@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2013 Citrix Systems
@@ -7,162 +6,162 @@
  * Author: Stefano Stabellini <stefano.stabellini@eu.citrix.com>
  */
 
-#घोषणा pr_fmt(fmt) "arm-pv: " fmt
+#define pr_fmt(fmt) "arm-pv: " fmt
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/cpuhotplug.h>
-#समावेश <linux/export.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/jump_label.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/psci.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/अटल_call.h>
+#include <linux/arm-smccc.h>
+#include <linux/cpuhotplug.h>
+#include <linux/export.h>
+#include <linux/io.h>
+#include <linux/jump_label.h>
+#include <linux/printk.h>
+#include <linux/psci.h>
+#include <linux/reboot.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/static_call.h>
 
-#समावेश <यंत्र/paravirt.h>
-#समावेश <यंत्र/pvघड़ी-abi.h>
-#समावेश <यंत्र/smp_plat.h>
+#include <asm/paravirt.h>
+#include <asm/pvclock-abi.h>
+#include <asm/smp_plat.h>
 
-काष्ठा अटल_key paravirt_steal_enabled;
-काष्ठा अटल_key paravirt_steal_rq_enabled;
+struct static_key paravirt_steal_enabled;
+struct static_key paravirt_steal_rq_enabled;
 
-अटल u64 native_steal_घड़ी(पूर्णांक cpu)
-अणु
-	वापस 0;
-पूर्ण
+static u64 native_steal_clock(int cpu)
+{
+	return 0;
+}
 
-DEFINE_STATIC_CALL(pv_steal_घड़ी, native_steal_घड़ी);
+DEFINE_STATIC_CALL(pv_steal_clock, native_steal_clock);
 
-काष्ठा pv_समय_stolen_समय_region अणु
-	काष्ठा pvघड़ी_vcpu_stolen_समय *kaddr;
-पूर्ण;
+struct pv_time_stolen_time_region {
+	struct pvclock_vcpu_stolen_time *kaddr;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा pv_समय_stolen_समय_region, stolen_समय_region);
+static DEFINE_PER_CPU(struct pv_time_stolen_time_region, stolen_time_region);
 
-अटल bool steal_acc = true;
-अटल पूर्णांक __init parse_no_stealacc(अक्षर *arg)
-अणु
+static bool steal_acc = true;
+static int __init parse_no_stealacc(char *arg)
+{
 	steal_acc = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 early_param("no-steal-acc", parse_no_stealacc);
 
-/* वापस stolen समय in ns by asking the hypervisor */
-अटल u64 para_steal_घड़ी(पूर्णांक cpu)
-अणु
-	काष्ठा pv_समय_stolen_समय_region *reg;
+/* return stolen time in ns by asking the hypervisor */
+static u64 para_steal_clock(int cpu)
+{
+	struct pv_time_stolen_time_region *reg;
 
-	reg = per_cpu_ptr(&stolen_समय_region, cpu);
+	reg = per_cpu_ptr(&stolen_time_region, cpu);
 
 	/*
-	 * paravirt_steal_घड़ी() may be called beक्रमe the CPU
-	 * online notअगरication callback runs. Until the callback
-	 * has run we just वापस zero.
+	 * paravirt_steal_clock() may be called before the CPU
+	 * online notification callback runs. Until the callback
+	 * has run we just return zero.
 	 */
-	अगर (!reg->kaddr)
-		वापस 0;
+	if (!reg->kaddr)
+		return 0;
 
-	वापस le64_to_cpu(READ_ONCE(reg->kaddr->stolen_समय));
-पूर्ण
+	return le64_to_cpu(READ_ONCE(reg->kaddr->stolen_time));
+}
 
-अटल पूर्णांक stolen_समय_cpu_करोwn_prepare(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा pv_समय_stolen_समय_region *reg;
+static int stolen_time_cpu_down_prepare(unsigned int cpu)
+{
+	struct pv_time_stolen_time_region *reg;
 
-	reg = this_cpu_ptr(&stolen_समय_region);
-	अगर (!reg->kaddr)
-		वापस 0;
+	reg = this_cpu_ptr(&stolen_time_region);
+	if (!reg->kaddr)
+		return 0;
 
 	memunmap(reg->kaddr);
-	स_रखो(reg, 0, माप(*reg));
+	memset(reg, 0, sizeof(*reg));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stolen_समय_cpu_online(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा pv_समय_stolen_समय_region *reg;
-	काष्ठा arm_smccc_res res;
+static int stolen_time_cpu_online(unsigned int cpu)
+{
+	struct pv_time_stolen_time_region *reg;
+	struct arm_smccc_res res;
 
-	reg = this_cpu_ptr(&stolen_समय_region);
+	reg = this_cpu_ptr(&stolen_time_region);
 
 	arm_smccc_1_1_invoke(ARM_SMCCC_HV_PV_TIME_ST, &res);
 
-	अगर (res.a0 == SMCCC_RET_NOT_SUPPORTED)
-		वापस -EINVAL;
+	if (res.a0 == SMCCC_RET_NOT_SUPPORTED)
+		return -EINVAL;
 
 	reg->kaddr = memremap(res.a0,
-			      माप(काष्ठा pvघड़ी_vcpu_stolen_समय),
+			      sizeof(struct pvclock_vcpu_stolen_time),
 			      MEMREMAP_WB);
 
-	अगर (!reg->kaddr) अणु
+	if (!reg->kaddr) {
 		pr_warn("Failed to map stolen time data structure\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (le32_to_cpu(reg->kaddr->revision) != 0 ||
-	    le32_to_cpu(reg->kaddr->attributes) != 0) अणु
+	if (le32_to_cpu(reg->kaddr->revision) != 0 ||
+	    le32_to_cpu(reg->kaddr->attributes) != 0) {
 		pr_warn_once("Unexpected revision or attributes in stolen time data\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init pv_समय_init_stolen_समय(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pv_time_init_stolen_time(void)
+{
+	int ret;
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN,
 				"hypervisor/arm/pvtime:online",
-				stolen_समय_cpu_online,
-				stolen_समय_cpu_करोwn_prepare);
-	अगर (ret < 0)
-		वापस ret;
-	वापस 0;
-पूर्ण
+				stolen_time_cpu_online,
+				stolen_time_cpu_down_prepare);
+	if (ret < 0)
+		return ret;
+	return 0;
+}
 
-अटल bool __init has_pv_steal_घड़ी(व्योम)
-अणु
-	काष्ठा arm_smccc_res res;
+static bool __init has_pv_steal_clock(void)
+{
+	struct arm_smccc_res res;
 
-	/* To detect the presence of PV समय support we require SMCCC 1.1+ */
-	अगर (arm_smccc_1_1_get_conduit() == SMCCC_CONDUIT_NONE)
-		वापस false;
+	/* To detect the presence of PV time support we require SMCCC 1.1+ */
+	if (arm_smccc_1_1_get_conduit() == SMCCC_CONDUIT_NONE)
+		return false;
 
 	arm_smccc_1_1_invoke(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
 			     ARM_SMCCC_HV_PV_TIME_FEATURES, &res);
 
-	अगर (res.a0 != SMCCC_RET_SUCCESS)
-		वापस false;
+	if (res.a0 != SMCCC_RET_SUCCESS)
+		return false;
 
 	arm_smccc_1_1_invoke(ARM_SMCCC_HV_PV_TIME_FEATURES,
 			     ARM_SMCCC_HV_PV_TIME_ST, &res);
 
-	वापस (res.a0 == SMCCC_RET_SUCCESS);
-पूर्ण
+	return (res.a0 == SMCCC_RET_SUCCESS);
+}
 
-पूर्णांक __init pv_समय_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init pv_time_init(void)
+{
+	int ret;
 
-	अगर (!has_pv_steal_घड़ी())
-		वापस 0;
+	if (!has_pv_steal_clock())
+		return 0;
 
-	ret = pv_समय_init_stolen_समय();
-	अगर (ret)
-		वापस ret;
+	ret = pv_time_init_stolen_time();
+	if (ret)
+		return ret;
 
-	अटल_call_update(pv_steal_घड़ी, para_steal_घड़ी);
+	static_call_update(pv_steal_clock, para_steal_clock);
 
-	अटल_key_slow_inc(&paravirt_steal_enabled);
-	अगर (steal_acc)
-		अटल_key_slow_inc(&paravirt_steal_rq_enabled);
+	static_key_slow_inc(&paravirt_steal_enabled);
+	if (steal_acc)
+		static_key_slow_inc(&paravirt_steal_rq_enabled);
 
 	pr_info("using stolen time PV\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

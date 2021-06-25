@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,54 +23,54 @@
  *
  */
 
-#समावेश <drm/radeon_drm.h>
-#समावेश "radeon.h"
-#समावेश "atom.h"
+#include <drm/radeon_drm.h>
+#include "radeon.h"
+#include "atom.h"
 
-#घोषणा TARGET_HW_I2C_CLOCK 50
+#define TARGET_HW_I2C_CLOCK 50
 
 /* these are a limitation of ProcessI2cChannelTransaction not the hw */
-#घोषणा ATOM_MAX_HW_I2C_WRITE 3
-#घोषणा ATOM_MAX_HW_I2C_READ  255
+#define ATOM_MAX_HW_I2C_WRITE 3
+#define ATOM_MAX_HW_I2C_READ  255
 
-अटल पूर्णांक radeon_process_i2c_ch(काष्ठा radeon_i2c_chan *chan,
+static int radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 				 u8 slave_addr, u8 flags,
-				 u8 *buf, पूर्णांक num)
-अणु
-	काष्ठा drm_device *dev = chan->dev;
-	काष्ठा radeon_device *rdev = dev->dev_निजी;
+				 u8 *buf, int num)
+{
+	struct drm_device *dev = chan->dev;
+	struct radeon_device *rdev = dev->dev_private;
 	PROCESS_I2C_CHANNEL_TRANSACTION_PS_ALLOCATION args;
-	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, ProcessI2cChannelTransaction);
-	अचिन्हित अक्षर *base;
+	int index = GetIndexIntoMasterTable(COMMAND, ProcessI2cChannelTransaction);
+	unsigned char *base;
 	u16 out = cpu_to_le16(0);
-	पूर्णांक r = 0;
+	int r = 0;
 
-	स_रखो(&args, 0, माप(args));
+	memset(&args, 0, sizeof(args));
 
 	mutex_lock(&chan->mutex);
 	mutex_lock(&rdev->mode_info.atom_context->scratch_mutex);
 
-	base = (अचिन्हित अक्षर *)rdev->mode_info.atom_context->scratch;
+	base = (unsigned char *)rdev->mode_info.atom_context->scratch;
 
-	अगर (flags & HW_I2C_WRITE) अणु
-		अगर (num > ATOM_MAX_HW_I2C_WRITE) अणु
+	if (flags & HW_I2C_WRITE) {
+		if (num > ATOM_MAX_HW_I2C_WRITE) {
 			DRM_ERROR("hw i2c: tried to write too many bytes (%d vs 3)\n", num);
 			r = -EINVAL;
-			जाओ करोne;
-		पूर्ण
-		अगर (buf == शून्य)
+			goto done;
+		}
+		if (buf == NULL)
 			args.ucRegIndex = 0;
-		अन्यथा
+		else
 			args.ucRegIndex = buf[0];
-		अगर (num)
+		if (num)
 			num--;
-		अगर (num)
-			स_नकल(&out, &buf[1], num);
+		if (num)
+			memcpy(&out, &buf[1], num);
 		args.lpI2CDataOut = cpu_to_le16(out);
-	पूर्ण अन्यथा अणु
+	} else {
 		args.ucRegIndex = 0;
 		args.lpI2CDataOut = 0;
-	पूर्ण
+	}
 
 	args.ucFlag = flags;
 	args.ucI2CSpeed = TARGET_HW_I2C_CLOCK;
@@ -79,77 +78,77 @@
 	args.ucSlaveAddr = slave_addr << 1;
 	args.ucLineNumber = chan->rec.i2c_id;
 
-	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
+	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uint32_t *)&args);
 
 	/* error */
-	अगर (args.ucStatus != HW_ASSISTED_I2C_STATUS_SUCCESS) अणु
+	if (args.ucStatus != HW_ASSISTED_I2C_STATUS_SUCCESS) {
 		DRM_DEBUG_KMS("hw_i2c error\n");
 		r = -EIO;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (!(flags & HW_I2C_WRITE))
+	if (!(flags & HW_I2C_WRITE))
 		radeon_atom_copy_swap(buf, base, num, false);
 
-करोne:
+done:
 	mutex_unlock(&rdev->mode_info.atom_context->scratch_mutex);
 	mutex_unlock(&chan->mutex);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक radeon_atom_hw_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
-			    काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	काष्ठा radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
-	काष्ठा i2c_msg *p;
-	पूर्णांक i, reमुख्यing, current_count, buffer_offset, max_bytes, ret;
+int radeon_atom_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
+			    struct i2c_msg *msgs, int num)
+{
+	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
+	struct i2c_msg *p;
+	int i, remaining, current_count, buffer_offset, max_bytes, ret;
 	u8 flags;
 
-	/* check क्रम bus probe */
+	/* check for bus probe */
 	p = &msgs[0];
-	अगर ((num == 1) && (p->len == 0)) अणु
+	if ((num == 1) && (p->len == 0)) {
 		ret = radeon_process_i2c_ch(i2c,
 					    p->addr, HW_I2C_WRITE,
-					    शून्य, 0);
-		अगर (ret)
-			वापस ret;
-		अन्यथा
-			वापस num;
-	पूर्ण
+					    NULL, 0);
+		if (ret)
+			return ret;
+		else
+			return num;
+	}
 
-	क्रम (i = 0; i < num; i++) अणु
+	for (i = 0; i < num; i++) {
 		p = &msgs[i];
-		reमुख्यing = p->len;
+		remaining = p->len;
 		buffer_offset = 0;
 		/* max_bytes are a limitation of ProcessI2cChannelTransaction not the hw */
-		अगर (p->flags & I2C_M_RD) अणु
+		if (p->flags & I2C_M_RD) {
 			max_bytes = ATOM_MAX_HW_I2C_READ;
 			flags = HW_I2C_READ;
-		पूर्ण अन्यथा अणु
+		} else {
 			max_bytes = ATOM_MAX_HW_I2C_WRITE;
 			flags = HW_I2C_WRITE;
-		पूर्ण
-		जबतक (reमुख्यing) अणु
-			अगर (reमुख्यing > max_bytes)
+		}
+		while (remaining) {
+			if (remaining > max_bytes)
 				current_count = max_bytes;
-			अन्यथा
-				current_count = reमुख्यing;
+			else
+				current_count = remaining;
 			ret = radeon_process_i2c_ch(i2c,
 						    p->addr, flags,
 						    &p->buf[buffer_offset], current_count);
-			अगर (ret)
-				वापस ret;
-			reमुख्यing -= current_count;
+			if (ret)
+				return ret;
+			remaining -= current_count;
 			buffer_offset += current_count;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-u32 radeon_atom_hw_i2c_func(काष्ठा i2c_adapter *adap)
-अणु
-	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-पूर्ण
+u32 radeon_atom_hw_i2c_func(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+}
 

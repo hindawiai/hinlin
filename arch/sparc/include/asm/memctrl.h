@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SPARC_MEMCTRL_H
-#घोषणा _SPARC_MEMCTRL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SPARC_MEMCTRL_H
+#define _SPARC_MEMCTRL_H
 
-प्रकार पूर्णांक (*dimm_prपूर्णांकer_t)(पूर्णांक synd_code, अचिन्हित दीर्घ paddr, अक्षर *buf, पूर्णांक buflen);
+typedef int (*dimm_printer_t)(int synd_code, unsigned long paddr, char *buf, int buflen);
 
-पूर्णांक रेजिस्टर_dimm_prपूर्णांकer(dimm_prपूर्णांकer_t func);
-व्योम unरेजिस्टर_dimm_prपूर्णांकer(dimm_prपूर्णांकer_t func);
+int register_dimm_printer(dimm_printer_t func);
+void unregister_dimm_printer(dimm_printer_t func);
 
-#पूर्ण_अगर /* _SPARC_MEMCTRL_H */
+#endif /* _SPARC_MEMCTRL_H */

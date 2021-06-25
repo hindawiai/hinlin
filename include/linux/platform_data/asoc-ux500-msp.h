@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
- * Author: Rabin Vincent <rabin.vincent@stericsson.com> क्रम ST-Ericsson
+ * Author: Rabin Vincent <rabin.vincent@stericsson.com> for ST-Ericsson
  */
 
-#अगर_अघोषित __MSP_H
-#घोषणा __MSP_H
+#ifndef __MSP_H
+#define __MSP_H
 
-#समावेश <linux/platक्रमm_data/dma-ste-dma40.h>
+#include <linux/platform_data/dma-ste-dma40.h>
 
-/* Platक्रमm data काष्ठाure क्रम a MSP I2S-device */
-काष्ठा msp_i2s_platक्रमm_data अणु
-	पूर्णांक id;
-	काष्ठा stedma40_chan_cfg *msp_i2s_dma_rx;
-	काष्ठा stedma40_chan_cfg *msp_i2s_dma_tx;
-पूर्ण;
+/* Platform data structure for a MSP I2S-device */
+struct msp_i2s_platform_data {
+	int id;
+	struct stedma40_chan_cfg *msp_i2s_dma_rx;
+	struct stedma40_chan_cfg *msp_i2s_dma_tx;
+};
 
-#पूर्ण_अगर
+#endif

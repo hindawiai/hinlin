@@ -1,63 +1,62 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित __DSI_PHY_H__
-#घोषणा __DSI_PHY_H__
+#ifndef __DSI_PHY_H__
+#define __DSI_PHY_H__
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश "dsi.h"
+#include "dsi.h"
 
-#घोषणा dsi_phy_पढ़ो(offset) msm_पढ़ोl((offset))
-#घोषणा dsi_phy_ग_लिखो(offset, data) msm_ग_लिखोl((data), (offset))
-#घोषणा dsi_phy_ग_लिखो_udelay(offset, data, delay_us) अणु msm_ग_लिखोl((data), (offset)); udelay(delay_us); पूर्ण
-#घोषणा dsi_phy_ग_लिखो_ndelay(offset, data, delay_ns) अणु msm_ग_लिखोl((data), (offset)); ndelay(delay_ns); पूर्ण
+#define dsi_phy_read(offset) msm_readl((offset))
+#define dsi_phy_write(offset, data) msm_writel((data), (offset))
+#define dsi_phy_write_udelay(offset, data, delay_us) { msm_writel((data), (offset)); udelay(delay_us); }
+#define dsi_phy_write_ndelay(offset, data, delay_ns) { msm_writel((data), (offset)); ndelay(delay_ns); }
 
-काष्ठा msm_dsi_phy_ops अणु
-	पूर्णांक (*pll_init)(काष्ठा msm_dsi_phy *phy);
-	पूर्णांक (*enable)(काष्ठा msm_dsi_phy *phy,
-			काष्ठा msm_dsi_phy_clk_request *clk_req);
-	व्योम (*disable)(काष्ठा msm_dsi_phy *phy);
-	व्योम (*save_pll_state)(काष्ठा msm_dsi_phy *phy);
-	पूर्णांक (*restore_pll_state)(काष्ठा msm_dsi_phy *phy);
-पूर्ण;
+struct msm_dsi_phy_ops {
+	int (*pll_init)(struct msm_dsi_phy *phy);
+	int (*enable)(struct msm_dsi_phy *phy,
+			struct msm_dsi_phy_clk_request *clk_req);
+	void (*disable)(struct msm_dsi_phy *phy);
+	void (*save_pll_state)(struct msm_dsi_phy *phy);
+	int (*restore_pll_state)(struct msm_dsi_phy *phy);
+};
 
-काष्ठा msm_dsi_phy_cfg अणु
-	काष्ठा dsi_reg_config reg_cfg;
-	काष्ठा msm_dsi_phy_ops ops;
+struct msm_dsi_phy_cfg {
+	struct dsi_reg_config reg_cfg;
+	struct msm_dsi_phy_ops ops;
 
-	अचिन्हित दीर्घ	min_pll_rate;
-	अचिन्हित दीर्घ	max_pll_rate;
+	unsigned long	min_pll_rate;
+	unsigned long	max_pll_rate;
 
-	स्थिर resource_माप_प्रकार io_start[DSI_MAX];
-	स्थिर पूर्णांक num_dsi_phy;
-	स्थिर पूर्णांक quirks;
+	const resource_size_t io_start[DSI_MAX];
+	const int num_dsi_phy;
+	const int quirks;
 	bool has_phy_regulator;
 	bool has_phy_lane;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_28nm_hpm_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_28nm_hpm_famb_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_28nm_lp_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_20nm_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_28nm_8960_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_14nm_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_14nm_660_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_10nm_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_10nm_8998_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_7nm_cfgs;
-बाह्य स्थिर काष्ठा msm_dsi_phy_cfg dsi_phy_7nm_8150_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_28nm_hpm_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_28nm_hpm_famb_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_28nm_lp_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_20nm_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_28nm_8960_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_14nm_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_14nm_660_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_10nm_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_10nm_8998_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_7nm_cfgs;
+extern const struct msm_dsi_phy_cfg dsi_phy_7nm_8150_cfgs;
 
-काष्ठा msm_dsi_dphy_timing अणु
+struct msm_dsi_dphy_timing {
 	u32 clk_zero;
 	u32 clk_trail;
 	u32 clk_prepare;
-	u32 hs_निकास;
+	u32 hs_exit;
 	u32 hs_zero;
 	u32 hs_prepare;
 	u32 hs_trail;
@@ -66,7 +65,7 @@
 	u32 ta_sure;
 	u32 ta_get;
 
-	काष्ठा msm_dsi_phy_shared_timings shared_timings;
+	struct msm_dsi_phy_shared_timings shared_timings;
 
 	/* For PHY v2 only */
 	u32 hs_rqst_ckln;
@@ -74,47 +73,47 @@
 	u32 hs_prep_dly_ckln;
 	u8 hs_halfbyte_en;
 	u8 hs_halfbyte_en_ckln;
-पूर्ण;
+};
 
-#घोषणा DSI_BYTE_PLL_CLK		0
-#घोषणा DSI_PIXEL_PLL_CLK		1
-#घोषणा NUM_PROVIDED_CLKS		2
+#define DSI_BYTE_PLL_CLK		0
+#define DSI_PIXEL_PLL_CLK		1
+#define NUM_PROVIDED_CLKS		2
 
-काष्ठा msm_dsi_phy अणु
-	काष्ठा platक्रमm_device *pdev;
-	व्योम __iomem *base;
-	व्योम __iomem *pll_base;
-	व्योम __iomem *reg_base;
-	व्योम __iomem *lane_base;
-	पूर्णांक id;
+struct msm_dsi_phy {
+	struct platform_device *pdev;
+	void __iomem *base;
+	void __iomem *pll_base;
+	void __iomem *reg_base;
+	void __iomem *lane_base;
+	int id;
 
-	काष्ठा clk *ahb_clk;
-	काष्ठा regulator_bulk_data supplies[DSI_DEV_REGULATOR_MAX];
+	struct clk *ahb_clk;
+	struct regulator_bulk_data supplies[DSI_DEV_REGULATOR_MAX];
 
-	काष्ठा msm_dsi_dphy_timing timing;
-	स्थिर काष्ठा msm_dsi_phy_cfg *cfg;
+	struct msm_dsi_dphy_timing timing;
+	const struct msm_dsi_phy_cfg *cfg;
 
-	क्रमागत msm_dsi_phy_useहाल useहाल;
-	bool regulator_lकरो_mode;
+	enum msm_dsi_phy_usecase usecase;
+	bool regulator_ldo_mode;
 
-	काष्ठा clk_hw *vco_hw;
+	struct clk_hw *vco_hw;
 	bool pll_on;
 
-	काष्ठा clk_hw_onecell_data *provided_घड़ीs;
+	struct clk_hw_onecell_data *provided_clocks;
 
 	bool state_saved;
-पूर्ण;
+};
 
 /*
- * PHY पूर्णांकernal functions
+ * PHY internal functions
  */
-पूर्णांक msm_dsi_dphy_timing_calc(काष्ठा msm_dsi_dphy_timing *timing,
-			     काष्ठा msm_dsi_phy_clk_request *clk_req);
-पूर्णांक msm_dsi_dphy_timing_calc_v2(काष्ठा msm_dsi_dphy_timing *timing,
-				काष्ठा msm_dsi_phy_clk_request *clk_req);
-पूर्णांक msm_dsi_dphy_timing_calc_v3(काष्ठा msm_dsi_dphy_timing *timing,
-				काष्ठा msm_dsi_phy_clk_request *clk_req);
-पूर्णांक msm_dsi_dphy_timing_calc_v4(काष्ठा msm_dsi_dphy_timing *timing,
-				काष्ठा msm_dsi_phy_clk_request *clk_req);
+int msm_dsi_dphy_timing_calc(struct msm_dsi_dphy_timing *timing,
+			     struct msm_dsi_phy_clk_request *clk_req);
+int msm_dsi_dphy_timing_calc_v2(struct msm_dsi_dphy_timing *timing,
+				struct msm_dsi_phy_clk_request *clk_req);
+int msm_dsi_dphy_timing_calc_v3(struct msm_dsi_dphy_timing *timing,
+				struct msm_dsi_phy_clk_request *clk_req);
+int msm_dsi_dphy_timing_calc_v4(struct msm_dsi_dphy_timing *timing,
+				struct msm_dsi_phy_clk_request *clk_req);
 
-#पूर्ण_अगर /* __DSI_PHY_H__ */
+#endif /* __DSI_PHY_H__ */

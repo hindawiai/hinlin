@@ -1,339 +1,338 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2006 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
-#समावेश <linux/module.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_mount.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/sunrpc/auth.h>
-#समावेश <linux/sunrpc/xprt.h>
-#समावेश <linux/sunrpc/bc_xprt.h>
-#समावेश <linux/sunrpc/rpc_pipe_fs.h>
-#समावेश "internal.h"
-#समावेश "callback.h"
-#समावेश "delegation.h"
-#समावेश "nfs4session.h"
-#समावेश "nfs4idmap.h"
-#समावेश "pnfs.h"
-#समावेश "netns.h"
+#include <linux/module.h>
+#include <linux/nfs_fs.h>
+#include <linux/nfs_mount.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/sunrpc/auth.h>
+#include <linux/sunrpc/xprt.h>
+#include <linux/sunrpc/bc_xprt.h>
+#include <linux/sunrpc/rpc_pipe_fs.h>
+#include "internal.h"
+#include "callback.h"
+#include "delegation.h"
+#include "nfs4session.h"
+#include "nfs4idmap.h"
+#include "pnfs.h"
+#include "netns.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_CLIENT
+#define NFSDBG_FACILITY		NFSDBG_CLIENT
 
 /*
- * Get a unique NFSv4.0 callback identअगरier which will be used
- * by the V4.0 callback service to lookup the nfs_client काष्ठा
+ * Get a unique NFSv4.0 callback identifier which will be used
+ * by the V4.0 callback service to lookup the nfs_client struct
  */
-अटल पूर्णांक nfs_get_cb_ident_idr(काष्ठा nfs_client *clp, पूर्णांक minorversion)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा nfs_net *nn = net_generic(clp->cl_net, nfs_net_id);
+static int nfs_get_cb_ident_idr(struct nfs_client *clp, int minorversion)
+{
+	int ret = 0;
+	struct nfs_net *nn = net_generic(clp->cl_net, nfs_net_id);
 
-	अगर (clp->rpc_ops->version != 4 || minorversion != 0)
-		वापस ret;
+	if (clp->rpc_ops->version != 4 || minorversion != 0)
+		return ret;
 	idr_preload(GFP_KERNEL);
 	spin_lock(&nn->nfs_client_lock);
 	ret = idr_alloc(&nn->cb_ident_idr, clp, 1, 0, GFP_NOWAIT);
-	अगर (ret >= 0)
+	if (ret >= 0)
 		clp->cl_cb_ident = ret;
 	spin_unlock(&nn->nfs_client_lock);
 	idr_preload_end();
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-#अगर_घोषित CONFIG_NFS_V4_1
+#ifdef CONFIG_NFS_V4_1
 /*
  * Per auth flavor data server rpc clients
  */
-काष्ठा nfs4_ds_server अणु
-	काष्ठा list_head	list;   /* ds_clp->cl_ds_clients */
-	काष्ठा rpc_clnt		*rpc_clnt;
-पूर्ण;
+struct nfs4_ds_server {
+	struct list_head	list;   /* ds_clp->cl_ds_clients */
+	struct rpc_clnt		*rpc_clnt;
+};
 
 /**
- * nfs4_find_ds_client - Common lookup हाल क्रम DS I/O
- * @ds_clp: poपूर्णांकer to the DS's nfs_client
+ * nfs4_find_ds_client - Common lookup case for DS I/O
+ * @ds_clp: pointer to the DS's nfs_client
  * @flavor: rpc auth flavour to match
  */
-अटल काष्ठा nfs4_ds_server *
-nfs4_find_ds_client(काष्ठा nfs_client *ds_clp, rpc_authflavor_t flavor)
-अणु
-	काष्ठा nfs4_ds_server *dss;
+static struct nfs4_ds_server *
+nfs4_find_ds_client(struct nfs_client *ds_clp, rpc_authflavor_t flavor)
+{
+	struct nfs4_ds_server *dss;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(dss, &ds_clp->cl_ds_clients, list) अणु
-		अगर (dss->rpc_clnt->cl_auth->au_flavor != flavor)
-			जारी;
-		जाओ out;
-	पूर्ण
-	dss = शून्य;
+	rcu_read_lock();
+	list_for_each_entry_rcu(dss, &ds_clp->cl_ds_clients, list) {
+		if (dss->rpc_clnt->cl_auth->au_flavor != flavor)
+			continue;
+		goto out;
+	}
+	dss = NULL;
 out:
-	rcu_पढ़ो_unlock();
-	वापस dss;
-पूर्ण
+	rcu_read_unlock();
+	return dss;
+}
 
-अटल काष्ठा nfs4_ds_server *
-nfs4_add_ds_client(काष्ठा nfs_client *ds_clp, rpc_authflavor_t flavor,
-			   काष्ठा nfs4_ds_server *new)
-अणु
-	काष्ठा nfs4_ds_server *dss;
+static struct nfs4_ds_server *
+nfs4_add_ds_client(struct nfs_client *ds_clp, rpc_authflavor_t flavor,
+			   struct nfs4_ds_server *new)
+{
+	struct nfs4_ds_server *dss;
 
 	spin_lock(&ds_clp->cl_lock);
-	list_क्रम_each_entry(dss, &ds_clp->cl_ds_clients, list) अणु
-		अगर (dss->rpc_clnt->cl_auth->au_flavor != flavor)
-			जारी;
-		जाओ out;
-	पूर्ण
-	अगर (new)
+	list_for_each_entry(dss, &ds_clp->cl_ds_clients, list) {
+		if (dss->rpc_clnt->cl_auth->au_flavor != flavor)
+			continue;
+		goto out;
+	}
+	if (new)
 		list_add_rcu(&new->list, &ds_clp->cl_ds_clients);
 	dss = new;
 out:
 	spin_unlock(&ds_clp->cl_lock); /* need some lock to protect list */
-	वापस dss;
-पूर्ण
+	return dss;
+}
 
-अटल काष्ठा nfs4_ds_server *
-nfs4_alloc_ds_server(काष्ठा nfs_client *ds_clp, rpc_authflavor_t flavor)
-अणु
-	काष्ठा nfs4_ds_server *dss;
+static struct nfs4_ds_server *
+nfs4_alloc_ds_server(struct nfs_client *ds_clp, rpc_authflavor_t flavor)
+{
+	struct nfs4_ds_server *dss;
 
-	dss = kदो_स्मृति(माप(*dss), GFP_NOFS);
-	अगर (dss == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	dss = kmalloc(sizeof(*dss), GFP_NOFS);
+	if (dss == NULL)
+		return ERR_PTR(-ENOMEM);
 
 	dss->rpc_clnt = rpc_clone_client_set_auth(ds_clp->cl_rpcclient, flavor);
-	अगर (IS_ERR(dss->rpc_clnt)) अणु
-		पूर्णांक err = PTR_ERR(dss->rpc_clnt);
-		kमुक्त (dss);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (IS_ERR(dss->rpc_clnt)) {
+		int err = PTR_ERR(dss->rpc_clnt);
+		kfree (dss);
+		return ERR_PTR(err);
+	}
 	INIT_LIST_HEAD(&dss->list);
 
-	वापस dss;
-पूर्ण
+	return dss;
+}
 
-अटल व्योम
-nfs4_मुक्त_ds_server(काष्ठा nfs4_ds_server *dss)
-अणु
+static void
+nfs4_free_ds_server(struct nfs4_ds_server *dss)
+{
 	rpc_release_client(dss->rpc_clnt);
-	kमुक्त(dss);
-पूर्ण
+	kfree(dss);
+}
 
 /**
  * nfs4_find_or_create_ds_client - Find or create a DS rpc client
- * @ds_clp: poपूर्णांकer to the DS's nfs_client
- * @inode: poपूर्णांकer to the inode
+ * @ds_clp: pointer to the DS's nfs_client
+ * @inode: pointer to the inode
  *
  * Find or create a DS rpc client with th MDS server rpc client auth flavor
  * in the nfs_client cl_ds_clients list.
  */
-काष्ठा rpc_clnt *
-nfs4_find_or_create_ds_client(काष्ठा nfs_client *ds_clp, काष्ठा inode *inode)
-अणु
-	काष्ठा nfs4_ds_server *dss, *new;
+struct rpc_clnt *
+nfs4_find_or_create_ds_client(struct nfs_client *ds_clp, struct inode *inode)
+{
+	struct nfs4_ds_server *dss, *new;
 	rpc_authflavor_t flavor = NFS_SERVER(inode)->client->cl_auth->au_flavor;
 
 	dss = nfs4_find_ds_client(ds_clp, flavor);
-	अगर (dss != शून्य)
-		जाओ out;
+	if (dss != NULL)
+		goto out;
 	new = nfs4_alloc_ds_server(ds_clp, flavor);
-	अगर (IS_ERR(new))
-		वापस ERR_CAST(new);
+	if (IS_ERR(new))
+		return ERR_CAST(new);
 	dss = nfs4_add_ds_client(ds_clp, flavor, new);
-	अगर (dss != new)
-		nfs4_मुक्त_ds_server(new);
+	if (dss != new)
+		nfs4_free_ds_server(new);
 out:
-	वापस dss->rpc_clnt;
-पूर्ण
+	return dss->rpc_clnt;
+}
 EXPORT_SYMBOL_GPL(nfs4_find_or_create_ds_client);
 
-अटल व्योम
-nfs4_shutकरोwn_ds_clients(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs4_ds_server *dss;
+static void
+nfs4_shutdown_ds_clients(struct nfs_client *clp)
+{
+	struct nfs4_ds_server *dss;
 
-	जबतक (!list_empty(&clp->cl_ds_clients)) अणु
+	while (!list_empty(&clp->cl_ds_clients)) {
 		dss = list_entry(clp->cl_ds_clients.next,
-					काष्ठा nfs4_ds_server, list);
+					struct nfs4_ds_server, list);
 		list_del(&dss->list);
-		rpc_shutकरोwn_client(dss->rpc_clnt);
-		kमुक्त (dss);
-	पूर्ण
-पूर्ण
+		rpc_shutdown_client(dss->rpc_clnt);
+		kfree (dss);
+	}
+}
 
-अटल व्योम
-nfs4_cleanup_callback(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs4_copy_state *cp_state;
+static void
+nfs4_cleanup_callback(struct nfs_client *clp)
+{
+	struct nfs4_copy_state *cp_state;
 
-	जबतक (!list_empty(&clp->pending_cb_stateids)) अणु
+	while (!list_empty(&clp->pending_cb_stateids)) {
 		cp_state = list_entry(clp->pending_cb_stateids.next,
-					काष्ठा nfs4_copy_state, copies);
+					struct nfs4_copy_state, copies);
 		list_del(&cp_state->copies);
-		kमुक्त(cp_state);
-	पूर्ण
-पूर्ण
+		kfree(cp_state);
+	}
+}
 
-व्योम nfs41_shutकरोwn_client(काष्ठा nfs_client *clp)
-अणु
-	अगर (nfs4_has_session(clp)) अणु
+void nfs41_shutdown_client(struct nfs_client *clp)
+{
+	if (nfs4_has_session(clp)) {
 		nfs4_cleanup_callback(clp);
-		nfs4_shutकरोwn_ds_clients(clp);
+		nfs4_shutdown_ds_clients(clp);
 		nfs4_destroy_session(clp->cl_session);
 		nfs4_destroy_clientid(clp);
-	पूर्ण
+	}
 
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_NFS_V4_1 */
+}
+#endif	/* CONFIG_NFS_V4_1 */
 
-व्योम nfs40_shutकरोwn_client(काष्ठा nfs_client *clp)
-अणु
-	अगर (clp->cl_slot_tbl) अणु
-		nfs4_shutकरोwn_slot_table(clp->cl_slot_tbl);
-		kमुक्त(clp->cl_slot_tbl);
-	पूर्ण
-पूर्ण
+void nfs40_shutdown_client(struct nfs_client *clp)
+{
+	if (clp->cl_slot_tbl) {
+		nfs4_shutdown_slot_table(clp->cl_slot_tbl);
+		kfree(clp->cl_slot_tbl);
+	}
+}
 
-काष्ठा nfs_client *nfs4_alloc_client(स्थिर काष्ठा nfs_client_initdata *cl_init)
-अणु
-	पूर्णांक err;
-	काष्ठा nfs_client *clp = nfs_alloc_client(cl_init);
-	अगर (IS_ERR(clp))
-		वापस clp;
+struct nfs_client *nfs4_alloc_client(const struct nfs_client_initdata *cl_init)
+{
+	int err;
+	struct nfs_client *clp = nfs_alloc_client(cl_init);
+	if (IS_ERR(clp))
+		return clp;
 
 	err = nfs_get_cb_ident_idr(clp, cl_init->minorversion);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	अगर (cl_init->minorversion > NFS4_MAX_MINOR_VERSION) अणु
+	if (cl_init->minorversion > NFS4_MAX_MINOR_VERSION) {
 		err = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	spin_lock_init(&clp->cl_lock);
 	INIT_DELAYED_WORK(&clp->cl_renewd, nfs4_renew_state);
 	INIT_LIST_HEAD(&clp->cl_ds_clients);
-	rpc_init_रुको_queue(&clp->cl_rpcरुकोq, "NFS client");
+	rpc_init_wait_queue(&clp->cl_rpcwaitq, "NFS client");
 	clp->cl_state = 1 << NFS4CLNT_LEASE_EXPIRED;
 	clp->cl_mvops = nfs_v4_minor_ops[cl_init->minorversion];
 	clp->cl_mig_gen = 1;
-#अगर IS_ENABLED(CONFIG_NFS_V4_1)
-	init_रुकोqueue_head(&clp->cl_lock_रुकोq);
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_NFS_V4_1)
+	init_waitqueue_head(&clp->cl_lock_waitq);
+#endif
 	INIT_LIST_HEAD(&clp->pending_cb_stateids);
-	वापस clp;
+	return clp;
 
 error:
-	nfs_मुक्त_client(clp);
-	वापस ERR_PTR(err);
-पूर्ण
+	nfs_free_client(clp);
+	return ERR_PTR(err);
+}
 
 /*
  * Destroy the NFS4 callback service
  */
-अटल व्योम nfs4_destroy_callback(काष्ठा nfs_client *clp)
-अणु
-	अगर (__test_and_clear_bit(NFS_CS_CALLBACK, &clp->cl_res_state))
-		nfs_callback_करोwn(clp->cl_mvops->minor_version, clp->cl_net);
-पूर्ण
+static void nfs4_destroy_callback(struct nfs_client *clp)
+{
+	if (__test_and_clear_bit(NFS_CS_CALLBACK, &clp->cl_res_state))
+		nfs_callback_down(clp->cl_mvops->minor_version, clp->cl_net);
+}
 
-अटल व्योम nfs4_shutकरोwn_client(काष्ठा nfs_client *clp)
-अणु
-	अगर (__test_and_clear_bit(NFS_CS_RENEWD, &clp->cl_res_state))
-		nfs4_समाप्त_renewd(clp);
-	clp->cl_mvops->shutकरोwn_client(clp);
+static void nfs4_shutdown_client(struct nfs_client *clp)
+{
+	if (__test_and_clear_bit(NFS_CS_RENEWD, &clp->cl_res_state))
+		nfs4_kill_renewd(clp);
+	clp->cl_mvops->shutdown_client(clp);
 	nfs4_destroy_callback(clp);
-	अगर (__test_and_clear_bit(NFS_CS_IDMAP, &clp->cl_res_state))
+	if (__test_and_clear_bit(NFS_CS_IDMAP, &clp->cl_res_state))
 		nfs_idmap_delete(clp);
 
-	rpc_destroy_रुको_queue(&clp->cl_rpcरुकोq);
-	kमुक्त(clp->cl_serverowner);
-	kमुक्त(clp->cl_serverscope);
-	kमुक्त(clp->cl_implid);
-	kमुक्त(clp->cl_owner_id);
-पूर्ण
+	rpc_destroy_wait_queue(&clp->cl_rpcwaitq);
+	kfree(clp->cl_serverowner);
+	kfree(clp->cl_serverscope);
+	kfree(clp->cl_implid);
+	kfree(clp->cl_owner_id);
+}
 
-व्योम nfs4_मुक्त_client(काष्ठा nfs_client *clp)
-अणु
-	nfs4_shutकरोwn_client(clp);
-	nfs_मुक्त_client(clp);
-पूर्ण
+void nfs4_free_client(struct nfs_client *clp)
+{
+	nfs4_shutdown_client(clp);
+	nfs_free_client(clp);
+}
 
 /*
  * Initialize the NFS4 callback service
  */
-अटल पूर्णांक nfs4_init_callback(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा rpc_xprt *xprt;
-	पूर्णांक error;
+static int nfs4_init_callback(struct nfs_client *clp)
+{
+	struct rpc_xprt *xprt;
+	int error;
 
 	xprt = rcu_dereference_raw(clp->cl_rpcclient->cl_xprt);
 
-	अगर (nfs4_has_session(clp)) अणु
+	if (nfs4_has_session(clp)) {
 		error = xprt_setup_backchannel(xprt, NFS41_BC_MIN_CALLBACKS);
-		अगर (error < 0)
-			वापस error;
-	पूर्ण
+		if (error < 0)
+			return error;
+	}
 
 	error = nfs_callback_up(clp->cl_mvops->minor_version, xprt);
-	अगर (error < 0) अणु
-		dprपूर्णांकk("%s: failed to start callback. Error = %d\n",
+	if (error < 0) {
+		dprintk("%s: failed to start callback. Error = %d\n",
 			__func__, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	__set_bit(NFS_CS_CALLBACK, &clp->cl_res_state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * nfs40_init_client - nfs_client initialization tasks क्रम NFSv4.0
+ * nfs40_init_client - nfs_client initialization tasks for NFSv4.0
  * @clp: nfs_client to initialize
  *
- * Returns zero on success, or a negative त्रुटि_सं अगर some error occurred.
+ * Returns zero on success, or a negative errno if some error occurred.
  */
-पूर्णांक nfs40_init_client(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs4_slot_table *tbl;
-	पूर्णांक ret;
+int nfs40_init_client(struct nfs_client *clp)
+{
+	struct nfs4_slot_table *tbl;
+	int ret;
 
-	tbl = kzalloc(माप(*tbl), GFP_NOFS);
-	अगर (tbl == शून्य)
-		वापस -ENOMEM;
+	tbl = kzalloc(sizeof(*tbl), GFP_NOFS);
+	if (tbl == NULL)
+		return -ENOMEM;
 
 	ret = nfs4_setup_slot_table(tbl, NFS4_MAX_SLOT_TABLE,
 					"NFSv4.0 transport Slot table");
-	अगर (ret) अणु
-		kमुक्त(tbl);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(tbl);
+		return ret;
+	}
 
 	clp->cl_slot_tbl = tbl;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
+#if defined(CONFIG_NFS_V4_1)
 
 /**
- * nfs41_init_client - nfs_client initialization tasks क्रम NFSv4.1+
+ * nfs41_init_client - nfs_client initialization tasks for NFSv4.1+
  * @clp: nfs_client to initialize
  *
- * Returns zero on success, or a negative त्रुटि_सं अगर some error occurred.
+ * Returns zero on success, or a negative errno if some error occurred.
  */
-पूर्णांक nfs41_init_client(काष्ठा nfs_client *clp)
-अणु
-	काष्ठा nfs4_session *session = शून्य;
+int nfs41_init_client(struct nfs_client *clp)
+{
+	struct nfs4_session *session = NULL;
 
 	/*
 	 * Create the session and mark it expired.
 	 * When a SEQUENCE operation encounters the expired session
-	 * it will करो session recovery to initialize it.
+	 * it will do session recovery to initialize it.
 	 */
 	session = nfs4_alloc_session(clp);
-	अगर (!session)
-		वापस -ENOMEM;
+	if (!session)
+		return -ENOMEM;
 
 	clp->cl_session = session;
 
@@ -341,129 +340,129 @@ error:
 	 * The create session reply races with the server back
 	 * channel probe. Mark the client NFS_CS_SESSION_INITING
 	 * so that the client back channel can find the
-	 * nfs_client काष्ठा
+	 * nfs_client struct
 	 */
-	nfs_mark_client_पढ़ोy(clp, NFS_CS_SESSION_INITING);
-	वापस 0;
-पूर्ण
+	nfs_mark_client_ready(clp, NFS_CS_SESSION_INITING);
+	return 0;
+}
 
-#पूर्ण_अगर	/* CONFIG_NFS_V4_1 */
+#endif	/* CONFIG_NFS_V4_1 */
 
 /*
- * Initialize the minor version specअगरic parts of an NFS4 client record
+ * Initialize the minor version specific parts of an NFS4 client record
  */
-अटल पूर्णांक nfs4_init_client_minor_version(काष्ठा nfs_client *clp)
-अणु
-	पूर्णांक ret;
+static int nfs4_init_client_minor_version(struct nfs_client *clp)
+{
+	int ret;
 
 	ret = clp->cl_mvops->init_client(clp);
-	अगर (ret)
-		वापस ret;
-	वापस nfs4_init_callback(clp);
-पूर्ण
+	if (ret)
+		return ret;
+	return nfs4_init_callback(clp);
+}
 
 /**
  * nfs4_init_client - Initialise an NFS4 client record
  *
  * @clp: nfs_client to initialise
- * @cl_init: poपूर्णांकer to nfs_client_initdata
+ * @cl_init: pointer to nfs_client_initdata
  *
- * Returns poपूर्णांकer to an NFS client, or an ERR_PTR value.
+ * Returns pointer to an NFS client, or an ERR_PTR value.
  */
-काष्ठा nfs_client *nfs4_init_client(काष्ठा nfs_client *clp,
-				    स्थिर काष्ठा nfs_client_initdata *cl_init)
-अणु
-	अक्षर buf[INET6_ADDRSTRLEN + 1];
-	स्थिर अक्षर *ip_addr = cl_init->ip_addr;
-	काष्ठा nfs_client *old;
-	पूर्णांक error;
+struct nfs_client *nfs4_init_client(struct nfs_client *clp,
+				    const struct nfs_client_initdata *cl_init)
+{
+	char buf[INET6_ADDRSTRLEN + 1];
+	const char *ip_addr = cl_init->ip_addr;
+	struct nfs_client *old;
+	int error;
 
-	अगर (clp->cl_cons_state == NFS_CS_READY)
-		/* the client is initialised alपढ़ोy */
-		वापस clp;
+	if (clp->cl_cons_state == NFS_CS_READY)
+		/* the client is initialised already */
+		return clp;
 
 	/* Check NFS protocol revision and initialize RPC op vector */
 	clp->rpc_ops = &nfs_v4_clientops;
 
-	अगर (clp->cl_minorversion != 0)
+	if (clp->cl_minorversion != 0)
 		__set_bit(NFS_CS_INFINITE_SLOTS, &clp->cl_flags);
 	__set_bit(NFS_CS_DISCRTRY, &clp->cl_flags);
 	__set_bit(NFS_CS_NO_RETRANS_TIMEOUT, &clp->cl_flags);
 
 	error = nfs_create_rpc_client(clp, cl_init, RPC_AUTH_GSS_KRB5I);
-	अगर (error == -EINVAL)
+	if (error == -EINVAL)
 		error = nfs_create_rpc_client(clp, cl_init, RPC_AUTH_UNIX);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
-	/* If no clientaddr= option was specअगरied, find a usable cb address */
-	अगर (ip_addr == शून्य) अणु
-		काष्ठा sockaddr_storage cb_addr;
-		काष्ठा sockaddr *sap = (काष्ठा sockaddr *)&cb_addr;
+	/* If no clientaddr= option was specified, find a usable cb address */
+	if (ip_addr == NULL) {
+		struct sockaddr_storage cb_addr;
+		struct sockaddr *sap = (struct sockaddr *)&cb_addr;
 
-		error = rpc_localaddr(clp->cl_rpcclient, sap, माप(cb_addr));
-		अगर (error < 0)
-			जाओ error;
-		error = rpc_ntop(sap, buf, माप(buf));
-		अगर (error < 0)
-			जाओ error;
-		ip_addr = (स्थिर अक्षर *)buf;
-	पूर्ण
-	strlcpy(clp->cl_ipaddr, ip_addr, माप(clp->cl_ipaddr));
+		error = rpc_localaddr(clp->cl_rpcclient, sap, sizeof(cb_addr));
+		if (error < 0)
+			goto error;
+		error = rpc_ntop(sap, buf, sizeof(buf));
+		if (error < 0)
+			goto error;
+		ip_addr = (const char *)buf;
+	}
+	strlcpy(clp->cl_ipaddr, ip_addr, sizeof(clp->cl_ipaddr));
 
 	error = nfs_idmap_new(clp);
-	अगर (error < 0) अणु
-		dprपूर्णांकk("%s: failed to create idmapper. Error = %d\n",
+	if (error < 0) {
+		dprintk("%s: failed to create idmapper. Error = %d\n",
 			__func__, error);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	__set_bit(NFS_CS_IDMAP, &clp->cl_res_state);
 
 	error = nfs4_init_client_minor_version(clp);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
 	error = nfs4_discover_server_trunking(clp, &old);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
-	अगर (clp != old) अणु
+	if (clp != old) {
 		clp->cl_preserve_clid = true;
 		/*
 		 * Mark the client as having failed initialization so other
 		 * processes walking the nfs_client_list in nfs_match_client()
 		 * won't try to use it.
 		 */
-		nfs_mark_client_पढ़ोy(clp, -EPERM);
-	पूर्ण
+		nfs_mark_client_ready(clp, -EPERM);
+	}
 	clear_bit(NFS_CS_TSM_POSSIBLE, &clp->cl_flags);
 	nfs_put_client(clp);
-	वापस old;
+	return old;
 
 error:
-	nfs_mark_client_पढ़ोy(clp, error);
+	nfs_mark_client_ready(clp, error);
 	nfs_put_client(clp);
-	वापस ERR_PTR(error);
-पूर्ण
+	return ERR_PTR(error);
+}
 
 /*
  * SETCLIENTID just did a callback update with the callback ident in
  * "drop," but server trunking discovery claims "drop" and "keep" are
  * actually the same server.  Swap the callback IDs so that "keep"
- * will जारी to use the callback ident the server now knows about,
+ * will continue to use the callback ident the server now knows about,
  * and so that "keep"'s original callback ident is destroyed when
- * "drop" is मुक्तd.
+ * "drop" is freed.
  */
-अटल व्योम nfs4_swap_callback_idents(काष्ठा nfs_client *keep,
-				      काष्ठा nfs_client *drop)
-अणु
-	काष्ठा nfs_net *nn = net_generic(keep->cl_net, nfs_net_id);
-	अचिन्हित पूर्णांक save = keep->cl_cb_ident;
+static void nfs4_swap_callback_idents(struct nfs_client *keep,
+				      struct nfs_client *drop)
+{
+	struct nfs_net *nn = net_generic(keep->cl_net, nfs_net_id);
+	unsigned int save = keep->cl_cb_ident;
 
-	अगर (keep->cl_cb_ident == drop->cl_cb_ident)
-		वापस;
+	if (keep->cl_cb_ident == drop->cl_cb_ident)
+		return;
 
-	dprपूर्णांकk("%s: keeping callback ident %u and dropping ident %u\n",
+	dprintk("%s: keeping callback ident %u and dropping ident %u\n",
 		__func__, keep->cl_cb_ident, drop->cl_cb_ident);
 
 	spin_lock(&nn->nfs_client_lock);
@@ -475,115 +474,115 @@ error:
 	drop->cl_cb_ident = save;
 
 	spin_unlock(&nn->nfs_client_lock);
-पूर्ण
+}
 
-अटल bool nfs4_match_client_owner_id(स्थिर काष्ठा nfs_client *clp1,
-		स्थिर काष्ठा nfs_client *clp2)
-अणु
-	अगर (clp1->cl_owner_id == शून्य || clp2->cl_owner_id == शून्य)
-		वापस true;
-	वापस म_भेद(clp1->cl_owner_id, clp2->cl_owner_id) == 0;
-पूर्ण
+static bool nfs4_match_client_owner_id(const struct nfs_client *clp1,
+		const struct nfs_client *clp2)
+{
+	if (clp1->cl_owner_id == NULL || clp2->cl_owner_id == NULL)
+		return true;
+	return strcmp(clp1->cl_owner_id, clp2->cl_owner_id) == 0;
+}
 
-अटल bool nfs4_same_verअगरier(nfs4_verअगरier *v1, nfs4_verअगरier *v2)
-अणु
-	वापस स_भेद(v1->data, v2->data, माप(v1->data)) == 0;
-पूर्ण
+static bool nfs4_same_verifier(nfs4_verifier *v1, nfs4_verifier *v2)
+{
+	return memcmp(v1->data, v2->data, sizeof(v1->data)) == 0;
+}
 
-अटल पूर्णांक nfs4_match_client(काष्ठा nfs_client  *pos,  काष्ठा nfs_client *new,
-			     काष्ठा nfs_client **prev, काष्ठा nfs_net *nn)
-अणु
-	पूर्णांक status;
+static int nfs4_match_client(struct nfs_client  *pos,  struct nfs_client *new,
+			     struct nfs_client **prev, struct nfs_net *nn)
+{
+	int status;
 
-	अगर (pos->rpc_ops != new->rpc_ops)
-		वापस 1;
+	if (pos->rpc_ops != new->rpc_ops)
+		return 1;
 
-	अगर (pos->cl_minorversion != new->cl_minorversion)
-		वापस 1;
+	if (pos->cl_minorversion != new->cl_minorversion)
+		return 1;
 
 	/* If "pos" isn't marked ready, we can't trust the
-	 * reमुख्यing fields in "pos", especially the client
-	 * ID and serverowner fields.  Wait क्रम CREATE_SESSION
+	 * remaining fields in "pos", especially the client
+	 * ID and serverowner fields.  Wait for CREATE_SESSION
 	 * to finish. */
-	अगर (pos->cl_cons_state > NFS_CS_READY) अणु
+	if (pos->cl_cons_state > NFS_CS_READY) {
 		refcount_inc(&pos->cl_count);
 		spin_unlock(&nn->nfs_client_lock);
 
 		nfs_put_client(*prev);
 		*prev = pos;
 
-		status = nfs_रुको_client_init_complete(pos);
+		status = nfs_wait_client_init_complete(pos);
 		spin_lock(&nn->nfs_client_lock);
 
-		अगर (status < 0)
-			वापस status;
-	पूर्ण
+		if (status < 0)
+			return status;
+	}
 
-	अगर (pos->cl_cons_state != NFS_CS_READY)
-		वापस 1;
+	if (pos->cl_cons_state != NFS_CS_READY)
+		return 1;
 
-	अगर (pos->cl_clientid != new->cl_clientid)
-		वापस 1;
+	if (pos->cl_clientid != new->cl_clientid)
+		return 1;
 
-	/* NFSv4.1 always uses the unअगरorm string, however someone
-	 * might चयन the uniquअगरier string on us.
+	/* NFSv4.1 always uses the uniform string, however someone
+	 * might switch the uniquifier string on us.
 	 */
-	अगर (!nfs4_match_client_owner_id(pos, new))
-		वापस 1;
+	if (!nfs4_match_client_owner_id(pos, new))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * nfs40_walk_client_list - Find server that recognizes a client ID
  *
  * @new: nfs_client with client ID to test
  * @result: OUT: found nfs_client, or new
- * @cred: credential to use क्रम trunking test
+ * @cred: credential to use for trunking test
  *
- * Returns zero, a negative त्रुटि_सं, or a negative NFS4ERR status.
- * If zero is वापसed, an nfs_client poपूर्णांकer is planted in "result."
+ * Returns zero, a negative errno, or a negative NFS4ERR status.
+ * If zero is returned, an nfs_client pointer is planted in "result."
  *
  * NB: nfs40_walk_client_list() relies on the new nfs_client being
  *     the last nfs_client on the list.
  */
-पूर्णांक nfs40_walk_client_list(काष्ठा nfs_client *new,
-			   काष्ठा nfs_client **result,
-			   स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा nfs_net *nn = net_generic(new->cl_net, nfs_net_id);
-	काष्ठा nfs_client *pos, *prev = शून्य;
-	काष्ठा nfs4_setclientid_res clid = अणु
+int nfs40_walk_client_list(struct nfs_client *new,
+			   struct nfs_client **result,
+			   const struct cred *cred)
+{
+	struct nfs_net *nn = net_generic(new->cl_net, nfs_net_id);
+	struct nfs_client *pos, *prev = NULL;
+	struct nfs4_setclientid_res clid = {
 		.clientid	= new->cl_clientid,
 		.confirm	= new->cl_confirm,
-	पूर्ण;
-	पूर्णांक status = -NFS4ERR_STALE_CLIENTID;
+	};
+	int status = -NFS4ERR_STALE_CLIENTID;
 
 	spin_lock(&nn->nfs_client_lock);
-	list_क्रम_each_entry(pos, &nn->nfs_client_list, cl_share_link) अणु
+	list_for_each_entry(pos, &nn->nfs_client_list, cl_share_link) {
 
-		अगर (pos == new)
-			जाओ found;
+		if (pos == new)
+			goto found;
 
 		status = nfs4_match_client(pos, new, &prev, nn);
-		अगर (status < 0)
-			जाओ out_unlock;
-		अगर (status != 0)
-			जारी;
+		if (status < 0)
+			goto out_unlock;
+		if (status != 0)
+			continue;
 		/*
 		 * We just sent a new SETCLIENTID, which should have
-		 * caused the server to वापस a new cl_confirm.  So अगर
-		 * cl_confirm is the same, then this is a dअगरferent
-		 * server that just वापसed the same cl_confirm by
+		 * caused the server to return a new cl_confirm.  So if
+		 * cl_confirm is the same, then this is a different
+		 * server that just returned the same cl_confirm by
 		 * coincidence:
 		 */
-		अगर ((new != pos) && nfs4_same_verअगरier(&pos->cl_confirm,
+		if ((new != pos) && nfs4_same_verifier(&pos->cl_confirm,
 						       &new->cl_confirm))
-			जारी;
+			continue;
 		/*
-		 * But अगर the cl_confirm's are dअगरferent, then the only
+		 * But if the cl_confirm's are different, then the only
 		 * way that a SETCLIENTID_CONFIRM to pos can succeed is
-		 * अगर new and pos poपूर्णांक to the same server:
+		 * if new and pos point to the same server:
 		 */
 found:
 		refcount_inc(&pos->cl_count);
@@ -593,280 +592,280 @@ found:
 		prev = pos;
 
 		status = nfs4_proc_setclientid_confirm(pos, &clid, cred);
-		चयन (status) अणु
-		हाल -NFS4ERR_STALE_CLIENTID:
-			अवरोध;
-		हाल 0:
+		switch (status) {
+		case -NFS4ERR_STALE_CLIENTID:
+			break;
+		case 0:
 			nfs4_swap_callback_idents(pos, new);
 			pos->cl_confirm = new->cl_confirm;
-			nfs_mark_client_पढ़ोy(pos, NFS_CS_READY);
+			nfs_mark_client_ready(pos, NFS_CS_READY);
 
-			prev = शून्य;
+			prev = NULL;
 			*result = pos;
-			जाओ out;
-		हाल -ERESTARTSYS:
-		हाल -ETIMEDOUT:
+			goto out;
+		case -ERESTARTSYS:
+		case -ETIMEDOUT:
 			/* The callback path may have been inadvertently
 			 * changed. Schedule recovery!
 			 */
-			nfs4_schedule_path_करोwn_recovery(pos);
-			जाओ out;
-		शेष:
-			जाओ out;
-		पूर्ण
+			nfs4_schedule_path_down_recovery(pos);
+			goto out;
+		default:
+			goto out;
+		}
 
 		spin_lock(&nn->nfs_client_lock);
-	पूर्ण
+	}
 out_unlock:
 	spin_unlock(&nn->nfs_client_lock);
 
 	/* No match found. The server lost our clientid */
 out:
 	nfs_put_client(prev);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#अगर_घोषित CONFIG_NFS_V4_1
+#ifdef CONFIG_NFS_V4_1
 /*
- * Returns true अगर the server major ids match
+ * Returns true if the server major ids match
  */
 bool
-nfs4_check_serverowner_major_id(काष्ठा nfs41_server_owner *o1,
-				काष्ठा nfs41_server_owner *o2)
-अणु
-	अगर (o1->major_id_sz != o2->major_id_sz)
-		वापस false;
-	वापस स_भेद(o1->major_id, o2->major_id, o1->major_id_sz) == 0;
-पूर्ण
+nfs4_check_serverowner_major_id(struct nfs41_server_owner *o1,
+				struct nfs41_server_owner *o2)
+{
+	if (o1->major_id_sz != o2->major_id_sz)
+		return false;
+	return memcmp(o1->major_id, o2->major_id, o1->major_id_sz) == 0;
+}
 
 /*
- * Returns true अगर the server scopes match
+ * Returns true if the server scopes match
  */
-अटल bool
-nfs4_check_server_scope(काष्ठा nfs41_server_scope *s1,
-			काष्ठा nfs41_server_scope *s2)
-अणु
-	अगर (s1->server_scope_sz != s2->server_scope_sz)
-		वापस false;
-	वापस स_भेद(s1->server_scope, s2->server_scope,
+static bool
+nfs4_check_server_scope(struct nfs41_server_scope *s1,
+			struct nfs41_server_scope *s2)
+{
+	if (s1->server_scope_sz != s2->server_scope_sz)
+		return false;
+	return memcmp(s1->server_scope, s2->server_scope,
 					s1->server_scope_sz) == 0;
-पूर्ण
+}
 
 /**
- * nfs4_detect_session_trunking - Checks क्रम session trunking.
+ * nfs4_detect_session_trunking - Checks for session trunking.
  * @clp:    original mount nfs_client
- * @res:    result काष्ठाure from an exchange_id using the original mount
+ * @res:    result structure from an exchange_id using the original mount
  *          nfs_client with a new multi_addr transport
- * @xprt:   poपूर्णांकer to the transport to add.
+ * @xprt:   pointer to the transport to add.
  *
  * Called after a successful EXCHANGE_ID on a multi-addr connection.
  * Upon success, add the transport.
  *
  * Returns zero on success, otherwise -EINVAL
  *
- * Note: since the exchange_id क्रम the new multi_addr transport uses the
+ * Note: since the exchange_id for the new multi_addr transport uses the
  * same nfs_client from the original mount, the cl_owner_id is reused,
  * so eir_clientowner is the same.
  */
-पूर्णांक nfs4_detect_session_trunking(काष्ठा nfs_client *clp,
-				 काष्ठा nfs41_exchange_id_res *res,
-				 काष्ठा rpc_xprt *xprt)
-अणु
+int nfs4_detect_session_trunking(struct nfs_client *clp,
+				 struct nfs41_exchange_id_res *res,
+				 struct rpc_xprt *xprt)
+{
 	/* Check eir_clientid */
-	अगर (clp->cl_clientid != res->clientid)
-		जाओ out_err;
+	if (clp->cl_clientid != res->clientid)
+		goto out_err;
 
 	/* Check eir_server_owner so_major_id */
-	अगर (!nfs4_check_serverowner_major_id(clp->cl_serverowner,
+	if (!nfs4_check_serverowner_major_id(clp->cl_serverowner,
 					     res->server_owner))
-		जाओ out_err;
+		goto out_err;
 
 	/* Check eir_server_owner so_minor_id */
-	अगर (clp->cl_serverowner->minor_id != res->server_owner->minor_id)
-		जाओ out_err;
+	if (clp->cl_serverowner->minor_id != res->server_owner->minor_id)
+		goto out_err;
 
 	/* Check eir_server_scope */
-	अगर (!nfs4_check_server_scope(clp->cl_serverscope, res->server_scope))
-		जाओ out_err;
+	if (!nfs4_check_server_scope(clp->cl_serverscope, res->server_scope))
+		goto out_err;
 
 	pr_info("NFS:  %s: Session trunking succeeded for %s\n",
 		clp->cl_hostname,
 		xprt->address_strings[RPC_DISPLAY_ADDR]);
 
-	वापस 0;
+	return 0;
 out_err:
 	pr_info("NFS:  %s: Session trunking failed for %s\n", clp->cl_hostname,
 		xprt->address_strings[RPC_DISPLAY_ADDR]);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
  * nfs41_walk_client_list - Find nfs_client that matches a client/server owner
  *
  * @new: nfs_client with client ID to test
  * @result: OUT: found nfs_client, or new
- * @cred: credential to use क्रम trunking test
+ * @cred: credential to use for trunking test
  *
- * Returns zero, a negative त्रुटि_सं, or a negative NFS4ERR status.
- * If zero is वापसed, an nfs_client poपूर्णांकer is planted in "result."
+ * Returns zero, a negative errno, or a negative NFS4ERR status.
+ * If zero is returned, an nfs_client pointer is planted in "result."
  *
  * NB: nfs41_walk_client_list() relies on the new nfs_client being
  *     the last nfs_client on the list.
  */
-पूर्णांक nfs41_walk_client_list(काष्ठा nfs_client *new,
-			   काष्ठा nfs_client **result,
-			   स्थिर काष्ठा cred *cred)
-अणु
-	काष्ठा nfs_net *nn = net_generic(new->cl_net, nfs_net_id);
-	काष्ठा nfs_client *pos, *prev = शून्य;
-	पूर्णांक status = -NFS4ERR_STALE_CLIENTID;
+int nfs41_walk_client_list(struct nfs_client *new,
+			   struct nfs_client **result,
+			   const struct cred *cred)
+{
+	struct nfs_net *nn = net_generic(new->cl_net, nfs_net_id);
+	struct nfs_client *pos, *prev = NULL;
+	int status = -NFS4ERR_STALE_CLIENTID;
 
 	spin_lock(&nn->nfs_client_lock);
-	list_क्रम_each_entry(pos, &nn->nfs_client_list, cl_share_link) अणु
+	list_for_each_entry(pos, &nn->nfs_client_list, cl_share_link) {
 
-		अगर (pos == new)
-			जाओ found;
+		if (pos == new)
+			goto found;
 
 		status = nfs4_match_client(pos, new, &prev, nn);
-		अगर (status < 0)
-			जाओ out;
-		अगर (status != 0)
-			जारी;
+		if (status < 0)
+			goto out;
+		if (status != 0)
+			continue;
 
 		/*
-		 * Note that session trunking is just a special subहाल of
-		 * client id trunking. In either हाल, we want to fall back
+		 * Note that session trunking is just a special subcase of
+		 * client id trunking. In either case, we want to fall back
 		 * to using the existing nfs_client.
 		 */
-		अगर (!nfs4_check_serverowner_major_id(pos->cl_serverowner,
+		if (!nfs4_check_serverowner_major_id(pos->cl_serverowner,
 						     new->cl_serverowner))
-			जारी;
+			continue;
 
 found:
 		refcount_inc(&pos->cl_count);
 		*result = pos;
 		status = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
 	spin_unlock(&nn->nfs_client_lock);
 	nfs_put_client(prev);
-	वापस status;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_NFS_V4_1 */
+	return status;
+}
+#endif	/* CONFIG_NFS_V4_1 */
 
-अटल व्योम nfs4_destroy_server(काष्ठा nfs_server *server)
-अणु
-	LIST_HEAD(मुक्तme);
+static void nfs4_destroy_server(struct nfs_server *server)
+{
+	LIST_HEAD(freeme);
 
-	nfs_server_वापस_all_delegations(server);
+	nfs_server_return_all_delegations(server);
 	unset_pnfs_layoutdriver(server);
-	nfs4_purge_state_owners(server, &मुक्तme);
-	nfs4_मुक्त_state_owners(&मुक्तme);
-पूर्ण
+	nfs4_purge_state_owners(server, &freeme);
+	nfs4_free_state_owners(&freeme);
+}
 
 /*
- * NFSv4.0 callback thपढ़ो helper
+ * NFSv4.0 callback thread helper
  *
- * Find a client by callback identअगरier
+ * Find a client by callback identifier
  */
-काष्ठा nfs_client *
-nfs4_find_client_ident(काष्ठा net *net, पूर्णांक cb_ident)
-अणु
-	काष्ठा nfs_client *clp;
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+struct nfs_client *
+nfs4_find_client_ident(struct net *net, int cb_ident)
+{
+	struct nfs_client *clp;
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
 	spin_lock(&nn->nfs_client_lock);
 	clp = idr_find(&nn->cb_ident_idr, cb_ident);
-	अगर (clp)
+	if (clp)
 		refcount_inc(&clp->cl_count);
 	spin_unlock(&nn->nfs_client_lock);
-	वापस clp;
-पूर्ण
+	return clp;
+}
 
-#अगर defined(CONFIG_NFS_V4_1)
-/* Common match routine क्रम v4.0 and v4.1 callback services */
-अटल bool nfs4_cb_match_client(स्थिर काष्ठा sockaddr *addr,
-		काष्ठा nfs_client *clp, u32 minorversion)
-अणु
-	काष्ठा sockaddr *clap = (काष्ठा sockaddr *)&clp->cl_addr;
+#if defined(CONFIG_NFS_V4_1)
+/* Common match routine for v4.0 and v4.1 callback services */
+static bool nfs4_cb_match_client(const struct sockaddr *addr,
+		struct nfs_client *clp, u32 minorversion)
+{
+	struct sockaddr *clap = (struct sockaddr *)&clp->cl_addr;
 
 	/* Don't match clients that failed to initialise */
-	अगर (!(clp->cl_cons_state == NFS_CS_READY ||
+	if (!(clp->cl_cons_state == NFS_CS_READY ||
 	    clp->cl_cons_state == NFS_CS_SESSION_INITING))
-		वापस false;
+		return false;
 
 	smp_rmb();
 
 	/* Match the version and minorversion */
-	अगर (clp->rpc_ops->version != 4 ||
+	if (clp->rpc_ops->version != 4 ||
 	    clp->cl_minorversion != minorversion)
-		वापस false;
+		return false;
 
 	/* Match only the IP address, not the port number */
-	वापस rpc_cmp_addr(addr, clap);
-पूर्ण
+	return rpc_cmp_addr(addr, clap);
+}
 
 /*
- * NFSv4.1 callback thपढ़ो helper
+ * NFSv4.1 callback thread helper
  * For CB_COMPOUND calls, find a client by IP address, protocol version,
  * minorversion, and sessionID
  *
- * Returns शून्य अगर no such client
+ * Returns NULL if no such client
  */
-काष्ठा nfs_client *
-nfs4_find_client_sessionid(काष्ठा net *net, स्थिर काष्ठा sockaddr *addr,
-			   काष्ठा nfs4_sessionid *sid, u32 minorversion)
-अणु
-	काष्ठा nfs_client *clp;
-	काष्ठा nfs_net *nn = net_generic(net, nfs_net_id);
+struct nfs_client *
+nfs4_find_client_sessionid(struct net *net, const struct sockaddr *addr,
+			   struct nfs4_sessionid *sid, u32 minorversion)
+{
+	struct nfs_client *clp;
+	struct nfs_net *nn = net_generic(net, nfs_net_id);
 
 	spin_lock(&nn->nfs_client_lock);
-	list_क्रम_each_entry(clp, &nn->nfs_client_list, cl_share_link) अणु
-		अगर (!nfs4_cb_match_client(addr, clp, minorversion))
-			जारी;
+	list_for_each_entry(clp, &nn->nfs_client_list, cl_share_link) {
+		if (!nfs4_cb_match_client(addr, clp, minorversion))
+			continue;
 
-		अगर (!nfs4_has_session(clp))
-			जारी;
+		if (!nfs4_has_session(clp))
+			continue;
 
 		/* Match sessionid*/
-		अगर (स_भेद(clp->cl_session->sess_id.data,
+		if (memcmp(clp->cl_session->sess_id.data,
 		    sid->data, NFS4_MAX_SESSIONID_LEN) != 0)
-			जारी;
+			continue;
 
 		refcount_inc(&clp->cl_count);
 		spin_unlock(&nn->nfs_client_lock);
-		वापस clp;
-	पूर्ण
+		return clp;
+	}
 	spin_unlock(&nn->nfs_client_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#अन्यथा /* CONFIG_NFS_V4_1 */
+#else /* CONFIG_NFS_V4_1 */
 
-काष्ठा nfs_client *
-nfs4_find_client_sessionid(काष्ठा net *net, स्थिर काष्ठा sockaddr *addr,
-			   काष्ठा nfs4_sessionid *sid, u32 minorversion)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
+struct nfs_client *
+nfs4_find_client_sessionid(struct net *net, const struct sockaddr *addr,
+			   struct nfs4_sessionid *sid, u32 minorversion)
+{
+	return NULL;
+}
+#endif /* CONFIG_NFS_V4_1 */
 
 /*
  * Set up an NFS4 client
  */
-अटल पूर्णांक nfs4_set_client(काष्ठा nfs_server *server,
-		स्थिर अक्षर *hostname,
-		स्थिर काष्ठा sockaddr *addr,
-		स्थिर माप_प्रकार addrlen,
-		स्थिर अक्षर *ip_addr,
-		पूर्णांक proto, स्थिर काष्ठा rpc_समयout *समयparms,
-		u32 minorversion, अचिन्हित पूर्णांक nconnect,
-		काष्ठा net *net)
-अणु
-	काष्ठा nfs_client_initdata cl_init = अणु
+static int nfs4_set_client(struct nfs_server *server,
+		const char *hostname,
+		const struct sockaddr *addr,
+		const size_t addrlen,
+		const char *ip_addr,
+		int proto, const struct rpc_timeout *timeparms,
+		u32 minorversion, unsigned int nconnect,
+		struct net *net)
+{
+	struct nfs_client_initdata cl_init = {
 		.hostname = hostname,
 		.addr = addr,
 		.addrlen = addrlen,
@@ -875,46 +874,46 @@ nfs4_find_client_sessionid(काष्ठा net *net, स्थिर का�
 		.proto = proto,
 		.minorversion = minorversion,
 		.net = net,
-		.समयparms = समयparms,
+		.timeparms = timeparms,
 		.cred = server->cred,
-	पूर्ण;
-	काष्ठा nfs_client *clp;
+	};
+	struct nfs_client *clp;
 
-	अगर (minorversion == 0)
+	if (minorversion == 0)
 		__set_bit(NFS_CS_REUSEPORT, &cl_init.init_flags);
-	अगर (proto == XPRT_TRANSPORT_TCP)
+	if (proto == XPRT_TRANSPORT_TCP)
 		cl_init.nconnect = nconnect;
 
-	अगर (server->flags & NFS_MOUNT_NORESVPORT)
+	if (server->flags & NFS_MOUNT_NORESVPORT)
 		__set_bit(NFS_CS_NORESVPORT, &cl_init.init_flags);
-	अगर (server->options & NFS_OPTION_MIGRATION)
+	if (server->options & NFS_OPTION_MIGRATION)
 		__set_bit(NFS_CS_MIGRATION, &cl_init.init_flags);
-	अगर (test_bit(NFS_MIG_TSM_POSSIBLE, &server->mig_status))
+	if (test_bit(NFS_MIG_TSM_POSSIBLE, &server->mig_status))
 		__set_bit(NFS_CS_TSM_POSSIBLE, &cl_init.init_flags);
 	server->port = rpc_get_port(addr);
 
 	/* Allocate or find a client reference we can use */
 	clp = nfs_get_client(&cl_init);
-	अगर (IS_ERR(clp))
-		वापस PTR_ERR(clp);
+	if (IS_ERR(clp))
+		return PTR_ERR(clp);
 
-	अगर (server->nfs_client == clp) अणु
+	if (server->nfs_client == clp) {
 		nfs_put_client(clp);
-		वापस -ELOOP;
-	पूर्ण
+		return -ELOOP;
+	}
 
 	/*
-	 * Query क्रम the lease समय on clientid setup or renewal
+	 * Query for the lease time on clientid setup or renewal
 	 *
 	 * Note that this will be set on nfs_clients that were created
-	 * only क्रम the DS role and did not set this bit, but now will
+	 * only for the DS role and did not set this bit, but now will
 	 * serve a dual role.
 	 */
 	set_bit(NFS_CS_CHECK_LEASE_TIME, &clp->cl_res_state);
 
 	server->nfs_client = clp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Set up a pNFS Data Server client.
@@ -922,18 +921,18 @@ nfs4_find_client_sessionid(काष्ठा net *net, स्थिर का�
  * Return any existing nfs_client that matches server address,port,version
  * and minorversion.
  *
- * For a new nfs_client, use a soft mount (शेष), a low retrans and a
- * low समयout पूर्णांकerval so that अगर a connection is lost, we retry through
+ * For a new nfs_client, use a soft mount (default), a low retrans and a
+ * low timeout interval so that if a connection is lost, we retry through
  * the MDS.
  */
-काष्ठा nfs_client *nfs4_set_ds_client(काष्ठा nfs_server *mds_srv,
-		स्थिर काष्ठा sockaddr *ds_addr, पूर्णांक ds_addrlen,
-		पूर्णांक ds_proto, अचिन्हित पूर्णांक ds_समयo, अचिन्हित पूर्णांक ds_retrans,
+struct nfs_client *nfs4_set_ds_client(struct nfs_server *mds_srv,
+		const struct sockaddr *ds_addr, int ds_addrlen,
+		int ds_proto, unsigned int ds_timeo, unsigned int ds_retrans,
 		u32 minor_version)
-अणु
-	काष्ठा rpc_समयout ds_समयout;
-	काष्ठा nfs_client *mds_clp = mds_srv->nfs_client;
-	काष्ठा nfs_client_initdata cl_init = अणु
+{
+	struct rpc_timeout ds_timeout;
+	struct nfs_client *mds_clp = mds_srv->nfs_client;
+	struct nfs_client_initdata cl_init = {
 		.addr = ds_addr,
 		.addrlen = ds_addrlen,
 		.nodename = mds_clp->cl_rpcclient->cl_nodename,
@@ -942,19 +941,19 @@ nfs4_find_client_sessionid(काष्ठा net *net, स्थिर का�
 		.proto = ds_proto,
 		.minorversion = minor_version,
 		.net = mds_clp->cl_net,
-		.समयparms = &ds_समयout,
+		.timeparms = &ds_timeout,
 		.cred = mds_srv->cred,
-	पूर्ण;
-	अक्षर buf[INET6_ADDRSTRLEN + 1];
+	};
+	char buf[INET6_ADDRSTRLEN + 1];
 
-	अगर (rpc_ntop(ds_addr, buf, माप(buf)) <= 0)
-		वापस ERR_PTR(-EINVAL);
+	if (rpc_ntop(ds_addr, buf, sizeof(buf)) <= 0)
+		return ERR_PTR(-EINVAL);
 	cl_init.hostname = buf;
 
-	अगर (mds_clp->cl_nconnect > 1 && ds_proto == XPRT_TRANSPORT_TCP)
+	if (mds_clp->cl_nconnect > 1 && ds_proto == XPRT_TRANSPORT_TCP)
 		cl_init.nconnect = mds_clp->cl_nconnect;
 
-	अगर (mds_srv->flags & NFS_MOUNT_NORESVPORT)
+	if (mds_srv->flags & NFS_MOUNT_NORESVPORT)
 		__set_bit(NFS_CS_NORESVPORT, &cl_init.init_flags);
 
 	/*
@@ -962,51 +961,51 @@ nfs4_find_client_sessionid(काष्ठा net *net, स्थिर का�
 	 * cl_ipaddr so as to use the same EXCHANGE_ID co_ownerid as the MDS
 	 * (section 13.1 RFC 5661).
 	 */
-	nfs_init_समयout_values(&ds_समयout, ds_proto, ds_समयo, ds_retrans);
-	वापस nfs_get_client(&cl_init);
-पूर्ण
+	nfs_init_timeout_values(&ds_timeout, ds_proto, ds_timeo, ds_retrans);
+	return nfs_get_client(&cl_init);
+}
 EXPORT_SYMBOL_GPL(nfs4_set_ds_client);
 
 /*
- * Session has been established, and the client marked पढ़ोy.
- * Limit the mount rsize, wsize and dtsize using negotiated क्रमe
+ * Session has been established, and the client marked ready.
+ * Limit the mount rsize, wsize and dtsize using negotiated fore
  * channel attributes.
  */
-अटल व्योम nfs4_session_limit_rwsize(काष्ठा nfs_server *server)
-अणु
-#अगर_घोषित CONFIG_NFS_V4_1
-	काष्ठा nfs4_session *sess;
+static void nfs4_session_limit_rwsize(struct nfs_server *server)
+{
+#ifdef CONFIG_NFS_V4_1
+	struct nfs4_session *sess;
 	u32 server_resp_sz;
 	u32 server_rqst_sz;
 
-	अगर (!nfs4_has_session(server->nfs_client))
-		वापस;
+	if (!nfs4_has_session(server->nfs_client))
+		return;
 	sess = server->nfs_client->cl_session;
-	server_resp_sz = sess->fc_attrs.max_resp_sz - nfs41_maxपढ़ो_overhead;
-	server_rqst_sz = sess->fc_attrs.max_rqst_sz - nfs41_maxग_लिखो_overhead;
+	server_resp_sz = sess->fc_attrs.max_resp_sz - nfs41_maxread_overhead;
+	server_rqst_sz = sess->fc_attrs.max_rqst_sz - nfs41_maxwrite_overhead;
 
-	अगर (server->dtsize > server_resp_sz)
+	if (server->dtsize > server_resp_sz)
 		server->dtsize = server_resp_sz;
-	अगर (server->rsize > server_resp_sz)
+	if (server->rsize > server_resp_sz)
 		server->rsize = server_resp_sz;
-	अगर (server->wsize > server_rqst_sz)
+	if (server->wsize > server_rqst_sz)
 		server->wsize = server_rqst_sz;
-#पूर्ण_अगर /* CONFIG_NFS_V4_1 */
-पूर्ण
+#endif /* CONFIG_NFS_V4_1 */
+}
 
 /*
  * Limit xattr sizes using the channel attributes.
  */
-अटल व्योम nfs4_session_limit_xasize(काष्ठा nfs_server *server)
-अणु
-#अगर_घोषित CONFIG_NFS_V4_2
-	काष्ठा nfs4_session *sess;
+static void nfs4_session_limit_xasize(struct nfs_server *server)
+{
+#ifdef CONFIG_NFS_V4_2
+	struct nfs4_session *sess;
 	u32 server_gxa_sz;
 	u32 server_sxa_sz;
 	u32 server_lxa_sz;
 
-	अगर (!nfs4_has_session(server->nfs_client))
-		वापस;
+	if (!nfs4_has_session(server->nfs_client))
+		return;
 
 	sess = server->nfs_client->cl_session;
 
@@ -1015,100 +1014,100 @@ EXPORT_SYMBOL_GPL(nfs4_set_ds_client);
 	server_lxa_sz = sess->fc_attrs.max_resp_sz -
 	    nfs42_maxlistxattrs_overhead;
 
-	अगर (server->gxasize > server_gxa_sz)
+	if (server->gxasize > server_gxa_sz)
 		server->gxasize = server_gxa_sz;
-	अगर (server->sxasize > server_sxa_sz)
+	if (server->sxasize > server_sxa_sz)
 		server->sxasize = server_sxa_sz;
-	अगर (server->lxasize > server_lxa_sz)
+	if (server->lxasize > server_lxa_sz)
 		server->lxasize = server_lxa_sz;
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल पूर्णांक nfs4_server_common_setup(काष्ठा nfs_server *server,
-		काष्ठा nfs_fh *mntfh, bool auth_probe)
-अणु
-	काष्ठा nfs_fattr *fattr;
-	पूर्णांक error;
+static int nfs4_server_common_setup(struct nfs_server *server,
+		struct nfs_fh *mntfh, bool auth_probe)
+{
+	struct nfs_fattr *fattr;
+	int error;
 
 	/* data servers support only a subset of NFSv4.1 */
-	अगर (is_ds_only_client(server->nfs_client))
-		वापस -EPROTONOSUPPORT;
+	if (is_ds_only_client(server->nfs_client))
+		return -EPROTONOSUPPORT;
 
 	fattr = nfs_alloc_fattr();
-	अगर (fattr == शून्य)
-		वापस -ENOMEM;
+	if (fattr == NULL)
+		return -ENOMEM;
 
 	/* We must ensure the session is initialised first */
 	error = nfs4_init_session(server->nfs_client);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
 	/* Set the basic capabilities */
 	server->caps |= server->nfs_client->cl_mvops->init_caps;
-	अगर (server->flags & NFS_MOUNT_NORसूचीPLUS)
-			server->caps &= ~NFS_CAP_READसूचीPLUS;
-	अगर (server->nfs_client->cl_proto == XPRT_TRANSPORT_RDMA)
+	if (server->flags & NFS_MOUNT_NORDIRPLUS)
+			server->caps &= ~NFS_CAP_READDIRPLUS;
+	if (server->nfs_client->cl_proto == XPRT_TRANSPORT_RDMA)
 		server->caps &= ~NFS_CAP_READ_PLUS;
 	/*
 	 * Don't use NFS uid/gid mapping if we're using AUTH_SYS or lower
 	 * authentication.
 	 */
-	अगर (nfs4_disable_idmapping &&
+	if (nfs4_disable_idmapping &&
 			server->client->cl_auth->au_flavor == RPC_AUTH_UNIX)
 		server->caps |= NFS_CAP_UIDGID_NOMAP;
 
 
 	/* Probe the root fh to retrieve its FSID and filehandle */
 	error = nfs4_get_rootfh(server, mntfh, auth_probe);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
-	dprपूर्णांकk("Server FSID: %llx:%llx\n",
-			(अचिन्हित दीर्घ दीर्घ) server->fsid.major,
-			(अचिन्हित दीर्घ दीर्घ) server->fsid.minor);
+	dprintk("Server FSID: %llx:%llx\n",
+			(unsigned long long) server->fsid.major,
+			(unsigned long long) server->fsid.minor);
 	nfs_display_fhandle(mntfh, "Pseudo-fs root FH");
 
 	error = nfs_probe_fsinfo(server, mntfh, fattr);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
 	nfs4_session_limit_rwsize(server);
 	nfs4_session_limit_xasize(server);
 
-	अगर (server->namelen == 0 || server->namelen > NFS4_MAXNAMLEN)
+	if (server->namelen == 0 || server->namelen > NFS4_MAXNAMLEN)
 		server->namelen = NFS4_MAXNAMLEN;
 
 	nfs_server_insert_lists(server);
-	server->mount_समय = jअगरfies;
+	server->mount_time = jiffies;
 	server->destroy = nfs4_destroy_server;
 out:
-	nfs_मुक्त_fattr(fattr);
-	वापस error;
-पूर्ण
+	nfs_free_fattr(fattr);
+	return error;
+}
 
 /*
  * Create a version 4 volume record
  */
-अटल पूर्णांक nfs4_init_server(काष्ठा nfs_server *server, काष्ठा fs_context *fc)
-अणु
-	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
-	काष्ठा rpc_समयout समयparms;
-	पूर्णांक error;
+static int nfs4_init_server(struct nfs_server *server, struct fs_context *fc)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+	struct rpc_timeout timeparms;
+	int error;
 
-	nfs_init_समयout_values(&समयparms, ctx->nfs_server.protocol,
-				ctx->समयo, ctx->retrans);
+	nfs_init_timeout_values(&timeparms, ctx->nfs_server.protocol,
+				ctx->timeo, ctx->retrans);
 
 	/* Initialise the client representation from the mount data */
 	server->flags = ctx->flags;
 	server->options = ctx->options;
 	server->auth_info = ctx->auth_info;
 
-	/* Use the first specअगरied auth flavor. If this flavor isn't
+	/* Use the first specified auth flavor. If this flavor isn't
 	 * allowed by the server, use the SECINFO path to try the
-	 * other specअगरied flavors */
-	अगर (ctx->auth_info.flavor_len >= 1)
+	 * other specified flavors */
+	if (ctx->auth_info.flavor_len >= 1)
 		ctx->selected_flavor = ctx->auth_info.flavors[0];
-	अन्यथा
+	else
 		ctx->selected_flavor = RPC_AUTH_UNIX;
 
 	/* Get a client record */
@@ -1118,17 +1117,17 @@ out:
 				ctx->nfs_server.addrlen,
 				ctx->client_address,
 				ctx->nfs_server.protocol,
-				&समयparms,
+				&timeparms,
 				ctx->minorversion,
 				ctx->nfs_server.nconnect,
 				fc->net_ns);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
-	अगर (ctx->rsize)
-		server->rsize = nfs_block_size(ctx->rsize, शून्य);
-	अगर (ctx->wsize)
-		server->wsize = nfs_block_size(ctx->wsize, शून्य);
+	if (ctx->rsize)
+		server->rsize = nfs_block_size(ctx->rsize, NULL);
+	if (ctx->wsize)
+		server->wsize = nfs_block_size(ctx->wsize, NULL);
 
 	server->acregmin = ctx->acregmin * HZ;
 	server->acregmax = ctx->acregmax * HZ;
@@ -1136,24 +1135,24 @@ out:
 	server->acdirmax = ctx->acdirmax * HZ;
 	server->port     = ctx->nfs_server.port;
 
-	वापस nfs_init_server_rpcclient(server, &समयparms,
+	return nfs_init_server_rpcclient(server, &timeparms,
 					 ctx->selected_flavor);
-पूर्ण
+}
 
 /*
  * Create a version 4 volume record
  * - keyed on server and FSID
  */
-काष्ठा nfs_server *nfs4_create_server(काष्ठा fs_context *fc)
-अणु
-	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
-	काष्ठा nfs_server *server;
+struct nfs_server *nfs4_create_server(struct fs_context *fc)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+	struct nfs_server *server;
 	bool auth_probe;
-	पूर्णांक error;
+	int error;
 
 	server = nfs_alloc_server();
-	अगर (!server)
-		वापस ERR_PTR(-ENOMEM);
+	if (!server)
+		return ERR_PTR(-ENOMEM);
 
 	server->cred = get_cred(fc->cred);
 
@@ -1161,34 +1160,34 @@ out:
 
 	/* set up the general RPC client */
 	error = nfs4_init_server(server, fc);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
 	error = nfs4_server_common_setup(server, ctx->mntfh, auth_probe);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
-	वापस server;
+	return server;
 
 error:
-	nfs_मुक्त_server(server);
-	वापस ERR_PTR(error);
-पूर्ण
+	nfs_free_server(server);
+	return ERR_PTR(error);
+}
 
 /*
  * Create an NFS4 referral server record
  */
-काष्ठा nfs_server *nfs4_create_referral_server(काष्ठा fs_context *fc)
-अणु
-	काष्ठा nfs_fs_context *ctx = nfs_fc2context(fc);
-	काष्ठा nfs_client *parent_client;
-	काष्ठा nfs_server *server, *parent_server;
+struct nfs_server *nfs4_create_referral_server(struct fs_context *fc)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+	struct nfs_client *parent_client;
+	struct nfs_server *server, *parent_server;
 	bool auth_probe;
-	पूर्णांक error;
+	int error;
 
 	server = nfs_alloc_server();
-	अगर (!server)
-		वापस ERR_PTR(-ENOMEM);
+	if (!server)
+		return ERR_PTR(-ENOMEM);
 
 	parent_server = NFS_SB(ctx->clone_data.sb);
 	parent_client = parent_server->nfs_client;
@@ -1199,7 +1198,7 @@ error:
 	nfs_server_copy_userdata(server, parent_server);
 
 	/* Get a client representation */
-#अगर IS_ENABLED(CONFIG_SUNRPC_XPRT_RDMA)
+#if IS_ENABLED(CONFIG_SUNRPC_XPRT_RDMA)
 	rpc_set_port(&ctx->nfs_server.address, NFS_RDMA_PORT);
 	error = nfs4_set_client(server,
 				ctx->nfs_server.hostname,
@@ -1207,13 +1206,13 @@ error:
 				ctx->nfs_server.addrlen,
 				parent_client->cl_ipaddr,
 				XPRT_TRANSPORT_RDMA,
-				parent_server->client->cl_समयout,
+				parent_server->client->cl_timeout,
 				parent_client->cl_mvops->minor_version,
 				parent_client->cl_nconnect,
 				parent_client->cl_net);
-	अगर (!error)
-		जाओ init_server;
-#पूर्ण_अगर	/* IS_ENABLED(CONFIG_SUNRPC_XPRT_RDMA) */
+	if (!error)
+		goto init_server;
+#endif	/* IS_ENABLED(CONFIG_SUNRPC_XPRT_RDMA) */
 
 	rpc_set_port(&ctx->nfs_server.address, NFS_PORT);
 	error = nfs4_set_client(server,
@@ -1222,117 +1221,117 @@ error:
 				ctx->nfs_server.addrlen,
 				parent_client->cl_ipaddr,
 				XPRT_TRANSPORT_TCP,
-				parent_server->client->cl_समयout,
+				parent_server->client->cl_timeout,
 				parent_client->cl_mvops->minor_version,
 				parent_client->cl_nconnect,
 				parent_client->cl_net);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_XPRT_RDMA)
+#if IS_ENABLED(CONFIG_SUNRPC_XPRT_RDMA)
 init_server:
-#पूर्ण_अगर
-	error = nfs_init_server_rpcclient(server, parent_server->client->cl_समयout,
+#endif
+	error = nfs_init_server_rpcclient(server, parent_server->client->cl_timeout,
 					  ctx->selected_flavor);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
 	auth_probe = parent_server->auth_info.flavor_len < 1;
 
 	error = nfs4_server_common_setup(server, ctx->mntfh, auth_probe);
-	अगर (error < 0)
-		जाओ error;
+	if (error < 0)
+		goto error;
 
-	वापस server;
+	return server;
 
 error:
-	nfs_मुक्त_server(server);
-	वापस ERR_PTR(error);
-पूर्ण
+	nfs_free_server(server);
+	return ERR_PTR(error);
+}
 
 /*
- * Grab the destination's particulars, including lease expiry समय.
+ * Grab the destination's particulars, including lease expiry time.
  *
- * Returns zero अगर probe succeeded and retrieved FSID matches the FSID
+ * Returns zero if probe succeeded and retrieved FSID matches the FSID
  * we have cached.
  */
-अटल पूर्णांक nfs_probe_destination(काष्ठा nfs_server *server)
-अणु
-	काष्ठा inode *inode = d_inode(server->super->s_root);
-	काष्ठा nfs_fattr *fattr;
-	पूर्णांक error;
+static int nfs_probe_destination(struct nfs_server *server)
+{
+	struct inode *inode = d_inode(server->super->s_root);
+	struct nfs_fattr *fattr;
+	int error;
 
 	fattr = nfs_alloc_fattr();
-	अगर (fattr == शून्य)
-		वापस -ENOMEM;
+	if (fattr == NULL)
+		return -ENOMEM;
 
-	/* Sanity: the probe won't work अगर the destination server
-	 * करोes not recognize the migrated FH. */
+	/* Sanity: the probe won't work if the destination server
+	 * does not recognize the migrated FH. */
 	error = nfs_probe_fsinfo(server, NFS_FH(inode), fattr);
 
-	nfs_मुक्त_fattr(fattr);
-	वापस error;
-पूर्ण
+	nfs_free_fattr(fattr);
+	return error;
+}
 
 /**
- * nfs4_update_server - Move an nfs_server to a dअगरferent nfs_client
+ * nfs4_update_server - Move an nfs_server to a different nfs_client
  *
  * @server: represents FSID to be moved
- * @hostname: new end-poपूर्णांक's hostname
- * @sap: new end-poपूर्णांक's socket address
+ * @hostname: new end-point's hostname
+ * @sap: new end-point's socket address
  * @salen: size of "sap"
  * @net: net namespace
  *
- * The nfs_server must be quiescent beक्रमe this function is invoked.
+ * The nfs_server must be quiescent before this function is invoked.
  * Either its session is drained (NFSv4.1+), or its transport is
  * plugged and drained (NFSv4.0).
  *
- * Returns zero on success, or a negative त्रुटि_सं value.
+ * Returns zero on success, or a negative errno value.
  */
-पूर्णांक nfs4_update_server(काष्ठा nfs_server *server, स्थिर अक्षर *hostname,
-		       काष्ठा sockaddr *sap, माप_प्रकार salen, काष्ठा net *net)
-अणु
-	काष्ठा nfs_client *clp = server->nfs_client;
-	काष्ठा rpc_clnt *clnt = server->client;
-	काष्ठा xprt_create xargs = अणु
+int nfs4_update_server(struct nfs_server *server, const char *hostname,
+		       struct sockaddr *sap, size_t salen, struct net *net)
+{
+	struct nfs_client *clp = server->nfs_client;
+	struct rpc_clnt *clnt = server->client;
+	struct xprt_create xargs = {
 		.ident		= clp->cl_proto,
 		.net		= net,
 		.dstaddr	= sap,
 		.addrlen	= salen,
 		.servername	= hostname,
-	पूर्ण;
-	अक्षर buf[INET6_ADDRSTRLEN + 1];
-	काष्ठा sockaddr_storage address;
-	काष्ठा sockaddr *localaddr = (काष्ठा sockaddr *)&address;
-	पूर्णांक error;
+	};
+	char buf[INET6_ADDRSTRLEN + 1];
+	struct sockaddr_storage address;
+	struct sockaddr *localaddr = (struct sockaddr *)&address;
+	int error;
 
-	error = rpc_चयन_client_transport(clnt, &xargs, clnt->cl_समयout);
-	अगर (error != 0)
-		वापस error;
+	error = rpc_switch_client_transport(clnt, &xargs, clnt->cl_timeout);
+	if (error != 0)
+		return error;
 
-	error = rpc_localaddr(clnt, localaddr, माप(address));
-	अगर (error != 0)
-		वापस error;
+	error = rpc_localaddr(clnt, localaddr, sizeof(address));
+	if (error != 0)
+		return error;
 
-	अगर (rpc_ntop(localaddr, buf, माप(buf)) == 0)
-		वापस -EAFNOSUPPORT;
+	if (rpc_ntop(localaddr, buf, sizeof(buf)) == 0)
+		return -EAFNOSUPPORT;
 
-	nfs_server_हटाओ_lists(server);
+	nfs_server_remove_lists(server);
 	set_bit(NFS_MIG_TSM_POSSIBLE, &server->mig_status);
 	error = nfs4_set_client(server, hostname, sap, salen, buf,
-				clp->cl_proto, clnt->cl_समयout,
+				clp->cl_proto, clnt->cl_timeout,
 				clp->cl_minorversion,
 				clp->cl_nconnect, net);
 	clear_bit(NFS_MIG_TSM_POSSIBLE, &server->mig_status);
-	अगर (error != 0) अणु
+	if (error != 0) {
 		nfs_server_insert_lists(server);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 	nfs_put_client(clp);
 
-	अगर (server->nfs_client->cl_hostname == शून्य)
+	if (server->nfs_client->cl_hostname == NULL)
 		server->nfs_client->cl_hostname = kstrdup(hostname, GFP_KERNEL);
 	nfs_server_insert_lists(server);
 
-	वापस nfs_probe_destination(server);
-पूर्ण
+	return nfs_probe_destination(server);
+}

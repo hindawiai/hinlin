@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ASMARM_ARCH_IRDA_H
-#घोषणा ASMARM_ARCH_IRDA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ASMARM_ARCH_IRDA_H
+#define ASMARM_ARCH_IRDA_H
 
-/* board specअगरic transceiver capabilities */
+/* board specific transceiver capabilities */
 
-#घोषणा IR_OFF		1
-#घोषणा IR_SIRMODE	2
-#घोषणा IR_FIRMODE	4
+#define IR_OFF		1
+#define IR_SIRMODE	2
+#define IR_FIRMODE	4
 
-काष्ठा pxaficp_platक्रमm_data अणु
-	पूर्णांक transceiver_cap;
-	व्योम (*transceiver_mode)(काष्ठा device *dev, पूर्णांक mode);
-	पूर्णांक (*startup)(काष्ठा device *dev);
-	व्योम (*shutकरोwn)(काष्ठा device *dev);
-	पूर्णांक gpio_pwकरोwn;		/* घातerकरोwn GPIO क्रम the IrDA chip */
-	bool gpio_pwकरोwn_inverted;	/* gpio_pwकरोwn is inverted */
-पूर्ण;
+struct pxaficp_platform_data {
+	int transceiver_cap;
+	void (*transceiver_mode)(struct device *dev, int mode);
+	int (*startup)(struct device *dev);
+	void (*shutdown)(struct device *dev);
+	int gpio_pwdown;		/* powerdown GPIO for the IrDA chip */
+	bool gpio_pwdown_inverted;	/* gpio_pwdown is inverted */
+};
 
-बाह्य व्योम pxa_set_ficp_info(काष्ठा pxaficp_platक्रमm_data *info);
+extern void pxa_set_ficp_info(struct pxaficp_platform_data *info);
 
-#अगर defined(CONFIG_PXA25x) || defined(CONFIG_PXA27x)
-व्योम pxa2xx_transceiver_mode(काष्ठा device *dev, पूर्णांक mode);
-#पूर्ण_अगर
+#if defined(CONFIG_PXA25x) || defined(CONFIG_PXA27x)
+void pxa2xx_transceiver_mode(struct device *dev, int mode);
+#endif
 
-#पूर्ण_अगर
+#endif

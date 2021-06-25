@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#समावेश "mt76x02_usb.h"
+#include "mt76x02_usb.h"
 
-अटल व्योम mt76x02u_हटाओ_dma_hdr(काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक hdr_len;
+static void mt76x02u_remove_dma_hdr(struct sk_buff *skb)
+{
+	int hdr_len;
 
-	skb_pull(skb, माप(काष्ठा mt76x02_txwi) + MT_DMA_HDR_LEN);
+	skb_pull(skb, sizeof(struct mt76x02_txwi) + MT_DMA_HDR_LEN);
 	hdr_len = ieee80211_get_hdrlen_from_skb(skb);
-	अगर (hdr_len % 4)
-		mt76x02_हटाओ_hdr_pad(skb, 2);
-पूर्ण
+	if (hdr_len % 4)
+		mt76x02_remove_hdr_pad(skb, 2);
+}
 
-व्योम mt76x02u_tx_complete_skb(काष्ठा mt76_dev *mdev, काष्ठा mt76_queue_entry *e)
-अणु
-	mt76x02u_हटाओ_dma_hdr(e->skb);
+void mt76x02u_tx_complete_skb(struct mt76_dev *mdev, struct mt76_queue_entry *e)
+{
+	mt76x02u_remove_dma_hdr(e->skb);
 	mt76_tx_complete_skb(mdev, e->wcid, e->skb);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02u_tx_complete_skb);
 
-पूर्णांक mt76x02u_mac_start(काष्ठा mt76x02_dev *dev)
-अणु
+int mt76x02u_mac_start(struct mt76x02_dev *dev)
+{
 	mt76x02_mac_reset_counters(dev);
 
 	mt76_wr(dev, MT_MAC_SYS_CTRL, MT_MAC_SYS_CTRL_ENABLE_TX);
-	अगर (!mt76x02_रुको_क्रम_wpdma(&dev->mt76, 200000))
-		वापस -ETIMEDOUT;
+	if (!mt76x02_wait_for_wpdma(&dev->mt76, 200000))
+		return -ETIMEDOUT;
 
 	mt76_wr(dev, MT_RX_FILTR_CFG, dev->mt76.rxfilter);
 
@@ -37,15 +36,15 @@ EXPORT_SYMBOL_GPL(mt76x02u_tx_complete_skb);
 		MT_MAC_SYS_CTRL_ENABLE_TX |
 		MT_MAC_SYS_CTRL_ENABLE_RX);
 
-	अगर (!mt76x02_रुको_क्रम_wpdma(&dev->mt76, 50))
-		वापस -ETIMEDOUT;
+	if (!mt76x02_wait_for_wpdma(&dev->mt76, 50))
+		return -ETIMEDOUT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt76x02u_mac_start);
 
-पूर्णांक mt76x02u_skb_dma_info(काष्ठा sk_buff *skb, पूर्णांक port, u32 flags)
-अणु
+int mt76x02u_skb_dma_info(struct sk_buff *skb, int port, u32 flags)
+{
 	u32 info, pad;
 
 	/* Buffer layout:
@@ -56,34 +55,34 @@ EXPORT_SYMBOL_GPL(mt76x02u_mac_start);
 	 */
 	info = FIELD_PREP(MT_TXD_INFO_LEN, round_up(skb->len, 4)) |
 	       FIELD_PREP(MT_TXD_INFO_DPORT, port) | flags;
-	put_unaligned_le32(info, skb_push(skb, माप(info)));
+	put_unaligned_le32(info, skb_push(skb, sizeof(info)));
 
 	pad = round_up(skb->len, 4) + 4 - skb->len;
-	वापस mt76_skb_adjust_pad(skb, pad);
-पूर्ण
+	return mt76_skb_adjust_pad(skb, pad);
+}
 
-पूर्णांक mt76x02u_tx_prepare_skb(काष्ठा mt76_dev *mdev, व्योम *data,
-			    क्रमागत mt76_txq_id qid, काष्ठा mt76_wcid *wcid,
-			    काष्ठा ieee80211_sta *sta,
-			    काष्ठा mt76_tx_info *tx_info)
-अणु
-	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
-	पूर्णांक pid, len = tx_info->skb->len, ep = q2ep(dev->mphy.q_tx[qid]->hw_idx);
-	काष्ठा mt76x02_txwi *txwi;
+int mt76x02u_tx_prepare_skb(struct mt76_dev *mdev, void *data,
+			    enum mt76_txq_id qid, struct mt76_wcid *wcid,
+			    struct ieee80211_sta *sta,
+			    struct mt76_tx_info *tx_info)
+{
+	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
+	int pid, len = tx_info->skb->len, ep = q2ep(dev->mphy.q_tx[qid]->hw_idx);
+	struct mt76x02_txwi *txwi;
 	bool ampdu = IEEE80211_SKB_CB(tx_info->skb)->flags & IEEE80211_TX_CTL_AMPDU;
-	क्रमागत mt76_qsel qsel;
+	enum mt76_qsel qsel;
 	u32 flags;
 
 	mt76_insert_hdr_pad(tx_info->skb);
 
-	txwi = (काष्ठा mt76x02_txwi *)(tx_info->skb->data - माप(*txwi));
-	mt76x02_mac_ग_लिखो_txwi(dev, txwi, tx_info->skb, wcid, sta, len);
-	skb_push(tx_info->skb, माप(*txwi));
+	txwi = (struct mt76x02_txwi *)(tx_info->skb->data - sizeof(*txwi));
+	mt76x02_mac_write_txwi(dev, txwi, tx_info->skb, wcid, sta, len);
+	skb_push(tx_info->skb, sizeof(*txwi));
 
 	pid = mt76_tx_status_skb_add(mdev, wcid, tx_info->skb);
 
-	/* encode packet rate क्रम no-skb packet id to fix up status reporting */
-	अगर (pid == MT_PACKET_ID_NO_SKB)
+	/* encode packet rate for no-skb packet id to fix up status reporting */
+	if (pid == MT_PACKET_ID_NO_SKB)
 		pid = MT_PACKET_ID_HAS_RATE |
 		      (le16_to_cpu(txwi->rate) & MT_PKTID_RATE) |
 		      FIELD_PREP(MT_PKTID_AC,
@@ -91,59 +90,59 @@ EXPORT_SYMBOL_GPL(mt76x02u_mac_start);
 
 	txwi->pktid = pid;
 
-	अगर ((mt76_is_skb_pktid(pid) && ampdu) || ep == MT_EP_OUT_HCCA)
+	if ((mt76_is_skb_pktid(pid) && ampdu) || ep == MT_EP_OUT_HCCA)
 		qsel = MT_QSEL_MGMT;
-	अन्यथा
+	else
 		qsel = MT_QSEL_EDCA;
 
 	flags = FIELD_PREP(MT_TXD_INFO_QSEL, qsel) |
 		MT_TXD_INFO_80211;
-	अगर (!wcid || wcid->hw_key_idx == 0xff || wcid->sw_iv)
+	if (!wcid || wcid->hw_key_idx == 0xff || wcid->sw_iv)
 		flags |= MT_TXD_INFO_WIV;
 
-	अगर (sta) अणु
-		काष्ठा mt76x02_sta *msta = (काष्ठा mt76x02_sta *)sta->drv_priv;
+	if (sta) {
+		struct mt76x02_sta *msta = (struct mt76x02_sta *)sta->drv_priv;
 
 		ewma_pktlen_add(&msta->pktlen, tx_info->skb->len);
-	पूर्ण
+	}
 
-	वापस mt76x02u_skb_dma_info(tx_info->skb, WLAN_PORT, flags);
-पूर्ण
+	return mt76x02u_skb_dma_info(tx_info->skb, WLAN_PORT, flags);
+}
 EXPORT_SYMBOL_GPL(mt76x02u_tx_prepare_skb);
 
-/* Trigger pre-TBTT event 8 ms beक्रमe TBTT */
-#घोषणा PRE_TBTT_USEC 8000
+/* Trigger pre-TBTT event 8 ms before TBTT */
+#define PRE_TBTT_USEC 8000
 
 /* Beacon SRAM memory is limited to 8kB. We need to send PS buffered frames
  * (which can be 1500 bytes big) via beacon memory. That make limit of number
  * of slots to 5. TODO: dynamically calculate offsets in beacon SRAM.
  */
-#घोषणा N_BCN_SLOTS 5
+#define N_BCN_SLOTS 5
 
-अटल व्योम mt76x02u_start_pre_tbtt_समयr(काष्ठा mt76x02_dev *dev)
-अणु
-	u64 समय;
+static void mt76x02u_start_pre_tbtt_timer(struct mt76x02_dev *dev)
+{
+	u64 time;
 	u32 tbtt;
 
-	/* Get reमुख्यing TBTT in usec */
+	/* Get remaining TBTT in usec */
 	tbtt = mt76_get_field(dev, MT_TBTT_TIMER, MT_TBTT_TIMER_VAL);
 	tbtt *= 32;
 
-	अगर (tbtt <= PRE_TBTT_USEC) अणु
-		queue_work(प्रणाली_highpri_wq, &dev->pre_tbtt_work);
-		वापस;
-	पूर्ण
+	if (tbtt <= PRE_TBTT_USEC) {
+		queue_work(system_highpri_wq, &dev->pre_tbtt_work);
+		return;
+	}
 
-	समय = (tbtt - PRE_TBTT_USEC) * 1000ull;
-	hrसमयr_start(&dev->pre_tbtt_समयr, समय, HRTIMER_MODE_REL);
-पूर्ण
+	time = (tbtt - PRE_TBTT_USEC) * 1000ull;
+	hrtimer_start(&dev->pre_tbtt_timer, time, HRTIMER_MODE_REL);
+}
 
-अटल व्योम mt76x02u_restart_pre_tbtt_समयr(काष्ठा mt76x02_dev *dev)
-अणु
+static void mt76x02u_restart_pre_tbtt_timer(struct mt76x02_dev *dev)
+{
 	u32 tbtt, dw0, dw1;
-	u64 tsf, समय;
+	u64 tsf, time;
 
-	/* Get reमुख्यing TBTT in usec */
+	/* Get remaining TBTT in usec */
 	tbtt = mt76_get_field(dev, MT_TBTT_TIMER, MT_TBTT_TIMER_VAL);
 	tbtt *= 32;
 
@@ -152,126 +151,126 @@ EXPORT_SYMBOL_GPL(mt76x02u_tx_prepare_skb);
 	tsf = (u64)dw0 << 32 | dw1;
 	dev_dbg(dev->mt76.dev, "TSF: %llu us TBTT %u us\n", tsf, tbtt);
 
-	/* Convert beacon पूर्णांकerval in TU (1024 usec) to nsec */
-	समय = ((1000000000ull * dev->mt76.beacon_पूर्णांक) >> 10);
+	/* Convert beacon interval in TU (1024 usec) to nsec */
+	time = ((1000000000ull * dev->mt76.beacon_int) >> 10);
 
-	/* Adjust समय to trigger hrसमयr 8ms beक्रमe TBTT */
-	अगर (tbtt < PRE_TBTT_USEC)
-		समय -= (PRE_TBTT_USEC - tbtt) * 1000ull;
-	अन्यथा
-		समय += (tbtt - PRE_TBTT_USEC) * 1000ull;
+	/* Adjust time to trigger hrtimer 8ms before TBTT */
+	if (tbtt < PRE_TBTT_USEC)
+		time -= (PRE_TBTT_USEC - tbtt) * 1000ull;
+	else
+		time += (tbtt - PRE_TBTT_USEC) * 1000ull;
 
-	hrसमयr_start(&dev->pre_tbtt_समयr, समय, HRTIMER_MODE_REL);
-पूर्ण
+	hrtimer_start(&dev->pre_tbtt_timer, time, HRTIMER_MODE_REL);
+}
 
-अटल व्योम mt76x02u_stop_pre_tbtt_समयr(काष्ठा mt76x02_dev *dev)
-अणु
-	करो अणु
-		hrसमयr_cancel(&dev->pre_tbtt_समयr);
+static void mt76x02u_stop_pre_tbtt_timer(struct mt76x02_dev *dev)
+{
+	do {
+		hrtimer_cancel(&dev->pre_tbtt_timer);
 		cancel_work_sync(&dev->pre_tbtt_work);
 		/* Timer can be rearmed by work. */
-	पूर्ण जबतक (hrसमयr_active(&dev->pre_tbtt_समयr));
-पूर्ण
+	} while (hrtimer_active(&dev->pre_tbtt_timer));
+}
 
-अटल व्योम mt76x02u_pre_tbtt_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mt76x02_dev *dev =
-		container_of(work, काष्ठा mt76x02_dev, pre_tbtt_work);
-	काष्ठा beacon_bc_data data = अणुपूर्ण;
-	काष्ठा sk_buff *skb;
-	पूर्णांक nbeacons;
+static void mt76x02u_pre_tbtt_work(struct work_struct *work)
+{
+	struct mt76x02_dev *dev =
+		container_of(work, struct mt76x02_dev, pre_tbtt_work);
+	struct beacon_bc_data data = {};
+	struct sk_buff *skb;
+	int nbeacons;
 
-	अगर (!dev->mt76.beacon_mask)
-		वापस;
+	if (!dev->mt76.beacon_mask)
+		return;
 
-	अगर (mt76_hw(dev)->conf.flags & IEEE80211_CONF_OFFCHANNEL)
-		वापस;
+	if (mt76_hw(dev)->conf.flags & IEEE80211_CONF_OFFCHANNEL)
+		return;
 
-	mt76x02_resync_beacon_समयr(dev);
+	mt76x02_resync_beacon_timer(dev);
 
 	/* Prevent corrupt transmissions during update */
 	mt76_set(dev, MT_BCN_BYPASS_MASK, 0xffff);
 	dev->beacon_data_count = 0;
 
-	ieee80211_iterate_active_पूर्णांकerfaces(mt76_hw(dev),
+	ieee80211_iterate_active_interfaces(mt76_hw(dev),
 		IEEE80211_IFACE_ITER_RESUME_ALL,
 		mt76x02_update_beacon_iter, dev);
 
 	mt76_csa_check(&dev->mt76);
 
-	अगर (dev->mt76.csa_complete) अणु
+	if (dev->mt76.csa_complete) {
 		mt76_csa_finish(&dev->mt76);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	nbeacons = hweight8(dev->mt76.beacon_mask);
 	mt76x02_enqueue_buffered_bc(dev, &data, N_BCN_SLOTS - nbeacons);
 
-	जबतक ((skb = __skb_dequeue(&data.q)) != शून्य)
+	while ((skb = __skb_dequeue(&data.q)) != NULL)
 		mt76x02_mac_set_beacon(dev, skb);
 
 out:
 	mt76_wr(dev, MT_BCN_BYPASS_MASK,
 		0xff00 | ~(0xff00 >> dev->beacon_data_count));
 
-	mt76x02u_restart_pre_tbtt_समयr(dev);
-पूर्ण
+	mt76x02u_restart_pre_tbtt_timer(dev);
+}
 
-अटल क्रमागत hrसमयr_restart mt76x02u_pre_tbtt_पूर्णांकerrupt(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा mt76x02_dev *dev =
-	    container_of(समयr, काष्ठा mt76x02_dev, pre_tbtt_समयr);
+static enum hrtimer_restart mt76x02u_pre_tbtt_interrupt(struct hrtimer *timer)
+{
+	struct mt76x02_dev *dev =
+	    container_of(timer, struct mt76x02_dev, pre_tbtt_timer);
 
-	queue_work(प्रणाली_highpri_wq, &dev->pre_tbtt_work);
+	queue_work(system_highpri_wq, &dev->pre_tbtt_work);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम mt76x02u_pre_tbtt_enable(काष्ठा mt76x02_dev *dev, bool en)
-अणु
-	अगर (en && dev->mt76.beacon_mask &&
-	    !hrसमयr_active(&dev->pre_tbtt_समयr))
-		mt76x02u_start_pre_tbtt_समयr(dev);
-	अगर (!en)
-		mt76x02u_stop_pre_tbtt_समयr(dev);
-पूर्ण
+static void mt76x02u_pre_tbtt_enable(struct mt76x02_dev *dev, bool en)
+{
+	if (en && dev->mt76.beacon_mask &&
+	    !hrtimer_active(&dev->pre_tbtt_timer))
+		mt76x02u_start_pre_tbtt_timer(dev);
+	if (!en)
+		mt76x02u_stop_pre_tbtt_timer(dev);
+}
 
-अटल व्योम mt76x02u_beacon_enable(काष्ठा mt76x02_dev *dev, bool en)
-अणु
-	अगर (WARN_ON_ONCE(!dev->mt76.beacon_पूर्णांक))
-		वापस;
+static void mt76x02u_beacon_enable(struct mt76x02_dev *dev, bool en)
+{
+	if (WARN_ON_ONCE(!dev->mt76.beacon_int))
+		return;
 
-	अगर (en)
-		mt76x02u_start_pre_tbtt_समयr(dev);
-पूर्ण
+	if (en)
+		mt76x02u_start_pre_tbtt_timer(dev);
+}
 
-व्योम mt76x02u_init_beacon_config(काष्ठा mt76x02_dev *dev)
-अणु
-	अटल स्थिर काष्ठा mt76x02_beacon_ops beacon_ops = अणु
+void mt76x02u_init_beacon_config(struct mt76x02_dev *dev)
+{
+	static const struct mt76x02_beacon_ops beacon_ops = {
 		.nslots = N_BCN_SLOTS,
 		.slot_size = (8192 / N_BCN_SLOTS) & ~63,
 		.pre_tbtt_enable = mt76x02u_pre_tbtt_enable,
 		.beacon_enable = mt76x02u_beacon_enable,
-	पूर्ण;
+	};
 	dev->beacon_ops = &beacon_ops;
 
-	hrसमयr_init(&dev->pre_tbtt_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	dev->pre_tbtt_समयr.function = mt76x02u_pre_tbtt_पूर्णांकerrupt;
+	hrtimer_init(&dev->pre_tbtt_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	dev->pre_tbtt_timer.function = mt76x02u_pre_tbtt_interrupt;
 	INIT_WORK(&dev->pre_tbtt_work, mt76x02u_pre_tbtt_work);
 
 	mt76x02_init_beacon_config(dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt76x02u_init_beacon_config);
 
-व्योम mt76x02u_निकास_beacon_config(काष्ठा mt76x02_dev *dev)
-अणु
-	अगर (!test_bit(MT76_REMOVED, &dev->mphy.state))
+void mt76x02u_exit_beacon_config(struct mt76x02_dev *dev)
+{
+	if (!test_bit(MT76_REMOVED, &dev->mphy.state))
 		mt76_clear(dev, MT_BEACON_TIME_CFG,
 			   MT_BEACON_TIME_CFG_TIMER_EN |
 			   MT_BEACON_TIME_CFG_SYNC_MODE |
 			   MT_BEACON_TIME_CFG_TBTT_EN |
 			   MT_BEACON_TIME_CFG_BEACON_TX);
 
-	mt76x02u_stop_pre_tbtt_समयr(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(mt76x02u_निकास_beacon_config);
+	mt76x02u_stop_pre_tbtt_timer(dev);
+}
+EXPORT_SYMBOL_GPL(mt76x02u_exit_beacon_config);

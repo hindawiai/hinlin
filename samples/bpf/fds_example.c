@@ -1,194 +1,193 @@
-<शैली गुरु>
-#समावेश <linux/unistd.h>
-#समावेश <linux/bpf.h>
+#include <linux/unistd.h>
+#include <linux/bpf.h>
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <string.h>
+#include <assert.h>
+#include <errno.h>
 
-#समावेश <sys/types.h>
-#समावेश <sys/socket.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
-#समावेश <bpf/bpf.h>
+#include <bpf/bpf.h>
 
-#समावेश <bpf/libbpf.h>
-#समावेश "bpf_insn.h"
-#समावेश "sock_example.h"
+#include <bpf/libbpf.h>
+#include "bpf_insn.h"
+#include "sock_example.h"
 
-#घोषणा BPF_F_PIN	(1 << 0)
-#घोषणा BPF_F_GET	(1 << 1)
-#घोषणा BPF_F_PIN_GET	(BPF_F_PIN | BPF_F_GET)
+#define BPF_F_PIN	(1 << 0)
+#define BPF_F_GET	(1 << 1)
+#define BPF_F_PIN_GET	(BPF_F_PIN | BPF_F_GET)
 
-#घोषणा BPF_F_KEY	(1 << 2)
-#घोषणा BPF_F_VAL	(1 << 3)
-#घोषणा BPF_F_KEY_VAL	(BPF_F_KEY | BPF_F_VAL)
+#define BPF_F_KEY	(1 << 2)
+#define BPF_F_VAL	(1 << 3)
+#define BPF_F_KEY_VAL	(BPF_F_KEY | BPF_F_VAL)
 
-#घोषणा BPF_M_UNSPEC	0
-#घोषणा BPF_M_MAP	1
-#घोषणा BPF_M_PROG	2
+#define BPF_M_UNSPEC	0
+#define BPF_M_MAP	1
+#define BPF_M_PROG	2
 
-अक्षर bpf_log_buf[BPF_LOG_BUF_SIZE];
+char bpf_log_buf[BPF_LOG_BUF_SIZE];
 
-अटल व्योम usage(व्योम)
-अणु
-	म_लिखो("Usage: fds_example [...]\n");
-	म_लिखो("       -F <file>   File to pin/get object\n");
-	म_लिखो("       -P          |- pin object\n");
-	म_लिखो("       -G          `- get object\n");
-	म_लिखो("       -m          eBPF map mode\n");
-	म_लिखो("       -k <key>    |- map key\n");
-	म_लिखो("       -v <value>  `- map value\n");
-	म_लिखो("       -p          eBPF prog mode\n");
-	म_लिखो("       -o <object> `- object file\n");
-	म_लिखो("       -h          Display this help.\n");
-पूर्ण
+static void usage(void)
+{
+	printf("Usage: fds_example [...]\n");
+	printf("       -F <file>   File to pin/get object\n");
+	printf("       -P          |- pin object\n");
+	printf("       -G          `- get object\n");
+	printf("       -m          eBPF map mode\n");
+	printf("       -k <key>    |- map key\n");
+	printf("       -v <value>  `- map value\n");
+	printf("       -p          eBPF prog mode\n");
+	printf("       -o <object> `- object file\n");
+	printf("       -h          Display this help.\n");
+}
 
-अटल पूर्णांक bpf_map_create(व्योम)
-अणु
-	वापस bpf_create_map(BPF_MAP_TYPE_ARRAY, माप(uपूर्णांक32_t),
-			      माप(uपूर्णांक32_t), 1024, 0);
-पूर्ण
+static int bpf_map_create(void)
+{
+	return bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(uint32_t),
+			      sizeof(uint32_t), 1024, 0);
+}
 
-अटल पूर्णांक bpf_prog_create(स्थिर अक्षर *object)
-अणु
-	अटल काष्ठा bpf_insn insns[] = अणु
+static int bpf_prog_create(const char *object)
+{
+	static struct bpf_insn insns[] = {
 		BPF_MOV64_IMM(BPF_REG_0, 1),
 		BPF_EXIT_INSN(),
-	पूर्ण;
-	माप_प्रकार insns_cnt = माप(insns) / माप(काष्ठा bpf_insn);
-	काष्ठा bpf_object *obj;
-	पूर्णांक prog_fd;
+	};
+	size_t insns_cnt = sizeof(insns) / sizeof(struct bpf_insn);
+	struct bpf_object *obj;
+	int prog_fd;
 
-	अगर (object) अणु
-		निश्चित(!bpf_prog_load(object, BPF_PROG_TYPE_UNSPEC,
+	if (object) {
+		assert(!bpf_prog_load(object, BPF_PROG_TYPE_UNSPEC,
 				      &obj, &prog_fd));
-		वापस prog_fd;
-	पूर्ण अन्यथा अणु
-		वापस bpf_load_program(BPF_PROG_TYPE_SOCKET_FILTER,
+		return prog_fd;
+	} else {
+		return bpf_load_program(BPF_PROG_TYPE_SOCKET_FILTER,
 					insns, insns_cnt, "GPL", 0,
 					bpf_log_buf, BPF_LOG_BUF_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक bpf_करो_map(स्थिर अक्षर *file, uपूर्णांक32_t flags, uपूर्णांक32_t key,
-		      uपूर्णांक32_t value)
-अणु
-	पूर्णांक fd, ret;
+static int bpf_do_map(const char *file, uint32_t flags, uint32_t key,
+		      uint32_t value)
+{
+	int fd, ret;
 
-	अगर (flags & BPF_F_PIN) अणु
+	if (flags & BPF_F_PIN) {
 		fd = bpf_map_create();
-		म_लिखो("bpf: map fd:%d (%s)\n", fd, म_त्रुटि(त्रुटि_सं));
-		निश्चित(fd > 0);
+		printf("bpf: map fd:%d (%s)\n", fd, strerror(errno));
+		assert(fd > 0);
 
 		ret = bpf_obj_pin(fd, file);
-		म_लिखो("bpf: pin ret:(%d,%s)\n", ret, म_त्रुटि(त्रुटि_सं));
-		निश्चित(ret == 0);
-	पूर्ण अन्यथा अणु
+		printf("bpf: pin ret:(%d,%s)\n", ret, strerror(errno));
+		assert(ret == 0);
+	} else {
 		fd = bpf_obj_get(file);
-		म_लिखो("bpf: get fd:%d (%s)\n", fd, म_त्रुटि(त्रुटि_सं));
-		निश्चित(fd > 0);
-	पूर्ण
+		printf("bpf: get fd:%d (%s)\n", fd, strerror(errno));
+		assert(fd > 0);
+	}
 
-	अगर ((flags & BPF_F_KEY_VAL) == BPF_F_KEY_VAL) अणु
+	if ((flags & BPF_F_KEY_VAL) == BPF_F_KEY_VAL) {
 		ret = bpf_map_update_elem(fd, &key, &value, 0);
-		म_लिखो("bpf: fd:%d u->(%u:%u) ret:(%d,%s)\n", fd, key, value,
-		       ret, म_त्रुटि(त्रुटि_सं));
-		निश्चित(ret == 0);
-	पूर्ण अन्यथा अगर (flags & BPF_F_KEY) अणु
+		printf("bpf: fd:%d u->(%u:%u) ret:(%d,%s)\n", fd, key, value,
+		       ret, strerror(errno));
+		assert(ret == 0);
+	} else if (flags & BPF_F_KEY) {
 		ret = bpf_map_lookup_elem(fd, &key, &value);
-		म_लिखो("bpf: fd:%d l->(%u):%u ret:(%d,%s)\n", fd, key, value,
-		       ret, म_त्रुटि(त्रुटि_सं));
-		निश्चित(ret == 0);
-	पूर्ण
+		printf("bpf: fd:%d l->(%u):%u ret:(%d,%s)\n", fd, key, value,
+		       ret, strerror(errno));
+		assert(ret == 0);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_करो_prog(स्थिर अक्षर *file, uपूर्णांक32_t flags, स्थिर अक्षर *object)
-अणु
-	पूर्णांक fd, sock, ret;
+static int bpf_do_prog(const char *file, uint32_t flags, const char *object)
+{
+	int fd, sock, ret;
 
-	अगर (flags & BPF_F_PIN) अणु
+	if (flags & BPF_F_PIN) {
 		fd = bpf_prog_create(object);
-		म_लिखो("bpf: prog fd:%d (%s)\n", fd, म_त्रुटि(त्रुटि_सं));
-		निश्चित(fd > 0);
+		printf("bpf: prog fd:%d (%s)\n", fd, strerror(errno));
+		assert(fd > 0);
 
 		ret = bpf_obj_pin(fd, file);
-		म_लिखो("bpf: pin ret:(%d,%s)\n", ret, म_त्रुटि(त्रुटि_सं));
-		निश्चित(ret == 0);
-	पूर्ण अन्यथा अणु
+		printf("bpf: pin ret:(%d,%s)\n", ret, strerror(errno));
+		assert(ret == 0);
+	} else {
 		fd = bpf_obj_get(file);
-		म_लिखो("bpf: get fd:%d (%s)\n", fd, म_त्रुटि(त्रुटि_सं));
-		निश्चित(fd > 0);
-	पूर्ण
+		printf("bpf: get fd:%d (%s)\n", fd, strerror(errno));
+		assert(fd > 0);
+	}
 
-	sock = खोलो_raw_sock("lo");
-	निश्चित(sock > 0);
+	sock = open_raw_sock("lo");
+	assert(sock > 0);
 
-	ret = setsockopt(sock, SOL_SOCKET, SO_ATTACH_BPF, &fd, माप(fd));
-	म_लिखो("bpf: sock:%d <- fd:%d attached ret:(%d,%s)\n", sock, fd,
-	       ret, म_त्रुटि(त्रुटि_सं));
-	निश्चित(ret == 0);
+	ret = setsockopt(sock, SOL_SOCKET, SO_ATTACH_BPF, &fd, sizeof(fd));
+	printf("bpf: sock:%d <- fd:%d attached ret:(%d,%s)\n", sock, fd,
+	       ret, strerror(errno));
+	assert(ret == 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	स्थिर अक्षर *file = शून्य, *object = शून्य;
-	uपूर्णांक32_t key = 0, value = 0, flags = 0;
-	पूर्णांक opt, mode = BPF_M_UNSPEC;
+int main(int argc, char **argv)
+{
+	const char *file = NULL, *object = NULL;
+	uint32_t key = 0, value = 0, flags = 0;
+	int opt, mode = BPF_M_UNSPEC;
 
-	जबतक ((opt = getopt(argc, argv, "F:PGmk:v:po:")) != -1) अणु
-		चयन (opt) अणु
+	while ((opt = getopt(argc, argv, "F:PGmk:v:po:")) != -1) {
+		switch (opt) {
 		/* General args */
-		हाल 'F':
+		case 'F':
 			file = optarg;
-			अवरोध;
-		हाल 'P':
+			break;
+		case 'P':
 			flags |= BPF_F_PIN;
-			अवरोध;
-		हाल 'G':
+			break;
+		case 'G':
 			flags |= BPF_F_GET;
-			अवरोध;
+			break;
 		/* Map-related args */
-		हाल 'm':
+		case 'm':
 			mode = BPF_M_MAP;
-			अवरोध;
-		हाल 'k':
-			key = म_से_अदीर्घ(optarg, शून्य, 0);
+			break;
+		case 'k':
+			key = strtoul(optarg, NULL, 0);
 			flags |= BPF_F_KEY;
-			अवरोध;
-		हाल 'v':
-			value = म_से_अदीर्घ(optarg, शून्य, 0);
+			break;
+		case 'v':
+			value = strtoul(optarg, NULL, 0);
 			flags |= BPF_F_VAL;
-			अवरोध;
+			break;
 		/* Prog-related args */
-		हाल 'p':
+		case 'p':
 			mode = BPF_M_PROG;
-			अवरोध;
-		हाल 'o':
+			break;
+		case 'o':
 			object = optarg;
-			अवरोध;
-		शेष:
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			goto out;
+		}
+	}
 
-	अगर (!(flags & BPF_F_PIN_GET) || !file)
-		जाओ out;
+	if (!(flags & BPF_F_PIN_GET) || !file)
+		goto out;
 
-	चयन (mode) अणु
-	हाल BPF_M_MAP:
-		वापस bpf_करो_map(file, flags, key, value);
-	हाल BPF_M_PROG:
-		वापस bpf_करो_prog(file, flags, object);
-	पूर्ण
+	switch (mode) {
+	case BPF_M_MAP:
+		return bpf_do_map(file, flags, key, value);
+	case BPF_M_PROG:
+		return bpf_do_prog(file, flags, object);
+	}
 out:
 	usage();
-	वापस -1;
-पूर्ण
+	return -1;
+}

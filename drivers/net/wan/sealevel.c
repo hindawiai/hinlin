@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Sealevel Systems 4021 driver.
  *
@@ -8,119 +7,119 @@
  *	Generic HDLC port Copyright (C) 2008 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/net.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hdlc.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <net/arp.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/net.h>
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/delay.h>
+#include <linux/hdlc.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <net/arp.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश "z85230.h"
-
-
-काष्ठा slvl_device
-अणु
-	काष्ठा z8530_channel *chan;
-	पूर्णांक channel;
-पूर्ण;
+#include <asm/irq.h>
+#include <asm/io.h>
+#include <asm/dma.h>
+#include <asm/byteorder.h>
+#include "z85230.h"
 
 
-काष्ठा slvl_board
-अणु
-	काष्ठा slvl_device dev[2];
-	काष्ठा z8530_dev board;
-	पूर्णांक iobase;
-पूर्ण;
+struct slvl_device
+{
+	struct z8530_channel *chan;
+	int channel;
+};
+
+
+struct slvl_board
+{
+	struct slvl_device dev[2];
+	struct z8530_dev board;
+	int iobase;
+};
 
 /*
  *	Network driver support routines
  */
 
-अटल अंतरभूत काष्ठा slvl_device* dev_to_chan(काष्ठा net_device *dev)
-अणु
-	वापस (काष्ठा slvl_device *)dev_to_hdlc(dev)->priv;
-पूर्ण
+static inline struct slvl_device* dev_to_chan(struct net_device *dev)
+{
+	return (struct slvl_device *)dev_to_hdlc(dev)->priv;
+}
 
 /*
- *	Frame receive. Simple क्रम our card as we करो HDLC and there
+ *	Frame receive. Simple for our card as we do HDLC and there
  *	is no funny garbage involved
  */
 
-अटल व्योम sealevel_input(काष्ठा z8530_channel *c, काष्ठा sk_buff *skb)
-अणु
+static void sealevel_input(struct z8530_channel *c, struct sk_buff *skb)
+{
 	/* Drop the CRC - it's not a good idea to try and negotiate it ;) */
 	skb_trim(skb, skb->len - 2);
 	skb->protocol = hdlc_type_trans(skb, c->netdevice);
 	skb_reset_mac_header(skb);
 	skb->dev = c->netdevice;
-	netअगर_rx(skb);
-पूर्ण
+	netif_rx(skb);
+}
 
 /*
  *	We've been placed in the UP state
  */
 
-अटल पूर्णांक sealevel_खोलो(काष्ठा net_device *d)
-अणु
-	काष्ठा slvl_device *slvl = dev_to_chan(d);
-	पूर्णांक err = -1;
-	पूर्णांक unit = slvl->channel;
+static int sealevel_open(struct net_device *d)
+{
+	struct slvl_device *slvl = dev_to_chan(d);
+	int err = -1;
+	int unit = slvl->channel;
 
 	/*
 	 *	Link layer up.
 	 */
 
-	चयन (unit) अणु
-		हाल 0:
-			err = z8530_sync_dma_खोलो(d, slvl->chan);
-			अवरोध;
-		हाल 1:
-			err = z8530_sync_खोलो(d, slvl->chan);
-			अवरोध;
-	पूर्ण
+	switch (unit) {
+		case 0:
+			err = z8530_sync_dma_open(d, slvl->chan);
+			break;
+		case 1:
+			err = z8530_sync_open(d, slvl->chan);
+			break;
+	}
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	err = hdlc_खोलो(d);
-	अगर (err) अणु
-		चयन (unit) अणु
-			हाल 0:
-				z8530_sync_dma_बंद(d, slvl->chan);
-				अवरोध;
-			हाल 1:
-				z8530_sync_बंद(d, slvl->chan);
-				अवरोध;
-		पूर्ण
-		वापस err;
-	पूर्ण
+	err = hdlc_open(d);
+	if (err) {
+		switch (unit) {
+			case 0:
+				z8530_sync_dma_close(d, slvl->chan);
+				break;
+			case 1:
+				z8530_sync_close(d, slvl->chan);
+				break;
+		}
+		return err;
+	}
 
 	slvl->chan->rx_function = sealevel_input;
 
 	/*
 	 *	Go go go
 	 */
-	netअगर_start_queue(d);
-	वापस 0;
-पूर्ण
+	netif_start_queue(d);
+	return 0;
+}
 
-अटल पूर्णांक sealevel_बंद(काष्ठा net_device *d)
-अणु
-	काष्ठा slvl_device *slvl = dev_to_chan(d);
-	पूर्णांक unit = slvl->channel;
+static int sealevel_close(struct net_device *d)
+{
+	struct slvl_device *slvl = dev_to_chan(d);
+	int unit = slvl->channel;
 
 	/*
 	 *	Discard new frames
@@ -128,57 +127,57 @@
 
 	slvl->chan->rx_function = z8530_null_rx;
 
-	hdlc_बंद(d);
-	netअगर_stop_queue(d);
+	hdlc_close(d);
+	netif_stop_queue(d);
 
-	चयन (unit) अणु
-		हाल 0:
-			z8530_sync_dma_बंद(d, slvl->chan);
-			अवरोध;
-		हाल 1:
-			z8530_sync_बंद(d, slvl->chan);
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (unit) {
+		case 0:
+			z8530_sync_dma_close(d, slvl->chan);
+			break;
+		case 1:
+			z8530_sync_close(d, slvl->chan);
+			break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक sealevel_ioctl(काष्ठा net_device *d, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	/* काष्ठा slvl_device *slvl=dev_to_chan(d);
-	   z8530_ioctl(d,&slvl->sync.chanA,अगरr,cmd) */
-	वापस hdlc_ioctl(d, अगरr, cmd);
-पूर्ण
+static int sealevel_ioctl(struct net_device *d, struct ifreq *ifr, int cmd)
+{
+	/* struct slvl_device *slvl=dev_to_chan(d);
+	   z8530_ioctl(d,&slvl->sync.chanA,ifr,cmd) */
+	return hdlc_ioctl(d, ifr, cmd);
+}
 
 /*
- *	Passed network frames, fire them करोwnwind.
+ *	Passed network frames, fire them downwind.
  */
 
-अटल netdev_tx_t sealevel_queue_xmit(काष्ठा sk_buff *skb,
-					     काष्ठा net_device *d)
-अणु
-	वापस z8530_queue_xmit(dev_to_chan(d)->chan, skb);
-पूर्ण
+static netdev_tx_t sealevel_queue_xmit(struct sk_buff *skb,
+					     struct net_device *d)
+{
+	return z8530_queue_xmit(dev_to_chan(d)->chan, skb);
+}
 
-अटल पूर्णांक sealevel_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding,
-			   अचिन्हित लघु parity)
-अणु
-	अगर (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
-		वापस 0;
-	वापस -EINVAL;
-पूर्ण
+static int sealevel_attach(struct net_device *dev, unsigned short encoding,
+			   unsigned short parity)
+{
+	if (encoding == ENCODING_NRZ && parity == PARITY_CRC16_PR1_CCITT)
+		return 0;
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा net_device_ops sealevel_ops = अणु
-	.nकरो_खोलो       = sealevel_खोलो,
-	.nकरो_stop       = sealevel_बंद,
-	.nकरो_start_xmit = hdlc_start_xmit,
-	.nकरो_करो_ioctl   = sealevel_ioctl,
-पूर्ण;
+static const struct net_device_ops sealevel_ops = {
+	.ndo_open       = sealevel_open,
+	.ndo_stop       = sealevel_close,
+	.ndo_start_xmit = hdlc_start_xmit,
+	.ndo_do_ioctl   = sealevel_ioctl,
+};
 
-अटल पूर्णांक slvl_setup(काष्ठा slvl_device *sv, पूर्णांक iobase, पूर्णांक irq)
-अणु
-	काष्ठा net_device *dev = alloc_hdlcdev(sv);
-	अगर (!dev)
-		वापस -1;
+static int slvl_setup(struct slvl_device *sv, int iobase, int irq)
+{
+	struct net_device *dev = alloc_hdlcdev(sv);
+	if (!dev)
+		return -1;
 
 	dev_to_hdlc(dev)->attach = sealevel_attach;
 	dev_to_hdlc(dev)->xmit = sealevel_queue_xmit;
@@ -186,39 +185,39 @@
 	dev->base_addr = iobase;
 	dev->irq = irq;
 
-	अगर (रेजिस्टर_hdlc_device(dev)) अणु
+	if (register_hdlc_device(dev)) {
 		pr_err("unable to register HDLC device\n");
-		मुक्त_netdev(dev);
-		वापस -1;
-	पूर्ण
+		free_netdev(dev);
+		return -1;
+	}
 
 	sv->chan->netdevice = dev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  *	Allocate and setup Sealevel board.
  */
 
-अटल __init काष्ठा slvl_board *slvl_init(पूर्णांक iobase, पूर्णांक irq,
-					   पूर्णांक txdma, पूर्णांक rxdma, पूर्णांक slow)
-अणु
-	काष्ठा z8530_dev *dev;
-	काष्ठा slvl_board *b;
+static __init struct slvl_board *slvl_init(int iobase, int irq,
+					   int txdma, int rxdma, int slow)
+{
+	struct z8530_dev *dev;
+	struct slvl_board *b;
 
 	/*
 	 *	Get the needed I/O space
 	 */
 
-	अगर (!request_region(iobase, 8, "Sealevel 4021")) अणु
+	if (!request_region(iobase, 8, "Sealevel 4021")) {
 		pr_warn("I/O 0x%X already in use\n", iobase);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	b = kzalloc(माप(काष्ठा slvl_board), GFP_KERNEL);
-	अगर (!b)
-		जाओ err_kzalloc;
+	b = kzalloc(sizeof(struct slvl_board), GFP_KERNEL);
+	if (!b)
+		goto err_kzalloc;
 
 	b->dev[0].chan = &b->board.chanA;
 	b->dev[0].channel = 0;
@@ -237,10 +236,10 @@
 	b->iobase = iobase;
 
 	/*
-	 *	Select 8530 delays क्रम the old board
+	 *	Select 8530 delays for the old board
 	 */
 
-	अगर (slow)
+	if (slow)
 		iobase |= Z8530_PORT_SLEEP;
 
 	dev->chanA.ctrlio = iobase + 1;
@@ -258,28 +257,28 @@
 	outb(3 | (1 << 7), b->iobase + 4);
 
 
-	/* We want a fast IRQ क्रम this device. Actually we'd like an even faster
-	   IRQ ;) - This is one driver RtLinux is made क्रम */
+	/* We want a fast IRQ for this device. Actually we'd like an even faster
+	   IRQ ;) - This is one driver RtLinux is made for */
 
-	अगर (request_irq(irq, z8530_पूर्णांकerrupt, 0,
-			"SeaLevel", dev) < 0) अणु
+	if (request_irq(irq, z8530_interrupt, 0,
+			"SeaLevel", dev) < 0) {
 		pr_warn("IRQ %d already in use\n", irq);
-		जाओ err_request_irq;
-	पूर्ण
+		goto err_request_irq;
+	}
 
 	dev->irq = irq;
-	dev->chanA.निजी = &b->dev[0];
-	dev->chanB.निजी = &b->dev[1];
+	dev->chanA.private = &b->dev[0];
+	dev->chanB.private = &b->dev[1];
 	dev->chanA.dev = dev;
 	dev->chanB.dev = dev;
 
 	dev->chanA.txdma = 3;
 	dev->chanA.rxdma = 1;
-	अगर (request_dma(dev->chanA.txdma, "SeaLevel (TX)"))
-		जाओ err_dma_tx;
+	if (request_dma(dev->chanA.txdma, "SeaLevel (TX)"))
+		goto err_dma_tx;
 
-	अगर (request_dma(dev->chanA.rxdma, "SeaLevel (RX)"))
-		जाओ err_dma_rx;
+	if (request_dma(dev->chanA.rxdma, "SeaLevel (RX)"))
+		goto err_dma_rx;
 
 	disable_irq(irq);
 
@@ -287,18 +286,18 @@
 	 *	Begin normal initialise
 	 */
 
-	अगर (z8530_init(dev) != 0) अणु
+	if (z8530_init(dev) != 0) {
 		pr_err("Z8530 series device not found\n");
 		enable_irq(irq);
-		जाओ मुक्त_hw;
-	पूर्ण
-	अगर (dev->type == Z85C30) अणु
+		goto free_hw;
+	}
+	if (dev->type == Z85C30) {
 		z8530_channel_load(&dev->chanA, z8530_hdlc_kilostream);
 		z8530_channel_load(&dev->chanB, z8530_hdlc_kilostream);
-	पूर्ण अन्यथा अणु
+	} else {
 		z8530_channel_load(&dev->chanA, z8530_hdlc_kilostream_85230);
 		z8530_channel_load(&dev->chanB, z8530_hdlc_kilostream_85230);
-	पूर्ण
+	}
 
 	/*
 	 *	Now we can take the IRQ
@@ -306,66 +305,66 @@
 
 	enable_irq(irq);
 
-	अगर (slvl_setup(&b->dev[0], iobase, irq))
-		जाओ मुक्त_hw;
-	अगर (slvl_setup(&b->dev[1], iobase, irq))
-		जाओ मुक्त_netdev0;
+	if (slvl_setup(&b->dev[0], iobase, irq))
+		goto free_hw;
+	if (slvl_setup(&b->dev[1], iobase, irq))
+		goto free_netdev0;
 
 	z8530_describe(dev, "I/O", iobase);
 	dev->active = 1;
-	वापस b;
+	return b;
 
-मुक्त_netdev0:
-	unरेजिस्टर_hdlc_device(b->dev[0].chan->netdevice);
-	मुक्त_netdev(b->dev[0].chan->netdevice);
-मुक्त_hw:
-	मुक्त_dma(dev->chanA.rxdma);
+free_netdev0:
+	unregister_hdlc_device(b->dev[0].chan->netdevice);
+	free_netdev(b->dev[0].chan->netdevice);
+free_hw:
+	free_dma(dev->chanA.rxdma);
 err_dma_rx:
-	मुक्त_dma(dev->chanA.txdma);
+	free_dma(dev->chanA.txdma);
 err_dma_tx:
-	मुक्त_irq(irq, dev);
+	free_irq(irq, dev);
 err_request_irq:
-	kमुक्त(b);
+	kfree(b);
 err_kzalloc:
 	release_region(iobase, 8);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम __निकास slvl_shutकरोwn(काष्ठा slvl_board *b)
-अणु
-	पूर्णांक u;
+static void __exit slvl_shutdown(struct slvl_board *b)
+{
+	int u;
 
-	z8530_shutकरोwn(&b->board);
+	z8530_shutdown(&b->board);
 
-	क्रम (u = 0; u < 2; u++) अणु
-		काष्ठा net_device *d = b->dev[u].chan->netdevice;
-		unरेजिस्टर_hdlc_device(d);
-		मुक्त_netdev(d);
-	पूर्ण
+	for (u = 0; u < 2; u++) {
+		struct net_device *d = b->dev[u].chan->netdevice;
+		unregister_hdlc_device(d);
+		free_netdev(d);
+	}
 
-	मुक्त_irq(b->board.irq, &b->board);
-	मुक्त_dma(b->board.chanA.rxdma);
-	मुक्त_dma(b->board.chanA.txdma);
+	free_irq(b->board.irq, &b->board);
+	free_dma(b->board.chanA.rxdma);
+	free_dma(b->board.chanA.txdma);
 	/* DMA off on the card, drop DTR */
 	outb(0, b->iobase);
 	release_region(b->iobase, 8);
-	kमुक्त(b);
-पूर्ण
+	kfree(b);
+}
 
 
-अटल पूर्णांक io=0x238;
-अटल पूर्णांक txdma=1;
-अटल पूर्णांक rxdma=3;
-अटल पूर्णांक irq=5;
-अटल bool slow=false;
+static int io=0x238;
+static int txdma=1;
+static int rxdma=3;
+static int irq=5;
+static bool slow=false;
 
-module_param_hw(io, पूर्णांक, ioport, 0);
+module_param_hw(io, int, ioport, 0);
 MODULE_PARM_DESC(io, "The I/O base of the Sealevel card");
-module_param_hw(txdma, पूर्णांक, dma, 0);
+module_param_hw(txdma, int, dma, 0);
 MODULE_PARM_DESC(txdma, "Transmit DMA channel");
-module_param_hw(rxdma, पूर्णांक, dma, 0);
+module_param_hw(rxdma, int, dma, 0);
 MODULE_PARM_DESC(rxdma, "Receive DMA channel");
-module_param_hw(irq, पूर्णांक, irq, 0);
+module_param_hw(irq, int, irq, 0);
 MODULE_PARM_DESC(irq, "The interrupt line setting for the SeaLevel card");
 module_param(slow, bool, 0);
 MODULE_PARM_DESC(slow, "Set this for an older Sealevel card such as the 4012");
@@ -374,20 +373,20 @@ MODULE_AUTHOR("Alan Cox");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Modular driver for the SeaLevel 4021");
 
-अटल काष्ठा slvl_board *slvl_unit;
+static struct slvl_board *slvl_unit;
 
-अटल पूर्णांक __init slvl_init_module(व्योम)
-अणु
+static int __init slvl_init_module(void)
+{
 	slvl_unit = slvl_init(io, irq, txdma, rxdma, slow);
 
-	वापस slvl_unit ? 0 : -ENODEV;
-पूर्ण
+	return slvl_unit ? 0 : -ENODEV;
+}
 
-अटल व्योम __निकास slvl_cleanup_module(व्योम)
-अणु
-	अगर (slvl_unit)
-		slvl_shutकरोwn(slvl_unit);
-पूर्ण
+static void __exit slvl_cleanup_module(void)
+{
+	if (slvl_unit)
+		slvl_shutdown(slvl_unit);
+}
 
 module_init(slvl_init_module);
-module_निकास(slvl_cleanup_module);
+module_exit(slvl_cleanup_module);

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// OWL factor घड़ी driver
+// OWL factor clock driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -9,214 +8,214 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश "owl-factor.h"
+#include "owl-factor.h"
 
-अटल अचिन्हित पूर्णांक _get_table_maxval(स्थिर काष्ठा clk_factor_table *table)
-अणु
-	अचिन्हित पूर्णांक maxval = 0;
-	स्थिर काष्ठा clk_factor_table *clkt;
+static unsigned int _get_table_maxval(const struct clk_factor_table *table)
+{
+	unsigned int maxval = 0;
+	const struct clk_factor_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++)
-		अगर (clkt->val > maxval)
+	for (clkt = table; clkt->div; clkt++)
+		if (clkt->val > maxval)
 			maxval = clkt->val;
-	वापस maxval;
-पूर्ण
+	return maxval;
+}
 
-अटल पूर्णांक _get_table_भाग_mul(स्थिर काष्ठा clk_factor_table *table,
-			अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक *mul, अचिन्हित पूर्णांक *भाग)
-अणु
-	स्थिर काष्ठा clk_factor_table *clkt;
+static int _get_table_div_mul(const struct clk_factor_table *table,
+			unsigned int val, unsigned int *mul, unsigned int *div)
+{
+	const struct clk_factor_table *clkt;
 
-	क्रम (clkt = table; clkt->भाग; clkt++) अणु
-		अगर (clkt->val == val) अणु
+	for (clkt = table; clkt->div; clkt++) {
+		if (clkt->val == val) {
 			*mul = clkt->mul;
-			*भाग = clkt->भाग;
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			*div = clkt->div;
+			return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक _get_table_val(स्थिर काष्ठा clk_factor_table *table,
-			अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate)
-अणु
-	स्थिर काष्ठा clk_factor_table *clkt;
-	पूर्णांक val = -1;
+static unsigned int _get_table_val(const struct clk_factor_table *table,
+			unsigned long rate, unsigned long parent_rate)
+{
+	const struct clk_factor_table *clkt;
+	int val = -1;
 	u64 calc_rate;
 
-	क्रम (clkt = table; clkt->भाग; clkt++) अणु
+	for (clkt = table; clkt->div; clkt++) {
 		calc_rate = parent_rate * clkt->mul;
-		करो_भाग(calc_rate, clkt->भाग);
+		do_div(calc_rate, clkt->div);
 
-		अगर ((अचिन्हित दीर्घ)calc_rate <= rate) अणु
+		if ((unsigned long)calc_rate <= rate) {
 			val = clkt->val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (val == -1)
+	if (val == -1)
 		val = _get_table_maxval(table);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक owl_clk_val_best(स्थिर काष्ठा owl_factor_hw *factor_hw,
-			काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			अचिन्हित दीर्घ *best_parent_rate)
-अणु
-	स्थिर काष्ठा clk_factor_table *clkt = factor_hw->table;
-	अचिन्हित दीर्घ parent_rate, try_parent_rate, best = 0, cur_rate;
-	अचिन्हित दीर्घ parent_rate_saved = *best_parent_rate;
-	पूर्णांक bestval = 0;
+static int owl_clk_val_best(const struct owl_factor_hw *factor_hw,
+			struct clk_hw *hw, unsigned long rate,
+			unsigned long *best_parent_rate)
+{
+	const struct clk_factor_table *clkt = factor_hw->table;
+	unsigned long parent_rate, try_parent_rate, best = 0, cur_rate;
+	unsigned long parent_rate_saved = *best_parent_rate;
+	int bestval = 0;
 
-	अगर (!rate)
+	if (!rate)
 		rate = 1;
 
-	अगर (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)) अणु
+	if (!(clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)) {
 		parent_rate = *best_parent_rate;
 		bestval = _get_table_val(clkt, rate, parent_rate);
-		वापस bestval;
-	पूर्ण
+		return bestval;
+	}
 
-	क्रम (clkt = factor_hw->table; clkt->भाग; clkt++) अणु
-		try_parent_rate = rate * clkt->भाग / clkt->mul;
+	for (clkt = factor_hw->table; clkt->div; clkt++) {
+		try_parent_rate = rate * clkt->div / clkt->mul;
 
-		अगर (try_parent_rate == parent_rate_saved) अणु
+		if (try_parent_rate == parent_rate_saved) {
 			pr_debug("%s: [%d %d %d] found try_parent_rate %ld\n",
-				__func__, clkt->val, clkt->mul, clkt->भाग,
+				__func__, clkt->val, clkt->mul, clkt->div,
 				try_parent_rate);
 			/*
-			 * It's the most ideal हाल अगर the requested rate can be
-			 * भागided from parent घड़ी without any need to change
-			 * parent rate, so वापस the भागider immediately.
+			 * It's the most ideal case if the requested rate can be
+			 * divided from parent clock without any need to change
+			 * parent rate, so return the divider immediately.
 			 */
 			*best_parent_rate = parent_rate_saved;
-			वापस clkt->val;
-		पूर्ण
+			return clkt->val;
+		}
 
 		parent_rate = clk_hw_round_rate(clk_hw_get_parent(hw),
 				try_parent_rate);
-		cur_rate = DIV_ROUND_UP(parent_rate, clkt->भाग) * clkt->mul;
-		अगर (cur_rate <= rate && cur_rate > best) अणु
+		cur_rate = DIV_ROUND_UP(parent_rate, clkt->div) * clkt->mul;
+		if (cur_rate <= rate && cur_rate > best) {
 			bestval = clkt->val;
 			best = cur_rate;
 			*best_parent_rate = parent_rate;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!bestval) अणु
+	if (!bestval) {
 		bestval = _get_table_maxval(clkt);
 		*best_parent_rate = clk_hw_round_rate(
 				clk_hw_get_parent(hw), 1);
-	पूर्ण
+	}
 
-	वापस bestval;
-पूर्ण
+	return bestval;
+}
 
-दीर्घ owl_factor_helper_round_rate(काष्ठा owl_clk_common *common,
-				स्थिर काष्ठा owl_factor_hw *factor_hw,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *parent_rate)
-अणु
-	स्थिर काष्ठा clk_factor_table *clkt = factor_hw->table;
-	अचिन्हित पूर्णांक val, mul = 0, भाग = 1;
+long owl_factor_helper_round_rate(struct owl_clk_common *common,
+				const struct owl_factor_hw *factor_hw,
+				unsigned long rate,
+				unsigned long *parent_rate)
+{
+	const struct clk_factor_table *clkt = factor_hw->table;
+	unsigned int val, mul = 0, div = 1;
 
 	val = owl_clk_val_best(factor_hw, &common->hw, rate, parent_rate);
-	_get_table_भाग_mul(clkt, val, &mul, &भाग);
+	_get_table_div_mul(clkt, val, &mul, &div);
 
-	वापस *parent_rate * mul / भाग;
-पूर्ण
+	return *parent_rate * mul / div;
+}
 
-अटल दीर्घ owl_factor_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा owl_factor *factor = hw_to_owl_factor(hw);
-	काष्ठा owl_factor_hw *factor_hw = &factor->factor_hw;
+static long owl_factor_round_rate(struct clk_hw *hw, unsigned long rate,
+			unsigned long *parent_rate)
+{
+	struct owl_factor *factor = hw_to_owl_factor(hw);
+	struct owl_factor_hw *factor_hw = &factor->factor_hw;
 
-	वापस owl_factor_helper_round_rate(&factor->common, factor_hw,
+	return owl_factor_helper_round_rate(&factor->common, factor_hw,
 					rate, parent_rate);
-पूर्ण
+}
 
-अचिन्हित दीर्घ owl_factor_helper_recalc_rate(काष्ठा owl_clk_common *common,
-					 स्थिर काष्ठा owl_factor_hw *factor_hw,
-					 अचिन्हित दीर्घ parent_rate)
-अणु
-	स्थिर काष्ठा clk_factor_table *clkt = factor_hw->table;
-	अचिन्हित दीर्घ दीर्घ पूर्णांक rate;
-	u32 reg, val, mul, भाग;
+unsigned long owl_factor_helper_recalc_rate(struct owl_clk_common *common,
+					 const struct owl_factor_hw *factor_hw,
+					 unsigned long parent_rate)
+{
+	const struct clk_factor_table *clkt = factor_hw->table;
+	unsigned long long int rate;
+	u32 reg, val, mul, div;
 
-	भाग = 0;
+	div = 0;
 	mul = 0;
 
-	regmap_पढ़ो(common->regmap, factor_hw->reg, &reg);
+	regmap_read(common->regmap, factor_hw->reg, &reg);
 
-	val = reg >> factor_hw->shअगरt;
-	val &= भाग_mask(factor_hw);
+	val = reg >> factor_hw->shift;
+	val &= div_mask(factor_hw);
 
-	_get_table_भाग_mul(clkt, val, &mul, &भाग);
-	अगर (!भाग) अणु
+	_get_table_div_mul(clkt, val, &mul, &div);
+	if (!div) {
 		WARN(!(factor_hw->fct_flags & CLK_DIVIDER_ALLOW_ZERO),
 			"%s: Zero divisor and CLK_DIVIDER_ALLOW_ZERO not set\n",
 			__clk_get_name(common->hw.clk));
-		वापस parent_rate;
-	पूर्ण
+		return parent_rate;
+	}
 
-	rate = (अचिन्हित दीर्घ दीर्घ पूर्णांक)parent_rate * mul;
-	करो_भाग(rate, भाग);
+	rate = (unsigned long long int)parent_rate * mul;
+	do_div(rate, div);
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल अचिन्हित दीर्घ owl_factor_recalc_rate(काष्ठा clk_hw *hw,
-			अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा owl_factor *factor = hw_to_owl_factor(hw);
-	काष्ठा owl_factor_hw *factor_hw = &factor->factor_hw;
-	काष्ठा owl_clk_common *common = &factor->common;
+static unsigned long owl_factor_recalc_rate(struct clk_hw *hw,
+			unsigned long parent_rate)
+{
+	struct owl_factor *factor = hw_to_owl_factor(hw);
+	struct owl_factor_hw *factor_hw = &factor->factor_hw;
+	struct owl_clk_common *common = &factor->common;
 
-	वापस owl_factor_helper_recalc_rate(common, factor_hw, parent_rate);
-पूर्ण
+	return owl_factor_helper_recalc_rate(common, factor_hw, parent_rate);
+}
 
-पूर्णांक owl_factor_helper_set_rate(स्थिर काष्ठा owl_clk_common *common,
-				स्थिर काष्ठा owl_factor_hw *factor_hw,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ parent_rate)
-अणु
+int owl_factor_helper_set_rate(const struct owl_clk_common *common,
+				const struct owl_factor_hw *factor_hw,
+				unsigned long rate,
+				unsigned long parent_rate)
+{
 	u32 val, reg;
 
 	val = _get_table_val(factor_hw->table, rate, parent_rate);
 
-	अगर (val > भाग_mask(factor_hw))
-		val = भाग_mask(factor_hw);
+	if (val > div_mask(factor_hw))
+		val = div_mask(factor_hw);
 
-	regmap_पढ़ो(common->regmap, factor_hw->reg, &reg);
+	regmap_read(common->regmap, factor_hw->reg, &reg);
 
-	reg &= ~(भाग_mask(factor_hw) << factor_hw->shअगरt);
-	reg |= val << factor_hw->shअगरt;
+	reg &= ~(div_mask(factor_hw) << factor_hw->shift);
+	reg |= val << factor_hw->shift;
 
-	regmap_ग_लिखो(common->regmap, factor_hw->reg, reg);
+	regmap_write(common->regmap, factor_hw->reg, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक owl_factor_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा owl_factor *factor = hw_to_owl_factor(hw);
-	काष्ठा owl_factor_hw *factor_hw = &factor->factor_hw;
-	काष्ठा owl_clk_common *common = &factor->common;
+static int owl_factor_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct owl_factor *factor = hw_to_owl_factor(hw);
+	struct owl_factor_hw *factor_hw = &factor->factor_hw;
+	struct owl_clk_common *common = &factor->common;
 
-	वापस owl_factor_helper_set_rate(common, factor_hw,
+	return owl_factor_helper_set_rate(common, factor_hw,
 					rate, parent_rate);
-पूर्ण
+}
 
-स्थिर काष्ठा clk_ops owl_factor_ops = अणु
+const struct clk_ops owl_factor_ops = {
 	.round_rate	= owl_factor_round_rate,
 	.recalc_rate	= owl_factor_recalc_rate,
 	.set_rate	= owl_factor_set_rate,
-पूर्ण;
+};

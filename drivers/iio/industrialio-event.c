@@ -1,245 +1,244 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Industrial I/O event handling
  *
  * Copyright (c) 2008 Jonathan Cameron
  *
- * Based on elements of hwmon and input subप्रणालीs.
+ * Based on elements of hwmon and input subsystems.
  */
 
-#समावेश <linux/anon_inodes.h>
-#समावेश <linux/device.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/module.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/iio-opaque.h>
-#समावेश "iio_core.h"
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/events.h>
+#include <linux/anon_inodes.h>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/kernel.h>
+#include <linux/kfifo.h>
+#include <linux/module.h>
+#include <linux/poll.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/wait.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/iio-opaque.h>
+#include "iio_core.h"
+#include <linux/iio/sysfs.h>
+#include <linux/iio/events.h>
 
 /**
- * काष्ठा iio_event_पूर्णांकerface - chrdev पूर्णांकerface क्रम an event line
- * @रुको:		रुको queue to allow blocking पढ़ोs of events
+ * struct iio_event_interface - chrdev interface for an event line
+ * @wait:		wait queue to allow blocking reads of events
  * @det_events:		list of detected events
- * @dev_attr_list:	list of event पूर्णांकerface sysfs attribute
+ * @dev_attr_list:	list of event interface sysfs attribute
  * @flags:		file operations related flags including busy flag.
- * @group:		event पूर्णांकerface sysfs attribute group
- * @पढ़ो_lock:		lock to protect kfअगरo पढ़ो operations
- * @ioctl_handler:	handler क्रम event ioctl() calls
+ * @group:		event interface sysfs attribute group
+ * @read_lock:		lock to protect kfifo read operations
+ * @ioctl_handler:	handler for event ioctl() calls
  */
-काष्ठा iio_event_पूर्णांकerface अणु
-	रुको_queue_head_t	रुको;
-	DECLARE_KFIFO(det_events, काष्ठा iio_event_data, 16);
+struct iio_event_interface {
+	wait_queue_head_t	wait;
+	DECLARE_KFIFO(det_events, struct iio_event_data, 16);
 
-	काष्ठा list_head	dev_attr_list;
-	अचिन्हित दीर्घ		flags;
-	काष्ठा attribute_group	group;
-	काष्ठा mutex		पढ़ो_lock;
-	काष्ठा iio_ioctl_handler	ioctl_handler;
-पूर्ण;
+	struct list_head	dev_attr_list;
+	unsigned long		flags;
+	struct attribute_group	group;
+	struct mutex		read_lock;
+	struct iio_ioctl_handler	ioctl_handler;
+};
 
-bool iio_event_enabled(स्थिर काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक)
-अणु
-	वापस !!test_bit(IIO_BUSY_BIT_POS, &ev_पूर्णांक->flags);
-पूर्ण
+bool iio_event_enabled(const struct iio_event_interface *ev_int)
+{
+	return !!test_bit(IIO_BUSY_BIT_POS, &ev_int->flags);
+}
 
 /**
- * iio_push_event() - try to add event to the list क्रम userspace पढ़ोing
- * @indio_dev:		IIO device काष्ठाure
+ * iio_push_event() - try to add event to the list for userspace reading
+ * @indio_dev:		IIO device structure
  * @ev_code:		What event
- * @बारtamp:		When the event occurred
+ * @timestamp:		When the event occurred
  *
  * Note: The caller must make sure that this function is not running
- * concurrently क्रम the same indio_dev more than once.
+ * concurrently for the same indio_dev more than once.
  *
  * This function may be safely used as soon as a valid reference to iio_dev has
  * been obtained via iio_device_alloc(), but any events that are submitted
- * beक्रमe iio_device_रेजिस्टर() has successfully completed will be silently
+ * before iio_device_register() has successfully completed will be silently
  * discarded.
  **/
-पूर्णांक iio_push_event(काष्ठा iio_dev *indio_dev, u64 ev_code, s64 बारtamp)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक = iio_dev_opaque->event_पूर्णांकerface;
-	काष्ठा iio_event_data ev;
-	पूर्णांक copied;
+int iio_push_event(struct iio_dev *indio_dev, u64 ev_code, s64 timestamp)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int = iio_dev_opaque->event_interface;
+	struct iio_event_data ev;
+	int copied;
 
-	अगर (!ev_पूर्णांक)
-		वापस 0;
+	if (!ev_int)
+		return 0;
 
 	/* Does anyone care? */
-	अगर (iio_event_enabled(ev_पूर्णांक)) अणु
+	if (iio_event_enabled(ev_int)) {
 
 		ev.id = ev_code;
-		ev.बारtamp = बारtamp;
+		ev.timestamp = timestamp;
 
-		copied = kfअगरo_put(&ev_पूर्णांक->det_events, ev);
-		अगर (copied != 0)
-			wake_up_poll(&ev_पूर्णांक->रुको, EPOLLIN);
-	पूर्ण
+		copied = kfifo_put(&ev_int->det_events, ev);
+		if (copied != 0)
+			wake_up_poll(&ev_int->wait, EPOLLIN);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(iio_push_event);
 
 /**
- * iio_event_poll() - poll the event queue to find out अगर it has data
- * @filep:	File काष्ठाure poपूर्णांकer to identअगरy the device
- * @रुको:	Poll table poपूर्णांकer to add the रुको queue on
+ * iio_event_poll() - poll the event queue to find out if it has data
+ * @filep:	File structure pointer to identify the device
+ * @wait:	Poll table pointer to add the wait queue on
  *
- * Return: (EPOLLIN | EPOLLRDNORM) अगर data is available क्रम पढ़ोing
+ * Return: (EPOLLIN | EPOLLRDNORM) if data is available for reading
  *	   or a negative error code on failure
  */
-अटल __poll_t iio_event_poll(काष्ठा file *filep,
-			     काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा iio_dev *indio_dev = filep->निजी_data;
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक = iio_dev_opaque->event_पूर्णांकerface;
+static __poll_t iio_event_poll(struct file *filep,
+			     struct poll_table_struct *wait)
+{
+	struct iio_dev *indio_dev = filep->private_data;
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int = iio_dev_opaque->event_interface;
 	__poll_t events = 0;
 
-	अगर (!indio_dev->info)
-		वापस events;
+	if (!indio_dev->info)
+		return events;
 
-	poll_रुको(filep, &ev_पूर्णांक->रुको, रुको);
+	poll_wait(filep, &ev_int->wait, wait);
 
-	अगर (!kfअगरo_is_empty(&ev_पूर्णांक->det_events))
+	if (!kfifo_is_empty(&ev_int->det_events))
 		events = EPOLLIN | EPOLLRDNORM;
 
-	वापस events;
-पूर्ण
+	return events;
+}
 
-अटल sमाप_प्रकार iio_event_chrdev_पढ़ो(काष्ठा file *filep,
-				     अक्षर __user *buf,
-				     माप_प्रकार count,
+static ssize_t iio_event_chrdev_read(struct file *filep,
+				     char __user *buf,
+				     size_t count,
 				     loff_t *f_ps)
-अणु
-	काष्ठा iio_dev *indio_dev = filep->निजी_data;
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक = iio_dev_opaque->event_पूर्णांकerface;
-	अचिन्हित पूर्णांक copied;
-	पूर्णांक ret;
+{
+	struct iio_dev *indio_dev = filep->private_data;
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int = iio_dev_opaque->event_interface;
+	unsigned int copied;
+	int ret;
 
-	अगर (!indio_dev->info)
-		वापस -ENODEV;
+	if (!indio_dev->info)
+		return -ENODEV;
 
-	अगर (count < माप(काष्ठा iio_event_data))
-		वापस -EINVAL;
+	if (count < sizeof(struct iio_event_data))
+		return -EINVAL;
 
-	करो अणु
-		अगर (kfअगरo_is_empty(&ev_पूर्णांक->det_events)) अणु
-			अगर (filep->f_flags & O_NONBLOCK)
-				वापस -EAGAIN;
+	do {
+		if (kfifo_is_empty(&ev_int->det_events)) {
+			if (filep->f_flags & O_NONBLOCK)
+				return -EAGAIN;
 
-			ret = रुको_event_पूर्णांकerruptible(ev_पूर्णांक->रुको,
-					!kfअगरo_is_empty(&ev_पूर्णांक->det_events) ||
-					indio_dev->info == शून्य);
-			अगर (ret)
-				वापस ret;
-			अगर (indio_dev->info == शून्य)
-				वापस -ENODEV;
-		पूर्ण
+			ret = wait_event_interruptible(ev_int->wait,
+					!kfifo_is_empty(&ev_int->det_events) ||
+					indio_dev->info == NULL);
+			if (ret)
+				return ret;
+			if (indio_dev->info == NULL)
+				return -ENODEV;
+		}
 
-		अगर (mutex_lock_पूर्णांकerruptible(&ev_पूर्णांक->पढ़ो_lock))
-			वापस -ERESTARTSYS;
-		ret = kfअगरo_to_user(&ev_पूर्णांक->det_events, buf, count, &copied);
-		mutex_unlock(&ev_पूर्णांक->पढ़ो_lock);
+		if (mutex_lock_interruptible(&ev_int->read_lock))
+			return -ERESTARTSYS;
+		ret = kfifo_to_user(&ev_int->det_events, buf, count, &copied);
+		mutex_unlock(&ev_int->read_lock);
 
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/*
-		 * If we couldn't पढ़ो anything from the fअगरo (a dअगरferent
-		 * thपढ़ो might have been faster) we either वापस -EAGAIN अगर
+		 * If we couldn't read anything from the fifo (a different
+		 * thread might have been faster) we either return -EAGAIN if
 		 * the file descriptor is non-blocking, otherwise we go back to
-		 * sleep and रुको क्रम more data to arrive.
+		 * sleep and wait for more data to arrive.
 		 */
-		अगर (copied == 0 && (filep->f_flags & O_NONBLOCK))
-			वापस -EAGAIN;
+		if (copied == 0 && (filep->f_flags & O_NONBLOCK))
+			return -EAGAIN;
 
-	पूर्ण जबतक (copied == 0);
+	} while (copied == 0);
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल पूर्णांक iio_event_chrdev_release(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा iio_dev *indio_dev = filep->निजी_data;
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक = iio_dev_opaque->event_पूर्णांकerface;
+static int iio_event_chrdev_release(struct inode *inode, struct file *filep)
+{
+	struct iio_dev *indio_dev = filep->private_data;
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int = iio_dev_opaque->event_interface;
 
-	clear_bit(IIO_BUSY_BIT_POS, &ev_पूर्णांक->flags);
+	clear_bit(IIO_BUSY_BIT_POS, &ev_int->flags);
 
 	iio_device_put(indio_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations iio_event_chrdev_fileops = अणु
-	.पढ़ो =  iio_event_chrdev_पढ़ो,
+static const struct file_operations iio_event_chrdev_fileops = {
+	.read =  iio_event_chrdev_read,
 	.poll =  iio_event_poll,
 	.release = iio_event_chrdev_release,
 	.owner = THIS_MODULE,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक iio_event_getfd(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक = iio_dev_opaque->event_पूर्णांकerface;
-	पूर्णांक fd;
+static int iio_event_getfd(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int = iio_dev_opaque->event_interface;
+	int fd;
 
-	अगर (ev_पूर्णांक == शून्य)
-		वापस -ENODEV;
+	if (ev_int == NULL)
+		return -ENODEV;
 
-	fd = mutex_lock_पूर्णांकerruptible(&indio_dev->mlock);
-	अगर (fd)
-		वापस fd;
+	fd = mutex_lock_interruptible(&indio_dev->mlock);
+	if (fd)
+		return fd;
 
-	अगर (test_and_set_bit(IIO_BUSY_BIT_POS, &ev_पूर्णांक->flags)) अणु
+	if (test_and_set_bit(IIO_BUSY_BIT_POS, &ev_int->flags)) {
 		fd = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	iio_device_get(indio_dev);
 
 	fd = anon_inode_getfd("iio:event", &iio_event_chrdev_fileops,
 				indio_dev, O_RDONLY | O_CLOEXEC);
-	अगर (fd < 0) अणु
-		clear_bit(IIO_BUSY_BIT_POS, &ev_पूर्णांक->flags);
+	if (fd < 0) {
+		clear_bit(IIO_BUSY_BIT_POS, &ev_int->flags);
 		iio_device_put(indio_dev);
-	पूर्ण अन्यथा अणु
-		kfअगरo_reset_out(&ev_पूर्णांक->det_events);
-	पूर्ण
+	} else {
+		kfifo_reset_out(&ev_int->det_events);
+	}
 
 unlock:
 	mutex_unlock(&indio_dev->mlock);
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल स्थिर अक्षर * स्थिर iio_ev_type_text[] = अणु
+static const char * const iio_ev_type_text[] = {
 	[IIO_EV_TYPE_THRESH] = "thresh",
 	[IIO_EV_TYPE_MAG] = "mag",
 	[IIO_EV_TYPE_ROC] = "roc",
 	[IIO_EV_TYPE_THRESH_ADAPTIVE] = "thresh_adaptive",
 	[IIO_EV_TYPE_MAG_ADAPTIVE] = "mag_adaptive",
 	[IIO_EV_TYPE_CHANGE] = "change",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर iio_ev_dir_text[] = अणु
-	[IIO_EV_सूची_EITHER] = "either",
-	[IIO_EV_सूची_RISING] = "rising",
-	[IIO_EV_सूची_FALLING] = "falling"
-पूर्ण;
+static const char * const iio_ev_dir_text[] = {
+	[IIO_EV_DIR_EITHER] = "either",
+	[IIO_EV_DIR_RISING] = "rising",
+	[IIO_EV_DIR_FALLING] = "falling"
+};
 
-अटल स्थिर अक्षर * स्थिर iio_ev_info_text[] = अणु
+static const char * const iio_ev_info_text[] = {
 	[IIO_EV_INFO_ENABLE] = "en",
 	[IIO_EV_INFO_VALUE] = "value",
 	[IIO_EV_INFO_HYSTERESIS] = "hysteresis",
@@ -247,351 +246,351 @@ unlock:
 	[IIO_EV_INFO_HIGH_PASS_FILTER_3DB] = "high_pass_filter_3db",
 	[IIO_EV_INFO_LOW_PASS_FILTER_3DB] = "low_pass_filter_3db",
 	[IIO_EV_INFO_TIMEOUT] = "timeout",
-पूर्ण;
+};
 
-अटल क्रमागत iio_event_direction iio_ev_attr_dir(काष्ठा iio_dev_attr *attr)
-अणु
-	वापस attr->c->event_spec[attr->address & 0xffff].dir;
-पूर्ण
+static enum iio_event_direction iio_ev_attr_dir(struct iio_dev_attr *attr)
+{
+	return attr->c->event_spec[attr->address & 0xffff].dir;
+}
 
-अटल क्रमागत iio_event_type iio_ev_attr_type(काष्ठा iio_dev_attr *attr)
-अणु
-	वापस attr->c->event_spec[attr->address & 0xffff].type;
-पूर्ण
+static enum iio_event_type iio_ev_attr_type(struct iio_dev_attr *attr)
+{
+	return attr->c->event_spec[attr->address & 0xffff].type;
+}
 
-अटल क्रमागत iio_event_info iio_ev_attr_info(काष्ठा iio_dev_attr *attr)
-अणु
-	वापस (attr->address >> 16) & 0xffff;
-पूर्ण
+static enum iio_event_info iio_ev_attr_info(struct iio_dev_attr *attr)
+{
+	return (attr->address >> 16) & 0xffff;
+}
 
-अटल sमाप_प्रकार iio_ev_state_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf,
-				  माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
-	पूर्णांक ret;
+static ssize_t iio_ev_state_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf,
+				  size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+	int ret;
 	bool val;
 
 	ret = strtobool(buf, &val);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = indio_dev->info->ग_लिखो_event_config(indio_dev,
+	ret = indio_dev->info->write_event_config(indio_dev,
 		this_attr->c, iio_ev_attr_type(this_attr),
 		iio_ev_attr_dir(this_attr), val);
 
-	वापस (ret < 0) ? ret : len;
-पूर्ण
+	return (ret < 0) ? ret : len;
+}
 
-अटल sमाप_प्रकार iio_ev_state_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
-	पूर्णांक val;
+static ssize_t iio_ev_state_show(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+	int val;
 
-	val = indio_dev->info->पढ़ो_event_config(indio_dev,
+	val = indio_dev->info->read_event_config(indio_dev,
 		this_attr->c, iio_ev_attr_type(this_attr),
 		iio_ev_attr_dir(this_attr));
-	अगर (val < 0)
-		वापस val;
-	अन्यथा
-		वापस sysfs_emit(buf, "%d\n", val);
-पूर्ण
+	if (val < 0)
+		return val;
+	else
+		return sysfs_emit(buf, "%d\n", val);
+}
 
-अटल sमाप_प्रकार iio_ev_value_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
-	पूर्णांक val, val2, val_arr[2];
-	पूर्णांक ret;
+static ssize_t iio_ev_value_show(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+	int val, val2, val_arr[2];
+	int ret;
 
-	ret = indio_dev->info->पढ़ो_event_value(indio_dev,
+	ret = indio_dev->info->read_event_value(indio_dev,
 		this_attr->c, iio_ev_attr_type(this_attr),
 		iio_ev_attr_dir(this_attr), iio_ev_attr_info(this_attr),
 		&val, &val2);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	val_arr[0] = val;
 	val_arr[1] = val2;
-	वापस iio_क्रमmat_value(buf, ret, 2, val_arr);
-पूर्ण
+	return iio_format_value(buf, ret, 2, val_arr);
+}
 
-अटल sमाप_प्रकार iio_ev_value_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf,
-				  माप_प्रकार len)
-अणु
-	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
-	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
-	पूर्णांक val, val2;
-	पूर्णांक ret;
+static ssize_t iio_ev_value_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf,
+				  size_t len)
+{
+	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
+	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+	int val, val2;
+	int ret;
 
-	अगर (!indio_dev->info->ग_लिखो_event_value)
-		वापस -EINVAL;
+	if (!indio_dev->info->write_event_value)
+		return -EINVAL;
 
-	ret = iio_str_to_fixpoपूर्णांक(buf, 100000, &val, &val2);
-	अगर (ret)
-		वापस ret;
-	ret = indio_dev->info->ग_लिखो_event_value(indio_dev,
+	ret = iio_str_to_fixpoint(buf, 100000, &val, &val2);
+	if (ret)
+		return ret;
+	ret = indio_dev->info->write_event_value(indio_dev,
 		this_attr->c, iio_ev_attr_type(this_attr),
 		iio_ev_attr_dir(this_attr), iio_ev_attr_info(this_attr),
 		val, val2);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक iio_device_add_event(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, अचिन्हित पूर्णांक spec_index,
-	क्रमागत iio_event_type type, क्रमागत iio_event_direction dir,
-	क्रमागत iio_shared_by shared_by, स्थिर अचिन्हित दीर्घ *mask)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	sमाप_प्रकार (*show)(काष्ठा device *, काष्ठा device_attribute *, अक्षर *);
-	sमाप_प्रकार (*store)(काष्ठा device *, काष्ठा device_attribute *,
-		स्थिर अक्षर *, माप_प्रकार);
-	अचिन्हित पूर्णांक attrcount = 0;
-	अचिन्हित पूर्णांक i;
-	अक्षर *postfix;
-	पूर्णांक ret;
+static int iio_device_add_event(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, unsigned int spec_index,
+	enum iio_event_type type, enum iio_event_direction dir,
+	enum iio_shared_by shared_by, const unsigned long *mask)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	ssize_t (*show)(struct device *, struct device_attribute *, char *);
+	ssize_t (*store)(struct device *, struct device_attribute *,
+		const char *, size_t);
+	unsigned int attrcount = 0;
+	unsigned int i;
+	char *postfix;
+	int ret;
 
-	क्रम_each_set_bit(i, mask, माप(*mask)*8) अणु
-		अगर (i >= ARRAY_SIZE(iio_ev_info_text))
-			वापस -EINVAL;
-		अगर (dir != IIO_EV_सूची_NONE)
-			postfix = kaप्र_लिखो(GFP_KERNEL, "%s_%s_%s",
+	for_each_set_bit(i, mask, sizeof(*mask)*8) {
+		if (i >= ARRAY_SIZE(iio_ev_info_text))
+			return -EINVAL;
+		if (dir != IIO_EV_DIR_NONE)
+			postfix = kasprintf(GFP_KERNEL, "%s_%s_%s",
 					iio_ev_type_text[type],
 					iio_ev_dir_text[dir],
 					iio_ev_info_text[i]);
-		अन्यथा
-			postfix = kaप्र_लिखो(GFP_KERNEL, "%s_%s",
+		else
+			postfix = kasprintf(GFP_KERNEL, "%s_%s",
 					iio_ev_type_text[type],
 					iio_ev_info_text[i]);
-		अगर (postfix == शून्य)
-			वापस -ENOMEM;
+		if (postfix == NULL)
+			return -ENOMEM;
 
-		अगर (i == IIO_EV_INFO_ENABLE) अणु
+		if (i == IIO_EV_INFO_ENABLE) {
 			show = iio_ev_state_show;
 			store = iio_ev_state_store;
-		पूर्ण अन्यथा अणु
+		} else {
 			show = iio_ev_value_show;
 			store = iio_ev_value_store;
-		पूर्ण
+		}
 
 		ret = __iio_add_chan_devattr(postfix, chan, show, store,
 			 (i << 16) | spec_index, shared_by, &indio_dev->dev,
-			 शून्य,
-			&iio_dev_opaque->event_पूर्णांकerface->dev_attr_list);
-		kमुक्त(postfix);
+			 NULL,
+			&iio_dev_opaque->event_interface->dev_attr_list);
+		kfree(postfix);
 
-		अगर ((ret == -EBUSY) && (shared_by != IIO_SEPARATE))
-			जारी;
+		if ((ret == -EBUSY) && (shared_by != IIO_SEPARATE))
+			continue;
 
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		attrcount++;
-	पूर्ण
+	}
 
-	वापस attrcount;
-पूर्ण
+	return attrcount;
+}
 
-अटल पूर्णांक iio_device_add_event_sysfs(काष्ठा iio_dev *indio_dev,
-	काष्ठा iio_chan_spec स्थिर *chan)
-अणु
-	पूर्णांक ret = 0, i, attrcount = 0;
-	क्रमागत iio_event_direction dir;
-	क्रमागत iio_event_type type;
+static int iio_device_add_event_sysfs(struct iio_dev *indio_dev,
+	struct iio_chan_spec const *chan)
+{
+	int ret = 0, i, attrcount = 0;
+	enum iio_event_direction dir;
+	enum iio_event_type type;
 
-	क्रम (i = 0; i < chan->num_event_specs; i++) अणु
+	for (i = 0; i < chan->num_event_specs; i++) {
 		type = chan->event_spec[i].type;
 		dir = chan->event_spec[i].dir;
 
 		ret = iio_device_add_event(indio_dev, chan, i, type, dir,
 			IIO_SEPARATE, &chan->event_spec[i].mask_separate);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		attrcount += ret;
 
 		ret = iio_device_add_event(indio_dev, chan, i, type, dir,
 			IIO_SHARED_BY_TYPE,
 			&chan->event_spec[i].mask_shared_by_type);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		attrcount += ret;
 
 		ret = iio_device_add_event(indio_dev, chan, i, type, dir,
-			IIO_SHARED_BY_सूची,
+			IIO_SHARED_BY_DIR,
 			&chan->event_spec[i].mask_shared_by_dir);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		attrcount += ret;
 
 		ret = iio_device_add_event(indio_dev, chan, i, type, dir,
 			IIO_SHARED_BY_ALL,
 			&chan->event_spec[i].mask_shared_by_all);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		attrcount += ret;
-	पूर्ण
+	}
 	ret = attrcount;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक __iio_add_event_config_attrs(काष्ठा iio_dev *indio_dev)
-अणु
-	पूर्णांक j, ret, attrcount = 0;
+static inline int __iio_add_event_config_attrs(struct iio_dev *indio_dev)
+{
+	int j, ret, attrcount = 0;
 
 	/* Dynamically created from the channels array */
-	क्रम (j = 0; j < indio_dev->num_channels; j++) अणु
+	for (j = 0; j < indio_dev->num_channels; j++) {
 		ret = iio_device_add_event_sysfs(indio_dev,
 						 &indio_dev->channels[j]);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		attrcount += ret;
-	पूर्ण
-	वापस attrcount;
-पूर्ण
+	}
+	return attrcount;
+}
 
-अटल bool iio_check_क्रम_dynamic_events(काष्ठा iio_dev *indio_dev)
-अणु
-	पूर्णांक j;
+static bool iio_check_for_dynamic_events(struct iio_dev *indio_dev)
+{
+	int j;
 
-	क्रम (j = 0; j < indio_dev->num_channels; j++) अणु
-		अगर (indio_dev->channels[j].num_event_specs != 0)
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (j = 0; j < indio_dev->num_channels; j++) {
+		if (indio_dev->channels[j].num_event_specs != 0)
+			return true;
+	}
+	return false;
+}
 
-अटल व्योम iio_setup_ev_पूर्णांक(काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक)
-अणु
-	INIT_KFIFO(ev_पूर्णांक->det_events);
-	init_रुकोqueue_head(&ev_पूर्णांक->रुको);
-	mutex_init(&ev_पूर्णांक->पढ़ो_lock);
-पूर्ण
+static void iio_setup_ev_int(struct iio_event_interface *ev_int)
+{
+	INIT_KFIFO(ev_int->det_events);
+	init_waitqueue_head(&ev_int->wait);
+	mutex_init(&ev_int->read_lock);
+}
 
-अटल दीर्घ iio_event_ioctl(काष्ठा iio_dev *indio_dev, काष्ठा file *filp,
-			    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	पूर्णांक __user *ip = (पूर्णांक __user *)arg;
-	पूर्णांक fd;
+static long iio_event_ioctl(struct iio_dev *indio_dev, struct file *filp,
+			    unsigned int cmd, unsigned long arg)
+{
+	int __user *ip = (int __user *)arg;
+	int fd;
 
-	अगर (cmd == IIO_GET_EVENT_FD_IOCTL) अणु
+	if (cmd == IIO_GET_EVENT_FD_IOCTL) {
 		fd = iio_event_getfd(indio_dev);
-		अगर (fd < 0)
-			वापस fd;
-		अगर (copy_to_user(ip, &fd, माप(fd)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+		if (fd < 0)
+			return fd;
+		if (copy_to_user(ip, &fd, sizeof(fd)))
+			return -EFAULT;
+		return 0;
+	}
 
-	वापस IIO_IOCTL_UNHANDLED;
-पूर्ण
+	return IIO_IOCTL_UNHANDLED;
+}
 
-अटल स्थिर अक्षर *iio_event_group_name = "events";
-पूर्णांक iio_device_रेजिस्टर_eventset(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक;
-	काष्ठा iio_dev_attr *p;
-	पूर्णांक ret = 0, attrcount_orig = 0, attrcount, attrn;
-	काष्ठा attribute **attr;
+static const char *iio_event_group_name = "events";
+int iio_device_register_eventset(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int;
+	struct iio_dev_attr *p;
+	int ret = 0, attrcount_orig = 0, attrcount, attrn;
+	struct attribute **attr;
 
-	अगर (!(indio_dev->info->event_attrs ||
-	      iio_check_क्रम_dynamic_events(indio_dev)))
-		वापस 0;
+	if (!(indio_dev->info->event_attrs ||
+	      iio_check_for_dynamic_events(indio_dev)))
+		return 0;
 
-	ev_पूर्णांक = kzalloc(माप(काष्ठा iio_event_पूर्णांकerface), GFP_KERNEL);
-	अगर (ev_पूर्णांक == शून्य)
-		वापस -ENOMEM;
+	ev_int = kzalloc(sizeof(struct iio_event_interface), GFP_KERNEL);
+	if (ev_int == NULL)
+		return -ENOMEM;
 
-	iio_dev_opaque->event_पूर्णांकerface = ev_पूर्णांक;
+	iio_dev_opaque->event_interface = ev_int;
 
-	INIT_LIST_HEAD(&ev_पूर्णांक->dev_attr_list);
+	INIT_LIST_HEAD(&ev_int->dev_attr_list);
 
-	iio_setup_ev_पूर्णांक(ev_पूर्णांक);
-	अगर (indio_dev->info->event_attrs != शून्य) अणु
+	iio_setup_ev_int(ev_int);
+	if (indio_dev->info->event_attrs != NULL) {
 		attr = indio_dev->info->event_attrs->attrs;
-		जबतक (*attr++ != शून्य)
+		while (*attr++ != NULL)
 			attrcount_orig++;
-	पूर्ण
+	}
 	attrcount = attrcount_orig;
-	अगर (indio_dev->channels) अणु
+	if (indio_dev->channels) {
 		ret = __iio_add_event_config_attrs(indio_dev);
-		अगर (ret < 0)
-			जाओ error_मुक्त_setup_event_lines;
+		if (ret < 0)
+			goto error_free_setup_event_lines;
 		attrcount += ret;
-	पूर्ण
+	}
 
-	ev_पूर्णांक->group.name = iio_event_group_name;
-	ev_पूर्णांक->group.attrs = kसुस्मृति(attrcount + 1,
-				      माप(ev_पूर्णांक->group.attrs[0]),
+	ev_int->group.name = iio_event_group_name;
+	ev_int->group.attrs = kcalloc(attrcount + 1,
+				      sizeof(ev_int->group.attrs[0]),
 				      GFP_KERNEL);
-	अगर (ev_पूर्णांक->group.attrs == शून्य) अणु
+	if (ev_int->group.attrs == NULL) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_setup_event_lines;
-	पूर्ण
-	अगर (indio_dev->info->event_attrs)
-		स_नकल(ev_पूर्णांक->group.attrs,
+		goto error_free_setup_event_lines;
+	}
+	if (indio_dev->info->event_attrs)
+		memcpy(ev_int->group.attrs,
 		       indio_dev->info->event_attrs->attrs,
-		       माप(ev_पूर्णांक->group.attrs[0]) * attrcount_orig);
+		       sizeof(ev_int->group.attrs[0]) * attrcount_orig);
 	attrn = attrcount_orig;
 	/* Add all elements from the list. */
-	list_क्रम_each_entry(p, &ev_पूर्णांक->dev_attr_list, l)
-		ev_पूर्णांक->group.attrs[attrn++] = &p->dev_attr.attr;
+	list_for_each_entry(p, &ev_int->dev_attr_list, l)
+		ev_int->group.attrs[attrn++] = &p->dev_attr.attr;
 
-	ret = iio_device_रेजिस्टर_sysfs_group(indio_dev, &ev_पूर्णांक->group);
-	अगर (ret)
-		जाओ error_मुक्त_setup_event_lines;
+	ret = iio_device_register_sysfs_group(indio_dev, &ev_int->group);
+	if (ret)
+		goto error_free_setup_event_lines;
 
-	ev_पूर्णांक->ioctl_handler.ioctl = iio_event_ioctl;
-	iio_device_ioctl_handler_रेजिस्टर(&iio_dev_opaque->indio_dev,
-					  &ev_पूर्णांक->ioctl_handler);
+	ev_int->ioctl_handler.ioctl = iio_event_ioctl;
+	iio_device_ioctl_handler_register(&iio_dev_opaque->indio_dev,
+					  &ev_int->ioctl_handler);
 
-	वापस 0;
+	return 0;
 
-error_मुक्त_setup_event_lines:
-	iio_मुक्त_chan_devattr_list(&ev_पूर्णांक->dev_attr_list);
-	kमुक्त(ev_पूर्णांक);
-	iio_dev_opaque->event_पूर्णांकerface = शून्य;
-	वापस ret;
-पूर्ण
+error_free_setup_event_lines:
+	iio_free_chan_devattr_list(&ev_int->dev_attr_list);
+	kfree(ev_int);
+	iio_dev_opaque->event_interface = NULL;
+	return ret;
+}
 
 /**
- * iio_device_wakeup_eventset - Wakes up the event रुकोqueue
+ * iio_device_wakeup_eventset - Wakes up the event waitqueue
  * @indio_dev: The IIO device
  *
- * Wakes up the event रुकोqueue used क्रम poll() and blocking पढ़ो().
- * Should usually be called when the device is unरेजिस्टरed.
+ * Wakes up the event waitqueue used for poll() and blocking read().
+ * Should usually be called when the device is unregistered.
  */
-व्योम iio_device_wakeup_eventset(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+void iio_device_wakeup_eventset(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
 
-	अगर (iio_dev_opaque->event_पूर्णांकerface == शून्य)
-		वापस;
-	wake_up(&iio_dev_opaque->event_पूर्णांकerface->रुको);
-पूर्ण
+	if (iio_dev_opaque->event_interface == NULL)
+		return;
+	wake_up(&iio_dev_opaque->event_interface->wait);
+}
 
-व्योम iio_device_unरेजिस्टर_eventset(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	काष्ठा iio_event_पूर्णांकerface *ev_पूर्णांक = iio_dev_opaque->event_पूर्णांकerface;
+void iio_device_unregister_eventset(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+	struct iio_event_interface *ev_int = iio_dev_opaque->event_interface;
 
-	अगर (ev_पूर्णांक == शून्य)
-		वापस;
+	if (ev_int == NULL)
+		return;
 
-	iio_device_ioctl_handler_unरेजिस्टर(&ev_पूर्णांक->ioctl_handler);
-	iio_मुक्त_chan_devattr_list(&ev_पूर्णांक->dev_attr_list);
-	kमुक्त(ev_पूर्णांक->group.attrs);
-	kमुक्त(ev_पूर्णांक);
-	iio_dev_opaque->event_पूर्णांकerface = शून्य;
-पूर्ण
+	iio_device_ioctl_handler_unregister(&ev_int->ioctl_handler);
+	iio_free_chan_devattr_list(&ev_int->dev_attr_list);
+	kfree(ev_int->group.attrs);
+	kfree(ev_int);
+	iio_dev_opaque->event_interface = NULL;
+}

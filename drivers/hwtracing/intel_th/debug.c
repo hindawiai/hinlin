@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Intel(R) Trace Hub driver debugging
  *
  * Copyright (C) 2014-2015 Intel Corporation.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/device.h>
-#समावेश <linux/debugfs.h>
+#include <linux/types.h>
+#include <linux/device.h>
+#include <linux/debugfs.h>
 
-#समावेश "intel_th.h"
-#समावेश "debug.h"
+#include "intel_th.h"
+#include "debug.h"
 
-काष्ठा dentry *पूर्णांकel_th_dbg;
+struct dentry *intel_th_dbg;
 
-व्योम पूर्णांकel_th_debug_init(व्योम)
-अणु
-	पूर्णांकel_th_dbg = debugfs_create_dir("intel_th", शून्य);
-	अगर (IS_ERR(पूर्णांकel_th_dbg))
-		पूर्णांकel_th_dbg = शून्य;
-पूर्ण
+void intel_th_debug_init(void)
+{
+	intel_th_dbg = debugfs_create_dir("intel_th", NULL);
+	if (IS_ERR(intel_th_dbg))
+		intel_th_dbg = NULL;
+}
 
-व्योम पूर्णांकel_th_debug_करोne(व्योम)
-अणु
-	debugfs_हटाओ(पूर्णांकel_th_dbg);
-	पूर्णांकel_th_dbg = शून्य;
-पूर्ण
+void intel_th_debug_done(void)
+{
+	debugfs_remove(intel_th_dbg);
+	intel_th_dbg = NULL;
+}

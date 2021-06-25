@@ -1,321 +1,320 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM समयr
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM timer
 
-#अगर !defined(_TRACE_TIMER_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_TIMER_H
+#if !defined(_TRACE_TIMER_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_TIMER_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/समयr.h>
+#include <linux/tracepoint.h>
+#include <linux/hrtimer.h>
+#include <linux/timer.h>
 
-DECLARE_EVENT_CLASS(समयr_class,
+DECLARE_EVENT_CLASS(timer_class,
 
-	TP_PROTO(काष्ठा समयr_list *समयr),
+	TP_PROTO(struct timer_list *timer),
 
-	TP_ARGS(समयr),
+	TP_ARGS(timer),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,	समयr	)
+		__field( void *,	timer	)
 	),
 
 	TP_fast_assign(
-		__entry->समयr	= समयr;
+		__entry->timer	= timer;
 	),
 
-	TP_prपूर्णांकk("timer=%p", __entry->समयr)
+	TP_printk("timer=%p", __entry->timer)
 );
 
 /**
- * समयr_init - called when the समयr is initialized
- * @समयr:	poपूर्णांकer to काष्ठा समयr_list
+ * timer_init - called when the timer is initialized
+ * @timer:	pointer to struct timer_list
  */
-DEFINE_EVENT(समयr_class, समयr_init,
+DEFINE_EVENT(timer_class, timer_init,
 
-	TP_PROTO(काष्ठा समयr_list *समयr),
+	TP_PROTO(struct timer_list *timer),
 
-	TP_ARGS(समयr)
+	TP_ARGS(timer)
 );
 
-#घोषणा decode_समयr_flags(flags)			\
-	__prपूर्णांक_flags(flags, "|",			\
-		अणु  TIMER_MIGRATING,	"M" पूर्ण,		\
-		अणु  TIMER_DEFERRABLE,	"D" पूर्ण,		\
-		अणु  TIMER_PINNED,	"P" पूर्ण,		\
-		अणु  TIMER_IRQSAFE,	"I" पूर्ण)
+#define decode_timer_flags(flags)			\
+	__print_flags(flags, "|",			\
+		{  TIMER_MIGRATING,	"M" },		\
+		{  TIMER_DEFERRABLE,	"D" },		\
+		{  TIMER_PINNED,	"P" },		\
+		{  TIMER_IRQSAFE,	"I" })
 
 /**
- * समयr_start - called when the समयr is started
- * @समयr:	poपूर्णांकer to काष्ठा समयr_list
- * @expires:	the समयrs expiry समय
+ * timer_start - called when the timer is started
+ * @timer:	pointer to struct timer_list
+ * @expires:	the timers expiry time
  */
-TRACE_EVENT(समयr_start,
+TRACE_EVENT(timer_start,
 
-	TP_PROTO(काष्ठा समयr_list *समयr,
-		अचिन्हित दीर्घ expires,
-		अचिन्हित पूर्णांक flags),
+	TP_PROTO(struct timer_list *timer,
+		unsigned long expires,
+		unsigned int flags),
 
-	TP_ARGS(समयr, expires, flags),
+	TP_ARGS(timer, expires, flags),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,	समयr		)
-		__field( व्योम *,	function	)
-		__field( अचिन्हित दीर्घ,	expires		)
-		__field( अचिन्हित दीर्घ,	now		)
-		__field( अचिन्हित पूर्णांक,	flags		)
+		__field( void *,	timer		)
+		__field( void *,	function	)
+		__field( unsigned long,	expires		)
+		__field( unsigned long,	now		)
+		__field( unsigned int,	flags		)
 	),
 
 	TP_fast_assign(
-		__entry->समयr		= समयr;
-		__entry->function	= समयr->function;
+		__entry->timer		= timer;
+		__entry->function	= timer->function;
 		__entry->expires	= expires;
-		__entry->now		= jअगरfies;
+		__entry->now		= jiffies;
 		__entry->flags		= flags;
 	),
 
-	TP_prपूर्णांकk("timer=%p function=%ps expires=%lu [timeout=%ld] cpu=%u idx=%u flags=%s",
-		  __entry->समयr, __entry->function, __entry->expires,
-		  (दीर्घ)__entry->expires - __entry->now,
+	TP_printk("timer=%p function=%ps expires=%lu [timeout=%ld] cpu=%u idx=%u flags=%s",
+		  __entry->timer, __entry->function, __entry->expires,
+		  (long)__entry->expires - __entry->now,
 		  __entry->flags & TIMER_CPUMASK,
 		  __entry->flags >> TIMER_ARRAYSHIFT,
-		  decode_समयr_flags(__entry->flags & TIMER_TRACE_FLAGMASK))
+		  decode_timer_flags(__entry->flags & TIMER_TRACE_FLAGMASK))
 );
 
 /**
- * समयr_expire_entry - called immediately beक्रमe the समयr callback
- * @समयr:	poपूर्णांकer to काष्ठा समयr_list
+ * timer_expire_entry - called immediately before the timer callback
+ * @timer:	pointer to struct timer_list
  *
- * Allows to determine the समयr latency.
+ * Allows to determine the timer latency.
  */
-TRACE_EVENT(समयr_expire_entry,
+TRACE_EVENT(timer_expire_entry,
 
-	TP_PROTO(काष्ठा समयr_list *समयr, अचिन्हित दीर्घ baseclk),
+	TP_PROTO(struct timer_list *timer, unsigned long baseclk),
 
-	TP_ARGS(समयr, baseclk),
+	TP_ARGS(timer, baseclk),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,	समयr	)
-		__field( अचिन्हित दीर्घ,	now	)
-		__field( व्योम *,	function)
-		__field( अचिन्हित दीर्घ,	baseclk	)
+		__field( void *,	timer	)
+		__field( unsigned long,	now	)
+		__field( void *,	function)
+		__field( unsigned long,	baseclk	)
 	),
 
 	TP_fast_assign(
-		__entry->समयr		= समयr;
-		__entry->now		= jअगरfies;
-		__entry->function	= समयr->function;
+		__entry->timer		= timer;
+		__entry->now		= jiffies;
+		__entry->function	= timer->function;
 		__entry->baseclk	= baseclk;
 	),
 
-	TP_prपूर्णांकk("timer=%p function=%ps now=%lu baseclk=%lu",
-		  __entry->समयr, __entry->function, __entry->now,
+	TP_printk("timer=%p function=%ps now=%lu baseclk=%lu",
+		  __entry->timer, __entry->function, __entry->now,
 		  __entry->baseclk)
 );
 
 /**
- * समयr_expire_निकास - called immediately after the समयr callback वापसs
- * @समयr:	poपूर्णांकer to काष्ठा समयr_list
+ * timer_expire_exit - called immediately after the timer callback returns
+ * @timer:	pointer to struct timer_list
  *
- * When used in combination with the समयr_expire_entry tracepoपूर्णांक we can
- * determine the runसमय of the समयr callback function.
+ * When used in combination with the timer_expire_entry tracepoint we can
+ * determine the runtime of the timer callback function.
  *
- * NOTE: Do NOT dereference समयr in TP_fast_assign. The poपूर्णांकer might
- * be invalid. We solely track the poपूर्णांकer.
+ * NOTE: Do NOT dereference timer in TP_fast_assign. The pointer might
+ * be invalid. We solely track the pointer.
  */
-DEFINE_EVENT(समयr_class, समयr_expire_निकास,
+DEFINE_EVENT(timer_class, timer_expire_exit,
 
-	TP_PROTO(काष्ठा समयr_list *समयr),
+	TP_PROTO(struct timer_list *timer),
 
-	TP_ARGS(समयr)
+	TP_ARGS(timer)
 );
 
 /**
- * समयr_cancel - called when the समयr is canceled
- * @समयr:	poपूर्णांकer to काष्ठा समयr_list
+ * timer_cancel - called when the timer is canceled
+ * @timer:	pointer to struct timer_list
  */
-DEFINE_EVENT(समयr_class, समयr_cancel,
+DEFINE_EVENT(timer_class, timer_cancel,
 
-	TP_PROTO(काष्ठा समयr_list *समयr),
+	TP_PROTO(struct timer_list *timer),
 
-	TP_ARGS(समयr)
+	TP_ARGS(timer)
 );
 
-#घोषणा decode_घड़ीid(type)						\
-	__prपूर्णांक_symbolic(type,						\
-		अणु CLOCK_REALTIME,	"CLOCK_REALTIME"	पूर्ण,	\
-		अणु CLOCK_MONOTONIC,	"CLOCK_MONOTONIC"	पूर्ण,	\
-		अणु CLOCK_BOOTTIME,	"CLOCK_BOOTTIME"	पूर्ण,	\
-		अणु CLOCK_TAI,		"CLOCK_TAI"		पूर्ण)
+#define decode_clockid(type)						\
+	__print_symbolic(type,						\
+		{ CLOCK_REALTIME,	"CLOCK_REALTIME"	},	\
+		{ CLOCK_MONOTONIC,	"CLOCK_MONOTONIC"	},	\
+		{ CLOCK_BOOTTIME,	"CLOCK_BOOTTIME"	},	\
+		{ CLOCK_TAI,		"CLOCK_TAI"		})
 
-#घोषणा decode_hrसमयr_mode(mode)					\
-	__prपूर्णांक_symbolic(mode,						\
-		अणु HRTIMER_MODE_ABS,		"ABS"		पूर्ण,	\
-		अणु HRTIMER_MODE_REL,		"REL"		पूर्ण,	\
-		अणु HRTIMER_MODE_ABS_PINNED,	"ABS|PINNED"	पूर्ण,	\
-		अणु HRTIMER_MODE_REL_PINNED,	"REL|PINNED"	पूर्ण,	\
-		अणु HRTIMER_MODE_ABS_SOFT,	"ABS|SOFT"	पूर्ण,	\
-		अणु HRTIMER_MODE_REL_SOFT,	"REL|SOFT"	पूर्ण,	\
-		अणु HRTIMER_MODE_ABS_PINNED_SOFT,	"ABS|PINNED|SOFT" पूर्ण,	\
-		अणु HRTIMER_MODE_REL_PINNED_SOFT,	"REL|PINNED|SOFT" पूर्ण)
+#define decode_hrtimer_mode(mode)					\
+	__print_symbolic(mode,						\
+		{ HRTIMER_MODE_ABS,		"ABS"		},	\
+		{ HRTIMER_MODE_REL,		"REL"		},	\
+		{ HRTIMER_MODE_ABS_PINNED,	"ABS|PINNED"	},	\
+		{ HRTIMER_MODE_REL_PINNED,	"REL|PINNED"	},	\
+		{ HRTIMER_MODE_ABS_SOFT,	"ABS|SOFT"	},	\
+		{ HRTIMER_MODE_REL_SOFT,	"REL|SOFT"	},	\
+		{ HRTIMER_MODE_ABS_PINNED_SOFT,	"ABS|PINNED|SOFT" },	\
+		{ HRTIMER_MODE_REL_PINNED_SOFT,	"REL|PINNED|SOFT" })
 
 /**
- * hrसमयr_init - called when the hrसमयr is initialized
- * @hrसमयr:	poपूर्णांकer to काष्ठा hrसमयr
- * @घड़ीid:	the hrसमयrs घड़ी
- * @mode:	the hrसमयrs mode
+ * hrtimer_init - called when the hrtimer is initialized
+ * @hrtimer:	pointer to struct hrtimer
+ * @clockid:	the hrtimers clock
+ * @mode:	the hrtimers mode
  */
-TRACE_EVENT(hrसमयr_init,
+TRACE_EVENT(hrtimer_init,
 
-	TP_PROTO(काष्ठा hrसमयr *hrसमयr, घड़ीid_t घड़ीid,
-		 क्रमागत hrसमयr_mode mode),
+	TP_PROTO(struct hrtimer *hrtimer, clockid_t clockid,
+		 enum hrtimer_mode mode),
 
-	TP_ARGS(hrसमयr, घड़ीid, mode),
+	TP_ARGS(hrtimer, clockid, mode),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,		hrसमयr		)
-		__field( घड़ीid_t,		घड़ीid		)
-		__field( क्रमागत hrसमयr_mode,	mode		)
+		__field( void *,		hrtimer		)
+		__field( clockid_t,		clockid		)
+		__field( enum hrtimer_mode,	mode		)
 	),
 
 	TP_fast_assign(
-		__entry->hrसमयr	= hrसमयr;
-		__entry->घड़ीid	= घड़ीid;
+		__entry->hrtimer	= hrtimer;
+		__entry->clockid	= clockid;
 		__entry->mode		= mode;
 	),
 
-	TP_prपूर्णांकk("hrtimer=%p clockid=%s mode=%s", __entry->hrसमयr,
-		  decode_घड़ीid(__entry->घड़ीid),
-		  decode_hrसमयr_mode(__entry->mode))
+	TP_printk("hrtimer=%p clockid=%s mode=%s", __entry->hrtimer,
+		  decode_clockid(__entry->clockid),
+		  decode_hrtimer_mode(__entry->mode))
 );
 
 /**
- * hrसमयr_start - called when the hrसमयr is started
- * @hrसमयr: poपूर्णांकer to काष्ठा hrसमयr
+ * hrtimer_start - called when the hrtimer is started
+ * @hrtimer: pointer to struct hrtimer
  */
-TRACE_EVENT(hrसमयr_start,
+TRACE_EVENT(hrtimer_start,
 
-	TP_PROTO(काष्ठा hrसमयr *hrसमयr, क्रमागत hrसमयr_mode mode),
+	TP_PROTO(struct hrtimer *hrtimer, enum hrtimer_mode mode),
 
-	TP_ARGS(hrसमयr, mode),
+	TP_ARGS(hrtimer, mode),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,	hrसमयr		)
-		__field( व्योम *,	function	)
+		__field( void *,	hrtimer		)
+		__field( void *,	function	)
 		__field( s64,		expires		)
 		__field( s64,		softexpires	)
-		__field( क्रमागत hrसमयr_mode,	mode	)
+		__field( enum hrtimer_mode,	mode	)
 	),
 
 	TP_fast_assign(
-		__entry->hrसमयr	= hrसमयr;
-		__entry->function	= hrसमयr->function;
-		__entry->expires	= hrसमयr_get_expires(hrसमयr);
-		__entry->softexpires	= hrसमयr_get_softexpires(hrसमयr);
+		__entry->hrtimer	= hrtimer;
+		__entry->function	= hrtimer->function;
+		__entry->expires	= hrtimer_get_expires(hrtimer);
+		__entry->softexpires	= hrtimer_get_softexpires(hrtimer);
 		__entry->mode		= mode;
 	),
 
-	TP_prपूर्णांकk("hrtimer=%p function=%ps expires=%llu softexpires=%llu "
-		  "mode=%s", __entry->hrसमयr, __entry->function,
-		  (अचिन्हित दीर्घ दीर्घ) __entry->expires,
-		  (अचिन्हित दीर्घ दीर्घ) __entry->softexpires,
-		  decode_hrसमयr_mode(__entry->mode))
+	TP_printk("hrtimer=%p function=%ps expires=%llu softexpires=%llu "
+		  "mode=%s", __entry->hrtimer, __entry->function,
+		  (unsigned long long) __entry->expires,
+		  (unsigned long long) __entry->softexpires,
+		  decode_hrtimer_mode(__entry->mode))
 );
 
 /**
- * hrसमयr_expire_entry - called immediately beक्रमe the hrसमयr callback
- * @hrसमयr:	poपूर्णांकer to काष्ठा hrसमयr
- * @now:	poपूर्णांकer to variable which contains current समय of the
- *		समयrs base.
+ * hrtimer_expire_entry - called immediately before the hrtimer callback
+ * @hrtimer:	pointer to struct hrtimer
+ * @now:	pointer to variable which contains current time of the
+ *		timers base.
  *
- * Allows to determine the समयr latency.
+ * Allows to determine the timer latency.
  */
-TRACE_EVENT(hrसमयr_expire_entry,
+TRACE_EVENT(hrtimer_expire_entry,
 
-	TP_PROTO(काष्ठा hrसमयr *hrसमयr, kसमय_प्रकार *now),
+	TP_PROTO(struct hrtimer *hrtimer, ktime_t *now),
 
-	TP_ARGS(hrसमयr, now),
+	TP_ARGS(hrtimer, now),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,	hrसमयr	)
+		__field( void *,	hrtimer	)
 		__field( s64,		now	)
-		__field( व्योम *,	function)
+		__field( void *,	function)
 	),
 
 	TP_fast_assign(
-		__entry->hrसमयr	= hrसमयr;
+		__entry->hrtimer	= hrtimer;
 		__entry->now		= *now;
-		__entry->function	= hrसमयr->function;
+		__entry->function	= hrtimer->function;
 	),
 
-	TP_prपूर्णांकk("hrtimer=%p function=%ps now=%llu",
-		  __entry->hrसमयr, __entry->function,
-		  (अचिन्हित दीर्घ दीर्घ) __entry->now)
+	TP_printk("hrtimer=%p function=%ps now=%llu",
+		  __entry->hrtimer, __entry->function,
+		  (unsigned long long) __entry->now)
 );
 
-DECLARE_EVENT_CLASS(hrसमयr_class,
+DECLARE_EVENT_CLASS(hrtimer_class,
 
-	TP_PROTO(काष्ठा hrसमयr *hrसमयr),
+	TP_PROTO(struct hrtimer *hrtimer),
 
-	TP_ARGS(hrसमयr),
+	TP_ARGS(hrtimer),
 
 	TP_STRUCT__entry(
-		__field( व्योम *,	hrसमयr	)
+		__field( void *,	hrtimer	)
 	),
 
 	TP_fast_assign(
-		__entry->hrसमयr	= hrसमयr;
+		__entry->hrtimer	= hrtimer;
 	),
 
-	TP_prपूर्णांकk("hrtimer=%p", __entry->hrसमयr)
+	TP_printk("hrtimer=%p", __entry->hrtimer)
 );
 
 /**
- * hrसमयr_expire_निकास - called immediately after the hrसमयr callback वापसs
- * @hrसमयr:	poपूर्णांकer to काष्ठा hrसमयr
+ * hrtimer_expire_exit - called immediately after the hrtimer callback returns
+ * @hrtimer:	pointer to struct hrtimer
  *
- * When used in combination with the hrसमयr_expire_entry tracepoपूर्णांक we can
- * determine the runसमय of the callback function.
+ * When used in combination with the hrtimer_expire_entry tracepoint we can
+ * determine the runtime of the callback function.
  */
-DEFINE_EVENT(hrसमयr_class, hrसमयr_expire_निकास,
+DEFINE_EVENT(hrtimer_class, hrtimer_expire_exit,
 
-	TP_PROTO(काष्ठा hrसमयr *hrसमयr),
+	TP_PROTO(struct hrtimer *hrtimer),
 
-	TP_ARGS(hrसमयr)
+	TP_ARGS(hrtimer)
 );
 
 /**
- * hrसमयr_cancel - called when the hrसमयr is canceled
- * @hrसमयr:	poपूर्णांकer to काष्ठा hrसमयr
+ * hrtimer_cancel - called when the hrtimer is canceled
+ * @hrtimer:	pointer to struct hrtimer
  */
-DEFINE_EVENT(hrसमयr_class, hrसमयr_cancel,
+DEFINE_EVENT(hrtimer_class, hrtimer_cancel,
 
-	TP_PROTO(काष्ठा hrसमयr *hrसमयr),
+	TP_PROTO(struct hrtimer *hrtimer),
 
-	TP_ARGS(hrसमयr)
+	TP_ARGS(hrtimer)
 );
 
 /**
- * iसमयr_state - called when iसमयr is started or canceled
- * @which:	name of the पूर्णांकerval समयr
- * @value:	the iसमयrs value, iसमयr is canceled अगर value->it_value is
+ * itimer_state - called when itimer is started or canceled
+ * @which:	name of the interval timer
+ * @value:	the itimers value, itimer is canceled if value->it_value is
  *		zero, otherwise it is started
- * @expires:	the iसमयrs expiry समय
+ * @expires:	the itimers expiry time
  */
-TRACE_EVENT(iसमयr_state,
+TRACE_EVENT(itimer_state,
 
-	TP_PROTO(पूर्णांक which, स्थिर काष्ठा iसमयrspec64 *स्थिर value,
-		 अचिन्हित दीर्घ दीर्घ expires),
+	TP_PROTO(int which, const struct itimerspec64 *const value,
+		 unsigned long long expires),
 
 	TP_ARGS(which, value, expires),
 
 	TP_STRUCT__entry(
-		__field(	पूर्णांक,			which		)
-		__field(	अचिन्हित दीर्घ दीर्घ,	expires		)
-		__field(	दीर्घ,			value_sec	)
-		__field(	दीर्घ,			value_nsec	)
-		__field(	दीर्घ,			पूर्णांकerval_sec	)
-		__field(	दीर्घ,			पूर्णांकerval_nsec	)
+		__field(	int,			which		)
+		__field(	unsigned long long,	expires		)
+		__field(	long,			value_sec	)
+		__field(	long,			value_nsec	)
+		__field(	long,			interval_sec	)
+		__field(	long,			interval_nsec	)
 	),
 
 	TP_fast_assign(
@@ -323,32 +322,32 @@ TRACE_EVENT(iसमयr_state,
 		__entry->expires	= expires;
 		__entry->value_sec	= value->it_value.tv_sec;
 		__entry->value_nsec	= value->it_value.tv_nsec;
-		__entry->पूर्णांकerval_sec	= value->it_पूर्णांकerval.tv_sec;
-		__entry->पूर्णांकerval_nsec	= value->it_पूर्णांकerval.tv_nsec;
+		__entry->interval_sec	= value->it_interval.tv_sec;
+		__entry->interval_nsec	= value->it_interval.tv_nsec;
 	),
 
-	TP_prपूर्णांकk("which=%d expires=%llu it_value=%ld.%06ld it_interval=%ld.%06ld",
+	TP_printk("which=%d expires=%llu it_value=%ld.%06ld it_interval=%ld.%06ld",
 		  __entry->which, __entry->expires,
 		  __entry->value_sec, __entry->value_nsec / NSEC_PER_USEC,
-		  __entry->पूर्णांकerval_sec, __entry->पूर्णांकerval_nsec / NSEC_PER_USEC)
+		  __entry->interval_sec, __entry->interval_nsec / NSEC_PER_USEC)
 );
 
 /**
- * iसमयr_expire - called when iसमयr expires
- * @which:	type of the पूर्णांकerval समयr
- * @pid:	pid of the process which owns the समयr
- * @now:	current समय, used to calculate the latency of iसमयr
+ * itimer_expire - called when itimer expires
+ * @which:	type of the interval timer
+ * @pid:	pid of the process which owns the timer
+ * @now:	current time, used to calculate the latency of itimer
  */
-TRACE_EVENT(iसमयr_expire,
+TRACE_EVENT(itimer_expire,
 
-	TP_PROTO(पूर्णांक which, काष्ठा pid *pid, अचिन्हित दीर्घ दीर्घ now),
+	TP_PROTO(int which, struct pid *pid, unsigned long long now),
 
 	TP_ARGS(which, pid, now),
 
 	TP_STRUCT__entry(
-		__field( पूर्णांक ,			which	)
+		__field( int ,			which	)
 		__field( pid_t,			pid	)
-		__field( अचिन्हित दीर्घ दीर्घ,	now	)
+		__field( unsigned long long,	now	)
 	),
 
 	TP_fast_assign(
@@ -357,13 +356,13 @@ TRACE_EVENT(iसमयr_expire,
 		__entry->pid	= pid_nr(pid);
 	),
 
-	TP_prपूर्णांकk("which=%d pid=%d now=%llu", __entry->which,
-		  (पूर्णांक) __entry->pid, __entry->now)
+	TP_printk("which=%d pid=%d now=%llu", __entry->which,
+		  (int) __entry->pid, __entry->now)
 );
 
-#अगर_घोषित CONFIG_NO_HZ_COMMON
+#ifdef CONFIG_NO_HZ_COMMON
 
-#घोषणा TICK_DEP_NAMES					\
+#define TICK_DEP_NAMES					\
 		tick_dep_mask_name(NONE)		\
 		tick_dep_name(POSIX_TIMER)		\
 		tick_dep_name(PERF_EVENTS)		\
@@ -371,40 +370,40 @@ TRACE_EVENT(iसमयr_expire,
 		tick_dep_name(CLOCK_UNSTABLE)		\
 		tick_dep_name_end(RCU)
 
-#अघोषित tick_dep_name
-#अघोषित tick_dep_mask_name
-#अघोषित tick_dep_name_end
+#undef tick_dep_name
+#undef tick_dep_mask_name
+#undef tick_dep_name_end
 
 /* The MASK will convert to their bits and they need to be processed too */
-#घोषणा tick_dep_name(sdep) TRACE_DEFINE_ENUM(TICK_DEP_BIT_##sdep); \
+#define tick_dep_name(sdep) TRACE_DEFINE_ENUM(TICK_DEP_BIT_##sdep); \
 	TRACE_DEFINE_ENUM(TICK_DEP_MASK_##sdep);
-#घोषणा tick_dep_name_end(sdep)  TRACE_DEFINE_ENUM(TICK_DEP_BIT_##sdep); \
+#define tick_dep_name_end(sdep)  TRACE_DEFINE_ENUM(TICK_DEP_BIT_##sdep); \
 	TRACE_DEFINE_ENUM(TICK_DEP_MASK_##sdep);
-/* NONE only has a mask defined क्रम it */
-#घोषणा tick_dep_mask_name(sdep) TRACE_DEFINE_ENUM(TICK_DEP_MASK_##sdep);
+/* NONE only has a mask defined for it */
+#define tick_dep_mask_name(sdep) TRACE_DEFINE_ENUM(TICK_DEP_MASK_##sdep);
 
 TICK_DEP_NAMES
 
-#अघोषित tick_dep_name
-#अघोषित tick_dep_mask_name
-#अघोषित tick_dep_name_end
+#undef tick_dep_name
+#undef tick_dep_mask_name
+#undef tick_dep_name_end
 
-#घोषणा tick_dep_name(sdep) अणु TICK_DEP_MASK_##sdep, #sdep पूर्ण,
-#घोषणा tick_dep_mask_name(sdep) अणु TICK_DEP_MASK_##sdep, #sdep पूर्ण,
-#घोषणा tick_dep_name_end(sdep) अणु TICK_DEP_MASK_##sdep, #sdep पूर्ण
+#define tick_dep_name(sdep) { TICK_DEP_MASK_##sdep, #sdep },
+#define tick_dep_mask_name(sdep) { TICK_DEP_MASK_##sdep, #sdep },
+#define tick_dep_name_end(sdep) { TICK_DEP_MASK_##sdep, #sdep }
 
-#घोषणा show_tick_dep_name(val)				\
-	__prपूर्णांक_symbolic(val, TICK_DEP_NAMES)
+#define show_tick_dep_name(val)				\
+	__print_symbolic(val, TICK_DEP_NAMES)
 
 TRACE_EVENT(tick_stop,
 
-	TP_PROTO(पूर्णांक success, पूर्णांक dependency),
+	TP_PROTO(int success, int dependency),
 
 	TP_ARGS(success, dependency),
 
 	TP_STRUCT__entry(
-		__field( पूर्णांक ,		success	)
-		__field( पूर्णांक ,		dependency )
+		__field( int ,		success	)
+		__field( int ,		dependency )
 	),
 
 	TP_fast_assign(
@@ -412,12 +411,12 @@ TRACE_EVENT(tick_stop,
 		__entry->dependency	= dependency;
 	),
 
-	TP_prपूर्णांकk("success=%d dependency=%s",  __entry->success, \
+	TP_printk("success=%d dependency=%s",  __entry->success, \
 			show_tick_dep_name(__entry->dependency))
 );
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /*  _TRACE_TIMER_H */
+#endif /*  _TRACE_TIMER_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

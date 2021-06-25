@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2020 Lubomir Rपूर्णांकel <lkundrak@v3.sk>
+ * Copyright (C) 2020 Lubomir Rintel <lkundrak@v3.sk>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
 
-#घोषणा HSIC_CTRL	0x08
-#घोषणा HSIC_ENABLE	BIT(7)
-#घोषणा PLL_BYPASS	BIT(4)
+#define HSIC_CTRL	0x08
+#define HSIC_ENABLE	BIT(7)
+#define PLL_BYPASS	BIT(4)
 
-अटल पूर्णांक mmp3_hsic_phy_init(काष्ठा phy *phy)
-अणु
-	व्योम __iomem *base = (व्योम __iomem *)phy_get_drvdata(phy);
+static int mmp3_hsic_phy_init(struct phy *phy)
+{
+	void __iomem *base = (void __iomem *)phy_get_drvdata(phy);
 	u32 hsic_ctrl;
 
-	hsic_ctrl = पढ़ोl_relaxed(base + HSIC_CTRL);
+	hsic_ctrl = readl_relaxed(base + HSIC_CTRL);
 	hsic_ctrl |= HSIC_ENABLE;
 	hsic_ctrl |= PLL_BYPASS;
-	ग_लिखोl_relaxed(hsic_ctrl, base + HSIC_CTRL);
+	writel_relaxed(hsic_ctrl, base + HSIC_CTRL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops mmp3_hsic_phy_ops = अणु
+static const struct phy_ops mmp3_hsic_phy_ops = {
 	.init		= mmp3_hsic_phy_init,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mmp3_hsic_phy_of_match[] = अणु
-	अणु .compatible = "marvell,mmp3-hsic-phy", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id mmp3_hsic_phy_of_match[] = {
+	{ .compatible = "marvell,mmp3-hsic-phy", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, mmp3_hsic_phy_of_match);
 
-अटल पूर्णांक mmp3_hsic_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा phy_provider *provider;
-	काष्ठा resource *resource;
-	व्योम __iomem *base;
-	काष्ठा phy *phy;
+static int mmp3_hsic_phy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct phy_provider *provider;
+	struct resource *resource;
+	void __iomem *base;
+	struct phy *phy;
 
-	resource = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	resource = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(dev, resource);
-	अगर (IS_ERR(base)) अणु
+	if (IS_ERR(base)) {
 		dev_err(dev, "failed to remap PHY regs\n");
-		वापस PTR_ERR(base);
-	पूर्ण
+		return PTR_ERR(base);
+	}
 
-	phy = devm_phy_create(dev, शून्य, &mmp3_hsic_phy_ops);
-	अगर (IS_ERR(phy)) अणु
+	phy = devm_phy_create(dev, NULL, &mmp3_hsic_phy_ops);
+	if (IS_ERR(phy)) {
 		dev_err(dev, "failed to create PHY\n");
-		वापस PTR_ERR(phy);
-	पूर्ण
+		return PTR_ERR(phy);
+	}
 
-	phy_set_drvdata(phy, (व्योम *)base);
-	provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	अगर (IS_ERR(provider)) अणु
+	phy_set_drvdata(phy, (void *)base);
+	provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	if (IS_ERR(provider)) {
 		dev_err(dev, "failed to register PHY provider\n");
-		वापस PTR_ERR(provider);
-	पूर्ण
+		return PTR_ERR(provider);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mmp3_hsic_phy_driver = अणु
+static struct platform_driver mmp3_hsic_phy_driver = {
 	.probe		= mmp3_hsic_phy_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "mmp3-hsic-phy",
 		.of_match_table = mmp3_hsic_phy_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(mmp3_hsic_phy_driver);
+	},
+};
+module_platform_driver(mmp3_hsic_phy_driver);
 
 MODULE_AUTHOR("Lubomir Rintel <lkundrak@v3.sk>");
 MODULE_DESCRIPTION("Marvell MMP3 USB HSIC PHY Driver");

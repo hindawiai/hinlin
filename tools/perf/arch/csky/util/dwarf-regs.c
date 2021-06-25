@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd.
-// Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
+// SPDX-License-Identifier: GPL-2.0
+// Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd.
+// Mapping of DWARF debug register numbers into register names.
 
-#समावेश <मानकघोष.स>
-#समावेश <dwarf-regs.h>
+#include <stddef.h>
+#include <dwarf-regs.h>
 
-#अगर defined(__CSKYABIV2__)
-#घोषणा CSKY_MAX_REGS 73
-स्थिर अक्षर *csky_dwarf_regs_table[CSKY_MAX_REGS] = अणु
+#if defined(__CSKYABIV2__)
+#define CSKY_MAX_REGS 73
+const char *csky_dwarf_regs_table[CSKY_MAX_REGS] = {
 	/* r0 ~ r8 */
 	"%a0", "%a1", "%a2", "%a3", "%regs0", "%regs1", "%regs2", "%regs3",
 	/* r9 ~ r15 */
@@ -20,31 +19,31 @@
 	/* r24 ~ r31 */
 	"%exregs8", "%exregs9", "%exregs10", "%exregs11", "%exregs12",
 	"%exregs13", "%exregs14", "%tls",
-	"%pc", शून्य, शून्य, शून्य, "%hi", "%lo", शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
+	"%pc", NULL, NULL, NULL, "%hi", "%lo", NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	"%epc",
-पूर्ण;
-#अन्यथा
-#घोषणा CSKY_MAX_REGS 57
-स्थिर अक्षर *csky_dwarf_regs_table[CSKY_MAX_REGS] = अणु
+};
+#else
+#define CSKY_MAX_REGS 57
+const char *csky_dwarf_regs_table[CSKY_MAX_REGS] = {
 	/* r0 ~ r8 */
 	"%sp", "%regs9", "%a0", "%a1", "%a2", "%a3", "%regs0", "%regs1",
 	/* r9 ~ r15 */
 	"%regs2", "%regs3", "%regs4", "%regs5", "%regs6", "%regs7", "%regs8",
 	"%lr",
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
-	शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य, शून्य,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	"%epc",
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
-अणु
-	वापस (n < CSKY_MAX_REGS) ? csky_dwarf_regs_table[n] : शून्य;
-पूर्ण
+const char *get_arch_regstr(unsigned int n)
+{
+	return (n < CSKY_MAX_REGS) ? csky_dwarf_regs_table[n] : NULL;
+}

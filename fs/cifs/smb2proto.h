@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- *   fs/cअगरs/smb2proto.h
+ *   fs/cifs/smb2proto.h
  *
  *   Copyright (c) International Business Machines  Corp., 2002, 2011
  *                 Etersoft, 2012
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *              Pavel Shilovsky (pshilovsky@samba.org) 2012
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -15,295 +14,295 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#अगर_अघोषित _SMB2PROTO_H
-#घोषणा _SMB2PROTO_H
-#समावेश <linux/nls.h>
-#समावेश <linux/key-type.h>
+#ifndef _SMB2PROTO_H
+#define _SMB2PROTO_H
+#include <linux/nls.h>
+#include <linux/key-type.h>
 
-काष्ठा statfs;
-काष्ठा smb_rqst;
+struct statfs;
+struct smb_rqst;
 
 /*
  *****************************************************************
  * All Prototypes
  *****************************************************************
  */
-बाह्य पूर्णांक map_smb2_to_linux_error(अक्षर *buf, bool log_err);
-बाह्य पूर्णांक smb2_check_message(अक्षर *buf, अचिन्हित पूर्णांक length,
-			      काष्ठा TCP_Server_Info *server);
-बाह्य अचिन्हित पूर्णांक smb2_calc_size(व्योम *buf, काष्ठा TCP_Server_Info *server);
-बाह्य अक्षर *smb2_get_data_area_len(पूर्णांक *off, पूर्णांक *len,
-				    काष्ठा smb2_sync_hdr *shdr);
-बाह्य __le16 *cअगरs_convert_path_to_utf16(स्थिर अक्षर *from,
-					  काष्ठा cअगरs_sb_info *cअगरs_sb);
+extern int map_smb2_to_linux_error(char *buf, bool log_err);
+extern int smb2_check_message(char *buf, unsigned int length,
+			      struct TCP_Server_Info *server);
+extern unsigned int smb2_calc_size(void *buf, struct TCP_Server_Info *server);
+extern char *smb2_get_data_area_len(int *off, int *len,
+				    struct smb2_sync_hdr *shdr);
+extern __le16 *cifs_convert_path_to_utf16(const char *from,
+					  struct cifs_sb_info *cifs_sb);
 
-बाह्य पूर्णांक smb2_verअगरy_signature(काष्ठा smb_rqst *, काष्ठा TCP_Server_Info *);
-बाह्य पूर्णांक smb2_check_receive(काष्ठा mid_q_entry *mid,
-			      काष्ठा TCP_Server_Info *server, bool log_error);
-बाह्य काष्ठा mid_q_entry *smb2_setup_request(काष्ठा cअगरs_ses *ses,
-					      काष्ठा TCP_Server_Info *,
-					      काष्ठा smb_rqst *rqst);
-बाह्य काष्ठा mid_q_entry *smb2_setup_async_request(
-			काष्ठा TCP_Server_Info *server, काष्ठा smb_rqst *rqst);
-बाह्य काष्ठा cअगरs_ses *smb2_find_smb_ses(काष्ठा TCP_Server_Info *server,
+extern int smb2_verify_signature(struct smb_rqst *, struct TCP_Server_Info *);
+extern int smb2_check_receive(struct mid_q_entry *mid,
+			      struct TCP_Server_Info *server, bool log_error);
+extern struct mid_q_entry *smb2_setup_request(struct cifs_ses *ses,
+					      struct TCP_Server_Info *,
+					      struct smb_rqst *rqst);
+extern struct mid_q_entry *smb2_setup_async_request(
+			struct TCP_Server_Info *server, struct smb_rqst *rqst);
+extern struct cifs_ses *smb2_find_smb_ses(struct TCP_Server_Info *server,
 					   __u64 ses_id);
-बाह्य काष्ठा cअगरs_tcon *smb2_find_smb_tcon(काष्ठा TCP_Server_Info *server,
+extern struct cifs_tcon *smb2_find_smb_tcon(struct TCP_Server_Info *server,
 						__u64 ses_id, __u32  tid);
-बाह्य पूर्णांक smb2_calc_signature(काष्ठा smb_rqst *rqst,
-				काष्ठा TCP_Server_Info *server,
+extern int smb2_calc_signature(struct smb_rqst *rqst,
+				struct TCP_Server_Info *server,
 				bool allocate_crypto);
-बाह्य पूर्णांक smb3_calc_signature(काष्ठा smb_rqst *rqst,
-				काष्ठा TCP_Server_Info *server,
+extern int smb3_calc_signature(struct smb_rqst *rqst,
+				struct TCP_Server_Info *server,
 				bool allocate_crypto);
-बाह्य व्योम smb2_echo_request(काष्ठा work_काष्ठा *work);
-बाह्य __le32 smb2_get_lease_state(काष्ठा cअगरsInodeInfo *cinode);
-बाह्य bool smb2_is_valid_oplock_अवरोध(अक्षर *buffer,
-				       काष्ठा TCP_Server_Info *srv);
-बाह्य काष्ठा cअगरs_ses *smb2_find_smb_ses(काष्ठा TCP_Server_Info *server,
+extern void smb2_echo_request(struct work_struct *work);
+extern __le32 smb2_get_lease_state(struct cifsInodeInfo *cinode);
+extern bool smb2_is_valid_oplock_break(char *buffer,
+				       struct TCP_Server_Info *srv);
+extern struct cifs_ses *smb2_find_smb_ses(struct TCP_Server_Info *server,
 					  __u64 ses_id);
-बाह्य पूर्णांक smb3_handle_पढ़ो_data(काष्ठा TCP_Server_Info *server,
-				 काष्ठा mid_q_entry *mid);
+extern int smb3_handle_read_data(struct TCP_Server_Info *server,
+				 struct mid_q_entry *mid);
 
-बाह्य पूर्णांक खोलो_cached_dir(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			   स्थिर अक्षर *path,
-			   काष्ठा cअगरs_sb_info *cअगरs_sb,
-			   काष्ठा cached_fid **cfid);
-बाह्य पूर्णांक खोलो_cached_dir_by_dentry(काष्ठा cअगरs_tcon *tcon,
-				     काष्ठा dentry *dentry,
-				     काष्ठा cached_fid **cfid);
-बाह्य व्योम बंद_cached_dir(काष्ठा cached_fid *cfid);
-बाह्य व्योम बंद_cached_dir_lease(काष्ठा cached_fid *cfid);
-बाह्य व्योम बंद_cached_dir_lease_locked(काष्ठा cached_fid *cfid);
-बाह्य व्योम move_smb2_info_to_cअगरs(खाता_ALL_INFO *dst,
-				   काष्ठा smb2_file_all_info *src);
-बाह्य पूर्णांक smb2_query_reparse_tag(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-				काष्ठा cअगरs_sb_info *cअगरs_sb, स्थिर अक्षर *path,
+extern int open_cached_dir(unsigned int xid, struct cifs_tcon *tcon,
+			   const char *path,
+			   struct cifs_sb_info *cifs_sb,
+			   struct cached_fid **cfid);
+extern int open_cached_dir_by_dentry(struct cifs_tcon *tcon,
+				     struct dentry *dentry,
+				     struct cached_fid **cfid);
+extern void close_cached_dir(struct cached_fid *cfid);
+extern void close_cached_dir_lease(struct cached_fid *cfid);
+extern void close_cached_dir_lease_locked(struct cached_fid *cfid);
+extern void move_smb2_info_to_cifs(FILE_ALL_INFO *dst,
+				   struct smb2_file_all_info *src);
+extern int smb2_query_reparse_tag(const unsigned int xid, struct cifs_tcon *tcon,
+				struct cifs_sb_info *cifs_sb, const char *path,
 				__u32 *reparse_tag);
-बाह्य पूर्णांक smb2_query_path_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-				काष्ठा cअगरs_sb_info *cअगरs_sb,
-				स्थिर अक्षर *full_path, खाता_ALL_INFO *data,
+extern int smb2_query_path_info(const unsigned int xid, struct cifs_tcon *tcon,
+				struct cifs_sb_info *cifs_sb,
+				const char *full_path, FILE_ALL_INFO *data,
 				bool *adjust_tz, bool *symlink);
-बाह्य पूर्णांक smb2_set_path_size(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			      स्थिर अक्षर *full_path, __u64 size,
-			      काष्ठा cअगरs_sb_info *cअगरs_sb, bool set_alloc);
-बाह्य पूर्णांक smb2_set_file_info(काष्ठा inode *inode, स्थिर अक्षर *full_path,
-			      खाता_BASIC_INFO *buf, स्थिर अचिन्हित पूर्णांक xid);
-बाह्य पूर्णांक smb311_posix_सूची_गढ़ो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा inode *inode,
-			       umode_t mode, काष्ठा cअगरs_tcon *tcon,
-			       स्थिर अक्षर *full_path,
-			       काष्ठा cअगरs_sb_info *cअगरs_sb);
-बाह्य पूर्णांक smb2_सूची_गढ़ो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा inode *inode,
-		      umode_t mode, काष्ठा cअगरs_tcon *tcon,
-		      स्थिर अक्षर *name, काष्ठा cअगरs_sb_info *cअगरs_sb);
-बाह्य व्योम smb2_सूची_गढ़ो_setinfo(काष्ठा inode *inode, स्थिर अक्षर *full_path,
-			       काष्ठा cअगरs_sb_info *cअगरs_sb,
-			       काष्ठा cअगरs_tcon *tcon, स्थिर अचिन्हित पूर्णांक xid);
-बाह्य पूर्णांक smb2_सूची_हटाओ(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		      स्थिर अक्षर *name, काष्ठा cअगरs_sb_info *cअगरs_sb);
-बाह्य पूर्णांक smb2_unlink(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		       स्थिर अक्षर *name, काष्ठा cअगरs_sb_info *cअगरs_sb);
-बाह्य पूर्णांक smb2_नाम_path(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			    स्थिर अक्षर *from_name, स्थिर अक्षर *to_name,
-			    काष्ठा cअगरs_sb_info *cअगरs_sb);
-बाह्य पूर्णांक smb2_create_hardlink(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-				स्थिर अक्षर *from_name, स्थिर अक्षर *to_name,
-				काष्ठा cअगरs_sb_info *cअगरs_sb);
-बाह्य पूर्णांक smb3_create_mf_symlink(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			काष्ठा cअगरs_sb_info *cअगरs_sb, स्थिर अचिन्हित अक्षर *path,
-			अक्षर *pbuf, अचिन्हित पूर्णांक *pbytes_written);
-बाह्य पूर्णांक smb3_query_mf_symlink(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			  काष्ठा cअगरs_sb_info *cअगरs_sb,
-			  स्थिर अचिन्हित अक्षर *path, अक्षर *pbuf,
-			  अचिन्हित पूर्णांक *pbytes_पढ़ो);
-बाह्य पूर्णांक smb2_खोलो_file(स्थिर अचिन्हित पूर्णांक xid,
-			  काष्ठा cअगरs_खोलो_parms *oparms,
-			  __u32 *oplock, खाता_ALL_INFO *buf);
-बाह्य पूर्णांक smb2_unlock_range(काष्ठा cअगरsFileInfo *cfile,
-			     काष्ठा file_lock *flock, स्थिर अचिन्हित पूर्णांक xid);
-बाह्य पूर्णांक smb2_push_mandatory_locks(काष्ठा cअगरsFileInfo *cfile);
-बाह्य व्योम smb2_reconnect_server(काष्ठा work_काष्ठा *work);
-बाह्य पूर्णांक smb3_crypto_aead_allocate(काष्ठा TCP_Server_Info *server);
-बाह्य अचिन्हित दीर्घ smb_rqst_len(काष्ठा TCP_Server_Info *server,
-				  काष्ठा smb_rqst *rqst);
-बाह्य व्योम smb2_set_next_command(काष्ठा cअगरs_tcon *tcon,
-				  काष्ठा smb_rqst *rqst);
-बाह्य व्योम smb2_set_related(काष्ठा smb_rqst *rqst);
+extern int smb2_set_path_size(const unsigned int xid, struct cifs_tcon *tcon,
+			      const char *full_path, __u64 size,
+			      struct cifs_sb_info *cifs_sb, bool set_alloc);
+extern int smb2_set_file_info(struct inode *inode, const char *full_path,
+			      FILE_BASIC_INFO *buf, const unsigned int xid);
+extern int smb311_posix_mkdir(const unsigned int xid, struct inode *inode,
+			       umode_t mode, struct cifs_tcon *tcon,
+			       const char *full_path,
+			       struct cifs_sb_info *cifs_sb);
+extern int smb2_mkdir(const unsigned int xid, struct inode *inode,
+		      umode_t mode, struct cifs_tcon *tcon,
+		      const char *name, struct cifs_sb_info *cifs_sb);
+extern void smb2_mkdir_setinfo(struct inode *inode, const char *full_path,
+			       struct cifs_sb_info *cifs_sb,
+			       struct cifs_tcon *tcon, const unsigned int xid);
+extern int smb2_rmdir(const unsigned int xid, struct cifs_tcon *tcon,
+		      const char *name, struct cifs_sb_info *cifs_sb);
+extern int smb2_unlink(const unsigned int xid, struct cifs_tcon *tcon,
+		       const char *name, struct cifs_sb_info *cifs_sb);
+extern int smb2_rename_path(const unsigned int xid, struct cifs_tcon *tcon,
+			    const char *from_name, const char *to_name,
+			    struct cifs_sb_info *cifs_sb);
+extern int smb2_create_hardlink(const unsigned int xid, struct cifs_tcon *tcon,
+				const char *from_name, const char *to_name,
+				struct cifs_sb_info *cifs_sb);
+extern int smb3_create_mf_symlink(unsigned int xid, struct cifs_tcon *tcon,
+			struct cifs_sb_info *cifs_sb, const unsigned char *path,
+			char *pbuf, unsigned int *pbytes_written);
+extern int smb3_query_mf_symlink(unsigned int xid, struct cifs_tcon *tcon,
+			  struct cifs_sb_info *cifs_sb,
+			  const unsigned char *path, char *pbuf,
+			  unsigned int *pbytes_read);
+extern int smb2_open_file(const unsigned int xid,
+			  struct cifs_open_parms *oparms,
+			  __u32 *oplock, FILE_ALL_INFO *buf);
+extern int smb2_unlock_range(struct cifsFileInfo *cfile,
+			     struct file_lock *flock, const unsigned int xid);
+extern int smb2_push_mandatory_locks(struct cifsFileInfo *cfile);
+extern void smb2_reconnect_server(struct work_struct *work);
+extern int smb3_crypto_aead_allocate(struct TCP_Server_Info *server);
+extern unsigned long smb_rqst_len(struct TCP_Server_Info *server,
+				  struct smb_rqst *rqst);
+extern void smb2_set_next_command(struct cifs_tcon *tcon,
+				  struct smb_rqst *rqst);
+extern void smb2_set_related(struct smb_rqst *rqst);
 
 /*
- * SMB2 Worker functions - most of protocol specअगरic implementation details
+ * SMB2 Worker functions - most of protocol specific implementation details
  * are contained within these calls.
  */
-बाह्य पूर्णांक SMB2_negotiate(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses);
-बाह्य पूर्णांक SMB2_sess_setup(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses,
-			   स्थिर काष्ठा nls_table *nls_cp);
-बाह्य पूर्णांक SMB2_logoff(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses);
-बाह्य पूर्णांक SMB2_tcon(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses,
-		     स्थिर अक्षर *tree, काष्ठा cअगरs_tcon *tcon,
-		     स्थिर काष्ठा nls_table *);
-बाह्य पूर्णांक SMB2_tdis(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon);
-बाह्य पूर्णांक SMB2_खोलो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_खोलो_parms *oparms,
+extern int SMB2_negotiate(const unsigned int xid, struct cifs_ses *ses);
+extern int SMB2_sess_setup(const unsigned int xid, struct cifs_ses *ses,
+			   const struct nls_table *nls_cp);
+extern int SMB2_logoff(const unsigned int xid, struct cifs_ses *ses);
+extern int SMB2_tcon(const unsigned int xid, struct cifs_ses *ses,
+		     const char *tree, struct cifs_tcon *tcon,
+		     const struct nls_table *);
+extern int SMB2_tdis(const unsigned int xid, struct cifs_tcon *tcon);
+extern int SMB2_open(const unsigned int xid, struct cifs_open_parms *oparms,
 		     __le16 *path, __u8 *oplock,
-		     काष्ठा smb2_file_all_info *buf,
-		     काष्ठा create_posix_rsp *posix,
-		     काष्ठा kvec *err_iov, पूर्णांक *resp_buftype);
-बाह्य पूर्णांक SMB2_खोलो_init(काष्ठा cअगरs_tcon *tcon,
-			  काष्ठा TCP_Server_Info *server,
-			  काष्ठा smb_rqst *rqst,
-			  __u8 *oplock, काष्ठा cअगरs_खोलो_parms *oparms,
+		     struct smb2_file_all_info *buf,
+		     struct create_posix_rsp *posix,
+		     struct kvec *err_iov, int *resp_buftype);
+extern int SMB2_open_init(struct cifs_tcon *tcon,
+			  struct TCP_Server_Info *server,
+			  struct smb_rqst *rqst,
+			  __u8 *oplock, struct cifs_open_parms *oparms,
 			  __le16 *path);
-बाह्य व्योम SMB2_खोलो_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB2_ioctl(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		     u64 persistent_fid, u64 अस्थिर_fid, u32 opcode,
-		     bool is_fsctl, अक्षर *in_data, u32 indatalen, u32 maxoutlen,
-		     अक्षर **out_data, u32 *plen /* वापसed data len */);
-बाह्य पूर्णांक SMB2_ioctl_init(काष्ठा cअगरs_tcon *tcon,
-			   काष्ठा TCP_Server_Info *server,
-			   काष्ठा smb_rqst *rqst,
-			   u64 persistent_fid, u64 अस्थिर_fid, u32 opcode,
-			   bool is_fsctl, अक्षर *in_data, u32 indatalen,
+extern void SMB2_open_free(struct smb_rqst *rqst);
+extern int SMB2_ioctl(const unsigned int xid, struct cifs_tcon *tcon,
+		     u64 persistent_fid, u64 volatile_fid, u32 opcode,
+		     bool is_fsctl, char *in_data, u32 indatalen, u32 maxoutlen,
+		     char **out_data, u32 *plen /* returned data len */);
+extern int SMB2_ioctl_init(struct cifs_tcon *tcon,
+			   struct TCP_Server_Info *server,
+			   struct smb_rqst *rqst,
+			   u64 persistent_fid, u64 volatile_fid, u32 opcode,
+			   bool is_fsctl, char *in_data, u32 indatalen,
 			   __u32 max_response_size);
-बाह्य व्योम SMB2_ioctl_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB2_change_notअगरy(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			u64 persistent_fid, u64 अस्थिर_fid, bool watch_tree,
+extern void SMB2_ioctl_free(struct smb_rqst *rqst);
+extern int SMB2_change_notify(const unsigned int xid, struct cifs_tcon *tcon,
+			u64 persistent_fid, u64 volatile_fid, bool watch_tree,
 			u32 completion_filter);
 
-बाह्य पूर्णांक __SMB2_बंद(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			u64 persistent_fid, u64 अस्थिर_fid,
-			काष्ठा smb2_file_network_खोलो_info *pbuf);
-बाह्य पूर्णांक SMB2_बंद(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		      u64 persistent_file_id, u64 अस्थिर_file_id);
-बाह्य पूर्णांक SMB2_बंद_init(काष्ठा cअगरs_tcon *tcon,
-			   काष्ठा TCP_Server_Info *server,
-			   काष्ठा smb_rqst *rqst,
-			   u64 persistent_fid, u64 अस्थिर_fid,
+extern int __SMB2_close(const unsigned int xid, struct cifs_tcon *tcon,
+			u64 persistent_fid, u64 volatile_fid,
+			struct smb2_file_network_open_info *pbuf);
+extern int SMB2_close(const unsigned int xid, struct cifs_tcon *tcon,
+		      u64 persistent_file_id, u64 volatile_file_id);
+extern int SMB2_close_init(struct cifs_tcon *tcon,
+			   struct TCP_Server_Info *server,
+			   struct smb_rqst *rqst,
+			   u64 persistent_fid, u64 volatile_fid,
 			   bool query_attrs);
-बाह्य व्योम SMB2_बंद_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB2_flush(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		      u64 persistent_file_id, u64 अस्थिर_file_id);
-बाह्य पूर्णांक SMB2_flush_init(स्थिर अचिन्हित पूर्णांक xid, काष्ठा smb_rqst *rqst,
-			   काष्ठा cअगरs_tcon *tcon,
-			   काष्ठा TCP_Server_Info *server,
-			   u64 persistent_file_id, u64 अस्थिर_file_id);
-बाह्य व्योम SMB2_flush_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB311_posix_query_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		u64 persistent_fid, u64 अस्थिर_fid, काष्ठा smb311_posix_qinfo *data, u32 *plen);
-बाह्य पूर्णांक SMB2_query_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			   u64 persistent_file_id, u64 अस्थिर_file_id,
-			   काष्ठा smb2_file_all_info *data);
-बाह्य पूर्णांक SMB2_query_info_init(काष्ठा cअगरs_tcon *tcon,
-				काष्ठा TCP_Server_Info *server,
-				काष्ठा smb_rqst *rqst,
-				u64 persistent_fid, u64 अस्थिर_fid,
+extern void SMB2_close_free(struct smb_rqst *rqst);
+extern int SMB2_flush(const unsigned int xid, struct cifs_tcon *tcon,
+		      u64 persistent_file_id, u64 volatile_file_id);
+extern int SMB2_flush_init(const unsigned int xid, struct smb_rqst *rqst,
+			   struct cifs_tcon *tcon,
+			   struct TCP_Server_Info *server,
+			   u64 persistent_file_id, u64 volatile_file_id);
+extern void SMB2_flush_free(struct smb_rqst *rqst);
+extern int SMB311_posix_query_info(const unsigned int xid, struct cifs_tcon *tcon,
+		u64 persistent_fid, u64 volatile_fid, struct smb311_posix_qinfo *data, u32 *plen);
+extern int SMB2_query_info(const unsigned int xid, struct cifs_tcon *tcon,
+			   u64 persistent_file_id, u64 volatile_file_id,
+			   struct smb2_file_all_info *data);
+extern int SMB2_query_info_init(struct cifs_tcon *tcon,
+				struct TCP_Server_Info *server,
+				struct smb_rqst *rqst,
+				u64 persistent_fid, u64 volatile_fid,
 				u8 info_class, u8 info_type,
-				u32 additional_info, माप_प्रकार output_len,
-				माप_प्रकार input_len, व्योम *input);
-बाह्य व्योम SMB2_query_info_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB2_query_acl(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			  u64 persistent_file_id, u64 अस्थिर_file_id,
-			  व्योम **data, अचिन्हित पूर्णांक *plen, u32 info);
-बाह्य पूर्णांक SMB2_get_srv_num(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			    u64 persistent_fid, u64 अस्थिर_fid,
+				u32 additional_info, size_t output_len,
+				size_t input_len, void *input);
+extern void SMB2_query_info_free(struct smb_rqst *rqst);
+extern int SMB2_query_acl(const unsigned int xid, struct cifs_tcon *tcon,
+			  u64 persistent_file_id, u64 volatile_file_id,
+			  void **data, unsigned int *plen, u32 info);
+extern int SMB2_get_srv_num(const unsigned int xid, struct cifs_tcon *tcon,
+			    u64 persistent_fid, u64 volatile_fid,
 			    __le64 *uniqueid);
-बाह्य पूर्णांक smb2_async_पढ़ोv(काष्ठा cअगरs_पढ़ोdata *rdata);
-बाह्य पूर्णांक SMB2_पढ़ो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_io_parms *io_parms,
-		     अचिन्हित पूर्णांक *nbytes, अक्षर **buf, पूर्णांक *buf_type);
-बाह्य पूर्णांक smb2_async_ग_लिखोv(काष्ठा cअगरs_ग_लिखोdata *wdata,
-			     व्योम (*release)(काष्ठा kref *kref));
-बाह्य पूर्णांक SMB2_ग_लिखो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_io_parms *io_parms,
-		      अचिन्हित पूर्णांक *nbytes, काष्ठा kvec *iov, पूर्णांक n_vec);
-बाह्य पूर्णांक SMB2_echo(काष्ठा TCP_Server_Info *server);
-बाह्य पूर्णांक SMB2_query_directory(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-				u64 persistent_fid, u64 अस्थिर_fid, पूर्णांक index,
-				काष्ठा cअगरs_search_info *srch_inf);
-बाह्य पूर्णांक SMB2_query_directory_init(अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-				     काष्ठा TCP_Server_Info *server,
-				     काष्ठा smb_rqst *rqst,
-				     u64 persistent_fid, u64 अस्थिर_fid,
-				     पूर्णांक index, पूर्णांक info_level);
-बाह्य व्योम SMB2_query_directory_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB2_set_eof(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			u64 persistent_fid, u64 अस्थिर_fid, u32 pid,
+extern int smb2_async_readv(struct cifs_readdata *rdata);
+extern int SMB2_read(const unsigned int xid, struct cifs_io_parms *io_parms,
+		     unsigned int *nbytes, char **buf, int *buf_type);
+extern int smb2_async_writev(struct cifs_writedata *wdata,
+			     void (*release)(struct kref *kref));
+extern int SMB2_write(const unsigned int xid, struct cifs_io_parms *io_parms,
+		      unsigned int *nbytes, struct kvec *iov, int n_vec);
+extern int SMB2_echo(struct TCP_Server_Info *server);
+extern int SMB2_query_directory(const unsigned int xid, struct cifs_tcon *tcon,
+				u64 persistent_fid, u64 volatile_fid, int index,
+				struct cifs_search_info *srch_inf);
+extern int SMB2_query_directory_init(unsigned int xid, struct cifs_tcon *tcon,
+				     struct TCP_Server_Info *server,
+				     struct smb_rqst *rqst,
+				     u64 persistent_fid, u64 volatile_fid,
+				     int index, int info_level);
+extern void SMB2_query_directory_free(struct smb_rqst *rqst);
+extern int SMB2_set_eof(const unsigned int xid, struct cifs_tcon *tcon,
+			u64 persistent_fid, u64 volatile_fid, u32 pid,
 			__le64 *eof);
-बाह्य पूर्णांक SMB2_set_info_init(काष्ठा cअगरs_tcon *tcon,
-			      काष्ठा TCP_Server_Info *server,
-			      काष्ठा smb_rqst *rqst,
-			      u64 persistent_fid, u64 अस्थिर_fid, u32 pid,
+extern int SMB2_set_info_init(struct cifs_tcon *tcon,
+			      struct TCP_Server_Info *server,
+			      struct smb_rqst *rqst,
+			      u64 persistent_fid, u64 volatile_fid, u32 pid,
 			      u8 info_class, u8 info_type, u32 additional_info,
-			      व्योम **data, अचिन्हित पूर्णांक *size);
-बाह्य व्योम SMB2_set_info_मुक्त(काष्ठा smb_rqst *rqst);
-बाह्य पूर्णांक SMB2_set_acl(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			u64 persistent_fid, u64 अस्थिर_fid,
-			काष्ठा cअगरs_ntsd *pnntsd, पूर्णांक pacllen, पूर्णांक aclflag);
-बाह्य पूर्णांक SMB2_set_ea(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		       u64 persistent_fid, u64 अस्थिर_fid,
-		       काष्ठा smb2_file_full_ea_info *buf, पूर्णांक len);
-बाह्य पूर्णांक SMB2_set_compression(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-				u64 persistent_fid, u64 अस्थिर_fid);
-बाह्य पूर्णांक SMB2_oplock_अवरोध(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			     स्थिर u64 persistent_fid, स्थिर u64 अस्थिर_fid,
-			     स्थिर __u8 oplock_level);
-बाह्य पूर्णांक smb2_handle_cancelled_बंद(काष्ठा cअगरs_tcon *tcon,
+			      void **data, unsigned int *size);
+extern void SMB2_set_info_free(struct smb_rqst *rqst);
+extern int SMB2_set_acl(const unsigned int xid, struct cifs_tcon *tcon,
+			u64 persistent_fid, u64 volatile_fid,
+			struct cifs_ntsd *pnntsd, int pacllen, int aclflag);
+extern int SMB2_set_ea(const unsigned int xid, struct cifs_tcon *tcon,
+		       u64 persistent_fid, u64 volatile_fid,
+		       struct smb2_file_full_ea_info *buf, int len);
+extern int SMB2_set_compression(const unsigned int xid, struct cifs_tcon *tcon,
+				u64 persistent_fid, u64 volatile_fid);
+extern int SMB2_oplock_break(const unsigned int xid, struct cifs_tcon *tcon,
+			     const u64 persistent_fid, const u64 volatile_fid,
+			     const __u8 oplock_level);
+extern int smb2_handle_cancelled_close(struct cifs_tcon *tcon,
 				       __u64 persistent_fid,
-				       __u64 अस्थिर_fid);
-बाह्य पूर्णांक smb2_handle_cancelled_mid(काष्ठा mid_q_entry *mid, काष्ठा TCP_Server_Info *server);
-व्योम smb2_cancelled_बंद_fid(काष्ठा work_काष्ठा *work);
-बाह्य पूर्णांक SMB2_QFS_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			 u64 persistent_file_id, u64 अस्थिर_file_id,
-			 काष्ठा kstatfs *FSData);
-बाह्य पूर्णांक SMB311_posix_qfs_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			 u64 persistent_file_id, u64 अस्थिर_file_id,
-			 काष्ठा kstatfs *FSData);
-बाह्य पूर्णांक SMB2_QFS_attr(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			 u64 persistent_file_id, u64 अस्थिर_file_id, पूर्णांक lvl);
-बाह्य पूर्णांक SMB2_lock(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		     स्थिर __u64 persist_fid, स्थिर __u64 अस्थिर_fid,
-		     स्थिर __u32 pid, स्थिर __u64 length, स्थिर __u64 offset,
-		     स्थिर __u32 lockFlags, स्थिर bool रुको);
-बाह्य पूर्णांक smb2_lockv(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-		      स्थिर __u64 persist_fid, स्थिर __u64 अस्थिर_fid,
-		      स्थिर __u32 pid, स्थिर __u32 num_lock,
-		      काष्ठा smb2_lock_element *buf);
-बाह्य पूर्णांक SMB2_lease_अवरोध(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			    __u8 *lease_key, स्थिर __le32 lease_state);
-बाह्य पूर्णांक smb3_validate_negotiate(स्थिर अचिन्हित पूर्णांक, काष्ठा cअगरs_tcon *);
+				       __u64 volatile_fid);
+extern int smb2_handle_cancelled_mid(struct mid_q_entry *mid, struct TCP_Server_Info *server);
+void smb2_cancelled_close_fid(struct work_struct *work);
+extern int SMB2_QFS_info(const unsigned int xid, struct cifs_tcon *tcon,
+			 u64 persistent_file_id, u64 volatile_file_id,
+			 struct kstatfs *FSData);
+extern int SMB311_posix_qfs_info(const unsigned int xid, struct cifs_tcon *tcon,
+			 u64 persistent_file_id, u64 volatile_file_id,
+			 struct kstatfs *FSData);
+extern int SMB2_QFS_attr(const unsigned int xid, struct cifs_tcon *tcon,
+			 u64 persistent_file_id, u64 volatile_file_id, int lvl);
+extern int SMB2_lock(const unsigned int xid, struct cifs_tcon *tcon,
+		     const __u64 persist_fid, const __u64 volatile_fid,
+		     const __u32 pid, const __u64 length, const __u64 offset,
+		     const __u32 lockFlags, const bool wait);
+extern int smb2_lockv(const unsigned int xid, struct cifs_tcon *tcon,
+		      const __u64 persist_fid, const __u64 volatile_fid,
+		      const __u32 pid, const __u32 num_lock,
+		      struct smb2_lock_element *buf);
+extern int SMB2_lease_break(const unsigned int xid, struct cifs_tcon *tcon,
+			    __u8 *lease_key, const __le32 lease_state);
+extern int smb3_validate_negotiate(const unsigned int, struct cifs_tcon *);
 
-बाह्य क्रमागत securityEnum smb2_select_sectype(काष्ठा TCP_Server_Info *,
-					क्रमागत securityEnum);
-बाह्य व्योम smb2_parse_contexts(काष्ठा TCP_Server_Info *server,
-				काष्ठा smb2_create_rsp *rsp,
-				अचिन्हित पूर्णांक *epoch, अक्षर *lease_key,
-				__u8 *oplock, काष्ठा smb2_file_all_info *buf,
-				काष्ठा create_posix_rsp *posix);
-बाह्य पूर्णांक smb3_encryption_required(स्थिर काष्ठा cअगरs_tcon *tcon);
-बाह्य पूर्णांक smb2_validate_iov(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक buffer_length,
-			     काष्ठा kvec *iov, अचिन्हित पूर्णांक min_buf_size);
-बाह्य पूर्णांक smb2_validate_and_copy_iov(अचिन्हित पूर्णांक offset,
-				      अचिन्हित पूर्णांक buffer_length,
-				      काष्ठा kvec *iov,
-				      अचिन्हित पूर्णांक minbufsize, अक्षर *data);
-बाह्य व्योम smb2_copy_fs_info_to_kstatfs(
-	 काष्ठा smb2_fs_full_size_info *pfs_inf,
-	 काष्ठा kstatfs *kst);
-बाह्य पूर्णांक smb311_crypto_shash_allocate(काष्ठा TCP_Server_Info *server);
-बाह्य पूर्णांक smb311_update_preauth_hash(काष्ठा cअगरs_ses *ses,
-				      काष्ठा kvec *iov, पूर्णांक nvec);
-बाह्य पूर्णांक smb2_query_info_compound(स्थिर अचिन्हित पूर्णांक xid,
-				    काष्ठा cअगरs_tcon *tcon,
+extern enum securityEnum smb2_select_sectype(struct TCP_Server_Info *,
+					enum securityEnum);
+extern void smb2_parse_contexts(struct TCP_Server_Info *server,
+				struct smb2_create_rsp *rsp,
+				unsigned int *epoch, char *lease_key,
+				__u8 *oplock, struct smb2_file_all_info *buf,
+				struct create_posix_rsp *posix);
+extern int smb3_encryption_required(const struct cifs_tcon *tcon);
+extern int smb2_validate_iov(unsigned int offset, unsigned int buffer_length,
+			     struct kvec *iov, unsigned int min_buf_size);
+extern int smb2_validate_and_copy_iov(unsigned int offset,
+				      unsigned int buffer_length,
+				      struct kvec *iov,
+				      unsigned int minbufsize, char *data);
+extern void smb2_copy_fs_info_to_kstatfs(
+	 struct smb2_fs_full_size_info *pfs_inf,
+	 struct kstatfs *kst);
+extern int smb311_crypto_shash_allocate(struct TCP_Server_Info *server);
+extern int smb311_update_preauth_hash(struct cifs_ses *ses,
+				      struct kvec *iov, int nvec);
+extern int smb2_query_info_compound(const unsigned int xid,
+				    struct cifs_tcon *tcon,
 				    __le16 *utf16_path, u32 desired_access,
 				    u32 class, u32 type, u32 output_len,
-				    काष्ठा kvec *rsp, पूर्णांक *buftype,
-				    काष्ठा cअगरs_sb_info *cअगरs_sb);
+				    struct kvec *rsp, int *buftype,
+				    struct cifs_sb_info *cifs_sb);
 /* query path info from the server using SMB311 POSIX extensions*/
-बाह्य पूर्णांक smb311_posix_query_path_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
-			काष्ठा cअगरs_sb_info *sb, स्थिर अक्षर *path, काष्ठा smb311_posix_qinfo *qinf,
+extern int smb311_posix_query_path_info(const unsigned int xid, struct cifs_tcon *tcon,
+			struct cifs_sb_info *sb, const char *path, struct smb311_posix_qinfo *qinf,
 			bool *adjust_tx, bool *symlink);
-पूर्णांक posix_info_parse(स्थिर व्योम *beg, स्थिर व्योम *end,
-		     काष्ठा smb2_posix_info_parsed *out);
-पूर्णांक posix_info_sid_size(स्थिर व्योम *beg, स्थिर व्योम *end);
-#पूर्ण_अगर			/* _SMB2PROTO_H */
+int posix_info_parse(const void *beg, const void *end,
+		     struct smb2_posix_info_parsed *out);
+int posix_info_sid_size(const void *beg, const void *end);
+#endif			/* _SMB2PROTO_H */

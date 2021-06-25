@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Miscellaneous cgroup controller
  *
@@ -7,38 +6,38 @@
  * Author: Vipin Sharma <vipinsh@google.com>
  */
 
-#समावेश <linux/सीमा.स>
-#समावेश <linux/cgroup.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/atomic.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/misc_cgroup.h>
+#include <linux/limits.h>
+#include <linux/cgroup.h>
+#include <linux/errno.h>
+#include <linux/atomic.h>
+#include <linux/slab.h>
+#include <linux/misc_cgroup.h>
 
-#घोषणा MAX_STR "max"
-#घोषणा MAX_NUM अच_दीर्घ_उच्च
+#define MAX_STR "max"
+#define MAX_NUM ULONG_MAX
 
-/* Miscellaneous res name, keep it in sync with क्रमागत misc_res_type */
-अटल स्थिर अक्षर *स्थिर misc_res_name[] = अणु
-#अगर_घोषित CONFIG_KVM_AMD_SEV
+/* Miscellaneous res name, keep it in sync with enum misc_res_type */
+static const char *const misc_res_name[] = {
+#ifdef CONFIG_KVM_AMD_SEV
 	/* AMD SEV ASIDs resource */
 	"sev",
 	/* AMD SEV-ES ASIDs resource */
 	"sev_es",
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 /* Root misc cgroup */
-अटल काष्ठा misc_cg root_cg;
+static struct misc_cg root_cg;
 
 /*
- * Miscellaneous resources capacity क्रम the entire machine. 0 capacity means
+ * Miscellaneous resources capacity for the entire machine. 0 capacity means
  * resource is not initialized or not present in the host.
  *
  * root_cg.max and capacity are independent of each other. root_cg.max can be
  * more than the actual capacity. We are using Limits resource distribution
- * model of cgroup क्रम miscellaneous controller.
+ * model of cgroup for miscellaneous controller.
  */
-अटल अचिन्हित दीर्घ misc_res_capacity[MISC_CG_RES_TYPES];
+static unsigned long misc_res_capacity[MISC_CG_RES_TYPES];
 
 /**
  * parent_misc() - Get the parent of the passed misc cgroup.
@@ -46,16 +45,16 @@
  *
  * Context: Any context.
  * Return:
- * * काष्ठा misc_cg* - Parent of the @cgroup.
- * * %शून्य - If @cgroup is null or the passed cgroup करोes not have a parent.
+ * * struct misc_cg* - Parent of the @cgroup.
+ * * %NULL - If @cgroup is null or the passed cgroup does not have a parent.
  */
-अटल काष्ठा misc_cg *parent_misc(काष्ठा misc_cg *cgroup)
-अणु
-	वापस cgroup ? css_misc(cgroup->css.parent) : शून्य;
-पूर्ण
+static struct misc_cg *parent_misc(struct misc_cg *cgroup)
+{
+	return cgroup ? css_misc(cgroup->css.parent) : NULL;
+}
 
 /**
- * valid_type() - Check अगर @type is valid or not.
+ * valid_type() - Check if @type is valid or not.
  * @type: misc res type.
  *
  * Context: Any context.
@@ -63,10 +62,10 @@
  * * true - If valid type.
  * * false - If not valid type.
  */
-अटल अंतरभूत bool valid_type(क्रमागत misc_res_type type)
-अणु
-	वापस type >= 0 && type < MISC_CG_RES_TYPES;
-पूर्ण
+static inline bool valid_type(enum misc_res_type type)
+{
+	return type >= 0 && type < MISC_CG_RES_TYPES;
+}
 
 /**
  * misc_cg_res_total_usage() - Get the current total usage of the resource.
@@ -75,13 +74,13 @@
  * Context: Any context.
  * Return: Current total usage of the resource.
  */
-अचिन्हित दीर्घ misc_cg_res_total_usage(क्रमागत misc_res_type type)
-अणु
-	अगर (valid_type(type))
-		वापस atomic_दीर्घ_पढ़ो(&root_cg.res[type].usage);
+unsigned long misc_cg_res_total_usage(enum misc_res_type type)
+{
+	if (valid_type(type))
+		return atomic_long_read(&root_cg.res[type].usage);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(misc_cg_res_total_usage);
 
 /**
@@ -89,116 +88,116 @@ EXPORT_SYMBOL_GPL(misc_cg_res_total_usage);
  * @type: Type of the misc res.
  * @capacity: Supported capacity of the misc res on the host.
  *
- * If capacity is 0 then the अक्षरging a misc cgroup fails क्रम that type.
+ * If capacity is 0 then the charging a misc cgroup fails for that type.
  *
  * Context: Any context.
  * Return:
- * * %0 - Successfully रेजिस्टरed the capacity.
+ * * %0 - Successfully registered the capacity.
  * * %-EINVAL - If @type is invalid.
  */
-पूर्णांक misc_cg_set_capacity(क्रमागत misc_res_type type, अचिन्हित दीर्घ capacity)
-अणु
-	अगर (!valid_type(type))
-		वापस -EINVAL;
+int misc_cg_set_capacity(enum misc_res_type type, unsigned long capacity)
+{
+	if (!valid_type(type))
+		return -EINVAL;
 
 	WRITE_ONCE(misc_res_capacity[type], capacity);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(misc_cg_set_capacity);
 
 /**
- * misc_cg_cancel_अक्षरge() - Cancel the अक्षरge from the misc cgroup.
- * @type: Misc res type in misc cg to cancel the अक्षरge from.
- * @cg: Misc cgroup to cancel अक्षरge from.
+ * misc_cg_cancel_charge() - Cancel the charge from the misc cgroup.
+ * @type: Misc res type in misc cg to cancel the charge from.
+ * @cg: Misc cgroup to cancel charge from.
  * @amount: Amount to cancel.
  *
  * Context: Any context.
  */
-अटल व्योम misc_cg_cancel_अक्षरge(क्रमागत misc_res_type type, काष्ठा misc_cg *cg,
-				  अचिन्हित दीर्घ amount)
-अणु
-	WARN_ONCE(atomic_दीर्घ_add_negative(-amount, &cg->res[type].usage),
+static void misc_cg_cancel_charge(enum misc_res_type type, struct misc_cg *cg,
+				  unsigned long amount)
+{
+	WARN_ONCE(atomic_long_add_negative(-amount, &cg->res[type].usage),
 		  "misc cgroup resource %s became less than 0",
 		  misc_res_name[type]);
-पूर्ण
+}
 
 /**
- * misc_cg_try_अक्षरge() - Try अक्षरging the misc cgroup.
- * @type: Misc res type to अक्षरge.
- * @cg: Misc cgroup which will be अक्षरged.
- * @amount: Amount to अक्षरge.
+ * misc_cg_try_charge() - Try charging the misc cgroup.
+ * @type: Misc res type to charge.
+ * @cg: Misc cgroup which will be charged.
+ * @amount: Amount to charge.
  *
  * Charge @amount to the misc cgroup. Caller must use the same cgroup during
- * the unअक्षरge call.
+ * the uncharge call.
  *
  * Context: Any context.
  * Return:
- * * %0 - If successfully अक्षरged.
+ * * %0 - If successfully charged.
  * * -EINVAL - If @type is invalid or misc res has 0 capacity.
  * * -EBUSY - If max limit will be crossed or total usage will be more than the
  *	      capacity.
  */
-पूर्णांक misc_cg_try_अक्षरge(क्रमागत misc_res_type type, काष्ठा misc_cg *cg,
-		       अचिन्हित दीर्घ amount)
-अणु
-	काष्ठा misc_cg *i, *j;
-	पूर्णांक ret;
-	काष्ठा misc_res *res;
-	पूर्णांक new_usage;
+int misc_cg_try_charge(enum misc_res_type type, struct misc_cg *cg,
+		       unsigned long amount)
+{
+	struct misc_cg *i, *j;
+	int ret;
+	struct misc_res *res;
+	int new_usage;
 
-	अगर (!(valid_type(type) && cg && READ_ONCE(misc_res_capacity[type])))
-		वापस -EINVAL;
+	if (!(valid_type(type) && cg && READ_ONCE(misc_res_capacity[type])))
+		return -EINVAL;
 
-	अगर (!amount)
-		वापस 0;
+	if (!amount)
+		return 0;
 
-	क्रम (i = cg; i; i = parent_misc(i)) अणु
+	for (i = cg; i; i = parent_misc(i)) {
 		res = &i->res[type];
 
-		new_usage = atomic_दीर्घ_add_वापस(amount, &res->usage);
-		अगर (new_usage > READ_ONCE(res->max) ||
-		    new_usage > READ_ONCE(misc_res_capacity[type])) अणु
-			अगर (!res->failed) अणु
+		new_usage = atomic_long_add_return(amount, &res->usage);
+		if (new_usage > READ_ONCE(res->max) ||
+		    new_usage > READ_ONCE(misc_res_capacity[type])) {
+			if (!res->failed) {
 				pr_info("cgroup: charge rejected by the misc controller for %s resource in ",
 					misc_res_name[type]);
 				pr_cont_cgroup_path(i->css.cgroup);
 				pr_cont("\n");
 				res->failed = true;
-			पूर्ण
+			}
 			ret = -EBUSY;
-			जाओ err_अक्षरge;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto err_charge;
+		}
+	}
+	return 0;
 
-err_अक्षरge:
-	क्रम (j = cg; j != i; j = parent_misc(j))
-		misc_cg_cancel_अक्षरge(type, j, amount);
-	misc_cg_cancel_अक्षरge(type, i, amount);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(misc_cg_try_अक्षरge);
+err_charge:
+	for (j = cg; j != i; j = parent_misc(j))
+		misc_cg_cancel_charge(type, j, amount);
+	misc_cg_cancel_charge(type, i, amount);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(misc_cg_try_charge);
 
 /**
- * misc_cg_unअक्षरge() - Unअक्षरge the misc cgroup.
- * @type: Misc res type which was अक्षरged.
- * @cg: Misc cgroup which will be unअक्षरged.
+ * misc_cg_uncharge() - Uncharge the misc cgroup.
+ * @type: Misc res type which was charged.
+ * @cg: Misc cgroup which will be uncharged.
  * @amount: Charged amount.
  *
  * Context: Any context.
  */
-व्योम misc_cg_unअक्षरge(क्रमागत misc_res_type type, काष्ठा misc_cg *cg,
-		      अचिन्हित दीर्घ amount)
-अणु
-	काष्ठा misc_cg *i;
+void misc_cg_uncharge(enum misc_res_type type, struct misc_cg *cg,
+		      unsigned long amount)
+{
+	struct misc_cg *i;
 
-	अगर (!(amount && valid_type(type) && cg))
-		वापस;
+	if (!(amount && valid_type(type) && cg))
+		return;
 
-	क्रम (i = cg; i; i = parent_misc(i))
-		misc_cg_cancel_अक्षरge(type, i, amount);
-पूर्ण
-EXPORT_SYMBOL_GPL(misc_cg_unअक्षरge);
+	for (i = cg; i; i = parent_misc(i))
+		misc_cg_cancel_charge(type, i, amount);
+}
+EXPORT_SYMBOL_GPL(misc_cg_uncharge);
 
 /**
  * misc_cg_max_show() - Show the misc cgroup max limit.
@@ -206,33 +205,33 @@ EXPORT_SYMBOL_GPL(misc_cg_unअक्षरge);
  * @v: Arguments passed
  *
  * Context: Any context.
- * Return: 0 to denote successful prपूर्णांक.
+ * Return: 0 to denote successful print.
  */
-अटल पूर्णांक misc_cg_max_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	पूर्णांक i;
-	काष्ठा misc_cg *cg = css_misc(seq_css(sf));
-	अचिन्हित दीर्घ max;
+static int misc_cg_max_show(struct seq_file *sf, void *v)
+{
+	int i;
+	struct misc_cg *cg = css_misc(seq_css(sf));
+	unsigned long max;
 
-	क्रम (i = 0; i < MISC_CG_RES_TYPES; i++) अणु
-		अगर (READ_ONCE(misc_res_capacity[i])) अणु
+	for (i = 0; i < MISC_CG_RES_TYPES; i++) {
+		if (READ_ONCE(misc_res_capacity[i])) {
 			max = READ_ONCE(cg->res[i].max);
-			अगर (max == MAX_NUM)
-				seq_म_लिखो(sf, "%s max\n", misc_res_name[i]);
-			अन्यथा
-				seq_म_लिखो(sf, "%s %lu\n", misc_res_name[i],
+			if (max == MAX_NUM)
+				seq_printf(sf, "%s max\n", misc_res_name[i]);
+			else
+				seq_printf(sf, "%s %lu\n", misc_res_name[i],
 					   max);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * misc_cg_max_ग_लिखो() - Update the maximum limit of the cgroup.
- * @of: Handler क्रम the file.
+ * misc_cg_max_write() - Update the maximum limit of the cgroup.
+ * @of: Handler for the file.
  * @buf: Data from the user. It should be either "max", 0, or a positive
- *	 पूर्णांकeger.
+ *	 integer.
  * @nbytes: Number of bytes of the data.
  * @off: Offset in the file.
  *
@@ -244,50 +243,50 @@ EXPORT_SYMBOL_GPL(misc_cg_unअक्षरge);
  * Return:
  * * >= 0 - Number of bytes processed in the input.
  * * -EINVAL - If buf is not valid.
- * * -दुस्फल - If number is bigger than the अचिन्हित दीर्घ capacity.
+ * * -ERANGE - If number is bigger than the unsigned long capacity.
  */
-अटल sमाप_प्रकार misc_cg_max_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
-				 माप_प्रकार nbytes, loff_t off)
-अणु
-	काष्ठा misc_cg *cg;
-	अचिन्हित दीर्घ max;
-	पूर्णांक ret = 0, i;
-	क्रमागत misc_res_type type = MISC_CG_RES_TYPES;
-	अक्षर *token;
+static ssize_t misc_cg_max_write(struct kernfs_open_file *of, char *buf,
+				 size_t nbytes, loff_t off)
+{
+	struct misc_cg *cg;
+	unsigned long max;
+	int ret = 0, i;
+	enum misc_res_type type = MISC_CG_RES_TYPES;
+	char *token;
 
-	buf = म_मालाip(buf);
+	buf = strstrip(buf);
 	token = strsep(&buf, " ");
 
-	अगर (!token || !buf)
-		वापस -EINVAL;
+	if (!token || !buf)
+		return -EINVAL;
 
-	क्रम (i = 0; i < MISC_CG_RES_TYPES; i++) अणु
-		अगर (!म_भेद(misc_res_name[i], token)) अणु
+	for (i = 0; i < MISC_CG_RES_TYPES; i++) {
+		if (!strcmp(misc_res_name[i], token)) {
 			type = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (type == MISC_CG_RES_TYPES)
-		वापस -EINVAL;
+	if (type == MISC_CG_RES_TYPES)
+		return -EINVAL;
 
-	अगर (!म_भेद(MAX_STR, buf)) अणु
+	if (!strcmp(MAX_STR, buf)) {
 		max = MAX_NUM;
-	पूर्ण अन्यथा अणु
-		ret = kम_से_अदीर्घ(buf, 0, &max);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	} else {
+		ret = kstrtoul(buf, 0, &max);
+		if (ret)
+			return ret;
+	}
 
 	cg = css_misc(of_css(of));
 
-	अगर (READ_ONCE(misc_res_capacity[type]))
+	if (READ_ONCE(misc_res_capacity[type]))
 		WRITE_ONCE(cg->res[type].max, max);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
-	वापस ret ? ret : nbytes;
-पूर्ण
+	return ret ? ret : nbytes;
+}
 
 /**
  * misc_cg_current_show() - Show the current usage of the misc cgroup.
@@ -295,22 +294,22 @@ EXPORT_SYMBOL_GPL(misc_cg_unअक्षरge);
  * @v: Arguments passed
  *
  * Context: Any context.
- * Return: 0 to denote successful prपूर्णांक.
+ * Return: 0 to denote successful print.
  */
-अटल पूर्णांक misc_cg_current_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ usage;
-	काष्ठा misc_cg *cg = css_misc(seq_css(sf));
+static int misc_cg_current_show(struct seq_file *sf, void *v)
+{
+	int i;
+	unsigned long usage;
+	struct misc_cg *cg = css_misc(seq_css(sf));
 
-	क्रम (i = 0; i < MISC_CG_RES_TYPES; i++) अणु
-		usage = atomic_दीर्घ_पढ़ो(&cg->res[i].usage);
-		अगर (READ_ONCE(misc_res_capacity[i]) || usage)
-			seq_म_लिखो(sf, "%s %lu\n", misc_res_name[i], usage);
-	पूर्ण
+	for (i = 0; i < MISC_CG_RES_TYPES; i++) {
+		usage = atomic_long_read(&cg->res[i].usage);
+		if (READ_ONCE(misc_res_capacity[i]) || usage)
+			seq_printf(sf, "%s %lu\n", misc_res_name[i], usage);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * misc_cg_capacity_show() - Show the total capacity of misc res on the host.
@@ -320,42 +319,42 @@ EXPORT_SYMBOL_GPL(misc_cg_unअक्षरge);
  * Only present in the root cgroup directory.
  *
  * Context: Any context.
- * Return: 0 to denote successful prपूर्णांक.
+ * Return: 0 to denote successful print.
  */
-अटल पूर्णांक misc_cg_capacity_show(काष्ठा seq_file *sf, व्योम *v)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ cap;
+static int misc_cg_capacity_show(struct seq_file *sf, void *v)
+{
+	int i;
+	unsigned long cap;
 
-	क्रम (i = 0; i < MISC_CG_RES_TYPES; i++) अणु
+	for (i = 0; i < MISC_CG_RES_TYPES; i++) {
 		cap = READ_ONCE(misc_res_capacity[i]);
-		अगर (cap)
-			seq_म_लिखो(sf, "%s %lu\n", misc_res_name[i], cap);
-	पूर्ण
+		if (cap)
+			seq_printf(sf, "%s %lu\n", misc_res_name[i], cap);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Misc cgroup पूर्णांकerface files */
-अटल काष्ठा cftype misc_cg_files[] = अणु
-	अणु
+/* Misc cgroup interface files */
+static struct cftype misc_cg_files[] = {
+	{
 		.name = "max",
-		.ग_लिखो = misc_cg_max_ग_लिखो,
+		.write = misc_cg_max_write,
 		.seq_show = misc_cg_max_show,
 		.flags = CFTYPE_NOT_ON_ROOT,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "current",
 		.seq_show = misc_cg_current_show,
 		.flags = CFTYPE_NOT_ON_ROOT,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "capacity",
 		.seq_show = misc_cg_capacity_show,
 		.flags = CFTYPE_ONLY_ON_ROOT,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
 /**
  * misc_cg_alloc() - Allocate misc cgroup.
@@ -363,46 +362,46 @@ EXPORT_SYMBOL_GPL(misc_cg_unअक्षरge);
  *
  * Context: Process context.
  * Return:
- * * काष्ठा cgroup_subsys_state* - css of the allocated cgroup.
+ * * struct cgroup_subsys_state* - css of the allocated cgroup.
  * * ERR_PTR(-ENOMEM) - No memory available to allocate.
  */
-अटल काष्ठा cgroup_subsys_state *
-misc_cg_alloc(काष्ठा cgroup_subsys_state *parent_css)
-अणु
-	क्रमागत misc_res_type i;
-	काष्ठा misc_cg *cg;
+static struct cgroup_subsys_state *
+misc_cg_alloc(struct cgroup_subsys_state *parent_css)
+{
+	enum misc_res_type i;
+	struct misc_cg *cg;
 
-	अगर (!parent_css) अणु
+	if (!parent_css) {
 		cg = &root_cg;
-	पूर्ण अन्यथा अणु
-		cg = kzalloc(माप(*cg), GFP_KERNEL);
-		अगर (!cg)
-			वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	} else {
+		cg = kzalloc(sizeof(*cg), GFP_KERNEL);
+		if (!cg)
+			return ERR_PTR(-ENOMEM);
+	}
 
-	क्रम (i = 0; i < MISC_CG_RES_TYPES; i++) अणु
+	for (i = 0; i < MISC_CG_RES_TYPES; i++) {
 		WRITE_ONCE(cg->res[i].max, MAX_NUM);
-		atomic_दीर्घ_set(&cg->res[i].usage, 0);
-	पूर्ण
+		atomic_long_set(&cg->res[i].usage, 0);
+	}
 
-	वापस &cg->css;
-पूर्ण
+	return &cg->css;
+}
 
 /**
- * misc_cg_मुक्त() - Free the misc cgroup.
+ * misc_cg_free() - Free the misc cgroup.
  * @css: cgroup subsys object.
  *
  * Context: Any context.
  */
-अटल व्योम misc_cg_मुक्त(काष्ठा cgroup_subsys_state *css)
-अणु
-	kमुक्त(css_misc(css));
-पूर्ण
+static void misc_cg_free(struct cgroup_subsys_state *css)
+{
+	kfree(css_misc(css));
+}
 
 /* Cgroup controller callbacks */
-काष्ठा cgroup_subsys misc_cgrp_subsys = अणु
+struct cgroup_subsys misc_cgrp_subsys = {
 	.css_alloc = misc_cg_alloc,
-	.css_मुक्त = misc_cg_मुक्त,
+	.css_free = misc_cg_free,
 	.legacy_cftypes = misc_cg_files,
 	.dfl_cftypes = misc_cg_files,
-पूर्ण;
+};

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  mm/mprotect.c
  *
@@ -10,444 +9,444 @@
  *  (C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
-#समावेश <linux/pagewalk.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/shm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/security.h>
-#समावेश <linux/mempolicy.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/migrate.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/pkeys.h>
-#समावेश <linux/ksm.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/mm_अंतरभूत.h>
-#समावेश <linux/pgtable.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <linux/pagewalk.h>
+#include <linux/hugetlb.h>
+#include <linux/shm.h>
+#include <linux/mman.h>
+#include <linux/fs.h>
+#include <linux/highmem.h>
+#include <linux/security.h>
+#include <linux/mempolicy.h>
+#include <linux/personality.h>
+#include <linux/syscalls.h>
+#include <linux/swap.h>
+#include <linux/swapops.h>
+#include <linux/mmu_notifier.h>
+#include <linux/migrate.h>
+#include <linux/perf_event.h>
+#include <linux/pkeys.h>
+#include <linux/ksm.h>
+#include <linux/uaccess.h>
+#include <linux/mm_inline.h>
+#include <linux/pgtable.h>
+#include <asm/cacheflush.h>
+#include <asm/mmu_context.h>
+#include <asm/tlbflush.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल अचिन्हित दीर्घ change_pte_range(काष्ठा vm_area_काष्ठा *vma, pmd_t *pmd,
-		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end, pgprot_t newprot,
-		अचिन्हित दीर्घ cp_flags)
-अणु
+static unsigned long change_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
+		unsigned long addr, unsigned long end, pgprot_t newprot,
+		unsigned long cp_flags)
+{
 	pte_t *pte, oldpte;
 	spinlock_t *ptl;
-	अचिन्हित दीर्घ pages = 0;
-	पूर्णांक target_node = NUMA_NO_NODE;
-	bool dirty_accountable = cp_flags & MM_CP_सूचीTY_ACCT;
+	unsigned long pages = 0;
+	int target_node = NUMA_NO_NODE;
+	bool dirty_accountable = cp_flags & MM_CP_DIRTY_ACCT;
 	bool prot_numa = cp_flags & MM_CP_PROT_NUMA;
 	bool uffd_wp = cp_flags & MM_CP_UFFD_WP;
 	bool uffd_wp_resolve = cp_flags & MM_CP_UFFD_WP_RESOLVE;
 
 	/*
-	 * Can be called with only the mmap_lock क्रम पढ़ोing by
-	 * prot_numa so we must check the pmd isn't स्थिरantly
+	 * Can be called with only the mmap_lock for reading by
+	 * prot_numa so we must check the pmd isn't constantly
 	 * changing from under us from pmd_none to pmd_trans_huge
 	 * and/or the other way around.
 	 */
-	अगर (pmd_trans_unstable(pmd))
-		वापस 0;
+	if (pmd_trans_unstable(pmd))
+		return 0;
 
 	/*
-	 * The pmd poपूर्णांकs to a regular pte so the pmd can't change
-	 * from under us even अगर the mmap_lock is only hold क्रम
-	 * पढ़ोing.
+	 * The pmd points to a regular pte so the pmd can't change
+	 * from under us even if the mmap_lock is only hold for
+	 * reading.
 	 */
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
 
-	/* Get target node क्रम single thपढ़ोed निजी VMAs */
-	अगर (prot_numa && !(vma->vm_flags & VM_SHARED) &&
-	    atomic_पढ़ो(&vma->vm_mm->mm_users) == 1)
+	/* Get target node for single threaded private VMAs */
+	if (prot_numa && !(vma->vm_flags & VM_SHARED) &&
+	    atomic_read(&vma->vm_mm->mm_users) == 1)
 		target_node = numa_node_id();
 
 	flush_tlb_batched_pending(vma->vm_mm);
 	arch_enter_lazy_mmu_mode();
-	करो अणु
+	do {
 		oldpte = *pte;
-		अगर (pte_present(oldpte)) अणु
+		if (pte_present(oldpte)) {
 			pte_t ptent;
-			bool preserve_ग_लिखो = prot_numa && pte_ग_लिखो(oldpte);
+			bool preserve_write = prot_numa && pte_write(oldpte);
 
 			/*
-			 * Aव्योम trapping faults against the zero or KSM
+			 * Avoid trapping faults against the zero or KSM
 			 * pages. See similar comment in change_huge_pmd.
 			 */
-			अगर (prot_numa) अणु
-				काष्ठा page *page;
+			if (prot_numa) {
+				struct page *page;
 
-				/* Aव्योम TLB flush अगर possible */
-				अगर (pte_protnone(oldpte))
-					जारी;
+				/* Avoid TLB flush if possible */
+				if (pte_protnone(oldpte))
+					continue;
 
 				page = vm_normal_page(vma, addr, oldpte);
-				अगर (!page || PageKsm(page))
-					जारी;
+				if (!page || PageKsm(page))
+					continue;
 
-				/* Also skip shared copy-on-ग_लिखो pages */
-				अगर (is_cow_mapping(vma->vm_flags) &&
+				/* Also skip shared copy-on-write pages */
+				if (is_cow_mapping(vma->vm_flags) &&
 				    page_mapcount(page) != 1)
-					जारी;
+					continue;
 
 				/*
 				 * While migration can move some dirty pages,
 				 * it cannot move them all from MIGRATE_ASYNC
 				 * context.
 				 */
-				अगर (page_is_file_lru(page) && PageDirty(page))
-					जारी;
+				if (page_is_file_lru(page) && PageDirty(page))
+					continue;
 
 				/*
-				 * Don't mess with PTEs अगर page is alपढ़ोy on the node
-				 * a single-thपढ़ोed process is running on.
+				 * Don't mess with PTEs if page is already on the node
+				 * a single-threaded process is running on.
 				 */
-				अगर (target_node == page_to_nid(page))
-					जारी;
-			पूर्ण
+				if (target_node == page_to_nid(page))
+					continue;
+			}
 
-			oldpte = ptep_modअगरy_prot_start(vma, addr, pte);
-			ptent = pte_modअगरy(oldpte, newprot);
-			अगर (preserve_ग_लिखो)
-				ptent = pte_mk_savedग_लिखो(ptent);
+			oldpte = ptep_modify_prot_start(vma, addr, pte);
+			ptent = pte_modify(oldpte, newprot);
+			if (preserve_write)
+				ptent = pte_mk_savedwrite(ptent);
 
-			अगर (uffd_wp) अणु
+			if (uffd_wp) {
 				ptent = pte_wrprotect(ptent);
 				ptent = pte_mkuffd_wp(ptent);
-			पूर्ण अन्यथा अगर (uffd_wp_resolve) अणु
+			} else if (uffd_wp_resolve) {
 				/*
-				 * Leave the ग_लिखो bit to be handled
-				 * by PF पूर्णांकerrupt handler, then
+				 * Leave the write bit to be handled
+				 * by PF interrupt handler, then
 				 * things like COW could be properly
 				 * handled.
 				 */
 				ptent = pte_clear_uffd_wp(ptent);
-			पूर्ण
+			}
 
-			/* Aव्योम taking ग_लिखो faults क्रम known dirty pages */
-			अगर (dirty_accountable && pte_dirty(ptent) &&
+			/* Avoid taking write faults for known dirty pages */
+			if (dirty_accountable && pte_dirty(ptent) &&
 					(pte_soft_dirty(ptent) ||
-					 !(vma->vm_flags & VM_SOFTसूचीTY))) अणु
-				ptent = pte_mkग_लिखो(ptent);
-			पूर्ण
-			ptep_modअगरy_prot_commit(vma, addr, pte, oldpte, ptent);
+					 !(vma->vm_flags & VM_SOFTDIRTY))) {
+				ptent = pte_mkwrite(ptent);
+			}
+			ptep_modify_prot_commit(vma, addr, pte, oldpte, ptent);
 			pages++;
-		पूर्ण अन्यथा अगर (is_swap_pte(oldpte)) अणु
+		} else if (is_swap_pte(oldpte)) {
 			swp_entry_t entry = pte_to_swp_entry(oldpte);
 			pte_t newpte;
 
-			अगर (is_ग_लिखो_migration_entry(entry)) अणु
+			if (is_write_migration_entry(entry)) {
 				/*
-				 * A protection check is dअगरficult so
-				 * just be safe and disable ग_लिखो
+				 * A protection check is difficult so
+				 * just be safe and disable write
 				 */
-				make_migration_entry_पढ़ो(&entry);
+				make_migration_entry_read(&entry);
 				newpte = swp_entry_to_pte(entry);
-				अगर (pte_swp_soft_dirty(oldpte))
+				if (pte_swp_soft_dirty(oldpte))
 					newpte = pte_swp_mksoft_dirty(newpte);
-				अगर (pte_swp_uffd_wp(oldpte))
+				if (pte_swp_uffd_wp(oldpte))
 					newpte = pte_swp_mkuffd_wp(newpte);
-			पूर्ण अन्यथा अगर (is_ग_लिखो_device_निजी_entry(entry)) अणु
+			} else if (is_write_device_private_entry(entry)) {
 				/*
-				 * We करो not preserve soft-dirtiness. See
-				 * copy_one_pte() क्रम explanation.
+				 * We do not preserve soft-dirtiness. See
+				 * copy_one_pte() for explanation.
 				 */
-				make_device_निजी_entry_पढ़ो(&entry);
+				make_device_private_entry_read(&entry);
 				newpte = swp_entry_to_pte(entry);
-				अगर (pte_swp_uffd_wp(oldpte))
+				if (pte_swp_uffd_wp(oldpte))
 					newpte = pte_swp_mkuffd_wp(newpte);
-			पूर्ण अन्यथा अणु
+			} else {
 				newpte = oldpte;
-			पूर्ण
+			}
 
-			अगर (uffd_wp)
+			if (uffd_wp)
 				newpte = pte_swp_mkuffd_wp(newpte);
-			अन्यथा अगर (uffd_wp_resolve)
+			else if (uffd_wp_resolve)
 				newpte = pte_swp_clear_uffd_wp(newpte);
 
-			अगर (!pte_same(oldpte, newpte)) अणु
+			if (!pte_same(oldpte, newpte)) {
 				set_pte_at(vma->vm_mm, addr, pte, newpte);
 				pages++;
-			पूर्ण
-		पूर्ण
-	पूर्ण जबतक (pte++, addr += PAGE_SIZE, addr != end);
+			}
+		}
+	} while (pte++, addr += PAGE_SIZE, addr != end);
 	arch_leave_lazy_mmu_mode();
 	pte_unmap_unlock(pte - 1, ptl);
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
 /*
- * Used when setting स्वतःmatic NUMA hपूर्णांकing protection where it is
- * critical that a numa hपूर्णांकing PMD is not confused with a bad PMD.
+ * Used when setting automatic NUMA hinting protection where it is
+ * critical that a numa hinting PMD is not confused with a bad PMD.
  */
-अटल अंतरभूत पूर्णांक pmd_none_or_clear_bad_unless_trans_huge(pmd_t *pmd)
-अणु
-	pmd_t pmdval = pmd_पढ़ो_atomic(pmd);
+static inline int pmd_none_or_clear_bad_unless_trans_huge(pmd_t *pmd)
+{
+	pmd_t pmdval = pmd_read_atomic(pmd);
 
-	/* See pmd_none_or_trans_huge_or_clear_bad क्रम info on barrier */
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+	/* See pmd_none_or_trans_huge_or_clear_bad for info on barrier */
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	barrier();
-#पूर्ण_अगर
+#endif
 
-	अगर (pmd_none(pmdval))
-		वापस 1;
-	अगर (pmd_trans_huge(pmdval))
-		वापस 0;
-	अगर (unlikely(pmd_bad(pmdval))) अणु
+	if (pmd_none(pmdval))
+		return 1;
+	if (pmd_trans_huge(pmdval))
+		return 0;
+	if (unlikely(pmd_bad(pmdval))) {
 		pmd_clear_bad(pmd);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ change_pmd_range(काष्ठा vm_area_काष्ठा *vma,
-		pud_t *pud, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-		pgprot_t newprot, अचिन्हित दीर्घ cp_flags)
-अणु
+static inline unsigned long change_pmd_range(struct vm_area_struct *vma,
+		pud_t *pud, unsigned long addr, unsigned long end,
+		pgprot_t newprot, unsigned long cp_flags)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ pages = 0;
-	अचिन्हित दीर्घ nr_huge_updates = 0;
-	काष्ठा mmu_notअगरier_range range;
+	unsigned long next;
+	unsigned long pages = 0;
+	unsigned long nr_huge_updates = 0;
+	struct mmu_notifier_range range;
 
 	range.start = 0;
 
 	pmd = pmd_offset(pud, addr);
-	करो अणु
-		अचिन्हित दीर्घ this_pages;
+	do {
+		unsigned long this_pages;
 
 		next = pmd_addr_end(addr, end);
 
 		/*
 		 * Automatic NUMA balancing walks the tables with mmap_lock
-		 * held क्रम पढ़ो. It's possible a parallel update to occur
+		 * held for read. It's possible a parallel update to occur
 		 * between pmd_trans_huge() and a pmd_none_or_clear_bad()
 		 * check leading to a false positive and clearing.
-		 * Hence, it's necessary to atomically पढ़ो the PMD value
-		 * क्रम all the checks.
+		 * Hence, it's necessary to atomically read the PMD value
+		 * for all the checks.
 		 */
-		अगर (!is_swap_pmd(*pmd) && !pmd_devmap(*pmd) &&
+		if (!is_swap_pmd(*pmd) && !pmd_devmap(*pmd) &&
 		     pmd_none_or_clear_bad_unless_trans_huge(pmd))
-			जाओ next;
+			goto next;
 
-		/* invoke the mmu notअगरier अगर the pmd is populated */
-		अगर (!range.start) अणु
-			mmu_notअगरier_range_init(&range,
+		/* invoke the mmu notifier if the pmd is populated */
+		if (!range.start) {
+			mmu_notifier_range_init(&range,
 				MMU_NOTIFY_PROTECTION_VMA, 0,
 				vma, vma->vm_mm, addr, end);
-			mmu_notअगरier_invalidate_range_start(&range);
-		पूर्ण
+			mmu_notifier_invalidate_range_start(&range);
+		}
 
-		अगर (is_swap_pmd(*pmd) || pmd_trans_huge(*pmd) || pmd_devmap(*pmd)) अणु
-			अगर (next - addr != HPAGE_PMD_SIZE) अणु
-				__split_huge_pmd(vma, pmd, addr, false, शून्य);
-			पूर्ण अन्यथा अणु
-				पूर्णांक nr_ptes = change_huge_pmd(vma, pmd, addr,
+		if (is_swap_pmd(*pmd) || pmd_trans_huge(*pmd) || pmd_devmap(*pmd)) {
+			if (next - addr != HPAGE_PMD_SIZE) {
+				__split_huge_pmd(vma, pmd, addr, false, NULL);
+			} else {
+				int nr_ptes = change_huge_pmd(vma, pmd, addr,
 							      newprot, cp_flags);
 
-				अगर (nr_ptes) अणु
-					अगर (nr_ptes == HPAGE_PMD_NR) अणु
+				if (nr_ptes) {
+					if (nr_ptes == HPAGE_PMD_NR) {
 						pages += HPAGE_PMD_NR;
 						nr_huge_updates++;
-					पूर्ण
+					}
 
 					/* huge pmd was handled */
-					जाओ next;
-				पूर्ण
-			पूर्ण
+					goto next;
+				}
+			}
 			/* fall through, the trans huge pmd just split */
-		पूर्ण
+		}
 		this_pages = change_pte_range(vma, pmd, addr, next, newprot,
 					      cp_flags);
 		pages += this_pages;
 next:
 		cond_resched();
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
+	} while (pmd++, addr = next, addr != end);
 
-	अगर (range.start)
-		mmu_notअगरier_invalidate_range_end(&range);
+	if (range.start)
+		mmu_notifier_invalidate_range_end(&range);
 
-	अगर (nr_huge_updates)
+	if (nr_huge_updates)
 		count_vm_numa_events(NUMA_HUGE_PTE_UPDATES, nr_huge_updates);
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ change_pud_range(काष्ठा vm_area_काष्ठा *vma,
-		p4d_t *p4d, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-		pgprot_t newprot, अचिन्हित दीर्घ cp_flags)
-अणु
+static inline unsigned long change_pud_range(struct vm_area_struct *vma,
+		p4d_t *p4d, unsigned long addr, unsigned long end,
+		pgprot_t newprot, unsigned long cp_flags)
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ pages = 0;
+	unsigned long next;
+	unsigned long pages = 0;
 
 	pud = pud_offset(p4d, addr);
-	करो अणु
+	do {
 		next = pud_addr_end(addr, end);
-		अगर (pud_none_or_clear_bad(pud))
-			जारी;
+		if (pud_none_or_clear_bad(pud))
+			continue;
 		pages += change_pmd_range(vma, pud, addr, next, newprot,
 					  cp_flags);
-	पूर्ण जबतक (pud++, addr = next, addr != end);
+	} while (pud++, addr = next, addr != end);
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ change_p4d_range(काष्ठा vm_area_काष्ठा *vma,
-		pgd_t *pgd, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-		pgprot_t newprot, अचिन्हित दीर्घ cp_flags)
-अणु
+static inline unsigned long change_p4d_range(struct vm_area_struct *vma,
+		pgd_t *pgd, unsigned long addr, unsigned long end,
+		pgprot_t newprot, unsigned long cp_flags)
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ pages = 0;
+	unsigned long next;
+	unsigned long pages = 0;
 
 	p4d = p4d_offset(pgd, addr);
-	करो अणु
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none_or_clear_bad(p4d))
-			जारी;
+		if (p4d_none_or_clear_bad(p4d))
+			continue;
 		pages += change_pud_range(vma, p4d, addr, next, newprot,
 					  cp_flags);
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
+	} while (p4d++, addr = next, addr != end);
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अटल अचिन्हित दीर्घ change_protection_range(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end, pgprot_t newprot,
-		अचिन्हित दीर्घ cp_flags)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+static unsigned long change_protection_range(struct vm_area_struct *vma,
+		unsigned long addr, unsigned long end, pgprot_t newprot,
+		unsigned long cp_flags)
+{
+	struct mm_struct *mm = vma->vm_mm;
 	pgd_t *pgd;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ start = addr;
-	अचिन्हित दीर्घ pages = 0;
+	unsigned long next;
+	unsigned long start = addr;
+	unsigned long pages = 0;
 
 	BUG_ON(addr >= end);
 	pgd = pgd_offset(mm, addr);
 	flush_cache_range(vma, addr, end);
 	inc_tlb_flush_pending(mm);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none_or_clear_bad(pgd))
-			जारी;
+		if (pgd_none_or_clear_bad(pgd))
+			continue;
 		pages += change_p4d_range(vma, pgd, addr, next, newprot,
 					  cp_flags);
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
+	} while (pgd++, addr = next, addr != end);
 
-	/* Only flush the TLB अगर we actually modअगरied any entries: */
-	अगर (pages)
+	/* Only flush the TLB if we actually modified any entries: */
+	if (pages)
 		flush_tlb_range(vma, start, end);
 	dec_tlb_flush_pending(mm);
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अचिन्हित दीर्घ change_protection(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-		       अचिन्हित दीर्घ end, pgprot_t newprot,
-		       अचिन्हित दीर्घ cp_flags)
-अणु
-	अचिन्हित दीर्घ pages;
+unsigned long change_protection(struct vm_area_struct *vma, unsigned long start,
+		       unsigned long end, pgprot_t newprot,
+		       unsigned long cp_flags)
+{
+	unsigned long pages;
 
 	BUG_ON((cp_flags & MM_CP_UFFD_WP_ALL) == MM_CP_UFFD_WP_ALL);
 
-	अगर (is_vm_hugetlb_page(vma))
+	if (is_vm_hugetlb_page(vma))
 		pages = hugetlb_change_protection(vma, start, end, newprot);
-	अन्यथा
+	else
 		pages = change_protection_range(vma, start, end, newprot,
 						cp_flags);
 
-	वापस pages;
-पूर्ण
+	return pages;
+}
 
-अटल पूर्णांक prot_none_pte_entry(pte_t *pte, अचिन्हित दीर्घ addr,
-			       अचिन्हित दीर्घ next, काष्ठा mm_walk *walk)
-अणु
-	वापस pfn_modअगरy_allowed(pte_pfn(*pte), *(pgprot_t *)(walk->निजी)) ?
+static int prot_none_pte_entry(pte_t *pte, unsigned long addr,
+			       unsigned long next, struct mm_walk *walk)
+{
+	return pfn_modify_allowed(pte_pfn(*pte), *(pgprot_t *)(walk->private)) ?
 		0 : -EACCES;
-पूर्ण
+}
 
-अटल पूर्णांक prot_none_hugetlb_entry(pte_t *pte, अचिन्हित दीर्घ hmask,
-				   अचिन्हित दीर्घ addr, अचिन्हित दीर्घ next,
-				   काष्ठा mm_walk *walk)
-अणु
-	वापस pfn_modअगरy_allowed(pte_pfn(*pte), *(pgprot_t *)(walk->निजी)) ?
+static int prot_none_hugetlb_entry(pte_t *pte, unsigned long hmask,
+				   unsigned long addr, unsigned long next,
+				   struct mm_walk *walk)
+{
+	return pfn_modify_allowed(pte_pfn(*pte), *(pgprot_t *)(walk->private)) ?
 		0 : -EACCES;
-पूर्ण
+}
 
-अटल पूर्णांक prot_none_test(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ next,
-			  काष्ठा mm_walk *walk)
-अणु
-	वापस 0;
-पूर्ण
+static int prot_none_test(unsigned long addr, unsigned long next,
+			  struct mm_walk *walk)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा mm_walk_ops prot_none_walk_ops = अणु
+static const struct mm_walk_ops prot_none_walk_ops = {
 	.pte_entry		= prot_none_pte_entry,
 	.hugetlb_entry		= prot_none_hugetlb_entry,
 	.test_walk		= prot_none_test,
-पूर्ण;
+};
 
-पूर्णांक
-mprotect_fixup(काष्ठा vm_area_काष्ठा *vma, काष्ठा vm_area_काष्ठा **pprev,
-	अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, अचिन्हित दीर्घ newflags)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	अचिन्हित दीर्घ oldflags = vma->vm_flags;
-	दीर्घ nrpages = (end - start) >> PAGE_SHIFT;
-	अचिन्हित दीर्घ अक्षरged = 0;
+int
+mprotect_fixup(struct vm_area_struct *vma, struct vm_area_struct **pprev,
+	unsigned long start, unsigned long end, unsigned long newflags)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	unsigned long oldflags = vma->vm_flags;
+	long nrpages = (end - start) >> PAGE_SHIFT;
+	unsigned long charged = 0;
 	pgoff_t pgoff;
-	पूर्णांक error;
-	पूर्णांक dirty_accountable = 0;
+	int error;
+	int dirty_accountable = 0;
 
-	अगर (newflags == oldflags) अणु
+	if (newflags == oldflags) {
 		*pprev = vma;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Do PROT_NONE PFN permission checks here when we can still
-	 * bail out without unकरोing a lot of state. This is a rather
-	 * uncommon हाल, so करोesn't need to be very optimized.
+	 * bail out without undoing a lot of state. This is a rather
+	 * uncommon case, so doesn't need to be very optimized.
 	 */
-	अगर (arch_has_pfn_modअगरy_check() &&
+	if (arch_has_pfn_modify_check() &&
 	    (vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP)) &&
-	    (newflags & VM_ACCESS_FLAGS) == 0) अणु
+	    (newflags & VM_ACCESS_FLAGS) == 0) {
 		pgprot_t new_pgprot = vm_get_page_prot(newflags);
 
 		error = walk_page_range(current->mm, start, end,
 				&prot_none_walk_ops, &new_pgprot);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
 	/*
-	 * If we make a निजी mapping writable we increase our commit;
-	 * but (without finer accounting) cannot reduce our commit अगर we
-	 * make it unwritable again. hugetlb mapping were accounted क्रम
-	 * even अगर पढ़ो-only so there is no need to account क्रम them here
+	 * If we make a private mapping writable we increase our commit;
+	 * but (without finer accounting) cannot reduce our commit if we
+	 * make it unwritable again. hugetlb mapping were accounted for
+	 * even if read-only so there is no need to account for them here
 	 */
-	अगर (newflags & VM_WRITE) अणु
-		/* Check space limits when area turns पूर्णांकo data. */
-		अगर (!may_expand_vm(mm, newflags, nrpages) &&
+	if (newflags & VM_WRITE) {
+		/* Check space limits when area turns into data. */
+		if (!may_expand_vm(mm, newflags, nrpages) &&
 				may_expand_vm(mm, oldflags, nrpages))
-			वापस -ENOMEM;
-		अगर (!(oldflags & (VM_ACCOUNT|VM_WRITE|VM_HUGETLB|
-						VM_SHARED|VM_NORESERVE))) अणु
-			अक्षरged = nrpages;
-			अगर (security_vm_enough_memory_mm(mm, अक्षरged))
-				वापस -ENOMEM;
+			return -ENOMEM;
+		if (!(oldflags & (VM_ACCOUNT|VM_WRITE|VM_HUGETLB|
+						VM_SHARED|VM_NORESERVE))) {
+			charged = nrpages;
+			if (security_vm_enough_memory_mm(mm, charged))
+				return -ENOMEM;
 			newflags |= VM_ACCOUNT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * First try to merge with previous and/or next vma.
@@ -456,134 +455,134 @@ mprotect_fixup(काष्ठा vm_area_काष्ठा *vma, काष्�
 	*pprev = vma_merge(mm, *pprev, start, end, newflags,
 			   vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
 			   vma->vm_userfaultfd_ctx);
-	अगर (*pprev) अणु
+	if (*pprev) {
 		vma = *pprev;
-		VM_WARN_ON((vma->vm_flags ^ newflags) & ~VM_SOFTसूचीTY);
-		जाओ success;
-	पूर्ण
+		VM_WARN_ON((vma->vm_flags ^ newflags) & ~VM_SOFTDIRTY);
+		goto success;
+	}
 
 	*pprev = vma;
 
-	अगर (start != vma->vm_start) अणु
+	if (start != vma->vm_start) {
 		error = split_vma(mm, vma, start, 1);
-		अगर (error)
-			जाओ fail;
-	पूर्ण
+		if (error)
+			goto fail;
+	}
 
-	अगर (end != vma->vm_end) अणु
+	if (end != vma->vm_end) {
 		error = split_vma(mm, vma, end, 0);
-		अगर (error)
-			जाओ fail;
-	पूर्ण
+		if (error)
+			goto fail;
+	}
 
 success:
 	/*
-	 * vm_flags and vm_page_prot are रक्षित by the mmap_lock
-	 * held in ग_लिखो mode.
+	 * vm_flags and vm_page_prot are protected by the mmap_lock
+	 * held in write mode.
 	 */
 	vma->vm_flags = newflags;
-	dirty_accountable = vma_wants_ग_लिखोnotअगरy(vma, vma->vm_page_prot);
+	dirty_accountable = vma_wants_writenotify(vma, vma->vm_page_prot);
 	vma_set_page_prot(vma);
 
 	change_protection(vma, start, end, vma->vm_page_prot,
-			  dirty_accountable ? MM_CP_सूचीTY_ACCT : 0);
+			  dirty_accountable ? MM_CP_DIRTY_ACCT : 0);
 
 	/*
-	 * Private VM_LOCKED VMA becoming writable: trigger COW to aव्योम major
+	 * Private VM_LOCKED VMA becoming writable: trigger COW to avoid major
 	 * fault on access.
 	 */
-	अगर ((oldflags & (VM_WRITE | VM_SHARED | VM_LOCKED)) == VM_LOCKED &&
-			(newflags & VM_WRITE)) अणु
-		populate_vma_page_range(vma, start, end, शून्य);
-	पूर्ण
+	if ((oldflags & (VM_WRITE | VM_SHARED | VM_LOCKED)) == VM_LOCKED &&
+			(newflags & VM_WRITE)) {
+		populate_vma_page_range(vma, start, end, NULL);
+	}
 
 	vm_stat_account(mm, oldflags, -nrpages);
 	vm_stat_account(mm, newflags, nrpages);
 	perf_event_mmap(vma);
-	वापस 0;
+	return 0;
 
 fail:
-	vm_unacct_memory(अक्षरged);
-	वापस error;
-पूर्ण
+	vm_unacct_memory(charged);
+	return error;
+}
 
 /*
- * pkey==-1 when करोing a legacy mprotect()
+ * pkey==-1 when doing a legacy mprotect()
  */
-अटल पूर्णांक करो_mprotect_pkey(अचिन्हित दीर्घ start, माप_प्रकार len,
-		अचिन्हित दीर्घ prot, पूर्णांक pkey)
-अणु
-	अचिन्हित दीर्घ nstart, end, पंचांगp, reqprot;
-	काष्ठा vm_area_काष्ठा *vma, *prev;
-	पूर्णांक error = -EINVAL;
-	स्थिर पूर्णांक grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);
-	स्थिर bool rier = (current->personality & READ_IMPLIES_EXEC) &&
+static int do_mprotect_pkey(unsigned long start, size_t len,
+		unsigned long prot, int pkey)
+{
+	unsigned long nstart, end, tmp, reqprot;
+	struct vm_area_struct *vma, *prev;
+	int error = -EINVAL;
+	const int grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);
+	const bool rier = (current->personality & READ_IMPLIES_EXEC) &&
 				(prot & PROT_READ);
 
 	start = untagged_addr(start);
 
 	prot &= ~(PROT_GROWSDOWN|PROT_GROWSUP);
-	अगर (grows == (PROT_GROWSDOWN|PROT_GROWSUP)) /* can't be both */
-		वापस -EINVAL;
+	if (grows == (PROT_GROWSDOWN|PROT_GROWSUP)) /* can't be both */
+		return -EINVAL;
 
-	अगर (start & ~PAGE_MASK)
-		वापस -EINVAL;
-	अगर (!len)
-		वापस 0;
+	if (start & ~PAGE_MASK)
+		return -EINVAL;
+	if (!len)
+		return 0;
 	len = PAGE_ALIGN(len);
 	end = start + len;
-	अगर (end <= start)
-		वापस -ENOMEM;
-	अगर (!arch_validate_prot(prot, start))
-		वापस -EINVAL;
+	if (end <= start)
+		return -ENOMEM;
+	if (!arch_validate_prot(prot, start))
+		return -EINVAL;
 
 	reqprot = prot;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(current->mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(current->mm))
+		return -EINTR;
 
 	/*
-	 * If userspace did not allocate the pkey, करो not let
+	 * If userspace did not allocate the pkey, do not let
 	 * them use it here.
 	 */
 	error = -EINVAL;
-	अगर ((pkey != -1) && !mm_pkey_is_allocated(current->mm, pkey))
-		जाओ out;
+	if ((pkey != -1) && !mm_pkey_is_allocated(current->mm, pkey))
+		goto out;
 
 	vma = find_vma(current->mm, start);
 	error = -ENOMEM;
-	अगर (!vma)
-		जाओ out;
+	if (!vma)
+		goto out;
 	prev = vma->vm_prev;
-	अगर (unlikely(grows & PROT_GROWSDOWN)) अणु
-		अगर (vma->vm_start >= end)
-			जाओ out;
+	if (unlikely(grows & PROT_GROWSDOWN)) {
+		if (vma->vm_start >= end)
+			goto out;
 		start = vma->vm_start;
 		error = -EINVAL;
-		अगर (!(vma->vm_flags & VM_GROWSDOWN))
-			जाओ out;
-	पूर्ण अन्यथा अणु
-		अगर (vma->vm_start > start)
-			जाओ out;
-		अगर (unlikely(grows & PROT_GROWSUP)) अणु
+		if (!(vma->vm_flags & VM_GROWSDOWN))
+			goto out;
+	} else {
+		if (vma->vm_start > start)
+			goto out;
+		if (unlikely(grows & PROT_GROWSUP)) {
 			end = vma->vm_end;
 			error = -EINVAL;
-			अगर (!(vma->vm_flags & VM_GROWSUP))
-				जाओ out;
-		पूर्ण
-	पूर्ण
-	अगर (start > vma->vm_start)
+			if (!(vma->vm_flags & VM_GROWSUP))
+				goto out;
+		}
+	}
+	if (start > vma->vm_start)
 		prev = vma;
 
-	क्रम (nstart = start ; ; ) अणु
-		अचिन्हित दीर्घ mask_off_old_flags;
-		अचिन्हित दीर्घ newflags;
-		पूर्णांक new_vma_pkey;
+	for (nstart = start ; ; ) {
+		unsigned long mask_off_old_flags;
+		unsigned long newflags;
+		int new_vma_pkey;
 
 		/* Here we know that vma->vm_start <= nstart < vma->vm_end. */
 
 		/* Does the application expect PROT_READ to imply PROT_EXEC */
-		अगर (rier && (vma->vm_flags & VM_MAYEXEC))
+		if (rier && (vma->vm_flags & VM_MAYEXEC))
 			prot |= PROT_EXEC;
 
 		/*
@@ -598,112 +597,112 @@ fail:
 		newflags = calc_vm_prot_bits(prot, new_vma_pkey);
 		newflags |= (vma->vm_flags & ~mask_off_old_flags);
 
-		/* newflags >> 4 shअगरt VM_MAY% in place of VM_% */
-		अगर ((newflags & ~(newflags >> 4)) & VM_ACCESS_FLAGS) अणु
+		/* newflags >> 4 shift VM_MAY% in place of VM_% */
+		if ((newflags & ~(newflags >> 4)) & VM_ACCESS_FLAGS) {
 			error = -EACCES;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* Allow architectures to sanity-check the new flags */
-		अगर (!arch_validate_flags(newflags)) अणु
+		if (!arch_validate_flags(newflags)) {
 			error = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		error = security_file_mprotect(vma, reqprot, prot);
-		अगर (error)
-			जाओ out;
+		if (error)
+			goto out;
 
-		पंचांगp = vma->vm_end;
-		अगर (पंचांगp > end)
-			पंचांगp = end;
+		tmp = vma->vm_end;
+		if (tmp > end)
+			tmp = end;
 
-		अगर (vma->vm_ops && vma->vm_ops->mprotect) अणु
-			error = vma->vm_ops->mprotect(vma, nstart, पंचांगp, newflags);
-			अगर (error)
-				जाओ out;
-		पूर्ण
+		if (vma->vm_ops && vma->vm_ops->mprotect) {
+			error = vma->vm_ops->mprotect(vma, nstart, tmp, newflags);
+			if (error)
+				goto out;
+		}
 
-		error = mprotect_fixup(vma, &prev, nstart, पंचांगp, newflags);
-		अगर (error)
-			जाओ out;
+		error = mprotect_fixup(vma, &prev, nstart, tmp, newflags);
+		if (error)
+			goto out;
 
-		nstart = पंचांगp;
+		nstart = tmp;
 
-		अगर (nstart < prev->vm_end)
+		if (nstart < prev->vm_end)
 			nstart = prev->vm_end;
-		अगर (nstart >= end)
-			जाओ out;
+		if (nstart >= end)
+			goto out;
 
 		vma = prev->vm_next;
-		अगर (!vma || vma->vm_start != nstart) अणु
+		if (!vma || vma->vm_start != nstart) {
 			error = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		prot = reqprot;
-	पूर्ण
+	}
 out:
-	mmap_ग_लिखो_unlock(current->mm);
-	वापस error;
-पूर्ण
+	mmap_write_unlock(current->mm);
+	return error;
+}
 
-SYSCALL_DEFINE3(mprotect, अचिन्हित दीर्घ, start, माप_प्रकार, len,
-		अचिन्हित दीर्घ, prot)
-अणु
-	वापस करो_mprotect_pkey(start, len, prot, -1);
-पूर्ण
+SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
+		unsigned long, prot)
+{
+	return do_mprotect_pkey(start, len, prot, -1);
+}
 
-#अगर_घोषित CONFIG_ARCH_HAS_PKEYS
+#ifdef CONFIG_ARCH_HAS_PKEYS
 
-SYSCALL_DEFINE4(pkey_mprotect, अचिन्हित दीर्घ, start, माप_प्रकार, len,
-		अचिन्हित दीर्घ, prot, पूर्णांक, pkey)
-अणु
-	वापस करो_mprotect_pkey(start, len, prot, pkey);
-पूर्ण
+SYSCALL_DEFINE4(pkey_mprotect, unsigned long, start, size_t, len,
+		unsigned long, prot, int, pkey)
+{
+	return do_mprotect_pkey(start, len, prot, pkey);
+}
 
-SYSCALL_DEFINE2(pkey_alloc, अचिन्हित दीर्घ, flags, अचिन्हित दीर्घ, init_val)
-अणु
-	पूर्णांक pkey;
-	पूर्णांक ret;
+SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
+{
+	int pkey;
+	int ret;
 
 	/* No flags supported yet. */
-	अगर (flags)
-		वापस -EINVAL;
-	/* check क्रम unsupported init values */
-	अगर (init_val & ~PKEY_ACCESS_MASK)
-		वापस -EINVAL;
+	if (flags)
+		return -EINVAL;
+	/* check for unsupported init values */
+	if (init_val & ~PKEY_ACCESS_MASK)
+		return -EINVAL;
 
-	mmap_ग_लिखो_lock(current->mm);
+	mmap_write_lock(current->mm);
 	pkey = mm_pkey_alloc(current->mm);
 
 	ret = -ENOSPC;
-	अगर (pkey == -1)
-		जाओ out;
+	if (pkey == -1)
+		goto out;
 
 	ret = arch_set_user_pkey_access(current, pkey, init_val);
-	अगर (ret) अणु
-		mm_pkey_मुक्त(current->mm, pkey);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		mm_pkey_free(current->mm, pkey);
+		goto out;
+	}
 	ret = pkey;
 out:
-	mmap_ग_लिखो_unlock(current->mm);
-	वापस ret;
-पूर्ण
+	mmap_write_unlock(current->mm);
+	return ret;
+}
 
-SYSCALL_DEFINE1(pkey_मुक्त, पूर्णांक, pkey)
-अणु
-	पूर्णांक ret;
+SYSCALL_DEFINE1(pkey_free, int, pkey)
+{
+	int ret;
 
-	mmap_ग_लिखो_lock(current->mm);
-	ret = mm_pkey_मुक्त(current->mm, pkey);
-	mmap_ग_लिखो_unlock(current->mm);
+	mmap_write_lock(current->mm);
+	ret = mm_pkey_free(current->mm, pkey);
+	mmap_write_unlock(current->mm);
 
 	/*
-	 * We could provide warnings or errors अगर any VMA still
+	 * We could provide warnings or errors if any VMA still
 	 * has the pkey set here.
 	 */
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* CONFIG_ARCH_HAS_PKEYS */
+#endif /* CONFIG_ARCH_HAS_PKEYS */

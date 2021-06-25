@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * leds-tca6507
  *
@@ -7,7 +6,7 @@
  * separate lines either by holding them low, or by pulsing them
  * with modulated width.
  * The modulation can be varied in a simple pattern to produce a
- * blink or द्विगुन-blink.
+ * blink or double-blink.
  *
  * This driver can configure each line either as a 'GPIO' which is
  * out-only (pull-up resistor required) or as an LED with variable
@@ -15,29 +14,29 @@
  *
  * Apart from OFF and ON there are three programmable brightness
  * levels which can be programmed from 0 to 15 and indicate how many
- * 500usec पूर्णांकervals in each 8msec that the led is 'on'.  The levels
+ * 500usec intervals in each 8msec that the led is 'on'.  The levels
  * are named MASTER, BANK0 and BANK1.
  *
- * There are two dअगरferent blink rates that can be programmed, each
- * with separate समय क्रम rise, on, fall, off and second-off.  Thus अगर
- * 3 or more dअगरferent non-trivial rates are required, software must
- * be used क्रम the extra rates. The two dअगरferent blink rates must
- * align with the two levels BANK0 and BANK1.  This driver करोes not
- * support द्विगुन-blink so 'second-off' always matches 'off'.
+ * There are two different blink rates that can be programmed, each
+ * with separate time for rise, on, fall, off and second-off.  Thus if
+ * 3 or more different non-trivial rates are required, software must
+ * be used for the extra rates. The two different blink rates must
+ * align with the two levels BANK0 and BANK1.  This driver does not
+ * support double-blink so 'second-off' always matches 'off'.
  *
- * Only 16 dअगरferent बार can be programmed in a roughly logarithmic
- * scale from 64ms to 16320ms.  To be precise the possible बार are:
+ * Only 16 different times can be programmed in a roughly logarithmic
+ * scale from 64ms to 16320ms.  To be precise the possible times are:
  *    0, 64, 128, 192, 256, 384, 512, 768,
  *    1024, 1536, 2048, 3072, 4096, 5760, 8128, 16320
  *
- * Times that cannot be बंदly matched with these must be handled in
+ * Times that cannot be closely matched with these must be handled in
  * software.  This driver allows 12.5% error in matching.
  *
- * This driver करोes not allow rise/fall rates to be set explicitly.
+ * This driver does not allow rise/fall rates to be set explicitly.
  * When trying to match a given 'on' or 'off' period, an appropriate
- * pair of 'change' and 'hold' बार are chosen to get a बंद match.
+ * pair of 'change' and 'hold' times are chosen to get a close match.
  * If the target delay is even, the 'change' number will be the
- * smaller; अगर odd, the 'hold' number will be the smaller.
+ * smaller; if odd, the 'hold' number will be the smaller.
 
  * Choosing pairs of delays with 12.5% errors allows us to match
  * delays in the ranges: 56-72, 112-144, 168-216, 224-27504,
@@ -45,18 +44,18 @@
  * 26% of the achievable sums can be matched by multiple pairings.
  * For example 1536 == 1536+0, 1024+512, or 768+768.
  * This driver will always choose the pairing with the least
- * maximum - 768+768 in this हाल.  Other pairings are not available.
+ * maximum - 768+768 in this case.  Other pairings are not available.
  *
  * Access to the 3 levels and 2 blinks are on a first-come,
- * first-served basis.  Access can be shared by multiple leds अगर they
- * have the same level and either same blink rates, or some करोn't
+ * first-served basis.  Access can be shared by multiple leds if they
+ * have the same level and either same blink rates, or some don't
  * blink.  When a led changes, it relinquishes access and tries again,
  * so it might lose access to hardware blink.
  *
  * If a blink engine cannot be allocated, software blink is used.  If
- * the desired brightness cannot be allocated, the बंदst available
+ * the desired brightness cannot be allocated, the closest available
  * non-zero brightness is used.  As 'full' is always available, the
- * worst हाल would be to have two dअगरferent blink rates at '1', with
+ * worst case would be to have two different blink rates at '1', with
  * Max at '2', then other leds will have to choose between '2' and
  * '16'.  Hopefully this is not likely.
  *
@@ -65,577 +64,577 @@
  * when the appropriate counter is zero.  The MASTER level has a
  * single usage count.
  *
- * Each LED has programmable 'on' and 'off' समय as milliseconds.
- * With each there is a flag saying अगर it was explicitly requested or
- * शेषed.  Similarly the banks know अगर each समय was explicit or a
- * शेष.  Defaults are permitted to be changed मुक्तly - they are
+ * Each LED has programmable 'on' and 'off' time as milliseconds.
+ * With each there is a flag saying if it was explicitly requested or
+ * defaulted.  Similarly the banks know if each time was explicit or a
+ * default.  Defaults are permitted to be changed freely - they are
  * not recognised when matching.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/property.h>
-#समावेश <linux/workqueue.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/leds.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/gpio/driver.h>
+#include <linux/property.h>
+#include <linux/workqueue.h>
 
-/* LED select रेजिस्टरs determine the source that drives LED outमाला_दो */
-#घोषणा TCA6507_LS_LED_OFF	0x0	/* Output HI-Z (off) */
-#घोषणा TCA6507_LS_LED_OFF1	0x1	/* Output HI-Z (off) - not used */
-#घोषणा TCA6507_LS_LED_PWM0	0x2	/* Output LOW with Bank0 rate */
-#घोषणा TCA6507_LS_LED_PWM1	0x3	/* Output LOW with Bank1 rate */
-#घोषणा TCA6507_LS_LED_ON	0x4	/* Output LOW (on) */
-#घोषणा TCA6507_LS_LED_MIR	0x5	/* Output LOW with Master Intensity */
-#घोषणा TCA6507_LS_BLINK0	0x6	/* Blink at Bank0 rate */
-#घोषणा TCA6507_LS_BLINK1	0x7	/* Blink at Bank1 rate */
+/* LED select registers determine the source that drives LED outputs */
+#define TCA6507_LS_LED_OFF	0x0	/* Output HI-Z (off) */
+#define TCA6507_LS_LED_OFF1	0x1	/* Output HI-Z (off) - not used */
+#define TCA6507_LS_LED_PWM0	0x2	/* Output LOW with Bank0 rate */
+#define TCA6507_LS_LED_PWM1	0x3	/* Output LOW with Bank1 rate */
+#define TCA6507_LS_LED_ON	0x4	/* Output LOW (on) */
+#define TCA6507_LS_LED_MIR	0x5	/* Output LOW with Master Intensity */
+#define TCA6507_LS_BLINK0	0x6	/* Blink at Bank0 rate */
+#define TCA6507_LS_BLINK1	0x7	/* Blink at Bank1 rate */
 
-काष्ठा tca6507_platक्रमm_data अणु
-	काष्ठा led_platक्रमm_data leds;
-#अगर_घोषित CONFIG_GPIOLIB
-	पूर्णांक gpio_base;
-#पूर्ण_अगर
-पूर्ण;
+struct tca6507_platform_data {
+	struct led_platform_data leds;
+#ifdef CONFIG_GPIOLIB
+	int gpio_base;
+#endif
+};
 
-#घोषणा	TCA6507_MAKE_GPIO 1
+#define	TCA6507_MAKE_GPIO 1
 
-क्रमागत अणु
+enum {
 	BANK0,
 	BANK1,
 	MASTER,
-पूर्ण;
-अटल पूर्णांक bank_source[3] = अणु
+};
+static int bank_source[3] = {
 	TCA6507_LS_LED_PWM0,
 	TCA6507_LS_LED_PWM1,
 	TCA6507_LS_LED_MIR,
-पूर्ण;
-अटल पूर्णांक blink_source[2] = अणु
+};
+static int blink_source[2] = {
 	TCA6507_LS_BLINK0,
 	TCA6507_LS_BLINK1,
-पूर्ण;
+};
 
-/* PWM रेजिस्टरs */
-#घोषणा	TCA6507_REG_CNT			11
+/* PWM registers */
+#define	TCA6507_REG_CNT			11
 
 /*
  * 0x00, 0x01, 0x02 encode the TCA6507_LS_* values, each output
- * owns one bit in each रेजिस्टर
+ * owns one bit in each register
  */
-#घोषणा	TCA6507_FADE_ON			0x03
-#घोषणा	TCA6507_FULL_ON			0x04
-#घोषणा	TCA6507_FADE_OFF		0x05
-#घोषणा	TCA6507_FIRST_OFF		0x06
-#घोषणा	TCA6507_SECOND_OFF		0x07
-#घोषणा	TCA6507_MAX_INTENSITY		0x08
-#घोषणा	TCA6507_MASTER_INTENSITY	0x09
-#घोषणा	TCA6507_INITIALIZE		0x0A
+#define	TCA6507_FADE_ON			0x03
+#define	TCA6507_FULL_ON			0x04
+#define	TCA6507_FADE_OFF		0x05
+#define	TCA6507_FIRST_OFF		0x06
+#define	TCA6507_SECOND_OFF		0x07
+#define	TCA6507_MAX_INTENSITY		0x08
+#define	TCA6507_MASTER_INTENSITY	0x09
+#define	TCA6507_INITIALIZE		0x0A
 
-#घोषणा	INIT_CODE			0x8
+#define	INIT_CODE			0x8
 
-#घोषणा TIMECODES 16
-अटल पूर्णांक समय_codes[TIMECODES] = अणु
+#define TIMECODES 16
+static int time_codes[TIMECODES] = {
 	0, 64, 128, 192, 256, 384, 512, 768,
 	1024, 1536, 2048, 3072, 4096, 5760, 8128, 16320
-पूर्ण;
+};
 
 /* Convert an led.brightness level (0..255) to a TCA6507 level (0..15) */
-अटल अंतरभूत पूर्णांक TO_LEVEL(पूर्णांक brightness)
-अणु
-	वापस brightness >> 4;
-पूर्ण
+static inline int TO_LEVEL(int brightness)
+{
+	return brightness >> 4;
+}
 
 /* ...and convert back */
-अटल अंतरभूत पूर्णांक TO_BRIGHT(पूर्णांक level)
-अणु
-	अगर (level)
-		वापस (level << 4) | 0xf;
-	वापस 0;
-पूर्ण
+static inline int TO_BRIGHT(int level)
+{
+	if (level)
+		return (level << 4) | 0xf;
+	return 0;
+}
 
-#घोषणा NUM_LEDS 7
-काष्ठा tca6507_chip अणु
-	पूर्णांक			reg_set;	/* One bit per रेजिस्टर where
-						 * a '1' means the रेजिस्टर
+#define NUM_LEDS 7
+struct tca6507_chip {
+	int			reg_set;	/* One bit per register where
+						 * a '1' means the register
 						 * should be written */
 	u8			reg_file[TCA6507_REG_CNT];
-	/* Bank 2 is Master Intensity and करोesn't use बार */
-	काष्ठा bank अणु
-		पूर्णांक level;
-		पूर्णांक onसमय, offसमय;
-		पूर्णांक on_dflt, off_dflt;
-		पूर्णांक समय_use, level_use;
-	पूर्ण bank[3];
-	काष्ठा i2c_client	*client;
-	काष्ठा work_काष्ठा	work;
+	/* Bank 2 is Master Intensity and doesn't use times */
+	struct bank {
+		int level;
+		int ontime, offtime;
+		int on_dflt, off_dflt;
+		int time_use, level_use;
+	} bank[3];
+	struct i2c_client	*client;
+	struct work_struct	work;
 	spinlock_t		lock;
 
-	काष्ठा tca6507_led अणु
-		काष्ठा tca6507_chip	*chip;
-		काष्ठा led_classdev	led_cdev;
-		पूर्णांक			num;
-		पूर्णांक			onसमय, offसमय;
-		पूर्णांक			on_dflt, off_dflt;
-		पूर्णांक			bank;	/* Bank used, or -1 */
-		पूर्णांक			blink;	/* Set अगर hardware-blinking */
-	पूर्ण leds[NUM_LEDS];
-#अगर_घोषित CONFIG_GPIOLIB
-	काष्ठा gpio_chip		gpio;
-	पूर्णांक				gpio_map[NUM_LEDS];
-#पूर्ण_अगर
-पूर्ण;
+	struct tca6507_led {
+		struct tca6507_chip	*chip;
+		struct led_classdev	led_cdev;
+		int			num;
+		int			ontime, offtime;
+		int			on_dflt, off_dflt;
+		int			bank;	/* Bank used, or -1 */
+		int			blink;	/* Set if hardware-blinking */
+	} leds[NUM_LEDS];
+#ifdef CONFIG_GPIOLIB
+	struct gpio_chip		gpio;
+	int				gpio_map[NUM_LEDS];
+#endif
+};
 
-अटल स्थिर काष्ठा i2c_device_id tca6507_id[] = अणु
-	अणु "tca6507" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id tca6507_id[] = {
+	{ "tca6507" },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, tca6507_id);
 
-अटल पूर्णांक choose_बार(पूर्णांक msec, पूर्णांक *c1p, पूर्णांक *c2p)
-अणु
+static int choose_times(int msec, int *c1p, int *c2p)
+{
 	/*
-	 * Choose two समयcodes which add to 'msec' as near as
-	 * possible.  The first वापसed is the 'on' or 'off' समय.
-	 * The second is to be used as a 'fade-on' or 'fade-off' समय.
+	 * Choose two timecodes which add to 'msec' as near as
+	 * possible.  The first returned is the 'on' or 'off' time.
+	 * The second is to be used as a 'fade-on' or 'fade-off' time.
 	 * If 'msec' is even, the first will not be smaller than the
 	 * second.  If 'msec' is odd, the first will not be larger
 	 * than the second.
 	 * If we cannot get a sum within 1/8 of 'msec' fail with
-	 * -EINVAL, otherwise वापस the sum that was achieved, plus 1
-	 * अगर the first is smaller.
+	 * -EINVAL, otherwise return the sum that was achieved, plus 1
+	 * if the first is smaller.
 	 * If two possibilities are equally good (e.g. 512+0,
 	 * 256+256), choose the first pair so there is more
-	 * change-समय visible (i.e. it is softer).
+	 * change-time visible (i.e. it is softer).
 	 */
-	पूर्णांक c1, c2;
-	पूर्णांक पंचांगax = msec * 9 / 8;
-	पूर्णांक पंचांगin = msec * 7 / 8;
-	पूर्णांक dअगरf = 65536;
+	int c1, c2;
+	int tmax = msec * 9 / 8;
+	int tmin = msec * 7 / 8;
+	int diff = 65536;
 
 	/* We start at '1' to ensure we never even think of choosing a
-	 * total समय of '0'.
+	 * total time of '0'.
 	 */
-	क्रम (c1 = 1; c1 < TIMECODES; c1++) अणु
-		पूर्णांक t = समय_codes[c1];
-		अगर (t*2 < पंचांगin)
-			जारी;
-		अगर (t > पंचांगax)
-			अवरोध;
-		क्रम (c2 = 0; c2 <= c1; c2++) अणु
-			पूर्णांक tt = t + समय_codes[c2];
-			पूर्णांक d;
-			अगर (tt < पंचांगin)
-				जारी;
-			अगर (tt > पंचांगax)
-				अवरोध;
+	for (c1 = 1; c1 < TIMECODES; c1++) {
+		int t = time_codes[c1];
+		if (t*2 < tmin)
+			continue;
+		if (t > tmax)
+			break;
+		for (c2 = 0; c2 <= c1; c2++) {
+			int tt = t + time_codes[c2];
+			int d;
+			if (tt < tmin)
+				continue;
+			if (tt > tmax)
+				break;
 			/* This works! */
-			d = असल(msec - tt);
-			अगर (d >= dअगरf)
-				जारी;
+			d = abs(msec - tt);
+			if (d >= diff)
+				continue;
 			/* Best yet */
 			*c1p = c1;
 			*c2p = c2;
-			dअगरf = d;
-			अगर (d == 0)
-				वापस msec;
-		पूर्ण
-	पूर्ण
-	अगर (dअगरf < 65536) अणु
-		पूर्णांक actual;
-		अगर (msec & 1) अणु
+			diff = d;
+			if (d == 0)
+				return msec;
+		}
+	}
+	if (diff < 65536) {
+		int actual;
+		if (msec & 1) {
 			c1 = *c2p;
 			*c2p = *c1p;
 			*c1p = c1;
-		पूर्ण
-		actual = समय_codes[*c1p] + समय_codes[*c2p];
-		अगर (*c1p < *c2p)
-			वापस actual + 1;
-		अन्यथा
-			वापस actual;
-	पूर्ण
-	/* No बंद match */
-	वापस -EINVAL;
-पूर्ण
+		}
+		actual = time_codes[*c1p] + time_codes[*c2p];
+		if (*c1p < *c2p)
+			return actual + 1;
+		else
+			return actual;
+	}
+	/* No close match */
+	return -EINVAL;
+}
 
 /*
- * Update the रेजिस्टर file with the appropriate 3-bit state क्रम the
+ * Update the register file with the appropriate 3-bit state for the
  * given led.
  */
-अटल व्योम set_select(काष्ठा tca6507_chip *tca, पूर्णांक led, पूर्णांक val)
-अणु
-	पूर्णांक mask = (1 << led);
-	पूर्णांक bit;
+static void set_select(struct tca6507_chip *tca, int led, int val)
+{
+	int mask = (1 << led);
+	int bit;
 
-	क्रम (bit = 0; bit < 3; bit++) अणु
-		पूर्णांक n = tca->reg_file[bit] & ~mask;
-		अगर (val & (1 << bit))
+	for (bit = 0; bit < 3; bit++) {
+		int n = tca->reg_file[bit] & ~mask;
+		if (val & (1 << bit))
 			n |= mask;
-		अगर (tca->reg_file[bit] != n) अणु
+		if (tca->reg_file[bit] != n) {
 			tca->reg_file[bit] = n;
 			tca->reg_set |= (1 << bit);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* Update the रेजिस्टर file with the appropriate 4-bit code क्रम one
- * bank or other.  This can be used क्रम समयrs, क्रम levels, or क्रम
+/* Update the register file with the appropriate 4-bit code for one
+ * bank or other.  This can be used for timers, for levels, or for
  * initialization.
  */
-अटल व्योम set_code(काष्ठा tca6507_chip *tca, पूर्णांक reg, पूर्णांक bank, पूर्णांक new)
-अणु
-	पूर्णांक mask = 0xF;
-	पूर्णांक n;
-	अगर (bank) अणु
+static void set_code(struct tca6507_chip *tca, int reg, int bank, int new)
+{
+	int mask = 0xF;
+	int n;
+	if (bank) {
 		mask <<= 4;
 		new <<= 4;
-	पूर्ण
+	}
 	n = tca->reg_file[reg] & ~mask;
 	n |= new;
-	अगर (tca->reg_file[reg] != n) अणु
+	if (tca->reg_file[reg] != n) {
 		tca->reg_file[reg] = n;
 		tca->reg_set |= 1 << reg;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Update brightness level. */
-अटल व्योम set_level(काष्ठा tca6507_chip *tca, पूर्णांक bank, पूर्णांक level)
-अणु
-	चयन (bank) अणु
-	हाल BANK0:
-	हाल BANK1:
+static void set_level(struct tca6507_chip *tca, int bank, int level)
+{
+	switch (bank) {
+	case BANK0:
+	case BANK1:
 		set_code(tca, TCA6507_MAX_INTENSITY, bank, level);
-		अवरोध;
-	हाल MASTER:
+		break;
+	case MASTER:
 		set_code(tca, TCA6507_MASTER_INTENSITY, 0, level);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	tca->bank[bank].level = level;
-पूर्ण
+}
 
-/* Record all relevant समय codes क्रम a given bank */
-अटल व्योम set_बार(काष्ठा tca6507_chip *tca, पूर्णांक bank)
-अणु
-	पूर्णांक c1, c2;
-	पूर्णांक result;
+/* Record all relevant time codes for a given bank */
+static void set_times(struct tca6507_chip *tca, int bank)
+{
+	int c1, c2;
+	int result;
 
-	result = choose_बार(tca->bank[bank].onसमय, &c1, &c2);
-	अगर (result < 0)
-		वापस;
+	result = choose_times(tca->bank[bank].ontime, &c1, &c2);
+	if (result < 0)
+		return;
 	dev_dbg(&tca->client->dev,
 		"Chose on  times %d(%d) %d(%d) for %dms\n",
-		c1, समय_codes[c1],
-		c2, समय_codes[c2], tca->bank[bank].onसमय);
+		c1, time_codes[c1],
+		c2, time_codes[c2], tca->bank[bank].ontime);
 	set_code(tca, TCA6507_FADE_ON, bank, c2);
 	set_code(tca, TCA6507_FULL_ON, bank, c1);
-	tca->bank[bank].onसमय = result;
+	tca->bank[bank].ontime = result;
 
-	result = choose_बार(tca->bank[bank].offसमय, &c1, &c2);
+	result = choose_times(tca->bank[bank].offtime, &c1, &c2);
 	dev_dbg(&tca->client->dev,
 		"Chose off times %d(%d) %d(%d) for %dms\n",
-		c1, समय_codes[c1],
-		c2, समय_codes[c2], tca->bank[bank].offसमय);
+		c1, time_codes[c1],
+		c2, time_codes[c2], tca->bank[bank].offtime);
 	set_code(tca, TCA6507_FADE_OFF, bank, c2);
 	set_code(tca, TCA6507_FIRST_OFF, bank, c1);
 	set_code(tca, TCA6507_SECOND_OFF, bank, c1);
-	tca->bank[bank].offसमय = result;
+	tca->bank[bank].offtime = result;
 
 	set_code(tca, TCA6507_INITIALIZE, bank, INIT_CODE);
-पूर्ण
+}
 
-/* Write all needed रेजिस्टर of tca6507 */
+/* Write all needed register of tca6507 */
 
-अटल व्योम tca6507_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tca6507_chip *tca = container_of(work, काष्ठा tca6507_chip,
+static void tca6507_work(struct work_struct *work)
+{
+	struct tca6507_chip *tca = container_of(work, struct tca6507_chip,
 						work);
-	काष्ठा i2c_client *cl = tca->client;
-	पूर्णांक set;
+	struct i2c_client *cl = tca->client;
+	int set;
 	u8 file[TCA6507_REG_CNT];
-	पूर्णांक r;
+	int r;
 
 	spin_lock_irq(&tca->lock);
 	set = tca->reg_set;
-	स_नकल(file, tca->reg_file, TCA6507_REG_CNT);
+	memcpy(file, tca->reg_file, TCA6507_REG_CNT);
 	tca->reg_set = 0;
 	spin_unlock_irq(&tca->lock);
 
-	क्रम (r = 0; r < TCA6507_REG_CNT; r++)
-		अगर (set & (1<<r))
-			i2c_smbus_ग_लिखो_byte_data(cl, r, file[r]);
-पूर्ण
+	for (r = 0; r < TCA6507_REG_CNT; r++)
+		if (set & (1<<r))
+			i2c_smbus_write_byte_data(cl, r, file[r]);
+}
 
-अटल व्योम led_release(काष्ठा tca6507_led *led)
-अणु
+static void led_release(struct tca6507_led *led)
+{
 	/* If led owns any resource, release it. */
-	काष्ठा tca6507_chip *tca = led->chip;
-	अगर (led->bank >= 0) अणु
-		काष्ठा bank *b = tca->bank + led->bank;
-		अगर (led->blink)
-			b->समय_use--;
+	struct tca6507_chip *tca = led->chip;
+	if (led->bank >= 0) {
+		struct bank *b = tca->bank + led->bank;
+		if (led->blink)
+			b->time_use--;
 		b->level_use--;
-	पूर्ण
+	}
 	led->blink = 0;
 	led->bank = -1;
-पूर्ण
+}
 
-अटल पूर्णांक led_prepare(काष्ठा tca6507_led *led)
-अणु
-	/* Assign this led to a bank, configuring that bank अगर
+static int led_prepare(struct tca6507_led *led)
+{
+	/* Assign this led to a bank, configuring that bank if
 	 * necessary. */
-	पूर्णांक level = TO_LEVEL(led->led_cdev.brightness);
-	काष्ठा tca6507_chip *tca = led->chip;
-	पूर्णांक c1, c2;
-	पूर्णांक i;
-	काष्ठा bank *b;
-	पूर्णांक need_init = 0;
+	int level = TO_LEVEL(led->led_cdev.brightness);
+	struct tca6507_chip *tca = led->chip;
+	int c1, c2;
+	int i;
+	struct bank *b;
+	int need_init = 0;
 
 	led->led_cdev.brightness = TO_BRIGHT(level);
-	अगर (level == 0) अणु
+	if (level == 0) {
 		set_select(tca, led->num, TCA6507_LS_LED_OFF);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (led->onसमय == 0 || led->offसमय == 0) अणु
+	if (led->ontime == 0 || led->offtime == 0) {
 		/*
 		 * Just set the brightness, choosing first usable
 		 * bank.  If none perfect, choose best.  Count
-		 * backwards so we check MASTER bank first to aव्योम
-		 * wasting a समयr.
+		 * backwards so we check MASTER bank first to avoid
+		 * wasting a timer.
 		 */
-		पूर्णांक best = -1;/* full-on */
-		पूर्णांक dअगरf = 15-level;
+		int best = -1;/* full-on */
+		int diff = 15-level;
 
-		अगर (level == 15) अणु
+		if (level == 15) {
 			set_select(tca, led->num, TCA6507_LS_LED_ON);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		क्रम (i = MASTER; i >= BANK0; i--) अणु
-			पूर्णांक d;
-			अगर (tca->bank[i].level == level ||
-			    tca->bank[i].level_use == 0) अणु
+		for (i = MASTER; i >= BANK0; i--) {
+			int d;
+			if (tca->bank[i].level == level ||
+			    tca->bank[i].level_use == 0) {
 				best = i;
-				अवरोध;
-			पूर्ण
-			d = असल(level - tca->bank[i].level);
-			अगर (d < dअगरf) अणु
-				dअगरf = d;
+				break;
+			}
+			d = abs(level - tca->bank[i].level);
+			if (d < diff) {
+				diff = d;
 				best = i;
-			पूर्ण
-		पूर्ण
-		अगर (best == -1) अणु
+			}
+		}
+		if (best == -1) {
 			/* Best brightness is full-on */
 			set_select(tca, led->num, TCA6507_LS_LED_ON);
 			led->led_cdev.brightness = LED_FULL;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (!tca->bank[best].level_use)
+		if (!tca->bank[best].level_use)
 			set_level(tca, best, level);
 
 		tca->bank[best].level_use++;
 		led->bank = best;
 		set_select(tca, led->num, bank_source[best]);
 		led->led_cdev.brightness = TO_BRIGHT(tca->bank[best].level);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * We have on/off समय so we need to try to allocate a timing
-	 * bank.  First check अगर बार are compatible with hardware
-	 * and give up अगर not.
+	 * We have on/off time so we need to try to allocate a timing
+	 * bank.  First check if times are compatible with hardware
+	 * and give up if not.
 	 */
-	अगर (choose_बार(led->onसमय, &c1, &c2) < 0)
-		वापस -EINVAL;
-	अगर (choose_बार(led->offसमय, &c1, &c2) < 0)
-		वापस -EINVAL;
+	if (choose_times(led->ontime, &c1, &c2) < 0)
+		return -EINVAL;
+	if (choose_times(led->offtime, &c1, &c2) < 0)
+		return -EINVAL;
 
-	क्रम (i = BANK0; i <= BANK1; i++) अणु
-		अगर (tca->bank[i].level_use == 0)
+	for (i = BANK0; i <= BANK1; i++) {
+		if (tca->bank[i].level_use == 0)
 			/* not in use - it is ours! */
-			अवरोध;
-		अगर (tca->bank[i].level != level)
+			break;
+		if (tca->bank[i].level != level)
 			/* Incompatible level - skip */
-			/* FIX: अगर समयr matches we maybe should consider
+			/* FIX: if timer matches we maybe should consider
 			 * this anyway...
 			 */
-			जारी;
+			continue;
 
-		अगर (tca->bank[i].समय_use == 0)
+		if (tca->bank[i].time_use == 0)
 			/* Timer not in use, and level matches - use it */
-			अवरोध;
+			break;
 
-		अगर (!(tca->bank[i].on_dflt ||
+		if (!(tca->bank[i].on_dflt ||
 		      led->on_dflt ||
-		      tca->bank[i].onसमय == led->onसमय))
-			/* on समय is incompatible */
-			जारी;
+		      tca->bank[i].ontime == led->ontime))
+			/* on time is incompatible */
+			continue;
 
-		अगर (!(tca->bank[i].off_dflt ||
+		if (!(tca->bank[i].off_dflt ||
 		      led->off_dflt ||
-		      tca->bank[i].offसमय == led->offसमय))
-			/* off समय is incompatible */
-			जारी;
+		      tca->bank[i].offtime == led->offtime))
+			/* off time is incompatible */
+			continue;
 
 		/* looks like a suitable match */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (i > BANK1)
+	if (i > BANK1)
 		/* Nothing matches - how sad */
-		वापस -EINVAL;
+		return -EINVAL;
 
 	b = &tca->bank[i];
-	अगर (b->level_use == 0)
+	if (b->level_use == 0)
 		set_level(tca, i, level);
 	b->level_use++;
 	led->bank = i;
 
-	अगर (b->on_dflt ||
+	if (b->on_dflt ||
 	    !led->on_dflt ||
-	    b->समय_use == 0) अणु
-		b->onसमय = led->onसमय;
+	    b->time_use == 0) {
+		b->ontime = led->ontime;
 		b->on_dflt = led->on_dflt;
 		need_init = 1;
-	पूर्ण
+	}
 
-	अगर (b->off_dflt ||
+	if (b->off_dflt ||
 	    !led->off_dflt ||
-	    b->समय_use == 0) अणु
-		b->offसमय = led->offसमय;
+	    b->time_use == 0) {
+		b->offtime = led->offtime;
 		b->off_dflt = led->off_dflt;
 		need_init = 1;
-	पूर्ण
+	}
 
-	अगर (need_init)
-		set_बार(tca, i);
+	if (need_init)
+		set_times(tca, i);
 
-	led->onसमय = b->onसमय;
-	led->offसमय = b->offसमय;
+	led->ontime = b->ontime;
+	led->offtime = b->offtime;
 
-	b->समय_use++;
+	b->time_use++;
 	led->blink = 1;
 	led->led_cdev.brightness = TO_BRIGHT(b->level);
 	set_select(tca, led->num, blink_source[i]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक led_assign(काष्ठा tca6507_led *led)
-अणु
-	काष्ठा tca6507_chip *tca = led->chip;
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
+static int led_assign(struct tca6507_led *led)
+{
+	struct tca6507_chip *tca = led->chip;
+	int err;
+	unsigned long flags;
 
 	spin_lock_irqsave(&tca->lock, flags);
 	led_release(led);
 	err = led_prepare(led);
-	अगर (err) अणु
+	if (err) {
 		/*
-		 * Can only fail on समयr setup.  In that हाल we need
+		 * Can only fail on timer setup.  In that case we need
 		 * to re-establish as steady level.
 		 */
-		led->onसमय = 0;
-		led->offसमय = 0;
+		led->ontime = 0;
+		led->offtime = 0;
 		led_prepare(led);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&tca->lock, flags);
 
-	अगर (tca->reg_set)
+	if (tca->reg_set)
 		schedule_work(&tca->work);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tca6507_brightness_set(काष्ठा led_classdev *led_cdev,
-				   क्रमागत led_brightness brightness)
-अणु
-	काष्ठा tca6507_led *led = container_of(led_cdev, काष्ठा tca6507_led,
+static void tca6507_brightness_set(struct led_classdev *led_cdev,
+				   enum led_brightness brightness)
+{
+	struct tca6507_led *led = container_of(led_cdev, struct tca6507_led,
 					       led_cdev);
 	led->led_cdev.brightness = brightness;
-	led->onसमय = 0;
-	led->offसमय = 0;
+	led->ontime = 0;
+	led->offtime = 0;
 	led_assign(led);
-पूर्ण
+}
 
-अटल पूर्णांक tca6507_blink_set(काष्ठा led_classdev *led_cdev,
-			     अचिन्हित दीर्घ *delay_on,
-			     अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा tca6507_led *led = container_of(led_cdev, काष्ठा tca6507_led,
+static int tca6507_blink_set(struct led_classdev *led_cdev,
+			     unsigned long *delay_on,
+			     unsigned long *delay_off)
+{
+	struct tca6507_led *led = container_of(led_cdev, struct tca6507_led,
 					       led_cdev);
 
-	अगर (*delay_on == 0)
+	if (*delay_on == 0)
 		led->on_dflt = 1;
-	अन्यथा अगर (delay_on != &led_cdev->blink_delay_on)
+	else if (delay_on != &led_cdev->blink_delay_on)
 		led->on_dflt = 0;
-	led->onसमय = *delay_on;
+	led->ontime = *delay_on;
 
-	अगर (*delay_off == 0)
+	if (*delay_off == 0)
 		led->off_dflt = 1;
-	अन्यथा अगर (delay_off != &led_cdev->blink_delay_off)
+	else if (delay_off != &led_cdev->blink_delay_off)
 		led->off_dflt = 0;
-	led->offसमय = *delay_off;
+	led->offtime = *delay_off;
 
-	अगर (led->onसमय == 0)
-		led->onसमय = 512;
-	अगर (led->offसमय == 0)
-		led->offसमय = 512;
+	if (led->ontime == 0)
+		led->ontime = 512;
+	if (led->offtime == 0)
+		led->offtime = 512;
 
-	अगर (led->led_cdev.brightness == LED_OFF)
+	if (led->led_cdev.brightness == LED_OFF)
 		led->led_cdev.brightness = LED_FULL;
-	अगर (led_assign(led) < 0) अणु
-		led->onसमय = 0;
-		led->offसमय = 0;
+	if (led_assign(led) < 0) {
+		led->ontime = 0;
+		led->offtime = 0;
 		led->led_cdev.brightness = LED_OFF;
-		वापस -EINVAL;
-	पूर्ण
-	*delay_on = led->onसमय;
-	*delay_off = led->offसमय;
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	*delay_on = led->ontime;
+	*delay_off = led->offtime;
+	return 0;
+}
 
-#अगर_घोषित CONFIG_GPIOLIB
-अटल व्योम tca6507_gpio_set_value(काष्ठा gpio_chip *gc,
-				   अचिन्हित offset, पूर्णांक val)
-अणु
-	काष्ठा tca6507_chip *tca = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_GPIOLIB
+static void tca6507_gpio_set_value(struct gpio_chip *gc,
+				   unsigned offset, int val)
+{
+	struct tca6507_chip *tca = gpiochip_get_data(gc);
+	unsigned long flags;
 
 	spin_lock_irqsave(&tca->lock, flags);
 	/*
-	 * 'OFF' is floating high, and 'ON' is pulled करोwn, so it has
+	 * 'OFF' is floating high, and 'ON' is pulled down, so it has
 	 * the inverse sense of 'val'.
 	 */
 	set_select(tca, tca->gpio_map[offset],
 		   val ? TCA6507_LS_LED_OFF : TCA6507_LS_LED_ON);
 	spin_unlock_irqrestore(&tca->lock, flags);
-	अगर (tca->reg_set)
+	if (tca->reg_set)
 		schedule_work(&tca->work);
-पूर्ण
+}
 
-अटल पूर्णांक tca6507_gpio_direction_output(काष्ठा gpio_chip *gc,
-					  अचिन्हित offset, पूर्णांक val)
-अणु
+static int tca6507_gpio_direction_output(struct gpio_chip *gc,
+					  unsigned offset, int val)
+{
 	tca6507_gpio_set_value(gc, offset, val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tca6507_probe_gpios(काष्ठा device *dev,
-			       काष्ठा tca6507_chip *tca,
-			       काष्ठा tca6507_platक्रमm_data *pdata)
-अणु
-	पूर्णांक err;
-	पूर्णांक i = 0;
-	पूर्णांक gpios = 0;
+static int tca6507_probe_gpios(struct device *dev,
+			       struct tca6507_chip *tca,
+			       struct tca6507_platform_data *pdata)
+{
+	int err;
+	int i = 0;
+	int gpios = 0;
 
-	क्रम (i = 0; i < NUM_LEDS; i++)
-		अगर (pdata->leds.leds[i].name && pdata->leds.leds[i].flags) अणु
+	for (i = 0; i < NUM_LEDS; i++)
+		if (pdata->leds.leds[i].name && pdata->leds.leds[i].flags) {
 			/* Configure as a gpio */
 			tca->gpio_map[gpios] = i;
 			gpios++;
-		पूर्ण
+		}
 
-	अगर (!gpios)
-		वापस 0;
+	if (!gpios)
+		return 0;
 
 	tca->gpio.label = "gpio-tca6507";
 	tca->gpio.ngpio = gpios;
@@ -644,183 +643,183 @@ MODULE_DEVICE_TABLE(i2c, tca6507_id);
 	tca->gpio.direction_output = tca6507_gpio_direction_output;
 	tca->gpio.set = tca6507_gpio_set_value;
 	tca->gpio.parent = dev;
-#अगर_घोषित CONFIG_OF_GPIO
+#ifdef CONFIG_OF_GPIO
 	tca->gpio.of_node = of_node_get(dev_of_node(dev));
-#पूर्ण_अगर
+#endif
 	err = gpiochip_add_data(&tca->gpio, tca);
-	अगर (err) अणु
+	if (err) {
 		tca->gpio.ngpio = 0;
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-अटल व्योम tca6507_हटाओ_gpio(काष्ठा tca6507_chip *tca)
-अणु
-	अगर (tca->gpio.ngpio)
-		gpiochip_हटाओ(&tca->gpio);
-पूर्ण
-#अन्यथा /* CONFIG_GPIOLIB */
-अटल पूर्णांक tca6507_probe_gpios(काष्ठा device *dev,
-			       काष्ठा tca6507_chip *tca,
-			       काष्ठा tca6507_platक्रमm_data *pdata)
-अणु
-	वापस 0;
-पूर्ण
-अटल व्योम tca6507_हटाओ_gpio(काष्ठा tca6507_chip *tca)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_GPIOLIB */
+static void tca6507_remove_gpio(struct tca6507_chip *tca)
+{
+	if (tca->gpio.ngpio)
+		gpiochip_remove(&tca->gpio);
+}
+#else /* CONFIG_GPIOLIB */
+static int tca6507_probe_gpios(struct device *dev,
+			       struct tca6507_chip *tca,
+			       struct tca6507_platform_data *pdata)
+{
+	return 0;
+}
+static void tca6507_remove_gpio(struct tca6507_chip *tca)
+{
+}
+#endif /* CONFIG_GPIOLIB */
 
-अटल काष्ठा tca6507_platक्रमm_data *
-tca6507_led_dt_init(काष्ठा device *dev)
-अणु
-	काष्ठा tca6507_platक्रमm_data *pdata;
-	काष्ठा fwnode_handle *child;
-	काष्ठा led_info *tca_leds;
-	पूर्णांक count;
+static struct tca6507_platform_data *
+tca6507_led_dt_init(struct device *dev)
+{
+	struct tca6507_platform_data *pdata;
+	struct fwnode_handle *child;
+	struct led_info *tca_leds;
+	int count;
 
 	count = device_get_child_node_count(dev);
-	अगर (!count || count > NUM_LEDS)
-		वापस ERR_PTR(-ENODEV);
+	if (!count || count > NUM_LEDS)
+		return ERR_PTR(-ENODEV);
 
-	tca_leds = devm_kसुस्मृति(dev, NUM_LEDS, माप(काष्ठा led_info),
+	tca_leds = devm_kcalloc(dev, NUM_LEDS, sizeof(struct led_info),
 				GFP_KERNEL);
-	अगर (!tca_leds)
-		वापस ERR_PTR(-ENOMEM);
+	if (!tca_leds)
+		return ERR_PTR(-ENOMEM);
 
-	device_क्रम_each_child_node(dev, child) अणु
-		काष्ठा led_info led;
+	device_for_each_child_node(dev, child) {
+		struct led_info led;
 		u32 reg;
-		पूर्णांक ret;
+		int ret;
 
-		अगर (fwnode_property_पढ़ो_string(child, "label", &led.name))
+		if (fwnode_property_read_string(child, "label", &led.name))
 			led.name = fwnode_get_name(child);
 
-		fwnode_property_पढ़ो_string(child, "linux,default-trigger",
-					    &led.शेष_trigger);
+		fwnode_property_read_string(child, "linux,default-trigger",
+					    &led.default_trigger);
 
 		led.flags = 0;
-		अगर (fwnode_property_match_string(child, "compatible",
+		if (fwnode_property_match_string(child, "compatible",
 						 "gpio") >= 0)
 			led.flags |= TCA6507_MAKE_GPIO;
 
-		ret = fwnode_property_पढ़ो_u32(child, "reg", &reg);
-		अगर (ret || reg >= NUM_LEDS) अणु
+		ret = fwnode_property_read_u32(child, "reg", &reg);
+		if (ret || reg >= NUM_LEDS) {
 			fwnode_handle_put(child);
-			वापस ERR_PTR(ret ? : -EINVAL);
-		पूर्ण
+			return ERR_PTR(ret ? : -EINVAL);
+		}
 
 		tca_leds[reg] = led;
-	पूर्ण
+	}
 
-	pdata = devm_kzalloc(dev, माप(काष्ठा tca6507_platक्रमm_data),
+	pdata = devm_kzalloc(dev, sizeof(struct tca6507_platform_data),
 			     GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
 
 	pdata->leds.leds = tca_leds;
 	pdata->leds.num_leds = NUM_LEDS;
-#अगर_घोषित CONFIG_GPIOLIB
+#ifdef CONFIG_GPIOLIB
 	pdata->gpio_base = -1;
-#पूर्ण_अगर
+#endif
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल स्थिर काष्ठा of_device_id __maybe_unused of_tca6507_leds_match[] = अणु
-	अणु .compatible = "ti,tca6507", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id __maybe_unused of_tca6507_leds_match[] = {
+	{ .compatible = "ti,tca6507", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, of_tca6507_leds_match);
 
-अटल पूर्णांक tca6507_probe(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा i2c_adapter *adapter;
-	काष्ठा tca6507_chip *tca;
-	काष्ठा tca6507_platक्रमm_data *pdata;
-	पूर्णांक err;
-	पूर्णांक i = 0;
+static int tca6507_probe(struct i2c_client *client,
+		const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	struct i2c_adapter *adapter;
+	struct tca6507_chip *tca;
+	struct tca6507_platform_data *pdata;
+	int err;
+	int i = 0;
 
 	adapter = client->adapter;
 
-	अगर (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
-		वापस -EIO;
+	if (!i2c_check_functionality(adapter, I2C_FUNC_I2C))
+		return -EIO;
 
 	pdata = tca6507_led_dt_init(dev);
-	अगर (IS_ERR(pdata)) अणु
+	if (IS_ERR(pdata)) {
 		dev_err(dev, "Need %d entries in platform-data list\n", NUM_LEDS);
-		वापस PTR_ERR(pdata);
-	पूर्ण
-	tca = devm_kzalloc(dev, माप(*tca), GFP_KERNEL);
-	अगर (!tca)
-		वापस -ENOMEM;
+		return PTR_ERR(pdata);
+	}
+	tca = devm_kzalloc(dev, sizeof(*tca), GFP_KERNEL);
+	if (!tca)
+		return -ENOMEM;
 
 	tca->client = client;
 	INIT_WORK(&tca->work, tca6507_work);
 	spin_lock_init(&tca->lock);
 	i2c_set_clientdata(client, tca);
 
-	क्रम (i = 0; i < NUM_LEDS; i++) अणु
-		काष्ठा tca6507_led *l = tca->leds + i;
+	for (i = 0; i < NUM_LEDS; i++) {
+		struct tca6507_led *l = tca->leds + i;
 
 		l->chip = tca;
 		l->num = i;
-		अगर (pdata->leds.leds[i].name && !pdata->leds.leds[i].flags) अणु
+		if (pdata->leds.leds[i].name && !pdata->leds.leds[i].flags) {
 			l->led_cdev.name = pdata->leds.leds[i].name;
-			l->led_cdev.शेष_trigger
-				= pdata->leds.leds[i].शेष_trigger;
+			l->led_cdev.default_trigger
+				= pdata->leds.leds[i].default_trigger;
 			l->led_cdev.brightness_set = tca6507_brightness_set;
 			l->led_cdev.blink_set = tca6507_blink_set;
 			l->bank = -1;
-			err = led_classdev_रेजिस्टर(dev, &l->led_cdev);
-			अगर (err < 0)
-				जाओ निकास;
-		पूर्ण
-	पूर्ण
+			err = led_classdev_register(dev, &l->led_cdev);
+			if (err < 0)
+				goto exit;
+		}
+	}
 	err = tca6507_probe_gpios(dev, tca, pdata);
-	अगर (err)
-		जाओ निकास;
-	/* set all रेजिस्टरs to known state - zero */
+	if (err)
+		goto exit;
+	/* set all registers to known state - zero */
 	tca->reg_set = 0x7f;
 	schedule_work(&tca->work);
 
-	वापस 0;
-निकास:
-	जबतक (i--) अणु
-		अगर (tca->leds[i].led_cdev.name)
-			led_classdev_unरेजिस्टर(&tca->leds[i].led_cdev);
-	पूर्ण
-	वापस err;
-पूर्ण
+	return 0;
+exit:
+	while (i--) {
+		if (tca->leds[i].led_cdev.name)
+			led_classdev_unregister(&tca->leds[i].led_cdev);
+	}
+	return err;
+}
 
-अटल पूर्णांक tca6507_हटाओ(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक i;
-	काष्ठा tca6507_chip *tca = i2c_get_clientdata(client);
-	काष्ठा tca6507_led *tca_leds = tca->leds;
+static int tca6507_remove(struct i2c_client *client)
+{
+	int i;
+	struct tca6507_chip *tca = i2c_get_clientdata(client);
+	struct tca6507_led *tca_leds = tca->leds;
 
-	क्रम (i = 0; i < NUM_LEDS; i++) अणु
-		अगर (tca_leds[i].led_cdev.name)
-			led_classdev_unरेजिस्टर(&tca_leds[i].led_cdev);
-	पूर्ण
-	tca6507_हटाओ_gpio(tca);
+	for (i = 0; i < NUM_LEDS; i++) {
+		if (tca_leds[i].led_cdev.name)
+			led_classdev_unregister(&tca_leds[i].led_cdev);
+	}
+	tca6507_remove_gpio(tca);
 	cancel_work_sync(&tca->work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i2c_driver tca6507_driver = अणु
-	.driver   = अणु
+static struct i2c_driver tca6507_driver = {
+	.driver   = {
 		.name    = "leds-tca6507",
 		.of_match_table = of_match_ptr(of_tca6507_leds_match),
-	पूर्ण,
+	},
 	.probe    = tca6507_probe,
-	.हटाओ   = tca6507_हटाओ,
+	.remove   = tca6507_remove,
 	.id_table = tca6507_id,
-पूर्ण;
+};
 
 module_i2c_driver(tca6507_driver);
 

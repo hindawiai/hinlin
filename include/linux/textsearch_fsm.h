@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_TEXTSEARCH_FSM_H
-#घोषणा __LINUX_TEXTSEARCH_FSM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_TEXTSEARCH_FSM_H
+#define __LINUX_TEXTSEARCH_FSM_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-क्रमागत अणु
-	TS_FSM_SPECIFIC,	/* specअगरic अक्षरacter */
-	TS_FSM_WILDCARD,	/* any अक्षरacter */
-	TS_FSM_DIGIT,		/* है_अंक() */
-	TS_FSM_XDIGIT,		/* है_षष्ठादशक() */
-	TS_FSM_PRINT,		/* है_छाप() */
-	TS_FSM_ALPHA,		/* है_अक्षर() */
-	TS_FSM_ALNUM,		/* है_अक्षर_अंक() */
+enum {
+	TS_FSM_SPECIFIC,	/* specific character */
+	TS_FSM_WILDCARD,	/* any character */
+	TS_FSM_DIGIT,		/* isdigit() */
+	TS_FSM_XDIGIT,		/* isxdigit() */
+	TS_FSM_PRINT,		/* isprint() */
+	TS_FSM_ALPHA,		/* isalpha() */
+	TS_FSM_ALNUM,		/* isalnum() */
 	TS_FSM_ASCII,		/* isascii() */
-	TS_FSM_CNTRL,		/* है_नियंत्रण() */
-	TS_FSM_GRAPH,		/* है_चित्र() */
-	TS_FSM_LOWER,		/* है_छोटा() */
-	TS_FSM_UPPER,		/* है_बड़ा() */
-	TS_FSM_PUNCT,		/* है_विराम() */
-	TS_FSM_SPACE,		/* है_खाली() */
+	TS_FSM_CNTRL,		/* iscntrl() */
+	TS_FSM_GRAPH,		/* isgraph() */
+	TS_FSM_LOWER,		/* islower() */
+	TS_FSM_UPPER,		/* isupper() */
+	TS_FSM_PUNCT,		/* ispunct() */
+	TS_FSM_SPACE,		/* isspace() */
 	__TS_FSM_TYPE_MAX,
-पूर्ण;
-#घोषणा TS_FSM_TYPE_MAX (__TS_FSM_TYPE_MAX - 1)
+};
+#define TS_FSM_TYPE_MAX (__TS_FSM_TYPE_MAX - 1)
 
-क्रमागत अणु
+enum {
 	TS_FSM_SINGLE,		/* 1 occurrence */
 	TS_FSM_PERHAPS,		/* 1 or 0 occurrence */
 	TS_FSM_ANY,		/* 0..n occurrences */
 	TS_FSM_MULTI,		/* 1..n occurrences */
 	TS_FSM_HEAD_IGNORE,	/* 0..n ignored occurrences at head */
 	__TS_FSM_RECUR_MAX,
-पूर्ण;
-#घोषणा TS_FSM_RECUR_MAX (__TS_FSM_RECUR_MAX - 1)
+};
+#define TS_FSM_RECUR_MAX (__TS_FSM_RECUR_MAX - 1)
 
 /**
- * काष्ठा ts_fsm_token - state machine token (state)
+ * struct ts_fsm_token - state machine token (state)
  * @type: type of token
  * @recur: number of recurrences
- * @value: अक्षरacter value क्रम TS_FSM_SPECIFIC
+ * @value: character value for TS_FSM_SPECIFIC
  */
-काष्ठा ts_fsm_token
-अणु
+struct ts_fsm_token
+{
 	__u16		type;
 	__u8		recur;
 	__u8		value;
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/board-h2-mmc.c
  *
@@ -9,67 +8,67 @@
  * This code is based on linux/arch/arm/mach-omap2/board-n800-mmc.c, which is:
  * Copyright (C) 2006 Nokia Corporation
  */
-#समावेश <linux/gpपन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/gpio-omap.h>
-#समावेश <linux/mfd/tps65010.h>
+#include <linux/gpio.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/gpio-omap.h>
+#include <linux/mfd/tps65010.h>
 
-#समावेश "board-h2.h"
-#समावेश "mmc.h"
+#include "board-h2.h"
+#include "mmc.h"
 
-#अगर IS_ENABLED(CONFIG_MMC_OMAP)
+#if IS_ENABLED(CONFIG_MMC_OMAP)
 
-अटल पूर्णांक mmc_set_घातer(काष्ठा device *dev, पूर्णांक slot, पूर्णांक घातer_on,
-				पूर्णांक vdd)
-अणु
-	gpio_set_value(H2_TPS_GPIO_MMC_PWR_EN, घातer_on);
-	वापस 0;
-पूर्ण
+static int mmc_set_power(struct device *dev, int slot, int power_on,
+				int vdd)
+{
+	gpio_set_value(H2_TPS_GPIO_MMC_PWR_EN, power_on);
+	return 0;
+}
 
-अटल पूर्णांक mmc_late_init(काष्ठा device *dev)
-अणु
-	पूर्णांक ret = gpio_request(H2_TPS_GPIO_MMC_PWR_EN, "MMC power");
-	अगर (ret < 0)
-		वापस ret;
+static int mmc_late_init(struct device *dev)
+{
+	int ret = gpio_request(H2_TPS_GPIO_MMC_PWR_EN, "MMC power");
+	if (ret < 0)
+		return ret;
 
 	gpio_direction_output(H2_TPS_GPIO_MMC_PWR_EN, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mmc_cleanup(काष्ठा device *dev)
-अणु
-	gpio_मुक्त(H2_TPS_GPIO_MMC_PWR_EN);
-पूर्ण
+static void mmc_cleanup(struct device *dev)
+{
+	gpio_free(H2_TPS_GPIO_MMC_PWR_EN);
+}
 
 /*
  * H2 could use the following functions tested:
  * - mmc_get_cover_state that uses OMAP_MPUIO(1)
  * - mmc_get_wp that uses OMAP_MPUIO(3)
  */
-अटल काष्ठा omap_mmc_platक्रमm_data mmc1_data = अणु
+static struct omap_mmc_platform_data mmc1_data = {
 	.nr_slots                       = 1,
 	.init				= mmc_late_init,
 	.cleanup			= mmc_cleanup,
-	.slots[0]       = अणु
-		.set_घातer              = mmc_set_घातer,
+	.slots[0]       = {
+		.set_power              = mmc_set_power,
 		.ocr_mask               = MMC_VDD_32_33 | MMC_VDD_33_34,
 		.name                   = "mmcblk",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा omap_mmc_platक्रमm_data *mmc_data[OMAP16XX_NR_MMC];
+static struct omap_mmc_platform_data *mmc_data[OMAP16XX_NR_MMC];
 
-व्योम __init h2_mmc_init(व्योम)
-अणु
+void __init h2_mmc_init(void)
+{
 	mmc_data[0] = &mmc1_data;
 	omap1_init_mmc(mmc_data, OMAP16XX_NR_MMC);
-पूर्ण
+}
 
-#अन्यथा
+#else
 
-व्योम __init h2_mmc_init(व्योम)
-अणु
-पूर्ण
+void __init h2_mmc_init(void)
+{
+}
 
-#पूर्ण_अगर
+#endif

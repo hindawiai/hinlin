@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  libahci.c - Common AHCI SATA low-level routines
  *
- *  Maपूर्णांकained by:  Tejun Heo <tj@kernel.org>
+ *  Maintained by:  Tejun Heo <tj@kernel.org>
  *    		    Please ALWAYS copy linux-ide@vger.kernel.org
  *		    on emails.
  *
  *  Copyright 2004-2005 Red Hat, Inc.
  *
- * libata करोcumentation is available via 'make {ps|pdf}docs',
+ * libata documentation is available via 'make {ps|pdf}docs',
  * as Documentation/driver-api/libata.rst
  *
- * AHCI hardware करोcumentation:
- * http://www.पूर्णांकel.com/technology/serialata/pdf/rev1_0.pdf
- * http://www.पूर्णांकel.com/technology/serialata/pdf/rev1_1.pdf
+ * AHCI hardware documentation:
+ * http://www.intel.com/technology/serialata/pdf/rev1_0.pdf
+ * http://www.intel.com/technology/serialata/pdf/rev1_1.pdf
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <linux/libata.h>
-#समावेश <linux/pci.h>
-#समावेश "ahci.h"
-#समावेश "libata.h"
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/nospec.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/dma-mapping.h>
+#include <linux/device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_cmnd.h>
+#include <linux/libata.h>
+#include <linux/pci.h>
+#include "ahci.h"
+#include "libata.h"
 
-अटल पूर्णांक ahci_skip_host_reset;
-पूर्णांक ahci_ignore_sss;
+static int ahci_skip_host_reset;
+int ahci_ignore_sss;
 EXPORT_SYMBOL_GPL(ahci_ignore_sss);
 
-module_param_named(skip_host_reset, ahci_skip_host_reset, पूर्णांक, 0444);
+module_param_named(skip_host_reset, ahci_skip_host_reset, int, 0444);
 MODULE_PARM_DESC(skip_host_reset, "skip global host reset (0=don't skip, 1=skip)");
 
-module_param_named(ignore_sss, ahci_ignore_sss, पूर्णांक, 0444);
+module_param_named(ignore_sss, ahci_ignore_sss, int, 0444);
 MODULE_PARM_DESC(ignore_sss, "Ignore staggered spinup flag (0=don't ignore, 1=ignore)");
 
-अटल पूर्णांक ahci_set_lpm(काष्ठा ata_link *link, क्रमागत ata_lpm_policy policy,
-			अचिन्हित hपूर्णांकs);
-अटल sमाप_प्रकार ahci_led_show(काष्ठा ata_port *ap, अक्षर *buf);
-अटल sमाप_प्रकार ahci_led_store(काष्ठा ata_port *ap, स्थिर अक्षर *buf,
-			      माप_प्रकार size);
-अटल sमाप_प्रकार ahci_transmit_led_message(काष्ठा ata_port *ap, u32 state,
-					sमाप_प्रकार size);
+static int ahci_set_lpm(struct ata_link *link, enum ata_lpm_policy policy,
+			unsigned hints);
+static ssize_t ahci_led_show(struct ata_port *ap, char *buf);
+static ssize_t ahci_led_store(struct ata_port *ap, const char *buf,
+			      size_t size);
+static ssize_t ahci_transmit_led_message(struct ata_port *ap, u32 state,
+					ssize_t size);
 
 
 
-अटल पूर्णांक ahci_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 *val);
-अटल पूर्णांक ahci_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 val);
-अटल bool ahci_qc_fill_rtf(काष्ठा ata_queued_cmd *qc);
-अटल पूर्णांक ahci_port_start(काष्ठा ata_port *ap);
-अटल व्योम ahci_port_stop(काष्ठा ata_port *ap);
-अटल क्रमागत ata_completion_errors ahci_qc_prep(काष्ठा ata_queued_cmd *qc);
-अटल पूर्णांक ahci_pmp_qc_defer(काष्ठा ata_queued_cmd *qc);
-अटल व्योम ahci_मुक्तze(काष्ठा ata_port *ap);
-अटल व्योम ahci_thaw(काष्ठा ata_port *ap);
-अटल व्योम ahci_set_aggressive_devslp(काष्ठा ata_port *ap, bool sleep);
-अटल व्योम ahci_enable_fbs(काष्ठा ata_port *ap);
-अटल व्योम ahci_disable_fbs(काष्ठा ata_port *ap);
-अटल व्योम ahci_pmp_attach(काष्ठा ata_port *ap);
-अटल व्योम ahci_pmp_detach(काष्ठा ata_port *ap);
-अटल पूर्णांक ahci_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			  अचिन्हित दीर्घ deadline);
-अटल पूर्णांक ahci_pmp_retry_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			  अचिन्हित दीर्घ deadline);
-अटल पूर्णांक ahci_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			  अचिन्हित दीर्घ deadline);
-अटल व्योम ahci_postreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class);
-अटल व्योम ahci_post_पूर्णांकernal_cmd(काष्ठा ata_queued_cmd *qc);
-अटल व्योम ahci_dev_config(काष्ठा ata_device *dev);
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ahci_port_suspend(काष्ठा ata_port *ap, pm_message_t mesg);
-#पूर्ण_अगर
-अटल sमाप_प्रकार ahci_activity_show(काष्ठा ata_device *dev, अक्षर *buf);
-अटल sमाप_प्रकार ahci_activity_store(काष्ठा ata_device *dev,
-				   क्रमागत sw_activity val);
-अटल व्योम ahci_init_sw_activity(काष्ठा ata_link *link);
+static int ahci_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val);
+static int ahci_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val);
+static bool ahci_qc_fill_rtf(struct ata_queued_cmd *qc);
+static int ahci_port_start(struct ata_port *ap);
+static void ahci_port_stop(struct ata_port *ap);
+static enum ata_completion_errors ahci_qc_prep(struct ata_queued_cmd *qc);
+static int ahci_pmp_qc_defer(struct ata_queued_cmd *qc);
+static void ahci_freeze(struct ata_port *ap);
+static void ahci_thaw(struct ata_port *ap);
+static void ahci_set_aggressive_devslp(struct ata_port *ap, bool sleep);
+static void ahci_enable_fbs(struct ata_port *ap);
+static void ahci_disable_fbs(struct ata_port *ap);
+static void ahci_pmp_attach(struct ata_port *ap);
+static void ahci_pmp_detach(struct ata_port *ap);
+static int ahci_softreset(struct ata_link *link, unsigned int *class,
+			  unsigned long deadline);
+static int ahci_pmp_retry_softreset(struct ata_link *link, unsigned int *class,
+			  unsigned long deadline);
+static int ahci_hardreset(struct ata_link *link, unsigned int *class,
+			  unsigned long deadline);
+static void ahci_postreset(struct ata_link *link, unsigned int *class);
+static void ahci_post_internal_cmd(struct ata_queued_cmd *qc);
+static void ahci_dev_config(struct ata_device *dev);
+#ifdef CONFIG_PM
+static int ahci_port_suspend(struct ata_port *ap, pm_message_t mesg);
+#endif
+static ssize_t ahci_activity_show(struct ata_device *dev, char *buf);
+static ssize_t ahci_activity_store(struct ata_device *dev,
+				   enum sw_activity val);
+static void ahci_init_sw_activity(struct ata_link *link);
 
-अटल sमाप_प्रकार ahci_show_host_caps(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf);
-अटल sमाप_प्रकार ahci_show_host_cap2(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf);
-अटल sमाप_प्रकार ahci_show_host_version(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf);
-अटल sमाप_प्रकार ahci_show_port_cmd(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf);
-अटल sमाप_प्रकार ahci_पढ़ो_em_buffer(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf);
-अटल sमाप_प्रकार ahci_store_em_buffer(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार size);
-अटल sमाप_प्रकार ahci_show_em_supported(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf);
-अटल irqवापस_t ahci_single_level_irq_पूर्णांकr(पूर्णांक irq, व्योम *dev_instance);
+static ssize_t ahci_show_host_caps(struct device *dev,
+				   struct device_attribute *attr, char *buf);
+static ssize_t ahci_show_host_cap2(struct device *dev,
+				   struct device_attribute *attr, char *buf);
+static ssize_t ahci_show_host_version(struct device *dev,
+				      struct device_attribute *attr, char *buf);
+static ssize_t ahci_show_port_cmd(struct device *dev,
+				  struct device_attribute *attr, char *buf);
+static ssize_t ahci_read_em_buffer(struct device *dev,
+				   struct device_attribute *attr, char *buf);
+static ssize_t ahci_store_em_buffer(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t size);
+static ssize_t ahci_show_em_supported(struct device *dev,
+				      struct device_attribute *attr, char *buf);
+static irqreturn_t ahci_single_level_irq_intr(int irq, void *dev_instance);
 
-अटल DEVICE_ATTR(ahci_host_caps, S_IRUGO, ahci_show_host_caps, शून्य);
-अटल DEVICE_ATTR(ahci_host_cap2, S_IRUGO, ahci_show_host_cap2, शून्य);
-अटल DEVICE_ATTR(ahci_host_version, S_IRUGO, ahci_show_host_version, शून्य);
-अटल DEVICE_ATTR(ahci_port_cmd, S_IRUGO, ahci_show_port_cmd, शून्य);
-अटल DEVICE_ATTR(em_buffer, S_IWUSR | S_IRUGO,
-		   ahci_पढ़ो_em_buffer, ahci_store_em_buffer);
-अटल DEVICE_ATTR(em_message_supported, S_IRUGO, ahci_show_em_supported, शून्य);
+static DEVICE_ATTR(ahci_host_caps, S_IRUGO, ahci_show_host_caps, NULL);
+static DEVICE_ATTR(ahci_host_cap2, S_IRUGO, ahci_show_host_cap2, NULL);
+static DEVICE_ATTR(ahci_host_version, S_IRUGO, ahci_show_host_version, NULL);
+static DEVICE_ATTR(ahci_port_cmd, S_IRUGO, ahci_show_port_cmd, NULL);
+static DEVICE_ATTR(em_buffer, S_IWUSR | S_IRUGO,
+		   ahci_read_em_buffer, ahci_store_em_buffer);
+static DEVICE_ATTR(em_message_supported, S_IRUGO, ahci_show_em_supported, NULL);
 
-काष्ठा device_attribute *ahci_shost_attrs[] = अणु
-	&dev_attr_link_घातer_management_policy,
+struct device_attribute *ahci_shost_attrs[] = {
+	&dev_attr_link_power_management_policy,
 	&dev_attr_em_message_type,
 	&dev_attr_em_message,
 	&dev_attr_ahci_host_caps,
@@ -119,19 +118,19 @@ MODULE_PARM_DESC(ignore_sss, "Ignore staggered spinup flag (0=don't ignore, 1=ig
 	&dev_attr_ahci_port_cmd,
 	&dev_attr_em_buffer,
 	&dev_attr_em_message_supported,
-	शून्य
-पूर्ण;
+	NULL
+};
 EXPORT_SYMBOL_GPL(ahci_shost_attrs);
 
-काष्ठा device_attribute *ahci_sdev_attrs[] = अणु
+struct device_attribute *ahci_sdev_attrs[] = {
 	&dev_attr_sw_activity,
 	&dev_attr_unload_heads,
 	&dev_attr_ncq_prio_enable,
-	शून्य
-पूर्ण;
+	NULL
+};
 EXPORT_SYMBOL_GPL(ahci_sdev_attrs);
 
-काष्ठा ata_port_operations ahci_ops = अणु
+struct ata_port_operations ahci_ops = {
 	.inherits		= &sata_pmp_port_ops,
 
 	.qc_defer		= ahci_pmp_qc_defer,
@@ -139,18 +138,18 @@ EXPORT_SYMBOL_GPL(ahci_sdev_attrs);
 	.qc_issue		= ahci_qc_issue,
 	.qc_fill_rtf		= ahci_qc_fill_rtf,
 
-	.मुक्तze			= ahci_मुक्तze,
+	.freeze			= ahci_freeze,
 	.thaw			= ahci_thaw,
 	.softreset		= ahci_softreset,
 	.hardreset		= ahci_hardreset,
 	.postreset		= ahci_postreset,
 	.pmp_softreset		= ahci_softreset,
 	.error_handler		= ahci_error_handler,
-	.post_पूर्णांकernal_cmd	= ahci_post_पूर्णांकernal_cmd,
+	.post_internal_cmd	= ahci_post_internal_cmd,
 	.dev_config		= ahci_dev_config,
 
-	.scr_पढ़ो		= ahci_scr_पढ़ो,
-	.scr_ग_लिखो		= ahci_scr_ग_लिखो,
+	.scr_read		= ahci_scr_read,
+	.scr_write		= ahci_scr_write,
 	.pmp_attach		= ahci_pmp_attach,
 	.pmp_detach		= ahci_pmp_detach,
 
@@ -160,402 +159,402 @@ EXPORT_SYMBOL_GPL(ahci_sdev_attrs);
 	.sw_activity_show	= ahci_activity_show,
 	.sw_activity_store	= ahci_activity_store,
 	.transmit_led_message	= ahci_transmit_led_message,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.port_suspend		= ahci_port_suspend,
 	.port_resume		= ahci_port_resume,
-#पूर्ण_अगर
+#endif
 	.port_start		= ahci_port_start,
 	.port_stop		= ahci_port_stop,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(ahci_ops);
 
-काष्ठा ata_port_operations ahci_pmp_retry_srst_ops = अणु
+struct ata_port_operations ahci_pmp_retry_srst_ops = {
 	.inherits		= &ahci_ops,
 	.softreset		= ahci_pmp_retry_softreset,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(ahci_pmp_retry_srst_ops);
 
-अटल bool ahci_em_messages __पढ़ो_mostly = true;
+static bool ahci_em_messages __read_mostly = true;
 module_param(ahci_em_messages, bool, 0444);
 /* add other LED protocol types when they become supported */
 MODULE_PARM_DESC(ahci_em_messages,
 	"AHCI Enclosure Management Message control (0 = off, 1 = on)");
 
-/* device sleep idle समयout in ms */
-अटल पूर्णांक devslp_idle_समयout __पढ़ो_mostly = 1000;
-module_param(devslp_idle_समयout, पूर्णांक, 0644);
-MODULE_PARM_DESC(devslp_idle_समयout, "device sleep idle timeout");
+/* device sleep idle timeout in ms */
+static int devslp_idle_timeout __read_mostly = 1000;
+module_param(devslp_idle_timeout, int, 0644);
+MODULE_PARM_DESC(devslp_idle_timeout, "device sleep idle timeout");
 
-अटल व्योम ahci_enable_ahci(व्योम __iomem *mmio)
-अणु
-	पूर्णांक i;
-	u32 पंचांगp;
+static void ahci_enable_ahci(void __iomem *mmio)
+{
+	int i;
+	u32 tmp;
 
 	/* turn on AHCI_EN */
-	पंचांगp = पढ़ोl(mmio + HOST_CTL);
-	अगर (पंचांगp & HOST_AHCI_EN)
-		वापस;
+	tmp = readl(mmio + HOST_CTL);
+	if (tmp & HOST_AHCI_EN)
+		return;
 
-	/* Some controllers need AHCI_EN to be written multiple बार.
-	 * Try a few बार beक्रमe giving up.
+	/* Some controllers need AHCI_EN to be written multiple times.
+	 * Try a few times before giving up.
 	 */
-	क्रम (i = 0; i < 5; i++) अणु
-		पंचांगp |= HOST_AHCI_EN;
-		ग_लिखोl(पंचांगp, mmio + HOST_CTL);
-		पंचांगp = पढ़ोl(mmio + HOST_CTL);	/* flush && sanity check */
-		अगर (पंचांगp & HOST_AHCI_EN)
-			वापस;
+	for (i = 0; i < 5; i++) {
+		tmp |= HOST_AHCI_EN;
+		writel(tmp, mmio + HOST_CTL);
+		tmp = readl(mmio + HOST_CTL);	/* flush && sanity check */
+		if (tmp & HOST_AHCI_EN)
+			return;
 		msleep(10);
-	पूर्ण
+	}
 
 	WARN_ON(1);
-पूर्ण
+}
 
 /**
- *	ahci_rpm_get_port - Make sure the port is घातered on
- *	@ap: Port to घातer on
+ *	ahci_rpm_get_port - Make sure the port is powered on
+ *	@ap: Port to power on
  *
- *	Whenever there is need to access the AHCI host रेजिस्टरs outside of
+ *	Whenever there is need to access the AHCI host registers outside of
  *	normal execution paths, call this function to make sure the host is
- *	actually घातered on.
+ *	actually powered on.
  */
-अटल पूर्णांक ahci_rpm_get_port(काष्ठा ata_port *ap)
-अणु
-	वापस pm_runसमय_get_sync(ap->dev);
-पूर्ण
+static int ahci_rpm_get_port(struct ata_port *ap)
+{
+	return pm_runtime_get_sync(ap->dev);
+}
 
 /**
- *	ahci_rpm_put_port - Unकरोes ahci_rpm_get_port()
- *	@ap: Port to घातer करोwn
+ *	ahci_rpm_put_port - Undoes ahci_rpm_get_port()
+ *	@ap: Port to power down
  *
- *	Unकरोes ahci_rpm_get_port() and possibly घातers करोwn the AHCI host
- *	अगर it has no more active users.
+ *	Undoes ahci_rpm_get_port() and possibly powers down the AHCI host
+ *	if it has no more active users.
  */
-अटल व्योम ahci_rpm_put_port(काष्ठा ata_port *ap)
-अणु
-	pm_runसमय_put(ap->dev);
-पूर्ण
+static void ahci_rpm_put_port(struct ata_port *ap)
+{
+	pm_runtime_put(ap->dev);
+}
 
-अटल sमाप_प्रकार ahci_show_host_caps(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+static ssize_t ahci_show_host_caps(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 
-	वापस प्र_लिखो(buf, "%x\n", hpriv->cap);
-पूर्ण
+	return sprintf(buf, "%x\n", hpriv->cap);
+}
 
-अटल sमाप_प्रकार ahci_show_host_cap2(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+static ssize_t ahci_show_host_cap2(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 
-	वापस प्र_लिखो(buf, "%x\n", hpriv->cap2);
-पूर्ण
+	return sprintf(buf, "%x\n", hpriv->cap2);
+}
 
-अटल sमाप_प्रकार ahci_show_host_version(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+static ssize_t ahci_show_host_version(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 
-	वापस प्र_लिखो(buf, "%x\n", hpriv->version);
-पूर्ण
+	return sprintf(buf, "%x\n", hpriv->version);
+}
 
-अटल sमाप_प्रकार ahci_show_port_cmd(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	sमाप_प्रकार ret;
+static ssize_t ahci_show_port_cmd(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	void __iomem *port_mmio = ahci_port_base(ap);
+	ssize_t ret;
 
 	ahci_rpm_get_port(ap);
-	ret = प्र_लिखो(buf, "%x\n", पढ़ोl(port_mmio + PORT_CMD));
+	ret = sprintf(buf, "%x\n", readl(port_mmio + PORT_CMD));
 	ahci_rpm_put_port(ap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार ahci_पढ़ो_em_buffer(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
-	व्योम __iomem *em_mmio = mmio + hpriv->em_loc;
+static ssize_t ahci_read_em_buffer(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *mmio = hpriv->mmio;
+	void __iomem *em_mmio = mmio + hpriv->em_loc;
 	u32 em_ctl, msg;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार count;
-	पूर्णांक i;
+	unsigned long flags;
+	size_t count;
+	int i;
 
 	ahci_rpm_get_port(ap);
 	spin_lock_irqsave(ap->lock, flags);
 
-	em_ctl = पढ़ोl(mmio + HOST_EM_CTL);
-	अगर (!(ap->flags & ATA_FLAG_EM) || em_ctl & EM_CTL_XMT ||
-	    !(hpriv->em_msg_type & EM_MSG_TYPE_SGPIO)) अणु
+	em_ctl = readl(mmio + HOST_EM_CTL);
+	if (!(ap->flags & ATA_FLAG_EM) || em_ctl & EM_CTL_XMT ||
+	    !(hpriv->em_msg_type & EM_MSG_TYPE_SGPIO)) {
 		spin_unlock_irqrestore(ap->lock, flags);
 		ahci_rpm_put_port(ap);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!(em_ctl & EM_CTL_MR)) अणु
+	if (!(em_ctl & EM_CTL_MR)) {
 		spin_unlock_irqrestore(ap->lock, flags);
 		ahci_rpm_put_port(ap);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (!(em_ctl & EM_CTL_SMB))
+	if (!(em_ctl & EM_CTL_SMB))
 		em_mmio += hpriv->em_buf_sz;
 
 	count = hpriv->em_buf_sz;
 
 	/* the count should not be larger than PAGE_SIZE */
-	अगर (count > PAGE_SIZE) अणु
-		अगर (prपूर्णांकk_ratelimit())
+	if (count > PAGE_SIZE) {
+		if (printk_ratelimit())
 			ata_port_warn(ap,
 				      "EM read buffer size too large: "
 				      "buffer size %u, page size %lu\n",
 				      hpriv->em_buf_sz, PAGE_SIZE);
 		count = PAGE_SIZE;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < count; i += 4) अणु
-		msg = पढ़ोl(em_mmio + i);
+	for (i = 0; i < count; i += 4) {
+		msg = readl(em_mmio + i);
 		buf[i] = msg & 0xff;
 		buf[i + 1] = (msg >> 8) & 0xff;
 		buf[i + 2] = (msg >> 16) & 0xff;
 		buf[i + 3] = (msg >> 24) & 0xff;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(ap->lock, flags);
 	ahci_rpm_put_port(ap);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल sमाप_प्रकार ahci_store_em_buffer(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    स्थिर अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
-	व्योम __iomem *em_mmio = mmio + hpriv->em_loc;
-	स्थिर अचिन्हित अक्षर *msg_buf = buf;
+static ssize_t ahci_store_em_buffer(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t size)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *mmio = hpriv->mmio;
+	void __iomem *em_mmio = mmio + hpriv->em_loc;
+	const unsigned char *msg_buf = buf;
 	u32 em_ctl, msg;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+	unsigned long flags;
+	int i;
 
 	/* check size validity */
-	अगर (!(ap->flags & ATA_FLAG_EM) ||
+	if (!(ap->flags & ATA_FLAG_EM) ||
 	    !(hpriv->em_msg_type & EM_MSG_TYPE_SGPIO) ||
 	    size % 4 || size > hpriv->em_buf_sz)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ahci_rpm_get_port(ap);
 	spin_lock_irqsave(ap->lock, flags);
 
-	em_ctl = पढ़ोl(mmio + HOST_EM_CTL);
-	अगर (em_ctl & EM_CTL_TM) अणु
+	em_ctl = readl(mmio + HOST_EM_CTL);
+	if (em_ctl & EM_CTL_TM) {
 		spin_unlock_irqrestore(ap->lock, flags);
 		ahci_rpm_put_port(ap);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	क्रम (i = 0; i < size; i += 4) अणु
+	for (i = 0; i < size; i += 4) {
 		msg = msg_buf[i] | msg_buf[i + 1] << 8 |
 		      msg_buf[i + 2] << 16 | msg_buf[i + 3] << 24;
-		ग_लिखोl(msg, em_mmio + i);
-	पूर्ण
+		writel(msg, em_mmio + i);
+	}
 
-	ग_लिखोl(em_ctl | EM_CTL_TM, mmio + HOST_EM_CTL);
+	writel(em_ctl | EM_CTL_TM, mmio + HOST_EM_CTL);
 
 	spin_unlock_irqrestore(ap->lock, flags);
 	ahci_rpm_put_port(ap);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार ahci_show_em_supported(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा ata_port *ap = ata_shost_to_port(shost);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
+static ssize_t ahci_show_em_supported(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct ata_port *ap = ata_shost_to_port(shost);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *mmio = hpriv->mmio;
 	u32 em_ctl;
 
 	ahci_rpm_get_port(ap);
-	em_ctl = पढ़ोl(mmio + HOST_EM_CTL);
+	em_ctl = readl(mmio + HOST_EM_CTL);
 	ahci_rpm_put_port(ap);
 
-	वापस प्र_लिखो(buf, "%s%s%s%s\n",
+	return sprintf(buf, "%s%s%s%s\n",
 		       em_ctl & EM_CTL_LED ? "led " : "",
 		       em_ctl & EM_CTL_SAFTE ? "saf-te " : "",
 		       em_ctl & EM_CTL_SES ? "ses-2 " : "",
 		       em_ctl & EM_CTL_SGPIO ? "sgpio " : "");
-पूर्ण
+}
 
 /**
  *	ahci_save_initial_config - Save and fixup initial config values
  *	@dev: target AHCI device
- *	@hpriv: host निजी area to store config values
+ *	@hpriv: host private area to store config values
  *
- *	Some रेजिस्टरs containing configuration info might be setup by
+ *	Some registers containing configuration info might be setup by
  *	BIOS and might be cleared on reset.  This function saves the
- *	initial values of those रेजिस्टरs पूर्णांकo @hpriv such that they
+ *	initial values of those registers into @hpriv such that they
  *	can be restored after controller reset.
  *
  *	If inconsistent, config values are fixed up by this function.
  *
- *	If it is not set alपढ़ोy this function sets hpriv->start_engine to
+ *	If it is not set already this function sets hpriv->start_engine to
  *	ahci_start_engine.
  *
  *	LOCKING:
  *	None.
  */
-व्योम ahci_save_initial_config(काष्ठा device *dev, काष्ठा ahci_host_priv *hpriv)
-अणु
-	व्योम __iomem *mmio = hpriv->mmio;
+void ahci_save_initial_config(struct device *dev, struct ahci_host_priv *hpriv)
+{
+	void __iomem *mmio = hpriv->mmio;
 	u32 cap, cap2, vers, port_map;
-	पूर्णांक i;
+	int i;
 
-	/* make sure AHCI mode is enabled beक्रमe accessing CAP */
+	/* make sure AHCI mode is enabled before accessing CAP */
 	ahci_enable_ahci(mmio);
 
 	/* Values prefixed with saved_ are written back to host after
-	 * reset.  Values without are used क्रम driver operation.
+	 * reset.  Values without are used for driver operation.
 	 */
-	hpriv->saved_cap = cap = पढ़ोl(mmio + HOST_CAP);
-	hpriv->saved_port_map = port_map = पढ़ोl(mmio + HOST_PORTS_IMPL);
+	hpriv->saved_cap = cap = readl(mmio + HOST_CAP);
+	hpriv->saved_port_map = port_map = readl(mmio + HOST_PORTS_IMPL);
 
-	/* CAP2 रेजिस्टर is only defined क्रम AHCI 1.2 and later */
-	vers = पढ़ोl(mmio + HOST_VERSION);
-	अगर ((vers >> 16) > 1 ||
+	/* CAP2 register is only defined for AHCI 1.2 and later */
+	vers = readl(mmio + HOST_VERSION);
+	if ((vers >> 16) > 1 ||
 	   ((vers >> 16) == 1 && (vers & 0xFFFF) >= 0x200))
-		hpriv->saved_cap2 = cap2 = पढ़ोl(mmio + HOST_CAP2);
-	अन्यथा
+		hpriv->saved_cap2 = cap2 = readl(mmio + HOST_CAP2);
+	else
 		hpriv->saved_cap2 = cap2 = 0;
 
 	/* some chips have errata preventing 64bit use */
-	अगर ((cap & HOST_CAP_64) && (hpriv->flags & AHCI_HFLAG_32BIT_ONLY)) अणु
+	if ((cap & HOST_CAP_64) && (hpriv->flags & AHCI_HFLAG_32BIT_ONLY)) {
 		dev_info(dev, "controller can't do 64bit DMA, forcing 32bit\n");
 		cap &= ~HOST_CAP_64;
-	पूर्ण
+	}
 
-	अगर ((cap & HOST_CAP_NCQ) && (hpriv->flags & AHCI_HFLAG_NO_NCQ)) अणु
+	if ((cap & HOST_CAP_NCQ) && (hpriv->flags & AHCI_HFLAG_NO_NCQ)) {
 		dev_info(dev, "controller can't do NCQ, turning off CAP_NCQ\n");
 		cap &= ~HOST_CAP_NCQ;
-	पूर्ण
+	}
 
-	अगर (!(cap & HOST_CAP_NCQ) && (hpriv->flags & AHCI_HFLAG_YES_NCQ)) अणु
+	if (!(cap & HOST_CAP_NCQ) && (hpriv->flags & AHCI_HFLAG_YES_NCQ)) {
 		dev_info(dev, "controller can do NCQ, turning on CAP_NCQ\n");
 		cap |= HOST_CAP_NCQ;
-	पूर्ण
+	}
 
-	अगर ((cap & HOST_CAP_PMP) && (hpriv->flags & AHCI_HFLAG_NO_PMP)) अणु
+	if ((cap & HOST_CAP_PMP) && (hpriv->flags & AHCI_HFLAG_NO_PMP)) {
 		dev_info(dev, "controller can't do PMP, turning off CAP_PMP\n");
 		cap &= ~HOST_CAP_PMP;
-	पूर्ण
+	}
 
-	अगर ((cap & HOST_CAP_SNTF) && (hpriv->flags & AHCI_HFLAG_NO_SNTF)) अणु
+	if ((cap & HOST_CAP_SNTF) && (hpriv->flags & AHCI_HFLAG_NO_SNTF)) {
 		dev_info(dev,
 			 "controller can't do SNTF, turning off CAP_SNTF\n");
 		cap &= ~HOST_CAP_SNTF;
-	पूर्ण
+	}
 
-	अगर ((cap2 & HOST_CAP2_SDS) && (hpriv->flags & AHCI_HFLAG_NO_DEVSLP)) अणु
+	if ((cap2 & HOST_CAP2_SDS) && (hpriv->flags & AHCI_HFLAG_NO_DEVSLP)) {
 		dev_info(dev,
 			 "controller can't do DEVSLP, turning off\n");
 		cap2 &= ~HOST_CAP2_SDS;
 		cap2 &= ~HOST_CAP2_SADM;
-	पूर्ण
+	}
 
-	अगर (!(cap & HOST_CAP_FBS) && (hpriv->flags & AHCI_HFLAG_YES_FBS)) अणु
+	if (!(cap & HOST_CAP_FBS) && (hpriv->flags & AHCI_HFLAG_YES_FBS)) {
 		dev_info(dev, "controller can do FBS, turning on CAP_FBS\n");
 		cap |= HOST_CAP_FBS;
-	पूर्ण
+	}
 
-	अगर ((cap & HOST_CAP_FBS) && (hpriv->flags & AHCI_HFLAG_NO_FBS)) अणु
+	if ((cap & HOST_CAP_FBS) && (hpriv->flags & AHCI_HFLAG_NO_FBS)) {
 		dev_info(dev, "controller can't do FBS, turning off CAP_FBS\n");
 		cap &= ~HOST_CAP_FBS;
-	पूर्ण
+	}
 
-	अगर (!(cap & HOST_CAP_ALPM) && (hpriv->flags & AHCI_HFLAG_YES_ALPM)) अणु
+	if (!(cap & HOST_CAP_ALPM) && (hpriv->flags & AHCI_HFLAG_YES_ALPM)) {
 		dev_info(dev, "controller can do ALPM, turning on CAP_ALPM\n");
 		cap |= HOST_CAP_ALPM;
-	पूर्ण
+	}
 
-	अगर ((cap & HOST_CAP_SXS) && (hpriv->flags & AHCI_HFLAG_NO_SXS)) अणु
+	if ((cap & HOST_CAP_SXS) && (hpriv->flags & AHCI_HFLAG_NO_SXS)) {
 		dev_info(dev, "controller does not support SXS, disabling CAP_SXS\n");
 		cap &= ~HOST_CAP_SXS;
-	पूर्ण
+	}
 
-	अगर (hpriv->क्रमce_port_map && port_map != hpriv->क्रमce_port_map) अणु
+	if (hpriv->force_port_map && port_map != hpriv->force_port_map) {
 		dev_info(dev, "forcing port_map 0x%x -> 0x%x\n",
-			 port_map, hpriv->क्रमce_port_map);
-		port_map = hpriv->क्रमce_port_map;
+			 port_map, hpriv->force_port_map);
+		port_map = hpriv->force_port_map;
 		hpriv->saved_port_map = port_map;
-	पूर्ण
+	}
 
-	अगर (hpriv->mask_port_map) अणु
+	if (hpriv->mask_port_map) {
 		dev_warn(dev, "masking port_map 0x%x -> 0x%x\n",
 			port_map,
 			port_map & hpriv->mask_port_map);
 		port_map &= hpriv->mask_port_map;
-	पूर्ण
+	}
 
 	/* cross check port_map and cap.n_ports */
-	अगर (port_map) अणु
-		पूर्णांक map_ports = 0;
+	if (port_map) {
+		int map_ports = 0;
 
-		क्रम (i = 0; i < AHCI_MAX_PORTS; i++)
-			अगर (port_map & (1 << i))
+		for (i = 0; i < AHCI_MAX_PORTS; i++)
+			if (port_map & (1 << i))
 				map_ports++;
 
 		/* If PI has more ports than n_ports, whine, clear
 		 * port_map and let it be generated from n_ports.
 		 */
-		अगर (map_ports > ahci_nr_ports(cap)) अणु
+		if (map_ports > ahci_nr_ports(cap)) {
 			dev_warn(dev,
 				 "implemented port map (0x%x) contains more ports than nr_ports (%u), using nr_ports\n",
 				 port_map, ahci_nr_ports(cap));
 			port_map = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* fabricate port_map from cap.nr_ports क्रम < AHCI 1.3 */
-	अगर (!port_map && vers < 0x10300) अणु
+	/* fabricate port_map from cap.nr_ports for < AHCI 1.3 */
+	if (!port_map && vers < 0x10300) {
 		port_map = (1 << ahci_nr_ports(cap)) - 1;
 		dev_warn(dev, "forcing PORTS_IMPL to 0x%x\n", port_map);
 
-		/* ग_लिखो the fixed up value to the PI रेजिस्टर */
+		/* write the fixed up value to the PI register */
 		hpriv->saved_port_map = port_map;
-	पूर्ण
+	}
 
 	/* record values to use during operation */
 	hpriv->cap = cap;
 	hpriv->cap2 = cap2;
-	hpriv->version = पढ़ोl(mmio + HOST_VERSION);
+	hpriv->version = readl(mmio + HOST_VERSION);
 	hpriv->port_map = port_map;
 
-	अगर (!hpriv->start_engine)
+	if (!hpriv->start_engine)
 		hpriv->start_engine = ahci_start_engine;
 
-	अगर (!hpriv->stop_engine)
+	if (!hpriv->stop_engine)
 		hpriv->stop_engine = ahci_stop_engine;
 
-	अगर (!hpriv->irq_handler)
-		hpriv->irq_handler = ahci_single_level_irq_पूर्णांकr;
-पूर्ण
+	if (!hpriv->irq_handler)
+		hpriv->irq_handler = ahci_single_level_irq_intr;
+}
 EXPORT_SYMBOL_GPL(ahci_save_initial_config);
 
 /**
@@ -567,440 +566,440 @@ EXPORT_SYMBOL_GPL(ahci_save_initial_config);
  *	LOCKING:
  *	None.
  */
-अटल व्योम ahci_restore_initial_config(काष्ठा ata_host *host)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
+static void ahci_restore_initial_config(struct ata_host *host)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
+	void __iomem *mmio = hpriv->mmio;
 
-	ग_लिखोl(hpriv->saved_cap, mmio + HOST_CAP);
-	अगर (hpriv->saved_cap2)
-		ग_लिखोl(hpriv->saved_cap2, mmio + HOST_CAP2);
-	ग_लिखोl(hpriv->saved_port_map, mmio + HOST_PORTS_IMPL);
-	(व्योम) पढ़ोl(mmio + HOST_PORTS_IMPL);	/* flush */
-पूर्ण
+	writel(hpriv->saved_cap, mmio + HOST_CAP);
+	if (hpriv->saved_cap2)
+		writel(hpriv->saved_cap2, mmio + HOST_CAP2);
+	writel(hpriv->saved_port_map, mmio + HOST_PORTS_IMPL);
+	(void) readl(mmio + HOST_PORTS_IMPL);	/* flush */
+}
 
-अटल अचिन्हित ahci_scr_offset(काष्ठा ata_port *ap, अचिन्हित पूर्णांक sc_reg)
-अणु
-	अटल स्थिर पूर्णांक offset[] = अणु
+static unsigned ahci_scr_offset(struct ata_port *ap, unsigned int sc_reg)
+{
+	static const int offset[] = {
 		[SCR_STATUS]		= PORT_SCR_STAT,
 		[SCR_CONTROL]		= PORT_SCR_CTL,
 		[SCR_ERROR]		= PORT_SCR_ERR,
 		[SCR_ACTIVE]		= PORT_SCR_ACT,
 		[SCR_NOTIFICATION]	= PORT_SCR_NTF,
-	पूर्ण;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+	};
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 
-	अगर (sc_reg < ARRAY_SIZE(offset) &&
+	if (sc_reg < ARRAY_SIZE(offset) &&
 	    (sc_reg != SCR_NOTIFICATION || (hpriv->cap & HOST_CAP_SNTF)))
-		वापस offset[sc_reg];
-	वापस 0;
-पूर्ण
+		return offset[sc_reg];
+	return 0;
+}
 
-अटल पूर्णांक ahci_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 *val)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(link->ap);
-	पूर्णांक offset = ahci_scr_offset(link->ap, sc_reg);
+static int ahci_scr_read(struct ata_link *link, unsigned int sc_reg, u32 *val)
+{
+	void __iomem *port_mmio = ahci_port_base(link->ap);
+	int offset = ahci_scr_offset(link->ap, sc_reg);
 
-	अगर (offset) अणु
-		*val = पढ़ोl(port_mmio + offset);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	if (offset) {
+		*val = readl(port_mmio + offset);
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक ahci_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg, u32 val)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(link->ap);
-	पूर्णांक offset = ahci_scr_offset(link->ap, sc_reg);
+static int ahci_scr_write(struct ata_link *link, unsigned int sc_reg, u32 val)
+{
+	void __iomem *port_mmio = ahci_port_base(link->ap);
+	int offset = ahci_scr_offset(link->ap, sc_reg);
 
-	अगर (offset) अणु
-		ग_लिखोl(val, port_mmio + offset);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	if (offset) {
+		writel(val, port_mmio + offset);
+		return 0;
+	}
+	return -EINVAL;
+}
 
-व्योम ahci_start_engine(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	u32 पंचांगp;
+void ahci_start_engine(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	u32 tmp;
 
 	/* start DMA */
-	पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
-	पंचांगp |= PORT_CMD_START;
-	ग_लिखोl(पंचांगp, port_mmio + PORT_CMD);
-	पढ़ोl(port_mmio + PORT_CMD); /* flush */
-पूर्ण
+	tmp = readl(port_mmio + PORT_CMD);
+	tmp |= PORT_CMD_START;
+	writel(tmp, port_mmio + PORT_CMD);
+	readl(port_mmio + PORT_CMD); /* flush */
+}
 EXPORT_SYMBOL_GPL(ahci_start_engine);
 
-पूर्णांक ahci_stop_engine(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	u32 पंचांगp;
+int ahci_stop_engine(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	u32 tmp;
 
 	/*
-	 * On some controllers, stopping a port's DMA engine जबतक the port
+	 * On some controllers, stopping a port's DMA engine while the port
 	 * is in ALPM state (partial or slumber) results in failures on
 	 * subsequent DMA engine starts.  For those controllers, put the
-	 * port back in active state beक्रमe stopping its DMA engine.
+	 * port back in active state before stopping its DMA engine.
 	 */
-	अगर ((hpriv->flags & AHCI_HFLAG_WAKE_BEFORE_STOP) &&
+	if ((hpriv->flags & AHCI_HFLAG_WAKE_BEFORE_STOP) &&
 	    (ap->link.lpm_policy > ATA_LPM_MAX_POWER) &&
-	    ahci_set_lpm(&ap->link, ATA_LPM_MAX_POWER, ATA_LPM_WAKE_ONLY)) अणु
+	    ahci_set_lpm(&ap->link, ATA_LPM_MAX_POWER, ATA_LPM_WAKE_ONLY)) {
 		dev_err(ap->host->dev, "Failed to wake up port before engine stop\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
+	tmp = readl(port_mmio + PORT_CMD);
 
-	/* check अगर the HBA is idle */
-	अगर ((पंचांगp & (PORT_CMD_START | PORT_CMD_LIST_ON)) == 0)
-		वापस 0;
+	/* check if the HBA is idle */
+	if ((tmp & (PORT_CMD_START | PORT_CMD_LIST_ON)) == 0)
+		return 0;
 
 	/*
-	 * Don't try to issue commands but वापस with ENODEV अगर the
+	 * Don't try to issue commands but return with ENODEV if the
 	 * AHCI controller not available anymore (e.g. due to PCIe hot
-	 * unplugging). Otherwise a 500ms delay क्रम each port is added.
+	 * unplugging). Otherwise a 500ms delay for each port is added.
 	 */
-	अगर (पंचांगp == 0xffffffff) अणु
+	if (tmp == 0xffffffff) {
 		dev_err(ap->host->dev, "AHCI controller unavailable!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* setting HBA to idle */
-	पंचांगp &= ~PORT_CMD_START;
-	ग_लिखोl(पंचांगp, port_mmio + PORT_CMD);
+	tmp &= ~PORT_CMD_START;
+	writel(tmp, port_mmio + PORT_CMD);
 
-	/* रुको क्रम engine to stop. This could be as दीर्घ as 500 msec */
-	पंचांगp = ata_रुको_रेजिस्टर(ap, port_mmio + PORT_CMD,
+	/* wait for engine to stop. This could be as long as 500 msec */
+	tmp = ata_wait_register(ap, port_mmio + PORT_CMD,
 				PORT_CMD_LIST_ON, PORT_CMD_LIST_ON, 1, 500);
-	अगर (पंचांगp & PORT_CMD_LIST_ON)
-		वापस -EIO;
+	if (tmp & PORT_CMD_LIST_ON)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ahci_stop_engine);
 
-व्योम ahci_start_fis_rx(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	u32 पंचांगp;
+void ahci_start_fis_rx(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	u32 tmp;
 
-	/* set FIS रेजिस्टरs */
-	अगर (hpriv->cap & HOST_CAP_64)
-		ग_लिखोl((pp->cmd_slot_dma >> 16) >> 16,
+	/* set FIS registers */
+	if (hpriv->cap & HOST_CAP_64)
+		writel((pp->cmd_slot_dma >> 16) >> 16,
 		       port_mmio + PORT_LST_ADDR_HI);
-	ग_लिखोl(pp->cmd_slot_dma & 0xffffffff, port_mmio + PORT_LST_ADDR);
+	writel(pp->cmd_slot_dma & 0xffffffff, port_mmio + PORT_LST_ADDR);
 
-	अगर (hpriv->cap & HOST_CAP_64)
-		ग_लिखोl((pp->rx_fis_dma >> 16) >> 16,
+	if (hpriv->cap & HOST_CAP_64)
+		writel((pp->rx_fis_dma >> 16) >> 16,
 		       port_mmio + PORT_FIS_ADDR_HI);
-	ग_लिखोl(pp->rx_fis_dma & 0xffffffff, port_mmio + PORT_FIS_ADDR);
+	writel(pp->rx_fis_dma & 0xffffffff, port_mmio + PORT_FIS_ADDR);
 
 	/* enable FIS reception */
-	पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
-	पंचांगp |= PORT_CMD_FIS_RX;
-	ग_लिखोl(पंचांगp, port_mmio + PORT_CMD);
+	tmp = readl(port_mmio + PORT_CMD);
+	tmp |= PORT_CMD_FIS_RX;
+	writel(tmp, port_mmio + PORT_CMD);
 
 	/* flush */
-	पढ़ोl(port_mmio + PORT_CMD);
-पूर्ण
+	readl(port_mmio + PORT_CMD);
+}
 EXPORT_SYMBOL_GPL(ahci_start_fis_rx);
 
-अटल पूर्णांक ahci_stop_fis_rx(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	u32 पंचांगp;
+static int ahci_stop_fis_rx(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	u32 tmp;
 
 	/* disable FIS reception */
-	पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
-	पंचांगp &= ~PORT_CMD_FIS_RX;
-	ग_लिखोl(पंचांगp, port_mmio + PORT_CMD);
+	tmp = readl(port_mmio + PORT_CMD);
+	tmp &= ~PORT_CMD_FIS_RX;
+	writel(tmp, port_mmio + PORT_CMD);
 
-	/* रुको क्रम completion, spec says 500ms, give it 1000 */
-	पंचांगp = ata_रुको_रेजिस्टर(ap, port_mmio + PORT_CMD, PORT_CMD_FIS_ON,
+	/* wait for completion, spec says 500ms, give it 1000 */
+	tmp = ata_wait_register(ap, port_mmio + PORT_CMD, PORT_CMD_FIS_ON,
 				PORT_CMD_FIS_ON, 10, 1000);
-	अगर (पंचांगp & PORT_CMD_FIS_ON)
-		वापस -EBUSY;
+	if (tmp & PORT_CMD_FIS_ON)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ahci_घातer_up(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static void ahci_power_up(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u32 cmd;
 
-	cmd = पढ़ोl(port_mmio + PORT_CMD) & ~PORT_CMD_ICC_MASK;
+	cmd = readl(port_mmio + PORT_CMD) & ~PORT_CMD_ICC_MASK;
 
 	/* spin up device */
-	अगर (hpriv->cap & HOST_CAP_SSS) अणु
+	if (hpriv->cap & HOST_CAP_SSS) {
 		cmd |= PORT_CMD_SPIN_UP;
-		ग_लिखोl(cmd, port_mmio + PORT_CMD);
-	पूर्ण
+		writel(cmd, port_mmio + PORT_CMD);
+	}
 
 	/* wake up link */
-	ग_लिखोl(cmd | PORT_CMD_ICC_ACTIVE, port_mmio + PORT_CMD);
-पूर्ण
+	writel(cmd | PORT_CMD_ICC_ACTIVE, port_mmio + PORT_CMD);
+}
 
-अटल पूर्णांक ahci_set_lpm(काष्ठा ata_link *link, क्रमागत ata_lpm_policy policy,
-			अचिन्हित पूर्णांक hपूर्णांकs)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static int ahci_set_lpm(struct ata_link *link, enum ata_lpm_policy policy,
+			unsigned int hints)
+{
+	struct ata_port *ap = link->ap;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
 
-	अगर (policy != ATA_LPM_MAX_POWER) अणु
-		/* wakeup flag only applies to the max घातer policy */
-		hपूर्णांकs &= ~ATA_LPM_WAKE_ONLY;
+	if (policy != ATA_LPM_MAX_POWER) {
+		/* wakeup flag only applies to the max power policy */
+		hints &= ~ATA_LPM_WAKE_ONLY;
 
 		/*
-		 * Disable पूर्णांकerrupts on Phy Ready. This keeps us from
-		 * getting woken up due to spurious phy पढ़ोy
-		 * पूर्णांकerrupts.
+		 * Disable interrupts on Phy Ready. This keeps us from
+		 * getting woken up due to spurious phy ready
+		 * interrupts.
 		 */
-		pp->पूर्णांकr_mask &= ~PORT_IRQ_PHYRDY;
-		ग_लिखोl(pp->पूर्णांकr_mask, port_mmio + PORT_IRQ_MASK);
+		pp->intr_mask &= ~PORT_IRQ_PHYRDY;
+		writel(pp->intr_mask, port_mmio + PORT_IRQ_MASK);
 
 		sata_link_scr_lpm(link, policy, false);
-	पूर्ण
+	}
 
-	अगर (hpriv->cap & HOST_CAP_ALPM) अणु
-		u32 cmd = पढ़ोl(port_mmio + PORT_CMD);
+	if (hpriv->cap & HOST_CAP_ALPM) {
+		u32 cmd = readl(port_mmio + PORT_CMD);
 
-		अगर (policy == ATA_LPM_MAX_POWER || !(hपूर्णांकs & ATA_LPM_HIPM)) अणु
-			अगर (!(hपूर्णांकs & ATA_LPM_WAKE_ONLY))
+		if (policy == ATA_LPM_MAX_POWER || !(hints & ATA_LPM_HIPM)) {
+			if (!(hints & ATA_LPM_WAKE_ONLY))
 				cmd &= ~(PORT_CMD_ASP | PORT_CMD_ALPE);
 			cmd |= PORT_CMD_ICC_ACTIVE;
 
-			ग_लिखोl(cmd, port_mmio + PORT_CMD);
-			पढ़ोl(port_mmio + PORT_CMD);
+			writel(cmd, port_mmio + PORT_CMD);
+			readl(port_mmio + PORT_CMD);
 
-			/* रुको 10ms to be sure we've come out of LPM state */
+			/* wait 10ms to be sure we've come out of LPM state */
 			ata_msleep(ap, 10);
 
-			अगर (hपूर्णांकs & ATA_LPM_WAKE_ONLY)
-				वापस 0;
-		पूर्ण अन्यथा अणु
+			if (hints & ATA_LPM_WAKE_ONLY)
+				return 0;
+		} else {
 			cmd |= PORT_CMD_ALPE;
-			अगर (policy == ATA_LPM_MIN_POWER)
+			if (policy == ATA_LPM_MIN_POWER)
 				cmd |= PORT_CMD_ASP;
-			अन्यथा अगर (policy == ATA_LPM_MIN_POWER_WITH_PARTIAL)
+			else if (policy == ATA_LPM_MIN_POWER_WITH_PARTIAL)
 				cmd &= ~PORT_CMD_ASP;
 
-			/* ग_लिखो out new cmd value */
-			ग_लिखोl(cmd, port_mmio + PORT_CMD);
-		पूर्ण
-	पूर्ण
+			/* write out new cmd value */
+			writel(cmd, port_mmio + PORT_CMD);
+		}
+	}
 
 	/* set aggressive device sleep */
-	अगर ((hpriv->cap2 & HOST_CAP2_SDS) &&
+	if ((hpriv->cap2 & HOST_CAP2_SDS) &&
 	    (hpriv->cap2 & HOST_CAP2_SADM) &&
-	    (link->device->flags & ATA_DFLAG_DEVSLP)) अणु
-		अगर (policy == ATA_LPM_MIN_POWER ||
+	    (link->device->flags & ATA_DFLAG_DEVSLP)) {
+		if (policy == ATA_LPM_MIN_POWER ||
 		    policy == ATA_LPM_MIN_POWER_WITH_PARTIAL)
 			ahci_set_aggressive_devslp(ap, true);
-		अन्यथा
+		else
 			ahci_set_aggressive_devslp(ap, false);
-	पूर्ण
+	}
 
-	अगर (policy == ATA_LPM_MAX_POWER) अणु
+	if (policy == ATA_LPM_MAX_POWER) {
 		sata_link_scr_lpm(link, policy, false);
 
 		/* turn PHYRDY IRQ back on */
-		pp->पूर्णांकr_mask |= PORT_IRQ_PHYRDY;
-		ग_लिखोl(pp->पूर्णांकr_mask, port_mmio + PORT_IRQ_MASK);
-	पूर्ण
+		pp->intr_mask |= PORT_IRQ_PHYRDY;
+		writel(pp->intr_mask, port_mmio + PORT_IRQ_MASK);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम ahci_घातer_करोwn(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+#ifdef CONFIG_PM
+static void ahci_power_down(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u32 cmd, scontrol;
 
-	अगर (!(hpriv->cap & HOST_CAP_SSS))
-		वापस;
+	if (!(hpriv->cap & HOST_CAP_SSS))
+		return;
 
-	/* put device पूर्णांकo listen mode, first set PxSCTL.DET to 0 */
-	scontrol = पढ़ोl(port_mmio + PORT_SCR_CTL);
+	/* put device into listen mode, first set PxSCTL.DET to 0 */
+	scontrol = readl(port_mmio + PORT_SCR_CTL);
 	scontrol &= ~0xf;
-	ग_लिखोl(scontrol, port_mmio + PORT_SCR_CTL);
+	writel(scontrol, port_mmio + PORT_SCR_CTL);
 
 	/* then set PxCMD.SUD to 0 */
-	cmd = पढ़ोl(port_mmio + PORT_CMD) & ~PORT_CMD_ICC_MASK;
+	cmd = readl(port_mmio + PORT_CMD) & ~PORT_CMD_ICC_MASK;
 	cmd &= ~PORT_CMD_SPIN_UP;
-	ग_लिखोl(cmd, port_mmio + PORT_CMD);
-पूर्ण
-#पूर्ण_अगर
+	writel(cmd, port_mmio + PORT_CMD);
+}
+#endif
 
-अटल व्योम ahci_start_port(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ata_link *link;
-	काष्ठा ahci_em_priv *emp;
-	sमाप_प्रकार rc;
-	पूर्णांक i;
+static void ahci_start_port(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ata_link *link;
+	struct ahci_em_priv *emp;
+	ssize_t rc;
+	int i;
 
 	/* enable FIS reception */
 	ahci_start_fis_rx(ap);
 
 	/* enable DMA */
-	अगर (!(hpriv->flags & AHCI_HFLAG_DELAY_ENGINE))
+	if (!(hpriv->flags & AHCI_HFLAG_DELAY_ENGINE))
 		hpriv->start_engine(ap);
 
 	/* turn on LEDs */
-	अगर (ap->flags & ATA_FLAG_EM) अणु
-		ata_क्रम_each_link(link, ap, EDGE) अणु
+	if (ap->flags & ATA_FLAG_EM) {
+		ata_for_each_link(link, ap, EDGE) {
 			emp = &pp->em_priv[link->pmp];
 
 			/* EM Transmit bit maybe busy during init */
-			क्रम (i = 0; i < EM_MAX_RETRY; i++) अणु
+			for (i = 0; i < EM_MAX_RETRY; i++) {
 				rc = ap->ops->transmit_led_message(ap,
 							       emp->led_state,
 							       4);
 				/*
-				 * If busy, give a breather but करो not
+				 * If busy, give a breather but do not
 				 * release EH ownership by using msleep()
 				 * instead of ata_msleep().  EM Transmit
-				 * bit is busy क्रम the whole host and
+				 * bit is busy for the whole host and
 				 * releasing ownership will cause other
 				 * ports to fail the same way.
 				 */
-				अगर (rc == -EBUSY)
+				if (rc == -EBUSY)
 					msleep(1);
-				अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				else
+					break;
+			}
+		}
+	}
 
-	अगर (ap->flags & ATA_FLAG_SW_ACTIVITY)
-		ata_क्रम_each_link(link, ap, EDGE)
+	if (ap->flags & ATA_FLAG_SW_ACTIVITY)
+		ata_for_each_link(link, ap, EDGE)
 			ahci_init_sw_activity(link);
 
-पूर्ण
+}
 
-अटल पूर्णांक ahci_deinit_port(काष्ठा ata_port *ap, स्थिर अक्षर **emsg)
-अणु
-	पूर्णांक rc;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+static int ahci_deinit_port(struct ata_port *ap, const char **emsg)
+{
+	int rc;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 
 	/* disable DMA */
 	rc = hpriv->stop_engine(ap);
-	अगर (rc) अणु
+	if (rc) {
 		*emsg = "failed to stop engine";
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/* disable FIS reception */
 	rc = ahci_stop_fis_rx(ap);
-	अगर (rc) अणु
+	if (rc) {
 		*emsg = "failed stop FIS RX";
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ahci_reset_controller(काष्ठा ata_host *host)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
-	u32 पंचांगp;
+int ahci_reset_controller(struct ata_host *host)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
+	void __iomem *mmio = hpriv->mmio;
+	u32 tmp;
 
-	/* we must be in AHCI mode, beक्रमe using anything
-	 * AHCI-specअगरic, such as HOST_RESET.
+	/* we must be in AHCI mode, before using anything
+	 * AHCI-specific, such as HOST_RESET.
 	 */
 	ahci_enable_ahci(mmio);
 
 	/* global controller reset */
-	अगर (!ahci_skip_host_reset) अणु
-		पंचांगp = पढ़ोl(mmio + HOST_CTL);
-		अगर ((पंचांगp & HOST_RESET) == 0) अणु
-			ग_लिखोl(पंचांगp | HOST_RESET, mmio + HOST_CTL);
-			पढ़ोl(mmio + HOST_CTL); /* flush */
-		पूर्ण
+	if (!ahci_skip_host_reset) {
+		tmp = readl(mmio + HOST_CTL);
+		if ((tmp & HOST_RESET) == 0) {
+			writel(tmp | HOST_RESET, mmio + HOST_CTL);
+			readl(mmio + HOST_CTL); /* flush */
+		}
 
 		/*
-		 * to perक्रमm host reset, OS should set HOST_RESET
-		 * and poll until this bit is पढ़ो to be "0".
+		 * to perform host reset, OS should set HOST_RESET
+		 * and poll until this bit is read to be "0".
 		 * reset must complete within 1 second, or
 		 * the hardware should be considered fried.
 		 */
-		पंचांगp = ata_रुको_रेजिस्टर(शून्य, mmio + HOST_CTL, HOST_RESET,
+		tmp = ata_wait_register(NULL, mmio + HOST_CTL, HOST_RESET,
 					HOST_RESET, 10, 1000);
 
-		अगर (पंचांगp & HOST_RESET) अणु
+		if (tmp & HOST_RESET) {
 			dev_err(host->dev, "controller reset failed (0x%x)\n",
-				पंचांगp);
-			वापस -EIO;
-		पूर्ण
+				tmp);
+			return -EIO;
+		}
 
 		/* turn on AHCI mode */
 		ahci_enable_ahci(mmio);
 
-		/* Some रेजिस्टरs might be cleared on reset.  Restore
+		/* Some registers might be cleared on reset.  Restore
 		 * initial values.
 		 */
-		अगर (!(hpriv->flags & AHCI_HFLAG_NO_WRITE_TO_RO))
+		if (!(hpriv->flags & AHCI_HFLAG_NO_WRITE_TO_RO))
 			ahci_restore_initial_config(host);
-	पूर्ण अन्यथा
+	} else
 		dev_info(host->dev, "skipping global host reset\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ahci_reset_controller);
 
-अटल व्योम ahci_sw_activity(काष्ठा ata_link *link)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_em_priv *emp = &pp->em_priv[link->pmp];
+static void ahci_sw_activity(struct ata_link *link)
+{
+	struct ata_port *ap = link->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_em_priv *emp = &pp->em_priv[link->pmp];
 
-	अगर (!(link->flags & ATA_LFLAG_SW_ACTIVITY))
-		वापस;
+	if (!(link->flags & ATA_LFLAG_SW_ACTIVITY))
+		return;
 
 	emp->activity++;
-	अगर (!समयr_pending(&emp->समयr))
-		mod_समयr(&emp->समयr, jअगरfies + msecs_to_jअगरfies(10));
-पूर्ण
+	if (!timer_pending(&emp->timer))
+		mod_timer(&emp->timer, jiffies + msecs_to_jiffies(10));
+}
 
-अटल व्योम ahci_sw_activity_blink(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ahci_em_priv *emp = from_समयr(emp, t, समयr);
-	काष्ठा ata_link *link = emp->link;
-	काष्ठा ata_port *ap = link->ap;
+static void ahci_sw_activity_blink(struct timer_list *t)
+{
+	struct ahci_em_priv *emp = from_timer(emp, t, timer);
+	struct ata_link *link = emp->link;
+	struct ata_port *ap = link->ap;
 
-	अचिन्हित दीर्घ led_message = emp->led_state;
+	unsigned long led_message = emp->led_state;
 	u32 activity_led_state;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	led_message &= EM_MSG_LED_VALUE;
 	led_message |= ap->port_no | (link->pmp << 8);
 
-	/* check to see अगर we've had activity.  If so,
-	 * toggle state of LED and reset समयr.  If not,
+	/* check to see if we've had activity.  If so,
+	 * toggle state of LED and reset timer.  If not,
 	 * turn LED to desired idle state.
 	 */
 	spin_lock_irqsave(ap->lock, flags);
-	अगर (emp->saved_activity != emp->activity) अणु
+	if (emp->saved_activity != emp->activity) {
 		emp->saved_activity = emp->activity;
 		/* get the current LED state */
 		activity_led_state = led_message & EM_MSG_LED_VALUE_ON;
 
-		अगर (activity_led_state)
+		if (activity_led_state)
 			activity_led_state = 0;
-		अन्यथा
+		else
 			activity_led_state = 1;
 
 		/* clear old state */
@@ -1008,84 +1007,84 @@ EXPORT_SYMBOL_GPL(ahci_reset_controller);
 
 		/* toggle state */
 		led_message |= (activity_led_state << 16);
-		mod_समयr(&emp->समयr, jअगरfies + msecs_to_jअगरfies(100));
-	पूर्ण अन्यथा अणु
-		/* चयन to idle */
+		mod_timer(&emp->timer, jiffies + msecs_to_jiffies(100));
+	} else {
+		/* switch to idle */
 		led_message &= ~EM_MSG_LED_VALUE_ACTIVITY;
-		अगर (emp->blink_policy == BLINK_OFF)
+		if (emp->blink_policy == BLINK_OFF)
 			led_message |= (1 << 16);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(ap->lock, flags);
 	ap->ops->transmit_led_message(ap, led_message, 4);
-पूर्ण
+}
 
-अटल व्योम ahci_init_sw_activity(काष्ठा ata_link *link)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_em_priv *emp = &pp->em_priv[link->pmp];
+static void ahci_init_sw_activity(struct ata_link *link)
+{
+	struct ata_port *ap = link->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_em_priv *emp = &pp->em_priv[link->pmp];
 
-	/* init activity stats, setup समयr */
+	/* init activity stats, setup timer */
 	emp->saved_activity = emp->activity = 0;
 	emp->link = link;
-	समयr_setup(&emp->समयr, ahci_sw_activity_blink, 0);
+	timer_setup(&emp->timer, ahci_sw_activity_blink, 0);
 
-	/* check our blink policy and set flag क्रम link अगर it's enabled */
-	अगर (emp->blink_policy)
+	/* check our blink policy and set flag for link if it's enabled */
+	if (emp->blink_policy)
 		link->flags |= ATA_LFLAG_SW_ACTIVITY;
-पूर्ण
+}
 
-पूर्णांक ahci_reset_em(काष्ठा ata_host *host)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
+int ahci_reset_em(struct ata_host *host)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
+	void __iomem *mmio = hpriv->mmio;
 	u32 em_ctl;
 
-	em_ctl = पढ़ोl(mmio + HOST_EM_CTL);
-	अगर ((em_ctl & EM_CTL_TM) || (em_ctl & EM_CTL_RST))
-		वापस -EINVAL;
+	em_ctl = readl(mmio + HOST_EM_CTL);
+	if ((em_ctl & EM_CTL_TM) || (em_ctl & EM_CTL_RST))
+		return -EINVAL;
 
-	ग_लिखोl(em_ctl | EM_CTL_RST, mmio + HOST_EM_CTL);
-	वापस 0;
-पूर्ण
+	writel(em_ctl | EM_CTL_RST, mmio + HOST_EM_CTL);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ahci_reset_em);
 
-अटल sमाप_प्रकार ahci_transmit_led_message(काष्ठा ata_port *ap, u32 state,
-					sमाप_प्रकार size)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
+static ssize_t ahci_transmit_led_message(struct ata_port *ap, u32 state,
+					ssize_t size)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	void __iomem *mmio = hpriv->mmio;
 	u32 em_ctl;
-	u32 message[] = अणु0, 0पूर्ण;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक pmp;
-	काष्ठा ahci_em_priv *emp;
+	u32 message[] = {0, 0};
+	unsigned long flags;
+	int pmp;
+	struct ahci_em_priv *emp;
 
 	/* get the slot number from the message */
 	pmp = (state & EM_MSG_LED_PMP_SLOT) >> 8;
-	अगर (pmp < EM_MAX_SLOTS)
+	if (pmp < EM_MAX_SLOTS)
 		emp = &pp->em_priv[pmp];
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	ahci_rpm_get_port(ap);
 	spin_lock_irqsave(ap->lock, flags);
 
 	/*
-	 * अगर we are still busy transmitting a previous message,
-	 * करो not allow
+	 * if we are still busy transmitting a previous message,
+	 * do not allow
 	 */
-	em_ctl = पढ़ोl(mmio + HOST_EM_CTL);
-	अगर (em_ctl & EM_CTL_TM) अणु
+	em_ctl = readl(mmio + HOST_EM_CTL);
+	if (em_ctl & EM_CTL_TM) {
 		spin_unlock_irqrestore(ap->lock, flags);
 		ahci_rpm_put_port(ap);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (hpriv->em_msg_type & EM_MSG_TYPE_LED) अणु
+	if (hpriv->em_msg_type & EM_MSG_TYPE_LED) {
 		/*
-		 * create message header - this is all zero except क्रम
+		 * create message header - this is all zero except for
 		 * the message size, which is 4 bytes.
 		 */
 		message[0] |= (4 << 8);
@@ -1093,79 +1092,79 @@ EXPORT_SYMBOL_GPL(ahci_reset_em);
 		/* ignore 0:4 of byte zero, fill in port info yourself */
 		message[1] = ((state & ~EM_MSG_LED_HBA_PORT) | ap->port_no);
 
-		/* ग_लिखो message to EM_LOC */
-		ग_लिखोl(message[0], mmio + hpriv->em_loc);
-		ग_लिखोl(message[1], mmio + hpriv->em_loc+4);
+		/* write message to EM_LOC */
+		writel(message[0], mmio + hpriv->em_loc);
+		writel(message[1], mmio + hpriv->em_loc+4);
 
 		/*
 		 * tell hardware to transmit the message
 		 */
-		ग_लिखोl(em_ctl | EM_CTL_TM, mmio + HOST_EM_CTL);
-	पूर्ण
+		writel(em_ctl | EM_CTL_TM, mmio + HOST_EM_CTL);
+	}
 
-	/* save off new led state क्रम port/slot */
+	/* save off new led state for port/slot */
 	emp->led_state = state;
 
 	spin_unlock_irqrestore(ap->lock, flags);
 	ahci_rpm_put_port(ap);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार ahci_led_show(काष्ठा ata_port *ap, अक्षर *buf)
-अणु
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ata_link *link;
-	काष्ठा ahci_em_priv *emp;
-	पूर्णांक rc = 0;
+static ssize_t ahci_led_show(struct ata_port *ap, char *buf)
+{
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ata_link *link;
+	struct ahci_em_priv *emp;
+	int rc = 0;
 
-	ata_क्रम_each_link(link, ap, EDGE) अणु
+	ata_for_each_link(link, ap, EDGE) {
 		emp = &pp->em_priv[link->pmp];
-		rc += प्र_लिखो(buf, "%lx\n", emp->led_state);
-	पूर्ण
-	वापस rc;
-पूर्ण
+		rc += sprintf(buf, "%lx\n", emp->led_state);
+	}
+	return rc;
+}
 
-अटल sमाप_प्रकार ahci_led_store(काष्ठा ata_port *ap, स्थिर अक्षर *buf,
-				माप_प्रकार size)
-अणु
-	अचिन्हित पूर्णांक state;
-	पूर्णांक pmp;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_em_priv *emp;
+static ssize_t ahci_led_store(struct ata_port *ap, const char *buf,
+				size_t size)
+{
+	unsigned int state;
+	int pmp;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_em_priv *emp;
 
-	अगर (kstrtouपूर्णांक(buf, 0, &state) < 0)
-		वापस -EINVAL;
+	if (kstrtouint(buf, 0, &state) < 0)
+		return -EINVAL;
 
 	/* get the slot number from the message */
 	pmp = (state & EM_MSG_LED_PMP_SLOT) >> 8;
-	अगर (pmp < EM_MAX_SLOTS) अणु
+	if (pmp < EM_MAX_SLOTS) {
 		pmp = array_index_nospec(pmp, EM_MAX_SLOTS);
 		emp = &pp->em_priv[pmp];
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	/* mask off the activity bits अगर we are in sw_activity
-	 * mode, user should turn off sw_activity beक्रमe setting
+	/* mask off the activity bits if we are in sw_activity
+	 * mode, user should turn off sw_activity before setting
 	 * activity led through em_message
 	 */
-	अगर (emp->blink_policy)
+	if (emp->blink_policy)
 		state &= ~EM_MSG_LED_VALUE_ACTIVITY;
 
-	वापस ap->ops->transmit_led_message(ap, state, size);
-पूर्ण
+	return ap->ops->transmit_led_message(ap, state, size);
+}
 
-अटल sमाप_प्रकार ahci_activity_store(काष्ठा ata_device *dev, क्रमागत sw_activity val)
-अणु
-	काष्ठा ata_link *link = dev->link;
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_em_priv *emp = &pp->em_priv[link->pmp];
+static ssize_t ahci_activity_store(struct ata_device *dev, enum sw_activity val)
+{
+	struct ata_link *link = dev->link;
+	struct ata_port *ap = link->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_em_priv *emp = &pp->em_priv[link->pmp];
 	u32 port_led_state = emp->led_state;
 
 	/* save the desired Activity LED behavior */
-	अगर (val == OFF) अणु
+	if (val == OFF) {
 		/* clear LFLAG */
 		link->flags &= ~(ATA_LFLAG_SW_ACTIVITY);
 
@@ -1173,122 +1172,122 @@ EXPORT_SYMBOL_GPL(ahci_reset_em);
 		port_led_state &= EM_MSG_LED_VALUE_OFF;
 		port_led_state |= (ap->port_no | (link->pmp << 8));
 		ap->ops->transmit_led_message(ap, port_led_state, 4);
-	पूर्ण अन्यथा अणु
+	} else {
 		link->flags |= ATA_LFLAG_SW_ACTIVITY;
-		अगर (val == BLINK_OFF) अणु
-			/* set LED to ON क्रम idle */
+		if (val == BLINK_OFF) {
+			/* set LED to ON for idle */
 			port_led_state &= EM_MSG_LED_VALUE_OFF;
 			port_led_state |= (ap->port_no | (link->pmp << 8));
 			port_led_state |= EM_MSG_LED_VALUE_ON; /* check this */
 			ap->ops->transmit_led_message(ap, port_led_state, 4);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	emp->blink_policy = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार ahci_activity_show(काष्ठा ata_device *dev, अक्षर *buf)
-अणु
-	काष्ठा ata_link *link = dev->link;
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_em_priv *emp = &pp->em_priv[link->pmp];
+static ssize_t ahci_activity_show(struct ata_device *dev, char *buf)
+{
+	struct ata_link *link = dev->link;
+	struct ata_port *ap = link->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_em_priv *emp = &pp->em_priv[link->pmp];
 
-	/* display the saved value of activity behavior क्रम this
+	/* display the saved value of activity behavior for this
 	 * disk.
 	 */
-	वापस प्र_लिखो(buf, "%d\n", emp->blink_policy);
-पूर्ण
+	return sprintf(buf, "%d\n", emp->blink_policy);
+}
 
-अटल व्योम ahci_port_init(काष्ठा device *dev, काष्ठा ata_port *ap,
-			   पूर्णांक port_no, व्योम __iomem *mmio,
-			   व्योम __iomem *port_mmio)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	स्थिर अक्षर *emsg = शून्य;
-	पूर्णांक rc;
-	u32 पंचांगp;
+static void ahci_port_init(struct device *dev, struct ata_port *ap,
+			   int port_no, void __iomem *mmio,
+			   void __iomem *port_mmio)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	const char *emsg = NULL;
+	int rc;
+	u32 tmp;
 
 	/* make sure port is not active */
 	rc = ahci_deinit_port(ap, &emsg);
-	अगर (rc)
+	if (rc)
 		dev_warn(dev, "%s (%d)\n", emsg, rc);
 
 	/* clear SError */
-	पंचांगp = पढ़ोl(port_mmio + PORT_SCR_ERR);
-	VPRINTK("PORT_SCR_ERR 0x%x\n", पंचांगp);
-	ग_लिखोl(पंचांगp, port_mmio + PORT_SCR_ERR);
+	tmp = readl(port_mmio + PORT_SCR_ERR);
+	VPRINTK("PORT_SCR_ERR 0x%x\n", tmp);
+	writel(tmp, port_mmio + PORT_SCR_ERR);
 
 	/* clear port IRQ */
-	पंचांगp = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-	VPRINTK("PORT_IRQ_STAT 0x%x\n", पंचांगp);
-	अगर (पंचांगp)
-		ग_लिखोl(पंचांगp, port_mmio + PORT_IRQ_STAT);
+	tmp = readl(port_mmio + PORT_IRQ_STAT);
+	VPRINTK("PORT_IRQ_STAT 0x%x\n", tmp);
+	if (tmp)
+		writel(tmp, port_mmio + PORT_IRQ_STAT);
 
-	ग_लिखोl(1 << port_no, mmio + HOST_IRQ_STAT);
+	writel(1 << port_no, mmio + HOST_IRQ_STAT);
 
 	/* mark esata ports */
-	पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
-	अगर ((पंचांगp & PORT_CMD_ESP) && (hpriv->cap & HOST_CAP_SXS))
+	tmp = readl(port_mmio + PORT_CMD);
+	if ((tmp & PORT_CMD_ESP) && (hpriv->cap & HOST_CAP_SXS))
 		ap->pflags |= ATA_PFLAG_EXTERNAL;
-पूर्ण
+}
 
-व्योम ahci_init_controller(काष्ठा ata_host *host)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
-	पूर्णांक i;
-	व्योम __iomem *port_mmio;
-	u32 पंचांगp;
+void ahci_init_controller(struct ata_host *host)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
+	void __iomem *mmio = hpriv->mmio;
+	int i;
+	void __iomem *port_mmio;
+	u32 tmp;
 
-	क्रम (i = 0; i < host->n_ports; i++) अणु
-		काष्ठा ata_port *ap = host->ports[i];
+	for (i = 0; i < host->n_ports; i++) {
+		struct ata_port *ap = host->ports[i];
 
 		port_mmio = ahci_port_base(ap);
-		अगर (ata_port_is_dummy(ap))
-			जारी;
+		if (ata_port_is_dummy(ap))
+			continue;
 
 		ahci_port_init(host->dev, ap, i, mmio, port_mmio);
-	पूर्ण
+	}
 
-	पंचांगp = पढ़ोl(mmio + HOST_CTL);
-	VPRINTK("HOST_CTL 0x%x\n", पंचांगp);
-	ग_लिखोl(पंचांगp | HOST_IRQ_EN, mmio + HOST_CTL);
-	पंचांगp = पढ़ोl(mmio + HOST_CTL);
-	VPRINTK("HOST_CTL 0x%x\n", पंचांगp);
-पूर्ण
+	tmp = readl(mmio + HOST_CTL);
+	VPRINTK("HOST_CTL 0x%x\n", tmp);
+	writel(tmp | HOST_IRQ_EN, mmio + HOST_CTL);
+	tmp = readl(mmio + HOST_CTL);
+	VPRINTK("HOST_CTL 0x%x\n", tmp);
+}
 EXPORT_SYMBOL_GPL(ahci_init_controller);
 
-अटल व्योम ahci_dev_config(काष्ठा ata_device *dev)
-अणु
-	काष्ठा ahci_host_priv *hpriv = dev->link->ap->host->निजी_data;
+static void ahci_dev_config(struct ata_device *dev)
+{
+	struct ahci_host_priv *hpriv = dev->link->ap->host->private_data;
 
-	अगर (hpriv->flags & AHCI_HFLAG_SECT255) अणु
+	if (hpriv->flags & AHCI_HFLAG_SECT255) {
 		dev->max_sectors = 255;
 		ata_dev_info(dev,
 			     "SB600 AHCI: limiting to 255 sectors per cmd\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अचिन्हित पूर्णांक ahci_dev_classअगरy(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ata_taskfile tf;
-	u32 पंचांगp;
+unsigned int ahci_dev_classify(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ata_taskfile tf;
+	u32 tmp;
 
-	पंचांगp = पढ़ोl(port_mmio + PORT_SIG);
-	tf.lbah		= (पंचांगp >> 24)	& 0xff;
-	tf.lbam		= (पंचांगp >> 16)	& 0xff;
-	tf.lbal		= (पंचांगp >> 8)	& 0xff;
-	tf.nsect	= (पंचांगp)		& 0xff;
+	tmp = readl(port_mmio + PORT_SIG);
+	tf.lbah		= (tmp >> 24)	& 0xff;
+	tf.lbam		= (tmp >> 16)	& 0xff;
+	tf.lbal		= (tmp >> 8)	& 0xff;
+	tf.nsect	= (tmp)		& 0xff;
 
-	वापस ata_dev_classअगरy(&tf);
-पूर्ण
-EXPORT_SYMBOL_GPL(ahci_dev_classअगरy);
+	return ata_dev_classify(&tf);
+}
+EXPORT_SYMBOL_GPL(ahci_dev_classify);
 
-व्योम ahci_fill_cmd_slot(काष्ठा ahci_port_priv *pp, अचिन्हित पूर्णांक tag,
+void ahci_fill_cmd_slot(struct ahci_port_priv *pp, unsigned int tag,
 			u32 opts)
-अणु
+{
 	dma_addr_t cmd_tbl_dma;
 
 	cmd_tbl_dma = pp->cmd_tbl_dma + tag * AHCI_CMD_TBL_SZ;
@@ -1297,431 +1296,431 @@ EXPORT_SYMBOL_GPL(ahci_dev_classअगरy);
 	pp->cmd_slot[tag].status = 0;
 	pp->cmd_slot[tag].tbl_addr = cpu_to_le32(cmd_tbl_dma & 0xffffffff);
 	pp->cmd_slot[tag].tbl_addr_hi = cpu_to_le32((cmd_tbl_dma >> 16) >> 16);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ahci_fill_cmd_slot);
 
-पूर्णांक ahci_kick_engine(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	u8 status = पढ़ोl(port_mmio + PORT_TFDATA) & 0xFF;
-	u32 पंचांगp;
-	पूर्णांक busy, rc;
+int ahci_kick_engine(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	u8 status = readl(port_mmio + PORT_TFDATA) & 0xFF;
+	u32 tmp;
+	int busy, rc;
 
 	/* stop engine */
 	rc = hpriv->stop_engine(ap);
-	अगर (rc)
-		जाओ out_restart;
+	if (rc)
+		goto out_restart;
 
-	/* need to करो CLO?
-	 * always करो CLO अगर PMP is attached (AHCI-1.3 9.2)
+	/* need to do CLO?
+	 * always do CLO if PMP is attached (AHCI-1.3 9.2)
 	 */
 	busy = status & (ATA_BUSY | ATA_DRQ);
-	अगर (!busy && !sata_pmp_attached(ap)) अणु
+	if (!busy && !sata_pmp_attached(ap)) {
 		rc = 0;
-		जाओ out_restart;
-	पूर्ण
+		goto out_restart;
+	}
 
-	अगर (!(hpriv->cap & HOST_CAP_CLO)) अणु
+	if (!(hpriv->cap & HOST_CAP_CLO)) {
 		rc = -EOPNOTSUPP;
-		जाओ out_restart;
-	पूर्ण
+		goto out_restart;
+	}
 
-	/* perक्रमm CLO */
-	पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
-	पंचांगp |= PORT_CMD_CLO;
-	ग_लिखोl(पंचांगp, port_mmio + PORT_CMD);
+	/* perform CLO */
+	tmp = readl(port_mmio + PORT_CMD);
+	tmp |= PORT_CMD_CLO;
+	writel(tmp, port_mmio + PORT_CMD);
 
 	rc = 0;
-	पंचांगp = ata_रुको_रेजिस्टर(ap, port_mmio + PORT_CMD,
+	tmp = ata_wait_register(ap, port_mmio + PORT_CMD,
 				PORT_CMD_CLO, PORT_CMD_CLO, 1, 500);
-	अगर (पंचांगp & PORT_CMD_CLO)
+	if (tmp & PORT_CMD_CLO)
 		rc = -EIO;
 
 	/* restart engine */
  out_restart:
 	hpriv->start_engine(ap);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(ahci_kick_engine);
 
-अटल पूर्णांक ahci_exec_polled_cmd(काष्ठा ata_port *ap, पूर्णांक pmp,
-				काष्ठा ata_taskfile *tf, पूर्णांक is_cmd, u16 flags,
-				अचिन्हित दीर्घ समयout_msec)
-अणु
-	स्थिर u32 cmd_fis_len = 5; /* five dwords */
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static int ahci_exec_polled_cmd(struct ata_port *ap, int pmp,
+				struct ata_taskfile *tf, int is_cmd, u16 flags,
+				unsigned long timeout_msec)
+{
+	const u32 cmd_fis_len = 5; /* five dwords */
+	struct ahci_port_priv *pp = ap->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u8 *fis = pp->cmd_tbl;
-	u32 पंचांगp;
+	u32 tmp;
 
 	/* prep the command */
 	ata_tf_to_fis(tf, pmp, is_cmd, fis);
 	ahci_fill_cmd_slot(pp, 0, cmd_fis_len | flags | (pmp << 12));
 
-	/* set port value क्रम softreset of Port Multiplier */
-	अगर (pp->fbs_enabled && pp->fbs_last_dev != pmp) अणु
-		पंचांगp = पढ़ोl(port_mmio + PORT_FBS);
-		पंचांगp &= ~(PORT_FBS_DEV_MASK | PORT_FBS_DEC);
-		पंचांगp |= pmp << PORT_FBS_DEV_OFFSET;
-		ग_लिखोl(पंचांगp, port_mmio + PORT_FBS);
+	/* set port value for softreset of Port Multiplier */
+	if (pp->fbs_enabled && pp->fbs_last_dev != pmp) {
+		tmp = readl(port_mmio + PORT_FBS);
+		tmp &= ~(PORT_FBS_DEV_MASK | PORT_FBS_DEC);
+		tmp |= pmp << PORT_FBS_DEV_OFFSET;
+		writel(tmp, port_mmio + PORT_FBS);
 		pp->fbs_last_dev = pmp;
-	पूर्ण
+	}
 
-	/* issue & रुको */
-	ग_लिखोl(1, port_mmio + PORT_CMD_ISSUE);
+	/* issue & wait */
+	writel(1, port_mmio + PORT_CMD_ISSUE);
 
-	अगर (समयout_msec) अणु
-		पंचांगp = ata_रुको_रेजिस्टर(ap, port_mmio + PORT_CMD_ISSUE,
-					0x1, 0x1, 1, समयout_msec);
-		अगर (पंचांगp & 0x1) अणु
+	if (timeout_msec) {
+		tmp = ata_wait_register(ap, port_mmio + PORT_CMD_ISSUE,
+					0x1, 0x1, 1, timeout_msec);
+		if (tmp & 0x1) {
 			ahci_kick_engine(ap);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण अन्यथा
-		पढ़ोl(port_mmio + PORT_CMD_ISSUE);	/* flush */
+			return -EBUSY;
+		}
+	} else
+		readl(port_mmio + PORT_CMD_ISSUE);	/* flush */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ahci_करो_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-		      पूर्णांक pmp, अचिन्हित दीर्घ deadline,
-		      पूर्णांक (*check_पढ़ोy)(काष्ठा ata_link *link))
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	स्थिर अक्षर *reason = शून्य;
-	अचिन्हित दीर्घ now, msecs;
-	काष्ठा ata_taskfile tf;
+int ahci_do_softreset(struct ata_link *link, unsigned int *class,
+		      int pmp, unsigned long deadline,
+		      int (*check_ready)(struct ata_link *link))
+{
+	struct ata_port *ap = link->ap;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	const char *reason = NULL;
+	unsigned long now, msecs;
+	struct ata_taskfile tf;
 	bool fbs_disabled = false;
-	पूर्णांक rc;
+	int rc;
 
 	DPRINTK("ENTER\n");
 
-	/* prepare क्रम SRST (AHCI-1.1 10.4.1) */
+	/* prepare for SRST (AHCI-1.1 10.4.1) */
 	rc = ahci_kick_engine(ap);
-	अगर (rc && rc != -EOPNOTSUPP)
+	if (rc && rc != -EOPNOTSUPP)
 		ata_link_warn(link, "failed to reset engine (errno=%d)\n", rc);
 
 	/*
-	 * According to AHCI-1.2 9.3.9: अगर FBS is enable, software shall
+	 * According to AHCI-1.2 9.3.9: if FBS is enable, software shall
 	 * clear PxFBS.EN to '0' prior to issuing software reset to devices
 	 * that is attached to port multiplier.
 	 */
-	अगर (!ata_is_host_link(link) && pp->fbs_enabled) अणु
+	if (!ata_is_host_link(link) && pp->fbs_enabled) {
 		ahci_disable_fbs(ap);
 		fbs_disabled = true;
-	पूर्ण
+	}
 
 	ata_tf_init(link->device, &tf);
 
 	/* issue the first H2D Register FIS */
 	msecs = 0;
-	now = jअगरfies;
-	अगर (समय_after(deadline, now))
-		msecs = jअगरfies_to_msecs(deadline - now);
+	now = jiffies;
+	if (time_after(deadline, now))
+		msecs = jiffies_to_msecs(deadline - now);
 
 	tf.ctl |= ATA_SRST;
-	अगर (ahci_exec_polled_cmd(ap, pmp, &tf, 0,
-				 AHCI_CMD_RESET | AHCI_CMD_CLR_BUSY, msecs)) अणु
+	if (ahci_exec_polled_cmd(ap, pmp, &tf, 0,
+				 AHCI_CMD_RESET | AHCI_CMD_CLR_BUSY, msecs)) {
 		rc = -EIO;
 		reason = "1st FIS failed";
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* spec says at least 5us, but be generous and sleep क्रम 1ms */
+	/* spec says at least 5us, but be generous and sleep for 1ms */
 	ata_msleep(ap, 1);
 
 	/* issue the second H2D Register FIS */
 	tf.ctl &= ~ATA_SRST;
 	ahci_exec_polled_cmd(ap, pmp, &tf, 0, 0, 0);
 
-	/* रुको क्रम link to become पढ़ोy */
-	rc = ata_रुको_after_reset(link, deadline, check_पढ़ोy);
-	अगर (rc == -EBUSY && hpriv->flags & AHCI_HFLAG_SRST_TOUT_IS_OFFLINE) अणु
+	/* wait for link to become ready */
+	rc = ata_wait_after_reset(link, deadline, check_ready);
+	if (rc == -EBUSY && hpriv->flags & AHCI_HFLAG_SRST_TOUT_IS_OFFLINE) {
 		/*
-		 * Workaround क्रम हालs where link online status can't
-		 * be trusted.  Treat device पढ़ोiness समयout as link
+		 * Workaround for cases where link online status can't
+		 * be trusted.  Treat device readiness timeout as link
 		 * offline.
 		 */
 		ata_link_info(link, "device not ready, treating as offline\n");
 		*class = ATA_DEV_NONE;
-	पूर्ण अन्यथा अगर (rc) अणु
+	} else if (rc) {
 		/* link occupied, -ENODEV too is an error */
 		reason = "device not ready";
-		जाओ fail;
-	पूर्ण अन्यथा
-		*class = ahci_dev_classअगरy(ap);
+		goto fail;
+	} else
+		*class = ahci_dev_classify(ap);
 
-	/* re-enable FBS अगर disabled beक्रमe */
-	अगर (fbs_disabled)
+	/* re-enable FBS if disabled before */
+	if (fbs_disabled)
 		ahci_enable_fbs(ap);
 
 	DPRINTK("EXIT, class=%u\n", *class);
-	वापस 0;
+	return 0;
 
  fail:
 	ata_link_err(link, "softreset failed (%s)\n", reason);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक ahci_check_पढ़ोy(काष्ठा ata_link *link)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(link->ap);
-	u8 status = पढ़ोl(port_mmio + PORT_TFDATA) & 0xFF;
+int ahci_check_ready(struct ata_link *link)
+{
+	void __iomem *port_mmio = ahci_port_base(link->ap);
+	u8 status = readl(port_mmio + PORT_TFDATA) & 0xFF;
 
-	वापस ata_check_पढ़ोy(status);
-पूर्ण
-EXPORT_SYMBOL_GPL(ahci_check_पढ़ोy);
+	return ata_check_ready(status);
+}
+EXPORT_SYMBOL_GPL(ahci_check_ready);
 
-अटल पूर्णांक ahci_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			  अचिन्हित दीर्घ deadline)
-अणु
-	पूर्णांक pmp = sata_srst_pmp(link);
+static int ahci_softreset(struct ata_link *link, unsigned int *class,
+			  unsigned long deadline)
+{
+	int pmp = sata_srst_pmp(link);
 
 	DPRINTK("ENTER\n");
 
-	वापस ahci_करो_softreset(link, class, pmp, deadline, ahci_check_पढ़ोy);
-पूर्ण
-EXPORT_SYMBOL_GPL(ahci_करो_softreset);
+	return ahci_do_softreset(link, class, pmp, deadline, ahci_check_ready);
+}
+EXPORT_SYMBOL_GPL(ahci_do_softreset);
 
-अटल पूर्णांक ahci_bad_pmp_check_पढ़ोy(काष्ठा ata_link *link)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(link->ap);
-	u8 status = पढ़ोl(port_mmio + PORT_TFDATA) & 0xFF;
-	u32 irq_status = पढ़ोl(port_mmio + PORT_IRQ_STAT);
+static int ahci_bad_pmp_check_ready(struct ata_link *link)
+{
+	void __iomem *port_mmio = ahci_port_base(link->ap);
+	u8 status = readl(port_mmio + PORT_TFDATA) & 0xFF;
+	u32 irq_status = readl(port_mmio + PORT_IRQ_STAT);
 
 	/*
-	 * There is no need to check TFDATA अगर BAD PMP is found due to HW bug,
-	 * which can save समयout delay.
+	 * There is no need to check TFDATA if BAD PMP is found due to HW bug,
+	 * which can save timeout delay.
 	 */
-	अगर (irq_status & PORT_IRQ_BAD_PMP)
-		वापस -EIO;
+	if (irq_status & PORT_IRQ_BAD_PMP)
+		return -EIO;
 
-	वापस ata_check_पढ़ोy(status);
-पूर्ण
+	return ata_check_ready(status);
+}
 
-अटल पूर्णांक ahci_pmp_retry_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-				    अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	पूर्णांक pmp = sata_srst_pmp(link);
-	पूर्णांक rc;
+static int ahci_pmp_retry_softreset(struct ata_link *link, unsigned int *class,
+				    unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
+	void __iomem *port_mmio = ahci_port_base(ap);
+	int pmp = sata_srst_pmp(link);
+	int rc;
 	u32 irq_sts;
 
 	DPRINTK("ENTER\n");
 
-	rc = ahci_करो_softreset(link, class, pmp, deadline,
-			       ahci_bad_pmp_check_पढ़ोy);
+	rc = ahci_do_softreset(link, class, pmp, deadline,
+			       ahci_bad_pmp_check_ready);
 
 	/*
 	 * Soft reset fails with IPMS set when PMP is enabled but
-	 * SATA HDD/ODD is connected to SATA port, करो soft reset
+	 * SATA HDD/ODD is connected to SATA port, do soft reset
 	 * again to port 0.
 	 */
-	अगर (rc == -EIO) अणु
-		irq_sts = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-		अगर (irq_sts & PORT_IRQ_BAD_PMP) अणु
+	if (rc == -EIO) {
+		irq_sts = readl(port_mmio + PORT_IRQ_STAT);
+		if (irq_sts & PORT_IRQ_BAD_PMP) {
 			ata_link_warn(link,
 					"applying PMP SRST workaround "
 					"and retrying\n");
-			rc = ahci_करो_softreset(link, class, 0, deadline,
-					       ahci_check_पढ़ोy);
-		पूर्ण
-	पूर्ण
+			rc = ahci_do_softreset(link, class, 0, deadline,
+					       ahci_check_ready);
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक ahci_करो_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-		      अचिन्हित दीर्घ deadline, bool *online)
-अणु
-	स्थिर अचिन्हित दीर्घ *timing = sata_ehc_deb_timing(&link->eh_context);
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+int ahci_do_hardreset(struct ata_link *link, unsigned int *class,
+		      unsigned long deadline, bool *online)
+{
+	const unsigned long *timing = sata_ehc_deb_timing(&link->eh_context);
+	struct ata_port *ap = link->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 	u8 *d2h_fis = pp->rx_fis + RX_FIS_D2H_REG;
-	काष्ठा ata_taskfile tf;
-	पूर्णांक rc;
+	struct ata_taskfile tf;
+	int rc;
 
 	DPRINTK("ENTER\n");
 
 	hpriv->stop_engine(ap);
 
-	/* clear D2H reception area to properly रुको क्रम D2H FIS */
+	/* clear D2H reception area to properly wait for D2H FIS */
 	ata_tf_init(link->device, &tf);
 	tf.command = ATA_BUSY;
 	ata_tf_to_fis(&tf, 0, 0, d2h_fis);
 
 	rc = sata_link_hardreset(link, timing, deadline, online,
-				 ahci_check_पढ़ोy);
+				 ahci_check_ready);
 
 	hpriv->start_engine(ap);
 
-	अगर (*online)
-		*class = ahci_dev_classअगरy(ap);
+	if (*online)
+		*class = ahci_dev_classify(ap);
 
 	DPRINTK("EXIT, rc=%d, class=%u\n", rc, *class);
-	वापस rc;
-पूर्ण
-EXPORT_SYMBOL_GPL(ahci_करो_hardreset);
+	return rc;
+}
+EXPORT_SYMBOL_GPL(ahci_do_hardreset);
 
-अटल पूर्णांक ahci_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			  अचिन्हित दीर्घ deadline)
-अणु
+static int ahci_hardreset(struct ata_link *link, unsigned int *class,
+			  unsigned long deadline)
+{
 	bool online;
 
-	वापस ahci_करो_hardreset(link, class, deadline, &online);
-पूर्ण
+	return ahci_do_hardreset(link, class, deadline, &online);
+}
 
-अटल व्योम ahci_postreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	u32 new_पंचांगp, पंचांगp;
+static void ahci_postreset(struct ata_link *link, unsigned int *class)
+{
+	struct ata_port *ap = link->ap;
+	void __iomem *port_mmio = ahci_port_base(ap);
+	u32 new_tmp, tmp;
 
 	ata_std_postreset(link, class);
 
 	/* Make sure port's ATAPI bit is set appropriately */
-	new_पंचांगp = पंचांगp = पढ़ोl(port_mmio + PORT_CMD);
-	अगर (*class == ATA_DEV_ATAPI)
-		new_पंचांगp |= PORT_CMD_ATAPI;
-	अन्यथा
-		new_पंचांगp &= ~PORT_CMD_ATAPI;
-	अगर (new_पंचांगp != पंचांगp) अणु
-		ग_लिखोl(new_पंचांगp, port_mmio + PORT_CMD);
-		पढ़ोl(port_mmio + PORT_CMD); /* flush */
-	पूर्ण
-पूर्ण
+	new_tmp = tmp = readl(port_mmio + PORT_CMD);
+	if (*class == ATA_DEV_ATAPI)
+		new_tmp |= PORT_CMD_ATAPI;
+	else
+		new_tmp &= ~PORT_CMD_ATAPI;
+	if (new_tmp != tmp) {
+		writel(new_tmp, port_mmio + PORT_CMD);
+		readl(port_mmio + PORT_CMD); /* flush */
+	}
+}
 
-अटल अचिन्हित पूर्णांक ahci_fill_sg(काष्ठा ata_queued_cmd *qc, व्योम *cmd_tbl)
-अणु
-	काष्ठा scatterlist *sg;
-	काष्ठा ahci_sg *ahci_sg = cmd_tbl + AHCI_CMD_TBL_HDR_SZ;
-	अचिन्हित पूर्णांक si;
+static unsigned int ahci_fill_sg(struct ata_queued_cmd *qc, void *cmd_tbl)
+{
+	struct scatterlist *sg;
+	struct ahci_sg *ahci_sg = cmd_tbl + AHCI_CMD_TBL_HDR_SZ;
+	unsigned int si;
 
 	VPRINTK("ENTER\n");
 
 	/*
 	 * Next, the S/G list.
 	 */
-	क्रम_each_sg(qc->sg, sg, qc->n_elem, si) अणु
+	for_each_sg(qc->sg, sg, qc->n_elem, si) {
 		dma_addr_t addr = sg_dma_address(sg);
 		u32 sg_len = sg_dma_len(sg);
 
 		ahci_sg[si].addr = cpu_to_le32(addr & 0xffffffff);
 		ahci_sg[si].addr_hi = cpu_to_le32((addr >> 16) >> 16);
 		ahci_sg[si].flags_size = cpu_to_le32(sg_len - 1);
-	पूर्ण
+	}
 
-	वापस si;
-पूर्ण
+	return si;
+}
 
-अटल पूर्णांक ahci_pmp_qc_defer(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
+static int ahci_pmp_qc_defer(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct ahci_port_priv *pp = ap->private_data;
 
-	अगर (!sata_pmp_attached(ap) || pp->fbs_enabled)
-		वापस ata_std_qc_defer(qc);
-	अन्यथा
-		वापस sata_pmp_qc_defer_cmd_चयन(qc);
-पूर्ण
+	if (!sata_pmp_attached(ap) || pp->fbs_enabled)
+		return ata_std_qc_defer(qc);
+	else
+		return sata_pmp_qc_defer_cmd_switch(qc);
+}
 
-अटल क्रमागत ata_completion_errors ahci_qc_prep(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	पूर्णांक is_atapi = ata_is_atapi(qc->tf.protocol);
-	व्योम *cmd_tbl;
+static enum ata_completion_errors ahci_qc_prep(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct ahci_port_priv *pp = ap->private_data;
+	int is_atapi = ata_is_atapi(qc->tf.protocol);
+	void *cmd_tbl;
 	u32 opts;
-	स्थिर u32 cmd_fis_len = 5; /* five dwords */
-	अचिन्हित पूर्णांक n_elem;
+	const u32 cmd_fis_len = 5; /* five dwords */
+	unsigned int n_elem;
 
 	/*
-	 * Fill in command table inक्रमmation.  First, the header,
+	 * Fill in command table information.  First, the header,
 	 * a SATA Register - Host to Device command FIS.
 	 */
 	cmd_tbl = pp->cmd_tbl + qc->hw_tag * AHCI_CMD_TBL_SZ;
 
 	ata_tf_to_fis(&qc->tf, qc->dev->link->pmp, 1, cmd_tbl);
-	अगर (is_atapi) अणु
-		स_रखो(cmd_tbl + AHCI_CMD_TBL_CDB, 0, 32);
-		स_नकल(cmd_tbl + AHCI_CMD_TBL_CDB, qc->cdb, qc->dev->cdb_len);
-	पूर्ण
+	if (is_atapi) {
+		memset(cmd_tbl + AHCI_CMD_TBL_CDB, 0, 32);
+		memcpy(cmd_tbl + AHCI_CMD_TBL_CDB, qc->cdb, qc->dev->cdb_len);
+	}
 
 	n_elem = 0;
-	अगर (qc->flags & ATA_QCFLAG_DMAMAP)
+	if (qc->flags & ATA_QCFLAG_DMAMAP)
 		n_elem = ahci_fill_sg(qc, cmd_tbl);
 
 	/*
-	 * Fill in command slot inक्रमmation.
+	 * Fill in command slot information.
 	 */
 	opts = cmd_fis_len | n_elem << 16 | (qc->dev->link->pmp << 12);
-	अगर (qc->tf.flags & ATA_TFLAG_WRITE)
+	if (qc->tf.flags & ATA_TFLAG_WRITE)
 		opts |= AHCI_CMD_WRITE;
-	अगर (is_atapi)
+	if (is_atapi)
 		opts |= AHCI_CMD_ATAPI | AHCI_CMD_PREFETCH;
 
 	ahci_fill_cmd_slot(pp, qc->hw_tag, opts);
 
-	वापस AC_ERR_OK;
-पूर्ण
+	return AC_ERR_OK;
+}
 
-अटल व्योम ahci_fbs_dec_पूर्णांकr(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	u32 fbs = पढ़ोl(port_mmio + PORT_FBS);
-	पूर्णांक retries = 3;
+static void ahci_fbs_dec_intr(struct ata_port *ap)
+{
+	struct ahci_port_priv *pp = ap->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
+	u32 fbs = readl(port_mmio + PORT_FBS);
+	int retries = 3;
 
 	DPRINTK("ENTER\n");
 	BUG_ON(!pp->fbs_enabled);
 
-	/* समय to रुको क्रम DEC is not specअगरied by AHCI spec,
-	 * add a retry loop क्रम safety.
+	/* time to wait for DEC is not specified by AHCI spec,
+	 * add a retry loop for safety.
 	 */
-	ग_लिखोl(fbs | PORT_FBS_DEC, port_mmio + PORT_FBS);
-	fbs = पढ़ोl(port_mmio + PORT_FBS);
-	जबतक ((fbs & PORT_FBS_DEC) && retries--) अणु
+	writel(fbs | PORT_FBS_DEC, port_mmio + PORT_FBS);
+	fbs = readl(port_mmio + PORT_FBS);
+	while ((fbs & PORT_FBS_DEC) && retries--) {
 		udelay(1);
-		fbs = पढ़ोl(port_mmio + PORT_FBS);
-	पूर्ण
+		fbs = readl(port_mmio + PORT_FBS);
+	}
 
-	अगर (fbs & PORT_FBS_DEC)
+	if (fbs & PORT_FBS_DEC)
 		dev_err(ap->host->dev, "failed to clear device error\n");
-पूर्ण
+}
 
-अटल व्योम ahci_error_पूर्णांकr(काष्ठा ata_port *ap, u32 irq_stat)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ata_eh_info *host_ehi = &ap->link.eh_info;
-	काष्ठा ata_link *link = शून्य;
-	काष्ठा ata_queued_cmd *active_qc;
-	काष्ठा ata_eh_info *active_ehi;
+static void ahci_error_intr(struct ata_port *ap, u32 irq_stat)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ata_eh_info *host_ehi = &ap->link.eh_info;
+	struct ata_link *link = NULL;
+	struct ata_queued_cmd *active_qc;
+	struct ata_eh_info *active_ehi;
 	bool fbs_need_dec = false;
 	u32 serror;
 
 	/* determine active link with error */
-	अगर (pp->fbs_enabled) अणु
-		व्योम __iomem *port_mmio = ahci_port_base(ap);
-		u32 fbs = पढ़ोl(port_mmio + PORT_FBS);
-		पूर्णांक pmp = fbs >> PORT_FBS_DWE_OFFSET;
+	if (pp->fbs_enabled) {
+		void __iomem *port_mmio = ahci_port_base(ap);
+		u32 fbs = readl(port_mmio + PORT_FBS);
+		int pmp = fbs >> PORT_FBS_DWE_OFFSET;
 
-		अगर ((fbs & PORT_FBS_SDE) && (pmp < ap->nr_pmp_links)) अणु
+		if ((fbs & PORT_FBS_SDE) && (pmp < ap->nr_pmp_links)) {
 			link = &ap->pmp_link[pmp];
 			fbs_need_dec = true;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा
-		ata_क्रम_each_link(link, ap, EDGE)
-			अगर (ata_link_active(link))
-				अवरोध;
+	} else
+		ata_for_each_link(link, ap, EDGE)
+			if (ata_link_active(link))
+				break;
 
-	अगर (!link)
+	if (!link)
 		link = &ap->link;
 
 	active_qc = ata_qc_from_tag(ap, link->active_tag);
@@ -1732,29 +1731,29 @@ EXPORT_SYMBOL_GPL(ahci_करो_hardreset);
 	ata_ehi_push_desc(host_ehi, "irq_stat 0x%08x", irq_stat);
 
 	/* AHCI needs SError cleared; otherwise, it might lock up */
-	ahci_scr_पढ़ो(&ap->link, SCR_ERROR, &serror);
-	ahci_scr_ग_लिखो(&ap->link, SCR_ERROR, serror);
+	ahci_scr_read(&ap->link, SCR_ERROR, &serror);
+	ahci_scr_write(&ap->link, SCR_ERROR, serror);
 	host_ehi->serror |= serror;
 
 	/* some controllers set IRQ_IF_ERR on device errors, ignore it */
-	अगर (hpriv->flags & AHCI_HFLAG_IGN_IRQ_IF_ERR)
+	if (hpriv->flags & AHCI_HFLAG_IGN_IRQ_IF_ERR)
 		irq_stat &= ~PORT_IRQ_IF_ERR;
 
-	अगर (irq_stat & PORT_IRQ_TF_ERR) अणु
-		/* If qc is active, अक्षरge it; otherwise, the active
+	if (irq_stat & PORT_IRQ_TF_ERR) {
+		/* If qc is active, charge it; otherwise, the active
 		 * link.  There's no active qc on NCQ errors.  It will
-		 * be determined by EH by पढ़ोing log page 10h.
+		 * be determined by EH by reading log page 10h.
 		 */
-		अगर (active_qc)
+		if (active_qc)
 			active_qc->err_mask |= AC_ERR_DEV;
-		अन्यथा
+		else
 			active_ehi->err_mask |= AC_ERR_DEV;
 
-		अगर (hpriv->flags & AHCI_HFLAG_IGN_SERR_INTERNAL)
+		if (hpriv->flags & AHCI_HFLAG_IGN_SERR_INTERNAL)
 			host_ehi->serror &= ~SERR_INTERNAL;
-	पूर्ण
+	}
 
-	अगर (irq_stat & PORT_IRQ_UNK_FIS) अणु
+	if (irq_stat & PORT_IRQ_UNK_FIS) {
 		u32 *unk = pp->rx_fis + RX_FIS_UNK;
 
 		active_ehi->err_mask |= AC_ERR_HSM;
@@ -1762,239 +1761,239 @@ EXPORT_SYMBOL_GPL(ahci_करो_hardreset);
 		ata_ehi_push_desc(active_ehi,
 				  "unknown FIS %08x %08x %08x %08x" ,
 				  unk[0], unk[1], unk[2], unk[3]);
-	पूर्ण
+	}
 
-	अगर (sata_pmp_attached(ap) && (irq_stat & PORT_IRQ_BAD_PMP)) अणु
+	if (sata_pmp_attached(ap) && (irq_stat & PORT_IRQ_BAD_PMP)) {
 		active_ehi->err_mask |= AC_ERR_HSM;
 		active_ehi->action |= ATA_EH_RESET;
 		ata_ehi_push_desc(active_ehi, "incorrect PMP");
-	पूर्ण
+	}
 
-	अगर (irq_stat & (PORT_IRQ_HBUS_ERR | PORT_IRQ_HBUS_DATA_ERR)) अणु
+	if (irq_stat & (PORT_IRQ_HBUS_ERR | PORT_IRQ_HBUS_DATA_ERR)) {
 		host_ehi->err_mask |= AC_ERR_HOST_BUS;
 		host_ehi->action |= ATA_EH_RESET;
 		ata_ehi_push_desc(host_ehi, "host bus error");
-	पूर्ण
+	}
 
-	अगर (irq_stat & PORT_IRQ_IF_ERR) अणु
-		अगर (fbs_need_dec)
+	if (irq_stat & PORT_IRQ_IF_ERR) {
+		if (fbs_need_dec)
 			active_ehi->err_mask |= AC_ERR_DEV;
-		अन्यथा अणु
+		else {
 			host_ehi->err_mask |= AC_ERR_ATA_BUS;
 			host_ehi->action |= ATA_EH_RESET;
-		पूर्ण
+		}
 
 		ata_ehi_push_desc(host_ehi, "interface fatal error");
-	पूर्ण
+	}
 
-	अगर (irq_stat & (PORT_IRQ_CONNECT | PORT_IRQ_PHYRDY)) अणु
+	if (irq_stat & (PORT_IRQ_CONNECT | PORT_IRQ_PHYRDY)) {
 		ata_ehi_hotplugged(host_ehi);
 		ata_ehi_push_desc(host_ehi, "%s",
 			irq_stat & PORT_IRQ_CONNECT ?
 			"connection status changed" : "PHY RDY changed");
-	पूर्ण
+	}
 
 	/* okay, let's hand over to EH */
 
-	अगर (irq_stat & PORT_IRQ_FREEZE)
-		ata_port_मुक्तze(ap);
-	अन्यथा अगर (fbs_need_dec) अणु
-		ata_link_पात(link);
-		ahci_fbs_dec_पूर्णांकr(ap);
-	पूर्ण अन्यथा
-		ata_port_पात(ap);
-पूर्ण
+	if (irq_stat & PORT_IRQ_FREEZE)
+		ata_port_freeze(ap);
+	else if (fbs_need_dec) {
+		ata_link_abort(link);
+		ahci_fbs_dec_intr(ap);
+	} else
+		ata_port_abort(ap);
+}
 
-अटल व्योम ahci_handle_port_पूर्णांकerrupt(काष्ठा ata_port *ap,
-				       व्योम __iomem *port_mmio, u32 status)
-अणु
-	काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	पूर्णांक resetting = !!(ap->pflags & ATA_PFLAG_RESETTING);
+static void ahci_handle_port_interrupt(struct ata_port *ap,
+				       void __iomem *port_mmio, u32 status)
+{
+	struct ata_eh_info *ehi = &ap->link.eh_info;
+	struct ahci_port_priv *pp = ap->private_data;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	int resetting = !!(ap->pflags & ATA_PFLAG_RESETTING);
 	u32 qc_active = 0;
-	पूर्णांक rc;
+	int rc;
 
-	/* ignore BAD_PMP जबतक resetting */
-	अगर (unlikely(resetting))
+	/* ignore BAD_PMP while resetting */
+	if (unlikely(resetting))
 		status &= ~PORT_IRQ_BAD_PMP;
 
-	अगर (sata_lpm_ignore_phy_events(&ap->link)) अणु
+	if (sata_lpm_ignore_phy_events(&ap->link)) {
 		status &= ~PORT_IRQ_PHYRDY;
-		ahci_scr_ग_लिखो(&ap->link, SCR_ERROR, SERR_PHYRDY_CHG);
-	पूर्ण
+		ahci_scr_write(&ap->link, SCR_ERROR, SERR_PHYRDY_CHG);
+	}
 
-	अगर (unlikely(status & PORT_IRQ_ERROR)) अणु
-		ahci_error_पूर्णांकr(ap, status);
-		वापस;
-	पूर्ण
+	if (unlikely(status & PORT_IRQ_ERROR)) {
+		ahci_error_intr(ap, status);
+		return;
+	}
 
-	अगर (status & PORT_IRQ_SDB_FIS) अणु
-		/* If SNotअगरication is available, leave notअगरication
-		 * handling to sata_async_notअगरication().  If not,
+	if (status & PORT_IRQ_SDB_FIS) {
+		/* If SNotification is available, leave notification
+		 * handling to sata_async_notification().  If not,
 		 * emulate it by snooping SDB FIS RX area.
 		 *
 		 * Snooping FIS RX area is probably cheaper than
-		 * poking SNotअगरication but some स्थिरrollers which
-		 * implement SNotअगरication, ICH9 क्रम example, करोn't
-		 * store AN SDB FIS पूर्णांकo receive area.
+		 * poking SNotification but some constrollers which
+		 * implement SNotification, ICH9 for example, don't
+		 * store AN SDB FIS into receive area.
 		 */
-		अगर (hpriv->cap & HOST_CAP_SNTF)
-			sata_async_notअगरication(ap);
-		अन्यथा अणु
+		if (hpriv->cap & HOST_CAP_SNTF)
+			sata_async_notification(ap);
+		else {
 			/* If the 'N' bit in word 0 of the FIS is set,
-			 * we just received asynchronous notअगरication.
+			 * we just received asynchronous notification.
 			 * Tell libata about it.
 			 *
-			 * Lack of SNotअगरication should not appear in
+			 * Lack of SNotification should not appear in
 			 * ahci 1.2, so the workaround is unnecessary
 			 * when FBS is enabled.
 			 */
-			अगर (pp->fbs_enabled)
+			if (pp->fbs_enabled)
 				WARN_ON_ONCE(1);
-			अन्यथा अणु
-				स्थिर __le32 *f = pp->rx_fis + RX_FIS_SDB;
+			else {
+				const __le32 *f = pp->rx_fis + RX_FIS_SDB;
 				u32 f0 = le32_to_cpu(f[0]);
-				अगर (f0 & (1 << 15))
-					sata_async_notअगरication(ap);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (f0 & (1 << 15))
+					sata_async_notification(ap);
+			}
+		}
+	}
 
 	/* pp->active_link is not reliable once FBS is enabled, both
 	 * PORT_SCR_ACT and PORT_CMD_ISSUE should be checked because
-	 * NCQ and non-NCQ commands may be in flight at the same समय.
+	 * NCQ and non-NCQ commands may be in flight at the same time.
 	 */
-	अगर (pp->fbs_enabled) अणु
-		अगर (ap->qc_active) अणु
-			qc_active = पढ़ोl(port_mmio + PORT_SCR_ACT);
-			qc_active |= पढ़ोl(port_mmio + PORT_CMD_ISSUE);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* pp->active_link is valid अगरf any command is in flight */
-		अगर (ap->qc_active && pp->active_link->sactive)
-			qc_active = पढ़ोl(port_mmio + PORT_SCR_ACT);
-		अन्यथा
-			qc_active = पढ़ोl(port_mmio + PORT_CMD_ISSUE);
-	पूर्ण
+	if (pp->fbs_enabled) {
+		if (ap->qc_active) {
+			qc_active = readl(port_mmio + PORT_SCR_ACT);
+			qc_active |= readl(port_mmio + PORT_CMD_ISSUE);
+		}
+	} else {
+		/* pp->active_link is valid iff any command is in flight */
+		if (ap->qc_active && pp->active_link->sactive)
+			qc_active = readl(port_mmio + PORT_SCR_ACT);
+		else
+			qc_active = readl(port_mmio + PORT_CMD_ISSUE);
+	}
 
 
 	rc = ata_qc_complete_multiple(ap, qc_active);
 
-	/* जबतक resetting, invalid completions are expected */
-	अगर (unlikely(rc < 0 && !resetting)) अणु
+	/* while resetting, invalid completions are expected */
+	if (unlikely(rc < 0 && !resetting)) {
 		ehi->err_mask |= AC_ERR_HSM;
 		ehi->action |= ATA_EH_RESET;
-		ata_port_मुक्तze(ap);
-	पूर्ण
-पूर्ण
+		ata_port_freeze(ap);
+	}
+}
 
-अटल व्योम ahci_port_पूर्णांकr(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static void ahci_port_intr(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u32 status;
 
-	status = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-	ग_लिखोl(status, port_mmio + PORT_IRQ_STAT);
+	status = readl(port_mmio + PORT_IRQ_STAT);
+	writel(status, port_mmio + PORT_IRQ_STAT);
 
-	ahci_handle_port_पूर्णांकerrupt(ap, port_mmio, status);
-पूर्ण
+	ahci_handle_port_interrupt(ap, port_mmio, status);
+}
 
-अटल irqवापस_t ahci_multi_irqs_पूर्णांकr_hard(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा ata_port *ap = dev_instance;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static irqreturn_t ahci_multi_irqs_intr_hard(int irq, void *dev_instance)
+{
+	struct ata_port *ap = dev_instance;
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u32 status;
 
 	VPRINTK("ENTER\n");
 
-	status = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-	ग_लिखोl(status, port_mmio + PORT_IRQ_STAT);
+	status = readl(port_mmio + PORT_IRQ_STAT);
+	writel(status, port_mmio + PORT_IRQ_STAT);
 
 	spin_lock(ap->lock);
-	ahci_handle_port_पूर्णांकerrupt(ap, port_mmio, status);
+	ahci_handle_port_interrupt(ap, port_mmio, status);
 	spin_unlock(ap->lock);
 
 	VPRINTK("EXIT\n");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-u32 ahci_handle_port_पूर्णांकr(काष्ठा ata_host *host, u32 irq_masked)
-अणु
-	अचिन्हित पूर्णांक i, handled = 0;
+u32 ahci_handle_port_intr(struct ata_host *host, u32 irq_masked)
+{
+	unsigned int i, handled = 0;
 
-	क्रम (i = 0; i < host->n_ports; i++) अणु
-		काष्ठा ata_port *ap;
+	for (i = 0; i < host->n_ports; i++) {
+		struct ata_port *ap;
 
-		अगर (!(irq_masked & (1 << i)))
-			जारी;
+		if (!(irq_masked & (1 << i)))
+			continue;
 
 		ap = host->ports[i];
-		अगर (ap) अणु
-			ahci_port_पूर्णांकr(ap);
+		if (ap) {
+			ahci_port_intr(ap);
 			VPRINTK("port %u\n", i);
-		पूर्ण अन्यथा अणु
+		} else {
 			VPRINTK("port %u (no irq)\n", i);
-			अगर (ata_ratelimit())
+			if (ata_ratelimit())
 				dev_warn(host->dev,
 					 "interrupt on disabled port %u\n", i);
-		पूर्ण
+		}
 
 		handled = 1;
-	पूर्ण
+	}
 
-	वापस handled;
-पूर्ण
-EXPORT_SYMBOL_GPL(ahci_handle_port_पूर्णांकr);
+	return handled;
+}
+EXPORT_SYMBOL_GPL(ahci_handle_port_intr);
 
-अटल irqवापस_t ahci_single_level_irq_पूर्णांकr(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा ata_host *host = dev_instance;
-	काष्ठा ahci_host_priv *hpriv;
-	अचिन्हित पूर्णांक rc = 0;
-	व्योम __iomem *mmio;
+static irqreturn_t ahci_single_level_irq_intr(int irq, void *dev_instance)
+{
+	struct ata_host *host = dev_instance;
+	struct ahci_host_priv *hpriv;
+	unsigned int rc = 0;
+	void __iomem *mmio;
 	u32 irq_stat, irq_masked;
 
 	VPRINTK("ENTER\n");
 
-	hpriv = host->निजी_data;
+	hpriv = host->private_data;
 	mmio = hpriv->mmio;
 
-	/* sigh.  0xffffffff is a valid वापस from h/w */
-	irq_stat = पढ़ोl(mmio + HOST_IRQ_STAT);
-	अगर (!irq_stat)
-		वापस IRQ_NONE;
+	/* sigh.  0xffffffff is a valid return from h/w */
+	irq_stat = readl(mmio + HOST_IRQ_STAT);
+	if (!irq_stat)
+		return IRQ_NONE;
 
 	irq_masked = irq_stat & hpriv->port_map;
 
 	spin_lock(&host->lock);
 
-	rc = ahci_handle_port_पूर्णांकr(host, irq_masked);
+	rc = ahci_handle_port_intr(host, irq_masked);
 
 	/* HOST_IRQ_STAT behaves as level triggered latch meaning that
 	 * it should be cleared after all the port events are cleared;
-	 * otherwise, it will उठाओ a spurious पूर्णांकerrupt after each
-	 * valid one.  Please पढ़ो section 10.6.2 of ahci 1.1 क्रम more
-	 * inक्रमmation.
+	 * otherwise, it will raise a spurious interrupt after each
+	 * valid one.  Please read section 10.6.2 of ahci 1.1 for more
+	 * information.
 	 *
-	 * Also, use the unmasked value to clear पूर्णांकerrupt as spurious
+	 * Also, use the unmasked value to clear interrupt as spurious
 	 * pending event on a dummy port might cause screaming IRQ.
 	 */
-	ग_लिखोl(irq_stat, mmio + HOST_IRQ_STAT);
+	writel(irq_stat, mmio + HOST_IRQ_STAT);
 
 	spin_unlock(&host->lock);
 
 	VPRINTK("EXIT\n");
 
-	वापस IRQ_RETVAL(rc);
-पूर्ण
+	return IRQ_RETVAL(rc);
+}
 
-अचिन्हित पूर्णांक ahci_qc_issue(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
+unsigned int ahci_qc_issue(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ahci_port_priv *pp = ap->private_data;
 
 	/* Keep track of the currently active link.  It will be used
 	 * in completion path to determine whether NCQ phase is in
@@ -2002,161 +2001,161 @@ EXPORT_SYMBOL_GPL(ahci_handle_port_पूर्णांकr);
 	 */
 	pp->active_link = qc->dev->link;
 
-	अगर (ata_is_ncq(qc->tf.protocol))
-		ग_लिखोl(1 << qc->hw_tag, port_mmio + PORT_SCR_ACT);
+	if (ata_is_ncq(qc->tf.protocol))
+		writel(1 << qc->hw_tag, port_mmio + PORT_SCR_ACT);
 
-	अगर (pp->fbs_enabled && pp->fbs_last_dev != qc->dev->link->pmp) अणु
-		u32 fbs = पढ़ोl(port_mmio + PORT_FBS);
+	if (pp->fbs_enabled && pp->fbs_last_dev != qc->dev->link->pmp) {
+		u32 fbs = readl(port_mmio + PORT_FBS);
 		fbs &= ~(PORT_FBS_DEV_MASK | PORT_FBS_DEC);
 		fbs |= qc->dev->link->pmp << PORT_FBS_DEV_OFFSET;
-		ग_लिखोl(fbs, port_mmio + PORT_FBS);
+		writel(fbs, port_mmio + PORT_FBS);
 		pp->fbs_last_dev = qc->dev->link->pmp;
-	पूर्ण
+	}
 
-	ग_लिखोl(1 << qc->hw_tag, port_mmio + PORT_CMD_ISSUE);
+	writel(1 << qc->hw_tag, port_mmio + PORT_CMD_ISSUE);
 
 	ahci_sw_activity(qc->dev->link);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ahci_qc_issue);
 
-अटल bool ahci_qc_fill_rtf(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ahci_port_priv *pp = qc->ap->निजी_data;
+static bool ahci_qc_fill_rtf(struct ata_queued_cmd *qc)
+{
+	struct ahci_port_priv *pp = qc->ap->private_data;
 	u8 *rx_fis = pp->rx_fis;
 
-	अगर (pp->fbs_enabled)
+	if (pp->fbs_enabled)
 		rx_fis += qc->dev->link->pmp * AHCI_RX_FIS_SZ;
 
 	/*
 	 * After a successful execution of an ATA PIO data-in command,
-	 * the device करोesn't send D2H Reg FIS to update the TF and
+	 * the device doesn't send D2H Reg FIS to update the TF and
 	 * the host should take TF and E_Status from the preceding PIO
 	 * Setup FIS.
 	 */
-	अगर (qc->tf.protocol == ATA_PROT_PIO && qc->dma_dir == DMA_FROM_DEVICE &&
-	    !(qc->flags & ATA_QCFLAG_FAILED)) अणु
+	if (qc->tf.protocol == ATA_PROT_PIO && qc->dma_dir == DMA_FROM_DEVICE &&
+	    !(qc->flags & ATA_QCFLAG_FAILED)) {
 		ata_tf_from_fis(rx_fis + RX_FIS_PIO_SETUP, &qc->result_tf);
 		qc->result_tf.command = (rx_fis + RX_FIS_PIO_SETUP)[15];
-	पूर्ण अन्यथा
+	} else
 		ata_tf_from_fis(rx_fis + RX_FIS_D2H_REG, &qc->result_tf);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम ahci_मुक्तze(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static void ahci_freeze(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
 
 	/* turn IRQ off */
-	ग_लिखोl(0, port_mmio + PORT_IRQ_MASK);
-पूर्ण
+	writel(0, port_mmio + PORT_IRQ_MASK);
+}
 
-अटल व्योम ahci_thaw(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *mmio = hpriv->mmio;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	u32 पंचांगp;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
+static void ahci_thaw(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *mmio = hpriv->mmio;
+	void __iomem *port_mmio = ahci_port_base(ap);
+	u32 tmp;
+	struct ahci_port_priv *pp = ap->private_data;
 
 	/* clear IRQ */
-	पंचांगp = पढ़ोl(port_mmio + PORT_IRQ_STAT);
-	ग_लिखोl(पंचांगp, port_mmio + PORT_IRQ_STAT);
-	ग_लिखोl(1 << ap->port_no, mmio + HOST_IRQ_STAT);
+	tmp = readl(port_mmio + PORT_IRQ_STAT);
+	writel(tmp, port_mmio + PORT_IRQ_STAT);
+	writel(1 << ap->port_no, mmio + HOST_IRQ_STAT);
 
 	/* turn IRQ back on */
-	ग_लिखोl(pp->पूर्णांकr_mask, port_mmio + PORT_IRQ_MASK);
-पूर्ण
+	writel(pp->intr_mask, port_mmio + PORT_IRQ_MASK);
+}
 
-व्योम ahci_error_handler(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
+void ahci_error_handler(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
 
-	अगर (!(ap->pflags & ATA_PFLAG_FROZEN)) अणु
+	if (!(ap->pflags & ATA_PFLAG_FROZEN)) {
 		/* restart engine */
 		hpriv->stop_engine(ap);
 		hpriv->start_engine(ap);
-	पूर्ण
+	}
 
 	sata_pmp_error_handler(ap);
 
-	अगर (!ata_dev_enabled(ap->link.device))
+	if (!ata_dev_enabled(ap->link.device))
 		hpriv->stop_engine(ap);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ahci_error_handler);
 
-अटल व्योम ahci_post_पूर्णांकernal_cmd(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
+static void ahci_post_internal_cmd(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
 
-	/* make DMA engine क्रमget about the failed command */
-	अगर (qc->flags & ATA_QCFLAG_FAILED)
+	/* make DMA engine forget about the failed command */
+	if (qc->flags & ATA_QCFLAG_FAILED)
 		ahci_kick_engine(ap);
-पूर्ण
+}
 
-अटल व्योम ahci_set_aggressive_devslp(काष्ठा ata_port *ap, bool sleep)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ata_device *dev = ap->link.device;
+static void ahci_set_aggressive_devslp(struct ata_port *ap, bool sleep)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ata_device *dev = ap->link.device;
 	u32 devslp, dm, dito, mdat, deto, dito_conf;
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक err_mask;
+	int rc;
+	unsigned int err_mask;
 
-	devslp = पढ़ोl(port_mmio + PORT_DEVSLP);
-	अगर (!(devslp & PORT_DEVSLP_DSP)) अणु
+	devslp = readl(port_mmio + PORT_DEVSLP);
+	if (!(devslp & PORT_DEVSLP_DSP)) {
 		dev_info(ap->host->dev, "port does not support device sleep\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* disable device sleep */
-	अगर (!sleep) अणु
-		अगर (devslp & PORT_DEVSLP_ADSE) अणु
-			ग_लिखोl(devslp & ~PORT_DEVSLP_ADSE,
+	if (!sleep) {
+		if (devslp & PORT_DEVSLP_ADSE) {
+			writel(devslp & ~PORT_DEVSLP_ADSE,
 			       port_mmio + PORT_DEVSLP);
 			err_mask = ata_dev_set_feature(dev,
 						       SETFEATURES_SATA_DISABLE,
 						       SATA_DEVSLP);
-			अगर (err_mask && err_mask != AC_ERR_DEV)
+			if (err_mask && err_mask != AC_ERR_DEV)
 				ata_dev_warn(dev, "failed to disable DEVSLP\n");
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	dm = (devslp & PORT_DEVSLP_DM_MASK) >> PORT_DEVSLP_DM_OFFSET;
-	dito = devslp_idle_समयout / (dm + 1);
-	अगर (dito > 0x3ff)
+	dito = devslp_idle_timeout / (dm + 1);
+	if (dito > 0x3ff)
 		dito = 0x3ff;
 
 	dito_conf = (devslp >> PORT_DEVSLP_DITO_OFFSET) & 0x3FF;
 
-	/* device sleep was alपढ़ोy enabled and same dito */
-	अगर ((devslp & PORT_DEVSLP_ADSE) && (dito_conf == dito))
-		वापस;
+	/* device sleep was already enabled and same dito */
+	if ((devslp & PORT_DEVSLP_ADSE) && (dito_conf == dito))
+		return;
 
 	/* set DITO, MDAT, DETO and enable DevSlp, need to stop engine first */
 	rc = hpriv->stop_engine(ap);
-	अगर (rc)
-		वापस;
+	if (rc)
+		return;
 
-	/* Use the nominal value 10 ms अगर the पढ़ो MDAT is zero,
+	/* Use the nominal value 10 ms if the read MDAT is zero,
 	 * the nominal value of DETO is 20 ms.
 	 */
-	अगर (dev->devslp_timing[ATA_LOG_DEVSLP_VALID] &
-	    ATA_LOG_DEVSLP_VALID_MASK) अणु
+	if (dev->devslp_timing[ATA_LOG_DEVSLP_VALID] &
+	    ATA_LOG_DEVSLP_VALID_MASK) {
 		mdat = dev->devslp_timing[ATA_LOG_DEVSLP_MDAT] &
 		       ATA_LOG_DEVSLP_MDAT_MASK;
-		अगर (!mdat)
+		if (!mdat)
 			mdat = 10;
 		deto = dev->devslp_timing[ATA_LOG_DEVSLP_DETO];
-		अगर (!deto)
+		if (!deto)
 			deto = 20;
-	पूर्ण अन्यथा अणु
+	} else {
 		mdat = 10;
 		deto = 20;
-	पूर्ण
+	}
 
 	/* Make dito, mdat, deto bits to 0s */
 	devslp &= ~GENMASK_ULL(24, 2);
@@ -2164,214 +2163,214 @@ EXPORT_SYMBOL_GPL(ahci_error_handler);
 		   (mdat << PORT_DEVSLP_MDAT_OFFSET) |
 		   (deto << PORT_DEVSLP_DETO_OFFSET) |
 		   PORT_DEVSLP_ADSE);
-	ग_लिखोl(devslp, port_mmio + PORT_DEVSLP);
+	writel(devslp, port_mmio + PORT_DEVSLP);
 
 	hpriv->start_engine(ap);
 
-	/* enable device sleep feature क्रम the drive */
+	/* enable device sleep feature for the drive */
 	err_mask = ata_dev_set_feature(dev,
 				       SETFEATURES_SATA_ENABLE,
 				       SATA_DEVSLP);
-	अगर (err_mask && err_mask != AC_ERR_DEV)
+	if (err_mask && err_mask != AC_ERR_DEV)
 		ata_dev_warn(dev, "failed to enable DEVSLP\n");
-पूर्ण
+}
 
-अटल व्योम ahci_enable_fbs(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static void ahci_enable_fbs(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u32 fbs;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (!pp->fbs_supported)
-		वापस;
+	if (!pp->fbs_supported)
+		return;
 
-	fbs = पढ़ोl(port_mmio + PORT_FBS);
-	अगर (fbs & PORT_FBS_EN) अणु
+	fbs = readl(port_mmio + PORT_FBS);
+	if (fbs & PORT_FBS_EN) {
 		pp->fbs_enabled = true;
 		pp->fbs_last_dev = -1; /* initialization */
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rc = hpriv->stop_engine(ap);
-	अगर (rc)
-		वापस;
+	if (rc)
+		return;
 
-	ग_लिखोl(fbs | PORT_FBS_EN, port_mmio + PORT_FBS);
-	fbs = पढ़ोl(port_mmio + PORT_FBS);
-	अगर (fbs & PORT_FBS_EN) अणु
+	writel(fbs | PORT_FBS_EN, port_mmio + PORT_FBS);
+	fbs = readl(port_mmio + PORT_FBS);
+	if (fbs & PORT_FBS_EN) {
 		dev_info(ap->host->dev, "FBS is enabled\n");
 		pp->fbs_enabled = true;
 		pp->fbs_last_dev = -1; /* initialization */
-	पूर्ण अन्यथा
+	} else
 		dev_err(ap->host->dev, "Failed to enable FBS\n");
 
 	hpriv->start_engine(ap);
-पूर्ण
+}
 
-अटल व्योम ahci_disable_fbs(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
+static void ahci_disable_fbs(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct ahci_port_priv *pp = ap->private_data;
+	void __iomem *port_mmio = ahci_port_base(ap);
 	u32 fbs;
-	पूर्णांक rc;
+	int rc;
 
-	अगर (!pp->fbs_supported)
-		वापस;
+	if (!pp->fbs_supported)
+		return;
 
-	fbs = पढ़ोl(port_mmio + PORT_FBS);
-	अगर ((fbs & PORT_FBS_EN) == 0) अणु
+	fbs = readl(port_mmio + PORT_FBS);
+	if ((fbs & PORT_FBS_EN) == 0) {
 		pp->fbs_enabled = false;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rc = hpriv->stop_engine(ap);
-	अगर (rc)
-		वापस;
+	if (rc)
+		return;
 
-	ग_लिखोl(fbs & ~PORT_FBS_EN, port_mmio + PORT_FBS);
-	fbs = पढ़ोl(port_mmio + PORT_FBS);
-	अगर (fbs & PORT_FBS_EN)
+	writel(fbs & ~PORT_FBS_EN, port_mmio + PORT_FBS);
+	fbs = readl(port_mmio + PORT_FBS);
+	if (fbs & PORT_FBS_EN)
 		dev_err(ap->host->dev, "Failed to disable FBS\n");
-	अन्यथा अणु
+	else {
 		dev_info(ap->host->dev, "FBS is disabled\n");
 		pp->fbs_enabled = false;
-	पूर्ण
+	}
 
 	hpriv->start_engine(ap);
-पूर्ण
+}
 
-अटल व्योम ahci_pmp_attach(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
+static void ahci_pmp_attach(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ahci_port_priv *pp = ap->private_data;
 	u32 cmd;
 
-	cmd = पढ़ोl(port_mmio + PORT_CMD);
+	cmd = readl(port_mmio + PORT_CMD);
 	cmd |= PORT_CMD_PMP;
-	ग_लिखोl(cmd, port_mmio + PORT_CMD);
+	writel(cmd, port_mmio + PORT_CMD);
 
 	ahci_enable_fbs(ap);
 
-	pp->पूर्णांकr_mask |= PORT_IRQ_BAD_PMP;
+	pp->intr_mask |= PORT_IRQ_BAD_PMP;
 
 	/*
-	 * We must not change the port पूर्णांकerrupt mask रेजिस्टर अगर the
-	 * port is marked frozen, the value in pp->पूर्णांकr_mask will be
+	 * We must not change the port interrupt mask register if the
+	 * port is marked frozen, the value in pp->intr_mask will be
 	 * restored later when the port is thawed.
 	 *
 	 * Note that during initialization, the port is marked as
-	 * frozen since the irq handler is not yet रेजिस्टरed.
+	 * frozen since the irq handler is not yet registered.
 	 */
-	अगर (!(ap->pflags & ATA_PFLAG_FROZEN))
-		ग_लिखोl(pp->पूर्णांकr_mask, port_mmio + PORT_IRQ_MASK);
-पूर्ण
+	if (!(ap->pflags & ATA_PFLAG_FROZEN))
+		writel(pp->intr_mask, port_mmio + PORT_IRQ_MASK);
+}
 
-अटल व्योम ahci_pmp_detach(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port_mmio = ahci_port_base(ap);
-	काष्ठा ahci_port_priv *pp = ap->निजी_data;
+static void ahci_pmp_detach(struct ata_port *ap)
+{
+	void __iomem *port_mmio = ahci_port_base(ap);
+	struct ahci_port_priv *pp = ap->private_data;
 	u32 cmd;
 
 	ahci_disable_fbs(ap);
 
-	cmd = पढ़ोl(port_mmio + PORT_CMD);
+	cmd = readl(port_mmio + PORT_CMD);
 	cmd &= ~PORT_CMD_PMP;
-	ग_लिखोl(cmd, port_mmio + PORT_CMD);
+	writel(cmd, port_mmio + PORT_CMD);
 
-	pp->पूर्णांकr_mask &= ~PORT_IRQ_BAD_PMP;
+	pp->intr_mask &= ~PORT_IRQ_BAD_PMP;
 
 	/* see comment above in ahci_pmp_attach() */
-	अगर (!(ap->pflags & ATA_PFLAG_FROZEN))
-		ग_लिखोl(pp->पूर्णांकr_mask, port_mmio + PORT_IRQ_MASK);
-पूर्ण
+	if (!(ap->pflags & ATA_PFLAG_FROZEN))
+		writel(pp->intr_mask, port_mmio + PORT_IRQ_MASK);
+}
 
-पूर्णांक ahci_port_resume(काष्ठा ata_port *ap)
-अणु
+int ahci_port_resume(struct ata_port *ap)
+{
 	ahci_rpm_get_port(ap);
 
-	ahci_घातer_up(ap);
+	ahci_power_up(ap);
 	ahci_start_port(ap);
 
-	अगर (sata_pmp_attached(ap))
+	if (sata_pmp_attached(ap))
 		ahci_pmp_attach(ap);
-	अन्यथा
+	else
 		ahci_pmp_detach(ap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ahci_port_resume);
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ahci_port_suspend(काष्ठा ata_port *ap, pm_message_t mesg)
-अणु
-	स्थिर अक्षर *emsg = शून्य;
-	पूर्णांक rc;
+#ifdef CONFIG_PM
+static int ahci_port_suspend(struct ata_port *ap, pm_message_t mesg)
+{
+	const char *emsg = NULL;
+	int rc;
 
 	rc = ahci_deinit_port(ap, &emsg);
-	अगर (rc == 0)
-		ahci_घातer_करोwn(ap);
-	अन्यथा अणु
+	if (rc == 0)
+		ahci_power_down(ap);
+	else {
 		ata_port_err(ap, "%s (%d)\n", emsg, rc);
-		ata_port_मुक्तze(ap);
-	पूर्ण
+		ata_port_freeze(ap);
+	}
 
 	ahci_rpm_put_port(ap);
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर
+	return rc;
+}
+#endif
 
-अटल पूर्णांक ahci_port_start(काष्ठा ata_port *ap)
-अणु
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	काष्ठा device *dev = ap->host->dev;
-	काष्ठा ahci_port_priv *pp;
-	व्योम *mem;
+static int ahci_port_start(struct ata_port *ap)
+{
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	struct device *dev = ap->host->dev;
+	struct ahci_port_priv *pp;
+	void *mem;
 	dma_addr_t mem_dma;
-	माप_प्रकार dma_sz, rx_fis_sz;
+	size_t dma_sz, rx_fis_sz;
 
-	pp = devm_kzalloc(dev, माप(*pp), GFP_KERNEL);
-	अगर (!pp)
-		वापस -ENOMEM;
+	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
+	if (!pp)
+		return -ENOMEM;
 
-	अगर (ap->host->n_ports > 1) अणु
+	if (ap->host->n_ports > 1) {
 		pp->irq_desc = devm_kzalloc(dev, 8, GFP_KERNEL);
-		अगर (!pp->irq_desc) अणु
-			devm_kमुक्त(dev, pp);
-			वापस -ENOMEM;
-		पूर्ण
-		snम_लिखो(pp->irq_desc, 8,
+		if (!pp->irq_desc) {
+			devm_kfree(dev, pp);
+			return -ENOMEM;
+		}
+		snprintf(pp->irq_desc, 8,
 			 "%s%d", dev_driver_string(dev), ap->port_no);
-	पूर्ण
+	}
 
 	/* check FBS capability */
-	अगर ((hpriv->cap & HOST_CAP_FBS) && sata_pmp_supported(ap)) अणु
-		व्योम __iomem *port_mmio = ahci_port_base(ap);
-		u32 cmd = पढ़ोl(port_mmio + PORT_CMD);
-		अगर (cmd & PORT_CMD_FBSCP)
+	if ((hpriv->cap & HOST_CAP_FBS) && sata_pmp_supported(ap)) {
+		void __iomem *port_mmio = ahci_port_base(ap);
+		u32 cmd = readl(port_mmio + PORT_CMD);
+		if (cmd & PORT_CMD_FBSCP)
 			pp->fbs_supported = true;
-		अन्यथा अगर (hpriv->flags & AHCI_HFLAG_YES_FBS) अणु
+		else if (hpriv->flags & AHCI_HFLAG_YES_FBS) {
 			dev_info(dev, "port %d can do FBS, forcing FBSCP\n",
 				 ap->port_no);
 			pp->fbs_supported = true;
-		पूर्ण अन्यथा
+		} else
 			dev_warn(dev, "port %d is not capable of FBS\n",
 				 ap->port_no);
-	पूर्ण
+	}
 
-	अगर (pp->fbs_supported) अणु
+	if (pp->fbs_supported) {
 		dma_sz = AHCI_PORT_PRIV_FBS_DMA_SZ;
 		rx_fis_sz = AHCI_RX_FIS_SZ * 16;
-	पूर्ण अन्यथा अणु
+	} else {
 		dma_sz = AHCI_PORT_PRIV_DMA_SZ;
 		rx_fis_sz = AHCI_RX_FIS_SZ;
-	पूर्ण
+	}
 
 	mem = dmam_alloc_coherent(dev, dma_sz, &mem_dma, GFP_KERNEL);
-	अगर (!mem)
-		वापस -ENOMEM;
+	if (!mem)
+		return -ENOMEM;
 
 	/*
 	 * First item in chunk of DMA memory: 32-slot command table,
@@ -2393,58 +2392,58 @@ EXPORT_SYMBOL_GPL(ahci_port_resume);
 	mem_dma += rx_fis_sz;
 
 	/*
-	 * Third item: data area क्रम storing a single command
+	 * Third item: data area for storing a single command
 	 * and its scatter-gather table
 	 */
 	pp->cmd_tbl = mem;
 	pp->cmd_tbl_dma = mem_dma;
 
 	/*
-	 * Save off initial list of पूर्णांकerrupts to be enabled.
+	 * Save off initial list of interrupts to be enabled.
 	 * This could be changed later
 	 */
-	pp->पूर्णांकr_mask = DEF_PORT_IRQ;
+	pp->intr_mask = DEF_PORT_IRQ;
 
 	/*
-	 * Switch to per-port locking in हाल each port has its own MSI vector.
+	 * Switch to per-port locking in case each port has its own MSI vector.
 	 */
-	अगर (hpriv->flags & AHCI_HFLAG_MULTI_MSI) अणु
+	if (hpriv->flags & AHCI_HFLAG_MULTI_MSI) {
 		spin_lock_init(&pp->lock);
 		ap->lock = &pp->lock;
-	पूर्ण
+	}
 
-	ap->निजी_data = pp;
+	ap->private_data = pp;
 
 	/* engage engines, captain */
-	वापस ahci_port_resume(ap);
-पूर्ण
+	return ahci_port_resume(ap);
+}
 
-अटल व्योम ahci_port_stop(काष्ठा ata_port *ap)
-अणु
-	स्थिर अक्षर *emsg = शून्य;
-	काष्ठा ahci_host_priv *hpriv = ap->host->निजी_data;
-	व्योम __iomem *host_mmio = hpriv->mmio;
-	पूर्णांक rc;
+static void ahci_port_stop(struct ata_port *ap)
+{
+	const char *emsg = NULL;
+	struct ahci_host_priv *hpriv = ap->host->private_data;
+	void __iomem *host_mmio = hpriv->mmio;
+	int rc;
 
 	/* de-initialize port */
 	rc = ahci_deinit_port(ap, &emsg);
-	अगर (rc)
+	if (rc)
 		ata_port_warn(ap, "%s (%d)\n", emsg, rc);
 
 	/*
 	 * Clear GHC.IS to prevent stuck INTx after disabling MSI and
 	 * re-enabling INTx.
 	 */
-	ग_लिखोl(1 << ap->port_no, host_mmio + HOST_IRQ_STAT);
+	writel(1 << ap->port_no, host_mmio + HOST_IRQ_STAT);
 
 	ahci_rpm_put_port(ap);
-पूर्ण
+}
 
-व्योम ahci_prपूर्णांक_info(काष्ठा ata_host *host, स्थिर अक्षर *scc_s)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
+void ahci_print_info(struct ata_host *host, const char *scc_s)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
 	u32 vers, cap, cap2, impl, speed;
-	स्थिर अक्षर *speed_s;
+	const char *speed_s;
 
 	vers = hpriv->version;
 	cap = hpriv->cap;
@@ -2452,13 +2451,13 @@ EXPORT_SYMBOL_GPL(ahci_port_resume);
 	impl = hpriv->port_map;
 
 	speed = (cap >> 20) & 0xf;
-	अगर (speed == 1)
+	if (speed == 1)
 		speed_s = "1.5";
-	अन्यथा अगर (speed == 2)
+	else if (speed == 2)
 		speed_s = "3";
-	अन्यथा अगर (speed == 3)
+	else if (speed == 3)
 		speed_s = "6";
-	अन्यथा
+	else
 		speed_s = "?";
 
 	dev_info(host->dev,
@@ -2509,105 +2508,105 @@ EXPORT_SYMBOL_GPL(ahci_port_resume);
 		cap2 & HOST_CAP2_NVMHCI ? "nvmp " : "",
 		cap2 & HOST_CAP2_BOH ? "boh " : ""
 		);
-पूर्ण
-EXPORT_SYMBOL_GPL(ahci_prपूर्णांक_info);
+}
+EXPORT_SYMBOL_GPL(ahci_print_info);
 
-व्योम ahci_set_em_messages(काष्ठा ahci_host_priv *hpriv,
-			  काष्ठा ata_port_info *pi)
-अणु
+void ahci_set_em_messages(struct ahci_host_priv *hpriv,
+			  struct ata_port_info *pi)
+{
 	u8 messages;
-	व्योम __iomem *mmio = hpriv->mmio;
-	u32 em_loc = पढ़ोl(mmio + HOST_EM_LOC);
-	u32 em_ctl = पढ़ोl(mmio + HOST_EM_CTL);
+	void __iomem *mmio = hpriv->mmio;
+	u32 em_loc = readl(mmio + HOST_EM_LOC);
+	u32 em_ctl = readl(mmio + HOST_EM_CTL);
 
-	अगर (!ahci_em_messages || !(hpriv->cap & HOST_CAP_EMS))
-		वापस;
+	if (!ahci_em_messages || !(hpriv->cap & HOST_CAP_EMS))
+		return;
 
 	messages = (em_ctl & EM_CTRL_MSG_TYPE) >> 16;
 
-	अगर (messages) अणु
+	if (messages) {
 		/* store em_loc */
 		hpriv->em_loc = ((em_loc >> 16) * 4);
 		hpriv->em_buf_sz = ((em_loc & 0xff) * 4);
 		hpriv->em_msg_type = messages;
 		pi->flags |= ATA_FLAG_EM;
-		अगर (!(em_ctl & EM_CTL_ALHD))
+		if (!(em_ctl & EM_CTL_ALHD))
 			pi->flags |= ATA_FLAG_SW_ACTIVITY;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(ahci_set_em_messages);
 
-अटल पूर्णांक ahci_host_activate_multi_irqs(काष्ठा ata_host *host,
-					 काष्ठा scsi_host_ढाँचा *sht)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	पूर्णांक i, rc;
+static int ahci_host_activate_multi_irqs(struct ata_host *host,
+					 struct scsi_host_template *sht)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
+	int i, rc;
 
 	rc = ata_host_start(host);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	/*
 	 * Requests IRQs according to AHCI-1.1 when multiple MSIs were
 	 * allocated. That is one MSI per port, starting from @irq.
 	 */
-	क्रम (i = 0; i < host->n_ports; i++) अणु
-		काष्ठा ahci_port_priv *pp = host->ports[i]->निजी_data;
-		पूर्णांक irq = hpriv->get_irq_vector(host, i);
+	for (i = 0; i < host->n_ports; i++) {
+		struct ahci_port_priv *pp = host->ports[i]->private_data;
+		int irq = hpriv->get_irq_vector(host, i);
 
-		/* Do not receive पूर्णांकerrupts sent by dummy ports */
-		अगर (!pp) अणु
+		/* Do not receive interrupts sent by dummy ports */
+		if (!pp) {
 			disable_irq(irq);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		rc = devm_request_irq(host->dev, irq, ahci_multi_irqs_पूर्णांकr_hard,
+		rc = devm_request_irq(host->dev, irq, ahci_multi_irqs_intr_hard,
 				0, pp->irq_desc, host->ports[i]);
 
-		अगर (rc)
-			वापस rc;
+		if (rc)
+			return rc;
 		ata_port_desc(host->ports[i], "irq %d", irq);
-	पूर्ण
+	}
 
-	वापस ata_host_रेजिस्टर(host, sht);
-पूर्ण
+	return ata_host_register(host, sht);
+}
 
 /**
- *	ahci_host_activate - start AHCI host, request IRQs and रेजिस्टर it
+ *	ahci_host_activate - start AHCI host, request IRQs and register it
  *	@host: target ATA host
- *	@sht: scsi_host_ढाँचा to use when रेजिस्टरing the host
+ *	@sht: scsi_host_template to use when registering the host
  *
  *	LOCKING:
  *	Inherited from calling layer (may sleep).
  *
  *	RETURNS:
- *	0 on success, -त्रुटि_सं otherwise.
+ *	0 on success, -errno otherwise.
  */
-पूर्णांक ahci_host_activate(काष्ठा ata_host *host, काष्ठा scsi_host_ढाँचा *sht)
-अणु
-	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
-	पूर्णांक irq = hpriv->irq;
-	पूर्णांक rc;
+int ahci_host_activate(struct ata_host *host, struct scsi_host_template *sht)
+{
+	struct ahci_host_priv *hpriv = host->private_data;
+	int irq = hpriv->irq;
+	int rc;
 
-	अगर (hpriv->flags & AHCI_HFLAG_MULTI_MSI) अणु
-		अगर (hpriv->irq_handler &&
-		    hpriv->irq_handler != ahci_single_level_irq_पूर्णांकr)
+	if (hpriv->flags & AHCI_HFLAG_MULTI_MSI) {
+		if (hpriv->irq_handler &&
+		    hpriv->irq_handler != ahci_single_level_irq_intr)
 			dev_warn(host->dev,
 			         "both AHCI_HFLAG_MULTI_MSI flag set and custom irq handler implemented\n");
-		अगर (!hpriv->get_irq_vector) अणु
+		if (!hpriv->get_irq_vector) {
 			dev_err(host->dev,
 				"AHCI_HFLAG_MULTI_MSI requires ->get_irq_vector!\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
 		rc = ahci_host_activate_multi_irqs(host, sht);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = ata_host_activate(host, irq, hpriv->irq_handler,
 				       IRQF_SHARED, sht);
-	पूर्ण
+	}
 
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL_GPL(ahci_host_activate);
 
 MODULE_AUTHOR("Jeff Garzik");

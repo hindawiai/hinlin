@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_SH7785_H__
-#घोषणा __ASM_SH7785_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_SH7785_H__
+#define __ASM_SH7785_H__
 
 /* Boot Mode Pins:
  *
@@ -21,14 +20,14 @@
  * MODE13: Boot Address Mode (L: 29-bit, H: 32-bit)
  * MODE14: Reserved (H: Normal operation)
  *
- * More inक्रमmation in sh7785 manual Rev.1.00, page 1628.
+ * More information in sh7785 manual Rev.1.00, page 1628.
  */
 
 /* Pin Function Controller:
  * GPIO_FN_xx - GPIO used to select pin function
  * GPIO_Pxx - GPIO mapped to real I/O pin on CPU
  */
-क्रमागत अणु
+enum {
 	/* PA */
 	GPIO_PA7, GPIO_PA6, GPIO_PA5, GPIO_PA4,
 	GPIO_PA3, GPIO_PA2, GPIO_PA1, GPIO_PA0,
@@ -256,6 +255,6 @@
 	GPIO_FN_SIOF_RXD,
 	GPIO_FN_MRESETOUT,
 	GPIO_FN_IRQOUT,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ASM_SH7785_H__ */
+#endif /* __ASM_SH7785_H__ */

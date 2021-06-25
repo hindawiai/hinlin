@@ -1,111 +1,110 @@
-<शैली गुरु>
 /*
- * include/यंत्र-xtensa/platक्रमm-iss/simcall.h
+ * include/asm-xtensa/platform-iss/simcall.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 Tensilica Inc.
  * Copyright (C) 2017 - 2021 Cadence Design Systems Inc.
  */
 
-#अगर_अघोषित _XTENSA_PLATFORM_ISS_SIMCALL_H
-#घोषणा _XTENSA_PLATFORM_ISS_SIMCALL_H
+#ifndef _XTENSA_PLATFORM_ISS_SIMCALL_H
+#define _XTENSA_PLATFORM_ISS_SIMCALL_H
 
-#समावेश <linux/bug.h>
+#include <linux/bug.h>
 
-#अगर_घोषित CONFIG_XTENSA_SIMCALL_ISS
-#समावेश <platक्रमm/simcall-iss.h>
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_XTENSA_SIMCALL_GDBIO
-#समावेश <platक्रमm/simcall-gdbपन.स>
-#पूर्ण_अगर
+#ifdef CONFIG_XTENSA_SIMCALL_ISS
+#include <platform/simcall-iss.h>
+#endif
+#ifdef CONFIG_XTENSA_SIMCALL_GDBIO
+#include <platform/simcall-gdbio.h>
+#endif
 
-अटल अंतरभूत पूर्णांक simc_निकास(पूर्णांक निकास_code)
-अणु
-#अगर_घोषित SYS_निकास
-	वापस __simc(SYS_निकास, निकास_code, 0, 0);
-#अन्यथा
+static inline int simc_exit(int exit_code)
+{
+#ifdef SYS_exit
+	return __simc(SYS_exit, exit_code, 0, 0);
+#else
 	WARN_ONCE(1, "%s: not implemented\n", __func__);
-	वापस -1;
-#पूर्ण_अगर
-पूर्ण
+	return -1;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक simc_खोलो(स्थिर अक्षर *file, पूर्णांक flags, पूर्णांक mode)
-अणु
-	वापस __simc(SYS_खोलो, (पूर्णांक) file, flags, mode);
-पूर्ण
+static inline int simc_open(const char *file, int flags, int mode)
+{
+	return __simc(SYS_open, (int) file, flags, mode);
+}
 
-अटल अंतरभूत पूर्णांक simc_बंद(पूर्णांक fd)
-अणु
-	वापस __simc(SYS_बंद, fd, 0, 0);
-पूर्ण
+static inline int simc_close(int fd)
+{
+	return __simc(SYS_close, fd, 0, 0);
+}
 
-अटल अंतरभूत पूर्णांक simc_ioctl(पूर्णांक fd, पूर्णांक request, व्योम *arg)
-अणु
-#अगर_घोषित SYS_ioctl
-	वापस __simc(SYS_ioctl, fd, request, (पूर्णांक) arg);
-#अन्यथा
+static inline int simc_ioctl(int fd, int request, void *arg)
+{
+#ifdef SYS_ioctl
+	return __simc(SYS_ioctl, fd, request, (int) arg);
+#else
 	WARN_ONCE(1, "%s: not implemented\n", __func__);
-	वापस -1;
-#पूर्ण_अगर
-पूर्ण
+	return -1;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक simc_पढ़ो(पूर्णांक fd, व्योम *buf, माप_प्रकार count)
-अणु
-	वापस __simc(SYS_पढ़ो, fd, (पूर्णांक) buf, count);
-पूर्ण
+static inline int simc_read(int fd, void *buf, size_t count)
+{
+	return __simc(SYS_read, fd, (int) buf, count);
+}
 
-अटल अंतरभूत पूर्णांक simc_ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count)
-अणु
-	वापस __simc(SYS_ग_लिखो, fd, (पूर्णांक) buf, count);
-पूर्ण
+static inline int simc_write(int fd, const void *buf, size_t count)
+{
+	return __simc(SYS_write, fd, (int) buf, count);
+}
 
-अटल अंतरभूत पूर्णांक simc_poll(पूर्णांक fd)
-अणु
-#अगर_घोषित SYS_select_one
-	दीर्घ समयval[2] = अणु 0, 0 पूर्ण;
+static inline int simc_poll(int fd)
+{
+#ifdef SYS_select_one
+	long timeval[2] = { 0, 0 };
 
-	वापस __simc(SYS_select_one, fd, XTISS_SELECT_ONE_READ, (पूर्णांक)&समयval);
-#अन्यथा
+	return __simc(SYS_select_one, fd, XTISS_SELECT_ONE_READ, (int)&timeval);
+#else
 	WARN_ONCE(1, "%s: not implemented\n", __func__);
-	वापस -1;
-#पूर्ण_अगर
-पूर्ण
+	return -1;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक simc_lseek(पूर्णांक fd, uपूर्णांक32_t off, पूर्णांक whence)
-अणु
-	वापस __simc(SYS_lseek, fd, off, whence);
-पूर्ण
+static inline int simc_lseek(int fd, uint32_t off, int whence)
+{
+	return __simc(SYS_lseek, fd, off, whence);
+}
 
-अटल अंतरभूत पूर्णांक simc_argc(व्योम)
-अणु
-#अगर_घोषित SYS_iss_argc
-	वापस __simc(SYS_iss_argc, 0, 0, 0);
-#अन्यथा
+static inline int simc_argc(void)
+{
+#ifdef SYS_iss_argc
+	return __simc(SYS_iss_argc, 0, 0, 0);
+#else
 	WARN_ONCE(1, "%s: not implemented\n", __func__);
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return 0;
+#endif
+}
 
-अटल अंतरभूत पूर्णांक simc_argv_size(व्योम)
-अणु
-#अगर_घोषित SYS_iss_argv_size
-	वापस __simc(SYS_iss_argv_size, 0, 0, 0);
-#अन्यथा
+static inline int simc_argv_size(void)
+{
+#ifdef SYS_iss_argv_size
+	return __simc(SYS_iss_argv_size, 0, 0, 0);
+#else
 	WARN_ONCE(1, "%s: not implemented\n", __func__);
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+	return 0;
+#endif
+}
 
-अटल अंतरभूत व्योम simc_argv(व्योम *buf)
-अणु
-#अगर_घोषित SYS_iss_set_argv
-	__simc(SYS_iss_set_argv, (पूर्णांक)buf, 0, 0);
-#अन्यथा
+static inline void simc_argv(void *buf)
+{
+#ifdef SYS_iss_set_argv
+	__simc(SYS_iss_set_argv, (int)buf, 0, 0);
+#else
 	WARN_ONCE(1, "%s: not implemented\n", __func__);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#पूर्ण_अगर /* _XTENSA_PLATFORM_ISS_SIMCALL_H */
+#endif /* _XTENSA_PLATFORM_ISS_SIMCALL_H */

@@ -1,358 +1,357 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+// SPDX-License-Identifier: GPL-2.0
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "qlge.h"
+#include "qlge.h"
 
-/* Read a NIC रेजिस्टर from the alternate function. */
-अटल u32 qlge_पढ़ो_other_func_reg(काष्ठा qlge_adapter *qdev,
+/* Read a NIC register from the alternate function. */
+static u32 qlge_read_other_func_reg(struct qlge_adapter *qdev,
 				    u32 reg)
-अणु
-	u32 रेजिस्टर_to_पढ़ो;
+{
+	u32 register_to_read;
 	u32 reg_val;
-	अचिन्हित पूर्णांक status = 0;
+	unsigned int status = 0;
 
-	रेजिस्टर_to_पढ़ो = MPI_NIC_REG_BLOCK
+	register_to_read = MPI_NIC_REG_BLOCK
 				| MPI_NIC_READ
 				| (qdev->alt_func << MPI_NIC_FUNCTION_SHIFT)
 				| reg;
-	status = qlge_पढ़ो_mpi_reg(qdev, रेजिस्टर_to_पढ़ो, &reg_val);
-	अगर (status != 0)
-		वापस 0xffffffff;
+	status = qlge_read_mpi_reg(qdev, register_to_read, &reg_val);
+	if (status != 0)
+		return 0xffffffff;
 
-	वापस reg_val;
-पूर्ण
+	return reg_val;
+}
 
-/* Write a NIC रेजिस्टर from the alternate function. */
-अटल पूर्णांक qlge_ग_लिखो_other_func_reg(काष्ठा qlge_adapter *qdev,
+/* Write a NIC register from the alternate function. */
+static int qlge_write_other_func_reg(struct qlge_adapter *qdev,
 				     u32 reg, u32 reg_val)
-अणु
-	u32 रेजिस्टर_to_पढ़ो;
+{
+	u32 register_to_read;
 
-	रेजिस्टर_to_पढ़ो = MPI_NIC_REG_BLOCK
+	register_to_read = MPI_NIC_REG_BLOCK
 				| MPI_NIC_READ
 				| (qdev->alt_func << MPI_NIC_FUNCTION_SHIFT)
 				| reg;
 
-	वापस qlge_ग_लिखो_mpi_reg(qdev, रेजिस्टर_to_पढ़ो, reg_val);
-पूर्ण
+	return qlge_write_mpi_reg(qdev, register_to_read, reg_val);
+}
 
-अटल पूर्णांक qlge_रुको_other_func_reg_rdy(काष्ठा qlge_adapter *qdev, u32 reg,
+static int qlge_wait_other_func_reg_rdy(struct qlge_adapter *qdev, u32 reg,
 					u32 bit, u32 err_bit)
-अणु
+{
 	u32 temp;
-	पूर्णांक count;
+	int count;
 
-	क्रम (count = 10; count; count--) अणु
-		temp = qlge_पढ़ो_other_func_reg(qdev, reg);
+	for (count = 10; count; count--) {
+		temp = qlge_read_other_func_reg(qdev, reg);
 
-		/* check क्रम errors */
-		अगर (temp & err_bit)
-			वापस -1;
-		अन्यथा अगर (temp & bit)
-			वापस 0;
+		/* check for errors */
+		if (temp & err_bit)
+			return -1;
+		else if (temp & bit)
+			return 0;
 		mdelay(10);
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}
 
-अटल पूर्णांक qlge_पढ़ो_other_func_serdes_reg(काष्ठा qlge_adapter *qdev, u32 reg,
+static int qlge_read_other_func_serdes_reg(struct qlge_adapter *qdev, u32 reg,
 					   u32 *data)
-अणु
-	पूर्णांक status;
+{
+	int status;
 
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_other_func_reg_rdy(qdev, XG_SERDES_ADDR / 4,
+	/* wait for reg to come ready */
+	status = qlge_wait_other_func_reg_rdy(qdev, XG_SERDES_ADDR / 4,
 					      XG_SERDES_ADDR_RDY, 0);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 
-	/* set up क्रम reg पढ़ो */
-	qlge_ग_लिखो_other_func_reg(qdev, XG_SERDES_ADDR / 4, reg | PROC_ADDR_R);
+	/* set up for reg read */
+	qlge_write_other_func_reg(qdev, XG_SERDES_ADDR / 4, reg | PROC_ADDR_R);
 
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_other_func_reg_rdy(qdev, XG_SERDES_ADDR / 4,
+	/* wait for reg to come ready */
+	status = qlge_wait_other_func_reg_rdy(qdev, XG_SERDES_ADDR / 4,
 					      XG_SERDES_ADDR_RDY, 0);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 
 	/* get the data */
-	*data = qlge_पढ़ो_other_func_reg(qdev, (XG_SERDES_DATA / 4));
-निकास:
-	वापस status;
-पूर्ण
+	*data = qlge_read_other_func_reg(qdev, (XG_SERDES_DATA / 4));
+exit:
+	return status;
+}
 
-/* Read out the SERDES रेजिस्टरs */
-अटल पूर्णांक qlge_पढ़ो_serdes_reg(काष्ठा qlge_adapter *qdev, u32 reg, u32 *data)
-अणु
-	पूर्णांक status;
+/* Read out the SERDES registers */
+static int qlge_read_serdes_reg(struct qlge_adapter *qdev, u32 reg, u32 *data)
+{
+	int status;
 
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev, XG_SERDES_ADDR, XG_SERDES_ADDR_RDY, 0);
-	अगर (status)
-		जाओ निकास;
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev, XG_SERDES_ADDR, XG_SERDES_ADDR_RDY, 0);
+	if (status)
+		goto exit;
 
-	/* set up क्रम reg पढ़ो */
-	qlge_ग_लिखो32(qdev, XG_SERDES_ADDR, reg | PROC_ADDR_R);
+	/* set up for reg read */
+	qlge_write32(qdev, XG_SERDES_ADDR, reg | PROC_ADDR_R);
 
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_reg_rdy(qdev, XG_SERDES_ADDR, XG_SERDES_ADDR_RDY, 0);
-	अगर (status)
-		जाओ निकास;
+	/* wait for reg to come ready */
+	status = qlge_wait_reg_rdy(qdev, XG_SERDES_ADDR, XG_SERDES_ADDR_RDY, 0);
+	if (status)
+		goto exit;
 
 	/* get the data */
-	*data = qlge_पढ़ो32(qdev, XG_SERDES_DATA);
-निकास:
-	वापस status;
-पूर्ण
+	*data = qlge_read32(qdev, XG_SERDES_DATA);
+exit:
+	return status;
+}
 
-अटल व्योम qlge_get_both_serdes(काष्ठा qlge_adapter *qdev, u32 addr,
+static void qlge_get_both_serdes(struct qlge_adapter *qdev, u32 addr,
 				 u32 *direct_ptr, u32 *indirect_ptr,
 				 bool direct_valid, bool indirect_valid)
-अणु
-	अचिन्हित पूर्णांक status;
+{
+	unsigned int status;
 
 	status = 1;
-	अगर (direct_valid)
-		status = qlge_पढ़ो_serdes_reg(qdev, addr, direct_ptr);
+	if (direct_valid)
+		status = qlge_read_serdes_reg(qdev, addr, direct_ptr);
 	/* Dead fill any failures or invalids. */
-	अगर (status)
+	if (status)
 		*direct_ptr = 0xDEADBEEF;
 
 	status = 1;
-	अगर (indirect_valid)
-		status = qlge_पढ़ो_other_func_serdes_reg(qdev, addr,
+	if (indirect_valid)
+		status = qlge_read_other_func_serdes_reg(qdev, addr,
 							 indirect_ptr);
 	/* Dead fill any failures or invalids. */
-	अगर (status)
+	if (status)
 		*indirect_ptr = 0xDEADBEEF;
-पूर्ण
+}
 
-अटल पूर्णांक qlge_get_serdes_regs(काष्ठा qlge_adapter *qdev,
-				काष्ठा qlge_mpi_coredump *mpi_coredump)
-अणु
-	पूर्णांक status;
+static int qlge_get_serdes_regs(struct qlge_adapter *qdev,
+				struct qlge_mpi_coredump *mpi_coredump)
+{
+	int status;
 	bool xfi_direct_valid = false, xfi_indirect_valid = false;
 	bool xaui_direct_valid = true, xaui_indirect_valid = true;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	u32 *direct_ptr, temp;
 	u32 *indirect_ptr;
 
-	/* The XAUI needs to be पढ़ो out per port */
-	status = qlge_पढ़ो_other_func_serdes_reg(qdev,
+	/* The XAUI needs to be read out per port */
+	status = qlge_read_other_func_serdes_reg(qdev,
 						 XG_SERDES_XAUI_HSS_PCS_START,
 						 &temp);
-	अगर (status)
+	if (status)
 		temp = XG_SERDES_ADDR_XAUI_PWR_DOWN;
 
-	अगर ((temp & XG_SERDES_ADDR_XAUI_PWR_DOWN) ==
+	if ((temp & XG_SERDES_ADDR_XAUI_PWR_DOWN) ==
 				XG_SERDES_ADDR_XAUI_PWR_DOWN)
 		xaui_indirect_valid = false;
 
-	status = qlge_पढ़ो_serdes_reg(qdev, XG_SERDES_XAUI_HSS_PCS_START, &temp);
+	status = qlge_read_serdes_reg(qdev, XG_SERDES_XAUI_HSS_PCS_START, &temp);
 
-	अगर (status)
+	if (status)
 		temp = XG_SERDES_ADDR_XAUI_PWR_DOWN;
 
-	अगर ((temp & XG_SERDES_ADDR_XAUI_PWR_DOWN) ==
+	if ((temp & XG_SERDES_ADDR_XAUI_PWR_DOWN) ==
 				XG_SERDES_ADDR_XAUI_PWR_DOWN)
 		xaui_direct_valid = false;
 
 	/*
-	 * XFI रेजिस्टर is shared so only need to पढ़ो one
+	 * XFI register is shared so only need to read one
 	 * functions and then check the bits.
 	 */
-	status = qlge_पढ़ो_serdes_reg(qdev, XG_SERDES_ADDR_STS, &temp);
-	अगर (status)
+	status = qlge_read_serdes_reg(qdev, XG_SERDES_ADDR_STS, &temp);
+	if (status)
 		temp = 0;
 
-	अगर ((temp & XG_SERDES_ADDR_XFI1_PWR_UP) ==
-					XG_SERDES_ADDR_XFI1_PWR_UP) अणु
-		/* now see अगर i'm NIC 1 or NIC 2 */
-		अगर (qdev->func & 1)
+	if ((temp & XG_SERDES_ADDR_XFI1_PWR_UP) ==
+					XG_SERDES_ADDR_XFI1_PWR_UP) {
+		/* now see if i'm NIC 1 or NIC 2 */
+		if (qdev->func & 1)
 			/* I'm NIC 2, so the indirect (NIC1) xfi is up. */
 			xfi_indirect_valid = true;
-		अन्यथा
+		else
 			xfi_direct_valid = true;
-	पूर्ण
-	अगर ((temp & XG_SERDES_ADDR_XFI2_PWR_UP) ==
-					XG_SERDES_ADDR_XFI2_PWR_UP) अणु
-		/* now see अगर i'm NIC 1 or NIC 2 */
-		अगर (qdev->func & 1)
+	}
+	if ((temp & XG_SERDES_ADDR_XFI2_PWR_UP) ==
+					XG_SERDES_ADDR_XFI2_PWR_UP) {
+		/* now see if i'm NIC 1 or NIC 2 */
+		if (qdev->func & 1)
 			/* I'm NIC 2, so the indirect (NIC1) xfi is up. */
 			xfi_direct_valid = true;
-		अन्यथा
+		else
 			xfi_indirect_valid = true;
-	पूर्ण
+	}
 
-	/* Get XAUI_AN रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_AN register block. */
+	if (qdev->func & 1) {
 		/* Function 2 is direct	*/
 		direct_ptr = mpi_coredump->serdes2_xaui_an;
 		indirect_ptr = mpi_coredump->serdes_xaui_an;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Function 1 is direct	*/
 		direct_ptr = mpi_coredump->serdes_xaui_an;
 		indirect_ptr = mpi_coredump->serdes2_xaui_an;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i <= 0x000000034; i += 4, direct_ptr++, indirect_ptr++)
+	for (i = 0; i <= 0x000000034; i += 4, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xaui_direct_valid, xaui_indirect_valid);
 
-	/* Get XAUI_HSS_PCS रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_HSS_PCS register block. */
+	if (qdev->func & 1) {
 		direct_ptr =
 			mpi_coredump->serdes2_xaui_hss_pcs;
 		indirect_ptr =
 			mpi_coredump->serdes_xaui_hss_pcs;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr =
 			mpi_coredump->serdes_xaui_hss_pcs;
 		indirect_ptr =
 			mpi_coredump->serdes2_xaui_hss_pcs;
-	पूर्ण
+	}
 
-	क्रम (i = 0x800; i <= 0x880; i += 4, direct_ptr++, indirect_ptr++)
+	for (i = 0x800; i <= 0x880; i += 4, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xaui_direct_valid, xaui_indirect_valid);
 
-	/* Get XAUI_XFI_AN रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_XFI_AN register block. */
+	if (qdev->func & 1) {
 		direct_ptr = mpi_coredump->serdes2_xfi_an;
 		indirect_ptr = mpi_coredump->serdes_xfi_an;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr = mpi_coredump->serdes_xfi_an;
 		indirect_ptr = mpi_coredump->serdes2_xfi_an;
-	पूर्ण
+	}
 
-	क्रम (i = 0x1000; i <= 0x1034; i += 4, direct_ptr++, indirect_ptr++)
+	for (i = 0x1000; i <= 0x1034; i += 4, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xfi_direct_valid, xfi_indirect_valid);
 
-	/* Get XAUI_XFI_TRAIN रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_XFI_TRAIN register block. */
+	if (qdev->func & 1) {
 		direct_ptr = mpi_coredump->serdes2_xfi_train;
 		indirect_ptr =
 			mpi_coredump->serdes_xfi_train;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr = mpi_coredump->serdes_xfi_train;
 		indirect_ptr =
 			mpi_coredump->serdes2_xfi_train;
-	पूर्ण
+	}
 
-	क्रम (i = 0x1050; i <= 0x107c; i += 4, direct_ptr++, indirect_ptr++)
+	for (i = 0x1050; i <= 0x107c; i += 4, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xfi_direct_valid, xfi_indirect_valid);
 
-	/* Get XAUI_XFI_HSS_PCS रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_XFI_HSS_PCS register block. */
+	if (qdev->func & 1) {
 		direct_ptr =
 			mpi_coredump->serdes2_xfi_hss_pcs;
 		indirect_ptr =
 			mpi_coredump->serdes_xfi_hss_pcs;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr =
 			mpi_coredump->serdes_xfi_hss_pcs;
 		indirect_ptr =
 			mpi_coredump->serdes2_xfi_hss_pcs;
-	पूर्ण
+	}
 
-	क्रम (i = 0x1800; i <= 0x1838; i += 4, direct_ptr++, indirect_ptr++)
+	for (i = 0x1800; i <= 0x1838; i += 4, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xfi_direct_valid, xfi_indirect_valid);
 
-	/* Get XAUI_XFI_HSS_TX रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_XFI_HSS_TX register block. */
+	if (qdev->func & 1) {
 		direct_ptr =
 			mpi_coredump->serdes2_xfi_hss_tx;
 		indirect_ptr =
 			mpi_coredump->serdes_xfi_hss_tx;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr = mpi_coredump->serdes_xfi_hss_tx;
 		indirect_ptr =
 			mpi_coredump->serdes2_xfi_hss_tx;
-	पूर्ण
-	क्रम (i = 0x1c00; i <= 0x1c1f; i++, direct_ptr++, indirect_ptr++)
+	}
+	for (i = 0x1c00; i <= 0x1c1f; i++, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xfi_direct_valid, xfi_indirect_valid);
 
-	/* Get XAUI_XFI_HSS_RX रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_XFI_HSS_RX register block. */
+	if (qdev->func & 1) {
 		direct_ptr =
 			mpi_coredump->serdes2_xfi_hss_rx;
 		indirect_ptr =
 			mpi_coredump->serdes_xfi_hss_rx;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr = mpi_coredump->serdes_xfi_hss_rx;
 		indirect_ptr =
 			mpi_coredump->serdes2_xfi_hss_rx;
-	पूर्ण
+	}
 
-	क्रम (i = 0x1c40; i <= 0x1c5f; i++, direct_ptr++, indirect_ptr++)
+	for (i = 0x1c40; i <= 0x1c5f; i++, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xfi_direct_valid, xfi_indirect_valid);
 
-	/* Get XAUI_XFI_HSS_PLL रेजिस्टर block. */
-	अगर (qdev->func & 1) अणु
+	/* Get XAUI_XFI_HSS_PLL register block. */
+	if (qdev->func & 1) {
 		direct_ptr =
 			mpi_coredump->serdes2_xfi_hss_pll;
 		indirect_ptr =
 			mpi_coredump->serdes_xfi_hss_pll;
-	पूर्ण अन्यथा अणु
+	} else {
 		direct_ptr =
 			mpi_coredump->serdes_xfi_hss_pll;
 		indirect_ptr =
 			mpi_coredump->serdes2_xfi_hss_pll;
-	पूर्ण
-	क्रम (i = 0x1e00; i <= 0x1e1f; i++, direct_ptr++, indirect_ptr++)
+	}
+	for (i = 0x1e00; i <= 0x1e1f; i++, direct_ptr++, indirect_ptr++)
 		qlge_get_both_serdes(qdev, i, direct_ptr, indirect_ptr,
 				     xfi_direct_valid, xfi_indirect_valid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qlge_पढ़ो_other_func_xgmac_reg(काष्ठा qlge_adapter *qdev, u32 reg,
+static int qlge_read_other_func_xgmac_reg(struct qlge_adapter *qdev, u32 reg,
 					  u32 *data)
-अणु
-	पूर्णांक status = 0;
+{
+	int status = 0;
 
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_other_func_reg_rdy(qdev, XGMAC_ADDR / 4,
+	/* wait for reg to come ready */
+	status = qlge_wait_other_func_reg_rdy(qdev, XGMAC_ADDR / 4,
 					      XGMAC_ADDR_RDY, XGMAC_ADDR_XME);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 
-	/* set up क्रम reg पढ़ो */
-	qlge_ग_लिखो_other_func_reg(qdev, XGMAC_ADDR / 4, reg | XGMAC_ADDR_R);
+	/* set up for reg read */
+	qlge_write_other_func_reg(qdev, XGMAC_ADDR / 4, reg | XGMAC_ADDR_R);
 
-	/* रुको क्रम reg to come पढ़ोy */
-	status = qlge_रुको_other_func_reg_rdy(qdev, XGMAC_ADDR / 4,
+	/* wait for reg to come ready */
+	status = qlge_wait_other_func_reg_rdy(qdev, XGMAC_ADDR / 4,
 					      XGMAC_ADDR_RDY, XGMAC_ADDR_XME);
-	अगर (status)
-		जाओ निकास;
+	if (status)
+		goto exit;
 
 	/* get the data */
-	*data = qlge_पढ़ो_other_func_reg(qdev, XGMAC_DATA / 4);
-निकास:
-	वापस status;
-पूर्ण
+	*data = qlge_read_other_func_reg(qdev, XGMAC_DATA / 4);
+exit:
+	return status;
+}
 
-/* Read the 400 xgmac control/statistics रेजिस्टरs
+/* Read the 400 xgmac control/statistics registers
  * skipping unused locations.
  */
-अटल पूर्णांक qlge_get_xgmac_regs(काष्ठा qlge_adapter *qdev, u32 *buf,
-			       अचिन्हित पूर्णांक other_function)
-अणु
-	पूर्णांक status = 0;
-	पूर्णांक i;
+static int qlge_get_xgmac_regs(struct qlge_adapter *qdev, u32 *buf,
+			       unsigned int other_function)
+{
+	int status = 0;
+	int i;
 
-	क्रम (i = PAUSE_SRC_LO; i < XGMAC_REGISTER_END; i += 4, buf++) अणु
-		/* We're पढ़ोing 400 xgmac रेजिस्टरs, but we filter out
-		 * several locations that are non-responsive to पढ़ोs.
+	for (i = PAUSE_SRC_LO; i < XGMAC_REGISTER_END; i += 4, buf++) {
+		/* We're reading 400 xgmac registers, but we filter out
+		 * several locations that are non-responsive to reads.
 		 */
-		अगर ((i == 0x00000114) ||
+		if ((i == 0x00000114) ||
 		    (i == 0x00000118) ||
 			(i == 0x0000013c) ||
 			(i == 0x00000140) ||
@@ -368,180 +367,180 @@
 			(i > 0x00000440 && i < 0x00000450) ||
 			(i > 0x00000450 && i < 0x00000500) ||
 			(i > 0x0000054c && i < 0x00000568) ||
-			(i > 0x000005c8 && i < 0x00000600)) अणु
-			अगर (other_function)
+			(i > 0x000005c8 && i < 0x00000600)) {
+			if (other_function)
 				status =
-				qlge_पढ़ो_other_func_xgmac_reg(qdev, i, buf);
-			अन्यथा
-				status = qlge_पढ़ो_xgmac_reg(qdev, i, buf);
+				qlge_read_other_func_xgmac_reg(qdev, i, buf);
+			else
+				status = qlge_read_xgmac_reg(qdev, i, buf);
 
-			अगर (status)
+			if (status)
 				*buf = 0xdeadbeef;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस status;
-पूर्ण
+			break;
+		}
+	}
+	return status;
+}
 
-अटल पूर्णांक qlge_get_ets_regs(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
-	पूर्णांक i;
+static int qlge_get_ets_regs(struct qlge_adapter *qdev, u32 *buf)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++, buf++) अणु
-		qlge_ग_लिखो32(qdev, NIC_ETS, i << 29 | 0x08000000);
-		*buf = qlge_पढ़ो32(qdev, NIC_ETS);
-	पूर्ण
+	for (i = 0; i < 8; i++, buf++) {
+		qlge_write32(qdev, NIC_ETS, i << 29 | 0x08000000);
+		*buf = qlge_read32(qdev, NIC_ETS);
+	}
 
-	क्रम (i = 0; i < 2; i++, buf++) अणु
-		qlge_ग_लिखो32(qdev, CNA_ETS, i << 29 | 0x08000000);
-		*buf = qlge_पढ़ो32(qdev, CNA_ETS);
-	पूर्ण
+	for (i = 0; i < 2; i++, buf++) {
+		qlge_write32(qdev, CNA_ETS, i << 29 | 0x08000000);
+		*buf = qlge_read32(qdev, CNA_ETS);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qlge_get_पूर्णांकr_states(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
-	पूर्णांक i;
+static void qlge_get_intr_states(struct qlge_adapter *qdev, u32 *buf)
+{
+	int i;
 
-	क्रम (i = 0; i < qdev->rx_ring_count; i++, buf++) अणु
-		qlge_ग_लिखो32(qdev, INTR_EN,
-			     qdev->पूर्णांकr_context[i].पूर्णांकr_पढ़ो_mask);
-		*buf = qlge_पढ़ो32(qdev, INTR_EN);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < qdev->rx_ring_count; i++, buf++) {
+		qlge_write32(qdev, INTR_EN,
+			     qdev->intr_context[i].intr_read_mask);
+		*buf = qlge_read32(qdev, INTR_EN);
+	}
+}
 
-अटल पूर्णांक qlge_get_cam_entries(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
-	पूर्णांक i, status;
+static int qlge_get_cam_entries(struct qlge_adapter *qdev, u32 *buf)
+{
+	int i, status;
 	u32 value[3];
 
 	status = qlge_sem_spinlock(qdev, SEM_MAC_ADDR_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		status = qlge_get_mac_addr_reg(qdev,
 					       MAC_ADDR_TYPE_CAM_MAC, i, value);
-		अगर (status) अणु
-			netअगर_err(qdev, drv, qdev->ndev,
+		if (status) {
+			netif_err(qdev, drv, qdev->ndev,
 				  "Failed read of mac index register\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		*buf++ = value[0];	/* lower MAC address */
 		*buf++ = value[1];	/* upper MAC address */
 		*buf++ = value[2];	/* output */
-	पूर्ण
-	क्रम (i = 0; i < 32; i++) अणु
+	}
+	for (i = 0; i < 32; i++) {
 		status = qlge_get_mac_addr_reg(qdev, MAC_ADDR_TYPE_MULTI_MAC,
 					       i, value);
-		अगर (status) अणु
-			netअगर_err(qdev, drv, qdev->ndev,
+		if (status) {
+			netif_err(qdev, drv, qdev->ndev,
 				  "Failed read of mac index register\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		*buf++ = value[0];	/* lower Mcast address */
 		*buf++ = value[1];	/* upper Mcast address */
-	पूर्ण
+	}
 err:
 	qlge_sem_unlock(qdev, SEM_MAC_ADDR_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक qlge_get_routing_entries(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
-	पूर्णांक status;
+static int qlge_get_routing_entries(struct qlge_adapter *qdev, u32 *buf)
+{
+	int status;
 	u32 value, i;
 
 	status = qlge_sem_spinlock(qdev, SEM_RT_IDX_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	क्रम (i = 0; i < 16; i++) अणु
+	for (i = 0; i < 16; i++) {
 		status = qlge_get_routing_reg(qdev, i, &value);
-		अगर (status) अणु
-			netअगर_err(qdev, drv, qdev->ndev,
+		if (status) {
+			netif_err(qdev, drv, qdev->ndev,
 				  "Failed read of routing index register\n");
-			जाओ err;
-		पूर्ण अन्यथा अणु
+			goto err;
+		} else {
 			*buf++ = value;
-		पूर्ण
-	पूर्ण
+		}
+	}
 err:
 	qlge_sem_unlock(qdev, SEM_RT_IDX_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Read the MPI Processor shaकरोw रेजिस्टरs */
-अटल पूर्णांक qlge_get_mpi_shaकरोw_regs(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
+/* Read the MPI Processor shadow registers */
+static int qlge_get_mpi_shadow_regs(struct qlge_adapter *qdev, u32 *buf)
+{
 	u32 i;
-	पूर्णांक status;
+	int status;
 
-	क्रम (i = 0; i < MPI_CORE_SH_REGS_CNT; i++, buf++) अणु
-		status = qlge_ग_लिखो_mpi_reg(qdev,
+	for (i = 0; i < MPI_CORE_SH_REGS_CNT; i++, buf++) {
+		status = qlge_write_mpi_reg(qdev,
 					    RISC_124,
 					    (SHADOW_OFFSET | i << SHADOW_REG_SHIFT));
-		अगर (status)
-			जाओ end;
-		status = qlge_पढ़ो_mpi_reg(qdev, RISC_127, buf);
-		अगर (status)
-			जाओ end;
-	पूर्ण
+		if (status)
+			goto end;
+		status = qlge_read_mpi_reg(qdev, RISC_127, buf);
+		if (status)
+			goto end;
+	}
 end:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Read the MPI Processor core रेजिस्टरs */
-अटल पूर्णांक qlge_get_mpi_regs(काष्ठा qlge_adapter *qdev, u32 *buf,
+/* Read the MPI Processor core registers */
+static int qlge_get_mpi_regs(struct qlge_adapter *qdev, u32 *buf,
 			     u32 offset, u32 count)
-अणु
-	पूर्णांक i, status = 0;
+{
+	int i, status = 0;
 
-	क्रम (i = 0; i < count; i++, buf++) अणु
-		status = qlge_पढ़ो_mpi_reg(qdev, offset + i, buf);
-		अगर (status)
-			वापस status;
-	पूर्ण
-	वापस status;
-पूर्ण
+	for (i = 0; i < count; i++, buf++) {
+		status = qlge_read_mpi_reg(qdev, offset + i, buf);
+		if (status)
+			return status;
+	}
+	return status;
+}
 
 /* Read the ASIC probe dump */
-अटल अचिन्हित पूर्णांक *qlge_get_probe(काष्ठा qlge_adapter *qdev, u32 घड़ी,
+static unsigned int *qlge_get_probe(struct qlge_adapter *qdev, u32 clock,
 				    u32 valid, u32 *buf)
-अणु
+{
 	u32 module, mux_sel, probe, lo_val, hi_val;
 
-	क्रम (module = 0; module < PRB_MX_ADDR_MAX_MODS; module++) अणु
-		अगर (!((valid >> module) & 1))
-			जारी;
-		क्रम (mux_sel = 0; mux_sel < PRB_MX_ADDR_MAX_MUX; mux_sel++) अणु
-			probe = घड़ी
+	for (module = 0; module < PRB_MX_ADDR_MAX_MODS; module++) {
+		if (!((valid >> module) & 1))
+			continue;
+		for (mux_sel = 0; mux_sel < PRB_MX_ADDR_MAX_MUX; mux_sel++) {
+			probe = clock
 				| PRB_MX_ADDR_ARE
 				| mux_sel
 				| (module << PRB_MX_ADDR_MOD_SEL_SHIFT);
-			qlge_ग_लिखो32(qdev, PRB_MX_ADDR, probe);
-			lo_val = qlge_पढ़ो32(qdev, PRB_MX_DATA);
-			अगर (mux_sel == 0) अणु
+			qlge_write32(qdev, PRB_MX_ADDR, probe);
+			lo_val = qlge_read32(qdev, PRB_MX_DATA);
+			if (mux_sel == 0) {
 				*buf = probe;
 				buf++;
-			पूर्ण
+			}
 			probe |= PRB_MX_ADDR_UP;
-			qlge_ग_लिखो32(qdev, PRB_MX_ADDR, probe);
-			hi_val = qlge_पढ़ो32(qdev, PRB_MX_DATA);
+			qlge_write32(qdev, PRB_MX_ADDR, probe);
+			hi_val = qlge_read32(qdev, PRB_MX_DATA);
 			*buf = lo_val;
 			buf++;
 			*buf = hi_val;
 			buf++;
-		पूर्ण
-	पूर्ण
-	वापस buf;
-पूर्ण
+		}
+	}
+	return buf;
+}
 
-अटल पूर्णांक qlge_get_probe_dump(काष्ठा qlge_adapter *qdev, अचिन्हित पूर्णांक *buf)
-अणु
+static int qlge_get_probe_dump(struct qlge_adapter *qdev, unsigned int *buf)
+{
 	/* First we have to enable the probe mux */
-	qlge_ग_लिखो_mpi_reg(qdev, MPI_TEST_FUNC_PRB_CTL, MPI_TEST_FUNC_PRB_EN);
+	qlge_write_mpi_reg(qdev, MPI_TEST_FUNC_PRB_CTL, MPI_TEST_FUNC_PRB_EN);
 	buf = qlge_get_probe(qdev, PRB_MX_ADDR_SYS_CLOCK,
 			     PRB_MX_ADDR_VALID_SYS_MOD, buf);
 	buf = qlge_get_probe(qdev, PRB_MX_ADDR_PCI_CLOCK,
@@ -550,36 +549,36 @@ end:
 			     PRB_MX_ADDR_VALID_XGM_MOD, buf);
 	buf = qlge_get_probe(qdev, PRB_MX_ADDR_FC_CLOCK,
 			     PRB_MX_ADDR_VALID_FC_MOD, buf);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Read out the routing index रेजिस्टरs */
-अटल पूर्णांक qlge_get_routing_index_रेजिस्टरs(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
-	पूर्णांक status;
+/* Read out the routing index registers */
+static int qlge_get_routing_index_registers(struct qlge_adapter *qdev, u32 *buf)
+{
+	int status;
 	u32 type, index, index_max;
 	u32 result_index;
 	u32 result_data;
 	u32 val;
 
 	status = qlge_sem_spinlock(qdev, SEM_RT_IDX_MASK);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
-	क्रम (type = 0; type < 4; type++) अणु
-		अगर (type < 2)
+	for (type = 0; type < 4; type++) {
+		if (type < 2)
 			index_max = 8;
-		अन्यथा
+		else
 			index_max = 16;
-		क्रम (index = 0; index < index_max; index++) अणु
+		for (index = 0; index < index_max; index++) {
 			val = RT_IDX_RS
 				| (type << RT_IDX_TYPE_SHIFT)
 				| (index << RT_IDX_IDX_SHIFT);
-			qlge_ग_लिखो32(qdev, RT_IDX, val);
+			qlge_write32(qdev, RT_IDX, val);
 			result_index = 0;
-			जबतक ((result_index & RT_IDX_MR) == 0)
-				result_index = qlge_पढ़ो32(qdev, RT_IDX);
-			result_data = qlge_पढ़ो32(qdev, RT_DATA);
+			while ((result_index & RT_IDX_MR) == 0)
+				result_index = qlge_read32(qdev, RT_IDX);
+			result_data = qlge_read32(qdev, RT_DATA);
 			*buf = type;
 			buf++;
 			*buf = index;
@@ -588,15 +587,15 @@ end:
 			buf++;
 			*buf = result_data;
 			buf++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	qlge_sem_unlock(qdev, SEM_RT_IDX_MASK);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-/* Read out the MAC protocol रेजिस्टरs */
-अटल व्योम qlge_get_mac_protocol_रेजिस्टरs(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
+/* Read out the MAC protocol registers */
+static void qlge_get_mac_protocol_registers(struct qlge_adapter *qdev, u32 *buf)
+{
 	u32 result_index, result_data;
 	u32 type;
 	u32 index;
@@ -606,710 +605,710 @@ end:
 	u32 max_index;
 	u32 max_offset;
 
-	क्रम (type = 0; type < MAC_ADDR_TYPE_COUNT; type++) अणु
-		चयन (type) अणु
-		हाल 0: /* CAM */
+	for (type = 0; type < MAC_ADDR_TYPE_COUNT; type++) {
+		switch (type) {
+		case 0: /* CAM */
 			initial_val |= MAC_ADDR_ADR;
 			max_index = MAC_ADDR_MAX_CAM_ENTRIES;
 			max_offset = MAC_ADDR_MAX_CAM_WCOUNT;
-			अवरोध;
-		हाल 1: /* Multicast MAC Address */
+			break;
+		case 1: /* Multicast MAC Address */
 			max_index = MAC_ADDR_MAX_CAM_WCOUNT;
 			max_offset = MAC_ADDR_MAX_CAM_WCOUNT;
-			अवरोध;
-		हाल 2: /* VLAN filter mask */
-		हाल 3: /* MC filter mask */
+			break;
+		case 2: /* VLAN filter mask */
+		case 3: /* MC filter mask */
 			max_index = MAC_ADDR_MAX_CAM_WCOUNT;
 			max_offset = MAC_ADDR_MAX_CAM_WCOUNT;
-			अवरोध;
-		हाल 4: /* FC MAC addresses */
+			break;
+		case 4: /* FC MAC addresses */
 			max_index = MAC_ADDR_MAX_FC_MAC_ENTRIES;
 			max_offset = MAC_ADDR_MAX_FC_MAC_WCOUNT;
-			अवरोध;
-		हाल 5: /* Mgmt MAC addresses */
+			break;
+		case 5: /* Mgmt MAC addresses */
 			max_index = MAC_ADDR_MAX_MGMT_MAC_ENTRIES;
 			max_offset = MAC_ADDR_MAX_MGMT_MAC_WCOUNT;
-			अवरोध;
-		हाल 6: /* Mgmt VLAN addresses */
+			break;
+		case 6: /* Mgmt VLAN addresses */
 			max_index = MAC_ADDR_MAX_MGMT_VLAN_ENTRIES;
 			max_offset = MAC_ADDR_MAX_MGMT_VLAN_WCOUNT;
-			अवरोध;
-		हाल 7: /* Mgmt IPv4 address */
+			break;
+		case 7: /* Mgmt IPv4 address */
 			max_index = MAC_ADDR_MAX_MGMT_V4_ENTRIES;
 			max_offset = MAC_ADDR_MAX_MGMT_V4_WCOUNT;
-			अवरोध;
-		हाल 8: /* Mgmt IPv6 address */
+			break;
+		case 8: /* Mgmt IPv6 address */
 			max_index = MAC_ADDR_MAX_MGMT_V6_ENTRIES;
 			max_offset = MAC_ADDR_MAX_MGMT_V6_WCOUNT;
-			अवरोध;
-		हाल 9: /* Mgmt TCP/UDP Dest port */
+			break;
+		case 9: /* Mgmt TCP/UDP Dest port */
 			max_index = MAC_ADDR_MAX_MGMT_TU_DP_ENTRIES;
 			max_offset = MAC_ADDR_MAX_MGMT_TU_DP_WCOUNT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			netdev_err(qdev->ndev, "Bad type!!! 0x%08x\n", type);
 			max_index = 0;
 			max_offset = 0;
-			अवरोध;
-		पूर्ण
-		क्रम (index = 0; index < max_index; index++) अणु
-			क्रम (offset = 0; offset < max_offset; offset++) अणु
+			break;
+		}
+		for (index = 0; index < max_index; index++) {
+			for (offset = 0; offset < max_offset; offset++) {
 				val = initial_val
 					| (type << MAC_ADDR_TYPE_SHIFT)
 					| (index << MAC_ADDR_IDX_SHIFT)
 					| (offset);
-				qlge_ग_लिखो32(qdev, MAC_ADDR_IDX, val);
+				qlge_write32(qdev, MAC_ADDR_IDX, val);
 				result_index = 0;
-				जबतक ((result_index & MAC_ADDR_MR) == 0) अणु
-					result_index = qlge_पढ़ो32(qdev,
+				while ((result_index & MAC_ADDR_MR) == 0) {
+					result_index = qlge_read32(qdev,
 								   MAC_ADDR_IDX);
-				पूर्ण
-				result_data = qlge_पढ़ो32(qdev, MAC_ADDR_DATA);
+				}
+				result_data = qlge_read32(qdev, MAC_ADDR_DATA);
 				*buf = result_index;
 				buf++;
 				*buf = result_data;
 				buf++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम qlge_get_sem_रेजिस्टरs(काष्ठा qlge_adapter *qdev, u32 *buf)
-अणु
+static void qlge_get_sem_registers(struct qlge_adapter *qdev, u32 *buf)
+{
 	u32 func_num, reg, reg_val;
-	पूर्णांक status;
+	int status;
 
-	क्रम (func_num = 0; func_num < MAX_SEMAPHORE_FUNCTIONS ; func_num++) अणु
+	for (func_num = 0; func_num < MAX_SEMAPHORE_FUNCTIONS ; func_num++) {
 		reg = MPI_NIC_REG_BLOCK
 			| (func_num << MPI_NIC_FUNCTION_SHIFT)
 			| (SEM / 4);
-		status = qlge_पढ़ो_mpi_reg(qdev, reg, &reg_val);
+		status = qlge_read_mpi_reg(qdev, reg, &reg_val);
 		*buf = reg_val;
-		/* अगर the पढ़ो failed then dead fill the element. */
-		अगर (!status)
+		/* if the read failed then dead fill the element. */
+		if (!status)
 			*buf = 0xdeadbeef;
 		buf++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Create a coredump segment header */
-अटल व्योम qlge_build_coredump_seg_header(काष्ठा mpi_coredump_segment_header *seg_hdr,
+static void qlge_build_coredump_seg_header(struct mpi_coredump_segment_header *seg_hdr,
 					   u32 seg_number, u32 seg_size, u8 *desc)
-अणु
-	स_रखो(seg_hdr, 0, माप(काष्ठा mpi_coredump_segment_header));
+{
+	memset(seg_hdr, 0, sizeof(struct mpi_coredump_segment_header));
 	seg_hdr->cookie = MPI_COREDUMP_COOKIE;
 	seg_hdr->seg_num = seg_number;
 	seg_hdr->seg_size = seg_size;
-	म_नकलन(seg_hdr->description, desc, (माप(seg_hdr->description)) - 1);
-पूर्ण
+	strncpy(seg_hdr->description, desc, (sizeof(seg_hdr->description)) - 1);
+}
 
 /*
  * This function should be called when a coredump / probedump
  * is to be extracted from the HBA. It is assumed there is a
- * qdev काष्ठाure that contains the base address of the रेजिस्टर
- * space क्रम this function as well as a coredump काष्ठाure that
+ * qdev structure that contains the base address of the register
+ * space for this function as well as a coredump structure that
  * will contain the dump.
  */
-पूर्णांक qlge_core_dump(काष्ठा qlge_adapter *qdev, काष्ठा qlge_mpi_coredump *mpi_coredump)
-अणु
-	पूर्णांक status;
-	पूर्णांक i;
+int qlge_core_dump(struct qlge_adapter *qdev, struct qlge_mpi_coredump *mpi_coredump)
+{
+	int status;
+	int i;
 
-	अगर (!mpi_coredump) अणु
-		netअगर_err(qdev, drv, qdev->ndev, "No memory allocated\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!mpi_coredump) {
+		netif_err(qdev, drv, qdev->ndev, "No memory allocated\n");
+		return -EINVAL;
+	}
 
-	/* Try to get the spinlock, but करोnt worry अगर
+	/* Try to get the spinlock, but dont worry if
 	 * it isn't available.  If the firmware died it
 	 * might be holding the sem.
 	 */
 	qlge_sem_spinlock(qdev, SEM_PROC_REG_MASK);
 
-	status = qlge_छोड़ो_mpi_risc(qdev);
-	अगर (status) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	status = qlge_pause_mpi_risc(qdev);
+	if (status) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Failed RISC pause. Status = 0x%.08x\n", status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Insert the global header */
-	स_रखो(&(mpi_coredump->mpi_global_header), 0,
-	       माप(काष्ठा mpi_coredump_global_header));
+	memset(&(mpi_coredump->mpi_global_header), 0,
+	       sizeof(struct mpi_coredump_global_header));
 	mpi_coredump->mpi_global_header.cookie = MPI_COREDUMP_COOKIE;
 	mpi_coredump->mpi_global_header.header_size =
-		माप(काष्ठा mpi_coredump_global_header);
+		sizeof(struct mpi_coredump_global_header);
 	mpi_coredump->mpi_global_header.image_size =
-		माप(काष्ठा qlge_mpi_coredump);
-	म_नकलन(mpi_coredump->mpi_global_header.id_string, "MPI Coredump",
-		माप(mpi_coredump->mpi_global_header.id_string));
+		sizeof(struct qlge_mpi_coredump);
+	strncpy(mpi_coredump->mpi_global_header.id_string, "MPI Coredump",
+		sizeof(mpi_coredump->mpi_global_header.id_string));
 
 	/* Get generic NIC reg dump */
 	qlge_build_coredump_seg_header(&mpi_coredump->nic_regs_seg_hdr,
 				       NIC1_CONTROL_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->nic_regs), "NIC1 Registers");
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->nic_regs), "NIC1 Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->nic2_regs_seg_hdr,
 				       NIC2_CONTROL_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->nic2_regs), "NIC2 Registers");
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->nic2_regs), "NIC2 Registers");
 
-	/* Get XGMac रेजिस्टरs. (Segment 18, Rev C. step 21) */
+	/* Get XGMac registers. (Segment 18, Rev C. step 21) */
 	qlge_build_coredump_seg_header(&mpi_coredump->xgmac1_seg_hdr,
 				       NIC1_XGMAC_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->xgmac1), "NIC1 XGMac Registers");
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->xgmac1), "NIC1 XGMac Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xgmac2_seg_hdr,
 				       NIC2_XGMAC_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->xgmac2), "NIC2 XGMac Registers");
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->xgmac2), "NIC2 XGMac Registers");
 
-	अगर (qdev->func & 1) अणु
+	if (qdev->func & 1) {
 		/* Odd means our function is NIC 2 */
-		क्रम (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
+		for (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
 			mpi_coredump->nic2_regs[i] =
-				qlge_पढ़ो32(qdev, i * माप(u32));
+				qlge_read32(qdev, i * sizeof(u32));
 
-		क्रम (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
+		for (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
 			mpi_coredump->nic_regs[i] =
-				qlge_पढ़ो_other_func_reg(qdev, (i * माप(u32)) / 4);
+				qlge_read_other_func_reg(qdev, (i * sizeof(u32)) / 4);
 
 		qlge_get_xgmac_regs(qdev, &mpi_coredump->xgmac2[0], 0);
 		qlge_get_xgmac_regs(qdev, &mpi_coredump->xgmac1[0], 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Even means our function is NIC 1 */
-		क्रम (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
+		for (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
 			mpi_coredump->nic_regs[i] =
-				qlge_पढ़ो32(qdev, i * माप(u32));
-		क्रम (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
+				qlge_read32(qdev, i * sizeof(u32));
+		for (i = 0; i < NIC_REGS_DUMP_WORD_COUNT; i++)
 			mpi_coredump->nic2_regs[i] =
-				qlge_पढ़ो_other_func_reg(qdev, (i * माप(u32)) / 4);
+				qlge_read_other_func_reg(qdev, (i * sizeof(u32)) / 4);
 
 		qlge_get_xgmac_regs(qdev, &mpi_coredump->xgmac1[0], 0);
 		qlge_get_xgmac_regs(qdev, &mpi_coredump->xgmac2[0], 1);
-	पूर्ण
+	}
 
 	/* Rev C. Step 20a */
 	qlge_build_coredump_seg_header(&mpi_coredump->xaui_an_hdr,
 				       XAUI_AN_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xaui_an),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xaui_an),
 				       "XAUI AN Registers");
 
 	/* Rev C. Step 20b */
 	qlge_build_coredump_seg_header(&mpi_coredump->xaui_hss_pcs_hdr,
 				       XAUI_HSS_PCS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xaui_hss_pcs),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xaui_hss_pcs),
 				       "XAUI HSS PCS Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi_an_hdr, XFI_AN_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xfi_an),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xfi_an),
 				       "XFI AN Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi_train_hdr,
 				       XFI_TRAIN_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xfi_train),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xfi_train),
 				       "XFI TRAIN Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi_hss_pcs_hdr,
 				       XFI_HSS_PCS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xfi_hss_pcs),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xfi_hss_pcs),
 				       "XFI HSS PCS Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi_hss_tx_hdr,
 				       XFI_HSS_TX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xfi_hss_tx),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xfi_hss_tx),
 				       "XFI HSS TX Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi_hss_rx_hdr,
 				       XFI_HSS_RX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xfi_hss_rx),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xfi_hss_rx),
 				       "XFI HSS RX Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi_hss_pll_hdr,
 				       XFI_HSS_PLL_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes_xfi_hss_pll),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes_xfi_hss_pll),
 				       "XFI HSS PLL Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xaui2_an_hdr,
 				       XAUI2_AN_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xaui_an),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xaui_an),
 				       "XAUI2 AN Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xaui2_hss_pcs_hdr,
 				       XAUI2_HSS_PCS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xaui_hss_pcs),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xaui_hss_pcs),
 				       "XAUI2 HSS PCS Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi2_an_hdr,
 				       XFI2_AN_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xfi_an),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xfi_an),
 				       "XFI2 AN Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi2_train_hdr,
 				       XFI2_TRAIN_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xfi_train),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xfi_train),
 				       "XFI2 TRAIN Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi2_hss_pcs_hdr,
 				       XFI2_HSS_PCS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xfi_hss_pcs),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xfi_hss_pcs),
 				       "XFI2 HSS PCS Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi2_hss_tx_hdr,
 				       XFI2_HSS_TX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xfi_hss_tx),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xfi_hss_tx),
 				       "XFI2 HSS TX Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi2_hss_rx_hdr,
 				       XFI2_HSS_RX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xfi_hss_rx),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xfi_hss_rx),
 				       "XFI2 HSS RX Registers");
 
 	qlge_build_coredump_seg_header(&mpi_coredump->xfi2_hss_pll_hdr,
 				       XFI2_HSS_PLL_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->serdes2_xfi_hss_pll),
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->serdes2_xfi_hss_pll),
 				       "XFI2 HSS PLL Registers");
 
 	status = qlge_get_serdes_regs(qdev, mpi_coredump);
-	अगर (status) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	if (status) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Failed Dump of Serdes Registers. Status = 0x%.08x\n",
 			  status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	qlge_build_coredump_seg_header(&mpi_coredump->core_regs_seg_hdr,
 				       CORE_SEG_NUM,
-				       माप(mpi_coredump->core_regs_seg_hdr) +
-				       माप(mpi_coredump->mpi_core_regs) +
-				       माप(mpi_coredump->mpi_core_sh_regs),
+				       sizeof(mpi_coredump->core_regs_seg_hdr) +
+				       sizeof(mpi_coredump->mpi_core_regs) +
+				       sizeof(mpi_coredump->mpi_core_sh_regs),
 				       "Core Registers");
 
 	/* Get the MPI Core Registers */
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->mpi_core_regs[0],
 				   MPI_CORE_REGS_ADDR, MPI_CORE_REGS_CNT);
-	अगर (status)
-		जाओ err;
-	/* Get the 16 MPI shaकरोw रेजिस्टरs */
-	status = qlge_get_mpi_shaकरोw_regs(qdev,
+	if (status)
+		goto err;
+	/* Get the 16 MPI shadow registers */
+	status = qlge_get_mpi_shadow_regs(qdev,
 					  &mpi_coredump->mpi_core_sh_regs[0]);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the Test Logic Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->test_logic_regs_seg_hdr,
 				       TEST_LOGIC_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->test_logic_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->test_logic_regs),
 				       "Test Logic Regs");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->test_logic_regs[0],
 				   TEST_REGS_ADDR, TEST_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the RMII Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->rmii_regs_seg_hdr,
 				       RMII_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->rmii_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->rmii_regs),
 				       "RMII Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->rmii_regs[0],
 				   RMII_REGS_ADDR, RMII_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the FCMAC1 Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->fcmac1_regs_seg_hdr,
 				       FCMAC1_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->fcmac1_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->fcmac1_regs),
 				       "FCMAC1 Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->fcmac1_regs[0],
 				   FCMAC1_REGS_ADDR, FCMAC_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the FCMAC2 Registers */
 
 	qlge_build_coredump_seg_header(&mpi_coredump->fcmac2_regs_seg_hdr,
 				       FCMAC2_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->fcmac2_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->fcmac2_regs),
 				       "FCMAC2 Registers");
 
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->fcmac2_regs[0],
 				   FCMAC2_REGS_ADDR, FCMAC_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the FC1 MBX Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->fc1_mbx_regs_seg_hdr,
 				       FC1_MBOX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->fc1_mbx_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->fc1_mbx_regs),
 				       "FC1 MBox Regs");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->fc1_mbx_regs[0],
 				   FC1_MBX_REGS_ADDR, FC_MBX_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the IDE Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->ide_regs_seg_hdr,
 				       IDE_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->ide_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->ide_regs),
 				       "IDE Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->ide_regs[0],
 				   IDE_REGS_ADDR, IDE_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the NIC1 MBX Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->nic1_mbx_regs_seg_hdr,
 				       NIC1_MBOX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->nic1_mbx_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->nic1_mbx_regs),
 				       "NIC1 MBox Regs");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->nic1_mbx_regs[0],
 				   NIC1_MBX_REGS_ADDR, NIC_MBX_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the SMBus Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->smbus_regs_seg_hdr,
 				       SMBUS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->smbus_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->smbus_regs),
 				       "SMBus Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->smbus_regs[0],
 				   SMBUS_REGS_ADDR, SMBUS_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the FC2 MBX Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->fc2_mbx_regs_seg_hdr,
 				       FC2_MBOX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->fc2_mbx_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->fc2_mbx_regs),
 				       "FC2 MBox Regs");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->fc2_mbx_regs[0],
 				   FC2_MBX_REGS_ADDR, FC_MBX_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the NIC2 MBX Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->nic2_mbx_regs_seg_hdr,
 				       NIC2_MBOX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->nic2_mbx_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->nic2_mbx_regs),
 				       "NIC2 MBox Regs");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->nic2_mbx_regs[0],
 				   NIC2_MBX_REGS_ADDR, NIC_MBX_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the I2C Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->i2c_regs_seg_hdr,
 				       I2C_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->i2c_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->i2c_regs),
 				       "I2C Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->i2c_regs[0],
 				   I2C_REGS_ADDR, I2C_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the MEMC Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->memc_regs_seg_hdr,
 				       MEMC_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->memc_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->memc_regs),
 				       "MEMC Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->memc_regs[0],
 				   MEMC_REGS_ADDR, MEMC_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the PBus Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->pbus_regs_seg_hdr,
 				       PBUS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->pbus_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->pbus_regs),
 				       "PBUS Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->pbus_regs[0],
 				   PBUS_REGS_ADDR, PBUS_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Get the MDE Registers */
 	qlge_build_coredump_seg_header(&mpi_coredump->mde_regs_seg_hdr,
 				       MDE_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->mde_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->mde_regs),
 				       "MDE Registers");
 	status = qlge_get_mpi_regs(qdev, &mpi_coredump->mde_regs[0],
 				   MDE_REGS_ADDR, MDE_REGS_CNT);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	qlge_build_coredump_seg_header(&mpi_coredump->misc_nic_seg_hdr,
 				       MISC_NIC_INFO_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->misc_nic_info),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->misc_nic_info),
 				       "MISC NIC INFO");
 	mpi_coredump->misc_nic_info.rx_ring_count = qdev->rx_ring_count;
 	mpi_coredump->misc_nic_info.tx_ring_count = qdev->tx_ring_count;
-	mpi_coredump->misc_nic_info.पूर्णांकr_count = qdev->पूर्णांकr_count;
+	mpi_coredump->misc_nic_info.intr_count = qdev->intr_count;
 	mpi_coredump->misc_nic_info.function = qdev->func;
 
 	/* Segment 31 */
-	/* Get indexed रेजिस्टर values. */
-	qlge_build_coredump_seg_header(&mpi_coredump->पूर्णांकr_states_seg_hdr,
+	/* Get indexed register values. */
+	qlge_build_coredump_seg_header(&mpi_coredump->intr_states_seg_hdr,
 				       INTR_STATES_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->पूर्णांकr_states),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->intr_states),
 				       "INTR States");
-	qlge_get_पूर्णांकr_states(qdev, &mpi_coredump->पूर्णांकr_states[0]);
+	qlge_get_intr_states(qdev, &mpi_coredump->intr_states[0]);
 
 	qlge_build_coredump_seg_header(&mpi_coredump->cam_entries_seg_hdr,
 				       CAM_ENTRIES_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->cam_entries),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->cam_entries),
 				       "CAM Entries");
 	status = qlge_get_cam_entries(qdev, &mpi_coredump->cam_entries[0]);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	qlge_build_coredump_seg_header(&mpi_coredump->nic_routing_words_seg_hdr,
 				       ROUTING_WORDS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->nic_routing_words),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->nic_routing_words),
 				       "Routing Words");
 	status = qlge_get_routing_entries(qdev,
 					  &mpi_coredump->nic_routing_words[0]);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	/* Segment 34 (Rev C. step 23) */
 	qlge_build_coredump_seg_header(&mpi_coredump->ets_seg_hdr,
 				       ETS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->ets),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->ets),
 				       "ETS Registers");
 	status = qlge_get_ets_regs(qdev, &mpi_coredump->ets[0]);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	qlge_build_coredump_seg_header(&mpi_coredump->probe_dump_seg_hdr,
 				       PROBE_DUMP_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->probe_dump),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->probe_dump),
 				       "Probe Dump");
 	qlge_get_probe_dump(qdev, &mpi_coredump->probe_dump[0]);
 
 	qlge_build_coredump_seg_header(&mpi_coredump->routing_reg_seg_hdr,
 				       ROUTING_INDEX_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->routing_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->routing_regs),
 				       "Routing Regs");
-	status = qlge_get_routing_index_रेजिस्टरs(qdev,
+	status = qlge_get_routing_index_registers(qdev,
 						  &mpi_coredump->routing_regs[0]);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	qlge_build_coredump_seg_header(&mpi_coredump->mac_prot_reg_seg_hdr,
 				       MAC_PROTOCOL_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->mac_prot_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->mac_prot_regs),
 				       "MAC Prot Regs");
-	qlge_get_mac_protocol_रेजिस्टरs(qdev, &mpi_coredump->mac_prot_regs[0]);
+	qlge_get_mac_protocol_registers(qdev, &mpi_coredump->mac_prot_regs[0]);
 
-	/* Get the semaphore रेजिस्टरs क्रम all 5 functions */
+	/* Get the semaphore registers for all 5 functions */
 	qlge_build_coredump_seg_header(&mpi_coredump->sem_regs_seg_hdr,
 				       SEM_REGS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header) +
-				       माप(mpi_coredump->sem_regs),	"Sem Registers");
+				       sizeof(struct mpi_coredump_segment_header) +
+				       sizeof(mpi_coredump->sem_regs),	"Sem Registers");
 
-	qlge_get_sem_रेजिस्टरs(qdev, &mpi_coredump->sem_regs[0]);
+	qlge_get_sem_registers(qdev, &mpi_coredump->sem_regs[0]);
 
-	/* Prevent the mpi restarting जबतक we dump the memory.*/
-	qlge_ग_लिखो_mpi_reg(qdev, MPI_TEST_FUNC_RST_STS, MPI_TEST_FUNC_RST_FRC);
+	/* Prevent the mpi restarting while we dump the memory.*/
+	qlge_write_mpi_reg(qdev, MPI_TEST_FUNC_RST_STS, MPI_TEST_FUNC_RST_FRC);
 
-	/* clear the छोड़ो */
-	status = qlge_unछोड़ो_mpi_risc(qdev);
-	अगर (status) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	/* clear the pause */
+	status = qlge_unpause_mpi_risc(qdev);
+	if (status) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Failed RISC unpause. Status = 0x%.08x\n", status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Reset the RISC so we can dump RAM */
 	status = qlge_hard_reset_mpi_risc(qdev);
-	अगर (status) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	if (status) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Failed RISC reset. Status = 0x%.08x\n", status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	qlge_build_coredump_seg_header(&mpi_coredump->code_ram_seg_hdr,
 				       WCS_RAM_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->code_ram),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->code_ram),
 				       "WCS RAM");
 	status = qlge_dump_risc_ram_area(qdev, &mpi_coredump->code_ram[0],
 					 CODE_RAM_ADDR, CODE_RAM_CNT);
-	अगर (status) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	if (status) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Failed Dump of CODE RAM. Status = 0x%.08x\n",
 			  status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Insert the segment header */
 	qlge_build_coredump_seg_header(&mpi_coredump->memc_ram_seg_hdr,
 				       MEMC_RAM_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->memc_ram),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->memc_ram),
 				       "MEMC RAM");
 	status = qlge_dump_risc_ram_area(qdev, &mpi_coredump->memc_ram[0],
 					 MEMC_RAM_ADDR, MEMC_RAM_CNT);
-	अगर (status) अणु
-		netअगर_err(qdev, drv, qdev->ndev,
+	if (status) {
+		netif_err(qdev, drv, qdev->ndev,
 			  "Failed Dump of MEMC RAM. Status = 0x%.08x\n",
 			  status);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 err:
-	qlge_sem_unlock(qdev, SEM_PROC_REG_MASK); /* करोes flush too */
-	वापस status;
-पूर्ण
+	qlge_sem_unlock(qdev, SEM_PROC_REG_MASK); /* does flush too */
+	return status;
+}
 
-अटल व्योम qlge_get_core_dump(काष्ठा qlge_adapter *qdev)
-अणु
-	अगर (!qlge_own_firmware(qdev)) अणु
-		netअगर_err(qdev, drv, qdev->ndev, "Don't own firmware!\n");
-		वापस;
-	पूर्ण
+static void qlge_get_core_dump(struct qlge_adapter *qdev)
+{
+	if (!qlge_own_firmware(qdev)) {
+		netif_err(qdev, drv, qdev->ndev, "Don't own firmware!\n");
+		return;
+	}
 
-	अगर (!netअगर_running(qdev->ndev)) अणु
-		netअगर_err(qdev, अगरup, qdev->ndev,
+	if (!netif_running(qdev->ndev)) {
+		netif_err(qdev, ifup, qdev->ndev,
 			  "Force Coredump can only be done from interface that is up\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	qlge_queue_fw_error(qdev);
-पूर्ण
+}
 
-अटल व्योम qlge_gen_reg_dump(काष्ठा qlge_adapter *qdev,
-			      काष्ठा qlge_reg_dump *mpi_coredump)
-अणु
-	पूर्णांक i, status;
+static void qlge_gen_reg_dump(struct qlge_adapter *qdev,
+			      struct qlge_reg_dump *mpi_coredump)
+{
+	int i, status;
 
-	स_रखो(&(mpi_coredump->mpi_global_header), 0,
-	       माप(काष्ठा mpi_coredump_global_header));
+	memset(&(mpi_coredump->mpi_global_header), 0,
+	       sizeof(struct mpi_coredump_global_header));
 	mpi_coredump->mpi_global_header.cookie = MPI_COREDUMP_COOKIE;
 	mpi_coredump->mpi_global_header.header_size =
-		माप(काष्ठा mpi_coredump_global_header);
+		sizeof(struct mpi_coredump_global_header);
 	mpi_coredump->mpi_global_header.image_size =
-		माप(काष्ठा qlge_reg_dump);
-	म_नकलन(mpi_coredump->mpi_global_header.id_string, "MPI Coredump",
-		माप(mpi_coredump->mpi_global_header.id_string));
+		sizeof(struct qlge_reg_dump);
+	strncpy(mpi_coredump->mpi_global_header.id_string, "MPI Coredump",
+		sizeof(mpi_coredump->mpi_global_header.id_string));
 
 	/* segment 16 */
 	qlge_build_coredump_seg_header(&mpi_coredump->misc_nic_seg_hdr,
 				       MISC_NIC_INFO_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->misc_nic_info),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->misc_nic_info),
 				       "MISC NIC INFO");
 	mpi_coredump->misc_nic_info.rx_ring_count = qdev->rx_ring_count;
 	mpi_coredump->misc_nic_info.tx_ring_count = qdev->tx_ring_count;
-	mpi_coredump->misc_nic_info.पूर्णांकr_count = qdev->पूर्णांकr_count;
+	mpi_coredump->misc_nic_info.intr_count = qdev->intr_count;
 	mpi_coredump->misc_nic_info.function = qdev->func;
 
 	/* Segment 16, Rev C. Step 18 */
 	qlge_build_coredump_seg_header(&mpi_coredump->nic_regs_seg_hdr,
 				       NIC1_CONTROL_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->nic_regs),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->nic_regs),
 				       "NIC Registers");
 	/* Get generic reg dump */
-	क्रम (i = 0; i < 64; i++)
-		mpi_coredump->nic_regs[i] = qlge_पढ़ो32(qdev, i * माप(u32));
+	for (i = 0; i < 64; i++)
+		mpi_coredump->nic_regs[i] = qlge_read32(qdev, i * sizeof(u32));
 
 	/* Segment 31 */
-	/* Get indexed रेजिस्टर values. */
-	qlge_build_coredump_seg_header(&mpi_coredump->पूर्णांकr_states_seg_hdr,
+	/* Get indexed register values. */
+	qlge_build_coredump_seg_header(&mpi_coredump->intr_states_seg_hdr,
 				       INTR_STATES_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->पूर्णांकr_states),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->intr_states),
 				       "INTR States");
-	qlge_get_पूर्णांकr_states(qdev, &mpi_coredump->पूर्णांकr_states[0]);
+	qlge_get_intr_states(qdev, &mpi_coredump->intr_states[0]);
 
 	qlge_build_coredump_seg_header(&mpi_coredump->cam_entries_seg_hdr,
 				       CAM_ENTRIES_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->cam_entries),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->cam_entries),
 				       "CAM Entries");
 	status = qlge_get_cam_entries(qdev, &mpi_coredump->cam_entries[0]);
-	अगर (status)
-		वापस;
+	if (status)
+		return;
 
 	qlge_build_coredump_seg_header(&mpi_coredump->nic_routing_words_seg_hdr,
 				       ROUTING_WORDS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->nic_routing_words),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->nic_routing_words),
 				       "Routing Words");
 	status = qlge_get_routing_entries(qdev,
 					  &mpi_coredump->nic_routing_words[0]);
-	अगर (status)
-		वापस;
+	if (status)
+		return;
 
 	/* Segment 34 (Rev C. step 23) */
 	qlge_build_coredump_seg_header(&mpi_coredump->ets_seg_hdr,
 				       ETS_SEG_NUM,
-				       माप(काष्ठा mpi_coredump_segment_header)
-				       + माप(mpi_coredump->ets),
+				       sizeof(struct mpi_coredump_segment_header)
+				       + sizeof(mpi_coredump->ets),
 				       "ETS Registers");
 	status = qlge_get_ets_regs(qdev, &mpi_coredump->ets[0]);
-	अगर (status)
-		वापस;
-पूर्ण
+	if (status)
+		return;
+}
 
-व्योम qlge_get_dump(काष्ठा qlge_adapter *qdev, व्योम *buff)
-अणु
+void qlge_get_dump(struct qlge_adapter *qdev, void *buff)
+{
 	/*
-	 * If the dump has alपढ़ोy been taken and is stored
-	 * in our पूर्णांकernal buffer and अगर क्रमce dump is set then
+	 * If the dump has already been taken and is stored
+	 * in our internal buffer and if force dump is set then
 	 * just start the spool to dump it to the log file
 	 * and also, take a snapshot of the general regs
-	 * to the user's buffer or अन्यथा take complete dump
-	 * to the user's buffer अगर क्रमce is not set.
+	 * to the user's buffer or else take complete dump
+	 * to the user's buffer if force is not set.
 	 */
 
-	अगर (!test_bit(QL_FRC_COREDUMP, &qdev->flags)) अणु
-		अगर (!qlge_core_dump(qdev, buff))
+	if (!test_bit(QL_FRC_COREDUMP, &qdev->flags)) {
+		if (!qlge_core_dump(qdev, buff))
 			qlge_soft_reset_mpi_risc(qdev);
-		अन्यथा
-			netअगर_err(qdev, drv, qdev->ndev, "coredump failed!\n");
-	पूर्ण अन्यथा अणु
+		else
+			netif_err(qdev, drv, qdev->ndev, "coredump failed!\n");
+	} else {
 		qlge_gen_reg_dump(qdev, buff);
 		qlge_get_core_dump(qdev);
-	पूर्ण
-पूर्ण
+	}
+}

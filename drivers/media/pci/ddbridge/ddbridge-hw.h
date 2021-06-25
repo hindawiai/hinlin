@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * ddbridge-hw.h: Digital Devices bridge hardware maps
  *
@@ -7,38 +6,38 @@
  *                         Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#अगर_अघोषित _DDBRIDGE_HW_H_
-#घोषणा _DDBRIDGE_HW_H_
+#ifndef _DDBRIDGE_HW_H_
+#define _DDBRIDGE_HW_H_
 
-#समावेश "ddbridge.h"
-
-/******************************************************************************/
-
-#घोषणा DDVID 0xdd01 /* Digital Devices Venकरोr ID */
+#include "ddbridge.h"
 
 /******************************************************************************/
 
-काष्ठा ddb_device_id अणु
-	u16 venकरोr;
+#define DDVID 0xdd01 /* Digital Devices Vendor ID */
+
+/******************************************************************************/
+
+struct ddb_device_id {
+	u16 vendor;
 	u16 device;
-	u16 subvenकरोr;
+	u16 subvendor;
 	u16 subdevice;
-	स्थिर काष्ठा ddb_info *info;
-पूर्ण;
+	const struct ddb_info *info;
+};
 
 /******************************************************************************/
 
-स्थिर काष्ठा ddb_info *get_ddb_info(u16 venकरोr, u16 device,
-				    u16 subvenकरोr, u16 subdevice);
+const struct ddb_info *get_ddb_info(u16 vendor, u16 device,
+				    u16 subvendor, u16 subdevice);
 
-#पूर्ण_अगर /* _DDBRIDGE_HW_H */
+#endif /* _DDBRIDGE_HW_H */

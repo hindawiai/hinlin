@@ -1,52 +1,51 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: utxख_त्रुटि - Various error/warning output functions
+ * Module Name: utxferror - Various error/warning output functions
  *
  ******************************************************************************/
 
-#घोषणा EXPORT_ACPI_INTERFACES
+#define EXPORT_ACPI_INTERFACES
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utxferror")
 
 /*
- * This module is used क्रम the in-kernel ACPICA as well as the ACPICA
+ * This module is used for the in-kernel ACPICA as well as the ACPICA
  * tools/applications.
  */
-#अगर_अघोषित ACPI_NO_ERROR_MESSAGES	/* Entire module */
+#ifndef ACPI_NO_ERROR_MESSAGES	/* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    acpi_error
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
- *              क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
+ *              format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक "ACPI Error" message with module/line/version info
+ * DESCRIPTION: Print "ACPI Error" message with module/line/version info
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_error(स्थिर अक्षर *module_name, u32 line_number, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+void ACPI_INTERNAL_VAR_XFACE
+acpi_error(const char *module_name, u32 line_number, const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_ERROR);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_ERROR);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_error)
 
@@ -54,42 +53,42 @@ ACPI_EXPORT_SYMBOL(acpi_error)
  *
  * FUNCTION:    acpi_exception
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
- *              status              - Status value to be decoded/क्रमmatted
- *              क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
+ *              status              - Status value to be decoded/formatted
+ *              format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक an "ACPI Error" message with module/line/version
+ * DESCRIPTION: Print an "ACPI Error" message with module/line/version
  *              info as well as decoded acpi_status.
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_exception(स्थिर अक्षर *module_name,
-	       u32 line_number, acpi_status status, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+void ACPI_INTERNAL_VAR_XFACE
+acpi_exception(const char *module_name,
+	       u32 line_number, acpi_status status, const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
+	ACPI_MSG_REDIRECT_BEGIN;
 
-	/* For AE_OK, just prपूर्णांक the message */
+	/* For AE_OK, just print the message */
 
-	अगर (ACPI_SUCCESS(status)) अणु
-		acpi_os_म_लिखो(ACPI_MSG_ERROR);
+	if (ACPI_SUCCESS(status)) {
+		acpi_os_printf(ACPI_MSG_ERROR);
 
-	पूर्ण अन्यथा अणु
-		acpi_os_म_लिखो(ACPI_MSG_ERROR "%s, ",
-			       acpi_क्रमmat_exception(status));
-	पूर्ण
+	} else {
+		acpi_os_printf(ACPI_MSG_ERROR "%s, ",
+			       acpi_format_exception(status));
+	}
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_exception)
 
@@ -97,30 +96,30 @@ ACPI_EXPORT_SYMBOL(acpi_exception)
  *
  * FUNCTION:    acpi_warning
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम warning output)
- *              line_number         - Caller's line number (क्रम warning output)
- *              क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  module_name         - Caller's module name (for warning output)
+ *              line_number         - Caller's line number (for warning output)
+ *              format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक "ACPI Warning" message with module/line/version info
+ * DESCRIPTION: Print "ACPI Warning" message with module/line/version info
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_warning(स्थिर अक्षर *module_name, u32 line_number, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+void ACPI_INTERNAL_VAR_XFACE
+acpi_warning(const char *module_name, u32 line_number, const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_WARNING);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_WARNING);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_warning)
 
@@ -128,28 +127,28 @@ ACPI_EXPORT_SYMBOL(acpi_warning)
  *
  * FUNCTION:    acpi_info
  *
- * PARAMETERS:  क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक generic "ACPI:" inक्रमmation message. There is no
+ * DESCRIPTION: Print generic "ACPI:" information message. There is no
  *              module/line/version info in order to keep the message simple.
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE acpi_info(स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+void ACPI_INTERNAL_VAR_XFACE acpi_info(const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_INFO);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_INFO);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
-	acpi_os_म_लिखो("\n");
-	बहु_पूर्ण(arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
+	acpi_os_printf("\n");
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_info)
 
@@ -157,32 +156,32 @@ ACPI_EXPORT_SYMBOL(acpi_info)
  *
  * FUNCTION:    acpi_bios_error
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
- *              क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
+ *              format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक "ACPI Firmware Error" message with module/line/version
+ * DESCRIPTION: Print "ACPI Firmware Error" message with module/line/version
  *              info
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_bios_error(स्थिर अक्षर *module_name,
-		u32 line_number, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+void ACPI_INTERNAL_VAR_XFACE
+acpi_bios_error(const char *module_name,
+		u32 line_number, const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_BIOS_ERROR);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_bios_error)
 
@@ -190,43 +189,43 @@ ACPI_EXPORT_SYMBOL(acpi_bios_error)
  *
  * FUNCTION:    acpi_bios_exception
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम error output)
- *              line_number         - Caller's line number (क्रम error output)
- *              status              - Status value to be decoded/क्रमmatted
- *              क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  module_name         - Caller's module name (for error output)
+ *              line_number         - Caller's line number (for error output)
+ *              status              - Status value to be decoded/formatted
+ *              format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक an "ACPI Firmware Error" message with module/line/version
+ * DESCRIPTION: Print an "ACPI Firmware Error" message with module/line/version
  *              info as well as decoded acpi_status.
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_bios_exception(स्थिर अक्षर *module_name,
+void ACPI_INTERNAL_VAR_XFACE
+acpi_bios_exception(const char *module_name,
 		    u32 line_number,
-		    acpi_status status, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+		    acpi_status status, const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
+	ACPI_MSG_REDIRECT_BEGIN;
 
-	/* For AE_OK, just prपूर्णांक the message */
+	/* For AE_OK, just print the message */
 
-	अगर (ACPI_SUCCESS(status)) अणु
-		acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR);
+	if (ACPI_SUCCESS(status)) {
+		acpi_os_printf(ACPI_MSG_BIOS_ERROR);
 
-	पूर्ण अन्यथा अणु
-		acpi_os_म_लिखो(ACPI_MSG_BIOS_ERROR "%s, ",
-			       acpi_क्रमmat_exception(status));
-	पूर्ण
+	} else {
+		acpi_os_printf(ACPI_MSG_BIOS_ERROR "%s, ",
+			       acpi_format_exception(status));
+	}
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_bios_exception)
 
@@ -234,32 +233,32 @@ ACPI_EXPORT_SYMBOL(acpi_bios_exception)
  *
  * FUNCTION:    acpi_bios_warning
  *
- * PARAMETERS:  module_name         - Caller's module name (क्रम warning output)
- *              line_number         - Caller's line number (क्रम warning output)
- *              क्रमmat              - Prपूर्णांकf क्रमmat string + additional args
+ * PARAMETERS:  module_name         - Caller's module name (for warning output)
+ *              line_number         - Caller's line number (for warning output)
+ *              format              - Printf format string + additional args
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक "ACPI Firmware Warning" message with module/line/version
+ * DESCRIPTION: Print "ACPI Firmware Warning" message with module/line/version
  *              info
  *
  ******************************************************************************/
-व्योम ACPI_INTERNAL_VAR_XFACE
-acpi_bios_warning(स्थिर अक्षर *module_name,
-		  u32 line_number, स्थिर अक्षर *क्रमmat, ...)
-अणु
-	बहु_सूची arg_list;
+void ACPI_INTERNAL_VAR_XFACE
+acpi_bios_warning(const char *module_name,
+		  u32 line_number, const char *format, ...)
+{
+	va_list arg_list;
 
-	ACPI_MSG_REसूचीECT_BEGIN;
-	acpi_os_म_लिखो(ACPI_MSG_BIOS_WARNING);
+	ACPI_MSG_REDIRECT_BEGIN;
+	acpi_os_printf(ACPI_MSG_BIOS_WARNING);
 
-	बहु_शुरू(arg_list, क्रमmat);
-	acpi_os_भ_लिखो(क्रमmat, arg_list);
+	va_start(arg_list, format);
+	acpi_os_vprintf(format, arg_list);
 	ACPI_MSG_SUFFIX;
-	बहु_पूर्ण(arg_list);
+	va_end(arg_list);
 
-	ACPI_MSG_REसूचीECT_END;
-पूर्ण
+	ACPI_MSG_REDIRECT_END;
+}
 
 ACPI_EXPORT_SYMBOL(acpi_bios_warning)
-#पूर्ण_अगर				/* ACPI_NO_ERROR_MESSAGES */
+#endif				/* ACPI_NO_ERROR_MESSAGES */

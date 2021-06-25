@@ -1,54 +1,53 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/pfn.h>
-#समावेश <यंत्र/xen/page.h>
-#समावेश <यंत्र/xen/hypercall.h>
-#समावेश <xen/पूर्णांकerface/memory.h>
+#include <linux/pfn.h>
+#include <asm/xen/page.h>
+#include <asm/xen/hypercall.h>
+#include <xen/interface/memory.h>
 
-#समावेश "multicalls.h"
-#समावेश "mmu.h"
+#include "multicalls.h"
+#include "mmu.h"
 
-अचिन्हित दीर्घ arbitrary_virt_to_mfn(व्योम *vaddr)
-अणु
+unsigned long arbitrary_virt_to_mfn(void *vaddr)
+{
 	xmaddr_t maddr = arbitrary_virt_to_machine(vaddr);
 
-	वापस PFN_DOWN(maddr.maddr);
-पूर्ण
+	return PFN_DOWN(maddr.maddr);
+}
 
-xmaddr_t arbitrary_virt_to_machine(व्योम *vaddr)
-अणु
-	अचिन्हित दीर्घ address = (अचिन्हित दीर्घ)vaddr;
-	अचिन्हित पूर्णांक level;
+xmaddr_t arbitrary_virt_to_machine(void *vaddr)
+{
+	unsigned long address = (unsigned long)vaddr;
+	unsigned int level;
 	pte_t *pte;
-	अचिन्हित offset;
+	unsigned offset;
 
 	/*
-	 * अगर the PFN is in the linear mapped vaddr range, we can just use
+	 * if the PFN is in the linear mapped vaddr range, we can just use
 	 * the (quick) virt_to_machine() p2m lookup
 	 */
-	अगर (virt_addr_valid(vaddr))
-		वापस virt_to_machine(vaddr);
+	if (virt_addr_valid(vaddr))
+		return virt_to_machine(vaddr);
 
-	/* otherwise we have to करो a (slower) full page-table walk */
+	/* otherwise we have to do a (slower) full page-table walk */
 
 	pte = lookup_address(address, &level);
-	BUG_ON(pte == शून्य);
+	BUG_ON(pte == NULL);
 	offset = address & ~PAGE_MASK;
-	वापस XMADDR(((phys_addr_t)pte_mfn(*pte) << PAGE_SHIFT) + offset);
-पूर्ण
+	return XMADDR(((phys_addr_t)pte_mfn(*pte) << PAGE_SHIFT) + offset);
+}
 EXPORT_SYMBOL_GPL(arbitrary_virt_to_machine);
 
 /* Returns: 0 success */
-पूर्णांक xen_unmap_करोमुख्य_gfn_range(काष्ठा vm_area_काष्ठा *vma,
-			       पूर्णांक nr, काष्ठा page **pages)
-अणु
-	अगर (xen_feature(XENFEAT_स्वतः_translated_physmap))
-		वापस xen_xlate_unmap_gfn_range(vma, nr, pages);
+int xen_unmap_domain_gfn_range(struct vm_area_struct *vma,
+			       int nr, struct page **pages)
+{
+	if (xen_feature(XENFEAT_auto_translated_physmap))
+		return xen_xlate_unmap_gfn_range(vma, nr, pages);
 
-	अगर (!pages)
-		वापस 0;
+	if (!pages)
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
-EXPORT_SYMBOL_GPL(xen_unmap_करोमुख्य_gfn_range);
+	return -EINVAL;
+}
+EXPORT_SYMBOL_GPL(xen_unmap_domain_gfn_range);

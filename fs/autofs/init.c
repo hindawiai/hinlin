@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 1997-1998 Transmeta Corporation -- All Rights Reserved
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश "autofs_i.h"
+#include <linux/module.h>
+#include <linux/init.h>
+#include "autofs_i.h"
 
-अटल काष्ठा dentry *स्वतःfs_mount(काष्ठा file_प्रणाली_type *fs_type,
-	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
-अणु
-	वापस mount_nodev(fs_type, flags, data, स्वतःfs_fill_super);
-पूर्ण
+static struct dentry *autofs_mount(struct file_system_type *fs_type,
+	int flags, const char *dev_name, void *data)
+{
+	return mount_nodev(fs_type, flags, data, autofs_fill_super);
+}
 
-काष्ठा file_प्रणाली_type स्वतःfs_fs_type = अणु
+struct file_system_type autofs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "autofs",
-	.mount		= स्वतःfs_mount,
-	.समाप्त_sb	= स्वतःfs_समाप्त_sb,
-पूर्ण;
+	.mount		= autofs_mount,
+	.kill_sb	= autofs_kill_sb,
+};
 MODULE_ALIAS_FS("autofs");
 MODULE_ALIAS("autofs");
 
-अटल पूर्णांक __init init_स्वतःfs_fs(व्योम)
-अणु
-	पूर्णांक err;
+static int __init init_autofs_fs(void)
+{
+	int err;
 
-	स्वतःfs_dev_ioctl_init();
+	autofs_dev_ioctl_init();
 
-	err = रेजिस्टर_fileप्रणाली(&स्वतःfs_fs_type);
-	अगर (err)
-		स्वतःfs_dev_ioctl_निकास();
+	err = register_filesystem(&autofs_fs_type);
+	if (err)
+		autofs_dev_ioctl_exit();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास निकास_स्वतःfs_fs(व्योम)
-अणु
-	स्वतःfs_dev_ioctl_निकास();
-	unरेजिस्टर_fileप्रणाली(&स्वतःfs_fs_type);
-पूर्ण
+static void __exit exit_autofs_fs(void)
+{
+	autofs_dev_ioctl_exit();
+	unregister_filesystem(&autofs_fs_type);
+}
 
-module_init(init_स्वतःfs_fs)
-module_निकास(निकास_स्वतःfs_fs)
+module_init(init_autofs_fs)
+module_exit(exit_autofs_fs)
 MODULE_LICENSE("GPL");

@@ -1,219 +1,218 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <sched.h>
-#समावेश <मानकतर्क.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/mount.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <sys/vfs.h>
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <sched.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/vfs.h>
+#include <unistd.h>
 
-#अगर_अघोषित MS_NOSYMFOLLOW
+#ifndef MS_NOSYMFOLLOW
 # define MS_NOSYMFOLLOW 256     /* Do not follow symlinks */
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित ST_NOSYMFOLLOW
+#ifndef ST_NOSYMFOLLOW
 # define ST_NOSYMFOLLOW 0x2000  /* Do not follow symlinks */
-#पूर्ण_अगर
+#endif
 
-#घोषणा DATA "/tmp/data"
-#घोषणा LINK "/tmp/symlink"
-#घोषणा TMP  "/tmp"
+#define DATA "/tmp/data"
+#define LINK "/tmp/symlink"
+#define TMP  "/tmp"
 
-अटल व्योम die(अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void die(char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	भख_लिखो(मानक_त्रुटि, fmt, ap);
-	बहु_पूर्ण(ap);
-	निकास(निकास_त्रुटि);
-पूर्ण
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	exit(EXIT_FAILURE);
+}
 
-अटल व्योम vmaybe_ग_लिखो_file(bool enoent_ok, अक्षर *filename, अक्षर *fmt,
-		बहु_सूची ap)
-अणु
-	sमाप_प्रकार written;
-	अक्षर buf[4096];
-	पूर्णांक buf_len;
-	पूर्णांक fd;
+static void vmaybe_write_file(bool enoent_ok, char *filename, char *fmt,
+		va_list ap)
+{
+	ssize_t written;
+	char buf[4096];
+	int buf_len;
+	int fd;
 
-	buf_len = vsnम_लिखो(buf, माप(buf), fmt, ap);
-	अगर (buf_len < 0)
-		die("vsnprintf failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	buf_len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	if (buf_len < 0)
+		die("vsnprintf failed: %s\n", strerror(errno));
 
-	अगर (buf_len >= माप(buf))
+	if (buf_len >= sizeof(buf))
 		die("vsnprintf output truncated\n");
 
-	fd = खोलो(filename, O_WRONLY);
-	अगर (fd < 0) अणु
-		अगर ((त्रुटि_सं == ENOENT) && enoent_ok)
-			वापस;
-		die("open of %s failed: %s\n", filename, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+	fd = open(filename, O_WRONLY);
+	if (fd < 0) {
+		if ((errno == ENOENT) && enoent_ok)
+			return;
+		die("open of %s failed: %s\n", filename, strerror(errno));
+	}
 
-	written = ग_लिखो(fd, buf, buf_len);
-	अगर (written != buf_len) अणु
-		अगर (written >= 0) अणु
+	written = write(fd, buf, buf_len);
+	if (written != buf_len) {
+		if (written >= 0) {
 			die("short write to %s\n", filename);
-		पूर्ण अन्यथा अणु
+		} else {
 			die("write to %s failed: %s\n",
-				filename, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
+				filename, strerror(errno));
+		}
+	}
 
-	अगर (बंद(fd) != 0)
-		die("close of %s failed: %s\n", filename, म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	if (close(fd) != 0)
+		die("close of %s failed: %s\n", filename, strerror(errno));
+}
 
-अटल व्योम maybe_ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void maybe_write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vmaybe_ग_लिखो_file(true, filename, fmt, ap);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	vmaybe_write_file(true, filename, fmt, ap);
+	va_end(ap);
+}
 
-अटल व्योम ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vmaybe_ग_लिखो_file(false, filename, fmt, ap);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	vmaybe_write_file(false, filename, fmt, ap);
+	va_end(ap);
+}
 
-अटल व्योम create_and_enter_ns(व्योम)
-अणु
+static void create_and_enter_ns(void)
+{
 	uid_t uid = getuid();
 	gid_t gid = getgid();
 
-	अगर (unshare(CLONE_NEWUSER) != 0)
-		die("unshare(CLONE_NEWUSER) failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (unshare(CLONE_NEWUSER) != 0)
+		die("unshare(CLONE_NEWUSER) failed: %s\n", strerror(errno));
 
-	maybe_ग_लिखो_file("/proc/self/setgroups", "deny");
-	ग_लिखो_file("/proc/self/uid_map", "0 %d 1", uid);
-	ग_लिखो_file("/proc/self/gid_map", "0 %d 1", gid);
+	maybe_write_file("/proc/self/setgroups", "deny");
+	write_file("/proc/self/uid_map", "0 %d 1", uid);
+	write_file("/proc/self/gid_map", "0 %d 1", gid);
 
-	अगर (setgid(0) != 0)
-		die("setgid(0) failed %s\n", म_त्रुटि(त्रुटि_सं));
-	अगर (setuid(0) != 0)
-		die("setuid(0) failed %s\n", म_त्रुटि(त्रुटि_सं));
+	if (setgid(0) != 0)
+		die("setgid(0) failed %s\n", strerror(errno));
+	if (setuid(0) != 0)
+		die("setuid(0) failed %s\n", strerror(errno));
 
-	अगर (unshare(CLONE_NEWNS) != 0)
-		die("unshare(CLONE_NEWNS) failed: %s\n", म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	if (unshare(CLONE_NEWNS) != 0)
+		die("unshare(CLONE_NEWNS) failed: %s\n", strerror(errno));
+}
 
-अटल व्योम setup_symlink(व्योम)
-अणु
-	पूर्णांक data, err;
+static void setup_symlink(void)
+{
+	int data, err;
 
 	data = creat(DATA, O_RDWR);
-	अगर (data < 0)
-		die("creat failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (data < 0)
+		die("creat failed: %s\n", strerror(errno));
 
 	err = symlink(DATA, LINK);
-	अगर (err < 0)
-		die("symlink failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (err < 0)
+		die("symlink failed: %s\n", strerror(errno));
 
-	अगर (बंद(data) != 0)
-		die("close of %s failed: %s\n", DATA, म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	if (close(data) != 0)
+		die("close of %s failed: %s\n", DATA, strerror(errno));
+}
 
-अटल व्योम test_link_traversal(bool nosymfollow)
-अणु
-	पूर्णांक link;
+static void test_link_traversal(bool nosymfollow)
+{
+	int link;
 
-	link = खोलो(LINK, 0, O_RDWR);
-	अगर (nosymfollow) अणु
-		अगर ((link != -1 || त्रुटि_सं != ELOOP)) अणु
+	link = open(LINK, 0, O_RDWR);
+	if (nosymfollow) {
+		if ((link != -1 || errno != ELOOP)) {
 			die("link traversal unexpected result: %d, %s\n",
-					link, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (link < 0)
-			die("link traversal failed: %s\n", म_त्रुटि(त्रुटि_सं));
+					link, strerror(errno));
+		}
+	} else {
+		if (link < 0)
+			die("link traversal failed: %s\n", strerror(errno));
 
-		अगर (बंद(link) != 0)
-			die("close of link failed: %s\n", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+		if (close(link) != 0)
+			die("close of link failed: %s\n", strerror(errno));
+	}
+}
 
-अटल व्योम test_पढ़ोlink(व्योम)
-अणु
-	अक्षर buf[4096];
-	sमाप_प्रकार ret;
+static void test_readlink(void)
+{
+	char buf[4096];
+	ssize_t ret;
 
-	bzero(buf, माप(buf));
+	bzero(buf, sizeof(buf));
 
-	ret = पढ़ोlink(LINK, buf, माप(buf));
-	अगर (ret < 0)
-		die("readlink failed: %s\n", म_त्रुटि(त्रुटि_सं));
-	अगर (म_भेद(buf, DATA) != 0)
+	ret = readlink(LINK, buf, sizeof(buf));
+	if (ret < 0)
+		die("readlink failed: %s\n", strerror(errno));
+	if (strcmp(buf, DATA) != 0)
 		die("readlink strcmp failed: '%s' '%s'\n", buf, DATA);
-पूर्ण
+}
 
-अटल व्योम test_realpath(व्योम)
-अणु
-	अक्षर *path = realpath(LINK, शून्य);
+static void test_realpath(void)
+{
+	char *path = realpath(LINK, NULL);
 
-	अगर (!path)
-		die("realpath failed: %s\n", म_त्रुटि(त्रुटि_सं));
-	अगर (म_भेद(path, DATA) != 0)
+	if (!path)
+		die("realpath failed: %s\n", strerror(errno));
+	if (strcmp(path, DATA) != 0)
 		die("realpath strcmp failed\n");
 
-	मुक्त(path);
-पूर्ण
+	free(path);
+}
 
-अटल व्योम test_statfs(bool nosymfollow)
-अणु
-	काष्ठा statfs buf;
-	पूर्णांक ret;
+static void test_statfs(bool nosymfollow)
+{
+	struct statfs buf;
+	int ret;
 
 	ret = statfs(TMP, &buf);
-	अगर (ret)
-		die("statfs failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (ret)
+		die("statfs failed: %s\n", strerror(errno));
 
-	अगर (nosymfollow) अणु
-		अगर ((buf.f_flags & ST_NOSYMFOLLOW) == 0)
+	if (nosymfollow) {
+		if ((buf.f_flags & ST_NOSYMFOLLOW) == 0)
 			die("ST_NOSYMFOLLOW not set on %s\n", TMP);
-	पूर्ण अन्यथा अणु
-		अगर ((buf.f_flags & ST_NOSYMFOLLOW) != 0)
+	} else {
+		if ((buf.f_flags & ST_NOSYMFOLLOW) != 0)
 			die("ST_NOSYMFOLLOW set on %s\n", TMP);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम run_tests(bool nosymfollow)
-अणु
+static void run_tests(bool nosymfollow)
+{
 	test_link_traversal(nosymfollow);
-	test_पढ़ोlink();
+	test_readlink();
 	test_realpath();
 	test_statfs(nosymfollow);
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
+int main(int argc, char **argv)
+{
 	create_and_enter_ns();
 
-	अगर (mount("testing", TMP, "ramfs", 0, शून्य) != 0)
-		die("mount failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (mount("testing", TMP, "ramfs", 0, NULL) != 0)
+		die("mount failed: %s\n", strerror(errno));
 
 	setup_symlink();
 	run_tests(false);
 
-	अगर (mount("testing", TMP, "ramfs", MS_REMOUNT|MS_NOSYMFOLLOW, शून्य) != 0)
-		die("remount failed: %s\n", म_त्रुटि(त्रुटि_सं));
+	if (mount("testing", TMP, "ramfs", MS_REMOUNT|MS_NOSYMFOLLOW, NULL) != 0)
+		die("remount failed: %s\n", strerror(errno));
 
 	run_tests(true);
 
-	वापस निकास_सफल;
-पूर्ण
+	return EXIT_SUCCESS;
+}

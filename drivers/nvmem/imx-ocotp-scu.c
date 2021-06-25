@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * i.MX8 OCOTP fusebox driver
  *
@@ -8,111 +7,111 @@
  * Peng Fan <peng.fan@nxp.com>
  */
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/firmware/imx/sci.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nvmem-provider.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/arm-smccc.h>
+#include <linux/firmware/imx/sci.h>
+#include <linux/module.h>
+#include <linux/nvmem-provider.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#घोषणा IMX_SIP_OTP_WRITE		0xc200000B
+#define IMX_SIP_OTP_WRITE		0xc200000B
 
-क्रमागत ocotp_devtype अणु
+enum ocotp_devtype {
 	IMX8QXP,
 	IMX8QM,
-पूर्ण;
+};
 
-#घोषणा ECC_REGION	BIT(0)
-#घोषणा HOLE_REGION	BIT(1)
+#define ECC_REGION	BIT(0)
+#define HOLE_REGION	BIT(1)
 
-काष्ठा ocotp_region अणु
+struct ocotp_region {
 	u32 start;
 	u32 end;
 	u32 flag;
-पूर्ण;
+};
 
-काष्ठा ocotp_devtype_data अणु
-	पूर्णांक devtype;
-	पूर्णांक nregs;
+struct ocotp_devtype_data {
+	int devtype;
+	int nregs;
 	u32 num_region;
-	काष्ठा ocotp_region region[];
-पूर्ण;
+	struct ocotp_region region[];
+};
 
-काष्ठा ocotp_priv अणु
-	काष्ठा device *dev;
-	स्थिर काष्ठा ocotp_devtype_data *data;
-	काष्ठा imx_sc_ipc *nvmem_ipc;
-पूर्ण;
+struct ocotp_priv {
+	struct device *dev;
+	const struct ocotp_devtype_data *data;
+	struct imx_sc_ipc *nvmem_ipc;
+};
 
-काष्ठा imx_sc_msg_misc_fuse_पढ़ो अणु
-	काष्ठा imx_sc_rpc_msg hdr;
+struct imx_sc_msg_misc_fuse_read {
+	struct imx_sc_rpc_msg hdr;
 	u32 word;
-पूर्ण __packed;
+} __packed;
 
-अटल DEFINE_MUTEX(scu_ocotp_mutex);
+static DEFINE_MUTEX(scu_ocotp_mutex);
 
-अटल काष्ठा ocotp_devtype_data imx8qxp_data = अणु
+static struct ocotp_devtype_data imx8qxp_data = {
 	.devtype = IMX8QXP,
 	.nregs = 800,
 	.num_region = 3,
-	.region = अणु
-		अणु0x10, 0x10f, ECC_REGIONपूर्ण,
-		अणु0x110, 0x21F, HOLE_REGIONपूर्ण,
-		अणु0x220, 0x31F, ECC_REGIONपूर्ण,
-	पूर्ण,
-पूर्ण;
+	.region = {
+		{0x10, 0x10f, ECC_REGION},
+		{0x110, 0x21F, HOLE_REGION},
+		{0x220, 0x31F, ECC_REGION},
+	},
+};
 
-अटल काष्ठा ocotp_devtype_data imx8qm_data = अणु
+static struct ocotp_devtype_data imx8qm_data = {
 	.devtype = IMX8QM,
 	.nregs = 800,
 	.num_region = 2,
-	.region = अणु
-		अणु0x10, 0x10f, ECC_REGIONपूर्ण,
-		अणु0x1a0, 0x1ff, ECC_REGIONपूर्ण,
-	पूर्ण,
-पूर्ण;
+	.region = {
+		{0x10, 0x10f, ECC_REGION},
+		{0x1a0, 0x1ff, ECC_REGION},
+	},
+};
 
-अटल bool in_hole(व्योम *context, u32 index)
-अणु
-	काष्ठा ocotp_priv *priv = context;
-	स्थिर काष्ठा ocotp_devtype_data *data = priv->data;
-	पूर्णांक i;
+static bool in_hole(void *context, u32 index)
+{
+	struct ocotp_priv *priv = context;
+	const struct ocotp_devtype_data *data = priv->data;
+	int i;
 
-	क्रम (i = 0; i < data->num_region; i++) अणु
-		अगर (data->region[i].flag & HOLE_REGION) अणु
-			अगर ((index >= data->region[i].start) &&
+	for (i = 0; i < data->num_region; i++) {
+		if (data->region[i].flag & HOLE_REGION) {
+			if ((index >= data->region[i].start) &&
 			    (index <= data->region[i].end))
-				वापस true;
-		पूर्ण
-	पूर्ण
+				return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool in_ecc(व्योम *context, u32 index)
-अणु
-	काष्ठा ocotp_priv *priv = context;
-	स्थिर काष्ठा ocotp_devtype_data *data = priv->data;
-	पूर्णांक i;
+static bool in_ecc(void *context, u32 index)
+{
+	struct ocotp_priv *priv = context;
+	const struct ocotp_devtype_data *data = priv->data;
+	int i;
 
-	क्रम (i = 0; i < data->num_region; i++) अणु
-		अगर (data->region[i].flag & ECC_REGION) अणु
-			अगर ((index >= data->region[i].start) &&
+	for (i = 0; i < data->num_region; i++) {
+		if (data->region[i].flag & ECC_REGION) {
+			if ((index >= data->region[i].start) &&
 			    (index <= data->region[i].end))
-				वापस true;
-		पूर्ण
-	पूर्ण
+				return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक imx_sc_misc_otp_fuse_पढ़ो(काष्ठा imx_sc_ipc *ipc, u32 word,
+static int imx_sc_misc_otp_fuse_read(struct imx_sc_ipc *ipc, u32 word,
 				     u32 *val)
-अणु
-	काष्ठा imx_sc_msg_misc_fuse_पढ़ो msg;
-	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
-	पूर्णांक ret;
+{
+	struct imx_sc_msg_misc_fuse_read msg;
+	struct imx_sc_rpc_msg *hdr = &msg.hdr;
+	int ret;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_MISC;
@@ -122,93 +121,93 @@
 	msg.word = word;
 
 	ret = imx_scu_call_rpc(ipc, &msg, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = msg.word;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_scu_ocotp_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
-			      व्योम *val, माप_प्रकार bytes)
-अणु
-	काष्ठा ocotp_priv *priv = context;
+static int imx_scu_ocotp_read(void *context, unsigned int offset,
+			      void *val, size_t bytes)
+{
+	struct ocotp_priv *priv = context;
 	u32 count, index, num_bytes;
 	u32 *buf;
-	व्योम *p;
-	पूर्णांक i, ret;
+	void *p;
+	int i, ret;
 
 	index = offset;
 	num_bytes = round_up(bytes, 4);
 	count = num_bytes >> 2;
 
-	अगर (count > (priv->data->nregs - index))
+	if (count > (priv->data->nregs - index))
 		count = priv->data->nregs - index;
 
 	p = kzalloc(num_bytes, GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	if (!p)
+		return -ENOMEM;
 
 	mutex_lock(&scu_ocotp_mutex);
 
 	buf = p;
 
-	क्रम (i = index; i < (index + count); i++) अणु
-		अगर (in_hole(context, i)) अणु
+	for (i = index; i < (index + count); i++) {
+		if (in_hole(context, i)) {
 			*buf++ = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		ret = imx_sc_misc_otp_fuse_पढ़ो(priv->nvmem_ipc, i, buf);
-		अगर (ret) अणु
+		ret = imx_sc_misc_otp_fuse_read(priv->nvmem_ipc, i, buf);
+		if (ret) {
 			mutex_unlock(&scu_ocotp_mutex);
-			kमुक्त(p);
-			वापस ret;
-		पूर्ण
+			kfree(p);
+			return ret;
+		}
 		buf++;
-	पूर्ण
+	}
 
-	स_नकल(val, (u8 *)p, bytes);
+	memcpy(val, (u8 *)p, bytes);
 
 	mutex_unlock(&scu_ocotp_mutex);
 
-	kमुक्त(p);
+	kfree(p);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_scu_ocotp_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक offset,
-			       व्योम *val, माप_प्रकार bytes)
-अणु
-	काष्ठा ocotp_priv *priv = context;
-	काष्ठा arm_smccc_res res;
+static int imx_scu_ocotp_write(void *context, unsigned int offset,
+			       void *val, size_t bytes)
+{
+	struct ocotp_priv *priv = context;
+	struct arm_smccc_res res;
 	u32 *buf = val;
-	u32 पंचांगp;
+	u32 tmp;
 	u32 index;
-	पूर्णांक ret;
+	int ret;
 
-	/* allow only writing one complete OTP word at a समय */
-	अगर (bytes != 4)
-		वापस -EINVAL;
+	/* allow only writing one complete OTP word at a time */
+	if (bytes != 4)
+		return -EINVAL;
 
 	index = offset;
 
-	अगर (in_hole(context, index))
-		वापस -EINVAL;
+	if (in_hole(context, index))
+		return -EINVAL;
 
-	अगर (in_ecc(context, index)) अणु
+	if (in_ecc(context, index)) {
 		pr_warn("ECC region, only program once\n");
 		mutex_lock(&scu_ocotp_mutex);
-		ret = imx_sc_misc_otp_fuse_पढ़ो(priv->nvmem_ipc, index, &पंचांगp);
+		ret = imx_sc_misc_otp_fuse_read(priv->nvmem_ipc, index, &tmp);
 		mutex_unlock(&scu_ocotp_mutex);
-		अगर (ret)
-			वापस ret;
-		अगर (पंचांगp) अणु
-			pr_warn("ECC region, already has value: %x\n", पंचांगp);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+		if (ret)
+			return ret;
+		if (tmp) {
+			pr_warn("ECC region, already has value: %x\n", tmp);
+			return -EIO;
+		}
+	}
 
 	mutex_lock(&scu_ocotp_mutex);
 
@@ -216,59 +215,59 @@
 
 	mutex_unlock(&scu_ocotp_mutex);
 
-	वापस res.a0;
-पूर्ण
+	return res.a0;
+}
 
-अटल काष्ठा nvmem_config imx_scu_ocotp_nvmem_config = अणु
+static struct nvmem_config imx_scu_ocotp_nvmem_config = {
 	.name = "imx-scu-ocotp",
-	.पढ़ो_only = false,
+	.read_only = false,
 	.word_size = 4,
 	.stride = 1,
 	.owner = THIS_MODULE,
-	.reg_पढ़ो = imx_scu_ocotp_पढ़ो,
-	.reg_ग_लिखो = imx_scu_ocotp_ग_लिखो,
-पूर्ण;
+	.reg_read = imx_scu_ocotp_read,
+	.reg_write = imx_scu_ocotp_write,
+};
 
-अटल स्थिर काष्ठा of_device_id imx_scu_ocotp_dt_ids[] = अणु
-	अणु .compatible = "fsl,imx8qxp-scu-ocotp", (व्योम *)&imx8qxp_data पूर्ण,
-	अणु .compatible = "fsl,imx8qm-scu-ocotp", (व्योम *)&imx8qm_data पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id imx_scu_ocotp_dt_ids[] = {
+	{ .compatible = "fsl,imx8qxp-scu-ocotp", (void *)&imx8qxp_data },
+	{ .compatible = "fsl,imx8qm-scu-ocotp", (void *)&imx8qm_data },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, imx_scu_ocotp_dt_ids);
 
-अटल पूर्णांक imx_scu_ocotp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा ocotp_priv *priv;
-	काष्ठा nvmem_device *nvmem;
-	पूर्णांक ret;
+static int imx_scu_ocotp_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ocotp_priv *priv;
+	struct nvmem_device *nvmem;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	ret = imx_scu_get_handle(&priv->nvmem_ipc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	priv->data = of_device_get_match_data(dev);
 	priv->dev = dev;
 	imx_scu_ocotp_nvmem_config.size = 4 * priv->data->nregs;
 	imx_scu_ocotp_nvmem_config.dev = dev;
 	imx_scu_ocotp_nvmem_config.priv = priv;
-	nvmem = devm_nvmem_रेजिस्टर(dev, &imx_scu_ocotp_nvmem_config);
+	nvmem = devm_nvmem_register(dev, &imx_scu_ocotp_nvmem_config);
 
-	वापस PTR_ERR_OR_ZERO(nvmem);
-पूर्ण
+	return PTR_ERR_OR_ZERO(nvmem);
+}
 
-अटल काष्ठा platक्रमm_driver imx_scu_ocotp_driver = अणु
+static struct platform_driver imx_scu_ocotp_driver = {
 	.probe	= imx_scu_ocotp_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "imx_scu_ocotp",
 		.of_match_table = imx_scu_ocotp_dt_ids,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(imx_scu_ocotp_driver);
+	},
+};
+module_platform_driver(imx_scu_ocotp_driver);
 
 MODULE_AUTHOR("Peng Fan <peng.fan@nxp.com>");
 MODULE_DESCRIPTION("i.MX8 SCU OCOTP fuse box driver");

@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
- * This file is part of the Chelsio FCoE driver क्रम Linux.
+ * This file is part of the Chelsio FCoE driver for Linux.
  *
  * Copyright (c) 2008-2012 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,103 +32,103 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <scsi/fc/fc_fs.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/pci.h>
+#include <linux/mm.h>
+#include <linux/jiffies.h>
+#include <scsi/fc/fc_fs.h>
 
-#समावेश "csio_init.h"
+#include "csio_init.h"
 
-अटल व्योम
-csio_vport_set_state(काष्ठा csio_lnode *ln);
+static void
+csio_vport_set_state(struct csio_lnode *ln);
 
 /*
  * csio_reg_rnode - Register a remote port with FC transport.
  * @rn: Rnode representing remote port.
  *
- * Call fc_remote_port_add() to रेजिस्टर this remote port with FC transport.
+ * Call fc_remote_port_add() to register this remote port with FC transport.
  * If remote port is Initiator OR Target OR both, change the role appropriately.
  *
  */
-व्योम
-csio_reg_rnode(काष्ठा csio_rnode *rn)
-अणु
-	काष्ठा csio_lnode *ln		= csio_rnode_to_lnode(rn);
-	काष्ठा Scsi_Host *shost		= csio_ln_to_shost(ln);
-	काष्ठा fc_rport_identअगरiers ids;
-	काष्ठा fc_rport  *rport;
-	काष्ठा csio_service_parms *sp;
+void
+csio_reg_rnode(struct csio_rnode *rn)
+{
+	struct csio_lnode *ln		= csio_rnode_to_lnode(rn);
+	struct Scsi_Host *shost		= csio_ln_to_shost(ln);
+	struct fc_rport_identifiers ids;
+	struct fc_rport  *rport;
+	struct csio_service_parms *sp;
 
 	ids.node_name	= wwn_to_u64(csio_rn_wwnn(rn));
 	ids.port_name	= wwn_to_u64(csio_rn_wwpn(rn));
 	ids.port_id	= rn->nport_id;
 	ids.roles	= FC_RPORT_ROLE_UNKNOWN;
 
-	अगर (rn->role & CSIO_RNFR_INITIATOR || rn->role & CSIO_RNFR_TARGET) अणु
+	if (rn->role & CSIO_RNFR_INITIATOR || rn->role & CSIO_RNFR_TARGET) {
 		rport = rn->rport;
-		CSIO_ASSERT(rport != शून्य);
-		जाओ update_role;
-	पूर्ण
+		CSIO_ASSERT(rport != NULL);
+		goto update_role;
+	}
 
 	rn->rport = fc_remote_port_add(shost, 0, &ids);
-	अगर (!rn->rport) अणु
+	if (!rn->rport) {
 		csio_ln_err(ln, "Failed to register rport = 0x%x.\n",
 					rn->nport_id);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ln->num_reg_rnodes++;
 	rport = rn->rport;
 	spin_lock_irq(shost->host_lock);
-	*((काष्ठा csio_rnode **)rport->dd_data) = rn;
+	*((struct csio_rnode **)rport->dd_data) = rn;
 	spin_unlock_irq(shost->host_lock);
 
 	sp = &rn->rn_sparm;
 	rport->maxframe_size = ntohs(sp->csp.sp_bb_data);
-	अगर (ntohs(sp->clsp[2].cp_class) & FC_CPC_VALID)
+	if (ntohs(sp->clsp[2].cp_class) & FC_CPC_VALID)
 		rport->supported_classes = FC_COS_CLASS3;
-	अन्यथा
+	else
 		rport->supported_classes = FC_COS_UNSPECIFIED;
 update_role:
-	अगर (rn->role & CSIO_RNFR_INITIATOR)
+	if (rn->role & CSIO_RNFR_INITIATOR)
 		ids.roles |= FC_RPORT_ROLE_FCP_INITIATOR;
-	अगर (rn->role & CSIO_RNFR_TARGET)
+	if (rn->role & CSIO_RNFR_TARGET)
 		ids.roles |= FC_RPORT_ROLE_FCP_TARGET;
 
-	अगर (ids.roles != FC_RPORT_ROLE_UNKNOWN)
+	if (ids.roles != FC_RPORT_ROLE_UNKNOWN)
 		fc_remote_port_rolechg(rport, ids.roles);
 
 	rn->scsi_id = rport->scsi_target_id;
 
 	csio_ln_dbg(ln, "Remote port x%x role 0x%x registered\n",
 		rn->nport_id, ids.roles);
-पूर्ण
+}
 
 /*
- * csio_unreg_rnode - Unरेजिस्टर a remote port with FC transport.
+ * csio_unreg_rnode - Unregister a remote port with FC transport.
  * @rn: Rnode representing remote port.
  *
- * Call fc_remote_port_delete() to unरेजिस्टर this remote port with FC
+ * Call fc_remote_port_delete() to unregister this remote port with FC
  * transport.
  *
  */
-व्योम
-csio_unreg_rnode(काष्ठा csio_rnode *rn)
-अणु
-	काष्ठा csio_lnode *ln = csio_rnode_to_lnode(rn);
-	काष्ठा fc_rport *rport = rn->rport;
+void
+csio_unreg_rnode(struct csio_rnode *rn)
+{
+	struct csio_lnode *ln = csio_rnode_to_lnode(rn);
+	struct fc_rport *rport = rn->rport;
 
 	rn->role &= ~(CSIO_RNFR_INITIATOR | CSIO_RNFR_TARGET);
 	fc_remote_port_delete(rport);
 	ln->num_reg_rnodes--;
 
 	csio_ln_dbg(ln, "Remote port x%x un-registered\n", rn->nport_id);
-पूर्ण
+}
 
 /*
  * csio_lnode_async_event - Async events from local port.
@@ -138,11 +137,11 @@ csio_unreg_rnode(काष्ठा csio_rnode *rn)
  * Async events from local node that FC transport/SCSI ML
  * should be made aware of (Eg: RSCN).
  */
-व्योम
-csio_lnode_async_event(काष्ठा csio_lnode *ln, क्रमागत csio_ln_fc_evt fc_evt)
-अणु
-	चयन (fc_evt) अणु
-	हाल CSIO_LN_FC_RSCN:
+void
+csio_lnode_async_event(struct csio_lnode *ln, enum csio_ln_fc_evt fc_evt)
+{
+	switch (fc_evt) {
+	case CSIO_LN_FC_RSCN:
 		/* Get payload of rscn from ln */
 		/* For each RSCN entry */
 			/*
@@ -151,38 +150,38 @@ csio_lnode_async_event(काष्ठा csio_lnode *ln, क्रमागत 
 			 *		      FCH_EVT_RSCN,
 			 *		      rscn_entry);
 			 */
-		अवरोध;
-	हाल CSIO_LN_FC_LINKUP:
+		break;
+	case CSIO_LN_FC_LINKUP:
 		/* send fc_host_post_event */
 		/* set vport state */
-		अगर (csio_is_npiv_ln(ln))
+		if (csio_is_npiv_ln(ln))
 			csio_vport_set_state(ln);
 
-		अवरोध;
-	हाल CSIO_LN_FC_LINKDOWN:
+		break;
+	case CSIO_LN_FC_LINKDOWN:
 		/* send fc_host_post_event */
 		/* set vport state */
-		अगर (csio_is_npiv_ln(ln))
+		if (csio_is_npiv_ln(ln))
 			csio_vport_set_state(ln);
 
-		अवरोध;
-	हाल CSIO_LN_FC_ATTRIB_UPDATE:
+		break;
+	case CSIO_LN_FC_ATTRIB_UPDATE:
 		csio_fchost_attr_init(ln);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 /*
  * csio_fchost_attr_init - Initialize FC transport attributes
  * @ln: Lnode.
  *
  */
-व्योम
-csio_fchost_attr_init(काष्ठा csio_lnode *ln)
-अणु
-	काष्ठा Scsi_Host  *shost = csio_ln_to_shost(ln);
+void
+csio_fchost_attr_init(struct csio_lnode *ln)
+{
+	struct Scsi_Host  *shost = csio_ln_to_shost(ln);
 
 	fc_host_node_name(shost) = wwn_to_u64(csio_ln_wwnn(ln));
 	fc_host_port_name(shost) = wwn_to_u64(csio_ln_wwpn(ln));
@@ -194,148 +193,148 @@ csio_fchost_attr_init(काष्ठा csio_lnode *ln)
 		FC_PORTSPEED_1GBIT;
 
 	fc_host_maxframe_size(shost) = ntohs(ln->ln_sparm.csp.sp_bb_data);
-	स_रखो(fc_host_supported_fc4s(shost), 0,
-		माप(fc_host_supported_fc4s(shost)));
+	memset(fc_host_supported_fc4s(shost), 0,
+		sizeof(fc_host_supported_fc4s(shost)));
 	fc_host_supported_fc4s(shost)[7] = 1;
 
-	स_रखो(fc_host_active_fc4s(shost), 0,
-		माप(fc_host_active_fc4s(shost)));
+	memset(fc_host_active_fc4s(shost), 0,
+		sizeof(fc_host_active_fc4s(shost)));
 	fc_host_active_fc4s(shost)[7] = 1;
-पूर्ण
+}
 
 /*
- * csio_get_host_port_id - sysfs entries क्रम nport_id is
+ * csio_get_host_port_id - sysfs entries for nport_id is
  * populated/cached from this function
  */
-अटल व्योम
-csio_get_host_port_id(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा csio_lnode *ln	= shost_priv(shost);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static void
+csio_get_host_port_id(struct Scsi_Host *shost)
+{
+	struct csio_lnode *ln	= shost_priv(shost);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
 	spin_lock_irq(&hw->lock);
 	fc_host_port_id(shost) = ln->nport_id;
 	spin_unlock_irq(&hw->lock);
-पूर्ण
+}
 
 /*
  * csio_get_port_type - Return FC local port type.
  * @shost: scsi host.
  *
  */
-अटल व्योम
-csio_get_host_port_type(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(shost);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static void
+csio_get_host_port_type(struct Scsi_Host *shost)
+{
+	struct csio_lnode *ln = shost_priv(shost);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
 	spin_lock_irq(&hw->lock);
-	अगर (csio_is_npiv_ln(ln))
+	if (csio_is_npiv_ln(ln))
 		fc_host_port_type(shost) = FC_PORTTYPE_NPIV;
-	अन्यथा
+	else
 		fc_host_port_type(shost) = FC_PORTTYPE_NPORT;
 	spin_unlock_irq(&hw->lock);
-पूर्ण
+}
 
 /*
  * csio_get_port_state - Return FC local port state.
  * @shost: scsi host.
  *
  */
-अटल व्योम
-csio_get_host_port_state(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(shost);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	अक्षर state[16];
+static void
+csio_get_host_port_state(struct Scsi_Host *shost)
+{
+	struct csio_lnode *ln = shost_priv(shost);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	char state[16];
 
 	spin_lock_irq(&hw->lock);
 
 	csio_lnode_state_to_str(ln, state);
-	अगर (!म_भेद(state, "READY"))
+	if (!strcmp(state, "READY"))
 		fc_host_port_state(shost) = FC_PORTSTATE_ONLINE;
-	अन्यथा अगर (!म_भेद(state, "OFFLINE"))
+	else if (!strcmp(state, "OFFLINE"))
 		fc_host_port_state(shost) = FC_PORTSTATE_LINKDOWN;
-	अन्यथा
+	else
 		fc_host_port_state(shost) = FC_PORTSTATE_UNKNOWN;
 
 	spin_unlock_irq(&hw->lock);
-पूर्ण
+}
 
 /*
  * csio_get_host_speed - Return link speed to FC transport.
  * @shost: scsi host.
  *
  */
-अटल व्योम
-csio_get_host_speed(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(shost);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static void
+csio_get_host_speed(struct Scsi_Host *shost)
+{
+	struct csio_lnode *ln = shost_priv(shost);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
 	spin_lock_irq(&hw->lock);
-	चयन (hw->pport[ln->portid].link_speed) अणु
-	हाल FW_PORT_CAP32_SPEED_1G:
+	switch (hw->pport[ln->portid].link_speed) {
+	case FW_PORT_CAP32_SPEED_1G:
 		fc_host_speed(shost) = FC_PORTSPEED_1GBIT;
-		अवरोध;
-	हाल FW_PORT_CAP32_SPEED_10G:
+		break;
+	case FW_PORT_CAP32_SPEED_10G:
 		fc_host_speed(shost) = FC_PORTSPEED_10GBIT;
-		अवरोध;
-	हाल FW_PORT_CAP32_SPEED_25G:
+		break;
+	case FW_PORT_CAP32_SPEED_25G:
 		fc_host_speed(shost) = FC_PORTSPEED_25GBIT;
-		अवरोध;
-	हाल FW_PORT_CAP32_SPEED_40G:
+		break;
+	case FW_PORT_CAP32_SPEED_40G:
 		fc_host_speed(shost) = FC_PORTSPEED_40GBIT;
-		अवरोध;
-	हाल FW_PORT_CAP32_SPEED_50G:
+		break;
+	case FW_PORT_CAP32_SPEED_50G:
 		fc_host_speed(shost) = FC_PORTSPEED_50GBIT;
-		अवरोध;
-	हाल FW_PORT_CAP32_SPEED_100G:
+		break;
+	case FW_PORT_CAP32_SPEED_100G:
 		fc_host_speed(shost) = FC_PORTSPEED_100GBIT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fc_host_speed(shost) = FC_PORTSPEED_UNKNOWN;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	spin_unlock_irq(&hw->lock);
-पूर्ण
+}
 
 /*
  * csio_get_host_fabric_name - Return fabric name
  * @shost: scsi host.
  *
  */
-अटल व्योम
-csio_get_host_fabric_name(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(shost);
-	काष्ठा csio_rnode *rn = शून्य;
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static void
+csio_get_host_fabric_name(struct Scsi_Host *shost)
+{
+	struct csio_lnode *ln = shost_priv(shost);
+	struct csio_rnode *rn = NULL;
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
 	spin_lock_irq(&hw->lock);
 	rn = csio_rnode_lookup_portid(ln, FC_FID_FLOGI);
-	अगर (rn)
+	if (rn)
 		fc_host_fabric_name(shost) = wwn_to_u64(csio_rn_wwnn(rn));
-	अन्यथा
+	else
 		fc_host_fabric_name(shost) = 0;
 	spin_unlock_irq(&hw->lock);
-पूर्ण
+}
 
 /*
  * csio_get_host_speed - Return FC transport statistics.
  * @ln: Lnode.
  *
  */
-अटल काष्ठा fc_host_statistics *
-csio_get_stats(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(shost);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	काष्ठा fc_host_statistics *fhs = &ln->fch_stats;
-	काष्ठा fw_fcoe_port_stats fcoe_port_stats;
-	uपूर्णांक64_t seconds;
+static struct fc_host_statistics *
+csio_get_stats(struct Scsi_Host *shost)
+{
+	struct csio_lnode *ln = shost_priv(shost);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	struct fc_host_statistics *fhs = &ln->fch_stats;
+	struct fw_fcoe_port_stats fcoe_port_stats;
+	uint64_t seconds;
 
-	स_रखो(&fcoe_port_stats, 0, माप(काष्ठा fw_fcoe_port_stats));
+	memset(&fcoe_port_stats, 0, sizeof(struct fw_fcoe_port_stats));
 	csio_get_phy_port_stats(hw, ln->portid, &fcoe_port_stats);
 
 	fhs->tx_frames  += (be64_to_cpu(fcoe_port_stats.tx_bcast_frames) +
@@ -360,78 +359,78 @@ csio_get_stats(काष्ठा Scsi_Host *shost)
 	fhs->fcp_control_requests +=  ln->stats.n_control_requests;
 	fhs->fcp_input_megabytes +=  ln->stats.n_input_bytes >> 20;
 	fhs->fcp_output_megabytes +=  ln->stats.n_output_bytes >> 20;
-	fhs->link_failure_count = ln->stats.n_link_करोwn;
-	/* Reset stats क्रम the device */
-	seconds = jअगरfies_to_msecs(jअगरfies) - hw->stats.n_reset_start;
-	करो_भाग(seconds, 1000);
+	fhs->link_failure_count = ln->stats.n_link_down;
+	/* Reset stats for the device */
+	seconds = jiffies_to_msecs(jiffies) - hw->stats.n_reset_start;
+	do_div(seconds, 1000);
 	fhs->seconds_since_last_reset = seconds;
 
-	वापस fhs;
-पूर्ण
+	return fhs;
+}
 
 /*
- * csio_set_rport_loss_पंचांगo - Set the rport dev loss समयout
+ * csio_set_rport_loss_tmo - Set the rport dev loss timeout
  * @rport: fc rport.
- * @समयout: new value क्रम dev loss पंचांगo.
+ * @timeout: new value for dev loss tmo.
  *
- * If समयout is non zero set the dev_loss_पंचांगo to समयout, अन्यथा set
- * dev_loss_पंचांगo to one.
+ * If timeout is non zero set the dev_loss_tmo to timeout, else set
+ * dev_loss_tmo to one.
  */
-अटल व्योम
-csio_set_rport_loss_पंचांगo(काष्ठा fc_rport *rport, uपूर्णांक32_t समयout)
-अणु
-	अगर (समयout)
-		rport->dev_loss_पंचांगo = समयout;
-	अन्यथा
-		rport->dev_loss_पंचांगo = 1;
-पूर्ण
+static void
+csio_set_rport_loss_tmo(struct fc_rport *rport, uint32_t timeout)
+{
+	if (timeout)
+		rport->dev_loss_tmo = timeout;
+	else
+		rport->dev_loss_tmo = 1;
+}
 
-अटल व्योम
-csio_vport_set_state(काष्ठा csio_lnode *ln)
-अणु
-	काष्ठा fc_vport *fc_vport = ln->fc_vport;
-	काष्ठा csio_lnode  *pln = ln->pln;
-	अक्षर state[16];
+static void
+csio_vport_set_state(struct csio_lnode *ln)
+{
+	struct fc_vport *fc_vport = ln->fc_vport;
+	struct csio_lnode  *pln = ln->pln;
+	char state[16];
 
 	/* Set fc vport state based on phyiscal lnode */
 	csio_lnode_state_to_str(pln, state);
-	अगर (म_भेद(state, "READY")) अणु
+	if (strcmp(state, "READY")) {
 		fc_vport_set_state(fc_vport, FC_VPORT_LINKDOWN);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(pln->flags & CSIO_LNF_NPIVSUPP)) अणु
+	if (!(pln->flags & CSIO_LNF_NPIVSUPP)) {
 		fc_vport_set_state(fc_vport, FC_VPORT_NO_FABRIC_SUPP);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Set fc vport state based on भव lnode */
+	/* Set fc vport state based on virtual lnode */
 	csio_lnode_state_to_str(ln, state);
-	अगर (म_भेद(state, "READY")) अणु
+	if (strcmp(state, "READY")) {
 		fc_vport_set_state(fc_vport, FC_VPORT_LINKDOWN);
-		वापस;
-	पूर्ण
+		return;
+	}
 	fc_vport_set_state(fc_vport, FC_VPORT_ACTIVE);
-पूर्ण
+}
 
-अटल पूर्णांक
-csio_fcoe_alloc_vnp(काष्ठा csio_hw *hw, काष्ठा csio_lnode *ln)
-अणु
-	काष्ठा csio_lnode *pln;
-	काष्ठा csio_mb  *mbp;
-	काष्ठा fw_fcoe_vnp_cmd *rsp;
-	पूर्णांक ret = 0;
-	पूर्णांक retry = 0;
+static int
+csio_fcoe_alloc_vnp(struct csio_hw *hw, struct csio_lnode *ln)
+{
+	struct csio_lnode *pln;
+	struct csio_mb  *mbp;
+	struct fw_fcoe_vnp_cmd *rsp;
+	int ret = 0;
+	int retry = 0;
 
 	/* Issue VNP cmd to alloc vport */
 	/* Allocate Mbox request */
 	spin_lock_irq(&hw->lock);
 	mbp = mempool_alloc(hw->mb_mempool, GFP_ATOMIC);
-	अगर (!mbp) अणु
+	if (!mbp) {
 		CSIO_INC_STATS(hw, n_err_nomem);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pln = ln->pln;
 	ln->fcf_flowid = pln->fcf_flowid;
@@ -439,42 +438,42 @@ csio_fcoe_alloc_vnp(काष्ठा csio_hw *hw, काष्ठा csio_lnod
 
 	csio_fcoe_vnp_alloc_init_mb(ln, mbp, CSIO_MB_DEFAULT_TMO,
 				    pln->fcf_flowid, pln->vnp_flowid, 0,
-				    csio_ln_wwnn(ln), csio_ln_wwpn(ln), शून्य);
+				    csio_ln_wwnn(ln), csio_ln_wwpn(ln), NULL);
 
-	क्रम (retry = 0; retry < 3; retry++) अणु
+	for (retry = 0; retry < 3; retry++) {
 		/* FW is expected to complete vnp cmd in immediate mode
 		 * without much delay.
 		 * Otherwise, there will be increase in IO latency since HW
 		 * lock is held till completion of vnp mbox cmd.
 		 */
 		ret = csio_mb_issue(hw, mbp);
-		अगर (ret != -EBUSY)
-			अवरोध;
+		if (ret != -EBUSY)
+			break;
 
-		/* Retry अगर mbox वापसs busy */
+		/* Retry if mbox returns busy */
 		spin_unlock_irq(&hw->lock);
 		msleep(2000);
 		spin_lock_irq(&hw->lock);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		csio_ln_err(ln, "Failed to issue mbox FCoE VNP command\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	/* Process Mbox response of VNP command */
-	rsp = (काष्ठा fw_fcoe_vnp_cmd *)(mbp->mb);
-	अगर (FW_CMD_RETVAL_G(ntohl(rsp->alloc_to_len16)) != FW_SUCCESS) अणु
+	rsp = (struct fw_fcoe_vnp_cmd *)(mbp->mb);
+	if (FW_CMD_RETVAL_G(ntohl(rsp->alloc_to_len16)) != FW_SUCCESS) {
 		csio_ln_err(ln, "FCOE VNP ALLOC cmd returned 0x%x!\n",
 			    FW_CMD_RETVAL_G(ntohl(rsp->alloc_to_len16)));
 		ret = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	ln->vnp_flowid = FW_FCOE_VNP_CMD_VNPI_GET(
 				ntohl(rsp->gen_wwn_to_vnpi));
-	स_नकल(csio_ln_wwnn(ln), rsp->vnport_wwnn, 8);
-	स_नकल(csio_ln_wwpn(ln), rsp->vnport_wwpn, 8);
+	memcpy(csio_ln_wwnn(ln), rsp->vnport_wwnn, 8);
+	memcpy(csio_ln_wwpn(ln), rsp->vnport_wwpn, 8);
 
 	csio_ln_dbg(ln, "FCOE VNPI: 0x%x\n", ln->vnp_flowid);
 	csio_ln_dbg(ln, "\tWWNN: %x%x%x%x%x%x%x%x\n",
@@ -488,171 +487,171 @@ csio_fcoe_alloc_vnp(काष्ठा csio_hw *hw, काष्ठा csio_lnod
 		    ln->ln_sparm.wwpn[4], ln->ln_sparm.wwpn[5],
 		    ln->ln_sparm.wwpn[6], ln->ln_sparm.wwpn[7]);
 
-out_मुक्त:
-	mempool_मुक्त(mbp, hw->mb_mempool);
+out_free:
+	mempool_free(mbp, hw->mb_mempool);
 out:
 	spin_unlock_irq(&hw->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-csio_fcoe_मुक्त_vnp(काष्ठा csio_hw *hw, काष्ठा csio_lnode *ln)
-अणु
-	काष्ठा csio_mb  *mbp;
-	काष्ठा fw_fcoe_vnp_cmd *rsp;
-	पूर्णांक ret = 0;
-	पूर्णांक retry = 0;
+static int
+csio_fcoe_free_vnp(struct csio_hw *hw, struct csio_lnode *ln)
+{
+	struct csio_mb  *mbp;
+	struct fw_fcoe_vnp_cmd *rsp;
+	int ret = 0;
+	int retry = 0;
 
-	/* Issue VNP cmd to मुक्त vport */
+	/* Issue VNP cmd to free vport */
 	/* Allocate Mbox request */
 
 	spin_lock_irq(&hw->lock);
 	mbp = mempool_alloc(hw->mb_mempool, GFP_ATOMIC);
-	अगर (!mbp) अणु
+	if (!mbp) {
 		CSIO_INC_STATS(hw, n_err_nomem);
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	csio_fcoe_vnp_मुक्त_init_mb(ln, mbp, CSIO_MB_DEFAULT_TMO,
+	csio_fcoe_vnp_free_init_mb(ln, mbp, CSIO_MB_DEFAULT_TMO,
 				   ln->fcf_flowid, ln->vnp_flowid,
-				   शून्य);
+				   NULL);
 
-	क्रम (retry = 0; retry < 3; retry++) अणु
+	for (retry = 0; retry < 3; retry++) {
 		ret = csio_mb_issue(hw, mbp);
-		अगर (ret != -EBUSY)
-			अवरोध;
+		if (ret != -EBUSY)
+			break;
 
-		/* Retry अगर mbox वापसs busy */
+		/* Retry if mbox returns busy */
 		spin_unlock_irq(&hw->lock);
 		msleep(2000);
 		spin_lock_irq(&hw->lock);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		csio_ln_err(ln, "Failed to issue mbox FCoE VNP command\n");
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	/* Process Mbox response of VNP command */
-	rsp = (काष्ठा fw_fcoe_vnp_cmd *)(mbp->mb);
-	अगर (FW_CMD_RETVAL_G(ntohl(rsp->alloc_to_len16)) != FW_SUCCESS) अणु
+	rsp = (struct fw_fcoe_vnp_cmd *)(mbp->mb);
+	if (FW_CMD_RETVAL_G(ntohl(rsp->alloc_to_len16)) != FW_SUCCESS) {
 		csio_ln_err(ln, "FCOE VNP FREE cmd returned 0x%x!\n",
 			    FW_CMD_RETVAL_G(ntohl(rsp->alloc_to_len16)));
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-out_मुक्त:
-	mempool_मुक्त(mbp, hw->mb_mempool);
+out_free:
+	mempool_free(mbp, hw->mb_mempool);
 out:
 	spin_unlock_irq(&hw->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-csio_vport_create(काष्ठा fc_vport *fc_vport, bool disable)
-अणु
-	काष्ठा Scsi_Host *shost = fc_vport->shost;
-	काष्ठा csio_lnode *pln = shost_priv(shost);
-	काष्ठा csio_lnode *ln = शून्य;
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(pln);
-	uपूर्णांक8_t wwn[8];
-	पूर्णांक ret = -1;
+static int
+csio_vport_create(struct fc_vport *fc_vport, bool disable)
+{
+	struct Scsi_Host *shost = fc_vport->shost;
+	struct csio_lnode *pln = shost_priv(shost);
+	struct csio_lnode *ln = NULL;
+	struct csio_hw *hw = csio_lnode_to_hw(pln);
+	uint8_t wwn[8];
+	int ret = -1;
 
 	ln = csio_shost_init(hw, &fc_vport->dev, false, pln);
-	अगर (!ln)
-		जाओ error;
+	if (!ln)
+		goto error;
 
-	अगर (fc_vport->node_name != 0) अणु
+	if (fc_vport->node_name != 0) {
 		u64_to_wwn(fc_vport->node_name, wwn);
 
-		अगर (!CSIO_VALID_WWN(wwn)) अणु
+		if (!CSIO_VALID_WWN(wwn)) {
 			csio_ln_err(ln,
 				    "vport create failed. Invalid wwnn\n");
-			जाओ error;
-		पूर्ण
-		स_नकल(csio_ln_wwnn(ln), wwn, 8);
-	पूर्ण
+			goto error;
+		}
+		memcpy(csio_ln_wwnn(ln), wwn, 8);
+	}
 
-	अगर (fc_vport->port_name != 0) अणु
+	if (fc_vport->port_name != 0) {
 		u64_to_wwn(fc_vport->port_name, wwn);
 
-		अगर (!CSIO_VALID_WWN(wwn)) अणु
+		if (!CSIO_VALID_WWN(wwn)) {
 			csio_ln_err(ln,
 				    "vport create failed. Invalid wwpn\n");
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
-		अगर (csio_lnode_lookup_by_wwpn(hw, wwn)) अणु
+		if (csio_lnode_lookup_by_wwpn(hw, wwn)) {
 			csio_ln_err(ln,
 			    "vport create failed. wwpn already exists\n");
-			जाओ error;
-		पूर्ण
-		स_नकल(csio_ln_wwpn(ln), wwn, 8);
-	पूर्ण
+			goto error;
+		}
+		memcpy(csio_ln_wwpn(ln), wwn, 8);
+	}
 
 	fc_vport_set_state(fc_vport, FC_VPORT_INITIALIZING);
 	ln->fc_vport = fc_vport;
 
-	अगर (csio_fcoe_alloc_vnp(hw, ln))
-		जाओ error;
+	if (csio_fcoe_alloc_vnp(hw, ln))
+		goto error;
 
-	*(काष्ठा csio_lnode **)fc_vport->dd_data = ln;
-	अगर (!fc_vport->node_name)
+	*(struct csio_lnode **)fc_vport->dd_data = ln;
+	if (!fc_vport->node_name)
 		fc_vport->node_name = wwn_to_u64(csio_ln_wwnn(ln));
-	अगर (!fc_vport->port_name)
+	if (!fc_vport->port_name)
 		fc_vport->port_name = wwn_to_u64(csio_ln_wwpn(ln));
 	csio_fchost_attr_init(ln);
-	वापस 0;
+	return 0;
 error:
-	अगर (ln)
-		csio_shost_निकास(ln);
+	if (ln)
+		csio_shost_exit(ln);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-csio_vport_delete(काष्ठा fc_vport *fc_vport)
-अणु
-	काष्ठा csio_lnode *ln = *(काष्ठा csio_lnode **)fc_vport->dd_data;
-	काष्ठा Scsi_Host *shost = csio_ln_to_shost(ln);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	पूर्णांक rmv;
+static int
+csio_vport_delete(struct fc_vport *fc_vport)
+{
+	struct csio_lnode *ln = *(struct csio_lnode **)fc_vport->dd_data;
+	struct Scsi_Host *shost = csio_ln_to_shost(ln);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	int rmv;
 
 	spin_lock_irq(&hw->lock);
 	rmv = csio_is_hw_removing(hw);
 	spin_unlock_irq(&hw->lock);
 
-	अगर (rmv) अणु
-		csio_shost_निकास(ln);
-		वापस 0;
-	पूर्ण
+	if (rmv) {
+		csio_shost_exit(ln);
+		return 0;
+	}
 
-	/* Quiesce ios and send हटाओ event to lnode */
+	/* Quiesce ios and send remove event to lnode */
 	scsi_block_requests(shost);
 	spin_lock_irq(&hw->lock);
 	csio_scsim_cleanup_io_lnode(csio_hw_to_scsim(hw), ln);
-	csio_lnode_बंद(ln);
+	csio_lnode_close(ln);
 	spin_unlock_irq(&hw->lock);
 	scsi_unblock_requests(shost);
 
 	/* Free vnp */
-	अगर (fc_vport->vport_state !=  FC_VPORT_DISABLED)
-		csio_fcoe_मुक्त_vnp(hw, ln);
+	if (fc_vport->vport_state !=  FC_VPORT_DISABLED)
+		csio_fcoe_free_vnp(hw, ln);
 
-	csio_shost_निकास(ln);
-	वापस 0;
-पूर्ण
+	csio_shost_exit(ln);
+	return 0;
+}
 
-अटल पूर्णांक
-csio_vport_disable(काष्ठा fc_vport *fc_vport, bool disable)
-अणु
-	काष्ठा csio_lnode *ln = *(काष्ठा csio_lnode **)fc_vport->dd_data;
-	काष्ठा Scsi_Host *shost = csio_ln_to_shost(ln);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static int
+csio_vport_disable(struct fc_vport *fc_vport, bool disable)
+{
+	struct csio_lnode *ln = *(struct csio_lnode **)fc_vport->dd_data;
+	struct Scsi_Host *shost = csio_ln_to_shost(ln);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
 	/* disable vport */
-	अगर (disable) अणु
+	if (disable) {
 		/* Quiesce ios and send stop event to lnode */
 		scsi_block_requests(shost);
 		spin_lock_irq(&hw->lock);
@@ -662,66 +661,66 @@ csio_vport_disable(काष्ठा fc_vport *fc_vport, bool disable)
 		scsi_unblock_requests(shost);
 
 		/* Free vnp */
-		csio_fcoe_मुक्त_vnp(hw, ln);
+		csio_fcoe_free_vnp(hw, ln);
 		fc_vport_set_state(fc_vport, FC_VPORT_DISABLED);
 		csio_ln_err(ln, "vport disabled\n");
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		/* enable vport */
 		fc_vport_set_state(fc_vport, FC_VPORT_INITIALIZING);
-		अगर (csio_fcoe_alloc_vnp(hw, ln)) अणु
+		if (csio_fcoe_alloc_vnp(hw, ln)) {
 			csio_ln_err(ln, "vport enabled failed.\n");
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		csio_ln_err(ln, "vport enabled\n");
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल व्योम
-csio_dev_loss_पंचांगo_callbk(काष्ठा fc_rport *rport)
-अणु
-	काष्ठा csio_rnode *rn;
-	काष्ठा csio_hw *hw;
-	काष्ठा csio_lnode *ln;
+static void
+csio_dev_loss_tmo_callbk(struct fc_rport *rport)
+{
+	struct csio_rnode *rn;
+	struct csio_hw *hw;
+	struct csio_lnode *ln;
 
-	rn = *((काष्ठा csio_rnode **)rport->dd_data);
+	rn = *((struct csio_rnode **)rport->dd_data);
 	ln = csio_rnode_to_lnode(rn);
 	hw = csio_lnode_to_hw(ln);
 
 	spin_lock_irq(&hw->lock);
 
-	/* वापस अगर driver is being हटाओd or same rnode comes back online */
-	अगर (csio_is_hw_removing(hw) || csio_is_rnode_पढ़ोy(rn))
-		जाओ out;
+	/* return if driver is being removed or same rnode comes back online */
+	if (csio_is_hw_removing(hw) || csio_is_rnode_ready(rn))
+		goto out;
 
 	csio_ln_dbg(ln, "devloss timeout on rnode:%p portid:x%x flowid:x%x\n",
 		    rn, rn->nport_id, csio_rn_flowid(rn));
 
-	CSIO_INC_STATS(ln, n_dev_loss_पंचांगo);
+	CSIO_INC_STATS(ln, n_dev_loss_tmo);
 
 	/*
-	 * enqueue devloss event to event worker thपढ़ो to serialize all
+	 * enqueue devloss event to event worker thread to serialize all
 	 * rnode events.
 	 */
-	अगर (csio_enqueue_evt(hw, CSIO_EVT_DEV_LOSS, &rn, माप(rn))) अणु
+	if (csio_enqueue_evt(hw, CSIO_EVT_DEV_LOSS, &rn, sizeof(rn))) {
 		CSIO_INC_STATS(hw, n_evt_drop);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(hw->flags & CSIO_HWF_FWEVT_PENDING)) अणु
+	if (!(hw->flags & CSIO_HWF_FWEVT_PENDING)) {
 		hw->flags |= CSIO_HWF_FWEVT_PENDING;
 		spin_unlock_irq(&hw->lock);
 		schedule_work(&hw->evtq_work);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 out:
 	spin_unlock_irq(&hw->lock);
-पूर्ण
+}
 
-/* FC transport functions ढाँचा - Physical port */
-काष्ठा fc_function_ढाँचा csio_fc_transport_funcs = अणु
+/* FC transport functions template - Physical port */
+struct fc_function_template csio_fc_transport_funcs = {
 	.show_host_node_name = 1,
 	.show_host_port_name = 1,
 	.show_host_supported_classes = 1,
@@ -745,27 +744,27 @@ out:
 
 	.get_fc_host_stats = csio_get_stats,
 
-	.dd_fcrport_size = माप(काष्ठा csio_rnode *),
+	.dd_fcrport_size = sizeof(struct csio_rnode *),
 	.show_rport_maxframe_size = 1,
 	.show_rport_supported_classes = 1,
 
-	.set_rport_dev_loss_पंचांगo = csio_set_rport_loss_पंचांगo,
-	.show_rport_dev_loss_पंचांगo = 1,
+	.set_rport_dev_loss_tmo = csio_set_rport_loss_tmo,
+	.show_rport_dev_loss_tmo = 1,
 
 	.show_starget_port_id = 1,
 	.show_starget_node_name = 1,
 	.show_starget_port_name = 1,
 
-	.dev_loss_पंचांगo_callbk = csio_dev_loss_पंचांगo_callbk,
-	.dd_fcvport_size = माप(काष्ठा csio_lnode *),
+	.dev_loss_tmo_callbk = csio_dev_loss_tmo_callbk,
+	.dd_fcvport_size = sizeof(struct csio_lnode *),
 
 	.vport_create = csio_vport_create,
 	.vport_disable = csio_vport_disable,
 	.vport_delete = csio_vport_delete,
-पूर्ण;
+};
 
-/* FC transport functions ढाँचा - Virtual  port */
-काष्ठा fc_function_ढाँचा csio_fc_transport_vport_funcs = अणु
+/* FC transport functions template - Virtual  port */
+struct fc_function_template csio_fc_transport_vport_funcs = {
 	.show_host_node_name = 1,
 	.show_host_port_name = 1,
 	.show_host_supported_classes = 1,
@@ -790,17 +789,17 @@ out:
 
 	.get_fc_host_stats = csio_get_stats,
 
-	.dd_fcrport_size = माप(काष्ठा csio_rnode *),
+	.dd_fcrport_size = sizeof(struct csio_rnode *),
 	.show_rport_maxframe_size = 1,
 	.show_rport_supported_classes = 1,
 
-	.set_rport_dev_loss_पंचांगo = csio_set_rport_loss_पंचांगo,
-	.show_rport_dev_loss_पंचांगo = 1,
+	.set_rport_dev_loss_tmo = csio_set_rport_loss_tmo,
+	.show_rport_dev_loss_tmo = 1,
 
 	.show_starget_port_id = 1,
 	.show_starget_node_name = 1,
 	.show_starget_port_name = 1,
 
-	.dev_loss_पंचांगo_callbk = csio_dev_loss_पंचांगo_callbk,
+	.dev_loss_tmo_callbk = csio_dev_loss_tmo_callbk,
 
-पूर्ण;
+};

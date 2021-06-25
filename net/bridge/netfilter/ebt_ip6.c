@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  ebt_ip6
  *
  *	Authors:
- *	Manohar Castelino <manohar.r.castelino@पूर्णांकel.com>
- *	Kuo-Lang Tseng <kuo-lang.tseng@पूर्णांकel.com>
- *	Jan Engelhardt <jengelh@meकरोzas.de>
+ *	Manohar Castelino <manohar.r.castelino@intel.com>
+ *	Kuo-Lang Tseng <kuo-lang.tseng@intel.com>
+ *	Jan Engelhardt <jengelh@medozas.de>
  *
  * Summary:
- * This is just a modअगरication of the IPv4 code written by
- * Bart De Schuymer <bdschuym@panकरोra.be>
+ * This is just a modification of the IPv4 code written by
+ * Bart De Schuymer <bdschuym@pandora.be>
  * with the changes required to support IPv6
  *
  *  Jan, 2008
  */
-#समावेश <linux/ipv6.h>
-#समावेश <net/ipv6.h>
-#समावेश <linux/in.h>
-#समावेश <linux/module.h>
-#समावेश <net/dsfield.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_bridge/ebtables.h>
-#समावेश <linux/netfilter_bridge/ebt_ip6.h>
+#include <linux/ipv6.h>
+#include <net/ipv6.h>
+#include <linux/in.h>
+#include <linux/module.h>
+#include <net/dsfield.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/netfilter_bridge/ebt_ip6.h>
 
-जोड़ pkthdr अणु
-	काष्ठा अणु
+union pkthdr {
+	struct {
 		__be16 src;
 		__be16 dst;
-	पूर्ण tcpudphdr;
-	काष्ठा अणु
+	} tcpudphdr;
+	struct {
 		u8 type;
 		u8 code;
-	पूर्ण icmphdr;
-पूर्ण;
+	} icmphdr;
+};
 
-अटल bool
-ebt_ip6_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा ebt_ip6_info *info = par->matchinfo;
-	स्थिर काष्ठा ipv6hdr *ih6;
-	काष्ठा ipv6hdr _ip6h;
-	स्थिर जोड़ pkthdr *pptr;
-	जोड़ pkthdr _pkthdr;
+static bool
+ebt_ip6_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct ebt_ip6_info *info = par->matchinfo;
+	const struct ipv6hdr *ih6;
+	struct ipv6hdr _ip6h;
+	const union pkthdr *pptr;
+	union pkthdr _pkthdr;
 
-	ih6 = skb_header_poपूर्णांकer(skb, 0, माप(_ip6h), &_ip6h);
-	अगर (ih6 == शून्य)
-		वापस false;
-	अगर ((info->biपंचांगask & EBT_IP6_TCLASS) &&
+	ih6 = skb_header_pointer(skb, 0, sizeof(_ip6h), &_ip6h);
+	if (ih6 == NULL)
+		return false;
+	if ((info->bitmask & EBT_IP6_TCLASS) &&
 	    NF_INVF(info, EBT_IP6_TCLASS,
 		    info->tclass != ipv6_get_dsfield(ih6)))
-		वापस false;
-	अगर (((info->biपंचांगask & EBT_IP6_SOURCE) &&
+		return false;
+	if (((info->bitmask & EBT_IP6_SOURCE) &&
 	     NF_INVF(info, EBT_IP6_SOURCE,
 		     ipv6_masked_addr_cmp(&ih6->saddr, &info->smsk,
 					  &info->saddr))) ||
-	    ((info->biपंचांगask & EBT_IP6_DEST) &&
+	    ((info->bitmask & EBT_IP6_DEST) &&
 	     NF_INVF(info, EBT_IP6_DEST,
 		     ipv6_masked_addr_cmp(&ih6->daddr, &info->dmsk,
 					  &info->daddr))))
-		वापस false;
-	अगर (info->biपंचांगask & EBT_IP6_PROTO) अणु
-		uपूर्णांक8_t nexthdr = ih6->nexthdr;
+		return false;
+	if (info->bitmask & EBT_IP6_PROTO) {
+		uint8_t nexthdr = ih6->nexthdr;
 		__be16 frag_off;
-		पूर्णांक offset_ph;
+		int offset_ph;
 
-		offset_ph = ipv6_skip_exthdr(skb, माप(_ip6h), &nexthdr, &frag_off);
-		अगर (offset_ph == -1)
-			वापस false;
-		अगर (NF_INVF(info, EBT_IP6_PROTO, info->protocol != nexthdr))
-			वापस false;
-		अगर (!(info->biपंचांगask & (EBT_IP6_DPORT |
+		offset_ph = ipv6_skip_exthdr(skb, sizeof(_ip6h), &nexthdr, &frag_off);
+		if (offset_ph == -1)
+			return false;
+		if (NF_INVF(info, EBT_IP6_PROTO, info->protocol != nexthdr))
+			return false;
+		if (!(info->bitmask & (EBT_IP6_DPORT |
 				       EBT_IP6_SPORT | EBT_IP6_ICMP6)))
-			वापस true;
+			return true;
 
-		/* min icmpv6 headersize is 4, so माप(_pkthdr) is ok. */
-		pptr = skb_header_poपूर्णांकer(skb, offset_ph, माप(_pkthdr),
+		/* min icmpv6 headersize is 4, so sizeof(_pkthdr) is ok. */
+		pptr = skb_header_pointer(skb, offset_ph, sizeof(_pkthdr),
 					  &_pkthdr);
-		अगर (pptr == शून्य)
-			वापस false;
-		अगर (info->biपंचांगask & EBT_IP6_DPORT) अणु
+		if (pptr == NULL)
+			return false;
+		if (info->bitmask & EBT_IP6_DPORT) {
 			u16 dst = ntohs(pptr->tcpudphdr.dst);
-			अगर (NF_INVF(info, EBT_IP6_DPORT,
+			if (NF_INVF(info, EBT_IP6_DPORT,
 				    dst < info->dport[0] ||
 				    dst > info->dport[1]))
-				वापस false;
-		पूर्ण
-		अगर (info->biपंचांगask & EBT_IP6_SPORT) अणु
+				return false;
+		}
+		if (info->bitmask & EBT_IP6_SPORT) {
 			u16 src = ntohs(pptr->tcpudphdr.src);
-			अगर (NF_INVF(info, EBT_IP6_SPORT,
+			if (NF_INVF(info, EBT_IP6_SPORT,
 				    src < info->sport[0] ||
 				    src > info->sport[1]))
-				वापस false;
-		पूर्ण
-		अगर ((info->biपंचांगask & EBT_IP6_ICMP6) &&
+				return false;
+		}
+		if ((info->bitmask & EBT_IP6_ICMP6) &&
 		    NF_INVF(info, EBT_IP6_ICMP6,
 			    pptr->icmphdr.type < info->icmpv6_type[0] ||
 			    pptr->icmphdr.type > info->icmpv6_type[1] ||
 			    pptr->icmphdr.code < info->icmpv6_code[0] ||
 			    pptr->icmphdr.code > info->icmpv6_code[1]))
-			वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			return false;
+	}
+	return true;
+}
 
-अटल पूर्णांक ebt_ip6_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा ebt_entry *e = par->entryinfo;
-	काष्ठा ebt_ip6_info *info = par->matchinfo;
+static int ebt_ip6_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct ebt_entry *e = par->entryinfo;
+	struct ebt_ip6_info *info = par->matchinfo;
 
-	अगर (e->ethproto != htons(ETH_P_IPV6) || e->invflags & EBT_IPROTO)
-		वापस -EINVAL;
-	अगर (info->biपंचांगask & ~EBT_IP6_MASK || info->invflags & ~EBT_IP6_MASK)
-		वापस -EINVAL;
-	अगर (info->biपंचांगask & (EBT_IP6_DPORT | EBT_IP6_SPORT)) अणु
-		अगर (info->invflags & EBT_IP6_PROTO)
-			वापस -EINVAL;
-		अगर (info->protocol != IPPROTO_TCP &&
+	if (e->ethproto != htons(ETH_P_IPV6) || e->invflags & EBT_IPROTO)
+		return -EINVAL;
+	if (info->bitmask & ~EBT_IP6_MASK || info->invflags & ~EBT_IP6_MASK)
+		return -EINVAL;
+	if (info->bitmask & (EBT_IP6_DPORT | EBT_IP6_SPORT)) {
+		if (info->invflags & EBT_IP6_PROTO)
+			return -EINVAL;
+		if (info->protocol != IPPROTO_TCP &&
 		    info->protocol != IPPROTO_UDP &&
 		    info->protocol != IPPROTO_UDPLITE &&
 		    info->protocol != IPPROTO_SCTP &&
 		    info->protocol != IPPROTO_DCCP)
-			वापस -EINVAL;
-	पूर्ण
-	अगर (info->biपंचांगask & EBT_IP6_DPORT && info->dport[0] > info->dport[1])
-		वापस -EINVAL;
-	अगर (info->biपंचांगask & EBT_IP6_SPORT && info->sport[0] > info->sport[1])
-		वापस -EINVAL;
-	अगर (info->biपंचांगask & EBT_IP6_ICMP6) अणु
-		अगर ((info->invflags & EBT_IP6_PROTO) ||
+			return -EINVAL;
+	}
+	if (info->bitmask & EBT_IP6_DPORT && info->dport[0] > info->dport[1])
+		return -EINVAL;
+	if (info->bitmask & EBT_IP6_SPORT && info->sport[0] > info->sport[1])
+		return -EINVAL;
+	if (info->bitmask & EBT_IP6_ICMP6) {
+		if ((info->invflags & EBT_IP6_PROTO) ||
 		     info->protocol != IPPROTO_ICMPV6)
-			वापस -EINVAL;
-		अगर (info->icmpv6_type[0] > info->icmpv6_type[1] ||
+			return -EINVAL;
+		if (info->icmpv6_type[0] > info->icmpv6_type[1] ||
 		    info->icmpv6_code[0] > info->icmpv6_code[1])
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+	}
+	return 0;
+}
 
-अटल काष्ठा xt_match ebt_ip6_mt_reg __पढ़ो_mostly = अणु
+static struct xt_match ebt_ip6_mt_reg __read_mostly = {
 	.name		= "ip6",
 	.revision	= 0,
 	.family		= NFPROTO_BRIDGE,
 	.match		= ebt_ip6_mt,
 	.checkentry	= ebt_ip6_mt_check,
-	.matchsize	= माप(काष्ठा ebt_ip6_info),
+	.matchsize	= sizeof(struct ebt_ip6_info),
 	.me		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ebt_ip6_init(व्योम)
-अणु
-	वापस xt_रेजिस्टर_match(&ebt_ip6_mt_reg);
-पूर्ण
+static int __init ebt_ip6_init(void)
+{
+	return xt_register_match(&ebt_ip6_mt_reg);
+}
 
-अटल व्योम __निकास ebt_ip6_fini(व्योम)
-अणु
-	xt_unरेजिस्टर_match(&ebt_ip6_mt_reg);
-पूर्ण
+static void __exit ebt_ip6_fini(void)
+{
+	xt_unregister_match(&ebt_ip6_mt_reg);
+}
 
 module_init(ebt_ip6_init);
-module_निकास(ebt_ip6_fini);
+module_exit(ebt_ip6_fini);
 MODULE_DESCRIPTION("Ebtables: IPv6 protocol packet match");
 MODULE_AUTHOR("Kuo-Lang Tseng <kuo-lang.tseng@intel.com>");
 MODULE_LICENSE("GPL");

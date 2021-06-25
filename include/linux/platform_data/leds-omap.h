@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright (C) 2006 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
  */
-#अगर_अघोषित ASMARM_ARCH_LED_H
-#घोषणा ASMARM_ARCH_LED_H
+#ifndef ASMARM_ARCH_LED_H
+#define ASMARM_ARCH_LED_H
 
-काष्ठा omap_led_config अणु
-	काष्ठा led_classdev	cdev;
+struct omap_led_config {
+	struct led_classdev	cdev;
 	s16			gpio;
-पूर्ण;
+};
 
-काष्ठा omap_led_platक्रमm_data अणु
+struct omap_led_platform_data {
 	s16			nr_leds;
-	काष्ठा omap_led_config	*leds;
-पूर्ण;
+	struct omap_led_config	*leds;
+};
 
-#पूर्ण_अगर
+#endif

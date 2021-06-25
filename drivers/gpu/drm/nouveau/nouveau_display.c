@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2008 Maarten Maathuis.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,165 +24,165 @@
  *
  */
 
-#समावेश <acpi/video.h>
+#include <acpi/video.h>
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_crtc_helper.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
 
-#समावेश "nouveau_fbcon.h"
-#समावेश "nouveau_crtc.h"
-#समावेश "nouveau_gem.h"
-#समावेश "nouveau_connector.h"
-#समावेश "nv50_display.h"
+#include "nouveau_fbcon.h"
+#include "nouveau_crtc.h"
+#include "nouveau_gem.h"
+#include "nouveau_connector.h"
+#include "nv50_display.h"
 
-#समावेश <nvअगर/class.h>
-#समावेश <nvअगर/cl0046.h>
-#समावेश <nvअगर/event.h>
-#समावेश <dispnv50/crc.h>
+#include <nvif/class.h>
+#include <nvif/cl0046.h>
+#include <nvif/event.h>
+#include <dispnv50/crc.h>
 
-पूर्णांक
-nouveau_display_vblank_enable(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा nouveau_crtc *nv_crtc;
-
-	nv_crtc = nouveau_crtc(crtc);
-	nvअगर_notअगरy_get(&nv_crtc->vblank);
-
-	वापस 0;
-पूर्ण
-
-व्योम
-nouveau_display_vblank_disable(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा nouveau_crtc *nv_crtc;
+int
+nouveau_display_vblank_enable(struct drm_crtc *crtc)
+{
+	struct nouveau_crtc *nv_crtc;
 
 	nv_crtc = nouveau_crtc(crtc);
-	nvअगर_notअगरy_put(&nv_crtc->vblank);
-पूर्ण
+	nvif_notify_get(&nv_crtc->vblank);
 
-अटल अंतरभूत पूर्णांक
-calc(पूर्णांक blanks, पूर्णांक blanke, पूर्णांक total, पूर्णांक line)
-अणु
-	अगर (blanke >= blanks) अणु
-		अगर (line >= blanks)
+	return 0;
+}
+
+void
+nouveau_display_vblank_disable(struct drm_crtc *crtc)
+{
+	struct nouveau_crtc *nv_crtc;
+
+	nv_crtc = nouveau_crtc(crtc);
+	nvif_notify_put(&nv_crtc->vblank);
+}
+
+static inline int
+calc(int blanks, int blanke, int total, int line)
+{
+	if (blanke >= blanks) {
+		if (line >= blanks)
 			line -= total;
-	पूर्ण अन्यथा अणु
-		अगर (line >= blanks)
+	} else {
+		if (line >= blanks)
 			line -= total;
 		line -= blanke + 1;
-	पूर्ण
-	वापस line;
-पूर्ण
+	}
+	return line;
+}
 
-अटल bool
-nouveau_display_scanoutpos_head(काष्ठा drm_crtc *crtc, पूर्णांक *vpos, पूर्णांक *hpos,
-				kसमय_प्रकार *sसमय, kसमय_प्रकार *eसमय)
-अणु
-	काष्ठा अणु
-		काष्ठा nv04_disp_mthd_v0 base;
-		काष्ठा nv04_disp_scanoutpos_v0 scan;
-	पूर्ण args = अणु
+static bool
+nouveau_display_scanoutpos_head(struct drm_crtc *crtc, int *vpos, int *hpos,
+				ktime_t *stime, ktime_t *etime)
+{
+	struct {
+		struct nv04_disp_mthd_v0 base;
+		struct nv04_disp_scanoutpos_v0 scan;
+	} args = {
 		.base.method = NV04_DISP_SCANOUTPOS,
 		.base.head = nouveau_crtc(crtc)->index,
-	पूर्ण;
-	काष्ठा nouveau_display *disp = nouveau_display(crtc->dev);
-	काष्ठा drm_vblank_crtc *vblank = &crtc->dev->vblank[drm_crtc_index(crtc)];
-	पूर्णांक retry = 20;
+	};
+	struct nouveau_display *disp = nouveau_display(crtc->dev);
+	struct drm_vblank_crtc *vblank = &crtc->dev->vblank[drm_crtc_index(crtc)];
+	int retry = 20;
 	bool ret = false;
 
-	करो अणु
-		ret = nvअगर_mthd(&disp->disp.object, 0, &args, माप(args));
-		अगर (ret != 0)
-			वापस false;
+	do {
+		ret = nvif_mthd(&disp->disp.object, 0, &args, sizeof(args));
+		if (ret != 0)
+			return false;
 
-		अगर (args.scan.vline) अणु
+		if (args.scan.vline) {
 			ret = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (retry) ndelay(vblank->linedur_ns);
-	पूर्ण जबतक (retry--);
+		if (retry) ndelay(vblank->linedur_ns);
+	} while (retry--);
 
 	*hpos = args.scan.hline;
 	*vpos = calc(args.scan.vblanks, args.scan.vblanke,
 		     args.scan.vtotal, args.scan.vline);
-	अगर (sसमय) *sसमय = ns_to_kसमय(args.scan.समय[0]);
-	अगर (eसमय) *eसमय = ns_to_kसमय(args.scan.समय[1]);
+	if (stime) *stime = ns_to_ktime(args.scan.time[0]);
+	if (etime) *etime = ns_to_ktime(args.scan.time[1]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 bool
-nouveau_display_scanoutpos(काष्ठा drm_crtc *crtc,
-			   bool in_vblank_irq, पूर्णांक *vpos, पूर्णांक *hpos,
-			   kसमय_प्रकार *sसमय, kसमय_प्रकार *eसमय,
-			   स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	वापस nouveau_display_scanoutpos_head(crtc, vpos, hpos,
-					       sसमय, eसमय);
-पूर्ण
+nouveau_display_scanoutpos(struct drm_crtc *crtc,
+			   bool in_vblank_irq, int *vpos, int *hpos,
+			   ktime_t *stime, ktime_t *etime,
+			   const struct drm_display_mode *mode)
+{
+	return nouveau_display_scanoutpos_head(crtc, vpos, hpos,
+					       stime, etime);
+}
 
-अटल स्थिर काष्ठा drm_framebuffer_funcs nouveau_framebuffer_funcs = अणु
+static const struct drm_framebuffer_funcs nouveau_framebuffer_funcs = {
 	.destroy = drm_gem_fb_destroy,
 	.create_handle = drm_gem_fb_create_handle,
-पूर्ण;
+};
 
-अटल व्योम
-nouveau_decode_mod(काष्ठा nouveau_drm *drm,
-		   uपूर्णांक64_t modअगरier,
-		   uपूर्णांक32_t *tile_mode,
-		   uपूर्णांक8_t *kind)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(drm->dev);
+static void
+nouveau_decode_mod(struct nouveau_drm *drm,
+		   uint64_t modifier,
+		   uint32_t *tile_mode,
+		   uint8_t *kind)
+{
+	struct nouveau_display *disp = nouveau_display(drm->dev);
 	BUG_ON(!tile_mode || !kind);
 
-	अगर (modअगरier == DRM_FORMAT_MOD_LINEAR) अणु
-		/* tile_mode will not be used in this हाल */
+	if (modifier == DRM_FORMAT_MOD_LINEAR) {
+		/* tile_mode will not be used in this case */
 		*tile_mode = 0;
 		*kind = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Extract the block height and kind from the corresponding
-		 * modअगरier fields.  See drm_fourcc.h क्रम details.
+		 * modifier fields.  See drm_fourcc.h for details.
 		 */
 
-		अगर ((modअगरier & (0xffull << 12)) == 0ull) अणु
-			/* Legacy modअगरier.  Translate to this dev's 'kind.' */
-			modअगरier |= disp->क्रमmat_modअगरiers[0] & (0xffull << 12);
-		पूर्ण
+		if ((modifier & (0xffull << 12)) == 0ull) {
+			/* Legacy modifier.  Translate to this dev's 'kind.' */
+			modifier |= disp->format_modifiers[0] & (0xffull << 12);
+		}
 
-		*tile_mode = (uपूर्णांक32_t)(modअगरier & 0xF);
-		*kind = (uपूर्णांक8_t)((modअगरier >> 12) & 0xFF);
+		*tile_mode = (uint32_t)(modifier & 0xF);
+		*kind = (uint8_t)((modifier >> 12) & 0xFF);
 
-		अगर (drm->client.device.info.chipset >= 0xc0)
+		if (drm->client.device.info.chipset >= 0xc0)
 			*tile_mode <<= 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम
-nouveau_framebuffer_get_layout(काष्ठा drm_framebuffer *fb,
-			       uपूर्णांक32_t *tile_mode,
-			       uपूर्णांक8_t *kind)
-अणु
-	अगर (fb->flags & DRM_MODE_FB_MODIFIERS) अणु
-		काष्ठा nouveau_drm *drm = nouveau_drm(fb->dev);
+void
+nouveau_framebuffer_get_layout(struct drm_framebuffer *fb,
+			       uint32_t *tile_mode,
+			       uint8_t *kind)
+{
+	if (fb->flags & DRM_MODE_FB_MODIFIERS) {
+		struct nouveau_drm *drm = nouveau_drm(fb->dev);
 
-		nouveau_decode_mod(drm, fb->modअगरier, tile_mode, kind);
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा nouveau_bo *nvbo = nouveau_gem_object(fb->obj[0]);
+		nouveau_decode_mod(drm, fb->modifier, tile_mode, kind);
+	} else {
+		const struct nouveau_bo *nvbo = nouveau_gem_object(fb->obj[0]);
 
 		*tile_mode = nvbo->mode;
 		*kind = nvbo->kind;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर u64 legacy_modअगरiers[] = अणु
+static const u64 legacy_modifiers[] = {
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(0),
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(1),
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(2),
@@ -191,95 +190,95 @@ nouveau_framebuffer_get_layout(काष्ठा drm_framebuffer *fb,
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(4),
 	DRM_FORMAT_MOD_NVIDIA_16BX2_BLOCK(5),
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल पूर्णांक
-nouveau_validate_decode_mod(काष्ठा nouveau_drm *drm,
-			    uपूर्णांक64_t modअगरier,
-			    uपूर्णांक32_t *tile_mode,
-			    uपूर्णांक8_t *kind)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(drm->dev);
-	पूर्णांक mod;
+static int
+nouveau_validate_decode_mod(struct nouveau_drm *drm,
+			    uint64_t modifier,
+			    uint32_t *tile_mode,
+			    uint8_t *kind)
+{
+	struct nouveau_display *disp = nouveau_display(drm->dev);
+	int mod;
 
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) {
+		return -EINVAL;
+	}
 
-	BUG_ON(!disp->क्रमmat_modअगरiers);
+	BUG_ON(!disp->format_modifiers);
 
-	क्रम (mod = 0;
-	     (disp->क्रमmat_modअगरiers[mod] != DRM_FORMAT_MOD_INVALID) &&
-	     (disp->क्रमmat_modअगरiers[mod] != modअगरier);
+	for (mod = 0;
+	     (disp->format_modifiers[mod] != DRM_FORMAT_MOD_INVALID) &&
+	     (disp->format_modifiers[mod] != modifier);
 	     mod++);
 
-	अगर (disp->क्रमmat_modअगरiers[mod] == DRM_FORMAT_MOD_INVALID) अणु
-		क्रम (mod = 0;
-		     (legacy_modअगरiers[mod] != DRM_FORMAT_MOD_INVALID) &&
-		     (legacy_modअगरiers[mod] != modअगरier);
+	if (disp->format_modifiers[mod] == DRM_FORMAT_MOD_INVALID) {
+		for (mod = 0;
+		     (legacy_modifiers[mod] != DRM_FORMAT_MOD_INVALID) &&
+		     (legacy_modifiers[mod] != modifier);
 		     mod++);
-		अगर (legacy_modअगरiers[mod] == DRM_FORMAT_MOD_INVALID)
-			वापस -EINVAL;
-	पूर्ण
+		if (legacy_modifiers[mod] == DRM_FORMAT_MOD_INVALID)
+			return -EINVAL;
+	}
 
-	nouveau_decode_mod(drm, modअगरier, tile_mode, kind);
+	nouveau_decode_mod(drm, modifier, tile_mode, kind);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत uपूर्णांक32_t
-nouveau_get_width_in_blocks(uपूर्णांक32_t stride)
-अणु
+static inline uint32_t
+nouveau_get_width_in_blocks(uint32_t stride)
+{
 	/* GOBs per block in the x direction is always one, and GOBs are
 	 * 64 bytes wide
 	 */
-	अटल स्थिर uपूर्णांक32_t log_block_width = 6;
+	static const uint32_t log_block_width = 6;
 
-	वापस (stride + (1 << log_block_width) - 1) >> log_block_width;
-पूर्ण
+	return (stride + (1 << log_block_width) - 1) >> log_block_width;
+}
 
-अटल अंतरभूत uपूर्णांक32_t
-nouveau_get_height_in_blocks(काष्ठा nouveau_drm *drm,
-			     uपूर्णांक32_t height,
-			     uपूर्णांक32_t log_block_height_in_gobs)
-अणु
-	uपूर्णांक32_t log_gob_height;
-	uपूर्णांक32_t log_block_height;
+static inline uint32_t
+nouveau_get_height_in_blocks(struct nouveau_drm *drm,
+			     uint32_t height,
+			     uint32_t log_block_height_in_gobs)
+{
+	uint32_t log_gob_height;
+	uint32_t log_block_height;
 
 	BUG_ON(drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA);
 
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI)
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI)
 		log_gob_height = 2;
-	अन्यथा
+	else
 		log_gob_height = 3;
 
 	log_block_height = log_block_height_in_gobs + log_gob_height;
 
-	वापस (height + (1 << log_block_height) - 1) >> log_block_height;
-पूर्ण
+	return (height + (1 << log_block_height) - 1) >> log_block_height;
+}
 
-अटल पूर्णांक
-nouveau_check_bl_size(काष्ठा nouveau_drm *drm, काष्ठा nouveau_bo *nvbo,
-		      uपूर्णांक32_t offset, uपूर्णांक32_t stride, uपूर्णांक32_t h,
-		      uपूर्णांक32_t tile_mode)
-अणु
-	uपूर्णांक32_t gob_size, bw, bh;
-	uपूर्णांक64_t bl_size;
+static int
+nouveau_check_bl_size(struct nouveau_drm *drm, struct nouveau_bo *nvbo,
+		      uint32_t offset, uint32_t stride, uint32_t h,
+		      uint32_t tile_mode)
+{
+	uint32_t gob_size, bw, bh;
+	uint64_t bl_size;
 
 	BUG_ON(drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA);
 
-	अगर (drm->client.device.info.chipset >= 0xc0) अणु
-		अगर (tile_mode & 0xF)
-			वापस -EINVAL;
+	if (drm->client.device.info.chipset >= 0xc0) {
+		if (tile_mode & 0xF)
+			return -EINVAL;
 		tile_mode >>= 4;
-	पूर्ण
+	}
 
-	अगर (tile_mode & 0xFFFFFFF0)
-		वापस -EINVAL;
+	if (tile_mode & 0xFFFFFFF0)
+		return -EINVAL;
 
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI)
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI)
 		gob_size = 256;
-	अन्यथा
+	else
 		gob_size = 512;
 
 	bw = nouveau_get_width_in_blocks(stride);
@@ -291,217 +290,217 @@ nouveau_check_bl_size(काष्ठा nouveau_drm *drm, काष्ठा no
 		      offset, stride, h, tile_mode, bw, bh, gob_size, bl_size,
 		      nvbo->bo.base.size);
 
-	अगर (bl_size + offset > nvbo->bo.base.size)
-		वापस -दुस्फल;
+	if (bl_size + offset > nvbo->bo.base.size)
+		return -ERANGE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nouveau_framebuffer_new(काष्ठा drm_device *dev,
-			स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd,
-			काष्ठा drm_gem_object *gem,
-			काष्ठा drm_framebuffer **pfb)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(gem);
-	काष्ठा drm_framebuffer *fb;
-	स्थिर काष्ठा drm_क्रमmat_info *info;
-	अचिन्हित पूर्णांक width, height, i;
-	uपूर्णांक32_t tile_mode;
-	uपूर्णांक8_t kind;
-	पूर्णांक ret;
+int
+nouveau_framebuffer_new(struct drm_device *dev,
+			const struct drm_mode_fb_cmd2 *mode_cmd,
+			struct drm_gem_object *gem,
+			struct drm_framebuffer **pfb)
+{
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
+	struct drm_framebuffer *fb;
+	const struct drm_format_info *info;
+	unsigned int width, height, i;
+	uint32_t tile_mode;
+	uint8_t kind;
+	int ret;
 
         /* YUV overlays have special requirements pre-NV50 */
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA &&
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA &&
 
-	    (mode_cmd->pixel_क्रमmat == DRM_FORMAT_YUYV ||
-	     mode_cmd->pixel_क्रमmat == DRM_FORMAT_UYVY ||
-	     mode_cmd->pixel_क्रमmat == DRM_FORMAT_NV12 ||
-	     mode_cmd->pixel_क्रमmat == DRM_FORMAT_NV21) &&
+	    (mode_cmd->pixel_format == DRM_FORMAT_YUYV ||
+	     mode_cmd->pixel_format == DRM_FORMAT_UYVY ||
+	     mode_cmd->pixel_format == DRM_FORMAT_NV12 ||
+	     mode_cmd->pixel_format == DRM_FORMAT_NV21) &&
 	    (mode_cmd->pitches[0] & 0x3f || /* align 64 */
 	     mode_cmd->pitches[0] >= 0x10000 || /* at most 64k pitch */
-	     (mode_cmd->pitches[1] && /* pitches क्रम planes must match */
-	      mode_cmd->pitches[0] != mode_cmd->pitches[1]))) अणु
+	     (mode_cmd->pitches[1] && /* pitches for planes must match */
+	      mode_cmd->pitches[0] != mode_cmd->pitches[1]))) {
 		DRM_DEBUG_KMS("Unsuitable framebuffer: format: %p4cc; pitches: 0x%x\n 0x%x\n",
-			      &mode_cmd->pixel_क्रमmat,
+			      &mode_cmd->pixel_format,
 			      mode_cmd->pitches[0], mode_cmd->pitches[1]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mode_cmd->flags & DRM_MODE_FB_MODIFIERS) अणु
-		अगर (nouveau_validate_decode_mod(drm, mode_cmd->modअगरier[0],
-						&tile_mode, &kind)) अणु
+	if (mode_cmd->flags & DRM_MODE_FB_MODIFIERS) {
+		if (nouveau_validate_decode_mod(drm, mode_cmd->modifier[0],
+						&tile_mode, &kind)) {
 			DRM_DEBUG_KMS("Unsupported modifier: 0x%llx\n",
-				      mode_cmd->modअगरier[0]);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				      mode_cmd->modifier[0]);
+			return -EINVAL;
+		}
+	} else {
 		tile_mode = nvbo->mode;
 		kind = nvbo->kind;
-	पूर्ण
+	}
 
-	info = drm_get_क्रमmat_info(dev, mode_cmd);
+	info = drm_get_format_info(dev, mode_cmd);
 
-	क्रम (i = 0; i < info->num_planes; i++) अणु
-		width = drm_क्रमmat_info_plane_width(info,
+	for (i = 0; i < info->num_planes; i++) {
+		width = drm_format_info_plane_width(info,
 						    mode_cmd->width,
 						    i);
-		height = drm_क्रमmat_info_plane_height(info,
+		height = drm_format_info_plane_height(info,
 						      mode_cmd->height,
 						      i);
 
-		अगर (kind) अणु
+		if (kind) {
 			ret = nouveau_check_bl_size(drm, nvbo,
 						    mode_cmd->offsets[i],
 						    mode_cmd->pitches[i],
 						    height, tile_mode);
-			अगर (ret)
-				वापस ret;
-		पूर्ण अन्यथा अणु
-			uपूर्णांक32_t size = mode_cmd->pitches[i] * height;
+			if (ret)
+				return ret;
+		} else {
+			uint32_t size = mode_cmd->pitches[i] * height;
 
-			अगर (size + mode_cmd->offsets[i] > nvbo->bo.base.size)
-				वापस -दुस्फल;
-		पूर्ण
-	पूर्ण
+			if (size + mode_cmd->offsets[i] > nvbo->bo.base.size)
+				return -ERANGE;
+		}
+	}
 
-	अगर (!(fb = *pfb = kzalloc(माप(*fb), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(fb = *pfb = kzalloc(sizeof(*fb), GFP_KERNEL)))
+		return -ENOMEM;
 
-	drm_helper_mode_fill_fb_काष्ठा(dev, fb, mode_cmd);
+	drm_helper_mode_fill_fb_struct(dev, fb, mode_cmd);
 	fb->obj[0] = gem;
 
 	ret = drm_framebuffer_init(dev, fb, &nouveau_framebuffer_funcs);
-	अगर (ret)
-		kमुक्त(fb);
-	वापस ret;
-पूर्ण
+	if (ret)
+		kfree(fb);
+	return ret;
+}
 
-काष्ठा drm_framebuffer *
-nouveau_user_framebuffer_create(काष्ठा drm_device *dev,
-				काष्ठा drm_file *file_priv,
-				स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd)
-अणु
-	काष्ठा drm_framebuffer *fb;
-	काष्ठा drm_gem_object *gem;
-	पूर्णांक ret;
+struct drm_framebuffer *
+nouveau_user_framebuffer_create(struct drm_device *dev,
+				struct drm_file *file_priv,
+				const struct drm_mode_fb_cmd2 *mode_cmd)
+{
+	struct drm_framebuffer *fb;
+	struct drm_gem_object *gem;
+	int ret;
 
 	gem = drm_gem_object_lookup(file_priv, mode_cmd->handles[0]);
-	अगर (!gem)
-		वापस ERR_PTR(-ENOENT);
+	if (!gem)
+		return ERR_PTR(-ENOENT);
 
 	ret = nouveau_framebuffer_new(dev, mode_cmd, gem, &fb);
-	अगर (ret == 0)
-		वापस fb;
+	if (ret == 0)
+		return fb;
 
 	drm_gem_object_put(gem);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल स्थिर काष्ठा drm_mode_config_funcs nouveau_mode_config_funcs = अणु
+static const struct drm_mode_config_funcs nouveau_mode_config_funcs = {
 	.fb_create = nouveau_user_framebuffer_create,
 	.output_poll_changed = nouveau_fbcon_output_poll_changed,
-पूर्ण;
+};
 
 
-काष्ठा nouveau_drm_prop_क्रमागत_list अणु
+struct nouveau_drm_prop_enum_list {
 	u8 gen_mask;
-	पूर्णांक type;
-	अक्षर *name;
-पूर्ण;
+	int type;
+	char *name;
+};
 
-अटल काष्ठा nouveau_drm_prop_क्रमागत_list underscan[] = अणु
-	अणु 6, UNDERSCAN_AUTO, "auto" पूर्ण,
-	अणु 6, UNDERSCAN_OFF, "off" पूर्ण,
-	अणु 6, UNDERSCAN_ON, "on" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct nouveau_drm_prop_enum_list underscan[] = {
+	{ 6, UNDERSCAN_AUTO, "auto" },
+	{ 6, UNDERSCAN_OFF, "off" },
+	{ 6, UNDERSCAN_ON, "on" },
+	{}
+};
 
-अटल काष्ठा nouveau_drm_prop_क्रमागत_list dither_mode[] = अणु
-	अणु 7, DITHERING_MODE_AUTO, "auto" पूर्ण,
-	अणु 7, DITHERING_MODE_OFF, "off" पूर्ण,
-	अणु 1, DITHERING_MODE_ON, "on" पूर्ण,
-	अणु 6, DITHERING_MODE_STATIC2X2, "static 2x2" पूर्ण,
-	अणु 6, DITHERING_MODE_DYNAMIC2X2, "dynamic 2x2" पूर्ण,
-	अणु 4, DITHERING_MODE_TEMPORAL, "temporal" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct nouveau_drm_prop_enum_list dither_mode[] = {
+	{ 7, DITHERING_MODE_AUTO, "auto" },
+	{ 7, DITHERING_MODE_OFF, "off" },
+	{ 1, DITHERING_MODE_ON, "on" },
+	{ 6, DITHERING_MODE_STATIC2X2, "static 2x2" },
+	{ 6, DITHERING_MODE_DYNAMIC2X2, "dynamic 2x2" },
+	{ 4, DITHERING_MODE_TEMPORAL, "temporal" },
+	{}
+};
 
-अटल काष्ठा nouveau_drm_prop_क्रमागत_list dither_depth[] = अणु
-	अणु 6, DITHERING_DEPTH_AUTO, "auto" पूर्ण,
-	अणु 6, DITHERING_DEPTH_6BPC, "6 bpc" पूर्ण,
-	अणु 6, DITHERING_DEPTH_8BPC, "8 bpc" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static struct nouveau_drm_prop_enum_list dither_depth[] = {
+	{ 6, DITHERING_DEPTH_AUTO, "auto" },
+	{ 6, DITHERING_DEPTH_6BPC, "6 bpc" },
+	{ 6, DITHERING_DEPTH_8BPC, "8 bpc" },
+	{}
+};
 
-#घोषणा PROP_ENUM(p,gen,n,list) करो अणु                                           \
-	काष्ठा nouveau_drm_prop_क्रमागत_list *l = (list);                         \
-	पूर्णांक c = 0;                                                             \
-	जबतक (l->gen_mask) अणु                                                  \
-		अगर (l->gen_mask & (1 << (gen)))                                \
+#define PROP_ENUM(p,gen,n,list) do {                                           \
+	struct nouveau_drm_prop_enum_list *l = (list);                         \
+	int c = 0;                                                             \
+	while (l->gen_mask) {                                                  \
+		if (l->gen_mask & (1 << (gen)))                                \
 			c++;                                                   \
 		l++;                                                           \
-	पूर्ण                                                                      \
-	अगर (c) अणु                                                               \
+	}                                                                      \
+	if (c) {                                                               \
 		p = drm_property_create(dev, DRM_MODE_PROP_ENUM, n, c);        \
 		l = (list);                                                    \
-		जबतक (p && l->gen_mask) अणु                                     \
-			अगर (l->gen_mask & (1 << (gen))) अणु                      \
-				drm_property_add_क्रमागत(p, l->type, l->name);    \
-			पूर्ण                                                      \
+		while (p && l->gen_mask) {                                     \
+			if (l->gen_mask & (1 << (gen))) {                      \
+				drm_property_add_enum(p, l->type, l->name);    \
+			}                                                      \
 			l++;                                                   \
-		पूर्ण                                                              \
-	पूर्ण                                                                      \
-पूर्ण जबतक(0)
+		}                                                              \
+	}                                                                      \
+} while(0)
 
-व्योम
-nouveau_display_hpd_resume(काष्ठा drm_device *dev)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+void
+nouveau_display_hpd_resume(struct drm_device *dev)
+{
+	struct nouveau_drm *drm = nouveau_drm(dev);
 
 	mutex_lock(&drm->hpd_lock);
 	drm->hpd_pending = ~0;
 	mutex_unlock(&drm->hpd_lock);
 
 	schedule_work(&drm->hpd_work);
-पूर्ण
+}
 
-अटल व्योम
-nouveau_display_hpd_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nouveau_drm *drm = container_of(work, typeof(*drm), hpd_work);
-	काष्ठा drm_device *dev = drm->dev;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_connector_list_iter conn_iter;
+static void
+nouveau_display_hpd_work(struct work_struct *work)
+{
+	struct nouveau_drm *drm = container_of(work, typeof(*drm), hpd_work);
+	struct drm_device *dev = drm->dev;
+	struct drm_connector *connector;
+	struct drm_connector_list_iter conn_iter;
 	u32 pending;
 	bool changed = false;
 
-	pm_runसमय_get_sync(dev->dev);
+	pm_runtime_get_sync(dev->dev);
 
 	mutex_lock(&drm->hpd_lock);
 	pending = drm->hpd_pending;
 	drm->hpd_pending = 0;
 	mutex_unlock(&drm->hpd_lock);
 
-	/* Nothing to करो, निकास early without updating the last busy counter */
-	अगर (!pending)
-		जाओ noop;
+	/* Nothing to do, exit early without updating the last busy counter */
+	if (!pending)
+		goto noop;
 
 	mutex_lock(&dev->mode_config.mutex);
 	drm_connector_list_iter_begin(dev, &conn_iter);
 
-	nouveau_क्रम_each_non_mst_connector_iter(connector, &conn_iter) अणु
-		क्रमागत drm_connector_status old_status = connector->status;
+	nouveau_for_each_non_mst_connector_iter(connector, &conn_iter) {
+		enum drm_connector_status old_status = connector->status;
 		u64 old_epoch_counter = connector->epoch_counter;
 
-		अगर (!(pending & drm_connector_mask(connector)))
-			जारी;
+		if (!(pending & drm_connector_mask(connector)))
+			continue;
 
-		connector->status = drm_helper_probe_detect(connector, शून्य,
+		connector->status = drm_helper_probe_detect(connector, NULL,
 							    false);
-		अगर (old_epoch_counter == connector->epoch_counter)
-			जारी;
+		if (old_epoch_counter == connector->epoch_counter)
+			continue;
 
 		changed = true;
 		drm_dbg_kms(dev, "[CONNECTOR:%d:%s] status updated from %s to %s (epoch counter %llu->%llu)\n",
@@ -509,132 +508,132 @@ nouveau_display_hpd_work(काष्ठा work_काष्ठा *work)
 			    drm_get_connector_status_name(old_status),
 			    drm_get_connector_status_name(connector->status),
 			    old_epoch_counter, connector->epoch_counter);
-	पूर्ण
+	}
 
 	drm_connector_list_iter_end(&conn_iter);
 	mutex_unlock(&dev->mode_config.mutex);
 
-	अगर (changed)
+	if (changed)
 		drm_kms_helper_hotplug_event(dev);
 
-	pm_runसमय_mark_last_busy(drm->dev->dev);
+	pm_runtime_mark_last_busy(drm->dev->dev);
 noop:
-	pm_runसमय_put_sync(drm->dev->dev);
-पूर्ण
+	pm_runtime_put_sync(drm->dev->dev);
+}
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 
-अटल पूर्णांक
-nouveau_display_acpi_ntfy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-			  व्योम *data)
-अणु
-	काष्ठा nouveau_drm *drm = container_of(nb, typeof(*drm), acpi_nb);
-	काष्ठा acpi_bus_event *info = data;
-	पूर्णांक ret;
+static int
+nouveau_display_acpi_ntfy(struct notifier_block *nb, unsigned long val,
+			  void *data)
+{
+	struct nouveau_drm *drm = container_of(nb, typeof(*drm), acpi_nb);
+	struct acpi_bus_event *info = data;
+	int ret;
 
-	अगर (!म_भेद(info->device_class, ACPI_VIDEO_CLASS)) अणु
-		अगर (info->type == ACPI_VIDEO_NOTIFY_PROBE) अणु
-			ret = pm_runसमय_get(drm->dev->dev);
-			अगर (ret == 1 || ret == -EACCES) अणु
-				/* If the GPU is alपढ़ोy awake, or in a state
+	if (!strcmp(info->device_class, ACPI_VIDEO_CLASS)) {
+		if (info->type == ACPI_VIDEO_NOTIFY_PROBE) {
+			ret = pm_runtime_get(drm->dev->dev);
+			if (ret == 1 || ret == -EACCES) {
+				/* If the GPU is already awake, or in a state
 				 * where we can't wake it up, it can handle
 				 * it's own hotplug events.
 				 */
-				pm_runसमय_put_स्वतःsuspend(drm->dev->dev);
-			पूर्ण अन्यथा अगर (ret == 0) अणु
-				/* We've started resuming the GPU alपढ़ोy, so
+				pm_runtime_put_autosuspend(drm->dev->dev);
+			} else if (ret == 0) {
+				/* We've started resuming the GPU already, so
 				 * it will handle scheduling a full reprobe
 				 * itself
 				 */
 				NV_DEBUG(drm, "ACPI requested connector reprobe\n");
-				pm_runसमय_put_noidle(drm->dev->dev);
-			पूर्ण अन्यथा अणु
+				pm_runtime_put_noidle(drm->dev->dev);
+			} else {
 				NV_WARN(drm, "Dropped ACPI reprobe event due to RPM error: %d\n",
 					ret);
-			पूर्ण
+			}
 
-			/* acpi-video should not generate keypresses क्रम this */
-			वापस NOTIFY_BAD;
-		पूर्ण
-	पूर्ण
+			/* acpi-video should not generate keypresses for this */
+			return NOTIFY_BAD;
+		}
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
-#पूर्ण_अगर
+	return NOTIFY_DONE;
+}
+#endif
 
-पूर्णांक
-nouveau_display_init(काष्ठा drm_device *dev, bool resume, bool runसमय)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(dev);
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_connector_list_iter conn_iter;
-	पूर्णांक ret;
+int
+nouveau_display_init(struct drm_device *dev, bool resume, bool runtime)
+{
+	struct nouveau_display *disp = nouveau_display(dev);
+	struct drm_connector *connector;
+	struct drm_connector_list_iter conn_iter;
+	int ret;
 
 	/*
-	 * Enable hotplug पूर्णांकerrupts (करोne as early as possible, since we need
-	 * them क्रम MST)
+	 * Enable hotplug interrupts (done as early as possible, since we need
+	 * them for MST)
 	 */
 	drm_connector_list_iter_begin(dev, &conn_iter);
-	nouveau_क्रम_each_non_mst_connector_iter(connector, &conn_iter) अणु
-		काष्ठा nouveau_connector *conn = nouveau_connector(connector);
-		nvअगर_notअगरy_get(&conn->hpd);
-	पूर्ण
+	nouveau_for_each_non_mst_connector_iter(connector, &conn_iter) {
+		struct nouveau_connector *conn = nouveau_connector(connector);
+		nvif_notify_get(&conn->hpd);
+	}
 	drm_connector_list_iter_end(&conn_iter);
 
-	ret = disp->init(dev, resume, runसमय);
-	अगर (ret)
-		वापस ret;
+	ret = disp->init(dev, resume, runtime);
+	if (ret)
+		return ret;
 
-	/* enable connector detection and polling क्रम connectors without HPD
+	/* enable connector detection and polling for connectors without HPD
 	 * support
 	 */
 	drm_kms_helper_poll_enable(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-nouveau_display_fini(काष्ठा drm_device *dev, bool suspend, bool runसमय)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(dev);
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_connector_list_iter conn_iter;
+void
+nouveau_display_fini(struct drm_device *dev, bool suspend, bool runtime)
+{
+	struct nouveau_display *disp = nouveau_display(dev);
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct drm_connector *connector;
+	struct drm_connector_list_iter conn_iter;
 
-	अगर (!suspend) अणु
-		अगर (drm_drv_uses_atomic_modeset(dev))
-			drm_atomic_helper_shutकरोwn(dev);
-		अन्यथा
-			drm_helper_क्रमce_disable_all(dev);
-	पूर्ण
+	if (!suspend) {
+		if (drm_drv_uses_atomic_modeset(dev))
+			drm_atomic_helper_shutdown(dev);
+		else
+			drm_helper_force_disable_all(dev);
+	}
 
-	/* disable hotplug पूर्णांकerrupts */
+	/* disable hotplug interrupts */
 	drm_connector_list_iter_begin(dev, &conn_iter);
-	nouveau_क्रम_each_non_mst_connector_iter(connector, &conn_iter) अणु
-		काष्ठा nouveau_connector *conn = nouveau_connector(connector);
-		nvअगर_notअगरy_put(&conn->hpd);
-	पूर्ण
+	nouveau_for_each_non_mst_connector_iter(connector, &conn_iter) {
+		struct nouveau_connector *conn = nouveau_connector(connector);
+		nvif_notify_put(&conn->hpd);
+	}
 	drm_connector_list_iter_end(&conn_iter);
 
-	अगर (!runसमय)
+	if (!runtime)
 		cancel_work_sync(&drm->hpd_work);
 
 	drm_kms_helper_poll_disable(dev);
-	disp->fini(dev, runसमय, suspend);
-पूर्ण
+	disp->fini(dev, runtime, suspend);
+}
 
-अटल व्योम
-nouveau_display_create_properties(काष्ठा drm_device *dev)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(dev);
-	पूर्णांक gen;
+static void
+nouveau_display_create_properties(struct drm_device *dev)
+{
+	struct nouveau_display *disp = nouveau_display(dev);
+	int gen;
 
-	अगर (disp->disp.object.oclass < NV50_DISP)
+	if (disp->disp.object.oclass < NV50_DISP)
 		gen = 0;
-	अन्यथा
-	अगर (disp->disp.object.oclass < GF110_DISP)
+	else
+	if (disp->disp.object.oclass < GF110_DISP)
 		gen = 1;
-	अन्यथा
+	else
 		gen = 2;
 
 	PROP_ENUM(disp->dithering_mode, gen, "dithering mode", dither_mode);
@@ -647,8 +646,8 @@ nouveau_display_create_properties(काष्ठा drm_device *dev)
 	disp->underscan_vborder_property =
 		drm_property_create_range(dev, 0, "underscan vborder", 0, 128);
 
-	अगर (gen < 1)
-		वापस;
+	if (gen < 1)
+		return;
 
 	/* -90..+90 */
 	disp->vibrant_hue_property =
@@ -657,19 +656,19 @@ nouveau_display_create_properties(काष्ठा drm_device *dev)
 	/* -100..+100 */
 	disp->color_vibrance_property =
 		drm_property_create_range(dev, 0, "color vibrance", 0, 200);
-पूर्ण
+}
 
-पूर्णांक
-nouveau_display_create(काष्ठा drm_device *dev)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा nvkm_device *device = nvxx_device(&drm->client.device);
-	काष्ठा nouveau_display *disp;
-	पूर्णांक ret;
+int
+nouveau_display_create(struct drm_device *dev)
+{
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct nvkm_device *device = nvxx_device(&drm->client.device);
+	struct nouveau_display *disp;
+	int ret;
 
-	disp = drm->display = kzalloc(माप(*disp), GFP_KERNEL);
-	अगर (!disp)
-		वापस -ENOMEM;
+	disp = drm->display = kzalloc(sizeof(*disp), GFP_KERNEL);
+	if (!disp)
+		return -ENOMEM;
 
 	drm_mode_config_init(dev);
 	drm_mode_create_scaling_mode_property(dev);
@@ -680,180 +679,180 @@ nouveau_display_create(काष्ठा drm_device *dev)
 
 	dev->mode_config.min_width = 0;
 	dev->mode_config.min_height = 0;
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_CELSIUS) अणु
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_CELSIUS) {
 		dev->mode_config.max_width = 2048;
 		dev->mode_config.max_height = 2048;
-	पूर्ण अन्यथा
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) अणु
+	} else
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA) {
 		dev->mode_config.max_width = 4096;
 		dev->mode_config.max_height = 4096;
-	पूर्ण अन्यथा
-	अगर (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI) अणु
+	} else
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_FERMI) {
 		dev->mode_config.max_width = 8192;
 		dev->mode_config.max_height = 8192;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->mode_config.max_width = 16384;
 		dev->mode_config.max_height = 16384;
-	पूर्ण
+	}
 
 	dev->mode_config.preferred_depth = 24;
-	dev->mode_config.prefer_shaकरोw = 1;
-	dev->mode_config.allow_fb_modअगरiers = true;
+	dev->mode_config.prefer_shadow = 1;
+	dev->mode_config.allow_fb_modifiers = true;
 
-	अगर (drm->client.device.info.chipset < 0x11)
+	if (drm->client.device.info.chipset < 0x11)
 		dev->mode_config.async_page_flip = false;
-	अन्यथा
+	else
 		dev->mode_config.async_page_flip = true;
 
 	drm_kms_helper_poll_init(dev);
 	drm_kms_helper_poll_disable(dev);
 
-	अगर (nouveau_modeset != 2 && drm->vbios.dcb.entries) अणु
-		ret = nvअगर_disp_ctor(&drm->client.device, "kmsDisp", 0,
+	if (nouveau_modeset != 2 && drm->vbios.dcb.entries) {
+		ret = nvif_disp_ctor(&drm->client.device, "kmsDisp", 0,
 				     &disp->disp);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			nouveau_display_create_properties(dev);
-			अगर (disp->disp.object.oclass < NV50_DISP)
+			if (disp->disp.object.oclass < NV50_DISP)
 				ret = nv04_display_create(dev);
-			अन्यथा
+			else
 				ret = nv50_display_create(dev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर (ret)
-		जाओ disp_create_err;
+	if (ret)
+		goto disp_create_err;
 
 	drm_mode_config_reset(dev);
 
-	अगर (dev->mode_config.num_crtc) अणु
+	if (dev->mode_config.num_crtc) {
 		ret = drm_vblank_init(dev, dev->mode_config.num_crtc);
-		अगर (ret)
-			जाओ vblank_err;
+		if (ret)
+			goto vblank_err;
 
-		अगर (disp->disp.object.oclass >= NV50_DISP)
+		if (disp->disp.object.oclass >= NV50_DISP)
 			nv50_crc_init(dev);
-	पूर्ण
+	}
 
 	INIT_WORK(&drm->hpd_work, nouveau_display_hpd_work);
 	mutex_init(&drm->hpd_lock);
-#अगर_घोषित CONFIG_ACPI
-	drm->acpi_nb.notअगरier_call = nouveau_display_acpi_ntfy;
-	रेजिस्टर_acpi_notअगरier(&drm->acpi_nb);
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+	drm->acpi_nb.notifier_call = nouveau_display_acpi_ntfy;
+	register_acpi_notifier(&drm->acpi_nb);
+#endif
 
-	वापस 0;
+	return 0;
 
 vblank_err:
 	disp->dtor(dev);
 disp_create_err:
 	drm_kms_helper_poll_fini(dev);
 	drm_mode_config_cleanup(dev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम
-nouveau_display_destroy(काष्ठा drm_device *dev)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(dev);
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
+void
+nouveau_display_destroy(struct drm_device *dev)
+{
+	struct nouveau_display *disp = nouveau_display(dev);
+	struct nouveau_drm *drm = nouveau_drm(dev);
 
-#अगर_घोषित CONFIG_ACPI
-	unरेजिस्टर_acpi_notअगरier(&drm->acpi_nb);
-#पूर्ण_अगर
+#ifdef CONFIG_ACPI
+	unregister_acpi_notifier(&drm->acpi_nb);
+#endif
 
 	drm_kms_helper_poll_fini(dev);
 	drm_mode_config_cleanup(dev);
 
-	अगर (disp->dtor)
+	if (disp->dtor)
 		disp->dtor(dev);
 
-	nvअगर_disp_dtor(&disp->disp);
+	nvif_disp_dtor(&disp->disp);
 
-	nouveau_drm(dev)->display = शून्य;
+	nouveau_drm(dev)->display = NULL;
 	mutex_destroy(&drm->hpd_lock);
-	kमुक्त(disp);
-पूर्ण
+	kfree(disp);
+}
 
-पूर्णांक
-nouveau_display_suspend(काष्ठा drm_device *dev, bool runसमय)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(dev);
+int
+nouveau_display_suspend(struct drm_device *dev, bool runtime)
+{
+	struct nouveau_display *disp = nouveau_display(dev);
 
-	अगर (drm_drv_uses_atomic_modeset(dev)) अणु
-		अगर (!runसमय) अणु
+	if (drm_drv_uses_atomic_modeset(dev)) {
+		if (!runtime) {
 			disp->suspend = drm_atomic_helper_suspend(dev);
-			अगर (IS_ERR(disp->suspend)) अणु
-				पूर्णांक ret = PTR_ERR(disp->suspend);
-				disp->suspend = शून्य;
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (IS_ERR(disp->suspend)) {
+				int ret = PTR_ERR(disp->suspend);
+				disp->suspend = NULL;
+				return ret;
+			}
+		}
+	}
 
-	nouveau_display_fini(dev, true, runसमय);
-	वापस 0;
-पूर्ण
+	nouveau_display_fini(dev, true, runtime);
+	return 0;
+}
 
-व्योम
-nouveau_display_resume(काष्ठा drm_device *dev, bool runसमय)
-अणु
-	काष्ठा nouveau_display *disp = nouveau_display(dev);
+void
+nouveau_display_resume(struct drm_device *dev, bool runtime)
+{
+	struct nouveau_display *disp = nouveau_display(dev);
 
-	nouveau_display_init(dev, true, runसमय);
+	nouveau_display_init(dev, true, runtime);
 
-	अगर (drm_drv_uses_atomic_modeset(dev)) अणु
-		अगर (disp->suspend) अणु
+	if (drm_drv_uses_atomic_modeset(dev)) {
+		if (disp->suspend) {
 			drm_atomic_helper_resume(dev, disp->suspend);
-			disp->suspend = शून्य;
-		पूर्ण
-		वापस;
-	पूर्ण
-पूर्ण
+			disp->suspend = NULL;
+		}
+		return;
+	}
+}
 
-पूर्णांक
-nouveau_display_dumb_create(काष्ठा drm_file *file_priv, काष्ठा drm_device *dev,
-			    काष्ठा drm_mode_create_dumb *args)
-अणु
-	काष्ठा nouveau_cli *cli = nouveau_cli(file_priv);
-	काष्ठा nouveau_bo *bo;
-	uपूर्णांक32_t करोमुख्य;
-	पूर्णांक ret;
+int
+nouveau_display_dumb_create(struct drm_file *file_priv, struct drm_device *dev,
+			    struct drm_mode_create_dumb *args)
+{
+	struct nouveau_cli *cli = nouveau_cli(file_priv);
+	struct nouveau_bo *bo;
+	uint32_t domain;
+	int ret;
 
 	args->pitch = roundup(args->width * (args->bpp / 8), 256);
 	args->size = args->pitch * args->height;
 	args->size = roundup(args->size, PAGE_SIZE);
 
-	/* Use VRAM अगर there is any ; otherwise fallback to प्रणाली memory */
-	अगर (nouveau_drm(dev)->client.device.info.ram_size != 0)
-		करोमुख्य = NOUVEAU_GEM_DOMAIN_VRAM;
-	अन्यथा
-		करोमुख्य = NOUVEAU_GEM_DOMAIN_GART;
+	/* Use VRAM if there is any ; otherwise fallback to system memory */
+	if (nouveau_drm(dev)->client.device.info.ram_size != 0)
+		domain = NOUVEAU_GEM_DOMAIN_VRAM;
+	else
+		domain = NOUVEAU_GEM_DOMAIN_GART;
 
-	ret = nouveau_gem_new(cli, args->size, 0, करोमुख्य, 0, 0, &bo);
-	अगर (ret)
-		वापस ret;
+	ret = nouveau_gem_new(cli, args->size, 0, domain, 0, 0, &bo);
+	if (ret)
+		return ret;
 
 	ret = drm_gem_handle_create(file_priv, &bo->bo.base, &args->handle);
 	drm_gem_object_put(&bo->bo.base);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक
-nouveau_display_dumb_map_offset(काष्ठा drm_file *file_priv,
-				काष्ठा drm_device *dev,
-				uपूर्णांक32_t handle, uपूर्णांक64_t *poffset)
-अणु
-	काष्ठा drm_gem_object *gem;
+int
+nouveau_display_dumb_map_offset(struct drm_file *file_priv,
+				struct drm_device *dev,
+				uint32_t handle, uint64_t *poffset)
+{
+	struct drm_gem_object *gem;
 
 	gem = drm_gem_object_lookup(file_priv, handle);
-	अगर (gem) अणु
-		काष्ठा nouveau_bo *bo = nouveau_gem_object(gem);
+	if (gem) {
+		struct nouveau_bo *bo = nouveau_gem_object(gem);
 		*poffset = drm_vma_node_offset_addr(&bo->bo.base.vma_node);
 		drm_gem_object_put(gem);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}

@@ -1,234 +1,233 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * OnKey device driver क्रम DA9063, DA9062 and DA9061 PMICs
+ * OnKey device driver for DA9063, DA9062 and DA9061 PMICs
  * Copyright (C) 2015  Dialog Semiconductor Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/da9063/core.h>
-#समावेश <linux/mfd/da9063/रेजिस्टरs.h>
-#समावेश <linux/mfd/da9062/core.h>
-#समावेश <linux/mfd/da9062/रेजिस्टरs.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/workqueue.h>
+#include <linux/regmap.h>
+#include <linux/of.h>
+#include <linux/mfd/da9063/core.h>
+#include <linux/mfd/da9063/registers.h>
+#include <linux/mfd/da9062/core.h>
+#include <linux/mfd/da9062/registers.h>
 
-काष्ठा da906x_chip_config अणु
+struct da906x_chip_config {
 	/* REGS */
-	पूर्णांक onkey_status;
-	पूर्णांक onkey_pwr_संकेतling;
-	पूर्णांक onkey_fault_log;
-	पूर्णांक onkey_shutकरोwn;
+	int onkey_status;
+	int onkey_pwr_signalling;
+	int onkey_fault_log;
+	int onkey_shutdown;
 	/* MASKS */
-	पूर्णांक onkey_nonkey_mask;
-	पूर्णांक onkey_nonkey_lock_mask;
-	पूर्णांक onkey_key_reset_mask;
-	पूर्णांक onkey_shutकरोwn_mask;
+	int onkey_nonkey_mask;
+	int onkey_nonkey_lock_mask;
+	int onkey_key_reset_mask;
+	int onkey_shutdown_mask;
 	/* NAMES */
-	स्थिर अक्षर *name;
-पूर्ण;
+	const char *name;
+};
 
-काष्ठा da9063_onkey अणु
-	काष्ठा delayed_work work;
-	काष्ठा input_dev *input;
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	स्थिर काष्ठा da906x_chip_config *config;
-	अक्षर phys[32];
-	bool key_घातer;
-पूर्ण;
+struct da9063_onkey {
+	struct delayed_work work;
+	struct input_dev *input;
+	struct device *dev;
+	struct regmap *regmap;
+	const struct da906x_chip_config *config;
+	char phys[32];
+	bool key_power;
+};
 
-अटल स्थिर काष्ठा da906x_chip_config da9063_regs = अणु
+static const struct da906x_chip_config da9063_regs = {
 	/* REGS */
 	.onkey_status = DA9063_REG_STATUS_A,
-	.onkey_pwr_संकेतling = DA9063_REG_CONTROL_B,
+	.onkey_pwr_signalling = DA9063_REG_CONTROL_B,
 	.onkey_fault_log = DA9063_REG_FAULT_LOG,
-	.onkey_shutकरोwn = DA9063_REG_CONTROL_F,
+	.onkey_shutdown = DA9063_REG_CONTROL_F,
 	/* MASKS */
 	.onkey_nonkey_mask = DA9063_NONKEY,
 	.onkey_nonkey_lock_mask = DA9063_NONKEY_LOCK,
 	.onkey_key_reset_mask = DA9063_KEY_RESET,
-	.onkey_shutकरोwn_mask = DA9063_SHUTDOWN,
+	.onkey_shutdown_mask = DA9063_SHUTDOWN,
 	/* NAMES */
 	.name = DA9063_DRVNAME_ONKEY,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा da906x_chip_config da9062_regs = अणु
+static const struct da906x_chip_config da9062_regs = {
 	/* REGS */
 	.onkey_status = DA9062AA_STATUS_A,
-	.onkey_pwr_संकेतling = DA9062AA_CONTROL_B,
+	.onkey_pwr_signalling = DA9062AA_CONTROL_B,
 	.onkey_fault_log = DA9062AA_FAULT_LOG,
-	.onkey_shutकरोwn = DA9062AA_CONTROL_F,
+	.onkey_shutdown = DA9062AA_CONTROL_F,
 	/* MASKS */
 	.onkey_nonkey_mask = DA9062AA_NONKEY_MASK,
 	.onkey_nonkey_lock_mask = DA9062AA_NONKEY_LOCK_MASK,
 	.onkey_key_reset_mask = DA9062AA_KEY_RESET_MASK,
-	.onkey_shutकरोwn_mask = DA9062AA_SHUTDOWN_MASK,
+	.onkey_shutdown_mask = DA9062AA_SHUTDOWN_MASK,
 	/* NAMES */
 	.name = "da9062-onkey",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id da9063_compatible_reg_id_table[] = अणु
-	अणु .compatible = "dlg,da9063-onkey", .data = &da9063_regs पूर्ण,
-	अणु .compatible = "dlg,da9062-onkey", .data = &da9062_regs पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id da9063_compatible_reg_id_table[] = {
+	{ .compatible = "dlg,da9063-onkey", .data = &da9063_regs },
+	{ .compatible = "dlg,da9062-onkey", .data = &da9062_regs },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, da9063_compatible_reg_id_table);
 
-अटल व्योम da9063_poll_on(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा da9063_onkey *onkey = container_of(work,
-						काष्ठा da9063_onkey,
+static void da9063_poll_on(struct work_struct *work)
+{
+	struct da9063_onkey *onkey = container_of(work,
+						struct da9063_onkey,
 						work.work);
-	स्थिर काष्ठा da906x_chip_config *config = onkey->config;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक fault_log = 0;
+	const struct da906x_chip_config *config = onkey->config;
+	unsigned int val;
+	int fault_log = 0;
 	bool poll = true;
-	पूर्णांक error;
+	int error;
 
 	/* Poll to see when the pin is released */
-	error = regmap_पढ़ो(onkey->regmap,
+	error = regmap_read(onkey->regmap,
 			    config->onkey_status,
 			    &val);
-	अगर (error) अणु
+	if (error) {
 		dev_err(onkey->dev,
 			"Failed to read ON status: %d\n", error);
-		जाओ err_poll;
-	पूर्ण
+		goto err_poll;
+	}
 
-	अगर (!(val & config->onkey_nonkey_mask)) अणु
+	if (!(val & config->onkey_nonkey_mask)) {
 		error = regmap_update_bits(onkey->regmap,
-					   config->onkey_pwr_संकेतling,
+					   config->onkey_pwr_signalling,
 					   config->onkey_nonkey_lock_mask,
 					   0);
-		अगर (error) अणु
+		if (error) {
 			dev_err(onkey->dev,
 				"Failed to reset the Key Delay %d\n", error);
-			जाओ err_poll;
-		पूर्ण
+			goto err_poll;
+		}
 
 		input_report_key(onkey->input, KEY_POWER, 0);
 		input_sync(onkey->input);
 
 		poll = false;
-	पूर्ण
+	}
 
 	/*
 	 * If the fault log KEY_RESET is detected, then clear it
-	 * and shut करोwn the प्रणाली.
+	 * and shut down the system.
 	 */
-	error = regmap_पढ़ो(onkey->regmap,
+	error = regmap_read(onkey->regmap,
 			    config->onkey_fault_log,
 			    &fault_log);
-	अगर (error) अणु
+	if (error) {
 		dev_warn(&onkey->input->dev,
 			 "Cannot read FAULT_LOG: %d\n", error);
-	पूर्ण अन्यथा अगर (fault_log & config->onkey_key_reset_mask) अणु
-		error = regmap_ग_लिखो(onkey->regmap,
+	} else if (fault_log & config->onkey_key_reset_mask) {
+		error = regmap_write(onkey->regmap,
 				     config->onkey_fault_log,
 				     config->onkey_key_reset_mask);
-		अगर (error) अणु
+		if (error) {
 			dev_warn(&onkey->input->dev,
 				 "Cannot reset KEY_RESET fault log: %d\n",
 				 error);
-		पूर्ण अन्यथा अणु
-			/* at this poपूर्णांक we करो any S/W housekeeping
-			 * and then send shutकरोwn command
+		} else {
+			/* at this point we do any S/W housekeeping
+			 * and then send shutdown command
 			 */
 			dev_dbg(&onkey->input->dev,
 				"Sending SHUTDOWN to PMIC ...\n");
-			error = regmap_ग_लिखो(onkey->regmap,
-					     config->onkey_shutकरोwn,
-					     config->onkey_shutकरोwn_mask);
-			अगर (error)
+			error = regmap_write(onkey->regmap,
+					     config->onkey_shutdown,
+					     config->onkey_shutdown_mask);
+			if (error)
 				dev_err(&onkey->input->dev,
 					"Cannot SHUTDOWN PMIC: %d\n",
 					error);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 err_poll:
-	अगर (poll)
-		schedule_delayed_work(&onkey->work, msecs_to_jअगरfies(50));
-पूर्ण
+	if (poll)
+		schedule_delayed_work(&onkey->work, msecs_to_jiffies(50));
+}
 
-अटल irqवापस_t da9063_onkey_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा da9063_onkey *onkey = data;
-	स्थिर काष्ठा da906x_chip_config *config = onkey->config;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक error;
+static irqreturn_t da9063_onkey_irq_handler(int irq, void *data)
+{
+	struct da9063_onkey *onkey = data;
+	const struct da906x_chip_config *config = onkey->config;
+	unsigned int val;
+	int error;
 
-	error = regmap_पढ़ो(onkey->regmap,
+	error = regmap_read(onkey->regmap,
 			    config->onkey_status,
 			    &val);
-	अगर (onkey->key_घातer && !error && (val & config->onkey_nonkey_mask)) अणु
+	if (onkey->key_power && !error && (val & config->onkey_nonkey_mask)) {
 		input_report_key(onkey->input, KEY_POWER, 1);
 		input_sync(onkey->input);
 		schedule_delayed_work(&onkey->work, 0);
 		dev_dbg(onkey->dev, "KEY_POWER long press.\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		input_report_key(onkey->input, KEY_POWER, 1);
 		input_sync(onkey->input);
 		input_report_key(onkey->input, KEY_POWER, 0);
 		input_sync(onkey->input);
 		dev_dbg(onkey->dev, "KEY_POWER short press.\n");
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम da9063_cancel_poll(व्योम *data)
-अणु
-	काष्ठा da9063_onkey *onkey = data;
+static void da9063_cancel_poll(void *data)
+{
+	struct da9063_onkey *onkey = data;
 
 	cancel_delayed_work_sync(&onkey->work);
-पूर्ण
+}
 
-अटल पूर्णांक da9063_onkey_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा da9063_onkey *onkey;
-	स्थिर काष्ठा of_device_id *match;
-	पूर्णांक irq;
-	पूर्णांक error;
+static int da9063_onkey_probe(struct platform_device *pdev)
+{
+	struct da9063_onkey *onkey;
+	const struct of_device_id *match;
+	int irq;
+	int error;
 
 	match = of_match_node(da9063_compatible_reg_id_table,
 			      pdev->dev.of_node);
-	अगर (!match)
-		वापस -ENXIO;
+	if (!match)
+		return -ENXIO;
 
-	onkey = devm_kzalloc(&pdev->dev, माप(काष्ठा da9063_onkey),
+	onkey = devm_kzalloc(&pdev->dev, sizeof(struct da9063_onkey),
 			     GFP_KERNEL);
-	अगर (!onkey) अणु
+	if (!onkey) {
 		dev_err(&pdev->dev, "Failed to allocate memory.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	onkey->config = match->data;
 	onkey->dev = &pdev->dev;
 
-	onkey->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
-	अगर (!onkey->regmap) अणु
+	onkey->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!onkey->regmap) {
 		dev_err(&pdev->dev, "Parent regmap unavailable.\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	onkey->key_घातer = !of_property_पढ़ो_bool(pdev->dev.of_node,
+	onkey->key_power = !of_property_read_bool(pdev->dev.of_node,
 						  "dlg,disable-key-power");
 
 	onkey->input = devm_input_allocate_device(&pdev->dev);
-	अगर (!onkey->input) अणु
+	if (!onkey->input) {
 		dev_err(&pdev->dev, "Failed to allocated input device.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	onkey->input->name = onkey->config->name;
-	snम_लिखो(onkey->phys, माप(onkey->phys), "%s/input0",
+	snprintf(onkey->phys, sizeof(onkey->phys), "%s/input0",
 		 onkey->config->name);
 	onkey->input->phys = onkey->phys;
 	onkey->input->dev.parent = &pdev->dev;
@@ -238,45 +237,45 @@ err_poll:
 	INIT_DELAYED_WORK(&onkey->work, da9063_poll_on);
 
 	error = devm_add_action(&pdev->dev, da9063_cancel_poll, onkey);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev,
 			"Failed to add cancel poll action: %d\n",
 			error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	irq = platक्रमm_get_irq_byname(pdev, "ONKEY");
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq_byname(pdev, "ONKEY");
+	if (irq < 0)
+		return irq;
 
-	error = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
-					  शून्य, da9063_onkey_irq_handler,
+	error = devm_request_threaded_irq(&pdev->dev, irq,
+					  NULL, da9063_onkey_irq_handler,
 					  IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					  "ONKEY", onkey);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev,
 			"Failed to request IRQ %d: %d\n", irq, error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = input_रेजिस्टर_device(onkey->input);
-	अगर (error) अणु
+	error = input_register_device(onkey->input);
+	if (error) {
 		dev_err(&pdev->dev,
 			"Failed to register input device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver da9063_onkey_driver = अणु
+static struct platform_driver da9063_onkey_driver = {
 	.probe	= da9063_onkey_probe,
-	.driver	= अणु
+	.driver	= {
 		.name	= DA9063_DRVNAME_ONKEY,
 		.of_match_table = da9063_compatible_reg_id_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(da9063_onkey_driver);
+	},
+};
+module_platform_driver(da9063_onkey_driver);
 
 MODULE_AUTHOR("S Twiss <stwiss.opensource@diasemi.com>");
 MODULE_DESCRIPTION("Onkey device driver for Dialog DA9063, DA9062 and DA9061");

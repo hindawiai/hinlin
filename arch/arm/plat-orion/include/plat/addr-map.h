@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * arch/arm/plat-orion/include/plat/addr-map.h
  *
@@ -9,47 +8,47 @@
  * warranty of any kind, whether express or implied.
  */
 
-#अगर_अघोषित __PLAT_ADDR_MAP_H
-#घोषणा __PLAT_ADDR_MAP_H
+#ifndef __PLAT_ADDR_MAP_H
+#define __PLAT_ADDR_MAP_H
 
-बाह्य काष्ठा mbus_dram_target_info orion_mbus_dram_info;
+extern struct mbus_dram_target_info orion_mbus_dram_info;
 
-काष्ठा orion_addr_map_cfg अणु
-	स्थिर पूर्णांक num_wins;	/* Total number of winकरोws */
-	स्थिर पूर्णांक remappable_wins;
-	व्योम __iomem *bridge_virt_base;
-	पूर्णांक hw_io_coherency;
+struct orion_addr_map_cfg {
+	const int num_wins;	/* Total number of windows */
+	const int remappable_wins;
+	void __iomem *bridge_virt_base;
+	int hw_io_coherency;
 
-	/* If शून्य, the शेष cpu_win_can_remap will be used, using
+	/* If NULL, the default cpu_win_can_remap will be used, using
 	   the value in remappable_wins */
-	पूर्णांक (*cpu_win_can_remap) (स्थिर काष्ठा orion_addr_map_cfg *cfg,
-				  स्थिर पूर्णांक win);
-	/* If शून्य, the शेष win_cfg_base will be used, using the
+	int (*cpu_win_can_remap) (const struct orion_addr_map_cfg *cfg,
+				  const int win);
+	/* If NULL, the default win_cfg_base will be used, using the
 	   value in bridge_virt_base */
-	व्योम __iomem *(*win_cfg_base) (स्थिर काष्ठा orion_addr_map_cfg *cfg,
-				 स्थिर पूर्णांक win);
-पूर्ण;
+	void __iomem *(*win_cfg_base) (const struct orion_addr_map_cfg *cfg,
+				 const int win);
+};
 
 /*
- * Inक्रमmation needed to setup one address mapping.
+ * Information needed to setup one address mapping.
  */
-काष्ठा orion_addr_map_info अणु
-	स्थिर पूर्णांक win;
-	स्थिर u32 base;
-	स्थिर u32 size;
-	स्थिर u8 target;
-	स्थिर u8 attr;
-	स्थिर पूर्णांक remap;
-पूर्ण;
+struct orion_addr_map_info {
+	const int win;
+	const u32 base;
+	const u32 size;
+	const u8 target;
+	const u8 attr;
+	const int remap;
+};
 
-व्योम __init orion_config_wins(काष्ठा orion_addr_map_cfg *cfg,
-			      स्थिर काष्ठा orion_addr_map_info *info);
+void __init orion_config_wins(struct orion_addr_map_cfg *cfg,
+			      const struct orion_addr_map_info *info);
 
-व्योम __init orion_setup_cpu_win(स्थिर काष्ठा orion_addr_map_cfg *cfg,
-				स्थिर पूर्णांक win, स्थिर u32 base,
-				स्थिर u32 size, स्थिर u8 target,
-				स्थिर u8 attr, स्थिर पूर्णांक remap);
+void __init orion_setup_cpu_win(const struct orion_addr_map_cfg *cfg,
+				const int win, const u32 base,
+				const u32 size, const u8 target,
+				const u8 attr, const int remap);
 
-व्योम __init orion_setup_cpu_mbus_target(स्थिर काष्ठा orion_addr_map_cfg *cfg,
-					स्थिर व्योम __iomem *ddr_winकरोw_cpu_base);
-#पूर्ण_अगर
+void __init orion_setup_cpu_mbus_target(const struct orion_addr_map_cfg *cfg,
+					const void __iomem *ddr_window_cpu_base);
+#endif

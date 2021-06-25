@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_BOOK3S_PGALLOC_H
-#घोषणा _ASM_POWERPC_BOOK3S_PGALLOC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_BOOK3S_PGALLOC_H
+#define _ASM_POWERPC_BOOK3S_PGALLOC_H
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-बाह्य व्योम tlb_हटाओ_table(काष्ठा mmu_gather *tlb, व्योम *table);
+extern void tlb_remove_table(struct mmu_gather *tlb, void *table);
 
-#अगर_घोषित CONFIG_PPC64
-#समावेश <यंत्र/book3s/64/pgभाग.स>
-#अन्यथा
-#समावेश <यंत्र/book3s/32/pgभाग.स>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#include <asm/book3s/64/pgalloc.h>
+#else
+#include <asm/book3s/32/pgalloc.h>
+#endif
 
-#पूर्ण_अगर /* _ASM_POWERPC_BOOK3S_PGALLOC_H */
+#endif /* _ASM_POWERPC_BOOK3S_PGALLOC_H */

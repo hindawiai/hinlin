@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * net/core/dev_addr_lists.c - Functions क्रम handling net device lists
+ * net/core/dev_addr_lists.c - Functions for handling net device lists
  * Copyright (c) 2010 Jiri Pirko <jpirko@redhat.com>
  *
- * This file contains functions क्रम working with unicast, multicast and device
+ * This file contains functions for working with unicast, multicast and device
  * addresses lists.
  */
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/export.h>
-#समावेश <linux/list.h>
+#include <linux/netdevice.h>
+#include <linux/rtnetlink.h>
+#include <linux/export.h>
+#include <linux/list.h>
 
 /*
  * General list handling functions
  */
 
-अटल पूर्णांक __hw_addr_create_ex(काष्ठा netdev_hw_addr_list *list,
-			       स्थिर अचिन्हित अक्षर *addr, पूर्णांक addr_len,
-			       अचिन्हित अक्षर addr_type, bool global,
+static int __hw_addr_create_ex(struct netdev_hw_addr_list *list,
+			       const unsigned char *addr, int addr_len,
+			       unsigned char addr_type, bool global,
 			       bool sync)
-अणु
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक alloc_size;
+{
+	struct netdev_hw_addr *ha;
+	int alloc_size;
 
-	alloc_size = माप(*ha);
-	अगर (alloc_size < L1_CACHE_BYTES)
+	alloc_size = sizeof(*ha);
+	if (alloc_size < L1_CACHE_BYTES)
 		alloc_size = L1_CACHE_BYTES;
-	ha = kदो_स्मृति(alloc_size, GFP_ATOMIC);
-	अगर (!ha)
-		वापस -ENOMEM;
-	स_नकल(ha->addr, addr, addr_len);
+	ha = kmalloc(alloc_size, GFP_ATOMIC);
+	if (!ha)
+		return -ENOMEM;
+	memcpy(ha->addr, addr, addr_len);
 	ha->type = addr_type;
 	ha->refcount = 1;
 	ha->global_use = global;
@@ -40,386 +39,386 @@
 	list_add_tail_rcu(&ha->list, &list->list);
 	list->count++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __hw_addr_add_ex(काष्ठा netdev_hw_addr_list *list,
-			    स्थिर अचिन्हित अक्षर *addr, पूर्णांक addr_len,
-			    अचिन्हित अक्षर addr_type, bool global, bool sync,
-			    पूर्णांक sync_count)
-अणु
-	काष्ठा netdev_hw_addr *ha;
+static int __hw_addr_add_ex(struct netdev_hw_addr_list *list,
+			    const unsigned char *addr, int addr_len,
+			    unsigned char addr_type, bool global, bool sync,
+			    int sync_count)
+{
+	struct netdev_hw_addr *ha;
 
-	अगर (addr_len > MAX_ADDR_LEN)
-		वापस -EINVAL;
+	if (addr_len > MAX_ADDR_LEN)
+		return -EINVAL;
 
-	list_क्रम_each_entry(ha, &list->list, list) अणु
-		अगर (ha->type == addr_type &&
-		    !स_भेद(ha->addr, addr, addr_len)) अणु
-			अगर (global) अणु
-				/* check अगर addr is alपढ़ोy used as global */
-				अगर (ha->global_use)
-					वापस 0;
-				अन्यथा
+	list_for_each_entry(ha, &list->list, list) {
+		if (ha->type == addr_type &&
+		    !memcmp(ha->addr, addr, addr_len)) {
+			if (global) {
+				/* check if addr is already used as global */
+				if (ha->global_use)
+					return 0;
+				else
 					ha->global_use = true;
-			पूर्ण
-			अगर (sync) अणु
-				अगर (ha->synced && sync_count)
-					वापस -EEXIST;
-				अन्यथा
+			}
+			if (sync) {
+				if (ha->synced && sync_count)
+					return -EEXIST;
+				else
 					ha->synced++;
-			पूर्ण
+			}
 			ha->refcount++;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस __hw_addr_create_ex(list, addr, addr_len, addr_type, global,
+	return __hw_addr_create_ex(list, addr, addr_len, addr_type, global,
 				   sync);
-पूर्ण
+}
 
-अटल पूर्णांक __hw_addr_add(काष्ठा netdev_hw_addr_list *list,
-			 स्थिर अचिन्हित अक्षर *addr, पूर्णांक addr_len,
-			 अचिन्हित अक्षर addr_type)
-अणु
-	वापस __hw_addr_add_ex(list, addr, addr_len, addr_type, false, false,
+static int __hw_addr_add(struct netdev_hw_addr_list *list,
+			 const unsigned char *addr, int addr_len,
+			 unsigned char addr_type)
+{
+	return __hw_addr_add_ex(list, addr, addr_len, addr_type, false, false,
 				0);
-पूर्ण
+}
 
-अटल पूर्णांक __hw_addr_del_entry(काष्ठा netdev_hw_addr_list *list,
-			       काष्ठा netdev_hw_addr *ha, bool global,
+static int __hw_addr_del_entry(struct netdev_hw_addr_list *list,
+			       struct netdev_hw_addr *ha, bool global,
 			       bool sync)
-अणु
-	अगर (global && !ha->global_use)
-		वापस -ENOENT;
+{
+	if (global && !ha->global_use)
+		return -ENOENT;
 
-	अगर (sync && !ha->synced)
-		वापस -ENOENT;
+	if (sync && !ha->synced)
+		return -ENOENT;
 
-	अगर (global)
+	if (global)
 		ha->global_use = false;
 
-	अगर (sync)
+	if (sync)
 		ha->synced--;
 
-	अगर (--ha->refcount)
-		वापस 0;
+	if (--ha->refcount)
+		return 0;
 	list_del_rcu(&ha->list);
-	kमुक्त_rcu(ha, rcu_head);
+	kfree_rcu(ha, rcu_head);
 	list->count--;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __hw_addr_del_ex(काष्ठा netdev_hw_addr_list *list,
-			    स्थिर अचिन्हित अक्षर *addr, पूर्णांक addr_len,
-			    अचिन्हित अक्षर addr_type, bool global, bool sync)
-अणु
-	काष्ठा netdev_hw_addr *ha;
+static int __hw_addr_del_ex(struct netdev_hw_addr_list *list,
+			    const unsigned char *addr, int addr_len,
+			    unsigned char addr_type, bool global, bool sync)
+{
+	struct netdev_hw_addr *ha;
 
-	list_क्रम_each_entry(ha, &list->list, list) अणु
-		अगर (!स_भेद(ha->addr, addr, addr_len) &&
+	list_for_each_entry(ha, &list->list, list) {
+		if (!memcmp(ha->addr, addr, addr_len) &&
 		    (ha->type == addr_type || !addr_type))
-			वापस __hw_addr_del_entry(list, ha, global, sync);
-	पूर्ण
-	वापस -ENOENT;
-पूर्ण
+			return __hw_addr_del_entry(list, ha, global, sync);
+	}
+	return -ENOENT;
+}
 
-अटल पूर्णांक __hw_addr_del(काष्ठा netdev_hw_addr_list *list,
-			 स्थिर अचिन्हित अक्षर *addr, पूर्णांक addr_len,
-			 अचिन्हित अक्षर addr_type)
-अणु
-	वापस __hw_addr_del_ex(list, addr, addr_len, addr_type, false, false);
-पूर्ण
+static int __hw_addr_del(struct netdev_hw_addr_list *list,
+			 const unsigned char *addr, int addr_len,
+			 unsigned char addr_type)
+{
+	return __hw_addr_del_ex(list, addr, addr_len, addr_type, false, false);
+}
 
-अटल पूर्णांक __hw_addr_sync_one(काष्ठा netdev_hw_addr_list *to_list,
-			       काष्ठा netdev_hw_addr *ha,
-			       पूर्णांक addr_len)
-अणु
-	पूर्णांक err;
+static int __hw_addr_sync_one(struct netdev_hw_addr_list *to_list,
+			       struct netdev_hw_addr *ha,
+			       int addr_len)
+{
+	int err;
 
 	err = __hw_addr_add_ex(to_list, ha->addr, addr_len, ha->type,
 			       false, true, ha->sync_cnt);
-	अगर (err && err != -EEXIST)
-		वापस err;
+	if (err && err != -EEXIST)
+		return err;
 
-	अगर (!err) अणु
+	if (!err) {
 		ha->sync_cnt++;
 		ha->refcount++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __hw_addr_unsync_one(काष्ठा netdev_hw_addr_list *to_list,
-				 काष्ठा netdev_hw_addr_list *from_list,
-				 काष्ठा netdev_hw_addr *ha,
-				 पूर्णांक addr_len)
-अणु
-	पूर्णांक err;
+static void __hw_addr_unsync_one(struct netdev_hw_addr_list *to_list,
+				 struct netdev_hw_addr_list *from_list,
+				 struct netdev_hw_addr *ha,
+				 int addr_len)
+{
+	int err;
 
 	err = __hw_addr_del_ex(to_list, ha->addr, addr_len, ha->type,
 			       false, true);
-	अगर (err)
-		वापस;
+	if (err)
+		return;
 	ha->sync_cnt--;
 	/* address on from list is not marked synced */
 	__hw_addr_del_entry(from_list, ha, false, false);
-पूर्ण
+}
 
-अटल पूर्णांक __hw_addr_sync_multiple(काष्ठा netdev_hw_addr_list *to_list,
-				   काष्ठा netdev_hw_addr_list *from_list,
-				   पूर्णांक addr_len)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
+static int __hw_addr_sync_multiple(struct netdev_hw_addr_list *to_list,
+				   struct netdev_hw_addr_list *from_list,
+				   int addr_len)
+{
+	int err = 0;
+	struct netdev_hw_addr *ha, *tmp;
 
-	list_क्रम_each_entry_safe(ha, पंचांगp, &from_list->list, list) अणु
-		अगर (ha->sync_cnt == ha->refcount) अणु
+	list_for_each_entry_safe(ha, tmp, &from_list->list, list) {
+		if (ha->sync_cnt == ha->refcount) {
 			__hw_addr_unsync_one(to_list, from_list, ha, addr_len);
-		पूर्ण अन्यथा अणु
+		} else {
 			err = __hw_addr_sync_one(to_list, ha, addr_len);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस err;
-पूर्ण
+			if (err)
+				break;
+		}
+	}
+	return err;
+}
 
 /* This function only works where there is a strict 1-1 relationship
  * between source and destionation of they synch. If you ever need to
  * sync addresses to more then 1 destination, you need to use
  * __hw_addr_sync_multiple().
  */
-पूर्णांक __hw_addr_sync(काष्ठा netdev_hw_addr_list *to_list,
-		   काष्ठा netdev_hw_addr_list *from_list,
-		   पूर्णांक addr_len)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
+int __hw_addr_sync(struct netdev_hw_addr_list *to_list,
+		   struct netdev_hw_addr_list *from_list,
+		   int addr_len)
+{
+	int err = 0;
+	struct netdev_hw_addr *ha, *tmp;
 
-	list_क्रम_each_entry_safe(ha, पंचांगp, &from_list->list, list) अणु
-		अगर (!ha->sync_cnt) अणु
+	list_for_each_entry_safe(ha, tmp, &from_list->list, list) {
+		if (!ha->sync_cnt) {
 			err = __hw_addr_sync_one(to_list, ha, addr_len);
-			अगर (err)
-				अवरोध;
-		पूर्ण अन्यथा अगर (ha->refcount == 1)
+			if (err)
+				break;
+		} else if (ha->refcount == 1)
 			__hw_addr_unsync_one(to_list, from_list, ha, addr_len);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 EXPORT_SYMBOL(__hw_addr_sync);
 
-व्योम __hw_addr_unsync(काष्ठा netdev_hw_addr_list *to_list,
-		      काष्ठा netdev_hw_addr_list *from_list,
-		      पूर्णांक addr_len)
-अणु
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
+void __hw_addr_unsync(struct netdev_hw_addr_list *to_list,
+		      struct netdev_hw_addr_list *from_list,
+		      int addr_len)
+{
+	struct netdev_hw_addr *ha, *tmp;
 
-	list_क्रम_each_entry_safe(ha, पंचांगp, &from_list->list, list) अणु
-		अगर (ha->sync_cnt)
+	list_for_each_entry_safe(ha, tmp, &from_list->list, list) {
+		if (ha->sync_cnt)
 			__hw_addr_unsync_one(to_list, from_list, ha, addr_len);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(__hw_addr_unsync);
 
 /**
  *  __hw_addr_sync_dev - Synchonize device's multicast list
  *  @list: address list to syncronize
  *  @dev:  device to sync
- *  @sync: function to call अगर address should be added
- *  @unsync: function to call अगर address should be हटाओd
+ *  @sync: function to call if address should be added
+ *  @unsync: function to call if address should be removed
  *
- *  This function is पूर्णांकended to be called from the nकरो_set_rx_mode
- *  function of devices that require explicit address add/हटाओ
- *  notअगरications.  The unsync function may be शून्य in which हाल
- *  the addresses requiring removal will simply be हटाओd without
- *  any notअगरication to the device.
+ *  This function is intended to be called from the ndo_set_rx_mode
+ *  function of devices that require explicit address add/remove
+ *  notifications.  The unsync function may be NULL in which case
+ *  the addresses requiring removal will simply be removed without
+ *  any notification to the device.
  **/
-पूर्णांक __hw_addr_sync_dev(काष्ठा netdev_hw_addr_list *list,
-		       काष्ठा net_device *dev,
-		       पूर्णांक (*sync)(काष्ठा net_device *, स्थिर अचिन्हित अक्षर *),
-		       पूर्णांक (*unsync)(काष्ठा net_device *,
-				     स्थिर अचिन्हित अक्षर *))
-अणु
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
-	पूर्णांक err;
+int __hw_addr_sync_dev(struct netdev_hw_addr_list *list,
+		       struct net_device *dev,
+		       int (*sync)(struct net_device *, const unsigned char *),
+		       int (*unsync)(struct net_device *,
+				     const unsigned char *))
+{
+	struct netdev_hw_addr *ha, *tmp;
+	int err;
 
 	/* first go through and flush out any stale entries */
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
-		अगर (!ha->sync_cnt || ha->refcount != 1)
-			जारी;
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
+		if (!ha->sync_cnt || ha->refcount != 1)
+			continue;
 
-		/* अगर unsync is defined and fails defer unsyncing address */
-		अगर (unsync && unsync(dev, ha->addr))
-			जारी;
+		/* if unsync is defined and fails defer unsyncing address */
+		if (unsync && unsync(dev, ha->addr))
+			continue;
 
 		ha->sync_cnt--;
 		__hw_addr_del_entry(list, ha, false, false);
-	पूर्ण
+	}
 
 	/* go through and sync new entries to the list */
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
-		अगर (ha->sync_cnt)
-			जारी;
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
+		if (ha->sync_cnt)
+			continue;
 
 		err = sync(dev, ha->addr);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		ha->sync_cnt++;
 		ha->refcount++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(__hw_addr_sync_dev);
 
 /**
  *  __hw_addr_ref_sync_dev - Synchronize device's multicast address list taking
- *  पूर्णांकo account references
+ *  into account references
  *  @list: address list to synchronize
  *  @dev:  device to sync
- *  @sync: function to call अगर address or reference on it should be added
- *  @unsync: function to call अगर address or some reference on it should हटाओd
+ *  @sync: function to call if address or reference on it should be added
+ *  @unsync: function to call if address or some reference on it should removed
  *
- *  This function is पूर्णांकended to be called from the nकरो_set_rx_mode
+ *  This function is intended to be called from the ndo_set_rx_mode
  *  function of devices that require explicit address or references on it
- *  add/हटाओ notअगरications. The unsync function may be शून्य in which हाल
+ *  add/remove notifications. The unsync function may be NULL in which case
  *  the addresses or references on it requiring removal will simply be
- *  हटाओd without any notअगरication to the device. That is responsibility of
- *  the driver to identअगरy and distribute address or references on it between
- *  पूर्णांकernal address tables.
+ *  removed without any notification to the device. That is responsibility of
+ *  the driver to identify and distribute address or references on it between
+ *  internal address tables.
  **/
-पूर्णांक __hw_addr_ref_sync_dev(काष्ठा netdev_hw_addr_list *list,
-			   काष्ठा net_device *dev,
-			   पूर्णांक (*sync)(काष्ठा net_device *,
-				       स्थिर अचिन्हित अक्षर *, पूर्णांक),
-			   पूर्णांक (*unsync)(काष्ठा net_device *,
-					 स्थिर अचिन्हित अक्षर *, पूर्णांक))
-अणु
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
-	पूर्णांक err, ref_cnt;
+int __hw_addr_ref_sync_dev(struct netdev_hw_addr_list *list,
+			   struct net_device *dev,
+			   int (*sync)(struct net_device *,
+				       const unsigned char *, int),
+			   int (*unsync)(struct net_device *,
+					 const unsigned char *, int))
+{
+	struct netdev_hw_addr *ha, *tmp;
+	int err, ref_cnt;
 
 	/* first go through and flush out any unsynced/stale entries */
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
-		/* sync अगर address is not used */
-		अगर ((ha->sync_cnt << 1) <= ha->refcount)
-			जारी;
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
+		/* sync if address is not used */
+		if ((ha->sync_cnt << 1) <= ha->refcount)
+			continue;
 
-		/* अगर fails defer unsyncing address */
+		/* if fails defer unsyncing address */
 		ref_cnt = ha->refcount - ha->sync_cnt;
-		अगर (unsync && unsync(dev, ha->addr, ref_cnt))
-			जारी;
+		if (unsync && unsync(dev, ha->addr, ref_cnt))
+			continue;
 
 		ha->refcount = (ref_cnt << 1) + 1;
 		ha->sync_cnt = ref_cnt;
 		__hw_addr_del_entry(list, ha, false, false);
-	पूर्ण
+	}
 
 	/* go through and sync updated/new entries to the list */
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
-		/* sync अगर address added or reused */
-		अगर ((ha->sync_cnt << 1) >= ha->refcount)
-			जारी;
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
+		/* sync if address added or reused */
+		if ((ha->sync_cnt << 1) >= ha->refcount)
+			continue;
 
 		ref_cnt = ha->refcount - ha->sync_cnt;
 		err = sync(dev, ha->addr, ref_cnt);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		ha->refcount = ref_cnt << 1;
 		ha->sync_cnt = ref_cnt;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(__hw_addr_ref_sync_dev);
 
 /**
  *  __hw_addr_ref_unsync_dev - Remove synchronized addresses and references on
  *  it from device
- *  @list: address list to हटाओ synchronized addresses (references on it) from
+ *  @list: address list to remove synchronized addresses (references on it) from
  *  @dev:  device to sync
- *  @unsync: function to call अगर address and references on it should be हटाओd
+ *  @unsync: function to call if address and references on it should be removed
  *
  *  Remove all addresses that were added to the device by
- *  __hw_addr_ref_sync_dev(). This function is पूर्णांकended to be called from the
- *  nकरो_stop or nकरो_खोलो functions on devices that require explicit address (or
- *  references on it) add/हटाओ notअगरications. If the unsync function poपूर्णांकer
- *  is शून्य then this function can be used to just reset the sync_cnt क्रम the
+ *  __hw_addr_ref_sync_dev(). This function is intended to be called from the
+ *  ndo_stop or ndo_open functions on devices that require explicit address (or
+ *  references on it) add/remove notifications. If the unsync function pointer
+ *  is NULL then this function can be used to just reset the sync_cnt for the
  *  addresses in the list.
  **/
-व्योम __hw_addr_ref_unsync_dev(काष्ठा netdev_hw_addr_list *list,
-			      काष्ठा net_device *dev,
-			      पूर्णांक (*unsync)(काष्ठा net_device *,
-					    स्थिर अचिन्हित अक्षर *, पूर्णांक))
-अणु
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
+void __hw_addr_ref_unsync_dev(struct netdev_hw_addr_list *list,
+			      struct net_device *dev,
+			      int (*unsync)(struct net_device *,
+					    const unsigned char *, int))
+{
+	struct netdev_hw_addr *ha, *tmp;
 
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
-		अगर (!ha->sync_cnt)
-			जारी;
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
+		if (!ha->sync_cnt)
+			continue;
 
-		/* अगर fails defer unsyncing address */
-		अगर (unsync && unsync(dev, ha->addr, ha->sync_cnt))
-			जारी;
+		/* if fails defer unsyncing address */
+		if (unsync && unsync(dev, ha->addr, ha->sync_cnt))
+			continue;
 
 		ha->refcount -= ha->sync_cnt - 1;
 		ha->sync_cnt = 0;
 		__hw_addr_del_entry(list, ha, false, false);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(__hw_addr_ref_unsync_dev);
 
 /**
  *  __hw_addr_unsync_dev - Remove synchronized addresses from device
- *  @list: address list to हटाओ synchronized addresses from
+ *  @list: address list to remove synchronized addresses from
  *  @dev:  device to sync
- *  @unsync: function to call अगर address should be हटाओd
+ *  @unsync: function to call if address should be removed
  *
  *  Remove all addresses that were added to the device by __hw_addr_sync_dev().
- *  This function is पूर्णांकended to be called from the nकरो_stop or nकरो_खोलो
- *  functions on devices that require explicit address add/हटाओ
- *  notअगरications.  If the unsync function poपूर्णांकer is शून्य then this function
- *  can be used to just reset the sync_cnt क्रम the addresses in the list.
+ *  This function is intended to be called from the ndo_stop or ndo_open
+ *  functions on devices that require explicit address add/remove
+ *  notifications.  If the unsync function pointer is NULL then this function
+ *  can be used to just reset the sync_cnt for the addresses in the list.
  **/
-व्योम __hw_addr_unsync_dev(काष्ठा netdev_hw_addr_list *list,
-			  काष्ठा net_device *dev,
-			  पूर्णांक (*unsync)(काष्ठा net_device *,
-					स्थिर अचिन्हित अक्षर *))
-अणु
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
+void __hw_addr_unsync_dev(struct netdev_hw_addr_list *list,
+			  struct net_device *dev,
+			  int (*unsync)(struct net_device *,
+					const unsigned char *))
+{
+	struct netdev_hw_addr *ha, *tmp;
 
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
-		अगर (!ha->sync_cnt)
-			जारी;
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
+		if (!ha->sync_cnt)
+			continue;
 
-		/* अगर unsync is defined and fails defer unsyncing address */
-		अगर (unsync && unsync(dev, ha->addr))
-			जारी;
+		/* if unsync is defined and fails defer unsyncing address */
+		if (unsync && unsync(dev, ha->addr))
+			continue;
 
 		ha->sync_cnt--;
 		__hw_addr_del_entry(list, ha, false, false);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(__hw_addr_unsync_dev);
 
-अटल व्योम __hw_addr_flush(काष्ठा netdev_hw_addr_list *list)
-अणु
-	काष्ठा netdev_hw_addr *ha, *पंचांगp;
+static void __hw_addr_flush(struct netdev_hw_addr_list *list)
+{
+	struct netdev_hw_addr *ha, *tmp;
 
-	list_क्रम_each_entry_safe(ha, पंचांगp, &list->list, list) अणु
+	list_for_each_entry_safe(ha, tmp, &list->list, list) {
 		list_del_rcu(&ha->list);
-		kमुक्त_rcu(ha, rcu_head);
-	पूर्ण
+		kfree_rcu(ha, rcu_head);
+	}
 	list->count = 0;
-पूर्ण
+}
 
-व्योम __hw_addr_init(काष्ठा netdev_hw_addr_list *list)
-अणु
+void __hw_addr_init(struct netdev_hw_addr_list *list)
+{
 	INIT_LIST_HEAD(&list->list);
 	list->count = 0;
-पूर्ण
+}
 EXPORT_SYMBOL(__hw_addr_init);
 
 /*
@@ -434,13 +433,13 @@ EXPORT_SYMBOL(__hw_addr_init);
  *
  *	The caller must hold the rtnl_mutex.
  */
-व्योम dev_addr_flush(काष्ठा net_device *dev)
-अणु
+void dev_addr_flush(struct net_device *dev)
+{
 	/* rtnl_mutex must be held here */
 
 	__hw_addr_flush(&dev->dev_addrs);
-	dev->dev_addr = शून्य;
-पूर्ण
+	dev->dev_addr = NULL;
+}
 EXPORT_SYMBOL(dev_addr_flush);
 
 /**
@@ -452,29 +451,29 @@ EXPORT_SYMBOL(dev_addr_flush);
  *
  *	The caller must hold the rtnl_mutex.
  */
-पूर्णांक dev_addr_init(काष्ठा net_device *dev)
-अणु
-	अचिन्हित अक्षर addr[MAX_ADDR_LEN];
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक err;
+int dev_addr_init(struct net_device *dev)
+{
+	unsigned char addr[MAX_ADDR_LEN];
+	struct netdev_hw_addr *ha;
+	int err;
 
 	/* rtnl_mutex must be held here */
 
 	__hw_addr_init(&dev->dev_addrs);
-	स_रखो(addr, 0, माप(addr));
-	err = __hw_addr_add(&dev->dev_addrs, addr, माप(addr),
+	memset(addr, 0, sizeof(addr));
+	err = __hw_addr_add(&dev->dev_addrs, addr, sizeof(addr),
 			    NETDEV_HW_ADDR_T_LAN);
-	अगर (!err) अणु
+	if (!err) {
 		/*
 		 * Get the first (previously created) address from the list
-		 * and set dev_addr poपूर्णांकer to this location.
+		 * and set dev_addr pointer to this location.
 		 */
 		ha = list_first_entry(&dev->dev_addrs.list,
-				      काष्ठा netdev_hw_addr, list);
+				      struct netdev_hw_addr, list);
 		dev->dev_addr = ha->addr;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 EXPORT_SYMBOL(dev_addr_init);
 
 /**
@@ -483,26 +482,26 @@ EXPORT_SYMBOL(dev_addr_init);
  *	@addr: address to add
  *	@addr_type: address type
  *
- *	Add a device address to the device or increase the reference count अगर
- *	it alपढ़ोy exists.
+ *	Add a device address to the device or increase the reference count if
+ *	it already exists.
  *
  *	The caller must hold the rtnl_mutex.
  */
-पूर्णांक dev_addr_add(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr,
-		 अचिन्हित अक्षर addr_type)
-अणु
-	पूर्णांक err;
+int dev_addr_add(struct net_device *dev, const unsigned char *addr,
+		 unsigned char addr_type)
+{
+	int err;
 
 	ASSERT_RTNL();
 
-	err = dev_pre_changeaddr_notअगरy(dev, addr, शून्य);
-	अगर (err)
-		वापस err;
+	err = dev_pre_changeaddr_notify(dev, addr, NULL);
+	if (err)
+		return err;
 	err = __hw_addr_add(&dev->dev_addrs, addr, dev->addr_len, addr_type);
-	अगर (!err)
-		call_netdevice_notअगरiers(NETDEV_CHANGEADDR, dev);
-	वापस err;
-पूर्ण
+	if (!err)
+		call_netdevice_notifiers(NETDEV_CHANGEADDR, dev);
+	return err;
+}
 EXPORT_SYMBOL(dev_addr_add);
 
 /**
@@ -511,35 +510,35 @@ EXPORT_SYMBOL(dev_addr_add);
  *	@addr: address to delete
  *	@addr_type: address type
  *
- *	Release reference to a device address and हटाओ it from the device
- *	अगर the reference count drops to zero.
+ *	Release reference to a device address and remove it from the device
+ *	if the reference count drops to zero.
  *
  *	The caller must hold the rtnl_mutex.
  */
-पूर्णांक dev_addr_del(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr,
-		 अचिन्हित अक्षर addr_type)
-अणु
-	पूर्णांक err;
-	काष्ठा netdev_hw_addr *ha;
+int dev_addr_del(struct net_device *dev, const unsigned char *addr,
+		 unsigned char addr_type)
+{
+	int err;
+	struct netdev_hw_addr *ha;
 
 	ASSERT_RTNL();
 
 	/*
-	 * We can not हटाओ the first address from the list because
-	 * dev->dev_addr poपूर्णांकs to that.
+	 * We can not remove the first address from the list because
+	 * dev->dev_addr points to that.
 	 */
 	ha = list_first_entry(&dev->dev_addrs.list,
-			      काष्ठा netdev_hw_addr, list);
-	अगर (!स_भेद(ha->addr, addr, dev->addr_len) &&
+			      struct netdev_hw_addr, list);
+	if (!memcmp(ha->addr, addr, dev->addr_len) &&
 	    ha->type == addr_type && ha->refcount == 1)
-		वापस -ENOENT;
+		return -ENOENT;
 
 	err = __hw_addr_del(&dev->dev_addrs, addr, dev->addr_len,
 			    addr_type);
-	अगर (!err)
-		call_netdevice_notअगरiers(NETDEV_CHANGEADDR, dev);
-	वापस err;
-पूर्ण
+	if (!err)
+		call_netdevice_notifiers(NETDEV_CHANGEADDR, dev);
+	return err;
+}
 EXPORT_SYMBOL(dev_addr_del);
 
 /*
@@ -551,27 +550,27 @@ EXPORT_SYMBOL(dev_addr_del);
  *	@dev: device
  *	@addr: address to add
  */
-पूर्णांक dev_uc_add_excl(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक err;
+int dev_uc_add_excl(struct net_device *dev, const unsigned char *addr)
+{
+	struct netdev_hw_addr *ha;
+	int err;
 
-	netअगर_addr_lock_bh(dev);
-	list_क्रम_each_entry(ha, &dev->uc.list, list) अणु
-		अगर (!स_भेद(ha->addr, addr, dev->addr_len) &&
-		    ha->type == NETDEV_HW_ADDR_T_UNICAST) अणु
+	netif_addr_lock_bh(dev);
+	list_for_each_entry(ha, &dev->uc.list, list) {
+		if (!memcmp(ha->addr, addr, dev->addr_len) &&
+		    ha->type == NETDEV_HW_ADDR_T_UNICAST) {
 			err = -EEXIST;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	err = __hw_addr_create_ex(&dev->uc, addr, dev->addr_len,
 				  NETDEV_HW_ADDR_T_UNICAST, true, false);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(dev);
 out:
-	netअगर_addr_unlock_bh(dev);
-	वापस err;
-पूर्ण
+	netif_addr_unlock_bh(dev);
+	return err;
+}
 EXPORT_SYMBOL(dev_uc_add_excl);
 
 /**
@@ -580,20 +579,20 @@ EXPORT_SYMBOL(dev_uc_add_excl);
  *	@addr: address to add
  *
  *	Add a secondary unicast address to the device or increase
- *	the reference count अगर it alपढ़ोy exists.
+ *	the reference count if it already exists.
  */
-पूर्णांक dev_uc_add(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	पूर्णांक err;
+int dev_uc_add(struct net_device *dev, const unsigned char *addr)
+{
+	int err;
 
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 	err = __hw_addr_add(&dev->uc, addr, dev->addr_len,
 			    NETDEV_HW_ADDR_T_UNICAST);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(dev);
-	netअगर_addr_unlock_bh(dev);
-	वापस err;
-पूर्ण
+	netif_addr_unlock_bh(dev);
+	return err;
+}
 EXPORT_SYMBOL(dev_uc_add);
 
 /**
@@ -601,21 +600,21 @@ EXPORT_SYMBOL(dev_uc_add);
  *	@dev: device
  *	@addr: address to delete
  *
- *	Release reference to a secondary unicast address and हटाओ it
- *	from the device अगर the reference count drops to zero.
+ *	Release reference to a secondary unicast address and remove it
+ *	from the device if the reference count drops to zero.
  */
-पूर्णांक dev_uc_del(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	पूर्णांक err;
+int dev_uc_del(struct net_device *dev, const unsigned char *addr)
+{
+	int err;
 
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 	err = __hw_addr_del(&dev->uc, addr, dev->addr_len,
 			    NETDEV_HW_ADDR_T_UNICAST);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(dev);
-	netअगर_addr_unlock_bh(dev);
-	वापस err;
-पूर्ण
+	netif_addr_unlock_bh(dev);
+	return err;
+}
 EXPORT_SYMBOL(dev_uc_del);
 
 /**
@@ -625,56 +624,56 @@ EXPORT_SYMBOL(dev_uc_del);
  *
  *	Add newly added addresses to the destination device and release
  *	addresses that have no users left. The source device must be
- *	locked by netअगर_addr_lock_bh.
+ *	locked by netif_addr_lock_bh.
  *
- *	This function is पूर्णांकended to be called from the dev->set_rx_mode
+ *	This function is intended to be called from the dev->set_rx_mode
  *	function of layered software devices.  This function assumes that
  *	addresses will only ever be synced to the @to devices and no other.
  */
-पूर्णांक dev_uc_sync(काष्ठा net_device *to, काष्ठा net_device *from)
-अणु
-	पूर्णांक err = 0;
+int dev_uc_sync(struct net_device *to, struct net_device *from)
+{
+	int err = 0;
 
-	अगर (to->addr_len != from->addr_len)
-		वापस -EINVAL;
+	if (to->addr_len != from->addr_len)
+		return -EINVAL;
 
-	netअगर_addr_lock(to);
+	netif_addr_lock(to);
 	err = __hw_addr_sync(&to->uc, &from->uc, to->addr_len);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(to);
-	netअगर_addr_unlock(to);
-	वापस err;
-पूर्ण
+	netif_addr_unlock(to);
+	return err;
+}
 EXPORT_SYMBOL(dev_uc_sync);
 
 /**
  *	dev_uc_sync_multiple - Synchronize device's unicast list to another
- *	device, but allow क्रम multiple calls to sync to multiple devices.
+ *	device, but allow for multiple calls to sync to multiple devices.
  *	@to: destination device
  *	@from: source device
  *
  *	Add newly added addresses to the destination device and release
  *	addresses that have been deleted from the source. The source device
- *	must be locked by netअगर_addr_lock_bh.
+ *	must be locked by netif_addr_lock_bh.
  *
- *	This function is पूर्णांकended to be called from the dev->set_rx_mode
- *	function of layered software devices.  It allows क्रम a single source
+ *	This function is intended to be called from the dev->set_rx_mode
+ *	function of layered software devices.  It allows for a single source
  *	device to be synced to multiple destination devices.
  */
-पूर्णांक dev_uc_sync_multiple(काष्ठा net_device *to, काष्ठा net_device *from)
-अणु
-	पूर्णांक err = 0;
+int dev_uc_sync_multiple(struct net_device *to, struct net_device *from)
+{
+	int err = 0;
 
-	अगर (to->addr_len != from->addr_len)
-		वापस -EINVAL;
+	if (to->addr_len != from->addr_len)
+		return -EINVAL;
 
-	netअगर_addr_lock(to);
+	netif_addr_lock(to);
 	err = __hw_addr_sync_multiple(&to->uc, &from->uc, to->addr_len);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(to);
-	netअगर_addr_unlock(to);
-	वापस err;
-पूर्ण
+	netif_addr_unlock(to);
+	return err;
+}
 EXPORT_SYMBOL(dev_uc_sync_multiple);
 
 /**
@@ -683,30 +682,30 @@ EXPORT_SYMBOL(dev_uc_sync_multiple);
  *	@from: source device
  *
  *	Remove all addresses that were added to the destination device by
- *	dev_uc_sync(). This function is पूर्णांकended to be called from the
+ *	dev_uc_sync(). This function is intended to be called from the
  *	dev->stop function of layered software devices.
  */
-व्योम dev_uc_unsync(काष्ठा net_device *to, काष्ठा net_device *from)
-अणु
-	अगर (to->addr_len != from->addr_len)
-		वापस;
+void dev_uc_unsync(struct net_device *to, struct net_device *from)
+{
+	if (to->addr_len != from->addr_len)
+		return;
 
-	/* netअगर_addr_lock_bh() uses lockdep subclass 0, this is okay क्रम two
+	/* netif_addr_lock_bh() uses lockdep subclass 0, this is okay for two
 	 * reasons:
 	 * 1) This is always called without any addr_list_lock, so as the
 	 *    outermost one here, it must be 0.
 	 * 2) This is called by some callers after unlinking the upper device,
 	 *    so the dev->lower_level becomes 1 again.
-	 * Thereक्रमe, the subclass क्रम 'from' is 0, for 'to' is either 1 or
+	 * Therefore, the subclass for 'from' is 0, for 'to' is either 1 or
 	 * larger.
 	 */
-	netअगर_addr_lock_bh(from);
-	netअगर_addr_lock(to);
+	netif_addr_lock_bh(from);
+	netif_addr_lock(to);
 	__hw_addr_unsync(&to->uc, &from->uc, to->addr_len);
 	__dev_set_rx_mode(to);
-	netअगर_addr_unlock(to);
-	netअगर_addr_unlock_bh(from);
-पूर्ण
+	netif_addr_unlock(to);
+	netif_addr_unlock_bh(from);
+}
 EXPORT_SYMBOL(dev_uc_unsync);
 
 /**
@@ -715,12 +714,12 @@ EXPORT_SYMBOL(dev_uc_unsync);
  *
  *	Flush unicast addresses.
  */
-व्योम dev_uc_flush(काष्ठा net_device *dev)
-अणु
-	netअगर_addr_lock_bh(dev);
+void dev_uc_flush(struct net_device *dev)
+{
+	netif_addr_lock_bh(dev);
 	__hw_addr_flush(&dev->uc);
-	netअगर_addr_unlock_bh(dev);
-पूर्ण
+	netif_addr_unlock_bh(dev);
+}
 EXPORT_SYMBOL(dev_uc_flush);
 
 /**
@@ -729,10 +728,10 @@ EXPORT_SYMBOL(dev_uc_flush);
  *
  *	Init unicast address list.
  */
-व्योम dev_uc_init(काष्ठा net_device *dev)
-अणु
+void dev_uc_init(struct net_device *dev)
+{
 	__hw_addr_init(&dev->uc);
-पूर्ण
+}
 EXPORT_SYMBOL(dev_uc_init);
 
 /*
@@ -744,54 +743,54 @@ EXPORT_SYMBOL(dev_uc_init);
  *	@dev: device
  *	@addr: address to add
  */
-पूर्णांक dev_mc_add_excl(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	काष्ठा netdev_hw_addr *ha;
-	पूर्णांक err;
+int dev_mc_add_excl(struct net_device *dev, const unsigned char *addr)
+{
+	struct netdev_hw_addr *ha;
+	int err;
 
-	netअगर_addr_lock_bh(dev);
-	list_क्रम_each_entry(ha, &dev->mc.list, list) अणु
-		अगर (!स_भेद(ha->addr, addr, dev->addr_len) &&
-		    ha->type == NETDEV_HW_ADDR_T_MULTICAST) अणु
+	netif_addr_lock_bh(dev);
+	list_for_each_entry(ha, &dev->mc.list, list) {
+		if (!memcmp(ha->addr, addr, dev->addr_len) &&
+		    ha->type == NETDEV_HW_ADDR_T_MULTICAST) {
 			err = -EEXIST;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	err = __hw_addr_create_ex(&dev->mc, addr, dev->addr_len,
 				  NETDEV_HW_ADDR_T_MULTICAST, true, false);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(dev);
 out:
-	netअगर_addr_unlock_bh(dev);
-	वापस err;
-पूर्ण
+	netif_addr_unlock_bh(dev);
+	return err;
+}
 EXPORT_SYMBOL(dev_mc_add_excl);
 
-अटल पूर्णांक __dev_mc_add(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr,
+static int __dev_mc_add(struct net_device *dev, const unsigned char *addr,
 			bool global)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 	err = __hw_addr_add_ex(&dev->mc, addr, dev->addr_len,
 			       NETDEV_HW_ADDR_T_MULTICAST, global, false, 0);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(dev);
-	netअगर_addr_unlock_bh(dev);
-	वापस err;
-पूर्ण
+	netif_addr_unlock_bh(dev);
+	return err;
+}
 /**
  *	dev_mc_add - Add a multicast address
  *	@dev: device
  *	@addr: address to add
  *
  *	Add a multicast address to the device or increase
- *	the reference count अगर it alपढ़ोy exists.
+ *	the reference count if it already exists.
  */
-पूर्णांक dev_mc_add(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __dev_mc_add(dev, addr, false);
-पूर्ण
+int dev_mc_add(struct net_device *dev, const unsigned char *addr)
+{
+	return __dev_mc_add(dev, addr, false);
+}
 EXPORT_SYMBOL(dev_mc_add);
 
 /**
@@ -801,38 +800,38 @@ EXPORT_SYMBOL(dev_mc_add);
  *
  *	Add a global multicast address to the device.
  */
-पूर्णांक dev_mc_add_global(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __dev_mc_add(dev, addr, true);
-पूर्ण
+int dev_mc_add_global(struct net_device *dev, const unsigned char *addr)
+{
+	return __dev_mc_add(dev, addr, true);
+}
 EXPORT_SYMBOL(dev_mc_add_global);
 
-अटल पूर्णांक __dev_mc_del(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr,
+static int __dev_mc_del(struct net_device *dev, const unsigned char *addr,
 			bool global)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
-	netअगर_addr_lock_bh(dev);
+	netif_addr_lock_bh(dev);
 	err = __hw_addr_del_ex(&dev->mc, addr, dev->addr_len,
 			       NETDEV_HW_ADDR_T_MULTICAST, global, false);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(dev);
-	netअगर_addr_unlock_bh(dev);
-	वापस err;
-पूर्ण
+	netif_addr_unlock_bh(dev);
+	return err;
+}
 
 /**
  *	dev_mc_del - Delete a multicast address.
  *	@dev: device
  *	@addr: address to delete
  *
- *	Release reference to a multicast address and हटाओ it
- *	from the device अगर the reference count drops to zero.
+ *	Release reference to a multicast address and remove it
+ *	from the device if the reference count drops to zero.
  */
-पूर्णांक dev_mc_del(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __dev_mc_del(dev, addr, false);
-पूर्ण
+int dev_mc_del(struct net_device *dev, const unsigned char *addr)
+{
+	return __dev_mc_del(dev, addr, false);
+}
 EXPORT_SYMBOL(dev_mc_del);
 
 /**
@@ -840,13 +839,13 @@ EXPORT_SYMBOL(dev_mc_del);
  *	@dev: device
  *	@addr: address to delete
  *
- *	Release reference to a multicast address and हटाओ it
- *	from the device अगर the reference count drops to zero.
+ *	Release reference to a multicast address and remove it
+ *	from the device if the reference count drops to zero.
  */
-पूर्णांक dev_mc_del_global(काष्ठा net_device *dev, स्थिर अचिन्हित अक्षर *addr)
-अणु
-	वापस __dev_mc_del(dev, addr, true);
-पूर्ण
+int dev_mc_del_global(struct net_device *dev, const unsigned char *addr)
+{
+	return __dev_mc_del(dev, addr, true);
+}
 EXPORT_SYMBOL(dev_mc_del_global);
 
 /**
@@ -856,55 +855,55 @@ EXPORT_SYMBOL(dev_mc_del_global);
  *
  *	Add newly added addresses to the destination device and release
  *	addresses that have no users left. The source device must be
- *	locked by netअगर_addr_lock_bh.
+ *	locked by netif_addr_lock_bh.
  *
- *	This function is पूर्णांकended to be called from the nकरो_set_rx_mode
+ *	This function is intended to be called from the ndo_set_rx_mode
  *	function of layered software devices.
  */
-पूर्णांक dev_mc_sync(काष्ठा net_device *to, काष्ठा net_device *from)
-अणु
-	पूर्णांक err = 0;
+int dev_mc_sync(struct net_device *to, struct net_device *from)
+{
+	int err = 0;
 
-	अगर (to->addr_len != from->addr_len)
-		वापस -EINVAL;
+	if (to->addr_len != from->addr_len)
+		return -EINVAL;
 
-	netअगर_addr_lock(to);
+	netif_addr_lock(to);
 	err = __hw_addr_sync(&to->mc, &from->mc, to->addr_len);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(to);
-	netअगर_addr_unlock(to);
-	वापस err;
-पूर्ण
+	netif_addr_unlock(to);
+	return err;
+}
 EXPORT_SYMBOL(dev_mc_sync);
 
 /**
  *	dev_mc_sync_multiple - Synchronize device's multicast list to another
- *	device, but allow क्रम multiple calls to sync to multiple devices.
+ *	device, but allow for multiple calls to sync to multiple devices.
  *	@to: destination device
  *	@from: source device
  *
  *	Add newly added addresses to the destination device and release
  *	addresses that have no users left. The source device must be
- *	locked by netअगर_addr_lock_bh.
+ *	locked by netif_addr_lock_bh.
  *
- *	This function is पूर्णांकended to be called from the nकरो_set_rx_mode
- *	function of layered software devices.  It allows क्रम a single
+ *	This function is intended to be called from the ndo_set_rx_mode
+ *	function of layered software devices.  It allows for a single
  *	source device to be synced to multiple destination devices.
  */
-पूर्णांक dev_mc_sync_multiple(काष्ठा net_device *to, काष्ठा net_device *from)
-अणु
-	पूर्णांक err = 0;
+int dev_mc_sync_multiple(struct net_device *to, struct net_device *from)
+{
+	int err = 0;
 
-	अगर (to->addr_len != from->addr_len)
-		वापस -EINVAL;
+	if (to->addr_len != from->addr_len)
+		return -EINVAL;
 
-	netअगर_addr_lock(to);
+	netif_addr_lock(to);
 	err = __hw_addr_sync_multiple(&to->mc, &from->mc, to->addr_len);
-	अगर (!err)
+	if (!err)
 		__dev_set_rx_mode(to);
-	netअगर_addr_unlock(to);
-	वापस err;
-पूर्ण
+	netif_addr_unlock(to);
+	return err;
+}
 EXPORT_SYMBOL(dev_mc_sync_multiple);
 
 /**
@@ -913,22 +912,22 @@ EXPORT_SYMBOL(dev_mc_sync_multiple);
  *	@from: source device
  *
  *	Remove all addresses that were added to the destination device by
- *	dev_mc_sync(). This function is पूर्णांकended to be called from the
+ *	dev_mc_sync(). This function is intended to be called from the
  *	dev->stop function of layered software devices.
  */
-व्योम dev_mc_unsync(काष्ठा net_device *to, काष्ठा net_device *from)
-अणु
-	अगर (to->addr_len != from->addr_len)
-		वापस;
+void dev_mc_unsync(struct net_device *to, struct net_device *from)
+{
+	if (to->addr_len != from->addr_len)
+		return;
 
 	/* See the above comments inside dev_uc_unsync(). */
-	netअगर_addr_lock_bh(from);
-	netअगर_addr_lock(to);
+	netif_addr_lock_bh(from);
+	netif_addr_lock(to);
 	__hw_addr_unsync(&to->mc, &from->mc, to->addr_len);
 	__dev_set_rx_mode(to);
-	netअगर_addr_unlock(to);
-	netअगर_addr_unlock_bh(from);
-पूर्ण
+	netif_addr_unlock(to);
+	netif_addr_unlock_bh(from);
+}
 EXPORT_SYMBOL(dev_mc_unsync);
 
 /**
@@ -937,12 +936,12 @@ EXPORT_SYMBOL(dev_mc_unsync);
  *
  *	Flush multicast addresses.
  */
-व्योम dev_mc_flush(काष्ठा net_device *dev)
-अणु
-	netअगर_addr_lock_bh(dev);
+void dev_mc_flush(struct net_device *dev)
+{
+	netif_addr_lock_bh(dev);
 	__hw_addr_flush(&dev->mc);
-	netअगर_addr_unlock_bh(dev);
-पूर्ण
+	netif_addr_unlock_bh(dev);
+}
 EXPORT_SYMBOL(dev_mc_flush);
 
 /**
@@ -951,8 +950,8 @@ EXPORT_SYMBOL(dev_mc_flush);
  *
  *	Init multicast address list.
  */
-व्योम dev_mc_init(काष्ठा net_device *dev)
-अणु
+void dev_mc_init(struct net_device *dev)
+{
 	__hw_addr_init(&dev->mc);
-पूर्ण
+}
 EXPORT_SYMBOL(dev_mc_init);

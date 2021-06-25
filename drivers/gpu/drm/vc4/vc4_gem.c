@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2014 Broadcom
+ * Copyright © 2014 Broadcom
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,207 +21,207 @@
  * IN THE SOFTWARE.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/dma-fence-array.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/sched/signal.h>
+#include <linux/dma-fence-array.h>
 
-#समावेश <drm/drm_syncobj.h>
+#include <drm/drm_syncobj.h>
 
-#समावेश "uapi/drm/vc4_drm.h"
-#समावेश "vc4_drv.h"
-#समावेश "vc4_regs.h"
-#समावेश "vc4_trace.h"
+#include "uapi/drm/vc4_drm.h"
+#include "vc4_drv.h"
+#include "vc4_regs.h"
+#include "vc4_trace.h"
 
-अटल व्योम
-vc4_queue_hangcheck(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void
+vc4_queue_hangcheck(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
-	mod_समयr(&vc4->hangcheck.समयr,
-		  round_jअगरfies_up(jअगरfies + msecs_to_jअगरfies(100)));
-पूर्ण
+	mod_timer(&vc4->hangcheck.timer,
+		  round_jiffies_up(jiffies + msecs_to_jiffies(100)));
+}
 
-काष्ठा vc4_hang_state अणु
-	काष्ठा drm_vc4_get_hang_state user_state;
+struct vc4_hang_state {
+	struct drm_vc4_get_hang_state user_state;
 
 	u32 bo_count;
-	काष्ठा drm_gem_object **bo;
-पूर्ण;
+	struct drm_gem_object **bo;
+};
 
-अटल व्योम
-vc4_मुक्त_hang_state(काष्ठा drm_device *dev, काष्ठा vc4_hang_state *state)
-अणु
-	अचिन्हित पूर्णांक i;
+static void
+vc4_free_hang_state(struct drm_device *dev, struct vc4_hang_state *state)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < state->user_state.bo_count; i++)
+	for (i = 0; i < state->user_state.bo_count; i++)
 		drm_gem_object_put(state->bo[i]);
 
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-पूर्णांक
-vc4_get_hang_state_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			 काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_get_hang_state *get_state = data;
-	काष्ठा drm_vc4_get_hang_state_bo *bo_state;
-	काष्ठा vc4_hang_state *kernel_state;
-	काष्ठा drm_vc4_get_hang_state *state;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	अचिन्हित दीर्घ irqflags;
+int
+vc4_get_hang_state_ioctl(struct drm_device *dev, void *data,
+			 struct drm_file *file_priv)
+{
+	struct drm_vc4_get_hang_state *get_state = data;
+	struct drm_vc4_get_hang_state_bo *bo_state;
+	struct vc4_hang_state *kernel_state;
+	struct drm_vc4_get_hang_state *state;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	unsigned long irqflags;
 	u32 i;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (!vc4->v3d) अणु
+	if (!vc4->v3d) {
 		DRM_DEBUG("VC4_GET_HANG_STATE with no VC4 V3D probed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
 	kernel_state = vc4->hang_state;
-	अगर (!kernel_state) अणु
+	if (!kernel_state) {
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	state = &kernel_state->user_state;
 
-	/* If the user's array isn't big enough, just वापस the
+	/* If the user's array isn't big enough, just return the
 	 * required array size.
 	 */
-	अगर (get_state->bo_count < state->bo_count) अणु
+	if (get_state->bo_count < state->bo_count) {
 		get_state->bo_count = state->bo_count;
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	vc4->hang_state = शून्य;
+	vc4->hang_state = NULL;
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 
-	/* Save the user's BO pointer, so we don't stomp it with the स_नकल. */
+	/* Save the user's BO pointer, so we don't stomp it with the memcpy. */
 	state->bo = get_state->bo;
-	स_नकल(get_state, state, माप(*state));
+	memcpy(get_state, state, sizeof(*state));
 
-	bo_state = kसुस्मृति(state->bo_count, माप(*bo_state), GFP_KERNEL);
-	अगर (!bo_state) अणु
+	bo_state = kcalloc(state->bo_count, sizeof(*bo_state), GFP_KERNEL);
+	if (!bo_state) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	क्रम (i = 0; i < state->bo_count; i++) अणु
-		काष्ठा vc4_bo *vc4_bo = to_vc4_bo(kernel_state->bo[i]);
+	for (i = 0; i < state->bo_count; i++) {
+		struct vc4_bo *vc4_bo = to_vc4_bo(kernel_state->bo[i]);
 		u32 handle;
 
 		ret = drm_gem_handle_create(file_priv, kernel_state->bo[i],
 					    &handle);
 
-		अगर (ret) अणु
+		if (ret) {
 			state->bo_count = i;
-			जाओ err_delete_handle;
-		पूर्ण
+			goto err_delete_handle;
+		}
 		bo_state[i].handle = handle;
 		bo_state[i].paddr = vc4_bo->base.paddr;
 		bo_state[i].size = vc4_bo->base.base.size;
-	पूर्ण
+	}
 
-	अगर (copy_to_user(u64_to_user_ptr(get_state->bo),
+	if (copy_to_user(u64_to_user_ptr(get_state->bo),
 			 bo_state,
-			 state->bo_count * माप(*bo_state)))
+			 state->bo_count * sizeof(*bo_state)))
 		ret = -EFAULT;
 
 err_delete_handle:
-	अगर (ret) अणु
-		क्रम (i = 0; i < state->bo_count; i++)
+	if (ret) {
+		for (i = 0; i < state->bo_count; i++)
 			drm_gem_handle_delete(file_priv, bo_state[i].handle);
-	पूर्ण
+	}
 
-err_मुक्त:
-	vc4_मुक्त_hang_state(dev, kernel_state);
-	kमुक्त(bo_state);
+err_free:
+	vc4_free_hang_state(dev, kernel_state);
+	kfree(bo_state);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-vc4_save_hang_state(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा drm_vc4_get_hang_state *state;
-	काष्ठा vc4_hang_state *kernel_state;
-	काष्ठा vc4_exec_info *exec[2];
-	काष्ठा vc4_bo *bo;
-	अचिन्हित दीर्घ irqflags;
-	अचिन्हित पूर्णांक i, j, k, unref_list_count;
+static void
+vc4_save_hang_state(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct drm_vc4_get_hang_state *state;
+	struct vc4_hang_state *kernel_state;
+	struct vc4_exec_info *exec[2];
+	struct vc4_bo *bo;
+	unsigned long irqflags;
+	unsigned int i, j, k, unref_list_count;
 
-	kernel_state = kसुस्मृति(1, माप(*kernel_state), GFP_KERNEL);
-	अगर (!kernel_state)
-		वापस;
+	kernel_state = kcalloc(1, sizeof(*kernel_state), GFP_KERNEL);
+	if (!kernel_state)
+		return;
 
 	state = &kernel_state->user_state;
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
 	exec[0] = vc4_first_bin_job(vc4);
 	exec[1] = vc4_first_render_job(vc4);
-	अगर (!exec[0] && !exec[1]) अणु
+	if (!exec[0] && !exec[1]) {
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Get the bos from both binner and renderer पूर्णांकo hang state. */
+	/* Get the bos from both binner and renderer into hang state. */
 	state->bo_count = 0;
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (!exec[i])
-			जारी;
+	for (i = 0; i < 2; i++) {
+		if (!exec[i])
+			continue;
 
 		unref_list_count = 0;
-		list_क्रम_each_entry(bo, &exec[i]->unref_list, unref_head)
+		list_for_each_entry(bo, &exec[i]->unref_list, unref_head)
 			unref_list_count++;
 		state->bo_count += exec[i]->bo_count + unref_list_count;
-	पूर्ण
+	}
 
-	kernel_state->bo = kसुस्मृति(state->bo_count,
-				   माप(*kernel_state->bo), GFP_ATOMIC);
+	kernel_state->bo = kcalloc(state->bo_count,
+				   sizeof(*kernel_state->bo), GFP_ATOMIC);
 
-	अगर (!kernel_state->bo) अणु
+	if (!kernel_state->bo) {
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	k = 0;
-	क्रम (i = 0; i < 2; i++) अणु
-		अगर (!exec[i])
-			जारी;
+	for (i = 0; i < 2; i++) {
+		if (!exec[i])
+			continue;
 
-		क्रम (j = 0; j < exec[i]->bo_count; j++) अणु
+		for (j = 0; j < exec[i]->bo_count; j++) {
 			bo = to_vc4_bo(&exec[i]->bo[j]->base);
 
-			/* Retain BOs just in हाल they were marked purgeable.
-			 * This prevents the BO from being purged beक्रमe
+			/* Retain BOs just in case they were marked purgeable.
+			 * This prevents the BO from being purged before
 			 * someone had a chance to dump the hang state.
 			 */
-			WARN_ON(!refcount_पढ़ो(&bo->usecnt));
+			WARN_ON(!refcount_read(&bo->usecnt));
 			refcount_inc(&bo->usecnt);
 			drm_gem_object_get(&exec[i]->bo[j]->base);
 			kernel_state->bo[k++] = &exec[i]->bo[j]->base;
-		पूर्ण
+		}
 
-		list_क्रम_each_entry(bo, &exec[i]->unref_list, unref_head) अणु
+		list_for_each_entry(bo, &exec[i]->unref_list, unref_head) {
 			/* No need to retain BOs coming from the ->unref_list
 			 * because they are naturally unpurgeable.
 			 */
 			drm_gem_object_get(&bo->base.base);
 			kernel_state->bo[k++] = &bo->base.base;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	WARN_ON_ONCE(k != state->bo_count);
 
-	अगर (exec[0])
+	if (exec[0])
 		state->start_bin = exec[0]->ct0ca;
-	अगर (exec[1])
+	if (exec[1])
 		state->start_render = exec[1]->ct1ca;
 
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
@@ -253,185 +252,185 @@ vc4_save_hang_state(काष्ठा drm_device *dev)
 	state->fdbgs = V3D_READ(V3D_FDBGS);
 	state->errstat = V3D_READ(V3D_ERRSTAT);
 
-	/* We need to turn purgeable BOs पूर्णांकo unpurgeable ones so that
-	 * userspace has a chance to dump the hang state beक्रमe the kernel
+	/* We need to turn purgeable BOs into unpurgeable ones so that
+	 * userspace has a chance to dump the hang state before the kernel
 	 * decides to purge those BOs.
-	 * Note that BO consistency at dump समय cannot be guaranteed. For
-	 * example, अगर the owner of these BOs decides to re-use them or mark
-	 * them purgeable again there's nothing we can करो to prevent it.
+	 * Note that BO consistency at dump time cannot be guaranteed. For
+	 * example, if the owner of these BOs decides to re-use them or mark
+	 * them purgeable again there's nothing we can do to prevent it.
 	 */
-	क्रम (i = 0; i < kernel_state->user_state.bo_count; i++) अणु
-		काष्ठा vc4_bo *bo = to_vc4_bo(kernel_state->bo[i]);
+	for (i = 0; i < kernel_state->user_state.bo_count; i++) {
+		struct vc4_bo *bo = to_vc4_bo(kernel_state->bo[i]);
 
-		अगर (bo->madv == __VC4_MADV_NOTSUPP)
-			जारी;
+		if (bo->madv == __VC4_MADV_NOTSUPP)
+			continue;
 
 		mutex_lock(&bo->madv_lock);
-		अगर (!WARN_ON(bo->madv == __VC4_MADV_PURGED))
+		if (!WARN_ON(bo->madv == __VC4_MADV_PURGED))
 			bo->madv = VC4_MADV_WILLNEED;
 		refcount_dec(&bo->usecnt);
 		mutex_unlock(&bo->madv_lock);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
-	अगर (vc4->hang_state) अणु
+	if (vc4->hang_state) {
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-		vc4_मुक्त_hang_state(dev, kernel_state);
-	पूर्ण अन्यथा अणु
+		vc4_free_hang_state(dev, kernel_state);
+	} else {
 		vc4->hang_state = kernel_state;
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-vc4_reset(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void
+vc4_reset(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
 	DRM_INFO("Resetting GPU.\n");
 
-	mutex_lock(&vc4->घातer_lock);
-	अगर (vc4->घातer_refcount) अणु
+	mutex_lock(&vc4->power_lock);
+	if (vc4->power_refcount) {
 		/* Power the device off and back on the by dropping the
-		 * reference on runसमय PM.
+		 * reference on runtime PM.
 		 */
-		pm_runसमय_put_sync_suspend(&vc4->v3d->pdev->dev);
-		pm_runसमय_get_sync(&vc4->v3d->pdev->dev);
-	पूर्ण
-	mutex_unlock(&vc4->घातer_lock);
+		pm_runtime_put_sync_suspend(&vc4->v3d->pdev->dev);
+		pm_runtime_get_sync(&vc4->v3d->pdev->dev);
+	}
+	mutex_unlock(&vc4->power_lock);
 
 	vc4_irq_reset(dev);
 
-	/* Rearm the hangcheck -- another job might have been रुकोing
-	 * क्रम our hung one to get kicked off, and vc4_irq_reset()
+	/* Rearm the hangcheck -- another job might have been waiting
+	 * for our hung one to get kicked off, and vc4_irq_reset()
 	 * would have started it.
 	 */
 	vc4_queue_hangcheck(dev);
-पूर्ण
+}
 
-अटल व्योम
-vc4_reset_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vc4_dev *vc4 =
-		container_of(work, काष्ठा vc4_dev, hangcheck.reset_work);
+static void
+vc4_reset_work(struct work_struct *work)
+{
+	struct vc4_dev *vc4 =
+		container_of(work, struct vc4_dev, hangcheck.reset_work);
 
 	vc4_save_hang_state(&vc4->base);
 
 	vc4_reset(&vc4->base);
-पूर्ण
+}
 
-अटल व्योम
-vc4_hangcheck_elapsed(काष्ठा समयr_list *t)
-अणु
-	काष्ठा vc4_dev *vc4 = from_समयr(vc4, t, hangcheck.समयr);
-	काष्ठा drm_device *dev = &vc4->base;
-	uपूर्णांक32_t ct0ca, ct1ca;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा vc4_exec_info *bin_exec, *render_exec;
+static void
+vc4_hangcheck_elapsed(struct timer_list *t)
+{
+	struct vc4_dev *vc4 = from_timer(vc4, t, hangcheck.timer);
+	struct drm_device *dev = &vc4->base;
+	uint32_t ct0ca, ct1ca;
+	unsigned long irqflags;
+	struct vc4_exec_info *bin_exec, *render_exec;
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
 
 	bin_exec = vc4_first_bin_job(vc4);
 	render_exec = vc4_first_render_job(vc4);
 
-	/* If idle, we can stop watching क्रम hangs. */
-	अगर (!bin_exec && !render_exec) अणु
+	/* If idle, we can stop watching for hangs. */
+	if (!bin_exec && !render_exec) {
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ct0ca = V3D_READ(V3D_CTNCA(0));
 	ct1ca = V3D_READ(V3D_CTNCA(1));
 
-	/* If we've made any progress in execution, rearm the समयr
-	 * and रुको.
+	/* If we've made any progress in execution, rearm the timer
+	 * and wait.
 	 */
-	अगर ((bin_exec && ct0ca != bin_exec->last_ct0ca) ||
-	    (render_exec && ct1ca != render_exec->last_ct1ca)) अणु
-		अगर (bin_exec)
+	if ((bin_exec && ct0ca != bin_exec->last_ct0ca) ||
+	    (render_exec && ct1ca != render_exec->last_ct1ca)) {
+		if (bin_exec)
 			bin_exec->last_ct0ca = ct0ca;
-		अगर (render_exec)
+		if (render_exec)
 			render_exec->last_ct1ca = ct1ca;
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 		vc4_queue_hangcheck(dev);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 
-	/* We've gone too दीर्घ with no progress, reset.  This has to
-	 * be करोne from a work काष्ठा, since resetting can sleep and
-	 * this समयr hook isn't allowed to.
+	/* We've gone too long with no progress, reset.  This has to
+	 * be done from a work struct, since resetting can sleep and
+	 * this timer hook isn't allowed to.
 	 */
 	schedule_work(&vc4->hangcheck.reset_work);
-पूर्ण
+}
 
-अटल व्योम
-submit_cl(काष्ठा drm_device *dev, uपूर्णांक32_t thपढ़ो, uपूर्णांक32_t start, uपूर्णांक32_t end)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void
+submit_cl(struct drm_device *dev, uint32_t thread, uint32_t start, uint32_t end)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
 	/* Set the current and end address of the control list.
-	 * Writing the end रेजिस्टर is what starts the job.
+	 * Writing the end register is what starts the job.
 	 */
-	V3D_WRITE(V3D_CTNCA(thपढ़ो), start);
-	V3D_WRITE(V3D_CTNEA(thपढ़ो), end);
-पूर्ण
+	V3D_WRITE(V3D_CTNCA(thread), start);
+	V3D_WRITE(V3D_CTNEA(thread), end);
+}
 
-पूर्णांक
-vc4_रुको_क्रम_seqno(काष्ठा drm_device *dev, uपूर्णांक64_t seqno, uपूर्णांक64_t समयout_ns,
-		   bool पूर्णांकerruptible)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ समयout_expire;
-	DEFINE_WAIT(रुको);
+int
+vc4_wait_for_seqno(struct drm_device *dev, uint64_t seqno, uint64_t timeout_ns,
+		   bool interruptible)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	int ret = 0;
+	unsigned long timeout_expire;
+	DEFINE_WAIT(wait);
 
-	अगर (vc4->finished_seqno >= seqno)
-		वापस 0;
+	if (vc4->finished_seqno >= seqno)
+		return 0;
 
-	अगर (समयout_ns == 0)
-		वापस -ETIME;
+	if (timeout_ns == 0)
+		return -ETIME;
 
-	समयout_expire = jअगरfies + nsecs_to_jअगरfies(समयout_ns);
+	timeout_expire = jiffies + nsecs_to_jiffies(timeout_ns);
 
-	trace_vc4_रुको_क्रम_seqno_begin(dev, seqno, समयout_ns);
-	क्रम (;;) अणु
-		prepare_to_रुको(&vc4->job_रुको_queue, &रुको,
-				पूर्णांकerruptible ? TASK_INTERRUPTIBLE :
+	trace_vc4_wait_for_seqno_begin(dev, seqno, timeout_ns);
+	for (;;) {
+		prepare_to_wait(&vc4->job_wait_queue, &wait,
+				interruptible ? TASK_INTERRUPTIBLE :
 				TASK_UNINTERRUPTIBLE);
 
-		अगर (पूर्णांकerruptible && संकेत_pending(current)) अणु
+		if (interruptible && signal_pending(current)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (vc4->finished_seqno >= seqno)
-			अवरोध;
+		if (vc4->finished_seqno >= seqno)
+			break;
 
-		अगर (समयout_ns != ~0ull) अणु
-			अगर (समय_after_eq(jअगरfies, समयout_expire)) अणु
+		if (timeout_ns != ~0ull) {
+			if (time_after_eq(jiffies, timeout_expire)) {
 				ret = -ETIME;
-				अवरोध;
-			पूर्ण
-			schedule_समयout(समयout_expire - jअगरfies);
-		पूर्ण अन्यथा अणु
+				break;
+			}
+			schedule_timeout(timeout_expire - jiffies);
+		} else {
 			schedule();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	finish_रुको(&vc4->job_रुको_queue, &रुको);
-	trace_vc4_रुको_क्रम_seqno_end(dev, seqno);
+	finish_wait(&vc4->job_wait_queue, &wait);
+	trace_vc4_wait_for_seqno_end(dev, seqno);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-vc4_flush_caches(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void
+vc4_flush_caches(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
-	/* Flush the GPU L2 caches.  These caches sit on top of प्रणाली
+	/* Flush the GPU L2 caches.  These caches sit on top of system
 	 * L3 (the 128kb or so shared with the CPU), and are
 	 * non-allocating in the L3.
 	 */
@@ -443,12 +442,12 @@ vc4_flush_caches(काष्ठा drm_device *dev)
 		  VC4_SET_FIELD(0xf, V3D_SLCACTL_T0CC) |
 		  VC4_SET_FIELD(0xf, V3D_SLCACTL_UCC) |
 		  VC4_SET_FIELD(0xf, V3D_SLCACTL_ICC));
-पूर्ण
+}
 
-अटल व्योम
-vc4_flush_texture_caches(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void
+vc4_flush_texture_caches(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
 	V3D_WRITE(V3D_L2CACTL,
 		  V3D_L2CACTL_L2CCLR);
@@ -456,225 +455,225 @@ vc4_flush_texture_caches(काष्ठा drm_device *dev)
 	V3D_WRITE(V3D_SLCACTL,
 		  VC4_SET_FIELD(0xf, V3D_SLCACTL_T1CC) |
 		  VC4_SET_FIELD(0xf, V3D_SLCACTL_T0CC));
-पूर्ण
+}
 
-/* Sets the रेजिस्टरs क्रम the next job to be actually be executed in
+/* Sets the registers for the next job to be actually be executed in
  * the hardware.
  *
  * The job_lock should be held during this.
  */
-व्योम
-vc4_submit_next_bin_job(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_exec_info *exec;
+void
+vc4_submit_next_bin_job(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_exec_info *exec;
 
 again:
 	exec = vc4_first_bin_job(vc4);
-	अगर (!exec)
-		वापस;
+	if (!exec)
+		return;
 
 	vc4_flush_caches(dev);
 
-	/* Only start the perfmon अगर it was not alपढ़ोy started by a previous
+	/* Only start the perfmon if it was not already started by a previous
 	 * job.
 	 */
-	अगर (exec->perfmon && vc4->active_perfmon != exec->perfmon)
+	if (exec->perfmon && vc4->active_perfmon != exec->perfmon)
 		vc4_perfmon_start(vc4, exec->perfmon);
 
-	/* Either put the job in the binner अगर it uses the binner, or
+	/* Either put the job in the binner if it uses the binner, or
 	 * immediately move it to the to-be-rendered queue.
 	 */
-	अगर (exec->ct0ca != exec->ct0ea) अणु
+	if (exec->ct0ca != exec->ct0ea) {
 		submit_cl(dev, 0, exec->ct0ca, exec->ct0ea);
-	पूर्ण अन्यथा अणु
-		काष्ठा vc4_exec_info *next;
+	} else {
+		struct vc4_exec_info *next;
 
 		vc4_move_job_to_render(dev, exec);
 		next = vc4_first_bin_job(vc4);
 
-		/* We can't start the next bin job अगर the previous job had a
-		 * dअगरferent perfmon instance attached to it. The same goes
-		 * अगर one of them had a perfmon attached to it and the other
-		 * one करोesn't.
+		/* We can't start the next bin job if the previous job had a
+		 * different perfmon instance attached to it. The same goes
+		 * if one of them had a perfmon attached to it and the other
+		 * one doesn't.
 		 */
-		अगर (next && next->perfmon == exec->perfmon)
-			जाओ again;
-	पूर्ण
-पूर्ण
+		if (next && next->perfmon == exec->perfmon)
+			goto again;
+	}
+}
 
-व्योम
-vc4_submit_next_render_job(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_exec_info *exec = vc4_first_render_job(vc4);
+void
+vc4_submit_next_render_job(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_exec_info *exec = vc4_first_render_job(vc4);
 
-	अगर (!exec)
-		वापस;
+	if (!exec)
+		return;
 
 	/* A previous RCL may have written to one of our textures, and
-	 * our full cache flush at bin समय may have occurred beक्रमe
+	 * our full cache flush at bin time may have occurred before
 	 * that RCL completed.  Flush the texture cache now, but not
-	 * the inकाष्ठाions or unअगरorms (since we करोn't ग_लिखो those
+	 * the instructions or uniforms (since we don't write those
 	 * from an RCL).
 	 */
 	vc4_flush_texture_caches(dev);
 
 	submit_cl(dev, 1, exec->ct1ca, exec->ct1ea);
-पूर्ण
+}
 
-व्योम
-vc4_move_job_to_render(काष्ठा drm_device *dev, काष्ठा vc4_exec_info *exec)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+void
+vc4_move_job_to_render(struct drm_device *dev, struct vc4_exec_info *exec)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 	bool was_empty = list_empty(&vc4->render_job_list);
 
 	list_move_tail(&exec->head, &vc4->render_job_list);
-	अगर (was_empty)
+	if (was_empty)
 		vc4_submit_next_render_job(dev);
-पूर्ण
+}
 
-अटल व्योम
-vc4_update_bo_seqnos(काष्ठा vc4_exec_info *exec, uपूर्णांक64_t seqno)
-अणु
-	काष्ठा vc4_bo *bo;
-	अचिन्हित i;
+static void
+vc4_update_bo_seqnos(struct vc4_exec_info *exec, uint64_t seqno)
+{
+	struct vc4_bo *bo;
+	unsigned i;
 
-	क्रम (i = 0; i < exec->bo_count; i++) अणु
+	for (i = 0; i < exec->bo_count; i++) {
 		bo = to_vc4_bo(&exec->bo[i]->base);
 		bo->seqno = seqno;
 
 		dma_resv_add_shared_fence(bo->base.base.resv, exec->fence);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(bo, &exec->unref_list, unref_head) अणु
+	list_for_each_entry(bo, &exec->unref_list, unref_head) {
 		bo->seqno = seqno;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < exec->rcl_ग_लिखो_bo_count; i++) अणु
-		bo = to_vc4_bo(&exec->rcl_ग_लिखो_bo[i]->base);
-		bo->ग_लिखो_seqno = seqno;
+	for (i = 0; i < exec->rcl_write_bo_count; i++) {
+		bo = to_vc4_bo(&exec->rcl_write_bo[i]->base);
+		bo->write_seqno = seqno;
 
 		dma_resv_add_excl_fence(bo->base.base.resv, exec->fence);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-vc4_unlock_bo_reservations(काष्ठा drm_device *dev,
-			   काष्ठा vc4_exec_info *exec,
-			   काष्ठा ww_acquire_ctx *acquire_ctx)
-अणु
-	पूर्णांक i;
+static void
+vc4_unlock_bo_reservations(struct drm_device *dev,
+			   struct vc4_exec_info *exec,
+			   struct ww_acquire_ctx *acquire_ctx)
+{
+	int i;
 
-	क्रम (i = 0; i < exec->bo_count; i++) अणु
-		काष्ठा drm_gem_object *bo = &exec->bo[i]->base;
+	for (i = 0; i < exec->bo_count; i++) {
+		struct drm_gem_object *bo = &exec->bo[i]->base;
 
 		dma_resv_unlock(bo->resv);
-	पूर्ण
+	}
 
 	ww_acquire_fini(acquire_ctx);
-पूर्ण
+}
 
 /* Takes the reservation lock on all the BOs being referenced, so that
- * at queue submit समय we can update the reservations.
+ * at queue submit time we can update the reservations.
  *
- * We करोn't lock the RCL the tile alloc/state BOs, or overflow memory
- * (all of which are on exec->unref_list).  They're entirely निजी
- * to vc4, so we करोn't attach dma-buf fences to them.
+ * We don't lock the RCL the tile alloc/state BOs, or overflow memory
+ * (all of which are on exec->unref_list).  They're entirely private
+ * to vc4, so we don't attach dma-buf fences to them.
  */
-अटल पूर्णांक
-vc4_lock_bo_reservations(काष्ठा drm_device *dev,
-			 काष्ठा vc4_exec_info *exec,
-			 काष्ठा ww_acquire_ctx *acquire_ctx)
-अणु
-	पूर्णांक contended_lock = -1;
-	पूर्णांक i, ret;
-	काष्ठा drm_gem_object *bo;
+static int
+vc4_lock_bo_reservations(struct drm_device *dev,
+			 struct vc4_exec_info *exec,
+			 struct ww_acquire_ctx *acquire_ctx)
+{
+	int contended_lock = -1;
+	int i, ret;
+	struct drm_gem_object *bo;
 
 	ww_acquire_init(acquire_ctx, &reservation_ww_class);
 
 retry:
-	अगर (contended_lock != -1) अणु
+	if (contended_lock != -1) {
 		bo = &exec->bo[contended_lock]->base;
-		ret = dma_resv_lock_slow_पूर्णांकerruptible(bo->resv, acquire_ctx);
-		अगर (ret) अणु
-			ww_acquire_करोne(acquire_ctx);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+		ret = dma_resv_lock_slow_interruptible(bo->resv, acquire_ctx);
+		if (ret) {
+			ww_acquire_done(acquire_ctx);
+			return ret;
+		}
+	}
 
-	क्रम (i = 0; i < exec->bo_count; i++) अणु
-		अगर (i == contended_lock)
-			जारी;
+	for (i = 0; i < exec->bo_count; i++) {
+		if (i == contended_lock)
+			continue;
 
 		bo = &exec->bo[i]->base;
 
-		ret = dma_resv_lock_पूर्णांकerruptible(bo->resv, acquire_ctx);
-		अगर (ret) अणु
-			पूर्णांक j;
+		ret = dma_resv_lock_interruptible(bo->resv, acquire_ctx);
+		if (ret) {
+			int j;
 
-			क्रम (j = 0; j < i; j++) अणु
+			for (j = 0; j < i; j++) {
 				bo = &exec->bo[j]->base;
 				dma_resv_unlock(bo->resv);
-			पूर्ण
+			}
 
-			अगर (contended_lock != -1 && contended_lock >= i) अणु
+			if (contended_lock != -1 && contended_lock >= i) {
 				bo = &exec->bo[contended_lock]->base;
 
 				dma_resv_unlock(bo->resv);
-			पूर्ण
+			}
 
-			अगर (ret == -EDEADLK) अणु
+			if (ret == -EDEADLK) {
 				contended_lock = i;
-				जाओ retry;
-			पूर्ण
+				goto retry;
+			}
 
-			ww_acquire_करोne(acquire_ctx);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			ww_acquire_done(acquire_ctx);
+			return ret;
+		}
+	}
 
-	ww_acquire_करोne(acquire_ctx);
+	ww_acquire_done(acquire_ctx);
 
-	/* Reserve space क्रम our shared (पढ़ो-only) fence references,
-	 * beक्रमe we commit the CL to the hardware.
+	/* Reserve space for our shared (read-only) fence references,
+	 * before we commit the CL to the hardware.
 	 */
-	क्रम (i = 0; i < exec->bo_count; i++) अणु
+	for (i = 0; i < exec->bo_count; i++) {
 		bo = &exec->bo[i]->base;
 
 		ret = dma_resv_reserve_shared(bo->resv, 1);
-		अगर (ret) अणु
+		if (ret) {
 			vc4_unlock_bo_reservations(dev, exec, acquire_ctx);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Queues a काष्ठा vc4_exec_info क्रम execution.  If no job is
+/* Queues a struct vc4_exec_info for execution.  If no job is
  * currently executing, then submits it.
  *
  * Unlike most GPUs, our hardware only handles one command list at a
- * समय.  To queue multiple jobs at once, we'd need to edit the
+ * time.  To queue multiple jobs at once, we'd need to edit the
  * previous command list to have a jump to the new one at the end, and
- * then bump the end address.  That's a change क्रम a later date,
+ * then bump the end address.  That's a change for a later date,
  * though.
  */
-अटल पूर्णांक
-vc4_queue_submit(काष्ठा drm_device *dev, काष्ठा vc4_exec_info *exec,
-		 काष्ठा ww_acquire_ctx *acquire_ctx,
-		 काष्ठा drm_syncobj *out_sync)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_exec_info *renderjob;
-	uपूर्णांक64_t seqno;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा vc4_fence *fence;
+static int
+vc4_queue_submit(struct drm_device *dev, struct vc4_exec_info *exec,
+		 struct ww_acquire_ctx *acquire_ctx,
+		 struct drm_syncobj *out_sync)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_exec_info *renderjob;
+	uint64_t seqno;
+	unsigned long irqflags;
+	struct vc4_fence *fence;
 
-	fence = kzalloc(माप(*fence), GFP_KERNEL);
-	अगर (!fence)
-		वापस -ENOMEM;
+	fence = kzalloc(sizeof(*fence), GFP_KERNEL);
+	if (!fence)
+		return -ENOMEM;
 	fence->dev = dev;
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
@@ -687,7 +686,7 @@ vc4_queue_submit(काष्ठा drm_device *dev, काष्ठा vc4_exec
 	fence->seqno = exec->seqno;
 	exec->fence = &fence->base;
 
-	अगर (out_sync)
+	if (out_sync)
 		drm_syncobj_replace_fence(out_sync, exec->fence);
 
 	vc4_update_bo_seqnos(exec, seqno);
@@ -696,203 +695,203 @@ vc4_queue_submit(काष्ठा drm_device *dev, काष्ठा vc4_exec
 
 	list_add_tail(&exec->head, &vc4->bin_job_list);
 
-	/* If no bin job was executing and अगर the render job (अगर any) has the
-	 * same perfmon as our job attached to it (or अगर both jobs करोn't have
+	/* If no bin job was executing and if the render job (if any) has the
+	 * same perfmon as our job attached to it (or if both jobs don't have
 	 * perfmon activated), then kick ours off.  Otherwise, it'll get
-	 * started when the previous job's flush/render करोne पूर्णांकerrupt occurs.
+	 * started when the previous job's flush/render done interrupt occurs.
 	 */
 	renderjob = vc4_first_render_job(vc4);
-	अगर (vc4_first_bin_job(vc4) == exec &&
-	    (!renderjob || renderjob->perfmon == exec->perfmon)) अणु
+	if (vc4_first_bin_job(vc4) == exec &&
+	    (!renderjob || renderjob->perfmon == exec->perfmon)) {
 		vc4_submit_next_bin_job(dev);
 		vc4_queue_hangcheck(dev);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vc4_cl_lookup_bos() - Sets up exec->bo[] with the GEM objects
  * referenced by the job.
  * @dev: DRM device
- * @file_priv: DRM file क्रम this fd
+ * @file_priv: DRM file for this fd
  * @exec: V3D job being set up
  *
  * The command validator needs to reference BOs by their index within
  * the submitted job's BO list.  This does the validation of the job's
- * BO list and reference counting क्रम the lअगरeसमय of the job.
+ * BO list and reference counting for the lifetime of the job.
  */
-अटल पूर्णांक
-vc4_cl_lookup_bos(काष्ठा drm_device *dev,
-		  काष्ठा drm_file *file_priv,
-		  काष्ठा vc4_exec_info *exec)
-अणु
-	काष्ठा drm_vc4_submit_cl *args = exec->args;
-	uपूर्णांक32_t *handles;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int
+vc4_cl_lookup_bos(struct drm_device *dev,
+		  struct drm_file *file_priv,
+		  struct vc4_exec_info *exec)
+{
+	struct drm_vc4_submit_cl *args = exec->args;
+	uint32_t *handles;
+	int ret = 0;
+	int i;
 
 	exec->bo_count = args->bo_handle_count;
 
-	अगर (!exec->bo_count) अणु
-		/* See comment on bo_index क्रम why we have to check
+	if (!exec->bo_count) {
+		/* See comment on bo_index for why we have to check
 		 * this.
 		 */
 		DRM_DEBUG("Rendering requires BOs to validate\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	exec->bo = kvदो_स्मृति_array(exec->bo_count,
-				    माप(काष्ठा drm_gem_cma_object *),
+	exec->bo = kvmalloc_array(exec->bo_count,
+				    sizeof(struct drm_gem_cma_object *),
 				    GFP_KERNEL | __GFP_ZERO);
-	अगर (!exec->bo) अणु
+	if (!exec->bo) {
 		DRM_ERROR("Failed to allocate validated BO pointers\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	handles = kvदो_स्मृति_array(exec->bo_count, माप(uपूर्णांक32_t), GFP_KERNEL);
-	अगर (!handles) अणु
+	handles = kvmalloc_array(exec->bo_count, sizeof(uint32_t), GFP_KERNEL);
+	if (!handles) {
 		ret = -ENOMEM;
 		DRM_ERROR("Failed to allocate incoming GEM handles\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (copy_from_user(handles, u64_to_user_ptr(args->bo_handles),
-			   exec->bo_count * माप(uपूर्णांक32_t))) अणु
+	if (copy_from_user(handles, u64_to_user_ptr(args->bo_handles),
+			   exec->bo_count * sizeof(uint32_t))) {
 		ret = -EFAULT;
 		DRM_ERROR("Failed to copy in GEM handles\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	spin_lock(&file_priv->table_lock);
-	क्रम (i = 0; i < exec->bo_count; i++) अणु
-		काष्ठा drm_gem_object *bo = idr_find(&file_priv->object_idr,
+	for (i = 0; i < exec->bo_count; i++) {
+		struct drm_gem_object *bo = idr_find(&file_priv->object_idr,
 						     handles[i]);
-		अगर (!bo) अणु
+		if (!bo) {
 			DRM_DEBUG("Failed to look up GEM BO %d: %d\n",
 				  i, handles[i]);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		drm_gem_object_get(bo);
-		exec->bo[i] = (काष्ठा drm_gem_cma_object *)bo;
-	पूर्ण
+		exec->bo[i] = (struct drm_gem_cma_object *)bo;
+	}
 	spin_unlock(&file_priv->table_lock);
 
-	अगर (ret)
-		जाओ fail_put_bo;
+	if (ret)
+		goto fail_put_bo;
 
-	क्रम (i = 0; i < exec->bo_count; i++) अणु
+	for (i = 0; i < exec->bo_count; i++) {
 		ret = vc4_bo_inc_usecnt(to_vc4_bo(&exec->bo[i]->base));
-		अगर (ret)
-			जाओ fail_dec_usecnt;
-	पूर्ण
+		if (ret)
+			goto fail_dec_usecnt;
+	}
 
-	kvमुक्त(handles);
-	वापस 0;
+	kvfree(handles);
+	return 0;
 
 fail_dec_usecnt:
 	/* Decrease usecnt on acquired objects.
 	 * We cannot rely on  vc4_complete_exec() to release resources here,
-	 * because vc4_complete_exec() has no inक्रमmation about which BO has
+	 * because vc4_complete_exec() has no information about which BO has
 	 * had its ->usecnt incremented.
-	 * To make things easier we just मुक्त everything explicitly and set
-	 * exec->bo to शून्य so that vc4_complete_exec() skips the 'BO release'
+	 * To make things easier we just free everything explicitly and set
+	 * exec->bo to NULL so that vc4_complete_exec() skips the 'BO release'
 	 * step.
 	 */
-	क्रम (i-- ; i >= 0; i--)
+	for (i-- ; i >= 0; i--)
 		vc4_bo_dec_usecnt(to_vc4_bo(&exec->bo[i]->base));
 
 fail_put_bo:
 	/* Release any reference to acquired objects. */
-	क्रम (i = 0; i < exec->bo_count && exec->bo[i]; i++)
+	for (i = 0; i < exec->bo_count && exec->bo[i]; i++)
 		drm_gem_object_put(&exec->bo[i]->base);
 
 fail:
-	kvमुक्त(handles);
-	kvमुक्त(exec->bo);
-	exec->bo = शून्य;
-	वापस ret;
-पूर्ण
+	kvfree(handles);
+	kvfree(exec->bo);
+	exec->bo = NULL;
+	return ret;
+}
 
-अटल पूर्णांक
-vc4_get_bcl(काष्ठा drm_device *dev, काष्ठा vc4_exec_info *exec)
-अणु
-	काष्ठा drm_vc4_submit_cl *args = exec->args;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	व्योम *temp = शून्य;
-	व्योम *bin;
-	पूर्णांक ret = 0;
-	uपूर्णांक32_t bin_offset = 0;
-	uपूर्णांक32_t shader_rec_offset = roundup(bin_offset + args->bin_cl_size,
+static int
+vc4_get_bcl(struct drm_device *dev, struct vc4_exec_info *exec)
+{
+	struct drm_vc4_submit_cl *args = exec->args;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	void *temp = NULL;
+	void *bin;
+	int ret = 0;
+	uint32_t bin_offset = 0;
+	uint32_t shader_rec_offset = roundup(bin_offset + args->bin_cl_size,
 					     16);
-	uपूर्णांक32_t unअगरorms_offset = shader_rec_offset + args->shader_rec_size;
-	uपूर्णांक32_t exec_size = unअगरorms_offset + args->unअगरorms_size;
-	uपूर्णांक32_t temp_size = exec_size + (माप(काष्ठा vc4_shader_state) *
+	uint32_t uniforms_offset = shader_rec_offset + args->shader_rec_size;
+	uint32_t exec_size = uniforms_offset + args->uniforms_size;
+	uint32_t temp_size = exec_size + (sizeof(struct vc4_shader_state) *
 					  args->shader_rec_count);
-	काष्ठा vc4_bo *bo;
+	struct vc4_bo *bo;
 
-	अगर (shader_rec_offset < args->bin_cl_size ||
-	    unअगरorms_offset < shader_rec_offset ||
-	    exec_size < unअगरorms_offset ||
-	    args->shader_rec_count >= (अच_पूर्णांक_उच्च /
-					  माप(काष्ठा vc4_shader_state)) ||
-	    temp_size < exec_size) अणु
+	if (shader_rec_offset < args->bin_cl_size ||
+	    uniforms_offset < shader_rec_offset ||
+	    exec_size < uniforms_offset ||
+	    args->shader_rec_count >= (UINT_MAX /
+					  sizeof(struct vc4_shader_state)) ||
+	    temp_size < exec_size) {
 		DRM_DEBUG("overflow in exec arguments\n");
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/* Allocate space where we'll store the copied in user command lists
 	 * and shader records.
 	 *
-	 * We करोn't just copy directly पूर्णांकo the BOs because we need to
-	 * पढ़ो the contents back क्रम validation, and I think the
+	 * We don't just copy directly into the BOs because we need to
+	 * read the contents back for validation, and I think the
 	 * bo->vaddr is uncached access.
 	 */
-	temp = kvदो_स्मृति_array(temp_size, 1, GFP_KERNEL);
-	अगर (!temp) अणु
+	temp = kvmalloc_array(temp_size, 1, GFP_KERNEL);
+	if (!temp) {
 		DRM_ERROR("Failed to allocate storage for copying "
 			  "in bin/render CLs.\n");
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	bin = temp + bin_offset;
 	exec->shader_rec_u = temp + shader_rec_offset;
-	exec->unअगरorms_u = temp + unअगरorms_offset;
+	exec->uniforms_u = temp + uniforms_offset;
 	exec->shader_state = temp + exec_size;
 	exec->shader_state_size = args->shader_rec_count;
 
-	अगर (copy_from_user(bin,
+	if (copy_from_user(bin,
 			   u64_to_user_ptr(args->bin_cl),
-			   args->bin_cl_size)) अणु
+			   args->bin_cl_size)) {
 		ret = -EFAULT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (copy_from_user(exec->shader_rec_u,
+	if (copy_from_user(exec->shader_rec_u,
 			   u64_to_user_ptr(args->shader_rec),
-			   args->shader_rec_size)) अणु
+			   args->shader_rec_size)) {
 		ret = -EFAULT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (copy_from_user(exec->unअगरorms_u,
-			   u64_to_user_ptr(args->unअगरorms),
-			   args->unअगरorms_size)) अणु
+	if (copy_from_user(exec->uniforms_u,
+			   u64_to_user_ptr(args->uniforms),
+			   args->uniforms_size)) {
 		ret = -EFAULT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	bo = vc4_bo_create(dev, exec_size, true, VC4_BO_TYPE_BCL);
-	अगर (IS_ERR(bo)) अणु
+	if (IS_ERR(bo)) {
 		DRM_ERROR("Couldn't allocate BO for binning\n");
 		ret = PTR_ERR(bo);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	exec->exec_bo = &bo->base;
 
 	list_add_tail(&to_vc4_bo(&exec->exec_bo->base)->unref_head,
@@ -906,77 +905,77 @@ vc4_get_bcl(काष्ठा drm_device *dev, काष्ठा vc4_exec_info
 	exec->shader_rec_p = exec->exec_bo->paddr + shader_rec_offset;
 	exec->shader_rec_size = args->shader_rec_size;
 
-	exec->unअगरorms_v = exec->exec_bo->vaddr + unअगरorms_offset;
-	exec->unअगरorms_p = exec->exec_bo->paddr + unअगरorms_offset;
-	exec->unअगरorms_size = args->unअगरorms_size;
+	exec->uniforms_v = exec->exec_bo->vaddr + uniforms_offset;
+	exec->uniforms_p = exec->exec_bo->paddr + uniforms_offset;
+	exec->uniforms_size = args->uniforms_size;
 
 	ret = vc4_validate_bin_cl(dev,
 				  exec->exec_bo->vaddr + bin_offset,
 				  bin,
 				  exec);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	ret = vc4_validate_shader_recs(dev, exec);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
-	अगर (exec->found_tile_binning_mode_config_packet) अणु
+	if (exec->found_tile_binning_mode_config_packet) {
 		ret = vc4_v3d_bin_bo_get(vc4, &exec->bin_bo_used);
-		अगर (ret)
-			जाओ fail;
-	पूर्ण
+		if (ret)
+			goto fail;
+	}
 
-	/* Block रुकोing on any previous rendering पूर्णांकo the CS's VBO,
+	/* Block waiting on any previous rendering into the CS's VBO,
 	 * IB, or textures, so that pixels are actually written by the
-	 * समय we try to पढ़ो them.
+	 * time we try to read them.
 	 */
-	ret = vc4_रुको_क्रम_seqno(dev, exec->bin_dep_seqno, ~0ull, true);
+	ret = vc4_wait_for_seqno(dev, exec->bin_dep_seqno, ~0ull, true);
 
 fail:
-	kvमुक्त(temp);
-	वापस ret;
-पूर्ण
+	kvfree(temp);
+	return ret;
+}
 
-अटल व्योम
-vc4_complete_exec(काष्ठा drm_device *dev, काष्ठा vc4_exec_info *exec)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	अचिन्हित दीर्घ irqflags;
-	अचिन्हित i;
+static void
+vc4_complete_exec(struct drm_device *dev, struct vc4_exec_info *exec)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	unsigned long irqflags;
+	unsigned i;
 
-	/* If we got क्रमce-completed because of GPU reset rather than
-	 * through our IRQ handler, संकेत the fence now.
+	/* If we got force-completed because of GPU reset rather than
+	 * through our IRQ handler, signal the fence now.
 	 */
-	अगर (exec->fence) अणु
-		dma_fence_संकेत(exec->fence);
+	if (exec->fence) {
+		dma_fence_signal(exec->fence);
 		dma_fence_put(exec->fence);
-	पूर्ण
+	}
 
-	अगर (exec->bo) अणु
-		क्रम (i = 0; i < exec->bo_count; i++) अणु
-			काष्ठा vc4_bo *bo = to_vc4_bo(&exec->bo[i]->base);
+	if (exec->bo) {
+		for (i = 0; i < exec->bo_count; i++) {
+			struct vc4_bo *bo = to_vc4_bo(&exec->bo[i]->base);
 
 			vc4_bo_dec_usecnt(bo);
 			drm_gem_object_put(&exec->bo[i]->base);
-		पूर्ण
-		kvमुक्त(exec->bo);
-	पूर्ण
+		}
+		kvfree(exec->bo);
+	}
 
-	जबतक (!list_empty(&exec->unref_list)) अणु
-		काष्ठा vc4_bo *bo = list_first_entry(&exec->unref_list,
-						     काष्ठा vc4_bo, unref_head);
+	while (!list_empty(&exec->unref_list)) {
+		struct vc4_bo *bo = list_first_entry(&exec->unref_list,
+						     struct vc4_bo, unref_head);
 		list_del(&bo->unref_head);
 		drm_gem_object_put(&bo->base.base);
-	पूर्ण
+	}
 
 	/* Free up the allocation of any bin slots we used. */
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
 	vc4->bin_alloc_used &= ~exec->bin_slots;
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 
-	/* Release the reference on the binner BO अगर needed. */
-	अगर (exec->bin_bo_used)
+	/* Release the reference on the binner BO if needed. */
+	if (exec->bin_bo_used)
 		vc4_v3d_bin_bo_put(vc4);
 
 	/* Release the reference we had on the perf monitor. */
@@ -984,398 +983,398 @@ vc4_complete_exec(काष्ठा drm_device *dev, काष्ठा vc4_exe
 
 	vc4_v3d_pm_put(vc4);
 
-	kमुक्त(exec);
-पूर्ण
+	kfree(exec);
+}
 
-व्योम
-vc4_job_handle_completed(काष्ठा vc4_dev *vc4)
-अणु
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा vc4_seqno_cb *cb, *cb_temp;
+void
+vc4_job_handle_completed(struct vc4_dev *vc4)
+{
+	unsigned long irqflags;
+	struct vc4_seqno_cb *cb, *cb_temp;
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
-	जबतक (!list_empty(&vc4->job_करोne_list)) अणु
-		काष्ठा vc4_exec_info *exec =
-			list_first_entry(&vc4->job_करोne_list,
-					 काष्ठा vc4_exec_info, head);
+	while (!list_empty(&vc4->job_done_list)) {
+		struct vc4_exec_info *exec =
+			list_first_entry(&vc4->job_done_list,
+					 struct vc4_exec_info, head);
 		list_del(&exec->head);
 
 		spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 		vc4_complete_exec(&vc4->base, exec);
 		spin_lock_irqsave(&vc4->job_lock, irqflags);
-	पूर्ण
+	}
 
-	list_क्रम_each_entry_safe(cb, cb_temp, &vc4->seqno_cb_list, work.entry) अणु
-		अगर (cb->seqno <= vc4->finished_seqno) अणु
+	list_for_each_entry_safe(cb, cb_temp, &vc4->seqno_cb_list, work.entry) {
+		if (cb->seqno <= vc4->finished_seqno) {
 			list_del_init(&cb->work.entry);
 			schedule_work(&cb->work);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
-पूर्ण
+}
 
-अटल व्योम vc4_seqno_cb_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vc4_seqno_cb *cb = container_of(work, काष्ठा vc4_seqno_cb, work);
+static void vc4_seqno_cb_work(struct work_struct *work)
+{
+	struct vc4_seqno_cb *cb = container_of(work, struct vc4_seqno_cb, work);
 
 	cb->func(cb);
-पूर्ण
+}
 
-पूर्णांक vc4_queue_seqno_cb(काष्ठा drm_device *dev,
-		       काष्ठा vc4_seqno_cb *cb, uपूर्णांक64_t seqno,
-		       व्योम (*func)(काष्ठा vc4_seqno_cb *cb))
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	अचिन्हित दीर्घ irqflags;
+int vc4_queue_seqno_cb(struct drm_device *dev,
+		       struct vc4_seqno_cb *cb, uint64_t seqno,
+		       void (*func)(struct vc4_seqno_cb *cb))
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	unsigned long irqflags;
 
 	cb->func = func;
 	INIT_WORK(&cb->work, vc4_seqno_cb_work);
 
 	spin_lock_irqsave(&vc4->job_lock, irqflags);
-	अगर (seqno > vc4->finished_seqno) अणु
+	if (seqno > vc4->finished_seqno) {
 		cb->seqno = seqno;
 		list_add_tail(&cb->work.entry, &vc4->seqno_cb_list);
-	पूर्ण अन्यथा अणु
+	} else {
 		schedule_work(&cb->work);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&vc4->job_lock, irqflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Scheduled when any job has been completed, this walks the list of
- * jobs that had completed and unrefs their BOs and मुक्तs their exec
- * काष्ठाs.
+ * jobs that had completed and unrefs their BOs and frees their exec
+ * structs.
  */
-अटल व्योम
-vc4_job_करोne_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vc4_dev *vc4 =
-		container_of(work, काष्ठा vc4_dev, job_करोne_work);
+static void
+vc4_job_done_work(struct work_struct *work)
+{
+	struct vc4_dev *vc4 =
+		container_of(work, struct vc4_dev, job_done_work);
 
 	vc4_job_handle_completed(vc4);
-पूर्ण
+}
 
-अटल पूर्णांक
-vc4_रुको_क्रम_seqno_ioctl_helper(काष्ठा drm_device *dev,
-				uपूर्णांक64_t seqno,
-				uपूर्णांक64_t *समयout_ns)
-अणु
-	अचिन्हित दीर्घ start = jअगरfies;
-	पूर्णांक ret = vc4_रुको_क्रम_seqno(dev, seqno, *समयout_ns, true);
+static int
+vc4_wait_for_seqno_ioctl_helper(struct drm_device *dev,
+				uint64_t seqno,
+				uint64_t *timeout_ns)
+{
+	unsigned long start = jiffies;
+	int ret = vc4_wait_for_seqno(dev, seqno, *timeout_ns, true);
 
-	अगर ((ret == -EINTR || ret == -ERESTARTSYS) && *समयout_ns != ~0ull) अणु
-		uपूर्णांक64_t delta = jअगरfies_to_nsecs(jअगरfies - start);
+	if ((ret == -EINTR || ret == -ERESTARTSYS) && *timeout_ns != ~0ull) {
+		uint64_t delta = jiffies_to_nsecs(jiffies - start);
 
-		अगर (*समयout_ns >= delta)
-			*समयout_ns -= delta;
-	पूर्ण
+		if (*timeout_ns >= delta)
+			*timeout_ns -= delta;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक
-vc4_रुको_seqno_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		     काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_रुको_seqno *args = data;
+int
+vc4_wait_seqno_ioctl(struct drm_device *dev, void *data,
+		     struct drm_file *file_priv)
+{
+	struct drm_vc4_wait_seqno *args = data;
 
-	वापस vc4_रुको_क्रम_seqno_ioctl_helper(dev, args->seqno,
-					       &args->समयout_ns);
-पूर्ण
+	return vc4_wait_for_seqno_ioctl_helper(dev, args->seqno,
+					       &args->timeout_ns);
+}
 
-पूर्णांक
-vc4_रुको_bo_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		  काष्ठा drm_file *file_priv)
-अणु
-	पूर्णांक ret;
-	काष्ठा drm_vc4_रुको_bo *args = data;
-	काष्ठा drm_gem_object *gem_obj;
-	काष्ठा vc4_bo *bo;
+int
+vc4_wait_bo_ioctl(struct drm_device *dev, void *data,
+		  struct drm_file *file_priv)
+{
+	int ret;
+	struct drm_vc4_wait_bo *args = data;
+	struct drm_gem_object *gem_obj;
+	struct vc4_bo *bo;
 
-	अगर (args->pad != 0)
-		वापस -EINVAL;
+	if (args->pad != 0)
+		return -EINVAL;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	bo = to_vc4_bo(gem_obj);
 
-	ret = vc4_रुको_क्रम_seqno_ioctl_helper(dev, bo->seqno,
-					      &args->समयout_ns);
+	ret = vc4_wait_for_seqno_ioctl_helper(dev, bo->seqno,
+					      &args->timeout_ns);
 
 	drm_gem_object_put(gem_obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vc4_submit_cl_ioctl() - Submits a job (frame) to the VC4.
  * @dev: DRM device
  * @data: ioctl argument
- * @file_priv: DRM file क्रम this fd
+ * @file_priv: DRM file for this fd
  *
- * This is the मुख्य entrypoपूर्णांक क्रम userspace to submit a 3D frame to
- * the GPU.  Userspace provides the binner command list (अगर
+ * This is the main entrypoint for userspace to submit a 3D frame to
+ * the GPU.  Userspace provides the binner command list (if
  * applicable), and the kernel sets up the render command list to draw
  * to the framebuffer described in the ioctl, using the command lists
  * that the 3D engine's binner will produce.
  */
-पूर्णांक
-vc4_submit_cl_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		    काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	काष्ठा vc4_file *vc4file = file_priv->driver_priv;
-	काष्ठा drm_vc4_submit_cl *args = data;
-	काष्ठा drm_syncobj *out_sync = शून्य;
-	काष्ठा vc4_exec_info *exec;
-	काष्ठा ww_acquire_ctx acquire_ctx;
-	काष्ठा dma_fence *in_fence;
-	पूर्णांक ret = 0;
+int
+vc4_submit_cl_ioctl(struct drm_device *dev, void *data,
+		    struct drm_file *file_priv)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	struct vc4_file *vc4file = file_priv->driver_priv;
+	struct drm_vc4_submit_cl *args = data;
+	struct drm_syncobj *out_sync = NULL;
+	struct vc4_exec_info *exec;
+	struct ww_acquire_ctx acquire_ctx;
+	struct dma_fence *in_fence;
+	int ret = 0;
 
-	अगर (!vc4->v3d) अणु
+	if (!vc4->v3d) {
 		DRM_DEBUG("VC4_SUBMIT_CL with no VC4 V3D probed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर ((args->flags & ~(VC4_SUBMIT_CL_USE_CLEAR_COLOR |
+	if ((args->flags & ~(VC4_SUBMIT_CL_USE_CLEAR_COLOR |
 			     VC4_SUBMIT_CL_FIXED_RCL_ORDER |
 			     VC4_SUBMIT_CL_RCL_ORDER_INCREASING_X |
-			     VC4_SUBMIT_CL_RCL_ORDER_INCREASING_Y)) != 0) अणु
+			     VC4_SUBMIT_CL_RCL_ORDER_INCREASING_Y)) != 0) {
 		DRM_DEBUG("Unknown flags: 0x%02x\n", args->flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (args->pad2 != 0) अणु
+	if (args->pad2 != 0) {
 		DRM_DEBUG("Invalid pad: 0x%08x\n", args->pad2);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	exec = kसुस्मृति(1, माप(*exec), GFP_KERNEL);
-	अगर (!exec) अणु
+	exec = kcalloc(1, sizeof(*exec), GFP_KERNEL);
+	if (!exec) {
 		DRM_ERROR("malloc failure on exec struct\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = vc4_v3d_pm_get(vc4);
-	अगर (ret) अणु
-		kमुक्त(exec);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(exec);
+		return ret;
+	}
 
 	exec->args = args;
 	INIT_LIST_HEAD(&exec->unref_list);
 
 	ret = vc4_cl_lookup_bos(dev, file_priv, exec);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
-	अगर (args->perfmonid) अणु
+	if (args->perfmonid) {
 		exec->perfmon = vc4_perfmon_find(vc4file,
 						 args->perfmonid);
-		अगर (!exec->perfmon) अणु
+		if (!exec->perfmon) {
 			ret = -ENOENT;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	अगर (args->in_sync) अणु
+	if (args->in_sync) {
 		ret = drm_syncobj_find_fence(file_priv, args->in_sync,
 					     0, 0, &in_fence);
-		अगर (ret)
-			जाओ fail;
+		if (ret)
+			goto fail;
 
 		/* When the fence (or fence array) is exclusively from our
-		 * context we can skip the रुको since jobs are executed in
+		 * context we can skip the wait since jobs are executed in
 		 * order of their submission through this ioctl and this can
 		 * only have fences from a prior job.
 		 */
-		अगर (!dma_fence_match_context(in_fence,
-					     vc4->dma_fence_context)) अणु
-			ret = dma_fence_रुको(in_fence, true);
-			अगर (ret) अणु
+		if (!dma_fence_match_context(in_fence,
+					     vc4->dma_fence_context)) {
+			ret = dma_fence_wait(in_fence, true);
+			if (ret) {
 				dma_fence_put(in_fence);
-				जाओ fail;
-			पूर्ण
-		पूर्ण
+				goto fail;
+			}
+		}
 
 		dma_fence_put(in_fence);
-	पूर्ण
+	}
 
-	अगर (exec->args->bin_cl_size != 0) अणु
+	if (exec->args->bin_cl_size != 0) {
 		ret = vc4_get_bcl(dev, exec);
-		अगर (ret)
-			जाओ fail;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto fail;
+	} else {
 		exec->ct0ca = 0;
 		exec->ct0ea = 0;
-	पूर्ण
+	}
 
 	ret = vc4_get_rcl(dev, exec);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	ret = vc4_lock_bo_reservations(dev, exec, &acquire_ctx);
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
-	अगर (args->out_sync) अणु
+	if (args->out_sync) {
 		out_sync = drm_syncobj_find(file_priv, args->out_sync);
-		अगर (!out_sync) अणु
+		if (!out_sync) {
 			ret = -EINVAL;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		/* We replace the fence in out_sync in vc4_queue_submit since
 		 * the render job could execute immediately after that call.
-		 * If it finishes beक्रमe our ioctl processing resumes the
-		 * render job fence could alपढ़ोy have been मुक्तd.
+		 * If it finishes before our ioctl processing resumes the
+		 * render job fence could already have been freed.
 		 */
-	पूर्ण
+	}
 
-	/* Clear this out of the काष्ठा we'll be putting in the queue,
+	/* Clear this out of the struct we'll be putting in the queue,
 	 * since it's part of our stack.
 	 */
-	exec->args = शून्य;
+	exec->args = NULL;
 
 	ret = vc4_queue_submit(dev, exec, &acquire_ctx, out_sync);
 
-	/* The syncobj isn't part of the exec data and we need to मुक्त our
-	 * reference even अगर job submission failed.
+	/* The syncobj isn't part of the exec data and we need to free our
+	 * reference even if job submission failed.
 	 */
-	अगर (out_sync)
+	if (out_sync)
 		drm_syncobj_put(out_sync);
 
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
-	/* Return the seqno क्रम our job. */
+	/* Return the seqno for our job. */
 	args->seqno = vc4->emit_seqno;
 
-	वापस 0;
+	return 0;
 
 fail:
 	vc4_complete_exec(&vc4->base, exec);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vc4_gem_destroy(काष्ठा drm_device *dev, व्योम *unused);
-पूर्णांक vc4_gem_init(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void vc4_gem_destroy(struct drm_device *dev, void *unused);
+int vc4_gem_init(struct drm_device *dev)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
 	vc4->dma_fence_context = dma_fence_context_alloc(1);
 
 	INIT_LIST_HEAD(&vc4->bin_job_list);
 	INIT_LIST_HEAD(&vc4->render_job_list);
-	INIT_LIST_HEAD(&vc4->job_करोne_list);
+	INIT_LIST_HEAD(&vc4->job_done_list);
 	INIT_LIST_HEAD(&vc4->seqno_cb_list);
 	spin_lock_init(&vc4->job_lock);
 
 	INIT_WORK(&vc4->hangcheck.reset_work, vc4_reset_work);
-	समयr_setup(&vc4->hangcheck.समयr, vc4_hangcheck_elapsed, 0);
+	timer_setup(&vc4->hangcheck.timer, vc4_hangcheck_elapsed, 0);
 
-	INIT_WORK(&vc4->job_करोne_work, vc4_job_करोne_work);
+	INIT_WORK(&vc4->job_done_work, vc4_job_done_work);
 
-	mutex_init(&vc4->घातer_lock);
+	mutex_init(&vc4->power_lock);
 
 	INIT_LIST_HEAD(&vc4->purgeable.list);
 	mutex_init(&vc4->purgeable.lock);
 
-	वापस drmm_add_action_or_reset(dev, vc4_gem_destroy, शून्य);
-पूर्ण
+	return drmm_add_action_or_reset(dev, vc4_gem_destroy, NULL);
+}
 
-अटल व्योम vc4_gem_destroy(काष्ठा drm_device *dev, व्योम *unused)
-अणु
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+static void vc4_gem_destroy(struct drm_device *dev, void *unused)
+{
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
 
-	/* Waiting क्रम exec to finish would need to be करोne beक्रमe
-	 * unरेजिस्टरing V3D.
+	/* Waiting for exec to finish would need to be done before
+	 * unregistering V3D.
 	 */
 	WARN_ON(vc4->emit_seqno != vc4->finished_seqno);
 
-	/* V3D should alपढ़ोy have disabled its पूर्णांकerrupt and cleared
-	 * the overflow allocation रेजिस्टरs.  Now मुक्त the object.
+	/* V3D should already have disabled its interrupt and cleared
+	 * the overflow allocation registers.  Now free the object.
 	 */
-	अगर (vc4->bin_bo) अणु
+	if (vc4->bin_bo) {
 		drm_gem_object_put(&vc4->bin_bo->base.base);
-		vc4->bin_bo = शून्य;
-	पूर्ण
+		vc4->bin_bo = NULL;
+	}
 
-	अगर (vc4->hang_state)
-		vc4_मुक्त_hang_state(dev, vc4->hang_state);
-पूर्ण
+	if (vc4->hang_state)
+		vc4_free_hang_state(dev, vc4->hang_state);
+}
 
-पूर्णांक vc4_gem_madvise_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			  काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vc4_gem_madvise *args = data;
-	काष्ठा drm_gem_object *gem_obj;
-	काष्ठा vc4_bo *bo;
-	पूर्णांक ret;
+int vc4_gem_madvise_ioctl(struct drm_device *dev, void *data,
+			  struct drm_file *file_priv)
+{
+	struct drm_vc4_gem_madvise *args = data;
+	struct drm_gem_object *gem_obj;
+	struct vc4_bo *bo;
+	int ret;
 
-	चयन (args->madv) अणु
-	हाल VC4_MADV_DONTNEED:
-	हाल VC4_MADV_WILLNEED:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (args->madv) {
+	case VC4_MADV_DONTNEED:
+	case VC4_MADV_WILLNEED:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (args->pad != 0)
-		वापस -EINVAL;
+	if (args->pad != 0)
+		return -EINVAL;
 
 	gem_obj = drm_gem_object_lookup(file_priv, args->handle);
-	अगर (!gem_obj) अणु
+	if (!gem_obj) {
 		DRM_DEBUG("Failed to look up GEM BO %d\n", args->handle);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	bo = to_vc4_bo(gem_obj);
 
 	/* Only BOs exposed to userspace can be purged. */
-	अगर (bo->madv == __VC4_MADV_NOTSUPP) अणु
+	if (bo->madv == __VC4_MADV_NOTSUPP) {
 		DRM_DEBUG("madvise not supported on this BO\n");
 		ret = -EINVAL;
-		जाओ out_put_gem;
-	पूर्ण
+		goto out_put_gem;
+	}
 
 	/* Not sure it's safe to purge imported BOs. Let's just assume it's
 	 * not until proven otherwise.
 	 */
-	अगर (gem_obj->import_attach) अणु
+	if (gem_obj->import_attach) {
 		DRM_DEBUG("madvise not supported on imported BOs\n");
 		ret = -EINVAL;
-		जाओ out_put_gem;
-	पूर्ण
+		goto out_put_gem;
+	}
 
 	mutex_lock(&bo->madv_lock);
 
-	अगर (args->madv == VC4_MADV_DONTNEED && bo->madv == VC4_MADV_WILLNEED &&
-	    !refcount_पढ़ो(&bo->usecnt)) अणु
+	if (args->madv == VC4_MADV_DONTNEED && bo->madv == VC4_MADV_WILLNEED &&
+	    !refcount_read(&bo->usecnt)) {
 		/* If the BO is about to be marked as purgeable, is not used
-		 * and is not alपढ़ोy purgeable or purged, add it to the
+		 * and is not already purgeable or purged, add it to the
 		 * purgeable list.
 		 */
 		vc4_bo_add_to_purgeable_pool(bo);
-	पूर्ण अन्यथा अगर (args->madv == VC4_MADV_WILLNEED &&
+	} else if (args->madv == VC4_MADV_WILLNEED &&
 		   bo->madv == VC4_MADV_DONTNEED &&
-		   !refcount_पढ़ो(&bo->usecnt)) अणु
-		/* The BO has not been purged yet, just हटाओ it from
+		   !refcount_read(&bo->usecnt)) {
+		/* The BO has not been purged yet, just remove it from
 		 * the purgeable list.
 		 */
-		vc4_bo_हटाओ_from_purgeable_pool(bo);
-	पूर्ण
+		vc4_bo_remove_from_purgeable_pool(bo);
+	}
 
 	/* Save the purged state. */
 	args->retained = bo->madv != __VC4_MADV_PURGED;
 
-	/* Update पूर्णांकernal madv state only अगर the bo was not purged. */
-	अगर (bo->madv != __VC4_MADV_PURGED)
+	/* Update internal madv state only if the bo was not purged. */
+	if (bo->madv != __VC4_MADV_PURGED)
 		bo->madv = args->madv;
 
 	mutex_unlock(&bo->madv_lock);
@@ -1385,5 +1384,5 @@ fail:
 out_put_gem:
 	drm_gem_object_put(gem_obj);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

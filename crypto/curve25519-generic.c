@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#समावेश <crypto/curve25519.h>
-#समावेश <crypto/पूर्णांकernal/kpp.h>
-#समावेश <crypto/kpp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/scatterlist.h>
+#include <crypto/curve25519.h>
+#include <crypto/internal/kpp.h>
+#include <crypto/kpp.h>
+#include <linux/module.h>
+#include <linux/scatterlist.h>
 
-अटल पूर्णांक curve25519_set_secret(काष्ठा crypto_kpp *tfm, स्थिर व्योम *buf,
-				 अचिन्हित पूर्णांक len)
-अणु
+static int curve25519_set_secret(struct crypto_kpp *tfm, const void *buf,
+				 unsigned int len)
+{
 	u8 *secret = kpp_tfm_ctx(tfm);
 
-	अगर (!len)
+	if (!len)
 		curve25519_generate_secret(secret);
-	अन्यथा अगर (len == CURVE25519_KEY_SIZE &&
-		 crypto_memneq(buf, curve25519_null_poपूर्णांक, CURVE25519_KEY_SIZE))
-		स_नकल(secret, buf, CURVE25519_KEY_SIZE);
-	अन्यथा
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	else if (len == CURVE25519_KEY_SIZE &&
+		 crypto_memneq(buf, curve25519_null_point, CURVE25519_KEY_SIZE))
+		memcpy(secret, buf, CURVE25519_KEY_SIZE);
+	else
+		return -EINVAL;
+	return 0;
+}
 
-अटल पूर्णांक curve25519_compute_value(काष्ठा kpp_request *req)
-अणु
-	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	स्थिर u8 *secret = kpp_tfm_ctx(tfm);
-	u8 खुला_key[CURVE25519_KEY_SIZE];
+static int curve25519_compute_value(struct kpp_request *req)
+{
+	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	const u8 *secret = kpp_tfm_ctx(tfm);
+	u8 public_key[CURVE25519_KEY_SIZE];
 	u8 buf[CURVE25519_KEY_SIZE];
-	पूर्णांक copied, nbytes;
-	u8 स्थिर *bp;
+	int copied, nbytes;
+	u8 const *bp;
 
-	अगर (req->src) अणु
+	if (req->src) {
 		copied = sg_copy_to_buffer(req->src,
-					   sg_nents_क्रम_len(req->src,
+					   sg_nents_for_len(req->src,
 							    CURVE25519_KEY_SIZE),
-					   खुला_key, CURVE25519_KEY_SIZE);
-		अगर (copied != CURVE25519_KEY_SIZE)
-			वापस -EINVAL;
-		bp = खुला_key;
-	पूर्ण अन्यथा अणु
-		bp = curve25519_base_poपूर्णांक;
-	पूर्ण
+					   public_key, CURVE25519_KEY_SIZE);
+		if (copied != CURVE25519_KEY_SIZE)
+			return -EINVAL;
+		bp = public_key;
+	} else {
+		bp = curve25519_base_point;
+	}
 
 	curve25519_generic(buf, secret, bp);
 
 	/* might want less than we've got */
-	nbytes = min_t(माप_प्रकार, CURVE25519_KEY_SIZE, req->dst_len);
-	copied = sg_copy_from_buffer(req->dst, sg_nents_क्रम_len(req->dst,
+	nbytes = min_t(size_t, CURVE25519_KEY_SIZE, req->dst_len);
+	copied = sg_copy_from_buffer(req->dst, sg_nents_for_len(req->dst,
 								nbytes),
 				     buf, nbytes);
-	अगर (copied != nbytes)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (copied != nbytes)
+		return -EINVAL;
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक curve25519_max_size(काष्ठा crypto_kpp *tfm)
-अणु
-	वापस CURVE25519_KEY_SIZE;
-पूर्ण
+static unsigned int curve25519_max_size(struct crypto_kpp *tfm)
+{
+	return CURVE25519_KEY_SIZE;
+}
 
-अटल काष्ठा kpp_alg curve25519_alg = अणु
+static struct kpp_alg curve25519_alg = {
 	.base.cra_name		= "curve25519",
 	.base.cra_driver_name	= "curve25519-generic",
 	.base.cra_priority	= 100,
@@ -68,23 +67,23 @@
 	.base.cra_ctxsize	= CURVE25519_KEY_SIZE,
 
 	.set_secret		= curve25519_set_secret,
-	.generate_खुला_key	= curve25519_compute_value,
+	.generate_public_key	= curve25519_compute_value,
 	.compute_shared_secret	= curve25519_compute_value,
 	.max_size		= curve25519_max_size,
-पूर्ण;
+};
 
-अटल पूर्णांक curve25519_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_kpp(&curve25519_alg);
-पूर्ण
+static int curve25519_init(void)
+{
+	return crypto_register_kpp(&curve25519_alg);
+}
 
-अटल व्योम curve25519_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_kpp(&curve25519_alg);
-पूर्ण
+static void curve25519_exit(void)
+{
+	crypto_unregister_kpp(&curve25519_alg);
+}
 
 subsys_initcall(curve25519_init);
-module_निकास(curve25519_निकास);
+module_exit(curve25519_exit);
 
 MODULE_ALIAS_CRYPTO("curve25519");
 MODULE_ALIAS_CRYPTO("curve25519-generic");

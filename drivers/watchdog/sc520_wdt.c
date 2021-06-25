@@ -1,430 +1,429 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *	AMD Elan SC520 processor Watchकरोg Timer driver
+ *	AMD Elan SC520 processor Watchdog Timer driver
  *
  *	Based on acquirewdt.c by Alan Cox,
  *	     and sbc60xxwdt.c by Jakob Oestergaard <jakob@unthought.net>
  *
- *	The authors करो NOT admit liability nor provide warranty क्रम
+ *	The authors do NOT admit liability nor provide warranty for
  *	any of this software. This material is provided "AS-IS" in
- *	the hope that it may be useful क्रम others.
+ *	the hope that it may be useful for others.
  *
  *	(c) Copyright 2001    Scott Jennings <linuxdrivers@oro.net>
  *           9/27 - 2001      [Initial release]
  *
  *	Additional fixes Alan Cox
- *	-	Fixed क्रमmatting
- *	-	Removed debug prपूर्णांकks
+ *	-	Fixed formatting
+ *	-	Removed debug printks
  *	-	Fixed SMP built kernel deadlock
- *	-	Switched to निजी locks not lock_kernel
- *	-	Used ioremap/ग_लिखोw/पढ़ोw
+ *	-	Switched to private locks not lock_kernel
+ *	-	Used ioremap/writew/readw
  *	-	Added NOWAYOUT support
  *	4/12 - 2002 Changes by Rob Radez <rob@osinvestor.com>
  *	-	Change comments
  *	-	Eliminate fop_llseek
  *	-	Change CONFIG_WATCHDOG_NOWAYOUT semantics
- *	-	Add KERN_* tags to prपूर्णांकks
- *	-	fix possible wdt_is_खोलो race
- *	-	Report proper capabilities in watchकरोg_info
- *	-	Add WDIOC_अणुGETSTATUS, GETBOOTSTATUS, SETTIMEOUT,
- *		GETTIMEOUT, SETOPTIONSपूर्ण ioctls
+ *	-	Add KERN_* tags to printks
+ *	-	fix possible wdt_is_open race
+ *	-	Report proper capabilities in watchdog_info
+ *	-	Add WDIOC_{GETSTATUS, GETBOOTSTATUS, SETTIMEOUT,
+ *		GETTIMEOUT, SETOPTIONS} ioctls
  *	09/8 - 2003 Changes by Wim Van Sebroeck <wim@iguana.be>
  *	-	cleanup of trailing spaces
- *	-	added extra prपूर्णांकk's क्रम startup problems
+ *	-	added extra printk's for startup problems
  *	-	use module_param
- *	-	made समयout (the emulated heartbeat) a module_param
- *	-	made the keepalive ping an पूर्णांकernal subroutine
+ *	-	made timeout (the emulated heartbeat) a module_param
+ *	-	made the keepalive ping an internal subroutine
  *	3/27 - 2004 Changes by Sean Young <sean@mess.org>
  *	-	set MMCR_BASE to 0xfffef000
- *	-	CBAR करोes not need to be पढ़ो
- *	-	हटाओd debugging prपूर्णांकks
+ *	-	CBAR does not need to be read
+ *	-	removed debugging printks
  *
- *  This WDT driver is dअगरferent from most other Linux WDT
- *  drivers in that the driver will ping the watchकरोg by itself,
- *  because this particular WDT has a very लघु समयout (1.6
+ *  This WDT driver is different from most other Linux WDT
+ *  drivers in that the driver will ping the watchdog by itself,
+ *  because this particular WDT has a very short timeout (1.6
  *  seconds) and it would be insane to count on any userspace
- *  daemon always getting scheduled within that समय frame.
+ *  daemon always getting scheduled within that time frame.
  *
  *  This driver uses memory mapped IO, and spinlock.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/timer.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/fs.h>
+#include <linux/ioport.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
 
 /*
- * The AMD Elan SC520 समयout value is 492us बार a घातer of 2 (0-7)
+ * The AMD Elan SC520 timeout value is 492us times a power of 2 (0-7)
  *
  *   0: 492us    2: 1.01s    4: 4.03s   6: 16.22s
  *   1: 503ms    3: 2.01s    5: 8.05s   7: 32.21s
  *
- * We will program the SC520 watchकरोg क्रम a समयout of 2.01s.
- * If we reset the watchकरोg every ~250ms we should be safe.
+ * We will program the SC520 watchdog for a timeout of 2.01s.
+ * If we reset the watchdog every ~250ms we should be safe.
  */
 
-#घोषणा WDT_INTERVAL (HZ/4+1)
+#define WDT_INTERVAL (HZ/4+1)
 
 /*
  * We must not require too good response from the userspace daemon.
  * Here we require the userspace daemon to send us a heartbeat
- * अक्षर to /dev/watchकरोg every 30 seconds.
+ * char to /dev/watchdog every 30 seconds.
  */
 
-#घोषणा WATCHDOG_TIMEOUT 30		/* 30 sec शेष समयout */
-/* in seconds, will be multiplied by HZ to get seconds to रुको क्रम a ping */
-अटल पूर्णांक समयout = WATCHDOG_TIMEOUT;
-module_param(समयout, पूर्णांक, 0);
-MODULE_PARM_DESC(समयout,
+#define WATCHDOG_TIMEOUT 30		/* 30 sec default timeout */
+/* in seconds, will be multiplied by HZ to get seconds to wait for a ping */
+static int timeout = WATCHDOG_TIMEOUT;
+module_param(timeout, int, 0);
+MODULE_PARM_DESC(timeout,
 	"Watchdog timeout in seconds. (1 <= timeout <= 3600, default="
 				__MODULE_STRING(WATCHDOG_TIMEOUT) ")");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /*
- * AMD Elan SC520 - Watchकरोg Timer Registers
+ * AMD Elan SC520 - Watchdog Timer Registers
  */
-#घोषणा MMCR_BASE	0xfffef000	/* The शेष base address */
-#घोषणा OFFS_WDTMRCTL	0xCB0	/* Watchकरोg Timer Control Register */
+#define MMCR_BASE	0xfffef000	/* The default base address */
+#define OFFS_WDTMRCTL	0xCB0	/* Watchdog Timer Control Register */
 
 /* WDT Control Register bit definitions */
-#घोषणा WDT_EXP_SEL_01	0x0001	/* [01] Time-out = 496 us (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_02	0x0002	/* [02] Time-out = 508 ms (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_03	0x0004	/* [03] Time-out = 1.02 s (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_04	0x0008	/* [04] Time-out = 2.03 s (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_05	0x0010	/* [05] Time-out = 4.07 s (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_06	0x0020	/* [06] Time-out = 8.13 s (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_07	0x0040	/* [07] Time-out = 16.27s (with 33 Mhz clk). */
-#घोषणा WDT_EXP_SEL_08	0x0080	/* [08] Time-out = 32.54s (with 33 Mhz clk). */
-#घोषणा WDT_IRQ_FLG	0x1000	/* [12] Interrupt Request Flag */
-#घोषणा WDT_WRST_ENB	0x4000	/* [14] Watchकरोg Timer Reset Enable */
-#घोषणा WDT_ENB		0x8000	/* [15] Watchकरोg Timer Enable */
+#define WDT_EXP_SEL_01	0x0001	/* [01] Time-out = 496 us (with 33 Mhz clk). */
+#define WDT_EXP_SEL_02	0x0002	/* [02] Time-out = 508 ms (with 33 Mhz clk). */
+#define WDT_EXP_SEL_03	0x0004	/* [03] Time-out = 1.02 s (with 33 Mhz clk). */
+#define WDT_EXP_SEL_04	0x0008	/* [04] Time-out = 2.03 s (with 33 Mhz clk). */
+#define WDT_EXP_SEL_05	0x0010	/* [05] Time-out = 4.07 s (with 33 Mhz clk). */
+#define WDT_EXP_SEL_06	0x0020	/* [06] Time-out = 8.13 s (with 33 Mhz clk). */
+#define WDT_EXP_SEL_07	0x0040	/* [07] Time-out = 16.27s (with 33 Mhz clk). */
+#define WDT_EXP_SEL_08	0x0080	/* [08] Time-out = 32.54s (with 33 Mhz clk). */
+#define WDT_IRQ_FLG	0x1000	/* [12] Interrupt Request Flag */
+#define WDT_WRST_ENB	0x4000	/* [14] Watchdog Timer Reset Enable */
+#define WDT_ENB		0x8000	/* [15] Watchdog Timer Enable */
 
-अटल __u16 __iomem *wdपंचांगrctl;
+static __u16 __iomem *wdtmrctl;
 
-अटल व्योम wdt_समयr_ping(काष्ठा समयr_list *);
-अटल DEFINE_TIMER(समयr, wdt_समयr_ping);
-अटल अचिन्हित दीर्घ next_heartbeat;
-अटल अचिन्हित दीर्घ wdt_is_खोलो;
-अटल अक्षर wdt_expect_बंद;
-अटल DEFINE_SPINLOCK(wdt_spinlock);
+static void wdt_timer_ping(struct timer_list *);
+static DEFINE_TIMER(timer, wdt_timer_ping);
+static unsigned long next_heartbeat;
+static unsigned long wdt_is_open;
+static char wdt_expect_close;
+static DEFINE_SPINLOCK(wdt_spinlock);
 
 /*
- *	Whack the करोg
+ *	Whack the dog
  */
 
-अटल व्योम wdt_समयr_ping(काष्ठा समयr_list *unused)
-अणु
+static void wdt_timer_ping(struct timer_list *unused)
+{
 	/* If we got a heartbeat pulse within the WDT_US_INTERVAL
 	 * we agree to ping the WDT
 	 */
-	अगर (समय_beक्रमe(jअगरfies, next_heartbeat)) अणु
+	if (time_before(jiffies, next_heartbeat)) {
 		/* Ping the WDT */
 		spin_lock(&wdt_spinlock);
-		ग_लिखोw(0xAAAA, wdपंचांगrctl);
-		ग_लिखोw(0x5555, wdपंचांगrctl);
+		writew(0xAAAA, wdtmrctl);
+		writew(0x5555, wdtmrctl);
 		spin_unlock(&wdt_spinlock);
 
-		/* Re-set the समयr पूर्णांकerval */
-		mod_समयr(&समयr, jअगरfies + WDT_INTERVAL);
-	पूर्ण अन्यथा
+		/* Re-set the timer interval */
+		mod_timer(&timer, jiffies + WDT_INTERVAL);
+	} else
 		pr_warn("Heartbeat lost! Will not ping the watchdog\n");
-पूर्ण
+}
 
 /*
  *	Utility routines
  */
 
-अटल व्योम wdt_config(पूर्णांक ग_लिखोval)
-अणु
-	अचिन्हित दीर्घ flags;
+static void wdt_config(int writeval)
+{
+	unsigned long flags;
 
-	/* buy some समय (ping) */
+	/* buy some time (ping) */
 	spin_lock_irqsave(&wdt_spinlock, flags);
-	पढ़ोw(wdपंचांगrctl);	/* ensure ग_लिखो synchronization */
-	ग_लिखोw(0xAAAA, wdपंचांगrctl);
-	ग_लिखोw(0x5555, wdपंचांगrctl);
-	/* unlock WDT = make WDT configuration रेजिस्टर writable one समय */
-	ग_लिखोw(0x3333, wdपंचांगrctl);
-	ग_लिखोw(0xCCCC, wdपंचांगrctl);
-	/* ग_लिखो WDT configuration रेजिस्टर */
-	ग_लिखोw(ग_लिखोval, wdपंचांगrctl);
+	readw(wdtmrctl);	/* ensure write synchronization */
+	writew(0xAAAA, wdtmrctl);
+	writew(0x5555, wdtmrctl);
+	/* unlock WDT = make WDT configuration register writable one time */
+	writew(0x3333, wdtmrctl);
+	writew(0xCCCC, wdtmrctl);
+	/* write WDT configuration register */
+	writew(writeval, wdtmrctl);
 	spin_unlock_irqrestore(&wdt_spinlock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक wdt_startup(व्योम)
-अणु
-	next_heartbeat = jअगरfies + (समयout * HZ);
+static int wdt_startup(void)
+{
+	next_heartbeat = jiffies + (timeout * HZ);
 
-	/* Start the समयr */
-	mod_समयr(&समयr, jअगरfies + WDT_INTERVAL);
+	/* Start the timer */
+	mod_timer(&timer, jiffies + WDT_INTERVAL);
 
-	/* Start the watchकरोg */
+	/* Start the watchdog */
 	wdt_config(WDT_ENB | WDT_WRST_ENB | WDT_EXP_SEL_04);
 
 	pr_info("Watchdog timer is now enabled\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wdt_turnoff(व्योम)
-अणु
-	/* Stop the समयr */
-	del_समयr(&समयr);
+static int wdt_turnoff(void)
+{
+	/* Stop the timer */
+	del_timer(&timer);
 
-	/* Stop the watchकरोg */
+	/* Stop the watchdog */
 	wdt_config(0);
 
 	pr_info("Watchdog timer is now disabled...\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wdt_keepalive(व्योम)
-अणु
+static int wdt_keepalive(void)
+{
 	/* user land ping */
-	next_heartbeat = jअगरfies + (समयout * HZ);
-	वापस 0;
-पूर्ण
+	next_heartbeat = jiffies + (timeout * HZ);
+	return 0;
+}
 
-अटल पूर्णांक wdt_set_heartbeat(पूर्णांक t)
-अणु
-	अगर ((t < 1) || (t > 3600))	/* arbitrary upper limit */
-		वापस -EINVAL;
+static int wdt_set_heartbeat(int t)
+{
+	if ((t < 1) || (t > 3600))	/* arbitrary upper limit */
+		return -EINVAL;
 
-	समयout = t;
-	वापस 0;
-पूर्ण
+	timeout = t;
+	return 0;
+}
 
 /*
- *	/dev/watchकरोg handling
+ *	/dev/watchdog handling
  */
 
-अटल sमाप_प्रकार fop_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-						माप_प्रकार count, loff_t *ppos)
-अणु
-	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
-	अगर (count) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार ofs;
+static ssize_t fop_write(struct file *file, const char __user *buf,
+						size_t count, loff_t *ppos)
+{
+	/* See if we got the magic character 'V' and reload the timer */
+	if (count) {
+		if (!nowayout) {
+			size_t ofs;
 
-			/* note: just in हाल someone wrote the magic अक्षरacter
+			/* note: just in case someone wrote the magic character
 			 * five months ago... */
-			wdt_expect_बंद = 0;
+			wdt_expect_close = 0;
 
 			/* now scan */
-			क्रम (ofs = 0; ofs != count; ofs++) अणु
-				अक्षर c;
-				अगर (get_user(c, buf + ofs))
-					वापस -EFAULT;
-				अगर (c == 'V')
-					wdt_expect_बंद = 42;
-			पूर्ण
-		पूर्ण
+			for (ofs = 0; ofs != count; ofs++) {
+				char c;
+				if (get_user(c, buf + ofs))
+					return -EFAULT;
+				if (c == 'V')
+					wdt_expect_close = 42;
+			}
+		}
 
 		/* Well, anyhow someone wrote to us, we should
-		   वापस that favour */
+		   return that favour */
 		wdt_keepalive();
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-अटल पूर्णांक fop_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	/* Just in हाल we're alपढ़ोy talking to someone... */
-	अगर (test_and_set_bit(0, &wdt_is_खोलो))
-		वापस -EBUSY;
-	अगर (nowayout)
+static int fop_open(struct inode *inode, struct file *file)
+{
+	/* Just in case we're already talking to someone... */
+	if (test_and_set_bit(0, &wdt_is_open))
+		return -EBUSY;
+	if (nowayout)
 		__module_get(THIS_MODULE);
 
 	/* Good, fire up the show */
 	wdt_startup();
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
-अटल पूर्णांक fop_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (wdt_expect_बंद == 42)
+static int fop_close(struct inode *inode, struct file *file)
+{
+	if (wdt_expect_close == 42)
 		wdt_turnoff();
-	अन्यथा अणु
+	else {
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		wdt_keepalive();
-	पूर्ण
-	clear_bit(0, &wdt_is_खोलो);
-	wdt_expect_बंद = 0;
-	वापस 0;
-पूर्ण
+	}
+	clear_bit(0, &wdt_is_open);
+	wdt_expect_close = 0;
+	return 0;
+}
 
-अटल दीर्घ fop_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक __user *p = argp;
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static long fop_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
+	static const struct watchdog_info ident = {
 		.options = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT
 							| WDIOF_MAGICCLOSE,
 		.firmware_version = 1,
 		.identity = "SC520",
-	पूर्ण;
+	};
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, p);
-	हाल WDIOC_SETOPTIONS:
-	अणु
-		पूर्णांक new_options, retval = -EINVAL;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, p);
+	case WDIOC_SETOPTIONS:
+	{
+		int new_options, retval = -EINVAL;
 
-		अगर (get_user(new_options, p))
-			वापस -EFAULT;
+		if (get_user(new_options, p))
+			return -EFAULT;
 
-		अगर (new_options & WDIOS_DISABLECARD) अणु
+		if (new_options & WDIOS_DISABLECARD) {
 			wdt_turnoff();
 			retval = 0;
-		पूर्ण
+		}
 
-		अगर (new_options & WDIOS_ENABLECARD) अणु
+		if (new_options & WDIOS_ENABLECARD) {
 			wdt_startup();
 			retval = 0;
-		पूर्ण
+		}
 
-		वापस retval;
-	पूर्ण
-	हाल WDIOC_KEEPALIVE:
+		return retval;
+	}
+	case WDIOC_KEEPALIVE:
 		wdt_keepalive();
-		वापस 0;
-	हाल WDIOC_SETTIMEOUT:
-	अणु
-		पूर्णांक new_समयout;
+		return 0;
+	case WDIOC_SETTIMEOUT:
+	{
+		int new_timeout;
 
-		अगर (get_user(new_समयout, p))
-			वापस -EFAULT;
+		if (get_user(new_timeout, p))
+			return -EFAULT;
 
-		अगर (wdt_set_heartbeat(new_समयout))
-			वापस -EINVAL;
+		if (wdt_set_heartbeat(new_timeout))
+			return -EINVAL;
 
 		wdt_keepalive();
-	पूर्ण
+	}
 		fallthrough;
-	हाल WDIOC_GETTIMEOUT:
-		वापस put_user(समयout, p);
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	case WDIOC_GETTIMEOUT:
+		return put_user(timeout, p);
+	default:
+		return -ENOTTY;
+	}
+}
 
-अटल स्थिर काष्ठा file_operations wdt_fops = अणु
+static const struct file_operations wdt_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= fop_ग_लिखो,
-	.खोलो		= fop_खोलो,
-	.release	= fop_बंद,
+	.write		= fop_write,
+	.open		= fop_open,
+	.release	= fop_close,
 	.unlocked_ioctl	= fop_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice wdt_miscdev = अणु
+static struct miscdevice wdt_miscdev = {
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &wdt_fops,
-पूर्ण;
+};
 
 /*
- *	Notअगरier क्रम प्रणाली करोwn
+ *	Notifier for system down
  */
 
-अटल पूर्णांक wdt_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
-	व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
+static int wdt_notify_sys(struct notifier_block *this, unsigned long code,
+	void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
 		wdt_turnoff();
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*
- *	The WDT needs to learn about soft shutकरोwns in order to
- *	turn the समयbomb रेजिस्टरs off.
+ *	The WDT needs to learn about soft shutdowns in order to
+ *	turn the timebomb registers off.
  */
 
-अटल काष्ठा notअगरier_block wdt_notअगरier = अणु
-	.notअगरier_call = wdt_notअगरy_sys,
-पूर्ण;
+static struct notifier_block wdt_notifier = {
+	.notifier_call = wdt_notify_sys,
+};
 
-अटल व्योम __निकास sc520_wdt_unload(व्योम)
-अणु
-	अगर (!nowayout)
+static void __exit sc520_wdt_unload(void)
+{
+	if (!nowayout)
 		wdt_turnoff();
 
-	/* Deरेजिस्टर */
-	misc_deरेजिस्टर(&wdt_miscdev);
-	unरेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
-	iounmap(wdपंचांगrctl);
-पूर्ण
+	/* Deregister */
+	misc_deregister(&wdt_miscdev);
+	unregister_reboot_notifier(&wdt_notifier);
+	iounmap(wdtmrctl);
+}
 
-अटल पूर्णांक __init sc520_wdt_init(व्योम)
-अणु
-	पूर्णांक rc = -EBUSY;
+static int __init sc520_wdt_init(void)
+{
+	int rc = -EBUSY;
 
-	/* Check that the समयout value is within it's range ;
-	   अगर not reset to the शेष */
-	अगर (wdt_set_heartbeat(समयout)) अणु
+	/* Check that the timeout value is within it's range ;
+	   if not reset to the default */
+	if (wdt_set_heartbeat(timeout)) {
 		wdt_set_heartbeat(WATCHDOG_TIMEOUT);
 		pr_info("timeout value must be 1 <= timeout <= 3600, using %d\n",
 			WATCHDOG_TIMEOUT);
-	पूर्ण
+	}
 
-	wdपंचांगrctl = ioremap(MMCR_BASE + OFFS_WDTMRCTL, 2);
-	अगर (!wdपंचांगrctl) अणु
+	wdtmrctl = ioremap(MMCR_BASE + OFFS_WDTMRCTL, 2);
+	if (!wdtmrctl) {
 		pr_err("Unable to remap memory\n");
 		rc = -ENOMEM;
-		जाओ err_out_region2;
-	पूर्ण
+		goto err_out_region2;
+	}
 
-	rc = रेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
-	अगर (rc) अणु
+	rc = register_reboot_notifier(&wdt_notifier);
+	if (rc) {
 		pr_err("cannot register reboot notifier (err=%d)\n", rc);
-		जाओ err_out_ioremap;
-	पूर्ण
+		goto err_out_ioremap;
+	}
 
-	rc = misc_रेजिस्टर(&wdt_miscdev);
-	अगर (rc) अणु
+	rc = misc_register(&wdt_miscdev);
+	if (rc) {
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, rc);
-		जाओ err_out_notअगरier;
-	पूर्ण
+		goto err_out_notifier;
+	}
 
 	pr_info("WDT driver for SC520 initialised. timeout=%d sec (nowayout=%d)\n",
-		समयout, nowayout);
+		timeout, nowayout);
 
-	वापस 0;
+	return 0;
 
-err_out_notअगरier:
-	unरेजिस्टर_reboot_notअगरier(&wdt_notअगरier);
+err_out_notifier:
+	unregister_reboot_notifier(&wdt_notifier);
 err_out_ioremap:
-	iounmap(wdपंचांगrctl);
+	iounmap(wdtmrctl);
 err_out_region2:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 module_init(sc520_wdt_init);
-module_निकास(sc520_wdt_unload);
+module_exit(sc520_wdt_unload);
 
 MODULE_AUTHOR("Scott and Bill Jennings");
 MODULE_DESCRIPTION(

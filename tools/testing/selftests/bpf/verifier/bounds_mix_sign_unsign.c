@@ -1,7 +1,6 @@
-<शैली गुरु>
-अणु
+{
 	"bounds checks mixing signed and unsigned, positive bounds",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -17,14 +16,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -40,14 +39,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 2",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -65,14 +64,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_8, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 3",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -89,14 +88,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_8, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 4",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -112,13 +111,13 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 5",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -135,14 +134,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 6",
-	.insns = अणु
+	.insns = {
 	BPF_MOV64_IMM(BPF_REG_2, 0),
 	BPF_MOV64_REG(BPF_REG_3, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_3, -512),
@@ -157,13 +156,13 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_skb_load_bytes),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.errstr = "R4 min value is negative, either use unsigned",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 7",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -179,13 +178,13 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 8",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -203,14 +202,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 9",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -228,13 +227,13 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 10",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -252,14 +251,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 11",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -278,14 +277,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 12",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -303,14 +302,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 13",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -331,16 +330,16 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 14",
-	.insns = अणु
+	.insns = {
 	BPF_LDX_MEM(BPF_W, BPF_REG_9, BPF_REG_1,
-		    दुरत्व(काष्ठा __sk_buff, mark)),
+		    offsetof(struct __sk_buff, mark)),
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -360,14 +359,14 @@
 	BPF_EXIT_INSN(),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_1, BPF_REG_2, -3),
 	BPF_JMP_IMM(BPF_JA, 0, 0, -7),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 4 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 4 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
-अणु
+},
+{
 	"bounds checks mixing signed and unsigned, variant 15",
-	.insns = अणु
+	.insns = {
 	BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 0),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
@@ -387,8 +386,8 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_0, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	पूर्ण,
-	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	},
+	.fixup_map_hash_8b = { 3 },
 	.errstr = "unbounded min value",
 	.result = REJECT,
-पूर्ण,
+},

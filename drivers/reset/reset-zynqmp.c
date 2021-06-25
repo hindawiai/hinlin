@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2018 Xilinx, Inc.
  *
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/firmware/xlnx-zynqmp.h>
-#समावेश <linux/of_device.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/firmware/xlnx-zynqmp.h>
+#include <linux/of_device.h>
 
-#घोषणा ZYNQMP_NR_RESETS (ZYNQMP_PM_RESET_END - ZYNQMP_PM_RESET_START)
-#घोषणा ZYNQMP_RESET_ID ZYNQMP_PM_RESET_START
-#घोषणा VERSAL_NR_RESETS	95
+#define ZYNQMP_NR_RESETS (ZYNQMP_PM_RESET_END - ZYNQMP_PM_RESET_START)
+#define ZYNQMP_RESET_ID ZYNQMP_PM_RESET_START
+#define VERSAL_NR_RESETS	95
 
-काष्ठा zynqmp_reset_soc_data अणु
+struct zynqmp_reset_soc_data {
 	u32 reset_id;
 	u32 num_resets;
-पूर्ण;
+};
 
-काष्ठा zynqmp_reset_data अणु
-	काष्ठा reset_controller_dev rcdev;
-	स्थिर काष्ठा zynqmp_reset_soc_data *data;
-पूर्ण;
+struct zynqmp_reset_data {
+	struct reset_controller_dev rcdev;
+	const struct zynqmp_reset_soc_data *data;
+};
 
-अटल अंतरभूत काष्ठा zynqmp_reset_data *
-to_zynqmp_reset_data(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा zynqmp_reset_data, rcdev);
-पूर्ण
+static inline struct zynqmp_reset_data *
+to_zynqmp_reset_data(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct zynqmp_reset_data, rcdev);
+}
 
-अटल पूर्णांक zynqmp_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	काष्ठा zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
+static int zynqmp_reset_assert(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	struct zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
 
-	वापस zynqmp_pm_reset_निश्चित(priv->data->reset_id + id,
+	return zynqmp_pm_reset_assert(priv->data->reset_id + id,
 				      PM_RESET_ACTION_ASSERT);
-पूर्ण
+}
 
-अटल पूर्णांक zynqmp_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				 अचिन्हित दीर्घ id)
-अणु
-	काष्ठा zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
+static int zynqmp_reset_deassert(struct reset_controller_dev *rcdev,
+				 unsigned long id)
+{
+	struct zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
 
-	वापस zynqmp_pm_reset_निश्चित(priv->data->reset_id + id,
+	return zynqmp_pm_reset_assert(priv->data->reset_id + id,
 				      PM_RESET_ACTION_RELEASE);
-पूर्ण
+}
 
-अटल पूर्णांक zynqmp_reset_status(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	काष्ठा zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
-	पूर्णांक val, err;
+static int zynqmp_reset_status(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	struct zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
+	int val, err;
 
 	err = zynqmp_pm_reset_get_status(priv->data->reset_id + id, &val);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक zynqmp_reset_reset(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
+static int zynqmp_reset_reset(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct zynqmp_reset_data *priv = to_zynqmp_reset_data(rcdev);
 
-	वापस zynqmp_pm_reset_निश्चित(priv->data->reset_id + id,
+	return zynqmp_pm_reset_assert(priv->data->reset_id + id,
 				      PM_RESET_ACTION_PULSE);
-पूर्ण
+}
 
-अटल पूर्णांक zynqmp_reset_of_xlate(काष्ठा reset_controller_dev *rcdev,
-				 स्थिर काष्ठा of_phandle_args *reset_spec)
-अणु
-	वापस reset_spec->args[0];
-पूर्ण
+static int zynqmp_reset_of_xlate(struct reset_controller_dev *rcdev,
+				 const struct of_phandle_args *reset_spec)
+{
+	return reset_spec->args[0];
+}
 
-अटल स्थिर काष्ठा zynqmp_reset_soc_data zynqmp_reset_data = अणु
+static const struct zynqmp_reset_soc_data zynqmp_reset_data = {
 	.reset_id = ZYNQMP_RESET_ID,
 	.num_resets = ZYNQMP_NR_RESETS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा zynqmp_reset_soc_data versal_reset_data = अणु
+static const struct zynqmp_reset_soc_data versal_reset_data = {
         .reset_id = 0,
         .num_resets = VERSAL_NR_RESETS,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reset_control_ops zynqmp_reset_ops = अणु
+static const struct reset_control_ops zynqmp_reset_ops = {
 	.reset = zynqmp_reset_reset,
-	.निश्चित = zynqmp_reset_निश्चित,
-	.deनिश्चित = zynqmp_reset_deनिश्चित,
+	.assert = zynqmp_reset_assert,
+	.deassert = zynqmp_reset_deassert,
 	.status = zynqmp_reset_status,
-पूर्ण;
+};
 
-अटल पूर्णांक zynqmp_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा zynqmp_reset_data *priv;
+static int zynqmp_reset_probe(struct platform_device *pdev)
+{
+	struct zynqmp_reset_data *priv;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->data = of_device_get_match_data(&pdev->dev);
-	अगर (!priv->data)
-		वापस -EINVAL;
+	if (!priv->data)
+		return -EINVAL;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
 	priv->rcdev.ops = &zynqmp_reset_ops;
 	priv->rcdev.owner = THIS_MODULE;
@@ -116,26 +115,26 @@ to_zynqmp_reset_data(काष्ठा reset_controller_dev *rcdev)
 	priv->rcdev.of_reset_n_cells = 1;
 	priv->rcdev.of_xlate = zynqmp_reset_of_xlate;
 
-	वापस devm_reset_controller_रेजिस्टर(&pdev->dev, &priv->rcdev);
-पूर्ण
+	return devm_reset_controller_register(&pdev->dev, &priv->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id zynqmp_reset_dt_ids[] = अणु
-	अणु .compatible = "xlnx,zynqmp-reset", .data = &zynqmp_reset_data, पूर्ण,
-	अणु .compatible = "xlnx,versal-reset", .data = &versal_reset_data, पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id zynqmp_reset_dt_ids[] = {
+	{ .compatible = "xlnx,zynqmp-reset", .data = &zynqmp_reset_data, },
+	{ .compatible = "xlnx,versal-reset", .data = &versal_reset_data, },
+	{ /* sentinel */ },
+};
 
-अटल काष्ठा platक्रमm_driver zynqmp_reset_driver = अणु
+static struct platform_driver zynqmp_reset_driver = {
 	.probe	= zynqmp_reset_probe,
-	.driver = अणु
+	.driver = {
 		.name		= KBUILD_MODNAME,
 		.of_match_table	= zynqmp_reset_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init zynqmp_reset_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&zynqmp_reset_driver);
-पूर्ण
+static int __init zynqmp_reset_init(void)
+{
+	return platform_driver_register(&zynqmp_reset_driver);
+}
 
 arch_initcall(zynqmp_reset_init);

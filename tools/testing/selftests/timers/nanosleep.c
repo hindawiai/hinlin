@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* Make sure समयrs करोn't वापस early
+/* Make sure timers don't return early
  *              by: john stultz (johnstul@us.ibm.com)
  *		    John Stultz (john.stultz@linaro.org)
  *              (C) Copyright IBM 2012
@@ -9,7 +8,7 @@
  *  To build:
  *	$ gcc nanosleep.c -o nanosleep -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -17,150 +16,150 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/समयx.h>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश "../kselftest.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/timex.h>
+#include <string.h>
+#include <signal.h>
+#include "../kselftest.h"
 
-#घोषणा NSEC_PER_SEC 1000000000ULL
+#define NSEC_PER_SEC 1000000000ULL
 
-#घोषणा CLOCK_REALTIME			0
-#घोषणा CLOCK_MONOTONIC			1
-#घोषणा CLOCK_PROCESS_CPUTIME_ID	2
-#घोषणा CLOCK_THREAD_CPUTIME_ID		3
-#घोषणा CLOCK_MONOTONIC_RAW		4
-#घोषणा CLOCK_REALTIME_COARSE		5
-#घोषणा CLOCK_MONOTONIC_COARSE		6
-#घोषणा CLOCK_BOOTTIME			7
-#घोषणा CLOCK_REALTIME_ALARM		8
-#घोषणा CLOCK_BOOTTIME_ALARM		9
-#घोषणा CLOCK_HWSPECIFIC		10
-#घोषणा CLOCK_TAI			11
-#घोषणा NR_CLOCKIDS			12
+#define CLOCK_REALTIME			0
+#define CLOCK_MONOTONIC			1
+#define CLOCK_PROCESS_CPUTIME_ID	2
+#define CLOCK_THREAD_CPUTIME_ID		3
+#define CLOCK_MONOTONIC_RAW		4
+#define CLOCK_REALTIME_COARSE		5
+#define CLOCK_MONOTONIC_COARSE		6
+#define CLOCK_BOOTTIME			7
+#define CLOCK_REALTIME_ALARM		8
+#define CLOCK_BOOTTIME_ALARM		9
+#define CLOCK_HWSPECIFIC		10
+#define CLOCK_TAI			11
+#define NR_CLOCKIDS			12
 
-#घोषणा UNSUPPORTED 0xf00f
+#define UNSUPPORTED 0xf00f
 
-अक्षर *घड़ीstring(पूर्णांक घड़ीid)
-अणु
-	चयन (घड़ीid) अणु
-	हाल CLOCK_REALTIME:
-		वापस "CLOCK_REALTIME";
-	हाल CLOCK_MONOTONIC:
-		वापस "CLOCK_MONOTONIC";
-	हाल CLOCK_PROCESS_CPUTIME_ID:
-		वापस "CLOCK_PROCESS_CPUTIME_ID";
-	हाल CLOCK_THREAD_CPUTIME_ID:
-		वापस "CLOCK_THREAD_CPUTIME_ID";
-	हाल CLOCK_MONOTONIC_RAW:
-		वापस "CLOCK_MONOTONIC_RAW";
-	हाल CLOCK_REALTIME_COARSE:
-		वापस "CLOCK_REALTIME_COARSE";
-	हाल CLOCK_MONOTONIC_COARSE:
-		वापस "CLOCK_MONOTONIC_COARSE";
-	हाल CLOCK_BOOTTIME:
-		वापस "CLOCK_BOOTTIME";
-	हाल CLOCK_REALTIME_ALARM:
-		वापस "CLOCK_REALTIME_ALARM";
-	हाल CLOCK_BOOTTIME_ALARM:
-		वापस "CLOCK_BOOTTIME_ALARM";
-	हाल CLOCK_TAI:
-		वापस "CLOCK_TAI";
-	पूर्ण;
-	वापस "UNKNOWN_CLOCKID";
-पूर्ण
+char *clockstring(int clockid)
+{
+	switch (clockid) {
+	case CLOCK_REALTIME:
+		return "CLOCK_REALTIME";
+	case CLOCK_MONOTONIC:
+		return "CLOCK_MONOTONIC";
+	case CLOCK_PROCESS_CPUTIME_ID:
+		return "CLOCK_PROCESS_CPUTIME_ID";
+	case CLOCK_THREAD_CPUTIME_ID:
+		return "CLOCK_THREAD_CPUTIME_ID";
+	case CLOCK_MONOTONIC_RAW:
+		return "CLOCK_MONOTONIC_RAW";
+	case CLOCK_REALTIME_COARSE:
+		return "CLOCK_REALTIME_COARSE";
+	case CLOCK_MONOTONIC_COARSE:
+		return "CLOCK_MONOTONIC_COARSE";
+	case CLOCK_BOOTTIME:
+		return "CLOCK_BOOTTIME";
+	case CLOCK_REALTIME_ALARM:
+		return "CLOCK_REALTIME_ALARM";
+	case CLOCK_BOOTTIME_ALARM:
+		return "CLOCK_BOOTTIME_ALARM";
+	case CLOCK_TAI:
+		return "CLOCK_TAI";
+	};
+	return "UNKNOWN_CLOCKID";
+}
 
-/* वापसs 1 अगर a <= b, 0 otherwise */
-अटल अंतरभूत पूर्णांक in_order(काष्ठा बारpec a, काष्ठा बारpec b)
-अणु
-	अगर (a.tv_sec < b.tv_sec)
-		वापस 1;
-	अगर (a.tv_sec > b.tv_sec)
-		वापस 0;
-	अगर (a.tv_nsec > b.tv_nsec)
-		वापस 0;
-	वापस 1;
-पूर्ण
+/* returns 1 if a <= b, 0 otherwise */
+static inline int in_order(struct timespec a, struct timespec b)
+{
+	if (a.tv_sec < b.tv_sec)
+		return 1;
+	if (a.tv_sec > b.tv_sec)
+		return 0;
+	if (a.tv_nsec > b.tv_nsec)
+		return 0;
+	return 1;
+}
 
-काष्ठा बारpec बारpec_add(काष्ठा बारpec ts, अचिन्हित दीर्घ दीर्घ ns)
-अणु
+struct timespec timespec_add(struct timespec ts, unsigned long long ns)
+{
 	ts.tv_nsec += ns;
-	जबतक (ts.tv_nsec >= NSEC_PER_SEC) अणु
+	while (ts.tv_nsec >= NSEC_PER_SEC) {
 		ts.tv_nsec -= NSEC_PER_SEC;
 		ts.tv_sec++;
-	पूर्ण
-	वापस ts;
-पूर्ण
+	}
+	return ts;
+}
 
-पूर्णांक nanosleep_test(पूर्णांक घड़ीid, दीर्घ दीर्घ ns)
-अणु
-	काष्ठा बारpec now, target, rel;
+int nanosleep_test(int clockid, long long ns)
+{
+	struct timespec now, target, rel;
 
-	/* First check असल समय */
-	अगर (घड़ी_समय_लो(घड़ीid, &now))
-		वापस UNSUPPORTED;
-	target = बारpec_add(now, ns);
+	/* First check abs time */
+	if (clock_gettime(clockid, &now))
+		return UNSUPPORTED;
+	target = timespec_add(now, ns);
 
-	अगर (घड़ी_nanosleep(घड़ीid, TIMER_ABSTIME, &target, शून्य))
-		वापस UNSUPPORTED;
-	घड़ी_समय_लो(घड़ीid, &now);
+	if (clock_nanosleep(clockid, TIMER_ABSTIME, &target, NULL))
+		return UNSUPPORTED;
+	clock_gettime(clockid, &now);
 
-	अगर (!in_order(target, now))
-		वापस -1;
+	if (!in_order(target, now))
+		return -1;
 
-	/* Second check relसमय */
-	घड़ी_समय_लो(घड़ीid, &now);
+	/* Second check reltime */
+	clock_gettime(clockid, &now);
 	rel.tv_sec = 0;
 	rel.tv_nsec = 0;
-	rel = बारpec_add(rel, ns);
-	target = बारpec_add(now, ns);
-	घड़ी_nanosleep(घड़ीid, 0, &rel, शून्य);
-	घड़ी_समय_लो(घड़ीid, &now);
+	rel = timespec_add(rel, ns);
+	target = timespec_add(now, ns);
+	clock_nanosleep(clockid, 0, &rel, NULL);
+	clock_gettime(clockid, &now);
 
-	अगर (!in_order(target, now))
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (!in_order(target, now))
+		return -1;
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	दीर्घ दीर्घ length;
-	पूर्णांक घड़ीid, ret;
+int main(int argc, char **argv)
+{
+	long long length;
+	int clockid, ret;
 
-	क्रम (घड़ीid = CLOCK_REALTIME; घड़ीid < NR_CLOCKIDS; घड़ीid++) अणु
+	for (clockid = CLOCK_REALTIME; clockid < NR_CLOCKIDS; clockid++) {
 
-		/* Skip cpuसमय घड़ीids since nanosleep won't increment cpuसमय */
-		अगर (घड़ीid == CLOCK_PROCESS_CPUTIME_ID ||
-				घड़ीid == CLOCK_THREAD_CPUTIME_ID ||
-				घड़ीid == CLOCK_HWSPECIFIC)
-			जारी;
+		/* Skip cputime clockids since nanosleep won't increment cputime */
+		if (clockid == CLOCK_PROCESS_CPUTIME_ID ||
+				clockid == CLOCK_THREAD_CPUTIME_ID ||
+				clockid == CLOCK_HWSPECIFIC)
+			continue;
 
-		म_लिखो("Nanosleep %-31s ", घड़ीstring(घड़ीid));
-		ख_साफ(मानक_निकास);
+		printf("Nanosleep %-31s ", clockstring(clockid));
+		fflush(stdout);
 
 		length = 10;
-		जबतक (length <= (NSEC_PER_SEC * 10)) अणु
-			ret = nanosleep_test(घड़ीid, length);
-			अगर (ret == UNSUPPORTED) अणु
-				म_लिखो("[UNSUPPORTED]\n");
-				जाओ next;
-			पूर्ण
-			अगर (ret < 0) अणु
-				म_लिखो("[FAILED]\n");
-				वापस ksft_निकास_fail();
-			पूर्ण
+		while (length <= (NSEC_PER_SEC * 10)) {
+			ret = nanosleep_test(clockid, length);
+			if (ret == UNSUPPORTED) {
+				printf("[UNSUPPORTED]\n");
+				goto next;
+			}
+			if (ret < 0) {
+				printf("[FAILED]\n");
+				return ksft_exit_fail();
+			}
 			length *= 100;
-		पूर्ण
-		म_लिखो("[OK]\n");
+		}
+		printf("[OK]\n");
 next:
 		ret = 0;
-	पूर्ण
-	वापस ksft_निकास_pass();
-पूर्ण
+	}
+	return ksft_exit_pass();
+}

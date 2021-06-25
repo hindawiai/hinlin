@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MAC80211_DEBUGFS_KEY_H
-#घोषणा __MAC80211_DEBUGFS_KEY_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MAC80211_DEBUGFS_KEY_H
+#define __MAC80211_DEBUGFS_KEY_H
 
-#अगर_घोषित CONFIG_MAC80211_DEBUGFS
-व्योम ieee80211_debugfs_key_add(काष्ठा ieee80211_key *key);
-व्योम ieee80211_debugfs_key_हटाओ(काष्ठा ieee80211_key *key);
-व्योम ieee80211_debugfs_key_update_शेष(काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_key_add_mgmt_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_key_हटाओ_mgmt_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_key_add_beacon_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_key_हटाओ_beacon_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_key_sta_del(काष्ठा ieee80211_key *key,
-				   काष्ठा sta_info *sta);
-#अन्यथा
-अटल अंतरभूत व्योम ieee80211_debugfs_key_add(काष्ठा ieee80211_key *key)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_हटाओ(काष्ठा ieee80211_key *key)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_update_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_add_mgmt_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_हटाओ_mgmt_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_add_beacon_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_हटाओ_beacon_शेष(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_key_sta_del(काष्ठा ieee80211_key *key,
-						 काष्ठा sta_info *sta)
-अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MAC80211_DEBUGFS
+void ieee80211_debugfs_key_add(struct ieee80211_key *key);
+void ieee80211_debugfs_key_remove(struct ieee80211_key *key);
+void ieee80211_debugfs_key_update_default(struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_key_add_mgmt_default(
+	struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_key_remove_mgmt_default(
+	struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_key_add_beacon_default(
+	struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_key_remove_beacon_default(
+	struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_key_sta_del(struct ieee80211_key *key,
+				   struct sta_info *sta);
+#else
+static inline void ieee80211_debugfs_key_add(struct ieee80211_key *key)
+{}
+static inline void ieee80211_debugfs_key_remove(struct ieee80211_key *key)
+{}
+static inline void ieee80211_debugfs_key_update_default(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_key_add_mgmt_default(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_key_remove_mgmt_default(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_key_add_beacon_default(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_key_remove_beacon_default(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_key_sta_del(struct ieee80211_key *key,
+						 struct sta_info *sta)
+{}
+#endif
 
-#पूर्ण_अगर /* __MAC80211_DEBUGFS_KEY_H */
+#endif /* __MAC80211_DEBUGFS_KEY_H */

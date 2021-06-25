@@ -1,164 +1,163 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Thomas Gleixner <tglx@linutronix.de>
  *
  *  For licencing details see kernel-base/COPYING
  */
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/export.h>
+#include <linux/pci.h>
 
-#समावेश <यंत्र/acpi.h>
-#समावेश <यंत्र/bios_ebda.h>
-#समावेश <यंत्र/paravirt.h>
-#समावेश <यंत्र/pci_x86.h>
-#समावेश <यंत्र/mpspec.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/e820/api.h>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/io_apic.h>
-#समावेश <यंत्र/hpet.h>
-#समावेश <यंत्र/memtype.h>
-#समावेश <यंत्र/tsc.h>
-#समावेश <यंत्र/iommu.h>
-#समावेश <यंत्र/mach_traps.h>
-#समावेश <यंत्र/irqकरोमुख्य.h>
+#include <asm/acpi.h>
+#include <asm/bios_ebda.h>
+#include <asm/paravirt.h>
+#include <asm/pci_x86.h>
+#include <asm/mpspec.h>
+#include <asm/setup.h>
+#include <asm/apic.h>
+#include <asm/e820/api.h>
+#include <asm/time.h>
+#include <asm/irq.h>
+#include <asm/io_apic.h>
+#include <asm/hpet.h>
+#include <asm/memtype.h>
+#include <asm/tsc.h>
+#include <asm/iommu.h>
+#include <asm/mach_traps.h>
+#include <asm/irqdomain.h>
 
-व्योम x86_init_noop(व्योम) अणु पूर्ण
-व्योम __init x86_init_uपूर्णांक_noop(अचिन्हित पूर्णांक unused) अणु पूर्ण
-अटल पूर्णांक __init iommu_init_noop(व्योम) अणु वापस 0; पूर्ण
-अटल व्योम iommu_shutकरोwn_noop(व्योम) अणु पूर्ण
-bool __init bool_x86_init_noop(व्योम) अणु वापस false; पूर्ण
-व्योम x86_op_पूर्णांक_noop(पूर्णांक cpu) अणु पूर्ण
-अटल __init पूर्णांक set_rtc_noop(स्थिर काष्ठा बारpec64 *now) अणु वापस -EINVAL; पूर्ण
-अटल __init व्योम get_rtc_noop(काष्ठा बारpec64 *now) अणु पूर्ण
+void x86_init_noop(void) { }
+void __init x86_init_uint_noop(unsigned int unused) { }
+static int __init iommu_init_noop(void) { return 0; }
+static void iommu_shutdown_noop(void) { }
+bool __init bool_x86_init_noop(void) { return false; }
+void x86_op_int_noop(int cpu) { }
+static __init int set_rtc_noop(const struct timespec64 *now) { return -EINVAL; }
+static __init void get_rtc_noop(struct timespec64 *now) { }
 
-अटल __initस्थिर स्थिर काष्ठा of_device_id of_cmos_match[] = अणु
-	अणु .compatible = "motorola,mc146818" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static __initconst const struct of_device_id of_cmos_match[] = {
+	{ .compatible = "motorola,mc146818" },
+	{}
+};
 
 /*
- * Allow devicetree configured प्रणालीs to disable the RTC by setting the
+ * Allow devicetree configured systems to disable the RTC by setting the
  * corresponding DT node's status property to disabled. Code is optimized
- * out क्रम CONFIG_OF=n builds.
+ * out for CONFIG_OF=n builds.
  */
-अटल __init व्योम x86_wallघड़ी_init(व्योम)
-अणु
-	काष्ठा device_node *node = of_find_matching_node(शून्य, of_cmos_match);
+static __init void x86_wallclock_init(void)
+{
+	struct device_node *node = of_find_matching_node(NULL, of_cmos_match);
 
-	अगर (node && !of_device_is_available(node)) अणु
-		x86_platक्रमm.get_wallघड़ी = get_rtc_noop;
-		x86_platक्रमm.set_wallघड़ी = set_rtc_noop;
-	पूर्ण
-पूर्ण
+	if (node && !of_device_is_available(node)) {
+		x86_platform.get_wallclock = get_rtc_noop;
+		x86_platform.set_wallclock = set_rtc_noop;
+	}
+}
 
 /*
- * The platक्रमm setup functions are preset with the शेष functions
- * क्रम standard PC hardware.
+ * The platform setup functions are preset with the default functions
+ * for standard PC hardware.
  */
-काष्ठा x86_init_ops x86_init __initdata = अणु
+struct x86_init_ops x86_init __initdata = {
 
-	.resources = अणु
+	.resources = {
 		.probe_roms		= probe_roms,
 		.reserve_resources	= reserve_standard_io_resources,
-		.memory_setup		= e820__memory_setup_शेष,
-	पूर्ण,
+		.memory_setup		= e820__memory_setup_default,
+	},
 
-	.mpparse = अणु
+	.mpparse = {
 		.setup_ioapic_ids	= x86_init_noop,
-		.find_smp_config	= शेष_find_smp_config,
-		.get_smp_config		= शेष_get_smp_config,
-	पूर्ण,
+		.find_smp_config	= default_find_smp_config,
+		.get_smp_config		= default_get_smp_config,
+	},
 
-	.irqs = अणु
+	.irqs = {
 		.pre_vector_init	= init_ISA_irqs,
-		.पूर्णांकr_init		= native_init_IRQ,
-		.पूर्णांकr_mode_select	= apic_पूर्णांकr_mode_select,
-		.पूर्णांकr_mode_init		= apic_पूर्णांकr_mode_init,
-		.create_pci_msi_करोमुख्य	= native_create_pci_msi_करोमुख्य,
-	पूर्ण,
+		.intr_init		= native_init_IRQ,
+		.intr_mode_select	= apic_intr_mode_select,
+		.intr_mode_init		= apic_intr_mode_init,
+		.create_pci_msi_domain	= native_create_pci_msi_domain,
+	},
 
-	.oem = अणु
+	.oem = {
 		.arch_setup		= x86_init_noop,
-		.banner			= शेष_banner,
-	पूर्ण,
+		.banner			= default_banner,
+	},
 
-	.paging = अणु
+	.paging = {
 		.pagetable_init		= native_pagetable_init,
-	पूर्ण,
+	},
 
-	.समयrs = अणु
-		.setup_percpu_घड़ीev	= setup_boot_APIC_घड़ी,
-		.समयr_init		= hpet_समय_init,
-		.wallघड़ी_init		= x86_wallघड़ी_init,
-	पूर्ण,
+	.timers = {
+		.setup_percpu_clockev	= setup_boot_APIC_clock,
+		.timer_init		= hpet_time_init,
+		.wallclock_init		= x86_wallclock_init,
+	},
 
-	.iommu = अणु
+	.iommu = {
 		.iommu_init		= iommu_init_noop,
-	पूर्ण,
+	},
 
-	.pci = अणु
-		.init			= x86_शेष_pci_init,
-		.init_irq		= x86_शेष_pci_init_irq,
-		.fixup_irqs		= x86_शेष_pci_fixup_irqs,
-	पूर्ण,
+	.pci = {
+		.init			= x86_default_pci_init,
+		.init_irq		= x86_default_pci_init_irq,
+		.fixup_irqs		= x86_default_pci_fixup_irqs,
+	},
 
-	.hyper = अणु
-		.init_platक्रमm		= x86_init_noop,
+	.hyper = {
+		.init_platform		= x86_init_noop,
 		.guest_late_init	= x86_init_noop,
 		.x2apic_available	= bool_x86_init_noop,
 		.msi_ext_dest_id	= bool_x86_init_noop,
 		.init_mem_mapping	= x86_init_noop,
-		.init_after_booपंचांगem	= x86_init_noop,
-	पूर्ण,
+		.init_after_bootmem	= x86_init_noop,
+	},
 
-	.acpi = अणु
-		.set_root_poपूर्णांकer	= x86_शेष_set_root_poपूर्णांकer,
-		.get_root_poपूर्णांकer	= x86_शेष_get_root_poपूर्णांकer,
+	.acpi = {
+		.set_root_pointer	= x86_default_set_root_pointer,
+		.get_root_pointer	= x86_default_get_root_pointer,
 		.reduced_hw_early_init	= acpi_generic_reduced_hw_init,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-काष्ठा x86_cpuinit_ops x86_cpuinit = अणु
-	.early_percpu_घड़ी_init	= x86_init_noop,
-	.setup_percpu_घड़ीev		= setup_secondary_APIC_घड़ी,
-पूर्ण;
+struct x86_cpuinit_ops x86_cpuinit = {
+	.early_percpu_clock_init	= x86_init_noop,
+	.setup_percpu_clockev		= setup_secondary_APIC_clock,
+};
 
-अटल व्योम शेष_nmi_init(व्योम) अणु पूर्ण;
+static void default_nmi_init(void) { };
 
-काष्ठा x86_platक्रमm_ops x86_platक्रमm __ro_after_init = अणु
+struct x86_platform_ops x86_platform __ro_after_init = {
 	.calibrate_cpu			= native_calibrate_cpu_early,
 	.calibrate_tsc			= native_calibrate_tsc,
-	.get_wallघड़ी			= mach_get_cmos_समय,
-	.set_wallघड़ी			= mach_set_rtc_mmss,
-	.iommu_shutकरोwn			= iommu_shutकरोwn_noop,
+	.get_wallclock			= mach_get_cmos_time,
+	.set_wallclock			= mach_set_rtc_mmss,
+	.iommu_shutdown			= iommu_shutdown_noop,
 	.is_untracked_pat_range		= is_ISA_range,
-	.nmi_init			= शेष_nmi_init,
-	.get_nmi_reason			= शेष_get_nmi_reason,
-	.save_sched_घड़ी_state 	= tsc_save_sched_घड़ी_state,
-	.restore_sched_घड़ी_state 	= tsc_restore_sched_घड़ी_state,
-	.hyper.pin_vcpu			= x86_op_पूर्णांक_noop,
-पूर्ण;
+	.nmi_init			= default_nmi_init,
+	.get_nmi_reason			= default_get_nmi_reason,
+	.save_sched_clock_state 	= tsc_save_sched_clock_state,
+	.restore_sched_clock_state 	= tsc_restore_sched_clock_state,
+	.hyper.pin_vcpu			= x86_op_int_noop,
+};
 
-EXPORT_SYMBOL_GPL(x86_platक्रमm);
+EXPORT_SYMBOL_GPL(x86_platform);
 
-#अगर defined(CONFIG_PCI_MSI)
-काष्ठा x86_msi_ops x86_msi __ro_after_init = अणु
-	.restore_msi_irqs	= शेष_restore_msi_irqs,
-पूर्ण;
+#if defined(CONFIG_PCI_MSI)
+struct x86_msi_ops x86_msi __ro_after_init = {
+	.restore_msi_irqs	= default_restore_msi_irqs,
+};
 
-/* MSI arch specअगरic hooks */
-व्योम arch_restore_msi_irqs(काष्ठा pci_dev *dev)
-अणु
+/* MSI arch specific hooks */
+void arch_restore_msi_irqs(struct pci_dev *dev)
+{
 	x86_msi.restore_msi_irqs(dev);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-काष्ठा x86_apic_ops x86_apic_ops __ro_after_init = अणु
-	.io_apic_पढ़ो	= native_io_apic_पढ़ो,
+struct x86_apic_ops x86_apic_ops __ro_after_init = {
+	.io_apic_read	= native_io_apic_read,
 	.restore	= native_restore_boot_irq_mode,
-पूर्ण;
+};

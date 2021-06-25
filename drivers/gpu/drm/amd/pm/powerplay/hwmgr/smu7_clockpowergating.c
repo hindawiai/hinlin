@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,417 +21,417 @@
  *
  */
 
-#समावेश "smu7_hwmgr.h"
-#समावेश "smu7_clockpowergating.h"
-#समावेश "smu7_common.h"
+#include "smu7_hwmgr.h"
+#include "smu7_clockpowergating.h"
+#include "smu7_common.h"
 
-अटल पूर्णांक smu7_enable_disable_uvd_dpm(काष्ठा pp_hwmgr *hwmgr, bool enable)
-अणु
-	वापस smum_send_msg_to_smc(hwmgr, enable ?
+static int smu7_enable_disable_uvd_dpm(struct pp_hwmgr *hwmgr, bool enable)
+{
+	return smum_send_msg_to_smc(hwmgr, enable ?
 			PPSMC_MSG_UVDDPM_Enable :
 			PPSMC_MSG_UVDDPM_Disable,
-			शून्य);
-पूर्ण
+			NULL);
+}
 
-अटल पूर्णांक smu7_enable_disable_vce_dpm(काष्ठा pp_hwmgr *hwmgr, bool enable)
-अणु
-	वापस smum_send_msg_to_smc(hwmgr, enable ?
+static int smu7_enable_disable_vce_dpm(struct pp_hwmgr *hwmgr, bool enable)
+{
+	return smum_send_msg_to_smc(hwmgr, enable ?
 			PPSMC_MSG_VCEDPM_Enable :
 			PPSMC_MSG_VCEDPM_Disable,
-			शून्य);
-पूर्ण
+			NULL);
+}
 
-अटल पूर्णांक smu7_update_uvd_dpm(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	अगर (!bgate)
+static int smu7_update_uvd_dpm(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	if (!bgate)
 		smum_update_smc_table(hwmgr, SMU_UVD_TABLE);
-	वापस smu7_enable_disable_uvd_dpm(hwmgr, !bgate);
-पूर्ण
+	return smu7_enable_disable_uvd_dpm(hwmgr, !bgate);
+}
 
-अटल पूर्णांक smu7_update_vce_dpm(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	अगर (!bgate)
+static int smu7_update_vce_dpm(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	if (!bgate)
 		smum_update_smc_table(hwmgr, SMU_VCE_TABLE);
-	वापस smu7_enable_disable_vce_dpm(hwmgr, !bgate);
-पूर्ण
+	return smu7_enable_disable_vce_dpm(hwmgr, !bgate);
+}
 
-पूर्णांक smu7_घातerकरोwn_uvd(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (phm_cf_want_uvd_घातer_gating(hwmgr))
-		वापस smum_send_msg_to_smc(hwmgr,
+int smu7_powerdown_uvd(struct pp_hwmgr *hwmgr)
+{
+	if (phm_cf_want_uvd_power_gating(hwmgr))
+		return smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_UVDPowerOFF,
-				शून्य);
-	वापस 0;
-पूर्ण
+				NULL);
+	return 0;
+}
 
-अटल पूर्णांक smu7_घातerup_uvd(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (phm_cf_want_uvd_घातer_gating(hwmgr)) अणु
-		अगर (phm_cap_enabled(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				  PHM_Platक्रमmCaps_UVDDynamicPowerGating)) अणु
-			वापस smum_send_msg_to_smc_with_parameter(hwmgr,
-					PPSMC_MSG_UVDPowerON, 1, शून्य);
-		पूर्ण अन्यथा अणु
-			वापस smum_send_msg_to_smc_with_parameter(hwmgr,
-					PPSMC_MSG_UVDPowerON, 0, शून्य);
-		पूर्ण
-	पूर्ण
+static int smu7_powerup_uvd(struct pp_hwmgr *hwmgr)
+{
+	if (phm_cf_want_uvd_power_gating(hwmgr)) {
+		if (phm_cap_enabled(hwmgr->platform_descriptor.platformCaps,
+				  PHM_PlatformCaps_UVDDynamicPowerGating)) {
+			return smum_send_msg_to_smc_with_parameter(hwmgr,
+					PPSMC_MSG_UVDPowerON, 1, NULL);
+		} else {
+			return smum_send_msg_to_smc_with_parameter(hwmgr,
+					PPSMC_MSG_UVDPowerON, 0, NULL);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक smu7_घातerकरोwn_vce(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (phm_cf_want_vce_घातer_gating(hwmgr))
-		वापस smum_send_msg_to_smc(hwmgr,
+static int smu7_powerdown_vce(struct pp_hwmgr *hwmgr)
+{
+	if (phm_cf_want_vce_power_gating(hwmgr))
+		return smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_VCEPowerOFF,
-				शून्य);
-	वापस 0;
-पूर्ण
+				NULL);
+	return 0;
+}
 
-अटल पूर्णांक smu7_घातerup_vce(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	अगर (phm_cf_want_vce_घातer_gating(hwmgr))
-		वापस smum_send_msg_to_smc(hwmgr,
+static int smu7_powerup_vce(struct pp_hwmgr *hwmgr)
+{
+	if (phm_cf_want_vce_power_gating(hwmgr))
+		return smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_VCEPowerON,
-				शून्य);
-	वापस 0;
-पूर्ण
+				NULL);
+	return 0;
+}
 
-पूर्णांक smu7_disable_घड़ी_घातer_gating(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा smu7_hwmgr *data = (काष्ठा smu7_hwmgr *)(hwmgr->backend);
+int smu7_disable_clock_power_gating(struct pp_hwmgr *hwmgr)
+{
+	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 
-	data->uvd_घातer_gated = false;
-	data->vce_घातer_gated = false;
+	data->uvd_power_gated = false;
+	data->vce_power_gated = false;
 
-	smu7_घातerup_uvd(hwmgr);
-	smu7_घातerup_vce(hwmgr);
+	smu7_powerup_uvd(hwmgr);
+	smu7_powerup_vce(hwmgr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम smu7_घातergate_uvd(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	काष्ठा smu7_hwmgr *data = (काष्ठा smu7_hwmgr *)(hwmgr->backend);
+void smu7_powergate_uvd(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 
-	data->uvd_घातer_gated = bgate;
+	data->uvd_power_gated = bgate;
 
-	अगर (bgate) अणु
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+	if (bgate) {
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_UVD,
 						AMD_PG_STATE_GATE);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 				AMD_IP_BLOCK_TYPE_UVD,
 				AMD_CG_STATE_GATE);
 		smu7_update_uvd_dpm(hwmgr, true);
-		smu7_घातerकरोwn_uvd(hwmgr);
-	पूर्ण अन्यथा अणु
-		smu7_घातerup_uvd(hwmgr);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		smu7_powerdown_uvd(hwmgr);
+	} else {
+		smu7_powerup_uvd(hwmgr);
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 				AMD_IP_BLOCK_TYPE_UVD,
 				AMD_CG_STATE_UNGATE);
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_UVD,
 						AMD_PG_STATE_UNGATE);
 		smu7_update_uvd_dpm(hwmgr, false);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-व्योम smu7_घातergate_vce(काष्ठा pp_hwmgr *hwmgr, bool bgate)
-अणु
-	काष्ठा smu7_hwmgr *data = (काष्ठा smu7_hwmgr *)(hwmgr->backend);
+void smu7_powergate_vce(struct pp_hwmgr *hwmgr, bool bgate)
+{
+	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 
-	data->vce_घातer_gated = bgate;
+	data->vce_power_gated = bgate;
 
-	अगर (bgate) अणु
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+	if (bgate) {
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_VCE,
 						AMD_PG_STATE_GATE);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 				AMD_IP_BLOCK_TYPE_VCE,
 				AMD_CG_STATE_GATE);
 		smu7_update_vce_dpm(hwmgr, true);
-		smu7_घातerकरोwn_vce(hwmgr);
-	पूर्ण अन्यथा अणु
-		smu7_घातerup_vce(hwmgr);
-		amdgpu_device_ip_set_घड़ीgating_state(hwmgr->adev,
+		smu7_powerdown_vce(hwmgr);
+	} else {
+		smu7_powerup_vce(hwmgr);
+		amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
 				AMD_IP_BLOCK_TYPE_VCE,
 				AMD_CG_STATE_UNGATE);
-		amdgpu_device_ip_set_घातergating_state(hwmgr->adev,
+		amdgpu_device_ip_set_powergating_state(hwmgr->adev,
 						AMD_IP_BLOCK_TYPE_VCE,
 						AMD_PG_STATE_UNGATE);
 		smu7_update_vce_dpm(hwmgr, false);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक smu7_update_घड़ी_gatings(काष्ठा pp_hwmgr *hwmgr,
-					स्थिर uपूर्णांक32_t *msg_id)
-अणु
+int smu7_update_clock_gatings(struct pp_hwmgr *hwmgr,
+					const uint32_t *msg_id)
+{
 	PPSMC_Msg msg;
-	uपूर्णांक32_t value;
+	uint32_t value;
 
-	अगर (!(hwmgr->feature_mask & PP_ENABLE_GFX_CG_THRU_SMU))
-		वापस 0;
+	if (!(hwmgr->feature_mask & PP_ENABLE_GFX_CG_THRU_SMU))
+		return 0;
 
-	चयन ((*msg_id & PP_GROUP_MASK) >> PP_GROUP_SHIFT) अणु
-	हाल PP_GROUP_GFX:
-		चयन ((*msg_id & PP_BLOCK_MASK) >> PP_BLOCK_SHIFT) अणु
-		हाल PP_BLOCK_GFX_CG:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+	switch ((*msg_id & PP_GROUP_MASK) >> PP_GROUP_SHIFT) {
+	case PP_GROUP_GFX:
+		switch ((*msg_id & PP_BLOCK_MASK) >> PP_BLOCK_SHIFT) {
+		case PP_BLOCK_GFX_CG:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG) ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_GFX_CGCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS
 					? PPSMC_MSG_EnableClockGatingFeature
 					: PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_GFX_CGLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_GFX_3D:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_GFX_3D:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG) ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_GFX_3DCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
 
-			अगर  (PP_STATE_SUPPORT_LS & *msg_id) अणु
+			if  (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_GFX_3DLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_GFX_RLC:
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+		case PP_BLOCK_GFX_RLC:
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_GFX_RLC_LS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_GFX_CP:
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+		case PP_BLOCK_GFX_CP:
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_GFX_CP_LS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_GFX_MG:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_GFX_MG:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG)	?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = (CG_CPF_MGCG_MASK | CG_RLC_MGCG_MASK |
 						CG_GFX_OTHERS_MGCG_MASK);
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+		default:
+			return -EINVAL;
+		}
+		break;
 
-	हाल PP_GROUP_SYS:
-		चयन ((*msg_id & PP_BLOCK_MASK) >> PP_BLOCK_SHIFT) अणु
-		हाल PP_BLOCK_SYS_BIF:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+	case PP_GROUP_SYS:
+		switch ((*msg_id & PP_BLOCK_MASK) >> PP_BLOCK_SHIFT) {
+		case PP_BLOCK_SYS_BIF:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_CG ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_BIF_MGCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अगर  (PP_STATE_SUPPORT_LS & *msg_id) अणु
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			if  (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_BIF_MGLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_SYS_MC:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_SYS_MC:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG)	?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_MC_MGCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
 
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_MC_MGLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_SYS_DRM:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_SYS_DRM:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_CG ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_DRM_MGCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_DRM_MGLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_SYS_HDP:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_SYS_HDP:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG) ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_HDP_MGCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
 
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_HDP_MGLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_SYS_SDMA:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_SYS_SDMA:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG)	?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_SDMA_MGCG_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
 
-			अगर (PP_STATE_SUPPORT_LS & *msg_id) अणु
+			if (PP_STATE_SUPPORT_LS & *msg_id) {
 				msg = (*msg_id & PP_STATE_MASK) & PP_STATE_LS ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_SDMA_MGLS_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		हाल PP_BLOCK_SYS_ROM:
-			अगर (PP_STATE_SUPPORT_CG & *msg_id) अणु
+		case PP_BLOCK_SYS_ROM:
+			if (PP_STATE_SUPPORT_CG & *msg_id) {
 				msg = ((*msg_id & PP_STATE_MASK) & PP_STATE_CG) ?
 						PPSMC_MSG_EnableClockGatingFeature :
 						PPSMC_MSG_DisableClockGatingFeature;
 				value = CG_SYS_ROM_MASK;
 
-				अगर (smum_send_msg_to_smc_with_parameter(
-						hwmgr, msg, value, शून्य))
-					वापस -EINVAL;
-			पूर्ण
-			अवरोध;
+				if (smum_send_msg_to_smc_with_parameter(
+						hwmgr, msg, value, NULL))
+					return -EINVAL;
+			}
+			break;
 
-		शेष:
-			वापस -EINVAL;
+		default:
+			return -EINVAL;
 
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस -EINVAL;
+	default:
+		return -EINVAL;
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This function is क्रम Polaris11 only क्रम now,
- * Powerplay will only control the अटल per CU Power Gating.
- * Dynamic per CU Power Gating will be करोne in gfx.
+/* This function is for Polaris11 only for now,
+ * Powerplay will only control the static per CU Power Gating.
+ * Dynamic per CU Power Gating will be done in gfx.
  */
-पूर्णांक smu7_घातergate_gfx(काष्ठा pp_hwmgr *hwmgr, bool enable)
-अणु
-	काष्ठा amdgpu_device *adev = hwmgr->adev;
+int smu7_powergate_gfx(struct pp_hwmgr *hwmgr, bool enable)
+{
+	struct amdgpu_device *adev = hwmgr->adev;
 
-	अगर (enable)
-		वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+	if (enable)
+		return smum_send_msg_to_smc_with_parameter(hwmgr,
 					PPSMC_MSG_GFX_CU_PG_ENABLE,
 					adev->gfx.cu_info.number,
-					शून्य);
-	अन्यथा
-		वापस smum_send_msg_to_smc(hwmgr,
+					NULL);
+	else
+		return smum_send_msg_to_smc(hwmgr,
 				PPSMC_MSG_GFX_CU_PG_DISABLE,
-				शून्य);
-पूर्ण
+				NULL);
+}

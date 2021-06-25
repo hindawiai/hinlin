@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* -*-linux-c-*-
 
- * venकरोr-specअगरic code क्रम SCSI CD-ROM's goes here.
+ * vendor-specific code for SCSI CD-ROM's goes here.
  *
  * This is needed becauce most of the new features (multisession and
- * the like) are too new to be included पूर्णांकo the SCSI-II standard (to
+ * the like) are too new to be included into the SCSI-II standard (to
  * be exact: there is'nt anything in my draft copy).
  *
- * Aug 1997: Ha! Got a SCSI-3 cdrom spec across my fingers. SCSI-3 करोes
+ * Aug 1997: Ha! Got a SCSI-3 cdrom spec across my fingers. SCSI-3 does
  *           multisession using the READ TOC command (like SONY).
  *
  *           Rearranged stuff here: SCSI-3 is included allways, support
- *           क्रम NEC/TOSHIBA/HP commands is optional.
+ *           for NEC/TOSHIBA/HP commands is optional.
  *
  *   Gerd Knorr <kraxel@cs.tu-berlin.de> 
  *
  * --------------------------------------------------------------------------
  *
- * support क्रम XA/multisession-CD's
+ * support for XA/multisession-CD's
  * 
  *   - NEC:     Detection and support of multisession CD's.
  *     
  *   - TOSHIBA: Detection and support of multisession CD's.
- *              Some XA-Sector tweaking, required क्रम older drives.
+ *              Some XA-Sector tweaking, required for older drives.
  *
  *   - SONY:    Detection and support of multisession CD's.
- *              added by Thomas Quinot <thomas@cuivre.मुक्तnix.fr>
+ *              added by Thomas Quinot <thomas@cuivre.freenix.fr>
  *
  *   - PIONEER, HITACHI, PLEXTOR, MATSHITA, TEAC, PHILIPS: known to
  *              work with SONY (SCSI3 now)  code.
  *
- *   - HP:      Much like SONY, but a little dअगरferent... (Thomas)
+ *   - HP:      Much like SONY, but a little different... (Thomas)
  *              HP-Writers only ??? Maybe other CD-Writers work with this too ?
- *              HP 6020 ग_लिखोrs now supported.
+ *              HP 6020 writers now supported.
  */
 
-#समावेश <linux/cdrom.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/bcd.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/slab.h>
+#include <linux/cdrom.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/bcd.h>
+#include <linux/blkdev.h>
+#include <linux/slab.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_ioctl.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_ioctl.h>
 
-#समावेश "sr.h"
+#include "sr.h"
 
-#अगर 0
-#घोषणा DEBUG
-#पूर्ण_अगर
+#if 0
+#define DEBUG
+#endif
 
-/* here are some स्थिरants to sort the venकरोrs पूर्णांकo groups */
+/* here are some constants to sort the vendors into groups */
 
-#घोषणा VENDOR_SCSI3           1	/* शेष: scsi-3 mmc */
+#define VENDOR_SCSI3           1	/* default: scsi-3 mmc */
 
-#घोषणा VENDOR_NEC             2
-#घोषणा VENDOR_TOSHIBA         3
-#घोषणा VENDOR_WRITER          4	/* pre-scsi3 ग_लिखोrs */
-#घोषणा VENDOR_CYGNAL_85ED     5	/* CD-on-a-chip */
+#define VENDOR_NEC             2
+#define VENDOR_TOSHIBA         3
+#define VENDOR_WRITER          4	/* pre-scsi3 writers */
+#define VENDOR_CYGNAL_85ED     5	/* CD-on-a-chip */
 
-#घोषणा VENDOR_TIMEOUT	30*HZ
+#define VENDOR_TIMEOUT	30*HZ
 
-व्योम sr_venकरोr_init(Scsi_CD *cd)
-अणु
-	स्थिर अक्षर *venकरोr = cd->device->venकरोr;
-	स्थिर अक्षर *model = cd->device->model;
+void sr_vendor_init(Scsi_CD *cd)
+{
+	const char *vendor = cd->device->vendor;
+	const char *model = cd->device->model;
 	
-	/* शेष */
-	cd->venकरोr = VENDOR_SCSI3;
-	अगर (cd->पढ़ोcd_known)
-		/* this is true क्रम scsi3/mmc drives - no more checks */
-		वापस;
+	/* default */
+	cd->vendor = VENDOR_SCSI3;
+	if (cd->readcd_known)
+		/* this is true for scsi3/mmc drives - no more checks */
+		return;
 
-	अगर (cd->device->type == TYPE_WORM) अणु
-		cd->venकरोr = VENDOR_WRITER;
+	if (cd->device->type == TYPE_WORM) {
+		cd->vendor = VENDOR_WRITER;
 
-	पूर्ण अन्यथा अगर (!म_भेदन(venकरोr, "NEC", 3)) अणु
-		cd->venकरोr = VENDOR_NEC;
-		अगर (!म_भेदन(model, "CD-ROM DRIVE:25", 15) ||
-		    !म_भेदन(model, "CD-ROM DRIVE:36", 15) ||
-		    !म_भेदन(model, "CD-ROM DRIVE:83", 15) ||
-		    !म_भेदन(model, "CD-ROM DRIVE:84 ", 16)
-#अगर 0
-		/* my NEC 3x वापसs the पढ़ो-raw data अगर a पढ़ो-raw
-		   is followed by a पढ़ो क्रम the same sector - aeb */
-		    || !म_भेदन(model, "CD-ROM DRIVE:500", 16)
-#पूर्ण_अगर
+	} else if (!strncmp(vendor, "NEC", 3)) {
+		cd->vendor = VENDOR_NEC;
+		if (!strncmp(model, "CD-ROM DRIVE:25", 15) ||
+		    !strncmp(model, "CD-ROM DRIVE:36", 15) ||
+		    !strncmp(model, "CD-ROM DRIVE:83", 15) ||
+		    !strncmp(model, "CD-ROM DRIVE:84 ", 16)
+#if 0
+		/* my NEC 3x returns the read-raw data if a read-raw
+		   is followed by a read for the same sector - aeb */
+		    || !strncmp(model, "CD-ROM DRIVE:500", 16)
+#endif
 		    )
 			/* these can't handle multisession, may hang */
 			cd->cdi.mask |= CDC_MULTI_SESSION;
 
-	पूर्ण अन्यथा अगर (!म_भेदन(venकरोr, "TOSHIBA", 7)) अणु
-		cd->venकरोr = VENDOR_TOSHIBA;
+	} else if (!strncmp(vendor, "TOSHIBA", 7)) {
+		cd->vendor = VENDOR_TOSHIBA;
 
-	पूर्ण अन्यथा अगर (!म_भेदन(venकरोr, "Beurer", 6) &&
-		   !म_भेदन(model, "Gluco Memory", 12)) अणु
+	} else if (!strncmp(vendor, "Beurer", 6) &&
+		   !strncmp(model, "Gluco Memory", 12)) {
 		/* The Beurer GL50 evo uses a Cygnal-manufactured CD-on-a-chip
 		   that only accepts a subset of SCSI commands.  Most of the
 		   not-implemented commands are fine to fail, but a few,
 		   particularly around the MMC or Audio commands, will put the
-		   device पूर्णांकo an unrecoverable state, so they need to be
-		   aव्योमed at all costs.
+		   device into an unrecoverable state, so they need to be
+		   avoided at all costs.
 		*/
-		cd->venकरोr = VENDOR_CYGNAL_85ED;
+		cd->vendor = VENDOR_CYGNAL_85ED;
 		cd->cdi.mask |= (
 			CDC_MULTI_SESSION |
 			CDC_CLOSE_TRAY | CDC_OPEN_TRAY |
@@ -115,84 +114,84 @@
 			CDC_GENERIC_PACKET |
 			CDC_PLAY_AUDIO
 			);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-/* small handy function क्रम चयनing block length using MODE SELECT,
- * used by sr_पढ़ो_sector() */
+/* small handy function for switching block length using MODE SELECT,
+ * used by sr_read_sector() */
 
-पूर्णांक sr_set_blocklength(Scsi_CD *cd, पूर्णांक blocklength)
-अणु
-	अचिन्हित अक्षर *buffer;	/* the buffer क्रम the ioctl */
-	काष्ठा packet_command cgc;
-	काष्ठा ccs_modesel_head *modesel;
-	पूर्णांक rc, density = 0;
+int sr_set_blocklength(Scsi_CD *cd, int blocklength)
+{
+	unsigned char *buffer;	/* the buffer for the ioctl */
+	struct packet_command cgc;
+	struct ccs_modesel_head *modesel;
+	int rc, density = 0;
 
-	अगर (cd->venकरोr == VENDOR_TOSHIBA)
+	if (cd->vendor == VENDOR_TOSHIBA)
 		density = (blocklength > 2048) ? 0x81 : 0x83;
 
-	buffer = kदो_स्मृति(512, GFP_KERNEL | GFP_DMA);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(512, GFP_KERNEL | GFP_DMA);
+	if (!buffer)
+		return -ENOMEM;
 
-#अगर_घोषित DEBUG
-	sr_prपूर्णांकk(KERN_INFO, cd, "MODE SELECT 0x%x/%d\n", density, blocklength);
-#पूर्ण_अगर
-	स_रखो(&cgc, 0, माप(काष्ठा packet_command));
+#ifdef DEBUG
+	sr_printk(KERN_INFO, cd, "MODE SELECT 0x%x/%d\n", density, blocklength);
+#endif
+	memset(&cgc, 0, sizeof(struct packet_command));
 	cgc.cmd[0] = MODE_SELECT;
 	cgc.cmd[1] = (1 << 4);
 	cgc.cmd[4] = 12;
-	modesel = (काष्ठा ccs_modesel_head *) buffer;
-	स_रखो(modesel, 0, माप(*modesel));
+	modesel = (struct ccs_modesel_head *) buffer;
+	memset(modesel, 0, sizeof(*modesel));
 	modesel->block_desc_length = 0x08;
 	modesel->density = density;
 	modesel->block_length_med = (blocklength >> 8) & 0xff;
 	modesel->block_length_lo = blocklength & 0xff;
 	cgc.buffer = buffer;
-	cgc.buflen = माप(*modesel);
+	cgc.buflen = sizeof(*modesel);
 	cgc.data_direction = DMA_TO_DEVICE;
-	cgc.समयout = VENDOR_TIMEOUT;
-	अगर (0 == (rc = sr_करो_ioctl(cd, &cgc))) अणु
+	cgc.timeout = VENDOR_TIMEOUT;
+	if (0 == (rc = sr_do_ioctl(cd, &cgc))) {
 		cd->device->sector_size = blocklength;
-	पूर्ण
-#अगर_घोषित DEBUG
-	अन्यथा
-		sr_prपूर्णांकk(KERN_INFO, cd,
+	}
+#ifdef DEBUG
+	else
+		sr_printk(KERN_INFO, cd,
 			  "switching blocklength to %d bytes failed\n",
 			  blocklength);
-#पूर्ण_अगर
-	kमुक्त(buffer);
-	वापस rc;
-पूर्ण
+#endif
+	kfree(buffer);
+	return rc;
+}
 
-/* This function माला_लो called after a media change. Checks अगर the CD is
-   multisession, asks क्रम offset etc. */
+/* This function gets called after a media change. Checks if the CD is
+   multisession, asks for offset etc. */
 
-पूर्णांक sr_cd_check(काष्ठा cdrom_device_info *cdi)
-अणु
+int sr_cd_check(struct cdrom_device_info *cdi)
+{
 	Scsi_CD *cd = cdi->handle;
-	अचिन्हित दीर्घ sector;
-	अचिन्हित अक्षर *buffer;	/* the buffer क्रम the ioctl */
-	काष्ठा packet_command cgc;
-	पूर्णांक rc, no_multi;
+	unsigned long sector;
+	unsigned char *buffer;	/* the buffer for the ioctl */
+	struct packet_command cgc;
+	int rc, no_multi;
 
-	अगर (cd->cdi.mask & CDC_MULTI_SESSION)
-		वापस 0;
+	if (cd->cdi.mask & CDC_MULTI_SESSION)
+		return 0;
 
-	buffer = kदो_स्मृति(512, GFP_KERNEL | GFP_DMA);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(512, GFP_KERNEL | GFP_DMA);
+	if (!buffer)
+		return -ENOMEM;
 
 	sector = 0;		/* the multisession sector offset goes here  */
 	no_multi = 0;		/* flag: the drive can't handle multisession */
 	rc = 0;
 
-	स_रखो(&cgc, 0, माप(काष्ठा packet_command));
+	memset(&cgc, 0, sizeof(struct packet_command));
 
-	चयन (cd->venकरोr) अणु
+	switch (cd->vendor) {
 
-	हाल VENDOR_SCSI3:
+	case VENDOR_SCSI3:
 		cgc.cmd[0] = READ_TOC;
 		cgc.cmd[8] = 12;
 		cgc.cmd[9] = 0x40;
@@ -200,26 +199,26 @@
 		cgc.buflen = 12;
 		cgc.quiet = 1;
 		cgc.data_direction = DMA_FROM_DEVICE;
-		cgc.समयout = VENDOR_TIMEOUT;
-		rc = sr_करो_ioctl(cd, &cgc);
-		अगर (rc != 0)
-			अवरोध;
-		अगर ((buffer[0] << 8) + buffer[1] < 0x0a) अणु
-			sr_prपूर्णांकk(KERN_INFO, cd, "Hmm, seems the drive "
+		cgc.timeout = VENDOR_TIMEOUT;
+		rc = sr_do_ioctl(cd, &cgc);
+		if (rc != 0)
+			break;
+		if ((buffer[0] << 8) + buffer[1] < 0x0a) {
+			sr_printk(KERN_INFO, cd, "Hmm, seems the drive "
 			   "doesn't support multisession CD's\n");
 			no_multi = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		sector = buffer[11] + (buffer[10] << 8) +
 		    (buffer[9] << 16) + (buffer[8] << 24);
-		अगर (buffer[6] <= 1) अणु
+		if (buffer[6] <= 1) {
 			/* ignore sector offsets from first track */
 			sector = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल VENDOR_NEC:अणु
-			अचिन्हित दीर्घ min, sec, frame;
+	case VENDOR_NEC:{
+			unsigned long min, sec, frame;
 			cgc.cmd[0] = 0xde;
 			cgc.cmd[1] = 0x03;
 			cgc.cmd[2] = 0xb0;
@@ -227,28 +226,28 @@
 			cgc.buflen = 0x16;
 			cgc.quiet = 1;
 			cgc.data_direction = DMA_FROM_DEVICE;
-			cgc.समयout = VENDOR_TIMEOUT;
-			rc = sr_करो_ioctl(cd, &cgc);
-			अगर (rc != 0)
-				अवरोध;
-			अगर (buffer[14] != 0 && buffer[14] != 0xb0) अणु
-				sr_prपूर्णांकk(KERN_INFO, cd, "Hmm, seems the cdrom "
+			cgc.timeout = VENDOR_TIMEOUT;
+			rc = sr_do_ioctl(cd, &cgc);
+			if (rc != 0)
+				break;
+			if (buffer[14] != 0 && buffer[14] != 0xb0) {
+				sr_printk(KERN_INFO, cd, "Hmm, seems the cdrom "
 					  "doesn't support multisession CD's\n");
 
 				no_multi = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			min = bcd2bin(buffer[15]);
 			sec = bcd2bin(buffer[16]);
 			frame = bcd2bin(buffer[17]);
 			sector = min * CD_SECS * CD_FRAMES + sec * CD_FRAMES + frame;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	हाल VENDOR_TOSHIBA:अणु
-			अचिन्हित दीर्घ min, sec, frame;
+	case VENDOR_TOSHIBA:{
+			unsigned long min, sec, frame;
 
-			/* we request some disc inक्रमmation (is it a XA-CD ?,
+			/* we request some disc information (is it a XA-CD ?,
 			 * where starts the last session ?) */
 			cgc.cmd[0] = 0xc7;
 			cgc.cmd[1] = 0x03;
@@ -256,27 +255,27 @@
 			cgc.buflen = 4;
 			cgc.quiet = 1;
 			cgc.data_direction = DMA_FROM_DEVICE;
-			cgc.समयout = VENDOR_TIMEOUT;
-			rc = sr_करो_ioctl(cd, &cgc);
-			अगर (rc == -EINVAL) अणु
-				sr_prपूर्णांकk(KERN_INFO, cd, "Hmm, seems the drive "
+			cgc.timeout = VENDOR_TIMEOUT;
+			rc = sr_do_ioctl(cd, &cgc);
+			if (rc == -EINVAL) {
+				sr_printk(KERN_INFO, cd, "Hmm, seems the drive "
 					  "doesn't support multisession CD's\n");
 				no_multi = 1;
-				अवरोध;
-			पूर्ण
-			अगर (rc != 0)
-				अवरोध;
+				break;
+			}
+			if (rc != 0)
+				break;
 			min = bcd2bin(buffer[1]);
 			sec = bcd2bin(buffer[2]);
 			frame = bcd2bin(buffer[3]);
 			sector = min * CD_SECS * CD_FRAMES + sec * CD_FRAMES + frame;
-			अगर (sector)
+			if (sector)
 				sector -= CD_MSF_OFFSET;
 			sr_set_blocklength(cd, 2048);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	हाल VENDOR_WRITER:
+	case VENDOR_WRITER:
 		cgc.cmd[0] = READ_TOC;
 		cgc.cmd[8] = 0x04;
 		cgc.cmd[9] = 0x40;
@@ -284,16 +283,16 @@
 		cgc.buflen = 0x04;
 		cgc.quiet = 1;
 		cgc.data_direction = DMA_FROM_DEVICE;
-		cgc.समयout = VENDOR_TIMEOUT;
-		rc = sr_करो_ioctl(cd, &cgc);
-		अगर (rc != 0) अणु
-			अवरोध;
-		पूर्ण
-		अगर ((rc = buffer[2]) == 0) अणु
-			sr_prपूर्णांकk(KERN_WARNING, cd,
+		cgc.timeout = VENDOR_TIMEOUT;
+		rc = sr_do_ioctl(cd, &cgc);
+		if (rc != 0) {
+			break;
+		}
+		if ((rc = buffer[2]) == 0) {
+			sr_printk(KERN_WARNING, cd,
 				  "No finished session\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		cgc.cmd[0] = READ_TOC;	/* Read TOC */
 		cgc.cmd[6] = rc & 0x7f;	/* number of last session */
 		cgc.cmd[8] = 0x0c;
@@ -302,40 +301,40 @@
 		cgc.buflen = 12;
 		cgc.quiet = 1;
 		cgc.data_direction = DMA_FROM_DEVICE;
-		cgc.समयout = VENDOR_TIMEOUT;
-		rc = sr_करो_ioctl(cd, &cgc);
-		अगर (rc != 0) अणु
-			अवरोध;
-		पूर्ण
+		cgc.timeout = VENDOR_TIMEOUT;
+		rc = sr_do_ioctl(cd, &cgc);
+		if (rc != 0) {
+			break;
+		}
 		sector = buffer[11] + (buffer[10] << 8) +
 		    (buffer[9] << 16) + (buffer[8] << 24);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* should not happen */
-		sr_prपूर्णांकk(KERN_WARNING, cd,
+		sr_printk(KERN_WARNING, cd,
 			  "unknown vendor code (%i), not initialized ?\n",
-			  cd->venकरोr);
+			  cd->vendor);
 		sector = 0;
 		no_multi = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	cd->ms_offset = sector;
 	cd->xa_flag = 0;
-	अगर (CDS_AUDIO != sr_disk_status(cdi) && 1 == sr_is_xa(cd))
+	if (CDS_AUDIO != sr_disk_status(cdi) && 1 == sr_is_xa(cd))
 		cd->xa_flag = 1;
 
-	अगर (2048 != cd->device->sector_size) अणु
+	if (2048 != cd->device->sector_size) {
 		sr_set_blocklength(cd, 2048);
-	पूर्ण
-	अगर (no_multi)
+	}
+	if (no_multi)
 		cdi->mask |= CDC_MULTI_SESSION;
 
-#अगर_घोषित DEBUG
-	अगर (sector)
-		sr_prपूर्णांकk(KERN_DEBUG, cd, "multisession offset=%lu\n",
+#ifdef DEBUG
+	if (sector)
+		sr_printk(KERN_DEBUG, cd, "multisession offset=%lu\n",
 			  sector);
-#पूर्ण_अगर
-	kमुक्त(buffer);
-	वापस rc;
-पूर्ण
+#endif
+	kfree(buffer);
+	return rc;
+}

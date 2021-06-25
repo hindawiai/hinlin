@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* Function to determine अगर a thपढ़ो group is single thपढ़ोed or not
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* Function to determine if a thread group is single threaded or not
  *
  * Copyright (C) 2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  * - Derived from security/selinux/hooks.c
  */
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/sched/mm.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task.h>
+#include <linux/sched/mm.h>
 
 /*
- * Returns true अगर the task करोes not share ->mm with another thपढ़ो/process.
+ * Returns true if the task does not share ->mm with another thread/process.
  */
-bool current_is_single_thपढ़ोed(व्योम)
-अणु
-	काष्ठा task_काष्ठा *task = current;
-	काष्ठा mm_काष्ठा *mm = task->mm;
-	काष्ठा task_काष्ठा *p, *t;
+bool current_is_single_threaded(void)
+{
+	struct task_struct *task = current;
+	struct mm_struct *mm = task->mm;
+	struct task_struct *p, *t;
 	bool ret;
 
-	अगर (atomic_पढ़ो(&task->संकेत->live) != 1)
-		वापस false;
+	if (atomic_read(&task->signal->live) != 1)
+		return false;
 
-	अगर (atomic_पढ़ो(&mm->mm_users) == 1)
-		वापस true;
+	if (atomic_read(&mm->mm_users) == 1)
+		return true;
 
 	ret = false;
-	rcu_पढ़ो_lock();
-	क्रम_each_process(p) अणु
-		अगर (unlikely(p->flags & PF_KTHREAD))
-			जारी;
-		अगर (unlikely(p == task->group_leader))
-			जारी;
+	rcu_read_lock();
+	for_each_process(p) {
+		if (unlikely(p->flags & PF_KTHREAD))
+			continue;
+		if (unlikely(p == task->group_leader))
+			continue;
 
-		क्रम_each_thपढ़ो(p, t) अणु
-			अगर (unlikely(t->mm == mm))
-				जाओ found;
-			अगर (likely(t->mm))
-				अवरोध;
+		for_each_thread(p, t) {
+			if (unlikely(t->mm == mm))
+				goto found;
+			if (likely(t->mm))
+				break;
 			/*
-			 * t->mm == शून्य. Make sure next_thपढ़ो/next_task
+			 * t->mm == NULL. Make sure next_thread/next_task
 			 * will see other CLONE_VM tasks which might be
-			 * विभाजनed beक्रमe निकासing.
+			 * forked before exiting.
 			 */
 			smp_rmb();
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ret = true;
 found:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

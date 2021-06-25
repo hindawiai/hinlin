@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश "bpf_iter.h"
-#समावेश <bpf/bpf_helpers.h>
+#include "bpf_iter.h"
+#include <bpf/bpf_helpers.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
 __u32 value_sum = 0;
 
 SEC("iter/bpf_map_elem")
-पूर्णांक dump_bpf_hash_map(काष्ठा bpf_iter__bpf_map_elem *ctx)
-अणु
-	व्योम *value = ctx->value;
+int dump_bpf_hash_map(struct bpf_iter__bpf_map_elem *ctx)
+{
+	void *value = ctx->value;
 
-	अगर (value == (व्योम *)0)
-		वापस 0;
+	if (value == (void *)0)
+		return 0;
 
-	/* negative offset, verअगरier failure. */
+	/* negative offset, verifier failure. */
 	value_sum += *(__u32 *)(value - 4);
-	वापस 0;
-पूर्ण
+	return 0;
+}

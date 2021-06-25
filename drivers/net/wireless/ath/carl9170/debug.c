@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Atheros CARL9170 driver
  *
@@ -7,7 +6,7 @@
  * Copyright 2008, Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2009, 2010, Christian Lamparter <chunkeey@googlemail.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -15,231 +14,231 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; see the file COPYING.  If not, see
+ * along with this program; see the file COPYING.  If not, see
  * http://www.gnu.org/licenses/.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *    Copyright (c) 2008-2009 Atheros Communications, Inc.
  *
- *    Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ *    Permission to use, copy, modify, and/or distribute this software for any
  *    purpose with or without fee is hereby granted, provided that the above
  *    copyright notice and this permission notice appear in all copies.
  *
  *    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  *    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  *    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *    ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  *    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "carl9170.h"
-#समावेश "cmd.h"
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/seq_file.h>
+#include <linux/vmalloc.h>
+#include "carl9170.h"
+#include "cmd.h"
 
-#घोषणा ADD(buf, off, max, fmt, args...)				\
-	off += scnम_लिखो(&buf[off], max - off, fmt, ##args)
+#define ADD(buf, off, max, fmt, args...)				\
+	off += scnprintf(&buf[off], max - off, fmt, ##args)
 
 
-काष्ठा carl9170_debugfs_fops अणु
-	अचिन्हित पूर्णांक पढ़ो_bufsize;
+struct carl9170_debugfs_fops {
+	unsigned int read_bufsize;
 	umode_t attr;
-	अक्षर *(*पढ़ो)(काष्ठा ar9170 *ar, अक्षर *buf, माप_प्रकार bufsize,
-		      sमाप_प्रकार *len);
-	sमाप_प्रकार (*ग_लिखो)(काष्ठा ar9170 *aru, स्थिर अक्षर *buf, माप_प्रकार size);
-	स्थिर काष्ठा file_operations fops;
+	char *(*read)(struct ar9170 *ar, char *buf, size_t bufsize,
+		      ssize_t *len);
+	ssize_t (*write)(struct ar9170 *aru, const char *buf, size_t size);
+	const struct file_operations fops;
 
-	क्रमागत carl9170_device_state req_dev_state;
-पूर्ण;
+	enum carl9170_device_state req_dev_state;
+};
 
-अटल sमाप_प्रकार carl9170_debugfs_पढ़ो(काष्ठा file *file, अक्षर __user *userbuf,
-				     माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा carl9170_debugfs_fops *dfops;
-	काष्ठा ar9170 *ar;
-	अक्षर *buf = शून्य, *res_buf = शून्य;
-	sमाप_प्रकार ret = 0;
-	पूर्णांक err = 0;
+static ssize_t carl9170_debugfs_read(struct file *file, char __user *userbuf,
+				     size_t count, loff_t *ppos)
+{
+	struct carl9170_debugfs_fops *dfops;
+	struct ar9170 *ar;
+	char *buf = NULL, *res_buf = NULL;
+	ssize_t ret = 0;
+	int err = 0;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	ar = file->निजी_data;
+	ar = file->private_data;
 
-	अगर (!ar)
-		वापस -ENODEV;
+	if (!ar)
+		return -ENODEV;
 	dfops = container_of(debugfs_real_fops(file),
-			     काष्ठा carl9170_debugfs_fops, fops);
+			     struct carl9170_debugfs_fops, fops);
 
-	अगर (!dfops->पढ़ो)
-		वापस -ENOSYS;
+	if (!dfops->read)
+		return -ENOSYS;
 
-	अगर (dfops->पढ़ो_bufsize) अणु
-		buf = vदो_स्मृति(dfops->पढ़ो_bufsize);
-		अगर (!buf)
-			वापस -ENOMEM;
-	पूर्ण
+	if (dfops->read_bufsize) {
+		buf = vmalloc(dfops->read_bufsize);
+		if (!buf)
+			return -ENOMEM;
+	}
 
 	mutex_lock(&ar->mutex);
-	अगर (!CHK_DEV_STATE(ar, dfops->req_dev_state)) अणु
+	if (!CHK_DEV_STATE(ar, dfops->req_dev_state)) {
 		err = -ENODEV;
 		res_buf = buf;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	res_buf = dfops->पढ़ो(ar, buf, dfops->पढ़ो_bufsize, &ret);
+	res_buf = dfops->read(ar, buf, dfops->read_bufsize, &ret);
 
-	अगर (ret > 0)
-		err = simple_पढ़ो_from_buffer(userbuf, count, ppos,
+	if (ret > 0)
+		err = simple_read_from_buffer(userbuf, count, ppos,
 					      res_buf, ret);
-	अन्यथा
+	else
 		err = ret;
 
-	WARN_ON_ONCE(dfops->पढ़ो_bufsize && (res_buf != buf));
+	WARN_ON_ONCE(dfops->read_bufsize && (res_buf != buf));
 
-out_मुक्त:
-	vमुक्त(res_buf);
+out_free:
+	vfree(res_buf);
 	mutex_unlock(&ar->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार carl9170_debugfs_ग_लिखो(काष्ठा file *file,
-	स्थिर अक्षर __user *userbuf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा carl9170_debugfs_fops *dfops;
-	काष्ठा ar9170 *ar;
-	अक्षर *buf = शून्य;
-	पूर्णांक err = 0;
+static ssize_t carl9170_debugfs_write(struct file *file,
+	const char __user *userbuf, size_t count, loff_t *ppos)
+{
+	struct carl9170_debugfs_fops *dfops;
+	struct ar9170 *ar;
+	char *buf = NULL;
+	int err = 0;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (count > PAGE_SIZE)
-		वापस -E2BIG;
+	if (count > PAGE_SIZE)
+		return -E2BIG;
 
-	ar = file->निजी_data;
+	ar = file->private_data;
 
-	अगर (!ar)
-		वापस -ENODEV;
+	if (!ar)
+		return -ENODEV;
 	dfops = container_of(debugfs_real_fops(file),
-			     काष्ठा carl9170_debugfs_fops, fops);
+			     struct carl9170_debugfs_fops, fops);
 
-	अगर (!dfops->ग_लिखो)
-		वापस -ENOSYS;
+	if (!dfops->write)
+		return -ENOSYS;
 
-	buf = vदो_स्मृति(count);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = vmalloc(count);
+	if (!buf)
+		return -ENOMEM;
 
-	अगर (copy_from_user(buf, userbuf, count)) अणु
+	if (copy_from_user(buf, userbuf, count)) {
 		err = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (mutex_trylock(&ar->mutex) == 0) अणु
+	if (mutex_trylock(&ar->mutex) == 0) {
 		err = -EAGAIN;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (!CHK_DEV_STATE(ar, dfops->req_dev_state)) अणु
+	if (!CHK_DEV_STATE(ar, dfops->req_dev_state)) {
 		err = -ENODEV;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	err = dfops->ग_लिखो(ar, buf, count);
-	अगर (err)
-		जाओ out_unlock;
+	err = dfops->write(ar, buf, count);
+	if (err)
+		goto out_unlock;
 
 out_unlock:
 	mutex_unlock(&ar->mutex);
 
-out_मुक्त:
-	vमुक्त(buf);
-	वापस err;
-पूर्ण
+out_free:
+	vfree(buf);
+	return err;
+}
 
-#घोषणा __DEBUGFS_DECLARE_खाता(name, _पढ़ो, _ग_लिखो, _पढ़ो_bufsize,	\
+#define __DEBUGFS_DECLARE_FILE(name, _read, _write, _read_bufsize,	\
 			       _attr, _dstate)				\
-अटल स्थिर काष्ठा carl9170_debugfs_fops carl_debugfs_##name ##_ops = अणु\
-	.पढ़ो_bufsize = _पढ़ो_bufsize,					\
-	.पढ़ो = _पढ़ो,							\
-	.ग_लिखो = _ग_लिखो,						\
+static const struct carl9170_debugfs_fops carl_debugfs_##name ##_ops = {\
+	.read_bufsize = _read_bufsize,					\
+	.read = _read,							\
+	.write = _write,						\
 	.attr = _attr,							\
 	.req_dev_state = _dstate,					\
-	.fops = अणु							\
-		.खोलो	= simple_खोलो,					\
-		.पढ़ो	= carl9170_debugfs_पढ़ो,			\
-		.ग_लिखो	= carl9170_debugfs_ग_लिखो,			\
+	.fops = {							\
+		.open	= simple_open,					\
+		.read	= carl9170_debugfs_read,			\
+		.write	= carl9170_debugfs_write,			\
 		.owner	= THIS_MODULE					\
-	पूर्ण,								\
-पूर्ण
+	},								\
+}
 
-#घोषणा DEBUGFS_DECLARE_खाता(name, _पढ़ो, _ग_लिखो, _पढ़ो_bufsize, _attr)	\
-	__DEBUGFS_DECLARE_खाता(name, _पढ़ो, _ग_लिखो, _पढ़ो_bufsize,	\
+#define DEBUGFS_DECLARE_FILE(name, _read, _write, _read_bufsize, _attr)	\
+	__DEBUGFS_DECLARE_FILE(name, _read, _write, _read_bufsize,	\
 			       _attr, CARL9170_STARTED)			\
 
-#घोषणा DEBUGFS_DECLARE_RO_खाता(name, _पढ़ो_bufsize)			\
-	DEBUGFS_DECLARE_खाता(name, carl9170_debugfs_##name ##_पढ़ो,	\
-			     शून्य, _पढ़ो_bufsize, 0400)
+#define DEBUGFS_DECLARE_RO_FILE(name, _read_bufsize)			\
+	DEBUGFS_DECLARE_FILE(name, carl9170_debugfs_##name ##_read,	\
+			     NULL, _read_bufsize, 0400)
 
-#घोषणा DEBUGFS_DECLARE_WO_खाता(name)					\
-	DEBUGFS_DECLARE_खाता(name, शून्य, carl9170_debugfs_##name ##_ग_लिखो,\
+#define DEBUGFS_DECLARE_WO_FILE(name)					\
+	DEBUGFS_DECLARE_FILE(name, NULL, carl9170_debugfs_##name ##_write,\
 			     0, 0200)
 
-#घोषणा DEBUGFS_DECLARE_RW_खाता(name, _पढ़ो_bufsize)			\
-	DEBUGFS_DECLARE_खाता(name, carl9170_debugfs_##name ##_पढ़ो,	\
-			     carl9170_debugfs_##name ##_ग_लिखो,		\
-			     _पढ़ो_bufsize, 0600)
+#define DEBUGFS_DECLARE_RW_FILE(name, _read_bufsize)			\
+	DEBUGFS_DECLARE_FILE(name, carl9170_debugfs_##name ##_read,	\
+			     carl9170_debugfs_##name ##_write,		\
+			     _read_bufsize, 0600)
 
-#घोषणा __DEBUGFS_DECLARE_RW_खाता(name, _पढ़ो_bufsize, _dstate)		\
-	__DEBUGFS_DECLARE_खाता(name, carl9170_debugfs_##name ##_पढ़ो,	\
-			     carl9170_debugfs_##name ##_ग_लिखो,		\
-			     _पढ़ो_bufsize, 0600, _dstate)
+#define __DEBUGFS_DECLARE_RW_FILE(name, _read_bufsize, _dstate)		\
+	__DEBUGFS_DECLARE_FILE(name, carl9170_debugfs_##name ##_read,	\
+			     carl9170_debugfs_##name ##_write,		\
+			     _read_bufsize, 0600, _dstate)
 
-#घोषणा DEBUGFS_READONLY_खाता(name, _पढ़ो_bufsize, fmt, value...)	\
-अटल अक्षर *carl9170_debugfs_ ##name ## _पढ़ो(काष्ठा ar9170 *ar,	\
-					     अक्षर *buf, माप_प्रकार buf_size,\
-					     sमाप_प्रकार *len)		\
-अणु									\
+#define DEBUGFS_READONLY_FILE(name, _read_bufsize, fmt, value...)	\
+static char *carl9170_debugfs_ ##name ## _read(struct ar9170 *ar,	\
+					     char *buf, size_t buf_size,\
+					     ssize_t *len)		\
+{									\
 	ADD(buf, *len, buf_size, fmt "\n", ##value);			\
-	वापस buf;							\
-पूर्ण									\
-DEBUGFS_DECLARE_RO_खाता(name, _पढ़ो_bufsize)
+	return buf;							\
+}									\
+DEBUGFS_DECLARE_RO_FILE(name, _read_bufsize)
 
-अटल अक्षर *carl9170_debugfs_mem_usage_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					     माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
+static char *carl9170_debugfs_mem_usage_read(struct ar9170 *ar, char *buf,
+					     size_t bufsize, ssize_t *len)
+{
 	spin_lock_bh(&ar->mem_lock);
 
 	ADD(buf, *len, bufsize, "jar: [%*pb]\n",
-	    ar->fw.mem_blocks, ar->mem_biपंचांगap);
+	    ar->fw.mem_blocks, ar->mem_bitmap);
 
 	ADD(buf, *len, bufsize, "cookies: used:%3d / total:%3d, allocs:%d\n",
-	    biपंचांगap_weight(ar->mem_biपंचांगap, ar->fw.mem_blocks),
-	    ar->fw.mem_blocks, atomic_पढ़ो(&ar->mem_allocs));
+	    bitmap_weight(ar->mem_bitmap, ar->fw.mem_blocks),
+	    ar->fw.mem_blocks, atomic_read(&ar->mem_allocs));
 
 	ADD(buf, *len, bufsize, "memory: free:%3d (%3d KiB) / total:%3d KiB)\n",
-	    atomic_पढ़ो(&ar->mem_मुक्त_blocks),
-	    (atomic_पढ़ो(&ar->mem_मुक्त_blocks) * ar->fw.mem_block_size) / 1024,
+	    atomic_read(&ar->mem_free_blocks),
+	    (atomic_read(&ar->mem_free_blocks) * ar->fw.mem_block_size) / 1024,
 	    (ar->fw.mem_blocks * ar->fw.mem_block_size) / 1024);
 
 	spin_unlock_bh(&ar->mem_lock);
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(mem_usage, 512);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(mem_usage, 512);
 
-अटल अक्षर *carl9170_debugfs_qos_stat_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					    माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
+static char *carl9170_debugfs_qos_stat_read(struct ar9170 *ar, char *buf,
+					    size_t bufsize, ssize_t *len)
+{
 	ADD(buf, *len, bufsize, "%s QoS AC\n", modparam_noht ? "Hardware" :
 	    "Software");
 
@@ -277,37 +276,37 @@ DEBUGFS_DECLARE_RO_खाता(mem_usage, 512);
 	    skb_queue_len(&ar->tx_pending[3]),
 	    skb_queue_len(&ar->tx_status[3]));
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(qos_stat, 512);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(qos_stat, 512);
 
-अटल व्योम carl9170_debugfs_क्रमmat_frame(काष्ठा ar9170 *ar,
-	काष्ठा sk_buff *skb, स्थिर अक्षर *prefix, अक्षर *buf,
-	sमाप_प्रकार *off, sमाप_प्रकार bufsize)
-अणु
-	काष्ठा _carl9170_tx_superframe *txc = (व्योम *) skb->data;
-	काष्ठा ieee80211_tx_info *txinfo = IEEE80211_SKB_CB(skb);
-	काष्ठा carl9170_tx_info *arinfo = (व्योम *) txinfo->rate_driver_data;
-	काष्ठा ieee80211_hdr *hdr = (व्योम *) txc->frame_data;
+static void carl9170_debugfs_format_frame(struct ar9170 *ar,
+	struct sk_buff *skb, const char *prefix, char *buf,
+	ssize_t *off, ssize_t bufsize)
+{
+	struct _carl9170_tx_superframe *txc = (void *) skb->data;
+	struct ieee80211_tx_info *txinfo = IEEE80211_SKB_CB(skb);
+	struct carl9170_tx_info *arinfo = (void *) txinfo->rate_driver_data;
+	struct ieee80211_hdr *hdr = (void *) txc->frame_data;
 
 	ADD(buf, *off, bufsize, "%s %p, c:%2x, DA:%pM, sq:%4d, mc:%.4x, "
 	    "pc:%.8x, to:%d ms\n", prefix, skb, txc->s.cookie,
 	    ieee80211_get_DA(hdr), get_seq_h(hdr),
 	    le16_to_cpu(txc->f.mac_control), le32_to_cpu(txc->f.phy_control),
-	    jअगरfies_to_msecs(jअगरfies - arinfo->समयout));
-पूर्ण
+	    jiffies_to_msecs(jiffies - arinfo->timeout));
+}
 
 
-अटल अक्षर *carl9170_debugfs_ampdu_state_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					       माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
-	काष्ठा carl9170_sta_tid *iter;
-	काष्ठा sk_buff *skb;
-	पूर्णांक cnt = 0, fc;
-	पूर्णांक offset;
+static char *carl9170_debugfs_ampdu_state_read(struct ar9170 *ar, char *buf,
+					       size_t bufsize, ssize_t *len)
+{
+	struct carl9170_sta_tid *iter;
+	struct sk_buff *skb;
+	int cnt = 0, fc;
+	int offset;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(iter, &ar->tx_ampdu_list, list) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(iter, &ar->tx_ampdu_list, list) {
 
 		spin_lock_bh(&iter->lock);
 		ADD(buf, *len, bufsize, "Entry: #%2d TID:%1d, BSN:%4d, "
@@ -316,9 +315,9 @@ DEBUGFS_DECLARE_RO_खाता(qos_stat, 512);
 		    iter->max, iter->state, iter->counter);
 
 		ADD(buf, *len, bufsize, "\tWindow:  [%*pb,W]\n",
-		    CARL9170_BAW_BITS, iter->biपंचांगap);
+		    CARL9170_BAW_BITS, iter->bitmap);
 
-#घोषणा BM_STR_OFF(offset)					\
+#define BM_STR_OFF(offset)					\
 	((CARL9170_BAW_BITS - (offset) - 1) / 4 +		\
 	 (CARL9170_BAW_BITS - (offset) - 1) / 32 + 1)
 
@@ -328,7 +327,7 @@ DEBUGFS_DECLARE_RO_खाता(qos_stat, 512);
 		offset = BM_STR_OFF(SEQ_DIFF(iter->snx, iter->bsn));
 		ADD(buf, *len, bufsize, "\tNext Seq: %*s\n", offset, "W");
 
-		offset = BM_STR_OFF(((पूर्णांक)iter->hsn - (पूर्णांक)iter->bsn) %
+		offset = BM_STR_OFF(((int)iter->hsn - (int)iter->bsn) %
 				     CARL9170_BAW_BITS);
 		ADD(buf, *len, bufsize, "\tLast Seq: %*s\n", offset, "N");
 
@@ -336,269 +335,269 @@ DEBUGFS_DECLARE_RO_खाता(qos_stat, 512);
 		    " currently queued:%d\n", skb_queue_len(&iter->queue));
 
 		fc = 0;
-		skb_queue_walk(&iter->queue, skb) अणु
-			अक्षर prefix[32];
+		skb_queue_walk(&iter->queue, skb) {
+			char prefix[32];
 
-			snम_लिखो(prefix, माप(prefix), "\t\t%3d :", fc);
-			carl9170_debugfs_क्रमmat_frame(ar, skb, prefix, buf,
+			snprintf(prefix, sizeof(prefix), "\t\t%3d :", fc);
+			carl9170_debugfs_format_frame(ar, skb, prefix, buf,
 						      len, bufsize);
 
 			fc++;
-		पूर्ण
+		}
 		spin_unlock_bh(&iter->lock);
 		cnt++;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(ampdu_state, 8000);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(ampdu_state, 8000);
 
-अटल व्योम carl9170_debugfs_queue_dump(काष्ठा ar9170 *ar, अक्षर *buf,
-	sमाप_प्रकार *len, माप_प्रकार bufsize, काष्ठा sk_buff_head *queue)
-अणु
-	काष्ठा sk_buff *skb;
-	अक्षर prefix[16];
-	पूर्णांक fc = 0;
+static void carl9170_debugfs_queue_dump(struct ar9170 *ar, char *buf,
+	ssize_t *len, size_t bufsize, struct sk_buff_head *queue)
+{
+	struct sk_buff *skb;
+	char prefix[16];
+	int fc = 0;
 
 	spin_lock_bh(&queue->lock);
-	skb_queue_walk(queue, skb) अणु
-		snम_लिखो(prefix, माप(prefix), "%3d :", fc);
-		carl9170_debugfs_क्रमmat_frame(ar, skb, prefix, buf,
+	skb_queue_walk(queue, skb) {
+		snprintf(prefix, sizeof(prefix), "%3d :", fc);
+		carl9170_debugfs_format_frame(ar, skb, prefix, buf,
 					      len, bufsize);
 		fc++;
-	पूर्ण
+	}
 	spin_unlock_bh(&queue->lock);
-पूर्ण
+}
 
-#घोषणा DEBUGFS_QUEUE_DUMP(q, qi)					\
-अटल अक्षर *carl9170_debugfs_##q ##_##qi ##_पढ़ो(काष्ठा ar9170 *ar,	\
-	अक्षर *buf, माप_प्रकार bufsize, sमाप_प्रकार *len)			\
-अणु									\
+#define DEBUGFS_QUEUE_DUMP(q, qi)					\
+static char *carl9170_debugfs_##q ##_##qi ##_read(struct ar9170 *ar,	\
+	char *buf, size_t bufsize, ssize_t *len)			\
+{									\
 	carl9170_debugfs_queue_dump(ar, buf, len, bufsize, &ar->q[qi]);	\
-	वापस buf;							\
-पूर्ण									\
-DEBUGFS_DECLARE_RO_खाता(q##_##qi, 8000);
+	return buf;							\
+}									\
+DEBUGFS_DECLARE_RO_FILE(q##_##qi, 8000);
 
-अटल अक्षर *carl9170_debugfs_sta_psm_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					   माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
+static char *carl9170_debugfs_sta_psm_read(struct ar9170 *ar, char *buf,
+					   size_t bufsize, ssize_t *len)
+{
 	ADD(buf, *len, bufsize, "psm state: %s\n", (ar->ps.off_override ?
 	    "FORCE CAM" : (ar->ps.state ? "PSM" : "CAM")));
 
 	ADD(buf, *len, bufsize, "sleep duration: %d ms.\n", ar->ps.sleep_ms);
 	ADD(buf, *len, bufsize, "last power-state transition: %d ms ago.\n",
-	    jअगरfies_to_msecs(jअगरfies - ar->ps.last_action));
+	    jiffies_to_msecs(jiffies - ar->ps.last_action));
 	ADD(buf, *len, bufsize, "last CAM->PSM transition: %d ms ago.\n",
-	    jअगरfies_to_msecs(jअगरfies - ar->ps.last_slept));
+	    jiffies_to_msecs(jiffies - ar->ps.last_slept));
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(sta_psm, 160);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(sta_psm, 160);
 
-अटल अक्षर *carl9170_debugfs_tx_stuck_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					    माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
-	पूर्णांक i;
+static char *carl9170_debugfs_tx_stuck_read(struct ar9170 *ar, char *buf,
+					    size_t bufsize, ssize_t *len)
+{
+	int i;
 
-	क्रम (i = 0; i < ar->hw->queues; i++) अणु
+	for (i = 0; i < ar->hw->queues; i++) {
 		ADD(buf, *len, bufsize, "TX queue [%d]: %10d max:%10d ms.\n",
 		    i, ieee80211_queue_stopped(ar->hw, i) ?
-		    jअगरfies_to_msecs(jअगरfies - ar->queue_stop_समयout[i]) : 0,
-		    jअगरfies_to_msecs(ar->max_queue_stop_समयout[i]));
+		    jiffies_to_msecs(jiffies - ar->queue_stop_timeout[i]) : 0,
+		    jiffies_to_msecs(ar->max_queue_stop_timeout[i]));
 
-		ar->max_queue_stop_समयout[i] = 0;
-	पूर्ण
+		ar->max_queue_stop_timeout[i] = 0;
+	}
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(tx_stuck, 180);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(tx_stuck, 180);
 
-अटल अक्षर *carl9170_debugfs_phy_noise_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					     माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
-	पूर्णांक err;
+static char *carl9170_debugfs_phy_noise_read(struct ar9170 *ar, char *buf,
+					     size_t bufsize, ssize_t *len)
+{
+	int err;
 
-	err = carl9170_get_noiseन्यूनमान(ar);
-	अगर (err) अणु
+	err = carl9170_get_noisefloor(ar);
+	if (err) {
 		*len = err;
-		वापस buf;
-	पूर्ण
+		return buf;
+	}
 
 	ADD(buf, *len, bufsize, "Chain 0: %10d dBm, ext. chan.:%10d dBm\n",
 	    ar->noise[0], ar->noise[2]);
 	ADD(buf, *len, bufsize, "Chain 2: %10d dBm, ext. chan.:%10d dBm\n",
 	    ar->noise[1], ar->noise[3]);
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(phy_noise, 180);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(phy_noise, 180);
 
-अटल अक्षर *carl9170_debugfs_vअगर_dump_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					    माप_प्रकार bufsize, sमाप_प्रकार *len)
-अणु
-	काष्ठा carl9170_vअगर_info *iter;
-	पूर्णांक i = 0;
+static char *carl9170_debugfs_vif_dump_read(struct ar9170 *ar, char *buf,
+					    size_t bufsize, ssize_t *len)
+{
+	struct carl9170_vif_info *iter;
+	int i = 0;
 
 	ADD(buf, *len, bufsize, "registered VIFs:%d \\ %d\n",
-	    ar->vअगरs, ar->fw.vअगर_num);
+	    ar->vifs, ar->fw.vif_num);
 
 	ADD(buf, *len, bufsize, "VIF bitmap: [%*pb]\n",
-	    ar->fw.vअगर_num, &ar->vअगर_biपंचांगap);
+	    ar->fw.vif_num, &ar->vif_bitmap);
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(iter, &ar->vअगर_list, list) अणु
-		काष्ठा ieee80211_vअगर *vअगर = carl9170_get_vअगर(iter);
+	rcu_read_lock();
+	list_for_each_entry_rcu(iter, &ar->vif_list, list) {
+		struct ieee80211_vif *vif = carl9170_get_vif(iter);
 		ADD(buf, *len, bufsize, "\t%d = [%s VIF, id:%d, type:%x "
-		    " mac:%pM %s]\n", i, (carl9170_get_मुख्य_vअगर(ar) == vअगर ?
-		    "Master" : " Slave"), iter->id, vअगर->type, vअगर->addr,
+		    " mac:%pM %s]\n", i, (carl9170_get_main_vif(ar) == vif ?
+		    "Master" : " Slave"), iter->id, vif->type, vif->addr,
 		    iter->enable_beacon ? "beaconing " : "");
 		i++;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RO_खाता(vअगर_dump, 8000);
+	return buf;
+}
+DEBUGFS_DECLARE_RO_FILE(vif_dump, 8000);
 
-#घोषणा UPDATE_COUNTER(ar, name)	(अणु				\
-	u32 __पंचांगp[ARRAY_SIZE(name##_regs)];				\
-	अचिन्हित पूर्णांक __i, __err = -ENODEV;				\
+#define UPDATE_COUNTER(ar, name)	({				\
+	u32 __tmp[ARRAY_SIZE(name##_regs)];				\
+	unsigned int __i, __err = -ENODEV;				\
 									\
-	क्रम (__i = 0; __i < ARRAY_SIZE(name##_regs); __i++) अणु		\
-		__पंचांगp[__i] = name##_regs[__i].reg;			\
+	for (__i = 0; __i < ARRAY_SIZE(name##_regs); __i++) {		\
+		__tmp[__i] = name##_regs[__i].reg;			\
 		ar->debug.stats.name##_counter[__i] = 0;		\
-	पूर्ण								\
+	}								\
 									\
-	अगर (IS_STARTED(ar))						\
-		__err = carl9170_पढ़ो_mreg(ar, ARRAY_SIZE(name##_regs),	\
-			__पंचांगp, ar->debug.stats.name##_counter);		\
-	(__err); पूर्ण)
+	if (IS_STARTED(ar))						\
+		__err = carl9170_read_mreg(ar, ARRAY_SIZE(name##_regs),	\
+			__tmp, ar->debug.stats.name##_counter);		\
+	(__err); })
 
-#घोषणा TALLY_SUM_UP(ar, name)	करो अणु					\
-	अचिन्हित पूर्णांक __i;						\
+#define TALLY_SUM_UP(ar, name)	do {					\
+	unsigned int __i;						\
 									\
-	क्रम (__i = 0; __i < ARRAY_SIZE(name##_regs); __i++) अणु		\
+	for (__i = 0; __i < ARRAY_SIZE(name##_regs); __i++) {		\
 		ar->debug.stats.name##_sum[__i] +=			\
 			ar->debug.stats.name##_counter[__i];		\
-	पूर्ण								\
-पूर्ण जबतक (0)
+	}								\
+} while (0)
 
-#घोषणा DEBUGFS_HW_TALLY_खाता(name, f)					\
-अटल अक्षर *carl9170_debugfs_##name ## _पढ़ो(काष्ठा ar9170 *ar,	\
-	 अक्षर *dum, माप_प्रकार bufsize, sमाप_प्रकार *ret)			\
-अणु									\
-	अक्षर *buf;							\
-	पूर्णांक i, max_len, err;						\
+#define DEBUGFS_HW_TALLY_FILE(name, f)					\
+static char *carl9170_debugfs_##name ## _read(struct ar9170 *ar,	\
+	 char *dum, size_t bufsize, ssize_t *ret)			\
+{									\
+	char *buf;							\
+	int i, max_len, err;						\
 									\
 	max_len = ARRAY_SIZE(name##_regs) * 80;				\
-	buf = vदो_स्मृति(max_len);						\
-	अगर (!buf)							\
-		वापस शून्य;						\
+	buf = vmalloc(max_len);						\
+	if (!buf)							\
+		return NULL;						\
 									\
 	err = UPDATE_COUNTER(ar, name);					\
-	अगर (err) अणु							\
+	if (err) {							\
 		*ret = err;						\
-		वापस buf;						\
-	पूर्ण								\
+		return buf;						\
+	}								\
 									\
 	TALLY_SUM_UP(ar, name);						\
 									\
-	क्रम (i = 0; i < ARRAY_SIZE(name##_regs); i++) अणु			\
+	for (i = 0; i < ARRAY_SIZE(name##_regs); i++) {			\
 		ADD(buf, *ret, max_len, "%22s = %" f "[+%" f "]\n",	\
 		    name##_regs[i].nreg, ar->debug.stats.name ##_sum[i],\
 		    ar->debug.stats.name ##_counter[i]);		\
-	पूर्ण								\
+	}								\
 									\
-	वापस buf;							\
-पूर्ण									\
-DEBUGFS_DECLARE_RO_खाता(name, 0);
+	return buf;							\
+}									\
+DEBUGFS_DECLARE_RO_FILE(name, 0);
 
-#घोषणा DEBUGFS_HW_REG_खाता(name, f)					\
-अटल अक्षर *carl9170_debugfs_##name ## _पढ़ो(काष्ठा ar9170 *ar,	\
-	अक्षर *dum, माप_प्रकार bufsize, sमाप_प्रकार *ret)			\
-अणु									\
-	अक्षर *buf;							\
-	पूर्णांक i, max_len, err;						\
+#define DEBUGFS_HW_REG_FILE(name, f)					\
+static char *carl9170_debugfs_##name ## _read(struct ar9170 *ar,	\
+	char *dum, size_t bufsize, ssize_t *ret)			\
+{									\
+	char *buf;							\
+	int i, max_len, err;						\
 									\
 	max_len = ARRAY_SIZE(name##_regs) * 80;				\
-	buf = vदो_स्मृति(max_len);						\
-	अगर (!buf)							\
-		वापस शून्य;						\
+	buf = vmalloc(max_len);						\
+	if (!buf)							\
+		return NULL;						\
 									\
 	err = UPDATE_COUNTER(ar, name);					\
-	अगर (err) अणु							\
+	if (err) {							\
 		*ret = err;						\
-		वापस buf;						\
-	पूर्ण								\
+		return buf;						\
+	}								\
 									\
-	क्रम (i = 0; i < ARRAY_SIZE(name##_regs); i++) अणु			\
+	for (i = 0; i < ARRAY_SIZE(name##_regs); i++) {			\
 		ADD(buf, *ret, max_len, "%22s = %" f "\n",		\
 		    name##_regs[i].nreg,				\
 		    ar->debug.stats.name##_counter[i]);			\
-	पूर्ण								\
+	}								\
 									\
-	वापस buf;							\
-पूर्ण									\
-DEBUGFS_DECLARE_RO_खाता(name, 0);
+	return buf;							\
+}									\
+DEBUGFS_DECLARE_RO_FILE(name, 0);
 
-अटल sमाप_प्रकार carl9170_debugfs_hw_ioपढ़ो32_ग_लिखो(काष्ठा ar9170 *ar,
-	स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err = 0, i, n = 0, max_len = 32, res;
-	अचिन्हित पूर्णांक reg, पंचांगp;
+static ssize_t carl9170_debugfs_hw_ioread32_write(struct ar9170 *ar,
+	const char *buf, size_t count)
+{
+	int err = 0, i, n = 0, max_len = 32, res;
+	unsigned int reg, tmp;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (count > max_len)
-		वापस -E2BIG;
+	if (count > max_len)
+		return -E2BIG;
 
-	res = माला_पूछो(buf, "0x%X %d", &reg, &n);
-	अगर (res < 1) अणु
+	res = sscanf(buf, "0x%X %d", &reg, &n);
+	if (res < 1) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (res == 1)
+	if (res == 1)
 		n = 1;
 
-	अगर (n > 15) अणु
+	if (n > 15) {
 		err = -EMSGSIZE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((reg >= 0x280000) || ((reg + (n << 2)) >= 0x280000)) अणु
+	if ((reg >= 0x280000) || ((reg + (n << 2)) >= 0x280000)) {
 		err = -EADDRNOTAVAIL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (reg & 3) अणु
+	if (reg & 3) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < n; i++) अणु
-		err = carl9170_पढ़ो_reg(ar, reg + (i << 2), &पंचांगp);
-		अगर (err)
-			जाओ out;
+	for (i = 0; i < n; i++) {
+		err = carl9170_read_reg(ar, reg + (i << 2), &tmp);
+		if (err)
+			goto out;
 
 		ar->debug.ring[ar->debug.ring_tail].reg = reg + (i << 2);
-		ar->debug.ring[ar->debug.ring_tail].value = पंचांगp;
+		ar->debug.ring[ar->debug.ring_tail].value = tmp;
 		ar->debug.ring_tail++;
 		ar->debug.ring_tail %= CARL9170_DEBUG_RING_SIZE;
-	पूर्ण
+	}
 
 out:
-	वापस err ? err : count;
-पूर्ण
+	return err ? err : count;
+}
 
-अटल अक्षर *carl9170_debugfs_hw_ioपढ़ो32_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-					       माप_प्रकार bufsize, sमाप_प्रकार *ret)
-अणु
-	पूर्णांक i = 0;
+static char *carl9170_debugfs_hw_ioread32_read(struct ar9170 *ar, char *buf,
+					       size_t bufsize, ssize_t *ret)
+{
+	int i = 0;
 
-	जबतक (ar->debug.ring_head != ar->debug.ring_tail) अणु
+	while (ar->debug.ring_head != ar->debug.ring_tail) {
 		ADD(buf, *ret, bufsize, "%.8x = %.8x\n",
 		    ar->debug.ring[ar->debug.ring_head].reg,
 		    ar->debug.ring[ar->debug.ring_head].value);
@@ -606,64 +605,64 @@ out:
 		ar->debug.ring_head++;
 		ar->debug.ring_head %= CARL9170_DEBUG_RING_SIZE;
 
-		अगर (i++ == 64)
-			अवरोध;
-	पूर्ण
+		if (i++ == 64)
+			break;
+	}
 	ar->debug.ring_head = ar->debug.ring_tail;
-	वापस buf;
-पूर्ण
-DEBUGFS_DECLARE_RW_खाता(hw_ioपढ़ो32, CARL9170_DEBUG_RING_SIZE * 40);
+	return buf;
+}
+DEBUGFS_DECLARE_RW_FILE(hw_ioread32, CARL9170_DEBUG_RING_SIZE * 40);
 
-अटल sमाप_प्रकार carl9170_debugfs_bug_ग_लिखो(काष्ठा ar9170 *ar, स्थिर अक्षर *buf,
-					  माप_प्रकार count)
-अणु
-	पूर्णांक err;
+static ssize_t carl9170_debugfs_bug_write(struct ar9170 *ar, const char *buf,
+					  size_t count)
+{
+	int err;
 
-	अगर (count < 1)
-		वापस -EINVAL;
+	if (count < 1)
+		return -EINVAL;
 
-	चयन (buf[0]) अणु
-	हाल 'F':
+	switch (buf[0]) {
+	case 'F':
 		ar->needs_full_reset = true;
-		अवरोध;
+		break;
 
-	हाल 'R':
-		अगर (!IS_STARTED(ar)) अणु
+	case 'R':
+		if (!IS_STARTED(ar)) {
 			err = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ar->needs_full_reset = false;
-		अवरोध;
+		break;
 
-	हाल 'M':
+	case 'M':
 		err = carl9170_mac_reset(ar);
-		अगर (err < 0)
+		if (err < 0)
 			count = err;
 
-		जाओ out;
+		goto out;
 
-	हाल 'P':
+	case 'P':
 		err = carl9170_set_channel(ar, ar->hw->conf.chandef.chan,
 			cfg80211_get_chandef_type(&ar->hw->conf.chandef));
-		अगर (err < 0)
+		if (err < 0)
 			count = err;
 
-		जाओ out;
+		goto out;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	carl9170_restart(ar, CARL9170_RR_USER_REQUEST);
 
 out:
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल अक्षर *carl9170_debugfs_bug_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-				       माप_प्रकार bufsize, sमाप_प्रकार *ret)
-अणु
+static char *carl9170_debugfs_bug_read(struct ar9170 *ar, char *buf,
+				       size_t bufsize, ssize_t *ret)
+{
 	ADD(buf, *ret, bufsize, "[P]hy reinit, [R]estart, [F]ull usb reset, "
 	    "[M]ac reset\n");
 	ADD(buf, *ret, bufsize, "firmware restarts:%d, last reason:%d\n",
@@ -675,93 +674,93 @@ out:
 	ADD(buf, *ret, bufsize, "reported firmware BUGs:%d\n",
 		ar->fw.bug_counter);
 	ADD(buf, *ret, bufsize, "pending restart requests:%d\n",
-		atomic_पढ़ो(&ar->pending_restarts));
-	वापस buf;
-पूर्ण
-__DEBUGFS_DECLARE_RW_खाता(bug, 400, CARL9170_STOPPED);
+		atomic_read(&ar->pending_restarts));
+	return buf;
+}
+__DEBUGFS_DECLARE_RW_FILE(bug, 400, CARL9170_STOPPED);
 
-अटल स्थिर अक्षर *स्थिर erp_modes[] = अणु
+static const char *const erp_modes[] = {
 	[CARL9170_ERP_INVALID] = "INVALID",
 	[CARL9170_ERP_AUTO] = "Automatic",
 	[CARL9170_ERP_MAC80211] = "Set by MAC80211",
 	[CARL9170_ERP_OFF] = "Force Off",
 	[CARL9170_ERP_RTS] = "Force RTS",
 	[CARL9170_ERP_CTS] = "Force CTS"
-पूर्ण;
+};
 
-अटल अक्षर *carl9170_debugfs_erp_पढ़ो(काष्ठा ar9170 *ar, अक्षर *buf,
-				       माप_प्रकार bufsize, sमाप_प्रकार *ret)
-अणु
+static char *carl9170_debugfs_erp_read(struct ar9170 *ar, char *buf,
+				       size_t bufsize, ssize_t *ret)
+{
 	ADD(buf, *ret, bufsize, "ERP Setting: (%d) -> %s\n", ar->erp_mode,
 	    erp_modes[ar->erp_mode]);
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल sमाप_प्रकार carl9170_debugfs_erp_ग_लिखो(काष्ठा ar9170 *ar, स्थिर अक्षर *buf,
-					  माप_प्रकार count)
-अणु
-	पूर्णांक res, val;
+static ssize_t carl9170_debugfs_erp_write(struct ar9170 *ar, const char *buf,
+					  size_t count)
+{
+	int res, val;
 
-	अगर (count < 1)
-		वापस -EINVAL;
+	if (count < 1)
+		return -EINVAL;
 
-	res = माला_पूछो(buf, "%d", &val);
-	अगर (res != 1)
-		वापस -EINVAL;
+	res = sscanf(buf, "%d", &val);
+	if (res != 1)
+		return -EINVAL;
 
-	अगर (!((val > CARL9170_ERP_INVALID) &&
+	if (!((val > CARL9170_ERP_INVALID) &&
 	      (val < __CARL9170_ERP_NUM)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ar->erp_mode = val;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-DEBUGFS_DECLARE_RW_खाता(erp, 80);
+DEBUGFS_DECLARE_RW_FILE(erp, 80);
 
-अटल sमाप_प्रकार carl9170_debugfs_hw_ioग_लिखो32_ग_लिखो(काष्ठा ar9170 *ar,
-	स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err = 0, max_len = 22, res;
+static ssize_t carl9170_debugfs_hw_iowrite32_write(struct ar9170 *ar,
+	const char *buf, size_t count)
+{
+	int err = 0, max_len = 22, res;
 	u32 reg, val;
 
-	अगर (!count)
-		वापस 0;
+	if (!count)
+		return 0;
 
-	अगर (count > max_len)
-		वापस -E2BIG;
+	if (count > max_len)
+		return -E2BIG;
 
-	res = माला_पूछो(buf, "0x%X 0x%X", &reg, &val);
-	अगर (res != 2) अणु
+	res = sscanf(buf, "0x%X 0x%X", &reg, &val);
+	if (res != 2) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (reg <= 0x100000 || reg >= 0x280000) अणु
+	if (reg <= 0x100000 || reg >= 0x280000) {
 		err = -EADDRNOTAVAIL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (reg & 3) अणु
+	if (reg & 3) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = carl9170_ग_लिखो_reg(ar, reg, val);
-	अगर (err)
-		जाओ out;
+	err = carl9170_write_reg(ar, reg, val);
+	if (err)
+		goto out;
 
 out:
-	वापस err ? err : count;
-पूर्ण
-DEBUGFS_DECLARE_WO_खाता(hw_ioग_लिखो32);
+	return err ? err : count;
+}
+DEBUGFS_DECLARE_WO_FILE(hw_iowrite32);
 
-DEBUGFS_HW_TALLY_खाता(hw_tx_tally, "u");
-DEBUGFS_HW_TALLY_खाता(hw_rx_tally, "u");
-DEBUGFS_HW_TALLY_खाता(hw_phy_errors, "u");
-DEBUGFS_HW_REG_खाता(hw_wlan_queue, ".8x");
-DEBUGFS_HW_REG_खाता(hw_pta_queue, ".8x");
-DEBUGFS_HW_REG_खाता(hw_ampdu_info, ".8x");
+DEBUGFS_HW_TALLY_FILE(hw_tx_tally, "u");
+DEBUGFS_HW_TALLY_FILE(hw_rx_tally, "u");
+DEBUGFS_HW_TALLY_FILE(hw_phy_errors, "u");
+DEBUGFS_HW_REG_FILE(hw_wlan_queue, ".8x");
+DEBUGFS_HW_REG_FILE(hw_pta_queue, ".8x");
+DEBUGFS_HW_REG_FILE(hw_ampdu_info, ".8x");
 DEBUGFS_QUEUE_DUMP(tx_status, 0);
 DEBUGFS_QUEUE_DUMP(tx_status, 1);
 DEBUGFS_QUEUE_DUMP(tx_status, 2);
@@ -770,53 +769,53 @@ DEBUGFS_QUEUE_DUMP(tx_pending, 0);
 DEBUGFS_QUEUE_DUMP(tx_pending, 1);
 DEBUGFS_QUEUE_DUMP(tx_pending, 2);
 DEBUGFS_QUEUE_DUMP(tx_pending, 3);
-DEBUGFS_READONLY_खाता(usb_tx_anch_urbs, 20, "%d",
-		      atomic_पढ़ो(&ar->tx_anch_urbs));
-DEBUGFS_READONLY_खाता(usb_rx_anch_urbs, 20, "%d",
-		      atomic_पढ़ो(&ar->rx_anch_urbs));
-DEBUGFS_READONLY_खाता(usb_rx_work_urbs, 20, "%d",
-		      atomic_पढ़ो(&ar->rx_work_urbs));
-DEBUGFS_READONLY_खाता(usb_rx_pool_urbs, 20, "%d",
-		      atomic_पढ़ो(&ar->rx_pool_urbs));
+DEBUGFS_READONLY_FILE(usb_tx_anch_urbs, 20, "%d",
+		      atomic_read(&ar->tx_anch_urbs));
+DEBUGFS_READONLY_FILE(usb_rx_anch_urbs, 20, "%d",
+		      atomic_read(&ar->rx_anch_urbs));
+DEBUGFS_READONLY_FILE(usb_rx_work_urbs, 20, "%d",
+		      atomic_read(&ar->rx_work_urbs));
+DEBUGFS_READONLY_FILE(usb_rx_pool_urbs, 20, "%d",
+		      atomic_read(&ar->rx_pool_urbs));
 
-DEBUGFS_READONLY_खाता(tx_total_queued, 20, "%d",
-		      atomic_पढ़ो(&ar->tx_total_queued));
-DEBUGFS_READONLY_खाता(tx_ampdu_scheduler, 20, "%d",
-		      atomic_पढ़ो(&ar->tx_ampdu_scheduler));
+DEBUGFS_READONLY_FILE(tx_total_queued, 20, "%d",
+		      atomic_read(&ar->tx_total_queued));
+DEBUGFS_READONLY_FILE(tx_ampdu_scheduler, 20, "%d",
+		      atomic_read(&ar->tx_ampdu_scheduler));
 
-DEBUGFS_READONLY_खाता(tx_total_pending, 20, "%d",
-		      atomic_पढ़ो(&ar->tx_total_pending));
+DEBUGFS_READONLY_FILE(tx_total_pending, 20, "%d",
+		      atomic_read(&ar->tx_total_pending));
 
-DEBUGFS_READONLY_खाता(tx_ampdu_list_len, 20, "%d",
+DEBUGFS_READONLY_FILE(tx_ampdu_list_len, 20, "%d",
 		      ar->tx_ampdu_list_len);
 
-DEBUGFS_READONLY_खाता(tx_ampdu_upload, 20, "%d",
-		      atomic_पढ़ो(&ar->tx_ampdu_upload));
+DEBUGFS_READONLY_FILE(tx_ampdu_upload, 20, "%d",
+		      atomic_read(&ar->tx_ampdu_upload));
 
-DEBUGFS_READONLY_खाता(tx_janitor_last_run, 64, "last run:%d ms ago",
-	jअगरfies_to_msecs(jअगरfies - ar->tx_janitor_last_run));
+DEBUGFS_READONLY_FILE(tx_janitor_last_run, 64, "last run:%d ms ago",
+	jiffies_to_msecs(jiffies - ar->tx_janitor_last_run));
 
-DEBUGFS_READONLY_खाता(tx_dropped, 20, "%d", ar->tx_dropped);
+DEBUGFS_READONLY_FILE(tx_dropped, 20, "%d", ar->tx_dropped);
 
-DEBUGFS_READONLY_खाता(rx_dropped, 20, "%d", ar->rx_dropped);
+DEBUGFS_READONLY_FILE(rx_dropped, 20, "%d", ar->rx_dropped);
 
-DEBUGFS_READONLY_खाता(snअगरfer_enabled, 20, "%d", ar->snअगरfer_enabled);
-DEBUGFS_READONLY_खाता(rx_software_decryption, 20, "%d",
+DEBUGFS_READONLY_FILE(sniffer_enabled, 20, "%d", ar->sniffer_enabled);
+DEBUGFS_READONLY_FILE(rx_software_decryption, 20, "%d",
 		      ar->rx_software_decryption);
-DEBUGFS_READONLY_खाता(ampdu_factor, 20, "%d",
+DEBUGFS_READONLY_FILE(ampdu_factor, 20, "%d",
 		      ar->current_factor);
-DEBUGFS_READONLY_खाता(ampdu_density, 20, "%d",
+DEBUGFS_READONLY_FILE(ampdu_density, 20, "%d",
 		      ar->current_density);
 
-DEBUGFS_READONLY_खाता(beacon_पूर्णांक, 20, "%d TU", ar->global_beacon_पूर्णांक);
-DEBUGFS_READONLY_खाता(pretbtt, 20, "%d TU", ar->global_pretbtt);
+DEBUGFS_READONLY_FILE(beacon_int, 20, "%d TU", ar->global_beacon_int);
+DEBUGFS_READONLY_FILE(pretbtt, 20, "%d TU", ar->global_pretbtt);
 
-व्योम carl9170_debugfs_रेजिस्टर(काष्ठा ar9170 *ar)
-अणु
+void carl9170_debugfs_register(struct ar9170 *ar)
+{
 	ar->debug_dir = debugfs_create_dir(KBUILD_MODNAME,
 		ar->hw->wiphy->debugfsdir);
 
-#घोषणा DEBUGFS_ADD(name)						\
+#define DEBUGFS_ADD(name)						\
 	debugfs_create_file(#name, carl_debugfs_##name ##_ops.attr,	\
 			    ar->debug_dir, ar,				\
 			    &carl_debugfs_##name ## _ops.fops)
@@ -835,7 +834,7 @@ DEBUGFS_READONLY_खाता(pretbtt, 20, "%d TU", ar->global_pretbtt);
 	DEBUGFS_ADD(tx_ampdu_list_len);
 
 	DEBUGFS_ADD(rx_dropped);
-	DEBUGFS_ADD(snअगरfer_enabled);
+	DEBUGFS_ADD(sniffer_enabled);
 	DEBUGFS_ADD(rx_software_decryption);
 
 	DEBUGFS_ADD(mem_usage);
@@ -867,21 +866,21 @@ DEBUGFS_READONLY_खाता(pretbtt, 20, "%d TU", ar->global_pretbtt);
 	DEBUGFS_ADD(tx_pending_2);
 	DEBUGFS_ADD(tx_pending_3);
 
-	DEBUGFS_ADD(hw_ioपढ़ो32);
-	DEBUGFS_ADD(hw_ioग_लिखो32);
+	DEBUGFS_ADD(hw_ioread32);
+	DEBUGFS_ADD(hw_iowrite32);
 	DEBUGFS_ADD(bug);
 
 	DEBUGFS_ADD(erp);
 
-	DEBUGFS_ADD(vअगर_dump);
+	DEBUGFS_ADD(vif_dump);
 
-	DEBUGFS_ADD(beacon_पूर्णांक);
+	DEBUGFS_ADD(beacon_int);
 	DEBUGFS_ADD(pretbtt);
 
-#अघोषित DEBUGFS_ADD
-पूर्ण
+#undef DEBUGFS_ADD
+}
 
-व्योम carl9170_debugfs_unरेजिस्टर(काष्ठा ar9170 *ar)
-अणु
-	debugfs_हटाओ_recursive(ar->debug_dir);
-पूर्ण
+void carl9170_debugfs_unregister(struct ar9170 *ar)
+{
+	debugfs_remove_recursive(ar->debug_dir);
+}

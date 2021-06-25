@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* alarmसमयr suspend test
+/* alarmtimer suspend test
  *		John Stultz (john.stultz@linaro.org)
  *              (C) Copyright Linaro 2013
  *              Licensed under the GPLv2
  *
- *   This test makes sure the alarmसमयr & RTC wakeup code is
+ *   This test makes sure the alarmtimer & RTC wakeup code is
  *   functioning.
  *
  *  To build:
- *	$ gcc alarmसमयr-suspend.c -o alarmसमयr-suspend -lrt
+ *	$ gcc alarmtimer-suspend.c -o alarmtimer-suspend -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -18,162 +17,162 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
 
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <समय.स>
-#समावेश <माला.स>
-#समावेश <संकेत.स>
-#समावेश <मानककोष.स>
-#समावेश <pthपढ़ो.h>
-#समावेश "../kselftest.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <time.h>
+#include <string.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include "../kselftest.h"
 
-#घोषणा CLOCK_REALTIME			0
-#घोषणा CLOCK_MONOTONIC			1
-#घोषणा CLOCK_PROCESS_CPUTIME_ID	2
-#घोषणा CLOCK_THREAD_CPUTIME_ID		3
-#घोषणा CLOCK_MONOTONIC_RAW		4
-#घोषणा CLOCK_REALTIME_COARSE		5
-#घोषणा CLOCK_MONOTONIC_COARSE		6
-#घोषणा CLOCK_BOOTTIME			7
-#घोषणा CLOCK_REALTIME_ALARM		8
-#घोषणा CLOCK_BOOTTIME_ALARM		9
-#घोषणा CLOCK_HWSPECIFIC		10
-#घोषणा CLOCK_TAI			11
-#घोषणा NR_CLOCKIDS			12
-
-
-#घोषणा NSEC_PER_SEC 1000000000ULL
-#घोषणा UNREASONABLE_LAT (NSEC_PER_SEC * 5) /* hopefully we resume in 5 secs */
-
-#घोषणा SUSPEND_SECS 15
-पूर्णांक alarmcount;
-पूर्णांक alarm_घड़ी_id;
-काष्ठा बारpec start_समय;
+#define CLOCK_REALTIME			0
+#define CLOCK_MONOTONIC			1
+#define CLOCK_PROCESS_CPUTIME_ID	2
+#define CLOCK_THREAD_CPUTIME_ID		3
+#define CLOCK_MONOTONIC_RAW		4
+#define CLOCK_REALTIME_COARSE		5
+#define CLOCK_MONOTONIC_COARSE		6
+#define CLOCK_BOOTTIME			7
+#define CLOCK_REALTIME_ALARM		8
+#define CLOCK_BOOTTIME_ALARM		9
+#define CLOCK_HWSPECIFIC		10
+#define CLOCK_TAI			11
+#define NR_CLOCKIDS			12
 
 
-अक्षर *घड़ीstring(पूर्णांक घड़ीid)
-अणु
-	चयन (घड़ीid) अणु
-	हाल CLOCK_REALTIME:
-		वापस "CLOCK_REALTIME";
-	हाल CLOCK_MONOTONIC:
-		वापस "CLOCK_MONOTONIC";
-	हाल CLOCK_PROCESS_CPUTIME_ID:
-		वापस "CLOCK_PROCESS_CPUTIME_ID";
-	हाल CLOCK_THREAD_CPUTIME_ID:
-		वापस "CLOCK_THREAD_CPUTIME_ID";
-	हाल CLOCK_MONOTONIC_RAW:
-		वापस "CLOCK_MONOTONIC_RAW";
-	हाल CLOCK_REALTIME_COARSE:
-		वापस "CLOCK_REALTIME_COARSE";
-	हाल CLOCK_MONOTONIC_COARSE:
-		वापस "CLOCK_MONOTONIC_COARSE";
-	हाल CLOCK_BOOTTIME:
-		वापस "CLOCK_BOOTTIME";
-	हाल CLOCK_REALTIME_ALARM:
-		वापस "CLOCK_REALTIME_ALARM";
-	हाल CLOCK_BOOTTIME_ALARM:
-		वापस "CLOCK_BOOTTIME_ALARM";
-	हाल CLOCK_TAI:
-		वापस "CLOCK_TAI";
-	पूर्ण;
-	वापस "UNKNOWN_CLOCKID";
-पूर्ण
+#define NSEC_PER_SEC 1000000000ULL
+#define UNREASONABLE_LAT (NSEC_PER_SEC * 5) /* hopefully we resume in 5 secs */
+
+#define SUSPEND_SECS 15
+int alarmcount;
+int alarm_clock_id;
+struct timespec start_time;
 
 
-दीर्घ दीर्घ बारpec_sub(काष्ठा बारpec a, काष्ठा बारpec b)
-अणु
-	दीर्घ दीर्घ ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
+char *clockstring(int clockid)
+{
+	switch (clockid) {
+	case CLOCK_REALTIME:
+		return "CLOCK_REALTIME";
+	case CLOCK_MONOTONIC:
+		return "CLOCK_MONOTONIC";
+	case CLOCK_PROCESS_CPUTIME_ID:
+		return "CLOCK_PROCESS_CPUTIME_ID";
+	case CLOCK_THREAD_CPUTIME_ID:
+		return "CLOCK_THREAD_CPUTIME_ID";
+	case CLOCK_MONOTONIC_RAW:
+		return "CLOCK_MONOTONIC_RAW";
+	case CLOCK_REALTIME_COARSE:
+		return "CLOCK_REALTIME_COARSE";
+	case CLOCK_MONOTONIC_COARSE:
+		return "CLOCK_MONOTONIC_COARSE";
+	case CLOCK_BOOTTIME:
+		return "CLOCK_BOOTTIME";
+	case CLOCK_REALTIME_ALARM:
+		return "CLOCK_REALTIME_ALARM";
+	case CLOCK_BOOTTIME_ALARM:
+		return "CLOCK_BOOTTIME_ALARM";
+	case CLOCK_TAI:
+		return "CLOCK_TAI";
+	};
+	return "UNKNOWN_CLOCKID";
+}
+
+
+long long timespec_sub(struct timespec a, struct timespec b)
+{
+	long long ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
 
 	ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक final_ret = 0;
+int final_ret = 0;
 
-व्योम sigalarm(पूर्णांक signo)
-अणु
-	दीर्घ दीर्घ delta_ns;
-	काष्ठा बारpec ts;
+void sigalarm(int signo)
+{
+	long long delta_ns;
+	struct timespec ts;
 
-	घड़ी_समय_लो(alarm_घड़ी_id, &ts);
+	clock_gettime(alarm_clock_id, &ts);
 	alarmcount++;
 
-	delta_ns = बारpec_sub(start_समय, ts);
+	delta_ns = timespec_sub(start_time, ts);
 	delta_ns -= NSEC_PER_SEC * SUSPEND_SECS * alarmcount;
 
-	म_लिखो("ALARM(%i): %ld:%ld latency: %lld ns ", alarmcount, ts.tv_sec,
+	printf("ALARM(%i): %ld:%ld latency: %lld ns ", alarmcount, ts.tv_sec,
 							ts.tv_nsec, delta_ns);
 
-	अगर (delta_ns > UNREASONABLE_LAT) अणु
-		म_लिखो("[FAIL]\n");
+	if (delta_ns > UNREASONABLE_LAT) {
+		printf("[FAIL]\n");
 		final_ret = -1;
-	पूर्ण अन्यथा
-		म_लिखो("[OK]\n");
+	} else
+		printf("[OK]\n");
 
-पूर्ण
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	समयr_t पंचांग1;
-	काष्ठा iसमयrspec its1, its2;
-	काष्ठा sigevent se;
-	काष्ठा sigaction act;
-	पूर्णांक signum = SIGRTMAX;
+int main(void)
+{
+	timer_t tm1;
+	struct itimerspec its1, its2;
+	struct sigevent se;
+	struct sigaction act;
+	int signum = SIGRTMAX;
 
-	/* Set up संकेत handler: */
+	/* Set up signal handler: */
 	sigfillset(&act.sa_mask);
 	act.sa_flags = 0;
 	act.sa_handler = sigalarm;
-	sigaction(signum, &act, शून्य);
+	sigaction(signum, &act, NULL);
 
-	/* Set up समयr: */
-	स_रखो(&se, 0, माप(se));
-	se.sigev_notअगरy = SIGEV_SIGNAL;
+	/* Set up timer: */
+	memset(&se, 0, sizeof(se));
+	se.sigev_notify = SIGEV_SIGNAL;
 	se.sigev_signo = signum;
-	se.sigev_value.sival_पूर्णांक = 0;
+	se.sigev_value.sival_int = 0;
 
-	क्रम (alarm_घड़ी_id = CLOCK_REALTIME_ALARM;
-			alarm_घड़ी_id <= CLOCK_BOOTTIME_ALARM;
-			alarm_घड़ी_id++) अणु
+	for (alarm_clock_id = CLOCK_REALTIME_ALARM;
+			alarm_clock_id <= CLOCK_BOOTTIME_ALARM;
+			alarm_clock_id++) {
 
 		alarmcount = 0;
-		अगर (समयr_create(alarm_घड़ी_id, &se, &पंचांग1) == -1) अणु
-			म_लिखो("timer_create failed, %s unsupported?\n",
-					घड़ीstring(alarm_घड़ी_id));
-			अवरोध;
-		पूर्ण
+		if (timer_create(alarm_clock_id, &se, &tm1) == -1) {
+			printf("timer_create failed, %s unsupported?\n",
+					clockstring(alarm_clock_id));
+			break;
+		}
 
-		घड़ी_समय_लो(alarm_घड़ी_id, &start_समय);
-		म_लिखो("Start time (%s): %ld:%ld\n", घड़ीstring(alarm_घड़ी_id),
-				start_समय.tv_sec, start_समय.tv_nsec);
-		म_लिखो("Setting alarm for every %i seconds\n", SUSPEND_SECS);
-		its1.it_value = start_समय;
+		clock_gettime(alarm_clock_id, &start_time);
+		printf("Start time (%s): %ld:%ld\n", clockstring(alarm_clock_id),
+				start_time.tv_sec, start_time.tv_nsec);
+		printf("Setting alarm for every %i seconds\n", SUSPEND_SECS);
+		its1.it_value = start_time;
 		its1.it_value.tv_sec += SUSPEND_SECS;
-		its1.it_पूर्णांकerval.tv_sec = SUSPEND_SECS;
-		its1.it_पूर्णांकerval.tv_nsec = 0;
+		its1.it_interval.tv_sec = SUSPEND_SECS;
+		its1.it_interval.tv_nsec = 0;
 
-		समयr_समय_रखो(पंचांग1, TIMER_ABSTIME, &its1, &its2);
+		timer_settime(tm1, TIMER_ABSTIME, &its1, &its2);
 
-		जबतक (alarmcount < 5)
-			sleep(1); /* First 5 alarms, करो nothing */
+		while (alarmcount < 5)
+			sleep(1); /* First 5 alarms, do nothing */
 
-		म_लिखो("Starting suspend loops\n");
-		जबतक (alarmcount < 10) अणु
-			पूर्णांक ret;
+		printf("Starting suspend loops\n");
+		while (alarmcount < 10) {
+			int ret;
 
 			sleep(3);
-			ret = प्रणाली("echo mem > /sys/power/state");
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-		समयr_delete(पंचांग1);
-	पूर्ण
-	अगर (final_ret)
-		वापस ksft_निकास_fail();
-	वापस ksft_निकास_pass();
-पूर्ण
+			ret = system("echo mem > /sys/power/state");
+			if (ret)
+				break;
+		}
+		timer_delete(tm1);
+	}
+	if (final_ret)
+		return ksft_exit_fail();
+	return ksft_exit_pass();
+}

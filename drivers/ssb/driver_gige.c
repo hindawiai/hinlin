@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Sonics Silicon Backplane
  * Broadcom Gigabit Ethernet core driver
@@ -6,15 +5,15 @@
  * Copyright 2008, Broadcom Corporation
  * Copyright 2008, Michael Buesch <m@bues.ch>
  *
- * Licensed under the GNU/GPL. See COPYING क्रम details.
+ * Licensed under the GNU/GPL. See COPYING for details.
  */
 
-#समावेश <linux/ssb/ssb.h>
-#समावेश <linux/ssb/ssb_driver_gige.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_regs.h>
-#समावेश <linux/slab.h>
+#include <linux/ssb/ssb.h>
+#include <linux/ssb/ssb_driver_gige.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+#include <linux/pci_regs.h>
+#include <linux/slab.h>
 
 
 /*
@@ -23,160 +22,160 @@ MODULE_AUTHOR("Michael Buesch");
 MODULE_LICENSE("GPL");
 */
 
-अटल स्थिर काष्ठा ssb_device_id ssb_gige_tbl[] = अणु
+static const struct ssb_device_id ssb_gige_tbl[] = {
 	SSB_DEVICE(SSB_VENDOR_BROADCOM, SSB_DEV_ETHERNET_GBIT, SSB_ANY_REV),
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 /* MODULE_DEVICE_TABLE(ssb, ssb_gige_tbl); */
 
 
-अटल अंतरभूत u8 gige_पढ़ो8(काष्ठा ssb_gige *dev, u16 offset)
-अणु
-	वापस ssb_पढ़ो8(dev->dev, offset);
-पूर्ण
+static inline u8 gige_read8(struct ssb_gige *dev, u16 offset)
+{
+	return ssb_read8(dev->dev, offset);
+}
 
-अटल अंतरभूत u16 gige_पढ़ो16(काष्ठा ssb_gige *dev, u16 offset)
-अणु
-	वापस ssb_पढ़ो16(dev->dev, offset);
-पूर्ण
+static inline u16 gige_read16(struct ssb_gige *dev, u16 offset)
+{
+	return ssb_read16(dev->dev, offset);
+}
 
-अटल अंतरभूत u32 gige_पढ़ो32(काष्ठा ssb_gige *dev, u16 offset)
-अणु
-	वापस ssb_पढ़ो32(dev->dev, offset);
-पूर्ण
+static inline u32 gige_read32(struct ssb_gige *dev, u16 offset)
+{
+	return ssb_read32(dev->dev, offset);
+}
 
-अटल अंतरभूत व्योम gige_ग_लिखो8(काष्ठा ssb_gige *dev,
+static inline void gige_write8(struct ssb_gige *dev,
 			       u16 offset, u8 value)
-अणु
-	ssb_ग_लिखो8(dev->dev, offset, value);
-पूर्ण
+{
+	ssb_write8(dev->dev, offset, value);
+}
 
-अटल अंतरभूत व्योम gige_ग_लिखो16(काष्ठा ssb_gige *dev,
+static inline void gige_write16(struct ssb_gige *dev,
 				u16 offset, u16 value)
-अणु
-	ssb_ग_लिखो16(dev->dev, offset, value);
-पूर्ण
+{
+	ssb_write16(dev->dev, offset, value);
+}
 
-अटल अंतरभूत व्योम gige_ग_लिखो32(काष्ठा ssb_gige *dev,
+static inline void gige_write32(struct ssb_gige *dev,
 				u16 offset, u32 value)
-अणु
-	ssb_ग_लिखो32(dev->dev, offset, value);
-पूर्ण
+{
+	ssb_write32(dev->dev, offset, value);
+}
 
-अटल अंतरभूत
-u8 gige_pcicfg_पढ़ो8(काष्ठा ssb_gige *dev, अचिन्हित पूर्णांक offset)
-अणु
+static inline
+u8 gige_pcicfg_read8(struct ssb_gige *dev, unsigned int offset)
+{
 	BUG_ON(offset >= 256);
-	वापस gige_पढ़ो8(dev, SSB_GIGE_PCICFG + offset);
-पूर्ण
+	return gige_read8(dev, SSB_GIGE_PCICFG + offset);
+}
 
-अटल अंतरभूत
-u16 gige_pcicfg_पढ़ो16(काष्ठा ssb_gige *dev, अचिन्हित पूर्णांक offset)
-अणु
+static inline
+u16 gige_pcicfg_read16(struct ssb_gige *dev, unsigned int offset)
+{
 	BUG_ON(offset >= 256);
-	वापस gige_पढ़ो16(dev, SSB_GIGE_PCICFG + offset);
-पूर्ण
+	return gige_read16(dev, SSB_GIGE_PCICFG + offset);
+}
 
-अटल अंतरभूत
-u32 gige_pcicfg_पढ़ो32(काष्ठा ssb_gige *dev, अचिन्हित पूर्णांक offset)
-अणु
+static inline
+u32 gige_pcicfg_read32(struct ssb_gige *dev, unsigned int offset)
+{
 	BUG_ON(offset >= 256);
-	वापस gige_पढ़ो32(dev, SSB_GIGE_PCICFG + offset);
-पूर्ण
+	return gige_read32(dev, SSB_GIGE_PCICFG + offset);
+}
 
-अटल अंतरभूत
-व्योम gige_pcicfg_ग_लिखो8(काष्ठा ssb_gige *dev,
-			अचिन्हित पूर्णांक offset, u8 value)
-अणु
+static inline
+void gige_pcicfg_write8(struct ssb_gige *dev,
+			unsigned int offset, u8 value)
+{
 	BUG_ON(offset >= 256);
-	gige_ग_लिखो8(dev, SSB_GIGE_PCICFG + offset, value);
-पूर्ण
+	gige_write8(dev, SSB_GIGE_PCICFG + offset, value);
+}
 
-अटल अंतरभूत
-व्योम gige_pcicfg_ग_लिखो16(काष्ठा ssb_gige *dev,
-			 अचिन्हित पूर्णांक offset, u16 value)
-अणु
+static inline
+void gige_pcicfg_write16(struct ssb_gige *dev,
+			 unsigned int offset, u16 value)
+{
 	BUG_ON(offset >= 256);
-	gige_ग_लिखो16(dev, SSB_GIGE_PCICFG + offset, value);
-पूर्ण
+	gige_write16(dev, SSB_GIGE_PCICFG + offset, value);
+}
 
-अटल अंतरभूत
-व्योम gige_pcicfg_ग_लिखो32(काष्ठा ssb_gige *dev,
-			 अचिन्हित पूर्णांक offset, u32 value)
-अणु
+static inline
+void gige_pcicfg_write32(struct ssb_gige *dev,
+			 unsigned int offset, u32 value)
+{
 	BUG_ON(offset >= 256);
-	gige_ग_लिखो32(dev, SSB_GIGE_PCICFG + offset, value);
-पूर्ण
+	gige_write32(dev, SSB_GIGE_PCICFG + offset, value);
+}
 
-अटल पूर्णांक ssb_gige_pci_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				    पूर्णांक reg, पूर्णांक size, u32 *val)
-अणु
-	काष्ठा ssb_gige *dev = container_of(bus->ops, काष्ठा ssb_gige, pci_ops);
-	अचिन्हित दीर्घ flags;
+static int ssb_gige_pci_read_config(struct pci_bus *bus, unsigned int devfn,
+				    int reg, int size, u32 *val)
+{
+	struct ssb_gige *dev = container_of(bus->ops, struct ssb_gige, pci_ops);
+	unsigned long flags;
 
-	अगर ((PCI_SLOT(devfn) > 0) || (PCI_FUNC(devfn) > 0))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	अगर (reg >= 256)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if ((PCI_SLOT(devfn) > 0) || (PCI_FUNC(devfn) > 0))
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	if (reg >= 256)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	चयन (size) अणु
-	हाल 1:
-		*val = gige_pcicfg_पढ़ो8(dev, reg);
-		अवरोध;
-	हाल 2:
-		*val = gige_pcicfg_पढ़ो16(dev, reg);
-		अवरोध;
-	हाल 4:
-		*val = gige_pcicfg_पढ़ो32(dev, reg);
-		अवरोध;
-	शेष:
+	switch (size) {
+	case 1:
+		*val = gige_pcicfg_read8(dev, reg);
+		break;
+	case 2:
+		*val = gige_pcicfg_read16(dev, reg);
+		break;
+	case 4:
+		*val = gige_pcicfg_read32(dev, reg);
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक ssb_gige_pci_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
-				     पूर्णांक reg, पूर्णांक size, u32 val)
-अणु
-	काष्ठा ssb_gige *dev = container_of(bus->ops, काष्ठा ssb_gige, pci_ops);
-	अचिन्हित दीर्घ flags;
+static int ssb_gige_pci_write_config(struct pci_bus *bus, unsigned int devfn,
+				     int reg, int size, u32 val)
+{
+	struct ssb_gige *dev = container_of(bus->ops, struct ssb_gige, pci_ops);
+	unsigned long flags;
 
-	अगर ((PCI_SLOT(devfn) > 0) || (PCI_FUNC(devfn) > 0))
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
-	अगर (reg >= 256)
-		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	if ((PCI_SLOT(devfn) > 0) || (PCI_FUNC(devfn) > 0))
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	if (reg >= 256)
+		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	चयन (size) अणु
-	हाल 1:
-		gige_pcicfg_ग_लिखो8(dev, reg, val);
-		अवरोध;
-	हाल 2:
-		gige_pcicfg_ग_लिखो16(dev, reg, val);
-		अवरोध;
-	हाल 4:
-		gige_pcicfg_ग_लिखो32(dev, reg, val);
-		अवरोध;
-	शेष:
+	switch (size) {
+	case 1:
+		gige_pcicfg_write8(dev, reg, val);
+		break;
+	case 2:
+		gige_pcicfg_write16(dev, reg, val);
+		break;
+	case 4:
+		gige_pcicfg_write32(dev, reg, val);
+		break;
+	default:
 		WARN_ON(1);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
+	return PCIBIOS_SUCCESSFUL;
+}
 
-अटल पूर्णांक ssb_gige_probe(काष्ठा ssb_device *sdev,
-			  स्थिर काष्ठा ssb_device_id *id)
-अणु
-	काष्ठा ssb_gige *dev;
-	u32 base, पंचांगslow, पंचांगshigh;
+static int ssb_gige_probe(struct ssb_device *sdev,
+			  const struct ssb_device_id *id)
+{
+	struct ssb_gige *dev;
+	u32 base, tmslow, tmshigh;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 	dev->dev = sdev;
 
 	spin_lock_init(&dev->lock);
@@ -184,21 +183,21 @@ u32 gige_pcicfg_पढ़ो32(काष्ठा ssb_gige *dev, अचिन्
 	dev->pci_controller.io_resource = &dev->io_resource;
 	dev->pci_controller.mem_resource = &dev->mem_resource;
 	dev->pci_controller.io_map_base = 0x800;
-	dev->pci_ops.पढ़ो = ssb_gige_pci_पढ़ो_config;
-	dev->pci_ops.ग_लिखो = ssb_gige_pci_ग_लिखो_config;
+	dev->pci_ops.read = ssb_gige_pci_read_config;
+	dev->pci_ops.write = ssb_gige_pci_write_config;
 
 	dev->io_resource.name = SSB_GIGE_IO_RES_NAME;
 	dev->io_resource.start = 0x800;
 	dev->io_resource.end = 0x8FF;
 	dev->io_resource.flags = IORESOURCE_IO | IORESOURCE_PCI_FIXED;
 
-	अगर (!ssb_device_is_enabled(sdev))
+	if (!ssb_device_is_enabled(sdev))
 		ssb_device_enable(sdev, 0);
 
 	/* Setup BAR0. This is a 64k MMIO region. */
-	base = ssb_admatch_base(ssb_पढ़ो32(sdev, SSB_ADMATCH1));
-	gige_pcicfg_ग_लिखो32(dev, PCI_BASE_ADDRESS_0, base);
-	gige_pcicfg_ग_लिखो32(dev, PCI_BASE_ADDRESS_1, 0);
+	base = ssb_admatch_base(ssb_read32(sdev, SSB_ADMATCH1));
+	gige_pcicfg_write32(dev, PCI_BASE_ADDRESS_0, base);
+	gige_pcicfg_write32(dev, PCI_BASE_ADDRESS_1, 0);
 
 	dev->mem_resource.name = SSB_GIGE_MEM_RES_NAME;
 	dev->mem_resource.start = base;
@@ -206,58 +205,58 @@ u32 gige_pcicfg_पढ़ो32(काष्ठा ssb_gige *dev, अचिन्
 	dev->mem_resource.flags = IORESOURCE_MEM | IORESOURCE_PCI_FIXED;
 
 	/* Enable the memory region. */
-	gige_pcicfg_ग_लिखो16(dev, PCI_COMMAND,
-			    gige_pcicfg_पढ़ो16(dev, PCI_COMMAND)
+	gige_pcicfg_write16(dev, PCI_COMMAND,
+			    gige_pcicfg_read16(dev, PCI_COMMAND)
 			    | PCI_COMMAND_MEMORY);
 
-	/* Write flushing is controlled by the Flush Status Control रेजिस्टर.
-	 * We want to flush every रेजिस्टर ग_लिखो with a समयout and we want
-	 * to disable the IRQ mask जबतक flushing to aव्योम concurrency.
-	 * Note that स्वतःmatic ग_लिखो flushing करोes _not_ work from
-	 * an IRQ handler. The driver must flush manually by पढ़ोing a रेजिस्टर.
+	/* Write flushing is controlled by the Flush Status Control register.
+	 * We want to flush every register write with a timeout and we want
+	 * to disable the IRQ mask while flushing to avoid concurrency.
+	 * Note that automatic write flushing does _not_ work from
+	 * an IRQ handler. The driver must flush manually by reading a register.
 	 */
-	gige_ग_लिखो32(dev, SSB_GIGE_SHIM_FLUSHSTAT, 0x00000068);
+	gige_write32(dev, SSB_GIGE_SHIM_FLUSHSTAT, 0x00000068);
 
-	/* Check अगर we have an RGMII or GMII PHY-bus.
-	 * On RGMII करो not bypass the DLLs */
-	पंचांगslow = ssb_पढ़ो32(sdev, SSB_TMSLOW);
-	पंचांगshigh = ssb_पढ़ो32(sdev, SSB_TMSHIGH);
-	अगर (पंचांगshigh & SSB_GIGE_TMSHIGH_RGMII) अणु
-		पंचांगslow &= ~SSB_GIGE_TMSLOW_TXBYPASS;
-		पंचांगslow &= ~SSB_GIGE_TMSLOW_RXBYPASS;
+	/* Check if we have an RGMII or GMII PHY-bus.
+	 * On RGMII do not bypass the DLLs */
+	tmslow = ssb_read32(sdev, SSB_TMSLOW);
+	tmshigh = ssb_read32(sdev, SSB_TMSHIGH);
+	if (tmshigh & SSB_GIGE_TMSHIGH_RGMII) {
+		tmslow &= ~SSB_GIGE_TMSLOW_TXBYPASS;
+		tmslow &= ~SSB_GIGE_TMSLOW_RXBYPASS;
 		dev->has_rgmii = 1;
-	पूर्ण अन्यथा अणु
-		पंचांगslow |= SSB_GIGE_TMSLOW_TXBYPASS;
-		पंचांगslow |= SSB_GIGE_TMSLOW_RXBYPASS;
+	} else {
+		tmslow |= SSB_GIGE_TMSLOW_TXBYPASS;
+		tmslow |= SSB_GIGE_TMSLOW_RXBYPASS;
 		dev->has_rgmii = 0;
-	पूर्ण
-	पंचांगslow |= SSB_GIGE_TMSLOW_DLLEN;
-	ssb_ग_लिखो32(sdev, SSB_TMSLOW, पंचांगslow);
+	}
+	tmslow |= SSB_GIGE_TMSLOW_DLLEN;
+	ssb_write32(sdev, SSB_TMSLOW, tmslow);
 
 	ssb_set_drvdata(sdev, dev);
-	रेजिस्टर_pci_controller(&dev->pci_controller);
+	register_pci_controller(&dev->pci_controller);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool pdev_is_ssb_gige_core(काष्ठा pci_dev *pdev)
-अणु
-	अगर (!pdev->resource[0].name)
-		वापस false;
-	वापस (म_भेद(pdev->resource[0].name, SSB_GIGE_MEM_RES_NAME) == 0);
-पूर्ण
+bool pdev_is_ssb_gige_core(struct pci_dev *pdev)
+{
+	if (!pdev->resource[0].name)
+		return false;
+	return (strcmp(pdev->resource[0].name, SSB_GIGE_MEM_RES_NAME) == 0);
+}
 EXPORT_SYMBOL(pdev_is_ssb_gige_core);
 
-पूर्णांक ssb_gige_pcibios_plat_dev_init(काष्ठा ssb_device *sdev,
-				   काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ssb_gige *dev = ssb_get_drvdata(sdev);
-	काष्ठा resource *res;
+int ssb_gige_pcibios_plat_dev_init(struct ssb_device *sdev,
+				   struct pci_dev *pdev)
+{
+	struct ssb_gige *dev = ssb_get_drvdata(sdev);
+	struct resource *res;
 
-	अगर (pdev->bus->ops != &dev->pci_ops) अणु
+	if (pdev->bus->ops != &dev->pci_ops) {
 		/* The PCI device is not on this SSB GigE bridge device. */
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Fixup the PCI resources. */
 	res = &(pdev->resource[0]);
@@ -266,33 +265,33 @@ EXPORT_SYMBOL(pdev_is_ssb_gige_core);
 	res->start = dev->mem_resource.start;
 	res->end = dev->mem_resource.end;
 
-	/* Fixup पूर्णांकerrupt lines. */
+	/* Fixup interrupt lines. */
 	pdev->irq = ssb_mips_irq(sdev) + 2;
-	pci_ग_लिखो_config_byte(pdev, PCI_INTERRUPT_LINE, pdev->irq);
+	pci_write_config_byte(pdev, PCI_INTERRUPT_LINE, pdev->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ssb_gige_map_irq(काष्ठा ssb_device *sdev,
-		     स्थिर काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ssb_gige *dev = ssb_get_drvdata(sdev);
+int ssb_gige_map_irq(struct ssb_device *sdev,
+		     const struct pci_dev *pdev)
+{
+	struct ssb_gige *dev = ssb_get_drvdata(sdev);
 
-	अगर (pdev->bus->ops != &dev->pci_ops) अणु
+	if (pdev->bus->ops != &dev->pci_ops) {
 		/* The PCI device is not on this SSB GigE bridge device. */
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस ssb_mips_irq(sdev) + 2;
-पूर्ण
+	return ssb_mips_irq(sdev) + 2;
+}
 
-अटल काष्ठा ssb_driver ssb_gige_driver = अणु
+static struct ssb_driver ssb_gige_driver = {
 	.name		= "BCM-GigE",
 	.id_table	= ssb_gige_tbl,
 	.probe		= ssb_gige_probe,
-पूर्ण;
+};
 
-पूर्णांक ssb_gige_init(व्योम)
-अणु
-	वापस ssb_driver_रेजिस्टर(&ssb_gige_driver);
-पूर्ण
+int ssb_gige_init(void)
+{
+	return ssb_driver_register(&ssb_gige_driver);
+}

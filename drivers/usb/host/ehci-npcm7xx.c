@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Nuvoton NPCM7xx driver क्रम EHCI HCD
+ * Nuvoton NPCM7xx driver for EHCI HCD
  *
  * Copyright (C) 2018 Nuvoton Technologies,
- * Avi Fishman <avi.fishman@nuvoton.com> <avअगरishman70@gmail.com>
- * Tomer Maimon <tomer.maimon@nuvoton.com> <पंचांगaimon77@gmail.com>
+ * Avi Fishman <avi.fishman@nuvoton.com> <avifishman70@gmail.com>
+ * Tomer Maimon <tomer.maimon@nuvoton.com> <tmaimon77@gmail.com>
  *
  * Based on various ehci-spear.c driver
  */
 
 
-#समावेश <linux/dma-mapping.h>
+#include <linux/dma-mapping.h>
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
 
-#समावेश "ehci.h"
+#include "ehci.h"
 
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
 
-#घोषणा DRIVER_DESC "EHCI npcm7xx driver"
+#define DRIVER_DESC "EHCI npcm7xx driver"
 
-अटल स्थिर अक्षर hcd_name[] = "npcm7xx-ehci";
+static const char hcd_name[] = "npcm7xx-ehci";
 
-#घोषणा  USB2PHYCTL_OFFSET 0x144
+#define  USB2PHYCTL_OFFSET 0x144
 
-#घोषणा  IPSRST2_OFFSET 0x24
-#घोषणा  IPSRST3_OFFSET 0x34
+#define  IPSRST2_OFFSET 0x24
+#define  IPSRST3_OFFSET 0x34
 
 
-अटल काष्ठा hc_driver __पढ़ो_mostly ehci_npcm7xx_hc_driver;
+static struct hc_driver __read_mostly ehci_npcm7xx_hc_driver;
 
-अटल पूर्णांक __maybe_unused ehci_npcm7xx_drv_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	bool करो_wakeup = device_may_wakeup(dev);
+static int __maybe_unused ehci_npcm7xx_drv_suspend(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	bool do_wakeup = device_may_wakeup(dev);
 
-	वापस ehci_suspend(hcd, करो_wakeup);
-पूर्ण
+	return ehci_suspend(hcd, do_wakeup);
+}
 
-अटल पूर्णांक __maybe_unused ehci_npcm7xx_drv_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+static int __maybe_unused ehci_npcm7xx_drv_resume(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
 
 	ehci_resume(hcd, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(ehci_npcm7xx_pm_ops, ehci_npcm7xx_drv_suspend,
+static SIMPLE_DEV_PM_OPS(ehci_npcm7xx_pm_ops, ehci_npcm7xx_drv_suspend,
 		ehci_npcm7xx_drv_resume);
 
-अटल पूर्णांक npcm7xx_ehci_hcd_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd;
-	काष्ठा resource *res;
-	काष्ठा regmap *gcr_regmap;
-	काष्ठा regmap *rst_regmap;
-	स्थिर काष्ठा hc_driver *driver = &ehci_npcm7xx_hc_driver;
-	पूर्णांक irq;
-	पूर्णांक retval;
+static int npcm7xx_ehci_hcd_drv_probe(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd;
+	struct resource *res;
+	struct regmap *gcr_regmap;
+	struct regmap *rst_regmap;
+	const struct hc_driver *driver = &ehci_npcm7xx_hc_driver;
+	int irq;
+	int retval;
 
 	dev_dbg(&pdev->dev,	"initializing npcm7xx ehci USB Controller\n");
 
 	gcr_regmap = syscon_regmap_lookup_by_compatible("nuvoton,npcm750-gcr");
-	अगर (IS_ERR(gcr_regmap)) अणु
+	if (IS_ERR(gcr_regmap)) {
 		dev_err(&pdev->dev, "%s: failed to find nuvoton,npcm750-gcr\n",
 			__func__);
-		वापस PTR_ERR(gcr_regmap);
-	पूर्ण
+		return PTR_ERR(gcr_regmap);
+	}
 
 	rst_regmap = syscon_regmap_lookup_by_compatible("nuvoton,npcm750-rst");
-	अगर (IS_ERR(rst_regmap)) अणु
+	if (IS_ERR(rst_regmap)) {
 		dev_err(&pdev->dev, "%s: failed to find nuvoton,npcm750-rst\n",
 			__func__);
-		वापस PTR_ERR(rst_regmap);
-	पूर्ण
+		return PTR_ERR(rst_regmap);
+	}
 
 	/********* phy init  ******/
 	// reset usb host
@@ -107,103 +106,103 @@
 	regmap_update_bits(rst_regmap, IPSRST2_OFFSET,
 			(0x1 << 26), 0);
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		retval = irq;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	/*
-	 * Right now device-tree probed devices करोn't get dma_mask set.
-	 * Since shared usb code relies on it, set it here क्रम now.
+	 * Right now device-tree probed devices don't get dma_mask set.
+	 * Since shared usb code relies on it, set it here for now.
 	 * Once we have dma capability bindings this can go away.
 	 */
 	retval = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (retval)
-		जाओ fail;
+	if (retval)
+		goto fail;
 
 	hcd = usb_create_hcd(driver, &pdev->dev, dev_name(&pdev->dev));
-	अगर (!hcd) अणु
+	if (!hcd) {
 		retval = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(hcd->regs)) अणु
+	if (IS_ERR(hcd->regs)) {
 		retval = PTR_ERR(hcd->regs);
-		जाओ err_put_hcd;
-	पूर्ण
+		goto err_put_hcd;
+	}
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 
-	/* रेजिस्टरs start at offset 0x0 */
+	/* registers start at offset 0x0 */
 	hcd_to_ehci(hcd)->caps = hcd->regs;
 
 	retval = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	अगर (retval)
-		जाओ err_put_hcd;
+	if (retval)
+		goto err_put_hcd;
 
 	device_wakeup_enable(hcd->self.controller);
-	वापस retval;
+	return retval;
 
 err_put_hcd:
 	usb_put_hcd(hcd);
 fail:
 	dev_err(&pdev->dev, "init fail, %d\n", retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक npcm7xx_ehci_hcd_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+static int npcm7xx_ehci_hcd_drv_remove(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 
 	usb_put_hcd(hcd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id npcm7xx_ehci_id_table[] = अणु
-	अणु .compatible = "nuvoton,npcm750-ehci" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id npcm7xx_ehci_id_table[] = {
+	{ .compatible = "nuvoton,npcm750-ehci" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, npcm7xx_ehci_id_table);
 
-अटल काष्ठा platक्रमm_driver npcm7xx_ehci_hcd_driver = अणु
+static struct platform_driver npcm7xx_ehci_hcd_driver = {
 	.probe		= npcm7xx_ehci_hcd_drv_probe,
-	.हटाओ		= npcm7xx_ehci_hcd_drv_हटाओ,
-	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
-	.driver		= अणु
+	.remove		= npcm7xx_ehci_hcd_drv_remove,
+	.shutdown	= usb_hcd_platform_shutdown,
+	.driver		= {
 		.name = "npcm7xx-ehci",
-		.bus = &platक्रमm_bus_type,
+		.bus = &platform_bus_type,
 		.pm = pm_ptr(&ehci_npcm7xx_pm_ops),
 		.of_match_table = npcm7xx_ehci_id_table,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init ehci_npcm7xx_init(व्योम)
-अणु
-	अगर (usb_disabled())
-		वापस -ENODEV;
+static int __init ehci_npcm7xx_init(void)
+{
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 
-	ehci_init_driver(&ehci_npcm7xx_hc_driver, शून्य);
-	वापस platक्रमm_driver_रेजिस्टर(&npcm7xx_ehci_hcd_driver);
-पूर्ण
+	ehci_init_driver(&ehci_npcm7xx_hc_driver, NULL);
+	return platform_driver_register(&npcm7xx_ehci_hcd_driver);
+}
 module_init(ehci_npcm7xx_init);
 
-अटल व्योम __निकास ehci_npcm7xx_cleanup(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&npcm7xx_ehci_hcd_driver);
-पूर्ण
-module_निकास(ehci_npcm7xx_cleanup);
+static void __exit ehci_npcm7xx_cleanup(void)
+{
+	platform_driver_unregister(&npcm7xx_ehci_hcd_driver);
+}
+module_exit(ehci_npcm7xx_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_ALIAS("platform:npcm7xx-ehci");

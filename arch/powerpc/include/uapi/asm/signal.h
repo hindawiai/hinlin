@@ -1,115 +1,114 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_ASM_POWERPC_SIGNAL_H
-#घोषणा _UAPI_ASM_POWERPC_SIGNAL_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_ASM_POWERPC_SIGNAL_H
+#define _UAPI_ASM_POWERPC_SIGNAL_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा _NSIG		64
-#अगर_घोषित __घातerpc64__
-#घोषणा _NSIG_BPW	64
-#अन्यथा
-#घोषणा _NSIG_BPW	32
-#पूर्ण_अगर
-#घोषणा _NSIG_WORDS	(_NSIG / _NSIG_BPW)
+#define _NSIG		64
+#ifdef __powerpc64__
+#define _NSIG_BPW	64
+#else
+#define _NSIG_BPW	32
+#endif
+#define _NSIG_WORDS	(_NSIG / _NSIG_BPW)
 
-प्रकार अचिन्हित दीर्घ old_sigset_t;		/* at least 32 bits */
+typedef unsigned long old_sigset_t;		/* at least 32 bits */
 
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ sig[_NSIG_WORDS];
-पूर्ण sigset_t;
+typedef struct {
+	unsigned long sig[_NSIG_WORDS];
+} sigset_t;
 
-#घोषणा SIGHUP		 1
-#घोषणा संक_विघ्न		 2
-#घोषणा SIGQUIT		 3
-#घोषणा संक_अवैध		 4
-#घोषणा SIGTRAP		 5
-#घोषणा SIGABRT		 6
-#घोषणा SIGIOT		 6
-#घोषणा SIGBUS		 7
-#घोषणा संक_भ_त्रुटि		 8
-#घोषणा SIGKILL		 9
-#घोषणा SIGUSR1		10
-#घोषणा संक_अंश		11
-#घोषणा SIGUSR2		12
-#घोषणा SIGPIPE		13
-#घोषणा SIGALRM		14
-#घोषणा संक_इति		15
-#घोषणा SIGSTKFLT	16
-#घोषणा SIGCHLD		17
-#घोषणा SIGCONT		18
-#घोषणा SIGSTOP		19
-#घोषणा SIGTSTP		20
-#घोषणा SIGTTIN		21
-#घोषणा SIGTTOU		22
-#घोषणा SIGURG		23
-#घोषणा SIGXCPU		24
-#घोषणा SIGXFSZ		25
-#घोषणा SIGVTALRM	26
-#घोषणा SIGPROF		27
-#घोषणा SIGWINCH	28
-#घोषणा SIGIO		29
-#घोषणा SIGPOLL		SIGIO
+#define SIGHUP		 1
+#define SIGINT		 2
+#define SIGQUIT		 3
+#define SIGILL		 4
+#define SIGTRAP		 5
+#define SIGABRT		 6
+#define SIGIOT		 6
+#define SIGBUS		 7
+#define SIGFPE		 8
+#define SIGKILL		 9
+#define SIGUSR1		10
+#define SIGSEGV		11
+#define SIGUSR2		12
+#define SIGPIPE		13
+#define SIGALRM		14
+#define SIGTERM		15
+#define SIGSTKFLT	16
+#define SIGCHLD		17
+#define SIGCONT		18
+#define SIGSTOP		19
+#define SIGTSTP		20
+#define SIGTTIN		21
+#define SIGTTOU		22
+#define SIGURG		23
+#define SIGXCPU		24
+#define SIGXFSZ		25
+#define SIGVTALRM	26
+#define SIGPROF		27
+#define SIGWINCH	28
+#define SIGIO		29
+#define SIGPOLL		SIGIO
 /*
-#घोषणा SIGLOST		29
+#define SIGLOST		29
 */
-#घोषणा SIGPWR		30
-#घोषणा SIGSYS		31
-#घोषणा	SIGUNUSED	31
+#define SIGPWR		30
+#define SIGSYS		31
+#define	SIGUNUSED	31
 
-/* These should not be considered स्थिरants from userland.  */
-#घोषणा SIGRTMIN	32
-#घोषणा SIGRTMAX	_NSIG
+/* These should not be considered constants from userland.  */
+#define SIGRTMIN	32
+#define SIGRTMAX	_NSIG
 
-#घोषणा SA_RESTORER	0x04000000U
+#define SA_RESTORER	0x04000000U
 
-#घोषणा MINSIGSTKSZ	2048
-#घोषणा SIGSTKSZ	8192
+#define MINSIGSTKSZ	2048
+#define SIGSTKSZ	8192
 
-#समावेश <यंत्र-generic/संकेत-defs.h>
+#include <asm-generic/signal-defs.h>
 
-#अगर_अघोषित __KERNEL__
-काष्ठा old_sigaction अणु
+#ifndef __KERNEL__
+struct old_sigaction {
 	__sighandler_t sa_handler;
 	old_sigset_t sa_mask;
-	अचिन्हित दीर्घ sa_flags;
+	unsigned long sa_flags;
 	__sigrestore_t sa_restorer;
-पूर्ण;
+};
 
-काष्ठा sigaction अणु
+struct sigaction {
 	__sighandler_t sa_handler;
-	अचिन्हित दीर्घ sa_flags;
+	unsigned long sa_flags;
 	__sigrestore_t sa_restorer;
-	sigset_t sa_mask;		/* mask last क्रम extensibility */
-पूर्ण;
-#पूर्ण_अगर
+	sigset_t sa_mask;		/* mask last for extensibility */
+};
+#endif
 
-प्रकार काष्ठा sigaltstack अणु
-	व्योम __user *ss_sp;
-	पूर्णांक ss_flags;
-	माप_प्रकार ss_size;
-पूर्ण stack_t;
+typedef struct sigaltstack {
+	void __user *ss_sp;
+	int ss_flags;
+	size_t ss_size;
+} stack_t;
 
 
-#अगर_अघोषित __घातerpc64__
+#ifndef __powerpc64__
 /*
- * These are parameters to dbg_sigवापस syscall.  They enable or
- * disable certain debugging things that can be करोne from संकेत
- * handlers.  The dbg_sigवापस syscall *must* be called from a
- * SA_SIGINFO संकेत so the ucontext can be passed to it.  It takes an
- * array of काष्ठा sig_dbg_op, which has the debug operations to
- * perक्रमm beक्रमe वापसing from the संकेत.
+ * These are parameters to dbg_sigreturn syscall.  They enable or
+ * disable certain debugging things that can be done from signal
+ * handlers.  The dbg_sigreturn syscall *must* be called from a
+ * SA_SIGINFO signal so the ucontext can be passed to it.  It takes an
+ * array of struct sig_dbg_op, which has the debug operations to
+ * perform before returning from the signal.
  */
-काष्ठा sig_dbg_op अणु
-	पूर्णांक dbg_type;
-	अचिन्हित दीर्घ dbg_value;
-पूर्ण;
+struct sig_dbg_op {
+	int dbg_type;
+	unsigned long dbg_value;
+};
 
 /* Enable or disable single-stepping.  The value sets the state. */
-#घोषणा SIG_DBG_SINGLE_STEPPING		1
+#define SIG_DBG_SINGLE_STEPPING		1
 
 /* Enable or disable branch tracing.  The value sets the state. */
-#घोषणा SIG_DBG_BRANCH_TRACING		2
-#पूर्ण_अगर /* ! __घातerpc64__ */
+#define SIG_DBG_BRANCH_TRACING		2
+#endif /* ! __powerpc64__ */
 
-#पूर्ण_अगर /* _UAPI_ASM_POWERPC_SIGNAL_H */
+#endif /* _UAPI_ASM_POWERPC_SIGNAL_H */

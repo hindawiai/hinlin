@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 
-#अगर_अघोषित _ASM_CSKY_PERF_REGS_H
-#घोषणा _ASM_CSKY_PERF_REGS_H
+#ifndef _ASM_CSKY_PERF_REGS_H
+#define _ASM_CSKY_PERF_REGS_H
 
-/* Index of काष्ठा pt_regs */
-क्रमागत perf_event_csky_regs अणु
+/* Index of struct pt_regs */
+enum perf_event_csky_regs {
 	PERF_REG_CSKY_TLS,
 	PERF_REG_CSKY_LR,
 	PERF_REG_CSKY_PC,
@@ -26,7 +25,7 @@
 	PERF_REG_CSKY_REGS7,
 	PERF_REG_CSKY_REGS8,
 	PERF_REG_CSKY_REGS9,
-#अगर defined(__CSKYABIV2__)
+#if defined(__CSKYABIV2__)
 	PERF_REG_CSKY_EXREGS0,
 	PERF_REG_CSKY_EXREGS1,
 	PERF_REG_CSKY_EXREGS2,
@@ -45,7 +44,7 @@
 	PERF_REG_CSKY_HI,
 	PERF_REG_CSKY_LO,
 	PERF_REG_CSKY_DCSR,
-#पूर्ण_अगर
+#endif
 	PERF_REG_CSKY_MAX,
-पूर्ण;
-#पूर्ण_अगर /* _ASM_CSKY_PERF_REGS_H */
+};
+#endif /* _ASM_CSKY_PERF_REGS_H */

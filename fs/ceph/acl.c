@@ -1,260 +1,259 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/fs/ceph/acl.c
  *
  * Copyright (C) 2013 Guangliang Zhao, <lucienchao@gmail.com>
  */
 
-#समावेश <linux/ceph/ceph_debug.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/xattr.h>
-#समावेश <linux/posix_acl_xattr.h>
-#समावेश <linux/posix_acl.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
+#include <linux/ceph/ceph_debug.h>
+#include <linux/fs.h>
+#include <linux/string.h>
+#include <linux/xattr.h>
+#include <linux/posix_acl_xattr.h>
+#include <linux/posix_acl.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 
-#समावेश "super.h"
+#include "super.h"
 
-अटल अंतरभूत व्योम ceph_set_cached_acl(काष्ठा inode *inode,
-					पूर्णांक type, काष्ठा posix_acl *acl)
-अणु
-	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+static inline void ceph_set_cached_acl(struct inode *inode,
+					int type, struct posix_acl *acl)
+{
+	struct ceph_inode_info *ci = ceph_inode(inode);
 
 	spin_lock(&ci->i_ceph_lock);
-	अगर (__ceph_caps_issued_mask_metric(ci, CEPH_CAP_XATTR_SHARED, 0))
+	if (__ceph_caps_issued_mask_metric(ci, CEPH_CAP_XATTR_SHARED, 0))
 		set_cached_acl(inode, type, acl);
-	अन्यथा
-		क्रमget_cached_acl(inode, type);
+	else
+		forget_cached_acl(inode, type);
 	spin_unlock(&ci->i_ceph_lock);
-पूर्ण
+}
 
-काष्ठा posix_acl *ceph_get_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	पूर्णांक size;
-	अचिन्हित पूर्णांक retry_cnt = 0;
-	स्थिर अक्षर *name;
-	अक्षर *value = शून्य;
-	काष्ठा posix_acl *acl;
+struct posix_acl *ceph_get_acl(struct inode *inode, int type)
+{
+	int size;
+	unsigned int retry_cnt = 0;
+	const char *name;
+	char *value = NULL;
+	struct posix_acl *acl;
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
 		name = XATTR_NAME_POSIX_ACL_ACCESS;
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
+		break;
+	case ACL_TYPE_DEFAULT:
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
 retry:
 	size = __ceph_getxattr(inode, name, "", 0);
-	अगर (size > 0) अणु
+	if (size > 0) {
 		value = kzalloc(size, GFP_NOFS);
-		अगर (!value)
-			वापस ERR_PTR(-ENOMEM);
+		if (!value)
+			return ERR_PTR(-ENOMEM);
 		size = __ceph_getxattr(inode, name, value, size);
-	पूर्ण
+	}
 
-	अगर (size == -दुस्फल && retry_cnt < 10) अणु
+	if (size == -ERANGE && retry_cnt < 10) {
 		retry_cnt++;
-		kमुक्त(value);
-		value = शून्य;
-		जाओ retry;
-	पूर्ण
+		kfree(value);
+		value = NULL;
+		goto retry;
+	}
 
-	अगर (size > 0) अणु
+	if (size > 0) {
 		acl = posix_acl_from_xattr(&init_user_ns, value, size);
-	पूर्ण अन्यथा अगर (size == -ENODATA || size == 0) अणु
-		acl = शून्य;
-	पूर्ण अन्यथा अणु
+	} else if (size == -ENODATA || size == 0) {
+		acl = NULL;
+	} else {
 		pr_err_ratelimited("get acl %llx.%llx failed, err=%d\n",
 				   ceph_vinop(inode), size);
 		acl = ERR_PTR(-EIO);
-	पूर्ण
+	}
 
-	kमुक्त(value);
+	kfree(value);
 
-	अगर (!IS_ERR(acl))
+	if (!IS_ERR(acl))
 		ceph_set_cached_acl(inode, type, acl);
 
-	वापस acl;
-पूर्ण
+	return acl;
+}
 
-पूर्णांक ceph_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		 काष्ठा posix_acl *acl, पूर्णांक type)
-अणु
-	पूर्णांक ret = 0, size = 0;
-	स्थिर अक्षर *name = शून्य;
-	अक्षर *value = शून्य;
-	काष्ठा iattr newattrs;
-	काष्ठा बारpec64 old_स_समय = inode->i_स_समय;
+int ceph_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+		 struct posix_acl *acl, int type)
+{
+	int ret = 0, size = 0;
+	const char *name = NULL;
+	char *value = NULL;
+	struct iattr newattrs;
+	struct timespec64 old_ctime = inode->i_ctime;
 	umode_t new_mode = inode->i_mode, old_mode = inode->i_mode;
 
-	अगर (ceph_snap(inode) != CEPH_NOSNAP) अणु
+	if (ceph_snap(inode) != CEPH_NOSNAP) {
 		ret = -EROFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
 		name = XATTR_NAME_POSIX_ACL_ACCESS;
-		अगर (acl) अणु
+		if (acl) {
 			ret = posix_acl_update_mode(&init_user_ns, inode,
 						    &new_mode, &acl);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
-		अगर (!S_ISसूची(inode->i_mode)) अणु
+			if (ret)
+				goto out;
+		}
+		break;
+	case ACL_TYPE_DEFAULT:
+		if (!S_ISDIR(inode->i_mode)) {
 			ret = acl ? -EINVAL : 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (acl) अणु
+	if (acl) {
 		size = posix_acl_xattr_size(acl->a_count);
-		value = kदो_स्मृति(size, GFP_NOFS);
-		अगर (!value) अणु
+		value = kmalloc(size, GFP_NOFS);
+		if (!value) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = posix_acl_to_xattr(&init_user_ns, acl, value, size);
-		अगर (ret < 0)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret < 0)
+			goto out_free;
+	}
 
-	अगर (new_mode != old_mode) अणु
-		newattrs.ia_स_समय = current_समय(inode);
+	if (new_mode != old_mode) {
+		newattrs.ia_ctime = current_time(inode);
 		newattrs.ia_mode = new_mode;
 		newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
 		ret = __ceph_setattr(inode, &newattrs);
-		अगर (ret)
-			जाओ out_मुक्त;
-	पूर्ण
+		if (ret)
+			goto out_free;
+	}
 
 	ret = __ceph_setxattr(inode, name, value, size, 0);
-	अगर (ret) अणु
-		अगर (new_mode != old_mode) अणु
-			newattrs.ia_स_समय = old_स_समय;
+	if (ret) {
+		if (new_mode != old_mode) {
+			newattrs.ia_ctime = old_ctime;
 			newattrs.ia_mode = old_mode;
 			newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
 			__ceph_setattr(inode, &newattrs);
-		पूर्ण
-		जाओ out_मुक्त;
-	पूर्ण
+		}
+		goto out_free;
+	}
 
 	ceph_set_cached_acl(inode, type, acl);
 
-out_मुक्त:
-	kमुक्त(value);
+out_free:
+	kfree(value);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ceph_pre_init_acls(काष्ठा inode *dir, umode_t *mode,
-		       काष्ठा ceph_acl_sec_ctx *as_ctx)
-अणु
-	काष्ठा posix_acl *acl, *शेष_acl;
-	माप_प्रकार val_size1 = 0, val_size2 = 0;
-	काष्ठा ceph_pagelist *pagelist = शून्य;
-	व्योम *पंचांगp_buf = शून्य;
-	पूर्णांक err;
+int ceph_pre_init_acls(struct inode *dir, umode_t *mode,
+		       struct ceph_acl_sec_ctx *as_ctx)
+{
+	struct posix_acl *acl, *default_acl;
+	size_t val_size1 = 0, val_size2 = 0;
+	struct ceph_pagelist *pagelist = NULL;
+	void *tmp_buf = NULL;
+	int err;
 
-	err = posix_acl_create(dir, mode, &शेष_acl, &acl);
-	अगर (err)
-		वापस err;
+	err = posix_acl_create(dir, mode, &default_acl, &acl);
+	if (err)
+		return err;
 
-	अगर (acl) अणु
+	if (acl) {
 		err = posix_acl_equiv_mode(acl, mode);
-		अगर (err < 0)
-			जाओ out_err;
-		अगर (err == 0) अणु
+		if (err < 0)
+			goto out_err;
+		if (err == 0) {
 			posix_acl_release(acl);
-			acl = शून्य;
-		पूर्ण
-	पूर्ण
+			acl = NULL;
+		}
+	}
 
-	अगर (!शेष_acl && !acl)
-		वापस 0;
+	if (!default_acl && !acl)
+		return 0;
 
-	अगर (acl)
+	if (acl)
 		val_size1 = posix_acl_xattr_size(acl->a_count);
-	अगर (शेष_acl)
-		val_size2 = posix_acl_xattr_size(शेष_acl->a_count);
+	if (default_acl)
+		val_size2 = posix_acl_xattr_size(default_acl->a_count);
 
 	err = -ENOMEM;
-	पंचांगp_buf = kदो_स्मृति(max(val_size1, val_size2), GFP_KERNEL);
-	अगर (!पंचांगp_buf)
-		जाओ out_err;
+	tmp_buf = kmalloc(max(val_size1, val_size2), GFP_KERNEL);
+	if (!tmp_buf)
+		goto out_err;
 	pagelist = ceph_pagelist_alloc(GFP_KERNEL);
-	अगर (!pagelist)
-		जाओ out_err;
+	if (!pagelist)
+		goto out_err;
 
 	err = ceph_pagelist_reserve(pagelist, PAGE_SIZE);
-	अगर (err)
-		जाओ out_err;
+	if (err)
+		goto out_err;
 
-	ceph_pagelist_encode_32(pagelist, acl && शेष_acl ? 2 : 1);
+	ceph_pagelist_encode_32(pagelist, acl && default_acl ? 2 : 1);
 
-	अगर (acl) अणु
-		माप_प्रकार len = म_माप(XATTR_NAME_POSIX_ACL_ACCESS);
+	if (acl) {
+		size_t len = strlen(XATTR_NAME_POSIX_ACL_ACCESS);
 		err = ceph_pagelist_reserve(pagelist, len + val_size1 + 8);
-		अगर (err)
-			जाओ out_err;
+		if (err)
+			goto out_err;
 		ceph_pagelist_encode_string(pagelist, XATTR_NAME_POSIX_ACL_ACCESS,
 					    len);
 		err = posix_acl_to_xattr(&init_user_ns, acl,
-					 पंचांगp_buf, val_size1);
-		अगर (err < 0)
-			जाओ out_err;
+					 tmp_buf, val_size1);
+		if (err < 0)
+			goto out_err;
 		ceph_pagelist_encode_32(pagelist, val_size1);
-		ceph_pagelist_append(pagelist, पंचांगp_buf, val_size1);
-	पूर्ण
-	अगर (शेष_acl) अणु
-		माप_प्रकार len = म_माप(XATTR_NAME_POSIX_ACL_DEFAULT);
+		ceph_pagelist_append(pagelist, tmp_buf, val_size1);
+	}
+	if (default_acl) {
+		size_t len = strlen(XATTR_NAME_POSIX_ACL_DEFAULT);
 		err = ceph_pagelist_reserve(pagelist, len + val_size2 + 8);
-		अगर (err)
-			जाओ out_err;
+		if (err)
+			goto out_err;
 		ceph_pagelist_encode_string(pagelist,
 					  XATTR_NAME_POSIX_ACL_DEFAULT, len);
-		err = posix_acl_to_xattr(&init_user_ns, शेष_acl,
-					 पंचांगp_buf, val_size2);
-		अगर (err < 0)
-			जाओ out_err;
+		err = posix_acl_to_xattr(&init_user_ns, default_acl,
+					 tmp_buf, val_size2);
+		if (err < 0)
+			goto out_err;
 		ceph_pagelist_encode_32(pagelist, val_size2);
-		ceph_pagelist_append(pagelist, पंचांगp_buf, val_size2);
-	पूर्ण
+		ceph_pagelist_append(pagelist, tmp_buf, val_size2);
+	}
 
-	kमुक्त(पंचांगp_buf);
+	kfree(tmp_buf);
 
 	as_ctx->acl = acl;
-	as_ctx->शेष_acl = शेष_acl;
+	as_ctx->default_acl = default_acl;
 	as_ctx->pagelist = pagelist;
-	वापस 0;
+	return 0;
 
 out_err:
 	posix_acl_release(acl);
-	posix_acl_release(शेष_acl);
-	kमुक्त(पंचांगp_buf);
-	अगर (pagelist)
+	posix_acl_release(default_acl);
+	kfree(tmp_buf);
+	if (pagelist)
 		ceph_pagelist_release(pagelist);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम ceph_init_inode_acls(काष्ठा inode *inode, काष्ठा ceph_acl_sec_ctx *as_ctx)
-अणु
-	अगर (!inode)
-		वापस;
+void ceph_init_inode_acls(struct inode *inode, struct ceph_acl_sec_ctx *as_ctx)
+{
+	if (!inode)
+		return;
 	ceph_set_cached_acl(inode, ACL_TYPE_ACCESS, as_ctx->acl);
-	ceph_set_cached_acl(inode, ACL_TYPE_DEFAULT, as_ctx->शेष_acl);
-पूर्ण
+	ceph_set_cached_acl(inode, ACL_TYPE_DEFAULT, as_ctx->default_acl);
+}

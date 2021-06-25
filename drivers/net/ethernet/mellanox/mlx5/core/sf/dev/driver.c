@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2020 Mellanox Technologies Ltd */
 
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/mlx5/device.h>
-#समावेश "mlx5_core.h"
-#समावेश "dev.h"
-#समावेश "devlink.h"
+#include <linux/mlx5/driver.h>
+#include <linux/mlx5/device.h>
+#include "mlx5_core.h"
+#include "dev.h"
+#include "devlink.h"
 
-अटल पूर्णांक mlx5_sf_dev_probe(काष्ठा auxiliary_device *adev, स्थिर काष्ठा auxiliary_device_id *id)
-अणु
-	काष्ठा mlx5_sf_dev *sf_dev = container_of(adev, काष्ठा mlx5_sf_dev, adev);
-	काष्ठा mlx5_core_dev *mdev;
-	काष्ठा devlink *devlink;
-	पूर्णांक err;
+static int mlx5_sf_dev_probe(struct auxiliary_device *adev, const struct auxiliary_device_id *id)
+{
+	struct mlx5_sf_dev *sf_dev = container_of(adev, struct mlx5_sf_dev, adev);
+	struct mlx5_core_dev *mdev;
+	struct devlink *devlink;
+	int err;
 
 	devlink = mlx5_devlink_alloc();
-	अगर (!devlink)
-		वापस -ENOMEM;
+	if (!devlink)
+		return -ENOMEM;
 
 	mdev = devlink_priv(devlink);
 	mdev->device = &adev->dev;
@@ -30,76 +29,76 @@
 	sf_dev->mdev = mdev;
 
 	err = mlx5_mdev_init(mdev, MLX5_DEFAULT_PROF);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(mdev, "mlx5_mdev_init on err=%d\n", err);
-		जाओ mdev_err;
-	पूर्ण
+		goto mdev_err;
+	}
 
-	mdev->iseg = ioremap(mdev->iseg_base, माप(*mdev->iseg));
-	अगर (!mdev->iseg) अणु
+	mdev->iseg = ioremap(mdev->iseg_base, sizeof(*mdev->iseg));
+	if (!mdev->iseg) {
 		mlx5_core_warn(mdev, "remap error\n");
 		err = -ENOMEM;
-		जाओ remap_err;
-	पूर्ण
+		goto remap_err;
+	}
 
 	err = mlx5_init_one(mdev);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_warn(mdev, "mlx5_init_one err=%d\n", err);
-		जाओ init_one_err;
-	पूर्ण
+		goto init_one_err;
+	}
 	devlink_reload_enable(devlink);
-	वापस 0;
+	return 0;
 
 init_one_err:
 	iounmap(mdev->iseg);
 remap_err:
 	mlx5_mdev_uninit(mdev);
 mdev_err:
-	mlx5_devlink_मुक्त(devlink);
-	वापस err;
-पूर्ण
+	mlx5_devlink_free(devlink);
+	return err;
+}
 
-अटल व्योम mlx5_sf_dev_हटाओ(काष्ठा auxiliary_device *adev)
-अणु
-	काष्ठा mlx5_sf_dev *sf_dev = container_of(adev, काष्ठा mlx5_sf_dev, adev);
-	काष्ठा devlink *devlink;
+static void mlx5_sf_dev_remove(struct auxiliary_device *adev)
+{
+	struct mlx5_sf_dev *sf_dev = container_of(adev, struct mlx5_sf_dev, adev);
+	struct devlink *devlink;
 
 	devlink = priv_to_devlink(sf_dev->mdev);
 	devlink_reload_disable(devlink);
 	mlx5_uninit_one(sf_dev->mdev);
 	iounmap(sf_dev->mdev->iseg);
 	mlx5_mdev_uninit(sf_dev->mdev);
-	mlx5_devlink_मुक्त(devlink);
-पूर्ण
+	mlx5_devlink_free(devlink);
+}
 
-अटल व्योम mlx5_sf_dev_shutकरोwn(काष्ठा auxiliary_device *adev)
-अणु
-	काष्ठा mlx5_sf_dev *sf_dev = container_of(adev, काष्ठा mlx5_sf_dev, adev);
+static void mlx5_sf_dev_shutdown(struct auxiliary_device *adev)
+{
+	struct mlx5_sf_dev *sf_dev = container_of(adev, struct mlx5_sf_dev, adev);
 
 	mlx5_unload_one(sf_dev->mdev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा auxiliary_device_id mlx5_sf_dev_id_table[] = अणु
-	अणु .name = MLX5_ADEV_NAME "." MLX5_SF_DEV_ID_NAME, पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct auxiliary_device_id mlx5_sf_dev_id_table[] = {
+	{ .name = MLX5_ADEV_NAME "." MLX5_SF_DEV_ID_NAME, },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(auxiliary, mlx5_sf_dev_id_table);
 
-अटल काष्ठा auxiliary_driver mlx5_sf_driver = अणु
+static struct auxiliary_driver mlx5_sf_driver = {
 	.name = MLX5_SF_DEV_ID_NAME,
 	.probe = mlx5_sf_dev_probe,
-	.हटाओ = mlx5_sf_dev_हटाओ,
-	.shutकरोwn = mlx5_sf_dev_shutकरोwn,
+	.remove = mlx5_sf_dev_remove,
+	.shutdown = mlx5_sf_dev_shutdown,
 	.id_table = mlx5_sf_dev_id_table,
-पूर्ण;
+};
 
-पूर्णांक mlx5_sf_driver_रेजिस्टर(व्योम)
-अणु
-	वापस auxiliary_driver_रेजिस्टर(&mlx5_sf_driver);
-पूर्ण
+int mlx5_sf_driver_register(void)
+{
+	return auxiliary_driver_register(&mlx5_sf_driver);
+}
 
-व्योम mlx5_sf_driver_unरेजिस्टर(व्योम)
-अणु
-	auxiliary_driver_unरेजिस्टर(&mlx5_sf_driver);
-पूर्ण
+void mlx5_sf_driver_unregister(void)
+{
+	auxiliary_driver_unregister(&mlx5_sf_driver);
+}

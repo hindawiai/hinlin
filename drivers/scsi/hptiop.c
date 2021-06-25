@@ -1,463 +1,462 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * HighPoपूर्णांक RR3xxx/4xxx controller driver क्रम Linux
- * Copyright (C) 2006-2015 HighPoपूर्णांक Technologies, Inc. All Rights Reserved.
+ * HighPoint RR3xxx/4xxx controller driver for Linux
+ * Copyright (C) 2006-2015 HighPoint Technologies, Inc. All Rights Reserved.
  *
- * Please report bugs/comments/suggestions to linux@highpoपूर्णांक-tech.com
+ * Please report bugs/comments/suggestions to linux@highpoint-tech.com
  *
- * For more inक्रमmation, visit http://www.highpoपूर्णांक-tech.com
+ * For more information, visit http://www.highpoint-tech.com
  */
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/भाग64.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश <scsi/scsi_host.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/timer.h>
+#include <linux/spinlock.h>
+#include <linux/gfp.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/div64.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_tcq.h>
+#include <scsi/scsi_host.h>
 
-#समावेश "hptiop.h"
+#include "hptiop.h"
 
 MODULE_AUTHOR("HighPoint Technologies, Inc.");
 MODULE_DESCRIPTION("HighPoint RocketRAID 3xxx/4xxx Controller Driver");
 
-अटल अक्षर driver_name[] = "hptiop";
-अटल स्थिर अक्षर driver_name_दीर्घ[] = "RocketRAID 3xxx/4xxx Controller driver";
-अटल स्थिर अक्षर driver_ver[] = "v1.10.0";
+static char driver_name[] = "hptiop";
+static const char driver_name_long[] = "RocketRAID 3xxx/4xxx Controller driver";
+static const char driver_ver[] = "v1.10.0";
 
-अटल पूर्णांक iop_send_sync_msg(काष्ठा hptiop_hba *hba, u32 msg, u32 millisec);
-अटल व्योम hptiop_finish_scsi_req(काष्ठा hptiop_hba *hba, u32 tag,
-				काष्ठा hpt_iop_request_scsi_command *req);
-अटल व्योम hptiop_host_request_callback_itl(काष्ठा hptiop_hba *hba, u32 tag);
-अटल व्योम hptiop_iop_request_callback_itl(काष्ठा hptiop_hba *hba, u32 tag);
-अटल व्योम hptiop_message_callback(काष्ठा hptiop_hba *hba, u32 msg);
+static int iop_send_sync_msg(struct hptiop_hba *hba, u32 msg, u32 millisec);
+static void hptiop_finish_scsi_req(struct hptiop_hba *hba, u32 tag,
+				struct hpt_iop_request_scsi_command *req);
+static void hptiop_host_request_callback_itl(struct hptiop_hba *hba, u32 tag);
+static void hptiop_iop_request_callback_itl(struct hptiop_hba *hba, u32 tag);
+static void hptiop_message_callback(struct hptiop_hba *hba, u32 msg);
 
-अटल पूर्णांक iop_रुको_पढ़ोy_itl(काष्ठा hptiop_hba *hba, u32 millisec)
-अणु
+static int iop_wait_ready_itl(struct hptiop_hba *hba, u32 millisec)
+{
 	u32 req = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < millisec; i++) अणु
-		req = पढ़ोl(&hba->u.itl.iop->inbound_queue);
-		अगर (req != IOPMU_QUEUE_EMPTY)
-			अवरोध;
+	for (i = 0; i < millisec; i++) {
+		req = readl(&hba->u.itl.iop->inbound_queue);
+		if (req != IOPMU_QUEUE_EMPTY)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (req != IOPMU_QUEUE_EMPTY) अणु
-		ग_लिखोl(req, &hba->u.itl.iop->outbound_queue);
-		पढ़ोl(&hba->u.itl.iop->outbound_पूर्णांकstatus);
-		वापस 0;
-	पूर्ण
+	if (req != IOPMU_QUEUE_EMPTY) {
+		writel(req, &hba->u.itl.iop->outbound_queue);
+		readl(&hba->u.itl.iop->outbound_intstatus);
+		return 0;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक iop_रुको_पढ़ोy_mv(काष्ठा hptiop_hba *hba, u32 millisec)
-अणु
-	वापस iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_NOP, millisec);
-पूर्ण
+static int iop_wait_ready_mv(struct hptiop_hba *hba, u32 millisec)
+{
+	return iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_NOP, millisec);
+}
 
-अटल पूर्णांक iop_रुको_पढ़ोy_mvfrey(काष्ठा hptiop_hba *hba, u32 millisec)
-अणु
-	वापस iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_NOP, millisec);
-पूर्ण
+static int iop_wait_ready_mvfrey(struct hptiop_hba *hba, u32 millisec)
+{
+	return iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_NOP, millisec);
+}
 
-अटल व्योम hptiop_request_callback_itl(काष्ठा hptiop_hba *hba, u32 tag)
-अणु
-	अगर (tag & IOPMU_QUEUE_ADDR_HOST_BIT)
+static void hptiop_request_callback_itl(struct hptiop_hba *hba, u32 tag)
+{
+	if (tag & IOPMU_QUEUE_ADDR_HOST_BIT)
 		hptiop_host_request_callback_itl(hba,
 				tag & ~IOPMU_QUEUE_ADDR_HOST_BIT);
-	अन्यथा
+	else
 		hptiop_iop_request_callback_itl(hba, tag);
-पूर्ण
+}
 
-अटल व्योम hptiop_drain_outbound_queue_itl(काष्ठा hptiop_hba *hba)
-अणु
+static void hptiop_drain_outbound_queue_itl(struct hptiop_hba *hba)
+{
 	u32 req;
 
-	जबतक ((req = पढ़ोl(&hba->u.itl.iop->outbound_queue)) !=
-						IOPMU_QUEUE_EMPTY) अणु
+	while ((req = readl(&hba->u.itl.iop->outbound_queue)) !=
+						IOPMU_QUEUE_EMPTY) {
 
-		अगर (req & IOPMU_QUEUE_MASK_HOST_BITS)
+		if (req & IOPMU_QUEUE_MASK_HOST_BITS)
 			hptiop_request_callback_itl(hba, req);
-		अन्यथा अणु
-			काष्ठा hpt_iop_request_header __iomem * p;
+		else {
+			struct hpt_iop_request_header __iomem * p;
 
-			p = (काष्ठा hpt_iop_request_header __iomem *)
-				((अक्षर __iomem *)hba->u.itl.iop + req);
+			p = (struct hpt_iop_request_header __iomem *)
+				((char __iomem *)hba->u.itl.iop + req);
 
-			अगर (पढ़ोl(&p->flags) & IOP_REQUEST_FLAG_SYNC_REQUEST) अणु
-				अगर (पढ़ोl(&p->context))
+			if (readl(&p->flags) & IOP_REQUEST_FLAG_SYNC_REQUEST) {
+				if (readl(&p->context))
 					hptiop_request_callback_itl(hba, req);
-				अन्यथा
-					ग_लिखोl(1, &p->context);
-			पूर्ण
-			अन्यथा
+				else
+					writel(1, &p->context);
+			}
+			else
 				hptiop_request_callback_itl(hba, req);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक iop_पूर्णांकr_itl(काष्ठा hptiop_hba *hba)
-अणु
-	काष्ठा hpt_iopmu_itl __iomem *iop = hba->u.itl.iop;
-	व्योम __iomem *plx = hba->u.itl.plx;
+static int iop_intr_itl(struct hptiop_hba *hba)
+{
+	struct hpt_iopmu_itl __iomem *iop = hba->u.itl.iop;
+	void __iomem *plx = hba->u.itl.plx;
 	u32 status;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (plx && पढ़ोl(plx + 0x11C5C) & 0xf)
-		ग_लिखोl(1, plx + 0x11C60);
+	if (plx && readl(plx + 0x11C5C) & 0xf)
+		writel(1, plx + 0x11C60);
 
-	status = पढ़ोl(&iop->outbound_पूर्णांकstatus);
+	status = readl(&iop->outbound_intstatus);
 
-	अगर (status & IOPMU_OUTBOUND_INT_MSG0) अणु
-		u32 msg = पढ़ोl(&iop->outbound_msgaddr0);
+	if (status & IOPMU_OUTBOUND_INT_MSG0) {
+		u32 msg = readl(&iop->outbound_msgaddr0);
 
-		dprपूर्णांकk("received outbound msg %x\n", msg);
-		ग_लिखोl(IOPMU_OUTBOUND_INT_MSG0, &iop->outbound_पूर्णांकstatus);
+		dprintk("received outbound msg %x\n", msg);
+		writel(IOPMU_OUTBOUND_INT_MSG0, &iop->outbound_intstatus);
 		hptiop_message_callback(hba, msg);
 		ret = 1;
-	पूर्ण
+	}
 
-	अगर (status & IOPMU_OUTBOUND_INT_POSTQUEUE) अणु
+	if (status & IOPMU_OUTBOUND_INT_POSTQUEUE) {
 		hptiop_drain_outbound_queue_itl(hba);
 		ret = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 mv_outbound_पढ़ो(काष्ठा hpt_iopmu_mv __iomem *mu)
-अणु
-	u32 outbound_tail = पढ़ोl(&mu->outbound_tail);
-	u32 outbound_head = पढ़ोl(&mu->outbound_head);
+static u64 mv_outbound_read(struct hpt_iopmu_mv __iomem *mu)
+{
+	u32 outbound_tail = readl(&mu->outbound_tail);
+	u32 outbound_head = readl(&mu->outbound_head);
 
-	अगर (outbound_tail != outbound_head) अणु
+	if (outbound_tail != outbound_head) {
 		u64 p;
 
-		स_नकल_fromio(&p, &mu->outbound_q[mu->outbound_tail], 8);
+		memcpy_fromio(&p, &mu->outbound_q[mu->outbound_tail], 8);
 		outbound_tail++;
 
-		अगर (outbound_tail == MVIOP_QUEUE_LEN)
+		if (outbound_tail == MVIOP_QUEUE_LEN)
 			outbound_tail = 0;
-		ग_लिखोl(outbound_tail, &mu->outbound_tail);
-		वापस p;
-	पूर्ण अन्यथा
-		वापस 0;
-पूर्ण
+		writel(outbound_tail, &mu->outbound_tail);
+		return p;
+	} else
+		return 0;
+}
 
-अटल व्योम mv_inbound_ग_लिखो(u64 p, काष्ठा hptiop_hba *hba)
-अणु
-	u32 inbound_head = पढ़ोl(&hba->u.mv.mu->inbound_head);
+static void mv_inbound_write(u64 p, struct hptiop_hba *hba)
+{
+	u32 inbound_head = readl(&hba->u.mv.mu->inbound_head);
 	u32 head = inbound_head + 1;
 
-	अगर (head == MVIOP_QUEUE_LEN)
+	if (head == MVIOP_QUEUE_LEN)
 		head = 0;
 
-	स_नकल_toio(&hba->u.mv.mu->inbound_q[inbound_head], &p, 8);
-	ग_लिखोl(head, &hba->u.mv.mu->inbound_head);
-	ग_लिखोl(MVIOP_MU_INBOUND_INT_POSTQUEUE,
-			&hba->u.mv.regs->inbound_करोorbell);
-पूर्ण
+	memcpy_toio(&hba->u.mv.mu->inbound_q[inbound_head], &p, 8);
+	writel(head, &hba->u.mv.mu->inbound_head);
+	writel(MVIOP_MU_INBOUND_INT_POSTQUEUE,
+			&hba->u.mv.regs->inbound_doorbell);
+}
 
-अटल व्योम hptiop_request_callback_mv(काष्ठा hptiop_hba *hba, u64 tag)
-अणु
+static void hptiop_request_callback_mv(struct hptiop_hba *hba, u64 tag)
+{
 	u32 req_type = (tag >> 5) & 0x7;
-	काष्ठा hpt_iop_request_scsi_command *req;
+	struct hpt_iop_request_scsi_command *req;
 
-	dprपूर्णांकk("hptiop_request_callback_mv: tag=%llx\n", tag);
+	dprintk("hptiop_request_callback_mv: tag=%llx\n", tag);
 
 	BUG_ON((tag & MVIOP_MU_QUEUE_REQUEST_RETURN_CONTEXT) == 0);
 
-	चयन (req_type) अणु
-	हाल IOP_REQUEST_TYPE_GET_CONFIG:
-	हाल IOP_REQUEST_TYPE_SET_CONFIG:
-		hba->msg_करोne = 1;
-		अवरोध;
+	switch (req_type) {
+	case IOP_REQUEST_TYPE_GET_CONFIG:
+	case IOP_REQUEST_TYPE_SET_CONFIG:
+		hba->msg_done = 1;
+		break;
 
-	हाल IOP_REQUEST_TYPE_SCSI_COMMAND:
+	case IOP_REQUEST_TYPE_SCSI_COMMAND:
 		req = hba->reqs[tag >> 8].req_virt;
-		अगर (likely(tag & MVIOP_MU_QUEUE_REQUEST_RESULT_BIT))
+		if (likely(tag & MVIOP_MU_QUEUE_REQUEST_RESULT_BIT))
 			req->header.result = cpu_to_le32(IOP_RESULT_SUCCESS);
 
 		hptiop_finish_scsi_req(hba, tag>>8, req);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक iop_पूर्णांकr_mv(काष्ठा hptiop_hba *hba)
-अणु
+static int iop_intr_mv(struct hptiop_hba *hba)
+{
 	u32 status;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	status = पढ़ोl(&hba->u.mv.regs->outbound_करोorbell);
-	ग_लिखोl(~status, &hba->u.mv.regs->outbound_करोorbell);
+	status = readl(&hba->u.mv.regs->outbound_doorbell);
+	writel(~status, &hba->u.mv.regs->outbound_doorbell);
 
-	अगर (status & MVIOP_MU_OUTBOUND_INT_MSG) अणु
+	if (status & MVIOP_MU_OUTBOUND_INT_MSG) {
 		u32 msg;
-		msg = पढ़ोl(&hba->u.mv.mu->outbound_msg);
-		dprपूर्णांकk("received outbound msg %x\n", msg);
+		msg = readl(&hba->u.mv.mu->outbound_msg);
+		dprintk("received outbound msg %x\n", msg);
 		hptiop_message_callback(hba, msg);
 		ret = 1;
-	पूर्ण
+	}
 
-	अगर (status & MVIOP_MU_OUTBOUND_INT_POSTQUEUE) अणु
+	if (status & MVIOP_MU_OUTBOUND_INT_POSTQUEUE) {
 		u64 tag;
 
-		जबतक ((tag = mv_outbound_पढ़ो(hba->u.mv.mu)))
+		while ((tag = mv_outbound_read(hba->u.mv.mu)))
 			hptiop_request_callback_mv(hba, tag);
 		ret = 1;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hptiop_request_callback_mvfrey(काष्ठा hptiop_hba *hba, u32 _tag)
-अणु
+static void hptiop_request_callback_mvfrey(struct hptiop_hba *hba, u32 _tag)
+{
 	u32 req_type = _tag & 0xf;
-	काष्ठा hpt_iop_request_scsi_command *req;
+	struct hpt_iop_request_scsi_command *req;
 
-	चयन (req_type) अणु
-	हाल IOP_REQUEST_TYPE_GET_CONFIG:
-	हाल IOP_REQUEST_TYPE_SET_CONFIG:
-		hba->msg_करोne = 1;
-		अवरोध;
+	switch (req_type) {
+	case IOP_REQUEST_TYPE_GET_CONFIG:
+	case IOP_REQUEST_TYPE_SET_CONFIG:
+		hba->msg_done = 1;
+		break;
 
-	हाल IOP_REQUEST_TYPE_SCSI_COMMAND:
+	case IOP_REQUEST_TYPE_SCSI_COMMAND:
 		req = hba->reqs[(_tag >> 4) & 0xff].req_virt;
-		अगर (likely(_tag & IOPMU_QUEUE_REQUEST_RESULT_BIT))
+		if (likely(_tag & IOPMU_QUEUE_REQUEST_RESULT_BIT))
 			req->header.result = IOP_RESULT_SUCCESS;
 		hptiop_finish_scsi_req(hba, (_tag >> 4) & 0xff, req);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक iop_पूर्णांकr_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
+static int iop_intr_mvfrey(struct hptiop_hba *hba)
+{
 	u32 _tag, status, cptr, cur_rptr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (hba->initialized)
-		ग_लिखोl(0, &(hba->u.mvfrey.mu->pcie_f0_पूर्णांक_enable));
+	if (hba->initialized)
+		writel(0, &(hba->u.mvfrey.mu->pcie_f0_int_enable));
 
-	status = पढ़ोl(&(hba->u.mvfrey.mu->f0_करोorbell));
-	अगर (status) अणु
-		ग_लिखोl(status, &(hba->u.mvfrey.mu->f0_करोorbell));
-		अगर (status & CPU_TO_F0_DRBL_MSG_BIT) अणु
-			u32 msg = पढ़ोl(&(hba->u.mvfrey.mu->cpu_to_f0_msg_a));
-			dprपूर्णांकk("received outbound msg %x\n", msg);
+	status = readl(&(hba->u.mvfrey.mu->f0_doorbell));
+	if (status) {
+		writel(status, &(hba->u.mvfrey.mu->f0_doorbell));
+		if (status & CPU_TO_F0_DRBL_MSG_BIT) {
+			u32 msg = readl(&(hba->u.mvfrey.mu->cpu_to_f0_msg_a));
+			dprintk("received outbound msg %x\n", msg);
 			hptiop_message_callback(hba, msg);
-		पूर्ण
+		}
 		ret = 1;
-	पूर्ण
+	}
 
-	status = पढ़ोl(&(hba->u.mvfrey.mu->isr_cause));
-	अगर (status) अणु
-		ग_लिखोl(status, &(hba->u.mvfrey.mu->isr_cause));
-		करो अणु
+	status = readl(&(hba->u.mvfrey.mu->isr_cause));
+	if (status) {
+		writel(status, &(hba->u.mvfrey.mu->isr_cause));
+		do {
 			cptr = *hba->u.mvfrey.outlist_cptr & 0xff;
 			cur_rptr = hba->u.mvfrey.outlist_rptr;
-			जबतक (cur_rptr != cptr) अणु
+			while (cur_rptr != cptr) {
 				cur_rptr++;
-				अगर (cur_rptr ==	hba->u.mvfrey.list_count)
+				if (cur_rptr ==	hba->u.mvfrey.list_count)
 					cur_rptr = 0;
 
 				_tag = hba->u.mvfrey.outlist[cur_rptr].val;
 				BUG_ON(!(_tag & IOPMU_QUEUE_MASK_HOST_BITS));
 				hptiop_request_callback_mvfrey(hba, _tag);
 				ret = 1;
-			पूर्ण
+			}
 			hba->u.mvfrey.outlist_rptr = cur_rptr;
-		पूर्ण जबतक (cptr != (*hba->u.mvfrey.outlist_cptr & 0xff));
-	पूर्ण
+		} while (cptr != (*hba->u.mvfrey.outlist_cptr & 0xff));
+	}
 
-	अगर (hba->initialized)
-		ग_लिखोl(0x1010, &(hba->u.mvfrey.mu->pcie_f0_पूर्णांक_enable));
+	if (hba->initialized)
+		writel(0x1010, &(hba->u.mvfrey.mu->pcie_f0_int_enable));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iop_send_sync_request_itl(काष्ठा hptiop_hba *hba,
-					व्योम __iomem *_req, u32 millisec)
-अणु
-	काष्ठा hpt_iop_request_header __iomem *req = _req;
+static int iop_send_sync_request_itl(struct hptiop_hba *hba,
+					void __iomem *_req, u32 millisec)
+{
+	struct hpt_iop_request_header __iomem *req = _req;
 	u32 i;
 
-	ग_लिखोl(पढ़ोl(&req->flags) | IOP_REQUEST_FLAG_SYNC_REQUEST, &req->flags);
-	ग_लिखोl(0, &req->context);
-	ग_लिखोl((अचिन्हित दीर्घ)req - (अचिन्हित दीर्घ)hba->u.itl.iop,
+	writel(readl(&req->flags) | IOP_REQUEST_FLAG_SYNC_REQUEST, &req->flags);
+	writel(0, &req->context);
+	writel((unsigned long)req - (unsigned long)hba->u.itl.iop,
 			&hba->u.itl.iop->inbound_queue);
-	पढ़ोl(&hba->u.itl.iop->outbound_पूर्णांकstatus);
+	readl(&hba->u.itl.iop->outbound_intstatus);
 
-	क्रम (i = 0; i < millisec; i++) अणु
-		iop_पूर्णांकr_itl(hba);
-		अगर (पढ़ोl(&req->context))
-			वापस 0;
+	for (i = 0; i < millisec; i++) {
+		iop_intr_itl(hba);
+		if (readl(&req->context))
+			return 0;
 		msleep(1);
-	पूर्ण
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक iop_send_sync_request_mv(काष्ठा hptiop_hba *hba,
+static int iop_send_sync_request_mv(struct hptiop_hba *hba,
 					u32 size_bits, u32 millisec)
-अणु
-	काष्ठा hpt_iop_request_header *reqhdr = hba->u.mv.पूर्णांकernal_req;
+{
+	struct hpt_iop_request_header *reqhdr = hba->u.mv.internal_req;
 	u32 i;
 
-	hba->msg_करोne = 0;
+	hba->msg_done = 0;
 	reqhdr->flags |= cpu_to_le32(IOP_REQUEST_FLAG_SYNC_REQUEST);
-	mv_inbound_ग_लिखो(hba->u.mv.पूर्णांकernal_req_phy |
+	mv_inbound_write(hba->u.mv.internal_req_phy |
 			MVIOP_MU_QUEUE_ADDR_HOST_BIT | size_bits, hba);
 
-	क्रम (i = 0; i < millisec; i++) अणु
-		iop_पूर्णांकr_mv(hba);
-		अगर (hba->msg_करोne)
-			वापस 0;
+	for (i = 0; i < millisec; i++) {
+		iop_intr_mv(hba);
+		if (hba->msg_done)
+			return 0;
 		msleep(1);
-	पूर्ण
-	वापस -1;
-पूर्ण
+	}
+	return -1;
+}
 
-अटल पूर्णांक iop_send_sync_request_mvfrey(काष्ठा hptiop_hba *hba,
+static int iop_send_sync_request_mvfrey(struct hptiop_hba *hba,
 					u32 size_bits, u32 millisec)
-अणु
-	काष्ठा hpt_iop_request_header *reqhdr =
-		hba->u.mvfrey.पूर्णांकernal_req.req_virt;
+{
+	struct hpt_iop_request_header *reqhdr =
+		hba->u.mvfrey.internal_req.req_virt;
 	u32 i;
 
-	hba->msg_करोne = 0;
+	hba->msg_done = 0;
 	reqhdr->flags |= cpu_to_le32(IOP_REQUEST_FLAG_SYNC_REQUEST);
-	hba->ops->post_req(hba, &(hba->u.mvfrey.पूर्णांकernal_req));
+	hba->ops->post_req(hba, &(hba->u.mvfrey.internal_req));
 
-	क्रम (i = 0; i < millisec; i++) अणु
-		iop_पूर्णांकr_mvfrey(hba);
-		अगर (hba->msg_करोne)
-			अवरोध;
+	for (i = 0; i < millisec; i++) {
+		iop_intr_mvfrey(hba);
+		if (hba->msg_done)
+			break;
 		msleep(1);
-	पूर्ण
-	वापस hba->msg_करोne ? 0 : -1;
-पूर्ण
+	}
+	return hba->msg_done ? 0 : -1;
+}
 
-अटल व्योम hptiop_post_msg_itl(काष्ठा hptiop_hba *hba, u32 msg)
-अणु
-	ग_लिखोl(msg, &hba->u.itl.iop->inbound_msgaddr0);
-	पढ़ोl(&hba->u.itl.iop->outbound_पूर्णांकstatus);
-पूर्ण
+static void hptiop_post_msg_itl(struct hptiop_hba *hba, u32 msg)
+{
+	writel(msg, &hba->u.itl.iop->inbound_msgaddr0);
+	readl(&hba->u.itl.iop->outbound_intstatus);
+}
 
-अटल व्योम hptiop_post_msg_mv(काष्ठा hptiop_hba *hba, u32 msg)
-अणु
-	ग_लिखोl(msg, &hba->u.mv.mu->inbound_msg);
-	ग_लिखोl(MVIOP_MU_INBOUND_INT_MSG, &hba->u.mv.regs->inbound_करोorbell);
-	पढ़ोl(&hba->u.mv.regs->inbound_करोorbell);
-पूर्ण
+static void hptiop_post_msg_mv(struct hptiop_hba *hba, u32 msg)
+{
+	writel(msg, &hba->u.mv.mu->inbound_msg);
+	writel(MVIOP_MU_INBOUND_INT_MSG, &hba->u.mv.regs->inbound_doorbell);
+	readl(&hba->u.mv.regs->inbound_doorbell);
+}
 
-अटल व्योम hptiop_post_msg_mvfrey(काष्ठा hptiop_hba *hba, u32 msg)
-अणु
-	ग_लिखोl(msg, &(hba->u.mvfrey.mu->f0_to_cpu_msg_a));
-	पढ़ोl(&(hba->u.mvfrey.mu->f0_to_cpu_msg_a));
-पूर्ण
+static void hptiop_post_msg_mvfrey(struct hptiop_hba *hba, u32 msg)
+{
+	writel(msg, &(hba->u.mvfrey.mu->f0_to_cpu_msg_a));
+	readl(&(hba->u.mvfrey.mu->f0_to_cpu_msg_a));
+}
 
-अटल पूर्णांक iop_send_sync_msg(काष्ठा hptiop_hba *hba, u32 msg, u32 millisec)
-अणु
+static int iop_send_sync_msg(struct hptiop_hba *hba, u32 msg, u32 millisec)
+{
 	u32 i;
 
-	hba->msg_करोne = 0;
-	hba->ops->disable_पूर्णांकr(hba);
+	hba->msg_done = 0;
+	hba->ops->disable_intr(hba);
 	hba->ops->post_msg(hba, msg);
 
-	क्रम (i = 0; i < millisec; i++) अणु
+	for (i = 0; i < millisec; i++) {
 		spin_lock_irq(hba->host->host_lock);
-		hba->ops->iop_पूर्णांकr(hba);
+		hba->ops->iop_intr(hba);
 		spin_unlock_irq(hba->host->host_lock);
-		अगर (hba->msg_करोne)
-			अवरोध;
+		if (hba->msg_done)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	hba->ops->enable_पूर्णांकr(hba);
-	वापस hba->msg_करोne? 0 : -1;
-पूर्ण
+	hba->ops->enable_intr(hba);
+	return hba->msg_done? 0 : -1;
+}
 
-अटल पूर्णांक iop_get_config_itl(काष्ठा hptiop_hba *hba,
-				काष्ठा hpt_iop_request_get_config *config)
-अणु
+static int iop_get_config_itl(struct hptiop_hba *hba,
+				struct hpt_iop_request_get_config *config)
+{
 	u32 req32;
-	काष्ठा hpt_iop_request_get_config __iomem *req;
+	struct hpt_iop_request_get_config __iomem *req;
 
-	req32 = पढ़ोl(&hba->u.itl.iop->inbound_queue);
-	अगर (req32 == IOPMU_QUEUE_EMPTY)
-		वापस -1;
+	req32 = readl(&hba->u.itl.iop->inbound_queue);
+	if (req32 == IOPMU_QUEUE_EMPTY)
+		return -1;
 
-	req = (काष्ठा hpt_iop_request_get_config __iomem *)
-			((अचिन्हित दीर्घ)hba->u.itl.iop + req32);
+	req = (struct hpt_iop_request_get_config __iomem *)
+			((unsigned long)hba->u.itl.iop + req32);
 
-	ग_लिखोl(0, &req->header.flags);
-	ग_लिखोl(IOP_REQUEST_TYPE_GET_CONFIG, &req->header.type);
-	ग_लिखोl(माप(काष्ठा hpt_iop_request_get_config), &req->header.size);
-	ग_लिखोl(IOP_RESULT_PENDING, &req->header.result);
+	writel(0, &req->header.flags);
+	writel(IOP_REQUEST_TYPE_GET_CONFIG, &req->header.type);
+	writel(sizeof(struct hpt_iop_request_get_config), &req->header.size);
+	writel(IOP_RESULT_PENDING, &req->header.result);
 
-	अगर (iop_send_sync_request_itl(hba, req, 20000)) अणु
-		dprपूर्णांकk("Get config send cmd failed\n");
-		वापस -1;
-	पूर्ण
+	if (iop_send_sync_request_itl(hba, req, 20000)) {
+		dprintk("Get config send cmd failed\n");
+		return -1;
+	}
 
-	स_नकल_fromio(config, req, माप(*config));
-	ग_लिखोl(req32, &hba->u.itl.iop->outbound_queue);
-	वापस 0;
-पूर्ण
+	memcpy_fromio(config, req, sizeof(*config));
+	writel(req32, &hba->u.itl.iop->outbound_queue);
+	return 0;
+}
 
-अटल पूर्णांक iop_get_config_mv(काष्ठा hptiop_hba *hba,
-				काष्ठा hpt_iop_request_get_config *config)
-अणु
-	काष्ठा hpt_iop_request_get_config *req = hba->u.mv.पूर्णांकernal_req;
+static int iop_get_config_mv(struct hptiop_hba *hba,
+				struct hpt_iop_request_get_config *config)
+{
+	struct hpt_iop_request_get_config *req = hba->u.mv.internal_req;
 
 	req->header.flags = cpu_to_le32(IOP_REQUEST_FLAG_OUTPUT_CONTEXT);
 	req->header.type = cpu_to_le32(IOP_REQUEST_TYPE_GET_CONFIG);
 	req->header.size =
-		cpu_to_le32(माप(काष्ठा hpt_iop_request_get_config));
+		cpu_to_le32(sizeof(struct hpt_iop_request_get_config));
 	req->header.result = cpu_to_le32(IOP_RESULT_PENDING);
 	req->header.context = cpu_to_le32(IOP_REQUEST_TYPE_GET_CONFIG<<5);
 	req->header.context_hi32 = 0;
 
-	अगर (iop_send_sync_request_mv(hba, 0, 20000)) अणु
-		dprपूर्णांकk("Get config send cmd failed\n");
-		वापस -1;
-	पूर्ण
+	if (iop_send_sync_request_mv(hba, 0, 20000)) {
+		dprintk("Get config send cmd failed\n");
+		return -1;
+	}
 
-	स_नकल(config, req, माप(काष्ठा hpt_iop_request_get_config));
-	वापस 0;
-पूर्ण
+	memcpy(config, req, sizeof(struct hpt_iop_request_get_config));
+	return 0;
+}
 
-अटल पूर्णांक iop_get_config_mvfrey(काष्ठा hptiop_hba *hba,
-				काष्ठा hpt_iop_request_get_config *config)
-अणु
-	काष्ठा hpt_iop_request_get_config *info = hba->u.mvfrey.config;
+static int iop_get_config_mvfrey(struct hptiop_hba *hba,
+				struct hpt_iop_request_get_config *config)
+{
+	struct hpt_iop_request_get_config *info = hba->u.mvfrey.config;
 
-	अगर (info->header.size != माप(काष्ठा hpt_iop_request_get_config) ||
+	if (info->header.size != sizeof(struct hpt_iop_request_get_config) ||
 			info->header.type != IOP_REQUEST_TYPE_GET_CONFIG)
-		वापस -1;
+		return -1;
 
-	config->पूर्णांकerface_version = info->पूर्णांकerface_version;
+	config->interface_version = info->interface_version;
 	config->firmware_version = info->firmware_version;
 	config->max_requests = info->max_requests;
 	config->request_size = info->request_size;
@@ -467,259 +466,259 @@ MODULE_DESCRIPTION("HighPoint RocketRAID 3xxx/4xxx Controller Driver");
 	config->max_devices = info->max_devices;
 	config->sdram_size = info->sdram_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iop_set_config_itl(काष्ठा hptiop_hba *hba,
-				काष्ठा hpt_iop_request_set_config *config)
-अणु
+static int iop_set_config_itl(struct hptiop_hba *hba,
+				struct hpt_iop_request_set_config *config)
+{
 	u32 req32;
-	काष्ठा hpt_iop_request_set_config __iomem *req;
+	struct hpt_iop_request_set_config __iomem *req;
 
-	req32 = पढ़ोl(&hba->u.itl.iop->inbound_queue);
-	अगर (req32 == IOPMU_QUEUE_EMPTY)
-		वापस -1;
+	req32 = readl(&hba->u.itl.iop->inbound_queue);
+	if (req32 == IOPMU_QUEUE_EMPTY)
+		return -1;
 
-	req = (काष्ठा hpt_iop_request_set_config __iomem *)
-			((अचिन्हित दीर्घ)hba->u.itl.iop + req32);
+	req = (struct hpt_iop_request_set_config __iomem *)
+			((unsigned long)hba->u.itl.iop + req32);
 
-	स_नकल_toio((u8 __iomem *)req + माप(काष्ठा hpt_iop_request_header),
-		(u8 *)config + माप(काष्ठा hpt_iop_request_header),
-		माप(काष्ठा hpt_iop_request_set_config) -
-			माप(काष्ठा hpt_iop_request_header));
+	memcpy_toio((u8 __iomem *)req + sizeof(struct hpt_iop_request_header),
+		(u8 *)config + sizeof(struct hpt_iop_request_header),
+		sizeof(struct hpt_iop_request_set_config) -
+			sizeof(struct hpt_iop_request_header));
 
-	ग_लिखोl(0, &req->header.flags);
-	ग_लिखोl(IOP_REQUEST_TYPE_SET_CONFIG, &req->header.type);
-	ग_लिखोl(माप(काष्ठा hpt_iop_request_set_config), &req->header.size);
-	ग_लिखोl(IOP_RESULT_PENDING, &req->header.result);
+	writel(0, &req->header.flags);
+	writel(IOP_REQUEST_TYPE_SET_CONFIG, &req->header.type);
+	writel(sizeof(struct hpt_iop_request_set_config), &req->header.size);
+	writel(IOP_RESULT_PENDING, &req->header.result);
 
-	अगर (iop_send_sync_request_itl(hba, req, 20000)) अणु
-		dprपूर्णांकk("Set config send cmd failed\n");
-		वापस -1;
-	पूर्ण
+	if (iop_send_sync_request_itl(hba, req, 20000)) {
+		dprintk("Set config send cmd failed\n");
+		return -1;
+	}
 
-	ग_लिखोl(req32, &hba->u.itl.iop->outbound_queue);
-	वापस 0;
-पूर्ण
+	writel(req32, &hba->u.itl.iop->outbound_queue);
+	return 0;
+}
 
-अटल पूर्णांक iop_set_config_mv(काष्ठा hptiop_hba *hba,
-				काष्ठा hpt_iop_request_set_config *config)
-अणु
-	काष्ठा hpt_iop_request_set_config *req = hba->u.mv.पूर्णांकernal_req;
+static int iop_set_config_mv(struct hptiop_hba *hba,
+				struct hpt_iop_request_set_config *config)
+{
+	struct hpt_iop_request_set_config *req = hba->u.mv.internal_req;
 
-	स_नकल(req, config, माप(काष्ठा hpt_iop_request_set_config));
+	memcpy(req, config, sizeof(struct hpt_iop_request_set_config));
 	req->header.flags = cpu_to_le32(IOP_REQUEST_FLAG_OUTPUT_CONTEXT);
 	req->header.type = cpu_to_le32(IOP_REQUEST_TYPE_SET_CONFIG);
 	req->header.size =
-		cpu_to_le32(माप(काष्ठा hpt_iop_request_set_config));
+		cpu_to_le32(sizeof(struct hpt_iop_request_set_config));
 	req->header.result = cpu_to_le32(IOP_RESULT_PENDING);
 	req->header.context = cpu_to_le32(IOP_REQUEST_TYPE_SET_CONFIG<<5);
 	req->header.context_hi32 = 0;
 
-	अगर (iop_send_sync_request_mv(hba, 0, 20000)) अणु
-		dprपूर्णांकk("Set config send cmd failed\n");
-		वापस -1;
-	पूर्ण
+	if (iop_send_sync_request_mv(hba, 0, 20000)) {
+		dprintk("Set config send cmd failed\n");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iop_set_config_mvfrey(काष्ठा hptiop_hba *hba,
-				काष्ठा hpt_iop_request_set_config *config)
-अणु
-	काष्ठा hpt_iop_request_set_config *req =
-		hba->u.mvfrey.पूर्णांकernal_req.req_virt;
+static int iop_set_config_mvfrey(struct hptiop_hba *hba,
+				struct hpt_iop_request_set_config *config)
+{
+	struct hpt_iop_request_set_config *req =
+		hba->u.mvfrey.internal_req.req_virt;
 
-	स_नकल(req, config, माप(काष्ठा hpt_iop_request_set_config));
+	memcpy(req, config, sizeof(struct hpt_iop_request_set_config));
 	req->header.flags = cpu_to_le32(IOP_REQUEST_FLAG_OUTPUT_CONTEXT);
 	req->header.type = cpu_to_le32(IOP_REQUEST_TYPE_SET_CONFIG);
 	req->header.size =
-		cpu_to_le32(माप(काष्ठा hpt_iop_request_set_config));
+		cpu_to_le32(sizeof(struct hpt_iop_request_set_config));
 	req->header.result = cpu_to_le32(IOP_RESULT_PENDING);
 	req->header.context = cpu_to_le32(IOP_REQUEST_TYPE_SET_CONFIG<<5);
 	req->header.context_hi32 = 0;
 
-	अगर (iop_send_sync_request_mvfrey(hba, 0, 20000)) अणु
-		dprपूर्णांकk("Set config send cmd failed\n");
-		वापस -1;
-	पूर्ण
+	if (iop_send_sync_request_mvfrey(hba, 0, 20000)) {
+		dprintk("Set config send cmd failed\n");
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hptiop_enable_पूर्णांकr_itl(काष्ठा hptiop_hba *hba)
-अणु
-	ग_लिखोl(~(IOPMU_OUTBOUND_INT_POSTQUEUE | IOPMU_OUTBOUND_INT_MSG0),
-		&hba->u.itl.iop->outbound_पूर्णांकmask);
-पूर्ण
+static void hptiop_enable_intr_itl(struct hptiop_hba *hba)
+{
+	writel(~(IOPMU_OUTBOUND_INT_POSTQUEUE | IOPMU_OUTBOUND_INT_MSG0),
+		&hba->u.itl.iop->outbound_intmask);
+}
 
-अटल व्योम hptiop_enable_पूर्णांकr_mv(काष्ठा hptiop_hba *hba)
-अणु
-	ग_लिखोl(MVIOP_MU_OUTBOUND_INT_POSTQUEUE | MVIOP_MU_OUTBOUND_INT_MSG,
-		&hba->u.mv.regs->outbound_पूर्णांकmask);
-पूर्ण
+static void hptiop_enable_intr_mv(struct hptiop_hba *hba)
+{
+	writel(MVIOP_MU_OUTBOUND_INT_POSTQUEUE | MVIOP_MU_OUTBOUND_INT_MSG,
+		&hba->u.mv.regs->outbound_intmask);
+}
 
-अटल व्योम hptiop_enable_पूर्णांकr_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
-	ग_लिखोl(CPU_TO_F0_DRBL_MSG_BIT, &(hba->u.mvfrey.mu->f0_करोorbell_enable));
-	ग_लिखोl(0x1, &(hba->u.mvfrey.mu->isr_enable));
-	ग_लिखोl(0x1010, &(hba->u.mvfrey.mu->pcie_f0_पूर्णांक_enable));
-पूर्ण
+static void hptiop_enable_intr_mvfrey(struct hptiop_hba *hba)
+{
+	writel(CPU_TO_F0_DRBL_MSG_BIT, &(hba->u.mvfrey.mu->f0_doorbell_enable));
+	writel(0x1, &(hba->u.mvfrey.mu->isr_enable));
+	writel(0x1010, &(hba->u.mvfrey.mu->pcie_f0_int_enable));
+}
 
-अटल पूर्णांक hptiop_initialize_iop(काष्ठा hptiop_hba *hba)
-अणु
-	/* enable पूर्णांकerrupts */
-	hba->ops->enable_पूर्णांकr(hba);
+static int hptiop_initialize_iop(struct hptiop_hba *hba)
+{
+	/* enable interrupts */
+	hba->ops->enable_intr(hba);
 
 	hba->initialized = 1;
 
 	/* start background tasks */
-	अगर (iop_send_sync_msg(hba,
-			IOPMU_INBOUND_MSG0_START_BACKGROUND_TASK, 5000)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: fail to start background task\n",
+	if (iop_send_sync_msg(hba,
+			IOPMU_INBOUND_MSG0_START_BACKGROUND_TASK, 5000)) {
+		printk(KERN_ERR "scsi%d: fail to start background task\n",
 			hba->host->host_no);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल व्योम __iomem *hptiop_map_pci_bar(काष्ठा hptiop_hba *hba, पूर्णांक index)
-अणु
+static void __iomem *hptiop_map_pci_bar(struct hptiop_hba *hba, int index)
+{
 	u32 mem_base_phy, length;
-	व्योम __iomem *mem_base_virt;
+	void __iomem *mem_base_virt;
 
-	काष्ठा pci_dev *pcidev = hba->pcidev;
+	struct pci_dev *pcidev = hba->pcidev;
 
 
-	अगर (!(pci_resource_flags(pcidev, index) & IORESOURCE_MEM)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: pci resource invalid\n",
+	if (!(pci_resource_flags(pcidev, index) & IORESOURCE_MEM)) {
+		printk(KERN_ERR "scsi%d: pci resource invalid\n",
 				hba->host->host_no);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	mem_base_phy = pci_resource_start(pcidev, index);
 	length = pci_resource_len(pcidev, index);
 	mem_base_virt = ioremap(mem_base_phy, length);
 
-	अगर (!mem_base_virt) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: Fail to ioremap memory space\n",
+	if (!mem_base_virt) {
+		printk(KERN_ERR "scsi%d: Fail to ioremap memory space\n",
 				hba->host->host_no);
-		वापस शून्य;
-	पूर्ण
-	वापस mem_base_virt;
-पूर्ण
+		return NULL;
+	}
+	return mem_base_virt;
+}
 
-अटल पूर्णांक hptiop_map_pci_bar_itl(काष्ठा hptiop_hba *hba)
-अणु
-	काष्ठा pci_dev *pcidev = hba->pcidev;
+static int hptiop_map_pci_bar_itl(struct hptiop_hba *hba)
+{
+	struct pci_dev *pcidev = hba->pcidev;
 	hba->u.itl.iop = hptiop_map_pci_bar(hba, 0);
-	अगर (hba->u.itl.iop == शून्य)
-		वापस -1;
-	अगर ((pcidev->device & 0xff00) == 0x4400) अणु
+	if (hba->u.itl.iop == NULL)
+		return -1;
+	if ((pcidev->device & 0xff00) == 0x4400) {
 		hba->u.itl.plx = hba->u.itl.iop;
 		hba->u.itl.iop = hptiop_map_pci_bar(hba, 2);
-		अगर (hba->u.itl.iop == शून्य) अणु
+		if (hba->u.itl.iop == NULL) {
 			iounmap(hba->u.itl.plx);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -1;
+		}
+	}
+	return 0;
+}
 
-अटल व्योम hptiop_unmap_pci_bar_itl(काष्ठा hptiop_hba *hba)
-अणु
-	अगर (hba->u.itl.plx)
+static void hptiop_unmap_pci_bar_itl(struct hptiop_hba *hba)
+{
+	if (hba->u.itl.plx)
 		iounmap(hba->u.itl.plx);
 	iounmap(hba->u.itl.iop);
-पूर्ण
+}
 
-अटल पूर्णांक hptiop_map_pci_bar_mv(काष्ठा hptiop_hba *hba)
-अणु
+static int hptiop_map_pci_bar_mv(struct hptiop_hba *hba)
+{
 	hba->u.mv.regs = hptiop_map_pci_bar(hba, 0);
-	अगर (hba->u.mv.regs == शून्य)
-		वापस -1;
+	if (hba->u.mv.regs == NULL)
+		return -1;
 
 	hba->u.mv.mu = hptiop_map_pci_bar(hba, 2);
-	अगर (hba->u.mv.mu == शून्य) अणु
+	if (hba->u.mv.mu == NULL) {
 		iounmap(hba->u.mv.regs);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hptiop_map_pci_bar_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
+static int hptiop_map_pci_bar_mvfrey(struct hptiop_hba *hba)
+{
 	hba->u.mvfrey.config = hptiop_map_pci_bar(hba, 0);
-	अगर (hba->u.mvfrey.config == शून्य)
-		वापस -1;
+	if (hba->u.mvfrey.config == NULL)
+		return -1;
 
 	hba->u.mvfrey.mu = hptiop_map_pci_bar(hba, 2);
-	अगर (hba->u.mvfrey.mu == शून्य) अणु
+	if (hba->u.mvfrey.mu == NULL) {
 		iounmap(hba->u.mvfrey.config);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hptiop_unmap_pci_bar_mv(काष्ठा hptiop_hba *hba)
-अणु
+static void hptiop_unmap_pci_bar_mv(struct hptiop_hba *hba)
+{
 	iounmap(hba->u.mv.regs);
 	iounmap(hba->u.mv.mu);
-पूर्ण
+}
 
-अटल व्योम hptiop_unmap_pci_bar_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
+static void hptiop_unmap_pci_bar_mvfrey(struct hptiop_hba *hba)
+{
 	iounmap(hba->u.mvfrey.config);
 	iounmap(hba->u.mvfrey.mu);
-पूर्ण
+}
 
-अटल व्योम hptiop_message_callback(काष्ठा hptiop_hba *hba, u32 msg)
-अणु
-	dprपूर्णांकk("iop message 0x%x\n", msg);
+static void hptiop_message_callback(struct hptiop_hba *hba, u32 msg)
+{
+	dprintk("iop message 0x%x\n", msg);
 
-	अगर (msg == IOPMU_INBOUND_MSG0_NOP ||
+	if (msg == IOPMU_INBOUND_MSG0_NOP ||
 		msg == IOPMU_INBOUND_MSG0_RESET_COMM)
-		hba->msg_करोne = 1;
+		hba->msg_done = 1;
 
-	अगर (!hba->initialized)
-		वापस;
+	if (!hba->initialized)
+		return;
 
-	अगर (msg == IOPMU_INBOUND_MSG0_RESET) अणु
+	if (msg == IOPMU_INBOUND_MSG0_RESET) {
 		atomic_set(&hba->resetting, 0);
 		wake_up(&hba->reset_wq);
-	पूर्ण
-	अन्यथा अगर (msg <= IOPMU_INBOUND_MSG0_MAX)
-		hba->msg_करोne = 1;
-पूर्ण
+	}
+	else if (msg <= IOPMU_INBOUND_MSG0_MAX)
+		hba->msg_done = 1;
+}
 
-अटल काष्ठा hptiop_request *get_req(काष्ठा hptiop_hba *hba)
-अणु
-	काष्ठा hptiop_request *ret;
+static struct hptiop_request *get_req(struct hptiop_hba *hba)
+{
+	struct hptiop_request *ret;
 
-	dprपूर्णांकk("get_req : req=%p\n", hba->req_list);
+	dprintk("get_req : req=%p\n", hba->req_list);
 
 	ret = hba->req_list;
-	अगर (ret)
+	if (ret)
 		hba->req_list = ret->next;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम मुक्त_req(काष्ठा hptiop_hba *hba, काष्ठा hptiop_request *req)
-अणु
-	dprपूर्णांकk("free_req(%d, %p)\n", req->index, req);
+static void free_req(struct hptiop_hba *hba, struct hptiop_request *req)
+{
+	dprintk("free_req(%d, %p)\n", req->index, req);
 	req->next = hba->req_list;
 	hba->req_list = req;
-पूर्ण
+}
 
-अटल व्योम hptiop_finish_scsi_req(काष्ठा hptiop_hba *hba, u32 tag,
-				काष्ठा hpt_iop_request_scsi_command *req)
-अणु
-	काष्ठा scsi_cmnd *scp;
+static void hptiop_finish_scsi_req(struct hptiop_hba *hba, u32 tag,
+				struct hpt_iop_request_scsi_command *req)
+{
+	struct scsi_cmnd *scp;
 
-	dprपूर्णांकk("hptiop_finish_scsi_req: req=%p, type=%d, "
+	dprintk("hptiop_finish_scsi_req: req=%p, type=%d, "
 			"result=%d, context=0x%x tag=%d\n",
 			req, req->header.type, req->header.result,
 			req->header.context, tag);
@@ -729,179 +728,179 @@ MODULE_DESCRIPTION("HighPoint RocketRAID 3xxx/4xxx Controller Driver");
 
 	scp = hba->reqs[tag].scp;
 
-	अगर (HPT_SCP(scp)->mapped)
+	if (HPT_SCP(scp)->mapped)
 		scsi_dma_unmap(scp);
 
-	चयन (le32_to_cpu(req->header.result)) अणु
-	हाल IOP_RESULT_SUCCESS:
+	switch (le32_to_cpu(req->header.result)) {
+	case IOP_RESULT_SUCCESS:
 		scsi_set_resid(scp,
 			scsi_bufflen(scp) - le32_to_cpu(req->dataxfer_length));
 		scp->result = (DID_OK<<16);
-		अवरोध;
-	हाल IOP_RESULT_BAD_TARGET:
+		break;
+	case IOP_RESULT_BAD_TARGET:
 		scp->result = (DID_BAD_TARGET<<16);
-		अवरोध;
-	हाल IOP_RESULT_BUSY:
+		break;
+	case IOP_RESULT_BUSY:
 		scp->result = (DID_BUS_BUSY<<16);
-		अवरोध;
-	हाल IOP_RESULT_RESET:
+		break;
+	case IOP_RESULT_RESET:
 		scp->result = (DID_RESET<<16);
-		अवरोध;
-	हाल IOP_RESULT_FAIL:
+		break;
+	case IOP_RESULT_FAIL:
 		scp->result = (DID_ERROR<<16);
-		अवरोध;
-	हाल IOP_RESULT_INVALID_REQUEST:
+		break;
+	case IOP_RESULT_INVALID_REQUEST:
 		scp->result = (DID_ABORT<<16);
-		अवरोध;
-	हाल IOP_RESULT_CHECK_CONDITION:
+		break;
+	case IOP_RESULT_CHECK_CONDITION:
 		scsi_set_resid(scp,
 			scsi_bufflen(scp) - le32_to_cpu(req->dataxfer_length));
 		scp->result = SAM_STAT_CHECK_CONDITION;
-		स_नकल(scp->sense_buffer, &req->sg_list, SCSI_SENSE_BUFFERSIZE);
-		जाओ skip_resid;
+		memcpy(scp->sense_buffer, &req->sg_list, SCSI_SENSE_BUFFERSIZE);
+		goto skip_resid;
 
-	शेष:
+	default:
 		scp->result = DRIVER_INVALID << 24 | DID_ABORT << 16;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	scsi_set_resid(scp,
 		scsi_bufflen(scp) - le32_to_cpu(req->dataxfer_length));
 
 skip_resid:
-	dprपूर्णांकk("scsi_done(%p)\n", scp);
-	scp->scsi_करोne(scp);
-	मुक्त_req(hba, &hba->reqs[tag]);
-पूर्ण
+	dprintk("scsi_done(%p)\n", scp);
+	scp->scsi_done(scp);
+	free_req(hba, &hba->reqs[tag]);
+}
 
-अटल व्योम hptiop_host_request_callback_itl(काष्ठा hptiop_hba *hba, u32 _tag)
-अणु
-	काष्ठा hpt_iop_request_scsi_command *req;
+static void hptiop_host_request_callback_itl(struct hptiop_hba *hba, u32 _tag)
+{
+	struct hpt_iop_request_scsi_command *req;
 	u32 tag;
 
-	अगर (hba->iopपूर्णांकf_v2) अणु
+	if (hba->iopintf_v2) {
 		tag = _tag & ~IOPMU_QUEUE_REQUEST_RESULT_BIT;
 		req = hba->reqs[tag].req_virt;
-		अगर (likely(_tag & IOPMU_QUEUE_REQUEST_RESULT_BIT))
+		if (likely(_tag & IOPMU_QUEUE_REQUEST_RESULT_BIT))
 			req->header.result = cpu_to_le32(IOP_RESULT_SUCCESS);
-	पूर्ण अन्यथा अणु
+	} else {
 		tag = _tag;
 		req = hba->reqs[tag].req_virt;
-	पूर्ण
+	}
 
 	hptiop_finish_scsi_req(hba, tag, req);
-पूर्ण
+}
 
-अटल व्योम hptiop_iop_request_callback_itl(काष्ठा hptiop_hba *hba, u32 tag)
-अणु
-	काष्ठा hpt_iop_request_header __iomem *req;
-	काष्ठा hpt_iop_request_ioctl_command __iomem *p;
-	काष्ठा hpt_ioctl_k *arg;
+static void hptiop_iop_request_callback_itl(struct hptiop_hba *hba, u32 tag)
+{
+	struct hpt_iop_request_header __iomem *req;
+	struct hpt_iop_request_ioctl_command __iomem *p;
+	struct hpt_ioctl_k *arg;
 
-	req = (काष्ठा hpt_iop_request_header __iomem *)
-			((अचिन्हित दीर्घ)hba->u.itl.iop + tag);
-	dprपूर्णांकk("hptiop_iop_request_callback_itl: req=%p, type=%d, "
+	req = (struct hpt_iop_request_header __iomem *)
+			((unsigned long)hba->u.itl.iop + tag);
+	dprintk("hptiop_iop_request_callback_itl: req=%p, type=%d, "
 			"result=%d, context=0x%x tag=%d\n",
-			req, पढ़ोl(&req->type), पढ़ोl(&req->result),
-			पढ़ोl(&req->context), tag);
+			req, readl(&req->type), readl(&req->result),
+			readl(&req->context), tag);
 
-	BUG_ON(!पढ़ोl(&req->result));
-	BUG_ON(पढ़ोl(&req->type) != IOP_REQUEST_TYPE_IOCTL_COMMAND);
+	BUG_ON(!readl(&req->result));
+	BUG_ON(readl(&req->type) != IOP_REQUEST_TYPE_IOCTL_COMMAND);
 
-	p = (काष्ठा hpt_iop_request_ioctl_command __iomem *)req;
-	arg = (काष्ठा hpt_ioctl_k *)(अचिन्हित दीर्घ)
-		(पढ़ोl(&req->context) |
-			((u64)पढ़ोl(&req->context_hi32)<<32));
+	p = (struct hpt_iop_request_ioctl_command __iomem *)req;
+	arg = (struct hpt_ioctl_k *)(unsigned long)
+		(readl(&req->context) |
+			((u64)readl(&req->context_hi32)<<32));
 
-	अगर (पढ़ोl(&req->result) == IOP_RESULT_SUCCESS) अणु
+	if (readl(&req->result) == IOP_RESULT_SUCCESS) {
 		arg->result = HPT_IOCTL_RESULT_OK;
 
-		अगर (arg->outbuf_size)
-			स_नकल_fromio(arg->outbuf,
-				&p->buf[(पढ़ोl(&p->inbuf_size) + 3)& ~3],
+		if (arg->outbuf_size)
+			memcpy_fromio(arg->outbuf,
+				&p->buf[(readl(&p->inbuf_size) + 3)& ~3],
 				arg->outbuf_size);
 
-		अगर (arg->bytes_वापसed)
-			*arg->bytes_वापसed = arg->outbuf_size;
-	पूर्ण
-	अन्यथा
+		if (arg->bytes_returned)
+			*arg->bytes_returned = arg->outbuf_size;
+	}
+	else
 		arg->result = HPT_IOCTL_RESULT_FAILED;
 
-	arg->करोne(arg);
-	ग_लिखोl(tag, &hba->u.itl.iop->outbound_queue);
-पूर्ण
+	arg->done(arg);
+	writel(tag, &hba->u.itl.iop->outbound_queue);
+}
 
-अटल irqवापस_t hptiop_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा hptiop_hba  *hba = dev_id;
-	पूर्णांक  handled;
-	अचिन्हित दीर्घ flags;
+static irqreturn_t hptiop_intr(int irq, void *dev_id)
+{
+	struct hptiop_hba  *hba = dev_id;
+	int  handled;
+	unsigned long flags;
 
 	spin_lock_irqsave(hba->host->host_lock, flags);
-	handled = hba->ops->iop_पूर्णांकr(hba);
+	handled = hba->ops->iop_intr(hba);
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-अटल पूर्णांक hptiop_buildsgl(काष्ठा scsi_cmnd *scp, काष्ठा hpt_iopsg *psg)
-अणु
-	काष्ठा Scsi_Host *host = scp->device->host;
-	काष्ठा hptiop_hba *hba = (काष्ठा hptiop_hba *)host->hostdata;
-	काष्ठा scatterlist *sg;
-	पूर्णांक idx, nseg;
+static int hptiop_buildsgl(struct scsi_cmnd *scp, struct hpt_iopsg *psg)
+{
+	struct Scsi_Host *host = scp->device->host;
+	struct hptiop_hba *hba = (struct hptiop_hba *)host->hostdata;
+	struct scatterlist *sg;
+	int idx, nseg;
 
 	nseg = scsi_dma_map(scp);
 	BUG_ON(nseg < 0);
-	अगर (!nseg)
-		वापस 0;
+	if (!nseg)
+		return 0;
 
 	HPT_SCP(scp)->sgcnt = nseg;
 	HPT_SCP(scp)->mapped = 1;
 
 	BUG_ON(HPT_SCP(scp)->sgcnt > hba->max_sg_descriptors);
 
-	scsi_क्रम_each_sg(scp, sg, HPT_SCP(scp)->sgcnt, idx) अणु
+	scsi_for_each_sg(scp, sg, HPT_SCP(scp)->sgcnt, idx) {
 		psg[idx].pci_address = cpu_to_le64(sg_dma_address(sg)) |
 			hba->ops->host_phy_flag;
 		psg[idx].size = cpu_to_le32(sg_dma_len(sg));
 		psg[idx].eot = (idx == HPT_SCP(scp)->sgcnt - 1) ?
 			cpu_to_le32(1) : 0;
-	पूर्ण
-	वापस HPT_SCP(scp)->sgcnt;
-पूर्ण
+	}
+	return HPT_SCP(scp)->sgcnt;
+}
 
-अटल व्योम hptiop_post_req_itl(काष्ठा hptiop_hba *hba,
-					काष्ठा hptiop_request *_req)
-अणु
-	काष्ठा hpt_iop_request_header *reqhdr = _req->req_virt;
+static void hptiop_post_req_itl(struct hptiop_hba *hba,
+					struct hptiop_request *_req)
+{
+	struct hpt_iop_request_header *reqhdr = _req->req_virt;
 
 	reqhdr->context = cpu_to_le32(IOPMU_QUEUE_ADDR_HOST_BIT |
 							(u32)_req->index);
 	reqhdr->context_hi32 = 0;
 
-	अगर (hba->iopपूर्णांकf_v2) अणु
+	if (hba->iopintf_v2) {
 		u32 size, size_bits;
 
 		size = le32_to_cpu(reqhdr->size);
-		अगर (size < 256)
+		if (size < 256)
 			size_bits = IOPMU_QUEUE_REQUEST_SIZE_BIT;
-		अन्यथा अगर (size < 512)
+		else if (size < 512)
 			size_bits = IOPMU_QUEUE_ADDR_HOST_BIT;
-		अन्यथा
+		else
 			size_bits = IOPMU_QUEUE_REQUEST_SIZE_BIT |
 						IOPMU_QUEUE_ADDR_HOST_BIT;
-		ग_लिखोl(_req->req_shअगरted_phy | size_bits,
+		writel(_req->req_shifted_phy | size_bits,
 			&hba->u.itl.iop->inbound_queue);
-	पूर्ण अन्यथा
-		ग_लिखोl(_req->req_shअगरted_phy | IOPMU_QUEUE_ADDR_HOST_BIT,
+	} else
+		writel(_req->req_shifted_phy | IOPMU_QUEUE_ADDR_HOST_BIT,
 					&hba->u.itl.iop->inbound_queue);
-पूर्ण
+}
 
-अटल व्योम hptiop_post_req_mv(काष्ठा hptiop_hba *hba,
-					काष्ठा hptiop_request *_req)
-अणु
-	काष्ठा hpt_iop_request_header *reqhdr = _req->req_virt;
+static void hptiop_post_req_mv(struct hptiop_hba *hba,
+					struct hptiop_request *_req)
+{
+	struct hpt_iop_request_header *reqhdr = _req->req_virt;
 	u32 size, size_bit;
 
 	reqhdr->context = cpu_to_le32(_req->index<<8 |
@@ -909,112 +908,112 @@ skip_resid:
 	reqhdr->context_hi32 = 0;
 	size = le32_to_cpu(reqhdr->size);
 
-	अगर (size <= 256)
+	if (size <= 256)
 		size_bit = 0;
-	अन्यथा अगर (size <= 256*2)
+	else if (size <= 256*2)
 		size_bit = 1;
-	अन्यथा अगर (size <= 256*3)
+	else if (size <= 256*3)
 		size_bit = 2;
-	अन्यथा
+	else
 		size_bit = 3;
 
-	mv_inbound_ग_लिखो((_req->req_shअगरted_phy << 5) |
+	mv_inbound_write((_req->req_shifted_phy << 5) |
 		MVIOP_MU_QUEUE_ADDR_HOST_BIT | size_bit, hba);
-पूर्ण
+}
 
-अटल व्योम hptiop_post_req_mvfrey(काष्ठा hptiop_hba *hba,
-					काष्ठा hptiop_request *_req)
-अणु
-	काष्ठा hpt_iop_request_header *reqhdr = _req->req_virt;
+static void hptiop_post_req_mvfrey(struct hptiop_hba *hba,
+					struct hptiop_request *_req)
+{
+	struct hpt_iop_request_header *reqhdr = _req->req_virt;
 	u32 index;
 
 	reqhdr->flags |= cpu_to_le32(IOP_REQUEST_FLAG_OUTPUT_CONTEXT |
 			IOP_REQUEST_FLAG_ADDR_BITS |
-			((_req->req_shअगरted_phy >> 11) & 0xffff0000));
+			((_req->req_shifted_phy >> 11) & 0xffff0000));
 	reqhdr->context = cpu_to_le32(IOPMU_QUEUE_ADDR_HOST_BIT |
 			(_req->index << 4) | reqhdr->type);
-	reqhdr->context_hi32 = cpu_to_le32((_req->req_shअगरted_phy << 5) &
+	reqhdr->context_hi32 = cpu_to_le32((_req->req_shifted_phy << 5) &
 			0xffffffff);
 
 	hba->u.mvfrey.inlist_wptr++;
 	index = hba->u.mvfrey.inlist_wptr & 0x3fff;
 
-	अगर (index == hba->u.mvfrey.list_count) अणु
+	if (index == hba->u.mvfrey.list_count) {
 		index = 0;
 		hba->u.mvfrey.inlist_wptr &= ~0x3fff;
 		hba->u.mvfrey.inlist_wptr ^= CL_POINTER_TOGGLE;
-	पूर्ण
+	}
 
 	hba->u.mvfrey.inlist[index].addr =
-			(dma_addr_t)_req->req_shअगरted_phy << 5;
-	hba->u.mvfrey.inlist[index].पूर्णांकrfc_len = (reqhdr->size + 3) / 4;
-	ग_लिखोl(hba->u.mvfrey.inlist_wptr,
-		&(hba->u.mvfrey.mu->inbound_ग_लिखो_ptr));
-	पढ़ोl(&(hba->u.mvfrey.mu->inbound_ग_लिखो_ptr));
-पूर्ण
+			(dma_addr_t)_req->req_shifted_phy << 5;
+	hba->u.mvfrey.inlist[index].intrfc_len = (reqhdr->size + 3) / 4;
+	writel(hba->u.mvfrey.inlist_wptr,
+		&(hba->u.mvfrey.mu->inbound_write_ptr));
+	readl(&(hba->u.mvfrey.mu->inbound_write_ptr));
+}
 
-अटल पूर्णांक hptiop_reset_comm_itl(काष्ठा hptiop_hba *hba)
-अणु
-	वापस 0;
-पूर्ण
+static int hptiop_reset_comm_itl(struct hptiop_hba *hba)
+{
+	return 0;
+}
 
-अटल पूर्णांक hptiop_reset_comm_mv(काष्ठा hptiop_hba *hba)
-अणु
-	वापस 0;
-पूर्ण
+static int hptiop_reset_comm_mv(struct hptiop_hba *hba)
+{
+	return 0;
+}
 
-अटल पूर्णांक hptiop_reset_comm_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
+static int hptiop_reset_comm_mvfrey(struct hptiop_hba *hba)
+{
 	u32 list_count = hba->u.mvfrey.list_count;
 
-	अगर (iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_RESET_COMM, 3000))
-		वापस -1;
+	if (iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_RESET_COMM, 3000))
+		return -1;
 
-	/* रुको 100ms क्रम MCU पढ़ोy */
+	/* wait 100ms for MCU ready */
 	msleep(100);
 
-	ग_लिखोl(cpu_to_le32(hba->u.mvfrey.inlist_phy & 0xffffffff),
+	writel(cpu_to_le32(hba->u.mvfrey.inlist_phy & 0xffffffff),
 			&(hba->u.mvfrey.mu->inbound_base));
-	ग_लिखोl(cpu_to_le32((hba->u.mvfrey.inlist_phy >> 16) >> 16),
+	writel(cpu_to_le32((hba->u.mvfrey.inlist_phy >> 16) >> 16),
 			&(hba->u.mvfrey.mu->inbound_base_high));
 
-	ग_लिखोl(cpu_to_le32(hba->u.mvfrey.outlist_phy & 0xffffffff),
+	writel(cpu_to_le32(hba->u.mvfrey.outlist_phy & 0xffffffff),
 			&(hba->u.mvfrey.mu->outbound_base));
-	ग_लिखोl(cpu_to_le32((hba->u.mvfrey.outlist_phy >> 16) >> 16),
+	writel(cpu_to_le32((hba->u.mvfrey.outlist_phy >> 16) >> 16),
 			&(hba->u.mvfrey.mu->outbound_base_high));
 
-	ग_लिखोl(cpu_to_le32(hba->u.mvfrey.outlist_cptr_phy & 0xffffffff),
-			&(hba->u.mvfrey.mu->outbound_shaकरोw_base));
-	ग_लिखोl(cpu_to_le32((hba->u.mvfrey.outlist_cptr_phy >> 16) >> 16),
-			&(hba->u.mvfrey.mu->outbound_shaकरोw_base_high));
+	writel(cpu_to_le32(hba->u.mvfrey.outlist_cptr_phy & 0xffffffff),
+			&(hba->u.mvfrey.mu->outbound_shadow_base));
+	writel(cpu_to_le32((hba->u.mvfrey.outlist_cptr_phy >> 16) >> 16),
+			&(hba->u.mvfrey.mu->outbound_shadow_base_high));
 
 	hba->u.mvfrey.inlist_wptr = (list_count - 1) | CL_POINTER_TOGGLE;
 	*hba->u.mvfrey.outlist_cptr = (list_count - 1) | CL_POINTER_TOGGLE;
 	hba->u.mvfrey.outlist_rptr = list_count - 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hptiop_queuecommand_lck(काष्ठा scsi_cmnd *scp,
-				व्योम (*करोne)(काष्ठा scsi_cmnd *))
-अणु
-	काष्ठा Scsi_Host *host = scp->device->host;
-	काष्ठा hptiop_hba *hba = (काष्ठा hptiop_hba *)host->hostdata;
-	काष्ठा hpt_iop_request_scsi_command *req;
-	पूर्णांक sg_count = 0;
-	काष्ठा hptiop_request *_req;
+static int hptiop_queuecommand_lck(struct scsi_cmnd *scp,
+				void (*done)(struct scsi_cmnd *))
+{
+	struct Scsi_Host *host = scp->device->host;
+	struct hptiop_hba *hba = (struct hptiop_hba *)host->hostdata;
+	struct hpt_iop_request_scsi_command *req;
+	int sg_count = 0;
+	struct hptiop_request *_req;
 
-	BUG_ON(!करोne);
-	scp->scsi_करोne = करोne;
+	BUG_ON(!done);
+	scp->scsi_done = done;
 
 	_req = get_req(hba);
-	अगर (_req == शून्य) अणु
-		dprपूर्णांकk("hptiop_queuecmd : no free req\n");
-		वापस SCSI_MLQUEUE_HOST_BUSY;
-	पूर्ण
+	if (_req == NULL) {
+		dprintk("hptiop_queuecmd : no free req\n");
+		return SCSI_MLQUEUE_HOST_BUSY;
+	}
 
 	_req->scp = scp;
 
-	dprपूर्णांकk("hptiop_queuecmd(scp=%p) %d/%d/%d/%llu cdb=(%08x-%08x-%08x-%08x) "
+	dprintk("hptiop_queuecmd(scp=%p) %d/%d/%d/%llu cdb=(%08x-%08x-%08x-%08x) "
 			"req_index=%d, req=%p\n",
 			scp,
 			host->host_no, scp->device->channel,
@@ -1027,19 +1026,19 @@ skip_resid:
 
 	scp->result = 0;
 
-	अगर (scp->device->channel ||
+	if (scp->device->channel ||
 			(scp->device->id > hba->max_devices) ||
-			((scp->device->id == (hba->max_devices-1)) && scp->device->lun)) अणु
+			((scp->device->id == (hba->max_devices-1)) && scp->device->lun)) {
 		scp->result = DID_BAD_TARGET << 16;
-		मुक्त_req(hba, _req);
-		जाओ cmd_करोne;
-	पूर्ण
+		free_req(hba, _req);
+		goto cmd_done;
+	}
 
 	req = _req->req_virt;
 
 	/* build S/G table */
 	sg_count = hptiop_buildsgl(scp, req->sg_list);
-	अगर (!sg_count)
+	if (!sg_count)
 		HPT_SCP(scp)->mapped = 0;
 
 	req->header.flags = cpu_to_le32(IOP_REQUEST_FLAG_OUTPUT_CONTEXT);
@@ -1050,122 +1049,122 @@ skip_resid:
 	req->target = scp->device->id;
 	req->lun = scp->device->lun;
 	req->header.size = cpu_to_le32(
-				माप(काष्ठा hpt_iop_request_scsi_command)
-				 - माप(काष्ठा hpt_iopsg)
-				 + sg_count * माप(काष्ठा hpt_iopsg));
+				sizeof(struct hpt_iop_request_scsi_command)
+				 - sizeof(struct hpt_iopsg)
+				 + sg_count * sizeof(struct hpt_iopsg));
 
-	स_नकल(req->cdb, scp->cmnd, माप(req->cdb));
+	memcpy(req->cdb, scp->cmnd, sizeof(req->cdb));
 	hba->ops->post_req(hba, _req);
-	वापस 0;
+	return 0;
 
-cmd_करोne:
-	dprपूर्णांकk("scsi_done(scp=%p)\n", scp);
-	scp->scsi_करोne(scp);
-	वापस 0;
-पूर्ण
+cmd_done:
+	dprintk("scsi_done(scp=%p)\n", scp);
+	scp->scsi_done(scp);
+	return 0;
+}
 
-अटल DEF_SCSI_QCMD(hptiop_queuecommand)
+static DEF_SCSI_QCMD(hptiop_queuecommand)
 
-अटल स्थिर अक्षर *hptiop_info(काष्ठा Scsi_Host *host)
-अणु
-	वापस driver_name_दीर्घ;
-पूर्ण
+static const char *hptiop_info(struct Scsi_Host *host)
+{
+	return driver_name_long;
+}
 
-अटल पूर्णांक hptiop_reset_hba(काष्ठा hptiop_hba *hba)
-अणु
-	अगर (atomic_xchg(&hba->resetting, 1) == 0) अणु
+static int hptiop_reset_hba(struct hptiop_hba *hba)
+{
+	if (atomic_xchg(&hba->resetting, 1) == 0) {
 		atomic_inc(&hba->reset_count);
 		hba->ops->post_msg(hba, IOPMU_INBOUND_MSG0_RESET);
-	पूर्ण
+	}
 
-	रुको_event_समयout(hba->reset_wq,
-			atomic_पढ़ो(&hba->resetting) == 0, 60 * HZ);
+	wait_event_timeout(hba->reset_wq,
+			atomic_read(&hba->resetting) == 0, 60 * HZ);
 
-	अगर (atomic_पढ़ो(&hba->resetting)) अणु
-		/* IOP is in unknown state, पात reset */
-		prपूर्णांकk(KERN_ERR "scsi%d: reset failed\n", hba->host->host_no);
-		वापस -1;
-	पूर्ण
+	if (atomic_read(&hba->resetting)) {
+		/* IOP is in unknown state, abort reset */
+		printk(KERN_ERR "scsi%d: reset failed\n", hba->host->host_no);
+		return -1;
+	}
 
-	अगर (iop_send_sync_msg(hba,
-		IOPMU_INBOUND_MSG0_START_BACKGROUND_TASK, 5000)) अणु
-		dprपूर्णांकk("scsi%d: fail to start background task\n",
+	if (iop_send_sync_msg(hba,
+		IOPMU_INBOUND_MSG0_START_BACKGROUND_TASK, 5000)) {
+		dprintk("scsi%d: fail to start background task\n",
 				hba->host->host_no);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hptiop_reset(काष्ठा scsi_cmnd *scp)
-अणु
-	काष्ठा hptiop_hba * hba = (काष्ठा hptiop_hba *)scp->device->host->hostdata;
+static int hptiop_reset(struct scsi_cmnd *scp)
+{
+	struct hptiop_hba * hba = (struct hptiop_hba *)scp->device->host->hostdata;
 
-	prपूर्णांकk(KERN_WARNING "hptiop_reset(%d/%d/%d)\n",
+	printk(KERN_WARNING "hptiop_reset(%d/%d/%d)\n",
 	       scp->device->host->host_no, -1, -1);
 
-	वापस hptiop_reset_hba(hba)? FAILED : SUCCESS;
-पूर्ण
+	return hptiop_reset_hba(hba)? FAILED : SUCCESS;
+}
 
-अटल पूर्णांक hptiop_adjust_disk_queue_depth(काष्ठा scsi_device *sdev,
-					  पूर्णांक queue_depth)
-अणु
-	काष्ठा hptiop_hba *hba = (काष्ठा hptiop_hba *)sdev->host->hostdata;
+static int hptiop_adjust_disk_queue_depth(struct scsi_device *sdev,
+					  int queue_depth)
+{
+	struct hptiop_hba *hba = (struct hptiop_hba *)sdev->host->hostdata;
 
-	अगर (queue_depth > hba->max_requests)
+	if (queue_depth > hba->max_requests)
 		queue_depth = hba->max_requests;
-	वापस scsi_change_queue_depth(sdev, queue_depth);
-पूर्ण
+	return scsi_change_queue_depth(sdev, queue_depth);
+}
 
-अटल sमाप_प्रकार hptiop_show_version(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", driver_ver);
-पूर्ण
+static ssize_t hptiop_show_version(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%s\n", driver_ver);
+}
 
-अटल sमाप_प्रकार hptiop_show_fw_version(काष्ठा device *dev,
-				      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *host = class_to_shost(dev);
-	काष्ठा hptiop_hba *hba = (काष्ठा hptiop_hba *)host->hostdata;
+static ssize_t hptiop_show_fw_version(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *host = class_to_shost(dev);
+	struct hptiop_hba *hba = (struct hptiop_hba *)host->hostdata;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d.%d.%d.%d\n",
+	return snprintf(buf, PAGE_SIZE, "%d.%d.%d.%d\n",
 				hba->firmware_version >> 24,
 				(hba->firmware_version >> 16) & 0xff,
 				(hba->firmware_version >> 8) & 0xff,
 				hba->firmware_version & 0xff);
-पूर्ण
+}
 
-अटल काष्ठा device_attribute hptiop_attr_version = अणु
-	.attr = अणु
+static struct device_attribute hptiop_attr_version = {
+	.attr = {
 		.name = "driver-version",
 		.mode = S_IRUGO,
-	पूर्ण,
+	},
 	.show = hptiop_show_version,
-पूर्ण;
+};
 
-अटल काष्ठा device_attribute hptiop_attr_fw_version = अणु
-	.attr = अणु
+static struct device_attribute hptiop_attr_fw_version = {
+	.attr = {
 		.name = "firmware-version",
 		.mode = S_IRUGO,
-	पूर्ण,
+	},
 	.show = hptiop_show_fw_version,
-पूर्ण;
+};
 
-अटल काष्ठा device_attribute *hptiop_attrs[] = अणु
+static struct device_attribute *hptiop_attrs[] = {
 	&hptiop_attr_version,
 	&hptiop_attr_fw_version,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल पूर्णांक hptiop_slave_config(काष्ठा scsi_device *sdev)
-अणु
-	अगर (sdev->type == TYPE_TAPE)
+static int hptiop_slave_config(struct scsi_device *sdev)
+{
+	if (sdev->type == TYPE_TAPE)
 		blk_queue_max_hw_sectors(sdev->request_queue, 8192);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा scsi_host_ढाँचा driver_ढाँचा = अणु
+static struct scsi_host_template driver_template = {
 	.module                     = THIS_MODULE,
 	.name                       = driver_name,
 	.queuecommand               = hptiop_queuecommand,
@@ -1177,165 +1176,165 @@ cmd_करोne:
 	.slave_configure            = hptiop_slave_config,
 	.this_id                    = -1,
 	.change_queue_depth         = hptiop_adjust_disk_queue_depth,
-पूर्ण;
+};
 
-अटल पूर्णांक hptiop_पूर्णांकernal_meदो_स्मृति_itl(काष्ठा hptiop_hba *hba)
-अणु
-	वापस 0;
-पूर्ण
+static int hptiop_internal_memalloc_itl(struct hptiop_hba *hba)
+{
+	return 0;
+}
 
-अटल पूर्णांक hptiop_पूर्णांकernal_meदो_स्मृति_mv(काष्ठा hptiop_hba *hba)
-अणु
-	hba->u.mv.पूर्णांकernal_req = dma_alloc_coherent(&hba->pcidev->dev,
-			0x800, &hba->u.mv.पूर्णांकernal_req_phy, GFP_KERNEL);
-	अगर (hba->u.mv.पूर्णांकernal_req)
-		वापस 0;
-	अन्यथा
-		वापस -1;
-पूर्ण
+static int hptiop_internal_memalloc_mv(struct hptiop_hba *hba)
+{
+	hba->u.mv.internal_req = dma_alloc_coherent(&hba->pcidev->dev,
+			0x800, &hba->u.mv.internal_req_phy, GFP_KERNEL);
+	if (hba->u.mv.internal_req)
+		return 0;
+	else
+		return -1;
+}
 
-अटल पूर्णांक hptiop_पूर्णांकernal_meदो_स्मृति_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
-	u32 list_count = पढ़ोl(&hba->u.mvfrey.mu->inbound_conf_ctl);
-	अक्षर *p;
+static int hptiop_internal_memalloc_mvfrey(struct hptiop_hba *hba)
+{
+	u32 list_count = readl(&hba->u.mvfrey.mu->inbound_conf_ctl);
+	char *p;
 	dma_addr_t phy;
 
 	BUG_ON(hba->max_request_size == 0);
 
-	अगर (list_count == 0) अणु
+	if (list_count == 0) {
 		BUG_ON(1);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	list_count >>= 16;
 
 	hba->u.mvfrey.list_count = list_count;
-	hba->u.mvfrey.पूर्णांकernal_mem_size = 0x800 +
-			list_count * माप(काष्ठा mvfrey_inlist_entry) +
-			list_count * माप(काष्ठा mvfrey_outlist_entry) +
-			माप(पूर्णांक);
+	hba->u.mvfrey.internal_mem_size = 0x800 +
+			list_count * sizeof(struct mvfrey_inlist_entry) +
+			list_count * sizeof(struct mvfrey_outlist_entry) +
+			sizeof(int);
 
 	p = dma_alloc_coherent(&hba->pcidev->dev,
-			hba->u.mvfrey.पूर्णांकernal_mem_size, &phy, GFP_KERNEL);
-	अगर (!p)
-		वापस -1;
+			hba->u.mvfrey.internal_mem_size, &phy, GFP_KERNEL);
+	if (!p)
+		return -1;
 
-	hba->u.mvfrey.पूर्णांकernal_req.req_virt = p;
-	hba->u.mvfrey.पूर्णांकernal_req.req_shअगरted_phy = phy >> 5;
-	hba->u.mvfrey.पूर्णांकernal_req.scp = शून्य;
-	hba->u.mvfrey.पूर्णांकernal_req.next = शून्य;
+	hba->u.mvfrey.internal_req.req_virt = p;
+	hba->u.mvfrey.internal_req.req_shifted_phy = phy >> 5;
+	hba->u.mvfrey.internal_req.scp = NULL;
+	hba->u.mvfrey.internal_req.next = NULL;
 
 	p += 0x800;
 	phy += 0x800;
 
-	hba->u.mvfrey.inlist = (काष्ठा mvfrey_inlist_entry *)p;
+	hba->u.mvfrey.inlist = (struct mvfrey_inlist_entry *)p;
 	hba->u.mvfrey.inlist_phy = phy;
 
-	p += list_count * माप(काष्ठा mvfrey_inlist_entry);
-	phy += list_count * माप(काष्ठा mvfrey_inlist_entry);
+	p += list_count * sizeof(struct mvfrey_inlist_entry);
+	phy += list_count * sizeof(struct mvfrey_inlist_entry);
 
-	hba->u.mvfrey.outlist = (काष्ठा mvfrey_outlist_entry *)p;
+	hba->u.mvfrey.outlist = (struct mvfrey_outlist_entry *)p;
 	hba->u.mvfrey.outlist_phy = phy;
 
-	p += list_count * माप(काष्ठा mvfrey_outlist_entry);
-	phy += list_count * माप(काष्ठा mvfrey_outlist_entry);
+	p += list_count * sizeof(struct mvfrey_outlist_entry);
+	phy += list_count * sizeof(struct mvfrey_outlist_entry);
 
 	hba->u.mvfrey.outlist_cptr = (__le32 *)p;
 	hba->u.mvfrey.outlist_cptr_phy = phy;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hptiop_पूर्णांकernal_memमुक्त_itl(काष्ठा hptiop_hba *hba)
-अणु
-	वापस 0;
-पूर्ण
+static int hptiop_internal_memfree_itl(struct hptiop_hba *hba)
+{
+	return 0;
+}
 
-अटल पूर्णांक hptiop_पूर्णांकernal_memमुक्त_mv(काष्ठा hptiop_hba *hba)
-अणु
-	अगर (hba->u.mv.पूर्णांकernal_req) अणु
-		dma_मुक्त_coherent(&hba->pcidev->dev, 0x800,
-			hba->u.mv.पूर्णांकernal_req, hba->u.mv.पूर्णांकernal_req_phy);
-		वापस 0;
-	पूर्ण अन्यथा
-		वापस -1;
-पूर्ण
+static int hptiop_internal_memfree_mv(struct hptiop_hba *hba)
+{
+	if (hba->u.mv.internal_req) {
+		dma_free_coherent(&hba->pcidev->dev, 0x800,
+			hba->u.mv.internal_req, hba->u.mv.internal_req_phy);
+		return 0;
+	} else
+		return -1;
+}
 
-अटल पूर्णांक hptiop_पूर्णांकernal_memमुक्त_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
-	अगर (hba->u.mvfrey.पूर्णांकernal_req.req_virt) अणु
-		dma_मुक्त_coherent(&hba->pcidev->dev,
-			hba->u.mvfrey.पूर्णांकernal_mem_size,
-			hba->u.mvfrey.पूर्णांकernal_req.req_virt,
+static int hptiop_internal_memfree_mvfrey(struct hptiop_hba *hba)
+{
+	if (hba->u.mvfrey.internal_req.req_virt) {
+		dma_free_coherent(&hba->pcidev->dev,
+			hba->u.mvfrey.internal_mem_size,
+			hba->u.mvfrey.internal_req.req_virt,
 			(dma_addr_t)
-			hba->u.mvfrey.पूर्णांकernal_req.req_shअगरted_phy << 5);
-		वापस 0;
-	पूर्ण अन्यथा
-		वापस -1;
-पूर्ण
+			hba->u.mvfrey.internal_req.req_shifted_phy << 5);
+		return 0;
+	} else
+		return -1;
+}
 
-अटल पूर्णांक hptiop_probe(काष्ठा pci_dev *pcidev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा Scsi_Host *host = शून्य;
-	काष्ठा hptiop_hba *hba;
-	काष्ठा hptiop_adapter_ops *iop_ops;
-	काष्ठा hpt_iop_request_get_config iop_config;
-	काष्ठा hpt_iop_request_set_config set_config;
+static int hptiop_probe(struct pci_dev *pcidev, const struct pci_device_id *id)
+{
+	struct Scsi_Host *host = NULL;
+	struct hptiop_hba *hba;
+	struct hptiop_adapter_ops *iop_ops;
+	struct hpt_iop_request_get_config iop_config;
+	struct hpt_iop_request_set_config set_config;
 	dma_addr_t start_phy;
-	व्योम *start_virt;
+	void *start_virt;
 	u32 offset, i, req_size;
-	पूर्णांक rc;
+	int rc;
 
-	dprपूर्णांकk("hptiop_probe(%p)\n", pcidev);
+	dprintk("hptiop_probe(%p)\n", pcidev);
 
-	अगर (pci_enable_device(pcidev)) अणु
-		prपूर्णांकk(KERN_ERR "hptiop: fail to enable pci device\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (pci_enable_device(pcidev)) {
+		printk(KERN_ERR "hptiop: fail to enable pci device\n");
+		return -ENODEV;
+	}
 
-	prपूर्णांकk(KERN_INFO "adapter at PCI %d:%d:%d, IRQ %d\n",
+	printk(KERN_INFO "adapter at PCI %d:%d:%d, IRQ %d\n",
 		pcidev->bus->number, pcidev->devfn >> 3, pcidev->devfn & 7,
 		pcidev->irq);
 
 	pci_set_master(pcidev);
 
-	/* Enable 64bit DMA अगर possible */
-	iop_ops = (काष्ठा hptiop_adapter_ops *)id->driver_data;
+	/* Enable 64bit DMA if possible */
+	iop_ops = (struct hptiop_adapter_ops *)id->driver_data;
 	rc = dma_set_mask(&pcidev->dev,
 			  DMA_BIT_MASK(iop_ops->hw_dma_bit_mask));
-	अगर (rc)
+	if (rc)
 		rc = dma_set_mask(&pcidev->dev, DMA_BIT_MASK(32));
 
-	अगर (rc) अणु
-		prपूर्णांकk(KERN_ERR "hptiop: fail to set dma_mask\n");
-		जाओ disable_pci_device;
-	पूर्ण
+	if (rc) {
+		printk(KERN_ERR "hptiop: fail to set dma_mask\n");
+		goto disable_pci_device;
+	}
 
-	अगर (pci_request_regions(pcidev, driver_name)) अणु
-		prपूर्णांकk(KERN_ERR "hptiop: pci_request_regions failed\n");
-		जाओ disable_pci_device;
-	पूर्ण
+	if (pci_request_regions(pcidev, driver_name)) {
+		printk(KERN_ERR "hptiop: pci_request_regions failed\n");
+		goto disable_pci_device;
+	}
 
-	host = scsi_host_alloc(&driver_ढाँचा, माप(काष्ठा hptiop_hba));
-	अगर (!host) अणु
-		prपूर्णांकk(KERN_ERR "hptiop: fail to alloc scsi host\n");
-		जाओ मुक्त_pci_regions;
-	पूर्ण
+	host = scsi_host_alloc(&driver_template, sizeof(struct hptiop_hba));
+	if (!host) {
+		printk(KERN_ERR "hptiop: fail to alloc scsi host\n");
+		goto free_pci_regions;
+	}
 
-	hba = (काष्ठा hptiop_hba *)host->hostdata;
-	स_रखो(hba, 0, माप(काष्ठा hptiop_hba));
+	hba = (struct hptiop_hba *)host->hostdata;
+	memset(hba, 0, sizeof(struct hptiop_hba));
 
 	hba->ops = iop_ops;
 	hba->pcidev = pcidev;
 	hba->host = host;
 	hba->initialized = 0;
-	hba->iopपूर्णांकf_v2 = 0;
+	hba->iopintf_v2 = 0;
 
 	atomic_set(&hba->resetting, 0);
 	atomic_set(&hba->reset_count, 0);
 
-	init_रुकोqueue_head(&hba->reset_wq);
-	init_रुकोqueue_head(&hba->ioctl_wq);
+	init_waitqueue_head(&hba->reset_wq);
+	init_waitqueue_head(&hba->ioctl_wq);
 
 	host->max_lun = 128;
 	host->max_channel = 0;
@@ -1343,28 +1342,28 @@ cmd_करोne:
 	host->n_io_port = 0;
 	host->irq = pcidev->irq;
 
-	अगर (hba->ops->map_pci_bar(hba))
-		जाओ मुक्त_scsi_host;
+	if (hba->ops->map_pci_bar(hba))
+		goto free_scsi_host;
 
-	अगर (hba->ops->iop_रुको_पढ़ोy(hba, 20000)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: firmware not ready\n",
+	if (hba->ops->iop_wait_ready(hba, 20000)) {
+		printk(KERN_ERR "scsi%d: firmware not ready\n",
 				hba->host->host_no);
-		जाओ unmap_pci_bar;
-	पूर्ण
+		goto unmap_pci_bar;
+	}
 
-	अगर (hba->ops->family == MV_BASED_IOP) अणु
-		अगर (hba->ops->पूर्णांकernal_meदो_स्मृति(hba)) अणु
-			prपूर्णांकk(KERN_ERR "scsi%d: internal_memalloc failed\n",
+	if (hba->ops->family == MV_BASED_IOP) {
+		if (hba->ops->internal_memalloc(hba)) {
+			printk(KERN_ERR "scsi%d: internal_memalloc failed\n",
 				hba->host->host_no);
-			जाओ unmap_pci_bar;
-		पूर्ण
-	पूर्ण
+			goto unmap_pci_bar;
+		}
+	}
 
-	अगर (hba->ops->get_config(hba, &iop_config)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: get config failed\n",
+	if (hba->ops->get_config(hba, &iop_config)) {
+		printk(KERN_ERR "scsi%d: get config failed\n",
 				hba->host->host_no);
-		जाओ unmap_pci_bar;
-	पूर्ण
+		goto unmap_pci_bar;
+	}
 
 	hba->max_requests = min(le32_to_cpu(iop_config.max_requests),
 				HPTIOP_MAX_REQUESTS);
@@ -1372,25 +1371,25 @@ cmd_करोne:
 	hba->max_request_size = le32_to_cpu(iop_config.request_size);
 	hba->max_sg_descriptors = le32_to_cpu(iop_config.max_sg_count);
 	hba->firmware_version = le32_to_cpu(iop_config.firmware_version);
-	hba->पूर्णांकerface_version = le32_to_cpu(iop_config.पूर्णांकerface_version);
+	hba->interface_version = le32_to_cpu(iop_config.interface_version);
 	hba->sdram_size = le32_to_cpu(iop_config.sdram_size);
 
-	अगर (hba->ops->family == MVFREY_BASED_IOP) अणु
-		अगर (hba->ops->पूर्णांकernal_meदो_स्मृति(hba)) अणु
-			prपूर्णांकk(KERN_ERR "scsi%d: internal_memalloc failed\n",
+	if (hba->ops->family == MVFREY_BASED_IOP) {
+		if (hba->ops->internal_memalloc(hba)) {
+			printk(KERN_ERR "scsi%d: internal_memalloc failed\n",
 				hba->host->host_no);
-			जाओ unmap_pci_bar;
-		पूर्ण
-		अगर (hba->ops->reset_comm(hba)) अणु
-			prपूर्णांकk(KERN_ERR "scsi%d: reset comm failed\n",
+			goto unmap_pci_bar;
+		}
+		if (hba->ops->reset_comm(hba)) {
+			printk(KERN_ERR "scsi%d: reset comm failed\n",
 					hba->host->host_no);
-			जाओ unmap_pci_bar;
-		पूर्ण
-	पूर्ण
+			goto unmap_pci_bar;
+		}
+	}
 
-	अगर (hba->firmware_version > 0x01020000 ||
-			hba->पूर्णांकerface_version > 0x01020000)
-		hba->iopपूर्णांकf_v2 = 1;
+	if (hba->firmware_version > 0x01020000 ||
+			hba->interface_version > 0x01020000)
+		hba->iopintf_v2 = 1;
 
 	host->max_sectors = le32_to_cpu(iop_config.data_transfer_length) >> 9;
 	host->max_id = le32_to_cpu(iop_config.max_devices);
@@ -1399,306 +1398,306 @@ cmd_करोne:
 	host->cmd_per_lun = le32_to_cpu(iop_config.max_requests);
 	host->max_cmd_len = 16;
 
-	req_size = माप(काष्ठा hpt_iop_request_scsi_command)
-		+ माप(काष्ठा hpt_iopsg) * (hba->max_sg_descriptors - 1);
-	अगर ((req_size & 0x1f) != 0)
+	req_size = sizeof(struct hpt_iop_request_scsi_command)
+		+ sizeof(struct hpt_iopsg) * (hba->max_sg_descriptors - 1);
+	if ((req_size & 0x1f) != 0)
 		req_size = (req_size + 0x1f) & ~0x1f;
 
-	स_रखो(&set_config, 0, माप(काष्ठा hpt_iop_request_set_config));
+	memset(&set_config, 0, sizeof(struct hpt_iop_request_set_config));
 	set_config.iop_id = cpu_to_le32(host->host_no);
 	set_config.vbus_id = cpu_to_le16(host->host_no);
 	set_config.max_host_request_size = cpu_to_le16(req_size);
 
-	अगर (hba->ops->set_config(hba, &set_config)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: set config failed\n",
+	if (hba->ops->set_config(hba, &set_config)) {
+		printk(KERN_ERR "scsi%d: set config failed\n",
 				hba->host->host_no);
-		जाओ unmap_pci_bar;
-	पूर्ण
+		goto unmap_pci_bar;
+	}
 
 	pci_set_drvdata(pcidev, host);
 
-	अगर (request_irq(pcidev->irq, hptiop_पूर्णांकr, IRQF_SHARED,
-					driver_name, hba)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: request irq %d failed\n",
+	if (request_irq(pcidev->irq, hptiop_intr, IRQF_SHARED,
+					driver_name, hba)) {
+		printk(KERN_ERR "scsi%d: request irq %d failed\n",
 					hba->host->host_no, pcidev->irq);
-		जाओ unmap_pci_bar;
-	पूर्ण
+		goto unmap_pci_bar;
+	}
 
 	/* Allocate request mem */
 
-	dprपूर्णांकk("req_size=%d, max_requests=%d\n", req_size, hba->max_requests);
+	dprintk("req_size=%d, max_requests=%d\n", req_size, hba->max_requests);
 
 	hba->req_size = req_size;
-	hba->req_list = शून्य;
+	hba->req_list = NULL;
 
-	क्रम (i = 0; i < hba->max_requests; i++) अणु
+	for (i = 0; i < hba->max_requests; i++) {
 		start_virt = dma_alloc_coherent(&pcidev->dev,
 					hba->req_size + 0x20,
 					&start_phy, GFP_KERNEL);
 
-		अगर (!start_virt) अणु
-			prपूर्णांकk(KERN_ERR "scsi%d: fail to alloc request mem\n",
+		if (!start_virt) {
+			printk(KERN_ERR "scsi%d: fail to alloc request mem\n",
 						hba->host->host_no);
-			जाओ मुक्त_request_mem;
-		पूर्ण
+			goto free_request_mem;
+		}
 
 		hba->dma_coherent[i] = start_virt;
 		hba->dma_coherent_handle[i] = start_phy;
 
-		अगर ((start_phy & 0x1f) != 0) अणु
+		if ((start_phy & 0x1f) != 0) {
 			offset = ((start_phy + 0x1f) & ~0x1f) - start_phy;
 			start_phy += offset;
 			start_virt += offset;
-		पूर्ण
+		}
 
-		hba->reqs[i].next = शून्य;
+		hba->reqs[i].next = NULL;
 		hba->reqs[i].req_virt = start_virt;
-		hba->reqs[i].req_shअगरted_phy = start_phy >> 5;
+		hba->reqs[i].req_shifted_phy = start_phy >> 5;
 		hba->reqs[i].index = i;
-		मुक्त_req(hba, &hba->reqs[i]);
-	पूर्ण
+		free_req(hba, &hba->reqs[i]);
+	}
 
 	/* Enable Interrupt and start background task */
-	अगर (hptiop_initialize_iop(hba))
-		जाओ मुक्त_request_mem;
+	if (hptiop_initialize_iop(hba))
+		goto free_request_mem;
 
-	अगर (scsi_add_host(host, &pcidev->dev)) अणु
-		prपूर्णांकk(KERN_ERR "scsi%d: scsi_add_host failed\n",
+	if (scsi_add_host(host, &pcidev->dev)) {
+		printk(KERN_ERR "scsi%d: scsi_add_host failed\n",
 					hba->host->host_no);
-		जाओ मुक्त_request_mem;
-	पूर्ण
+		goto free_request_mem;
+	}
 
 	scsi_scan_host(host);
 
-	dprपूर्णांकk("scsi%d: hptiop_probe successfully\n", hba->host->host_no);
-	वापस 0;
+	dprintk("scsi%d: hptiop_probe successfully\n", hba->host->host_no);
+	return 0;
 
-मुक्त_request_mem:
-	क्रम (i = 0; i < hba->max_requests; i++) अणु
-		अगर (hba->dma_coherent[i] && hba->dma_coherent_handle[i])
-			dma_मुक्त_coherent(&hba->pcidev->dev,
+free_request_mem:
+	for (i = 0; i < hba->max_requests; i++) {
+		if (hba->dma_coherent[i] && hba->dma_coherent_handle[i])
+			dma_free_coherent(&hba->pcidev->dev,
 					hba->req_size + 0x20,
 					hba->dma_coherent[i],
 					hba->dma_coherent_handle[i]);
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	मुक्त_irq(hba->pcidev->irq, hba);
+	free_irq(hba->pcidev->irq, hba);
 
 unmap_pci_bar:
-	hba->ops->पूर्णांकernal_memमुक्त(hba);
+	hba->ops->internal_memfree(hba);
 
 	hba->ops->unmap_pci_bar(hba);
 
-मुक्त_scsi_host:
+free_scsi_host:
 	scsi_host_put(host);
 
-मुक्त_pci_regions:
+free_pci_regions:
 	pci_release_regions(pcidev);
 
 disable_pci_device:
 	pci_disable_device(pcidev);
 
-	dprपूर्णांकk("scsi%d: hptiop_probe fail\n", host ? host->host_no : 0);
-	वापस -ENODEV;
-पूर्ण
+	dprintk("scsi%d: hptiop_probe fail\n", host ? host->host_no : 0);
+	return -ENODEV;
+}
 
-अटल व्योम hptiop_shutकरोwn(काष्ठा pci_dev *pcidev)
-अणु
-	काष्ठा Scsi_Host *host = pci_get_drvdata(pcidev);
-	काष्ठा hptiop_hba *hba = (काष्ठा hptiop_hba *)host->hostdata;
+static void hptiop_shutdown(struct pci_dev *pcidev)
+{
+	struct Scsi_Host *host = pci_get_drvdata(pcidev);
+	struct hptiop_hba *hba = (struct hptiop_hba *)host->hostdata;
 
-	dprपूर्णांकk("hptiop_shutdown(%p)\n", hba);
+	dprintk("hptiop_shutdown(%p)\n", hba);
 
 	/* stop the iop */
-	अगर (iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_SHUTDOWN, 60000))
-		prपूर्णांकk(KERN_ERR "scsi%d: shutdown the iop timeout\n",
+	if (iop_send_sync_msg(hba, IOPMU_INBOUND_MSG0_SHUTDOWN, 60000))
+		printk(KERN_ERR "scsi%d: shutdown the iop timeout\n",
 					hba->host->host_no);
 
-	/* disable all outbound पूर्णांकerrupts */
-	hba->ops->disable_पूर्णांकr(hba);
-पूर्ण
+	/* disable all outbound interrupts */
+	hba->ops->disable_intr(hba);
+}
 
-अटल व्योम hptiop_disable_पूर्णांकr_itl(काष्ठा hptiop_hba *hba)
-अणु
-	u32 पूर्णांक_mask;
+static void hptiop_disable_intr_itl(struct hptiop_hba *hba)
+{
+	u32 int_mask;
 
-	पूर्णांक_mask = पढ़ोl(&hba->u.itl.iop->outbound_पूर्णांकmask);
-	ग_लिखोl(पूर्णांक_mask |
+	int_mask = readl(&hba->u.itl.iop->outbound_intmask);
+	writel(int_mask |
 		IOPMU_OUTBOUND_INT_MSG0 | IOPMU_OUTBOUND_INT_POSTQUEUE,
-		&hba->u.itl.iop->outbound_पूर्णांकmask);
-	पढ़ोl(&hba->u.itl.iop->outbound_पूर्णांकmask);
-पूर्ण
+		&hba->u.itl.iop->outbound_intmask);
+	readl(&hba->u.itl.iop->outbound_intmask);
+}
 
-अटल व्योम hptiop_disable_पूर्णांकr_mv(काष्ठा hptiop_hba *hba)
-अणु
-	ग_लिखोl(0, &hba->u.mv.regs->outbound_पूर्णांकmask);
-	पढ़ोl(&hba->u.mv.regs->outbound_पूर्णांकmask);
-पूर्ण
+static void hptiop_disable_intr_mv(struct hptiop_hba *hba)
+{
+	writel(0, &hba->u.mv.regs->outbound_intmask);
+	readl(&hba->u.mv.regs->outbound_intmask);
+}
 
-अटल व्योम hptiop_disable_पूर्णांकr_mvfrey(काष्ठा hptiop_hba *hba)
-अणु
-	ग_लिखोl(0, &(hba->u.mvfrey.mu->f0_करोorbell_enable));
-	पढ़ोl(&(hba->u.mvfrey.mu->f0_करोorbell_enable));
-	ग_लिखोl(0, &(hba->u.mvfrey.mu->isr_enable));
-	पढ़ोl(&(hba->u.mvfrey.mu->isr_enable));
-	ग_लिखोl(0, &(hba->u.mvfrey.mu->pcie_f0_पूर्णांक_enable));
-	पढ़ोl(&(hba->u.mvfrey.mu->pcie_f0_पूर्णांक_enable));
-पूर्ण
+static void hptiop_disable_intr_mvfrey(struct hptiop_hba *hba)
+{
+	writel(0, &(hba->u.mvfrey.mu->f0_doorbell_enable));
+	readl(&(hba->u.mvfrey.mu->f0_doorbell_enable));
+	writel(0, &(hba->u.mvfrey.mu->isr_enable));
+	readl(&(hba->u.mvfrey.mu->isr_enable));
+	writel(0, &(hba->u.mvfrey.mu->pcie_f0_int_enable));
+	readl(&(hba->u.mvfrey.mu->pcie_f0_int_enable));
+}
 
-अटल व्योम hptiop_हटाओ(काष्ठा pci_dev *pcidev)
-अणु
-	काष्ठा Scsi_Host *host = pci_get_drvdata(pcidev);
-	काष्ठा hptiop_hba *hba = (काष्ठा hptiop_hba *)host->hostdata;
+static void hptiop_remove(struct pci_dev *pcidev)
+{
+	struct Scsi_Host *host = pci_get_drvdata(pcidev);
+	struct hptiop_hba *hba = (struct hptiop_hba *)host->hostdata;
 	u32 i;
 
-	dprपूर्णांकk("scsi%d: hptiop_remove\n", hba->host->host_no);
+	dprintk("scsi%d: hptiop_remove\n", hba->host->host_no);
 
-	scsi_हटाओ_host(host);
+	scsi_remove_host(host);
 
-	hptiop_shutकरोwn(pcidev);
+	hptiop_shutdown(pcidev);
 
-	मुक्त_irq(hba->pcidev->irq, hba);
+	free_irq(hba->pcidev->irq, hba);
 
-	क्रम (i = 0; i < hba->max_requests; i++) अणु
-		अगर (hba->dma_coherent[i] && hba->dma_coherent_handle[i])
-			dma_मुक्त_coherent(&hba->pcidev->dev,
+	for (i = 0; i < hba->max_requests; i++) {
+		if (hba->dma_coherent[i] && hba->dma_coherent_handle[i])
+			dma_free_coherent(&hba->pcidev->dev,
 					hba->req_size + 0x20,
 					hba->dma_coherent[i],
 					hba->dma_coherent_handle[i]);
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	hba->ops->पूर्णांकernal_memमुक्त(hba);
+	hba->ops->internal_memfree(hba);
 
 	hba->ops->unmap_pci_bar(hba);
 
 	pci_release_regions(hba->pcidev);
-	pci_set_drvdata(hba->pcidev, शून्य);
+	pci_set_drvdata(hba->pcidev, NULL);
 	pci_disable_device(hba->pcidev);
 
 	scsi_host_put(host);
-पूर्ण
+}
 
-अटल काष्ठा hptiop_adapter_ops hptiop_itl_ops = अणु
+static struct hptiop_adapter_ops hptiop_itl_ops = {
 	.family            = INTEL_BASED_IOP,
-	.iop_रुको_पढ़ोy    = iop_रुको_पढ़ोy_itl,
-	.पूर्णांकernal_meदो_स्मृति = hptiop_पूर्णांकernal_meदो_स्मृति_itl,
-	.पूर्णांकernal_memमुक्त  = hptiop_पूर्णांकernal_memमुक्त_itl,
+	.iop_wait_ready    = iop_wait_ready_itl,
+	.internal_memalloc = hptiop_internal_memalloc_itl,
+	.internal_memfree  = hptiop_internal_memfree_itl,
 	.map_pci_bar       = hptiop_map_pci_bar_itl,
 	.unmap_pci_bar     = hptiop_unmap_pci_bar_itl,
-	.enable_पूर्णांकr       = hptiop_enable_पूर्णांकr_itl,
-	.disable_पूर्णांकr      = hptiop_disable_पूर्णांकr_itl,
+	.enable_intr       = hptiop_enable_intr_itl,
+	.disable_intr      = hptiop_disable_intr_itl,
 	.get_config        = iop_get_config_itl,
 	.set_config        = iop_set_config_itl,
-	.iop_पूर्णांकr          = iop_पूर्णांकr_itl,
+	.iop_intr          = iop_intr_itl,
 	.post_msg          = hptiop_post_msg_itl,
 	.post_req          = hptiop_post_req_itl,
 	.hw_dma_bit_mask   = 64,
 	.reset_comm        = hptiop_reset_comm_itl,
 	.host_phy_flag     = cpu_to_le64(0),
-पूर्ण;
+};
 
-अटल काष्ठा hptiop_adapter_ops hptiop_mv_ops = अणु
+static struct hptiop_adapter_ops hptiop_mv_ops = {
 	.family            = MV_BASED_IOP,
-	.iop_रुको_पढ़ोy    = iop_रुको_पढ़ोy_mv,
-	.पूर्णांकernal_meदो_स्मृति = hptiop_पूर्णांकernal_meदो_स्मृति_mv,
-	.पूर्णांकernal_memमुक्त  = hptiop_पूर्णांकernal_memमुक्त_mv,
+	.iop_wait_ready    = iop_wait_ready_mv,
+	.internal_memalloc = hptiop_internal_memalloc_mv,
+	.internal_memfree  = hptiop_internal_memfree_mv,
 	.map_pci_bar       = hptiop_map_pci_bar_mv,
 	.unmap_pci_bar     = hptiop_unmap_pci_bar_mv,
-	.enable_पूर्णांकr       = hptiop_enable_पूर्णांकr_mv,
-	.disable_पूर्णांकr      = hptiop_disable_पूर्णांकr_mv,
+	.enable_intr       = hptiop_enable_intr_mv,
+	.disable_intr      = hptiop_disable_intr_mv,
 	.get_config        = iop_get_config_mv,
 	.set_config        = iop_set_config_mv,
-	.iop_पूर्णांकr          = iop_पूर्णांकr_mv,
+	.iop_intr          = iop_intr_mv,
 	.post_msg          = hptiop_post_msg_mv,
 	.post_req          = hptiop_post_req_mv,
 	.hw_dma_bit_mask   = 33,
 	.reset_comm        = hptiop_reset_comm_mv,
 	.host_phy_flag     = cpu_to_le64(0),
-पूर्ण;
+};
 
-अटल काष्ठा hptiop_adapter_ops hptiop_mvfrey_ops = अणु
+static struct hptiop_adapter_ops hptiop_mvfrey_ops = {
 	.family            = MVFREY_BASED_IOP,
-	.iop_रुको_पढ़ोy    = iop_रुको_पढ़ोy_mvfrey,
-	.पूर्णांकernal_meदो_स्मृति = hptiop_पूर्णांकernal_meदो_स्मृति_mvfrey,
-	.पूर्णांकernal_memमुक्त  = hptiop_पूर्णांकernal_memमुक्त_mvfrey,
+	.iop_wait_ready    = iop_wait_ready_mvfrey,
+	.internal_memalloc = hptiop_internal_memalloc_mvfrey,
+	.internal_memfree  = hptiop_internal_memfree_mvfrey,
 	.map_pci_bar       = hptiop_map_pci_bar_mvfrey,
 	.unmap_pci_bar     = hptiop_unmap_pci_bar_mvfrey,
-	.enable_पूर्णांकr       = hptiop_enable_पूर्णांकr_mvfrey,
-	.disable_पूर्णांकr      = hptiop_disable_पूर्णांकr_mvfrey,
+	.enable_intr       = hptiop_enable_intr_mvfrey,
+	.disable_intr      = hptiop_disable_intr_mvfrey,
 	.get_config        = iop_get_config_mvfrey,
 	.set_config        = iop_set_config_mvfrey,
-	.iop_पूर्णांकr          = iop_पूर्णांकr_mvfrey,
+	.iop_intr          = iop_intr_mvfrey,
 	.post_msg          = hptiop_post_msg_mvfrey,
 	.post_req          = hptiop_post_req_mvfrey,
 	.hw_dma_bit_mask   = 64,
 	.reset_comm        = hptiop_reset_comm_mvfrey,
 	.host_phy_flag     = cpu_to_le64(1),
-पूर्ण;
+};
 
-अटल काष्ठा pci_device_id hptiop_id_table[] = अणु
-	अणु PCI_VDEVICE(TTI, 0x3220), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3320), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3410), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3510), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3511), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3520), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3521), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3522), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3530), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3540), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3560), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4210), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4211), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4310), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4311), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4320), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4321), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4322), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4400), (kernel_uदीर्घ_t)&hptiop_itl_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3120), (kernel_uदीर्घ_t)&hptiop_mv_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3122), (kernel_uदीर्घ_t)&hptiop_mv_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3020), (kernel_uदीर्घ_t)&hptiop_mv_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4520), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x4522), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3610), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3611), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3620), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3622), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3640), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3660), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3680), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणु PCI_VDEVICE(TTI, 0x3690), (kernel_uदीर्घ_t)&hptiop_mvfrey_ops पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static struct pci_device_id hptiop_id_table[] = {
+	{ PCI_VDEVICE(TTI, 0x3220), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3320), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3410), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3510), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3511), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3520), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3521), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3522), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3530), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3540), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3560), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4210), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4211), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4310), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4311), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4320), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4321), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4322), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x4400), (kernel_ulong_t)&hptiop_itl_ops },
+	{ PCI_VDEVICE(TTI, 0x3120), (kernel_ulong_t)&hptiop_mv_ops },
+	{ PCI_VDEVICE(TTI, 0x3122), (kernel_ulong_t)&hptiop_mv_ops },
+	{ PCI_VDEVICE(TTI, 0x3020), (kernel_ulong_t)&hptiop_mv_ops },
+	{ PCI_VDEVICE(TTI, 0x4520), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x4522), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3610), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3611), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3620), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3622), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3640), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3660), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3680), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{ PCI_VDEVICE(TTI, 0x3690), (kernel_ulong_t)&hptiop_mvfrey_ops },
+	{},
+};
 
 MODULE_DEVICE_TABLE(pci, hptiop_id_table);
 
-अटल काष्ठा pci_driver hptiop_pci_driver = अणु
+static struct pci_driver hptiop_pci_driver = {
 	.name       = driver_name,
 	.id_table   = hptiop_id_table,
 	.probe      = hptiop_probe,
-	.हटाओ     = hptiop_हटाओ,
-	.shutकरोwn   = hptiop_shutकरोwn,
-पूर्ण;
+	.remove     = hptiop_remove,
+	.shutdown   = hptiop_shutdown,
+};
 
-अटल पूर्णांक __init hptiop_module_init(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "%s %s\n", driver_name_दीर्घ, driver_ver);
-	वापस pci_रेजिस्टर_driver(&hptiop_pci_driver);
-पूर्ण
+static int __init hptiop_module_init(void)
+{
+	printk(KERN_INFO "%s %s\n", driver_name_long, driver_ver);
+	return pci_register_driver(&hptiop_pci_driver);
+}
 
-अटल व्योम __निकास hptiop_module_निकास(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&hptiop_pci_driver);
-पूर्ण
+static void __exit hptiop_module_exit(void)
+{
+	pci_unregister_driver(&hptiop_pci_driver);
+}
 
 
 module_init(hptiop_module_init);
-module_निकास(hptiop_module_निकास);
+module_exit(hptiop_module_exit);
 
 MODULE_LICENSE("GPL");
 

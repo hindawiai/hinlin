@@ -1,59 +1,58 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * linux/arch/arm/mach-sa1100/generic.h
  *
  * Author: Nicolas Pitre
  */
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/reboot.h>
+#include <linux/cpufreq.h>
+#include <linux/reboot.h>
 
-बाह्य व्योम sa1100_समयr_init(व्योम);
-बाह्य व्योम __init sa1100_map_io(व्योम);
-बाह्य व्योम __init sa1100_init_irq(व्योम);
-बाह्य व्योम __init sa1100_init_gpio(व्योम);
-बाह्य व्योम sa11x0_restart(क्रमागत reboot_mode, स्थिर अक्षर *);
-बाह्य व्योम sa11x0_init_late(व्योम);
+extern void sa1100_timer_init(void);
+extern void __init sa1100_map_io(void);
+extern void __init sa1100_init_irq(void);
+extern void __init sa1100_init_gpio(void);
+extern void sa11x0_restart(enum reboot_mode, const char *);
+extern void sa11x0_init_late(void);
 
-#घोषणा SET_BANK(__nr,__start,__size) \
+#define SET_BANK(__nr,__start,__size) \
 	mi->bank[__nr].start = (__start), \
 	mi->bank[__nr].size = (__size)
 
-बाह्य व्योम sa1110_mb_enable(व्योम);
-बाह्य व्योम sa1110_mb_disable(व्योम);
+extern void sa1110_mb_enable(void);
+extern void sa1110_mb_disable(void);
 
-बाह्य काष्ठा cpufreq_frequency_table sa11x0_freq_table[];
-बाह्य अचिन्हित पूर्णांक sa11x0_माला_लोpeed(अचिन्हित पूर्णांक cpu);
+extern struct cpufreq_frequency_table sa11x0_freq_table[];
+extern unsigned int sa11x0_getspeed(unsigned int cpu);
 
-काष्ठा flash_platक्रमm_data;
-काष्ठा resource;
+struct flash_platform_data;
+struct resource;
 
-व्योम sa11x0_रेजिस्टर_mtd(काष्ठा flash_platक्रमm_data *flash,
-			 काष्ठा resource *res, पूर्णांक nr);
+void sa11x0_register_mtd(struct flash_platform_data *flash,
+			 struct resource *res, int nr);
 
-काष्ठा irda_platक्रमm_data;
-व्योम sa11x0_रेजिस्टर_irda(काष्ठा irda_platक्रमm_data *irda);
+struct irda_platform_data;
+void sa11x0_register_irda(struct irda_platform_data *irda);
 
-काष्ठा mcp_plat_data;
-व्योम sa11x0_ppc_configure_mcp(व्योम);
-व्योम sa11x0_रेजिस्टर_mcp(काष्ठा mcp_plat_data *data);
+struct mcp_plat_data;
+void sa11x0_ppc_configure_mcp(void);
+void sa11x0_register_mcp(struct mcp_plat_data *data);
 
-काष्ठा sa1100fb_mach_info;
-व्योम sa11x0_रेजिस्टर_lcd(काष्ठा sa1100fb_mach_info *inf);
+struct sa1100fb_mach_info;
+void sa11x0_register_lcd(struct sa1100fb_mach_info *inf);
 
-#अगर_घोषित CONFIG_PM
-पूर्णांक sa11x0_pm_init(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक sa11x0_pm_init(व्योम) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+int sa11x0_pm_init(void);
+#else
+static inline int sa11x0_pm_init(void) { return 0; }
+#endif
 
-पूर्णांक sa11xx_clk_init(व्योम);
+int sa11xx_clk_init(void);
 
-काष्ठा gpiod_lookup_table;
-व्योम sa11x0_रेजिस्टर_pcmcia(पूर्णांक socket, काष्ठा gpiod_lookup_table *);
+struct gpiod_lookup_table;
+void sa11x0_register_pcmcia(int socket, struct gpiod_lookup_table *);
 
-काष्ठा fixed_voltage_config;
-काष्ठा regulator_consumer_supply;
-पूर्णांक sa11x0_रेजिस्टर_fixed_regulator(पूर्णांक n, काष्ठा fixed_voltage_config *cfg,
-	काष्ठा regulator_consumer_supply *supplies, अचिन्हित num_supplies,
+struct fixed_voltage_config;
+struct regulator_consumer_supply;
+int sa11x0_register_fixed_regulator(int n, struct fixed_voltage_config *cfg,
+	struct regulator_consumer_supply *supplies, unsigned num_supplies,
 	bool uses_gpio);

@@ -1,41 +1,40 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NFT_FIB_H_
-#घोषणा _NFT_FIB_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NFT_FIB_H_
+#define _NFT_FIB_H_
 
-#समावेश <net/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables.h>
 
-काष्ठा nft_fib अणु
+struct nft_fib {
 	u8			dreg;
 	u8			result;
 	u32			flags;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा nla_policy nft_fib_policy[];
+extern const struct nla_policy nft_fib_policy[];
 
-अटल अंतरभूत bool
-nft_fib_is_loopback(स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा net_device *in)
-अणु
-	वापस skb->pkt_type == PACKET_LOOPBACK || in->flags & IFF_LOOPBACK;
-पूर्ण
+static inline bool
+nft_fib_is_loopback(const struct sk_buff *skb, const struct net_device *in)
+{
+	return skb->pkt_type == PACKET_LOOPBACK || in->flags & IFF_LOOPBACK;
+}
 
-पूर्णांक nft_fib_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr);
-पूर्णांक nft_fib_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
-		 स्थिर काष्ठा nlattr * स्थिर tb[]);
-पूर्णांक nft_fib_validate(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
-		     स्थिर काष्ठा nft_data **data);
+int nft_fib_dump(struct sk_buff *skb, const struct nft_expr *expr);
+int nft_fib_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
+		 const struct nlattr * const tb[]);
+int nft_fib_validate(const struct nft_ctx *ctx, const struct nft_expr *expr,
+		     const struct nft_data **data);
 
 
-व्योम nft_fib4_eval_type(स्थिर काष्ठा nft_expr *expr, काष्ठा nft_regs *regs,
-			स्थिर काष्ठा nft_pktinfo *pkt);
-व्योम nft_fib4_eval(स्थिर काष्ठा nft_expr *expr, काष्ठा nft_regs *regs,
-		   स्थिर काष्ठा nft_pktinfo *pkt);
+void nft_fib4_eval_type(const struct nft_expr *expr, struct nft_regs *regs,
+			const struct nft_pktinfo *pkt);
+void nft_fib4_eval(const struct nft_expr *expr, struct nft_regs *regs,
+		   const struct nft_pktinfo *pkt);
 
-व्योम nft_fib6_eval_type(स्थिर काष्ठा nft_expr *expr, काष्ठा nft_regs *regs,
-			स्थिर काष्ठा nft_pktinfo *pkt);
-व्योम nft_fib6_eval(स्थिर काष्ठा nft_expr *expr, काष्ठा nft_regs *regs,
-		   स्थिर काष्ठा nft_pktinfo *pkt);
+void nft_fib6_eval_type(const struct nft_expr *expr, struct nft_regs *regs,
+			const struct nft_pktinfo *pkt);
+void nft_fib6_eval(const struct nft_expr *expr, struct nft_regs *regs,
+		   const struct nft_pktinfo *pkt);
 
-व्योम nft_fib_store_result(व्योम *reg, स्थिर काष्ठा nft_fib *priv,
-			  स्थिर काष्ठा net_device *dev);
-#पूर्ण_अगर
+void nft_fib_store_result(void *reg, const struct nft_fib *priv,
+			  const struct net_device *dev);
+#endif

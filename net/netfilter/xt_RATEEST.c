@@ -1,227 +1,226 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (C) 2007 Patrick McHardy <kaber@trash.net>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/gen_stats.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <net/gen_stats.h>
-#समावेश <net/netlink.h>
-#समावेश <net/netns/generic.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/gen_stats.h>
+#include <linux/jhash.h>
+#include <linux/rtnetlink.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <net/gen_stats.h>
+#include <net/netlink.h>
+#include <net/netns/generic.h>
 
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_RATEEST.h>
-#समावेश <net/netfilter/xt_rateest.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_RATEEST.h>
+#include <net/netfilter/xt_rateest.h>
 
-#घोषणा RATEEST_HSIZE	16
+#define RATEEST_HSIZE	16
 
-काष्ठा xt_rateest_net अणु
-	काष्ठा mutex hash_lock;
-	काष्ठा hlist_head hash[RATEEST_HSIZE];
-पूर्ण;
+struct xt_rateest_net {
+	struct mutex hash_lock;
+	struct hlist_head hash[RATEEST_HSIZE];
+};
 
-अटल अचिन्हित पूर्णांक xt_rateest_id;
+static unsigned int xt_rateest_id;
 
-अटल अचिन्हित पूर्णांक jhash_rnd __पढ़ो_mostly;
+static unsigned int jhash_rnd __read_mostly;
 
-अटल अचिन्हित पूर्णांक xt_rateest_hash(स्थिर अक्षर *name)
-अणु
-	वापस jhash(name, माप_field(काष्ठा xt_rateest, name), jhash_rnd) &
+static unsigned int xt_rateest_hash(const char *name)
+{
+	return jhash(name, sizeof_field(struct xt_rateest, name), jhash_rnd) &
 	       (RATEEST_HSIZE - 1);
-पूर्ण
+}
 
-अटल व्योम xt_rateest_hash_insert(काष्ठा xt_rateest_net *xn,
-				   काष्ठा xt_rateest *est)
-अणु
-	अचिन्हित पूर्णांक h;
+static void xt_rateest_hash_insert(struct xt_rateest_net *xn,
+				   struct xt_rateest *est)
+{
+	unsigned int h;
 
 	h = xt_rateest_hash(est->name);
 	hlist_add_head(&est->list, &xn->hash[h]);
-पूर्ण
+}
 
-अटल काष्ठा xt_rateest *__xt_rateest_lookup(काष्ठा xt_rateest_net *xn,
-					      स्थिर अक्षर *name)
-अणु
-	काष्ठा xt_rateest *est;
-	अचिन्हित पूर्णांक h;
+static struct xt_rateest *__xt_rateest_lookup(struct xt_rateest_net *xn,
+					      const char *name)
+{
+	struct xt_rateest *est;
+	unsigned int h;
 
 	h = xt_rateest_hash(name);
-	hlist_क्रम_each_entry(est, &xn->hash[h], list) अणु
-		अगर (म_भेद(est->name, name) == 0) अणु
+	hlist_for_each_entry(est, &xn->hash[h], list) {
+		if (strcmp(est->name, name) == 0) {
 			est->refcnt++;
-			वापस est;
-		पूर्ण
-	पूर्ण
+			return est;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा xt_rateest *xt_rateest_lookup(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा xt_rateest_net *xn = net_generic(net, xt_rateest_id);
-	काष्ठा xt_rateest *est;
+struct xt_rateest *xt_rateest_lookup(struct net *net, const char *name)
+{
+	struct xt_rateest_net *xn = net_generic(net, xt_rateest_id);
+	struct xt_rateest *est;
 
 	mutex_lock(&xn->hash_lock);
 	est = __xt_rateest_lookup(xn, name);
 	mutex_unlock(&xn->hash_lock);
-	वापस est;
-पूर्ण
+	return est;
+}
 EXPORT_SYMBOL_GPL(xt_rateest_lookup);
 
-व्योम xt_rateest_put(काष्ठा net *net, काष्ठा xt_rateest *est)
-अणु
-	काष्ठा xt_rateest_net *xn = net_generic(net, xt_rateest_id);
+void xt_rateest_put(struct net *net, struct xt_rateest *est)
+{
+	struct xt_rateest_net *xn = net_generic(net, xt_rateest_id);
 
 	mutex_lock(&xn->hash_lock);
-	अगर (--est->refcnt == 0) अणु
+	if (--est->refcnt == 0) {
 		hlist_del(&est->list);
-		gen_समाप्त_estimator(&est->rate_est);
+		gen_kill_estimator(&est->rate_est);
 		/*
-		 * gen_estimator est_समयr() might access est->lock or bstats,
-		 * रुको a RCU grace period beक्रमe मुक्तing 'est'
+		 * gen_estimator est_timer() might access est->lock or bstats,
+		 * wait a RCU grace period before freeing 'est'
 		 */
-		kमुक्त_rcu(est, rcu);
-	पूर्ण
+		kfree_rcu(est, rcu);
+	}
 	mutex_unlock(&xn->hash_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(xt_rateest_put);
 
-अटल अचिन्हित पूर्णांक
-xt_rateest_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_rateest_target_info *info = par->targinfo;
-	काष्ठा gnet_stats_basic_packed *stats = &info->est->bstats;
+static unsigned int
+xt_rateest_tg(struct sk_buff *skb, const struct xt_action_param *par)
+{
+	const struct xt_rateest_target_info *info = par->targinfo;
+	struct gnet_stats_basic_packed *stats = &info->est->bstats;
 
 	spin_lock_bh(&info->est->lock);
 	stats->bytes += skb->len;
 	stats->packets++;
 	spin_unlock_bh(&info->est->lock);
 
-	वापस XT_CONTINUE;
-पूर्ण
+	return XT_CONTINUE;
+}
 
-अटल पूर्णांक xt_rateest_tg_checkentry(स्थिर काष्ठा xt_tgchk_param *par)
-अणु
-	काष्ठा xt_rateest_net *xn = net_generic(par->net, xt_rateest_id);
-	काष्ठा xt_rateest_target_info *info = par->targinfo;
-	काष्ठा xt_rateest *est;
-	काष्ठा अणु
-		काष्ठा nlattr		opt;
-		काष्ठा gnet_estimator	est;
-	पूर्ण cfg;
-	पूर्णांक ret;
+static int xt_rateest_tg_checkentry(const struct xt_tgchk_param *par)
+{
+	struct xt_rateest_net *xn = net_generic(par->net, xt_rateest_id);
+	struct xt_rateest_target_info *info = par->targinfo;
+	struct xt_rateest *est;
+	struct {
+		struct nlattr		opt;
+		struct gnet_estimator	est;
+	} cfg;
+	int ret;
 
-	अगर (strnlen(info->name, माप(est->name)) >= माप(est->name))
-		वापस -ENAMETOOLONG;
+	if (strnlen(info->name, sizeof(est->name)) >= sizeof(est->name))
+		return -ENAMETOOLONG;
 
-	net_get_अक्रमom_once(&jhash_rnd, माप(jhash_rnd));
+	net_get_random_once(&jhash_rnd, sizeof(jhash_rnd));
 
 	mutex_lock(&xn->hash_lock);
 	est = __xt_rateest_lookup(xn, info->name);
-	अगर (est) अणु
+	if (est) {
 		mutex_unlock(&xn->hash_lock);
 		/*
-		 * If estimator parameters are specअगरied, they must match the
+		 * If estimator parameters are specified, they must match the
 		 * existing estimator.
 		 */
-		अगर ((!info->पूर्णांकerval && !info->ewma_log) ||
-		    (info->पूर्णांकerval != est->params.पूर्णांकerval ||
-		     info->ewma_log != est->params.ewma_log)) अणु
+		if ((!info->interval && !info->ewma_log) ||
+		    (info->interval != est->params.interval ||
+		     info->ewma_log != est->params.ewma_log)) {
 			xt_rateest_put(par->net, est);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		info->est = est;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = -ENOMEM;
-	est = kzalloc(माप(*est), GFP_KERNEL);
-	अगर (!est)
-		जाओ err1;
+	est = kzalloc(sizeof(*est), GFP_KERNEL);
+	if (!est)
+		goto err1;
 
-	strlcpy(est->name, info->name, माप(est->name));
+	strlcpy(est->name, info->name, sizeof(est->name));
 	spin_lock_init(&est->lock);
 	est->refcnt		= 1;
-	est->params.पूर्णांकerval	= info->पूर्णांकerval;
+	est->params.interval	= info->interval;
 	est->params.ewma_log	= info->ewma_log;
 
-	cfg.opt.nla_len		= nla_attr_size(माप(cfg.est));
+	cfg.opt.nla_len		= nla_attr_size(sizeof(cfg.est));
 	cfg.opt.nla_type	= TCA_STATS_RATE_EST;
-	cfg.est.पूर्णांकerval	= info->पूर्णांकerval;
+	cfg.est.interval	= info->interval;
 	cfg.est.ewma_log	= info->ewma_log;
 
-	ret = gen_new_estimator(&est->bstats, शून्य, &est->rate_est,
-				&est->lock, शून्य, &cfg.opt);
-	अगर (ret < 0)
-		जाओ err2;
+	ret = gen_new_estimator(&est->bstats, NULL, &est->rate_est,
+				&est->lock, NULL, &cfg.opt);
+	if (ret < 0)
+		goto err2;
 
 	info->est = est;
 	xt_rateest_hash_insert(xn, est);
 	mutex_unlock(&xn->hash_lock);
-	वापस 0;
+	return 0;
 
 err2:
-	kमुक्त(est);
+	kfree(est);
 err1:
 	mutex_unlock(&xn->hash_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xt_rateest_tg_destroy(स्थिर काष्ठा xt_tgdtor_param *par)
-अणु
-	काष्ठा xt_rateest_target_info *info = par->targinfo;
+static void xt_rateest_tg_destroy(const struct xt_tgdtor_param *par)
+{
+	struct xt_rateest_target_info *info = par->targinfo;
 
 	xt_rateest_put(par->net, info->est);
-पूर्ण
+}
 
-अटल काष्ठा xt_target xt_rateest_tg_reg __पढ़ो_mostly = अणु
+static struct xt_target xt_rateest_tg_reg __read_mostly = {
 	.name       = "RATEEST",
 	.revision   = 0,
 	.family     = NFPROTO_UNSPEC,
 	.target     = xt_rateest_tg,
 	.checkentry = xt_rateest_tg_checkentry,
 	.destroy    = xt_rateest_tg_destroy,
-	.tarमाला_लोize = माप(काष्ठा xt_rateest_target_info),
-	.usersize   = दुरत्व(काष्ठा xt_rateest_target_info, est),
+	.targetsize = sizeof(struct xt_rateest_target_info),
+	.usersize   = offsetof(struct xt_rateest_target_info, est),
 	.me         = THIS_MODULE,
-पूर्ण;
+};
 
-अटल __net_init पूर्णांक xt_rateest_net_init(काष्ठा net *net)
-अणु
-	काष्ठा xt_rateest_net *xn = net_generic(net, xt_rateest_id);
-	पूर्णांक i;
+static __net_init int xt_rateest_net_init(struct net *net)
+{
+	struct xt_rateest_net *xn = net_generic(net, xt_rateest_id);
+	int i;
 
 	mutex_init(&xn->hash_lock);
-	क्रम (i = 0; i < ARRAY_SIZE(xn->hash); i++)
+	for (i = 0; i < ARRAY_SIZE(xn->hash); i++)
 		INIT_HLIST_HEAD(&xn->hash[i]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pernet_operations xt_rateest_net_ops = अणु
+static struct pernet_operations xt_rateest_net_ops = {
 	.init = xt_rateest_net_init,
 	.id   = &xt_rateest_id,
-	.size = माप(काष्ठा xt_rateest_net),
-पूर्ण;
+	.size = sizeof(struct xt_rateest_net),
+};
 
-अटल पूर्णांक __init xt_rateest_tg_init(व्योम)
-अणु
-	पूर्णांक err = रेजिस्टर_pernet_subsys(&xt_rateest_net_ops);
+static int __init xt_rateest_tg_init(void)
+{
+	int err = register_pernet_subsys(&xt_rateest_net_ops);
 
-	अगर (err)
-		वापस err;
-	वापस xt_रेजिस्टर_target(&xt_rateest_tg_reg);
-पूर्ण
+	if (err)
+		return err;
+	return xt_register_target(&xt_rateest_tg_reg);
+}
 
-अटल व्योम __निकास xt_rateest_tg_fini(व्योम)
-अणु
-	xt_unरेजिस्टर_target(&xt_rateest_tg_reg);
-	unरेजिस्टर_pernet_subsys(&xt_rateest_net_ops);
-पूर्ण
+static void __exit xt_rateest_tg_fini(void)
+{
+	xt_unregister_target(&xt_rateest_tg_reg);
+	unregister_pernet_subsys(&xt_rateest_net_ops);
+}
 
 
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
@@ -230,4 +229,4 @@ MODULE_DESCRIPTION("Xtables: packet rate estimator");
 MODULE_ALIAS("ipt_RATEEST");
 MODULE_ALIAS("ip6t_RATEEST");
 module_init(xt_rateest_tg_init);
-module_निकास(xt_rateest_tg_fini);
+module_exit(xt_rateest_tg_fini);

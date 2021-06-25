@@ -1,150 +1,149 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * R-Car Gen2 Clock Pulse Generator
  *
  * Copyright (C) 2016 Cogent Embedded Inc.
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/sys_soc.h>
+#include <linux/bug.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/sys_soc.h>
 
-#समावेश "renesas-cpg-mssr.h"
-#समावेश "rcar-gen2-cpg.h"
+#include "renesas-cpg-mssr.h"
+#include "rcar-gen2-cpg.h"
 
-#घोषणा CPG_FRQCRB		0x0004
-#घोषणा CPG_FRQCRB_KICK		BIT(31)
-#घोषणा CPG_SDCKCR		0x0074
-#घोषणा CPG_PLL0CR		0x00d8
-#घोषणा CPG_PLL0CR_STC_SHIFT	24
-#घोषणा CPG_PLL0CR_STC_MASK	(0x7f << CPG_PLL0CR_STC_SHIFT)
-#घोषणा CPG_FRQCRC		0x00e0
-#घोषणा CPG_FRQCRC_ZFC_SHIFT	8
-#घोषणा CPG_FRQCRC_ZFC_MASK	(0x1f << CPG_FRQCRC_ZFC_SHIFT)
-#घोषणा CPG_ADSPCKCR		0x025c
-#घोषणा CPG_RCANCKCR		0x0270
+#define CPG_FRQCRB		0x0004
+#define CPG_FRQCRB_KICK		BIT(31)
+#define CPG_SDCKCR		0x0074
+#define CPG_PLL0CR		0x00d8
+#define CPG_PLL0CR_STC_SHIFT	24
+#define CPG_PLL0CR_STC_MASK	(0x7f << CPG_PLL0CR_STC_SHIFT)
+#define CPG_FRQCRC		0x00e0
+#define CPG_FRQCRC_ZFC_SHIFT	8
+#define CPG_FRQCRC_ZFC_MASK	(0x1f << CPG_FRQCRC_ZFC_SHIFT)
+#define CPG_ADSPCKCR		0x025c
+#define CPG_RCANCKCR		0x0270
 
-अटल spinlock_t cpg_lock;
+static spinlock_t cpg_lock;
 
 /*
  * Z Clock
  *
- * Traits of this घड़ी:
+ * Traits of this clock:
  * prepare - clk_prepare only ensures that parents are prepared
  * enable - clk_enable only ensures that parents are enabled
  * rate - rate is adjustable.  clk->rate = parent->rate * mult / 32
  * parent - fixed parent.  No clk_set_parent support
  */
 
-काष्ठा cpg_z_clk अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *reg;
-	व्योम __iomem *kick_reg;
-पूर्ण;
+struct cpg_z_clk {
+	struct clk_hw hw;
+	void __iomem *reg;
+	void __iomem *kick_reg;
+};
 
-#घोषणा to_z_clk(_hw)	container_of(_hw, काष्ठा cpg_z_clk, hw)
+#define to_z_clk(_hw)	container_of(_hw, struct cpg_z_clk, hw)
 
-अटल अचिन्हित दीर्घ cpg_z_clk_recalc_rate(काष्ठा clk_hw *hw,
-					   अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा cpg_z_clk *zclk = to_z_clk(hw);
-	अचिन्हित पूर्णांक mult;
-	अचिन्हित पूर्णांक val;
+static unsigned long cpg_z_clk_recalc_rate(struct clk_hw *hw,
+					   unsigned long parent_rate)
+{
+	struct cpg_z_clk *zclk = to_z_clk(hw);
+	unsigned int mult;
+	unsigned int val;
 
-	val = (पढ़ोl(zclk->reg) & CPG_FRQCRC_ZFC_MASK) >> CPG_FRQCRC_ZFC_SHIFT;
+	val = (readl(zclk->reg) & CPG_FRQCRC_ZFC_MASK) >> CPG_FRQCRC_ZFC_SHIFT;
 	mult = 32 - val;
 
-	वापस भाग_u64((u64)parent_rate * mult, 32);
-पूर्ण
+	return div_u64((u64)parent_rate * mult, 32);
+}
 
-अटल पूर्णांक cpg_z_clk_determine_rate(काष्ठा clk_hw *hw,
-				    काष्ठा clk_rate_request *req)
-अणु
-	अचिन्हित दीर्घ prate = req->best_parent_rate;
-	अचिन्हित पूर्णांक min_mult, max_mult, mult;
+static int cpg_z_clk_determine_rate(struct clk_hw *hw,
+				    struct clk_rate_request *req)
+{
+	unsigned long prate = req->best_parent_rate;
+	unsigned int min_mult, max_mult, mult;
 
-	min_mult = max(भाग64_ul(req->min_rate * 32ULL, prate), 1ULL);
-	max_mult = min(भाग64_ul(req->max_rate * 32ULL, prate), 32ULL);
-	अगर (max_mult < min_mult)
-		वापस -EINVAL;
+	min_mult = max(div64_ul(req->min_rate * 32ULL, prate), 1ULL);
+	max_mult = min(div64_ul(req->max_rate * 32ULL, prate), 32ULL);
+	if (max_mult < min_mult)
+		return -EINVAL;
 
-	mult = भाग64_ul(req->rate * 32ULL, prate);
+	mult = div64_ul(req->rate * 32ULL, prate);
 	mult = clamp(mult, min_mult, max_mult);
 
-	req->rate = भाग_u64((u64)prate * mult, 32);
-	वापस 0;
-पूर्ण
+	req->rate = div_u64((u64)prate * mult, 32);
+	return 0;
+}
 
-अटल पूर्णांक cpg_z_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			      अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा cpg_z_clk *zclk = to_z_clk(hw);
-	अचिन्हित पूर्णांक mult;
+static int cpg_z_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+			      unsigned long parent_rate)
+{
+	struct cpg_z_clk *zclk = to_z_clk(hw);
+	unsigned int mult;
 	u32 val, kick;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	mult = भाग64_ul(rate * 32ULL, parent_rate);
+	mult = div64_ul(rate * 32ULL, parent_rate);
 	mult = clamp(mult, 1U, 32U);
 
-	अगर (पढ़ोl(zclk->kick_reg) & CPG_FRQCRB_KICK)
-		वापस -EBUSY;
+	if (readl(zclk->kick_reg) & CPG_FRQCRB_KICK)
+		return -EBUSY;
 
-	val = पढ़ोl(zclk->reg);
+	val = readl(zclk->reg);
 	val &= ~CPG_FRQCRC_ZFC_MASK;
 	val |= (32 - mult) << CPG_FRQCRC_ZFC_SHIFT;
-	ग_लिखोl(val, zclk->reg);
+	writel(val, zclk->reg);
 
 	/*
-	 * Set KICK bit in FRQCRB to update hardware setting and रुको क्रम
-	 * घड़ी change completion.
+	 * Set KICK bit in FRQCRB to update hardware setting and wait for
+	 * clock change completion.
 	 */
-	kick = पढ़ोl(zclk->kick_reg);
+	kick = readl(zclk->kick_reg);
 	kick |= CPG_FRQCRB_KICK;
-	ग_लिखोl(kick, zclk->kick_reg);
+	writel(kick, zclk->kick_reg);
 
 	/*
-	 * Note: There is no HW inक्रमmation about the worst हाल latency.
+	 * Note: There is no HW information about the worst case latency.
 	 *
 	 * Using experimental measurements, it seems that no more than
 	 * ~10 iterations are needed, independently of the CPU rate.
-	 * Since this value might be dependent on बाह्यal xtal rate, pll1
-	 * rate or even the other emulation घड़ीs rate, use 1000 as a
+	 * Since this value might be dependent on external xtal rate, pll1
+	 * rate or even the other emulation clocks rate, use 1000 as a
 	 * "super" safe value.
 	 */
-	क्रम (i = 1000; i; i--) अणु
-		अगर (!(पढ़ोl(zclk->kick_reg) & CPG_FRQCRB_KICK))
-			वापस 0;
+	for (i = 1000; i; i--) {
+		if (!(readl(zclk->kick_reg) & CPG_FRQCRB_KICK))
+			return 0;
 
 		cpu_relax();
-	पूर्ण
+	}
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल स्थिर काष्ठा clk_ops cpg_z_clk_ops = अणु
+static const struct clk_ops cpg_z_clk_ops = {
 	.recalc_rate = cpg_z_clk_recalc_rate,
 	.determine_rate = cpg_z_clk_determine_rate,
 	.set_rate = cpg_z_clk_set_rate,
-पूर्ण;
+};
 
-अटल काष्ठा clk * __init cpg_z_clk_रेजिस्टर(स्थिर अक्षर *name,
-					      स्थिर अक्षर *parent_name,
-					      व्योम __iomem *base)
-अणु
-	काष्ठा clk_init_data init = अणुपूर्ण;
-	काष्ठा cpg_z_clk *zclk;
-	काष्ठा clk *clk;
+static struct clk * __init cpg_z_clk_register(const char *name,
+					      const char *parent_name,
+					      void __iomem *base)
+{
+	struct clk_init_data init = {};
+	struct cpg_z_clk *zclk;
+	struct clk *clk;
 
-	zclk = kzalloc(माप(*zclk), GFP_KERNEL);
-	अगर (!zclk)
-		वापस ERR_PTR(-ENOMEM);
+	zclk = kzalloc(sizeof(*zclk), GFP_KERNEL);
+	if (!zclk)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &cpg_z_clk_ops;
@@ -155,240 +154,240 @@
 	zclk->kick_reg = base + CPG_FRQCRB;
 	zclk->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &zclk->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(zclk);
+	clk = clk_register(NULL, &zclk->hw);
+	if (IS_ERR(clk))
+		kfree(zclk);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-अटल काष्ठा clk * __init cpg_rcan_clk_रेजिस्टर(स्थिर अक्षर *name,
-						 स्थिर अक्षर *parent_name,
-						 व्योम __iomem *base)
-अणु
-	काष्ठा clk_fixed_factor *fixed;
-	काष्ठा clk_gate *gate;
-	काष्ठा clk *clk;
+static struct clk * __init cpg_rcan_clk_register(const char *name,
+						 const char *parent_name,
+						 void __iomem *base)
+{
+	struct clk_fixed_factor *fixed;
+	struct clk_gate *gate;
+	struct clk *clk;
 
-	fixed = kzalloc(माप(*fixed), GFP_KERNEL);
-	अगर (!fixed)
-		वापस ERR_PTR(-ENOMEM);
+	fixed = kzalloc(sizeof(*fixed), GFP_KERNEL);
+	if (!fixed)
+		return ERR_PTR(-ENOMEM);
 
 	fixed->mult = 1;
-	fixed->भाग = 6;
+	fixed->div = 6;
 
-	gate = kzalloc(माप(*gate), GFP_KERNEL);
-	अगर (!gate) अणु
-		kमुक्त(fixed);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
+	if (!gate) {
+		kfree(fixed);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	gate->reg = base + CPG_RCANCKCR;
 	gate->bit_idx = 8;
 	gate->flags = CLK_GATE_SET_TO_DISABLE;
 	gate->lock = &cpg_lock;
 
-	clk = clk_रेजिस्टर_composite(शून्य, name, &parent_name, 1, शून्य, शून्य,
+	clk = clk_register_composite(NULL, name, &parent_name, 1, NULL, NULL,
 				     &fixed->hw, &clk_fixed_factor_ops,
 				     &gate->hw, &clk_gate_ops, 0);
-	अगर (IS_ERR(clk)) अणु
-		kमुक्त(gate);
-		kमुक्त(fixed);
-	पूर्ण
+	if (IS_ERR(clk)) {
+		kfree(gate);
+		kfree(fixed);
+	}
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-/* ADSP भागisors */
-अटल स्थिर काष्ठा clk_भाग_प्रकारable cpg_adsp_भाग_प्रकारable[] = अणु
-	अणु  1,  3 पूर्ण, अणु  2,  4 पूर्ण, अणु  3,  6 पूर्ण, अणु  4,  8 पूर्ण,
-	अणु  5, 12 पूर्ण, अणु  6, 16 पूर्ण, अणु  7, 18 पूर्ण, अणु  8, 24 पूर्ण,
-	अणु 10, 36 पूर्ण, अणु 11, 48 पूर्ण, अणु  0,  0 पूर्ण,
-पूर्ण;
+/* ADSP divisors */
+static const struct clk_div_table cpg_adsp_div_table[] = {
+	{  1,  3 }, {  2,  4 }, {  3,  6 }, {  4,  8 },
+	{  5, 12 }, {  6, 16 }, {  7, 18 }, {  8, 24 },
+	{ 10, 36 }, { 11, 48 }, {  0,  0 },
+};
 
-अटल काष्ठा clk * __init cpg_adsp_clk_रेजिस्टर(स्थिर अक्षर *name,
-						 स्थिर अक्षर *parent_name,
-						 व्योम __iomem *base)
-अणु
-	काष्ठा clk_भागider *भाग;
-	काष्ठा clk_gate *gate;
-	काष्ठा clk *clk;
+static struct clk * __init cpg_adsp_clk_register(const char *name,
+						 const char *parent_name,
+						 void __iomem *base)
+{
+	struct clk_divider *div;
+	struct clk_gate *gate;
+	struct clk *clk;
 
-	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
-	अगर (!भाग)
-		वापस ERR_PTR(-ENOMEM);
+	div = kzalloc(sizeof(*div), GFP_KERNEL);
+	if (!div)
+		return ERR_PTR(-ENOMEM);
 
-	भाग->reg = base + CPG_ADSPCKCR;
-	भाग->width = 4;
-	भाग->table = cpg_adsp_भाग_प्रकारable;
-	भाग->lock = &cpg_lock;
+	div->reg = base + CPG_ADSPCKCR;
+	div->width = 4;
+	div->table = cpg_adsp_div_table;
+	div->lock = &cpg_lock;
 
-	gate = kzalloc(माप(*gate), GFP_KERNEL);
-	अगर (!gate) अणु
-		kमुक्त(भाग);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
+	if (!gate) {
+		kfree(div);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	gate->reg = base + CPG_ADSPCKCR;
 	gate->bit_idx = 8;
 	gate->flags = CLK_GATE_SET_TO_DISABLE;
 	gate->lock = &cpg_lock;
 
-	clk = clk_रेजिस्टर_composite(शून्य, name, &parent_name, 1, शून्य, शून्य,
-				     &भाग->hw, &clk_भागider_ops,
+	clk = clk_register_composite(NULL, name, &parent_name, 1, NULL, NULL,
+				     &div->hw, &clk_divider_ops,
 				     &gate->hw, &clk_gate_ops, 0);
-	अगर (IS_ERR(clk)) अणु
-		kमुक्त(gate);
-		kमुक्त(भाग);
-	पूर्ण
+	if (IS_ERR(clk)) {
+		kfree(gate);
+		kfree(div);
+	}
 
-	वापस clk;
-पूर्ण
+	return clk;
+}
 
-/* SDHI भागisors */
-अटल स्थिर काष्ठा clk_भाग_प्रकारable cpg_sdh_भाग_प्रकारable[] = अणु
-	अणु  0,  2 पूर्ण, अणु  1,  3 पूर्ण, अणु  2,  4 पूर्ण, अणु  3,  6 पूर्ण,
-	अणु  4,  8 पूर्ण, अणु  5, 12 पूर्ण, अणु  6, 16 पूर्ण, अणु  7, 18 पूर्ण,
-	अणु  8, 24 पूर्ण, अणु 10, 36 पूर्ण, अणु 11, 48 पूर्ण, अणु  0,  0 पूर्ण,
-पूर्ण;
+/* SDHI divisors */
+static const struct clk_div_table cpg_sdh_div_table[] = {
+	{  0,  2 }, {  1,  3 }, {  2,  4 }, {  3,  6 },
+	{  4,  8 }, {  5, 12 }, {  6, 16 }, {  7, 18 },
+	{  8, 24 }, { 10, 36 }, { 11, 48 }, {  0,  0 },
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable cpg_sd01_भाग_प्रकारable[] = अणु
-	अणु  4,  8 पूर्ण, अणु  5, 12 पूर्ण, अणु  6, 16 पूर्ण, अणु  7, 18 पूर्ण,
-	अणु  8, 24 पूर्ण, अणु 10, 36 पूर्ण, अणु 11, 48 पूर्ण, अणु 12, 10 पूर्ण,
-	अणु  0,  0 पूर्ण,
-पूर्ण;
+static const struct clk_div_table cpg_sd01_div_table[] = {
+	{  4,  8 }, {  5, 12 }, {  6, 16 }, {  7, 18 },
+	{  8, 24 }, { 10, 36 }, { 11, 48 }, { 12, 10 },
+	{  0,  0 },
+};
 
-अटल स्थिर काष्ठा rcar_gen2_cpg_pll_config *cpg_pll_config __initdata;
-अटल अचिन्हित पूर्णांक cpg_pll0_भाग __initdata;
-अटल u32 cpg_mode __initdata;
-अटल u32 cpg_quirks __initdata;
+static const struct rcar_gen2_cpg_pll_config *cpg_pll_config __initdata;
+static unsigned int cpg_pll0_div __initdata;
+static u32 cpg_mode __initdata;
+static u32 cpg_quirks __initdata;
 
-#घोषणा SD_SKIP_FIRST	BIT(0)		/* Skip first घड़ी in SD table */
+#define SD_SKIP_FIRST	BIT(0)		/* Skip first clock in SD table */
 
-अटल स्थिर काष्ठा soc_device_attribute cpg_quirks_match[] __initस्थिर = अणु
-	अणु
+static const struct soc_device_attribute cpg_quirks_match[] __initconst = {
+	{
 		.soc_id = "r8a77470",
-		.data = (व्योम *)SD_SKIP_FIRST,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+		.data = (void *)SD_SKIP_FIRST,
+	},
+	{ /* sentinel */ }
+};
 
-काष्ठा clk * __init rcar_gen2_cpg_clk_रेजिस्टर(काष्ठा device *dev,
-	स्थिर काष्ठा cpg_core_clk *core, स्थिर काष्ठा cpg_mssr_info *info,
-	काष्ठा clk **clks, व्योम __iomem *base,
-	काष्ठा raw_notअगरier_head *notअगरiers)
-अणु
-	स्थिर काष्ठा clk_भाग_प्रकारable *table = शून्य;
-	स्थिर काष्ठा clk *parent;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित पूर्णांक mult = 1;
-	अचिन्हित पूर्णांक भाग = 1;
-	अचिन्हित पूर्णांक shअगरt;
+struct clk * __init rcar_gen2_cpg_clk_register(struct device *dev,
+	const struct cpg_core_clk *core, const struct cpg_mssr_info *info,
+	struct clk **clks, void __iomem *base,
+	struct raw_notifier_head *notifiers)
+{
+	const struct clk_div_table *table = NULL;
+	const struct clk *parent;
+	const char *parent_name;
+	unsigned int mult = 1;
+	unsigned int div = 1;
+	unsigned int shift;
 
 	parent = clks[core->parent];
-	अगर (IS_ERR(parent))
-		वापस ERR_CAST(parent);
+	if (IS_ERR(parent))
+		return ERR_CAST(parent);
 
 	parent_name = __clk_get_name(parent);
 
-	चयन (core->type) अणु
+	switch (core->type) {
 	/* R-Car Gen2 */
-	हाल CLK_TYPE_GEN2_MAIN:
-		भाग = cpg_pll_config->extal_भाग;
-		अवरोध;
+	case CLK_TYPE_GEN2_MAIN:
+		div = cpg_pll_config->extal_div;
+		break;
 
-	हाल CLK_TYPE_GEN2_PLL0:
+	case CLK_TYPE_GEN2_PLL0:
 		/*
-		 * PLL0 is a  configurable multiplier घड़ी except on R-Car
-		 * V2H/E2. Register the PLL0 घड़ी as a fixed factor घड़ी क्रम
-		 * now as there's no generic multiplier घड़ी implementation and
+		 * PLL0 is a  configurable multiplier clock except on R-Car
+		 * V2H/E2. Register the PLL0 clock as a fixed factor clock for
+		 * now as there's no generic multiplier clock implementation and
 		 * we  currently  have no need to change  the multiplier value.
 		 */
 		mult = cpg_pll_config->pll0_mult;
-		भाग  = cpg_pll0_भाग;
-		अगर (!mult) अणु
-			u32 pll0cr = पढ़ोl(base + CPG_PLL0CR);
+		div  = cpg_pll0_div;
+		if (!mult) {
+			u32 pll0cr = readl(base + CPG_PLL0CR);
 
 			mult = (((pll0cr & CPG_PLL0CR_STC_MASK) >>
 				 CPG_PLL0CR_STC_SHIFT) + 1) * 2;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CLK_TYPE_GEN2_PLL1:
+	case CLK_TYPE_GEN2_PLL1:
 		mult = cpg_pll_config->pll1_mult / 2;
-		अवरोध;
+		break;
 
-	हाल CLK_TYPE_GEN2_PLL3:
+	case CLK_TYPE_GEN2_PLL3:
 		mult = cpg_pll_config->pll3_mult;
-		अवरोध;
+		break;
 
-	हाल CLK_TYPE_GEN2_Z:
-		वापस cpg_z_clk_रेजिस्टर(core->name, parent_name, base);
+	case CLK_TYPE_GEN2_Z:
+		return cpg_z_clk_register(core->name, parent_name, base);
 
-	हाल CLK_TYPE_GEN2_LB:
-		भाग = cpg_mode & BIT(18) ? 36 : 24;
-		अवरोध;
+	case CLK_TYPE_GEN2_LB:
+		div = cpg_mode & BIT(18) ? 36 : 24;
+		break;
 
-	हाल CLK_TYPE_GEN2_ADSP:
-		वापस cpg_adsp_clk_रेजिस्टर(core->name, parent_name, base);
+	case CLK_TYPE_GEN2_ADSP:
+		return cpg_adsp_clk_register(core->name, parent_name, base);
 
-	हाल CLK_TYPE_GEN2_SDH:
-		table = cpg_sdh_भाग_प्रकारable;
-		shअगरt = 8;
-		अवरोध;
+	case CLK_TYPE_GEN2_SDH:
+		table = cpg_sdh_div_table;
+		shift = 8;
+		break;
 
-	हाल CLK_TYPE_GEN2_SD0:
-		table = cpg_sd01_भाग_प्रकारable;
-		अगर (cpg_quirks & SD_SKIP_FIRST)
+	case CLK_TYPE_GEN2_SD0:
+		table = cpg_sd01_div_table;
+		if (cpg_quirks & SD_SKIP_FIRST)
 			table++;
 
-		shअगरt = 4;
-		अवरोध;
+		shift = 4;
+		break;
 
-	हाल CLK_TYPE_GEN2_SD1:
-		table = cpg_sd01_भाग_प्रकारable;
-		अगर (cpg_quirks & SD_SKIP_FIRST)
+	case CLK_TYPE_GEN2_SD1:
+		table = cpg_sd01_div_table;
+		if (cpg_quirks & SD_SKIP_FIRST)
 			table++;
 
-		shअगरt = 0;
-		अवरोध;
+		shift = 0;
+		break;
 
-	हाल CLK_TYPE_GEN2_QSPI:
-		भाग = (cpg_mode & (BIT(3) | BIT(2) | BIT(1))) == BIT(2) ?
+	case CLK_TYPE_GEN2_QSPI:
+		div = (cpg_mode & (BIT(3) | BIT(2) | BIT(1))) == BIT(2) ?
 		      8 : 10;
-		अवरोध;
+		break;
 
-	हाल CLK_TYPE_GEN2_RCAN:
-		वापस cpg_rcan_clk_रेजिस्टर(core->name, parent_name, base);
+	case CLK_TYPE_GEN2_RCAN:
+		return cpg_rcan_clk_register(core->name, parent_name, base);
 
-	शेष:
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	default:
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!table)
-		वापस clk_रेजिस्टर_fixed_factor(शून्य, core->name, parent_name,
-						 0, mult, भाग);
-	अन्यथा
-		वापस clk_रेजिस्टर_भागider_table(शून्य, core->name,
+	if (!table)
+		return clk_register_fixed_factor(NULL, core->name, parent_name,
+						 0, mult, div);
+	else
+		return clk_register_divider_table(NULL, core->name,
 						  parent_name, 0,
-						  base + CPG_SDCKCR, shअगरt, 4,
+						  base + CPG_SDCKCR, shift, 4,
 						  0, table, &cpg_lock);
-पूर्ण
+}
 
-पूर्णांक __init rcar_gen2_cpg_init(स्थिर काष्ठा rcar_gen2_cpg_pll_config *config,
-			      अचिन्हित पूर्णांक pll0_भाग, u32 mode)
-अणु
-	स्थिर काष्ठा soc_device_attribute *attr;
+int __init rcar_gen2_cpg_init(const struct rcar_gen2_cpg_pll_config *config,
+			      unsigned int pll0_div, u32 mode)
+{
+	const struct soc_device_attribute *attr;
 
 	cpg_pll_config = config;
-	cpg_pll0_भाग = pll0_भाग;
+	cpg_pll0_div = pll0_div;
 	cpg_mode = mode;
 	attr = soc_device_match(cpg_quirks_match);
-	अगर (attr)
-		cpg_quirks = (uपूर्णांकptr_t)attr->data;
+	if (attr)
+		cpg_quirks = (uintptr_t)attr->data;
 	pr_debug("%s: mode = 0x%x quirks = 0x%x\n", __func__, mode, cpg_quirks);
 
 	spin_lock_init(&cpg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

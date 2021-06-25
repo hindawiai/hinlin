@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * cppc_msr.c:  MSR Interface क्रम CPPC
+ * cppc_msr.c:  MSR Interface for CPPC
  * Copyright (c) 2016, Intel Corporation.
  */
 
-#समावेश <acpi/cppc_acpi.h>
-#समावेश <यंत्र/msr.h>
+#include <acpi/cppc_acpi.h>
+#include <asm/msr.h>
 
-/* Refer to drivers/acpi/cppc_acpi.c क्रम the description of functions */
+/* Refer to drivers/acpi/cppc_acpi.c for the description of functions */
 
-bool cpc_ffh_supported(व्योम)
-अणु
-	वापस true;
-पूर्ण
+bool cpc_ffh_supported(void)
+{
+	return true;
+}
 
-पूर्णांक cpc_पढ़ो_ffh(पूर्णांक cpunum, काष्ठा cpc_reg *reg, u64 *val)
-अणु
-	पूर्णांक err;
+int cpc_read_ffh(int cpunum, struct cpc_reg *reg, u64 *val)
+{
+	int err;
 
 	err = rdmsrl_safe_on_cpu(cpunum, reg->address, val);
-	अगर (!err) अणु
+	if (!err) {
 		u64 mask = GENMASK_ULL(reg->bit_offset + reg->bit_width - 1,
 				       reg->bit_offset);
 
 		*val &= mask;
 		*val >>= reg->bit_offset;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-पूर्णांक cpc_ग_लिखो_ffh(पूर्णांक cpunum, काष्ठा cpc_reg *reg, u64 val)
-अणु
+int cpc_write_ffh(int cpunum, struct cpc_reg *reg, u64 val)
+{
 	u64 rd_val;
-	पूर्णांक err;
+	int err;
 
 	err = rdmsrl_safe_on_cpu(cpunum, reg->address, &rd_val);
-	अगर (!err) अणु
+	if (!err) {
 		u64 mask = GENMASK_ULL(reg->bit_offset + reg->bit_width - 1,
 				       reg->bit_offset);
 
@@ -45,6 +44,6 @@ bool cpc_ffh_supported(व्योम)
 		rd_val &= ~mask;
 		rd_val |= val;
 		err = wrmsrl_safe_on_cpu(cpunum, reg->address, rd_val);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}

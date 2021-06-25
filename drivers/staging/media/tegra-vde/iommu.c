@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * NVIDIA Tegra Video decoder driver
  *
  * Copyright (C) 2016-2019 GRATE-DRIVER project
  */
 
-#समावेश <linux/iommu.h>
-#समावेश <linux/iova.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/iommu.h>
+#include <linux/iova.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
 
-#अगर IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
-#समावेश <यंत्र/dma-iommu.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
+#include <asm/dma-iommu.h>
+#endif
 
-#समावेश "vde.h"
+#include "vde.h"
 
-पूर्णांक tegra_vde_iommu_map(काष्ठा tegra_vde *vde,
-			काष्ठा sg_table *sgt,
-			काष्ठा iova **iovap,
-			माप_प्रकार size)
-अणु
-	काष्ठा iova *iova;
-	अचिन्हित दीर्घ shअगरt;
-	अचिन्हित दीर्घ end;
+int tegra_vde_iommu_map(struct tegra_vde *vde,
+			struct sg_table *sgt,
+			struct iova **iovap,
+			size_t size)
+{
+	struct iova *iova;
+	unsigned long shift;
+	unsigned long end;
 	dma_addr_t addr;
 
-	end = vde->करोमुख्य->geometry.aperture_end;
+	end = vde->domain->geometry.aperture_end;
 	size = iova_align(&vde->iova, size);
-	shअगरt = iova_shअगरt(&vde->iova);
+	shift = iova_shift(&vde->iova);
 
-	iova = alloc_iova(&vde->iova, size >> shअगरt, end >> shअगरt, true);
-	अगर (!iova)
-		वापस -ENOMEM;
+	iova = alloc_iova(&vde->iova, size >> shift, end >> shift, true);
+	if (!iova)
+		return -ENOMEM;
 
 	addr = iova_dma_addr(&vde->iova, iova);
 
-	size = iommu_map_sgtable(vde->करोमुख्य, addr, sgt,
+	size = iommu_map_sgtable(vde->domain, addr, sgt,
 				 IOMMU_READ | IOMMU_WRITE);
-	अगर (!size) अणु
-		__मुक्त_iova(&vde->iova, iova);
-		वापस -ENXIO;
-	पूर्ण
+	if (!size) {
+		__free_iova(&vde->iova, iova);
+		return -ENXIO;
+	}
 
 	*iovap = iova;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम tegra_vde_iommu_unmap(काष्ठा tegra_vde *vde, काष्ठा iova *iova)
-अणु
-	अचिन्हित दीर्घ shअगरt = iova_shअगरt(&vde->iova);
-	अचिन्हित दीर्घ size = iova_size(iova) << shअगरt;
+void tegra_vde_iommu_unmap(struct tegra_vde *vde, struct iova *iova)
+{
+	unsigned long shift = iova_shift(&vde->iova);
+	unsigned long size = iova_size(iova) << shift;
 	dma_addr_t addr = iova_dma_addr(&vde->iova, iova);
 
-	iommu_unmap(vde->करोमुख्य, addr, size);
-	__मुक्त_iova(&vde->iova, iova);
-पूर्ण
+	iommu_unmap(vde->domain, addr, size);
+	__free_iova(&vde->iova, iova);
+}
 
-पूर्णांक tegra_vde_iommu_init(काष्ठा tegra_vde *vde)
-अणु
-	काष्ठा device *dev = vde->miscdev.parent;
-	काष्ठा iova *iova;
-	अचिन्हित दीर्घ order;
-	अचिन्हित दीर्घ shअगरt;
-	पूर्णांक err;
+int tegra_vde_iommu_init(struct tegra_vde *vde)
+{
+	struct device *dev = vde->miscdev.parent;
+	struct iova *iova;
+	unsigned long order;
+	unsigned long shift;
+	int err;
 
 	vde->group = iommu_group_get(dev);
-	अगर (!vde->group)
-		वापस 0;
+	if (!vde->group)
+		return 0;
 
-#अगर IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
-	अगर (dev->archdata.mapping) अणु
-		काष्ठा dma_iommu_mapping *mapping = to_dma_iommu_mapping(dev);
+#if IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
+	if (dev->archdata.mapping) {
+		struct dma_iommu_mapping *mapping = to_dma_iommu_mapping(dev);
 
 		arm_iommu_detach_device(dev);
 		arm_iommu_release_mapping(mapping);
-	पूर्ण
-#पूर्ण_अगर
-	vde->करोमुख्य = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
-	अगर (!vde->करोमुख्य) अणु
+	}
+#endif
+	vde->domain = iommu_domain_alloc(&platform_bus_type);
+	if (!vde->domain) {
 		err = -ENOMEM;
-		जाओ put_group;
-	पूर्ण
+		goto put_group;
+	}
 
 	err = iova_cache_get();
-	अगर (err)
-		जाओ मुक्त_करोमुख्य;
+	if (err)
+		goto free_domain;
 
-	order = __ffs(vde->करोमुख्य->pgsize_biपंचांगap);
-	init_iova_करोमुख्य(&vde->iova, 1UL << order, 0);
+	order = __ffs(vde->domain->pgsize_bitmap);
+	init_iova_domain(&vde->iova, 1UL << order, 0);
 
-	err = iommu_attach_group(vde->करोमुख्य, vde->group);
-	अगर (err)
-		जाओ put_iova;
+	err = iommu_attach_group(vde->domain, vde->group);
+	if (err)
+		goto put_iova;
 
 	/*
-	 * We're using some अटल addresses that are not accessible by VDE
+	 * We're using some static addresses that are not accessible by VDE
 	 * to trap invalid memory accesses.
 	 */
-	shअगरt = iova_shअगरt(&vde->iova);
-	iova = reserve_iova(&vde->iova, 0x60000000 >> shअगरt,
-			    0x70000000 >> shअगरt);
-	अगर (!iova) अणु
+	shift = iova_shift(&vde->iova);
+	iova = reserve_iova(&vde->iova, 0x60000000 >> shift,
+			    0x70000000 >> shift);
+	if (!iova) {
 		err = -ENOMEM;
-		जाओ detach_group;
-	पूर्ण
+		goto detach_group;
+	}
 
-	vde->iova_resv_अटल_addresses = iova;
+	vde->iova_resv_static_addresses = iova;
 
 	/*
-	 * BSEV's end-address wraps around due to पूर्णांकeger overflow during
-	 * of hardware context preparation अगर IOVA is allocated at the end
+	 * BSEV's end-address wraps around due to integer overflow during
+	 * of hardware context preparation if IOVA is allocated at the end
 	 * of address space and VDE can't handle that. Hence simply reserve
-	 * the last page to aव्योम the problem.
+	 * the last page to avoid the problem.
 	 */
-	iova = reserve_iova(&vde->iova, 0xffffffff >> shअगरt,
-			    (0xffffffff >> shअगरt) + 1);
-	अगर (!iova) अणु
+	iova = reserve_iova(&vde->iova, 0xffffffff >> shift,
+			    (0xffffffff >> shift) + 1);
+	if (!iova) {
 		err = -ENOMEM;
-		जाओ unreserve_iova;
-	पूर्ण
+		goto unreserve_iova;
+	}
 
 	vde->iova_resv_last_page = iova;
 
-	वापस 0;
+	return 0;
 
 unreserve_iova:
-	__मुक्त_iova(&vde->iova, vde->iova_resv_अटल_addresses);
+	__free_iova(&vde->iova, vde->iova_resv_static_addresses);
 detach_group:
-	iommu_detach_group(vde->करोमुख्य, vde->group);
+	iommu_detach_group(vde->domain, vde->group);
 put_iova:
-	put_iova_करोमुख्य(&vde->iova);
+	put_iova_domain(&vde->iova);
 	iova_cache_put();
-मुक्त_करोमुख्य:
-	iommu_करोमुख्य_मुक्त(vde->करोमुख्य);
+free_domain:
+	iommu_domain_free(vde->domain);
 put_group:
 	iommu_group_put(vde->group);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम tegra_vde_iommu_deinit(काष्ठा tegra_vde *vde)
-अणु
-	अगर (vde->करोमुख्य) अणु
-		__मुक्त_iova(&vde->iova, vde->iova_resv_last_page);
-		__मुक्त_iova(&vde->iova, vde->iova_resv_अटल_addresses);
-		iommu_detach_group(vde->करोमुख्य, vde->group);
-		put_iova_करोमुख्य(&vde->iova);
+void tegra_vde_iommu_deinit(struct tegra_vde *vde)
+{
+	if (vde->domain) {
+		__free_iova(&vde->iova, vde->iova_resv_last_page);
+		__free_iova(&vde->iova, vde->iova_resv_static_addresses);
+		iommu_detach_group(vde->domain, vde->group);
+		put_iova_domain(&vde->iova);
 		iova_cache_put();
-		iommu_करोमुख्य_मुक्त(vde->करोमुख्य);
+		iommu_domain_free(vde->domain);
 		iommu_group_put(vde->group);
 
-		vde->करोमुख्य = शून्य;
-	पूर्ण
-पूर्ण
+		vde->domain = NULL;
+	}
+}

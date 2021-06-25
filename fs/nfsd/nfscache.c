@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Request reply cache. This is currently a global cache, but this may
  * change in the future and be a per-client cache.
  *
  * This code is heavily inspired by the 44BSD implementation, although
- * it करोes things a bit dअगरferently.
+ * it does things a bit differently.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  */
 
-#समावेश <linux/sunrpc/svc_xprt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/log2.h>
-#समावेश <linux/hash.h>
-#समावेश <net/checksum.h>
+#include <linux/sunrpc/svc_xprt.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/highmem.h>
+#include <linux/log2.h>
+#include <linux/hash.h>
+#include <net/checksum.h>
 
-#समावेश "nfsd.h"
-#समावेश "cache.h"
-#समावेश "trace.h"
+#include "nfsd.h"
+#include "cache.h"
+#include "trace.h"
 
 /*
  * We use this value to determine the number of hash buckets from the max
  * cache size, the idea being that when the cache is at its maximum number
  * of entries, then this should be the average number of entries per bucket.
  */
-#घोषणा TARGET_BUCKET_SIZE	64
+#define TARGET_BUCKET_SIZE	64
 
-काष्ठा nfsd_drc_bucket अणु
-	काष्ठा rb_root rb_head;
-	काष्ठा list_head lru_head;
+struct nfsd_drc_bucket {
+	struct rb_root rb_head;
+	struct list_head lru_head;
 	spinlock_t cache_lock;
-पूर्ण;
+};
 
-अटल काष्ठा kmem_cache	*drc_slab;
+static struct kmem_cache	*drc_slab;
 
-अटल पूर्णांक	nfsd_cache_append(काष्ठा svc_rqst *rqstp, काष्ठा kvec *vec);
-अटल अचिन्हित दीर्घ nfsd_reply_cache_count(काष्ठा shrinker *shrink,
-					    काष्ठा shrink_control *sc);
-अटल अचिन्हित दीर्घ nfsd_reply_cache_scan(काष्ठा shrinker *shrink,
-					   काष्ठा shrink_control *sc);
+static int	nfsd_cache_append(struct svc_rqst *rqstp, struct kvec *vec);
+static unsigned long nfsd_reply_cache_count(struct shrinker *shrink,
+					    struct shrink_control *sc);
+static unsigned long nfsd_reply_cache_scan(struct shrinker *shrink,
+					   struct shrink_control *sc);
 
 /*
  * Put a cap on the size of the DRC based on the amount of available
@@ -58,118 +57,118 @@
  *   8GB:   92681
  *  16GB:  131072
  *
- * ...with a hard cap of 256k entries. In the worst हाल, each entry will be
+ * ...with a hard cap of 256k entries. In the worst case, each entry will be
  * ~1k, so the above numbers should give a rough max of the amount of memory
  * used in k.
  *
  * XXX: these limits are per-container, so memory used will increase
  * linearly with number of containers.  Maybe that's OK.
  */
-अटल अचिन्हित पूर्णांक
-nfsd_cache_size_limit(व्योम)
-अणु
-	अचिन्हित पूर्णांक limit;
-	अचिन्हित दीर्घ low_pages = totalram_pages() - totalhigh_pages();
+static unsigned int
+nfsd_cache_size_limit(void)
+{
+	unsigned int limit;
+	unsigned long low_pages = totalram_pages() - totalhigh_pages();
 
-	limit = (16 * पूर्णांक_वर्ग_मूल(low_pages)) << (PAGE_SHIFT-10);
-	वापस min_t(अचिन्हित पूर्णांक, limit, 256*1024);
-पूर्ण
+	limit = (16 * int_sqrt(low_pages)) << (PAGE_SHIFT-10);
+	return min_t(unsigned int, limit, 256*1024);
+}
 
 /*
  * Compute the number of hash buckets we need. Divide the max cachesize by
- * the "target" max bucket size, and round up to next घातer of two.
+ * the "target" max bucket size, and round up to next power of two.
  */
-अटल अचिन्हित पूर्णांक
-nfsd_hashsize(अचिन्हित पूर्णांक limit)
-अणु
-	वापस roundup_घात_of_two(limit / TARGET_BUCKET_SIZE);
-पूर्ण
+static unsigned int
+nfsd_hashsize(unsigned int limit)
+{
+	return roundup_pow_of_two(limit / TARGET_BUCKET_SIZE);
+}
 
-अटल u32
-nfsd_cache_hash(__be32 xid, काष्ठा nfsd_net *nn)
-अणु
-	वापस hash_32(be32_to_cpu(xid), nn->maskbits);
-पूर्ण
+static u32
+nfsd_cache_hash(__be32 xid, struct nfsd_net *nn)
+{
+	return hash_32(be32_to_cpu(xid), nn->maskbits);
+}
 
-अटल काष्ठा svc_cacherep *
-nfsd_reply_cache_alloc(काष्ठा svc_rqst *rqstp, __wsum csum,
-			काष्ठा nfsd_net *nn)
-अणु
-	काष्ठा svc_cacherep	*rp;
+static struct svc_cacherep *
+nfsd_reply_cache_alloc(struct svc_rqst *rqstp, __wsum csum,
+			struct nfsd_net *nn)
+{
+	struct svc_cacherep	*rp;
 
 	rp = kmem_cache_alloc(drc_slab, GFP_KERNEL);
-	अगर (rp) अणु
+	if (rp) {
 		rp->c_state = RC_UNUSED;
 		rp->c_type = RC_NOCACHE;
 		RB_CLEAR_NODE(&rp->c_node);
 		INIT_LIST_HEAD(&rp->c_lru);
 
-		स_रखो(&rp->c_key, 0, माप(rp->c_key));
+		memset(&rp->c_key, 0, sizeof(rp->c_key));
 		rp->c_key.k_xid = rqstp->rq_xid;
 		rp->c_key.k_proc = rqstp->rq_proc;
-		rpc_copy_addr((काष्ठा sockaddr *)&rp->c_key.k_addr, svc_addr(rqstp));
-		rpc_set_port((काष्ठा sockaddr *)&rp->c_key.k_addr, rpc_get_port(svc_addr(rqstp)));
+		rpc_copy_addr((struct sockaddr *)&rp->c_key.k_addr, svc_addr(rqstp));
+		rpc_set_port((struct sockaddr *)&rp->c_key.k_addr, rpc_get_port(svc_addr(rqstp)));
 		rp->c_key.k_prot = rqstp->rq_prot;
 		rp->c_key.k_vers = rqstp->rq_vers;
 		rp->c_key.k_len = rqstp->rq_arg.len;
 		rp->c_key.k_csum = csum;
-	पूर्ण
-	वापस rp;
-पूर्ण
+	}
+	return rp;
+}
 
-अटल व्योम
-nfsd_reply_cache_मुक्त_locked(काष्ठा nfsd_drc_bucket *b, काष्ठा svc_cacherep *rp,
-				काष्ठा nfsd_net *nn)
-अणु
-	अगर (rp->c_type == RC_REPLBUFF && rp->c_replvec.iov_base) अणु
+static void
+nfsd_reply_cache_free_locked(struct nfsd_drc_bucket *b, struct svc_cacherep *rp,
+				struct nfsd_net *nn)
+{
+	if (rp->c_type == RC_REPLBUFF && rp->c_replvec.iov_base) {
 		nfsd_stats_drc_mem_usage_sub(nn, rp->c_replvec.iov_len);
-		kमुक्त(rp->c_replvec.iov_base);
-	पूर्ण
-	अगर (rp->c_state != RC_UNUSED) अणु
+		kfree(rp->c_replvec.iov_base);
+	}
+	if (rp->c_state != RC_UNUSED) {
 		rb_erase(&rp->c_node, &b->rb_head);
 		list_del(&rp->c_lru);
 		atomic_dec(&nn->num_drc_entries);
-		nfsd_stats_drc_mem_usage_sub(nn, माप(*rp));
-	पूर्ण
-	kmem_cache_मुक्त(drc_slab, rp);
-पूर्ण
+		nfsd_stats_drc_mem_usage_sub(nn, sizeof(*rp));
+	}
+	kmem_cache_free(drc_slab, rp);
+}
 
-अटल व्योम
-nfsd_reply_cache_मुक्त(काष्ठा nfsd_drc_bucket *b, काष्ठा svc_cacherep *rp,
-			काष्ठा nfsd_net *nn)
-अणु
+static void
+nfsd_reply_cache_free(struct nfsd_drc_bucket *b, struct svc_cacherep *rp,
+			struct nfsd_net *nn)
+{
 	spin_lock(&b->cache_lock);
-	nfsd_reply_cache_मुक्त_locked(b, rp, nn);
+	nfsd_reply_cache_free_locked(b, rp, nn);
 	spin_unlock(&b->cache_lock);
-पूर्ण
+}
 
-पूर्णांक nfsd_drc_slab_create(व्योम)
-अणु
+int nfsd_drc_slab_create(void)
+{
 	drc_slab = kmem_cache_create("nfsd_drc",
-				माप(काष्ठा svc_cacherep), 0, 0, शून्य);
-	वापस drc_slab ? 0: -ENOMEM;
-पूर्ण
+				sizeof(struct svc_cacherep), 0, 0, NULL);
+	return drc_slab ? 0: -ENOMEM;
+}
 
-व्योम nfsd_drc_slab_मुक्त(व्योम)
-अणु
+void nfsd_drc_slab_free(void)
+{
 	kmem_cache_destroy(drc_slab);
-पूर्ण
+}
 
-अटल पूर्णांक nfsd_reply_cache_stats_init(काष्ठा nfsd_net *nn)
-अणु
-	वापस nfsd_percpu_counters_init(nn->counter, NFSD_NET_COUNTERS_NUM);
-पूर्ण
+static int nfsd_reply_cache_stats_init(struct nfsd_net *nn)
+{
+	return nfsd_percpu_counters_init(nn->counter, NFSD_NET_COUNTERS_NUM);
+}
 
-अटल व्योम nfsd_reply_cache_stats_destroy(काष्ठा nfsd_net *nn)
-अणु
+static void nfsd_reply_cache_stats_destroy(struct nfsd_net *nn)
+{
 	nfsd_percpu_counters_destroy(nn->counter, NFSD_NET_COUNTERS_NUM);
-पूर्ण
+}
 
-पूर्णांक nfsd_reply_cache_init(काष्ठा nfsd_net *nn)
-अणु
-	अचिन्हित पूर्णांक hashsize;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक status = 0;
+int nfsd_reply_cache_init(struct nfsd_net *nn)
+{
+	unsigned int hashsize;
+	unsigned int i;
+	int status = 0;
 
 	nn->max_drc_entries = nfsd_cache_size_limit();
 	atomic_set(&nn->num_drc_entries, 0);
@@ -177,225 +176,225 @@ nfsd_reply_cache_मुक्त(काष्ठा nfsd_drc_bucket *b, का�
 	nn->maskbits = ilog2(hashsize);
 
 	status = nfsd_reply_cache_stats_init(nn);
-	अगर (status)
-		जाओ out_nomem;
+	if (status)
+		goto out_nomem;
 
 	nn->nfsd_reply_cache_shrinker.scan_objects = nfsd_reply_cache_scan;
 	nn->nfsd_reply_cache_shrinker.count_objects = nfsd_reply_cache_count;
 	nn->nfsd_reply_cache_shrinker.seeks = 1;
-	status = रेजिस्टर_shrinker(&nn->nfsd_reply_cache_shrinker);
-	अगर (status)
-		जाओ out_stats_destroy;
+	status = register_shrinker(&nn->nfsd_reply_cache_shrinker);
+	if (status)
+		goto out_stats_destroy;
 
 	nn->drc_hashtbl = kvzalloc(array_size(hashsize,
-				माप(*nn->drc_hashtbl)), GFP_KERNEL);
-	अगर (!nn->drc_hashtbl)
-		जाओ out_shrinker;
+				sizeof(*nn->drc_hashtbl)), GFP_KERNEL);
+	if (!nn->drc_hashtbl)
+		goto out_shrinker;
 
-	क्रम (i = 0; i < hashsize; i++) अणु
+	for (i = 0; i < hashsize; i++) {
 		INIT_LIST_HEAD(&nn->drc_hashtbl[i].lru_head);
 		spin_lock_init(&nn->drc_hashtbl[i].cache_lock);
-	पूर्ण
+	}
 	nn->drc_hashsize = hashsize;
 
-	वापस 0;
+	return 0;
 out_shrinker:
-	unरेजिस्टर_shrinker(&nn->nfsd_reply_cache_shrinker);
+	unregister_shrinker(&nn->nfsd_reply_cache_shrinker);
 out_stats_destroy:
 	nfsd_reply_cache_stats_destroy(nn);
 out_nomem:
-	prपूर्णांकk(KERN_ERR "nfsd: failed to allocate reply cache\n");
-	वापस -ENOMEM;
-पूर्ण
+	printk(KERN_ERR "nfsd: failed to allocate reply cache\n");
+	return -ENOMEM;
+}
 
-व्योम nfsd_reply_cache_shutकरोwn(काष्ठा nfsd_net *nn)
-अणु
-	काष्ठा svc_cacherep	*rp;
-	अचिन्हित पूर्णांक i;
+void nfsd_reply_cache_shutdown(struct nfsd_net *nn)
+{
+	struct svc_cacherep	*rp;
+	unsigned int i;
 
 	nfsd_reply_cache_stats_destroy(nn);
-	unरेजिस्टर_shrinker(&nn->nfsd_reply_cache_shrinker);
+	unregister_shrinker(&nn->nfsd_reply_cache_shrinker);
 
-	क्रम (i = 0; i < nn->drc_hashsize; i++) अणु
-		काष्ठा list_head *head = &nn->drc_hashtbl[i].lru_head;
-		जबतक (!list_empty(head)) अणु
-			rp = list_first_entry(head, काष्ठा svc_cacherep, c_lru);
-			nfsd_reply_cache_मुक्त_locked(&nn->drc_hashtbl[i],
+	for (i = 0; i < nn->drc_hashsize; i++) {
+		struct list_head *head = &nn->drc_hashtbl[i].lru_head;
+		while (!list_empty(head)) {
+			rp = list_first_entry(head, struct svc_cacherep, c_lru);
+			nfsd_reply_cache_free_locked(&nn->drc_hashtbl[i],
 									rp, nn);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	kvमुक्त(nn->drc_hashtbl);
-	nn->drc_hashtbl = शून्य;
+	kvfree(nn->drc_hashtbl);
+	nn->drc_hashtbl = NULL;
 	nn->drc_hashsize = 0;
 
-पूर्ण
+}
 
 /*
- * Move cache entry to end of LRU list, and queue the cleaner to run अगर it's
- * not alपढ़ोy scheduled.
+ * Move cache entry to end of LRU list, and queue the cleaner to run if it's
+ * not already scheduled.
  */
-अटल व्योम
-lru_put_end(काष्ठा nfsd_drc_bucket *b, काष्ठा svc_cacherep *rp)
-अणु
-	rp->c_बारtamp = jअगरfies;
+static void
+lru_put_end(struct nfsd_drc_bucket *b, struct svc_cacherep *rp)
+{
+	rp->c_timestamp = jiffies;
 	list_move_tail(&rp->c_lru, &b->lru_head);
-पूर्ण
+}
 
-अटल दीर्घ
-prune_bucket(काष्ठा nfsd_drc_bucket *b, काष्ठा nfsd_net *nn)
-अणु
-	काष्ठा svc_cacherep *rp, *पंचांगp;
-	दीर्घ मुक्तd = 0;
+static long
+prune_bucket(struct nfsd_drc_bucket *b, struct nfsd_net *nn)
+{
+	struct svc_cacherep *rp, *tmp;
+	long freed = 0;
 
-	list_क्रम_each_entry_safe(rp, पंचांगp, &b->lru_head, c_lru) अणु
+	list_for_each_entry_safe(rp, tmp, &b->lru_head, c_lru) {
 		/*
-		 * Don't मुक्त entries attached to calls that are still
-		 * in-progress, but करो keep scanning the list.
+		 * Don't free entries attached to calls that are still
+		 * in-progress, but do keep scanning the list.
 		 */
-		अगर (rp->c_state == RC_INPROG)
-			जारी;
-		अगर (atomic_पढ़ो(&nn->num_drc_entries) <= nn->max_drc_entries &&
-		    समय_beक्रमe(jअगरfies, rp->c_बारtamp + RC_EXPIRE))
-			अवरोध;
-		nfsd_reply_cache_मुक्त_locked(b, rp, nn);
-		मुक्तd++;
-	पूर्ण
-	वापस मुक्तd;
-पूर्ण
+		if (rp->c_state == RC_INPROG)
+			continue;
+		if (atomic_read(&nn->num_drc_entries) <= nn->max_drc_entries &&
+		    time_before(jiffies, rp->c_timestamp + RC_EXPIRE))
+			break;
+		nfsd_reply_cache_free_locked(b, rp, nn);
+		freed++;
+	}
+	return freed;
+}
 
 /*
  * Walk the LRU list and prune off entries that are older than RC_EXPIRE.
  * Also prune the oldest ones when the total exceeds the max number of entries.
  */
-अटल दीर्घ
-prune_cache_entries(काष्ठा nfsd_net *nn)
-अणु
-	अचिन्हित पूर्णांक i;
-	दीर्घ मुक्तd = 0;
+static long
+prune_cache_entries(struct nfsd_net *nn)
+{
+	unsigned int i;
+	long freed = 0;
 
-	क्रम (i = 0; i < nn->drc_hashsize; i++) अणु
-		काष्ठा nfsd_drc_bucket *b = &nn->drc_hashtbl[i];
+	for (i = 0; i < nn->drc_hashsize; i++) {
+		struct nfsd_drc_bucket *b = &nn->drc_hashtbl[i];
 
-		अगर (list_empty(&b->lru_head))
-			जारी;
+		if (list_empty(&b->lru_head))
+			continue;
 		spin_lock(&b->cache_lock);
-		मुक्तd += prune_bucket(b, nn);
+		freed += prune_bucket(b, nn);
 		spin_unlock(&b->cache_lock);
-	पूर्ण
-	वापस मुक्तd;
-पूर्ण
+	}
+	return freed;
+}
 
-अटल अचिन्हित दीर्घ
-nfsd_reply_cache_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
-	काष्ठा nfsd_net *nn = container_of(shrink,
-				काष्ठा nfsd_net, nfsd_reply_cache_shrinker);
+static unsigned long
+nfsd_reply_cache_count(struct shrinker *shrink, struct shrink_control *sc)
+{
+	struct nfsd_net *nn = container_of(shrink,
+				struct nfsd_net, nfsd_reply_cache_shrinker);
 
-	वापस atomic_पढ़ो(&nn->num_drc_entries);
-पूर्ण
+	return atomic_read(&nn->num_drc_entries);
+}
 
-अटल अचिन्हित दीर्घ
-nfsd_reply_cache_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
-	काष्ठा nfsd_net *nn = container_of(shrink,
-				काष्ठा nfsd_net, nfsd_reply_cache_shrinker);
+static unsigned long
+nfsd_reply_cache_scan(struct shrinker *shrink, struct shrink_control *sc)
+{
+	struct nfsd_net *nn = container_of(shrink,
+				struct nfsd_net, nfsd_reply_cache_shrinker);
 
-	वापस prune_cache_entries(nn);
-पूर्ण
+	return prune_cache_entries(nn);
+}
 /*
- * Walk an xdr_buf and get a CRC क्रम at most the first RC_CSUMLEN bytes
+ * Walk an xdr_buf and get a CRC for at most the first RC_CSUMLEN bytes
  */
-अटल __wsum
-nfsd_cache_csum(काष्ठा svc_rqst *rqstp)
-अणु
-	पूर्णांक idx;
-	अचिन्हित पूर्णांक base;
+static __wsum
+nfsd_cache_csum(struct svc_rqst *rqstp)
+{
+	int idx;
+	unsigned int base;
 	__wsum csum;
-	काष्ठा xdr_buf *buf = &rqstp->rq_arg;
-	स्थिर अचिन्हित अक्षर *p = buf->head[0].iov_base;
-	माप_प्रकार csum_len = min_t(माप_प्रकार, buf->head[0].iov_len + buf->page_len,
+	struct xdr_buf *buf = &rqstp->rq_arg;
+	const unsigned char *p = buf->head[0].iov_base;
+	size_t csum_len = min_t(size_t, buf->head[0].iov_len + buf->page_len,
 				RC_CSUMLEN);
-	माप_प्रकार len = min(buf->head[0].iov_len, csum_len);
+	size_t len = min(buf->head[0].iov_len, csum_len);
 
 	/* rq_arg.head first */
 	csum = csum_partial(p, len, 0);
 	csum_len -= len;
 
-	/* Continue पूर्णांकo page array */
+	/* Continue into page array */
 	idx = buf->page_base / PAGE_SIZE;
 	base = buf->page_base & ~PAGE_MASK;
-	जबतक (csum_len) अणु
+	while (csum_len) {
 		p = page_address(buf->pages[idx]) + base;
-		len = min_t(माप_प्रकार, PAGE_SIZE - base, csum_len);
+		len = min_t(size_t, PAGE_SIZE - base, csum_len);
 		csum = csum_partial(p, len, csum);
 		csum_len -= len;
 		base = 0;
 		++idx;
-	पूर्ण
-	वापस csum;
-पूर्ण
+	}
+	return csum;
+}
 
-अटल पूर्णांक
-nfsd_cache_key_cmp(स्थिर काष्ठा svc_cacherep *key,
-			स्थिर काष्ठा svc_cacherep *rp, काष्ठा nfsd_net *nn)
-अणु
-	अगर (key->c_key.k_xid == rp->c_key.k_xid &&
-	    key->c_key.k_csum != rp->c_key.k_csum) अणु
+static int
+nfsd_cache_key_cmp(const struct svc_cacherep *key,
+			const struct svc_cacherep *rp, struct nfsd_net *nn)
+{
+	if (key->c_key.k_xid == rp->c_key.k_xid &&
+	    key->c_key.k_csum != rp->c_key.k_csum) {
 		nfsd_stats_payload_misses_inc(nn);
 		trace_nfsd_drc_mismatch(nn, key, rp);
-	पूर्ण
+	}
 
-	वापस स_भेद(&key->c_key, &rp->c_key, माप(key->c_key));
-पूर्ण
+	return memcmp(&key->c_key, &rp->c_key, sizeof(key->c_key));
+}
 
 /*
- * Search the request hash क्रम an entry that matches the given rqstp.
+ * Search the request hash for an entry that matches the given rqstp.
  * Must be called with cache_lock held. Returns the found entry or
  * inserts an empty key on failure.
  */
-अटल काष्ठा svc_cacherep *
-nfsd_cache_insert(काष्ठा nfsd_drc_bucket *b, काष्ठा svc_cacherep *key,
-			काष्ठा nfsd_net *nn)
-अणु
-	काष्ठा svc_cacherep	*rp, *ret = key;
-	काष्ठा rb_node		**p = &b->rb_head.rb_node,
-				*parent = शून्य;
-	अचिन्हित पूर्णांक		entries = 0;
-	पूर्णांक cmp;
+static struct svc_cacherep *
+nfsd_cache_insert(struct nfsd_drc_bucket *b, struct svc_cacherep *key,
+			struct nfsd_net *nn)
+{
+	struct svc_cacherep	*rp, *ret = key;
+	struct rb_node		**p = &b->rb_head.rb_node,
+				*parent = NULL;
+	unsigned int		entries = 0;
+	int cmp;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		++entries;
 		parent = *p;
-		rp = rb_entry(parent, काष्ठा svc_cacherep, c_node);
+		rp = rb_entry(parent, struct svc_cacherep, c_node);
 
 		cmp = nfsd_cache_key_cmp(key, rp, nn);
-		अगर (cmp < 0)
+		if (cmp < 0)
 			p = &parent->rb_left;
-		अन्यथा अगर (cmp > 0)
+		else if (cmp > 0)
 			p = &parent->rb_right;
-		अन्यथा अणु
+		else {
 			ret = rp;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	rb_link_node(&key->c_node, parent, p);
 	rb_insert_color(&key->c_node, &b->rb_head);
 out:
 	/* tally hash chain length stats */
-	अगर (entries > nn->दीर्घest_chain) अणु
-		nn->दीर्घest_chain = entries;
-		nn->दीर्घest_chain_cachesize = atomic_पढ़ो(&nn->num_drc_entries);
-	पूर्ण अन्यथा अगर (entries == nn->दीर्घest_chain) अणु
+	if (entries > nn->longest_chain) {
+		nn->longest_chain = entries;
+		nn->longest_chain_cachesize = atomic_read(&nn->num_drc_entries);
+	} else if (entries == nn->longest_chain) {
 		/* prefer to keep the smallest cachesize possible here */
-		nn->दीर्घest_chain_cachesize = min_t(अचिन्हित पूर्णांक,
-				nn->दीर्घest_chain_cachesize,
-				atomic_पढ़ो(&nn->num_drc_entries));
-	पूर्ण
+		nn->longest_chain_cachesize = min_t(unsigned int,
+				nn->longest_chain_cachesize,
+				atomic_read(&nn->num_drc_entries));
+	}
 
 	lru_put_end(b, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * nfsd_cache_lookup - Find an entry in the duplicate reply cache
@@ -404,7 +403,7 @@ out:
  * Try to find an entry matching the current call in the cache. When none
  * is found, we try to grab the oldest expired entry off the LRU list. If
  * a suitable one isn't there, then drop the cache_lock and allocate a
- * new one, then search again in हाल one got inserted जबतक this thपढ़ो
+ * new one, then search again in case one got inserted while this thread
  * didn't hold the lock.
  *
  * Return values:
@@ -412,47 +411,47 @@ out:
  *   %RC_REPLY: Reply from cache
  *   %RC_DROPIT: Do not process the request further
  */
-पूर्णांक nfsd_cache_lookup(काष्ठा svc_rqst *rqstp)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
-	काष्ठा svc_cacherep	*rp, *found;
+int nfsd_cache_lookup(struct svc_rqst *rqstp)
+{
+	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	struct svc_cacherep	*rp, *found;
 	__be32			xid = rqstp->rq_xid;
 	__wsum			csum;
 	u32 hash = nfsd_cache_hash(xid, nn);
-	काष्ठा nfsd_drc_bucket *b = &nn->drc_hashtbl[hash];
-	पूर्णांक type = rqstp->rq_cachetype;
-	पूर्णांक rtn = RC_DOIT;
+	struct nfsd_drc_bucket *b = &nn->drc_hashtbl[hash];
+	int type = rqstp->rq_cachetype;
+	int rtn = RC_DOIT;
 
-	rqstp->rq_cacherep = शून्य;
-	अगर (type == RC_NOCACHE) अणु
+	rqstp->rq_cacherep = NULL;
+	if (type == RC_NOCACHE) {
 		nfsd_stats_rc_nocache_inc();
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	csum = nfsd_cache_csum(rqstp);
 
 	/*
-	 * Since the common हाल is a cache miss followed by an insert,
-	 * pपुनः_स्मृतिate an entry.
+	 * Since the common case is a cache miss followed by an insert,
+	 * preallocate an entry.
 	 */
 	rp = nfsd_reply_cache_alloc(rqstp, csum, nn);
-	अगर (!rp)
-		जाओ out;
+	if (!rp)
+		goto out;
 
 	spin_lock(&b->cache_lock);
 	found = nfsd_cache_insert(b, rp, nn);
-	अगर (found != rp) अणु
-		nfsd_reply_cache_मुक्त_locked(शून्य, rp, nn);
+	if (found != rp) {
+		nfsd_reply_cache_free_locked(NULL, rp, nn);
 		rp = found;
-		जाओ found_entry;
-	पूर्ण
+		goto found_entry;
+	}
 
 	nfsd_stats_rc_misses_inc();
 	rqstp->rq_cacherep = rp;
 	rp->c_state = RC_INPROG;
 
 	atomic_inc(&nn->num_drc_entries);
-	nfsd_stats_drc_mem_usage_add(nn, माप(*rp));
+	nfsd_stats_drc_mem_usage_add(nn, sizeof(*rp));
 
 	/* go ahead and prune the cache */
 	prune_bucket(b, nn);
@@ -460,44 +459,44 @@ out:
 out_unlock:
 	spin_unlock(&b->cache_lock);
 out:
-	वापस rtn;
+	return rtn;
 
 found_entry:
-	/* We found a matching entry which is either in progress or करोne. */
+	/* We found a matching entry which is either in progress or done. */
 	nfsd_stats_rc_hits_inc();
 	rtn = RC_DROPIT;
 
 	/* Request being processed */
-	अगर (rp->c_state == RC_INPROG)
-		जाओ out_trace;
+	if (rp->c_state == RC_INPROG)
+		goto out_trace;
 
 	/* From the hall of fame of impractical attacks:
 	 * Is this a user who tries to snoop on the cache? */
 	rtn = RC_DOIT;
-	अगर (!test_bit(RQ_SECURE, &rqstp->rq_flags) && rp->c_secure)
-		जाओ out_trace;
+	if (!test_bit(RQ_SECURE, &rqstp->rq_flags) && rp->c_secure)
+		goto out_trace;
 
 	/* Compose RPC reply header */
-	चयन (rp->c_type) अणु
-	हाल RC_NOCACHE:
-		अवरोध;
-	हाल RC_REPLSTAT:
+	switch (rp->c_type) {
+	case RC_NOCACHE:
+		break;
+	case RC_REPLSTAT:
 		svc_putu32(&rqstp->rq_res.head[0], rp->c_replstat);
 		rtn = RC_REPLY;
-		अवरोध;
-	हाल RC_REPLBUFF:
-		अगर (!nfsd_cache_append(rqstp, &rp->c_replvec))
-			जाओ out_unlock; /* should not happen */
+		break;
+	case RC_REPLBUFF:
+		if (!nfsd_cache_append(rqstp, &rp->c_replvec))
+			goto out_unlock; /* should not happen */
 		rtn = RC_REPLY;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ONCE(1, "nfsd: bad repcache type %d\n", rp->c_type);
-	पूर्ण
+	}
 
 out_trace:
 	trace_nfsd_drc_found(nn, rqstp, rtn);
-	जाओ out_unlock;
-पूर्ण
+	goto out_unlock;
+}
 
 /**
  * nfsd_cache_update - Update an entry in the duplicate reply cache.
@@ -510,61 +509,61 @@ out_trace:
  *
  * We're copying around data here rather than swapping buffers because
  * the toplevel loop requires max-sized buffers, which would be a waste
- * of memory क्रम a cache with a max reply size of 100 bytes (diropokres).
+ * of memory for a cache with a max reply size of 100 bytes (diropokres).
  *
- * If we should start to use dअगरferent types of cache entries tailored
- * specअगरically क्रम attrstat and fh's, we may save even more space.
+ * If we should start to use different types of cache entries tailored
+ * specifically for attrstat and fh's, we may save even more space.
  *
  * Also note that a cachetype of RC_NOCACHE can legally be passed when
  * nfsd failed to encode a reply that otherwise would have been cached.
- * In this हाल, nfsd_cache_update is called with statp == शून्य.
+ * In this case, nfsd_cache_update is called with statp == NULL.
  */
-व्योम nfsd_cache_update(काष्ठा svc_rqst *rqstp, पूर्णांक cachetype, __be32 *statp)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
-	काष्ठा svc_cacherep *rp = rqstp->rq_cacherep;
-	काष्ठा kvec	*resv = &rqstp->rq_res.head[0], *cachv;
+void nfsd_cache_update(struct svc_rqst *rqstp, int cachetype, __be32 *statp)
+{
+	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
+	struct svc_cacherep *rp = rqstp->rq_cacherep;
+	struct kvec	*resv = &rqstp->rq_res.head[0], *cachv;
 	u32		hash;
-	काष्ठा nfsd_drc_bucket *b;
-	पूर्णांक		len;
-	माप_प्रकार		bufsize = 0;
+	struct nfsd_drc_bucket *b;
+	int		len;
+	size_t		bufsize = 0;
 
-	अगर (!rp)
-		वापस;
+	if (!rp)
+		return;
 
 	hash = nfsd_cache_hash(rp->c_key.k_xid, nn);
 	b = &nn->drc_hashtbl[hash];
 
-	len = resv->iov_len - ((अक्षर*)statp - (अक्षर*)resv->iov_base);
+	len = resv->iov_len - ((char*)statp - (char*)resv->iov_base);
 	len >>= 2;
 
 	/* Don't cache excessive amounts of data and XDR failures */
-	अगर (!statp || len > (256 >> 2)) अणु
-		nfsd_reply_cache_मुक्त(b, rp, nn);
-		वापस;
-	पूर्ण
+	if (!statp || len > (256 >> 2)) {
+		nfsd_reply_cache_free(b, rp, nn);
+		return;
+	}
 
-	चयन (cachetype) अणु
-	हाल RC_REPLSTAT:
-		अगर (len != 1)
-			prपूर्णांकk("nfsd: RC_REPLSTAT/reply len %d!\n",len);
+	switch (cachetype) {
+	case RC_REPLSTAT:
+		if (len != 1)
+			printk("nfsd: RC_REPLSTAT/reply len %d!\n",len);
 		rp->c_replstat = *statp;
-		अवरोध;
-	हाल RC_REPLBUFF:
+		break;
+	case RC_REPLBUFF:
 		cachv = &rp->c_replvec;
 		bufsize = len << 2;
-		cachv->iov_base = kदो_स्मृति(bufsize, GFP_KERNEL);
-		अगर (!cachv->iov_base) अणु
-			nfsd_reply_cache_मुक्त(b, rp, nn);
-			वापस;
-		पूर्ण
+		cachv->iov_base = kmalloc(bufsize, GFP_KERNEL);
+		if (!cachv->iov_base) {
+			nfsd_reply_cache_free(b, rp, nn);
+			return;
+		}
 		cachv->iov_len = bufsize;
-		स_नकल(cachv->iov_base, statp, bufsize);
-		अवरोध;
-	हाल RC_NOCACHE:
-		nfsd_reply_cache_मुक्त(b, rp, nn);
-		वापस;
-	पूर्ण
+		memcpy(cachv->iov_base, statp, bufsize);
+		break;
+	case RC_NOCACHE:
+		nfsd_reply_cache_free(b, rp, nn);
+		return;
+	}
 	spin_lock(&b->cache_lock);
 	nfsd_stats_drc_mem_usage_add(nn, bufsize);
 	lru_put_end(b, rp);
@@ -572,61 +571,61 @@ out_trace:
 	rp->c_type = cachetype;
 	rp->c_state = RC_DONE;
 	spin_unlock(&b->cache_lock);
-	वापस;
-पूर्ण
+	return;
+}
 
 /*
  * Copy cached reply to current reply buffer. Should always fit.
  * FIXME as reply is in a page, we should just attach the page, and
  * keep a refcount....
  */
-अटल पूर्णांक
-nfsd_cache_append(काष्ठा svc_rqst *rqstp, काष्ठा kvec *data)
-अणु
-	काष्ठा kvec	*vec = &rqstp->rq_res.head[0];
+static int
+nfsd_cache_append(struct svc_rqst *rqstp, struct kvec *data)
+{
+	struct kvec	*vec = &rqstp->rq_res.head[0];
 
-	अगर (vec->iov_len + data->iov_len > PAGE_SIZE) अणु
-		prपूर्णांकk(KERN_WARNING "nfsd: cached reply too large (%zd).\n",
+	if (vec->iov_len + data->iov_len > PAGE_SIZE) {
+		printk(KERN_WARNING "nfsd: cached reply too large (%zd).\n",
 				data->iov_len);
-		वापस 0;
-	पूर्ण
-	स_नकल((अक्षर*)vec->iov_base + vec->iov_len, data->iov_base, data->iov_len);
+		return 0;
+	}
+	memcpy((char*)vec->iov_base + vec->iov_len, data->iov_base, data->iov_len);
 	vec->iov_len += data->iov_len;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Note that fields may be added, हटाओd or reordered in the future. Programs
- * scraping this file क्रम info should test the labels to ensure they're
+ * Note that fields may be added, removed or reordered in the future. Programs
+ * scraping this file for info should test the labels to ensure they're
  * getting the correct field.
  */
-अटल पूर्णांक nfsd_reply_cache_stats_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा nfsd_net *nn = m->निजी;
+static int nfsd_reply_cache_stats_show(struct seq_file *m, void *v)
+{
+	struct nfsd_net *nn = m->private;
 
-	seq_म_लिखो(m, "max entries:           %u\n", nn->max_drc_entries);
-	seq_म_लिखो(m, "num entries:           %u\n",
-		   atomic_पढ़ो(&nn->num_drc_entries));
-	seq_म_लिखो(m, "hash buckets:          %u\n", 1 << nn->maskbits);
-	seq_म_लिखो(m, "mem usage:             %lld\n",
+	seq_printf(m, "max entries:           %u\n", nn->max_drc_entries);
+	seq_printf(m, "num entries:           %u\n",
+		   atomic_read(&nn->num_drc_entries));
+	seq_printf(m, "hash buckets:          %u\n", 1 << nn->maskbits);
+	seq_printf(m, "mem usage:             %lld\n",
 		   percpu_counter_sum_positive(&nn->counter[NFSD_NET_DRC_MEM_USAGE]));
-	seq_म_लिखो(m, "cache hits:            %lld\n",
+	seq_printf(m, "cache hits:            %lld\n",
 		   percpu_counter_sum_positive(&nfsdstats.counter[NFSD_STATS_RC_HITS]));
-	seq_म_लिखो(m, "cache misses:          %lld\n",
+	seq_printf(m, "cache misses:          %lld\n",
 		   percpu_counter_sum_positive(&nfsdstats.counter[NFSD_STATS_RC_MISSES]));
-	seq_म_लिखो(m, "not cached:            %lld\n",
+	seq_printf(m, "not cached:            %lld\n",
 		   percpu_counter_sum_positive(&nfsdstats.counter[NFSD_STATS_RC_NOCACHE]));
-	seq_म_लिखो(m, "payload misses:        %lld\n",
+	seq_printf(m, "payload misses:        %lld\n",
 		   percpu_counter_sum_positive(&nn->counter[NFSD_NET_PAYLOAD_MISSES]));
-	seq_म_लिखो(m, "longest chain len:     %u\n", nn->दीर्घest_chain);
-	seq_म_लिखो(m, "cachesize at longest:  %u\n", nn->दीर्घest_chain_cachesize);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "longest chain len:     %u\n", nn->longest_chain);
+	seq_printf(m, "cachesize at longest:  %u\n", nn->longest_chain_cachesize);
+	return 0;
+}
 
-पूर्णांक nfsd_reply_cache_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा nfsd_net *nn = net_generic(file_inode(file)->i_sb->s_fs_info,
+int nfsd_reply_cache_stats_open(struct inode *inode, struct file *file)
+{
+	struct nfsd_net *nn = net_generic(file_inode(file)->i_sb->s_fs_info,
 								nfsd_net_id);
 
-	वापस single_खोलो(file, nfsd_reply_cache_stats_show, nn);
-पूर्ण
+	return single_open(file, nfsd_reply_cache_stats_show, nn);
+}

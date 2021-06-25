@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*******************************************************************************
- * This file contains the iSCSI Target specअगरic Task Management functions.
+ * This file contains the iSCSI Target specific Task Management functions.
  *
  * (c) Copyright 2007-2013 Datera, Inc.
  *
@@ -9,211 +8,211 @@
  *
  ******************************************************************************/
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <scsi/scsi_proto.h>
-#समावेश <scsi/iscsi_proto.h>
-#समावेश <target/target_core_base.h>
-#समावेश <target/target_core_fabric.h>
-#समावेश <target/iscsi/iscsi_transport.h>
+#include <asm/unaligned.h>
+#include <scsi/scsi_proto.h>
+#include <scsi/iscsi_proto.h>
+#include <target/target_core_base.h>
+#include <target/target_core_fabric.h>
+#include <target/iscsi/iscsi_transport.h>
 
-#समावेश <target/iscsi/iscsi_target_core.h>
-#समावेश "iscsi_target_seq_pdu_list.h"
-#समावेश "iscsi_target_datain_values.h"
-#समावेश "iscsi_target_device.h"
-#समावेश "iscsi_target_erl0.h"
-#समावेश "iscsi_target_erl1.h"
-#समावेश "iscsi_target_erl2.h"
-#समावेश "iscsi_target_tmr.h"
-#समावेश "iscsi_target_tpg.h"
-#समावेश "iscsi_target_util.h"
-#समावेश "iscsi_target.h"
+#include <target/iscsi/iscsi_target_core.h>
+#include "iscsi_target_seq_pdu_list.h"
+#include "iscsi_target_datain_values.h"
+#include "iscsi_target_device.h"
+#include "iscsi_target_erl0.h"
+#include "iscsi_target_erl1.h"
+#include "iscsi_target_erl2.h"
+#include "iscsi_target_tmr.h"
+#include "iscsi_target_tpg.h"
+#include "iscsi_target_util.h"
+#include "iscsi_target.h"
 
-u8 iscsit_पंचांगr_पात_task(
-	काष्ठा iscsi_cmd *cmd,
-	अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा iscsi_cmd *ref_cmd;
-	काष्ठा iscsi_conn *conn = cmd->conn;
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req = cmd->पंचांगr_req;
-	काष्ठा se_पंचांगr_req *se_पंचांगr = cmd->se_cmd.se_पंचांगr_req;
-	काष्ठा iscsi_पंचांग *hdr = (काष्ठा iscsi_पंचांग *) buf;
+u8 iscsit_tmr_abort_task(
+	struct iscsi_cmd *cmd,
+	unsigned char *buf)
+{
+	struct iscsi_cmd *ref_cmd;
+	struct iscsi_conn *conn = cmd->conn;
+	struct iscsi_tmr_req *tmr_req = cmd->tmr_req;
+	struct se_tmr_req *se_tmr = cmd->se_cmd.se_tmr_req;
+	struct iscsi_tm *hdr = (struct iscsi_tm *) buf;
 
 	ref_cmd = iscsit_find_cmd_from_itt(conn, hdr->rtt);
-	अगर (!ref_cmd) अणु
+	if (!ref_cmd) {
 		pr_err("Unable to locate RefTaskTag: 0x%08x on CID:"
 			" %hu.\n", hdr->rtt, conn->cid);
-		वापस (iscsi_sna_gte(be32_to_cpu(hdr->refcmdsn), conn->sess->exp_cmd_sn) &&
-			iscsi_sna_lte(be32_to_cpu(hdr->refcmdsn), (u32) atomic_पढ़ो(&conn->sess->max_cmd_sn))) ?
+		return (iscsi_sna_gte(be32_to_cpu(hdr->refcmdsn), conn->sess->exp_cmd_sn) &&
+			iscsi_sna_lte(be32_to_cpu(hdr->refcmdsn), (u32) atomic_read(&conn->sess->max_cmd_sn))) ?
 			ISCSI_TMF_RSP_COMPLETE : ISCSI_TMF_RSP_NO_TASK;
-	पूर्ण
-	अगर (ref_cmd->cmd_sn != be32_to_cpu(hdr->refcmdsn)) अणु
+	}
+	if (ref_cmd->cmd_sn != be32_to_cpu(hdr->refcmdsn)) {
 		pr_err("RefCmdSN 0x%08x does not equal"
 			" task's CmdSN 0x%08x. Rejecting ABORT_TASK.\n",
 			hdr->refcmdsn, ref_cmd->cmd_sn);
-		वापस ISCSI_TMF_RSP_REJECTED;
-	पूर्ण
+		return ISCSI_TMF_RSP_REJECTED;
+	}
 
-	se_पंचांगr->ref_task_tag		= (__क्रमce u32)hdr->rtt;
-	पंचांगr_req->ref_cmd		= ref_cmd;
-	पंचांगr_req->exp_data_sn		= be32_to_cpu(hdr->exp_datasn);
+	se_tmr->ref_task_tag		= (__force u32)hdr->rtt;
+	tmr_req->ref_cmd		= ref_cmd;
+	tmr_req->exp_data_sn		= be32_to_cpu(hdr->exp_datasn);
 
-	वापस ISCSI_TMF_RSP_COMPLETE;
-पूर्ण
+	return ISCSI_TMF_RSP_COMPLETE;
+}
 
 /*
  *	Called from iscsit_handle_task_mgt_cmd().
  */
-पूर्णांक iscsit_पंचांगr_task_warm_reset(
-	काष्ठा iscsi_conn *conn,
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा iscsi_session *sess = conn->sess;
-	काष्ठा iscsi_node_attrib *na = iscsit_tpg_get_node_attrib(sess);
+int iscsit_tmr_task_warm_reset(
+	struct iscsi_conn *conn,
+	struct iscsi_tmr_req *tmr_req,
+	unsigned char *buf)
+{
+	struct iscsi_session *sess = conn->sess;
+	struct iscsi_node_attrib *na = iscsit_tpg_get_node_attrib(sess);
 
-	अगर (!na->पंचांगr_warm_reset) अणु
+	if (!na->tmr_warm_reset) {
 		pr_err("TMR Opcode TARGET_WARM_RESET authorization"
 			" failed for Initiator Node: %s\n",
 			sess->se_sess->se_node_acl->initiatorname);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	/*
-	 * Do the real work in transport_generic_करो_पंचांगr().
+	 * Do the real work in transport_generic_do_tmr().
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक iscsit_पंचांगr_task_cold_reset(
-	काष्ठा iscsi_conn *conn,
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा iscsi_session *sess = conn->sess;
-	काष्ठा iscsi_node_attrib *na = iscsit_tpg_get_node_attrib(sess);
+int iscsit_tmr_task_cold_reset(
+	struct iscsi_conn *conn,
+	struct iscsi_tmr_req *tmr_req,
+	unsigned char *buf)
+{
+	struct iscsi_session *sess = conn->sess;
+	struct iscsi_node_attrib *na = iscsit_tpg_get_node_attrib(sess);
 
-	अगर (!na->पंचांगr_cold_reset) अणु
+	if (!na->tmr_cold_reset) {
 		pr_err("TMR Opcode TARGET_COLD_RESET authorization"
 			" failed for Initiator Node: %s\n",
 			sess->se_sess->se_node_acl->initiatorname);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	/*
-	 * Do the real work in transport_generic_करो_पंचांगr().
+	 * Do the real work in transport_generic_do_tmr().
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u8 iscsit_पंचांगr_task_reassign(
-	काष्ठा iscsi_cmd *cmd,
-	अचिन्हित अक्षर *buf)
-अणु
-	काष्ठा iscsi_cmd *ref_cmd = शून्य;
-	काष्ठा iscsi_conn *conn = cmd->conn;
-	काष्ठा iscsi_conn_recovery *cr = शून्य;
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req = cmd->पंचांगr_req;
-	काष्ठा se_पंचांगr_req *se_पंचांगr = cmd->se_cmd.se_पंचांगr_req;
-	काष्ठा iscsi_पंचांग *hdr = (काष्ठा iscsi_पंचांग *) buf;
+u8 iscsit_tmr_task_reassign(
+	struct iscsi_cmd *cmd,
+	unsigned char *buf)
+{
+	struct iscsi_cmd *ref_cmd = NULL;
+	struct iscsi_conn *conn = cmd->conn;
+	struct iscsi_conn_recovery *cr = NULL;
+	struct iscsi_tmr_req *tmr_req = cmd->tmr_req;
+	struct se_tmr_req *se_tmr = cmd->se_cmd.se_tmr_req;
+	struct iscsi_tm *hdr = (struct iscsi_tm *) buf;
 	u64 ret, ref_lun;
 
 	pr_debug("Got TASK_REASSIGN TMR ITT: 0x%08x,"
 		" RefTaskTag: 0x%08x, ExpDataSN: 0x%08x, CID: %hu\n",
 		hdr->itt, hdr->rtt, hdr->exp_datasn, conn->cid);
 
-	अगर (conn->sess->sess_ops->ErrorRecoveryLevel != 2) अणु
+	if (conn->sess->sess_ops->ErrorRecoveryLevel != 2) {
 		pr_err("TMR TASK_REASSIGN not supported in ERL<2,"
 				" ignoring request.\n");
-		वापस ISCSI_TMF_RSP_NOT_SUPPORTED;
-	पूर्ण
+		return ISCSI_TMF_RSP_NOT_SUPPORTED;
+	}
 
-	ret = iscsit_find_cmd_क्रम_recovery(conn->sess, &ref_cmd, &cr, hdr->rtt);
-	अगर (ret == -2) अणु
+	ret = iscsit_find_cmd_for_recovery(conn->sess, &ref_cmd, &cr, hdr->rtt);
+	if (ret == -2) {
 		pr_err("Command ITT: 0x%08x is still alligent to CID:"
 			" %hu\n", ref_cmd->init_task_tag, cr->cid);
-		वापस ISCSI_TMF_RSP_TASK_ALLEGIANT;
-	पूर्ण अन्यथा अगर (ret == -1) अणु
+		return ISCSI_TMF_RSP_TASK_ALLEGIANT;
+	} else if (ret == -1) {
 		pr_err("Unable to locate RefTaskTag: 0x%08x in"
 			" connection recovery command list.\n", hdr->rtt);
-		वापस ISCSI_TMF_RSP_NO_TASK;
-	पूर्ण
+		return ISCSI_TMF_RSP_NO_TASK;
+	}
 	/*
-	 * Temporary check to prevent connection recovery क्रम
-	 * connections with a dअगरfering Max*DataSegmentLength.
+	 * Temporary check to prevent connection recovery for
+	 * connections with a differing Max*DataSegmentLength.
 	 */
-	अगर (cr->maxrecvdatasegmentlength !=
-	    conn->conn_ops->MaxRecvDataSegmentLength) अणु
+	if (cr->maxrecvdatasegmentlength !=
+	    conn->conn_ops->MaxRecvDataSegmentLength) {
 		pr_err("Unable to perform connection recovery for"
 			" differing MaxRecvDataSegmentLength, rejecting"
 			" TMR TASK_REASSIGN.\n");
-		वापस ISCSI_TMF_RSP_REJECTED;
-	पूर्ण
-	अगर (cr->maxxmitdatasegmentlength !=
-	    conn->conn_ops->MaxXmitDataSegmentLength) अणु
+		return ISCSI_TMF_RSP_REJECTED;
+	}
+	if (cr->maxxmitdatasegmentlength !=
+	    conn->conn_ops->MaxXmitDataSegmentLength) {
 		pr_err("Unable to perform connection recovery for"
 			" differing MaxXmitDataSegmentLength, rejecting"
 			" TMR TASK_REASSIGN.\n");
-		वापस ISCSI_TMF_RSP_REJECTED;
-	पूर्ण
+		return ISCSI_TMF_RSP_REJECTED;
+	}
 
-	ref_lun = scsilun_to_पूर्णांक(&hdr->lun);
-	अगर (ref_lun != ref_cmd->se_cmd.orig_fe_lun) अणु
+	ref_lun = scsilun_to_int(&hdr->lun);
+	if (ref_lun != ref_cmd->se_cmd.orig_fe_lun) {
 		pr_err("Unable to perform connection recovery for"
 			" differing ref_lun: %llu ref_cmd orig_fe_lun: %llu\n",
 			ref_lun, ref_cmd->se_cmd.orig_fe_lun);
-		वापस ISCSI_TMF_RSP_REJECTED;
-	पूर्ण
+		return ISCSI_TMF_RSP_REJECTED;
+	}
 
-	se_पंचांगr->ref_task_tag		= (__क्रमce u32)hdr->rtt;
-	पंचांगr_req->ref_cmd		= ref_cmd;
-	पंचांगr_req->exp_data_sn		= be32_to_cpu(hdr->exp_datasn);
-	पंचांगr_req->conn_recovery		= cr;
-	पंचांगr_req->task_reassign		= 1;
+	se_tmr->ref_task_tag		= (__force u32)hdr->rtt;
+	tmr_req->ref_cmd		= ref_cmd;
+	tmr_req->exp_data_sn		= be32_to_cpu(hdr->exp_datasn);
+	tmr_req->conn_recovery		= cr;
+	tmr_req->task_reassign		= 1;
 	/*
-	 * Command can now be reasचिन्हित to a new connection.
-	 * The task management response must be sent beक्रमe the
-	 * reassignment actually happens.  See iscsi_पंचांगr_post_handler().
+	 * Command can now be reassigned to a new connection.
+	 * The task management response must be sent before the
+	 * reassignment actually happens.  See iscsi_tmr_post_handler().
 	 */
-	वापस ISCSI_TMF_RSP_COMPLETE;
-पूर्ण
+	return ISCSI_TMF_RSP_COMPLETE;
+}
 
-अटल व्योम iscsit_task_reassign_हटाओ_cmd(
-	काष्ठा iscsi_cmd *cmd,
-	काष्ठा iscsi_conn_recovery *cr,
-	काष्ठा iscsi_session *sess)
-अणु
-	पूर्णांक ret;
+static void iscsit_task_reassign_remove_cmd(
+	struct iscsi_cmd *cmd,
+	struct iscsi_conn_recovery *cr,
+	struct iscsi_session *sess)
+{
+	int ret;
 
 	spin_lock(&cr->conn_recovery_cmd_lock);
-	ret = iscsit_हटाओ_cmd_from_connection_recovery(cmd, sess);
+	ret = iscsit_remove_cmd_from_connection_recovery(cmd, sess);
 	spin_unlock(&cr->conn_recovery_cmd_lock);
-	अगर (!ret) अणु
+	if (!ret) {
 		pr_debug("iSCSI connection recovery successful for CID:"
 			" %hu on SID: %u\n", cr->cid, sess->sid);
-		iscsit_हटाओ_active_connection_recovery_entry(cr, sess);
-	पूर्ण
-पूर्ण
+		iscsit_remove_active_connection_recovery_entry(cr, sess);
+	}
+}
 
-अटल पूर्णांक iscsit_task_reassign_complete_nop_out(
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_cmd *cmd = पंचांगr_req->ref_cmd;
-	काष्ठा iscsi_conn_recovery *cr;
+static int iscsit_task_reassign_complete_nop_out(
+	struct iscsi_tmr_req *tmr_req,
+	struct iscsi_conn *conn)
+{
+	struct iscsi_cmd *cmd = tmr_req->ref_cmd;
+	struct iscsi_conn_recovery *cr;
 
-	अगर (!cmd->cr) अणु
+	if (!cmd->cr) {
 		pr_err("struct iscsi_conn_recovery pointer for ITT: 0x%08x"
 			" is NULL!\n", cmd->init_task_tag);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	cr = cmd->cr;
 
 	/*
-	 * Reset the StatSN so a new one क्रम this commands new connection
-	 * will be asचिन्हित.
+	 * Reset the StatSN so a new one for this commands new connection
+	 * will be assigned.
 	 * Reset the ExpStatSN as well so we may receive Status SNACKs.
 	 */
 	cmd->stat_sn = cmd->exp_stat_sn = 0;
 
-	iscsit_task_reassign_हटाओ_cmd(cmd, cr, conn->sess);
+	iscsit_task_reassign_remove_cmd(cmd, cr, conn->sess);
 
 	spin_lock_bh(&conn->cmd_lock);
 	list_add_tail(&cmd->i_conn_node, &conn->conn_cmd_list);
@@ -221,123 +220,123 @@ u8 iscsit_पंचांगr_task_reassign(
 
 	cmd->i_state = ISTATE_SEND_NOPIN;
 	iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iscsit_task_reassign_complete_ग_लिखो(
-	काष्ठा iscsi_cmd *cmd,
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req)
-अणु
-	पूर्णांक no_build_r2ts = 0;
+static int iscsit_task_reassign_complete_write(
+	struct iscsi_cmd *cmd,
+	struct iscsi_tmr_req *tmr_req)
+{
+	int no_build_r2ts = 0;
 	u32 length = 0, offset = 0;
-	काष्ठा iscsi_conn *conn = cmd->conn;
-	काष्ठा se_cmd *se_cmd = &cmd->se_cmd;
+	struct iscsi_conn *conn = cmd->conn;
+	struct se_cmd *se_cmd = &cmd->se_cmd;
 	/*
 	 * The Initiator must not send a R2T SNACK with a Begrun less than
 	 * the TMR TASK_REASSIGN's ExpDataSN.
 	 */
-	अगर (!पंचांगr_req->exp_data_sn) अणु
+	if (!tmr_req->exp_data_sn) {
 		cmd->cmd_flags &= ~ICF_GOT_DATACK_SNACK;
 		cmd->acked_data_sn = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->cmd_flags |= ICF_GOT_DATACK_SNACK;
-		cmd->acked_data_sn = (पंचांगr_req->exp_data_sn - 1);
-	पूर्ण
+		cmd->acked_data_sn = (tmr_req->exp_data_sn - 1);
+	}
 
 	/*
 	 * The TMR TASK_REASSIGN's ExpDataSN contains the next R2TSN the
 	 * Initiator is expecting.  The Target controls all WRITE operations
-	 * so अगर we have received all DataOUT we can safety ignore Initiator.
+	 * so if we have received all DataOUT we can safety ignore Initiator.
 	 */
-	अगर (cmd->cmd_flags & ICF_GOT_LAST_DATAOUT) अणु
-		अगर (!(cmd->se_cmd.transport_state & CMD_T_SENT)) अणु
+	if (cmd->cmd_flags & ICF_GOT_LAST_DATAOUT) {
+		if (!(cmd->se_cmd.transport_state & CMD_T_SENT)) {
 			pr_debug("WRITE ITT: 0x%08x: t_state: %d"
 				" never sent to transport\n",
 				cmd->init_task_tag, cmd->se_cmd.t_state);
 			target_execute_cmd(se_cmd);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		cmd->i_state = ISTATE_SEND_STATUS;
 		iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Special हाल to deal with DataSequenceInOrder=No and Non-Immeidate
+	 * Special case to deal with DataSequenceInOrder=No and Non-Immeidate
 	 * Unsolicited DataOut.
 	 */
-	अगर (cmd->unsolicited_data) अणु
+	if (cmd->unsolicited_data) {
 		cmd->unsolicited_data = 0;
 
-		offset = cmd->next_burst_len = cmd->ग_लिखो_data_करोne;
+		offset = cmd->next_burst_len = cmd->write_data_done;
 
-		अगर ((conn->sess->sess_ops->FirstBurstLength - offset) >=
-		     cmd->se_cmd.data_length) अणु
+		if ((conn->sess->sess_ops->FirstBurstLength - offset) >=
+		     cmd->se_cmd.data_length) {
 			no_build_r2ts = 1;
 			length = (cmd->se_cmd.data_length - offset);
-		पूर्ण अन्यथा
+		} else
 			length = (conn->sess->sess_ops->FirstBurstLength - offset);
 
 		spin_lock_bh(&cmd->r2t_lock);
-		अगर (iscsit_add_r2t_to_list(cmd, offset, length, 0, 0) < 0) अणु
+		if (iscsit_add_r2t_to_list(cmd, offset, length, 0, 0) < 0) {
 			spin_unlock_bh(&cmd->r2t_lock);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 		cmd->outstanding_r2ts++;
 		spin_unlock_bh(&cmd->r2t_lock);
 
-		अगर (no_build_r2ts)
-			वापस 0;
-	पूर्ण
+		if (no_build_r2ts)
+			return 0;
+	}
 	/*
-	 * iscsit_build_r2ts_क्रम_cmd() can handle the rest from here.
+	 * iscsit_build_r2ts_for_cmd() can handle the rest from here.
 	 */
-	वापस conn->conn_transport->iscsit_get_dataout(conn, cmd, true);
-पूर्ण
+	return conn->conn_transport->iscsit_get_dataout(conn, cmd, true);
+}
 
-अटल पूर्णांक iscsit_task_reassign_complete_पढ़ो(
-	काष्ठा iscsi_cmd *cmd,
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req)
-अणु
-	काष्ठा iscsi_conn *conn = cmd->conn;
-	काष्ठा iscsi_datain_req *dr;
-	काष्ठा se_cmd *se_cmd = &cmd->se_cmd;
+static int iscsit_task_reassign_complete_read(
+	struct iscsi_cmd *cmd,
+	struct iscsi_tmr_req *tmr_req)
+{
+	struct iscsi_conn *conn = cmd->conn;
+	struct iscsi_datain_req *dr;
+	struct se_cmd *se_cmd = &cmd->se_cmd;
 	/*
 	 * The Initiator must not send a Data SNACK with a BegRun less than
 	 * the TMR TASK_REASSIGN's ExpDataSN.
 	 */
-	अगर (!पंचांगr_req->exp_data_sn) अणु
+	if (!tmr_req->exp_data_sn) {
 		cmd->cmd_flags &= ~ICF_GOT_DATACK_SNACK;
 		cmd->acked_data_sn = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		cmd->cmd_flags |= ICF_GOT_DATACK_SNACK;
-		cmd->acked_data_sn = (पंचांगr_req->exp_data_sn - 1);
-	पूर्ण
+		cmd->acked_data_sn = (tmr_req->exp_data_sn - 1);
+	}
 
-	अगर (!(cmd->se_cmd.transport_state & CMD_T_SENT)) अणु
+	if (!(cmd->se_cmd.transport_state & CMD_T_SENT)) {
 		pr_debug("READ ITT: 0x%08x: t_state: %d never sent to"
 			" transport\n", cmd->init_task_tag,
 			cmd->se_cmd.t_state);
 		transport_handle_cdb_direct(se_cmd);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!(se_cmd->transport_state & CMD_T_COMPLETE)) अणु
+	if (!(se_cmd->transport_state & CMD_T_COMPLETE)) {
 		pr_err("READ ITT: 0x%08x: t_state: %d, never returned"
 			" from transport\n", cmd->init_task_tag,
 			cmd->se_cmd.t_state);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	dr = iscsit_allocate_datain_req();
-	अगर (!dr)
-		वापस -1;
+	if (!dr)
+		return -1;
 	/*
 	 * The TMR TASK_REASSIGN's ExpDataSN contains the next DataSN the
 	 * Initiator is expecting.
 	 */
-	dr->data_sn = dr->begrun = पंचांगr_req->exp_data_sn;
+	dr->data_sn = dr->begrun = tmr_req->exp_data_sn;
 	dr->runlength = 0;
 	dr->generate_recovery_values = 1;
 	dr->recovery = DATAIN_CONNECTION_RECOVERY;
@@ -346,181 +345,181 @@ u8 iscsit_पंचांगr_task_reassign(
 
 	cmd->i_state = ISTATE_SEND_DATAIN;
 	iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iscsit_task_reassign_complete_none(
-	काष्ठा iscsi_cmd *cmd,
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req)
-अणु
-	काष्ठा iscsi_conn *conn = cmd->conn;
+static int iscsit_task_reassign_complete_none(
+	struct iscsi_cmd *cmd,
+	struct iscsi_tmr_req *tmr_req)
+{
+	struct iscsi_conn *conn = cmd->conn;
 
 	cmd->i_state = ISTATE_SEND_STATUS;
 	iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iscsit_task_reassign_complete_scsi_cmnd(
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_cmd *cmd = पंचांगr_req->ref_cmd;
-	काष्ठा iscsi_conn_recovery *cr;
+static int iscsit_task_reassign_complete_scsi_cmnd(
+	struct iscsi_tmr_req *tmr_req,
+	struct iscsi_conn *conn)
+{
+	struct iscsi_cmd *cmd = tmr_req->ref_cmd;
+	struct iscsi_conn_recovery *cr;
 
-	अगर (!cmd->cr) अणु
+	if (!cmd->cr) {
 		pr_err("struct iscsi_conn_recovery pointer for ITT: 0x%08x"
 			" is NULL!\n", cmd->init_task_tag);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	cr = cmd->cr;
 
 	/*
-	 * Reset the StatSN so a new one क्रम this commands new connection
-	 * will be asचिन्हित.
+	 * Reset the StatSN so a new one for this commands new connection
+	 * will be assigned.
 	 * Reset the ExpStatSN as well so we may receive Status SNACKs.
 	 */
 	cmd->stat_sn = cmd->exp_stat_sn = 0;
 
-	iscsit_task_reassign_हटाओ_cmd(cmd, cr, conn->sess);
+	iscsit_task_reassign_remove_cmd(cmd, cr, conn->sess);
 
 	spin_lock_bh(&conn->cmd_lock);
 	list_add_tail(&cmd->i_conn_node, &conn->conn_cmd_list);
 	spin_unlock_bh(&conn->cmd_lock);
 
-	अगर (cmd->se_cmd.se_cmd_flags & SCF_SENT_CHECK_CONDITION) अणु
+	if (cmd->se_cmd.se_cmd_flags & SCF_SENT_CHECK_CONDITION) {
 		cmd->i_state = ISTATE_SEND_STATUS;
 		iscsit_add_cmd_to_response_queue(cmd, conn, cmd->i_state);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (cmd->data_direction) अणु
-	हाल DMA_TO_DEVICE:
-		वापस iscsit_task_reassign_complete_ग_लिखो(cmd, पंचांगr_req);
-	हाल DMA_FROM_DEVICE:
-		वापस iscsit_task_reassign_complete_पढ़ो(cmd, पंचांगr_req);
-	हाल DMA_NONE:
-		वापस iscsit_task_reassign_complete_none(cmd, पंचांगr_req);
-	शेष:
+	switch (cmd->data_direction) {
+	case DMA_TO_DEVICE:
+		return iscsit_task_reassign_complete_write(cmd, tmr_req);
+	case DMA_FROM_DEVICE:
+		return iscsit_task_reassign_complete_read(cmd, tmr_req);
+	case DMA_NONE:
+		return iscsit_task_reassign_complete_none(cmd, tmr_req);
+	default:
 		pr_err("Unknown cmd->data_direction: 0x%02x\n",
 				cmd->data_direction);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक iscsit_task_reassign_complete(
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_cmd *cmd;
-	पूर्णांक ret = 0;
+static int iscsit_task_reassign_complete(
+	struct iscsi_tmr_req *tmr_req,
+	struct iscsi_conn *conn)
+{
+	struct iscsi_cmd *cmd;
+	int ret = 0;
 
-	अगर (!पंचांगr_req->ref_cmd) अणु
+	if (!tmr_req->ref_cmd) {
 		pr_err("TMR Request is missing a RefCmd struct iscsi_cmd.\n");
-		वापस -1;
-	पूर्ण
-	cmd = पंचांगr_req->ref_cmd;
+		return -1;
+	}
+	cmd = tmr_req->ref_cmd;
 
 	cmd->conn = conn;
 
-	चयन (cmd->iscsi_opcode) अणु
-	हाल ISCSI_OP_NOOP_OUT:
-		ret = iscsit_task_reassign_complete_nop_out(पंचांगr_req, conn);
-		अवरोध;
-	हाल ISCSI_OP_SCSI_CMD:
-		ret = iscsit_task_reassign_complete_scsi_cmnd(पंचांगr_req, conn);
-		अवरोध;
-	शेष:
+	switch (cmd->iscsi_opcode) {
+	case ISCSI_OP_NOOP_OUT:
+		ret = iscsit_task_reassign_complete_nop_out(tmr_req, conn);
+		break;
+	case ISCSI_OP_SCSI_CMD:
+		ret = iscsit_task_reassign_complete_scsi_cmnd(tmr_req, conn);
+		break;
+	default:
 		 pr_err("Illegal iSCSI Opcode 0x%02x during"
 			" command reallegiance\n", cmd->iscsi_opcode);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
 	pr_debug("Completed connection reallegiance for Opcode: 0x%02x,"
 		" ITT: 0x%08x to CID: %hu.\n", cmd->iscsi_opcode,
 			cmd->init_task_tag, conn->cid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *	Handles special after-the-fact actions related to TMRs.
- *	Right now the only one that its really needed क्रम is
+ *	Right now the only one that its really needed for is
  *	connection recovery releated TASK_REASSIGN.
  */
-पूर्णांक iscsit_पंचांगr_post_handler(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req = cmd->पंचांगr_req;
-	काष्ठा se_पंचांगr_req *se_पंचांगr = cmd->se_cmd.se_पंचांगr_req;
+int iscsit_tmr_post_handler(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
+{
+	struct iscsi_tmr_req *tmr_req = cmd->tmr_req;
+	struct se_tmr_req *se_tmr = cmd->se_cmd.se_tmr_req;
 
-	अगर (पंचांगr_req->task_reassign &&
-	   (se_पंचांगr->response == ISCSI_TMF_RSP_COMPLETE))
-		वापस iscsit_task_reassign_complete(पंचांगr_req, conn);
+	if (tmr_req->task_reassign &&
+	   (se_tmr->response == ISCSI_TMF_RSP_COMPLETE))
+		return iscsit_task_reassign_complete(tmr_req, conn);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(iscsit_पंचांगr_post_handler);
+	return 0;
+}
+EXPORT_SYMBOL(iscsit_tmr_post_handler);
 
 /*
- *	Nothing to करो here, but leave it क्रम good measure. :-)
+ *	Nothing to do here, but leave it for good measure. :-)
  */
-अटल पूर्णांक iscsit_task_reassign_prepare_पढ़ो(
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	काष्ठा iscsi_conn *conn)
-अणु
-	वापस 0;
-पूर्ण
+static int iscsit_task_reassign_prepare_read(
+	struct iscsi_tmr_req *tmr_req,
+	struct iscsi_conn *conn)
+{
+	return 0;
+}
 
-अटल व्योम iscsit_task_reassign_prepare_unsolicited_dataout(
-	काष्ठा iscsi_cmd *cmd,
-	काष्ठा iscsi_conn *conn)
-अणु
-	पूर्णांक i, j;
-	काष्ठा iscsi_pdu *pdu = शून्य;
-	काष्ठा iscsi_seq *seq = शून्य;
+static void iscsit_task_reassign_prepare_unsolicited_dataout(
+	struct iscsi_cmd *cmd,
+	struct iscsi_conn *conn)
+{
+	int i, j;
+	struct iscsi_pdu *pdu = NULL;
+	struct iscsi_seq *seq = NULL;
 
-	अगर (conn->sess->sess_ops->DataSequenceInOrder) अणु
+	if (conn->sess->sess_ops->DataSequenceInOrder) {
 		cmd->data_sn = 0;
 
-		अगर (cmd->immediate_data)
+		if (cmd->immediate_data)
 			cmd->r2t_offset += (cmd->first_burst_len -
 				cmd->seq_start_offset);
 
-		अगर (conn->sess->sess_ops->DataPDUInOrder) अणु
-			cmd->ग_लिखो_data_करोne -= (cmd->immediate_data) ?
+		if (conn->sess->sess_ops->DataPDUInOrder) {
+			cmd->write_data_done -= (cmd->immediate_data) ?
 						(cmd->first_burst_len -
 						 cmd->seq_start_offset) :
 						 cmd->first_burst_len;
 			cmd->first_burst_len = 0;
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		क्रम (i = 0; i < cmd->pdu_count; i++) अणु
+		for (i = 0; i < cmd->pdu_count; i++) {
 			pdu = &cmd->pdu_list[i];
 
-			अगर (pdu->status != ISCSI_PDU_RECEIVED_OK)
-				जारी;
+			if (pdu->status != ISCSI_PDU_RECEIVED_OK)
+				continue;
 
-			अगर ((pdu->offset >= cmd->seq_start_offset) &&
+			if ((pdu->offset >= cmd->seq_start_offset) &&
 			   ((pdu->offset + pdu->length) <=
-			     cmd->seq_end_offset)) अणु
+			     cmd->seq_end_offset)) {
 				cmd->first_burst_len -= pdu->length;
-				cmd->ग_लिखो_data_करोne -= pdu->length;
+				cmd->write_data_done -= pdu->length;
 				pdu->status = ISCSI_PDU_NOT_RECEIVED;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < cmd->seq_count; i++) अणु
+			}
+		}
+	} else {
+		for (i = 0; i < cmd->seq_count; i++) {
 			seq = &cmd->seq_list[i];
 
-			अगर (seq->type != SEQTYPE_UNSOLICITED)
-				जारी;
+			if (seq->type != SEQTYPE_UNSOLICITED)
+				continue;
 
-			cmd->ग_लिखो_data_करोne -=
+			cmd->write_data_done -=
 					(seq->offset - seq->orig_offset);
 			cmd->first_burst_len = 0;
 			seq->data_sn = 0;
@@ -528,44 +527,44 @@ EXPORT_SYMBOL(iscsit_पंचांगr_post_handler);
 			seq->next_burst_len = 0;
 			seq->status = DATAOUT_SEQUENCE_WITHIN_COMMAND_RECOVERY;
 
-			अगर (conn->sess->sess_ops->DataPDUInOrder)
-				जारी;
+			if (conn->sess->sess_ops->DataPDUInOrder)
+				continue;
 
-			क्रम (j = 0; j < seq->pdu_count; j++) अणु
+			for (j = 0; j < seq->pdu_count; j++) {
 				pdu = &cmd->pdu_list[j+seq->pdu_start];
 
-				अगर (pdu->status != ISCSI_PDU_RECEIVED_OK)
-					जारी;
+				if (pdu->status != ISCSI_PDU_RECEIVED_OK)
+					continue;
 
 				pdu->status = ISCSI_PDU_NOT_RECEIVED;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल पूर्णांक iscsit_task_reassign_prepare_ग_लिखो(
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_cmd *cmd = पंचांगr_req->ref_cmd;
-	काष्ठा iscsi_pdu *pdu = शून्य;
-	काष्ठा iscsi_r2t *r2t = शून्य, *r2t_पंचांगp;
-	पूर्णांक first_incomplete_r2t = 1, i = 0;
+static int iscsit_task_reassign_prepare_write(
+	struct iscsi_tmr_req *tmr_req,
+	struct iscsi_conn *conn)
+{
+	struct iscsi_cmd *cmd = tmr_req->ref_cmd;
+	struct iscsi_pdu *pdu = NULL;
+	struct iscsi_r2t *r2t = NULL, *r2t_tmp;
+	int first_incomplete_r2t = 1, i = 0;
 
 	/*
 	 * The command was in the process of receiving Unsolicited DataOUT when
 	 * the connection failed.
 	 */
-	अगर (cmd->unsolicited_data)
+	if (cmd->unsolicited_data)
 		iscsit_task_reassign_prepare_unsolicited_dataout(cmd, conn);
 
 	/*
 	 * The Initiator is requesting R2Ts starting from zero,  skip
-	 * checking acknowledged R2Ts and start checking काष्ठा iscsi_r2ts
+	 * checking acknowledged R2Ts and start checking struct iscsi_r2ts
 	 * greater than zero.
 	 */
-	अगर (!पंचांगr_req->exp_data_sn)
-		जाओ drop_unacknowledged_r2ts;
+	if (!tmr_req->exp_data_sn)
+		goto drop_unacknowledged_r2ts;
 
 	/*
 	 * We now check that the PDUs in DataOUT sequences below
@@ -576,107 +575,107 @@ EXPORT_SYMBOL(iscsit_पंचांगr_post_handler);
 	 *
 	 * If we have not received all DataOUT in question,  we must
 	 * make sure to make the appropriate changes to values in
-	 * काष्ठा iscsi_cmd (and अन्यथाwhere depending on session parameters)
-	 * so iscsit_build_r2ts_क्रम_cmd() in iscsit_task_reassign_complete_ग_लिखो()
-	 * will resend a new R2T क्रम the DataOUT sequences in question.
+	 * struct iscsi_cmd (and elsewhere depending on session parameters)
+	 * so iscsit_build_r2ts_for_cmd() in iscsit_task_reassign_complete_write()
+	 * will resend a new R2T for the DataOUT sequences in question.
 	 */
 	spin_lock_bh(&cmd->r2t_lock);
-	अगर (list_empty(&cmd->cmd_r2t_list)) अणु
+	if (list_empty(&cmd->cmd_r2t_list)) {
 		spin_unlock_bh(&cmd->r2t_lock);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	list_क्रम_each_entry(r2t, &cmd->cmd_r2t_list, r2t_list) अणु
+	list_for_each_entry(r2t, &cmd->cmd_r2t_list, r2t_list) {
 
-		अगर (r2t->r2t_sn >= पंचांगr_req->exp_data_sn)
-			जारी;
+		if (r2t->r2t_sn >= tmr_req->exp_data_sn)
+			continue;
 		/*
 		 * Safely ignore Recovery R2Ts and R2Ts that have completed
 		 * DataOUT sequences.
 		 */
-		अगर (r2t->seq_complete)
-			जारी;
+		if (r2t->seq_complete)
+			continue;
 
-		अगर (r2t->recovery_r2t)
-			जारी;
+		if (r2t->recovery_r2t)
+			continue;
 
 		/*
 		 *                 DataSequenceInOrder=Yes:
 		 *
-		 * Taking पूर्णांकo account the iSCSI implementation requirement of
-		 * MaxOutstandingR2T=1 जबतक ErrorRecoveryLevel>0 and
-		 * DataSequenceInOrder=Yes, we must take पूर्णांकo consideration
+		 * Taking into account the iSCSI implementation requirement of
+		 * MaxOutstandingR2T=1 while ErrorRecoveryLevel>0 and
+		 * DataSequenceInOrder=Yes, we must take into consideration
 		 * the following:
 		 *
 		 *                  DataSequenceInOrder=No:
 		 *
-		 * Taking पूर्णांकo account that the Initiator controls the (possibly
-		 * अक्रमom) PDU Order in (possibly अक्रमom) Sequence Order of
-		 * DataOUT the target requests with R2Ts,  we must take पूर्णांकo
+		 * Taking into account that the Initiator controls the (possibly
+		 * random) PDU Order in (possibly random) Sequence Order of
+		 * DataOUT the target requests with R2Ts,  we must take into
 		 * consideration the following:
 		 *
-		 *      DataPDUInOrder=Yes क्रम DataSequenceInOrder=[Yes,No]:
+		 *      DataPDUInOrder=Yes for DataSequenceInOrder=[Yes,No]:
 		 *
 		 * While processing non-complete R2T DataOUT sequence requests
 		 * the Target will re-request only the total sequence length
 		 * minus current received offset.  This is because we must
-		 * assume the initiator will जारी sending DataOUT from the
-		 * last PDU beक्रमe the connection failed.
+		 * assume the initiator will continue sending DataOUT from the
+		 * last PDU before the connection failed.
 		 *
-		 *      DataPDUInOrder=No क्रम DataSequenceInOrder=[Yes,No]:
+		 *      DataPDUInOrder=No for DataSequenceInOrder=[Yes,No]:
 		 *
 		 * While processing non-complete R2T DataOUT sequence requests
-		 * the Target will re-request the entire DataOUT sequence अगर
+		 * the Target will re-request the entire DataOUT sequence if
 		 * any single PDU is missing from the sequence.  This is because
 		 * we have no logical method to determine the next PDU offset,
-		 * and we must assume the Initiator will be sending any अक्रमom
+		 * and we must assume the Initiator will be sending any random
 		 * PDU offset in the current sequence after TASK_REASSIGN
 		 * has completed.
 		 */
-		अगर (conn->sess->sess_ops->DataSequenceInOrder) अणु
-			अगर (!first_incomplete_r2t) अणु
+		if (conn->sess->sess_ops->DataSequenceInOrder) {
+			if (!first_incomplete_r2t) {
 				cmd->r2t_offset -= r2t->xfer_len;
-				जाओ next;
-			पूर्ण
+				goto next;
+			}
 
-			अगर (conn->sess->sess_ops->DataPDUInOrder) अणु
+			if (conn->sess->sess_ops->DataPDUInOrder) {
 				cmd->data_sn = 0;
 				cmd->r2t_offset -= (r2t->xfer_len -
 					cmd->next_burst_len);
 				first_incomplete_r2t = 0;
-				जाओ next;
-			पूर्ण
+				goto next;
+			}
 
 			cmd->data_sn = 0;
 			cmd->r2t_offset -= r2t->xfer_len;
 
-			क्रम (i = 0; i < cmd->pdu_count; i++) अणु
+			for (i = 0; i < cmd->pdu_count; i++) {
 				pdu = &cmd->pdu_list[i];
 
-				अगर (pdu->status != ISCSI_PDU_RECEIVED_OK)
-					जारी;
+				if (pdu->status != ISCSI_PDU_RECEIVED_OK)
+					continue;
 
-				अगर ((pdu->offset >= r2t->offset) &&
+				if ((pdu->offset >= r2t->offset) &&
 				    (pdu->offset < (r2t->offset +
-						r2t->xfer_len))) अणु
+						r2t->xfer_len))) {
 					cmd->next_burst_len -= pdu->length;
-					cmd->ग_लिखो_data_करोne -= pdu->length;
+					cmd->write_data_done -= pdu->length;
 					pdu->status = ISCSI_PDU_NOT_RECEIVED;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			first_incomplete_r2t = 0;
-		पूर्ण अन्यथा अणु
-			काष्ठा iscsi_seq *seq;
+		} else {
+			struct iscsi_seq *seq;
 
 			seq = iscsit_get_seq_holder(cmd, r2t->offset,
 					r2t->xfer_len);
-			अगर (!seq) अणु
+			if (!seq) {
 				spin_unlock_bh(&cmd->r2t_lock);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
-			cmd->ग_लिखो_data_करोne -=
+			cmd->write_data_done -=
 					(seq->offset - seq->orig_offset);
 			seq->data_sn = 0;
 			seq->offset = seq->orig_offset;
@@ -685,158 +684,158 @@ EXPORT_SYMBOL(iscsit_पंचांगr_post_handler);
 
 			cmd->seq_send_order--;
 
-			अगर (conn->sess->sess_ops->DataPDUInOrder)
-				जाओ next;
+			if (conn->sess->sess_ops->DataPDUInOrder)
+				goto next;
 
-			क्रम (i = 0; i < seq->pdu_count; i++) अणु
+			for (i = 0; i < seq->pdu_count; i++) {
 				pdu = &cmd->pdu_list[i+seq->pdu_start];
 
-				अगर (pdu->status != ISCSI_PDU_RECEIVED_OK)
-					जारी;
+				if (pdu->status != ISCSI_PDU_RECEIVED_OK)
+					continue;
 
 				pdu->status = ISCSI_PDU_NOT_RECEIVED;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 next:
 		cmd->outstanding_r2ts--;
-	पूर्ण
+	}
 	spin_unlock_bh(&cmd->r2t_lock);
 
 	/*
 	 * We now drop all unacknowledged R2Ts, ie: ExpDataSN from TMR
 	 * TASK_REASSIGN to the last R2T in the list..  We are also careful
-	 * to check that the Initiator is not requesting R2Ts क्रम DataOUT
-	 * sequences it has alपढ़ोy completed.
+	 * to check that the Initiator is not requesting R2Ts for DataOUT
+	 * sequences it has already completed.
 	 *
-	 * Free each R2T in question and adjust values in काष्ठा iscsi_cmd
-	 * accordingly so iscsit_build_r2ts_क्रम_cmd() करो the rest of
+	 * Free each R2T in question and adjust values in struct iscsi_cmd
+	 * accordingly so iscsit_build_r2ts_for_cmd() do the rest of
 	 * the work after the TMR TASK_REASSIGN Response is sent.
 	 */
 drop_unacknowledged_r2ts:
 
 	cmd->cmd_flags &= ~ICF_SENT_LAST_R2T;
-	cmd->r2t_sn = पंचांगr_req->exp_data_sn;
+	cmd->r2t_sn = tmr_req->exp_data_sn;
 
 	spin_lock_bh(&cmd->r2t_lock);
-	list_क्रम_each_entry_safe(r2t, r2t_पंचांगp, &cmd->cmd_r2t_list, r2t_list) अणु
+	list_for_each_entry_safe(r2t, r2t_tmp, &cmd->cmd_r2t_list, r2t_list) {
 		/*
 		 * Skip up to the R2T Sequence number provided by the
 		 * iSCSI TASK_REASSIGN TMR
 		 */
-		अगर (r2t->r2t_sn < पंचांगr_req->exp_data_sn)
-			जारी;
+		if (r2t->r2t_sn < tmr_req->exp_data_sn)
+			continue;
 
-		अगर (r2t->seq_complete) अणु
+		if (r2t->seq_complete) {
 			pr_err("Initiator is requesting R2Ts from"
 				" R2TSN: 0x%08x, but R2TSN: 0x%08x, Offset: %u,"
 				" Length: %u is already complete."
 				"   BAD INITIATOR ERL=2 IMPLEMENTATION!\n",
-				पंचांगr_req->exp_data_sn, r2t->r2t_sn,
+				tmr_req->exp_data_sn, r2t->r2t_sn,
 				r2t->offset, r2t->xfer_len);
 			spin_unlock_bh(&cmd->r2t_lock);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
-		अगर (r2t->recovery_r2t) अणु
-			iscsit_मुक्त_r2t(r2t, cmd);
-			जारी;
-		पूर्ण
+		if (r2t->recovery_r2t) {
+			iscsit_free_r2t(r2t, cmd);
+			continue;
+		}
 
 		/*		   DataSequenceInOrder=Yes:
 		 *
-		 * Taking पूर्णांकo account the iSCSI implementation requirement of
-		 * MaxOutstandingR2T=1 जबतक ErrorRecoveryLevel>0 and
+		 * Taking into account the iSCSI implementation requirement of
+		 * MaxOutstandingR2T=1 while ErrorRecoveryLevel>0 and
 		 * DataSequenceInOrder=Yes, it's safe to subtract the R2Ts
 		 * entire transfer length from the commands R2T offset marker.
 		 *
 		 *		   DataSequenceInOrder=No:
 		 *
-		 * We subtract the dअगरference from काष्ठा iscsi_seq between the
-		 * current offset and original offset from cmd->ग_लिखो_data_करोne
-		 * क्रम account क्रम DataOUT PDUs alपढ़ोy received.  Then reset
+		 * We subtract the difference from struct iscsi_seq between the
+		 * current offset and original offset from cmd->write_data_done
+		 * for account for DataOUT PDUs already received.  Then reset
 		 * the current offset to the original and zero out the current
 		 * burst length,  to make sure we re-request the entire DataOUT
 		 * sequence.
 		 */
-		अगर (conn->sess->sess_ops->DataSequenceInOrder)
+		if (conn->sess->sess_ops->DataSequenceInOrder)
 			cmd->r2t_offset -= r2t->xfer_len;
-		अन्यथा
+		else
 			cmd->seq_send_order--;
 
 		cmd->outstanding_r2ts--;
-		iscsit_मुक्त_r2t(r2t, cmd);
-	पूर्ण
+		iscsit_free_r2t(r2t, cmd);
+	}
 	spin_unlock_bh(&cmd->r2t_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Perक्रमms sanity checks TMR TASK_REASSIGN's ExpDataSN क्रम
- *	a given काष्ठा iscsi_cmd.
+ *	Performs sanity checks TMR TASK_REASSIGN's ExpDataSN for
+ *	a given struct iscsi_cmd.
  */
-पूर्णांक iscsit_check_task_reassign_expdatasn(
-	काष्ठा iscsi_पंचांगr_req *पंचांगr_req,
-	काष्ठा iscsi_conn *conn)
-अणु
-	काष्ठा iscsi_cmd *ref_cmd = पंचांगr_req->ref_cmd;
+int iscsit_check_task_reassign_expdatasn(
+	struct iscsi_tmr_req *tmr_req,
+	struct iscsi_conn *conn)
+{
+	struct iscsi_cmd *ref_cmd = tmr_req->ref_cmd;
 
-	अगर (ref_cmd->iscsi_opcode != ISCSI_OP_SCSI_CMD)
-		वापस 0;
+	if (ref_cmd->iscsi_opcode != ISCSI_OP_SCSI_CMD)
+		return 0;
 
-	अगर (ref_cmd->se_cmd.se_cmd_flags & SCF_SENT_CHECK_CONDITION)
-		वापस 0;
+	if (ref_cmd->se_cmd.se_cmd_flags & SCF_SENT_CHECK_CONDITION)
+		return 0;
 
-	अगर (ref_cmd->data_direction == DMA_NONE)
-		वापस 0;
+	if (ref_cmd->data_direction == DMA_NONE)
+		return 0;
 
 	/*
 	 * For READs the TMR TASK_REASSIGNs ExpDataSN contains the next DataSN
 	 * of DataIN the Initiator is expecting.
 	 *
 	 * Also check that the Initiator is not re-requesting DataIN that has
-	 * alपढ़ोy been acknowledged with a DataAck SNACK.
+	 * already been acknowledged with a DataAck SNACK.
 	 */
-	अगर (ref_cmd->data_direction == DMA_FROM_DEVICE) अणु
-		अगर (पंचांगr_req->exp_data_sn > ref_cmd->data_sn) अणु
+	if (ref_cmd->data_direction == DMA_FROM_DEVICE) {
+		if (tmr_req->exp_data_sn > ref_cmd->data_sn) {
 			pr_err("Received ExpDataSN: 0x%08x for READ"
 				" in TMR TASK_REASSIGN greater than command's"
-				" DataSN: 0x%08x.\n", पंचांगr_req->exp_data_sn,
+				" DataSN: 0x%08x.\n", tmr_req->exp_data_sn,
 				ref_cmd->data_sn);
-			वापस -1;
-		पूर्ण
-		अगर ((ref_cmd->cmd_flags & ICF_GOT_DATACK_SNACK) &&
-		    (पंचांगr_req->exp_data_sn <= ref_cmd->acked_data_sn)) अणु
+			return -1;
+		}
+		if ((ref_cmd->cmd_flags & ICF_GOT_DATACK_SNACK) &&
+		    (tmr_req->exp_data_sn <= ref_cmd->acked_data_sn)) {
 			pr_err("Received ExpDataSN: 0x%08x for READ"
 				" in TMR TASK_REASSIGN for previously"
 				" acknowledged DataIN: 0x%08x,"
-				" protocol error\n", पंचांगr_req->exp_data_sn,
+				" protocol error\n", tmr_req->exp_data_sn,
 				ref_cmd->acked_data_sn);
-			वापस -1;
-		पूर्ण
-		वापस iscsit_task_reassign_prepare_पढ़ो(पंचांगr_req, conn);
-	पूर्ण
+			return -1;
+		}
+		return iscsit_task_reassign_prepare_read(tmr_req, conn);
+	}
 
 	/*
 	 * For WRITEs the TMR TASK_REASSIGNs ExpDataSN contains the next R2TSN
-	 * क्रम R2Ts the Initiator is expecting.
+	 * for R2Ts the Initiator is expecting.
 	 *
-	 * Do the magic in iscsit_task_reassign_prepare_ग_लिखो().
+	 * Do the magic in iscsit_task_reassign_prepare_write().
 	 */
-	अगर (ref_cmd->data_direction == DMA_TO_DEVICE) अणु
-		अगर (पंचांगr_req->exp_data_sn > ref_cmd->r2t_sn) अणु
+	if (ref_cmd->data_direction == DMA_TO_DEVICE) {
+		if (tmr_req->exp_data_sn > ref_cmd->r2t_sn) {
 			pr_err("Received ExpDataSN: 0x%08x for WRITE"
 				" in TMR TASK_REASSIGN greater than command's"
-				" R2TSN: 0x%08x.\n", पंचांगr_req->exp_data_sn,
+				" R2TSN: 0x%08x.\n", tmr_req->exp_data_sn,
 					ref_cmd->r2t_sn);
-			वापस -1;
-		पूर्ण
-		वापस iscsit_task_reassign_prepare_ग_लिखो(पंचांगr_req, conn);
-	पूर्ण
+			return -1;
+		}
+		return iscsit_task_reassign_prepare_write(tmr_req, conn);
+	}
 
 	pr_err("Unknown iSCSI data_direction: 0x%02x\n",
 			ref_cmd->data_direction);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}

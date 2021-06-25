@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*****************************************************************************/
 
 /*
  *	hdlcdrv.c  -- HDLC packet radio network driver.
  *
- *	Copyright (C) 1996-2000  Thomas Sailer (sailer@अगरe.ee.ethz.ch)
+ *	Copyright (C) 1996-2000  Thomas Sailer (sailer@ife.ee.ethz.ch)
  *
  *  Please note that the GPL allows you to use the driver, NOT the radio.
  *  In order to use the radio, you need a license from the communications
@@ -17,52 +16,52 @@
  *  History:
  *   0.1  21.09.1996  Started
  *        18.10.1996  Changed to new user space access routines 
- *                    (copy_अणुto,fromपूर्ण_user)
+ *                    (copy_{to,from}_user)
  *   0.2  21.11.1996  various small changes
  *   0.3  03.03.1997  fixed (hopefully) IP not working with ax.25 as a module
  *   0.4  16.04.1997  init code/data tagged
  *   0.5  30.07.1997  made HDLC buffers bigger (solves a problem with the
  *                    soundmodem driver)
  *   0.6  05.04.1998  add spinlocks
- *   0.7  03.08.1999  हटाओd some old compatibility cruft
- *   0.8  12.02.2000  adapted to softnet driver पूर्णांकerface
+ *   0.7  03.08.1999  removed some old compatibility cruft
+ *   0.8  12.02.2000  adapted to softnet driver interface
  */
 
 /*****************************************************************************/
 
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/net.h>
-#समावेश <linux/in.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/net.h>
+#include <linux/in.h>
+#include <linux/if.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/hdlcdrv.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <net/ax25.h> 
-#समावेश <linux/uaccess.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <linux/hdlcdrv.h>
+#include <linux/random.h>
+#include <net/ax25.h> 
+#include <linux/uaccess.h>
 
-#समावेश <linux/crc-ccitt.h>
-
-/* --------------------------------------------------------------------- */
-
-#घोषणा KISS_VERBOSE
+#include <linux/crc-ccitt.h>
 
 /* --------------------------------------------------------------------- */
 
-#घोषणा PARAM_TXDELAY   1
-#घोषणा PARAM_PERSIST   2
-#घोषणा PARAM_SLOTTIME  3
-#घोषणा PARAM_TXTAIL    4
-#घोषणा PARAM_FULLDUP   5
-#घोषणा PARAM_HARDWARE  6
-#घोषणा PARAM_RETURN    255
+#define KISS_VERBOSE
+
+/* --------------------------------------------------------------------- */
+
+#define PARAM_TXDELAY   1
+#define PARAM_PERSIST   2
+#define PARAM_SLOTTIME  3
+#define PARAM_TXTAIL    4
+#define PARAM_FULLDUP   5
+#define PARAM_HARDWARE  6
+#define PARAM_RETURN    255
 
 /* --------------------------------------------------------------------- */
 /*
@@ -73,255 +72,255 @@
 
 /*---------------------------------------------------------------------------*/
 
-अटल अंतरभूत व्योम append_crc_ccitt(अचिन्हित अक्षर *buffer, पूर्णांक len)
-अणु
- 	अचिन्हित पूर्णांक crc = crc_ccitt(0xffff, buffer, len) ^ 0xffff;
+static inline void append_crc_ccitt(unsigned char *buffer, int len)
+{
+ 	unsigned int crc = crc_ccitt(0xffff, buffer, len) ^ 0xffff;
 	buffer += len;
 	*buffer++ = crc;
 	*buffer++ = crc >> 8;
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------*/
 
-अटल अंतरभूत पूर्णांक check_crc_ccitt(स्थिर अचिन्हित अक्षर *buf, पूर्णांक cnt)
-अणु
-	वापस (crc_ccitt(0xffff, buf, cnt) & 0xffff) == 0xf0b8;
-पूर्ण
+static inline int check_crc_ccitt(const unsigned char *buf, int cnt)
+{
+	return (crc_ccitt(0xffff, buf, cnt) & 0xffff) == 0xf0b8;
+}
 
 /*---------------------------------------------------------------------------*/
 
-#अगर 0
-अटल पूर्णांक calc_crc_ccitt(स्थिर अचिन्हित अक्षर *buf, पूर्णांक cnt)
-अणु
-	अचिन्हित पूर्णांक crc = 0xffff;
+#if 0
+static int calc_crc_ccitt(const unsigned char *buf, int cnt)
+{
+	unsigned int crc = 0xffff;
 
-	क्रम (; cnt > 0; cnt--)
+	for (; cnt > 0; cnt--)
 		crc = (crc >> 8) ^ crc_ccitt_table[(crc ^ *buf++) & 0xff];
 	crc ^= 0xffff;
-	वापस crc & 0xffff;
-पूर्ण
-#पूर्ण_अगर
+	return crc & 0xffff;
+}
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#घोषणा tenms_to_2flags(s,tenms) ((tenms * s->par.bitrate) / 100 / 16)
+#define tenms_to_2flags(s,tenms) ((tenms * s->par.bitrate) / 100 / 16)
 
 /* ---------------------------------------------------------------------- */
 /*
  * The HDLC routines
  */
 
-अटल पूर्णांक hdlc_rx_add_bytes(काष्ठा hdlcdrv_state *s, अचिन्हित पूर्णांक bits, 
-			     पूर्णांक num)
-अणु
-	पूर्णांक added = 0;
+static int hdlc_rx_add_bytes(struct hdlcdrv_state *s, unsigned int bits, 
+			     int num)
+{
+	int added = 0;
 	
-	जबतक (s->hdlcrx.rx_state && num >= 8) अणु
-		अगर (s->hdlcrx.len >= माप(s->hdlcrx.buffer)) अणु
+	while (s->hdlcrx.rx_state && num >= 8) {
+		if (s->hdlcrx.len >= sizeof(s->hdlcrx.buffer)) {
 			s->hdlcrx.rx_state = 0;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		*s->hdlcrx.bp++ = bits >> (32-num);
 		s->hdlcrx.len++;
 		num -= 8;
 		added += 8;
-	पूर्ण
-	वापस added;
-पूर्ण
+	}
+	return added;
+}
 
-अटल व्योम hdlc_rx_flag(काष्ठा net_device *dev, काष्ठा hdlcdrv_state *s)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक pkt_len;
-	अचिन्हित अक्षर *cp;
+static void hdlc_rx_flag(struct net_device *dev, struct hdlcdrv_state *s)
+{
+	struct sk_buff *skb;
+	int pkt_len;
+	unsigned char *cp;
 
-	अगर (s->hdlcrx.len < 4) 
-		वापस;
-	अगर (!check_crc_ccitt(s->hdlcrx.buffer, s->hdlcrx.len)) 
-		वापस;
+	if (s->hdlcrx.len < 4) 
+		return;
+	if (!check_crc_ccitt(s->hdlcrx.buffer, s->hdlcrx.len)) 
+		return;
 	pkt_len = s->hdlcrx.len - 2 + 1; /* KISS kludge */
-	अगर (!(skb = dev_alloc_skb(pkt_len))) अणु
-		prपूर्णांकk("%s: memory squeeze, dropping packet\n", dev->name);
+	if (!(skb = dev_alloc_skb(pkt_len))) {
+		printk("%s: memory squeeze, dropping packet\n", dev->name);
 		dev->stats.rx_dropped++;
-		वापस;
-	पूर्ण
+		return;
+	}
 	cp = skb_put(skb, pkt_len);
 	*cp++ = 0; /* KISS kludge */
-	स_नकल(cp, s->hdlcrx.buffer, pkt_len - 1);
+	memcpy(cp, s->hdlcrx.buffer, pkt_len - 1);
 	skb->protocol = ax25_type_trans(skb, dev);
-	netअगर_rx(skb);
+	netif_rx(skb);
 	dev->stats.rx_packets++;
-पूर्ण
+}
 
-व्योम hdlcdrv_receiver(काष्ठा net_device *dev, काष्ठा hdlcdrv_state *s)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक mask1, mask2, mask3, mask4, mask5, mask6, word;
+void hdlcdrv_receiver(struct net_device *dev, struct hdlcdrv_state *s)
+{
+	int i;
+	unsigned int mask1, mask2, mask3, mask4, mask5, mask6, word;
 	
-	अगर (!s || s->magic != HDLCDRV_MAGIC) 
-		वापस;
-	अगर (test_and_set_bit(0, &s->hdlcrx.in_hdlc_rx))
-		वापस;
+	if (!s || s->magic != HDLCDRV_MAGIC) 
+		return;
+	if (test_and_set_bit(0, &s->hdlcrx.in_hdlc_rx))
+		return;
 
-	जबतक (!hdlcdrv_hbuf_empty(&s->hdlcrx.hbuf)) अणु
+	while (!hdlcdrv_hbuf_empty(&s->hdlcrx.hbuf)) {
 		word = hdlcdrv_hbuf_get(&s->hdlcrx.hbuf);	
 
-#अगर_घोषित HDLCDRV_DEBUG
+#ifdef HDLCDRV_DEBUG
 		hdlcdrv_add_bitbuffer_word(&s->bitbuf_hdlc, word);
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
+#endif /* HDLCDRV_DEBUG */
 	       	s->hdlcrx.bitstream >>= 16;
 		s->hdlcrx.bitstream |= word << 16;
 		s->hdlcrx.bitbuf >>= 16;
 		s->hdlcrx.bitbuf |= word << 16;
 		s->hdlcrx.numbits += 16;
-		क्रम(i = 15, mask1 = 0x1fc00, mask2 = 0x1fe00, mask3 = 0x0fc00,
+		for(i = 15, mask1 = 0x1fc00, mask2 = 0x1fe00, mask3 = 0x0fc00,
 		    mask4 = 0x1f800, mask5 = 0xf800, mask6 = 0xffff; 
 		    i >= 0; 
 		    i--, mask1 <<= 1, mask2 <<= 1, mask3 <<= 1, mask4 <<= 1, 
-		    mask5 <<= 1, mask6 = (mask6 << 1) | 1) अणु
-			अगर ((s->hdlcrx.bitstream & mask1) == mask1)
-				s->hdlcrx.rx_state = 0; /* पात received */
-			अन्यथा अगर ((s->hdlcrx.bitstream & mask2) == mask3) अणु
+		    mask5 <<= 1, mask6 = (mask6 << 1) | 1) {
+			if ((s->hdlcrx.bitstream & mask1) == mask1)
+				s->hdlcrx.rx_state = 0; /* abort received */
+			else if ((s->hdlcrx.bitstream & mask2) == mask3) {
 				/* flag received */
-				अगर (s->hdlcrx.rx_state) अणु
+				if (s->hdlcrx.rx_state) {
 					hdlc_rx_add_bytes(s, s->hdlcrx.bitbuf 
 							  << (8+i),
 							  s->hdlcrx.numbits
 							  -8-i);
 					hdlc_rx_flag(dev, s);
-				पूर्ण
+				}
 				s->hdlcrx.len = 0;
 				s->hdlcrx.bp = s->hdlcrx.buffer;
 				s->hdlcrx.rx_state = 1;
 				s->hdlcrx.numbits = i;
-			पूर्ण अन्यथा अगर ((s->hdlcrx.bitstream & mask4) == mask5) अणु
+			} else if ((s->hdlcrx.bitstream & mask4) == mask5) {
 				/* stuffed bit */
 				s->hdlcrx.numbits--;
 				s->hdlcrx.bitbuf = (s->hdlcrx.bitbuf & (~mask6)) |
 					((s->hdlcrx.bitbuf & mask6) << 1);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		s->hdlcrx.numbits -= hdlc_rx_add_bytes(s, s->hdlcrx.bitbuf,
 						       s->hdlcrx.numbits);
-	पूर्ण
+	}
 	clear_bit(0, &s->hdlcrx.in_hdlc_rx);
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल अंतरभूत व्योम करो_kiss_params(काष्ठा hdlcdrv_state *s,
-				  अचिन्हित अक्षर *data, अचिन्हित दीर्घ len)
-अणु
+static inline void do_kiss_params(struct hdlcdrv_state *s,
+				  unsigned char *data, unsigned long len)
+{
 
-#अगर_घोषित KISS_VERBOSE
-#घोषणा PKP(a,b) prपूर्णांकk(KERN_INFO "hdlcdrv.c: channel params: " a "\n", b)
-#अन्यथा /* KISS_VERBOSE */	      
-#घोषणा PKP(a,b) 
-#पूर्ण_अगर /* KISS_VERBOSE */	      
+#ifdef KISS_VERBOSE
+#define PKP(a,b) printk(KERN_INFO "hdlcdrv.c: channel params: " a "\n", b)
+#else /* KISS_VERBOSE */	      
+#define PKP(a,b) 
+#endif /* KISS_VERBOSE */	      
 
-	अगर (len < 2)
-		वापस;
-	चयन(data[0]) अणु
-	हाल PARAM_TXDELAY:
+	if (len < 2)
+		return;
+	switch(data[0]) {
+	case PARAM_TXDELAY:
 		s->ch_params.tx_delay = data[1];
 		PKP("TX delay = %ums", 10 * s->ch_params.tx_delay);
-		अवरोध;
-	हाल PARAM_PERSIST:   
+		break;
+	case PARAM_PERSIST:   
 		s->ch_params.ppersist = data[1];
 		PKP("p persistence = %u", s->ch_params.ppersist);
-		अवरोध;
-	हाल PARAM_SLOTTIME:  
-		s->ch_params.slotसमय = data[1];
-		PKP("slot time = %ums", s->ch_params.slotसमय);
-		अवरोध;
-	हाल PARAM_TXTAIL:    
+		break;
+	case PARAM_SLOTTIME:  
+		s->ch_params.slottime = data[1];
+		PKP("slot time = %ums", s->ch_params.slottime);
+		break;
+	case PARAM_TXTAIL:    
 		s->ch_params.tx_tail = data[1];
 		PKP("TX tail = %ums", s->ch_params.tx_tail);
-		अवरोध;
-	हाल PARAM_FULLDUP:   
+		break;
+	case PARAM_FULLDUP:   
 		s->ch_params.fulldup = !!data[1];
 		PKP("%s duplex", s->ch_params.fulldup ? "full" : "half");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-#अघोषित PKP
-पूर्ण
+		break;
+	default:
+		break;
+	}
+#undef PKP
+}
 
 /* ---------------------------------------------------------------------- */
 
-व्योम hdlcdrv_transmitter(काष्ठा net_device *dev, काष्ठा hdlcdrv_state *s)
-अणु
-	अचिन्हित पूर्णांक mask1, mask2, mask3;
-	पूर्णांक i;
-	काष्ठा sk_buff *skb;
-	पूर्णांक pkt_len;
+void hdlcdrv_transmitter(struct net_device *dev, struct hdlcdrv_state *s)
+{
+	unsigned int mask1, mask2, mask3;
+	int i;
+	struct sk_buff *skb;
+	int pkt_len;
 
-	अगर (!s || s->magic != HDLCDRV_MAGIC) 
-		वापस;
-	अगर (test_and_set_bit(0, &s->hdlctx.in_hdlc_tx))
-		वापस;
-	क्रम (;;) अणु
-		अगर (s->hdlctx.numbits >= 16) अणु
-			अगर (hdlcdrv_hbuf_full(&s->hdlctx.hbuf)) अणु
+	if (!s || s->magic != HDLCDRV_MAGIC) 
+		return;
+	if (test_and_set_bit(0, &s->hdlctx.in_hdlc_tx))
+		return;
+	for (;;) {
+		if (s->hdlctx.numbits >= 16) {
+			if (hdlcdrv_hbuf_full(&s->hdlctx.hbuf)) {
 				clear_bit(0, &s->hdlctx.in_hdlc_tx);
-				वापस;
-			पूर्ण
+				return;
+			}
 			hdlcdrv_hbuf_put(&s->hdlctx.hbuf, s->hdlctx.bitbuf);
 			s->hdlctx.bitbuf >>= 16;
 			s->hdlctx.numbits -= 16;
-		पूर्ण
-		चयन (s->hdlctx.tx_state) अणु
-		शेष:
+		}
+		switch (s->hdlctx.tx_state) {
+		default:
 			clear_bit(0, &s->hdlctx.in_hdlc_tx);
-			वापस;
-		हाल 0:
-		हाल 1:
-			अगर (s->hdlctx.numflags) अणु
+			return;
+		case 0:
+		case 1:
+			if (s->hdlctx.numflags) {
 				s->hdlctx.numflags--;
 				s->hdlctx.bitbuf |= 
 					0x7e7e << s->hdlctx.numbits;
 				s->hdlctx.numbits += 16;
-				अवरोध;
-			पूर्ण
-			अगर (s->hdlctx.tx_state == 1) अणु
+				break;
+			}
+			if (s->hdlctx.tx_state == 1) {
 				clear_bit(0, &s->hdlctx.in_hdlc_tx);
-				वापस;
-			पूर्ण
-			अगर (!(skb = s->skb)) अणु
-				पूर्णांक flgs = tenms_to_2flags(s, s->ch_params.tx_tail);
-				अगर (flgs < 2)
+				return;
+			}
+			if (!(skb = s->skb)) {
+				int flgs = tenms_to_2flags(s, s->ch_params.tx_tail);
+				if (flgs < 2)
 					flgs = 2;
 				s->hdlctx.tx_state = 1;
 				s->hdlctx.numflags = flgs;
-				अवरोध;
-			पूर्ण
-			s->skb = शून्य;
-			netअगर_wake_queue(dev);
+				break;
+			}
+			s->skb = NULL;
+			netif_wake_queue(dev);
 			pkt_len = skb->len-1; /* strip KISS byte */
-			अगर (pkt_len >= HDLCDRV_MAXFLEN || pkt_len < 2) अणु
+			if (pkt_len >= HDLCDRV_MAXFLEN || pkt_len < 2) {
 				s->hdlctx.tx_state = 0;
 				s->hdlctx.numflags = 1;
-				dev_kमुक्त_skb_irq(skb);
-				अवरोध;
-			पूर्ण
+				dev_kfree_skb_irq(skb);
+				break;
+			}
 			skb_copy_from_linear_data_offset(skb, 1,
 							 s->hdlctx.buffer,
 							 pkt_len);
-			dev_kमुक्त_skb_irq(skb);
+			dev_kfree_skb_irq(skb);
 			s->hdlctx.bp = s->hdlctx.buffer;
 			append_crc_ccitt(s->hdlctx.buffer, pkt_len);
 			s->hdlctx.len = pkt_len+2; /* the appended CRC */
 			s->hdlctx.tx_state = 2;
 			s->hdlctx.bitstream = 0;
 			dev->stats.tx_packets++;
-			अवरोध;
-		हाल 2:
-			अगर (!s->hdlctx.len) अणु
+			break;
+		case 2:
+			if (!s->hdlctx.len) {
 				s->hdlctx.tx_state = 0;
 				s->hdlctx.numflags = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			s->hdlctx.len--;
 			s->hdlctx.bitbuf |= *s->hdlctx.bp <<
 				s->hdlctx.numbits;
@@ -331,10 +330,10 @@
 			mask2 = 0x10000;
 			mask3 = 0xffffffff >> (31-s->hdlctx.numbits);
 			s->hdlctx.numbits += 8;
-			क्रम(i = 0; i < 8; i++, mask1 <<= 1, mask2 <<= 1, 
-			    mask3 = (mask3 << 1) | 1) अणु
-				अगर ((s->hdlctx.bitstream & mask1) != mask1) 
-					जारी;
+			for(i = 0; i < 8; i++, mask1 <<= 1, mask2 <<= 1, 
+			    mask3 = (mask3 << 1) | 1) {
+				if ((s->hdlctx.bitstream & mask1) != mask1) 
+					continue;
 				s->hdlctx.bitstream &= ~mask2;
 				s->hdlctx.bitbuf = 
 					(s->hdlctx.bitbuf & mask3) |
@@ -342,106 +341,106 @@
 						 (~mask3)) << 1);
 				s->hdlctx.numbits++;
 				mask3 = (mask3 << 1) | 1;
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+			break;
+		}
+	}
+}
 
 /* ---------------------------------------------------------------------- */
 
-अटल व्योम start_tx(काष्ठा net_device *dev, काष्ठा hdlcdrv_state *s)
-अणु
+static void start_tx(struct net_device *dev, struct hdlcdrv_state *s)
+{
 	s->hdlctx.tx_state = 0;
 	s->hdlctx.numflags = tenms_to_2flags(s, s->ch_params.tx_delay);
 	s->hdlctx.bitbuf = s->hdlctx.bitstream = s->hdlctx.numbits = 0;
 	hdlcdrv_transmitter(dev, s);
 	s->hdlctx.ptt = 1;
 	s->ptt_keyed++;
-पूर्ण
+}
 
 /* ---------------------------------------------------------------------- */
 
-व्योम hdlcdrv_arbitrate(काष्ठा net_device *dev, काष्ठा hdlcdrv_state *s)
-अणु
-	अगर (!s || s->magic != HDLCDRV_MAGIC || s->hdlctx.ptt || !s->skb) 
-		वापस;
-	अगर (s->ch_params.fulldup) अणु
+void hdlcdrv_arbitrate(struct net_device *dev, struct hdlcdrv_state *s)
+{
+	if (!s || s->magic != HDLCDRV_MAGIC || s->hdlctx.ptt || !s->skb) 
+		return;
+	if (s->ch_params.fulldup) {
 		start_tx(dev, s);
-		वापस;
-	पूर्ण
-	अगर (s->hdlcrx.dcd) अणु
-		s->hdlctx.slotcnt = s->ch_params.slotसमय;
-		वापस;
-	पूर्ण
-	अगर ((--s->hdlctx.slotcnt) > 0)
-		वापस;
-	s->hdlctx.slotcnt = s->ch_params.slotसमय;
-	अगर ((pअक्रमom_u32() % 256) > s->ch_params.ppersist)
-		वापस;
+		return;
+	}
+	if (s->hdlcrx.dcd) {
+		s->hdlctx.slotcnt = s->ch_params.slottime;
+		return;
+	}
+	if ((--s->hdlctx.slotcnt) > 0)
+		return;
+	s->hdlctx.slotcnt = s->ch_params.slottime;
+	if ((prandom_u32() % 256) > s->ch_params.ppersist)
+		return;
 	start_tx(dev, s);
-पूर्ण
+}
 
 /* --------------------------------------------------------------------- */
 /*
- * ===================== network driver पूर्णांकerface =========================
+ * ===================== network driver interface =========================
  */
 
-अटल netdev_tx_t hdlcdrv_send_packet(काष्ठा sk_buff *skb,
-				       काष्ठा net_device *dev)
-अणु
-	काष्ठा hdlcdrv_state *sm = netdev_priv(dev);
+static netdev_tx_t hdlcdrv_send_packet(struct sk_buff *skb,
+				       struct net_device *dev)
+{
+	struct hdlcdrv_state *sm = netdev_priv(dev);
 
-	अगर (skb->protocol == htons(ETH_P_IP))
-		वापस ax25_ip_xmit(skb);
+	if (skb->protocol == htons(ETH_P_IP))
+		return ax25_ip_xmit(skb);
 
-	अगर (skb->data[0] != 0) अणु
-		करो_kiss_params(sm, skb->data, skb->len);
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
-	अगर (sm->skb) अणु
-		dev_kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
-	netअगर_stop_queue(dev);
+	if (skb->data[0] != 0) {
+		do_kiss_params(sm, skb->data, skb->len);
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
+	if (sm->skb) {
+		dev_kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
+	netif_stop_queue(dev);
 	sm->skb = skb;
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक hdlcdrv_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
-अणु
-	काष्ठा sockaddr *sa = (काष्ठा sockaddr *)addr;
+static int hdlcdrv_set_mac_address(struct net_device *dev, void *addr)
+{
+	struct sockaddr *sa = (struct sockaddr *)addr;
 
-	/* addr is an AX.25 shअगरted ASCII mac address */
-	स_नकल(dev->dev_addr, sa->sa_data, dev->addr_len); 
-	वापस 0;                                         
-पूर्ण
+	/* addr is an AX.25 shifted ASCII mac address */
+	memcpy(dev->dev_addr, sa->sa_data, dev->addr_len); 
+	return 0;                                         
+}
 
 /* --------------------------------------------------------------------- */
 /*
  * Open/initialize the board. This is called (in the current kernel)
- * someसमय after booting when the 'ifconfig' program is run.
+ * sometime after booting when the 'ifconfig' program is run.
  *
- * This routine should set everything up anew at each खोलो, even
- * रेजिस्टरs that "should" only need to be set once at boot, so that
- * there is non-reboot way to recover अगर something goes wrong.
+ * This routine should set everything up anew at each open, even
+ * registers that "should" only need to be set once at boot, so that
+ * there is non-reboot way to recover if something goes wrong.
  */
 
-अटल पूर्णांक hdlcdrv_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा hdlcdrv_state *s = netdev_priv(dev);
-	पूर्णांक i;
+static int hdlcdrv_open(struct net_device *dev)
+{
+	struct hdlcdrv_state *s = netdev_priv(dev);
+	int i;
 
-	अगर (!s->ops || !s->ops->खोलो)
-		वापस -ENODEV;
+	if (!s->ops || !s->ops->open)
+		return -ENODEV;
 
 	/*
 	 * initialise some variables
 	 */
-	s->खोलोed = 1;
+	s->opened = 1;
 	s->hdlcrx.hbuf.rd = s->hdlcrx.hbuf.wr = 0;
 	s->hdlcrx.in_hdlc_rx = 0;
 	s->hdlcrx.rx_state = 0;
@@ -452,77 +451,77 @@
 	s->hdlctx.numflags = 0;
 	s->hdlctx.bitstream = s->hdlctx.bitbuf = s->hdlctx.numbits = 0;
 	s->hdlctx.ptt = 0;
-	s->hdlctx.slotcnt = s->ch_params.slotसमय;
+	s->hdlctx.slotcnt = s->ch_params.slottime;
 	s->hdlctx.calibrate = 0;
 
-	i = s->ops->खोलो(dev);
-	अगर (i)
-		वापस i;
-	netअगर_start_queue(dev);
-	वापस 0;
-पूर्ण
+	i = s->ops->open(dev);
+	if (i)
+		return i;
+	netif_start_queue(dev);
+	return 0;
+}
 
 /* --------------------------------------------------------------------- */
 /* 
- * The inverse routine to hdlcdrv_खोलो(). 
+ * The inverse routine to hdlcdrv_open(). 
  */
 
-अटल पूर्णांक hdlcdrv_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा hdlcdrv_state *s = netdev_priv(dev);
-	पूर्णांक i = 0;
+static int hdlcdrv_close(struct net_device *dev)
+{
+	struct hdlcdrv_state *s = netdev_priv(dev);
+	int i = 0;
 
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 
-	अगर (s->ops && s->ops->बंद)
-		i = s->ops->बंद(dev);
-	dev_kमुक्त_skb(s->skb);
-	s->skb = शून्य;
-	s->खोलोed = 0;
-	वापस i;
-पूर्ण
+	if (s->ops && s->ops->close)
+		i = s->ops->close(dev);
+	dev_kfree_skb(s->skb);
+	s->skb = NULL;
+	s->opened = 0;
+	return i;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक hdlcdrv_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा hdlcdrv_state *s = netdev_priv(dev);
-	काष्ठा hdlcdrv_ioctl bi;
+static int hdlcdrv_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct hdlcdrv_state *s = netdev_priv(dev);
+	struct hdlcdrv_ioctl bi;
 
-	अगर (cmd != SIOCDEVPRIVATE) अणु
-		अगर (s->ops && s->ops->ioctl)
-			वापस s->ops->ioctl(dev, अगरr, &bi, cmd);
-		वापस -ENOIOCTLCMD;
-	पूर्ण
-	अगर (copy_from_user(&bi, अगरr->अगरr_data, माप(bi)))
-		वापस -EFAULT;
+	if (cmd != SIOCDEVPRIVATE) {
+		if (s->ops && s->ops->ioctl)
+			return s->ops->ioctl(dev, ifr, &bi, cmd);
+		return -ENOIOCTLCMD;
+	}
+	if (copy_from_user(&bi, ifr->ifr_data, sizeof(bi)))
+		return -EFAULT;
 
-	चयन (bi.cmd) अणु
-	शेष:
-		अगर (s->ops && s->ops->ioctl)
-			वापस s->ops->ioctl(dev, अगरr, &bi, cmd);
-		वापस -ENOIOCTLCMD;
+	switch (bi.cmd) {
+	default:
+		if (s->ops && s->ops->ioctl)
+			return s->ops->ioctl(dev, ifr, &bi, cmd);
+		return -ENOIOCTLCMD;
 
-	हाल HDLCDRVCTL_GETCHANNELPAR:
+	case HDLCDRVCTL_GETCHANNELPAR:
 		bi.data.cp.tx_delay = s->ch_params.tx_delay;
 		bi.data.cp.tx_tail = s->ch_params.tx_tail;
-		bi.data.cp.slotसमय = s->ch_params.slotसमय;
+		bi.data.cp.slottime = s->ch_params.slottime;
 		bi.data.cp.ppersist = s->ch_params.ppersist;
 		bi.data.cp.fulldup = s->ch_params.fulldup;
-		अवरोध;
+		break;
 
-	हाल HDLCDRVCTL_SETCHANNELPAR:
-		अगर (!capable(CAP_NET_ADMIN))
-			वापस -EACCES;
+	case HDLCDRVCTL_SETCHANNELPAR:
+		if (!capable(CAP_NET_ADMIN))
+			return -EACCES;
 		s->ch_params.tx_delay = bi.data.cp.tx_delay;
 		s->ch_params.tx_tail = bi.data.cp.tx_tail;
-		s->ch_params.slotसमय = bi.data.cp.slotसमय;
+		s->ch_params.slottime = bi.data.cp.slottime;
 		s->ch_params.ppersist = bi.data.cp.ppersist;
 		s->ch_params.fulldup = bi.data.cp.fulldup;
 		s->hdlctx.slotcnt = 1;
-		वापस 0;
+		return 0;
 		
-	हाल HDLCDRVCTL_GETMODEMPAR:
+	case HDLCDRVCTL_GETMODEMPAR:
 		bi.data.mp.iobase = dev->base_addr;
 		bi.data.mp.irq = dev->irq;
 		bi.data.mp.dma = dev->dma;
@@ -530,11 +529,11 @@
 		bi.data.mp.seriobase = s->ptt_out.seriobase;
 		bi.data.mp.pariobase = s->ptt_out.pariobase;
 		bi.data.mp.midiiobase = s->ptt_out.midiiobase;
-		अवरोध;
+		break;
 
-	हाल HDLCDRVCTL_SETMODEMPAR:
-		अगर ((!capable(CAP_SYS_RAWIO)) || netअगर_running(dev))
-			वापस -EACCES;
+	case HDLCDRVCTL_SETMODEMPAR:
+		if ((!capable(CAP_SYS_RAWIO)) || netif_running(dev))
+			return -EACCES;
 		dev->base_addr = bi.data.mp.iobase;
 		dev->irq = bi.data.mp.irq;
 		dev->dma = bi.data.mp.dma;
@@ -542,9 +541,9 @@
 		s->ptt_out.seriobase = bi.data.mp.seriobase;
 		s->ptt_out.pariobase = bi.data.mp.pariobase;
 		s->ptt_out.midiiobase = bi.data.mp.midiiobase;
-		वापस 0;	
+		return 0;	
 	
-	हाल HDLCDRVCTL_GETSTAT:
+	case HDLCDRVCTL_GETSTAT:
 		bi.data.cs.ptt = hdlcdrv_ptt(s);
 		bi.data.cs.dcd = s->hdlcrx.dcd;
 		bi.data.cs.ptt_keyed = s->ptt_keyed;
@@ -552,88 +551,88 @@
 		bi.data.cs.tx_errors = dev->stats.tx_errors;
 		bi.data.cs.rx_packets = dev->stats.rx_packets;
 		bi.data.cs.rx_errors = dev->stats.rx_errors;
-		अवरोध;		
+		break;		
 
-	हाल HDLCDRVCTL_OLDGETSTAT:
+	case HDLCDRVCTL_OLDGETSTAT:
 		bi.data.ocs.ptt = hdlcdrv_ptt(s);
 		bi.data.ocs.dcd = s->hdlcrx.dcd;
 		bi.data.ocs.ptt_keyed = s->ptt_keyed;
-		अवरोध;		
+		break;		
 
-	हाल HDLCDRVCTL_CALIBRATE:
-		अगर(!capable(CAP_SYS_RAWIO))
-			वापस -EPERM;
-		अगर (s->par.bitrate <= 0)
-			वापस -EINVAL;
-		अगर (bi.data.calibrate > पूर्णांक_उच्च / s->par.bitrate)
-			वापस -EINVAL;
+	case HDLCDRVCTL_CALIBRATE:
+		if(!capable(CAP_SYS_RAWIO))
+			return -EPERM;
+		if (s->par.bitrate <= 0)
+			return -EINVAL;
+		if (bi.data.calibrate > INT_MAX / s->par.bitrate)
+			return -EINVAL;
 		s->hdlctx.calibrate = bi.data.calibrate * s->par.bitrate / 16;
-		वापस 0;
+		return 0;
 
-	हाल HDLCDRVCTL_GETSAMPLES:
-#अगर_अघोषित HDLCDRV_DEBUG
-		वापस -EPERM;
-#अन्यथा /* HDLCDRV_DEBUG */
-		अगर (s->bitbuf_channel.rd == s->bitbuf_channel.wr) 
-			वापस -EAGAIN;
+	case HDLCDRVCTL_GETSAMPLES:
+#ifndef HDLCDRV_DEBUG
+		return -EPERM;
+#else /* HDLCDRV_DEBUG */
+		if (s->bitbuf_channel.rd == s->bitbuf_channel.wr) 
+			return -EAGAIN;
 		bi.data.bits = 
 			s->bitbuf_channel.buffer[s->bitbuf_channel.rd];
 		s->bitbuf_channel.rd = (s->bitbuf_channel.rd+1) %
-			माप(s->bitbuf_channel.buffer);
-		अवरोध;
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
+			sizeof(s->bitbuf_channel.buffer);
+		break;
+#endif /* HDLCDRV_DEBUG */
 				
-	हाल HDLCDRVCTL_GETBITS:
-#अगर_अघोषित HDLCDRV_DEBUG
-		वापस -EPERM;
-#अन्यथा /* HDLCDRV_DEBUG */
-		अगर (s->bitbuf_hdlc.rd == s->bitbuf_hdlc.wr) 
-			वापस -EAGAIN;
+	case HDLCDRVCTL_GETBITS:
+#ifndef HDLCDRV_DEBUG
+		return -EPERM;
+#else /* HDLCDRV_DEBUG */
+		if (s->bitbuf_hdlc.rd == s->bitbuf_hdlc.wr) 
+			return -EAGAIN;
 		bi.data.bits = 
 			s->bitbuf_hdlc.buffer[s->bitbuf_hdlc.rd];
 		s->bitbuf_hdlc.rd = (s->bitbuf_hdlc.rd+1) %
-			माप(s->bitbuf_hdlc.buffer);
-		अवरोध;		
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
+			sizeof(s->bitbuf_hdlc.buffer);
+		break;		
+#endif /* HDLCDRV_DEBUG */
 
-	हाल HDLCDRVCTL_DRIVERNAME:
-		अगर (s->ops && s->ops->drvname) अणु
+	case HDLCDRVCTL_DRIVERNAME:
+		if (s->ops && s->ops->drvname) {
 			strlcpy(bi.data.drivername, s->ops->drvname,
-				माप(bi.data.drivername));
-			अवरोध;
-		पूर्ण
+				sizeof(bi.data.drivername));
+			break;
+		}
 		bi.data.drivername[0] = '\0';
-		अवरोध;
+		break;
 		
-	पूर्ण
-	अगर (copy_to_user(अगरr->अगरr_data, &bi, माप(bi)))
-		वापस -EFAULT;
-	वापस 0;
+	}
+	if (copy_to_user(ifr->ifr_data, &bi, sizeof(bi)))
+		return -EFAULT;
+	return 0;
 
-पूर्ण
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल स्थिर काष्ठा net_device_ops hdlcdrv_netdev = अणु
-	.nकरो_खोलो	= hdlcdrv_खोलो,
-	.nकरो_stop	= hdlcdrv_बंद,
-	.nकरो_start_xmit = hdlcdrv_send_packet,
-	.nकरो_करो_ioctl	= hdlcdrv_ioctl,
-	.nकरो_set_mac_address = hdlcdrv_set_mac_address,
-पूर्ण;
+static const struct net_device_ops hdlcdrv_netdev = {
+	.ndo_open	= hdlcdrv_open,
+	.ndo_stop	= hdlcdrv_close,
+	.ndo_start_xmit = hdlcdrv_send_packet,
+	.ndo_do_ioctl	= hdlcdrv_ioctl,
+	.ndo_set_mac_address = hdlcdrv_set_mac_address,
+};
 
 /*
  * Initialize fields in hdlcdrv
  */
-अटल व्योम hdlcdrv_setup(काष्ठा net_device *dev)
-अणु
-	अटल स्थिर काष्ठा hdlcdrv_channel_params dflt_ch_params = अणु 
+static void hdlcdrv_setup(struct net_device *dev)
+{
+	static const struct hdlcdrv_channel_params dflt_ch_params = { 
 		20, 2, 10, 40, 0 
-	पूर्ण;
-	काष्ठा hdlcdrv_state *s = netdev_priv(dev);
+	};
+	struct hdlcdrv_state *s = netdev_priv(dev);
 
 	/*
-	 * initialize the hdlcdrv_state काष्ठा
+	 * initialize the hdlcdrv_state struct
 	 */
 	s->ch_params = dflt_ch_params;
 	s->ptt_keyed = 0;
@@ -650,53 +649,53 @@
 	s->hdlctx.numflags = 0;
 	s->hdlctx.bitstream = s->hdlctx.bitbuf = s->hdlctx.numbits = 0;
 	s->hdlctx.ptt = 0;
-	s->hdlctx.slotcnt = s->ch_params.slotसमय;
+	s->hdlctx.slotcnt = s->ch_params.slottime;
 	s->hdlctx.calibrate = 0;
 
-#अगर_घोषित HDLCDRV_DEBUG
+#ifdef HDLCDRV_DEBUG
 	s->bitbuf_channel.rd = s->bitbuf_channel.wr = 0;
 	s->bitbuf_channel.shreg = 0x80;
 
 	s->bitbuf_hdlc.rd = s->bitbuf_hdlc.wr = 0;
 	s->bitbuf_hdlc.shreg = 0x80;
-#पूर्ण_अगर /* HDLCDRV_DEBUG */
+#endif /* HDLCDRV_DEBUG */
 
 
-	/* Fill in the fields of the device काष्ठाure */
+	/* Fill in the fields of the device structure */
 
-	s->skb = शून्य;
+	s->skb = NULL;
 	
 	dev->netdev_ops = &hdlcdrv_netdev;
 	dev->header_ops = &ax25_header_ops;
 	
 	dev->type = ARPHRD_AX25;           /* AF_AX25 device */
 	dev->hard_header_len = AX25_MAX_HEADER_LEN + AX25_BPQ_HEADER_LEN;
-	dev->mtu = AX25_DEF_PACLEN;        /* eth_mtu is the शेष */
-	dev->addr_len = AX25_ADDR_LEN;     /* माप an ax.25 address */
-	स_नकल(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
-	स_नकल(dev->dev_addr, &ax25_defaddr, AX25_ADDR_LEN);
+	dev->mtu = AX25_DEF_PACLEN;        /* eth_mtu is the default */
+	dev->addr_len = AX25_ADDR_LEN;     /* sizeof an ax.25 address */
+	memcpy(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
+	memcpy(dev->dev_addr, &ax25_defaddr, AX25_ADDR_LEN);
 	dev->tx_queue_len = 16;
-पूर्ण
+}
 
 /* --------------------------------------------------------------------- */
-काष्ठा net_device *hdlcdrv_रेजिस्टर(स्थिर काष्ठा hdlcdrv_ops *ops,
-				    अचिन्हित पूर्णांक privsize, स्थिर अक्षर *अगरname,
-				    अचिन्हित पूर्णांक baseaddr, अचिन्हित पूर्णांक irq, 
-				    अचिन्हित पूर्णांक dma) 
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा hdlcdrv_state *s;
-	पूर्णांक err;
+struct net_device *hdlcdrv_register(const struct hdlcdrv_ops *ops,
+				    unsigned int privsize, const char *ifname,
+				    unsigned int baseaddr, unsigned int irq, 
+				    unsigned int dma) 
+{
+	struct net_device *dev;
+	struct hdlcdrv_state *s;
+	int err;
 
-	अगर (privsize < माप(काष्ठा hdlcdrv_state))
-		privsize = माप(काष्ठा hdlcdrv_state);
+	if (privsize < sizeof(struct hdlcdrv_state))
+		privsize = sizeof(struct hdlcdrv_state);
 
-	dev = alloc_netdev(privsize, अगरname, NET_NAME_UNKNOWN, hdlcdrv_setup);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = alloc_netdev(privsize, ifname, NET_NAME_UNKNOWN, hdlcdrv_setup);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	/*
-	 * initialize part of the hdlcdrv_state काष्ठा
+	 * initialize part of the hdlcdrv_state struct
 	 */
 	s = netdev_priv(dev);
 	s->magic = HDLCDRV_MAGIC;
@@ -705,54 +704,54 @@
 	dev->irq = irq;
 	dev->dma = dma;
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err < 0) अणु
-		prपूर्णांकk(KERN_WARNING "hdlcdrv: cannot register net "
+	err = register_netdev(dev);
+	if (err < 0) {
+		printk(KERN_WARNING "hdlcdrv: cannot register net "
 		       "device %s\n", dev->name);
-		मुक्त_netdev(dev);
+		free_netdev(dev);
 		dev = ERR_PTR(err);
-	पूर्ण
-	वापस dev;
-पूर्ण
+	}
+	return dev;
+}
 
 /* --------------------------------------------------------------------- */
 
-व्योम hdlcdrv_unरेजिस्टर(काष्ठा net_device *dev) 
-अणु
-	काष्ठा hdlcdrv_state *s = netdev_priv(dev);
+void hdlcdrv_unregister(struct net_device *dev) 
+{
+	struct hdlcdrv_state *s = netdev_priv(dev);
 
 	BUG_ON(s->magic != HDLCDRV_MAGIC);
 
-	अगर (s->खोलोed && s->ops->बंद)
-		s->ops->बंद(dev);
-	unरेजिस्टर_netdev(dev);
+	if (s->opened && s->ops->close)
+		s->ops->close(dev);
+	unregister_netdev(dev);
 	
-	मुक्त_netdev(dev);
-पूर्ण
+	free_netdev(dev);
+}
 
 /* --------------------------------------------------------------------- */
 
 EXPORT_SYMBOL(hdlcdrv_receiver);
 EXPORT_SYMBOL(hdlcdrv_transmitter);
 EXPORT_SYMBOL(hdlcdrv_arbitrate);
-EXPORT_SYMBOL(hdlcdrv_रेजिस्टर);
-EXPORT_SYMBOL(hdlcdrv_unरेजिस्टर);
+EXPORT_SYMBOL(hdlcdrv_register);
+EXPORT_SYMBOL(hdlcdrv_unregister);
 
 /* --------------------------------------------------------------------- */
 
-अटल पूर्णांक __init hdlcdrv_init_driver(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "hdlcdrv: (C) 1996-2000 Thomas Sailer HB9JNX/AE4WA\n");
-	prपूर्णांकk(KERN_INFO "hdlcdrv: version 0.8\n");
-	वापस 0;
-पूर्ण
+static int __init hdlcdrv_init_driver(void)
+{
+	printk(KERN_INFO "hdlcdrv: (C) 1996-2000 Thomas Sailer HB9JNX/AE4WA\n");
+	printk(KERN_INFO "hdlcdrv: version 0.8\n");
+	return 0;
+}
 
 /* --------------------------------------------------------------------- */
 
-अटल व्योम __निकास hdlcdrv_cleanup_driver(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "hdlcdrv: cleanup\n");
-पूर्ण
+static void __exit hdlcdrv_cleanup_driver(void)
+{
+	printk(KERN_INFO "hdlcdrv: cleanup\n");
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -760,6 +759,6 @@ MODULE_AUTHOR("Thomas M. Sailer, sailer@ife.ee.ethz.ch, hb9jnx@hb9w.che.eu");
 MODULE_DESCRIPTION("Packet Radio network interface HDLC encoder/decoder");
 MODULE_LICENSE("GPL");
 module_init(hdlcdrv_init_driver);
-module_निकास(hdlcdrv_cleanup_driver);
+module_exit(hdlcdrv_cleanup_driver);
 
 /* --------------------------------------------------------------------- */

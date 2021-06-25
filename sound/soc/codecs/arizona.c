@@ -1,340 +1,339 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * arizona.c - Wolfson Arizona class device shared support
  *
  * Copyright 2012 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gcd.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/tlv.h>
+#include <linux/delay.h>
+#include <linux/gcd.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pm_runtime.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/tlv.h>
 
-#समावेश <linux/mfd/arizona/core.h>
-#समावेश <linux/mfd/arizona/रेजिस्टरs.h>
+#include <linux/mfd/arizona/core.h>
+#include <linux/mfd/arizona/registers.h>
 
-#समावेश "arizona.h"
+#include "arizona.h"
 
-#घोषणा ARIZONA_AIF_BCLK_CTRL                   0x00
-#घोषणा ARIZONA_AIF_TX_PIN_CTRL                 0x01
-#घोषणा ARIZONA_AIF_RX_PIN_CTRL                 0x02
-#घोषणा ARIZONA_AIF_RATE_CTRL                   0x03
-#घोषणा ARIZONA_AIF_FORMAT                      0x04
-#घोषणा ARIZONA_AIF_TX_BCLK_RATE                0x05
-#घोषणा ARIZONA_AIF_RX_BCLK_RATE                0x06
-#घोषणा ARIZONA_AIF_FRAME_CTRL_1                0x07
-#घोषणा ARIZONA_AIF_FRAME_CTRL_2                0x08
-#घोषणा ARIZONA_AIF_FRAME_CTRL_3                0x09
-#घोषणा ARIZONA_AIF_FRAME_CTRL_4                0x0A
-#घोषणा ARIZONA_AIF_FRAME_CTRL_5                0x0B
-#घोषणा ARIZONA_AIF_FRAME_CTRL_6                0x0C
-#घोषणा ARIZONA_AIF_FRAME_CTRL_7                0x0D
-#घोषणा ARIZONA_AIF_FRAME_CTRL_8                0x0E
-#घोषणा ARIZONA_AIF_FRAME_CTRL_9                0x0F
-#घोषणा ARIZONA_AIF_FRAME_CTRL_10               0x10
-#घोषणा ARIZONA_AIF_FRAME_CTRL_11               0x11
-#घोषणा ARIZONA_AIF_FRAME_CTRL_12               0x12
-#घोषणा ARIZONA_AIF_FRAME_CTRL_13               0x13
-#घोषणा ARIZONA_AIF_FRAME_CTRL_14               0x14
-#घोषणा ARIZONA_AIF_FRAME_CTRL_15               0x15
-#घोषणा ARIZONA_AIF_FRAME_CTRL_16               0x16
-#घोषणा ARIZONA_AIF_FRAME_CTRL_17               0x17
-#घोषणा ARIZONA_AIF_FRAME_CTRL_18               0x18
-#घोषणा ARIZONA_AIF_TX_ENABLES                  0x19
-#घोषणा ARIZONA_AIF_RX_ENABLES                  0x1A
-#घोषणा ARIZONA_AIF_FORCE_WRITE                 0x1B
+#define ARIZONA_AIF_BCLK_CTRL                   0x00
+#define ARIZONA_AIF_TX_PIN_CTRL                 0x01
+#define ARIZONA_AIF_RX_PIN_CTRL                 0x02
+#define ARIZONA_AIF_RATE_CTRL                   0x03
+#define ARIZONA_AIF_FORMAT                      0x04
+#define ARIZONA_AIF_TX_BCLK_RATE                0x05
+#define ARIZONA_AIF_RX_BCLK_RATE                0x06
+#define ARIZONA_AIF_FRAME_CTRL_1                0x07
+#define ARIZONA_AIF_FRAME_CTRL_2                0x08
+#define ARIZONA_AIF_FRAME_CTRL_3                0x09
+#define ARIZONA_AIF_FRAME_CTRL_4                0x0A
+#define ARIZONA_AIF_FRAME_CTRL_5                0x0B
+#define ARIZONA_AIF_FRAME_CTRL_6                0x0C
+#define ARIZONA_AIF_FRAME_CTRL_7                0x0D
+#define ARIZONA_AIF_FRAME_CTRL_8                0x0E
+#define ARIZONA_AIF_FRAME_CTRL_9                0x0F
+#define ARIZONA_AIF_FRAME_CTRL_10               0x10
+#define ARIZONA_AIF_FRAME_CTRL_11               0x11
+#define ARIZONA_AIF_FRAME_CTRL_12               0x12
+#define ARIZONA_AIF_FRAME_CTRL_13               0x13
+#define ARIZONA_AIF_FRAME_CTRL_14               0x14
+#define ARIZONA_AIF_FRAME_CTRL_15               0x15
+#define ARIZONA_AIF_FRAME_CTRL_16               0x16
+#define ARIZONA_AIF_FRAME_CTRL_17               0x17
+#define ARIZONA_AIF_FRAME_CTRL_18               0x18
+#define ARIZONA_AIF_TX_ENABLES                  0x19
+#define ARIZONA_AIF_RX_ENABLES                  0x1A
+#define ARIZONA_AIF_FORCE_WRITE                 0x1B
 
-#घोषणा ARIZONA_FLL_VCO_CORNER 141900000
-#घोषणा ARIZONA_FLL_MAX_FREF   13500000
-#घोषणा ARIZONA_FLL_MIN_FVCO   90000000
-#घोषणा ARIZONA_FLL_MAX_FRATIO 16
-#घोषणा ARIZONA_FLL_MAX_REFDIV 8
-#घोषणा ARIZONA_FLL_MIN_OUTDIV 2
-#घोषणा ARIZONA_FLL_MAX_OUTDIV 7
+#define ARIZONA_FLL_VCO_CORNER 141900000
+#define ARIZONA_FLL_MAX_FREF   13500000
+#define ARIZONA_FLL_MIN_FVCO   90000000
+#define ARIZONA_FLL_MAX_FRATIO 16
+#define ARIZONA_FLL_MAX_REFDIV 8
+#define ARIZONA_FLL_MIN_OUTDIV 2
+#define ARIZONA_FLL_MAX_OUTDIV 7
 
-#घोषणा ARIZONA_FMT_DSP_MODE_A          0
-#घोषणा ARIZONA_FMT_DSP_MODE_B          1
-#घोषणा ARIZONA_FMT_I2S_MODE            2
-#घोषणा ARIZONA_FMT_LEFT_JUSTIFIED_MODE 3
+#define ARIZONA_FMT_DSP_MODE_A          0
+#define ARIZONA_FMT_DSP_MODE_B          1
+#define ARIZONA_FMT_I2S_MODE            2
+#define ARIZONA_FMT_LEFT_JUSTIFIED_MODE 3
 
-#घोषणा arizona_fll_err(_fll, fmt, ...) \
+#define arizona_fll_err(_fll, fmt, ...) \
 	dev_err(_fll->arizona->dev, "FLL%d: " fmt, _fll->id, ##__VA_ARGS__)
-#घोषणा arizona_fll_warn(_fll, fmt, ...) \
+#define arizona_fll_warn(_fll, fmt, ...) \
 	dev_warn(_fll->arizona->dev, "FLL%d: " fmt, _fll->id, ##__VA_ARGS__)
-#घोषणा arizona_fll_dbg(_fll, fmt, ...) \
+#define arizona_fll_dbg(_fll, fmt, ...) \
 	dev_dbg(_fll->arizona->dev, "FLL%d: " fmt, _fll->id, ##__VA_ARGS__)
 
-#घोषणा arizona_aअगर_err(_dai, fmt, ...) \
+#define arizona_aif_err(_dai, fmt, ...) \
 	dev_err(_dai->dev, "AIF%d: " fmt, _dai->id, ##__VA_ARGS__)
-#घोषणा arizona_aअगर_warn(_dai, fmt, ...) \
+#define arizona_aif_warn(_dai, fmt, ...) \
 	dev_warn(_dai->dev, "AIF%d: " fmt, _dai->id, ##__VA_ARGS__)
-#घोषणा arizona_aअगर_dbg(_dai, fmt, ...) \
+#define arizona_aif_dbg(_dai, fmt, ...) \
 	dev_dbg(_dai->dev, "AIF%d: " fmt, _dai->id, ##__VA_ARGS__)
 
-अटल पूर्णांक arizona_spk_ev(काष्ठा snd_soc_dapm_widget *w,
-			  काष्ठा snd_kcontrol *kcontrol,
-			  पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
-	पूर्णांक val;
+static int arizona_spk_ev(struct snd_soc_dapm_widget *w,
+			  struct snd_kcontrol *kcontrol,
+			  int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
+	int val;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		val = snd_soc_component_पढ़ो(component,
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		val = snd_soc_component_read(component,
 					       ARIZONA_INTERRUPT_RAW_STATUS_3);
-		अगर (val & ARIZONA_SPK_OVERHEAT_STS) अणु
+		if (val & ARIZONA_SPK_OVERHEAT_STS) {
 			dev_crit(arizona->dev,
 				 "Speaker not enabled due to temperature\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
 		regmap_update_bits_async(arizona->regmap,
 					 ARIZONA_OUTPUT_ENABLES_1,
-					 1 << w->shअगरt, 1 << w->shअगरt);
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
+					 1 << w->shift, 1 << w->shift);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
 		regmap_update_bits_async(arizona->regmap,
 					 ARIZONA_OUTPUT_ENABLES_1,
-					 1 << w->shअगरt, 0);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+					 1 << w->shift, 0);
+		break;
+	default:
+		break;
+	}
 
-	वापस arizona_out_ev(w, kcontrol, event);
-पूर्ण
+	return arizona_out_ev(w, kcontrol, event);
+}
 
-अटल irqवापस_t arizona_thermal_warn(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा arizona *arizona = data;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static irqreturn_t arizona_thermal_warn(int irq, void *data)
+{
+	struct arizona *arizona = data;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, ARIZONA_INTERRUPT_RAW_STATUS_3,
+	ret = regmap_read(arizona->regmap, ARIZONA_INTERRUPT_RAW_STATUS_3,
 			  &val);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(arizona->dev, "Failed to read thermal status: %d\n",
 			ret);
-	पूर्ण अन्यथा अगर (val & ARIZONA_SPK_OVERHEAT_WARN_STS) अणु
+	} else if (val & ARIZONA_SPK_OVERHEAT_WARN_STS) {
 		dev_crit(arizona->dev, "Thermal warning\n");
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t arizona_thermal_shutकरोwn(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा arizona *arizona = data;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static irqreturn_t arizona_thermal_shutdown(int irq, void *data)
+{
+	struct arizona *arizona = data;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, ARIZONA_INTERRUPT_RAW_STATUS_3,
+	ret = regmap_read(arizona->regmap, ARIZONA_INTERRUPT_RAW_STATUS_3,
 			  &val);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(arizona->dev, "Failed to read thermal status: %d\n",
 			ret);
-	पूर्ण अन्यथा अगर (val & ARIZONA_SPK_OVERHEAT_STS) अणु
+	} else if (val & ARIZONA_SPK_OVERHEAT_STS) {
 		dev_crit(arizona->dev, "Thermal shutdown\n");
 		ret = regmap_update_bits(arizona->regmap,
 					 ARIZONA_OUTPUT_ENABLES_1,
 					 ARIZONA_OUT4L_ENA |
 					 ARIZONA_OUT4R_ENA, 0);
-		अगर (ret != 0)
+		if (ret != 0)
 			dev_crit(arizona->dev,
 				 "Failed to disable speaker outputs: %d\n",
 				 ret);
-	पूर्ण
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget arizona_spkl =
+static const struct snd_soc_dapm_widget arizona_spkl =
 	SND_SOC_DAPM_PGA_E("OUT4L", SND_SOC_NOPM,
-			   ARIZONA_OUT4L_ENA_SHIFT, 0, शून्य, 0, arizona_spk_ev,
+			   ARIZONA_OUT4L_ENA_SHIFT, 0, NULL, 0, arizona_spk_ev,
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD);
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget arizona_spkr =
+static const struct snd_soc_dapm_widget arizona_spkr =
 	SND_SOC_DAPM_PGA_E("OUT4R", SND_SOC_NOPM,
-			   ARIZONA_OUT4R_ENA_SHIFT, 0, शून्य, 0, arizona_spk_ev,
+			   ARIZONA_OUT4R_ENA_SHIFT, 0, NULL, 0, arizona_spk_ev,
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD);
 
-पूर्णांक arizona_init_spk(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक ret;
+int arizona_init_spk(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int ret;
 
 	ret = snd_soc_dapm_new_controls(dapm, &arizona_spkl, 1);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	चयन (arizona->type) अणु
-	हाल WM8997:
-	हाल CS47L24:
-	हाल WM1831:
-		अवरोध;
-	शेष:
+	switch (arizona->type) {
+	case WM8997:
+	case CS47L24:
+	case WM1831:
+		break;
+	default:
 		ret = snd_soc_dapm_new_controls(dapm, &arizona_spkr, 1);
-		अगर (ret != 0)
-			वापस ret;
-		अवरोध;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_spk);
 
-पूर्णांक arizona_init_spk_irqs(काष्ठा arizona *arizona)
-अणु
-	पूर्णांक ret;
+int arizona_init_spk_irqs(struct arizona *arizona)
+{
+	int ret;
 
 	ret = arizona_request_irq(arizona, ARIZONA_IRQ_SPK_OVERHEAT_WARN,
 				  "Thermal warning", arizona_thermal_warn,
 				  arizona);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(arizona->dev,
 			"Failed to get thermal warning IRQ: %d\n",
 			ret);
 
 	ret = arizona_request_irq(arizona, ARIZONA_IRQ_SPK_OVERHEAT,
-				  "Thermal shutdown", arizona_thermal_shutकरोwn,
+				  "Thermal shutdown", arizona_thermal_shutdown,
 				  arizona);
-	अगर (ret != 0)
+	if (ret != 0)
 		dev_err(arizona->dev,
 			"Failed to get thermal shutdown IRQ: %d\n",
 			ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_spk_irqs);
 
-पूर्णांक arizona_मुक्त_spk_irqs(काष्ठा arizona *arizona)
-अणु
-	arizona_मुक्त_irq(arizona, ARIZONA_IRQ_SPK_OVERHEAT_WARN, arizona);
-	arizona_मुक्त_irq(arizona, ARIZONA_IRQ_SPK_OVERHEAT, arizona);
+int arizona_free_spk_irqs(struct arizona *arizona)
+{
+	arizona_free_irq(arizona, ARIZONA_IRQ_SPK_OVERHEAT_WARN, arizona);
+	arizona_free_irq(arizona, ARIZONA_IRQ_SPK_OVERHEAT, arizona);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(arizona_मुक्त_spk_irqs);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(arizona_free_spk_irqs);
 
-अटल स्थिर काष्ठा snd_soc_dapm_route arizona_mono_routes[] = अणु
-	अणु "OUT1R", शून्य, "OUT1L" पूर्ण,
-	अणु "OUT2R", शून्य, "OUT2L" पूर्ण,
-	अणु "OUT3R", शून्य, "OUT3L" पूर्ण,
-	अणु "OUT4R", शून्य, "OUT4L" पूर्ण,
-	अणु "OUT5R", शून्य, "OUT5L" पूर्ण,
-	अणु "OUT6R", शून्य, "OUT6L" पूर्ण,
-पूर्ण;
+static const struct snd_soc_dapm_route arizona_mono_routes[] = {
+	{ "OUT1R", NULL, "OUT1L" },
+	{ "OUT2R", NULL, "OUT2L" },
+	{ "OUT3R", NULL, "OUT3L" },
+	{ "OUT4R", NULL, "OUT4L" },
+	{ "OUT5R", NULL, "OUT5L" },
+	{ "OUT6R", NULL, "OUT6L" },
+};
 
-पूर्णांक arizona_init_mono(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक i;
+int arizona_init_mono(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int i;
 
-	क्रम (i = 0; i < ARIZONA_MAX_OUTPUT; ++i) अणु
-		अगर (arizona->pdata.out_mono[i])
+	for (i = 0; i < ARIZONA_MAX_OUTPUT; ++i) {
+		if (arizona->pdata.out_mono[i])
 			snd_soc_dapm_add_routes(dapm,
 						&arizona_mono_routes[i], 1);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_mono);
 
-पूर्णांक arizona_init_gpio(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक i;
+int arizona_init_gpio(struct snd_soc_component *component)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int i;
 
-	चयन (arizona->type) अणु
-	हाल WM5110:
-	हाल WM8280:
+	switch (arizona->type) {
+	case WM5110:
+	case WM8280:
 		snd_soc_component_disable_pin(component,
 					      "DRC2 Signal Activity");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	snd_soc_component_disable_pin(component, "DRC1 Signal Activity");
 
-	क्रम (i = 0; i < ARRAY_SIZE(arizona->pdata.gpio_शेषs); i++) अणु
-		चयन (arizona->pdata.gpio_शेषs[i] & ARIZONA_GPN_FN_MASK) अणु
-		हाल ARIZONA_GP_FN_DRC1_SIGNAL_DETECT:
+	for (i = 0; i < ARRAY_SIZE(arizona->pdata.gpio_defaults); i++) {
+		switch (arizona->pdata.gpio_defaults[i] & ARIZONA_GPN_FN_MASK) {
+		case ARIZONA_GP_FN_DRC1_SIGNAL_DETECT:
 			snd_soc_component_enable_pin(component,
 						     "DRC1 Signal Activity");
-			अवरोध;
-		हाल ARIZONA_GP_FN_DRC2_SIGNAL_DETECT:
+			break;
+		case ARIZONA_GP_FN_DRC2_SIGNAL_DETECT:
 			snd_soc_component_enable_pin(component,
 						     "DRC2 Signal Activity");
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_gpio);
 
-पूर्णांक arizona_init_common(काष्ठा arizona *arizona)
-अणु
-	काष्ठा arizona_pdata *pdata = &arizona->pdata;
-	अचिन्हित पूर्णांक val, mask;
-	पूर्णांक i;
+int arizona_init_common(struct arizona *arizona)
+{
+	struct arizona_pdata *pdata = &arizona->pdata;
+	unsigned int val, mask;
+	int i;
 
-	BLOCKING_INIT_NOTIFIER_HEAD(&arizona->notअगरier);
+	BLOCKING_INIT_NOTIFIER_HEAD(&arizona->notifier);
 
-	क्रम (i = 0; i < ARIZONA_MAX_OUTPUT; ++i) अणु
-		/* Default is 0 so noop with शेषs */
-		अगर (pdata->out_mono[i])
+	for (i = 0; i < ARIZONA_MAX_OUTPUT; ++i) {
+		/* Default is 0 so noop with defaults */
+		if (pdata->out_mono[i])
 			val = ARIZONA_OUT1_MONO;
-		अन्यथा
+		else
 			val = 0;
 
 		regmap_update_bits(arizona->regmap,
 				   ARIZONA_OUTPUT_PATH_CONFIG_1L + (i * 8),
 				   ARIZONA_OUT1_MONO, val);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARIZONA_MAX_PDM_SPK; i++) अणु
-		अगर (pdata->spk_mute[i])
+	for (i = 0; i < ARIZONA_MAX_PDM_SPK; i++) {
+		if (pdata->spk_mute[i])
 			regmap_update_bits(arizona->regmap,
 					   ARIZONA_PDM_SPK1_CTRL_1 + (i * 2),
 					   ARIZONA_SPK1_MUTE_ENDIAN_MASK |
 					   ARIZONA_SPK1_MUTE_SEQ1_MASK,
 					   pdata->spk_mute[i]);
 
-		अगर (pdata->spk_fmt[i])
+		if (pdata->spk_fmt[i])
 			regmap_update_bits(arizona->regmap,
 					   ARIZONA_PDM_SPK1_CTRL_2 + (i * 2),
 					   ARIZONA_SPK1_FMT_MASK,
 					   pdata->spk_fmt[i]);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARIZONA_MAX_INPUT; i++) अणु
-		/* Default क्रम both is 0 so noop with शेषs */
+	for (i = 0; i < ARIZONA_MAX_INPUT; i++) {
+		/* Default for both is 0 so noop with defaults */
 		val = pdata->dmic_ref[i] << ARIZONA_IN1_DMIC_SUP_SHIFT;
-		अगर (pdata->inmode[i] & ARIZONA_INMODE_DMIC)
+		if (pdata->inmode[i] & ARIZONA_INMODE_DMIC)
 			val |= 1 << ARIZONA_IN1_MODE_SHIFT;
 
-		चयन (arizona->type) अणु
-		हाल WM8998:
-		हाल WM1814:
+		switch (arizona->type) {
+		case WM8998:
+		case WM1814:
 			regmap_update_bits(arizona->regmap,
 				ARIZONA_ADC_DIGITAL_VOLUME_1L + (i * 8),
 				ARIZONA_IN1L_SRC_SE_MASK,
@@ -349,43 +348,43 @@ EXPORT_SYMBOL_GPL(arizona_init_gpio);
 
 			mask = ARIZONA_IN1_DMIC_SUP_MASK |
 			       ARIZONA_IN1_MODE_MASK;
-			अवरोध;
-		शेष:
-			अगर (pdata->inmode[i] & ARIZONA_INMODE_SE)
+			break;
+		default:
+			if (pdata->inmode[i] & ARIZONA_INMODE_SE)
 				val |= 1 << ARIZONA_IN1_SINGLE_ENDED_SHIFT;
 
 			mask = ARIZONA_IN1_DMIC_SUP_MASK |
 			       ARIZONA_IN1_MODE_MASK |
 			       ARIZONA_IN1_SINGLE_ENDED_MASK;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		regmap_update_bits(arizona->regmap,
 				   ARIZONA_IN1L_CONTROL + (i * 8),
 				   mask, val);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_common);
 
-पूर्णांक arizona_init_vol_limit(काष्ठा arizona *arizona)
-अणु
-	पूर्णांक i;
+int arizona_init_vol_limit(struct arizona *arizona)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(arizona->pdata.out_vol_limit); ++i) अणु
-		अगर (arizona->pdata.out_vol_limit[i])
+	for (i = 0; i < ARRAY_SIZE(arizona->pdata.out_vol_limit); ++i) {
+		if (arizona->pdata.out_vol_limit[i])
 			regmap_update_bits(arizona->regmap,
 					   ARIZONA_DAC_VOLUME_LIMIT_1L + i * 4,
 					   ARIZONA_OUT1L_VOL_LIM_MASK,
 					   arizona->pdata.out_vol_limit[i]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_vol_limit);
 
-स्थिर अक्षर * स्थिर arizona_mixer_texts[ARIZONA_NUM_MIXER_INPUTS] = अणु
+const char * const arizona_mixer_texts[ARIZONA_NUM_MIXER_INPUTS] = {
 	"None",
 	"Tone Generator 1",
 	"Tone Generator 2",
@@ -490,10 +489,10 @@ EXPORT_SYMBOL_GPL(arizona_init_vol_limit);
 	"ISRC3DEC2",
 	"ISRC3DEC3",
 	"ISRC3DEC4",
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_mixer_texts);
 
-अचिन्हित पूर्णांक arizona_mixer_values[ARIZONA_NUM_MIXER_INPUTS] = अणु
+unsigned int arizona_mixer_values[ARIZONA_NUM_MIXER_INPUTS] = {
 	0x00,  /* None */
 	0x04,  /* Tone */
 	0x05,
@@ -501,7 +500,7 @@ EXPORT_SYMBOL_GPL(arizona_mixer_texts);
 	0x08,  /* AEC */
 	0x09,  /* AEC2 */
 	0x0c,  /* Noise mixer */
-	0x0d,  /* Comक्रमt noise */
+	0x0d,  /* Comfort noise */
 	0x10,  /* IN1L */
 	0x11,
 	0x12,
@@ -598,49 +597,49 @@ EXPORT_SYMBOL_GPL(arizona_mixer_texts);
 	0xb5,
 	0xb6,
 	0xb7,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_mixer_values);
 
-स्थिर DECLARE_TLV_DB_SCALE(arizona_mixer_tlv, -3200, 100, 0);
+const DECLARE_TLV_DB_SCALE(arizona_mixer_tlv, -3200, 100, 0);
 EXPORT_SYMBOL_GPL(arizona_mixer_tlv);
 
-स्थिर अक्षर * स्थिर arizona_sample_rate_text[ARIZONA_SAMPLE_RATE_ENUM_SIZE] = अणु
+const char * const arizona_sample_rate_text[ARIZONA_SAMPLE_RATE_ENUM_SIZE] = {
 	"12kHz", "24kHz", "48kHz", "96kHz", "192kHz",
 	"11.025kHz", "22.05kHz", "44.1kHz", "88.2kHz", "176.4kHz",
 	"4kHz", "8kHz", "16kHz", "32kHz",
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_sample_rate_text);
 
-स्थिर अचिन्हित पूर्णांक arizona_sample_rate_val[ARIZONA_SAMPLE_RATE_ENUM_SIZE] = अणु
+const unsigned int arizona_sample_rate_val[ARIZONA_SAMPLE_RATE_ENUM_SIZE] = {
 	0x01, 0x02, 0x03, 0x04, 0x05, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
 	0x10, 0x11, 0x12, 0x13,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_sample_rate_val);
 
-स्थिर अक्षर *arizona_sample_rate_val_to_name(अचिन्हित पूर्णांक rate_val)
-अणु
-	पूर्णांक i;
+const char *arizona_sample_rate_val_to_name(unsigned int rate_val)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(arizona_sample_rate_val); ++i) अणु
-		अगर (arizona_sample_rate_val[i] == rate_val)
-			वापस arizona_sample_rate_text[i];
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(arizona_sample_rate_val); ++i) {
+		if (arizona_sample_rate_val[i] == rate_val)
+			return arizona_sample_rate_text[i];
+	}
 
-	वापस "Illegal";
-पूर्ण
+	return "Illegal";
+}
 EXPORT_SYMBOL_GPL(arizona_sample_rate_val_to_name);
 
-स्थिर अक्षर * स्थिर arizona_rate_text[ARIZONA_RATE_ENUM_SIZE] = अणु
+const char * const arizona_rate_text[ARIZONA_RATE_ENUM_SIZE] = {
 	"SYNCCLK rate", "8kHz", "16kHz", "ASYNCCLK rate",
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_rate_text);
 
-स्थिर अचिन्हित पूर्णांक arizona_rate_val[ARIZONA_RATE_ENUM_SIZE] = अणु
+const unsigned int arizona_rate_val[ARIZONA_RATE_ENUM_SIZE] = {
 	0, 1, 2, 8,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_rate_val);
 
-स्थिर काष्ठा soc_क्रमागत arizona_isrc_fsh[] = अणु
+const struct soc_enum arizona_isrc_fsh[] = {
 	SOC_VALUE_ENUM_SINGLE(ARIZONA_ISRC_1_CTRL_1,
 			      ARIZONA_ISRC1_FSH_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE,
@@ -653,10 +652,10 @@ EXPORT_SYMBOL_GPL(arizona_rate_val);
 			      ARIZONA_ISRC3_FSH_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE,
 			      arizona_rate_text, arizona_rate_val),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_isrc_fsh);
 
-स्थिर काष्ठा soc_क्रमागत arizona_isrc_fsl[] = अणु
+const struct soc_enum arizona_isrc_fsl[] = {
 	SOC_VALUE_ENUM_SINGLE(ARIZONA_ISRC_1_CTRL_2,
 			      ARIZONA_ISRC1_FSL_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE,
@@ -669,20 +668,20 @@ EXPORT_SYMBOL_GPL(arizona_isrc_fsh);
 			      ARIZONA_ISRC3_FSL_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE,
 			      arizona_rate_text, arizona_rate_val),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_isrc_fsl);
 
-स्थिर काष्ठा soc_क्रमागत arizona_asrc_rate1 =
+const struct soc_enum arizona_asrc_rate1 =
 	SOC_VALUE_ENUM_SINGLE(ARIZONA_ASRC_RATE1,
 			      ARIZONA_ASRC_RATE1_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE - 1,
 			      arizona_rate_text, arizona_rate_val);
 EXPORT_SYMBOL_GPL(arizona_asrc_rate1);
 
-अटल स्थिर अक्षर * स्थिर arizona_vol_ramp_text[] = अणु
+static const char * const arizona_vol_ramp_text[] = {
 	"0ms/6dB", "0.5ms/6dB", "1ms/6dB", "2ms/6dB", "4ms/6dB", "8ms/6dB",
 	"15ms/6dB", "30ms/6dB",
-पूर्ण;
+};
 
 SOC_ENUM_SINGLE_DECL(arizona_in_vd_ramp,
 		     ARIZONA_INPUT_VOLUME_RAMP,
@@ -708,9 +707,9 @@ SOC_ENUM_SINGLE_DECL(arizona_out_vi_ramp,
 		     arizona_vol_ramp_text);
 EXPORT_SYMBOL_GPL(arizona_out_vi_ramp);
 
-अटल स्थिर अक्षर * स्थिर arizona_lhpf_mode_text[] = अणु
+static const char * const arizona_lhpf_mode_text[] = {
 	"Low-pass", "High-pass"
-पूर्ण;
+};
 
 SOC_ENUM_SINGLE_DECL(arizona_lhpf1_mode,
 		     ARIZONA_HPLPF1_1,
@@ -736,9 +735,9 @@ SOC_ENUM_SINGLE_DECL(arizona_lhpf4_mode,
 		     arizona_lhpf_mode_text);
 EXPORT_SYMBOL_GPL(arizona_lhpf4_mode);
 
-अटल स्थिर अक्षर * स्थिर arizona_ng_hold_text[] = अणु
+static const char * const arizona_ng_hold_text[] = {
 	"30ms", "120ms", "250ms", "500ms",
-पूर्ण;
+};
 
 SOC_ENUM_SINGLE_DECL(arizona_ng_hold,
 		     ARIZONA_NOISE_GATE_CONTROL,
@@ -746,21 +745,21 @@ SOC_ENUM_SINGLE_DECL(arizona_ng_hold,
 		     arizona_ng_hold_text);
 EXPORT_SYMBOL_GPL(arizona_ng_hold);
 
-अटल स्थिर अक्षर * स्थिर arizona_in_hpf_cut_text[] = अणु
+static const char * const arizona_in_hpf_cut_text[] = {
 	"2.5Hz", "5Hz", "10Hz", "20Hz", "40Hz"
-पूर्ण;
+};
 
-SOC_ENUM_SINGLE_DECL(arizona_in_hpf_cut_क्रमागत,
+SOC_ENUM_SINGLE_DECL(arizona_in_hpf_cut_enum,
 		     ARIZONA_HPF_CONTROL,
 		     ARIZONA_IN_HPF_CUT_SHIFT,
 		     arizona_in_hpf_cut_text);
-EXPORT_SYMBOL_GPL(arizona_in_hpf_cut_क्रमागत);
+EXPORT_SYMBOL_GPL(arizona_in_hpf_cut_enum);
 
-अटल स्थिर अक्षर * स्थिर arizona_in_dmic_osr_text[] = अणु
+static const char * const arizona_in_dmic_osr_text[] = {
 	"1.536MHz", "3.072MHz", "6.144MHz", "768kHz",
-पूर्ण;
+};
 
-स्थिर काष्ठा soc_क्रमागत arizona_in_dmic_osr[] = अणु
+const struct soc_enum arizona_in_dmic_osr[] = {
 	SOC_ENUM_SINGLE(ARIZONA_IN1L_CONTROL, ARIZONA_IN1_OSR_SHIFT,
 			ARRAY_SIZE(arizona_in_dmic_osr_text),
 			arizona_in_dmic_osr_text),
@@ -773,18 +772,18 @@ EXPORT_SYMBOL_GPL(arizona_in_hpf_cut_क्रमागत);
 	SOC_ENUM_SINGLE(ARIZONA_IN4L_CONTROL, ARIZONA_IN4_OSR_SHIFT,
 			ARRAY_SIZE(arizona_in_dmic_osr_text),
 			arizona_in_dmic_osr_text),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_in_dmic_osr);
 
-अटल स्थिर अक्षर * स्थिर arizona_anc_input_src_text[] = अणु
+static const char * const arizona_anc_input_src_text[] = {
 	"None", "IN1", "IN2", "IN3", "IN4",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर arizona_anc_channel_src_text[] = अणु
+static const char * const arizona_anc_channel_src_text[] = {
 	"None", "Left", "Right", "Combine",
-पूर्ण;
+};
 
-स्थिर काष्ठा soc_क्रमागत arizona_anc_input_src[] = अणु
+const struct soc_enum arizona_anc_input_src[] = {
 	SOC_ENUM_SINGLE(ARIZONA_ANC_SRC,
 			ARIZONA_IN_RXANCL_SEL_SHIFT,
 			ARRAY_SIZE(arizona_anc_input_src_text),
@@ -801,24 +800,24 @@ EXPORT_SYMBOL_GPL(arizona_in_dmic_osr);
 			ARIZONA_FCR_MIC_MODE_SEL_SHIFT,
 			ARRAY_SIZE(arizona_anc_channel_src_text),
 			arizona_anc_channel_src_text),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_anc_input_src);
 
-अटल स्थिर अक्षर * स्थिर arizona_anc_ng_texts[] = अणु
+static const char * const arizona_anc_ng_texts[] = {
 	"None",
 	"Internal",
 	"External",
-पूर्ण;
+};
 
-SOC_ENUM_SINGLE_DECL(arizona_anc_ng_क्रमागत, SND_SOC_NOPM, 0,
+SOC_ENUM_SINGLE_DECL(arizona_anc_ng_enum, SND_SOC_NOPM, 0,
 		     arizona_anc_ng_texts);
-EXPORT_SYMBOL_GPL(arizona_anc_ng_क्रमागत);
+EXPORT_SYMBOL_GPL(arizona_anc_ng_enum);
 
-अटल स्थिर अक्षर * स्थिर arizona_output_anc_src_text[] = अणु
+static const char * const arizona_output_anc_src_text[] = {
 	"None", "RXANCL", "RXANCR",
-पूर्ण;
+};
 
-स्थिर काष्ठा soc_क्रमागत arizona_output_anc_src[] = अणु
+const struct soc_enum arizona_output_anc_src[] = {
 	SOC_ENUM_SINGLE(ARIZONA_OUTPUT_PATH_CONFIG_1L,
 			ARIZONA_OUT1L_ANC_SRC_SHIFT,
 			ARRAY_SIZE(arizona_output_anc_src_text),
@@ -867,655 +866,655 @@ EXPORT_SYMBOL_GPL(arizona_anc_ng_क्रमागत);
 			ARIZONA_OUT6R_ANC_SRC_SHIFT,
 			ARRAY_SIZE(arizona_output_anc_src_text),
 			arizona_output_anc_src_text),
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_output_anc_src);
 
-स्थिर काष्ठा snd_kcontrol_new arizona_voice_trigger_चयन[] = अणु
+const struct snd_kcontrol_new arizona_voice_trigger_switch[] = {
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0),
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 1, 1, 0),
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 2, 1, 0),
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 3, 1, 0),
-पूर्ण;
-EXPORT_SYMBOL_GPL(arizona_voice_trigger_चयन);
+};
+EXPORT_SYMBOL_GPL(arizona_voice_trigger_switch);
 
-अटल व्योम arizona_in_set_vu(काष्ठा snd_soc_component *component, पूर्णांक ena)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक i;
+static void arizona_in_set_vu(struct snd_soc_component *component, int ena)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int val;
+	int i;
 
-	अगर (ena)
+	if (ena)
 		val = ARIZONA_IN_VU;
-	अन्यथा
+	else
 		val = 0;
 
-	क्रम (i = 0; i < priv->num_inमाला_दो; i++)
+	for (i = 0; i < priv->num_inputs; i++)
 		snd_soc_component_update_bits(component,
 				    ARIZONA_ADC_DIGITAL_VOLUME_1L + (i * 4),
 				    ARIZONA_IN_VU, val);
-पूर्ण
+}
 
-bool arizona_input_analog(काष्ठा snd_soc_component *component, पूर्णांक shअगरt)
-अणु
-	अचिन्हित पूर्णांक reg = ARIZONA_IN1L_CONTROL + ((shअगरt / 2) * 8);
-	अचिन्हित पूर्णांक val = snd_soc_component_पढ़ो(component, reg);
+bool arizona_input_analog(struct snd_soc_component *component, int shift)
+{
+	unsigned int reg = ARIZONA_IN1L_CONTROL + ((shift / 2) * 8);
+	unsigned int val = snd_soc_component_read(component, reg);
 
-	वापस !(val & ARIZONA_IN1_MODE_MASK);
-पूर्ण
+	return !(val & ARIZONA_IN1_MODE_MASK);
+}
 EXPORT_SYMBOL_GPL(arizona_input_analog);
 
-पूर्णांक arizona_in_ev(काष्ठा snd_soc_dapm_widget *w, काष्ठा snd_kcontrol *kcontrol,
-		  पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक reg;
+int arizona_in_ev(struct snd_soc_dapm_widget *w, struct snd_kcontrol *kcontrol,
+		  int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int reg;
 
-	अगर (w->shअगरt % 2)
-		reg = ARIZONA_ADC_DIGITAL_VOLUME_1L + ((w->shअगरt / 2) * 8);
-	अन्यथा
-		reg = ARIZONA_ADC_DIGITAL_VOLUME_1R + ((w->shअगरt / 2) * 8);
+	if (w->shift % 2)
+		reg = ARIZONA_ADC_DIGITAL_VOLUME_1L + ((w->shift / 2) * 8);
+	else
+		reg = ARIZONA_ADC_DIGITAL_VOLUME_1R + ((w->shift / 2) * 8);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
 		priv->in_pending++;
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMU:
+		break;
+	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_component_update_bits(component, reg,
 					      ARIZONA_IN1L_MUTE, 0);
 
 		/* If this is the last input pending then allow VU */
 		priv->in_pending--;
-		अगर (priv->in_pending == 0) अणु
+		if (priv->in_pending == 0) {
 			msleep(1);
 			arizona_in_set_vu(component, 1);
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
+		}
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
 		snd_soc_component_update_bits(component, reg,
 				    ARIZONA_IN1L_MUTE | ARIZONA_IN_VU,
 				    ARIZONA_IN1L_MUTE | ARIZONA_IN_VU);
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
-		/* Disable volume updates अगर no inमाला_दो are enabled */
-		reg = snd_soc_component_पढ़ो(component, ARIZONA_INPUT_ENABLES);
-		अगर (reg == 0)
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		/* Disable volume updates if no inputs are enabled */
+		reg = snd_soc_component_read(component, ARIZONA_INPUT_ENABLES);
+		if (reg == 0)
 			arizona_in_set_vu(component, 0);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_in_ev);
 
-पूर्णांक arizona_out_ev(काष्ठा snd_soc_dapm_widget *w,
-		   काष्ठा snd_kcontrol *kcontrol,
-		   पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
+int arizona_out_ev(struct snd_soc_dapm_widget *w,
+		   struct snd_kcontrol *kcontrol,
+		   int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		चयन (w->shअगरt) अणु
-		हाल ARIZONA_OUT1L_ENA_SHIFT:
-		हाल ARIZONA_OUT1R_ENA_SHIFT:
-		हाल ARIZONA_OUT2L_ENA_SHIFT:
-		हाल ARIZONA_OUT2R_ENA_SHIFT:
-		हाल ARIZONA_OUT3L_ENA_SHIFT:
-		हाल ARIZONA_OUT3R_ENA_SHIFT:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		switch (w->shift) {
+		case ARIZONA_OUT1L_ENA_SHIFT:
+		case ARIZONA_OUT1R_ENA_SHIFT:
+		case ARIZONA_OUT2L_ENA_SHIFT:
+		case ARIZONA_OUT2R_ENA_SHIFT:
+		case ARIZONA_OUT3L_ENA_SHIFT:
+		case ARIZONA_OUT3R_ENA_SHIFT:
 			priv->out_up_pending++;
 			priv->out_up_delay += 17;
-			अवरोध;
-		हाल ARIZONA_OUT4L_ENA_SHIFT:
-		हाल ARIZONA_OUT4R_ENA_SHIFT:
+			break;
+		case ARIZONA_OUT4L_ENA_SHIFT:
+		case ARIZONA_OUT4R_ENA_SHIFT:
 			priv->out_up_pending++;
-			चयन (arizona->type) अणु
-			हाल WM5102:
-			हाल WM8997:
-				अवरोध;
-			शेष:
+			switch (arizona->type) {
+			case WM5102:
+			case WM8997:
+				break;
+			default:
 				priv->out_up_delay += 10;
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMU:
-		चयन (w->shअगरt) अणु
-		हाल ARIZONA_OUT1L_ENA_SHIFT:
-		हाल ARIZONA_OUT1R_ENA_SHIFT:
-		हाल ARIZONA_OUT2L_ENA_SHIFT:
-		हाल ARIZONA_OUT2R_ENA_SHIFT:
-		हाल ARIZONA_OUT3L_ENA_SHIFT:
-		हाल ARIZONA_OUT3R_ENA_SHIFT:
-		हाल ARIZONA_OUT4L_ENA_SHIFT:
-		हाल ARIZONA_OUT4R_ENA_SHIFT:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case SND_SOC_DAPM_POST_PMU:
+		switch (w->shift) {
+		case ARIZONA_OUT1L_ENA_SHIFT:
+		case ARIZONA_OUT1R_ENA_SHIFT:
+		case ARIZONA_OUT2L_ENA_SHIFT:
+		case ARIZONA_OUT2R_ENA_SHIFT:
+		case ARIZONA_OUT3L_ENA_SHIFT:
+		case ARIZONA_OUT3R_ENA_SHIFT:
+		case ARIZONA_OUT4L_ENA_SHIFT:
+		case ARIZONA_OUT4R_ENA_SHIFT:
 			priv->out_up_pending--;
-			अगर (!priv->out_up_pending && priv->out_up_delay) अणु
+			if (!priv->out_up_pending && priv->out_up_delay) {
 				dev_dbg(component->dev, "Power up delay: %d\n",
 					priv->out_up_delay);
 				msleep(priv->out_up_delay);
 				priv->out_up_delay = 0;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
-		चयन (w->shअगरt) अणु
-		हाल ARIZONA_OUT1L_ENA_SHIFT:
-		हाल ARIZONA_OUT1R_ENA_SHIFT:
-		हाल ARIZONA_OUT2L_ENA_SHIFT:
-		हाल ARIZONA_OUT2R_ENA_SHIFT:
-		हाल ARIZONA_OUT3L_ENA_SHIFT:
-		हाल ARIZONA_OUT3R_ENA_SHIFT:
-			priv->out_करोwn_pending++;
-			priv->out_करोwn_delay++;
-			अवरोध;
-		हाल ARIZONA_OUT4L_ENA_SHIFT:
-		हाल ARIZONA_OUT4R_ENA_SHIFT:
-			priv->out_करोwn_pending++;
-			चयन (arizona->type) अणु
-			हाल WM5102:
-			हाल WM8997:
-				अवरोध;
-			हाल WM8998:
-			हाल WM1814:
-				priv->out_करोwn_delay += 5;
-				अवरोध;
-			शेष:
-				priv->out_करोwn_delay++;
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल SND_SOC_DAPM_POST_PMD:
-		चयन (w->shअगरt) अणु
-		हाल ARIZONA_OUT1L_ENA_SHIFT:
-		हाल ARIZONA_OUT1R_ENA_SHIFT:
-		हाल ARIZONA_OUT2L_ENA_SHIFT:
-		हाल ARIZONA_OUT2R_ENA_SHIFT:
-		हाल ARIZONA_OUT3L_ENA_SHIFT:
-		हाल ARIZONA_OUT3R_ENA_SHIFT:
-		हाल ARIZONA_OUT4L_ENA_SHIFT:
-		हाल ARIZONA_OUT4R_ENA_SHIFT:
-			priv->out_करोwn_pending--;
-			अगर (!priv->out_करोwn_pending && priv->out_करोwn_delay) अणु
+		default:
+			break;
+		}
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		switch (w->shift) {
+		case ARIZONA_OUT1L_ENA_SHIFT:
+		case ARIZONA_OUT1R_ENA_SHIFT:
+		case ARIZONA_OUT2L_ENA_SHIFT:
+		case ARIZONA_OUT2R_ENA_SHIFT:
+		case ARIZONA_OUT3L_ENA_SHIFT:
+		case ARIZONA_OUT3R_ENA_SHIFT:
+			priv->out_down_pending++;
+			priv->out_down_delay++;
+			break;
+		case ARIZONA_OUT4L_ENA_SHIFT:
+		case ARIZONA_OUT4R_ENA_SHIFT:
+			priv->out_down_pending++;
+			switch (arizona->type) {
+			case WM5102:
+			case WM8997:
+				break;
+			case WM8998:
+			case WM1814:
+				priv->out_down_delay += 5;
+				break;
+			default:
+				priv->out_down_delay++;
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		switch (w->shift) {
+		case ARIZONA_OUT1L_ENA_SHIFT:
+		case ARIZONA_OUT1R_ENA_SHIFT:
+		case ARIZONA_OUT2L_ENA_SHIFT:
+		case ARIZONA_OUT2R_ENA_SHIFT:
+		case ARIZONA_OUT3L_ENA_SHIFT:
+		case ARIZONA_OUT3R_ENA_SHIFT:
+		case ARIZONA_OUT4L_ENA_SHIFT:
+		case ARIZONA_OUT4R_ENA_SHIFT:
+			priv->out_down_pending--;
+			if (!priv->out_down_pending && priv->out_down_delay) {
 				dev_dbg(component->dev, "Power down delay: %d\n",
-					priv->out_करोwn_delay);
-				msleep(priv->out_करोwn_delay);
-				priv->out_करोwn_delay = 0;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+					priv->out_down_delay);
+				msleep(priv->out_down_delay);
+				priv->out_down_delay = 0;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_out_ev);
 
-पूर्णांक arizona_hp_ev(काष्ठा snd_soc_dapm_widget *w, काष्ठा snd_kcontrol *kcontrol,
-		  पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	अचिन्हित पूर्णांक mask = 1 << w->shअगरt;
-	अचिन्हित पूर्णांक val;
+int arizona_hp_ev(struct snd_soc_dapm_widget *w, struct snd_kcontrol *kcontrol,
+		  int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	unsigned int mask = 1 << w->shift;
+	unsigned int val;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
 		val = mask;
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
 		val = 0;
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMU:
-	हाल SND_SOC_DAPM_POST_PMD:
-		वापस arizona_out_ev(w, kcontrol, event);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case SND_SOC_DAPM_PRE_PMU:
+	case SND_SOC_DAPM_POST_PMD:
+		return arizona_out_ev(w, kcontrol, event);
+	default:
+		return -EINVAL;
+	}
 
-	/* Store the desired state क्रम the HP outमाला_दो */
+	/* Store the desired state for the HP outputs */
 	priv->arizona->hp_ena &= ~mask;
 	priv->arizona->hp_ena |= val;
 
-	/* Force off अगर HPDET clamp is active */
-	अगर (priv->arizona->hpdet_clamp)
+	/* Force off if HPDET clamp is active */
+	if (priv->arizona->hpdet_clamp)
 		val = 0;
 
 	regmap_update_bits_async(arizona->regmap, ARIZONA_OUTPUT_ENABLES_1,
 				 mask, val);
 
-	वापस arizona_out_ev(w, kcontrol, event);
-पूर्ण
+	return arizona_out_ev(w, kcontrol, event);
+}
 EXPORT_SYMBOL_GPL(arizona_hp_ev);
 
-अटल पूर्णांक arizona_dvfs_enable(काष्ठा snd_soc_component *component)
-अणु
-	स्थिर काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक ret;
+static int arizona_dvfs_enable(struct snd_soc_component *component)
+{
+	const struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int ret;
 
 	ret = regulator_set_voltage(arizona->dcvdd, 1800000, 1800000);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to boost DCVDD: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regmap_update_bits(arizona->regmap,
 				 ARIZONA_DYNAMIC_FREQUENCY_SCALING_1,
 				 ARIZONA_SUBSYS_MAX_FREQ,
 				 ARIZONA_SUBSYS_MAX_FREQ);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to enable subsys max: %d\n", ret);
 		regulator_set_voltage(arizona->dcvdd, 1200000, 1800000);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arizona_dvfs_disable(काष्ठा snd_soc_component *component)
-अणु
-	स्थिर काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक ret;
+static int arizona_dvfs_disable(struct snd_soc_component *component)
+{
+	const struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int ret;
 
 	ret = regmap_update_bits(arizona->regmap,
 				 ARIZONA_DYNAMIC_FREQUENCY_SCALING_1,
 				 ARIZONA_SUBSYS_MAX_FREQ, 0);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to disable subsys max: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_set_voltage(arizona->dcvdd, 1200000, 1800000);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(component->dev, "Failed to unboost DCVDD: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक arizona_dvfs_up(काष्ठा snd_soc_component *component, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret = 0;
+int arizona_dvfs_up(struct snd_soc_component *component, unsigned int flags)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	int ret = 0;
 
 	mutex_lock(&priv->dvfs_lock);
 
-	अगर (!priv->dvfs_cached && !priv->dvfs_reqs) अणु
+	if (!priv->dvfs_cached && !priv->dvfs_reqs) {
 		ret = arizona_dvfs_enable(component);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	priv->dvfs_reqs |= flags;
 err:
 	mutex_unlock(&priv->dvfs_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(arizona_dvfs_up);
 
-पूर्णांक arizona_dvfs_करोwn(काष्ठा snd_soc_component *component, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक old_reqs;
-	पूर्णांक ret = 0;
+int arizona_dvfs_down(struct snd_soc_component *component, unsigned int flags)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int old_reqs;
+	int ret = 0;
 
 	mutex_lock(&priv->dvfs_lock);
 
 	old_reqs = priv->dvfs_reqs;
 	priv->dvfs_reqs &= ~flags;
 
-	अगर (!priv->dvfs_cached && old_reqs && !priv->dvfs_reqs)
+	if (!priv->dvfs_cached && old_reqs && !priv->dvfs_reqs)
 		ret = arizona_dvfs_disable(component);
 
 	mutex_unlock(&priv->dvfs_lock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(arizona_dvfs_करोwn);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(arizona_dvfs_down);
 
-पूर्णांक arizona_dvfs_sysclk_ev(काष्ठा snd_soc_dapm_widget *w,
-			   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret = 0;
+int arizona_dvfs_sysclk_ev(struct snd_soc_dapm_widget *w,
+			   struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	int ret = 0;
 
 	mutex_lock(&priv->dvfs_lock);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		अगर (priv->dvfs_reqs)
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		if (priv->dvfs_reqs)
 			ret = arizona_dvfs_enable(component);
 
 		priv->dvfs_cached = false;
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
-		/* We must ensure DVFS is disabled beक्रमe the codec goes पूर्णांकo
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		/* We must ensure DVFS is disabled before the codec goes into
 		 * suspend so that we are never in an illegal state of DVFS
 		 * enabled without enough DCVDD
 		 */
 		priv->dvfs_cached = true;
 
-		अगर (priv->dvfs_reqs)
+		if (priv->dvfs_reqs)
 			ret = arizona_dvfs_disable(component);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	mutex_unlock(&priv->dvfs_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(arizona_dvfs_sysclk_ev);
 
-व्योम arizona_init_dvfs(काष्ठा arizona_priv *priv)
-अणु
+void arizona_init_dvfs(struct arizona_priv *priv)
+{
 	mutex_init(&priv->dvfs_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(arizona_init_dvfs);
 
-पूर्णांक arizona_anc_ev(काष्ठा snd_soc_dapm_widget *w,
-		   काष्ठा snd_kcontrol *kcontrol,
-		   पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	अचिन्हित पूर्णांक val;
+int arizona_anc_ev(struct snd_soc_dapm_widget *w,
+		   struct snd_kcontrol *kcontrol,
+		   int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	unsigned int val;
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMU:
-		val = 1 << w->shअगरt;
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMD:
-		val = 1 << (w->shअगरt + 1);
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		val = 1 << w->shift;
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		val = 1 << (w->shift + 1);
+		break;
+	default:
+		return 0;
+	}
 
-	snd_soc_component_ग_लिखो(component, ARIZONA_CLOCK_CONTROL, val);
+	snd_soc_component_write(component, ARIZONA_CLOCK_CONTROL, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_anc_ev);
 
-अटल अचिन्हित पूर्णांक arizona_opclk_ref_48k_rates[] = अणु
+static unsigned int arizona_opclk_ref_48k_rates[] = {
 	6144000,
 	12288000,
 	24576000,
 	49152000,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक arizona_opclk_ref_44k1_rates[] = अणु
+static unsigned int arizona_opclk_ref_44k1_rates[] = {
 	5644800,
 	11289600,
 	22579200,
 	45158400,
-पूर्ण;
+};
 
-अटल पूर्णांक arizona_set_opclk(काष्ठा snd_soc_component *component,
-			     अचिन्हित पूर्णांक clk, अचिन्हित पूर्णांक freq)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक *rates;
-	पूर्णांक ref, भाग, refclk;
+static int arizona_set_opclk(struct snd_soc_component *component,
+			     unsigned int clk, unsigned int freq)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	unsigned int reg;
+	unsigned int *rates;
+	int ref, div, refclk;
 
-	चयन (clk) अणु
-	हाल ARIZONA_CLK_OPCLK:
+	switch (clk) {
+	case ARIZONA_CLK_OPCLK:
 		reg = ARIZONA_OUTPUT_SYSTEM_CLOCK;
 		refclk = priv->sysclk;
-		अवरोध;
-	हाल ARIZONA_CLK_ASYNC_OPCLK:
+		break;
+	case ARIZONA_CLK_ASYNC_OPCLK:
 		reg = ARIZONA_OUTPUT_ASYNC_CLOCK;
 		refclk = priv->asyncclk;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (refclk % 8000)
+	if (refclk % 8000)
 		rates = arizona_opclk_ref_44k1_rates;
-	अन्यथा
+	else
 		rates = arizona_opclk_ref_48k_rates;
 
-	क्रम (ref = 0; ref < ARRAY_SIZE(arizona_opclk_ref_48k_rates) &&
-	     rates[ref] <= refclk; ref++) अणु
-		भाग = 1;
-		जबतक (rates[ref] / भाग >= freq && भाग < 32) अणु
-			अगर (rates[ref] / भाग == freq) अणु
+	for (ref = 0; ref < ARRAY_SIZE(arizona_opclk_ref_48k_rates) &&
+	     rates[ref] <= refclk; ref++) {
+		div = 1;
+		while (rates[ref] / div >= freq && div < 32) {
+			if (rates[ref] / div == freq) {
 				dev_dbg(component->dev, "Configured %dHz OPCLK\n",
 					freq);
 				snd_soc_component_update_bits(component, reg,
 						    ARIZONA_OPCLK_DIV_MASK |
 						    ARIZONA_OPCLK_SEL_MASK,
-						    (भाग <<
+						    (div <<
 						     ARIZONA_OPCLK_DIV_SHIFT) |
 						    ref);
-				वापस 0;
-			पूर्ण
-			भाग++;
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+			div++;
+		}
+	}
 
 	dev_err(component->dev, "Unable to generate %dHz OPCLK\n", freq);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-पूर्णांक arizona_clk_ev(काष्ठा snd_soc_dapm_widget *w,
-		   काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक clk_idx;
-	पूर्णांक ret;
+int arizona_clk_ev(struct snd_soc_dapm_widget *w,
+		   struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
+	unsigned int val;
+	int clk_idx;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, w->reg, &val);
-	अगर (ret) अणु
+	ret = regmap_read(arizona->regmap, w->reg, &val);
+	if (ret) {
 		dev_err(component->dev, "Failed to check clock source: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	val = (val & ARIZONA_SYSCLK_SRC_MASK) >> ARIZONA_SYSCLK_SRC_SHIFT;
 
-	चयन (val) अणु
-	हाल ARIZONA_CLK_SRC_MCLK1:
+	switch (val) {
+	case ARIZONA_CLK_SRC_MCLK1:
 		clk_idx = ARIZONA_MCLK1;
-		अवरोध;
-	हाल ARIZONA_CLK_SRC_MCLK2:
+		break;
+	case ARIZONA_CLK_SRC_MCLK2:
 		clk_idx = ARIZONA_MCLK2;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_PRE_PMU:
-		वापस clk_prepare_enable(arizona->mclk[clk_idx]);
-	हाल SND_SOC_DAPM_POST_PMD:
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		return clk_prepare_enable(arizona->mclk[clk_idx]);
+	case SND_SOC_DAPM_POST_PMD:
 		clk_disable_unprepare(arizona->mclk[clk_idx]);
-		वापस 0;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return 0;
+	}
+}
 EXPORT_SYMBOL_GPL(arizona_clk_ev);
 
-पूर्णांक arizona_set_sysclk(काष्ठा snd_soc_component *component, पूर्णांक clk_id,
-		       पूर्णांक source, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	अक्षर *name;
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक mask = ARIZONA_SYSCLK_FREQ_MASK | ARIZONA_SYSCLK_SRC_MASK;
-	अचिन्हित पूर्णांक val = source << ARIZONA_SYSCLK_SRC_SHIFT;
-	पूर्णांक *clk;
+int arizona_set_sysclk(struct snd_soc_component *component, int clk_id,
+		       int source, unsigned int freq, int dir)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	char *name;
+	unsigned int reg;
+	unsigned int mask = ARIZONA_SYSCLK_FREQ_MASK | ARIZONA_SYSCLK_SRC_MASK;
+	unsigned int val = source << ARIZONA_SYSCLK_SRC_SHIFT;
+	int *clk;
 
-	चयन (clk_id) अणु
-	हाल ARIZONA_CLK_SYSCLK:
+	switch (clk_id) {
+	case ARIZONA_CLK_SYSCLK:
 		name = "SYSCLK";
 		reg = ARIZONA_SYSTEM_CLOCK_1;
 		clk = &priv->sysclk;
 		mask |= ARIZONA_SYSCLK_FRAC;
-		अवरोध;
-	हाल ARIZONA_CLK_ASYNCCLK:
+		break;
+	case ARIZONA_CLK_ASYNCCLK:
 		name = "ASYNCCLK";
 		reg = ARIZONA_ASYNC_CLOCK_1;
 		clk = &priv->asyncclk;
-		अवरोध;
-	हाल ARIZONA_CLK_OPCLK:
-	हाल ARIZONA_CLK_ASYNC_OPCLK:
-		वापस arizona_set_opclk(component, clk_id, freq);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case ARIZONA_CLK_OPCLK:
+	case ARIZONA_CLK_ASYNC_OPCLK:
+		return arizona_set_opclk(component, clk_id, freq);
+	default:
+		return -EINVAL;
+	}
 
-	चयन (freq) अणु
-	हाल  5644800:
-	हाल  6144000:
-		अवरोध;
-	हाल 11289600:
-	हाल 12288000:
+	switch (freq) {
+	case  5644800:
+	case  6144000:
+		break;
+	case 11289600:
+	case 12288000:
 		val |= ARIZONA_CLK_12MHZ << ARIZONA_SYSCLK_FREQ_SHIFT;
-		अवरोध;
-	हाल 22579200:
-	हाल 24576000:
+		break;
+	case 22579200:
+	case 24576000:
 		val |= ARIZONA_CLK_24MHZ << ARIZONA_SYSCLK_FREQ_SHIFT;
-		अवरोध;
-	हाल 45158400:
-	हाल 49152000:
+		break;
+	case 45158400:
+	case 49152000:
 		val |= ARIZONA_CLK_49MHZ << ARIZONA_SYSCLK_FREQ_SHIFT;
-		अवरोध;
-	हाल 67737600:
-	हाल 73728000:
+		break;
+	case 67737600:
+	case 73728000:
 		val |= ARIZONA_CLK_73MHZ << ARIZONA_SYSCLK_FREQ_SHIFT;
-		अवरोध;
-	हाल 90316800:
-	हाल 98304000:
+		break;
+	case 90316800:
+	case 98304000:
 		val |= ARIZONA_CLK_98MHZ << ARIZONA_SYSCLK_FREQ_SHIFT;
-		अवरोध;
-	हाल 135475200:
-	हाल 147456000:
+		break;
+	case 135475200:
+	case 147456000:
 		val |= ARIZONA_CLK_147MHZ << ARIZONA_SYSCLK_FREQ_SHIFT;
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		dev_dbg(arizona->dev, "%s cleared\n", name);
 		*clk = freq;
-		वापस 0;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		return 0;
+	default:
+		return -EINVAL;
+	}
 
 	*clk = freq;
 
-	अगर (freq % 6144000)
+	if (freq % 6144000)
 		val |= ARIZONA_SYSCLK_FRAC;
 
 	dev_dbg(arizona->dev, "%s set to %uHz", name, freq);
 
-	वापस regmap_update_bits(arizona->regmap, reg, mask, val);
-पूर्ण
+	return regmap_update_bits(arizona->regmap, reg, mask, val);
+}
 EXPORT_SYMBOL_GPL(arizona_set_sysclk);
 
-अटल पूर्णांक arizona_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक lrclk, bclk, mode, base;
+static int arizona_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = dai->component;
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int lrclk, bclk, mode, base;
 
 	base = dai->driver->base;
 
 	lrclk = 0;
 	bclk = 0;
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
 		mode = ARIZONA_FMT_DSP_MODE_A;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
-		अगर ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
-				!= SND_SOC_DAIFMT_CBM_CFM) अणु
-			arizona_aअगर_err(dai, "DSP_B not valid in slave mode\n");
-			वापस -EINVAL;
-		पूर्ण
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
+		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
+				!= SND_SOC_DAIFMT_CBM_CFM) {
+			arizona_aif_err(dai, "DSP_B not valid in slave mode\n");
+			return -EINVAL;
+		}
 		mode = ARIZONA_FMT_DSP_MODE_B;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
+		break;
+	case SND_SOC_DAIFMT_I2S:
 		mode = ARIZONA_FMT_I2S_MODE;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		अगर ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
-				!= SND_SOC_DAIFMT_CBM_CFM) अणु
-			arizona_aअगर_err(dai, "LEFT_J not valid in slave mode\n");
-			वापस -EINVAL;
-		पूर्ण
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
+		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
+				!= SND_SOC_DAIFMT_CBM_CFM) {
+			arizona_aif_err(dai, "LEFT_J not valid in slave mode\n");
+			return -EINVAL;
+		}
 		mode = ARIZONA_FMT_LEFT_JUSTIFIED_MODE;
-		अवरोध;
-	शेष:
-		arizona_aअगर_err(dai, "Unsupported DAI format %d\n",
+		break;
+	default:
+		arizona_aif_err(dai, "Unsupported DAI format %d\n",
 				fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBS_CFM:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBS_CFM:
 		lrclk |= ARIZONA_AIF1TX_LRCLK_MSTR;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFS:
 		bclk |= ARIZONA_AIF1_BCLK_MSTR;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
 		bclk |= ARIZONA_AIF1_BCLK_MSTR;
 		lrclk |= ARIZONA_AIF1TX_LRCLK_MSTR;
-		अवरोध;
-	शेष:
-		arizona_aअगर_err(dai, "Unsupported master mode %d\n",
+		break;
+	default:
+		arizona_aif_err(dai, "Unsupported master mode %d\n",
 				fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_IF:
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
+		break;
+	case SND_SOC_DAIFMT_IB_IF:
 		bclk |= ARIZONA_AIF1_BCLK_INV;
 		lrclk |= ARIZONA_AIF1TX_LRCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_NF:
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
 		bclk |= ARIZONA_AIF1_BCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_NB_IF:
+		break;
+	case SND_SOC_DAIFMT_NB_IF:
 		lrclk |= ARIZONA_AIF1TX_LRCLK_INV;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	regmap_update_bits_async(arizona->regmap, base + ARIZONA_AIF_BCLK_CTRL,
 				 ARIZONA_AIF1_BCLK_INV |
@@ -1531,10 +1530,10 @@ EXPORT_SYMBOL_GPL(arizona_set_sysclk);
 	regmap_update_bits(arizona->regmap, base + ARIZONA_AIF_FORMAT,
 			   ARIZONA_AIF1_FMT_MASK, mode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर पूर्णांक arizona_48k_bclk_rates[] = अणु
+static const int arizona_48k_bclk_rates[] = {
 	-1,
 	48000,
 	64000,
@@ -1554,9 +1553,9 @@ EXPORT_SYMBOL_GPL(arizona_set_sysclk);
 	8192000,
 	12288000,
 	24576000,
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक arizona_44k1_bclk_rates[] = अणु
+static const int arizona_44k1_bclk_rates[] = {
 	-1,
 	44100,
 	58800,
@@ -1576,9 +1575,9 @@ EXPORT_SYMBOL_GPL(arizona_set_sysclk);
 	7526400,
 	11289600,
 	22579200,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक arizona_sr_vals[] = अणु
+static const unsigned int arizona_sr_vals[] = {
 	0,
 	12000,
 	24000,
@@ -1603,267 +1602,267 @@ EXPORT_SYMBOL_GPL(arizona_set_sysclk);
 	128000,
 	256000,
 	512000,
-पूर्ण;
+};
 
-#घोषणा ARIZONA_48K_RATE_MASK	0x0F003E
-#घोषणा ARIZONA_44K1_RATE_MASK	0x003E00
-#घोषणा ARIZONA_RATE_MASK	(ARIZONA_48K_RATE_MASK | ARIZONA_44K1_RATE_MASK)
+#define ARIZONA_48K_RATE_MASK	0x0F003E
+#define ARIZONA_44K1_RATE_MASK	0x003E00
+#define ARIZONA_RATE_MASK	(ARIZONA_48K_RATE_MASK | ARIZONA_44K1_RATE_MASK)
 
-अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list arizona_स्थिरraपूर्णांक = अणु
+static const struct snd_pcm_hw_constraint_list arizona_constraint = {
 	.count	= ARRAY_SIZE(arizona_sr_vals),
 	.list	= arizona_sr_vals,
-पूर्ण;
+};
 
-अटल पूर्णांक arizona_startup(काष्ठा snd_pcm_substream *substream,
-			   काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona_dai_priv *dai_priv = &priv->dai[dai->id - 1];
-	अचिन्हित पूर्णांक base_rate;
+static int arizona_startup(struct snd_pcm_substream *substream,
+			   struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona_dai_priv *dai_priv = &priv->dai[dai->id - 1];
+	unsigned int base_rate;
 
-	अगर (!substream->runसमय)
-		वापस 0;
+	if (!substream->runtime)
+		return 0;
 
-	चयन (dai_priv->clk) अणु
-	हाल ARIZONA_CLK_SYSCLK:
+	switch (dai_priv->clk) {
+	case ARIZONA_CLK_SYSCLK:
 		base_rate = priv->sysclk;
-		अवरोध;
-	हाल ARIZONA_CLK_ASYNCCLK:
+		break;
+	case ARIZONA_CLK_ASYNCCLK:
 		base_rate = priv->asyncclk;
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (base_rate == 0)
-		dai_priv->स्थिरraपूर्णांक.mask = ARIZONA_RATE_MASK;
-	अन्यथा अगर (base_rate % 8000)
-		dai_priv->स्थिरraपूर्णांक.mask = ARIZONA_44K1_RATE_MASK;
-	अन्यथा
-		dai_priv->स्थिरraपूर्णांक.mask = ARIZONA_48K_RATE_MASK;
+	if (base_rate == 0)
+		dai_priv->constraint.mask = ARIZONA_RATE_MASK;
+	else if (base_rate % 8000)
+		dai_priv->constraint.mask = ARIZONA_44K1_RATE_MASK;
+	else
+		dai_priv->constraint.mask = ARIZONA_48K_RATE_MASK;
 
-	वापस snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
+	return snd_pcm_hw_constraint_list(substream->runtime, 0,
 					  SNDRV_PCM_HW_PARAM_RATE,
-					  &dai_priv->स्थिरraपूर्णांक);
-पूर्ण
+					  &dai_priv->constraint);
+}
 
-अटल व्योम arizona_wm5102_set_dac_comp(काष्ठा snd_soc_component *component,
-					अचिन्हित पूर्णांक rate)
-अणु
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	काष्ठा reg_sequence dac_comp[] = अणु
-		अणु 0x80, 0x3 पूर्ण,
-		अणु ARIZONA_DAC_COMP_1, 0 पूर्ण,
-		अणु ARIZONA_DAC_COMP_2, 0 पूर्ण,
-		अणु 0x80, 0x0 पूर्ण,
-	पूर्ण;
+static void arizona_wm5102_set_dac_comp(struct snd_soc_component *component,
+					unsigned int rate)
+{
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	struct reg_sequence dac_comp[] = {
+		{ 0x80, 0x3 },
+		{ ARIZONA_DAC_COMP_1, 0 },
+		{ ARIZONA_DAC_COMP_2, 0 },
+		{ 0x80, 0x0 },
+	};
 
 	mutex_lock(&arizona->dac_comp_lock);
 
 	dac_comp[1].def = arizona->dac_comp_coeff;
-	अगर (rate >= 176400)
+	if (rate >= 176400)
 		dac_comp[2].def = arizona->dac_comp_enabled;
 
 	mutex_unlock(&arizona->dac_comp_lock);
 
-	regmap_multi_reg_ग_लिखो(arizona->regmap,
+	regmap_multi_reg_write(arizona->regmap,
 			       dac_comp,
 			       ARRAY_SIZE(dac_comp));
-पूर्ण
+}
 
-अटल पूर्णांक arizona_hw_params_rate(काष्ठा snd_pcm_substream *substream,
-				  काष्ठा snd_pcm_hw_params *params,
-				  काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona_dai_priv *dai_priv = &priv->dai[dai->id - 1];
-	पूर्णांक base = dai->driver->base;
-	पूर्णांक i, sr_val, ret;
+static int arizona_hw_params_rate(struct snd_pcm_substream *substream,
+				  struct snd_pcm_hw_params *params,
+				  struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona_dai_priv *dai_priv = &priv->dai[dai->id - 1];
+	int base = dai->driver->base;
+	int i, sr_val, ret;
 
 	/*
 	 * We will need to be more flexible than this in future,
-	 * currently we use a single sample rate क्रम SYSCLK.
+	 * currently we use a single sample rate for SYSCLK.
 	 */
-	क्रम (i = 0; i < ARRAY_SIZE(arizona_sr_vals); i++)
-		अगर (arizona_sr_vals[i] == params_rate(params))
-			अवरोध;
-	अगर (i == ARRAY_SIZE(arizona_sr_vals)) अणु
-		arizona_aअगर_err(dai, "Unsupported sample rate %dHz\n",
+	for (i = 0; i < ARRAY_SIZE(arizona_sr_vals); i++)
+		if (arizona_sr_vals[i] == params_rate(params))
+			break;
+	if (i == ARRAY_SIZE(arizona_sr_vals)) {
+		arizona_aif_err(dai, "Unsupported sample rate %dHz\n",
 				params_rate(params));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sr_val = i;
 
-	चयन (priv->arizona->type) अणु
-	हाल WM5102:
-	हाल WM8997:
-		अगर (arizona_sr_vals[sr_val] >= 88200)
+	switch (priv->arizona->type) {
+	case WM5102:
+	case WM8997:
+		if (arizona_sr_vals[sr_val] >= 88200)
 			ret = arizona_dvfs_up(component, ARIZONA_DVFS_SR1_RQ);
-		अन्यथा
-			ret = arizona_dvfs_करोwn(component, ARIZONA_DVFS_SR1_RQ);
+		else
+			ret = arizona_dvfs_down(component, ARIZONA_DVFS_SR1_RQ);
 
-		अगर (ret) अणु
-			arizona_aअगर_err(dai, "Failed to change DVFS %d\n", ret);
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		if (ret) {
+			arizona_aif_err(dai, "Failed to change DVFS %d\n", ret);
+			return ret;
+		}
+		break;
+	default:
+		break;
+	}
 
-	चयन (dai_priv->clk) अणु
-	हाल ARIZONA_CLK_SYSCLK:
-		चयन (priv->arizona->type) अणु
-		हाल WM5102:
+	switch (dai_priv->clk) {
+	case ARIZONA_CLK_SYSCLK:
+		switch (priv->arizona->type) {
+		case WM5102:
 			arizona_wm5102_set_dac_comp(component,
 						    params_rate(params));
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
 		snd_soc_component_update_bits(component, ARIZONA_SAMPLE_RATE_1,
 					      ARIZONA_SAMPLE_RATE_1_MASK,
 					      sr_val);
-		अगर (base)
+		if (base)
 			snd_soc_component_update_bits(component,
 					base + ARIZONA_AIF_RATE_CTRL,
 					ARIZONA_AIF1_RATE_MASK, 0);
-		अवरोध;
-	हाल ARIZONA_CLK_ASYNCCLK:
+		break;
+	case ARIZONA_CLK_ASYNCCLK:
 		snd_soc_component_update_bits(component,
 					      ARIZONA_ASYNC_SAMPLE_RATE_1,
 					      ARIZONA_ASYNC_SAMPLE_RATE_1_MASK,
 					      sr_val);
-		अगर (base)
+		if (base)
 			snd_soc_component_update_bits(component,
 					base + ARIZONA_AIF_RATE_CTRL,
 					ARIZONA_AIF1_RATE_MASK,
 					8 << ARIZONA_AIF1_RATE_SHIFT);
-		अवरोध;
-	शेष:
-		arizona_aअगर_err(dai, "Invalid clock %d\n", dai_priv->clk);
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		arizona_aif_err(dai, "Invalid clock %d\n", dai_priv->clk);
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool arizona_aअगर_cfg_changed(काष्ठा snd_soc_component *component,
-				    पूर्णांक base, पूर्णांक bclk, पूर्णांक lrclk, पूर्णांक frame)
-अणु
-	पूर्णांक val;
+static bool arizona_aif_cfg_changed(struct snd_soc_component *component,
+				    int base, int bclk, int lrclk, int frame)
+{
+	int val;
 
-	val = snd_soc_component_पढ़ो(component, base + ARIZONA_AIF_BCLK_CTRL);
-	अगर (bclk != (val & ARIZONA_AIF1_BCLK_FREQ_MASK))
-		वापस true;
+	val = snd_soc_component_read(component, base + ARIZONA_AIF_BCLK_CTRL);
+	if (bclk != (val & ARIZONA_AIF1_BCLK_FREQ_MASK))
+		return true;
 
-	val = snd_soc_component_पढ़ो(component, base + ARIZONA_AIF_TX_BCLK_RATE);
-	अगर (lrclk != (val & ARIZONA_AIF1TX_BCPF_MASK))
-		वापस true;
+	val = snd_soc_component_read(component, base + ARIZONA_AIF_TX_BCLK_RATE);
+	if (lrclk != (val & ARIZONA_AIF1TX_BCPF_MASK))
+		return true;
 
-	val = snd_soc_component_पढ़ो(component, base + ARIZONA_AIF_FRAME_CTRL_1);
-	अगर (frame != (val & (ARIZONA_AIF1TX_WL_MASK |
+	val = snd_soc_component_read(component, base + ARIZONA_AIF_FRAME_CTRL_1);
+	if (frame != (val & (ARIZONA_AIF1TX_WL_MASK |
 			     ARIZONA_AIF1TX_SLOT_LEN_MASK)))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक arizona_hw_params(काष्ठा snd_pcm_substream *substream,
-			     काष्ठा snd_pcm_hw_params *params,
-			     काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक base = dai->driver->base;
-	स्थिर पूर्णांक *rates;
-	पूर्णांक i, ret, val;
-	पूर्णांक channels = params_channels(params);
-	पूर्णांक chan_limit = arizona->pdata.max_channels_घड़ीed[dai->id - 1];
-	पूर्णांक tdm_width = arizona->tdm_width[dai->id - 1];
-	पूर्णांक tdm_slots = arizona->tdm_slots[dai->id - 1];
-	पूर्णांक bclk, lrclk, wl, frame, bclk_target;
+static int arizona_hw_params(struct snd_pcm_substream *substream,
+			     struct snd_pcm_hw_params *params,
+			     struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int base = dai->driver->base;
+	const int *rates;
+	int i, ret, val;
+	int channels = params_channels(params);
+	int chan_limit = arizona->pdata.max_channels_clocked[dai->id - 1];
+	int tdm_width = arizona->tdm_width[dai->id - 1];
+	int tdm_slots = arizona->tdm_slots[dai->id - 1];
+	int bclk, lrclk, wl, frame, bclk_target;
 	bool reconfig;
-	अचिन्हित पूर्णांक aअगर_tx_state, aअगर_rx_state;
+	unsigned int aif_tx_state, aif_rx_state;
 
-	अगर (params_rate(params) % 4000)
+	if (params_rate(params) % 4000)
 		rates = &arizona_44k1_bclk_rates[0];
-	अन्यथा
+	else
 		rates = &arizona_48k_bclk_rates[0];
 
 	wl = params_width(params);
 
-	अगर (tdm_slots) अणु
-		arizona_aअगर_dbg(dai, "Configuring for %d %d bit TDM slots\n",
+	if (tdm_slots) {
+		arizona_aif_dbg(dai, "Configuring for %d %d bit TDM slots\n",
 				tdm_slots, tdm_width);
 		bclk_target = tdm_slots * tdm_width * params_rate(params);
 		channels = tdm_slots;
-	पूर्ण अन्यथा अणु
+	} else {
 		bclk_target = snd_soc_params_to_bclk(params);
 		tdm_width = wl;
-	पूर्ण
+	}
 
-	अगर (chan_limit && chan_limit < channels) अणु
-		arizona_aअगर_dbg(dai, "Limiting to %d channels\n", chan_limit);
+	if (chan_limit && chan_limit < channels) {
+		arizona_aif_dbg(dai, "Limiting to %d channels\n", chan_limit);
 		bclk_target /= channels;
 		bclk_target *= chan_limit;
-	पूर्ण
+	}
 
-	/* Force multiple of 2 channels क्रम I2S mode */
-	val = snd_soc_component_पढ़ो(component, base + ARIZONA_AIF_FORMAT);
+	/* Force multiple of 2 channels for I2S mode */
+	val = snd_soc_component_read(component, base + ARIZONA_AIF_FORMAT);
 	val &= ARIZONA_AIF1_FMT_MASK;
-	अगर ((channels & 1) && (val == ARIZONA_FMT_I2S_MODE)) अणु
-		arizona_aअगर_dbg(dai, "Forcing stereo mode\n");
+	if ((channels & 1) && (val == ARIZONA_FMT_I2S_MODE)) {
+		arizona_aif_dbg(dai, "Forcing stereo mode\n");
 		bclk_target /= channels;
 		bclk_target *= channels + 1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(arizona_44k1_bclk_rates); i++) अणु
-		अगर (rates[i] >= bclk_target &&
-		    rates[i] % params_rate(params) == 0) अणु
+	for (i = 0; i < ARRAY_SIZE(arizona_44k1_bclk_rates); i++) {
+		if (rates[i] >= bclk_target &&
+		    rates[i] % params_rate(params) == 0) {
 			bclk = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == ARRAY_SIZE(arizona_44k1_bclk_rates)) अणु
-		arizona_aअगर_err(dai, "Unsupported sample rate %dHz\n",
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(arizona_44k1_bclk_rates)) {
+		arizona_aif_err(dai, "Unsupported sample rate %dHz\n",
 				params_rate(params));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	lrclk = rates[bclk] / params_rate(params);
 
-	arizona_aअगर_dbg(dai, "BCLK %dHz LRCLK %dHz\n",
+	arizona_aif_dbg(dai, "BCLK %dHz LRCLK %dHz\n",
 			rates[bclk], rates[bclk] / lrclk);
 
 	frame = wl << ARIZONA_AIF1TX_WL_SHIFT | tdm_width;
 
-	reconfig = arizona_aअगर_cfg_changed(component, base, bclk, lrclk, frame);
+	reconfig = arizona_aif_cfg_changed(component, base, bclk, lrclk, frame);
 
-	अगर (reconfig) अणु
+	if (reconfig) {
 		/* Save AIF TX/RX state */
-		aअगर_tx_state = snd_soc_component_पढ़ो(component,
+		aif_tx_state = snd_soc_component_read(component,
 					    base + ARIZONA_AIF_TX_ENABLES);
-		aअगर_rx_state = snd_soc_component_पढ़ो(component,
+		aif_rx_state = snd_soc_component_read(component,
 					    base + ARIZONA_AIF_RX_ENABLES);
-		/* Disable AIF TX/RX beक्रमe reconfiguring it */
+		/* Disable AIF TX/RX before reconfiguring it */
 		regmap_update_bits_async(arizona->regmap,
 					 base + ARIZONA_AIF_TX_ENABLES,
 					 0xff, 0x0);
 		regmap_update_bits(arizona->regmap,
 				   base + ARIZONA_AIF_RX_ENABLES, 0xff, 0x0);
-	पूर्ण
+	}
 
 	ret = arizona_hw_params_rate(substream, params, dai);
-	अगर (ret != 0)
-		जाओ restore_aअगर;
+	if (ret != 0)
+		goto restore_aif;
 
-	अगर (reconfig) अणु
+	if (reconfig) {
 		regmap_update_bits_async(arizona->regmap,
 					 base + ARIZONA_AIF_BCLK_CTRL,
 					 ARIZONA_AIF1_BCLK_FREQ_MASK, bclk);
@@ -1881,63 +1880,63 @@ EXPORT_SYMBOL_GPL(arizona_set_sysclk);
 				   base + ARIZONA_AIF_FRAME_CTRL_2,
 				   ARIZONA_AIF1RX_WL_MASK |
 				   ARIZONA_AIF1RX_SLOT_LEN_MASK, frame);
-	पूर्ण
+	}
 
-restore_aअगर:
-	अगर (reconfig) अणु
+restore_aif:
+	if (reconfig) {
 		/* Restore AIF TX/RX state */
 		regmap_update_bits_async(arizona->regmap,
 					 base + ARIZONA_AIF_TX_ENABLES,
-					 0xff, aअगर_tx_state);
+					 0xff, aif_tx_state);
 		regmap_update_bits(arizona->regmap,
 				   base + ARIZONA_AIF_RX_ENABLES,
-				   0xff, aअगर_rx_state);
-	पूर्ण
-	वापस ret;
-पूर्ण
+				   0xff, aif_rx_state);
+	}
+	return ret;
+}
 
-अटल स्थिर अक्षर *arizona_dai_clk_str(पूर्णांक clk_id)
-अणु
-	चयन (clk_id) अणु
-	हाल ARIZONA_CLK_SYSCLK:
-		वापस "SYSCLK";
-	हाल ARIZONA_CLK_ASYNCCLK:
-		वापस "ASYNCCLK";
-	शेष:
-		वापस "Unknown clock";
-	पूर्ण
-पूर्ण
+static const char *arizona_dai_clk_str(int clk_id)
+{
+	switch (clk_id) {
+	case ARIZONA_CLK_SYSCLK:
+		return "SYSCLK";
+	case ARIZONA_CLK_ASYNCCLK:
+		return "ASYNCCLK";
+	default:
+		return "Unknown clock";
+	}
+}
 
-अटल पूर्णांक arizona_dai_set_sysclk(काष्ठा snd_soc_dai *dai,
-				  पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona_dai_priv *dai_priv = &priv->dai[dai->id - 1];
-	काष्ठा snd_soc_dapm_route routes[2];
+static int arizona_dai_set_sysclk(struct snd_soc_dai *dai,
+				  int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = dai->component;
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona_dai_priv *dai_priv = &priv->dai[dai->id - 1];
+	struct snd_soc_dapm_route routes[2];
 
-	चयन (clk_id) अणु
-	हाल ARIZONA_CLK_SYSCLK:
-	हाल ARIZONA_CLK_ASYNCCLK:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (clk_id) {
+	case ARIZONA_CLK_SYSCLK:
+	case ARIZONA_CLK_ASYNCCLK:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (clk_id == dai_priv->clk)
-		वापस 0;
+	if (clk_id == dai_priv->clk)
+		return 0;
 
-	अगर (snd_soc_dai_active(dai)) अणु
+	if (snd_soc_dai_active(dai)) {
 		dev_err(component->dev, "Can't change clock on active DAI %d\n",
 			dai->id);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	dev_dbg(component->dev, "Setting AIF%d to %s\n", dai->id + 1,
 		arizona_dai_clk_str(clk_id));
 
-	स_रखो(&routes, 0, माप(routes));
+	memset(&routes, 0, sizeof(routes));
 	routes[0].sink = dai->driver->capture.stream_name;
 	routes[1].sink = dai->driver->playback.stream_name;
 
@@ -1951,66 +1950,66 @@ restore_aअगर:
 
 	dai_priv->clk = clk_id;
 
-	वापस snd_soc_dapm_sync(dapm);
-पूर्ण
+	return snd_soc_dapm_sync(dapm);
+}
 
-अटल पूर्णांक arizona_set_tristate(काष्ठा snd_soc_dai *dai, पूर्णांक tristate)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	पूर्णांक base = dai->driver->base;
-	अचिन्हित पूर्णांक reg;
+static int arizona_set_tristate(struct snd_soc_dai *dai, int tristate)
+{
+	struct snd_soc_component *component = dai->component;
+	int base = dai->driver->base;
+	unsigned int reg;
 
-	अगर (tristate)
+	if (tristate)
 		reg = ARIZONA_AIF1_TRI;
-	अन्यथा
+	else
 		reg = 0;
 
-	वापस snd_soc_component_update_bits(component,
+	return snd_soc_component_update_bits(component,
 					     base + ARIZONA_AIF_RATE_CTRL,
 					     ARIZONA_AIF1_TRI, reg);
-पूर्ण
+}
 
-अटल व्योम arizona_set_channels_to_mask(काष्ठा snd_soc_dai *dai,
-					 अचिन्हित पूर्णांक base,
-					 पूर्णांक channels, अचिन्हित पूर्णांक mask)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक slot, i;
+static void arizona_set_channels_to_mask(struct snd_soc_dai *dai,
+					 unsigned int base,
+					 int channels, unsigned int mask)
+{
+	struct snd_soc_component *component = dai->component;
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int slot, i;
 
-	क्रम (i = 0; i < channels; ++i) अणु
+	for (i = 0; i < channels; ++i) {
 		slot = ffs(mask) - 1;
-		अगर (slot < 0)
-			वापस;
+		if (slot < 0)
+			return;
 
-		regmap_ग_लिखो(arizona->regmap, base + i, slot);
+		regmap_write(arizona->regmap, base + i, slot);
 
 		mask &= ~(1 << slot);
-	पूर्ण
+	}
 
-	अगर (mask)
-		arizona_aअगर_warn(dai, "Too many channels in TDM mask\n");
-पूर्ण
+	if (mask)
+		arizona_aif_warn(dai, "Too many channels in TDM mask\n");
+}
 
-अटल पूर्णांक arizona_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
-				अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा arizona_priv *priv = snd_soc_component_get_drvdata(component);
-	काष्ठा arizona *arizona = priv->arizona;
-	पूर्णांक base = dai->driver->base;
-	पूर्णांक rx_max_chan = dai->driver->playback.channels_max;
-	पूर्णांक tx_max_chan = dai->driver->capture.channels_max;
+static int arizona_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
+				unsigned int rx_mask, int slots, int slot_width)
+{
+	struct snd_soc_component *component = dai->component;
+	struct arizona_priv *priv = snd_soc_component_get_drvdata(component);
+	struct arizona *arizona = priv->arizona;
+	int base = dai->driver->base;
+	int rx_max_chan = dai->driver->playback.channels_max;
+	int tx_max_chan = dai->driver->capture.channels_max;
 
-	/* Only support TDM क्रम the physical AIFs */
-	अगर (dai->id > ARIZONA_MAX_AIF)
-		वापस -ENOTSUPP;
+	/* Only support TDM for the physical AIFs */
+	if (dai->id > ARIZONA_MAX_AIF)
+		return -ENOTSUPP;
 
-	अगर (slots == 0) अणु
+	if (slots == 0) {
 		tx_mask = (1 << tx_max_chan) - 1;
 		rx_mask = (1 << rx_max_chan) - 1;
-	पूर्ण
+	}
 
 	arizona_set_channels_to_mask(dai, base + ARIZONA_AIF_FRAME_CTRL_3,
 				     tx_max_chan, tx_mask);
@@ -2020,51 +2019,51 @@ restore_aअगर:
 	arizona->tdm_width[dai->id - 1] = slot_width;
 	arizona->tdm_slots[dai->id - 1] = slots;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा snd_soc_dai_ops arizona_dai_ops = अणु
+const struct snd_soc_dai_ops arizona_dai_ops = {
 	.startup = arizona_startup,
 	.set_fmt = arizona_set_fmt,
 	.set_tdm_slot = arizona_set_tdm_slot,
 	.hw_params = arizona_hw_params,
 	.set_sysclk = arizona_dai_set_sysclk,
 	.set_tristate = arizona_set_tristate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_dai_ops);
 
-स्थिर काष्ठा snd_soc_dai_ops arizona_simple_dai_ops = अणु
+const struct snd_soc_dai_ops arizona_simple_dai_ops = {
 	.startup = arizona_startup,
 	.hw_params = arizona_hw_params_rate,
 	.set_sysclk = arizona_dai_set_sysclk,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(arizona_simple_dai_ops);
 
-पूर्णांक arizona_init_dai(काष्ठा arizona_priv *priv, पूर्णांक id)
-अणु
-	काष्ठा arizona_dai_priv *dai_priv = &priv->dai[id];
+int arizona_init_dai(struct arizona_priv *priv, int id)
+{
+	struct arizona_dai_priv *dai_priv = &priv->dai[id];
 
 	dai_priv->clk = ARIZONA_CLK_SYSCLK;
-	dai_priv->स्थिरraपूर्णांक = arizona_स्थिरraपूर्णांक;
+	dai_priv->constraint = arizona_constraint;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_dai);
 
-अटल काष्ठा अणु
-	अचिन्हित पूर्णांक min;
-	अचिन्हित पूर्णांक max;
+static struct {
+	unsigned int min;
+	unsigned int max;
 	u16 fratio;
-	पूर्णांक ratio;
-पूर्ण fll_fratios[] = अणु
-	अणु       0,    64000, 4, 16 पूर्ण,
-	अणु   64000,   128000, 3,  8 पूर्ण,
-	अणु  128000,   256000, 2,  4 पूर्ण,
-	अणु  256000,  1000000, 1,  2 पूर्ण,
-	अणु 1000000, 13500000, 0,  1 पूर्ण,
-पूर्ण;
+	int ratio;
+} fll_fratios[] = {
+	{       0,    64000, 4, 16 },
+	{   64000,   128000, 3,  8 },
+	{  128000,   256000, 2,  4 },
+	{  256000,  1000000, 1,  2 },
+	{ 1000000, 13500000, 0,  1 },
+};
 
-अटल स्थिर अचिन्हित पूर्णांक pseuकरो_fref_max[ARIZONA_FLL_MAX_FRATIO] = अणु
+static const unsigned int pseudo_fref_max[ARIZONA_FLL_MAX_FRATIO] = {
 	13500000,
 	 6144000,
 	 6144000,
@@ -2081,256 +2080,256 @@ EXPORT_SYMBOL_GPL(arizona_init_dai);
 	 1536000,
 	 1536000,
 	  768000,
-पूर्ण;
+};
 
-अटल काष्ठा अणु
-	अचिन्हित पूर्णांक min;
-	अचिन्हित पूर्णांक max;
+static struct {
+	unsigned int min;
+	unsigned int max;
 	u16 gain;
-पूर्ण fll_gains[] = अणु
-	अणु       0,   256000, 0 पूर्ण,
-	अणु  256000,  1000000, 2 पूर्ण,
-	अणु 1000000, 13500000, 4 पूर्ण,
-पूर्ण;
+} fll_gains[] = {
+	{       0,   256000, 0 },
+	{  256000,  1000000, 2 },
+	{ 1000000, 13500000, 4 },
+};
 
-काष्ठा arizona_fll_cfg अणु
-	पूर्णांक n;
-	अचिन्हित पूर्णांक theta;
-	अचिन्हित पूर्णांक lambda;
-	पूर्णांक refभाग;
-	पूर्णांक outभाग;
-	पूर्णांक fratio;
-	पूर्णांक gain;
-पूर्ण;
+struct arizona_fll_cfg {
+	int n;
+	unsigned int theta;
+	unsigned int lambda;
+	int refdiv;
+	int outdiv;
+	int fratio;
+	int gain;
+};
 
-अटल पूर्णांक arizona_validate_fll(काष्ठा arizona_fll *fll,
-				अचिन्हित पूर्णांक Fref,
-				अचिन्हित पूर्णांक Fout)
-अणु
-	अचिन्हित पूर्णांक Fvco_min;
+static int arizona_validate_fll(struct arizona_fll *fll,
+				unsigned int Fref,
+				unsigned int Fout)
+{
+	unsigned int Fvco_min;
 
-	अगर (fll->fout && Fout != fll->fout) अणु
+	if (fll->fout && Fout != fll->fout) {
 		arizona_fll_err(fll,
 				"Can't change output on active FLL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (Fref / ARIZONA_FLL_MAX_REFDIV > ARIZONA_FLL_MAX_FREF) अणु
+	if (Fref / ARIZONA_FLL_MAX_REFDIV > ARIZONA_FLL_MAX_FREF) {
 		arizona_fll_err(fll,
 				"Can't scale %dMHz in to <=13.5MHz\n",
 				Fref);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	Fvco_min = ARIZONA_FLL_MIN_FVCO * fll->vco_mult;
-	अगर (Fout * ARIZONA_FLL_MAX_OUTDIV < Fvco_min) अणु
+	if (Fout * ARIZONA_FLL_MAX_OUTDIV < Fvco_min) {
 		arizona_fll_err(fll, "No FLL_OUTDIV for Fout=%uHz\n",
 				Fout);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arizona_find_fratio(अचिन्हित पूर्णांक Fref, पूर्णांक *fratio)
-अणु
-	पूर्णांक i;
+static int arizona_find_fratio(unsigned int Fref, int *fratio)
+{
+	int i;
 
 	/* Find an appropriate FLL_FRATIO */
-	क्रम (i = 0; i < ARRAY_SIZE(fll_fratios); i++) अणु
-		अगर (fll_fratios[i].min <= Fref && Fref <= fll_fratios[i].max) अणु
-			अगर (fratio)
+	for (i = 0; i < ARRAY_SIZE(fll_fratios); i++) {
+		if (fll_fratios[i].min <= Fref && Fref <= fll_fratios[i].max) {
+			if (fratio)
 				*fratio = fll_fratios[i].fratio;
-			वापस fll_fratios[i].ratio;
-		पूर्ण
-	पूर्ण
+			return fll_fratios[i].ratio;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक arizona_calc_fratio(काष्ठा arizona_fll *fll,
-			       काष्ठा arizona_fll_cfg *cfg,
-			       अचिन्हित पूर्णांक target,
-			       अचिन्हित पूर्णांक Fref, bool sync)
-अणु
-	पूर्णांक init_ratio, ratio;
-	पूर्णांक refभाग, भाग;
+static int arizona_calc_fratio(struct arizona_fll *fll,
+			       struct arizona_fll_cfg *cfg,
+			       unsigned int target,
+			       unsigned int Fref, bool sync)
+{
+	int init_ratio, ratio;
+	int refdiv, div;
 
-	/* Fref must be <=13.5MHz, find initial refभाग */
-	भाग = 1;
-	cfg->refभाग = 0;
-	जबतक (Fref > ARIZONA_FLL_MAX_FREF) अणु
-		भाग *= 2;
+	/* Fref must be <=13.5MHz, find initial refdiv */
+	div = 1;
+	cfg->refdiv = 0;
+	while (Fref > ARIZONA_FLL_MAX_FREF) {
+		div *= 2;
 		Fref /= 2;
-		cfg->refभाग++;
+		cfg->refdiv++;
 
-		अगर (भाग > ARIZONA_FLL_MAX_REFDIV)
-			वापस -EINVAL;
-	पूर्ण
+		if (div > ARIZONA_FLL_MAX_REFDIV)
+			return -EINVAL;
+	}
 
 	/* Find an appropriate FLL_FRATIO */
 	init_ratio = arizona_find_fratio(Fref, &cfg->fratio);
-	अगर (init_ratio < 0) अणु
+	if (init_ratio < 0) {
 		arizona_fll_err(fll, "Unable to find FRATIO for Fref=%uHz\n",
 				Fref);
-		वापस init_ratio;
-	पूर्ण
+		return init_ratio;
+	}
 
-	चयन (fll->arizona->type) अणु
-	हाल WM5102:
-	हाल WM8997:
-		वापस init_ratio;
-	हाल WM5110:
-	हाल WM8280:
-		अगर (fll->arizona->rev < 3 || sync)
-			वापस init_ratio;
-		अवरोध;
-	शेष:
-		अगर (sync)
-			वापस init_ratio;
-		अवरोध;
-	पूर्ण
+	switch (fll->arizona->type) {
+	case WM5102:
+	case WM8997:
+		return init_ratio;
+	case WM5110:
+	case WM8280:
+		if (fll->arizona->rev < 3 || sync)
+			return init_ratio;
+		break;
+	default:
+		if (sync)
+			return init_ratio;
+		break;
+	}
 
 	cfg->fratio = init_ratio - 1;
 
-	/* Adjust FRATIO/refभाग to aव्योम पूर्णांकeger mode अगर possible */
-	refभाग = cfg->refभाग;
+	/* Adjust FRATIO/refdiv to avoid integer mode if possible */
+	refdiv = cfg->refdiv;
 
 	arizona_fll_dbg(fll, "pseudo: initial ratio=%u fref=%u refdiv=%u\n",
-			init_ratio, Fref, refभाग);
+			init_ratio, Fref, refdiv);
 
-	जबतक (भाग <= ARIZONA_FLL_MAX_REFDIV) अणु
-		/* start from init_ratio because this may alपढ़ोy give a
+	while (div <= ARIZONA_FLL_MAX_REFDIV) {
+		/* start from init_ratio because this may already give a
 		 * fractional N.K
 		 */
-		क्रम (ratio = init_ratio; ratio > 0; ratio--) अणु
-			अगर (target % (ratio * Fref)) अणु
-				cfg->refभाग = refभाग;
+		for (ratio = init_ratio; ratio > 0; ratio--) {
+			if (target % (ratio * Fref)) {
+				cfg->refdiv = refdiv;
 				cfg->fratio = ratio - 1;
 				arizona_fll_dbg(fll,
 					"pseudo: found fref=%u refdiv=%d(%d) ratio=%d\n",
-					Fref, refभाग, भाग, ratio);
-				वापस ratio;
-			पूर्ण
-		पूर्ण
+					Fref, refdiv, div, ratio);
+				return ratio;
+			}
+		}
 
-		क्रम (ratio = init_ratio + 1; ratio <= ARIZONA_FLL_MAX_FRATIO;
-		     ratio++) अणु
-			अगर ((ARIZONA_FLL_VCO_CORNER / 2) /
-			    (fll->vco_mult * ratio) < Fref) अणु
+		for (ratio = init_ratio + 1; ratio <= ARIZONA_FLL_MAX_FRATIO;
+		     ratio++) {
+			if ((ARIZONA_FLL_VCO_CORNER / 2) /
+			    (fll->vco_mult * ratio) < Fref) {
 				arizona_fll_dbg(fll, "pseudo: hit VCO corner\n");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (Fref > pseuकरो_fref_max[ratio - 1]) अणु
+			if (Fref > pseudo_fref_max[ratio - 1]) {
 				arizona_fll_dbg(fll,
 					"pseudo: exceeded max fref(%u) for ratio=%u\n",
-					pseuकरो_fref_max[ratio - 1],
+					pseudo_fref_max[ratio - 1],
 					ratio);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (target % (ratio * Fref)) अणु
-				cfg->refभाग = refभाग;
+			if (target % (ratio * Fref)) {
+				cfg->refdiv = refdiv;
 				cfg->fratio = ratio - 1;
 				arizona_fll_dbg(fll,
 					"pseudo: found fref=%u refdiv=%d(%d) ratio=%d\n",
-					Fref, refभाग, भाग, ratio);
-				वापस ratio;
-			पूर्ण
-		पूर्ण
+					Fref, refdiv, div, ratio);
+				return ratio;
+			}
+		}
 
-		भाग *= 2;
+		div *= 2;
 		Fref /= 2;
-		refभाग++;
-		init_ratio = arizona_find_fratio(Fref, शून्य);
+		refdiv++;
+		init_ratio = arizona_find_fratio(Fref, NULL);
 		arizona_fll_dbg(fll,
 				"pseudo: change fref=%u refdiv=%d(%d) ratio=%u\n",
-				Fref, refभाग, भाग, init_ratio);
-	पूर्ण
+				Fref, refdiv, div, init_ratio);
+	}
 
 	arizona_fll_warn(fll, "Falling back to integer mode operation\n");
-	वापस cfg->fratio + 1;
-पूर्ण
+	return cfg->fratio + 1;
+}
 
-अटल पूर्णांक arizona_calc_fll(काष्ठा arizona_fll *fll,
-			    काष्ठा arizona_fll_cfg *cfg,
-			    अचिन्हित पूर्णांक Fref, bool sync)
-अणु
-	अचिन्हित पूर्णांक target, भाग, gcd_fll;
-	पूर्णांक i, ratio;
+static int arizona_calc_fll(struct arizona_fll *fll,
+			    struct arizona_fll_cfg *cfg,
+			    unsigned int Fref, bool sync)
+{
+	unsigned int target, div, gcd_fll;
+	int i, ratio;
 
 	arizona_fll_dbg(fll, "Fref=%u Fout=%u\n", Fref, fll->fout);
 
-	/* Fvco should be over the targt; करोn't check the upper bound */
-	भाग = ARIZONA_FLL_MIN_OUTDIV;
-	जबतक (fll->fout * भाग < ARIZONA_FLL_MIN_FVCO * fll->vco_mult) अणु
-		भाग++;
-		अगर (भाग > ARIZONA_FLL_MAX_OUTDIV)
-			वापस -EINVAL;
-	पूर्ण
-	target = fll->fout * भाग / fll->vco_mult;
-	cfg->outभाग = भाग;
+	/* Fvco should be over the targt; don't check the upper bound */
+	div = ARIZONA_FLL_MIN_OUTDIV;
+	while (fll->fout * div < ARIZONA_FLL_MIN_FVCO * fll->vco_mult) {
+		div++;
+		if (div > ARIZONA_FLL_MAX_OUTDIV)
+			return -EINVAL;
+	}
+	target = fll->fout * div / fll->vco_mult;
+	cfg->outdiv = div;
 
 	arizona_fll_dbg(fll, "Fvco=%dHz\n", target);
 
-	/* Find an appropriate FLL_FRATIO and refभाग */
+	/* Find an appropriate FLL_FRATIO and refdiv */
 	ratio = arizona_calc_fratio(fll, cfg, target, Fref, sync);
-	अगर (ratio < 0)
-		वापस ratio;
+	if (ratio < 0)
+		return ratio;
 
-	/* Apply the भागision क्रम our reमुख्यing calculations */
-	Fref = Fref / (1 << cfg->refभाग);
+	/* Apply the division for our remaining calculations */
+	Fref = Fref / (1 << cfg->refdiv);
 
 	cfg->n = target / (ratio * Fref);
 
-	अगर (target % (ratio * Fref)) अणु
+	if (target % (ratio * Fref)) {
 		gcd_fll = gcd(target, ratio * Fref);
 		arizona_fll_dbg(fll, "GCD=%u\n", gcd_fll);
 
 		cfg->theta = (target - (cfg->n * ratio * Fref))
 			/ gcd_fll;
 		cfg->lambda = (ratio * Fref) / gcd_fll;
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg->theta = 0;
 		cfg->lambda = 0;
-	पूर्ण
+	}
 
-	/* Round करोwn to 16bit range with cost of accuracy lost.
+	/* Round down to 16bit range with cost of accuracy lost.
 	 * Denominator must be bigger than numerator so we only
 	 * take care of it.
 	 */
-	जबतक (cfg->lambda >= (1 << 16)) अणु
+	while (cfg->lambda >= (1 << 16)) {
 		cfg->theta >>= 1;
 		cfg->lambda >>= 1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(fll_gains); i++) अणु
-		अगर (fll_gains[i].min <= Fref && Fref <= fll_gains[i].max) अणु
+	for (i = 0; i < ARRAY_SIZE(fll_gains); i++) {
+		if (fll_gains[i].min <= Fref && Fref <= fll_gains[i].max) {
 			cfg->gain = fll_gains[i].gain;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (i == ARRAY_SIZE(fll_gains)) अणु
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(fll_gains)) {
 		arizona_fll_err(fll, "Unable to find gain for Fref=%uHz\n",
 				Fref);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	arizona_fll_dbg(fll, "N=%d THETA=%d LAMBDA=%d\n",
 			cfg->n, cfg->theta, cfg->lambda);
 	arizona_fll_dbg(fll, "FRATIO=0x%x(%d) OUTDIV=%d REFCLK_DIV=0x%x(%d)\n",
-			cfg->fratio, ratio, cfg->outभाग,
-			cfg->refभाग, 1 << cfg->refभाग);
+			cfg->fratio, ratio, cfg->outdiv,
+			cfg->refdiv, 1 << cfg->refdiv);
 	arizona_fll_dbg(fll, "GAIN=0x%x(%d)\n", cfg->gain, 1 << cfg->gain);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम arizona_apply_fll(काष्ठा arizona *arizona, अचिन्हित पूर्णांक base,
-			      काष्ठा arizona_fll_cfg *cfg, पूर्णांक source,
+static void arizona_apply_fll(struct arizona *arizona, unsigned int base,
+			      struct arizona_fll_cfg *cfg, int source,
 			      bool sync)
-अणु
+{
 	regmap_update_bits_async(arizona->regmap, base + 3,
 				 ARIZONA_FLL1_THETA_MASK, cfg->theta);
 	regmap_update_bits_async(arizona->regmap, base + 4,
@@ -2341,95 +2340,95 @@ EXPORT_SYMBOL_GPL(arizona_init_dai);
 	regmap_update_bits_async(arizona->regmap, base + 6,
 				 ARIZONA_FLL1_CLK_REF_DIV_MASK |
 				 ARIZONA_FLL1_CLK_REF_SRC_MASK,
-				 cfg->refभाग << ARIZONA_FLL1_CLK_REF_DIV_SHIFT |
+				 cfg->refdiv << ARIZONA_FLL1_CLK_REF_DIV_SHIFT |
 				 source << ARIZONA_FLL1_CLK_REF_SRC_SHIFT);
 
-	अगर (sync) अणु
+	if (sync) {
 		regmap_update_bits(arizona->regmap, base + 0x7,
 				   ARIZONA_FLL1_GAIN_MASK,
 				   cfg->gain << ARIZONA_FLL1_GAIN_SHIFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		regmap_update_bits(arizona->regmap, base + 0x5,
 				   ARIZONA_FLL1_OUTDIV_MASK,
-				   cfg->outभाग << ARIZONA_FLL1_OUTDIV_SHIFT);
+				   cfg->outdiv << ARIZONA_FLL1_OUTDIV_SHIFT);
 		regmap_update_bits(arizona->regmap, base + 0x9,
 				   ARIZONA_FLL1_GAIN_MASK,
 				   cfg->gain << ARIZONA_FLL1_GAIN_SHIFT);
-	पूर्ण
+	}
 
 	regmap_update_bits_async(arizona->regmap, base + 2,
 				 ARIZONA_FLL1_CTRL_UPD | ARIZONA_FLL1_N_MASK,
 				 ARIZONA_FLL1_CTRL_UPD | cfg->n);
-पूर्ण
+}
 
-अटल पूर्णांक arizona_is_enabled_fll(काष्ठा arizona_fll *fll, पूर्णांक base)
-अणु
-	काष्ठा arizona *arizona = fll->arizona;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक ret;
+static int arizona_is_enabled_fll(struct arizona_fll *fll, int base)
+{
+	struct arizona *arizona = fll->arizona;
+	unsigned int reg;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, base + 1, &reg);
-	अगर (ret != 0) अणु
+	ret = regmap_read(arizona->regmap, base + 1, &reg);
+	if (ret != 0) {
 		arizona_fll_err(fll, "Failed to read current state: %d\n",
 				ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस reg & ARIZONA_FLL1_ENA;
-पूर्ण
+	return reg & ARIZONA_FLL1_ENA;
+}
 
-अटल पूर्णांक arizona_set_fll_clks(काष्ठा arizona_fll *fll, पूर्णांक base, bool ena)
-अणु
-	काष्ठा arizona *arizona = fll->arizona;
-	अचिन्हित पूर्णांक val;
-	काष्ठा clk *clk;
-	पूर्णांक ret;
+static int arizona_set_fll_clks(struct arizona_fll *fll, int base, bool ena)
+{
+	struct arizona *arizona = fll->arizona;
+	unsigned int val;
+	struct clk *clk;
+	int ret;
 
-	ret = regmap_पढ़ो(arizona->regmap, base + 6, &val);
-	अगर (ret != 0) अणु
+	ret = regmap_read(arizona->regmap, base + 6, &val);
+	if (ret != 0) {
 		arizona_fll_err(fll, "Failed to read current source: %d\n",
 				ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	val &= ARIZONA_FLL1_CLK_REF_SRC_MASK;
 	val >>= ARIZONA_FLL1_CLK_REF_SRC_SHIFT;
 
-	चयन (val) अणु
-	हाल ARIZONA_FLL_SRC_MCLK1:
+	switch (val) {
+	case ARIZONA_FLL_SRC_MCLK1:
 		clk = arizona->mclk[ARIZONA_MCLK1];
-		अवरोध;
-	हाल ARIZONA_FLL_SRC_MCLK2:
+		break;
+	case ARIZONA_FLL_SRC_MCLK2:
 		clk = arizona->mclk[ARIZONA_MCLK2];
-		अवरोध;
-	शेष:
-		वापस 0;
-	पूर्ण
+		break;
+	default:
+		return 0;
+	}
 
-	अगर (ena) अणु
-		वापस clk_prepare_enable(clk);
-	पूर्ण अन्यथा अणु
+	if (ena) {
+		return clk_prepare_enable(clk);
+	} else {
 		clk_disable_unprepare(clk);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल पूर्णांक arizona_enable_fll(काष्ठा arizona_fll *fll)
-अणु
-	काष्ठा arizona *arizona = fll->arizona;
+static int arizona_enable_fll(struct arizona_fll *fll)
+{
+	struct arizona *arizona = fll->arizona;
 	bool use_sync = false;
-	पूर्णांक alपढ़ोy_enabled = arizona_is_enabled_fll(fll, fll->base);
-	पूर्णांक sync_enabled = arizona_is_enabled_fll(fll, fll->base + 0x10);
-	काष्ठा arizona_fll_cfg cfg;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक val;
+	int already_enabled = arizona_is_enabled_fll(fll, fll->base);
+	int sync_enabled = arizona_is_enabled_fll(fll, fll->base + 0x10);
+	struct arizona_fll_cfg cfg;
+	int i;
+	unsigned int val;
 
-	अगर (alपढ़ोy_enabled < 0)
-		वापस alपढ़ोy_enabled;
-	अगर (sync_enabled < 0)
-		वापस sync_enabled;
+	if (already_enabled < 0)
+		return already_enabled;
+	if (sync_enabled < 0)
+		return sync_enabled;
 
-	अगर (alपढ़ोy_enabled) अणु
+	if (already_enabled) {
 		/* Facilitate smooth refclk across the transition */
 		regmap_update_bits(fll->arizona->regmap, fll->base + 1,
 				   ARIZONA_FLL1_FREERUN, ARIZONA_FLL1_FREERUN);
@@ -2437,33 +2436,33 @@ EXPORT_SYMBOL_GPL(arizona_init_dai);
 		regmap_update_bits_async(fll->arizona->regmap, fll->base + 0x9,
 					 ARIZONA_FLL1_GAIN_MASK, 0);
 
-		अगर (arizona_is_enabled_fll(fll, fll->base + 0x10) > 0)
+		if (arizona_is_enabled_fll(fll, fll->base + 0x10) > 0)
 			arizona_set_fll_clks(fll, fll->base + 0x10, false);
 		arizona_set_fll_clks(fll, fll->base, false);
-	पूर्ण
+	}
 
 	/*
 	 * If we have both REFCLK and SYNCCLK then enable both,
 	 * otherwise apply the SYNCCLK settings to REFCLK.
 	 */
-	अगर (fll->ref_src >= 0 && fll->ref_freq &&
-	    fll->ref_src != fll->sync_src) अणु
+	if (fll->ref_src >= 0 && fll->ref_freq &&
+	    fll->ref_src != fll->sync_src) {
 		arizona_calc_fll(fll, &cfg, fll->ref_freq, false);
 
 		/* Ref path hardcodes lambda to 65536 when sync is on */
-		अगर (fll->sync_src >= 0 && cfg.lambda)
+		if (fll->sync_src >= 0 && cfg.lambda)
 			cfg.theta = (cfg.theta * (1 << 16)) / cfg.lambda;
 
 		arizona_apply_fll(arizona, fll->base, &cfg, fll->ref_src,
 				  false);
-		अगर (fll->sync_src >= 0) अणु
+		if (fll->sync_src >= 0) {
 			arizona_calc_fll(fll, &cfg, fll->sync_freq, true);
 
 			arizona_apply_fll(arizona, fll->base + 0x10, &cfg,
 					  fll->sync_src, true);
 			use_sync = true;
-		पूर्ण
-	पूर्ण अन्यथा अगर (fll->sync_src >= 0) अणु
+		}
+	} else if (fll->sync_src >= 0) {
 		arizona_calc_fll(fll, &cfg, fll->sync_freq, false);
 
 		arizona_apply_fll(arizona, fll->base, &cfg,
@@ -2471,68 +2470,68 @@ EXPORT_SYMBOL_GPL(arizona_init_dai);
 
 		regmap_update_bits_async(arizona->regmap, fll->base + 0x11,
 					 ARIZONA_FLL1_SYNC_ENA, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		arizona_fll_err(fll, "No clocks provided\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (alपढ़ोy_enabled && !!sync_enabled != use_sync)
+	if (already_enabled && !!sync_enabled != use_sync)
 		arizona_fll_warn(fll, "Synchroniser changed on active FLL\n");
 
 	/*
-	 * Increase the bandwidth अगर we're not using a low frequency
+	 * Increase the bandwidth if we're not using a low frequency
 	 * sync source.
 	 */
-	अगर (use_sync && fll->sync_freq > 100000)
+	if (use_sync && fll->sync_freq > 100000)
 		regmap_update_bits_async(arizona->regmap, fll->base + 0x17,
 					 ARIZONA_FLL1_SYNC_BW, 0);
-	अन्यथा
+	else
 		regmap_update_bits_async(arizona->regmap, fll->base + 0x17,
 					 ARIZONA_FLL1_SYNC_BW,
 					 ARIZONA_FLL1_SYNC_BW);
 
-	अगर (!alपढ़ोy_enabled)
-		pm_runसमय_get_sync(arizona->dev);
+	if (!already_enabled)
+		pm_runtime_get_sync(arizona->dev);
 
-	अगर (use_sync) अणु
+	if (use_sync) {
 		arizona_set_fll_clks(fll, fll->base + 0x10, true);
 		regmap_update_bits_async(arizona->regmap, fll->base + 0x11,
 					 ARIZONA_FLL1_SYNC_ENA,
 					 ARIZONA_FLL1_SYNC_ENA);
-	पूर्ण
+	}
 	arizona_set_fll_clks(fll, fll->base, true);
 	regmap_update_bits_async(arizona->regmap, fll->base + 1,
 				 ARIZONA_FLL1_ENA, ARIZONA_FLL1_ENA);
 
-	अगर (alपढ़ोy_enabled)
+	if (already_enabled)
 		regmap_update_bits_async(arizona->regmap, fll->base + 1,
 					 ARIZONA_FLL1_FREERUN, 0);
 
 	arizona_fll_dbg(fll, "Waiting for FLL lock...\n");
 	val = 0;
-	क्रम (i = 0; i < 15; i++) अणु
-		अगर (i < 5)
+	for (i = 0; i < 15; i++) {
+		if (i < 5)
 			usleep_range(200, 400);
-		अन्यथा
+		else
 			msleep(20);
 
-		regmap_पढ़ो(arizona->regmap,
+		regmap_read(arizona->regmap,
 			    ARIZONA_INTERRUPT_RAW_STATUS_5,
 			    &val);
-		अगर (val & (ARIZONA_FLL1_CLOCK_OK_STS << (fll->id - 1)))
-			अवरोध;
-	पूर्ण
-	अगर (i == 15)
+		if (val & (ARIZONA_FLL1_CLOCK_OK_STS << (fll->id - 1)))
+			break;
+	}
+	if (i == 15)
 		arizona_fll_warn(fll, "Timed out waiting for lock\n");
-	अन्यथा
+	else
 		arizona_fll_dbg(fll, "FLL locked (%d polls)\n", i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम arizona_disable_fll(काष्ठा arizona_fll *fll)
-अणु
-	काष्ठा arizona *arizona = fll->arizona;
+static void arizona_disable_fll(struct arizona_fll *fll)
+{
+	struct arizona *arizona = fll->arizona;
 	bool ref_change, sync_change;
 
 	regmap_update_bits_async(arizona->regmap, fll->base + 1,
@@ -2544,143 +2543,143 @@ EXPORT_SYMBOL_GPL(arizona_init_dai);
 	regmap_update_bits_async(arizona->regmap, fll->base + 1,
 				 ARIZONA_FLL1_FREERUN, 0);
 
-	अगर (sync_change)
+	if (sync_change)
 		arizona_set_fll_clks(fll, fll->base + 0x10, false);
 
-	अगर (ref_change) अणु
+	if (ref_change) {
 		arizona_set_fll_clks(fll, fll->base, false);
-		pm_runसमय_put_स्वतःsuspend(arizona->dev);
-	पूर्ण
-पूर्ण
+		pm_runtime_put_autosuspend(arizona->dev);
+	}
+}
 
-पूर्णांक arizona_set_fll_refclk(काष्ठा arizona_fll *fll, पूर्णांक source,
-			   अचिन्हित पूर्णांक Fref, अचिन्हित पूर्णांक Fout)
-अणु
-	पूर्णांक ret = 0;
+int arizona_set_fll_refclk(struct arizona_fll *fll, int source,
+			   unsigned int Fref, unsigned int Fout)
+{
+	int ret = 0;
 
-	अगर (fll->ref_src == source && fll->ref_freq == Fref)
-		वापस 0;
+	if (fll->ref_src == source && fll->ref_freq == Fref)
+		return 0;
 
-	अगर (fll->fout && Fref > 0) अणु
+	if (fll->fout && Fref > 0) {
 		ret = arizona_validate_fll(fll, Fref, fll->fout);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
 	fll->ref_src = source;
 	fll->ref_freq = Fref;
 
-	अगर (fll->fout && Fref > 0)
+	if (fll->fout && Fref > 0)
 		ret = arizona_enable_fll(fll);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(arizona_set_fll_refclk);
 
-पूर्णांक arizona_set_fll(काष्ठा arizona_fll *fll, पूर्णांक source,
-		    अचिन्हित पूर्णांक Fref, अचिन्हित पूर्णांक Fout)
-अणु
-	पूर्णांक ret = 0;
+int arizona_set_fll(struct arizona_fll *fll, int source,
+		    unsigned int Fref, unsigned int Fout)
+{
+	int ret = 0;
 
-	अगर (fll->sync_src == source &&
+	if (fll->sync_src == source &&
 	    fll->sync_freq == Fref && fll->fout == Fout)
-		वापस 0;
+		return 0;
 
-	अगर (Fout) अणु
-		अगर (fll->ref_src >= 0) अणु
+	if (Fout) {
+		if (fll->ref_src >= 0) {
 			ret = arizona_validate_fll(fll, fll->ref_freq, Fout);
-			अगर (ret != 0)
-				वापस ret;
-		पूर्ण
+			if (ret != 0)
+				return ret;
+		}
 
 		ret = arizona_validate_fll(fll, Fref, Fout);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण
+		if (ret != 0)
+			return ret;
+	}
 
 	fll->sync_src = source;
 	fll->sync_freq = Fref;
 	fll->fout = Fout;
 
-	अगर (Fout)
+	if (Fout)
 		ret = arizona_enable_fll(fll);
-	अन्यथा
+	else
 		arizona_disable_fll(fll);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(arizona_set_fll);
 
-पूर्णांक arizona_init_fll(काष्ठा arizona *arizona, पूर्णांक id, पूर्णांक base, पूर्णांक lock_irq,
-		     पूर्णांक ok_irq, काष्ठा arizona_fll *fll)
-अणु
-	अचिन्हित पूर्णांक val;
+int arizona_init_fll(struct arizona *arizona, int id, int base, int lock_irq,
+		     int ok_irq, struct arizona_fll *fll)
+{
+	unsigned int val;
 
 	fll->id = id;
 	fll->base = base;
 	fll->arizona = arizona;
 	fll->sync_src = ARIZONA_FLL_SRC_NONE;
 
-	/* Configure शेष refclk to 32kHz अगर we have one */
-	regmap_पढ़ो(arizona->regmap, ARIZONA_CLOCK_32K_1, &val);
-	चयन (val & ARIZONA_CLK_32K_SRC_MASK) अणु
-	हाल ARIZONA_CLK_SRC_MCLK1:
-	हाल ARIZONA_CLK_SRC_MCLK2:
+	/* Configure default refclk to 32kHz if we have one */
+	regmap_read(arizona->regmap, ARIZONA_CLOCK_32K_1, &val);
+	switch (val & ARIZONA_CLK_32K_SRC_MASK) {
+	case ARIZONA_CLK_SRC_MCLK1:
+	case ARIZONA_CLK_SRC_MCLK2:
 		fll->ref_src = val & ARIZONA_CLK_32K_SRC_MASK;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		fll->ref_src = ARIZONA_FLL_SRC_NONE;
-	पूर्ण
+	}
 	fll->ref_freq = 32768;
 
-	snम_लिखो(fll->lock_name, माप(fll->lock_name), "FLL%d lock", id);
-	snम_लिखो(fll->घड़ी_ok_name, माप(fll->घड़ी_ok_name),
+	snprintf(fll->lock_name, sizeof(fll->lock_name), "FLL%d lock", id);
+	snprintf(fll->clock_ok_name, sizeof(fll->clock_ok_name),
 		 "FLL%d clock OK", id);
 
 	regmap_update_bits(arizona->regmap, fll->base + 1,
 			   ARIZONA_FLL1_FREERUN, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_init_fll);
 
 /**
- * arizona_set_output_mode - Set the mode of the specअगरied output
+ * arizona_set_output_mode - Set the mode of the specified output
  *
  * @component: Device to configure
  * @output: Output number
- * @dअगरf: True to set the output to dअगरferential mode
+ * @diff: True to set the output to differential mode
  *
- * Some प्रणालीs use बाह्यal analogue चयनes to connect more
+ * Some systems use external analogue switches to connect more
  * analogue devices to the CODEC than are supported by the device.  In
- * some प्रणालीs this requires changing the चयनed output from single
- * ended to dअगरferential mode dynamically at runसमय, an operation
+ * some systems this requires changing the switched output from single
+ * ended to differential mode dynamically at runtime, an operation
  * supported using this function.
  *
- * Most प्रणालीs have a single अटल configuration and should use
- * platक्रमm data instead.
+ * Most systems have a single static configuration and should use
+ * platform data instead.
  */
-पूर्णांक arizona_set_output_mode(काष्ठा snd_soc_component *component, पूर्णांक output,
-			    bool dअगरf)
-अणु
-	अचिन्हित पूर्णांक reg, val;
+int arizona_set_output_mode(struct snd_soc_component *component, int output,
+			    bool diff)
+{
+	unsigned int reg, val;
 
-	अगर (output < 1 || output > 6)
-		वापस -EINVAL;
+	if (output < 1 || output > 6)
+		return -EINVAL;
 
 	reg = ARIZONA_OUTPUT_PATH_CONFIG_1L + (output - 1) * 8;
 
-	अगर (dअगरf)
+	if (diff)
 		val = ARIZONA_OUT1_MONO;
-	अन्यथा
+	else
 		val = 0;
 
-	वापस snd_soc_component_update_bits(component, reg,
+	return snd_soc_component_update_bits(component, reg,
 					     ARIZONA_OUT1_MONO, val);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(arizona_set_output_mode);
 
-अटल स्थिर काष्ठा soc_क्रमागत arizona_adsp2_rate_क्रमागत[] = अणु
+static const struct soc_enum arizona_adsp2_rate_enum[] = {
 	SOC_VALUE_ENUM_SINGLE(ARIZONA_DSP1_CONTROL_1,
 			      ARIZONA_DSP1_RATE_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE,
@@ -2697,164 +2696,164 @@ EXPORT_SYMBOL_GPL(arizona_set_output_mode);
 			      ARIZONA_DSP1_RATE_SHIFT, 0xf,
 			      ARIZONA_RATE_ENUM_SIZE,
 			      arizona_rate_text, arizona_rate_val),
-पूर्ण;
+};
 
-स्थिर काष्ठा snd_kcontrol_new arizona_adsp2_rate_controls[] = अणु
-	SOC_ENUM("DSP1 Rate", arizona_adsp2_rate_क्रमागत[0]),
-	SOC_ENUM("DSP2 Rate", arizona_adsp2_rate_क्रमागत[1]),
-	SOC_ENUM("DSP3 Rate", arizona_adsp2_rate_क्रमागत[2]),
-	SOC_ENUM("DSP4 Rate", arizona_adsp2_rate_क्रमागत[3]),
-पूर्ण;
+const struct snd_kcontrol_new arizona_adsp2_rate_controls[] = {
+	SOC_ENUM("DSP1 Rate", arizona_adsp2_rate_enum[0]),
+	SOC_ENUM("DSP2 Rate", arizona_adsp2_rate_enum[1]),
+	SOC_ENUM("DSP3 Rate", arizona_adsp2_rate_enum[2]),
+	SOC_ENUM("DSP4 Rate", arizona_adsp2_rate_enum[3]),
+};
 EXPORT_SYMBOL_GPL(arizona_adsp2_rate_controls);
 
-अटल bool arizona_eq_filter_unstable(bool mode, __be16 _a, __be16 _b)
-अणु
+static bool arizona_eq_filter_unstable(bool mode, __be16 _a, __be16 _b)
+{
 	s16 a = be16_to_cpu(_a);
 	s16 b = be16_to_cpu(_b);
 
-	अगर (!mode) अणु
-		वापस असल(a) >= 4096;
-	पूर्ण अन्यथा अणु
-		अगर (असल(b) >= 4096)
-			वापस true;
+	if (!mode) {
+		return abs(a) >= 4096;
+	} else {
+		if (abs(b) >= 4096)
+			return true;
 
-		वापस (असल((a << 16) / (4096 - b)) >= 4096 << 4);
-	पूर्ण
-पूर्ण
+		return (abs((a << 16) / (4096 - b)) >= 4096 << 4);
+	}
+}
 
-पूर्णांक arizona_eq_coeff_put(काष्ठा snd_kcontrol *kcontrol,
-			 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
-	काष्ठा soc_bytes *params = (व्योम *)kcontrol->निजी_value;
-	अचिन्हित पूर्णांक val;
+int arizona_eq_coeff_put(struct snd_kcontrol *kcontrol,
+			 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
+	struct soc_bytes *params = (void *)kcontrol->private_value;
+	unsigned int val;
 	__be16 *data;
-	पूर्णांक len;
-	पूर्णांक ret;
+	int len;
+	int ret;
 
 	len = params->num_regs * regmap_get_val_bytes(arizona->regmap);
 
 	data = kmemdup(ucontrol->value.bytes.data, len, GFP_KERNEL | GFP_DMA);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
 	data[0] &= cpu_to_be16(ARIZONA_EQ1_B1_MODE);
 
-	अगर (arizona_eq_filter_unstable(!!data[0], data[1], data[2]) ||
+	if (arizona_eq_filter_unstable(!!data[0], data[1], data[2]) ||
 	    arizona_eq_filter_unstable(true, data[4], data[5]) ||
 	    arizona_eq_filter_unstable(true, data[8], data[9]) ||
 	    arizona_eq_filter_unstable(true, data[12], data[13]) ||
-	    arizona_eq_filter_unstable(false, data[16], data[17])) अणु
+	    arizona_eq_filter_unstable(false, data[16], data[17])) {
 		dev_err(arizona->dev, "Rejecting unstable EQ coefficients\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = regmap_पढ़ो(arizona->regmap, params->base, &val);
-	अगर (ret != 0)
-		जाओ out;
+	ret = regmap_read(arizona->regmap, params->base, &val);
+	if (ret != 0)
+		goto out;
 
 	val &= ~ARIZONA_EQ1_B1_MODE;
 	data[0] |= cpu_to_be16(val);
 
-	ret = regmap_raw_ग_लिखो(arizona->regmap, params->base, data, len);
+	ret = regmap_raw_write(arizona->regmap, params->base, data, len);
 
 out:
-	kमुक्त(data);
-	वापस ret;
-पूर्ण
+	kfree(data);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(arizona_eq_coeff_put);
 
-पूर्णांक arizona_lhpf_coeff_put(काष्ठा snd_kcontrol *kcontrol,
-			   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा arizona *arizona = dev_get_drvdata(component->dev->parent);
+int arizona_lhpf_coeff_put(struct snd_kcontrol *kcontrol,
+			   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct arizona *arizona = dev_get_drvdata(component->dev->parent);
 	__be16 *data = (__be16 *)ucontrol->value.bytes.data;
 	s16 val = be16_to_cpu(*data);
 
-	अगर (असल(val) >= 4096) अणु
+	if (abs(val) >= 4096) {
 		dev_err(arizona->dev, "Rejecting unstable LHPF coefficients\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस snd_soc_bytes_put(kcontrol, ucontrol);
-पूर्ण
+	return snd_soc_bytes_put(kcontrol, ucontrol);
+}
 EXPORT_SYMBOL_GPL(arizona_lhpf_coeff_put);
 
-पूर्णांक arizona_of_get_audio_pdata(काष्ठा arizona *arizona)
-अणु
-	काष्ठा arizona_pdata *pdata = &arizona->pdata;
-	काष्ठा device_node *np = arizona->dev->of_node;
-	काष्ठा property *prop;
-	स्थिर __be32 *cur;
+int arizona_of_get_audio_pdata(struct arizona *arizona)
+{
+	struct arizona_pdata *pdata = &arizona->pdata;
+	struct device_node *np = arizona->dev->of_node;
+	struct property *prop;
+	const __be32 *cur;
 	u32 val;
 	u32 pdm_val[ARIZONA_MAX_PDM_SPK];
-	पूर्णांक ret;
-	पूर्णांक count = 0;
+	int ret;
+	int count = 0;
 
 	count = 0;
-	of_property_क्रम_each_u32(np, "wlf,inmode", prop, cur, val) अणु
-		अगर (count == ARRAY_SIZE(pdata->inmode))
-			अवरोध;
+	of_property_for_each_u32(np, "wlf,inmode", prop, cur, val) {
+		if (count == ARRAY_SIZE(pdata->inmode))
+			break;
 
 		pdata->inmode[count] = val;
 		count++;
-	पूर्ण
+	}
 
 	count = 0;
-	of_property_क्रम_each_u32(np, "wlf,dmic-ref", prop, cur, val) अणु
-		अगर (count == ARRAY_SIZE(pdata->dmic_ref))
-			अवरोध;
+	of_property_for_each_u32(np, "wlf,dmic-ref", prop, cur, val) {
+		if (count == ARRAY_SIZE(pdata->dmic_ref))
+			break;
 
 		pdata->dmic_ref[count] = val;
 		count++;
-	पूर्ण
+	}
 
 	count = 0;
-	of_property_क्रम_each_u32(np, "wlf,out-mono", prop, cur, val) अणु
-		अगर (count == ARRAY_SIZE(pdata->out_mono))
-			अवरोध;
+	of_property_for_each_u32(np, "wlf,out-mono", prop, cur, val) {
+		if (count == ARRAY_SIZE(pdata->out_mono))
+			break;
 
 		pdata->out_mono[count] = !!val;
 		count++;
-	पूर्ण
+	}
 
 	count = 0;
-	of_property_क्रम_each_u32(np, "wlf,max-channels-clocked", prop, cur, val) अणु
-		अगर (count == ARRAY_SIZE(pdata->max_channels_घड़ीed))
-			अवरोध;
+	of_property_for_each_u32(np, "wlf,max-channels-clocked", prop, cur, val) {
+		if (count == ARRAY_SIZE(pdata->max_channels_clocked))
+			break;
 
-		pdata->max_channels_घड़ीed[count] = val;
+		pdata->max_channels_clocked[count] = val;
 		count++;
-	पूर्ण
+	}
 
 	count = 0;
-	of_property_क्रम_each_u32(np, "wlf,out-volume-limit", prop, cur, val) अणु
-		अगर (count == ARRAY_SIZE(pdata->out_vol_limit))
-			अवरोध;
+	of_property_for_each_u32(np, "wlf,out-volume-limit", prop, cur, val) {
+		if (count == ARRAY_SIZE(pdata->out_vol_limit))
+			break;
 
 		pdata->out_vol_limit[count] = val;
 		count++;
-	पूर्ण
+	}
 
-	ret = of_property_पढ़ो_u32_array(np, "wlf,spk-fmt",
+	ret = of_property_read_u32_array(np, "wlf,spk-fmt",
 					 pdm_val, ARRAY_SIZE(pdm_val));
 
-	अगर (ret >= 0)
-		क्रम (count = 0; count < ARRAY_SIZE(pdata->spk_fmt); ++count)
+	if (ret >= 0)
+		for (count = 0; count < ARRAY_SIZE(pdata->spk_fmt); ++count)
 			pdata->spk_fmt[count] = pdm_val[count];
 
-	ret = of_property_पढ़ो_u32_array(np, "wlf,spk-mute",
+	ret = of_property_read_u32_array(np, "wlf,spk-mute",
 					 pdm_val, ARRAY_SIZE(pdm_val));
 
-	अगर (ret >= 0)
-		क्रम (count = 0; count < ARRAY_SIZE(pdata->spk_mute); ++count)
+	if (ret >= 0)
+		for (count = 0; count < ARRAY_SIZE(pdata->spk_mute); ++count)
 			pdata->spk_mute[count] = pdm_val[count];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(arizona_of_get_audio_pdata);
 
 MODULE_DESCRIPTION("ASoC Wolfson Arizona class device support");

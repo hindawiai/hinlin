@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/cpufreq.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 
-__weak व्योम arch_freq_prepare_all(व्योम)
-अणु
-पूर्ण
+__weak void arch_freq_prepare_all(void)
+{
+}
 
-बाह्य स्थिर काष्ठा seq_operations cpuinfo_op;
-अटल पूर्णांक cpuinfo_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+extern const struct seq_operations cpuinfo_op;
+static int cpuinfo_open(struct inode *inode, struct file *file)
+{
 	arch_freq_prepare_all();
-	वापस seq_खोलो(file, &cpuinfo_op);
-पूर्ण
+	return seq_open(file, &cpuinfo_op);
+}
 
-अटल स्थिर काष्ठा proc_ops cpuinfo_proc_ops = अणु
+static const struct proc_ops cpuinfo_proc_ops = {
 	.proc_flags	= PROC_ENTRY_PERMANENT,
-	.proc_खोलो	= cpuinfo_खोलो,
-	.proc_पढ़ो_iter	= seq_पढ़ो_iter,
+	.proc_open	= cpuinfo_open,
+	.proc_read_iter	= seq_read_iter,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
-पूर्ण;
+};
 
-अटल पूर्णांक __init proc_cpuinfo_init(व्योम)
-अणु
-	proc_create("cpuinfo", 0, शून्य, &cpuinfo_proc_ops);
-	वापस 0;
-पूर्ण
+static int __init proc_cpuinfo_init(void)
+{
+	proc_create("cpuinfo", 0, NULL, &cpuinfo_proc_ops);
+	return 0;
+}
 fs_initcall(proc_cpuinfo_init);

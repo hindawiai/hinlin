@@ -1,256 +1,255 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <sys/ioctl.h>
-#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
-#समावेश <linux/kernel.h>
-#समावेश "tests.h"
-#समावेश "debug.h"
-#समावेश "event.h"
-#समावेश "cloexec.h"
-#समावेश "../perf-sys.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/hw_breakpoint.h>
+#include <linux/kernel.h>
+#include "tests.h"
+#include "debug.h"
+#include "event.h"
+#include "cloexec.h"
+#include "../perf-sys.h"
 
-#घोषणा WP_TEST_ASSERT_VAL(fd, text, val)       \
-करो अणु                                            \
-	दीर्घ दीर्घ count;                        \
-	wp_पढ़ो(fd, &count, माप(दीर्घ दीर्घ)); \
+#define WP_TEST_ASSERT_VAL(fd, text, val)       \
+do {                                            \
+	long long count;                        \
+	wp_read(fd, &count, sizeof(long long)); \
 	TEST_ASSERT_VAL(text, count == val);    \
-पूर्ण जबतक (0)
+} while (0)
 
-अस्थिर u64 data1;
-अस्थिर u8 data2[3];
+volatile u64 data1;
+volatile u8 data2[3];
 
-अटल पूर्णांक wp_पढ़ो(पूर्णांक fd, दीर्घ दीर्घ *count, पूर्णांक size)
-अणु
-	पूर्णांक ret = पढ़ो(fd, count, size);
+static int wp_read(int fd, long long *count, int size)
+{
+	int ret = read(fd, count, size);
 
-	अगर (ret != size) अणु
+	if (ret != size) {
 		pr_debug("failed to read: %d\n", ret);
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}
 
-अटल व्योम get__perf_event_attr(काष्ठा perf_event_attr *attr, पूर्णांक wp_type,
-				 व्योम *wp_addr, अचिन्हित दीर्घ wp_len)
-अणु
-	स_रखो(attr, 0, माप(काष्ठा perf_event_attr));
+static void get__perf_event_attr(struct perf_event_attr *attr, int wp_type,
+				 void *wp_addr, unsigned long wp_len)
+{
+	memset(attr, 0, sizeof(struct perf_event_attr));
 	attr->type           = PERF_TYPE_BREAKPOINT;
-	attr->size           = माप(काष्ठा perf_event_attr);
+	attr->size           = sizeof(struct perf_event_attr);
 	attr->config         = 0;
 	attr->bp_type        = wp_type;
-	attr->bp_addr        = (अचिन्हित दीर्घ)wp_addr;
+	attr->bp_addr        = (unsigned long)wp_addr;
 	attr->bp_len         = wp_len;
 	attr->sample_period  = 1;
 	attr->sample_type    = PERF_SAMPLE_IP;
 	attr->exclude_kernel = 1;
 	attr->exclude_hv     = 1;
-पूर्ण
+}
 
-अटल पूर्णांक __event(पूर्णांक wp_type, व्योम *wp_addr, अचिन्हित दीर्घ wp_len)
-अणु
-	पूर्णांक fd;
-	काष्ठा perf_event_attr attr;
+static int __event(int wp_type, void *wp_addr, unsigned long wp_len)
+{
+	int fd;
+	struct perf_event_attr attr;
 
 	get__perf_event_attr(&attr, wp_type, wp_addr, wp_len);
-	fd = sys_perf_event_खोलो(&attr, 0, -1, -1,
-				 perf_event_खोलो_cloexec_flag());
-	अगर (fd < 0)
+	fd = sys_perf_event_open(&attr, 0, -1, -1,
+				 perf_event_open_cloexec_flag());
+	if (fd < 0)
 		pr_debug("failed opening event %x\n", attr.bp_type);
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल पूर्णांक wp_ro_test(व्योम)
-अणु
-	पूर्णांक fd;
-	अचिन्हित दीर्घ पंचांगp, पंचांगp1 = अक्रम();
+static int wp_ro_test(void)
+{
+	int fd;
+	unsigned long tmp, tmp1 = rand();
 
-	fd = __event(HW_BREAKPOINT_R, (व्योम *)&data1, माप(data1));
-	अगर (fd < 0)
-		वापस -1;
+	fd = __event(HW_BREAKPOINT_R, (void *)&data1, sizeof(data1));
+	if (fd < 0)
+		return -1;
 
-	पंचांगp = data1;
+	tmp = data1;
 	WP_TEST_ASSERT_VAL(fd, "RO watchpoint", 1);
 
-	data1 = पंचांगp1 + पंचांगp;
+	data1 = tmp1 + tmp;
 	WP_TEST_ASSERT_VAL(fd, "RO watchpoint", 1);
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}
 
-अटल पूर्णांक wp_wo_test(व्योम)
-अणु
-	पूर्णांक fd;
-	अचिन्हित दीर्घ पंचांगp, पंचांगp1 = अक्रम();
+static int wp_wo_test(void)
+{
+	int fd;
+	unsigned long tmp, tmp1 = rand();
 
-	fd = __event(HW_BREAKPOINT_W, (व्योम *)&data1, माप(data1));
-	अगर (fd < 0)
-		वापस -1;
+	fd = __event(HW_BREAKPOINT_W, (void *)&data1, sizeof(data1));
+	if (fd < 0)
+		return -1;
 
-	पंचांगp = data1;
+	tmp = data1;
 	WP_TEST_ASSERT_VAL(fd, "WO watchpoint", 0);
 
-	data1 = पंचांगp1 + पंचांगp;
+	data1 = tmp1 + tmp;
 	WP_TEST_ASSERT_VAL(fd, "WO watchpoint", 1);
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}
 
-अटल पूर्णांक wp_rw_test(व्योम)
-अणु
-	पूर्णांक fd;
-	अचिन्हित दीर्घ पंचांगp, पंचांगp1 = अक्रम();
+static int wp_rw_test(void)
+{
+	int fd;
+	unsigned long tmp, tmp1 = rand();
 
-	fd = __event(HW_BREAKPOINT_R | HW_BREAKPOINT_W, (व्योम *)&data1,
-		     माप(data1));
-	अगर (fd < 0)
-		वापस -1;
+	fd = __event(HW_BREAKPOINT_R | HW_BREAKPOINT_W, (void *)&data1,
+		     sizeof(data1));
+	if (fd < 0)
+		return -1;
 
-	पंचांगp = data1;
+	tmp = data1;
 	WP_TEST_ASSERT_VAL(fd, "RW watchpoint", 1);
 
-	data1 = पंचांगp1 + पंचांगp;
+	data1 = tmp1 + tmp;
 	WP_TEST_ASSERT_VAL(fd, "RW watchpoint", 2);
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}
 
-अटल पूर्णांक wp_modअगरy_test(व्योम)
-अणु
-	पूर्णांक fd, ret;
-	अचिन्हित दीर्घ पंचांगp = अक्रम();
-	काष्ठा perf_event_attr new_attr;
+static int wp_modify_test(void)
+{
+	int fd, ret;
+	unsigned long tmp = rand();
+	struct perf_event_attr new_attr;
 
-	fd = __event(HW_BREAKPOINT_W, (व्योम *)&data1, माप(data1));
-	अगर (fd < 0)
-		वापस -1;
+	fd = __event(HW_BREAKPOINT_W, (void *)&data1, sizeof(data1));
+	if (fd < 0)
+		return -1;
 
-	data1 = पंचांगp;
+	data1 = tmp;
 	WP_TEST_ASSERT_VAL(fd, "Modify watchpoint", 1);
 
-	/* Modअगरy watchpoपूर्णांक with disabled = 1 */
-	get__perf_event_attr(&new_attr, HW_BREAKPOINT_W, (व्योम *)&data2[0],
-			     माप(u8) * 2);
+	/* Modify watchpoint with disabled = 1 */
+	get__perf_event_attr(&new_attr, HW_BREAKPOINT_W, (void *)&data2[0],
+			     sizeof(u8) * 2);
 	new_attr.disabled = 1;
 	ret = ioctl(fd, PERF_EVENT_IOC_MODIFY_ATTRIBUTES, &new_attr);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_debug("ioctl(PERF_EVENT_IOC_MODIFY_ATTRIBUTES) failed\n");
-		बंद(fd);
-		वापस ret;
-	पूर्ण
+		close(fd);
+		return ret;
+	}
 
-	data2[1] = पंचांगp; /* Not Counted */
+	data2[1] = tmp; /* Not Counted */
 	WP_TEST_ASSERT_VAL(fd, "Modify watchpoint", 1);
 
 	/* Enable the event */
 	ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_debug("Failed to enable event\n");
-		बंद(fd);
-		वापस ret;
-	पूर्ण
+		close(fd);
+		return ret;
+	}
 
-	data2[1] = पंचांगp; /* Counted */
+	data2[1] = tmp; /* Counted */
 	WP_TEST_ASSERT_VAL(fd, "Modify watchpoint", 2);
 
-	data2[2] = पंचांगp; /* Not Counted */
+	data2[2] = tmp; /* Not Counted */
 	WP_TEST_ASSERT_VAL(fd, "Modify watchpoint", 2);
 
-	बंद(fd);
-	वापस 0;
-पूर्ण
+	close(fd);
+	return 0;
+}
 
-अटल bool wp_ro_supported(व्योम)
-अणु
-#अगर defined (__x86_64__) || defined (__i386__)
-	वापस false;
-#अन्यथा
-	वापस true;
-#पूर्ण_अगर
-पूर्ण
+static bool wp_ro_supported(void)
+{
+#if defined (__x86_64__) || defined (__i386__)
+	return false;
+#else
+	return true;
+#endif
+}
 
-अटल स्थिर अक्षर *wp_ro_skip_msg(व्योम)
-अणु
-#अगर defined (__x86_64__) || defined (__i386__)
-	वापस "missing hardware support";
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+static const char *wp_ro_skip_msg(void)
+{
+#if defined (__x86_64__) || defined (__i386__)
+	return "missing hardware support";
+#else
+	return NULL;
+#endif
+}
 
-अटल काष्ठा अणु
-	स्थिर अक्षर *desc;
-	पूर्णांक (*target_func)(व्योम);
-	bool (*is_supported)(व्योम);
-	स्थिर अक्षर *(*skip_msg)(व्योम);
-पूर्ण wp_testहाल_table[] = अणु
-	अणु
+static struct {
+	const char *desc;
+	int (*target_func)(void);
+	bool (*is_supported)(void);
+	const char *(*skip_msg)(void);
+} wp_testcase_table[] = {
+	{
 		.desc = "Read Only Watchpoint",
 		.target_func = &wp_ro_test,
 		.is_supported = &wp_ro_supported,
 		.skip_msg = &wp_ro_skip_msg,
-	पूर्ण,
-	अणु
+	},
+	{
 		.desc = "Write Only Watchpoint",
 		.target_func = &wp_wo_test,
-	पूर्ण,
-	अणु
+	},
+	{
 		.desc = "Read / Write Watchpoint",
 		.target_func = &wp_rw_test,
-	पूर्ण,
-	अणु
+	},
+	{
 		.desc = "Modify Watchpoint",
-		.target_func = &wp_modअगरy_test,
-	पूर्ण,
-पूर्ण;
+		.target_func = &wp_modify_test,
+	},
+};
 
-पूर्णांक test__wp_subtest_get_nr(व्योम)
-अणु
-	वापस (पूर्णांक)ARRAY_SIZE(wp_testहाल_table);
-पूर्ण
+int test__wp_subtest_get_nr(void)
+{
+	return (int)ARRAY_SIZE(wp_testcase_table);
+}
 
-स्थिर अक्षर *test__wp_subtest_get_desc(पूर्णांक i)
-अणु
-	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(wp_testहाल_table))
-		वापस शून्य;
-	वापस wp_testहाल_table[i].desc;
-पूर्ण
+const char *test__wp_subtest_get_desc(int i)
+{
+	if (i < 0 || i >= (int)ARRAY_SIZE(wp_testcase_table))
+		return NULL;
+	return wp_testcase_table[i].desc;
+}
 
-स्थिर अक्षर *test__wp_subtest_skip_reason(पूर्णांक i)
-अणु
-	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(wp_testहाल_table))
-		वापस शून्य;
-	अगर (!wp_testहाल_table[i].skip_msg)
-		वापस शून्य;
-	वापस wp_testहाल_table[i].skip_msg();
-पूर्ण
+const char *test__wp_subtest_skip_reason(int i)
+{
+	if (i < 0 || i >= (int)ARRAY_SIZE(wp_testcase_table))
+		return NULL;
+	if (!wp_testcase_table[i].skip_msg)
+		return NULL;
+	return wp_testcase_table[i].skip_msg();
+}
 
-पूर्णांक test__wp(काष्ठा test *test __maybe_unused, पूर्णांक i)
-अणु
-	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(wp_testहाल_table))
-		वापस TEST_FAIL;
+int test__wp(struct test *test __maybe_unused, int i)
+{
+	if (i < 0 || i >= (int)ARRAY_SIZE(wp_testcase_table))
+		return TEST_FAIL;
 
-	अगर (wp_testहाल_table[i].is_supported &&
-	    !wp_testहाल_table[i].is_supported())
-		वापस TEST_SKIP;
+	if (wp_testcase_table[i].is_supported &&
+	    !wp_testcase_table[i].is_supported())
+		return TEST_SKIP;
 
-	वापस !wp_testहाल_table[i].target_func() ? TEST_OK : TEST_FAIL;
-पूर्ण
+	return !wp_testcase_table[i].target_func() ? TEST_OK : TEST_FAIL;
+}
 
-/* The s390 so far करोes not have support क्रम
- * inकाष्ठाion अवरोधpoपूर्णांक using the perf_event_खोलो() प्रणाली call.
+/* The s390 so far does not have support for
+ * instruction breakpoint using the perf_event_open() system call.
  */
-bool test__wp_is_supported(व्योम)
-अणु
-#अगर defined(__s390x__)
-	वापस false;
-#अन्यथा
-	वापस true;
-#पूर्ण_अगर
-पूर्ण
+bool test__wp_is_supported(void)
+{
+#if defined(__s390x__)
+	return false;
+#else
+	return true;
+#endif
+}

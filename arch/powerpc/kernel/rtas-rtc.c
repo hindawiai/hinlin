@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/rtas.h>
-#समावेश <यंत्र/समय.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/time.h>
+#include <linux/timer.h>
+#include <linux/init.h>
+#include <linux/rtc.h>
+#include <linux/delay.h>
+#include <linux/ratelimit.h>
+#include <asm/prom.h>
+#include <asm/rtas.h>
+#include <asm/time.h>
 
 
-#घोषणा MAX_RTC_WAIT 5000	/* 5 sec */
-#घोषणा RTAS_CLOCK_BUSY (-2)
-समय64_t __init rtas_get_boot_समय(व्योम)
-अणु
-	पूर्णांक ret[8];
-	पूर्णांक error;
-	अचिन्हित पूर्णांक रुको_समय;
-	u64 max_रुको_tb;
+#define MAX_RTC_WAIT 5000	/* 5 sec */
+#define RTAS_CLOCK_BUSY (-2)
+time64_t __init rtas_get_boot_time(void)
+{
+	int ret[8];
+	int error;
+	unsigned int wait_time;
+	u64 max_wait_tb;
 
-	max_रुको_tb = get_tb() + tb_ticks_per_usec * 1000 * MAX_RTC_WAIT;
-	करो अणु
+	max_wait_tb = get_tb() + tb_ticks_per_usec * 1000 * MAX_RTC_WAIT;
+	do {
 		error = rtas_call(rtas_token("get-time-of-day"), 0, 8, ret);
 
-		रुको_समय = rtas_busy_delay_समय(error);
-		अगर (रुको_समय) अणु
-			/* This is boot समय so we spin. */
-			udelay(रुको_समय*1000);
-		पूर्ण
-	पूर्ण जबतक (रुको_समय && (get_tb() < max_रुको_tb));
+		wait_time = rtas_busy_delay_time(error);
+		if (wait_time) {
+			/* This is boot time so we spin. */
+			udelay(wait_time*1000);
+		}
+	} while (wait_time && (get_tb() < max_wait_tb));
 
-	अगर (error != 0) अणु
-		prपूर्णांकk_ratelimited(KERN_WARNING
+	if (error != 0) {
+		printk_ratelimited(KERN_WARNING
 				   "error: reading the clock failed (%d)\n",
 				   error);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस स_गढ़ो64(ret[0], ret[1], ret[2], ret[3], ret[4], ret[5]);
-पूर्ण
+	return mktime64(ret[0], ret[1], ret[2], ret[3], ret[4], ret[5]);
+}
 
-/* NOTE: get_rtc_समय will get an error अगर executed in पूर्णांकerrupt context
- * and अगर a delay is needed to पढ़ो the घड़ी.  In this हाल we just
- * silently वापस without updating rtc_पंचांग.
+/* NOTE: get_rtc_time will get an error if executed in interrupt context
+ * and if a delay is needed to read the clock.  In this case we just
+ * silently return without updating rtc_tm.
  */
-व्योम rtas_get_rtc_समय(काष्ठा rtc_समय *rtc_पंचांग)
-अणु
-        पूर्णांक ret[8];
-	पूर्णांक error;
-	अचिन्हित पूर्णांक रुको_समय;
-	u64 max_रुको_tb;
+void rtas_get_rtc_time(struct rtc_time *rtc_tm)
+{
+        int ret[8];
+	int error;
+	unsigned int wait_time;
+	u64 max_wait_tb;
 
-	max_रुको_tb = get_tb() + tb_ticks_per_usec * 1000 * MAX_RTC_WAIT;
-	करो अणु
+	max_wait_tb = get_tb() + tb_ticks_per_usec * 1000 * MAX_RTC_WAIT;
+	do {
 		error = rtas_call(rtas_token("get-time-of-day"), 0, 8, ret);
 
-		रुको_समय = rtas_busy_delay_समय(error);
-		अगर (रुको_समय) अणु
-			अगर (in_पूर्णांकerrupt()) अणु
-				स_रखो(rtc_पंचांग, 0, माप(काष्ठा rtc_समय));
-				prपूर्णांकk_ratelimited(KERN_WARNING
+		wait_time = rtas_busy_delay_time(error);
+		if (wait_time) {
+			if (in_interrupt()) {
+				memset(rtc_tm, 0, sizeof(struct rtc_time));
+				printk_ratelimited(KERN_WARNING
 						   "error: reading clock "
 						   "would delay interrupt\n");
-				वापस;	/* delay not allowed */
-			पूर्ण
-			msleep(रुको_समय);
-		पूर्ण
-	पूर्ण जबतक (रुको_समय && (get_tb() < max_रुको_tb));
+				return;	/* delay not allowed */
+			}
+			msleep(wait_time);
+		}
+	} while (wait_time && (get_tb() < max_wait_tb));
 
-	अगर (error != 0) अणु
-		prपूर्णांकk_ratelimited(KERN_WARNING
+	if (error != 0) {
+		printk_ratelimited(KERN_WARNING
 				   "error: reading the clock failed (%d)\n",
 				   error);
-		वापस;
-        पूर्ण
+		return;
+        }
 
-	rtc_पंचांग->पंचांग_sec = ret[5];
-	rtc_पंचांग->पंचांग_min = ret[4];
-	rtc_पंचांग->पंचांग_hour = ret[3];
-	rtc_पंचांग->पंचांग_mday = ret[2];
-	rtc_पंचांग->पंचांग_mon = ret[1] - 1;
-	rtc_पंचांग->पंचांग_year = ret[0] - 1900;
-पूर्ण
+	rtc_tm->tm_sec = ret[5];
+	rtc_tm->tm_min = ret[4];
+	rtc_tm->tm_hour = ret[3];
+	rtc_tm->tm_mday = ret[2];
+	rtc_tm->tm_mon = ret[1] - 1;
+	rtc_tm->tm_year = ret[0] - 1900;
+}
 
-पूर्णांक rtas_set_rtc_समय(काष्ठा rtc_समय *पंचांग)
-अणु
-	पूर्णांक error, रुको_समय;
-	u64 max_रुको_tb;
+int rtas_set_rtc_time(struct rtc_time *tm)
+{
+	int error, wait_time;
+	u64 max_wait_tb;
 
-	max_रुको_tb = get_tb() + tb_ticks_per_usec * 1000 * MAX_RTC_WAIT;
-	करो अणु
-	        error = rtas_call(rtas_token("set-time-of-day"), 7, 1, शून्य,
-				  पंचांग->पंचांग_year + 1900, पंचांग->पंचांग_mon + 1,
-				  पंचांग->पंचांग_mday, पंचांग->पंचांग_hour, पंचांग->पंचांग_min,
-				  पंचांग->पंचांग_sec, 0);
+	max_wait_tb = get_tb() + tb_ticks_per_usec * 1000 * MAX_RTC_WAIT;
+	do {
+	        error = rtas_call(rtas_token("set-time-of-day"), 7, 1, NULL,
+				  tm->tm_year + 1900, tm->tm_mon + 1,
+				  tm->tm_mday, tm->tm_hour, tm->tm_min,
+				  tm->tm_sec, 0);
 
-		रुको_समय = rtas_busy_delay_समय(error);
-		अगर (रुको_समय) अणु
-			अगर (in_पूर्णांकerrupt())
-				वापस 1;	/* probably decrementer */
-			msleep(रुको_समय);
-		पूर्ण
-	पूर्ण जबतक (रुको_समय && (get_tb() < max_रुको_tb));
+		wait_time = rtas_busy_delay_time(error);
+		if (wait_time) {
+			if (in_interrupt())
+				return 1;	/* probably decrementer */
+			msleep(wait_time);
+		}
+	} while (wait_time && (get_tb() < max_wait_tb));
 
-	अगर (error != 0)
-		prपूर्णांकk_ratelimited(KERN_WARNING
+	if (error != 0)
+		printk_ratelimited(KERN_WARNING
 				   "error: setting the clock failed (%d)\n",
 				   error);
 
-        वापस 0;
-पूर्ण
+        return 0;
+}

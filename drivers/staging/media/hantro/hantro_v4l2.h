@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Hantro VPU codec driver
  *
@@ -14,14 +13,14 @@
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  */
 
-#अगर_अघोषित HANTRO_V4L2_H_
-#घोषणा HANTRO_V4L2_H_
+#ifndef HANTRO_V4L2_H_
+#define HANTRO_V4L2_H_
 
-#समावेश "hantro.h"
+#include "hantro.h"
 
-बाह्य स्थिर काष्ठा v4l2_ioctl_ops hantro_ioctl_ops;
-बाह्य स्थिर काष्ठा vb2_ops hantro_queue_ops;
+extern const struct v4l2_ioctl_ops hantro_ioctl_ops;
+extern const struct vb2_ops hantro_queue_ops;
 
-व्योम hantro_reset_fmts(काष्ठा hantro_ctx *ctx);
+void hantro_reset_fmts(struct hantro_ctx *ctx);
 
-#पूर्ण_अगर /* HANTRO_V4L2_H_ */
+#endif /* HANTRO_V4L2_H_ */

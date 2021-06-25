@@ -1,349 +1,348 @@
-<शैली गुरु>
 /*
  * QorIQ 10G MDIO Controller
  *
  * Copyright 2012 Freescale Semiconductor, Inc.
  *
- * Authors: Andy Fleming <afleming@मुक्तscale.com>
- *          Timur Tabi <timur@मुक्तscale.com>
+ * Authors: Andy Fleming <afleming@freescale.com>
+ *          Timur Tabi <timur@freescale.com>
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_mdपन.स>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/phy.h>
+#include <linux/mdio.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/of_mdio.h>
 
-/* Number of microseconds to रुको क्रम a रेजिस्टर to respond */
-#घोषणा TIMEOUT	1000
+/* Number of microseconds to wait for a register to respond */
+#define TIMEOUT	1000
 
-काष्ठा tgec_mdio_controller अणु
+struct tgec_mdio_controller {
 	__be32	reserved[12];
 	__be32	mdio_stat;	/* MDIO configuration and status */
 	__be32	mdio_ctl;	/* MDIO control */
 	__be32	mdio_data;	/* MDIO data */
 	__be32	mdio_addr;	/* MDIO address */
-पूर्ण __packed;
+} __packed;
 
-#घोषणा MDIO_STAT_ENC		BIT(6)
-#घोषणा MDIO_STAT_CLKDIV(x)	(((x>>1) & 0xff) << 8)
-#घोषणा MDIO_STAT_BSY		BIT(0)
-#घोषणा MDIO_STAT_RD_ER		BIT(1)
-#घोषणा MDIO_CTL_DEV_ADDR(x) 	(x & 0x1f)
-#घोषणा MDIO_CTL_PORT_ADDR(x)	((x & 0x1f) << 5)
-#घोषणा MDIO_CTL_PRE_DIS	BIT(10)
-#घोषणा MDIO_CTL_SCAN_EN	BIT(11)
-#घोषणा MDIO_CTL_POST_INC	BIT(14)
-#घोषणा MDIO_CTL_READ		BIT(15)
+#define MDIO_STAT_ENC		BIT(6)
+#define MDIO_STAT_CLKDIV(x)	(((x>>1) & 0xff) << 8)
+#define MDIO_STAT_BSY		BIT(0)
+#define MDIO_STAT_RD_ER		BIT(1)
+#define MDIO_CTL_DEV_ADDR(x) 	(x & 0x1f)
+#define MDIO_CTL_PORT_ADDR(x)	((x & 0x1f) << 5)
+#define MDIO_CTL_PRE_DIS	BIT(10)
+#define MDIO_CTL_SCAN_EN	BIT(11)
+#define MDIO_CTL_POST_INC	BIT(14)
+#define MDIO_CTL_READ		BIT(15)
 
-#घोषणा MDIO_DATA(x)		(x & 0xffff)
-#घोषणा MDIO_DATA_BSY		BIT(31)
+#define MDIO_DATA(x)		(x & 0xffff)
+#define MDIO_DATA_BSY		BIT(31)
 
-काष्ठा mdio_fsl_priv अणु
-	काष्ठा	tgec_mdio_controller __iomem *mdio_base;
+struct mdio_fsl_priv {
+	struct	tgec_mdio_controller __iomem *mdio_base;
 	bool	is_little_endian;
 	bool	has_a011043;
-पूर्ण;
+};
 
-अटल u32 xgmac_पढ़ो32(व्योम __iomem *regs,
+static u32 xgmac_read32(void __iomem *regs,
 			bool is_little_endian)
-अणु
-	अगर (is_little_endian)
-		वापस ioपढ़ो32(regs);
-	अन्यथा
-		वापस ioपढ़ो32be(regs);
-पूर्ण
+{
+	if (is_little_endian)
+		return ioread32(regs);
+	else
+		return ioread32be(regs);
+}
 
-अटल व्योम xgmac_ग_लिखो32(u32 value,
-			  व्योम __iomem *regs,
+static void xgmac_write32(u32 value,
+			  void __iomem *regs,
 			  bool is_little_endian)
-अणु
-	अगर (is_little_endian)
-		ioग_लिखो32(value, regs);
-	अन्यथा
-		ioग_लिखो32be(value, regs);
-पूर्ण
+{
+	if (is_little_endian)
+		iowrite32(value, regs);
+	else
+		iowrite32be(value, regs);
+}
 
 /*
- * Wait until the MDIO bus is मुक्त
+ * Wait until the MDIO bus is free
  */
-अटल पूर्णांक xgmac_रुको_until_मुक्त(काष्ठा device *dev,
-				 काष्ठा tgec_mdio_controller __iomem *regs,
+static int xgmac_wait_until_free(struct device *dev,
+				 struct tgec_mdio_controller __iomem *regs,
 				 bool is_little_endian)
-अणु
-	अचिन्हित पूर्णांक समयout;
+{
+	unsigned int timeout;
 
-	/* Wait till the bus is मुक्त */
-	समयout = TIMEOUT;
-	जबतक ((xgmac_पढ़ो32(&regs->mdio_stat, is_little_endian) &
-		MDIO_STAT_BSY) && समयout) अणु
+	/* Wait till the bus is free */
+	timeout = TIMEOUT;
+	while ((xgmac_read32(&regs->mdio_stat, is_little_endian) &
+		MDIO_STAT_BSY) && timeout) {
 		cpu_relax();
-		समयout--;
-	पूर्ण
+		timeout--;
+	}
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		dev_err(dev, "timeout waiting for bus to be free\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Wait till the MDIO पढ़ो or ग_लिखो operation is complete
+ * Wait till the MDIO read or write operation is complete
  */
-अटल पूर्णांक xgmac_रुको_until_करोne(काष्ठा device *dev,
-				 काष्ठा tgec_mdio_controller __iomem *regs,
+static int xgmac_wait_until_done(struct device *dev,
+				 struct tgec_mdio_controller __iomem *regs,
 				 bool is_little_endian)
-अणु
-	अचिन्हित पूर्णांक समयout;
+{
+	unsigned int timeout;
 
-	/* Wait till the MDIO ग_लिखो is complete */
-	समयout = TIMEOUT;
-	जबतक ((xgmac_पढ़ो32(&regs->mdio_stat, is_little_endian) &
-		MDIO_STAT_BSY) && समयout) अणु
+	/* Wait till the MDIO write is complete */
+	timeout = TIMEOUT;
+	while ((xgmac_read32(&regs->mdio_stat, is_little_endian) &
+		MDIO_STAT_BSY) && timeout) {
 		cpu_relax();
-		समयout--;
-	पूर्ण
+		timeout--;
+	}
 
-	अगर (!समयout) अणु
+	if (!timeout) {
 		dev_err(dev, "timeout waiting for operation to complete\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Write value to the PHY क्रम this device to the रेजिस्टर at regnum,रुकोing
- * until the ग_लिखो is करोne beक्रमe it वापसs.  All PHY configuration has to be
- * करोne through the TSEC1 MIIM regs.
+ * Write value to the PHY for this device to the register at regnum,waiting
+ * until the write is done before it returns.  All PHY configuration has to be
+ * done through the TSEC1 MIIM regs.
  */
-अटल पूर्णांक xgmac_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक regnum, u16 value)
-अणु
-	काष्ठा mdio_fsl_priv *priv = (काष्ठा mdio_fsl_priv *)bus->priv;
-	काष्ठा tgec_mdio_controller __iomem *regs = priv->mdio_base;
-	uपूर्णांक16_t dev_addr;
+static int xgmac_mdio_write(struct mii_bus *bus, int phy_id, int regnum, u16 value)
+{
+	struct mdio_fsl_priv *priv = (struct mdio_fsl_priv *)bus->priv;
+	struct tgec_mdio_controller __iomem *regs = priv->mdio_base;
+	uint16_t dev_addr;
 	u32 mdio_ctl, mdio_stat;
-	पूर्णांक ret;
+	int ret;
 	bool endian = priv->is_little_endian;
 
-	mdio_stat = xgmac_पढ़ो32(&regs->mdio_stat, endian);
-	अगर (regnum & MII_ADDR_C45) अणु
+	mdio_stat = xgmac_read32(&regs->mdio_stat, endian);
+	if (regnum & MII_ADDR_C45) {
 		/* Clause 45 (ie 10G) */
 		dev_addr = (regnum >> 16) & 0x1f;
 		mdio_stat |= MDIO_STAT_ENC;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Clause 22 (ie 1G) */
 		dev_addr = regnum & 0x1f;
 		mdio_stat &= ~MDIO_STAT_ENC;
-	पूर्ण
+	}
 
-	xgmac_ग_लिखो32(mdio_stat, &regs->mdio_stat, endian);
+	xgmac_write32(mdio_stat, &regs->mdio_stat, endian);
 
-	ret = xgmac_रुको_until_मुक्त(&bus->dev, regs, endian);
-	अगर (ret)
-		वापस ret;
+	ret = xgmac_wait_until_free(&bus->dev, regs, endian);
+	if (ret)
+		return ret;
 
 	/* Set the port and dev addr */
 	mdio_ctl = MDIO_CTL_PORT_ADDR(phy_id) | MDIO_CTL_DEV_ADDR(dev_addr);
-	xgmac_ग_लिखो32(mdio_ctl, &regs->mdio_ctl, endian);
+	xgmac_write32(mdio_ctl, &regs->mdio_ctl, endian);
 
-	/* Set the रेजिस्टर address */
-	अगर (regnum & MII_ADDR_C45) अणु
-		xgmac_ग_लिखो32(regnum & 0xffff, &regs->mdio_addr, endian);
+	/* Set the register address */
+	if (regnum & MII_ADDR_C45) {
+		xgmac_write32(regnum & 0xffff, &regs->mdio_addr, endian);
 
-		ret = xgmac_रुको_until_मुक्त(&bus->dev, regs, endian);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = xgmac_wait_until_free(&bus->dev, regs, endian);
+		if (ret)
+			return ret;
+	}
 
-	/* Write the value to the रेजिस्टर */
-	xgmac_ग_लिखो32(MDIO_DATA(value), &regs->mdio_data, endian);
+	/* Write the value to the register */
+	xgmac_write32(MDIO_DATA(value), &regs->mdio_data, endian);
 
-	ret = xgmac_रुको_until_करोne(&bus->dev, regs, endian);
-	अगर (ret)
-		वापस ret;
+	ret = xgmac_wait_until_done(&bus->dev, regs, endian);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Reads from रेजिस्टर regnum in the PHY क्रम device dev, वापसing the value.
- * Clears miimcom first.  All PHY configuration has to be करोne through the
+ * Reads from register regnum in the PHY for device dev, returning the value.
+ * Clears miimcom first.  All PHY configuration has to be done through the
  * TSEC1 MIIM regs.
  */
-अटल पूर्णांक xgmac_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक regnum)
-अणु
-	काष्ठा mdio_fsl_priv *priv = (काष्ठा mdio_fsl_priv *)bus->priv;
-	काष्ठा tgec_mdio_controller __iomem *regs = priv->mdio_base;
-	uपूर्णांक16_t dev_addr;
-	uपूर्णांक32_t mdio_stat;
-	uपूर्णांक32_t mdio_ctl;
-	uपूर्णांक16_t value;
-	पूर्णांक ret;
+static int xgmac_mdio_read(struct mii_bus *bus, int phy_id, int regnum)
+{
+	struct mdio_fsl_priv *priv = (struct mdio_fsl_priv *)bus->priv;
+	struct tgec_mdio_controller __iomem *regs = priv->mdio_base;
+	uint16_t dev_addr;
+	uint32_t mdio_stat;
+	uint32_t mdio_ctl;
+	uint16_t value;
+	int ret;
 	bool endian = priv->is_little_endian;
 
-	mdio_stat = xgmac_पढ़ो32(&regs->mdio_stat, endian);
-	अगर (regnum & MII_ADDR_C45) अणु
+	mdio_stat = xgmac_read32(&regs->mdio_stat, endian);
+	if (regnum & MII_ADDR_C45) {
 		dev_addr = (regnum >> 16) & 0x1f;
 		mdio_stat |= MDIO_STAT_ENC;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_addr = regnum & 0x1f;
 		mdio_stat &= ~MDIO_STAT_ENC;
-	पूर्ण
+	}
 
-	xgmac_ग_लिखो32(mdio_stat, &regs->mdio_stat, endian);
+	xgmac_write32(mdio_stat, &regs->mdio_stat, endian);
 
-	ret = xgmac_रुको_until_मुक्त(&bus->dev, regs, endian);
-	अगर (ret)
-		वापस ret;
+	ret = xgmac_wait_until_free(&bus->dev, regs, endian);
+	if (ret)
+		return ret;
 
 	/* Set the Port and Device Addrs */
 	mdio_ctl = MDIO_CTL_PORT_ADDR(phy_id) | MDIO_CTL_DEV_ADDR(dev_addr);
-	xgmac_ग_लिखो32(mdio_ctl, &regs->mdio_ctl, endian);
+	xgmac_write32(mdio_ctl, &regs->mdio_ctl, endian);
 
-	/* Set the रेजिस्टर address */
-	अगर (regnum & MII_ADDR_C45) अणु
-		xgmac_ग_लिखो32(regnum & 0xffff, &regs->mdio_addr, endian);
+	/* Set the register address */
+	if (regnum & MII_ADDR_C45) {
+		xgmac_write32(regnum & 0xffff, &regs->mdio_addr, endian);
 
-		ret = xgmac_रुको_until_मुक्त(&bus->dev, regs, endian);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = xgmac_wait_until_free(&bus->dev, regs, endian);
+		if (ret)
+			return ret;
+	}
 
-	/* Initiate the पढ़ो */
-	xgmac_ग_लिखो32(mdio_ctl | MDIO_CTL_READ, &regs->mdio_ctl, endian);
+	/* Initiate the read */
+	xgmac_write32(mdio_ctl | MDIO_CTL_READ, &regs->mdio_ctl, endian);
 
-	ret = xgmac_रुको_until_करोne(&bus->dev, regs, endian);
-	अगर (ret)
-		वापस ret;
+	ret = xgmac_wait_until_done(&bus->dev, regs, endian);
+	if (ret)
+		return ret;
 
-	/* Return all Fs अगर nothing was there */
-	अगर ((xgmac_पढ़ो32(&regs->mdio_stat, endian) & MDIO_STAT_RD_ER) &&
-	    !priv->has_a011043) अणु
+	/* Return all Fs if nothing was there */
+	if ((xgmac_read32(&regs->mdio_stat, endian) & MDIO_STAT_RD_ER) &&
+	    !priv->has_a011043) {
 		dev_dbg(&bus->dev,
 			"Error while reading PHY%d reg at %d.%hhu\n",
 			phy_id, dev_addr, regnum);
-		वापस 0xffff;
-	पूर्ण
+		return 0xffff;
+	}
 
-	value = xgmac_पढ़ो32(&regs->mdio_data, endian) & 0xffff;
+	value = xgmac_read32(&regs->mdio_data, endian) & 0xffff;
 	dev_dbg(&bus->dev, "read %04x\n", value);
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक xgmac_mdio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा mii_bus *bus;
-	काष्ठा resource *res;
-	काष्ठा mdio_fsl_priv *priv;
-	पूर्णांक ret;
+static int xgmac_mdio_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct mii_bus *bus;
+	struct resource *res;
+	struct mdio_fsl_priv *priv;
+	int ret;
 
 	/* In DPAA-1, MDIO is one of the many FMan sub-devices. The FMan
-	 * defines a रेजिस्टर space that spans a large area, covering all the
-	 * subdevice areas. Thereक्रमe, MDIO cannot claim exclusive access to
-	 * this रेजिस्टर area.
+	 * defines a register space that spans a large area, covering all the
+	 * subdevice areas. Therefore, MDIO cannot claim exclusive access to
+	 * this register area.
 	 */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "could not obtain address\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	bus = mdiobus_alloc_size(माप(काष्ठा mdio_fsl_priv));
-	अगर (!bus)
-		वापस -ENOMEM;
+	bus = mdiobus_alloc_size(sizeof(struct mdio_fsl_priv));
+	if (!bus)
+		return -ENOMEM;
 
 	bus->name = "Freescale XGMAC MDIO Bus";
-	bus->पढ़ो = xgmac_mdio_पढ़ो;
-	bus->ग_लिखो = xgmac_mdio_ग_लिखो;
+	bus->read = xgmac_mdio_read;
+	bus->write = xgmac_mdio_write;
 	bus->parent = &pdev->dev;
 	bus->probe_capabilities = MDIOBUS_C22_C45;
-	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%pa", &res->start);
+	snprintf(bus->id, MII_BUS_ID_SIZE, "%pa", &res->start);
 
 	/* Set the PHY base address */
 	priv = bus->priv;
 	priv->mdio_base = ioremap(res->start, resource_size(res));
-	अगर (!priv->mdio_base) अणु
+	if (!priv->mdio_base) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	priv->is_little_endian = device_property_पढ़ो_bool(&pdev->dev,
+	priv->is_little_endian = device_property_read_bool(&pdev->dev,
 							   "little-endian");
 
-	priv->has_a011043 = device_property_पढ़ो_bool(&pdev->dev,
+	priv->has_a011043 = device_property_read_bool(&pdev->dev,
 						      "fsl,erratum-a011043");
 
-	ret = of_mdiobus_रेजिस्टर(bus, np);
-	अगर (ret) अणु
+	ret = of_mdiobus_register(bus, np);
+	if (ret) {
 		dev_err(&pdev->dev, "cannot register MDIO bus\n");
-		जाओ err_registration;
-	पूर्ण
+		goto err_registration;
+	}
 
-	platक्रमm_set_drvdata(pdev, bus);
+	platform_set_drvdata(pdev, bus);
 
-	वापस 0;
+	return 0;
 
 err_registration:
 	iounmap(priv->mdio_base);
 
 err_ioremap:
-	mdiobus_मुक्त(bus);
+	mdiobus_free(bus);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xgmac_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mii_bus *bus = platक्रमm_get_drvdata(pdev);
+static int xgmac_mdio_remove(struct platform_device *pdev)
+{
+	struct mii_bus *bus = platform_get_drvdata(pdev);
 
-	mdiobus_unरेजिस्टर(bus);
+	mdiobus_unregister(bus);
 	iounmap(bus->priv);
-	mdiobus_मुक्त(bus);
+	mdiobus_free(bus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id xgmac_mdio_match[] = अणु
-	अणु
+static const struct of_device_id xgmac_mdio_match[] = {
+	{
 		.compatible = "fsl,fman-xmdio",
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "fsl,fman-memac-mdio",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, xgmac_mdio_match);
 
-अटल स्थिर काष्ठा acpi_device_id xgmac_acpi_match[] = अणु
-	अणु "NXP0006" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id xgmac_acpi_match[] = {
+	{ "NXP0006" },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, xgmac_acpi_match);
 
-अटल काष्ठा platक्रमm_driver xgmac_mdio_driver = अणु
-	.driver = अणु
+static struct platform_driver xgmac_mdio_driver = {
+	.driver = {
 		.name = "fsl-fman_xmdio",
 		.of_match_table = xgmac_mdio_match,
 		.acpi_match_table = xgmac_acpi_match,
-	पूर्ण,
+	},
 	.probe = xgmac_mdio_probe,
-	.हटाओ = xgmac_mdio_हटाओ,
-पूर्ण;
+	.remove = xgmac_mdio_remove,
+};
 
-module_platक्रमm_driver(xgmac_mdio_driver);
+module_platform_driver(xgmac_mdio_driver);
 
 MODULE_DESCRIPTION("Freescale QorIQ 10G MDIO Controller");
 MODULE_LICENSE("GPL v2");

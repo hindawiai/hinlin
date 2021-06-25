@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_IA64_UNWIND_H
-#घोषणा _ASM_IA64_UNWIND_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_IA64_UNWIND_H
+#define _ASM_IA64_UNWIND_H
 
 /*
  * Copyright (C) 1999-2000, 2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *
- * A simple API क्रम unwinding kernel stacks.  This is used क्रम
- * debugging and error reporting purposes.  The kernel करोesn't need
+ * A simple API for unwinding kernel stacks.  This is used for
+ * debugging and error reporting purposes.  The kernel doesn't need
  * full-blown stack unwinding with all the bells and whitles, so there
- * is not much poपूर्णांक in implementing the full IA-64 unwind API (though
+ * is not much point in implementing the full IA-64 unwind API (though
  * it would of course be possible to implement the kernel API on top
  * of it).
  */
 
-काष्ठा task_काष्ठा;	/* क्रमward declaration */
-काष्ठा चयन_stack;	/* क्रमward declaration */
+struct task_struct;	/* forward declaration */
+struct switch_stack;	/* forward declaration */
 
-क्रमागत unw_application_रेजिस्टर अणु
+enum unw_application_register {
 	UNW_AR_BSP,
 	UNW_AR_BSPSTORE,
 	UNW_AR_PFS,
@@ -31,205 +30,205 @@
 	UNW_AR_CCV,
 	UNW_AR_CSD,
 	UNW_AR_SSD
-पूर्ण;
+};
 
 /*
- * The following declarations are निजी to the unwind
+ * The following declarations are private to the unwind
  * implementation:
  */
 
-काष्ठा unw_stack अणु
-	अचिन्हित दीर्घ limit;
-	अचिन्हित दीर्घ top;
-पूर्ण;
+struct unw_stack {
+	unsigned long limit;
+	unsigned long top;
+};
 
-#घोषणा UNW_FLAG_INTERRUPT_FRAME	(1UL << 0)
+#define UNW_FLAG_INTERRUPT_FRAME	(1UL << 0)
 
 /*
- * No user of this module should every access this काष्ठाure directly
+ * No user of this module should every access this structure directly
  * as it is subject to change.  It is declared here solely so we can
- * use स्वतःmatic variables.
+ * use automatic variables.
  */
-काष्ठा unw_frame_info अणु
-	काष्ठा unw_stack regstk;
-	काष्ठा unw_stack memstk;
-	अचिन्हित पूर्णांक flags;
-	लघु hपूर्णांक;
-	लघु prev_script;
+struct unw_frame_info {
+	struct unw_stack regstk;
+	struct unw_stack memstk;
+	unsigned int flags;
+	short hint;
+	short prev_script;
 
 	/* current frame info: */
-	अचिन्हित दीर्घ bsp;		/* backing store poपूर्णांकer value */
-	अचिन्हित दीर्घ sp;		/* stack poपूर्णांकer value */
-	अचिन्हित दीर्घ psp;		/* previous sp value */
-	अचिन्हित दीर्घ ip;		/* inकाष्ठाion poपूर्णांकer value */
-	अचिन्हित दीर्घ pr;		/* current predicate values */
-	अचिन्हित दीर्घ *cfm_loc;		/* cfm save location (or शून्य) */
-	अचिन्हित दीर्घ pt;		/* काष्ठा pt_regs location */
+	unsigned long bsp;		/* backing store pointer value */
+	unsigned long sp;		/* stack pointer value */
+	unsigned long psp;		/* previous sp value */
+	unsigned long ip;		/* instruction pointer value */
+	unsigned long pr;		/* current predicate values */
+	unsigned long *cfm_loc;		/* cfm save location (or NULL) */
+	unsigned long pt;		/* struct pt_regs location */
 
-	काष्ठा task_काष्ठा *task;
-	काष्ठा चयन_stack *sw;
+	struct task_struct *task;
+	struct switch_stack *sw;
 
 	/* preserved state: */
-	अचिन्हित दीर्घ *bsp_loc;		/* previous bsp save location */
-	अचिन्हित दीर्घ *bspstore_loc;
-	अचिन्हित दीर्घ *pfs_loc;
-	अचिन्हित दीर्घ *rnat_loc;
-	अचिन्हित दीर्घ *rp_loc;
-	अचिन्हित दीर्घ *pri_unat_loc;
-	अचिन्हित दीर्घ *unat_loc;
-	अचिन्हित दीर्घ *pr_loc;
-	अचिन्हित दीर्घ *lc_loc;
-	अचिन्हित दीर्घ *fpsr_loc;
-	काष्ठा unw_ireg अणु
-		अचिन्हित दीर्घ *loc;
-		काष्ठा unw_ireg_nat अणु
-			अचिन्हित दीर्घ type : 3;		/* क्रमागत unw_nat_type */
-			चिन्हित दीर्घ off : 61;		/* NaT word is at loc+nat.off */
-		पूर्ण nat;
-	पूर्ण r4, r5, r6, r7;
-	अचिन्हित दीर्घ *b1_loc, *b2_loc, *b3_loc, *b4_loc, *b5_loc;
-	काष्ठा ia64_fpreg *f2_loc, *f3_loc, *f4_loc, *f5_loc, *fr_loc[16];
-पूर्ण;
+	unsigned long *bsp_loc;		/* previous bsp save location */
+	unsigned long *bspstore_loc;
+	unsigned long *pfs_loc;
+	unsigned long *rnat_loc;
+	unsigned long *rp_loc;
+	unsigned long *pri_unat_loc;
+	unsigned long *unat_loc;
+	unsigned long *pr_loc;
+	unsigned long *lc_loc;
+	unsigned long *fpsr_loc;
+	struct unw_ireg {
+		unsigned long *loc;
+		struct unw_ireg_nat {
+			unsigned long type : 3;		/* enum unw_nat_type */
+			signed long off : 61;		/* NaT word is at loc+nat.off */
+		} nat;
+	} r4, r5, r6, r7;
+	unsigned long *b1_loc, *b2_loc, *b3_loc, *b4_loc, *b5_loc;
+	struct ia64_fpreg *f2_loc, *f3_loc, *f4_loc, *f5_loc, *fr_loc[16];
+};
 
 /*
  * The official API follows below:
  */
 
-काष्ठा unw_table_entry अणु
+struct unw_table_entry {
 	u64 start_offset;
 	u64 end_offset;
 	u64 info_offset;
-पूर्ण;
+};
 
 /*
  * Initialize unwind support.
  */
-बाह्य व्योम unw_init (व्योम);
+extern void unw_init (void);
 
-बाह्य व्योम *unw_add_unwind_table (स्थिर अक्षर *name, अचिन्हित दीर्घ segment_base, अचिन्हित दीर्घ gp,
-				   स्थिर व्योम *table_start, स्थिर व्योम *table_end);
+extern void *unw_add_unwind_table (const char *name, unsigned long segment_base, unsigned long gp,
+				   const void *table_start, const void *table_end);
 
-बाह्य व्योम unw_हटाओ_unwind_table (व्योम *handle);
+extern void unw_remove_unwind_table (void *handle);
 
 /*
  * Prepare to unwind blocked task t.
  */
-बाह्य व्योम unw_init_from_blocked_task (काष्ठा unw_frame_info *info, काष्ठा task_काष्ठा *t);
+extern void unw_init_from_blocked_task (struct unw_frame_info *info, struct task_struct *t);
 
-बाह्य व्योम unw_init_frame_info (काष्ठा unw_frame_info *info, काष्ठा task_काष्ठा *t,
-				 काष्ठा चयन_stack *sw);
+extern void unw_init_frame_info (struct unw_frame_info *info, struct task_struct *t,
+				 struct switch_stack *sw);
 
 /*
- * Prepare to unwind the currently running thपढ़ो.
+ * Prepare to unwind the currently running thread.
  */
-बाह्य व्योम unw_init_running (व्योम (*callback)(काष्ठा unw_frame_info *info, व्योम *arg), व्योम *arg);
+extern void unw_init_running (void (*callback)(struct unw_frame_info *info, void *arg), void *arg);
 
 /*
- * Unwind to previous to frame.  Returns 0 अगर successful, negative
- * number in हाल of an error.
+ * Unwind to previous to frame.  Returns 0 if successful, negative
+ * number in case of an error.
  */
-बाह्य पूर्णांक unw_unwind (काष्ठा unw_frame_info *info);
+extern int unw_unwind (struct unw_frame_info *info);
 
 /*
- * Unwind until the वापस poपूर्णांकer is in user-land (or until an error
- * occurs).  Returns 0 अगर successful, negative number in हाल of
+ * Unwind until the return pointer is in user-land (or until an error
+ * occurs).  Returns 0 if successful, negative number in case of
  * error.
  */
-बाह्य पूर्णांक unw_unwind_to_user (काष्ठा unw_frame_info *info);
+extern int unw_unwind_to_user (struct unw_frame_info *info);
 
-#घोषणा unw_is_पूर्णांकr_frame(info)	(((info)->flags & UNW_FLAG_INTERRUPT_FRAME) != 0)
+#define unw_is_intr_frame(info)	(((info)->flags & UNW_FLAG_INTERRUPT_FRAME) != 0)
 
-अटल अंतरभूत पूर्णांक
-unw_get_ip (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ *valp)
-अणु
+static inline int
+unw_get_ip (struct unw_frame_info *info, unsigned long *valp)
+{
 	*valp = (info)->ip;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-unw_get_sp (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ *valp)
-अणु
+static inline int
+unw_get_sp (struct unw_frame_info *info, unsigned long *valp)
+{
 	*valp = (info)->sp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-unw_get_psp (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ *valp)
-अणु
+static inline int
+unw_get_psp (struct unw_frame_info *info, unsigned long *valp)
+{
 	*valp = (info)->psp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-unw_get_bsp (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ *valp)
-अणु
+static inline int
+unw_get_bsp (struct unw_frame_info *info, unsigned long *valp)
+{
 	*valp = (info)->bsp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-unw_get_cfm (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ *valp)
-अणु
+static inline int
+unw_get_cfm (struct unw_frame_info *info, unsigned long *valp)
+{
 	*valp = *(info)->cfm_loc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-unw_set_cfm (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ val)
-अणु
+static inline int
+unw_set_cfm (struct unw_frame_info *info, unsigned long val)
+{
 	*(info)->cfm_loc = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-unw_get_rp (काष्ठा unw_frame_info *info, अचिन्हित दीर्घ *val)
-अणु
-	अगर (!info->rp_loc)
-		वापस -1;
+static inline int
+unw_get_rp (struct unw_frame_info *info, unsigned long *val)
+{
+	if (!info->rp_loc)
+		return -1;
 	*val = *info->rp_loc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-बाह्य पूर्णांक unw_access_gr (काष्ठा unw_frame_info *, पूर्णांक, अचिन्हित दीर्घ *, अक्षर *, पूर्णांक);
-बाह्य पूर्णांक unw_access_br (काष्ठा unw_frame_info *, पूर्णांक, अचिन्हित दीर्घ *, पूर्णांक);
-बाह्य पूर्णांक unw_access_fr (काष्ठा unw_frame_info *, पूर्णांक, काष्ठा ia64_fpreg *, पूर्णांक);
-बाह्य पूर्णांक unw_access_ar (काष्ठा unw_frame_info *, पूर्णांक, अचिन्हित दीर्घ *, पूर्णांक);
-बाह्य पूर्णांक unw_access_pr (काष्ठा unw_frame_info *, अचिन्हित दीर्घ *, पूर्णांक);
+extern int unw_access_gr (struct unw_frame_info *, int, unsigned long *, char *, int);
+extern int unw_access_br (struct unw_frame_info *, int, unsigned long *, int);
+extern int unw_access_fr (struct unw_frame_info *, int, struct ia64_fpreg *, int);
+extern int unw_access_ar (struct unw_frame_info *, int, unsigned long *, int);
+extern int unw_access_pr (struct unw_frame_info *, unsigned long *, int);
 
-अटल अंतरभूत पूर्णांक
-unw_set_gr (काष्ठा unw_frame_info *i, पूर्णांक n, अचिन्हित दीर्घ v, अक्षर nat)
-अणु
-	वापस unw_access_gr(i, n, &v, &nat, 1);
-पूर्ण
+static inline int
+unw_set_gr (struct unw_frame_info *i, int n, unsigned long v, char nat)
+{
+	return unw_access_gr(i, n, &v, &nat, 1);
+}
 
-अटल अंतरभूत पूर्णांक
-unw_set_br (काष्ठा unw_frame_info *i, पूर्णांक n, अचिन्हित दीर्घ v)
-अणु
-	वापस unw_access_br(i, n, &v, 1);
-पूर्ण
+static inline int
+unw_set_br (struct unw_frame_info *i, int n, unsigned long v)
+{
+	return unw_access_br(i, n, &v, 1);
+}
 
-अटल अंतरभूत पूर्णांक
-unw_set_fr (काष्ठा unw_frame_info *i, पूर्णांक n, काष्ठा ia64_fpreg v)
-अणु
-	वापस unw_access_fr(i, n, &v, 1);
-पूर्ण
+static inline int
+unw_set_fr (struct unw_frame_info *i, int n, struct ia64_fpreg v)
+{
+	return unw_access_fr(i, n, &v, 1);
+}
 
-अटल अंतरभूत पूर्णांक
-unw_set_ar (काष्ठा unw_frame_info *i, पूर्णांक n, अचिन्हित दीर्घ v)
-अणु
-	वापस unw_access_ar(i, n, &v, 1);
-पूर्ण
+static inline int
+unw_set_ar (struct unw_frame_info *i, int n, unsigned long v)
+{
+	return unw_access_ar(i, n, &v, 1);
+}
 
-अटल अंतरभूत पूर्णांक
-unw_set_pr (काष्ठा unw_frame_info *i, अचिन्हित दीर्घ v)
-अणु
-	वापस unw_access_pr(i, &v, 1);
-पूर्ण
+static inline int
+unw_set_pr (struct unw_frame_info *i, unsigned long v)
+{
+	return unw_access_pr(i, &v, 1);
+}
 
-#घोषणा unw_get_gr(i,n,v,nat)	unw_access_gr(i,n,v,nat,0)
-#घोषणा unw_get_br(i,n,v)	unw_access_br(i,n,v,0)
-#घोषणा unw_get_fr(i,n,v)	unw_access_fr(i,n,v,0)
-#घोषणा unw_get_ar(i,n,v)	unw_access_ar(i,n,v,0)
-#घोषणा unw_get_pr(i,v)		unw_access_pr(i,v,0)
+#define unw_get_gr(i,n,v,nat)	unw_access_gr(i,n,v,nat,0)
+#define unw_get_br(i,n,v)	unw_access_br(i,n,v,0)
+#define unw_get_fr(i,n,v)	unw_access_fr(i,n,v,0)
+#define unw_get_ar(i,n,v)	unw_access_ar(i,n,v,0)
+#define unw_get_pr(i,v)		unw_access_pr(i,v,0)
 
-#पूर्ण_अगर /* _ASM_UNWIND_H */
+#endif /* _ASM_UNWIND_H */

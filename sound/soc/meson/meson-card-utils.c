@@ -1,304 +1,303 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (c) 2020 BayLibre, SAS.
 // Author: Jerome Brunet <jbrunet@baylibre.com>
 
-#समावेश <linux/module.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <sound/soc.h>
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <sound/soc.h>
 
-#समावेश "meson-card.h"
+#include "meson-card.h"
 
-पूर्णांक meson_card_i2s_set_sysclk(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_pcm_hw_params *params,
-			      अचिन्हित पूर्णांक mclk_fs)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai;
-	अचिन्हित पूर्णांक mclk;
-	पूर्णांक ret, i;
+int meson_card_i2s_set_sysclk(struct snd_pcm_substream *substream,
+			      struct snd_pcm_hw_params *params,
+			      unsigned int mclk_fs)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai;
+	unsigned int mclk;
+	int ret, i;
 
-	अगर (!mclk_fs)
-		वापस 0;
+	if (!mclk_fs)
+		return 0;
 
 	mclk = params_rate(params) * mclk_fs;
 
-	क्रम_each_rtd_codec_dais(rtd, i, codec_dai) अणु
+	for_each_rtd_codec_dais(rtd, i, codec_dai) {
 		ret = snd_soc_dai_set_sysclk(codec_dai, 0, mclk,
 					     SND_SOC_CLOCK_IN);
-		अगर (ret && ret != -ENOTSUPP)
-			वापस ret;
-	पूर्ण
+		if (ret && ret != -ENOTSUPP)
+			return ret;
+	}
 
 	ret = snd_soc_dai_set_sysclk(asoc_rtd_to_cpu(rtd, 0), 0, mclk,
 				     SND_SOC_CLOCK_OUT);
-	अगर (ret && ret != -ENOTSUPP)
-		वापस ret;
+	if (ret && ret != -ENOTSUPP)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(meson_card_i2s_set_sysclk);
 
-पूर्णांक meson_card_पुनः_स्मृतिate_links(काष्ठा snd_soc_card *card,
-				अचिन्हित पूर्णांक num_links)
-अणु
-	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(card);
-	काष्ठा snd_soc_dai_link *links;
-	व्योम **ldata;
+int meson_card_reallocate_links(struct snd_soc_card *card,
+				unsigned int num_links)
+{
+	struct meson_card *priv = snd_soc_card_get_drvdata(card);
+	struct snd_soc_dai_link *links;
+	void **ldata;
 
-	links = kपुनः_स्मृति(priv->card.dai_link,
-			 num_links * माप(*priv->card.dai_link),
+	links = krealloc(priv->card.dai_link,
+			 num_links * sizeof(*priv->card.dai_link),
 			 GFP_KERNEL | __GFP_ZERO);
-	अगर (!links)
-		जाओ err_links;
+	if (!links)
+		goto err_links;
 
-	ldata = kपुनः_स्मृति(priv->link_data,
-			 num_links * माप(*priv->link_data),
+	ldata = krealloc(priv->link_data,
+			 num_links * sizeof(*priv->link_data),
 			 GFP_KERNEL | __GFP_ZERO);
-	अगर (!ldata)
-		जाओ err_ldata;
+	if (!ldata)
+		goto err_ldata;
 
 	priv->card.dai_link = links;
 	priv->link_data = ldata;
 	priv->card.num_links = num_links;
-	वापस 0;
+	return 0;
 
 err_ldata:
-	kमुक्त(links);
+	kfree(links);
 err_links:
 	dev_err(priv->card.dev, "failed to allocate links\n");
-	वापस -ENOMEM;
+	return -ENOMEM;
 
-पूर्ण
-EXPORT_SYMBOL_GPL(meson_card_पुनः_स्मृतिate_links);
+}
+EXPORT_SYMBOL_GPL(meson_card_reallocate_links);
 
-पूर्णांक meson_card_parse_dai(काष्ठा snd_soc_card *card,
-			 काष्ठा device_node *node,
-			 काष्ठा device_node **dai_of_node,
-			 स्थिर अक्षर **dai_name)
-अणु
-	काष्ठा of_phandle_args args;
-	पूर्णांक ret;
+int meson_card_parse_dai(struct snd_soc_card *card,
+			 struct device_node *node,
+			 struct device_node **dai_of_node,
+			 const char **dai_name)
+{
+	struct of_phandle_args args;
+	int ret;
 
-	अगर (!dai_name || !dai_of_node || !node)
-		वापस -EINVAL;
+	if (!dai_name || !dai_of_node || !node)
+		return -EINVAL;
 
 	ret = of_parse_phandle_with_args(node, "sound-dai",
 					 "#sound-dai-cells", 0, &args);
-	अगर (ret) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(card->dev, "can't parse dai %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	*dai_of_node = args.np;
 
-	वापस snd_soc_get_dai_name(&args, dai_name);
-पूर्ण
+	return snd_soc_get_dai_name(&args, dai_name);
+}
 EXPORT_SYMBOL_GPL(meson_card_parse_dai);
 
-अटल पूर्णांक meson_card_set_link_name(काष्ठा snd_soc_card *card,
-				    काष्ठा snd_soc_dai_link *link,
-				    काष्ठा device_node *node,
-				    स्थिर अक्षर *prefix)
-अणु
-	अक्षर *name = devm_kaप्र_लिखो(card->dev, GFP_KERNEL, "%s.%s",
+static int meson_card_set_link_name(struct snd_soc_card *card,
+				    struct snd_soc_dai_link *link,
+				    struct device_node *node,
+				    const char *prefix)
+{
+	char *name = devm_kasprintf(card->dev, GFP_KERNEL, "%s.%s",
 				    prefix, node->full_name);
-	अगर (!name)
-		वापस -ENOMEM;
+	if (!name)
+		return -ENOMEM;
 
 	link->name = name;
 	link->stream_name = name;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित पूर्णांक meson_card_parse_daअगरmt(काष्ठा device_node *node,
-				     काष्ठा device_node *cpu_node)
-अणु
-	काष्ठा device_node *bitclkmaster = शून्य;
-	काष्ठा device_node *framemaster = शून्य;
-	अचिन्हित पूर्णांक daअगरmt;
+unsigned int meson_card_parse_daifmt(struct device_node *node,
+				     struct device_node *cpu_node)
+{
+	struct device_node *bitclkmaster = NULL;
+	struct device_node *framemaster = NULL;
+	unsigned int daifmt;
 
-	daअगरmt = snd_soc_of_parse_daअगरmt(node, "",
+	daifmt = snd_soc_of_parse_daifmt(node, "",
 					 &bitclkmaster, &framemaster);
-	daअगरmt &= ~SND_SOC_DAIFMT_MASTER_MASK;
+	daifmt &= ~SND_SOC_DAIFMT_MASTER_MASK;
 
-	/* If no master is provided, शेष to cpu master */
-	अगर (!bitclkmaster || bitclkmaster == cpu_node) अणु
-		daअगरmt |= (!framemaster || framemaster == cpu_node) ?
+	/* If no master is provided, default to cpu master */
+	if (!bitclkmaster || bitclkmaster == cpu_node) {
+		daifmt |= (!framemaster || framemaster == cpu_node) ?
 			SND_SOC_DAIFMT_CBS_CFS : SND_SOC_DAIFMT_CBS_CFM;
-	पूर्ण अन्यथा अणु
-		daअगरmt |= (!framemaster || framemaster == cpu_node) ?
+	} else {
+		daifmt |= (!framemaster || framemaster == cpu_node) ?
 			SND_SOC_DAIFMT_CBM_CFS : SND_SOC_DAIFMT_CBM_CFM;
-	पूर्ण
+	}
 
 	of_node_put(bitclkmaster);
 	of_node_put(framemaster);
 
-	वापस daअगरmt;
-पूर्ण
-EXPORT_SYMBOL_GPL(meson_card_parse_daअगरmt);
+	return daifmt;
+}
+EXPORT_SYMBOL_GPL(meson_card_parse_daifmt);
 
-पूर्णांक meson_card_set_be_link(काष्ठा snd_soc_card *card,
-			   काष्ठा snd_soc_dai_link *link,
-			   काष्ठा device_node *node)
-अणु
-	काष्ठा snd_soc_dai_link_component *codec;
-	काष्ठा device_node *np;
-	पूर्णांक ret, num_codecs;
+int meson_card_set_be_link(struct snd_soc_card *card,
+			   struct snd_soc_dai_link *link,
+			   struct device_node *node)
+{
+	struct snd_soc_dai_link_component *codec;
+	struct device_node *np;
+	int ret, num_codecs;
 
 	num_codecs = of_get_child_count(node);
-	अगर (!num_codecs) अणु
+	if (!num_codecs) {
 		dev_err(card->dev, "be link %s has no codec\n",
 			node->full_name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	codec = devm_kसुस्मृति(card->dev, num_codecs, माप(*codec), GFP_KERNEL);
-	अगर (!codec)
-		वापस -ENOMEM;
+	codec = devm_kcalloc(card->dev, num_codecs, sizeof(*codec), GFP_KERNEL);
+	if (!codec)
+		return -ENOMEM;
 
 	link->codecs = codec;
 	link->num_codecs = num_codecs;
 
-	क्रम_each_child_of_node(node, np) अणु
+	for_each_child_of_node(node, np) {
 		ret = meson_card_parse_dai(card, np, &codec->of_node,
 					   &codec->dai_name);
-		अगर (ret) अणु
+		if (ret) {
 			of_node_put(np);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		codec++;
-	पूर्ण
+	}
 
 	ret = meson_card_set_link_name(card, link, node, "be");
-	अगर (ret)
+	if (ret)
 		dev_err(card->dev, "error setting %pOFn link name\n", np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(meson_card_set_be_link);
 
-पूर्णांक meson_card_set_fe_link(काष्ठा snd_soc_card *card,
-			   काष्ठा snd_soc_dai_link *link,
-			   काष्ठा device_node *node,
+int meson_card_set_fe_link(struct snd_soc_card *card,
+			   struct snd_soc_dai_link *link,
+			   struct device_node *node,
 			   bool is_playback)
-अणु
-	काष्ठा snd_soc_dai_link_component *codec;
+{
+	struct snd_soc_dai_link_component *codec;
 
-	codec = devm_kzalloc(card->dev, माप(*codec), GFP_KERNEL);
-	अगर (!codec)
-		वापस -ENOMEM;
+	codec = devm_kzalloc(card->dev, sizeof(*codec), GFP_KERNEL);
+	if (!codec)
+		return -ENOMEM;
 
 	link->codecs = codec;
 	link->num_codecs = 1;
 
 	link->dynamic = 1;
-	link->dpcm_merged_क्रमmat = 1;
+	link->dpcm_merged_format = 1;
 	link->dpcm_merged_chan = 1;
 	link->dpcm_merged_rate = 1;
 	link->codecs->dai_name = "snd-soc-dummy-dai";
 	link->codecs->name = "snd-soc-dummy";
 
-	अगर (is_playback)
+	if (is_playback)
 		link->dpcm_playback = 1;
-	अन्यथा
+	else
 		link->dpcm_capture = 1;
 
-	वापस meson_card_set_link_name(card, link, node, "fe");
-पूर्ण
+	return meson_card_set_link_name(card, link, node, "fe");
+}
 EXPORT_SYMBOL_GPL(meson_card_set_fe_link);
 
-अटल पूर्णांक meson_card_add_links(काष्ठा snd_soc_card *card)
-अणु
-	काष्ठा meson_card *priv = snd_soc_card_get_drvdata(card);
-	काष्ठा device_node *node = card->dev->of_node;
-	काष्ठा device_node *np;
-	पूर्णांक num, i, ret;
+static int meson_card_add_links(struct snd_soc_card *card)
+{
+	struct meson_card *priv = snd_soc_card_get_drvdata(card);
+	struct device_node *node = card->dev->of_node;
+	struct device_node *np;
+	int num, i, ret;
 
 	num = of_get_child_count(node);
-	अगर (!num) अणु
+	if (!num) {
 		dev_err(card->dev, "card has no links\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = meson_card_पुनः_स्मृतिate_links(card, num);
-	अगर (ret)
-		वापस ret;
+	ret = meson_card_reallocate_links(card, num);
+	if (ret)
+		return ret;
 
 	i = 0;
-	क्रम_each_child_of_node(node, np) अणु
+	for_each_child_of_node(node, np) {
 		ret = priv->match_data->add_link(card, np, &i);
-		अगर (ret) अणु
+		if (ret) {
 			of_node_put(np);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		i++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_card_parse_of_optional(काष्ठा snd_soc_card *card,
-					स्थिर अक्षर *propname,
-					पूर्णांक (*func)(काष्ठा snd_soc_card *c,
-						    स्थिर अक्षर *p))
-अणु
-	/* If property is not provided, करोn't fail ... */
-	अगर (!of_property_पढ़ो_bool(card->dev->of_node, propname))
-		वापस 0;
+static int meson_card_parse_of_optional(struct snd_soc_card *card,
+					const char *propname,
+					int (*func)(struct snd_soc_card *c,
+						    const char *p))
+{
+	/* If property is not provided, don't fail ... */
+	if (!of_property_read_bool(card->dev->of_node, propname))
+		return 0;
 
-	/* ... but करो fail अगर it is provided and the parsing fails */
-	वापस func(card, propname);
-पूर्ण
+	/* ... but do fail if it is provided and the parsing fails */
+	return func(card, propname);
+}
 
-अटल व्योम meson_card_clean_references(काष्ठा meson_card *priv)
-अणु
-	काष्ठा snd_soc_card *card = &priv->card;
-	काष्ठा snd_soc_dai_link *link;
-	काष्ठा snd_soc_dai_link_component *codec;
-	काष्ठा snd_soc_aux_dev *aux;
-	पूर्णांक i, j;
+static void meson_card_clean_references(struct meson_card *priv)
+{
+	struct snd_soc_card *card = &priv->card;
+	struct snd_soc_dai_link *link;
+	struct snd_soc_dai_link_component *codec;
+	struct snd_soc_aux_dev *aux;
+	int i, j;
 
-	अगर (card->dai_link) अणु
-		क्रम_each_card_prelinks(card, i, link) अणु
-			अगर (link->cpus)
+	if (card->dai_link) {
+		for_each_card_prelinks(card, i, link) {
+			if (link->cpus)
 				of_node_put(link->cpus->of_node);
-			क्रम_each_link_codecs(link, j, codec)
+			for_each_link_codecs(link, j, codec)
 				of_node_put(codec->of_node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (card->aux_dev) अणु
-		क्रम_each_card_pre_auxs(card, i, aux)
+	if (card->aux_dev) {
+		for_each_card_pre_auxs(card, i, aux)
 			of_node_put(aux->dlc.of_node);
-	पूर्ण
+	}
 
-	kमुक्त(card->dai_link);
-	kमुक्त(priv->link_data);
-पूर्ण
+	kfree(card->dai_link);
+	kfree(priv->link_data);
+}
 
-पूर्णांक meson_card_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा meson_card_match_data *data;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा meson_card *priv;
-	पूर्णांक ret;
+int meson_card_probe(struct platform_device *pdev)
+{
+	const struct meson_card_match_data *data;
+	struct device *dev = &pdev->dev;
+	struct meson_card *priv;
+	int ret;
 
 	data = of_device_get_match_data(dev);
-	अगर (!data) अणु
+	if (!data) {
 		dev_err(dev, "failed to match device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 	snd_soc_card_set_drvdata(&priv->card, priv);
 
 	priv->card.owner = THIS_MODULE;
@@ -306,52 +305,52 @@ EXPORT_SYMBOL_GPL(meson_card_set_fe_link);
 	priv->match_data = data;
 
 	ret = snd_soc_of_parse_card_name(&priv->card, "model");
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = meson_card_parse_of_optional(&priv->card, "audio-routing",
 					   snd_soc_of_parse_audio_routing);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "error while parsing routing\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = meson_card_parse_of_optional(&priv->card, "audio-widgets",
-					   snd_soc_of_parse_audio_simple_widमाला_लो);
-	अगर (ret) अणु
+					   snd_soc_of_parse_audio_simple_widgets);
+	if (ret) {
 		dev_err(dev, "error while parsing widgets\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = meson_card_add_links(&priv->card);
-	अगर (ret)
-		जाओ out_err;
+	if (ret)
+		goto out_err;
 
 	ret = snd_soc_of_parse_aux_devs(&priv->card, "audio-aux-devs");
-	अगर (ret)
-		जाओ out_err;
+	if (ret)
+		goto out_err;
 
-	ret = devm_snd_soc_रेजिस्टर_card(dev, &priv->card);
-	अगर (ret)
-		जाओ out_err;
+	ret = devm_snd_soc_register_card(dev, &priv->card);
+	if (ret)
+		goto out_err;
 
-	वापस 0;
+	return 0;
 
 out_err:
 	meson_card_clean_references(priv);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(meson_card_probe);
 
-पूर्णांक meson_card_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा meson_card *priv = platक्रमm_get_drvdata(pdev);
+int meson_card_remove(struct platform_device *pdev)
+{
+	struct meson_card *priv = platform_get_drvdata(pdev);
 
 	meson_card_clean_references(priv);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(meson_card_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(meson_card_remove);
 
 MODULE_DESCRIPTION("Amlogic Sound Card Utils");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

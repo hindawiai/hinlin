@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Applied Micro X-Gene SoC Ethernet v2 Driver
  *
@@ -8,135 +7,135 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
-#समावेश "main.h"
+#include "main.h"
 
-अटल पूर्णांक xge_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg, u16 data)
-अणु
-	काष्ठा xge_pdata *pdata = bus->priv;
-	u32 करोne, val = 0;
-	u8 रुको = 10;
+static int xge_mdio_write(struct mii_bus *bus, int phy_id, int reg, u16 data)
+{
+	struct xge_pdata *pdata = bus->priv;
+	u32 done, val = 0;
+	u8 wait = 10;
 
 	SET_REG_BITS(&val, PHY_ADDR, phy_id);
 	SET_REG_BITS(&val, REG_ADDR, reg);
 	xge_wr_csr(pdata, MII_MGMT_ADDRESS, val);
 
 	xge_wr_csr(pdata, MII_MGMT_CONTROL, data);
-	करो अणु
+	do {
 		usleep_range(5, 10);
-		करोne = xge_rd_csr(pdata, MII_MGMT_INDICATORS);
-	पूर्ण जबतक ((करोne & MII_MGMT_BUSY) && रुको--);
+		done = xge_rd_csr(pdata, MII_MGMT_INDICATORS);
+	} while ((done & MII_MGMT_BUSY) && wait--);
 
-	अगर (करोne & MII_MGMT_BUSY) अणु
+	if (done & MII_MGMT_BUSY) {
 		dev_err(&bus->dev, "MII_MGMT write failed\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xge_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
-अणु
-	काष्ठा xge_pdata *pdata = bus->priv;
-	u32 data, करोne, val = 0;
-	u8 रुको = 10;
+static int xge_mdio_read(struct mii_bus *bus, int phy_id, int reg)
+{
+	struct xge_pdata *pdata = bus->priv;
+	u32 data, done, val = 0;
+	u8 wait = 10;
 
 	SET_REG_BITS(&val, PHY_ADDR, phy_id);
 	SET_REG_BITS(&val, REG_ADDR, reg);
 	xge_wr_csr(pdata, MII_MGMT_ADDRESS, val);
 
 	xge_wr_csr(pdata, MII_MGMT_COMMAND, MII_READ_CYCLE);
-	करो अणु
+	do {
 		usleep_range(5, 10);
-		करोne = xge_rd_csr(pdata, MII_MGMT_INDICATORS);
-	पूर्ण जबतक ((करोne & MII_MGMT_BUSY) && रुको--);
+		done = xge_rd_csr(pdata, MII_MGMT_INDICATORS);
+	} while ((done & MII_MGMT_BUSY) && wait--);
 
-	अगर (करोne & MII_MGMT_BUSY) अणु
+	if (done & MII_MGMT_BUSY) {
 		dev_err(&bus->dev, "MII_MGMT read failed\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	data = xge_rd_csr(pdata, MII_MGMT_STATUS);
 	xge_wr_csr(pdata, MII_MGMT_COMMAND, 0);
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल व्योम xge_adjust_link(काष्ठा net_device *ndev)
-अणु
-	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
-	काष्ठा phy_device *phydev = ndev->phydev;
+static void xge_adjust_link(struct net_device *ndev)
+{
+	struct xge_pdata *pdata = netdev_priv(ndev);
+	struct phy_device *phydev = ndev->phydev;
 
-	अगर (phydev->link) अणु
-		अगर (pdata->phy_speed != phydev->speed) अणु
+	if (phydev->link) {
+		if (pdata->phy_speed != phydev->speed) {
 			pdata->phy_speed = phydev->speed;
 			xge_mac_set_speed(pdata);
 			xge_mac_enable(pdata);
-			phy_prपूर्णांक_status(phydev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (pdata->phy_speed != SPEED_UNKNOWN) अणु
+			phy_print_status(phydev);
+		}
+	} else {
+		if (pdata->phy_speed != SPEED_UNKNOWN) {
 			pdata->phy_speed = SPEED_UNKNOWN;
 			xge_mac_disable(pdata);
-			phy_prपूर्णांक_status(phydev);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			phy_print_status(phydev);
+		}
+	}
+}
 
-व्योम xge_mdio_हटाओ(काष्ठा net_device *ndev)
-अणु
-	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
-	काष्ठा mii_bus *mdio_bus = pdata->mdio_bus;
+void xge_mdio_remove(struct net_device *ndev)
+{
+	struct xge_pdata *pdata = netdev_priv(ndev);
+	struct mii_bus *mdio_bus = pdata->mdio_bus;
 
-	अगर (ndev->phydev)
+	if (ndev->phydev)
 		phy_disconnect(ndev->phydev);
 
-	अगर (mdio_bus->state == MDIOBUS_REGISTERED)
-		mdiobus_unरेजिस्टर(mdio_bus);
+	if (mdio_bus->state == MDIOBUS_REGISTERED)
+		mdiobus_unregister(mdio_bus);
 
-	mdiobus_मुक्त(mdio_bus);
-पूर्ण
+	mdiobus_free(mdio_bus);
+}
 
-पूर्णांक xge_mdio_config(काष्ठा net_device *ndev)
-अणु
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
-	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
-	काष्ठा device *dev = &pdata->pdev->dev;
-	काष्ठा mii_bus *mdio_bus;
-	काष्ठा phy_device *phydev;
-	पूर्णांक ret;
+int xge_mdio_config(struct net_device *ndev)
+{
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
+	struct xge_pdata *pdata = netdev_priv(ndev);
+	struct device *dev = &pdata->pdev->dev;
+	struct mii_bus *mdio_bus;
+	struct phy_device *phydev;
+	int ret;
 
 	mdio_bus = mdiobus_alloc();
-	अगर (!mdio_bus)
-		वापस -ENOMEM;
+	if (!mdio_bus)
+		return -ENOMEM;
 
 	mdio_bus->name = "APM X-Gene Ethernet (v2) MDIO Bus";
-	mdio_bus->पढ़ो = xge_mdio_पढ़ो;
-	mdio_bus->ग_लिखो = xge_mdio_ग_लिखो;
+	mdio_bus->read = xge_mdio_read;
+	mdio_bus->write = xge_mdio_write;
 	mdio_bus->priv = pdata;
 	mdio_bus->parent = dev;
-	snम_लिखो(mdio_bus->id, MII_BUS_ID_SIZE, "%s-mii", dev_name(dev));
+	snprintf(mdio_bus->id, MII_BUS_ID_SIZE, "%s-mii", dev_name(dev));
 	pdata->mdio_bus = mdio_bus;
 
 	mdio_bus->phy_mask = 0x1;
-	ret = mdiobus_रेजिस्टर(mdio_bus);
-	अगर (ret)
-		जाओ err;
+	ret = mdiobus_register(mdio_bus);
+	if (ret)
+		goto err;
 
 	phydev = phy_find_first(mdio_bus);
-	अगर (!phydev) अणु
+	if (!phydev) {
 		dev_err(dev, "no PHY found\n");
 		ret = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	phydev = phy_connect(ndev, phydev_name(phydev),
 			     &xge_adjust_link,
 			     pdata->resources.phy_mode);
 
-	अगर (IS_ERR(phydev)) अणु
+	if (IS_ERR(phydev)) {
 		netdev_err(ndev, "Could not attach to PHY\n");
 		ret = PTR_ERR(phydev);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	linkmode_set_bit_array(phy_10_100_features_array,
 			       ARRAY_SIZE(phy_10_100_features_array),
@@ -151,9 +150,9 @@
 	linkmode_copy(phydev->advertising, phydev->supported);
 	pdata->phy_speed = SPEED_UNKNOWN;
 
-	वापस 0;
+	return 0;
 err:
-	xge_mdio_हटाओ(ndev);
+	xge_mdio_remove(ndev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

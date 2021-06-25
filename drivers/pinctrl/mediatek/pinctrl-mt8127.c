@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: Hongzhou.Yang <hongzhou.yang@mediatek.com>
  *         Yingjoe Chen <yingjoe.chen@mediatek.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/regmap.h>
-#समावेश <dt-bindings/pinctrl/mt65xx.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/regmap.h>
+#include <dt-bindings/pinctrl/mt65xx.h>
 
-#समावेश "pinctrl-mtk-common.h"
-#समावेश "pinctrl-mtk-mt8127.h"
+#include "pinctrl-mtk-common.h"
+#include "pinctrl-mtk-mt8127.h"
 
-अटल स्थिर काष्ठा mtk_drv_group_desc mt8127_drv_grp[] =  अणु
+static const struct mtk_drv_group_desc mt8127_drv_grp[] =  {
 	/* 0E4E8SR 4/8/12/16 */
 	MTK_DRV_GRP(4, 16, 1, 2, 4),
 	/* 0E2E4SR  2/4/6/8 */
 	MTK_DRV_GRP(2, 8, 1, 2, 2),
 	/* E8E4E2  2/4/6/8/10/12/14/16 */
 	MTK_DRV_GRP(2, 16, 0, 2, 2)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_drv_grp mt8127_pin_drv[] = अणु
+static const struct mtk_pin_drv_grp mt8127_pin_drv[] = {
 	MTK_PIN_DRV_GRP(0,   0xb00,  0, 1),
 	MTK_PIN_DRV_GRP(1,   0xb00,  0, 1),
 	MTK_PIN_DRV_GRP(2,   0xb00,  0, 1),
@@ -134,9 +133,9 @@
 	MTK_PIN_DRV_GRP(136, 0xc20,  0, 2),
 	MTK_PIN_DRV_GRP(137, 0xc20,  0, 2),
 	MTK_PIN_DRV_GRP(142, 0xb50,  0, 2),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_spec_pupd_set_samereg mt8127_spec_pupd[] = अणु
+static const struct mtk_pin_spec_pupd_set_samereg mt8127_spec_pupd[] = {
 	MTK_PIN_PUPD_SPEC_SR(33,  0xd90, 2, 0, 1),	/* KPROW0 */
 	MTK_PIN_PUPD_SPEC_SR(34,  0xd90, 6, 4, 5),	/* KPROW1 */
 	MTK_PIN_PUPD_SPEC_SR(35,  0xd90, 10, 8, 9),	/* KPROW2 */
@@ -171,16 +170,16 @@
 	MTK_PIN_PUPD_SPEC_SR(136, 0xc30, 4, 6, 5),	/* MSDC0_DAT1 */
 	MTK_PIN_PUPD_SPEC_SR(137, 0xc30, 0, 2, 1),	/* MSDC0_DAT0 */
 	MTK_PIN_PUPD_SPEC_SR(142, 0xdc0, 2, 0, 1),	/* EINT21 */
-पूर्ण;
+};
 
-अटल पूर्णांक mt8127_spec_pull_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
-		अचिन्हित अक्षर align, bool isup, अचिन्हित पूर्णांक r1r0)
-अणु
-	वापस mtk_pctrl_spec_pull_set_samereg(regmap, mt8127_spec_pupd,
+static int mt8127_spec_pull_set(struct regmap *regmap, unsigned int pin,
+		unsigned char align, bool isup, unsigned int r1r0)
+{
+	return mtk_pctrl_spec_pull_set_samereg(regmap, mt8127_spec_pupd,
 		ARRAY_SIZE(mt8127_spec_pupd), pin, align, isup, r1r0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा mtk_pin_ies_smt_set mt8127_ies_set[] = अणु
+static const struct mtk_pin_ies_smt_set mt8127_ies_set[] = {
 	MTK_PIN_IES_SMT_SPEC(0, 9, 0x900, 0),
 	MTK_PIN_IES_SMT_SPEC(10, 13, 0x900, 1),
 	MTK_PIN_IES_SMT_SPEC(14, 28, 0x900, 2),
@@ -210,9 +209,9 @@
 	MTK_PIN_IES_SMT_SPEC(134, 137, 0xc20, 4),
 	MTK_PIN_IES_SMT_SPEC(138, 141, 0x910, 9),
 	MTK_PIN_IES_SMT_SPEC(142, 142, 0x900, 13),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_ies_smt_set mt8127_smt_set[] = अणु
+static const struct mtk_pin_ies_smt_set mt8127_smt_set[] = {
 	MTK_PIN_IES_SMT_SPEC(0, 9, 0x920, 0),
 	MTK_PIN_IES_SMT_SPEC(10, 13, 0x920, 1),
 	MTK_PIN_IES_SMT_SPEC(14, 28, 0x920, 2),
@@ -258,22 +257,22 @@
 	MTK_PIN_IES_SMT_SPEC(137, 137, 0xc30, 3),
 	MTK_PIN_IES_SMT_SPEC(138, 141, 0x930, 9),
 	MTK_PIN_IES_SMT_SPEC(142, 142, 0x920, 13),
-पूर्ण;
+};
 
-अटल पूर्णांक mt8127_ies_smt_set(काष्ठा regmap *regmap, अचिन्हित पूर्णांक pin,
-		अचिन्हित अक्षर align, पूर्णांक value, क्रमागत pin_config_param arg)
-अणु
-	अगर (arg == PIN_CONFIG_INPUT_ENABLE)
-		वापस mtk_pconf_spec_set_ies_smt_range(regmap, mt8127_ies_set,
+static int mt8127_ies_smt_set(struct regmap *regmap, unsigned int pin,
+		unsigned char align, int value, enum pin_config_param arg)
+{
+	if (arg == PIN_CONFIG_INPUT_ENABLE)
+		return mtk_pconf_spec_set_ies_smt_range(regmap, mt8127_ies_set,
 			ARRAY_SIZE(mt8127_ies_set), pin, align, value);
-	अन्यथा अगर (arg == PIN_CONFIG_INPUT_SCHMITT_ENABLE)
-		वापस mtk_pconf_spec_set_ies_smt_range(regmap, mt8127_smt_set,
+	else if (arg == PIN_CONFIG_INPUT_SCHMITT_ENABLE)
+		return mtk_pconf_spec_set_ies_smt_range(regmap, mt8127_smt_set,
 			ARRAY_SIZE(mt8127_smt_set), pin, align, value);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 
-अटल स्थिर काष्ठा mtk_pinctrl_devdata mt8127_pinctrl_data = अणु
+static const struct mtk_pinctrl_devdata mt8127_pinctrl_data = {
 	.pins = mtk_pins_mt8127,
 	.npins = ARRAY_SIZE(mtk_pins_mt8127),
 	.grp_desc = mt8127_drv_grp,
@@ -285,7 +284,7 @@
 	.dir_offset = 0x0000,
 	.pullen_offset = 0x0100,
 	.pullsel_offset = 0x0200,
-	.करोut_offset = 0x0400,
+	.dout_offset = 0x0400,
 	.din_offset = 0x0500,
 	.pinmux_offset = 0x0600,
 	.type1_start = 143,
@@ -293,34 +292,34 @@
 	.port_shf = 4,
 	.port_mask = 0xf,
 	.port_align = 4,
-	.eपूर्णांक_hw = अणु
+	.eint_hw = {
 		.port_mask = 7,
 		.ports     = 6,
 		.ap_num    = 143,
 		.db_cnt    = 16,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक mt8127_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस mtk_pctrl_init(pdev, &mt8127_pinctrl_data, शून्य);
-पूर्ण
+static int mt8127_pinctrl_probe(struct platform_device *pdev)
+{
+	return mtk_pctrl_init(pdev, &mt8127_pinctrl_data, NULL);
+}
 
-अटल स्थिर काष्ठा of_device_id mt8127_pctrl_match[] = अणु
-	अणु .compatible = "mediatek,mt8127-pinctrl", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id mt8127_pctrl_match[] = {
+	{ .compatible = "mediatek,mt8127-pinctrl", },
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver mtk_pinctrl_driver = अणु
+static struct platform_driver mtk_pinctrl_driver = {
 	.probe = mt8127_pinctrl_probe,
-	.driver = अणु
+	.driver = {
 		.name = "mediatek-mt8127-pinctrl",
 		.of_match_table = mt8127_pctrl_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init mtk_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mtk_pinctrl_driver);
-पूर्ण
+static int __init mtk_pinctrl_init(void)
+{
+	return platform_driver_register(&mtk_pinctrl_driver);
+}
 arch_initcall(mtk_pinctrl_init);

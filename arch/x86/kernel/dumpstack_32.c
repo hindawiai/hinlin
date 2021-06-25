@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
- *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Lअसल
+ *  Copyright (C) 2000, 2001, 2002 Andi Kleen, SuSE Labs
  */
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/export.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/nmi.h>
+#include <linux/sched/debug.h>
+#include <linux/kallsyms.h>
+#include <linux/kprobes.h>
+#include <linux/uaccess.h>
+#include <linux/hardirq.h>
+#include <linux/kdebug.h>
+#include <linux/export.h>
+#include <linux/ptrace.h>
+#include <linux/kexec.h>
+#include <linux/sysfs.h>
+#include <linux/bug.h>
+#include <linux/nmi.h>
 
-#समावेश <यंत्र/stacktrace.h>
+#include <asm/stacktrace.h>
 
-स्थिर अक्षर *stack_type_name(क्रमागत stack_type type)
-अणु
-	अगर (type == STACK_TYPE_IRQ)
-		वापस "IRQ";
+const char *stack_type_name(enum stack_type type)
+{
+	if (type == STACK_TYPE_IRQ)
+		return "IRQ";
 
-	अगर (type == STACK_TYPE_SOFTIRQ)
-		वापस "SOFTIRQ";
+	if (type == STACK_TYPE_SOFTIRQ)
+		return "SOFTIRQ";
 
-	अगर (type == STACK_TYPE_ENTRY)
-		वापस "ENTRY_TRAMPOLINE";
+	if (type == STACK_TYPE_ENTRY)
+		return "ENTRY_TRAMPOLINE";
 
-	अगर (type == STACK_TYPE_EXCEPTION)
-		वापस "#DF";
+	if (type == STACK_TYPE_EXCEPTION)
+		return "#DF";
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल bool in_hardirq_stack(अचिन्हित दीर्घ *stack, काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ *begin = (अचिन्हित दीर्घ *)this_cpu_पढ़ो(hardirq_stack_ptr);
-	अचिन्हित दीर्घ *end   = begin + (THREAD_SIZE / माप(दीर्घ));
+static bool in_hardirq_stack(unsigned long *stack, struct stack_info *info)
+{
+	unsigned long *begin = (unsigned long *)this_cpu_read(hardirq_stack_ptr);
+	unsigned long *end   = begin + (THREAD_SIZE / sizeof(long));
 
 	/*
-	 * This is a software stack, so 'end' can be a valid stack poपूर्णांकer.
+	 * This is a software stack, so 'end' can be a valid stack pointer.
 	 * It just means the stack is empty.
 	 */
-	अगर (stack < begin || stack > end)
-		वापस false;
+	if (stack < begin || stack > end)
+		return false;
 
 	info->type	= STACK_TYPE_IRQ;
 	info->begin	= begin;
 	info->end	= end;
 
 	/*
-	 * See irq_32.c -- the next stack poपूर्णांकer is stored at the beginning of
+	 * See irq_32.c -- the next stack pointer is stored at the beginning of
 	 * the stack.
 	 */
-	info->next_sp	= (अचिन्हित दीर्घ *)*begin;
+	info->next_sp	= (unsigned long *)*begin;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool in_softirq_stack(अचिन्हित दीर्घ *stack, काष्ठा stack_info *info)
-अणु
-	अचिन्हित दीर्घ *begin = (अचिन्हित दीर्घ *)this_cpu_पढ़ो(softirq_stack_ptr);
-	अचिन्हित दीर्घ *end   = begin + (THREAD_SIZE / माप(दीर्घ));
+static bool in_softirq_stack(unsigned long *stack, struct stack_info *info)
+{
+	unsigned long *begin = (unsigned long *)this_cpu_read(softirq_stack_ptr);
+	unsigned long *end   = begin + (THREAD_SIZE / sizeof(long));
 
 	/*
-	 * This is a software stack, so 'end' can be a valid stack poपूर्णांकer.
+	 * This is a software stack, so 'end' can be a valid stack pointer.
 	 * It just means the stack is empty.
 	 */
-	अगर (stack < begin || stack > end)
-		वापस false;
+	if (stack < begin || stack > end)
+		return false;
 
 	info->type	= STACK_TYPE_SOFTIRQ;
 	info->begin	= begin;
 	info->end	= end;
 
 	/*
-	 * The next stack poपूर्णांकer is stored at the beginning of the stack.
+	 * The next stack pointer is stored at the beginning of the stack.
 	 * See irq_32.c.
 	 */
-	info->next_sp	= (अचिन्हित दीर्घ *)*begin;
+	info->next_sp	= (unsigned long *)*begin;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool in_द्विगुनfault_stack(अचिन्हित दीर्घ *stack, काष्ठा stack_info *info)
-अणु
-	काष्ठा cpu_entry_area *cea = get_cpu_entry_area(raw_smp_processor_id());
-	काष्ठा द्विगुनfault_stack *ss = &cea->द्विगुनfault_stack;
+static bool in_doublefault_stack(unsigned long *stack, struct stack_info *info)
+{
+	struct cpu_entry_area *cea = get_cpu_entry_area(raw_smp_processor_id());
+	struct doublefault_stack *ss = &cea->doublefault_stack;
 
-	व्योम *begin = ss->stack;
-	व्योम *end = begin + माप(ss->stack);
+	void *begin = ss->stack;
+	void *end = begin + sizeof(ss->stack);
 
-	अगर ((व्योम *)stack < begin || (व्योम *)stack >= end)
-		वापस false;
+	if ((void *)stack < begin || (void *)stack >= end)
+		return false;
 
 	info->type	= STACK_TYPE_EXCEPTION;
 	info->begin	= begin;
 	info->end	= end;
-	info->next_sp	= (अचिन्हित दीर्घ *)this_cpu_पढ़ो(cpu_tss_rw.x86_tss.sp);
+	info->next_sp	= (unsigned long *)this_cpu_read(cpu_tss_rw.x86_tss.sp);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-पूर्णांक get_stack_info(अचिन्हित दीर्घ *stack, काष्ठा task_काष्ठा *task,
-		   काष्ठा stack_info *info, अचिन्हित दीर्घ *visit_mask)
-अणु
-	अगर (!stack)
-		जाओ unknown;
+int get_stack_info(unsigned long *stack, struct task_struct *task,
+		   struct stack_info *info, unsigned long *visit_mask)
+{
+	if (!stack)
+		goto unknown;
 
 	task = task ? : current;
 
-	अगर (in_task_stack(stack, task, info))
-		जाओ recursion_check;
+	if (in_task_stack(stack, task, info))
+		goto recursion_check;
 
-	अगर (task != current)
-		जाओ unknown;
+	if (task != current)
+		goto unknown;
 
-	अगर (in_entry_stack(stack, info))
-		जाओ recursion_check;
+	if (in_entry_stack(stack, info))
+		goto recursion_check;
 
-	अगर (in_hardirq_stack(stack, info))
-		जाओ recursion_check;
+	if (in_hardirq_stack(stack, info))
+		goto recursion_check;
 
-	अगर (in_softirq_stack(stack, info))
-		जाओ recursion_check;
+	if (in_softirq_stack(stack, info))
+		goto recursion_check;
 
-	अगर (in_द्विगुनfault_stack(stack, info))
-		जाओ recursion_check;
+	if (in_doublefault_stack(stack, info))
+		goto recursion_check;
 
-	जाओ unknown;
+	goto unknown;
 
 recursion_check:
 	/*
-	 * Make sure we करोn't iterate through any given stack more than once.
-	 * If it comes up a second समय then there's something wrong going on:
-	 * just अवरोध out and report an unknown stack type.
+	 * Make sure we don't iterate through any given stack more than once.
+	 * If it comes up a second time then there's something wrong going on:
+	 * just break out and report an unknown stack type.
 	 */
-	अगर (visit_mask) अणु
-		अगर (*visit_mask & (1UL << info->type)) अणु
-			prपूर्णांकk_deferred_once(KERN_WARNING "WARNING: stack recursion on stack type %d\n", info->type);
-			जाओ unknown;
-		पूर्ण
+	if (visit_mask) {
+		if (*visit_mask & (1UL << info->type)) {
+			printk_deferred_once(KERN_WARNING "WARNING: stack recursion on stack type %d\n", info->type);
+			goto unknown;
+		}
 		*visit_mask |= 1UL << info->type;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 unknown:
 	info->type = STACK_TYPE_UNKNOWN;
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}

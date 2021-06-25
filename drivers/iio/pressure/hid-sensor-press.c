@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * HID Sensors Driver
  * Copyright (c) 2014, Intel Corporation.
  */
-#समावेश <linux/device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/hid-sensor-hub.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश "../common/hid-sensors/hid-sensor-trigger.h"
+#include <linux/device.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/hid-sensor-hub.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
+#include "../common/hid-sensors/hid-sensor-trigger.h"
 
-#घोषणा CHANNEL_SCAN_INDEX_PRESSURE 0
+#define CHANNEL_SCAN_INDEX_PRESSURE 0
 
-काष्ठा press_state अणु
-	काष्ठा hid_sensor_hub_callbacks callbacks;
-	काष्ठा hid_sensor_common common_attributes;
-	काष्ठा hid_sensor_hub_attribute_info press_attr;
+struct press_state {
+	struct hid_sensor_hub_callbacks callbacks;
+	struct hid_sensor_common common_attributes;
+	struct hid_sensor_hub_attribute_info press_attr;
 	u32 press_data;
-	पूर्णांक scale_pre_decml;
-	पूर्णांक scale_post_decml;
-	पूर्णांक scale_precision;
-	पूर्णांक value_offset;
-पूर्ण;
+	int scale_pre_decml;
+	int scale_post_decml;
+	int scale_precision;
+	int value_offset;
+};
 
-अटल स्थिर u32 press_sensitivity_addresses[] = अणु
+static const u32 press_sensitivity_addresses[] = {
 	HID_USAGE_SENSOR_DATA_ATMOSPHERIC_PRESSURE,
 	HID_USAGE_SENSOR_ATMOSPHERIC_PRESSURE
-पूर्ण;
+};
 
 /* Channel definitions */
-अटल स्थिर काष्ठा iio_chan_spec press_channels[] = अणु
-	अणु
+static const struct iio_chan_spec press_channels[] = {
+	{
 		.type = IIO_PRESSURE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_OFFSET) |
@@ -45,48 +44,48 @@
 		BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 		BIT(IIO_CHAN_INFO_HYSTERESIS),
 		.scan_index = CHANNEL_SCAN_INDEX_PRESSURE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* Adjust channel real bits based on report descriptor */
-अटल व्योम press_adjust_channel_bit_mask(काष्ठा iio_chan_spec *channels,
-					पूर्णांक channel, पूर्णांक size)
-अणु
+static void press_adjust_channel_bit_mask(struct iio_chan_spec *channels,
+					int channel, int size)
+{
 	channels[channel].scan_type.sign = 's';
 	/* Real storage bits will change based on the report desc. */
 	channels[channel].scan_type.realbits = size * 8;
 	/* Maximum size of a sample to capture is u32 */
-	channels[channel].scan_type.storagebits = माप(u32) * 8;
-पूर्ण
+	channels[channel].scan_type.storagebits = sizeof(u32) * 8;
+}
 
-/* Channel पढ़ो_raw handler */
-अटल पूर्णांक press_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			      काष्ठा iio_chan_spec स्थिर *chan,
-			      पूर्णांक *val, पूर्णांक *val2,
-			      दीर्घ mask)
-अणु
-	काष्ठा press_state *press_state = iio_priv(indio_dev);
-	पूर्णांक report_id = -1;
+/* Channel read_raw handler */
+static int press_read_raw(struct iio_dev *indio_dev,
+			      struct iio_chan_spec const *chan,
+			      int *val, int *val2,
+			      long mask)
+{
+	struct press_state *press_state = iio_priv(indio_dev);
+	int report_id = -1;
 	u32 address;
-	पूर्णांक ret_type;
+	int ret_type;
 	s32 min;
 
 	*val = 0;
 	*val2 = 0;
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		चयन (chan->scan_index) अणु
-		हाल  CHANNEL_SCAN_INDEX_PRESSURE:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		switch (chan->scan_index) {
+		case  CHANNEL_SCAN_INDEX_PRESSURE:
 			report_id = press_state->press_attr.report_id;
 			min = press_state->press_attr.logical_minimum;
 			address = HID_USAGE_SENSOR_ATMOSPHERIC_PRESSURE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			report_id = -1;
-			अवरोध;
-		पूर्ण
-		अगर (report_id >= 0) अणु
-			hid_sensor_घातer_state(&press_state->common_attributes,
+			break;
+		}
+		if (report_id >= 0) {
+			hid_sensor_power_state(&press_state->common_attributes,
 						true);
 			*val = sensor_hub_input_attr_get_raw_value(
 				press_state->common_attributes.hsdev,
@@ -94,160 +93,160 @@
 				report_id,
 				SENSOR_HUB_SYNC,
 				min < 0);
-			hid_sensor_घातer_state(&press_state->common_attributes,
+			hid_sensor_power_state(&press_state->common_attributes,
 						false);
-		पूर्ण अन्यथा अणु
+		} else {
 			*val = 0;
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		ret_type = IIO_VAL_INT;
-		अवरोध;
-	हाल IIO_CHAN_INFO_SCALE:
+		break;
+	case IIO_CHAN_INFO_SCALE:
 		*val = press_state->scale_pre_decml;
 		*val2 = press_state->scale_post_decml;
 		ret_type = press_state->scale_precision;
-		अवरोध;
-	हाल IIO_CHAN_INFO_OFFSET:
+		break;
+	case IIO_CHAN_INFO_OFFSET:
 		*val = press_state->value_offset;
 		ret_type = IIO_VAL_INT;
-		अवरोध;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		ret_type = hid_sensor_पढ़ो_samp_freq_value(
+		break;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		ret_type = hid_sensor_read_samp_freq_value(
 				&press_state->common_attributes, val, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_HYSTERESIS:
-		ret_type = hid_sensor_पढ़ो_raw_hyst_value(
+		break;
+	case IIO_CHAN_INFO_HYSTERESIS:
+		ret_type = hid_sensor_read_raw_hyst_value(
 				&press_state->common_attributes, val, val2);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret_type = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret_type;
-पूर्ण
+	return ret_type;
+}
 
-/* Channel ग_लिखो_raw handler */
-अटल पूर्णांक press_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			       काष्ठा iio_chan_spec स्थिर *chan,
-			       पूर्णांक val,
-			       पूर्णांक val2,
-			       दीर्घ mask)
-अणु
-	काष्ठा press_state *press_state = iio_priv(indio_dev);
-	पूर्णांक ret = 0;
+/* Channel write_raw handler */
+static int press_write_raw(struct iio_dev *indio_dev,
+			       struct iio_chan_spec const *chan,
+			       int val,
+			       int val2,
+			       long mask)
+{
+	struct press_state *press_state = iio_priv(indio_dev);
+	int ret = 0;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		ret = hid_sensor_ग_लिखो_samp_freq_value(
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		ret = hid_sensor_write_samp_freq_value(
 				&press_state->common_attributes, val, val2);
-		अवरोध;
-	हाल IIO_CHAN_INFO_HYSTERESIS:
-		ret = hid_sensor_ग_लिखो_raw_hyst_value(
+		break;
+	case IIO_CHAN_INFO_HYSTERESIS:
+		ret = hid_sensor_write_raw_hyst_value(
 				&press_state->common_attributes, val, val2);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_info press_info = अणु
-	.पढ़ो_raw = &press_पढ़ो_raw,
-	.ग_लिखो_raw = &press_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info press_info = {
+	.read_raw = &press_read_raw,
+	.write_raw = &press_write_raw,
+};
 
 /* Function to push data to buffer */
-अटल व्योम hid_sensor_push_data(काष्ठा iio_dev *indio_dev, स्थिर व्योम *data,
-					पूर्णांक len)
-अणु
+static void hid_sensor_push_data(struct iio_dev *indio_dev, const void *data,
+					int len)
+{
 	dev_dbg(&indio_dev->dev, "hid_sensor_push_data\n");
 	iio_push_to_buffers(indio_dev, data);
-पूर्ण
+}
 
 /* Callback handler to send event after all samples are received and captured */
-अटल पूर्णांक press_proc_event(काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id,
-				व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(priv);
-	काष्ठा press_state *press_state = iio_priv(indio_dev);
+static int press_proc_event(struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id,
+				void *priv)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(priv);
+	struct press_state *press_state = iio_priv(indio_dev);
 
 	dev_dbg(&indio_dev->dev, "press_proc_event\n");
-	अगर (atomic_पढ़ो(&press_state->common_attributes.data_पढ़ोy))
+	if (atomic_read(&press_state->common_attributes.data_ready))
 		hid_sensor_push_data(indio_dev,
 				&press_state->press_data,
-				माप(press_state->press_data));
+				sizeof(press_state->press_data));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Capture samples in local storage */
-अटल पूर्णांक press_capture_sample(काष्ठा hid_sensor_hub_device *hsdev,
-				अचिन्हित usage_id,
-				माप_प्रकार raw_len, अक्षर *raw_data,
-				व्योम *priv)
-अणु
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(priv);
-	काष्ठा press_state *press_state = iio_priv(indio_dev);
-	पूर्णांक ret = -EINVAL;
+static int press_capture_sample(struct hid_sensor_hub_device *hsdev,
+				unsigned usage_id,
+				size_t raw_len, char *raw_data,
+				void *priv)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(priv);
+	struct press_state *press_state = iio_priv(indio_dev);
+	int ret = -EINVAL;
 
-	चयन (usage_id) अणु
-	हाल HID_USAGE_SENSOR_ATMOSPHERIC_PRESSURE:
+	switch (usage_id) {
+	case HID_USAGE_SENSOR_ATMOSPHERIC_PRESSURE:
 		press_state->press_data = *(u32 *)raw_data;
 		ret = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Parse report which is specअगरic to an usage id*/
-अटल पूर्णांक press_parse_report(काष्ठा platक्रमm_device *pdev,
-				काष्ठा hid_sensor_hub_device *hsdev,
-				काष्ठा iio_chan_spec *channels,
-				अचिन्हित usage_id,
-				काष्ठा press_state *st)
-अणु
-	पूर्णांक ret;
+/* Parse report which is specific to an usage id*/
+static int press_parse_report(struct platform_device *pdev,
+				struct hid_sensor_hub_device *hsdev,
+				struct iio_chan_spec *channels,
+				unsigned usage_id,
+				struct press_state *st)
+{
+	int ret;
 
 	ret = sensor_hub_input_get_attribute_info(hsdev, HID_INPUT_REPORT,
 			usage_id,
 			HID_USAGE_SENSOR_ATMOSPHERIC_PRESSURE,
 			&st->press_attr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	press_adjust_channel_bit_mask(channels, CHANNEL_SCAN_INDEX_PRESSURE,
 					st->press_attr.size);
 
 	dev_dbg(&pdev->dev, "press %x:%x\n", st->press_attr.index,
 			st->press_attr.report_id);
 
-	st->scale_precision = hid_sensor_क्रमmat_scale(
+	st->scale_precision = hid_sensor_format_scale(
 				HID_USAGE_SENSOR_PRESSURE,
 				&st->press_attr,
 				&st->scale_pre_decml, &st->scale_post_decml);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Function to initialize the processing क्रम usage id */
-अटल पूर्णांक hid_press_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret = 0;
-	अटल स्थिर अक्षर *name = "press";
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा press_state *press_state;
-	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
+/* Function to initialize the processing for usage id */
+static int hid_press_probe(struct platform_device *pdev)
+{
+	int ret = 0;
+	static const char *name = "press";
+	struct iio_dev *indio_dev;
+	struct press_state *press_state;
+	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
 
 	indio_dev = devm_iio_device_alloc(&pdev->dev,
-				माप(काष्ठा press_state));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, indio_dev);
+				sizeof(struct press_state));
+	if (!indio_dev)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, indio_dev);
 
 	press_state = iio_priv(indio_dev);
 	press_state->common_attributes.hsdev = hsdev;
@@ -258,102 +257,102 @@
 					&press_state->common_attributes,
 					press_sensitivity_addresses,
 					ARRAY_SIZE(press_sensitivity_addresses));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to setup common attributes\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	indio_dev->channels = kmemdup(press_channels, माप(press_channels),
+	indio_dev->channels = kmemdup(press_channels, sizeof(press_channels),
 				      GFP_KERNEL);
-	अगर (!indio_dev->channels) अणु
+	if (!indio_dev->channels) {
 		dev_err(&pdev->dev, "failed to duplicate channels\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = press_parse_report(pdev, hsdev,
-				 (काष्ठा iio_chan_spec *)indio_dev->channels,
+				 (struct iio_chan_spec *)indio_dev->channels,
 				 HID_USAGE_SENSOR_PRESSURE, press_state);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to setup attributes\n");
-		जाओ error_मुक्त_dev_mem;
-	पूर्ण
+		goto error_free_dev_mem;
+	}
 
 	indio_dev->num_channels =
 				ARRAY_SIZE(press_channels);
 	indio_dev->info = &press_info;
 	indio_dev->name = name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
-	atomic_set(&press_state->common_attributes.data_पढ़ोy, 0);
+	atomic_set(&press_state->common_attributes.data_ready, 0);
 
 	ret = hid_sensor_setup_trigger(indio_dev, name,
 				&press_state->common_attributes);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "trigger setup failed\n");
-		जाओ error_मुक्त_dev_mem;
-	पूर्ण
+		goto error_free_dev_mem;
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret) अणु
+	ret = iio_device_register(indio_dev);
+	if (ret) {
 		dev_err(&pdev->dev, "device register failed\n");
-		जाओ error_हटाओ_trigger;
-	पूर्ण
+		goto error_remove_trigger;
+	}
 
 	press_state->callbacks.send_event = press_proc_event;
 	press_state->callbacks.capture_sample = press_capture_sample;
 	press_state->callbacks.pdev = pdev;
-	ret = sensor_hub_रेजिस्टर_callback(hsdev, HID_USAGE_SENSOR_PRESSURE,
+	ret = sensor_hub_register_callback(hsdev, HID_USAGE_SENSOR_PRESSURE,
 					&press_state->callbacks);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "callback reg failed\n");
-		जाओ error_iio_unreg;
-	पूर्ण
+		goto error_iio_unreg;
+	}
 
-	वापस ret;
+	return ret;
 
 error_iio_unreg:
-	iio_device_unरेजिस्टर(indio_dev);
-error_हटाओ_trigger:
-	hid_sensor_हटाओ_trigger(indio_dev, &press_state->common_attributes);
-error_मुक्त_dev_mem:
-	kमुक्त(indio_dev->channels);
-	वापस ret;
-पूर्ण
+	iio_device_unregister(indio_dev);
+error_remove_trigger:
+	hid_sensor_remove_trigger(indio_dev, &press_state->common_attributes);
+error_free_dev_mem:
+	kfree(indio_dev->channels);
+	return ret;
+}
 
-/* Function to deinitialize the processing क्रम usage id */
-अटल पूर्णांक hid_press_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
-	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा press_state *press_state = iio_priv(indio_dev);
+/* Function to deinitialize the processing for usage id */
+static int hid_press_remove(struct platform_device *pdev)
+{
+	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
+	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+	struct press_state *press_state = iio_priv(indio_dev);
 
-	sensor_hub_हटाओ_callback(hsdev, HID_USAGE_SENSOR_PRESSURE);
-	iio_device_unरेजिस्टर(indio_dev);
-	hid_sensor_हटाओ_trigger(indio_dev, &press_state->common_attributes);
-	kमुक्त(indio_dev->channels);
+	sensor_hub_remove_callback(hsdev, HID_USAGE_SENSOR_PRESSURE);
+	iio_device_unregister(indio_dev);
+	hid_sensor_remove_trigger(indio_dev, &press_state->common_attributes);
+	kfree(indio_dev->channels);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id hid_press_ids[] = अणु
-	अणु
-		/* Format: HID-SENSOR-usage_id_in_hex_lowerहाल */
+static const struct platform_device_id hid_press_ids[] = {
+	{
+		/* Format: HID-SENSOR-usage_id_in_hex_lowercase */
 		.name = "HID-SENSOR-200031",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, hid_press_ids);
+	},
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(platform, hid_press_ids);
 
-अटल काष्ठा platक्रमm_driver hid_press_platक्रमm_driver = अणु
+static struct platform_driver hid_press_platform_driver = {
 	.id_table = hid_press_ids,
-	.driver = अणु
+	.driver = {
 		.name	= KBUILD_MODNAME,
 		.pm	= &hid_sensor_pm_ops,
-	पूर्ण,
+	},
 	.probe		= hid_press_probe,
-	.हटाओ		= hid_press_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(hid_press_platक्रमm_driver);
+	.remove		= hid_press_remove,
+};
+module_platform_driver(hid_press_platform_driver);
 
 MODULE_DESCRIPTION("HID Sensor Pressure");
 MODULE_AUTHOR("Archana Patni <archana.patni@intel.com>");

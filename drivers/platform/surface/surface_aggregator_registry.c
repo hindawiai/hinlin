@@ -1,33 +1,32 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Surface System Aggregator Module (SSAM) client device registry.
  *
- * Registry क्रम non-platक्रमm/non-ACPI SSAM client devices, i.e. devices that
- * cannot be स्वतः-detected. Provides device-hubs and perक्रमms instantiation
- * क्रम these devices.
+ * Registry for non-platform/non-ACPI SSAM client devices, i.e. devices that
+ * cannot be auto-detected. Provides device-hubs and performs instantiation
+ * for these devices.
  *
  * Copyright (C) 2020-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/acpi.h>
+#include <linux/kernel.h>
+#include <linux/limits.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/surface_aggregator/controller.h>
-#समावेश <linux/surface_aggregator/device.h>
+#include <linux/surface_aggregator/controller.h>
+#include <linux/surface_aggregator/device.h>
 
 
 /* -- Device registry. ------------------------------------------------------ */
 
 /*
  * SSAM device names follow the SSAM module alias, meaning they are prefixed
- * with 'ssam:', followed by करोमुख्य, category, target ID, instance ID, and
+ * with 'ssam:', followed by domain, category, target ID, instance ID, and
  * function, each encoded as two-digit hexadecimal, separated by ':'. In other
  * words, it follows the scheme
  *
@@ -38,592 +37,592 @@
  */
 
 /* Root node. */
-अटल स्थिर काष्ठा software_node ssam_node_root = अणु
+static const struct software_node ssam_node_root = {
 	.name = "ssam_platform_hub",
-पूर्ण;
+};
 
 /* Base device hub (devices attached to Surface Book 3 base). */
-अटल स्थिर काष्ठा software_node ssam_node_hub_base = अणु
+static const struct software_node ssam_node_hub_base = {
 	.name = "ssam:00:00:02:00:00",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* AC adapter. */
-अटल स्थिर काष्ठा software_node ssam_node_bat_ac = अणु
+static const struct software_node ssam_node_bat_ac = {
 	.name = "ssam:01:02:01:01:01",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* Primary battery. */
-अटल स्थिर काष्ठा software_node ssam_node_bat_मुख्य = अणु
+static const struct software_node ssam_node_bat_main = {
 	.name = "ssam:01:02:01:01:00",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* Secondary battery (Surface Book 3). */
-अटल स्थिर काष्ठा software_node ssam_node_bat_sb3base = अणु
+static const struct software_node ssam_node_bat_sb3base = {
 	.name = "ssam:01:02:02:01:00",
 	.parent = &ssam_node_hub_base,
-पूर्ण;
+};
 
-/* Platक्रमm profile / perक्रमmance-mode device. */
-अटल स्थिर काष्ठा software_node ssam_node_पंचांगp_pprof = अणु
+/* Platform profile / performance-mode device. */
+static const struct software_node ssam_node_tmp_pprof = {
 	.name = "ssam:01:03:01:00:01",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
-/* DTX / detachment-प्रणाली device (Surface Book 3). */
-अटल स्थिर काष्ठा software_node ssam_node_bas_dtx = अणु
+/* DTX / detachment-system device (Surface Book 3). */
+static const struct software_node ssam_node_bas_dtx = {
 	.name = "ssam:01:11:01:00:00",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* HID keyboard. */
-अटल स्थिर काष्ठा software_node ssam_node_hid_मुख्य_keyboard = अणु
+static const struct software_node ssam_node_hid_main_keyboard = {
 	.name = "ssam:01:15:02:01:00",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* HID touchpad. */
-अटल स्थिर काष्ठा software_node ssam_node_hid_मुख्य_touchpad = अणु
+static const struct software_node ssam_node_hid_main_touchpad = {
 	.name = "ssam:01:15:02:03:00",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* HID device instance 5 (unknown HID device). */
-अटल स्थिर काष्ठा software_node ssam_node_hid_मुख्य_iid5 = अणु
+static const struct software_node ssam_node_hid_main_iid5 = {
 	.name = "ssam:01:15:02:05:00",
 	.parent = &ssam_node_root,
-पूर्ण;
+};
 
 /* HID keyboard (base hub). */
-अटल स्थिर काष्ठा software_node ssam_node_hid_base_keyboard = अणु
+static const struct software_node ssam_node_hid_base_keyboard = {
 	.name = "ssam:01:15:02:01:00",
 	.parent = &ssam_node_hub_base,
-पूर्ण;
+};
 
 /* HID touchpad (base hub). */
-अटल स्थिर काष्ठा software_node ssam_node_hid_base_touchpad = अणु
+static const struct software_node ssam_node_hid_base_touchpad = {
 	.name = "ssam:01:15:02:03:00",
 	.parent = &ssam_node_hub_base,
-पूर्ण;
+};
 
 /* HID device instance 5 (unknown HID device, base hub). */
-अटल स्थिर काष्ठा software_node ssam_node_hid_base_iid5 = अणु
+static const struct software_node ssam_node_hid_base_iid5 = {
 	.name = "ssam:01:15:02:05:00",
 	.parent = &ssam_node_hub_base,
-पूर्ण;
+};
 
 /* HID device instance 6 (unknown HID device, base hub). */
-अटल स्थिर काष्ठा software_node ssam_node_hid_base_iid6 = अणु
+static const struct software_node ssam_node_hid_base_iid6 = {
 	.name = "ssam:01:15:02:06:00",
 	.parent = &ssam_node_hub_base,
-पूर्ण;
+};
 
-/* Devices क्रम Surface Book 2. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sb2[] = अणु
+/* Devices for Surface Book 2. */
+static const struct software_node *ssam_node_group_sb2[] = {
 	&ssam_node_root,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
+	&ssam_node_tmp_pprof,
+	NULL,
+};
 
-/* Devices क्रम Surface Book 3. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sb3[] = अणु
+/* Devices for Surface Book 3. */
+static const struct software_node *ssam_node_group_sb3[] = {
 	&ssam_node_root,
 	&ssam_node_hub_base,
 	&ssam_node_bat_ac,
-	&ssam_node_bat_मुख्य,
+	&ssam_node_bat_main,
 	&ssam_node_bat_sb3base,
-	&ssam_node_पंचांगp_pprof,
+	&ssam_node_tmp_pprof,
 	&ssam_node_bas_dtx,
 	&ssam_node_hid_base_keyboard,
 	&ssam_node_hid_base_touchpad,
 	&ssam_node_hid_base_iid5,
 	&ssam_node_hid_base_iid6,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-/* Devices क्रम Surface Laptop 1. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sl1[] = अणु
+/* Devices for Surface Laptop 1. */
+static const struct software_node *ssam_node_group_sl1[] = {
 	&ssam_node_root,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
+	&ssam_node_tmp_pprof,
+	NULL,
+};
 
-/* Devices क्रम Surface Laptop 2. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sl2[] = अणु
+/* Devices for Surface Laptop 2. */
+static const struct software_node *ssam_node_group_sl2[] = {
 	&ssam_node_root,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
+	&ssam_node_tmp_pprof,
+	NULL,
+};
 
-/* Devices क्रम Surface Laptop 3 and 4. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sl3[] = अणु
-	&ssam_node_root,
-	&ssam_node_bat_ac,
-	&ssam_node_bat_मुख्य,
-	&ssam_node_पंचांगp_pprof,
-	&ssam_node_hid_मुख्य_keyboard,
-	&ssam_node_hid_मुख्य_touchpad,
-	&ssam_node_hid_मुख्य_iid5,
-	शून्य,
-पूर्ण;
-
-/* Devices क्रम Surface Laptop Go. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_slg1[] = अणु
+/* Devices for Surface Laptop 3 and 4. */
+static const struct software_node *ssam_node_group_sl3[] = {
 	&ssam_node_root,
 	&ssam_node_bat_ac,
-	&ssam_node_bat_मुख्य,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
+	&ssam_node_bat_main,
+	&ssam_node_tmp_pprof,
+	&ssam_node_hid_main_keyboard,
+	&ssam_node_hid_main_touchpad,
+	&ssam_node_hid_main_iid5,
+	NULL,
+};
 
-/* Devices क्रम Surface Pro 5. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sp5[] = अणु
-	&ssam_node_root,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
-
-/* Devices क्रम Surface Pro 6. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sp6[] = अणु
-	&ssam_node_root,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
-
-/* Devices क्रम Surface Pro 7 and Surface Pro 7+. */
-अटल स्थिर काष्ठा software_node *ssam_node_group_sp7[] = अणु
+/* Devices for Surface Laptop Go. */
+static const struct software_node *ssam_node_group_slg1[] = {
 	&ssam_node_root,
 	&ssam_node_bat_ac,
-	&ssam_node_bat_मुख्य,
-	&ssam_node_पंचांगp_pprof,
-	शून्य,
-पूर्ण;
+	&ssam_node_bat_main,
+	&ssam_node_tmp_pprof,
+	NULL,
+};
+
+/* Devices for Surface Pro 5. */
+static const struct software_node *ssam_node_group_sp5[] = {
+	&ssam_node_root,
+	&ssam_node_tmp_pprof,
+	NULL,
+};
+
+/* Devices for Surface Pro 6. */
+static const struct software_node *ssam_node_group_sp6[] = {
+	&ssam_node_root,
+	&ssam_node_tmp_pprof,
+	NULL,
+};
+
+/* Devices for Surface Pro 7 and Surface Pro 7+. */
+static const struct software_node *ssam_node_group_sp7[] = {
+	&ssam_node_root,
+	&ssam_node_bat_ac,
+	&ssam_node_bat_main,
+	&ssam_node_tmp_pprof,
+	NULL,
+};
 
 
 /* -- Device registry helper functions. ------------------------------------- */
 
-अटल पूर्णांक ssam_uid_from_string(स्थिर अक्षर *str, काष्ठा ssam_device_uid *uid)
-अणु
+static int ssam_uid_from_string(const char *str, struct ssam_device_uid *uid)
+{
 	u8 d, tc, tid, iid, fn;
-	पूर्णांक n;
+	int n;
 
-	n = माला_पूछो(str, "ssam:%hhx:%hhx:%hhx:%hhx:%hhx", &d, &tc, &tid, &iid, &fn);
-	अगर (n != 5)
-		वापस -EINVAL;
+	n = sscanf(str, "ssam:%hhx:%hhx:%hhx:%hhx:%hhx", &d, &tc, &tid, &iid, &fn);
+	if (n != 5)
+		return -EINVAL;
 
-	uid->करोमुख्य = d;
+	uid->domain = d;
 	uid->category = tc;
 	uid->target = tid;
 	uid->instance = iid;
 	uid->function = fn;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ssam_hub_हटाओ_devices_fn(काष्ठा device *dev, व्योम *data)
-अणु
-	अगर (!is_ssam_device(dev))
-		वापस 0;
+static int ssam_hub_remove_devices_fn(struct device *dev, void *data)
+{
+	if (!is_ssam_device(dev))
+		return 0;
 
-	ssam_device_हटाओ(to_ssam_device(dev));
-	वापस 0;
-पूर्ण
+	ssam_device_remove(to_ssam_device(dev));
+	return 0;
+}
 
-अटल व्योम ssam_hub_हटाओ_devices(काष्ठा device *parent)
-अणु
-	device_क्रम_each_child_reverse(parent, शून्य, ssam_hub_हटाओ_devices_fn);
-पूर्ण
+static void ssam_hub_remove_devices(struct device *parent)
+{
+	device_for_each_child_reverse(parent, NULL, ssam_hub_remove_devices_fn);
+}
 
-अटल पूर्णांक ssam_hub_add_device(काष्ठा device *parent, काष्ठा ssam_controller *ctrl,
-			       काष्ठा fwnode_handle *node)
-अणु
-	काष्ठा ssam_device_uid uid;
-	काष्ठा ssam_device *sdev;
-	पूर्णांक status;
+static int ssam_hub_add_device(struct device *parent, struct ssam_controller *ctrl,
+			       struct fwnode_handle *node)
+{
+	struct ssam_device_uid uid;
+	struct ssam_device *sdev;
+	int status;
 
 	status = ssam_uid_from_string(fwnode_get_name(node), &uid);
-	अगर (status)
-		वापस status;
+	if (status)
+		return status;
 
 	sdev = ssam_device_alloc(ctrl, uid);
-	अगर (!sdev)
-		वापस -ENOMEM;
+	if (!sdev)
+		return -ENOMEM;
 
 	sdev->dev.parent = parent;
 	sdev->dev.fwnode = node;
 
 	status = ssam_device_add(sdev);
-	अगर (status)
+	if (status)
 		ssam_device_put(sdev);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक ssam_hub_add_devices(काष्ठा device *parent, काष्ठा ssam_controller *ctrl,
-				काष्ठा fwnode_handle *node)
-अणु
-	काष्ठा fwnode_handle *child;
-	पूर्णांक status;
+static int ssam_hub_add_devices(struct device *parent, struct ssam_controller *ctrl,
+				struct fwnode_handle *node)
+{
+	struct fwnode_handle *child;
+	int status;
 
-	fwnode_क्रम_each_child_node(node, child) अणु
+	fwnode_for_each_child_node(node, child) {
 		/*
-		 * Try to add the device specअगरied in the firmware node. If
-		 * this fails with -EINVAL, the node करोes not specअगरy any SSAM
-		 * device, so ignore it and जारी with the next one.
+		 * Try to add the device specified in the firmware node. If
+		 * this fails with -EINVAL, the node does not specify any SSAM
+		 * device, so ignore it and continue with the next one.
 		 */
 
 		status = ssam_hub_add_device(parent, ctrl, child);
-		अगर (status && status != -EINVAL)
-			जाओ err;
-	पूर्ण
+		if (status && status != -EINVAL)
+			goto err;
+	}
 
-	वापस 0;
+	return 0;
 err:
-	ssam_hub_हटाओ_devices(parent);
-	वापस status;
-पूर्ण
+	ssam_hub_remove_devices(parent);
+	return status;
+}
 
 
 /* -- SSAM base-hub driver. ------------------------------------------------- */
 
 /*
- * Some devices (especially battery) may need a bit of समय to be fully usable
+ * Some devices (especially battery) may need a bit of time to be fully usable
  * after being (re-)connected. This delay has been determined via
  * experimentation.
  */
-#घोषणा SSAM_BASE_UPDATE_CONNECT_DELAY		msecs_to_jअगरfies(2500)
+#define SSAM_BASE_UPDATE_CONNECT_DELAY		msecs_to_jiffies(2500)
 
-क्रमागत ssam_base_hub_state अणु
+enum ssam_base_hub_state {
 	SSAM_BASE_HUB_UNINITIALIZED,
 	SSAM_BASE_HUB_CONNECTED,
 	SSAM_BASE_HUB_DISCONNECTED,
-पूर्ण;
+};
 
-काष्ठा ssam_base_hub अणु
-	काष्ठा ssam_device *sdev;
+struct ssam_base_hub {
+	struct ssam_device *sdev;
 
-	क्रमागत ssam_base_hub_state state;
-	काष्ठा delayed_work update_work;
+	enum ssam_base_hub_state state;
+	struct delayed_work update_work;
 
-	काष्ठा ssam_event_notअगरier notअगर;
-पूर्ण;
+	struct ssam_event_notifier notif;
+};
 
-SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_query_opmode, u8, अणु
+SSAM_DEFINE_SYNC_REQUEST_R(ssam_bas_query_opmode, u8, {
 	.target_category = SSAM_SSH_TC_BAS,
 	.target_id       = 0x01,
 	.command_id      = 0x0d,
 	.instance_id     = 0x00,
-पूर्ण);
+});
 
-#घोषणा SSAM_BAS_OPMODE_TABLET		0x00
-#घोषणा SSAM_EVENT_BAS_CID_CONNECTION	0x0c
+#define SSAM_BAS_OPMODE_TABLET		0x00
+#define SSAM_EVENT_BAS_CID_CONNECTION	0x0c
 
-अटल पूर्णांक ssam_base_hub_query_state(काष्ठा ssam_base_hub *hub, क्रमागत ssam_base_hub_state *state)
-अणु
+static int ssam_base_hub_query_state(struct ssam_base_hub *hub, enum ssam_base_hub_state *state)
+{
 	u8 opmode;
-	पूर्णांक status;
+	int status;
 
 	status = ssam_retry(ssam_bas_query_opmode, hub->sdev->ctrl, &opmode);
-	अगर (status < 0) अणु
+	if (status < 0) {
 		dev_err(&hub->sdev->dev, "failed to query base state: %d\n", status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	अगर (opmode != SSAM_BAS_OPMODE_TABLET)
+	if (opmode != SSAM_BAS_OPMODE_TABLET)
 		*state = SSAM_BASE_HUB_CONNECTED;
-	अन्यथा
+	else
 		*state = SSAM_BASE_HUB_DISCONNECTED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार ssam_base_hub_state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा ssam_base_hub *hub = dev_get_drvdata(dev);
+static ssize_t ssam_base_hub_state_show(struct device *dev, struct device_attribute *attr,
+					char *buf)
+{
+	struct ssam_base_hub *hub = dev_get_drvdata(dev);
 	bool connected = hub->state == SSAM_BASE_HUB_CONNECTED;
 
-	वापस sysfs_emit(buf, "%d\n", connected);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", connected);
+}
 
-अटल काष्ठा device_attribute ssam_base_hub_attr_state =
-	__ATTR(state, 0444, ssam_base_hub_state_show, शून्य);
+static struct device_attribute ssam_base_hub_attr_state =
+	__ATTR(state, 0444, ssam_base_hub_state_show, NULL);
 
-अटल काष्ठा attribute *ssam_base_hub_attrs[] = अणु
+static struct attribute *ssam_base_hub_attrs[] = {
 	&ssam_base_hub_attr_state.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group ssam_base_hub_group = अणु
+static const struct attribute_group ssam_base_hub_group = {
 	.attrs = ssam_base_hub_attrs,
-पूर्ण;
+};
 
-अटल व्योम ssam_base_hub_update_workfn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ssam_base_hub *hub = container_of(work, काष्ठा ssam_base_hub, update_work.work);
-	काष्ठा fwnode_handle *node = dev_fwnode(&hub->sdev->dev);
-	क्रमागत ssam_base_hub_state state;
-	पूर्णांक status = 0;
+static void ssam_base_hub_update_workfn(struct work_struct *work)
+{
+	struct ssam_base_hub *hub = container_of(work, struct ssam_base_hub, update_work.work);
+	struct fwnode_handle *node = dev_fwnode(&hub->sdev->dev);
+	enum ssam_base_hub_state state;
+	int status = 0;
 
 	status = ssam_base_hub_query_state(hub, &state);
-	अगर (status)
-		वापस;
+	if (status)
+		return;
 
-	अगर (hub->state == state)
-		वापस;
+	if (hub->state == state)
+		return;
 	hub->state = state;
 
-	अगर (hub->state == SSAM_BASE_HUB_CONNECTED)
+	if (hub->state == SSAM_BASE_HUB_CONNECTED)
 		status = ssam_hub_add_devices(&hub->sdev->dev, hub->sdev->ctrl, node);
-	अन्यथा
-		ssam_hub_हटाओ_devices(&hub->sdev->dev);
+	else
+		ssam_hub_remove_devices(&hub->sdev->dev);
 
-	अगर (status)
+	if (status)
 		dev_err(&hub->sdev->dev, "failed to update base-hub devices: %d\n", status);
-पूर्ण
+}
 
-अटल u32 ssam_base_hub_notअगर(काष्ठा ssam_event_notअगरier *nf, स्थिर काष्ठा ssam_event *event)
-अणु
-	काष्ठा ssam_base_hub *hub = container_of(nf, काष्ठा ssam_base_hub, notअगर);
-	अचिन्हित दीर्घ delay;
+static u32 ssam_base_hub_notif(struct ssam_event_notifier *nf, const struct ssam_event *event)
+{
+	struct ssam_base_hub *hub = container_of(nf, struct ssam_base_hub, notif);
+	unsigned long delay;
 
-	अगर (event->command_id != SSAM_EVENT_BAS_CID_CONNECTION)
-		वापस 0;
+	if (event->command_id != SSAM_EVENT_BAS_CID_CONNECTION)
+		return 0;
 
-	अगर (event->length < 1) अणु
+	if (event->length < 1) {
 		dev_err(&hub->sdev->dev, "unexpected payload size: %u\n", event->length);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * Delay update when the base is being connected to give devices/EC
-	 * some समय to set up.
+	 * some time to set up.
 	 */
 	delay = event->data[0] ? SSAM_BASE_UPDATE_CONNECT_DELAY : 0;
 
 	schedule_delayed_work(&hub->update_work, delay);
 
 	/*
-	 * Do not वापस SSAM_NOTIF_HANDLED: The event should be picked up and
-	 * consumed by the detachment प्रणाली driver. We're just a (more or less)
+	 * Do not return SSAM_NOTIF_HANDLED: The event should be picked up and
+	 * consumed by the detachment system driver. We're just a (more or less)
 	 * silent observer.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused ssam_base_hub_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ssam_base_hub *hub = dev_get_drvdata(dev);
+static int __maybe_unused ssam_base_hub_resume(struct device *dev)
+{
+	struct ssam_base_hub *hub = dev_get_drvdata(dev);
 
 	schedule_delayed_work(&hub->update_work, 0);
-	वापस 0;
-पूर्ण
-अटल SIMPLE_DEV_PM_OPS(ssam_base_hub_pm_ops, शून्य, ssam_base_hub_resume);
+	return 0;
+}
+static SIMPLE_DEV_PM_OPS(ssam_base_hub_pm_ops, NULL, ssam_base_hub_resume);
 
-अटल पूर्णांक ssam_base_hub_probe(काष्ठा ssam_device *sdev)
-अणु
-	काष्ठा ssam_base_hub *hub;
-	पूर्णांक status;
+static int ssam_base_hub_probe(struct ssam_device *sdev)
+{
+	struct ssam_base_hub *hub;
+	int status;
 
-	hub = devm_kzalloc(&sdev->dev, माप(*hub), GFP_KERNEL);
-	अगर (!hub)
-		वापस -ENOMEM;
+	hub = devm_kzalloc(&sdev->dev, sizeof(*hub), GFP_KERNEL);
+	if (!hub)
+		return -ENOMEM;
 
 	hub->sdev = sdev;
 	hub->state = SSAM_BASE_HUB_UNINITIALIZED;
 
-	hub->notअगर.base.priority = पूर्णांक_उच्च;  /* This notअगरier should run first. */
-	hub->notअगर.base.fn = ssam_base_hub_notअगर;
-	hub->notअगर.event.reg = SSAM_EVENT_REGISTRY_SAM;
-	hub->notअगर.event.id.target_category = SSAM_SSH_TC_BAS,
-	hub->notअगर.event.id.instance = 0,
-	hub->notअगर.event.mask = SSAM_EVENT_MASK_NONE;
-	hub->notअगर.event.flags = SSAM_EVENT_SEQUENCED;
+	hub->notif.base.priority = INT_MAX;  /* This notifier should run first. */
+	hub->notif.base.fn = ssam_base_hub_notif;
+	hub->notif.event.reg = SSAM_EVENT_REGISTRY_SAM;
+	hub->notif.event.id.target_category = SSAM_SSH_TC_BAS,
+	hub->notif.event.id.instance = 0,
+	hub->notif.event.mask = SSAM_EVENT_MASK_NONE;
+	hub->notif.event.flags = SSAM_EVENT_SEQUENCED;
 
 	INIT_DELAYED_WORK(&hub->update_work, ssam_base_hub_update_workfn);
 
 	ssam_device_set_drvdata(sdev, hub);
 
-	status = ssam_notअगरier_रेजिस्टर(sdev->ctrl, &hub->notअगर);
-	अगर (status)
-		वापस status;
+	status = ssam_notifier_register(sdev->ctrl, &hub->notif);
+	if (status)
+		return status;
 
 	status = sysfs_create_group(&sdev->dev.kobj, &ssam_base_hub_group);
-	अगर (status)
-		जाओ err;
+	if (status)
+		goto err;
 
 	schedule_delayed_work(&hub->update_work, 0);
-	वापस 0;
+	return 0;
 
 err:
-	ssam_notअगरier_unरेजिस्टर(sdev->ctrl, &hub->notअगर);
+	ssam_notifier_unregister(sdev->ctrl, &hub->notif);
 	cancel_delayed_work_sync(&hub->update_work);
-	ssam_hub_हटाओ_devices(&sdev->dev);
-	वापस status;
-पूर्ण
+	ssam_hub_remove_devices(&sdev->dev);
+	return status;
+}
 
-अटल व्योम ssam_base_hub_हटाओ(काष्ठा ssam_device *sdev)
-अणु
-	काष्ठा ssam_base_hub *hub = ssam_device_get_drvdata(sdev);
+static void ssam_base_hub_remove(struct ssam_device *sdev)
+{
+	struct ssam_base_hub *hub = ssam_device_get_drvdata(sdev);
 
-	sysfs_हटाओ_group(&sdev->dev.kobj, &ssam_base_hub_group);
+	sysfs_remove_group(&sdev->dev.kobj, &ssam_base_hub_group);
 
-	ssam_notअगरier_unरेजिस्टर(sdev->ctrl, &hub->notअगर);
+	ssam_notifier_unregister(sdev->ctrl, &hub->notif);
 	cancel_delayed_work_sync(&hub->update_work);
-	ssam_hub_हटाओ_devices(&sdev->dev);
-पूर्ण
+	ssam_hub_remove_devices(&sdev->dev);
+}
 
-अटल स्थिर काष्ठा ssam_device_id ssam_base_hub_match[] = अणु
-	अणु SSAM_VDEV(HUB, 0x02, SSAM_ANY_IID, 0x00) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct ssam_device_id ssam_base_hub_match[] = {
+	{ SSAM_VDEV(HUB, 0x02, SSAM_ANY_IID, 0x00) },
+	{ },
+};
 
-अटल काष्ठा ssam_device_driver ssam_base_hub_driver = अणु
+static struct ssam_device_driver ssam_base_hub_driver = {
 	.probe = ssam_base_hub_probe,
-	.हटाओ = ssam_base_hub_हटाओ,
+	.remove = ssam_base_hub_remove,
 	.match_table = ssam_base_hub_match,
-	.driver = अणु
+	.driver = {
 		.name = "surface_aggregator_base_hub",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.pm = &ssam_base_hub_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
-/* -- SSAM platक्रमm/meta-hub driver. ---------------------------------------- */
+/* -- SSAM platform/meta-hub driver. ---------------------------------------- */
 
-अटल स्थिर काष्ठा acpi_device_id ssam_platक्रमm_hub_match[] = अणु
+static const struct acpi_device_id ssam_platform_hub_match[] = {
 	/* Surface Pro 4, 5, and 6 (OMBR < 0x10) */
-	अणु "MSHW0081", (अचिन्हित दीर्घ)ssam_node_group_sp5 पूर्ण,
+	{ "MSHW0081", (unsigned long)ssam_node_group_sp5 },
 
 	/* Surface Pro 6 (OMBR >= 0x10) */
-	अणु "MSHW0111", (अचिन्हित दीर्घ)ssam_node_group_sp6 पूर्ण,
+	{ "MSHW0111", (unsigned long)ssam_node_group_sp6 },
 
 	/* Surface Pro 7 */
-	अणु "MSHW0116", (अचिन्हित दीर्घ)ssam_node_group_sp7 पूर्ण,
+	{ "MSHW0116", (unsigned long)ssam_node_group_sp7 },
 
 	/* Surface Pro 7+ */
-	अणु "MSHW0119", (अचिन्हित दीर्घ)ssam_node_group_sp7 पूर्ण,
+	{ "MSHW0119", (unsigned long)ssam_node_group_sp7 },
 
 	/* Surface Book 2 */
-	अणु "MSHW0107", (अचिन्हित दीर्घ)ssam_node_group_sb2 पूर्ण,
+	{ "MSHW0107", (unsigned long)ssam_node_group_sb2 },
 
 	/* Surface Book 3 */
-	अणु "MSHW0117", (अचिन्हित दीर्घ)ssam_node_group_sb3 पूर्ण,
+	{ "MSHW0117", (unsigned long)ssam_node_group_sb3 },
 
 	/* Surface Laptop 1 */
-	अणु "MSHW0086", (अचिन्हित दीर्घ)ssam_node_group_sl1 पूर्ण,
+	{ "MSHW0086", (unsigned long)ssam_node_group_sl1 },
 
 	/* Surface Laptop 2 */
-	अणु "MSHW0112", (अचिन्हित दीर्घ)ssam_node_group_sl2 पूर्ण,
+	{ "MSHW0112", (unsigned long)ssam_node_group_sl2 },
 
 	/* Surface Laptop 3 (13", Intel) */
-	अणु "MSHW0114", (अचिन्हित दीर्घ)ssam_node_group_sl3 पूर्ण,
+	{ "MSHW0114", (unsigned long)ssam_node_group_sl3 },
 
 	/* Surface Laptop 3 (15", AMD) and 4 (15", AMD) */
-	अणु "MSHW0110", (अचिन्हित दीर्घ)ssam_node_group_sl3 पूर्ण,
+	{ "MSHW0110", (unsigned long)ssam_node_group_sl3 },
 
 	/* Surface Laptop 4 (13", Intel) */
-	अणु "MSHW0250", (अचिन्हित दीर्घ)ssam_node_group_sl3 पूर्ण,
+	{ "MSHW0250", (unsigned long)ssam_node_group_sl3 },
 
 	/* Surface Laptop Go 1 */
-	अणु "MSHW0118", (अचिन्हित दीर्घ)ssam_node_group_slg1 पूर्ण,
+	{ "MSHW0118", (unsigned long)ssam_node_group_slg1 },
 
-	अणु पूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, ssam_platक्रमm_hub_match);
+	{ },
+};
+MODULE_DEVICE_TABLE(acpi, ssam_platform_hub_match);
 
-अटल पूर्णांक ssam_platक्रमm_hub_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा software_node **nodes;
-	काष्ठा ssam_controller *ctrl;
-	काष्ठा fwnode_handle *root;
-	पूर्णांक status;
+static int ssam_platform_hub_probe(struct platform_device *pdev)
+{
+	const struct software_node **nodes;
+	struct ssam_controller *ctrl;
+	struct fwnode_handle *root;
+	int status;
 
-	nodes = (स्थिर काष्ठा software_node **)acpi_device_get_match_data(&pdev->dev);
-	अगर (!nodes)
-		वापस -ENODEV;
+	nodes = (const struct software_node **)acpi_device_get_match_data(&pdev->dev);
+	if (!nodes)
+		return -ENODEV;
 
 	/*
 	 * As we're adding the SSAM client devices as children under this device
 	 * and not the SSAM controller, we need to add a device link to the
-	 * controller to ensure that we हटाओ all of our devices beक्रमe the
-	 * controller is हटाओd. This also guarantees proper ordering क्रम
+	 * controller to ensure that we remove all of our devices before the
+	 * controller is removed. This also guarantees proper ordering for
 	 * suspend/resume of the devices on this hub.
 	 */
 	ctrl = ssam_client_bind(&pdev->dev);
-	अगर (IS_ERR(ctrl))
-		वापस PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
+	if (IS_ERR(ctrl))
+		return PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
 
-	status = software_node_रेजिस्टर_node_group(nodes);
-	अगर (status)
-		वापस status;
+	status = software_node_register_node_group(nodes);
+	if (status)
+		return status;
 
 	root = software_node_fwnode(&ssam_node_root);
-	अगर (!root) अणु
-		software_node_unरेजिस्टर_node_group(nodes);
-		वापस -ENOENT;
-	पूर्ण
+	if (!root) {
+		software_node_unregister_node_group(nodes);
+		return -ENOENT;
+	}
 
 	set_secondary_fwnode(&pdev->dev, root);
 
 	status = ssam_hub_add_devices(&pdev->dev, ctrl, root);
-	अगर (status) अणु
-		set_secondary_fwnode(&pdev->dev, शून्य);
-		software_node_unरेजिस्टर_node_group(nodes);
-	पूर्ण
+	if (status) {
+		set_secondary_fwnode(&pdev->dev, NULL);
+		software_node_unregister_node_group(nodes);
+	}
 
-	platक्रमm_set_drvdata(pdev, nodes);
-	वापस status;
-पूर्ण
+	platform_set_drvdata(pdev, nodes);
+	return status;
+}
 
-अटल पूर्णांक ssam_platक्रमm_hub_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा software_node **nodes = platक्रमm_get_drvdata(pdev);
+static int ssam_platform_hub_remove(struct platform_device *pdev)
+{
+	const struct software_node **nodes = platform_get_drvdata(pdev);
 
-	ssam_hub_हटाओ_devices(&pdev->dev);
-	set_secondary_fwnode(&pdev->dev, शून्य);
-	software_node_unरेजिस्टर_node_group(nodes);
-	वापस 0;
-पूर्ण
+	ssam_hub_remove_devices(&pdev->dev);
+	set_secondary_fwnode(&pdev->dev, NULL);
+	software_node_unregister_node_group(nodes);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ssam_platक्रमm_hub_driver = अणु
-	.probe = ssam_platक्रमm_hub_probe,
-	.हटाओ = ssam_platक्रमm_hub_हटाओ,
-	.driver = अणु
+static struct platform_driver ssam_platform_hub_driver = {
+	.probe = ssam_platform_hub_probe,
+	.remove = ssam_platform_hub_remove,
+	.driver = {
 		.name = "surface_aggregator_platform_hub",
-		.acpi_match_table = ssam_platक्रमm_hub_match,
+		.acpi_match_table = ssam_platform_hub_match,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
 /* -- Module initialization. ------------------------------------------------ */
 
-अटल पूर्णांक __init ssam_device_hub_init(व्योम)
-अणु
-	पूर्णांक status;
+static int __init ssam_device_hub_init(void)
+{
+	int status;
 
-	status = platक्रमm_driver_रेजिस्टर(&ssam_platक्रमm_hub_driver);
-	अगर (status)
-		वापस status;
+	status = platform_driver_register(&ssam_platform_hub_driver);
+	if (status)
+		return status;
 
-	status = ssam_device_driver_रेजिस्टर(&ssam_base_hub_driver);
-	अगर (status)
-		platक्रमm_driver_unरेजिस्टर(&ssam_platक्रमm_hub_driver);
+	status = ssam_device_driver_register(&ssam_base_hub_driver);
+	if (status)
+		platform_driver_unregister(&ssam_platform_hub_driver);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 module_init(ssam_device_hub_init);
 
-अटल व्योम __निकास ssam_device_hub_निकास(व्योम)
-अणु
-	ssam_device_driver_unरेजिस्टर(&ssam_base_hub_driver);
-	platक्रमm_driver_unरेजिस्टर(&ssam_platक्रमm_hub_driver);
-पूर्ण
-module_निकास(ssam_device_hub_निकास);
+static void __exit ssam_device_hub_exit(void)
+{
+	ssam_device_driver_unregister(&ssam_base_hub_driver);
+	platform_driver_unregister(&ssam_platform_hub_driver);
+}
+module_exit(ssam_device_hub_exit);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("Device-registry for Surface System Aggregator Module");

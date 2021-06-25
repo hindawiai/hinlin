@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * vsock sock_diag(7) module
  *
@@ -7,34 +6,34 @@
  * Author: Stefan Hajnoczi <stefanha@redhat.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/sock_diag.h>
-#समावेश <linux/vm_sockets_diag.h>
-#समावेश <net/af_vsock.h>
+#include <linux/module.h>
+#include <linux/sock_diag.h>
+#include <linux/vm_sockets_diag.h>
+#include <net/af_vsock.h>
 
-अटल पूर्णांक sk_diag_fill(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
 			u32 portid, u32 seq, u32 flags)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	काष्ठा vsock_diag_msg *rep;
-	काष्ठा nlmsghdr *nlh;
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	struct vsock_diag_msg *rep;
+	struct nlmsghdr *nlh;
 
-	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, माप(*rep),
+	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, sizeof(*rep),
 			flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	if (!nlh)
+		return -EMSGSIZE;
 
 	rep = nlmsg_data(nlh);
 	rep->vdiag_family = AF_VSOCK;
 
-	/* Lock order dictates that sk_lock is acquired beक्रमe
-	 * vsock_table_lock, so we cannot lock here.  Simply करोn't take
+	/* Lock order dictates that sk_lock is acquired before
+	 * vsock_table_lock, so we cannot lock here.  Simply don't take
 	 * sk_lock; sk is guaranteed to stay alive since vsock_table_lock is
 	 * held.
 	 */
 	rep->vdiag_type = sk->sk_type;
 	rep->vdiag_state = sk->sk_state;
-	rep->vdiag_shutकरोwn = sk->sk_shutकरोwn;
+	rep->vdiag_shutdown = sk->sk_shutdown;
 	rep->vdiag_src_cid = vsk->local_addr.svm_cid;
 	rep->vdiag_src_port = vsk->local_addr.svm_port;
 	rep->vdiag_dst_cid = vsk->remote_addr.svm_cid;
@@ -43,18 +42,18 @@
 
 	sock_diag_save_cookie(sk, rep->vdiag_cookie);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vsock_diag_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा vsock_diag_req *req;
-	काष्ठा vsock_sock *vsk;
-	अचिन्हित पूर्णांक bucket;
-	अचिन्हित पूर्णांक last_i;
-	अचिन्हित पूर्णांक table;
-	काष्ठा net *net;
-	अचिन्हित पूर्णांक i;
+static int vsock_diag_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct vsock_diag_req *req;
+	struct vsock_sock *vsk;
+	unsigned int bucket;
+	unsigned int last_i;
+	unsigned int table;
+	struct net *net;
+	unsigned int i;
 
 	req = nlmsg_data(cb->nlh);
 	net = sock_net(skb->sk);
@@ -69,111 +68,111 @@
 	spin_lock_bh(&vsock_table_lock);
 
 	/* Bind table (locally created sockets) */
-	अगर (table == 0) अणु
-		जबतक (bucket < ARRAY_SIZE(vsock_bind_table)) अणु
-			काष्ठा list_head *head = &vsock_bind_table[bucket];
+	if (table == 0) {
+		while (bucket < ARRAY_SIZE(vsock_bind_table)) {
+			struct list_head *head = &vsock_bind_table[bucket];
 
 			i = 0;
-			list_क्रम_each_entry(vsk, head, bound_table) अणु
-				काष्ठा sock *sk = sk_vsock(vsk);
+			list_for_each_entry(vsk, head, bound_table) {
+				struct sock *sk = sk_vsock(vsk);
 
-				अगर (!net_eq(sock_net(sk), net))
-					जारी;
-				अगर (i < last_i)
-					जाओ next_bind;
-				अगर (!(req->vdiag_states & (1 << sk->sk_state)))
-					जाओ next_bind;
-				अगर (sk_diag_fill(sk, skb,
+				if (!net_eq(sock_net(sk), net))
+					continue;
+				if (i < last_i)
+					goto next_bind;
+				if (!(req->vdiag_states & (1 << sk->sk_state)))
+					goto next_bind;
+				if (sk_diag_fill(sk, skb,
 						 NETLINK_CB(cb->skb).portid,
 						 cb->nlh->nlmsg_seq,
 						 NLM_F_MULTI) < 0)
-					जाओ करोne;
+					goto done;
 next_bind:
 				i++;
-			पूर्ण
+			}
 			last_i = 0;
 			bucket++;
-		पूर्ण
+		}
 
 		table++;
 		bucket = 0;
-	पूर्ण
+	}
 
 	/* Connected table (accepted connections) */
-	जबतक (bucket < ARRAY_SIZE(vsock_connected_table)) अणु
-		काष्ठा list_head *head = &vsock_connected_table[bucket];
+	while (bucket < ARRAY_SIZE(vsock_connected_table)) {
+		struct list_head *head = &vsock_connected_table[bucket];
 
 		i = 0;
-		list_क्रम_each_entry(vsk, head, connected_table) अणु
-			काष्ठा sock *sk = sk_vsock(vsk);
+		list_for_each_entry(vsk, head, connected_table) {
+			struct sock *sk = sk_vsock(vsk);
 
-			/* Skip sockets we've alपढ़ोy seen above */
-			अगर (__vsock_in_bound_table(vsk))
-				जारी;
+			/* Skip sockets we've already seen above */
+			if (__vsock_in_bound_table(vsk))
+				continue;
 
-			अगर (!net_eq(sock_net(sk), net))
-				जारी;
-			अगर (i < last_i)
-				जाओ next_connected;
-			अगर (!(req->vdiag_states & (1 << sk->sk_state)))
-				जाओ next_connected;
-			अगर (sk_diag_fill(sk, skb,
+			if (!net_eq(sock_net(sk), net))
+				continue;
+			if (i < last_i)
+				goto next_connected;
+			if (!(req->vdiag_states & (1 << sk->sk_state)))
+				goto next_connected;
+			if (sk_diag_fill(sk, skb,
 					 NETLINK_CB(cb->skb).portid,
 					 cb->nlh->nlmsg_seq,
 					 NLM_F_MULTI) < 0)
-				जाओ करोne;
+				goto done;
 next_connected:
 			i++;
-		पूर्ण
+		}
 		last_i = 0;
 		bucket++;
-	पूर्ण
+	}
 
-करोne:
+done:
 	spin_unlock_bh(&vsock_table_lock);
 
 	cb->args[0] = table;
 	cb->args[1] = bucket;
 	cb->args[2] = i;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल पूर्णांक vsock_diag_handler_dump(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *h)
-अणु
-	पूर्णांक hdrlen = माप(काष्ठा vsock_diag_req);
-	काष्ठा net *net = sock_net(skb->sk);
+static int vsock_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
+{
+	int hdrlen = sizeof(struct vsock_diag_req);
+	struct net *net = sock_net(skb->sk);
 
-	अगर (nlmsg_len(h) < hdrlen)
-		वापस -EINVAL;
+	if (nlmsg_len(h) < hdrlen)
+		return -EINVAL;
 
-	अगर (h->nlmsg_flags & NLM_F_DUMP) अणु
-		काष्ठा netlink_dump_control c = अणु
+	if (h->nlmsg_flags & NLM_F_DUMP) {
+		struct netlink_dump_control c = {
 			.dump = vsock_diag_dump,
-		पूर्ण;
-		वापस netlink_dump_start(net->diag_nlsk, skb, h, &c);
-	पूर्ण
+		};
+		return netlink_dump_start(net->diag_nlsk, skb, h, &c);
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल स्थिर काष्ठा sock_diag_handler vsock_diag_handler = अणु
+static const struct sock_diag_handler vsock_diag_handler = {
 	.family = AF_VSOCK,
 	.dump = vsock_diag_handler_dump,
-पूर्ण;
+};
 
-अटल पूर्णांक __init vsock_diag_init(व्योम)
-अणु
-	वापस sock_diag_रेजिस्टर(&vsock_diag_handler);
-पूर्ण
+static int __init vsock_diag_init(void)
+{
+	return sock_diag_register(&vsock_diag_handler);
+}
 
-अटल व्योम __निकास vsock_diag_निकास(व्योम)
-अणु
-	sock_diag_unरेजिस्टर(&vsock_diag_handler);
-पूर्ण
+static void __exit vsock_diag_exit(void)
+{
+	sock_diag_unregister(&vsock_diag_handler);
+}
 
 module_init(vsock_diag_init);
-module_निकास(vsock_diag_निकास);
+module_exit(vsock_diag_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NET_PF_PROTO_TYPE(PF_NETLINK, NETLINK_SOCK_DIAG,
 			       40 /* AF_VSOCK */);

@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
-#समावेश <मानकघोष.स>
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <stddef.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-__attribute__ ((noअंतरभूत))
-व्योम foo(काष्ठा __sk_buff *skb)
-अणु
+__attribute__ ((noinline))
+void foo(struct __sk_buff *skb)
+{
 	skb->tc_index = 0;
-पूर्ण
+}
 
 SEC("classifier/test")
-पूर्णांक test_cls(काष्ठा __sk_buff *skb)
-अणु
+int test_cls(struct __sk_buff *skb)
+{
 	foo(skb);
-	वापस 0;
-पूर्ण
+	return 0;
+}

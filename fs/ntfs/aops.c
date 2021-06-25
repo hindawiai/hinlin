@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /**
  * aops.c - NTFS kernel address space operations and page cache handling.
  *
  * Copyright (c) 2001-2014 Anton Altaparmakov and Tuxera Inc.
- * Copyright (c) 2002 Riअक्षरd Russon
+ * Copyright (c) 2002 Richard Russon
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/bit_spinlock.h>
-#समावेश <linux/bपन.स>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/gfp.h>
+#include <linux/mm.h>
+#include <linux/pagemap.h>
+#include <linux/swap.h>
+#include <linux/buffer_head.h>
+#include <linux/writeback.h>
+#include <linux/bit_spinlock.h>
+#include <linux/bio.h>
 
-#समावेश "aops.h"
-#समावेश "attrib.h"
-#समावेश "debug.h"
-#समावेश "inode.h"
-#समावेश "mft.h"
-#समावेश "runlist.h"
-#समावेश "types.h"
-#समावेश "ntfs.h"
+#include "aops.h"
+#include "attrib.h"
+#include "debug.h"
+#include "inode.h"
+#include "mft.h"
+#include "runlist.h"
+#include "types.h"
+#include "ntfs.h"
 
 /**
- * ntfs_end_buffer_async_पढ़ो - async io completion क्रम पढ़ोing attributes
+ * ntfs_end_buffer_async_read - async io completion for reading attributes
  * @bh:		buffer head on which io is completed
  * @uptodate:	whether @bh is now uptodate or not
  *
- * Asynchronous I/O completion handler क्रम पढ़ोing pages beदीर्घing to the
+ * Asynchronous I/O completion handler for reading pages belonging to the
  * attribute address space of an inode.  The inodes can either be files or
  * directories or they can be fake inodes describing some attribute.
  *
- * If NInoMstProtected(), perक्रमm the post पढ़ो mst fixups when all IO on the
+ * If NInoMstProtected(), perform the post read mst fixups when all IO on the
  * page has been completed and mark the page uptodate or set the error bit on
  * the page.  To determine the size of the records that need fixing up, we
  * cheat a little bit by setting the index_block_size in ntfs_inode to the ntfs
  * record size, and index_block_size_bits, to the log(base 2) of the ntfs
  * record size.
  */
-अटल व्योम ntfs_end_buffer_async_पढ़ो(काष्ठा buffer_head *bh, पूर्णांक uptodate)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा buffer_head *first, *पंचांगp;
-	काष्ठा page *page;
-	काष्ठा inode *vi;
+static void ntfs_end_buffer_async_read(struct buffer_head *bh, int uptodate)
+{
+	unsigned long flags;
+	struct buffer_head *first, *tmp;
+	struct page *page;
+	struct inode *vi;
 	ntfs_inode *ni;
-	पूर्णांक page_uptodate = 1;
+	int page_uptodate = 1;
 
 	page = bh->b_page;
 	vi = page->mapping->host;
 	ni = NTFS_I(vi);
 
-	अगर (likely(uptodate)) अणु
+	if (likely(uptodate)) {
 		loff_t i_size;
 		s64 file_ofs, init_size;
 
@@ -64,240 +63,240 @@
 
 		file_ofs = ((s64)page->index << PAGE_SHIFT) +
 				bh_offset(bh);
-		पढ़ो_lock_irqsave(&ni->size_lock, flags);
+		read_lock_irqsave(&ni->size_lock, flags);
 		init_size = ni->initialized_size;
-		i_size = i_size_पढ़ो(vi);
-		पढ़ो_unlock_irqrestore(&ni->size_lock, flags);
-		अगर (unlikely(init_size > i_size)) अणु
+		i_size = i_size_read(vi);
+		read_unlock_irqrestore(&ni->size_lock, flags);
+		if (unlikely(init_size > i_size)) {
 			/* Race with shrinking truncate. */
 			init_size = i_size;
-		पूर्ण
-		/* Check क्रम the current buffer head overflowing. */
-		अगर (unlikely(file_ofs + bh->b_size > init_size)) अणु
-			पूर्णांक ofs;
-			व्योम *kaddr;
+		}
+		/* Check for the current buffer head overflowing. */
+		if (unlikely(file_ofs + bh->b_size > init_size)) {
+			int ofs;
+			void *kaddr;
 
 			ofs = 0;
-			अगर (file_ofs < init_size)
+			if (file_ofs < init_size)
 				ofs = init_size - file_ofs;
 			kaddr = kmap_atomic(page);
-			स_रखो(kaddr + bh_offset(bh) + ofs, 0,
+			memset(kaddr + bh_offset(bh) + ofs, 0,
 					bh->b_size - ofs);
 			flush_dcache_page(page);
 			kunmap_atomic(kaddr);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		clear_buffer_uptodate(bh);
 		SetPageError(page);
 		ntfs_error(ni->vol->sb, "Buffer I/O error, logical block "
-				"0x%llx.", (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
-	पूर्ण
+				"0x%llx.", (unsigned long long)bh->b_blocknr);
+	}
 	first = page_buffers(page);
 	spin_lock_irqsave(&first->b_uptodate_lock, flags);
-	clear_buffer_async_पढ़ो(bh);
+	clear_buffer_async_read(bh);
 	unlock_buffer(bh);
-	पंचांगp = bh;
-	करो अणु
-		अगर (!buffer_uptodate(पंचांगp))
+	tmp = bh;
+	do {
+		if (!buffer_uptodate(tmp))
 			page_uptodate = 0;
-		अगर (buffer_async_पढ़ो(पंचांगp)) अणु
-			अगर (likely(buffer_locked(पंचांगp)))
-				जाओ still_busy;
+		if (buffer_async_read(tmp)) {
+			if (likely(buffer_locked(tmp)))
+				goto still_busy;
 			/* Async buffers must be locked. */
 			BUG();
-		पूर्ण
-		पंचांगp = पंचांगp->b_this_page;
-	पूर्ण जबतक (पंचांगp != bh);
+		}
+		tmp = tmp->b_this_page;
+	} while (tmp != bh);
 	spin_unlock_irqrestore(&first->b_uptodate_lock, flags);
 	/*
 	 * If none of the buffers had errors then we can set the page uptodate,
-	 * but we first have to perक्रमm the post पढ़ो mst fixups, अगर the
-	 * attribute is mst रक्षित, i.e. अगर NInoMstProteced(ni) is true.
+	 * but we first have to perform the post read mst fixups, if the
+	 * attribute is mst protected, i.e. if NInoMstProteced(ni) is true.
 	 * Note we ignore fixup errors as those are detected when
 	 * map_mft_record() is called which gives us per record granularity
 	 * rather than per page granularity.
 	 */
-	अगर (!NInoMstProtected(ni)) अणु
-		अगर (likely(page_uptodate && !PageError(page)))
+	if (!NInoMstProtected(ni)) {
+		if (likely(page_uptodate && !PageError(page)))
 			SetPageUptodate(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 *kaddr;
-		अचिन्हित पूर्णांक i, recs;
+		unsigned int i, recs;
 		u32 rec_size;
 
 		rec_size = ni->itype.index.block_size;
 		recs = PAGE_SIZE / rec_size;
-		/* Should have been verअगरied beक्रमe we got here... */
+		/* Should have been verified before we got here... */
 		BUG_ON(!recs);
 		kaddr = kmap_atomic(page);
-		क्रम (i = 0; i < recs; i++)
-			post_पढ़ो_mst_fixup((NTFS_RECORD*)(kaddr +
+		for (i = 0; i < recs; i++)
+			post_read_mst_fixup((NTFS_RECORD*)(kaddr +
 					i * rec_size), rec_size);
 		kunmap_atomic(kaddr);
 		flush_dcache_page(page);
-		अगर (likely(page_uptodate && !PageError(page)))
+		if (likely(page_uptodate && !PageError(page)))
 			SetPageUptodate(page);
-	पूर्ण
+	}
 	unlock_page(page);
-	वापस;
+	return;
 still_busy:
 	spin_unlock_irqrestore(&first->b_uptodate_lock, flags);
-	वापस;
-पूर्ण
+	return;
+}
 
 /**
- * ntfs_पढ़ो_block - fill a @page of an address space with data
+ * ntfs_read_block - fill a @page of an address space with data
  * @page:	page cache page to fill with data
  *
- * Fill the page @page of the address space beदीर्घing to the @page->host inode.
- * We पढ़ो each buffer asynchronously and when all buffers are पढ़ो in, our io
- * completion handler ntfs_end_buffer_पढ़ो_async(), अगर required, स्वतःmatically
- * applies the mst fixups to the page beक्रमe finally marking it uptodate and
+ * Fill the page @page of the address space belonging to the @page->host inode.
+ * We read each buffer asynchronously and when all buffers are read in, our io
+ * completion handler ntfs_end_buffer_read_async(), if required, automatically
+ * applies the mst fixups to the page before finally marking it uptodate and
  * unlocking it.
  *
- * We only enक्रमce allocated_size limit because i_size is checked क्रम in
- * generic_file_पढ़ो().
+ * We only enforce allocated_size limit because i_size is checked for in
+ * generic_file_read().
  *
- * Return 0 on success and -त्रुटि_सं on error.
+ * Return 0 on success and -errno on error.
  *
- * Contains an adapted version of fs/buffer.c::block_पढ़ो_full_page().
+ * Contains an adapted version of fs/buffer.c::block_read_full_page().
  */
-अटल पूर्णांक ntfs_पढ़ो_block(काष्ठा page *page)
-अणु
+static int ntfs_read_block(struct page *page)
+{
 	loff_t i_size;
 	VCN vcn;
 	LCN lcn;
 	s64 init_size;
-	काष्ठा inode *vi;
+	struct inode *vi;
 	ntfs_inode *ni;
 	ntfs_volume *vol;
 	runlist_element *rl;
-	काष्ठा buffer_head *bh, *head, *arr[MAX_BUF_PER_PAGE];
+	struct buffer_head *bh, *head, *arr[MAX_BUF_PER_PAGE];
 	sector_t iblock, lblock, zblock;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक blocksize, vcn_ofs;
-	पूर्णांक i, nr;
-	अचिन्हित अक्षर blocksize_bits;
+	unsigned long flags;
+	unsigned int blocksize, vcn_ofs;
+	int i, nr;
+	unsigned char blocksize_bits;
 
 	vi = page->mapping->host;
 	ni = NTFS_I(vi);
 	vol = ni->vol;
 
-	/* $MFT/$DATA must have its complete runlist in memory at all बार. */
+	/* $MFT/$DATA must have its complete runlist in memory at all times. */
 	BUG_ON(!ni->runlist.rl && !ni->mft_no && !NInoAttr(ni));
 
 	blocksize = vol->sb->s_blocksize;
 	blocksize_bits = vol->sb->s_blocksize_bits;
 
-	अगर (!page_has_buffers(page)) अणु
+	if (!page_has_buffers(page)) {
 		create_empty_buffers(page, blocksize, 0);
-		अगर (unlikely(!page_has_buffers(page))) अणु
+		if (unlikely(!page_has_buffers(page))) {
 			unlock_page(page);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 	bh = head = page_buffers(page);
 	BUG_ON(!bh);
 
 	/*
-	 * We may be racing with truncate.  To aव्योम some of the problems we
-	 * now take a snapshot of the various sizes and use those क्रम the whole
-	 * of the function.  In हाल of an extending truncate it just means we
+	 * We may be racing with truncate.  To avoid some of the problems we
+	 * now take a snapshot of the various sizes and use those for the whole
+	 * of the function.  In case of an extending truncate it just means we
 	 * may leave some buffers unmapped which are now allocated.  This is
-	 * not a problem since these buffers will just get mapped when a ग_लिखो
-	 * occurs.  In हाल of a shrinking truncate, we will detect this later
-	 * on due to the runlist being incomplete and अगर the page is being
+	 * not a problem since these buffers will just get mapped when a write
+	 * occurs.  In case of a shrinking truncate, we will detect this later
+	 * on due to the runlist being incomplete and if the page is being
 	 * fully truncated, truncate will throw it away as soon as we unlock
-	 * it so no need to worry what we करो with it.
+	 * it so no need to worry what we do with it.
 	 */
 	iblock = (s64)page->index << (PAGE_SHIFT - blocksize_bits);
-	पढ़ो_lock_irqsave(&ni->size_lock, flags);
+	read_lock_irqsave(&ni->size_lock, flags);
 	lblock = (ni->allocated_size + blocksize - 1) >> blocksize_bits;
 	init_size = ni->initialized_size;
-	i_size = i_size_पढ़ो(vi);
-	पढ़ो_unlock_irqrestore(&ni->size_lock, flags);
-	अगर (unlikely(init_size > i_size)) अणु
+	i_size = i_size_read(vi);
+	read_unlock_irqrestore(&ni->size_lock, flags);
+	if (unlikely(init_size > i_size)) {
 		/* Race with shrinking truncate. */
 		init_size = i_size;
-	पूर्ण
+	}
 	zblock = (init_size + blocksize - 1) >> blocksize_bits;
 
 	/* Loop through all the buffers in the page. */
-	rl = शून्य;
+	rl = NULL;
 	nr = i = 0;
-	करो अणु
-		पूर्णांक err = 0;
+	do {
+		int err = 0;
 
-		अगर (unlikely(buffer_uptodate(bh)))
-			जारी;
-		अगर (unlikely(buffer_mapped(bh))) अणु
+		if (unlikely(buffer_uptodate(bh)))
+			continue;
+		if (unlikely(buffer_mapped(bh))) {
 			arr[nr++] = bh;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		bh->b_bdev = vol->sb->s_bdev;
 		/* Is the block within the allowed limits? */
-		अगर (iblock < lblock) अणु
+		if (iblock < lblock) {
 			bool is_retry = false;
 
-			/* Convert iblock पूर्णांकo corresponding vcn and offset. */
+			/* Convert iblock into corresponding vcn and offset. */
 			vcn = (VCN)iblock << blocksize_bits >>
 					vol->cluster_size_bits;
 			vcn_ofs = ((VCN)iblock << blocksize_bits) &
 					vol->cluster_size_mask;
-			अगर (!rl) अणु
+			if (!rl) {
 lock_retry_remap:
-				करोwn_पढ़ो(&ni->runlist.lock);
+				down_read(&ni->runlist.lock);
 				rl = ni->runlist.rl;
-			पूर्ण
-			अगर (likely(rl != शून्य)) अणु
+			}
+			if (likely(rl != NULL)) {
 				/* Seek to element containing target vcn. */
-				जबतक (rl->length && rl[1].vcn <= vcn)
+				while (rl->length && rl[1].vcn <= vcn)
 					rl++;
 				lcn = ntfs_rl_vcn_to_lcn(rl, vcn);
-			पूर्ण अन्यथा
+			} else
 				lcn = LCN_RL_NOT_MAPPED;
 			/* Successful remap. */
-			अगर (lcn >= 0) अणु
+			if (lcn >= 0) {
 				/* Setup buffer head to correct block. */
 				bh->b_blocknr = ((lcn << vol->cluster_size_bits)
 						+ vcn_ofs) >> blocksize_bits;
 				set_buffer_mapped(bh);
-				/* Only पढ़ो initialized data blocks. */
-				अगर (iblock < zblock) अणु
+				/* Only read initialized data blocks. */
+				if (iblock < zblock) {
 					arr[nr++] = bh;
-					जारी;
-				पूर्ण
+					continue;
+				}
 				/* Fully non-initialized data block, zero it. */
-				जाओ handle_zblock;
-			पूर्ण
+				goto handle_zblock;
+			}
 			/* It is a hole, need to zero it. */
-			अगर (lcn == LCN_HOLE)
-				जाओ handle_hole;
+			if (lcn == LCN_HOLE)
+				goto handle_hole;
 			/* If first try and runlist unmapped, map and retry. */
-			अगर (!is_retry && lcn == LCN_RL_NOT_MAPPED) अणु
+			if (!is_retry && lcn == LCN_RL_NOT_MAPPED) {
 				is_retry = true;
 				/*
-				 * Attempt to map runlist, dropping lock क्रम
+				 * Attempt to map runlist, dropping lock for
 				 * the duration.
 				 */
-				up_पढ़ो(&ni->runlist.lock);
+				up_read(&ni->runlist.lock);
 				err = ntfs_map_runlist(ni, vcn);
-				अगर (likely(!err))
-					जाओ lock_retry_remap;
-				rl = शून्य;
-			पूर्ण अन्यथा अगर (!rl)
-				up_पढ़ो(&ni->runlist.lock);
+				if (likely(!err))
+					goto lock_retry_remap;
+				rl = NULL;
+			} else if (!rl)
+				up_read(&ni->runlist.lock);
 			/*
 			 * If buffer is outside the runlist, treat it as a
 			 * hole.  This can happen due to concurrent truncate
-			 * क्रम example.
+			 * for example.
 			 */
-			अगर (err == -ENOENT || lcn == LCN_ENOENT) अणु
+			if (err == -ENOENT || lcn == LCN_ENOENT) {
 				err = 0;
-				जाओ handle_hole;
-			पूर्ण
+				goto handle_hole;
+			}
 			/* Hard error, zero out region. */
-			अगर (!err)
+			if (!err)
 				err = -EIO;
 			bh->b_blocknr = -1;
 			SetPageError(page);
@@ -306,13 +305,13 @@ lock_retry_remap:
 					"offset 0x%x because its location on "
 					"disk could not be determined%s "
 					"(error code %i).", ni->mft_no,
-					ni->type, (अचिन्हित दीर्घ दीर्घ)vcn,
+					ni->type, (unsigned long long)vcn,
 					vcn_ofs, is_retry ? " even after "
 					"retrying" : "", err);
-		पूर्ण
+		}
 		/*
 		 * Either iblock was outside lblock limits or
-		 * ntfs_rl_vcn_to_lcn() वापसed error.  Just zero that portion
+		 * ntfs_rl_vcn_to_lcn() returned error.  Just zero that portion
 		 * of the page and set the buffer uptodate.
 		 */
 handle_hole:
@@ -320,231 +319,231 @@ handle_hole:
 		clear_buffer_mapped(bh);
 handle_zblock:
 		zero_user(page, i * blocksize, blocksize);
-		अगर (likely(!err))
+		if (likely(!err))
 			set_buffer_uptodate(bh);
-	पूर्ण जबतक (i++, iblock++, (bh = bh->b_this_page) != head);
+	} while (i++, iblock++, (bh = bh->b_this_page) != head);
 
-	/* Release the lock अगर we took it. */
-	अगर (rl)
-		up_पढ़ो(&ni->runlist.lock);
+	/* Release the lock if we took it. */
+	if (rl)
+		up_read(&ni->runlist.lock);
 
-	/* Check we have at least one buffer पढ़ोy क्रम i/o. */
-	अगर (nr) अणु
-		काष्ठा buffer_head *tbh;
+	/* Check we have at least one buffer ready for i/o. */
+	if (nr) {
+		struct buffer_head *tbh;
 
 		/* Lock the buffers. */
-		क्रम (i = 0; i < nr; i++) अणु
+		for (i = 0; i < nr; i++) {
 			tbh = arr[i];
 			lock_buffer(tbh);
-			tbh->b_end_io = ntfs_end_buffer_async_पढ़ो;
-			set_buffer_async_पढ़ो(tbh);
-		पूर्ण
+			tbh->b_end_io = ntfs_end_buffer_async_read;
+			set_buffer_async_read(tbh);
+		}
 		/* Finally, start i/o on the buffers. */
-		क्रम (i = 0; i < nr; i++) अणु
+		for (i = 0; i < nr; i++) {
 			tbh = arr[i];
-			अगर (likely(!buffer_uptodate(tbh)))
+			if (likely(!buffer_uptodate(tbh)))
 				submit_bh(REQ_OP_READ, 0, tbh);
-			अन्यथा
-				ntfs_end_buffer_async_पढ़ो(tbh, 1);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			else
+				ntfs_end_buffer_async_read(tbh, 1);
+		}
+		return 0;
+	}
 	/* No i/o was scheduled on any of the buffers. */
-	अगर (likely(!PageError(page)))
+	if (likely(!PageError(page)))
 		SetPageUptodate(page);
-	अन्यथा /* Signal synchronous i/o error. */
+	else /* Signal synchronous i/o error. */
 		nr = -EIO;
 	unlock_page(page);
-	वापस nr;
-पूर्ण
+	return nr;
+}
 
 /**
- * ntfs_पढ़ोpage - fill a @page of a @file with data from the device
- * @file:	खोलो file to which the page @page beदीर्घs or शून्य
+ * ntfs_readpage - fill a @page of a @file with data from the device
+ * @file:	open file to which the page @page belongs or NULL
  * @page:	page cache page to fill with data
  *
- * For non-resident attributes, ntfs_पढ़ोpage() fills the @page of the खोलो
- * file @file by calling the ntfs version of the generic block_पढ़ो_full_page()
- * function, ntfs_पढ़ो_block(), which in turn creates and पढ़ोs in the buffers
+ * For non-resident attributes, ntfs_readpage() fills the @page of the open
+ * file @file by calling the ntfs version of the generic block_read_full_page()
+ * function, ntfs_read_block(), which in turn creates and reads in the buffers
  * associated with the page asynchronously.
  *
- * For resident attributes, OTOH, ntfs_पढ़ोpage() fills @page by copying the
+ * For resident attributes, OTOH, ntfs_readpage() fills @page by copying the
  * data from the mft record (which at this stage is most likely in memory) and
- * fills the reमुख्यder with zeroes. Thus, in this हाल, I/O is synchronous, as
- * even अगर the mft record is not cached at this poपूर्णांक in समय, we need to रुको
- * क्रम it to be पढ़ो in beक्रमe we can करो the copy.
+ * fills the remainder with zeroes. Thus, in this case, I/O is synchronous, as
+ * even if the mft record is not cached at this point in time, we need to wait
+ * for it to be read in before we can do the copy.
  *
- * Return 0 on success and -त्रुटि_सं on error.
+ * Return 0 on success and -errno on error.
  */
-अटल पूर्णांक ntfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
+static int ntfs_readpage(struct file *file, struct page *page)
+{
 	loff_t i_size;
-	काष्ठा inode *vi;
+	struct inode *vi;
 	ntfs_inode *ni, *base_ni;
 	u8 *addr;
 	ntfs_attr_search_ctx *ctx;
 	MFT_RECORD *mrec;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 attr_len;
-	पूर्णांक err = 0;
+	int err = 0;
 
-retry_पढ़ोpage:
+retry_readpage:
 	BUG_ON(!PageLocked(page));
 	vi = page->mapping->host;
-	i_size = i_size_पढ़ो(vi);
+	i_size = i_size_read(vi);
 	/* Is the page fully outside i_size? (truncate in progress) */
-	अगर (unlikely(page->index >= (i_size + PAGE_SIZE - 1) >>
-			PAGE_SHIFT)) अणु
+	if (unlikely(page->index >= (i_size + PAGE_SIZE - 1) >>
+			PAGE_SHIFT)) {
 		zero_user(page, 0, PAGE_SIZE);
 		ntfs_debug("Read outside i_size - truncated?");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*
 	 * This can potentially happen because we clear PageUptodate() during
-	 * ntfs_ग_लिखोpage() of MstProtected() attributes.
+	 * ntfs_writepage() of MstProtected() attributes.
 	 */
-	अगर (PageUptodate(page)) अणु
+	if (PageUptodate(page)) {
 		unlock_page(page);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	ni = NTFS_I(vi);
 	/*
 	 * Only $DATA attributes can be encrypted and only unnamed $DATA
 	 * attributes can be compressed.  Index root can have the flags set but
 	 * this means to create compressed/encrypted files, not that the
-	 * attribute is compressed/encrypted.  Note we need to check क्रम
+	 * attribute is compressed/encrypted.  Note we need to check for
 	 * AT_INDEX_ALLOCATION since this is the type of both directory and
 	 * index inodes.
 	 */
-	अगर (ni->type != AT_INDEX_ALLOCATION) अणु
+	if (ni->type != AT_INDEX_ALLOCATION) {
 		/* If attribute is encrypted, deny access, just like NT4. */
-		अगर (NInoEncrypted(ni)) अणु
+		if (NInoEncrypted(ni)) {
 			BUG_ON(ni->type != AT_DATA);
 			err = -EACCES;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		/* Compressed data streams are handled in compress.c. */
-		अगर (NInoNonResident(ni) && NInoCompressed(ni)) अणु
+		if (NInoNonResident(ni) && NInoCompressed(ni)) {
 			BUG_ON(ni->type != AT_DATA);
 			BUG_ON(ni->name_len);
-			वापस ntfs_पढ़ो_compressed_block(page);
-		पूर्ण
-	पूर्ण
+			return ntfs_read_compressed_block(page);
+		}
+	}
 	/* NInoNonResident() == NInoIndexAllocPresent() */
-	अगर (NInoNonResident(ni)) अणु
+	if (NInoNonResident(ni)) {
 		/* Normal, non-resident data stream. */
-		वापस ntfs_पढ़ो_block(page);
-	पूर्ण
+		return ntfs_read_block(page);
+	}
 	/*
 	 * Attribute is resident, implying it is not compressed or encrypted.
 	 * This also means the attribute is smaller than an mft record and
 	 * hence smaller than a page, so can simply zero out any pages with
 	 * index above 0.  Note the attribute can actually be marked compressed
-	 * but अगर it is resident the actual data is not compressed so we are
+	 * but if it is resident the actual data is not compressed so we are
 	 * ok to ignore the compressed flag here.
 	 */
-	अगर (unlikely(page->index > 0)) अणु
+	if (unlikely(page->index > 0)) {
 		zero_user(page, 0, PAGE_SIZE);
-		जाओ करोne;
-	पूर्ण
-	अगर (!NInoAttr(ni))
+		goto done;
+	}
+	if (!NInoAttr(ni))
 		base_ni = ni;
-	अन्यथा
+	else
 		base_ni = ni->ext.base_ntfs_ino;
 	/* Map, pin, and lock the mft record. */
 	mrec = map_mft_record(base_ni);
-	अगर (IS_ERR(mrec)) अणु
+	if (IS_ERR(mrec)) {
 		err = PTR_ERR(mrec);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	/*
-	 * If a parallel ग_लिखो made the attribute non-resident, drop the mft
-	 * record and retry the पढ़ोpage.
+	 * If a parallel write made the attribute non-resident, drop the mft
+	 * record and retry the readpage.
 	 */
-	अगर (unlikely(NInoNonResident(ni))) अणु
+	if (unlikely(NInoNonResident(ni))) {
 		unmap_mft_record(base_ni);
-		जाओ retry_पढ़ोpage;
-	पूर्ण
+		goto retry_readpage;
+	}
 	ctx = ntfs_attr_get_search_ctx(base_ni, mrec);
-	अगर (unlikely(!ctx)) अणु
+	if (unlikely(!ctx)) {
 		err = -ENOMEM;
-		जाओ unm_err_out;
-	पूर्ण
+		goto unm_err_out;
+	}
 	err = ntfs_attr_lookup(ni->type, ni->name, ni->name_len,
-			CASE_SENSITIVE, 0, शून्य, 0, ctx);
-	अगर (unlikely(err))
-		जाओ put_unm_err_out;
+			CASE_SENSITIVE, 0, NULL, 0, ctx);
+	if (unlikely(err))
+		goto put_unm_err_out;
 	attr_len = le32_to_cpu(ctx->attr->data.resident.value_length);
-	पढ़ो_lock_irqsave(&ni->size_lock, flags);
-	अगर (unlikely(attr_len > ni->initialized_size))
+	read_lock_irqsave(&ni->size_lock, flags);
+	if (unlikely(attr_len > ni->initialized_size))
 		attr_len = ni->initialized_size;
-	i_size = i_size_पढ़ो(vi);
-	पढ़ो_unlock_irqrestore(&ni->size_lock, flags);
-	अगर (unlikely(attr_len > i_size)) अणु
+	i_size = i_size_read(vi);
+	read_unlock_irqrestore(&ni->size_lock, flags);
+	if (unlikely(attr_len > i_size)) {
 		/* Race with shrinking truncate. */
 		attr_len = i_size;
-	पूर्ण
+	}
 	addr = kmap_atomic(page);
 	/* Copy the data to the page. */
-	स_नकल(addr, (u8*)ctx->attr +
+	memcpy(addr, (u8*)ctx->attr +
 			le16_to_cpu(ctx->attr->data.resident.value_offset),
 			attr_len);
-	/* Zero the reमुख्यder of the page. */
-	स_रखो(addr + attr_len, 0, PAGE_SIZE - attr_len);
+	/* Zero the remainder of the page. */
+	memset(addr + attr_len, 0, PAGE_SIZE - attr_len);
 	flush_dcache_page(page);
 	kunmap_atomic(addr);
 put_unm_err_out:
 	ntfs_attr_put_search_ctx(ctx);
 unm_err_out:
 	unmap_mft_record(base_ni);
-करोne:
+done:
 	SetPageUptodate(page);
 err_out:
 	unlock_page(page);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित NTFS_RW
+#ifdef NTFS_RW
 
 /**
- * ntfs_ग_लिखो_block - ग_लिखो a @page to the backing store
- * @page:	page cache page to ग_लिखो out
- * @wbc:	ग_लिखोback control काष्ठाure
+ * ntfs_write_block - write a @page to the backing store
+ * @page:	page cache page to write out
+ * @wbc:	writeback control structure
  *
- * This function is क्रम writing pages beदीर्घing to non-resident, non-mst
- * रक्षित attributes to their backing store.
+ * This function is for writing pages belonging to non-resident, non-mst
+ * protected attributes to their backing store.
  *
- * For a page with buffers, map and ग_लिखो the dirty buffers asynchronously
- * under page ग_लिखोback. For a page without buffers, create buffers क्रम the
+ * For a page with buffers, map and write the dirty buffers asynchronously
+ * under page writeback. For a page without buffers, create buffers for the
  * page, then proceed as above.
  *
- * If a page करोesn't have buffers the page dirty state is definitive. If a page
- * करोes have buffers, the page dirty state is just a hपूर्णांक, and the buffer dirty
- * state is definitive. (A hपूर्णांक which has rules: dirty buffers against a clean
+ * If a page doesn't have buffers the page dirty state is definitive. If a page
+ * does have buffers, the page dirty state is just a hint, and the buffer dirty
+ * state is definitive. (A hint which has rules: dirty buffers against a clean
  * page is illegal. Other combinations are legal and need to be handled. In
- * particular a dirty page containing clean buffers क्रम example.)
+ * particular a dirty page containing clean buffers for example.)
  *
- * Return 0 on success and -त्रुटि_सं on error.
+ * Return 0 on success and -errno on error.
  *
- * Based on ntfs_पढ़ो_block() and __block_ग_लिखो_full_page().
+ * Based on ntfs_read_block() and __block_write_full_page().
  */
-अटल पूर्णांक ntfs_ग_लिखो_block(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
+static int ntfs_write_block(struct page *page, struct writeback_control *wbc)
+{
 	VCN vcn;
 	LCN lcn;
 	s64 initialized_size;
 	loff_t i_size;
 	sector_t block, dblock, iblock;
-	काष्ठा inode *vi;
+	struct inode *vi;
 	ntfs_inode *ni;
 	ntfs_volume *vol;
 	runlist_element *rl;
-	काष्ठा buffer_head *bh, *head;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक blocksize, vcn_ofs;
-	पूर्णांक err;
-	bool need_end_ग_लिखोback;
-	अचिन्हित अक्षर blocksize_bits;
+	struct buffer_head *bh, *head;
+	unsigned long flags;
+	unsigned int blocksize, vcn_ofs;
+	int err;
+	bool need_end_writeback;
+	unsigned char blocksize_bits;
 
 	vi = page->mapping->host;
 	ni = NTFS_I(vi);
@@ -557,11 +556,11 @@ err_out:
 	BUG_ON(NInoMstProtected(ni));
 	blocksize = vol->sb->s_blocksize;
 	blocksize_bits = vol->sb->s_blocksize_bits;
-	अगर (!page_has_buffers(page)) अणु
+	if (!page_has_buffers(page)) {
 		BUG_ON(!PageUptodate(page));
 		create_empty_buffers(page, blocksize,
 				(1 << BH_Uptodate) | (1 << BH_Dirty));
-		अगर (unlikely(!page_has_buffers(page))) अणु
+		if (unlikely(!page_has_buffers(page))) {
 			ntfs_warning(vol->sb, "Error allocating page "
 					"buffers.  Redirtying page so we try "
 					"again later.");
@@ -569,25 +568,25 @@ err_out:
 			 * Put the page back on mapping->dirty_pages, but leave
 			 * its buffers' dirty state as-is.
 			 */
-			redirty_page_क्रम_ग_लिखोpage(wbc, page);
+			redirty_page_for_writepage(wbc, page);
 			unlock_page(page);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	bh = head = page_buffers(page);
 	BUG_ON(!bh);
 
-	/* NOTE: Dअगरferent naming scheme to ntfs_पढ़ो_block()! */
+	/* NOTE: Different naming scheme to ntfs_read_block()! */
 
 	/* The first block in the page. */
 	block = (s64)page->index << (PAGE_SHIFT - blocksize_bits);
 
-	पढ़ो_lock_irqsave(&ni->size_lock, flags);
-	i_size = i_size_पढ़ो(vi);
+	read_lock_irqsave(&ni->size_lock, flags);
+	i_size = i_size_read(vi);
 	initialized_size = ni->initialized_size;
-	पढ़ो_unlock_irqrestore(&ni->size_lock, flags);
+	read_unlock_irqrestore(&ni->size_lock, flags);
 
-	/* The first out of bounds block क्रम the data size. */
+	/* The first out of bounds block for the data size. */
 	dblock = (i_size + blocksize - 1) >> blocksize_bits;
 
 	/* The last (fully or partially) initialized block. */
@@ -596,7 +595,7 @@ err_out:
 	/*
 	 * Be very careful.  We have no exclusion from __set_page_dirty_buffers
 	 * here, and the (potentially unmapped) buffers may become dirty at
-	 * any समय.  If a buffer becomes dirty here after we've inspected it
+	 * any time.  If a buffer becomes dirty here after we've inspected it
 	 * then we just miss that fact, and the page stays dirty.
 	 *
 	 * Buffers outside i_size may be dirtied by __set_page_dirty_buffers;
@@ -608,71 +607,71 @@ err_out:
 	 * buffers to disk addresses and handling any aliases from the
 	 * underlying block device's mapping.
 	 */
-	rl = शून्य;
+	rl = NULL;
 	err = 0;
-	करो अणु
+	do {
 		bool is_retry = false;
 
-		अगर (unlikely(block >= dblock)) अणु
+		if (unlikely(block >= dblock)) {
 			/*
 			 * Mapped buffers outside i_size will occur, because
 			 * this page can be outside i_size when there is a
 			 * truncate in progress. The contents of such buffers
-			 * were zeroed by ntfs_ग_लिखोpage().
+			 * were zeroed by ntfs_writepage().
 			 *
-			 * FIXME: What about the small race winकरोw where
-			 * ntfs_ग_लिखोpage() has not करोne any clearing because
-			 * the page was within i_size but beक्रमe we get here,
-			 * vmtruncate() modअगरies i_size?
+			 * FIXME: What about the small race window where
+			 * ntfs_writepage() has not done any clearing because
+			 * the page was within i_size but before we get here,
+			 * vmtruncate() modifies i_size?
 			 */
 			clear_buffer_dirty(bh);
 			set_buffer_uptodate(bh);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Clean buffers are not written out, so no need to map them. */
-		अगर (!buffer_dirty(bh))
-			जारी;
+		if (!buffer_dirty(bh))
+			continue;
 
 		/* Make sure we have enough initialized size. */
-		अगर (unlikely((block >= iblock) &&
-				(initialized_size < i_size))) अणु
+		if (unlikely((block >= iblock) &&
+				(initialized_size < i_size))) {
 			/*
 			 * If this page is fully outside initialized size, zero
 			 * out all pages between the current initialized size
-			 * and the current page. Just use ntfs_पढ़ोpage() to करो
+			 * and the current page. Just use ntfs_readpage() to do
 			 * the zeroing transparently.
 			 */
-			अगर (block > iblock) अणु
+			if (block > iblock) {
 				// TODO:
-				// For each page करो:
-				// - पढ़ो_cache_page()
-				// Again क्रम each page करो:
-				// - रुको_on_page_locked()
+				// For each page do:
+				// - read_cache_page()
+				// Again for each page do:
+				// - wait_on_page_locked()
 				// - Check (PageUptodate(page) &&
 				//			!PageError(page))
 				// Update initialized size in the attribute and
 				// in the inode.
-				// Again, क्रम each page करो:
+				// Again, for each page do:
 				//	__set_page_dirty_buffers();
 				// put_page()
-				// We करोn't need to रुको on the ग_लिखोs.
+				// We don't need to wait on the writes.
 				// Update iblock.
-			पूर्ण
+			}
 			/*
 			 * The current page straddles initialized size. Zero
 			 * all non-uptodate buffers and set them uptodate (and
 			 * dirty?). Note, there aren't any non-uptodate buffers
-			 * अगर the page is uptodate.
+			 * if the page is uptodate.
 			 * FIXME: For an uptodate page, the buffers may need to
 			 * be written out because they were not initialized on
-			 * disk beक्रमe.
+			 * disk before.
 			 */
-			अगर (!PageUptodate(page)) अणु
+			if (!PageUptodate(page)) {
 				// TODO:
 				// Zero any non-uptodate buffers up to i_size.
 				// Set them uptodate and dirty.
-			पूर्ण
+			}
 			// TODO:
 			// Update initialized size in the attribute and in the
 			// inode (up to i_size).
@@ -682,161 +681,161 @@ err_out:
 			ntfs_error(vol->sb, "Writing beyond initialized size "
 					"is not supported yet. Sorry.");
 			err = -EOPNOTSUPP;
-			अवरोध;
+			break;
 			// Do NOT set_buffer_new() BUT DO clear buffer range
-			// outside ग_लिखो request range.
+			// outside write request range.
 			// set_buffer_uptodate() on complete buffers as well as
 			// set_buffer_dirty().
-		पूर्ण
+		}
 
-		/* No need to map buffers that are alपढ़ोy mapped. */
-		अगर (buffer_mapped(bh))
-			जारी;
+		/* No need to map buffers that are already mapped. */
+		if (buffer_mapped(bh))
+			continue;
 
 		/* Unmapped, dirty buffer. Need to map it. */
 		bh->b_bdev = vol->sb->s_bdev;
 
-		/* Convert block पूर्णांकo corresponding vcn and offset. */
+		/* Convert block into corresponding vcn and offset. */
 		vcn = (VCN)block << blocksize_bits;
 		vcn_ofs = vcn & vol->cluster_size_mask;
 		vcn >>= vol->cluster_size_bits;
-		अगर (!rl) अणु
+		if (!rl) {
 lock_retry_remap:
-			करोwn_पढ़ो(&ni->runlist.lock);
+			down_read(&ni->runlist.lock);
 			rl = ni->runlist.rl;
-		पूर्ण
-		अगर (likely(rl != शून्य)) अणु
+		}
+		if (likely(rl != NULL)) {
 			/* Seek to element containing target vcn. */
-			जबतक (rl->length && rl[1].vcn <= vcn)
+			while (rl->length && rl[1].vcn <= vcn)
 				rl++;
 			lcn = ntfs_rl_vcn_to_lcn(rl, vcn);
-		पूर्ण अन्यथा
+		} else
 			lcn = LCN_RL_NOT_MAPPED;
 		/* Successful remap. */
-		अगर (lcn >= 0) अणु
-			/* Setup buffer head to poपूर्णांक to correct block. */
+		if (lcn >= 0) {
+			/* Setup buffer head to point to correct block. */
 			bh->b_blocknr = ((lcn << vol->cluster_size_bits) +
 					vcn_ofs) >> blocksize_bits;
 			set_buffer_mapped(bh);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* It is a hole, need to instantiate it. */
-		अगर (lcn == LCN_HOLE) अणु
+		if (lcn == LCN_HOLE) {
 			u8 *kaddr;
-			अचिन्हित दीर्घ *bpos, *bend;
+			unsigned long *bpos, *bend;
 
-			/* Check अगर the buffer is zero. */
+			/* Check if the buffer is zero. */
 			kaddr = kmap_atomic(page);
-			bpos = (अचिन्हित दीर्घ *)(kaddr + bh_offset(bh));
-			bend = (अचिन्हित दीर्घ *)((u8*)bpos + blocksize);
-			करो अणु
-				अगर (unlikely(*bpos))
-					अवरोध;
-			पूर्ण जबतक (likely(++bpos < bend));
+			bpos = (unsigned long *)(kaddr + bh_offset(bh));
+			bend = (unsigned long *)((u8*)bpos + blocksize);
+			do {
+				if (unlikely(*bpos))
+					break;
+			} while (likely(++bpos < bend));
 			kunmap_atomic(kaddr);
-			अगर (bpos == bend) अणु
+			if (bpos == bend) {
 				/*
-				 * Buffer is zero and sparse, no need to ग_लिखो
+				 * Buffer is zero and sparse, no need to write
 				 * it.
 				 */
 				bh->b_blocknr = -1;
 				clear_buffer_dirty(bh);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			// TODO: Instantiate the hole.
 			// clear_buffer_new(bh);
 			// clean_bdev_bh_alias(bh);
 			ntfs_error(vol->sb, "Writing into sparse regions is "
 					"not supported yet. Sorry.");
 			err = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* If first try and runlist unmapped, map and retry. */
-		अगर (!is_retry && lcn == LCN_RL_NOT_MAPPED) अणु
+		if (!is_retry && lcn == LCN_RL_NOT_MAPPED) {
 			is_retry = true;
 			/*
-			 * Attempt to map runlist, dropping lock क्रम
+			 * Attempt to map runlist, dropping lock for
 			 * the duration.
 			 */
-			up_पढ़ो(&ni->runlist.lock);
+			up_read(&ni->runlist.lock);
 			err = ntfs_map_runlist(ni, vcn);
-			अगर (likely(!err))
-				जाओ lock_retry_remap;
-			rl = शून्य;
-		पूर्ण अन्यथा अगर (!rl)
-			up_पढ़ो(&ni->runlist.lock);
+			if (likely(!err))
+				goto lock_retry_remap;
+			rl = NULL;
+		} else if (!rl)
+			up_read(&ni->runlist.lock);
 		/*
 		 * If buffer is outside the runlist, truncate has cut it out
 		 * of the runlist.  Just clean and clear the buffer and set it
 		 * uptodate so it can get discarded by the VM.
 		 */
-		अगर (err == -ENOENT || lcn == LCN_ENOENT) अणु
+		if (err == -ENOENT || lcn == LCN_ENOENT) {
 			bh->b_blocknr = -1;
 			clear_buffer_dirty(bh);
 			zero_user(page, bh_offset(bh), blocksize);
 			set_buffer_uptodate(bh);
 			err = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* Failed to map the buffer, even after retrying. */
-		अगर (!err)
+		if (!err)
 			err = -EIO;
 		bh->b_blocknr = -1;
 		ntfs_error(vol->sb, "Failed to write to inode 0x%lx, "
 				"attribute type 0x%x, vcn 0x%llx, offset 0x%x "
 				"because its location on disk could not be "
 				"determined%s (error code %i).", ni->mft_no,
-				ni->type, (अचिन्हित दीर्घ दीर्घ)vcn,
+				ni->type, (unsigned long long)vcn,
 				vcn_ofs, is_retry ? " even after "
 				"retrying" : "", err);
-		अवरोध;
-	पूर्ण जबतक (block++, (bh = bh->b_this_page) != head);
+		break;
+	} while (block++, (bh = bh->b_this_page) != head);
 
-	/* Release the lock अगर we took it. */
-	अगर (rl)
-		up_पढ़ो(&ni->runlist.lock);
+	/* Release the lock if we took it. */
+	if (rl)
+		up_read(&ni->runlist.lock);
 
-	/* For the error हाल, need to reset bh to the beginning. */
+	/* For the error case, need to reset bh to the beginning. */
 	bh = head;
 
-	/* Just an optimization, so ->पढ़ोpage() is not called later. */
-	अगर (unlikely(!PageUptodate(page))) अणु
-		पूर्णांक uptodate = 1;
-		करो अणु
-			अगर (!buffer_uptodate(bh)) अणु
+	/* Just an optimization, so ->readpage() is not called later. */
+	if (unlikely(!PageUptodate(page))) {
+		int uptodate = 1;
+		do {
+			if (!buffer_uptodate(bh)) {
 				uptodate = 0;
 				bh = head;
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक ((bh = bh->b_this_page) != head);
-		अगर (uptodate)
+				break;
+			}
+		} while ((bh = bh->b_this_page) != head);
+		if (uptodate)
 			SetPageUptodate(page);
-	पूर्ण
+	}
 
-	/* Setup all mapped, dirty buffers क्रम async ग_लिखो i/o. */
-	करो अणु
-		अगर (buffer_mapped(bh) && buffer_dirty(bh)) अणु
+	/* Setup all mapped, dirty buffers for async write i/o. */
+	do {
+		if (buffer_mapped(bh) && buffer_dirty(bh)) {
 			lock_buffer(bh);
-			अगर (test_clear_buffer_dirty(bh)) अणु
+			if (test_clear_buffer_dirty(bh)) {
 				BUG_ON(!buffer_uptodate(bh));
-				mark_buffer_async_ग_लिखो(bh);
-			पूर्ण अन्यथा
+				mark_buffer_async_write(bh);
+			} else
 				unlock_buffer(bh);
-		पूर्ण अन्यथा अगर (unlikely(err)) अणु
+		} else if (unlikely(err)) {
 			/*
-			 * For the error हाल. The buffer may have been set
+			 * For the error case. The buffer may have been set
 			 * dirty during attachment to a dirty page.
 			 */
-			अगर (err != -ENOMEM)
+			if (err != -ENOMEM)
 				clear_buffer_dirty(bh);
-		पूर्ण
-	पूर्ण जबतक ((bh = bh->b_this_page) != head);
+		}
+	} while ((bh = bh->b_this_page) != head);
 
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		// TODO: Remove the -EOPNOTSUPP check later on...
-		अगर (unlikely(err == -EOPNOTSUPP))
+		if (unlikely(err == -EOPNOTSUPP))
 			err = 0;
-		अन्यथा अगर (err == -ENOMEM) अणु
+		else if (err == -ENOMEM) {
 			ntfs_warning(vol->sb, "Error allocating memory. "
 					"Redirtying page so we try again "
 					"later.");
@@ -844,79 +843,79 @@ lock_retry_remap:
 			 * Put the page back on mapping->dirty_pages, but
 			 * leave its buffer's dirty state as-is.
 			 */
-			redirty_page_क्रम_ग_लिखोpage(wbc, page);
+			redirty_page_for_writepage(wbc, page);
 			err = 0;
-		पूर्ण अन्यथा
+		} else
 			SetPageError(page);
-	पूर्ण
+	}
 
 	BUG_ON(PageWriteback(page));
-	set_page_ग_लिखोback(page);	/* Keeps try_to_मुक्त_buffers() away. */
+	set_page_writeback(page);	/* Keeps try_to_free_buffers() away. */
 
-	/* Submit the prepared buffers क्रम i/o. */
-	need_end_ग_लिखोback = true;
-	करो अणु
-		काष्ठा buffer_head *next = bh->b_this_page;
-		अगर (buffer_async_ग_लिखो(bh)) अणु
+	/* Submit the prepared buffers for i/o. */
+	need_end_writeback = true;
+	do {
+		struct buffer_head *next = bh->b_this_page;
+		if (buffer_async_write(bh)) {
 			submit_bh(REQ_OP_WRITE, 0, bh);
-			need_end_ग_लिखोback = false;
-		पूर्ण
+			need_end_writeback = false;
+		}
 		bh = next;
-	पूर्ण जबतक (bh != head);
+	} while (bh != head);
 	unlock_page(page);
 
-	/* If no i/o was started, need to end_page_ग_लिखोback(). */
-	अगर (unlikely(need_end_ग_लिखोback))
-		end_page_ग_लिखोback(page);
+	/* If no i/o was started, need to end_page_writeback(). */
+	if (unlikely(need_end_writeback))
+		end_page_writeback(page);
 
 	ntfs_debug("Done.");
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * ntfs_ग_लिखो_mst_block - ग_लिखो a @page to the backing store
- * @page:	page cache page to ग_लिखो out
- * @wbc:	ग_लिखोback control काष्ठाure
+ * ntfs_write_mst_block - write a @page to the backing store
+ * @page:	page cache page to write out
+ * @wbc:	writeback control structure
  *
- * This function is क्रम writing pages beदीर्घing to non-resident, mst रक्षित
+ * This function is for writing pages belonging to non-resident, mst protected
  * attributes to their backing store.  The only supported attributes are index
  * allocation and $MFT/$DATA.  Both directory inodes and index inodes are
- * supported क्रम the index allocation हाल.
+ * supported for the index allocation case.
  *
- * The page must reमुख्य locked क्रम the duration of the ग_लिखो because we apply
- * the mst fixups, ग_लिखो, and then unकरो the fixups, so अगर we were to unlock the
- * page beक्रमe unकरोing the fixups, any other user of the page will see the
+ * The page must remain locked for the duration of the write because we apply
+ * the mst fixups, write, and then undo the fixups, so if we were to unlock the
+ * page before undoing the fixups, any other user of the page will see the
  * page contents as corrupt.
  *
- * We clear the page uptodate flag क्रम the duration of the function to ensure
- * exclusion क्रम the $MFT/$DATA हाल against someone mapping an mft record we
+ * We clear the page uptodate flag for the duration of the function to ensure
+ * exclusion for the $MFT/$DATA case against someone mapping an mft record we
  * are about to apply the mst fixups to.
  *
- * Return 0 on success and -त्रुटि_सं on error.
+ * Return 0 on success and -errno on error.
  *
- * Based on ntfs_ग_लिखो_block(), ntfs_mft_ग_लिखोpage(), and
- * ग_लिखो_mft_record_nolock().
+ * Based on ntfs_write_block(), ntfs_mft_writepage(), and
+ * write_mft_record_nolock().
  */
-अटल पूर्णांक ntfs_ग_लिखो_mst_block(काष्ठा page *page,
-		काष्ठा ग_लिखोback_control *wbc)
-अणु
+static int ntfs_write_mst_block(struct page *page,
+		struct writeback_control *wbc)
+{
 	sector_t block, dblock, rec_block;
-	काष्ठा inode *vi = page->mapping->host;
+	struct inode *vi = page->mapping->host;
 	ntfs_inode *ni = NTFS_I(vi);
 	ntfs_volume *vol = ni->vol;
 	u8 *kaddr;
-	अचिन्हित पूर्णांक rec_size = ni->itype.index.block_size;
+	unsigned int rec_size = ni->itype.index.block_size;
 	ntfs_inode *locked_nis[PAGE_SIZE / NTFS_BLOCK_SIZE];
-	काष्ठा buffer_head *bh, *head, *tbh, *rec_start_bh;
-	काष्ठा buffer_head *bhs[MAX_BUF_PER_PAGE];
+	struct buffer_head *bh, *head, *tbh, *rec_start_bh;
+	struct buffer_head *bhs[MAX_BUF_PER_PAGE];
 	runlist_element *rl;
-	पूर्णांक i, nr_locked_nis, nr_recs, nr_bhs, max_bhs, bhs_per_rec, err, err2;
-	अचिन्हित bh_size, rec_size_bits;
+	int i, nr_locked_nis, nr_recs, nr_bhs, max_bhs, bhs_per_rec, err, err2;
+	unsigned bh_size, rec_size_bits;
 	bool sync, is_mft, page_is_dirty, rec_is_dirty;
-	अचिन्हित अक्षर bh_size_bits;
+	unsigned char bh_size_bits;
 
-	अगर (WARN_ON(rec_size < NTFS_BLOCK_SIZE))
-		वापस -EINVAL;
+	if (WARN_ON(rec_size < NTFS_BLOCK_SIZE))
+		return -EINVAL;
 
 	ntfs_debug("Entering for inode 0x%lx, attribute type 0x%x, page index "
 			"0x%lx.", vi->i_ino, ni->type, page->index);
@@ -924,12 +923,12 @@ lock_retry_remap:
 	BUG_ON(!NInoMstProtected(ni));
 	is_mft = (S_ISREG(vi->i_mode) && !vi->i_ino);
 	/*
-	 * NOTE: ntfs_ग_लिखो_mst_block() would be called क्रम $MFTMirr अगर a page
+	 * NOTE: ntfs_write_mst_block() would be called for $MFTMirr if a page
 	 * in its page cache were to be marked dirty.  However this should
-	 * never happen with the current driver and considering we करो not
-	 * handle this हाल here we करो want to BUG(), at least क्रम now.
+	 * never happen with the current driver and considering we do not
+	 * handle this case here we do want to BUG(), at least for now.
 	 */
-	BUG_ON(!(is_mft || S_ISसूची(vi->i_mode) ||
+	BUG_ON(!(is_mft || S_ISDIR(vi->i_mode) ||
 			(NInoAttr(ni) && ni->type == AT_INDEX_ALLOCATION)));
 	bh_size = vol->sb->s_blocksize;
 	bh_size_bits = vol->sb->s_blocksize_bits;
@@ -937,7 +936,7 @@ lock_retry_remap:
 	BUG_ON(!max_bhs);
 	BUG_ON(max_bhs > MAX_BUF_PER_PAGE);
 
-	/* Were we called क्रम sync purposes? */
+	/* Were we called for sync purposes? */
 	sync = (wbc->sync_mode == WB_SYNC_ALL);
 
 	/* Make sure we have mapped buffers. */
@@ -953,108 +952,108 @@ lock_retry_remap:
 	rec_block = block = (sector_t)page->index <<
 			(PAGE_SHIFT - bh_size_bits);
 
-	/* The first out of bounds block क्रम the data size. */
-	dblock = (i_size_पढ़ो(vi) + bh_size - 1) >> bh_size_bits;
+	/* The first out of bounds block for the data size. */
+	dblock = (i_size_read(vi) + bh_size - 1) >> bh_size_bits;
 
-	rl = शून्य;
+	rl = NULL;
 	err = err2 = nr_bhs = nr_recs = nr_locked_nis = 0;
 	page_is_dirty = rec_is_dirty = false;
-	rec_start_bh = शून्य;
-	करो अणु
+	rec_start_bh = NULL;
+	do {
 		bool is_retry = false;
 
-		अगर (likely(block < rec_block)) अणु
-			अगर (unlikely(block >= dblock)) अणु
+		if (likely(block < rec_block)) {
+			if (unlikely(block >= dblock)) {
 				clear_buffer_dirty(bh);
 				set_buffer_uptodate(bh);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			/*
 			 * This block is not the first one in the record.  We
 			 * ignore the buffer's dirty state because we could
 			 * have raced with a parallel mark_ntfs_record_dirty().
 			 */
-			अगर (!rec_is_dirty)
-				जारी;
-			अगर (unlikely(err2)) अणु
-				अगर (err2 != -ENOMEM)
+			if (!rec_is_dirty)
+				continue;
+			if (unlikely(err2)) {
+				if (err2 != -ENOMEM)
 					clear_buffer_dirty(bh);
-				जारी;
-			पूर्ण
-		पूर्ण अन्यथा /* अगर (block == rec_block) */ अणु
+				continue;
+			}
+		} else /* if (block == rec_block) */ {
 			BUG_ON(block > rec_block);
 			/* This block is the first one in the record. */
 			rec_block += bhs_per_rec;
 			err2 = 0;
-			अगर (unlikely(block >= dblock)) अणु
+			if (unlikely(block >= dblock)) {
 				clear_buffer_dirty(bh);
-				जारी;
-			पूर्ण
-			अगर (!buffer_dirty(bh)) अणु
+				continue;
+			}
+			if (!buffer_dirty(bh)) {
 				/* Clean records are not written out. */
 				rec_is_dirty = false;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			rec_is_dirty = true;
 			rec_start_bh = bh;
-		पूर्ण
-		/* Need to map the buffer अगर it is not mapped alपढ़ोy. */
-		अगर (unlikely(!buffer_mapped(bh))) अणु
+		}
+		/* Need to map the buffer if it is not mapped already. */
+		if (unlikely(!buffer_mapped(bh))) {
 			VCN vcn;
 			LCN lcn;
-			अचिन्हित पूर्णांक vcn_ofs;
+			unsigned int vcn_ofs;
 
 			bh->b_bdev = vol->sb->s_bdev;
 			/* Obtain the vcn and offset of the current block. */
 			vcn = (VCN)block << bh_size_bits;
 			vcn_ofs = vcn & vol->cluster_size_mask;
 			vcn >>= vol->cluster_size_bits;
-			अगर (!rl) अणु
+			if (!rl) {
 lock_retry_remap:
-				करोwn_पढ़ो(&ni->runlist.lock);
+				down_read(&ni->runlist.lock);
 				rl = ni->runlist.rl;
-			पूर्ण
-			अगर (likely(rl != शून्य)) अणु
+			}
+			if (likely(rl != NULL)) {
 				/* Seek to element containing target vcn. */
-				जबतक (rl->length && rl[1].vcn <= vcn)
+				while (rl->length && rl[1].vcn <= vcn)
 					rl++;
 				lcn = ntfs_rl_vcn_to_lcn(rl, vcn);
-			पूर्ण अन्यथा
+			} else
 				lcn = LCN_RL_NOT_MAPPED;
 			/* Successful remap. */
-			अगर (likely(lcn >= 0)) अणु
+			if (likely(lcn >= 0)) {
 				/* Setup buffer head to correct block. */
 				bh->b_blocknr = ((lcn <<
 						vol->cluster_size_bits) +
 						vcn_ofs) >> bh_size_bits;
 				set_buffer_mapped(bh);
-			पूर्ण अन्यथा अणु
+			} else {
 				/*
 				 * Remap failed.  Retry to map the runlist once
 				 * unless we are working on $MFT which always
 				 * has the whole of its runlist in memory.
 				 */
-				अगर (!is_mft && !is_retry &&
-						lcn == LCN_RL_NOT_MAPPED) अणु
+				if (!is_mft && !is_retry &&
+						lcn == LCN_RL_NOT_MAPPED) {
 					is_retry = true;
 					/*
 					 * Attempt to map runlist, dropping
-					 * lock क्रम the duration.
+					 * lock for the duration.
 					 */
-					up_पढ़ो(&ni->runlist.lock);
+					up_read(&ni->runlist.lock);
 					err2 = ntfs_map_runlist(ni, vcn);
-					अगर (likely(!err2))
-						जाओ lock_retry_remap;
-					अगर (err2 == -ENOMEM)
+					if (likely(!err2))
+						goto lock_retry_remap;
+					if (err2 == -ENOMEM)
 						page_is_dirty = true;
 					lcn = err2;
-				पूर्ण अन्यथा अणु
+				} else {
 					err2 = -EIO;
-					अगर (!rl)
-						up_पढ़ो(&ni->runlist.lock);
-				पूर्ण
+					if (!rl)
+						up_read(&ni->runlist.lock);
+				}
 				/* Hard error.  Abort writing this record. */
-				अगर (!err || err == -ENOMEM)
+				if (!err || err == -ENOMEM)
 					err = err2;
 				bh->b_blocknr = -1;
 				ntfs_error(vol->sb, "Cannot write ntfs record "
@@ -1063,94 +1062,94 @@ lock_retry_remap:
 						"its location on disk could "
 						"not be determined (error "
 						"code %lli).",
-						(दीर्घ दीर्घ)block <<
+						(long long)block <<
 						bh_size_bits >>
 						vol->mft_record_size_bits,
 						ni->mft_no, ni->type,
-						(दीर्घ दीर्घ)lcn);
+						(long long)lcn);
 				/*
-				 * If this is not the first buffer, हटाओ the
+				 * If this is not the first buffer, remove the
 				 * buffers in this record from the list of
-				 * buffers to ग_लिखो and clear their dirty bit
-				 * अगर not error -ENOMEM.
+				 * buffers to write and clear their dirty bit
+				 * if not error -ENOMEM.
 				 */
-				अगर (rec_start_bh != bh) अणु
-					जबतक (bhs[--nr_bhs] != rec_start_bh)
+				if (rec_start_bh != bh) {
+					while (bhs[--nr_bhs] != rec_start_bh)
 						;
-					अगर (err2 != -ENOMEM) अणु
-						करो अणु
+					if (err2 != -ENOMEM) {
+						do {
 							clear_buffer_dirty(
 								rec_start_bh);
-						पूर्ण जबतक ((rec_start_bh =
+						} while ((rec_start_bh =
 								rec_start_bh->
 								b_this_page) !=
 								bh);
-					पूर्ण
-				पूर्ण
-				जारी;
-			पूर्ण
-		पूर्ण
+					}
+				}
+				continue;
+			}
+		}
 		BUG_ON(!buffer_uptodate(bh));
 		BUG_ON(nr_bhs >= max_bhs);
 		bhs[nr_bhs++] = bh;
-	पूर्ण जबतक (block++, (bh = bh->b_this_page) != head);
-	अगर (unlikely(rl))
-		up_पढ़ो(&ni->runlist.lock);
-	/* If there were no dirty buffers, we are करोne. */
-	अगर (!nr_bhs)
-		जाओ करोne;
+	} while (block++, (bh = bh->b_this_page) != head);
+	if (unlikely(rl))
+		up_read(&ni->runlist.lock);
+	/* If there were no dirty buffers, we are done. */
+	if (!nr_bhs)
+		goto done;
 	/* Map the page so we can access its contents. */
 	kaddr = kmap(page);
 	/* Clear the page uptodate flag whilst the mst fixups are applied. */
 	BUG_ON(!PageUptodate(page));
 	ClearPageUptodate(page);
-	क्रम (i = 0; i < nr_bhs; i++) अणु
-		अचिन्हित पूर्णांक ofs;
+	for (i = 0; i < nr_bhs; i++) {
+		unsigned int ofs;
 
 		/* Skip buffers which are not at the beginning of records. */
-		अगर (i % bhs_per_rec)
-			जारी;
+		if (i % bhs_per_rec)
+			continue;
 		tbh = bhs[i];
 		ofs = bh_offset(tbh);
-		अगर (is_mft) अणु
+		if (is_mft) {
 			ntfs_inode *tni;
-			अचिन्हित दीर्घ mft_no;
+			unsigned long mft_no;
 
 			/* Get the mft record number. */
 			mft_no = (((s64)page->index << PAGE_SHIFT) + ofs)
 					>> rec_size_bits;
-			/* Check whether to ग_लिखो this mft record. */
-			tni = शून्य;
-			अगर (!ntfs_may_ग_लिखो_mft_record(vol, mft_no,
-					(MFT_RECORD*)(kaddr + ofs), &tni)) अणु
+			/* Check whether to write this mft record. */
+			tni = NULL;
+			if (!ntfs_may_write_mft_record(vol, mft_no,
+					(MFT_RECORD*)(kaddr + ofs), &tni)) {
 				/*
 				 * The record should not be written.  This
-				 * means we need to redirty the page beक्रमe
-				 * वापसing.
+				 * means we need to redirty the page before
+				 * returning.
 				 */
 				page_is_dirty = true;
 				/*
 				 * Remove the buffers in this mft record from
-				 * the list of buffers to ग_लिखो.
+				 * the list of buffers to write.
 				 */
-				करो अणु
-					bhs[i] = शून्य;
-				पूर्ण जबतक (++i % bhs_per_rec);
-				जारी;
-			पूर्ण
+				do {
+					bhs[i] = NULL;
+				} while (++i % bhs_per_rec);
+				continue;
+			}
 			/*
 			 * The record should be written.  If a locked ntfs
-			 * inode was वापसed, add it to the array of locked
+			 * inode was returned, add it to the array of locked
 			 * ntfs inodes.
 			 */
-			अगर (tni)
+			if (tni)
 				locked_nis[nr_locked_nis++] = tni;
-		पूर्ण
+		}
 		/* Apply the mst protection fixups. */
-		err2 = pre_ग_लिखो_mst_fixup((NTFS_RECORD*)(kaddr + ofs),
+		err2 = pre_write_mst_fixup((NTFS_RECORD*)(kaddr + ofs),
 				rec_size);
-		अगर (unlikely(err2)) अणु
-			अगर (!err || err == -ENOMEM)
+		if (unlikely(err2)) {
+			if (!err || err == -ENOMEM)
 				err = -EIO;
 			ntfs_error(vol->sb, "Failed to apply mst fixups "
 					"(inode 0x%lx, attribute type 0x%x, "
@@ -1158,116 +1157,116 @@ lock_retry_remap:
 					"  Unmount and run chkdsk.", vi->i_ino,
 					ni->type, page->index, ofs);
 			/*
-			 * Mark all the buffers in this record clean as we करो
-			 * not want to ग_लिखो corrupt data to disk.
+			 * Mark all the buffers in this record clean as we do
+			 * not want to write corrupt data to disk.
 			 */
-			करो अणु
+			do {
 				clear_buffer_dirty(bhs[i]);
-				bhs[i] = शून्य;
-			पूर्ण जबतक (++i % bhs_per_rec);
-			जारी;
-		पूर्ण
+				bhs[i] = NULL;
+			} while (++i % bhs_per_rec);
+			continue;
+		}
 		nr_recs++;
-	पूर्ण
-	/* If no records are to be written out, we are करोne. */
-	अगर (!nr_recs)
-		जाओ unm_करोne;
+	}
+	/* If no records are to be written out, we are done. */
+	if (!nr_recs)
+		goto unm_done;
 	flush_dcache_page(page);
-	/* Lock buffers and start synchronous ग_लिखो i/o on them. */
-	क्रम (i = 0; i < nr_bhs; i++) अणु
+	/* Lock buffers and start synchronous write i/o on them. */
+	for (i = 0; i < nr_bhs; i++) {
 		tbh = bhs[i];
-		अगर (!tbh)
-			जारी;
-		अगर (!trylock_buffer(tbh))
+		if (!tbh)
+			continue;
+		if (!trylock_buffer(tbh))
 			BUG();
 		/* The buffer dirty state is now irrelevant, just clean it. */
 		clear_buffer_dirty(tbh);
 		BUG_ON(!buffer_uptodate(tbh));
 		BUG_ON(!buffer_mapped(tbh));
 		get_bh(tbh);
-		tbh->b_end_io = end_buffer_ग_लिखो_sync;
+		tbh->b_end_io = end_buffer_write_sync;
 		submit_bh(REQ_OP_WRITE, 0, tbh);
-	पूर्ण
-	/* Synchronize the mft mirror now अगर not @sync. */
-	अगर (is_mft && !sync)
-		जाओ करो_mirror;
-करो_रुको:
+	}
+	/* Synchronize the mft mirror now if not @sync. */
+	if (is_mft && !sync)
+		goto do_mirror;
+do_wait:
 	/* Wait on i/o completion of buffers. */
-	क्रम (i = 0; i < nr_bhs; i++) अणु
+	for (i = 0; i < nr_bhs; i++) {
 		tbh = bhs[i];
-		अगर (!tbh)
-			जारी;
-		रुको_on_buffer(tbh);
-		अगर (unlikely(!buffer_uptodate(tbh))) अणु
+		if (!tbh)
+			continue;
+		wait_on_buffer(tbh);
+		if (unlikely(!buffer_uptodate(tbh))) {
 			ntfs_error(vol->sb, "I/O error while writing ntfs "
 					"record buffer (inode 0x%lx, "
 					"attribute type 0x%x, page index "
 					"0x%lx, page offset 0x%lx)!  Unmount "
 					"and run chkdsk.", vi->i_ino, ni->type,
 					page->index, bh_offset(tbh));
-			अगर (!err || err == -ENOMEM)
+			if (!err || err == -ENOMEM)
 				err = -EIO;
 			/*
 			 * Set the buffer uptodate so the page and buffer
-			 * states करो not become out of sync.
+			 * states do not become out of sync.
 			 */
 			set_buffer_uptodate(tbh);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* If @sync, now synchronize the mft mirror. */
-	अगर (is_mft && sync) अणु
-करो_mirror:
-		क्रम (i = 0; i < nr_bhs; i++) अणु
-			अचिन्हित दीर्घ mft_no;
-			अचिन्हित पूर्णांक ofs;
+	if (is_mft && sync) {
+do_mirror:
+		for (i = 0; i < nr_bhs; i++) {
+			unsigned long mft_no;
+			unsigned int ofs;
 
 			/*
 			 * Skip buffers which are not at the beginning of
 			 * records.
 			 */
-			अगर (i % bhs_per_rec)
-				जारी;
+			if (i % bhs_per_rec)
+				continue;
 			tbh = bhs[i];
-			/* Skip हटाओd buffers (and hence records). */
-			अगर (!tbh)
-				जारी;
+			/* Skip removed buffers (and hence records). */
+			if (!tbh)
+				continue;
 			ofs = bh_offset(tbh);
 			/* Get the mft record number. */
 			mft_no = (((s64)page->index << PAGE_SHIFT) + ofs)
 					>> rec_size_bits;
-			अगर (mft_no < vol->mfपंचांगirr_size)
+			if (mft_no < vol->mftmirr_size)
 				ntfs_sync_mft_mirror(vol, mft_no,
 						(MFT_RECORD*)(kaddr + ofs),
 						sync);
-		पूर्ण
-		अगर (!sync)
-			जाओ करो_रुको;
-	पूर्ण
+		}
+		if (!sync)
+			goto do_wait;
+	}
 	/* Remove the mst protection fixups again. */
-	क्रम (i = 0; i < nr_bhs; i++) अणु
-		अगर (!(i % bhs_per_rec)) अणु
+	for (i = 0; i < nr_bhs; i++) {
+		if (!(i % bhs_per_rec)) {
 			tbh = bhs[i];
-			अगर (!tbh)
-				जारी;
-			post_ग_लिखो_mst_fixup((NTFS_RECORD*)(kaddr +
+			if (!tbh)
+				continue;
+			post_write_mst_fixup((NTFS_RECORD*)(kaddr +
 					bh_offset(tbh)));
-		पूर्ण
-	पूर्ण
+		}
+	}
 	flush_dcache_page(page);
-unm_करोne:
+unm_done:
 	/* Unlock any locked inodes. */
-	जबतक (nr_locked_nis-- > 0) अणु
+	while (nr_locked_nis-- > 0) {
 		ntfs_inode *tni, *base_tni;
 		
 		tni = locked_nis[nr_locked_nis];
 		/* Get the base inode. */
 		mutex_lock(&tni->extent_lock);
-		अगर (tni->nr_extents >= 0)
+		if (tni->nr_extents >= 0)
 			base_tni = tni;
-		अन्यथा अणु
+		else {
 			base_tni = tni->ext.base_ntfs_ino;
 			BUG_ON(!base_tni);
-		पूर्ण
+		}
 		mutex_unlock(&tni->extent_lock);
 		ntfs_debug("Unlocking %s inode 0x%lx.",
 				tni == base_tni ? "base" : "extent",
@@ -1275,425 +1274,425 @@ unm_करोne:
 		mutex_unlock(&tni->mrec_lock);
 		atomic_dec(&tni->count);
 		iput(VFS_I(base_tni));
-	पूर्ण
+	}
 	SetPageUptodate(page);
 	kunmap(page);
-करोne:
-	अगर (unlikely(err && err != -ENOMEM)) अणु
+done:
+	if (unlikely(err && err != -ENOMEM)) {
 		/*
-		 * Set page error अगर there is only one ntfs record in the page.
+		 * Set page error if there is only one ntfs record in the page.
 		 * Otherwise we would loose per-record granularity.
 		 */
-		अगर (ni->itype.index.block_size == PAGE_SIZE)
+		if (ni->itype.index.block_size == PAGE_SIZE)
 			SetPageError(page);
 		NVolSetErrors(vol);
-	पूर्ण
-	अगर (page_is_dirty) अणु
+	}
+	if (page_is_dirty) {
 		ntfs_debug("Page still contains one or more dirty ntfs "
 				"records.  Redirtying the page starting at "
 				"record 0x%lx.", page->index <<
 				(PAGE_SHIFT - rec_size_bits));
-		redirty_page_क्रम_ग_लिखोpage(wbc, page);
+		redirty_page_for_writepage(wbc, page);
 		unlock_page(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Keep the VM happy.  This must be करोne otherwise the
-		 * radix-tree tag PAGECACHE_TAG_सूचीTY reमुख्यs set even though
+		 * Keep the VM happy.  This must be done otherwise the
+		 * radix-tree tag PAGECACHE_TAG_DIRTY remains set even though
 		 * the page is clean.
 		 */
 		BUG_ON(PageWriteback(page));
-		set_page_ग_लिखोback(page);
+		set_page_writeback(page);
 		unlock_page(page);
-		end_page_ग_लिखोback(page);
-	पूर्ण
-	अगर (likely(!err))
+		end_page_writeback(page);
+	}
+	if (likely(!err))
 		ntfs_debug("Done.");
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * ntfs_ग_लिखोpage - ग_लिखो a @page to the backing store
- * @page:	page cache page to ग_लिखो out
- * @wbc:	ग_लिखोback control काष्ठाure
+ * ntfs_writepage - write a @page to the backing store
+ * @page:	page cache page to write out
+ * @wbc:	writeback control structure
  *
  * This is called from the VM when it wants to have a dirty ntfs page cache
- * page cleaned.  The VM has alपढ़ोy locked the page and marked it clean.
+ * page cleaned.  The VM has already locked the page and marked it clean.
  *
- * For non-resident attributes, ntfs_ग_लिखोpage() ग_लिखोs the @page by calling
- * the ntfs version of the generic block_ग_लिखो_full_page() function,
- * ntfs_ग_लिखो_block(), which in turn अगर necessary creates and ग_लिखोs the
+ * For non-resident attributes, ntfs_writepage() writes the @page by calling
+ * the ntfs version of the generic block_write_full_page() function,
+ * ntfs_write_block(), which in turn if necessary creates and writes the
  * buffers associated with the page asynchronously.
  *
- * For resident attributes, OTOH, ntfs_ग_लिखोpage() ग_लिखोs the @page by copying
+ * For resident attributes, OTOH, ntfs_writepage() writes the @page by copying
  * the data to the mft record (which at this stage is most likely in memory).
  * The mft record is then marked dirty and written out asynchronously via the
- * vfs inode dirty code path क्रम the inode the mft record beदीर्घs to or via the
- * vm page dirty code path क्रम the page the mft record is in.
+ * vfs inode dirty code path for the inode the mft record belongs to or via the
+ * vm page dirty code path for the page the mft record is in.
  *
- * Based on ntfs_पढ़ोpage() and fs/buffer.c::block_ग_लिखो_full_page().
+ * Based on ntfs_readpage() and fs/buffer.c::block_write_full_page().
  *
- * Return 0 on success and -त्रुटि_सं on error.
+ * Return 0 on success and -errno on error.
  */
-अटल पूर्णांक ntfs_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
+static int ntfs_writepage(struct page *page, struct writeback_control *wbc)
+{
 	loff_t i_size;
-	काष्ठा inode *vi = page->mapping->host;
-	ntfs_inode *base_ni = शून्य, *ni = NTFS_I(vi);
-	अक्षर *addr;
-	ntfs_attr_search_ctx *ctx = शून्य;
-	MFT_RECORD *m = शून्य;
+	struct inode *vi = page->mapping->host;
+	ntfs_inode *base_ni = NULL, *ni = NTFS_I(vi);
+	char *addr;
+	ntfs_attr_search_ctx *ctx = NULL;
+	MFT_RECORD *m = NULL;
 	u32 attr_len;
-	पूर्णांक err;
+	int err;
 
-retry_ग_लिखोpage:
+retry_writepage:
 	BUG_ON(!PageLocked(page));
-	i_size = i_size_पढ़ो(vi);
+	i_size = i_size_read(vi);
 	/* Is the page fully outside i_size? (truncate in progress) */
-	अगर (unlikely(page->index >= (i_size + PAGE_SIZE - 1) >>
-			PAGE_SHIFT)) अणु
+	if (unlikely(page->index >= (i_size + PAGE_SIZE - 1) >>
+			PAGE_SHIFT)) {
 		/*
 		 * The page may have dirty, unmapped buffers.  Make them
-		 * मुक्तable here, so the page करोes not leak.
+		 * freeable here, so the page does not leak.
 		 */
 		block_invalidatepage(page, 0, PAGE_SIZE);
 		unlock_page(page);
 		ntfs_debug("Write outside i_size - truncated?");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/*
 	 * Only $DATA attributes can be encrypted and only unnamed $DATA
 	 * attributes can be compressed.  Index root can have the flags set but
 	 * this means to create compressed/encrypted files, not that the
-	 * attribute is compressed/encrypted.  Note we need to check क्रम
+	 * attribute is compressed/encrypted.  Note we need to check for
 	 * AT_INDEX_ALLOCATION since this is the type of both directory and
 	 * index inodes.
 	 */
-	अगर (ni->type != AT_INDEX_ALLOCATION) अणु
+	if (ni->type != AT_INDEX_ALLOCATION) {
 		/* If file is encrypted, deny access, just like NT4. */
-		अगर (NInoEncrypted(ni)) अणु
+		if (NInoEncrypted(ni)) {
 			unlock_page(page);
 			BUG_ON(ni->type != AT_DATA);
 			ntfs_debug("Denying write access to encrypted file.");
-			वापस -EACCES;
-		पूर्ण
+			return -EACCES;
+		}
 		/* Compressed data streams are handled in compress.c. */
-		अगर (NInoNonResident(ni) && NInoCompressed(ni)) अणु
+		if (NInoNonResident(ni) && NInoCompressed(ni)) {
 			BUG_ON(ni->type != AT_DATA);
 			BUG_ON(ni->name_len);
 			// TODO: Implement and replace this with
-			// वापस ntfs_ग_लिखो_compressed_block(page);
+			// return ntfs_write_compressed_block(page);
 			unlock_page(page);
 			ntfs_error(vi->i_sb, "Writing to compressed files is "
 					"not supported yet.  Sorry.");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-		// TODO: Implement and हटाओ this check.
-		अगर (NInoNonResident(ni) && NInoSparse(ni)) अणु
+			return -EOPNOTSUPP;
+		}
+		// TODO: Implement and remove this check.
+		if (NInoNonResident(ni) && NInoSparse(ni)) {
 			unlock_page(page);
 			ntfs_error(vi->i_sb, "Writing to sparse files is not "
 					"supported yet.  Sorry.");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
+			return -EOPNOTSUPP;
+		}
+	}
 	/* NInoNonResident() == NInoIndexAllocPresent() */
-	अगर (NInoNonResident(ni)) अणु
-		/* We have to zero every समय due to mmap-at-end-of-file. */
-		अगर (page->index >= (i_size >> PAGE_SHIFT)) अणु
+	if (NInoNonResident(ni)) {
+		/* We have to zero every time due to mmap-at-end-of-file. */
+		if (page->index >= (i_size >> PAGE_SHIFT)) {
 			/* The page straddles i_size. */
-			अचिन्हित पूर्णांक ofs = i_size & ~PAGE_MASK;
+			unsigned int ofs = i_size & ~PAGE_MASK;
 			zero_user_segment(page, ofs, PAGE_SIZE);
-		पूर्ण
-		/* Handle mst रक्षित attributes. */
-		अगर (NInoMstProtected(ni))
-			वापस ntfs_ग_लिखो_mst_block(page, wbc);
+		}
+		/* Handle mst protected attributes. */
+		if (NInoMstProtected(ni))
+			return ntfs_write_mst_block(page, wbc);
 		/* Normal, non-resident data stream. */
-		वापस ntfs_ग_लिखो_block(page, wbc);
-	पूर्ण
+		return ntfs_write_block(page, wbc);
+	}
 	/*
 	 * Attribute is resident, implying it is not compressed, encrypted, or
-	 * mst रक्षित.  This also means the attribute is smaller than an mft
-	 * record and hence smaller than a page, so can simply वापस error on
+	 * mst protected.  This also means the attribute is smaller than an mft
+	 * record and hence smaller than a page, so can simply return error on
 	 * any pages with index above 0.  Note the attribute can actually be
-	 * marked compressed but अगर it is resident the actual data is not
+	 * marked compressed but if it is resident the actual data is not
 	 * compressed so we are ok to ignore the compressed flag here.
 	 */
 	BUG_ON(page_has_buffers(page));
 	BUG_ON(!PageUptodate(page));
-	अगर (unlikely(page->index > 0)) अणु
+	if (unlikely(page->index > 0)) {
 		ntfs_error(vi->i_sb, "BUG()! page->index (0x%lx) > 0.  "
 				"Aborting write.", page->index);
 		BUG_ON(PageWriteback(page));
-		set_page_ग_लिखोback(page);
+		set_page_writeback(page);
 		unlock_page(page);
-		end_page_ग_लिखोback(page);
-		वापस -EIO;
-	पूर्ण
-	अगर (!NInoAttr(ni))
+		end_page_writeback(page);
+		return -EIO;
+	}
+	if (!NInoAttr(ni))
 		base_ni = ni;
-	अन्यथा
+	else
 		base_ni = ni->ext.base_ntfs_ino;
 	/* Map, pin, and lock the mft record. */
 	m = map_mft_record(base_ni);
-	अगर (IS_ERR(m)) अणु
+	if (IS_ERR(m)) {
 		err = PTR_ERR(m);
-		m = शून्य;
-		ctx = शून्य;
-		जाओ err_out;
-	पूर्ण
+		m = NULL;
+		ctx = NULL;
+		goto err_out;
+	}
 	/*
-	 * If a parallel ग_लिखो made the attribute non-resident, drop the mft
-	 * record and retry the ग_लिखोpage.
+	 * If a parallel write made the attribute non-resident, drop the mft
+	 * record and retry the writepage.
 	 */
-	अगर (unlikely(NInoNonResident(ni))) अणु
+	if (unlikely(NInoNonResident(ni))) {
 		unmap_mft_record(base_ni);
-		जाओ retry_ग_लिखोpage;
-	पूर्ण
+		goto retry_writepage;
+	}
 	ctx = ntfs_attr_get_search_ctx(base_ni, m);
-	अगर (unlikely(!ctx)) अणु
+	if (unlikely(!ctx)) {
 		err = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 	err = ntfs_attr_lookup(ni->type, ni->name, ni->name_len,
-			CASE_SENSITIVE, 0, शून्य, 0, ctx);
-	अगर (unlikely(err))
-		जाओ err_out;
+			CASE_SENSITIVE, 0, NULL, 0, ctx);
+	if (unlikely(err))
+		goto err_out;
 	/*
-	 * Keep the VM happy.  This must be करोne otherwise the radix-tree tag
-	 * PAGECACHE_TAG_सूचीTY reमुख्यs set even though the page is clean.
+	 * Keep the VM happy.  This must be done otherwise the radix-tree tag
+	 * PAGECACHE_TAG_DIRTY remains set even though the page is clean.
 	 */
 	BUG_ON(PageWriteback(page));
-	set_page_ग_लिखोback(page);
+	set_page_writeback(page);
 	unlock_page(page);
 	attr_len = le32_to_cpu(ctx->attr->data.resident.value_length);
-	i_size = i_size_पढ़ो(vi);
-	अगर (unlikely(attr_len > i_size)) अणु
+	i_size = i_size_read(vi);
+	if (unlikely(attr_len > i_size)) {
 		/* Race with shrinking truncate or a failed truncate. */
 		attr_len = i_size;
 		/*
 		 * If the truncate failed, fix it up now.  If a concurrent
-		 * truncate, we करो its job, so it करोes not have to करो anything.
+		 * truncate, we do its job, so it does not have to do anything.
 		 */
 		err = ntfs_resident_attr_value_resize(ctx->mrec, ctx->attr,
 				attr_len);
 		/* Shrinking cannot fail. */
 		BUG_ON(err);
-	पूर्ण
+	}
 	addr = kmap_atomic(page);
 	/* Copy the data from the page to the mft record. */
-	स_नकल((u8*)ctx->attr +
+	memcpy((u8*)ctx->attr +
 			le16_to_cpu(ctx->attr->data.resident.value_offset),
 			addr, attr_len);
 	/* Zero out of bounds area in the page cache page. */
-	स_रखो(addr + attr_len, 0, PAGE_SIZE - attr_len);
+	memset(addr + attr_len, 0, PAGE_SIZE - attr_len);
 	kunmap_atomic(addr);
 	flush_dcache_page(page);
 	flush_dcache_mft_record_page(ctx->ntfs_ino);
-	/* We are करोne with the page. */
-	end_page_ग_लिखोback(page);
-	/* Finally, mark the mft record dirty, so it माला_लो written back. */
+	/* We are done with the page. */
+	end_page_writeback(page);
+	/* Finally, mark the mft record dirty, so it gets written back. */
 	mark_mft_record_dirty(ctx->ntfs_ino);
 	ntfs_attr_put_search_ctx(ctx);
 	unmap_mft_record(base_ni);
-	वापस 0;
+	return 0;
 err_out:
-	अगर (err == -ENOMEM) अणु
+	if (err == -ENOMEM) {
 		ntfs_warning(vi->i_sb, "Error allocating memory. Redirtying "
 				"page so we try again later.");
 		/*
 		 * Put the page back on mapping->dirty_pages, but leave its
 		 * buffers' dirty state as-is.
 		 */
-		redirty_page_क्रम_ग_लिखोpage(wbc, page);
+		redirty_page_for_writepage(wbc, page);
 		err = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ntfs_error(vi->i_sb, "Resident attribute write failed with "
 				"error %i.", err);
 		SetPageError(page);
 		NVolSetErrors(ni->vol);
-	पूर्ण
+	}
 	unlock_page(page);
-	अगर (ctx)
+	if (ctx)
 		ntfs_attr_put_search_ctx(ctx);
-	अगर (m)
+	if (m)
 		unmap_mft_record(base_ni);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#पूर्ण_अगर	/* NTFS_RW */
+#endif	/* NTFS_RW */
 
 /**
  * ntfs_bmap - map logical file block to physical device block
- * @mapping:	address space mapping to which the block to be mapped beदीर्घs
+ * @mapping:	address space mapping to which the block to be mapped belongs
  * @block:	logical block to map to its physical device block
  *
  * For regular, non-resident files (i.e. not compressed and not encrypted), map
- * the logical @block beदीर्घing to the file described by the address space
+ * the logical @block belonging to the file described by the address space
  * mapping @mapping to its physical device block.
  *
  * The size of the block is equal to the @s_blocksize field of the super block
- * of the mounted file प्रणाली which is guaranteed to be smaller than or equal
+ * of the mounted file system which is guaranteed to be smaller than or equal
  * to the cluster size thus the block is guaranteed to fit entirely inside the
- * cluster which means we करो not need to care how many contiguous bytes are
+ * cluster which means we do not need to care how many contiguous bytes are
  * available after the beginning of the block.
  *
- * Return the physical device block अगर the mapping succeeded or 0 अगर the block
+ * Return the physical device block if the mapping succeeded or 0 if the block
  * is sparse or there was an error.
  *
- * Note: This is a problem अगर someone tries to run bmap() on $Boot प्रणाली file
- * as that really is in block zero but there is nothing we can करो.  bmap() is
+ * Note: This is a problem if someone tries to run bmap() on $Boot system file
+ * as that really is in block zero but there is nothing we can do.  bmap() is
  * just broken in that respect (just like it cannot distinguish sparse from
  * not available or error).
  */
-अटल sector_t ntfs_bmap(काष्ठा address_space *mapping, sector_t block)
-अणु
+static sector_t ntfs_bmap(struct address_space *mapping, sector_t block)
+{
 	s64 ofs, size;
 	loff_t i_size;
 	LCN lcn;
-	अचिन्हित दीर्घ blocksize, flags;
+	unsigned long blocksize, flags;
 	ntfs_inode *ni = NTFS_I(mapping->host);
 	ntfs_volume *vol = ni->vol;
-	अचिन्हित delta;
-	अचिन्हित अक्षर blocksize_bits, cluster_size_shअगरt;
+	unsigned delta;
+	unsigned char blocksize_bits, cluster_size_shift;
 
 	ntfs_debug("Entering for mft_no 0x%lx, logical block 0x%llx.",
-			ni->mft_no, (अचिन्हित दीर्घ दीर्घ)block);
-	अगर (ni->type != AT_DATA || !NInoNonResident(ni) || NInoEncrypted(ni)) अणु
+			ni->mft_no, (unsigned long long)block);
+	if (ni->type != AT_DATA || !NInoNonResident(ni) || NInoEncrypted(ni)) {
 		ntfs_error(vol->sb, "BMAP does not make sense for %s "
 				"attributes, returning 0.",
 				(ni->type != AT_DATA) ? "non-data" :
 				(!NInoNonResident(ni) ? "resident" :
 				"encrypted"));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* None of these can happen. */
 	BUG_ON(NInoCompressed(ni));
 	BUG_ON(NInoMstProtected(ni));
 	blocksize = vol->sb->s_blocksize;
 	blocksize_bits = vol->sb->s_blocksize_bits;
 	ofs = (s64)block << blocksize_bits;
-	पढ़ो_lock_irqsave(&ni->size_lock, flags);
+	read_lock_irqsave(&ni->size_lock, flags);
 	size = ni->initialized_size;
-	i_size = i_size_पढ़ो(VFS_I(ni));
-	पढ़ो_unlock_irqrestore(&ni->size_lock, flags);
+	i_size = i_size_read(VFS_I(ni));
+	read_unlock_irqrestore(&ni->size_lock, flags);
 	/*
 	 * If the offset is outside the initialized size or the block straddles
 	 * the initialized size then pretend it is a hole unless the
 	 * initialized size equals the file size.
 	 */
-	अगर (unlikely(ofs >= size || (ofs + blocksize > size && size < i_size)))
-		जाओ hole;
-	cluster_size_shअगरt = vol->cluster_size_bits;
-	करोwn_पढ़ो(&ni->runlist.lock);
-	lcn = ntfs_attr_vcn_to_lcn_nolock(ni, ofs >> cluster_size_shअगरt, false);
-	up_पढ़ो(&ni->runlist.lock);
-	अगर (unlikely(lcn < LCN_HOLE)) अणु
+	if (unlikely(ofs >= size || (ofs + blocksize > size && size < i_size)))
+		goto hole;
+	cluster_size_shift = vol->cluster_size_bits;
+	down_read(&ni->runlist.lock);
+	lcn = ntfs_attr_vcn_to_lcn_nolock(ni, ofs >> cluster_size_shift, false);
+	up_read(&ni->runlist.lock);
+	if (unlikely(lcn < LCN_HOLE)) {
 		/*
-		 * Step करोwn to an पूर्णांकeger to aव्योम gcc करोing a दीर्घ दीर्घ
-		 * comparision in the चयन when we know @lcn is between
+		 * Step down to an integer to avoid gcc doing a long long
+		 * comparision in the switch when we know @lcn is between
 		 * LCN_HOLE and LCN_EIO (i.e. -1 to -5).
 		 *
 		 * Otherwise older gcc (at least on some architectures) will
 		 * try to use __cmpdi2() which is of course not available in
 		 * the kernel.
 		 */
-		चयन ((पूर्णांक)lcn) अणु
-		हाल LCN_ENOENT:
+		switch ((int)lcn) {
+		case LCN_ENOENT:
 			/*
 			 * If the offset is out of bounds then pretend it is a
 			 * hole.
 			 */
-			जाओ hole;
-		हाल LCN_ENOMEM:
+			goto hole;
+		case LCN_ENOMEM:
 			ntfs_error(vol->sb, "Not enough memory to complete "
 					"mapping for inode 0x%lx.  "
 					"Returning 0.", ni->mft_no);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			ntfs_error(vol->sb, "Failed to complete mapping for "
 					"inode 0x%lx.  Run chkdsk.  "
 					"Returning 0.", ni->mft_no);
-			अवरोध;
-		पूर्ण
-		वापस 0;
-	पूर्ण
-	अगर (lcn < 0) अणु
+			break;
+		}
+		return 0;
+	}
+	if (lcn < 0) {
 		/* It is a hole. */
 hole:
 		ntfs_debug("Done (returning hole).");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/*
 	 * The block is really allocated and fullfils all our criteria.
-	 * Convert the cluster to units of block size and वापस the result.
+	 * Convert the cluster to units of block size and return the result.
 	 */
 	delta = ofs & vol->cluster_size_mask;
-	अगर (unlikely(माप(block) < माप(lcn))) अणु
-		block = lcn = ((lcn << cluster_size_shअगरt) + delta) >>
+	if (unlikely(sizeof(block) < sizeof(lcn))) {
+		block = lcn = ((lcn << cluster_size_shift) + delta) >>
 				blocksize_bits;
-		/* If the block number was truncated वापस 0. */
-		अगर (unlikely(block != lcn)) अणु
+		/* If the block number was truncated return 0. */
+		if (unlikely(block != lcn)) {
 			ntfs_error(vol->sb, "Physical block 0x%llx is too "
 					"large to be returned, returning 0.",
-					(दीर्घ दीर्घ)lcn);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा
-		block = ((lcn << cluster_size_shअगरt) + delta) >>
+					(long long)lcn);
+			return 0;
+		}
+	} else
+		block = ((lcn << cluster_size_shift) + delta) >>
 				blocksize_bits;
-	ntfs_debug("Done (returning block 0x%llx).", (अचिन्हित दीर्घ दीर्घ)lcn);
-	वापस block;
-पूर्ण
+	ntfs_debug("Done (returning block 0x%llx).", (unsigned long long)lcn);
+	return block;
+}
 
 /**
- * ntfs_normal_aops - address space operations क्रम normal inodes and attributes
+ * ntfs_normal_aops - address space operations for normal inodes and attributes
  *
- * Note these are not used क्रम compressed or mst रक्षित inodes and
+ * Note these are not used for compressed or mst protected inodes and
  * attributes.
  */
-स्थिर काष्ठा address_space_operations ntfs_normal_aops = अणु
-	.पढ़ोpage	= ntfs_पढ़ोpage,
-#अगर_घोषित NTFS_RW
-	.ग_लिखोpage	= ntfs_ग_लिखोpage,
+const struct address_space_operations ntfs_normal_aops = {
+	.readpage	= ntfs_readpage,
+#ifdef NTFS_RW
+	.writepage	= ntfs_writepage,
 	.set_page_dirty	= __set_page_dirty_buffers,
-#पूर्ण_अगर /* NTFS_RW */
+#endif /* NTFS_RW */
 	.bmap		= ntfs_bmap,
 	.migratepage	= buffer_migrate_page,
 	.is_partially_uptodate = block_is_partially_uptodate,
-	.error_हटाओ_page = generic_error_हटाओ_page,
-पूर्ण;
+	.error_remove_page = generic_error_remove_page,
+};
 
 /**
- * ntfs_compressed_aops - address space operations क्रम compressed inodes
+ * ntfs_compressed_aops - address space operations for compressed inodes
  */
-स्थिर काष्ठा address_space_operations ntfs_compressed_aops = अणु
-	.पढ़ोpage	= ntfs_पढ़ोpage,
-#अगर_घोषित NTFS_RW
-	.ग_लिखोpage	= ntfs_ग_लिखोpage,
+const struct address_space_operations ntfs_compressed_aops = {
+	.readpage	= ntfs_readpage,
+#ifdef NTFS_RW
+	.writepage	= ntfs_writepage,
 	.set_page_dirty	= __set_page_dirty_buffers,
-#पूर्ण_अगर /* NTFS_RW */
+#endif /* NTFS_RW */
 	.migratepage	= buffer_migrate_page,
 	.is_partially_uptodate = block_is_partially_uptodate,
-	.error_हटाओ_page = generic_error_हटाओ_page,
-पूर्ण;
+	.error_remove_page = generic_error_remove_page,
+};
 
 /**
- * ntfs_mst_aops - general address space operations क्रम mst protecteed inodes
+ * ntfs_mst_aops - general address space operations for mst protecteed inodes
  *		   and attributes
  */
-स्थिर काष्ठा address_space_operations ntfs_mst_aops = अणु
-	.पढ़ोpage	= ntfs_पढ़ोpage,	/* Fill page with data. */
-#अगर_घोषित NTFS_RW
-	.ग_लिखोpage	= ntfs_ग_लिखोpage,	/* Write dirty page to disk. */
+const struct address_space_operations ntfs_mst_aops = {
+	.readpage	= ntfs_readpage,	/* Fill page with data. */
+#ifdef NTFS_RW
+	.writepage	= ntfs_writepage,	/* Write dirty page to disk. */
 	.set_page_dirty	= __set_page_dirty_nobuffers,	/* Set the page dirty
 						   without touching the buffers
-						   beदीर्घing to the page. */
-#पूर्ण_अगर /* NTFS_RW */
+						   belonging to the page. */
+#endif /* NTFS_RW */
 	.migratepage	= buffer_migrate_page,
 	.is_partially_uptodate	= block_is_partially_uptodate,
-	.error_हटाओ_page = generic_error_हटाओ_page,
-पूर्ण;
+	.error_remove_page = generic_error_remove_page,
+};
 
-#अगर_घोषित NTFS_RW
+#ifdef NTFS_RW
 
 /**
  * mark_ntfs_record_dirty - mark an ntfs record dirty
@@ -1702,60 +1701,60 @@ hole:
  *
  * Set the buffers and the page in which the ntfs record is located dirty.
  *
- * The latter also marks the vfs inode the ntfs record beदीर्घs to dirty
- * (I_सूचीTY_PAGES only).
+ * The latter also marks the vfs inode the ntfs record belongs to dirty
+ * (I_DIRTY_PAGES only).
  *
- * If the page करोes not have buffers, we create them and set them uptodate.
+ * If the page does not have buffers, we create them and set them uptodate.
  * The page may not be locked which is why we need to handle the buffers under
- * the mapping->निजी_lock.  Once the buffers are marked dirty we no दीर्घer
- * need the lock since try_to_मुक्त_buffers() करोes not मुक्त dirty buffers.
+ * the mapping->private_lock.  Once the buffers are marked dirty we no longer
+ * need the lock since try_to_free_buffers() does not free dirty buffers.
  */
-व्योम mark_ntfs_record_dirty(काष्ठा page *page, स्थिर अचिन्हित पूर्णांक ofs) अणु
-	काष्ठा address_space *mapping = page->mapping;
+void mark_ntfs_record_dirty(struct page *page, const unsigned int ofs) {
+	struct address_space *mapping = page->mapping;
 	ntfs_inode *ni = NTFS_I(mapping->host);
-	काष्ठा buffer_head *bh, *head, *buffers_to_मुक्त = शून्य;
-	अचिन्हित पूर्णांक end, bh_size, bh_ofs;
+	struct buffer_head *bh, *head, *buffers_to_free = NULL;
+	unsigned int end, bh_size, bh_ofs;
 
 	BUG_ON(!PageUptodate(page));
 	end = ofs + ni->itype.index.block_size;
 	bh_size = VFS_I(ni)->i_sb->s_blocksize;
-	spin_lock(&mapping->निजी_lock);
-	अगर (unlikely(!page_has_buffers(page))) अणु
-		spin_unlock(&mapping->निजी_lock);
+	spin_lock(&mapping->private_lock);
+	if (unlikely(!page_has_buffers(page))) {
+		spin_unlock(&mapping->private_lock);
 		bh = head = alloc_page_buffers(page, bh_size, true);
-		spin_lock(&mapping->निजी_lock);
-		अगर (likely(!page_has_buffers(page))) अणु
-			काष्ठा buffer_head *tail;
+		spin_lock(&mapping->private_lock);
+		if (likely(!page_has_buffers(page))) {
+			struct buffer_head *tail;
 
-			करो अणु
+			do {
 				set_buffer_uptodate(bh);
 				tail = bh;
 				bh = bh->b_this_page;
-			पूर्ण जबतक (bh);
+			} while (bh);
 			tail->b_this_page = head;
-			attach_page_निजी(page, head);
-		पूर्ण अन्यथा
-			buffers_to_मुक्त = bh;
-	पूर्ण
+			attach_page_private(page, head);
+		} else
+			buffers_to_free = bh;
+	}
 	bh = head = page_buffers(page);
 	BUG_ON(!bh);
-	करो अणु
+	do {
 		bh_ofs = bh_offset(bh);
-		अगर (bh_ofs + bh_size <= ofs)
-			जारी;
-		अगर (unlikely(bh_ofs >= end))
-			अवरोध;
+		if (bh_ofs + bh_size <= ofs)
+			continue;
+		if (unlikely(bh_ofs >= end))
+			break;
 		set_buffer_dirty(bh);
-	पूर्ण जबतक ((bh = bh->b_this_page) != head);
-	spin_unlock(&mapping->निजी_lock);
+	} while ((bh = bh->b_this_page) != head);
+	spin_unlock(&mapping->private_lock);
 	__set_page_dirty_nobuffers(page);
-	अगर (unlikely(buffers_to_मुक्त)) अणु
-		करो अणु
-			bh = buffers_to_मुक्त->b_this_page;
-			मुक्त_buffer_head(buffers_to_मुक्त);
-			buffers_to_मुक्त = bh;
-		पूर्ण जबतक (buffers_to_मुक्त);
-	पूर्ण
-पूर्ण
+	if (unlikely(buffers_to_free)) {
+		do {
+			bh = buffers_to_free->b_this_page;
+			free_buffer_head(buffers_to_free);
+			buffers_to_free = bh;
+		} while (buffers_to_free);
+	}
+}
 
-#पूर्ण_अगर /* NTFS_RW */
+#endif /* NTFS_RW */

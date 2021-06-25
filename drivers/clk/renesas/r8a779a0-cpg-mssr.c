@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * r8a779a0 Clock Pulse Generator / Module Standby and Software Reset
  *
@@ -11,45 +10,45 @@
  * Copyright (C) 2015 Renesas Electronics Corp.
  */
 
-#समावेश <linux/bug.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/soc/renesas/rcar-rst.h>
+#include <linux/bug.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/pm.h>
+#include <linux/slab.h>
+#include <linux/soc/renesas/rcar-rst.h>
 
-#समावेश <dt-bindings/घड़ी/r8a779a0-cpg-mssr.h>
+#include <dt-bindings/clock/r8a779a0-cpg-mssr.h>
 
-#समावेश "rcar-cpg-lib.h"
-#समावेश "renesas-cpg-mssr.h"
+#include "rcar-cpg-lib.h"
+#include "renesas-cpg-mssr.h"
 
-क्रमागत rcar_r8a779a0_clk_types अणु
+enum rcar_r8a779a0_clk_types {
 	CLK_TYPE_R8A779A0_MAIN = CLK_TYPE_CUSTOM,
 	CLK_TYPE_R8A779A0_PLL1,
 	CLK_TYPE_R8A779A0_PLL2X_3X,	/* PLL[23][01] */
 	CLK_TYPE_R8A779A0_PLL5,
 	CLK_TYPE_R8A779A0_SD,
-	CLK_TYPE_R8A779A0_MDSEL,	/* Select parent/भागider using mode pin */
-	CLK_TYPE_R8A779A0_OSC,	/* OSC EXTAL preभागider and fixed भागider */
-पूर्ण;
+	CLK_TYPE_R8A779A0_MDSEL,	/* Select parent/divider using mode pin */
+	CLK_TYPE_R8A779A0_OSC,	/* OSC EXTAL predivider and fixed divider */
+};
 
-काष्ठा rcar_r8a779a0_cpg_pll_config अणु
-	u8 extal_भाग;
+struct rcar_r8a779a0_cpg_pll_config {
+	u8 extal_div;
 	u8 pll1_mult;
-	u8 pll1_भाग;
+	u8 pll1_div;
 	u8 pll5_mult;
-	u8 pll5_भाग;
-	u8 osc_preभाग;
-पूर्ण;
+	u8 pll5_div;
+	u8 osc_prediv;
+};
 
-क्रमागत clk_ids अणु
-	/* Core Clock Outमाला_दो exported to DT */
+enum clk_ids {
+	/* Core Clock Outputs exported to DT */
 	LAST_DT_CORE_CLK = R8A779A0_CLK_OSC,
 
 	/* External Input Clocks */
@@ -79,25 +78,25 @@
 
 	/* Module Clocks */
 	MOD_CLK_BASE
-पूर्ण;
+};
 
-#घोषणा DEF_PLL(_name, _id, _offset)	\
+#define DEF_PLL(_name, _id, _offset)	\
 	DEF_BASE(_name, _id, CLK_TYPE_R8A779A0_PLL2X_3X, CLK_MAIN, \
 		 .offset = _offset)
 
-#घोषणा DEF_SD(_name, _id, _parent, _offset)   \
+#define DEF_SD(_name, _id, _parent, _offset)   \
 	DEF_BASE(_name, _id, CLK_TYPE_R8A779A0_SD, _parent, .offset = _offset)
 
-#घोषणा DEF_MDSEL(_name, _id, _md, _parent0, _भाग0, _parent1, _भाग1) \
+#define DEF_MDSEL(_name, _id, _md, _parent0, _div0, _parent1, _div1) \
 	DEF_BASE(_name, _id, CLK_TYPE_R8A779A0_MDSEL,	\
 		 (_parent0) << 16 | (_parent1),		\
-		 .भाग = (_भाग0) << 16 | (_भाग1), .offset = _md)
+		 .div = (_div0) << 16 | (_div1), .offset = _md)
 
-#घोषणा DEF_OSC(_name, _id, _parent, _भाग)		\
-	DEF_BASE(_name, _id, CLK_TYPE_R8A779A0_OSC, _parent, .भाग = _भाग)
+#define DEF_OSC(_name, _id, _parent, _div)		\
+	DEF_BASE(_name, _id, CLK_TYPE_R8A779A0_OSC, _parent, .div = _div)
 
-अटल स्थिर काष्ठा cpg_core_clk r8a779a0_core_clks[] __initस्थिर = अणु
-	/* External Clock Inमाला_दो */
+static const struct cpg_core_clk r8a779a0_core_clks[] __initconst = {
+	/* External Clock Inputs */
 	DEF_INPUT("extal",  CLK_EXTAL),
 	DEF_INPUT("extalr", CLK_EXTALR),
 
@@ -122,7 +121,7 @@
 	DEF_FIXED(".sdsrc",		CLK_SDSRC,	CLK_PLL5_DIV4,	1, 1),
 	DEF_RATE(".oco",		CLK_OCO,	32768),
 
-	/* Core Clock Outमाला_दो */
+	/* Core Clock Outputs */
 	DEF_FIXED("zx",		R8A779A0_CLK_ZX,	CLK_PLL20_DIV2,	2, 1),
 	DEF_FIXED("s1d1",	R8A779A0_CLK_S1D1,	CLK_S1,		1, 1),
 	DEF_FIXED("s1d2",	R8A779A0_CLK_S1D2,	CLK_S1,		2, 1),
@@ -155,9 +154,9 @@
 
 	DEF_OSC("osc",		R8A779A0_CLK_OSC,	CLK_EXTAL,	8),
 	DEF_MDSEL("r",		R8A779A0_CLK_R, 29, CLK_EXTALR, 1, CLK_OCO, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mssr_mod_clk r8a779a0_mod_clks[] __initस्थिर = अणु
+static const struct mssr_mod_clk r8a779a0_mod_clks[] __initconst = {
 	DEF_MOD("avb0",		211,	R8A779A0_CLK_S3D2),
 	DEF_MOD("avb1",		212,	R8A779A0_CLK_S3D2),
 	DEF_MOD("avb2",		213,	R8A779A0_CLK_S3D2),
@@ -247,86 +246,86 @@
 	DEF_MOD("vspx1",	1029,	R8A779A0_CLK_S1D1),
 	DEF_MOD("vspx2",	1030,	R8A779A0_CLK_S1D1),
 	DEF_MOD("vspx3",	1031,	R8A779A0_CLK_S1D1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rcar_r8a779a0_cpg_pll_config *cpg_pll_config __initdata;
-अटल अचिन्हित पूर्णांक cpg_clk_extalr __initdata;
-अटल u32 cpg_mode __initdata;
+static const struct rcar_r8a779a0_cpg_pll_config *cpg_pll_config __initdata;
+static unsigned int cpg_clk_extalr __initdata;
+static u32 cpg_mode __initdata;
 
-अटल काष्ठा clk * __init rcar_r8a779a0_cpg_clk_रेजिस्टर(काष्ठा device *dev,
-	स्थिर काष्ठा cpg_core_clk *core, स्थिर काष्ठा cpg_mssr_info *info,
-	काष्ठा clk **clks, व्योम __iomem *base,
-	काष्ठा raw_notअगरier_head *notअगरiers)
-अणु
-	स्थिर काष्ठा clk *parent;
-	अचिन्हित पूर्णांक mult = 1;
-	अचिन्हित पूर्णांक भाग = 1;
+static struct clk * __init rcar_r8a779a0_cpg_clk_register(struct device *dev,
+	const struct cpg_core_clk *core, const struct cpg_mssr_info *info,
+	struct clk **clks, void __iomem *base,
+	struct raw_notifier_head *notifiers)
+{
+	const struct clk *parent;
+	unsigned int mult = 1;
+	unsigned int div = 1;
 	u32 value;
 
 	parent = clks[core->parent & 0xffff];	/* some types use high bits */
-	अगर (IS_ERR(parent))
-		वापस ERR_CAST(parent);
+	if (IS_ERR(parent))
+		return ERR_CAST(parent);
 
-	चयन (core->type) अणु
-	हाल CLK_TYPE_R8A779A0_MAIN:
-		भाग = cpg_pll_config->extal_भाग;
-		अवरोध;
+	switch (core->type) {
+	case CLK_TYPE_R8A779A0_MAIN:
+		div = cpg_pll_config->extal_div;
+		break;
 
-	हाल CLK_TYPE_R8A779A0_PLL1:
+	case CLK_TYPE_R8A779A0_PLL1:
 		mult = cpg_pll_config->pll1_mult;
-		भाग = cpg_pll_config->pll1_भाग;
-		अवरोध;
+		div = cpg_pll_config->pll1_div;
+		break;
 
-	हाल CLK_TYPE_R8A779A0_PLL2X_3X:
-		value = पढ़ोl(base + core->offset);
+	case CLK_TYPE_R8A779A0_PLL2X_3X:
+		value = readl(base + core->offset);
 		mult = (((value >> 24) & 0x7f) + 1) * 2;
-		अवरोध;
+		break;
 
-	हाल CLK_TYPE_R8A779A0_PLL5:
+	case CLK_TYPE_R8A779A0_PLL5:
 		mult = cpg_pll_config->pll5_mult;
-		भाग = cpg_pll_config->pll5_भाग;
-		अवरोध;
+		div = cpg_pll_config->pll5_div;
+		break;
 
-	हाल CLK_TYPE_R8A779A0_SD:
-		वापस cpg_sd_clk_रेजिस्टर(core->name, base, core->offset,
-					   __clk_get_name(parent), notअगरiers,
+	case CLK_TYPE_R8A779A0_SD:
+		return cpg_sd_clk_register(core->name, base, core->offset,
+					   __clk_get_name(parent), notifiers,
 					   false);
-		अवरोध;
+		break;
 
-	हाल CLK_TYPE_R8A779A0_MDSEL:
+	case CLK_TYPE_R8A779A0_MDSEL:
 		/*
-		 * Clock selectable between two parents and two fixed भागiders
+		 * Clock selectable between two parents and two fixed dividers
 		 * using a mode pin
 		 */
-		अगर (cpg_mode & BIT(core->offset)) अणु
-			भाग = core->भाग & 0xffff;
-		पूर्ण अन्यथा अणु
+		if (cpg_mode & BIT(core->offset)) {
+			div = core->div & 0xffff;
+		} else {
 			parent = clks[core->parent >> 16];
-			अगर (IS_ERR(parent))
-				वापस ERR_CAST(parent);
-			भाग = core->भाग >> 16;
-		पूर्ण
+			if (IS_ERR(parent))
+				return ERR_CAST(parent);
+			div = core->div >> 16;
+		}
 		mult = 1;
-		अवरोध;
+		break;
 
-	हाल CLK_TYPE_R8A779A0_OSC:
+	case CLK_TYPE_R8A779A0_OSC:
 		/*
-		 * Clock combining OSC EXTAL preभागider and a fixed भागider
+		 * Clock combining OSC EXTAL predivider and a fixed divider
 		 */
-		भाग = cpg_pll_config->osc_preभाग * core->भाग;
-		अवरोध;
+		div = cpg_pll_config->osc_prediv * core->div;
+		break;
 
-	शेष:
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	default:
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस clk_रेजिस्टर_fixed_factor(शून्य, core->name,
-					 __clk_get_name(parent), 0, mult, भाग);
-पूर्ण
+	return clk_register_fixed_factor(NULL, core->name,
+					 __clk_get_name(parent), 0, mult, div);
+}
 
-अटल स्थिर अचिन्हित पूर्णांक r8a779a0_crit_mod_clks[] __initस्थिर = अणु
+static const unsigned int r8a779a0_crit_mod_clks[] __initconst = {
 	MOD_CLK_ID(907),	/* RWDT */
-पूर्ण;
+};
 
 /*
  * CPG Clock Data
@@ -340,33 +339,33 @@
  * 1  0	 Prohibited setting
  * 1  1	 33.33 / 2	x128	x216	x128	x144	x192	/32
  */
-#घोषणा CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 13) | \
+#define CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 13) | \
 					 (((md) & BIT(13)) >> 13))
 
-अटल स्थिर काष्ठा rcar_r8a779a0_cpg_pll_config cpg_pll_configs[4] = अणु
-	/* EXTAL भाग	PLL1 mult/भाग	PLL5 mult/भाग	OSC preभाग */
-	अणु 1,		128,	1,	192,	1,	16,	पूर्ण,
-	अणु 1,		106,	1,	160,	1,	19,	पूर्ण,
-	अणु 0,		0,	0,	0,	0,	0,	पूर्ण,
-	अणु 2,		128,	1,	192,	1,	32,	पूर्ण,
-पूर्ण;
+static const struct rcar_r8a779a0_cpg_pll_config cpg_pll_configs[4] = {
+	/* EXTAL div	PLL1 mult/div	PLL5 mult/div	OSC prediv */
+	{ 1,		128,	1,	192,	1,	16,	},
+	{ 1,		106,	1,	160,	1,	19,	},
+	{ 0,		0,	0,	0,	0,	0,	},
+	{ 2,		128,	1,	192,	1,	32,	},
+};
 
-अटल पूर्णांक __init r8a779a0_cpg_mssr_init(काष्ठा device *dev)
-अणु
-	पूर्णांक error;
+static int __init r8a779a0_cpg_mssr_init(struct device *dev)
+{
+	int error;
 
-	error = rcar_rst_पढ़ो_mode_pins(&cpg_mode);
-	अगर (error)
-		वापस error;
+	error = rcar_rst_read_mode_pins(&cpg_mode);
+	if (error)
+		return error;
 
 	cpg_pll_config = &cpg_pll_configs[CPG_PLL_CONFIG_INDEX(cpg_mode)];
 	cpg_clk_extalr = CLK_EXTALR;
 	spin_lock_init(&cpg_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा cpg_mssr_info r8a779a0_cpg_mssr_info __initस्थिर = अणु
+const struct cpg_mssr_info r8a779a0_cpg_mssr_info __initconst = {
 	/* Core Clocks */
 	.core_clks = r8a779a0_core_clks,
 	.num_core_clks = ARRAY_SIZE(r8a779a0_core_clks),
@@ -384,7 +383,7 @@
 
 	/* Callbacks */
 	.init = r8a779a0_cpg_mssr_init,
-	.cpg_clk_रेजिस्टर = rcar_r8a779a0_cpg_clk_रेजिस्टर,
+	.cpg_clk_register = rcar_r8a779a0_cpg_clk_register,
 
 	.reg_layout = CLK_REG_LAYOUT_RCAR_V3U,
-पूर्ण;
+};

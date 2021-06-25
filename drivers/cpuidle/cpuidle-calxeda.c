@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2012 Calxeda, Inc.
  *
@@ -7,67 +6,67 @@
  * Copyright 2012 Freescale Semiconductor, Inc.
  * Copyright 2012 Linaro Ltd.
  *
- * Maपूर्णांकainer: Rob Herring <rob.herring@calxeda.com>
+ * Maintainer: Rob Herring <rob.herring@calxeda.com>
  */
 
-#समावेश <linux/cpuidle.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/psci.h>
+#include <linux/cpuidle.h>
+#include <linux/cpu_pm.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/platform_device.h>
+#include <linux/psci.h>
 
-#समावेश <यंत्र/cpuidle.h>
-#समावेश <यंत्र/suspend.h>
+#include <asm/cpuidle.h>
+#include <asm/suspend.h>
 
-#समावेश <uapi/linux/psci.h>
+#include <uapi/linux/psci.h>
 
-#घोषणा CALXEDA_IDLE_PARAM \
+#define CALXEDA_IDLE_PARAM \
 	((0 << PSCI_0_2_POWER_STATE_ID_SHIFT) | \
 	 (0 << PSCI_0_2_POWER_STATE_AFFL_SHIFT) | \
 	 (PSCI_POWER_STATE_TYPE_POWER_DOWN << PSCI_0_2_POWER_STATE_TYPE_SHIFT))
 
-अटल पूर्णांक calxeda_idle_finish(अचिन्हित दीर्घ val)
-अणु
-	वापस psci_ops.cpu_suspend(CALXEDA_IDLE_PARAM, __pa(cpu_resume));
-पूर्ण
+static int calxeda_idle_finish(unsigned long val)
+{
+	return psci_ops.cpu_suspend(CALXEDA_IDLE_PARAM, __pa(cpu_resume));
+}
 
-अटल पूर्णांक calxeda_pwrकरोwn_idle(काष्ठा cpuidle_device *dev,
-				काष्ठा cpuidle_driver *drv,
-				पूर्णांक index)
-अणु
+static int calxeda_pwrdown_idle(struct cpuidle_device *dev,
+				struct cpuidle_driver *drv,
+				int index)
+{
 	cpu_pm_enter();
 	cpu_suspend(0, calxeda_idle_finish);
-	cpu_pm_निकास();
+	cpu_pm_exit();
 
-	वापस index;
-पूर्ण
+	return index;
+}
 
-अटल काष्ठा cpuidle_driver calxeda_idle_driver = अणु
+static struct cpuidle_driver calxeda_idle_driver = {
 	.name = "calxeda_idle",
-	.states = अणु
+	.states = {
 		ARM_CPUIDLE_WFI_STATE,
-		अणु
+		{
 			.name = "PG",
 			.desc = "Power Gate",
-			.निकास_latency = 30,
-			.घातer_usage = 50,
+			.exit_latency = 30,
+			.power_usage = 50,
 			.target_residency = 200,
-			.enter = calxeda_pwrकरोwn_idle,
-		पूर्ण,
-	पूर्ण,
+			.enter = calxeda_pwrdown_idle,
+		},
+	},
 	.state_count = 2,
-पूर्ण;
+};
 
-अटल पूर्णांक calxeda_cpuidle_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस cpuidle_रेजिस्टर(&calxeda_idle_driver, शून्य);
-पूर्ण
+static int calxeda_cpuidle_probe(struct platform_device *pdev)
+{
+	return cpuidle_register(&calxeda_idle_driver, NULL);
+}
 
-अटल काष्ठा platक्रमm_driver calxeda_cpuidle_plat_driver = अणु
-        .driver = अणु
+static struct platform_driver calxeda_cpuidle_plat_driver = {
+        .driver = {
                 .name = "cpuidle-calxeda",
-        पूर्ण,
+        },
         .probe = calxeda_cpuidle_probe,
-पूर्ण;
-builtin_platक्रमm_driver(calxeda_cpuidle_plat_driver);
+};
+builtin_platform_driver(calxeda_cpuidle_plat_driver);

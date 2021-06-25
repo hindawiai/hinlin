@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#समावेश "../wifi.h"
-#समावेश "../pci.h"
-#समावेश "../base.h"
-#समावेश "reg.h"
-#समावेश "def.h"
-#समावेश "fw.h"
+#include "../wifi.h"
+#include "../pci.h"
+#include "../base.h"
+#include "reg.h"
+#include "def.h"
+#include "fw.h"
 
-अटल व्योम _rtl92s_fw_set_rqpn(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+static void _rtl92s_fw_set_rqpn(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
 
-	rtl_ग_लिखो_dword(rtlpriv, RQPN, 0xffffffff);
-	rtl_ग_लिखो_dword(rtlpriv, RQPN + 4, 0xffffffff);
-	rtl_ग_लिखो_byte(rtlpriv, RQPN + 8, 0xff);
-	rtl_ग_लिखो_byte(rtlpriv, RQPN + 0xB, 0x80);
-पूर्ण
+	rtl_write_dword(rtlpriv, RQPN, 0xffffffff);
+	rtl_write_dword(rtlpriv, RQPN + 4, 0xffffffff);
+	rtl_write_byte(rtlpriv, RQPN + 8, 0xff);
+	rtl_write_byte(rtlpriv, RQPN + 0xB, 0x80);
+}
 
-अटल bool _rtl92s_firmware_enable_cpu(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	u32 icheckसमय = 200;
-	u16 पंचांगpu2b;
-	u8 पंचांगpu1b, cpustatus = 0;
+static bool _rtl92s_firmware_enable_cpu(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	u32 ichecktime = 200;
+	u16 tmpu2b;
+	u8 tmpu1b, cpustatus = 0;
 
 	_rtl92s_fw_set_rqpn(hw);
 
 	/* Enable CPU. */
-	पंचांगpu1b = rtl_पढ़ो_byte(rtlpriv, SYS_CLKR);
+	tmpu1b = rtl_read_byte(rtlpriv, SYS_CLKR);
 	/* AFE source */
-	rtl_ग_लिखो_byte(rtlpriv, SYS_CLKR, (पंचांगpu1b | SYS_CPU_CLKSEL));
+	rtl_write_byte(rtlpriv, SYS_CLKR, (tmpu1b | SYS_CPU_CLKSEL));
 
-	पंचांगpu2b = rtl_पढ़ो_word(rtlpriv, REG_SYS_FUNC_EN);
-	rtl_ग_लिखो_word(rtlpriv, REG_SYS_FUNC_EN, (पंचांगpu2b | FEN_CPUEN));
+	tmpu2b = rtl_read_word(rtlpriv, REG_SYS_FUNC_EN);
+	rtl_write_word(rtlpriv, REG_SYS_FUNC_EN, (tmpu2b | FEN_CPUEN));
 
 	/* Polling IMEM Ready after CPU has refilled. */
-	करो अणु
-		cpustatus = rtl_पढ़ो_byte(rtlpriv, TCR);
-		अगर (cpustatus & IMEM_RDY) अणु
+	do {
+		cpustatus = rtl_read_byte(rtlpriv, TCR);
+		if (cpustatus & IMEM_RDY) {
 			rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 				"IMEM Ready after CPU has refilled\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		udelay(100);
-	पूर्ण जबतक (icheckसमय--);
+	} while (ichecktime--);
 
-	अगर (!(cpustatus & IMEM_RDY))
-		वापस false;
+	if (!(cpustatus & IMEM_RDY))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल क्रमागत fw_status _rtl92s_firmware_get_nextstatus(
-		क्रमागत fw_status fw_currentstatus)
-अणु
-	क्रमागत fw_status	next_fwstatus = 0;
+static enum fw_status _rtl92s_firmware_get_nextstatus(
+		enum fw_status fw_currentstatus)
+{
+	enum fw_status	next_fwstatus = 0;
 
-	चयन (fw_currentstatus) अणु
-	हाल FW_STATUS_INIT:
+	switch (fw_currentstatus) {
+	case FW_STATUS_INIT:
 		next_fwstatus = FW_STATUS_LOAD_IMEM;
-		अवरोध;
-	हाल FW_STATUS_LOAD_IMEM:
+		break;
+	case FW_STATUS_LOAD_IMEM:
 		next_fwstatus = FW_STATUS_LOAD_EMEM;
-		अवरोध;
-	हाल FW_STATUS_LOAD_EMEM:
+		break;
+	case FW_STATUS_LOAD_EMEM:
 		next_fwstatus = FW_STATUS_LOAD_DMEM;
-		अवरोध;
-	हाल FW_STATUS_LOAD_DMEM:
+		break;
+	case FW_STATUS_LOAD_DMEM:
 		next_fwstatus = FW_STATUS_READY;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस next_fwstatus;
-पूर्ण
+	return next_fwstatus;
+}
 
-अटल u8 _rtl92s_firmware_header_map_rftype(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+static u8 _rtl92s_firmware_header_map_rftype(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_phy *rtlphy = &(rtlpriv->phy);
 
-	चयन (rtlphy->rf_type) अणु
-	हाल RF_1T1R:
-		वापस 0x11;
-	हाल RF_1T2R:
-		वापस 0x12;
-	हाल RF_2T2R:
-		वापस 0x22;
-	शेष:
+	switch (rtlphy->rf_type) {
+	case RF_1T1R:
+		return 0x11;
+	case RF_1T2R:
+		return 0x12;
+	case RF_2T2R:
+		return 0x22;
+	default:
 		pr_err("Unknown RF type(%x)\n", rtlphy->rf_type);
-		अवरोध;
-	पूर्ण
-	वापस 0x22;
-पूर्ण
+		break;
+	}
+	return 0x22;
+}
 
-अटल व्योम _rtl92s_firmwareheader_priveupdate(काष्ठा ieee80211_hw *hw,
-		काष्ठा fw_priv *pfw_priv)
-अणु
-	/* Update RF types क्रम RATR settings. */
+static void _rtl92s_firmwareheader_priveupdate(struct ieee80211_hw *hw,
+		struct fw_priv *pfw_priv)
+{
+	/* Update RF types for RATR settings. */
 	pfw_priv->rf_config = _rtl92s_firmware_header_map_rftype(hw);
-पूर्ण
+}
 
 
 
-अटल bool _rtl92s_cmd_send_packet(काष्ठा ieee80211_hw *hw,
-		काष्ठा sk_buff *skb, u8 last)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	काष्ठा rtl8192_tx_ring *ring;
-	काष्ठा rtl_tx_desc *pdesc;
-	अचिन्हित दीर्घ flags;
+static bool _rtl92s_cmd_send_packet(struct ieee80211_hw *hw,
+		struct sk_buff *skb, u8 last)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	struct rtl8192_tx_ring *ring;
+	struct rtl_tx_desc *pdesc;
+	unsigned long flags;
 	u8 idx = 0;
 
 	ring = &rtlpci->tx_ring[TXCMD_QUEUE];
@@ -128,15 +127,15 @@
 
 	spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool _rtl92s_firmware_करोwnloadcode(काष्ठा ieee80211_hw *hw,
-		u8 *code_भव_address, u32 buffer_len)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा sk_buff *skb;
-	काष्ठा rtl_tcb_desc *tcb_desc;
+static bool _rtl92s_firmware_downloadcode(struct ieee80211_hw *hw,
+		u8 *code_virtual_address, u32 buffer_len)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct sk_buff *skb;
+	struct rtl_tcb_desc *tcb_desc;
 	u16 frag_threshold = MAX_FIRMWARE_CODE_SIZE;
 	u16 frag_length, frag_offset = 0;
 	u16 extra_descoffset = 0;
@@ -144,32 +143,32 @@
 
 	_rtl92s_fw_set_rqpn(hw);
 
-	अगर (buffer_len >= MAX_FIRMWARE_CODE_SIZE) अणु
+	if (buffer_len >= MAX_FIRMWARE_CODE_SIZE) {
 		pr_err("Size over FIRMWARE_CODE_SIZE!\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	extra_descoffset = 0;
 
-	करो अणु
-		अगर ((buffer_len - frag_offset) > frag_threshold) अणु
+	do {
+		if ((buffer_len - frag_offset) > frag_threshold) {
 			frag_length = frag_threshold + extra_descoffset;
-		पूर्ण अन्यथा अणु
+		} else {
 			frag_length = (u16)(buffer_len - frag_offset +
 					    extra_descoffset);
 			last_inipkt = 1;
-		पूर्ण
+		}
 
 		/* Allocate skb buffer to contain firmware */
 		/* info and tx descriptor info. */
 		skb = dev_alloc_skb(frag_length);
-		अगर (!skb)
-			वापस false;
+		if (!skb)
+			return false;
 		skb_reserve(skb, extra_descoffset);
-		skb_put_data(skb, code_भव_address + frag_offset,
+		skb_put_data(skb, code_virtual_address + frag_offset,
 			     (u32)(frag_length - extra_descoffset));
 
-		tcb_desc = (काष्ठा rtl_tcb_desc *)(skb->cb);
+		tcb_desc = (struct rtl_tcb_desc *)(skb->cb);
 		tcb_desc->queue_index = TXCMD_QUEUE;
 		tcb_desc->cmd_or_init = DESC_PACKET_TYPE_INIT;
 		tcb_desc->last_inipkt = last_inipkt;
@@ -178,162 +177,162 @@
 
 		frag_offset += (frag_length - extra_descoffset);
 
-	पूर्ण जबतक (frag_offset < buffer_len);
+	} while (frag_offset < buffer_len);
 
-	rtl_ग_लिखो_byte(rtlpriv, TP_POLL, TPPOLL_CQ);
+	rtl_write_byte(rtlpriv, TP_POLL, TPPOLL_CQ);
 
-	वापस true ;
-पूर्ण
+	return true ;
+}
 
-अटल bool _rtl92s_firmware_checkपढ़ोy(काष्ठा ieee80211_hw *hw,
+static bool _rtl92s_firmware_checkready(struct ieee80211_hw *hw,
 		u8 loadfw_status)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rt_firmware *firmware = (काष्ठा rt_firmware *)rtlhal->pfirmware;
-	u32 पंचांगpu4b;
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rt_firmware *firmware = (struct rt_firmware *)rtlhal->pfirmware;
+	u32 tmpu4b;
 	u8 cpustatus = 0;
-	लघु pollingcnt = 1000;
+	short pollingcnt = 1000;
 	bool rtstatus = true;
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 		"LoadStaus(%d)\n", loadfw_status);
 
-	firmware->fwstatus = (क्रमागत fw_status)loadfw_status;
+	firmware->fwstatus = (enum fw_status)loadfw_status;
 
-	चयन (loadfw_status) अणु
-	हाल FW_STATUS_LOAD_IMEM:
-		/* Polling IMEM code करोne. */
-		करो अणु
-			cpustatus = rtl_पढ़ो_byte(rtlpriv, TCR);
-			अगर (cpustatus & IMEM_CODE_DONE)
-				अवरोध;
+	switch (loadfw_status) {
+	case FW_STATUS_LOAD_IMEM:
+		/* Polling IMEM code done. */
+		do {
+			cpustatus = rtl_read_byte(rtlpriv, TCR);
+			if (cpustatus & IMEM_CODE_DONE)
+				break;
 			udelay(5);
-		पूर्ण जबतक (pollingcnt--);
+		} while (pollingcnt--);
 
-		अगर (!(cpustatus & IMEM_CHK_RPT) || (pollingcnt <= 0)) अणु
+		if (!(cpustatus & IMEM_CHK_RPT) || (pollingcnt <= 0)) {
 			pr_err("FW_STATUS_LOAD_IMEM FAIL CPU, Status=%x\n",
 			       cpustatus);
-			जाओ status_check_fail;
-		पूर्ण
-		अवरोध;
+			goto status_check_fail;
+		}
+		break;
 
-	हाल FW_STATUS_LOAD_EMEM:
+	case FW_STATUS_LOAD_EMEM:
 		/* Check Put Code OK and Turn On CPU */
-		/* Polling EMEM code करोne. */
-		करो अणु
-			cpustatus = rtl_पढ़ो_byte(rtlpriv, TCR);
-			अगर (cpustatus & EMEM_CODE_DONE)
-				अवरोध;
+		/* Polling EMEM code done. */
+		do {
+			cpustatus = rtl_read_byte(rtlpriv, TCR);
+			if (cpustatus & EMEM_CODE_DONE)
+				break;
 			udelay(5);
-		पूर्ण जबतक (pollingcnt--);
+		} while (pollingcnt--);
 
-		अगर (!(cpustatus & EMEM_CHK_RPT) || (pollingcnt <= 0)) अणु
+		if (!(cpustatus & EMEM_CHK_RPT) || (pollingcnt <= 0)) {
 			pr_err("FW_STATUS_LOAD_EMEM FAIL CPU, Status=%x\n",
 			       cpustatus);
-			जाओ status_check_fail;
-		पूर्ण
+			goto status_check_fail;
+		}
 
 		/* Turn On CPU */
 		rtstatus = _rtl92s_firmware_enable_cpu(hw);
-		अगर (!rtstatus) अणु
+		if (!rtstatus) {
 			pr_err("Enable CPU fail!\n");
-			जाओ status_check_fail;
-		पूर्ण
-		अवरोध;
+			goto status_check_fail;
+		}
+		break;
 
-	हाल FW_STATUS_LOAD_DMEM:
-		/* Polling DMEM code करोne */
-		करो अणु
-			cpustatus = rtl_पढ़ो_byte(rtlpriv, TCR);
-			अगर (cpustatus & DMEM_CODE_DONE)
-				अवरोध;
+	case FW_STATUS_LOAD_DMEM:
+		/* Polling DMEM code done */
+		do {
+			cpustatus = rtl_read_byte(rtlpriv, TCR);
+			if (cpustatus & DMEM_CODE_DONE)
+				break;
 			udelay(5);
-		पूर्ण जबतक (pollingcnt--);
+		} while (pollingcnt--);
 
-		अगर (!(cpustatus & DMEM_CODE_DONE) || (pollingcnt <= 0)) अणु
+		if (!(cpustatus & DMEM_CODE_DONE) || (pollingcnt <= 0)) {
 			pr_err("Polling DMEM code done fail ! cpustatus(%#x)\n",
 			       cpustatus);
-			जाओ status_check_fail;
-		पूर्ण
+			goto status_check_fail;
+		}
 
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"DMEM code download success, cpustatus(%#x)\n",
 			cpustatus);
 
 		/* Prevent Delay too much and being scheduled out */
-		/* Polling Load Firmware पढ़ोy */
+		/* Polling Load Firmware ready */
 		pollingcnt = 2000;
-		करो अणु
-			cpustatus = rtl_पढ़ो_byte(rtlpriv, TCR);
-			अगर (cpustatus & FWRDY)
-				अवरोध;
+		do {
+			cpustatus = rtl_read_byte(rtlpriv, TCR);
+			if (cpustatus & FWRDY)
+				break;
 			udelay(40);
-		पूर्ण जबतक (pollingcnt--);
+		} while (pollingcnt--);
 
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"Polling Load Firmware ready, cpustatus(%x)\n",
 			cpustatus);
 
-		अगर (((cpustatus & LOAD_FW_READY) != LOAD_FW_READY) ||
-		    (pollingcnt <= 0)) अणु
+		if (((cpustatus & LOAD_FW_READY) != LOAD_FW_READY) ||
+		    (pollingcnt <= 0)) {
 			pr_err("Polling Load Firmware ready fail ! cpustatus(%x)\n",
 			       cpustatus);
-			जाओ status_check_fail;
-		पूर्ण
+			goto status_check_fail;
+		}
 
 		/* If right here, we can set TCR/RCR to desired value  */
 		/* and config MAC lookback mode to normal mode */
-		पंचांगpu4b = rtl_पढ़ो_dword(rtlpriv, TCR);
-		rtl_ग_लिखो_dword(rtlpriv, TCR, (पंचांगpu4b & (~TCR_ICV)));
+		tmpu4b = rtl_read_dword(rtlpriv, TCR);
+		rtl_write_dword(rtlpriv, TCR, (tmpu4b & (~TCR_ICV)));
 
-		पंचांगpu4b = rtl_पढ़ो_dword(rtlpriv, RCR);
-		rtl_ग_लिखो_dword(rtlpriv, RCR, (पंचांगpu4b | RCR_APPFCS |
+		tmpu4b = rtl_read_dword(rtlpriv, RCR);
+		rtl_write_dword(rtlpriv, RCR, (tmpu4b | RCR_APPFCS |
 				RCR_APP_ICV | RCR_APP_MIC));
 
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
-			"Current RCR settings(%#x)\n", पंचांगpu4b);
+			"Current RCR settings(%#x)\n", tmpu4b);
 
 		/* Set to normal mode. */
-		rtl_ग_लिखो_byte(rtlpriv, LBKMD_SEL, LBK_NORMAL);
-		अवरोध;
+		rtl_write_byte(rtlpriv, LBKMD_SEL, LBK_NORMAL);
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown status check!\n");
 		rtstatus = false;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 status_check_fail:
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 		"loadfw_status(%d), rtstatus(%x)\n",
 		loadfw_status, rtstatus);
-	वापस rtstatus;
-पूर्ण
+	return rtstatus;
+}
 
-पूर्णांक rtl92s_करोwnload_fw(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rt_firmware *firmware = शून्य;
-	काष्ठा fw_hdr *pfwheader;
-	काष्ठा fw_priv *pfw_priv = शून्य;
-	u8 *puc_mappedfile = शून्य;
+int rtl92s_download_fw(struct ieee80211_hw *hw)
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rt_firmware *firmware = NULL;
+	struct fw_hdr *pfwheader;
+	struct fw_priv *pfw_priv = NULL;
+	u8 *puc_mappedfile = NULL;
 	u32 ul_filelength = 0;
 	u8 fwhdr_size = RT_8192S_FIRMWARE_HDR_SIZE;
 	u8 fwstatus = FW_STATUS_INIT;
 	bool rtstatus = true;
 
-	अगर (rtlpriv->max_fw_size == 0 || !rtlhal->pfirmware)
-		वापस 1;
+	if (rtlpriv->max_fw_size == 0 || !rtlhal->pfirmware)
+		return 1;
 
-	firmware = (काष्ठा rt_firmware *)rtlhal->pfirmware;
+	firmware = (struct rt_firmware *)rtlhal->pfirmware;
 	firmware->fwstatus = FW_STATUS_INIT;
 
-	puc_mappedfile = firmware->sz_fw_पंचांगpbuffer;
+	puc_mappedfile = firmware->sz_fw_tmpbuffer;
 
 	/* 1. Retrieve FW header. */
-	firmware->pfwheader = (काष्ठा fw_hdr *) puc_mappedfile;
+	firmware->pfwheader = (struct fw_hdr *) puc_mappedfile;
 	pfwheader = firmware->pfwheader;
 	firmware->firmwareversion =  byte(pfwheader->version, 0);
 	firmware->pfwheader->fwpriv.hci_sel = 1;/* pcie */
@@ -345,45 +344,45 @@ status_check_fail:
 		pfwheader->img_imem_size, pfwheader->img_sram_size);
 
 	/* 2. Retrieve IMEM image. */
-	अगर ((pfwheader->img_imem_size == 0) || (pfwheader->img_imem_size >
-	    माप(firmware->fw_imem))) अणु
+	if ((pfwheader->img_imem_size == 0) || (pfwheader->img_imem_size >
+	    sizeof(firmware->fw_imem))) {
 		pr_err("memory for data image is less than IMEM required\n");
-		जाओ fail;
-	पूर्ण अन्यथा अणु
+		goto fail;
+	} else {
 		puc_mappedfile += fwhdr_size;
 
-		स_नकल(firmware->fw_imem, puc_mappedfile,
+		memcpy(firmware->fw_imem, puc_mappedfile,
 		       pfwheader->img_imem_size);
 		firmware->fw_imem_len = pfwheader->img_imem_size;
-	पूर्ण
+	}
 
 	/* 3. Retriecve EMEM image. */
-	अगर (pfwheader->img_sram_size > माप(firmware->fw_emem)) अणु
+	if (pfwheader->img_sram_size > sizeof(firmware->fw_emem)) {
 		pr_err("memory for data image is less than EMEM required\n");
-		जाओ fail;
-	पूर्ण अन्यथा अणु
+		goto fail;
+	} else {
 		puc_mappedfile += firmware->fw_imem_len;
 
-		स_नकल(firmware->fw_emem, puc_mappedfile,
+		memcpy(firmware->fw_emem, puc_mappedfile,
 		       pfwheader->img_sram_size);
 		firmware->fw_emem_len = pfwheader->img_sram_size;
-	पूर्ण
+	}
 
-	/* 4. करोwnload fw now */
+	/* 4. download fw now */
 	fwstatus = _rtl92s_firmware_get_nextstatus(firmware->fwstatus);
-	जबतक (fwstatus != FW_STATUS_READY) अणु
+	while (fwstatus != FW_STATUS_READY) {
 		/* Image buffer redirection. */
-		चयन (fwstatus) अणु
-		हाल FW_STATUS_LOAD_IMEM:
+		switch (fwstatus) {
+		case FW_STATUS_LOAD_IMEM:
 			puc_mappedfile = firmware->fw_imem;
 			ul_filelength = firmware->fw_imem_len;
-			अवरोध;
-		हाल FW_STATUS_LOAD_EMEM:
+			break;
+		case FW_STATUS_LOAD_EMEM:
 			puc_mappedfile = firmware->fw_emem;
 			ul_filelength = firmware->fw_emem_len;
-			अवरोध;
-		हाल FW_STATUS_LOAD_DMEM:
-			/* Partial update the content of header निजी. */
+			break;
+		case FW_STATUS_LOAD_DMEM:
+			/* Partial update the content of header private. */
 			pfwheader = firmware->pfwheader;
 			pfw_priv = &pfwheader->fwpriv;
 			_rtl92s_firmwareheader_priveupdate(hw, pfw_priv);
@@ -391,56 +390,56 @@ status_check_fail:
 					RT_8192S_FIRMWARE_HDR_EXCLUDE_PRI_SIZE;
 			ul_filelength = fwhdr_size -
 					RT_8192S_FIRMWARE_HDR_EXCLUDE_PRI_SIZE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("Unexpected Download step!!\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		/* <2> Download image file */
-		rtstatus = _rtl92s_firmware_करोwnloadcode(hw, puc_mappedfile,
+		rtstatus = _rtl92s_firmware_downloadcode(hw, puc_mappedfile,
 				ul_filelength);
 
-		अगर (!rtstatus) अणु
+		if (!rtstatus) {
 			pr_err("fail!\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		/* <3> Check whether load FW process is पढ़ोy */
-		rtstatus = _rtl92s_firmware_checkपढ़ोy(hw, fwstatus);
-		अगर (!rtstatus) अणु
+		/* <3> Check whether load FW process is ready */
+		rtstatus = _rtl92s_firmware_checkready(hw, fwstatus);
+		if (!rtstatus) {
 			pr_err("rtl8192se: firmware fail!\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		fwstatus = _rtl92s_firmware_get_nextstatus(firmware->fwstatus);
-	पूर्ण
+	}
 
-	वापस rtstatus;
+	return rtstatus;
 fail:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 _rtl92s_fill_h2c_cmd(काष्ठा sk_buff *skb, u32 h2cbufferlen,
+static u32 _rtl92s_fill_h2c_cmd(struct sk_buff *skb, u32 h2cbufferlen,
 				u32 cmd_num, u32 *pelement_id, u32 *pcmd_len,
 				u8 **pcmb_buffer, u8 *cmd_start_seq)
-अणु
+{
 	u32 totallen = 0, len = 0, tx_desclen = 0;
-	u32 pre_जारीoffset = 0;
+	u32 pre_continueoffset = 0;
 	u8 *ph2c_buffer;
 	u8 i = 0;
 
-	करो अणु
+	do {
 		/* 8 - Byte alignment */
 		len = H2C_TX_CMD_HDR_LEN + N_BYTE_ALIGMENT(pcmd_len[i], 8);
 
 		/* Buffer length is not enough */
-		अगर (h2cbufferlen < totallen + len + tx_desclen)
-			अवरोध;
+		if (h2cbufferlen < totallen + len + tx_desclen)
+			break;
 
 		/* Clear content */
 		ph2c_buffer = skb_put(skb, (u32)len);
-		स_रखो((ph2c_buffer + totallen + tx_desclen), 0, len);
+		memset((ph2c_buffer + totallen + tx_desclen), 0, len);
 
 		/* CMD len */
 		le32p_replace_bits((__le32 *)(ph2c_buffer + totallen +
@@ -460,84 +459,84 @@ fail:
 		++*cmd_start_seq;
 
 		/* Copy memory */
-		स_नकल((ph2c_buffer + totallen + tx_desclen +
+		memcpy((ph2c_buffer + totallen + tx_desclen +
 			H2C_TX_CMD_HDR_LEN), pcmb_buffer[i], pcmd_len[i]);
 
-		/* CMD जारी */
-		/* set the जारी in prevoius cmd. */
-		अगर (i < cmd_num - 1)
+		/* CMD continue */
+		/* set the continue in prevoius cmd. */
+		if (i < cmd_num - 1)
 			le32p_replace_bits((__le32 *)(ph2c_buffer +
-						      pre_जारीoffset),
+						      pre_continueoffset),
 					   1, BIT(31));
 
-		pre_जारीoffset = totallen;
+		pre_continueoffset = totallen;
 
 		totallen += len;
-	पूर्ण जबतक (++i < cmd_num);
+	} while (++i < cmd_num);
 
-	वापस totallen;
-पूर्ण
+	return totallen;
+}
 
-अटल u32 _rtl92s_get_h2c_cmdlen(u32 h2cbufferlen, u32 cmd_num, u32 *pcmd_len)
-अणु
+static u32 _rtl92s_get_h2c_cmdlen(u32 h2cbufferlen, u32 cmd_num, u32 *pcmd_len)
+{
 	u32 totallen = 0, len = 0, tx_desclen = 0;
 	u8 i = 0;
 
-	करो अणु
+	do {
 		/* 8 - Byte alignment */
 		len = H2C_TX_CMD_HDR_LEN + N_BYTE_ALIGMENT(pcmd_len[i], 8);
 
 		/* Buffer length is not enough */
-		अगर (h2cbufferlen < totallen + len + tx_desclen)
-			अवरोध;
+		if (h2cbufferlen < totallen + len + tx_desclen)
+			break;
 
 		totallen += len;
-	पूर्ण जबतक (++i < cmd_num);
+	} while (++i < cmd_num);
 
-	वापस totallen + tx_desclen;
-पूर्ण
+	return totallen + tx_desclen;
+}
 
-अटल bool _rtl92s_firmware_set_h2c_cmd(काष्ठा ieee80211_hw *hw, u8 h2c_cmd,
+static bool _rtl92s_firmware_set_h2c_cmd(struct ieee80211_hw *hw, u8 h2c_cmd,
 					 u8 *pcmd_buffer)
-अणु
-	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
-	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	काष्ठा rtl_tcb_desc *cb_desc;
-	काष्ठा sk_buff *skb;
+{
+	struct rtl_priv *rtlpriv = rtl_priv(hw);
+	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	struct rtl_tcb_desc *cb_desc;
+	struct sk_buff *skb;
 	u32	element_id = 0;
 	u32	cmd_len = 0;
 	u32	len;
 
-	चयन (h2c_cmd) अणु
-	हाल FW_H2C_SETPWRMODE:
+	switch (h2c_cmd) {
+	case FW_H2C_SETPWRMODE:
 		element_id = H2C_SETPWRMODE_CMD ;
-		cmd_len = माप(काष्ठा h2c_set_pwrmode_parm);
-		अवरोध;
-	हाल FW_H2C_JOINBSSRPT:
+		cmd_len = sizeof(struct h2c_set_pwrmode_parm);
+		break;
+	case FW_H2C_JOINBSSRPT:
 		element_id = H2C_JOINBSSRPT_CMD;
-		cmd_len = माप(काष्ठा h2c_joinbss_rpt_parm);
-		अवरोध;
-	हाल FW_H2C_WOWLAN_UPDATE_GTK:
+		cmd_len = sizeof(struct h2c_joinbss_rpt_parm);
+		break;
+	case FW_H2C_WOWLAN_UPDATE_GTK:
 		element_id = H2C_WOWLAN_UPDATE_GTK_CMD;
-		cmd_len = माप(काष्ठा h2c_wpa_two_way_parm);
-		अवरोध;
-	हाल FW_H2C_WOWLAN_UPDATE_IV:
+		cmd_len = sizeof(struct h2c_wpa_two_way_parm);
+		break;
+	case FW_H2C_WOWLAN_UPDATE_IV:
 		element_id = H2C_WOWLAN_UPDATE_IV_CMD;
-		cmd_len = माप(अचिन्हित दीर्घ दीर्घ);
-		अवरोध;
-	हाल FW_H2C_WOWLAN_OFFLOAD:
+		cmd_len = sizeof(unsigned long long);
+		break;
+	case FW_H2C_WOWLAN_OFFLOAD:
 		element_id = H2C_WOWLAN_FW_OFFLOAD;
-		cmd_len = माप(u8);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		cmd_len = sizeof(u8);
+		break;
+	default:
+		break;
+	}
 
 	len = _rtl92s_get_h2c_cmdlen(MAX_TRANSMIT_BUFFER_SIZE, 1, &cmd_len);
 	skb = dev_alloc_skb(len);
-	अगर (!skb)
-		वापस false;
-	cb_desc = (काष्ठा rtl_tcb_desc *)(skb->cb);
+	if (!skb)
+		return false;
+	cb_desc = (struct rtl_tcb_desc *)(skb->cb);
 	cb_desc->queue_index = TXCMD_QUEUE;
 	cb_desc->cmd_or_init = DESC_PACKET_TYPE_NORMAL;
 	cb_desc->last_inipkt = false;
@@ -547,14 +546,14 @@ fail:
 	_rtl92s_cmd_send_packet(hw, skb, false);
 	rtlpriv->cfg->ops->tx_polling(hw, TXCMD_QUEUE);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम rtl92s_set_fw_pwrmode_cmd(काष्ठा ieee80211_hw *hw, u8 mode)
-अणु
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	काष्ठा h2c_set_pwrmode_parm	pwrmode;
+void rtl92s_set_fw_pwrmode_cmd(struct ieee80211_hw *hw, u8 mode)
+{
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	struct h2c_set_pwrmode_parm	pwrmode;
 	u16 max_wakeup_period = 0;
 
 	pwrmode.mode = mode;
@@ -565,39 +564,39 @@ fail:
 	pwrmode.bcn_rx_en = 0;
 	pwrmode.bcn_to = 0;
 	le16p_replace_bits((__le16 *)(((u8 *)(&pwrmode) + 8)),
-			   mac->vअगर->bss_conf.beacon_पूर्णांक, GENMASK(15, 0));
+			   mac->vif->bss_conf.beacon_int, GENMASK(15, 0));
 	pwrmode.app_itv = 0;
-	pwrmode.awake_bcn_itvl = ppsc->reg_max_lps_awakeपूर्णांकvl;
+	pwrmode.awake_bcn_itvl = ppsc->reg_max_lps_awakeintvl;
 	pwrmode.smart_ps = 1;
 	pwrmode.bcn_pass_period = 10;
 
 	/* Set beacon pass count */
-	अगर (pwrmode.mode == FW_PS_MIN_MODE)
-		max_wakeup_period = mac->vअगर->bss_conf.beacon_पूर्णांक;
-	अन्यथा अगर (pwrmode.mode == FW_PS_MAX_MODE)
-		max_wakeup_period = mac->vअगर->bss_conf.beacon_पूर्णांक *
-			mac->vअगर->bss_conf.dtim_period;
+	if (pwrmode.mode == FW_PS_MIN_MODE)
+		max_wakeup_period = mac->vif->bss_conf.beacon_int;
+	else if (pwrmode.mode == FW_PS_MAX_MODE)
+		max_wakeup_period = mac->vif->bss_conf.beacon_int *
+			mac->vif->bss_conf.dtim_period;
 
-	अगर (max_wakeup_period >= 500)
+	if (max_wakeup_period >= 500)
 		pwrmode.bcn_pass_cnt = 1;
-	अन्यथा अगर ((max_wakeup_period >= 300) && (max_wakeup_period < 500))
+	else if ((max_wakeup_period >= 300) && (max_wakeup_period < 500))
 		pwrmode.bcn_pass_cnt = 2;
-	अन्यथा अगर ((max_wakeup_period >= 200) && (max_wakeup_period < 300))
+	else if ((max_wakeup_period >= 200) && (max_wakeup_period < 300))
 		pwrmode.bcn_pass_cnt = 3;
-	अन्यथा अगर ((max_wakeup_period >= 20) && (max_wakeup_period < 200))
+	else if ((max_wakeup_period >= 20) && (max_wakeup_period < 200))
 		pwrmode.bcn_pass_cnt = 5;
-	अन्यथा
+	else
 		pwrmode.bcn_pass_cnt = 1;
 
 	_rtl92s_firmware_set_h2c_cmd(hw, FW_H2C_SETPWRMODE, (u8 *)&pwrmode);
 
-पूर्ण
+}
 
-व्योम rtl92s_set_fw_joinbss_report_cmd(काष्ठा ieee80211_hw *hw,
+void rtl92s_set_fw_joinbss_report_cmd(struct ieee80211_hw *hw,
 		u8 mstatus, u8 ps_qosinfo)
-अणु
-	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	काष्ठा h2c_joinbss_rpt_parm joinbss_rpt;
+{
+	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	struct h2c_joinbss_rpt_parm joinbss_rpt;
 
 	joinbss_rpt.opmode = mstatus;
 	joinbss_rpt.ps_qos_info = ps_qosinfo;
@@ -608,10 +607,10 @@ fail:
 	joinbss_rpt.bssid[4] = mac->bssid[4];
 	joinbss_rpt.bssid[5] = mac->bssid[5];
 	le16p_replace_bits((__le16 *)(((u8 *)(&joinbss_rpt) + 8)),
-			   mac->vअगर->bss_conf.beacon_पूर्णांक, GENMASK(15, 0));
+			   mac->vif->bss_conf.beacon_int, GENMASK(15, 0));
 	le16p_replace_bits((__le16 *)(((u8 *)(&joinbss_rpt) + 10)),
 			   mac->assoc_id, GENMASK(15, 0));
 
 	_rtl92s_firmware_set_h2c_cmd(hw, FW_H2C_JOINBSSRPT, (u8 *)&joinbss_rpt);
-पूर्ण
+}
 

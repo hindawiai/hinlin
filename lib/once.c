@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/once.h>
-#समावेश <linux/अक्रमom.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/once.h>
+#include <linux/random.h>
 
-काष्ठा once_work अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा अटल_key_true *key;
-पूर्ण;
+struct once_work {
+	struct work_struct work;
+	struct static_key_true *key;
+};
 
-अटल व्योम once_deferred(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा once_work *work;
+static void once_deferred(struct work_struct *w)
+{
+	struct once_work *work;
 
-	work = container_of(w, काष्ठा once_work, work);
-	BUG_ON(!अटल_key_enabled(work->key));
-	अटल_branch_disable(work->key);
-	kमुक्त(work);
-पूर्ण
+	work = container_of(w, struct once_work, work);
+	BUG_ON(!static_key_enabled(work->key));
+	static_branch_disable(work->key);
+	kfree(work);
+}
 
-अटल व्योम once_disable_jump(काष्ठा अटल_key_true *key)
-अणु
-	काष्ठा once_work *w;
+static void once_disable_jump(struct static_key_true *key)
+{
+	struct once_work *w;
 
-	w = kदो_स्मृति(माप(*w), GFP_ATOMIC);
-	अगर (!w)
-		वापस;
+	w = kmalloc(sizeof(*w), GFP_ATOMIC);
+	if (!w)
+		return;
 
 	INIT_WORK(&w->work, once_deferred);
 	w->key = key;
 	schedule_work(&w->work);
-पूर्ण
+}
 
-अटल DEFINE_SPINLOCK(once_lock);
+static DEFINE_SPINLOCK(once_lock);
 
-bool __करो_once_start(bool *करोne, अचिन्हित दीर्घ *flags)
+bool __do_once_start(bool *done, unsigned long *flags)
 	__acquires(once_lock)
-अणु
+{
 	spin_lock_irqsave(&once_lock, *flags);
-	अगर (*करोne) अणु
+	if (*done) {
 		spin_unlock_irqrestore(&once_lock, *flags);
 		/* Keep sparse happy by restoring an even lock count on
-		 * this lock. In हाल we वापस here, we करोn't call पूर्णांकo
-		 * __करो_once_करोne but वापस early in the DO_ONCE() macro.
+		 * this lock. In case we return here, we don't call into
+		 * __do_once_done but return early in the DO_ONCE() macro.
 		 */
 		__acquire(once_lock);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(__करो_once_start);
+	return true;
+}
+EXPORT_SYMBOL(__do_once_start);
 
-व्योम __करो_once_करोne(bool *करोne, काष्ठा अटल_key_true *once_key,
-		    अचिन्हित दीर्घ *flags)
+void __do_once_done(bool *done, struct static_key_true *once_key,
+		    unsigned long *flags)
 	__releases(once_lock)
-अणु
-	*करोne = true;
+{
+	*done = true;
 	spin_unlock_irqrestore(&once_lock, *flags);
 	once_disable_jump(once_key);
-पूर्ण
-EXPORT_SYMBOL(__करो_once_करोne);
+}
+EXPORT_SYMBOL(__do_once_done);

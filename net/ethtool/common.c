@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <linux/ethtool_netlink.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/rtnetlink.h>
+#include <linux/ethtool_netlink.h>
+#include <linux/net_tstamp.h>
+#include <linux/phy.h>
+#include <linux/rtnetlink.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-स्थिर अक्षर netdev_features_strings[NETDEV_FEATURE_COUNT][ETH_GSTRING_LEN] = अणु
+const char netdev_features_strings[NETDEV_FEATURE_COUNT][ETH_GSTRING_LEN] = {
 	[NETIF_F_SG_BIT] =               "tx-scatter-gather",
 	[NETIF_F_IP_CSUM_BIT] =          "tx-checksum-ipv4",
 	[NETIF_F_HW_CSUM_BIT] =          "tx-checksum-ip-generic",
@@ -74,40 +73,40 @@
 	[NETIF_F_HW_HSR_TAG_RM_BIT] =	 "hsr-tag-rm-offload",
 	[NETIF_F_HW_HSR_FWD_BIT] =	 "hsr-fwd-offload",
 	[NETIF_F_HW_HSR_DUP_BIT] =	 "hsr-dup-offload",
-पूर्ण;
+};
 
-स्थिर अक्षर
-rss_hash_func_strings[ETH_RSS_HASH_FUNCS_COUNT][ETH_GSTRING_LEN] = अणु
+const char
+rss_hash_func_strings[ETH_RSS_HASH_FUNCS_COUNT][ETH_GSTRING_LEN] = {
 	[ETH_RSS_HASH_TOP_BIT] =	"toeplitz",
 	[ETH_RSS_HASH_XOR_BIT] =	"xor",
 	[ETH_RSS_HASH_CRC32_BIT] =	"crc32",
-पूर्ण;
+};
 
-स्थिर अक्षर
-tunable_strings[__ETHTOOL_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
+const char
+tunable_strings[__ETHTOOL_TUNABLE_COUNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_ID_UNSPEC]     = "Unspec",
 	[ETHTOOL_RX_COPYBREAK]	= "rx-copybreak",
 	[ETHTOOL_TX_COPYBREAK]	= "tx-copybreak",
 	[ETHTOOL_PFC_PREVENTION_TOUT] = "pfc-prevention-tout",
-पूर्ण;
+};
 
-स्थिर अक्षर
-phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
+const char
+phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_ID_UNSPEC]     = "Unspec",
 	[ETHTOOL_PHY_DOWNSHIFT]	= "phy-downshift",
 	[ETHTOOL_PHY_FAST_LINK_DOWN] = "phy-fast-link-down",
 	[ETHTOOL_PHY_EDPD]	= "phy-energy-detect-power-down",
-पूर्ण;
+};
 
-#घोषणा __LINK_MODE_NAME(speed, type, duplex) \
+#define __LINK_MODE_NAME(speed, type, duplex) \
 	#speed "base" #type "/" #duplex
-#घोषणा __DEFINE_LINK_MODE_NAME(speed, type, duplex) \
+#define __DEFINE_LINK_MODE_NAME(speed, type, duplex) \
 	[ETHTOOL_LINK_MODE(speed, type, duplex)] = \
 	__LINK_MODE_NAME(speed, type, duplex)
-#घोषणा __DEFINE_SPECIAL_MODE_NAME(_mode, _name) \
+#define __DEFINE_SPECIAL_MODE_NAME(_mode, _name) \
 	[ETHTOOL_LINK_MODE_ ## _mode ## _BIT] = _name
 
-स्थिर अक्षर link_mode_names[][ETH_GSTRING_LEN] = अणु
+const char link_mode_names[][ETH_GSTRING_LEN] = {
 	__DEFINE_LINK_MODE_NAME(10, T, Half),
 	__DEFINE_LINK_MODE_NAME(10, T, Full),
 	__DEFINE_LINK_MODE_NAME(100, T, Half),
@@ -200,58 +199,58 @@ phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
 	__DEFINE_LINK_MODE_NAME(400000, CR4, Full),
 	__DEFINE_LINK_MODE_NAME(100, FX, Half),
 	__DEFINE_LINK_MODE_NAME(100, FX, Full),
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(link_mode_names) == __ETHTOOL_LINK_MODE_MASK_NBITS);
+};
+static_assert(ARRAY_SIZE(link_mode_names) == __ETHTOOL_LINK_MODE_MASK_NBITS);
 
-#घोषणा __LINK_MODE_LANES_CR		1
-#घोषणा __LINK_MODE_LANES_CR2		2
-#घोषणा __LINK_MODE_LANES_CR4		4
-#घोषणा __LINK_MODE_LANES_CR8		8
-#घोषणा __LINK_MODE_LANES_DR		1
-#घोषणा __LINK_MODE_LANES_DR2		2
-#घोषणा __LINK_MODE_LANES_DR4		4
-#घोषणा __LINK_MODE_LANES_DR8		8
-#घोषणा __LINK_MODE_LANES_KR		1
-#घोषणा __LINK_MODE_LANES_KR2		2
-#घोषणा __LINK_MODE_LANES_KR4		4
-#घोषणा __LINK_MODE_LANES_KR8		8
-#घोषणा __LINK_MODE_LANES_SR		1
-#घोषणा __LINK_MODE_LANES_SR2		2
-#घोषणा __LINK_MODE_LANES_SR4		4
-#घोषणा __LINK_MODE_LANES_SR8		8
-#घोषणा __LINK_MODE_LANES_ER		1
-#घोषणा __LINK_MODE_LANES_KX		1
-#घोषणा __LINK_MODE_LANES_KX4		4
-#घोषणा __LINK_MODE_LANES_LR		1
-#घोषणा __LINK_MODE_LANES_LR4		4
-#घोषणा __LINK_MODE_LANES_LR4_ER4	4
-#घोषणा __LINK_MODE_LANES_LR_ER_FR	1
-#घोषणा __LINK_MODE_LANES_LR2_ER2_FR2	2
-#घोषणा __LINK_MODE_LANES_LR4_ER4_FR4	4
-#घोषणा __LINK_MODE_LANES_LR8_ER8_FR8	8
-#घोषणा __LINK_MODE_LANES_LRM		1
-#घोषणा __LINK_MODE_LANES_MLD2		2
-#घोषणा __LINK_MODE_LANES_T		1
-#घोषणा __LINK_MODE_LANES_T1		1
-#घोषणा __LINK_MODE_LANES_X		1
-#घोषणा __LINK_MODE_LANES_FX		1
+#define __LINK_MODE_LANES_CR		1
+#define __LINK_MODE_LANES_CR2		2
+#define __LINK_MODE_LANES_CR4		4
+#define __LINK_MODE_LANES_CR8		8
+#define __LINK_MODE_LANES_DR		1
+#define __LINK_MODE_LANES_DR2		2
+#define __LINK_MODE_LANES_DR4		4
+#define __LINK_MODE_LANES_DR8		8
+#define __LINK_MODE_LANES_KR		1
+#define __LINK_MODE_LANES_KR2		2
+#define __LINK_MODE_LANES_KR4		4
+#define __LINK_MODE_LANES_KR8		8
+#define __LINK_MODE_LANES_SR		1
+#define __LINK_MODE_LANES_SR2		2
+#define __LINK_MODE_LANES_SR4		4
+#define __LINK_MODE_LANES_SR8		8
+#define __LINK_MODE_LANES_ER		1
+#define __LINK_MODE_LANES_KX		1
+#define __LINK_MODE_LANES_KX4		4
+#define __LINK_MODE_LANES_LR		1
+#define __LINK_MODE_LANES_LR4		4
+#define __LINK_MODE_LANES_LR4_ER4	4
+#define __LINK_MODE_LANES_LR_ER_FR	1
+#define __LINK_MODE_LANES_LR2_ER2_FR2	2
+#define __LINK_MODE_LANES_LR4_ER4_FR4	4
+#define __LINK_MODE_LANES_LR8_ER8_FR8	8
+#define __LINK_MODE_LANES_LRM		1
+#define __LINK_MODE_LANES_MLD2		2
+#define __LINK_MODE_LANES_T		1
+#define __LINK_MODE_LANES_T1		1
+#define __LINK_MODE_LANES_X		1
+#define __LINK_MODE_LANES_FX		1
 
-#घोषणा __DEFINE_LINK_MODE_PARAMS(_speed, _type, _duplex)	\
-	[ETHTOOL_LINK_MODE(_speed, _type, _duplex)] = अणु		\
+#define __DEFINE_LINK_MODE_PARAMS(_speed, _type, _duplex)	\
+	[ETHTOOL_LINK_MODE(_speed, _type, _duplex)] = {		\
 		.speed  = SPEED_ ## _speed, \
 		.lanes  = __LINK_MODE_LANES_ ## _type, \
 		.duplex	= __DUPLEX_ ## _duplex \
-	पूर्ण
-#घोषणा __DUPLEX_Half DUPLEX_HALF
-#घोषणा __DUPLEX_Full DUPLEX_FULL
-#घोषणा __DEFINE_SPECIAL_MODE_PARAMS(_mode) \
-	[ETHTOOL_LINK_MODE_ ## _mode ## _BIT] = अणु \
+	}
+#define __DUPLEX_Half DUPLEX_HALF
+#define __DUPLEX_Full DUPLEX_FULL
+#define __DEFINE_SPECIAL_MODE_PARAMS(_mode) \
+	[ETHTOOL_LINK_MODE_ ## _mode ## _BIT] = { \
 		.speed	= SPEED_UNKNOWN, \
 		.lanes	= 0, \
 		.duplex	= DUPLEX_UNKNOWN, \
-	पूर्ण
+	}
 
-स्थिर काष्ठा link_mode_info link_mode_params[] = अणु
+const struct link_mode_info link_mode_params[] = {
 	__DEFINE_LINK_MODE_PARAMS(10, T, Half),
 	__DEFINE_LINK_MODE_PARAMS(10, T, Full),
 	__DEFINE_LINK_MODE_PARAMS(100, T, Half),
@@ -272,11 +271,11 @@ phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
 	__DEFINE_LINK_MODE_PARAMS(1000, KX, Full),
 	__DEFINE_LINK_MODE_PARAMS(10000, KX4, Full),
 	__DEFINE_LINK_MODE_PARAMS(10000, KR, Full),
-	[ETHTOOL_LINK_MODE_10000baseR_FEC_BIT] = अणु
+	[ETHTOOL_LINK_MODE_10000baseR_FEC_BIT] = {
 		.speed	= SPEED_10000,
 		.lanes	= 1,
 		.duplex = DUPLEX_FULL,
-	पूर्ण,
+	},
 	__DEFINE_LINK_MODE_PARAMS(20000, MLD2, Full),
 	__DEFINE_LINK_MODE_PARAMS(20000, KR2, Full),
 	__DEFINE_LINK_MODE_PARAMS(40000, KR4, Full),
@@ -348,10 +347,10 @@ phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
 	__DEFINE_LINK_MODE_PARAMS(400000, CR4, Full),
 	__DEFINE_LINK_MODE_PARAMS(100, FX, Half),
 	__DEFINE_LINK_MODE_PARAMS(100, FX, Full),
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(link_mode_params) == __ETHTOOL_LINK_MODE_MASK_NBITS);
+};
+static_assert(ARRAY_SIZE(link_mode_params) == __ETHTOOL_LINK_MODE_MASK_NBITS);
 
-स्थिर अक्षर netअगर_msg_class_names[][ETH_GSTRING_LEN] = अणु
+const char netif_msg_class_names[][ETH_GSTRING_LEN] = {
 	[NETIF_MSG_DRV_BIT]		= "drv",
 	[NETIF_MSG_PROBE_BIT]		= "probe",
 	[NETIF_MSG_LINK_BIT]		= "link",
@@ -367,49 +366,49 @@ phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
 	[NETIF_MSG_PKTDATA_BIT]		= "pktdata",
 	[NETIF_MSG_HW_BIT]		= "hw",
 	[NETIF_MSG_WOL_BIT]		= "wol",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(netअगर_msg_class_names) == NETIF_MSG_CLASS_COUNT);
+};
+static_assert(ARRAY_SIZE(netif_msg_class_names) == NETIF_MSG_CLASS_COUNT);
 
-स्थिर अक्षर wol_mode_names[][ETH_GSTRING_LEN] = अणु
-	[स्थिर_ilog2(WAKE_PHY)]		= "phy",
-	[स्थिर_ilog2(WAKE_UCAST)]	= "ucast",
-	[स्थिर_ilog2(WAKE_MCAST)]	= "mcast",
-	[स्थिर_ilog2(WAKE_BCAST)]	= "bcast",
-	[स्थिर_ilog2(WAKE_ARP)]		= "arp",
-	[स्थिर_ilog2(WAKE_MAGIC)]	= "magic",
-	[स्थिर_ilog2(WAKE_MAGICSECURE)]	= "magicsecure",
-	[स्थिर_ilog2(WAKE_FILTER)]	= "filter",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(wol_mode_names) == WOL_MODE_COUNT);
+const char wol_mode_names[][ETH_GSTRING_LEN] = {
+	[const_ilog2(WAKE_PHY)]		= "phy",
+	[const_ilog2(WAKE_UCAST)]	= "ucast",
+	[const_ilog2(WAKE_MCAST)]	= "mcast",
+	[const_ilog2(WAKE_BCAST)]	= "bcast",
+	[const_ilog2(WAKE_ARP)]		= "arp",
+	[const_ilog2(WAKE_MAGIC)]	= "magic",
+	[const_ilog2(WAKE_MAGICSECURE)]	= "magicsecure",
+	[const_ilog2(WAKE_FILTER)]	= "filter",
+};
+static_assert(ARRAY_SIZE(wol_mode_names) == WOL_MODE_COUNT);
 
-स्थिर अक्षर sof_बारtamping_names[][ETH_GSTRING_LEN] = अणु
-	[स्थिर_ilog2(SOF_TIMESTAMPING_TX_HARDWARE)]  = "hardware-transmit",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_TX_SOFTWARE)]  = "software-transmit",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_RX_HARDWARE)]  = "hardware-receive",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_RX_SOFTWARE)]  = "software-receive",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_SOFTWARE)]     = "software-system-clock",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_SYS_HARDWARE)] = "hardware-legacy-clock",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_RAW_HARDWARE)] = "hardware-raw-clock",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_OPT_ID)]       = "option-id",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_TX_SCHED)]     = "sched-transmit",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_TX_ACK)]       = "ack-transmit",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_OPT_CMSG)]     = "option-cmsg",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_OPT_TSONLY)]   = "option-tsonly",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_OPT_STATS)]    = "option-stats",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_OPT_PKTINFO)]  = "option-pktinfo",
-	[स्थिर_ilog2(SOF_TIMESTAMPING_OPT_TX_SWHW)]  = "option-tx-swhw",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(sof_बारtamping_names) == __SOF_TIMESTAMPING_CNT);
+const char sof_timestamping_names[][ETH_GSTRING_LEN] = {
+	[const_ilog2(SOF_TIMESTAMPING_TX_HARDWARE)]  = "hardware-transmit",
+	[const_ilog2(SOF_TIMESTAMPING_TX_SOFTWARE)]  = "software-transmit",
+	[const_ilog2(SOF_TIMESTAMPING_RX_HARDWARE)]  = "hardware-receive",
+	[const_ilog2(SOF_TIMESTAMPING_RX_SOFTWARE)]  = "software-receive",
+	[const_ilog2(SOF_TIMESTAMPING_SOFTWARE)]     = "software-system-clock",
+	[const_ilog2(SOF_TIMESTAMPING_SYS_HARDWARE)] = "hardware-legacy-clock",
+	[const_ilog2(SOF_TIMESTAMPING_RAW_HARDWARE)] = "hardware-raw-clock",
+	[const_ilog2(SOF_TIMESTAMPING_OPT_ID)]       = "option-id",
+	[const_ilog2(SOF_TIMESTAMPING_TX_SCHED)]     = "sched-transmit",
+	[const_ilog2(SOF_TIMESTAMPING_TX_ACK)]       = "ack-transmit",
+	[const_ilog2(SOF_TIMESTAMPING_OPT_CMSG)]     = "option-cmsg",
+	[const_ilog2(SOF_TIMESTAMPING_OPT_TSONLY)]   = "option-tsonly",
+	[const_ilog2(SOF_TIMESTAMPING_OPT_STATS)]    = "option-stats",
+	[const_ilog2(SOF_TIMESTAMPING_OPT_PKTINFO)]  = "option-pktinfo",
+	[const_ilog2(SOF_TIMESTAMPING_OPT_TX_SWHW)]  = "option-tx-swhw",
+};
+static_assert(ARRAY_SIZE(sof_timestamping_names) == __SOF_TIMESTAMPING_CNT);
 
-स्थिर अक्षर ts_tx_type_names[][ETH_GSTRING_LEN] = अणु
+const char ts_tx_type_names[][ETH_GSTRING_LEN] = {
 	[HWTSTAMP_TX_OFF]		= "off",
 	[HWTSTAMP_TX_ON]		= "on",
 	[HWTSTAMP_TX_ONESTEP_SYNC]	= "onestep-sync",
 	[HWTSTAMP_TX_ONESTEP_P2P]	= "onestep-p2p",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(ts_tx_type_names) == __HWTSTAMP_TX_CNT);
+};
+static_assert(ARRAY_SIZE(ts_tx_type_names) == __HWTSTAMP_TX_CNT);
 
-स्थिर अक्षर ts_rx_filter_names[][ETH_GSTRING_LEN] = अणु
+const char ts_rx_filter_names[][ETH_GSTRING_LEN] = {
 	[HWTSTAMP_FILTER_NONE]			= "none",
 	[HWTSTAMP_FILTER_ALL]			= "all",
 	[HWTSTAMP_FILTER_SOME]			= "some",
@@ -426,34 +425,34 @@ phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = अणु
 	[HWTSTAMP_FILTER_PTP_V2_SYNC]		= "ptpv2-sync",
 	[HWTSTAMP_FILTER_PTP_V2_DELAY_REQ]	= "ptpv2-delay-req",
 	[HWTSTAMP_FILTER_NTP_ALL]		= "ntp-all",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(ts_rx_filter_names) == __HWTSTAMP_FILTER_CNT);
+};
+static_assert(ARRAY_SIZE(ts_rx_filter_names) == __HWTSTAMP_FILTER_CNT);
 
-स्थिर अक्षर udp_tunnel_type_names[][ETH_GSTRING_LEN] = अणु
+const char udp_tunnel_type_names[][ETH_GSTRING_LEN] = {
 	[ETHTOOL_UDP_TUNNEL_TYPE_VXLAN]		= "vxlan",
 	[ETHTOOL_UDP_TUNNEL_TYPE_GENEVE]	= "geneve",
 	[ETHTOOL_UDP_TUNNEL_TYPE_VXLAN_GPE]	= "vxlan-gpe",
-पूर्ण;
-अटल_निश्चित(ARRAY_SIZE(udp_tunnel_type_names) ==
+};
+static_assert(ARRAY_SIZE(udp_tunnel_type_names) ==
 	      __ETHTOOL_UDP_TUNNEL_TYPE_CNT);
 
-/* वापस false अगर legacy contained non-0 deprecated fields
+/* return false if legacy contained non-0 deprecated fields
  * maxtxpkt/maxrxpkt. rest of ksettings always updated
  */
 bool
 convert_legacy_settings_to_link_ksettings(
-	काष्ठा ethtool_link_ksettings *link_ksettings,
-	स्थिर काष्ठा ethtool_cmd *legacy_settings)
-अणु
+	struct ethtool_link_ksettings *link_ksettings,
+	const struct ethtool_cmd *legacy_settings)
+{
 	bool retval = true;
 
-	स_रखो(link_ksettings, 0, माप(*link_ksettings));
+	memset(link_ksettings, 0, sizeof(*link_ksettings));
 
 	/* This is used to tell users that driver is still using these
 	 * deprecated legacy fields, and they should not use
 	 * %ETHTOOL_GLINKSETTINGS/%ETHTOOL_SLINKSETTINGS
 	 */
-	अगर (legacy_settings->maxtxpkt ||
+	if (legacy_settings->maxtxpkt ||
 	    legacy_settings->maxrxpkt)
 		retval = false;
 
@@ -474,109 +473,109 @@ convert_legacy_settings_to_link_ksettings(
 		= legacy_settings->port;
 	link_ksettings->base.phy_address
 		= legacy_settings->phy_address;
-	link_ksettings->base.स्वतःneg
-		= legacy_settings->स्वतःneg;
+	link_ksettings->base.autoneg
+		= legacy_settings->autoneg;
 	link_ksettings->base.mdio_support
 		= legacy_settings->mdio_support;
 	link_ksettings->base.eth_tp_mdix
 		= legacy_settings->eth_tp_mdix;
 	link_ksettings->base.eth_tp_mdix_ctrl
 		= legacy_settings->eth_tp_mdix_ctrl;
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-पूर्णांक __ethtool_get_link(काष्ठा net_device *dev)
-अणु
-	अगर (!dev->ethtool_ops->get_link)
-		वापस -EOPNOTSUPP;
+int __ethtool_get_link(struct net_device *dev)
+{
+	if (!dev->ethtool_ops->get_link)
+		return -EOPNOTSUPP;
 
-	वापस netअगर_running(dev) && dev->ethtool_ops->get_link(dev);
-पूर्ण
+	return netif_running(dev) && dev->ethtool_ops->get_link(dev);
+}
 
-पूर्णांक ethtool_get_max_rxfh_channel(काष्ठा net_device *dev, u32 *max)
-अणु
+int ethtool_get_max_rxfh_channel(struct net_device *dev, u32 *max)
+{
 	u32 dev_size, current_max = 0;
 	u32 *indir;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!dev->ethtool_ops->get_rxfh_indir_size ||
+	if (!dev->ethtool_ops->get_rxfh_indir_size ||
 	    !dev->ethtool_ops->get_rxfh)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 	dev_size = dev->ethtool_ops->get_rxfh_indir_size(dev);
-	अगर (dev_size == 0)
-		वापस -EOPNOTSUPP;
+	if (dev_size == 0)
+		return -EOPNOTSUPP;
 
-	indir = kसुस्मृति(dev_size, माप(indir[0]), GFP_USER);
-	अगर (!indir)
-		वापस -ENOMEM;
+	indir = kcalloc(dev_size, sizeof(indir[0]), GFP_USER);
+	if (!indir)
+		return -ENOMEM;
 
-	ret = dev->ethtool_ops->get_rxfh(dev, indir, शून्य, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = dev->ethtool_ops->get_rxfh(dev, indir, NULL, NULL);
+	if (ret)
+		goto out;
 
-	जबतक (dev_size--)
+	while (dev_size--)
 		current_max = max(current_max, indir[dev_size]);
 
 	*max = current_max;
 
 out:
-	kमुक्त(indir);
-	वापस ret;
-पूर्ण
+	kfree(indir);
+	return ret;
+}
 
-पूर्णांक ethtool_check_ops(स्थिर काष्ठा ethtool_ops *ops)
-अणु
-	अगर (WARN_ON(ops->set_coalesce && !ops->supported_coalesce_params))
-		वापस -EINVAL;
-	/* NOTE: sufficiently insane drivers may swap ethtool_ops at runसमय,
-	 * the fact that ops are checked at registration समय करोes not
+int ethtool_check_ops(const struct ethtool_ops *ops)
+{
+	if (WARN_ON(ops->set_coalesce && !ops->supported_coalesce_params))
+		return -EINVAL;
+	/* NOTE: sufficiently insane drivers may swap ethtool_ops at runtime,
+	 * the fact that ops are checked at registration time does not
 	 * mean the ops attached to a netdev later on are sane.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक __ethtool_get_ts_info(काष्ठा net_device *dev, काष्ठा ethtool_ts_info *info)
-अणु
-	स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-	काष्ठा phy_device *phydev = dev->phydev;
+int __ethtool_get_ts_info(struct net_device *dev, struct ethtool_ts_info *info)
+{
+	const struct ethtool_ops *ops = dev->ethtool_ops;
+	struct phy_device *phydev = dev->phydev;
 
-	स_रखो(info, 0, माप(*info));
+	memset(info, 0, sizeof(*info));
 	info->cmd = ETHTOOL_GET_TS_INFO;
 
-	अगर (phy_has_tsinfo(phydev))
-		वापस phy_ts_info(phydev, info);
-	अगर (ops->get_ts_info)
-		वापस ops->get_ts_info(dev, info);
+	if (phy_has_tsinfo(phydev))
+		return phy_ts_info(phydev, info);
+	if (ops->get_ts_info)
+		return ops->get_ts_info(dev, info);
 
-	info->so_बारtamping = SOF_TIMESTAMPING_RX_SOFTWARE |
+	info->so_timestamping = SOF_TIMESTAMPING_RX_SOFTWARE |
 				SOF_TIMESTAMPING_SOFTWARE;
 	info->phc_index = -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा ethtool_phy_ops *ethtool_phy_ops;
+const struct ethtool_phy_ops *ethtool_phy_ops;
 
-व्योम ethtool_set_ethtool_phy_ops(स्थिर काष्ठा ethtool_phy_ops *ops)
-अणु
+void ethtool_set_ethtool_phy_ops(const struct ethtool_phy_ops *ops)
+{
 	rtnl_lock();
 	ethtool_phy_ops = ops;
 	rtnl_unlock();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ethtool_set_ethtool_phy_ops);
 
-व्योम
-ethtool_params_from_link_mode(काष्ठा ethtool_link_ksettings *link_ksettings,
-			      क्रमागत ethtool_link_mode_bit_indices link_mode)
-अणु
-	स्थिर काष्ठा link_mode_info *link_info;
+void
+ethtool_params_from_link_mode(struct ethtool_link_ksettings *link_ksettings,
+			      enum ethtool_link_mode_bit_indices link_mode)
+{
+	const struct link_mode_info *link_info;
 
-	अगर (WARN_ON_ONCE(link_mode >= __ETHTOOL_LINK_MODE_MASK_NBITS))
-		वापस;
+	if (WARN_ON_ONCE(link_mode >= __ETHTOOL_LINK_MODE_MASK_NBITS))
+		return;
 
 	link_info = &link_mode_params[link_mode];
 	link_ksettings->base.speed = link_info->speed;
 	link_ksettings->lanes = link_info->lanes;
 	link_ksettings->base.duplex = link_info->duplex;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(ethtool_params_from_link_mode);

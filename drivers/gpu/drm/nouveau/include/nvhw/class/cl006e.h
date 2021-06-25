@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*******************************************************************************
     Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
 
-    Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
-    copy of this software and associated करोcumentation files (the "Software"),
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
     to deal in the Software without restriction, including without limitation
-    the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
     and/or sell copies of the Software, and to permit persons to whom the
-    Software is furnished to करो so, subject to the following conditions:
+    Software is furnished to do so, subject to the following conditions:
 
     The above copyright notice and this permission notice shall be included in
     all copies or substantial portions of the Software.
@@ -21,11 +20,11 @@
     DEALINGS IN THE SOFTWARE.
 
 *******************************************************************************/
-#अगर_अघोषित _cl006e_h_
-#घोषणा _cl006e_h_
+#ifndef _cl006e_h_
+#define _cl006e_h_
 
 /* fields and values */
-#घोषणा NV06E_SET_OBJECT                                           (0x00000000)
-#घोषणा NV06E_REFERENCE                                            (0x00000048)
-#घोषणा NV06E_SET_REFERENCE                                        (0x00000050)
-#पूर्ण_अगर /* _cl006e_h_ */
+#define NV06E_SET_OBJECT                                           (0x00000000)
+#define NV06E_REFERENCE                                            (0x00000048)
+#define NV06E_SET_REFERENCE                                        (0x00000050)
+#endif /* _cl006e_h_ */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/mm/swapfile.c
  *
@@ -7,883 +6,883 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/swap.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ksm.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/security.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/memcontrol.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/oom.h>
-#समावेश <linux/frontswap.h>
-#समावेश <linux/swapfile.h>
-#समावेश <linux/export.h>
-#समावेश <linux/swap_slots.h>
-#समावेश <linux/sort.h>
+#include <linux/mm.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/task.h>
+#include <linux/hugetlb.h>
+#include <linux/mman.h>
+#include <linux/slab.h>
+#include <linux/kernel_stat.h>
+#include <linux/swap.h>
+#include <linux/vmalloc.h>
+#include <linux/pagemap.h>
+#include <linux/namei.h>
+#include <linux/shmem_fs.h>
+#include <linux/blkdev.h>
+#include <linux/random.h>
+#include <linux/writeback.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/init.h>
+#include <linux/ksm.h>
+#include <linux/rmap.h>
+#include <linux/security.h>
+#include <linux/backing-dev.h>
+#include <linux/mutex.h>
+#include <linux/capability.h>
+#include <linux/syscalls.h>
+#include <linux/memcontrol.h>
+#include <linux/poll.h>
+#include <linux/oom.h>
+#include <linux/frontswap.h>
+#include <linux/swapfile.h>
+#include <linux/export.h>
+#include <linux/swap_slots.h>
+#include <linux/sort.h>
 
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/swap_cgroup.h>
+#include <asm/tlbflush.h>
+#include <linux/swapops.h>
+#include <linux/swap_cgroup.h>
 
-अटल bool swap_count_जारीd(काष्ठा swap_info_काष्ठा *, pgoff_t,
-				 अचिन्हित अक्षर);
-अटल व्योम मुक्त_swap_count_continuations(काष्ठा swap_info_काष्ठा *);
+static bool swap_count_continued(struct swap_info_struct *, pgoff_t,
+				 unsigned char);
+static void free_swap_count_continuations(struct swap_info_struct *);
 
 DEFINE_SPINLOCK(swap_lock);
-अटल अचिन्हित पूर्णांक nr_swapfiles;
-atomic_दीर्घ_t nr_swap_pages;
+static unsigned int nr_swapfiles;
+atomic_long_t nr_swap_pages;
 /*
  * Some modules use swappable objects and may try to swap them out under
- * memory pressure (via the shrinker). Beक्रमe करोing so, they may wish to
- * check to see अगर any swap space is available.
+ * memory pressure (via the shrinker). Before doing so, they may wish to
+ * check to see if any swap space is available.
  */
 EXPORT_SYMBOL_GPL(nr_swap_pages);
-/* रक्षित with swap_lock. पढ़ोing in vm_swap_full() करोesn't need lock */
-दीर्घ total_swap_pages;
-अटल पूर्णांक least_priority = -1;
+/* protected with swap_lock. reading in vm_swap_full() doesn't need lock */
+long total_swap_pages;
+static int least_priority = -1;
 
-अटल स्थिर अक्षर Bad_file[] = "Bad swap file entry ";
-अटल स्थिर अक्षर Unused_file[] = "Unused swap file entry ";
-अटल स्थिर अक्षर Bad_offset[] = "Bad swap offset entry ";
-अटल स्थिर अक्षर Unused_offset[] = "Unused swap offset entry ";
+static const char Bad_file[] = "Bad swap file entry ";
+static const char Unused_file[] = "Unused swap file entry ";
+static const char Bad_offset[] = "Bad swap offset entry ";
+static const char Unused_offset[] = "Unused swap offset entry ";
 
 /*
- * all active swap_info_काष्ठाs
- * रक्षित with swap_lock, and ordered by priority.
+ * all active swap_info_structs
+ * protected with swap_lock, and ordered by priority.
  */
 PLIST_HEAD(swap_active_head);
 
 /*
- * all available (active, not full) swap_info_काष्ठाs
- * रक्षित with swap_avail_lock, ordered by priority.
+ * all available (active, not full) swap_info_structs
+ * protected with swap_avail_lock, ordered by priority.
  * This is used by get_swap_page() instead of swap_active_head
- * because swap_active_head includes all swap_info_काष्ठाs,
- * but get_swap_page() करोesn't need to look at full ones.
+ * because swap_active_head includes all swap_info_structs,
+ * but get_swap_page() doesn't need to look at full ones.
  * This uses its own lock instead of swap_lock because when a
- * swap_info_काष्ठा changes between not-full/full, it needs to
- * add/हटाओ itself to/from this list, but the swap_info_काष्ठा->lock
+ * swap_info_struct changes between not-full/full, it needs to
+ * add/remove itself to/from this list, but the swap_info_struct->lock
  * is held and the locking order requires swap_lock to be taken
- * beक्रमe any swap_info_काष्ठा->lock.
+ * before any swap_info_struct->lock.
  */
-अटल काष्ठा plist_head *swap_avail_heads;
-अटल DEFINE_SPINLOCK(swap_avail_lock);
+static struct plist_head *swap_avail_heads;
+static DEFINE_SPINLOCK(swap_avail_lock);
 
-काष्ठा swap_info_काष्ठा *swap_info[MAX_SWAPखाताS];
+struct swap_info_struct *swap_info[MAX_SWAPFILES];
 
-अटल DEFINE_MUTEX(swapon_mutex);
+static DEFINE_MUTEX(swapon_mutex);
 
-अटल DECLARE_WAIT_QUEUE_HEAD(proc_poll_रुको);
+static DECLARE_WAIT_QUEUE_HEAD(proc_poll_wait);
 /* Activity counter to indicate that a swapon or swapoff has occurred */
-अटल atomic_t proc_poll_event = ATOMIC_INIT(0);
+static atomic_t proc_poll_event = ATOMIC_INIT(0);
 
 atomic_t nr_rotate_swap = ATOMIC_INIT(0);
 
-अटल काष्ठा swap_info_काष्ठा *swap_type_to_swap_info(पूर्णांक type)
-अणु
-	अगर (type >= READ_ONCE(nr_swapfiles))
-		वापस शून्य;
+static struct swap_info_struct *swap_type_to_swap_info(int type)
+{
+	if (type >= READ_ONCE(nr_swapfiles))
+		return NULL;
 
 	smp_rmb();	/* Pairs with smp_wmb in alloc_swap_info. */
-	वापस READ_ONCE(swap_info[type]);
-पूर्ण
+	return READ_ONCE(swap_info[type]);
+}
 
-अटल अंतरभूत अचिन्हित अक्षर swap_count(अचिन्हित अक्षर ent)
-अणु
-	वापस ent & ~SWAP_HAS_CACHE;	/* may include COUNT_CONTINUED flag */
-पूर्ण
+static inline unsigned char swap_count(unsigned char ent)
+{
+	return ent & ~SWAP_HAS_CACHE;	/* may include COUNT_CONTINUED flag */
+}
 
-/* Reclaim the swap entry anyway अगर possible */
-#घोषणा TTRS_ANYWAY		0x1
+/* Reclaim the swap entry anyway if possible */
+#define TTRS_ANYWAY		0x1
 /*
- * Reclaim the swap entry अगर there are no more mappings of the
+ * Reclaim the swap entry if there are no more mappings of the
  * corresponding page
  */
-#घोषणा TTRS_UNMAPPED		0x2
-/* Reclaim the swap entry अगर swap is getting full*/
-#घोषणा TTRS_FULL		0x4
+#define TTRS_UNMAPPED		0x2
+/* Reclaim the swap entry if swap is getting full*/
+#define TTRS_FULL		0x4
 
-/* वापसs 1 अगर swap entry is मुक्तd */
-अटल पूर्णांक __try_to_reclaim_swap(काष्ठा swap_info_काष्ठा *si,
-				 अचिन्हित दीर्घ offset, अचिन्हित दीर्घ flags)
-अणु
+/* returns 1 if swap entry is freed */
+static int __try_to_reclaim_swap(struct swap_info_struct *si,
+				 unsigned long offset, unsigned long flags)
+{
 	swp_entry_t entry = swp_entry(si->type, offset);
-	काष्ठा page *page;
-	पूर्णांक ret = 0;
+	struct page *page;
+	int ret = 0;
 
 	page = find_get_page(swap_address_space(entry), offset);
-	अगर (!page)
-		वापस 0;
+	if (!page)
+		return 0;
 	/*
 	 * When this function is called from scan_swap_map_slots() and it's
 	 * called by vmscan.c at reclaiming pages. So, we hold a lock on a page,
-	 * here. We have to use trylock क्रम aव्योमing deadlock. This is a special
-	 * हाल and you should use try_to_मुक्त_swap() with explicit lock_page()
+	 * here. We have to use trylock for avoiding deadlock. This is a special
+	 * case and you should use try_to_free_swap() with explicit lock_page()
 	 * in usual operations.
 	 */
-	अगर (trylock_page(page)) अणु
-		अगर ((flags & TTRS_ANYWAY) ||
+	if (trylock_page(page)) {
+		if ((flags & TTRS_ANYWAY) ||
 		    ((flags & TTRS_UNMAPPED) && !page_mapped(page)) ||
 		    ((flags & TTRS_FULL) && mem_cgroup_swap_full(page)))
-			ret = try_to_मुक्त_swap(page);
+			ret = try_to_free_swap(page);
 		unlock_page(page);
-	पूर्ण
+	}
 	put_page(page);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत काष्ठा swap_extent *first_se(काष्ठा swap_info_काष्ठा *sis)
-अणु
-	काष्ठा rb_node *rb = rb_first(&sis->swap_extent_root);
-	वापस rb_entry(rb, काष्ठा swap_extent, rb_node);
-पूर्ण
+static inline struct swap_extent *first_se(struct swap_info_struct *sis)
+{
+	struct rb_node *rb = rb_first(&sis->swap_extent_root);
+	return rb_entry(rb, struct swap_extent, rb_node);
+}
 
-अटल अंतरभूत काष्ठा swap_extent *next_se(काष्ठा swap_extent *se)
-अणु
-	काष्ठा rb_node *rb = rb_next(&se->rb_node);
-	वापस rb ? rb_entry(rb, काष्ठा swap_extent, rb_node) : शून्य;
-पूर्ण
+static inline struct swap_extent *next_se(struct swap_extent *se)
+{
+	struct rb_node *rb = rb_next(&se->rb_node);
+	return rb ? rb_entry(rb, struct swap_extent, rb_node) : NULL;
+}
 
 /*
  * swapon tell device that all the old swap contents can be discarded,
  * to allow the swap device to optimize its wear-levelling.
  */
-अटल पूर्णांक discard_swap(काष्ठा swap_info_काष्ठा *si)
-अणु
-	काष्ठा swap_extent *se;
+static int discard_swap(struct swap_info_struct *si)
+{
+	struct swap_extent *se;
 	sector_t start_block;
 	sector_t nr_blocks;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	/* Do not discard the swap header page! */
 	se = first_se(si);
 	start_block = (se->start_block + 1) << (PAGE_SHIFT - 9);
 	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
-	अगर (nr_blocks) अणु
+	if (nr_blocks) {
 		err = blkdev_issue_discard(si->bdev, start_block,
 				nr_blocks, GFP_KERNEL, 0);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		cond_resched();
-	पूर्ण
+	}
 
-	क्रम (se = next_se(se); se; se = next_se(se)) अणु
+	for (se = next_se(se); se; se = next_se(se)) {
 		start_block = se->start_block << (PAGE_SHIFT - 9);
 		nr_blocks = (sector_t)se->nr_pages << (PAGE_SHIFT - 9);
 
 		err = blkdev_issue_discard(si->bdev, start_block,
 				nr_blocks, GFP_KERNEL, 0);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		cond_resched();
-	पूर्ण
-	वापस err;		/* That will often be -EOPNOTSUPP */
-पूर्ण
+	}
+	return err;		/* That will often be -EOPNOTSUPP */
+}
 
-अटल काष्ठा swap_extent *
-offset_to_swap_extent(काष्ठा swap_info_काष्ठा *sis, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा swap_extent *se;
-	काष्ठा rb_node *rb;
+static struct swap_extent *
+offset_to_swap_extent(struct swap_info_struct *sis, unsigned long offset)
+{
+	struct swap_extent *se;
+	struct rb_node *rb;
 
 	rb = sis->swap_extent_root.rb_node;
-	जबतक (rb) अणु
-		se = rb_entry(rb, काष्ठा swap_extent, rb_node);
-		अगर (offset < se->start_page)
+	while (rb) {
+		se = rb_entry(rb, struct swap_extent, rb_node);
+		if (offset < se->start_page)
 			rb = rb->rb_left;
-		अन्यथा अगर (offset >= se->start_page + se->nr_pages)
+		else if (offset >= se->start_page + se->nr_pages)
 			rb = rb->rb_right;
-		अन्यथा
-			वापस se;
-	पूर्ण
+		else
+			return se;
+	}
 	/* It *must* be present */
 	BUG();
-पूर्ण
+}
 
-sector_t swap_page_sector(काष्ठा page *page)
-अणु
-	काष्ठा swap_info_काष्ठा *sis = page_swap_info(page);
-	काष्ठा swap_extent *se;
+sector_t swap_page_sector(struct page *page)
+{
+	struct swap_info_struct *sis = page_swap_info(page);
+	struct swap_extent *se;
 	sector_t sector;
 	pgoff_t offset;
 
 	offset = __page_file_index(page);
 	se = offset_to_swap_extent(sis, offset);
 	sector = se->start_block + (offset - se->start_page);
-	वापस sector << (PAGE_SHIFT - 9);
-पूर्ण
+	return sector << (PAGE_SHIFT - 9);
+}
 
 /*
  * swap allocation tell device that a cluster of swap can now be discarded,
  * to allow the swap device to optimize its wear-levelling.
  */
-अटल व्योम discard_swap_cluster(काष्ठा swap_info_काष्ठा *si,
+static void discard_swap_cluster(struct swap_info_struct *si,
 				 pgoff_t start_page, pgoff_t nr_pages)
-अणु
-	काष्ठा swap_extent *se = offset_to_swap_extent(si, start_page);
+{
+	struct swap_extent *se = offset_to_swap_extent(si, start_page);
 
-	जबतक (nr_pages) अणु
+	while (nr_pages) {
 		pgoff_t offset = start_page - se->start_page;
 		sector_t start_block = se->start_block + offset;
 		sector_t nr_blocks = se->nr_pages - offset;
 
-		अगर (nr_blocks > nr_pages)
+		if (nr_blocks > nr_pages)
 			nr_blocks = nr_pages;
 		start_page += nr_blocks;
 		nr_pages -= nr_blocks;
 
 		start_block <<= PAGE_SHIFT - 9;
 		nr_blocks <<= PAGE_SHIFT - 9;
-		अगर (blkdev_issue_discard(si->bdev, start_block,
+		if (blkdev_issue_discard(si->bdev, start_block,
 					nr_blocks, GFP_NOIO, 0))
-			अवरोध;
+			break;
 
 		se = next_se(se);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_THP_SWAP
-#घोषणा SWAPखाता_CLUSTER	HPAGE_PMD_NR
+#ifdef CONFIG_THP_SWAP
+#define SWAPFILE_CLUSTER	HPAGE_PMD_NR
 
-#घोषणा swap_entry_size(size)	(size)
-#अन्यथा
-#घोषणा SWAPखाता_CLUSTER	256
+#define swap_entry_size(size)	(size)
+#else
+#define SWAPFILE_CLUSTER	256
 
 /*
- * Define swap_entry_size() as स्थिरant to let compiler to optimize
- * out some code अगर !CONFIG_THP_SWAP
+ * Define swap_entry_size() as constant to let compiler to optimize
+ * out some code if !CONFIG_THP_SWAP
  */
-#घोषणा swap_entry_size(size)	1
-#पूर्ण_अगर
-#घोषणा LATENCY_LIMIT		256
+#define swap_entry_size(size)	1
+#endif
+#define LATENCY_LIMIT		256
 
-अटल अंतरभूत व्योम cluster_set_flag(काष्ठा swap_cluster_info *info,
-	अचिन्हित पूर्णांक flag)
-अणु
+static inline void cluster_set_flag(struct swap_cluster_info *info,
+	unsigned int flag)
+{
 	info->flags = flag;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक cluster_count(काष्ठा swap_cluster_info *info)
-अणु
-	वापस info->data;
-पूर्ण
+static inline unsigned int cluster_count(struct swap_cluster_info *info)
+{
+	return info->data;
+}
 
-अटल अंतरभूत व्योम cluster_set_count(काष्ठा swap_cluster_info *info,
-				     अचिन्हित पूर्णांक c)
-अणु
+static inline void cluster_set_count(struct swap_cluster_info *info,
+				     unsigned int c)
+{
 	info->data = c;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_set_count_flag(काष्ठा swap_cluster_info *info,
-					 अचिन्हित पूर्णांक c, अचिन्हित पूर्णांक f)
-अणु
+static inline void cluster_set_count_flag(struct swap_cluster_info *info,
+					 unsigned int c, unsigned int f)
+{
 	info->flags = f;
 	info->data = c;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक cluster_next(काष्ठा swap_cluster_info *info)
-अणु
-	वापस info->data;
-पूर्ण
+static inline unsigned int cluster_next(struct swap_cluster_info *info)
+{
+	return info->data;
+}
 
-अटल अंतरभूत व्योम cluster_set_next(काष्ठा swap_cluster_info *info,
-				    अचिन्हित पूर्णांक n)
-अणु
+static inline void cluster_set_next(struct swap_cluster_info *info,
+				    unsigned int n)
+{
 	info->data = n;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम cluster_set_next_flag(काष्ठा swap_cluster_info *info,
-					 अचिन्हित पूर्णांक n, अचिन्हित पूर्णांक f)
-अणु
+static inline void cluster_set_next_flag(struct swap_cluster_info *info,
+					 unsigned int n, unsigned int f)
+{
 	info->flags = f;
 	info->data = n;
-पूर्ण
+}
 
-अटल अंतरभूत bool cluster_is_मुक्त(काष्ठा swap_cluster_info *info)
-अणु
-	वापस info->flags & CLUSTER_FLAG_FREE;
-पूर्ण
+static inline bool cluster_is_free(struct swap_cluster_info *info)
+{
+	return info->flags & CLUSTER_FLAG_FREE;
+}
 
-अटल अंतरभूत bool cluster_is_null(काष्ठा swap_cluster_info *info)
-अणु
-	वापस info->flags & CLUSTER_FLAG_NEXT_शून्य;
-पूर्ण
+static inline bool cluster_is_null(struct swap_cluster_info *info)
+{
+	return info->flags & CLUSTER_FLAG_NEXT_NULL;
+}
 
-अटल अंतरभूत व्योम cluster_set_null(काष्ठा swap_cluster_info *info)
-अणु
-	info->flags = CLUSTER_FLAG_NEXT_शून्य;
+static inline void cluster_set_null(struct swap_cluster_info *info)
+{
+	info->flags = CLUSTER_FLAG_NEXT_NULL;
 	info->data = 0;
-पूर्ण
+}
 
-अटल अंतरभूत bool cluster_is_huge(काष्ठा swap_cluster_info *info)
-अणु
-	अगर (IS_ENABLED(CONFIG_THP_SWAP))
-		वापस info->flags & CLUSTER_FLAG_HUGE;
-	वापस false;
-पूर्ण
+static inline bool cluster_is_huge(struct swap_cluster_info *info)
+{
+	if (IS_ENABLED(CONFIG_THP_SWAP))
+		return info->flags & CLUSTER_FLAG_HUGE;
+	return false;
+}
 
-अटल अंतरभूत व्योम cluster_clear_huge(काष्ठा swap_cluster_info *info)
-अणु
+static inline void cluster_clear_huge(struct swap_cluster_info *info)
+{
 	info->flags &= ~CLUSTER_FLAG_HUGE;
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा swap_cluster_info *lock_cluster(काष्ठा swap_info_काष्ठा *si,
-						     अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा swap_cluster_info *ci;
+static inline struct swap_cluster_info *lock_cluster(struct swap_info_struct *si,
+						     unsigned long offset)
+{
+	struct swap_cluster_info *ci;
 
 	ci = si->cluster_info;
-	अगर (ci) अणु
-		ci += offset / SWAPखाता_CLUSTER;
+	if (ci) {
+		ci += offset / SWAPFILE_CLUSTER;
 		spin_lock(&ci->lock);
-	पूर्ण
-	वापस ci;
-पूर्ण
+	}
+	return ci;
+}
 
-अटल अंतरभूत व्योम unlock_cluster(काष्ठा swap_cluster_info *ci)
-अणु
-	अगर (ci)
+static inline void unlock_cluster(struct swap_cluster_info *ci)
+{
+	if (ci)
 		spin_unlock(&ci->lock);
-पूर्ण
+}
 
 /*
- * Determine the locking method in use क्रम this device.  Return
- * swap_cluster_info अगर SSD-style cluster-based locking is in place.
+ * Determine the locking method in use for this device.  Return
+ * swap_cluster_info if SSD-style cluster-based locking is in place.
  */
-अटल अंतरभूत काष्ठा swap_cluster_info *lock_cluster_or_swap_info(
-		काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा swap_cluster_info *ci;
+static inline struct swap_cluster_info *lock_cluster_or_swap_info(
+		struct swap_info_struct *si, unsigned long offset)
+{
+	struct swap_cluster_info *ci;
 
-	/* Try to use fine-grained SSD-style locking अगर available: */
+	/* Try to use fine-grained SSD-style locking if available: */
 	ci = lock_cluster(si, offset);
 	/* Otherwise, fall back to traditional, coarse locking: */
-	अगर (!ci)
+	if (!ci)
 		spin_lock(&si->lock);
 
-	वापस ci;
-पूर्ण
+	return ci;
+}
 
-अटल अंतरभूत व्योम unlock_cluster_or_swap_info(काष्ठा swap_info_काष्ठा *si,
-					       काष्ठा swap_cluster_info *ci)
-अणु
-	अगर (ci)
+static inline void unlock_cluster_or_swap_info(struct swap_info_struct *si,
+					       struct swap_cluster_info *ci)
+{
+	if (ci)
 		unlock_cluster(ci);
-	अन्यथा
+	else
 		spin_unlock(&si->lock);
-पूर्ण
+}
 
-अटल अंतरभूत bool cluster_list_empty(काष्ठा swap_cluster_list *list)
-अणु
-	वापस cluster_is_null(&list->head);
-पूर्ण
+static inline bool cluster_list_empty(struct swap_cluster_list *list)
+{
+	return cluster_is_null(&list->head);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक cluster_list_first(काष्ठा swap_cluster_list *list)
-अणु
-	वापस cluster_next(&list->head);
-पूर्ण
+static inline unsigned int cluster_list_first(struct swap_cluster_list *list)
+{
+	return cluster_next(&list->head);
+}
 
-अटल व्योम cluster_list_init(काष्ठा swap_cluster_list *list)
-अणु
+static void cluster_list_init(struct swap_cluster_list *list)
+{
 	cluster_set_null(&list->head);
 	cluster_set_null(&list->tail);
-पूर्ण
+}
 
-अटल व्योम cluster_list_add_tail(काष्ठा swap_cluster_list *list,
-				  काष्ठा swap_cluster_info *ci,
-				  अचिन्हित पूर्णांक idx)
-अणु
-	अगर (cluster_list_empty(list)) अणु
+static void cluster_list_add_tail(struct swap_cluster_list *list,
+				  struct swap_cluster_info *ci,
+				  unsigned int idx)
+{
+	if (cluster_list_empty(list)) {
 		cluster_set_next_flag(&list->head, idx, 0);
 		cluster_set_next_flag(&list->tail, idx, 0);
-	पूर्ण अन्यथा अणु
-		काष्ठा swap_cluster_info *ci_tail;
-		अचिन्हित पूर्णांक tail = cluster_next(&list->tail);
+	} else {
+		struct swap_cluster_info *ci_tail;
+		unsigned int tail = cluster_next(&list->tail);
 
 		/*
 		 * Nested cluster lock, but both cluster locks are
-		 * only acquired when we held swap_info_काष्ठा->lock
+		 * only acquired when we held swap_info_struct->lock
 		 */
 		ci_tail = ci + tail;
 		spin_lock_nested(&ci_tail->lock, SINGLE_DEPTH_NESTING);
 		cluster_set_next(ci_tail, idx);
 		spin_unlock(&ci_tail->lock);
 		cluster_set_next_flag(&list->tail, idx, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक cluster_list_del_first(काष्ठा swap_cluster_list *list,
-					   काष्ठा swap_cluster_info *ci)
-अणु
-	अचिन्हित पूर्णांक idx;
+static unsigned int cluster_list_del_first(struct swap_cluster_list *list,
+					   struct swap_cluster_info *ci)
+{
+	unsigned int idx;
 
 	idx = cluster_next(&list->head);
-	अगर (cluster_next(&list->tail) == idx) अणु
+	if (cluster_next(&list->tail) == idx) {
 		cluster_set_null(&list->head);
 		cluster_set_null(&list->tail);
-	पूर्ण अन्यथा
+	} else
 		cluster_set_next_flag(&list->head,
 				      cluster_next(&ci[idx]), 0);
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-/* Add a cluster to discard list and schedule it to करो discard */
-अटल व्योम swap_cluster_schedule_discard(काष्ठा swap_info_काष्ठा *si,
-		अचिन्हित पूर्णांक idx)
-अणु
+/* Add a cluster to discard list and schedule it to do discard */
+static void swap_cluster_schedule_discard(struct swap_info_struct *si,
+		unsigned int idx)
+{
 	/*
-	 * If scan_swap_map() can't find a मुक्त cluster, it will check
+	 * If scan_swap_map() can't find a free cluster, it will check
 	 * si->swap_map directly. To make sure the discarding cluster isn't
 	 * taken by scan_swap_map(), mark the swap entries bad (occupied). It
 	 * will be cleared after discard
 	 */
-	स_रखो(si->swap_map + idx * SWAPखाता_CLUSTER,
-			SWAP_MAP_BAD, SWAPखाता_CLUSTER);
+	memset(si->swap_map + idx * SWAPFILE_CLUSTER,
+			SWAP_MAP_BAD, SWAPFILE_CLUSTER);
 
 	cluster_list_add_tail(&si->discard_clusters, si->cluster_info, idx);
 
 	schedule_work(&si->discard_work);
-पूर्ण
+}
 
-अटल व्योम __मुक्त_cluster(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ idx)
-अणु
-	काष्ठा swap_cluster_info *ci = si->cluster_info;
+static void __free_cluster(struct swap_info_struct *si, unsigned long idx)
+{
+	struct swap_cluster_info *ci = si->cluster_info;
 
 	cluster_set_flag(ci + idx, CLUSTER_FLAG_FREE);
-	cluster_list_add_tail(&si->मुक्त_clusters, ci, idx);
-पूर्ण
+	cluster_list_add_tail(&si->free_clusters, ci, idx);
+}
 
 /*
  * Doing discard actually. After a cluster discard is finished, the cluster
- * will be added to मुक्त cluster list. caller should hold si->lock.
+ * will be added to free cluster list. caller should hold si->lock.
 */
-अटल व्योम swap_करो_scheduled_discard(काष्ठा swap_info_काष्ठा *si)
-अणु
-	काष्ठा swap_cluster_info *info, *ci;
-	अचिन्हित पूर्णांक idx;
+static void swap_do_scheduled_discard(struct swap_info_struct *si)
+{
+	struct swap_cluster_info *info, *ci;
+	unsigned int idx;
 
 	info = si->cluster_info;
 
-	जबतक (!cluster_list_empty(&si->discard_clusters)) अणु
+	while (!cluster_list_empty(&si->discard_clusters)) {
 		idx = cluster_list_del_first(&si->discard_clusters, info);
 		spin_unlock(&si->lock);
 
-		discard_swap_cluster(si, idx * SWAPखाता_CLUSTER,
-				SWAPखाता_CLUSTER);
+		discard_swap_cluster(si, idx * SWAPFILE_CLUSTER,
+				SWAPFILE_CLUSTER);
 
 		spin_lock(&si->lock);
-		ci = lock_cluster(si, idx * SWAPखाता_CLUSTER);
-		__मुक्त_cluster(si, idx);
-		स_रखो(si->swap_map + idx * SWAPखाता_CLUSTER,
-				0, SWAPखाता_CLUSTER);
+		ci = lock_cluster(si, idx * SWAPFILE_CLUSTER);
+		__free_cluster(si, idx);
+		memset(si->swap_map + idx * SWAPFILE_CLUSTER,
+				0, SWAPFILE_CLUSTER);
 		unlock_cluster(ci);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम swap_discard_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
+static void swap_discard_work(struct work_struct *work)
+{
+	struct swap_info_struct *si;
 
-	si = container_of(work, काष्ठा swap_info_काष्ठा, discard_work);
+	si = container_of(work, struct swap_info_struct, discard_work);
 
 	spin_lock(&si->lock);
-	swap_करो_scheduled_discard(si);
+	swap_do_scheduled_discard(si);
 	spin_unlock(&si->lock);
-पूर्ण
+}
 
-अटल व्योम alloc_cluster(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ idx)
-अणु
-	काष्ठा swap_cluster_info *ci = si->cluster_info;
+static void alloc_cluster(struct swap_info_struct *si, unsigned long idx)
+{
+	struct swap_cluster_info *ci = si->cluster_info;
 
-	VM_BUG_ON(cluster_list_first(&si->मुक्त_clusters) != idx);
-	cluster_list_del_first(&si->मुक्त_clusters, ci);
+	VM_BUG_ON(cluster_list_first(&si->free_clusters) != idx);
+	cluster_list_del_first(&si->free_clusters, ci);
 	cluster_set_count_flag(ci + idx, 0, 0);
-पूर्ण
+}
 
-अटल व्योम मुक्त_cluster(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ idx)
-अणु
-	काष्ठा swap_cluster_info *ci = si->cluster_info + idx;
+static void free_cluster(struct swap_info_struct *si, unsigned long idx)
+{
+	struct swap_cluster_info *ci = si->cluster_info + idx;
 
 	VM_BUG_ON(cluster_count(ci) != 0);
 	/*
 	 * If the swap is discardable, prepare discard the cluster
-	 * instead of मुक्त it immediately. The cluster will be मुक्तd
+	 * instead of free it immediately. The cluster will be freed
 	 * after discard.
 	 */
-	अगर ((si->flags & (SWP_WRITEOK | SWP_PAGE_DISCARD)) ==
-	    (SWP_WRITEOK | SWP_PAGE_DISCARD)) अणु
+	if ((si->flags & (SWP_WRITEOK | SWP_PAGE_DISCARD)) ==
+	    (SWP_WRITEOK | SWP_PAGE_DISCARD)) {
 		swap_cluster_schedule_discard(si, idx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	__मुक्त_cluster(si, idx);
-पूर्ण
+	__free_cluster(si, idx);
+}
 
 /*
  * The cluster corresponding to page_nr will be used. The cluster will be
- * हटाओd from मुक्त cluster list and its usage counter will be increased.
+ * removed from free cluster list and its usage counter will be increased.
  */
-अटल व्योम inc_cluster_info_page(काष्ठा swap_info_काष्ठा *p,
-	काष्ठा swap_cluster_info *cluster_info, अचिन्हित दीर्घ page_nr)
-अणु
-	अचिन्हित दीर्घ idx = page_nr / SWAPखाता_CLUSTER;
+static void inc_cluster_info_page(struct swap_info_struct *p,
+	struct swap_cluster_info *cluster_info, unsigned long page_nr)
+{
+	unsigned long idx = page_nr / SWAPFILE_CLUSTER;
 
-	अगर (!cluster_info)
-		वापस;
-	अगर (cluster_is_मुक्त(&cluster_info[idx]))
+	if (!cluster_info)
+		return;
+	if (cluster_is_free(&cluster_info[idx]))
 		alloc_cluster(p, idx);
 
-	VM_BUG_ON(cluster_count(&cluster_info[idx]) >= SWAPखाता_CLUSTER);
+	VM_BUG_ON(cluster_count(&cluster_info[idx]) >= SWAPFILE_CLUSTER);
 	cluster_set_count(&cluster_info[idx],
 		cluster_count(&cluster_info[idx]) + 1);
-पूर्ण
+}
 
 /*
  * The cluster corresponding to page_nr decreases one usage. If the usage
  * counter becomes 0, which means no page in the cluster is in using, we can
- * optionally discard the cluster and add it to मुक्त cluster list.
+ * optionally discard the cluster and add it to free cluster list.
  */
-अटल व्योम dec_cluster_info_page(काष्ठा swap_info_काष्ठा *p,
-	काष्ठा swap_cluster_info *cluster_info, अचिन्हित दीर्घ page_nr)
-अणु
-	अचिन्हित दीर्घ idx = page_nr / SWAPखाता_CLUSTER;
+static void dec_cluster_info_page(struct swap_info_struct *p,
+	struct swap_cluster_info *cluster_info, unsigned long page_nr)
+{
+	unsigned long idx = page_nr / SWAPFILE_CLUSTER;
 
-	अगर (!cluster_info)
-		वापस;
+	if (!cluster_info)
+		return;
 
 	VM_BUG_ON(cluster_count(&cluster_info[idx]) == 0);
 	cluster_set_count(&cluster_info[idx],
 		cluster_count(&cluster_info[idx]) - 1);
 
-	अगर (cluster_count(&cluster_info[idx]) == 0)
-		मुक्त_cluster(p, idx);
-पूर्ण
+	if (cluster_count(&cluster_info[idx]) == 0)
+		free_cluster(p, idx);
+}
 
 /*
- * It's possible scan_swap_map() uses a मुक्त cluster in the middle of मुक्त
- * cluster list. Aव्योमing such abuse to aव्योम list corruption.
+ * It's possible scan_swap_map() uses a free cluster in the middle of free
+ * cluster list. Avoiding such abuse to avoid list corruption.
  */
-अटल bool
-scan_swap_map_ssd_cluster_conflict(काष्ठा swap_info_काष्ठा *si,
-	अचिन्हित दीर्घ offset)
-अणु
-	काष्ठा percpu_cluster *percpu_cluster;
+static bool
+scan_swap_map_ssd_cluster_conflict(struct swap_info_struct *si,
+	unsigned long offset)
+{
+	struct percpu_cluster *percpu_cluster;
 	bool conflict;
 
-	offset /= SWAPखाता_CLUSTER;
-	conflict = !cluster_list_empty(&si->मुक्त_clusters) &&
-		offset != cluster_list_first(&si->मुक्त_clusters) &&
-		cluster_is_मुक्त(&si->cluster_info[offset]);
+	offset /= SWAPFILE_CLUSTER;
+	conflict = !cluster_list_empty(&si->free_clusters) &&
+		offset != cluster_list_first(&si->free_clusters) &&
+		cluster_is_free(&si->cluster_info[offset]);
 
-	अगर (!conflict)
-		वापस false;
+	if (!conflict)
+		return false;
 
 	percpu_cluster = this_cpu_ptr(si->percpu_cluster);
 	cluster_set_null(&percpu_cluster->index);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Try to get a swap entry from current cpu's swap entry pool (a cluster). This
- * might involve allocating a new cluster क्रम current CPU too.
+ * might involve allocating a new cluster for current CPU too.
  */
-अटल bool scan_swap_map_try_ssd_cluster(काष्ठा swap_info_काष्ठा *si,
-	अचिन्हित दीर्घ *offset, अचिन्हित दीर्घ *scan_base)
-अणु
-	काष्ठा percpu_cluster *cluster;
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ पंचांगp, max;
+static bool scan_swap_map_try_ssd_cluster(struct swap_info_struct *si,
+	unsigned long *offset, unsigned long *scan_base)
+{
+	struct percpu_cluster *cluster;
+	struct swap_cluster_info *ci;
+	unsigned long tmp, max;
 
 new_cluster:
 	cluster = this_cpu_ptr(si->percpu_cluster);
-	अगर (cluster_is_null(&cluster->index)) अणु
-		अगर (!cluster_list_empty(&si->मुक्त_clusters)) अणु
-			cluster->index = si->मुक्त_clusters.head;
+	if (cluster_is_null(&cluster->index)) {
+		if (!cluster_list_empty(&si->free_clusters)) {
+			cluster->index = si->free_clusters.head;
 			cluster->next = cluster_next(&cluster->index) *
-					SWAPखाता_CLUSTER;
-		पूर्ण अन्यथा अगर (!cluster_list_empty(&si->discard_clusters)) अणु
+					SWAPFILE_CLUSTER;
+		} else if (!cluster_list_empty(&si->discard_clusters)) {
 			/*
-			 * we करोn't have मुक्त cluster but have some clusters in
-			 * discarding, करो discard now and reclaim them, then
-			 * reपढ़ो cluster_next_cpu since we dropped si->lock
+			 * we don't have free cluster but have some clusters in
+			 * discarding, do discard now and reclaim them, then
+			 * reread cluster_next_cpu since we dropped si->lock
 			 */
-			swap_करो_scheduled_discard(si);
-			*scan_base = this_cpu_पढ़ो(*si->cluster_next_cpu);
+			swap_do_scheduled_discard(si);
+			*scan_base = this_cpu_read(*si->cluster_next_cpu);
 			*offset = *scan_base;
-			जाओ new_cluster;
-		पूर्ण अन्यथा
-			वापस false;
-	पूर्ण
+			goto new_cluster;
+		} else
+			return false;
+	}
 
 	/*
-	 * Other CPUs can use our cluster अगर they can't find a मुक्त cluster,
-	 * check अगर there is still मुक्त entry in the cluster
+	 * Other CPUs can use our cluster if they can't find a free cluster,
+	 * check if there is still free entry in the cluster
 	 */
-	पंचांगp = cluster->next;
-	max = min_t(अचिन्हित दीर्घ, si->max,
-		    (cluster_next(&cluster->index) + 1) * SWAPखाता_CLUSTER);
-	अगर (पंचांगp < max) अणु
-		ci = lock_cluster(si, पंचांगp);
-		जबतक (पंचांगp < max) अणु
-			अगर (!si->swap_map[पंचांगp])
-				अवरोध;
-			पंचांगp++;
-		पूर्ण
+	tmp = cluster->next;
+	max = min_t(unsigned long, si->max,
+		    (cluster_next(&cluster->index) + 1) * SWAPFILE_CLUSTER);
+	if (tmp < max) {
+		ci = lock_cluster(si, tmp);
+		while (tmp < max) {
+			if (!si->swap_map[tmp])
+				break;
+			tmp++;
+		}
 		unlock_cluster(ci);
-	पूर्ण
-	अगर (पंचांगp >= max) अणु
+	}
+	if (tmp >= max) {
 		cluster_set_null(&cluster->index);
-		जाओ new_cluster;
-	पूर्ण
-	cluster->next = पंचांगp + 1;
-	*offset = पंचांगp;
-	*scan_base = पंचांगp;
-	वापस true;
-पूर्ण
+		goto new_cluster;
+	}
+	cluster->next = tmp + 1;
+	*offset = tmp;
+	*scan_base = tmp;
+	return true;
+}
 
-अटल व्योम __del_from_avail_list(काष्ठा swap_info_काष्ठा *p)
-अणु
-	पूर्णांक nid;
+static void __del_from_avail_list(struct swap_info_struct *p)
+{
+	int nid;
 
-	क्रम_each_node(nid)
+	for_each_node(nid)
 		plist_del(&p->avail_lists[nid], &swap_avail_heads[nid]);
-पूर्ण
+}
 
-अटल व्योम del_from_avail_list(काष्ठा swap_info_काष्ठा *p)
-अणु
+static void del_from_avail_list(struct swap_info_struct *p)
+{
 	spin_lock(&swap_avail_lock);
 	__del_from_avail_list(p);
 	spin_unlock(&swap_avail_lock);
-पूर्ण
+}
 
-अटल व्योम swap_range_alloc(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ offset,
-			     अचिन्हित पूर्णांक nr_entries)
-अणु
-	अचिन्हित पूर्णांक end = offset + nr_entries - 1;
+static void swap_range_alloc(struct swap_info_struct *si, unsigned long offset,
+			     unsigned int nr_entries)
+{
+	unsigned int end = offset + nr_entries - 1;
 
-	अगर (offset == si->lowest_bit)
+	if (offset == si->lowest_bit)
 		si->lowest_bit += nr_entries;
-	अगर (end == si->highest_bit)
+	if (end == si->highest_bit)
 		WRITE_ONCE(si->highest_bit, si->highest_bit - nr_entries);
 	si->inuse_pages += nr_entries;
-	अगर (si->inuse_pages == si->pages) अणु
+	if (si->inuse_pages == si->pages) {
 		si->lowest_bit = si->max;
 		si->highest_bit = 0;
 		del_from_avail_list(si);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम add_to_avail_list(काष्ठा swap_info_काष्ठा *p)
-अणु
-	पूर्णांक nid;
+static void add_to_avail_list(struct swap_info_struct *p)
+{
+	int nid;
 
 	spin_lock(&swap_avail_lock);
-	क्रम_each_node(nid) अणु
+	for_each_node(nid) {
 		WARN_ON(!plist_node_empty(&p->avail_lists[nid]));
 		plist_add(&p->avail_lists[nid], &swap_avail_heads[nid]);
-	पूर्ण
+	}
 	spin_unlock(&swap_avail_lock);
-पूर्ण
+}
 
-अटल व्योम swap_range_मुक्त(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ offset,
-			    अचिन्हित पूर्णांक nr_entries)
-अणु
-	अचिन्हित दीर्घ begin = offset;
-	अचिन्हित दीर्घ end = offset + nr_entries - 1;
-	व्योम (*swap_slot_मुक्त_notअगरy)(काष्ठा block_device *, अचिन्हित दीर्घ);
+static void swap_range_free(struct swap_info_struct *si, unsigned long offset,
+			    unsigned int nr_entries)
+{
+	unsigned long begin = offset;
+	unsigned long end = offset + nr_entries - 1;
+	void (*swap_slot_free_notify)(struct block_device *, unsigned long);
 
-	अगर (offset < si->lowest_bit)
+	if (offset < si->lowest_bit)
 		si->lowest_bit = offset;
-	अगर (end > si->highest_bit) अणु
+	if (end > si->highest_bit) {
 		bool was_full = !si->highest_bit;
 
 		WRITE_ONCE(si->highest_bit, end);
-		अगर (was_full && (si->flags & SWP_WRITEOK))
+		if (was_full && (si->flags & SWP_WRITEOK))
 			add_to_avail_list(si);
-	पूर्ण
-	atomic_दीर्घ_add(nr_entries, &nr_swap_pages);
+	}
+	atomic_long_add(nr_entries, &nr_swap_pages);
 	si->inuse_pages -= nr_entries;
-	अगर (si->flags & SWP_BLKDEV)
-		swap_slot_मुक्त_notअगरy =
-			si->bdev->bd_disk->fops->swap_slot_मुक्त_notअगरy;
-	अन्यथा
-		swap_slot_मुक्त_notअगरy = शून्य;
-	जबतक (offset <= end) अणु
+	if (si->flags & SWP_BLKDEV)
+		swap_slot_free_notify =
+			si->bdev->bd_disk->fops->swap_slot_free_notify;
+	else
+		swap_slot_free_notify = NULL;
+	while (offset <= end) {
 		arch_swap_invalidate_page(si->type, offset);
 		frontswap_invalidate_page(si->type, offset);
-		अगर (swap_slot_मुक्त_notअगरy)
-			swap_slot_मुक्त_notअगरy(si->bdev, offset);
+		if (swap_slot_free_notify)
+			swap_slot_free_notify(si->bdev, offset);
 		offset++;
-	पूर्ण
-	clear_shaकरोw_from_swap_cache(si->type, begin, end);
-पूर्ण
+	}
+	clear_shadow_from_swap_cache(si->type, begin, end);
+}
 
-अटल व्योम set_cluster_next(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ next)
-अणु
-	अचिन्हित दीर्घ prev;
+static void set_cluster_next(struct swap_info_struct *si, unsigned long next)
+{
+	unsigned long prev;
 
-	अगर (!(si->flags & SWP_SOLIDSTATE)) अणु
+	if (!(si->flags & SWP_SOLIDSTATE)) {
 		si->cluster_next = next;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	prev = this_cpu_पढ़ो(*si->cluster_next_cpu);
+	prev = this_cpu_read(*si->cluster_next_cpu);
 	/*
 	 * Cross the swap address space size aligned trunk, choose
-	 * another trunk अक्रमomly to aव्योम lock contention on swap
-	 * address space अगर possible.
+	 * another trunk randomly to avoid lock contention on swap
+	 * address space if possible.
 	 */
-	अगर ((prev >> SWAP_ADDRESS_SPACE_SHIFT) !=
-	    (next >> SWAP_ADDRESS_SPACE_SHIFT)) अणु
-		/* No मुक्त swap slots available */
-		अगर (si->highest_bit <= si->lowest_bit)
-			वापस;
+	if ((prev >> SWAP_ADDRESS_SPACE_SHIFT) !=
+	    (next >> SWAP_ADDRESS_SPACE_SHIFT)) {
+		/* No free swap slots available */
+		if (si->highest_bit <= si->lowest_bit)
+			return;
 		next = si->lowest_bit +
-			pअक्रमom_u32_max(si->highest_bit - si->lowest_bit + 1);
+			prandom_u32_max(si->highest_bit - si->lowest_bit + 1);
 		next = ALIGN_DOWN(next, SWAP_ADDRESS_SPACE_PAGES);
-		next = max_t(अचिन्हित पूर्णांक, next, si->lowest_bit);
-	पूर्ण
-	this_cpu_ग_लिखो(*si->cluster_next_cpu, next);
-पूर्ण
+		next = max_t(unsigned int, next, si->lowest_bit);
+	}
+	this_cpu_write(*si->cluster_next_cpu, next);
+}
 
-अटल पूर्णांक scan_swap_map_slots(काष्ठा swap_info_काष्ठा *si,
-			       अचिन्हित अक्षर usage, पूर्णांक nr,
+static int scan_swap_map_slots(struct swap_info_struct *si,
+			       unsigned char usage, int nr,
 			       swp_entry_t slots[])
-अणु
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ scan_base;
-	अचिन्हित दीर्घ last_in_cluster = 0;
-	पूर्णांक latency_ration = LATENCY_LIMIT;
-	पूर्णांक n_ret = 0;
+{
+	struct swap_cluster_info *ci;
+	unsigned long offset;
+	unsigned long scan_base;
+	unsigned long last_in_cluster = 0;
+	int latency_ration = LATENCY_LIMIT;
+	int n_ret = 0;
 	bool scanned_many = false;
 
 	/*
 	 * We try to cluster swap pages by allocating them sequentially
-	 * in swap.  Once we've allocated SWAPखाता_CLUSTER pages this
-	 * way, however, we resort to first-मुक्त allocation, starting
+	 * in swap.  Once we've allocated SWAPFILE_CLUSTER pages this
+	 * way, however, we resort to first-free allocation, starting
 	 * a new cluster.  This prevents us from scattering swap pages
 	 * all over the entire swap partition, so that we reduce
-	 * overall disk seek बार between swap pages.  -- sct
-	 * But we करो now try to find an empty cluster.  -Andrea
+	 * overall disk seek times between swap pages.  -- sct
+	 * But we do now try to find an empty cluster.  -Andrea
 	 * And we let swap pages go all over an SSD partition.  Hugh
 	 */
 
 	si->flags += SWP_SCANNING;
 	/*
-	 * Use percpu scan base क्रम SSD to reduce lock contention on
+	 * Use percpu scan base for SSD to reduce lock contention on
 	 * cluster and swap cache.  For HDD, sequential access is more
 	 * important.
 	 */
-	अगर (si->flags & SWP_SOLIDSTATE)
-		scan_base = this_cpu_पढ़ो(*si->cluster_next_cpu);
-	अन्यथा
+	if (si->flags & SWP_SOLIDSTATE)
+		scan_base = this_cpu_read(*si->cluster_next_cpu);
+	else
 		scan_base = si->cluster_next;
 	offset = scan_base;
 
 	/* SSD algorithm */
-	अगर (si->cluster_info) अणु
-		अगर (!scan_swap_map_try_ssd_cluster(si, &offset, &scan_base))
-			जाओ scan;
-	पूर्ण अन्यथा अगर (unlikely(!si->cluster_nr--)) अणु
-		अगर (si->pages - si->inuse_pages < SWAPखाता_CLUSTER) अणु
-			si->cluster_nr = SWAPखाता_CLUSTER - 1;
-			जाओ checks;
-		पूर्ण
+	if (si->cluster_info) {
+		if (!scan_swap_map_try_ssd_cluster(si, &offset, &scan_base))
+			goto scan;
+	} else if (unlikely(!si->cluster_nr--)) {
+		if (si->pages - si->inuse_pages < SWAPFILE_CLUSTER) {
+			si->cluster_nr = SWAPFILE_CLUSTER - 1;
+			goto checks;
+		}
 
 		spin_unlock(&si->lock);
 
 		/*
-		 * If seek is expensive, start searching क्रम new cluster from
+		 * If seek is expensive, start searching for new cluster from
 		 * start of partition, to minimize the span of allocated swap.
 		 * If seek is cheap, that is the SWP_SOLIDSTATE si->cluster_info
-		 * हाल, just handled by scan_swap_map_try_ssd_cluster() above.
+		 * case, just handled by scan_swap_map_try_ssd_cluster() above.
 		 */
 		scan_base = offset = si->lowest_bit;
-		last_in_cluster = offset + SWAPखाता_CLUSTER - 1;
+		last_in_cluster = offset + SWAPFILE_CLUSTER - 1;
 
 		/* Locate the first empty (unaligned) cluster */
-		क्रम (; last_in_cluster <= si->highest_bit; offset++) अणु
-			अगर (si->swap_map[offset])
-				last_in_cluster = offset + SWAPखाता_CLUSTER;
-			अन्यथा अगर (offset == last_in_cluster) अणु
+		for (; last_in_cluster <= si->highest_bit; offset++) {
+			if (si->swap_map[offset])
+				last_in_cluster = offset + SWAPFILE_CLUSTER;
+			else if (offset == last_in_cluster) {
 				spin_lock(&si->lock);
-				offset -= SWAPखाता_CLUSTER - 1;
+				offset -= SWAPFILE_CLUSTER - 1;
 				si->cluster_next = offset;
-				si->cluster_nr = SWAPखाता_CLUSTER - 1;
-				जाओ checks;
-			पूर्ण
-			अगर (unlikely(--latency_ration < 0)) अणु
+				si->cluster_nr = SWAPFILE_CLUSTER - 1;
+				goto checks;
+			}
+			if (unlikely(--latency_ration < 0)) {
 				cond_resched();
 				latency_ration = LATENCY_LIMIT;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		offset = scan_base;
 		spin_lock(&si->lock);
-		si->cluster_nr = SWAPखाता_CLUSTER - 1;
-	पूर्ण
+		si->cluster_nr = SWAPFILE_CLUSTER - 1;
+	}
 
 checks:
-	अगर (si->cluster_info) अणु
-		जबतक (scan_swap_map_ssd_cluster_conflict(si, offset)) अणु
-		/* take a अवरोध अगर we alपढ़ोy got some slots */
-			अगर (n_ret)
-				जाओ करोne;
-			अगर (!scan_swap_map_try_ssd_cluster(si, &offset,
+	if (si->cluster_info) {
+		while (scan_swap_map_ssd_cluster_conflict(si, offset)) {
+		/* take a break if we already got some slots */
+			if (n_ret)
+				goto done;
+			if (!scan_swap_map_try_ssd_cluster(si, &offset,
 							&scan_base))
-				जाओ scan;
-		पूर्ण
-	पूर्ण
-	अगर (!(si->flags & SWP_WRITEOK))
-		जाओ no_page;
-	अगर (!si->highest_bit)
-		जाओ no_page;
-	अगर (offset > si->highest_bit)
+				goto scan;
+		}
+	}
+	if (!(si->flags & SWP_WRITEOK))
+		goto no_page;
+	if (!si->highest_bit)
+		goto no_page;
+	if (offset > si->highest_bit)
 		scan_base = offset = si->lowest_bit;
 
 	ci = lock_cluster(si, offset);
-	/* reuse swap entry of cache-only swap अगर not busy. */
-	अगर (vm_swap_full() && si->swap_map[offset] == SWAP_HAS_CACHE) अणु
-		पूर्णांक swap_was_मुक्तd;
+	/* reuse swap entry of cache-only swap if not busy. */
+	if (vm_swap_full() && si->swap_map[offset] == SWAP_HAS_CACHE) {
+		int swap_was_freed;
 		unlock_cluster(ci);
 		spin_unlock(&si->lock);
-		swap_was_मुक्तd = __try_to_reclaim_swap(si, offset, TTRS_ANYWAY);
+		swap_was_freed = __try_to_reclaim_swap(si, offset, TTRS_ANYWAY);
 		spin_lock(&si->lock);
-		/* entry was मुक्तd successfully, try to use this again */
-		अगर (swap_was_मुक्तd)
-			जाओ checks;
-		जाओ scan; /* check next one */
-	पूर्ण
+		/* entry was freed successfully, try to use this again */
+		if (swap_was_freed)
+			goto checks;
+		goto scan; /* check next one */
+	}
 
-	अगर (si->swap_map[offset]) अणु
+	if (si->swap_map[offset]) {
 		unlock_cluster(ci);
-		अगर (!n_ret)
-			जाओ scan;
-		अन्यथा
-			जाओ करोne;
-	पूर्ण
+		if (!n_ret)
+			goto scan;
+		else
+			goto done;
+	}
 	WRITE_ONCE(si->swap_map[offset], usage);
 	inc_cluster_info_page(si, si->cluster_info, offset);
 	unlock_cluster(ci);
@@ -892,194 +891,194 @@ checks:
 	slots[n_ret++] = swp_entry(si->type, offset);
 
 	/* got enough slots or reach max slots? */
-	अगर ((n_ret == nr) || (offset >= si->highest_bit))
-		जाओ करोne;
+	if ((n_ret == nr) || (offset >= si->highest_bit))
+		goto done;
 
-	/* search क्रम next available slot */
+	/* search for next available slot */
 
-	/* समय to take a अवरोध? */
-	अगर (unlikely(--latency_ration < 0)) अणु
-		अगर (n_ret)
-			जाओ करोne;
+	/* time to take a break? */
+	if (unlikely(--latency_ration < 0)) {
+		if (n_ret)
+			goto done;
 		spin_unlock(&si->lock);
 		cond_resched();
 		spin_lock(&si->lock);
 		latency_ration = LATENCY_LIMIT;
-	पूर्ण
+	}
 
 	/* try to get more slots in cluster */
-	अगर (si->cluster_info) अणु
-		अगर (scan_swap_map_try_ssd_cluster(si, &offset, &scan_base))
-			जाओ checks;
-	पूर्ण अन्यथा अगर (si->cluster_nr && !si->swap_map[++offset]) अणु
-		/* non-ssd हाल, still more slots in cluster? */
+	if (si->cluster_info) {
+		if (scan_swap_map_try_ssd_cluster(si, &offset, &scan_base))
+			goto checks;
+	} else if (si->cluster_nr && !si->swap_map[++offset]) {
+		/* non-ssd case, still more slots in cluster? */
 		--si->cluster_nr;
-		जाओ checks;
-	पूर्ण
+		goto checks;
+	}
 
 	/*
-	 * Even अगर there's no मुक्त clusters available (fragmented),
+	 * Even if there's no free clusters available (fragmented),
 	 * try to scan a little more quickly with lock held unless we
-	 * have scanned too many slots alपढ़ोy.
+	 * have scanned too many slots already.
 	 */
-	अगर (!scanned_many) अणु
-		अचिन्हित दीर्घ scan_limit;
+	if (!scanned_many) {
+		unsigned long scan_limit;
 
-		अगर (offset < scan_base)
+		if (offset < scan_base)
 			scan_limit = scan_base;
-		अन्यथा
+		else
 			scan_limit = si->highest_bit;
-		क्रम (; offset <= scan_limit && --latency_ration > 0;
-		     offset++) अणु
-			अगर (!si->swap_map[offset])
-				जाओ checks;
-		पूर्ण
-	पूर्ण
+		for (; offset <= scan_limit && --latency_ration > 0;
+		     offset++) {
+			if (!si->swap_map[offset])
+				goto checks;
+		}
+	}
 
-करोne:
+done:
 	set_cluster_next(si, offset + 1);
 	si->flags -= SWP_SCANNING;
-	वापस n_ret;
+	return n_ret;
 
 scan:
 	spin_unlock(&si->lock);
-	जबतक (++offset <= READ_ONCE(si->highest_bit)) अणु
-		अगर (data_race(!si->swap_map[offset])) अणु
+	while (++offset <= READ_ONCE(si->highest_bit)) {
+		if (data_race(!si->swap_map[offset])) {
 			spin_lock(&si->lock);
-			जाओ checks;
-		पूर्ण
-		अगर (vm_swap_full() &&
-		    READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) अणु
+			goto checks;
+		}
+		if (vm_swap_full() &&
+		    READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) {
 			spin_lock(&si->lock);
-			जाओ checks;
-		पूर्ण
-		अगर (unlikely(--latency_ration < 0)) अणु
+			goto checks;
+		}
+		if (unlikely(--latency_ration < 0)) {
 			cond_resched();
 			latency_ration = LATENCY_LIMIT;
 			scanned_many = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	offset = si->lowest_bit;
-	जबतक (offset < scan_base) अणु
-		अगर (data_race(!si->swap_map[offset])) अणु
+	while (offset < scan_base) {
+		if (data_race(!si->swap_map[offset])) {
 			spin_lock(&si->lock);
-			जाओ checks;
-		पूर्ण
-		अगर (vm_swap_full() &&
-		    READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) अणु
+			goto checks;
+		}
+		if (vm_swap_full() &&
+		    READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) {
 			spin_lock(&si->lock);
-			जाओ checks;
-		पूर्ण
-		अगर (unlikely(--latency_ration < 0)) अणु
+			goto checks;
+		}
+		if (unlikely(--latency_ration < 0)) {
 			cond_resched();
 			latency_ration = LATENCY_LIMIT;
 			scanned_many = true;
-		पूर्ण
+		}
 		offset++;
-	पूर्ण
+	}
 	spin_lock(&si->lock);
 
 no_page:
 	si->flags -= SWP_SCANNING;
-	वापस n_ret;
-पूर्ण
+	return n_ret;
+}
 
-अटल पूर्णांक swap_alloc_cluster(काष्ठा swap_info_काष्ठा *si, swp_entry_t *slot)
-अणु
-	अचिन्हित दीर्घ idx;
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ offset;
+static int swap_alloc_cluster(struct swap_info_struct *si, swp_entry_t *slot)
+{
+	unsigned long idx;
+	struct swap_cluster_info *ci;
+	unsigned long offset;
 
 	/*
 	 * Should not even be attempting cluster allocations when huge
 	 * page swap is disabled.  Warn and fail the allocation.
 	 */
-	अगर (!IS_ENABLED(CONFIG_THP_SWAP)) अणु
+	if (!IS_ENABLED(CONFIG_THP_SWAP)) {
 		VM_WARN_ON_ONCE(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (cluster_list_empty(&si->मुक्त_clusters))
-		वापस 0;
+	if (cluster_list_empty(&si->free_clusters))
+		return 0;
 
-	idx = cluster_list_first(&si->मुक्त_clusters);
-	offset = idx * SWAPखाता_CLUSTER;
+	idx = cluster_list_first(&si->free_clusters);
+	offset = idx * SWAPFILE_CLUSTER;
 	ci = lock_cluster(si, offset);
 	alloc_cluster(si, idx);
-	cluster_set_count_flag(ci, SWAPखाता_CLUSTER, CLUSTER_FLAG_HUGE);
+	cluster_set_count_flag(ci, SWAPFILE_CLUSTER, CLUSTER_FLAG_HUGE);
 
-	स_रखो(si->swap_map + offset, SWAP_HAS_CACHE, SWAPखाता_CLUSTER);
+	memset(si->swap_map + offset, SWAP_HAS_CACHE, SWAPFILE_CLUSTER);
 	unlock_cluster(ci);
-	swap_range_alloc(si, offset, SWAPखाता_CLUSTER);
+	swap_range_alloc(si, offset, SWAPFILE_CLUSTER);
 	*slot = swp_entry(si->type, offset);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम swap_मुक्त_cluster(काष्ठा swap_info_काष्ठा *si, अचिन्हित दीर्घ idx)
-अणु
-	अचिन्हित दीर्घ offset = idx * SWAPखाता_CLUSTER;
-	काष्ठा swap_cluster_info *ci;
+static void swap_free_cluster(struct swap_info_struct *si, unsigned long idx)
+{
+	unsigned long offset = idx * SWAPFILE_CLUSTER;
+	struct swap_cluster_info *ci;
 
 	ci = lock_cluster(si, offset);
-	स_रखो(si->swap_map + offset, 0, SWAPखाता_CLUSTER);
+	memset(si->swap_map + offset, 0, SWAPFILE_CLUSTER);
 	cluster_set_count_flag(ci, 0, 0);
-	मुक्त_cluster(si, idx);
+	free_cluster(si, idx);
 	unlock_cluster(ci);
-	swap_range_मुक्त(si, offset, SWAPखाता_CLUSTER);
-पूर्ण
+	swap_range_free(si, offset, SWAPFILE_CLUSTER);
+}
 
-अटल अचिन्हित दीर्घ scan_swap_map(काष्ठा swap_info_काष्ठा *si,
-				   अचिन्हित अक्षर usage)
-अणु
+static unsigned long scan_swap_map(struct swap_info_struct *si,
+				   unsigned char usage)
+{
 	swp_entry_t entry;
-	पूर्णांक n_ret;
+	int n_ret;
 
 	n_ret = scan_swap_map_slots(si, usage, 1, &entry);
 
-	अगर (n_ret)
-		वापस swp_offset(entry);
-	अन्यथा
-		वापस 0;
+	if (n_ret)
+		return swp_offset(entry);
+	else
+		return 0;
 
-पूर्ण
+}
 
-पूर्णांक get_swap_pages(पूर्णांक n_goal, swp_entry_t swp_entries[], पूर्णांक entry_size)
-अणु
-	अचिन्हित दीर्घ size = swap_entry_size(entry_size);
-	काष्ठा swap_info_काष्ठा *si, *next;
-	दीर्घ avail_pgs;
-	पूर्णांक n_ret = 0;
-	पूर्णांक node;
+int get_swap_pages(int n_goal, swp_entry_t swp_entries[], int entry_size)
+{
+	unsigned long size = swap_entry_size(entry_size);
+	struct swap_info_struct *si, *next;
+	long avail_pgs;
+	int n_ret = 0;
+	int node;
 
 	/* Only single cluster request supported */
-	WARN_ON_ONCE(n_goal > 1 && size == SWAPखाता_CLUSTER);
+	WARN_ON_ONCE(n_goal > 1 && size == SWAPFILE_CLUSTER);
 
 	spin_lock(&swap_avail_lock);
 
-	avail_pgs = atomic_दीर्घ_पढ़ो(&nr_swap_pages) / size;
-	अगर (avail_pgs <= 0) अणु
+	avail_pgs = atomic_long_read(&nr_swap_pages) / size;
+	if (avail_pgs <= 0) {
 		spin_unlock(&swap_avail_lock);
-		जाओ noswap;
-	पूर्ण
+		goto noswap;
+	}
 
-	n_goal = min3((दीर्घ)n_goal, (दीर्घ)SWAP_BATCH, avail_pgs);
+	n_goal = min3((long)n_goal, (long)SWAP_BATCH, avail_pgs);
 
-	atomic_दीर्घ_sub(n_goal * size, &nr_swap_pages);
+	atomic_long_sub(n_goal * size, &nr_swap_pages);
 
 start_over:
 	node = numa_node_id();
-	plist_क्रम_each_entry_safe(si, next, &swap_avail_heads[node], avail_lists[node]) अणु
+	plist_for_each_entry_safe(si, next, &swap_avail_heads[node], avail_lists[node]) {
 		/* requeue si to after same-priority siblings */
 		plist_requeue(&si->avail_lists[node], &swap_avail_heads[node]);
 		spin_unlock(&swap_avail_lock);
 		spin_lock(&si->lock);
-		अगर (!si->highest_bit || !(si->flags & SWP_WRITEOK)) अणु
+		if (!si->highest_bit || !(si->flags & SWP_WRITEOK)) {
 			spin_lock(&swap_avail_lock);
-			अगर (plist_node_empty(&si->avail_lists[node])) अणु
+			if (plist_node_empty(&si->avail_lists[node])) {
 				spin_unlock(&si->lock);
-				जाओ nextsi;
-			पूर्ण
+				goto nextsi;
+			}
 			WARN(!si->highest_bit,
 			     "swap_info %d in list but !highest_bit\n",
 			     si->type);
@@ -1088,267 +1087,267 @@ start_over:
 			     si->type);
 			__del_from_avail_list(si);
 			spin_unlock(&si->lock);
-			जाओ nextsi;
-		पूर्ण
-		अगर (size == SWAPखाता_CLUSTER) अणु
-			अगर (si->flags & SWP_BLKDEV)
+			goto nextsi;
+		}
+		if (size == SWAPFILE_CLUSTER) {
+			if (si->flags & SWP_BLKDEV)
 				n_ret = swap_alloc_cluster(si, swp_entries);
-		पूर्ण अन्यथा
+		} else
 			n_ret = scan_swap_map_slots(si, SWAP_HAS_CACHE,
 						    n_goal, swp_entries);
 		spin_unlock(&si->lock);
-		अगर (n_ret || size == SWAPखाता_CLUSTER)
-			जाओ check_out;
+		if (n_ret || size == SWAPFILE_CLUSTER)
+			goto check_out;
 		pr_debug("scan_swap_map of si %d failed to find offset\n",
 			si->type);
 
 		spin_lock(&swap_avail_lock);
 nextsi:
 		/*
-		 * अगर we got here, it's likely that si was almost full beक्रमe,
+		 * if we got here, it's likely that si was almost full before,
 		 * and since scan_swap_map() can drop the si->lock, multiple
 		 * callers probably all tried to get a page from the same si
-		 * and it filled up beक्रमe we could get one; or, the si filled
+		 * and it filled up before we could get one; or, the si filled
 		 * up between us dropping swap_avail_lock and taking si->lock.
 		 * Since we dropped the swap_avail_lock, the swap_avail_head
-		 * list may have been modअगरied; so अगर next is still in the
+		 * list may have been modified; so if next is still in the
 		 * swap_avail_head list then try it, otherwise start over
-		 * अगर we have not gotten any slots.
+		 * if we have not gotten any slots.
 		 */
-		अगर (plist_node_empty(&next->avail_lists[node]))
-			जाओ start_over;
-	पूर्ण
+		if (plist_node_empty(&next->avail_lists[node]))
+			goto start_over;
+	}
 
 	spin_unlock(&swap_avail_lock);
 
 check_out:
-	अगर (n_ret < n_goal)
-		atomic_दीर्घ_add((दीर्घ)(n_goal - n_ret) * size,
+	if (n_ret < n_goal)
+		atomic_long_add((long)(n_goal - n_ret) * size,
 				&nr_swap_pages);
 noswap:
-	वापस n_ret;
-पूर्ण
+	return n_ret;
+}
 
 /* The only caller of this function is now suspend routine */
-swp_entry_t get_swap_page_of_type(पूर्णांक type)
-अणु
-	काष्ठा swap_info_काष्ठा *si = swap_type_to_swap_info(type);
+swp_entry_t get_swap_page_of_type(int type)
+{
+	struct swap_info_struct *si = swap_type_to_swap_info(type);
 	pgoff_t offset;
 
-	अगर (!si)
-		जाओ fail;
+	if (!si)
+		goto fail;
 
 	spin_lock(&si->lock);
-	अगर (si->flags & SWP_WRITEOK) अणु
-		/* This is called क्रम allocating swap entry, not cache */
+	if (si->flags & SWP_WRITEOK) {
+		/* This is called for allocating swap entry, not cache */
 		offset = scan_swap_map(si, 1);
-		अगर (offset) अणु
-			atomic_दीर्घ_dec(&nr_swap_pages);
+		if (offset) {
+			atomic_long_dec(&nr_swap_pages);
 			spin_unlock(&si->lock);
-			वापस swp_entry(type, offset);
-		पूर्ण
-	पूर्ण
+			return swp_entry(type, offset);
+		}
+	}
 	spin_unlock(&si->lock);
 fail:
-	वापस (swp_entry_t) अणु0पूर्ण;
-पूर्ण
+	return (swp_entry_t) {0};
+}
 
-अटल काष्ठा swap_info_काष्ठा *__swap_info_get(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
-	अचिन्हित दीर्घ offset;
+static struct swap_info_struct *__swap_info_get(swp_entry_t entry)
+{
+	struct swap_info_struct *p;
+	unsigned long offset;
 
-	अगर (!entry.val)
-		जाओ out;
+	if (!entry.val)
+		goto out;
 	p = swp_swap_info(entry);
-	अगर (!p)
-		जाओ bad_nofile;
-	अगर (data_race(!(p->flags & SWP_USED)))
-		जाओ bad_device;
+	if (!p)
+		goto bad_nofile;
+	if (data_race(!(p->flags & SWP_USED)))
+		goto bad_device;
 	offset = swp_offset(entry);
-	अगर (offset >= p->max)
-		जाओ bad_offset;
-	वापस p;
+	if (offset >= p->max)
+		goto bad_offset;
+	return p;
 
 bad_offset:
 	pr_err("%s: %s%08lx\n", __func__, Bad_offset, entry.val);
-	जाओ out;
+	goto out;
 bad_device:
 	pr_err("%s: %s%08lx\n", __func__, Unused_file, entry.val);
-	जाओ out;
+	goto out;
 bad_nofile:
 	pr_err("%s: %s%08lx\n", __func__, Bad_file, entry.val);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा swap_info_काष्ठा *_swap_info_get(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
+static struct swap_info_struct *_swap_info_get(swp_entry_t entry)
+{
+	struct swap_info_struct *p;
 
 	p = __swap_info_get(entry);
-	अगर (!p)
-		जाओ out;
-	अगर (data_race(!p->swap_map[swp_offset(entry)]))
-		जाओ bad_मुक्त;
-	वापस p;
+	if (!p)
+		goto out;
+	if (data_race(!p->swap_map[swp_offset(entry)]))
+		goto bad_free;
+	return p;
 
-bad_मुक्त:
+bad_free:
 	pr_err("%s: %s%08lx\n", __func__, Unused_offset, entry.val);
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा swap_info_काष्ठा *swap_info_get(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
+static struct swap_info_struct *swap_info_get(swp_entry_t entry)
+{
+	struct swap_info_struct *p;
 
 	p = _swap_info_get(entry);
-	अगर (p)
+	if (p)
 		spin_lock(&p->lock);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल काष्ठा swap_info_काष्ठा *swap_info_get_cont(swp_entry_t entry,
-					काष्ठा swap_info_काष्ठा *q)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
+static struct swap_info_struct *swap_info_get_cont(swp_entry_t entry,
+					struct swap_info_struct *q)
+{
+	struct swap_info_struct *p;
 
 	p = _swap_info_get(entry);
 
-	अगर (p != q) अणु
-		अगर (q != शून्य)
+	if (p != q) {
+		if (q != NULL)
 			spin_unlock(&q->lock);
-		अगर (p != शून्य)
+		if (p != NULL)
 			spin_lock(&p->lock);
-	पूर्ण
-	वापस p;
-पूर्ण
+	}
+	return p;
+}
 
-अटल अचिन्हित अक्षर __swap_entry_मुक्त_locked(काष्ठा swap_info_काष्ठा *p,
-					      अचिन्हित दीर्घ offset,
-					      अचिन्हित अक्षर usage)
-अणु
-	अचिन्हित अक्षर count;
-	अचिन्हित अक्षर has_cache;
+static unsigned char __swap_entry_free_locked(struct swap_info_struct *p,
+					      unsigned long offset,
+					      unsigned char usage)
+{
+	unsigned char count;
+	unsigned char has_cache;
 
 	count = p->swap_map[offset];
 
 	has_cache = count & SWAP_HAS_CACHE;
 	count &= ~SWAP_HAS_CACHE;
 
-	अगर (usage == SWAP_HAS_CACHE) अणु
+	if (usage == SWAP_HAS_CACHE) {
 		VM_BUG_ON(!has_cache);
 		has_cache = 0;
-	पूर्ण अन्यथा अगर (count == SWAP_MAP_SHMEM) अणु
+	} else if (count == SWAP_MAP_SHMEM) {
 		/*
 		 * Or we could insist on shmem.c using a special
-		 * swap_shmem_मुक्त() and मुक्त_shmem_swap_and_cache()...
+		 * swap_shmem_free() and free_shmem_swap_and_cache()...
 		 */
 		count = 0;
-	पूर्ण अन्यथा अगर ((count & ~COUNT_CONTINUED) <= SWAP_MAP_MAX) अणु
-		अगर (count == COUNT_CONTINUED) अणु
-			अगर (swap_count_जारीd(p, offset, count))
+	} else if ((count & ~COUNT_CONTINUED) <= SWAP_MAP_MAX) {
+		if (count == COUNT_CONTINUED) {
+			if (swap_count_continued(p, offset, count))
 				count = SWAP_MAP_MAX | COUNT_CONTINUED;
-			अन्यथा
+			else
 				count = SWAP_MAP_MAX;
-		पूर्ण अन्यथा
+		} else
 			count--;
-	पूर्ण
+	}
 
 	usage = count | has_cache;
-	अगर (usage)
+	if (usage)
 		WRITE_ONCE(p->swap_map[offset], usage);
-	अन्यथा
+	else
 		WRITE_ONCE(p->swap_map[offset], SWAP_HAS_CACHE);
 
-	वापस usage;
-पूर्ण
+	return usage;
+}
 
 /*
  * Check whether swap entry is valid in the swap device.  If so,
- * वापस poपूर्णांकer to swap_info_काष्ठा, and keep the swap entry valid
+ * return pointer to swap_info_struct, and keep the swap entry valid
  * via preventing the swap device from being swapoff, until
- * put_swap_device() is called.  Otherwise वापस शून्य.
+ * put_swap_device() is called.  Otherwise return NULL.
  *
- * The entirety of the RCU पढ़ो critical section must come beक्रमe the
- * वापस from or after the call to synchronize_rcu() in
- * enable_swap_info() or swapoff().  So अगर "si->flags & SWP_VALID" is
+ * The entirety of the RCU read critical section must come before the
+ * return from or after the call to synchronize_rcu() in
+ * enable_swap_info() or swapoff().  So if "si->flags & SWP_VALID" is
  * true, the si->map, si->cluster_info, etc. must be valid in the
  * critical section.
  *
- * Notice that swapoff or swapoff+swapon can still happen beक्रमe the
- * rcu_पढ़ो_lock() in get_swap_device() or after the rcu_पढ़ो_unlock()
- * in put_swap_device() अगर there isn't any other way to prevent
+ * Notice that swapoff or swapoff+swapon can still happen before the
+ * rcu_read_lock() in get_swap_device() or after the rcu_read_unlock()
+ * in put_swap_device() if there isn't any other way to prevent
  * swapoff, such as page lock, page table lock, etc.  The caller must
- * be prepared क्रम that.  For example, the following situation is
+ * be prepared for that.  For example, the following situation is
  * possible.
  *
  *   CPU1				CPU2
- *   करो_swap_page()
+ *   do_swap_page()
  *     ...				swapoff+swapon
- *     __पढ़ो_swap_cache_async()
+ *     __read_swap_cache_async()
  *       swapcache_prepare()
  *         __swap_duplicate()
  *           // check swap_map
- *     // verअगरy PTE not changed
+ *     // verify PTE not changed
  *
- * In __swap_duplicate(), the swap_map need to be checked beक्रमe
- * changing partly because the specअगरied swap entry may be क्रम another
- * swap device which has been swapoff.  And in करो_swap_page(), after
- * the page is पढ़ो from the swap device, the PTE is verअगरied not
+ * In __swap_duplicate(), the swap_map need to be checked before
+ * changing partly because the specified swap entry may be for another
+ * swap device which has been swapoff.  And in do_swap_page(), after
+ * the page is read from the swap device, the PTE is verified not
  * changed with the page table locked to check whether the swap device
  * has been swapoff or swapoff+swapon.
  */
-काष्ठा swap_info_काष्ठा *get_swap_device(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
-	अचिन्हित दीर्घ offset;
+struct swap_info_struct *get_swap_device(swp_entry_t entry)
+{
+	struct swap_info_struct *si;
+	unsigned long offset;
 
-	अगर (!entry.val)
-		जाओ out;
+	if (!entry.val)
+		goto out;
 	si = swp_swap_info(entry);
-	अगर (!si)
-		जाओ bad_nofile;
+	if (!si)
+		goto bad_nofile;
 
-	rcu_पढ़ो_lock();
-	अगर (data_race(!(si->flags & SWP_VALID)))
-		जाओ unlock_out;
+	rcu_read_lock();
+	if (data_race(!(si->flags & SWP_VALID)))
+		goto unlock_out;
 	offset = swp_offset(entry);
-	अगर (offset >= si->max)
-		जाओ unlock_out;
+	if (offset >= si->max)
+		goto unlock_out;
 
-	वापस si;
+	return si;
 bad_nofile:
 	pr_err("%s: %s%08lx\n", __func__, Bad_file, entry.val);
 out:
-	वापस शून्य;
+	return NULL;
 unlock_out:
-	rcu_पढ़ो_unlock();
-	वापस शून्य;
-पूर्ण
+	rcu_read_unlock();
+	return NULL;
+}
 
-अटल अचिन्हित अक्षर __swap_entry_मुक्त(काष्ठा swap_info_काष्ठा *p,
+static unsigned char __swap_entry_free(struct swap_info_struct *p,
 				       swp_entry_t entry)
-अणु
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ offset = swp_offset(entry);
-	अचिन्हित अक्षर usage;
+{
+	struct swap_cluster_info *ci;
+	unsigned long offset = swp_offset(entry);
+	unsigned char usage;
 
 	ci = lock_cluster_or_swap_info(p, offset);
-	usage = __swap_entry_मुक्त_locked(p, offset, 1);
+	usage = __swap_entry_free_locked(p, offset, 1);
 	unlock_cluster_or_swap_info(p, ci);
-	अगर (!usage)
-		मुक्त_swap_slot(entry);
+	if (!usage)
+		free_swap_slot(entry);
 
-	वापस usage;
-पूर्ण
+	return usage;
+}
 
-अटल व्योम swap_entry_मुक्त(काष्ठा swap_info_काष्ठा *p, swp_entry_t entry)
-अणु
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ offset = swp_offset(entry);
-	अचिन्हित अक्षर count;
+static void swap_entry_free(struct swap_info_struct *p, swp_entry_t entry)
+{
+	struct swap_cluster_info *ci;
+	unsigned long offset = swp_offset(entry);
+	unsigned char count;
 
 	ci = lock_cluster(p, offset);
 	count = p->swap_map[offset];
@@ -1357,1140 +1356,1140 @@ unlock_out:
 	dec_cluster_info_page(p, p->cluster_info, offset);
 	unlock_cluster(ci);
 
-	mem_cgroup_unअक्षरge_swap(entry, 1);
-	swap_range_मुक्त(p, offset, 1);
-पूर्ण
+	mem_cgroup_uncharge_swap(entry, 1);
+	swap_range_free(p, offset, 1);
+}
 
 /*
  * Caller has made sure that the swap device corresponding to entry
  * is still around or has not been recycled.
  */
-व्योम swap_मुक्त(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
+void swap_free(swp_entry_t entry)
+{
+	struct swap_info_struct *p;
 
 	p = _swap_info_get(entry);
-	अगर (p)
-		__swap_entry_मुक्त(p, entry);
-पूर्ण
+	if (p)
+		__swap_entry_free(p, entry);
+}
 
 /*
  * Called after dropping swapcache to decrease refcnt to swap entries.
  */
-व्योम put_swap_page(काष्ठा page *page, swp_entry_t entry)
-अणु
-	अचिन्हित दीर्घ offset = swp_offset(entry);
-	अचिन्हित दीर्घ idx = offset / SWAPखाता_CLUSTER;
-	काष्ठा swap_cluster_info *ci;
-	काष्ठा swap_info_काष्ठा *si;
-	अचिन्हित अक्षर *map;
-	अचिन्हित पूर्णांक i, मुक्त_entries = 0;
-	अचिन्हित अक्षर val;
-	पूर्णांक size = swap_entry_size(thp_nr_pages(page));
+void put_swap_page(struct page *page, swp_entry_t entry)
+{
+	unsigned long offset = swp_offset(entry);
+	unsigned long idx = offset / SWAPFILE_CLUSTER;
+	struct swap_cluster_info *ci;
+	struct swap_info_struct *si;
+	unsigned char *map;
+	unsigned int i, free_entries = 0;
+	unsigned char val;
+	int size = swap_entry_size(thp_nr_pages(page));
 
 	si = _swap_info_get(entry);
-	अगर (!si)
-		वापस;
+	if (!si)
+		return;
 
 	ci = lock_cluster_or_swap_info(si, offset);
-	अगर (size == SWAPखाता_CLUSTER) अणु
+	if (size == SWAPFILE_CLUSTER) {
 		VM_BUG_ON(!cluster_is_huge(ci));
 		map = si->swap_map + offset;
-		क्रम (i = 0; i < SWAPखाता_CLUSTER; i++) अणु
+		for (i = 0; i < SWAPFILE_CLUSTER; i++) {
 			val = map[i];
 			VM_BUG_ON(!(val & SWAP_HAS_CACHE));
-			अगर (val == SWAP_HAS_CACHE)
-				मुक्त_entries++;
-		पूर्ण
+			if (val == SWAP_HAS_CACHE)
+				free_entries++;
+		}
 		cluster_clear_huge(ci);
-		अगर (मुक्त_entries == SWAPखाता_CLUSTER) अणु
+		if (free_entries == SWAPFILE_CLUSTER) {
 			unlock_cluster_or_swap_info(si, ci);
 			spin_lock(&si->lock);
-			mem_cgroup_unअक्षरge_swap(entry, SWAPखाता_CLUSTER);
-			swap_मुक्त_cluster(si, idx);
+			mem_cgroup_uncharge_swap(entry, SWAPFILE_CLUSTER);
+			swap_free_cluster(si, idx);
 			spin_unlock(&si->lock);
-			वापस;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < size; i++, entry.val++) अणु
-		अगर (!__swap_entry_मुक्त_locked(si, offset + i, SWAP_HAS_CACHE)) अणु
+			return;
+		}
+	}
+	for (i = 0; i < size; i++, entry.val++) {
+		if (!__swap_entry_free_locked(si, offset + i, SWAP_HAS_CACHE)) {
 			unlock_cluster_or_swap_info(si, ci);
-			मुक्त_swap_slot(entry);
-			अगर (i == size - 1)
-				वापस;
+			free_swap_slot(entry);
+			if (i == size - 1)
+				return;
 			lock_cluster_or_swap_info(si, offset);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	unlock_cluster_or_swap_info(si, ci);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_THP_SWAP
-पूर्णांक split_swap_cluster(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ offset = swp_offset(entry);
+#ifdef CONFIG_THP_SWAP
+int split_swap_cluster(swp_entry_t entry)
+{
+	struct swap_info_struct *si;
+	struct swap_cluster_info *ci;
+	unsigned long offset = swp_offset(entry);
 
 	si = _swap_info_get(entry);
-	अगर (!si)
-		वापस -EBUSY;
+	if (!si)
+		return -EBUSY;
 	ci = lock_cluster(si, offset);
 	cluster_clear_huge(ci);
 	unlock_cluster(ci);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक swp_entry_cmp(स्थिर व्योम *ent1, स्थिर व्योम *ent2)
-अणु
-	स्थिर swp_entry_t *e1 = ent1, *e2 = ent2;
+static int swp_entry_cmp(const void *ent1, const void *ent2)
+{
+	const swp_entry_t *e1 = ent1, *e2 = ent2;
 
-	वापस (पूर्णांक)swp_type(*e1) - (पूर्णांक)swp_type(*e2);
-पूर्ण
+	return (int)swp_type(*e1) - (int)swp_type(*e2);
+}
 
-व्योम swapcache_मुक्त_entries(swp_entry_t *entries, पूर्णांक n)
-अणु
-	काष्ठा swap_info_काष्ठा *p, *prev;
-	पूर्णांक i;
+void swapcache_free_entries(swp_entry_t *entries, int n)
+{
+	struct swap_info_struct *p, *prev;
+	int i;
 
-	अगर (n <= 0)
-		वापस;
+	if (n <= 0)
+		return;
 
-	prev = शून्य;
-	p = शून्य;
+	prev = NULL;
+	p = NULL;
 
 	/*
 	 * Sort swap entries by swap device, so each lock is only taken once.
-	 * nr_swapfiles isn't असलolutely correct, but the overhead of sort() is
+	 * nr_swapfiles isn't absolutely correct, but the overhead of sort() is
 	 * so low that it isn't necessary to optimize further.
 	 */
-	अगर (nr_swapfiles > 1)
-		sort(entries, n, माप(entries[0]), swp_entry_cmp, शून्य);
-	क्रम (i = 0; i < n; ++i) अणु
+	if (nr_swapfiles > 1)
+		sort(entries, n, sizeof(entries[0]), swp_entry_cmp, NULL);
+	for (i = 0; i < n; ++i) {
 		p = swap_info_get_cont(entries[i], prev);
-		अगर (p)
-			swap_entry_मुक्त(p, entries[i]);
+		if (p)
+			swap_entry_free(p, entries[i]);
 		prev = p;
-	पूर्ण
-	अगर (p)
+	}
+	if (p)
 		spin_unlock(&p->lock);
-पूर्ण
+}
 
 /*
  * How many references to page are currently swapped out?
- * This करोes not give an exact answer when swap count is जारीd,
- * but करोes include the high COUNT_CONTINUED flag to allow क्रम that.
+ * This does not give an exact answer when swap count is continued,
+ * but does include the high COUNT_CONTINUED flag to allow for that.
  */
-पूर्णांक page_swapcount(काष्ठा page *page)
-अणु
-	पूर्णांक count = 0;
-	काष्ठा swap_info_काष्ठा *p;
-	काष्ठा swap_cluster_info *ci;
+int page_swapcount(struct page *page)
+{
+	int count = 0;
+	struct swap_info_struct *p;
+	struct swap_cluster_info *ci;
 	swp_entry_t entry;
-	अचिन्हित दीर्घ offset;
+	unsigned long offset;
 
-	entry.val = page_निजी(page);
+	entry.val = page_private(page);
 	p = _swap_info_get(entry);
-	अगर (p) अणु
+	if (p) {
 		offset = swp_offset(entry);
 		ci = lock_cluster_or_swap_info(p, offset);
 		count = swap_count(p->swap_map[offset]);
 		unlock_cluster_or_swap_info(p, ci);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-पूर्णांक __swap_count(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
+int __swap_count(swp_entry_t entry)
+{
+	struct swap_info_struct *si;
 	pgoff_t offset = swp_offset(entry);
-	पूर्णांक count = 0;
+	int count = 0;
 
 	si = get_swap_device(entry);
-	अगर (si) अणु
+	if (si) {
 		count = swap_count(si->swap_map[offset]);
 		put_swap_device(si);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
-अटल पूर्णांक swap_swapcount(काष्ठा swap_info_काष्ठा *si, swp_entry_t entry)
-अणु
-	पूर्णांक count = 0;
+static int swap_swapcount(struct swap_info_struct *si, swp_entry_t entry)
+{
+	int count = 0;
 	pgoff_t offset = swp_offset(entry);
-	काष्ठा swap_cluster_info *ci;
+	struct swap_cluster_info *ci;
 
 	ci = lock_cluster_or_swap_info(si, offset);
 	count = swap_count(si->swap_map[offset]);
 	unlock_cluster_or_swap_info(si, ci);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
  * How many references to @entry are currently swapped out?
- * This करोes not give an exact answer when swap count is जारीd,
- * but करोes include the high COUNT_CONTINUED flag to allow क्रम that.
+ * This does not give an exact answer when swap count is continued,
+ * but does include the high COUNT_CONTINUED flag to allow for that.
  */
-पूर्णांक __swp_swapcount(swp_entry_t entry)
-अणु
-	पूर्णांक count = 0;
-	काष्ठा swap_info_काष्ठा *si;
+int __swp_swapcount(swp_entry_t entry)
+{
+	int count = 0;
+	struct swap_info_struct *si;
 
 	si = get_swap_device(entry);
-	अगर (si) अणु
+	if (si) {
 		count = swap_swapcount(si, entry);
 		put_swap_device(si);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
 /*
  * How many references to @entry are currently swapped out?
- * This considers COUNT_CONTINUED so it वापसs exact answer.
+ * This considers COUNT_CONTINUED so it returns exact answer.
  */
-पूर्णांक swp_swapcount(swp_entry_t entry)
-अणु
-	पूर्णांक count, पंचांगp_count, n;
-	काष्ठा swap_info_काष्ठा *p;
-	काष्ठा swap_cluster_info *ci;
-	काष्ठा page *page;
+int swp_swapcount(swp_entry_t entry)
+{
+	int count, tmp_count, n;
+	struct swap_info_struct *p;
+	struct swap_cluster_info *ci;
+	struct page *page;
 	pgoff_t offset;
-	अचिन्हित अक्षर *map;
+	unsigned char *map;
 
 	p = _swap_info_get(entry);
-	अगर (!p)
-		वापस 0;
+	if (!p)
+		return 0;
 
 	offset = swp_offset(entry);
 
 	ci = lock_cluster_or_swap_info(p, offset);
 
 	count = swap_count(p->swap_map[offset]);
-	अगर (!(count & COUNT_CONTINUED))
-		जाओ out;
+	if (!(count & COUNT_CONTINUED))
+		goto out;
 
 	count &= ~COUNT_CONTINUED;
 	n = SWAP_MAP_MAX + 1;
 
-	page = vदो_स्मृति_to_page(p->swap_map + offset);
+	page = vmalloc_to_page(p->swap_map + offset);
 	offset &= ~PAGE_MASK;
-	VM_BUG_ON(page_निजी(page) != SWP_CONTINUED);
+	VM_BUG_ON(page_private(page) != SWP_CONTINUED);
 
-	करो अणु
+	do {
 		page = list_next_entry(page, lru);
 		map = kmap_atomic(page);
-		पंचांगp_count = map[offset];
+		tmp_count = map[offset];
 		kunmap_atomic(map);
 
-		count += (पंचांगp_count & ~COUNT_CONTINUED) * n;
+		count += (tmp_count & ~COUNT_CONTINUED) * n;
 		n *= (SWAP_CONT_MAX + 1);
-	पूर्ण जबतक (पंचांगp_count & COUNT_CONTINUED);
+	} while (tmp_count & COUNT_CONTINUED);
 out:
 	unlock_cluster_or_swap_info(p, ci);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल bool swap_page_trans_huge_swapped(काष्ठा swap_info_काष्ठा *si,
+static bool swap_page_trans_huge_swapped(struct swap_info_struct *si,
 					 swp_entry_t entry)
-अणु
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित अक्षर *map = si->swap_map;
-	अचिन्हित दीर्घ roffset = swp_offset(entry);
-	अचिन्हित दीर्घ offset = round_करोwn(roffset, SWAPखाता_CLUSTER);
-	पूर्णांक i;
+{
+	struct swap_cluster_info *ci;
+	unsigned char *map = si->swap_map;
+	unsigned long roffset = swp_offset(entry);
+	unsigned long offset = round_down(roffset, SWAPFILE_CLUSTER);
+	int i;
 	bool ret = false;
 
 	ci = lock_cluster_or_swap_info(si, offset);
-	अगर (!ci || !cluster_is_huge(ci)) अणु
-		अगर (swap_count(map[roffset]))
+	if (!ci || !cluster_is_huge(ci)) {
+		if (swap_count(map[roffset]))
 			ret = true;
-		जाओ unlock_out;
-	पूर्ण
-	क्रम (i = 0; i < SWAPखाता_CLUSTER; i++) अणु
-		अगर (swap_count(map[offset + i])) अणु
+		goto unlock_out;
+	}
+	for (i = 0; i < SWAPFILE_CLUSTER; i++) {
+		if (swap_count(map[offset + i])) {
 			ret = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 unlock_out:
 	unlock_cluster_or_swap_info(si, ci);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool page_swapped(काष्ठा page *page)
-अणु
+static bool page_swapped(struct page *page)
+{
 	swp_entry_t entry;
-	काष्ठा swap_info_काष्ठा *si;
+	struct swap_info_struct *si;
 
-	अगर (!IS_ENABLED(CONFIG_THP_SWAP) || likely(!PageTransCompound(page)))
-		वापस page_swapcount(page) != 0;
+	if (!IS_ENABLED(CONFIG_THP_SWAP) || likely(!PageTransCompound(page)))
+		return page_swapcount(page) != 0;
 
 	page = compound_head(page);
-	entry.val = page_निजी(page);
+	entry.val = page_private(page);
 	si = _swap_info_get(entry);
-	अगर (si)
-		वापस swap_page_trans_huge_swapped(si, entry);
-	वापस false;
-पूर्ण
+	if (si)
+		return swap_page_trans_huge_swapped(si, entry);
+	return false;
+}
 
-अटल पूर्णांक page_trans_huge_map_swapcount(काष्ठा page *page, पूर्णांक *total_mapcount,
-					 पूर्णांक *total_swapcount)
-अणु
-	पूर्णांक i, map_swapcount, _total_mapcount, _total_swapcount;
-	अचिन्हित दीर्घ offset = 0;
-	काष्ठा swap_info_काष्ठा *si;
-	काष्ठा swap_cluster_info *ci = शून्य;
-	अचिन्हित अक्षर *map = शून्य;
-	पूर्णांक mapcount, swapcount = 0;
+static int page_trans_huge_map_swapcount(struct page *page, int *total_mapcount,
+					 int *total_swapcount)
+{
+	int i, map_swapcount, _total_mapcount, _total_swapcount;
+	unsigned long offset = 0;
+	struct swap_info_struct *si;
+	struct swap_cluster_info *ci = NULL;
+	unsigned char *map = NULL;
+	int mapcount, swapcount = 0;
 
 	/* hugetlbfs shouldn't call it */
 	VM_BUG_ON_PAGE(PageHuge(page), page);
 
-	अगर (!IS_ENABLED(CONFIG_THP_SWAP) || likely(!PageTransCompound(page))) अणु
+	if (!IS_ENABLED(CONFIG_THP_SWAP) || likely(!PageTransCompound(page))) {
 		mapcount = page_trans_huge_mapcount(page, total_mapcount);
-		अगर (PageSwapCache(page))
+		if (PageSwapCache(page))
 			swapcount = page_swapcount(page);
-		अगर (total_swapcount)
+		if (total_swapcount)
 			*total_swapcount = swapcount;
-		वापस mapcount + swapcount;
-	पूर्ण
+		return mapcount + swapcount;
+	}
 
 	page = compound_head(page);
 
 	_total_mapcount = _total_swapcount = map_swapcount = 0;
-	अगर (PageSwapCache(page)) अणु
+	if (PageSwapCache(page)) {
 		swp_entry_t entry;
 
-		entry.val = page_निजी(page);
+		entry.val = page_private(page);
 		si = _swap_info_get(entry);
-		अगर (si) अणु
+		if (si) {
 			map = si->swap_map;
 			offset = swp_offset(entry);
-		पूर्ण
-	पूर्ण
-	अगर (map)
+		}
+	}
+	if (map)
 		ci = lock_cluster(si, offset);
-	क्रम (i = 0; i < HPAGE_PMD_NR; i++) अणु
-		mapcount = atomic_पढ़ो(&page[i]._mapcount) + 1;
+	for (i = 0; i < HPAGE_PMD_NR; i++) {
+		mapcount = atomic_read(&page[i]._mapcount) + 1;
 		_total_mapcount += mapcount;
-		अगर (map) अणु
+		if (map) {
 			swapcount = swap_count(map[offset + i]);
 			_total_swapcount += swapcount;
-		पूर्ण
+		}
 		map_swapcount = max(map_swapcount, mapcount + swapcount);
-	पूर्ण
+	}
 	unlock_cluster(ci);
-	अगर (PageDoubleMap(page)) अणु
+	if (PageDoubleMap(page)) {
 		map_swapcount -= 1;
 		_total_mapcount -= HPAGE_PMD_NR;
-	पूर्ण
+	}
 	mapcount = compound_mapcount(page);
 	map_swapcount += mapcount;
 	_total_mapcount += mapcount;
-	अगर (total_mapcount)
+	if (total_mapcount)
 		*total_mapcount = _total_mapcount;
-	अगर (total_swapcount)
+	if (total_swapcount)
 		*total_swapcount = _total_swapcount;
 
-	वापस map_swapcount;
-पूर्ण
+	return map_swapcount;
+}
 
 /*
- * We can ग_लिखो to an anon page without COW अगर there are no other references
- * to it.  And as a side-effect, मुक्त up its swap: because the old content
- * on disk will never be पढ़ो, and seeking back there to ग_लिखो new content
- * later would only waste समय away from clustering.
+ * We can write to an anon page without COW if there are no other references
+ * to it.  And as a side-effect, free up its swap: because the old content
+ * on disk will never be read, and seeking back there to write new content
+ * later would only waste time away from clustering.
  *
- * NOTE: total_map_swapcount should not be relied upon by the caller अगर
- * reuse_swap_page() वापसs false, but it may be always overwritten
- * (see the other implementation क्रम CONFIG_SWAP=n).
+ * NOTE: total_map_swapcount should not be relied upon by the caller if
+ * reuse_swap_page() returns false, but it may be always overwritten
+ * (see the other implementation for CONFIG_SWAP=n).
  */
-bool reuse_swap_page(काष्ठा page *page, पूर्णांक *total_map_swapcount)
-अणु
-	पूर्णांक count, total_mapcount, total_swapcount;
+bool reuse_swap_page(struct page *page, int *total_map_swapcount)
+{
+	int count, total_mapcount, total_swapcount;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
-	अगर (unlikely(PageKsm(page)))
-		वापस false;
+	if (unlikely(PageKsm(page)))
+		return false;
 	count = page_trans_huge_map_swapcount(page, &total_mapcount,
 					      &total_swapcount);
-	अगर (total_map_swapcount)
+	if (total_map_swapcount)
 		*total_map_swapcount = total_mapcount + total_swapcount;
-	अगर (count == 1 && PageSwapCache(page) &&
+	if (count == 1 && PageSwapCache(page) &&
 	    (likely(!PageTransCompound(page)) ||
-	     /* The reमुख्यing swap count will be मुक्तd soon */
-	     total_swapcount == page_swapcount(page))) अणु
-		अगर (!PageWriteback(page)) अणु
+	     /* The remaining swap count will be freed soon */
+	     total_swapcount == page_swapcount(page))) {
+		if (!PageWriteback(page)) {
 			page = compound_head(page);
 			delete_from_swap_cache(page);
 			SetPageDirty(page);
-		पूर्ण अन्यथा अणु
+		} else {
 			swp_entry_t entry;
-			काष्ठा swap_info_काष्ठा *p;
+			struct swap_info_struct *p;
 
-			entry.val = page_निजी(page);
+			entry.val = page_private(page);
 			p = swap_info_get(entry);
-			अगर (p->flags & SWP_STABLE_WRITES) अणु
+			if (p->flags & SWP_STABLE_WRITES) {
 				spin_unlock(&p->lock);
-				वापस false;
-			पूर्ण
+				return false;
+			}
 			spin_unlock(&p->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस count <= 1;
-पूर्ण
+	return count <= 1;
+}
 
 /*
- * If swap is getting full, or अगर there are no more mappings of this page,
- * then try_to_मुक्त_swap is called to मुक्त its swap space.
+ * If swap is getting full, or if there are no more mappings of this page,
+ * then try_to_free_swap is called to free its swap space.
  */
-पूर्णांक try_to_मुक्त_swap(काष्ठा page *page)
-अणु
+int try_to_free_swap(struct page *page)
+{
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 
-	अगर (!PageSwapCache(page))
-		वापस 0;
-	अगर (PageWriteback(page))
-		वापस 0;
-	अगर (page_swapped(page))
-		वापस 0;
+	if (!PageSwapCache(page))
+		return 0;
+	if (PageWriteback(page))
+		return 0;
+	if (page_swapped(page))
+		return 0;
 
 	/*
 	 * Once hibernation has begun to create its image of memory,
-	 * there's a danger that one of the calls to try_to_मुक्त_swap()
-	 * - most probably a call from __try_to_reclaim_swap() जबतक
-	 * hibernation is allocating its own swap pages क्रम the image,
-	 * but conceivably even a call from memory reclaim - will मुक्त
-	 * the swap from a page which has alपढ़ोy been recorded in the
-	 * image as a clean swapcache page, and then reuse its swap क्रम
+	 * there's a danger that one of the calls to try_to_free_swap()
+	 * - most probably a call from __try_to_reclaim_swap() while
+	 * hibernation is allocating its own swap pages for the image,
+	 * but conceivably even a call from memory reclaim - will free
+	 * the swap from a page which has already been recorded in the
+	 * image as a clean swapcache page, and then reuse its swap for
 	 * another page of the image.  On waking from hibernation, the
-	 * original page might be मुक्तd under memory pressure, then
-	 * later पढ़ो back in from swap, now with the wrong data.
+	 * original page might be freed under memory pressure, then
+	 * later read back in from swap, now with the wrong data.
 	 *
-	 * Hibernation suspends storage जबतक it is writing the image
+	 * Hibernation suspends storage while it is writing the image
 	 * to disk so check that here.
 	 */
-	अगर (pm_suspended_storage())
-		वापस 0;
+	if (pm_suspended_storage())
+		return 0;
 
 	page = compound_head(page);
 	delete_from_swap_cache(page);
 	SetPageDirty(page);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Free the swap entry like above, but also try to
- * मुक्त the page cache entry अगर it is the last user.
+ * free the page cache entry if it is the last user.
  */
-पूर्णांक मुक्त_swap_and_cache(swp_entry_t entry)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
-	अचिन्हित अक्षर count;
+int free_swap_and_cache(swp_entry_t entry)
+{
+	struct swap_info_struct *p;
+	unsigned char count;
 
-	अगर (non_swap_entry(entry))
-		वापस 1;
+	if (non_swap_entry(entry))
+		return 1;
 
 	p = _swap_info_get(entry);
-	अगर (p) अणु
-		count = __swap_entry_मुक्त(p, entry);
-		अगर (count == SWAP_HAS_CACHE &&
+	if (p) {
+		count = __swap_entry_free(p, entry);
+		if (count == SWAP_HAS_CACHE &&
 		    !swap_page_trans_huge_swapped(p, entry))
 			__try_to_reclaim_swap(p, swp_offset(entry),
 					      TTRS_UNMAPPED | TTRS_FULL);
-	पूर्ण
-	वापस p != शून्य;
-पूर्ण
+	}
+	return p != NULL;
+}
 
-#अगर_घोषित CONFIG_HIBERNATION
+#ifdef CONFIG_HIBERNATION
 /*
- * Find the swap type that corresponds to given device (अगर any).
+ * Find the swap type that corresponds to given device (if any).
  *
  * @offset - number of the PAGE_SIZE-sized block of the device, starting
  * from 0, in which the swap header is expected to be located.
  *
- * This is needed क्रम the suspend to disk (aka swsusp).
+ * This is needed for the suspend to disk (aka swsusp).
  */
-पूर्णांक swap_type_of(dev_t device, sector_t offset)
-अणु
-	पूर्णांक type;
+int swap_type_of(dev_t device, sector_t offset)
+{
+	int type;
 
-	अगर (!device)
-		वापस -1;
+	if (!device)
+		return -1;
 
 	spin_lock(&swap_lock);
-	क्रम (type = 0; type < nr_swapfiles; type++) अणु
-		काष्ठा swap_info_काष्ठा *sis = swap_info[type];
+	for (type = 0; type < nr_swapfiles; type++) {
+		struct swap_info_struct *sis = swap_info[type];
 
-		अगर (!(sis->flags & SWP_WRITEOK))
-			जारी;
+		if (!(sis->flags & SWP_WRITEOK))
+			continue;
 
-		अगर (device == sis->bdev->bd_dev) अणु
-			काष्ठा swap_extent *se = first_se(sis);
+		if (device == sis->bdev->bd_dev) {
+			struct swap_extent *se = first_se(sis);
 
-			अगर (se->start_block == offset) अणु
+			if (se->start_block == offset) {
 				spin_unlock(&swap_lock);
-				वापस type;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return type;
+			}
+		}
+	}
 	spin_unlock(&swap_lock);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-पूर्णांक find_first_swap(dev_t *device)
-अणु
-	पूर्णांक type;
+int find_first_swap(dev_t *device)
+{
+	int type;
 
 	spin_lock(&swap_lock);
-	क्रम (type = 0; type < nr_swapfiles; type++) अणु
-		काष्ठा swap_info_काष्ठा *sis = swap_info[type];
+	for (type = 0; type < nr_swapfiles; type++) {
+		struct swap_info_struct *sis = swap_info[type];
 
-		अगर (!(sis->flags & SWP_WRITEOK))
-			जारी;
+		if (!(sis->flags & SWP_WRITEOK))
+			continue;
 		*device = sis->bdev->bd_dev;
 		spin_unlock(&swap_lock);
-		वापस type;
-	पूर्ण
+		return type;
+	}
 	spin_unlock(&swap_lock);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 /*
  * Get the (PAGE_SIZE) block corresponding to given offset on the swapdev
  * corresponding to given index in swap_info (swap type).
  */
-sector_t swapdev_block(पूर्णांक type, pgoff_t offset)
-अणु
-	काष्ठा swap_info_काष्ठा *si = swap_type_to_swap_info(type);
-	काष्ठा swap_extent *se;
+sector_t swapdev_block(int type, pgoff_t offset)
+{
+	struct swap_info_struct *si = swap_type_to_swap_info(type);
+	struct swap_extent *se;
 
-	अगर (!si || !(si->flags & SWP_WRITEOK))
-		वापस 0;
+	if (!si || !(si->flags & SWP_WRITEOK))
+		return 0;
 	se = offset_to_swap_extent(si, offset);
-	वापस se->start_block + (offset - se->start_page);
-पूर्ण
+	return se->start_block + (offset - se->start_page);
+}
 
 /*
  * Return either the total number of swap pages of given type, or the number
- * of मुक्त pages of that type (depending on @मुक्त)
+ * of free pages of that type (depending on @free)
  *
- * This is needed क्रम software suspend
+ * This is needed for software suspend
  */
-अचिन्हित पूर्णांक count_swap_pages(पूर्णांक type, पूर्णांक मुक्त)
-अणु
-	अचिन्हित पूर्णांक n = 0;
+unsigned int count_swap_pages(int type, int free)
+{
+	unsigned int n = 0;
 
 	spin_lock(&swap_lock);
-	अगर ((अचिन्हित पूर्णांक)type < nr_swapfiles) अणु
-		काष्ठा swap_info_काष्ठा *sis = swap_info[type];
+	if ((unsigned int)type < nr_swapfiles) {
+		struct swap_info_struct *sis = swap_info[type];
 
 		spin_lock(&sis->lock);
-		अगर (sis->flags & SWP_WRITEOK) अणु
+		if (sis->flags & SWP_WRITEOK) {
 			n = sis->pages;
-			अगर (मुक्त)
+			if (free)
 				n -= sis->inuse_pages;
-		पूर्ण
+		}
 		spin_unlock(&sis->lock);
-	पूर्ण
+	}
 	spin_unlock(&swap_lock);
-	वापस n;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HIBERNATION */
+	return n;
+}
+#endif /* CONFIG_HIBERNATION */
 
-अटल अंतरभूत पूर्णांक pte_same_as_swp(pte_t pte, pte_t swp_pte)
-अणु
-	वापस pte_same(pte_swp_clear_flags(pte), swp_pte);
-पूर्ण
+static inline int pte_same_as_swp(pte_t pte, pte_t swp_pte)
+{
+	return pte_same(pte_swp_clear_flags(pte), swp_pte);
+}
 
 /*
  * No need to decide whether this PTE shares the swap entry with others,
- * just let करो_wp_page work it out अगर a ग_लिखो is requested later - to
- * क्रमce COW, vm_page_prot omits ग_लिखो permission from any निजी vma.
+ * just let do_wp_page work it out if a write is requested later - to
+ * force COW, vm_page_prot omits write permission from any private vma.
  */
-अटल पूर्णांक unuse_pte(काष्ठा vm_area_काष्ठा *vma, pmd_t *pmd,
-		अचिन्हित दीर्घ addr, swp_entry_t entry, काष्ठा page *page)
-अणु
-	काष्ठा page *swapcache;
+static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
+		unsigned long addr, swp_entry_t entry, struct page *page)
+{
+	struct page *swapcache;
 	spinlock_t *ptl;
 	pte_t *pte;
-	पूर्णांक ret = 1;
+	int ret = 1;
 
 	swapcache = page;
 	page = ksm_might_need_to_copy(page, vma, addr);
-	अगर (unlikely(!page))
-		वापस -ENOMEM;
+	if (unlikely(!page))
+		return -ENOMEM;
 
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-	अगर (unlikely(!pte_same_as_swp(*pte, swp_entry_to_pte(entry)))) अणु
+	if (unlikely(!pte_same_as_swp(*pte, swp_entry_to_pte(entry)))) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dec_mm_counter(vma->vm_mm, MM_SWAPENTS);
 	inc_mm_counter(vma->vm_mm, MM_ANONPAGES);
 	get_page(page);
 	set_pte_at(vma->vm_mm, addr, pte,
 		   pte_mkold(mk_pte(page, vma->vm_page_prot)));
-	अगर (page == swapcache) अणु
+	if (page == swapcache) {
 		page_add_anon_rmap(page, vma, addr, false);
-	पूर्ण अन्यथा अणु /* ksm created a completely new copy */
+	} else { /* ksm created a completely new copy */
 		page_add_new_anon_rmap(page, vma, addr, false);
 		lru_cache_add_inactive_or_unevictable(page, vma);
-	पूर्ण
-	swap_मुक्त(entry);
+	}
+	swap_free(entry);
 out:
 	pte_unmap_unlock(pte, ptl);
-	अगर (page != swapcache) अणु
+	if (page != swapcache) {
 		unlock_page(page);
 		put_page(page);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक unuse_pte_range(काष्ठा vm_area_काष्ठा *vma, pmd_t *pmd,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			अचिन्हित पूर्णांक type, bool frontswap,
-			अचिन्हित दीर्घ *fs_pages_to_unuse)
-अणु
-	काष्ठा page *page;
+static int unuse_pte_range(struct vm_area_struct *vma, pmd_t *pmd,
+			unsigned long addr, unsigned long end,
+			unsigned int type, bool frontswap,
+			unsigned long *fs_pages_to_unuse)
+{
+	struct page *page;
 	swp_entry_t entry;
 	pte_t *pte;
-	काष्ठा swap_info_काष्ठा *si;
-	अचिन्हित दीर्घ offset;
-	पूर्णांक ret = 0;
-	अस्थिर अचिन्हित अक्षर *swap_map;
+	struct swap_info_struct *si;
+	unsigned long offset;
+	int ret = 0;
+	volatile unsigned char *swap_map;
 
 	si = swap_info[type];
 	pte = pte_offset_map(pmd, addr);
-	करो अणु
-		अगर (!is_swap_pte(*pte))
-			जारी;
+	do {
+		if (!is_swap_pte(*pte))
+			continue;
 
 		entry = pte_to_swp_entry(*pte);
-		अगर (swp_type(entry) != type)
-			जारी;
+		if (swp_type(entry) != type)
+			continue;
 
 		offset = swp_offset(entry);
-		अगर (frontswap && !frontswap_test(si, offset))
-			जारी;
+		if (frontswap && !frontswap_test(si, offset))
+			continue;
 
 		pte_unmap(pte);
 		swap_map = &si->swap_map[offset];
 		page = lookup_swap_cache(entry, vma, addr);
-		अगर (!page) अणु
-			काष्ठा vm_fault vmf = अणु
+		if (!page) {
+			struct vm_fault vmf = {
 				.vma = vma,
 				.address = addr,
 				.pmd = pmd,
-			पूर्ण;
+			};
 
-			page = swapin_पढ़ोahead(entry, GFP_HIGHUSER_MOVABLE,
+			page = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE,
 						&vmf);
-		पूर्ण
-		अगर (!page) अणु
-			अगर (*swap_map == 0 || *swap_map == SWAP_MAP_BAD)
-				जाओ try_next;
-			वापस -ENOMEM;
-		पूर्ण
+		}
+		if (!page) {
+			if (*swap_map == 0 || *swap_map == SWAP_MAP_BAD)
+				goto try_next;
+			return -ENOMEM;
+		}
 
 		lock_page(page);
-		रुको_on_page_ग_लिखोback(page);
+		wait_on_page_writeback(page);
 		ret = unuse_pte(vma, pmd, addr, entry, page);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			unlock_page(page);
 			put_page(page);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		try_to_मुक्त_swap(page);
+		try_to_free_swap(page);
 		unlock_page(page);
 		put_page(page);
 
-		अगर (*fs_pages_to_unuse && !--(*fs_pages_to_unuse)) अणु
+		if (*fs_pages_to_unuse && !--(*fs_pages_to_unuse)) {
 			ret = FRONTSWAP_PAGES_UNUSED;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 try_next:
 		pte = pte_offset_map(pmd, addr);
-	पूर्ण जबतक (pte++, addr += PAGE_SIZE, addr != end);
+	} while (pte++, addr += PAGE_SIZE, addr != end);
 	pte_unmap(pte - 1);
 
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक unuse_pmd_range(काष्ठा vm_area_काष्ठा *vma, pud_t *pud,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				अचिन्हित पूर्णांक type, bool frontswap,
-				अचिन्हित दीर्घ *fs_pages_to_unuse)
-अणु
+static inline int unuse_pmd_range(struct vm_area_struct *vma, pud_t *pud,
+				unsigned long addr, unsigned long end,
+				unsigned int type, bool frontswap,
+				unsigned long *fs_pages_to_unuse)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
-	पूर्णांक ret;
+	unsigned long next;
+	int ret;
 
 	pmd = pmd_offset(pud, addr);
-	करो अणु
+	do {
 		cond_resched();
 		next = pmd_addr_end(addr, end);
-		अगर (pmd_none_or_trans_huge_or_clear_bad(pmd))
-			जारी;
+		if (pmd_none_or_trans_huge_or_clear_bad(pmd))
+			continue;
 		ret = unuse_pte_range(vma, pmd, addr, next, type,
 				      frontswap, fs_pages_to_unuse);
-		अगर (ret)
-			वापस ret;
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	} while (pmd++, addr = next, addr != end);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक unuse_pud_range(काष्ठा vm_area_काष्ठा *vma, p4d_t *p4d,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				अचिन्हित पूर्णांक type, bool frontswap,
-				अचिन्हित दीर्घ *fs_pages_to_unuse)
-अणु
+static inline int unuse_pud_range(struct vm_area_struct *vma, p4d_t *p4d,
+				unsigned long addr, unsigned long end,
+				unsigned int type, bool frontswap,
+				unsigned long *fs_pages_to_unuse)
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
-	पूर्णांक ret;
+	unsigned long next;
+	int ret;
 
 	pud = pud_offset(p4d, addr);
-	करो अणु
+	do {
 		next = pud_addr_end(addr, end);
-		अगर (pud_none_or_clear_bad(pud))
-			जारी;
+		if (pud_none_or_clear_bad(pud))
+			continue;
 		ret = unuse_pmd_range(vma, pud, addr, next, type,
 				      frontswap, fs_pages_to_unuse);
-		अगर (ret)
-			वापस ret;
-	पूर्ण जबतक (pud++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	} while (pud++, addr = next, addr != end);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक unuse_p4d_range(काष्ठा vm_area_काष्ठा *vma, pgd_t *pgd,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				अचिन्हित पूर्णांक type, bool frontswap,
-				अचिन्हित दीर्घ *fs_pages_to_unuse)
-अणु
+static inline int unuse_p4d_range(struct vm_area_struct *vma, pgd_t *pgd,
+				unsigned long addr, unsigned long end,
+				unsigned int type, bool frontswap,
+				unsigned long *fs_pages_to_unuse)
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
-	पूर्णांक ret;
+	unsigned long next;
+	int ret;
 
 	p4d = p4d_offset(pgd, addr);
-	करो अणु
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none_or_clear_bad(p4d))
-			जारी;
+		if (p4d_none_or_clear_bad(p4d))
+			continue;
 		ret = unuse_pud_range(vma, p4d, addr, next, type,
 				      frontswap, fs_pages_to_unuse);
-		अगर (ret)
-			वापस ret;
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	} while (p4d++, addr = next, addr != end);
+	return 0;
+}
 
-अटल पूर्णांक unuse_vma(काष्ठा vm_area_काष्ठा *vma, अचिन्हित पूर्णांक type,
-		     bool frontswap, अचिन्हित दीर्घ *fs_pages_to_unuse)
-अणु
+static int unuse_vma(struct vm_area_struct *vma, unsigned int type,
+		     bool frontswap, unsigned long *fs_pages_to_unuse)
+{
 	pgd_t *pgd;
-	अचिन्हित दीर्घ addr, end, next;
-	पूर्णांक ret;
+	unsigned long addr, end, next;
+	int ret;
 
 	addr = vma->vm_start;
 	end = vma->vm_end;
 
 	pgd = pgd_offset(vma->vm_mm, addr);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none_or_clear_bad(pgd))
-			जारी;
+		if (pgd_none_or_clear_bad(pgd))
+			continue;
 		ret = unuse_p4d_range(vma, pgd, addr, next, type,
 				      frontswap, fs_pages_to_unuse);
-		अगर (ret)
-			वापस ret;
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	} while (pgd++, addr = next, addr != end);
+	return 0;
+}
 
-अटल पूर्णांक unuse_mm(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक type,
-		    bool frontswap, अचिन्हित दीर्घ *fs_pages_to_unuse)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक ret = 0;
+static int unuse_mm(struct mm_struct *mm, unsigned int type,
+		    bool frontswap, unsigned long *fs_pages_to_unuse)
+{
+	struct vm_area_struct *vma;
+	int ret = 0;
 
-	mmap_पढ़ो_lock(mm);
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (vma->anon_vma) अणु
+	mmap_read_lock(mm);
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (vma->anon_vma) {
 			ret = unuse_vma(vma, type, frontswap,
 					fs_pages_to_unuse);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
+			if (ret)
+				break;
+		}
 		cond_resched();
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
-	वापस ret;
-पूर्ण
+	}
+	mmap_read_unlock(mm);
+	return ret;
+}
 
 /*
- * Scan swap_map (or frontswap_map अगर frontswap parameter is true)
+ * Scan swap_map (or frontswap_map if frontswap parameter is true)
  * from current position to next entry still in use. Return 0
- * अगर there are no inuse entries after prev till end of the map.
+ * if there are no inuse entries after prev till end of the map.
  */
-अटल अचिन्हित पूर्णांक find_next_to_unuse(काष्ठा swap_info_काष्ठा *si,
-					अचिन्हित पूर्णांक prev, bool frontswap)
-अणु
-	अचिन्हित पूर्णांक i;
-	अचिन्हित अक्षर count;
+static unsigned int find_next_to_unuse(struct swap_info_struct *si,
+					unsigned int prev, bool frontswap)
+{
+	unsigned int i;
+	unsigned char count;
 
 	/*
-	 * No need क्रम swap_lock here: we're just looking
-	 * क्रम whether an entry is in use, not modअगरying it; false
-	 * hits are okay, and sys_swapoff() has alपढ़ोy prevented new
-	 * allocations from this area (जबतक holding swap_lock).
+	 * No need for swap_lock here: we're just looking
+	 * for whether an entry is in use, not modifying it; false
+	 * hits are okay, and sys_swapoff() has already prevented new
+	 * allocations from this area (while holding swap_lock).
 	 */
-	क्रम (i = prev + 1; i < si->max; i++) अणु
+	for (i = prev + 1; i < si->max; i++) {
 		count = READ_ONCE(si->swap_map[i]);
-		अगर (count && swap_count(count) != SWAP_MAP_BAD)
-			अगर (!frontswap || frontswap_test(si, i))
-				अवरोध;
-		अगर ((i % LATENCY_LIMIT) == 0)
+		if (count && swap_count(count) != SWAP_MAP_BAD)
+			if (!frontswap || frontswap_test(si, i))
+				break;
+		if ((i % LATENCY_LIMIT) == 0)
 			cond_resched();
-	पूर्ण
+	}
 
-	अगर (i == si->max)
+	if (i == si->max)
 		i = 0;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /*
  * If the boolean frontswap is true, only unuse pages_to_unuse pages;
- * pages_to_unuse==0 means all pages; ignored अगर frontswap is false
+ * pages_to_unuse==0 means all pages; ignored if frontswap is false
  */
-पूर्णांक try_to_unuse(अचिन्हित पूर्णांक type, bool frontswap,
-		 अचिन्हित दीर्घ pages_to_unuse)
-अणु
-	काष्ठा mm_काष्ठा *prev_mm;
-	काष्ठा mm_काष्ठा *mm;
-	काष्ठा list_head *p;
-	पूर्णांक retval = 0;
-	काष्ठा swap_info_काष्ठा *si = swap_info[type];
-	काष्ठा page *page;
+int try_to_unuse(unsigned int type, bool frontswap,
+		 unsigned long pages_to_unuse)
+{
+	struct mm_struct *prev_mm;
+	struct mm_struct *mm;
+	struct list_head *p;
+	int retval = 0;
+	struct swap_info_struct *si = swap_info[type];
+	struct page *page;
 	swp_entry_t entry;
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 
-	अगर (!READ_ONCE(si->inuse_pages))
-		वापस 0;
+	if (!READ_ONCE(si->inuse_pages))
+		return 0;
 
-	अगर (!frontswap)
+	if (!frontswap)
 		pages_to_unuse = 0;
 
 retry:
 	retval = shmem_unuse(type, frontswap, &pages_to_unuse);
-	अगर (retval)
-		जाओ out;
+	if (retval)
+		goto out;
 
 	prev_mm = &init_mm;
 	mmget(prev_mm);
 
 	spin_lock(&mmlist_lock);
 	p = &init_mm.mmlist;
-	जबतक (READ_ONCE(si->inuse_pages) &&
-	       !संकेत_pending(current) &&
-	       (p = p->next) != &init_mm.mmlist) अणु
+	while (READ_ONCE(si->inuse_pages) &&
+	       !signal_pending(current) &&
+	       (p = p->next) != &init_mm.mmlist) {
 
-		mm = list_entry(p, काष्ठा mm_काष्ठा, mmlist);
-		अगर (!mmget_not_zero(mm))
-			जारी;
+		mm = list_entry(p, struct mm_struct, mmlist);
+		if (!mmget_not_zero(mm))
+			continue;
 		spin_unlock(&mmlist_lock);
 		mmput(prev_mm);
 		prev_mm = mm;
 		retval = unuse_mm(mm, type, frontswap, &pages_to_unuse);
 
-		अगर (retval) अणु
+		if (retval) {
 			mmput(prev_mm);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Make sure that we aren't completely समाप्तing
-		 * पूर्णांकeractive perक्रमmance.
+		 * Make sure that we aren't completely killing
+		 * interactive performance.
 		 */
 		cond_resched();
 		spin_lock(&mmlist_lock);
-	पूर्ण
+	}
 	spin_unlock(&mmlist_lock);
 
 	mmput(prev_mm);
 
 	i = 0;
-	जबतक (READ_ONCE(si->inuse_pages) &&
-	       !संकेत_pending(current) &&
-	       (i = find_next_to_unuse(si, i, frontswap)) != 0) अणु
+	while (READ_ONCE(si->inuse_pages) &&
+	       !signal_pending(current) &&
+	       (i = find_next_to_unuse(si, i, frontswap)) != 0) {
 
 		entry = swp_entry(type, i);
 		page = find_get_page(swap_address_space(entry), i);
-		अगर (!page)
-			जारी;
+		if (!page)
+			continue;
 
 		/*
-		 * It is conceivable that a racing task हटाओd this page from
-		 * swap cache just beक्रमe we acquired the page lock. The page
+		 * It is conceivable that a racing task removed this page from
+		 * swap cache just before we acquired the page lock. The page
 		 * might even be back in swap cache on another swap area. But
-		 * that is okay, try_to_मुक्त_swap() only हटाओs stale pages.
+		 * that is okay, try_to_free_swap() only removes stale pages.
 		 */
 		lock_page(page);
-		रुको_on_page_ग_लिखोback(page);
-		try_to_मुक्त_swap(page);
+		wait_on_page_writeback(page);
+		try_to_free_swap(page);
 		unlock_page(page);
 		put_page(page);
 
 		/*
-		 * For frontswap, we just need to unuse pages_to_unuse, अगर
-		 * it was specअगरied. Need not check frontswap again here as
-		 * we alपढ़ोy zeroed out pages_to_unuse अगर not frontswap.
+		 * For frontswap, we just need to unuse pages_to_unuse, if
+		 * it was specified. Need not check frontswap again here as
+		 * we already zeroed out pages_to_unuse if not frontswap.
 		 */
-		अगर (pages_to_unuse && --pages_to_unuse == 0)
-			जाओ out;
-	पूर्ण
+		if (pages_to_unuse && --pages_to_unuse == 0)
+			goto out;
+	}
 
 	/*
-	 * Lets check again to see अगर there are still swap entries in the map.
-	 * If yes, we would need to करो retry the unuse logic again.
+	 * Lets check again to see if there are still swap entries in the map.
+	 * If yes, we would need to do retry the unuse logic again.
 	 * Under global memory pressure, swap entries can be reinserted back
-	 * पूर्णांकo process space after the mmlist loop above passes over them.
+	 * into process space after the mmlist loop above passes over them.
 	 *
 	 * Limit the number of retries? No: when mmget_not_zero() above fails,
-	 * that mm is likely to be मुक्तing swap from निकास_mmap(), which proceeds
-	 * at its own independent pace; and even shmem_ग_लिखोpage() could have
+	 * that mm is likely to be freeing swap from exit_mmap(), which proceeds
+	 * at its own independent pace; and even shmem_writepage() could have
 	 * been preempted after get_swap_page(), temporarily hiding that swap.
-	 * It's easy and robust (though cpu-पूर्णांकensive) just to keep retrying.
+	 * It's easy and robust (though cpu-intensive) just to keep retrying.
 	 */
-	अगर (READ_ONCE(si->inuse_pages)) अणु
-		अगर (!संकेत_pending(current))
-			जाओ retry;
+	if (READ_ONCE(si->inuse_pages)) {
+		if (!signal_pending(current))
+			goto retry;
 		retval = -EINTR;
-	पूर्ण
+	}
 out:
-	वापस (retval == FRONTSWAP_PAGES_UNUSED) ? 0 : retval;
-पूर्ण
+	return (retval == FRONTSWAP_PAGES_UNUSED) ? 0 : retval;
+}
 
 /*
- * After a successful try_to_unuse, अगर no swap is now in use, we know
- * we can empty the mmlist.  swap_lock must be held on entry and निकास.
+ * After a successful try_to_unuse, if no swap is now in use, we know
+ * we can empty the mmlist.  swap_lock must be held on entry and exit.
  * Note that mmlist_lock nests inside swap_lock, and an mm must be
- * added to the mmlist just after page_duplicate - beक्रमe would be racy.
+ * added to the mmlist just after page_duplicate - before would be racy.
  */
-अटल व्योम drain_mmlist(व्योम)
-अणु
-	काष्ठा list_head *p, *next;
-	अचिन्हित पूर्णांक type;
+static void drain_mmlist(void)
+{
+	struct list_head *p, *next;
+	unsigned int type;
 
-	क्रम (type = 0; type < nr_swapfiles; type++)
-		अगर (swap_info[type]->inuse_pages)
-			वापस;
+	for (type = 0; type < nr_swapfiles; type++)
+		if (swap_info[type]->inuse_pages)
+			return;
 	spin_lock(&mmlist_lock);
-	list_क्रम_each_safe(p, next, &init_mm.mmlist)
+	list_for_each_safe(p, next, &init_mm.mmlist)
 		list_del_init(p);
 	spin_unlock(&mmlist_lock);
-पूर्ण
+}
 
 /*
- * Free all of a swapdev's extent inक्रमmation
+ * Free all of a swapdev's extent information
  */
-अटल व्योम destroy_swap_extents(काष्ठा swap_info_काष्ठा *sis)
-अणु
-	जबतक (!RB_EMPTY_ROOT(&sis->swap_extent_root)) अणु
-		काष्ठा rb_node *rb = sis->swap_extent_root.rb_node;
-		काष्ठा swap_extent *se = rb_entry(rb, काष्ठा swap_extent, rb_node);
+static void destroy_swap_extents(struct swap_info_struct *sis)
+{
+	while (!RB_EMPTY_ROOT(&sis->swap_extent_root)) {
+		struct rb_node *rb = sis->swap_extent_root.rb_node;
+		struct swap_extent *se = rb_entry(rb, struct swap_extent, rb_node);
 
 		rb_erase(rb, &sis->swap_extent_root);
-		kमुक्त(se);
-	पूर्ण
+		kfree(se);
+	}
 
-	अगर (sis->flags & SWP_ACTIVATED) अणु
-		काष्ठा file *swap_file = sis->swap_file;
-		काष्ठा address_space *mapping = swap_file->f_mapping;
+	if (sis->flags & SWP_ACTIVATED) {
+		struct file *swap_file = sis->swap_file;
+		struct address_space *mapping = swap_file->f_mapping;
 
 		sis->flags &= ~SWP_ACTIVATED;
-		अगर (mapping->a_ops->swap_deactivate)
+		if (mapping->a_ops->swap_deactivate)
 			mapping->a_ops->swap_deactivate(swap_file);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Add a block range (and the corresponding page range) पूर्णांकo this swapdev's
+ * Add a block range (and the corresponding page range) into this swapdev's
  * extent tree.
  *
  * This function rather assumes that it is called in ascending page order.
  */
-पूर्णांक
-add_swap_extent(काष्ठा swap_info_काष्ठा *sis, अचिन्हित दीर्घ start_page,
-		अचिन्हित दीर्घ nr_pages, sector_t start_block)
-अणु
-	काष्ठा rb_node **link = &sis->swap_extent_root.rb_node, *parent = शून्य;
-	काष्ठा swap_extent *se;
-	काष्ठा swap_extent *new_se;
+int
+add_swap_extent(struct swap_info_struct *sis, unsigned long start_page,
+		unsigned long nr_pages, sector_t start_block)
+{
+	struct rb_node **link = &sis->swap_extent_root.rb_node, *parent = NULL;
+	struct swap_extent *se;
+	struct swap_extent *new_se;
 
 	/*
 	 * place the new node at the right most since the
 	 * function is called in ascending page order.
 	 */
-	जबतक (*link) अणु
+	while (*link) {
 		parent = *link;
 		link = &parent->rb_right;
-	पूर्ण
+	}
 
-	अगर (parent) अणु
-		se = rb_entry(parent, काष्ठा swap_extent, rb_node);
+	if (parent) {
+		se = rb_entry(parent, struct swap_extent, rb_node);
 		BUG_ON(se->start_page + se->nr_pages != start_page);
-		अगर (se->start_block + se->nr_pages == start_block) अणु
+		if (se->start_block + se->nr_pages == start_block) {
 			/* Merge it */
 			se->nr_pages += nr_pages;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	/* No merge, insert a new extent. */
-	new_se = kदो_स्मृति(माप(*se), GFP_KERNEL);
-	अगर (new_se == शून्य)
-		वापस -ENOMEM;
+	new_se = kmalloc(sizeof(*se), GFP_KERNEL);
+	if (new_se == NULL)
+		return -ENOMEM;
 	new_se->start_page = start_page;
 	new_se->nr_pages = nr_pages;
 	new_se->start_block = start_block;
 
 	rb_link_node(&new_se->rb_node, parent, link);
 	rb_insert_color(&new_se->rb_node, &sis->swap_extent_root);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(add_swap_extent);
 
 /*
  * A `swap extent' is a simple thing which maps a contiguous range of pages
  * onto a contiguous range of disk blocks.  An ordered list of swap extents
- * is built at swapon समय and is then used at swap_ग_लिखोpage/swap_पढ़ोpage
- * समय क्रम locating where on disk a page beदीर्घs.
+ * is built at swapon time and is then used at swap_writepage/swap_readpage
+ * time for locating where on disk a page belongs.
  *
  * If the swapfile is an S_ISBLK block device, a single extent is installed.
- * This is करोne so that the मुख्य operating code can treat S_ISBLK and S_ISREG
+ * This is done so that the main operating code can treat S_ISBLK and S_ISREG
  * swap files identically.
  *
  * Whether the swapdev is an S_ISREG file or an S_ISBLK blockdev, the swap
  * extent list operates in PAGE_SIZE disk blocks.  Both S_ISREG and S_ISBLK
- * swapfiles are handled *identically* after swapon समय.
+ * swapfiles are handled *identically* after swapon time.
  *
  * For S_ISREG swapfiles, setup_swap_extents() will walk all the file's blocks
- * and will parse them पूर्णांकo an ordered extent list, in PAGE_SIZE chunks.  If
- * some stray blocks are found which करो not fall within the PAGE_SIZE alignment
+ * and will parse them into an ordered extent list, in PAGE_SIZE chunks.  If
+ * some stray blocks are found which do not fall within the PAGE_SIZE alignment
  * requirements, they are simply tossed out - we will never use those blocks
- * क्रम swapping.
+ * for swapping.
  *
- * For all swap devices we set S_SWAPखाता across the lअगरe of the swapon.  This
+ * For all swap devices we set S_SWAPFILE across the life of the swapon.  This
  * prevents users from writing to the swap device, which will corrupt memory.
  *
  * The amount of disk space which a single swap extent represents varies.
  * Typically it is in the 1-4 megabyte range.  So we can have hundreds of
- * extents in the list.  To aव्योम much list walking, we cache the previous
+ * extents in the list.  To avoid much list walking, we cache the previous
  * search location in `curr_swap_extent', and start new searches from there.
  * This is extremely effective.  The average number of iterations in
  * map_swap_page() has been measured at about 0.3 per page.  - akpm.
  */
-अटल पूर्णांक setup_swap_extents(काष्ठा swap_info_काष्ठा *sis, sector_t *span)
-अणु
-	काष्ठा file *swap_file = sis->swap_file;
-	काष्ठा address_space *mapping = swap_file->f_mapping;
-	काष्ठा inode *inode = mapping->host;
-	पूर्णांक ret;
+static int setup_swap_extents(struct swap_info_struct *sis, sector_t *span)
+{
+	struct file *swap_file = sis->swap_file;
+	struct address_space *mapping = swap_file->f_mapping;
+	struct inode *inode = mapping->host;
+	int ret;
 
-	अगर (S_ISBLK(inode->i_mode)) अणु
+	if (S_ISBLK(inode->i_mode)) {
 		ret = add_swap_extent(sis, 0, sis->max, 0);
 		*span = sis->pages;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (mapping->a_ops->swap_activate) अणु
+	if (mapping->a_ops->swap_activate) {
 		ret = mapping->a_ops->swap_activate(sis, swap_file, span);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			sis->flags |= SWP_ACTIVATED;
-		अगर (!ret) अणु
+		if (!ret) {
 			sis->flags |= SWP_FS_OPS;
 			ret = add_swap_extent(sis, 0, sis->max, 0);
 			*span = sis->pages;
-		पूर्ण
-		वापस ret;
-	पूर्ण
+		}
+		return ret;
+	}
 
-	वापस generic_swapfile_activate(sis, swap_file, span);
-पूर्ण
+	return generic_swapfile_activate(sis, swap_file, span);
+}
 
-अटल पूर्णांक swap_node(काष्ठा swap_info_काष्ठा *p)
-अणु
-	काष्ठा block_device *bdev;
+static int swap_node(struct swap_info_struct *p)
+{
+	struct block_device *bdev;
 
-	अगर (p->bdev)
+	if (p->bdev)
 		bdev = p->bdev;
-	अन्यथा
+	else
 		bdev = p->swap_file->f_inode->i_sb->s_bdev;
 
-	वापस bdev ? bdev->bd_disk->node_id : NUMA_NO_NODE;
-पूर्ण
+	return bdev ? bdev->bd_disk->node_id : NUMA_NO_NODE;
+}
 
-अटल व्योम setup_swap_info(काष्ठा swap_info_काष्ठा *p, पूर्णांक prio,
-			    अचिन्हित अक्षर *swap_map,
-			    काष्ठा swap_cluster_info *cluster_info)
-अणु
-	पूर्णांक i;
+static void setup_swap_info(struct swap_info_struct *p, int prio,
+			    unsigned char *swap_map,
+			    struct swap_cluster_info *cluster_info)
+{
+	int i;
 
-	अगर (prio >= 0)
+	if (prio >= 0)
 		p->prio = prio;
-	अन्यथा
+	else
 		p->prio = --least_priority;
 	/*
 	 * the plist prio is negated because plist ordering is
-	 * low-to-high, जबतक swap ordering is high-to-low
+	 * low-to-high, while swap ordering is high-to-low
 	 */
 	p->list.prio = -p->prio;
-	क्रम_each_node(i) अणु
-		अगर (p->prio >= 0)
+	for_each_node(i) {
+		if (p->prio >= 0)
 			p->avail_lists[i].prio = -p->prio;
-		अन्यथा अणु
-			अगर (swap_node(p) == i)
+		else {
+			if (swap_node(p) == i)
 				p->avail_lists[i].prio = 1;
-			अन्यथा
+			else
 				p->avail_lists[i].prio = -p->prio;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	p->swap_map = swap_map;
 	p->cluster_info = cluster_info;
-पूर्ण
+}
 
-अटल व्योम _enable_swap_info(काष्ठा swap_info_काष्ठा *p)
-अणु
+static void _enable_swap_info(struct swap_info_struct *p)
+{
 	p->flags |= SWP_WRITEOK | SWP_VALID;
-	atomic_दीर्घ_add(p->pages, &nr_swap_pages);
+	atomic_long_add(p->pages, &nr_swap_pages);
 	total_swap_pages += p->pages;
 
-	निश्चित_spin_locked(&swap_lock);
+	assert_spin_locked(&swap_lock);
 	/*
 	 * both lists are plists, and thus priority ordered.
-	 * swap_active_head needs to be priority ordered क्रम swapoff(),
-	 * which on removal of any swap_info_काष्ठा with an स्वतः-asचिन्हित
-	 * (i.e. negative) priority increments the स्वतः-asचिन्हित priority
-	 * of any lower-priority swap_info_काष्ठाs.
-	 * swap_avail_head needs to be priority ordered क्रम get_swap_page(),
+	 * swap_active_head needs to be priority ordered for swapoff(),
+	 * which on removal of any swap_info_struct with an auto-assigned
+	 * (i.e. negative) priority increments the auto-assigned priority
+	 * of any lower-priority swap_info_structs.
+	 * swap_avail_head needs to be priority ordered for get_swap_page(),
 	 * which allocates swap pages from the highest available priority
-	 * swap_info_काष्ठा.
+	 * swap_info_struct.
 	 */
 	plist_add(&p->list, &swap_active_head);
 	add_to_avail_list(p);
-पूर्ण
+}
 
-अटल व्योम enable_swap_info(काष्ठा swap_info_काष्ठा *p, पूर्णांक prio,
-				अचिन्हित अक्षर *swap_map,
-				काष्ठा swap_cluster_info *cluster_info,
-				अचिन्हित दीर्घ *frontswap_map)
-अणु
+static void enable_swap_info(struct swap_info_struct *p, int prio,
+				unsigned char *swap_map,
+				struct swap_cluster_info *cluster_info,
+				unsigned long *frontswap_map)
+{
 	frontswap_init(p->type, frontswap_map);
 	spin_lock(&swap_lock);
 	spin_lock(&p->lock);
@@ -2499,7 +2498,7 @@ EXPORT_SYMBOL_GPL(add_swap_extent);
 	spin_unlock(&swap_lock);
 	/*
 	 * Guarantee swap_map, cluster_info, etc. fields are valid
-	 * between get/put_swap_device() अगर SWP_VALID bit is set
+	 * between get/put_swap_device() if SWP_VALID bit is set
 	 */
 	synchronize_rcu();
 	spin_lock(&swap_lock);
@@ -2507,96 +2506,96 @@ EXPORT_SYMBOL_GPL(add_swap_extent);
 	_enable_swap_info(p);
 	spin_unlock(&p->lock);
 	spin_unlock(&swap_lock);
-पूर्ण
+}
 
-अटल व्योम reinsert_swap_info(काष्ठा swap_info_काष्ठा *p)
-अणु
+static void reinsert_swap_info(struct swap_info_struct *p)
+{
 	spin_lock(&swap_lock);
 	spin_lock(&p->lock);
 	setup_swap_info(p, p->prio, p->swap_map, p->cluster_info);
 	_enable_swap_info(p);
 	spin_unlock(&p->lock);
 	spin_unlock(&swap_lock);
-पूर्ण
+}
 
-bool has_usable_swap(व्योम)
-अणु
+bool has_usable_swap(void)
+{
 	bool ret = true;
 
 	spin_lock(&swap_lock);
-	अगर (plist_head_empty(&swap_active_head))
+	if (plist_head_empty(&swap_active_head))
 		ret = false;
 	spin_unlock(&swap_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-SYSCALL_DEFINE1(swapoff, स्थिर अक्षर __user *, specialfile)
-अणु
-	काष्ठा swap_info_काष्ठा *p = शून्य;
-	अचिन्हित अक्षर *swap_map;
-	काष्ठा swap_cluster_info *cluster_info;
-	अचिन्हित दीर्घ *frontswap_map;
-	काष्ठा file *swap_file, *victim;
-	काष्ठा address_space *mapping;
-	काष्ठा inode *inode;
-	काष्ठा filename *pathname;
-	पूर्णांक err, found = 0;
-	अचिन्हित पूर्णांक old_block_size;
+SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
+{
+	struct swap_info_struct *p = NULL;
+	unsigned char *swap_map;
+	struct swap_cluster_info *cluster_info;
+	unsigned long *frontswap_map;
+	struct file *swap_file, *victim;
+	struct address_space *mapping;
+	struct inode *inode;
+	struct filename *pathname;
+	int err, found = 0;
+	unsigned int old_block_size;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
 	BUG_ON(!current->mm);
 
 	pathname = getname(specialfile);
-	अगर (IS_ERR(pathname))
-		वापस PTR_ERR(pathname);
+	if (IS_ERR(pathname))
+		return PTR_ERR(pathname);
 
-	victim = file_खोलो_name(pathname, O_RDWR|O_LARGEखाता, 0);
+	victim = file_open_name(pathname, O_RDWR|O_LARGEFILE, 0);
 	err = PTR_ERR(victim);
-	अगर (IS_ERR(victim))
-		जाओ out;
+	if (IS_ERR(victim))
+		goto out;
 
 	mapping = victim->f_mapping;
 	spin_lock(&swap_lock);
-	plist_क्रम_each_entry(p, &swap_active_head, list) अणु
-		अगर (p->flags & SWP_WRITEOK) अणु
-			अगर (p->swap_file->f_mapping == mapping) अणु
+	plist_for_each_entry(p, &swap_active_head, list) {
+		if (p->flags & SWP_WRITEOK) {
+			if (p->swap_file->f_mapping == mapping) {
 				found = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (!found) अणु
+				break;
+			}
+		}
+	}
+	if (!found) {
 		err = -EINVAL;
 		spin_unlock(&swap_lock);
-		जाओ out_dput;
-	पूर्ण
-	अगर (!security_vm_enough_memory_mm(current->mm, p->pages))
+		goto out_dput;
+	}
+	if (!security_vm_enough_memory_mm(current->mm, p->pages))
 		vm_unacct_memory(p->pages);
-	अन्यथा अणु
+	else {
 		err = -ENOMEM;
 		spin_unlock(&swap_lock);
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 	del_from_avail_list(p);
 	spin_lock(&p->lock);
-	अगर (p->prio < 0) अणु
-		काष्ठा swap_info_काष्ठा *si = p;
-		पूर्णांक nid;
+	if (p->prio < 0) {
+		struct swap_info_struct *si = p;
+		int nid;
 
-		plist_क्रम_each_entry_जारी(si, &swap_active_head, list) अणु
+		plist_for_each_entry_continue(si, &swap_active_head, list) {
 			si->prio++;
 			si->list.prio--;
-			क्रम_each_node(nid) अणु
-				अगर (si->avail_lists[nid].prio != 1)
+			for_each_node(nid) {
+				if (si->avail_lists[nid].prio != 1)
 					si->avail_lists[nid].prio--;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		least_priority++;
-	पूर्ण
+	}
 	plist_del(&p->list, &swap_active_head);
-	atomic_दीर्घ_sub(p->pages, &nr_swap_pages);
+	atomic_long_sub(p->pages, &nr_swap_pages);
 	total_swap_pages -= p->pages;
 	p->flags &= ~SWP_WRITEOK;
 	spin_unlock(&p->lock);
@@ -2605,15 +2604,15 @@ SYSCALL_DEFINE1(swapoff, स्थिर अक्षर __user *, specialfile)
 	disable_swap_slots_cache_lock();
 
 	set_current_oom_origin();
-	err = try_to_unuse(p->type, false, 0); /* क्रमce unuse all pages */
+	err = try_to_unuse(p->type, false, 0); /* force unuse all pages */
 	clear_current_oom_origin();
 
-	अगर (err) अणु
-		/* re-insert swap space back पूर्णांकo swap_list */
+	if (err) {
+		/* re-insert swap space back into swap_list */
 		reinsert_swap_info(p);
 		reenable_swap_slots_cache_unlock();
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
 	reenable_swap_slots_cache_unlock();
 
@@ -2623,7 +2622,7 @@ SYSCALL_DEFINE1(swapoff, स्थिर अक्षर __user *, specialfile)
 	spin_unlock(&p->lock);
 	spin_unlock(&swap_lock);
 	/*
-	 * रुको क्रम swap operations रक्षित by get/put_swap_device()
+	 * wait for swap operations protected by get/put_swap_device()
 	 * to complete
 	 */
 	synchronize_rcu();
@@ -2631,10 +2630,10 @@ SYSCALL_DEFINE1(swapoff, स्थिर अक्षर __user *, specialfile)
 	flush_work(&p->discard_work);
 
 	destroy_swap_extents(p);
-	अगर (p->flags & SWP_CONTINUED)
-		मुक्त_swap_count_continuations(p);
+	if (p->flags & SWP_CONTINUED)
+		free_swap_count_continuations(p);
 
-	अगर (!p->bdev || !blk_queue_nonrot(bdev_get_queue(p->bdev)))
+	if (!p->bdev || !blk_queue_nonrot(bdev_get_queue(p->bdev)))
 		atomic_dec(&nr_rotate_swap);
 
 	mutex_lock(&swapon_mutex);
@@ -2642,57 +2641,57 @@ SYSCALL_DEFINE1(swapoff, स्थिर अक्षर __user *, specialfile)
 	spin_lock(&p->lock);
 	drain_mmlist();
 
-	/* रुको क्रम anyone still in scan_swap_map */
-	p->highest_bit = 0;		/* cuts scans लघु */
-	जबतक (p->flags >= SWP_SCANNING) अणु
+	/* wait for anyone still in scan_swap_map */
+	p->highest_bit = 0;		/* cuts scans short */
+	while (p->flags >= SWP_SCANNING) {
 		spin_unlock(&p->lock);
 		spin_unlock(&swap_lock);
-		schedule_समयout_unपूर्णांकerruptible(1);
+		schedule_timeout_uninterruptible(1);
 		spin_lock(&swap_lock);
 		spin_lock(&p->lock);
-	पूर्ण
+	}
 
 	swap_file = p->swap_file;
 	old_block_size = p->old_block_size;
-	p->swap_file = शून्य;
+	p->swap_file = NULL;
 	p->max = 0;
 	swap_map = p->swap_map;
-	p->swap_map = शून्य;
+	p->swap_map = NULL;
 	cluster_info = p->cluster_info;
-	p->cluster_info = शून्य;
+	p->cluster_info = NULL;
 	frontswap_map = frontswap_map_get(p);
 	spin_unlock(&p->lock);
 	spin_unlock(&swap_lock);
 	arch_swap_invalidate_area(p->type);
 	frontswap_invalidate_area(p->type);
-	frontswap_map_set(p, शून्य);
+	frontswap_map_set(p, NULL);
 	mutex_unlock(&swapon_mutex);
-	मुक्त_percpu(p->percpu_cluster);
-	p->percpu_cluster = शून्य;
-	मुक्त_percpu(p->cluster_next_cpu);
-	p->cluster_next_cpu = शून्य;
-	vमुक्त(swap_map);
-	kvमुक्त(cluster_info);
-	kvमुक्त(frontswap_map);
-	/* Destroy swap account inक्रमmation */
+	free_percpu(p->percpu_cluster);
+	p->percpu_cluster = NULL;
+	free_percpu(p->cluster_next_cpu);
+	p->cluster_next_cpu = NULL;
+	vfree(swap_map);
+	kvfree(cluster_info);
+	kvfree(frontswap_map);
+	/* Destroy swap account information */
 	swap_cgroup_swapoff(p->type);
-	निकास_swap_address_space(p->type);
+	exit_swap_address_space(p->type);
 
 	inode = mapping->host;
-	अगर (S_ISBLK(inode->i_mode)) अणु
-		काष्ठा block_device *bdev = I_BDEV(inode);
+	if (S_ISBLK(inode->i_mode)) {
+		struct block_device *bdev = I_BDEV(inode);
 
 		set_blocksize(bdev, old_block_size);
 		blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
-	पूर्ण
+	}
 
 	inode_lock(inode);
-	inode->i_flags &= ~S_SWAPखाता;
+	inode->i_flags &= ~S_SWAPFILE;
 	inode_unlock(inode);
-	filp_बंद(swap_file, शून्य);
+	filp_close(swap_file, NULL);
 
 	/*
-	 * Clear the SWP_USED flag after all resources are मुक्तd so that swapon
+	 * Clear the SWP_USED flag after all resources are freed so that swapon
 	 * can reuse this swap_info in alloc_swap_info() safely.  It is ok to
 	 * not hold p->lock after we cleared its SWP_WRITEOK.
 	 */
@@ -2702,240 +2701,240 @@ SYSCALL_DEFINE1(swapoff, स्थिर अक्षर __user *, specialfile)
 
 	err = 0;
 	atomic_inc(&proc_poll_event);
-	wake_up_पूर्णांकerruptible(&proc_poll_रुको);
+	wake_up_interruptible(&proc_poll_wait);
 
 out_dput:
-	filp_बंद(victim, शून्य);
+	filp_close(victim, NULL);
 out:
 	putname(pathname);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल __poll_t swaps_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
+#ifdef CONFIG_PROC_FS
+static __poll_t swaps_poll(struct file *file, poll_table *wait)
+{
+	struct seq_file *seq = file->private_data;
 
-	poll_रुको(file, &proc_poll_रुको, रुको);
+	poll_wait(file, &proc_poll_wait, wait);
 
-	अगर (seq->poll_event != atomic_पढ़ो(&proc_poll_event)) अणु
-		seq->poll_event = atomic_पढ़ो(&proc_poll_event);
-		वापस EPOLLIN | EPOLLRDNORM | EPOLLERR | EPOLLPRI;
-	पूर्ण
+	if (seq->poll_event != atomic_read(&proc_poll_event)) {
+		seq->poll_event = atomic_read(&proc_poll_event);
+		return EPOLLIN | EPOLLRDNORM | EPOLLERR | EPOLLPRI;
+	}
 
-	वापस EPOLLIN | EPOLLRDNORM;
-पूर्ण
+	return EPOLLIN | EPOLLRDNORM;
+}
 
 /* iterator */
-अटल व्योम *swap_start(काष्ठा seq_file *swap, loff_t *pos)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
-	पूर्णांक type;
+static void *swap_start(struct seq_file *swap, loff_t *pos)
+{
+	struct swap_info_struct *si;
+	int type;
 	loff_t l = *pos;
 
 	mutex_lock(&swapon_mutex);
 
-	अगर (!l)
-		वापस SEQ_START_TOKEN;
+	if (!l)
+		return SEQ_START_TOKEN;
 
-	क्रम (type = 0; (si = swap_type_to_swap_info(type)); type++) अणु
-		अगर (!(si->flags & SWP_USED) || !si->swap_map)
-			जारी;
-		अगर (!--l)
-			वापस si;
-	पूर्ण
+	for (type = 0; (si = swap_type_to_swap_info(type)); type++) {
+		if (!(si->flags & SWP_USED) || !si->swap_map)
+			continue;
+		if (!--l)
+			return si;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *swap_next(काष्ठा seq_file *swap, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा swap_info_काष्ठा *si = v;
-	पूर्णांक type;
+static void *swap_next(struct seq_file *swap, void *v, loff_t *pos)
+{
+	struct swap_info_struct *si = v;
+	int type;
 
-	अगर (v == SEQ_START_TOKEN)
+	if (v == SEQ_START_TOKEN)
 		type = 0;
-	अन्यथा
+	else
 		type = si->type + 1;
 
 	++(*pos);
-	क्रम (; (si = swap_type_to_swap_info(type)); type++) अणु
-		अगर (!(si->flags & SWP_USED) || !si->swap_map)
-			जारी;
-		वापस si;
-	पूर्ण
+	for (; (si = swap_type_to_swap_info(type)); type++) {
+		if (!(si->flags & SWP_USED) || !si->swap_map)
+			continue;
+		return si;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम swap_stop(काष्ठा seq_file *swap, व्योम *v)
-अणु
+static void swap_stop(struct seq_file *swap, void *v)
+{
 	mutex_unlock(&swapon_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक swap_show(काष्ठा seq_file *swap, व्योम *v)
-अणु
-	काष्ठा swap_info_काष्ठा *si = v;
-	काष्ठा file *file;
-	पूर्णांक len;
-	अचिन्हित पूर्णांक bytes, inuse;
+static int swap_show(struct seq_file *swap, void *v)
+{
+	struct swap_info_struct *si = v;
+	struct file *file;
+	int len;
+	unsigned int bytes, inuse;
 
-	अगर (si == SEQ_START_TOKEN) अणु
-		seq_माला_दो(swap, "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n");
-		वापस 0;
-	पूर्ण
+	if (si == SEQ_START_TOKEN) {
+		seq_puts(swap, "Filename\t\t\t\tType\t\tSize\t\tUsed\t\tPriority\n");
+		return 0;
+	}
 
 	bytes = si->pages << (PAGE_SHIFT - 10);
 	inuse = si->inuse_pages << (PAGE_SHIFT - 10);
 
 	file = si->swap_file;
 	len = seq_file_path(swap, file, " \t\n\\");
-	seq_म_लिखो(swap, "%*s%s\t%u\t%s%u\t%s%d\n",
+	seq_printf(swap, "%*s%s\t%u\t%s%u\t%s%d\n",
 			len < 40 ? 40 - len : 1, " ",
 			S_ISBLK(file_inode(file)->i_mode) ?
 				"partition" : "file\t",
 			bytes, bytes < 10000000 ? "\t" : "",
 			inuse, inuse < 10000000 ? "\t" : "",
 			si->prio);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations swaps_op = अणु
+static const struct seq_operations swaps_op = {
 	.start =	swap_start,
 	.next =		swap_next,
 	.stop =		swap_stop,
 	.show =		swap_show
-पूर्ण;
+};
 
-अटल पूर्णांक swaps_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *seq;
-	पूर्णांक ret;
+static int swaps_open(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq;
+	int ret;
 
-	ret = seq_खोलो(file, &swaps_op);
-	अगर (ret)
-		वापस ret;
+	ret = seq_open(file, &swaps_op);
+	if (ret)
+		return ret;
 
-	seq = file->निजी_data;
-	seq->poll_event = atomic_पढ़ो(&proc_poll_event);
-	वापस 0;
-पूर्ण
+	seq = file->private_data;
+	seq->poll_event = atomic_read(&proc_poll_event);
+	return 0;
+}
 
-अटल स्थिर काष्ठा proc_ops swaps_proc_ops = अणु
+static const struct proc_ops swaps_proc_ops = {
 	.proc_flags	= PROC_ENTRY_PERMANENT,
-	.proc_खोलो	= swaps_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_open	= swaps_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
 	.proc_poll	= swaps_poll,
-पूर्ण;
+};
 
-अटल पूर्णांक __init procswaps_init(व्योम)
-अणु
-	proc_create("swaps", 0, शून्य, &swaps_proc_ops);
-	वापस 0;
-पूर्ण
+static int __init procswaps_init(void)
+{
+	proc_create("swaps", 0, NULL, &swaps_proc_ops);
+	return 0;
+}
 __initcall(procswaps_init);
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */
 
-#अगर_घोषित MAX_SWAPखाताS_CHECK
-अटल पूर्णांक __init max_swapfiles_check(व्योम)
-अणु
-	MAX_SWAPखाताS_CHECK();
-	वापस 0;
-पूर्ण
+#ifdef MAX_SWAPFILES_CHECK
+static int __init max_swapfiles_check(void)
+{
+	MAX_SWAPFILES_CHECK();
+	return 0;
+}
 late_initcall(max_swapfiles_check);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा swap_info_काष्ठा *alloc_swap_info(व्योम)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
-	काष्ठा swap_info_काष्ठा *defer = शून्य;
-	अचिन्हित पूर्णांक type;
-	पूर्णांक i;
+static struct swap_info_struct *alloc_swap_info(void)
+{
+	struct swap_info_struct *p;
+	struct swap_info_struct *defer = NULL;
+	unsigned int type;
+	int i;
 
-	p = kvzalloc(काष्ठा_size(p, avail_lists, nr_node_ids), GFP_KERNEL);
-	अगर (!p)
-		वापस ERR_PTR(-ENOMEM);
+	p = kvzalloc(struct_size(p, avail_lists, nr_node_ids), GFP_KERNEL);
+	if (!p)
+		return ERR_PTR(-ENOMEM);
 
 	spin_lock(&swap_lock);
-	क्रम (type = 0; type < nr_swapfiles; type++) अणु
-		अगर (!(swap_info[type]->flags & SWP_USED))
-			अवरोध;
-	पूर्ण
-	अगर (type >= MAX_SWAPखाताS) अणु
+	for (type = 0; type < nr_swapfiles; type++) {
+		if (!(swap_info[type]->flags & SWP_USED))
+			break;
+	}
+	if (type >= MAX_SWAPFILES) {
 		spin_unlock(&swap_lock);
-		kvमुक्त(p);
-		वापस ERR_PTR(-EPERM);
-	पूर्ण
-	अगर (type >= nr_swapfiles) अणु
+		kvfree(p);
+		return ERR_PTR(-EPERM);
+	}
+	if (type >= nr_swapfiles) {
 		p->type = type;
 		WRITE_ONCE(swap_info[type], p);
 		/*
-		 * Write swap_info[type] beक्रमe nr_swapfiles, in हाल a
-		 * racing procfs swap_start() or swap_next() is पढ़ोing them.
-		 * (We never shrink nr_swapfiles, we never मुक्त this entry.)
+		 * Write swap_info[type] before nr_swapfiles, in case a
+		 * racing procfs swap_start() or swap_next() is reading them.
+		 * (We never shrink nr_swapfiles, we never free this entry.)
 		 */
 		smp_wmb();
 		WRITE_ONCE(nr_swapfiles, nr_swapfiles + 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		defer = p;
 		p = swap_info[type];
 		/*
-		 * Do not स_रखो this entry: a racing procfs swap_next()
-		 * would be relying on p->type to reमुख्य valid.
+		 * Do not memset this entry: a racing procfs swap_next()
+		 * would be relying on p->type to remain valid.
 		 */
-	पूर्ण
+	}
 	p->swap_extent_root = RB_ROOT;
 	plist_node_init(&p->list, 0);
-	क्रम_each_node(i)
+	for_each_node(i)
 		plist_node_init(&p->avail_lists[i], 0);
 	p->flags = SWP_USED;
 	spin_unlock(&swap_lock);
-	kvमुक्त(defer);
+	kvfree(defer);
 	spin_lock_init(&p->lock);
 	spin_lock_init(&p->cont_lock);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल पूर्णांक claim_swapfile(काष्ठा swap_info_काष्ठा *p, काष्ठा inode *inode)
-अणु
-	पूर्णांक error;
+static int claim_swapfile(struct swap_info_struct *p, struct inode *inode)
+{
+	int error;
 
-	अगर (S_ISBLK(inode->i_mode)) अणु
+	if (S_ISBLK(inode->i_mode)) {
 		p->bdev = blkdev_get_by_dev(inode->i_rdev,
 				   FMODE_READ | FMODE_WRITE | FMODE_EXCL, p);
-		अगर (IS_ERR(p->bdev)) अणु
+		if (IS_ERR(p->bdev)) {
 			error = PTR_ERR(p->bdev);
-			p->bdev = शून्य;
-			वापस error;
-		पूर्ण
+			p->bdev = NULL;
+			return error;
+		}
 		p->old_block_size = block_size(p->bdev);
 		error = set_blocksize(p->bdev, PAGE_SIZE);
-		अगर (error < 0)
-			वापस error;
+		if (error < 0)
+			return error;
 		/*
 		 * Zoned block devices contain zones that have a sequential
-		 * ग_लिखो only restriction.  Hence zoned block devices are not
-		 * suitable क्रम swapping.  Disallow them here.
+		 * write only restriction.  Hence zoned block devices are not
+		 * suitable for swapping.  Disallow them here.
 		 */
-		अगर (blk_queue_is_zoned(p->bdev->bd_disk->queue))
-			वापस -EINVAL;
+		if (blk_queue_is_zoned(p->bdev->bd_disk->queue))
+			return -EINVAL;
 		p->flags |= SWP_BLKDEV;
-	पूर्ण अन्यथा अगर (S_ISREG(inode->i_mode)) अणु
+	} else if (S_ISREG(inode->i_mode)) {
 		p->bdev = inode->i_sb->s_bdev;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * Find out how many pages are allowed क्रम a single swap device. There
+ * Find out how many pages are allowed for a single swap device. There
  * are two limiting factors:
- * 1) the number of bits क्रम the swap offset in the swp_entry_t type, and
- * 2) the number of bits in the swap pte, as defined by the dअगरferent
+ * 1) the number of bits for the swap offset in the swp_entry_t type, and
+ * 2) the number of bits in the swap pte, as defined by the different
  * architectures.
  *
  * In order to find the largest possible bit mask, a swap entry with
@@ -2947,48 +2946,48 @@ late_initcall(max_swapfiles_check);
  * be encoded in either the swp_entry_t or the architecture definition
  * of a swap pte.
  */
-अचिन्हित दीर्घ generic_max_swapfile_size(व्योम)
-अणु
-	वापस swp_offset(pte_to_swp_entry(
+unsigned long generic_max_swapfile_size(void)
+{
+	return swp_offset(pte_to_swp_entry(
 			swp_entry_to_pte(swp_entry(0, ~0UL)))) + 1;
-पूर्ण
+}
 
-/* Can be overridden by an architecture क्रम additional checks. */
-__weak अचिन्हित दीर्घ max_swapfile_size(व्योम)
-अणु
-	वापस generic_max_swapfile_size();
-पूर्ण
+/* Can be overridden by an architecture for additional checks. */
+__weak unsigned long max_swapfile_size(void)
+{
+	return generic_max_swapfile_size();
+}
 
-अटल अचिन्हित दीर्घ पढ़ो_swap_header(काष्ठा swap_info_काष्ठा *p,
-					जोड़ swap_header *swap_header,
-					काष्ठा inode *inode)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ maxpages;
-	अचिन्हित दीर्घ swapfilepages;
-	अचिन्हित दीर्घ last_page;
+static unsigned long read_swap_header(struct swap_info_struct *p,
+					union swap_header *swap_header,
+					struct inode *inode)
+{
+	int i;
+	unsigned long maxpages;
+	unsigned long swapfilepages;
+	unsigned long last_page;
 
-	अगर (स_भेद("SWAPSPACE2", swap_header->magic.magic, 10)) अणु
+	if (memcmp("SWAPSPACE2", swap_header->magic.magic, 10)) {
 		pr_err("Unable to find swap-space signature\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* swap partition endianess hack... */
-	अगर (swab32(swap_header->info.version) == 1) अणु
+	if (swab32(swap_header->info.version) == 1) {
 		swab32s(&swap_header->info.version);
 		swab32s(&swap_header->info.last_page);
 		swab32s(&swap_header->info.nr_badpages);
-		अगर (swap_header->info.nr_badpages > MAX_SWAP_BADPAGES)
-			वापस 0;
-		क्रम (i = 0; i < swap_header->info.nr_badpages; i++)
+		if (swap_header->info.nr_badpages > MAX_SWAP_BADPAGES)
+			return 0;
+		for (i = 0; i < swap_header->info.nr_badpages; i++)
 			swab32s(&swap_header->info.badpages[i]);
-	पूर्ण
+	}
 	/* Check the swap header's sub-version */
-	अगर (swap_header->info.version != 1) अणु
+	if (swap_header->info.version != 1) {
 		pr_warn("Unable to handle swap header version %d\n",
 			swap_header->info.version);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	p->lowest_bit  = 1;
 	p->cluster_next = 1;
@@ -2996,298 +2995,298 @@ __weak अचिन्हित दीर्घ max_swapfile_size(व्यो�
 
 	maxpages = max_swapfile_size();
 	last_page = swap_header->info.last_page;
-	अगर (!last_page) अणु
+	if (!last_page) {
 		pr_warn("Empty swap-file\n");
-		वापस 0;
-	पूर्ण
-	अगर (last_page > maxpages) अणु
+		return 0;
+	}
+	if (last_page > maxpages) {
 		pr_warn("Truncating oversized swap area, only using %luk out of %luk\n",
 			maxpages << (PAGE_SHIFT - 10),
 			last_page << (PAGE_SHIFT - 10));
-	पूर्ण
-	अगर (maxpages > last_page) अणु
+	}
+	if (maxpages > last_page) {
 		maxpages = last_page + 1;
-		/* p->max is an अचिन्हित पूर्णांक: करोn't overflow it */
-		अगर ((अचिन्हित पूर्णांक)maxpages == 0)
-			maxpages = अच_पूर्णांक_उच्च;
-	पूर्ण
+		/* p->max is an unsigned int: don't overflow it */
+		if ((unsigned int)maxpages == 0)
+			maxpages = UINT_MAX;
+	}
 	p->highest_bit = maxpages - 1;
 
-	अगर (!maxpages)
-		वापस 0;
-	swapfilepages = i_size_पढ़ो(inode) >> PAGE_SHIFT;
-	अगर (swapfilepages && maxpages > swapfilepages) अणु
+	if (!maxpages)
+		return 0;
+	swapfilepages = i_size_read(inode) >> PAGE_SHIFT;
+	if (swapfilepages && maxpages > swapfilepages) {
 		pr_warn("Swap area shorter than signature indicates\n");
-		वापस 0;
-	पूर्ण
-	अगर (swap_header->info.nr_badpages && S_ISREG(inode->i_mode))
-		वापस 0;
-	अगर (swap_header->info.nr_badpages > MAX_SWAP_BADPAGES)
-		वापस 0;
+		return 0;
+	}
+	if (swap_header->info.nr_badpages && S_ISREG(inode->i_mode))
+		return 0;
+	if (swap_header->info.nr_badpages > MAX_SWAP_BADPAGES)
+		return 0;
 
-	वापस maxpages;
-पूर्ण
+	return maxpages;
+}
 
-#घोषणा SWAP_CLUSTER_INFO_COLS						\
-	DIV_ROUND_UP(L1_CACHE_BYTES, माप(काष्ठा swap_cluster_info))
-#घोषणा SWAP_CLUSTER_SPACE_COLS						\
-	DIV_ROUND_UP(SWAP_ADDRESS_SPACE_PAGES, SWAPखाता_CLUSTER)
-#घोषणा SWAP_CLUSTER_COLS						\
-	max_t(अचिन्हित पूर्णांक, SWAP_CLUSTER_INFO_COLS, SWAP_CLUSTER_SPACE_COLS)
+#define SWAP_CLUSTER_INFO_COLS						\
+	DIV_ROUND_UP(L1_CACHE_BYTES, sizeof(struct swap_cluster_info))
+#define SWAP_CLUSTER_SPACE_COLS						\
+	DIV_ROUND_UP(SWAP_ADDRESS_SPACE_PAGES, SWAPFILE_CLUSTER)
+#define SWAP_CLUSTER_COLS						\
+	max_t(unsigned int, SWAP_CLUSTER_INFO_COLS, SWAP_CLUSTER_SPACE_COLS)
 
-अटल पूर्णांक setup_swap_map_and_extents(काष्ठा swap_info_काष्ठा *p,
-					जोड़ swap_header *swap_header,
-					अचिन्हित अक्षर *swap_map,
-					काष्ठा swap_cluster_info *cluster_info,
-					अचिन्हित दीर्घ maxpages,
+static int setup_swap_map_and_extents(struct swap_info_struct *p,
+					union swap_header *swap_header,
+					unsigned char *swap_map,
+					struct swap_cluster_info *cluster_info,
+					unsigned long maxpages,
 					sector_t *span)
-अणु
-	अचिन्हित पूर्णांक j, k;
-	अचिन्हित पूर्णांक nr_good_pages;
-	पूर्णांक nr_extents;
-	अचिन्हित दीर्घ nr_clusters = DIV_ROUND_UP(maxpages, SWAPखाता_CLUSTER);
-	अचिन्हित दीर्घ col = p->cluster_next / SWAPखाता_CLUSTER % SWAP_CLUSTER_COLS;
-	अचिन्हित दीर्घ i, idx;
+{
+	unsigned int j, k;
+	unsigned int nr_good_pages;
+	int nr_extents;
+	unsigned long nr_clusters = DIV_ROUND_UP(maxpages, SWAPFILE_CLUSTER);
+	unsigned long col = p->cluster_next / SWAPFILE_CLUSTER % SWAP_CLUSTER_COLS;
+	unsigned long i, idx;
 
 	nr_good_pages = maxpages - 1;	/* omit header page */
 
-	cluster_list_init(&p->मुक्त_clusters);
+	cluster_list_init(&p->free_clusters);
 	cluster_list_init(&p->discard_clusters);
 
-	क्रम (i = 0; i < swap_header->info.nr_badpages; i++) अणु
-		अचिन्हित पूर्णांक page_nr = swap_header->info.badpages[i];
-		अगर (page_nr == 0 || page_nr > swap_header->info.last_page)
-			वापस -EINVAL;
-		अगर (page_nr < maxpages) अणु
+	for (i = 0; i < swap_header->info.nr_badpages; i++) {
+		unsigned int page_nr = swap_header->info.badpages[i];
+		if (page_nr == 0 || page_nr > swap_header->info.last_page)
+			return -EINVAL;
+		if (page_nr < maxpages) {
 			swap_map[page_nr] = SWAP_MAP_BAD;
 			nr_good_pages--;
 			/*
-			 * Haven't marked the cluster मुक्त yet, no list
+			 * Haven't marked the cluster free yet, no list
 			 * operation involved
 			 */
 			inc_cluster_info_page(p, cluster_info, page_nr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Haven't marked the cluster मुक्त yet, no list operation involved */
-	क्रम (i = maxpages; i < round_up(maxpages, SWAPखाता_CLUSTER); i++)
+	/* Haven't marked the cluster free yet, no list operation involved */
+	for (i = maxpages; i < round_up(maxpages, SWAPFILE_CLUSTER); i++)
 		inc_cluster_info_page(p, cluster_info, i);
 
-	अगर (nr_good_pages) अणु
+	if (nr_good_pages) {
 		swap_map[0] = SWAP_MAP_BAD;
 		/*
-		 * Not mark the cluster मुक्त yet, no list
+		 * Not mark the cluster free yet, no list
 		 * operation involved
 		 */
 		inc_cluster_info_page(p, cluster_info, 0);
 		p->max = maxpages;
 		p->pages = nr_good_pages;
 		nr_extents = setup_swap_extents(p, span);
-		अगर (nr_extents < 0)
-			वापस nr_extents;
+		if (nr_extents < 0)
+			return nr_extents;
 		nr_good_pages = p->pages;
-	पूर्ण
-	अगर (!nr_good_pages) अणु
+	}
+	if (!nr_good_pages) {
 		pr_warn("Empty swap-file\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!cluster_info)
-		वापस nr_extents;
+	if (!cluster_info)
+		return nr_extents;
 
 
 	/*
 	 * Reduce false cache line sharing between cluster_info and
 	 * sharing same address space.
 	 */
-	क्रम (k = 0; k < SWAP_CLUSTER_COLS; k++) अणु
+	for (k = 0; k < SWAP_CLUSTER_COLS; k++) {
 		j = (k + col) % SWAP_CLUSTER_COLS;
-		क्रम (i = 0; i < DIV_ROUND_UP(nr_clusters, SWAP_CLUSTER_COLS); i++) अणु
+		for (i = 0; i < DIV_ROUND_UP(nr_clusters, SWAP_CLUSTER_COLS); i++) {
 			idx = i * SWAP_CLUSTER_COLS + j;
-			अगर (idx >= nr_clusters)
-				जारी;
-			अगर (cluster_count(&cluster_info[idx]))
-				जारी;
+			if (idx >= nr_clusters)
+				continue;
+			if (cluster_count(&cluster_info[idx]))
+				continue;
 			cluster_set_flag(&cluster_info[idx], CLUSTER_FLAG_FREE);
-			cluster_list_add_tail(&p->मुक्त_clusters, cluster_info,
+			cluster_list_add_tail(&p->free_clusters, cluster_info,
 					      idx);
-		पूर्ण
-	पूर्ण
-	वापस nr_extents;
-पूर्ण
+		}
+	}
+	return nr_extents;
+}
 
 /*
- * Helper to sys_swapon determining अगर a given swap
+ * Helper to sys_swapon determining if a given swap
  * backing device queue supports DISCARD operations.
  */
-अटल bool swap_discardable(काष्ठा swap_info_काष्ठा *si)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(si->bdev);
+static bool swap_discardable(struct swap_info_struct *si)
+{
+	struct request_queue *q = bdev_get_queue(si->bdev);
 
-	अगर (!q || !blk_queue_discard(q))
-		वापस false;
+	if (!q || !blk_queue_discard(q))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-SYSCALL_DEFINE2(swapon, स्थिर अक्षर __user *, specialfile, पूर्णांक, swap_flags)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
-	काष्ठा filename *name;
-	काष्ठा file *swap_file = शून्य;
-	काष्ठा address_space *mapping;
-	पूर्णांक prio;
-	पूर्णांक error;
-	जोड़ swap_header *swap_header;
-	पूर्णांक nr_extents;
+SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
+{
+	struct swap_info_struct *p;
+	struct filename *name;
+	struct file *swap_file = NULL;
+	struct address_space *mapping;
+	int prio;
+	int error;
+	union swap_header *swap_header;
+	int nr_extents;
 	sector_t span;
-	अचिन्हित दीर्घ maxpages;
-	अचिन्हित अक्षर *swap_map = शून्य;
-	काष्ठा swap_cluster_info *cluster_info = शून्य;
-	अचिन्हित दीर्घ *frontswap_map = शून्य;
-	काष्ठा page *page = शून्य;
-	काष्ठा inode *inode = शून्य;
+	unsigned long maxpages;
+	unsigned char *swap_map = NULL;
+	struct swap_cluster_info *cluster_info = NULL;
+	unsigned long *frontswap_map = NULL;
+	struct page *page = NULL;
+	struct inode *inode = NULL;
 	bool inced_nr_rotate_swap = false;
 
-	अगर (swap_flags & ~SWAP_FLAGS_VALID)
-		वापस -EINVAL;
+	if (swap_flags & ~SWAP_FLAGS_VALID)
+		return -EINVAL;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (!swap_avail_heads)
-		वापस -ENOMEM;
+	if (!swap_avail_heads)
+		return -ENOMEM;
 
 	p = alloc_swap_info();
-	अगर (IS_ERR(p))
-		वापस PTR_ERR(p);
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
 	INIT_WORK(&p->discard_work, swap_discard_work);
 
 	name = getname(specialfile);
-	अगर (IS_ERR(name)) अणु
+	if (IS_ERR(name)) {
 		error = PTR_ERR(name);
-		name = शून्य;
-		जाओ bad_swap;
-	पूर्ण
-	swap_file = file_खोलो_name(name, O_RDWR|O_LARGEखाता, 0);
-	अगर (IS_ERR(swap_file)) अणु
+		name = NULL;
+		goto bad_swap;
+	}
+	swap_file = file_open_name(name, O_RDWR|O_LARGEFILE, 0);
+	if (IS_ERR(swap_file)) {
 		error = PTR_ERR(swap_file);
-		swap_file = शून्य;
-		जाओ bad_swap;
-	पूर्ण
+		swap_file = NULL;
+		goto bad_swap;
+	}
 
 	p->swap_file = swap_file;
 	mapping = swap_file->f_mapping;
 	inode = mapping->host;
 
 	error = claim_swapfile(p, inode);
-	अगर (unlikely(error))
-		जाओ bad_swap;
+	if (unlikely(error))
+		goto bad_swap;
 
 	inode_lock(inode);
-	अगर (IS_SWAPखाता(inode)) अणु
+	if (IS_SWAPFILE(inode)) {
 		error = -EBUSY;
-		जाओ bad_swap_unlock_inode;
-	पूर्ण
+		goto bad_swap_unlock_inode;
+	}
 
 	/*
 	 * Read the swap header.
 	 */
-	अगर (!mapping->a_ops->पढ़ोpage) अणु
+	if (!mapping->a_ops->readpage) {
 		error = -EINVAL;
-		जाओ bad_swap_unlock_inode;
-	पूर्ण
-	page = पढ़ो_mapping_page(mapping, 0, swap_file);
-	अगर (IS_ERR(page)) अणु
+		goto bad_swap_unlock_inode;
+	}
+	page = read_mapping_page(mapping, 0, swap_file);
+	if (IS_ERR(page)) {
 		error = PTR_ERR(page);
-		जाओ bad_swap_unlock_inode;
-	पूर्ण
+		goto bad_swap_unlock_inode;
+	}
 	swap_header = kmap(page);
 
-	maxpages = पढ़ो_swap_header(p, swap_header, inode);
-	अगर (unlikely(!maxpages)) अणु
+	maxpages = read_swap_header(p, swap_header, inode);
+	if (unlikely(!maxpages)) {
 		error = -EINVAL;
-		जाओ bad_swap_unlock_inode;
-	पूर्ण
+		goto bad_swap_unlock_inode;
+	}
 
 	/* OK, set up the swap map and apply the bad block list */
 	swap_map = vzalloc(maxpages);
-	अगर (!swap_map) अणु
+	if (!swap_map) {
 		error = -ENOMEM;
-		जाओ bad_swap_unlock_inode;
-	पूर्ण
+		goto bad_swap_unlock_inode;
+	}
 
-	अगर (p->bdev && blk_queue_stable_ग_लिखोs(p->bdev->bd_disk->queue))
+	if (p->bdev && blk_queue_stable_writes(p->bdev->bd_disk->queue))
 		p->flags |= SWP_STABLE_WRITES;
 
-	अगर (p->bdev && p->bdev->bd_disk->fops->rw_page)
+	if (p->bdev && p->bdev->bd_disk->fops->rw_page)
 		p->flags |= SWP_SYNCHRONOUS_IO;
 
-	अगर (p->bdev && blk_queue_nonrot(bdev_get_queue(p->bdev))) अणु
-		पूर्णांक cpu;
-		अचिन्हित दीर्घ ci, nr_cluster;
+	if (p->bdev && blk_queue_nonrot(bdev_get_queue(p->bdev))) {
+		int cpu;
+		unsigned long ci, nr_cluster;
 
 		p->flags |= SWP_SOLIDSTATE;
-		p->cluster_next_cpu = alloc_percpu(अचिन्हित पूर्णांक);
-		अगर (!p->cluster_next_cpu) अणु
+		p->cluster_next_cpu = alloc_percpu(unsigned int);
+		if (!p->cluster_next_cpu) {
 			error = -ENOMEM;
-			जाओ bad_swap_unlock_inode;
-		पूर्ण
+			goto bad_swap_unlock_inode;
+		}
 		/*
-		 * select a अक्रमom position to start with to help wear leveling
+		 * select a random position to start with to help wear leveling
 		 * SSD
 		 */
-		क्रम_each_possible_cpu(cpu) अणु
+		for_each_possible_cpu(cpu) {
 			per_cpu(*p->cluster_next_cpu, cpu) =
-				1 + pअक्रमom_u32_max(p->highest_bit);
-		पूर्ण
-		nr_cluster = DIV_ROUND_UP(maxpages, SWAPखाता_CLUSTER);
+				1 + prandom_u32_max(p->highest_bit);
+		}
+		nr_cluster = DIV_ROUND_UP(maxpages, SWAPFILE_CLUSTER);
 
-		cluster_info = kvसुस्मृति(nr_cluster, माप(*cluster_info),
+		cluster_info = kvcalloc(nr_cluster, sizeof(*cluster_info),
 					GFP_KERNEL);
-		अगर (!cluster_info) अणु
+		if (!cluster_info) {
 			error = -ENOMEM;
-			जाओ bad_swap_unlock_inode;
-		पूर्ण
+			goto bad_swap_unlock_inode;
+		}
 
-		क्रम (ci = 0; ci < nr_cluster; ci++)
+		for (ci = 0; ci < nr_cluster; ci++)
 			spin_lock_init(&((cluster_info + ci)->lock));
 
-		p->percpu_cluster = alloc_percpu(काष्ठा percpu_cluster);
-		अगर (!p->percpu_cluster) अणु
+		p->percpu_cluster = alloc_percpu(struct percpu_cluster);
+		if (!p->percpu_cluster) {
 			error = -ENOMEM;
-			जाओ bad_swap_unlock_inode;
-		पूर्ण
-		क्रम_each_possible_cpu(cpu) अणु
-			काष्ठा percpu_cluster *cluster;
+			goto bad_swap_unlock_inode;
+		}
+		for_each_possible_cpu(cpu) {
+			struct percpu_cluster *cluster;
 			cluster = per_cpu_ptr(p->percpu_cluster, cpu);
 			cluster_set_null(&cluster->index);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		atomic_inc(&nr_rotate_swap);
 		inced_nr_rotate_swap = true;
-	पूर्ण
+	}
 
 	error = swap_cgroup_swapon(p->type, maxpages);
-	अगर (error)
-		जाओ bad_swap_unlock_inode;
+	if (error)
+		goto bad_swap_unlock_inode;
 
 	nr_extents = setup_swap_map_and_extents(p, swap_header, swap_map,
 		cluster_info, maxpages, &span);
-	अगर (unlikely(nr_extents < 0)) अणु
+	if (unlikely(nr_extents < 0)) {
 		error = nr_extents;
-		जाओ bad_swap_unlock_inode;
-	पूर्ण
-	/* frontswap enabled? set up bit-per-page map क्रम frontswap */
-	अगर (IS_ENABLED(CONFIG_FRONTSWAP))
-		frontswap_map = kvसुस्मृति(BITS_TO_LONGS(maxpages),
-					 माप(दीर्घ),
+		goto bad_swap_unlock_inode;
+	}
+	/* frontswap enabled? set up bit-per-page map for frontswap */
+	if (IS_ENABLED(CONFIG_FRONTSWAP))
+		frontswap_map = kvcalloc(BITS_TO_LONGS(maxpages),
+					 sizeof(long),
 					 GFP_KERNEL);
 
-	अगर (p->bdev && (swap_flags & SWAP_FLAG_DISCARD) && swap_discardable(p)) अणु
+	if (p->bdev && (swap_flags & SWAP_FLAG_DISCARD) && swap_discardable(p)) {
 		/*
-		 * When discard is enabled क्रम swap with no particular
+		 * When discard is enabled for swap with no particular
 		 * policy flagged, we set all swap discard flags here in
 		 * order to sustain backward compatibility with older
 		 * swapon(8) releases.
@@ -3297,49 +3296,49 @@ SYSCALL_DEFINE2(swapon, स्थिर अक्षर __user *, specialfile, �
 
 		/*
 		 * By flagging sys_swapon, a sysadmin can tell us to
-		 * either करो single-समय area discards only, or to just
-		 * perक्रमm discards क्रम released swap page-clusters.
-		 * Now it's समय to adjust the p->flags accordingly.
+		 * either do single-time area discards only, or to just
+		 * perform discards for released swap page-clusters.
+		 * Now it's time to adjust the p->flags accordingly.
 		 */
-		अगर (swap_flags & SWAP_FLAG_DISCARD_ONCE)
+		if (swap_flags & SWAP_FLAG_DISCARD_ONCE)
 			p->flags &= ~SWP_PAGE_DISCARD;
-		अन्यथा अगर (swap_flags & SWAP_FLAG_DISCARD_PAGES)
+		else if (swap_flags & SWAP_FLAG_DISCARD_PAGES)
 			p->flags &= ~SWP_AREA_DISCARD;
 
-		/* issue a swapon-समय discard अगर it's still required */
-		अगर (p->flags & SWP_AREA_DISCARD) अणु
-			पूर्णांक err = discard_swap(p);
-			अगर (unlikely(err))
+		/* issue a swapon-time discard if it's still required */
+		if (p->flags & SWP_AREA_DISCARD) {
+			int err = discard_swap(p);
+			if (unlikely(err))
 				pr_err("swapon: discard_swap(%p): %d\n",
 					p, err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	error = init_swap_address_space(p->type, maxpages);
-	अगर (error)
-		जाओ bad_swap_unlock_inode;
+	if (error)
+		goto bad_swap_unlock_inode;
 
 	/*
-	 * Flush any pending IO and dirty mappings beक्रमe we start using this
+	 * Flush any pending IO and dirty mappings before we start using this
 	 * swap device.
 	 */
-	inode->i_flags |= S_SWAPखाता;
-	error = inode_drain_ग_लिखोs(inode);
-	अगर (error) अणु
-		inode->i_flags &= ~S_SWAPखाता;
-		जाओ मुक्त_swap_address_space;
-	पूर्ण
+	inode->i_flags |= S_SWAPFILE;
+	error = inode_drain_writes(inode);
+	if (error) {
+		inode->i_flags &= ~S_SWAPFILE;
+		goto free_swap_address_space;
+	}
 
 	mutex_lock(&swapon_mutex);
 	prio = -1;
-	अगर (swap_flags & SWAP_FLAG_PREFER)
+	if (swap_flags & SWAP_FLAG_PREFER)
 		prio =
 		  (swap_flags & SWAP_FLAG_PRIO_MASK) >> SWAP_FLAG_PRIO_SHIFT;
 	enable_swap_info(p, prio, swap_map, cluster_info, frontswap_map);
 
 	pr_info("Adding %uk swap on %s.  Priority:%d extents:%d across:%lluk %s%s%s%s%s\n",
 		p->pages<<(PAGE_SHIFT-10), name->name, p->prio,
-		nr_extents, (अचिन्हित दीर्घ दीर्घ)span<<(PAGE_SHIFT-10),
+		nr_extents, (unsigned long long)span<<(PAGE_SHIFT-10),
 		(p->flags & SWP_SOLIDSTATE) ? "SS" : "",
 		(p->flags & SWP_DISCARDABLE) ? "D" : "",
 		(p->flags & SWP_AREA_DISCARD) ? "s" : "",
@@ -3348,91 +3347,91 @@ SYSCALL_DEFINE2(swapon, स्थिर अक्षर __user *, specialfile, �
 
 	mutex_unlock(&swapon_mutex);
 	atomic_inc(&proc_poll_event);
-	wake_up_पूर्णांकerruptible(&proc_poll_रुको);
+	wake_up_interruptible(&proc_poll_wait);
 
 	error = 0;
-	जाओ out;
-मुक्त_swap_address_space:
-	निकास_swap_address_space(p->type);
+	goto out;
+free_swap_address_space:
+	exit_swap_address_space(p->type);
 bad_swap_unlock_inode:
 	inode_unlock(inode);
 bad_swap:
-	मुक्त_percpu(p->percpu_cluster);
-	p->percpu_cluster = शून्य;
-	मुक्त_percpu(p->cluster_next_cpu);
-	p->cluster_next_cpu = शून्य;
-	अगर (inode && S_ISBLK(inode->i_mode) && p->bdev) अणु
+	free_percpu(p->percpu_cluster);
+	p->percpu_cluster = NULL;
+	free_percpu(p->cluster_next_cpu);
+	p->cluster_next_cpu = NULL;
+	if (inode && S_ISBLK(inode->i_mode) && p->bdev) {
 		set_blocksize(p->bdev, p->old_block_size);
 		blkdev_put(p->bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
-	पूर्ण
-	inode = शून्य;
+	}
+	inode = NULL;
 	destroy_swap_extents(p);
 	swap_cgroup_swapoff(p->type);
 	spin_lock(&swap_lock);
-	p->swap_file = शून्य;
+	p->swap_file = NULL;
 	p->flags = 0;
 	spin_unlock(&swap_lock);
-	vमुक्त(swap_map);
-	kvमुक्त(cluster_info);
-	kvमुक्त(frontswap_map);
-	अगर (inced_nr_rotate_swap)
+	vfree(swap_map);
+	kvfree(cluster_info);
+	kvfree(frontswap_map);
+	if (inced_nr_rotate_swap)
 		atomic_dec(&nr_rotate_swap);
-	अगर (swap_file)
-		filp_बंद(swap_file, शून्य);
+	if (swap_file)
+		filp_close(swap_file, NULL);
 out:
-	अगर (page && !IS_ERR(page)) अणु
+	if (page && !IS_ERR(page)) {
 		kunmap(page);
 		put_page(page);
-	पूर्ण
-	अगर (name)
+	}
+	if (name)
 		putname(name);
-	अगर (inode)
+	if (inode)
 		inode_unlock(inode);
-	अगर (!error)
+	if (!error)
 		enable_swap_slots_cache();
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम si_swapinfo(काष्ठा sysinfo *val)
-अणु
-	अचिन्हित पूर्णांक type;
-	अचिन्हित दीर्घ nr_to_be_unused = 0;
+void si_swapinfo(struct sysinfo *val)
+{
+	unsigned int type;
+	unsigned long nr_to_be_unused = 0;
 
 	spin_lock(&swap_lock);
-	क्रम (type = 0; type < nr_swapfiles; type++) अणु
-		काष्ठा swap_info_काष्ठा *si = swap_info[type];
+	for (type = 0; type < nr_swapfiles; type++) {
+		struct swap_info_struct *si = swap_info[type];
 
-		अगर ((si->flags & SWP_USED) && !(si->flags & SWP_WRITEOK))
+		if ((si->flags & SWP_USED) && !(si->flags & SWP_WRITEOK))
 			nr_to_be_unused += si->inuse_pages;
-	पूर्ण
-	val->मुक्तswap = atomic_दीर्घ_पढ़ो(&nr_swap_pages) + nr_to_be_unused;
+	}
+	val->freeswap = atomic_long_read(&nr_swap_pages) + nr_to_be_unused;
 	val->totalswap = total_swap_pages + nr_to_be_unused;
 	spin_unlock(&swap_lock);
-पूर्ण
+}
 
 /*
- * Verअगरy that a swap entry is valid and increment its swap map count.
+ * Verify that a swap entry is valid and increment its swap map count.
  *
- * Returns error code in following हाल.
+ * Returns error code in following case.
  * - success -> 0
  * - swp_entry is invalid -> EINVAL
  * - swp_entry is migration entry -> EINVAL
- * - swap-cache reference is requested but there is alपढ़ोy one. -> EEXIST
+ * - swap-cache reference is requested but there is already one. -> EEXIST
  * - swap-cache reference is requested but the entry is not used. -> ENOENT
- * - swap-mapped reference requested but needs जारीd swap count. -> ENOMEM
+ * - swap-mapped reference requested but needs continued swap count. -> ENOMEM
  */
-अटल पूर्णांक __swap_duplicate(swp_entry_t entry, अचिन्हित अक्षर usage)
-अणु
-	काष्ठा swap_info_काष्ठा *p;
-	काष्ठा swap_cluster_info *ci;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित अक्षर count;
-	अचिन्हित अक्षर has_cache;
-	पूर्णांक err;
+static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
+{
+	struct swap_info_struct *p;
+	struct swap_cluster_info *ci;
+	unsigned long offset;
+	unsigned char count;
+	unsigned char has_cache;
+	int err;
 
 	p = get_swap_device(entry);
-	अगर (!p)
-		वापस -EINVAL;
+	if (!p)
+		return -EINVAL;
 
 	offset = swp_offset(entry);
 	ci = lock_cluster_or_swap_info(p, offset);
@@ -3440,155 +3439,155 @@ out:
 	count = p->swap_map[offset];
 
 	/*
-	 * swapin_पढ़ोahead() करोesn't check अगर a swap entry is valid, so the
+	 * swapin_readahead() doesn't check if a swap entry is valid, so the
 	 * swap entry could be SWAP_MAP_BAD. Check here with lock held.
 	 */
-	अगर (unlikely(swap_count(count) == SWAP_MAP_BAD)) अणु
+	if (unlikely(swap_count(count) == SWAP_MAP_BAD)) {
 		err = -ENOENT;
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
 	has_cache = count & SWAP_HAS_CACHE;
 	count &= ~SWAP_HAS_CACHE;
 	err = 0;
 
-	अगर (usage == SWAP_HAS_CACHE) अणु
+	if (usage == SWAP_HAS_CACHE) {
 
-		/* set SWAP_HAS_CACHE अगर there is no cache and entry is used */
-		अगर (!has_cache && count)
+		/* set SWAP_HAS_CACHE if there is no cache and entry is used */
+		if (!has_cache && count)
 			has_cache = SWAP_HAS_CACHE;
-		अन्यथा अगर (has_cache)		/* someone अन्यथा added cache */
+		else if (has_cache)		/* someone else added cache */
 			err = -EEXIST;
-		अन्यथा				/* no users reमुख्यing */
+		else				/* no users remaining */
 			err = -ENOENT;
 
-	पूर्ण अन्यथा अगर (count || has_cache) अणु
+	} else if (count || has_cache) {
 
-		अगर ((count & ~COUNT_CONTINUED) < SWAP_MAP_MAX)
+		if ((count & ~COUNT_CONTINUED) < SWAP_MAP_MAX)
 			count += usage;
-		अन्यथा अगर ((count & ~COUNT_CONTINUED) > SWAP_MAP_MAX)
+		else if ((count & ~COUNT_CONTINUED) > SWAP_MAP_MAX)
 			err = -EINVAL;
-		अन्यथा अगर (swap_count_जारीd(p, offset, count))
+		else if (swap_count_continued(p, offset, count))
 			count = COUNT_CONTINUED;
-		अन्यथा
+		else
 			err = -ENOMEM;
-	पूर्ण अन्यथा
+	} else
 		err = -ENOENT;			/* unused swap entry */
 
 	WRITE_ONCE(p->swap_map[offset], count | has_cache);
 
 unlock_out:
 	unlock_cluster_or_swap_info(p, ci);
-	अगर (p)
+	if (p)
 		put_swap_device(p);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Help swapoff by noting that swap entry beदीर्घs to shmem/पंचांगpfs
- * (in which हाल its reference count is never incremented).
+ * Help swapoff by noting that swap entry belongs to shmem/tmpfs
+ * (in which case its reference count is never incremented).
  */
-व्योम swap_shmem_alloc(swp_entry_t entry)
-अणु
+void swap_shmem_alloc(swp_entry_t entry)
+{
 	__swap_duplicate(entry, SWAP_MAP_SHMEM);
-पूर्ण
+}
 
 /*
  * Increase reference count of swap entry by 1.
- * Returns 0 क्रम success, or -ENOMEM अगर a swap_count_continuation is required
- * but could not be atomically allocated.  Returns 0, just as अगर it succeeded,
- * अगर __swap_duplicate() fails क्रम another reason (-EINVAL or -ENOENT), which
- * might occur अगर a page table entry has got corrupted.
+ * Returns 0 for success, or -ENOMEM if a swap_count_continuation is required
+ * but could not be atomically allocated.  Returns 0, just as if it succeeded,
+ * if __swap_duplicate() fails for another reason (-EINVAL or -ENOENT), which
+ * might occur if a page table entry has got corrupted.
  */
-पूर्णांक swap_duplicate(swp_entry_t entry)
-अणु
-	पूर्णांक err = 0;
+int swap_duplicate(swp_entry_t entry)
+{
+	int err = 0;
 
-	जबतक (!err && __swap_duplicate(entry, 1) == -ENOMEM)
+	while (!err && __swap_duplicate(entry, 1) == -ENOMEM)
 		err = add_swap_count_continuation(entry, GFP_ATOMIC);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * @entry: swap entry क्रम which we allocate swap cache.
+ * @entry: swap entry for which we allocate swap cache.
  *
- * Called when allocating swap cache क्रम existing swap entry,
- * This can वापस error codes. Returns 0 at success.
+ * Called when allocating swap cache for existing swap entry,
+ * This can return error codes. Returns 0 at success.
  * -EEXIST means there is a swap cache.
- * Note: वापस code is dअगरferent from swap_duplicate().
+ * Note: return code is different from swap_duplicate().
  */
-पूर्णांक swapcache_prepare(swp_entry_t entry)
-अणु
-	वापस __swap_duplicate(entry, SWAP_HAS_CACHE);
-पूर्ण
+int swapcache_prepare(swp_entry_t entry)
+{
+	return __swap_duplicate(entry, SWAP_HAS_CACHE);
+}
 
-काष्ठा swap_info_काष्ठा *swp_swap_info(swp_entry_t entry)
-अणु
-	वापस swap_type_to_swap_info(swp_type(entry));
-पूर्ण
+struct swap_info_struct *swp_swap_info(swp_entry_t entry)
+{
+	return swap_type_to_swap_info(swp_type(entry));
+}
 
-काष्ठा swap_info_काष्ठा *page_swap_info(काष्ठा page *page)
-अणु
-	swp_entry_t entry = अणु .val = page_निजी(page) पूर्ण;
-	वापस swp_swap_info(entry);
-पूर्ण
+struct swap_info_struct *page_swap_info(struct page *page)
+{
+	swp_entry_t entry = { .val = page_private(page) };
+	return swp_swap_info(entry);
+}
 
 /*
- * out-of-line __page_file_ methods to aव्योम include hell.
+ * out-of-line __page_file_ methods to avoid include hell.
  */
-काष्ठा address_space *__page_file_mapping(काष्ठा page *page)
-अणु
-	वापस page_swap_info(page)->swap_file->f_mapping;
-पूर्ण
+struct address_space *__page_file_mapping(struct page *page)
+{
+	return page_swap_info(page)->swap_file->f_mapping;
+}
 EXPORT_SYMBOL_GPL(__page_file_mapping);
 
-pgoff_t __page_file_index(काष्ठा page *page)
-अणु
-	swp_entry_t swap = अणु .val = page_निजी(page) पूर्ण;
-	वापस swp_offset(swap);
-पूर्ण
+pgoff_t __page_file_index(struct page *page)
+{
+	swp_entry_t swap = { .val = page_private(page) };
+	return swp_offset(swap);
+}
 EXPORT_SYMBOL_GPL(__page_file_index);
 
 /*
  * add_swap_count_continuation - called when a swap count is duplicated
  * beyond SWAP_MAP_MAX, it allocates a new page and links that to the entry's
- * page of the original vदो_स्मृति'ed swap_map, to hold the continuation count
- * (क्रम that entry and क्रम its neighbouring PAGE_SIZE swap entries).  Called
+ * page of the original vmalloc'ed swap_map, to hold the continuation count
+ * (for that entry and for its neighbouring PAGE_SIZE swap entries).  Called
  * again when count is duplicated beyond SWAP_MAP_MAX * SWAP_CONT_MAX, etc.
  *
- * These continuation pages are selकरोm referenced: the common paths all work
+ * These continuation pages are seldom referenced: the common paths all work
  * on the original swap_map, only referring to a continuation page when the
  * low "digit" of a count is incremented or decremented through SWAP_MAP_MAX.
  *
- * add_swap_count_continuation(, GFP_ATOMIC) can be called जबतक holding
- * page table locks; अगर it fails, add_swap_count_continuation(, GFP_KERNEL)
+ * add_swap_count_continuation(, GFP_ATOMIC) can be called while holding
+ * page table locks; if it fails, add_swap_count_continuation(, GFP_KERNEL)
  * can be called after dropping locks.
  */
-पूर्णांक add_swap_count_continuation(swp_entry_t entry, gfp_t gfp_mask)
-अणु
-	काष्ठा swap_info_काष्ठा *si;
-	काष्ठा swap_cluster_info *ci;
-	काष्ठा page *head;
-	काष्ठा page *page;
-	काष्ठा page *list_page;
+int add_swap_count_continuation(swp_entry_t entry, gfp_t gfp_mask)
+{
+	struct swap_info_struct *si;
+	struct swap_cluster_info *ci;
+	struct page *head;
+	struct page *page;
+	struct page *list_page;
 	pgoff_t offset;
-	अचिन्हित अक्षर count;
-	पूर्णांक ret = 0;
+	unsigned char count;
+	int ret = 0;
 
 	/*
 	 * When debugging, it's easier to use __GFP_ZERO here; but it's better
-	 * क्रम latency not to zero a page जबतक GFP_ATOMIC and holding locks.
+	 * for latency not to zero a page while GFP_ATOMIC and holding locks.
 	 */
 	page = alloc_page(gfp_mask | __GFP_HIGHMEM);
 
 	si = get_swap_device(entry);
-	अगर (!si) अणु
+	if (!si) {
 		/*
 		 * An acceptable race has occurred since the failing
 		 * __swap_duplicate(): the swap device may be swapoff
 		 */
-		जाओ outer;
-	पूर्ण
+		goto outer;
+	}
 	spin_lock(&si->lock);
 
 	offset = swp_offset(entry);
@@ -3597,49 +3596,49 @@ EXPORT_SYMBOL_GPL(__page_file_index);
 
 	count = swap_count(si->swap_map[offset]);
 
-	अगर ((count & ~COUNT_CONTINUED) != SWAP_MAP_MAX) अणु
+	if ((count & ~COUNT_CONTINUED) != SWAP_MAP_MAX) {
 		/*
 		 * The higher the swap count, the more likely it is that tasks
-		 * will race to add swap count continuation: we need to aव्योम
+		 * will race to add swap count continuation: we need to avoid
 		 * over-provisioning.
 		 */
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!page) अणु
+	if (!page) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * We are क्रमtunate that although vदो_स्मृति_to_page uses pte_offset_map,
-	 * no architecture is using highmem pages क्रम kernel page tables: so it
+	 * We are fortunate that although vmalloc_to_page uses pte_offset_map,
+	 * no architecture is using highmem pages for kernel page tables: so it
 	 * will not corrupt the GFP_ATOMIC caller's atomic page table kmaps.
 	 */
-	head = vदो_स्मृति_to_page(si->swap_map + offset);
+	head = vmalloc_to_page(si->swap_map + offset);
 	offset &= ~PAGE_MASK;
 
 	spin_lock(&si->cont_lock);
 	/*
-	 * Page allocation करोes not initialize the page's lru field,
-	 * but it करोes always reset its निजी field.
+	 * Page allocation does not initialize the page's lru field,
+	 * but it does always reset its private field.
 	 */
-	अगर (!page_निजी(head)) अणु
+	if (!page_private(head)) {
 		BUG_ON(count & COUNT_CONTINUED);
 		INIT_LIST_HEAD(&head->lru);
-		set_page_निजी(head, SWP_CONTINUED);
+		set_page_private(head, SWP_CONTINUED);
 		si->flags |= SWP_CONTINUED;
-	पूर्ण
+	}
 
-	list_क्रम_each_entry(list_page, &head->lru, lru) अणु
-		अचिन्हित अक्षर *map;
+	list_for_each_entry(list_page, &head->lru, lru) {
+		unsigned char *map;
 
 		/*
 		 * If the previous map said no continuation, but we've found
-		 * a continuation page, मुक्त our allocation and use this one.
+		 * a continuation page, free our allocation and use this one.
 		 */
-		अगर (!(count & COUNT_CONTINUED))
-			जाओ out_unlock_cont;
+		if (!(count & COUNT_CONTINUED))
+			goto out_unlock_cont;
 
 		map = kmap_atomic(list_page) + offset;
 		count = *map;
@@ -3647,14 +3646,14 @@ EXPORT_SYMBOL_GPL(__page_file_index);
 
 		/*
 		 * If this continuation count now has some space in it,
-		 * मुक्त our allocation and use this one.
+		 * free our allocation and use this one.
 		 */
-		अगर ((count & ~COUNT_CONTINUED) != SWAP_CONT_MAX)
-			जाओ out_unlock_cont;
-	पूर्ण
+		if ((count & ~COUNT_CONTINUED) != SWAP_CONT_MAX)
+			goto out_unlock_cont;
+	}
 
 	list_add_tail(&page->lru, &head->lru);
-	page = शून्य;			/* now it's attached, don't मुक्त it */
+	page = NULL;			/* now it's attached, don't free it */
 out_unlock_cont:
 	spin_unlock(&si->cont_lock);
 out:
@@ -3662,167 +3661,167 @@ out:
 	spin_unlock(&si->lock);
 	put_swap_device(si);
 outer:
-	अगर (page)
-		__मुक्त_page(page);
-	वापस ret;
-पूर्ण
+	if (page)
+		__free_page(page);
+	return ret;
+}
 
 /*
- * swap_count_जारीd - when the original swap_map count is incremented
- * from SWAP_MAP_MAX, check अगर there is alपढ़ोy a continuation page to carry
- * पूर्णांकo, carry अगर so, or अन्यथा fail until a new continuation page is allocated;
+ * swap_count_continued - when the original swap_map count is incremented
+ * from SWAP_MAP_MAX, check if there is already a continuation page to carry
+ * into, carry if so, or else fail until a new continuation page is allocated;
  * when the original swap_map count is decremented from 0 with continuation,
  * borrow from the continuation and report whether it still holds more.
- * Called जबतक __swap_duplicate() or swap_entry_मुक्त() holds swap or cluster
+ * Called while __swap_duplicate() or swap_entry_free() holds swap or cluster
  * lock.
  */
-अटल bool swap_count_जारीd(काष्ठा swap_info_काष्ठा *si,
-				 pgoff_t offset, अचिन्हित अक्षर count)
-अणु
-	काष्ठा page *head;
-	काष्ठा page *page;
-	अचिन्हित अक्षर *map;
+static bool swap_count_continued(struct swap_info_struct *si,
+				 pgoff_t offset, unsigned char count)
+{
+	struct page *head;
+	struct page *page;
+	unsigned char *map;
 	bool ret;
 
-	head = vदो_स्मृति_to_page(si->swap_map + offset);
-	अगर (page_निजी(head) != SWP_CONTINUED) अणु
+	head = vmalloc_to_page(si->swap_map + offset);
+	if (page_private(head) != SWP_CONTINUED) {
 		BUG_ON(count & COUNT_CONTINUED);
-		वापस false;		/* need to add count continuation */
-	पूर्ण
+		return false;		/* need to add count continuation */
+	}
 
 	spin_lock(&si->cont_lock);
 	offset &= ~PAGE_MASK;
 	page = list_next_entry(head, lru);
 	map = kmap_atomic(page) + offset;
 
-	अगर (count == SWAP_MAP_MAX)	/* initial increment from swap_map */
-		जाओ init_map;		/* jump over SWAP_CONT_MAX checks */
+	if (count == SWAP_MAP_MAX)	/* initial increment from swap_map */
+		goto init_map;		/* jump over SWAP_CONT_MAX checks */
 
-	अगर (count == (SWAP_MAP_MAX | COUNT_CONTINUED)) अणु /* incrementing */
+	if (count == (SWAP_MAP_MAX | COUNT_CONTINUED)) { /* incrementing */
 		/*
 		 * Think of how you add 1 to 999
 		 */
-		जबतक (*map == (SWAP_CONT_MAX | COUNT_CONTINUED)) अणु
+		while (*map == (SWAP_CONT_MAX | COUNT_CONTINUED)) {
 			kunmap_atomic(map);
 			page = list_next_entry(page, lru);
 			BUG_ON(page == head);
 			map = kmap_atomic(page) + offset;
-		पूर्ण
-		अगर (*map == SWAP_CONT_MAX) अणु
+		}
+		if (*map == SWAP_CONT_MAX) {
 			kunmap_atomic(map);
 			page = list_next_entry(page, lru);
-			अगर (page == head) अणु
+			if (page == head) {
 				ret = false;	/* add count continuation */
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			map = kmap_atomic(page) + offset;
 init_map:		*map = 0;		/* we didn't zero the page */
-		पूर्ण
+		}
 		*map += 1;
 		kunmap_atomic(map);
-		जबतक ((page = list_prev_entry(page, lru)) != head) अणु
+		while ((page = list_prev_entry(page, lru)) != head) {
 			map = kmap_atomic(page) + offset;
 			*map = COUNT_CONTINUED;
 			kunmap_atomic(map);
-		पूर्ण
+		}
 		ret = true;			/* incremented */
 
-	पूर्ण अन्यथा अणु				/* decrementing */
+	} else {				/* decrementing */
 		/*
 		 * Think of how you subtract 1 from 1000
 		 */
 		BUG_ON(count != COUNT_CONTINUED);
-		जबतक (*map == COUNT_CONTINUED) अणु
+		while (*map == COUNT_CONTINUED) {
 			kunmap_atomic(map);
 			page = list_next_entry(page, lru);
 			BUG_ON(page == head);
 			map = kmap_atomic(page) + offset;
-		पूर्ण
+		}
 		BUG_ON(*map == 0);
 		*map -= 1;
-		अगर (*map == 0)
+		if (*map == 0)
 			count = 0;
 		kunmap_atomic(map);
-		जबतक ((page = list_prev_entry(page, lru)) != head) अणु
+		while ((page = list_prev_entry(page, lru)) != head) {
 			map = kmap_atomic(page) + offset;
 			*map = SWAP_CONT_MAX | count;
 			count = COUNT_CONTINUED;
 			kunmap_atomic(map);
-		पूर्ण
+		}
 		ret = count == COUNT_CONTINUED;
-	पूर्ण
+	}
 out:
 	spin_unlock(&si->cont_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * मुक्त_swap_count_continuations - swapoff मुक्त all the continuation pages
- * appended to the swap_map, after swap_map is quiesced, beक्रमe vमुक्त'ing it.
+ * free_swap_count_continuations - swapoff free all the continuation pages
+ * appended to the swap_map, after swap_map is quiesced, before vfree'ing it.
  */
-अटल व्योम मुक्त_swap_count_continuations(काष्ठा swap_info_काष्ठा *si)
-अणु
+static void free_swap_count_continuations(struct swap_info_struct *si)
+{
 	pgoff_t offset;
 
-	क्रम (offset = 0; offset < si->max; offset += PAGE_SIZE) अणु
-		काष्ठा page *head;
-		head = vदो_स्मृति_to_page(si->swap_map + offset);
-		अगर (page_निजी(head)) अणु
-			काष्ठा page *page, *next;
+	for (offset = 0; offset < si->max; offset += PAGE_SIZE) {
+		struct page *head;
+		head = vmalloc_to_page(si->swap_map + offset);
+		if (page_private(head)) {
+			struct page *page, *next;
 
-			list_क्रम_each_entry_safe(page, next, &head->lru, lru) अणु
+			list_for_each_entry_safe(page, next, &head->lru, lru) {
 				list_del(&page->lru);
-				__मुक्त_page(page);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				__free_page(page);
+			}
+		}
+	}
+}
 
-#अगर defined(CONFIG_MEMCG) && defined(CONFIG_BLK_CGROUP)
-व्योम cgroup_throttle_swaprate(काष्ठा page *page, gfp_t gfp_mask)
-अणु
-	काष्ठा swap_info_काष्ठा *si, *next;
-	पूर्णांक nid = page_to_nid(page);
+#if defined(CONFIG_MEMCG) && defined(CONFIG_BLK_CGROUP)
+void cgroup_throttle_swaprate(struct page *page, gfp_t gfp_mask)
+{
+	struct swap_info_struct *si, *next;
+	int nid = page_to_nid(page);
 
-	अगर (!(gfp_mask & __GFP_IO))
-		वापस;
+	if (!(gfp_mask & __GFP_IO))
+		return;
 
-	अगर (!blk_cgroup_congested())
-		वापस;
+	if (!blk_cgroup_congested())
+		return;
 
 	/*
-	 * We've alपढ़ोy scheduled a throttle, aव्योम taking the global swap
+	 * We've already scheduled a throttle, avoid taking the global swap
 	 * lock.
 	 */
-	अगर (current->throttle_queue)
-		वापस;
+	if (current->throttle_queue)
+		return;
 
 	spin_lock(&swap_avail_lock);
-	plist_क्रम_each_entry_safe(si, next, &swap_avail_heads[nid],
-				  avail_lists[nid]) अणु
-		अगर (si->bdev) अणु
+	plist_for_each_entry_safe(si, next, &swap_avail_heads[nid],
+				  avail_lists[nid]) {
+		if (si->bdev) {
 			blkcg_schedule_throttle(bdev_get_queue(si->bdev), true);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&swap_avail_lock);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक __init swapfile_init(व्योम)
-अणु
-	पूर्णांक nid;
+static int __init swapfile_init(void)
+{
+	int nid;
 
-	swap_avail_heads = kदो_स्मृति_array(nr_node_ids, माप(काष्ठा plist_head),
+	swap_avail_heads = kmalloc_array(nr_node_ids, sizeof(struct plist_head),
 					 GFP_KERNEL);
-	अगर (!swap_avail_heads) अणु
+	if (!swap_avail_heads) {
 		pr_emerg("Not enough memory for swap heads, swap is disabled\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	क्रम_each_node(nid)
+	for_each_node(nid)
 		plist_head_init(&swap_avail_heads[nid]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(swapfile_init);

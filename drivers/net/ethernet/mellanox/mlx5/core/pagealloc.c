@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,158 +30,158 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mlx5/driver.h>
-#समावेश <linux/xarray.h>
-#समावेश "mlx5_core.h"
-#समावेश "lib/eq.h"
+#include <linux/highmem.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/mlx5/driver.h>
+#include <linux/xarray.h>
+#include "mlx5_core.h"
+#include "lib/eq.h"
 
-क्रमागत अणु
+enum {
 	MLX5_PAGES_CANT_GIVE	= 0,
 	MLX5_PAGES_GIVE		= 1,
 	MLX5_PAGES_TAKE		= 2
-पूर्ण;
+};
 
-काष्ठा mlx5_pages_req अणु
-	काष्ठा mlx5_core_dev *dev;
+struct mlx5_pages_req {
+	struct mlx5_core_dev *dev;
 	u16	func_id;
 	u8	ec_function;
 	s32	npages;
-	काष्ठा work_काष्ठा work;
+	struct work_struct work;
 	u8	release_all;
-पूर्ण;
+};
 
-काष्ठा fw_page अणु
-	काष्ठा rb_node		rb_node;
+struct fw_page {
+	struct rb_node		rb_node;
 	u64			addr;
-	काष्ठा page	       *page;
+	struct page	       *page;
 	u32			function;
-	अचिन्हित दीर्घ		biपंचांगask;
-	काष्ठा list_head	list;
-	अचिन्हित पूर्णांक मुक्त_count;
-पूर्ण;
+	unsigned long		bitmask;
+	struct list_head	list;
+	unsigned int free_count;
+};
 
-क्रमागत अणु
+enum {
 	MAX_RECLAIM_TIME_MSECS	= 5000,
 	MAX_RECLAIM_VFS_PAGES_TIME_MSECS = 2 * 1000 * 60,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MLX5_MAX_RECLAIM_TIME_MILI	= 5000,
 	MLX5_NUM_4K_IN_PAGE		= PAGE_SIZE / MLX5_ADAPTER_PAGE_SIZE,
-पूर्ण;
+};
 
-अटल u32 get_function(u16 func_id, bool ec_function)
-अणु
-	वापस (u32)func_id | (ec_function << 16);
-पूर्ण
+static u32 get_function(u16 func_id, bool ec_function)
+{
+	return (u32)func_id | (ec_function << 16);
+}
 
-अटल काष्ठा rb_root *page_root_per_function(काष्ठा mlx5_core_dev *dev, u32 function)
-अणु
-	काष्ठा rb_root *root;
-	पूर्णांक err;
+static struct rb_root *page_root_per_function(struct mlx5_core_dev *dev, u32 function)
+{
+	struct rb_root *root;
+	int err;
 
 	root = xa_load(&dev->priv.page_root_xa, function);
-	अगर (root)
-		वापस root;
+	if (root)
+		return root;
 
-	root = kzalloc(माप(*root), GFP_KERNEL);
-	अगर (!root)
-		वापस ERR_PTR(-ENOMEM);
+	root = kzalloc(sizeof(*root), GFP_KERNEL);
+	if (!root)
+		return ERR_PTR(-ENOMEM);
 
 	err = xa_insert(&dev->priv.page_root_xa, function, root, GFP_KERNEL);
-	अगर (err) अणु
-		kमुक्त(root);
-		वापस ERR_PTR(err);
-	पूर्ण
+	if (err) {
+		kfree(root);
+		return ERR_PTR(err);
+	}
 
 	*root = RB_ROOT;
 
-	वापस root;
-पूर्ण
+	return root;
+}
 
-अटल पूर्णांक insert_page(काष्ठा mlx5_core_dev *dev, u64 addr, काष्ठा page *page, u32 function)
-अणु
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा rb_root *root;
-	काष्ठा rb_node **new;
-	काष्ठा fw_page *nfp;
-	काष्ठा fw_page *tfp;
-	पूर्णांक i;
+static int insert_page(struct mlx5_core_dev *dev, u64 addr, struct page *page, u32 function)
+{
+	struct rb_node *parent = NULL;
+	struct rb_root *root;
+	struct rb_node **new;
+	struct fw_page *nfp;
+	struct fw_page *tfp;
+	int i;
 
 	root = page_root_per_function(dev, function);
-	अगर (IS_ERR(root))
-		वापस PTR_ERR(root);
+	if (IS_ERR(root))
+		return PTR_ERR(root);
 
 	new = &root->rb_node;
 
-	जबतक (*new) अणु
+	while (*new) {
 		parent = *new;
-		tfp = rb_entry(parent, काष्ठा fw_page, rb_node);
-		अगर (tfp->addr < addr)
+		tfp = rb_entry(parent, struct fw_page, rb_node);
+		if (tfp->addr < addr)
 			new = &parent->rb_left;
-		अन्यथा अगर (tfp->addr > addr)
+		else if (tfp->addr > addr)
 			new = &parent->rb_right;
-		अन्यथा
-			वापस -EEXIST;
-	पूर्ण
+		else
+			return -EEXIST;
+	}
 
-	nfp = kzalloc(माप(*nfp), GFP_KERNEL);
-	अगर (!nfp)
-		वापस -ENOMEM;
+	nfp = kzalloc(sizeof(*nfp), GFP_KERNEL);
+	if (!nfp)
+		return -ENOMEM;
 
 	nfp->addr = addr;
 	nfp->page = page;
 	nfp->function = function;
-	nfp->मुक्त_count = MLX5_NUM_4K_IN_PAGE;
-	क्रम (i = 0; i < MLX5_NUM_4K_IN_PAGE; i++)
-		set_bit(i, &nfp->biपंचांगask);
+	nfp->free_count = MLX5_NUM_4K_IN_PAGE;
+	for (i = 0; i < MLX5_NUM_4K_IN_PAGE; i++)
+		set_bit(i, &nfp->bitmask);
 
 	rb_link_node(&nfp->rb_node, parent, new);
 	rb_insert_color(&nfp->rb_node, root);
-	list_add(&nfp->list, &dev->priv.मुक्त_list);
+	list_add(&nfp->list, &dev->priv.free_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा fw_page *find_fw_page(काष्ठा mlx5_core_dev *dev, u64 addr,
+static struct fw_page *find_fw_page(struct mlx5_core_dev *dev, u64 addr,
 				    u32 function)
-अणु
-	काष्ठा fw_page *result = शून्य;
-	काष्ठा rb_root *root;
-	काष्ठा rb_node *पंचांगp;
-	काष्ठा fw_page *tfp;
+{
+	struct fw_page *result = NULL;
+	struct rb_root *root;
+	struct rb_node *tmp;
+	struct fw_page *tfp;
 
 	root = xa_load(&dev->priv.page_root_xa, function);
-	अगर (WARN_ON_ONCE(!root))
-		वापस शून्य;
+	if (WARN_ON_ONCE(!root))
+		return NULL;
 
-	पंचांगp = root->rb_node;
+	tmp = root->rb_node;
 
-	जबतक (पंचांगp) अणु
-		tfp = rb_entry(पंचांगp, काष्ठा fw_page, rb_node);
-		अगर (tfp->addr < addr) अणु
-			पंचांगp = पंचांगp->rb_left;
-		पूर्ण अन्यथा अगर (tfp->addr > addr) अणु
-			पंचांगp = पंचांगp->rb_right;
-		पूर्ण अन्यथा अणु
+	while (tmp) {
+		tfp = rb_entry(tmp, struct fw_page, rb_node);
+		if (tfp->addr < addr) {
+			tmp = tmp->rb_left;
+		} else if (tfp->addr > addr) {
+			tmp = tmp->rb_right;
+		} else {
 			result = tfp;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक mlx5_cmd_query_pages(काष्ठा mlx5_core_dev *dev, u16 *func_id,
-				s32 *npages, पूर्णांक boot)
-अणु
-	u32 out[MLX5_ST_SZ_DW(query_pages_out)] = अणुपूर्ण;
-	u32 in[MLX5_ST_SZ_DW(query_pages_in)] = अणुपूर्ण;
-	पूर्णांक err;
+static int mlx5_cmd_query_pages(struct mlx5_core_dev *dev, u16 *func_id,
+				s32 *npages, int boot)
+{
+	u32 out[MLX5_ST_SZ_DW(query_pages_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(query_pages_in)] = {};
+	int err;
 
 	MLX5_SET(query_pages_in, in, opcode, MLX5_CMD_OP_QUERY_PAGES);
 	MLX5_SET(query_pages_in, in, op_mod, boot ?
@@ -191,134 +190,134 @@
 	MLX5_SET(query_pages_in, in, embedded_cpu_function, mlx5_core_is_ecpf(dev));
 
 	err = mlx5_cmd_exec_inout(dev, query_pages, in, out);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	*npages = MLX5_GET(query_pages_out, out, num_pages);
 	*func_id = MLX5_GET(query_pages_out, out, function_id);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक alloc_4k(काष्ठा mlx5_core_dev *dev, u64 *addr, u32 function)
-अणु
-	काष्ठा fw_page *fp = शून्य;
-	काष्ठा fw_page *iter;
-	अचिन्हित n;
+static int alloc_4k(struct mlx5_core_dev *dev, u64 *addr, u32 function)
+{
+	struct fw_page *fp = NULL;
+	struct fw_page *iter;
+	unsigned n;
 
-	list_क्रम_each_entry(iter, &dev->priv.मुक्त_list, list) अणु
-		अगर (iter->function != function)
-			जारी;
+	list_for_each_entry(iter, &dev->priv.free_list, list) {
+		if (iter->function != function)
+			continue;
 		fp = iter;
-	पूर्ण
+	}
 
-	अगर (list_empty(&dev->priv.मुक्त_list) || !fp)
-		वापस -ENOMEM;
+	if (list_empty(&dev->priv.free_list) || !fp)
+		return -ENOMEM;
 
-	n = find_first_bit(&fp->biपंचांगask, 8 * माप(fp->biपंचांगask));
-	अगर (n >= MLX5_NUM_4K_IN_PAGE) अणु
+	n = find_first_bit(&fp->bitmask, 8 * sizeof(fp->bitmask));
+	if (n >= MLX5_NUM_4K_IN_PAGE) {
 		mlx5_core_warn(dev, "alloc 4k bug\n");
-		वापस -ENOENT;
-	पूर्ण
-	clear_bit(n, &fp->biपंचांगask);
-	fp->मुक्त_count--;
-	अगर (!fp->मुक्त_count)
+		return -ENOENT;
+	}
+	clear_bit(n, &fp->bitmask);
+	fp->free_count--;
+	if (!fp->free_count)
 		list_del(&fp->list);
 
 	*addr = fp->addr + n * MLX5_ADAPTER_PAGE_SIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MLX5_U64_4K_PAGE_MASK ((~(u64)0U) << PAGE_SHIFT)
+#define MLX5_U64_4K_PAGE_MASK ((~(u64)0U) << PAGE_SHIFT)
 
-अटल व्योम मुक्त_fwp(काष्ठा mlx5_core_dev *dev, काष्ठा fw_page *fwp,
-		     bool in_मुक्त_list)
-अणु
-	काष्ठा rb_root *root;
+static void free_fwp(struct mlx5_core_dev *dev, struct fw_page *fwp,
+		     bool in_free_list)
+{
+	struct rb_root *root;
 
 	root = xa_load(&dev->priv.page_root_xa, fwp->function);
-	अगर (WARN_ON_ONCE(!root))
-		वापस;
+	if (WARN_ON_ONCE(!root))
+		return;
 
 	rb_erase(&fwp->rb_node, root);
-	अगर (in_मुक्त_list)
+	if (in_free_list)
 		list_del(&fwp->list);
 	dma_unmap_page(mlx5_core_dma_dev(dev), fwp->addr & MLX5_U64_4K_PAGE_MASK,
-		       PAGE_SIZE, DMA_BIसूचीECTIONAL);
-	__मुक्त_page(fwp->page);
-	kमुक्त(fwp);
-पूर्ण
+		       PAGE_SIZE, DMA_BIDIRECTIONAL);
+	__free_page(fwp->page);
+	kfree(fwp);
+}
 
-अटल व्योम मुक्त_4k(काष्ठा mlx5_core_dev *dev, u64 addr, u32 function)
-अणु
-	काष्ठा fw_page *fwp;
-	पूर्णांक n;
+static void free_4k(struct mlx5_core_dev *dev, u64 addr, u32 function)
+{
+	struct fw_page *fwp;
+	int n;
 
 	fwp = find_fw_page(dev, addr & MLX5_U64_4K_PAGE_MASK, function);
-	अगर (!fwp) अणु
+	if (!fwp) {
 		mlx5_core_warn_rl(dev, "page not found\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	n = (addr & ~MLX5_U64_4K_PAGE_MASK) >> MLX5_ADAPTER_PAGE_SHIFT;
-	fwp->मुक्त_count++;
-	set_bit(n, &fwp->biपंचांगask);
-	अगर (fwp->मुक्त_count == MLX5_NUM_4K_IN_PAGE)
-		मुक्त_fwp(dev, fwp, fwp->मुक्त_count != 1);
-	अन्यथा अगर (fwp->मुक्त_count == 1)
-		list_add(&fwp->list, &dev->priv.मुक्त_list);
-पूर्ण
+	fwp->free_count++;
+	set_bit(n, &fwp->bitmask);
+	if (fwp->free_count == MLX5_NUM_4K_IN_PAGE)
+		free_fwp(dev, fwp, fwp->free_count != 1);
+	else if (fwp->free_count == 1)
+		list_add(&fwp->list, &dev->priv.free_list);
+}
 
-अटल पूर्णांक alloc_प्रणाली_page(काष्ठा mlx5_core_dev *dev, u32 function)
-अणु
-	काष्ठा device *device = mlx5_core_dma_dev(dev);
-	पूर्णांक nid = dev_to_node(device);
-	काष्ठा page *page;
+static int alloc_system_page(struct mlx5_core_dev *dev, u32 function)
+{
+	struct device *device = mlx5_core_dma_dev(dev);
+	int nid = dev_to_node(device);
+	struct page *page;
 	u64 zero_addr = 1;
 	u64 addr;
-	पूर्णांक err;
+	int err;
 
 	page = alloc_pages_node(nid, GFP_HIGHUSER, 0);
-	अगर (!page) अणु
+	if (!page) {
 		mlx5_core_warn(dev, "failed to allocate page\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 map:
-	addr = dma_map_page(device, page, 0, PAGE_SIZE, DMA_BIसूचीECTIONAL);
-	अगर (dma_mapping_error(device, addr)) अणु
+	addr = dma_map_page(device, page, 0, PAGE_SIZE, DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(device, addr)) {
 		mlx5_core_warn(dev, "failed dma mapping page\n");
 		err = -ENOMEM;
-		जाओ err_mapping;
-	पूर्ण
+		goto err_mapping;
+	}
 
-	/* Firmware करोesn't support page with physical address 0 */
-	अगर (addr == 0) अणु
+	/* Firmware doesn't support page with physical address 0 */
+	if (addr == 0) {
 		zero_addr = addr;
-		जाओ map;
-	पूर्ण
+		goto map;
+	}
 
 	err = insert_page(dev, addr, page, function);
-	अगर (err) अणु
+	if (err) {
 		mlx5_core_err(dev, "failed to track allocated page\n");
-		dma_unmap_page(device, addr, PAGE_SIZE, DMA_BIसूचीECTIONAL);
-	पूर्ण
+		dma_unmap_page(device, addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+	}
 
 err_mapping:
-	अगर (err)
-		__मुक्त_page(page);
+	if (err)
+		__free_page(page);
 
-	अगर (zero_addr == 0)
+	if (zero_addr == 0)
 		dma_unmap_page(device, zero_addr, PAGE_SIZE,
-			       DMA_BIसूचीECTIONAL);
+			       DMA_BIDIRECTIONAL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम page_notअगरy_fail(काष्ठा mlx5_core_dev *dev, u16 func_id,
+static void page_notify_fail(struct mlx5_core_dev *dev, u16 func_id,
 			     bool ec_function)
-अणु
-	u32 in[MLX5_ST_SZ_DW(manage_pages_in)] = अणुपूर्ण;
-	पूर्णांक err;
+{
+	u32 in[MLX5_ST_SZ_DW(manage_pages_in)] = {};
+	int err;
 
 	MLX5_SET(manage_pages_in, in, opcode, MLX5_CMD_OP_MANAGE_PAGES);
 	MLX5_SET(manage_pages_in, in, op_mod, MLX5_PAGES_CANT_GIVE);
@@ -326,43 +325,43 @@ err_mapping:
 	MLX5_SET(manage_pages_in, in, embedded_cpu_function, ec_function);
 
 	err = mlx5_cmd_exec_in(dev, manage_pages, in);
-	अगर (err)
+	if (err)
 		mlx5_core_warn(dev, "page notify failed func_id(%d) err(%d)\n",
 			       func_id, err);
-पूर्ण
+}
 
-अटल पूर्णांक give_pages(काष्ठा mlx5_core_dev *dev, u16 func_id, पूर्णांक npages,
-		      पूर्णांक notअगरy_fail, bool ec_function)
-अणु
+static int give_pages(struct mlx5_core_dev *dev, u16 func_id, int npages,
+		      int notify_fail, bool ec_function)
+{
 	u32 function = get_function(func_id, ec_function);
-	u32 out[MLX5_ST_SZ_DW(manage_pages_out)] = अणु0पूर्ण;
-	पूर्णांक inlen = MLX5_ST_SZ_BYTES(manage_pages_in);
+	u32 out[MLX5_ST_SZ_DW(manage_pages_out)] = {0};
+	int inlen = MLX5_ST_SZ_BYTES(manage_pages_in);
 	u64 addr;
-	पूर्णांक err;
+	int err;
 	u32 *in;
-	पूर्णांक i;
+	int i;
 
 	inlen += npages * MLX5_FLD_SZ_BYTES(manage_pages_in, pas[0]);
 	in = kvzalloc(inlen, GFP_KERNEL);
-	अगर (!in) अणु
+	if (!in) {
 		err = -ENOMEM;
 		mlx5_core_warn(dev, "vzalloc failed %d\n", inlen);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	क्रम (i = 0; i < npages; i++) अणु
+	for (i = 0; i < npages; i++) {
 retry:
 		err = alloc_4k(dev, &addr, function);
-		अगर (err) अणु
-			अगर (err == -ENOMEM)
-				err = alloc_प्रणाली_page(dev, function);
-			अगर (err)
-				जाओ out_4k;
+		if (err) {
+			if (err == -ENOMEM)
+				err = alloc_system_page(dev, function);
+			if (err)
+				goto out_4k;
 
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 		MLX5_ARRAY_SET64(manage_pages_in, in, pas, i, addr);
-	पूर्ण
+	}
 
 	MLX5_SET(manage_pages_in, in, opcode, MLX5_CMD_OP_MANAGE_PAGES);
 	MLX5_SET(manage_pages_in, in, op_mod, MLX5_PAGES_GIVE);
@@ -370,97 +369,97 @@ retry:
 	MLX5_SET(manage_pages_in, in, input_num_entries, npages);
 	MLX5_SET(manage_pages_in, in, embedded_cpu_function, ec_function);
 
-	err = mlx5_cmd_exec(dev, in, inlen, out, माप(out));
-	अगर (err) अणु
+	err = mlx5_cmd_exec(dev, in, inlen, out, sizeof(out));
+	if (err) {
 		mlx5_core_warn(dev, "func_id 0x%x, npages %d, err %d\n",
 			       func_id, npages, err);
-		जाओ out_4k;
-	पूर्ण
+		goto out_4k;
+	}
 
 	dev->priv.fw_pages += npages;
-	अगर (func_id)
+	if (func_id)
 		dev->priv.vfs_pages += npages;
-	अन्यथा अगर (mlx5_core_is_ecpf(dev) && !ec_function)
+	else if (mlx5_core_is_ecpf(dev) && !ec_function)
 		dev->priv.host_pf_pages += npages;
 
 	mlx5_core_dbg(dev, "npages %d, ec_function %d, func_id 0x%x, err %d\n",
 		      npages, ec_function, func_id, err);
 
-	kvमुक्त(in);
-	वापस 0;
+	kvfree(in);
+	return 0;
 
 out_4k:
-	क्रम (i--; i >= 0; i--)
-		मुक्त_4k(dev, MLX5_GET64(manage_pages_in, in, pas[i]), function);
-out_मुक्त:
-	kvमुक्त(in);
-	अगर (notअगरy_fail)
-		page_notअगरy_fail(dev, func_id, ec_function);
-	वापस err;
-पूर्ण
+	for (i--; i >= 0; i--)
+		free_4k(dev, MLX5_GET64(manage_pages_in, in, pas[i]), function);
+out_free:
+	kvfree(in);
+	if (notify_fail)
+		page_notify_fail(dev, func_id, ec_function);
+	return err;
+}
 
-अटल व्योम release_all_pages(काष्ठा mlx5_core_dev *dev, u16 func_id,
+static void release_all_pages(struct mlx5_core_dev *dev, u16 func_id,
 			      bool ec_function)
-अणु
+{
 	u32 function = get_function(func_id, ec_function);
-	काष्ठा rb_root *root;
-	काष्ठा rb_node *p;
-	पूर्णांक npages = 0;
+	struct rb_root *root;
+	struct rb_node *p;
+	int npages = 0;
 
 	root = xa_load(&dev->priv.page_root_xa, function);
-	अगर (WARN_ON_ONCE(!root))
-		वापस;
+	if (WARN_ON_ONCE(!root))
+		return;
 
 	p = rb_first(root);
-	जबतक (p) अणु
-		काष्ठा fw_page *fwp = rb_entry(p, काष्ठा fw_page, rb_node);
+	while (p) {
+		struct fw_page *fwp = rb_entry(p, struct fw_page, rb_node);
 
 		p = rb_next(p);
-		npages += (MLX5_NUM_4K_IN_PAGE - fwp->मुक्त_count);
-		मुक्त_fwp(dev, fwp, fwp->मुक्त_count);
-	पूर्ण
+		npages += (MLX5_NUM_4K_IN_PAGE - fwp->free_count);
+		free_fwp(dev, fwp, fwp->free_count);
+	}
 
 	dev->priv.fw_pages -= npages;
-	अगर (func_id)
+	if (func_id)
 		dev->priv.vfs_pages -= npages;
-	अन्यथा अगर (mlx5_core_is_ecpf(dev) && !ec_function)
+	else if (mlx5_core_is_ecpf(dev) && !ec_function)
 		dev->priv.host_pf_pages -= npages;
 
 	mlx5_core_dbg(dev, "npages %d, ec_function %d, func_id 0x%x\n",
 		      npages, ec_function, func_id);
-पूर्ण
+}
 
-अटल u32 fwp_fill_manage_pages_out(काष्ठा fw_page *fwp, u32 *out, u32 index,
+static u32 fwp_fill_manage_pages_out(struct fw_page *fwp, u32 *out, u32 index,
 				     u32 npages)
-अणु
+{
 	u32 pages_set = 0;
-	अचिन्हित पूर्णांक n;
+	unsigned int n;
 
-	क्रम_each_clear_bit(n, &fwp->biपंचांगask, MLX5_NUM_4K_IN_PAGE) अणु
+	for_each_clear_bit(n, &fwp->bitmask, MLX5_NUM_4K_IN_PAGE) {
 		MLX5_ARRAY_SET64(manage_pages_out, out, pas, index + pages_set,
 				 fwp->addr + (n * MLX5_ADAPTER_PAGE_SIZE));
 		pages_set++;
 
-		अगर (!--npages)
-			अवरोध;
-	पूर्ण
+		if (!--npages)
+			break;
+	}
 
-	वापस pages_set;
-पूर्ण
+	return pages_set;
+}
 
-अटल पूर्णांक reclaim_pages_cmd(काष्ठा mlx5_core_dev *dev,
-			     u32 *in, पूर्णांक in_size, u32 *out, पूर्णांक out_size)
-अणु
-	काष्ठा rb_root *root;
-	काष्ठा fw_page *fwp;
-	काष्ठा rb_node *p;
+static int reclaim_pages_cmd(struct mlx5_core_dev *dev,
+			     u32 *in, int in_size, u32 *out, int out_size)
+{
+	struct rb_root *root;
+	struct fw_page *fwp;
+	struct rb_node *p;
 	bool ec_function;
 	u32 func_id;
 	u32 npages;
 	u32 i = 0;
 
-	अगर (!mlx5_cmd_is_करोwn(dev))
-		वापस mlx5_cmd_exec(dev, in, in_size, out, out_size);
+	if (!mlx5_cmd_is_down(dev))
+		return mlx5_cmd_exec(dev, in, in_size, out, out_size);
 
 	/* No hard feelings, we want our pages back! */
 	npages = MLX5_GET(manage_pages_in, in, input_num_entries);
@@ -468,39 +467,39 @@ out_मुक्त:
 	ec_function = MLX5_GET(manage_pages_in, in, embedded_cpu_function);
 
 	root = xa_load(&dev->priv.page_root_xa, get_function(func_id, ec_function));
-	अगर (WARN_ON_ONCE(!root))
-		वापस -EEXIST;
+	if (WARN_ON_ONCE(!root))
+		return -EEXIST;
 
 	p = rb_first(root);
-	जबतक (p && i < npages) अणु
-		fwp = rb_entry(p, काष्ठा fw_page, rb_node);
+	while (p && i < npages) {
+		fwp = rb_entry(p, struct fw_page, rb_node);
 		p = rb_next(p);
 
 		i += fwp_fill_manage_pages_out(fwp, out, i, npages - i);
-	पूर्ण
+	}
 
 	MLX5_SET(manage_pages_out, out, output_num_entries, i);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reclaim_pages(काष्ठा mlx5_core_dev *dev, u16 func_id, पूर्णांक npages,
-			 पूर्णांक *nclaimed, bool ec_function)
-अणु
+static int reclaim_pages(struct mlx5_core_dev *dev, u16 func_id, int npages,
+			 int *nclaimed, bool ec_function)
+{
 	u32 function = get_function(func_id, ec_function);
-	पूर्णांक outlen = MLX5_ST_SZ_BYTES(manage_pages_out);
-	u32 in[MLX5_ST_SZ_DW(manage_pages_in)] = अणुपूर्ण;
-	पूर्णांक num_claimed;
+	int outlen = MLX5_ST_SZ_BYTES(manage_pages_out);
+	u32 in[MLX5_ST_SZ_DW(manage_pages_in)] = {};
+	int num_claimed;
 	u32 *out;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	अगर (nclaimed)
+	if (nclaimed)
 		*nclaimed = 0;
 
 	outlen += npages * MLX5_FLD_SZ_BYTES(manage_pages_out, pas[0]);
 	out = kvzalloc(outlen, GFP_KERNEL);
-	अगर (!out)
-		वापस -ENOMEM;
+	if (!out)
+		return -ENOMEM;
 
 	MLX5_SET(manage_pages_in, in, opcode, MLX5_CMD_OP_MANAGE_PAGES);
 	MLX5_SET(manage_pages_in, in, op_mod, MLX5_PAGES_TAKE);
@@ -510,77 +509,77 @@ out_मुक्त:
 
 	mlx5_core_dbg(dev, "func 0x%x, npages %d, outlen %d\n",
 		      func_id, npages, outlen);
-	err = reclaim_pages_cmd(dev, in, माप(in), out, outlen);
-	अगर (err) अणु
+	err = reclaim_pages_cmd(dev, in, sizeof(in), out, outlen);
+	if (err) {
 		mlx5_core_err(dev, "failed reclaiming pages: err %d\n", err);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	num_claimed = MLX5_GET(manage_pages_out, out, output_num_entries);
-	अगर (num_claimed > npages) अणु
+	if (num_claimed > npages) {
 		mlx5_core_warn(dev, "fw returned %d, driver asked %d => corruption\n",
 			       num_claimed, npages);
 		err = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	क्रम (i = 0; i < num_claimed; i++)
-		मुक्त_4k(dev, MLX5_GET64(manage_pages_out, out, pas[i]), function);
+	for (i = 0; i < num_claimed; i++)
+		free_4k(dev, MLX5_GET64(manage_pages_out, out, pas[i]), function);
 
-	अगर (nclaimed)
+	if (nclaimed)
 		*nclaimed = num_claimed;
 
 	dev->priv.fw_pages -= num_claimed;
-	अगर (func_id)
+	if (func_id)
 		dev->priv.vfs_pages -= num_claimed;
-	अन्यथा अगर (mlx5_core_is_ecpf(dev) && !ec_function)
+	else if (mlx5_core_is_ecpf(dev) && !ec_function)
 		dev->priv.host_pf_pages -= num_claimed;
 
-out_मुक्त:
-	kvमुक्त(out);
-	वापस err;
-पूर्ण
+out_free:
+	kvfree(out);
+	return err;
+}
 
-अटल व्योम pages_work_handler(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mlx5_pages_req *req = container_of(work, काष्ठा mlx5_pages_req, work);
-	काष्ठा mlx5_core_dev *dev = req->dev;
-	पूर्णांक err = 0;
+static void pages_work_handler(struct work_struct *work)
+{
+	struct mlx5_pages_req *req = container_of(work, struct mlx5_pages_req, work);
+	struct mlx5_core_dev *dev = req->dev;
+	int err = 0;
 
-	अगर (req->release_all)
+	if (req->release_all)
 		release_all_pages(dev, req->func_id, req->ec_function);
-	अन्यथा अगर (req->npages < 0)
-		err = reclaim_pages(dev, req->func_id, -1 * req->npages, शून्य,
+	else if (req->npages < 0)
+		err = reclaim_pages(dev, req->func_id, -1 * req->npages, NULL,
 				    req->ec_function);
-	अन्यथा अगर (req->npages > 0)
+	else if (req->npages > 0)
 		err = give_pages(dev, req->func_id, req->npages, 1, req->ec_function);
 
-	अगर (err)
+	if (err)
 		mlx5_core_warn(dev, "%s fail %d\n",
 			       req->npages < 0 ? "reclaim" : "give", err);
 
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
-क्रमागत अणु
+enum {
 	EC_FUNCTION_MASK = 0x8000,
 	RELEASE_ALL_PAGES_MASK = 0x4000,
-पूर्ण;
+};
 
-अटल पूर्णांक req_pages_handler(काष्ठा notअगरier_block *nb,
-			     अचिन्हित दीर्घ type, व्योम *data)
-अणु
-	काष्ठा mlx5_pages_req *req;
-	काष्ठा mlx5_core_dev *dev;
-	काष्ठा mlx5_priv *priv;
-	काष्ठा mlx5_eqe *eqe;
+static int req_pages_handler(struct notifier_block *nb,
+			     unsigned long type, void *data)
+{
+	struct mlx5_pages_req *req;
+	struct mlx5_core_dev *dev;
+	struct mlx5_priv *priv;
+	struct mlx5_eqe *eqe;
 	bool ec_function;
 	bool release_all;
 	u16 func_id;
 	s32 npages;
 
-	priv = mlx5_nb_cof(nb, काष्ठा mlx5_priv, pg_nb);
-	dev  = container_of(priv, काष्ठा mlx5_core_dev, priv);
+	priv = mlx5_nb_cof(nb, struct mlx5_priv, pg_nb);
+	dev  = container_of(priv, struct mlx5_core_dev, priv);
 	eqe  = data;
 
 	func_id = be16_to_cpu(eqe->data.req_pages.func_id);
@@ -590,11 +589,11 @@ out_मुक्त:
 		      RELEASE_ALL_PAGES_MASK;
 	mlx5_core_dbg(dev, "page request for func 0x%x, npages %d, release_all %d\n",
 		      func_id, npages, release_all);
-	req = kzalloc(माप(*req), GFP_ATOMIC);
-	अगर (!req) अणु
+	req = kzalloc(sizeof(*req), GFP_ATOMIC);
+	if (!req) {
 		mlx5_core_warn(dev, "failed to allocate pages request\n");
-		वापस NOTIFY_DONE;
-	पूर्ण
+		return NOTIFY_DONE;
+	}
 
 	req->dev = dev;
 	req->func_id = func_id;
@@ -603,83 +602,83 @@ out_मुक्त:
 	req->release_all = release_all;
 	INIT_WORK(&req->work, pages_work_handler);
 	queue_work(dev->priv.pg_wq, &req->work);
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-पूर्णांक mlx5_satisfy_startup_pages(काष्ठा mlx5_core_dev *dev, पूर्णांक boot)
-अणु
+int mlx5_satisfy_startup_pages(struct mlx5_core_dev *dev, int boot)
+{
 	u16 func_id;
 	s32 npages;
-	पूर्णांक err;
+	int err;
 
 	err = mlx5_cmd_query_pages(dev, &func_id, &npages, boot);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mlx5_core_dbg(dev, "requested %d %s pages for func_id 0x%x\n",
 		      npages, boot ? "boot" : "init", func_id);
 
-	वापस give_pages(dev, func_id, npages, 0, mlx5_core_is_ecpf(dev));
-पूर्ण
+	return give_pages(dev, func_id, npages, 0, mlx5_core_is_ecpf(dev));
+}
 
-क्रमागत अणु
+enum {
 	MLX5_BLKS_FOR_RECLAIM_PAGES = 12
-पूर्ण;
+};
 
-अटल पूर्णांक optimal_reclaimed_pages(व्योम)
-अणु
-	काष्ठा mlx5_cmd_prot_block *block;
-	काष्ठा mlx5_cmd_layout *lay;
-	पूर्णांक ret;
+static int optimal_reclaimed_pages(void)
+{
+	struct mlx5_cmd_prot_block *block;
+	struct mlx5_cmd_layout *lay;
+	int ret;
 
-	ret = (माप(lay->out) + MLX5_BLKS_FOR_RECLAIM_PAGES * माप(block->data) -
+	ret = (sizeof(lay->out) + MLX5_BLKS_FOR_RECLAIM_PAGES * sizeof(block->data) -
 	       MLX5_ST_SZ_BYTES(manage_pages_out)) /
 	       MLX5_FLD_SZ_BYTES(manage_pages_out, pas[0]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mlx5_reclaim_root_pages(काष्ठा mlx5_core_dev *dev,
-				   काष्ठा rb_root *root, u16 func_id)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + msecs_to_jअगरfies(MAX_RECLAIM_TIME_MSECS);
+static int mlx5_reclaim_root_pages(struct mlx5_core_dev *dev,
+				   struct rb_root *root, u16 func_id)
+{
+	unsigned long end = jiffies + msecs_to_jiffies(MAX_RECLAIM_TIME_MSECS);
 
-	जबतक (!RB_EMPTY_ROOT(root)) अणु
-		पूर्णांक nclaimed;
-		पूर्णांक err;
+	while (!RB_EMPTY_ROOT(root)) {
+		int nclaimed;
+		int err;
 
 		err = reclaim_pages(dev, func_id, optimal_reclaimed_pages(),
 				    &nclaimed, mlx5_core_is_ecpf(dev));
-		अगर (err) अणु
+		if (err) {
 			mlx5_core_warn(dev, "failed reclaiming pages (%d) for func id 0x%x\n",
 				       err, func_id);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
-		अगर (nclaimed)
-			end = jअगरfies + msecs_to_jअगरfies(MAX_RECLAIM_TIME_MSECS);
+		if (nclaimed)
+			end = jiffies + msecs_to_jiffies(MAX_RECLAIM_TIME_MSECS);
 
-		अगर (समय_after(jअगरfies, end)) अणु
+		if (time_after(jiffies, end)) {
 			mlx5_core_warn(dev, "FW did not return all pages. giving up...\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx5_reclaim_startup_pages(काष्ठा mlx5_core_dev *dev)
-अणु
-	काष्ठा rb_root *root;
-	अचिन्हित दीर्घ id;
-	व्योम *entry;
+int mlx5_reclaim_startup_pages(struct mlx5_core_dev *dev)
+{
+	struct rb_root *root;
+	unsigned long id;
+	void *entry;
 
-	xa_क्रम_each(&dev->priv.page_root_xa, id, entry) अणु
+	xa_for_each(&dev->priv.page_root_xa, id, entry) {
 		root = entry;
 		mlx5_reclaim_root_pages(dev, root, id);
 		xa_erase(&dev->priv.page_root_xa, id);
-		kमुक्त(root);
-	पूर्ण
+		kfree(root);
+	}
 
 	WARN_ON(!xa_empty(&dev->priv.page_root_xa));
 
@@ -693,63 +692,63 @@ out_मुक्त:
 	     "External host PF FW pages counter is %d after reclaiming all pages\n",
 	     dev->priv.host_pf_pages);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx5_pagealloc_init(काष्ठा mlx5_core_dev *dev)
-अणु
-	INIT_LIST_HEAD(&dev->priv.मुक्त_list);
-	dev->priv.pg_wq = create_singlethपढ़ो_workqueue("mlx5_page_allocator");
-	अगर (!dev->priv.pg_wq)
-		वापस -ENOMEM;
+int mlx5_pagealloc_init(struct mlx5_core_dev *dev)
+{
+	INIT_LIST_HEAD(&dev->priv.free_list);
+	dev->priv.pg_wq = create_singlethread_workqueue("mlx5_page_allocator");
+	if (!dev->priv.pg_wq)
+		return -ENOMEM;
 
 	xa_init(&dev->priv.page_root_xa);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mlx5_pagealloc_cleanup(काष्ठा mlx5_core_dev *dev)
-अणु
+void mlx5_pagealloc_cleanup(struct mlx5_core_dev *dev)
+{
 	xa_destroy(&dev->priv.page_root_xa);
 	destroy_workqueue(dev->priv.pg_wq);
-पूर्ण
+}
 
-व्योम mlx5_pagealloc_start(काष्ठा mlx5_core_dev *dev)
-अणु
+void mlx5_pagealloc_start(struct mlx5_core_dev *dev)
+{
 	MLX5_NB_INIT(&dev->priv.pg_nb, req_pages_handler, PAGE_REQUEST);
-	mlx5_eq_notअगरier_रेजिस्टर(dev, &dev->priv.pg_nb);
-पूर्ण
+	mlx5_eq_notifier_register(dev, &dev->priv.pg_nb);
+}
 
-व्योम mlx5_pagealloc_stop(काष्ठा mlx5_core_dev *dev)
-अणु
-	mlx5_eq_notअगरier_unरेजिस्टर(dev, &dev->priv.pg_nb);
+void mlx5_pagealloc_stop(struct mlx5_core_dev *dev)
+{
+	mlx5_eq_notifier_unregister(dev, &dev->priv.pg_nb);
 	flush_workqueue(dev->priv.pg_wq);
-पूर्ण
+}
 
-पूर्णांक mlx5_रुको_क्रम_pages(काष्ठा mlx5_core_dev *dev, पूर्णांक *pages)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + msecs_to_jअगरfies(MAX_RECLAIM_VFS_PAGES_TIME_MSECS);
-	पूर्णांक prev_pages = *pages;
+int mlx5_wait_for_pages(struct mlx5_core_dev *dev, int *pages)
+{
+	unsigned long end = jiffies + msecs_to_jiffies(MAX_RECLAIM_VFS_PAGES_TIME_MSECS);
+	int prev_pages = *pages;
 
-	/* In हाल of पूर्णांकernal error we will मुक्त the pages manually later */
-	अगर (dev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR) अणु
+	/* In case of internal error we will free the pages manually later */
+	if (dev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR) {
 		mlx5_core_warn(dev, "Skipping wait for vf pages stage");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mlx5_core_dbg(dev, "Waiting for %d pages\n", prev_pages);
-	जबतक (*pages) अणु
-		अगर (समय_after(jअगरfies, end)) अणु
+	while (*pages) {
+		if (time_after(jiffies, end)) {
 			mlx5_core_warn(dev, "aborting while there are %d pending pages\n", *pages);
-			वापस -ETIMEDOUT;
-		पूर्ण
-		अगर (*pages < prev_pages) अणु
-			end = jअगरfies + msecs_to_jअगरfies(MAX_RECLAIM_VFS_PAGES_TIME_MSECS);
+			return -ETIMEDOUT;
+		}
+		if (*pages < prev_pages) {
+			end = jiffies + msecs_to_jiffies(MAX_RECLAIM_VFS_PAGES_TIME_MSECS);
 			prev_pages = *pages;
-		पूर्ण
+		}
 		msleep(50);
-	पूर्ण
+	}
 
 	mlx5_core_dbg(dev, "All pages received\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}

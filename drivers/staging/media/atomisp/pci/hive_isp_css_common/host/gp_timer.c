@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश <type_support.h> /*uपूर्णांक32_t */
-#समावेश "gp_timer.h"   /*प्रणाली_local.h,
-			  gp_समयr_खुला.h*/
+#include <type_support.h> /*uint32_t */
+#include "gp_timer.h"   /*system_local.h,
+			  gp_timer_public.h*/
 
-#अगर_अघोषित __INLINE_GP_TIMER__
-#समावेश "gp_timer_private.h"  /*device_access.h*/
-#पूर्ण_अगर /* __INLINE_GP_TIMER__ */
-#समावेश "system_local.h"
+#ifndef __INLINE_GP_TIMER__
+#include "gp_timer_private.h"  /*device_access.h*/
+#endif /* __INLINE_GP_TIMER__ */
+#include "system_local.h"
 
-/* FIXME: not sure अगर reg_load(), reg_store() should be API.
+/* FIXME: not sure if reg_load(), reg_store() should be API.
  */
-अटल uपूर्णांक32_t
-gp_समयr_reg_load(uपूर्णांक32_t reg);
+static uint32_t
+gp_timer_reg_load(uint32_t reg);
 
-अटल व्योम
-gp_समयr_reg_store(u32 reg, uपूर्णांक32_t value);
+static void
+gp_timer_reg_store(u32 reg, uint32_t value);
 
-अटल uपूर्णांक32_t
-gp_समयr_reg_load(uपूर्णांक32_t reg)
-अणु
-	वापस ia_css_device_load_uपूर्णांक32(
+static uint32_t
+gp_timer_reg_load(uint32_t reg)
+{
+	return ia_css_device_load_uint32(
 		   GP_TIMER_BASE +
-		   (reg * माप(uपूर्णांक32_t)));
-पूर्ण
+		   (reg * sizeof(uint32_t)));
+}
 
-अटल व्योम
-gp_समयr_reg_store(u32 reg, uपूर्णांक32_t value)
-अणु
-	ia_css_device_store_uपूर्णांक32((GP_TIMER_BASE +
-				    (reg * माप(uपूर्णांक32_t))),
+static void
+gp_timer_reg_store(u32 reg, uint32_t value)
+{
+	ia_css_device_store_uint32((GP_TIMER_BASE +
+				    (reg * sizeof(uint32_t))),
 				   value);
-पूर्ण
+}
 
-व्योम gp_समयr_init(gp_समयr_ID_t ID)
-अणु
+void gp_timer_init(gp_timer_ID_t ID)
+{
 	/* set_overall_enable*/
-	gp_समयr_reg_store(_REG_GP_TIMER_OVERALL_ENABLE, 1);
+	gp_timer_reg_store(_REG_GP_TIMER_OVERALL_ENABLE, 1);
 
 	/*set enable*/
-	gp_समयr_reg_store(_REG_GP_TIMER_ENABLE_ID(ID), 1);
+	gp_timer_reg_store(_REG_GP_TIMER_ENABLE_ID(ID), 1);
 
-	/* set संकेत select */
-	gp_समयr_reg_store(_REG_GP_TIMER_SIGNAL_SELECT_ID(ID), GP_TIMER_SIGNAL_SELECT);
+	/* set signal select */
+	gp_timer_reg_store(_REG_GP_TIMER_SIGNAL_SELECT_ID(ID), GP_TIMER_SIGNAL_SELECT);
 
 	/*set count type */
-	gp_समयr_reg_store(_REG_GP_TIMER_COUNT_TYPE_ID(ID), GP_TIMER_COUNT_TYPE_LOW);
+	gp_timer_reg_store(_REG_GP_TIMER_COUNT_TYPE_ID(ID), GP_TIMER_COUNT_TYPE_LOW);
 
-	/*reset gp समयr */
-	gp_समयr_reg_store(_REG_GP_TIMER_RESET_REG, 0xFF);
-पूर्ण
+	/*reset gp timer */
+	gp_timer_reg_store(_REG_GP_TIMER_RESET_REG, 0xFF);
+}
 
-uपूर्णांक32_t
-gp_समयr_पढ़ो(gp_समयr_ID_t ID)
-अणु
-	वापस	gp_समयr_reg_load(_REG_GP_TIMER_VALUE_ID(ID));
-पूर्ण
+uint32_t
+gp_timer_read(gp_timer_ID_t ID)
+{
+	return	gp_timer_reg_load(_REG_GP_TIMER_VALUE_ID(ID));
+}

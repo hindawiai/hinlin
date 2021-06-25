@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * IO-Data GLAN Tank board रेजिस्टरs
+ * IO-Data GLAN Tank board registers
  */
 
-#अगर_अघोषित __GLANTANK_H
-#घोषणा __GLANTANK_H
+#ifndef __GLANTANK_H
+#define __GLANTANK_H
 
-#घोषणा GLANTANK_UART		0xfe800000	/* UART */
+#define GLANTANK_UART		0xfe800000	/* UART */
 
 
-#पूर्ण_अगर
+#endif

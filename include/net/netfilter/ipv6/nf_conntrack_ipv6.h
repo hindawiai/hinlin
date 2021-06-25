@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_IPV6_H
-#घोषणा _NF_CONNTRACK_IPV6_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_IPV6_H
+#define _NF_CONNTRACK_IPV6_H
 
-बाह्य स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_icmpv6;
+extern const struct nf_conntrack_l4proto nf_conntrack_l4proto_icmpv6;
 
-#पूर्ण_अगर /* _NF_CONNTRACK_IPV6_H*/
+#endif /* _NF_CONNTRACK_IPV6_H*/

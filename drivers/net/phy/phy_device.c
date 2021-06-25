@@ -1,6 +1,5 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-/* Framework क्रम finding and configuring PHYs.
+// SPDX-License-Identifier: GPL-2.0+
+/* Framework for finding and configuring PHYs.
  * Also contains generic PHY driver
  *
  * Author: Andy Fleming
@@ -8,31 +7,31 @@
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/mii.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/phy_led_triggers.h>
-#समावेश <linux/property.h>
-#समावेश <linux/sfp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/unistd.h>
+#include <linux/bitmap.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/mdio.h>
+#include <linux/mii.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/phy.h>
+#include <linux/phy_led_triggers.h>
+#include <linux/property.h>
+#include <linux/sfp.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/uaccess.h>
+#include <linux/unistd.h>
 
 MODULE_DESCRIPTION("PHY library");
 MODULE_AUTHOR("Andy Fleming");
@@ -59,19 +58,19 @@ EXPORT_SYMBOL_GPL(phy_10gbit_features);
 __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_fec_features) __ro_after_init;
 EXPORT_SYMBOL_GPL(phy_10gbit_fec_features);
 
-स्थिर पूर्णांक phy_basic_ports_array[3] = अणु
+const int phy_basic_ports_array[3] = {
 	ETHTOOL_LINK_MODE_Autoneg_BIT,
 	ETHTOOL_LINK_MODE_TP_BIT,
 	ETHTOOL_LINK_MODE_MII_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_basic_ports_array);
 
-स्थिर पूर्णांक phy_fibre_port_array[1] = अणु
+const int phy_fibre_port_array[1] = {
 	ETHTOOL_LINK_MODE_FIBRE_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_fibre_port_array);
 
-स्थिर पूर्णांक phy_all_ports_features_array[7] = अणु
+const int phy_all_ports_features_array[7] = {
 	ETHTOOL_LINK_MODE_Autoneg_BIT,
 	ETHTOOL_LINK_MODE_TP_BIT,
 	ETHTOOL_LINK_MODE_MII_BIT,
@@ -79,50 +78,50 @@ EXPORT_SYMBOL_GPL(phy_fibre_port_array);
 	ETHTOOL_LINK_MODE_AUI_BIT,
 	ETHTOOL_LINK_MODE_BNC_BIT,
 	ETHTOOL_LINK_MODE_Backplane_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_all_ports_features_array);
 
-स्थिर पूर्णांक phy_10_100_features_array[4] = अणु
+const int phy_10_100_features_array[4] = {
 	ETHTOOL_LINK_MODE_10baseT_Half_BIT,
 	ETHTOOL_LINK_MODE_10baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_100baseT_Half_BIT,
 	ETHTOOL_LINK_MODE_100baseT_Full_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_10_100_features_array);
 
-स्थिर पूर्णांक phy_basic_t1_features_array[2] = अणु
+const int phy_basic_t1_features_array[2] = {
 	ETHTOOL_LINK_MODE_TP_BIT,
 	ETHTOOL_LINK_MODE_100baseT1_Full_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_basic_t1_features_array);
 
-स्थिर पूर्णांक phy_gbit_features_array[2] = अणु
+const int phy_gbit_features_array[2] = {
 	ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
 	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_gbit_features_array);
 
-स्थिर पूर्णांक phy_10gbit_features_array[1] = अणु
+const int phy_10gbit_features_array[1] = {
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(phy_10gbit_features_array);
 
-अटल स्थिर पूर्णांक phy_10gbit_fec_features_array[1] = अणु
+static const int phy_10gbit_fec_features_array[1] = {
 	ETHTOOL_LINK_MODE_10000baseR_FEC_BIT,
-पूर्ण;
+};
 
 __ETHTOOL_DECLARE_LINK_MODE_MASK(phy_10gbit_full_features) __ro_after_init;
 EXPORT_SYMBOL_GPL(phy_10gbit_full_features);
 
-अटल स्थिर पूर्णांक phy_10gbit_full_features_array[] = अणु
+static const int phy_10gbit_full_features_array[] = {
 	ETHTOOL_LINK_MODE_10baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_100baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
-पूर्ण;
+};
 
-अटल व्योम features_init(व्योम)
-अणु
+static void features_init(void)
+{
 	/* 10/100 half/full*/
 	linkmode_set_bit_array(phy_basic_ports_array,
 			       ARRAY_SIZE(phy_basic_ports_array),
@@ -197,150 +196,150 @@ EXPORT_SYMBOL_GPL(phy_10gbit_full_features);
 	linkmode_set_bit_array(phy_10gbit_fec_features_array,
 			       ARRAY_SIZE(phy_10gbit_fec_features_array),
 			       phy_10gbit_fec_features);
-पूर्ण
+}
 
-व्योम phy_device_मुक्त(काष्ठा phy_device *phydev)
-अणु
+void phy_device_free(struct phy_device *phydev)
+{
 	put_device(&phydev->mdio.dev);
-पूर्ण
-EXPORT_SYMBOL(phy_device_मुक्त);
+}
+EXPORT_SYMBOL(phy_device_free);
 
-अटल व्योम phy_mdio_device_मुक्त(काष्ठा mdio_device *mdiodev)
-अणु
-	काष्ठा phy_device *phydev;
+static void phy_mdio_device_free(struct mdio_device *mdiodev)
+{
+	struct phy_device *phydev;
 
-	phydev = container_of(mdiodev, काष्ठा phy_device, mdio);
-	phy_device_मुक्त(phydev);
-पूर्ण
+	phydev = container_of(mdiodev, struct phy_device, mdio);
+	phy_device_free(phydev);
+}
 
-अटल व्योम phy_device_release(काष्ठा device *dev)
-अणु
-	kमुक्त(to_phy_device(dev));
-पूर्ण
+static void phy_device_release(struct device *dev)
+{
+	kfree(to_phy_device(dev));
+}
 
-अटल व्योम phy_mdio_device_हटाओ(काष्ठा mdio_device *mdiodev)
-अणु
-	काष्ठा phy_device *phydev;
+static void phy_mdio_device_remove(struct mdio_device *mdiodev)
+{
+	struct phy_device *phydev;
 
-	phydev = container_of(mdiodev, काष्ठा phy_device, mdio);
-	phy_device_हटाओ(phydev);
-पूर्ण
+	phydev = container_of(mdiodev, struct phy_device, mdio);
+	phy_device_remove(phydev);
+}
 
-अटल काष्ठा phy_driver genphy_driver;
+static struct phy_driver genphy_driver;
 
-अटल LIST_HEAD(phy_fixup_list);
-अटल DEFINE_MUTEX(phy_fixup_lock);
+static LIST_HEAD(phy_fixup_list);
+static DEFINE_MUTEX(phy_fixup_lock);
 
-अटल bool mdio_bus_phy_may_suspend(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा device_driver *drv = phydev->mdio.dev.driver;
-	काष्ठा phy_driver *phydrv = to_phy_driver(drv);
-	काष्ठा net_device *netdev = phydev->attached_dev;
+static bool mdio_bus_phy_may_suspend(struct phy_device *phydev)
+{
+	struct device_driver *drv = phydev->mdio.dev.driver;
+	struct phy_driver *phydrv = to_phy_driver(drv);
+	struct net_device *netdev = phydev->attached_dev;
 
-	अगर (!drv || !phydrv->suspend)
-		वापस false;
+	if (!drv || !phydrv->suspend)
+		return false;
 
-	/* PHY not attached? May suspend अगर the PHY has not alपढ़ोy been
+	/* PHY not attached? May suspend if the PHY has not already been
 	 * suspended as part of a prior call to phy_disconnect() ->
 	 * phy_detach() -> phy_suspend() because the parent netdev might be the
-	 * MDIO bus driver and घड़ी gated at this poपूर्णांक.
+	 * MDIO bus driver and clock gated at this point.
 	 */
-	अगर (!netdev)
-		जाओ out;
+	if (!netdev)
+		goto out;
 
-	अगर (netdev->wol_enabled)
-		वापस false;
+	if (netdev->wol_enabled)
+		return false;
 
-	/* As दीर्घ as not all affected network drivers support the
-	 * wol_enabled flag, let's check क्रम hपूर्णांकs that WoL is enabled.
-	 * Don't suspend PHY अगर the attached netdev parent may wake up.
-	 * The parent may poपूर्णांक to a PCI device, as in tg3 driver.
+	/* As long as not all affected network drivers support the
+	 * wol_enabled flag, let's check for hints that WoL is enabled.
+	 * Don't suspend PHY if the attached netdev parent may wake up.
+	 * The parent may point to a PCI device, as in tg3 driver.
 	 */
-	अगर (netdev->dev.parent && device_may_wakeup(netdev->dev.parent))
-		वापस false;
+	if (netdev->dev.parent && device_may_wakeup(netdev->dev.parent))
+		return false;
 
-	/* Also करोn't suspend PHY अगर the netdev itself may wakeup. This
-	 * is the हाल क्रम devices w/o underlaying pwr. mgmt. aware bus,
+	/* Also don't suspend PHY if the netdev itself may wakeup. This
+	 * is the case for devices w/o underlaying pwr. mgmt. aware bus,
 	 * e.g. SoC devices.
 	 */
-	अगर (device_may_wakeup(&netdev->dev))
-		वापस false;
+	if (device_may_wakeup(&netdev->dev))
+		return false;
 
 out:
-	वापस !phydev->suspended;
-पूर्ण
+	return !phydev->suspended;
+}
 
-अटल __maybe_unused पूर्णांक mdio_bus_phy_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static __maybe_unused int mdio_bus_phy_suspend(struct device *dev)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
-	अगर (phydev->mac_managed_pm)
-		वापस 0;
+	if (phydev->mac_managed_pm)
+		return 0;
 
 	/* We must stop the state machine manually, otherwise it stops out of
 	 * control, possibly with the phydev->lock held. Upon resume, netdev
 	 * may call phy routines that try to grab the same lock, and that may
 	 * lead to a deadlock.
 	 */
-	अगर (phydev->attached_dev && phydev->adjust_link)
+	if (phydev->attached_dev && phydev->adjust_link)
 		phy_stop_machine(phydev);
 
-	अगर (!mdio_bus_phy_may_suspend(phydev))
-		वापस 0;
+	if (!mdio_bus_phy_may_suspend(phydev))
+		return 0;
 
 	phydev->suspended_by_mdio_bus = 1;
 
-	वापस phy_suspend(phydev);
-पूर्ण
+	return phy_suspend(phydev);
+}
 
-अटल __maybe_unused पूर्णांक mdio_bus_phy_resume(काष्ठा device *dev)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
-	पूर्णांक ret;
+static __maybe_unused int mdio_bus_phy_resume(struct device *dev)
+{
+	struct phy_device *phydev = to_phy_device(dev);
+	int ret;
 
-	अगर (phydev->mac_managed_pm)
-		वापस 0;
+	if (phydev->mac_managed_pm)
+		return 0;
 
-	अगर (!phydev->suspended_by_mdio_bus)
-		जाओ no_resume;
+	if (!phydev->suspended_by_mdio_bus)
+		goto no_resume;
 
 	phydev->suspended_by_mdio_bus = 0;
 
 	ret = phy_init_hw(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = phy_resume(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 no_resume:
-	अगर (phydev->attached_dev && phydev->adjust_link)
+	if (phydev->attached_dev && phydev->adjust_link)
 		phy_start_machine(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(mdio_bus_phy_pm_ops, mdio_bus_phy_suspend,
+static SIMPLE_DEV_PM_OPS(mdio_bus_phy_pm_ops, mdio_bus_phy_suspend,
 			 mdio_bus_phy_resume);
 
 /**
- * phy_रेजिस्टर_fixup - creates a new phy_fixup and adds it to the list
+ * phy_register_fixup - creates a new phy_fixup and adds it to the list
  * @bus_id: A string which matches phydev->mdio.dev.bus_id (or PHY_ANY_ID)
  * @phy_uid: Used to match against phydev->phy_id (the UID of the PHY)
  *	It can also be PHY_ANY_UID
- * @phy_uid_mask: Applied to phydev->phy_id and fixup->phy_uid beक्रमe
+ * @phy_uid_mask: Applied to phydev->phy_id and fixup->phy_uid before
  *	comparison
  * @run: The actual code to be run when a matching PHY is found
  */
-पूर्णांक phy_रेजिस्टर_fixup(स्थिर अक्षर *bus_id, u32 phy_uid, u32 phy_uid_mask,
-		       पूर्णांक (*run)(काष्ठा phy_device *))
-अणु
-	काष्ठा phy_fixup *fixup = kzalloc(माप(*fixup), GFP_KERNEL);
+int phy_register_fixup(const char *bus_id, u32 phy_uid, u32 phy_uid_mask,
+		       int (*run)(struct phy_device *))
+{
+	struct phy_fixup *fixup = kzalloc(sizeof(*fixup), GFP_KERNEL);
 
-	अगर (!fixup)
-		वापस -ENOMEM;
+	if (!fixup)
+		return -ENOMEM;
 
-	strlcpy(fixup->bus_id, bus_id, माप(fixup->bus_id));
+	strlcpy(fixup->bus_id, bus_id, sizeof(fixup->bus_id));
 	fixup->phy_uid = phy_uid;
 	fixup->phy_uid_mask = phy_uid_mask;
 	fixup->run = run;
@@ -349,234 +348,234 @@ no_resume:
 	list_add_tail(&fixup->list, &phy_fixup_list);
 	mutex_unlock(&phy_fixup_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(phy_रेजिस्टर_fixup);
+	return 0;
+}
+EXPORT_SYMBOL(phy_register_fixup);
 
 /* Registers a fixup to be run on any PHY with the UID in phy_uid */
-पूर्णांक phy_रेजिस्टर_fixup_क्रम_uid(u32 phy_uid, u32 phy_uid_mask,
-			       पूर्णांक (*run)(काष्ठा phy_device *))
-अणु
-	वापस phy_रेजिस्टर_fixup(PHY_ANY_ID, phy_uid, phy_uid_mask, run);
-पूर्ण
-EXPORT_SYMBOL(phy_रेजिस्टर_fixup_क्रम_uid);
+int phy_register_fixup_for_uid(u32 phy_uid, u32 phy_uid_mask,
+			       int (*run)(struct phy_device *))
+{
+	return phy_register_fixup(PHY_ANY_ID, phy_uid, phy_uid_mask, run);
+}
+EXPORT_SYMBOL(phy_register_fixup_for_uid);
 
 /* Registers a fixup to be run on the PHY with id string bus_id */
-पूर्णांक phy_रेजिस्टर_fixup_क्रम_id(स्थिर अक्षर *bus_id,
-			      पूर्णांक (*run)(काष्ठा phy_device *))
-अणु
-	वापस phy_रेजिस्टर_fixup(bus_id, PHY_ANY_UID, 0xffffffff, run);
-पूर्ण
-EXPORT_SYMBOL(phy_रेजिस्टर_fixup_क्रम_id);
+int phy_register_fixup_for_id(const char *bus_id,
+			      int (*run)(struct phy_device *))
+{
+	return phy_register_fixup(bus_id, PHY_ANY_UID, 0xffffffff, run);
+}
+EXPORT_SYMBOL(phy_register_fixup_for_id);
 
 /**
- * phy_unरेजिस्टर_fixup - हटाओ a phy_fixup from the list
+ * phy_unregister_fixup - remove a phy_fixup from the list
  * @bus_id: A string matches fixup->bus_id (or PHY_ANY_ID) in phy_fixup_list
  * @phy_uid: A phy id matches fixup->phy_id (or PHY_ANY_UID) in phy_fixup_list
- * @phy_uid_mask: Applied to phy_uid and fixup->phy_uid beक्रमe comparison
+ * @phy_uid_mask: Applied to phy_uid and fixup->phy_uid before comparison
  */
-पूर्णांक phy_unरेजिस्टर_fixup(स्थिर अक्षर *bus_id, u32 phy_uid, u32 phy_uid_mask)
-अणु
-	काष्ठा list_head *pos, *n;
-	काष्ठा phy_fixup *fixup;
-	पूर्णांक ret;
+int phy_unregister_fixup(const char *bus_id, u32 phy_uid, u32 phy_uid_mask)
+{
+	struct list_head *pos, *n;
+	struct phy_fixup *fixup;
+	int ret;
 
 	ret = -ENODEV;
 
 	mutex_lock(&phy_fixup_lock);
-	list_क्रम_each_safe(pos, n, &phy_fixup_list) अणु
-		fixup = list_entry(pos, काष्ठा phy_fixup, list);
+	list_for_each_safe(pos, n, &phy_fixup_list) {
+		fixup = list_entry(pos, struct phy_fixup, list);
 
-		अगर ((!म_भेद(fixup->bus_id, bus_id)) &&
+		if ((!strcmp(fixup->bus_id, bus_id)) &&
 		    ((fixup->phy_uid & phy_uid_mask) ==
-		     (phy_uid & phy_uid_mask))) अणु
+		     (phy_uid & phy_uid_mask))) {
 			list_del(&fixup->list);
-			kमुक्त(fixup);
+			kfree(fixup);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&phy_fixup_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(phy_unरेजिस्टर_fixup);
+	return ret;
+}
+EXPORT_SYMBOL(phy_unregister_fixup);
 
-/* Unरेजिस्टरs a fixup of any PHY with the UID in phy_uid */
-पूर्णांक phy_unरेजिस्टर_fixup_क्रम_uid(u32 phy_uid, u32 phy_uid_mask)
-अणु
-	वापस phy_unरेजिस्टर_fixup(PHY_ANY_ID, phy_uid, phy_uid_mask);
-पूर्ण
-EXPORT_SYMBOL(phy_unरेजिस्टर_fixup_क्रम_uid);
+/* Unregisters a fixup of any PHY with the UID in phy_uid */
+int phy_unregister_fixup_for_uid(u32 phy_uid, u32 phy_uid_mask)
+{
+	return phy_unregister_fixup(PHY_ANY_ID, phy_uid, phy_uid_mask);
+}
+EXPORT_SYMBOL(phy_unregister_fixup_for_uid);
 
-/* Unरेजिस्टरs a fixup of the PHY with id string bus_id */
-पूर्णांक phy_unरेजिस्टर_fixup_क्रम_id(स्थिर अक्षर *bus_id)
-अणु
-	वापस phy_unरेजिस्टर_fixup(bus_id, PHY_ANY_UID, 0xffffffff);
-पूर्ण
-EXPORT_SYMBOL(phy_unरेजिस्टर_fixup_क्रम_id);
+/* Unregisters a fixup of the PHY with id string bus_id */
+int phy_unregister_fixup_for_id(const char *bus_id)
+{
+	return phy_unregister_fixup(bus_id, PHY_ANY_UID, 0xffffffff);
+}
+EXPORT_SYMBOL(phy_unregister_fixup_for_id);
 
-/* Returns 1 अगर fixup matches phydev in bus_id and phy_uid.
+/* Returns 1 if fixup matches phydev in bus_id and phy_uid.
  * Fixups can be set to match any in one or more fields.
  */
-अटल पूर्णांक phy_needs_fixup(काष्ठा phy_device *phydev, काष्ठा phy_fixup *fixup)
-अणु
-	अगर (म_भेद(fixup->bus_id, phydev_name(phydev)) != 0)
-		अगर (म_भेद(fixup->bus_id, PHY_ANY_ID) != 0)
-			वापस 0;
+static int phy_needs_fixup(struct phy_device *phydev, struct phy_fixup *fixup)
+{
+	if (strcmp(fixup->bus_id, phydev_name(phydev)) != 0)
+		if (strcmp(fixup->bus_id, PHY_ANY_ID) != 0)
+			return 0;
 
-	अगर ((fixup->phy_uid & fixup->phy_uid_mask) !=
+	if ((fixup->phy_uid & fixup->phy_uid_mask) !=
 	    (phydev->phy_id & fixup->phy_uid_mask))
-		अगर (fixup->phy_uid != PHY_ANY_UID)
-			वापस 0;
+		if (fixup->phy_uid != PHY_ANY_UID)
+			return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Runs any matching fixups क्रम this phydev */
-अटल पूर्णांक phy_scan_fixups(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा phy_fixup *fixup;
+/* Runs any matching fixups for this phydev */
+static int phy_scan_fixups(struct phy_device *phydev)
+{
+	struct phy_fixup *fixup;
 
 	mutex_lock(&phy_fixup_lock);
-	list_क्रम_each_entry(fixup, &phy_fixup_list, list) अणु
-		अगर (phy_needs_fixup(phydev, fixup)) अणु
-			पूर्णांक err = fixup->run(phydev);
+	list_for_each_entry(fixup, &phy_fixup_list, list) {
+		if (phy_needs_fixup(phydev, fixup)) {
+			int err = fixup->run(phydev);
 
-			अगर (err < 0) अणु
+			if (err < 0) {
 				mutex_unlock(&phy_fixup_lock);
-				वापस err;
-			पूर्ण
+				return err;
+			}
 			phydev->has_fixups = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&phy_fixup_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक phy_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
-	काष्ठा phy_driver *phydrv = to_phy_driver(drv);
-	स्थिर पूर्णांक num_ids = ARRAY_SIZE(phydev->c45_ids.device_ids);
-	पूर्णांक i;
+static int phy_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct phy_device *phydev = to_phy_device(dev);
+	struct phy_driver *phydrv = to_phy_driver(drv);
+	const int num_ids = ARRAY_SIZE(phydev->c45_ids.device_ids);
+	int i;
 
-	अगर (!(phydrv->mdiodrv.flags & MDIO_DEVICE_IS_PHY))
-		वापस 0;
+	if (!(phydrv->mdiodrv.flags & MDIO_DEVICE_IS_PHY))
+		return 0;
 
-	अगर (phydrv->match_phy_device)
-		वापस phydrv->match_phy_device(phydev);
+	if (phydrv->match_phy_device)
+		return phydrv->match_phy_device(phydev);
 
-	अगर (phydev->is_c45) अणु
-		क्रम (i = 1; i < num_ids; i++) अणु
-			अगर (phydev->c45_ids.device_ids[i] == 0xffffffff)
-				जारी;
+	if (phydev->is_c45) {
+		for (i = 1; i < num_ids; i++) {
+			if (phydev->c45_ids.device_ids[i] == 0xffffffff)
+				continue;
 
-			अगर ((phydrv->phy_id & phydrv->phy_id_mask) ==
+			if ((phydrv->phy_id & phydrv->phy_id_mask) ==
 			    (phydev->c45_ids.device_ids[i] &
 			     phydrv->phy_id_mask))
-				वापस 1;
-		पूर्ण
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस (phydrv->phy_id & phydrv->phy_id_mask) ==
+				return 1;
+		}
+		return 0;
+	} else {
+		return (phydrv->phy_id & phydrv->phy_id_mask) ==
 			(phydev->phy_id & phydrv->phy_id_mask);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार
-phy_id_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static ssize_t
+phy_id_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
-	वापस प्र_लिखो(buf, "0x%.8lx\n", (अचिन्हित दीर्घ)phydev->phy_id);
-पूर्ण
-अटल DEVICE_ATTR_RO(phy_id);
+	return sprintf(buf, "0x%.8lx\n", (unsigned long)phydev->phy_id);
+}
+static DEVICE_ATTR_RO(phy_id);
 
-अटल sमाप_प्रकार
-phy_पूर्णांकerface_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
-	स्थिर अक्षर *mode = शून्य;
+static ssize_t
+phy_interface_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct phy_device *phydev = to_phy_device(dev);
+	const char *mode = NULL;
 
-	अगर (phy_is_पूर्णांकernal(phydev))
+	if (phy_is_internal(phydev))
 		mode = "internal";
-	अन्यथा
-		mode = phy_modes(phydev->पूर्णांकerface);
+	else
+		mode = phy_modes(phydev->interface);
 
-	वापस प्र_लिखो(buf, "%s\n", mode);
-पूर्ण
-अटल DEVICE_ATTR_RO(phy_पूर्णांकerface);
+	return sprintf(buf, "%s\n", mode);
+}
+static DEVICE_ATTR_RO(phy_interface);
 
-अटल sमाप_प्रकार
-phy_has_fixups_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    अक्षर *buf)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static ssize_t
+phy_has_fixups_show(struct device *dev, struct device_attribute *attr,
+		    char *buf)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", phydev->has_fixups);
-पूर्ण
-अटल DEVICE_ATTR_RO(phy_has_fixups);
+	return sprintf(buf, "%d\n", phydev->has_fixups);
+}
+static DEVICE_ATTR_RO(phy_has_fixups);
 
-अटल sमाप_प्रकार phy_dev_flags_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  अक्षर *buf)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static ssize_t phy_dev_flags_show(struct device *dev,
+				  struct device_attribute *attr,
+				  char *buf)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", phydev->dev_flags);
-पूर्ण
-अटल DEVICE_ATTR_RO(phy_dev_flags);
+	return sprintf(buf, "0x%08x\n", phydev->dev_flags);
+}
+static DEVICE_ATTR_RO(phy_dev_flags);
 
-अटल काष्ठा attribute *phy_dev_attrs[] = अणु
+static struct attribute *phy_dev_attrs[] = {
 	&dev_attr_phy_id.attr,
-	&dev_attr_phy_पूर्णांकerface.attr,
+	&dev_attr_phy_interface.attr,
 	&dev_attr_phy_has_fixups.attr,
 	&dev_attr_phy_dev_flags.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(phy_dev);
 
-अटल स्थिर काष्ठा device_type mdio_bus_phy_type = अणु
+static const struct device_type mdio_bus_phy_type = {
 	.name = "PHY",
 	.groups = phy_dev_groups,
 	.release = phy_device_release,
 	.pm = pm_ptr(&mdio_bus_phy_pm_ops),
-पूर्ण;
+};
 
-अटल पूर्णांक phy_request_driver_module(काष्ठा phy_device *dev, u32 phy_id)
-अणु
-	पूर्णांक ret;
+static int phy_request_driver_module(struct phy_device *dev, u32 phy_id)
+{
+	int ret;
 
 	ret = request_module(MDIO_MODULE_PREFIX MDIO_ID_FMT,
 			     MDIO_ID_ARGS(phy_id));
-	/* We only check क्रम failures in executing the usermode binary,
-	 * not whether a PHY driver module exists क्रम the PHY ID.
-	 * Accept -ENOENT because this may occur in हाल no initramfs exists,
+	/* We only check for failures in executing the usermode binary,
+	 * not whether a PHY driver module exists for the PHY ID.
+	 * Accept -ENOENT because this may occur in case no initramfs exists,
 	 * then modprobe isn't available.
 	 */
-	अगर (IS_ENABLED(CONFIG_MODULES) && ret < 0 && ret != -ENOENT) अणु
+	if (IS_ENABLED(CONFIG_MODULES) && ret < 0 && ret != -ENOENT) {
 		phydev_err(dev, "error %d loading PHY driver module for ID 0x%08lx\n",
-			   ret, (अचिन्हित दीर्घ)phy_id);
-		वापस ret;
-	पूर्ण
+			   ret, (unsigned long)phy_id);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा phy_device *phy_device_create(काष्ठा mii_bus *bus, पूर्णांक addr, u32 phy_id,
+struct phy_device *phy_device_create(struct mii_bus *bus, int addr, u32 phy_id,
 				     bool is_c45,
-				     काष्ठा phy_c45_device_ids *c45_ids)
-अणु
-	काष्ठा phy_device *dev;
-	काष्ठा mdio_device *mdiodev;
-	पूर्णांक ret = 0;
+				     struct phy_c45_device_ids *c45_ids)
+{
+	struct phy_device *dev;
+	struct mdio_device *mdiodev;
+	int ret = 0;
 
-	/* We allocate the device, and initialize the शेष values */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	/* We allocate the device, and initialize the default values */
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	mdiodev = &dev->mdio;
 	mdiodev->dev.parent = &bus->dev;
@@ -586,22 +585,22 @@ ATTRIBUTE_GROUPS(phy_dev);
 	mdiodev->bus_match = phy_bus_match;
 	mdiodev->addr = addr;
 	mdiodev->flags = MDIO_DEVICE_FLAG_PHY;
-	mdiodev->device_मुक्त = phy_mdio_device_मुक्त;
-	mdiodev->device_हटाओ = phy_mdio_device_हटाओ;
+	mdiodev->device_free = phy_mdio_device_free;
+	mdiodev->device_remove = phy_mdio_device_remove;
 
 	dev->speed = SPEED_UNKNOWN;
 	dev->duplex = DUPLEX_UNKNOWN;
-	dev->छोड़ो = 0;
-	dev->asym_छोड़ो = 0;
+	dev->pause = 0;
+	dev->asym_pause = 0;
 	dev->link = 0;
 	dev->port = PORT_TP;
-	dev->पूर्णांकerface = PHY_INTERFACE_MODE_GMII;
+	dev->interface = PHY_INTERFACE_MODE_GMII;
 
-	dev->स्वतःneg = AUTONEG_ENABLE;
+	dev->autoneg = AUTONEG_ENABLE;
 
 	dev->is_c45 = is_c45;
 	dev->phy_id = phy_id;
-	अगर (c45_ids)
+	if (c45_ids)
 		dev->c45_ids = *c45_ids;
 	dev->irq = bus->irq[addr];
 
@@ -613,1240 +612,1240 @@ ATTRIBUTE_GROUPS(phy_dev);
 	mutex_init(&dev->lock);
 	INIT_DELAYED_WORK(&dev->state_queue, phy_state_machine);
 
-	/* Request the appropriate module unconditionally; करोn't
-	 * bother trying to करो so only अगर it isn't alपढ़ोy loaded,
-	 * because that माला_लो complicated. A hotplug event would have
-	 * करोne an unconditional modprobe anyway.
-	 * We करोn't do normal hotplug because it won't work क्रम MDIO
-	 * -- because it relies on the device staying around क्रम दीर्घ
-	 * enough क्रम the driver to get loaded. With MDIO, the NIC
+	/* Request the appropriate module unconditionally; don't
+	 * bother trying to do so only if it isn't already loaded,
+	 * because that gets complicated. A hotplug event would have
+	 * done an unconditional modprobe anyway.
+	 * We don't do normal hotplug because it won't work for MDIO
+	 * -- because it relies on the device staying around for long
+	 * enough for the driver to get loaded. With MDIO, the NIC
 	 * driver will get bored and give up as soon as it finds that
-	 * there's no driver _alपढ़ोy_ loaded.
+	 * there's no driver _already_ loaded.
 	 */
-	अगर (is_c45 && c45_ids) अणु
-		स्थिर पूर्णांक num_ids = ARRAY_SIZE(c45_ids->device_ids);
-		पूर्णांक i;
+	if (is_c45 && c45_ids) {
+		const int num_ids = ARRAY_SIZE(c45_ids->device_ids);
+		int i;
 
-		क्रम (i = 1; i < num_ids; i++) अणु
-			अगर (c45_ids->device_ids[i] == 0xffffffff)
-				जारी;
+		for (i = 1; i < num_ids; i++) {
+			if (c45_ids->device_ids[i] == 0xffffffff)
+				continue;
 
 			ret = phy_request_driver_module(dev,
 						c45_ids->device_ids[i]);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (ret)
+				break;
+		}
+	} else {
 		ret = phy_request_driver_module(dev, phy_id);
-	पूर्ण
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		put_device(&mdiodev->dev);
 		dev = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 EXPORT_SYMBOL(phy_device_create);
 
-/* phy_c45_probe_present - checks to see अगर a MMD is present in the package
+/* phy_c45_probe_present - checks to see if a MMD is present in the package
  * @bus: the target MII bus
  * @prtad: PHY package address on the MII bus
  * @devad: PHY device (MMD) address
  *
- * Read the MDIO_STAT2 रेजिस्टर, and check whether a device is responding
+ * Read the MDIO_STAT2 register, and check whether a device is responding
  * at this address.
  *
- * Returns: negative error number on bus access error, zero अगर no device
- * is responding, or positive अगर a device is present.
+ * Returns: negative error number on bus access error, zero if no device
+ * is responding, or positive if a device is present.
  */
-अटल पूर्णांक phy_c45_probe_present(काष्ठा mii_bus *bus, पूर्णांक prtad, पूर्णांक devad)
-अणु
-	पूर्णांक stat2;
+static int phy_c45_probe_present(struct mii_bus *bus, int prtad, int devad)
+{
+	int stat2;
 
-	stat2 = mdiobus_c45_पढ़ो(bus, prtad, devad, MDIO_STAT2);
-	अगर (stat2 < 0)
-		वापस stat2;
+	stat2 = mdiobus_c45_read(bus, prtad, devad, MDIO_STAT2);
+	if (stat2 < 0)
+		return stat2;
 
-	वापस (stat2 & MDIO_STAT2_DEVPRST) == MDIO_STAT2_DEVPRST_VAL;
-पूर्ण
+	return (stat2 & MDIO_STAT2_DEVPRST) == MDIO_STAT2_DEVPRST_VAL;
+}
 
-/* get_phy_c45_devs_in_pkg - पढ़ोs a MMD's devices in package रेजिस्टरs.
+/* get_phy_c45_devs_in_pkg - reads a MMD's devices in package registers.
  * @bus: the target MII bus
  * @addr: PHY address on the MII bus
  * @dev_addr: MMD address in the PHY.
- * @devices_in_package: where to store the devices in package inक्रमmation.
+ * @devices_in_package: where to store the devices in package information.
  *
- * Description: पढ़ोs devices in package रेजिस्टरs of a MMD at @dev_addr
+ * Description: reads devices in package registers of a MMD at @dev_addr
  * from PHY at @addr on @bus.
  *
  * Returns: 0 on success, -EIO on failure.
  */
-अटल पूर्णांक get_phy_c45_devs_in_pkg(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक dev_addr,
+static int get_phy_c45_devs_in_pkg(struct mii_bus *bus, int addr, int dev_addr,
 				   u32 *devices_in_package)
-अणु
-	पूर्णांक phy_reg;
+{
+	int phy_reg;
 
-	phy_reg = mdiobus_c45_पढ़ो(bus, addr, dev_addr, MDIO_DEVS2);
-	अगर (phy_reg < 0)
-		वापस -EIO;
+	phy_reg = mdiobus_c45_read(bus, addr, dev_addr, MDIO_DEVS2);
+	if (phy_reg < 0)
+		return -EIO;
 	*devices_in_package = phy_reg << 16;
 
-	phy_reg = mdiobus_c45_पढ़ो(bus, addr, dev_addr, MDIO_DEVS1);
-	अगर (phy_reg < 0)
-		वापस -EIO;
+	phy_reg = mdiobus_c45_read(bus, addr, dev_addr, MDIO_DEVS1);
+	if (phy_reg < 0)
+		return -EIO;
 	*devices_in_package |= phy_reg;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * get_phy_c45_ids - पढ़ोs the specअगरied addr क्रम its 802.3-c45 IDs.
+ * get_phy_c45_ids - reads the specified addr for its 802.3-c45 IDs.
  * @bus: the target MII bus
  * @addr: PHY address on the MII bus
- * @c45_ids: where to store the c45 ID inक्रमmation.
+ * @c45_ids: where to store the c45 ID information.
  *
- * Read the PHY "devices in package". If this appears to be valid, पढ़ो
- * the PHY identअगरiers क्रम each device. Return the "devices in package"
- * and identअगरiers in @c45_ids.
+ * Read the PHY "devices in package". If this appears to be valid, read
+ * the PHY identifiers for each device. Return the "devices in package"
+ * and identifiers in @c45_ids.
  *
- * Returns zero on success, %-EIO on bus access error, or %-ENODEV अगर
+ * Returns zero on success, %-EIO on bus access error, or %-ENODEV if
  * the "devices in package" is invalid.
  */
-अटल पूर्णांक get_phy_c45_ids(काष्ठा mii_bus *bus, पूर्णांक addr,
-			   काष्ठा phy_c45_device_ids *c45_ids)
-अणु
-	स्थिर पूर्णांक num_ids = ARRAY_SIZE(c45_ids->device_ids);
+static int get_phy_c45_ids(struct mii_bus *bus, int addr,
+			   struct phy_c45_device_ids *c45_ids)
+{
+	const int num_ids = ARRAY_SIZE(c45_ids->device_ids);
 	u32 devs_in_pkg = 0;
-	पूर्णांक i, ret, phy_reg;
+	int i, ret, phy_reg;
 
 	/* Find first non-zero Devices In package. Device zero is reserved
-	 * क्रम 802.3 c45 complied PHYs, so करोn't probe it at first.
+	 * for 802.3 c45 complied PHYs, so don't probe it at first.
 	 */
-	क्रम (i = 1; i < MDIO_MMD_NUM && (devs_in_pkg == 0 ||
-	     (devs_in_pkg & 0x1fffffff) == 0x1fffffff); i++) अणु
-		अगर (i == MDIO_MMD_VEND1 || i == MDIO_MMD_VEND2) अणु
+	for (i = 1; i < MDIO_MMD_NUM && (devs_in_pkg == 0 ||
+	     (devs_in_pkg & 0x1fffffff) == 0x1fffffff); i++) {
+		if (i == MDIO_MMD_VEND1 || i == MDIO_MMD_VEND2) {
 			/* Check that there is a device present at this
-			 * address beक्रमe पढ़ोing the devices-in-package
-			 * रेजिस्टर to aव्योम पढ़ोing garbage from the PHY.
-			 * Some PHYs (88x3310) venकरोr space is not IEEE802.3
+			 * address before reading the devices-in-package
+			 * register to avoid reading garbage from the PHY.
+			 * Some PHYs (88x3310) vendor space is not IEEE802.3
 			 * compliant.
 			 */
 			ret = phy_c45_probe_present(bus, addr, i);
-			अगर (ret < 0)
-				वापस -EIO;
+			if (ret < 0)
+				return -EIO;
 
-			अगर (!ret)
-				जारी;
-		पूर्ण
+			if (!ret)
+				continue;
+		}
 		phy_reg = get_phy_c45_devs_in_pkg(bus, addr, i, &devs_in_pkg);
-		अगर (phy_reg < 0)
-			वापस -EIO;
-	पूर्ण
+		if (phy_reg < 0)
+			return -EIO;
+	}
 
-	अगर ((devs_in_pkg & 0x1fffffff) == 0x1fffffff) अणु
+	if ((devs_in_pkg & 0x1fffffff) == 0x1fffffff) {
 		/* If mostly Fs, there is no device there, then let's probe
 		 * MMD 0, as some 10G PHYs have zero Devices In package,
 		 * e.g. Cortina CS4315/CS4340 PHY.
 		 */
 		phy_reg = get_phy_c45_devs_in_pkg(bus, addr, 0, &devs_in_pkg);
-		अगर (phy_reg < 0)
-			वापस -EIO;
+		if (phy_reg < 0)
+			return -EIO;
 
 		/* no device there, let's get out of here */
-		अगर ((devs_in_pkg & 0x1fffffff) == 0x1fffffff)
-			वापस -ENODEV;
-	पूर्ण
+		if ((devs_in_pkg & 0x1fffffff) == 0x1fffffff)
+			return -ENODEV;
+	}
 
-	/* Now probe Device Identअगरiers क्रम each device present. */
-	क्रम (i = 1; i < num_ids; i++) अणु
-		अगर (!(devs_in_pkg & (1 << i)))
-			जारी;
+	/* Now probe Device Identifiers for each device present. */
+	for (i = 1; i < num_ids; i++) {
+		if (!(devs_in_pkg & (1 << i)))
+			continue;
 
-		अगर (i == MDIO_MMD_VEND1 || i == MDIO_MMD_VEND2) अणु
-			/* Probe the "Device Present" bits क्रम the venकरोr MMDs
-			 * to ignore these अगर they करो not contain IEEE 802.3
-			 * रेजिस्टरs.
+		if (i == MDIO_MMD_VEND1 || i == MDIO_MMD_VEND2) {
+			/* Probe the "Device Present" bits for the vendor MMDs
+			 * to ignore these if they do not contain IEEE 802.3
+			 * registers.
 			 */
 			ret = phy_c45_probe_present(bus, addr, i);
-			अगर (ret < 0)
-				वापस ret;
+			if (ret < 0)
+				return ret;
 
-			अगर (!ret)
-				जारी;
-		पूर्ण
+			if (!ret)
+				continue;
+		}
 
-		phy_reg = mdiobus_c45_पढ़ो(bus, addr, i, MII_PHYSID1);
-		अगर (phy_reg < 0)
-			वापस -EIO;
+		phy_reg = mdiobus_c45_read(bus, addr, i, MII_PHYSID1);
+		if (phy_reg < 0)
+			return -EIO;
 		c45_ids->device_ids[i] = phy_reg << 16;
 
-		phy_reg = mdiobus_c45_पढ़ो(bus, addr, i, MII_PHYSID2);
-		अगर (phy_reg < 0)
-			वापस -EIO;
+		phy_reg = mdiobus_c45_read(bus, addr, i, MII_PHYSID2);
+		if (phy_reg < 0)
+			return -EIO;
 		c45_ids->device_ids[i] |= phy_reg;
-	पूर्ण
+	}
 
 	c45_ids->devices_in_package = devs_in_pkg;
-	/* Bit 0 करोesn't represent a device, it indicates c22 regs presence */
+	/* Bit 0 doesn't represent a device, it indicates c22 regs presence */
 	c45_ids->mmds_present = devs_in_pkg & ~BIT(0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * get_phy_c22_id - पढ़ोs the specअगरied addr क्रम its clause 22 ID.
+ * get_phy_c22_id - reads the specified addr for its clause 22 ID.
  * @bus: the target MII bus
  * @addr: PHY address on the MII bus
  * @phy_id: where to store the ID retrieved.
  *
  * Read the 802.3 clause 22 PHY ID from the PHY at @addr on the @bus,
- * placing it in @phy_id. Return zero on successful पढ़ो and the ID is
- * valid, %-EIO on bus access error, or %-ENODEV अगर no device responds
+ * placing it in @phy_id. Return zero on successful read and the ID is
+ * valid, %-EIO on bus access error, or %-ENODEV if no device responds
  * or invalid ID.
  */
-अटल पूर्णांक get_phy_c22_id(काष्ठा mii_bus *bus, पूर्णांक addr, u32 *phy_id)
-अणु
-	पूर्णांक phy_reg;
+static int get_phy_c22_id(struct mii_bus *bus, int addr, u32 *phy_id)
+{
+	int phy_reg;
 
 	/* Grab the bits from PHYIR1, and put them in the upper half */
-	phy_reg = mdiobus_पढ़ो(bus, addr, MII_PHYSID1);
-	अगर (phy_reg < 0) अणु
-		/* वापसing -ENODEV करोesn't stop bus scanning */
-		वापस (phy_reg == -EIO || phy_reg == -ENODEV) ? -ENODEV : -EIO;
-	पूर्ण
+	phy_reg = mdiobus_read(bus, addr, MII_PHYSID1);
+	if (phy_reg < 0) {
+		/* returning -ENODEV doesn't stop bus scanning */
+		return (phy_reg == -EIO || phy_reg == -ENODEV) ? -ENODEV : -EIO;
+	}
 
 	*phy_id = phy_reg << 16;
 
 	/* Grab the bits from PHYIR2, and put them in the lower half */
-	phy_reg = mdiobus_पढ़ो(bus, addr, MII_PHYSID2);
-	अगर (phy_reg < 0) अणु
-		/* वापसing -ENODEV करोesn't stop bus scanning */
-		वापस (phy_reg == -EIO || phy_reg == -ENODEV) ? -ENODEV : -EIO;
-	पूर्ण
+	phy_reg = mdiobus_read(bus, addr, MII_PHYSID2);
+	if (phy_reg < 0) {
+		/* returning -ENODEV doesn't stop bus scanning */
+		return (phy_reg == -EIO || phy_reg == -ENODEV) ? -ENODEV : -EIO;
+	}
 
 	*phy_id |= phy_reg;
 
 	/* If the phy_id is mostly Fs, there is no device there */
-	अगर ((*phy_id & 0x1fffffff) == 0x1fffffff)
-		वापस -ENODEV;
+	if ((*phy_id & 0x1fffffff) == 0x1fffffff)
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * get_phy_device - पढ़ोs the specअगरied PHY device and वापसs its @phy_device
- *		    काष्ठा
+ * get_phy_device - reads the specified PHY device and returns its @phy_device
+ *		    struct
  * @bus: the target MII bus
  * @addr: PHY address on the MII bus
  * @is_c45: If true the PHY uses the 802.3 clause 45 protocol
  *
- * Probe क्रम a PHY at @addr on @bus.
+ * Probe for a PHY at @addr on @bus.
  *
- * When probing क्रम a clause 22 PHY, then पढ़ो the ID रेजिस्टरs. If we find
- * a valid ID, allocate and वापस a &काष्ठा phy_device.
+ * When probing for a clause 22 PHY, then read the ID registers. If we find
+ * a valid ID, allocate and return a &struct phy_device.
  *
- * When probing क्रम a clause 45 PHY, पढ़ो the "devices in package" रेजिस्टरs.
- * If the "devices in package" appears valid, पढ़ो the ID रेजिस्टरs क्रम each
- * MMD, allocate and वापस a &काष्ठा phy_device.
+ * When probing for a clause 45 PHY, read the "devices in package" registers.
+ * If the "devices in package" appears valid, read the ID registers for each
+ * MMD, allocate and return a &struct phy_device.
  *
- * Returns an allocated &काष्ठा phy_device on success, %-ENODEV अगर there is
+ * Returns an allocated &struct phy_device on success, %-ENODEV if there is
  * no PHY present, or %-EIO on bus access error.
  */
-काष्ठा phy_device *get_phy_device(काष्ठा mii_bus *bus, पूर्णांक addr, bool is_c45)
-अणु
-	काष्ठा phy_c45_device_ids c45_ids;
+struct phy_device *get_phy_device(struct mii_bus *bus, int addr, bool is_c45)
+{
+	struct phy_c45_device_ids c45_ids;
 	u32 phy_id = 0;
-	पूर्णांक r;
+	int r;
 
 	c45_ids.devices_in_package = 0;
 	c45_ids.mmds_present = 0;
-	स_रखो(c45_ids.device_ids, 0xff, माप(c45_ids.device_ids));
+	memset(c45_ids.device_ids, 0xff, sizeof(c45_ids.device_ids));
 
-	अगर (is_c45)
+	if (is_c45)
 		r = get_phy_c45_ids(bus, addr, &c45_ids);
-	अन्यथा
+	else
 		r = get_phy_c22_id(bus, addr, &phy_id);
 
-	अगर (r)
-		वापस ERR_PTR(r);
+	if (r)
+		return ERR_PTR(r);
 
-	वापस phy_device_create(bus, addr, phy_id, is_c45, &c45_ids);
-पूर्ण
+	return phy_device_create(bus, addr, phy_id, is_c45, &c45_ids);
+}
 EXPORT_SYMBOL(get_phy_device);
 
 /**
- * phy_device_रेजिस्टर - Register the phy device on the MDIO bus
- * @phydev: phy_device काष्ठाure to be added to the MDIO bus
+ * phy_device_register - Register the phy device on the MDIO bus
+ * @phydev: phy_device structure to be added to the MDIO bus
  */
-पूर्णांक phy_device_रेजिस्टर(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+int phy_device_register(struct phy_device *phydev)
+{
+	int err;
 
-	err = mdiobus_रेजिस्टर_device(&phydev->mdio);
-	अगर (err)
-		वापस err;
+	err = mdiobus_register_device(&phydev->mdio);
+	if (err)
+		return err;
 
-	/* Deनिश्चित the reset संकेत */
+	/* Deassert the reset signal */
 	phy_device_reset(phydev, 0);
 
-	/* Run all of the fixups क्रम this PHY */
+	/* Run all of the fixups for this PHY */
 	err = phy_scan_fixups(phydev);
-	अगर (err) अणु
+	if (err) {
 		phydev_err(phydev, "failed to initialize\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = device_add(&phydev->mdio.dev);
-	अगर (err) अणु
+	if (err) {
 		phydev_err(phydev, "failed to add\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	वापस 0;
+	return 0;
 
  out:
-	/* Assert the reset संकेत */
+	/* Assert the reset signal */
 	phy_device_reset(phydev, 1);
 
-	mdiobus_unरेजिस्टर_device(&phydev->mdio);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(phy_device_रेजिस्टर);
+	mdiobus_unregister_device(&phydev->mdio);
+	return err;
+}
+EXPORT_SYMBOL(phy_device_register);
 
 /**
- * phy_device_हटाओ - Remove a previously रेजिस्टरed phy device from the MDIO bus
- * @phydev: phy_device काष्ठाure to हटाओ
+ * phy_device_remove - Remove a previously registered phy device from the MDIO bus
+ * @phydev: phy_device structure to remove
  *
- * This करोesn't मुक्त the phy_device itself, it merely reverses the effects
- * of phy_device_रेजिस्टर(). Use phy_device_मुक्त() to मुक्त the device
+ * This doesn't free the phy_device itself, it merely reverses the effects
+ * of phy_device_register(). Use phy_device_free() to free the device
  * after calling this function.
  */
-व्योम phy_device_हटाओ(काष्ठा phy_device *phydev)
-अणु
-	अगर (phydev->mii_ts)
-		unरेजिस्टर_mii_बारtamper(phydev->mii_ts);
+void phy_device_remove(struct phy_device *phydev)
+{
+	if (phydev->mii_ts)
+		unregister_mii_timestamper(phydev->mii_ts);
 
 	device_del(&phydev->mdio.dev);
 
-	/* Assert the reset संकेत */
+	/* Assert the reset signal */
 	phy_device_reset(phydev, 1);
 
-	mdiobus_unरेजिस्टर_device(&phydev->mdio);
-पूर्ण
-EXPORT_SYMBOL(phy_device_हटाओ);
+	mdiobus_unregister_device(&phydev->mdio);
+}
+EXPORT_SYMBOL(phy_device_remove);
 
 /**
  * phy_find_first - finds the first PHY device on the bus
  * @bus: the target MII bus
  */
-काष्ठा phy_device *phy_find_first(काष्ठा mii_bus *bus)
-अणु
-	काष्ठा phy_device *phydev;
-	पूर्णांक addr;
+struct phy_device *phy_find_first(struct mii_bus *bus)
+{
+	struct phy_device *phydev;
+	int addr;
 
-	क्रम (addr = 0; addr < PHY_MAX_ADDR; addr++) अणु
+	for (addr = 0; addr < PHY_MAX_ADDR; addr++) {
 		phydev = mdiobus_get_phy(bus, addr);
-		अगर (phydev)
-			वापस phydev;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (phydev)
+			return phydev;
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(phy_find_first);
 
-अटल व्योम phy_link_change(काष्ठा phy_device *phydev, bool up)
-अणु
-	काष्ठा net_device *netdev = phydev->attached_dev;
+static void phy_link_change(struct phy_device *phydev, bool up)
+{
+	struct net_device *netdev = phydev->attached_dev;
 
-	अगर (up)
-		netअगर_carrier_on(netdev);
-	अन्यथा
-		netअगर_carrier_off(netdev);
+	if (up)
+		netif_carrier_on(netdev);
+	else
+		netif_carrier_off(netdev);
 	phydev->adjust_link(netdev);
-	अगर (phydev->mii_ts && phydev->mii_ts->link_state)
+	if (phydev->mii_ts && phydev->mii_ts->link_state)
 		phydev->mii_ts->link_state(phydev->mii_ts, phydev);
-पूर्ण
+}
 
 /**
  * phy_prepare_link - prepares the PHY layer to monitor link status
- * @phydev: target phy_device काष्ठा
- * @handler: callback function क्रम link status change notअगरications
+ * @phydev: target phy_device struct
+ * @handler: callback function for link status change notifications
  *
- * Description: Tells the PHY infraकाष्ठाure to handle the
+ * Description: Tells the PHY infrastructure to handle the
  *   gory details on monitoring link status (whether through
- *   polling or an पूर्णांकerrupt), and to call back to the
+ *   polling or an interrupt), and to call back to the
  *   connected device driver when the link status changes.
- *   If you want to monitor your own link state, करोn't call
+ *   If you want to monitor your own link state, don't call
  *   this function.
  */
-अटल व्योम phy_prepare_link(काष्ठा phy_device *phydev,
-			     व्योम (*handler)(काष्ठा net_device *))
-अणु
+static void phy_prepare_link(struct phy_device *phydev,
+			     void (*handler)(struct net_device *))
+{
 	phydev->adjust_link = handler;
-पूर्ण
+}
 
 /**
- * phy_connect_direct - connect an ethernet device to a specअगरic phy_device
+ * phy_connect_direct - connect an ethernet device to a specific phy_device
  * @dev: the network device to connect
- * @phydev: the poपूर्णांकer to the phy device
- * @handler: callback function क्रम state change notअगरications
- * @पूर्णांकerface: PHY device's पूर्णांकerface
+ * @phydev: the pointer to the phy device
+ * @handler: callback function for state change notifications
+ * @interface: PHY device's interface
  */
-पूर्णांक phy_connect_direct(काष्ठा net_device *dev, काष्ठा phy_device *phydev,
-		       व्योम (*handler)(काष्ठा net_device *),
-		       phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	पूर्णांक rc;
+int phy_connect_direct(struct net_device *dev, struct phy_device *phydev,
+		       void (*handler)(struct net_device *),
+		       phy_interface_t interface)
+{
+	int rc;
 
-	अगर (!dev)
-		वापस -EINVAL;
+	if (!dev)
+		return -EINVAL;
 
-	rc = phy_attach_direct(dev, phydev, phydev->dev_flags, पूर्णांकerface);
-	अगर (rc)
-		वापस rc;
+	rc = phy_attach_direct(dev, phydev, phydev->dev_flags, interface);
+	if (rc)
+		return rc;
 
 	phy_prepare_link(phydev, handler);
-	अगर (phy_पूर्णांकerrupt_is_valid(phydev))
-		phy_request_पूर्णांकerrupt(phydev);
+	if (phy_interrupt_is_valid(phydev))
+		phy_request_interrupt(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(phy_connect_direct);
 
 /**
  * phy_connect - connect an ethernet device to a PHY device
  * @dev: the network device to connect
  * @bus_id: the id string of the PHY device to connect
- * @handler: callback function क्रम state change notअगरications
- * @पूर्णांकerface: PHY device's पूर्णांकerface
+ * @handler: callback function for state change notifications
+ * @interface: PHY device's interface
  *
- * Description: Convenience function क्रम connecting ethernet
- *   devices to PHY devices.  The शेष behavior is क्रम
- *   the PHY infraकाष्ठाure to handle everything, and only notअगरy
+ * Description: Convenience function for connecting ethernet
+ *   devices to PHY devices.  The default behavior is for
+ *   the PHY infrastructure to handle everything, and only notify
  *   the connected driver when the link status changes.  If you
- *   करोn't want, or can't use the provided functionality, you may
+ *   don't want, or can't use the provided functionality, you may
  *   choose to call only the subset of functions which provide
  *   the desired functionality.
  */
-काष्ठा phy_device *phy_connect(काष्ठा net_device *dev, स्थिर अक्षर *bus_id,
-			       व्योम (*handler)(काष्ठा net_device *),
-			       phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	काष्ठा phy_device *phydev;
-	काष्ठा device *d;
-	पूर्णांक rc;
+struct phy_device *phy_connect(struct net_device *dev, const char *bus_id,
+			       void (*handler)(struct net_device *),
+			       phy_interface_t interface)
+{
+	struct phy_device *phydev;
+	struct device *d;
+	int rc;
 
-	/* Search the list of PHY devices on the mdio bus क्रम the
+	/* Search the list of PHY devices on the mdio bus for the
 	 * PHY with the requested name
 	 */
-	d = bus_find_device_by_name(&mdio_bus_type, शून्य, bus_id);
-	अगर (!d) अणु
+	d = bus_find_device_by_name(&mdio_bus_type, NULL, bus_id);
+	if (!d) {
 		pr_err("PHY %s not found\n", bus_id);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 	phydev = to_phy_device(d);
 
-	rc = phy_connect_direct(dev, phydev, handler, पूर्णांकerface);
+	rc = phy_connect_direct(dev, phydev, handler, interface);
 	put_device(d);
-	अगर (rc)
-		वापस ERR_PTR(rc);
+	if (rc)
+		return ERR_PTR(rc);
 
-	वापस phydev;
-पूर्ण
+	return phydev;
+}
 EXPORT_SYMBOL(phy_connect);
 
 /**
- * phy_disconnect - disable पूर्णांकerrupts, stop state machine, and detach a PHY
+ * phy_disconnect - disable interrupts, stop state machine, and detach a PHY
  *		    device
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  */
-व्योम phy_disconnect(काष्ठा phy_device *phydev)
-अणु
-	अगर (phy_is_started(phydev))
+void phy_disconnect(struct phy_device *phydev)
+{
+	if (phy_is_started(phydev))
 		phy_stop(phydev);
 
-	अगर (phy_पूर्णांकerrupt_is_valid(phydev))
-		phy_मुक्त_पूर्णांकerrupt(phydev);
+	if (phy_interrupt_is_valid(phydev))
+		phy_free_interrupt(phydev);
 
-	phydev->adjust_link = शून्य;
+	phydev->adjust_link = NULL;
 
 	phy_detach(phydev);
-पूर्ण
+}
 EXPORT_SYMBOL(phy_disconnect);
 
 /**
- * phy_poll_reset - Safely रुको until a PHY reset has properly completed
+ * phy_poll_reset - Safely wait until a PHY reset has properly completed
  * @phydev: The PHY device to poll
  *
  * Description: According to IEEE 802.3, Section 2, Subsection 22.2.4.1.1, as
  *   published in 2008, a PHY reset may take up to 0.5 seconds.  The MII BMCR
- *   रेजिस्टर must be polled until the BMCR_RESET bit clears.
+ *   register must be polled until the BMCR_RESET bit clears.
  *
- *   Furthermore, any attempts to ग_लिखो to PHY रेजिस्टरs may have no effect
+ *   Furthermore, any attempts to write to PHY registers may have no effect
  *   or even generate MDIO bus errors until this is complete.
  *
- *   Some PHYs (such as the Marvell 88E1111) करोn't entirely conक्रमm to the
- *   standard and करो not fully reset after the BMCR_RESET bit is set, and may
- *   even *REQUIRE* a soft-reset to properly restart स्वतःnegotiation.  In an
- *   efक्रमt to support such broken PHYs, this function is separate from the
+ *   Some PHYs (such as the Marvell 88E1111) don't entirely conform to the
+ *   standard and do not fully reset after the BMCR_RESET bit is set, and may
+ *   even *REQUIRE* a soft-reset to properly restart autonegotiation.  In an
+ *   effort to support such broken PHYs, this function is separate from the
  *   standard phy_init_hw() which will zero all the other bits in the BMCR
- *   and reapply all driver-specअगरic and board-specअगरic fixups.
+ *   and reapply all driver-specific and board-specific fixups.
  */
-अटल पूर्णांक phy_poll_reset(काष्ठा phy_device *phydev)
-अणु
+static int phy_poll_reset(struct phy_device *phydev)
+{
 	/* Poll until the reset bit clears (50ms per retry == 0.6 sec) */
-	पूर्णांक ret, val;
+	int ret, val;
 
-	ret = phy_पढ़ो_poll_समयout(phydev, MII_BMCR, val, !(val & BMCR_RESET),
+	ret = phy_read_poll_timeout(phydev, MII_BMCR, val, !(val & BMCR_RESET),
 				    50000, 600000, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	/* Some chips (smsc911x) may still need up to another 1ms after the
-	 * BMCR_RESET bit is cleared beक्रमe they are usable.
+	 * BMCR_RESET bit is cleared before they are usable.
 	 */
 	msleep(1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक phy_init_hw(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret = 0;
+int phy_init_hw(struct phy_device *phydev)
+{
+	int ret = 0;
 
-	/* Deनिश्चित the reset संकेत */
+	/* Deassert the reset signal */
 	phy_device_reset(phydev, 0);
 
-	अगर (!phydev->drv)
-		वापस 0;
+	if (!phydev->drv)
+		return 0;
 
-	अगर (phydev->drv->soft_reset) अणु
+	if (phydev->drv->soft_reset) {
 		ret = phydev->drv->soft_reset(phydev);
-		/* see comment in genphy_soft_reset क्रम an explanation */
-		अगर (!ret)
+		/* see comment in genphy_soft_reset for an explanation */
+		if (!ret)
 			phydev->suspended = 0;
-	पूर्ण
+	}
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = phy_scan_fixups(phydev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (phydev->drv->config_init) अणु
+	if (phydev->drv->config_init) {
 		ret = phydev->drv->config_init(phydev);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	अगर (phydev->drv->config_पूर्णांकr) अणु
-		ret = phydev->drv->config_पूर्णांकr(phydev);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (phydev->drv->config_intr) {
+		ret = phydev->drv->config_intr(phydev);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(phy_init_hw);
 
-व्योम phy_attached_info(काष्ठा phy_device *phydev)
-अणु
-	phy_attached_prपूर्णांक(phydev, शून्य);
-पूर्ण
+void phy_attached_info(struct phy_device *phydev)
+{
+	phy_attached_print(phydev, NULL);
+}
 EXPORT_SYMBOL(phy_attached_info);
 
-#घोषणा ATTACHED_FMT "attached PHY driver %s(mii_bus:phy_addr=%s, irq=%s)"
-अक्षर *phy_attached_info_irq(काष्ठा phy_device *phydev)
-अणु
-	अक्षर *irq_str;
-	अक्षर irq_num[8];
+#define ATTACHED_FMT "attached PHY driver %s(mii_bus:phy_addr=%s, irq=%s)"
+char *phy_attached_info_irq(struct phy_device *phydev)
+{
+	char *irq_str;
+	char irq_num[8];
 
-	चयन(phydev->irq) अणु
-	हाल PHY_POLL:
+	switch(phydev->irq) {
+	case PHY_POLL:
 		irq_str = "POLL";
-		अवरोध;
-	हाल PHY_MAC_INTERRUPT:
+		break;
+	case PHY_MAC_INTERRUPT:
 		irq_str = "MAC";
-		अवरोध;
-	शेष:
-		snम_लिखो(irq_num, माप(irq_num), "%d", phydev->irq);
+		break;
+	default:
+		snprintf(irq_num, sizeof(irq_num), "%d", phydev->irq);
 		irq_str = irq_num;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस kaप्र_लिखो(GFP_KERNEL, "%s", irq_str);
-पूर्ण
+	return kasprintf(GFP_KERNEL, "%s", irq_str);
+}
 EXPORT_SYMBOL(phy_attached_info_irq);
 
-व्योम phy_attached_prपूर्णांक(काष्ठा phy_device *phydev, स्थिर अक्षर *fmt, ...)
-अणु
-	स्थिर अक्षर *unbound = phydev->drv ? "" : "[unbound] ";
-	अक्षर *irq_str = phy_attached_info_irq(phydev);
+void phy_attached_print(struct phy_device *phydev, const char *fmt, ...)
+{
+	const char *unbound = phydev->drv ? "" : "[unbound] ";
+	char *irq_str = phy_attached_info_irq(phydev);
 
-	अगर (!fmt) अणु
+	if (!fmt) {
 		phydev_info(phydev, ATTACHED_FMT "\n", unbound,
 			    phydev_name(phydev), irq_str);
-	पूर्ण अन्यथा अणु
-		बहु_सूची ap;
+	} else {
+		va_list ap;
 
 		phydev_info(phydev, ATTACHED_FMT, unbound,
 			    phydev_name(phydev), irq_str);
 
-		बहु_शुरू(ap, fmt);
-		vprपूर्णांकk(fmt, ap);
-		बहु_पूर्ण(ap);
-	पूर्ण
-	kमुक्त(irq_str);
-पूर्ण
-EXPORT_SYMBOL(phy_attached_prपूर्णांक);
+		va_start(ap, fmt);
+		vprintk(fmt, ap);
+		va_end(ap);
+	}
+	kfree(irq_str);
+}
+EXPORT_SYMBOL(phy_attached_print);
 
-अटल व्योम phy_sysfs_create_links(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा net_device *dev = phydev->attached_dev;
-	पूर्णांक err;
+static void phy_sysfs_create_links(struct phy_device *phydev)
+{
+	struct net_device *dev = phydev->attached_dev;
+	int err;
 
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	err = sysfs_create_link(&phydev->mdio.dev.kobj, &dev->dev.kobj,
 				"attached_dev");
-	अगर (err)
-		वापस;
+	if (err)
+		return;
 
 	err = sysfs_create_link_nowarn(&dev->dev.kobj,
 				       &phydev->mdio.dev.kobj,
 				       "phydev");
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "could not add device link to %s err %d\n",
 			kobject_name(&phydev->mdio.dev.kobj),
 			err);
 		/* non-fatal - some net drivers can use one netdevice
 		 * with more then one phy
 		 */
-	पूर्ण
+	}
 
 	phydev->sysfs_links = true;
-पूर्ण
+}
 
-अटल sमाप_प्रकार
-phy_standalone_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		    अक्षर *buf)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static ssize_t
+phy_standalone_show(struct device *dev, struct device_attribute *attr,
+		    char *buf)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
-	वापस प्र_लिखो(buf, "%d\n", !phydev->attached_dev);
-पूर्ण
-अटल DEVICE_ATTR_RO(phy_standalone);
+	return sprintf(buf, "%d\n", !phydev->attached_dev);
+}
+static DEVICE_ATTR_RO(phy_standalone);
 
 /**
  * phy_sfp_attach - attach the SFP bus to the PHY upstream network device
- * @upstream: poपूर्णांकer to the phy device
+ * @upstream: pointer to the phy device
  * @bus: sfp bus representing cage being attached
  *
  * This is used to fill in the sfp_upstream_ops .attach member.
  */
-व्योम phy_sfp_attach(व्योम *upstream, काष्ठा sfp_bus *bus)
-अणु
-	काष्ठा phy_device *phydev = upstream;
+void phy_sfp_attach(void *upstream, struct sfp_bus *bus)
+{
+	struct phy_device *phydev = upstream;
 
-	अगर (phydev->attached_dev)
+	if (phydev->attached_dev)
 		phydev->attached_dev->sfp_bus = bus;
 	phydev->sfp_bus_attached = true;
-पूर्ण
+}
 EXPORT_SYMBOL(phy_sfp_attach);
 
 /**
  * phy_sfp_detach - detach the SFP bus from the PHY upstream network device
- * @upstream: poपूर्णांकer to the phy device
+ * @upstream: pointer to the phy device
  * @bus: sfp bus representing cage being attached
  *
  * This is used to fill in the sfp_upstream_ops .detach member.
  */
-व्योम phy_sfp_detach(व्योम *upstream, काष्ठा sfp_bus *bus)
-अणु
-	काष्ठा phy_device *phydev = upstream;
+void phy_sfp_detach(void *upstream, struct sfp_bus *bus)
+{
+	struct phy_device *phydev = upstream;
 
-	अगर (phydev->attached_dev)
-		phydev->attached_dev->sfp_bus = शून्य;
+	if (phydev->attached_dev)
+		phydev->attached_dev->sfp_bus = NULL;
 	phydev->sfp_bus_attached = false;
-पूर्ण
+}
 EXPORT_SYMBOL(phy_sfp_detach);
 
 /**
- * phy_sfp_probe - probe क्रम a SFP cage attached to this PHY device
- * @phydev: Poपूर्णांकer to phy_device
+ * phy_sfp_probe - probe for a SFP cage attached to this PHY device
+ * @phydev: Pointer to phy_device
  * @ops: SFP's upstream operations
  */
-पूर्णांक phy_sfp_probe(काष्ठा phy_device *phydev,
-		  स्थिर काष्ठा sfp_upstream_ops *ops)
-अणु
-	काष्ठा sfp_bus *bus;
-	पूर्णांक ret = 0;
+int phy_sfp_probe(struct phy_device *phydev,
+		  const struct sfp_upstream_ops *ops)
+{
+	struct sfp_bus *bus;
+	int ret = 0;
 
-	अगर (phydev->mdio.dev.fwnode) अणु
+	if (phydev->mdio.dev.fwnode) {
 		bus = sfp_bus_find_fwnode(phydev->mdio.dev.fwnode);
-		अगर (IS_ERR(bus))
-			वापस PTR_ERR(bus);
+		if (IS_ERR(bus))
+			return PTR_ERR(bus);
 
 		phydev->sfp_bus = bus;
 
 		ret = sfp_bus_add_upstream(bus, phydev, ops);
 		sfp_bus_put(bus);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 EXPORT_SYMBOL(phy_sfp_probe);
 
 /**
- * phy_attach_direct - attach a network device to a given PHY device poपूर्णांकer
+ * phy_attach_direct - attach a network device to a given PHY device pointer
  * @dev: network device to attach
- * @phydev: Poपूर्णांकer to phy_device to attach
+ * @phydev: Pointer to phy_device to attach
  * @flags: PHY device's dev_flags
- * @पूर्णांकerface: PHY device's पूर्णांकerface
+ * @interface: PHY device's interface
  *
  * Description: Called by drivers to attach to a particular PHY
  *     device. The phy_device is found, and properly hooked up
  *     to the phy_driver.  If no driver is attached, then a
  *     generic driver is used.  The phy_device is given a ptr to
- *     the attaching device, and given a callback क्रम link status
- *     change.  The phy_device is वापसed to the attaching driver.
+ *     the attaching device, and given a callback for link status
+ *     change.  The phy_device is returned to the attaching driver.
  *     This function takes a reference on the phy device.
  */
-पूर्णांक phy_attach_direct(काष्ठा net_device *dev, काष्ठा phy_device *phydev,
-		      u32 flags, phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	काष्ठा mii_bus *bus = phydev->mdio.bus;
-	काष्ठा device *d = &phydev->mdio.dev;
-	काष्ठा module *ndev_owner = शून्य;
+int phy_attach_direct(struct net_device *dev, struct phy_device *phydev,
+		      u32 flags, phy_interface_t interface)
+{
+	struct mii_bus *bus = phydev->mdio.bus;
+	struct device *d = &phydev->mdio.dev;
+	struct module *ndev_owner = NULL;
 	bool using_genphy = false;
-	पूर्णांक err;
+	int err;
 
-	/* For Ethernet device drivers that रेजिस्टर their own MDIO bus, we
-	 * will have bus->owner match ndev_mod, so we करो not want to increment
+	/* For Ethernet device drivers that register their own MDIO bus, we
+	 * will have bus->owner match ndev_mod, so we do not want to increment
 	 * our own module->refcnt here, otherwise we would not be able to
 	 * unload later on.
 	 */
-	अगर (dev)
+	if (dev)
 		ndev_owner = dev->dev.parent->driver->owner;
-	अगर (ndev_owner != bus->owner && !try_module_get(bus->owner)) अणु
+	if (ndev_owner != bus->owner && !try_module_get(bus->owner)) {
 		phydev_err(phydev, "failed to get the bus module\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	get_device(d);
 
-	/* Assume that अगर there is no driver, that it करोesn't
+	/* Assume that if there is no driver, that it doesn't
 	 * exist, and we should use the genphy driver.
 	 */
-	अगर (!d->driver) अणु
-		अगर (phydev->is_c45)
+	if (!d->driver) {
+		if (phydev->is_c45)
 			d->driver = &genphy_c45_driver.mdiodrv.driver;
-		अन्यथा
+		else
 			d->driver = &genphy_driver.mdiodrv.driver;
 
 		using_genphy = true;
-	पूर्ण
+	}
 
-	अगर (!try_module_get(d->driver->owner)) अणु
+	if (!try_module_get(d->driver->owner)) {
 		phydev_err(phydev, "failed to get the device driver module\n");
 		err = -EIO;
-		जाओ error_put_device;
-	पूर्ण
+		goto error_put_device;
+	}
 
-	अगर (using_genphy) अणु
+	if (using_genphy) {
 		err = d->driver->probe(d);
-		अगर (err >= 0)
+		if (err >= 0)
 			err = device_bind_driver(d);
 
-		अगर (err)
-			जाओ error_module_put;
-	पूर्ण
+		if (err)
+			goto error_module_put;
+	}
 
-	अगर (phydev->attached_dev) अणु
+	if (phydev->attached_dev) {
 		dev_err(&dev->dev, "PHY already attached\n");
 		err = -EBUSY;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	phydev->phy_link_change = phy_link_change;
-	अगर (dev) अणु
+	if (dev) {
 		phydev->attached_dev = dev;
 		dev->phydev = phydev;
 
-		अगर (phydev->sfp_bus_attached)
+		if (phydev->sfp_bus_attached)
 			dev->sfp_bus = phydev->sfp_bus;
-		अन्यथा अगर (dev->sfp_bus)
+		else if (dev->sfp_bus)
 			phydev->is_on_sfp_module = true;
-	पूर्ण
+	}
 
-	/* Some Ethernet drivers try to connect to a PHY device beक्रमe
-	 * calling रेजिस्टर_netdevice() -> netdev_रेजिस्टर_kobject() and
-	 * करोes the dev->dev.kobj initialization. Here we only check क्रम
+	/* Some Ethernet drivers try to connect to a PHY device before
+	 * calling register_netdevice() -> netdev_register_kobject() and
+	 * does the dev->dev.kobj initialization. Here we only check for
 	 * success which indicates that the network device kobject is
-	 * पढ़ोy. Once we करो that we still need to keep track of whether
-	 * links were successfully set up or not क्रम phy_detach() to
-	 * हटाओ them accordingly.
+	 * ready. Once we do that we still need to keep track of whether
+	 * links were successfully set up or not for phy_detach() to
+	 * remove them accordingly.
 	 */
 	phydev->sysfs_links = false;
 
 	phy_sysfs_create_links(phydev);
 
-	अगर (!phydev->attached_dev) अणु
+	if (!phydev->attached_dev) {
 		err = sysfs_create_file(&phydev->mdio.dev.kobj,
 					&dev_attr_phy_standalone.attr);
-		अगर (err)
+		if (err)
 			phydev_err(phydev, "error creating 'phy_standalone' sysfs entry\n");
-	पूर्ण
+	}
 
 	phydev->dev_flags |= flags;
 
-	phydev->पूर्णांकerface = पूर्णांकerface;
+	phydev->interface = interface;
 
 	phydev->state = PHY_READY;
 
-	/* Port is set to PORT_TP by शेष and the actual PHY driver will set
-	 * it to dअगरferent value depending on the PHY configuration. If we have
+	/* Port is set to PORT_TP by default and the actual PHY driver will set
+	 * it to different value depending on the PHY configuration. If we have
 	 * the generic PHY driver we can't figure it out, thus set the old
 	 * legacy PORT_MII value.
 	 */
-	अगर (using_genphy)
+	if (using_genphy)
 		phydev->port = PORT_MII;
 
 	/* Initial carrier state is off as the phy is about to be
 	 * (re)initialized.
 	 */
-	अगर (dev)
-		netअगर_carrier_off(phydev->attached_dev);
+	if (dev)
+		netif_carrier_off(phydev->attached_dev);
 
 	/* Do initial configuration here, now that
 	 * we have certain key parameters
-	 * (dev_flags and पूर्णांकerface)
+	 * (dev_flags and interface)
 	 */
 	err = phy_init_hw(phydev);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 
-	err = phy_disable_पूर्णांकerrupts(phydev);
-	अगर (err)
-		वापस err;
+	err = phy_disable_interrupts(phydev);
+	if (err)
+		return err;
 
 	phy_resume(phydev);
-	phy_led_triggers_रेजिस्टर(phydev);
+	phy_led_triggers_register(phydev);
 
-	वापस err;
+	return err;
 
 error:
-	/* phy_detach() करोes all of the cleanup below */
+	/* phy_detach() does all of the cleanup below */
 	phy_detach(phydev);
-	वापस err;
+	return err;
 
 error_module_put:
 	module_put(d->driver->owner);
 error_put_device:
 	put_device(d);
-	अगर (ndev_owner != bus->owner)
+	if (ndev_owner != bus->owner)
 		module_put(bus->owner);
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(phy_attach_direct);
 
 /**
  * phy_attach - attach a network device to a particular PHY device
  * @dev: network device to attach
  * @bus_id: Bus ID of PHY device to attach
- * @पूर्णांकerface: PHY device's पूर्णांकerface
+ * @interface: PHY device's interface
  *
  * Description: Same as phy_attach_direct() except that a PHY bus_id
- *     string is passed instead of a poपूर्णांकer to a काष्ठा phy_device.
+ *     string is passed instead of a pointer to a struct phy_device.
  */
-काष्ठा phy_device *phy_attach(काष्ठा net_device *dev, स्थिर अक्षर *bus_id,
-			      phy_पूर्णांकerface_t पूर्णांकerface)
-अणु
-	काष्ठा bus_type *bus = &mdio_bus_type;
-	काष्ठा phy_device *phydev;
-	काष्ठा device *d;
-	पूर्णांक rc;
+struct phy_device *phy_attach(struct net_device *dev, const char *bus_id,
+			      phy_interface_t interface)
+{
+	struct bus_type *bus = &mdio_bus_type;
+	struct phy_device *phydev;
+	struct device *d;
+	int rc;
 
-	अगर (!dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!dev)
+		return ERR_PTR(-EINVAL);
 
-	/* Search the list of PHY devices on the mdio bus क्रम the
+	/* Search the list of PHY devices on the mdio bus for the
 	 * PHY with the requested name
 	 */
-	d = bus_find_device_by_name(bus, शून्य, bus_id);
-	अगर (!d) अणु
+	d = bus_find_device_by_name(bus, NULL, bus_id);
+	if (!d) {
 		pr_err("PHY %s not found\n", bus_id);
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 	phydev = to_phy_device(d);
 
-	rc = phy_attach_direct(dev, phydev, phydev->dev_flags, पूर्णांकerface);
+	rc = phy_attach_direct(dev, phydev, phydev->dev_flags, interface);
 	put_device(d);
-	अगर (rc)
-		वापस ERR_PTR(rc);
+	if (rc)
+		return ERR_PTR(rc);
 
-	वापस phydev;
-पूर्ण
+	return phydev;
+}
 EXPORT_SYMBOL(phy_attach);
 
-अटल bool phy_driver_is_genphy_kind(काष्ठा phy_device *phydev,
-				      काष्ठा device_driver *driver)
-अणु
-	काष्ठा device *d = &phydev->mdio.dev;
+static bool phy_driver_is_genphy_kind(struct phy_device *phydev,
+				      struct device_driver *driver)
+{
+	struct device *d = &phydev->mdio.dev;
 	bool ret = false;
 
-	अगर (!phydev->drv)
-		वापस ret;
+	if (!phydev->drv)
+		return ret;
 
 	get_device(d);
 	ret = d->driver == driver;
 	put_device(d);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool phy_driver_is_genphy(काष्ठा phy_device *phydev)
-अणु
-	वापस phy_driver_is_genphy_kind(phydev,
+bool phy_driver_is_genphy(struct phy_device *phydev)
+{
+	return phy_driver_is_genphy_kind(phydev,
 					 &genphy_driver.mdiodrv.driver);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(phy_driver_is_genphy);
 
-bool phy_driver_is_genphy_10g(काष्ठा phy_device *phydev)
-अणु
-	वापस phy_driver_is_genphy_kind(phydev,
+bool phy_driver_is_genphy_10g(struct phy_device *phydev)
+{
+	return phy_driver_is_genphy_kind(phydev,
 					 &genphy_c45_driver.mdiodrv.driver);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(phy_driver_is_genphy_10g);
 
 /**
  * phy_package_join - join a common PHY group
- * @phydev: target phy_device काष्ठा
- * @addr: cookie and PHY address क्रम global रेजिस्टर access
- * @priv_size: अगर non-zero allocate this amount of bytes क्रम निजी data
+ * @phydev: target phy_device struct
+ * @addr: cookie and PHY address for global register access
+ * @priv_size: if non-zero allocate this amount of bytes for private data
  *
- * This joins a PHY group and provides a shared storage क्रम all phydevs in
- * this group. This is पूर्णांकended to be used क्रम packages which contain
- * more than one PHY, क्रम example a quad PHY transceiver.
+ * This joins a PHY group and provides a shared storage for all phydevs in
+ * this group. This is intended to be used for packages which contain
+ * more than one PHY, for example a quad PHY transceiver.
  *
  * The addr parameter serves as a cookie which has to have the same value
- * क्रम all members of one group and as a PHY address to access generic
- * रेजिस्टरs of a PHY package. Usually, one of the PHY addresses of the
- * dअगरferent PHYs in the package provides access to these global रेजिस्टरs.
- * The address which is given here, will be used in the phy_package_पढ़ो()
- * and phy_package_ग_लिखो() convenience functions. If your PHY करोesn't have
- * global रेजिस्टरs you can just pick any of the PHY addresses.
+ * for all members of one group and as a PHY address to access generic
+ * registers of a PHY package. Usually, one of the PHY addresses of the
+ * different PHYs in the package provides access to these global registers.
+ * The address which is given here, will be used in the phy_package_read()
+ * and phy_package_write() convenience functions. If your PHY doesn't have
+ * global registers you can just pick any of the PHY addresses.
  *
- * This will set the shared poपूर्णांकer of the phydev to the shared storage.
- * If this is the first call क्रम a this cookie the shared storage will be
+ * This will set the shared pointer of the phydev to the shared storage.
+ * If this is the first call for a this cookie the shared storage will be
  * allocated. If priv_size is non-zero, the given amount of bytes are
- * allocated क्रम the priv member.
+ * allocated for the priv member.
  *
  * Returns < 1 on error, 0 on success. Esp. calling phy_package_join()
- * with the same cookie but a dअगरferent priv_size is an error.
+ * with the same cookie but a different priv_size is an error.
  */
-पूर्णांक phy_package_join(काष्ठा phy_device *phydev, पूर्णांक addr, माप_प्रकार priv_size)
-अणु
-	काष्ठा mii_bus *bus = phydev->mdio.bus;
-	काष्ठा phy_package_shared *shared;
-	पूर्णांक ret;
+int phy_package_join(struct phy_device *phydev, int addr, size_t priv_size)
+{
+	struct mii_bus *bus = phydev->mdio.bus;
+	struct phy_package_shared *shared;
+	int ret;
 
-	अगर (addr < 0 || addr >= PHY_MAX_ADDR)
-		वापस -EINVAL;
+	if (addr < 0 || addr >= PHY_MAX_ADDR)
+		return -EINVAL;
 
 	mutex_lock(&bus->shared_lock);
 	shared = bus->shared[addr];
-	अगर (!shared) अणु
+	if (!shared) {
 		ret = -ENOMEM;
-		shared = kzalloc(माप(*shared), GFP_KERNEL);
-		अगर (!shared)
-			जाओ err_unlock;
-		अगर (priv_size) अणु
+		shared = kzalloc(sizeof(*shared), GFP_KERNEL);
+		if (!shared)
+			goto err_unlock;
+		if (priv_size) {
 			shared->priv = kzalloc(priv_size, GFP_KERNEL);
-			अगर (!shared->priv)
-				जाओ err_मुक्त;
+			if (!shared->priv)
+				goto err_free;
 			shared->priv_size = priv_size;
-		पूर्ण
+		}
 		shared->addr = addr;
 		refcount_set(&shared->refcnt, 1);
 		bus->shared[addr] = shared;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EINVAL;
-		अगर (priv_size && priv_size != shared->priv_size)
-			जाओ err_unlock;
+		if (priv_size && priv_size != shared->priv_size)
+			goto err_unlock;
 		refcount_inc(&shared->refcnt);
-	पूर्ण
+	}
 	mutex_unlock(&bus->shared_lock);
 
 	phydev->shared = shared;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kमुक्त(shared);
+err_free:
+	kfree(shared);
 err_unlock:
 	mutex_unlock(&bus->shared_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(phy_package_join);
 
 /**
  * phy_package_leave - leave a common PHY group
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  *
  * This leaves a PHY group created by phy_package_join(). If this phydev
  * was the last user of the shared data between the group, this data is
- * मुक्तd. Resets the phydev->shared poपूर्णांकer to शून्य.
+ * freed. Resets the phydev->shared pointer to NULL.
  */
-व्योम phy_package_leave(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा phy_package_shared *shared = phydev->shared;
-	काष्ठा mii_bus *bus = phydev->mdio.bus;
+void phy_package_leave(struct phy_device *phydev)
+{
+	struct phy_package_shared *shared = phydev->shared;
+	struct mii_bus *bus = phydev->mdio.bus;
 
-	अगर (!shared)
-		वापस;
+	if (!shared)
+		return;
 
-	अगर (refcount_dec_and_mutex_lock(&shared->refcnt, &bus->shared_lock)) अणु
-		bus->shared[shared->addr] = शून्य;
+	if (refcount_dec_and_mutex_lock(&shared->refcnt, &bus->shared_lock)) {
+		bus->shared[shared->addr] = NULL;
 		mutex_unlock(&bus->shared_lock);
-		kमुक्त(shared->priv);
-		kमुक्त(shared);
-	पूर्ण
+		kfree(shared->priv);
+		kfree(shared);
+	}
 
-	phydev->shared = शून्य;
-पूर्ण
+	phydev->shared = NULL;
+}
 EXPORT_SYMBOL_GPL(phy_package_leave);
 
-अटल व्योम devm_phy_package_leave(काष्ठा device *dev, व्योम *res)
-अणु
-	phy_package_leave(*(काष्ठा phy_device **)res);
-पूर्ण
+static void devm_phy_package_leave(struct device *dev, void *res)
+{
+	phy_package_leave(*(struct phy_device **)res);
+}
 
 /**
  * devm_phy_package_join - resource managed phy_package_join()
- * @dev: device that is रेजिस्टरing this PHY package
- * @phydev: target phy_device काष्ठा
- * @addr: cookie and PHY address क्रम global रेजिस्टर access
- * @priv_size: अगर non-zero allocate this amount of bytes क्रम निजी data
+ * @dev: device that is registering this PHY package
+ * @phydev: target phy_device struct
+ * @addr: cookie and PHY address for global register access
+ * @priv_size: if non-zero allocate this amount of bytes for private data
  *
  * Managed phy_package_join(). Shared storage fetched by this function,
- * phy_package_leave() is स्वतःmatically called on driver detach. See
- * phy_package_join() क्रम more inक्रमmation.
+ * phy_package_leave() is automatically called on driver detach. See
+ * phy_package_join() for more information.
  */
-पूर्णांक devm_phy_package_join(काष्ठा device *dev, काष्ठा phy_device *phydev,
-			  पूर्णांक addr, माप_प्रकार priv_size)
-अणु
-	काष्ठा phy_device **ptr;
-	पूर्णांक ret;
+int devm_phy_package_join(struct device *dev, struct phy_device *phydev,
+			  int addr, size_t priv_size)
+{
+	struct phy_device **ptr;
+	int ret;
 
-	ptr = devres_alloc(devm_phy_package_leave, माप(*ptr),
+	ptr = devres_alloc(devm_phy_package_leave, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस -ENOMEM;
+	if (!ptr)
+		return -ENOMEM;
 
 	ret = phy_package_join(phydev, addr, priv_size);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		*ptr = phydev;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(devm_phy_package_join);
 
 /**
  * phy_detach - detach a PHY device from its network device
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  *
  * This detaches the phy device from its network device and the phy
  * driver, and drops the reference count taken in phy_attach_direct().
  */
-व्योम phy_detach(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा net_device *dev = phydev->attached_dev;
-	काष्ठा module *ndev_owner = शून्य;
-	काष्ठा mii_bus *bus;
+void phy_detach(struct phy_device *phydev)
+{
+	struct net_device *dev = phydev->attached_dev;
+	struct module *ndev_owner = NULL;
+	struct mii_bus *bus;
 
-	अगर (phydev->sysfs_links) अणु
-		अगर (dev)
-			sysfs_हटाओ_link(&dev->dev.kobj, "phydev");
-		sysfs_हटाओ_link(&phydev->mdio.dev.kobj, "attached_dev");
-	पूर्ण
+	if (phydev->sysfs_links) {
+		if (dev)
+			sysfs_remove_link(&dev->dev.kobj, "phydev");
+		sysfs_remove_link(&phydev->mdio.dev.kobj, "attached_dev");
+	}
 
-	अगर (!phydev->attached_dev)
-		sysfs_हटाओ_file(&phydev->mdio.dev.kobj,
+	if (!phydev->attached_dev)
+		sysfs_remove_file(&phydev->mdio.dev.kobj,
 				  &dev_attr_phy_standalone.attr);
 
 	phy_suspend(phydev);
-	अगर (dev) अणु
-		phydev->attached_dev->phydev = शून्य;
-		phydev->attached_dev = शून्य;
-	पूर्ण
-	phydev->phylink = शून्य;
+	if (dev) {
+		phydev->attached_dev->phydev = NULL;
+		phydev->attached_dev = NULL;
+	}
+	phydev->phylink = NULL;
 
-	phy_led_triggers_unरेजिस्टर(phydev);
+	phy_led_triggers_unregister(phydev);
 
-	अगर (phydev->mdio.dev.driver)
+	if (phydev->mdio.dev.driver)
 		module_put(phydev->mdio.dev.driver->owner);
 
-	/* If the device had no specअगरic driver beक्रमe (i.e. - it
+	/* If the device had no specific driver before (i.e. - it
 	 * was using the generic driver), we unbind the device
 	 * from the generic driver so that there's a chance a
 	 * real driver could be loaded
 	 */
-	अगर (phy_driver_is_genphy(phydev) ||
+	if (phy_driver_is_genphy(phydev) ||
 	    phy_driver_is_genphy_10g(phydev))
 		device_release_driver(&phydev->mdio.dev);
 
 	/*
-	 * The phydev might go away on the put_device() below, so aव्योम
-	 * a use-after-मुक्त bug by पढ़ोing the underlying bus first.
+	 * The phydev might go away on the put_device() below, so avoid
+	 * a use-after-free bug by reading the underlying bus first.
 	 */
 	bus = phydev->mdio.bus;
 
 	put_device(&phydev->mdio.dev);
-	अगर (dev)
+	if (dev)
 		ndev_owner = dev->dev.parent->driver->owner;
-	अगर (ndev_owner != bus->owner)
+	if (ndev_owner != bus->owner)
 		module_put(bus->owner);
 
-	/* Assert the reset संकेत */
+	/* Assert the reset signal */
 	phy_device_reset(phydev, 1);
-पूर्ण
+}
 EXPORT_SYMBOL(phy_detach);
 
-पूर्णांक phy_suspend(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा ethtool_wolinfo wol = अणु .cmd = ETHTOOL_GWOL पूर्ण;
-	काष्ठा net_device *netdev = phydev->attached_dev;
-	काष्ठा phy_driver *phydrv = phydev->drv;
-	पूर्णांक ret;
+int phy_suspend(struct phy_device *phydev)
+{
+	struct ethtool_wolinfo wol = { .cmd = ETHTOOL_GWOL };
+	struct net_device *netdev = phydev->attached_dev;
+	struct phy_driver *phydrv = phydev->drv;
+	int ret;
 
-	अगर (phydev->suspended)
-		वापस 0;
+	if (phydev->suspended)
+		return 0;
 
 	/* If the device has WOL enabled, we cannot suspend the PHY */
 	phy_ethtool_get_wol(phydev, &wol);
-	अगर (wol.wolopts || (netdev && netdev->wol_enabled))
-		वापस -EBUSY;
+	if (wol.wolopts || (netdev && netdev->wol_enabled))
+		return -EBUSY;
 
-	अगर (!phydrv || !phydrv->suspend)
-		वापस 0;
+	if (!phydrv || !phydrv->suspend)
+		return 0;
 
 	ret = phydrv->suspend(phydev);
-	अगर (!ret)
+	if (!ret)
 		phydev->suspended = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(phy_suspend);
 
-पूर्णांक __phy_resume(काष्ठा phy_device *phydev)
-अणु
-	काष्ठा phy_driver *phydrv = phydev->drv;
-	पूर्णांक ret;
+int __phy_resume(struct phy_device *phydev)
+{
+	struct phy_driver *phydrv = phydev->drv;
+	int ret;
 
-	lockdep_निश्चित_held(&phydev->lock);
+	lockdep_assert_held(&phydev->lock);
 
-	अगर (!phydrv || !phydrv->resume)
-		वापस 0;
+	if (!phydrv || !phydrv->resume)
+		return 0;
 
 	ret = phydrv->resume(phydev);
-	अगर (!ret)
+	if (!ret)
 		phydev->suspended = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(__phy_resume);
 
-पूर्णांक phy_resume(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक ret;
+int phy_resume(struct phy_device *phydev)
+{
+	int ret;
 
 	mutex_lock(&phydev->lock);
 	ret = __phy_resume(phydev);
 	mutex_unlock(&phydev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(phy_resume);
 
-पूर्णांक phy_loopback(काष्ठा phy_device *phydev, bool enable)
-अणु
-	काष्ठा phy_driver *phydrv = to_phy_driver(phydev->mdio.dev.driver);
-	पूर्णांक ret = 0;
+int phy_loopback(struct phy_device *phydev, bool enable)
+{
+	struct phy_driver *phydrv = to_phy_driver(phydev->mdio.dev.driver);
+	int ret = 0;
 
-	अगर (!phydrv)
-		वापस -ENODEV;
+	if (!phydrv)
+		return -ENODEV;
 
 	mutex_lock(&phydev->lock);
 
-	अगर (enable && phydev->loopback_enabled) अणु
+	if (enable && phydev->loopback_enabled) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!enable && !phydev->loopback_enabled) अणु
+	if (!enable && !phydev->loopback_enabled) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (phydrv->set_loopback)
+	if (phydrv->set_loopback)
 		ret = phydrv->set_loopback(phydev, enable);
-	अन्यथा
+	else
 		ret = genphy_loopback(phydev, enable);
 
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	phydev->loopback_enabled = enable;
 
 out:
 	mutex_unlock(&phydev->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(phy_loopback);
 
 /**
- * phy_reset_after_clk_enable - perक्रमm a PHY reset अगर needed
- * @phydev: target phy_device काष्ठा
+ * phy_reset_after_clk_enable - perform a PHY reset if needed
+ * @phydev: target phy_device struct
  *
  * Description: Some PHYs are known to need a reset after their refclk was
- *   enabled. This function evaluates the flags and perक्रमm the reset अगर it's
- *   needed. Returns < 0 on error, 0 अगर the phy wasn't reset and 1 अगर the phy
+ *   enabled. This function evaluates the flags and perform the reset if it's
+ *   needed. Returns < 0 on error, 0 if the phy wasn't reset and 1 if the phy
  *   was reset.
  */
-पूर्णांक phy_reset_after_clk_enable(काष्ठा phy_device *phydev)
-अणु
-	अगर (!phydev || !phydev->drv)
-		वापस -ENODEV;
+int phy_reset_after_clk_enable(struct phy_device *phydev)
+{
+	if (!phydev || !phydev->drv)
+		return -ENODEV;
 
-	अगर (phydev->drv->flags & PHY_RST_AFTER_CLK_EN) अणु
+	if (phydev->drv->flags & PHY_RST_AFTER_CLK_EN) {
 		phy_device_reset(phydev, 1);
 		phy_device_reset(phydev, 0);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(phy_reset_after_clk_enable);
 
 /* Generic PHY support and helper functions */
 
 /**
- * genphy_config_advert - sanitize and advertise स्वतः-negotiation parameters
- * @phydev: target phy_device काष्ठा
+ * genphy_config_advert - sanitize and advertise auto-negotiation parameters
+ * @phydev: target phy_device struct
  *
  * Description: Writes MII_ADVERTISE with the appropriate values,
  *   after sanitizing the values to make sure we only advertise
- *   what is supported.  Returns < 0 on error, 0 अगर the PHY's advertisement
- *   hasn't changed, and > 0 अगर it has changed.
+ *   what is supported.  Returns < 0 on error, 0 if the PHY's advertisement
+ *   hasn't changed, and > 0 if it has changed.
  */
-अटल पूर्णांक genphy_config_advert(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err, bmsr, changed = 0;
+static int genphy_config_advert(struct phy_device *phydev)
+{
+	int err, bmsr, changed = 0;
 	u32 adv;
 
 	/* Only allow advertising what this PHY supports */
@@ -1856,555 +1855,555 @@ EXPORT_SYMBOL(phy_reset_after_clk_enable);
 	adv = linkmode_adv_to_mii_adv_t(phydev->advertising);
 
 	/* Setup standard advertisement */
-	err = phy_modअगरy_changed(phydev, MII_ADVERTISE,
+	err = phy_modify_changed(phydev, MII_ADVERTISE,
 				 ADVERTISE_ALL | ADVERTISE_100BASE4 |
 				 ADVERTISE_PAUSE_CAP | ADVERTISE_PAUSE_ASYM,
 				 adv);
-	अगर (err < 0)
-		वापस err;
-	अगर (err > 0)
+	if (err < 0)
+		return err;
+	if (err > 0)
 		changed = 1;
 
-	bmsr = phy_पढ़ो(phydev, MII_BMSR);
-	अगर (bmsr < 0)
-		वापस bmsr;
+	bmsr = phy_read(phydev, MII_BMSR);
+	if (bmsr < 0)
+		return bmsr;
 
 	/* Per 802.3-2008, Section 22.2.4.2.16 Extended status all
 	 * 1000Mbits/sec capable PHYs shall have the BMSR_ESTATEN bit set to a
 	 * logical 1.
 	 */
-	अगर (!(bmsr & BMSR_ESTATEN))
-		वापस changed;
+	if (!(bmsr & BMSR_ESTATEN))
+		return changed;
 
 	adv = linkmode_adv_to_mii_ctrl1000_t(phydev->advertising);
 
-	err = phy_modअगरy_changed(phydev, MII_CTRL1000,
+	err = phy_modify_changed(phydev, MII_CTRL1000,
 				 ADVERTISE_1000FULL | ADVERTISE_1000HALF,
 				 adv);
-	अगर (err < 0)
-		वापस err;
-	अगर (err > 0)
+	if (err < 0)
+		return err;
+	if (err > 0)
 		changed = 1;
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
 /**
- * genphy_c37_config_advert - sanitize and advertise स्वतः-negotiation parameters
- * @phydev: target phy_device काष्ठा
+ * genphy_c37_config_advert - sanitize and advertise auto-negotiation parameters
+ * @phydev: target phy_device struct
  *
  * Description: Writes MII_ADVERTISE with the appropriate values,
  *   after sanitizing the values to make sure we only advertise
- *   what is supported.  Returns < 0 on error, 0 अगर the PHY's advertisement
- *   hasn't changed, and > 0 अगर it has changed. This function is पूर्णांकended
- *   क्रम Clause 37 1000Base-X mode.
+ *   what is supported.  Returns < 0 on error, 0 if the PHY's advertisement
+ *   hasn't changed, and > 0 if it has changed. This function is intended
+ *   for Clause 37 1000Base-X mode.
  */
-अटल पूर्णांक genphy_c37_config_advert(काष्ठा phy_device *phydev)
-अणु
+static int genphy_c37_config_advert(struct phy_device *phydev)
+{
 	u16 adv = 0;
 
 	/* Only allow advertising what this PHY supports */
 	linkmode_and(phydev->advertising, phydev->advertising,
 		     phydev->supported);
 
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
 			      phydev->advertising))
 		adv |= ADVERTISE_1000XFULL;
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
 			      phydev->advertising))
 		adv |= ADVERTISE_1000XPAUSE;
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
 			      phydev->advertising))
 		adv |= ADVERTISE_1000XPSE_ASYM;
 
-	वापस phy_modअगरy_changed(phydev, MII_ADVERTISE,
+	return phy_modify_changed(phydev, MII_ADVERTISE,
 				  ADVERTISE_1000XFULL | ADVERTISE_1000XPAUSE |
 				  ADVERTISE_1000XHALF | ADVERTISE_1000XPSE_ASYM,
 				  adv);
-पूर्ण
+}
 
 /**
  * genphy_config_eee_advert - disable unwanted eee mode advertisement
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  *
  * Description: Writes MDIO_AN_EEE_ADV after disabling unsupported energy
- *   efficent ethernet modes. Returns 0 अगर the PHY's advertisement hasn't
- *   changed, and 1 अगर it has changed.
+ *   efficent ethernet modes. Returns 0 if the PHY's advertisement hasn't
+ *   changed, and 1 if it has changed.
  */
-पूर्णांक genphy_config_eee_advert(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+int genphy_config_eee_advert(struct phy_device *phydev)
+{
+	int err;
 
 	/* Nothing to disable */
-	अगर (!phydev->eee_broken_modes)
-		वापस 0;
+	if (!phydev->eee_broken_modes)
+		return 0;
 
-	err = phy_modअगरy_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_EEE_ADV,
+	err = phy_modify_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_EEE_ADV,
 				     phydev->eee_broken_modes, 0);
 	/* If the call failed, we assume that EEE is not supported */
-	वापस err < 0 ? 0 : err;
-पूर्ण
+	return err < 0 ? 0 : err;
+}
 EXPORT_SYMBOL(genphy_config_eee_advert);
 
 /**
- * genphy_setup_क्रमced - configures/क्रमces speed/duplex from @phydev
- * @phydev: target phy_device काष्ठा
+ * genphy_setup_forced - configures/forces speed/duplex from @phydev
+ * @phydev: target phy_device struct
  *
- * Description: Configures MII_BMCR to क्रमce speed/duplex
+ * Description: Configures MII_BMCR to force speed/duplex
  *   to the values in phydev. Assumes that the values are valid.
  *   Please see phy_sanitize_settings().
  */
-पूर्णांक genphy_setup_क्रमced(काष्ठा phy_device *phydev)
-अणु
+int genphy_setup_forced(struct phy_device *phydev)
+{
 	u16 ctl = 0;
 
-	phydev->छोड़ो = 0;
-	phydev->asym_छोड़ो = 0;
+	phydev->pause = 0;
+	phydev->asym_pause = 0;
 
-	अगर (SPEED_1000 == phydev->speed)
+	if (SPEED_1000 == phydev->speed)
 		ctl |= BMCR_SPEED1000;
-	अन्यथा अगर (SPEED_100 == phydev->speed)
+	else if (SPEED_100 == phydev->speed)
 		ctl |= BMCR_SPEED100;
 
-	अगर (DUPLEX_FULL == phydev->duplex)
+	if (DUPLEX_FULL == phydev->duplex)
 		ctl |= BMCR_FULLDPLX;
 
-	वापस phy_modअगरy(phydev, MII_BMCR,
+	return phy_modify(phydev, MII_BMCR,
 			  ~(BMCR_LOOPBACK | BMCR_ISOLATE | BMCR_PDOWN), ctl);
-पूर्ण
-EXPORT_SYMBOL(genphy_setup_क्रमced);
+}
+EXPORT_SYMBOL(genphy_setup_forced);
 
-अटल पूर्णांक genphy_setup_master_slave(काष्ठा phy_device *phydev)
-अणु
+static int genphy_setup_master_slave(struct phy_device *phydev)
+{
 	u16 ctl = 0;
 
-	अगर (!phydev->is_gigabit_capable)
-		वापस 0;
+	if (!phydev->is_gigabit_capable)
+		return 0;
 
-	चयन (phydev->master_slave_set) अणु
-	हाल MASTER_SLAVE_CFG_MASTER_PREFERRED:
+	switch (phydev->master_slave_set) {
+	case MASTER_SLAVE_CFG_MASTER_PREFERRED:
 		ctl |= CTL1000_PREFER_MASTER;
-		अवरोध;
-	हाल MASTER_SLAVE_CFG_SLAVE_PREFERRED:
-		अवरोध;
-	हाल MASTER_SLAVE_CFG_MASTER_FORCE:
+		break;
+	case MASTER_SLAVE_CFG_SLAVE_PREFERRED:
+		break;
+	case MASTER_SLAVE_CFG_MASTER_FORCE:
 		ctl |= CTL1000_AS_MASTER;
 		fallthrough;
-	हाल MASTER_SLAVE_CFG_SLAVE_FORCE:
+	case MASTER_SLAVE_CFG_SLAVE_FORCE:
 		ctl |= CTL1000_ENABLE_MASTER;
-		अवरोध;
-	हाल MASTER_SLAVE_CFG_UNKNOWN:
-	हाल MASTER_SLAVE_CFG_UNSUPPORTED:
-		वापस 0;
-	शेष:
+		break;
+	case MASTER_SLAVE_CFG_UNKNOWN:
+	case MASTER_SLAVE_CFG_UNSUPPORTED:
+		return 0;
+	default:
 		phydev_warn(phydev, "Unsupported Master/Slave mode\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	वापस phy_modअगरy_changed(phydev, MII_CTRL1000,
+	return phy_modify_changed(phydev, MII_CTRL1000,
 				  (CTL1000_ENABLE_MASTER | CTL1000_AS_MASTER |
 				   CTL1000_PREFER_MASTER), ctl);
-पूर्ण
+}
 
-अटल पूर्णांक genphy_पढ़ो_master_slave(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक cfg, state;
-	पूर्णांक val;
+static int genphy_read_master_slave(struct phy_device *phydev)
+{
+	int cfg, state;
+	int val;
 
-	अगर (!phydev->is_gigabit_capable) अणु
+	if (!phydev->is_gigabit_capable) {
 		phydev->master_slave_get = MASTER_SLAVE_CFG_UNSUPPORTED;
 		phydev->master_slave_state = MASTER_SLAVE_STATE_UNSUPPORTED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	phydev->master_slave_get = MASTER_SLAVE_CFG_UNKNOWN;
 	phydev->master_slave_state = MASTER_SLAVE_STATE_UNKNOWN;
 
-	val = phy_पढ़ो(phydev, MII_CTRL1000);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read(phydev, MII_CTRL1000);
+	if (val < 0)
+		return val;
 
-	अगर (val & CTL1000_ENABLE_MASTER) अणु
-		अगर (val & CTL1000_AS_MASTER)
+	if (val & CTL1000_ENABLE_MASTER) {
+		if (val & CTL1000_AS_MASTER)
 			cfg = MASTER_SLAVE_CFG_MASTER_FORCE;
-		अन्यथा
+		else
 			cfg = MASTER_SLAVE_CFG_SLAVE_FORCE;
-	पूर्ण अन्यथा अणु
-		अगर (val & CTL1000_PREFER_MASTER)
+	} else {
+		if (val & CTL1000_PREFER_MASTER)
 			cfg = MASTER_SLAVE_CFG_MASTER_PREFERRED;
-		अन्यथा
+		else
 			cfg = MASTER_SLAVE_CFG_SLAVE_PREFERRED;
-	पूर्ण
+	}
 
-	val = phy_पढ़ो(phydev, MII_STAT1000);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read(phydev, MII_STAT1000);
+	if (val < 0)
+		return val;
 
-	अगर (val & LPA_1000MSFAIL) अणु
+	if (val & LPA_1000MSFAIL) {
 		state = MASTER_SLAVE_STATE_ERR;
-	पूर्ण अन्यथा अगर (phydev->link) अणु
-		/* this bits are valid only क्रम active link */
-		अगर (val & LPA_1000MSRES)
+	} else if (phydev->link) {
+		/* this bits are valid only for active link */
+		if (val & LPA_1000MSRES)
 			state = MASTER_SLAVE_STATE_MASTER;
-		अन्यथा
+		else
 			state = MASTER_SLAVE_STATE_SLAVE;
-	पूर्ण अन्यथा अणु
+	} else {
 		state = MASTER_SLAVE_STATE_UNKNOWN;
-	पूर्ण
+	}
 
 	phydev->master_slave_get = cfg;
 	phydev->master_slave_state = state;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * genphy_restart_aneg - Enable and Restart Autonegotiation
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  */
-पूर्णांक genphy_restart_aneg(काष्ठा phy_device *phydev)
-अणु
+int genphy_restart_aneg(struct phy_device *phydev)
+{
 	/* Don't isolate the PHY if we're negotiating */
-	वापस phy_modअगरy(phydev, MII_BMCR, BMCR_ISOLATE,
+	return phy_modify(phydev, MII_BMCR, BMCR_ISOLATE,
 			  BMCR_ANENABLE | BMCR_ANRESTART);
-पूर्ण
+}
 EXPORT_SYMBOL(genphy_restart_aneg);
 
 /**
- * genphy_check_and_restart_aneg - Enable and restart स्वतः-negotiation
- * @phydev: target phy_device काष्ठा
+ * genphy_check_and_restart_aneg - Enable and restart auto-negotiation
+ * @phydev: target phy_device struct
  * @restart: whether aneg restart is requested
  *
- * Check, and restart स्वतः-negotiation अगर needed.
+ * Check, and restart auto-negotiation if needed.
  */
-पूर्णांक genphy_check_and_restart_aneg(काष्ठा phy_device *phydev, bool restart)
-अणु
-	पूर्णांक ret;
+int genphy_check_and_restart_aneg(struct phy_device *phydev, bool restart)
+{
+	int ret;
 
-	अगर (!restart) अणु
+	if (!restart) {
 		/* Advertisement hasn't changed, but maybe aneg was never on to
 		 * begin with?  Or maybe phy was isolated?
 		 */
-		ret = phy_पढ़ो(phydev, MII_BMCR);
-		अगर (ret < 0)
-			वापस ret;
+		ret = phy_read(phydev, MII_BMCR);
+		if (ret < 0)
+			return ret;
 
-		अगर (!(ret & BMCR_ANENABLE) || (ret & BMCR_ISOLATE))
+		if (!(ret & BMCR_ANENABLE) || (ret & BMCR_ISOLATE))
 			restart = true;
-	पूर्ण
+	}
 
-	अगर (restart)
-		वापस genphy_restart_aneg(phydev);
+	if (restart)
+		return genphy_restart_aneg(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(genphy_check_and_restart_aneg);
 
 /**
- * __genphy_config_aneg - restart स्वतः-negotiation or ग_लिखो BMCR
- * @phydev: target phy_device काष्ठा
- * @changed: whether स्वतःneg is requested
+ * __genphy_config_aneg - restart auto-negotiation or write BMCR
+ * @phydev: target phy_device struct
+ * @changed: whether autoneg is requested
  *
- * Description: If स्वतः-negotiation is enabled, we configure the
- *   advertising, and then restart स्वतः-negotiation.  If it is not
- *   enabled, then we ग_लिखो the BMCR.
+ * Description: If auto-negotiation is enabled, we configure the
+ *   advertising, and then restart auto-negotiation.  If it is not
+ *   enabled, then we write the BMCR.
  */
-पूर्णांक __genphy_config_aneg(काष्ठा phy_device *phydev, bool changed)
-अणु
-	पूर्णांक err;
+int __genphy_config_aneg(struct phy_device *phydev, bool changed)
+{
+	int err;
 
-	अगर (genphy_config_eee_advert(phydev))
+	if (genphy_config_eee_advert(phydev))
 		changed = true;
 
 	err = genphy_setup_master_slave(phydev);
-	अगर (err < 0)
-		वापस err;
-	अन्यथा अगर (err)
+	if (err < 0)
+		return err;
+	else if (err)
 		changed = true;
 
-	अगर (AUTONEG_ENABLE != phydev->स्वतःneg)
-		वापस genphy_setup_क्रमced(phydev);
+	if (AUTONEG_ENABLE != phydev->autoneg)
+		return genphy_setup_forced(phydev);
 
 	err = genphy_config_advert(phydev);
-	अगर (err < 0) /* error */
-		वापस err;
-	अन्यथा अगर (err)
+	if (err < 0) /* error */
+		return err;
+	else if (err)
 		changed = true;
 
-	वापस genphy_check_and_restart_aneg(phydev, changed);
-पूर्ण
+	return genphy_check_and_restart_aneg(phydev, changed);
+}
 EXPORT_SYMBOL(__genphy_config_aneg);
 
 /**
- * genphy_c37_config_aneg - restart स्वतः-negotiation or ग_लिखो BMCR
- * @phydev: target phy_device काष्ठा
+ * genphy_c37_config_aneg - restart auto-negotiation or write BMCR
+ * @phydev: target phy_device struct
  *
- * Description: If स्वतः-negotiation is enabled, we configure the
- *   advertising, and then restart स्वतः-negotiation.  If it is not
- *   enabled, then we ग_लिखो the BMCR. This function is पूर्णांकended
- *   क्रम use with Clause 37 1000Base-X mode.
+ * Description: If auto-negotiation is enabled, we configure the
+ *   advertising, and then restart auto-negotiation.  If it is not
+ *   enabled, then we write the BMCR. This function is intended
+ *   for use with Clause 37 1000Base-X mode.
  */
-पूर्णांक genphy_c37_config_aneg(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err, changed;
+int genphy_c37_config_aneg(struct phy_device *phydev)
+{
+	int err, changed;
 
-	अगर (phydev->स्वतःneg != AUTONEG_ENABLE)
-		वापस genphy_setup_क्रमced(phydev);
+	if (phydev->autoneg != AUTONEG_ENABLE)
+		return genphy_setup_forced(phydev);
 
-	err = phy_modअगरy(phydev, MII_BMCR, BMCR_SPEED1000 | BMCR_SPEED100,
+	err = phy_modify(phydev, MII_BMCR, BMCR_SPEED1000 | BMCR_SPEED100,
 			 BMCR_SPEED1000);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	changed = genphy_c37_config_advert(phydev);
-	अगर (changed < 0) /* error */
-		वापस changed;
+	if (changed < 0) /* error */
+		return changed;
 
-	अगर (!changed) अणु
+	if (!changed) {
 		/* Advertisement hasn't changed, but maybe aneg was never on to
 		 * begin with?  Or maybe phy was isolated?
 		 */
-		पूर्णांक ctl = phy_पढ़ो(phydev, MII_BMCR);
+		int ctl = phy_read(phydev, MII_BMCR);
 
-		अगर (ctl < 0)
-			वापस ctl;
+		if (ctl < 0)
+			return ctl;
 
-		अगर (!(ctl & BMCR_ANENABLE) || (ctl & BMCR_ISOLATE))
-			changed = 1; /* करो restart aneg */
-	पूर्ण
+		if (!(ctl & BMCR_ANENABLE) || (ctl & BMCR_ISOLATE))
+			changed = 1; /* do restart aneg */
+	}
 
-	/* Only restart aneg अगर we are advertising something dअगरferent
-	 * than we were beक्रमe.
+	/* Only restart aneg if we are advertising something different
+	 * than we were before.
 	 */
-	अगर (changed > 0)
-		वापस genphy_restart_aneg(phydev);
+	if (changed > 0)
+		return genphy_restart_aneg(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(genphy_c37_config_aneg);
 
 /**
- * genphy_aneg_करोne - वापस स्वतः-negotiation status
- * @phydev: target phy_device काष्ठा
+ * genphy_aneg_done - return auto-negotiation status
+ * @phydev: target phy_device struct
  *
- * Description: Reads the status रेजिस्टर and वापसs 0 either अगर
- *   स्वतः-negotiation is incomplete, or अगर there was an error.
- *   Returns BMSR_ANEGCOMPLETE अगर स्वतः-negotiation is करोne.
+ * Description: Reads the status register and returns 0 either if
+ *   auto-negotiation is incomplete, or if there was an error.
+ *   Returns BMSR_ANEGCOMPLETE if auto-negotiation is done.
  */
-पूर्णांक genphy_aneg_करोne(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक retval = phy_पढ़ो(phydev, MII_BMSR);
+int genphy_aneg_done(struct phy_device *phydev)
+{
+	int retval = phy_read(phydev, MII_BMSR);
 
-	वापस (retval < 0) ? retval : (retval & BMSR_ANEGCOMPLETE);
-पूर्ण
-EXPORT_SYMBOL(genphy_aneg_करोne);
+	return (retval < 0) ? retval : (retval & BMSR_ANEGCOMPLETE);
+}
+EXPORT_SYMBOL(genphy_aneg_done);
 
 /**
  * genphy_update_link - update link status in @phydev
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  *
  * Description: Update the value in phydev->link to reflect the
- *   current link value.  In order to करो this, we need to पढ़ो
- *   the status रेजिस्टर twice, keeping the second value.
+ *   current link value.  In order to do this, we need to read
+ *   the status register twice, keeping the second value.
  */
-पूर्णांक genphy_update_link(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक status = 0, bmcr;
+int genphy_update_link(struct phy_device *phydev)
+{
+	int status = 0, bmcr;
 
-	bmcr = phy_पढ़ो(phydev, MII_BMCR);
-	अगर (bmcr < 0)
-		वापस bmcr;
+	bmcr = phy_read(phydev, MII_BMCR);
+	if (bmcr < 0)
+		return bmcr;
 
-	/* Autoneg is being started, thereक्रमe disregard BMSR value and
-	 * report link as करोwn.
+	/* Autoneg is being started, therefore disregard BMSR value and
+	 * report link as down.
 	 */
-	अगर (bmcr & BMCR_ANRESTART)
-		जाओ करोne;
+	if (bmcr & BMCR_ANRESTART)
+		goto done;
 
 	/* The link state is latched low so that momentary link
-	 * drops can be detected. Do not द्विगुन-पढ़ो the status
-	 * in polling mode to detect such लघु link drops except
-	 * the link was alपढ़ोy करोwn.
+	 * drops can be detected. Do not double-read the status
+	 * in polling mode to detect such short link drops except
+	 * the link was already down.
 	 */
-	अगर (!phy_polling_mode(phydev) || !phydev->link) अणु
-		status = phy_पढ़ो(phydev, MII_BMSR);
-		अगर (status < 0)
-			वापस status;
-		अन्यथा अगर (status & BMSR_LSTATUS)
-			जाओ करोne;
-	पूर्ण
+	if (!phy_polling_mode(phydev) || !phydev->link) {
+		status = phy_read(phydev, MII_BMSR);
+		if (status < 0)
+			return status;
+		else if (status & BMSR_LSTATUS)
+			goto done;
+	}
 
-	/* Read link and स्वतःnegotiation status */
-	status = phy_पढ़ो(phydev, MII_BMSR);
-	अगर (status < 0)
-		वापस status;
-करोne:
+	/* Read link and autonegotiation status */
+	status = phy_read(phydev, MII_BMSR);
+	if (status < 0)
+		return status;
+done:
 	phydev->link = status & BMSR_LSTATUS ? 1 : 0;
-	phydev->स्वतःneg_complete = status & BMSR_ANEGCOMPLETE ? 1 : 0;
+	phydev->autoneg_complete = status & BMSR_ANEGCOMPLETE ? 1 : 0;
 
-	/* Consider the हाल that स्वतःneg was started and "aneg complete"
+	/* Consider the case that autoneg was started and "aneg complete"
 	 * bit has been reset, but "link up" bit not yet.
 	 */
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE && !phydev->स्वतःneg_complete)
+	if (phydev->autoneg == AUTONEG_ENABLE && !phydev->autoneg_complete)
 		phydev->link = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(genphy_update_link);
 
-पूर्णांक genphy_पढ़ो_lpa(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक lpa, lpagb;
+int genphy_read_lpa(struct phy_device *phydev)
+{
+	int lpa, lpagb;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE) अणु
-		अगर (!phydev->स्वतःneg_complete) अणु
+	if (phydev->autoneg == AUTONEG_ENABLE) {
+		if (!phydev->autoneg_complete) {
 			mii_stat1000_mod_linkmode_lpa_t(phydev->lp_advertising,
 							0);
 			mii_lpa_mod_linkmode_lpa_t(phydev->lp_advertising, 0);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (phydev->is_gigabit_capable) अणु
-			lpagb = phy_पढ़ो(phydev, MII_STAT1000);
-			अगर (lpagb < 0)
-				वापस lpagb;
+		if (phydev->is_gigabit_capable) {
+			lpagb = phy_read(phydev, MII_STAT1000);
+			if (lpagb < 0)
+				return lpagb;
 
-			अगर (lpagb & LPA_1000MSFAIL) अणु
-				पूर्णांक adv = phy_पढ़ो(phydev, MII_CTRL1000);
+			if (lpagb & LPA_1000MSFAIL) {
+				int adv = phy_read(phydev, MII_CTRL1000);
 
-				अगर (adv < 0)
-					वापस adv;
+				if (adv < 0)
+					return adv;
 
-				अगर (adv & CTL1000_ENABLE_MASTER)
+				if (adv & CTL1000_ENABLE_MASTER)
 					phydev_err(phydev, "Master/Slave resolution failed, maybe conflicting manual settings?\n");
-				अन्यथा
+				else
 					phydev_err(phydev, "Master/Slave resolution failed\n");
-				वापस -ENOLINK;
-			पूर्ण
+				return -ENOLINK;
+			}
 
 			mii_stat1000_mod_linkmode_lpa_t(phydev->lp_advertising,
 							lpagb);
-		पूर्ण
+		}
 
-		lpa = phy_पढ़ो(phydev, MII_LPA);
-		अगर (lpa < 0)
-			वापस lpa;
+		lpa = phy_read(phydev, MII_LPA);
+		if (lpa < 0)
+			return lpa;
 
 		mii_lpa_mod_linkmode_lpa_t(phydev->lp_advertising, lpa);
-	पूर्ण अन्यथा अणु
+	} else {
 		linkmode_zero(phydev->lp_advertising);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(genphy_पढ़ो_lpa);
+	return 0;
+}
+EXPORT_SYMBOL(genphy_read_lpa);
 
 /**
- * genphy_पढ़ो_status_fixed - पढ़ो the link parameters क्रम !aneg mode
- * @phydev: target phy_device काष्ठा
+ * genphy_read_status_fixed - read the link parameters for !aneg mode
+ * @phydev: target phy_device struct
  *
- * Read the current duplex and speed state क्रम a PHY operating with
- * स्वतःnegotiation disabled.
+ * Read the current duplex and speed state for a PHY operating with
+ * autonegotiation disabled.
  */
-पूर्णांक genphy_पढ़ो_status_fixed(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक bmcr = phy_पढ़ो(phydev, MII_BMCR);
+int genphy_read_status_fixed(struct phy_device *phydev)
+{
+	int bmcr = phy_read(phydev, MII_BMCR);
 
-	अगर (bmcr < 0)
-		वापस bmcr;
+	if (bmcr < 0)
+		return bmcr;
 
-	अगर (bmcr & BMCR_FULLDPLX)
+	if (bmcr & BMCR_FULLDPLX)
 		phydev->duplex = DUPLEX_FULL;
-	अन्यथा
+	else
 		phydev->duplex = DUPLEX_HALF;
 
-	अगर (bmcr & BMCR_SPEED1000)
+	if (bmcr & BMCR_SPEED1000)
 		phydev->speed = SPEED_1000;
-	अन्यथा अगर (bmcr & BMCR_SPEED100)
+	else if (bmcr & BMCR_SPEED100)
 		phydev->speed = SPEED_100;
-	अन्यथा
+	else
 		phydev->speed = SPEED_10;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(genphy_पढ़ो_status_fixed);
+	return 0;
+}
+EXPORT_SYMBOL(genphy_read_status_fixed);
 
 /**
- * genphy_पढ़ो_status - check the link status and update current link state
- * @phydev: target phy_device काष्ठा
+ * genphy_read_status - check the link status and update current link state
+ * @phydev: target phy_device struct
  *
  * Description: Check the link, then figure out the current state
  *   by comparing what we advertise with what the link partner
  *   advertises.  Start by checking the gigabit possibilities,
  *   then move on to 10/100.
  */
-पूर्णांक genphy_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err, old_link = phydev->link;
+int genphy_read_status(struct phy_device *phydev)
+{
+	int err, old_link = phydev->link;
 
-	/* Update the link, but वापस अगर there was an error */
+	/* Update the link, but return if there was an error */
 	err = genphy_update_link(phydev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* why bother the PHY अगर nothing can have changed */
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE && old_link && phydev->link)
-		वापस 0;
+	/* why bother the PHY if nothing can have changed */
+	if (phydev->autoneg == AUTONEG_ENABLE && old_link && phydev->link)
+		return 0;
 
 	phydev->speed = SPEED_UNKNOWN;
 	phydev->duplex = DUPLEX_UNKNOWN;
-	phydev->छोड़ो = 0;
-	phydev->asym_छोड़ो = 0;
+	phydev->pause = 0;
+	phydev->asym_pause = 0;
 
-	err = genphy_पढ़ो_master_slave(phydev);
-	अगर (err < 0)
-		वापस err;
+	err = genphy_read_master_slave(phydev);
+	if (err < 0)
+		return err;
 
-	err = genphy_पढ़ो_lpa(phydev);
-	अगर (err < 0)
-		वापस err;
+	err = genphy_read_lpa(phydev);
+	if (err < 0)
+		return err;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE && phydev->स्वतःneg_complete) अणु
+	if (phydev->autoneg == AUTONEG_ENABLE && phydev->autoneg_complete) {
 		phy_resolve_aneg_linkmode(phydev);
-	पूर्ण अन्यथा अगर (phydev->स्वतःneg == AUTONEG_DISABLE) अणु
-		err = genphy_पढ़ो_status_fixed(phydev);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	} else if (phydev->autoneg == AUTONEG_DISABLE) {
+		err = genphy_read_status_fixed(phydev);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(genphy_पढ़ो_status);
+	return 0;
+}
+EXPORT_SYMBOL(genphy_read_status);
 
 /**
- * genphy_c37_पढ़ो_status - check the link status and update current link state
- * @phydev: target phy_device काष्ठा
+ * genphy_c37_read_status - check the link status and update current link state
+ * @phydev: target phy_device struct
  *
  * Description: Check the link, then figure out the current state
  *   by comparing what we advertise with what the link partner
- *   advertises. This function is क्रम Clause 37 1000Base-X mode.
+ *   advertises. This function is for Clause 37 1000Base-X mode.
  */
-पूर्णांक genphy_c37_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक lpa, err, old_link = phydev->link;
+int genphy_c37_read_status(struct phy_device *phydev)
+{
+	int lpa, err, old_link = phydev->link;
 
-	/* Update the link, but वापस अगर there was an error */
+	/* Update the link, but return if there was an error */
 	err = genphy_update_link(phydev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* why bother the PHY अगर nothing can have changed */
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE && old_link && phydev->link)
-		वापस 0;
+	/* why bother the PHY if nothing can have changed */
+	if (phydev->autoneg == AUTONEG_ENABLE && old_link && phydev->link)
+		return 0;
 
 	phydev->duplex = DUPLEX_UNKNOWN;
-	phydev->छोड़ो = 0;
-	phydev->asym_छोड़ो = 0;
+	phydev->pause = 0;
+	phydev->asym_pause = 0;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE && phydev->स्वतःneg_complete) अणु
-		lpa = phy_पढ़ो(phydev, MII_LPA);
-		अगर (lpa < 0)
-			वापस lpa;
+	if (phydev->autoneg == AUTONEG_ENABLE && phydev->autoneg_complete) {
+		lpa = phy_read(phydev, MII_LPA);
+		if (lpa < 0)
+			return lpa;
 
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 				 phydev->lp_advertising, lpa & LPA_LPACK);
@@ -2417,94 +2416,94 @@ EXPORT_SYMBOL(genphy_पढ़ो_status);
 				 lpa & LPA_1000XPAUSE_ASYM);
 
 		phy_resolve_aneg_linkmode(phydev);
-	पूर्ण अन्यथा अगर (phydev->स्वतःneg == AUTONEG_DISABLE) अणु
-		पूर्णांक bmcr = phy_पढ़ो(phydev, MII_BMCR);
+	} else if (phydev->autoneg == AUTONEG_DISABLE) {
+		int bmcr = phy_read(phydev, MII_BMCR);
 
-		अगर (bmcr < 0)
-			वापस bmcr;
+		if (bmcr < 0)
+			return bmcr;
 
-		अगर (bmcr & BMCR_FULLDPLX)
+		if (bmcr & BMCR_FULLDPLX)
 			phydev->duplex = DUPLEX_FULL;
-		अन्यथा
+		else
 			phydev->duplex = DUPLEX_HALF;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(genphy_c37_पढ़ो_status);
+	return 0;
+}
+EXPORT_SYMBOL(genphy_c37_read_status);
 
 /**
  * genphy_soft_reset - software reset the PHY via BMCR_RESET bit
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  *
- * Description: Perक्रमm a software PHY reset using the standard
- * BMCR_RESET bit and poll क्रम the reset bit to be cleared.
+ * Description: Perform a software PHY reset using the standard
+ * BMCR_RESET bit and poll for the reset bit to be cleared.
  *
  * Returns: 0 on success, < 0 on failure
  */
-पूर्णांक genphy_soft_reset(काष्ठा phy_device *phydev)
-अणु
+int genphy_soft_reset(struct phy_device *phydev)
+{
 	u16 res = BMCR_RESET;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (phydev->स्वतःneg == AUTONEG_ENABLE)
+	if (phydev->autoneg == AUTONEG_ENABLE)
 		res |= BMCR_ANRESTART;
 
-	ret = phy_modअगरy(phydev, MII_BMCR, BMCR_ISOLATE, res);
-	अगर (ret < 0)
-		वापस ret;
+	ret = phy_modify(phydev, MII_BMCR, BMCR_ISOLATE, res);
+	if (ret < 0)
+		return ret;
 
-	/* Clause 22 states that setting bit BMCR_RESET sets control रेजिस्टरs
-	 * to their शेष value. Thereक्रमe the POWER DOWN bit is supposed to
+	/* Clause 22 states that setting bit BMCR_RESET sets control registers
+	 * to their default value. Therefore the POWER DOWN bit is supposed to
 	 * be cleared after soft reset.
 	 */
 	phydev->suspended = 0;
 
 	ret = phy_poll_reset(phydev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* BMCR may be reset to शेषs */
-	अगर (phydev->स्वतःneg == AUTONEG_DISABLE)
-		ret = genphy_setup_क्रमced(phydev);
+	/* BMCR may be reset to defaults */
+	if (phydev->autoneg == AUTONEG_DISABLE)
+		ret = genphy_setup_forced(phydev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(genphy_soft_reset);
 
-irqवापस_t genphy_handle_पूर्णांकerrupt_no_ack(काष्ठा phy_device *phydev)
-अणु
-	/* It seems there are हालs where the पूर्णांकerrupts are handled by another
-	 * entity (ie an IRQ controller embedded inside the PHY) and करो not
-	 * need any other पूर्णांकerraction from phylib. In this हाल, just trigger
+irqreturn_t genphy_handle_interrupt_no_ack(struct phy_device *phydev)
+{
+	/* It seems there are cases where the interrupts are handled by another
+	 * entity (ie an IRQ controller embedded inside the PHY) and do not
+	 * need any other interraction from phylib. In this case, just trigger
 	 * the state machine directly.
 	 */
 	phy_trigger_machine(phydev);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(genphy_handle_पूर्णांकerrupt_no_ack);
+	return 0;
+}
+EXPORT_SYMBOL(genphy_handle_interrupt_no_ack);
 
 /**
- * genphy_पढ़ो_abilities - पढ़ो PHY abilities from Clause 22 रेजिस्टरs
- * @phydev: target phy_device काष्ठा
+ * genphy_read_abilities - read PHY abilities from Clause 22 registers
+ * @phydev: target phy_device struct
  *
  * Description: Reads the PHY's abilities and populates
  * phydev->supported accordingly.
  *
  * Returns: 0 on success, < 0 on failure
  */
-पूर्णांक genphy_पढ़ो_abilities(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक val;
+int genphy_read_abilities(struct phy_device *phydev)
+{
+	int val;
 
 	linkmode_set_bit_array(phy_basic_ports_array,
 			       ARRAY_SIZE(phy_basic_ports_array),
 			       phydev->supported);
 
-	val = phy_पढ़ो(phydev, MII_BMSR);
-	अगर (val < 0)
-		वापस val;
+	val = phy_read(phydev, MII_BMSR);
+	if (val < 0)
+		return val;
 
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_Autoneg_BIT, phydev->supported,
 			 val & BMSR_ANEGCAPABLE);
@@ -2518,10 +2517,10 @@ EXPORT_SYMBOL(genphy_handle_पूर्णांकerrupt_no_ack);
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_10baseT_Half_BIT, phydev->supported,
 			 val & BMSR_10HALF);
 
-	अगर (val & BMSR_ESTATEN) अणु
-		val = phy_पढ़ो(phydev, MII_ESTATUS);
-		अगर (val < 0)
-			वापस val;
+	if (val & BMSR_ESTATEN) {
+		val = phy_read(phydev, MII_ESTATUS);
+		if (val < 0)
+			return val;
 
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 				 phydev->supported, val & ESTATUS_1000_TFULL);
@@ -2529,403 +2528,403 @@ EXPORT_SYMBOL(genphy_handle_पूर्णांकerrupt_no_ack);
 				 phydev->supported, val & ESTATUS_1000_THALF);
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
 				 phydev->supported, val & ESTATUS_1000_XFULL);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(genphy_पढ़ो_abilities);
+	return 0;
+}
+EXPORT_SYMBOL(genphy_read_abilities);
 
-/* This is used क्रम the phy device which करोesn't support the MMD extended
- * रेजिस्टर access, but it करोes have side effect when we are trying to access
- * the MMD रेजिस्टर via indirect method.
+/* This is used for the phy device which doesn't support the MMD extended
+ * register access, but it does have side effect when we are trying to access
+ * the MMD register via indirect method.
  */
-पूर्णांक genphy_पढ़ो_mmd_unsupported(काष्ठा phy_device *phdev, पूर्णांक devad, u16 regnum)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(genphy_पढ़ो_mmd_unsupported);
+int genphy_read_mmd_unsupported(struct phy_device *phdev, int devad, u16 regnum)
+{
+	return -EOPNOTSUPP;
+}
+EXPORT_SYMBOL(genphy_read_mmd_unsupported);
 
-पूर्णांक genphy_ग_लिखो_mmd_unsupported(काष्ठा phy_device *phdev, पूर्णांक devnum,
+int genphy_write_mmd_unsupported(struct phy_device *phdev, int devnum,
 				 u16 regnum, u16 val)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-EXPORT_SYMBOL(genphy_ग_लिखो_mmd_unsupported);
+{
+	return -EOPNOTSUPP;
+}
+EXPORT_SYMBOL(genphy_write_mmd_unsupported);
 
-पूर्णांक genphy_suspend(काष्ठा phy_device *phydev)
-अणु
-	वापस phy_set_bits(phydev, MII_BMCR, BMCR_PDOWN);
-पूर्ण
+int genphy_suspend(struct phy_device *phydev)
+{
+	return phy_set_bits(phydev, MII_BMCR, BMCR_PDOWN);
+}
 EXPORT_SYMBOL(genphy_suspend);
 
-पूर्णांक genphy_resume(काष्ठा phy_device *phydev)
-अणु
-	वापस phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN);
-पूर्ण
+int genphy_resume(struct phy_device *phydev)
+{
+	return phy_clear_bits(phydev, MII_BMCR, BMCR_PDOWN);
+}
 EXPORT_SYMBOL(genphy_resume);
 
-पूर्णांक genphy_loopback(काष्ठा phy_device *phydev, bool enable)
-अणु
-	अगर (enable) अणु
+int genphy_loopback(struct phy_device *phydev, bool enable)
+{
+	if (enable) {
 		u16 val, ctl = BMCR_LOOPBACK;
-		पूर्णांक ret;
+		int ret;
 
-		अगर (phydev->speed == SPEED_1000)
+		if (phydev->speed == SPEED_1000)
 			ctl |= BMCR_SPEED1000;
-		अन्यथा अगर (phydev->speed == SPEED_100)
+		else if (phydev->speed == SPEED_100)
 			ctl |= BMCR_SPEED100;
 
-		अगर (phydev->duplex == DUPLEX_FULL)
+		if (phydev->duplex == DUPLEX_FULL)
 			ctl |= BMCR_FULLDPLX;
 
-		phy_modअगरy(phydev, MII_BMCR, ~0, ctl);
+		phy_modify(phydev, MII_BMCR, ~0, ctl);
 
-		ret = phy_पढ़ो_poll_समयout(phydev, MII_BMSR, val,
+		ret = phy_read_poll_timeout(phydev, MII_BMSR, val,
 					    val & BMSR_LSTATUS,
 				    5000, 500000, true);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		phy_modअगरy(phydev, MII_BMCR, BMCR_LOOPBACK, 0);
+		if (ret)
+			return ret;
+	} else {
+		phy_modify(phydev, MII_BMCR, BMCR_LOOPBACK, 0);
 
 		phy_config_aneg(phydev);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(genphy_loopback);
 
 /**
- * phy_हटाओ_link_mode - Remove a supported link mode
- * @phydev: phy_device काष्ठाure to हटाओ link mode from
- * @link_mode: Link mode to be हटाओd
+ * phy_remove_link_mode - Remove a supported link mode
+ * @phydev: phy_device structure to remove link mode from
+ * @link_mode: Link mode to be removed
  *
- * Description: Some MACs करोn't support all link modes which the PHY
- * करोes.  e.g. a 1G MAC often करोes not support 1000Half. Add a helper
- * to हटाओ a link mode.
+ * Description: Some MACs don't support all link modes which the PHY
+ * does.  e.g. a 1G MAC often does not support 1000Half. Add a helper
+ * to remove a link mode.
  */
-व्योम phy_हटाओ_link_mode(काष्ठा phy_device *phydev, u32 link_mode)
-अणु
+void phy_remove_link_mode(struct phy_device *phydev, u32 link_mode)
+{
 	linkmode_clear_bit(link_mode, phydev->supported);
 	phy_advertise_supported(phydev);
-पूर्ण
-EXPORT_SYMBOL(phy_हटाओ_link_mode);
+}
+EXPORT_SYMBOL(phy_remove_link_mode);
 
-अटल व्योम phy_copy_छोड़ो_bits(अचिन्हित दीर्घ *dst, अचिन्हित दीर्घ *src)
-अणु
+static void phy_copy_pause_bits(unsigned long *dst, unsigned long *src)
+{
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, dst,
 		linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, src));
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_Pause_BIT, dst,
 		linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT, src));
-पूर्ण
+}
 
 /**
  * phy_advertise_supported - Advertise all supported modes
- * @phydev: target phy_device काष्ठा
+ * @phydev: target phy_device struct
  *
- * Description: Called to advertise all supported modes, करोesn't touch
- * छोड़ो mode advertising.
+ * Description: Called to advertise all supported modes, doesn't touch
+ * pause mode advertising.
  */
-व्योम phy_advertise_supported(काष्ठा phy_device *phydev)
-अणु
+void phy_advertise_supported(struct phy_device *phydev)
+{
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(new);
 
 	linkmode_copy(new, phydev->supported);
-	phy_copy_छोड़ो_bits(new, phydev->advertising);
+	phy_copy_pause_bits(new, phydev->advertising);
 	linkmode_copy(phydev->advertising, new);
-पूर्ण
+}
 EXPORT_SYMBOL(phy_advertise_supported);
 
 /**
- * phy_support_sym_छोड़ो - Enable support of symmetrical छोड़ो
- * @phydev: target phy_device काष्ठा
+ * phy_support_sym_pause - Enable support of symmetrical pause
+ * @phydev: target phy_device struct
  *
  * Description: Called by the MAC to indicate is supports symmetrical
- * Pause, but not asym छोड़ो.
+ * Pause, but not asym pause.
  */
-व्योम phy_support_sym_छोड़ो(काष्ठा phy_device *phydev)
-अणु
+void phy_support_sym_pause(struct phy_device *phydev)
+{
 	linkmode_clear_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, phydev->supported);
-	phy_copy_छोड़ो_bits(phydev->advertising, phydev->supported);
-पूर्ण
-EXPORT_SYMBOL(phy_support_sym_छोड़ो);
+	phy_copy_pause_bits(phydev->advertising, phydev->supported);
+}
+EXPORT_SYMBOL(phy_support_sym_pause);
 
 /**
- * phy_support_asym_छोड़ो - Enable support of asym छोड़ो
- * @phydev: target phy_device काष्ठा
+ * phy_support_asym_pause - Enable support of asym pause
+ * @phydev: target phy_device struct
  *
  * Description: Called by the MAC to indicate is supports Asym Pause.
  */
-व्योम phy_support_asym_छोड़ो(काष्ठा phy_device *phydev)
-अणु
-	phy_copy_छोड़ो_bits(phydev->advertising, phydev->supported);
-पूर्ण
-EXPORT_SYMBOL(phy_support_asym_छोड़ो);
+void phy_support_asym_pause(struct phy_device *phydev)
+{
+	phy_copy_pause_bits(phydev->advertising, phydev->supported);
+}
+EXPORT_SYMBOL(phy_support_asym_pause);
 
 /**
- * phy_set_sym_छोड़ो - Configure symmetric Pause
- * @phydev: target phy_device काष्ठा
+ * phy_set_sym_pause - Configure symmetric Pause
+ * @phydev: target phy_device struct
  * @rx: Receiver Pause is supported
  * @tx: Transmit Pause is supported
- * @स्वतःneg: Auto neg should be used
+ * @autoneg: Auto neg should be used
  *
- * Description: Configure advertised Pause support depending on अगर
- * receiver छोड़ो and छोड़ो स्वतः neg is supported. Generally called
- * from the set_छोड़ोparam .nकरो.
+ * Description: Configure advertised Pause support depending on if
+ * receiver pause and pause auto neg is supported. Generally called
+ * from the set_pauseparam .ndo.
  */
-व्योम phy_set_sym_छोड़ो(काष्ठा phy_device *phydev, bool rx, bool tx,
-		       bool स्वतःneg)
-अणु
+void phy_set_sym_pause(struct phy_device *phydev, bool rx, bool tx,
+		       bool autoneg)
+{
 	linkmode_clear_bit(ETHTOOL_LINK_MODE_Pause_BIT, phydev->supported);
 
-	अगर (rx && tx && स्वतःneg)
+	if (rx && tx && autoneg)
 		linkmode_set_bit(ETHTOOL_LINK_MODE_Pause_BIT,
 				 phydev->supported);
 
 	linkmode_copy(phydev->advertising, phydev->supported);
-पूर्ण
-EXPORT_SYMBOL(phy_set_sym_छोड़ो);
+}
+EXPORT_SYMBOL(phy_set_sym_pause);
 
 /**
- * phy_set_asym_छोड़ो - Configure Pause and Asym Pause
- * @phydev: target phy_device काष्ठा
+ * phy_set_asym_pause - Configure Pause and Asym Pause
+ * @phydev: target phy_device struct
  * @rx: Receiver Pause is supported
  * @tx: Transmit Pause is supported
  *
- * Description: Configure advertised Pause support depending on अगर
- * transmit and receiver छोड़ो is supported. If there has been a
- * change in adverting, trigger a new स्वतःneg. Generally called from
- * the set_छोड़ोparam .nकरो.
+ * Description: Configure advertised Pause support depending on if
+ * transmit and receiver pause is supported. If there has been a
+ * change in adverting, trigger a new autoneg. Generally called from
+ * the set_pauseparam .ndo.
  */
-व्योम phy_set_asym_छोड़ो(काष्ठा phy_device *phydev, bool rx, bool tx)
-अणु
+void phy_set_asym_pause(struct phy_device *phydev, bool rx, bool tx)
+{
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(oldadv);
 
 	linkmode_copy(oldadv, phydev->advertising);
-	linkmode_set_छोड़ो(phydev->advertising, tx, rx);
+	linkmode_set_pause(phydev->advertising, tx, rx);
 
-	अगर (!linkmode_equal(oldadv, phydev->advertising) &&
-	    phydev->स्वतःneg)
+	if (!linkmode_equal(oldadv, phydev->advertising) &&
+	    phydev->autoneg)
 		phy_start_aneg(phydev);
-पूर्ण
-EXPORT_SYMBOL(phy_set_asym_छोड़ो);
+}
+EXPORT_SYMBOL(phy_set_asym_pause);
 
 /**
- * phy_validate_छोड़ो - Test अगर the PHY/MAC support the छोड़ो configuration
- * @phydev: phy_device काष्ठा
- * @pp: requested छोड़ो configuration
+ * phy_validate_pause - Test if the PHY/MAC support the pause configuration
+ * @phydev: phy_device struct
+ * @pp: requested pause configuration
  *
- * Description: Test अगर the PHY/MAC combination supports the Pause
- * configuration the user is requesting. Returns True अगर it is
+ * Description: Test if the PHY/MAC combination supports the Pause
+ * configuration the user is requesting. Returns True if it is
  * supported, false otherwise.
  */
-bool phy_validate_छोड़ो(काष्ठा phy_device *phydev,
-			काष्ठा ethtool_छोड़ोparam *pp)
-अणु
-	अगर (!linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
-			       phydev->supported) && pp->rx_छोड़ो)
-		वापस false;
+bool phy_validate_pause(struct phy_device *phydev,
+			struct ethtool_pauseparam *pp)
+{
+	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
+			       phydev->supported) && pp->rx_pause)
+		return false;
 
-	अगर (!linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
+	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
 			       phydev->supported) &&
-	    pp->rx_छोड़ो != pp->tx_छोड़ो)
-		वापस false;
+	    pp->rx_pause != pp->tx_pause)
+		return false;
 
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(phy_validate_छोड़ो);
+	return true;
+}
+EXPORT_SYMBOL(phy_validate_pause);
 
 /**
- * phy_get_छोड़ो - resolve negotiated छोड़ो modes
- * @phydev: phy_device काष्ठा
- * @tx_छोड़ो: poपूर्णांकer to bool to indicate whether transmit छोड़ो should be
+ * phy_get_pause - resolve negotiated pause modes
+ * @phydev: phy_device struct
+ * @tx_pause: pointer to bool to indicate whether transmit pause should be
  * enabled.
- * @rx_छोड़ो: poपूर्णांकer to bool to indicate whether receive छोड़ो should be
+ * @rx_pause: pointer to bool to indicate whether receive pause should be
  * enabled.
  *
- * Resolve and वापस the flow control modes according to the negotiation
+ * Resolve and return the flow control modes according to the negotiation
  * result. This includes checking that we are operating in full duplex mode.
- * See linkmode_resolve_छोड़ो() क्रम further details.
+ * See linkmode_resolve_pause() for further details.
  */
-व्योम phy_get_छोड़ो(काष्ठा phy_device *phydev, bool *tx_छोड़ो, bool *rx_छोड़ो)
-अणु
-	अगर (phydev->duplex != DUPLEX_FULL) अणु
-		*tx_छोड़ो = false;
-		*rx_छोड़ो = false;
-		वापस;
-	पूर्ण
+void phy_get_pause(struct phy_device *phydev, bool *tx_pause, bool *rx_pause)
+{
+	if (phydev->duplex != DUPLEX_FULL) {
+		*tx_pause = false;
+		*rx_pause = false;
+		return;
+	}
 
-	वापस linkmode_resolve_छोड़ो(phydev->advertising,
+	return linkmode_resolve_pause(phydev->advertising,
 				      phydev->lp_advertising,
-				      tx_छोड़ो, rx_छोड़ो);
-पूर्ण
-EXPORT_SYMBOL(phy_get_छोड़ो);
+				      tx_pause, rx_pause);
+}
+EXPORT_SYMBOL(phy_get_pause);
 
-#अगर IS_ENABLED(CONFIG_OF_MDIO)
-अटल पूर्णांक phy_get_पूर्णांक_delay_property(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	s32 पूर्णांक_delay;
-	पूर्णांक ret;
+#if IS_ENABLED(CONFIG_OF_MDIO)
+static int phy_get_int_delay_property(struct device *dev, const char *name)
+{
+	s32 int_delay;
+	int ret;
 
-	ret = device_property_पढ़ो_u32(dev, name, &पूर्णांक_delay);
-	अगर (ret)
-		वापस ret;
+	ret = device_property_read_u32(dev, name, &int_delay);
+	if (ret)
+		return ret;
 
-	वापस पूर्णांक_delay;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक phy_get_पूर्णांक_delay_property(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	वापस -EINVAL;
-पूर्ण
-#पूर्ण_अगर
+	return int_delay;
+}
+#else
+static int phy_get_int_delay_property(struct device *dev, const char *name)
+{
+	return -EINVAL;
+}
+#endif
 
 /**
- * phy_get_पूर्णांकernal_delay - वापसs the index of the पूर्णांकernal delay
- * @phydev: phy_device काष्ठा
- * @dev: poपूर्णांकer to the devices device काष्ठा
+ * phy_get_internal_delay - returns the index of the internal delay
+ * @phydev: phy_device struct
+ * @dev: pointer to the devices device struct
  * @delay_values: array of delays the PHY supports
  * @size: the size of the delay array
- * @is_rx: boolean to indicate to get the rx पूर्णांकernal delay
+ * @is_rx: boolean to indicate to get the rx internal delay
  *
- * Returns the index within the array of पूर्णांकernal delay passed in.
- * If the device property is not present then the पूर्णांकerface type is checked
- * अगर the पूर्णांकerface defines use of पूर्णांकernal delay then a 1 is वापसed otherwise
- * a 0 is वापसed.
- * The array must be in ascending order. If PHY करोes not have an ascending order
- * array then size = 0 and the value of the delay property is वापसed.
- * Return -EINVAL अगर the delay is invalid or cannot be found.
+ * Returns the index within the array of internal delay passed in.
+ * If the device property is not present then the interface type is checked
+ * if the interface defines use of internal delay then a 1 is returned otherwise
+ * a 0 is returned.
+ * The array must be in ascending order. If PHY does not have an ascending order
+ * array then size = 0 and the value of the delay property is returned.
+ * Return -EINVAL if the delay is invalid or cannot be found.
  */
-s32 phy_get_पूर्णांकernal_delay(काष्ठा phy_device *phydev, काष्ठा device *dev,
-			   स्थिर पूर्णांक *delay_values, पूर्णांक size, bool is_rx)
-अणु
+s32 phy_get_internal_delay(struct phy_device *phydev, struct device *dev,
+			   const int *delay_values, int size, bool is_rx)
+{
 	s32 delay;
-	पूर्णांक i;
+	int i;
 
-	अगर (is_rx) अणु
-		delay = phy_get_पूर्णांक_delay_property(dev, "rx-internal-delay-ps");
-		अगर (delay < 0 && size == 0) अणु
-			अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
-			    phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID)
-				वापस 1;
-			अन्यथा
-				वापस 0;
-		पूर्ण
+	if (is_rx) {
+		delay = phy_get_int_delay_property(dev, "rx-internal-delay-ps");
+		if (delay < 0 && size == 0) {
+			if (phydev->interface == PHY_INTERFACE_MODE_RGMII_ID ||
+			    phydev->interface == PHY_INTERFACE_MODE_RGMII_RXID)
+				return 1;
+			else
+				return 0;
+		}
 
-	पूर्ण अन्यथा अणु
-		delay = phy_get_पूर्णांक_delay_property(dev, "tx-internal-delay-ps");
-		अगर (delay < 0 && size == 0) अणु
-			अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
-			    phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID)
-				वापस 1;
-			अन्यथा
-				वापस 0;
-		पूर्ण
-	पूर्ण
+	} else {
+		delay = phy_get_int_delay_property(dev, "tx-internal-delay-ps");
+		if (delay < 0 && size == 0) {
+			if (phydev->interface == PHY_INTERFACE_MODE_RGMII_ID ||
+			    phydev->interface == PHY_INTERFACE_MODE_RGMII_TXID)
+				return 1;
+			else
+				return 0;
+		}
+	}
 
-	अगर (delay < 0)
-		वापस delay;
+	if (delay < 0)
+		return delay;
 
-	अगर (delay && size == 0)
-		वापस delay;
+	if (delay && size == 0)
+		return delay;
 
-	अगर (delay < delay_values[0] || delay > delay_values[size - 1]) अणु
+	if (delay < delay_values[0] || delay > delay_values[size - 1]) {
 		phydev_err(phydev, "Delay %d is out of range\n", delay);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (delay == delay_values[0])
-		वापस 0;
+	if (delay == delay_values[0])
+		return 0;
 
-	क्रम (i = 1; i < size; i++) अणु
-		अगर (delay == delay_values[i])
-			वापस i;
+	for (i = 1; i < size; i++) {
+		if (delay == delay_values[i])
+			return i;
 
 		/* Find an approximate index by looking up the table */
-		अगर (delay > delay_values[i - 1] &&
-		    delay < delay_values[i]) अणु
-			अगर (delay - delay_values[i - 1] <
+		if (delay > delay_values[i - 1] &&
+		    delay < delay_values[i]) {
+			if (delay - delay_values[i - 1] <
 			    delay_values[i] - delay)
-				वापस i - 1;
-			अन्यथा
-				वापस i;
-		पूर्ण
-	पूर्ण
+				return i - 1;
+			else
+				return i;
+		}
+	}
 
 	phydev_err(phydev, "error finding internal delay index for %d\n",
 		   delay);
 
-	वापस -EINVAL;
-पूर्ण
-EXPORT_SYMBOL(phy_get_पूर्णांकernal_delay);
+	return -EINVAL;
+}
+EXPORT_SYMBOL(phy_get_internal_delay);
 
-अटल bool phy_drv_supports_irq(काष्ठा phy_driver *phydrv)
-अणु
-	वापस phydrv->config_पूर्णांकr && phydrv->handle_पूर्णांकerrupt;
-पूर्ण
+static bool phy_drv_supports_irq(struct phy_driver *phydrv)
+{
+	return phydrv->config_intr && phydrv->handle_interrupt;
+}
 
 /**
  * phy_probe - probe and init a PHY device
  * @dev: device to probe and init
  *
- * Description: Take care of setting up the phy_device काष्ठाure,
+ * Description: Take care of setting up the phy_device structure,
  *   set the state to READY (the driver's init function should
- *   set it to STARTING अगर needed).
+ *   set it to STARTING if needed).
  */
-अटल पूर्णांक phy_probe(काष्ठा device *dev)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
-	काष्ठा device_driver *drv = phydev->mdio.dev.driver;
-	काष्ठा phy_driver *phydrv = to_phy_driver(drv);
-	पूर्णांक err = 0;
+static int phy_probe(struct device *dev)
+{
+	struct phy_device *phydev = to_phy_device(dev);
+	struct device_driver *drv = phydev->mdio.dev.driver;
+	struct phy_driver *phydrv = to_phy_driver(drv);
+	int err = 0;
 
 	phydev->drv = phydrv;
 
-	/* Disable the पूर्णांकerrupt अगर the PHY करोesn't support it
-	 * but the पूर्णांकerrupt is still a valid one
+	/* Disable the interrupt if the PHY doesn't support it
+	 * but the interrupt is still a valid one
 	 */
-	 अगर (!phy_drv_supports_irq(phydrv) && phy_पूर्णांकerrupt_is_valid(phydev))
+	 if (!phy_drv_supports_irq(phydrv) && phy_interrupt_is_valid(phydev))
 		phydev->irq = PHY_POLL;
 
-	अगर (phydrv->flags & PHY_IS_INTERNAL)
-		phydev->is_पूर्णांकernal = true;
+	if (phydrv->flags & PHY_IS_INTERNAL)
+		phydev->is_internal = true;
 
 	mutex_lock(&phydev->lock);
 
-	/* Deनिश्चित the reset संकेत */
+	/* Deassert the reset signal */
 	phy_device_reset(phydev, 0);
 
-	अगर (phydev->drv->probe) अणु
+	if (phydev->drv->probe) {
 		err = phydev->drv->probe(phydev);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
 	/* Start out supporting everything. Eventually,
-	 * a controller will attach, and may modअगरy one
+	 * a controller will attach, and may modify one
 	 * or both of these values
 	 */
-	अगर (phydrv->features) अणु
+	if (phydrv->features) {
 		linkmode_copy(phydev->supported, phydrv->features);
-	पूर्ण अन्यथा अगर (phydrv->get_features) अणु
+	} else if (phydrv->get_features) {
 		err = phydrv->get_features(phydev);
-	पूर्ण अन्यथा अगर (phydev->is_c45) अणु
-		err = genphy_c45_pma_पढ़ो_abilities(phydev);
-	पूर्ण अन्यथा अणु
-		err = genphy_पढ़ो_abilities(phydev);
-	पूर्ण
+	} else if (phydev->is_c45) {
+		err = genphy_c45_pma_read_abilities(phydev);
+	} else {
+		err = genphy_read_abilities(phydev);
+	}
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (!linkmode_test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
+	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 			       phydev->supported))
-		phydev->स्वतःneg = 0;
+		phydev->autoneg = 0;
 
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
 			      phydev->supported))
 		phydev->is_gigabit_capable = 1;
-	अगर (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 			      phydev->supported))
 		phydev->is_gigabit_capable = 1;
 
@@ -2938,40 +2937,40 @@ EXPORT_SYMBOL(phy_get_पूर्णांकernal_delay);
 	of_set_phy_eee_broken(phydev);
 
 	/* The Pause Frame bits indicate that the PHY can support passing
-	 * छोड़ो frames. During स्वतःnegotiation, the PHYs will determine अगर
-	 * they should allow छोड़ो frames to pass.  The MAC driver should then
+	 * pause frames. During autonegotiation, the PHYs will determine if
+	 * they should allow pause frames to pass.  The MAC driver should then
 	 * use that result to determine whether to enable flow control via
-	 * छोड़ो frames.
+	 * pause frames.
 	 *
 	 * Normally, PHY drivers should not set the Pause bits, and instead
-	 * allow phylib to करो that.  However, there may be some situations
+	 * allow phylib to do that.  However, there may be some situations
 	 * (e.g. hardware erratum) where the driver wants to set only one
 	 * of these bits.
 	 */
-	अगर (!test_bit(ETHTOOL_LINK_MODE_Pause_BIT, phydev->supported) &&
-	    !test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, phydev->supported)) अणु
+	if (!test_bit(ETHTOOL_LINK_MODE_Pause_BIT, phydev->supported) &&
+	    !test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, phydev->supported)) {
 		linkmode_set_bit(ETHTOOL_LINK_MODE_Pause_BIT,
 				 phydev->supported);
 		linkmode_set_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
 				 phydev->supported);
-	पूर्ण
+	}
 
-	/* Set the state to READY by शेष */
+	/* Set the state to READY by default */
 	phydev->state = PHY_READY;
 
 out:
-	/* Assert the reset संकेत */
-	अगर (err)
+	/* Assert the reset signal */
+	if (err)
 		phy_device_reset(phydev, 1);
 
 	mutex_unlock(&phydev->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक phy_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static int phy_remove(struct device *dev)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
 	cancel_delayed_work_sync(&phydev->state_queue);
 
@@ -2980,149 +2979,149 @@ out:
 	mutex_unlock(&phydev->lock);
 
 	sfp_bus_del_upstream(phydev->sfp_bus);
-	phydev->sfp_bus = शून्य;
+	phydev->sfp_bus = NULL;
 
-	अगर (phydev->drv && phydev->drv->हटाओ)
-		phydev->drv->हटाओ(phydev);
+	if (phydev->drv && phydev->drv->remove)
+		phydev->drv->remove(phydev);
 
-	/* Assert the reset संकेत */
+	/* Assert the reset signal */
 	phy_device_reset(phydev, 1);
 
-	phydev->drv = शून्य;
+	phydev->drv = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम phy_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा phy_device *phydev = to_phy_device(dev);
+static void phy_shutdown(struct device *dev)
+{
+	struct phy_device *phydev = to_phy_device(dev);
 
-	phy_disable_पूर्णांकerrupts(phydev);
-पूर्ण
+	phy_disable_interrupts(phydev);
+}
 
 /**
- * phy_driver_रेजिस्टर - रेजिस्टर a phy_driver with the PHY layer
- * @new_driver: new phy_driver to रेजिस्टर
+ * phy_driver_register - register a phy_driver with the PHY layer
+ * @new_driver: new phy_driver to register
  * @owner: module owning this PHY
  */
-पूर्णांक phy_driver_रेजिस्टर(काष्ठा phy_driver *new_driver, काष्ठा module *owner)
-अणु
-	पूर्णांक retval;
+int phy_driver_register(struct phy_driver *new_driver, struct module *owner)
+{
+	int retval;
 
 	/* Either the features are hard coded, or dynamically
 	 * determined. It cannot be both.
 	 */
-	अगर (WARN_ON(new_driver->features && new_driver->get_features)) अणु
+	if (WARN_ON(new_driver->features && new_driver->get_features)) {
 		pr_err("%s: features and get_features must not both be set\n",
 		       new_driver->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	new_driver->mdiodrv.flags |= MDIO_DEVICE_IS_PHY;
 	new_driver->mdiodrv.driver.name = new_driver->name;
 	new_driver->mdiodrv.driver.bus = &mdio_bus_type;
 	new_driver->mdiodrv.driver.probe = phy_probe;
-	new_driver->mdiodrv.driver.हटाओ = phy_हटाओ;
-	new_driver->mdiodrv.driver.shutकरोwn = phy_shutकरोwn;
+	new_driver->mdiodrv.driver.remove = phy_remove;
+	new_driver->mdiodrv.driver.shutdown = phy_shutdown;
 	new_driver->mdiodrv.driver.owner = owner;
 	new_driver->mdiodrv.driver.probe_type = PROBE_FORCE_SYNCHRONOUS;
 
-	retval = driver_रेजिस्टर(&new_driver->mdiodrv.driver);
-	अगर (retval) अणु
+	retval = driver_register(&new_driver->mdiodrv.driver);
+	if (retval) {
 		pr_err("%s: Error %d in registering driver\n",
 		       new_driver->name, retval);
 
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	pr_debug("%s: Registered new driver\n", new_driver->name);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(phy_driver_रेजिस्टर);
+	return 0;
+}
+EXPORT_SYMBOL(phy_driver_register);
 
-पूर्णांक phy_drivers_रेजिस्टर(काष्ठा phy_driver *new_driver, पूर्णांक n,
-			 काष्ठा module *owner)
-अणु
-	पूर्णांक i, ret = 0;
+int phy_drivers_register(struct phy_driver *new_driver, int n,
+			 struct module *owner)
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < n; i++) अणु
-		ret = phy_driver_रेजिस्टर(new_driver + i, owner);
-		अगर (ret) अणु
-			जबतक (i-- > 0)
-				phy_driver_unरेजिस्टर(new_driver + i);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(phy_drivers_रेजिस्टर);
+	for (i = 0; i < n; i++) {
+		ret = phy_driver_register(new_driver + i, owner);
+		if (ret) {
+			while (i-- > 0)
+				phy_driver_unregister(new_driver + i);
+			break;
+		}
+	}
+	return ret;
+}
+EXPORT_SYMBOL(phy_drivers_register);
 
-व्योम phy_driver_unरेजिस्टर(काष्ठा phy_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->mdiodrv.driver);
-पूर्ण
-EXPORT_SYMBOL(phy_driver_unरेजिस्टर);
+void phy_driver_unregister(struct phy_driver *drv)
+{
+	driver_unregister(&drv->mdiodrv.driver);
+}
+EXPORT_SYMBOL(phy_driver_unregister);
 
-व्योम phy_drivers_unरेजिस्टर(काष्ठा phy_driver *drv, पूर्णांक n)
-अणु
-	पूर्णांक i;
+void phy_drivers_unregister(struct phy_driver *drv, int n)
+{
+	int i;
 
-	क्रम (i = 0; i < n; i++)
-		phy_driver_unरेजिस्टर(drv + i);
-पूर्ण
-EXPORT_SYMBOL(phy_drivers_unरेजिस्टर);
+	for (i = 0; i < n; i++)
+		phy_driver_unregister(drv + i);
+}
+EXPORT_SYMBOL(phy_drivers_unregister);
 
-अटल काष्ठा phy_driver genphy_driver = अणु
+static struct phy_driver genphy_driver = {
 	.phy_id		= 0xffffffff,
 	.phy_id_mask	= 0xffffffff,
 	.name		= "Generic PHY",
-	.get_features	= genphy_पढ़ो_abilities,
+	.get_features	= genphy_read_abilities,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
 	.set_loopback   = genphy_loopback,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ethtool_phy_ops phy_ethtool_phy_ops = अणु
+static const struct ethtool_phy_ops phy_ethtool_phy_ops = {
 	.get_sset_count		= phy_ethtool_get_sset_count,
 	.get_strings		= phy_ethtool_get_strings,
 	.get_stats		= phy_ethtool_get_stats,
 	.start_cable_test	= phy_start_cable_test,
 	.start_cable_test_tdr	= phy_start_cable_test_tdr,
-पूर्ण;
+};
 
-अटल पूर्णांक __init phy_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init phy_init(void)
+{
+	int rc;
 
 	rc = mdio_bus_init();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	ethtool_set_ethtool_phy_ops(&phy_ethtool_phy_ops);
 	features_init();
 
-	rc = phy_driver_रेजिस्टर(&genphy_c45_driver, THIS_MODULE);
-	अगर (rc)
-		जाओ err_c45;
+	rc = phy_driver_register(&genphy_c45_driver, THIS_MODULE);
+	if (rc)
+		goto err_c45;
 
-	rc = phy_driver_रेजिस्टर(&genphy_driver, THIS_MODULE);
-	अगर (rc) अणु
-		phy_driver_unरेजिस्टर(&genphy_c45_driver);
+	rc = phy_driver_register(&genphy_driver, THIS_MODULE);
+	if (rc) {
+		phy_driver_unregister(&genphy_c45_driver);
 err_c45:
-		mdio_bus_निकास();
-	पूर्ण
+		mdio_bus_exit();
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास phy_निकास(व्योम)
-अणु
-	phy_driver_unरेजिस्टर(&genphy_c45_driver);
-	phy_driver_unरेजिस्टर(&genphy_driver);
-	mdio_bus_निकास();
-	ethtool_set_ethtool_phy_ops(शून्य);
-पूर्ण
+static void __exit phy_exit(void)
+{
+	phy_driver_unregister(&genphy_c45_driver);
+	phy_driver_unregister(&genphy_driver);
+	mdio_bus_exit();
+	ethtool_set_ethtool_phy_ops(NULL);
+}
 
 subsys_initcall(phy_init);
-module_निकास(phy_निकास);
+module_exit(phy_exit);

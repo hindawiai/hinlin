@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Provide access to भव console memory.
+ * Provide access to virtual console memory.
  * /dev/vcs: the screen as it is being viewed right now (possibly scrolled)
  * /dev/vcsN: the screen of /dev/ttyN (1 <= N <= 63)
  *            [minor: N]
  *
  * /dev/vcsaN: idem, but including attributes, and prefixed with
  *	the 4 bytes lines,columns,x,y (as screendump used to give).
- *	Attribute/अक्षरacter pair is in native endianity.
+ *	Attribute/character pair is in native endianity.
  *            [minor: N+128]
  *
  * /dev/vcsuN: similar to /dev/vcsaN but using 4-byte unicode values
  *	instead of 1-byte screen glyph values.
  *            [minor: N+64]
  *
- * /dev/vcsuaN: same idea as /dev/vcsaN क्रम unicode (not yet implemented).
+ * /dev/vcsuaN: same idea as /dev/vcsaN for unicode (not yet implemented).
  *
- * This replaces screendump and part of selection, so that the प्रणाली
- * administrator can control access using file प्रणाली permissions.
+ * This replaces screendump and part of selection, so that the system
+ * administrator can control access using file system permissions.
  *
- * aeb@cwi.nl - efter Friedas begravअन्यथा - 950211
+ * aeb@cwi.nl - efter Friedas begravelse - 950211
  *
- * machek@k332.feld.cvut.cz - modअगरied not to send अक्षरacters to wrong console
- *	 - fixed some fatal off-by-one bugs (0-- no दीर्घer == -1 -> looping and looping and looping...)
- *	 - making it लघुer - scr_पढ़ोw are macros which expand in PRETTY दीर्घ code
+ * machek@k332.feld.cvut.cz - modified not to send characters to wrong console
+ *	 - fixed some fatal off-by-one bugs (0-- no longer == -1 -> looping and looping and looping...)
+ *	 - making it shorter - scr_readw are macros which expand in PRETTY long code
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/major.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/export.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/init.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <linux/selection.h>
-#समावेश <linux/kbd_kern.h>
-#समावेश <linux/console.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/notअगरier.h>
+#include <linux/kernel.h>
+#include <linux/major.h>
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/tty.h>
+#include <linux/interrupt.h>
+#include <linux/mm.h>
+#include <linux/init.h>
+#include <linux/vt_kern.h>
+#include <linux/selection.h>
+#include <linux/kbd_kern.h>
+#include <linux/console.h>
+#include <linux/device.h>
+#include <linux/sched.h>
+#include <linux/fs.h>
+#include <linux/poll.h>
+#include <linux/signal.h>
+#include <linux/slab.h>
+#include <linux/notifier.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/uaccess.h>
+#include <asm/byteorder.h>
+#include <asm/unaligned.h>
 
-#घोषणा HEADER_SIZE	4u
-#घोषणा CON_BUF_SIZE (CONFIG_BASE_SMALL ? 256 : PAGE_SIZE)
+#define HEADER_SIZE	4u
+#define CON_BUF_SIZE (CONFIG_BASE_SMALL ? 256 : PAGE_SIZE)
 
 /*
  * Our minor space:
@@ -60,208 +59,208 @@
  *   0 ... 63	glyph mode without attributes
  *  64 ... 127	unicode mode without attributes
  * 128 ... 191	glyph mode with attributes
- * 192 ... 255	unused (reserved क्रम unicode with attributes)
+ * 192 ... 255	unused (reserved for unicode with attributes)
  *
  * This relies on MAX_NR_CONSOLES being  <= 63, meaning 63 actual consoles
- * with minors 0, 64, 128 and 192 being proxies क्रम the क्रमeground console.
+ * with minors 0, 64, 128 and 192 being proxies for the foreground console.
  */
-#अगर MAX_NR_CONSOLES > 63
+#if MAX_NR_CONSOLES > 63
 #warning "/dev/vcs* devices may not accommodate more than 63 consoles"
-#पूर्ण_अगर
+#endif
 
-#घोषणा console(inode)		(iminor(inode) & 63)
-#घोषणा use_unicode(inode)	(iminor(inode) & 64)
-#घोषणा use_attributes(inode)	(iminor(inode) & 128)
+#define console(inode)		(iminor(inode) & 63)
+#define use_unicode(inode)	(iminor(inode) & 64)
+#define use_attributes(inode)	(iminor(inode) & 128)
 
 
-काष्ठा vcs_poll_data अणु
-	काष्ठा notअगरier_block notअगरier;
-	अचिन्हित पूर्णांक cons_num;
-	पूर्णांक event;
-	रुको_queue_head_t रुकोq;
-	काष्ठा fasync_काष्ठा *fasync;
-पूर्ण;
+struct vcs_poll_data {
+	struct notifier_block notifier;
+	unsigned int cons_num;
+	int event;
+	wait_queue_head_t waitq;
+	struct fasync_struct *fasync;
+};
 
-अटल पूर्णांक
-vcs_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ code, व्योम *_param)
-अणु
-	काष्ठा vt_notअगरier_param *param = _param;
-	काष्ठा vc_data *vc = param->vc;
-	काष्ठा vcs_poll_data *poll =
-		container_of(nb, काष्ठा vcs_poll_data, notअगरier);
-	पूर्णांक currcons = poll->cons_num;
-	पूर्णांक fa_band;
+static int
+vcs_notifier(struct notifier_block *nb, unsigned long code, void *_param)
+{
+	struct vt_notifier_param *param = _param;
+	struct vc_data *vc = param->vc;
+	struct vcs_poll_data *poll =
+		container_of(nb, struct vcs_poll_data, notifier);
+	int currcons = poll->cons_num;
+	int fa_band;
 
-	चयन (code) अणु
-	हाल VT_UPDATE:
+	switch (code) {
+	case VT_UPDATE:
 		fa_band = POLL_PRI;
-		अवरोध;
-	हाल VT_DEALLOCATE:
+		break;
+	case VT_DEALLOCATE:
 		fa_band = POLL_HUP;
-		अवरोध;
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+		break;
+	default:
+		return NOTIFY_DONE;
+	}
 
-	अगर (currcons == 0)
+	if (currcons == 0)
 		currcons = fg_console;
-	अन्यथा
+	else
 		currcons--;
-	अगर (currcons != vc->vc_num)
-		वापस NOTIFY_DONE;
+	if (currcons != vc->vc_num)
+		return NOTIFY_DONE;
 
 	poll->event = code;
-	wake_up_पूर्णांकerruptible(&poll->रुकोq);
-	समाप्त_fasync(&poll->fasync, SIGIO, fa_band);
-	वापस NOTIFY_OK;
-पूर्ण
+	wake_up_interruptible(&poll->waitq);
+	kill_fasync(&poll->fasync, SIGIO, fa_band);
+	return NOTIFY_OK;
+}
 
-अटल व्योम
-vcs_poll_data_मुक्त(काष्ठा vcs_poll_data *poll)
-अणु
-	unरेजिस्टर_vt_notअगरier(&poll->notअगरier);
-	kमुक्त(poll);
-पूर्ण
+static void
+vcs_poll_data_free(struct vcs_poll_data *poll)
+{
+	unregister_vt_notifier(&poll->notifier);
+	kfree(poll);
+}
 
-अटल काष्ठा vcs_poll_data *
-vcs_poll_data_get(काष्ठा file *file)
-अणु
-	काष्ठा vcs_poll_data *poll = file->निजी_data, *समाप्त = शून्य;
+static struct vcs_poll_data *
+vcs_poll_data_get(struct file *file)
+{
+	struct vcs_poll_data *poll = file->private_data, *kill = NULL;
 
-	अगर (poll)
-		वापस poll;
+	if (poll)
+		return poll;
 
-	poll = kzalloc(माप(*poll), GFP_KERNEL);
-	अगर (!poll)
-		वापस शून्य;
+	poll = kzalloc(sizeof(*poll), GFP_KERNEL);
+	if (!poll)
+		return NULL;
 	poll->cons_num = console(file_inode(file));
-	init_रुकोqueue_head(&poll->रुकोq);
-	poll->notअगरier.notअगरier_call = vcs_notअगरier;
+	init_waitqueue_head(&poll->waitq);
+	poll->notifier.notifier_call = vcs_notifier;
 	/*
 	 * In order not to lose any update event, we must pretend one might
-	 * have occurred beक्रमe we have a chance to रेजिस्टर our notअगरier.
+	 * have occurred before we have a chance to register our notifier.
 	 * This is also how user space has come to detect which kernels
 	 * support POLLPRI on /dev/vcs* devices i.e. using poll() with
-	 * POLLPRI and a zero समयout.
+	 * POLLPRI and a zero timeout.
 	 */
 	poll->event = VT_UPDATE;
 
-	अगर (रेजिस्टर_vt_notअगरier(&poll->notअगरier) != 0) अणु
-		kमुक्त(poll);
-		वापस शून्य;
-	पूर्ण
+	if (register_vt_notifier(&poll->notifier) != 0) {
+		kfree(poll);
+		return NULL;
+	}
 
 	/*
 	 * This code may be called either through ->poll() or ->fasync().
-	 * If we have two thपढ़ोs using the same file descriptor, they could
-	 * both enter this function, both notice that the काष्ठाure hasn't
+	 * If we have two threads using the same file descriptor, they could
+	 * both enter this function, both notice that the structure hasn't
 	 * been allocated yet and go ahead allocating it in parallel, but
 	 * only one of them must survive and be shared otherwise we'd leak
-	 * memory with a dangling notअगरier callback.
+	 * memory with a dangling notifier callback.
 	 */
 	spin_lock(&file->f_lock);
-	अगर (!file->निजी_data) अणु
-		file->निजी_data = poll;
-	पूर्ण अन्यथा अणु
-		/* someone अन्यथा raced ahead of us */
-		समाप्त = poll;
-		poll = file->निजी_data;
-	पूर्ण
+	if (!file->private_data) {
+		file->private_data = poll;
+	} else {
+		/* someone else raced ahead of us */
+		kill = poll;
+		poll = file->private_data;
+	}
 	spin_unlock(&file->f_lock);
-	अगर (समाप्त)
-		vcs_poll_data_मुक्त(समाप्त);
+	if (kill)
+		vcs_poll_data_free(kill);
 
-	वापस poll;
-पूर्ण
+	return poll;
+}
 
 /**
- * vcs_vc -- वापस VC क्रम @inode
- * @inode: inode क्रम which to वापस a VC
- * @viewed: वापसs whether this console is currently क्रमeground (viewed)
+ * vcs_vc -- return VC for @inode
+ * @inode: inode for which to return a VC
+ * @viewed: returns whether this console is currently foreground (viewed)
  *
  * Must be called with console_lock.
  */
-अटल काष्ठा vc_data *vcs_vc(काष्ठा inode *inode, bool *viewed)
-अणु
-	अचिन्हित पूर्णांक currcons = console(inode);
+static struct vc_data *vcs_vc(struct inode *inode, bool *viewed)
+{
+	unsigned int currcons = console(inode);
 
 	WARN_CONSOLE_UNLOCKED();
 
-	अगर (currcons == 0) अणु
+	if (currcons == 0) {
 		currcons = fg_console;
-		अगर (viewed)
+		if (viewed)
 			*viewed = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		currcons--;
-		अगर (viewed)
+		if (viewed)
 			*viewed = false;
-	पूर्ण
-	वापस vc_cons[currcons].d;
-पूर्ण
+	}
+	return vc_cons[currcons].d;
+}
 
 /**
- * vcs_size -- वापस size क्रम a VC in @vc
+ * vcs_size -- return size for a VC in @vc
  * @vc: which VC
- * @attr: करोes it use attributes?
+ * @attr: does it use attributes?
  * @unicode: is it unicode?
  *
  * Must be called with console_lock.
  */
-अटल पूर्णांक vcs_size(स्थिर काष्ठा vc_data *vc, bool attr, bool unicode)
-अणु
-	पूर्णांक size;
+static int vcs_size(const struct vc_data *vc, bool attr, bool unicode)
+{
+	int size;
 
 	WARN_CONSOLE_UNLOCKED();
 
 	size = vc->vc_rows * vc->vc_cols;
 
-	अगर (attr) अणु
-		अगर (unicode)
-			वापस -EOPNOTSUPP;
+	if (attr) {
+		if (unicode)
+			return -EOPNOTSUPP;
 
 		size = 2 * size + HEADER_SIZE;
-	पूर्ण अन्यथा अगर (unicode)
+	} else if (unicode)
 		size *= 4;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल loff_t vcs_lseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा vc_data *vc;
-	पूर्णांक size;
+static loff_t vcs_lseek(struct file *file, loff_t offset, int orig)
+{
+	struct inode *inode = file_inode(file);
+	struct vc_data *vc;
+	int size;
 
 	console_lock();
-	vc = vcs_vc(inode, शून्य);
-	अगर (!vc) अणु
+	vc = vcs_vc(inode, NULL);
+	if (!vc) {
 		console_unlock();
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	size = vcs_size(vc, use_attributes(inode), use_unicode(inode));
 	console_unlock();
-	अगर (size < 0)
-		वापस size;
-	वापस fixed_size_llseek(file, offset, orig, size);
-पूर्ण
+	if (size < 0)
+		return size;
+	return fixed_size_llseek(file, offset, orig, size);
+}
 
-अटल पूर्णांक vcs_पढ़ो_buf_uni(काष्ठा vc_data *vc, अक्षर *con_buf,
-		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, bool viewed)
-अणु
-	अचिन्हित पूर्णांक nr, row, col, maxcol = vc->vc_cols;
-	पूर्णांक ret;
+static int vcs_read_buf_uni(struct vc_data *vc, char *con_buf,
+		unsigned int pos, unsigned int count, bool viewed)
+{
+	unsigned int nr, row, col, maxcol = vc->vc_cols;
+	int ret;
 
 	ret = vc_uniscr_check(vc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pos /= 4;
 	row = pos / maxcol;
 	col = pos % maxcol;
 	nr = maxcol - col;
-	करो अणु
-		अगर (nr > count / 4)
+	do {
+		if (nr > count / 4)
 			nr = count / 4;
 		vc_uniscr_copy_line(vc, con_buf, viewed, row, col, nr);
 		con_buf += nr * 4;
@@ -269,71 +268,71 @@ vcs_poll_data_get(काष्ठा file *file)
 		row++;
 		col = 0;
 		nr = maxcol;
-	पूर्ण जबतक (count);
+	} while (count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vcs_पढ़ो_buf_noattr(स्थिर काष्ठा vc_data *vc, अक्षर *con_buf,
-		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, bool viewed)
-अणु
+static void vcs_read_buf_noattr(const struct vc_data *vc, char *con_buf,
+		unsigned int pos, unsigned int count, bool viewed)
+{
 	u16 *org;
-	अचिन्हित पूर्णांक col, maxcol = vc->vc_cols;
+	unsigned int col, maxcol = vc->vc_cols;
 
 	org = screen_pos(vc, pos, viewed);
 	col = pos % maxcol;
 	pos += maxcol - col;
 
-	जबतक (count-- > 0) अणु
-		*con_buf++ = (vcs_scr_पढ़ोw(vc, org++) & 0xff);
-		अगर (++col == maxcol) अणु
+	while (count-- > 0) {
+		*con_buf++ = (vcs_scr_readw(vc, org++) & 0xff);
+		if (++col == maxcol) {
 			org = screen_pos(vc, pos, viewed);
 			col = 0;
 			pos += maxcol;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल अचिन्हित पूर्णांक vcs_पढ़ो_buf(स्थिर काष्ठा vc_data *vc, अक्षर *con_buf,
-		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, bool viewed,
-		अचिन्हित पूर्णांक *skip)
-अणु
+static unsigned int vcs_read_buf(const struct vc_data *vc, char *con_buf,
+		unsigned int pos, unsigned int count, bool viewed,
+		unsigned int *skip)
+{
 	u16 *org, *con_buf16;
-	अचिन्हित पूर्णांक col, maxcol = vc->vc_cols;
-	अचिन्हित पूर्णांक filled = count;
+	unsigned int col, maxcol = vc->vc_cols;
+	unsigned int filled = count;
 
-	अगर (pos < HEADER_SIZE) अणु
-		/* clamp header values अगर they करोn't fit */
+	if (pos < HEADER_SIZE) {
+		/* clamp header values if they don't fit */
 		con_buf[0] = min(vc->vc_rows, 0xFFu);
 		con_buf[1] = min(vc->vc_cols, 0xFFu);
-		अ_लोonsxy(vc, con_buf + 2);
+		getconsxy(vc, con_buf + 2);
 
 		*skip += pos;
 		count += pos;
-		अगर (count > CON_BUF_SIZE) अणु
+		if (count > CON_BUF_SIZE) {
 			count = CON_BUF_SIZE;
 			filled = count - pos;
-		पूर्ण
+		}
 
-		/* Advance state poपूर्णांकers and move on. */
+		/* Advance state pointers and move on. */
 		count -= min(HEADER_SIZE, count);
 		pos = HEADER_SIZE;
 		con_buf += HEADER_SIZE;
 		/* If count >= 0, then pos is even... */
-	पूर्ण अन्यथा अगर (pos & 1) अणु
+	} else if (pos & 1) {
 		/*
-		 * Skip first byte क्रम output अगर start address is odd. Update
-		 * region sizes up/करोwn depending on मुक्त space in buffer.
+		 * Skip first byte for output if start address is odd. Update
+		 * region sizes up/down depending on free space in buffer.
 		 */
 		(*skip)++;
-		अगर (count < CON_BUF_SIZE)
+		if (count < CON_BUF_SIZE)
 			count++;
-		अन्यथा
+		else
 			filled--;
-	पूर्ण
+	}
 
-	अगर (!count)
-		वापस filled;
+	if (!count)
+		return filled;
 
 	pos -= HEADER_SIZE;
 	pos /= 2;
@@ -343,44 +342,44 @@ vcs_poll_data_get(काष्ठा file *file)
 	pos += maxcol - col;
 
 	/*
-	 * Buffer has even length, so we can always copy अक्षरacter + attribute.
-	 * We करो not copy last byte to userspace अगर count is odd.
+	 * Buffer has even length, so we can always copy character + attribute.
+	 * We do not copy last byte to userspace if count is odd.
 	 */
 	count = (count + 1) / 2;
 	con_buf16 = (u16 *)con_buf;
 
-	जबतक (count) अणु
-		*con_buf16++ = vcs_scr_पढ़ोw(vc, org++);
+	while (count) {
+		*con_buf16++ = vcs_scr_readw(vc, org++);
 		count--;
-		अगर (++col == maxcol) अणु
+		if (++col == maxcol) {
 			org = screen_pos(vc, pos, viewed);
 			col = 0;
 			pos += maxcol;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस filled;
-पूर्ण
+	return filled;
+}
 
-अटल sमाप_प्रकार
-vcs_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा vc_data *vc;
-	काष्ठा vcs_poll_data *poll;
-	अचिन्हित पूर्णांक पढ़ो;
-	sमाप_प्रकार ret;
-	अक्षर *con_buf;
+static ssize_t
+vcs_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+	struct inode *inode = file_inode(file);
+	struct vc_data *vc;
+	struct vcs_poll_data *poll;
+	unsigned int read;
+	ssize_t ret;
+	char *con_buf;
 	loff_t pos;
 	bool viewed, attr, uni_mode;
 
-	con_buf = (अक्षर *) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!con_buf)
-		वापस -ENOMEM;
+	con_buf = (char *) __get_free_page(GFP_KERNEL);
+	if (!con_buf)
+		return -ENOMEM;
 
 	pos = *ppos;
 
-	/* Select the proper current console and verअगरy
+	/* Select the proper current console and verify
 	 * sanity of the situation under the console lock.
 	 */
 	console_lock();
@@ -389,227 +388,227 @@ vcs_पढ़ो(काष्ठा file *file, अक्षर __user *buf, म
 	attr = use_attributes(inode);
 	ret = -ENXIO;
 	vc = vcs_vc(inode, &viewed);
-	अगर (!vc)
-		जाओ unlock_out;
+	if (!vc)
+		goto unlock_out;
 
 	ret = -EINVAL;
-	अगर (pos < 0)
-		जाओ unlock_out;
-	/* we enक्रमce 32-bit alignment क्रम pos and count in unicode mode */
-	अगर (uni_mode && (pos | count) & 3)
-		जाओ unlock_out;
+	if (pos < 0)
+		goto unlock_out;
+	/* we enforce 32-bit alignment for pos and count in unicode mode */
+	if (uni_mode && (pos | count) & 3)
+		goto unlock_out;
 
-	poll = file->निजी_data;
-	अगर (count && poll)
+	poll = file->private_data;
+	if (count && poll)
 		poll->event = 0;
-	पढ़ो = 0;
+	read = 0;
 	ret = 0;
-	जबतक (count) अणु
-		अचिन्हित पूर्णांक this_round, skip = 0;
-		पूर्णांक size;
+	while (count) {
+		unsigned int this_round, skip = 0;
+		int size;
 
 		/* Check whether we are above size each round,
 		 * as copy_to_user at the end of this loop
 		 * could sleep.
 		 */
 		size = vcs_size(vc, attr, uni_mode);
-		अगर (size < 0) अणु
-			अगर (पढ़ो)
-				अवरोध;
+		if (size < 0) {
+			if (read)
+				break;
 			ret = size;
-			जाओ unlock_out;
-		पूर्ण
-		अगर (pos >= size)
-			अवरोध;
-		अगर (count > size - pos)
+			goto unlock_out;
+		}
+		if (pos >= size)
+			break;
+		if (count > size - pos)
 			count = size - pos;
 
 		this_round = count;
-		अगर (this_round > CON_BUF_SIZE)
+		if (this_round > CON_BUF_SIZE)
 			this_round = CON_BUF_SIZE;
 
-		/* Perक्रमm the whole पढ़ो पूर्णांकo the local con_buf.
+		/* Perform the whole read into the local con_buf.
 		 * Then we can drop the console spinlock and safely
 		 * attempt to move it to userspace.
 		 */
 
-		अगर (uni_mode) अणु
-			ret = vcs_पढ़ो_buf_uni(vc, con_buf, pos, this_round,
+		if (uni_mode) {
+			ret = vcs_read_buf_uni(vc, con_buf, pos, this_round,
 					viewed);
-			अगर (ret)
-				अवरोध;
-		पूर्ण अन्यथा अगर (!attr) अणु
-			vcs_पढ़ो_buf_noattr(vc, con_buf, pos, this_round,
+			if (ret)
+				break;
+		} else if (!attr) {
+			vcs_read_buf_noattr(vc, con_buf, pos, this_round,
 					viewed);
-		पूर्ण अन्यथा अणु
-			this_round = vcs_पढ़ो_buf(vc, con_buf, pos, this_round,
+		} else {
+			this_round = vcs_read_buf(vc, con_buf, pos, this_round,
 					viewed, &skip);
-		पूर्ण
+		}
 
-		/* Finally, release the console semaphore जबतक we push
+		/* Finally, release the console semaphore while we push
 		 * all the data to userspace from our temporary buffer.
 		 *
 		 * AKPM: Even though it's a semaphore, we should drop it because
-		 * the pagefault handling code may want to call prपूर्णांकk().
+		 * the pagefault handling code may want to call printk().
 		 */
 
 		console_unlock();
 		ret = copy_to_user(buf, con_buf + skip, this_round);
 		console_lock();
 
-		अगर (ret) अणु
-			पढ़ो += this_round - ret;
+		if (ret) {
+			read += this_round - ret;
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		buf += this_round;
 		pos += this_round;
-		पढ़ो += this_round;
+		read += this_round;
 		count -= this_round;
-	पूर्ण
-	*ppos += पढ़ो;
-	अगर (पढ़ो)
-		ret = पढ़ो;
+	}
+	*ppos += read;
+	if (read)
+		ret = read;
 unlock_out:
 	console_unlock();
-	मुक्त_page((अचिन्हित दीर्घ) con_buf);
-	वापस ret;
-पूर्ण
+	free_page((unsigned long) con_buf);
+	return ret;
+}
 
-अटल u16 *vcs_ग_लिखो_buf_noattr(काष्ठा vc_data *vc, स्थिर अक्षर *con_buf,
-		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, bool viewed, u16 **org0)
-अणु
+static u16 *vcs_write_buf_noattr(struct vc_data *vc, const char *con_buf,
+		unsigned int pos, unsigned int count, bool viewed, u16 **org0)
+{
 	u16 *org;
-	अचिन्हित पूर्णांक col, maxcol = vc->vc_cols;
+	unsigned int col, maxcol = vc->vc_cols;
 
 	*org0 = org = screen_pos(vc, pos, viewed);
 	col = pos % maxcol;
 	pos += maxcol - col;
 
-	जबतक (count > 0) अणु
-		अचिन्हित अक्षर c = *con_buf++;
+	while (count > 0) {
+		unsigned char c = *con_buf++;
 
 		count--;
-		vcs_scr_ग_लिखोw(vc,
-			       (vcs_scr_पढ़ोw(vc, org) & 0xff00) | c, org);
+		vcs_scr_writew(vc,
+			       (vcs_scr_readw(vc, org) & 0xff00) | c, org);
 		org++;
-		अगर (++col == maxcol) अणु
+		if (++col == maxcol) {
 			org = screen_pos(vc, pos, viewed);
 			col = 0;
 			pos += maxcol;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस org;
-पूर्ण
+	return org;
+}
 
 /*
- * Compilers (gcc 10) are unable to optimize the swap in cpu_to_le16. So करो it
+ * Compilers (gcc 10) are unable to optimize the swap in cpu_to_le16. So do it
  * the poor man way.
  */
-अटल अंतरभूत u16 vc_compile_le16(u8 hi, u8 lo)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	वापस (lo << 8u) | hi;
-#अन्यथा
-	वापस (hi << 8u) | lo;
-#पूर्ण_अगर
-पूर्ण
+static inline u16 vc_compile_le16(u8 hi, u8 lo)
+{
+#ifdef __BIG_ENDIAN
+	return (lo << 8u) | hi;
+#else
+	return (hi << 8u) | lo;
+#endif
+}
 
-अटल u16 *vcs_ग_लिखो_buf(काष्ठा vc_data *vc, स्थिर अक्षर *con_buf,
-		अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count, bool viewed, u16 **org0)
-अणु
+static u16 *vcs_write_buf(struct vc_data *vc, const char *con_buf,
+		unsigned int pos, unsigned int count, bool viewed, u16 **org0)
+{
 	u16 *org;
-	अचिन्हित पूर्णांक col, maxcol = vc->vc_cols;
-	अचिन्हित अक्षर c;
+	unsigned int col, maxcol = vc->vc_cols;
+	unsigned char c;
 
 	/* header */
-	अगर (pos < HEADER_SIZE) अणु
-		अक्षर header[HEADER_SIZE];
+	if (pos < HEADER_SIZE) {
+		char header[HEADER_SIZE];
 
-		अ_लोonsxy(vc, header + 2);
-		जबतक (pos < HEADER_SIZE && count > 0) अणु
+		getconsxy(vc, header + 2);
+		while (pos < HEADER_SIZE && count > 0) {
 			count--;
 			header[pos++] = *con_buf++;
-		पूर्ण
-		अगर (!viewed)
-			अ_दोonsxy(vc, header + 2);
-	पूर्ण
+		}
+		if (!viewed)
+			putconsxy(vc, header + 2);
+	}
 
-	अगर (!count)
-		वापस शून्य;
+	if (!count)
+		return NULL;
 
 	pos -= HEADER_SIZE;
 	col = (pos/2) % maxcol;
 
 	*org0 = org = screen_pos(vc, pos/2, viewed);
 
-	/* odd pos -- the first single अक्षरacter */
-	अगर (pos & 1) अणु
+	/* odd pos -- the first single character */
+	if (pos & 1) {
 		count--;
 		c = *con_buf++;
-		vcs_scr_ग_लिखोw(vc, vc_compile_le16(c, vcs_scr_पढ़ोw(vc, org)),
+		vcs_scr_writew(vc, vc_compile_le16(c, vcs_scr_readw(vc, org)),
 				org);
 		org++;
 		pos++;
-		अगर (++col == maxcol) अणु
+		if (++col == maxcol) {
 			org = screen_pos(vc, pos/2, viewed);
 			col = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	pos /= 2;
 	pos += maxcol - col;
 
-	/* even pos -- handle attr+अक्षरacter pairs */
-	जबतक (count > 1) अणु
-		अचिन्हित लघु w;
+	/* even pos -- handle attr+character pairs */
+	while (count > 1) {
+		unsigned short w;
 
-		w = get_unaligned(((अचिन्हित लघु *)con_buf));
-		vcs_scr_ग_लिखोw(vc, w, org++);
+		w = get_unaligned(((unsigned short *)con_buf));
+		vcs_scr_writew(vc, w, org++);
 		con_buf += 2;
 		count -= 2;
-		अगर (++col == maxcol) अणु
+		if (++col == maxcol) {
 			org = screen_pos(vc, pos, viewed);
 			col = 0;
 			pos += maxcol;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!count)
-		वापस org;
+	if (!count)
+		return org;
 
-	/* odd pos -- the reमुख्यing अक्षरacter */
+	/* odd pos -- the remaining character */
 	c = *con_buf++;
-	vcs_scr_ग_लिखोw(vc, vc_compile_le16(vcs_scr_पढ़ोw(vc, org) >> 8, c),
+	vcs_scr_writew(vc, vc_compile_le16(vcs_scr_readw(vc, org) >> 8, c),
 				org);
 
-	वापस org;
-पूर्ण
+	return org;
+}
 
-अटल sमाप_प्रकार
-vcs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा vc_data *vc;
-	अक्षर *con_buf;
+static ssize_t
+vcs_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	struct inode *inode = file_inode(file);
+	struct vc_data *vc;
+	char *con_buf;
 	u16 *org0, *org;
-	अचिन्हित पूर्णांक written;
-	पूर्णांक size;
-	sमाप_प्रकार ret;
+	unsigned int written;
+	int size;
+	ssize_t ret;
 	loff_t pos;
 	bool viewed, attr;
 
-	अगर (use_unicode(inode))
-		वापस -EOPNOTSUPP;
+	if (use_unicode(inode))
+		return -EOPNOTSUPP;
 
-	con_buf = (अक्षर *) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!con_buf)
-		वापस -ENOMEM;
+	con_buf = (char *) __get_free_page(GFP_KERNEL);
+	if (!con_buf)
+		return -ENOMEM;
 
 	pos = *ppos;
 
-	/* Select the proper current console and verअगरy
+	/* Select the proper current console and verify
 	 * sanity of the situation under the console lock.
 	 */
 	console_lock();
@@ -617,200 +616,200 @@ vcs_ग_लिखो(काष्ठा file *file, स्थिर अक्ष
 	attr = use_attributes(inode);
 	ret = -ENXIO;
 	vc = vcs_vc(inode, &viewed);
-	अगर (!vc)
-		जाओ unlock_out;
+	if (!vc)
+		goto unlock_out;
 
 	size = vcs_size(vc, attr, false);
-	अगर (size < 0) अणु
+	if (size < 0) {
 		ret = size;
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 	ret = -EINVAL;
-	अगर (pos < 0 || pos > size)
-		जाओ unlock_out;
-	अगर (count > size - pos)
+	if (pos < 0 || pos > size)
+		goto unlock_out;
+	if (count > size - pos)
 		count = size - pos;
 	written = 0;
-	जबतक (count) अणु
-		अचिन्हित पूर्णांक this_round = count;
+	while (count) {
+		unsigned int this_round = count;
 
-		अगर (this_round > CON_BUF_SIZE)
+		if (this_round > CON_BUF_SIZE)
 			this_round = CON_BUF_SIZE;
 
-		/* Temporarily drop the console lock so that we can पढ़ो
-		 * in the ग_लिखो data from userspace safely.
+		/* Temporarily drop the console lock so that we can read
+		 * in the write data from userspace safely.
 		 */
 		console_unlock();
 		ret = copy_from_user(con_buf, buf, this_round);
 		console_lock();
 
-		अगर (ret) अणु
+		if (ret) {
 			this_round -= ret;
-			अगर (!this_round) अणु
-				/* Abort loop अगर no data were copied. Otherwise
+			if (!this_round) {
+				/* Abort loop if no data were copied. Otherwise
 				 * fail with -EFAULT.
 				 */
-				अगर (written)
-					अवरोध;
+				if (written)
+					break;
 				ret = -EFAULT;
-				जाओ unlock_out;
-			पूर्ण
-		पूर्ण
+				goto unlock_out;
+			}
+		}
 
-		/* The vcs_size might have changed जबतक we slept to grab
+		/* The vcs_size might have changed while we slept to grab
 		 * the user buffer, so recheck.
 		 * Return data written up to now on failure.
 		 */
 		size = vcs_size(vc, attr, false);
-		अगर (size < 0) अणु
-			अगर (written)
-				अवरोध;
+		if (size < 0) {
+			if (written)
+				break;
 			ret = size;
-			जाओ unlock_out;
-		पूर्ण
-		अगर (pos >= size)
-			अवरोध;
-		अगर (this_round > size - pos)
+			goto unlock_out;
+		}
+		if (pos >= size)
+			break;
+		if (this_round > size - pos)
 			this_round = size - pos;
 
-		/* OK, now actually push the ग_लिखो to the console
+		/* OK, now actually push the write to the console
 		 * under the lock using the local kernel buffer.
 		 */
 
-		अगर (attr)
-			org = vcs_ग_लिखो_buf(vc, con_buf, pos, this_round,
+		if (attr)
+			org = vcs_write_buf(vc, con_buf, pos, this_round,
 					viewed, &org0);
-		अन्यथा
-			org = vcs_ग_लिखो_buf_noattr(vc, con_buf, pos, this_round,
+		else
+			org = vcs_write_buf_noattr(vc, con_buf, pos, this_round,
 					viewed, &org0);
 
 		count -= this_round;
 		written += this_round;
 		buf += this_round;
 		pos += this_round;
-		अगर (org)
-			update_region(vc, (अचिन्हित दीर्घ)(org0), org - org0);
-	पूर्ण
+		if (org)
+			update_region(vc, (unsigned long)(org0), org - org0);
+	}
 	*ppos += written;
 	ret = written;
-	अगर (written)
+	if (written)
 		vcs_scr_updated(vc);
 
 unlock_out:
 	console_unlock();
-	मुक्त_page((अचिन्हित दीर्घ) con_buf);
-	वापस ret;
-पूर्ण
+	free_page((unsigned long) con_buf);
+	return ret;
+}
 
-अटल __poll_t
-vcs_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा vcs_poll_data *poll = vcs_poll_data_get(file);
+static __poll_t
+vcs_poll(struct file *file, poll_table *wait)
+{
+	struct vcs_poll_data *poll = vcs_poll_data_get(file);
 	__poll_t ret = DEFAULT_POLLMASK|EPOLLERR;
 
-	अगर (poll) अणु
-		poll_रुको(file, &poll->रुकोq, रुको);
-		चयन (poll->event) अणु
-		हाल VT_UPDATE:
+	if (poll) {
+		poll_wait(file, &poll->waitq, wait);
+		switch (poll->event) {
+		case VT_UPDATE:
 			ret = DEFAULT_POLLMASK|EPOLLPRI;
-			अवरोध;
-		हाल VT_DEALLOCATE:
+			break;
+		case VT_DEALLOCATE:
 			ret = DEFAULT_POLLMASK|EPOLLHUP|EPOLLERR;
-			अवरोध;
-		हाल 0:
+			break;
+		case 0:
 			ret = DEFAULT_POLLMASK;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल पूर्णांक
-vcs_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	काष्ठा vcs_poll_data *poll = file->निजी_data;
+static int
+vcs_fasync(int fd, struct file *file, int on)
+{
+	struct vcs_poll_data *poll = file->private_data;
 
-	अगर (!poll) अणु
-		/* करोn't allocate anything अगर all we want is disable fasync */
-		अगर (!on)
-			वापस 0;
+	if (!poll) {
+		/* don't allocate anything if all we want is disable fasync */
+		if (!on)
+			return 0;
 		poll = vcs_poll_data_get(file);
-		अगर (!poll)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!poll)
+			return -ENOMEM;
+	}
 
-	वापस fasync_helper(fd, file, on, &poll->fasync);
-पूर्ण
+	return fasync_helper(fd, file, on, &poll->fasync);
+}
 
-अटल पूर्णांक
-vcs_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	अचिन्हित पूर्णांक currcons = console(inode);
+static int
+vcs_open(struct inode *inode, struct file *filp)
+{
+	unsigned int currcons = console(inode);
 	bool attr = use_attributes(inode);
 	bool uni_mode = use_unicode(inode);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	/* we currently करोn't support attributes in unicode mode */
-	अगर (attr && uni_mode)
-		वापस -EOPNOTSUPP;
+	/* we currently don't support attributes in unicode mode */
+	if (attr && uni_mode)
+		return -EOPNOTSUPP;
 
 	console_lock();
-	अगर(currcons && !vc_cons_allocated(currcons-1))
+	if(currcons && !vc_cons_allocated(currcons-1))
 		ret = -ENXIO;
 	console_unlock();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vcs_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा vcs_poll_data *poll = file->निजी_data;
+static int vcs_release(struct inode *inode, struct file *file)
+{
+	struct vcs_poll_data *poll = file->private_data;
 
-	अगर (poll)
-		vcs_poll_data_मुक्त(poll);
-	वापस 0;
-पूर्ण
+	if (poll)
+		vcs_poll_data_free(poll);
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations vcs_fops = अणु
+static const struct file_operations vcs_fops = {
 	.llseek		= vcs_lseek,
-	.पढ़ो		= vcs_पढ़ो,
-	.ग_लिखो		= vcs_ग_लिखो,
+	.read		= vcs_read,
+	.write		= vcs_write,
 	.poll		= vcs_poll,
 	.fasync		= vcs_fasync,
-	.खोलो		= vcs_खोलो,
+	.open		= vcs_open,
 	.release	= vcs_release,
-पूर्ण;
+};
 
-अटल काष्ठा class *vc_class;
+static struct class *vc_class;
 
-व्योम vcs_make_sysfs(पूर्णांक index)
-अणु
-	device_create(vc_class, शून्य, MKDEV(VCS_MAJOR, index + 1), शून्य,
+void vcs_make_sysfs(int index)
+{
+	device_create(vc_class, NULL, MKDEV(VCS_MAJOR, index + 1), NULL,
 		      "vcs%u", index + 1);
-	device_create(vc_class, शून्य, MKDEV(VCS_MAJOR, index + 65), शून्य,
+	device_create(vc_class, NULL, MKDEV(VCS_MAJOR, index + 65), NULL,
 		      "vcsu%u", index + 1);
-	device_create(vc_class, शून्य, MKDEV(VCS_MAJOR, index + 129), शून्य,
+	device_create(vc_class, NULL, MKDEV(VCS_MAJOR, index + 129), NULL,
 		      "vcsa%u", index + 1);
-पूर्ण
+}
 
-व्योम vcs_हटाओ_sysfs(पूर्णांक index)
-अणु
+void vcs_remove_sysfs(int index)
+{
 	device_destroy(vc_class, MKDEV(VCS_MAJOR, index + 1));
 	device_destroy(vc_class, MKDEV(VCS_MAJOR, index + 65));
 	device_destroy(vc_class, MKDEV(VCS_MAJOR, index + 129));
-पूर्ण
+}
 
-पूर्णांक __init vcs_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+int __init vcs_init(void)
+{
+	unsigned int i;
 
-	अगर (रेजिस्टर_chrdev(VCS_MAJOR, "vcs", &vcs_fops))
+	if (register_chrdev(VCS_MAJOR, "vcs", &vcs_fops))
 		panic("unable to get major %d for vcs device", VCS_MAJOR);
 	vc_class = class_create(THIS_MODULE, "vc");
 
-	device_create(vc_class, शून्य, MKDEV(VCS_MAJOR, 0), शून्य, "vcs");
-	device_create(vc_class, शून्य, MKDEV(VCS_MAJOR, 64), शून्य, "vcsu");
-	device_create(vc_class, शून्य, MKDEV(VCS_MAJOR, 128), शून्य, "vcsa");
-	क्रम (i = 0; i < MIN_NR_CONSOLES; i++)
+	device_create(vc_class, NULL, MKDEV(VCS_MAJOR, 0), NULL, "vcs");
+	device_create(vc_class, NULL, MKDEV(VCS_MAJOR, 64), NULL, "vcsu");
+	device_create(vc_class, NULL, MKDEV(VCS_MAJOR, 128), NULL, "vcsa");
+	for (i = 0; i < MIN_NR_CONSOLES; i++)
 		vcs_make_sysfs(i);
-	वापस 0;
-पूर्ण
+	return 0;
+}

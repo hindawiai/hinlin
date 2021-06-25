@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/net/sunrpc/clnt.c
  *
- *  This file contains the high-level RPC पूर्णांकerface.
+ *  This file contains the high-level RPC interface.
  *  It is modeled as a finite state machine to support both synchronous
  *  and asynchronous requests.
  *
@@ -20,373 +19,373 @@
  */
 
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kallsyms.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/un.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kallsyms.h>
+#include <linux/mm.h>
+#include <linux/namei.h>
+#include <linux/mount.h>
+#include <linux/slab.h>
+#include <linux/rcupdate.h>
+#include <linux/utsname.h>
+#include <linux/workqueue.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <linux/un.h>
 
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/sunrpc/addr.h>
-#समावेश <linux/sunrpc/rpc_pipe_fs.h>
-#समावेश <linux/sunrpc/metrics.h>
-#समावेश <linux/sunrpc/bc_xprt.h>
-#समावेश <trace/events/sunrpc.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/sunrpc/addr.h>
+#include <linux/sunrpc/rpc_pipe_fs.h>
+#include <linux/sunrpc/metrics.h>
+#include <linux/sunrpc/bc_xprt.h>
+#include <trace/events/sunrpc.h>
 
-#समावेश "sunrpc.h"
-#समावेश "netns.h"
+#include "sunrpc.h"
+#include "netns.h"
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
 # define RPCDBG_FACILITY	RPCDBG_CALL
-#पूर्ण_अगर
+#endif
 
 /*
- * All RPC clients are linked पूर्णांकo this list
+ * All RPC clients are linked into this list
  */
 
-अटल DECLARE_WAIT_QUEUE_HEAD(destroy_रुको);
+static DECLARE_WAIT_QUEUE_HEAD(destroy_wait);
 
 
-अटल व्योम	call_start(काष्ठा rpc_task *task);
-अटल व्योम	call_reserve(काष्ठा rpc_task *task);
-अटल व्योम	call_reserveresult(काष्ठा rpc_task *task);
-अटल व्योम	call_allocate(काष्ठा rpc_task *task);
-अटल व्योम	call_encode(काष्ठा rpc_task *task);
-अटल व्योम	call_decode(काष्ठा rpc_task *task);
-अटल व्योम	call_bind(काष्ठा rpc_task *task);
-अटल व्योम	call_bind_status(काष्ठा rpc_task *task);
-अटल व्योम	call_transmit(काष्ठा rpc_task *task);
-अटल व्योम	call_status(काष्ठा rpc_task *task);
-अटल व्योम	call_transmit_status(काष्ठा rpc_task *task);
-अटल व्योम	call_refresh(काष्ठा rpc_task *task);
-अटल व्योम	call_refreshresult(काष्ठा rpc_task *task);
-अटल व्योम	call_connect(काष्ठा rpc_task *task);
-अटल व्योम	call_connect_status(काष्ठा rpc_task *task);
+static void	call_start(struct rpc_task *task);
+static void	call_reserve(struct rpc_task *task);
+static void	call_reserveresult(struct rpc_task *task);
+static void	call_allocate(struct rpc_task *task);
+static void	call_encode(struct rpc_task *task);
+static void	call_decode(struct rpc_task *task);
+static void	call_bind(struct rpc_task *task);
+static void	call_bind_status(struct rpc_task *task);
+static void	call_transmit(struct rpc_task *task);
+static void	call_status(struct rpc_task *task);
+static void	call_transmit_status(struct rpc_task *task);
+static void	call_refresh(struct rpc_task *task);
+static void	call_refreshresult(struct rpc_task *task);
+static void	call_connect(struct rpc_task *task);
+static void	call_connect_status(struct rpc_task *task);
 
-अटल पूर्णांक	rpc_encode_header(काष्ठा rpc_task *task,
-				  काष्ठा xdr_stream *xdr);
-अटल पूर्णांक	rpc_decode_header(काष्ठा rpc_task *task,
-				  काष्ठा xdr_stream *xdr);
-अटल पूर्णांक	rpc_ping(काष्ठा rpc_clnt *clnt);
-अटल व्योम	rpc_check_समयout(काष्ठा rpc_task *task);
+static int	rpc_encode_header(struct rpc_task *task,
+				  struct xdr_stream *xdr);
+static int	rpc_decode_header(struct rpc_task *task,
+				  struct xdr_stream *xdr);
+static int	rpc_ping(struct rpc_clnt *clnt);
+static void	rpc_check_timeout(struct rpc_task *task);
 
-अटल व्योम rpc_रेजिस्टर_client(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा net *net = rpc_net_ns(clnt);
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+static void rpc_register_client(struct rpc_clnt *clnt)
+{
+	struct net *net = rpc_net_ns(clnt);
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	spin_lock(&sn->rpc_client_lock);
 	list_add(&clnt->cl_clients, &sn->all_clients);
 	spin_unlock(&sn->rpc_client_lock);
-पूर्ण
+}
 
-अटल व्योम rpc_unरेजिस्टर_client(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा net *net = rpc_net_ns(clnt);
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+static void rpc_unregister_client(struct rpc_clnt *clnt)
+{
+	struct net *net = rpc_net_ns(clnt);
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	spin_lock(&sn->rpc_client_lock);
 	list_del(&clnt->cl_clients);
 	spin_unlock(&sn->rpc_client_lock);
-पूर्ण
+}
 
-अटल व्योम __rpc_clnt_हटाओ_pipedir(काष्ठा rpc_clnt *clnt)
-अणु
-	rpc_हटाओ_client_dir(clnt);
-पूर्ण
+static void __rpc_clnt_remove_pipedir(struct rpc_clnt *clnt)
+{
+	rpc_remove_client_dir(clnt);
+}
 
-अटल व्योम rpc_clnt_हटाओ_pipedir(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा net *net = rpc_net_ns(clnt);
-	काष्ठा super_block *pipefs_sb;
+static void rpc_clnt_remove_pipedir(struct rpc_clnt *clnt)
+{
+	struct net *net = rpc_net_ns(clnt);
+	struct super_block *pipefs_sb;
 
 	pipefs_sb = rpc_get_sb_net(net);
-	अगर (pipefs_sb) अणु
-		__rpc_clnt_हटाओ_pipedir(clnt);
+	if (pipefs_sb) {
+		__rpc_clnt_remove_pipedir(clnt);
 		rpc_put_sb_net(net);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा dentry *rpc_setup_pipedir_sb(काष्ठा super_block *sb,
-				    काष्ठा rpc_clnt *clnt)
-अणु
-	अटल uपूर्णांक32_t clntid;
-	स्थिर अक्षर *dir_name = clnt->cl_program->pipe_dir_name;
-	अक्षर name[15];
-	काष्ठा dentry *dir, *dentry;
+static struct dentry *rpc_setup_pipedir_sb(struct super_block *sb,
+				    struct rpc_clnt *clnt)
+{
+	static uint32_t clntid;
+	const char *dir_name = clnt->cl_program->pipe_dir_name;
+	char name[15];
+	struct dentry *dir, *dentry;
 
 	dir = rpc_d_lookup_sb(sb, dir_name);
-	अगर (dir == शून्य) अणु
+	if (dir == NULL) {
 		pr_info("RPC: pipefs directory doesn't exist: %s\n", dir_name);
-		वापस dir;
-	पूर्ण
-	क्रम (;;) अणु
-		snम_लिखो(name, माप(name), "clnt%x", (अचिन्हित पूर्णांक)clntid++);
-		name[माप(name) - 1] = '\0';
+		return dir;
+	}
+	for (;;) {
+		snprintf(name, sizeof(name), "clnt%x", (unsigned int)clntid++);
+		name[sizeof(name) - 1] = '\0';
 		dentry = rpc_create_client_dir(dir, name, clnt);
-		अगर (!IS_ERR(dentry))
-			अवरोध;
-		अगर (dentry == ERR_PTR(-EEXIST))
-			जारी;
-		prपूर्णांकk(KERN_INFO "RPC: Couldn't create pipefs entry"
+		if (!IS_ERR(dentry))
+			break;
+		if (dentry == ERR_PTR(-EEXIST))
+			continue;
+		printk(KERN_INFO "RPC: Couldn't create pipefs entry"
 				" %s/%s, error %ld\n",
 				dir_name, name, PTR_ERR(dentry));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	dput(dir);
-	वापस dentry;
-पूर्ण
+	return dentry;
+}
 
-अटल पूर्णांक
-rpc_setup_pipedir(काष्ठा super_block *pipefs_sb, काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा dentry *dentry;
+static int
+rpc_setup_pipedir(struct super_block *pipefs_sb, struct rpc_clnt *clnt)
+{
+	struct dentry *dentry;
 
-	अगर (clnt->cl_program->pipe_dir_name != शून्य) अणु
+	if (clnt->cl_program->pipe_dir_name != NULL) {
 		dentry = rpc_setup_pipedir_sb(pipefs_sb, clnt);
-		अगर (IS_ERR(dentry))
-			वापस PTR_ERR(dentry);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (IS_ERR(dentry))
+			return PTR_ERR(dentry);
+	}
+	return 0;
+}
 
-अटल पूर्णांक rpc_clnt_skip_event(काष्ठा rpc_clnt *clnt, अचिन्हित दीर्घ event)
-अणु
-	अगर (clnt->cl_program->pipe_dir_name == शून्य)
-		वापस 1;
+static int rpc_clnt_skip_event(struct rpc_clnt *clnt, unsigned long event)
+{
+	if (clnt->cl_program->pipe_dir_name == NULL)
+		return 1;
 
-	चयन (event) अणु
-	हाल RPC_PIPEFS_MOUNT:
-		अगर (clnt->cl_pipedir_objects.pdh_dentry != शून्य)
-			वापस 1;
-		अगर (atomic_पढ़ो(&clnt->cl_count) == 0)
-			वापस 1;
-		अवरोध;
-	हाल RPC_PIPEFS_UMOUNT:
-		अगर (clnt->cl_pipedir_objects.pdh_dentry == शून्य)
-			वापस 1;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (event) {
+	case RPC_PIPEFS_MOUNT:
+		if (clnt->cl_pipedir_objects.pdh_dentry != NULL)
+			return 1;
+		if (atomic_read(&clnt->cl_count) == 0)
+			return 1;
+		break;
+	case RPC_PIPEFS_UMOUNT:
+		if (clnt->cl_pipedir_objects.pdh_dentry == NULL)
+			return 1;
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __rpc_clnt_handle_event(काष्ठा rpc_clnt *clnt, अचिन्हित दीर्घ event,
-				   काष्ठा super_block *sb)
-अणु
-	काष्ठा dentry *dentry;
+static int __rpc_clnt_handle_event(struct rpc_clnt *clnt, unsigned long event,
+				   struct super_block *sb)
+{
+	struct dentry *dentry;
 
-	चयन (event) अणु
-	हाल RPC_PIPEFS_MOUNT:
+	switch (event) {
+	case RPC_PIPEFS_MOUNT:
 		dentry = rpc_setup_pipedir_sb(sb, clnt);
-		अगर (!dentry)
-			वापस -ENOENT;
-		अगर (IS_ERR(dentry))
-			वापस PTR_ERR(dentry);
-		अवरोध;
-	हाल RPC_PIPEFS_UMOUNT:
-		__rpc_clnt_हटाओ_pipedir(clnt);
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "%s: unknown event: %ld\n", __func__, event);
-		वापस -ENOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!dentry)
+			return -ENOENT;
+		if (IS_ERR(dentry))
+			return PTR_ERR(dentry);
+		break;
+	case RPC_PIPEFS_UMOUNT:
+		__rpc_clnt_remove_pipedir(clnt);
+		break;
+	default:
+		printk(KERN_ERR "%s: unknown event: %ld\n", __func__, event);
+		return -ENOTSUPP;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __rpc_pipefs_event(काष्ठा rpc_clnt *clnt, अचिन्हित दीर्घ event,
-				काष्ठा super_block *sb)
-अणु
-	पूर्णांक error = 0;
+static int __rpc_pipefs_event(struct rpc_clnt *clnt, unsigned long event,
+				struct super_block *sb)
+{
+	int error = 0;
 
-	क्रम (;; clnt = clnt->cl_parent) अणु
-		अगर (!rpc_clnt_skip_event(clnt, event))
+	for (;; clnt = clnt->cl_parent) {
+		if (!rpc_clnt_skip_event(clnt, event))
 			error = __rpc_clnt_handle_event(clnt, event, sb);
-		अगर (error || clnt == clnt->cl_parent)
-			अवरोध;
-	पूर्ण
-	वापस error;
-पूर्ण
+		if (error || clnt == clnt->cl_parent)
+			break;
+	}
+	return error;
+}
 
-अटल काष्ठा rpc_clnt *rpc_get_client_क्रम_event(काष्ठा net *net, पूर्णांक event)
-अणु
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
-	काष्ठा rpc_clnt *clnt;
+static struct rpc_clnt *rpc_get_client_for_event(struct net *net, int event)
+{
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+	struct rpc_clnt *clnt;
 
 	spin_lock(&sn->rpc_client_lock);
-	list_क्रम_each_entry(clnt, &sn->all_clients, cl_clients) अणु
-		अगर (rpc_clnt_skip_event(clnt, event))
-			जारी;
+	list_for_each_entry(clnt, &sn->all_clients, cl_clients) {
+		if (rpc_clnt_skip_event(clnt, event))
+			continue;
 		spin_unlock(&sn->rpc_client_lock);
-		वापस clnt;
-	पूर्ण
+		return clnt;
+	}
 	spin_unlock(&sn->rpc_client_lock);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक rpc_pipefs_event(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
-			    व्योम *ptr)
-अणु
-	काष्ठा super_block *sb = ptr;
-	काष्ठा rpc_clnt *clnt;
-	पूर्णांक error = 0;
+static int rpc_pipefs_event(struct notifier_block *nb, unsigned long event,
+			    void *ptr)
+{
+	struct super_block *sb = ptr;
+	struct rpc_clnt *clnt;
+	int error = 0;
 
-	जबतक ((clnt = rpc_get_client_क्रम_event(sb->s_fs_info, event))) अणु
+	while ((clnt = rpc_get_client_for_event(sb->s_fs_info, event))) {
 		error = __rpc_pipefs_event(clnt, event, sb);
-		अगर (error)
-			अवरोध;
-	पूर्ण
-	वापस error;
-पूर्ण
+		if (error)
+			break;
+	}
+	return error;
+}
 
-अटल काष्ठा notअगरier_block rpc_clients_block = अणु
-	.notअगरier_call	= rpc_pipefs_event,
+static struct notifier_block rpc_clients_block = {
+	.notifier_call	= rpc_pipefs_event,
 	.priority	= SUNRPC_PIPEFS_RPC_PRIO,
-पूर्ण;
+};
 
-पूर्णांक rpc_clients_notअगरier_रेजिस्टर(व्योम)
-अणु
-	वापस rpc_pipefs_notअगरier_रेजिस्टर(&rpc_clients_block);
-पूर्ण
+int rpc_clients_notifier_register(void)
+{
+	return rpc_pipefs_notifier_register(&rpc_clients_block);
+}
 
-व्योम rpc_clients_notअगरier_unरेजिस्टर(व्योम)
-अणु
-	वापस rpc_pipefs_notअगरier_unरेजिस्टर(&rpc_clients_block);
-पूर्ण
+void rpc_clients_notifier_unregister(void)
+{
+	return rpc_pipefs_notifier_unregister(&rpc_clients_block);
+}
 
-अटल काष्ठा rpc_xprt *rpc_clnt_set_transport(काष्ठा rpc_clnt *clnt,
-		काष्ठा rpc_xprt *xprt,
-		स्थिर काष्ठा rpc_समयout *समयout)
-अणु
-	काष्ठा rpc_xprt *old;
+static struct rpc_xprt *rpc_clnt_set_transport(struct rpc_clnt *clnt,
+		struct rpc_xprt *xprt,
+		const struct rpc_timeout *timeout)
+{
+	struct rpc_xprt *old;
 
 	spin_lock(&clnt->cl_lock);
-	old = rcu_dereference_रक्षित(clnt->cl_xprt,
+	old = rcu_dereference_protected(clnt->cl_xprt,
 			lockdep_is_held(&clnt->cl_lock));
 
-	अगर (!xprt_bound(xprt))
-		clnt->cl_स्वतःbind = 1;
+	if (!xprt_bound(xprt))
+		clnt->cl_autobind = 1;
 
-	clnt->cl_समयout = समयout;
-	rcu_assign_poपूर्णांकer(clnt->cl_xprt, xprt);
+	clnt->cl_timeout = timeout;
+	rcu_assign_pointer(clnt->cl_xprt, xprt);
 	spin_unlock(&clnt->cl_lock);
 
-	वापस old;
-पूर्ण
+	return old;
+}
 
-अटल व्योम rpc_clnt_set_nodename(काष्ठा rpc_clnt *clnt, स्थिर अक्षर *nodename)
-अणु
+static void rpc_clnt_set_nodename(struct rpc_clnt *clnt, const char *nodename)
+{
 	clnt->cl_nodelen = strlcpy(clnt->cl_nodename,
-			nodename, माप(clnt->cl_nodename));
-पूर्ण
+			nodename, sizeof(clnt->cl_nodename));
+}
 
-अटल पूर्णांक rpc_client_रेजिस्टर(काष्ठा rpc_clnt *clnt,
-			       rpc_authflavor_t pseuकरोflavor,
-			       स्थिर अक्षर *client_name)
-अणु
-	काष्ठा rpc_auth_create_args auth_args = अणु
-		.pseuकरोflavor = pseuकरोflavor,
+static int rpc_client_register(struct rpc_clnt *clnt,
+			       rpc_authflavor_t pseudoflavor,
+			       const char *client_name)
+{
+	struct rpc_auth_create_args auth_args = {
+		.pseudoflavor = pseudoflavor,
 		.target_name = client_name,
-	पूर्ण;
-	काष्ठा rpc_auth *auth;
-	काष्ठा net *net = rpc_net_ns(clnt);
-	काष्ठा super_block *pipefs_sb;
-	पूर्णांक err;
+	};
+	struct rpc_auth *auth;
+	struct net *net = rpc_net_ns(clnt);
+	struct super_block *pipefs_sb;
+	int err;
 
-	rpc_clnt_debugfs_रेजिस्टर(clnt);
+	rpc_clnt_debugfs_register(clnt);
 
 	pipefs_sb = rpc_get_sb_net(net);
-	अगर (pipefs_sb) अणु
+	if (pipefs_sb) {
 		err = rpc_setup_pipedir(pipefs_sb, clnt);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		if (err)
+			goto out;
+	}
 
-	rpc_रेजिस्टर_client(clnt);
-	अगर (pipefs_sb)
+	rpc_register_client(clnt);
+	if (pipefs_sb)
 		rpc_put_sb_net(net);
 
 	auth = rpcauth_create(&auth_args, clnt);
-	अगर (IS_ERR(auth)) अणु
-		dprपूर्णांकk("RPC:       Couldn't create auth handle (flavor %u)\n",
-				pseuकरोflavor);
+	if (IS_ERR(auth)) {
+		dprintk("RPC:       Couldn't create auth handle (flavor %u)\n",
+				pseudoflavor);
 		err = PTR_ERR(auth);
-		जाओ err_auth;
-	पूर्ण
-	वापस 0;
+		goto err_auth;
+	}
+	return 0;
 err_auth:
 	pipefs_sb = rpc_get_sb_net(net);
-	rpc_unरेजिस्टर_client(clnt);
-	__rpc_clnt_हटाओ_pipedir(clnt);
+	rpc_unregister_client(clnt);
+	__rpc_clnt_remove_pipedir(clnt);
 out:
-	अगर (pipefs_sb)
+	if (pipefs_sb)
 		rpc_put_sb_net(net);
-	rpc_clnt_debugfs_unरेजिस्टर(clnt);
-	वापस err;
-पूर्ण
+	rpc_clnt_debugfs_unregister(clnt);
+	return err;
+}
 
-अटल DEFINE_IDA(rpc_clids);
+static DEFINE_IDA(rpc_clids);
 
-व्योम rpc_cleanup_clids(व्योम)
-अणु
+void rpc_cleanup_clids(void)
+{
 	ida_destroy(&rpc_clids);
-पूर्ण
+}
 
-अटल पूर्णांक rpc_alloc_clid(काष्ठा rpc_clnt *clnt)
-अणु
-	पूर्णांक clid;
+static int rpc_alloc_clid(struct rpc_clnt *clnt)
+{
+	int clid;
 
 	clid = ida_simple_get(&rpc_clids, 0, 0, GFP_KERNEL);
-	अगर (clid < 0)
-		वापस clid;
+	if (clid < 0)
+		return clid;
 	clnt->cl_clid = clid;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rpc_मुक्त_clid(काष्ठा rpc_clnt *clnt)
-अणु
-	ida_simple_हटाओ(&rpc_clids, clnt->cl_clid);
-पूर्ण
+static void rpc_free_clid(struct rpc_clnt *clnt)
+{
+	ida_simple_remove(&rpc_clids, clnt->cl_clid);
+}
 
-अटल काष्ठा rpc_clnt * rpc_new_client(स्थिर काष्ठा rpc_create_args *args,
-		काष्ठा rpc_xprt_चयन *xps,
-		काष्ठा rpc_xprt *xprt,
-		काष्ठा rpc_clnt *parent)
-अणु
-	स्थिर काष्ठा rpc_program *program = args->program;
-	स्थिर काष्ठा rpc_version *version;
-	काष्ठा rpc_clnt *clnt = शून्य;
-	स्थिर काष्ठा rpc_समयout *समयout;
-	स्थिर अक्षर *nodename = args->nodename;
-	पूर्णांक err;
+static struct rpc_clnt * rpc_new_client(const struct rpc_create_args *args,
+		struct rpc_xprt_switch *xps,
+		struct rpc_xprt *xprt,
+		struct rpc_clnt *parent)
+{
+	const struct rpc_program *program = args->program;
+	const struct rpc_version *version;
+	struct rpc_clnt *clnt = NULL;
+	const struct rpc_timeout *timeout;
+	const char *nodename = args->nodename;
+	int err;
 
 	err = rpciod_up();
-	अगर (err)
-		जाओ out_no_rpciod;
+	if (err)
+		goto out_no_rpciod;
 
 	err = -EINVAL;
-	अगर (args->version >= program->nrvers)
-		जाओ out_err;
+	if (args->version >= program->nrvers)
+		goto out_err;
 	version = program->version[args->version];
-	अगर (version == शून्य)
-		जाओ out_err;
+	if (version == NULL)
+		goto out_err;
 
 	err = -ENOMEM;
-	clnt = kzalloc(माप(*clnt), GFP_KERNEL);
-	अगर (!clnt)
-		जाओ out_err;
+	clnt = kzalloc(sizeof(*clnt), GFP_KERNEL);
+	if (!clnt)
+		goto out_err;
 	clnt->cl_parent = parent ? : clnt;
 
 	err = rpc_alloc_clid(clnt);
-	अगर (err)
-		जाओ out_no_clid;
+	if (err)
+		goto out_no_clid;
 
 	clnt->cl_cred	  = get_cred(args->cred);
 	clnt->cl_procinfo = version->procs;
@@ -397,124 +396,124 @@ out:
 	clnt->cl_metrics  = rpc_alloc_iostats(clnt);
 	rpc_init_pipe_dir_head(&clnt->cl_pipedir_objects);
 	err = -ENOMEM;
-	अगर (clnt->cl_metrics == शून्य)
-		जाओ out_no_stats;
+	if (clnt->cl_metrics == NULL)
+		goto out_no_stats;
 	clnt->cl_program  = program;
 	INIT_LIST_HEAD(&clnt->cl_tasks);
 	spin_lock_init(&clnt->cl_lock);
 
-	समयout = xprt->समयout;
-	अगर (args->समयout != शून्य) अणु
-		स_नकल(&clnt->cl_समयout_शेष, args->समयout,
-				माप(clnt->cl_समयout_शेष));
-		समयout = &clnt->cl_समयout_शेष;
-	पूर्ण
+	timeout = xprt->timeout;
+	if (args->timeout != NULL) {
+		memcpy(&clnt->cl_timeout_default, args->timeout,
+				sizeof(clnt->cl_timeout_default));
+		timeout = &clnt->cl_timeout_default;
+	}
 
-	rpc_clnt_set_transport(clnt, xprt, समयout);
+	rpc_clnt_set_transport(clnt, xprt, timeout);
 	xprt_iter_init(&clnt->cl_xpi, xps);
-	xprt_चयन_put(xps);
+	xprt_switch_put(xps);
 
-	clnt->cl_rtt = &clnt->cl_rtt_शेष;
-	rpc_init_rtt(&clnt->cl_rtt_शेष, clnt->cl_समयout->to_initval);
+	clnt->cl_rtt = &clnt->cl_rtt_default;
+	rpc_init_rtt(&clnt->cl_rtt_default, clnt->cl_timeout->to_initval);
 
 	atomic_set(&clnt->cl_count, 1);
 
-	अगर (nodename == शून्य)
+	if (nodename == NULL)
 		nodename = utsname()->nodename;
 	/* save the nodename */
 	rpc_clnt_set_nodename(clnt, nodename);
 
-	err = rpc_client_रेजिस्टर(clnt, args->authflavor, args->client_name);
-	अगर (err)
-		जाओ out_no_path;
-	अगर (parent)
+	err = rpc_client_register(clnt, args->authflavor, args->client_name);
+	if (err)
+		goto out_no_path;
+	if (parent)
 		atomic_inc(&parent->cl_count);
 
 	trace_rpc_clnt_new(clnt, xprt, program->name, args->servername);
-	वापस clnt;
+	return clnt;
 
 out_no_path:
-	rpc_मुक्त_iostats(clnt->cl_metrics);
+	rpc_free_iostats(clnt->cl_metrics);
 out_no_stats:
 	put_cred(clnt->cl_cred);
-	rpc_मुक्त_clid(clnt);
+	rpc_free_clid(clnt);
 out_no_clid:
-	kमुक्त(clnt);
+	kfree(clnt);
 out_err:
-	rpciod_करोwn();
+	rpciod_down();
 out_no_rpciod:
-	xprt_चयन_put(xps);
+	xprt_switch_put(xps);
 	xprt_put(xprt);
 	trace_rpc_clnt_new_err(program->name, args->servername, err);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा rpc_clnt *rpc_create_xprt(काष्ठा rpc_create_args *args,
-					काष्ठा rpc_xprt *xprt)
-अणु
-	काष्ठा rpc_clnt *clnt = शून्य;
-	काष्ठा rpc_xprt_चयन *xps;
+static struct rpc_clnt *rpc_create_xprt(struct rpc_create_args *args,
+					struct rpc_xprt *xprt)
+{
+	struct rpc_clnt *clnt = NULL;
+	struct rpc_xprt_switch *xps;
 
-	अगर (args->bc_xprt && args->bc_xprt->xpt_bc_xps) अणु
+	if (args->bc_xprt && args->bc_xprt->xpt_bc_xps) {
 		WARN_ON_ONCE(!(args->protocol & XPRT_TRANSPORT_BC));
 		xps = args->bc_xprt->xpt_bc_xps;
-		xprt_चयन_get(xps);
-	पूर्ण अन्यथा अणु
-		xps = xprt_चयन_alloc(xprt, GFP_KERNEL);
-		अगर (xps == शून्य) अणु
+		xprt_switch_get(xps);
+	} else {
+		xps = xprt_switch_alloc(xprt, GFP_KERNEL);
+		if (xps == NULL) {
 			xprt_put(xprt);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-		अगर (xprt->bc_xprt) अणु
-			xprt_चयन_get(xps);
+			return ERR_PTR(-ENOMEM);
+		}
+		if (xprt->bc_xprt) {
+			xprt_switch_get(xps);
 			xprt->bc_xprt->xpt_bc_xps = xps;
-		पूर्ण
-	पूर्ण
-	clnt = rpc_new_client(args, xps, xprt, शून्य);
-	अगर (IS_ERR(clnt))
-		वापस clnt;
+		}
+	}
+	clnt = rpc_new_client(args, xps, xprt, NULL);
+	if (IS_ERR(clnt))
+		return clnt;
 
-	अगर (!(args->flags & RPC_CLNT_CREATE_NOPING)) अणु
-		पूर्णांक err = rpc_ping(clnt);
-		अगर (err != 0) अणु
-			rpc_shutकरोwn_client(clnt);
-			वापस ERR_PTR(err);
-		पूर्ण
-	पूर्ण
+	if (!(args->flags & RPC_CLNT_CREATE_NOPING)) {
+		int err = rpc_ping(clnt);
+		if (err != 0) {
+			rpc_shutdown_client(clnt);
+			return ERR_PTR(err);
+		}
+	}
 
 	clnt->cl_softrtry = 1;
-	अगर (args->flags & (RPC_CLNT_CREATE_HARDRTRY|RPC_CLNT_CREATE_SOFTERR)) अणु
+	if (args->flags & (RPC_CLNT_CREATE_HARDRTRY|RPC_CLNT_CREATE_SOFTERR)) {
 		clnt->cl_softrtry = 0;
-		अगर (args->flags & RPC_CLNT_CREATE_SOFTERR)
+		if (args->flags & RPC_CLNT_CREATE_SOFTERR)
 			clnt->cl_softerr = 1;
-	पूर्ण
+	}
 
-	अगर (args->flags & RPC_CLNT_CREATE_AUTOBIND)
-		clnt->cl_स्वतःbind = 1;
-	अगर (args->flags & RPC_CLNT_CREATE_NO_RETRANS_TIMEOUT)
-		clnt->cl_noretransसमयo = 1;
-	अगर (args->flags & RPC_CLNT_CREATE_DISCRTRY)
+	if (args->flags & RPC_CLNT_CREATE_AUTOBIND)
+		clnt->cl_autobind = 1;
+	if (args->flags & RPC_CLNT_CREATE_NO_RETRANS_TIMEOUT)
+		clnt->cl_noretranstimeo = 1;
+	if (args->flags & RPC_CLNT_CREATE_DISCRTRY)
 		clnt->cl_discrtry = 1;
-	अगर (!(args->flags & RPC_CLNT_CREATE_QUIET))
+	if (!(args->flags & RPC_CLNT_CREATE_QUIET))
 		clnt->cl_chatty = 1;
 
-	वापस clnt;
-पूर्ण
+	return clnt;
+}
 
 /**
  * rpc_create - create an RPC client and transport with one call
- * @args: rpc_clnt create argument काष्ठाure
+ * @args: rpc_clnt create argument structure
  *
  * Creates and initializes an RPC transport and an RPC client.
  *
- * It can ping the server in order to determine अगर it is up, and to see अगर
+ * It can ping the server in order to determine if it is up, and to see if
  * it supports this program and version.  RPC_CLNT_CREATE_NOPING disables
  * this behavior so asynchronous tasks can also use rpc_create.
  */
-काष्ठा rpc_clnt *rpc_create(काष्ठा rpc_create_args *args)
-अणु
-	काष्ठा rpc_xprt *xprt;
-	काष्ठा xprt_create xprtargs = अणु
+struct rpc_clnt *rpc_create(struct rpc_create_args *args)
+{
+	struct rpc_xprt *xprt;
+	struct xprt_create xprtargs = {
 		.net = args->net,
 		.ident = args->protocol,
 		.srcaddr = args->saddress,
@@ -522,224 +521,224 @@ out_no_rpciod:
 		.addrlen = args->addrsize,
 		.servername = args->servername,
 		.bc_xprt = args->bc_xprt,
-	पूर्ण;
-	अक्षर servername[48];
-	काष्ठा rpc_clnt *clnt;
-	पूर्णांक i;
+	};
+	char servername[48];
+	struct rpc_clnt *clnt;
+	int i;
 
-	अगर (args->bc_xprt) अणु
+	if (args->bc_xprt) {
 		WARN_ON_ONCE(!(args->protocol & XPRT_TRANSPORT_BC));
 		xprt = args->bc_xprt->xpt_bc_xprt;
-		अगर (xprt) अणु
+		if (xprt) {
 			xprt_get(xprt);
-			वापस rpc_create_xprt(args, xprt);
-		पूर्ण
-	पूर्ण
+			return rpc_create_xprt(args, xprt);
+		}
+	}
 
-	अगर (args->flags & RPC_CLNT_CREATE_INFINITE_SLOTS)
+	if (args->flags & RPC_CLNT_CREATE_INFINITE_SLOTS)
 		xprtargs.flags |= XPRT_CREATE_INFINITE_SLOTS;
-	अगर (args->flags & RPC_CLNT_CREATE_NO_IDLE_TIMEOUT)
+	if (args->flags & RPC_CLNT_CREATE_NO_IDLE_TIMEOUT)
 		xprtargs.flags |= XPRT_CREATE_NO_IDLE_TIMEOUT;
 	/*
-	 * If the caller chooses not to specअगरy a hostname, whip
+	 * If the caller chooses not to specify a hostname, whip
 	 * up a string representation of the passed-in address.
 	 */
-	अगर (xprtargs.servername == शून्य) अणु
-		काष्ठा sockaddr_un *sun =
-				(काष्ठा sockaddr_un *)args->address;
-		काष्ठा sockaddr_in *sin =
-				(काष्ठा sockaddr_in *)args->address;
-		काष्ठा sockaddr_in6 *sin6 =
-				(काष्ठा sockaddr_in6 *)args->address;
+	if (xprtargs.servername == NULL) {
+		struct sockaddr_un *sun =
+				(struct sockaddr_un *)args->address;
+		struct sockaddr_in *sin =
+				(struct sockaddr_in *)args->address;
+		struct sockaddr_in6 *sin6 =
+				(struct sockaddr_in6 *)args->address;
 
 		servername[0] = '\0';
-		चयन (args->address->sa_family) अणु
-		हाल AF_LOCAL:
-			snम_लिखो(servername, माप(servername), "%s",
+		switch (args->address->sa_family) {
+		case AF_LOCAL:
+			snprintf(servername, sizeof(servername), "%s",
 				 sun->sun_path);
-			अवरोध;
-		हाल AF_INET:
-			snम_लिखो(servername, माप(servername), "%pI4",
+			break;
+		case AF_INET:
+			snprintf(servername, sizeof(servername), "%pI4",
 				 &sin->sin_addr.s_addr);
-			अवरोध;
-		हाल AF_INET6:
-			snम_लिखो(servername, माप(servername), "%pI6",
+			break;
+		case AF_INET6:
+			snprintf(servername, sizeof(servername), "%pI6",
 				 &sin6->sin6_addr);
-			अवरोध;
-		शेष:
-			/* caller wants शेष server name, but
+			break;
+		default:
+			/* caller wants default server name, but
 			 * address family isn't recognized. */
-			वापस ERR_PTR(-EINVAL);
-		पूर्ण
+			return ERR_PTR(-EINVAL);
+		}
 		xprtargs.servername = servername;
-	पूर्ण
+	}
 
 	xprt = xprt_create_transport(&xprtargs);
-	अगर (IS_ERR(xprt))
-		वापस (काष्ठा rpc_clnt *)xprt;
+	if (IS_ERR(xprt))
+		return (struct rpc_clnt *)xprt;
 
 	/*
-	 * By शेष, kernel RPC client connects from a reserved port.
-	 * CAP_NET_BIND_SERVICE will not be set क्रम unprivileged requesters,
-	 * but it is always enabled क्रम rpciod, which handles the connect
+	 * By default, kernel RPC client connects from a reserved port.
+	 * CAP_NET_BIND_SERVICE will not be set for unprivileged requesters,
+	 * but it is always enabled for rpciod, which handles the connect
 	 * operation.
 	 */
 	xprt->resvport = 1;
-	अगर (args->flags & RPC_CLNT_CREATE_NONPRIVPORT)
+	if (args->flags & RPC_CLNT_CREATE_NONPRIVPORT)
 		xprt->resvport = 0;
 	xprt->reuseport = 0;
-	अगर (args->flags & RPC_CLNT_CREATE_REUSEPORT)
+	if (args->flags & RPC_CLNT_CREATE_REUSEPORT)
 		xprt->reuseport = 1;
 
 	clnt = rpc_create_xprt(args, xprt);
-	अगर (IS_ERR(clnt) || args->nconnect <= 1)
-		वापस clnt;
+	if (IS_ERR(clnt) || args->nconnect <= 1)
+		return clnt;
 
-	क्रम (i = 0; i < args->nconnect - 1; i++) अणु
-		अगर (rpc_clnt_add_xprt(clnt, &xprtargs, शून्य, शून्य) < 0)
-			अवरोध;
-	पूर्ण
-	वापस clnt;
-पूर्ण
+	for (i = 0; i < args->nconnect - 1; i++) {
+		if (rpc_clnt_add_xprt(clnt, &xprtargs, NULL, NULL) < 0)
+			break;
+	}
+	return clnt;
+}
 EXPORT_SYMBOL_GPL(rpc_create);
 
 /*
- * This function clones the RPC client काष्ठाure. It allows us to share the
- * same transport जबतक varying parameters such as the authentication
+ * This function clones the RPC client structure. It allows us to share the
+ * same transport while varying parameters such as the authentication
  * flavour.
  */
-अटल काष्ठा rpc_clnt *__rpc_clone_client(काष्ठा rpc_create_args *args,
-					   काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_xprt_चयन *xps;
-	काष्ठा rpc_xprt *xprt;
-	काष्ठा rpc_clnt *new;
-	पूर्णांक err;
+static struct rpc_clnt *__rpc_clone_client(struct rpc_create_args *args,
+					   struct rpc_clnt *clnt)
+{
+	struct rpc_xprt_switch *xps;
+	struct rpc_xprt *xprt;
+	struct rpc_clnt *new;
+	int err;
 
 	err = -ENOMEM;
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = xprt_get(rcu_dereference(clnt->cl_xprt));
-	xps = xprt_चयन_get(rcu_dereference(clnt->cl_xpi.xpi_xpचयन));
-	rcu_पढ़ो_unlock();
-	अगर (xprt == शून्य || xps == शून्य) अणु
+	xps = xprt_switch_get(rcu_dereference(clnt->cl_xpi.xpi_xpswitch));
+	rcu_read_unlock();
+	if (xprt == NULL || xps == NULL) {
 		xprt_put(xprt);
-		xprt_चयन_put(xps);
-		जाओ out_err;
-	पूर्ण
+		xprt_switch_put(xps);
+		goto out_err;
+	}
 	args->servername = xprt->servername;
 	args->nodename = clnt->cl_nodename;
 
 	new = rpc_new_client(args, xps, xprt, clnt);
-	अगर (IS_ERR(new))
-		वापस new;
+	if (IS_ERR(new))
+		return new;
 
-	/* Turn off स्वतःbind on clones */
-	new->cl_स्वतःbind = 0;
+	/* Turn off autobind on clones */
+	new->cl_autobind = 0;
 	new->cl_softrtry = clnt->cl_softrtry;
 	new->cl_softerr = clnt->cl_softerr;
-	new->cl_noretransसमयo = clnt->cl_noretransसमयo;
+	new->cl_noretranstimeo = clnt->cl_noretranstimeo;
 	new->cl_discrtry = clnt->cl_discrtry;
 	new->cl_chatty = clnt->cl_chatty;
 	new->cl_principal = clnt->cl_principal;
-	वापस new;
+	return new;
 
 out_err:
 	trace_rpc_clnt_clone_err(clnt, err);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
 /**
- * rpc_clone_client - Clone an RPC client काष्ठाure
+ * rpc_clone_client - Clone an RPC client structure
  *
  * @clnt: RPC client whose parameters are copied
  *
  * Returns a fresh RPC client or an ERR_PTR.
  */
-काष्ठा rpc_clnt *rpc_clone_client(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_create_args args = अणु
+struct rpc_clnt *rpc_clone_client(struct rpc_clnt *clnt)
+{
+	struct rpc_create_args args = {
 		.program	= clnt->cl_program,
 		.prognumber	= clnt->cl_prog,
 		.version	= clnt->cl_vers,
 		.authflavor	= clnt->cl_auth->au_flavor,
 		.cred		= clnt->cl_cred,
-	पूर्ण;
-	वापस __rpc_clone_client(&args, clnt);
-पूर्ण
+	};
+	return __rpc_clone_client(&args, clnt);
+}
 EXPORT_SYMBOL_GPL(rpc_clone_client);
 
 /**
- * rpc_clone_client_set_auth - Clone an RPC client काष्ठाure and set its auth
+ * rpc_clone_client_set_auth - Clone an RPC client structure and set its auth
  *
  * @clnt: RPC client whose parameters are copied
- * @flavor: security flavor क्रम new client
+ * @flavor: security flavor for new client
  *
  * Returns a fresh RPC client or an ERR_PTR.
  */
-काष्ठा rpc_clnt *
-rpc_clone_client_set_auth(काष्ठा rpc_clnt *clnt, rpc_authflavor_t flavor)
-अणु
-	काष्ठा rpc_create_args args = अणु
+struct rpc_clnt *
+rpc_clone_client_set_auth(struct rpc_clnt *clnt, rpc_authflavor_t flavor)
+{
+	struct rpc_create_args args = {
 		.program	= clnt->cl_program,
 		.prognumber	= clnt->cl_prog,
 		.version	= clnt->cl_vers,
 		.authflavor	= flavor,
 		.cred		= clnt->cl_cred,
-	पूर्ण;
-	वापस __rpc_clone_client(&args, clnt);
-पूर्ण
+	};
+	return __rpc_clone_client(&args, clnt);
+}
 EXPORT_SYMBOL_GPL(rpc_clone_client_set_auth);
 
 /**
- * rpc_चयन_client_transport: चयन the RPC transport on the fly
- * @clnt: poपूर्णांकer to a काष्ठा rpc_clnt
- * @args: poपूर्णांकer to the new transport arguments
- * @समयout: poपूर्णांकer to the new समयout parameters
+ * rpc_switch_client_transport: switch the RPC transport on the fly
+ * @clnt: pointer to a struct rpc_clnt
+ * @args: pointer to the new transport arguments
+ * @timeout: pointer to the new timeout parameters
  *
- * This function allows the caller to चयन the RPC transport क्रम the
- * rpc_clnt काष्ठाure 'clnt' to allow it to connect to a mirrored NFS
- * server, क्रम instance.  It assumes that the caller has ensured that
- * there are no active RPC tasks by using some क्रमm of locking.
+ * This function allows the caller to switch the RPC transport for the
+ * rpc_clnt structure 'clnt' to allow it to connect to a mirrored NFS
+ * server, for instance.  It assumes that the caller has ensured that
+ * there are no active RPC tasks by using some form of locking.
  *
- * Returns zero अगर "clnt" is now using the new xprt.  Otherwise a
- * negative त्रुटि_सं is वापसed, and "clnt" जारीs to use the old
+ * Returns zero if "clnt" is now using the new xprt.  Otherwise a
+ * negative errno is returned, and "clnt" continues to use the old
  * xprt.
  */
-पूर्णांक rpc_चयन_client_transport(काष्ठा rpc_clnt *clnt,
-		काष्ठा xprt_create *args,
-		स्थिर काष्ठा rpc_समयout *समयout)
-अणु
-	स्थिर काष्ठा rpc_समयout *old_समयo;
-	rpc_authflavor_t pseuकरोflavor;
-	काष्ठा rpc_xprt_चयन *xps, *oldxps;
-	काष्ठा rpc_xprt *xprt, *old;
-	काष्ठा rpc_clnt *parent;
-	पूर्णांक err;
+int rpc_switch_client_transport(struct rpc_clnt *clnt,
+		struct xprt_create *args,
+		const struct rpc_timeout *timeout)
+{
+	const struct rpc_timeout *old_timeo;
+	rpc_authflavor_t pseudoflavor;
+	struct rpc_xprt_switch *xps, *oldxps;
+	struct rpc_xprt *xprt, *old;
+	struct rpc_clnt *parent;
+	int err;
 
 	xprt = xprt_create_transport(args);
-	अगर (IS_ERR(xprt))
-		वापस PTR_ERR(xprt);
+	if (IS_ERR(xprt))
+		return PTR_ERR(xprt);
 
-	xps = xprt_चयन_alloc(xprt, GFP_KERNEL);
-	अगर (xps == शून्य) अणु
+	xps = xprt_switch_alloc(xprt, GFP_KERNEL);
+	if (xps == NULL) {
 		xprt_put(xprt);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	pseuकरोflavor = clnt->cl_auth->au_flavor;
+	pseudoflavor = clnt->cl_auth->au_flavor;
 
-	old_समयo = clnt->cl_समयout;
-	old = rpc_clnt_set_transport(clnt, xprt, समयout);
-	oldxps = xprt_iter_xchg_चयन(&clnt->cl_xpi, xps);
+	old_timeo = clnt->cl_timeout;
+	old = rpc_clnt_set_transport(clnt, xprt, timeout);
+	oldxps = xprt_iter_xchg_switch(&clnt->cl_xpi, xps);
 
-	rpc_unरेजिस्टर_client(clnt);
-	__rpc_clnt_हटाओ_pipedir(clnt);
-	rpc_clnt_debugfs_unरेजिस्टर(clnt);
+	rpc_unregister_client(clnt);
+	__rpc_clnt_remove_pipedir(clnt);
+	rpc_clnt_debugfs_unregister(clnt);
 
 	/*
-	 * A new transport was created.  "clnt" thereक्रमe
+	 * A new transport was created.  "clnt" therefore
 	 * becomes the root of a new cl_parent tree.  clnt's
-	 * children, अगर it has any, still poपूर्णांक to the old xprt.
+	 * children, if it has any, still point to the old xprt.
 	 */
 	parent = clnt->cl_parent;
 	clnt->cl_parent = clnt;
@@ -749,200 +748,200 @@ EXPORT_SYMBOL_GPL(rpc_clone_client_set_auth);
 	 * contexts in particular are between a single
 	 * client and server.
 	 */
-	err = rpc_client_रेजिस्टर(clnt, pseuकरोflavor, शून्य);
-	अगर (err)
-		जाओ out_revert;
+	err = rpc_client_register(clnt, pseudoflavor, NULL);
+	if (err)
+		goto out_revert;
 
 	synchronize_rcu();
-	अगर (parent != clnt)
+	if (parent != clnt)
 		rpc_release_client(parent);
-	xprt_चयन_put(oldxps);
+	xprt_switch_put(oldxps);
 	xprt_put(old);
 	trace_rpc_clnt_replace_xprt(clnt);
-	वापस 0;
+	return 0;
 
 out_revert:
-	xps = xprt_iter_xchg_चयन(&clnt->cl_xpi, oldxps);
-	rpc_clnt_set_transport(clnt, old, old_समयo);
+	xps = xprt_iter_xchg_switch(&clnt->cl_xpi, oldxps);
+	rpc_clnt_set_transport(clnt, old, old_timeo);
 	clnt->cl_parent = parent;
-	rpc_client_रेजिस्टर(clnt, pseuकरोflavor, शून्य);
-	xprt_चयन_put(xps);
+	rpc_client_register(clnt, pseudoflavor, NULL);
+	xprt_switch_put(xps);
 	xprt_put(xprt);
 	trace_rpc_clnt_replace_xprt_err(clnt);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_चयन_client_transport);
+	return err;
+}
+EXPORT_SYMBOL_GPL(rpc_switch_client_transport);
 
-अटल
-पूर्णांक rpc_clnt_xprt_iter_init(काष्ठा rpc_clnt *clnt, काष्ठा rpc_xprt_iter *xpi)
-अणु
-	काष्ठा rpc_xprt_चयन *xps;
+static
+int rpc_clnt_xprt_iter_init(struct rpc_clnt *clnt, struct rpc_xprt_iter *xpi)
+{
+	struct rpc_xprt_switch *xps;
 
-	rcu_पढ़ो_lock();
-	xps = xprt_चयन_get(rcu_dereference(clnt->cl_xpi.xpi_xpचयन));
-	rcu_पढ़ो_unlock();
-	अगर (xps == शून्य)
-		वापस -EAGAIN;
+	rcu_read_lock();
+	xps = xprt_switch_get(rcu_dereference(clnt->cl_xpi.xpi_xpswitch));
+	rcu_read_unlock();
+	if (xps == NULL)
+		return -EAGAIN;
 	xprt_iter_init_listall(xpi, xps);
-	xprt_चयन_put(xps);
-	वापस 0;
-पूर्ण
+	xprt_switch_put(xps);
+	return 0;
+}
 
 /**
- * rpc_clnt_iterate_क्रम_each_xprt - Apply a function to all transports
- * @clnt: poपूर्णांकer to client
+ * rpc_clnt_iterate_for_each_xprt - Apply a function to all transports
+ * @clnt: pointer to client
  * @fn: function to apply
- * @data: व्योम poपूर्णांकer to function data
+ * @data: void pointer to function data
  *
  * Iterates through the list of RPC transports currently attached to the
  * client and applies the function fn(clnt, xprt, data).
  *
- * On error, the iteration stops, and the function वापसs the error value.
+ * On error, the iteration stops, and the function returns the error value.
  */
-पूर्णांक rpc_clnt_iterate_क्रम_each_xprt(काष्ठा rpc_clnt *clnt,
-		पूर्णांक (*fn)(काष्ठा rpc_clnt *, काष्ठा rpc_xprt *, व्योम *),
-		व्योम *data)
-अणु
-	काष्ठा rpc_xprt_iter xpi;
-	पूर्णांक ret;
+int rpc_clnt_iterate_for_each_xprt(struct rpc_clnt *clnt,
+		int (*fn)(struct rpc_clnt *, struct rpc_xprt *, void *),
+		void *data)
+{
+	struct rpc_xprt_iter xpi;
+	int ret;
 
 	ret = rpc_clnt_xprt_iter_init(clnt, &xpi);
-	अगर (ret)
-		वापस ret;
-	क्रम (;;) अणु
-		काष्ठा rpc_xprt *xprt = xprt_iter_get_next(&xpi);
+	if (ret)
+		return ret;
+	for (;;) {
+		struct rpc_xprt *xprt = xprt_iter_get_next(&xpi);
 
-		अगर (!xprt)
-			अवरोध;
+		if (!xprt)
+			break;
 		ret = fn(clnt, xprt, data);
 		xprt_put(xprt);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 	xprt_iter_destroy(&xpi);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_clnt_iterate_क्रम_each_xprt);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(rpc_clnt_iterate_for_each_xprt);
 
 /*
- * Kill all tasks क्रम the given client.
- * XXX: समाप्त their descendants as well?
+ * Kill all tasks for the given client.
+ * XXX: kill their descendants as well?
  */
-व्योम rpc_समाप्तall_tasks(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_task	*rovr;
+void rpc_killall_tasks(struct rpc_clnt *clnt)
+{
+	struct rpc_task	*rovr;
 
 
-	अगर (list_empty(&clnt->cl_tasks))
-		वापस;
+	if (list_empty(&clnt->cl_tasks))
+		return;
 
 	/*
 	 * Spin lock all_tasks to prevent changes...
 	 */
-	trace_rpc_clnt_समाप्तall(clnt);
+	trace_rpc_clnt_killall(clnt);
 	spin_lock(&clnt->cl_lock);
-	list_क्रम_each_entry(rovr, &clnt->cl_tasks, tk_task)
-		rpc_संकेत_task(rovr);
+	list_for_each_entry(rovr, &clnt->cl_tasks, tk_task)
+		rpc_signal_task(rovr);
 	spin_unlock(&clnt->cl_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_समाप्तall_tasks);
+}
+EXPORT_SYMBOL_GPL(rpc_killall_tasks);
 
 /*
- * Properly shut करोwn an RPC client, terminating all outstanding
+ * Properly shut down an RPC client, terminating all outstanding
  * requests.
  */
-व्योम rpc_shutकरोwn_client(काष्ठा rpc_clnt *clnt)
-अणु
+void rpc_shutdown_client(struct rpc_clnt *clnt)
+{
 	might_sleep();
 
-	trace_rpc_clnt_shutकरोwn(clnt);
+	trace_rpc_clnt_shutdown(clnt);
 
-	जबतक (!list_empty(&clnt->cl_tasks)) अणु
-		rpc_समाप्तall_tasks(clnt);
-		रुको_event_समयout(destroy_रुको,
+	while (!list_empty(&clnt->cl_tasks)) {
+		rpc_killall_tasks(clnt);
+		wait_event_timeout(destroy_wait,
 			list_empty(&clnt->cl_tasks), 1*HZ);
-	पूर्ण
+	}
 
 	rpc_release_client(clnt);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_shutकरोwn_client);
+}
+EXPORT_SYMBOL_GPL(rpc_shutdown_client);
 
 /*
  * Free an RPC client
  */
-अटल व्योम rpc_मुक्त_client_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rpc_clnt *clnt = container_of(work, काष्ठा rpc_clnt, cl_work);
+static void rpc_free_client_work(struct work_struct *work)
+{
+	struct rpc_clnt *clnt = container_of(work, struct rpc_clnt, cl_work);
 
-	trace_rpc_clnt_मुक्त(clnt);
+	trace_rpc_clnt_free(clnt);
 
 	/* These might block on processes that might allocate memory,
 	 * so they cannot be called in rpciod, so they are handled separately
 	 * here.
 	 */
-	rpc_clnt_debugfs_unरेजिस्टर(clnt);
-	rpc_मुक्त_clid(clnt);
-	rpc_clnt_हटाओ_pipedir(clnt);
+	rpc_clnt_debugfs_unregister(clnt);
+	rpc_free_clid(clnt);
+	rpc_clnt_remove_pipedir(clnt);
 	xprt_put(rcu_dereference_raw(clnt->cl_xprt));
 
-	kमुक्त(clnt);
-	rpciod_करोwn();
-पूर्ण
-अटल काष्ठा rpc_clnt *
-rpc_मुक्त_client(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_clnt *parent = शून्य;
+	kfree(clnt);
+	rpciod_down();
+}
+static struct rpc_clnt *
+rpc_free_client(struct rpc_clnt *clnt)
+{
+	struct rpc_clnt *parent = NULL;
 
 	trace_rpc_clnt_release(clnt);
-	अगर (clnt->cl_parent != clnt)
+	if (clnt->cl_parent != clnt)
 		parent = clnt->cl_parent;
-	rpc_unरेजिस्टर_client(clnt);
-	rpc_मुक्त_iostats(clnt->cl_metrics);
-	clnt->cl_metrics = शून्य;
+	rpc_unregister_client(clnt);
+	rpc_free_iostats(clnt->cl_metrics);
+	clnt->cl_metrics = NULL;
 	xprt_iter_destroy(&clnt->cl_xpi);
 	put_cred(clnt->cl_cred);
 
-	INIT_WORK(&clnt->cl_work, rpc_मुक्त_client_work);
+	INIT_WORK(&clnt->cl_work, rpc_free_client_work);
 	schedule_work(&clnt->cl_work);
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
 /*
  * Free an RPC client
  */
-अटल काष्ठा rpc_clnt *
-rpc_मुक्त_auth(काष्ठा rpc_clnt *clnt)
-अणु
-	अगर (clnt->cl_auth == शून्य)
-		वापस rpc_मुक्त_client(clnt);
+static struct rpc_clnt *
+rpc_free_auth(struct rpc_clnt *clnt)
+{
+	if (clnt->cl_auth == NULL)
+		return rpc_free_client(clnt);
 
 	/*
-	 * Note: RPCSEC_GSS may need to send शून्य RPC calls in order to
-	 *       release reमुख्यing GSS contexts. This mechanism ensures
-	 *       that it can करो so safely.
+	 * Note: RPCSEC_GSS may need to send NULL RPC calls in order to
+	 *       release remaining GSS contexts. This mechanism ensures
+	 *       that it can do so safely.
 	 */
 	atomic_inc(&clnt->cl_count);
 	rpcauth_release(clnt->cl_auth);
-	clnt->cl_auth = शून्य;
-	अगर (atomic_dec_and_test(&clnt->cl_count))
-		वापस rpc_मुक्त_client(clnt);
-	वापस शून्य;
-पूर्ण
+	clnt->cl_auth = NULL;
+	if (atomic_dec_and_test(&clnt->cl_count))
+		return rpc_free_client(clnt);
+	return NULL;
+}
 
 /*
  * Release reference to the RPC client
  */
-व्योम
-rpc_release_client(काष्ठा rpc_clnt *clnt)
-अणु
-	करो अणु
-		अगर (list_empty(&clnt->cl_tasks))
-			wake_up(&destroy_रुको);
-		अगर (!atomic_dec_and_test(&clnt->cl_count))
-			अवरोध;
-		clnt = rpc_मुक्त_auth(clnt);
-	पूर्ण जबतक (clnt != शून्य);
-पूर्ण
+void
+rpc_release_client(struct rpc_clnt *clnt)
+{
+	do {
+		if (list_empty(&clnt->cl_tasks))
+			wake_up(&destroy_wait);
+		if (!atomic_dec_and_test(&clnt->cl_count))
+			break;
+		clnt = rpc_free_auth(clnt);
+	} while (clnt != NULL);
+}
 EXPORT_SYMBOL_GPL(rpc_release_client);
 
 /**
@@ -951,278 +950,278 @@ EXPORT_SYMBOL_GPL(rpc_release_client);
  * @program: rpc program to set
  * @vers: rpc program version
  *
- * Clones the rpc client and sets up a new RPC program. This is मुख्यly
- * of use क्रम enabling dअगरferent RPC programs to share the same transport.
- * The Sun NFSv2/v3 ACL protocol can करो this.
+ * Clones the rpc client and sets up a new RPC program. This is mainly
+ * of use for enabling different RPC programs to share the same transport.
+ * The Sun NFSv2/v3 ACL protocol can do this.
  */
-काष्ठा rpc_clnt *rpc_bind_new_program(काष्ठा rpc_clnt *old,
-				      स्थिर काष्ठा rpc_program *program,
+struct rpc_clnt *rpc_bind_new_program(struct rpc_clnt *old,
+				      const struct rpc_program *program,
 				      u32 vers)
-अणु
-	काष्ठा rpc_create_args args = अणु
+{
+	struct rpc_create_args args = {
 		.program	= program,
 		.prognumber	= program->number,
 		.version	= vers,
 		.authflavor	= old->cl_auth->au_flavor,
 		.cred		= old->cl_cred,
-	पूर्ण;
-	काष्ठा rpc_clnt *clnt;
-	पूर्णांक err;
+	};
+	struct rpc_clnt *clnt;
+	int err;
 
 	clnt = __rpc_clone_client(&args, old);
-	अगर (IS_ERR(clnt))
-		जाओ out;
+	if (IS_ERR(clnt))
+		goto out;
 	err = rpc_ping(clnt);
-	अगर (err != 0) अणु
-		rpc_shutकरोwn_client(clnt);
+	if (err != 0) {
+		rpc_shutdown_client(clnt);
 		clnt = ERR_PTR(err);
-	पूर्ण
+	}
 out:
-	वापस clnt;
-पूर्ण
+	return clnt;
+}
 EXPORT_SYMBOL_GPL(rpc_bind_new_program);
 
-काष्ठा rpc_xprt *
-rpc_task_get_xprt(काष्ठा rpc_clnt *clnt, काष्ठा rpc_xprt *xprt)
-अणु
-	काष्ठा rpc_xprt_चयन *xps;
+struct rpc_xprt *
+rpc_task_get_xprt(struct rpc_clnt *clnt, struct rpc_xprt *xprt)
+{
+	struct rpc_xprt_switch *xps;
 
-	अगर (!xprt)
-		वापस शून्य;
-	rcu_पढ़ो_lock();
-	xps = rcu_dereference(clnt->cl_xpi.xpi_xpचयन);
-	atomic_दीर्घ_inc(&xps->xps_queuelen);
-	rcu_पढ़ो_unlock();
-	atomic_दीर्घ_inc(&xprt->queuelen);
+	if (!xprt)
+		return NULL;
+	rcu_read_lock();
+	xps = rcu_dereference(clnt->cl_xpi.xpi_xpswitch);
+	atomic_long_inc(&xps->xps_queuelen);
+	rcu_read_unlock();
+	atomic_long_inc(&xprt->queuelen);
 
-	वापस xprt;
-पूर्ण
+	return xprt;
+}
 
-अटल व्योम
-rpc_task_release_xprt(काष्ठा rpc_clnt *clnt, काष्ठा rpc_xprt *xprt)
-अणु
-	काष्ठा rpc_xprt_चयन *xps;
+static void
+rpc_task_release_xprt(struct rpc_clnt *clnt, struct rpc_xprt *xprt)
+{
+	struct rpc_xprt_switch *xps;
 
-	atomic_दीर्घ_dec(&xprt->queuelen);
-	rcu_पढ़ो_lock();
-	xps = rcu_dereference(clnt->cl_xpi.xpi_xpचयन);
-	atomic_दीर्घ_dec(&xps->xps_queuelen);
-	rcu_पढ़ो_unlock();
+	atomic_long_dec(&xprt->queuelen);
+	rcu_read_lock();
+	xps = rcu_dereference(clnt->cl_xpi.xpi_xpswitch);
+	atomic_long_dec(&xps->xps_queuelen);
+	rcu_read_unlock();
 
 	xprt_put(xprt);
-पूर्ण
+}
 
-व्योम rpc_task_release_transport(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_xprt *xprt = task->tk_xprt;
+void rpc_task_release_transport(struct rpc_task *task)
+{
+	struct rpc_xprt *xprt = task->tk_xprt;
 
-	अगर (xprt) अणु
-		task->tk_xprt = शून्य;
-		अगर (task->tk_client)
+	if (xprt) {
+		task->tk_xprt = NULL;
+		if (task->tk_client)
 			rpc_task_release_xprt(task->tk_client, xprt);
-		अन्यथा
+		else
 			xprt_put(xprt);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(rpc_task_release_transport);
 
-व्योम rpc_task_release_client(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_clnt *clnt = task->tk_client;
+void rpc_task_release_client(struct rpc_task *task)
+{
+	struct rpc_clnt *clnt = task->tk_client;
 
 	rpc_task_release_transport(task);
-	अगर (clnt != शून्य) अणु
+	if (clnt != NULL) {
 		/* Remove from client task list */
 		spin_lock(&clnt->cl_lock);
 		list_del(&task->tk_task);
 		spin_unlock(&clnt->cl_lock);
-		task->tk_client = शून्य;
+		task->tk_client = NULL;
 
 		rpc_release_client(clnt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा rpc_xprt *
-rpc_task_get_first_xprt(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_xprt *xprt;
+static struct rpc_xprt *
+rpc_task_get_first_xprt(struct rpc_clnt *clnt)
+{
+	struct rpc_xprt *xprt;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = xprt_get(rcu_dereference(clnt->cl_xprt));
-	rcu_पढ़ो_unlock();
-	वापस rpc_task_get_xprt(clnt, xprt);
-पूर्ण
+	rcu_read_unlock();
+	return rpc_task_get_xprt(clnt, xprt);
+}
 
-अटल काष्ठा rpc_xprt *
-rpc_task_get_next_xprt(काष्ठा rpc_clnt *clnt)
-अणु
-	वापस rpc_task_get_xprt(clnt, xprt_iter_get_next(&clnt->cl_xpi));
-पूर्ण
+static struct rpc_xprt *
+rpc_task_get_next_xprt(struct rpc_clnt *clnt)
+{
+	return rpc_task_get_xprt(clnt, xprt_iter_get_next(&clnt->cl_xpi));
+}
 
-अटल
-व्योम rpc_task_set_transport(काष्ठा rpc_task *task, काष्ठा rpc_clnt *clnt)
-अणु
-	अगर (task->tk_xprt)
-		वापस;
-	अगर (task->tk_flags & RPC_TASK_NO_ROUND_ROBIN)
+static
+void rpc_task_set_transport(struct rpc_task *task, struct rpc_clnt *clnt)
+{
+	if (task->tk_xprt)
+		return;
+	if (task->tk_flags & RPC_TASK_NO_ROUND_ROBIN)
 		task->tk_xprt = rpc_task_get_first_xprt(clnt);
-	अन्यथा
+	else
 		task->tk_xprt = rpc_task_get_next_xprt(clnt);
-पूर्ण
+}
 
-अटल
-व्योम rpc_task_set_client(काष्ठा rpc_task *task, काष्ठा rpc_clnt *clnt)
-अणु
+static
+void rpc_task_set_client(struct rpc_task *task, struct rpc_clnt *clnt)
+{
 
-	अगर (clnt != शून्य) अणु
+	if (clnt != NULL) {
 		rpc_task_set_transport(task, clnt);
 		task->tk_client = clnt;
 		atomic_inc(&clnt->cl_count);
-		अगर (clnt->cl_softrtry)
+		if (clnt->cl_softrtry)
 			task->tk_flags |= RPC_TASK_SOFT;
-		अगर (clnt->cl_softerr)
+		if (clnt->cl_softerr)
 			task->tk_flags |= RPC_TASK_TIMEOUT;
-		अगर (clnt->cl_noretransसमयo)
+		if (clnt->cl_noretranstimeo)
 			task->tk_flags |= RPC_TASK_NO_RETRANS_TIMEOUT;
-		अगर (atomic_पढ़ो(&clnt->cl_swapper))
+		if (atomic_read(&clnt->cl_swapper))
 			task->tk_flags |= RPC_TASK_SWAPPER;
 		/* Add to the client's list of all tasks */
 		spin_lock(&clnt->cl_lock);
 		list_add_tail(&task->tk_task, &clnt->cl_tasks);
 		spin_unlock(&clnt->cl_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-rpc_task_set_rpc_message(काष्ठा rpc_task *task, स्थिर काष्ठा rpc_message *msg)
-अणु
-	अगर (msg != शून्य) अणु
+static void
+rpc_task_set_rpc_message(struct rpc_task *task, const struct rpc_message *msg)
+{
+	if (msg != NULL) {
 		task->tk_msg.rpc_proc = msg->rpc_proc;
 		task->tk_msg.rpc_argp = msg->rpc_argp;
 		task->tk_msg.rpc_resp = msg->rpc_resp;
 		task->tk_msg.rpc_cred = msg->rpc_cred;
-		अगर (!(task->tk_flags & RPC_TASK_CRED_NOREF))
+		if (!(task->tk_flags & RPC_TASK_CRED_NOREF))
 			get_cred(task->tk_msg.rpc_cred);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Default callback क्रम async RPC calls
+ * Default callback for async RPC calls
  */
-अटल व्योम
-rpc_शेष_callback(काष्ठा rpc_task *task, व्योम *data)
-अणु
-पूर्ण
+static void
+rpc_default_callback(struct rpc_task *task, void *data)
+{
+}
 
-अटल स्थिर काष्ठा rpc_call_ops rpc_शेष_ops = अणु
-	.rpc_call_करोne = rpc_शेष_callback,
-पूर्ण;
+static const struct rpc_call_ops rpc_default_ops = {
+	.rpc_call_done = rpc_default_callback,
+};
 
 /**
  * rpc_run_task - Allocate a new RPC task, then run rpc_execute against it
- * @task_setup_data: poपूर्णांकer to task initialisation data
+ * @task_setup_data: pointer to task initialisation data
  */
-काष्ठा rpc_task *rpc_run_task(स्थिर काष्ठा rpc_task_setup *task_setup_data)
-अणु
-	काष्ठा rpc_task *task;
+struct rpc_task *rpc_run_task(const struct rpc_task_setup *task_setup_data)
+{
+	struct rpc_task *task;
 
 	task = rpc_new_task(task_setup_data);
 
-	अगर (!RPC_IS_ASYNC(task))
+	if (!RPC_IS_ASYNC(task))
 		task->tk_flags |= RPC_TASK_CRED_NOREF;
 
 	rpc_task_set_client(task, task_setup_data->rpc_client);
 	rpc_task_set_rpc_message(task, task_setup_data->rpc_message);
 
-	अगर (task->tk_action == शून्य)
+	if (task->tk_action == NULL)
 		rpc_call_start(task);
 
 	atomic_inc(&task->tk_count);
 	rpc_execute(task);
-	वापस task;
-पूर्ण
+	return task;
+}
 EXPORT_SYMBOL_GPL(rpc_run_task);
 
 /**
- * rpc_call_sync - Perक्रमm a synchronous RPC call
- * @clnt: poपूर्णांकer to RPC client
+ * rpc_call_sync - Perform a synchronous RPC call
+ * @clnt: pointer to RPC client
  * @msg: RPC call parameters
  * @flags: RPC call flags
  */
-पूर्णांक rpc_call_sync(काष्ठा rpc_clnt *clnt, स्थिर काष्ठा rpc_message *msg, पूर्णांक flags)
-अणु
-	काष्ठा rpc_task	*task;
-	काष्ठा rpc_task_setup task_setup_data = अणु
+int rpc_call_sync(struct rpc_clnt *clnt, const struct rpc_message *msg, int flags)
+{
+	struct rpc_task	*task;
+	struct rpc_task_setup task_setup_data = {
 		.rpc_client = clnt,
 		.rpc_message = msg,
-		.callback_ops = &rpc_शेष_ops,
+		.callback_ops = &rpc_default_ops,
 		.flags = flags,
-	पूर्ण;
-	पूर्णांक status;
+	};
+	int status;
 
 	WARN_ON_ONCE(flags & RPC_TASK_ASYNC);
-	अगर (flags & RPC_TASK_ASYNC) अणु
+	if (flags & RPC_TASK_ASYNC) {
 		rpc_release_calldata(task_setup_data.callback_ops,
 			task_setup_data.callback_data);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	task = rpc_run_task(&task_setup_data);
-	अगर (IS_ERR(task))
-		वापस PTR_ERR(task);
+	if (IS_ERR(task))
+		return PTR_ERR(task);
 	status = task->tk_status;
 	rpc_put_task(task);
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(rpc_call_sync);
 
 /**
- * rpc_call_async - Perक्रमm an asynchronous RPC call
- * @clnt: poपूर्णांकer to RPC client
+ * rpc_call_async - Perform an asynchronous RPC call
+ * @clnt: pointer to RPC client
  * @msg: RPC call parameters
  * @flags: RPC call flags
  * @tk_ops: RPC call ops
  * @data: user call data
  */
-पूर्णांक
-rpc_call_async(काष्ठा rpc_clnt *clnt, स्थिर काष्ठा rpc_message *msg, पूर्णांक flags,
-	       स्थिर काष्ठा rpc_call_ops *tk_ops, व्योम *data)
-अणु
-	काष्ठा rpc_task	*task;
-	काष्ठा rpc_task_setup task_setup_data = अणु
+int
+rpc_call_async(struct rpc_clnt *clnt, const struct rpc_message *msg, int flags,
+	       const struct rpc_call_ops *tk_ops, void *data)
+{
+	struct rpc_task	*task;
+	struct rpc_task_setup task_setup_data = {
 		.rpc_client = clnt,
 		.rpc_message = msg,
 		.callback_ops = tk_ops,
 		.callback_data = data,
 		.flags = flags|RPC_TASK_ASYNC,
-	पूर्ण;
+	};
 
 	task = rpc_run_task(&task_setup_data);
-	अगर (IS_ERR(task))
-		वापस PTR_ERR(task);
+	if (IS_ERR(task))
+		return PTR_ERR(task);
 	rpc_put_task(task);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rpc_call_async);
 
-#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
-अटल व्योम call_bc_encode(काष्ठा rpc_task *task);
+#if defined(CONFIG_SUNRPC_BACKCHANNEL)
+static void call_bc_encode(struct rpc_task *task);
 
 /**
- * rpc_run_bc_task - Allocate a new RPC task क्रम backchannel use, then run
+ * rpc_run_bc_task - Allocate a new RPC task for backchannel use, then run
  * rpc_execute against it
  * @req: RPC request
  */
-काष्ठा rpc_task *rpc_run_bc_task(काष्ठा rpc_rqst *req)
-अणु
-	काष्ठा rpc_task *task;
-	काष्ठा rpc_task_setup task_setup_data = अणु
-		.callback_ops = &rpc_शेष_ops,
+struct rpc_task *rpc_run_bc_task(struct rpc_rqst *req)
+{
+	struct rpc_task *task;
+	struct rpc_task_setup task_setup_data = {
+		.callback_ops = &rpc_default_ops,
 		.flags = RPC_TASK_SOFTCONN |
 			RPC_TASK_NO_RETRANS_TIMEOUT,
-	पूर्ण;
+	};
 
-	dprपूर्णांकk("RPC: rpc_run_bc_task req= %p\n", req);
+	dprintk("RPC: rpc_run_bc_task req= %p\n", req);
 	/*
 	 * Create an rpc_task to send the data
 	 */
@@ -1231,549 +1230,549 @@ EXPORT_SYMBOL_GPL(rpc_call_async);
 
 	task->tk_action = call_bc_encode;
 	atomic_inc(&task->tk_count);
-	WARN_ON_ONCE(atomic_पढ़ो(&task->tk_count) != 2);
+	WARN_ON_ONCE(atomic_read(&task->tk_count) != 2);
 	rpc_execute(task);
 
-	dprपूर्णांकk("RPC: rpc_run_bc_task: task= %p\n", task);
-	वापस task;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SUNRPC_BACKCHANNEL */
+	dprintk("RPC: rpc_run_bc_task: task= %p\n", task);
+	return task;
+}
+#endif /* CONFIG_SUNRPC_BACKCHANNEL */
 
 /**
- * rpc_prepare_reply_pages - Prepare to receive a reply data payload पूर्णांकo pages
+ * rpc_prepare_reply_pages - Prepare to receive a reply data payload into pages
  * @req: RPC request to prepare
- * @pages: vector of काष्ठा page poपूर्णांकers
+ * @pages: vector of struct page pointers
  * @base: offset in first page where receive should start, in bytes
  * @len: expected size of the upper layer data payload, in bytes
  * @hdrsize: expected size of upper layer reply header, in XDR words
  *
  */
-व्योम rpc_prepare_reply_pages(काष्ठा rpc_rqst *req, काष्ठा page **pages,
-			     अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक len,
-			     अचिन्हित पूर्णांक hdrsize)
-अणु
+void rpc_prepare_reply_pages(struct rpc_rqst *req, struct page **pages,
+			     unsigned int base, unsigned int len,
+			     unsigned int hdrsize)
+{
 	hdrsize += RPC_REPHDRSIZE + req->rq_cred->cr_auth->au_ralign;
 
-	xdr_अंतरभूत_pages(&req->rq_rcv_buf, hdrsize << 2, pages, base, len);
+	xdr_inline_pages(&req->rq_rcv_buf, hdrsize << 2, pages, base, len);
 	trace_rpc_xdr_reply_pages(req->rq_task, &req->rq_rcv_buf);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rpc_prepare_reply_pages);
 
-व्योम
-rpc_call_start(काष्ठा rpc_task *task)
-अणु
+void
+rpc_call_start(struct rpc_task *task)
+{
 	task->tk_action = call_start;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rpc_call_start);
 
 /**
  * rpc_peeraddr - extract remote peer address from clnt's xprt
- * @clnt: RPC client काष्ठाure
+ * @clnt: RPC client structure
  * @buf: target buffer
  * @bufsize: length of target buffer
  *
  * Returns the number of bytes that are actually in the stored address.
  */
-माप_प्रकार rpc_peeraddr(काष्ठा rpc_clnt *clnt, काष्ठा sockaddr *buf, माप_प्रकार bufsize)
-अणु
-	माप_प्रकार bytes;
-	काष्ठा rpc_xprt *xprt;
+size_t rpc_peeraddr(struct rpc_clnt *clnt, struct sockaddr *buf, size_t bufsize)
+{
+	size_t bytes;
+	struct rpc_xprt *xprt;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = rcu_dereference(clnt->cl_xprt);
 
 	bytes = xprt->addrlen;
-	अगर (bytes > bufsize)
+	if (bytes > bufsize)
 		bytes = bufsize;
-	स_नकल(buf, &xprt->addr, bytes);
-	rcu_पढ़ो_unlock();
+	memcpy(buf, &xprt->addr, bytes);
+	rcu_read_unlock();
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 EXPORT_SYMBOL_GPL(rpc_peeraddr);
 
 /**
- * rpc_peeraddr2str - वापस remote peer address in prपूर्णांकable क्रमmat
- * @clnt: RPC client काष्ठाure
- * @क्रमmat: address क्रमmat
+ * rpc_peeraddr2str - return remote peer address in printable format
+ * @clnt: RPC client structure
+ * @format: address format
  *
- * NB: the lअगरeसमय of the memory referenced by the वापसed poपूर्णांकer is
- * the same as the rpc_xprt itself.  As दीर्घ as the caller uses this
- * poपूर्णांकer, it must hold the RCU पढ़ो lock.
+ * NB: the lifetime of the memory referenced by the returned pointer is
+ * the same as the rpc_xprt itself.  As long as the caller uses this
+ * pointer, it must hold the RCU read lock.
  */
-स्थिर अक्षर *rpc_peeraddr2str(काष्ठा rpc_clnt *clnt,
-			     क्रमागत rpc_display_क्रमmat_t क्रमmat)
-अणु
-	काष्ठा rpc_xprt *xprt;
+const char *rpc_peeraddr2str(struct rpc_clnt *clnt,
+			     enum rpc_display_format_t format)
+{
+	struct rpc_xprt *xprt;
 
 	xprt = rcu_dereference(clnt->cl_xprt);
 
-	अगर (xprt->address_strings[क्रमmat] != शून्य)
-		वापस xprt->address_strings[क्रमmat];
-	अन्यथा
-		वापस "unprintable";
-पूर्ण
+	if (xprt->address_strings[format] != NULL)
+		return xprt->address_strings[format];
+	else
+		return "unprintable";
+}
 EXPORT_SYMBOL_GPL(rpc_peeraddr2str);
 
-अटल स्थिर काष्ठा sockaddr_in rpc_inaddr_loopback = अणु
+static const struct sockaddr_in rpc_inaddr_loopback = {
 	.sin_family		= AF_INET,
 	.sin_addr.s_addr	= htonl(INADDR_ANY),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sockaddr_in6 rpc_in6addr_loopback = अणु
+static const struct sockaddr_in6 rpc_in6addr_loopback = {
 	.sin6_family		= AF_INET6,
 	.sin6_addr		= IN6ADDR_ANY_INIT,
-पूर्ण;
+};
 
 /*
- * Try a माला_लोockname() on a connected datagram socket.  Using a
+ * Try a getsockname() on a connected datagram socket.  Using a
  * connected datagram socket prevents leaving a socket in TIME_WAIT.
  * This conserves the ephemeral port number space.
  *
- * Returns zero and fills in "buf" अगर successful; otherwise, a
- * negative त्रुटि_सं is वापसed.
+ * Returns zero and fills in "buf" if successful; otherwise, a
+ * negative errno is returned.
  */
-अटल पूर्णांक rpc_sockname(काष्ठा net *net, काष्ठा sockaddr *sap, माप_प्रकार salen,
-			काष्ठा sockaddr *buf)
-अणु
-	काष्ठा socket *sock;
-	पूर्णांक err;
+static int rpc_sockname(struct net *net, struct sockaddr *sap, size_t salen,
+			struct sockaddr *buf)
+{
+	struct socket *sock;
+	int err;
 
 	err = __sock_create(net, sap->sa_family,
 				SOCK_DGRAM, IPPROTO_UDP, &sock, 1);
-	अगर (err < 0) अणु
-		dprपूर्णांकk("RPC:       can't create UDP socket (%d)\n", err);
-		जाओ out;
-	पूर्ण
+	if (err < 0) {
+		dprintk("RPC:       can't create UDP socket (%d)\n", err);
+		goto out;
+	}
 
-	चयन (sap->sa_family) अणु
-	हाल AF_INET:
+	switch (sap->sa_family) {
+	case AF_INET:
 		err = kernel_bind(sock,
-				(काष्ठा sockaddr *)&rpc_inaddr_loopback,
-				माप(rpc_inaddr_loopback));
-		अवरोध;
-	हाल AF_INET6:
+				(struct sockaddr *)&rpc_inaddr_loopback,
+				sizeof(rpc_inaddr_loopback));
+		break;
+	case AF_INET6:
 		err = kernel_bind(sock,
-				(काष्ठा sockaddr *)&rpc_in6addr_loopback,
-				माप(rpc_in6addr_loopback));
-		अवरोध;
-	शेष:
+				(struct sockaddr *)&rpc_in6addr_loopback,
+				sizeof(rpc_in6addr_loopback));
+		break;
+	default:
 		err = -EAFNOSUPPORT;
-		जाओ out;
-	पूर्ण
-	अगर (err < 0) अणु
-		dprपूर्णांकk("RPC:       can't bind UDP socket (%d)\n", err);
-		जाओ out_release;
-	पूर्ण
+		goto out;
+	}
+	if (err < 0) {
+		dprintk("RPC:       can't bind UDP socket (%d)\n", err);
+		goto out_release;
+	}
 
 	err = kernel_connect(sock, sap, salen, 0);
-	अगर (err < 0) अणु
-		dprपूर्णांकk("RPC:       can't connect UDP socket (%d)\n", err);
-		जाओ out_release;
-	पूर्ण
+	if (err < 0) {
+		dprintk("RPC:       can't connect UDP socket (%d)\n", err);
+		goto out_release;
+	}
 
-	err = kernel_माला_लोockname(sock, buf);
-	अगर (err < 0) अणु
-		dprपूर्णांकk("RPC:       getsockname failed (%d)\n", err);
-		जाओ out_release;
-	पूर्ण
+	err = kernel_getsockname(sock, buf);
+	if (err < 0) {
+		dprintk("RPC:       getsockname failed (%d)\n", err);
+		goto out_release;
+	}
 
 	err = 0;
-	अगर (buf->sa_family == AF_INET6) अणु
-		काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)buf;
+	if (buf->sa_family == AF_INET6) {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)buf;
 		sin6->sin6_scope_id = 0;
-	पूर्ण
-	dprपूर्णांकk("RPC:       %s succeeded\n", __func__);
+	}
+	dprintk("RPC:       %s succeeded\n", __func__);
 
 out_release:
 	sock_release(sock);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Scraping a connected socket failed, so we करोn't have a useable
+ * Scraping a connected socket failed, so we don't have a useable
  * local address.  Fallback: generate an address that will prevent
  * the server from calling us back.
  *
- * Returns zero and fills in "buf" अगर successful; otherwise, a
- * negative त्रुटि_सं is वापसed.
+ * Returns zero and fills in "buf" if successful; otherwise, a
+ * negative errno is returned.
  */
-अटल पूर्णांक rpc_anyaddr(पूर्णांक family, काष्ठा sockaddr *buf, माप_प्रकार buflen)
-अणु
-	चयन (family) अणु
-	हाल AF_INET:
-		अगर (buflen < माप(rpc_inaddr_loopback))
-			वापस -EINVAL;
-		स_नकल(buf, &rpc_inaddr_loopback,
-				माप(rpc_inaddr_loopback));
-		अवरोध;
-	हाल AF_INET6:
-		अगर (buflen < माप(rpc_in6addr_loopback))
-			वापस -EINVAL;
-		स_नकल(buf, &rpc_in6addr_loopback,
-				माप(rpc_in6addr_loopback));
-		अवरोध;
-	शेष:
-		dprपूर्णांकk("RPC:       %s: address family not supported\n",
+static int rpc_anyaddr(int family, struct sockaddr *buf, size_t buflen)
+{
+	switch (family) {
+	case AF_INET:
+		if (buflen < sizeof(rpc_inaddr_loopback))
+			return -EINVAL;
+		memcpy(buf, &rpc_inaddr_loopback,
+				sizeof(rpc_inaddr_loopback));
+		break;
+	case AF_INET6:
+		if (buflen < sizeof(rpc_in6addr_loopback))
+			return -EINVAL;
+		memcpy(buf, &rpc_in6addr_loopback,
+				sizeof(rpc_in6addr_loopback));
+		break;
+	default:
+		dprintk("RPC:       %s: address family not supported\n",
 			__func__);
-		वापस -EAFNOSUPPORT;
-	पूर्ण
-	dprपूर्णांकk("RPC:       %s: succeeded\n", __func__);
-	वापस 0;
-पूर्ण
+		return -EAFNOSUPPORT;
+	}
+	dprintk("RPC:       %s: succeeded\n", __func__);
+	return 0;
+}
 
 /**
- * rpc_localaddr - discover local endpoपूर्णांक address क्रम an RPC client
- * @clnt: RPC client काष्ठाure
+ * rpc_localaddr - discover local endpoint address for an RPC client
+ * @clnt: RPC client structure
  * @buf: target buffer
  * @buflen: size of target buffer, in bytes
  *
- * Returns zero and fills in "buf" and "buflen" अगर successful;
- * otherwise, a negative त्रुटि_सं is वापसed.
+ * Returns zero and fills in "buf" and "buflen" if successful;
+ * otherwise, a negative errno is returned.
  *
- * This works even अगर the underlying transport is not currently connected,
- * or अगर the upper layer never previously provided a source address.
+ * This works even if the underlying transport is not currently connected,
+ * or if the upper layer never previously provided a source address.
  *
  * The result of this function call is transient: multiple calls in
- * succession may give dअगरferent results, depending on how local
- * networking configuration changes over समय.
+ * succession may give different results, depending on how local
+ * networking configuration changes over time.
  */
-पूर्णांक rpc_localaddr(काष्ठा rpc_clnt *clnt, काष्ठा sockaddr *buf, माप_प्रकार buflen)
-अणु
-	काष्ठा sockaddr_storage address;
-	काष्ठा sockaddr *sap = (काष्ठा sockaddr *)&address;
-	काष्ठा rpc_xprt *xprt;
-	काष्ठा net *net;
-	माप_प्रकार salen;
-	पूर्णांक err;
+int rpc_localaddr(struct rpc_clnt *clnt, struct sockaddr *buf, size_t buflen)
+{
+	struct sockaddr_storage address;
+	struct sockaddr *sap = (struct sockaddr *)&address;
+	struct rpc_xprt *xprt;
+	struct net *net;
+	size_t salen;
+	int err;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = rcu_dereference(clnt->cl_xprt);
 	salen = xprt->addrlen;
-	स_नकल(sap, &xprt->addr, salen);
+	memcpy(sap, &xprt->addr, salen);
 	net = get_net(xprt->xprt_net);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	rpc_set_port(sap, 0);
 	err = rpc_sockname(net, sap, salen, buf);
 	put_net(net);
-	अगर (err != 0)
-		/* Couldn't discover local address, वापस ANYADDR */
-		वापस rpc_anyaddr(sap->sa_family, buf, buflen);
-	वापस 0;
-पूर्ण
+	if (err != 0)
+		/* Couldn't discover local address, return ANYADDR */
+		return rpc_anyaddr(sap->sa_family, buf, buflen);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rpc_localaddr);
 
-व्योम
-rpc_रखो_बफsize(काष्ठा rpc_clnt *clnt, अचिन्हित पूर्णांक sndsize, अचिन्हित पूर्णांक rcvsize)
-अणु
-	काष्ठा rpc_xprt *xprt;
+void
+rpc_setbufsize(struct rpc_clnt *clnt, unsigned int sndsize, unsigned int rcvsize)
+{
+	struct rpc_xprt *xprt;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = rcu_dereference(clnt->cl_xprt);
-	अगर (xprt->ops->set_buffer_size)
+	if (xprt->ops->set_buffer_size)
 		xprt->ops->set_buffer_size(xprt, sndsize, rcvsize);
-	rcu_पढ़ो_unlock();
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_रखो_बफsize);
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL_GPL(rpc_setbufsize);
 
 /**
- * rpc_net_ns - Get the network namespace क्रम this RPC client
+ * rpc_net_ns - Get the network namespace for this RPC client
  * @clnt: RPC client to query
  *
  */
-काष्ठा net *rpc_net_ns(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा net *ret;
+struct net *rpc_net_ns(struct rpc_clnt *clnt)
+{
+	struct net *ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ret = rcu_dereference(clnt->cl_xprt)->xprt_net;
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rpc_net_ns);
 
 /**
- * rpc_max_payload - Get maximum payload size क्रम a transport, in bytes
+ * rpc_max_payload - Get maximum payload size for a transport, in bytes
  * @clnt: RPC client to query
  *
  * For stream transports, this is one RPC record fragment (see RFC
- * 1831), as we करोn't support multi-record requests yet.  For datagram
+ * 1831), as we don't support multi-record requests yet.  For datagram
  * transports, this is the size of an IP packet minus the IP, UDP, and
  * RPC header sizes.
  */
-माप_प्रकार rpc_max_payload(काष्ठा rpc_clnt *clnt)
-अणु
-	माप_प्रकार ret;
+size_t rpc_max_payload(struct rpc_clnt *clnt)
+{
+	size_t ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ret = rcu_dereference(clnt->cl_xprt)->max_payload;
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rpc_max_payload);
 
 /**
  * rpc_max_bc_payload - Get maximum backchannel payload size, in bytes
  * @clnt: RPC client to query
  */
-माप_प्रकार rpc_max_bc_payload(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_xprt *xprt;
-	माप_प्रकार ret;
+size_t rpc_max_bc_payload(struct rpc_clnt *clnt)
+{
+	struct rpc_xprt *xprt;
+	size_t ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = rcu_dereference(clnt->cl_xprt);
 	ret = xprt->ops->bc_maxpayload(xprt);
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rpc_max_bc_payload);
 
-अचिन्हित पूर्णांक rpc_num_bc_slots(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_xprt *xprt;
-	अचिन्हित पूर्णांक ret;
+unsigned int rpc_num_bc_slots(struct rpc_clnt *clnt)
+{
+	struct rpc_xprt *xprt;
+	unsigned int ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	xprt = rcu_dereference(clnt->cl_xprt);
 	ret = xprt->ops->bc_num_slots(xprt);
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+	rcu_read_unlock();
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rpc_num_bc_slots);
 
 /**
- * rpc_क्रमce_rebind - क्रमce transport to check that remote port is unchanged
+ * rpc_force_rebind - force transport to check that remote port is unchanged
  * @clnt: client to rebind
  *
  */
-व्योम rpc_क्रमce_rebind(काष्ठा rpc_clnt *clnt)
-अणु
-	अगर (clnt->cl_स्वतःbind) अणु
-		rcu_पढ़ो_lock();
+void rpc_force_rebind(struct rpc_clnt *clnt)
+{
+	if (clnt->cl_autobind) {
+		rcu_read_lock();
 		xprt_clear_bound(rcu_dereference(clnt->cl_xprt));
-		rcu_पढ़ो_unlock();
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_क्रमce_rebind);
+		rcu_read_unlock();
+	}
+}
+EXPORT_SYMBOL_GPL(rpc_force_rebind);
 
-अटल पूर्णांक
-__rpc_restart_call(काष्ठा rpc_task *task, व्योम (*action)(काष्ठा rpc_task *))
-अणु
+static int
+__rpc_restart_call(struct rpc_task *task, void (*action)(struct rpc_task *))
+{
 	task->tk_status = 0;
 	task->tk_rpc_status = 0;
 	task->tk_action = action;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * Restart an (async) RPC call. Usually called from within the
- * निकास handler.
+ * exit handler.
  */
-पूर्णांक
-rpc_restart_call(काष्ठा rpc_task *task)
-अणु
-	वापस __rpc_restart_call(task, call_start);
-पूर्ण
+int
+rpc_restart_call(struct rpc_task *task)
+{
+	return __rpc_restart_call(task, call_start);
+}
 EXPORT_SYMBOL_GPL(rpc_restart_call);
 
 /*
  * Restart an (async) RPC call from the call_prepare state.
- * Usually called from within the निकास handler.
+ * Usually called from within the exit handler.
  */
-पूर्णांक
-rpc_restart_call_prepare(काष्ठा rpc_task *task)
-अणु
-	अगर (task->tk_ops->rpc_call_prepare != शून्य)
-		वापस __rpc_restart_call(task, rpc_prepare_task);
-	वापस rpc_restart_call(task);
-पूर्ण
+int
+rpc_restart_call_prepare(struct rpc_task *task)
+{
+	if (task->tk_ops->rpc_call_prepare != NULL)
+		return __rpc_restart_call(task, rpc_prepare_task);
+	return rpc_restart_call(task);
+}
 EXPORT_SYMBOL_GPL(rpc_restart_call_prepare);
 
-स्थिर अक्षर
-*rpc_proc_name(स्थिर काष्ठा rpc_task *task)
-अणु
-	स्थिर काष्ठा rpc_procinfo *proc = task->tk_msg.rpc_proc;
+const char
+*rpc_proc_name(const struct rpc_task *task)
+{
+	const struct rpc_procinfo *proc = task->tk_msg.rpc_proc;
 
-	अगर (proc) अणु
-		अगर (proc->p_name)
-			वापस proc->p_name;
-		अन्यथा
-			वापस "NULL";
-	पूर्ण अन्यथा
-		वापस "no proc";
-पूर्ण
+	if (proc) {
+		if (proc->p_name)
+			return proc->p_name;
+		else
+			return "NULL";
+	} else
+		return "no proc";
+}
 
-अटल व्योम
-__rpc_call_rpcerror(काष्ठा rpc_task *task, पूर्णांक tk_status, पूर्णांक rpc_status)
-अणु
+static void
+__rpc_call_rpcerror(struct rpc_task *task, int tk_status, int rpc_status)
+{
 	trace_rpc_call_rpcerror(task, tk_status, rpc_status);
 	task->tk_rpc_status = rpc_status;
-	rpc_निकास(task, tk_status);
-पूर्ण
+	rpc_exit(task, tk_status);
+}
 
-अटल व्योम
-rpc_call_rpcerror(काष्ठा rpc_task *task, पूर्णांक status)
-अणु
+static void
+rpc_call_rpcerror(struct rpc_task *task, int status)
+{
 	__rpc_call_rpcerror(task, status, status);
-पूर्ण
+}
 
 /*
  * 0.  Initial state
  *
- *     Other FSM states can be visited zero or more बार, but
- *     this state is visited exactly once क्रम each RPC.
+ *     Other FSM states can be visited zero or more times, but
+ *     this state is visited exactly once for each RPC.
  */
-अटल व्योम
-call_start(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_clnt	*clnt = task->tk_client;
-	पूर्णांक idx = task->tk_msg.rpc_proc->p_statidx;
+static void
+call_start(struct rpc_task *task)
+{
+	struct rpc_clnt	*clnt = task->tk_client;
+	int idx = task->tk_msg.rpc_proc->p_statidx;
 
 	trace_rpc_request(task);
 
-	/* Increment call count (version might not be valid क्रम ping) */
-	अगर (clnt->cl_program->version[clnt->cl_vers])
+	/* Increment call count (version might not be valid for ping) */
+	if (clnt->cl_program->version[clnt->cl_vers])
 		clnt->cl_program->version[clnt->cl_vers]->counts[idx]++;
 	clnt->cl_stats->rpccnt++;
 	task->tk_action = call_reserve;
 	rpc_task_set_transport(task, clnt);
-पूर्ण
+}
 
 /*
  * 1.	Reserve an RPC call slot
  */
-अटल व्योम
-call_reserve(काष्ठा rpc_task *task)
-अणु
+static void
+call_reserve(struct rpc_task *task)
+{
 	task->tk_status  = 0;
 	task->tk_action  = call_reserveresult;
 	xprt_reserve(task);
-पूर्ण
+}
 
-अटल व्योम call_retry_reserve(काष्ठा rpc_task *task);
+static void call_retry_reserve(struct rpc_task *task);
 
 /*
  * 1b.	Grok the result of xprt_reserve()
  */
-अटल व्योम
-call_reserveresult(काष्ठा rpc_task *task)
-अणु
-	पूर्णांक status = task->tk_status;
+static void
+call_reserveresult(struct rpc_task *task)
+{
+	int status = task->tk_status;
 
 	/*
 	 * After a call to xprt_reserve(), we must have either
-	 * a request slot or अन्यथा an error status.
+	 * a request slot or else an error status.
 	 */
 	task->tk_status = 0;
-	अगर (status >= 0) अणु
-		अगर (task->tk_rqstp) अणु
+	if (status >= 0) {
+		if (task->tk_rqstp) {
 			task->tk_action = call_refresh;
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		rpc_call_rpcerror(task, -EIO);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (status) अणु
-	हाल -ENOMEM:
+	switch (status) {
+	case -ENOMEM:
 		rpc_delay(task, HZ >> 2);
 		fallthrough;
-	हाल -EAGAIN:	/* woken up; retry */
+	case -EAGAIN:	/* woken up; retry */
 		task->tk_action = call_retry_reserve;
-		वापस;
-	शेष:
+		return;
+	default:
 		rpc_call_rpcerror(task, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * 1c.	Retry reserving an RPC call slot
  */
-अटल व्योम
-call_retry_reserve(काष्ठा rpc_task *task)
-अणु
+static void
+call_retry_reserve(struct rpc_task *task)
+{
 	task->tk_status  = 0;
 	task->tk_action  = call_reserveresult;
 	xprt_retry_reserve(task);
-पूर्ण
+}
 
 /*
  * 2.	Bind and/or refresh the credentials
  */
-अटल व्योम
-call_refresh(काष्ठा rpc_task *task)
-अणु
+static void
+call_refresh(struct rpc_task *task)
+{
 	task->tk_action = call_refreshresult;
 	task->tk_status = 0;
 	task->tk_client->cl_stats->rpcauthrefresh++;
 	rpcauth_refreshcred(task);
-पूर्ण
+}
 
 /*
  * 2a.	Process the results of a credential refresh
  */
-अटल व्योम
-call_refreshresult(काष्ठा rpc_task *task)
-अणु
-	पूर्णांक status = task->tk_status;
+static void
+call_refreshresult(struct rpc_task *task)
+{
+	int status = task->tk_status;
 
 	task->tk_status = 0;
 	task->tk_action = call_refresh;
-	चयन (status) अणु
-	हाल 0:
-		अगर (rpcauth_uptodatecred(task)) अणु
+	switch (status) {
+	case 0:
+		if (rpcauth_uptodatecred(task)) {
 			task->tk_action = call_allocate;
-			वापस;
-		पूर्ण
-		/* Use rate-limiting and a max number of retries अगर refresh
+			return;
+		}
+		/* Use rate-limiting and a max number of retries if refresh
 		 * had status 0 but failed to update the cred.
 		 */
 		fallthrough;
-	हाल -ETIMEDOUT:
+	case -ETIMEDOUT:
 		rpc_delay(task, 3*HZ);
 		fallthrough;
-	हाल -EAGAIN:
+	case -EAGAIN:
 		status = -EACCES;
 		fallthrough;
-	हाल -EKEYEXPIRED:
-		अगर (!task->tk_cred_retry)
-			अवरोध;
+	case -EKEYEXPIRED:
+		if (!task->tk_cred_retry)
+			break;
 		task->tk_cred_retry--;
 		trace_rpc_retry_refresh_status(task);
-		वापस;
-	पूर्ण
+		return;
+	}
 	trace_rpc_refresh_status(task);
 	rpc_call_rpcerror(task, status);
-पूर्ण
+}
 
 /*
- * 2b.	Allocate the buffer. For details, see sched.c:rpc_दो_स्मृति.
- *	(Note: buffer memory is मुक्तd in xprt_release).
+ * 2b.	Allocate the buffer. For details, see sched.c:rpc_malloc.
+ *	(Note: buffer memory is freed in xprt_release).
  */
-अटल व्योम
-call_allocate(काष्ठा rpc_task *task)
-अणु
-	स्थिर काष्ठा rpc_auth *auth = task->tk_rqstp->rq_cred->cr_auth;
-	काष्ठा rpc_rqst *req = task->tk_rqstp;
-	काष्ठा rpc_xprt *xprt = req->rq_xprt;
-	स्थिर काष्ठा rpc_procinfo *proc = task->tk_msg.rpc_proc;
-	पूर्णांक status;
+static void
+call_allocate(struct rpc_task *task)
+{
+	const struct rpc_auth *auth = task->tk_rqstp->rq_cred->cr_auth;
+	struct rpc_rqst *req = task->tk_rqstp;
+	struct rpc_xprt *xprt = req->rq_xprt;
+	const struct rpc_procinfo *proc = task->tk_msg.rpc_proc;
+	int status;
 
 	task->tk_status = 0;
 	task->tk_action = call_encode;
 
-	अगर (req->rq_buffer)
-		वापस;
+	if (req->rq_buffer)
+		return;
 
-	अगर (proc->p_proc != 0) अणु
+	if (proc->p_proc != 0) {
 		BUG_ON(proc->p_arglen == 0);
-		अगर (proc->p_decode != शून्य)
+		if (proc->p_decode != NULL)
 			BUG_ON(proc->p_replen == 0);
-	पूर्ण
+	}
 
 	/*
 	 * Calculate the size (in quads) of the RPC call
@@ -1785,44 +1784,44 @@ call_allocate(काष्ठा rpc_task *task)
 	req->rq_callsize <<= 2;
 	/*
 	 * Note: the reply buffer must at minimum allocate enough space
-	 * क्रम the 'struct accepted_reply' from RFC5531.
+	 * for the 'struct accepted_reply' from RFC5531.
 	 */
 	req->rq_rcvsize = RPC_REPHDRSIZE + auth->au_rslack + \
-			max_t(माप_प्रकार, proc->p_replen, 2);
+			max_t(size_t, proc->p_replen, 2);
 	req->rq_rcvsize <<= 2;
 
 	status = xprt->ops->buf_alloc(task);
 	trace_rpc_buf_alloc(task, status);
-	अगर (status == 0)
-		वापस;
-	अगर (status != -ENOMEM) अणु
+	if (status == 0)
+		return;
+	if (status != -ENOMEM) {
 		rpc_call_rpcerror(task, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (RPC_IS_ASYNC(task) || !fatal_संकेत_pending(current)) अणु
+	if (RPC_IS_ASYNC(task) || !fatal_signal_pending(current)) {
 		task->tk_action = call_allocate;
 		rpc_delay(task, HZ>>4);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rpc_call_rpcerror(task, -ERESTARTSYS);
-पूर्ण
+}
 
-अटल पूर्णांक
-rpc_task_need_encode(काष्ठा rpc_task *task)
-अणु
-	वापस test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate) == 0 &&
+static int
+rpc_task_need_encode(struct rpc_task *task)
+{
+	return test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate) == 0 &&
 		(!(task->tk_flags & RPC_TASK_SENT) ||
 		 !(task->tk_flags & RPC_TASK_NO_RETRANS_TIMEOUT) ||
 		 xprt_request_need_retransmit(task));
-पूर्ण
+}
 
-अटल व्योम
-rpc_xdr_encode(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_rqst	*req = task->tk_rqstp;
-	काष्ठा xdr_stream xdr;
+static void
+rpc_xdr_encode(struct rpc_task *task)
+{
+	struct rpc_rqst	*req = task->tk_rqstp;
+	struct xdr_stream xdr;
 
 	xdr_buf_init(&req->rq_snd_buf,
 		     req->rq_buffer,
@@ -1835,679 +1834,679 @@ rpc_xdr_encode(काष्ठा rpc_task *task)
 	req->rq_snd_buf.head[0].iov_len = 0;
 	xdr_init_encode(&xdr, &req->rq_snd_buf,
 			req->rq_snd_buf.head[0].iov_base, req);
-	xdr_मुक्त_bvec(&req->rq_snd_buf);
-	अगर (rpc_encode_header(task, &xdr))
-		वापस;
+	xdr_free_bvec(&req->rq_snd_buf);
+	if (rpc_encode_header(task, &xdr))
+		return;
 
 	task->tk_status = rpcauth_wrap_req(task, &xdr);
-पूर्ण
+}
 
 /*
  * 3.	Encode arguments of an RPC call
  */
-अटल व्योम
-call_encode(काष्ठा rpc_task *task)
-अणु
-	अगर (!rpc_task_need_encode(task))
-		जाओ out;
+static void
+call_encode(struct rpc_task *task)
+{
+	if (!rpc_task_need_encode(task))
+		goto out;
 
-	/* Dequeue task from the receive queue जबतक we're encoding */
+	/* Dequeue task from the receive queue while we're encoding */
 	xprt_request_dequeue_xprt(task);
 	/* Encode here so that rpcsec_gss can use correct sequence number. */
 	rpc_xdr_encode(task);
 	/* Did the encode result in an error condition? */
-	अगर (task->tk_status != 0) अणु
+	if (task->tk_status != 0) {
 		/* Was the error nonfatal? */
-		चयन (task->tk_status) अणु
-		हाल -EAGAIN:
-		हाल -ENOMEM:
+		switch (task->tk_status) {
+		case -EAGAIN:
+		case -ENOMEM:
 			rpc_delay(task, HZ >> 4);
-			अवरोध;
-		हाल -EKEYEXPIRED:
-			अगर (!task->tk_cred_retry) अणु
-				rpc_निकास(task, task->tk_status);
-			पूर्ण अन्यथा अणु
+			break;
+		case -EKEYEXPIRED:
+			if (!task->tk_cred_retry) {
+				rpc_exit(task, task->tk_status);
+			} else {
 				task->tk_action = call_refresh;
 				task->tk_cred_retry--;
 				trace_rpc_retry_refresh_status(task);
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			rpc_call_rpcerror(task, task->tk_status);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	/* Add task to reply queue beक्रमe transmission to aव्योम races */
-	अगर (rpc_reply_expected(task))
+	/* Add task to reply queue before transmission to avoid races */
+	if (rpc_reply_expected(task))
 		xprt_request_enqueue_receive(task);
 	xprt_request_enqueue_transmit(task);
 out:
 	task->tk_action = call_transmit;
 	/* Check that the connection is OK */
-	अगर (!xprt_bound(task->tk_xprt))
+	if (!xprt_bound(task->tk_xprt))
 		task->tk_action = call_bind;
-	अन्यथा अगर (!xprt_connected(task->tk_xprt))
+	else if (!xprt_connected(task->tk_xprt))
 		task->tk_action = call_connect;
-पूर्ण
+}
 
 /*
- * Helpers to check अगर the task was alपढ़ोy transmitted, and
- * to take action when that is the हाल.
+ * Helpers to check if the task was already transmitted, and
+ * to take action when that is the case.
  */
-अटल bool
-rpc_task_transmitted(काष्ठा rpc_task *task)
-अणु
-	वापस !test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate);
-पूर्ण
+static bool
+rpc_task_transmitted(struct rpc_task *task)
+{
+	return !test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate);
+}
 
-अटल व्योम
-rpc_task_handle_transmitted(काष्ठा rpc_task *task)
-अणु
+static void
+rpc_task_handle_transmitted(struct rpc_task *task)
+{
 	xprt_end_transmit(task);
 	task->tk_action = call_transmit_status;
-पूर्ण
+}
 
 /*
- * 4.	Get the server port number अगर not yet set
+ * 4.	Get the server port number if not yet set
  */
-अटल व्योम
-call_bind(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
+static void
+call_bind(struct rpc_task *task)
+{
+	struct rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
 
-	अगर (rpc_task_transmitted(task)) अणु
+	if (rpc_task_transmitted(task)) {
 		rpc_task_handle_transmitted(task);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (xprt_bound(xprt)) अणु
+	if (xprt_bound(xprt)) {
 		task->tk_action = call_connect;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	task->tk_action = call_bind_status;
-	अगर (!xprt_prepare_transmit(task))
-		वापस;
+	if (!xprt_prepare_transmit(task))
+		return;
 
 	xprt->ops->rpcbind(task);
-पूर्ण
+}
 
 /*
  * 4a.	Sort out bind result
  */
-अटल व्योम
-call_bind_status(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
-	पूर्णांक status = -EIO;
+static void
+call_bind_status(struct rpc_task *task)
+{
+	struct rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
+	int status = -EIO;
 
-	अगर (rpc_task_transmitted(task)) अणु
+	if (rpc_task_transmitted(task)) {
 		rpc_task_handle_transmitted(task);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (task->tk_status >= 0)
-		जाओ out_next;
-	अगर (xprt_bound(xprt)) अणु
+	if (task->tk_status >= 0)
+		goto out_next;
+	if (xprt_bound(xprt)) {
 		task->tk_status = 0;
-		जाओ out_next;
-	पूर्ण
+		goto out_next;
+	}
 
-	चयन (task->tk_status) अणु
-	हाल -ENOMEM:
+	switch (task->tk_status) {
+	case -ENOMEM:
 		rpc_delay(task, HZ >> 2);
-		जाओ retry_समयout;
-	हाल -EACCES:
+		goto retry_timeout;
+	case -EACCES:
 		trace_rpcb_prog_unavail_err(task);
-		/* fail immediately अगर this is an RPC ping */
-		अगर (task->tk_msg.rpc_proc->p_proc == 0) अणु
+		/* fail immediately if this is an RPC ping */
+		if (task->tk_msg.rpc_proc->p_proc == 0) {
 			status = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
-		अगर (task->tk_rebind_retry == 0)
-			अवरोध;
+			break;
+		}
+		if (task->tk_rebind_retry == 0)
+			break;
 		task->tk_rebind_retry--;
 		rpc_delay(task, 3*HZ);
-		जाओ retry_समयout;
-	हाल -ENOBUFS:
+		goto retry_timeout;
+	case -ENOBUFS:
 		rpc_delay(task, HZ >> 2);
-		जाओ retry_समयout;
-	हाल -EAGAIN:
-		जाओ retry_समयout;
-	हाल -ETIMEDOUT:
-		trace_rpcb_समयout_err(task);
-		जाओ retry_समयout;
-	हाल -EPFNOSUPPORT:
-		/* server करोesn't support any rpcbind version we know of */
+		goto retry_timeout;
+	case -EAGAIN:
+		goto retry_timeout;
+	case -ETIMEDOUT:
+		trace_rpcb_timeout_err(task);
+		goto retry_timeout;
+	case -EPFNOSUPPORT:
+		/* server doesn't support any rpcbind version we know of */
 		trace_rpcb_bind_version_err(task);
-		अवरोध;
-	हाल -EPROTONOSUPPORT:
+		break;
+	case -EPROTONOSUPPORT:
 		trace_rpcb_bind_version_err(task);
-		जाओ retry_समयout;
-	हाल -ECONNREFUSED:		/* connection problems */
-	हाल -ECONNRESET:
-	हाल -ECONNABORTED:
-	हाल -ENOTCONN:
-	हाल -EHOSTDOWN:
-	हाल -ENETDOWN:
-	हाल -EHOSTUNREACH:
-	हाल -ENETUNREACH:
-	हाल -EPIPE:
+		goto retry_timeout;
+	case -ECONNREFUSED:		/* connection problems */
+	case -ECONNRESET:
+	case -ECONNABORTED:
+	case -ENOTCONN:
+	case -EHOSTDOWN:
+	case -ENETDOWN:
+	case -EHOSTUNREACH:
+	case -ENETUNREACH:
+	case -EPIPE:
 		trace_rpcb_unreachable_err(task);
-		अगर (!RPC_IS_SOFTCONN(task)) अणु
+		if (!RPC_IS_SOFTCONN(task)) {
 			rpc_delay(task, 5*HZ);
-			जाओ retry_समयout;
-		पूर्ण
+			goto retry_timeout;
+		}
 		status = task->tk_status;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		trace_rpcb_unrecognized_err(task);
-	पूर्ण
+	}
 
 	rpc_call_rpcerror(task, status);
-	वापस;
+	return;
 out_next:
 	task->tk_action = call_connect;
-	वापस;
-retry_समयout:
+	return;
+retry_timeout:
 	task->tk_status = 0;
 	task->tk_action = call_bind;
-	rpc_check_समयout(task);
-पूर्ण
+	rpc_check_timeout(task);
+}
 
 /*
  * 4b.	Connect to the RPC server
  */
-अटल व्योम
-call_connect(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
+static void
+call_connect(struct rpc_task *task)
+{
+	struct rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
 
-	अगर (rpc_task_transmitted(task)) अणु
+	if (rpc_task_transmitted(task)) {
 		rpc_task_handle_transmitted(task);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (xprt_connected(xprt)) अणु
+	if (xprt_connected(xprt)) {
 		task->tk_action = call_transmit;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	task->tk_action = call_connect_status;
-	अगर (task->tk_status < 0)
-		वापस;
-	अगर (task->tk_flags & RPC_TASK_NOCONNECT) अणु
+	if (task->tk_status < 0)
+		return;
+	if (task->tk_flags & RPC_TASK_NOCONNECT) {
 		rpc_call_rpcerror(task, -ENOTCONN);
-		वापस;
-	पूर्ण
-	अगर (!xprt_prepare_transmit(task))
-		वापस;
+		return;
+	}
+	if (!xprt_prepare_transmit(task))
+		return;
 	xprt_connect(task);
-पूर्ण
+}
 
 /*
  * 4c.	Sort out connect result
  */
-अटल व्योम
-call_connect_status(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
-	काष्ठा rpc_clnt *clnt = task->tk_client;
-	पूर्णांक status = task->tk_status;
+static void
+call_connect_status(struct rpc_task *task)
+{
+	struct rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
+	struct rpc_clnt *clnt = task->tk_client;
+	int status = task->tk_status;
 
-	अगर (rpc_task_transmitted(task)) अणु
+	if (rpc_task_transmitted(task)) {
 		rpc_task_handle_transmitted(task);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	trace_rpc_connect_status(task);
 
-	अगर (task->tk_status == 0) अणु
+	if (task->tk_status == 0) {
 		clnt->cl_stats->netreconn++;
-		जाओ out_next;
-	पूर्ण
-	अगर (xprt_connected(xprt)) अणु
+		goto out_next;
+	}
+	if (xprt_connected(xprt)) {
 		task->tk_status = 0;
-		जाओ out_next;
-	पूर्ण
+		goto out_next;
+	}
 
 	task->tk_status = 0;
-	चयन (status) अणु
-	हाल -ECONNREFUSED:
+	switch (status) {
+	case -ECONNREFUSED:
 		/* A positive refusal suggests a rebind is needed. */
-		अगर (RPC_IS_SOFTCONN(task))
-			अवरोध;
-		अगर (clnt->cl_स्वतःbind) अणु
-			rpc_क्रमce_rebind(clnt);
-			जाओ out_retry;
-		पूर्ण
+		if (RPC_IS_SOFTCONN(task))
+			break;
+		if (clnt->cl_autobind) {
+			rpc_force_rebind(clnt);
+			goto out_retry;
+		}
 		fallthrough;
-	हाल -ECONNRESET:
-	हाल -ECONNABORTED:
-	हाल -ENETDOWN:
-	हाल -ENETUNREACH:
-	हाल -EHOSTUNREACH:
-	हाल -EPIPE:
-	हाल -EPROTO:
+	case -ECONNRESET:
+	case -ECONNABORTED:
+	case -ENETDOWN:
+	case -ENETUNREACH:
+	case -EHOSTUNREACH:
+	case -EPIPE:
+	case -EPROTO:
 		xprt_conditional_disconnect(task->tk_rqstp->rq_xprt,
 					    task->tk_rqstp->rq_connect_cookie);
-		अगर (RPC_IS_SOFTCONN(task))
-			अवरोध;
+		if (RPC_IS_SOFTCONN(task))
+			break;
 		/* retry with existing socket, after a delay */
 		rpc_delay(task, 3*HZ);
 		fallthrough;
-	हाल -EADDRINUSE:
-	हाल -ENOTCONN:
-	हाल -EAGAIN:
-	हाल -ETIMEDOUT:
-		जाओ out_retry;
-	हाल -ENOBUFS:
+	case -EADDRINUSE:
+	case -ENOTCONN:
+	case -EAGAIN:
+	case -ETIMEDOUT:
+		goto out_retry;
+	case -ENOBUFS:
 		rpc_delay(task, HZ >> 2);
-		जाओ out_retry;
-	पूर्ण
+		goto out_retry;
+	}
 	rpc_call_rpcerror(task, status);
-	वापस;
+	return;
 out_next:
 	task->tk_action = call_transmit;
-	वापस;
+	return;
 out_retry:
-	/* Check क्रम समयouts beक्रमe looping back to call_bind */
+	/* Check for timeouts before looping back to call_bind */
 	task->tk_action = call_bind;
-	rpc_check_समयout(task);
-पूर्ण
+	rpc_check_timeout(task);
+}
 
 /*
- * 5.	Transmit the RPC request, and रुको क्रम reply
+ * 5.	Transmit the RPC request, and wait for reply
  */
-अटल व्योम
-call_transmit(काष्ठा rpc_task *task)
-अणु
-	अगर (rpc_task_transmitted(task)) अणु
+static void
+call_transmit(struct rpc_task *task)
+{
+	if (rpc_task_transmitted(task)) {
 		rpc_task_handle_transmitted(task);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	task->tk_action = call_transmit_status;
-	अगर (!xprt_prepare_transmit(task))
-		वापस;
+	if (!xprt_prepare_transmit(task))
+		return;
 	task->tk_status = 0;
-	अगर (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate)) अणु
-		अगर (!xprt_connected(task->tk_xprt)) अणु
+	if (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate)) {
+		if (!xprt_connected(task->tk_xprt)) {
 			task->tk_status = -ENOTCONN;
-			वापस;
-		पूर्ण
+			return;
+		}
 		xprt_transmit(task);
-	पूर्ण
+	}
 	xprt_end_transmit(task);
-पूर्ण
+}
 
 /*
  * 5a.	Handle cleanup after a transmission
  */
-अटल व्योम
-call_transmit_status(काष्ठा rpc_task *task)
-अणु
+static void
+call_transmit_status(struct rpc_task *task)
+{
 	task->tk_action = call_status;
 
 	/*
-	 * Common हाल: success.  Force the compiler to put this
+	 * Common case: success.  Force the compiler to put this
 	 * test first.
 	 */
-	अगर (rpc_task_transmitted(task)) अणु
+	if (rpc_task_transmitted(task)) {
 		task->tk_status = 0;
-		xprt_request_रुको_receive(task);
-		वापस;
-	पूर्ण
+		xprt_request_wait_receive(task);
+		return;
+	}
 
-	चयन (task->tk_status) अणु
-	शेष:
-		अवरोध;
-	हाल -EBADMSG:
+	switch (task->tk_status) {
+	default:
+		break;
+	case -EBADMSG:
 		task->tk_status = 0;
 		task->tk_action = call_encode;
-		अवरोध;
+		break;
 		/*
-		 * Special हालs: अगर we've been रुकोing on the
-		 * socket's ग_लिखो_space() callback, or अगर the
-		 * socket just वापसed a connection error,
+		 * Special cases: if we've been waiting on the
+		 * socket's write_space() callback, or if the
+		 * socket just returned a connection error,
 		 * then hold onto the transport lock.
 		 */
-	हाल -ENOBUFS:
+	case -ENOBUFS:
 		rpc_delay(task, HZ>>2);
 		fallthrough;
-	हाल -EBADSLT:
-	हाल -EAGAIN:
+	case -EBADSLT:
+	case -EAGAIN:
 		task->tk_action = call_transmit;
 		task->tk_status = 0;
-		अवरोध;
-	हाल -ECONNREFUSED:
-	हाल -EHOSTDOWN:
-	हाल -ENETDOWN:
-	हाल -EHOSTUNREACH:
-	हाल -ENETUNREACH:
-	हाल -EPERM:
-		अगर (RPC_IS_SOFTCONN(task)) अणु
-			अगर (!task->tk_msg.rpc_proc->p_proc)
+		break;
+	case -ECONNREFUSED:
+	case -EHOSTDOWN:
+	case -ENETDOWN:
+	case -EHOSTUNREACH:
+	case -ENETUNREACH:
+	case -EPERM:
+		if (RPC_IS_SOFTCONN(task)) {
+			if (!task->tk_msg.rpc_proc->p_proc)
 				trace_xprt_ping(task->tk_xprt,
 						task->tk_status);
 			rpc_call_rpcerror(task, task->tk_status);
-			वापस;
-		पूर्ण
+			return;
+		}
 		fallthrough;
-	हाल -ECONNRESET:
-	हाल -ECONNABORTED:
-	हाल -EADDRINUSE:
-	हाल -ENOTCONN:
-	हाल -EPIPE:
+	case -ECONNRESET:
+	case -ECONNABORTED:
+	case -EADDRINUSE:
+	case -ENOTCONN:
+	case -EPIPE:
 		task->tk_action = call_bind;
 		task->tk_status = 0;
-		अवरोध;
-	पूर्ण
-	rpc_check_समयout(task);
-पूर्ण
+		break;
+	}
+	rpc_check_timeout(task);
+}
 
-#अगर defined(CONFIG_SUNRPC_BACKCHANNEL)
-अटल व्योम call_bc_transmit(काष्ठा rpc_task *task);
-अटल व्योम call_bc_transmit_status(काष्ठा rpc_task *task);
+#if defined(CONFIG_SUNRPC_BACKCHANNEL)
+static void call_bc_transmit(struct rpc_task *task);
+static void call_bc_transmit_status(struct rpc_task *task);
 
-अटल व्योम
-call_bc_encode(काष्ठा rpc_task *task)
-अणु
+static void
+call_bc_encode(struct rpc_task *task)
+{
 	xprt_request_enqueue_transmit(task);
 	task->tk_action = call_bc_transmit;
-पूर्ण
+}
 
 /*
  * 5b.	Send the backchannel RPC reply.  On error, drop the reply.  In
  * addition, disconnect on connectivity errors.
  */
-अटल व्योम
-call_bc_transmit(काष्ठा rpc_task *task)
-अणु
+static void
+call_bc_transmit(struct rpc_task *task)
+{
 	task->tk_action = call_bc_transmit_status;
-	अगर (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate)) अणु
-		अगर (!xprt_prepare_transmit(task))
-			वापस;
+	if (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate)) {
+		if (!xprt_prepare_transmit(task))
+			return;
 		task->tk_status = 0;
 		xprt_transmit(task);
-	पूर्ण
+	}
 	xprt_end_transmit(task);
-पूर्ण
+}
 
-अटल व्योम
-call_bc_transmit_status(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_rqst *req = task->tk_rqstp;
+static void
+call_bc_transmit_status(struct rpc_task *task)
+{
+	struct rpc_rqst *req = task->tk_rqstp;
 
-	अगर (rpc_task_transmitted(task))
+	if (rpc_task_transmitted(task))
 		task->tk_status = 0;
 
-	चयन (task->tk_status) अणु
-	हाल 0:
+	switch (task->tk_status) {
+	case 0:
 		/* Success */
-	हाल -ENETDOWN:
-	हाल -EHOSTDOWN:
-	हाल -EHOSTUNREACH:
-	हाल -ENETUNREACH:
-	हाल -ECONNRESET:
-	हाल -ECONNREFUSED:
-	हाल -EADDRINUSE:
-	हाल -ENOTCONN:
-	हाल -EPIPE:
-		अवरोध;
-	हाल -ENOBUFS:
+	case -ENETDOWN:
+	case -EHOSTDOWN:
+	case -EHOSTUNREACH:
+	case -ENETUNREACH:
+	case -ECONNRESET:
+	case -ECONNREFUSED:
+	case -EADDRINUSE:
+	case -ENOTCONN:
+	case -EPIPE:
+		break;
+	case -ENOBUFS:
 		rpc_delay(task, HZ>>2);
 		fallthrough;
-	हाल -EBADSLT:
-	हाल -EAGAIN:
+	case -EBADSLT:
+	case -EAGAIN:
 		task->tk_status = 0;
 		task->tk_action = call_bc_transmit;
-		वापस;
-	हाल -ETIMEDOUT:
+		return;
+	case -ETIMEDOUT:
 		/*
 		 * Problem reaching the server.  Disconnect and let the
-		 * क्रमechannel reestablish the connection.  The server will
+		 * forechannel reestablish the connection.  The server will
 		 * have to retransmit the backchannel request and we'll
 		 * reprocess it.  Since these ops are idempotent, there's no
-		 * need to cache our reply at this समय.
+		 * need to cache our reply at this time.
 		 */
-		prपूर्णांकk(KERN_NOTICE "RPC: Could not send backchannel reply "
+		printk(KERN_NOTICE "RPC: Could not send backchannel reply "
 			"error: %d\n", task->tk_status);
 		xprt_conditional_disconnect(req->rq_xprt,
 			req->rq_connect_cookie);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*
 		 * We were unable to reply and will have to drop the
 		 * request.  The server should reconnect and retransmit.
 		 */
-		prपूर्णांकk(KERN_NOTICE "RPC: Could not send backchannel reply "
+		printk(KERN_NOTICE "RPC: Could not send backchannel reply "
 			"error: %d\n", task->tk_status);
-		अवरोध;
-	पूर्ण
-	task->tk_action = rpc_निकास_task;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SUNRPC_BACKCHANNEL */
+		break;
+	}
+	task->tk_action = rpc_exit_task;
+}
+#endif /* CONFIG_SUNRPC_BACKCHANNEL */
 
 /*
  * 6.	Sort out the RPC call status
  */
-अटल व्योम
-call_status(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_clnt	*clnt = task->tk_client;
-	पूर्णांक		status;
+static void
+call_status(struct rpc_task *task)
+{
+	struct rpc_clnt	*clnt = task->tk_client;
+	int		status;
 
-	अगर (!task->tk_msg.rpc_proc->p_proc)
+	if (!task->tk_msg.rpc_proc->p_proc)
 		trace_xprt_ping(task->tk_xprt, task->tk_status);
 
 	status = task->tk_status;
-	अगर (status >= 0) अणु
+	if (status >= 0) {
 		task->tk_action = call_decode;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	trace_rpc_call_status(task);
 	task->tk_status = 0;
-	चयन(status) अणु
-	हाल -EHOSTDOWN:
-	हाल -ENETDOWN:
-	हाल -EHOSTUNREACH:
-	हाल -ENETUNREACH:
-	हाल -EPERM:
-		अगर (RPC_IS_SOFTCONN(task))
-			जाओ out_निकास;
+	switch(status) {
+	case -EHOSTDOWN:
+	case -ENETDOWN:
+	case -EHOSTUNREACH:
+	case -ENETUNREACH:
+	case -EPERM:
+		if (RPC_IS_SOFTCONN(task))
+			goto out_exit;
 		/*
-		 * Delay any retries क्रम 3 seconds, then handle as अगर it
-		 * were a समयout.
+		 * Delay any retries for 3 seconds, then handle as if it
+		 * were a timeout.
 		 */
 		rpc_delay(task, 3*HZ);
 		fallthrough;
-	हाल -ETIMEDOUT:
-		अवरोध;
-	हाल -ECONNREFUSED:
-	हाल -ECONNRESET:
-	हाल -ECONNABORTED:
-	हाल -ENOTCONN:
-		rpc_क्रमce_rebind(clnt);
-		अवरोध;
-	हाल -EADDRINUSE:
+	case -ETIMEDOUT:
+		break;
+	case -ECONNREFUSED:
+	case -ECONNRESET:
+	case -ECONNABORTED:
+	case -ENOTCONN:
+		rpc_force_rebind(clnt);
+		break;
+	case -EADDRINUSE:
 		rpc_delay(task, 3*HZ);
 		fallthrough;
-	हाल -EPIPE:
-	हाल -EAGAIN:
-		अवरोध;
-	हाल -EIO:
-		/* shutकरोwn or soft समयout */
-		जाओ out_निकास;
-	शेष:
-		अगर (clnt->cl_chatty)
-			prपूर्णांकk("%s: RPC call returned error %d\n",
+	case -EPIPE:
+	case -EAGAIN:
+		break;
+	case -EIO:
+		/* shutdown or soft timeout */
+		goto out_exit;
+	default:
+		if (clnt->cl_chatty)
+			printk("%s: RPC call returned error %d\n",
 			       clnt->cl_program->name, -status);
-		जाओ out_निकास;
-	पूर्ण
+		goto out_exit;
+	}
 	task->tk_action = call_encode;
-	अगर (status != -ECONNRESET && status != -ECONNABORTED)
-		rpc_check_समयout(task);
-	वापस;
-out_निकास:
+	if (status != -ECONNRESET && status != -ECONNABORTED)
+		rpc_check_timeout(task);
+	return;
+out_exit:
 	rpc_call_rpcerror(task, status);
-पूर्ण
+}
 
-अटल bool
-rpc_check_connected(स्थिर काष्ठा rpc_rqst *req)
-अणु
-	/* No allocated request or transport? वापस true */
-	अगर (!req || !req->rq_xprt)
-		वापस true;
-	वापस xprt_connected(req->rq_xprt);
-पूर्ण
+static bool
+rpc_check_connected(const struct rpc_rqst *req)
+{
+	/* No allocated request or transport? return true */
+	if (!req || !req->rq_xprt)
+		return true;
+	return xprt_connected(req->rq_xprt);
+}
 
-अटल व्योम
-rpc_check_समयout(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_clnt	*clnt = task->tk_client;
+static void
+rpc_check_timeout(struct rpc_task *task)
+{
+	struct rpc_clnt	*clnt = task->tk_client;
 
-	अगर (RPC_SIGNALLED(task)) अणु
+	if (RPC_SIGNALLED(task)) {
 		rpc_call_rpcerror(task, -ERESTARTSYS);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (xprt_adjust_समयout(task->tk_rqstp) == 0)
-		वापस;
+	if (xprt_adjust_timeout(task->tk_rqstp) == 0)
+		return;
 
-	trace_rpc_समयout_status(task);
-	task->tk_समयouts++;
+	trace_rpc_timeout_status(task);
+	task->tk_timeouts++;
 
-	अगर (RPC_IS_SOFTCONN(task) && !rpc_check_connected(task->tk_rqstp)) अणु
+	if (RPC_IS_SOFTCONN(task) && !rpc_check_connected(task->tk_rqstp)) {
 		rpc_call_rpcerror(task, -ETIMEDOUT);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (RPC_IS_SOFT(task)) अणु
+	if (RPC_IS_SOFT(task)) {
 		/*
 		 * Once a "no retrans timeout" soft tasks (a.k.a NFSv4) has
-		 * been sent, it should समय out only अगर the transport
-		 * connection माला_लो terminally broken.
+		 * been sent, it should time out only if the transport
+		 * connection gets terminally broken.
 		 */
-		अगर ((task->tk_flags & RPC_TASK_NO_RETRANS_TIMEOUT) &&
+		if ((task->tk_flags & RPC_TASK_NO_RETRANS_TIMEOUT) &&
 		    rpc_check_connected(task->tk_rqstp))
-			वापस;
+			return;
 
-		अगर (clnt->cl_chatty) अणु
+		if (clnt->cl_chatty) {
 			pr_notice_ratelimited(
 				"%s: server %s not responding, timed out\n",
 				clnt->cl_program->name,
 				task->tk_xprt->servername);
-		पूर्ण
-		अगर (task->tk_flags & RPC_TASK_TIMEOUT)
+		}
+		if (task->tk_flags & RPC_TASK_TIMEOUT)
 			rpc_call_rpcerror(task, -ETIMEDOUT);
-		अन्यथा
+		else
 			__rpc_call_rpcerror(task, -EIO, -ETIMEDOUT);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(task->tk_flags & RPC_CALL_MAJORSEEN)) अणु
+	if (!(task->tk_flags & RPC_CALL_MAJORSEEN)) {
 		task->tk_flags |= RPC_CALL_MAJORSEEN;
-		अगर (clnt->cl_chatty) अणु
+		if (clnt->cl_chatty) {
 			pr_notice_ratelimited(
 				"%s: server %s not responding, still trying\n",
 				clnt->cl_program->name,
 				task->tk_xprt->servername);
-		पूर्ण
-	पूर्ण
-	rpc_क्रमce_rebind(clnt);
+		}
+	}
+	rpc_force_rebind(clnt);
 	/*
-	 * Did our request समय out due to an RPCSEC_GSS out-of-sequence
+	 * Did our request time out due to an RPCSEC_GSS out-of-sequence
 	 * event? RFC2203 requires the server to drop all such requests.
 	 */
 	rpcauth_invalcred(task);
-पूर्ण
+}
 
 /*
  * 7.	Decode the RPC reply
  */
-अटल व्योम
-call_decode(काष्ठा rpc_task *task)
-अणु
-	काष्ठा rpc_clnt	*clnt = task->tk_client;
-	काष्ठा rpc_rqst	*req = task->tk_rqstp;
-	काष्ठा xdr_stream xdr;
-	पूर्णांक err;
+static void
+call_decode(struct rpc_task *task)
+{
+	struct rpc_clnt	*clnt = task->tk_client;
+	struct rpc_rqst	*req = task->tk_rqstp;
+	struct xdr_stream xdr;
+	int err;
 
-	अगर (!task->tk_msg.rpc_proc->p_decode) अणु
-		task->tk_action = rpc_निकास_task;
-		वापस;
-	पूर्ण
+	if (!task->tk_msg.rpc_proc->p_decode) {
+		task->tk_action = rpc_exit_task;
+		return;
+	}
 
-	अगर (task->tk_flags & RPC_CALL_MAJORSEEN) अणु
-		अगर (clnt->cl_chatty) अणु
+	if (task->tk_flags & RPC_CALL_MAJORSEEN) {
+		if (clnt->cl_chatty) {
 			pr_notice_ratelimited("%s: server %s OK\n",
 				clnt->cl_program->name,
 				task->tk_xprt->servername);
-		पूर्ण
+		}
 		task->tk_flags &= ~RPC_CALL_MAJORSEEN;
-	पूर्ण
+	}
 
 	/*
 	 * Did we ever call xprt_complete_rqst()? If not, we should assume
 	 * the message is incomplete.
 	 */
 	err = -EAGAIN;
-	अगर (!req->rq_reply_bytes_recvd)
-		जाओ out;
+	if (!req->rq_reply_bytes_recvd)
+		goto out;
 
-	/* Ensure that we see all ग_लिखोs made by xprt_complete_rqst()
-	 * beक्रमe it changed req->rq_reply_bytes_recvd.
+	/* Ensure that we see all writes made by xprt_complete_rqst()
+	 * before it changed req->rq_reply_bytes_recvd.
 	 */
 	smp_rmb();
 
-	req->rq_rcv_buf.len = req->rq_निजी_buf.len;
+	req->rq_rcv_buf.len = req->rq_private_buf.len;
 	trace_rpc_xdr_recvfrom(task, &req->rq_rcv_buf);
 
 	/* Check that the softirq receive buffer is valid */
-	WARN_ON(स_भेद(&req->rq_rcv_buf, &req->rq_निजी_buf,
-				माप(req->rq_rcv_buf)) != 0);
+	WARN_ON(memcmp(&req->rq_rcv_buf, &req->rq_private_buf,
+				sizeof(req->rq_rcv_buf)) != 0);
 
 	xdr_init_decode(&xdr, &req->rq_rcv_buf,
 			req->rq_rcv_buf.head[0].iov_base, req);
 	err = rpc_decode_header(task, &xdr);
 out:
-	चयन (err) अणु
-	हाल 0:
-		task->tk_action = rpc_निकास_task;
+	switch (err) {
+	case 0:
+		task->tk_action = rpc_exit_task;
 		task->tk_status = rpcauth_unwrap_resp(task, &xdr);
-		वापस;
-	हाल -EAGAIN:
+		return;
+	case -EAGAIN:
 		task->tk_status = 0;
-		अगर (task->tk_client->cl_discrtry)
+		if (task->tk_client->cl_discrtry)
 			xprt_conditional_disconnect(req->rq_xprt,
 						    req->rq_connect_cookie);
 		task->tk_action = call_encode;
-		rpc_check_समयout(task);
-		अवरोध;
-	हाल -EKEYREJECTED:
+		rpc_check_timeout(task);
+		break;
+	case -EKEYREJECTED:
 		task->tk_action = call_reserve;
-		rpc_check_समयout(task);
+		rpc_check_timeout(task);
 		rpcauth_invalcred(task);
-		/* Ensure we obtain a new XID अगर we retry! */
+		/* Ensure we obtain a new XID if we retry! */
 		xprt_release(task);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-rpc_encode_header(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
-अणु
-	काष्ठा rpc_clnt *clnt = task->tk_client;
-	काष्ठा rpc_rqst	*req = task->tk_rqstp;
+static int
+rpc_encode_header(struct rpc_task *task, struct xdr_stream *xdr)
+{
+	struct rpc_clnt *clnt = task->tk_client;
+	struct rpc_rqst	*req = task->tk_rqstp;
 	__be32 *p;
-	पूर्णांक error;
+	int error;
 
 	error = -EMSGSIZE;
 	p = xdr_reserve_space(xdr, RPC_CALLHDRSIZE << 2);
-	अगर (!p)
-		जाओ out_fail;
+	if (!p)
+		goto out_fail;
 	*p++ = req->rq_xid;
 	*p++ = rpc_call;
 	*p++ = cpu_to_be32(RPC_VERSION);
@@ -2516,529 +2515,529 @@ rpc_encode_header(काष्ठा rpc_task *task, काष्ठा xdr_stre
 	*p   = cpu_to_be32(task->tk_msg.rpc_proc->p_proc);
 
 	error = rpcauth_marshcred(task, xdr);
-	अगर (error < 0)
-		जाओ out_fail;
-	वापस 0;
+	if (error < 0)
+		goto out_fail;
+	return 0;
 out_fail:
 	trace_rpc_bad_callhdr(task);
 	rpc_call_rpcerror(task, error);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल noअंतरभूत पूर्णांक
-rpc_decode_header(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
-अणु
-	काष्ठा rpc_clnt *clnt = task->tk_client;
-	पूर्णांक error;
+static noinline int
+rpc_decode_header(struct rpc_task *task, struct xdr_stream *xdr)
+{
+	struct rpc_clnt *clnt = task->tk_client;
+	int error;
 	__be32 *p;
 
 	/* RFC-1014 says that the representation of XDR data must be a
 	 * multiple of four bytes
-	 * - अगर it isn't poपूर्णांकer subtraction in the NFS client may give
+	 * - if it isn't pointer subtraction in the NFS client may give
 	 *   undefined results
 	 */
-	अगर (task->tk_rqstp->rq_rcv_buf.len & 3)
-		जाओ out_unparsable;
+	if (task->tk_rqstp->rq_rcv_buf.len & 3)
+		goto out_unparsable;
 
-	p = xdr_अंतरभूत_decode(xdr, 3 * माप(*p));
-	अगर (!p)
-		जाओ out_unparsable;
+	p = xdr_inline_decode(xdr, 3 * sizeof(*p));
+	if (!p)
+		goto out_unparsable;
 	p++;	/* skip XID */
-	अगर (*p++ != rpc_reply)
-		जाओ out_unparsable;
-	अगर (*p++ != rpc_msg_accepted)
-		जाओ out_msg_denied;
+	if (*p++ != rpc_reply)
+		goto out_unparsable;
+	if (*p++ != rpc_msg_accepted)
+		goto out_msg_denied;
 
 	error = rpcauth_checkverf(task, xdr);
-	अगर (error)
-		जाओ out_verअगरier;
+	if (error)
+		goto out_verifier;
 
-	p = xdr_अंतरभूत_decode(xdr, माप(*p));
-	अगर (!p)
-		जाओ out_unparsable;
-	चयन (*p) अणु
-	हाल rpc_success:
-		वापस 0;
-	हाल rpc_prog_unavail:
+	p = xdr_inline_decode(xdr, sizeof(*p));
+	if (!p)
+		goto out_unparsable;
+	switch (*p) {
+	case rpc_success:
+		return 0;
+	case rpc_prog_unavail:
 		trace_rpc__prog_unavail(task);
 		error = -EPFNOSUPPORT;
-		जाओ out_err;
-	हाल rpc_prog_mismatch:
+		goto out_err;
+	case rpc_prog_mismatch:
 		trace_rpc__prog_mismatch(task);
 		error = -EPROTONOSUPPORT;
-		जाओ out_err;
-	हाल rpc_proc_unavail:
+		goto out_err;
+	case rpc_proc_unavail:
 		trace_rpc__proc_unavail(task);
 		error = -EOPNOTSUPP;
-		जाओ out_err;
-	हाल rpc_garbage_args:
-	हाल rpc_प्रणाली_err:
+		goto out_err;
+	case rpc_garbage_args:
+	case rpc_system_err:
 		trace_rpc__garbage_args(task);
 		error = -EIO;
-		अवरोध;
-	शेष:
-		जाओ out_unparsable;
-	पूर्ण
+		break;
+	default:
+		goto out_unparsable;
+	}
 
 out_garbage:
 	clnt->cl_stats->rpcgarbage++;
-	अगर (task->tk_garb_retry) अणु
+	if (task->tk_garb_retry) {
 		task->tk_garb_retry--;
 		task->tk_action = call_encode;
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 out_err:
 	rpc_call_rpcerror(task, error);
-	वापस error;
+	return error;
 
 out_unparsable:
 	trace_rpc__unparsable(task);
 	error = -EIO;
-	जाओ out_garbage;
+	goto out_garbage;
 
-out_verअगरier:
-	trace_rpc_bad_verअगरier(task);
-	जाओ out_garbage;
+out_verifier:
+	trace_rpc_bad_verifier(task);
+	goto out_garbage;
 
 out_msg_denied:
 	error = -EACCES;
-	p = xdr_अंतरभूत_decode(xdr, माप(*p));
-	अगर (!p)
-		जाओ out_unparsable;
-	चयन (*p++) अणु
-	हाल rpc_auth_error:
-		अवरोध;
-	हाल rpc_mismatch:
+	p = xdr_inline_decode(xdr, sizeof(*p));
+	if (!p)
+		goto out_unparsable;
+	switch (*p++) {
+	case rpc_auth_error:
+		break;
+	case rpc_mismatch:
 		trace_rpc__mismatch(task);
 		error = -EPROTONOSUPPORT;
-		जाओ out_err;
-	शेष:
-		जाओ out_unparsable;
-	पूर्ण
+		goto out_err;
+	default:
+		goto out_unparsable;
+	}
 
-	p = xdr_अंतरभूत_decode(xdr, माप(*p));
-	अगर (!p)
-		जाओ out_unparsable;
-	चयन (*p++) अणु
-	हाल rpc_autherr_rejectedcred:
-	हाल rpc_autherr_rejectedverf:
-	हाल rpcsec_gsserr_credproblem:
-	हाल rpcsec_gsserr_ctxproblem:
-		अगर (!task->tk_cred_retry)
-			अवरोध;
+	p = xdr_inline_decode(xdr, sizeof(*p));
+	if (!p)
+		goto out_unparsable;
+	switch (*p++) {
+	case rpc_autherr_rejectedcred:
+	case rpc_autherr_rejectedverf:
+	case rpcsec_gsserr_credproblem:
+	case rpcsec_gsserr_ctxproblem:
+		if (!task->tk_cred_retry)
+			break;
 		task->tk_cred_retry--;
 		trace_rpc__stale_creds(task);
-		वापस -EKEYREJECTED;
-	हाल rpc_autherr_badcred:
-	हाल rpc_autherr_badverf:
+		return -EKEYREJECTED;
+	case rpc_autherr_badcred:
+	case rpc_autherr_badverf:
 		/* possibly garbled cred/verf? */
-		अगर (!task->tk_garb_retry)
-			अवरोध;
+		if (!task->tk_garb_retry)
+			break;
 		task->tk_garb_retry--;
 		trace_rpc__bad_creds(task);
 		task->tk_action = call_encode;
-		वापस -EAGAIN;
-	हाल rpc_autherr_tooweak:
+		return -EAGAIN;
+	case rpc_autherr_tooweak:
 		trace_rpc__auth_tooweak(task);
 		pr_warn("RPC: server %s requires stronger authentication.\n",
 			task->tk_xprt->servername);
-		अवरोध;
-	शेष:
-		जाओ out_unparsable;
-	पूर्ण
-	जाओ out_err;
-पूर्ण
+		break;
+	default:
+		goto out_unparsable;
+	}
+	goto out_err;
+}
 
-अटल व्योम rpcproc_encode_null(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-		स्थिर व्योम *obj)
-अणु
-पूर्ण
+static void rpcproc_encode_null(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+		const void *obj)
+{
+}
 
-अटल पूर्णांक rpcproc_decode_null(काष्ठा rpc_rqst *rqstp, काष्ठा xdr_stream *xdr,
-		व्योम *obj)
-अणु
-	वापस 0;
-पूर्ण
+static int rpcproc_decode_null(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
+		void *obj)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा rpc_procinfo rpcproc_null = अणु
+static const struct rpc_procinfo rpcproc_null = {
 	.p_encode = rpcproc_encode_null,
 	.p_decode = rpcproc_decode_null,
-पूर्ण;
+};
 
-अटल पूर्णांक rpc_ping(काष्ठा rpc_clnt *clnt)
-अणु
-	काष्ठा rpc_message msg = अणु
+static int rpc_ping(struct rpc_clnt *clnt)
+{
+	struct rpc_message msg = {
 		.rpc_proc = &rpcproc_null,
-	पूर्ण;
-	पूर्णांक err;
+	};
+	int err;
 	err = rpc_call_sync(clnt, &msg, RPC_TASK_SOFT | RPC_TASK_SOFTCONN |
-			    RPC_TASK_शून्यCREDS);
-	वापस err;
-पूर्ण
+			    RPC_TASK_NULLCREDS);
+	return err;
+}
 
-अटल
-काष्ठा rpc_task *rpc_call_null_helper(काष्ठा rpc_clnt *clnt,
-		काष्ठा rpc_xprt *xprt, काष्ठा rpc_cred *cred, पूर्णांक flags,
-		स्थिर काष्ठा rpc_call_ops *ops, व्योम *data)
-अणु
-	काष्ठा rpc_message msg = अणु
+static
+struct rpc_task *rpc_call_null_helper(struct rpc_clnt *clnt,
+		struct rpc_xprt *xprt, struct rpc_cred *cred, int flags,
+		const struct rpc_call_ops *ops, void *data)
+{
+	struct rpc_message msg = {
 		.rpc_proc = &rpcproc_null,
-	पूर्ण;
-	काष्ठा rpc_task_setup task_setup_data = अणु
+	};
+	struct rpc_task_setup task_setup_data = {
 		.rpc_client = clnt,
 		.rpc_xprt = xprt,
 		.rpc_message = &msg,
 		.rpc_op_cred = cred,
-		.callback_ops = (ops != शून्य) ? ops : &rpc_शेष_ops,
+		.callback_ops = (ops != NULL) ? ops : &rpc_default_ops,
 		.callback_data = data,
 		.flags = flags | RPC_TASK_SOFT | RPC_TASK_SOFTCONN |
-			 RPC_TASK_शून्यCREDS,
-	पूर्ण;
+			 RPC_TASK_NULLCREDS,
+	};
 
-	वापस rpc_run_task(&task_setup_data);
-पूर्ण
+	return rpc_run_task(&task_setup_data);
+}
 
-काष्ठा rpc_task *rpc_call_null(काष्ठा rpc_clnt *clnt, काष्ठा rpc_cred *cred, पूर्णांक flags)
-अणु
-	वापस rpc_call_null_helper(clnt, शून्य, cred, flags, शून्य, शून्य);
-पूर्ण
+struct rpc_task *rpc_call_null(struct rpc_clnt *clnt, struct rpc_cred *cred, int flags)
+{
+	return rpc_call_null_helper(clnt, NULL, cred, flags, NULL, NULL);
+}
 EXPORT_SYMBOL_GPL(rpc_call_null);
 
-काष्ठा rpc_cb_add_xprt_calldata अणु
-	काष्ठा rpc_xprt_चयन *xps;
-	काष्ठा rpc_xprt *xprt;
-पूर्ण;
+struct rpc_cb_add_xprt_calldata {
+	struct rpc_xprt_switch *xps;
+	struct rpc_xprt *xprt;
+};
 
-अटल व्योम rpc_cb_add_xprt_करोne(काष्ठा rpc_task *task, व्योम *calldata)
-अणु
-	काष्ठा rpc_cb_add_xprt_calldata *data = calldata;
+static void rpc_cb_add_xprt_done(struct rpc_task *task, void *calldata)
+{
+	struct rpc_cb_add_xprt_calldata *data = calldata;
 
-	अगर (task->tk_status == 0)
-		rpc_xprt_चयन_add_xprt(data->xps, data->xprt);
-पूर्ण
+	if (task->tk_status == 0)
+		rpc_xprt_switch_add_xprt(data->xps, data->xprt);
+}
 
-अटल व्योम rpc_cb_add_xprt_release(व्योम *calldata)
-अणु
-	काष्ठा rpc_cb_add_xprt_calldata *data = calldata;
+static void rpc_cb_add_xprt_release(void *calldata)
+{
+	struct rpc_cb_add_xprt_calldata *data = calldata;
 
 	xprt_put(data->xprt);
-	xprt_चयन_put(data->xps);
-	kमुक्त(data);
-पूर्ण
+	xprt_switch_put(data->xps);
+	kfree(data);
+}
 
-अटल स्थिर काष्ठा rpc_call_ops rpc_cb_add_xprt_call_ops = अणु
-	.rpc_call_करोne = rpc_cb_add_xprt_करोne,
+static const struct rpc_call_ops rpc_cb_add_xprt_call_ops = {
+	.rpc_call_done = rpc_cb_add_xprt_done,
 	.rpc_release = rpc_cb_add_xprt_release,
-पूर्ण;
+};
 
 /**
  * rpc_clnt_test_and_add_xprt - Test and add a new transport to a rpc_clnt
- * @clnt: poपूर्णांकer to काष्ठा rpc_clnt
- * @xps: poपूर्णांकer to काष्ठा rpc_xprt_चयन,
- * @xprt: poपूर्णांकer काष्ठा rpc_xprt
+ * @clnt: pointer to struct rpc_clnt
+ * @xps: pointer to struct rpc_xprt_switch,
+ * @xprt: pointer struct rpc_xprt
  * @dummy: unused
  */
-पूर्णांक rpc_clnt_test_and_add_xprt(काष्ठा rpc_clnt *clnt,
-		काष्ठा rpc_xprt_चयन *xps, काष्ठा rpc_xprt *xprt,
-		व्योम *dummy)
-अणु
-	काष्ठा rpc_cb_add_xprt_calldata *data;
-	काष्ठा rpc_task *task;
+int rpc_clnt_test_and_add_xprt(struct rpc_clnt *clnt,
+		struct rpc_xprt_switch *xps, struct rpc_xprt *xprt,
+		void *dummy)
+{
+	struct rpc_cb_add_xprt_calldata *data;
+	struct rpc_task *task;
 
-	data = kदो_स्मृति(माप(*data), GFP_NOFS);
-	अगर (!data)
-		वापस -ENOMEM;
-	data->xps = xprt_चयन_get(xps);
+	data = kmalloc(sizeof(*data), GFP_NOFS);
+	if (!data)
+		return -ENOMEM;
+	data->xps = xprt_switch_get(xps);
 	data->xprt = xprt_get(xprt);
-	अगर (rpc_xprt_चयन_has_addr(data->xps, (काष्ठा sockaddr *)&xprt->addr)) अणु
+	if (rpc_xprt_switch_has_addr(data->xps, (struct sockaddr *)&xprt->addr)) {
 		rpc_cb_add_xprt_release(data);
-		जाओ success;
-	पूर्ण
+		goto success;
+	}
 
-	task = rpc_call_null_helper(clnt, xprt, शून्य, RPC_TASK_ASYNC,
+	task = rpc_call_null_helper(clnt, xprt, NULL, RPC_TASK_ASYNC,
 			&rpc_cb_add_xprt_call_ops, data);
 
 	rpc_put_task(task);
 success:
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(rpc_clnt_test_and_add_xprt);
 
 /**
  * rpc_clnt_setup_test_and_add_xprt()
  *
- * This is an rpc_clnt_add_xprt setup() function which वापसs 1 so:
- *   1) caller of the test function must dereference the rpc_xprt_चयन
+ * This is an rpc_clnt_add_xprt setup() function which returns 1 so:
+ *   1) caller of the test function must dereference the rpc_xprt_switch
  *   and the rpc_xprt.
- *   2) test function must call rpc_xprt_चयन_add_xprt, usually in
- *   the rpc_call_करोne routine.
+ *   2) test function must call rpc_xprt_switch_add_xprt, usually in
+ *   the rpc_call_done routine.
  *
- * Upon success (वापस of 1), the test function adds the new
- * transport to the rpc_clnt xprt चयन
+ * Upon success (return of 1), the test function adds the new
+ * transport to the rpc_clnt xprt switch
  *
- * @clnt: काष्ठा rpc_clnt to get the new transport
- * @xps:  the rpc_xprt_चयन to hold the new transport
+ * @clnt: struct rpc_clnt to get the new transport
+ * @xps:  the rpc_xprt_switch to hold the new transport
  * @xprt: the rpc_xprt to test
- * @data: a काष्ठा rpc_add_xprt_test poपूर्णांकer that holds the test function
+ * @data: a struct rpc_add_xprt_test pointer that holds the test function
  *        and test function call data
  */
-पूर्णांक rpc_clnt_setup_test_and_add_xprt(काष्ठा rpc_clnt *clnt,
-				     काष्ठा rpc_xprt_चयन *xps,
-				     काष्ठा rpc_xprt *xprt,
-				     व्योम *data)
-अणु
-	काष्ठा rpc_task *task;
-	काष्ठा rpc_add_xprt_test *xtest = (काष्ठा rpc_add_xprt_test *)data;
-	पूर्णांक status = -EADDRINUSE;
+int rpc_clnt_setup_test_and_add_xprt(struct rpc_clnt *clnt,
+				     struct rpc_xprt_switch *xps,
+				     struct rpc_xprt *xprt,
+				     void *data)
+{
+	struct rpc_task *task;
+	struct rpc_add_xprt_test *xtest = (struct rpc_add_xprt_test *)data;
+	int status = -EADDRINUSE;
 
 	xprt = xprt_get(xprt);
-	xprt_चयन_get(xps);
+	xprt_switch_get(xps);
 
-	अगर (rpc_xprt_चयन_has_addr(xps, (काष्ठा sockaddr *)&xprt->addr))
-		जाओ out_err;
+	if (rpc_xprt_switch_has_addr(xps, (struct sockaddr *)&xprt->addr))
+		goto out_err;
 
 	/* Test the connection */
-	task = rpc_call_null_helper(clnt, xprt, शून्य, 0, शून्य, शून्य);
-	अगर (IS_ERR(task)) अणु
+	task = rpc_call_null_helper(clnt, xprt, NULL, 0, NULL, NULL);
+	if (IS_ERR(task)) {
 		status = PTR_ERR(task);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 	status = task->tk_status;
 	rpc_put_task(task);
 
-	अगर (status < 0)
-		जाओ out_err;
+	if (status < 0)
+		goto out_err;
 
-	/* rpc_xprt_चयन and rpc_xprt are deferrenced by add_xprt_test() */
+	/* rpc_xprt_switch and rpc_xprt are deferrenced by add_xprt_test() */
 	xtest->add_xprt_test(clnt, xprt, xtest->data);
 
 	xprt_put(xprt);
-	xprt_चयन_put(xps);
+	xprt_switch_put(xps);
 
-	/* so that rpc_clnt_add_xprt करोes not call rpc_xprt_चयन_add_xprt */
-	वापस 1;
+	/* so that rpc_clnt_add_xprt does not call rpc_xprt_switch_add_xprt */
+	return 1;
 out_err:
 	xprt_put(xprt);
-	xprt_चयन_put(xps);
+	xprt_switch_put(xps);
 	pr_info("RPC:   rpc_clnt_test_xprt failed: %d addr %s not added\n",
 		status, xprt->address_strings[RPC_DISPLAY_ADDR]);
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(rpc_clnt_setup_test_and_add_xprt);
 
 /**
  * rpc_clnt_add_xprt - Add a new transport to a rpc_clnt
- * @clnt: poपूर्णांकer to काष्ठा rpc_clnt
- * @xprtargs: poपूर्णांकer to काष्ठा xprt_create
+ * @clnt: pointer to struct rpc_clnt
+ * @xprtargs: pointer to struct xprt_create
  * @setup: callback to test and/or set up the connection
- * @data: poपूर्णांकer to setup function data
+ * @data: pointer to setup function data
  *
  * Creates a new transport using the parameters set in args and
  * adds it to clnt.
- * If ping is set, then test that connectivity succeeds beक्रमe
+ * If ping is set, then test that connectivity succeeds before
  * adding the new transport.
  *
  */
-पूर्णांक rpc_clnt_add_xprt(काष्ठा rpc_clnt *clnt,
-		काष्ठा xprt_create *xprtargs,
-		पूर्णांक (*setup)(काष्ठा rpc_clnt *,
-			काष्ठा rpc_xprt_चयन *,
-			काष्ठा rpc_xprt *,
-			व्योम *),
-		व्योम *data)
-अणु
-	काष्ठा rpc_xprt_चयन *xps;
-	काष्ठा rpc_xprt *xprt;
-	अचिन्हित दीर्घ connect_समयout;
-	अचिन्हित दीर्घ reconnect_समयout;
-	अचिन्हित अक्षर resvport, reuseport;
-	पूर्णांक ret = 0;
+int rpc_clnt_add_xprt(struct rpc_clnt *clnt,
+		struct xprt_create *xprtargs,
+		int (*setup)(struct rpc_clnt *,
+			struct rpc_xprt_switch *,
+			struct rpc_xprt *,
+			void *),
+		void *data)
+{
+	struct rpc_xprt_switch *xps;
+	struct rpc_xprt *xprt;
+	unsigned long connect_timeout;
+	unsigned long reconnect_timeout;
+	unsigned char resvport, reuseport;
+	int ret = 0;
 
-	rcu_पढ़ो_lock();
-	xps = xprt_चयन_get(rcu_dereference(clnt->cl_xpi.xpi_xpचयन));
+	rcu_read_lock();
+	xps = xprt_switch_get(rcu_dereference(clnt->cl_xpi.xpi_xpswitch));
 	xprt = xprt_iter_xprt(&clnt->cl_xpi);
-	अगर (xps == शून्य || xprt == शून्य) अणु
-		rcu_पढ़ो_unlock();
-		xprt_चयन_put(xps);
-		वापस -EAGAIN;
-	पूर्ण
+	if (xps == NULL || xprt == NULL) {
+		rcu_read_unlock();
+		xprt_switch_put(xps);
+		return -EAGAIN;
+	}
 	resvport = xprt->resvport;
 	reuseport = xprt->reuseport;
-	connect_समयout = xprt->connect_समयout;
-	reconnect_समयout = xprt->max_reconnect_समयout;
-	rcu_पढ़ो_unlock();
+	connect_timeout = xprt->connect_timeout;
+	reconnect_timeout = xprt->max_reconnect_timeout;
+	rcu_read_unlock();
 
 	xprt = xprt_create_transport(xprtargs);
-	अगर (IS_ERR(xprt)) अणु
+	if (IS_ERR(xprt)) {
 		ret = PTR_ERR(xprt);
-		जाओ out_put_चयन;
-	पूर्ण
+		goto out_put_switch;
+	}
 	xprt->resvport = resvport;
 	xprt->reuseport = reuseport;
-	अगर (xprt->ops->set_connect_समयout != शून्य)
-		xprt->ops->set_connect_समयout(xprt,
-				connect_समयout,
-				reconnect_समयout);
+	if (xprt->ops->set_connect_timeout != NULL)
+		xprt->ops->set_connect_timeout(xprt,
+				connect_timeout,
+				reconnect_timeout);
 
-	rpc_xprt_चयन_set_roundrobin(xps);
-	अगर (setup) अणु
+	rpc_xprt_switch_set_roundrobin(xps);
+	if (setup) {
 		ret = setup(clnt, xps, xprt, data);
-		अगर (ret != 0)
-			जाओ out_put_xprt;
-	पूर्ण
-	rpc_xprt_चयन_add_xprt(xps, xprt);
+		if (ret != 0)
+			goto out_put_xprt;
+	}
+	rpc_xprt_switch_add_xprt(xps, xprt);
 out_put_xprt:
 	xprt_put(xprt);
-out_put_चयन:
-	xprt_चयन_put(xps);
-	वापस ret;
-पूर्ण
+out_put_switch:
+	xprt_switch_put(xps);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rpc_clnt_add_xprt);
 
-काष्ठा connect_समयout_data अणु
-	अचिन्हित दीर्घ connect_समयout;
-	अचिन्हित दीर्घ reconnect_समयout;
-पूर्ण;
+struct connect_timeout_data {
+	unsigned long connect_timeout;
+	unsigned long reconnect_timeout;
+};
 
-अटल पूर्णांक
-rpc_xprt_set_connect_समयout(काष्ठा rpc_clnt *clnt,
-		काष्ठा rpc_xprt *xprt,
-		व्योम *data)
-अणु
-	काष्ठा connect_समयout_data *समयo = data;
+static int
+rpc_xprt_set_connect_timeout(struct rpc_clnt *clnt,
+		struct rpc_xprt *xprt,
+		void *data)
+{
+	struct connect_timeout_data *timeo = data;
 
-	अगर (xprt->ops->set_connect_समयout)
-		xprt->ops->set_connect_समयout(xprt,
-				समयo->connect_समयout,
-				समयo->reconnect_समयout);
-	वापस 0;
-पूर्ण
+	if (xprt->ops->set_connect_timeout)
+		xprt->ops->set_connect_timeout(xprt,
+				timeo->connect_timeout,
+				timeo->reconnect_timeout);
+	return 0;
+}
 
-व्योम
-rpc_set_connect_समयout(काष्ठा rpc_clnt *clnt,
-		अचिन्हित दीर्घ connect_समयout,
-		अचिन्हित दीर्घ reconnect_समयout)
-अणु
-	काष्ठा connect_समयout_data समयout = अणु
-		.connect_समयout = connect_समयout,
-		.reconnect_समयout = reconnect_समयout,
-	पूर्ण;
-	rpc_clnt_iterate_क्रम_each_xprt(clnt,
-			rpc_xprt_set_connect_समयout,
-			&समयout);
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_set_connect_समयout);
+void
+rpc_set_connect_timeout(struct rpc_clnt *clnt,
+		unsigned long connect_timeout,
+		unsigned long reconnect_timeout)
+{
+	struct connect_timeout_data timeout = {
+		.connect_timeout = connect_timeout,
+		.reconnect_timeout = reconnect_timeout,
+	};
+	rpc_clnt_iterate_for_each_xprt(clnt,
+			rpc_xprt_set_connect_timeout,
+			&timeout);
+}
+EXPORT_SYMBOL_GPL(rpc_set_connect_timeout);
 
-व्योम rpc_clnt_xprt_चयन_put(काष्ठा rpc_clnt *clnt)
-अणु
-	rcu_पढ़ो_lock();
-	xprt_चयन_put(rcu_dereference(clnt->cl_xpi.xpi_xpचयन));
-	rcu_पढ़ो_unlock();
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_clnt_xprt_चयन_put);
+void rpc_clnt_xprt_switch_put(struct rpc_clnt *clnt)
+{
+	rcu_read_lock();
+	xprt_switch_put(rcu_dereference(clnt->cl_xpi.xpi_xpswitch));
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL_GPL(rpc_clnt_xprt_switch_put);
 
-व्योम rpc_clnt_xprt_चयन_add_xprt(काष्ठा rpc_clnt *clnt, काष्ठा rpc_xprt *xprt)
-अणु
-	rcu_पढ़ो_lock();
-	rpc_xprt_चयन_add_xprt(rcu_dereference(clnt->cl_xpi.xpi_xpचयन),
+void rpc_clnt_xprt_switch_add_xprt(struct rpc_clnt *clnt, struct rpc_xprt *xprt)
+{
+	rcu_read_lock();
+	rpc_xprt_switch_add_xprt(rcu_dereference(clnt->cl_xpi.xpi_xpswitch),
 				 xprt);
-	rcu_पढ़ो_unlock();
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_clnt_xprt_चयन_add_xprt);
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL_GPL(rpc_clnt_xprt_switch_add_xprt);
 
-bool rpc_clnt_xprt_चयन_has_addr(काष्ठा rpc_clnt *clnt,
-				   स्थिर काष्ठा sockaddr *sap)
-अणु
-	काष्ठा rpc_xprt_चयन *xps;
+bool rpc_clnt_xprt_switch_has_addr(struct rpc_clnt *clnt,
+				   const struct sockaddr *sap)
+{
+	struct rpc_xprt_switch *xps;
 	bool ret;
 
-	rcu_पढ़ो_lock();
-	xps = rcu_dereference(clnt->cl_xpi.xpi_xpचयन);
-	ret = rpc_xprt_चयन_has_addr(xps, sap);
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(rpc_clnt_xprt_चयन_has_addr);
+	rcu_read_lock();
+	xps = rcu_dereference(clnt->cl_xpi.xpi_xpswitch);
+	ret = rpc_xprt_switch_has_addr(xps, sap);
+	rcu_read_unlock();
+	return ret;
+}
+EXPORT_SYMBOL_GPL(rpc_clnt_xprt_switch_has_addr);
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_DEBUG)
-अटल व्योम rpc_show_header(व्योम)
-अणु
-	prपूर्णांकk(KERN_INFO "-pid- flgs status -client- --rqstp- "
+#if IS_ENABLED(CONFIG_SUNRPC_DEBUG)
+static void rpc_show_header(void)
+{
+	printk(KERN_INFO "-pid- flgs status -client- --rqstp- "
 		"-timeout ---ops--\n");
-पूर्ण
+}
 
-अटल व्योम rpc_show_task(स्थिर काष्ठा rpc_clnt *clnt,
-			  स्थिर काष्ठा rpc_task *task)
-अणु
-	स्थिर अक्षर *rpc_रुकोq = "none";
+static void rpc_show_task(const struct rpc_clnt *clnt,
+			  const struct rpc_task *task)
+{
+	const char *rpc_waitq = "none";
 
-	अगर (RPC_IS_QUEUED(task))
-		rpc_रुकोq = rpc_qname(task->tk_रुकोqueue);
+	if (RPC_IS_QUEUED(task))
+		rpc_waitq = rpc_qname(task->tk_waitqueue);
 
-	prपूर्णांकk(KERN_INFO "%5u %04x %6d %8p %8p %8ld %8p %sv%u %s a:%ps q:%s\n",
+	printk(KERN_INFO "%5u %04x %6d %8p %8p %8ld %8p %sv%u %s a:%ps q:%s\n",
 		task->tk_pid, task->tk_flags, task->tk_status,
-		clnt, task->tk_rqstp, rpc_task_समयout(task), task->tk_ops,
+		clnt, task->tk_rqstp, rpc_task_timeout(task), task->tk_ops,
 		clnt->cl_program->name, clnt->cl_vers, rpc_proc_name(task),
-		task->tk_action, rpc_रुकोq);
-पूर्ण
+		task->tk_action, rpc_waitq);
+}
 
-व्योम rpc_show_tasks(काष्ठा net *net)
-अणु
-	काष्ठा rpc_clnt *clnt;
-	काष्ठा rpc_task *task;
-	पूर्णांक header = 0;
-	काष्ठा sunrpc_net *sn = net_generic(net, sunrpc_net_id);
+void rpc_show_tasks(struct net *net)
+{
+	struct rpc_clnt *clnt;
+	struct rpc_task *task;
+	int header = 0;
+	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	spin_lock(&sn->rpc_client_lock);
-	list_क्रम_each_entry(clnt, &sn->all_clients, cl_clients) अणु
+	list_for_each_entry(clnt, &sn->all_clients, cl_clients) {
 		spin_lock(&clnt->cl_lock);
-		list_क्रम_each_entry(task, &clnt->cl_tasks, tk_task) अणु
-			अगर (!header) अणु
+		list_for_each_entry(task, &clnt->cl_tasks, tk_task) {
+			if (!header) {
 				rpc_show_header();
 				header++;
-			पूर्ण
+			}
 			rpc_show_task(clnt, task);
-		पूर्ण
+		}
 		spin_unlock(&clnt->cl_lock);
-	पूर्ण
+	}
 	spin_unlock(&sn->rpc_client_lock);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_SUNRPC_SWAP)
-अटल पूर्णांक
-rpc_clnt_swap_activate_callback(काष्ठा rpc_clnt *clnt,
-		काष्ठा rpc_xprt *xprt,
-		व्योम *dummy)
-अणु
-	वापस xprt_enable_swap(xprt);
-पूर्ण
+#if IS_ENABLED(CONFIG_SUNRPC_SWAP)
+static int
+rpc_clnt_swap_activate_callback(struct rpc_clnt *clnt,
+		struct rpc_xprt *xprt,
+		void *dummy)
+{
+	return xprt_enable_swap(xprt);
+}
 
-पूर्णांक
-rpc_clnt_swap_activate(काष्ठा rpc_clnt *clnt)
-अणु
-	अगर (atomic_inc_वापस(&clnt->cl_swapper) == 1)
-		वापस rpc_clnt_iterate_क्रम_each_xprt(clnt,
-				rpc_clnt_swap_activate_callback, शून्य);
-	वापस 0;
-पूर्ण
+int
+rpc_clnt_swap_activate(struct rpc_clnt *clnt)
+{
+	if (atomic_inc_return(&clnt->cl_swapper) == 1)
+		return rpc_clnt_iterate_for_each_xprt(clnt,
+				rpc_clnt_swap_activate_callback, NULL);
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rpc_clnt_swap_activate);
 
-अटल पूर्णांक
-rpc_clnt_swap_deactivate_callback(काष्ठा rpc_clnt *clnt,
-		काष्ठा rpc_xprt *xprt,
-		व्योम *dummy)
-अणु
+static int
+rpc_clnt_swap_deactivate_callback(struct rpc_clnt *clnt,
+		struct rpc_xprt *xprt,
+		void *dummy)
+{
 	xprt_disable_swap(xprt);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-rpc_clnt_swap_deactivate(काष्ठा rpc_clnt *clnt)
-अणु
-	अगर (atomic_dec_अगर_positive(&clnt->cl_swapper) == 0)
-		rpc_clnt_iterate_क्रम_each_xprt(clnt,
-				rpc_clnt_swap_deactivate_callback, शून्य);
-पूर्ण
+void
+rpc_clnt_swap_deactivate(struct rpc_clnt *clnt)
+{
+	if (atomic_dec_if_positive(&clnt->cl_swapper) == 0)
+		rpc_clnt_iterate_for_each_xprt(clnt,
+				rpc_clnt_swap_deactivate_callback, NULL);
+}
 EXPORT_SYMBOL_GPL(rpc_clnt_swap_deactivate);
-#पूर्ण_अगर /* CONFIG_SUNRPC_SWAP */
+#endif /* CONFIG_SUNRPC_SWAP */

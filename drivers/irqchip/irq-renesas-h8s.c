@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * H8S पूर्णांकerrupt controller driver
+ * H8S interrupt controller driver
  *
- * Copyright 2015 Yoshinori Sato <ysato@users.sourceक्रमge.jp>
+ * Copyright 2015 Yoshinori Sato <ysato@users.sourceforge.jp>
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/irqchip.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/irq.h>
+#include <linux/irqchip.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <asm/io.h>
 
-अटल व्योम *पूर्णांकc_baseaddr;
-#घोषणा IPRA (पूर्णांकc_baseaddr)
+static void *intc_baseaddr;
+#define IPRA (intc_baseaddr)
 
-अटल स्थिर अचिन्हित अक्षर ipr_table[] = अणु
+static const unsigned char ipr_table[] = {
 	0x03, 0x02, 0x01, 0x00, 0x13, 0x12, 0x11, 0x10, /* 16 - 23 */
 	0x23, 0x22, 0x21, 0x20, 0x33, 0x32, 0x31, 0x30, /* 24 - 31 */
 	0x43, 0x42, 0x41, 0x40, 0x53, 0x53, 0x52, 0x52, /* 32 - 39 */
@@ -30,74 +29,74 @@
 	0x90, 0x90, 0x90, 0x90, 0xa3, 0xa3, 0xa3, 0xa3, /* 104 - 111 */
 	0xa2, 0xa2, 0xa2, 0xa2, 0xa1, 0xa1, 0xa1, 0xa1, /* 112 - 119 */
 	0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, 0xa0, /* 120 - 127 */
-पूर्ण;
+};
 
-अटल व्योम h8s_disable_irq(काष्ठा irq_data *data)
-अणु
-	पूर्णांक pos;
-	व्योम __iomem *addr;
-	अचिन्हित लघु pri;
-	पूर्णांक irq = data->irq;
-
-	addr = IPRA + ((ipr_table[irq - 16] & 0xf0) >> 3);
-	pos = (ipr_table[irq - 16] & 0x0f) * 4;
-	pri = ~(0x000f << pos);
-	pri &= पढ़ोw(addr);
-	ग_लिखोw(pri, addr);
-पूर्ण
-
-अटल व्योम h8s_enable_irq(काष्ठा irq_data *data)
-अणु
-	पूर्णांक pos;
-	व्योम __iomem *addr;
-	अचिन्हित लघु pri;
-	पूर्णांक irq = data->irq;
+static void h8s_disable_irq(struct irq_data *data)
+{
+	int pos;
+	void __iomem *addr;
+	unsigned short pri;
+	int irq = data->irq;
 
 	addr = IPRA + ((ipr_table[irq - 16] & 0xf0) >> 3);
 	pos = (ipr_table[irq - 16] & 0x0f) * 4;
 	pri = ~(0x000f << pos);
-	pri &= पढ़ोw(addr);
+	pri &= readw(addr);
+	writew(pri, addr);
+}
+
+static void h8s_enable_irq(struct irq_data *data)
+{
+	int pos;
+	void __iomem *addr;
+	unsigned short pri;
+	int irq = data->irq;
+
+	addr = IPRA + ((ipr_table[irq - 16] & 0xf0) >> 3);
+	pos = (ipr_table[irq - 16] & 0x0f) * 4;
+	pri = ~(0x000f << pos);
+	pri &= readw(addr);
 	pri |= 1 << pos;
-	ग_लिखोw(pri, addr);
-पूर्ण
+	writew(pri, addr);
+}
 
-काष्ठा irq_chip h8s_irq_chip = अणु
+struct irq_chip h8s_irq_chip = {
 	.name		= "H8S-INTC",
 	.irq_enable	= h8s_enable_irq,
 	.irq_disable	= h8s_disable_irq,
-पूर्ण;
+};
 
-अटल __init पूर्णांक irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+static __init int irq_map(struct irq_domain *h, unsigned int virq,
 			  irq_hw_number_t hw_irq_num)
-अणु
+{
        irq_set_chip_and_handler(virq, &h8s_irq_chip, handle_simple_irq);
 
-       वापस 0;
-पूर्ण
+       return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops irq_ops = अणु
+static const struct irq_domain_ops irq_ops = {
        .map    = irq_map,
-       .xlate  = irq_करोमुख्य_xlate_onecell,
-पूर्ण;
+       .xlate  = irq_domain_xlate_onecell,
+};
 
-अटल पूर्णांक __init h8s_पूर्णांकc_of_init(काष्ठा device_node *पूर्णांकc,
-				   काष्ठा device_node *parent)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	पूर्णांक n;
+static int __init h8s_intc_of_init(struct device_node *intc,
+				   struct device_node *parent)
+{
+	struct irq_domain *domain;
+	int n;
 
-	पूर्णांकc_baseaddr = of_iomap(पूर्णांकc, 0);
-	BUG_ON(!पूर्णांकc_baseaddr);
+	intc_baseaddr = of_iomap(intc, 0);
+	BUG_ON(!intc_baseaddr);
 
-	/* All पूर्णांकerrupt priority is 0 (disable) */
+	/* All interrupt priority is 0 (disable) */
 	/* IPRA to IPRK */
-	क्रम (n = 0; n <= 'k' - 'a'; n++)
-		ग_लिखोw(0x0000, IPRA + (n * 2));
+	for (n = 0; n <= 'k' - 'a'; n++)
+		writew(0x0000, IPRA + (n * 2));
 
-	करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, NR_IRQS, &irq_ops, शून्य);
-	BUG_ON(!करोमुख्य);
-	irq_set_शेष_host(करोमुख्य);
-	वापस 0;
-पूर्ण
+	domain = irq_domain_add_linear(intc, NR_IRQS, &irq_ops, NULL);
+	BUG_ON(!domain);
+	irq_set_default_host(domain);
+	return 0;
+}
 
-IRQCHIP_DECLARE(h8s_पूर्णांकc, "renesas,h8s-intc", h8s_पूर्णांकc_of_init);
+IRQCHIP_DECLARE(h8s_intc, "renesas,h8s-intc", h8s_intc_of_init);

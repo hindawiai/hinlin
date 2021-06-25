@@ -1,546 +1,545 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Routines क्रम control of the AK4113 via I2C/4-wire serial पूर्णांकerface
+ *  Routines for control of the AK4113 via I2C/4-wire serial interface
  *  IEC958 (S/PDIF) receiver by Asahi Kasei
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  *  Copyright (c) by Pavel Hofman <pavel.hofman@ivitera.com>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/ak4113.h>
-#समावेश <sound/asoundef.h>
-#समावेश <sound/info.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/pcm.h>
+#include <sound/ak4113.h>
+#include <sound/asoundef.h>
+#include <sound/info.h>
 
 MODULE_AUTHOR("Pavel Hofman <pavel.hofman@ivitera.com>");
 MODULE_DESCRIPTION("AK4113 IEC958 (S/PDIF) receiver by Asahi Kasei");
 MODULE_LICENSE("GPL");
 
-#घोषणा AK4113_ADDR			0x00 /* fixed address */
+#define AK4113_ADDR			0x00 /* fixed address */
 
-अटल व्योम ak4113_stats(काष्ठा work_काष्ठा *work);
-अटल व्योम ak4113_init_regs(काष्ठा ak4113 *chip);
+static void ak4113_stats(struct work_struct *work);
+static void ak4113_init_regs(struct ak4113 *chip);
 
 
-अटल व्योम reg_ग_लिखो(काष्ठा ak4113 *ak4113, अचिन्हित अक्षर reg,
-		अचिन्हित अक्षर val)
-अणु
-	ak4113->ग_लिखो(ak4113->निजी_data, reg, val);
-	अगर (reg < माप(ak4113->regmap))
+static void reg_write(struct ak4113 *ak4113, unsigned char reg,
+		unsigned char val)
+{
+	ak4113->write(ak4113->private_data, reg, val);
+	if (reg < sizeof(ak4113->regmap))
 		ak4113->regmap[reg] = val;
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर reg_पढ़ो(काष्ठा ak4113 *ak4113, अचिन्हित अक्षर reg)
-अणु
-	वापस ak4113->पढ़ो(ak4113->निजी_data, reg);
-पूर्ण
+static inline unsigned char reg_read(struct ak4113 *ak4113, unsigned char reg)
+{
+	return ak4113->read(ak4113->private_data, reg);
+}
 
-अटल व्योम snd_ak4113_मुक्त(काष्ठा ak4113 *chip)
-अणु
-	atomic_inc(&chip->wq_processing);	/* करोn't schedule new work */
+static void snd_ak4113_free(struct ak4113 *chip)
+{
+	atomic_inc(&chip->wq_processing);	/* don't schedule new work */
 	cancel_delayed_work_sync(&chip->work);
-	kमुक्त(chip);
-पूर्ण
+	kfree(chip);
+}
 
-अटल पूर्णांक snd_ak4113_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा ak4113 *chip = device->device_data;
-	snd_ak4113_मुक्त(chip);
-	वापस 0;
-पूर्ण
+static int snd_ak4113_dev_free(struct snd_device *device)
+{
+	struct ak4113 *chip = device->device_data;
+	snd_ak4113_free(chip);
+	return 0;
+}
 
-पूर्णांक snd_ak4113_create(काष्ठा snd_card *card, ak4113_पढ़ो_t *पढ़ो,
-		ak4113_ग_लिखो_t *ग_लिखो, स्थिर अचिन्हित अक्षर *pgm,
-		व्योम *निजी_data, काष्ठा ak4113 **r_ak4113)
-अणु
-	काष्ठा ak4113 *chip;
-	पूर्णांक err;
-	अचिन्हित अक्षर reg;
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त =     snd_ak4113_dev_मुक्त,
-	पूर्ण;
+int snd_ak4113_create(struct snd_card *card, ak4113_read_t *read,
+		ak4113_write_t *write, const unsigned char *pgm,
+		void *private_data, struct ak4113 **r_ak4113)
+{
+	struct ak4113 *chip;
+	int err;
+	unsigned char reg;
+	static const struct snd_device_ops ops = {
+		.dev_free =     snd_ak4113_dev_free,
+	};
 
-	chip = kzalloc(माप(*chip), GFP_KERNEL);
-	अगर (chip == शून्य)
-		वापस -ENOMEM;
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	if (chip == NULL)
+		return -ENOMEM;
 	spin_lock_init(&chip->lock);
 	chip->card = card;
-	chip->पढ़ो = पढ़ो;
-	chip->ग_लिखो = ग_लिखो;
-	chip->निजी_data = निजी_data;
+	chip->read = read;
+	chip->write = write;
+	chip->private_data = private_data;
 	INIT_DELAYED_WORK(&chip->work, ak4113_stats);
 	atomic_set(&chip->wq_processing, 0);
 	mutex_init(&chip->reinit_mutex);
 
-	क्रम (reg = 0; reg < AK4113_WRITABLE_REGS ; reg++)
+	for (reg = 0; reg < AK4113_WRITABLE_REGS ; reg++)
 		chip->regmap[reg] = pgm[reg];
 	ak4113_init_regs(chip);
 
-	chip->rcs0 = reg_पढ़ो(chip, AK4113_REG_RCS0) & ~(AK4113_QINT |
+	chip->rcs0 = reg_read(chip, AK4113_REG_RCS0) & ~(AK4113_QINT |
 			AK4113_CINT | AK4113_STC);
-	chip->rcs1 = reg_पढ़ो(chip, AK4113_REG_RCS1);
-	chip->rcs2 = reg_पढ़ो(chip, AK4113_REG_RCS2);
+	chip->rcs1 = reg_read(chip, AK4113_REG_RCS1);
+	chip->rcs2 = reg_read(chip, AK4113_REG_RCS2);
 	err = snd_device_new(card, SNDRV_DEV_CODEC, chip, &ops);
-	अगर (err < 0)
-		जाओ __fail;
+	if (err < 0)
+		goto __fail;
 
-	अगर (r_ak4113)
+	if (r_ak4113)
 		*r_ak4113 = chip;
-	वापस 0;
+	return 0;
 
 __fail:
-	snd_ak4113_मुक्त(chip);
-	वापस err;
-पूर्ण
+	snd_ak4113_free(chip);
+	return err;
+}
 EXPORT_SYMBOL_GPL(snd_ak4113_create);
 
-व्योम snd_ak4113_reg_ग_लिखो(काष्ठा ak4113 *chip, अचिन्हित अक्षर reg,
-		अचिन्हित अक्षर mask, अचिन्हित अक्षर val)
-अणु
-	अगर (reg >= AK4113_WRITABLE_REGS)
-		वापस;
-	reg_ग_लिखो(chip, reg, (chip->regmap[reg] & ~mask) | val);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_ak4113_reg_ग_लिखो);
+void snd_ak4113_reg_write(struct ak4113 *chip, unsigned char reg,
+		unsigned char mask, unsigned char val)
+{
+	if (reg >= AK4113_WRITABLE_REGS)
+		return;
+	reg_write(chip, reg, (chip->regmap[reg] & ~mask) | val);
+}
+EXPORT_SYMBOL_GPL(snd_ak4113_reg_write);
 
-अटल व्योम ak4113_init_regs(काष्ठा ak4113 *chip)
-अणु
-	अचिन्हित अक्षर old = chip->regmap[AK4113_REG_PWRDN], reg;
+static void ak4113_init_regs(struct ak4113 *chip)
+{
+	unsigned char old = chip->regmap[AK4113_REG_PWRDN], reg;
 
-	/* bring the chip to reset state and घातerकरोwn state */
-	reg_ग_लिखो(chip, AK4113_REG_PWRDN, old & ~(AK4113_RST|AK4113_PWN));
+	/* bring the chip to reset state and powerdown state */
+	reg_write(chip, AK4113_REG_PWRDN, old & ~(AK4113_RST|AK4113_PWN));
 	udelay(200);
-	/* release reset, but leave घातerकरोwn */
-	reg_ग_लिखो(chip, AK4113_REG_PWRDN, (old | AK4113_RST) & ~AK4113_PWN);
+	/* release reset, but leave powerdown */
+	reg_write(chip, AK4113_REG_PWRDN, (old | AK4113_RST) & ~AK4113_PWN);
 	udelay(200);
-	क्रम (reg = 1; reg < AK4113_WRITABLE_REGS; reg++)
-		reg_ग_लिखो(chip, reg, chip->regmap[reg]);
-	/* release घातerकरोwn, everything is initialized now */
-	reg_ग_लिखो(chip, AK4113_REG_PWRDN, old | AK4113_RST | AK4113_PWN);
-पूर्ण
+	for (reg = 1; reg < AK4113_WRITABLE_REGS; reg++)
+		reg_write(chip, reg, chip->regmap[reg]);
+	/* release powerdown, everything is initialized now */
+	reg_write(chip, AK4113_REG_PWRDN, old | AK4113_RST | AK4113_PWN);
+}
 
-व्योम snd_ak4113_reinit(काष्ठा ak4113 *chip)
-अणु
-	अगर (atomic_inc_वापस(&chip->wq_processing) == 1)
+void snd_ak4113_reinit(struct ak4113 *chip)
+{
+	if (atomic_inc_return(&chip->wq_processing) == 1)
 		cancel_delayed_work_sync(&chip->work);
 	mutex_lock(&chip->reinit_mutex);
 	ak4113_init_regs(chip);
 	mutex_unlock(&chip->reinit_mutex);
 	/* bring up statistics / event queing */
-	अगर (atomic_dec_and_test(&chip->wq_processing))
+	if (atomic_dec_and_test(&chip->wq_processing))
 		schedule_delayed_work(&chip->work, HZ / 10);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(snd_ak4113_reinit);
 
-अटल अचिन्हित पूर्णांक बाह्यal_rate(अचिन्हित अक्षर rcs1)
-अणु
-	चयन (rcs1 & (AK4113_FS0|AK4113_FS1|AK4113_FS2|AK4113_FS3)) अणु
-	हाल AK4113_FS_8000HZ:
-		वापस 8000;
-	हाल AK4113_FS_11025HZ:
-		वापस 11025;
-	हाल AK4113_FS_16000HZ:
-		वापस 16000;
-	हाल AK4113_FS_22050HZ:
-		वापस 22050;
-	हाल AK4113_FS_24000HZ:
-		वापस 24000;
-	हाल AK4113_FS_32000HZ:
-		वापस 32000;
-	हाल AK4113_FS_44100HZ:
-		वापस 44100;
-	हाल AK4113_FS_48000HZ:
-		वापस 48000;
-	हाल AK4113_FS_64000HZ:
-		वापस 64000;
-	हाल AK4113_FS_88200HZ:
-		वापस 88200;
-	हाल AK4113_FS_96000HZ:
-		वापस 96000;
-	हाल AK4113_FS_176400HZ:
-		वापस 176400;
-	हाल AK4113_FS_192000HZ:
-		वापस 192000;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static unsigned int external_rate(unsigned char rcs1)
+{
+	switch (rcs1 & (AK4113_FS0|AK4113_FS1|AK4113_FS2|AK4113_FS3)) {
+	case AK4113_FS_8000HZ:
+		return 8000;
+	case AK4113_FS_11025HZ:
+		return 11025;
+	case AK4113_FS_16000HZ:
+		return 16000;
+	case AK4113_FS_22050HZ:
+		return 22050;
+	case AK4113_FS_24000HZ:
+		return 24000;
+	case AK4113_FS_32000HZ:
+		return 32000;
+	case AK4113_FS_44100HZ:
+		return 44100;
+	case AK4113_FS_48000HZ:
+		return 48000;
+	case AK4113_FS_64000HZ:
+		return 64000;
+	case AK4113_FS_88200HZ:
+		return 88200;
+	case AK4113_FS_96000HZ:
+		return 96000;
+	case AK4113_FS_176400HZ:
+		return 176400;
+	case AK4113_FS_192000HZ:
+		return 192000;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक snd_ak4113_in_error_info(काष्ठा snd_kcontrol *kcontrol,
-				    काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_in_error_info(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = दीर्घ_उच्च;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = LONG_MAX;
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_in_error_get(काष्ठा snd_kcontrol *kcontrol,
-				   काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
+static int snd_ak4113_in_error_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
 
 	spin_lock_irq(&chip->lock);
-	ucontrol->value.पूर्णांकeger.value[0] =
-		chip->errors[kcontrol->निजी_value];
-	chip->errors[kcontrol->निजी_value] = 0;
+	ucontrol->value.integer.value[0] =
+		chip->errors[kcontrol->private_value];
+	chip->errors[kcontrol->private_value] = 0;
 	spin_unlock_irq(&chip->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा snd_ak4113_in_bit_info		snd_ctl_boolean_mono_info
+#define snd_ak4113_in_bit_info		snd_ctl_boolean_mono_info
 
-अटल पूर्णांक snd_ak4113_in_bit_get(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित अक्षर reg = kcontrol->निजी_value & 0xff;
-	अचिन्हित अक्षर bit = (kcontrol->निजी_value >> 8) & 0xff;
-	अचिन्हित अक्षर inv = (kcontrol->निजी_value >> 31) & 1;
+static int snd_ak4113_in_bit_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
+	unsigned char reg = kcontrol->private_value & 0xff;
+	unsigned char bit = (kcontrol->private_value >> 8) & 0xff;
+	unsigned char inv = (kcontrol->private_value >> 31) & 1;
 
-	ucontrol->value.पूर्णांकeger.value[0] =
-		((reg_पढ़ो(chip, reg) & (1 << bit)) ? 1 : 0) ^ inv;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] =
+		((reg_read(chip, reg) & (1 << bit)) ? 1 : 0) ^ inv;
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_rx_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_rx_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 5;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 5;
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_rx_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
+static int snd_ak4113_rx_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.पूर्णांकeger.value[0] =
+	ucontrol->value.integer.value[0] =
 		(AK4113_IPS(chip->regmap[AK4113_REG_IO1]));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_rx_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक change;
+static int snd_ak4113_rx_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
+	int change;
 	u8 old_val;
 
 	spin_lock_irq(&chip->lock);
 	old_val = chip->regmap[AK4113_REG_IO1];
-	change = ucontrol->value.पूर्णांकeger.value[0] != AK4113_IPS(old_val);
-	अगर (change)
-		reg_ग_लिखो(chip, AK4113_REG_IO1,
+	change = ucontrol->value.integer.value[0] != AK4113_IPS(old_val);
+	if (change)
+		reg_write(chip, AK4113_REG_IO1,
 				(old_val & (~AK4113_IPS(0xff))) |
-				(AK4113_IPS(ucontrol->value.पूर्णांकeger.value[0])));
+				(AK4113_IPS(ucontrol->value.integer.value[0])));
 	spin_unlock_irq(&chip->lock);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल पूर्णांक snd_ak4113_rate_info(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_rate_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 192000;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 192000;
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_rate_get(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
+static int snd_ak4113_rate_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.पूर्णांकeger.value[0] = बाह्यal_rate(reg_पढ़ो(chip,
+	ucontrol->value.integer.value[0] = external_rate(reg_read(chip,
 				AK4113_REG_RCS1));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_info(काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_spdif_info(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_get(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित i;
+static int snd_ak4113_spdif_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
+	unsigned i;
 
-	क्रम (i = 0; i < AK4113_REG_RXCSB_SIZE; i++)
-		ucontrol->value.iec958.status[i] = reg_पढ़ो(chip,
+	for (i = 0; i < AK4113_REG_RXCSB_SIZE; i++)
+		ucontrol->value.iec958.status[i] = reg_read(chip,
 				AK4113_REG_RXCSB0 + i);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_mask_info(काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_spdif_mask_info(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_mask_get(काष्ठा snd_kcontrol *kcontrol,
-				      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	स_रखो(ucontrol->value.iec958.status, 0xff, AK4113_REG_RXCSB_SIZE);
-	वापस 0;
-पूर्ण
+static int snd_ak4113_spdif_mask_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	memset(ucontrol->value.iec958.status, 0xff, AK4113_REG_RXCSB_SIZE);
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_pinfo(काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_spdif_pinfo(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 0xffff;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 0xffff;
 	uinfo->count = 4;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_pget(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित लघु पंचांगp;
+static int snd_ak4113_spdif_pget(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
+	unsigned short tmp;
 
-	ucontrol->value.पूर्णांकeger.value[0] = 0xf8f2;
-	ucontrol->value.पूर्णांकeger.value[1] = 0x4e1f;
-	पंचांगp = reg_पढ़ो(chip, AK4113_REG_Pc0) |
-		(reg_पढ़ो(chip, AK4113_REG_Pc1) << 8);
-	ucontrol->value.पूर्णांकeger.value[2] = पंचांगp;
-	पंचांगp = reg_पढ़ो(chip, AK4113_REG_Pd0) |
-		(reg_पढ़ो(chip, AK4113_REG_Pd1) << 8);
-	ucontrol->value.पूर्णांकeger.value[3] = पंचांगp;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = 0xf8f2;
+	ucontrol->value.integer.value[1] = 0x4e1f;
+	tmp = reg_read(chip, AK4113_REG_Pc0) |
+		(reg_read(chip, AK4113_REG_Pc1) << 8);
+	ucontrol->value.integer.value[2] = tmp;
+	tmp = reg_read(chip, AK4113_REG_Pd0) |
+		(reg_read(chip, AK4113_REG_Pd1) << 8);
+	ucontrol->value.integer.value[3] = tmp;
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_qinfo(काष्ठा snd_kcontrol *kcontrol,
-		काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int snd_ak4113_spdif_qinfo(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 	uinfo->count = AK4113_REG_QSUB_SIZE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_ak4113_spdअगर_qget(काष्ठा snd_kcontrol *kcontrol,
-				 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा ak4113 *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित i;
+static int snd_ak4113_spdif_qget(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct ak4113 *chip = snd_kcontrol_chip(kcontrol);
+	unsigned i;
 
-	क्रम (i = 0; i < AK4113_REG_QSUB_SIZE; i++)
-		ucontrol->value.bytes.data[i] = reg_पढ़ो(chip,
+	for (i = 0; i < AK4113_REG_QSUB_SIZE; i++)
+		ucontrol->value.bytes.data[i] = reg_read(chip,
 				AK4113_REG_QSUB_ADDR + i);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Don't क्रमget to change AK4113_CONTROLS define!!! */
-अटल स्थिर काष्ठा snd_kcontrol_new snd_ak4113_iec958_controls[] = अणु
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+/* Don't forget to change AK4113_CONTROLS define!!! */
+static const struct snd_kcontrol_new snd_ak4113_iec958_controls[] = {
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 Parity Errors",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_error_info,
 	.get =		snd_ak4113_in_error_get,
-	.निजी_value = AK4113_PARITY_ERRORS,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = AK4113_PARITY_ERRORS,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 V-Bit Errors",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_error_info,
 	.get =		snd_ak4113_in_error_get,
-	.निजी_value = AK4113_V_BIT_ERRORS,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = AK4113_V_BIT_ERRORS,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 C-CRC Errors",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_error_info,
 	.get =		snd_ak4113_in_error_get,
-	.निजी_value = AK4113_CCRC_ERRORS,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = AK4113_CCRC_ERRORS,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 Q-CRC Errors",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_error_info,
 	.get =		snd_ak4113_in_error_get,
-	.निजी_value = AK4113_QCRC_ERRORS,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = AK4113_QCRC_ERRORS,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 External Rate",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_rate_info,
 	.get =		snd_ak4113_rate_get,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("", CAPTURE, MASK),
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ,
-	.info =		snd_ak4113_spdअगर_mask_info,
-	.get =		snd_ak4113_spdअगर_mask_get,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.info =		snd_ak4113_spdif_mask_info,
+	.get =		snd_ak4113_spdif_mask_get,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		SNDRV_CTL_NAME_IEC958("", CAPTURE, DEFAULT),
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-	.info =		snd_ak4113_spdअगर_info,
-	.get =		snd_ak4113_spdअगर_get,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.info =		snd_ak4113_spdif_info,
+	.get =		snd_ak4113_spdif_get,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 Preamble Capture Default",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-	.info =		snd_ak4113_spdअगर_pinfo,
-	.get =		snd_ak4113_spdअगर_pget,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.info =		snd_ak4113_spdif_pinfo,
+	.get =		snd_ak4113_spdif_pget,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 Q-subcode Capture Default",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-	.info =		snd_ak4113_spdअगर_qinfo,
-	.get =		snd_ak4113_spdअगर_qget,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.info =		snd_ak4113_spdif_qinfo,
+	.get =		snd_ak4113_spdif_qget,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 Audio",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_bit_info,
 	.get =		snd_ak4113_in_bit_get,
-	.निजी_value = (1<<31) | (1<<8) | AK4113_REG_RCS0,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = (1<<31) | (1<<8) | AK4113_REG_RCS0,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 Non-PCM Bitstream",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_bit_info,
 	.get =		snd_ak4113_in_bit_get,
-	.निजी_value = (0<<8) | AK4113_REG_RCS1,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = (0<<8) | AK4113_REG_RCS1,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"IEC958 DTS Bitstream",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 	.info =		snd_ak4113_in_bit_info,
 	.get =		snd_ak4113_in_bit_get,
-	.निजी_value = (1<<8) | AK4113_REG_RCS1,
-पूर्ण,
-अणु
-	.अगरace =	SNDRV_CTL_ELEM_IFACE_PCM,
+	.private_value = (1<<8) | AK4113_REG_RCS1,
+},
+{
+	.iface =	SNDRV_CTL_ELEM_IFACE_PCM,
 	.name =		"AK4113 Input Select",
 	.access =	SNDRV_CTL_ELEM_ACCESS_READ |
 		SNDRV_CTL_ELEM_ACCESS_WRITE,
 	.info =		snd_ak4113_rx_info,
 	.get =		snd_ak4113_rx_get,
 	.put =		snd_ak4113_rx_put,
-पूर्ण
-पूर्ण;
+}
+};
 
-अटल व्योम snd_ak4113_proc_regs_पढ़ो(काष्ठा snd_info_entry *entry,
-		काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा ak4113 *ak4113 = entry->निजी_data;
-	पूर्णांक reg, val;
-	/* all ak4113 रेजिस्टरs 0x00 - 0x1c */
-	क्रम (reg = 0; reg < 0x1d; reg++) अणु
-		val = reg_पढ़ो(ak4113, reg);
-		snd_iम_लिखो(buffer, "0x%02x = 0x%02x\n", reg, val);
-	पूर्ण
-पूर्ण
+static void snd_ak4113_proc_regs_read(struct snd_info_entry *entry,
+		struct snd_info_buffer *buffer)
+{
+	struct ak4113 *ak4113 = entry->private_data;
+	int reg, val;
+	/* all ak4113 registers 0x00 - 0x1c */
+	for (reg = 0; reg < 0x1d; reg++) {
+		val = reg_read(ak4113, reg);
+		snd_iprintf(buffer, "0x%02x = 0x%02x\n", reg, val);
+	}
+}
 
-अटल व्योम snd_ak4113_proc_init(काष्ठा ak4113 *ak4113)
-अणु
+static void snd_ak4113_proc_init(struct ak4113 *ak4113)
+{
 	snd_card_ro_proc_new(ak4113->card, "ak4113", ak4113,
-			     snd_ak4113_proc_regs_पढ़ो);
-पूर्ण
+			     snd_ak4113_proc_regs_read);
+}
 
-पूर्णांक snd_ak4113_build(काष्ठा ak4113 *ak4113,
-		काष्ठा snd_pcm_substream *cap_substream)
-अणु
-	काष्ठा snd_kcontrol *kctl;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक err;
+int snd_ak4113_build(struct ak4113 *ak4113,
+		struct snd_pcm_substream *cap_substream)
+{
+	struct snd_kcontrol *kctl;
+	unsigned int idx;
+	int err;
 
-	अगर (snd_BUG_ON(!cap_substream))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!cap_substream))
+		return -EINVAL;
 	ak4113->substream = cap_substream;
-	क्रम (idx = 0; idx < AK4113_CONTROLS; idx++) अणु
+	for (idx = 0; idx < AK4113_CONTROLS; idx++) {
 		kctl = snd_ctl_new1(&snd_ak4113_iec958_controls[idx], ak4113);
-		अगर (kctl == शून्य)
-			वापस -ENOMEM;
+		if (kctl == NULL)
+			return -ENOMEM;
 		kctl->id.device = cap_substream->pcm->device;
 		kctl->id.subdevice = cap_substream->number;
 		err = snd_ctl_add(ak4113->card, kctl);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		ak4113->kctls[idx] = kctl;
-	पूर्ण
+	}
 	snd_ak4113_proc_init(ak4113);
 	/* trigger workq */
 	schedule_delayed_work(&ak4113->work, HZ / 10);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(snd_ak4113_build);
 
-पूर्णांक snd_ak4113_बाह्यal_rate(काष्ठा ak4113 *ak4113)
-अणु
-	अचिन्हित अक्षर rcs1;
+int snd_ak4113_external_rate(struct ak4113 *ak4113)
+{
+	unsigned char rcs1;
 
-	rcs1 = reg_पढ़ो(ak4113, AK4113_REG_RCS1);
-	वापस बाह्यal_rate(rcs1);
-पूर्ण
-EXPORT_SYMBOL_GPL(snd_ak4113_बाह्यal_rate);
+	rcs1 = reg_read(ak4113, AK4113_REG_RCS1);
+	return external_rate(rcs1);
+}
+EXPORT_SYMBOL_GPL(snd_ak4113_external_rate);
 
-पूर्णांक snd_ak4113_check_rate_and_errors(काष्ठा ak4113 *ak4113, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय =
-		ak4113->substream ? ak4113->substream->runसमय : शून्य;
-	अचिन्हित दीर्घ _flags;
-	पूर्णांक res = 0;
-	अचिन्हित अक्षर rcs0, rcs1, rcs2;
-	अचिन्हित अक्षर c0, c1;
+int snd_ak4113_check_rate_and_errors(struct ak4113 *ak4113, unsigned int flags)
+{
+	struct snd_pcm_runtime *runtime =
+		ak4113->substream ? ak4113->substream->runtime : NULL;
+	unsigned long _flags;
+	int res = 0;
+	unsigned char rcs0, rcs1, rcs2;
+	unsigned char c0, c1;
 
-	rcs1 = reg_पढ़ो(ak4113, AK4113_REG_RCS1);
-	अगर (flags & AK4113_CHECK_NO_STAT)
-		जाओ __rate;
-	rcs0 = reg_पढ़ो(ak4113, AK4113_REG_RCS0);
-	rcs2 = reg_पढ़ो(ak4113, AK4113_REG_RCS2);
+	rcs1 = reg_read(ak4113, AK4113_REG_RCS1);
+	if (flags & AK4113_CHECK_NO_STAT)
+		goto __rate;
+	rcs0 = reg_read(ak4113, AK4113_REG_RCS0);
+	rcs2 = reg_read(ak4113, AK4113_REG_RCS2);
 	spin_lock_irqsave(&ak4113->lock, _flags);
-	अगर (rcs0 & AK4113_PAR)
+	if (rcs0 & AK4113_PAR)
 		ak4113->errors[AK4113_PARITY_ERRORS]++;
-	अगर (rcs0 & AK4113_V)
+	if (rcs0 & AK4113_V)
 		ak4113->errors[AK4113_V_BIT_ERRORS]++;
-	अगर (rcs2 & AK4113_CCRC)
+	if (rcs2 & AK4113_CCRC)
 		ak4113->errors[AK4113_CCRC_ERRORS]++;
-	अगर (rcs2 & AK4113_QCRC)
+	if (rcs2 & AK4113_QCRC)
 		ak4113->errors[AK4113_QCRC_ERRORS]++;
 	c0 = (ak4113->rcs0 & (AK4113_QINT | AK4113_CINT | AK4113_STC |
 				AK4113_AUDION | AK4113_AUTO | AK4113_UNLCK)) ^
@@ -555,87 +554,87 @@ EXPORT_SYMBOL_GPL(snd_ak4113_बाह्यal_rate);
 	ak4113->rcs2 = rcs2;
 	spin_unlock_irqrestore(&ak4113->lock, _flags);
 
-	अगर (rcs0 & AK4113_PAR)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (rcs0 & AK4113_PAR)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[0]->id);
-	अगर (rcs0 & AK4113_V)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (rcs0 & AK4113_V)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[1]->id);
-	अगर (rcs2 & AK4113_CCRC)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (rcs2 & AK4113_CCRC)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[2]->id);
-	अगर (rcs2 & AK4113_QCRC)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (rcs2 & AK4113_QCRC)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[3]->id);
 
 	/* rate change */
-	अगर (c1 & 0xf0)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (c1 & 0xf0)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[4]->id);
 
-	अगर ((c1 & AK4113_PEM) | (c0 & AK4113_CINT))
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if ((c1 & AK4113_PEM) | (c0 & AK4113_CINT))
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[6]->id);
-	अगर (c0 & AK4113_QINT)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (c0 & AK4113_QINT)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[8]->id);
 
-	अगर (c0 & AK4113_AUDION)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (c0 & AK4113_AUDION)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[9]->id);
-	अगर (c1 & AK4113_NPCM)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (c1 & AK4113_NPCM)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[10]->id);
-	अगर (c1 & AK4113_DTSCD)
-		snd_ctl_notअगरy(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
+	if (c1 & AK4113_DTSCD)
+		snd_ctl_notify(ak4113->card, SNDRV_CTL_EVENT_MASK_VALUE,
 				&ak4113->kctls[11]->id);
 
-	अगर (ak4113->change_callback && (c0 | c1) != 0)
+	if (ak4113->change_callback && (c0 | c1) != 0)
 		ak4113->change_callback(ak4113, c0, c1);
 
 __rate:
 	/* compare rate */
-	res = बाह्यal_rate(rcs1);
-	अगर (!(flags & AK4113_CHECK_NO_RATE) && runसमय &&
-			(runसमय->rate != res)) अणु
+	res = external_rate(rcs1);
+	if (!(flags & AK4113_CHECK_NO_RATE) && runtime &&
+			(runtime->rate != res)) {
 		snd_pcm_stream_lock_irqsave(ak4113->substream, _flags);
-		अगर (snd_pcm_running(ak4113->substream)) अणु
-			/*prपूर्णांकk(KERN_DEBUG "rate changed (%i <- %i)\n",
-			 * runसमय->rate, res); */
+		if (snd_pcm_running(ak4113->substream)) {
+			/*printk(KERN_DEBUG "rate changed (%i <- %i)\n",
+			 * runtime->rate, res); */
 			snd_pcm_stop(ak4113->substream,
 					SNDRV_PCM_STATE_DRAINING);
-			wake_up(&runसमय->sleep);
+			wake_up(&runtime->sleep);
 			res = 1;
-		पूर्ण
+		}
 		snd_pcm_stream_unlock_irqrestore(ak4113->substream, _flags);
-	पूर्ण
-	वापस res;
-पूर्ण
+	}
+	return res;
+}
 EXPORT_SYMBOL_GPL(snd_ak4113_check_rate_and_errors);
 
-अटल व्योम ak4113_stats(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ak4113 *chip = container_of(work, काष्ठा ak4113, work.work);
+static void ak4113_stats(struct work_struct *work)
+{
+	struct ak4113 *chip = container_of(work, struct ak4113, work.work);
 
-	अगर (atomic_inc_वापस(&chip->wq_processing) == 1)
+	if (atomic_inc_return(&chip->wq_processing) == 1)
 		snd_ak4113_check_rate_and_errors(chip, chip->check_flags);
 
-	अगर (atomic_dec_and_test(&chip->wq_processing))
+	if (atomic_dec_and_test(&chip->wq_processing))
 		schedule_delayed_work(&chip->work, HZ / 10);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-व्योम snd_ak4113_suspend(काष्ठा ak4113 *chip)
-अणु
-	atomic_inc(&chip->wq_processing); /* करोn't schedule new work */
+#ifdef CONFIG_PM
+void snd_ak4113_suspend(struct ak4113 *chip)
+{
+	atomic_inc(&chip->wq_processing); /* don't schedule new work */
 	cancel_delayed_work_sync(&chip->work);
-पूर्ण
+}
 EXPORT_SYMBOL(snd_ak4113_suspend);
 
-व्योम snd_ak4113_resume(काष्ठा ak4113 *chip)
-अणु
+void snd_ak4113_resume(struct ak4113 *chip)
+{
 	atomic_dec(&chip->wq_processing);
 	snd_ak4113_reinit(chip);
-पूर्ण
+}
 EXPORT_SYMBOL(snd_ak4113_resume);
-#पूर्ण_अगर
+#endif

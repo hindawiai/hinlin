@@ -1,251 +1,250 @@
-<शैली गुरु>
 /*
- * Aपंचांगel AT91 common AIC (Advanced Interrupt Controller) code shared by
- * irq-aपंचांगel-aic and irq-aपंचांगel-aic5 drivers
+ * Atmel AT91 common AIC (Advanced Interrupt Controller) code shared by
+ * irq-atmel-aic and irq-atmel-aic5 drivers
  *
  *  Copyright (C) 2004 SAN People
  *  Copyright (C) 2004 ATMEL
  *  Copyright (C) Rick Bronson
  *  Copyright (C) 2014 Free Electrons
  *
- *  Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
+ *  Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/slab.h>
 
-#समावेश "irq-atmel-aic-common.h"
+#include "irq-atmel-aic-common.h"
 
-#घोषणा AT91_AIC_PRIOR			GENMASK(2, 0)
-#घोषणा AT91_AIC_IRQ_MIN_PRIORITY	0
-#घोषणा AT91_AIC_IRQ_MAX_PRIORITY	7
+#define AT91_AIC_PRIOR			GENMASK(2, 0)
+#define AT91_AIC_IRQ_MIN_PRIORITY	0
+#define AT91_AIC_IRQ_MAX_PRIORITY	7
 
-#घोषणा AT91_AIC_SRCTYPE		GENMASK(6, 5)
-#घोषणा AT91_AIC_SRCTYPE_LOW		(0 << 5)
-#घोषणा AT91_AIC_SRCTYPE_FALLING	(1 << 5)
-#घोषणा AT91_AIC_SRCTYPE_HIGH		(2 << 5)
-#घोषणा AT91_AIC_SRCTYPE_RISING		(3 << 5)
+#define AT91_AIC_SRCTYPE		GENMASK(6, 5)
+#define AT91_AIC_SRCTYPE_LOW		(0 << 5)
+#define AT91_AIC_SRCTYPE_FALLING	(1 << 5)
+#define AT91_AIC_SRCTYPE_HIGH		(2 << 5)
+#define AT91_AIC_SRCTYPE_RISING		(3 << 5)
 
-काष्ठा aic_chip_data अणु
+struct aic_chip_data {
 	u32 ext_irqs;
-पूर्ण;
+};
 
-अटल व्योम aic_common_shutकरोwn(काष्ठा irq_data *d)
-अणु
-	काष्ठा irq_chip_type *ct = irq_data_get_chip_type(d);
+static void aic_common_shutdown(struct irq_data *d)
+{
+	struct irq_chip_type *ct = irq_data_get_chip_type(d);
 
 	ct->chip.irq_mask(d);
-पूर्ण
+}
 
-पूर्णांक aic_common_set_type(काष्ठा irq_data *d, अचिन्हित type, अचिन्हित *val)
-अणु
-	काष्ठा irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा aic_chip_data *aic = gc->निजी;
-	अचिन्हित aic_type;
+int aic_common_set_type(struct irq_data *d, unsigned type, unsigned *val)
+{
+	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
+	struct aic_chip_data *aic = gc->private;
+	unsigned aic_type;
 
-	चयन (type) अणु
-	हाल IRQ_TYPE_LEVEL_HIGH:
+	switch (type) {
+	case IRQ_TYPE_LEVEL_HIGH:
 		aic_type = AT91_AIC_SRCTYPE_HIGH;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_RISING:
+		break;
+	case IRQ_TYPE_EDGE_RISING:
 		aic_type = AT91_AIC_SRCTYPE_RISING;
-		अवरोध;
-	हाल IRQ_TYPE_LEVEL_LOW:
-		अगर (!(d->mask & aic->ext_irqs))
-			वापस -EINVAL;
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
+		if (!(d->mask & aic->ext_irqs))
+			return -EINVAL;
 
 		aic_type = AT91_AIC_SRCTYPE_LOW;
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
-		अगर (!(d->mask & aic->ext_irqs))
-			वापस -EINVAL;
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
+		if (!(d->mask & aic->ext_irqs))
+			return -EINVAL;
 
 		aic_type = AT91_AIC_SRCTYPE_FALLING;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	*val &= ~AT91_AIC_SRCTYPE;
 	*val |= aic_type;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम aic_common_set_priority(पूर्णांक priority, अचिन्हित *val)
-अणु
+void aic_common_set_priority(int priority, unsigned *val)
+{
 	*val &= ~AT91_AIC_PRIOR;
 	*val |= priority;
-पूर्ण
+}
 
-पूर्णांक aic_common_irq_करोमुख्य_xlate(काष्ठा irq_करोमुख्य *d,
-				काष्ठा device_node *ctrlr,
-				स्थिर u32 *पूर्णांकspec,
-				अचिन्हित पूर्णांक पूर्णांकsize,
+int aic_common_irq_domain_xlate(struct irq_domain *d,
+				struct device_node *ctrlr,
+				const u32 *intspec,
+				unsigned int intsize,
 				irq_hw_number_t *out_hwirq,
-				अचिन्हित पूर्णांक *out_type)
-अणु
-	अगर (WARN_ON(पूर्णांकsize < 3))
-		वापस -EINVAL;
+				unsigned int *out_type)
+{
+	if (WARN_ON(intsize < 3))
+		return -EINVAL;
 
-	अगर (WARN_ON((पूर्णांकspec[2] < AT91_AIC_IRQ_MIN_PRIORITY) ||
-		    (पूर्णांकspec[2] > AT91_AIC_IRQ_MAX_PRIORITY)))
-		वापस -EINVAL;
+	if (WARN_ON((intspec[2] < AT91_AIC_IRQ_MIN_PRIORITY) ||
+		    (intspec[2] > AT91_AIC_IRQ_MAX_PRIORITY)))
+		return -EINVAL;
 
-	*out_hwirq = पूर्णांकspec[0];
-	*out_type = पूर्णांकspec[1] & IRQ_TYPE_SENSE_MASK;
+	*out_hwirq = intspec[0];
+	*out_type = intspec[1] & IRQ_TYPE_SENSE_MASK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init aic_common_ext_irq_of_init(काष्ठा irq_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा device_node *node = irq_करोमुख्य_get_of_node(करोमुख्य);
-	काष्ठा irq_chip_generic *gc;
-	काष्ठा aic_chip_data *aic;
-	काष्ठा property *prop;
-	स्थिर __be32 *p;
+static void __init aic_common_ext_irq_of_init(struct irq_domain *domain)
+{
+	struct device_node *node = irq_domain_get_of_node(domain);
+	struct irq_chip_generic *gc;
+	struct aic_chip_data *aic;
+	struct property *prop;
+	const __be32 *p;
 	u32 hwirq;
 
-	gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, 0);
+	gc = irq_get_domain_generic_chip(domain, 0);
 
-	aic = gc->निजी;
+	aic = gc->private;
 	aic->ext_irqs |= 1;
 
-	of_property_क्रम_each_u32(node, "atmel,external-irqs", prop, p, hwirq) अणु
-		gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, hwirq);
-		अगर (!gc) अणु
+	of_property_for_each_u32(node, "atmel,external-irqs", prop, p, hwirq) {
+		gc = irq_get_domain_generic_chip(domain, hwirq);
+		if (!gc) {
 			pr_warn("AIC: external irq %d >= %d skip it\n",
-				hwirq, करोमुख्य->revmap_size);
-			जारी;
-		पूर्ण
+				hwirq, domain->revmap_size);
+			continue;
+		}
 
-		aic = gc->निजी;
+		aic = gc->private;
 		aic->ext_irqs |= (1 << (hwirq % 32));
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा AT91_RTC_IDR           0x24
-#घोषणा AT91_RTC_IMR           0x28
-#घोषणा AT91_RTC_IRQ_MASK      0x1f
+#define AT91_RTC_IDR           0x24
+#define AT91_RTC_IMR           0x28
+#define AT91_RTC_IRQ_MASK      0x1f
 
-व्योम __init aic_common_rtc_irq_fixup(व्योम)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *regs;
+void __init aic_common_rtc_irq_fixup(void)
+{
+	struct device_node *np;
+	void __iomem *regs;
 
-	np = of_find_compatible_node(शून्य, शून्य, "atmel,at91rm9200-rtc");
-	अगर (!np)
-		np = of_find_compatible_node(शून्य, शून्य,
+	np = of_find_compatible_node(NULL, NULL, "atmel,at91rm9200-rtc");
+	if (!np)
+		np = of_find_compatible_node(NULL, NULL,
 					     "atmel,at91sam9x5-rtc");
 
-	अगर (!np)
-		वापस;
+	if (!np)
+		return;
 
 	regs = of_iomap(np, 0);
 	of_node_put(np);
 
-	अगर (!regs)
-		वापस;
+	if (!regs)
+		return;
 
-	ग_लिखोl(AT91_RTC_IRQ_MASK, regs + AT91_RTC_IDR);
+	writel(AT91_RTC_IRQ_MASK, regs + AT91_RTC_IDR);
 
 	iounmap(regs);
-पूर्ण
+}
 
-#घोषणा AT91_RTT_MR		0x00			/* Real-समय Mode Register */
-#घोषणा AT91_RTT_ALMIEN		(1 << 16)		/* Alarm Interrupt Enable */
-#घोषणा AT91_RTT_RTTINCIEN	(1 << 17)		/* Real Time Timer Increment Interrupt Enable */
+#define AT91_RTT_MR		0x00			/* Real-time Mode Register */
+#define AT91_RTT_ALMIEN		(1 << 16)		/* Alarm Interrupt Enable */
+#define AT91_RTT_RTTINCIEN	(1 << 17)		/* Real Time Timer Increment Interrupt Enable */
 
-व्योम __init aic_common_rtt_irq_fixup(व्योम)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *regs;
+void __init aic_common_rtt_irq_fixup(void)
+{
+	struct device_node *np;
+	void __iomem *regs;
 
 	/*
 	 * The at91sam9263 SoC has 2 instances of the RTT block, hence we
 	 * iterate over the DT to find each occurrence.
 	 */
-	क्रम_each_compatible_node(np, शून्य, "atmel,at91sam9260-rtt") अणु
+	for_each_compatible_node(np, NULL, "atmel,at91sam9260-rtt") {
 		regs = of_iomap(np, 0);
-		अगर (!regs)
-			जारी;
+		if (!regs)
+			continue;
 
-		ग_लिखोl(पढ़ोl(regs + AT91_RTT_MR) &
+		writel(readl(regs + AT91_RTT_MR) &
 		       ~(AT91_RTT_ALMIEN | AT91_RTT_RTTINCIEN),
 		       regs + AT91_RTT_MR);
 
 		iounmap(regs);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __init aic_common_irq_fixup(स्थिर काष्ठा of_device_id *matches)
-अणु
-	काष्ठा device_node *root = of_find_node_by_path("/");
-	स्थिर काष्ठा of_device_id *match;
+static void __init aic_common_irq_fixup(const struct of_device_id *matches)
+{
+	struct device_node *root = of_find_node_by_path("/");
+	const struct of_device_id *match;
 
-	अगर (!root)
-		वापस;
+	if (!root)
+		return;
 
 	match = of_match_node(matches, root);
 
-	अगर (match) अणु
-		व्योम (*fixup)(व्योम) = match->data;
+	if (match) {
+		void (*fixup)(void) = match->data;
 		fixup();
-	पूर्ण
+	}
 
 	of_node_put(root);
-पूर्ण
+}
 
-काष्ठा irq_करोमुख्य *__init aic_common_of_init(काष्ठा device_node *node,
-					     स्थिर काष्ठा irq_करोमुख्य_ops *ops,
-					     स्थिर अक्षर *name, पूर्णांक nirqs,
-					     स्थिर काष्ठा of_device_id *matches)
-अणु
-	काष्ठा irq_chip_generic *gc;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	काष्ठा aic_chip_data *aic;
-	व्योम __iomem *reg_base;
-	पूर्णांक nchips;
-	पूर्णांक ret;
-	पूर्णांक i;
+struct irq_domain *__init aic_common_of_init(struct device_node *node,
+					     const struct irq_domain_ops *ops,
+					     const char *name, int nirqs,
+					     const struct of_device_id *matches)
+{
+	struct irq_chip_generic *gc;
+	struct irq_domain *domain;
+	struct aic_chip_data *aic;
+	void __iomem *reg_base;
+	int nchips;
+	int ret;
+	int i;
 
 	nchips = DIV_ROUND_UP(nirqs, 32);
 
 	reg_base = of_iomap(node, 0);
-	अगर (!reg_base)
-		वापस ERR_PTR(-ENOMEM);
+	if (!reg_base)
+		return ERR_PTR(-ENOMEM);
 
-	aic = kसुस्मृति(nchips, माप(*aic), GFP_KERNEL);
-	अगर (!aic) अणु
+	aic = kcalloc(nchips, sizeof(*aic), GFP_KERNEL);
+	if (!aic) {
 		ret = -ENOMEM;
-		जाओ err_iounmap;
-	पूर्ण
+		goto err_iounmap;
+	}
 
-	करोमुख्य = irq_करोमुख्य_add_linear(node, nchips * 32, ops, aic);
-	अगर (!करोमुख्य) अणु
+	domain = irq_domain_add_linear(node, nchips * 32, ops, aic);
+	if (!domain) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_aic;
-	पूर्ण
+		goto err_free_aic;
+	}
 
-	ret = irq_alloc_करोमुख्य_generic_chips(करोमुख्य, 32, 1, name,
+	ret = irq_alloc_domain_generic_chips(domain, 32, 1, name,
 					     handle_fasteoi_irq,
 					     IRQ_NOREQUEST | IRQ_NOPROBE |
 					     IRQ_NOAUTOEN, 0, 0);
-	अगर (ret)
-		जाओ err_करोमुख्य_हटाओ;
+	if (ret)
+		goto err_domain_remove;
 
-	क्रम (i = 0; i < nchips; i++) अणु
-		gc = irq_get_करोमुख्य_generic_chip(करोमुख्य, i * 32);
+	for (i = 0; i < nchips; i++) {
+		gc = irq_get_domain_generic_chip(domain, i * 32);
 
 		gc->reg_base = reg_base;
 
@@ -254,23 +253,23 @@
 		gc->chip_types[0].type = IRQ_TYPE_SENSE_MASK;
 		gc->chip_types[0].chip.irq_eoi = irq_gc_eoi;
 		gc->chip_types[0].chip.irq_set_wake = irq_gc_set_wake;
-		gc->chip_types[0].chip.irq_shutकरोwn = aic_common_shutकरोwn;
-		gc->निजी = &aic[i];
-	पूर्ण
+		gc->chip_types[0].chip.irq_shutdown = aic_common_shutdown;
+		gc->private = &aic[i];
+	}
 
-	aic_common_ext_irq_of_init(करोमुख्य);
+	aic_common_ext_irq_of_init(domain);
 	aic_common_irq_fixup(matches);
 
-	वापस करोमुख्य;
+	return domain;
 
-err_करोमुख्य_हटाओ:
-	irq_करोमुख्य_हटाओ(करोमुख्य);
+err_domain_remove:
+	irq_domain_remove(domain);
 
-err_मुक्त_aic:
-	kमुक्त(aic);
+err_free_aic:
+	kfree(aic);
 
 err_iounmap:
 	iounmap(reg_base);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}

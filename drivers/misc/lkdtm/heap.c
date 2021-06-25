@@ -1,222 +1,221 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This is क्रम all the tests relating directly to heap memory, including
+ * This is for all the tests relating directly to heap memory, including
  * page allocation and slab allocations.
  */
-#समावेश "lkdtm.h"
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
+#include "lkdtm.h"
+#include <linux/slab.h>
+#include <linux/sched.h>
 
-अटल काष्ठा kmem_cache *द्विगुन_मुक्त_cache;
-अटल काष्ठा kmem_cache *a_cache;
-अटल काष्ठा kmem_cache *b_cache;
+static struct kmem_cache *double_free_cache;
+static struct kmem_cache *a_cache;
+static struct kmem_cache *b_cache;
 
 /*
- * This tries to stay within the next largest घातer-of-2 kदो_स्मृति cache
- * to aव्योम actually overwriting anything important अगर it's not detected
+ * This tries to stay within the next largest power-of-2 kmalloc cache
+ * to avoid actually overwriting anything important if it's not detected
  * correctly.
  */
-व्योम lkdपंचांग_OVERWRITE_ALLOCATION(व्योम)
-अणु
-	माप_प्रकार len = 1020;
-	u32 *data = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!data)
-		वापस;
+void lkdtm_OVERWRITE_ALLOCATION(void)
+{
+	size_t len = 1020;
+	u32 *data = kmalloc(len, GFP_KERNEL);
+	if (!data)
+		return;
 
-	data[1024 / माप(u32)] = 0x12345678;
-	kमुक्त(data);
-पूर्ण
+	data[1024 / sizeof(u32)] = 0x12345678;
+	kfree(data);
+}
 
-व्योम lkdपंचांग_WRITE_AFTER_FREE(व्योम)
-अणु
-	पूर्णांक *base, *again;
-	माप_प्रकार len = 1024;
+void lkdtm_WRITE_AFTER_FREE(void)
+{
+	int *base, *again;
+	size_t len = 1024;
 	/*
-	 * The slub allocator uses the first word to store the मुक्त
-	 * poपूर्णांकer in some configurations. Use the middle of the
-	 * allocation to aव्योम running पूर्णांकo the मुक्तlist
+	 * The slub allocator uses the first word to store the free
+	 * pointer in some configurations. Use the middle of the
+	 * allocation to avoid running into the freelist
 	 */
-	माप_प्रकार offset = (len / माप(*base)) / 2;
+	size_t offset = (len / sizeof(*base)) / 2;
 
-	base = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!base)
-		वापस;
+	base = kmalloc(len, GFP_KERNEL);
+	if (!base)
+		return;
 	pr_info("Allocated memory %p-%p\n", base, &base[offset * 2]);
 	pr_info("Attempting bad write to freed memory at %p\n",
 		&base[offset]);
-	kमुक्त(base);
+	kfree(base);
 	base[offset] = 0x0abcdef0;
-	/* Attempt to notice the overग_लिखो. */
-	again = kदो_स्मृति(len, GFP_KERNEL);
-	kमुक्त(again);
-	अगर (again != base)
+	/* Attempt to notice the overwrite. */
+	again = kmalloc(len, GFP_KERNEL);
+	kfree(again);
+	if (again != base)
 		pr_info("Hmm, didn't get the same memory range.\n");
-पूर्ण
+}
 
-व्योम lkdपंचांग_READ_AFTER_FREE(व्योम)
-अणु
-	पूर्णांक *base, *val, saw;
-	माप_प्रकार len = 1024;
+void lkdtm_READ_AFTER_FREE(void)
+{
+	int *base, *val, saw;
+	size_t len = 1024;
 	/*
 	 * The slub allocator will use the either the first word or
-	 * the middle of the allocation to store the मुक्त poपूर्णांकer,
+	 * the middle of the allocation to store the free pointer,
 	 * depending on configurations. Store in the second word to
-	 * aव्योम running पूर्णांकo the मुक्तlist.
+	 * avoid running into the freelist.
 	 */
-	माप_प्रकार offset = माप(*base);
+	size_t offset = sizeof(*base);
 
-	base = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!base) अणु
+	base = kmalloc(len, GFP_KERNEL);
+	if (!base) {
 		pr_info("Unable to allocate base memory.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	val = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (!val) अणु
+	val = kmalloc(len, GFP_KERNEL);
+	if (!val) {
 		pr_info("Unable to allocate val memory.\n");
-		kमुक्त(base);
-		वापस;
-	पूर्ण
+		kfree(base);
+		return;
+	}
 
 	*val = 0x12345678;
 	base[offset] = *val;
 	pr_info("Value in memory before free: %x\n", base[offset]);
 
-	kमुक्त(base);
+	kfree(base);
 
 	pr_info("Attempting bad read from freed memory\n");
 	saw = base[offset];
-	अगर (saw != *val) अणु
+	if (saw != *val) {
 		/* Good! Poisoning happened, so declare a win. */
 		pr_info("Memory correctly poisoned (%x)\n", saw);
 		BUG();
-	पूर्ण
+	}
 	pr_info("Memory was not poisoned\n");
 
-	kमुक्त(val);
-पूर्ण
+	kfree(val);
+}
 
-व्योम lkdपंचांग_WRITE_BUDDY_AFTER_FREE(व्योम)
-अणु
-	अचिन्हित दीर्घ p = __get_मुक्त_page(GFP_KERNEL);
-	अगर (!p) अणु
+void lkdtm_WRITE_BUDDY_AFTER_FREE(void)
+{
+	unsigned long p = __get_free_page(GFP_KERNEL);
+	if (!p) {
 		pr_info("Unable to allocate free page\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_info("Writing to the buddy page before free\n");
-	स_रखो((व्योम *)p, 0x3, PAGE_SIZE);
-	मुक्त_page(p);
+	memset((void *)p, 0x3, PAGE_SIZE);
+	free_page(p);
 	schedule();
 	pr_info("Attempting bad write to the buddy page after free\n");
-	स_रखो((व्योम *)p, 0x78, PAGE_SIZE);
-	/* Attempt to notice the overग_लिखो. */
-	p = __get_मुक्त_page(GFP_KERNEL);
-	मुक्त_page(p);
+	memset((void *)p, 0x78, PAGE_SIZE);
+	/* Attempt to notice the overwrite. */
+	p = __get_free_page(GFP_KERNEL);
+	free_page(p);
 	schedule();
-पूर्ण
+}
 
-व्योम lkdपंचांग_READ_BUDDY_AFTER_FREE(व्योम)
-अणु
-	अचिन्हित दीर्घ p = __get_मुक्त_page(GFP_KERNEL);
-	पूर्णांक saw, *val;
-	पूर्णांक *base;
+void lkdtm_READ_BUDDY_AFTER_FREE(void)
+{
+	unsigned long p = __get_free_page(GFP_KERNEL);
+	int saw, *val;
+	int *base;
 
-	अगर (!p) अणु
+	if (!p) {
 		pr_info("Unable to allocate free page\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	val = kदो_स्मृति(1024, GFP_KERNEL);
-	अगर (!val) अणु
+	val = kmalloc(1024, GFP_KERNEL);
+	if (!val) {
 		pr_info("Unable to allocate val memory.\n");
-		मुक्त_page(p);
-		वापस;
-	पूर्ण
+		free_page(p);
+		return;
+	}
 
-	base = (पूर्णांक *)p;
+	base = (int *)p;
 
 	*val = 0x12345678;
 	base[0] = *val;
 	pr_info("Value in memory before free: %x\n", base[0]);
-	मुक्त_page(p);
+	free_page(p);
 	pr_info("Attempting to read from freed memory\n");
 	saw = base[0];
-	अगर (saw != *val) अणु
+	if (saw != *val) {
 		/* Good! Poisoning happened, so declare a win. */
 		pr_info("Memory correctly poisoned (%x)\n", saw);
 		BUG();
-	पूर्ण
+	}
 	pr_info("Buddy page was not poisoned\n");
 
-	kमुक्त(val);
-पूर्ण
+	kfree(val);
+}
 
-व्योम lkdपंचांग_SLAB_FREE_DOUBLE(व्योम)
-अणु
-	पूर्णांक *val;
+void lkdtm_SLAB_FREE_DOUBLE(void)
+{
+	int *val;
 
-	val = kmem_cache_alloc(द्विगुन_मुक्त_cache, GFP_KERNEL);
-	अगर (!val) अणु
+	val = kmem_cache_alloc(double_free_cache, GFP_KERNEL);
+	if (!val) {
 		pr_info("Unable to allocate double_free_cache memory.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Just make sure we got real memory. */
 	*val = 0x12345678;
 	pr_info("Attempting double slab free ...\n");
-	kmem_cache_मुक्त(द्विगुन_मुक्त_cache, val);
-	kmem_cache_मुक्त(द्विगुन_मुक्त_cache, val);
-पूर्ण
+	kmem_cache_free(double_free_cache, val);
+	kmem_cache_free(double_free_cache, val);
+}
 
-व्योम lkdपंचांग_SLAB_FREE_CROSS(व्योम)
-अणु
-	पूर्णांक *val;
+void lkdtm_SLAB_FREE_CROSS(void)
+{
+	int *val;
 
 	val = kmem_cache_alloc(a_cache, GFP_KERNEL);
-	अगर (!val) अणु
+	if (!val) {
 		pr_info("Unable to allocate a_cache memory.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Just make sure we got real memory. */
 	*val = 0x12345679;
 	pr_info("Attempting cross-cache slab free ...\n");
-	kmem_cache_मुक्त(b_cache, val);
-पूर्ण
+	kmem_cache_free(b_cache, val);
+}
 
-व्योम lkdपंचांग_SLAB_FREE_PAGE(व्योम)
-अणु
-	अचिन्हित दीर्घ p = __get_मुक्त_page(GFP_KERNEL);
+void lkdtm_SLAB_FREE_PAGE(void)
+{
+	unsigned long p = __get_free_page(GFP_KERNEL);
 
 	pr_info("Attempting non-Slab slab free ...\n");
-	kmem_cache_मुक्त(शून्य, (व्योम *)p);
-	मुक्त_page(p);
-पूर्ण
+	kmem_cache_free(NULL, (void *)p);
+	free_page(p);
+}
 
 /*
- * We have स्थिरructors to keep the caches distinctly separated without
+ * We have constructors to keep the caches distinctly separated without
  * needing to boot with "slab_nomerge".
  */
-अटल व्योम ctor_द्विगुन_मुक्त(व्योम *region)
-अणु पूर्ण
-अटल व्योम ctor_a(व्योम *region)
-अणु पूर्ण
-अटल व्योम ctor_b(व्योम *region)
-अणु पूर्ण
+static void ctor_double_free(void *region)
+{ }
+static void ctor_a(void *region)
+{ }
+static void ctor_b(void *region)
+{ }
 
-व्योम __init lkdपंचांग_heap_init(व्योम)
-अणु
-	द्विगुन_मुक्त_cache = kmem_cache_create("lkdtm-heap-double_free",
-					      64, 0, 0, ctor_द्विगुन_मुक्त);
+void __init lkdtm_heap_init(void)
+{
+	double_free_cache = kmem_cache_create("lkdtm-heap-double_free",
+					      64, 0, 0, ctor_double_free);
 	a_cache = kmem_cache_create("lkdtm-heap-a", 64, 0, 0, ctor_a);
 	b_cache = kmem_cache_create("lkdtm-heap-b", 64, 0, 0, ctor_b);
-पूर्ण
+}
 
-व्योम __निकास lkdपंचांग_heap_निकास(व्योम)
-अणु
-	kmem_cache_destroy(द्विगुन_मुक्त_cache);
+void __exit lkdtm_heap_exit(void)
+{
+	kmem_cache_destroy(double_free_cache);
 	kmem_cache_destroy(a_cache);
 	kmem_cache_destroy(b_cache);
-पूर्ण
+}

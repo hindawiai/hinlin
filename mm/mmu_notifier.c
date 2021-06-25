@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  linux/mm/mmu_notअगरier.c
+ *  linux/mm/mmu_notifier.c
  *
  *  Copyright (C) 2008  Qumranet, Inc.
  *  Copyright (C) 2008  SGI
  *             Christoph Lameter <cl@linux.com>
  */
 
-#समावेश <linux/rculist.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/export.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerval_tree.h>
-#समावेश <linux/srcu.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/slab.h>
+#include <linux/rculist.h>
+#include <linux/mmu_notifier.h>
+#include <linux/export.h>
+#include <linux/mm.h>
+#include <linux/err.h>
+#include <linux/interval_tree.h>
+#include <linux/srcu.h>
+#include <linux/rcupdate.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/slab.h>
 
-/* global SRCU क्रम all MMs */
+/* global SRCU for all MMs */
 DEFINE_STATIC_SRCU(srcu);
 
-#अगर_घोषित CONFIG_LOCKDEP
-काष्ठा lockdep_map __mmu_notअगरier_invalidate_range_start_map = अणु
+#ifdef CONFIG_LOCKDEP
+struct lockdep_map __mmu_notifier_invalidate_range_start_map = {
 	.name = "mmu_notifier_invalidate_range_start"
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /*
- * The mmu_notअगरier_subscriptions काष्ठाure is allocated and installed in
- * mm->notअगरier_subscriptions inside the mm_take_all_locks() रक्षित
+ * The mmu_notifier_subscriptions structure is allocated and installed in
+ * mm->notifier_subscriptions inside the mm_take_all_locks() protected
  * critical section and it's released only when mm_count reaches zero
  * in mmdrop().
  */
-काष्ठा mmu_notअगरier_subscriptions अणु
-	/* all mmu notअगरiers रेजिस्टरed in this mm are queued in this list */
-	काष्ठा hlist_head list;
+struct mmu_notifier_subscriptions {
+	/* all mmu notifiers registered in this mm are queued in this list */
+	struct hlist_head list;
 	bool has_itree;
-	/* to serialize the list modअगरications and hlist_unhashed */
+	/* to serialize the list modifications and hlist_unhashed */
 	spinlock_t lock;
-	अचिन्हित दीर्घ invalidate_seq;
-	अचिन्हित दीर्घ active_invalidate_ranges;
-	काष्ठा rb_root_cached itree;
-	रुको_queue_head_t wq;
-	काष्ठा hlist_head deferred_list;
-पूर्ण;
+	unsigned long invalidate_seq;
+	unsigned long active_invalidate_ranges;
+	struct rb_root_cached itree;
+	wait_queue_head_t wq;
+	struct hlist_head deferred_list;
+};
 
 /*
- * This is a collision-retry पढ़ो-side/ग_लिखो-side 'lock', a lot like a
- * seqcount, however this allows multiple ग_लिखो-sides to hold it at
- * once. Conceptually the ग_लिखो side is protecting the values of the PTEs in
- * this mm, such that PTES cannot be पढ़ो पूर्णांकo SPTEs (shaकरोw PTEs) जबतक any
- * ग_लिखोr exists.
+ * This is a collision-retry read-side/write-side 'lock', a lot like a
+ * seqcount, however this allows multiple write-sides to hold it at
+ * once. Conceptually the write side is protecting the values of the PTEs in
+ * this mm, such that PTES cannot be read into SPTEs (shadow PTEs) while any
+ * writer exists.
  *
  * Note that the core mm creates nested invalidate_range_start()/end() regions
- * within the same thपढ़ो, and runs invalidate_range_start()/end() in parallel
- * on multiple CPUs. This is deचिन्हित to not reduce concurrency or block
+ * within the same thread, and runs invalidate_range_start()/end() in parallel
+ * on multiple CPUs. This is designed to not reduce concurrency or block
  * progress on the mm side.
  *
- * As a secondary function, holding the full ग_लिखो side also serves to prevent
- * ग_लिखोrs क्रम the itree, this is an optimization to aव्योम extra locking
- * during invalidate_range_start/end notअगरiers.
+ * As a secondary function, holding the full write side also serves to prevent
+ * writers for the itree, this is an optimization to avoid extra locking
+ * during invalidate_range_start/end notifiers.
  *
- * The ग_लिखो side has two states, fully excluded:
+ * The write side has two states, fully excluded:
  *  - mm->active_invalidate_ranges != 0
  *  - subscriptions->invalidate_seq & 1 == True (odd)
- *  - some range on the mm_काष्ठा is being invalidated
+ *  - some range on the mm_struct is being invalidated
  *  - the itree is not allowed to change
  *
  * And partially excluded:
  *  - mm->active_invalidate_ranges != 0
  *  - subscriptions->invalidate_seq & 1 == False (even)
- *  - some range on the mm_काष्ठा is being invalidated
+ *  - some range on the mm_struct is being invalidated
  *  - the itree is allowed to change
  *
- * Operations on notअगरier_subscriptions->invalidate_seq (under spinlock):
+ * Operations on notifier_subscriptions->invalidate_seq (under spinlock):
  *    seq |= 1  # Begin writing
  *    seq++     # Release the writing state
- *    seq & 1   # True अगर a ग_लिखोr exists
+ *    seq & 1   # True if a writer exists
  *
- * The later state aव्योमs some expensive work on inv_end in the common हाल of
- * no mmu_पूर्णांकerval_notअगरier monitoring the VA.
+ * The later state avoids some expensive work on inv_end in the common case of
+ * no mmu_interval_notifier monitoring the VA.
  */
-अटल bool
-mn_itree_is_invalidating(काष्ठा mmu_notअगरier_subscriptions *subscriptions)
-अणु
-	lockdep_निश्चित_held(&subscriptions->lock);
-	वापस subscriptions->invalidate_seq & 1;
-पूर्ण
+static bool
+mn_itree_is_invalidating(struct mmu_notifier_subscriptions *subscriptions)
+{
+	lockdep_assert_held(&subscriptions->lock);
+	return subscriptions->invalidate_seq & 1;
+}
 
-अटल काष्ठा mmu_पूर्णांकerval_notअगरier *
-mn_itree_inv_start_range(काष्ठा mmu_notअगरier_subscriptions *subscriptions,
-			 स्थिर काष्ठा mmu_notअगरier_range *range,
-			 अचिन्हित दीर्घ *seq)
-अणु
-	काष्ठा पूर्णांकerval_tree_node *node;
-	काष्ठा mmu_पूर्णांकerval_notअगरier *res = शून्य;
+static struct mmu_interval_notifier *
+mn_itree_inv_start_range(struct mmu_notifier_subscriptions *subscriptions,
+			 const struct mmu_notifier_range *range,
+			 unsigned long *seq)
+{
+	struct interval_tree_node *node;
+	struct mmu_interval_notifier *res = NULL;
 
 	spin_lock(&subscriptions->lock);
 	subscriptions->active_invalidate_ranges++;
-	node = पूर्णांकerval_tree_iter_first(&subscriptions->itree, range->start,
+	node = interval_tree_iter_first(&subscriptions->itree, range->start,
 					range->end - 1);
-	अगर (node) अणु
+	if (node) {
 		subscriptions->invalidate_seq |= 1;
-		res = container_of(node, काष्ठा mmu_पूर्णांकerval_notअगरier,
-				   पूर्णांकerval_tree);
-	पूर्ण
+		res = container_of(node, struct mmu_interval_notifier,
+				   interval_tree);
+	}
 
 	*seq = subscriptions->invalidate_seq;
 	spin_unlock(&subscriptions->lock);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल काष्ठा mmu_पूर्णांकerval_notअगरier *
-mn_itree_inv_next(काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub,
-		  स्थिर काष्ठा mmu_notअगरier_range *range)
-अणु
-	काष्ठा पूर्णांकerval_tree_node *node;
+static struct mmu_interval_notifier *
+mn_itree_inv_next(struct mmu_interval_notifier *interval_sub,
+		  const struct mmu_notifier_range *range)
+{
+	struct interval_tree_node *node;
 
-	node = पूर्णांकerval_tree_iter_next(&पूर्णांकerval_sub->पूर्णांकerval_tree,
+	node = interval_tree_iter_next(&interval_sub->interval_tree,
 				       range->start, range->end - 1);
-	अगर (!node)
-		वापस शून्य;
-	वापस container_of(node, काष्ठा mmu_पूर्णांकerval_notअगरier, पूर्णांकerval_tree);
-पूर्ण
+	if (!node)
+		return NULL;
+	return container_of(node, struct mmu_interval_notifier, interval_tree);
+}
 
-अटल व्योम mn_itree_inv_end(काष्ठा mmu_notअगरier_subscriptions *subscriptions)
-अणु
-	काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub;
-	काष्ठा hlist_node *next;
+static void mn_itree_inv_end(struct mmu_notifier_subscriptions *subscriptions)
+{
+	struct mmu_interval_notifier *interval_sub;
+	struct hlist_node *next;
 
 	spin_lock(&subscriptions->lock);
-	अगर (--subscriptions->active_invalidate_ranges ||
-	    !mn_itree_is_invalidating(subscriptions)) अणु
+	if (--subscriptions->active_invalidate_ranges ||
+	    !mn_itree_is_invalidating(subscriptions)) {
 		spin_unlock(&subscriptions->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Make invalidate_seq even */
 	subscriptions->invalidate_seq++;
 
 	/*
 	 * The inv_end incorporates a deferred mechanism like rtnl_unlock().
-	 * Adds and हटाओs are queued until the final inv_end happens then
-	 * they are progressed. This arrangement क्रम tree updates is used to
-	 * aव्योम using a blocking lock during invalidate_range_start.
+	 * Adds and removes are queued until the final inv_end happens then
+	 * they are progressed. This arrangement for tree updates is used to
+	 * avoid using a blocking lock during invalidate_range_start.
 	 */
-	hlist_क्रम_each_entry_safe(पूर्णांकerval_sub, next,
+	hlist_for_each_entry_safe(interval_sub, next,
 				  &subscriptions->deferred_list,
-				  deferred_item) अणु
-		अगर (RB_EMPTY_NODE(&पूर्णांकerval_sub->पूर्णांकerval_tree.rb))
-			पूर्णांकerval_tree_insert(&पूर्णांकerval_sub->पूर्णांकerval_tree,
+				  deferred_item) {
+		if (RB_EMPTY_NODE(&interval_sub->interval_tree.rb))
+			interval_tree_insert(&interval_sub->interval_tree,
 					     &subscriptions->itree);
-		अन्यथा
-			पूर्णांकerval_tree_हटाओ(&पूर्णांकerval_sub->पूर्णांकerval_tree,
+		else
+			interval_tree_remove(&interval_sub->interval_tree,
 					     &subscriptions->itree);
-		hlist_del(&पूर्णांकerval_sub->deferred_item);
-	पूर्ण
+		hlist_del(&interval_sub->deferred_item);
+	}
 	spin_unlock(&subscriptions->lock);
 
 	wake_up_all(&subscriptions->wq);
-पूर्ण
+}
 
 /**
- * mmu_पूर्णांकerval_पढ़ो_begin - Begin a पढ़ो side critical section against a VA
+ * mmu_interval_read_begin - Begin a read side critical section against a VA
  *                           range
- * @पूर्णांकerval_sub: The पूर्णांकerval subscription
+ * @interval_sub: The interval subscription
  *
- * mmu_iterval_पढ़ो_begin()/mmu_iterval_पढ़ो_retry() implement a
- * collision-retry scheme similar to seqcount क्रम the VA range under
+ * mmu_iterval_read_begin()/mmu_iterval_read_retry() implement a
+ * collision-retry scheme similar to seqcount for the VA range under
  * subscription. If the mm invokes invalidation during the critical section
- * then mmu_पूर्णांकerval_पढ़ो_retry() will वापस true.
+ * then mmu_interval_read_retry() will return true.
  *
- * This is useful to obtain shaकरोw PTEs where tearकरोwn or setup of the SPTEs
- * require a blocking context.  The critical region क्रमmed by this can sleep,
+ * This is useful to obtain shadow PTEs where teardown or setup of the SPTEs
+ * require a blocking context.  The critical region formed by this can sleep,
  * and the required 'user_lock' can also be a sleeping lock.
  *
- * The caller is required to provide a 'user_lock' to serialize both tearकरोwn
+ * The caller is required to provide a 'user_lock' to serialize both teardown
  * and setup.
  *
- * The वापस value should be passed to mmu_पूर्णांकerval_पढ़ो_retry().
+ * The return value should be passed to mmu_interval_read_retry().
  */
-अचिन्हित दीर्घ
-mmu_पूर्णांकerval_पढ़ो_begin(काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions =
-		पूर्णांकerval_sub->mm->notअगरier_subscriptions;
-	अचिन्हित दीर्घ seq;
+unsigned long
+mmu_interval_read_begin(struct mmu_interval_notifier *interval_sub)
+{
+	struct mmu_notifier_subscriptions *subscriptions =
+		interval_sub->mm->notifier_subscriptions;
+	unsigned long seq;
 	bool is_invalidating;
 
 	/*
-	 * If the subscription has a dअगरferent seq value under the user_lock
+	 * If the subscription has a different seq value under the user_lock
 	 * than we started with then it has collided.
 	 *
 	 * If the subscription currently has the same seq value as the
@@ -200,9 +199,9 @@ mmu_पूर्णांकerval_पढ़ो_begin(काष्ठा mmu_प�
 	 * invalidate_start/end and is colliding.
 	 *
 	 * The locking looks broadly like this:
-	 *   mn_tree_invalidate_start():          mmu_पूर्णांकerval_पढ़ो_begin():
+	 *   mn_tree_invalidate_start():          mmu_interval_read_begin():
 	 *                                         spin_lock
-	 *                                          seq = READ_ONCE(पूर्णांकerval_sub->invalidate_seq);
+	 *                                          seq = READ_ONCE(interval_sub->invalidate_seq);
 	 *                                          seq == subs->invalidate_seq
 	 *                                         spin_unlock
 	 *    spin_lock
@@ -210,11 +209,11 @@ mmu_पूर्णांकerval_पढ़ो_begin(काष्ठा mmu_प�
 	 *    spin_unlock
 	 *     op->invalidate_range():
 	 *       user_lock
-	 *        mmu_पूर्णांकerval_set_seq()
-	 *         पूर्णांकerval_sub->invalidate_seq = seq
+	 *        mmu_interval_set_seq()
+	 *         interval_sub->invalidate_seq = seq
 	 *       user_unlock
 	 *
-	 *                          [Required: mmu_पूर्णांकerval_पढ़ो_retry() == true]
+	 *                          [Required: mmu_interval_read_retry() == true]
 	 *
 	 *   mn_itree_inv_end():
 	 *    spin_lock
@@ -222,247 +221,247 @@ mmu_पूर्णांकerval_पढ़ो_begin(काष्ठा mmu_प�
 	 *    spin_unlock
 	 *
 	 *                                        user_lock
-	 *                                         mmu_पूर्णांकerval_पढ़ो_retry():
-	 *                                          पूर्णांकerval_sub->invalidate_seq != seq
+	 *                                         mmu_interval_read_retry():
+	 *                                          interval_sub->invalidate_seq != seq
 	 *                                        user_unlock
 	 *
-	 * Barriers are not needed here as any races here are बंदd by an
-	 * eventual mmu_पूर्णांकerval_पढ़ो_retry(), which provides a barrier via the
+	 * Barriers are not needed here as any races here are closed by an
+	 * eventual mmu_interval_read_retry(), which provides a barrier via the
 	 * user_lock.
 	 */
 	spin_lock(&subscriptions->lock);
-	/* Pairs with the WRITE_ONCE in mmu_पूर्णांकerval_set_seq() */
-	seq = READ_ONCE(पूर्णांकerval_sub->invalidate_seq);
+	/* Pairs with the WRITE_ONCE in mmu_interval_set_seq() */
+	seq = READ_ONCE(interval_sub->invalidate_seq);
 	is_invalidating = seq == subscriptions->invalidate_seq;
 	spin_unlock(&subscriptions->lock);
 
 	/*
-	 * पूर्णांकerval_sub->invalidate_seq must always be set to an odd value via
-	 * mmu_पूर्णांकerval_set_seq() using the provided cur_seq from
-	 * mn_itree_inv_start_range(). This ensures that अगर seq करोes wrap we
-	 * will always clear the below sleep in some reasonable समय as
+	 * interval_sub->invalidate_seq must always be set to an odd value via
+	 * mmu_interval_set_seq() using the provided cur_seq from
+	 * mn_itree_inv_start_range(). This ensures that if seq does wrap we
+	 * will always clear the below sleep in some reasonable time as
 	 * subscriptions->invalidate_seq is even in the idle state.
 	 */
-	lock_map_acquire(&__mmu_notअगरier_invalidate_range_start_map);
-	lock_map_release(&__mmu_notअगरier_invalidate_range_start_map);
-	अगर (is_invalidating)
-		रुको_event(subscriptions->wq,
+	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+	if (is_invalidating)
+		wait_event(subscriptions->wq,
 			   READ_ONCE(subscriptions->invalidate_seq) != seq);
 
 	/*
-	 * Notice that mmu_पूर्णांकerval_पढ़ो_retry() can alपढ़ोy be true at this
-	 * poपूर्णांक, aव्योमing loops here allows the caller to provide a global
-	 * समय bound.
+	 * Notice that mmu_interval_read_retry() can already be true at this
+	 * point, avoiding loops here allows the caller to provide a global
+	 * time bound.
 	 */
 
-	वापस seq;
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_पूर्णांकerval_पढ़ो_begin);
+	return seq;
+}
+EXPORT_SYMBOL_GPL(mmu_interval_read_begin);
 
-अटल व्योम mn_itree_release(काष्ठा mmu_notअगरier_subscriptions *subscriptions,
-			     काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mmu_notअगरier_range range = अणु
+static void mn_itree_release(struct mmu_notifier_subscriptions *subscriptions,
+			     struct mm_struct *mm)
+{
+	struct mmu_notifier_range range = {
 		.flags = MMU_NOTIFIER_RANGE_BLOCKABLE,
 		.event = MMU_NOTIFY_RELEASE,
 		.mm = mm,
 		.start = 0,
-		.end = अच_दीर्घ_उच्च,
-	पूर्ण;
-	काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub;
-	अचिन्हित दीर्घ cur_seq;
+		.end = ULONG_MAX,
+	};
+	struct mmu_interval_notifier *interval_sub;
+	unsigned long cur_seq;
 	bool ret;
 
-	क्रम (पूर्णांकerval_sub =
+	for (interval_sub =
 		     mn_itree_inv_start_range(subscriptions, &range, &cur_seq);
-	     पूर्णांकerval_sub;
-	     पूर्णांकerval_sub = mn_itree_inv_next(पूर्णांकerval_sub, &range)) अणु
-		ret = पूर्णांकerval_sub->ops->invalidate(पूर्णांकerval_sub, &range,
+	     interval_sub;
+	     interval_sub = mn_itree_inv_next(interval_sub, &range)) {
+		ret = interval_sub->ops->invalidate(interval_sub, &range,
 						    cur_seq);
 		WARN_ON(!ret);
-	पूर्ण
+	}
 
 	mn_itree_inv_end(subscriptions);
-पूर्ण
+}
 
 /*
- * This function can't run concurrently against mmu_notअगरier_रेजिस्टर
- * because mm->mm_users > 0 during mmu_notअगरier_रेजिस्टर and निकास_mmap
- * runs with mm_users == 0. Other tasks may still invoke mmu notअगरiers
+ * This function can't run concurrently against mmu_notifier_register
+ * because mm->mm_users > 0 during mmu_notifier_register and exit_mmap
+ * runs with mm_users == 0. Other tasks may still invoke mmu notifiers
  * in parallel despite there being no task using this mm any more,
- * through the vmas outside of the निकास_mmap context, such as with
- * vmtruncate. This serializes against mmu_notअगरier_unरेजिस्टर with
- * the notअगरier_subscriptions->lock in addition to SRCU and it serializes
- * against the other mmu notअगरiers with SRCU. काष्ठा mmu_notअगरier_subscriptions
- * can't go away from under us as निकास_mmap holds an mm_count pin
+ * through the vmas outside of the exit_mmap context, such as with
+ * vmtruncate. This serializes against mmu_notifier_unregister with
+ * the notifier_subscriptions->lock in addition to SRCU and it serializes
+ * against the other mmu notifiers with SRCU. struct mmu_notifier_subscriptions
+ * can't go away from under us as exit_mmap holds an mm_count pin
  * itself.
  */
-अटल व्योम mn_hlist_release(काष्ठा mmu_notअगरier_subscriptions *subscriptions,
-			     काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक id;
+static void mn_hlist_release(struct mmu_notifier_subscriptions *subscriptions,
+			     struct mm_struct *mm)
+{
+	struct mmu_notifier *subscription;
+	int id;
 
 	/*
-	 * SRCU here will block mmu_notअगरier_unरेजिस्टर until
-	 * ->release वापसs.
+	 * SRCU here will block mmu_notifier_unregister until
+	 * ->release returns.
 	 */
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription, &subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu))
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription, &subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu))
 		/*
-		 * If ->release runs beक्रमe mmu_notअगरier_unरेजिस्टर it must be
-		 * handled, as it's the only way क्रम the driver to flush all
+		 * If ->release runs before mmu_notifier_unregister it must be
+		 * handled, as it's the only way for the driver to flush all
 		 * existing sptes and stop the driver from establishing any more
-		 * sptes beक्रमe all the pages in the mm are मुक्तd.
+		 * sptes before all the pages in the mm are freed.
 		 */
-		अगर (subscription->ops->release)
+		if (subscription->ops->release)
 			subscription->ops->release(subscription, mm);
 
 	spin_lock(&subscriptions->lock);
-	जबतक (unlikely(!hlist_empty(&subscriptions->list))) अणु
+	while (unlikely(!hlist_empty(&subscriptions->list))) {
 		subscription = hlist_entry(subscriptions->list.first,
-					   काष्ठा mmu_notअगरier, hlist);
+					   struct mmu_notifier, hlist);
 		/*
-		 * We arrived beक्रमe mmu_notअगरier_unरेजिस्टर so
-		 * mmu_notअगरier_unरेजिस्टर will करो nothing other than to रुको
-		 * क्रम ->release to finish and क्रम mmu_notअगरier_unरेजिस्टर to
-		 * वापस.
+		 * We arrived before mmu_notifier_unregister so
+		 * mmu_notifier_unregister will do nothing other than to wait
+		 * for ->release to finish and for mmu_notifier_unregister to
+		 * return.
 		 */
 		hlist_del_init_rcu(&subscription->hlist);
-	पूर्ण
+	}
 	spin_unlock(&subscriptions->lock);
-	srcu_पढ़ो_unlock(&srcu, id);
+	srcu_read_unlock(&srcu, id);
 
 	/*
-	 * synchronize_srcu here prevents mmu_notअगरier_release from वापसing to
-	 * निकास_mmap (which would proceed with मुक्तing all pages in the mm)
-	 * until the ->release method वापसs, अगर it was invoked by
-	 * mmu_notअगरier_unरेजिस्टर.
+	 * synchronize_srcu here prevents mmu_notifier_release from returning to
+	 * exit_mmap (which would proceed with freeing all pages in the mm)
+	 * until the ->release method returns, if it was invoked by
+	 * mmu_notifier_unregister.
 	 *
-	 * The notअगरier_subscriptions can't go away from under us because
-	 * one mm_count is held by निकास_mmap.
+	 * The notifier_subscriptions can't go away from under us because
+	 * one mm_count is held by exit_mmap.
 	 */
 	synchronize_srcu(&srcu);
-पूर्ण
+}
 
-व्योम __mmu_notअगरier_release(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions =
-		mm->notअगरier_subscriptions;
+void __mmu_notifier_release(struct mm_struct *mm)
+{
+	struct mmu_notifier_subscriptions *subscriptions =
+		mm->notifier_subscriptions;
 
-	अगर (subscriptions->has_itree)
+	if (subscriptions->has_itree)
 		mn_itree_release(subscriptions, mm);
 
-	अगर (!hlist_empty(&subscriptions->list))
+	if (!hlist_empty(&subscriptions->list))
 		mn_hlist_release(subscriptions, mm);
-पूर्ण
+}
 
 /*
  * If no young bitflag is supported by the hardware, ->clear_flush_young can
- * unmap the address and वापस 1 or 0 depending अगर the mapping previously
+ * unmap the address and return 1 or 0 depending if the mapping previously
  * existed or not.
  */
-पूर्णांक __mmu_notअगरier_clear_flush_young(काष्ठा mm_काष्ठा *mm,
-					अचिन्हित दीर्घ start,
-					अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक young = 0, id;
+int __mmu_notifier_clear_flush_young(struct mm_struct *mm,
+					unsigned long start,
+					unsigned long end)
+{
+	struct mmu_notifier *subscription;
+	int young = 0, id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription,
-				 &mm->notअगरier_subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
-		अगर (subscription->ops->clear_flush_young)
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription,
+				 &mm->notifier_subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
+		if (subscription->ops->clear_flush_young)
 			young |= subscription->ops->clear_flush_young(
 				subscription, mm, start, end);
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
+	}
+	srcu_read_unlock(&srcu, id);
 
-	वापस young;
-पूर्ण
+	return young;
+}
 
-पूर्णांक __mmu_notअगरier_clear_young(काष्ठा mm_काष्ठा *mm,
-			       अचिन्हित दीर्घ start,
-			       अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक young = 0, id;
+int __mmu_notifier_clear_young(struct mm_struct *mm,
+			       unsigned long start,
+			       unsigned long end)
+{
+	struct mmu_notifier *subscription;
+	int young = 0, id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription,
-				 &mm->notअगरier_subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
-		अगर (subscription->ops->clear_young)
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription,
+				 &mm->notifier_subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
+		if (subscription->ops->clear_young)
 			young |= subscription->ops->clear_young(subscription,
 								mm, start, end);
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
+	}
+	srcu_read_unlock(&srcu, id);
 
-	वापस young;
-पूर्ण
+	return young;
+}
 
-पूर्णांक __mmu_notअगरier_test_young(काष्ठा mm_काष्ठा *mm,
-			      अचिन्हित दीर्घ address)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक young = 0, id;
+int __mmu_notifier_test_young(struct mm_struct *mm,
+			      unsigned long address)
+{
+	struct mmu_notifier *subscription;
+	int young = 0, id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription,
-				 &mm->notअगरier_subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
-		अगर (subscription->ops->test_young) अणु
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription,
+				 &mm->notifier_subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
+		if (subscription->ops->test_young) {
 			young = subscription->ops->test_young(subscription, mm,
 							      address);
-			अगर (young)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
+			if (young)
+				break;
+		}
+	}
+	srcu_read_unlock(&srcu, id);
 
-	वापस young;
-पूर्ण
+	return young;
+}
 
-व्योम __mmu_notअगरier_change_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
+void __mmu_notifier_change_pte(struct mm_struct *mm, unsigned long address,
 			       pte_t pte)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक id;
+{
+	struct mmu_notifier *subscription;
+	int id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription,
-				 &mm->notअगरier_subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
-		अगर (subscription->ops->change_pte)
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription,
+				 &mm->notifier_subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
+		if (subscription->ops->change_pte)
 			subscription->ops->change_pte(subscription, mm, address,
 						      pte);
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
-पूर्ण
+	}
+	srcu_read_unlock(&srcu, id);
+}
 
-अटल पूर्णांक mn_itree_invalidate(काष्ठा mmu_notअगरier_subscriptions *subscriptions,
-			       स्थिर काष्ठा mmu_notअगरier_range *range)
-अणु
-	काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub;
-	अचिन्हित दीर्घ cur_seq;
+static int mn_itree_invalidate(struct mmu_notifier_subscriptions *subscriptions,
+			       const struct mmu_notifier_range *range)
+{
+	struct mmu_interval_notifier *interval_sub;
+	unsigned long cur_seq;
 
-	क्रम (पूर्णांकerval_sub =
+	for (interval_sub =
 		     mn_itree_inv_start_range(subscriptions, range, &cur_seq);
-	     पूर्णांकerval_sub;
-	     पूर्णांकerval_sub = mn_itree_inv_next(पूर्णांकerval_sub, range)) अणु
+	     interval_sub;
+	     interval_sub = mn_itree_inv_next(interval_sub, range)) {
 		bool ret;
 
-		ret = पूर्णांकerval_sub->ops->invalidate(पूर्णांकerval_sub, range,
+		ret = interval_sub->ops->invalidate(interval_sub, range,
 						    cur_seq);
-		अगर (!ret) अणु
-			अगर (WARN_ON(mmu_notअगरier_range_blockable(range)))
-				जारी;
-			जाओ out_would_block;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+		if (!ret) {
+			if (WARN_ON(mmu_notifier_range_blockable(range)))
+				continue;
+			goto out_would_block;
+		}
+	}
+	return 0;
 
 out_would_block:
 	/*
@@ -470,652 +469,652 @@ out_would_block:
 	 * invalidate_range_end()
 	 */
 	mn_itree_inv_end(subscriptions);
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक mn_hlist_invalidate_range_start(
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions,
-	काष्ठा mmu_notअगरier_range *range)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक ret = 0;
-	पूर्णांक id;
+static int mn_hlist_invalidate_range_start(
+	struct mmu_notifier_subscriptions *subscriptions,
+	struct mmu_notifier_range *range)
+{
+	struct mmu_notifier *subscription;
+	int ret = 0;
+	int id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription, &subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
-		स्थिर काष्ठा mmu_notअगरier_ops *ops = subscription->ops;
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription, &subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
+		const struct mmu_notifier_ops *ops = subscription->ops;
 
-		अगर (ops->invalidate_range_start) अणु
-			पूर्णांक _ret;
+		if (ops->invalidate_range_start) {
+			int _ret;
 
-			अगर (!mmu_notअगरier_range_blockable(range))
+			if (!mmu_notifier_range_blockable(range))
 				non_block_start();
 			_ret = ops->invalidate_range_start(subscription, range);
-			अगर (!mmu_notअगरier_range_blockable(range))
+			if (!mmu_notifier_range_blockable(range))
 				non_block_end();
-			अगर (_ret) अणु
+			if (_ret) {
 				pr_info("%pS callback failed with %d in %sblockable context.\n",
 					ops->invalidate_range_start, _ret,
-					!mmu_notअगरier_range_blockable(range) ?
+					!mmu_notifier_range_blockable(range) ?
 						"non-" :
 						"");
-				WARN_ON(mmu_notअगरier_range_blockable(range) ||
+				WARN_ON(mmu_notifier_range_blockable(range) ||
 					_ret != -EAGAIN);
 				/*
-				 * We call all the notअगरiers on any EAGAIN,
-				 * there is no way क्रम a notअगरier to know अगर
+				 * We call all the notifiers on any EAGAIN,
+				 * there is no way for a notifier to know if
 				 * its start method failed, thus a start that
-				 * करोes EAGAIN can't also करो end.
+				 * does EAGAIN can't also do end.
 				 */
 				WARN_ON(ops->invalidate_range_end);
 				ret = _ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (ret) अणु
+	if (ret) {
 		/*
 		 * Must be non-blocking to get here.  If there are multiple
-		 * notअगरiers and one or more failed start, any that succeeded
+		 * notifiers and one or more failed start, any that succeeded
 		 * start are expecting their end to be called.  Do so now.
 		 */
-		hlist_क्रम_each_entry_rcu(subscription, &subscriptions->list,
-					 hlist, srcu_पढ़ो_lock_held(&srcu)) अणु
-			अगर (!subscription->ops->invalidate_range_end)
-				जारी;
+		hlist_for_each_entry_rcu(subscription, &subscriptions->list,
+					 hlist, srcu_read_lock_held(&srcu)) {
+			if (!subscription->ops->invalidate_range_end)
+				continue;
 
 			subscription->ops->invalidate_range_end(subscription,
 								range);
-		पूर्ण
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
+		}
+	}
+	srcu_read_unlock(&srcu, id);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक __mmu_notअगरier_invalidate_range_start(काष्ठा mmu_notअगरier_range *range)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions =
-		range->mm->notअगरier_subscriptions;
-	पूर्णांक ret;
+int __mmu_notifier_invalidate_range_start(struct mmu_notifier_range *range)
+{
+	struct mmu_notifier_subscriptions *subscriptions =
+		range->mm->notifier_subscriptions;
+	int ret;
 
-	अगर (subscriptions->has_itree) अणु
+	if (subscriptions->has_itree) {
 		ret = mn_itree_invalidate(subscriptions, range);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (!hlist_empty(&subscriptions->list))
-		वापस mn_hlist_invalidate_range_start(subscriptions, range);
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	if (!hlist_empty(&subscriptions->list))
+		return mn_hlist_invalidate_range_start(subscriptions, range);
+	return 0;
+}
 
-अटल व्योम
-mn_hlist_invalidate_end(काष्ठा mmu_notअगरier_subscriptions *subscriptions,
-			काष्ठा mmu_notअगरier_range *range, bool only_end)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक id;
+static void
+mn_hlist_invalidate_end(struct mmu_notifier_subscriptions *subscriptions,
+			struct mmu_notifier_range *range, bool only_end)
+{
+	struct mmu_notifier *subscription;
+	int id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription, &subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription, &subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
 		/*
-		 * Call invalidate_range here too to aव्योम the need क्रम the
-		 * subप्रणाली of having to रेजिस्टर an invalidate_range_end
-		 * call-back when there is invalidate_range alपढ़ोy. Usually a
-		 * subप्रणाली रेजिस्टरs either invalidate_range_start()/end() or
+		 * Call invalidate_range here too to avoid the need for the
+		 * subsystem of having to register an invalidate_range_end
+		 * call-back when there is invalidate_range already. Usually a
+		 * subsystem registers either invalidate_range_start()/end() or
 		 * invalidate_range(), so this will be no additional overhead
-		 * (besides the poपूर्णांकer check).
+		 * (besides the pointer check).
 		 *
-		 * We skip call to invalidate_range() अगर we know it is safe ie
-		 * call site use mmu_notअगरier_invalidate_range_only_end() which
-		 * is safe to करो when we know that a call to invalidate_range()
-		 * alपढ़ोy happen under page table lock.
+		 * We skip call to invalidate_range() if we know it is safe ie
+		 * call site use mmu_notifier_invalidate_range_only_end() which
+		 * is safe to do when we know that a call to invalidate_range()
+		 * already happen under page table lock.
 		 */
-		अगर (!only_end && subscription->ops->invalidate_range)
+		if (!only_end && subscription->ops->invalidate_range)
 			subscription->ops->invalidate_range(subscription,
 							    range->mm,
 							    range->start,
 							    range->end);
-		अगर (subscription->ops->invalidate_range_end) अणु
-			अगर (!mmu_notअगरier_range_blockable(range))
+		if (subscription->ops->invalidate_range_end) {
+			if (!mmu_notifier_range_blockable(range))
 				non_block_start();
 			subscription->ops->invalidate_range_end(subscription,
 								range);
-			अगर (!mmu_notअगरier_range_blockable(range))
+			if (!mmu_notifier_range_blockable(range))
 				non_block_end();
-		पूर्ण
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
-पूर्ण
+		}
+	}
+	srcu_read_unlock(&srcu, id);
+}
 
-व्योम __mmu_notअगरier_invalidate_range_end(काष्ठा mmu_notअगरier_range *range,
+void __mmu_notifier_invalidate_range_end(struct mmu_notifier_range *range,
 					 bool only_end)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions =
-		range->mm->notअगरier_subscriptions;
+{
+	struct mmu_notifier_subscriptions *subscriptions =
+		range->mm->notifier_subscriptions;
 
-	lock_map_acquire(&__mmu_notअगरier_invalidate_range_start_map);
-	अगर (subscriptions->has_itree)
+	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+	if (subscriptions->has_itree)
 		mn_itree_inv_end(subscriptions);
 
-	अगर (!hlist_empty(&subscriptions->list))
+	if (!hlist_empty(&subscriptions->list))
 		mn_hlist_invalidate_end(subscriptions, range, only_end);
-	lock_map_release(&__mmu_notअगरier_invalidate_range_start_map);
-पूर्ण
+	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+}
 
-व्योम __mmu_notअगरier_invalidate_range(काष्ठा mm_काष्ठा *mm,
-				  अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक id;
+void __mmu_notifier_invalidate_range(struct mm_struct *mm,
+				  unsigned long start, unsigned long end)
+{
+	struct mmu_notifier *subscription;
+	int id;
 
-	id = srcu_पढ़ो_lock(&srcu);
-	hlist_क्रम_each_entry_rcu(subscription,
-				 &mm->notअगरier_subscriptions->list, hlist,
-				 srcu_पढ़ो_lock_held(&srcu)) अणु
-		अगर (subscription->ops->invalidate_range)
+	id = srcu_read_lock(&srcu);
+	hlist_for_each_entry_rcu(subscription,
+				 &mm->notifier_subscriptions->list, hlist,
+				 srcu_read_lock_held(&srcu)) {
+		if (subscription->ops->invalidate_range)
 			subscription->ops->invalidate_range(subscription, mm,
 							    start, end);
-	पूर्ण
-	srcu_पढ़ो_unlock(&srcu, id);
-पूर्ण
+	}
+	srcu_read_unlock(&srcu, id);
+}
 
 /*
- * Same as mmu_notअगरier_रेजिस्टर but here the caller must hold the mmap_lock in
- * ग_लिखो mode. A शून्य mn संकेतs the notअगरier is being रेजिस्टरed क्रम itree
+ * Same as mmu_notifier_register but here the caller must hold the mmap_lock in
+ * write mode. A NULL mn signals the notifier is being registered for itree
  * mode.
  */
-पूर्णांक __mmu_notअगरier_रेजिस्टर(काष्ठा mmu_notअगरier *subscription,
-			    काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions = शून्य;
-	पूर्णांक ret;
+int __mmu_notifier_register(struct mmu_notifier *subscription,
+			    struct mm_struct *mm)
+{
+	struct mmu_notifier_subscriptions *subscriptions = NULL;
+	int ret;
 
-	mmap_निश्चित_ग_लिखो_locked(mm);
-	BUG_ON(atomic_पढ़ो(&mm->mm_users) <= 0);
+	mmap_assert_write_locked(mm);
+	BUG_ON(atomic_read(&mm->mm_users) <= 0);
 
-	अगर (!mm->notअगरier_subscriptions) अणु
+	if (!mm->notifier_subscriptions) {
 		/*
-		 * kदो_स्मृति cannot be called under mm_take_all_locks(), but we
-		 * know that mm->notअगरier_subscriptions can't change जबतक we
-		 * hold the ग_लिखो side of the mmap_lock.
+		 * kmalloc cannot be called under mm_take_all_locks(), but we
+		 * know that mm->notifier_subscriptions can't change while we
+		 * hold the write side of the mmap_lock.
 		 */
 		subscriptions = kzalloc(
-			माप(काष्ठा mmu_notअगरier_subscriptions), GFP_KERNEL);
-		अगर (!subscriptions)
-			वापस -ENOMEM;
+			sizeof(struct mmu_notifier_subscriptions), GFP_KERNEL);
+		if (!subscriptions)
+			return -ENOMEM;
 
 		INIT_HLIST_HEAD(&subscriptions->list);
 		spin_lock_init(&subscriptions->lock);
 		subscriptions->invalidate_seq = 2;
 		subscriptions->itree = RB_ROOT_CACHED;
-		init_रुकोqueue_head(&subscriptions->wq);
+		init_waitqueue_head(&subscriptions->wq);
 		INIT_HLIST_HEAD(&subscriptions->deferred_list);
-	पूर्ण
+	}
 
 	ret = mm_take_all_locks(mm);
-	अगर (unlikely(ret))
-		जाओ out_clean;
+	if (unlikely(ret))
+		goto out_clean;
 
 	/*
-	 * Serialize the update against mmu_notअगरier_unरेजिस्टर. A
-	 * side note: mmu_notअगरier_release can't run concurrently with
+	 * Serialize the update against mmu_notifier_unregister. A
+	 * side note: mmu_notifier_release can't run concurrently with
 	 * us because we hold the mm_users pin (either implicitly as
 	 * current->mm or explicitly with get_task_mm() or similar).
-	 * We can't race against any other mmu notअगरier method either
+	 * We can't race against any other mmu notifier method either
 	 * thanks to mm_take_all_locks().
 	 *
 	 * release semantics on the initialization of the
-	 * mmu_notअगरier_subscriptions's contents are provided क्रम unlocked
-	 * पढ़ोers.  acquire can only be used जबतक holding the mmgrab or
+	 * mmu_notifier_subscriptions's contents are provided for unlocked
+	 * readers.  acquire can only be used while holding the mmgrab or
 	 * mmget, and is safe because once created the
-	 * mmu_notअगरier_subscriptions is not मुक्तd until the mm is destroyed.
+	 * mmu_notifier_subscriptions is not freed until the mm is destroyed.
 	 * As above, users holding the mmap_lock or one of the
-	 * mm_take_all_locks() करो not need to use acquire semantics.
+	 * mm_take_all_locks() do not need to use acquire semantics.
 	 */
-	अगर (subscriptions)
-		smp_store_release(&mm->notअगरier_subscriptions, subscriptions);
+	if (subscriptions)
+		smp_store_release(&mm->notifier_subscriptions, subscriptions);
 
-	अगर (subscription) अणु
-		/* Pairs with the mmdrop in mmu_notअगरier_unरेजिस्टर_* */
+	if (subscription) {
+		/* Pairs with the mmdrop in mmu_notifier_unregister_* */
 		mmgrab(mm);
 		subscription->mm = mm;
 		subscription->users = 1;
 
-		spin_lock(&mm->notअगरier_subscriptions->lock);
+		spin_lock(&mm->notifier_subscriptions->lock);
 		hlist_add_head_rcu(&subscription->hlist,
-				   &mm->notअगरier_subscriptions->list);
-		spin_unlock(&mm->notअगरier_subscriptions->lock);
-	पूर्ण अन्यथा
-		mm->notअगरier_subscriptions->has_itree = true;
+				   &mm->notifier_subscriptions->list);
+		spin_unlock(&mm->notifier_subscriptions->lock);
+	} else
+		mm->notifier_subscriptions->has_itree = true;
 
 	mm_drop_all_locks(mm);
-	BUG_ON(atomic_पढ़ो(&mm->mm_users) <= 0);
-	वापस 0;
+	BUG_ON(atomic_read(&mm->mm_users) <= 0);
+	return 0;
 
 out_clean:
-	kमुक्त(subscriptions);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(__mmu_notअगरier_रेजिस्टर);
+	kfree(subscriptions);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(__mmu_notifier_register);
 
 /**
- * mmu_notअगरier_रेजिस्टर - Register a notअगरier on a mm
- * @subscription: The notअगरier to attach
- * @mm: The mm to attach the notअगरier to
+ * mmu_notifier_register - Register a notifier on a mm
+ * @subscription: The notifier to attach
+ * @mm: The mm to attach the notifier to
  *
  * Must not hold mmap_lock nor any other VM related lock when calling
- * this registration function. Must also ensure mm_users can't go करोwn
- * to zero जबतक this runs to aव्योम races with mmu_notअगरier_release,
+ * this registration function. Must also ensure mm_users can't go down
+ * to zero while this runs to avoid races with mmu_notifier_release,
  * so mm has to be current->mm or the mm should be pinned safely such
  * as with get_task_mm(). If the mm is not current->mm, the mm_users
- * pin should be released by calling mmput after mmu_notअगरier_रेजिस्टर
- * वापसs.
+ * pin should be released by calling mmput after mmu_notifier_register
+ * returns.
  *
- * mmu_notअगरier_unरेजिस्टर() or mmu_notअगरier_put() must be always called to
- * unरेजिस्टर the notअगरier.
+ * mmu_notifier_unregister() or mmu_notifier_put() must be always called to
+ * unregister the notifier.
  *
- * While the caller has a mmu_notअगरier get the subscription->mm poपूर्णांकer will reमुख्य
- * valid, and can be converted to an active mm poपूर्णांकer via mmget_not_zero().
+ * While the caller has a mmu_notifier get the subscription->mm pointer will remain
+ * valid, and can be converted to an active mm pointer via mmget_not_zero().
  */
-पूर्णांक mmu_notअगरier_रेजिस्टर(काष्ठा mmu_notअगरier *subscription,
-			  काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक ret;
+int mmu_notifier_register(struct mmu_notifier *subscription,
+			  struct mm_struct *mm)
+{
+	int ret;
 
-	mmap_ग_लिखो_lock(mm);
-	ret = __mmu_notअगरier_रेजिस्टर(subscription, mm);
-	mmap_ग_लिखो_unlock(mm);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_notअगरier_रेजिस्टर);
+	mmap_write_lock(mm);
+	ret = __mmu_notifier_register(subscription, mm);
+	mmap_write_unlock(mm);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(mmu_notifier_register);
 
-अटल काष्ठा mmu_notअगरier *
-find_get_mmu_notअगरier(काष्ठा mm_काष्ठा *mm, स्थिर काष्ठा mmu_notअगरier_ops *ops)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
+static struct mmu_notifier *
+find_get_mmu_notifier(struct mm_struct *mm, const struct mmu_notifier_ops *ops)
+{
+	struct mmu_notifier *subscription;
 
-	spin_lock(&mm->notअगरier_subscriptions->lock);
-	hlist_क्रम_each_entry_rcu(subscription,
-				 &mm->notअगरier_subscriptions->list, hlist,
-				 lockdep_is_held(&mm->notअगरier_subscriptions->lock)) अणु
-		अगर (subscription->ops != ops)
-			जारी;
+	spin_lock(&mm->notifier_subscriptions->lock);
+	hlist_for_each_entry_rcu(subscription,
+				 &mm->notifier_subscriptions->list, hlist,
+				 lockdep_is_held(&mm->notifier_subscriptions->lock)) {
+		if (subscription->ops != ops)
+			continue;
 
-		अगर (likely(subscription->users != अच_पूर्णांक_उच्च))
+		if (likely(subscription->users != UINT_MAX))
 			subscription->users++;
-		अन्यथा
+		else
 			subscription = ERR_PTR(-EOVERFLOW);
-		spin_unlock(&mm->notअगरier_subscriptions->lock);
-		वापस subscription;
-	पूर्ण
-	spin_unlock(&mm->notअगरier_subscriptions->lock);
-	वापस शून्य;
-पूर्ण
+		spin_unlock(&mm->notifier_subscriptions->lock);
+		return subscription;
+	}
+	spin_unlock(&mm->notifier_subscriptions->lock);
+	return NULL;
+}
 
 /**
- * mmu_notअगरier_get_locked - Return the single काष्ठा mmu_notअगरier क्रम
+ * mmu_notifier_get_locked - Return the single struct mmu_notifier for
  *                           the mm & ops
- * @ops: The operations काष्ठा being subscribe with
- * @mm : The mm to attach notअगरiers too
+ * @ops: The operations struct being subscribe with
+ * @mm : The mm to attach notifiers too
  *
- * This function either allocates a new mmu_notअगरier via
- * ops->alloc_notअगरier(), or वापसs an alपढ़ोy existing notअगरier on the
- * list. The value of the ops poपूर्णांकer is used to determine when two notअगरiers
+ * This function either allocates a new mmu_notifier via
+ * ops->alloc_notifier(), or returns an already existing notifier on the
+ * list. The value of the ops pointer is used to determine when two notifiers
  * are the same.
  *
- * Each call to mmu_notअगरier_get() must be paired with a call to
- * mmu_notअगरier_put(). The caller must hold the ग_लिखो side of mm->mmap_lock.
+ * Each call to mmu_notifier_get() must be paired with a call to
+ * mmu_notifier_put(). The caller must hold the write side of mm->mmap_lock.
  *
- * While the caller has a mmu_notअगरier get the mm poपूर्णांकer will reमुख्य valid,
- * and can be converted to an active mm poपूर्णांकer via mmget_not_zero().
+ * While the caller has a mmu_notifier get the mm pointer will remain valid,
+ * and can be converted to an active mm pointer via mmget_not_zero().
  */
-काष्ठा mmu_notअगरier *mmu_notअगरier_get_locked(स्थिर काष्ठा mmu_notअगरier_ops *ops,
-					     काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mmu_notअगरier *subscription;
-	पूर्णांक ret;
+struct mmu_notifier *mmu_notifier_get_locked(const struct mmu_notifier_ops *ops,
+					     struct mm_struct *mm)
+{
+	struct mmu_notifier *subscription;
+	int ret;
 
-	mmap_निश्चित_ग_लिखो_locked(mm);
+	mmap_assert_write_locked(mm);
 
-	अगर (mm->notअगरier_subscriptions) अणु
-		subscription = find_get_mmu_notअगरier(mm, ops);
-		अगर (subscription)
-			वापस subscription;
-	पूर्ण
+	if (mm->notifier_subscriptions) {
+		subscription = find_get_mmu_notifier(mm, ops);
+		if (subscription)
+			return subscription;
+	}
 
-	subscription = ops->alloc_notअगरier(mm);
-	अगर (IS_ERR(subscription))
-		वापस subscription;
+	subscription = ops->alloc_notifier(mm);
+	if (IS_ERR(subscription))
+		return subscription;
 	subscription->ops = ops;
-	ret = __mmu_notअगरier_रेजिस्टर(subscription, mm);
-	अगर (ret)
-		जाओ out_मुक्त;
-	वापस subscription;
-out_मुक्त:
-	subscription->ops->मुक्त_notअगरier(subscription);
-	वापस ERR_PTR(ret);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_notअगरier_get_locked);
+	ret = __mmu_notifier_register(subscription, mm);
+	if (ret)
+		goto out_free;
+	return subscription;
+out_free:
+	subscription->ops->free_notifier(subscription);
+	return ERR_PTR(ret);
+}
+EXPORT_SYMBOL_GPL(mmu_notifier_get_locked);
 
-/* this is called after the last mmu_notअगरier_unरेजिस्टर() वापसed */
-व्योम __mmu_notअगरier_subscriptions_destroy(काष्ठा mm_काष्ठा *mm)
-अणु
-	BUG_ON(!hlist_empty(&mm->notअगरier_subscriptions->list));
-	kमुक्त(mm->notअगरier_subscriptions);
-	mm->notअगरier_subscriptions = LIST_POISON1; /* debug */
-पूर्ण
+/* this is called after the last mmu_notifier_unregister() returned */
+void __mmu_notifier_subscriptions_destroy(struct mm_struct *mm)
+{
+	BUG_ON(!hlist_empty(&mm->notifier_subscriptions->list));
+	kfree(mm->notifier_subscriptions);
+	mm->notifier_subscriptions = LIST_POISON1; /* debug */
+}
 
 /*
- * This releases the mm_count pin स्वतःmatically and मुक्तs the mm
- * काष्ठाure अगर it was the last user of it. It serializes against
- * running mmu notअगरiers with SRCU and against mmu_notअगरier_unरेजिस्टर
- * with the unरेजिस्टर lock + SRCU. All sptes must be dropped beक्रमe
- * calling mmu_notअगरier_unरेजिस्टर. ->release or any other notअगरier
- * method may be invoked concurrently with mmu_notअगरier_unरेजिस्टर,
- * and only after mmu_notअगरier_unरेजिस्टर वापसed we're guaranteed
+ * This releases the mm_count pin automatically and frees the mm
+ * structure if it was the last user of it. It serializes against
+ * running mmu notifiers with SRCU and against mmu_notifier_unregister
+ * with the unregister lock + SRCU. All sptes must be dropped before
+ * calling mmu_notifier_unregister. ->release or any other notifier
+ * method may be invoked concurrently with mmu_notifier_unregister,
+ * and only after mmu_notifier_unregister returned we're guaranteed
  * that ->release or any other method can't run anymore.
  */
-व्योम mmu_notअगरier_unरेजिस्टर(काष्ठा mmu_notअगरier *subscription,
-			     काष्ठा mm_काष्ठा *mm)
-अणु
-	BUG_ON(atomic_पढ़ो(&mm->mm_count) <= 0);
+void mmu_notifier_unregister(struct mmu_notifier *subscription,
+			     struct mm_struct *mm)
+{
+	BUG_ON(atomic_read(&mm->mm_count) <= 0);
 
-	अगर (!hlist_unhashed(&subscription->hlist)) अणु
+	if (!hlist_unhashed(&subscription->hlist)) {
 		/*
-		 * SRCU here will क्रमce निकास_mmap to रुको क्रम ->release to
-		 * finish beक्रमe मुक्तing the pages.
+		 * SRCU here will force exit_mmap to wait for ->release to
+		 * finish before freeing the pages.
 		 */
-		पूर्णांक id;
+		int id;
 
-		id = srcu_पढ़ो_lock(&srcu);
+		id = srcu_read_lock(&srcu);
 		/*
-		 * निकास_mmap will block in mmu_notअगरier_release to guarantee
-		 * that ->release is called beक्रमe मुक्तing the pages.
+		 * exit_mmap will block in mmu_notifier_release to guarantee
+		 * that ->release is called before freeing the pages.
 		 */
-		अगर (subscription->ops->release)
+		if (subscription->ops->release)
 			subscription->ops->release(subscription, mm);
-		srcu_पढ़ो_unlock(&srcu, id);
+		srcu_read_unlock(&srcu, id);
 
-		spin_lock(&mm->notअगरier_subscriptions->lock);
+		spin_lock(&mm->notifier_subscriptions->lock);
 		/*
-		 * Can not use list_del_rcu() since __mmu_notअगरier_release
-		 * can delete it beक्रमe we hold the lock.
+		 * Can not use list_del_rcu() since __mmu_notifier_release
+		 * can delete it before we hold the lock.
 		 */
 		hlist_del_init_rcu(&subscription->hlist);
-		spin_unlock(&mm->notअगरier_subscriptions->lock);
-	पूर्ण
+		spin_unlock(&mm->notifier_subscriptions->lock);
+	}
 
 	/*
-	 * Wait क्रम any running method to finish, of course including
-	 * ->release अगर it was run by mmu_notअगरier_release instead of us.
+	 * Wait for any running method to finish, of course including
+	 * ->release if it was run by mmu_notifier_release instead of us.
 	 */
 	synchronize_srcu(&srcu);
 
-	BUG_ON(atomic_पढ़ो(&mm->mm_count) <= 0);
+	BUG_ON(atomic_read(&mm->mm_count) <= 0);
 
 	mmdrop(mm);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_notअगरier_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(mmu_notifier_unregister);
 
-अटल व्योम mmu_notअगरier_मुक्त_rcu(काष्ठा rcu_head *rcu)
-अणु
-	काष्ठा mmu_notअगरier *subscription =
-		container_of(rcu, काष्ठा mmu_notअगरier, rcu);
-	काष्ठा mm_काष्ठा *mm = subscription->mm;
+static void mmu_notifier_free_rcu(struct rcu_head *rcu)
+{
+	struct mmu_notifier *subscription =
+		container_of(rcu, struct mmu_notifier, rcu);
+	struct mm_struct *mm = subscription->mm;
 
-	subscription->ops->मुक्त_notअगरier(subscription);
-	/* Pairs with the get in __mmu_notअगरier_रेजिस्टर() */
+	subscription->ops->free_notifier(subscription);
+	/* Pairs with the get in __mmu_notifier_register() */
 	mmdrop(mm);
-पूर्ण
+}
 
 /**
- * mmu_notअगरier_put - Release the reference on the notअगरier
- * @subscription: The notअगरier to act on
+ * mmu_notifier_put - Release the reference on the notifier
+ * @subscription: The notifier to act on
  *
- * This function must be paired with each mmu_notअगरier_get(), it releases the
+ * This function must be paired with each mmu_notifier_get(), it releases the
  * reference obtained by the get. If this is the last reference then process
- * to मुक्त the notअगरier will be run asynchronously.
+ * to free the notifier will be run asynchronously.
  *
- * Unlike mmu_notअगरier_unरेजिस्टर() the get/put flow only calls ops->release
- * when the mm_काष्ठा is destroyed. Instead मुक्त_notअगरier is always called to
+ * Unlike mmu_notifier_unregister() the get/put flow only calls ops->release
+ * when the mm_struct is destroyed. Instead free_notifier is always called to
  * release any resources held by the user.
  *
  * As ops->release is not guaranteed to be called, the user must ensure that
- * all sptes are dropped, and no new sptes can be established beक्रमe
- * mmu_notअगरier_put() is called.
+ * all sptes are dropped, and no new sptes can be established before
+ * mmu_notifier_put() is called.
  *
  * This function can be called from the ops->release callback, however the
- * caller must still ensure it is called pairwise with mmu_notअगरier_get().
+ * caller must still ensure it is called pairwise with mmu_notifier_get().
  *
- * Modules calling this function must call mmu_notअगरier_synchronize() in
- * their __निकास functions to ensure the async work is completed.
+ * Modules calling this function must call mmu_notifier_synchronize() in
+ * their __exit functions to ensure the async work is completed.
  */
-व्योम mmu_notअगरier_put(काष्ठा mmu_notअगरier *subscription)
-अणु
-	काष्ठा mm_काष्ठा *mm = subscription->mm;
+void mmu_notifier_put(struct mmu_notifier *subscription)
+{
+	struct mm_struct *mm = subscription->mm;
 
-	spin_lock(&mm->notअगरier_subscriptions->lock);
-	अगर (WARN_ON(!subscription->users) || --subscription->users)
-		जाओ out_unlock;
+	spin_lock(&mm->notifier_subscriptions->lock);
+	if (WARN_ON(!subscription->users) || --subscription->users)
+		goto out_unlock;
 	hlist_del_init_rcu(&subscription->hlist);
-	spin_unlock(&mm->notअगरier_subscriptions->lock);
+	spin_unlock(&mm->notifier_subscriptions->lock);
 
-	call_srcu(&srcu, &subscription->rcu, mmu_notअगरier_मुक्त_rcu);
-	वापस;
+	call_srcu(&srcu, &subscription->rcu, mmu_notifier_free_rcu);
+	return;
 
 out_unlock:
-	spin_unlock(&mm->notअगरier_subscriptions->lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_notअगरier_put);
+	spin_unlock(&mm->notifier_subscriptions->lock);
+}
+EXPORT_SYMBOL_GPL(mmu_notifier_put);
 
-अटल पूर्णांक __mmu_पूर्णांकerval_notअगरier_insert(
-	काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub, काष्ठा mm_काष्ठा *mm,
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions, अचिन्हित दीर्घ start,
-	अचिन्हित दीर्घ length, स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
-अणु
-	पूर्णांकerval_sub->mm = mm;
-	पूर्णांकerval_sub->ops = ops;
-	RB_CLEAR_NODE(&पूर्णांकerval_sub->पूर्णांकerval_tree.rb);
-	पूर्णांकerval_sub->पूर्णांकerval_tree.start = start;
+static int __mmu_interval_notifier_insert(
+	struct mmu_interval_notifier *interval_sub, struct mm_struct *mm,
+	struct mmu_notifier_subscriptions *subscriptions, unsigned long start,
+	unsigned long length, const struct mmu_interval_notifier_ops *ops)
+{
+	interval_sub->mm = mm;
+	interval_sub->ops = ops;
+	RB_CLEAR_NODE(&interval_sub->interval_tree.rb);
+	interval_sub->interval_tree.start = start;
 	/*
-	 * Note that the representation of the पूर्णांकervals in the पूर्णांकerval tree
-	 * considers the ending poपूर्णांक as contained in the पूर्णांकerval.
+	 * Note that the representation of the intervals in the interval tree
+	 * considers the ending point as contained in the interval.
 	 */
-	अगर (length == 0 ||
+	if (length == 0 ||
 	    check_add_overflow(start, length - 1,
-			       &पूर्णांकerval_sub->पूर्णांकerval_tree.last))
-		वापस -EOVERFLOW;
+			       &interval_sub->interval_tree.last))
+		return -EOVERFLOW;
 
 	/* Must call with a mmget() held */
-	अगर (WARN_ON(atomic_पढ़ो(&mm->mm_users) <= 0))
-		वापस -EINVAL;
+	if (WARN_ON(atomic_read(&mm->mm_users) <= 0))
+		return -EINVAL;
 
-	/* pairs with mmdrop in mmu_पूर्णांकerval_notअगरier_हटाओ() */
+	/* pairs with mmdrop in mmu_interval_notifier_remove() */
 	mmgrab(mm);
 
 	/*
 	 * If some invalidate_range_start/end region is going on in parallel
-	 * we करोn't know what VA ranges are affected, so we must assume this
+	 * we don't know what VA ranges are affected, so we must assume this
 	 * new range is included.
 	 *
 	 * If the itree is invalidating then we are not allowed to change
-	 * it. Retrying until invalidation is करोne is tricky due to the
-	 * possibility क्रम live lock, instead defer the add to
+	 * it. Retrying until invalidation is done is tricky due to the
+	 * possibility for live lock, instead defer the add to
 	 * mn_itree_inv_end() so this algorithm is deterministic.
 	 *
-	 * In all हालs the value क्रम the पूर्णांकerval_sub->invalidate_seq should be
-	 * odd, see mmu_पूर्णांकerval_पढ़ो_begin()
+	 * In all cases the value for the interval_sub->invalidate_seq should be
+	 * odd, see mmu_interval_read_begin()
 	 */
 	spin_lock(&subscriptions->lock);
-	अगर (subscriptions->active_invalidate_ranges) अणु
-		अगर (mn_itree_is_invalidating(subscriptions))
-			hlist_add_head(&पूर्णांकerval_sub->deferred_item,
+	if (subscriptions->active_invalidate_ranges) {
+		if (mn_itree_is_invalidating(subscriptions))
+			hlist_add_head(&interval_sub->deferred_item,
 				       &subscriptions->deferred_list);
-		अन्यथा अणु
+		else {
 			subscriptions->invalidate_seq |= 1;
-			पूर्णांकerval_tree_insert(&पूर्णांकerval_sub->पूर्णांकerval_tree,
+			interval_tree_insert(&interval_sub->interval_tree,
 					     &subscriptions->itree);
-		पूर्ण
-		पूर्णांकerval_sub->invalidate_seq = subscriptions->invalidate_seq;
-	पूर्ण अन्यथा अणु
+		}
+		interval_sub->invalidate_seq = subscriptions->invalidate_seq;
+	} else {
 		WARN_ON(mn_itree_is_invalidating(subscriptions));
 		/*
-		 * The starting seq क्रम a subscription not under invalidation
+		 * The starting seq for a subscription not under invalidation
 		 * should be odd, not equal to the current invalidate_seq and
-		 * invalidate_seq should not 'wrap' to the new seq any समय
+		 * invalidate_seq should not 'wrap' to the new seq any time
 		 * soon.
 		 */
-		पूर्णांकerval_sub->invalidate_seq =
+		interval_sub->invalidate_seq =
 			subscriptions->invalidate_seq - 1;
-		पूर्णांकerval_tree_insert(&पूर्णांकerval_sub->पूर्णांकerval_tree,
+		interval_tree_insert(&interval_sub->interval_tree,
 				     &subscriptions->itree);
-	पूर्ण
+	}
 	spin_unlock(&subscriptions->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * mmu_पूर्णांकerval_notअगरier_insert - Insert an पूर्णांकerval notअगरier
- * @पूर्णांकerval_sub: Interval subscription to रेजिस्टर
- * @start: Starting भव address to monitor
+ * mmu_interval_notifier_insert - Insert an interval notifier
+ * @interval_sub: Interval subscription to register
+ * @start: Starting virtual address to monitor
  * @length: Length of the range to monitor
- * @mm: mm_काष्ठा to attach to
- * @ops: Interval notअगरier operations to be called on matching events
+ * @mm: mm_struct to attach to
+ * @ops: Interval notifier operations to be called on matching events
  *
- * This function subscribes the पूर्णांकerval notअगरier क्रम notअगरications from the
- * mm.  Upon वापस the ops related to mmu_पूर्णांकerval_notअगरier will be called
- * whenever an event that पूर्णांकersects with the given range occurs.
+ * This function subscribes the interval notifier for notifications from the
+ * mm.  Upon return the ops related to mmu_interval_notifier will be called
+ * whenever an event that intersects with the given range occurs.
  *
- * Upon वापस the range_notअगरier may not be present in the पूर्णांकerval tree yet.
- * The caller must use the normal पूर्णांकerval notअगरier पढ़ो flow via
- * mmu_पूर्णांकerval_पढ़ो_begin() to establish SPTEs क्रम this range.
+ * Upon return the range_notifier may not be present in the interval tree yet.
+ * The caller must use the normal interval notifier read flow via
+ * mmu_interval_read_begin() to establish SPTEs for this range.
  */
-पूर्णांक mmu_पूर्णांकerval_notअगरier_insert(काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub,
-				 काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
-				 अचिन्हित दीर्घ length,
-				 स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions;
-	पूर्णांक ret;
+int mmu_interval_notifier_insert(struct mmu_interval_notifier *interval_sub,
+				 struct mm_struct *mm, unsigned long start,
+				 unsigned long length,
+				 const struct mmu_interval_notifier_ops *ops)
+{
+	struct mmu_notifier_subscriptions *subscriptions;
+	int ret;
 
 	might_lock(&mm->mmap_lock);
 
-	subscriptions = smp_load_acquire(&mm->notअगरier_subscriptions);
-	अगर (!subscriptions || !subscriptions->has_itree) अणु
-		ret = mmu_notअगरier_रेजिस्टर(शून्य, mm);
-		अगर (ret)
-			वापस ret;
-		subscriptions = mm->notअगरier_subscriptions;
-	पूर्ण
-	वापस __mmu_पूर्णांकerval_notअगरier_insert(पूर्णांकerval_sub, mm, subscriptions,
+	subscriptions = smp_load_acquire(&mm->notifier_subscriptions);
+	if (!subscriptions || !subscriptions->has_itree) {
+		ret = mmu_notifier_register(NULL, mm);
+		if (ret)
+			return ret;
+		subscriptions = mm->notifier_subscriptions;
+	}
+	return __mmu_interval_notifier_insert(interval_sub, mm, subscriptions,
 					      start, length, ops);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_पूर्णांकerval_notअगरier_insert);
+}
+EXPORT_SYMBOL_GPL(mmu_interval_notifier_insert);
 
-पूर्णांक mmu_पूर्णांकerval_notअगरier_insert_locked(
-	काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub, काष्ठा mm_काष्ठा *mm,
-	अचिन्हित दीर्घ start, अचिन्हित दीर्घ length,
-	स्थिर काष्ठा mmu_पूर्णांकerval_notअगरier_ops *ops)
-अणु
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions =
-		mm->notअगरier_subscriptions;
-	पूर्णांक ret;
+int mmu_interval_notifier_insert_locked(
+	struct mmu_interval_notifier *interval_sub, struct mm_struct *mm,
+	unsigned long start, unsigned long length,
+	const struct mmu_interval_notifier_ops *ops)
+{
+	struct mmu_notifier_subscriptions *subscriptions =
+		mm->notifier_subscriptions;
+	int ret;
 
-	mmap_निश्चित_ग_लिखो_locked(mm);
+	mmap_assert_write_locked(mm);
 
-	अगर (!subscriptions || !subscriptions->has_itree) अणु
-		ret = __mmu_notअगरier_रेजिस्टर(शून्य, mm);
-		अगर (ret)
-			वापस ret;
-		subscriptions = mm->notअगरier_subscriptions;
-	पूर्ण
-	वापस __mmu_पूर्णांकerval_notअगरier_insert(पूर्णांकerval_sub, mm, subscriptions,
+	if (!subscriptions || !subscriptions->has_itree) {
+		ret = __mmu_notifier_register(NULL, mm);
+		if (ret)
+			return ret;
+		subscriptions = mm->notifier_subscriptions;
+	}
+	return __mmu_interval_notifier_insert(interval_sub, mm, subscriptions,
 					      start, length, ops);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_पूर्णांकerval_notअगरier_insert_locked);
+}
+EXPORT_SYMBOL_GPL(mmu_interval_notifier_insert_locked);
 
 /**
- * mmu_पूर्णांकerval_notअगरier_हटाओ - Remove a पूर्णांकerval notअगरier
- * @पूर्णांकerval_sub: Interval subscription to unरेजिस्टर
+ * mmu_interval_notifier_remove - Remove a interval notifier
+ * @interval_sub: Interval subscription to unregister
  *
- * This function must be paired with mmu_पूर्णांकerval_notअगरier_insert(). It cannot
+ * This function must be paired with mmu_interval_notifier_insert(). It cannot
  * be called from any ops callback.
  *
- * Once this वापसs ops callbacks are no दीर्घer running on other CPUs and
+ * Once this returns ops callbacks are no longer running on other CPUs and
  * will not be called in future.
  */
-व्योम mmu_पूर्णांकerval_notअगरier_हटाओ(काष्ठा mmu_पूर्णांकerval_notअगरier *पूर्णांकerval_sub)
-अणु
-	काष्ठा mm_काष्ठा *mm = पूर्णांकerval_sub->mm;
-	काष्ठा mmu_notअगरier_subscriptions *subscriptions =
-		mm->notअगरier_subscriptions;
-	अचिन्हित दीर्घ seq = 0;
+void mmu_interval_notifier_remove(struct mmu_interval_notifier *interval_sub)
+{
+	struct mm_struct *mm = interval_sub->mm;
+	struct mmu_notifier_subscriptions *subscriptions =
+		mm->notifier_subscriptions;
+	unsigned long seq = 0;
 
 	might_sleep();
 
 	spin_lock(&subscriptions->lock);
-	अगर (mn_itree_is_invalidating(subscriptions)) अणु
+	if (mn_itree_is_invalidating(subscriptions)) {
 		/*
-		 * हटाओ is being called after insert put this on the
-		 * deferred list, but beक्रमe the deferred list was processed.
+		 * remove is being called after insert put this on the
+		 * deferred list, but before the deferred list was processed.
 		 */
-		अगर (RB_EMPTY_NODE(&पूर्णांकerval_sub->पूर्णांकerval_tree.rb)) अणु
-			hlist_del(&पूर्णांकerval_sub->deferred_item);
-		पूर्ण अन्यथा अणु
-			hlist_add_head(&पूर्णांकerval_sub->deferred_item,
+		if (RB_EMPTY_NODE(&interval_sub->interval_tree.rb)) {
+			hlist_del(&interval_sub->deferred_item);
+		} else {
+			hlist_add_head(&interval_sub->deferred_item,
 				       &subscriptions->deferred_list);
 			seq = subscriptions->invalidate_seq;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		WARN_ON(RB_EMPTY_NODE(&पूर्णांकerval_sub->पूर्णांकerval_tree.rb));
-		पूर्णांकerval_tree_हटाओ(&पूर्णांकerval_sub->पूर्णांकerval_tree,
+		}
+	} else {
+		WARN_ON(RB_EMPTY_NODE(&interval_sub->interval_tree.rb));
+		interval_tree_remove(&interval_sub->interval_tree,
 				     &subscriptions->itree);
-	पूर्ण
+	}
 	spin_unlock(&subscriptions->lock);
 
 	/*
 	 * The possible sleep on progress in the invalidation requires the
 	 * caller not hold any locks held by invalidation callbacks.
 	 */
-	lock_map_acquire(&__mmu_notअगरier_invalidate_range_start_map);
-	lock_map_release(&__mmu_notअगरier_invalidate_range_start_map);
-	अगर (seq)
-		रुको_event(subscriptions->wq,
+	lock_map_acquire(&__mmu_notifier_invalidate_range_start_map);
+	lock_map_release(&__mmu_notifier_invalidate_range_start_map);
+	if (seq)
+		wait_event(subscriptions->wq,
 			   READ_ONCE(subscriptions->invalidate_seq) != seq);
 
-	/* pairs with mmgrab in mmu_पूर्णांकerval_notअगरier_insert() */
+	/* pairs with mmgrab in mmu_interval_notifier_insert() */
 	mmdrop(mm);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_पूर्णांकerval_notअगरier_हटाओ);
+}
+EXPORT_SYMBOL_GPL(mmu_interval_notifier_remove);
 
 /**
- * mmu_notअगरier_synchronize - Ensure all mmu_notअगरiers are मुक्तd
+ * mmu_notifier_synchronize - Ensure all mmu_notifiers are freed
  *
  * This function ensures that all outstanding async SRU work from
- * mmu_notअगरier_put() is completed. After it वापसs any mmu_notअगरier_ops
- * associated with an unused mmu_notअगरier will no दीर्घer be called.
+ * mmu_notifier_put() is completed. After it returns any mmu_notifier_ops
+ * associated with an unused mmu_notifier will no longer be called.
  *
- * Beक्रमe using the caller must ensure that all of its mmu_notअगरiers have been
- * fully released via mmu_notअगरier_put().
+ * Before using the caller must ensure that all of its mmu_notifiers have been
+ * fully released via mmu_notifier_put().
  *
- * Modules using the mmu_notअगरier_put() API should call this in their __निकास
- * function to aव्योम module unloading races.
+ * Modules using the mmu_notifier_put() API should call this in their __exit
+ * function to avoid module unloading races.
  */
-व्योम mmu_notअगरier_synchronize(व्योम)
-अणु
+void mmu_notifier_synchronize(void)
+{
 	synchronize_srcu(&srcu);
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_notअगरier_synchronize);
+}
+EXPORT_SYMBOL_GPL(mmu_notifier_synchronize);
 
 bool
-mmu_notअगरier_range_update_to_पढ़ो_only(स्थिर काष्ठा mmu_notअगरier_range *range)
-अणु
-	अगर (!range->vma || range->event != MMU_NOTIFY_PROTECTION_VMA)
-		वापस false;
-	/* Return true अगर the vma still have the पढ़ो flag set. */
-	वापस range->vma->vm_flags & VM_READ;
-पूर्ण
-EXPORT_SYMBOL_GPL(mmu_notअगरier_range_update_to_पढ़ो_only);
+mmu_notifier_range_update_to_read_only(const struct mmu_notifier_range *range)
+{
+	if (!range->vma || range->event != MMU_NOTIFY_PROTECTION_VMA)
+		return false;
+	/* Return true if the vma still have the read flag set. */
+	return range->vma->vm_flags & VM_READ;
+}
+EXPORT_SYMBOL_GPL(mmu_notifier_range_update_to_read_only);

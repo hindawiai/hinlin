@@ -1,74 +1,73 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/rhashtable.h>
-#समावेश <net/netfilter/nf_flow_table.h>
-#समावेश <net/netfilter/nf_tables.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/netfilter.h>
+#include <linux/rhashtable.h>
+#include <net/netfilter/nf_flow_table.h>
+#include <net/netfilter/nf_tables.h>
 
-अटल अचिन्हित पूर्णांक
-nf_flow_offload_inet_hook(व्योम *priv, काष्ठा sk_buff *skb,
-			  स्थिर काष्ठा nf_hook_state *state)
-अणु
-	चयन (skb->protocol) अणु
-	हाल htons(ETH_P_IP):
-		वापस nf_flow_offload_ip_hook(priv, skb, state);
-	हाल htons(ETH_P_IPV6):
-		वापस nf_flow_offload_ipv6_hook(priv, skb, state);
-	पूर्ण
+static unsigned int
+nf_flow_offload_inet_hook(void *priv, struct sk_buff *skb,
+			  const struct nf_hook_state *state)
+{
+	switch (skb->protocol) {
+	case htons(ETH_P_IP):
+		return nf_flow_offload_ip_hook(priv, skb, state);
+	case htons(ETH_P_IPV6):
+		return nf_flow_offload_ipv6_hook(priv, skb, state);
+	}
 
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 
-अटल पूर्णांक nf_flow_rule_route_inet(काष्ठा net *net,
-				   स्थिर काष्ठा flow_offload *flow,
-				   क्रमागत flow_offload_tuple_dir dir,
-				   काष्ठा nf_flow_rule *flow_rule)
-अणु
-	स्थिर काष्ठा flow_offload_tuple *flow_tuple = &flow->tuplehash[dir].tuple;
-	पूर्णांक err;
+static int nf_flow_rule_route_inet(struct net *net,
+				   const struct flow_offload *flow,
+				   enum flow_offload_tuple_dir dir,
+				   struct nf_flow_rule *flow_rule)
+{
+	const struct flow_offload_tuple *flow_tuple = &flow->tuplehash[dir].tuple;
+	int err;
 
-	चयन (flow_tuple->l3proto) अणु
-	हाल NFPROTO_IPV4:
+	switch (flow_tuple->l3proto) {
+	case NFPROTO_IPV4:
 		err = nf_flow_rule_route_ipv4(net, flow, dir, flow_rule);
-		अवरोध;
-	हाल NFPROTO_IPV6:
+		break;
+	case NFPROTO_IPV6:
 		err = nf_flow_rule_route_ipv6(net, flow, dir, flow_rule);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा nf_flowtable_type flowtable_inet = अणु
+static struct nf_flowtable_type flowtable_inet = {
 	.family		= NFPROTO_INET,
 	.init		= nf_flow_table_init,
 	.setup		= nf_flow_table_offload_setup,
 	.action		= nf_flow_rule_route_inet,
-	.मुक्त		= nf_flow_table_मुक्त,
+	.free		= nf_flow_table_free,
 	.hook		= nf_flow_offload_inet_hook,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nf_flow_inet_module_init(व्योम)
-अणु
-	nft_रेजिस्टर_flowtable_type(&flowtable_inet);
+static int __init nf_flow_inet_module_init(void)
+{
+	nft_register_flowtable_type(&flowtable_inet);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास nf_flow_inet_module_निकास(व्योम)
-अणु
-	nft_unरेजिस्टर_flowtable_type(&flowtable_inet);
-पूर्ण
+static void __exit nf_flow_inet_module_exit(void)
+{
+	nft_unregister_flowtable_type(&flowtable_inet);
+}
 
 module_init(nf_flow_inet_module_init);
-module_निकास(nf_flow_inet_module_निकास);
+module_exit(nf_flow_inet_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pablo Neira Ayuso <pablo@netfilter.org>");

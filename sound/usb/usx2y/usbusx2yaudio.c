@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *   US-X2Y AUDIO
  *   Copyright (c) 2002-2004 by Karsten Wiese
  *
  *   based on
  *
- *   (Tentative) USB Audio Driver क्रम ALSA
+ *   (Tentative) USB Audio Driver for ALSA
  *
  *   Main and PCM part
  *
@@ -14,840 +13,840 @@
  *
  *   Many codes borrowed from audio.c by 
  *	    Alan Cox (alan@lxorguk.ukuu.org.uk)
- *	    Thomas Sailer (sailer@अगरe.ee.ethz.ch)
+ *	    Thomas Sailer (sailer@ife.ee.ethz.ch)
  */
 
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <sound/core.h>
-#समावेश <sound/info.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश "usx2y.h"
-#समावेश "usbusx2y.h"
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/moduleparam.h>
+#include <sound/core.h>
+#include <sound/info.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include "usx2y.h"
+#include "usbusx2y.h"
 
-#घोषणा USX2Y_NRPACKS 4			/* Default value used क्रम nr of packs per urb.
+#define USX2Y_NRPACKS 4			/* Default value used for nr of packs per urb.
 					  1 to 4 have been tested ok on uhci.
 					  To use 3 on ohci, you'd need a patch:
-					  look क्रम "0000425-linux-2.6.9-rc4-mm1_ohci-hcd.patch.gz" on
+					  look for "0000425-linux-2.6.9-rc4-mm1_ohci-hcd.patch.gz" on
 					  "https://bugtrack.alsa-project.org/alsa-bug/bug_view_page.php?bug_id=0000425"
 					  .
-					  1, 2 and 4 work out of the box on ohci, अगर I recall correctly.
+					  1, 2 and 4 work out of the box on ohci, if I recall correctly.
 					  Bigger is safer operation,
 					  smaller gives lower latencies.
 					*/
-#घोषणा USX2Y_NRPACKS_VARIABLE y	/* If your प्रणाली works ok with this module's parameter
+#define USX2Y_NRPACKS_VARIABLE y	/* If your system works ok with this module's parameter
 					   nrpacks set to 1, you might as well comment 
-					   this #घोषणा out, and thereby produce smaller, faster code.
+					   this #define out, and thereby produce smaller, faster code.
 					   You'd also set USX2Y_NRPACKS to 1 then.
 					*/
 
-#अगर_घोषित USX2Y_NRPACKS_VARIABLE
- अटल पूर्णांक nrpacks = USX2Y_NRPACKS; /* number of packets per urb */
- #घोषणा  nr_of_packs() nrpacks
- module_param(nrpacks, पूर्णांक, 0444);
+#ifdef USX2Y_NRPACKS_VARIABLE
+ static int nrpacks = USX2Y_NRPACKS; /* number of packets per urb */
+ #define  nr_of_packs() nrpacks
+ module_param(nrpacks, int, 0444);
  MODULE_PARM_DESC(nrpacks, "Number of packets per URB.");
-#अन्यथा
- #घोषणा nr_of_packs() USX2Y_NRPACKS
-#पूर्ण_अगर
+#else
+ #define nr_of_packs() USX2Y_NRPACKS
+#endif
 
 
-अटल पूर्णांक usX2Y_urb_capt_retire(काष्ठा snd_usX2Y_substream *subs)
-अणु
-	काष्ठा urb	*urb = subs->completed_urb;
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
-	अचिन्हित अक्षर	*cp;
-	पूर्णांक 		i, len, lens = 0, hwptr_करोne = subs->hwptr_करोne;
-	काष्ठा usX2Ydev	*usX2Y = subs->usX2Y;
+static int usX2Y_urb_capt_retire(struct snd_usX2Y_substream *subs)
+{
+	struct urb	*urb = subs->completed_urb;
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
+	unsigned char	*cp;
+	int 		i, len, lens = 0, hwptr_done = subs->hwptr_done;
+	struct usX2Ydev	*usX2Y = subs->usX2Y;
 
-	क्रम (i = 0; i < nr_of_packs(); i++) अणु
-		cp = (अचिन्हित अक्षर*)urb->transfer_buffer + urb->iso_frame_desc[i].offset;
-		अगर (urb->iso_frame_desc[i].status) अणु /* active? hmm, skip this */
-			snd_prपूर्णांकk(KERN_ERR "active frame status %i. "
+	for (i = 0; i < nr_of_packs(); i++) {
+		cp = (unsigned char*)urb->transfer_buffer + urb->iso_frame_desc[i].offset;
+		if (urb->iso_frame_desc[i].status) { /* active? hmm, skip this */
+			snd_printk(KERN_ERR "active frame status %i. "
 				   "Most probably some hardware problem.\n",
 				   urb->iso_frame_desc[i].status);
-			वापस urb->iso_frame_desc[i].status;
-		पूर्ण
+			return urb->iso_frame_desc[i].status;
+		}
 		len = urb->iso_frame_desc[i].actual_length / usX2Y->stride;
-		अगर (! len) अणु
-			snd_prपूर्णांकd("0 == len ERROR!\n");
-			जारी;
-		पूर्ण
+		if (! len) {
+			snd_printd("0 == len ERROR!\n");
+			continue;
+		}
 
 		/* copy a data chunk */
-		अगर ((hwptr_करोne + len) > runसमय->buffer_size) अणु
-			पूर्णांक cnt = runसमय->buffer_size - hwptr_करोne;
-			पूर्णांक blen = cnt * usX2Y->stride;
-			स_नकल(runसमय->dma_area + hwptr_करोne * usX2Y->stride, cp, blen);
-			स_नकल(runसमय->dma_area, cp + blen, len * usX2Y->stride - blen);
-		पूर्ण अन्यथा अणु
-			स_नकल(runसमय->dma_area + hwptr_करोne * usX2Y->stride, cp,
+		if ((hwptr_done + len) > runtime->buffer_size) {
+			int cnt = runtime->buffer_size - hwptr_done;
+			int blen = cnt * usX2Y->stride;
+			memcpy(runtime->dma_area + hwptr_done * usX2Y->stride, cp, blen);
+			memcpy(runtime->dma_area, cp + blen, len * usX2Y->stride - blen);
+		} else {
+			memcpy(runtime->dma_area + hwptr_done * usX2Y->stride, cp,
 			       len * usX2Y->stride);
-		पूर्ण
+		}
 		lens += len;
-		अगर ((hwptr_करोne += len) >= runसमय->buffer_size)
-			hwptr_करोne -= runसमय->buffer_size;
-	पूर्ण
+		if ((hwptr_done += len) >= runtime->buffer_size)
+			hwptr_done -= runtime->buffer_size;
+	}
 
-	subs->hwptr_करोne = hwptr_करोne;
-	subs->transfer_करोne += lens;
-	/* update the poपूर्णांकer, call callback अगर necessary */
-	अगर (subs->transfer_करोne >= runसमय->period_size) अणु
-		subs->transfer_करोne -= runसमय->period_size;
+	subs->hwptr_done = hwptr_done;
+	subs->transfer_done += lens;
+	/* update the pointer, call callback if necessary */
+	if (subs->transfer_done >= runtime->period_size) {
+		subs->transfer_done -= runtime->period_size;
 		snd_pcm_period_elapsed(subs->pcm_substream);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 /*
- * prepare urb क्रम playback data pipe
+ * prepare urb for playback data pipe
  *
  * we copy the data directly from the pcm buffer.
  * the current position to be copied is held in hwptr field.
- * since a urb can handle only a single linear buffer, अगर the total
+ * since a urb can handle only a single linear buffer, if the total
  * transferred area overflows the buffer boundary, we cannot send
  * it directly from the buffer.  thus the data is once copied to
- * a temporary buffer and urb poपूर्णांकs to that.
+ * a temporary buffer and urb points to that.
  */
-अटल पूर्णांक usX2Y_urb_play_prepare(काष्ठा snd_usX2Y_substream *subs,
-				  काष्ठा urb *cap_urb,
-				  काष्ठा urb *urb)
-अणु
-	पूर्णांक count, counts, pack;
-	काष्ठा usX2Ydev *usX2Y = subs->usX2Y;
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
+static int usX2Y_urb_play_prepare(struct snd_usX2Y_substream *subs,
+				  struct urb *cap_urb,
+				  struct urb *urb)
+{
+	int count, counts, pack;
+	struct usX2Ydev *usX2Y = subs->usX2Y;
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
 
 	count = 0;
-	क्रम (pack = 0; pack <  nr_of_packs(); pack++) अणु
+	for (pack = 0; pack <  nr_of_packs(); pack++) {
 		/* calculate the size of a packet */
 		counts = cap_urb->iso_frame_desc[pack].actual_length / usX2Y->stride;
 		count += counts;
-		अगर (counts < 43 || counts > 50) अणु
-			snd_prपूर्णांकk(KERN_ERR "should not be here with counts=%i\n", counts);
-			वापस -EPIPE;
-		पूर्ण
+		if (counts < 43 || counts > 50) {
+			snd_printk(KERN_ERR "should not be here with counts=%i\n", counts);
+			return -EPIPE;
+		}
 		/* set up descriptor */
 		urb->iso_frame_desc[pack].offset = pack ?
 			urb->iso_frame_desc[pack - 1].offset +
 			urb->iso_frame_desc[pack - 1].length :
 			0;
 		urb->iso_frame_desc[pack].length = cap_urb->iso_frame_desc[pack].actual_length;
-	पूर्ण
-	अगर (atomic_पढ़ो(&subs->state) >= state_PRERUNNING)
-		अगर (subs->hwptr + count > runसमय->buffer_size) अणु
+	}
+	if (atomic_read(&subs->state) >= state_PRERUNNING)
+		if (subs->hwptr + count > runtime->buffer_size) {
 			/* err, the transferred area goes over buffer boundary.
 			 * copy the data to the temp buffer.
 			 */
-			पूर्णांक len;
-			len = runसमय->buffer_size - subs->hwptr;
-			urb->transfer_buffer = subs->पंचांगpbuf;
-			स_नकल(subs->पंचांगpbuf, runसमय->dma_area +
+			int len;
+			len = runtime->buffer_size - subs->hwptr;
+			urb->transfer_buffer = subs->tmpbuf;
+			memcpy(subs->tmpbuf, runtime->dma_area +
 			       subs->hwptr * usX2Y->stride, len * usX2Y->stride);
-			स_नकल(subs->पंचांगpbuf + len * usX2Y->stride,
-			       runसमय->dma_area, (count - len) * usX2Y->stride);
+			memcpy(subs->tmpbuf + len * usX2Y->stride,
+			       runtime->dma_area, (count - len) * usX2Y->stride);
 			subs->hwptr += count;
-			subs->hwptr -= runसमय->buffer_size;
-		पूर्ण अन्यथा अणु
-			/* set the buffer poपूर्णांकer */
-			urb->transfer_buffer = runसमय->dma_area + subs->hwptr * usX2Y->stride;
-			अगर ((subs->hwptr += count) >= runसमय->buffer_size)
-				subs->hwptr -= runसमय->buffer_size;
-		पूर्ण
-	अन्यथा
-		urb->transfer_buffer = subs->पंचांगpbuf;
+			subs->hwptr -= runtime->buffer_size;
+		} else {
+			/* set the buffer pointer */
+			urb->transfer_buffer = runtime->dma_area + subs->hwptr * usX2Y->stride;
+			if ((subs->hwptr += count) >= runtime->buffer_size)
+				subs->hwptr -= runtime->buffer_size;
+		}
+	else
+		urb->transfer_buffer = subs->tmpbuf;
 	urb->transfer_buffer_length = count * usX2Y->stride;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * process after playback data complete
  *
- * update the current position and call callback अगर a period is processed.
+ * update the current position and call callback if a period is processed.
  */
-अटल व्योम usX2Y_urb_play_retire(काष्ठा snd_usX2Y_substream *subs, काष्ठा urb *urb)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->pcm_substream->runसमय;
-	पूर्णांक		len = urb->actual_length / subs->usX2Y->stride;
+static void usX2Y_urb_play_retire(struct snd_usX2Y_substream *subs, struct urb *urb)
+{
+	struct snd_pcm_runtime *runtime = subs->pcm_substream->runtime;
+	int		len = urb->actual_length / subs->usX2Y->stride;
 
-	subs->transfer_करोne += len;
-	subs->hwptr_करोne +=  len;
-	अगर (subs->hwptr_करोne >= runसमय->buffer_size)
-		subs->hwptr_करोne -= runसमय->buffer_size;
-	अगर (subs->transfer_करोne >= runसमय->period_size) अणु
-		subs->transfer_करोne -= runसमय->period_size;
+	subs->transfer_done += len;
+	subs->hwptr_done +=  len;
+	if (subs->hwptr_done >= runtime->buffer_size)
+		subs->hwptr_done -= runtime->buffer_size;
+	if (subs->transfer_done >= runtime->period_size) {
+		subs->transfer_done -= runtime->period_size;
 		snd_pcm_period_elapsed(subs->pcm_substream);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक usX2Y_urb_submit(काष्ठा snd_usX2Y_substream *subs, काष्ठा urb *urb, पूर्णांक frame)
-अणु
-	पूर्णांक err;
-	अगर (!urb)
-		वापस -ENODEV;
-	urb->start_frame = (frame + NRURBS * nr_of_packs());  // let hcd करो rollover sanity checks
-	urb->hcpriv = शून्य;
-	urb->dev = subs->usX2Y->dev; /* we need to set this at each समय */
-	अगर ((err = usb_submit_urb(urb, GFP_ATOMIC)) < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "usb_submit_urb() returned %i\n", err);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int usX2Y_urb_submit(struct snd_usX2Y_substream *subs, struct urb *urb, int frame)
+{
+	int err;
+	if (!urb)
+		return -ENODEV;
+	urb->start_frame = (frame + NRURBS * nr_of_packs());  // let hcd do rollover sanity checks
+	urb->hcpriv = NULL;
+	urb->dev = subs->usX2Y->dev; /* we need to set this at each time */
+	if ((err = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
+		snd_printk(KERN_ERR "usb_submit_urb() returned %i\n", err);
+		return err;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक usX2Y_usbframe_complete(काष्ठा snd_usX2Y_substream *capsubs,
-					  काष्ठा snd_usX2Y_substream *playbacksubs,
-					  पूर्णांक frame)
-अणु
-	पूर्णांक err, state;
-	काष्ठा urb *urb = playbacksubs->completed_urb;
+static inline int usX2Y_usbframe_complete(struct snd_usX2Y_substream *capsubs,
+					  struct snd_usX2Y_substream *playbacksubs,
+					  int frame)
+{
+	int err, state;
+	struct urb *urb = playbacksubs->completed_urb;
 
-	state = atomic_पढ़ो(&playbacksubs->state);
-	अगर (शून्य != urb) अणु
-		अगर (state == state_RUNNING)
+	state = atomic_read(&playbacksubs->state);
+	if (NULL != urb) {
+		if (state == state_RUNNING)
 			usX2Y_urb_play_retire(playbacksubs, urb);
-		अन्यथा अगर (state >= state_PRERUNNING)
+		else if (state >= state_PRERUNNING)
 			atomic_inc(&playbacksubs->state);
-	पूर्ण अन्यथा अणु
-		चयन (state) अणु
-		हाल state_STARTING1:
+	} else {
+		switch (state) {
+		case state_STARTING1:
 			urb = playbacksubs->urb[0];
 			atomic_inc(&playbacksubs->state);
-			अवरोध;
-		हाल state_STARTING2:
+			break;
+		case state_STARTING2:
 			urb = playbacksubs->urb[1];
 			atomic_inc(&playbacksubs->state);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (urb) अणु
-		अगर ((err = usX2Y_urb_play_prepare(playbacksubs, capsubs->completed_urb, urb)) ||
-		    (err = usX2Y_urb_submit(playbacksubs, urb, frame))) अणु
-			वापस err;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
+	if (urb) {
+		if ((err = usX2Y_urb_play_prepare(playbacksubs, capsubs->completed_urb, urb)) ||
+		    (err = usX2Y_urb_submit(playbacksubs, urb, frame))) {
+			return err;
+		}
+	}
 
-	playbacksubs->completed_urb = शून्य;
+	playbacksubs->completed_urb = NULL;
 
-	state = atomic_पढ़ो(&capsubs->state);
-	अगर (state >= state_PREPARED) अणु
-		अगर (state == state_RUNNING) अणु
-			अगर ((err = usX2Y_urb_capt_retire(capsubs)))
-				वापस err;
-		पूर्ण अन्यथा अगर (state >= state_PRERUNNING)
+	state = atomic_read(&capsubs->state);
+	if (state >= state_PREPARED) {
+		if (state == state_RUNNING) {
+			if ((err = usX2Y_urb_capt_retire(capsubs)))
+				return err;
+		} else if (state >= state_PRERUNNING)
 			atomic_inc(&capsubs->state);
-		अगर ((err = usX2Y_urb_submit(capsubs, capsubs->completed_urb, frame)))
-			वापस err;
-	पूर्ण
-	capsubs->completed_urb = शून्य;
-	वापस 0;
-पूर्ण
+		if ((err = usX2Y_urb_submit(capsubs, capsubs->completed_urb, frame)))
+			return err;
+	}
+	capsubs->completed_urb = NULL;
+	return 0;
+}
 
 
-अटल व्योम usX2Y_clients_stop(काष्ठा usX2Ydev *usX2Y)
-अणु
-	पूर्णांक s, u;
+static void usX2Y_clients_stop(struct usX2Ydev *usX2Y)
+{
+	int s, u;
 
-	क्रम (s = 0; s < 4; s++) अणु
-		काष्ठा snd_usX2Y_substream *subs = usX2Y->subs[s];
-		अगर (subs) अणु
-			snd_prपूर्णांकdd("%i %p state=%i\n", s, subs, atomic_पढ़ो(&subs->state));
+	for (s = 0; s < 4; s++) {
+		struct snd_usX2Y_substream *subs = usX2Y->subs[s];
+		if (subs) {
+			snd_printdd("%i %p state=%i\n", s, subs, atomic_read(&subs->state));
 			atomic_set(&subs->state, state_STOPPED);
-		पूर्ण
-	पूर्ण
-	क्रम (s = 0; s < 4; s++) अणु
-		काष्ठा snd_usX2Y_substream *subs = usX2Y->subs[s];
-		अगर (subs) अणु
-			अगर (atomic_पढ़ो(&subs->state) >= state_PRERUNNING)
+		}
+	}
+	for (s = 0; s < 4; s++) {
+		struct snd_usX2Y_substream *subs = usX2Y->subs[s];
+		if (subs) {
+			if (atomic_read(&subs->state) >= state_PRERUNNING)
 				snd_pcm_stop_xrun(subs->pcm_substream);
-			क्रम (u = 0; u < NRURBS; u++) अणु
-				काष्ठा urb *urb = subs->urb[u];
-				अगर (शून्य != urb)
-					snd_prपूर्णांकdd("%i status=%i start_frame=%i\n",
+			for (u = 0; u < NRURBS; u++) {
+				struct urb *urb = subs->urb[u];
+				if (NULL != urb)
+					snd_printdd("%i status=%i start_frame=%i\n",
 						    u, urb->status, urb->start_frame);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	usX2Y->prepare_subs = शून्य;
-	wake_up(&usX2Y->prepare_रुको_queue);
-पूर्ण
+			}
+		}
+	}
+	usX2Y->prepare_subs = NULL;
+	wake_up(&usX2Y->prepare_wait_queue);
+}
 
-अटल व्योम usX2Y_error_urb_status(काष्ठा usX2Ydev *usX2Y,
-				   काष्ठा snd_usX2Y_substream *subs, काष्ठा urb *urb)
-अणु
-	snd_prपूर्णांकk(KERN_ERR "ep=%i stalled with status=%i\n", subs->endpoपूर्णांक, urb->status);
+static void usX2Y_error_urb_status(struct usX2Ydev *usX2Y,
+				   struct snd_usX2Y_substream *subs, struct urb *urb)
+{
+	snd_printk(KERN_ERR "ep=%i stalled with status=%i\n", subs->endpoint, urb->status);
 	urb->status = 0;
 	usX2Y_clients_stop(usX2Y);
-पूर्ण
+}
 
-अटल व्योम i_usX2Y_urb_complete(काष्ठा urb *urb)
-अणु
-	काष्ठा snd_usX2Y_substream *subs = urb->context;
-	काष्ठा usX2Ydev *usX2Y = subs->usX2Y;
+static void i_usX2Y_urb_complete(struct urb *urb)
+{
+	struct snd_usX2Y_substream *subs = urb->context;
+	struct usX2Ydev *usX2Y = subs->usX2Y;
 
-	अगर (unlikely(atomic_पढ़ो(&subs->state) < state_PREPARED)) अणु
-		snd_prपूर्णांकdd("hcd_frame=%i ep=%i%s status=%i start_frame=%i\n",
+	if (unlikely(atomic_read(&subs->state) < state_PREPARED)) {
+		snd_printdd("hcd_frame=%i ep=%i%s status=%i start_frame=%i\n",
 			    usb_get_current_frame_number(usX2Y->dev),
-			    subs->endpoपूर्णांक, usb_pipein(urb->pipe) ? "in" : "out",
+			    subs->endpoint, usb_pipein(urb->pipe) ? "in" : "out",
 			    urb->status, urb->start_frame);
-		वापस;
-	पूर्ण
-	अगर (unlikely(urb->status)) अणु
+		return;
+	}
+	if (unlikely(urb->status)) {
 		usX2Y_error_urb_status(usX2Y, subs, urb);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	subs->completed_urb = urb;
 
-	अणु
-		काष्ठा snd_usX2Y_substream *capsubs = usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE],
+	{
+		struct snd_usX2Y_substream *capsubs = usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE],
 			*playbacksubs = usX2Y->subs[SNDRV_PCM_STREAM_PLAYBACK];
-		अगर (capsubs->completed_urb &&
-		    atomic_पढ़ो(&capsubs->state) >= state_PREPARED &&
+		if (capsubs->completed_urb &&
+		    atomic_read(&capsubs->state) >= state_PREPARED &&
 		    (playbacksubs->completed_urb ||
-		     atomic_पढ़ो(&playbacksubs->state) < state_PREPARED)) अणु
-			अगर (!usX2Y_usbframe_complete(capsubs, playbacksubs, urb->start_frame))
-				usX2Y->रुको_iso_frame += nr_of_packs();
-			अन्यथा अणु
-				snd_prपूर्णांकdd("\n");
+		     atomic_read(&playbacksubs->state) < state_PREPARED)) {
+			if (!usX2Y_usbframe_complete(capsubs, playbacksubs, urb->start_frame))
+				usX2Y->wait_iso_frame += nr_of_packs();
+			else {
+				snd_printdd("\n");
 				usX2Y_clients_stop(usX2Y);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम usX2Y_urbs_set_complete(काष्ठा usX2Ydev * usX2Y,
-				    व्योम (*complete)(काष्ठा urb *))
-अणु
-	पूर्णांक s, u;
-	क्रम (s = 0; s < 4; s++) अणु
-		काष्ठा snd_usX2Y_substream *subs = usX2Y->subs[s];
-		अगर (शून्य != subs)
-			क्रम (u = 0; u < NRURBS; u++) अणु
-				काष्ठा urb * urb = subs->urb[u];
-				अगर (शून्य != urb)
+static void usX2Y_urbs_set_complete(struct usX2Ydev * usX2Y,
+				    void (*complete)(struct urb *))
+{
+	int s, u;
+	for (s = 0; s < 4; s++) {
+		struct snd_usX2Y_substream *subs = usX2Y->subs[s];
+		if (NULL != subs)
+			for (u = 0; u < NRURBS; u++) {
+				struct urb * urb = subs->urb[u];
+				if (NULL != urb)
 					urb->complete = complete;
-			पूर्ण
-	पूर्ण
-पूर्ण
+			}
+	}
+}
 
-अटल व्योम usX2Y_subs_startup_finish(काष्ठा usX2Ydev * usX2Y)
-अणु
+static void usX2Y_subs_startup_finish(struct usX2Ydev * usX2Y)
+{
 	usX2Y_urbs_set_complete(usX2Y, i_usX2Y_urb_complete);
-	usX2Y->prepare_subs = शून्य;
-पूर्ण
+	usX2Y->prepare_subs = NULL;
+}
 
-अटल व्योम i_usX2Y_subs_startup(काष्ठा urb *urb)
-अणु
-	काष्ठा snd_usX2Y_substream *subs = urb->context;
-	काष्ठा usX2Ydev *usX2Y = subs->usX2Y;
-	काष्ठा snd_usX2Y_substream *prepare_subs = usX2Y->prepare_subs;
-	अगर (शून्य != prepare_subs)
-		अगर (urb->start_frame == prepare_subs->urb[0]->start_frame) अणु
+static void i_usX2Y_subs_startup(struct urb *urb)
+{
+	struct snd_usX2Y_substream *subs = urb->context;
+	struct usX2Ydev *usX2Y = subs->usX2Y;
+	struct snd_usX2Y_substream *prepare_subs = usX2Y->prepare_subs;
+	if (NULL != prepare_subs)
+		if (urb->start_frame == prepare_subs->urb[0]->start_frame) {
 			usX2Y_subs_startup_finish(usX2Y);
 			atomic_inc(&prepare_subs->state);
-			wake_up(&usX2Y->prepare_रुको_queue);
-		पूर्ण
+			wake_up(&usX2Y->prepare_wait_queue);
+		}
 
 	i_usX2Y_urb_complete(urb);
-पूर्ण
+}
 
-अटल व्योम usX2Y_subs_prepare(काष्ठा snd_usX2Y_substream *subs)
-अणु
-	snd_prपूर्णांकdd("usX2Y_substream_prepare(%p) ep=%i urb0=%p urb1=%p\n",
-		    subs, subs->endpoपूर्णांक, subs->urb[0], subs->urb[1]);
-	/* reset the poपूर्णांकer */
+static void usX2Y_subs_prepare(struct snd_usX2Y_substream *subs)
+{
+	snd_printdd("usX2Y_substream_prepare(%p) ep=%i urb0=%p urb1=%p\n",
+		    subs, subs->endpoint, subs->urb[0], subs->urb[1]);
+	/* reset the pointer */
 	subs->hwptr = 0;
-	subs->hwptr_करोne = 0;
-	subs->transfer_करोne = 0;
-पूर्ण
+	subs->hwptr_done = 0;
+	subs->transfer_done = 0;
+}
 
 
-अटल व्योम usX2Y_urb_release(काष्ठा urb **urb, पूर्णांक मुक्त_tb)
-अणु
-	अगर (*urb) अणु
-		usb_समाप्त_urb(*urb);
-		अगर (मुक्त_tb)
-			kमुक्त((*urb)->transfer_buffer);
-		usb_मुक्त_urb(*urb);
-		*urb = शून्य;
-	पूर्ण
-पूर्ण
+static void usX2Y_urb_release(struct urb **urb, int free_tb)
+{
+	if (*urb) {
+		usb_kill_urb(*urb);
+		if (free_tb)
+			kfree((*urb)->transfer_buffer);
+		usb_free_urb(*urb);
+		*urb = NULL;
+	}
+}
 /*
  * release a substreams urbs
  */
-अटल व्योम usX2Y_urbs_release(काष्ठा snd_usX2Y_substream *subs)
-अणु
-	पूर्णांक i;
-	snd_prपूर्णांकdd("usX2Y_urbs_release() %i\n", subs->endpoपूर्णांक);
-	क्रम (i = 0; i < NRURBS; i++)
+static void usX2Y_urbs_release(struct snd_usX2Y_substream *subs)
+{
+	int i;
+	snd_printdd("usX2Y_urbs_release() %i\n", subs->endpoint);
+	for (i = 0; i < NRURBS; i++)
 		usX2Y_urb_release(subs->urb + i,
 				  subs != subs->usX2Y->subs[SNDRV_PCM_STREAM_PLAYBACK]);
 
-	kमुक्त(subs->पंचांगpbuf);
-	subs->पंचांगpbuf = शून्य;
-पूर्ण
+	kfree(subs->tmpbuf);
+	subs->tmpbuf = NULL;
+}
 /*
  * initialize a substream's urbs
  */
-अटल पूर्णांक usX2Y_urbs_allocate(काष्ठा snd_usX2Y_substream *subs)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक pipe;
-	पूर्णांक is_playback = subs == subs->usX2Y->subs[SNDRV_PCM_STREAM_PLAYBACK];
-	काष्ठा usb_device *dev = subs->usX2Y->dev;
+static int usX2Y_urbs_allocate(struct snd_usX2Y_substream *subs)
+{
+	int i;
+	unsigned int pipe;
+	int is_playback = subs == subs->usX2Y->subs[SNDRV_PCM_STREAM_PLAYBACK];
+	struct usb_device *dev = subs->usX2Y->dev;
 
-	pipe = is_playback ? usb_sndisocpipe(dev, subs->endpoपूर्णांक) :
-			usb_rcvisocpipe(dev, subs->endpoपूर्णांक);
+	pipe = is_playback ? usb_sndisocpipe(dev, subs->endpoint) :
+			usb_rcvisocpipe(dev, subs->endpoint);
 	subs->maxpacksize = usb_maxpacket(dev, pipe, is_playback);
-	अगर (!subs->maxpacksize)
-		वापस -EINVAL;
+	if (!subs->maxpacksize)
+		return -EINVAL;
 
-	अगर (is_playback && शून्य == subs->पंचांगpbuf) अणु	/* allocate a temporary buffer क्रम playback */
-		subs->पंचांगpbuf = kसुस्मृति(nr_of_packs(), subs->maxpacksize, GFP_KERNEL);
-		अगर (!subs->पंचांगpbuf)
-			वापस -ENOMEM;
-	पूर्ण
+	if (is_playback && NULL == subs->tmpbuf) {	/* allocate a temporary buffer for playback */
+		subs->tmpbuf = kcalloc(nr_of_packs(), subs->maxpacksize, GFP_KERNEL);
+		if (!subs->tmpbuf)
+			return -ENOMEM;
+	}
 	/* allocate and initialize data urbs */
-	क्रम (i = 0; i < NRURBS; i++) अणु
-		काष्ठा urb **purb = subs->urb + i;
-		अगर (*purb) अणु
-			usb_समाप्त_urb(*purb);
-			जारी;
-		पूर्ण
+	for (i = 0; i < NRURBS; i++) {
+		struct urb **purb = subs->urb + i;
+		if (*purb) {
+			usb_kill_urb(*purb);
+			continue;
+		}
 		*purb = usb_alloc_urb(nr_of_packs(), GFP_KERNEL);
-		अगर (शून्य == *purb) अणु
+		if (NULL == *purb) {
 			usX2Y_urbs_release(subs);
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (!is_playback && !(*purb)->transfer_buffer) अणु
+			return -ENOMEM;
+		}
+		if (!is_playback && !(*purb)->transfer_buffer) {
 			/* allocate a capture buffer per urb */
 			(*purb)->transfer_buffer =
-				kदो_स्मृति_array(subs->maxpacksize,
+				kmalloc_array(subs->maxpacksize,
 					      nr_of_packs(), GFP_KERNEL);
-			अगर (शून्य == (*purb)->transfer_buffer) अणु
+			if (NULL == (*purb)->transfer_buffer) {
 				usX2Y_urbs_release(subs);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+				return -ENOMEM;
+			}
+		}
 		(*purb)->dev = dev;
 		(*purb)->pipe = pipe;
 		(*purb)->number_of_packets = nr_of_packs();
 		(*purb)->context = subs;
-		(*purb)->पूर्णांकerval = 1;
+		(*purb)->interval = 1;
 		(*purb)->complete = i_usX2Y_subs_startup;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम usX2Y_subs_startup(काष्ठा snd_usX2Y_substream *subs)
-अणु
-	काष्ठा usX2Ydev *usX2Y = subs->usX2Y;
+static void usX2Y_subs_startup(struct snd_usX2Y_substream *subs)
+{
+	struct usX2Ydev *usX2Y = subs->usX2Y;
 	usX2Y->prepare_subs = subs;
 	subs->urb[0]->start_frame = -1;
 	wmb();
 	usX2Y_urbs_set_complete(usX2Y, i_usX2Y_subs_startup);
-पूर्ण
+}
 
-अटल पूर्णांक usX2Y_urbs_start(काष्ठा snd_usX2Y_substream *subs)
-अणु
-	पूर्णांक i, err;
-	काष्ठा usX2Ydev *usX2Y = subs->usX2Y;
+static int usX2Y_urbs_start(struct snd_usX2Y_substream *subs)
+{
+	int i, err;
+	struct usX2Ydev *usX2Y = subs->usX2Y;
 
-	अगर ((err = usX2Y_urbs_allocate(subs)) < 0)
-		वापस err;
-	subs->completed_urb = शून्य;
-	क्रम (i = 0; i < 4; i++) अणु
-		काष्ठा snd_usX2Y_substream *subs = usX2Y->subs[i];
-		अगर (subs != शून्य && atomic_पढ़ो(&subs->state) >= state_PREPARED)
-			जाओ start;
-	पूर्ण
+	if ((err = usX2Y_urbs_allocate(subs)) < 0)
+		return err;
+	subs->completed_urb = NULL;
+	for (i = 0; i < 4; i++) {
+		struct snd_usX2Y_substream *subs = usX2Y->subs[i];
+		if (subs != NULL && atomic_read(&subs->state) >= state_PREPARED)
+			goto start;
+	}
 
  start:
 	usX2Y_subs_startup(subs);
-	क्रम (i = 0; i < NRURBS; i++) अणु
-		काष्ठा urb *urb = subs->urb[i];
-		अगर (usb_pipein(urb->pipe)) अणु
-			अचिन्हित दीर्घ pack;
-			अगर (0 == i)
+	for (i = 0; i < NRURBS; i++) {
+		struct urb *urb = subs->urb[i];
+		if (usb_pipein(urb->pipe)) {
+			unsigned long pack;
+			if (0 == i)
 				atomic_set(&subs->state, state_STARTING3);
 			urb->dev = usX2Y->dev;
-			क्रम (pack = 0; pack < nr_of_packs(); pack++) अणु
+			for (pack = 0; pack < nr_of_packs(); pack++) {
 				urb->iso_frame_desc[pack].offset = subs->maxpacksize * pack;
 				urb->iso_frame_desc[pack].length = subs->maxpacksize;
-			पूर्ण
+			}
 			urb->transfer_buffer_length = subs->maxpacksize * nr_of_packs(); 
-			अगर ((err = usb_submit_urb(urb, GFP_ATOMIC)) < 0) अणु
-				snd_prपूर्णांकk (KERN_ERR "cannot submit datapipe for urb %d, err = %d\n", i, err);
+			if ((err = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
+				snd_printk (KERN_ERR "cannot submit datapipe for urb %d, err = %d\n", i, err);
 				err = -EPIPE;
-				जाओ cleanup;
-			पूर्ण अन्यथा
-				अगर (i == 0)
-					usX2Y->रुको_iso_frame = urb->start_frame;
+				goto cleanup;
+			} else
+				if (i == 0)
+					usX2Y->wait_iso_frame = urb->start_frame;
 			urb->transfer_flags = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			atomic_set(&subs->state, state_STARTING1);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	err = 0;
-	रुको_event(usX2Y->prepare_रुको_queue, शून्य == usX2Y->prepare_subs);
-	अगर (atomic_पढ़ो(&subs->state) != state_PREPARED)
+	wait_event(usX2Y->prepare_wait_queue, NULL == usX2Y->prepare_subs);
+	if (atomic_read(&subs->state) != state_PREPARED)
 		err = -EPIPE;
 
  cleanup:
-	अगर (err) अणु
+	if (err) {
 		usX2Y_subs_startup_finish(usX2Y);
 		usX2Y_clients_stop(usX2Y);		// something is completely wroong > stop evrything
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /*
- * वापस the current pcm poपूर्णांकer.  just वापस the hwptr_करोne value.
+ * return the current pcm pointer.  just return the hwptr_done value.
  */
-अटल snd_pcm_uframes_t snd_usX2Y_pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usX2Y_substream *subs = substream->runसमय->निजी_data;
-	वापस subs->hwptr_करोne;
-पूर्ण
+static snd_pcm_uframes_t snd_usX2Y_pcm_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_usX2Y_substream *subs = substream->runtime->private_data;
+	return subs->hwptr_done;
+}
 /*
  * start/stop substream
  */
-अटल पूर्णांक snd_usX2Y_pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_usX2Y_substream *subs = substream->runसमय->निजी_data;
+static int snd_usX2Y_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+{
+	struct snd_usX2Y_substream *subs = substream->runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-		snd_prपूर्णांकdd("snd_usX2Y_pcm_trigger(START)\n");
-		अगर (atomic_पढ़ो(&subs->state) == state_PREPARED &&
-		    atomic_पढ़ो(&subs->usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE]->state) >= state_PREPARED) अणु
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+		snd_printdd("snd_usX2Y_pcm_trigger(START)\n");
+		if (atomic_read(&subs->state) == state_PREPARED &&
+		    atomic_read(&subs->usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE]->state) >= state_PREPARED) {
 			atomic_set(&subs->state, state_PRERUNNING);
-		पूर्ण अन्यथा अणु
-			snd_prपूर्णांकdd("\n");
-			वापस -EPIPE;
-		पूर्ण
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-		snd_prपूर्णांकdd("snd_usX2Y_pcm_trigger(STOP)\n");
-		अगर (atomic_पढ़ो(&subs->state) >= state_PRERUNNING)
+		} else {
+			snd_printdd("\n");
+			return -EPIPE;
+		}
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+		snd_printdd("snd_usX2Y_pcm_trigger(STOP)\n");
+		if (atomic_read(&subs->state) >= state_PRERUNNING)
 			atomic_set(&subs->state, state_PREPARED);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
 
 /*
  * allocate a buffer, setup samplerate
  *
  * so far we use a physically linear buffer although packetize transfer
- * करोesn't need a continuous area.
- * अगर sg buffer is supported on the later version of alsa, we'll follow
+ * doesn't need a continuous area.
+ * if sg buffer is supported on the later version of alsa, we'll follow
  * that.
  */
-अटल स्थिर काष्ठा s_c2
-अणु
-	अक्षर c1, c2;
-पूर्ण
+static const struct s_c2
+{
+	char c1, c2;
+}
 	SetRate44100[] =
-अणु
-	अणु 0x14, 0x08पूर्ण,	// this line sets 44100, well actually a little less
-	अणु 0x18, 0x40पूर्ण,	// only tascam / frontier design knows the further lines .......
-	अणु 0x18, 0x42पूर्ण,
-	अणु 0x18, 0x45पूर्ण,
-	अणु 0x18, 0x46पूर्ण,
-	अणु 0x18, 0x48पूर्ण,
-	अणु 0x18, 0x4Aपूर्ण,
-	अणु 0x18, 0x4Cपूर्ण,
-	अणु 0x18, 0x4Eपूर्ण,
-	अणु 0x18, 0x50पूर्ण,
-	अणु 0x18, 0x52पूर्ण,
-	अणु 0x18, 0x54पूर्ण,
-	अणु 0x18, 0x56पूर्ण,
-	अणु 0x18, 0x58पूर्ण,
-	अणु 0x18, 0x5Aपूर्ण,
-	अणु 0x18, 0x5Cपूर्ण,
-	अणु 0x18, 0x5Eपूर्ण,
-	अणु 0x18, 0x60पूर्ण,
-	अणु 0x18, 0x62पूर्ण,
-	अणु 0x18, 0x64पूर्ण,
-	अणु 0x18, 0x66पूर्ण,
-	अणु 0x18, 0x68पूर्ण,
-	अणु 0x18, 0x6Aपूर्ण,
-	अणु 0x18, 0x6Cपूर्ण,
-	अणु 0x18, 0x6Eपूर्ण,
-	अणु 0x18, 0x70पूर्ण,
-	अणु 0x18, 0x72पूर्ण,
-	अणु 0x18, 0x74पूर्ण,
-	अणु 0x18, 0x76पूर्ण,
-	अणु 0x18, 0x78पूर्ण,
-	अणु 0x18, 0x7Aपूर्ण,
-	अणु 0x18, 0x7Cपूर्ण,
-	अणु 0x18, 0x7Eपूर्ण
-पूर्ण;
-अटल स्थिर काष्ठा s_c2 SetRate48000[] =
-अणु
-	अणु 0x14, 0x09पूर्ण,	// this line sets 48000, well actually a little less
-	अणु 0x18, 0x40पूर्ण,	// only tascam / frontier design knows the further lines .......
-	अणु 0x18, 0x42पूर्ण,
-	अणु 0x18, 0x45पूर्ण,
-	अणु 0x18, 0x46पूर्ण,
-	अणु 0x18, 0x48पूर्ण,
-	अणु 0x18, 0x4Aपूर्ण,
-	अणु 0x18, 0x4Cपूर्ण,
-	अणु 0x18, 0x4Eपूर्ण,
-	अणु 0x18, 0x50पूर्ण,
-	अणु 0x18, 0x52पूर्ण,
-	अणु 0x18, 0x54पूर्ण,
-	अणु 0x18, 0x56पूर्ण,
-	अणु 0x18, 0x58पूर्ण,
-	अणु 0x18, 0x5Aपूर्ण,
-	अणु 0x18, 0x5Cपूर्ण,
-	अणु 0x18, 0x5Eपूर्ण,
-	अणु 0x18, 0x60पूर्ण,
-	अणु 0x18, 0x62पूर्ण,
-	अणु 0x18, 0x64पूर्ण,
-	अणु 0x18, 0x66पूर्ण,
-	अणु 0x18, 0x68पूर्ण,
-	अणु 0x18, 0x6Aपूर्ण,
-	अणु 0x18, 0x6Cपूर्ण,
-	अणु 0x18, 0x6Eपूर्ण,
-	अणु 0x18, 0x70पूर्ण,
-	अणु 0x18, 0x73पूर्ण,
-	अणु 0x18, 0x74पूर्ण,
-	अणु 0x18, 0x76पूर्ण,
-	अणु 0x18, 0x78पूर्ण,
-	अणु 0x18, 0x7Aपूर्ण,
-	अणु 0x18, 0x7Cपूर्ण,
-	अणु 0x18, 0x7Eपूर्ण
-पूर्ण;
-#घोषणा NOOF_SETRATE_URBS ARRAY_SIZE(SetRate48000)
+{
+	{ 0x14, 0x08},	// this line sets 44100, well actually a little less
+	{ 0x18, 0x40},	// only tascam / frontier design knows the further lines .......
+	{ 0x18, 0x42},
+	{ 0x18, 0x45},
+	{ 0x18, 0x46},
+	{ 0x18, 0x48},
+	{ 0x18, 0x4A},
+	{ 0x18, 0x4C},
+	{ 0x18, 0x4E},
+	{ 0x18, 0x50},
+	{ 0x18, 0x52},
+	{ 0x18, 0x54},
+	{ 0x18, 0x56},
+	{ 0x18, 0x58},
+	{ 0x18, 0x5A},
+	{ 0x18, 0x5C},
+	{ 0x18, 0x5E},
+	{ 0x18, 0x60},
+	{ 0x18, 0x62},
+	{ 0x18, 0x64},
+	{ 0x18, 0x66},
+	{ 0x18, 0x68},
+	{ 0x18, 0x6A},
+	{ 0x18, 0x6C},
+	{ 0x18, 0x6E},
+	{ 0x18, 0x70},
+	{ 0x18, 0x72},
+	{ 0x18, 0x74},
+	{ 0x18, 0x76},
+	{ 0x18, 0x78},
+	{ 0x18, 0x7A},
+	{ 0x18, 0x7C},
+	{ 0x18, 0x7E}
+};
+static const struct s_c2 SetRate48000[] =
+{
+	{ 0x14, 0x09},	// this line sets 48000, well actually a little less
+	{ 0x18, 0x40},	// only tascam / frontier design knows the further lines .......
+	{ 0x18, 0x42},
+	{ 0x18, 0x45},
+	{ 0x18, 0x46},
+	{ 0x18, 0x48},
+	{ 0x18, 0x4A},
+	{ 0x18, 0x4C},
+	{ 0x18, 0x4E},
+	{ 0x18, 0x50},
+	{ 0x18, 0x52},
+	{ 0x18, 0x54},
+	{ 0x18, 0x56},
+	{ 0x18, 0x58},
+	{ 0x18, 0x5A},
+	{ 0x18, 0x5C},
+	{ 0x18, 0x5E},
+	{ 0x18, 0x60},
+	{ 0x18, 0x62},
+	{ 0x18, 0x64},
+	{ 0x18, 0x66},
+	{ 0x18, 0x68},
+	{ 0x18, 0x6A},
+	{ 0x18, 0x6C},
+	{ 0x18, 0x6E},
+	{ 0x18, 0x70},
+	{ 0x18, 0x73},
+	{ 0x18, 0x74},
+	{ 0x18, 0x76},
+	{ 0x18, 0x78},
+	{ 0x18, 0x7A},
+	{ 0x18, 0x7C},
+	{ 0x18, 0x7E}
+};
+#define NOOF_SETRATE_URBS ARRAY_SIZE(SetRate48000)
 
-अटल व्योम i_usX2Y_04Int(काष्ठा urb *urb)
-अणु
-	काष्ठा usX2Ydev *usX2Y = urb->context;
+static void i_usX2Y_04Int(struct urb *urb)
+{
+	struct usX2Ydev *usX2Y = urb->context;
 	
-	अगर (urb->status)
-		snd_prपूर्णांकk(KERN_ERR "snd_usX2Y_04Int() urb->status=%i\n", urb->status);
-	अगर (0 == --usX2Y->US04->len)
+	if (urb->status)
+		snd_printk(KERN_ERR "snd_usX2Y_04Int() urb->status=%i\n", urb->status);
+	if (0 == --usX2Y->US04->len)
 		wake_up(&usX2Y->In04WaitQueue);
-पूर्ण
+}
 
-अटल पूर्णांक usX2Y_rate_set(काष्ठा usX2Ydev *usX2Y, पूर्णांक rate)
-अणु
-	पूर्णांक			err = 0, i;
-	काष्ठा snd_usX2Y_urbSeq	*us = शून्य;
-	पूर्णांक			*usbdata = शून्य;
-	स्थिर काष्ठा s_c2	*ra = rate == 48000 ? SetRate48000 : SetRate44100;
+static int usX2Y_rate_set(struct usX2Ydev *usX2Y, int rate)
+{
+	int			err = 0, i;
+	struct snd_usX2Y_urbSeq	*us = NULL;
+	int			*usbdata = NULL;
+	const struct s_c2	*ra = rate == 48000 ? SetRate48000 : SetRate44100;
 
-	अगर (usX2Y->rate != rate) अणु
-		us = kzalloc(माप(*us) + माप(काष्ठा urb*) * NOOF_SETRATE_URBS, GFP_KERNEL);
-		अगर (शून्य == us) अणु
+	if (usX2Y->rate != rate) {
+		us = kzalloc(sizeof(*us) + sizeof(struct urb*) * NOOF_SETRATE_URBS, GFP_KERNEL);
+		if (NULL == us) {
 			err = -ENOMEM;
-			जाओ cleanup;
-		पूर्ण
-		usbdata = kदो_स्मृति_array(NOOF_SETRATE_URBS, माप(पूर्णांक),
+			goto cleanup;
+		}
+		usbdata = kmalloc_array(NOOF_SETRATE_URBS, sizeof(int),
 					GFP_KERNEL);
-		अगर (शून्य == usbdata) अणु
+		if (NULL == usbdata) {
 			err = -ENOMEM;
-			जाओ cleanup;
-		पूर्ण
-		क्रम (i = 0; i < NOOF_SETRATE_URBS; ++i) अणु
-			अगर (शून्य == (us->urb[i] = usb_alloc_urb(0, GFP_KERNEL))) अणु
+			goto cleanup;
+		}
+		for (i = 0; i < NOOF_SETRATE_URBS; ++i) {
+			if (NULL == (us->urb[i] = usb_alloc_urb(0, GFP_KERNEL))) {
 				err = -ENOMEM;
-				जाओ cleanup;
-			पूर्ण
-			((अक्षर*)(usbdata + i))[0] = ra[i].c1;
-			((अक्षर*)(usbdata + i))[1] = ra[i].c2;
+				goto cleanup;
+			}
+			((char*)(usbdata + i))[0] = ra[i].c1;
+			((char*)(usbdata + i))[1] = ra[i].c2;
 			usb_fill_bulk_urb(us->urb[i], usX2Y->dev, usb_sndbulkpipe(usX2Y->dev, 4),
 					  usbdata + i, 2, i_usX2Y_04Int, usX2Y);
-		पूर्ण
+		}
 		err = usb_urb_ep_type_check(us->urb[0]);
-		अगर (err < 0)
-			जाओ cleanup;
+		if (err < 0)
+			goto cleanup;
 		us->submitted =	0;
 		us->len =	NOOF_SETRATE_URBS;
 		usX2Y->US04 =	us;
-		रुको_event_समयout(usX2Y->In04WaitQueue, 0 == us->len, HZ);
-		usX2Y->US04 =	शून्य;
-		अगर (us->len)
+		wait_event_timeout(usX2Y->In04WaitQueue, 0 == us->len, HZ);
+		usX2Y->US04 =	NULL;
+		if (us->len)
 			err = -ENODEV;
 	cleanup:
-		अगर (us) अणु
+		if (us) {
 			us->submitted =	2*NOOF_SETRATE_URBS;
-			क्रम (i = 0; i < NOOF_SETRATE_URBS; ++i) अणु
-				काष्ठा urb *urb = us->urb[i];
-				अगर (!urb)
-					जारी;
-				अगर (urb->status) अणु
-					अगर (!err)
+			for (i = 0; i < NOOF_SETRATE_URBS; ++i) {
+				struct urb *urb = us->urb[i];
+				if (!urb)
+					continue;
+				if (urb->status) {
+					if (!err)
 						err = -ENODEV;
-					usb_समाप्त_urb(urb);
-				पूर्ण
-				usb_मुक्त_urb(urb);
-			पूर्ण
-			usX2Y->US04 = शून्य;
-			kमुक्त(usbdata);
-			kमुक्त(us);
-			अगर (!err)
+					usb_kill_urb(urb);
+				}
+				usb_free_urb(urb);
+			}
+			usX2Y->US04 = NULL;
+			kfree(usbdata);
+			kfree(us);
+			if (!err)
 				usX2Y->rate = rate;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक usX2Y_क्रमmat_set(काष्ठा usX2Ydev *usX2Y, snd_pcm_क्रमmat_t क्रमmat)
-अणु
-	पूर्णांक alternate, err;
-	काष्ठा list_head* p;
-	अगर (क्रमmat == SNDRV_PCM_FORMAT_S24_3LE) अणु
+static int usX2Y_format_set(struct usX2Ydev *usX2Y, snd_pcm_format_t format)
+{
+	int alternate, err;
+	struct list_head* p;
+	if (format == SNDRV_PCM_FORMAT_S24_3LE) {
 		alternate = 2;
 		usX2Y->stride = 6;
-	पूर्ण अन्यथा अणु
+	} else {
 		alternate = 1;
 		usX2Y->stride = 4;
-	पूर्ण
-	list_क्रम_each(p, &usX2Y->midi_list) अणु
+	}
+	list_for_each(p, &usX2Y->midi_list) {
 		snd_usbmidi_input_stop(p);
-	पूर्ण
-	usb_समाप्त_urb(usX2Y->In04urb);
-	अगर ((err = usb_set_पूर्णांकerface(usX2Y->dev, 0, alternate))) अणु
-		snd_prपूर्णांकk(KERN_ERR "usb_set_interface error \n");
-		वापस err;
-	पूर्ण
+	}
+	usb_kill_urb(usX2Y->In04urb);
+	if ((err = usb_set_interface(usX2Y->dev, 0, alternate))) {
+		snd_printk(KERN_ERR "usb_set_interface error \n");
+		return err;
+	}
 	usX2Y->In04urb->dev = usX2Y->dev;
 	err = usb_submit_urb(usX2Y->In04urb, GFP_KERNEL);
-	list_क्रम_each(p, &usX2Y->midi_list) अणु
+	list_for_each(p, &usX2Y->midi_list) {
 		snd_usbmidi_input_start(p);
-	पूर्ण
-	usX2Y->क्रमmat = क्रमmat;
+	}
+	usX2Y->format = format;
 	usX2Y->rate = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक snd_usX2Y_pcm_hw_params(काष्ठा snd_pcm_substream *substream,
-				   काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	पूर्णांक			err = 0;
-	अचिन्हित पूर्णांक		rate = params_rate(hw_params);
-	snd_pcm_क्रमmat_t	क्रमmat = params_क्रमmat(hw_params);
-	काष्ठा snd_card *card = substream->pstr->pcm->card;
-	काष्ठा usX2Ydev	*dev = usX2Y(card);
-	पूर्णांक i;
+static int snd_usX2Y_pcm_hw_params(struct snd_pcm_substream *substream,
+				   struct snd_pcm_hw_params *hw_params)
+{
+	int			err = 0;
+	unsigned int		rate = params_rate(hw_params);
+	snd_pcm_format_t	format = params_format(hw_params);
+	struct snd_card *card = substream->pstr->pcm->card;
+	struct usX2Ydev	*dev = usX2Y(card);
+	int i;
 
 	mutex_lock(&usX2Y(card)->pcm_mutex);
-	snd_prपूर्णांकdd("snd_usX2Y_hw_params(%p, %p)\n", substream, hw_params);
+	snd_printdd("snd_usX2Y_hw_params(%p, %p)\n", substream, hw_params);
 	/* all pcm substreams off one usX2Y have to operate at the same
-	 * rate & क्रमmat
+	 * rate & format
 	 */
-	क्रम (i = 0; i < dev->pcm_devs * 2; i++) अणु
-		काष्ठा snd_usX2Y_substream *subs = dev->subs[i];
-		काष्ठा snd_pcm_substream *test_substream;
+	for (i = 0; i < dev->pcm_devs * 2; i++) {
+		struct snd_usX2Y_substream *subs = dev->subs[i];
+		struct snd_pcm_substream *test_substream;
 
-		अगर (!subs)
-			जारी;
+		if (!subs)
+			continue;
 		test_substream = subs->pcm_substream;
-		अगर (!test_substream || test_substream == substream ||
-		    !test_substream->runसमय)
-			जारी;
-		अगर ((test_substream->runसमय->क्रमmat &&
-		     test_substream->runसमय->क्रमmat != क्रमmat) ||
-		    (test_substream->runसमय->rate &&
-		     test_substream->runसमय->rate != rate)) अणु
+		if (!test_substream || test_substream == substream ||
+		    !test_substream->runtime)
+			continue;
+		if ((test_substream->runtime->format &&
+		     test_substream->runtime->format != format) ||
+		    (test_substream->runtime->rate &&
+		     test_substream->runtime->rate != rate)) {
 			err = -EINVAL;
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
  error:
 	mutex_unlock(&usX2Y(card)->pcm_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * मुक्त the buffer
+ * free the buffer
  */
-अटल पूर्णांक snd_usX2Y_pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_usX2Y_substream *subs = runसमय->निजी_data;
+static int snd_usX2Y_pcm_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_usX2Y_substream *subs = runtime->private_data;
 	mutex_lock(&subs->usX2Y->pcm_mutex);
-	snd_prपूर्णांकdd("snd_usX2Y_hw_free(%p)\n", substream);
+	snd_printdd("snd_usX2Y_hw_free(%p)\n", substream);
 
-	अगर (SNDRV_PCM_STREAM_PLAYBACK == substream->stream) अणु
-		काष्ठा snd_usX2Y_substream *cap_subs = subs->usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE];
+	if (SNDRV_PCM_STREAM_PLAYBACK == substream->stream) {
+		struct snd_usX2Y_substream *cap_subs = subs->usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE];
 		atomic_set(&subs->state, state_STOPPED);
 		usX2Y_urbs_release(subs);
-		अगर (!cap_subs->pcm_substream ||
-		    !cap_subs->pcm_substream->runसमय ||
-		    !cap_subs->pcm_substream->runसमय->status ||
-		    cap_subs->pcm_substream->runसमय->status->state < SNDRV_PCM_STATE_PREPARED) अणु
+		if (!cap_subs->pcm_substream ||
+		    !cap_subs->pcm_substream->runtime ||
+		    !cap_subs->pcm_substream->runtime->status ||
+		    cap_subs->pcm_substream->runtime->status->state < SNDRV_PCM_STATE_PREPARED) {
 			atomic_set(&cap_subs->state, state_STOPPED);
 			usX2Y_urbs_release(cap_subs);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा snd_usX2Y_substream *playback_subs = subs->usX2Y->subs[SNDRV_PCM_STREAM_PLAYBACK];
-		अगर (atomic_पढ़ो(&playback_subs->state) < state_PREPARED) अणु
+		}
+	} else {
+		struct snd_usX2Y_substream *playback_subs = subs->usX2Y->subs[SNDRV_PCM_STREAM_PLAYBACK];
+		if (atomic_read(&playback_subs->state) < state_PREPARED) {
 			atomic_set(&subs->state, state_STOPPED);
 			usX2Y_urbs_release(subs);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&subs->usX2Y->pcm_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /*
  * prepare callback
  *
- * set क्रमmat and initialize urbs
+ * set format and initialize urbs
  */
-अटल पूर्णांक snd_usX2Y_pcm_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_usX2Y_substream *subs = runसमय->निजी_data;
-	काष्ठा usX2Ydev *usX2Y = subs->usX2Y;
-	काष्ठा snd_usX2Y_substream *capsubs = subs->usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE];
-	पूर्णांक err = 0;
-	snd_prपूर्णांकdd("snd_usX2Y_pcm_prepare(%p)\n", substream);
+static int snd_usX2Y_pcm_prepare(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_usX2Y_substream *subs = runtime->private_data;
+	struct usX2Ydev *usX2Y = subs->usX2Y;
+	struct snd_usX2Y_substream *capsubs = subs->usX2Y->subs[SNDRV_PCM_STREAM_CAPTURE];
+	int err = 0;
+	snd_printdd("snd_usX2Y_pcm_prepare(%p)\n", substream);
 
 	mutex_lock(&usX2Y->pcm_mutex);
 	usX2Y_subs_prepare(subs);
 // Start hardware streams
 // SyncStream first....
-	अगर (atomic_पढ़ो(&capsubs->state) < state_PREPARED) अणु
-		अगर (usX2Y->क्रमmat != runसमय->क्रमmat)
-			अगर ((err = usX2Y_क्रमmat_set(usX2Y, runसमय->क्रमmat)) < 0)
-				जाओ up_prepare_mutex;
-		अगर (usX2Y->rate != runसमय->rate)
-			अगर ((err = usX2Y_rate_set(usX2Y, runसमय->rate)) < 0)
-				जाओ up_prepare_mutex;
-		snd_prपूर्णांकdd("starting capture pipe for %s\n", subs == capsubs ? "self" : "playpipe");
-		अगर (0 > (err = usX2Y_urbs_start(capsubs)))
-			जाओ up_prepare_mutex;
-	पूर्ण
+	if (atomic_read(&capsubs->state) < state_PREPARED) {
+		if (usX2Y->format != runtime->format)
+			if ((err = usX2Y_format_set(usX2Y, runtime->format)) < 0)
+				goto up_prepare_mutex;
+		if (usX2Y->rate != runtime->rate)
+			if ((err = usX2Y_rate_set(usX2Y, runtime->rate)) < 0)
+				goto up_prepare_mutex;
+		snd_printdd("starting capture pipe for %s\n", subs == capsubs ? "self" : "playpipe");
+		if (0 > (err = usX2Y_urbs_start(capsubs)))
+			goto up_prepare_mutex;
+	}
 
-	अगर (subs != capsubs && atomic_पढ़ो(&subs->state) < state_PREPARED)
+	if (subs != capsubs && atomic_read(&subs->state) < state_PREPARED)
 		err = usX2Y_urbs_start(subs);
 
  up_prepare_mutex:
 	mutex_unlock(&usX2Y->pcm_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_usX2Y_2c =
-अणु
+static const struct snd_pcm_hardware snd_usX2Y_2c =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				 SNDRV_PCM_INFO_MMAP_VALID |
 				 SNDRV_PCM_INFO_BATCH),
-	.क्रमmats =                 SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_3LE,
+	.formats =                 SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_3LE,
 	.rates =                   SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000,
 	.rate_min =                44100,
 	.rate_max =                48000,
@@ -858,141 +857,141 @@
 	.period_bytes_max =	(128*1024),
 	.periods_min =		2,
 	.periods_max =		1024,
-	.fअगरo_size =              0
-पूर्ण;
+	.fifo_size =              0
+};
 
 
 
-अटल पूर्णांक snd_usX2Y_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_usX2Y_substream	*subs = ((काष्ठा snd_usX2Y_substream **)
+static int snd_usX2Y_pcm_open(struct snd_pcm_substream *substream)
+{
+	struct snd_usX2Y_substream	*subs = ((struct snd_usX2Y_substream **)
 					 snd_pcm_substream_chip(substream))[substream->stream];
-	काष्ठा snd_pcm_runसमय	*runसमय = substream->runसमय;
+	struct snd_pcm_runtime	*runtime = substream->runtime;
 
-	अगर (subs->usX2Y->chip_status & USX2Y_STAT_CHIP_MMAP_PCM_URBS)
-		वापस -EBUSY;
+	if (subs->usX2Y->chip_status & USX2Y_STAT_CHIP_MMAP_PCM_URBS)
+		return -EBUSY;
 
-	runसमय->hw = snd_usX2Y_2c;
-	runसमय->निजी_data = subs;
+	runtime->hw = snd_usX2Y_2c;
+	runtime->private_data = subs;
 	subs->pcm_substream = substream;
-	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_TIME, 1000, 200000);
-	वापस 0;
-पूर्ण
+	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIOD_TIME, 1000, 200000);
+	return 0;
+}
 
 
 
-अटल पूर्णांक snd_usX2Y_pcm_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_usX2Y_substream *subs = runसमय->निजी_data;
+static int snd_usX2Y_pcm_close(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_usX2Y_substream *subs = runtime->private_data;
 
-	subs->pcm_substream = शून्य;
+	subs->pcm_substream = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_usX2Y_pcm_ops =
-अणु
-	.खोलो =		snd_usX2Y_pcm_खोलो,
-	.बंद =	snd_usX2Y_pcm_बंद,
+static const struct snd_pcm_ops snd_usX2Y_pcm_ops =
+{
+	.open =		snd_usX2Y_pcm_open,
+	.close =	snd_usX2Y_pcm_close,
 	.hw_params =	snd_usX2Y_pcm_hw_params,
-	.hw_मुक्त =	snd_usX2Y_pcm_hw_मुक्त,
+	.hw_free =	snd_usX2Y_pcm_hw_free,
 	.prepare =	snd_usX2Y_pcm_prepare,
 	.trigger =	snd_usX2Y_pcm_trigger,
-	.poपूर्णांकer =	snd_usX2Y_pcm_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_usX2Y_pcm_pointer,
+};
 
 
 /*
- * मुक्त a usb stream instance
+ * free a usb stream instance
  */
-अटल व्योम usX2Y_audio_stream_मुक्त(काष्ठा snd_usX2Y_substream **usX2Y_substream)
-अणु
-	पूर्णांक stream;
+static void usX2Y_audio_stream_free(struct snd_usX2Y_substream **usX2Y_substream)
+{
+	int stream;
 
-	क्रम_each_pcm_streams(stream) अणु
-		kमुक्त(usX2Y_substream[stream]);
-		usX2Y_substream[stream] = शून्य;
-	पूर्ण
-पूर्ण
+	for_each_pcm_streams(stream) {
+		kfree(usX2Y_substream[stream]);
+		usX2Y_substream[stream] = NULL;
+	}
+}
 
-अटल व्योम snd_usX2Y_pcm_निजी_मुक्त(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_usX2Y_substream **usX2Y_stream = pcm->निजी_data;
-	अगर (usX2Y_stream)
-		usX2Y_audio_stream_मुक्त(usX2Y_stream);
-पूर्ण
+static void snd_usX2Y_pcm_private_free(struct snd_pcm *pcm)
+{
+	struct snd_usX2Y_substream **usX2Y_stream = pcm->private_data;
+	if (usX2Y_stream)
+		usX2Y_audio_stream_free(usX2Y_stream);
+}
 
-अटल पूर्णांक usX2Y_audio_stream_new(काष्ठा snd_card *card, पूर्णांक playback_endpoपूर्णांक, पूर्णांक capture_endpoपूर्णांक)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err, i;
-	काष्ठा snd_usX2Y_substream **usX2Y_substream =
+static int usX2Y_audio_stream_new(struct snd_card *card, int playback_endpoint, int capture_endpoint)
+{
+	struct snd_pcm *pcm;
+	int err, i;
+	struct snd_usX2Y_substream **usX2Y_substream =
 		usX2Y(card)->subs + 2 * usX2Y(card)->pcm_devs;
 
-	क्रम (i = playback_endpoपूर्णांक ? SNDRV_PCM_STREAM_PLAYBACK : SNDRV_PCM_STREAM_CAPTURE;
-	     i <= SNDRV_PCM_STREAM_CAPTURE; ++i) अणु
-		usX2Y_substream[i] = kzalloc(माप(काष्ठा snd_usX2Y_substream), GFP_KERNEL);
-		अगर (!usX2Y_substream[i])
-			वापस -ENOMEM;
+	for (i = playback_endpoint ? SNDRV_PCM_STREAM_PLAYBACK : SNDRV_PCM_STREAM_CAPTURE;
+	     i <= SNDRV_PCM_STREAM_CAPTURE; ++i) {
+		usX2Y_substream[i] = kzalloc(sizeof(struct snd_usX2Y_substream), GFP_KERNEL);
+		if (!usX2Y_substream[i])
+			return -ENOMEM;
 
 		usX2Y_substream[i]->usX2Y = usX2Y(card);
-	पूर्ण
+	}
 
-	अगर (playback_endpoपूर्णांक)
-		usX2Y_substream[SNDRV_PCM_STREAM_PLAYBACK]->endpoपूर्णांक = playback_endpoपूर्णांक;
-	usX2Y_substream[SNDRV_PCM_STREAM_CAPTURE]->endpoपूर्णांक = capture_endpoपूर्णांक;
+	if (playback_endpoint)
+		usX2Y_substream[SNDRV_PCM_STREAM_PLAYBACK]->endpoint = playback_endpoint;
+	usX2Y_substream[SNDRV_PCM_STREAM_CAPTURE]->endpoint = capture_endpoint;
 
 	err = snd_pcm_new(card, NAME_ALLCAPS" Audio", usX2Y(card)->pcm_devs,
-			  playback_endpoपूर्णांक ? 1 : 0, 1,
+			  playback_endpoint ? 1 : 0, 1,
 			  &pcm);
-	अगर (err < 0) अणु
-		usX2Y_audio_stream_मुक्त(usX2Y_substream);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		usX2Y_audio_stream_free(usX2Y_substream);
+		return err;
+	}
 
-	अगर (playback_endpoपूर्णांक)
+	if (playback_endpoint)
 		snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_usX2Y_pcm_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_usX2Y_pcm_ops);
 
-	pcm->निजी_data = usX2Y_substream;
-	pcm->निजी_मुक्त = snd_usX2Y_pcm_निजी_मुक्त;
+	pcm->private_data = usX2Y_substream;
+	pcm->private_free = snd_usX2Y_pcm_private_free;
 	pcm->info_flags = 0;
 
-	प्र_लिखो(pcm->name, NAME_ALLCAPS" Audio #%d", usX2Y(card)->pcm_devs);
+	sprintf(pcm->name, NAME_ALLCAPS" Audio #%d", usX2Y(card)->pcm_devs);
 
-	अगर (playback_endpoपूर्णांक) अणु
+	if (playback_endpoint) {
 		snd_pcm_set_managed_buffer(pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream,
 					   SNDRV_DMA_TYPE_CONTINUOUS,
-					   शून्य,
+					   NULL,
 					   64*1024, 128*1024);
-	पूर्ण
+	}
 
 	snd_pcm_set_managed_buffer(pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream,
 				   SNDRV_DMA_TYPE_CONTINUOUS,
-				   शून्य,
+				   NULL,
 				   64*1024, 128*1024);
 	usX2Y(card)->pcm_devs++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * create a chip instance and set its names.
  */
-पूर्णांक usX2Y_audio_create(काष्ठा snd_card *card)
-अणु
-	पूर्णांक err = 0;
+int usX2Y_audio_create(struct snd_card *card)
+{
+	int err = 0;
 	
 	INIT_LIST_HEAD(&usX2Y(card)->pcm_list);
 
-	अगर (0 > (err = usX2Y_audio_stream_new(card, 0xA, 0x8)))
-		वापस err;
-	अगर (le16_to_cpu(usX2Y(card)->dev->descriptor.idProduct) == USB_ID_US428)
-	     अगर (0 > (err = usX2Y_audio_stream_new(card, 0, 0xA)))
-		     वापस err;
-	अगर (le16_to_cpu(usX2Y(card)->dev->descriptor.idProduct) != USB_ID_US122)
+	if (0 > (err = usX2Y_audio_stream_new(card, 0xA, 0x8)))
+		return err;
+	if (le16_to_cpu(usX2Y(card)->dev->descriptor.idProduct) == USB_ID_US428)
+	     if (0 > (err = usX2Y_audio_stream_new(card, 0, 0xA)))
+		     return err;
+	if (le16_to_cpu(usX2Y(card)->dev->descriptor.idProduct) != USB_ID_US122)
 		err = usX2Y_rate_set(usX2Y(card), 44100);	// Lets us428 recognize output-volume settings, disturbs us122.
-	वापस err;
-पूर्ण
+	return err;
+}

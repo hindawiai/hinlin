@@ -1,195 +1,194 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * BCM47XX MTD partitioning
  *
- * Copyright तऊ 2012 Rafaध Miधecki <zajec5@gmail.com>
+ * Copyright © 2012 Rafał Miłecki <zajec5@gmail.com>
  */
 
-#समावेश <linux/bcm47xx_nvram.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
+#include <linux/bcm47xx_nvram.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
 
-#समावेश <uapi/linux/magic.h>
+#include <uapi/linux/magic.h>
 
 /*
- * न_अंकD flash on Netgear R6250 was verअगरied to contain 15 partitions.
- * This will result in allocating too big array क्रम some old devices, but the
- * memory will be मुक्तd soon anyway (see mtd_device_parse_रेजिस्टर).
+ * NAND flash on Netgear R6250 was verified to contain 15 partitions.
+ * This will result in allocating too big array for some old devices, but the
+ * memory will be freed soon anyway (see mtd_device_parse_register).
  */
-#घोषणा BCM47XXPART_MAX_PARTS		20
+#define BCM47XXPART_MAX_PARTS		20
 
 /*
- * Amount of bytes we पढ़ो when analyzing each block of flash memory.
- * Set it big enough to allow detecting partition and पढ़ोing important data.
+ * Amount of bytes we read when analyzing each block of flash memory.
+ * Set it big enough to allow detecting partition and reading important data.
  */
-#घोषणा BCM47XXPART_BYTES_TO_READ	0x4e8
+#define BCM47XXPART_BYTES_TO_READ	0x4e8
 
 /* Magics */
-#घोषणा BOARD_DATA_MAGIC		0x5246504D	/* MPFR */
-#घोषणा BOARD_DATA_MAGIC2		0xBD0D0BBD
-#घोषणा CFE_MAGIC			0x43464531	/* 1EFC */
-#घोषणा FACTORY_MAGIC			0x59544346	/* FCTY */
-#घोषणा NVRAM_HEADER			0x48534C46	/* FLSH */
-#घोषणा POT_MAGIC1			0x54544f50	/* POTT */
-#घोषणा POT_MAGIC2			0x504f		/* OP */
-#घोषणा ML_MAGIC1			0x39685a42
-#घोषणा ML_MAGIC2			0x26594131
-#घोषणा TRX_MAGIC			0x30524448
-#घोषणा SHSQ_MAGIC			0x71736873	/* shsq (weird ZTE H218N endianness) */
+#define BOARD_DATA_MAGIC		0x5246504D	/* MPFR */
+#define BOARD_DATA_MAGIC2		0xBD0D0BBD
+#define CFE_MAGIC			0x43464531	/* 1EFC */
+#define FACTORY_MAGIC			0x59544346	/* FCTY */
+#define NVRAM_HEADER			0x48534C46	/* FLSH */
+#define POT_MAGIC1			0x54544f50	/* POTT */
+#define POT_MAGIC2			0x504f		/* OP */
+#define ML_MAGIC1			0x39685a42
+#define ML_MAGIC2			0x26594131
+#define TRX_MAGIC			0x30524448
+#define SHSQ_MAGIC			0x71736873	/* shsq (weird ZTE H218N endianness) */
 
-अटल स्थिर अक्षर * स्थिर trx_types[] = अणु "trx", शून्य पूर्ण;
+static const char * const trx_types[] = { "trx", NULL };
 
-काष्ठा trx_header अणु
-	uपूर्णांक32_t magic;
-	uपूर्णांक32_t length;
-	uपूर्णांक32_t crc32;
-	uपूर्णांक16_t flags;
-	uपूर्णांक16_t version;
-	uपूर्णांक32_t offset[3];
-पूर्ण __packed;
+struct trx_header {
+	uint32_t magic;
+	uint32_t length;
+	uint32_t crc32;
+	uint16_t flags;
+	uint16_t version;
+	uint32_t offset[3];
+} __packed;
 
-अटल व्योम bcm47xxpart_add_part(काष्ठा mtd_partition *part, स्थिर अक्षर *name,
-				 u64 offset, uपूर्णांक32_t mask_flags)
-अणु
+static void bcm47xxpart_add_part(struct mtd_partition *part, const char *name,
+				 u64 offset, uint32_t mask_flags)
+{
 	part->name = name;
 	part->offset = offset;
 	part->mask_flags = mask_flags;
-पूर्ण
+}
 
 /**
- * bcm47xxpart_bootpartition - माला_लो index of TRX partition used by bootloader
+ * bcm47xxpart_bootpartition - gets index of TRX partition used by bootloader
  *
- * Some devices may have more than one TRX partition. In such हाल one of them
- * is the मुख्य one and another a failsafe one. Bootloader may fallback to the
- * failsafe firmware अगर it detects corruption of the मुख्य image.
+ * Some devices may have more than one TRX partition. In such case one of them
+ * is the main one and another a failsafe one. Bootloader may fallback to the
+ * failsafe firmware if it detects corruption of the main image.
  *
  * This function provides info about currently used TRX partition. It's the one
  * containing kernel started by the bootloader.
  */
-अटल पूर्णांक bcm47xxpart_bootpartition(व्योम)
-अणु
-	अक्षर buf[4];
-	पूर्णांक bootpartition;
+static int bcm47xxpart_bootpartition(void)
+{
+	char buf[4];
+	int bootpartition;
 
 	/* Check CFE environment variable */
-	अगर (bcm47xx_nvram_दो_पर्या("bootpartition", buf, माप(buf)) > 0) अणु
-		अगर (!kstrtoपूर्णांक(buf, 0, &bootpartition))
-			वापस bootpartition;
-	पूर्ण
+	if (bcm47xx_nvram_getenv("bootpartition", buf, sizeof(buf)) > 0) {
+		if (!kstrtoint(buf, 0, &bootpartition))
+			return bootpartition;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm47xxpart_parse(काष्ठा mtd_info *master,
-			     स्थिर काष्ठा mtd_partition **pparts,
-			     काष्ठा mtd_part_parser_data *data)
-अणु
-	काष्ठा mtd_partition *parts;
-	uपूर्णांक8_t i, curr_part = 0;
-	uपूर्णांक32_t *buf;
-	माप_प्रकार bytes_पढ़ो;
-	uपूर्णांक32_t offset;
-	uपूर्णांक32_t blocksize = master->erasesize;
-	पूर्णांक trx_parts[2]; /* Array with indexes of TRX partitions */
-	पूर्णांक trx_num = 0; /* Number of found TRX partitions */
-	पूर्णांक possible_nvram_sizes[] = अणु 0x8000, 0xF000, 0x10000, पूर्ण;
-	पूर्णांक err;
+static int bcm47xxpart_parse(struct mtd_info *master,
+			     const struct mtd_partition **pparts,
+			     struct mtd_part_parser_data *data)
+{
+	struct mtd_partition *parts;
+	uint8_t i, curr_part = 0;
+	uint32_t *buf;
+	size_t bytes_read;
+	uint32_t offset;
+	uint32_t blocksize = master->erasesize;
+	int trx_parts[2]; /* Array with indexes of TRX partitions */
+	int trx_num = 0; /* Number of found TRX partitions */
+	int possible_nvram_sizes[] = { 0x8000, 0xF000, 0x10000, };
+	int err;
 
 	/*
 	 * Some really old flashes (like AT45DB*) had smaller erasesize-s, but
 	 * partitions were aligned to at least 0x1000 anyway.
 	 */
-	अगर (blocksize < 0x1000)
+	if (blocksize < 0x1000)
 		blocksize = 0x1000;
 
 	/* Alloc */
-	parts = kसुस्मृति(BCM47XXPART_MAX_PARTS, माप(काष्ठा mtd_partition),
+	parts = kcalloc(BCM47XXPART_MAX_PARTS, sizeof(struct mtd_partition),
 			GFP_KERNEL);
-	अगर (!parts)
-		वापस -ENOMEM;
+	if (!parts)
+		return -ENOMEM;
 
 	buf = kzalloc(BCM47XXPART_BYTES_TO_READ, GFP_KERNEL);
-	अगर (!buf) अणु
-		kमुक्त(parts);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!buf) {
+		kfree(parts);
+		return -ENOMEM;
+	}
 
-	/* Parse block by block looking क्रम magics */
-	क्रम (offset = 0; offset <= master->size - blocksize;
-	     offset += blocksize) अणु
+	/* Parse block by block looking for magics */
+	for (offset = 0; offset <= master->size - blocksize;
+	     offset += blocksize) {
 		/* Nothing more in higher memory on BCM47XX (MIPS) */
-		अगर (IS_ENABLED(CONFIG_BCM47XX) && offset >= 0x2000000)
-			अवरोध;
+		if (IS_ENABLED(CONFIG_BCM47XX) && offset >= 0x2000000)
+			break;
 
-		अगर (curr_part >= BCM47XXPART_MAX_PARTS) अणु
+		if (curr_part >= BCM47XXPART_MAX_PARTS) {
 			pr_warn("Reached maximum number of partitions, scanning stopped!\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Read beginning of the block */
-		err = mtd_पढ़ो(master, offset, BCM47XXPART_BYTES_TO_READ,
-			       &bytes_पढ़ो, (uपूर्णांक8_t *)buf);
-		अगर (err && !mtd_is_bitflip(err)) अणु
+		err = mtd_read(master, offset, BCM47XXPART_BYTES_TO_READ,
+			       &bytes_read, (uint8_t *)buf);
+		if (err && !mtd_is_bitflip(err)) {
 			pr_err("mtd_read error while parsing (offset: 0x%X): %d\n",
 			       offset, err);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Magic or small NVRAM at 0x400 */
-		अगर ((buf[0x4e0 / 4] == CFE_MAGIC && buf[0x4e4 / 4] == CFE_MAGIC) ||
-		    (buf[0x400 / 4] == NVRAM_HEADER)) अणु
+		if ((buf[0x4e0 / 4] == CFE_MAGIC && buf[0x4e4 / 4] == CFE_MAGIC) ||
+		    (buf[0x400 / 4] == NVRAM_HEADER)) {
 			bcm47xxpart_add_part(&parts[curr_part++], "boot",
 					     offset, MTD_WRITEABLE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
-		 * board_data starts with board_id which dअगरfers across boards,
+		 * board_data starts with board_id which differs across boards,
 		 * but we can use 'MPFR' (hopefully) magic at 0x100
 		 */
-		अगर (buf[0x100 / 4] == BOARD_DATA_MAGIC) अणु
+		if (buf[0x100 / 4] == BOARD_DATA_MAGIC) {
 			bcm47xxpart_add_part(&parts[curr_part++], "board_data",
 					     offset, MTD_WRITEABLE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Found on Huawei E970 */
-		अगर (buf[0x000 / 4] == FACTORY_MAGIC) अणु
+		if (buf[0x000 / 4] == FACTORY_MAGIC) {
 			bcm47xxpart_add_part(&parts[curr_part++], "factory",
 					     offset, MTD_WRITEABLE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* POT(TOP) */
-		अगर (buf[0x000 / 4] == POT_MAGIC1 &&
-		    (buf[0x004 / 4] & 0xFFFF) == POT_MAGIC2) अणु
+		if (buf[0x000 / 4] == POT_MAGIC1 &&
+		    (buf[0x004 / 4] & 0xFFFF) == POT_MAGIC2) {
 			bcm47xxpart_add_part(&parts[curr_part++], "POT", offset,
 					     MTD_WRITEABLE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* ML */
-		अगर (buf[0x010 / 4] == ML_MAGIC1 &&
-		    buf[0x014 / 4] == ML_MAGIC2) अणु
+		if (buf[0x010 / 4] == ML_MAGIC1 &&
+		    buf[0x014 / 4] == ML_MAGIC2) {
 			bcm47xxpart_add_part(&parts[curr_part++], "ML", offset,
 					     MTD_WRITEABLE);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* TRX */
-		अगर (buf[0x000 / 4] == TRX_MAGIC) अणु
-			काष्ठा trx_header *trx;
-			uपूर्णांक32_t last_subpart;
-			uपूर्णांक32_t trx_size;
+		if (buf[0x000 / 4] == TRX_MAGIC) {
+			struct trx_header *trx;
+			uint32_t last_subpart;
+			uint32_t trx_size;
 
-			अगर (trx_num >= ARRAY_SIZE(trx_parts))
+			if (trx_num >= ARRAY_SIZE(trx_parts))
 				pr_warn("No enough space to store another TRX found at 0x%X\n",
 					offset);
-			अन्यथा
+			else
 				trx_parts[trx_num++] = curr_part;
 			bcm47xxpart_add_part(&parts[curr_part++], "firmware",
 					     offset, 0);
@@ -199,9 +198,9 @@
 			 * reliable as it could be decreased to make CRC32 cover
 			 * only part of TRX data. It's commonly used as checksum
 			 * can't cover e.g. ever-changing rootfs partition.
-			 * Use offsets as helpers क्रम assuming min TRX size.
+			 * Use offsets as helpers for assuming min TRX size.
 			 */
-			trx = (काष्ठा trx_header *)buf;
+			trx = (struct trx_header *)buf;
 			last_subpart = max3(trx->offset[0], trx->offset[1],
 					    trx->offset[2]);
 			trx_size = max(trx->length, last_subpart + blocksize);
@@ -211,107 +210,107 @@
 			 * the next loop iteration will increase it.
 			 */
 			offset += roundup(trx_size, blocksize) - blocksize;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Squashfs on devices not using TRX */
-		अगर (le32_to_cpu(buf[0x000 / 4]) == SQUASHFS_MAGIC ||
-		    buf[0x000 / 4] == SHSQ_MAGIC) अणु
+		if (le32_to_cpu(buf[0x000 / 4]) == SQUASHFS_MAGIC ||
+		    buf[0x000 / 4] == SHSQ_MAGIC) {
 			bcm47xxpart_add_part(&parts[curr_part++], "rootfs",
 					     offset, 0);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * New (ARM?) devices may have NVRAM in some middle block. Last
 		 * block will be checked later, so skip it.
 		 */
-		अगर (offset != master->size - blocksize &&
-		    buf[0x000 / 4] == NVRAM_HEADER) अणु
+		if (offset != master->size - blocksize &&
+		    buf[0x000 / 4] == NVRAM_HEADER) {
 			bcm47xxpart_add_part(&parts[curr_part++], "nvram",
 					     offset, 0);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Read middle of the block */
-		err = mtd_पढ़ो(master, offset + 0x8000, 0x4, &bytes_पढ़ो,
-			       (uपूर्णांक8_t *)buf);
-		अगर (err && !mtd_is_bitflip(err)) अणु
+		err = mtd_read(master, offset + 0x8000, 0x4, &bytes_read,
+			       (uint8_t *)buf);
+		if (err && !mtd_is_bitflip(err)) {
 			pr_err("mtd_read error while parsing (offset: 0x%X): %d\n",
 			       offset, err);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Some devices (ex. WNDR3700v3) करोn't have a standard 'MPFR' */
-		अगर (buf[0x000 / 4] == BOARD_DATA_MAGIC2) अणु
+		/* Some devices (ex. WNDR3700v3) don't have a standard 'MPFR' */
+		if (buf[0x000 / 4] == BOARD_DATA_MAGIC2) {
 			bcm47xxpart_add_part(&parts[curr_part++], "board_data",
 					     offset, MTD_WRITEABLE);
-			जारी;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+	}
 
-	/* Look क्रम NVRAM at the end of the last block. */
-	क्रम (i = 0; i < ARRAY_SIZE(possible_nvram_sizes); i++) अणु
-		अगर (curr_part >= BCM47XXPART_MAX_PARTS) अणु
+	/* Look for NVRAM at the end of the last block. */
+	for (i = 0; i < ARRAY_SIZE(possible_nvram_sizes); i++) {
+		if (curr_part >= BCM47XXPART_MAX_PARTS) {
 			pr_warn("Reached maximum number of partitions, scanning stopped!\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		offset = master->size - possible_nvram_sizes[i];
-		err = mtd_पढ़ो(master, offset, 0x4, &bytes_पढ़ो,
-			       (uपूर्णांक8_t *)buf);
-		अगर (err && !mtd_is_bitflip(err)) अणु
+		err = mtd_read(master, offset, 0x4, &bytes_read,
+			       (uint8_t *)buf);
+		if (err && !mtd_is_bitflip(err)) {
 			pr_err("mtd_read error while reading (offset 0x%X): %d\n",
 			       offset, err);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Standard NVRAM */
-		अगर (buf[0] == NVRAM_HEADER) अणु
+		if (buf[0] == NVRAM_HEADER) {
 			bcm47xxpart_add_part(&parts[curr_part++], "nvram",
 					     master->size - blocksize, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	kमुक्त(buf);
+	kfree(buf);
 
 	/*
 	 * Assume that partitions end at the beginning of the one they are
 	 * followed by.
 	 */
-	क्रम (i = 0; i < curr_part; i++) अणु
+	for (i = 0; i < curr_part; i++) {
 		u64 next_part_offset = (i < curr_part - 1) ?
 				       parts[i + 1].offset : master->size;
 
 		parts[i].size = next_part_offset - parts[i].offset;
-	पूर्ण
+	}
 
 	/* If there was TRX parse it now */
-	क्रम (i = 0; i < trx_num; i++) अणु
-		काष्ठा mtd_partition *trx = &parts[trx_parts[i]];
+	for (i = 0; i < trx_num; i++) {
+		struct mtd_partition *trx = &parts[trx_parts[i]];
 
-		अगर (i == bcm47xxpart_bootpartition())
+		if (i == bcm47xxpart_bootpartition())
 			trx->types = trx_types;
-		अन्यथा
+		else
 			trx->name = "failsafe";
-	पूर्ण
+	}
 
 	*pparts = parts;
-	वापस curr_part;
-पूर्ण;
+	return curr_part;
+};
 
-अटल स्थिर काष्ठा of_device_id bcm47xxpart_of_match_table[] = अणु
-	अणु .compatible = "brcm,bcm947xx-cfe-partitions" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id bcm47xxpart_of_match_table[] = {
+	{ .compatible = "brcm,bcm947xx-cfe-partitions" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, bcm47xxpart_of_match_table);
 
-अटल काष्ठा mtd_part_parser bcm47xxpart_mtd_parser = अणु
+static struct mtd_part_parser bcm47xxpart_mtd_parser = {
 	.parse_fn = bcm47xxpart_parse,
 	.name = "bcm47xxpart",
 	.of_match_table = bcm47xxpart_of_match_table,
-पूर्ण;
+};
 module_mtd_part_parser(bcm47xxpart_mtd_parser);
 
 MODULE_LICENSE("GPL");

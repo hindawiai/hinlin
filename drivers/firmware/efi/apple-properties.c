@@ -1,238 +1,237 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * apple-properties.c - EFI device properties on Macs
  * Copyright (C) 2016 Lukas Wunner <lukas@wunner.de>
  *
  * Properties are stored either as:
- * u8 arrays which can be retrieved with device_property_पढ़ो_u8_array() or
+ * u8 arrays which can be retrieved with device_property_read_u8_array() or
  * booleans which can be queried with device_property_present().
  */
 
-#घोषणा pr_fmt(fmt) "apple-properties: " fmt
+#define pr_fmt(fmt) "apple-properties: " fmt
 
-#समावेश <linux/memblock.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_data/x86/apple.h>
-#समावेश <linux/property.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ucs2_माला.स>
-#समावेश <यंत्र/setup.h>
+#include <linux/memblock.h>
+#include <linux/efi.h>
+#include <linux/io.h>
+#include <linux/platform_data/x86/apple.h>
+#include <linux/property.h>
+#include <linux/slab.h>
+#include <linux/ucs2_string.h>
+#include <asm/setup.h>
 
-अटल bool dump_properties __initdata;
+static bool dump_properties __initdata;
 
-अटल पूर्णांक __init dump_properties_enable(अक्षर *arg)
-अणु
+static int __init dump_properties_enable(char *arg)
+{
 	dump_properties = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __setup("dump_apple_properties", dump_properties_enable);
 
-काष्ठा dev_header अणु
+struct dev_header {
 	u32 len;
 	u32 prop_count;
-	काष्ठा efi_dev_path path[];
+	struct efi_dev_path path[];
 	/*
 	 * followed by key/value pairs, each key and value preceded by u32 len,
-	 * len includes itself, value may be empty (in which हाल its len is 4)
+	 * len includes itself, value may be empty (in which case its len is 4)
 	 */
-पूर्ण;
+};
 
-काष्ठा properties_header अणु
+struct properties_header {
 	u32 len;
 	u32 version;
 	u32 dev_count;
-	काष्ठा dev_header dev_header[];
-पूर्ण;
+	struct dev_header dev_header[];
+};
 
-अटल व्योम __init unmarshal_key_value_pairs(काष्ठा dev_header *dev_header,
-					     काष्ठा device *dev, स्थिर व्योम *ptr,
-					     काष्ठा property_entry entry[])
-अणु
-	पूर्णांक i;
+static void __init unmarshal_key_value_pairs(struct dev_header *dev_header,
+					     struct device *dev, const void *ptr,
+					     struct property_entry entry[])
+{
+	int i;
 
-	क्रम (i = 0; i < dev_header->prop_count; i++) अणु
-		पूर्णांक reमुख्यing = dev_header->len - (ptr - (व्योम *)dev_header);
+	for (i = 0; i < dev_header->prop_count; i++) {
+		int remaining = dev_header->len - (ptr - (void *)dev_header);
 		u32 key_len, val_len, entry_len;
-		स्थिर u8 *entry_data;
-		अक्षर *key;
+		const u8 *entry_data;
+		char *key;
 
-		अगर (माप(key_len) > reमुख्यing)
-			अवरोध;
+		if (sizeof(key_len) > remaining)
+			break;
 
 		key_len = *(typeof(key_len) *)ptr;
-		अगर (key_len + माप(val_len) > reमुख्यing ||
-		    key_len < माप(key_len) + माप(efi_अक्षर16_t) ||
-		    *(efi_अक्षर16_t *)(ptr + माप(key_len)) == 0) अणु
+		if (key_len + sizeof(val_len) > remaining ||
+		    key_len < sizeof(key_len) + sizeof(efi_char16_t) ||
+		    *(efi_char16_t *)(ptr + sizeof(key_len)) == 0) {
 			dev_err(dev, "invalid property name len at %#zx\n",
-				ptr - (व्योम *)dev_header);
-			अवरोध;
-		पूर्ण
+				ptr - (void *)dev_header);
+			break;
+		}
 
 		val_len = *(typeof(val_len) *)(ptr + key_len);
-		अगर (key_len + val_len > reमुख्यing ||
-		    val_len < माप(val_len)) अणु
+		if (key_len + val_len > remaining ||
+		    val_len < sizeof(val_len)) {
 			dev_err(dev, "invalid property val len at %#zx\n",
-				ptr - (व्योम *)dev_header + key_len);
-			अवरोध;
-		पूर्ण
+				ptr - (void *)dev_header + key_len);
+			break;
+		}
 
-		/* 4 bytes to accommodate UTF-8 code poपूर्णांकs + null byte */
-		key = kzalloc((key_len - माप(key_len)) * 4 + 1, GFP_KERNEL);
-		अगर (!key) अणु
+		/* 4 bytes to accommodate UTF-8 code points + null byte */
+		key = kzalloc((key_len - sizeof(key_len)) * 4 + 1, GFP_KERNEL);
+		if (!key) {
 			dev_err(dev, "cannot allocate property name\n");
-			अवरोध;
-		पूर्ण
-		ucs2_as_utf8(key, ptr + माप(key_len),
-			     key_len - माप(key_len));
+			break;
+		}
+		ucs2_as_utf8(key, ptr + sizeof(key_len),
+			     key_len - sizeof(key_len));
 
-		entry_data = ptr + key_len + माप(val_len);
-		entry_len = val_len - माप(val_len);
-		अगर (entry_len)
+		entry_data = ptr + key_len + sizeof(val_len);
+		entry_len = val_len - sizeof(val_len);
+		if (entry_len)
 			entry[i] = PROPERTY_ENTRY_U8_ARRAY_LEN(key, entry_data,
 							       entry_len);
-		अन्यथा
+		else
 			entry[i] = PROPERTY_ENTRY_BOOL(key);
 
-		अगर (dump_properties) अणु
+		if (dump_properties) {
 			dev_info(dev, "property: %s\n", key);
-			prपूर्णांक_hex_dump(KERN_INFO, pr_fmt(), DUMP_PREFIX_OFFSET,
+			print_hex_dump(KERN_INFO, pr_fmt(), DUMP_PREFIX_OFFSET,
 				16, 1, entry_data, entry_len, true);
-		पूर्ण
+		}
 
 		ptr += key_len + val_len;
-	पूर्ण
+	}
 
-	अगर (i != dev_header->prop_count) अणु
+	if (i != dev_header->prop_count) {
 		dev_err(dev, "got %d device properties, expected %u\n", i,
 			dev_header->prop_count);
-		prपूर्णांक_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
+		print_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
 			16, 1, dev_header, dev_header->len, true);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev_info(dev, "assigning %d device properties\n", i);
-पूर्ण
+}
 
-अटल पूर्णांक __init unmarshal_devices(काष्ठा properties_header *properties)
-अणु
-	माप_प्रकार offset = दुरत्व(काष्ठा properties_header, dev_header[0]);
+static int __init unmarshal_devices(struct properties_header *properties)
+{
+	size_t offset = offsetof(struct properties_header, dev_header[0]);
 
-	जबतक (offset + माप(काष्ठा dev_header) < properties->len) अणु
-		काष्ठा dev_header *dev_header = (व्योम *)properties + offset;
-		काष्ठा property_entry *entry = शून्य;
-		स्थिर काष्ठा efi_dev_path *ptr;
-		काष्ठा device *dev;
-		माप_प्रकार len;
-		पूर्णांक ret, i;
+	while (offset + sizeof(struct dev_header) < properties->len) {
+		struct dev_header *dev_header = (void *)properties + offset;
+		struct property_entry *entry = NULL;
+		const struct efi_dev_path *ptr;
+		struct device *dev;
+		size_t len;
+		int ret, i;
 
-		अगर (offset + dev_header->len > properties->len ||
-		    dev_header->len <= माप(*dev_header)) अणु
+		if (offset + dev_header->len > properties->len ||
+		    dev_header->len <= sizeof(*dev_header)) {
 			pr_err("invalid len in dev_header at %#zx\n", offset);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ptr = dev_header->path;
-		len = dev_header->len - माप(*dev_header);
+		len = dev_header->len - sizeof(*dev_header);
 
 		dev = efi_get_device_by_path(&ptr, &len);
-		अगर (IS_ERR(dev)) अणु
+		if (IS_ERR(dev)) {
 			pr_err("device path parse error %ld at %#zx:\n",
-			       PTR_ERR(dev), (व्योम *)ptr - (व्योम *)dev_header);
-			prपूर्णांक_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
+			       PTR_ERR(dev), (void *)ptr - (void *)dev_header);
+			print_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
 			       16, 1, dev_header, dev_header->len, true);
-			dev = शून्य;
-			जाओ skip_device;
-		पूर्ण
+			dev = NULL;
+			goto skip_device;
+		}
 
-		entry = kसुस्मृति(dev_header->prop_count + 1, माप(*entry),
+		entry = kcalloc(dev_header->prop_count + 1, sizeof(*entry),
 				GFP_KERNEL);
-		अगर (!entry) अणु
+		if (!entry) {
 			dev_err(dev, "cannot allocate properties\n");
-			जाओ skip_device;
-		पूर्ण
+			goto skip_device;
+		}
 
 		unmarshal_key_value_pairs(dev_header, dev, ptr, entry);
-		अगर (!entry[0].name)
-			जाओ skip_device;
+		if (!entry[0].name)
+			goto skip_device;
 
 		ret = device_add_properties(dev, entry); /* makes deep copy */
-		अगर (ret)
+		if (ret)
 			dev_err(dev, "error %d assigning properties\n", ret);
 
-		क्रम (i = 0; entry[i].name; i++)
-			kमुक्त(entry[i].name);
+		for (i = 0; entry[i].name; i++)
+			kfree(entry[i].name);
 
 skip_device:
-		kमुक्त(entry);
+		kfree(entry);
 		put_device(dev);
 		offset += dev_header->len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init map_properties(व्योम)
-अणु
-	काष्ठा properties_header *properties;
-	काष्ठा setup_data *data;
+static int __init map_properties(void)
+{
+	struct properties_header *properties;
+	struct setup_data *data;
 	u32 data_len;
 	u64 pa_data;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!x86_apple_machine)
-		वापस 0;
+	if (!x86_apple_machine)
+		return 0;
 
 	pa_data = boot_params.hdr.setup_data;
-	जबतक (pa_data) अणु
-		data = memremap(pa_data, माप(*data), MEMREMAP_WB);
-		अगर (!data) अणु
+	while (pa_data) {
+		data = memremap(pa_data, sizeof(*data), MEMREMAP_WB);
+		if (!data) {
 			pr_err("cannot map setup_data header\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		अगर (data->type != SETUP_APPLE_PROPERTIES) अणु
+		if (data->type != SETUP_APPLE_PROPERTIES) {
 			pa_data = data->next;
 			memunmap(data);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		data_len = data->len;
 		memunmap(data);
 
-		data = memremap(pa_data, माप(*data) + data_len, MEMREMAP_WB);
-		अगर (!data) अणु
+		data = memremap(pa_data, sizeof(*data) + data_len, MEMREMAP_WB);
+		if (!data) {
 			pr_err("cannot map setup_data payload\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		properties = (काष्ठा properties_header *)data->data;
-		अगर (properties->version != 1) अणु
+		properties = (struct properties_header *)data->data;
+		if (properties->version != 1) {
 			pr_err("unsupported version:\n");
-			prपूर्णांक_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
+			print_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
 			       16, 1, properties, data_len, true);
 			ret = -ENOTSUPP;
-		पूर्ण अन्यथा अगर (properties->len != data_len) अणु
+		} else if (properties->len != data_len) {
 			pr_err("length mismatch, expected %u\n", data_len);
-			prपूर्णांक_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
+			print_hex_dump(KERN_ERR, pr_fmt(), DUMP_PREFIX_OFFSET,
 			       16, 1, properties, data_len, true);
 			ret = -EINVAL;
-		पूर्ण अन्यथा
+		} else
 			ret = unmarshal_devices(properties);
 
 		/*
-		 * Can only मुक्त the setup_data payload but not its header
-		 * to aव्योम अवरोधing the chain of ->next poपूर्णांकers.
+		 * Can only free the setup_data payload but not its header
+		 * to avoid breaking the chain of ->next pointers.
 		 */
 		data->len = 0;
 		memunmap(data);
-		memblock_मुक्त_late(pa_data + माप(*data), data_len);
+		memblock_free_late(pa_data + sizeof(*data), data_len);
 
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
 fs_initcall(map_properties);

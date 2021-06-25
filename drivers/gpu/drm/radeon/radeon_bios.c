@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,15 +26,15 @@
  *          Jerome Glisse
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
 
-#समावेश <drm/drm_device.h>
+#include <drm/drm_device.h>
 
-#समावेश "atom.h"
-#समावेश "radeon.h"
-#समावेश "radeon_reg.h"
+#include "atom.h"
+#include "radeon.h"
+#include "radeon_reg.h"
 
 /*
  * BIOS.
@@ -43,222 +42,222 @@
 
 /* If you boot an IGP board with a discrete card as the primary,
  * the IGP rom is not accessible via the rom bar as the IGP rom is
- * part of the प्रणाली bios.  On boot, the प्रणाली bios माला_दो a
- * copy of the igp rom at the start of vram अगर a discrete card is
+ * part of the system bios.  On boot, the system bios puts a
+ * copy of the igp rom at the start of vram if a discrete card is
  * present.
  */
-अटल bool igp_पढ़ो_bios_from_vram(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक8_t __iomem *bios;
-	resource_माप_प्रकार vram_base;
-	resource_माप_प्रकार size = 256 * 1024; /* ??? */
+static bool igp_read_bios_from_vram(struct radeon_device *rdev)
+{
+	uint8_t __iomem *bios;
+	resource_size_t vram_base;
+	resource_size_t size = 256 * 1024; /* ??? */
 
-	अगर (!(rdev->flags & RADEON_IS_IGP))
-		अगर (!radeon_card_posted(rdev))
-			वापस false;
+	if (!(rdev->flags & RADEON_IS_IGP))
+		if (!radeon_card_posted(rdev))
+			return false;
 
-	rdev->bios = शून्य;
+	rdev->bios = NULL;
 	vram_base = pci_resource_start(rdev->pdev, 0);
 	bios = ioremap(vram_base, size);
-	अगर (!bios) अणु
-		वापस false;
-	पूर्ण
+	if (!bios) {
+		return false;
+	}
 
-	अगर (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) अणु
+	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) {
 		iounmap(bios);
-		वापस false;
-	पूर्ण
-	rdev->bios = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (rdev->bios == शून्य) अणु
+		return false;
+	}
+	rdev->bios = kmalloc(size, GFP_KERNEL);
+	if (rdev->bios == NULL) {
 		iounmap(bios);
-		वापस false;
-	पूर्ण
-	स_नकल_fromio(rdev->bios, bios, size);
+		return false;
+	}
+	memcpy_fromio(rdev->bios, bios, size);
 	iounmap(bios);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool radeon_पढ़ो_bios(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक8_t __iomem *bios, val1, val2;
-	माप_प्रकार size;
+static bool radeon_read_bios(struct radeon_device *rdev)
+{
+	uint8_t __iomem *bios, val1, val2;
+	size_t size;
 
-	rdev->bios = शून्य;
-	/* XXX: some cards may वापस 0 क्रम rom size? ddx has a workaround */
+	rdev->bios = NULL;
+	/* XXX: some cards may return 0 for rom size? ddx has a workaround */
 	bios = pci_map_rom(rdev->pdev, &size);
-	अगर (!bios) अणु
-		वापस false;
-	पूर्ण
+	if (!bios) {
+		return false;
+	}
 
-	val1 = पढ़ोb(&bios[0]);
-	val2 = पढ़ोb(&bios[1]);
+	val1 = readb(&bios[0]);
+	val2 = readb(&bios[1]);
 
-	अगर (size == 0 || val1 != 0x55 || val2 != 0xaa) अणु
+	if (size == 0 || val1 != 0x55 || val2 != 0xaa) {
 		pci_unmap_rom(rdev->pdev, bios);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 	rdev->bios = kzalloc(size, GFP_KERNEL);
-	अगर (rdev->bios == शून्य) अणु
+	if (rdev->bios == NULL) {
 		pci_unmap_rom(rdev->pdev, bios);
-		वापस false;
-	पूर्ण
-	स_नकल_fromio(rdev->bios, bios, size);
+		return false;
+	}
+	memcpy_fromio(rdev->bios, bios, size);
 	pci_unmap_rom(rdev->pdev, bios);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool radeon_पढ़ो_platक्रमm_bios(काष्ठा radeon_device *rdev)
-अणु
+static bool radeon_read_platform_bios(struct radeon_device *rdev)
+{
 	phys_addr_t rom = rdev->pdev->rom;
-	माप_प्रकार romlen = rdev->pdev->romlen;
-	व्योम __iomem *bios;
+	size_t romlen = rdev->pdev->romlen;
+	void __iomem *bios;
 
-	rdev->bios = शून्य;
+	rdev->bios = NULL;
 
-	अगर (!rom || romlen == 0)
-		वापस false;
+	if (!rom || romlen == 0)
+		return false;
 
 	rdev->bios = kzalloc(romlen, GFP_KERNEL);
-	अगर (!rdev->bios)
-		वापस false;
+	if (!rdev->bios)
+		return false;
 
 	bios = ioremap(rom, romlen);
-	अगर (!bios)
-		जाओ मुक्त_bios;
+	if (!bios)
+		goto free_bios;
 
-	स_नकल_fromio(rdev->bios, bios, romlen);
+	memcpy_fromio(rdev->bios, bios, romlen);
 	iounmap(bios);
 
-	अगर (rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa)
-		जाओ मुक्त_bios;
+	if (rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa)
+		goto free_bios;
 
-	वापस true;
-मुक्त_bios:
-	kमुक्त(rdev->bios);
-	वापस false;
-पूर्ण
+	return true;
+free_bios:
+	kfree(rdev->bios);
+	return false;
+}
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 /* ATRM is used to get the BIOS on the discrete cards in
- * dual-gpu प्रणालीs.
+ * dual-gpu systems.
  */
 /* retrieve the ROM in 4k blocks */
-#घोषणा ATRM_BIOS_PAGE 4096
+#define ATRM_BIOS_PAGE 4096
 /**
  * radeon_atrm_call - fetch a chunk of the vbios
  *
  * @atrm_handle: acpi ATRM handle
- * @bios: vbios image poपूर्णांकer
+ * @bios: vbios image pointer
  * @offset: offset of vbios image data to fetch
  * @len: length of vbios image data to fetch
  *
  * Executes ATRM to fetch a chunk of the discrete
- * vbios image on PX प्रणालीs (all asics).
+ * vbios image on PX systems (all asics).
  * Returns the length of the buffer fetched.
  */
-अटल पूर्णांक radeon_atrm_call(acpi_handle atrm_handle, uपूर्णांक8_t *bios,
-			    पूर्णांक offset, पूर्णांक len)
-अणु
+static int radeon_atrm_call(acpi_handle atrm_handle, uint8_t *bios,
+			    int offset, int len)
+{
 	acpi_status status;
-	जोड़ acpi_object atrm_arg_elements[2], *obj;
-	काष्ठा acpi_object_list atrm_arg;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	union acpi_object atrm_arg_elements[2], *obj;
+	struct acpi_object_list atrm_arg;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL};
 
 	atrm_arg.count = 2;
-	atrm_arg.poपूर्णांकer = &atrm_arg_elements[0];
+	atrm_arg.pointer = &atrm_arg_elements[0];
 
 	atrm_arg_elements[0].type = ACPI_TYPE_INTEGER;
-	atrm_arg_elements[0].पूर्णांकeger.value = offset;
+	atrm_arg_elements[0].integer.value = offset;
 
 	atrm_arg_elements[1].type = ACPI_TYPE_INTEGER;
-	atrm_arg_elements[1].पूर्णांकeger.value = len;
+	atrm_arg_elements[1].integer.value = len;
 
-	status = acpi_evaluate_object(atrm_handle, शून्य, &atrm_arg, &buffer);
-	अगर (ACPI_FAILURE(status)) अणु
-		prपूर्णांकk("failed to evaluate ATRM got %s\n", acpi_क्रमmat_exception(status));
-		वापस -ENODEV;
-	पूर्ण
+	status = acpi_evaluate_object(atrm_handle, NULL, &atrm_arg, &buffer);
+	if (ACPI_FAILURE(status)) {
+		printk("failed to evaluate ATRM got %s\n", acpi_format_exception(status));
+		return -ENODEV;
+	}
 
-	obj = (जोड़ acpi_object *)buffer.poपूर्णांकer;
-	स_नकल(bios+offset, obj->buffer.poपूर्णांकer, obj->buffer.length);
+	obj = (union acpi_object *)buffer.pointer;
+	memcpy(bios+offset, obj->buffer.pointer, obj->buffer.length);
 	len = obj->buffer.length;
-	kमुक्त(buffer.poपूर्णांकer);
-	वापस len;
-पूर्ण
+	kfree(buffer.pointer);
+	return len;
+}
 
-अटल bool radeon_atrm_get_bios(काष्ठा radeon_device *rdev)
-अणु
-	पूर्णांक ret;
-	पूर्णांक size = 256 * 1024;
-	पूर्णांक i;
-	काष्ठा pci_dev *pdev = शून्य;
+static bool radeon_atrm_get_bios(struct radeon_device *rdev)
+{
+	int ret;
+	int size = 256 * 1024;
+	int i;
+	struct pci_dev *pdev = NULL;
 	acpi_handle dhandle, atrm_handle;
 	acpi_status status;
 	bool found = false;
 
-	/* ATRM is क्रम the discrete card only */
-	अगर (rdev->flags & RADEON_IS_IGP)
-		वापस false;
+	/* ATRM is for the discrete card only */
+	if (rdev->flags & RADEON_IS_IGP)
+		return false;
 
-	जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != शून्य) अणु
+	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
 		dhandle = ACPI_HANDLE(&pdev->dev);
-		अगर (!dhandle)
-			जारी;
+		if (!dhandle)
+			continue;
 
 		status = acpi_get_handle(dhandle, "ATRM", &atrm_handle);
-		अगर (ACPI_SUCCESS(status)) अणु
+		if (ACPI_SUCCESS(status)) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found) अणु
-		जबतक ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != शून्य) अणु
+	if (!found) {
+		while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
 			dhandle = ACPI_HANDLE(&pdev->dev);
-			अगर (!dhandle)
-				जारी;
+			if (!dhandle)
+				continue;
 
 			status = acpi_get_handle(dhandle, "ATRM", &atrm_handle);
-			अगर (ACPI_SUCCESS(status)) अणु
+			if (ACPI_SUCCESS(status)) {
 				found = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (!found)
-		वापस false;
+	if (!found)
+		return false;
 
-	rdev->bios = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!rdev->bios) अणु
+	rdev->bios = kmalloc(size, GFP_KERNEL);
+	if (!rdev->bios) {
 		DRM_ERROR("Unable to allocate bios\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	क्रम (i = 0; i < size / ATRM_BIOS_PAGE; i++) अणु
+	for (i = 0; i < size / ATRM_BIOS_PAGE; i++) {
 		ret = radeon_atrm_call(atrm_handle,
 				       rdev->bios,
 				       (i * ATRM_BIOS_PAGE),
 				       ATRM_BIOS_PAGE);
-		अगर (ret < ATRM_BIOS_PAGE)
-			अवरोध;
-	पूर्ण
+		if (ret < ATRM_BIOS_PAGE)
+			break;
+	}
 
-	अगर (i == 0 || rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) अणु
-		kमुक्त(rdev->bios);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool radeon_atrm_get_bios(काष्ठा radeon_device *rdev)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+	if (i == 0 || rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) {
+		kfree(rdev->bios);
+		return false;
+	}
+	return true;
+}
+#else
+static inline bool radeon_atrm_get_bios(struct radeon_device *rdev)
+{
+	return false;
+}
+#endif
 
-अटल bool ni_पढ़ो_disabled_bios(काष्ठा radeon_device *rdev)
-अणु
+static bool ni_read_disabled_bios(struct radeon_device *rdev)
+{
 	u32 bus_cntl;
 	u32 d1vga_control;
 	u32 d2vga_control;
@@ -274,7 +273,7 @@
 
 	/* enable the rom */
 	WREG32(R600_BUS_CNTL, (bus_cntl & ~R600_BIOS_ROM_DIS));
-	अगर (!ASIC_IS_NODCE(rdev)) अणु
+	if (!ASIC_IS_NODCE(rdev)) {
 		/* Disable VGA mode */
 		WREG32(AVIVO_D1VGA_CONTROL,
 		       (d1vga_control & ~(AVIVO_DVGA_CONTROL_MODE_ENABLE |
@@ -284,32 +283,32 @@
 					  AVIVO_DVGA_CONTROL_TIMING_SELECT)));
 		WREG32(AVIVO_VGA_RENDER_CONTROL,
 		       (vga_render_control & ~AVIVO_VGA_VSTATUS_CNTL_MASK));
-	पूर्ण
+	}
 	WREG32(R600_ROM_CNTL, rom_cntl | R600_SCK_OVERWRITE);
 
-	r = radeon_पढ़ो_bios(rdev);
+	r = radeon_read_bios(rdev);
 
 	/* restore regs */
 	WREG32(R600_BUS_CNTL, bus_cntl);
-	अगर (!ASIC_IS_NODCE(rdev)) अणु
+	if (!ASIC_IS_NODCE(rdev)) {
 		WREG32(AVIVO_D1VGA_CONTROL, d1vga_control);
 		WREG32(AVIVO_D2VGA_CONTROL, d2vga_control);
 		WREG32(AVIVO_VGA_RENDER_CONTROL, vga_render_control);
-	पूर्ण
+	}
 	WREG32(R600_ROM_CNTL, rom_cntl);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool r700_पढ़ो_disabled_bios(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक32_t viph_control;
-	uपूर्णांक32_t bus_cntl;
-	uपूर्णांक32_t d1vga_control;
-	uपूर्णांक32_t d2vga_control;
-	uपूर्णांक32_t vga_render_control;
-	uपूर्णांक32_t rom_cntl;
-	uपूर्णांक32_t cg_spll_func_cntl = 0;
-	uपूर्णांक32_t cg_spll_status;
+static bool r700_read_disabled_bios(struct radeon_device *rdev)
+{
+	uint32_t viph_control;
+	uint32_t bus_cntl;
+	uint32_t d1vga_control;
+	uint32_t d2vga_control;
+	uint32_t vga_render_control;
+	uint32_t rom_cntl;
+	uint32_t cg_spll_func_cntl = 0;
+	uint32_t cg_spll_status;
 	bool r;
 
 	viph_control = RREG32(RADEON_VIPH_CONTROL);
@@ -333,56 +332,56 @@
 	WREG32(AVIVO_VGA_RENDER_CONTROL,
 	       (vga_render_control & ~AVIVO_VGA_VSTATUS_CNTL_MASK));
 
-	अगर (rdev->family == CHIP_RV730) अणु
+	if (rdev->family == CHIP_RV730) {
 		cg_spll_func_cntl = RREG32(R600_CG_SPLL_FUNC_CNTL);
 
 		/* enable bypass mode */
 		WREG32(R600_CG_SPLL_FUNC_CNTL, (cg_spll_func_cntl |
 						R600_SPLL_BYPASS_EN));
 
-		/* रुको क्रम SPLL_CHG_STATUS to change to 1 */
+		/* wait for SPLL_CHG_STATUS to change to 1 */
 		cg_spll_status = 0;
-		जबतक (!(cg_spll_status & R600_SPLL_CHG_STATUS))
+		while (!(cg_spll_status & R600_SPLL_CHG_STATUS))
 			cg_spll_status = RREG32(R600_CG_SPLL_STATUS);
 
 		WREG32(R600_ROM_CNTL, (rom_cntl & ~R600_SCK_OVERWRITE));
-	पूर्ण अन्यथा
+	} else
 		WREG32(R600_ROM_CNTL, (rom_cntl | R600_SCK_OVERWRITE));
 
-	r = radeon_पढ़ो_bios(rdev);
+	r = radeon_read_bios(rdev);
 
 	/* restore regs */
-	अगर (rdev->family == CHIP_RV730) अणु
+	if (rdev->family == CHIP_RV730) {
 		WREG32(R600_CG_SPLL_FUNC_CNTL, cg_spll_func_cntl);
 
-		/* रुको क्रम SPLL_CHG_STATUS to change to 1 */
+		/* wait for SPLL_CHG_STATUS to change to 1 */
 		cg_spll_status = 0;
-		जबतक (!(cg_spll_status & R600_SPLL_CHG_STATUS))
+		while (!(cg_spll_status & R600_SPLL_CHG_STATUS))
 			cg_spll_status = RREG32(R600_CG_SPLL_STATUS);
-	पूर्ण
+	}
 	WREG32(RADEON_VIPH_CONTROL, viph_control);
 	WREG32(R600_BUS_CNTL, bus_cntl);
 	WREG32(AVIVO_D1VGA_CONTROL, d1vga_control);
 	WREG32(AVIVO_D2VGA_CONTROL, d2vga_control);
 	WREG32(AVIVO_VGA_RENDER_CONTROL, vga_render_control);
 	WREG32(R600_ROM_CNTL, rom_cntl);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool r600_पढ़ो_disabled_bios(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक32_t viph_control;
-	uपूर्णांक32_t bus_cntl;
-	uपूर्णांक32_t d1vga_control;
-	uपूर्णांक32_t d2vga_control;
-	uपूर्णांक32_t vga_render_control;
-	uपूर्णांक32_t rom_cntl;
-	uपूर्णांक32_t general_pwrmgt;
-	uपूर्णांक32_t low_vid_lower_gpio_cntl;
-	uपूर्णांक32_t medium_vid_lower_gpio_cntl;
-	uपूर्णांक32_t high_vid_lower_gpio_cntl;
-	uपूर्णांक32_t ctxsw_vid_lower_gpio_cntl;
-	uपूर्णांक32_t lower_gpio_enable;
+static bool r600_read_disabled_bios(struct radeon_device *rdev)
+{
+	uint32_t viph_control;
+	uint32_t bus_cntl;
+	uint32_t d1vga_control;
+	uint32_t d2vga_control;
+	uint32_t vga_render_control;
+	uint32_t rom_cntl;
+	uint32_t general_pwrmgt;
+	uint32_t low_vid_lower_gpio_cntl;
+	uint32_t medium_vid_lower_gpio_cntl;
+	uint32_t high_vid_lower_gpio_cntl;
+	uint32_t ctxsw_vid_lower_gpio_cntl;
+	uint32_t lower_gpio_enable;
 	bool r;
 
 	viph_control = RREG32(RADEON_VIPH_CONTROL);
@@ -428,7 +427,7 @@
 	       (ctxsw_vid_lower_gpio_cntl & ~0x400));
 	WREG32(R600_LOWER_GPIO_ENABLE, (lower_gpio_enable | 0x400));
 
-	r = radeon_पढ़ो_bios(rdev);
+	r = radeon_read_bios(rdev);
 
 	/* restore regs */
 	WREG32(RADEON_VIPH_CONTROL, viph_control);
@@ -443,20 +442,20 @@
 	WREG32(R600_HIGH_VID_LOWER_GPIO_CNTL, high_vid_lower_gpio_cntl);
 	WREG32(R600_CTXSW_VID_LOWER_GPIO_CNTL, ctxsw_vid_lower_gpio_cntl);
 	WREG32(R600_LOWER_GPIO_ENABLE, lower_gpio_enable);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool avivo_पढ़ो_disabled_bios(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक32_t seprom_cntl1;
-	uपूर्णांक32_t viph_control;
-	uपूर्णांक32_t bus_cntl;
-	uपूर्णांक32_t d1vga_control;
-	uपूर्णांक32_t d2vga_control;
-	uपूर्णांक32_t vga_render_control;
-	uपूर्णांक32_t gpiopad_a;
-	uपूर्णांक32_t gpiopad_en;
-	uपूर्णांक32_t gpiopad_mask;
+static bool avivo_read_disabled_bios(struct radeon_device *rdev)
+{
+	uint32_t seprom_cntl1;
+	uint32_t viph_control;
+	uint32_t bus_cntl;
+	uint32_t d1vga_control;
+	uint32_t d2vga_control;
+	uint32_t vga_render_control;
+	uint32_t gpiopad_a;
+	uint32_t gpiopad_en;
+	uint32_t gpiopad_mask;
 	bool r;
 
 	seprom_cntl1 = RREG32(RADEON_SEPROM_CNTL1);
@@ -492,7 +491,7 @@
 	WREG32(AVIVO_VGA_RENDER_CONTROL,
 	       (vga_render_control & ~AVIVO_VGA_VSTATUS_CNTL_MASK));
 
-	r = radeon_पढ़ो_bios(rdev);
+	r = radeon_read_bios(rdev);
 
 	/* restore regs */
 	WREG32(RADEON_SEPROM_CNTL1, seprom_cntl1);
@@ -504,38 +503,38 @@
 	WREG32(RADEON_GPIOPAD_A, gpiopad_a);
 	WREG32(RADEON_GPIOPAD_EN, gpiopad_en);
 	WREG32(RADEON_GPIOPAD_MASK, gpiopad_mask);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल bool legacy_पढ़ो_disabled_bios(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक32_t seprom_cntl1;
-	uपूर्णांक32_t viph_control;
-	uपूर्णांक32_t bus_cntl;
-	uपूर्णांक32_t crtc_gen_cntl;
-	uपूर्णांक32_t crtc2_gen_cntl;
-	uपूर्णांक32_t crtc_ext_cntl;
-	uपूर्णांक32_t fp2_gen_cntl;
+static bool legacy_read_disabled_bios(struct radeon_device *rdev)
+{
+	uint32_t seprom_cntl1;
+	uint32_t viph_control;
+	uint32_t bus_cntl;
+	uint32_t crtc_gen_cntl;
+	uint32_t crtc2_gen_cntl;
+	uint32_t crtc_ext_cntl;
+	uint32_t fp2_gen_cntl;
 	bool r;
 
 	seprom_cntl1 = RREG32(RADEON_SEPROM_CNTL1);
 	viph_control = RREG32(RADEON_VIPH_CONTROL);
-	अगर (rdev->flags & RADEON_IS_PCIE)
+	if (rdev->flags & RADEON_IS_PCIE)
 		bus_cntl = RREG32(RV370_BUS_CNTL);
-	अन्यथा
+	else
 		bus_cntl = RREG32(RADEON_BUS_CNTL);
 	crtc_gen_cntl = RREG32(RADEON_CRTC_GEN_CNTL);
 	crtc2_gen_cntl = 0;
 	crtc_ext_cntl = RREG32(RADEON_CRTC_EXT_CNTL);
 	fp2_gen_cntl = 0;
 
-	अगर (rdev->pdev->device == PCI_DEVICE_ID_ATI_RADEON_QY) अणु
+	if (rdev->pdev->device == PCI_DEVICE_ID_ATI_RADEON_QY) {
 		fp2_gen_cntl = RREG32(RADEON_FP2_GEN_CNTL);
-	पूर्ण
+	}
 
-	अगर (!(rdev->flags & RADEON_SINGLE_CRTC)) अणु
+	if (!(rdev->flags & RADEON_SINGLE_CRTC)) {
 		crtc2_gen_cntl = RREG32(RADEON_CRTC2_GEN_CNTL);
-	पूर्ण
+	}
 
 	WREG32(RADEON_SEPROM_CNTL1,
 	       ((seprom_cntl1 & ~RADEON_SCK_PRESCALE_MASK) |
@@ -545,176 +544,176 @@
 	WREG32(RADEON_VIPH_CONTROL, (viph_control & ~RADEON_VIPH_EN));
 
 	/* enable the rom */
-	अगर (rdev->flags & RADEON_IS_PCIE)
+	if (rdev->flags & RADEON_IS_PCIE)
 		WREG32(RV370_BUS_CNTL, (bus_cntl & ~RV370_BUS_BIOS_DIS_ROM));
-	अन्यथा
+	else
 		WREG32(RADEON_BUS_CNTL, (bus_cntl & ~RADEON_BUS_BIOS_DIS_ROM));
 
-	/* Turn off mem requests and CRTC क्रम both controllers */
+	/* Turn off mem requests and CRTC for both controllers */
 	WREG32(RADEON_CRTC_GEN_CNTL,
 	       ((crtc_gen_cntl & ~RADEON_CRTC_EN) |
 		(RADEON_CRTC_DISP_REQ_EN_B |
 		 RADEON_CRTC_EXT_DISP_EN)));
-	अगर (!(rdev->flags & RADEON_SINGLE_CRTC)) अणु
+	if (!(rdev->flags & RADEON_SINGLE_CRTC)) {
 		WREG32(RADEON_CRTC2_GEN_CNTL,
 		       ((crtc2_gen_cntl & ~RADEON_CRTC2_EN) |
 			RADEON_CRTC2_DISP_REQ_EN_B));
-	पूर्ण
+	}
 	/* Turn off CRTC */
 	WREG32(RADEON_CRTC_EXT_CNTL,
 	       ((crtc_ext_cntl & ~RADEON_CRTC_CRT_ON) |
 		(RADEON_CRTC_SYNC_TRISTAT |
 		 RADEON_CRTC_DISPLAY_DIS)));
 
-	अगर (rdev->pdev->device == PCI_DEVICE_ID_ATI_RADEON_QY) अणु
+	if (rdev->pdev->device == PCI_DEVICE_ID_ATI_RADEON_QY) {
 		WREG32(RADEON_FP2_GEN_CNTL, (fp2_gen_cntl & ~RADEON_FP2_ON));
-	पूर्ण
+	}
 
-	r = radeon_पढ़ो_bios(rdev);
+	r = radeon_read_bios(rdev);
 
 	/* restore regs */
 	WREG32(RADEON_SEPROM_CNTL1, seprom_cntl1);
 	WREG32(RADEON_VIPH_CONTROL, viph_control);
-	अगर (rdev->flags & RADEON_IS_PCIE)
+	if (rdev->flags & RADEON_IS_PCIE)
 		WREG32(RV370_BUS_CNTL, bus_cntl);
-	अन्यथा
+	else
 		WREG32(RADEON_BUS_CNTL, bus_cntl);
 	WREG32(RADEON_CRTC_GEN_CNTL, crtc_gen_cntl);
-	अगर (!(rdev->flags & RADEON_SINGLE_CRTC)) अणु
+	if (!(rdev->flags & RADEON_SINGLE_CRTC)) {
 		WREG32(RADEON_CRTC2_GEN_CNTL, crtc2_gen_cntl);
-	पूर्ण
+	}
 	WREG32(RADEON_CRTC_EXT_CNTL, crtc_ext_cntl);
-	अगर (rdev->pdev->device == PCI_DEVICE_ID_ATI_RADEON_QY) अणु
+	if (rdev->pdev->device == PCI_DEVICE_ID_ATI_RADEON_QY) {
 		WREG32(RADEON_FP2_GEN_CNTL, fp2_gen_cntl);
-	पूर्ण
-	वापस r;
-पूर्ण
+	}
+	return r;
+}
 
-अटल bool radeon_पढ़ो_disabled_bios(काष्ठा radeon_device *rdev)
-अणु
-	अगर (rdev->flags & RADEON_IS_IGP)
-		वापस igp_पढ़ो_bios_from_vram(rdev);
-	अन्यथा अगर (rdev->family >= CHIP_BARTS)
-		वापस ni_पढ़ो_disabled_bios(rdev);
-	अन्यथा अगर (rdev->family >= CHIP_RV770)
-		वापस r700_पढ़ो_disabled_bios(rdev);
-	अन्यथा अगर (rdev->family >= CHIP_R600)
-		वापस r600_पढ़ो_disabled_bios(rdev);
-	अन्यथा अगर (rdev->family >= CHIP_RS600)
-		वापस avivo_पढ़ो_disabled_bios(rdev);
-	अन्यथा
-		वापस legacy_पढ़ो_disabled_bios(rdev);
-पूर्ण
+static bool radeon_read_disabled_bios(struct radeon_device *rdev)
+{
+	if (rdev->flags & RADEON_IS_IGP)
+		return igp_read_bios_from_vram(rdev);
+	else if (rdev->family >= CHIP_BARTS)
+		return ni_read_disabled_bios(rdev);
+	else if (rdev->family >= CHIP_RV770)
+		return r700_read_disabled_bios(rdev);
+	else if (rdev->family >= CHIP_R600)
+		return r600_read_disabled_bios(rdev);
+	else if (rdev->family >= CHIP_RS600)
+		return avivo_read_disabled_bios(rdev);
+	else
+		return legacy_read_disabled_bios(rdev);
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल bool radeon_acpi_vfct_bios(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा acpi_table_header *hdr;
+#ifdef CONFIG_ACPI
+static bool radeon_acpi_vfct_bios(struct radeon_device *rdev)
+{
+	struct acpi_table_header *hdr;
 	acpi_size tbl_size;
 	UEFI_ACPI_VFCT *vfct;
-	अचिन्हित offset;
+	unsigned offset;
 
-	अगर (!ACPI_SUCCESS(acpi_get_table("VFCT", 1, &hdr)))
-		वापस false;
+	if (!ACPI_SUCCESS(acpi_get_table("VFCT", 1, &hdr)))
+		return false;
 	tbl_size = hdr->length;
-	अगर (tbl_size < माप(UEFI_ACPI_VFCT)) अणु
+	if (tbl_size < sizeof(UEFI_ACPI_VFCT)) {
 		DRM_ERROR("ACPI VFCT table present but broken (too short #1)\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	vfct = (UEFI_ACPI_VFCT *)hdr;
 	offset = vfct->VBIOSImageOffset;
 
-	जबतक (offset < tbl_size) अणु
-		GOP_VBIOS_CONTENT *vbios = (GOP_VBIOS_CONTENT *)((अक्षर *)hdr + offset);
+	while (offset < tbl_size) {
+		GOP_VBIOS_CONTENT *vbios = (GOP_VBIOS_CONTENT *)((char *)hdr + offset);
 		VFCT_IMAGE_HEADER *vhdr = &vbios->VbiosHeader;
 
-		offset += माप(VFCT_IMAGE_HEADER);
-		अगर (offset > tbl_size) अणु
+		offset += sizeof(VFCT_IMAGE_HEADER);
+		if (offset > tbl_size) {
 			DRM_ERROR("ACPI VFCT image header truncated\n");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
 		offset += vhdr->ImageLength;
-		अगर (offset > tbl_size) अणु
+		if (offset > tbl_size) {
 			DRM_ERROR("ACPI VFCT image truncated\n");
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
-		अगर (vhdr->ImageLength &&
+		if (vhdr->ImageLength &&
 		    vhdr->PCIBus == rdev->pdev->bus->number &&
 		    vhdr->PCIDevice == PCI_SLOT(rdev->pdev->devfn) &&
 		    vhdr->PCIFunction == PCI_FUNC(rdev->pdev->devfn) &&
-		    vhdr->VenकरोrID == rdev->pdev->venकरोr &&
-		    vhdr->DeviceID == rdev->pdev->device) अणु
+		    vhdr->VendorID == rdev->pdev->vendor &&
+		    vhdr->DeviceID == rdev->pdev->device) {
 			rdev->bios = kmemdup(&vbios->VbiosContent,
 					     vhdr->ImageLength,
 					     GFP_KERNEL);
 
-			अगर (!rdev->bios)
-				वापस false;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			if (!rdev->bios)
+				return false;
+			return true;
+		}
+	}
 
 	DRM_ERROR("ACPI VFCT table present but broken (too short #2)\n");
-	वापस false;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool radeon_acpi_vfct_bios(काष्ठा radeon_device *rdev)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+	return false;
+}
+#else
+static inline bool radeon_acpi_vfct_bios(struct radeon_device *rdev)
+{
+	return false;
+}
+#endif
 
-bool radeon_get_bios(काष्ठा radeon_device *rdev)
-अणु
+bool radeon_get_bios(struct radeon_device *rdev)
+{
 	bool r;
-	uपूर्णांक16_t पंचांगp;
+	uint16_t tmp;
 
 	r = radeon_atrm_get_bios(rdev);
-	अगर (!r)
+	if (!r)
 		r = radeon_acpi_vfct_bios(rdev);
-	अगर (!r)
-		r = igp_पढ़ो_bios_from_vram(rdev);
-	अगर (!r)
-		r = radeon_पढ़ो_bios(rdev);
-	अगर (!r)
-		r = radeon_पढ़ो_disabled_bios(rdev);
-	अगर (!r)
-		r = radeon_पढ़ो_platक्रमm_bios(rdev);
-	अगर (!r || rdev->bios == शून्य) अणु
+	if (!r)
+		r = igp_read_bios_from_vram(rdev);
+	if (!r)
+		r = radeon_read_bios(rdev);
+	if (!r)
+		r = radeon_read_disabled_bios(rdev);
+	if (!r)
+		r = radeon_read_platform_bios(rdev);
+	if (!r || rdev->bios == NULL) {
 		DRM_ERROR("Unable to locate a BIOS ROM\n");
-		rdev->bios = शून्य;
-		वापस false;
-	पूर्ण
-	अगर (rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) अणु
-		prपूर्णांकk("BIOS signature incorrect %x %x\n", rdev->bios[0], rdev->bios[1]);
-		जाओ मुक्त_bios;
-	पूर्ण
+		rdev->bios = NULL;
+		return false;
+	}
+	if (rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) {
+		printk("BIOS signature incorrect %x %x\n", rdev->bios[0], rdev->bios[1]);
+		goto free_bios;
+	}
 
-	पंचांगp = RBIOS16(0x18);
-	अगर (RBIOS8(पंचांगp + 0x14) != 0x0) अणु
+	tmp = RBIOS16(0x18);
+	if (RBIOS8(tmp + 0x14) != 0x0) {
 		DRM_INFO("Not an x86 BIOS ROM, not using.\n");
-		जाओ मुक्त_bios;
-	पूर्ण
+		goto free_bios;
+	}
 
 	rdev->bios_header_start = RBIOS16(0x48);
-	अगर (!rdev->bios_header_start) अणु
-		जाओ मुक्त_bios;
-	पूर्ण
-	पंचांगp = rdev->bios_header_start + 4;
-	अगर (!स_भेद(rdev->bios + पंचांगp, "ATOM", 4) ||
-	    !स_भेद(rdev->bios + पंचांगp, "MOTA", 4)) अणु
+	if (!rdev->bios_header_start) {
+		goto free_bios;
+	}
+	tmp = rdev->bios_header_start + 4;
+	if (!memcmp(rdev->bios + tmp, "ATOM", 4) ||
+	    !memcmp(rdev->bios + tmp, "MOTA", 4)) {
 		rdev->is_atom_bios = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		rdev->is_atom_bios = false;
-	पूर्ण
+	}
 
 	DRM_DEBUG("%sBIOS detected\n", rdev->is_atom_bios ? "ATOM" : "COM");
-	वापस true;
-मुक्त_bios:
-	kमुक्त(rdev->bios);
-	rdev->bios = शून्य;
-	वापस false;
-पूर्ण
+	return true;
+free_bios:
+	kfree(rdev->bios);
+	rdev->bios = NULL;
+	return false;
+}

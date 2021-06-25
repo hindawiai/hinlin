@@ -1,371 +1,370 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Emma Mobile Timer Support - STI
  *
  *  Copyright (C) 2012 Magnus Damm
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/err.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/irq.h>
+#include <linux/err.h>
+#include <linux/delay.h>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-क्रमागत अणु USER_CLOCKSOURCE, USER_CLOCKEVENT, USER_NR पूर्ण;
+enum { USER_CLOCKSOURCE, USER_CLOCKEVENT, USER_NR };
 
-काष्ठा em_sti_priv अणु
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-	काष्ठा platक्रमm_device *pdev;
-	अचिन्हित पूर्णांक active[USER_NR];
-	अचिन्हित दीर्घ rate;
+struct em_sti_priv {
+	void __iomem *base;
+	struct clk *clk;
+	struct platform_device *pdev;
+	unsigned int active[USER_NR];
+	unsigned long rate;
 	raw_spinlock_t lock;
-	काष्ठा घड़ी_event_device ced;
-	काष्ठा घड़ीsource cs;
-पूर्ण;
+	struct clock_event_device ced;
+	struct clocksource cs;
+};
 
-#घोषणा STI_CONTROL 0x00
-#घोषणा STI_COMPA_H 0x10
-#घोषणा STI_COMPA_L 0x14
-#घोषणा STI_COMPB_H 0x18
-#घोषणा STI_COMPB_L 0x1c
-#घोषणा STI_COUNT_H 0x20
-#घोषणा STI_COUNT_L 0x24
-#घोषणा STI_COUNT_RAW_H 0x28
-#घोषणा STI_COUNT_RAW_L 0x2c
-#घोषणा STI_SET_H 0x30
-#घोषणा STI_SET_L 0x34
-#घोषणा STI_INTSTATUS 0x40
-#घोषणा STI_INTRAWSTATUS 0x44
-#घोषणा STI_INTENSET 0x48
-#घोषणा STI_INTENCLR 0x4c
-#घोषणा STI_INTFFCLR 0x50
+#define STI_CONTROL 0x00
+#define STI_COMPA_H 0x10
+#define STI_COMPA_L 0x14
+#define STI_COMPB_H 0x18
+#define STI_COMPB_L 0x1c
+#define STI_COUNT_H 0x20
+#define STI_COUNT_L 0x24
+#define STI_COUNT_RAW_H 0x28
+#define STI_COUNT_RAW_L 0x2c
+#define STI_SET_H 0x30
+#define STI_SET_L 0x34
+#define STI_INTSTATUS 0x40
+#define STI_INTRAWSTATUS 0x44
+#define STI_INTENSET 0x48
+#define STI_INTENCLR 0x4c
+#define STI_INTFFCLR 0x50
 
-अटल अंतरभूत अचिन्हित दीर्घ em_sti_पढ़ो(काष्ठा em_sti_priv *p, पूर्णांक offs)
-अणु
-	वापस ioपढ़ो32(p->base + offs);
-पूर्ण
+static inline unsigned long em_sti_read(struct em_sti_priv *p, int offs)
+{
+	return ioread32(p->base + offs);
+}
 
-अटल अंतरभूत व्योम em_sti_ग_लिखो(काष्ठा em_sti_priv *p, पूर्णांक offs,
-				अचिन्हित दीर्घ value)
-अणु
-	ioग_लिखो32(value, p->base + offs);
-पूर्ण
+static inline void em_sti_write(struct em_sti_priv *p, int offs,
+				unsigned long value)
+{
+	iowrite32(value, p->base + offs);
+}
 
-अटल पूर्णांक em_sti_enable(काष्ठा em_sti_priv *p)
-अणु
-	पूर्णांक ret;
+static int em_sti_enable(struct em_sti_priv *p)
+{
+	int ret;
 
-	/* enable घड़ी */
+	/* enable clock */
 	ret = clk_enable(p->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&p->pdev->dev, "cannot enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* reset the counter */
-	em_sti_ग_लिखो(p, STI_SET_H, 0x40000000);
-	em_sti_ग_लिखो(p, STI_SET_L, 0x00000000);
+	em_sti_write(p, STI_SET_H, 0x40000000);
+	em_sti_write(p, STI_SET_L, 0x00000000);
 
-	/* mask and clear pending पूर्णांकerrupts */
-	em_sti_ग_लिखो(p, STI_INTENCLR, 3);
-	em_sti_ग_लिखो(p, STI_INTFFCLR, 3);
+	/* mask and clear pending interrupts */
+	em_sti_write(p, STI_INTENCLR, 3);
+	em_sti_write(p, STI_INTFFCLR, 3);
 
-	/* enable updates of counter रेजिस्टरs */
-	em_sti_ग_लिखो(p, STI_CONTROL, 1);
+	/* enable updates of counter registers */
+	em_sti_write(p, STI_CONTROL, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम em_sti_disable(काष्ठा em_sti_priv *p)
-अणु
-	/* mask पूर्णांकerrupts */
-	em_sti_ग_लिखो(p, STI_INTENCLR, 3);
+static void em_sti_disable(struct em_sti_priv *p)
+{
+	/* mask interrupts */
+	em_sti_write(p, STI_INTENCLR, 3);
 
-	/* stop घड़ी */
+	/* stop clock */
 	clk_disable(p->clk);
-पूर्ण
+}
 
-अटल u64 em_sti_count(काष्ठा em_sti_priv *p)
-अणु
+static u64 em_sti_count(struct em_sti_priv *p)
+{
 	u64 ticks;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* the STI hardware buffers the 48-bit count, but to
-	 * अवरोध it out पूर्णांकo two 32-bit access the रेजिस्टरs
+	 * break it out into two 32-bit access the registers
 	 * must be accessed in a certain order.
-	 * Always पढ़ो STI_COUNT_H beक्रमe STI_COUNT_L.
+	 * Always read STI_COUNT_H before STI_COUNT_L.
 	 */
 	raw_spin_lock_irqsave(&p->lock, flags);
-	ticks = (u64)(em_sti_पढ़ो(p, STI_COUNT_H) & 0xffff) << 32;
-	ticks |= em_sti_पढ़ो(p, STI_COUNT_L);
+	ticks = (u64)(em_sti_read(p, STI_COUNT_H) & 0xffff) << 32;
+	ticks |= em_sti_read(p, STI_COUNT_L);
 	raw_spin_unlock_irqrestore(&p->lock, flags);
 
-	वापस ticks;
-पूर्ण
+	return ticks;
+}
 
-अटल u64 em_sti_set_next(काष्ठा em_sti_priv *p, u64 next)
-अणु
-	अचिन्हित दीर्घ flags;
+static u64 em_sti_set_next(struct em_sti_priv *p, u64 next)
+{
+	unsigned long flags;
 
 	raw_spin_lock_irqsave(&p->lock, flags);
 
-	/* mask compare A पूर्णांकerrupt */
-	em_sti_ग_लिखो(p, STI_INTENCLR, 1);
+	/* mask compare A interrupt */
+	em_sti_write(p, STI_INTENCLR, 1);
 
 	/* update compare A value */
-	em_sti_ग_लिखो(p, STI_COMPA_H, next >> 32);
-	em_sti_ग_लिखो(p, STI_COMPA_L, next & 0xffffffff);
+	em_sti_write(p, STI_COMPA_H, next >> 32);
+	em_sti_write(p, STI_COMPA_L, next & 0xffffffff);
 
-	/* clear compare A पूर्णांकerrupt source */
-	em_sti_ग_लिखो(p, STI_INTFFCLR, 1);
+	/* clear compare A interrupt source */
+	em_sti_write(p, STI_INTFFCLR, 1);
 
-	/* unmask compare A पूर्णांकerrupt */
-	em_sti_ग_लिखो(p, STI_INTENSET, 1);
+	/* unmask compare A interrupt */
+	em_sti_write(p, STI_INTENSET, 1);
 
 	raw_spin_unlock_irqrestore(&p->lock, flags);
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-अटल irqवापस_t em_sti_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा em_sti_priv *p = dev_id;
+static irqreturn_t em_sti_interrupt(int irq, void *dev_id)
+{
+	struct em_sti_priv *p = dev_id;
 
 	p->ced.event_handler(&p->ced);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक em_sti_start(काष्ठा em_sti_priv *p, अचिन्हित पूर्णांक user)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक used_beक्रमe;
-	पूर्णांक ret = 0;
+static int em_sti_start(struct em_sti_priv *p, unsigned int user)
+{
+	unsigned long flags;
+	int used_before;
+	int ret = 0;
 
 	raw_spin_lock_irqsave(&p->lock, flags);
-	used_beक्रमe = p->active[USER_CLOCKSOURCE] | p->active[USER_CLOCKEVENT];
-	अगर (!used_beक्रमe)
+	used_before = p->active[USER_CLOCKSOURCE] | p->active[USER_CLOCKEVENT];
+	if (!used_before)
 		ret = em_sti_enable(p);
 
-	अगर (!ret)
+	if (!ret)
 		p->active[user] = 1;
 	raw_spin_unlock_irqrestore(&p->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम em_sti_stop(काष्ठा em_sti_priv *p, अचिन्हित पूर्णांक user)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक used_beक्रमe, used_after;
+static void em_sti_stop(struct em_sti_priv *p, unsigned int user)
+{
+	unsigned long flags;
+	int used_before, used_after;
 
 	raw_spin_lock_irqsave(&p->lock, flags);
-	used_beक्रमe = p->active[USER_CLOCKSOURCE] | p->active[USER_CLOCKEVENT];
+	used_before = p->active[USER_CLOCKSOURCE] | p->active[USER_CLOCKEVENT];
 	p->active[user] = 0;
 	used_after = p->active[USER_CLOCKSOURCE] | p->active[USER_CLOCKEVENT];
 
-	अगर (used_beक्रमe && !used_after)
+	if (used_before && !used_after)
 		em_sti_disable(p);
 	raw_spin_unlock_irqrestore(&p->lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा em_sti_priv *cs_to_em_sti(काष्ठा घड़ीsource *cs)
-अणु
-	वापस container_of(cs, काष्ठा em_sti_priv, cs);
-पूर्ण
+static struct em_sti_priv *cs_to_em_sti(struct clocksource *cs)
+{
+	return container_of(cs, struct em_sti_priv, cs);
+}
 
-अटल u64 em_sti_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस em_sti_count(cs_to_em_sti(cs));
-पूर्ण
+static u64 em_sti_clocksource_read(struct clocksource *cs)
+{
+	return em_sti_count(cs_to_em_sti(cs));
+}
 
-अटल पूर्णांक em_sti_घड़ीsource_enable(काष्ठा घड़ीsource *cs)
-अणु
-	काष्ठा em_sti_priv *p = cs_to_em_sti(cs);
+static int em_sti_clocksource_enable(struct clocksource *cs)
+{
+	struct em_sti_priv *p = cs_to_em_sti(cs);
 
-	वापस em_sti_start(p, USER_CLOCKSOURCE);
-पूर्ण
+	return em_sti_start(p, USER_CLOCKSOURCE);
+}
 
-अटल व्योम em_sti_घड़ीsource_disable(काष्ठा घड़ीsource *cs)
-अणु
+static void em_sti_clocksource_disable(struct clocksource *cs)
+{
 	em_sti_stop(cs_to_em_sti(cs), USER_CLOCKSOURCE);
-पूर्ण
+}
 
-अटल व्योम em_sti_घड़ीsource_resume(काष्ठा घड़ीsource *cs)
-अणु
-	em_sti_घड़ीsource_enable(cs);
-पूर्ण
+static void em_sti_clocksource_resume(struct clocksource *cs)
+{
+	em_sti_clocksource_enable(cs);
+}
 
-अटल पूर्णांक em_sti_रेजिस्टर_घड़ीsource(काष्ठा em_sti_priv *p)
-अणु
-	काष्ठा घड़ीsource *cs = &p->cs;
+static int em_sti_register_clocksource(struct em_sti_priv *p)
+{
+	struct clocksource *cs = &p->cs;
 
 	cs->name = dev_name(&p->pdev->dev);
 	cs->rating = 200;
-	cs->पढ़ो = em_sti_घड़ीsource_पढ़ो;
-	cs->enable = em_sti_घड़ीsource_enable;
-	cs->disable = em_sti_घड़ीsource_disable;
-	cs->suspend = em_sti_घड़ीsource_disable;
-	cs->resume = em_sti_घड़ीsource_resume;
+	cs->read = em_sti_clocksource_read;
+	cs->enable = em_sti_clocksource_enable;
+	cs->disable = em_sti_clocksource_disable;
+	cs->suspend = em_sti_clocksource_disable;
+	cs->resume = em_sti_clocksource_resume;
 	cs->mask = CLOCKSOURCE_MASK(48);
 	cs->flags = CLOCK_SOURCE_IS_CONTINUOUS;
 
 	dev_info(&p->pdev->dev, "used as clock source\n");
 
-	घड़ीsource_रेजिस्टर_hz(cs, p->rate);
-	वापस 0;
-पूर्ण
+	clocksource_register_hz(cs, p->rate);
+	return 0;
+}
 
-अटल काष्ठा em_sti_priv *ced_to_em_sti(काष्ठा घड़ी_event_device *ced)
-अणु
-	वापस container_of(ced, काष्ठा em_sti_priv, ced);
-पूर्ण
+static struct em_sti_priv *ced_to_em_sti(struct clock_event_device *ced)
+{
+	return container_of(ced, struct em_sti_priv, ced);
+}
 
-अटल पूर्णांक em_sti_घड़ी_event_shutकरोwn(काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा em_sti_priv *p = ced_to_em_sti(ced);
+static int em_sti_clock_event_shutdown(struct clock_event_device *ced)
+{
+	struct em_sti_priv *p = ced_to_em_sti(ced);
 	em_sti_stop(p, USER_CLOCKEVENT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक em_sti_घड़ी_event_set_oneshot(काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा em_sti_priv *p = ced_to_em_sti(ced);
+static int em_sti_clock_event_set_oneshot(struct clock_event_device *ced)
+{
+	struct em_sti_priv *p = ced_to_em_sti(ced);
 
 	dev_info(&p->pdev->dev, "used for oneshot clock events\n");
 	em_sti_start(p, USER_CLOCKEVENT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक em_sti_घड़ी_event_next(अचिन्हित दीर्घ delta,
-				   काष्ठा घड़ी_event_device *ced)
-अणु
-	काष्ठा em_sti_priv *p = ced_to_em_sti(ced);
+static int em_sti_clock_event_next(unsigned long delta,
+				   struct clock_event_device *ced)
+{
+	struct em_sti_priv *p = ced_to_em_sti(ced);
 	u64 next;
-	पूर्णांक safe;
+	int safe;
 
 	next = em_sti_set_next(p, em_sti_count(p) + delta);
 	safe = em_sti_count(p) < (next - 1);
 
-	वापस !safe;
-पूर्ण
+	return !safe;
+}
 
-अटल व्योम em_sti_रेजिस्टर_घड़ीevent(काष्ठा em_sti_priv *p)
-अणु
-	काष्ठा घड़ी_event_device *ced = &p->ced;
+static void em_sti_register_clockevent(struct em_sti_priv *p)
+{
+	struct clock_event_device *ced = &p->ced;
 
 	ced->name = dev_name(&p->pdev->dev);
 	ced->features = CLOCK_EVT_FEAT_ONESHOT;
 	ced->rating = 200;
 	ced->cpumask = cpu_possible_mask;
-	ced->set_next_event = em_sti_घड़ी_event_next;
-	ced->set_state_shutकरोwn = em_sti_घड़ी_event_shutकरोwn;
-	ced->set_state_oneshot = em_sti_घड़ी_event_set_oneshot;
+	ced->set_next_event = em_sti_clock_event_next;
+	ced->set_state_shutdown = em_sti_clock_event_shutdown;
+	ced->set_state_oneshot = em_sti_clock_event_set_oneshot;
 
 	dev_info(&p->pdev->dev, "used for clock events\n");
 
-	घड़ीevents_config_and_रेजिस्टर(ced, p->rate, 2, 0xffffffff);
-पूर्ण
+	clockevents_config_and_register(ced, p->rate, 2, 0xffffffff);
+}
 
-अटल पूर्णांक em_sti_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा em_sti_priv *p;
-	पूर्णांक irq, ret;
+static int em_sti_probe(struct platform_device *pdev)
+{
+	struct em_sti_priv *p;
+	int irq, ret;
 
-	p = devm_kzalloc(&pdev->dev, माप(*p), GFP_KERNEL);
-	अगर (p == शून्य)
-		वापस -ENOMEM;
+	p = devm_kzalloc(&pdev->dev, sizeof(*p), GFP_KERNEL);
+	if (p == NULL)
+		return -ENOMEM;
 
 	p->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, p);
+	platform_set_drvdata(pdev, p);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	/* map memory, let base poपूर्णांक to the STI instance */
-	p->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(p->base))
-		वापस PTR_ERR(p->base);
+	/* map memory, let base point to the STI instance */
+	p->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(p->base))
+		return PTR_ERR(p->base);
 
-	ret = devm_request_irq(&pdev->dev, irq, em_sti_पूर्णांकerrupt,
+	ret = devm_request_irq(&pdev->dev, irq, em_sti_interrupt,
 			       IRQF_TIMER | IRQF_IRQPOLL | IRQF_NOBALANCING,
 			       dev_name(&pdev->dev), p);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to request low IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* get hold of घड़ी */
+	/* get hold of clock */
 	p->clk = devm_clk_get(&pdev->dev, "sclk");
-	अगर (IS_ERR(p->clk)) अणु
+	if (IS_ERR(p->clk)) {
 		dev_err(&pdev->dev, "cannot get clock\n");
-		वापस PTR_ERR(p->clk);
-	पूर्ण
+		return PTR_ERR(p->clk);
+	}
 
 	ret = clk_prepare(p->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "cannot prepare clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_enable(p->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&p->pdev->dev, "cannot enable clock\n");
 		clk_unprepare(p->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	p->rate = clk_get_rate(p->clk);
 	clk_disable(p->clk);
 
 	raw_spin_lock_init(&p->lock);
-	em_sti_रेजिस्टर_घड़ीevent(p);
-	em_sti_रेजिस्टर_घड़ीsource(p);
-	वापस 0;
-पूर्ण
+	em_sti_register_clockevent(p);
+	em_sti_register_clocksource(p);
+	return 0;
+}
 
-अटल पूर्णांक em_sti_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस -EBUSY; /* cannot unरेजिस्टर घड़ीevent and घड़ीsource */
-पूर्ण
+static int em_sti_remove(struct platform_device *pdev)
+{
+	return -EBUSY; /* cannot unregister clockevent and clocksource */
+}
 
-अटल स्थिर काष्ठा of_device_id em_sti_dt_ids[] = अणु
-	अणु .compatible = "renesas,em-sti", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id em_sti_dt_ids[] = {
+	{ .compatible = "renesas,em-sti", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, em_sti_dt_ids);
 
-अटल काष्ठा platक्रमm_driver em_sti_device_driver = अणु
+static struct platform_driver em_sti_device_driver = {
 	.probe		= em_sti_probe,
-	.हटाओ		= em_sti_हटाओ,
-	.driver		= अणु
+	.remove		= em_sti_remove,
+	.driver		= {
 		.name	= "em_sti",
 		.of_match_table = em_sti_dt_ids,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init em_sti_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&em_sti_device_driver);
-पूर्ण
+static int __init em_sti_init(void)
+{
+	return platform_driver_register(&em_sti_device_driver);
+}
 
-अटल व्योम __निकास em_sti_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&em_sti_device_driver);
-पूर्ण
+static void __exit em_sti_exit(void)
+{
+	platform_driver_unregister(&em_sti_device_driver);
+}
 
 subsys_initcall(em_sti_init);
-module_निकास(em_sti_निकास);
+module_exit(em_sti_exit);
 
 MODULE_AUTHOR("Magnus Damm");
 MODULE_DESCRIPTION("Renesas Emma Mobile STI Timer Driver");

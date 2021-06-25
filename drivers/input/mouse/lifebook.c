@@ -1,292 +1,291 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Fujitsu B-series Lअगरebook PS/2 TouchScreen driver
+ * Fujitsu B-series Lifebook PS/2 TouchScreen driver
  *
  * Copyright (c) 2005 Vojtech Pavlik <vojtech@suse.cz>
  * Copyright (c) 2005 Kenan Esau <kenan.esau@conan.de>
  *
- * TouchScreen detection, असलolute mode setting and packet layout is taken from
+ * TouchScreen detection, absolute mode setting and packet layout is taken from
  * Harald Hoyer's description of the device.
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/libps2.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/input.h>
+#include <linux/serio.h>
+#include <linux/libps2.h>
+#include <linux/dmi.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश "psmouse.h"
-#समावेश "lifebook.h"
+#include "psmouse.h"
+#include "lifebook.h"
 
-काष्ठा lअगरebook_data अणु
-	काष्ठा input_dev *dev2;		/* Relative device */
-	अक्षर phys[32];
-पूर्ण;
+struct lifebook_data {
+	struct input_dev *dev2;		/* Relative device */
+	char phys[32];
+};
 
-अटल bool lअगरebook_present;
+static bool lifebook_present;
 
-अटल स्थिर अक्षर *desired_serio_phys;
+static const char *desired_serio_phys;
 
-अटल पूर्णांक lअगरebook_limit_serio3(स्थिर काष्ठा dmi_प्रणाली_id *d)
-अणु
+static int lifebook_limit_serio3(const struct dmi_system_id *d)
+{
 	desired_serio_phys = "isa0060/serio3";
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल bool lअगरebook_use_6byte_proto;
+static bool lifebook_use_6byte_proto;
 
-अटल पूर्णांक lअगरebook_set_6byte_proto(स्थिर काष्ठा dmi_प्रणाली_id *d)
-अणु
-	lअगरebook_use_6byte_proto = true;
-	वापस 1;
-पूर्ण
+static int lifebook_set_6byte_proto(const struct dmi_system_id *d)
+{
+	lifebook_use_6byte_proto = true;
+	return 1;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id lअगरebook_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id lifebook_dmi_table[] __initconst = {
+	{
 		/* FLORA-ie 55mi */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "FLORA-ie 55mi"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		/* LअगरeBook B */
-		.matches = अणु
+		},
+	},
+	{
+		/* LifeBook B */
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Lifebook B Series"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		/* LअगरeBook B */
-		.matches = अणु
+		},
+	},
+	{
+		/* LifeBook B */
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "LifeBook B Series"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		/* Lअगरebook B */
-		.matches = अणु
+		},
+	},
+	{
+		/* Lifebook B */
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "LIFEBOOK B Series"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		/* Lअगरebook B-2130 */
-		.matches = अणु
+		},
+	},
+	{
+		/* Lifebook B-2130 */
+		.matches = {
 			DMI_MATCH(DMI_BOARD_NAME, "ZEPHYR"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		/* Lअगरebook B213x/B2150 */
-		.matches = अणु
+		},
+	},
+	{
+		/* Lifebook B213x/B2150 */
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "LifeBook B2131/B2133/B2150"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* Zephyr */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "ZEPHYR"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* Panasonic CF-18 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "CF-18"),
-		पूर्ण,
-		.callback = lअगरebook_limit_serio3,
-	पूर्ण,
-	अणु
+		},
+		.callback = lifebook_limit_serio3,
+	},
+	{
 		/* Panasonic CF-28 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Matsushita"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "CF-28"),
-		पूर्ण,
-		.callback = lअगरebook_set_6byte_proto,
-	पूर्ण,
-	अणु
+		},
+		.callback = lifebook_set_6byte_proto,
+	},
+	{
 		/* Panasonic CF-29 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Matsushita"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "CF-29"),
-		पूर्ण,
-		.callback = lअगरebook_set_6byte_proto,
-	पूर्ण,
-	अणु
+		},
+		.callback = lifebook_set_6byte_proto,
+	},
+	{
 		/* Panasonic CF-72 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "CF-72"),
-		पूर्ण,
-		.callback = lअगरebook_set_6byte_proto,
-	पूर्ण,
-	अणु
-		/* Lअगरebook B142 */
-		.matches = अणु
+		},
+		.callback = lifebook_set_6byte_proto,
+	},
+	{
+		/* Lifebook B142 */
+		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "LifeBook B142"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
-व्योम __init lअगरebook_module_init(व्योम)
-अणु
-	lअगरebook_present = dmi_check_प्रणाली(lअगरebook_dmi_table);
-पूर्ण
+void __init lifebook_module_init(void)
+{
+	lifebook_present = dmi_check_system(lifebook_dmi_table);
+}
 
-अटल psmouse_ret_t lअगरebook_process_byte(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा lअगरebook_data *priv = psmouse->निजी;
-	काष्ठा input_dev *dev1 = psmouse->dev;
-	काष्ठा input_dev *dev2 = priv ? priv->dev2 : शून्य;
+static psmouse_ret_t lifebook_process_byte(struct psmouse *psmouse)
+{
+	struct lifebook_data *priv = psmouse->private;
+	struct input_dev *dev1 = psmouse->dev;
+	struct input_dev *dev2 = priv ? priv->dev2 : NULL;
 	u8 *packet = psmouse->packet;
 	bool relative_packet = packet[0] & 0x08;
 
-	अगर (relative_packet || !lअगरebook_use_6byte_proto) अणु
-		अगर (psmouse->pktcnt != 3)
-			वापस PSMOUSE_GOOD_DATA;
-	पूर्ण अन्यथा अणु
-		चयन (psmouse->pktcnt) अणु
-		हाल 1:
-			वापस (packet[0] & 0xf8) == 0x00 ?
+	if (relative_packet || !lifebook_use_6byte_proto) {
+		if (psmouse->pktcnt != 3)
+			return PSMOUSE_GOOD_DATA;
+	} else {
+		switch (psmouse->pktcnt) {
+		case 1:
+			return (packet[0] & 0xf8) == 0x00 ?
 				PSMOUSE_GOOD_DATA : PSMOUSE_BAD_DATA;
-		हाल 2:
-			वापस PSMOUSE_GOOD_DATA;
-		हाल 3:
-			वापस ((packet[2] & 0x30) << 2) == (packet[2] & 0xc0) ?
+		case 2:
+			return PSMOUSE_GOOD_DATA;
+		case 3:
+			return ((packet[2] & 0x30) << 2) == (packet[2] & 0xc0) ?
 				PSMOUSE_GOOD_DATA : PSMOUSE_BAD_DATA;
-		हाल 4:
-			वापस (packet[3] & 0xf8) == 0xc0 ?
+		case 4:
+			return (packet[3] & 0xf8) == 0xc0 ?
 				PSMOUSE_GOOD_DATA : PSMOUSE_BAD_DATA;
-		हाल 5:
-			वापस (packet[4] & 0xc0) == (packet[2] & 0xc0) ?
+		case 5:
+			return (packet[4] & 0xc0) == (packet[2] & 0xc0) ?
 				PSMOUSE_GOOD_DATA : PSMOUSE_BAD_DATA;
-		हाल 6:
-			अगर (((packet[5] & 0x30) << 2) != (packet[5] & 0xc0))
-				वापस PSMOUSE_BAD_DATA;
-			अगर ((packet[5] & 0xc0) != (packet[1] & 0xc0))
-				वापस PSMOUSE_BAD_DATA;
-			अवरोध; /* report data */
-		पूर्ण
-	पूर्ण
+		case 6:
+			if (((packet[5] & 0x30) << 2) != (packet[5] & 0xc0))
+				return PSMOUSE_BAD_DATA;
+			if ((packet[5] & 0xc0) != (packet[1] & 0xc0))
+				return PSMOUSE_BAD_DATA;
+			break; /* report data */
+		}
+	}
 
-	अगर (relative_packet) अणु
-		अगर (!dev2)
+	if (relative_packet) {
+		if (!dev2)
 			psmouse_warn(psmouse,
 				     "got relative packet but no relative device set up\n");
-	पूर्ण अन्यथा अणु
-		अगर (lअगरebook_use_6byte_proto) अणु
-			input_report_असल(dev1, ABS_X,
+	} else {
+		if (lifebook_use_6byte_proto) {
+			input_report_abs(dev1, ABS_X,
 				((packet[1] & 0x3f) << 6) | (packet[2] & 0x3f));
-			input_report_असल(dev1, ABS_Y,
+			input_report_abs(dev1, ABS_Y,
 				4096 - (((packet[4] & 0x3f) << 6) | (packet[5] & 0x3f)));
-		पूर्ण अन्यथा अणु
-			input_report_असल(dev1, ABS_X,
+		} else {
+			input_report_abs(dev1, ABS_X,
 				(packet[1] | ((packet[0] & 0x30) << 4)));
-			input_report_असल(dev1, ABS_Y,
+			input_report_abs(dev1, ABS_Y,
 				1024 - (packet[2] | ((packet[0] & 0xC0) << 2)));
-		पूर्ण
+		}
 		input_report_key(dev1, BTN_TOUCH, packet[0] & 0x04);
 		input_sync(dev1);
-	पूर्ण
+	}
 
-	अगर (dev2) अणु
-		अगर (relative_packet)
+	if (dev2) {
+		if (relative_packet)
 			psmouse_report_standard_motion(dev2, packet);
 
 		psmouse_report_standard_buttons(dev2, packet[0]);
 		input_sync(dev2);
-	पूर्ण
+	}
 
-	वापस PSMOUSE_FULL_PACKET;
-पूर्ण
+	return PSMOUSE_FULL_PACKET;
+}
 
-अटल पूर्णांक lअगरebook_असलolute_mode(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा ps2dev *ps2dev = &psmouse->ps2dev;
+static int lifebook_absolute_mode(struct psmouse *psmouse)
+{
+	struct ps2dev *ps2dev = &psmouse->ps2dev;
 	u8 param;
-	पूर्णांक error;
+	int error;
 
 	error = psmouse_reset(psmouse);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
-	 * Enable असलolute output -- ps2_command fails always but अगर
+	 * Enable absolute output -- ps2_command fails always but if
 	 * you leave this call out the touchscreen will never send
-	 * असलolute coordinates
+	 * absolute coordinates
 	 */
-	param = lअगरebook_use_6byte_proto ? 0x08 : 0x07;
+	param = lifebook_use_6byte_proto ? 0x08 : 0x07;
 	ps2_command(ps2dev, &param, PSMOUSE_CMD_SETRES);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम lअगरebook_relative_mode(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा ps2dev *ps2dev = &psmouse->ps2dev;
+static void lifebook_relative_mode(struct psmouse *psmouse)
+{
+	struct ps2dev *ps2dev = &psmouse->ps2dev;
 	u8 param = 0x06;
 
 	ps2_command(ps2dev, &param, PSMOUSE_CMD_SETRES);
-पूर्ण
+}
 
-अटल व्योम lअगरebook_set_resolution(काष्ठा psmouse *psmouse, अचिन्हित पूर्णांक resolution)
-अणु
-	अटल स्थिर u8 params[] = अणु 0, 1, 2, 2, 3 पूर्ण;
+static void lifebook_set_resolution(struct psmouse *psmouse, unsigned int resolution)
+{
+	static const u8 params[] = { 0, 1, 2, 2, 3 };
 	u8 p;
 
-	अगर (resolution == 0 || resolution > 400)
+	if (resolution == 0 || resolution > 400)
 		resolution = 400;
 
 	p = params[resolution / 100];
 	ps2_command(&psmouse->ps2dev, &p, PSMOUSE_CMD_SETRES);
 	psmouse->resolution = 50 << p;
-पूर्ण
+}
 
-अटल व्योम lअगरebook_disconnect(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा lअगरebook_data *priv = psmouse->निजी;
+static void lifebook_disconnect(struct psmouse *psmouse)
+{
+	struct lifebook_data *priv = psmouse->private;
 
 	psmouse_reset(psmouse);
-	अगर (priv) अणु
-		input_unरेजिस्टर_device(priv->dev2);
-		kमुक्त(priv);
-	पूर्ण
-	psmouse->निजी = शून्य;
-पूर्ण
+	if (priv) {
+		input_unregister_device(priv->dev2);
+		kfree(priv);
+	}
+	psmouse->private = NULL;
+}
 
-पूर्णांक lअगरebook_detect(काष्ठा psmouse *psmouse, bool set_properties)
-अणु
-	अगर (!lअगरebook_present)
-		वापस -ENXIO;
+int lifebook_detect(struct psmouse *psmouse, bool set_properties)
+{
+	if (!lifebook_present)
+		return -ENXIO;
 
-	अगर (desired_serio_phys &&
-	    म_भेद(psmouse->ps2dev.serio->phys, desired_serio_phys))
-		वापस -ENXIO;
+	if (desired_serio_phys &&
+	    strcmp(psmouse->ps2dev.serio->phys, desired_serio_phys))
+		return -ENXIO;
 
-	अगर (set_properties) अणु
-		psmouse->venकरोr = "Fujitsu";
+	if (set_properties) {
+		psmouse->vendor = "Fujitsu";
 		psmouse->name = "Lifebook TouchScreen";
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lअगरebook_create_relative_device(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा input_dev *dev2;
-	काष्ठा lअगरebook_data *priv;
-	पूर्णांक error = -ENOMEM;
+static int lifebook_create_relative_device(struct psmouse *psmouse)
+{
+	struct input_dev *dev2;
+	struct lifebook_data *priv;
+	int error = -ENOMEM;
 
-	priv = kzalloc(माप(काष्ठा lअगरebook_data), GFP_KERNEL);
+	priv = kzalloc(sizeof(struct lifebook_data), GFP_KERNEL);
 	dev2 = input_allocate_device();
-	अगर (!priv || !dev2)
-		जाओ err_out;
+	if (!priv || !dev2)
+		goto err_out;
 
 	priv->dev2 = dev2;
-	snम_लिखो(priv->phys, माप(priv->phys),
+	snprintf(priv->phys, sizeof(priv->phys),
 		 "%s/input1", psmouse->ps2dev.serio->phys);
 
 	dev2->phys = priv->phys;
 	dev2->name = "LBPS/2 Fujitsu Lifebook Touchpad";
 	dev2->id.bustype = BUS_I8042;
-	dev2->id.venकरोr  = 0x0002;
+	dev2->id.vendor  = 0x0002;
 	dev2->id.product = PSMOUSE_LIFEBOOK;
 	dev2->id.version = 0x0000;
 	dev2->dev.parent = &psmouse->ps2dev.serio->dev;
@@ -296,59 +295,59 @@
 	input_set_capability(dev2, EV_KEY, BTN_LEFT);
 	input_set_capability(dev2, EV_KEY, BTN_RIGHT);
 
-	error = input_रेजिस्टर_device(priv->dev2);
-	अगर (error)
-		जाओ err_out;
+	error = input_register_device(priv->dev2);
+	if (error)
+		goto err_out;
 
-	psmouse->निजी = priv;
-	वापस 0;
+	psmouse->private = priv;
+	return 0;
 
  err_out:
-	input_मुक्त_device(dev2);
-	kमुक्त(priv);
-	वापस error;
-पूर्ण
+	input_free_device(dev2);
+	kfree(priv);
+	return error;
+}
 
-पूर्णांक lअगरebook_init(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा input_dev *dev1 = psmouse->dev;
-	पूर्णांक max_coord = lअगरebook_use_6byte_proto ? 4096 : 1024;
-	पूर्णांक error;
+int lifebook_init(struct psmouse *psmouse)
+{
+	struct input_dev *dev1 = psmouse->dev;
+	int max_coord = lifebook_use_6byte_proto ? 4096 : 1024;
+	int error;
 
-	error = lअगरebook_असलolute_mode(psmouse);
-	अगर (error)
-		वापस error;
+	error = lifebook_absolute_mode(psmouse);
+	if (error)
+		return error;
 
-	/* Clear शेष capabilities */
-	biपंचांगap_zero(dev1->evbit, EV_CNT);
-	biपंचांगap_zero(dev1->relbit, REL_CNT);
-	biपंचांगap_zero(dev1->keybit, KEY_CNT);
+	/* Clear default capabilities */
+	bitmap_zero(dev1->evbit, EV_CNT);
+	bitmap_zero(dev1->relbit, REL_CNT);
+	bitmap_zero(dev1->keybit, KEY_CNT);
 
 	input_set_capability(dev1, EV_KEY, BTN_TOUCH);
-	input_set_असल_params(dev1, ABS_X, 0, max_coord, 0, 0);
-	input_set_असल_params(dev1, ABS_Y, 0, max_coord, 0, 0);
+	input_set_abs_params(dev1, ABS_X, 0, max_coord, 0, 0);
+	input_set_abs_params(dev1, ABS_Y, 0, max_coord, 0, 0);
 
-	अगर (!desired_serio_phys) अणु
-		error = lअगरebook_create_relative_device(psmouse);
-		अगर (error) अणु
-			lअगरebook_relative_mode(psmouse);
-			वापस error;
-		पूर्ण
-	पूर्ण
+	if (!desired_serio_phys) {
+		error = lifebook_create_relative_device(psmouse);
+		if (error) {
+			lifebook_relative_mode(psmouse);
+			return error;
+		}
+	}
 
-	psmouse->protocol_handler = lअगरebook_process_byte;
-	psmouse->set_resolution = lअगरebook_set_resolution;
-	psmouse->disconnect = lअगरebook_disconnect;
-	psmouse->reconnect  = lअगरebook_असलolute_mode;
+	psmouse->protocol_handler = lifebook_process_byte;
+	psmouse->set_resolution = lifebook_set_resolution;
+	psmouse->disconnect = lifebook_disconnect;
+	psmouse->reconnect  = lifebook_absolute_mode;
 
-	psmouse->model = lअगरebook_use_6byte_proto ? 6 : 3;
+	psmouse->model = lifebook_use_6byte_proto ? 6 : 3;
 
 	/*
 	 * Use packet size = 3 even when using 6-byte protocol because
-	 * that's what POLL will वापस on Lअगरebooks (according to spec).
+	 * that's what POLL will return on Lifebooks (according to spec).
 	 */
 	psmouse->pktsize = 3;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

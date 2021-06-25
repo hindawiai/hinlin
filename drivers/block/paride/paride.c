@@ -1,9 +1,8 @@
-<शैली गुरु>
 /* 
         paride.c  (c) 1997-8  Grant R. Guenther <grant@torque.net>
                               Under the terms of the GNU General Public License.
 
-	This is the base module क्रम the family of device drivers
+	This is the base module for the family of device drivers
         that support parallel port IDE devices.  
 
 */
@@ -13,468 +12,468 @@
 	1.01	GRG 1998.05.03	Use spinlocks
 	1.02	GRG 1998.05.05  init_proto, release_proto, ktti
 	1.03	GRG 1998.08.15  eliminate compiler warning
-	1.04    GRG 1998.11.28  added support क्रम FRIQ 
+	1.04    GRG 1998.11.28  added support for FRIQ 
 	1.05    TMW 2000.06.06  use parport_find_number instead of
-				parport_क्रमागतerate
+				parport_enumerate
 	1.06    TMW 2001.03.26  more sane parport-or-not resource management
 */
 
-#घोषणा PI_VERSION      "1.06"
+#define PI_VERSION      "1.06"
 
-#समावेश <linux/module.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/sched.h>	/* TASK_* */
-#समावेश <linux/parport.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kmod.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/ioport.h>
+#include <linux/string.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/sched.h>	/* TASK_* */
+#include <linux/parport.h>
+#include <linux/slab.h>
 
-#समावेश "paride.h"
+#include "paride.h"
 
 MODULE_LICENSE("GPL");
 
-#घोषणा MAX_PROTOS	32
+#define MAX_PROTOS	32
 
-अटल काष्ठा pi_protocol *protocols[MAX_PROTOS];
+static struct pi_protocol *protocols[MAX_PROTOS];
 
-अटल DEFINE_SPINLOCK(pi_spinlock);
+static DEFINE_SPINLOCK(pi_spinlock);
 
-व्योम pi_ग_लिखो_regr(PIA * pi, पूर्णांक cont, पूर्णांक regr, पूर्णांक val)
-अणु
-	pi->proto->ग_लिखो_regr(pi, cont, regr, val);
-पूर्ण
+void pi_write_regr(PIA * pi, int cont, int regr, int val)
+{
+	pi->proto->write_regr(pi, cont, regr, val);
+}
 
-EXPORT_SYMBOL(pi_ग_लिखो_regr);
+EXPORT_SYMBOL(pi_write_regr);
 
-पूर्णांक pi_पढ़ो_regr(PIA * pi, पूर्णांक cont, पूर्णांक regr)
-अणु
-	वापस pi->proto->पढ़ो_regr(pi, cont, regr);
-पूर्ण
+int pi_read_regr(PIA * pi, int cont, int regr)
+{
+	return pi->proto->read_regr(pi, cont, regr);
+}
 
-EXPORT_SYMBOL(pi_पढ़ो_regr);
+EXPORT_SYMBOL(pi_read_regr);
 
-व्योम pi_ग_लिखो_block(PIA * pi, अक्षर *buf, पूर्णांक count)
-अणु
-	pi->proto->ग_लिखो_block(pi, buf, count);
-पूर्ण
+void pi_write_block(PIA * pi, char *buf, int count)
+{
+	pi->proto->write_block(pi, buf, count);
+}
 
-EXPORT_SYMBOL(pi_ग_लिखो_block);
+EXPORT_SYMBOL(pi_write_block);
 
-व्योम pi_पढ़ो_block(PIA * pi, अक्षर *buf, पूर्णांक count)
-अणु
-	pi->proto->पढ़ो_block(pi, buf, count);
-पूर्ण
+void pi_read_block(PIA * pi, char *buf, int count)
+{
+	pi->proto->read_block(pi, buf, count);
+}
 
-EXPORT_SYMBOL(pi_पढ़ो_block);
+EXPORT_SYMBOL(pi_read_block);
 
-अटल व्योम pi_wake_up(व्योम *p)
-अणु
+static void pi_wake_up(void *p)
+{
 	PIA *pi = (PIA *) p;
-	अचिन्हित दीर्घ flags;
-	व्योम (*cont) (व्योम) = शून्य;
+	unsigned long flags;
+	void (*cont) (void) = NULL;
 
 	spin_lock_irqsave(&pi_spinlock, flags);
 
-	अगर (pi->claim_cont && !parport_claim(pi->pardev)) अणु
+	if (pi->claim_cont && !parport_claim(pi->pardev)) {
 		cont = pi->claim_cont;
-		pi->claim_cont = शून्य;
+		pi->claim_cont = NULL;
 		pi->claimed = 1;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&pi_spinlock, flags);
 
 	wake_up(&(pi->parq));
 
-	अगर (cont)
+	if (cont)
 		cont();
-पूर्ण
+}
 
-पूर्णांक pi_schedule_claimed(PIA * pi, व्योम (*cont) (व्योम))
-अणु
-	अचिन्हित दीर्घ flags;
+int pi_schedule_claimed(PIA * pi, void (*cont) (void))
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pi_spinlock, flags);
-	अगर (pi->pardev && parport_claim(pi->pardev)) अणु
+	if (pi->pardev && parport_claim(pi->pardev)) {
 		pi->claim_cont = cont;
 		spin_unlock_irqrestore(&pi_spinlock, flags);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	pi->claimed = 1;
 	spin_unlock_irqrestore(&pi_spinlock, flags);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL(pi_schedule_claimed);
 
-व्योम pi_करो_claimed(PIA * pi, व्योम (*cont) (व्योम))
-अणु
-	अगर (pi_schedule_claimed(pi, cont))
+void pi_do_claimed(PIA * pi, void (*cont) (void))
+{
+	if (pi_schedule_claimed(pi, cont))
 		cont();
-पूर्ण
+}
 
-EXPORT_SYMBOL(pi_करो_claimed);
+EXPORT_SYMBOL(pi_do_claimed);
 
-अटल व्योम pi_claim(PIA * pi)
-अणु
-	अगर (pi->claimed)
-		वापस;
+static void pi_claim(PIA * pi)
+{
+	if (pi->claimed)
+		return;
 	pi->claimed = 1;
-	अगर (pi->pardev)
-		रुको_event(pi->parq,
-			   !parport_claim((काष्ठा pardevice *) pi->pardev));
-पूर्ण
+	if (pi->pardev)
+		wait_event(pi->parq,
+			   !parport_claim((struct pardevice *) pi->pardev));
+}
 
-अटल व्योम pi_unclaim(PIA * pi)
-अणु
+static void pi_unclaim(PIA * pi)
+{
 	pi->claimed = 0;
-	अगर (pi->pardev)
-		parport_release((काष्ठा pardevice *) (pi->pardev));
-पूर्ण
+	if (pi->pardev)
+		parport_release((struct pardevice *) (pi->pardev));
+}
 
-व्योम pi_connect(PIA * pi)
-अणु
+void pi_connect(PIA * pi)
+{
 	pi_claim(pi);
 	pi->proto->connect(pi);
-पूर्ण
+}
 
 EXPORT_SYMBOL(pi_connect);
 
-व्योम pi_disconnect(PIA * pi)
-अणु
+void pi_disconnect(PIA * pi)
+{
 	pi->proto->disconnect(pi);
 	pi_unclaim(pi);
-पूर्ण
+}
 
 EXPORT_SYMBOL(pi_disconnect);
 
-अटल व्योम pi_unरेजिस्टर_parport(PIA * pi)
-अणु
-	अगर (pi->pardev) अणु
-		parport_unरेजिस्टर_device((काष्ठा pardevice *) (pi->pardev));
-		pi->pardev = शून्य;
-	पूर्ण
-पूर्ण
+static void pi_unregister_parport(PIA * pi)
+{
+	if (pi->pardev) {
+		parport_unregister_device((struct pardevice *) (pi->pardev));
+		pi->pardev = NULL;
+	}
+}
 
-व्योम pi_release(PIA * pi)
-अणु
-	pi_unरेजिस्टर_parport(pi);
-	अगर (pi->proto->release_proto)
+void pi_release(PIA * pi)
+{
+	pi_unregister_parport(pi);
+	if (pi->proto->release_proto)
 		pi->proto->release_proto(pi);
 	module_put(pi->proto->owner);
-पूर्ण
+}
 
 EXPORT_SYMBOL(pi_release);
 
-अटल पूर्णांक शेष_test_proto(PIA * pi, अक्षर *scratch, पूर्णांक verbose)
-अणु
-	पूर्णांक j, k;
-	पूर्णांक e[2] = अणु 0, 0 पूर्ण;
+static int default_test_proto(PIA * pi, char *scratch, int verbose)
+{
+	int j, k;
+	int e[2] = { 0, 0 };
 
 	pi->proto->connect(pi);
 
-	क्रम (j = 0; j < 2; j++) अणु
-		pi_ग_लिखो_regr(pi, 0, 6, 0xa0 + j * 0x10);
-		क्रम (k = 0; k < 256; k++) अणु
-			pi_ग_लिखो_regr(pi, 0, 2, k ^ 0xaa);
-			pi_ग_लिखो_regr(pi, 0, 3, k ^ 0x55);
-			अगर (pi_पढ़ो_regr(pi, 0, 2) != (k ^ 0xaa))
+	for (j = 0; j < 2; j++) {
+		pi_write_regr(pi, 0, 6, 0xa0 + j * 0x10);
+		for (k = 0; k < 256; k++) {
+			pi_write_regr(pi, 0, 2, k ^ 0xaa);
+			pi_write_regr(pi, 0, 3, k ^ 0x55);
+			if (pi_read_regr(pi, 0, 2) != (k ^ 0xaa))
 				e[j]++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	pi->proto->disconnect(pi);
 
-	अगर (verbose)
-		prपूर्णांकk("%s: %s: port 0x%x, mode  %d, test=(%d,%d)\n",
+	if (verbose)
+		printk("%s: %s: port 0x%x, mode  %d, test=(%d,%d)\n",
 		       pi->device, pi->proto->name, pi->port,
 		       pi->mode, e[0], e[1]);
 
-	वापस (e[0] && e[1]);	/* not here अगर both > 0 */
-पूर्ण
+	return (e[0] && e[1]);	/* not here if both > 0 */
+}
 
-अटल पूर्णांक pi_test_proto(PIA * pi, अक्षर *scratch, पूर्णांक verbose)
-अणु
-	पूर्णांक res;
+static int pi_test_proto(PIA * pi, char *scratch, int verbose)
+{
+	int res;
 
 	pi_claim(pi);
-	अगर (pi->proto->test_proto)
+	if (pi->proto->test_proto)
 		res = pi->proto->test_proto(pi, scratch, verbose);
-	अन्यथा
-		res = शेष_test_proto(pi, scratch, verbose);
+	else
+		res = default_test_proto(pi, scratch, verbose);
 	pi_unclaim(pi);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक paride_रेजिस्टर(PIP * pr)
-अणु
-	पूर्णांक k;
+int paride_register(PIP * pr)
+{
+	int k;
 
-	क्रम (k = 0; k < MAX_PROTOS; k++)
-		अगर (protocols[k] && !म_भेद(pr->name, protocols[k]->name)) अणु
-			prपूर्णांकk("paride: %s protocol already registered\n",
+	for (k = 0; k < MAX_PROTOS; k++)
+		if (protocols[k] && !strcmp(pr->name, protocols[k]->name)) {
+			printk("paride: %s protocol already registered\n",
 			       pr->name);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 	k = 0;
-	जबतक ((k < MAX_PROTOS) && (protocols[k]))
+	while ((k < MAX_PROTOS) && (protocols[k]))
 		k++;
-	अगर (k == MAX_PROTOS) अणु
-		prपूर्णांकk("paride: protocol table full\n");
-		वापस -1;
-	पूर्ण
+	if (k == MAX_PROTOS) {
+		printk("paride: protocol table full\n");
+		return -1;
+	}
 	protocols[k] = pr;
 	pr->index = k;
-	prपूर्णांकk("paride: %s registered as protocol %d\n", pr->name, k);
-	वापस 0;
-पूर्ण
+	printk("paride: %s registered as protocol %d\n", pr->name, k);
+	return 0;
+}
 
-EXPORT_SYMBOL(paride_रेजिस्टर);
+EXPORT_SYMBOL(paride_register);
 
-व्योम paride_unरेजिस्टर(PIP * pr)
-अणु
-	अगर (!pr)
-		वापस;
-	अगर (protocols[pr->index] != pr) अणु
-		prपूर्णांकk("paride: %s not registered\n", pr->name);
-		वापस;
-	पूर्ण
-	protocols[pr->index] = शून्य;
-पूर्ण
+void paride_unregister(PIP * pr)
+{
+	if (!pr)
+		return;
+	if (protocols[pr->index] != pr) {
+		printk("paride: %s not registered\n", pr->name);
+		return;
+	}
+	protocols[pr->index] = NULL;
+}
 
-EXPORT_SYMBOL(paride_unरेजिस्टर);
+EXPORT_SYMBOL(paride_unregister);
 
-अटल पूर्णांक pi_रेजिस्टर_parport(PIA *pi, पूर्णांक verbose, पूर्णांक unit)
-अणु
-	काष्ठा parport *port;
-	काष्ठा pardev_cb par_cb;
+static int pi_register_parport(PIA *pi, int verbose, int unit)
+{
+	struct parport *port;
+	struct pardev_cb par_cb;
 
 	port = parport_find_base(pi->port);
-	अगर (!port)
-		वापस 0;
-	स_रखो(&par_cb, 0, माप(par_cb));
+	if (!port)
+		return 0;
+	memset(&par_cb, 0, sizeof(par_cb));
 	par_cb.wakeup = pi_wake_up;
-	par_cb.निजी = (व्योम *)pi;
-	pi->pardev = parport_रेजिस्टर_dev_model(port, pi->device, &par_cb,
+	par_cb.private = (void *)pi;
+	pi->pardev = parport_register_dev_model(port, pi->device, &par_cb,
 						unit);
 	parport_put_port(port);
-	अगर (!pi->pardev)
-		वापस 0;
+	if (!pi->pardev)
+		return 0;
 
-	init_रुकोqueue_head(&pi->parq);
+	init_waitqueue_head(&pi->parq);
 
-	अगर (verbose)
-		prपूर्णांकk("%s: 0x%x is %s\n", pi->device, pi->port, port->name);
+	if (verbose)
+		printk("%s: 0x%x is %s\n", pi->device, pi->port, port->name);
 
-	pi->parname = (अक्षर *) port->name;
+	pi->parname = (char *) port->name;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक pi_probe_mode(PIA * pi, पूर्णांक max, अक्षर *scratch, पूर्णांक verbose)
-अणु
-	पूर्णांक best, range;
+static int pi_probe_mode(PIA * pi, int max, char *scratch, int verbose)
+{
+	int best, range;
 
-	अगर (pi->mode != -1) अणु
-		अगर (pi->mode >= max)
-			वापस 0;
+	if (pi->mode != -1) {
+		if (pi->mode >= max)
+			return 0;
 		range = 3;
-		अगर (pi->mode >= pi->proto->epp_first)
+		if (pi->mode >= pi->proto->epp_first)
 			range = 8;
-		अगर ((range == 8) && (pi->port % 8))
-			वापस 0;
+		if ((range == 8) && (pi->port % 8))
+			return 0;
 		pi->reserved = range;
-		वापस (!pi_test_proto(pi, scratch, verbose));
-	पूर्ण
+		return (!pi_test_proto(pi, scratch, verbose));
+	}
 	best = -1;
-	क्रम (pi->mode = 0; pi->mode < max; pi->mode++) अणु
+	for (pi->mode = 0; pi->mode < max; pi->mode++) {
 		range = 3;
-		अगर (pi->mode >= pi->proto->epp_first)
+		if (pi->mode >= pi->proto->epp_first)
 			range = 8;
-		अगर ((range == 8) && (pi->port % 8))
-			अवरोध;
+		if ((range == 8) && (pi->port % 8))
+			break;
 		pi->reserved = range;
-		अगर (!pi_test_proto(pi, scratch, verbose))
+		if (!pi_test_proto(pi, scratch, verbose))
 			best = pi->mode;
-	पूर्ण
+	}
 	pi->mode = best;
-	वापस (best > -1);
-पूर्ण
+	return (best > -1);
+}
 
-अटल पूर्णांक pi_probe_unit(PIA * pi, पूर्णांक unit, अक्षर *scratch, पूर्णांक verbose)
-अणु
-	पूर्णांक max, s, e;
+static int pi_probe_unit(PIA * pi, int unit, char *scratch, int verbose)
+{
+	int max, s, e;
 
 	s = unit;
 	e = s + 1;
 
-	अगर (s == -1) अणु
+	if (s == -1) {
 		s = 0;
 		e = pi->proto->max_units;
-	पूर्ण
+	}
 
-	अगर (!pi_रेजिस्टर_parport(pi, verbose, s))
-		वापस 0;
+	if (!pi_register_parport(pi, verbose, s))
+		return 0;
 
-	अगर (pi->proto->test_port) अणु
+	if (pi->proto->test_port) {
 		pi_claim(pi);
 		max = pi->proto->test_port(pi);
 		pi_unclaim(pi);
-	पूर्ण अन्यथा
+	} else
 		max = pi->proto->max_mode;
 
-	अगर (pi->proto->probe_unit) अणु
+	if (pi->proto->probe_unit) {
 		pi_claim(pi);
-		क्रम (pi->unit = s; pi->unit < e; pi->unit++)
-			अगर (pi->proto->probe_unit(pi)) अणु
+		for (pi->unit = s; pi->unit < e; pi->unit++)
+			if (pi->proto->probe_unit(pi)) {
 				pi_unclaim(pi);
-				अगर (pi_probe_mode(pi, max, scratch, verbose))
-					वापस 1;
-				pi_unरेजिस्टर_parport(pi);
-				वापस 0;
-			पूर्ण
+				if (pi_probe_mode(pi, max, scratch, verbose))
+					return 1;
+				pi_unregister_parport(pi);
+				return 0;
+			}
 		pi_unclaim(pi);
-		pi_unरेजिस्टर_parport(pi);
-		वापस 0;
-	पूर्ण
+		pi_unregister_parport(pi);
+		return 0;
+	}
 
-	अगर (!pi_probe_mode(pi, max, scratch, verbose)) अणु
-		pi_unरेजिस्टर_parport(pi);
-		वापस 0;
-	पूर्ण
-	वापस 1;
+	if (!pi_probe_mode(pi, max, scratch, verbose)) {
+		pi_unregister_parport(pi);
+		return 0;
+	}
+	return 1;
 
-पूर्ण
+}
 
-पूर्णांक pi_init(PIA * pi, पूर्णांक स्वतःprobe, पूर्णांक port, पूर्णांक mode,
-	पूर्णांक unit, पूर्णांक protocol, पूर्णांक delay, अक्षर *scratch,
-	पूर्णांक devtype, पूर्णांक verbose, अक्षर *device)
-अणु
-	पूर्णांक p, k, s, e;
-	पूर्णांक lpts[7] = अणु 0x3bc, 0x378, 0x278, 0x268, 0x27c, 0x26c, 0 पूर्ण;
+int pi_init(PIA * pi, int autoprobe, int port, int mode,
+	int unit, int protocol, int delay, char *scratch,
+	int devtype, int verbose, char *device)
+{
+	int p, k, s, e;
+	int lpts[7] = { 0x3bc, 0x378, 0x278, 0x268, 0x27c, 0x26c, 0 };
 
 	s = protocol;
 	e = s + 1;
 
-	अगर (!protocols[0])
+	if (!protocols[0])
 		request_module("paride_protocol");
 
-	अगर (स्वतःprobe) अणु
+	if (autoprobe) {
 		s = 0;
 		e = MAX_PROTOS;
-	पूर्ण अन्यथा अगर ((s < 0) || (s >= MAX_PROTOS) || (port <= 0) ||
+	} else if ((s < 0) || (s >= MAX_PROTOS) || (port <= 0) ||
 		   (!protocols[s]) || (unit < 0) ||
-		   (unit >= protocols[s]->max_units)) अणु
-		prपूर्णांकk("%s: Invalid parameters\n", device);
-		वापस 0;
-	पूर्ण
+		   (unit >= protocols[s]->max_units)) {
+		printk("%s: Invalid parameters\n", device);
+		return 0;
+	}
 
-	क्रम (p = s; p < e; p++) अणु
-		काष्ठा pi_protocol *proto = protocols[p];
-		अगर (!proto)
-			जारी;
+	for (p = s; p < e; p++) {
+		struct pi_protocol *proto = protocols[p];
+		if (!proto)
+			continue;
 		/* still racy */
-		अगर (!try_module_get(proto->owner))
-			जारी;
+		if (!try_module_get(proto->owner))
+			continue;
 		pi->proto = proto;
-		pi->निजी = 0;
-		अगर (proto->init_proto && proto->init_proto(pi) < 0) अणु
-			pi->proto = शून्य;
+		pi->private = 0;
+		if (proto->init_proto && proto->init_proto(pi) < 0) {
+			pi->proto = NULL;
 			module_put(proto->owner);
-			जारी;
-		पूर्ण
-		अगर (delay == -1)
-			pi->delay = pi->proto->शेष_delay;
-		अन्यथा
+			continue;
+		}
+		if (delay == -1)
+			pi->delay = pi->proto->default_delay;
+		else
 			pi->delay = delay;
 		pi->devtype = devtype;
 		pi->device = device;
 
-		pi->parname = शून्य;
-		pi->pardev = शून्य;
-		init_रुकोqueue_head(&pi->parq);
+		pi->parname = NULL;
+		pi->pardev = NULL;
+		init_waitqueue_head(&pi->parq);
 		pi->claimed = 0;
-		pi->claim_cont = शून्य;
+		pi->claim_cont = NULL;
 
 		pi->mode = mode;
-		अगर (port != -1) अणु
+		if (port != -1) {
 			pi->port = port;
-			अगर (pi_probe_unit(pi, unit, scratch, verbose))
-				अवरोध;
+			if (pi_probe_unit(pi, unit, scratch, verbose))
+				break;
 			pi->port = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			k = 0;
-			जबतक ((pi->port = lpts[k++]))
-				अगर (pi_probe_unit
+			while ((pi->port = lpts[k++]))
+				if (pi_probe_unit
 				    (pi, unit, scratch, verbose))
-					अवरोध;
-			अगर (pi->port)
-				अवरोध;
-		पूर्ण
-		अगर (pi->proto->release_proto)
+					break;
+			if (pi->port)
+				break;
+		}
+		if (pi->proto->release_proto)
 			pi->proto->release_proto(pi);
 		module_put(proto->owner);
-	पूर्ण
+	}
 
-	अगर (!pi->port) अणु
-		अगर (स्वतःprobe)
-			prपूर्णांकk("%s: Autoprobe failed\n", device);
-		अन्यथा
-			prपूर्णांकk("%s: Adapter not found\n", device);
-		वापस 0;
-	पूर्ण
+	if (!pi->port) {
+		if (autoprobe)
+			printk("%s: Autoprobe failed\n", device);
+		else
+			printk("%s: Adapter not found\n", device);
+		return 0;
+	}
 
-	अगर (pi->parname)
-		prपूर्णांकk("%s: Sharing %s at 0x%x\n", pi->device,
+	if (pi->parname)
+		printk("%s: Sharing %s at 0x%x\n", pi->device,
 		       pi->parname, pi->port);
 
 	pi->proto->log_adapter(pi, scratch, verbose);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 EXPORT_SYMBOL(pi_init);
 
-अटल पूर्णांक pi_probe(काष्ठा pardevice *par_dev)
-अणु
-	काष्ठा device_driver *drv = par_dev->dev.driver;
-	पूर्णांक len = म_माप(drv->name);
+static int pi_probe(struct pardevice *par_dev)
+{
+	struct device_driver *drv = par_dev->dev.driver;
+	int len = strlen(drv->name);
 
-	अगर (म_भेदन(par_dev->name, drv->name, len))
-		वापस -ENODEV;
+	if (strncmp(par_dev->name, drv->name, len))
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम *pi_रेजिस्टर_driver(अक्षर *name)
-अणु
-	काष्ठा parport_driver *parp_drv;
-	पूर्णांक ret;
+void *pi_register_driver(char *name)
+{
+	struct parport_driver *parp_drv;
+	int ret;
 
-	parp_drv = kzalloc(माप(*parp_drv), GFP_KERNEL);
-	अगर (!parp_drv)
-		वापस शून्य;
+	parp_drv = kzalloc(sizeof(*parp_drv), GFP_KERNEL);
+	if (!parp_drv)
+		return NULL;
 
 	parp_drv->name = name;
 	parp_drv->probe = pi_probe;
 	parp_drv->devmodel = true;
 
-	ret = parport_रेजिस्टर_driver(parp_drv);
-	अगर (ret) अणु
-		kमुक्त(parp_drv);
-		वापस शून्य;
-	पूर्ण
-	वापस (व्योम *)parp_drv;
-पूर्ण
-EXPORT_SYMBOL(pi_रेजिस्टर_driver);
+	ret = parport_register_driver(parp_drv);
+	if (ret) {
+		kfree(parp_drv);
+		return NULL;
+	}
+	return (void *)parp_drv;
+}
+EXPORT_SYMBOL(pi_register_driver);
 
-व्योम pi_unरेजिस्टर_driver(व्योम *_drv)
-अणु
-	काष्ठा parport_driver *drv = _drv;
+void pi_unregister_driver(void *_drv)
+{
+	struct parport_driver *drv = _drv;
 
-	parport_unरेजिस्टर_driver(drv);
-	kमुक्त(drv);
-पूर्ण
-EXPORT_SYMBOL(pi_unरेजिस्टर_driver);
+	parport_unregister_driver(drv);
+	kfree(drv);
+}
+EXPORT_SYMBOL(pi_unregister_driver);

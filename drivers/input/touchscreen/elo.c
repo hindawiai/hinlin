@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Elo serial touchscreen driver
  *
@@ -13,15 +12,15 @@
  * legacy 'E271-140' 4-byte protocol and Elo legacy 'E261-280' 3-byte protocol.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/प्रकार.स>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/serio.h>
+#include <linux/ctype.h>
 
-#घोषणा DRIVER_DESC	"Elo serial touchscreen driver"
+#define DRIVER_DESC	"Elo serial touchscreen driver"
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -31,302 +30,302 @@ MODULE_LICENSE("GPL");
  * Definitions & global arrays.
  */
 
-#घोषणा ELO_MAX_LENGTH		10
+#define ELO_MAX_LENGTH		10
 
-#घोषणा ELO10_PACKET_LEN	8
-#घोषणा ELO10_TOUCH		0x03
-#घोषणा ELO10_PRESSURE		0x80
+#define ELO10_PACKET_LEN	8
+#define ELO10_TOUCH		0x03
+#define ELO10_PRESSURE		0x80
 
-#घोषणा ELO10_LEAD_BYTE		'U'
+#define ELO10_LEAD_BYTE		'U'
 
-#घोषणा ELO10_ID_CMD		'i'
+#define ELO10_ID_CMD		'i'
 
-#घोषणा ELO10_TOUCH_PACKET	'T'
-#घोषणा ELO10_ACK_PACKET	'A'
-#घोषणा ELI10_ID_PACKET		'I'
+#define ELO10_TOUCH_PACKET	'T'
+#define ELO10_ACK_PACKET	'A'
+#define ELI10_ID_PACKET		'I'
 
 /*
  * Per-touchscreen data.
  */
 
-काष्ठा elo अणु
-	काष्ठा input_dev *dev;
-	काष्ठा serio *serio;
-	काष्ठा mutex cmd_mutex;
-	काष्ठा completion cmd_करोne;
-	पूर्णांक id;
-	पूर्णांक idx;
-	अचिन्हित अक्षर expected_packet;
-	अचिन्हित अक्षर csum;
-	अचिन्हित अक्षर data[ELO_MAX_LENGTH];
-	अचिन्हित अक्षर response[ELO10_PACKET_LEN];
-	अक्षर phys[32];
-पूर्ण;
+struct elo {
+	struct input_dev *dev;
+	struct serio *serio;
+	struct mutex cmd_mutex;
+	struct completion cmd_done;
+	int id;
+	int idx;
+	unsigned char expected_packet;
+	unsigned char csum;
+	unsigned char data[ELO_MAX_LENGTH];
+	unsigned char response[ELO10_PACKET_LEN];
+	char phys[32];
+};
 
-अटल व्योम elo_process_data_10(काष्ठा elo *elo, अचिन्हित अक्षर data)
-अणु
-	काष्ठा input_dev *dev = elo->dev;
+static void elo_process_data_10(struct elo *elo, unsigned char data)
+{
+	struct input_dev *dev = elo->dev;
 
 	elo->data[elo->idx] = data;
 
-	चयन (elo->idx++) अणु
-	हाल 0:
+	switch (elo->idx++) {
+	case 0:
 		elo->csum = 0xaa;
-		अगर (data != ELO10_LEAD_BYTE) अणु
+		if (data != ELO10_LEAD_BYTE) {
 			dev_dbg(&elo->serio->dev,
 				"unsynchronized data: 0x%02x\n", data);
 			elo->idx = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 9:
+	case 9:
 		elo->idx = 0;
-		अगर (data != elo->csum) अणु
+		if (data != elo->csum) {
 			dev_dbg(&elo->serio->dev,
 				"bad checksum: 0x%02x, expected 0x%02x\n",
 				 data, elo->csum);
-			अवरोध;
-		पूर्ण
-		अगर (elo->data[1] != elo->expected_packet) अणु
-			अगर (elo->data[1] != ELO10_TOUCH_PACKET)
+			break;
+		}
+		if (elo->data[1] != elo->expected_packet) {
+			if (elo->data[1] != ELO10_TOUCH_PACKET)
 				dev_dbg(&elo->serio->dev,
 					"unexpected packet: 0x%02x\n",
 					 elo->data[1]);
-			अवरोध;
-		पूर्ण
-		अगर (likely(elo->data[1] == ELO10_TOUCH_PACKET)) अणु
-			input_report_असल(dev, ABS_X, (elo->data[4] << 8) | elo->data[3]);
-			input_report_असल(dev, ABS_Y, (elo->data[6] << 8) | elo->data[5]);
-			अगर (elo->data[2] & ELO10_PRESSURE)
-				input_report_असल(dev, ABS_PRESSURE,
+			break;
+		}
+		if (likely(elo->data[1] == ELO10_TOUCH_PACKET)) {
+			input_report_abs(dev, ABS_X, (elo->data[4] << 8) | elo->data[3]);
+			input_report_abs(dev, ABS_Y, (elo->data[6] << 8) | elo->data[5]);
+			if (elo->data[2] & ELO10_PRESSURE)
+				input_report_abs(dev, ABS_PRESSURE,
 						(elo->data[8] << 8) | elo->data[7]);
 			input_report_key(dev, BTN_TOUCH, elo->data[2] & ELO10_TOUCH);
 			input_sync(dev);
-		पूर्ण अन्यथा अगर (elo->data[1] == ELO10_ACK_PACKET) अणु
-			अगर (elo->data[2] == '0')
+		} else if (elo->data[1] == ELO10_ACK_PACKET) {
+			if (elo->data[2] == '0')
 				elo->expected_packet = ELO10_TOUCH_PACKET;
-			complete(&elo->cmd_करोne);
-		पूर्ण अन्यथा अणु
-			स_नकल(elo->response, &elo->data[1], ELO10_PACKET_LEN);
+			complete(&elo->cmd_done);
+		} else {
+			memcpy(elo->response, &elo->data[1], ELO10_PACKET_LEN);
 			elo->expected_packet = ELO10_ACK_PACKET;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 	elo->csum += data;
-पूर्ण
+}
 
-अटल व्योम elo_process_data_6(काष्ठा elo *elo, अचिन्हित अक्षर data)
-अणु
-	काष्ठा input_dev *dev = elo->dev;
+static void elo_process_data_6(struct elo *elo, unsigned char data)
+{
+	struct input_dev *dev = elo->dev;
 
 	elo->data[elo->idx] = data;
 
-	चयन (elo->idx++) अणु
+	switch (elo->idx++) {
 
-	हाल 0:
-		अगर ((data & 0xc0) != 0xc0)
+	case 0:
+		if ((data & 0xc0) != 0xc0)
 			elo->idx = 0;
-		अवरोध;
+		break;
 
-	हाल 1:
-		अगर ((data & 0xc0) != 0x80)
+	case 1:
+		if ((data & 0xc0) != 0x80)
 			elo->idx = 0;
-		अवरोध;
+		break;
 
-	हाल 2:
-		अगर ((data & 0xc0) != 0x40)
+	case 2:
+		if ((data & 0xc0) != 0x40)
 			elo->idx = 0;
-		अवरोध;
+		break;
 
-	हाल 3:
-		अगर (data & 0xc0) अणु
+	case 3:
+		if (data & 0xc0) {
 			elo->idx = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		input_report_असल(dev, ABS_X, ((elo->data[0] & 0x3f) << 6) | (elo->data[1] & 0x3f));
-		input_report_असल(dev, ABS_Y, ((elo->data[2] & 0x3f) << 6) | (elo->data[3] & 0x3f));
+		input_report_abs(dev, ABS_X, ((elo->data[0] & 0x3f) << 6) | (elo->data[1] & 0x3f));
+		input_report_abs(dev, ABS_Y, ((elo->data[2] & 0x3f) << 6) | (elo->data[3] & 0x3f));
 
-		अगर (elo->id == 2) अणु
+		if (elo->id == 2) {
 			input_report_key(dev, BTN_TOUCH, 1);
 			input_sync(dev);
 			elo->idx = 0;
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	हाल 4:
-		अगर (data) अणु
+	case 4:
+		if (data) {
 			input_sync(dev);
 			elo->idx = 0;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल 5:
-		अगर ((data & 0xf0) == 0) अणु
-			input_report_असल(dev, ABS_PRESSURE, elo->data[5]);
+	case 5:
+		if ((data & 0xf0) == 0) {
+			input_report_abs(dev, ABS_PRESSURE, elo->data[5]);
 			input_report_key(dev, BTN_TOUCH, !!elo->data[5]);
-		पूर्ण
+		}
 		input_sync(dev);
 		elo->idx = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम elo_process_data_3(काष्ठा elo *elo, अचिन्हित अक्षर data)
-अणु
-	काष्ठा input_dev *dev = elo->dev;
+static void elo_process_data_3(struct elo *elo, unsigned char data)
+{
+	struct input_dev *dev = elo->dev;
 
 	elo->data[elo->idx] = data;
 
-	चयन (elo->idx++) अणु
+	switch (elo->idx++) {
 
-	हाल 0:
-		अगर ((data & 0x7f) != 0x01)
+	case 0:
+		if ((data & 0x7f) != 0x01)
 			elo->idx = 0;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		input_report_key(dev, BTN_TOUCH, !(elo->data[1] & 0x80));
-		input_report_असल(dev, ABS_X, elo->data[1]);
-		input_report_असल(dev, ABS_Y, elo->data[2]);
+		input_report_abs(dev, ABS_X, elo->data[1]);
+		input_report_abs(dev, ABS_Y, elo->data[2]);
 		input_sync(dev);
 		elo->idx = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल irqवापस_t elo_पूर्णांकerrupt(काष्ठा serio *serio,
-		अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा elo *elo = serio_get_drvdata(serio);
+static irqreturn_t elo_interrupt(struct serio *serio,
+		unsigned char data, unsigned int flags)
+{
+	struct elo *elo = serio_get_drvdata(serio);
 
-	चयन (elo->id) अणु
-	हाल 0:
+	switch (elo->id) {
+	case 0:
 		elo_process_data_10(elo, data);
-		अवरोध;
+		break;
 
-	हाल 1:
-	हाल 2:
+	case 1:
+	case 2:
 		elo_process_data_6(elo, data);
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		elo_process_data_3(elo, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक elo_command_10(काष्ठा elo *elo, अचिन्हित अक्षर *packet)
-अणु
-	पूर्णांक rc = -1;
-	पूर्णांक i;
-	अचिन्हित अक्षर csum = 0xaa + ELO10_LEAD_BYTE;
+static int elo_command_10(struct elo *elo, unsigned char *packet)
+{
+	int rc = -1;
+	int i;
+	unsigned char csum = 0xaa + ELO10_LEAD_BYTE;
 
 	mutex_lock(&elo->cmd_mutex);
 
-	serio_छोड़ो_rx(elo->serio);
-	elo->expected_packet = बड़े(packet[0]);
-	init_completion(&elo->cmd_करोne);
-	serio_जारी_rx(elo->serio);
+	serio_pause_rx(elo->serio);
+	elo->expected_packet = toupper(packet[0]);
+	init_completion(&elo->cmd_done);
+	serio_continue_rx(elo->serio);
 
-	अगर (serio_ग_लिखो(elo->serio, ELO10_LEAD_BYTE))
-		जाओ out;
+	if (serio_write(elo->serio, ELO10_LEAD_BYTE))
+		goto out;
 
-	क्रम (i = 0; i < ELO10_PACKET_LEN; i++) अणु
+	for (i = 0; i < ELO10_PACKET_LEN; i++) {
 		csum += packet[i];
-		अगर (serio_ग_लिखो(elo->serio, packet[i]))
-			जाओ out;
-	पूर्ण
+		if (serio_write(elo->serio, packet[i]))
+			goto out;
+	}
 
-	अगर (serio_ग_लिखो(elo->serio, csum))
-		जाओ out;
+	if (serio_write(elo->serio, csum))
+		goto out;
 
-	रुको_क्रम_completion_समयout(&elo->cmd_करोne, HZ);
+	wait_for_completion_timeout(&elo->cmd_done, HZ);
 
-	अगर (elo->expected_packet == ELO10_TOUCH_PACKET) अणु
+	if (elo->expected_packet == ELO10_TOUCH_PACKET) {
 		/* We are back in reporting mode, the command was ACKed */
-		स_नकल(packet, elo->response, ELO10_PACKET_LEN);
+		memcpy(packet, elo->response, ELO10_PACKET_LEN);
 		rc = 0;
-	पूर्ण
+	}
 
  out:
 	mutex_unlock(&elo->cmd_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक elo_setup_10(काष्ठा elo *elo)
-अणु
-	अटल स्थिर अक्षर *elo_types[] = अणु "Accu", "Dura", "Intelli", "Carroll" पूर्ण;
-	काष्ठा input_dev *dev = elo->dev;
-	अचिन्हित अक्षर packet[ELO10_PACKET_LEN] = अणु ELO10_ID_CMD पूर्ण;
+static int elo_setup_10(struct elo *elo)
+{
+	static const char *elo_types[] = { "Accu", "Dura", "Intelli", "Carroll" };
+	struct input_dev *dev = elo->dev;
+	unsigned char packet[ELO10_PACKET_LEN] = { ELO10_ID_CMD };
 
-	अगर (elo_command_10(elo, packet))
-		वापस -1;
+	if (elo_command_10(elo, packet))
+		return -1;
 
 	dev->id.version = (packet[5] << 8) | packet[4];
 
-	input_set_असल_params(dev, ABS_X, 96, 4000, 0, 0);
-	input_set_असल_params(dev, ABS_Y, 96, 4000, 0, 0);
-	अगर (packet[3] & ELO10_PRESSURE)
-		input_set_असल_params(dev, ABS_PRESSURE, 0, 255, 0, 0);
+	input_set_abs_params(dev, ABS_X, 96, 4000, 0, 0);
+	input_set_abs_params(dev, ABS_Y, 96, 4000, 0, 0);
+	if (packet[3] & ELO10_PRESSURE)
+		input_set_abs_params(dev, ABS_PRESSURE, 0, 255, 0, 0);
 
 	dev_info(&elo->serio->dev,
 		 "%sTouch touchscreen, fw: %02x.%02x, features: 0x%02x, controller: 0x%02x\n",
 		 elo_types[(packet[1] -'0') & 0x03],
 		 packet[5], packet[4], packet[3], packet[7]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * elo_disconnect() is the opposite of elo_connect()
  */
 
-अटल व्योम elo_disconnect(काष्ठा serio *serio)
-अणु
-	काष्ठा elo *elo = serio_get_drvdata(serio);
+static void elo_disconnect(struct serio *serio)
+{
+	struct elo *elo = serio_get_drvdata(serio);
 
 	input_get_device(elo->dev);
-	input_unरेजिस्टर_device(elo->dev);
-	serio_बंद(serio);
-	serio_set_drvdata(serio, शून्य);
+	input_unregister_device(elo->dev);
+	serio_close(serio);
+	serio_set_drvdata(serio, NULL);
 	input_put_device(elo->dev);
-	kमुक्त(elo);
-पूर्ण
+	kfree(elo);
+}
 
 /*
  * elo_connect() is the routine that is called when someone adds a
- * new serio device that supports Gunze protocol and रेजिस्टरs it as
+ * new serio device that supports Gunze protocol and registers it as
  * an input device.
  */
 
-अटल पूर्णांक elo_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
-अणु
-	काष्ठा elo *elo;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err;
+static int elo_connect(struct serio *serio, struct serio_driver *drv)
+{
+	struct elo *elo;
+	struct input_dev *input_dev;
+	int err;
 
-	elo = kzalloc(माप(काष्ठा elo), GFP_KERNEL);
+	elo = kzalloc(sizeof(struct elo), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!elo || !input_dev) अणु
+	if (!elo || !input_dev) {
 		err = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	elo->serio = serio;
 	elo->id = serio->id.id;
 	elo->dev = input_dev;
 	elo->expected_packet = ELO10_TOUCH_PACKET;
 	mutex_init(&elo->cmd_mutex);
-	init_completion(&elo->cmd_करोne);
-	snम_लिखो(elo->phys, माप(elo->phys), "%s/input0", serio->phys);
+	init_completion(&elo->cmd_done);
+	snprintf(elo->phys, sizeof(elo->phys), "%s/input0", serio->phys);
 
 	input_dev->name = "Elo Serial TouchScreen";
 	input_dev->phys = elo->phys;
 	input_dev->id.bustype = BUS_RS232;
-	input_dev->id.venकरोr = SERIO_ELO;
+	input_dev->id.vendor = SERIO_ELO;
 	input_dev->id.product = elo->id;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &serio->dev;
@@ -335,73 +334,73 @@ MODULE_LICENSE("GPL");
 	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
 
 	serio_set_drvdata(serio, elo);
-	err = serio_खोलो(serio, drv);
-	अगर (err)
-		जाओ fail2;
+	err = serio_open(serio, drv);
+	if (err)
+		goto fail2;
 
-	चयन (elo->id) अणु
+	switch (elo->id) {
 
-	हाल 0: /* 10-byte protocol */
-		अगर (elo_setup_10(elo)) अणु
+	case 0: /* 10-byte protocol */
+		if (elo_setup_10(elo)) {
 			err = -EIO;
-			जाओ fail3;
-		पूर्ण
+			goto fail3;
+		}
 
-		अवरोध;
+		break;
 
-	हाल 1: /* 6-byte protocol */
-		input_set_असल_params(input_dev, ABS_PRESSURE, 0, 15, 0, 0);
+	case 1: /* 6-byte protocol */
+		input_set_abs_params(input_dev, ABS_PRESSURE, 0, 15, 0, 0);
 		fallthrough;
 
-	हाल 2: /* 4-byte protocol */
-		input_set_असल_params(input_dev, ABS_X, 96, 4000, 0, 0);
-		input_set_असल_params(input_dev, ABS_Y, 96, 4000, 0, 0);
-		अवरोध;
+	case 2: /* 4-byte protocol */
+		input_set_abs_params(input_dev, ABS_X, 96, 4000, 0, 0);
+		input_set_abs_params(input_dev, ABS_Y, 96, 4000, 0, 0);
+		break;
 
-	हाल 3: /* 3-byte protocol */
-		input_set_असल_params(input_dev, ABS_X, 0, 255, 0, 0);
-		input_set_असल_params(input_dev, ABS_Y, 0, 255, 0, 0);
-		अवरोध;
-	पूर्ण
+	case 3: /* 3-byte protocol */
+		input_set_abs_params(input_dev, ABS_X, 0, 255, 0, 0);
+		input_set_abs_params(input_dev, ABS_Y, 0, 255, 0, 0);
+		break;
+	}
 
-	err = input_रेजिस्टर_device(elo->dev);
-	अगर (err)
-		जाओ fail3;
+	err = input_register_device(elo->dev);
+	if (err)
+		goto fail3;
 
-	वापस 0;
+	return 0;
 
- fail3: serio_बंद(serio);
- fail2:	serio_set_drvdata(serio, शून्य);
- fail1:	input_मुक्त_device(input_dev);
-	kमुक्त(elo);
-	वापस err;
-पूर्ण
+ fail3: serio_close(serio);
+ fail2:	serio_set_drvdata(serio, NULL);
+ fail1:	input_free_device(input_dev);
+	kfree(elo);
+	return err;
+}
 
 /*
- * The serio driver काष्ठाure.
+ * The serio driver structure.
  */
 
-अटल स्थिर काष्ठा serio_device_id elo_serio_ids[] = अणु
-	अणु
+static const struct serio_device_id elo_serio_ids[] = {
+	{
 		.type	= SERIO_RS232,
 		.proto	= SERIO_ELO,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(serio, elo_serio_ids);
 
-अटल काष्ठा serio_driver elo_drv = अणु
-	.driver		= अणु
+static struct serio_driver elo_drv = {
+	.driver		= {
 		.name	= "elo",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.id_table	= elo_serio_ids,
-	.पूर्णांकerrupt	= elo_पूर्णांकerrupt,
+	.interrupt	= elo_interrupt,
 	.connect	= elo_connect,
 	.disconnect	= elo_disconnect,
-पूर्ण;
+};
 
 module_serio_driver(elo_drv);

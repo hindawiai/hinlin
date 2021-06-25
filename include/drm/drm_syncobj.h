@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2017 Red Hat
+ * Copyright © 2017 Red Hat
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,110 +23,110 @@
  * Authors:
  *
  */
-#अगर_अघोषित __DRM_SYNCOBJ_H__
-#घोषणा __DRM_SYNCOBJ_H__
+#ifndef __DRM_SYNCOBJ_H__
+#define __DRM_SYNCOBJ_H__
 
-#समावेश <linux/dma-fence.h>
-#समावेश <linux/dma-fence-chain.h>
+#include <linux/dma-fence.h>
+#include <linux/dma-fence-chain.h>
 
-काष्ठा drm_file;
+struct drm_file;
 
 /**
- * काष्ठा drm_syncobj - sync object.
+ * struct drm_syncobj - sync object.
  *
- * This काष्ठाure defines a generic sync object which wraps a &dma_fence.
+ * This structure defines a generic sync object which wraps a &dma_fence.
  */
-काष्ठा drm_syncobj अणु
+struct drm_syncobj {
 	/**
 	 * @refcount: Reference count of this object.
 	 */
-	काष्ठा kref refcount;
+	struct kref refcount;
 	/**
 	 * @fence:
-	 * शून्य or a poपूर्णांकer to the fence bound to this object.
+	 * NULL or a pointer to the fence bound to this object.
 	 *
 	 * This field should not be used directly. Use drm_syncobj_fence_get()
 	 * and drm_syncobj_replace_fence() instead.
 	 */
-	काष्ठा dma_fence __rcu *fence;
+	struct dma_fence __rcu *fence;
 	/**
-	 * @cb_list: List of callbacks to call when the &fence माला_लो replaced.
+	 * @cb_list: List of callbacks to call when the &fence gets replaced.
 	 */
-	काष्ठा list_head cb_list;
+	struct list_head cb_list;
 	/**
-	 * @lock: Protects &cb_list and ग_लिखो-locks &fence.
+	 * @lock: Protects &cb_list and write-locks &fence.
 	 */
 	spinlock_t lock;
 	/**
-	 * @file: A file backing क्रम this syncobj.
+	 * @file: A file backing for this syncobj.
 	 */
-	काष्ठा file *file;
-पूर्ण;
+	struct file *file;
+};
 
-व्योम drm_syncobj_मुक्त(काष्ठा kref *kref);
+void drm_syncobj_free(struct kref *kref);
 
 /**
  * drm_syncobj_get - acquire a syncobj reference
  * @obj: sync object
  *
  * This acquires an additional reference to @obj. It is illegal to call this
- * without alपढ़ोy holding a reference. No locks required.
+ * without already holding a reference. No locks required.
  */
-अटल अंतरभूत व्योम
-drm_syncobj_get(काष्ठा drm_syncobj *obj)
-अणु
+static inline void
+drm_syncobj_get(struct drm_syncobj *obj)
+{
 	kref_get(&obj->refcount);
-पूर्ण
+}
 
 /**
  * drm_syncobj_put - release a reference to a sync object.
  * @obj: sync object.
  */
-अटल अंतरभूत व्योम
-drm_syncobj_put(काष्ठा drm_syncobj *obj)
-अणु
-	kref_put(&obj->refcount, drm_syncobj_मुक्त);
-पूर्ण
+static inline void
+drm_syncobj_put(struct drm_syncobj *obj)
+{
+	kref_put(&obj->refcount, drm_syncobj_free);
+}
 
 /**
  * drm_syncobj_fence_get - get a reference to a fence in a sync object
  * @syncobj: sync object.
  *
  * This acquires additional reference to &drm_syncobj.fence contained in @obj,
- * अगर not शून्य. It is illegal to call this without alपढ़ोy holding a reference.
+ * if not NULL. It is illegal to call this without already holding a reference.
  * No locks required.
  *
  * Returns:
- * Either the fence of @obj or शून्य अगर there's none.
+ * Either the fence of @obj or NULL if there's none.
  */
-अटल अंतरभूत काष्ठा dma_fence *
-drm_syncobj_fence_get(काष्ठा drm_syncobj *syncobj)
-अणु
-	काष्ठा dma_fence *fence;
+static inline struct dma_fence *
+drm_syncobj_fence_get(struct drm_syncobj *syncobj)
+{
+	struct dma_fence *fence;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	fence = dma_fence_get_rcu_safe(&syncobj->fence);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस fence;
-पूर्ण
+	return fence;
+}
 
-काष्ठा drm_syncobj *drm_syncobj_find(काष्ठा drm_file *file_निजी,
+struct drm_syncobj *drm_syncobj_find(struct drm_file *file_private,
 				     u32 handle);
-व्योम drm_syncobj_add_poपूर्णांक(काष्ठा drm_syncobj *syncobj,
-			   काष्ठा dma_fence_chain *chain,
-			   काष्ठा dma_fence *fence,
-			   uपूर्णांक64_t poपूर्णांक);
-व्योम drm_syncobj_replace_fence(काष्ठा drm_syncobj *syncobj,
-			       काष्ठा dma_fence *fence);
-पूर्णांक drm_syncobj_find_fence(काष्ठा drm_file *file_निजी,
-			   u32 handle, u64 poपूर्णांक, u64 flags,
-			   काष्ठा dma_fence **fence);
-व्योम drm_syncobj_मुक्त(काष्ठा kref *kref);
-पूर्णांक drm_syncobj_create(काष्ठा drm_syncobj **out_syncobj, uपूर्णांक32_t flags,
-		       काष्ठा dma_fence *fence);
-पूर्णांक drm_syncobj_get_handle(काष्ठा drm_file *file_निजी,
-			   काष्ठा drm_syncobj *syncobj, u32 *handle);
-पूर्णांक drm_syncobj_get_fd(काष्ठा drm_syncobj *syncobj, पूर्णांक *p_fd);
+void drm_syncobj_add_point(struct drm_syncobj *syncobj,
+			   struct dma_fence_chain *chain,
+			   struct dma_fence *fence,
+			   uint64_t point);
+void drm_syncobj_replace_fence(struct drm_syncobj *syncobj,
+			       struct dma_fence *fence);
+int drm_syncobj_find_fence(struct drm_file *file_private,
+			   u32 handle, u64 point, u64 flags,
+			   struct dma_fence **fence);
+void drm_syncobj_free(struct kref *kref);
+int drm_syncobj_create(struct drm_syncobj **out_syncobj, uint32_t flags,
+		       struct dma_fence *fence);
+int drm_syncobj_get_handle(struct drm_file *file_private,
+			   struct drm_syncobj *syncobj, u32 *handle);
+int drm_syncobj_get_fd(struct drm_syncobj *syncobj, int *p_fd);
 
-#पूर्ण_अगर
+#endif

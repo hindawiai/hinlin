@@ -1,427 +1,426 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 //
 // GPIO Aggregator
 //
 // Copyright (C) 2019-2020 Glider bv
 
-#घोषणा DRV_NAME       "gpio-aggregator"
-#घोषणा pr_fmt(fmt)	DRV_NAME ": " fmt
+#define DRV_NAME       "gpio-aggregator"
+#define pr_fmt(fmt)	DRV_NAME ": " fmt
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/overflow.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/माला.स>
+#include <linux/bitmap.h>
+#include <linux/bitops.h>
+#include <linux/ctype.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio/driver.h>
+#include <linux/gpio/machine.h>
+#include <linux/idr.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/overflow.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/string.h>
 
 
 /*
- * GPIO Aggregator sysfs पूर्णांकerface
+ * GPIO Aggregator sysfs interface
  */
 
-काष्ठा gpio_aggregator अणु
-	काष्ठा gpiod_lookup_table *lookups;
-	काष्ठा platक्रमm_device *pdev;
-	अक्षर args[];
-पूर्ण;
+struct gpio_aggregator {
+	struct gpiod_lookup_table *lookups;
+	struct platform_device *pdev;
+	char args[];
+};
 
-अटल DEFINE_MUTEX(gpio_aggregator_lock);	/* protects idr */
-अटल DEFINE_IDR(gpio_aggregator_idr);
+static DEFINE_MUTEX(gpio_aggregator_lock);	/* protects idr */
+static DEFINE_IDR(gpio_aggregator_idr);
 
-अटल पूर्णांक aggr_add_gpio(काष्ठा gpio_aggregator *aggr, स्थिर अक्षर *key,
-			 पूर्णांक hwnum, अचिन्हित पूर्णांक *n)
-अणु
-	काष्ठा gpiod_lookup_table *lookups;
+static int aggr_add_gpio(struct gpio_aggregator *aggr, const char *key,
+			 int hwnum, unsigned int *n)
+{
+	struct gpiod_lookup_table *lookups;
 
-	lookups = kपुनः_स्मृति(aggr->lookups, काष्ठा_size(lookups, table, *n + 2),
+	lookups = krealloc(aggr->lookups, struct_size(lookups, table, *n + 2),
 			   GFP_KERNEL);
-	अगर (!lookups)
-		वापस -ENOMEM;
+	if (!lookups)
+		return -ENOMEM;
 
-	lookups->table[*n] = GPIO_LOOKUP_IDX(key, hwnum, शून्य, *n, 0);
+	lookups->table[*n] = GPIO_LOOKUP_IDX(key, hwnum, NULL, *n, 0);
 
 	(*n)++;
-	स_रखो(&lookups->table[*n], 0, माप(lookups->table[*n]));
+	memset(&lookups->table[*n], 0, sizeof(lookups->table[*n]));
 
 	aggr->lookups = lookups;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aggr_parse(काष्ठा gpio_aggregator *aggr)
-अणु
-	अक्षर *args = skip_spaces(aggr->args);
-	अक्षर *name, *offsets, *p;
-	अचिन्हित दीर्घ *biपंचांगap;
-	अचिन्हित पूर्णांक i, n = 0;
-	पूर्णांक error = 0;
+static int aggr_parse(struct gpio_aggregator *aggr)
+{
+	char *args = skip_spaces(aggr->args);
+	char *name, *offsets, *p;
+	unsigned long *bitmap;
+	unsigned int i, n = 0;
+	int error = 0;
 
-	biपंचांगap = biपंचांगap_alloc(ARCH_NR_GPIOS, GFP_KERNEL);
-	अगर (!biपंचांगap)
-		वापस -ENOMEM;
+	bitmap = bitmap_alloc(ARCH_NR_GPIOS, GFP_KERNEL);
+	if (!bitmap)
+		return -ENOMEM;
 
 	args = next_arg(args, &name, &p);
-	जबतक (*args) अणु
+	while (*args) {
 		args = next_arg(args, &offsets, &p);
 
 		p = get_options(offsets, 0, &error);
-		अगर (error == 0 || *p) अणु
+		if (error == 0 || *p) {
 			/* Named GPIO line */
 			error = aggr_add_gpio(aggr, name, U16_MAX, &n);
-			अगर (error)
-				जाओ मुक्त_biपंचांगap;
+			if (error)
+				goto free_bitmap;
 
 			name = offsets;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* GPIO chip + offset(s) */
-		error = biपंचांगap_parselist(offsets, biपंचांगap, ARCH_NR_GPIOS);
-		अगर (error) अणु
+		error = bitmap_parselist(offsets, bitmap, ARCH_NR_GPIOS);
+		if (error) {
 			pr_err("Cannot parse %s: %d\n", offsets, error);
-			जाओ मुक्त_biपंचांगap;
-		पूर्ण
+			goto free_bitmap;
+		}
 
-		क्रम_each_set_bit(i, biपंचांगap, ARCH_NR_GPIOS) अणु
+		for_each_set_bit(i, bitmap, ARCH_NR_GPIOS) {
 			error = aggr_add_gpio(aggr, name, i, &n);
-			अगर (error)
-				जाओ मुक्त_biपंचांगap;
-		पूर्ण
+			if (error)
+				goto free_bitmap;
+		}
 
 		args = next_arg(args, &name, &p);
-	पूर्ण
+	}
 
-	अगर (!n) अणु
+	if (!n) {
 		pr_err("No GPIOs specified\n");
 		error = -EINVAL;
-	पूर्ण
+	}
 
-मुक्त_biपंचांगap:
-	biपंचांगap_मुक्त(biपंचांगap);
-	वापस error;
-पूर्ण
+free_bitmap:
+	bitmap_free(bitmap);
+	return error;
+}
 
-अटल sमाप_प्रकार new_device_store(काष्ठा device_driver *driver, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा gpio_aggregator *aggr;
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक res, id;
+static ssize_t new_device_store(struct device_driver *driver, const char *buf,
+				size_t count)
+{
+	struct gpio_aggregator *aggr;
+	struct platform_device *pdev;
+	int res, id;
 
 	/* kernfs guarantees string termination, so count + 1 is safe */
-	aggr = kzalloc(माप(*aggr) + count + 1, GFP_KERNEL);
-	अगर (!aggr)
-		वापस -ENOMEM;
+	aggr = kzalloc(sizeof(*aggr) + count + 1, GFP_KERNEL);
+	if (!aggr)
+		return -ENOMEM;
 
-	स_नकल(aggr->args, buf, count + 1);
+	memcpy(aggr->args, buf, count + 1);
 
-	aggr->lookups = kzalloc(काष्ठा_size(aggr->lookups, table, 1),
+	aggr->lookups = kzalloc(struct_size(aggr->lookups, table, 1),
 				GFP_KERNEL);
-	अगर (!aggr->lookups) अणु
+	if (!aggr->lookups) {
 		res = -ENOMEM;
-		जाओ मुक्त_ga;
-	पूर्ण
+		goto free_ga;
+	}
 
 	mutex_lock(&gpio_aggregator_lock);
 	id = idr_alloc(&gpio_aggregator_idr, aggr, 0, 0, GFP_KERNEL);
 	mutex_unlock(&gpio_aggregator_lock);
 
-	अगर (id < 0) अणु
+	if (id < 0) {
 		res = id;
-		जाओ मुक्त_table;
-	पूर्ण
+		goto free_table;
+	}
 
-	aggr->lookups->dev_id = kaप्र_लिखो(GFP_KERNEL, "%s.%d", DRV_NAME, id);
-	अगर (!aggr->lookups->dev_id) अणु
+	aggr->lookups->dev_id = kasprintf(GFP_KERNEL, "%s.%d", DRV_NAME, id);
+	if (!aggr->lookups->dev_id) {
 		res = -ENOMEM;
-		जाओ हटाओ_idr;
-	पूर्ण
+		goto remove_idr;
+	}
 
 	res = aggr_parse(aggr);
-	अगर (res)
-		जाओ मुक्त_dev_id;
+	if (res)
+		goto free_dev_id;
 
 	gpiod_add_lookup_table(aggr->lookups);
 
-	pdev = platक्रमm_device_रेजिस्टर_simple(DRV_NAME, id, शून्य, 0);
-	अगर (IS_ERR(pdev)) अणु
+	pdev = platform_device_register_simple(DRV_NAME, id, NULL, 0);
+	if (IS_ERR(pdev)) {
 		res = PTR_ERR(pdev);
-		जाओ हटाओ_table;
-	पूर्ण
+		goto remove_table;
+	}
 
 	aggr->pdev = pdev;
-	वापस count;
+	return count;
 
-हटाओ_table:
-	gpiod_हटाओ_lookup_table(aggr->lookups);
-मुक्त_dev_id:
-	kमुक्त(aggr->lookups->dev_id);
-हटाओ_idr:
+remove_table:
+	gpiod_remove_lookup_table(aggr->lookups);
+free_dev_id:
+	kfree(aggr->lookups->dev_id);
+remove_idr:
 	mutex_lock(&gpio_aggregator_lock);
-	idr_हटाओ(&gpio_aggregator_idr, id);
+	idr_remove(&gpio_aggregator_idr, id);
 	mutex_unlock(&gpio_aggregator_lock);
-मुक्त_table:
-	kमुक्त(aggr->lookups);
-मुक्त_ga:
-	kमुक्त(aggr);
-	वापस res;
-पूर्ण
+free_table:
+	kfree(aggr->lookups);
+free_ga:
+	kfree(aggr);
+	return res;
+}
 
-अटल DRIVER_ATTR_WO(new_device);
+static DRIVER_ATTR_WO(new_device);
 
-अटल व्योम gpio_aggregator_मुक्त(काष्ठा gpio_aggregator *aggr)
-अणु
-	platक्रमm_device_unरेजिस्टर(aggr->pdev);
-	gpiod_हटाओ_lookup_table(aggr->lookups);
-	kमुक्त(aggr->lookups->dev_id);
-	kमुक्त(aggr->lookups);
-	kमुक्त(aggr);
-पूर्ण
+static void gpio_aggregator_free(struct gpio_aggregator *aggr)
+{
+	platform_device_unregister(aggr->pdev);
+	gpiod_remove_lookup_table(aggr->lookups);
+	kfree(aggr->lookups->dev_id);
+	kfree(aggr->lookups);
+	kfree(aggr);
+}
 
-अटल sमाप_प्रकार delete_device_store(काष्ठा device_driver *driver,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा gpio_aggregator *aggr;
-	अचिन्हित पूर्णांक id;
-	पूर्णांक error;
+static ssize_t delete_device_store(struct device_driver *driver,
+				   const char *buf, size_t count)
+{
+	struct gpio_aggregator *aggr;
+	unsigned int id;
+	int error;
 
-	अगर (!str_has_prefix(buf, DRV_NAME "."))
-		वापस -EINVAL;
+	if (!str_has_prefix(buf, DRV_NAME "."))
+		return -EINVAL;
 
-	error = kstrtouपूर्णांक(buf + म_माप(DRV_NAME "."), 10, &id);
-	अगर (error)
-		वापस error;
+	error = kstrtouint(buf + strlen(DRV_NAME "."), 10, &id);
+	if (error)
+		return error;
 
 	mutex_lock(&gpio_aggregator_lock);
-	aggr = idr_हटाओ(&gpio_aggregator_idr, id);
+	aggr = idr_remove(&gpio_aggregator_idr, id);
 	mutex_unlock(&gpio_aggregator_lock);
-	अगर (!aggr)
-		वापस -ENOENT;
+	if (!aggr)
+		return -ENOENT;
 
-	gpio_aggregator_मुक्त(aggr);
-	वापस count;
-पूर्ण
-अटल DRIVER_ATTR_WO(delete_device);
+	gpio_aggregator_free(aggr);
+	return count;
+}
+static DRIVER_ATTR_WO(delete_device);
 
-अटल काष्ठा attribute *gpio_aggregator_attrs[] = अणु
+static struct attribute *gpio_aggregator_attrs[] = {
 	&driver_attr_new_device.attr,
 	&driver_attr_delete_device.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(gpio_aggregator);
 
-अटल पूर्णांक __निकास gpio_aggregator_idr_हटाओ(पूर्णांक id, व्योम *p, व्योम *data)
-अणु
-	gpio_aggregator_मुक्त(p);
-	वापस 0;
-पूर्ण
+static int __exit gpio_aggregator_idr_remove(int id, void *p, void *data)
+{
+	gpio_aggregator_free(p);
+	return 0;
+}
 
-अटल व्योम __निकास gpio_aggregator_हटाओ_all(व्योम)
-अणु
+static void __exit gpio_aggregator_remove_all(void)
+{
 	mutex_lock(&gpio_aggregator_lock);
-	idr_क्रम_each(&gpio_aggregator_idr, gpio_aggregator_idr_हटाओ, शून्य);
+	idr_for_each(&gpio_aggregator_idr, gpio_aggregator_idr_remove, NULL);
 	idr_destroy(&gpio_aggregator_idr);
 	mutex_unlock(&gpio_aggregator_lock);
-पूर्ण
+}
 
 
 /*
  *  GPIO Forwarder
  */
 
-काष्ठा gpiochip_fwd अणु
-	काष्ठा gpio_chip chip;
-	काष्ठा gpio_desc **descs;
-	जोड़ अणु
-		काष्ठा mutex mlock;	/* protects पंचांगp[] अगर can_sleep */
-		spinlock_t slock;	/* protects पंचांगp[] अगर !can_sleep */
-	पूर्ण;
-	अचिन्हित दीर्घ पंचांगp[];		/* values and descs क्रम multiple ops */
-पूर्ण;
+struct gpiochip_fwd {
+	struct gpio_chip chip;
+	struct gpio_desc **descs;
+	union {
+		struct mutex mlock;	/* protects tmp[] if can_sleep */
+		spinlock_t slock;	/* protects tmp[] if !can_sleep */
+	};
+	unsigned long tmp[];		/* values and descs for multiple ops */
+};
 
-अटल पूर्णांक gpio_fwd_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
+static int gpio_fwd_get_direction(struct gpio_chip *chip, unsigned int offset)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
 
-	वापस gpiod_get_direction(fwd->descs[offset]);
-पूर्ण
+	return gpiod_get_direction(fwd->descs[offset]);
+}
 
-अटल पूर्णांक gpio_fwd_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
+static int gpio_fwd_direction_input(struct gpio_chip *chip, unsigned int offset)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
 
-	वापस gpiod_direction_input(fwd->descs[offset]);
-पूर्ण
+	return gpiod_direction_input(fwd->descs[offset]);
+}
 
-अटल पूर्णांक gpio_fwd_direction_output(काष्ठा gpio_chip *chip,
-				     अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
+static int gpio_fwd_direction_output(struct gpio_chip *chip,
+				     unsigned int offset, int value)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
 
-	वापस gpiod_direction_output(fwd->descs[offset], value);
-पूर्ण
+	return gpiod_direction_output(fwd->descs[offset], value);
+}
 
-अटल पूर्णांक gpio_fwd_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
+static int gpio_fwd_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
 
-	वापस gpiod_get_value(fwd->descs[offset]);
-पूर्ण
+	return gpiod_get_value(fwd->descs[offset]);
+}
 
-अटल पूर्णांक gpio_fwd_get_multiple(काष्ठा gpiochip_fwd *fwd, अचिन्हित दीर्घ *mask,
-				 अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा gpio_desc **descs;
-	अचिन्हित दीर्घ *values;
-	अचिन्हित पूर्णांक i, j = 0;
-	पूर्णांक error;
+static int gpio_fwd_get_multiple(struct gpiochip_fwd *fwd, unsigned long *mask,
+				 unsigned long *bits)
+{
+	struct gpio_desc **descs;
+	unsigned long *values;
+	unsigned int i, j = 0;
+	int error;
 
-	/* Both values biपंचांगap and desc poपूर्णांकers are stored in पंचांगp[] */
-	values = &fwd->पंचांगp[0];
-	descs = (व्योम *)&fwd->पंचांगp[BITS_TO_LONGS(fwd->chip.ngpio)];
+	/* Both values bitmap and desc pointers are stored in tmp[] */
+	values = &fwd->tmp[0];
+	descs = (void *)&fwd->tmp[BITS_TO_LONGS(fwd->chip.ngpio)];
 
-	biपंचांगap_clear(values, 0, fwd->chip.ngpio);
-	क्रम_each_set_bit(i, mask, fwd->chip.ngpio)
+	bitmap_clear(values, 0, fwd->chip.ngpio);
+	for_each_set_bit(i, mask, fwd->chip.ngpio)
 		descs[j++] = fwd->descs[i];
 
-	error = gpiod_get_array_value(j, descs, शून्य, values);
-	अगर (error)
-		वापस error;
+	error = gpiod_get_array_value(j, descs, NULL, values);
+	if (error)
+		return error;
 
 	j = 0;
-	क्रम_each_set_bit(i, mask, fwd->chip.ngpio)
+	for_each_set_bit(i, mask, fwd->chip.ngpio)
 		__assign_bit(i, bits, test_bit(j++, values));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gpio_fwd_get_multiple_locked(काष्ठा gpio_chip *chip,
-					अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error;
+static int gpio_fwd_get_multiple_locked(struct gpio_chip *chip,
+					unsigned long *mask, unsigned long *bits)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
+	unsigned long flags;
+	int error;
 
-	अगर (chip->can_sleep) अणु
+	if (chip->can_sleep) {
 		mutex_lock(&fwd->mlock);
 		error = gpio_fwd_get_multiple(fwd, mask, bits);
 		mutex_unlock(&fwd->mlock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock_irqsave(&fwd->slock, flags);
 		error = gpio_fwd_get_multiple(fwd, mask, bits);
 		spin_unlock_irqrestore(&fwd->slock, flags);
-	पूर्ण
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम gpio_fwd_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
+static void gpio_fwd_set(struct gpio_chip *chip, unsigned int offset, int value)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
 
 	gpiod_set_value(fwd->descs[offset], value);
-पूर्ण
+}
 
-अटल व्योम gpio_fwd_set_multiple(काष्ठा gpiochip_fwd *fwd, अचिन्हित दीर्घ *mask,
-				  अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा gpio_desc **descs;
-	अचिन्हित दीर्घ *values;
-	अचिन्हित पूर्णांक i, j = 0;
+static void gpio_fwd_set_multiple(struct gpiochip_fwd *fwd, unsigned long *mask,
+				  unsigned long *bits)
+{
+	struct gpio_desc **descs;
+	unsigned long *values;
+	unsigned int i, j = 0;
 
-	/* Both values biपंचांगap and desc poपूर्णांकers are stored in पंचांगp[] */
-	values = &fwd->पंचांगp[0];
-	descs = (व्योम *)&fwd->पंचांगp[BITS_TO_LONGS(fwd->chip.ngpio)];
+	/* Both values bitmap and desc pointers are stored in tmp[] */
+	values = &fwd->tmp[0];
+	descs = (void *)&fwd->tmp[BITS_TO_LONGS(fwd->chip.ngpio)];
 
-	क्रम_each_set_bit(i, mask, fwd->chip.ngpio) अणु
+	for_each_set_bit(i, mask, fwd->chip.ngpio) {
 		__assign_bit(j, values, test_bit(i, bits));
 		descs[j++] = fwd->descs[i];
-	पूर्ण
+	}
 
-	gpiod_set_array_value(j, descs, शून्य, values);
-पूर्ण
+	gpiod_set_array_value(j, descs, NULL, values);
+}
 
-अटल व्योम gpio_fwd_set_multiple_locked(काष्ठा gpio_chip *chip,
-					 अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
-	अचिन्हित दीर्घ flags;
+static void gpio_fwd_set_multiple_locked(struct gpio_chip *chip,
+					 unsigned long *mask, unsigned long *bits)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
+	unsigned long flags;
 
-	अगर (chip->can_sleep) अणु
+	if (chip->can_sleep) {
 		mutex_lock(&fwd->mlock);
 		gpio_fwd_set_multiple(fwd, mask, bits);
 		mutex_unlock(&fwd->mlock);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock_irqsave(&fwd->slock, flags);
 		gpio_fwd_set_multiple(fwd, mask, bits);
 		spin_unlock_irqrestore(&fwd->slock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक gpio_fwd_set_config(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-			       अचिन्हित दीर्घ config)
-अणु
-	काष्ठा gpiochip_fwd *fwd = gpiochip_get_data(chip);
+static int gpio_fwd_set_config(struct gpio_chip *chip, unsigned int offset,
+			       unsigned long config)
+{
+	struct gpiochip_fwd *fwd = gpiochip_get_data(chip);
 
-	वापस gpiod_set_config(fwd->descs[offset], config);
-पूर्ण
+	return gpiod_set_config(fwd->descs[offset], config);
+}
 
 /**
- * gpiochip_fwd_create() - Create a new GPIO क्रमwarder
- * @dev: Parent device poपूर्णांकer
- * @ngpios: Number of GPIOs in the क्रमwarder.
- * @descs: Array containing the GPIO descriptors to क्रमward to.
+ * gpiochip_fwd_create() - Create a new GPIO forwarder
+ * @dev: Parent device pointer
+ * @ngpios: Number of GPIOs in the forwarder.
+ * @descs: Array containing the GPIO descriptors to forward to.
  *         This array must contain @ngpios entries, and must not be deallocated
- *         beक्रमe the क्रमwarder has been destroyed again.
+ *         before the forwarder has been destroyed again.
  *
- * This function creates a new gpiochip, which क्रमwards all GPIO operations to
+ * This function creates a new gpiochip, which forwards all GPIO operations to
  * the passed GPIO descriptors.
  *
- * Return: An opaque object poपूर्णांकer, or an ERR_PTR()-encoded negative error
+ * Return: An opaque object pointer, or an ERR_PTR()-encoded negative error
  *         code on failure.
  */
-अटल काष्ठा gpiochip_fwd *gpiochip_fwd_create(काष्ठा device *dev,
-						अचिन्हित पूर्णांक ngpios,
-						काष्ठा gpio_desc *descs[])
-अणु
-	स्थिर अक्षर *label = dev_name(dev);
-	काष्ठा gpiochip_fwd *fwd;
-	काष्ठा gpio_chip *chip;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक error;
+static struct gpiochip_fwd *gpiochip_fwd_create(struct device *dev,
+						unsigned int ngpios,
+						struct gpio_desc *descs[])
+{
+	const char *label = dev_name(dev);
+	struct gpiochip_fwd *fwd;
+	struct gpio_chip *chip;
+	unsigned int i;
+	int error;
 
-	fwd = devm_kzalloc(dev, काष्ठा_size(fwd, पंचांगp,
+	fwd = devm_kzalloc(dev, struct_size(fwd, tmp,
 			   BITS_TO_LONGS(ngpios) + ngpios), GFP_KERNEL);
-	अगर (!fwd)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fwd)
+		return ERR_PTR(-ENOMEM);
 
 	chip = &fwd->chip;
 
 	/*
-	 * If any of the GPIO lines are sleeping, then the entire क्रमwarder
+	 * If any of the GPIO lines are sleeping, then the entire forwarder
 	 * will be sleeping.
-	 * If any of the chips support .set_config(), then the क्रमwarder will
+	 * If any of the chips support .set_config(), then the forwarder will
 	 * support setting configs.
 	 */
-	क्रम (i = 0; i < ngpios; i++) अणु
-		काष्ठा gpio_chip *parent = gpiod_to_chip(descs[i]);
+	for (i = 0; i < ngpios; i++) {
+		struct gpio_chip *parent = gpiod_to_chip(descs[i]);
 
 		dev_dbg(dev, "%u => gpio-%d\n", i, desc_to_gpio(descs[i]));
 
-		अगर (gpiod_cansleep(descs[i]))
+		if (gpiod_cansleep(descs[i]))
 			chip->can_sleep = true;
-		अगर (parent && parent->set_config)
+		if (parent && parent->set_config)
 			chip->set_config = gpio_fwd_set_config;
-	पूर्ण
+	}
 
 	chip->label = label;
 	chip->parent = dev;
@@ -437,84 +436,84 @@ ATTRIBUTE_GROUPS(gpio_aggregator);
 	chip->ngpio = ngpios;
 	fwd->descs = descs;
 
-	अगर (chip->can_sleep)
+	if (chip->can_sleep)
 		mutex_init(&fwd->mlock);
-	अन्यथा
+	else
 		spin_lock_init(&fwd->slock);
 
 	error = devm_gpiochip_add_data(dev, chip, fwd);
-	अगर (error)
-		वापस ERR_PTR(error);
+	if (error)
+		return ERR_PTR(error);
 
-	वापस fwd;
-पूर्ण
+	return fwd;
+}
 
 
 /*
- *  GPIO Aggregator platक्रमm device
+ *  GPIO Aggregator platform device
  */
 
-अटल पूर्णांक gpio_aggregator_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा gpio_desc **descs;
-	काष्ठा gpiochip_fwd *fwd;
-	पूर्णांक i, n;
+static int gpio_aggregator_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct gpio_desc **descs;
+	struct gpiochip_fwd *fwd;
+	int i, n;
 
-	n = gpiod_count(dev, शून्य);
-	अगर (n < 0)
-		वापस n;
+	n = gpiod_count(dev, NULL);
+	if (n < 0)
+		return n;
 
-	descs = devm_kदो_स्मृति_array(dev, n, माप(*descs), GFP_KERNEL);
-	अगर (!descs)
-		वापस -ENOMEM;
+	descs = devm_kmalloc_array(dev, n, sizeof(*descs), GFP_KERNEL);
+	if (!descs)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < n; i++) अणु
-		descs[i] = devm_gpiod_get_index(dev, शून्य, i, GPIOD_ASIS);
-		अगर (IS_ERR(descs[i]))
-			वापस PTR_ERR(descs[i]);
-	पूर्ण
+	for (i = 0; i < n; i++) {
+		descs[i] = devm_gpiod_get_index(dev, NULL, i, GPIOD_ASIS);
+		if (IS_ERR(descs[i]))
+			return PTR_ERR(descs[i]);
+	}
 
 	fwd = gpiochip_fwd_create(dev, n, descs);
-	अगर (IS_ERR(fwd))
-		वापस PTR_ERR(fwd);
+	if (IS_ERR(fwd))
+		return PTR_ERR(fwd);
 
-	platक्रमm_set_drvdata(pdev, fwd);
-	वापस 0;
-पूर्ण
+	platform_set_drvdata(pdev, fwd);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id gpio_aggregator_dt_ids[] = अणु
+#ifdef CONFIG_OF
+static const struct of_device_id gpio_aggregator_dt_ids[] = {
 	/*
 	 * Add GPIO-operated devices controlled from userspace below,
 	 * or use "driver_override" in sysfs
 	 */
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 MODULE_DEVICE_TABLE(of, gpio_aggregator_dt_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver gpio_aggregator_driver = अणु
+static struct platform_driver gpio_aggregator_driver = {
 	.probe = gpio_aggregator_probe,
-	.driver = अणु
+	.driver = {
 		.name = DRV_NAME,
 		.groups = gpio_aggregator_groups,
 		.of_match_table = of_match_ptr(gpio_aggregator_dt_ids),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init gpio_aggregator_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&gpio_aggregator_driver);
-पूर्ण
+static int __init gpio_aggregator_init(void)
+{
+	return platform_driver_register(&gpio_aggregator_driver);
+}
 module_init(gpio_aggregator_init);
 
-अटल व्योम __निकास gpio_aggregator_निकास(व्योम)
-अणु
-	gpio_aggregator_हटाओ_all();
-	platक्रमm_driver_unरेजिस्टर(&gpio_aggregator_driver);
-पूर्ण
-module_निकास(gpio_aggregator_निकास);
+static void __exit gpio_aggregator_exit(void)
+{
+	gpio_aggregator_remove_all();
+	platform_driver_unregister(&gpio_aggregator_driver);
+}
+module_exit(gpio_aggregator_exit);
 
 MODULE_AUTHOR("Geert Uytterhoeven <geert+renesas@glider.be>");
 MODULE_DESCRIPTION("GPIO Aggregator");

@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#अगर_घोषित STATIC
-#घोषणा PREBOOT
+// SPDX-License-Identifier: GPL-2.0
+#ifdef STATIC
+#define PREBOOT
 /* Pre-boot environment: included */
 
 /* prevent inclusion of _LINUX_KERNEL_H in pre-boot environment: lots
- * errors about console_prपूर्णांकk etc... on ARM */
-#घोषणा _LINUX_KERNEL_H
+ * errors about console_printk etc... on ARM */
+#define _LINUX_KERNEL_H
 
-#समावेश "zlib_inflate/inftrees.c"
-#समावेश "zlib_inflate/inffast.c"
-#समावेश "zlib_inflate/inflate.c"
-#अगर_घोषित CONFIG_ZLIB_DFLTCC
-#समावेश "zlib_dfltcc/dfltcc.c"
-#समावेश "zlib_dfltcc/dfltcc_inflate.c"
-#पूर्ण_अगर
+#include "zlib_inflate/inftrees.c"
+#include "zlib_inflate/inffast.c"
+#include "zlib_inflate/inflate.c"
+#ifdef CONFIG_ZLIB_DFLTCC
+#include "zlib_dfltcc/dfltcc.c"
+#include "zlib_dfltcc/dfltcc_inflate.c"
+#endif
 
-#अन्यथा /* STATIC */
+#else /* STATIC */
 /* initramfs et al: linked */
 
-#समावेश <linux/zutil.h>
+#include <linux/zutil.h>
 
-#समावेश "zlib_inflate/inftrees.h"
-#समावेश "zlib_inflate/inffast.h"
-#समावेश "zlib_inflate/inflate.h"
+#include "zlib_inflate/inftrees.h"
+#include "zlib_inflate/inffast.h"
+#include "zlib_inflate/inflate.h"
 
-#समावेश "zlib_inflate/infutil.h"
-#समावेश <linux/decompress/inflate.h>
+#include "zlib_inflate/infutil.h"
+#include <linux/decompress/inflate.h>
 
-#पूर्ण_अगर /* STATIC */
+#endif /* STATIC */
 
-#समावेश <linux/decompress/mm.h>
+#include <linux/decompress/mm.h>
 
-#घोषणा GZIP_IOBUF_SIZE (16*1024)
+#define GZIP_IOBUF_SIZE (16*1024)
 
-अटल दीर्घ INIT nofill(व्योम *buffer, अचिन्हित दीर्घ len)
-अणु
-	वापस -1;
-पूर्ण
+static long INIT nofill(void *buffer, unsigned long len)
+{
+	return -1;
+}
 
 /* Included from initramfs et al code */
-STATIC पूर्णांक INIT __gunzip(अचिन्हित अक्षर *buf, दीर्घ len,
-		       दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-		       दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-		       अचिन्हित अक्षर *out_buf, दीर्घ out_len,
-		       दीर्घ *pos,
-		       व्योम(*error)(अक्षर *x)) अणु
+STATIC int INIT __gunzip(unsigned char *buf, long len,
+		       long (*fill)(void*, unsigned long),
+		       long (*flush)(void*, unsigned long),
+		       unsigned char *out_buf, long out_len,
+		       long *pos,
+		       void(*error)(char *x)) {
 	u8 *zbuf;
-	काष्ठा z_stream_s *strm;
-	पूर्णांक rc;
+	struct z_stream_s *strm;
+	int rc;
 
 	rc = -1;
-	अगर (flush) अणु
+	if (flush) {
 		out_len = 0x8000; /* 32 K */
-		out_buf = दो_स्मृति(out_len);
-	पूर्ण अन्यथा अणु
-		अगर (!out_len)
-			out_len = ((माप_प्रकार)~0) - (माप_प्रकार)out_buf; /* no limit */
-	पूर्ण
-	अगर (!out_buf) अणु
+		out_buf = malloc(out_len);
+	} else {
+		if (!out_len)
+			out_len = ((size_t)~0) - (size_t)out_buf; /* no limit */
+	}
+	if (!out_buf) {
 		error("Out of memory while allocating output buffer");
-		जाओ gunzip_nomem1;
-	पूर्ण
+		goto gunzip_nomem1;
+	}
 
-	अगर (buf)
+	if (buf)
 		zbuf = buf;
-	अन्यथा अणु
-		zbuf = दो_स्मृति(GZIP_IOBUF_SIZE);
+	else {
+		zbuf = malloc(GZIP_IOBUF_SIZE);
 		len = 0;
-	पूर्ण
-	अगर (!zbuf) अणु
+	}
+	if (!zbuf) {
 		error("Out of memory while allocating input buffer");
-		जाओ gunzip_nomem2;
-	पूर्ण
+		goto gunzip_nomem2;
+	}
 
-	strm = दो_स्मृति(माप(*strm));
-	अगर (strm == शून्य) अणु
+	strm = malloc(sizeof(*strm));
+	if (strm == NULL) {
 		error("Out of memory while allocating z_stream");
-		जाओ gunzip_nomem3;
-	पूर्ण
+		goto gunzip_nomem3;
+	}
 
-	strm->workspace = दो_स्मृति(flush ? zlib_inflate_workspacesize() :
-#अगर_घोषित CONFIG_ZLIB_DFLTCC
-	/* Always allocate the full workspace क्रम DFLTCC */
+	strm->workspace = malloc(flush ? zlib_inflate_workspacesize() :
+#ifdef CONFIG_ZLIB_DFLTCC
+	/* Always allocate the full workspace for DFLTCC */
 				 zlib_inflate_workspacesize());
-#अन्यथा
-				 माप(काष्ठा inflate_state));
-#पूर्ण_अगर
-	अगर (strm->workspace == शून्य) अणु
+#else
+				 sizeof(struct inflate_state));
+#endif
+	if (strm->workspace == NULL) {
 		error("Out of memory while allocating workspace");
-		जाओ gunzip_nomem4;
-	पूर्ण
+		goto gunzip_nomem4;
+	}
 
-	अगर (!fill)
+	if (!fill)
 		fill = nofill;
 
-	अगर (len == 0)
+	if (len == 0)
 		len = fill(zbuf, GZIP_IOBUF_SIZE);
 
-	/* verअगरy the gzip header */
-	अगर (len < 10 ||
-	   zbuf[0] != 0x1f || zbuf[1] != 0x8b || zbuf[2] != 0x08) अणु
-		अगर (pos)
+	/* verify the gzip header */
+	if (len < 10 ||
+	   zbuf[0] != 0x1f || zbuf[1] != 0x8b || zbuf[2] != 0x08) {
+		if (pos)
 			*pos = 0;
 		error("Not a gzip file");
-		जाओ gunzip_5;
-	पूर्ण
+		goto gunzip_5;
+	}
 
 	/* skip over gzip header (1f,8b,08... 10 bytes total +
 	 * possible asciz filename)
@@ -113,108 +112,108 @@ STATIC पूर्णांक INIT __gunzip(अचिन्हित अक्
 	strm->next_in = zbuf + 10;
 	strm->avail_in = len - 10;
 	/* skip over asciz filename */
-	अगर (zbuf[3] & 0x8) अणु
-		करो अणु
+	if (zbuf[3] & 0x8) {
+		do {
 			/*
-			 * If the filename करोesn't fit पूर्णांकo the buffer,
+			 * If the filename doesn't fit into the buffer,
 			 * the file is very probably corrupt. Don't try
-			 * to पढ़ो more data.
+			 * to read more data.
 			 */
-			अगर (strm->avail_in == 0) अणु
+			if (strm->avail_in == 0) {
 				error("header error");
-				जाओ gunzip_5;
-			पूर्ण
+				goto gunzip_5;
+			}
 			--strm->avail_in;
-		पूर्ण जबतक (*strm->next_in++);
-	पूर्ण
+		} while (*strm->next_in++);
+	}
 
 	strm->next_out = out_buf;
 	strm->avail_out = out_len;
 
 	rc = zlib_inflateInit2(strm, -MAX_WBITS);
 
-#अगर_घोषित CONFIG_ZLIB_DFLTCC
-	/* Always keep the winकरोw क्रम DFLTCC */
-#अन्यथा
-	अगर (!flush) अणु
+#ifdef CONFIG_ZLIB_DFLTCC
+	/* Always keep the window for DFLTCC */
+#else
+	if (!flush) {
 		WS(strm)->inflate_state.wsize = 0;
-		WS(strm)->inflate_state.winकरोw = शून्य;
-	पूर्ण
-#पूर्ण_अगर
+		WS(strm)->inflate_state.window = NULL;
+	}
+#endif
 
-	जबतक (rc == Z_OK) अणु
-		अगर (strm->avail_in == 0) अणु
-			/* TODO: handle हाल where both pos and fill are set */
+	while (rc == Z_OK) {
+		if (strm->avail_in == 0) {
+			/* TODO: handle case where both pos and fill are set */
 			len = fill(zbuf, GZIP_IOBUF_SIZE);
-			अगर (len < 0) अणु
+			if (len < 0) {
 				rc = -1;
 				error("read error");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			strm->next_in = zbuf;
 			strm->avail_in = len;
-		पूर्ण
+		}
 		rc = zlib_inflate(strm, 0);
 
 		/* Write any data generated */
-		अगर (flush && strm->next_out > out_buf) अणु
-			दीर्घ l = strm->next_out - out_buf;
-			अगर (l != flush(out_buf, l)) अणु
+		if (flush && strm->next_out > out_buf) {
+			long l = strm->next_out - out_buf;
+			if (l != flush(out_buf, l)) {
 				rc = -1;
 				error("write error");
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			strm->next_out = out_buf;
 			strm->avail_out = out_len;
-		पूर्ण
+		}
 
 		/* after Z_FINISH, only Z_STREAM_END is "we unpacked it all" */
-		अगर (rc == Z_STREAM_END) अणु
+		if (rc == Z_STREAM_END) {
 			rc = 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर (rc != Z_OK) अणु
+			break;
+		} else if (rc != Z_OK) {
 			error("uncompression error");
 			rc = -1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	zlib_inflateEnd(strm);
-	अगर (pos)
+	if (pos)
 		/* add + 8 to skip over trailer */
 		*pos = strm->next_in - zbuf+8;
 
 gunzip_5:
-	मुक्त(strm->workspace);
+	free(strm->workspace);
 gunzip_nomem4:
-	मुक्त(strm);
+	free(strm);
 gunzip_nomem3:
-	अगर (!buf)
-		मुक्त(zbuf);
+	if (!buf)
+		free(zbuf);
 gunzip_nomem2:
-	अगर (flush)
-		मुक्त(out_buf);
+	if (flush)
+		free(out_buf);
 gunzip_nomem1:
-	वापस rc; /* वापसs Z_OK (0) अगर successful */
-पूर्ण
+	return rc; /* returns Z_OK (0) if successful */
+}
 
-#अगर_अघोषित PREBOOT
-STATIC पूर्णांक INIT gunzip(अचिन्हित अक्षर *buf, दीर्घ len,
-		       दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-		       दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-		       अचिन्हित अक्षर *out_buf,
-		       दीर्घ *pos,
-		       व्योम (*error)(अक्षर *x))
-अणु
-	वापस __gunzip(buf, len, fill, flush, out_buf, 0, pos, error);
-पूर्ण
-#अन्यथा
-STATIC पूर्णांक INIT __decompress(अचिन्हित अक्षर *buf, दीर्घ len,
-			   दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
-			   दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
-			   अचिन्हित अक्षर *out_buf, दीर्घ out_len,
-			   दीर्घ *pos,
-			   व्योम (*error)(अक्षर *x))
-अणु
-	वापस __gunzip(buf, len, fill, flush, out_buf, out_len, pos, error);
-पूर्ण
-#पूर्ण_अगर
+#ifndef PREBOOT
+STATIC int INIT gunzip(unsigned char *buf, long len,
+		       long (*fill)(void*, unsigned long),
+		       long (*flush)(void*, unsigned long),
+		       unsigned char *out_buf,
+		       long *pos,
+		       void (*error)(char *x))
+{
+	return __gunzip(buf, len, fill, flush, out_buf, 0, pos, error);
+}
+#else
+STATIC int INIT __decompress(unsigned char *buf, long len,
+			   long (*fill)(void*, unsigned long),
+			   long (*flush)(void*, unsigned long),
+			   unsigned char *out_buf, long out_len,
+			   long *pos,
+			   void (*error)(char *x))
+{
+	return __gunzip(buf, len, fill, flush, out_buf, out_len, pos, error);
+}
+#endif

@@ -1,170 +1,169 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2018 - Bootlin
  *
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  *
- * Header containing पूर्णांकernal definitions to be used only by core files.
- * न_अंकD controller drivers should not include this file.
+ * Header containing internal definitions to be used only by core files.
+ * NAND controller drivers should not include this file.
  */
 
-#अगर_अघोषित __LINUX_RAWन_अंकD_INTERNALS
-#घोषणा __LINUX_RAWन_अंकD_INTERNALS
+#ifndef __LINUX_RAWNAND_INTERNALS
+#define __LINUX_RAWNAND_INTERNALS
 
-#समावेश <linux/mtd/rawnand.h>
+#include <linux/mtd/rawnand.h>
 
 /*
- * न_अंकD Flash Manufacturer ID Codes
+ * NAND Flash Manufacturer ID Codes
  */
-#घोषणा न_अंकD_MFR_AMD		0x01
-#घोषणा न_अंकD_MFR_ATO		0x9b
-#घोषणा न_अंकD_MFR_EON		0x92
-#घोषणा न_अंकD_MFR_ESMT		0xc8
-#घोषणा न_अंकD_MFR_FUJITSU	0x04
-#घोषणा न_अंकD_MFR_HYNIX		0xad
-#घोषणा न_अंकD_MFR_INTEL		0x89
-#घोषणा न_अंकD_MFR_MACRONIX	0xc2
-#घोषणा न_अंकD_MFR_MICRON		0x2c
-#घोषणा न_अंकD_MFR_NATIONAL	0x8f
-#घोषणा न_अंकD_MFR_RENESAS	0x07
-#घोषणा न_अंकD_MFR_SAMSUNG	0xec
-#घोषणा न_अंकD_MFR_SANDISK	0x45
-#घोषणा न_अंकD_MFR_STMICRO	0x20
+#define NAND_MFR_AMD		0x01
+#define NAND_MFR_ATO		0x9b
+#define NAND_MFR_EON		0x92
+#define NAND_MFR_ESMT		0xc8
+#define NAND_MFR_FUJITSU	0x04
+#define NAND_MFR_HYNIX		0xad
+#define NAND_MFR_INTEL		0x89
+#define NAND_MFR_MACRONIX	0xc2
+#define NAND_MFR_MICRON		0x2c
+#define NAND_MFR_NATIONAL	0x8f
+#define NAND_MFR_RENESAS	0x07
+#define NAND_MFR_SAMSUNG	0xec
+#define NAND_MFR_SANDISK	0x45
+#define NAND_MFR_STMICRO	0x20
 /* Kioxia is new name of Toshiba memory. */
-#घोषणा न_अंकD_MFR_TOSHIBA	0x98
-#घोषणा न_अंकD_MFR_WINBOND	0xef
+#define NAND_MFR_TOSHIBA	0x98
+#define NAND_MFR_WINBOND	0xef
 
 /**
- * काष्ठा nand_manufacturer_ops - न_अंकD Manufacturer operations
- * @detect: detect the न_अंकD memory organization and capabilities
- * @init: initialize all venकरोr specअगरic fields (like the ->पढ़ो_retry()
- *	  implementation) अगर any.
+ * struct nand_manufacturer_ops - NAND Manufacturer operations
+ * @detect: detect the NAND memory organization and capabilities
+ * @init: initialize all vendor specific fields (like the ->read_retry()
+ *	  implementation) if any.
  * @cleanup: the ->init() function may have allocated resources, ->cleanup()
- *	     is here to let venकरोr specअगरic code release those resources.
- * @fixup_onfi_param_page: apply venकरोr specअगरic fixups to the ONFI parameter
- *			   page. This is called after the checksum is verअगरied.
+ *	     is here to let vendor specific code release those resources.
+ * @fixup_onfi_param_page: apply vendor specific fixups to the ONFI parameter
+ *			   page. This is called after the checksum is verified.
  */
-काष्ठा nand_manufacturer_ops अणु
-	व्योम (*detect)(काष्ठा nand_chip *chip);
-	पूर्णांक (*init)(काष्ठा nand_chip *chip);
-	व्योम (*cleanup)(काष्ठा nand_chip *chip);
-	व्योम (*fixup_onfi_param_page)(काष्ठा nand_chip *chip,
-				      काष्ठा nand_onfi_params *p);
-पूर्ण;
+struct nand_manufacturer_ops {
+	void (*detect)(struct nand_chip *chip);
+	int (*init)(struct nand_chip *chip);
+	void (*cleanup)(struct nand_chip *chip);
+	void (*fixup_onfi_param_page)(struct nand_chip *chip,
+				      struct nand_onfi_params *p);
+};
 
 /**
- * काष्ठा nand_manufacturer_desc - न_अंकD Flash Manufacturer descriptor
+ * struct nand_manufacturer_desc - NAND Flash Manufacturer descriptor
  * @name: Manufacturer name
  * @id: manufacturer ID code of device.
  * @ops: manufacturer operations
  */
-काष्ठा nand_manufacturer_desc अणु
-	पूर्णांक id;
-	अक्षर *name;
-	स्थिर काष्ठा nand_manufacturer_ops *ops;
-पूर्ण;
+struct nand_manufacturer_desc {
+	int id;
+	char *name;
+	const struct nand_manufacturer_ops *ops;
+};
 
 
-बाह्य काष्ठा nand_flash_dev nand_flash_ids[];
+extern struct nand_flash_dev nand_flash_ids[];
 
-बाह्य स्थिर काष्ठा nand_manufacturer_ops amd_nand_manuf_ops;
-बाह्य स्थिर काष्ठा nand_manufacturer_ops esmt_nand_manuf_ops;
-बाह्य स्थिर काष्ठा nand_manufacturer_ops hynix_nand_manuf_ops;
-बाह्य स्थिर काष्ठा nand_manufacturer_ops macronix_nand_manuf_ops;
-बाह्य स्थिर काष्ठा nand_manufacturer_ops micron_nand_manuf_ops;
-बाह्य स्थिर काष्ठा nand_manufacturer_ops samsung_nand_manuf_ops;
-बाह्य स्थिर काष्ठा nand_manufacturer_ops toshiba_nand_manuf_ops;
+extern const struct nand_manufacturer_ops amd_nand_manuf_ops;
+extern const struct nand_manufacturer_ops esmt_nand_manuf_ops;
+extern const struct nand_manufacturer_ops hynix_nand_manuf_ops;
+extern const struct nand_manufacturer_ops macronix_nand_manuf_ops;
+extern const struct nand_manufacturer_ops micron_nand_manuf_ops;
+extern const struct nand_manufacturer_ops samsung_nand_manuf_ops;
+extern const struct nand_manufacturer_ops toshiba_nand_manuf_ops;
 
 /* MLC pairing schemes */
-बाह्य स्थिर काष्ठा mtd_pairing_scheme dist3_pairing_scheme;
+extern const struct mtd_pairing_scheme dist3_pairing_scheme;
 
 /* Core functions */
-स्थिर काष्ठा nand_manufacturer_desc *nand_get_manufacturer_desc(u8 id);
-पूर्णांक nand_bbm_get_next_page(काष्ठा nand_chip *chip, पूर्णांक page);
-पूर्णांक nand_markbad_bbm(काष्ठा nand_chip *chip, loff_t ofs);
-पूर्णांक nand_erase_nand(काष्ठा nand_chip *chip, काष्ठा erase_info *instr,
-		    पूर्णांक allowbbt);
-व्योम onfi_fill_पूर्णांकerface_config(काष्ठा nand_chip *chip,
-				काष्ठा nand_पूर्णांकerface_config *अगरace,
-				क्रमागत nand_पूर्णांकerface_type type,
-				अचिन्हित पूर्णांक timing_mode);
-अचिन्हित पूर्णांक
-onfi_find_बंदst_sdr_mode(स्थिर काष्ठा nand_sdr_timings *spec_timings);
-पूर्णांक nand_choose_best_sdr_timings(काष्ठा nand_chip *chip,
-				 काष्ठा nand_पूर्णांकerface_config *अगरace,
-				 काष्ठा nand_sdr_timings *spec_timings);
-स्थिर काष्ठा nand_पूर्णांकerface_config *nand_get_reset_पूर्णांकerface_config(व्योम);
-पूर्णांक nand_get_features(काष्ठा nand_chip *chip, पूर्णांक addr, u8 *subfeature_param);
-पूर्णांक nand_set_features(काष्ठा nand_chip *chip, पूर्णांक addr, u8 *subfeature_param);
-पूर्णांक nand_पढ़ो_page_raw_notsupp(काष्ठा nand_chip *chip, u8 *buf,
-			       पूर्णांक oob_required, पूर्णांक page);
-पूर्णांक nand_ग_लिखो_page_raw_notsupp(काष्ठा nand_chip *chip, स्थिर u8 *buf,
-				पूर्णांक oob_required, पूर्णांक page);
-पूर्णांक nand_निकास_status_op(काष्ठा nand_chip *chip);
-पूर्णांक nand_पढ़ो_param_page_op(काष्ठा nand_chip *chip, u8 page, व्योम *buf,
-			    अचिन्हित पूर्णांक len);
-व्योम nand_decode_ext_id(काष्ठा nand_chip *chip);
-व्योम panic_nand_रुको(काष्ठा nand_chip *chip, अचिन्हित दीर्घ समयo);
-व्योम sanitize_string(uपूर्णांक8_t *s, माप_प्रकार len);
+const struct nand_manufacturer_desc *nand_get_manufacturer_desc(u8 id);
+int nand_bbm_get_next_page(struct nand_chip *chip, int page);
+int nand_markbad_bbm(struct nand_chip *chip, loff_t ofs);
+int nand_erase_nand(struct nand_chip *chip, struct erase_info *instr,
+		    int allowbbt);
+void onfi_fill_interface_config(struct nand_chip *chip,
+				struct nand_interface_config *iface,
+				enum nand_interface_type type,
+				unsigned int timing_mode);
+unsigned int
+onfi_find_closest_sdr_mode(const struct nand_sdr_timings *spec_timings);
+int nand_choose_best_sdr_timings(struct nand_chip *chip,
+				 struct nand_interface_config *iface,
+				 struct nand_sdr_timings *spec_timings);
+const struct nand_interface_config *nand_get_reset_interface_config(void);
+int nand_get_features(struct nand_chip *chip, int addr, u8 *subfeature_param);
+int nand_set_features(struct nand_chip *chip, int addr, u8 *subfeature_param);
+int nand_read_page_raw_notsupp(struct nand_chip *chip, u8 *buf,
+			       int oob_required, int page);
+int nand_write_page_raw_notsupp(struct nand_chip *chip, const u8 *buf,
+				int oob_required, int page);
+int nand_exit_status_op(struct nand_chip *chip);
+int nand_read_param_page_op(struct nand_chip *chip, u8 page, void *buf,
+			    unsigned int len);
+void nand_decode_ext_id(struct nand_chip *chip);
+void panic_nand_wait(struct nand_chip *chip, unsigned long timeo);
+void sanitize_string(uint8_t *s, size_t len);
 
-अटल अंतरभूत bool nand_has_exec_op(काष्ठा nand_chip *chip)
-अणु
-	अगर (!chip->controller || !chip->controller->ops ||
+static inline bool nand_has_exec_op(struct nand_chip *chip)
+{
+	if (!chip->controller || !chip->controller->ops ||
 	    !chip->controller->ops->exec_op)
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल अंतरभूत पूर्णांक nand_check_op(काष्ठा nand_chip *chip,
-				स्थिर काष्ठा nand_operation *op)
-अणु
-	अगर (!nand_has_exec_op(chip))
-		वापस 0;
+static inline int nand_check_op(struct nand_chip *chip,
+				const struct nand_operation *op)
+{
+	if (!nand_has_exec_op(chip))
+		return 0;
 
-	वापस chip->controller->ops->exec_op(chip, op, true);
-पूर्ण
+	return chip->controller->ops->exec_op(chip, op, true);
+}
 
-अटल अंतरभूत पूर्णांक nand_exec_op(काष्ठा nand_chip *chip,
-			       स्थिर काष्ठा nand_operation *op)
-अणु
-	अगर (!nand_has_exec_op(chip))
-		वापस -ENOTSUPP;
+static inline int nand_exec_op(struct nand_chip *chip,
+			       const struct nand_operation *op)
+{
+	if (!nand_has_exec_op(chip))
+		return -ENOTSUPP;
 
-	अगर (WARN_ON(op->cs >= nanddev_ntarमाला_लो(&chip->base)))
-		वापस -EINVAL;
+	if (WARN_ON(op->cs >= nanddev_ntargets(&chip->base)))
+		return -EINVAL;
 
-	वापस chip->controller->ops->exec_op(chip, op, false);
-पूर्ण
+	return chip->controller->ops->exec_op(chip, op, false);
+}
 
-अटल अंतरभूत bool nand_controller_can_setup_पूर्णांकerface(काष्ठा nand_chip *chip)
-अणु
-	अगर (!chip->controller || !chip->controller->ops ||
-	    !chip->controller->ops->setup_पूर्णांकerface)
-		वापस false;
+static inline bool nand_controller_can_setup_interface(struct nand_chip *chip)
+{
+	if (!chip->controller || !chip->controller->ops ||
+	    !chip->controller->ops->setup_interface)
+		return false;
 
-	अगर (chip->options & न_अंकD_KEEP_TIMINGS)
-		वापस false;
+	if (chip->options & NAND_KEEP_TIMINGS)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /* BBT functions */
-पूर्णांक nand_markbad_bbt(काष्ठा nand_chip *chip, loff_t offs);
-पूर्णांक nand_isreserved_bbt(काष्ठा nand_chip *chip, loff_t offs);
-पूर्णांक nand_isbad_bbt(काष्ठा nand_chip *chip, loff_t offs, पूर्णांक allowbbt);
+int nand_markbad_bbt(struct nand_chip *chip, loff_t offs);
+int nand_isreserved_bbt(struct nand_chip *chip, loff_t offs);
+int nand_isbad_bbt(struct nand_chip *chip, loff_t offs, int allowbbt);
 
 /* Legacy */
-व्योम nand_legacy_set_शेषs(काष्ठा nand_chip *chip);
-व्योम nand_legacy_adjust_cmdfunc(काष्ठा nand_chip *chip);
-पूर्णांक nand_legacy_check_hooks(काष्ठा nand_chip *chip);
+void nand_legacy_set_defaults(struct nand_chip *chip);
+void nand_legacy_adjust_cmdfunc(struct nand_chip *chip);
+int nand_legacy_check_hooks(struct nand_chip *chip);
 
 /* ONFI functions */
-u16 onfi_crc16(u16 crc, u8 स्थिर *p, माप_प्रकार len);
-पूर्णांक nand_onfi_detect(काष्ठा nand_chip *chip);
+u16 onfi_crc16(u16 crc, u8 const *p, size_t len);
+int nand_onfi_detect(struct nand_chip *chip);
 
 /* JEDEC functions */
-पूर्णांक nand_jedec_detect(काष्ठा nand_chip *chip);
+int nand_jedec_detect(struct nand_chip *chip);
 
-#पूर्ण_अगर /* __LINUX_RAWन_अंकD_INTERNALS */
+#endif /* __LINUX_RAWNAND_INTERNALS */

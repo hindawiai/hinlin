@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * MIPS support क्रम CONFIG_OF device tree support
+ * MIPS support for CONFIG_OF device tree support
  *
  * Copyright (C) 2010 Cisco Systems Inc. <dediao@cisco.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/export.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/init.h>
+#include <linux/export.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/memblock.h>
+#include <linux/debugfs.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/bootinfo.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/prom.h>
+#include <asm/bootinfo.h>
+#include <asm/page.h>
+#include <asm/prom.h>
 
-अटल अक्षर mips_machine_name[64] = "Unknown";
+static char mips_machine_name[64] = "Unknown";
 
-__init व्योम mips_set_machine_name(स्थिर अक्षर *name)
-अणु
-	अगर (name == शून्य)
-		वापस;
+__init void mips_set_machine_name(const char *name)
+{
+	if (name == NULL)
+		return;
 
-	strlcpy(mips_machine_name, name, माप(mips_machine_name));
+	strlcpy(mips_machine_name, name, sizeof(mips_machine_name));
 	pr_info("MIPS: machine is %s\n", mips_get_machine_name());
-पूर्ण
+}
 
-अक्षर *mips_get_machine_name(व्योम)
-अणु
-	वापस mips_machine_name;
-पूर्ण
+char *mips_get_machine_name(void)
+{
+	return mips_machine_name;
+}
 
-#अगर_घोषित CONFIG_USE_OF
+#ifdef CONFIG_USE_OF
 
-व्योम __init __dt_setup_arch(व्योम *bph)
-अणु
-	अगर (!early_init_dt_scan(bph))
-		वापस;
+void __init __dt_setup_arch(void *bph)
+{
+	if (!early_init_dt_scan(bph))
+		return;
 
 	mips_set_machine_name(of_flat_dt_get_machine_name());
-पूर्ण
+}
 
-पूर्णांक __init __dt_रेजिस्टर_buses(स्थिर अक्षर *bus0, स्थिर अक्षर *bus1)
-अणु
-	अटल काष्ठा of_device_id of_ids[3];
+int __init __dt_register_buses(const char *bus0, const char *bus1)
+{
+	static struct of_device_id of_ids[3];
 
-	अगर (!of_have_populated_dt())
+	if (!of_have_populated_dt())
 		panic("device tree not present");
 
-	strlcpy(of_ids[0].compatible, bus0, माप(of_ids[0].compatible));
-	अगर (bus1) अणु
+	strlcpy(of_ids[0].compatible, bus0, sizeof(of_ids[0].compatible));
+	if (bus1) {
 		strlcpy(of_ids[1].compatible, bus1,
-			माप(of_ids[1].compatible));
-	पूर्ण
+			sizeof(of_ids[1].compatible));
+	}
 
-	अगर (of_platक्रमm_populate(शून्य, of_ids, शून्य, शून्य))
+	if (of_platform_populate(NULL, of_ids, NULL, NULL))
 		panic("failed to populate DT");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif

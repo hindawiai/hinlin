@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sh/boards/landisk/gio.c - driver क्रम landisk
+ * arch/sh/boards/landisk/gio.c - driver for landisk
  *
  * This driver will also support the I-O DATA Device, Inc. LANDISK Board.
  * LANDISK and USL-5P Button, LED and GIO driver drive function.
@@ -9,157 +8,157 @@
  *   Copylight (C) 2006 kogiidena
  *   Copylight (C) 2002 Atom Create Engineering Co., Ltd. *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/fs.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <mach-landisk/mach/gपन.स>
-#समावेश <mach-landisk/mach/iodata_landisk.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kdev_t.h>
+#include <linux/cdev.h>
+#include <linux/fs.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
+#include <mach-landisk/mach/gio.h>
+#include <mach-landisk/mach/iodata_landisk.h>
 
-#घोषणा DEVCOUNT                4
-#घोषणा GIO_MINOR	        2	/* GIO minor no. */
+#define DEVCOUNT                4
+#define GIO_MINOR	        2	/* GIO minor no. */
 
-अटल dev_t dev;
-अटल काष्ठा cdev *cdev_p;
-अटल पूर्णांक खोलोCnt;
+static dev_t dev;
+static struct cdev *cdev_p;
+static int openCnt;
 
-अटल पूर्णांक gio_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक minor = iminor(inode);
-	पूर्णांक ret = -ENOENT;
+static int gio_open(struct inode *inode, struct file *filp)
+{
+	int minor = iminor(inode);
+	int ret = -ENOENT;
 
 	preempt_disable();
-	अगर (minor < DEVCOUNT) अणु
-		अगर (खोलोCnt > 0) अणु
+	if (minor < DEVCOUNT) {
+		if (openCnt > 0) {
 			ret = -EALREADY;
-		पूर्ण अन्यथा अणु
-			खोलोCnt++;
+		} else {
+			openCnt++;
 			ret = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	preempt_enable();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक gio_बंद(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	पूर्णांक minor = iminor(inode);
+static int gio_close(struct inode *inode, struct file *filp)
+{
+	int minor = iminor(inode);
 
-	अगर (minor < DEVCOUNT) अणु
-		खोलोCnt--;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (minor < DEVCOUNT) {
+		openCnt--;
+	}
+	return 0;
+}
 
-अटल दीर्घ gio_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	अचिन्हित पूर्णांक data;
-	अटल अचिन्हित पूर्णांक addr = 0;
+static long gio_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+{
+	unsigned int data;
+	static unsigned int addr = 0;
 
-	अगर (cmd & 0x01) अणु	/* ग_लिखो */
-		अगर (copy_from_user(&data, (पूर्णांक *)arg, माप(पूर्णांक))) अणु
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+	if (cmd & 0x01) {	/* write */
+		if (copy_from_user(&data, (int *)arg, sizeof(int))) {
+			return -EFAULT;
+		}
+	}
 
-	चयन (cmd) अणु
-	हाल GIODRV_IOCSGIOSETADDR:	/* address set */
+	switch (cmd) {
+	case GIODRV_IOCSGIOSETADDR:	/* address set */
 		addr = data;
-		अवरोध;
+		break;
 
-	हाल GIODRV_IOCSGIODATA1:	/* ग_लिखो byte */
-		__raw_ग_लिखोb((अचिन्हित अक्षर)(0x0ff & data), addr);
-		अवरोध;
+	case GIODRV_IOCSGIODATA1:	/* write byte */
+		__raw_writeb((unsigned char)(0x0ff & data), addr);
+		break;
 
-	हाल GIODRV_IOCSGIODATA2:	/* ग_लिखो word */
-		अगर (addr & 0x01) अणु
-			वापस -EFAULT;
-		पूर्ण
-		__raw_ग_लिखोw((अचिन्हित लघु पूर्णांक)(0x0ffff & data), addr);
-		अवरोध;
+	case GIODRV_IOCSGIODATA2:	/* write word */
+		if (addr & 0x01) {
+			return -EFAULT;
+		}
+		__raw_writew((unsigned short int)(0x0ffff & data), addr);
+		break;
 
-	हाल GIODRV_IOCSGIODATA4:	/* ग_लिखो दीर्घ */
-		अगर (addr & 0x03) अणु
-			वापस -EFAULT;
-		पूर्ण
-		__raw_ग_लिखोl(data, addr);
-		अवरोध;
+	case GIODRV_IOCSGIODATA4:	/* write long */
+		if (addr & 0x03) {
+			return -EFAULT;
+		}
+		__raw_writel(data, addr);
+		break;
 
-	हाल GIODRV_IOCGGIODATA1:	/* पढ़ो byte */
-		data = __raw_पढ़ोb(addr);
-		अवरोध;
+	case GIODRV_IOCGGIODATA1:	/* read byte */
+		data = __raw_readb(addr);
+		break;
 
-	हाल GIODRV_IOCGGIODATA2:	/* पढ़ो word */
-		अगर (addr & 0x01) अणु
-			वापस -EFAULT;
-		पूर्ण
-		data = __raw_पढ़ोw(addr);
-		अवरोध;
+	case GIODRV_IOCGGIODATA2:	/* read word */
+		if (addr & 0x01) {
+			return -EFAULT;
+		}
+		data = __raw_readw(addr);
+		break;
 
-	हाल GIODRV_IOCGGIODATA4:	/* पढ़ो दीर्घ */
-		अगर (addr & 0x03) अणु
-			वापस -EFAULT;
-		पूर्ण
-		data = __raw_पढ़ोl(addr);
-		अवरोध;
-	शेष:
-		वापस -EFAULT;
-		अवरोध;
-	पूर्ण
+	case GIODRV_IOCGGIODATA4:	/* read long */
+		if (addr & 0x03) {
+			return -EFAULT;
+		}
+		data = __raw_readl(addr);
+		break;
+	default:
+		return -EFAULT;
+		break;
+	}
 
-	अगर ((cmd & 0x01) == 0) अणु	/* पढ़ो */
-		अगर (copy_to_user((पूर्णांक *)arg, &data, माप(पूर्णांक))) अणु
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if ((cmd & 0x01) == 0) {	/* read */
+		if (copy_to_user((int *)arg, &data, sizeof(int))) {
+			return -EFAULT;
+		}
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations gio_fops = अणु
+static const struct file_operations gio_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = gio_खोलो,	/* खोलो */
-	.release = gio_बंद,	/* release */
+	.open = gio_open,	/* open */
+	.release = gio_close,	/* release */
 	.unlocked_ioctl = gio_ioctl,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक __init gio_init(व्योम)
-अणु
-	पूर्णांक error;
+static int __init gio_init(void)
+{
+	int error;
 
-	prपूर्णांकk(KERN_INFO "gio: driver initialized\n");
+	printk(KERN_INFO "gio: driver initialized\n");
 
-	खोलोCnt = 0;
+	openCnt = 0;
 
-	अगर ((error = alloc_chrdev_region(&dev, 0, DEVCOUNT, "gio")) < 0) अणु
-		prपूर्णांकk(KERN_ERR
+	if ((error = alloc_chrdev_region(&dev, 0, DEVCOUNT, "gio")) < 0) {
+		printk(KERN_ERR
 		       "gio: Couldn't alloc_chrdev_region, error=%d\n",
 		       error);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	cdev_p = cdev_alloc();
 	cdev_p->ops = &gio_fops;
 	error = cdev_add(cdev_p, dev, DEVCOUNT);
-	अगर (error) अणु
-		prपूर्णांकk(KERN_ERR
+	if (error) {
+		printk(KERN_ERR
 		       "gio: Couldn't cdev_add, error=%d\n", error);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास gio_निकास(व्योम)
-अणु
+static void __exit gio_exit(void)
+{
 	cdev_del(cdev_p);
-	unरेजिस्टर_chrdev_region(dev, DEVCOUNT);
-पूर्ण
+	unregister_chrdev_region(dev, DEVCOUNT);
+}
 
 module_init(gio_init);
-module_निकास(gio_निकास);
+module_exit(gio_exit);
 
 MODULE_LICENSE("GPL");

@@ -1,296 +1,295 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  This file contains the पूर्णांकerface functions क्रम the various समय related
- *  प्रणाली calls: समय, sसमय, समय_लोofday, समय_रखोofday, adjसमय
+ *  This file contains the interface functions for the various time related
+ *  system calls: time, stime, gettimeofday, settimeofday, adjtime
  *
- * Modअगरication history:
+ * Modification history:
  *
  * 1993-09-02    Philip Gladstone
- *      Created file with समय related functions from sched/core.c and adjसमयx()
+ *      Created file with time related functions from sched/core.c and adjtimex()
  * 1993-10-08    Torsten Duwe
- *      adjसमय पूर्णांकerface update and CMOS घड़ी ग_लिखो code
+ *      adjtime interface update and CMOS clock write code
  * 1995-08-13    Torsten Duwe
  *      kernel PLL updated to 1994-12-13 specs (rfc-1589)
  * 1999-01-16    Ulrich Windl
- *	Introduced error checking क्रम many हालs in adjसमयx().
- *	Updated NTP code according to technical memoअक्रमum Jan '96
+ *	Introduced error checking for many cases in adjtimex().
+ *	Updated NTP code according to technical memorandum Jan '96
  *	"A Kernel Model for Precision Timekeeping" by Dave Mills
- *	Allow समय_स्थिरant larger than MAXTC(6) क्रम NTP v4 (MAXTC == 10)
- *	(Even though the technical memoअक्रमum क्रमbids it)
+ *	Allow time_constant larger than MAXTC(6) for NTP v4 (MAXTC == 10)
+ *	(Even though the technical memorandum forbids it)
  * 2004-07-14	 Christoph Lameter
- *	Added getnsसमयofday to allow the posix समयr functions to वापस
+ *	Added getnstimeofday to allow the posix timer functions to return
  *	with nanosecond accuracy
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयx.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/समयkeeper_पूर्णांकernal.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/security.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/ptrace.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/timex.h>
+#include <linux/capability.h>
+#include <linux/timekeeper_internal.h>
+#include <linux/errno.h>
+#include <linux/syscalls.h>
+#include <linux/security.h>
+#include <linux/fs.h>
+#include <linux/math64.h>
+#include <linux/ptrace.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/compat.h>
-#समावेश <यंत्र/unistd.h>
+#include <linux/uaccess.h>
+#include <linux/compat.h>
+#include <asm/unistd.h>
 
-#समावेश <generated/समयस्थिर.h>
-#समावेश "timekeeping.h"
+#include <generated/timeconst.h>
+#include "timekeeping.h"
 
 /*
- * The समयzone where the local प्रणाली is located.  Used as a शेष by some
- * programs who obtain this value by using समय_लोofday.
+ * The timezone where the local system is located.  Used as a default by some
+ * programs who obtain this value by using gettimeofday.
  */
-काष्ठा समयzone sys_tz;
+struct timezone sys_tz;
 
 EXPORT_SYMBOL(sys_tz);
 
-#अगर_घोषित __ARCH_WANT_SYS_TIME
+#ifdef __ARCH_WANT_SYS_TIME
 
 /*
- * sys_समय() can be implemented in user-level using
- * sys_समय_लोofday().  Is this क्रम backwards compatibility?  If so,
- * why not move it पूर्णांकo the appropriate arch directory (क्रम those
+ * sys_time() can be implemented in user-level using
+ * sys_gettimeofday().  Is this for backwards compatibility?  If so,
+ * why not move it into the appropriate arch directory (for those
  * architectures that need it).
  */
-SYSCALL_DEFINE1(समय, __kernel_old_समय_प्रकार __user *, tloc)
-अणु
-	__kernel_old_समय_प्रकार i = (__kernel_old_समय_प्रकार)kसमय_get_real_seconds();
+SYSCALL_DEFINE1(time, __kernel_old_time_t __user *, tloc)
+{
+	__kernel_old_time_t i = (__kernel_old_time_t)ktime_get_real_seconds();
 
-	अगर (tloc) अणु
-		अगर (put_user(i,tloc))
-			वापस -EFAULT;
-	पूर्ण
-	क्रमce_successful_syscall_वापस();
-	वापस i;
-पूर्ण
+	if (tloc) {
+		if (put_user(i,tloc))
+			return -EFAULT;
+	}
+	force_successful_syscall_return();
+	return i;
+}
 
 /*
- * sys_sसमय() can be implemented in user-level using
- * sys_समय_रखोofday().  Is this क्रम backwards compatibility?  If so,
- * why not move it पूर्णांकo the appropriate arch directory (क्रम those
+ * sys_stime() can be implemented in user-level using
+ * sys_settimeofday().  Is this for backwards compatibility?  If so,
+ * why not move it into the appropriate arch directory (for those
  * architectures that need it).
  */
 
-SYSCALL_DEFINE1(sसमय, __kernel_old_समय_प्रकार __user *, tptr)
-अणु
-	काष्ठा बारpec64 tv;
-	पूर्णांक err;
+SYSCALL_DEFINE1(stime, __kernel_old_time_t __user *, tptr)
+{
+	struct timespec64 tv;
+	int err;
 
-	अगर (get_user(tv.tv_sec, tptr))
-		वापस -EFAULT;
+	if (get_user(tv.tv_sec, tptr))
+		return -EFAULT;
 
 	tv.tv_nsec = 0;
 
-	err = security_समय_रखो64(&tv, शून्य);
-	अगर (err)
-		वापस err;
+	err = security_settime64(&tv, NULL);
+	if (err)
+		return err;
 
-	करो_समय_रखोofday64(&tv);
-	वापस 0;
-पूर्ण
+	do_settimeofday64(&tv);
+	return 0;
+}
 
-#पूर्ण_अगर /* __ARCH_WANT_SYS_TIME */
+#endif /* __ARCH_WANT_SYS_TIME */
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
-#अगर_घोषित __ARCH_WANT_SYS_TIME32
+#ifdef CONFIG_COMPAT_32BIT_TIME
+#ifdef __ARCH_WANT_SYS_TIME32
 
-/* old_समय32_t is a 32 bit "long" and needs to get converted. */
-SYSCALL_DEFINE1(समय32, old_समय32_t __user *, tloc)
-अणु
-	old_समय32_t i;
+/* old_time32_t is a 32 bit "long" and needs to get converted. */
+SYSCALL_DEFINE1(time32, old_time32_t __user *, tloc)
+{
+	old_time32_t i;
 
-	i = (old_समय32_t)kसमय_get_real_seconds();
+	i = (old_time32_t)ktime_get_real_seconds();
 
-	अगर (tloc) अणु
-		अगर (put_user(i,tloc))
-			वापस -EFAULT;
-	पूर्ण
-	क्रमce_successful_syscall_वापस();
-	वापस i;
-पूर्ण
+	if (tloc) {
+		if (put_user(i,tloc))
+			return -EFAULT;
+	}
+	force_successful_syscall_return();
+	return i;
+}
 
-SYSCALL_DEFINE1(sसमय32, old_समय32_t __user *, tptr)
-अणु
-	काष्ठा बारpec64 tv;
-	पूर्णांक err;
+SYSCALL_DEFINE1(stime32, old_time32_t __user *, tptr)
+{
+	struct timespec64 tv;
+	int err;
 
-	अगर (get_user(tv.tv_sec, tptr))
-		वापस -EFAULT;
+	if (get_user(tv.tv_sec, tptr))
+		return -EFAULT;
 
 	tv.tv_nsec = 0;
 
-	err = security_समय_रखो64(&tv, शून्य);
-	अगर (err)
-		वापस err;
+	err = security_settime64(&tv, NULL);
+	if (err)
+		return err;
 
-	करो_समय_रखोofday64(&tv);
-	वापस 0;
-पूर्ण
+	do_settimeofday64(&tv);
+	return 0;
+}
 
-#पूर्ण_अगर /* __ARCH_WANT_SYS_TIME32 */
-#पूर्ण_अगर
+#endif /* __ARCH_WANT_SYS_TIME32 */
+#endif
 
-SYSCALL_DEFINE2(समय_लोofday, काष्ठा __kernel_old_समयval __user *, tv,
-		काष्ठा समयzone __user *, tz)
-अणु
-	अगर (likely(tv != शून्य)) अणु
-		काष्ठा बारpec64 ts;
+SYSCALL_DEFINE2(gettimeofday, struct __kernel_old_timeval __user *, tv,
+		struct timezone __user *, tz)
+{
+	if (likely(tv != NULL)) {
+		struct timespec64 ts;
 
-		kसमय_get_real_ts64(&ts);
-		अगर (put_user(ts.tv_sec, &tv->tv_sec) ||
+		ktime_get_real_ts64(&ts);
+		if (put_user(ts.tv_sec, &tv->tv_sec) ||
 		    put_user(ts.tv_nsec / 1000, &tv->tv_usec))
-			वापस -EFAULT;
-	पूर्ण
-	अगर (unlikely(tz != शून्य)) अणु
-		अगर (copy_to_user(tz, &sys_tz, माप(sys_tz)))
-			वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EFAULT;
+	}
+	if (unlikely(tz != NULL)) {
+		if (copy_to_user(tz, &sys_tz, sizeof(sys_tz)))
+			return -EFAULT;
+	}
+	return 0;
+}
 
 /*
- * In हाल क्रम some reason the CMOS घड़ी has not alपढ़ोy been running
- * in UTC, but in some local समय: The first समय we set the समयzone,
- * we will warp the घड़ी so that it is ticking UTC समय instead of
- * local समय. Presumably, अगर someone is setting the समयzone then we
+ * In case for some reason the CMOS clock has not already been running
+ * in UTC, but in some local time: The first time we set the timezone,
+ * we will warp the clock so that it is ticking UTC time instead of
+ * local time. Presumably, if someone is setting the timezone then we
  * are running in an environment where the programs understand about
- * समयzones. This should be करोne at boot समय in the /etc/rc script,
- * as soon as possible, so that the घड़ी can be set right. Otherwise,
- * various programs will get confused when the घड़ी माला_लो warped.
+ * timezones. This should be done at boot time in the /etc/rc script,
+ * as soon as possible, so that the clock can be set right. Otherwise,
+ * various programs will get confused when the clock gets warped.
  */
 
-पूर्णांक करो_sys_समय_रखोofday64(स्थिर काष्ठा बारpec64 *tv, स्थिर काष्ठा समयzone *tz)
-अणु
-	अटल पूर्णांक firstसमय = 1;
-	पूर्णांक error = 0;
+int do_sys_settimeofday64(const struct timespec64 *tv, const struct timezone *tz)
+{
+	static int firsttime = 1;
+	int error = 0;
 
-	अगर (tv && !बारpec64_valid_settod(tv))
-		वापस -EINVAL;
+	if (tv && !timespec64_valid_settod(tv))
+		return -EINVAL;
 
-	error = security_समय_रखो64(tv, tz);
-	अगर (error)
-		वापस error;
+	error = security_settime64(tv, tz);
+	if (error)
+		return error;
 
-	अगर (tz) अणु
-		/* Verअगरy we're within the +-15 hrs range */
-		अगर (tz->tz_minuteswest > 15*60 || tz->tz_minuteswest < -15*60)
-			वापस -EINVAL;
+	if (tz) {
+		/* Verify we're within the +-15 hrs range */
+		if (tz->tz_minuteswest > 15*60 || tz->tz_minuteswest < -15*60)
+			return -EINVAL;
 
 		sys_tz = *tz;
 		update_vsyscall_tz();
-		अगर (firstसमय) अणु
-			firstसमय = 0;
-			अगर (!tv)
-				समयkeeping_warp_घड़ी();
-		पूर्ण
-	पूर्ण
-	अगर (tv)
-		वापस करो_समय_रखोofday64(tv);
-	वापस 0;
-पूर्ण
+		if (firsttime) {
+			firsttime = 0;
+			if (!tv)
+				timekeeping_warp_clock();
+		}
+	}
+	if (tv)
+		return do_settimeofday64(tv);
+	return 0;
+}
 
-SYSCALL_DEFINE2(समय_रखोofday, काष्ठा __kernel_old_समयval __user *, tv,
-		काष्ठा समयzone __user *, tz)
-अणु
-	काष्ठा बारpec64 new_ts;
-	काष्ठा समयzone new_tz;
+SYSCALL_DEFINE2(settimeofday, struct __kernel_old_timeval __user *, tv,
+		struct timezone __user *, tz)
+{
+	struct timespec64 new_ts;
+	struct timezone new_tz;
 
-	अगर (tv) अणु
-		अगर (get_user(new_ts.tv_sec, &tv->tv_sec) ||
+	if (tv) {
+		if (get_user(new_ts.tv_sec, &tv->tv_sec) ||
 		    get_user(new_ts.tv_nsec, &tv->tv_usec))
-			वापस -EFAULT;
+			return -EFAULT;
 
-		अगर (new_ts.tv_nsec > USEC_PER_SEC || new_ts.tv_nsec < 0)
-			वापस -EINVAL;
+		if (new_ts.tv_nsec > USEC_PER_SEC || new_ts.tv_nsec < 0)
+			return -EINVAL;
 
 		new_ts.tv_nsec *= NSEC_PER_USEC;
-	पूर्ण
-	अगर (tz) अणु
-		अगर (copy_from_user(&new_tz, tz, माप(*tz)))
-			वापस -EFAULT;
-	पूर्ण
+	}
+	if (tz) {
+		if (copy_from_user(&new_tz, tz, sizeof(*tz)))
+			return -EFAULT;
+	}
 
-	वापस करो_sys_समय_रखोofday64(tv ? &new_ts : शून्य, tz ? &new_tz : शून्य);
-पूर्ण
+	return do_sys_settimeofday64(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
+}
 
-#अगर_घोषित CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE2(समय_लोofday, काष्ठा old_समयval32 __user *, tv,
-		       काष्ठा समयzone __user *, tz)
-अणु
-	अगर (tv) अणु
-		काष्ठा बारpec64 ts;
+#ifdef CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE2(gettimeofday, struct old_timeval32 __user *, tv,
+		       struct timezone __user *, tz)
+{
+	if (tv) {
+		struct timespec64 ts;
 
-		kसमय_get_real_ts64(&ts);
-		अगर (put_user(ts.tv_sec, &tv->tv_sec) ||
+		ktime_get_real_ts64(&ts);
+		if (put_user(ts.tv_sec, &tv->tv_sec) ||
 		    put_user(ts.tv_nsec / 1000, &tv->tv_usec))
-			वापस -EFAULT;
-	पूर्ण
-	अगर (tz) अणु
-		अगर (copy_to_user(tz, &sys_tz, माप(sys_tz)))
-			वापस -EFAULT;
-	पूर्ण
+			return -EFAULT;
+	}
+	if (tz) {
+		if (copy_to_user(tz, &sys_tz, sizeof(sys_tz)))
+			return -EFAULT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-COMPAT_SYSCALL_DEFINE2(समय_रखोofday, काष्ठा old_समयval32 __user *, tv,
-		       काष्ठा समयzone __user *, tz)
-अणु
-	काष्ठा बारpec64 new_ts;
-	काष्ठा समयzone new_tz;
+COMPAT_SYSCALL_DEFINE2(settimeofday, struct old_timeval32 __user *, tv,
+		       struct timezone __user *, tz)
+{
+	struct timespec64 new_ts;
+	struct timezone new_tz;
 
-	अगर (tv) अणु
-		अगर (get_user(new_ts.tv_sec, &tv->tv_sec) ||
+	if (tv) {
+		if (get_user(new_ts.tv_sec, &tv->tv_sec) ||
 		    get_user(new_ts.tv_nsec, &tv->tv_usec))
-			वापस -EFAULT;
+			return -EFAULT;
 
-		अगर (new_ts.tv_nsec > USEC_PER_SEC || new_ts.tv_nsec < 0)
-			वापस -EINVAL;
+		if (new_ts.tv_nsec > USEC_PER_SEC || new_ts.tv_nsec < 0)
+			return -EINVAL;
 
 		new_ts.tv_nsec *= NSEC_PER_USEC;
-	पूर्ण
-	अगर (tz) अणु
-		अगर (copy_from_user(&new_tz, tz, माप(*tz)))
-			वापस -EFAULT;
-	पूर्ण
+	}
+	if (tz) {
+		if (copy_from_user(&new_tz, tz, sizeof(*tz)))
+			return -EFAULT;
+	}
 
-	वापस करो_sys_समय_रखोofday64(tv ? &new_ts : शून्य, tz ? &new_tz : शून्य);
-पूर्ण
-#पूर्ण_अगर
+	return do_sys_settimeofday64(tv ? &new_ts : NULL, tz ? &new_tz : NULL);
+}
+#endif
 
-#अगर_घोषित CONFIG_64BIT
-SYSCALL_DEFINE1(adjसमयx, काष्ठा __kernel_समयx __user *, txc_p)
-अणु
-	काष्ठा __kernel_समयx txc;		/* Local copy of parameter */
-	पूर्णांक ret;
+#ifdef CONFIG_64BIT
+SYSCALL_DEFINE1(adjtimex, struct __kernel_timex __user *, txc_p)
+{
+	struct __kernel_timex txc;		/* Local copy of parameter */
+	int ret;
 
-	/* Copy the user data space पूर्णांकo the kernel copy
-	 * काष्ठाure. But bear in mind that the काष्ठाures
+	/* Copy the user data space into the kernel copy
+	 * structure. But bear in mind that the structures
 	 * may change
 	 */
-	अगर (copy_from_user(&txc, txc_p, माप(काष्ठा __kernel_समयx)))
-		वापस -EFAULT;
-	ret = करो_adjसमयx(&txc);
-	वापस copy_to_user(txc_p, &txc, माप(काष्ठा __kernel_समयx)) ? -EFAULT : ret;
-पूर्ण
-#पूर्ण_अगर
+	if (copy_from_user(&txc, txc_p, sizeof(struct __kernel_timex)))
+		return -EFAULT;
+	ret = do_adjtimex(&txc);
+	return copy_to_user(txc_p, &txc, sizeof(struct __kernel_timex)) ? -EFAULT : ret;
+}
+#endif
 
-#अगर_घोषित CONFIG_COMPAT_32BIT_TIME
-पूर्णांक get_old_समयx32(काष्ठा __kernel_समयx *txc, स्थिर काष्ठा old_समयx32 __user *utp)
-अणु
-	काष्ठा old_समयx32 tx32;
+#ifdef CONFIG_COMPAT_32BIT_TIME
+int get_old_timex32(struct __kernel_timex *txc, const struct old_timex32 __user *utp)
+{
+	struct old_timex32 tx32;
 
-	स_रखो(txc, 0, माप(काष्ठा __kernel_समयx));
-	अगर (copy_from_user(&tx32, utp, माप(काष्ठा old_समयx32)))
-		वापस -EFAULT;
+	memset(txc, 0, sizeof(struct __kernel_timex));
+	if (copy_from_user(&tx32, utp, sizeof(struct old_timex32)))
+		return -EFAULT;
 
 	txc->modes = tx32.modes;
 	txc->offset = tx32.offset;
@@ -298,125 +297,125 @@ SYSCALL_DEFINE1(adjसमयx, काष्ठा __kernel_समयx __user *, 
 	txc->maxerror = tx32.maxerror;
 	txc->esterror = tx32.esterror;
 	txc->status = tx32.status;
-	txc->स्थिरant = tx32.स्थिरant;
+	txc->constant = tx32.constant;
 	txc->precision = tx32.precision;
 	txc->tolerance = tx32.tolerance;
-	txc->समय.tv_sec = tx32.समय.tv_sec;
-	txc->समय.tv_usec = tx32.समय.tv_usec;
+	txc->time.tv_sec = tx32.time.tv_sec;
+	txc->time.tv_usec = tx32.time.tv_usec;
 	txc->tick = tx32.tick;
 	txc->ppsfreq = tx32.ppsfreq;
 	txc->jitter = tx32.jitter;
-	txc->shअगरt = tx32.shअगरt;
+	txc->shift = tx32.shift;
 	txc->stabil = tx32.stabil;
 	txc->jitcnt = tx32.jitcnt;
 	txc->calcnt = tx32.calcnt;
 	txc->errcnt = tx32.errcnt;
 	txc->stbcnt = tx32.stbcnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक put_old_समयx32(काष्ठा old_समयx32 __user *utp, स्थिर काष्ठा __kernel_समयx *txc)
-अणु
-	काष्ठा old_समयx32 tx32;
+int put_old_timex32(struct old_timex32 __user *utp, const struct __kernel_timex *txc)
+{
+	struct old_timex32 tx32;
 
-	स_रखो(&tx32, 0, माप(काष्ठा old_समयx32));
+	memset(&tx32, 0, sizeof(struct old_timex32));
 	tx32.modes = txc->modes;
 	tx32.offset = txc->offset;
 	tx32.freq = txc->freq;
 	tx32.maxerror = txc->maxerror;
 	tx32.esterror = txc->esterror;
 	tx32.status = txc->status;
-	tx32.स्थिरant = txc->स्थिरant;
+	tx32.constant = txc->constant;
 	tx32.precision = txc->precision;
 	tx32.tolerance = txc->tolerance;
-	tx32.समय.tv_sec = txc->समय.tv_sec;
-	tx32.समय.tv_usec = txc->समय.tv_usec;
+	tx32.time.tv_sec = txc->time.tv_sec;
+	tx32.time.tv_usec = txc->time.tv_usec;
 	tx32.tick = txc->tick;
 	tx32.ppsfreq = txc->ppsfreq;
 	tx32.jitter = txc->jitter;
-	tx32.shअगरt = txc->shअगरt;
+	tx32.shift = txc->shift;
 	tx32.stabil = txc->stabil;
 	tx32.jitcnt = txc->jitcnt;
 	tx32.calcnt = txc->calcnt;
 	tx32.errcnt = txc->errcnt;
 	tx32.stbcnt = txc->stbcnt;
 	tx32.tai = txc->tai;
-	अगर (copy_to_user(utp, &tx32, माप(काष्ठा old_समयx32)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(utp, &tx32, sizeof(struct old_timex32)))
+		return -EFAULT;
+	return 0;
+}
 
-SYSCALL_DEFINE1(adjसमयx_समय32, काष्ठा old_समयx32 __user *, utp)
-अणु
-	काष्ठा __kernel_समयx txc;
-	पूर्णांक err, ret;
+SYSCALL_DEFINE1(adjtimex_time32, struct old_timex32 __user *, utp)
+{
+	struct __kernel_timex txc;
+	int err, ret;
 
-	err = get_old_समयx32(&txc, utp);
-	अगर (err)
-		वापस err;
+	err = get_old_timex32(&txc, utp);
+	if (err)
+		return err;
 
-	ret = करो_adjसमयx(&txc);
+	ret = do_adjtimex(&txc);
 
-	err = put_old_समयx32(utp, &txc);
-	अगर (err)
-		वापस err;
+	err = put_old_timex32(utp, &txc);
+	if (err)
+		return err;
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
 /*
- * Convert jअगरfies to milliseconds and back.
+ * Convert jiffies to milliseconds and back.
  *
- * Aव्योम unnecessary multiplications/भागisions in the
- * two most common HZ हालs:
+ * Avoid unnecessary multiplications/divisions in the
+ * two most common HZ cases:
  */
-अचिन्हित पूर्णांक jअगरfies_to_msecs(स्थिर अचिन्हित दीर्घ j)
-अणु
-#अगर HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
-	वापस (MSEC_PER_SEC / HZ) * j;
-#या_अगर HZ > MSEC_PER_SEC && !(HZ % MSEC_PER_SEC)
-	वापस (j + (HZ / MSEC_PER_SEC) - 1)/(HZ / MSEC_PER_SEC);
-#अन्यथा
-# अगर BITS_PER_LONG == 32
-	वापस (HZ_TO_MSEC_MUL32 * j + (1ULL << HZ_TO_MSEC_SHR32) - 1) >>
+unsigned int jiffies_to_msecs(const unsigned long j)
+{
+#if HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
+	return (MSEC_PER_SEC / HZ) * j;
+#elif HZ > MSEC_PER_SEC && !(HZ % MSEC_PER_SEC)
+	return (j + (HZ / MSEC_PER_SEC) - 1)/(HZ / MSEC_PER_SEC);
+#else
+# if BITS_PER_LONG == 32
+	return (HZ_TO_MSEC_MUL32 * j + (1ULL << HZ_TO_MSEC_SHR32) - 1) >>
 	       HZ_TO_MSEC_SHR32;
-# अन्यथा
-	वापस DIV_ROUND_UP(j * HZ_TO_MSEC_NUM, HZ_TO_MSEC_DEN);
-# endअगर
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(jअगरfies_to_msecs);
+# else
+	return DIV_ROUND_UP(j * HZ_TO_MSEC_NUM, HZ_TO_MSEC_DEN);
+# endif
+#endif
+}
+EXPORT_SYMBOL(jiffies_to_msecs);
 
-अचिन्हित पूर्णांक jअगरfies_to_usecs(स्थिर अचिन्हित दीर्घ j)
-अणु
+unsigned int jiffies_to_usecs(const unsigned long j)
+{
 	/*
-	 * Hz usually करोesn't go much further MSEC_PER_SEC.
-	 * jअगरfies_to_usecs() and usecs_to_jअगरfies() depend on that.
+	 * Hz usually doesn't go much further MSEC_PER_SEC.
+	 * jiffies_to_usecs() and usecs_to_jiffies() depend on that.
 	 */
 	BUILD_BUG_ON(HZ > USEC_PER_SEC);
 
-#अगर !(USEC_PER_SEC % HZ)
-	वापस (USEC_PER_SEC / HZ) * j;
-#अन्यथा
-# अगर BITS_PER_LONG == 32
-	वापस (HZ_TO_USEC_MUL32 * j) >> HZ_TO_USEC_SHR32;
-# अन्यथा
-	वापस (j * HZ_TO_USEC_NUM) / HZ_TO_USEC_DEN;
-# endअगर
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(jअगरfies_to_usecs);
+#if !(USEC_PER_SEC % HZ)
+	return (USEC_PER_SEC / HZ) * j;
+#else
+# if BITS_PER_LONG == 32
+	return (HZ_TO_USEC_MUL32 * j) >> HZ_TO_USEC_SHR32;
+# else
+	return (j * HZ_TO_USEC_NUM) / HZ_TO_USEC_DEN;
+# endif
+#endif
+}
+EXPORT_SYMBOL(jiffies_to_usecs);
 
 /*
- * स_गढ़ो64 - Converts date to seconds.
+ * mktime64 - Converts date to seconds.
  * Converts Gregorian date to seconds since 1970-01-01 00:00:00.
- * Assumes input in normal date क्रमmat, i.e. 1980-12-31 23:59:59
+ * Assumes input in normal date format, i.e. 1980-12-31 23:59:59
  * => year=1980, mon=12, day=31, hour=23, min=59, sec=59.
  *
- * [For the Julian calendar (which was used in Russia beक्रमe 1917,
- * Britain & colonies beक्रमe 1752, anywhere अन्यथा beक्रमe 1582,
+ * [For the Julian calendar (which was used in Russia before 1917,
+ * Britain & colonies before 1752, anywhere else before 1582,
  * and is still in use by some communities) leave out the
  * -year/100+year/400 terms, and add 10.]
  *
@@ -424,487 +423,487 @@ EXPORT_SYMBOL(jअगरfies_to_usecs);
  *
  * A leap second can be indicated by calling this function with sec as
  * 60 (allowable under ISO 8601).  The leap second is treated the same
- * as the following second since they करोn't exist in UNIX समय.
+ * as the following second since they don't exist in UNIX time.
  *
  * An encoding of midnight at the end of the day as 24:00:00 - ie. midnight
  * tomorrow - (allowable under ISO 8601) is supported.
  */
-समय64_t स_गढ़ो64(स्थिर अचिन्हित पूर्णांक year0, स्थिर अचिन्हित पूर्णांक mon0,
-		स्थिर अचिन्हित पूर्णांक day, स्थिर अचिन्हित पूर्णांक hour,
-		स्थिर अचिन्हित पूर्णांक min, स्थिर अचिन्हित पूर्णांक sec)
-अणु
-	अचिन्हित पूर्णांक mon = mon0, year = year0;
+time64_t mktime64(const unsigned int year0, const unsigned int mon0,
+		const unsigned int day, const unsigned int hour,
+		const unsigned int min, const unsigned int sec)
+{
+	unsigned int mon = mon0, year = year0;
 
 	/* 1..12 -> 11,12,1..10 */
-	अगर (0 >= (पूर्णांक) (mon -= 2)) अणु
+	if (0 >= (int) (mon -= 2)) {
 		mon += 12;	/* Puts Feb last since it has leap day */
 		year -= 1;
-	पूर्ण
+	}
 
-	वापस ((((समय64_t)
+	return ((((time64_t)
 		  (year/4 - year/100 + year/400 + 367*mon/12 + day) +
 		  year*365 - 719499
 	    )*24 + hour /* now have hours - midnight tomorrow handled here */
 	  )*60 + min /* now have minutes */
 	)*60 + sec; /* finally seconds */
-पूर्ण
-EXPORT_SYMBOL(स_गढ़ो64);
+}
+EXPORT_SYMBOL(mktime64);
 
-काष्ठा __kernel_old_समयval ns_to_kernel_old_समयval(स्थिर s64 nsec)
-अणु
-	काष्ठा बारpec64 ts = ns_to_बारpec64(nsec);
-	काष्ठा __kernel_old_समयval tv;
+struct __kernel_old_timeval ns_to_kernel_old_timeval(const s64 nsec)
+{
+	struct timespec64 ts = ns_to_timespec64(nsec);
+	struct __kernel_old_timeval tv;
 
 	tv.tv_sec = ts.tv_sec;
 	tv.tv_usec = (suseconds_t)ts.tv_nsec / 1000;
 
-	वापस tv;
-पूर्ण
-EXPORT_SYMBOL(ns_to_kernel_old_समयval);
+	return tv;
+}
+EXPORT_SYMBOL(ns_to_kernel_old_timeval);
 
 /**
- * set_normalized_बारpec - set बारpec sec and nsec parts and normalize
+ * set_normalized_timespec - set timespec sec and nsec parts and normalize
  *
- * @ts:		poपूर्णांकer to बारpec variable to be set
+ * @ts:		pointer to timespec variable to be set
  * @sec:	seconds to set
  * @nsec:	nanoseconds to set
  *
- * Set seconds and nanoseconds field of a बारpec variable and
- * normalize to the बारpec storage क्रमmat
+ * Set seconds and nanoseconds field of a timespec variable and
+ * normalize to the timespec storage format
  *
  * Note: The tv_nsec part is always in the range of
  *	0 <= tv_nsec < NSEC_PER_SEC
  * For negative values only the tv_sec field is negative !
  */
-व्योम set_normalized_बारpec64(काष्ठा बारpec64 *ts, समय64_t sec, s64 nsec)
-अणु
-	जबतक (nsec >= NSEC_PER_SEC) अणु
+void set_normalized_timespec64(struct timespec64 *ts, time64_t sec, s64 nsec)
+{
+	while (nsec >= NSEC_PER_SEC) {
 		/*
-		 * The following यंत्र() prevents the compiler from
-		 * optimising this loop पूर्णांकo a modulo operation. See
-		 * also __iter_भाग_u64_rem() in include/linux/समय.स
+		 * The following asm() prevents the compiler from
+		 * optimising this loop into a modulo operation. See
+		 * also __iter_div_u64_rem() in include/linux/time.h
 		 */
-		यंत्र("" : "+rm"(nsec));
+		asm("" : "+rm"(nsec));
 		nsec -= NSEC_PER_SEC;
 		++sec;
-	पूर्ण
-	जबतक (nsec < 0) अणु
-		यंत्र("" : "+rm"(nsec));
+	}
+	while (nsec < 0) {
+		asm("" : "+rm"(nsec));
 		nsec += NSEC_PER_SEC;
 		--sec;
-	पूर्ण
+	}
 	ts->tv_sec = sec;
 	ts->tv_nsec = nsec;
-पूर्ण
-EXPORT_SYMBOL(set_normalized_बारpec64);
+}
+EXPORT_SYMBOL(set_normalized_timespec64);
 
 /**
- * ns_to_बारpec64 - Convert nanoseconds to बारpec64
+ * ns_to_timespec64 - Convert nanoseconds to timespec64
  * @nsec:       the nanoseconds value to be converted
  *
- * Returns the बारpec64 representation of the nsec parameter.
+ * Returns the timespec64 representation of the nsec parameter.
  */
-काष्ठा बारpec64 ns_to_बारpec64(स्थिर s64 nsec)
-अणु
-	काष्ठा बारpec64 ts = अणु 0, 0 पूर्ण;
+struct timespec64 ns_to_timespec64(const s64 nsec)
+{
+	struct timespec64 ts = { 0, 0 };
 	s32 rem;
 
-	अगर (likely(nsec > 0)) अणु
-		ts.tv_sec = भाग_u64_rem(nsec, NSEC_PER_SEC, &rem);
+	if (likely(nsec > 0)) {
+		ts.tv_sec = div_u64_rem(nsec, NSEC_PER_SEC, &rem);
 		ts.tv_nsec = rem;
-	पूर्ण अन्यथा अगर (nsec < 0) अणु
+	} else if (nsec < 0) {
 		/*
-		 * With negative बार, tv_sec poपूर्णांकs to the earlier
+		 * With negative times, tv_sec points to the earlier
 		 * second, and tv_nsec counts the nanoseconds since
 		 * then, so tv_nsec is always a positive number.
 		 */
-		ts.tv_sec = -भाग_u64_rem(-nsec - 1, NSEC_PER_SEC, &rem) - 1;
+		ts.tv_sec = -div_u64_rem(-nsec - 1, NSEC_PER_SEC, &rem) - 1;
 		ts.tv_nsec = NSEC_PER_SEC - rem - 1;
-	पूर्ण
+	}
 
-	वापस ts;
-पूर्ण
-EXPORT_SYMBOL(ns_to_बारpec64);
+	return ts;
+}
+EXPORT_SYMBOL(ns_to_timespec64);
 
 /**
- * msecs_to_jअगरfies: - convert milliseconds to jअगरfies
- * @m:	समय in milliseconds
+ * msecs_to_jiffies: - convert milliseconds to jiffies
+ * @m:	time in milliseconds
  *
- * conversion is करोne as follows:
+ * conversion is done as follows:
  *
  * - negative values mean 'infinite timeout' (MAX_JIFFY_OFFSET)
  *
  * - 'too large' values [that would result in larger than
  *   MAX_JIFFY_OFFSET values] mean 'infinite timeout' too.
  *
- * - all other values are converted to jअगरfies by either multiplying
- *   the input value by a factor or भागiding it with a factor and
+ * - all other values are converted to jiffies by either multiplying
+ *   the input value by a factor or dividing it with a factor and
  *   handling any 32-bit overflows.
- *   क्रम the details see __msecs_to_jअगरfies()
+ *   for the details see __msecs_to_jiffies()
  *
- * msecs_to_jअगरfies() checks क्रम the passed in value being a स्थिरant
- * via __builtin_स्थिरant_p() allowing gcc to eliminate most of the
- * code, __msecs_to_jअगरfies() is called अगर the value passed करोes not
- * allow स्थिरant folding and the actual conversion must be करोne at
- * runसमय.
- * the _msecs_to_jअगरfies helpers are the HZ dependent conversion
- * routines found in include/linux/jअगरfies.h
+ * msecs_to_jiffies() checks for the passed in value being a constant
+ * via __builtin_constant_p() allowing gcc to eliminate most of the
+ * code, __msecs_to_jiffies() is called if the value passed does not
+ * allow constant folding and the actual conversion must be done at
+ * runtime.
+ * the _msecs_to_jiffies helpers are the HZ dependent conversion
+ * routines found in include/linux/jiffies.h
  */
-अचिन्हित दीर्घ __msecs_to_jअगरfies(स्थिर अचिन्हित पूर्णांक m)
-अणु
+unsigned long __msecs_to_jiffies(const unsigned int m)
+{
 	/*
-	 * Negative value, means infinite समयout:
+	 * Negative value, means infinite timeout:
 	 */
-	अगर ((पूर्णांक)m < 0)
-		वापस MAX_JIFFY_OFFSET;
-	वापस _msecs_to_jअगरfies(m);
-पूर्ण
-EXPORT_SYMBOL(__msecs_to_jअगरfies);
+	if ((int)m < 0)
+		return MAX_JIFFY_OFFSET;
+	return _msecs_to_jiffies(m);
+}
+EXPORT_SYMBOL(__msecs_to_jiffies);
 
-अचिन्हित दीर्घ __usecs_to_jअगरfies(स्थिर अचिन्हित पूर्णांक u)
-अणु
-	अगर (u > jअगरfies_to_usecs(MAX_JIFFY_OFFSET))
-		वापस MAX_JIFFY_OFFSET;
-	वापस _usecs_to_jअगरfies(u);
-पूर्ण
-EXPORT_SYMBOL(__usecs_to_jअगरfies);
+unsigned long __usecs_to_jiffies(const unsigned int u)
+{
+	if (u > jiffies_to_usecs(MAX_JIFFY_OFFSET))
+		return MAX_JIFFY_OFFSET;
+	return _usecs_to_jiffies(u);
+}
+EXPORT_SYMBOL(__usecs_to_jiffies);
 
 /*
  * The TICK_NSEC - 1 rounds up the value to the next resolution.  Note
- * that a reमुख्यder subtract here would not करो the right thing as the
- * resolution values करोn't fall on second boundaries.  I.e. the line:
+ * that a remainder subtract here would not do the right thing as the
+ * resolution values don't fall on second boundaries.  I.e. the line:
  * nsec -= nsec % TICK_NSEC; is NOT a correct resolution rounding.
  * Note that due to the small error in the multiplier here, this
- * rounding is incorrect क्रम sufficiently large values of tv_nsec, but
- * well क्रमmed बारpecs should have tv_nsec < NSEC_PER_SEC, so we're
+ * rounding is incorrect for sufficiently large values of tv_nsec, but
+ * well formed timespecs should have tv_nsec < NSEC_PER_SEC, so we're
  * OK.
  *
- * Rather, we just shअगरt the bits off the right.
+ * Rather, we just shift the bits off the right.
  *
  * The >> (NSEC_JIFFIE_SC - SEC_JIFFIE_SC) converts the scaled nsec
  * value to a scaled second value.
  */
 
-अचिन्हित दीर्घ
-बारpec64_to_jअगरfies(स्थिर काष्ठा बारpec64 *value)
-अणु
+unsigned long
+timespec64_to_jiffies(const struct timespec64 *value)
+{
 	u64 sec = value->tv_sec;
-	दीर्घ nsec = value->tv_nsec + TICK_NSEC - 1;
+	long nsec = value->tv_nsec + TICK_NSEC - 1;
 
-	अगर (sec >= MAX_SEC_IN_JIFFIES)अणु
+	if (sec >= MAX_SEC_IN_JIFFIES){
 		sec = MAX_SEC_IN_JIFFIES;
 		nsec = 0;
-	पूर्ण
-	वापस ((sec * SEC_CONVERSION) +
+	}
+	return ((sec * SEC_CONVERSION) +
 		(((u64)nsec * NSEC_CONVERSION) >>
 		 (NSEC_JIFFIE_SC - SEC_JIFFIE_SC))) >> SEC_JIFFIE_SC;
 
-पूर्ण
-EXPORT_SYMBOL(बारpec64_to_jअगरfies);
+}
+EXPORT_SYMBOL(timespec64_to_jiffies);
 
-व्योम
-jअगरfies_to_बारpec64(स्थिर अचिन्हित दीर्घ jअगरfies, काष्ठा बारpec64 *value)
-अणु
+void
+jiffies_to_timespec64(const unsigned long jiffies, struct timespec64 *value)
+{
 	/*
-	 * Convert jअगरfies to nanoseconds and separate with
-	 * one भागide.
+	 * Convert jiffies to nanoseconds and separate with
+	 * one divide.
 	 */
 	u32 rem;
-	value->tv_sec = भाग_u64_rem((u64)jअगरfies * TICK_NSEC,
+	value->tv_sec = div_u64_rem((u64)jiffies * TICK_NSEC,
 				    NSEC_PER_SEC, &rem);
 	value->tv_nsec = rem;
-पूर्ण
-EXPORT_SYMBOL(jअगरfies_to_बारpec64);
+}
+EXPORT_SYMBOL(jiffies_to_timespec64);
 
 /*
- * Convert jअगरfies/jअगरfies_64 to घड़ी_प्रकार and back.
+ * Convert jiffies/jiffies_64 to clock_t and back.
  */
-घड़ी_प्रकार jअगरfies_to_घड़ी_प्रकार(अचिन्हित दीर्घ x)
-अणु
-#अगर (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
-# अगर HZ < USER_HZ
-	वापस x * (USER_HZ / HZ);
-# अन्यथा
-	वापस x / (HZ / USER_HZ);
-# endअगर
-#अन्यथा
-	वापस भाग_u64((u64)x * TICK_NSEC, NSEC_PER_SEC / USER_HZ);
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(jअगरfies_to_घड़ी_प्रकार);
+clock_t jiffies_to_clock_t(unsigned long x)
+{
+#if (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
+# if HZ < USER_HZ
+	return x * (USER_HZ / HZ);
+# else
+	return x / (HZ / USER_HZ);
+# endif
+#else
+	return div_u64((u64)x * TICK_NSEC, NSEC_PER_SEC / USER_HZ);
+#endif
+}
+EXPORT_SYMBOL(jiffies_to_clock_t);
 
-अचिन्हित दीर्घ घड़ी_प्रकार_to_jअगरfies(अचिन्हित दीर्घ x)
-अणु
-#अगर (HZ % USER_HZ)==0
-	अगर (x >= ~0UL / (HZ / USER_HZ))
-		वापस ~0UL;
-	वापस x * (HZ / USER_HZ);
-#अन्यथा
+unsigned long clock_t_to_jiffies(unsigned long x)
+{
+#if (HZ % USER_HZ)==0
+	if (x >= ~0UL / (HZ / USER_HZ))
+		return ~0UL;
+	return x * (HZ / USER_HZ);
+#else
 	/* Don't worry about loss of precision here .. */
-	अगर (x >= ~0UL / HZ * USER_HZ)
-		वापस ~0UL;
+	if (x >= ~0UL / HZ * USER_HZ)
+		return ~0UL;
 
-	/* .. but करो try to contain it here */
-	वापस भाग_u64((u64)x * HZ, USER_HZ);
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(घड़ी_प्रकार_to_jअगरfies);
+	/* .. but do try to contain it here */
+	return div_u64((u64)x * HZ, USER_HZ);
+#endif
+}
+EXPORT_SYMBOL(clock_t_to_jiffies);
 
-u64 jअगरfies_64_to_घड़ी_प्रकार(u64 x)
-अणु
-#अगर (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
-# अगर HZ < USER_HZ
-	x = भाग_u64(x * USER_HZ, HZ);
-# elअगर HZ > USER_HZ
-	x = भाग_u64(x, HZ / USER_HZ);
-# अन्यथा
-	/* Nothing to करो */
-# endअगर
-#अन्यथा
+u64 jiffies_64_to_clock_t(u64 x)
+{
+#if (TICK_NSEC % (NSEC_PER_SEC / USER_HZ)) == 0
+# if HZ < USER_HZ
+	x = div_u64(x * USER_HZ, HZ);
+# elif HZ > USER_HZ
+	x = div_u64(x, HZ / USER_HZ);
+# else
+	/* Nothing to do */
+# endif
+#else
 	/*
-	 * There are better ways that करोn't overflow early,
-	 * but even this करोesn't overflow in hundreds of years
+	 * There are better ways that don't overflow early,
+	 * but even this doesn't overflow in hundreds of years
 	 * in 64 bits, so..
 	 */
-	x = भाग_u64(x * TICK_NSEC, (NSEC_PER_SEC / USER_HZ));
-#पूर्ण_अगर
-	वापस x;
-पूर्ण
-EXPORT_SYMBOL(jअगरfies_64_to_घड़ी_प्रकार);
+	x = div_u64(x * TICK_NSEC, (NSEC_PER_SEC / USER_HZ));
+#endif
+	return x;
+}
+EXPORT_SYMBOL(jiffies_64_to_clock_t);
 
-u64 nsec_to_घड़ी_प्रकार(u64 x)
-अणु
-#अगर (NSEC_PER_SEC % USER_HZ) == 0
-	वापस भाग_u64(x, NSEC_PER_SEC / USER_HZ);
-#या_अगर (USER_HZ % 512) == 0
-	वापस भाग_u64(x * USER_HZ / 512, NSEC_PER_SEC / 512);
-#अन्यथा
+u64 nsec_to_clock_t(u64 x)
+{
+#if (NSEC_PER_SEC % USER_HZ) == 0
+	return div_u64(x, NSEC_PER_SEC / USER_HZ);
+#elif (USER_HZ % 512) == 0
+	return div_u64(x * USER_HZ / 512, NSEC_PER_SEC / 512);
+#else
 	/*
-         * max relative error 5.7e-8 (1.8s per year) क्रम USER_HZ <= 1024,
+         * max relative error 5.7e-8 (1.8s per year) for USER_HZ <= 1024,
          * overflow after 64.99 years.
-         * exact क्रम HZ=60, 72, 90, 120, 144, 180, 300, 600, 900, ...
+         * exact for HZ=60, 72, 90, 120, 144, 180, 300, 600, 900, ...
          */
-	वापस भाग_u64(x * 9, (9ull * NSEC_PER_SEC + (USER_HZ / 2)) / USER_HZ);
-#पूर्ण_अगर
-पूर्ण
+	return div_u64(x * 9, (9ull * NSEC_PER_SEC + (USER_HZ / 2)) / USER_HZ);
+#endif
+}
 
-u64 jअगरfies64_to_nsecs(u64 j)
-अणु
-#अगर !(NSEC_PER_SEC % HZ)
-	वापस (NSEC_PER_SEC / HZ) * j;
-# अन्यथा
-	वापस भाग_u64(j * HZ_TO_NSEC_NUM, HZ_TO_NSEC_DEN);
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(jअगरfies64_to_nsecs);
+u64 jiffies64_to_nsecs(u64 j)
+{
+#if !(NSEC_PER_SEC % HZ)
+	return (NSEC_PER_SEC / HZ) * j;
+# else
+	return div_u64(j * HZ_TO_NSEC_NUM, HZ_TO_NSEC_DEN);
+#endif
+}
+EXPORT_SYMBOL(jiffies64_to_nsecs);
 
-u64 jअगरfies64_to_msecs(स्थिर u64 j)
-अणु
-#अगर HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
-	वापस (MSEC_PER_SEC / HZ) * j;
-#अन्यथा
-	वापस भाग_u64(j * HZ_TO_MSEC_NUM, HZ_TO_MSEC_DEN);
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(jअगरfies64_to_msecs);
+u64 jiffies64_to_msecs(const u64 j)
+{
+#if HZ <= MSEC_PER_SEC && !(MSEC_PER_SEC % HZ)
+	return (MSEC_PER_SEC / HZ) * j;
+#else
+	return div_u64(j * HZ_TO_MSEC_NUM, HZ_TO_MSEC_DEN);
+#endif
+}
+EXPORT_SYMBOL(jiffies64_to_msecs);
 
 /**
- * nsecs_to_jअगरfies64 - Convert nsecs in u64 to jअगरfies64
+ * nsecs_to_jiffies64 - Convert nsecs in u64 to jiffies64
  *
  * @n:	nsecs in u64
  *
- * Unlike अणुm,uपूर्णsecs_to_jअगरfies, type of input is not अचिन्हित पूर्णांक but u64.
- * And this करोesn't वापस MAX_JIFFY_OFFSET since this function is deचिन्हित
- * क्रम scheduler, not क्रम use in device drivers to calculate समयout value.
+ * Unlike {m,u}secs_to_jiffies, type of input is not unsigned int but u64.
+ * And this doesn't return MAX_JIFFY_OFFSET since this function is designed
+ * for scheduler, not for use in device drivers to calculate timeout value.
  *
  * note:
  *   NSEC_PER_SEC = 10^9 = (5^9 * 2^9) = (1953125 * 512)
- *   ULदीर्घ_उच्च ns = 18446744073.709551615 secs = about 584 years
+ *   ULLONG_MAX ns = 18446744073.709551615 secs = about 584 years
  */
-u64 nsecs_to_jअगरfies64(u64 n)
-अणु
-#अगर (NSEC_PER_SEC % HZ) == 0
-	/* Common हाल, HZ = 100, 128, 200, 250, 256, 500, 512, 1000 etc. */
-	वापस भाग_u64(n, NSEC_PER_SEC / HZ);
-#या_अगर (HZ % 512) == 0
-	/* overflow after 292 years अगर HZ = 1024 */
-	वापस भाग_u64(n * HZ / 512, NSEC_PER_SEC / 512);
-#अन्यथा
+u64 nsecs_to_jiffies64(u64 n)
+{
+#if (NSEC_PER_SEC % HZ) == 0
+	/* Common case, HZ = 100, 128, 200, 250, 256, 500, 512, 1000 etc. */
+	return div_u64(n, NSEC_PER_SEC / HZ);
+#elif (HZ % 512) == 0
+	/* overflow after 292 years if HZ = 1024 */
+	return div_u64(n * HZ / 512, NSEC_PER_SEC / 512);
+#else
 	/*
-	 * Generic हाल - optimized क्रम हालs where HZ is a multiple of 3.
-	 * overflow after 64.99 years, exact क्रम HZ = 60, 72, 90, 120 etc.
+	 * Generic case - optimized for cases where HZ is a multiple of 3.
+	 * overflow after 64.99 years, exact for HZ = 60, 72, 90, 120 etc.
 	 */
-	वापस भाग_u64(n * 9, (9ull * NSEC_PER_SEC + HZ / 2) / HZ);
-#पूर्ण_अगर
-पूर्ण
-EXPORT_SYMBOL(nsecs_to_jअगरfies64);
+	return div_u64(n * 9, (9ull * NSEC_PER_SEC + HZ / 2) / HZ);
+#endif
+}
+EXPORT_SYMBOL(nsecs_to_jiffies64);
 
 /**
- * nsecs_to_jअगरfies - Convert nsecs in u64 to jअगरfies
+ * nsecs_to_jiffies - Convert nsecs in u64 to jiffies
  *
  * @n:	nsecs in u64
  *
- * Unlike अणुm,uपूर्णsecs_to_jअगरfies, type of input is not अचिन्हित पूर्णांक but u64.
- * And this करोesn't वापस MAX_JIFFY_OFFSET since this function is deचिन्हित
- * क्रम scheduler, not क्रम use in device drivers to calculate समयout value.
+ * Unlike {m,u}secs_to_jiffies, type of input is not unsigned int but u64.
+ * And this doesn't return MAX_JIFFY_OFFSET since this function is designed
+ * for scheduler, not for use in device drivers to calculate timeout value.
  *
  * note:
  *   NSEC_PER_SEC = 10^9 = (5^9 * 2^9) = (1953125 * 512)
- *   ULदीर्घ_उच्च ns = 18446744073.709551615 secs = about 584 years
+ *   ULLONG_MAX ns = 18446744073.709551615 secs = about 584 years
  */
-अचिन्हित दीर्घ nsecs_to_jअगरfies(u64 n)
-अणु
-	वापस (अचिन्हित दीर्घ)nsecs_to_jअगरfies64(n);
-पूर्ण
-EXPORT_SYMBOL_GPL(nsecs_to_jअगरfies);
+unsigned long nsecs_to_jiffies(u64 n)
+{
+	return (unsigned long)nsecs_to_jiffies64(n);
+}
+EXPORT_SYMBOL_GPL(nsecs_to_jiffies);
 
 /*
- * Add two बारpec64 values and करो a safety check क्रम overflow.
+ * Add two timespec64 values and do a safety check for overflow.
  * It's assumed that both values are valid (>= 0).
- * And, each बारpec64 is in normalized क्रमm.
+ * And, each timespec64 is in normalized form.
  */
-काष्ठा बारpec64 बारpec64_add_safe(स्थिर काष्ठा बारpec64 lhs,
-				स्थिर काष्ठा बारpec64 rhs)
-अणु
-	काष्ठा बारpec64 res;
+struct timespec64 timespec64_add_safe(const struct timespec64 lhs,
+				const struct timespec64 rhs)
+{
+	struct timespec64 res;
 
-	set_normalized_बारpec64(&res, (समयu64_t) lhs.tv_sec + rhs.tv_sec,
+	set_normalized_timespec64(&res, (timeu64_t) lhs.tv_sec + rhs.tv_sec,
 			lhs.tv_nsec + rhs.tv_nsec);
 
-	अगर (unlikely(res.tv_sec < lhs.tv_sec || res.tv_sec < rhs.tv_sec)) अणु
+	if (unlikely(res.tv_sec < lhs.tv_sec || res.tv_sec < rhs.tv_sec)) {
 		res.tv_sec = TIME64_MAX;
 		res.tv_nsec = 0;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-पूर्णांक get_बारpec64(काष्ठा बारpec64 *ts,
-		   स्थिर काष्ठा __kernel_बारpec __user *uts)
-अणु
-	काष्ठा __kernel_बारpec kts;
-	पूर्णांक ret;
+int get_timespec64(struct timespec64 *ts,
+		   const struct __kernel_timespec __user *uts)
+{
+	struct __kernel_timespec kts;
+	int ret;
 
-	ret = copy_from_user(&kts, uts, माप(kts));
-	अगर (ret)
-		वापस -EFAULT;
+	ret = copy_from_user(&kts, uts, sizeof(kts));
+	if (ret)
+		return -EFAULT;
 
 	ts->tv_sec = kts.tv_sec;
 
 	/* Zero out the padding in compat mode */
-	अगर (in_compat_syscall())
+	if (in_compat_syscall())
 		kts.tv_nsec &= 0xFFFFFFFFUL;
 
 	/* In 32-bit mode, this drops the padding */
 	ts->tv_nsec = kts.tv_nsec;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(get_बारpec64);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(get_timespec64);
 
-पूर्णांक put_बारpec64(स्थिर काष्ठा बारpec64 *ts,
-		   काष्ठा __kernel_बारpec __user *uts)
-अणु
-	काष्ठा __kernel_बारpec kts = अणु
+int put_timespec64(const struct timespec64 *ts,
+		   struct __kernel_timespec __user *uts)
+{
+	struct __kernel_timespec kts = {
 		.tv_sec = ts->tv_sec,
 		.tv_nsec = ts->tv_nsec
-	पूर्ण;
+	};
 
-	वापस copy_to_user(uts, &kts, माप(kts)) ? -EFAULT : 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(put_बारpec64);
+	return copy_to_user(uts, &kts, sizeof(kts)) ? -EFAULT : 0;
+}
+EXPORT_SYMBOL_GPL(put_timespec64);
 
-अटल पूर्णांक __get_old_बारpec32(काष्ठा बारpec64 *ts64,
-				   स्थिर काष्ठा old_बारpec32 __user *cts)
-अणु
-	काष्ठा old_बारpec32 ts;
-	पूर्णांक ret;
+static int __get_old_timespec32(struct timespec64 *ts64,
+				   const struct old_timespec32 __user *cts)
+{
+	struct old_timespec32 ts;
+	int ret;
 
-	ret = copy_from_user(&ts, cts, माप(ts));
-	अगर (ret)
-		वापस -EFAULT;
+	ret = copy_from_user(&ts, cts, sizeof(ts));
+	if (ret)
+		return -EFAULT;
 
 	ts64->tv_sec = ts.tv_sec;
 	ts64->tv_nsec = ts.tv_nsec;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __put_old_बारpec32(स्थिर काष्ठा बारpec64 *ts64,
-				   काष्ठा old_बारpec32 __user *cts)
-अणु
-	काष्ठा old_बारpec32 ts = अणु
+static int __put_old_timespec32(const struct timespec64 *ts64,
+				   struct old_timespec32 __user *cts)
+{
+	struct old_timespec32 ts = {
 		.tv_sec = ts64->tv_sec,
 		.tv_nsec = ts64->tv_nsec
-	पूर्ण;
-	वापस copy_to_user(cts, &ts, माप(ts)) ? -EFAULT : 0;
-पूर्ण
+	};
+	return copy_to_user(cts, &ts, sizeof(ts)) ? -EFAULT : 0;
+}
 
-पूर्णांक get_old_बारpec32(काष्ठा बारpec64 *ts, स्थिर व्योम __user *uts)
-अणु
-	अगर (COMPAT_USE_64BIT_TIME)
-		वापस copy_from_user(ts, uts, माप(*ts)) ? -EFAULT : 0;
-	अन्यथा
-		वापस __get_old_बारpec32(ts, uts);
-पूर्ण
-EXPORT_SYMBOL_GPL(get_old_बारpec32);
+int get_old_timespec32(struct timespec64 *ts, const void __user *uts)
+{
+	if (COMPAT_USE_64BIT_TIME)
+		return copy_from_user(ts, uts, sizeof(*ts)) ? -EFAULT : 0;
+	else
+		return __get_old_timespec32(ts, uts);
+}
+EXPORT_SYMBOL_GPL(get_old_timespec32);
 
-पूर्णांक put_old_बारpec32(स्थिर काष्ठा बारpec64 *ts, व्योम __user *uts)
-अणु
-	अगर (COMPAT_USE_64BIT_TIME)
-		वापस copy_to_user(uts, ts, माप(*ts)) ? -EFAULT : 0;
-	अन्यथा
-		वापस __put_old_बारpec32(ts, uts);
-पूर्ण
-EXPORT_SYMBOL_GPL(put_old_बारpec32);
+int put_old_timespec32(const struct timespec64 *ts, void __user *uts)
+{
+	if (COMPAT_USE_64BIT_TIME)
+		return copy_to_user(uts, ts, sizeof(*ts)) ? -EFAULT : 0;
+	else
+		return __put_old_timespec32(ts, uts);
+}
+EXPORT_SYMBOL_GPL(put_old_timespec32);
 
-पूर्णांक get_iसमयrspec64(काष्ठा iसमयrspec64 *it,
-			स्थिर काष्ठा __kernel_iसमयrspec __user *uit)
-अणु
-	पूर्णांक ret;
+int get_itimerspec64(struct itimerspec64 *it,
+			const struct __kernel_itimerspec __user *uit)
+{
+	int ret;
 
-	ret = get_बारpec64(&it->it_पूर्णांकerval, &uit->it_पूर्णांकerval);
-	अगर (ret)
-		वापस ret;
+	ret = get_timespec64(&it->it_interval, &uit->it_interval);
+	if (ret)
+		return ret;
 
-	ret = get_बारpec64(&it->it_value, &uit->it_value);
+	ret = get_timespec64(&it->it_value, &uit->it_value);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(get_iसमयrspec64);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(get_itimerspec64);
 
-पूर्णांक put_iसमयrspec64(स्थिर काष्ठा iसमयrspec64 *it,
-			काष्ठा __kernel_iसमयrspec __user *uit)
-अणु
-	पूर्णांक ret;
+int put_itimerspec64(const struct itimerspec64 *it,
+			struct __kernel_itimerspec __user *uit)
+{
+	int ret;
 
-	ret = put_बारpec64(&it->it_पूर्णांकerval, &uit->it_पूर्णांकerval);
-	अगर (ret)
-		वापस ret;
+	ret = put_timespec64(&it->it_interval, &uit->it_interval);
+	if (ret)
+		return ret;
 
-	ret = put_बारpec64(&it->it_value, &uit->it_value);
+	ret = put_timespec64(&it->it_value, &uit->it_value);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(put_iसमयrspec64);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(put_itimerspec64);
 
-पूर्णांक get_old_iसमयrspec32(काष्ठा iसमयrspec64 *its,
-			स्थिर काष्ठा old_iसमयrspec32 __user *uits)
-अणु
+int get_old_itimerspec32(struct itimerspec64 *its,
+			const struct old_itimerspec32 __user *uits)
+{
 
-	अगर (__get_old_बारpec32(&its->it_पूर्णांकerval, &uits->it_पूर्णांकerval) ||
-	    __get_old_बारpec32(&its->it_value, &uits->it_value))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(get_old_iसमयrspec32);
+	if (__get_old_timespec32(&its->it_interval, &uits->it_interval) ||
+	    __get_old_timespec32(&its->it_value, &uits->it_value))
+		return -EFAULT;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(get_old_itimerspec32);
 
-पूर्णांक put_old_iसमयrspec32(स्थिर काष्ठा iसमयrspec64 *its,
-			काष्ठा old_iसमयrspec32 __user *uits)
-अणु
-	अगर (__put_old_बारpec32(&its->it_पूर्णांकerval, &uits->it_पूर्णांकerval) ||
-	    __put_old_बारpec32(&its->it_value, &uits->it_value))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(put_old_iसमयrspec32);
+int put_old_itimerspec32(const struct itimerspec64 *its,
+			struct old_itimerspec32 __user *uits)
+{
+	if (__put_old_timespec32(&its->it_interval, &uits->it_interval) ||
+	    __put_old_timespec32(&its->it_value, &uits->it_value))
+		return -EFAULT;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(put_old_itimerspec32);

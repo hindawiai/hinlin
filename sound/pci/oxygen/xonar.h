@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित XONAR_H_INCLUDED
-#घोषणा XONAR_H_INCLUDED
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef XONAR_H_INCLUDED
+#define XONAR_H_INCLUDED
 
-#समावेश "oxygen.h"
+#include "oxygen.h"
 
-काष्ठा xonar_generic अणु
-	अचिन्हित पूर्णांक anti_pop_delay;
+struct xonar_generic {
+	unsigned int anti_pop_delay;
 	u16 output_enable_bit;
-	u8 ext_घातer_reg;
-	u8 ext_घातer_पूर्णांक_reg;
-	u8 ext_घातer_bit;
-	u8 has_घातer;
-पूर्ण;
+	u8 ext_power_reg;
+	u8 ext_power_int_reg;
+	u8 ext_power_bit;
+	u8 has_power;
+};
 
-काष्ठा xonar_hdmi अणु
+struct xonar_hdmi {
 	u8 params[5];
-पूर्ण;
+};
 
 /* generic helper functions */
 
-व्योम xonar_enable_output(काष्ठा oxygen *chip);
-व्योम xonar_disable_output(काष्ठा oxygen *chip);
-व्योम xonar_init_ext_घातer(काष्ठा oxygen *chip);
-व्योम xonar_init_cs53x1(काष्ठा oxygen *chip);
-व्योम xonar_set_cs53x1_params(काष्ठा oxygen *chip,
-			     काष्ठा snd_pcm_hw_params *params);
+void xonar_enable_output(struct oxygen *chip);
+void xonar_disable_output(struct oxygen *chip);
+void xonar_init_ext_power(struct oxygen *chip);
+void xonar_init_cs53x1(struct oxygen *chip);
+void xonar_set_cs53x1_params(struct oxygen *chip,
+			     struct snd_pcm_hw_params *params);
 
-#घोषणा XONAR_GPIO_BIT_INVERT	(1 << 16)
-पूर्णांक xonar_gpio_bit_चयन_get(काष्ठा snd_kcontrol *ctl,
-			      काष्ठा snd_ctl_elem_value *value);
-पूर्णांक xonar_gpio_bit_चयन_put(काष्ठा snd_kcontrol *ctl,
-			      काष्ठा snd_ctl_elem_value *value);
+#define XONAR_GPIO_BIT_INVERT	(1 << 16)
+int xonar_gpio_bit_switch_get(struct snd_kcontrol *ctl,
+			      struct snd_ctl_elem_value *value);
+int xonar_gpio_bit_switch_put(struct snd_kcontrol *ctl,
+			      struct snd_ctl_elem_value *value);
 
-/* model-specअगरic card drivers */
+/* model-specific card drivers */
 
-पूर्णांक get_xonar_pcm179x_model(काष्ठा oxygen *chip,
-			    स्थिर काष्ठा pci_device_id *id);
-पूर्णांक get_xonar_cs43xx_model(काष्ठा oxygen *chip,
-			   स्थिर काष्ठा pci_device_id *id);
-पूर्णांक get_xonar_wm87x6_model(काष्ठा oxygen *chip,
-			   स्थिर काष्ठा pci_device_id *id);
+int get_xonar_pcm179x_model(struct oxygen *chip,
+			    const struct pci_device_id *id);
+int get_xonar_cs43xx_model(struct oxygen *chip,
+			   const struct pci_device_id *id);
+int get_xonar_wm87x6_model(struct oxygen *chip,
+			   const struct pci_device_id *id);
 
 /* HDMI helper functions */
 
-व्योम xonar_hdmi_init(काष्ठा oxygen *chip, काष्ठा xonar_hdmi *data);
-व्योम xonar_hdmi_cleanup(काष्ठा oxygen *chip);
-व्योम xonar_hdmi_resume(काष्ठा oxygen *chip, काष्ठा xonar_hdmi *hdmi);
-व्योम xonar_hdmi_pcm_hardware_filter(अचिन्हित पूर्णांक channel,
-				    काष्ठा snd_pcm_hardware *hardware);
-व्योम xonar_set_hdmi_params(काष्ठा oxygen *chip, काष्ठा xonar_hdmi *hdmi,
-			   काष्ठा snd_pcm_hw_params *params);
-व्योम xonar_hdmi_uart_input(काष्ठा oxygen *chip);
+void xonar_hdmi_init(struct oxygen *chip, struct xonar_hdmi *data);
+void xonar_hdmi_cleanup(struct oxygen *chip);
+void xonar_hdmi_resume(struct oxygen *chip, struct xonar_hdmi *hdmi);
+void xonar_hdmi_pcm_hardware_filter(unsigned int channel,
+				    struct snd_pcm_hardware *hardware);
+void xonar_set_hdmi_params(struct oxygen *chip, struct xonar_hdmi *hdmi,
+			   struct snd_pcm_hw_params *params);
+void xonar_hdmi_uart_input(struct oxygen *chip);
 
-#पूर्ण_अगर
+#endif

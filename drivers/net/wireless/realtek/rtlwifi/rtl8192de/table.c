@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "table.h"
+#include "table.h"
 
-u32 rtl8192de_phy_reg_2tarray[PHY_REG_2T_ARRAYLENGTH] = अणु
+u32 rtl8192de_phy_reg_2tarray[PHY_REG_2T_ARRAYLENGTH] = {
 	0x024, 0x0011800d,
 	0x028, 0x00ffdb83,
 	0x014, 0x088ba955,
@@ -197,9 +196,9 @@ u32 rtl8192de_phy_reg_2tarray[PHY_REG_2T_ARRAYLENGTH] = अणु
 	0xf1c, 0x00000064,
 	0xf4c, 0x00000004,
 	0xf00, 0x00000300,
-पूर्ण;
+};
 
-u32 rtl8192de_phy_reg_array_pg[PHY_REG_ARRAY_PG_LENGTH] = अणु
+u32 rtl8192de_phy_reg_array_pg[PHY_REG_ARRAY_PG_LENGTH] = {
 	0xe00, 0xffffffff, 0x07090c0c,
 	0xe04, 0xffffffff, 0x01020405,
 	0xe08, 0x0000ff00, 0x00000000,
@@ -408,9 +407,9 @@ u32 rtl8192de_phy_reg_array_pg[PHY_REG_ARRAY_PG_LENGTH] = अणु
 	0x848, 0xffffffff, 0x00040408,
 	0x84c, 0xffffffff, 0x00000000,
 	0x868, 0xffffffff, 0x00000000,
-पूर्ण;
+};
 
-u32 rtl8192de_radioa_2tarray[RADIOA_2T_ARRAYLENGTH] = अणु
+u32 rtl8192de_radioa_2tarray[RADIOA_2T_ARRAYLENGTH] = {
 	0x000, 0x00030000,
 	0x001, 0x00030000,
 	0x002, 0x00000000,
@@ -600,9 +599,9 @@ u32 rtl8192de_radioa_2tarray[RADIOA_2T_ARRAYLENGTH] = अणु
 	0x02e, 0x0000510b,
 	0x02d, 0x00055555,
 	0x02e, 0x0005510c,
-पूर्ण;
+};
 
-u32 rtl8192de_radiob_2tarray[RADIOB_2T_ARRAYLENGTH] = अणु
+u32 rtl8192de_radiob_2tarray[RADIOB_2T_ARRAYLENGTH] = {
 	0x000, 0x00030000,
 	0x001, 0x00030000,
 	0x002, 0x00000000,
@@ -795,9 +794,9 @@ u32 rtl8192de_radiob_2tarray[RADIOB_2T_ARRAYLENGTH] = अणु
 	0x02e, 0x0006480d,
 	0x02d, 0x000ccccc,
 	0x02e, 0x000c480e,
-पूर्ण;
+};
 
-u32 rtl8192de_radioa_2t_पूर्णांक_paarray[RADIOA_2T_INT_PA_ARRAYLENGTH] = अणु
+u32 rtl8192de_radioa_2t_int_paarray[RADIOA_2T_INT_PA_ARRAYLENGTH] = {
 	0x000, 0x00030000,
 	0x001, 0x00030000,
 	0x002, 0x00000000,
@@ -987,9 +986,9 @@ u32 rtl8192de_radioa_2t_पूर्णांक_paarray[RADIOA_2T_INT_PA_ARRAYL
 	0x02e, 0x0000510b,
 	0x02d, 0x00055555,
 	0x02e, 0x0005510c,
-पूर्ण;
+};
 
-u32 rtl8192de_radiob_2t_पूर्णांक_paarray[RADIOB_2T_INT_PA_ARRAYLENGTH] = अणु
+u32 rtl8192de_radiob_2t_int_paarray[RADIOB_2T_INT_PA_ARRAYLENGTH] = {
 	0x000, 0x00030000,
 	0x001, 0x00030000,
 	0x002, 0x00000000,
@@ -1182,9 +1181,9 @@ u32 rtl8192de_radiob_2t_पूर्णांक_paarray[RADIOB_2T_INT_PA_ARRAYL
 	0x02e, 0x0006480d,
 	0x02d, 0x000ccccc,
 	0x02e, 0x000c480e,
-पूर्ण;
+};
 
-u32 rtl8192de_mac_2tarray[MAC_2T_ARRAYLENGTH] = अणु
+u32 rtl8192de_mac_2tarray[MAC_2T_ARRAYLENGTH] = {
 	0x420, 0x00000080,
 	0x423, 0x00000000,
 	0x430, 0x00000000,
@@ -1265,9 +1264,9 @@ u32 rtl8192de_mac_2tarray[MAC_2T_ARRAYLENGTH] = अणु
 	0x709, 0x00000043,
 	0x70a, 0x00000065,
 	0x70b, 0x00000087,
-पूर्ण;
+};
 
-u32 rtl8192de_agctab_array[AGCTAB_ARRAYLENGTH] = अणु
+u32 rtl8192de_agctab_array[AGCTAB_ARRAYLENGTH] = {
 	0xc78, 0x7b000001,
 	0xc78, 0x7b010001,
 	0xc78, 0x7b020001,
@@ -1461,9 +1460,9 @@ u32 rtl8192de_agctab_array[AGCTAB_ARRAYLENGTH] = अणु
 	0xc78, 0x6e1e0044,
 	0xc78, 0x6e1f0044,
 	0xc78, 0x6e1f0000,
-पूर्ण;
+};
 
-u32 rtl8192de_agctab_5garray[AGCTAB_5G_ARRAYLENGTH] = अणु
+u32 rtl8192de_agctab_5garray[AGCTAB_5G_ARRAYLENGTH] = {
 	0xc78, 0x7b000001,
 	0xc78, 0x7b010001,
 	0xc78, 0x7a020001,
@@ -1561,9 +1560,9 @@ u32 rtl8192de_agctab_5garray[AGCTAB_5G_ARRAYLENGTH] = अणु
 	0xc78, 0x6e1e0044,
 	0xc78, 0x6e1f0044,
 	0xc78, 0x6e1f0000,
-पूर्ण;
+};
 
-u32 rtl8192de_agctab_2garray[AGCTAB_2G_ARRAYLENGTH] = अणु
+u32 rtl8192de_agctab_2garray[AGCTAB_2G_ARRAYLENGTH] = {
 	0xc78, 0x7b000001,
 	0xc78, 0x7b010001,
 	0xc78, 0x7b020001,
@@ -1661,4 +1660,4 @@ u32 rtl8192de_agctab_2garray[AGCTAB_2G_ARRAYLENGTH] = अणु
 	0xc78, 0x621e0002,
 	0xc78, 0x621f0002,
 	0xc78, 0x6e1f0000,
-पूर्ण;
+};

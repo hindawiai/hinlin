@@ -1,131 +1,130 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * wm8400.c  --  WM8400 ALSA Soc Audio driver
  *
  * Copyright 2008-11 Wolfson Microelectronics PLC.
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/mfd/wm8400-audपन.स>
-#समावेश <linux/mfd/wm8400-निजी.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/mfd/wm8400-audio.h>
+#include <linux/mfd/wm8400-private.h>
+#include <linux/mfd/core.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
 
-#समावेश "wm8400.h"
+#include "wm8400.h"
 
-अटल काष्ठा regulator_bulk_data घातer[] = अणु
-	अणु
+static struct regulator_bulk_data power[] = {
+	{
 		.supply = "I2S1VDD",
-	पूर्ण,
-	अणु
+	},
+	{
 		.supply = "I2S2VDD",
-	पूर्ण,
-	अणु
+	},
+	{
 		.supply = "DCVDD",
-	पूर्ण,
-	अणु
+	},
+	{
 		.supply = "AVDD",
-	पूर्ण,
-	अणु
+	},
+	{
 		.supply = "FLLVDD",
-	पूर्ण,
-	अणु
+	},
+	{
 		.supply = "HPVDD",
-	पूर्ण,
-	अणु
+	},
+	{
 		.supply = "SPKVDD",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* codec निजी data */
-काष्ठा wm8400_priv अणु
-	काष्ठा wm8400 *wm8400;
-	u16 fake_रेजिस्टर;
-	अचिन्हित पूर्णांक sysclk;
-	अचिन्हित पूर्णांक pcmclk;
-	पूर्णांक fll_in, fll_out;
-पूर्ण;
+/* codec private data */
+struct wm8400_priv {
+	struct wm8400 *wm8400;
+	u16 fake_register;
+	unsigned int sysclk;
+	unsigned int pcmclk;
+	int fll_in, fll_out;
+};
 
-अटल व्योम wm8400_component_reset(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
+static void wm8400_component_reset(struct snd_soc_component *component)
+{
+	struct wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
 
 	wm8400_reset_codec_reg_cache(wm8400->wm8400);
-पूर्ण
+}
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(in_pga_tlv, -1650, 3000, 0);
+static const DECLARE_TLV_DB_SCALE(in_pga_tlv, -1650, 3000, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(out_mix_tlv, -2100, 0, 0);
+static const DECLARE_TLV_DB_SCALE(out_mix_tlv, -2100, 0, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(out_pga_tlv, -7300, 600, 0);
+static const DECLARE_TLV_DB_SCALE(out_pga_tlv, -7300, 600, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(out_dac_tlv, -7163, 0, 0);
+static const DECLARE_TLV_DB_SCALE(out_dac_tlv, -7163, 0, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(in_adc_tlv, -7163, 1763, 0);
+static const DECLARE_TLV_DB_SCALE(in_adc_tlv, -7163, 1763, 0);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(out_sidetone_tlv, -3600, 0, 0);
+static const DECLARE_TLV_DB_SCALE(out_sidetone_tlv, -3600, 0, 0);
 
-अटल पूर्णांक wm8400_outpga_put_volsw_vu(काष्ठा snd_kcontrol *kcontrol,
-        काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	पूर्णांक reg = mc->reg;
-        पूर्णांक ret;
+static int wm8400_outpga_put_volsw_vu(struct snd_kcontrol *kcontrol,
+        struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	int reg = mc->reg;
+        int ret;
         u16 val;
 
         ret = snd_soc_put_volsw(kcontrol, ucontrol);
-        अगर (ret < 0)
-                वापस ret;
+        if (ret < 0)
+                return ret;
 
         /* now hit the volume update bits (always bit 8) */
-	val = snd_soc_component_पढ़ो(component, reg);
-        वापस snd_soc_component_ग_लिखो(component, reg, val | 0x0100);
-पूर्ण
+	val = snd_soc_component_read(component, reg);
+        return snd_soc_component_write(component, reg, val | 0x0100);
+}
 
-#घोषणा WM8400_OUTPGA_SINGLE_R_TLV(xname, reg, shअगरt, max, invert, tlv_array) \
-	SOC_SINGLE_EXT_TLV(xname, reg, shअगरt, max, invert, \
+#define WM8400_OUTPGA_SINGLE_R_TLV(xname, reg, shift, max, invert, tlv_array) \
+	SOC_SINGLE_EXT_TLV(xname, reg, shift, max, invert, \
 		snd_soc_get_volsw, wm8400_outpga_put_volsw_vu, tlv_array)
 
 
-अटल स्थिर अक्षर *wm8400_digital_sidetone[] =
-	अणु"None", "Left ADC", "Right ADC", "Reserved"पूर्ण;
+static const char *wm8400_digital_sidetone[] =
+	{"None", "Left ADC", "Right ADC", "Reserved"};
 
-अटल SOC_ENUM_SINGLE_DECL(wm8400_left_digital_sidetone_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(wm8400_left_digital_sidetone_enum,
 			    WM8400_DIGITAL_SIDE_TONE,
 			    WM8400_ADC_TO_DACL_SHIFT,
 			    wm8400_digital_sidetone);
 
-अटल SOC_ENUM_SINGLE_DECL(wm8400_right_digital_sidetone_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(wm8400_right_digital_sidetone_enum,
 			    WM8400_DIGITAL_SIDE_TONE,
 			    WM8400_ADC_TO_DACR_SHIFT,
 			    wm8400_digital_sidetone);
 
-अटल स्थिर अक्षर *wm8400_adcmode[] =
-	अणु"Hi-fi mode", "Voice mode 1", "Voice mode 2", "Voice mode 3"पूर्ण;
+static const char *wm8400_adcmode[] =
+	{"Hi-fi mode", "Voice mode 1", "Voice mode 2", "Voice mode 3"};
 
-अटल SOC_ENUM_SINGLE_DECL(wm8400_right_adcmode_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(wm8400_right_adcmode_enum,
 			    WM8400_ADC_CTRL,
 			    WM8400_ADC_HPF_CUT_SHIFT,
 			    wm8400_adcmode);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_snd_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_snd_controls[] = {
 /* INMIXL */
 SOC_SINGLE("LIN12 PGA Boost", WM8400_INPUT_MIXER3, WM8400_L12MNBST_SHIFT,
 	   1, 0),
@@ -228,8 +227,8 @@ WM8400_OUTPGA_SINGLE_R_TLV("Right DAC Digital Volume",
 	WM8400_RIGHT_DAC_DIGITAL_VOLUME, WM8400_DACR_VOL_SHIFT,
 	127, 0, out_dac_tlv),
 
-SOC_ENUM("Left Digital Sidetone", wm8400_left_digital_sidetone_क्रमागत),
-SOC_ENUM("Right Digital Sidetone", wm8400_right_digital_sidetone_क्रमागत),
+SOC_ENUM("Left Digital Sidetone", wm8400_left_digital_sidetone_enum),
+SOC_ENUM("Right Digital Sidetone", wm8400_right_digital_sidetone_enum),
 
 SOC_SINGLE_TLV("Left Digital Sidetone Volume", WM8400_DIGITAL_SIDE_TONE,
 	WM8400_ADCL_DAC_SVOL_SHIFT, 15, 0, out_sidetone_tlv),
@@ -239,7 +238,7 @@ SOC_SINGLE_TLV("Right Digital Sidetone Volume", WM8400_DIGITAL_SIDE_TONE,
 SOC_SINGLE("ADC Digital High Pass Filter Switch", WM8400_ADC_CTRL,
 	WM8400_ADC_HPF_ENA_SHIFT, 1, 0),
 
-SOC_ENUM("ADC HPF Mode", wm8400_right_adcmode_क्रमागत),
+SOC_ENUM("ADC HPF Mode", wm8400_right_adcmode_enum),
 
 WM8400_OUTPGA_SINGLE_R_TLV("Left ADC Digital Volume",
 	WM8400_LEFT_ADC_DIGITAL_VOLUME,
@@ -307,87 +306,87 @@ SOC_SINGLE("RIN34 ZC Switch", WM8400_RIGHT_LINE_INPUT_3_4_VOLUME,
 SOC_SINGLE("RIN34 Mute Switch", WM8400_RIGHT_LINE_INPUT_3_4_VOLUME,
 	WM8400_RI34MUTE_SHIFT, 1, 0),
 
-पूर्ण;
+};
 
 /*
  * _DAPM_ Controls
  */
 
-अटल पूर्णांक ouपंचांगixer_event (काष्ठा snd_soc_dapm_widget *w,
-	काष्ठा snd_kcontrol * kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	काष्ठा soc_mixer_control *mc =
-		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
-	u32 reg_shअगरt = mc->shअगरt;
-	पूर्णांक ret = 0;
+static int outmixer_event (struct snd_soc_dapm_widget *w,
+	struct snd_kcontrol * kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct soc_mixer_control *mc =
+		(struct soc_mixer_control *)kcontrol->private_value;
+	u32 reg_shift = mc->shift;
+	int ret = 0;
 	u16 reg;
 
-	चयन (reg_shअगरt) अणु
-	हाल WM8400_SPEAKER_MIXER | (WM8400_LDSPK << 8) :
-		reg = snd_soc_component_पढ़ो(component, WM8400_OUTPUT_MIXER1);
-		अगर (reg & WM8400_LDLO) अणु
-			prपूर्णांकk(KERN_WARNING
+	switch (reg_shift) {
+	case WM8400_SPEAKER_MIXER | (WM8400_LDSPK << 8) :
+		reg = snd_soc_component_read(component, WM8400_OUTPUT_MIXER1);
+		if (reg & WM8400_LDLO) {
+			printk(KERN_WARNING
 			"Cannot set as Output Mixer 1 LDLO Set\n");
 			ret = -1;
-		पूर्ण
-		अवरोध;
-	हाल WM8400_SPEAKER_MIXER | (WM8400_RDSPK << 8):
-		reg = snd_soc_component_पढ़ो(component, WM8400_OUTPUT_MIXER2);
-		अगर (reg & WM8400_RDRO) अणु
-			prपूर्णांकk(KERN_WARNING
+		}
+		break;
+	case WM8400_SPEAKER_MIXER | (WM8400_RDSPK << 8):
+		reg = snd_soc_component_read(component, WM8400_OUTPUT_MIXER2);
+		if (reg & WM8400_RDRO) {
+			printk(KERN_WARNING
 			"Cannot set as Output Mixer 2 RDRO Set\n");
 			ret = -1;
-		पूर्ण
-		अवरोध;
-	हाल WM8400_OUTPUT_MIXER1 | (WM8400_LDLO << 8):
-		reg = snd_soc_component_पढ़ो(component, WM8400_SPEAKER_MIXER);
-		अगर (reg & WM8400_LDSPK) अणु
-			prपूर्णांकk(KERN_WARNING
+		}
+		break;
+	case WM8400_OUTPUT_MIXER1 | (WM8400_LDLO << 8):
+		reg = snd_soc_component_read(component, WM8400_SPEAKER_MIXER);
+		if (reg & WM8400_LDSPK) {
+			printk(KERN_WARNING
 			"Cannot set as Speaker Mixer LDSPK Set\n");
 			ret = -1;
-		पूर्ण
-		अवरोध;
-	हाल WM8400_OUTPUT_MIXER2 | (WM8400_RDRO << 8):
-		reg = snd_soc_component_पढ़ो(component, WM8400_SPEAKER_MIXER);
-		अगर (reg & WM8400_RDSPK) अणु
-			prपूर्णांकk(KERN_WARNING
+		}
+		break;
+	case WM8400_OUTPUT_MIXER2 | (WM8400_RDRO << 8):
+		reg = snd_soc_component_read(component, WM8400_SPEAKER_MIXER);
+		if (reg & WM8400_RDSPK) {
+			printk(KERN_WARNING
 			"Cannot set as Speaker Mixer RDSPK Set\n");
 			ret = -1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* INMIX dB values */
-अटल स्थिर DECLARE_TLV_DB_SCALE(in_mix_tlv, -1200, 600, 0);
+static const DECLARE_TLV_DB_SCALE(in_mix_tlv, -1200, 600, 0);
 
 /* Left In PGA Connections */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_lin12_pga_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_lin12_pga_controls[] = {
 SOC_DAPM_SINGLE("LIN1 Switch", WM8400_INPUT_MIXER2, WM8400_LMN1_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LIN2 Switch", WM8400_INPUT_MIXER2, WM8400_LMP2_SHIFT, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_lin34_pga_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_lin34_pga_controls[] = {
 SOC_DAPM_SINGLE("LIN3 Switch", WM8400_INPUT_MIXER2, WM8400_LMN3_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LIN4 Switch", WM8400_INPUT_MIXER2, WM8400_LMP4_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* Right In PGA Connections */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_rin12_pga_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_rin12_pga_controls[] = {
 SOC_DAPM_SINGLE("RIN1 Switch", WM8400_INPUT_MIXER2, WM8400_RMN1_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("RIN2 Switch", WM8400_INPUT_MIXER2, WM8400_RMP2_SHIFT, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_rin34_pga_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_rin34_pga_controls[] = {
 SOC_DAPM_SINGLE("RIN3 Switch", WM8400_INPUT_MIXER2, WM8400_RMN3_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("RIN4 Switch", WM8400_INPUT_MIXER2, WM8400_RMP4_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* INMIXL */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_inmixl_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_inmixl_controls[] = {
 SOC_DAPM_SINGLE_TLV("Record Left Volume", WM8400_INPUT_MIXER3,
 	WM8400_LDBVOL_SHIFT, WM8400_LDBVOL_MASK, 0, in_mix_tlv),
 SOC_DAPM_SINGLE_TLV("LIN2 Volume", WM8400_INPUT_MIXER5, WM8400_LI2BVOL_SHIFT,
@@ -396,10 +395,10 @@ SOC_DAPM_SINGLE("LINPGA12 Switch", WM8400_INPUT_MIXER3, WM8400_L12MNB_SHIFT,
 		1, 0),
 SOC_DAPM_SINGLE("LINPGA34 Switch", WM8400_INPUT_MIXER3, WM8400_L34MNB_SHIFT,
 		1, 0),
-पूर्ण;
+};
 
 /* INMIXR */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_inmixr_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_inmixr_controls[] = {
 SOC_DAPM_SINGLE_TLV("Record Right Volume", WM8400_INPUT_MIXER4,
 	WM8400_RDBVOL_SHIFT, WM8400_RDBVOL_MASK, 0, in_mix_tlv),
 SOC_DAPM_SINGLE_TLV("RIN2 Volume", WM8400_INPUT_MIXER6, WM8400_RI2BVOL_SHIFT,
@@ -408,36 +407,36 @@ SOC_DAPM_SINGLE("RINPGA12 Switch", WM8400_INPUT_MIXER3, WM8400_L12MNB_SHIFT,
 	1, 0),
 SOC_DAPM_SINGLE("RINPGA34 Switch", WM8400_INPUT_MIXER3, WM8400_L34MNB_SHIFT,
 	1, 0),
-पूर्ण;
+};
 
 /* AINLMUX */
-अटल स्थिर अक्षर *wm8400_ainlmux[] =
-	अणु"INMIXL Mix", "RXVOICE Mix", "DIFFINL Mix"पूर्ण;
+static const char *wm8400_ainlmux[] =
+	{"INMIXL Mix", "RXVOICE Mix", "DIFFINL Mix"};
 
-अटल SOC_ENUM_SINGLE_DECL(wm8400_ainlmux_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(wm8400_ainlmux_enum,
 			    WM8400_INPUT_MIXER1,
 			    WM8400_AINLMODE_SHIFT,
 			    wm8400_ainlmux);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_ainlmux_controls =
-SOC_DAPM_ENUM("Route", wm8400_ainlmux_क्रमागत);
+static const struct snd_kcontrol_new wm8400_dapm_ainlmux_controls =
+SOC_DAPM_ENUM("Route", wm8400_ainlmux_enum);
 
 /* DIFFINL */
 
 /* AINRMUX */
-अटल स्थिर अक्षर *wm8400_ainrmux[] =
-	अणु"INMIXR Mix", "RXVOICE Mix", "DIFFINR Mix"पूर्ण;
+static const char *wm8400_ainrmux[] =
+	{"INMIXR Mix", "RXVOICE Mix", "DIFFINR Mix"};
 
-अटल SOC_ENUM_SINGLE_DECL(wm8400_ainrmux_क्रमागत,
+static SOC_ENUM_SINGLE_DECL(wm8400_ainrmux_enum,
 			    WM8400_INPUT_MIXER1,
 			    WM8400_AINRMODE_SHIFT,
 			    wm8400_ainrmux);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_ainrmux_controls =
-SOC_DAPM_ENUM("Route", wm8400_ainrmux_क्रमागत);
+static const struct snd_kcontrol_new wm8400_dapm_ainrmux_controls =
+SOC_DAPM_ENUM("Route", wm8400_ainrmux_enum);
 
 /* LOMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_lomix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_lomix_controls[] = {
 SOC_DAPM_SINGLE("LOMIX Right ADC Bypass Switch", WM8400_OUTPUT_MIXER1,
 	WM8400_LRBLO_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LOMIX Left ADC Bypass Switch", WM8400_OUTPUT_MIXER1,
@@ -452,10 +451,10 @@ SOC_DAPM_SINGLE("LOMIX LIN12 PGA Bypass Switch", WM8400_OUTPUT_MIXER1,
 	WM8400_LL12LO_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LOMIX Left DAC Switch", WM8400_OUTPUT_MIXER1,
 	WM8400_LDLO_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* ROMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_romix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_romix_controls[] = {
 SOC_DAPM_SINGLE("ROMIX Left ADC Bypass Switch", WM8400_OUTPUT_MIXER2,
 	WM8400_RLBRO_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("ROMIX Right ADC Bypass Switch", WM8400_OUTPUT_MIXER2,
@@ -470,66 +469,66 @@ SOC_DAPM_SINGLE("ROMIX RIN12 PGA Bypass Switch", WM8400_OUTPUT_MIXER2,
 	WM8400_RR12RO_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("ROMIX Right DAC Switch", WM8400_OUTPUT_MIXER2,
 	WM8400_RDRO_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* LONMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_lonmix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_lonmix_controls[] = {
 SOC_DAPM_SINGLE("LONMIX Left Mixer PGA Switch", WM8400_LINE_MIXER1,
 	WM8400_LLOPGALON_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LONMIX Right Mixer PGA Switch", WM8400_LINE_MIXER1,
 	WM8400_LROPGALON_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LONMIX Inverted LOP Switch", WM8400_LINE_MIXER1,
 	WM8400_LOPLON_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* LOPMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_lopmix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_lopmix_controls[] = {
 SOC_DAPM_SINGLE("LOPMIX Right Mic Bypass Switch", WM8400_LINE_MIXER1,
 	WM8400_LR12LOP_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LOPMIX Left Mic Bypass Switch", WM8400_LINE_MIXER1,
 	WM8400_LL12LOP_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("LOPMIX Left Mixer PGA Switch", WM8400_LINE_MIXER1,
 	WM8400_LLOPGALOP_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* RONMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_ronmix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_ronmix_controls[] = {
 SOC_DAPM_SINGLE("RONMIX Right Mixer PGA Switch", WM8400_LINE_MIXER2,
 	WM8400_RROPGARON_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("RONMIX Left Mixer PGA Switch", WM8400_LINE_MIXER2,
 	WM8400_RLOPGARON_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("RONMIX Inverted ROP Switch", WM8400_LINE_MIXER2,
 	WM8400_ROPRON_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* ROPMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_ropmix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_ropmix_controls[] = {
 SOC_DAPM_SINGLE("ROPMIX Left Mic Bypass Switch", WM8400_LINE_MIXER2,
 	WM8400_RL12ROP_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("ROPMIX Right Mic Bypass Switch", WM8400_LINE_MIXER2,
 	WM8400_RR12ROP_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("ROPMIX Right Mixer PGA Switch", WM8400_LINE_MIXER2,
 	WM8400_RROPGAROP_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* OUT3MIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_out3mix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_out3mix_controls[] = {
 SOC_DAPM_SINGLE("OUT3MIX LIN4/RXP Bypass Switch", WM8400_OUT3_4_MIXER,
 	WM8400_LI4O3_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("OUT3MIX Left Out PGA Switch", WM8400_OUT3_4_MIXER,
 	WM8400_LPGAO3_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* OUT4MIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_out4mix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_out4mix_controls[] = {
 SOC_DAPM_SINGLE("OUT4MIX Right Out PGA Switch", WM8400_OUT3_4_MIXER,
 	WM8400_RPGAO4_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("OUT4MIX RIN4/RXP Bypass Switch", WM8400_OUT3_4_MIXER,
 	WM8400_RI4O4_SHIFT, 1, 0),
-पूर्ण;
+};
 
 /* SPKMIX */
-अटल स्थिर काष्ठा snd_kcontrol_new wm8400_dapm_spkmix_controls[] = अणु
+static const struct snd_kcontrol_new wm8400_dapm_spkmix_controls[] = {
 SOC_DAPM_SINGLE("SPKMIX LIN2 Bypass Switch", WM8400_SPEAKER_MIXER,
 	WM8400_LI2SPK_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("SPKMIX LADC Bypass Switch", WM8400_SPEAKER_MIXER,
@@ -546,9 +545,9 @@ SOC_DAPM_SINGLE("SPKMIX RADC Bypass Switch", WM8400_SPEAKER_MIXER,
 	WM8400_RL12ROP_SHIFT, 1, 0),
 SOC_DAPM_SINGLE("SPKMIX RIN2 Bypass Switch", WM8400_SPEAKER_MIXER,
 	WM8400_RI2SPK_SHIFT, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8400_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm8400_dapm_widgets[] = {
 /* Input Side */
 /* Input Lines */
 SND_SOC_DAPM_INPUT("LIN1"),
@@ -586,9 +585,9 @@ SND_SOC_DAPM_MIXER("RIN34 PGA", WM8400_POWER_MANAGEMENT_2,
 		   ARRAY_SIZE(wm8400_dapm_rin34_pga_controls)),
 
 SND_SOC_DAPM_SUPPLY("INL", WM8400_POWER_MANAGEMENT_2, WM8400_AINL_ENA_SHIFT,
-		    0, शून्य, 0),
+		    0, NULL, 0),
 SND_SOC_DAPM_SUPPLY("INR", WM8400_POWER_MANAGEMENT_2, WM8400_AINR_ENA_SHIFT,
-		    0, शून्य, 0),
+		    0, NULL, 0),
 
 /* INMIXL */
 SND_SOC_DAPM_MIXER("INMIXL", SND_SOC_NOPM, 0, 0,
@@ -618,7 +617,7 @@ SND_SOC_DAPM_MIXER_E("LOMIX", WM8400_POWER_MANAGEMENT_3,
 		     WM8400_LOMIX_ENA_SHIFT,
 		     0, &wm8400_dapm_lomix_controls[0],
 		     ARRAY_SIZE(wm8400_dapm_lomix_controls),
-		     ouपंचांगixer_event, SND_SOC_DAPM_PRE_REG),
+		     outmixer_event, SND_SOC_DAPM_PRE_REG),
 
 /* LONMIX */
 SND_SOC_DAPM_MIXER("LONMIX", WM8400_POWER_MANAGEMENT_3, WM8400_LON_ENA_SHIFT,
@@ -638,7 +637,7 @@ SND_SOC_DAPM_MIXER("OUT3MIX", WM8400_POWER_MANAGEMENT_1, WM8400_OUT3_ENA_SHIFT,
 /* SPKMIX */
 SND_SOC_DAPM_MIXER_E("SPKMIX", WM8400_POWER_MANAGEMENT_1, WM8400_SPK_ENA_SHIFT,
 		     0, &wm8400_dapm_spkmix_controls[0],
-		     ARRAY_SIZE(wm8400_dapm_spkmix_controls), ouपंचांगixer_event,
+		     ARRAY_SIZE(wm8400_dapm_spkmix_controls), outmixer_event,
 		     SND_SOC_DAPM_PRE_REG),
 
 /* OUT4MIX */
@@ -661,27 +660,27 @@ SND_SOC_DAPM_MIXER_E("ROMIX", WM8400_POWER_MANAGEMENT_3,
 		     WM8400_ROMIX_ENA_SHIFT,
 		     0, &wm8400_dapm_romix_controls[0],
 		     ARRAY_SIZE(wm8400_dapm_romix_controls),
-		     ouपंचांगixer_event, SND_SOC_DAPM_PRE_REG),
+		     outmixer_event, SND_SOC_DAPM_PRE_REG),
 
 /* LOUT PGA */
 SND_SOC_DAPM_PGA("LOUT PGA", WM8400_POWER_MANAGEMENT_1, WM8400_LOUT_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 
 /* ROUT PGA */
 SND_SOC_DAPM_PGA("ROUT PGA", WM8400_POWER_MANAGEMENT_1, WM8400_ROUT_ENA_SHIFT,
-		 0, शून्य, 0),
+		 0, NULL, 0),
 
 /* LOPGA */
 SND_SOC_DAPM_PGA("LOPGA", WM8400_POWER_MANAGEMENT_3, WM8400_LOPGA_ENA_SHIFT, 0,
-	शून्य, 0),
+	NULL, 0),
 
 /* ROPGA */
 SND_SOC_DAPM_PGA("ROPGA", WM8400_POWER_MANAGEMENT_3, WM8400_ROPGA_ENA_SHIFT, 0,
-	शून्य, 0),
+	NULL, 0),
 
 /* MICBIAS */
 SND_SOC_DAPM_SUPPLY("MICBIAS", WM8400_POWER_MANAGEMENT_1,
-		    WM8400_MIC1BIAS_ENA_SHIFT, 0, शून्य, 0),
+		    WM8400_MIC1BIAS_ENA_SHIFT, 0, NULL, 0),
 
 SND_SOC_DAPM_OUTPUT("LON"),
 SND_SOC_DAPM_OUTPUT("LOP"),
@@ -695,652 +694,652 @@ SND_SOC_DAPM_OUTPUT("ROP"),
 SND_SOC_DAPM_OUTPUT("RON"),
 
 SND_SOC_DAPM_OUTPUT("Internal DAC Sink"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8400_dapm_routes[] = अणु
-	/* Make DACs turn on when playing even अगर not mixed पूर्णांकo any outमाला_दो */
-	अणु"Internal DAC Sink", शून्य, "Left DAC"पूर्ण,
-	अणु"Internal DAC Sink", शून्य, "Right DAC"पूर्ण,
+static const struct snd_soc_dapm_route wm8400_dapm_routes[] = {
+	/* Make DACs turn on when playing even if not mixed into any outputs */
+	{"Internal DAC Sink", NULL, "Left DAC"},
+	{"Internal DAC Sink", NULL, "Right DAC"},
 
 	/* Make ADCs turn on when recording
-	 * even अगर not mixed from any inमाला_दो */
-	अणु"Left ADC", शून्य, "Internal ADC Source"पूर्ण,
-	अणु"Right ADC", शून्य, "Internal ADC Source"पूर्ण,
+	 * even if not mixed from any inputs */
+	{"Left ADC", NULL, "Internal ADC Source"},
+	{"Right ADC", NULL, "Internal ADC Source"},
 
 	/* Input Side */
 	/* LIN12 PGA */
-	अणु"LIN12 PGA", "LIN1 Switch", "LIN1"पूर्ण,
-	अणु"LIN12 PGA", "LIN2 Switch", "LIN2"पूर्ण,
+	{"LIN12 PGA", "LIN1 Switch", "LIN1"},
+	{"LIN12 PGA", "LIN2 Switch", "LIN2"},
 	/* LIN34 PGA */
-	अणु"LIN34 PGA", "LIN3 Switch", "LIN3"पूर्ण,
-	अणु"LIN34 PGA", "LIN4 Switch", "LIN4/RXN"पूर्ण,
+	{"LIN34 PGA", "LIN3 Switch", "LIN3"},
+	{"LIN34 PGA", "LIN4 Switch", "LIN4/RXN"},
 	/* INMIXL */
-	अणु"INMIXL", शून्य, "INL"पूर्ण,
-	अणु"INMIXL", "Record Left Volume", "LOMIX"पूर्ण,
-	अणु"INMIXL", "LIN2 Volume", "LIN2"पूर्ण,
-	अणु"INMIXL", "LINPGA12 Switch", "LIN12 PGA"पूर्ण,
-	अणु"INMIXL", "LINPGA34 Switch", "LIN34 PGA"पूर्ण,
+	{"INMIXL", NULL, "INL"},
+	{"INMIXL", "Record Left Volume", "LOMIX"},
+	{"INMIXL", "LIN2 Volume", "LIN2"},
+	{"INMIXL", "LINPGA12 Switch", "LIN12 PGA"},
+	{"INMIXL", "LINPGA34 Switch", "LIN34 PGA"},
 	/* AILNMUX */
-	अणु"AILNMUX", शून्य, "INL"पूर्ण,
-	अणु"AILNMUX", "INMIXL Mix", "INMIXL"पूर्ण,
-	अणु"AILNMUX", "DIFFINL Mix", "LIN12 PGA"पूर्ण,
-	अणु"AILNMUX", "DIFFINL Mix", "LIN34 PGA"पूर्ण,
-	अणु"AILNMUX", "RXVOICE Mix", "LIN4/RXN"पूर्ण,
-	अणु"AILNMUX", "RXVOICE Mix", "RIN4/RXP"पूर्ण,
+	{"AILNMUX", NULL, "INL"},
+	{"AILNMUX", "INMIXL Mix", "INMIXL"},
+	{"AILNMUX", "DIFFINL Mix", "LIN12 PGA"},
+	{"AILNMUX", "DIFFINL Mix", "LIN34 PGA"},
+	{"AILNMUX", "RXVOICE Mix", "LIN4/RXN"},
+	{"AILNMUX", "RXVOICE Mix", "RIN4/RXP"},
 	/* ADC */
-	अणु"Left ADC", शून्य, "AILNMUX"पूर्ण,
+	{"Left ADC", NULL, "AILNMUX"},
 
 	/* RIN12 PGA */
-	अणु"RIN12 PGA", "RIN1 Switch", "RIN1"पूर्ण,
-	अणु"RIN12 PGA", "RIN2 Switch", "RIN2"पूर्ण,
+	{"RIN12 PGA", "RIN1 Switch", "RIN1"},
+	{"RIN12 PGA", "RIN2 Switch", "RIN2"},
 	/* RIN34 PGA */
-	अणु"RIN34 PGA", "RIN3 Switch", "RIN3"पूर्ण,
-	अणु"RIN34 PGA", "RIN4 Switch", "RIN4/RXP"पूर्ण,
+	{"RIN34 PGA", "RIN3 Switch", "RIN3"},
+	{"RIN34 PGA", "RIN4 Switch", "RIN4/RXP"},
 	/* INMIXR */
-	अणु"INMIXR", शून्य, "INR"पूर्ण,
-	अणु"INMIXR", "Record Right Volume", "ROMIX"पूर्ण,
-	अणु"INMIXR", "RIN2 Volume", "RIN2"पूर्ण,
-	अणु"INMIXR", "RINPGA12 Switch", "RIN12 PGA"पूर्ण,
-	अणु"INMIXR", "RINPGA34 Switch", "RIN34 PGA"पूर्ण,
+	{"INMIXR", NULL, "INR"},
+	{"INMIXR", "Record Right Volume", "ROMIX"},
+	{"INMIXR", "RIN2 Volume", "RIN2"},
+	{"INMIXR", "RINPGA12 Switch", "RIN12 PGA"},
+	{"INMIXR", "RINPGA34 Switch", "RIN34 PGA"},
 	/* AIRNMUX */
-	अणु"AIRNMUX", शून्य, "INR"पूर्ण,
-	अणु"AIRNMUX", "INMIXR Mix", "INMIXR"पूर्ण,
-	अणु"AIRNMUX", "DIFFINR Mix", "RIN12 PGA"पूर्ण,
-	अणु"AIRNMUX", "DIFFINR Mix", "RIN34 PGA"पूर्ण,
-	अणु"AIRNMUX", "RXVOICE Mix", "LIN4/RXN"पूर्ण,
-	अणु"AIRNMUX", "RXVOICE Mix", "RIN4/RXP"पूर्ण,
+	{"AIRNMUX", NULL, "INR"},
+	{"AIRNMUX", "INMIXR Mix", "INMIXR"},
+	{"AIRNMUX", "DIFFINR Mix", "RIN12 PGA"},
+	{"AIRNMUX", "DIFFINR Mix", "RIN34 PGA"},
+	{"AIRNMUX", "RXVOICE Mix", "LIN4/RXN"},
+	{"AIRNMUX", "RXVOICE Mix", "RIN4/RXP"},
 	/* ADC */
-	अणु"Right ADC", शून्य, "AIRNMUX"पूर्ण,
+	{"Right ADC", NULL, "AIRNMUX"},
 
 	/* LOMIX */
-	अणु"LOMIX", "LOMIX RIN3 Bypass Switch", "RIN3"पूर्ण,
-	अणु"LOMIX", "LOMIX LIN3 Bypass Switch", "LIN3"पूर्ण,
-	अणु"LOMIX", "LOMIX LIN12 PGA Bypass Switch", "LIN12 PGA"पूर्ण,
-	अणु"LOMIX", "LOMIX RIN12 PGA Bypass Switch", "RIN12 PGA"पूर्ण,
-	अणु"LOMIX", "LOMIX Right ADC Bypass Switch", "AIRNMUX"पूर्ण,
-	अणु"LOMIX", "LOMIX Left ADC Bypass Switch", "AILNMUX"पूर्ण,
-	अणु"LOMIX", "LOMIX Left DAC Switch", "Left DAC"पूर्ण,
+	{"LOMIX", "LOMIX RIN3 Bypass Switch", "RIN3"},
+	{"LOMIX", "LOMIX LIN3 Bypass Switch", "LIN3"},
+	{"LOMIX", "LOMIX LIN12 PGA Bypass Switch", "LIN12 PGA"},
+	{"LOMIX", "LOMIX RIN12 PGA Bypass Switch", "RIN12 PGA"},
+	{"LOMIX", "LOMIX Right ADC Bypass Switch", "AIRNMUX"},
+	{"LOMIX", "LOMIX Left ADC Bypass Switch", "AILNMUX"},
+	{"LOMIX", "LOMIX Left DAC Switch", "Left DAC"},
 
 	/* ROMIX */
-	अणु"ROMIX", "ROMIX RIN3 Bypass Switch", "RIN3"पूर्ण,
-	अणु"ROMIX", "ROMIX LIN3 Bypass Switch", "LIN3"पूर्ण,
-	अणु"ROMIX", "ROMIX LIN12 PGA Bypass Switch", "LIN12 PGA"पूर्ण,
-	अणु"ROMIX", "ROMIX RIN12 PGA Bypass Switch", "RIN12 PGA"पूर्ण,
-	अणु"ROMIX", "ROMIX Right ADC Bypass Switch", "AIRNMUX"पूर्ण,
-	अणु"ROMIX", "ROMIX Left ADC Bypass Switch", "AILNMUX"पूर्ण,
-	अणु"ROMIX", "ROMIX Right DAC Switch", "Right DAC"पूर्ण,
+	{"ROMIX", "ROMIX RIN3 Bypass Switch", "RIN3"},
+	{"ROMIX", "ROMIX LIN3 Bypass Switch", "LIN3"},
+	{"ROMIX", "ROMIX LIN12 PGA Bypass Switch", "LIN12 PGA"},
+	{"ROMIX", "ROMIX RIN12 PGA Bypass Switch", "RIN12 PGA"},
+	{"ROMIX", "ROMIX Right ADC Bypass Switch", "AIRNMUX"},
+	{"ROMIX", "ROMIX Left ADC Bypass Switch", "AILNMUX"},
+	{"ROMIX", "ROMIX Right DAC Switch", "Right DAC"},
 
 	/* SPKMIX */
-	अणु"SPKMIX", "SPKMIX LIN2 Bypass Switch", "LIN2"पूर्ण,
-	अणु"SPKMIX", "SPKMIX RIN2 Bypass Switch", "RIN2"पूर्ण,
-	अणु"SPKMIX", "SPKMIX LADC Bypass Switch", "AILNMUX"पूर्ण,
-	अणु"SPKMIX", "SPKMIX RADC Bypass Switch", "AIRNMUX"पूर्ण,
-	अणु"SPKMIX", "SPKMIX Left Mixer PGA Switch", "LOPGA"पूर्ण,
-	अणु"SPKMIX", "SPKMIX Right Mixer PGA Switch", "ROPGA"पूर्ण,
-	अणु"SPKMIX", "SPKMIX Right DAC Switch", "Right DAC"पूर्ण,
-	अणु"SPKMIX", "SPKMIX Left DAC Switch", "Right DAC"पूर्ण,
+	{"SPKMIX", "SPKMIX LIN2 Bypass Switch", "LIN2"},
+	{"SPKMIX", "SPKMIX RIN2 Bypass Switch", "RIN2"},
+	{"SPKMIX", "SPKMIX LADC Bypass Switch", "AILNMUX"},
+	{"SPKMIX", "SPKMIX RADC Bypass Switch", "AIRNMUX"},
+	{"SPKMIX", "SPKMIX Left Mixer PGA Switch", "LOPGA"},
+	{"SPKMIX", "SPKMIX Right Mixer PGA Switch", "ROPGA"},
+	{"SPKMIX", "SPKMIX Right DAC Switch", "Right DAC"},
+	{"SPKMIX", "SPKMIX Left DAC Switch", "Right DAC"},
 
 	/* LONMIX */
-	अणु"LONMIX", "LONMIX Left Mixer PGA Switch", "LOPGA"पूर्ण,
-	अणु"LONMIX", "LONMIX Right Mixer PGA Switch", "ROPGA"पूर्ण,
-	अणु"LONMIX", "LONMIX Inverted LOP Switch", "LOPMIX"पूर्ण,
+	{"LONMIX", "LONMIX Left Mixer PGA Switch", "LOPGA"},
+	{"LONMIX", "LONMIX Right Mixer PGA Switch", "ROPGA"},
+	{"LONMIX", "LONMIX Inverted LOP Switch", "LOPMIX"},
 
 	/* LOPMIX */
-	अणु"LOPMIX", "LOPMIX Right Mic Bypass Switch", "RIN12 PGA"पूर्ण,
-	अणु"LOPMIX", "LOPMIX Left Mic Bypass Switch", "LIN12 PGA"पूर्ण,
-	अणु"LOPMIX", "LOPMIX Left Mixer PGA Switch", "LOPGA"पूर्ण,
+	{"LOPMIX", "LOPMIX Right Mic Bypass Switch", "RIN12 PGA"},
+	{"LOPMIX", "LOPMIX Left Mic Bypass Switch", "LIN12 PGA"},
+	{"LOPMIX", "LOPMIX Left Mixer PGA Switch", "LOPGA"},
 
 	/* OUT3MIX */
-	अणु"OUT3MIX", "OUT3MIX LIN4/RXP Bypass Switch", "LIN4/RXN"पूर्ण,
-	अणु"OUT3MIX", "OUT3MIX Left Out PGA Switch", "LOPGA"पूर्ण,
+	{"OUT3MIX", "OUT3MIX LIN4/RXP Bypass Switch", "LIN4/RXN"},
+	{"OUT3MIX", "OUT3MIX Left Out PGA Switch", "LOPGA"},
 
 	/* OUT4MIX */
-	अणु"OUT4MIX", "OUT4MIX Right Out PGA Switch", "ROPGA"पूर्ण,
-	अणु"OUT4MIX", "OUT4MIX RIN4/RXP Bypass Switch", "RIN4/RXP"पूर्ण,
+	{"OUT4MIX", "OUT4MIX Right Out PGA Switch", "ROPGA"},
+	{"OUT4MIX", "OUT4MIX RIN4/RXP Bypass Switch", "RIN4/RXP"},
 
 	/* RONMIX */
-	अणु"RONMIX", "RONMIX Right Mixer PGA Switch", "ROPGA"पूर्ण,
-	अणु"RONMIX", "RONMIX Left Mixer PGA Switch", "LOPGA"पूर्ण,
-	अणु"RONMIX", "RONMIX Inverted ROP Switch", "ROPMIX"पूर्ण,
+	{"RONMIX", "RONMIX Right Mixer PGA Switch", "ROPGA"},
+	{"RONMIX", "RONMIX Left Mixer PGA Switch", "LOPGA"},
+	{"RONMIX", "RONMIX Inverted ROP Switch", "ROPMIX"},
 
 	/* ROPMIX */
-	अणु"ROPMIX", "ROPMIX Left Mic Bypass Switch", "LIN12 PGA"पूर्ण,
-	अणु"ROPMIX", "ROPMIX Right Mic Bypass Switch", "RIN12 PGA"पूर्ण,
-	अणु"ROPMIX", "ROPMIX Right Mixer PGA Switch", "ROPGA"पूर्ण,
+	{"ROPMIX", "ROPMIX Left Mic Bypass Switch", "LIN12 PGA"},
+	{"ROPMIX", "ROPMIX Right Mic Bypass Switch", "RIN12 PGA"},
+	{"ROPMIX", "ROPMIX Right Mixer PGA Switch", "ROPGA"},
 
 	/* Out Mixer PGAs */
-	अणु"LOPGA", शून्य, "LOMIX"पूर्ण,
-	अणु"ROPGA", शून्य, "ROMIX"पूर्ण,
+	{"LOPGA", NULL, "LOMIX"},
+	{"ROPGA", NULL, "ROMIX"},
 
-	अणु"LOUT PGA", शून्य, "LOMIX"पूर्ण,
-	अणु"ROUT PGA", शून्य, "ROMIX"पूर्ण,
+	{"LOUT PGA", NULL, "LOMIX"},
+	{"ROUT PGA", NULL, "ROMIX"},
 
 	/* Output Pins */
-	अणु"LON", शून्य, "LONMIX"पूर्ण,
-	अणु"LOP", शून्य, "LOPMIX"पूर्ण,
-	अणु"OUT3", शून्य, "OUT3MIX"पूर्ण,
-	अणु"LOUT", शून्य, "LOUT PGA"पूर्ण,
-	अणु"SPKN", शून्य, "SPKMIX"पूर्ण,
-	अणु"ROUT", शून्य, "ROUT PGA"पूर्ण,
-	अणु"OUT4", शून्य, "OUT4MIX"पूर्ण,
-	अणु"ROP", शून्य, "ROPMIX"पूर्ण,
-	अणु"RON", शून्य, "RONMIX"पूर्ण,
-पूर्ण;
+	{"LON", NULL, "LONMIX"},
+	{"LOP", NULL, "LOPMIX"},
+	{"OUT3", NULL, "OUT3MIX"},
+	{"LOUT", NULL, "LOUT PGA"},
+	{"SPKN", NULL, "SPKMIX"},
+	{"ROUT", NULL, "ROUT PGA"},
+	{"OUT4", NULL, "OUT4MIX"},
+	{"ROP", NULL, "ROPMIX"},
+	{"RON", NULL, "RONMIX"},
+};
 
 /*
- * Clock after FLL and भागiders
+ * Clock after FLL and dividers
  */
-अटल पूर्णांक wm8400_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
-		पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
+static int wm8400_set_dai_sysclk(struct snd_soc_dai *codec_dai,
+		int clk_id, unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
 
 	wm8400->sysclk = freq;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा fll_factors अणु
+struct fll_factors {
 	u16 n;
 	u16 k;
-	u16 outभाग;
+	u16 outdiv;
 	u16 fratio;
 	u16 freq_ref;
-पूर्ण;
+};
 
-#घोषणा FIXED_FLL_SIZE ((1 << 16) * 10)
+#define FIXED_FLL_SIZE ((1 << 16) * 10)
 
-अटल पूर्णांक fll_factors(काष्ठा wm8400_priv *wm8400, काष्ठा fll_factors *factors,
-		       अचिन्हित पूर्णांक Fref, अचिन्हित पूर्णांक Fout)
-अणु
+static int fll_factors(struct wm8400_priv *wm8400, struct fll_factors *factors,
+		       unsigned int Fref, unsigned int Fout)
+{
 	u64 Kpart;
-	अचिन्हित पूर्णांक K, Nmod, target;
+	unsigned int K, Nmod, target;
 
-	factors->outभाग = 2;
-	जबतक (Fout * factors->outभाग <  90000000 ||
-	       Fout * factors->outभाग > 100000000) अणु
-		factors->outभाग *= 2;
-		अगर (factors->outभाग > 32) अणु
+	factors->outdiv = 2;
+	while (Fout * factors->outdiv <  90000000 ||
+	       Fout * factors->outdiv > 100000000) {
+		factors->outdiv *= 2;
+		if (factors->outdiv > 32) {
 			dev_err(wm8400->wm8400->dev,
 				"Unsupported FLL output frequency %uHz\n",
 				Fout);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	target = Fout * factors->outभाग;
-	factors->outभाग = factors->outभाग >> 2;
+			return -EINVAL;
+		}
+	}
+	target = Fout * factors->outdiv;
+	factors->outdiv = factors->outdiv >> 2;
 
-	अगर (Fref < 48000)
+	if (Fref < 48000)
 		factors->freq_ref = 1;
-	अन्यथा
+	else
 		factors->freq_ref = 0;
 
-	अगर (Fref < 1000000)
+	if (Fref < 1000000)
 		factors->fratio = 9;
-	अन्यथा
+	else
 		factors->fratio = 0;
 
 	/* Ensure we have a fractional part */
-	करो अणु
-		अगर (Fref < 1000000)
+	do {
+		if (Fref < 1000000)
 			factors->fratio--;
-		अन्यथा
+		else
 			factors->fratio++;
 
-		अगर (factors->fratio < 1 || factors->fratio > 8) अणु
+		if (factors->fratio < 1 || factors->fratio > 8) {
 			dev_err(wm8400->wm8400->dev,
 				"Unable to calculate FRATIO\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		factors->n = target / (Fref * factors->fratio);
 		Nmod = target % (Fref * factors->fratio);
-	पूर्ण जबतक (Nmod == 0);
+	} while (Nmod == 0);
 
 	/* Calculate fractional part - scale up so we can round. */
-	Kpart = FIXED_FLL_SIZE * (दीर्घ दीर्घ)Nmod;
+	Kpart = FIXED_FLL_SIZE * (long long)Nmod;
 
-	करो_भाग(Kpart, (Fref * factors->fratio));
+	do_div(Kpart, (Fref * factors->fratio));
 
 	K = Kpart & 0xFFFFFFFF;
 
-	अगर ((K % 10) >= 5)
+	if ((K % 10) >= 5)
 		K += 5;
 
-	/* Move करोwn to proper range now rounding is करोne */
+	/* Move down to proper range now rounding is done */
 	factors->k = K / 10;
 
 	dev_dbg(wm8400->wm8400->dev,
 		"FLL: Fref=%u Fout=%u N=%x K=%x, FRATIO=%x OUTDIV=%x\n",
 		Fref, Fout,
-		factors->n, factors->k, factors->fratio, factors->outभाग);
+		factors->n, factors->k, factors->fratio, factors->outdiv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8400_set_dai_pll(काष्ठा snd_soc_dai *codec_dai, पूर्णांक pll_id,
-			      पूर्णांक source, अचिन्हित पूर्णांक freq_in,
-			      अचिन्हित पूर्णांक freq_out)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	काष्ठा wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
-	काष्ठा fll_factors factors;
-	पूर्णांक ret;
+static int wm8400_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
+			      int source, unsigned int freq_in,
+			      unsigned int freq_out)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	struct wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
+	struct fll_factors factors;
+	int ret;
 	u16 reg;
 
-	अगर (freq_in == wm8400->fll_in && freq_out == wm8400->fll_out)
-		वापस 0;
+	if (freq_in == wm8400->fll_in && freq_out == wm8400->fll_out)
+		return 0;
 
-	अगर (freq_out) अणु
+	if (freq_out) {
 		ret = fll_factors(wm8400, &factors, freq_in, freq_out);
-		अगर (ret != 0)
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		if (ret != 0)
+			return ret;
+	} else {
 		/* Bodge GCC 4.4.0 uninitialised variable warning - it
-		 * करोesn't seem capable of working out that we निकास अगर
-		 * freq_out is 0 beक्रमe any of the uses. */
-		स_रखो(&factors, 0, माप(factors));
-	पूर्ण
+		 * doesn't seem capable of working out that we exit if
+		 * freq_out is 0 before any of the uses. */
+		memset(&factors, 0, sizeof(factors));
+	}
 
 	wm8400->fll_out = freq_out;
 	wm8400->fll_in = freq_in;
 
-	/* We *must* disable the FLL beक्रमe any changes */
-	reg = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_2);
+	/* We *must* disable the FLL before any changes */
+	reg = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_2);
 	reg &= ~WM8400_FLL_ENA;
-	snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_2, reg);
+	snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_2, reg);
 
-	reg = snd_soc_component_पढ़ो(component, WM8400_FLL_CONTROL_1);
+	reg = snd_soc_component_read(component, WM8400_FLL_CONTROL_1);
 	reg &= ~WM8400_FLL_OSC_ENA;
-	snd_soc_component_ग_लिखो(component, WM8400_FLL_CONTROL_1, reg);
+	snd_soc_component_write(component, WM8400_FLL_CONTROL_1, reg);
 
-	अगर (!freq_out)
-		वापस 0;
+	if (!freq_out)
+		return 0;
 
 	reg &= ~(WM8400_FLL_REF_FREQ | WM8400_FLL_FRATIO_MASK);
 	reg |= WM8400_FLL_FRAC | factors.fratio;
 	reg |= factors.freq_ref << WM8400_FLL_REF_FREQ_SHIFT;
-	snd_soc_component_ग_लिखो(component, WM8400_FLL_CONTROL_1, reg);
+	snd_soc_component_write(component, WM8400_FLL_CONTROL_1, reg);
 
-	snd_soc_component_ग_लिखो(component, WM8400_FLL_CONTROL_2, factors.k);
-	snd_soc_component_ग_लिखो(component, WM8400_FLL_CONTROL_3, factors.n);
+	snd_soc_component_write(component, WM8400_FLL_CONTROL_2, factors.k);
+	snd_soc_component_write(component, WM8400_FLL_CONTROL_3, factors.n);
 
-	reg = snd_soc_component_पढ़ो(component, WM8400_FLL_CONTROL_4);
+	reg = snd_soc_component_read(component, WM8400_FLL_CONTROL_4);
 	reg &= ~WM8400_FLL_OUTDIV_MASK;
-	reg |= factors.outभाग;
-	snd_soc_component_ग_लिखो(component, WM8400_FLL_CONTROL_4, reg);
+	reg |= factors.outdiv;
+	snd_soc_component_write(component, WM8400_FLL_CONTROL_4, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Sets ADC and Voice DAC क्रमmat.
+ * Sets ADC and Voice DAC format.
  */
-अटल पूर्णांक wm8400_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
-		अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
+static int wm8400_set_dai_fmt(struct snd_soc_dai *codec_dai,
+		unsigned int fmt)
+{
+	struct snd_soc_component *component = codec_dai->component;
 	u16 audio1, audio3;
 
-	audio1 = snd_soc_component_पढ़ो(component, WM8400_AUDIO_INTERFACE_1);
-	audio3 = snd_soc_component_पढ़ो(component, WM8400_AUDIO_INTERFACE_3);
+	audio1 = snd_soc_component_read(component, WM8400_AUDIO_INTERFACE_1);
+	audio3 = snd_soc_component_read(component, WM8400_AUDIO_INTERFACE_3);
 
-	/* set master/slave audio पूर्णांकerface */
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+	/* set master/slave audio interface */
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
 		audio3 &= ~WM8400_AIF_MSTR1;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
 		audio3 |= WM8400_AIF_MSTR1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	audio1 &= ~WM8400_AIF_FMT_MASK;
 
-	/* पूर्णांकerface क्रमmat */
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	/* interface format */
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
 		audio1 |= WM8400_AIF_FMT_I2S;
 		audio1 &= ~WM8400_AIF_LRCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
 		audio1 |= WM8400_AIF_FMT_RIGHTJ;
 		audio1 &= ~WM8400_AIF_LRCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		audio1 |= WM8400_AIF_FMT_LEFTJ;
 		audio1 &= ~WM8400_AIF_LRCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A:
+		break;
+	case SND_SOC_DAIFMT_DSP_A:
 		audio1 |= WM8400_AIF_FMT_DSP;
 		audio1 &= ~WM8400_AIF_LRCLK_INV;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
 		audio1 |= WM8400_AIF_FMT_DSP | WM8400_AIF_LRCLK_INV;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	snd_soc_component_ग_लिखो(component, WM8400_AUDIO_INTERFACE_1, audio1);
-	snd_soc_component_ग_लिखो(component, WM8400_AUDIO_INTERFACE_3, audio3);
-	वापस 0;
-पूर्ण
+	snd_soc_component_write(component, WM8400_AUDIO_INTERFACE_1, audio1);
+	snd_soc_component_write(component, WM8400_AUDIO_INTERFACE_3, audio3);
+	return 0;
+}
 
-अटल पूर्णांक wm8400_set_dai_clkभाग(काष्ठा snd_soc_dai *codec_dai,
-		पूर्णांक भाग_id, पूर्णांक भाग)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
+static int wm8400_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
+		int div_id, int div)
+{
+	struct snd_soc_component *component = codec_dai->component;
 	u16 reg;
 
-	चयन (भाग_id) अणु
-	हाल WM8400_MCLK_DIV:
-		reg = snd_soc_component_पढ़ो(component, WM8400_CLOCKING_2) &
+	switch (div_id) {
+	case WM8400_MCLK_DIV:
+		reg = snd_soc_component_read(component, WM8400_CLOCKING_2) &
 			~WM8400_MCLK_DIV_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_CLOCKING_2, reg | भाग);
-		अवरोध;
-	हाल WM8400_DACCLK_DIV:
-		reg = snd_soc_component_पढ़ो(component, WM8400_CLOCKING_2) &
+		snd_soc_component_write(component, WM8400_CLOCKING_2, reg | div);
+		break;
+	case WM8400_DACCLK_DIV:
+		reg = snd_soc_component_read(component, WM8400_CLOCKING_2) &
 			~WM8400_DAC_CLKDIV_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_CLOCKING_2, reg | भाग);
-		अवरोध;
-	हाल WM8400_ADCCLK_DIV:
-		reg = snd_soc_component_पढ़ो(component, WM8400_CLOCKING_2) &
+		snd_soc_component_write(component, WM8400_CLOCKING_2, reg | div);
+		break;
+	case WM8400_ADCCLK_DIV:
+		reg = snd_soc_component_read(component, WM8400_CLOCKING_2) &
 			~WM8400_ADC_CLKDIV_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_CLOCKING_2, reg | भाग);
-		अवरोध;
-	हाल WM8400_BCLK_DIV:
-		reg = snd_soc_component_पढ़ो(component, WM8400_CLOCKING_1) &
+		snd_soc_component_write(component, WM8400_CLOCKING_2, reg | div);
+		break;
+	case WM8400_BCLK_DIV:
+		reg = snd_soc_component_read(component, WM8400_CLOCKING_1) &
 			~WM8400_BCLK_DIV_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_CLOCKING_1, reg | भाग);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		snd_soc_component_write(component, WM8400_CLOCKING_1, reg | div);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Set PCM DAI bit size and sample rate.
  */
-अटल पूर्णांक wm8400_hw_params(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_pcm_hw_params *params,
-	काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	u16 audio1 = snd_soc_component_पढ़ो(component, WM8400_AUDIO_INTERFACE_1);
+static int wm8400_hw_params(struct snd_pcm_substream *substream,
+	struct snd_pcm_hw_params *params,
+	struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	u16 audio1 = snd_soc_component_read(component, WM8400_AUDIO_INTERFACE_1);
 
 	audio1 &= ~WM8400_AIF_WL_MASK;
 	/* bit size */
-	चयन (params_width(params)) अणु
-	हाल 16:
-		अवरोध;
-	हाल 20:
+	switch (params_width(params)) {
+	case 16:
+		break;
+	case 20:
 		audio1 |= WM8400_AIF_WL_20BITS;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		audio1 |= WM8400_AIF_WL_24BITS;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		audio1 |= WM8400_AIF_WL_32BITS;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	snd_soc_component_ग_लिखो(component, WM8400_AUDIO_INTERFACE_1, audio1);
-	वापस 0;
-पूर्ण
+	snd_soc_component_write(component, WM8400_AUDIO_INTERFACE_1, audio1);
+	return 0;
+}
 
-अटल पूर्णांक wm8400_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	u16 val = snd_soc_component_पढ़ो(component, WM8400_DAC_CTRL) & ~WM8400_DAC_MUTE;
+static int wm8400_mute(struct snd_soc_dai *dai, int mute, int direction)
+{
+	struct snd_soc_component *component = dai->component;
+	u16 val = snd_soc_component_read(component, WM8400_DAC_CTRL) & ~WM8400_DAC_MUTE;
 
-	अगर (mute)
-		snd_soc_component_ग_लिखो(component, WM8400_DAC_CTRL, val | WM8400_DAC_MUTE);
-	अन्यथा
-		snd_soc_component_ग_लिखो(component, WM8400_DAC_CTRL, val);
+	if (mute)
+		snd_soc_component_write(component, WM8400_DAC_CTRL, val | WM8400_DAC_MUTE);
+	else
+		snd_soc_component_write(component, WM8400_DAC_CTRL, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* TODO: set bias क्रम best perक्रमmance at standby */
-अटल पूर्णांक wm8400_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
+/* TODO: set bias for best performance at standby */
+static int wm8400_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	struct wm8400_priv *wm8400 = snd_soc_component_get_drvdata(component);
 	u16 val;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
 
-	हाल SND_SOC_BIAS_PREPARE:
+	case SND_SOC_BIAS_PREPARE:
 		/* VMID=2*50k */
-		val = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_1) &
+		val = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_1) &
 			~WM8400_VMID_MODE_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, val | 0x2);
-		अवरोध;
+		snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, val | 0x2);
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
-			ret = regulator_bulk_enable(ARRAY_SIZE(घातer),
-						    &घातer[0]);
-			अगर (ret != 0) अणु
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+			ret = regulator_bulk_enable(ARRAY_SIZE(power),
+						    &power[0]);
+			if (ret != 0) {
 				dev_err(wm8400->wm8400->dev,
 					"Failed to enable regulators: %d\n",
 					ret);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
-			snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1,
+			snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1,
 				     WM8400_CODEC_ENA | WM8400_SYSCLK_ENA);
 
 			/* Enable POBCTRL, SOFT_ST, VMIDTOG and BUFDCOPEN */
-			snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP2, WM8400_SOFTST |
+			snd_soc_component_write(component, WM8400_ANTIPOP2, WM8400_SOFTST |
 				     WM8400_BUFDCOPEN | WM8400_POBCTRL);
 
 			msleep(50);
 
 			/* Enable VREF & VMID at 2x50k */
-			val = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_1);
+			val = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_1);
 			val |= 0x2 | WM8400_VREF_ENA;
-			snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, val);
+			snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, val);
 
 			/* Enable BUFIOEN */
-			snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP2, WM8400_SOFTST |
+			snd_soc_component_write(component, WM8400_ANTIPOP2, WM8400_SOFTST |
 				     WM8400_BUFDCOPEN | WM8400_POBCTRL |
 				     WM8400_BUFIOEN);
 
 			/* disable POBCTRL, SOFT_ST and BUFDCOPEN */
-			snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP2, WM8400_BUFIOEN);
-		पूर्ण
+			snd_soc_component_write(component, WM8400_ANTIPOP2, WM8400_BUFIOEN);
+		}
 
 		/* VMID=2*300k */
-		val = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_1) &
+		val = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_1) &
 			~WM8400_VMID_MODE_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, val | 0x4);
-		अवरोध;
+		snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, val | 0x4);
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
+	case SND_SOC_BIAS_OFF:
 		/* Enable POBCTRL and SOFT_ST */
-		snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP2, WM8400_SOFTST |
+		snd_soc_component_write(component, WM8400_ANTIPOP2, WM8400_SOFTST |
 			WM8400_POBCTRL | WM8400_BUFIOEN);
 
 		/* Enable POBCTRL, SOFT_ST and BUFDCOPEN */
-		snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP2, WM8400_SOFTST |
+		snd_soc_component_write(component, WM8400_ANTIPOP2, WM8400_SOFTST |
 			WM8400_BUFDCOPEN | WM8400_POBCTRL |
 			WM8400_BUFIOEN);
 
 		/* mute DAC */
-		val = snd_soc_component_पढ़ो(component, WM8400_DAC_CTRL);
-		snd_soc_component_ग_लिखो(component, WM8400_DAC_CTRL, val | WM8400_DAC_MUTE);
+		val = snd_soc_component_read(component, WM8400_DAC_CTRL);
+		snd_soc_component_write(component, WM8400_DAC_CTRL, val | WM8400_DAC_MUTE);
 
-		/* Enable any disabled outमाला_दो */
-		val = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_1);
+		/* Enable any disabled outputs */
+		val = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_1);
 		val |= WM8400_SPK_ENA | WM8400_OUT3_ENA |
 			WM8400_OUT4_ENA | WM8400_LOUT_ENA |
 			WM8400_ROUT_ENA;
-		snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, val);
+		snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, val);
 
 		/* Disable VMID */
 		val &= ~WM8400_VMID_MODE_MASK;
-		snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, val);
+		snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, val);
 
 		msleep(300);
 
-		/* Enable all output disअक्षरge bits */
-		snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP1, WM8400_DIS_LLINE |
+		/* Enable all output discharge bits */
+		snd_soc_component_write(component, WM8400_ANTIPOP1, WM8400_DIS_LLINE |
 			WM8400_DIS_RLINE | WM8400_DIS_OUT3 |
 			WM8400_DIS_OUT4 | WM8400_DIS_LOUT |
 			WM8400_DIS_ROUT);
 
 		/* Disable VREF */
 		val &= ~WM8400_VREF_ENA;
-		snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, val);
+		snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, val);
 
 		/* disable POBCTRL, SOFT_ST and BUFDCOPEN */
-		snd_soc_component_ग_लिखो(component, WM8400_ANTIPOP2, 0x0);
+		snd_soc_component_write(component, WM8400_ANTIPOP2, 0x0);
 
-		ret = regulator_bulk_disable(ARRAY_SIZE(घातer),
-					     &घातer[0]);
-		अगर (ret != 0)
-			वापस ret;
+		ret = regulator_bulk_disable(ARRAY_SIZE(power),
+					     &power[0]);
+		if (ret != 0)
+			return ret;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा WM8400_RATES SNDRV_PCM_RATE_8000_96000
+#define WM8400_RATES SNDRV_PCM_RATE_8000_96000
 
-#घोषणा WM8400_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#define WM8400_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 	SNDRV_PCM_FMTBIT_S24_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm8400_dai_ops = अणु
+static const struct snd_soc_dai_ops wm8400_dai_ops = {
 	.hw_params = wm8400_hw_params,
 	.mute_stream = wm8400_mute,
 	.set_fmt = wm8400_set_dai_fmt,
-	.set_clkभाग = wm8400_set_dai_clkभाग,
+	.set_clkdiv = wm8400_set_dai_clkdiv,
 	.set_sysclk = wm8400_set_dai_sysclk,
 	.set_pll = wm8400_set_dai_pll,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
 /*
- * The WM8400 supports 2 dअगरferent and mutually exclusive DAI
+ * The WM8400 supports 2 different and mutually exclusive DAI
  * configurations.
  *
  * 1. ADC/DAC on Primary Interface
  * 2. ADC on Primary Interface/DAC on secondary
  */
-अटल काष्ठा snd_soc_dai_driver wm8400_dai = अणु
+static struct snd_soc_dai_driver wm8400_dai = {
 /* ADC/DAC on primary */
 	.name = "wm8400-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = WM8400_RATES,
-		.क्रमmats = WM8400_FORMATS,
-	पूर्ण,
-	.capture = अणु
+		.formats = WM8400_FORMATS,
+	},
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = WM8400_RATES,
-		.क्रमmats = WM8400_FORMATS,
-	पूर्ण,
+		.formats = WM8400_FORMATS,
+	},
 	.ops = &wm8400_dai_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक wm8400_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8400 *wm8400 = dev_get_platdata(component->dev);
-	काष्ठा wm8400_priv *priv;
-	पूर्णांक ret;
+static int wm8400_component_probe(struct snd_soc_component *component)
+{
+	struct wm8400 *wm8400 = dev_get_platdata(component->dev);
+	struct wm8400_priv *priv;
+	int ret;
 	u16 reg;
 
-	priv = devm_kzalloc(component->dev, माप(काष्ठा wm8400_priv),
+	priv = devm_kzalloc(component->dev, sizeof(struct wm8400_priv),
 			    GFP_KERNEL);
-	अगर (priv == शून्य)
-		वापस -ENOMEM;
+	if (priv == NULL)
+		return -ENOMEM;
 
 	snd_soc_component_init_regmap(component, wm8400->regmap);
 	snd_soc_component_set_drvdata(component, priv);
 	priv->wm8400 = wm8400;
 
 	ret = devm_regulator_bulk_get(wm8400->dev,
-				 ARRAY_SIZE(घातer), &घातer[0]);
-	अगर (ret != 0) अणु
+				 ARRAY_SIZE(power), &power[0]);
+	if (ret != 0) {
 		dev_err(component->dev, "Failed to get regulators: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	wm8400_component_reset(component);
 
-	reg = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_1);
-	snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1, reg | WM8400_CODEC_ENA);
+	reg = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_1);
+	snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1, reg | WM8400_CODEC_ENA);
 
 	/* Latch volume update bits */
-	reg = snd_soc_component_पढ़ो(component, WM8400_LEFT_LINE_INPUT_1_2_VOLUME);
-	snd_soc_component_ग_लिखो(component, WM8400_LEFT_LINE_INPUT_1_2_VOLUME,
+	reg = snd_soc_component_read(component, WM8400_LEFT_LINE_INPUT_1_2_VOLUME);
+	snd_soc_component_write(component, WM8400_LEFT_LINE_INPUT_1_2_VOLUME,
 		     reg & WM8400_IPVU);
-	reg = snd_soc_component_पढ़ो(component, WM8400_RIGHT_LINE_INPUT_1_2_VOLUME);
-	snd_soc_component_ग_लिखो(component, WM8400_RIGHT_LINE_INPUT_1_2_VOLUME,
+	reg = snd_soc_component_read(component, WM8400_RIGHT_LINE_INPUT_1_2_VOLUME);
+	snd_soc_component_write(component, WM8400_RIGHT_LINE_INPUT_1_2_VOLUME,
 		     reg & WM8400_IPVU);
 
-	snd_soc_component_ग_लिखो(component, WM8400_LEFT_OUTPUT_VOLUME, 0x50 | (1<<8));
-	snd_soc_component_ग_लिखो(component, WM8400_RIGHT_OUTPUT_VOLUME, 0x50 | (1<<8));
+	snd_soc_component_write(component, WM8400_LEFT_OUTPUT_VOLUME, 0x50 | (1<<8));
+	snd_soc_component_write(component, WM8400_RIGHT_OUTPUT_VOLUME, 0x50 | (1<<8));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम  wm8400_component_हटाओ(काष्ठा snd_soc_component *component)
-अणु
+static void  wm8400_component_remove(struct snd_soc_component *component)
+{
 	u16 reg;
 
-	reg = snd_soc_component_पढ़ो(component, WM8400_POWER_MANAGEMENT_1);
-	snd_soc_component_ग_लिखो(component, WM8400_POWER_MANAGEMENT_1,
+	reg = snd_soc_component_read(component, WM8400_POWER_MANAGEMENT_1);
+	snd_soc_component_write(component, WM8400_POWER_MANAGEMENT_1,
 		     reg & (~WM8400_CODEC_ENA));
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8400 = अणु
+static const struct snd_soc_component_driver soc_component_dev_wm8400 = {
 	.probe			= wm8400_component_probe,
-	.हटाओ			= wm8400_component_हटाओ,
+	.remove			= wm8400_component_remove,
 	.set_bias_level		= wm8400_set_bias_level,
 	.controls		= wm8400_snd_controls,
 	.num_controls		= ARRAY_SIZE(wm8400_snd_controls),
-	.dapm_widमाला_लो		= wm8400_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm8400_dapm_widमाला_लो),
+	.dapm_widgets		= wm8400_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(wm8400_dapm_widgets),
 	.dapm_routes		= wm8400_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(wm8400_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक wm8400_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+static int wm8400_probe(struct platform_device *pdev)
+{
+	return devm_snd_soc_register_component(&pdev->dev,
 			&soc_component_dev_wm8400,
 			&wm8400_dai, 1);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver wm8400_codec_driver = अणु
-	.driver = अणु
+static struct platform_driver wm8400_codec_driver = {
+	.driver = {
 		   .name = "wm8400-codec",
-		   पूर्ण,
+		   },
 	.probe = wm8400_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(wm8400_codec_driver);
+module_platform_driver(wm8400_codec_driver);
 
 MODULE_DESCRIPTION("ASoC WM8400 driver");
 MODULE_AUTHOR("Mark Brown");

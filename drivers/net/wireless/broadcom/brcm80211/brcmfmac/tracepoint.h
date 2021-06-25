@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2013 Broadcom Corporation
  */
-#अगर !defined(BRCMF_TRACEPOINT_H_) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा BRCMF_TRACEPOINT_H_
+#if !defined(BRCMF_TRACEPOINT_H_) || defined(TRACE_HEADER_MULTI_READ)
+#define BRCMF_TRACEPOINT_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/types.h>
+#include <linux/tracepoint.h>
 
-#अगर_अघोषित CONFIG_BRCM_TRACING
+#ifndef CONFIG_BRCM_TRACING
 
-#अघोषित TRACE_EVENT
-#घोषणा TRACE_EVENT(name, proto, ...) \
-अटल अंतरभूत व्योम trace_ ## name(proto) अणुपूर्ण
+#undef TRACE_EVENT
+#define TRACE_EVENT(name, proto, ...) \
+static inline void trace_ ## name(proto) {}
 
-#अघोषित DECLARE_EVENT_CLASS
-#घोषणा DECLARE_EVENT_CLASS(...)
+#undef DECLARE_EVENT_CLASS
+#define DECLARE_EVENT_CLASS(...)
 
-#अघोषित DEFINE_EVENT
-#घोषणा DEFINE_EVENT(evt_class, name, proto, ...) \
-अटल अंतरभूत व्योम trace_ ## name(proto) अणुपूर्ण
+#undef DEFINE_EVENT
+#define DEFINE_EVENT(evt_class, name, proto, ...) \
+static inline void trace_ ## name(proto) {}
 
-#पूर्ण_अगर /* CONFIG_BRCM_TRACING */
+#endif /* CONFIG_BRCM_TRACING */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM	brcmfmac
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM	brcmfmac
 
-#घोषणा MAX_MSG_LEN		100
+#define MAX_MSG_LEN		100
 
 TRACE_EVENT(brcmf_err,
-	TP_PROTO(स्थिर अक्षर *func, काष्ठा va_क्रमmat *vaf),
+	TP_PROTO(const char *func, struct va_format *vaf),
 	TP_ARGS(func, vaf),
 	TP_STRUCT__entry(
 		__string(func, func)
-		__dynamic_array(अक्षर, msg, MAX_MSG_LEN)
+		__dynamic_array(char, msg, MAX_MSG_LEN)
 	),
 	TP_fast_assign(
 		__assign_str(func, func);
-		WARN_ON_ONCE(vsnम_लिखो(__get_dynamic_array(msg),
+		WARN_ON_ONCE(vsnprintf(__get_dynamic_array(msg),
 				       MAX_MSG_LEN, vaf->fmt,
 				       *vaf->va) >= MAX_MSG_LEN);
 	),
-	TP_prपूर्णांकk("%s: %s", __get_str(func), __get_str(msg))
+	TP_printk("%s: %s", __get_str(func), __get_str(msg))
 );
 
 TRACE_EVENT(brcmf_dbg,
-	TP_PROTO(u32 level, स्थिर अक्षर *func, काष्ठा va_क्रमmat *vaf),
+	TP_PROTO(u32 level, const char *func, struct va_format *vaf),
 	TP_ARGS(level, func, vaf),
 	TP_STRUCT__entry(
 		__field(u32, level)
 		__string(func, func)
-		__dynamic_array(अक्षर, msg, MAX_MSG_LEN)
+		__dynamic_array(char, msg, MAX_MSG_LEN)
 	),
 	TP_fast_assign(
 		__entry->level = level;
 		__assign_str(func, func);
-		WARN_ON_ONCE(vsnम_लिखो(__get_dynamic_array(msg),
+		WARN_ON_ONCE(vsnprintf(__get_dynamic_array(msg),
 				       MAX_MSG_LEN, vaf->fmt,
 				       *vaf->va) >= MAX_MSG_LEN);
 	),
-	TP_prपूर्णांकk("%s: %s", __get_str(func), __get_str(msg))
+	TP_printk("%s: %s", __get_str(func), __get_str(msg))
 );
 
 TRACE_EVENT(brcmf_hexdump,
-	TP_PROTO(व्योम *data, माप_प्रकार len),
+	TP_PROTO(void *data, size_t len),
 	TP_ARGS(data, len),
 	TP_STRUCT__entry(
-		__field(अचिन्हित दीर्घ, len)
-		__field(अचिन्हित दीर्घ, addr)
+		__field(unsigned long, len)
+		__field(unsigned long, addr)
 		__dynamic_array(u8, hdata, len)
 	),
 	TP_fast_assign(
 		__entry->len = len;
-		__entry->addr = (अचिन्हित दीर्घ)data;
-		स_नकल(__get_dynamic_array(hdata), data, len);
+		__entry->addr = (unsigned long)data;
+		memcpy(__get_dynamic_array(hdata), data, len);
 	),
-	TP_prपूर्णांकk("hexdump [addr=%lx, length=%lu]", __entry->addr, __entry->len)
+	TP_printk("hexdump [addr=%lx, length=%lu]", __entry->addr, __entry->len)
 );
 
 TRACE_EVENT(brcmf_bcdchdr,
-	TP_PROTO(व्योम *data),
+	TP_PROTO(void *data),
 	TP_ARGS(data),
 	TP_STRUCT__entry(
 		__field(u8, flags)
 		__field(u8, prio)
 		__field(u8, flags2)
 		__field(u32, siglen)
-		__dynamic_array(u8, संकेत, *((u8 *)data + 3) * 4)
+		__dynamic_array(u8, signal, *((u8 *)data + 3) * 4)
 	),
 	TP_fast_assign(
 		__entry->flags = *(u8 *)data;
 		__entry->prio = *((u8 *)data + 1);
 		__entry->flags2 = *((u8 *)data + 2);
 		__entry->siglen = *((u8 *)data + 3) * 4;
-		स_नकल(__get_dynamic_array(संकेत),
+		memcpy(__get_dynamic_array(signal),
 		       (u8 *)data + 4, __entry->siglen);
 	),
-	TP_prपूर्णांकk("bcdc: prio=%d siglen=%d", __entry->prio, __entry->siglen)
+	TP_printk("bcdc: prio=%d siglen=%d", __entry->prio, __entry->siglen)
 );
 
-#अगर_अघोषित SDPCM_RX
-#घोषणा SDPCM_RX	0
-#पूर्ण_अगर
-#अगर_अघोषित SDPCM_TX
-#घोषणा SDPCM_TX	1
-#पूर्ण_अगर
-#अगर_अघोषित SDPCM_GLOM
-#घोषणा SDPCM_GLOM	2
-#पूर्ण_अगर
+#ifndef SDPCM_RX
+#define SDPCM_RX	0
+#endif
+#ifndef SDPCM_TX
+#define SDPCM_TX	1
+#endif
+#ifndef SDPCM_GLOM
+#define SDPCM_GLOM	2
+#endif
 
 TRACE_EVENT(brcmf_sdpcm_hdr,
-	TP_PROTO(u8 dir, व्योम *data),
+	TP_PROTO(u8 dir, void *data),
 	TP_ARGS(dir, data),
 	TP_STRUCT__entry(
 		__field(u8, dir)
@@ -119,24 +118,24 @@ TRACE_EVENT(brcmf_sdpcm_hdr,
 		__dynamic_array(u8, hdr, dir == SDPCM_GLOM ? 20 : 12)
 	),
 	TP_fast_assign(
-		स_नकल(__get_dynamic_array(hdr), data, dir == SDPCM_GLOM ? 20 : 12);
+		memcpy(__get_dynamic_array(hdr), data, dir == SDPCM_GLOM ? 20 : 12);
 		__entry->len = *(u8 *)data | (*((u8 *)data + 1) << 8);
 		__entry->dir = dir;
 	),
-	TP_prपूर्णांकk("sdpcm: %s len %u, seq %d",
+	TP_printk("sdpcm: %s len %u, seq %d",
 		  __entry->dir == SDPCM_RX ? "RX" : "TX",
 		  __entry->len, ((u8 *)__get_dynamic_array(hdr))[4])
 );
 
-#अगर_घोषित CONFIG_BRCM_TRACING
+#ifdef CONFIG_BRCM_TRACING
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
-#अघोषित TRACE_INCLUDE_खाता
-#घोषणा TRACE_INCLUDE_खाता tracepoपूर्णांक
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
+#undef TRACE_INCLUDE_FILE
+#define TRACE_INCLUDE_FILE tracepoint
 
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>
 
-#पूर्ण_अगर /* CONFIG_BRCM_TRACING */
+#endif /* CONFIG_BRCM_TRACING */
 
-#पूर्ण_अगर /* BRCMF_TRACEPOINT_H_ */
+#endif /* BRCMF_TRACEPOINT_H_ */

@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pid.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश "bpf_preload.h"
+// SPDX-License-Identifier: GPL-2.0
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/pid.h>
+#include <linux/fs.h>
+#include <linux/sched/signal.h>
+#include "bpf_preload.h"
 
-बाह्य अक्षर bpf_preload_umd_start;
-बाह्य अक्षर bpf_preload_umd_end;
+extern char bpf_preload_umd_start;
+extern char bpf_preload_umd_end;
 
-अटल पूर्णांक preload(काष्ठा bpf_preload_info *obj);
-अटल पूर्णांक finish(व्योम);
+static int preload(struct bpf_preload_info *obj);
+static int finish(void);
 
-अटल काष्ठा bpf_preload_ops umd_ops = अणु
+static struct bpf_preload_ops umd_ops = {
 	.info.driver_name = "bpf_preload",
 	.preload = preload,
 	.finish = finish,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक preload(काष्ठा bpf_preload_info *obj)
-अणु
-	पूर्णांक magic = BPF_PRELOAD_START;
+static int preload(struct bpf_preload_info *obj)
+{
+	int magic = BPF_PRELOAD_START;
 	loff_t pos = 0;
-	पूर्णांक i, err;
-	sमाप_प्रकार n;
+	int i, err;
+	ssize_t n;
 
-	err = विभाजन_usermode_driver(&umd_ops.info);
-	अगर (err)
-		वापस err;
+	err = fork_usermode_driver(&umd_ops.info);
+	if (err)
+		return err;
 
 	/* send the start magic to let UMD proceed with loading BPF progs */
-	n = kernel_ग_लिखो(umd_ops.info.pipe_to_umh,
-			 &magic, माप(magic), &pos);
-	अगर (n != माप(magic))
-		वापस -EPIPE;
+	n = kernel_write(umd_ops.info.pipe_to_umh,
+			 &magic, sizeof(magic), &pos);
+	if (n != sizeof(magic))
+		return -EPIPE;
 
 	/* receive bpf_link IDs and names from UMD */
 	pos = 0;
-	क्रम (i = 0; i < BPF_PRELOAD_LINKS; i++) अणु
-		n = kernel_पढ़ो(umd_ops.info.pipe_from_umh,
-				&obj[i], माप(*obj), &pos);
-		अगर (n != माप(*obj))
-			वापस -EPIPE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i = 0; i < BPF_PRELOAD_LINKS; i++) {
+		n = kernel_read(umd_ops.info.pipe_from_umh,
+				&obj[i], sizeof(*obj), &pos);
+		if (n != sizeof(*obj))
+			return -EPIPE;
+	}
+	return 0;
+}
 
-अटल पूर्णांक finish(व्योम)
-अणु
-	पूर्णांक magic = BPF_PRELOAD_END;
-	काष्ठा pid *tgid;
+static int finish(void)
+{
+	int magic = BPF_PRELOAD_END;
+	struct pid *tgid;
 	loff_t pos = 0;
-	sमाप_प्रकार n;
+	ssize_t n;
 
-	/* send the last magic to UMD. It will करो a normal निकास. */
-	n = kernel_ग_लिखो(umd_ops.info.pipe_to_umh,
-			 &magic, माप(magic), &pos);
-	अगर (n != माप(magic))
-		वापस -EPIPE;
+	/* send the last magic to UMD. It will do a normal exit. */
+	n = kernel_write(umd_ops.info.pipe_to_umh,
+			 &magic, sizeof(magic), &pos);
+	if (n != sizeof(magic))
+		return -EPIPE;
 
 	tgid = umd_ops.info.tgid;
-	अगर (tgid) अणु
-		रुको_event(tgid->रुको_pidfd, thपढ़ो_group_निकासed(tgid));
+	if (tgid) {
+		wait_event(tgid->wait_pidfd, thread_group_exited(tgid));
 		umd_cleanup_helper(&umd_ops.info);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक __init load_umd(व्योम)
-अणु
-	पूर्णांक err;
+static int __init load_umd(void)
+{
+	int err;
 
 	err = umd_load_blob(&umd_ops.info, &bpf_preload_umd_start,
 			    &bpf_preload_umd_end - &bpf_preload_umd_start);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	bpf_preload_ops = &umd_ops;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास fini_umd(व्योम)
-अणु
-	काष्ठा pid *tgid;
+static void __exit fini_umd(void)
+{
+	struct pid *tgid;
 
-	bpf_preload_ops = शून्य;
+	bpf_preload_ops = NULL;
 
-	/* समाप्त UMD in हाल it's still there due to earlier error */
+	/* kill UMD in case it's still there due to earlier error */
 	tgid = umd_ops.info.tgid;
-	अगर (tgid) अणु
-		समाप्त_pid(tgid, SIGKILL, 1);
+	if (tgid) {
+		kill_pid(tgid, SIGKILL, 1);
 
-		रुको_event(tgid->रुको_pidfd, thपढ़ो_group_निकासed(tgid));
+		wait_event(tgid->wait_pidfd, thread_group_exited(tgid));
 		umd_cleanup_helper(&umd_ops.info);
-	पूर्ण
+	}
 	umd_unload_blob(&umd_ops.info);
-पूर्ण
+}
 late_initcall(load_umd);
-module_निकास(fini_umd);
+module_exit(fini_umd);
 MODULE_LICENSE("GPL");

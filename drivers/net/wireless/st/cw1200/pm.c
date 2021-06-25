@@ -1,205 +1,204 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Mac80211 घातer management API क्रम ST-Ericsson CW1200 drivers
+ * Mac80211 power management API for ST-Ericsson CW1200 drivers
  *
  * Copyright (c) 2011, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश "cw1200.h"
-#समावेश "pm.h"
-#समावेश "sta.h"
-#समावेश "bh.h"
-#समावेश "hwbus.h"
+#include <linux/module.h>
+#include <linux/if_ether.h>
+#include "cw1200.h"
+#include "pm.h"
+#include "sta.h"
+#include "bh.h"
+#include "hwbus.h"
 
-#घोषणा CW1200_BEACON_SKIPPING_MULTIPLIER 3
+#define CW1200_BEACON_SKIPPING_MULTIPLIER 3
 
-काष्ठा cw1200_udp_port_filter अणु
-	काष्ठा wsm_udp_port_filter_hdr hdr;
+struct cw1200_udp_port_filter {
+	struct wsm_udp_port_filter_hdr hdr;
 	/* Up to 4 filters are allowed. */
-	काष्ठा wsm_udp_port_filter filters[WSM_MAX_FILTER_ELEMENTS];
-पूर्ण __packed;
+	struct wsm_udp_port_filter filters[WSM_MAX_FILTER_ELEMENTS];
+} __packed;
 
-काष्ठा cw1200_ether_type_filter अणु
-	काष्ठा wsm_ether_type_filter_hdr hdr;
+struct cw1200_ether_type_filter {
+	struct wsm_ether_type_filter_hdr hdr;
 	/* Up to 4 filters are allowed. */
-	काष्ठा wsm_ether_type_filter filters[WSM_MAX_FILTER_ELEMENTS];
-पूर्ण __packed;
+	struct wsm_ether_type_filter filters[WSM_MAX_FILTER_ELEMENTS];
+} __packed;
 
-अटल काष्ठा cw1200_udp_port_filter cw1200_udp_port_filter_on = अणु
+static struct cw1200_udp_port_filter cw1200_udp_port_filter_on = {
 	.hdr.num = 2,
-	.filters = अणु
-		[0] = अणु
+	.filters = {
+		[0] = {
 			.action = WSM_FILTER_ACTION_FILTER_OUT,
 			.type = WSM_FILTER_PORT_TYPE_DST,
 			.port = __cpu_to_le16(67), /* DHCP Bootps */
-		पूर्ण,
-		[1] = अणु
+		},
+		[1] = {
 			.action = WSM_FILTER_ACTION_FILTER_OUT,
 			.type = WSM_FILTER_PORT_TYPE_DST,
 			.port = __cpu_to_le16(68), /* DHCP Bootpc */
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+		},
+	}
+};
 
-अटल काष्ठा wsm_udp_port_filter_hdr cw1200_udp_port_filter_off = अणु
+static struct wsm_udp_port_filter_hdr cw1200_udp_port_filter_off = {
 	.num = 0,
-पूर्ण;
+};
 
-#अगर_अघोषित ETH_P_WAPI
-#घोषणा ETH_P_WAPI     0x88B4
-#पूर्ण_अगर
+#ifndef ETH_P_WAPI
+#define ETH_P_WAPI     0x88B4
+#endif
 
-अटल काष्ठा cw1200_ether_type_filter cw1200_ether_type_filter_on = अणु
+static struct cw1200_ether_type_filter cw1200_ether_type_filter_on = {
 	.hdr.num = 4,
-	.filters = अणु
-		[0] = अणु
+	.filters = {
+		[0] = {
 			.action = WSM_FILTER_ACTION_FILTER_IN,
 			.type = __cpu_to_le16(ETH_P_IP),
-		पूर्ण,
-		[1] = अणु
+		},
+		[1] = {
 			.action = WSM_FILTER_ACTION_FILTER_IN,
 			.type = __cpu_to_le16(ETH_P_PAE),
-		पूर्ण,
-		[2] = अणु
+		},
+		[2] = {
 			.action = WSM_FILTER_ACTION_FILTER_IN,
 			.type = __cpu_to_le16(ETH_P_WAPI),
-		पूर्ण,
-		[3] = अणु
+		},
+		[3] = {
 			.action = WSM_FILTER_ACTION_FILTER_IN,
 			.type = __cpu_to_le16(ETH_P_ARP),
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल काष्ठा wsm_ether_type_filter_hdr cw1200_ether_type_filter_off = अणु
+static struct wsm_ether_type_filter_hdr cw1200_ether_type_filter_off = {
 	.num = 0,
-पूर्ण;
+};
 
-/* निजी */
-काष्ठा cw1200_suspend_state अणु
-	अचिन्हित दीर्घ bss_loss_पंचांगo;
-	अचिन्हित दीर्घ join_पंचांगo;
-	अचिन्हित दीर्घ direct_probe;
-	अचिन्हित दीर्घ link_id_gc;
+/* private */
+struct cw1200_suspend_state {
+	unsigned long bss_loss_tmo;
+	unsigned long join_tmo;
+	unsigned long direct_probe;
+	unsigned long link_id_gc;
 	bool beacon_skipping;
 	u8 prev_ps_mode;
-पूर्ण;
+};
 
-अटल व्योम cw1200_pm_stay_awake_पंचांगo(काष्ठा समयr_list *unused)
-अणु
-	/* XXX what's the poपूर्णांक of this ? */
-पूर्ण
+static void cw1200_pm_stay_awake_tmo(struct timer_list *unused)
+{
+	/* XXX what's the point of this ? */
+}
 
-पूर्णांक cw1200_pm_init(काष्ठा cw1200_pm_state *pm,
-		   काष्ठा cw1200_common *priv)
-अणु
+int cw1200_pm_init(struct cw1200_pm_state *pm,
+		   struct cw1200_common *priv)
+{
 	spin_lock_init(&pm->lock);
 
-	समयr_setup(&pm->stay_awake, cw1200_pm_stay_awake_पंचांगo, 0);
+	timer_setup(&pm->stay_awake, cw1200_pm_stay_awake_tmo, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cw1200_pm_deinit(काष्ठा cw1200_pm_state *pm)
-अणु
-	del_समयr_sync(&pm->stay_awake);
-पूर्ण
+void cw1200_pm_deinit(struct cw1200_pm_state *pm)
+{
+	del_timer_sync(&pm->stay_awake);
+}
 
-व्योम cw1200_pm_stay_awake(काष्ठा cw1200_pm_state *pm,
-			  अचिन्हित दीर्घ पंचांगo)
-अणु
-	दीर्घ cur_पंचांगo;
+void cw1200_pm_stay_awake(struct cw1200_pm_state *pm,
+			  unsigned long tmo)
+{
+	long cur_tmo;
 	spin_lock_bh(&pm->lock);
-	cur_पंचांगo = pm->stay_awake.expires - jअगरfies;
-	अगर (!समयr_pending(&pm->stay_awake) || cur_पंचांगo < (दीर्घ)पंचांगo)
-		mod_समयr(&pm->stay_awake, jअगरfies + पंचांगo);
+	cur_tmo = pm->stay_awake.expires - jiffies;
+	if (!timer_pending(&pm->stay_awake) || cur_tmo < (long)tmo)
+		mod_timer(&pm->stay_awake, jiffies + tmo);
 	spin_unlock_bh(&pm->lock);
-पूर्ण
+}
 
-अटल दीर्घ cw1200_suspend_work(काष्ठा delayed_work *work)
-अणु
-	पूर्णांक ret = cancel_delayed_work(work);
-	दीर्घ पंचांगo;
-	अगर (ret > 0) अणु
+static long cw1200_suspend_work(struct delayed_work *work)
+{
+	int ret = cancel_delayed_work(work);
+	long tmo;
+	if (ret > 0) {
 		/* Timer is pending */
-		पंचांगo = work->समयr.expires - jअगरfies;
-		अगर (पंचांगo < 0)
-			पंचांगo = 0;
-	पूर्ण अन्यथा अणु
-		पंचांगo = -1;
-	पूर्ण
-	वापस पंचांगo;
-पूर्ण
+		tmo = work->timer.expires - jiffies;
+		if (tmo < 0)
+			tmo = 0;
+	} else {
+		tmo = -1;
+	}
+	return tmo;
+}
 
-अटल पूर्णांक cw1200_resume_work(काष्ठा cw1200_common *priv,
-			       काष्ठा delayed_work *work,
-			       अचिन्हित दीर्घ पंचांगo)
-अणु
-	अगर ((दीर्घ)पंचांगo < 0)
-		वापस 1;
+static int cw1200_resume_work(struct cw1200_common *priv,
+			       struct delayed_work *work,
+			       unsigned long tmo)
+{
+	if ((long)tmo < 0)
+		return 1;
 
-	वापस queue_delayed_work(priv->workqueue, work, पंचांगo);
-पूर्ण
+	return queue_delayed_work(priv->workqueue, work, tmo);
+}
 
-पूर्णांक cw1200_can_suspend(काष्ठा cw1200_common *priv)
-अणु
-	अगर (atomic_पढ़ो(&priv->bh_rx)) अणु
+int cw1200_can_suspend(struct cw1200_common *priv)
+{
+	if (atomic_read(&priv->bh_rx)) {
 		wiphy_dbg(priv->hw->wiphy, "Suspend interrupted.\n");
-		वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		return 0;
+	}
+	return 1;
+}
 EXPORT_SYMBOL_GPL(cw1200_can_suspend);
 
-पूर्णांक cw1200_wow_suspend(काष्ठा ieee80211_hw *hw, काष्ठा cfg80211_wowlan *wowlan)
-अणु
-	काष्ठा cw1200_common *priv = hw->priv;
-	काष्ठा cw1200_pm_state *pm_state = &priv->pm_state;
-	काष्ठा cw1200_suspend_state *state;
-	पूर्णांक ret;
+int cw1200_wow_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
+{
+	struct cw1200_common *priv = hw->priv;
+	struct cw1200_pm_state *pm_state = &priv->pm_state;
+	struct cw1200_suspend_state *state;
+	int ret;
 
 	spin_lock_bh(&pm_state->lock);
-	ret = समयr_pending(&pm_state->stay_awake);
+	ret = timer_pending(&pm_state->stay_awake);
 	spin_unlock_bh(&pm_state->lock);
-	अगर (ret)
-		वापस -EAGAIN;
+	if (ret)
+		return -EAGAIN;
 
 	/* Do not suspend when datapath is not idle */
-	अगर (priv->tx_queue_stats.num_queued)
-		वापस -EBUSY;
+	if (priv->tx_queue_stats.num_queued)
+		return -EBUSY;
 
 	/* Make sure there is no configuration requests in progress. */
-	अगर (!mutex_trylock(&priv->conf_mutex))
-		वापस -EBUSY;
+	if (!mutex_trylock(&priv->conf_mutex))
+		return -EBUSY;
 
-	/* Ensure pending operations are करोne.
-	 * Note also that wow_suspend must वापस in ~2.5sec, beक्रमe
-	 * watchकरोg is triggered.
+	/* Ensure pending operations are done.
+	 * Note also that wow_suspend must return in ~2.5sec, before
+	 * watchdog is triggered.
 	 */
-	अगर (priv->channel_चयन_in_progress)
-		जाओ revert1;
+	if (priv->channel_switch_in_progress)
+		goto revert1;
 
 	/* Do not suspend when join is pending */
-	अगर (priv->join_pending)
-		जाओ revert1;
+	if (priv->join_pending)
+		goto revert1;
 
 	/* Do not suspend when scanning */
-	अगर (करोwn_trylock(&priv->scan.lock))
-		जाओ revert1;
+	if (down_trylock(&priv->scan.lock))
+		goto revert1;
 
 	/* Lock TX. */
 	wsm_lock_tx_async(priv);
 
-	/* Wait to aव्योम possible race with bh code.
-	 * But करो not रुको too दीर्घ...
+	/* Wait to avoid possible race with bh code.
+	 * But do not wait too long...
 	 */
-	अगर (रुको_event_समयout(priv->bh_evt_wq,
+	if (wait_event_timeout(priv->bh_evt_wq,
 			       !priv->hw_bufs_used, HZ / 10) <= 0)
-		जाओ revert2;
+		goto revert2;
 
 	/* Set UDP filter */
 	wsm_set_udp_port_filter(priv, &cw1200_udp_port_filter_on.hdr);
@@ -208,28 +207,28 @@ EXPORT_SYMBOL_GPL(cw1200_can_suspend);
 	wsm_set_ether_type_filter(priv, &cw1200_ether_type_filter_on.hdr);
 
 	/* Allocate state */
-	state = kzalloc(माप(काष्ठा cw1200_suspend_state), GFP_KERNEL);
-	अगर (!state)
-		जाओ revert3;
+	state = kzalloc(sizeof(struct cw1200_suspend_state), GFP_KERNEL);
+	if (!state)
+		goto revert3;
 
-	/* Change to legacy PS जबतक going to suspend */
-	अगर (!priv->vअगर->p2p &&
+	/* Change to legacy PS while going to suspend */
+	if (!priv->vif->p2p &&
 	    priv->join_status == CW1200_JOIN_STATUS_STA &&
-	    priv->घातersave_mode.mode != WSM_PSM_PS) अणु
-		state->prev_ps_mode = priv->घातersave_mode.mode;
-		priv->घातersave_mode.mode = WSM_PSM_PS;
-		cw1200_set_pm(priv, &priv->घातersave_mode);
-		अगर (रुको_event_पूर्णांकerruptible_समयout(priv->ps_mode_चयन_करोne,
-						     !priv->ps_mode_चयन_in_progress, 1*HZ) <= 0) अणु
-			जाओ revert4;
-		पूर्ण
-	पूर्ण
+	    priv->powersave_mode.mode != WSM_PSM_PS) {
+		state->prev_ps_mode = priv->powersave_mode.mode;
+		priv->powersave_mode.mode = WSM_PSM_PS;
+		cw1200_set_pm(priv, &priv->powersave_mode);
+		if (wait_event_interruptible_timeout(priv->ps_mode_switch_done,
+						     !priv->ps_mode_switch_in_progress, 1*HZ) <= 0) {
+			goto revert4;
+		}
+	}
 
 	/* Store delayed work states. */
-	state->bss_loss_पंचांगo =
+	state->bss_loss_tmo =
 		cw1200_suspend_work(&priv->bss_loss_work);
-	state->join_पंचांगo =
-		cw1200_suspend_work(&priv->join_समयout);
+	state->join_tmo =
+		cw1200_suspend_work(&priv->join_timeout);
 	state->direct_probe =
 		cw1200_suspend_work(&priv->scan.probe_work);
 	state->link_id_gc =
@@ -239,56 +238,56 @@ EXPORT_SYMBOL_GPL(cw1200_can_suspend);
 	atomic_set(&priv->recent_scan, 0);
 
 	/* Enable beacon skipping */
-	अगर (priv->join_status == CW1200_JOIN_STATUS_STA &&
+	if (priv->join_status == CW1200_JOIN_STATUS_STA &&
 	    priv->join_dtim_period &&
-	    !priv->has_multicast_subscription) अणु
+	    !priv->has_multicast_subscription) {
 		state->beacon_skipping = true;
 		wsm_set_beacon_wakeup_period(priv,
 					     priv->join_dtim_period,
 					     CW1200_BEACON_SKIPPING_MULTIPLIER * priv->join_dtim_period);
-	पूर्ण
+	}
 
-	/* Stop serving thपढ़ो */
-	अगर (cw1200_bh_suspend(priv))
-		जाओ revert5;
+	/* Stop serving thread */
+	if (cw1200_bh_suspend(priv))
+		goto revert5;
 
-	ret = समयr_pending(&priv->mcast_समयout);
-	अगर (ret)
-		जाओ revert6;
+	ret = timer_pending(&priv->mcast_timeout);
+	if (ret)
+		goto revert6;
 
 	/* Store suspend state */
 	pm_state->suspend_state = state;
 
 	/* Enable IRQ wake */
-	ret = priv->hwbus_ops->घातer_mgmt(priv->hwbus_priv, true);
-	अगर (ret) अणु
+	ret = priv->hwbus_ops->power_mgmt(priv->hwbus_priv, true);
+	if (ret) {
 		wiphy_err(priv->hw->wiphy,
 			  "PM request failed: %d. WoW is disabled.\n", ret);
 		cw1200_wow_resume(hw);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Force resume अगर event is coming from the device. */
-	अगर (atomic_पढ़ो(&priv->bh_rx)) अणु
+	/* Force resume if event is coming from the device. */
+	if (atomic_read(&priv->bh_rx)) {
 		cw1200_wow_resume(hw);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	वापस 0;
+	return 0;
 
 revert6:
 	WARN_ON(cw1200_bh_resume(priv));
 revert5:
 	cw1200_resume_work(priv, &priv->bss_loss_work,
-			   state->bss_loss_पंचांगo);
-	cw1200_resume_work(priv, &priv->join_समयout,
-			   state->join_पंचांगo);
+			   state->bss_loss_tmo);
+	cw1200_resume_work(priv, &priv->join_timeout,
+			   state->join_tmo);
 	cw1200_resume_work(priv, &priv->scan.probe_work,
 			   state->direct_probe);
 	cw1200_resume_work(priv, &priv->link_id_gc_work,
 			   state->link_id_gc);
 revert4:
-	kमुक्त(state);
+	kfree(state);
 revert3:
 	wsm_set_udp_port_filter(priv, &cw1200_udp_port_filter_off);
 	wsm_set_ether_type_filter(priv, &cw1200_ether_type_filter_off);
@@ -297,49 +296,49 @@ revert2:
 	up(&priv->scan.lock);
 revert1:
 	mutex_unlock(&priv->conf_mutex);
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-पूर्णांक cw1200_wow_resume(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा cw1200_common *priv = hw->priv;
-	काष्ठा cw1200_pm_state *pm_state = &priv->pm_state;
-	काष्ठा cw1200_suspend_state *state;
+int cw1200_wow_resume(struct ieee80211_hw *hw)
+{
+	struct cw1200_common *priv = hw->priv;
+	struct cw1200_pm_state *pm_state = &priv->pm_state;
+	struct cw1200_suspend_state *state;
 
 	state = pm_state->suspend_state;
-	pm_state->suspend_state = शून्य;
+	pm_state->suspend_state = NULL;
 
 	/* Disable IRQ wake */
-	priv->hwbus_ops->घातer_mgmt(priv->hwbus_priv, false);
+	priv->hwbus_ops->power_mgmt(priv->hwbus_priv, false);
 
-	/* Scan.lock must be released beक्रमe BH is resumed other way
-	 * in हाल when BSS_LOST command arrived the processing of the
+	/* Scan.lock must be released before BH is resumed other way
+	 * in case when BSS_LOST command arrived the processing of the
 	 * command will be delayed.
 	 */
 	up(&priv->scan.lock);
 
-	/* Resume BH thपढ़ो */
+	/* Resume BH thread */
 	WARN_ON(cw1200_bh_resume(priv));
 
 	/* Restores previous PS mode */
-	अगर (!priv->vअगर->p2p && priv->join_status == CW1200_JOIN_STATUS_STA) अणु
-		priv->घातersave_mode.mode = state->prev_ps_mode;
-		cw1200_set_pm(priv, &priv->घातersave_mode);
-	पूर्ण
+	if (!priv->vif->p2p && priv->join_status == CW1200_JOIN_STATUS_STA) {
+		priv->powersave_mode.mode = state->prev_ps_mode;
+		cw1200_set_pm(priv, &priv->powersave_mode);
+	}
 
-	अगर (state->beacon_skipping) अणु
-		wsm_set_beacon_wakeup_period(priv, priv->beacon_पूर्णांक *
+	if (state->beacon_skipping) {
+		wsm_set_beacon_wakeup_period(priv, priv->beacon_int *
 					     priv->join_dtim_period >
 					     MAX_BEACON_SKIP_TIME_MS ? 1 :
 					     priv->join_dtim_period, 0);
 		state->beacon_skipping = false;
-	पूर्ण
+	}
 
 	/* Resume delayed work */
 	cw1200_resume_work(priv, &priv->bss_loss_work,
-			   state->bss_loss_पंचांगo);
-	cw1200_resume_work(priv, &priv->join_समयout,
-			   state->join_पंचांगo);
+			   state->bss_loss_tmo);
+	cw1200_resume_work(priv, &priv->join_timeout,
+			   state->join_tmo);
 	cw1200_resume_work(priv, &priv->scan.probe_work,
 			   state->direct_probe);
 	cw1200_resume_work(priv, &priv->link_id_gc_work,
@@ -358,7 +357,7 @@ revert1:
 	mutex_unlock(&priv->conf_mutex);
 
 	/* Free memory */
-	kमुक्त(state);
+	kfree(state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

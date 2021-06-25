@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * processor thermal device RFIM control
  * Copyright (c) 2020, Intel Corporation.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश "processor_thermal_device.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include "processor_thermal_device.h"
 
-अटल काष्ठा rapl_अगर_priv rapl_mmio_priv;
+static struct rapl_if_priv rapl_mmio_priv;
 
-अटल स्थिर काष्ठा rapl_mmio_regs rapl_mmio_शेष = अणु
+static const struct rapl_mmio_regs rapl_mmio_default = {
 	.reg_unit = 0x5938,
-	.regs[RAPL_DOMAIN_PACKAGE] = अणु 0x59a0, 0x593c, 0x58f0, 0, 0x5930पूर्ण,
-	.regs[RAPL_DOMAIN_DRAM] = अणु 0x58e0, 0x58e8, 0x58ec, 0, 0पूर्ण,
+	.regs[RAPL_DOMAIN_PACKAGE] = { 0x59a0, 0x593c, 0x58f0, 0, 0x5930},
+	.regs[RAPL_DOMAIN_DRAM] = { 0x58e0, 0x58e8, 0x58ec, 0, 0},
 	.limits[RAPL_DOMAIN_PACKAGE] = 2,
 	.limits[RAPL_DOMAIN_DRAM] = 2,
-पूर्ण;
+};
 
-अटल पूर्णांक rapl_mmio_cpu_online(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा rapl_package *rp;
+static int rapl_mmio_cpu_online(unsigned int cpu)
+{
+	struct rapl_package *rp;
 
-	/* mmio rapl supports package 0 only क्रम now */
-	अगर (topology_physical_package_id(cpu))
-		वापस 0;
+	/* mmio rapl supports package 0 only for now */
+	if (topology_physical_package_id(cpu))
+		return 0;
 
-	rp = rapl_find_package_करोमुख्य(cpu, &rapl_mmio_priv);
-	अगर (!rp) अणु
+	rp = rapl_find_package_domain(cpu, &rapl_mmio_priv);
+	if (!rp) {
 		rp = rapl_add_package(cpu, &rapl_mmio_priv);
-		अगर (IS_ERR(rp))
-			वापस PTR_ERR(rp);
-	पूर्ण
+		if (IS_ERR(rp))
+			return PTR_ERR(rp);
+	}
 	cpumask_set_cpu(cpu, &rp->cpumask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rapl_mmio_cpu_करोwn_prep(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा rapl_package *rp;
-	पूर्णांक lead_cpu;
+static int rapl_mmio_cpu_down_prep(unsigned int cpu)
+{
+	struct rapl_package *rp;
+	int lead_cpu;
 
-	rp = rapl_find_package_करोमुख्य(cpu, &rapl_mmio_priv);
-	अगर (!rp)
-		वापस 0;
+	rp = rapl_find_package_domain(cpu, &rapl_mmio_priv);
+	if (!rp)
+		return 0;
 
 	cpumask_clear_cpu(cpu, &rp->cpumask);
 	lead_cpu = cpumask_first(&rp->cpumask);
-	अगर (lead_cpu >= nr_cpu_ids)
-		rapl_हटाओ_package(rp);
-	अन्यथा अगर (rp->lead_cpu == cpu)
+	if (lead_cpu >= nr_cpu_ids)
+		rapl_remove_package(rp);
+	else if (rp->lead_cpu == cpu)
 		rp->lead_cpu = lead_cpu;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rapl_mmio_पढ़ो_raw(पूर्णांक cpu, काष्ठा reg_action *ra)
-अणु
-	अगर (!ra->reg)
-		वापस -EINVAL;
+static int rapl_mmio_read_raw(int cpu, struct reg_action *ra)
+{
+	if (!ra->reg)
+		return -EINVAL;
 
-	ra->value = पढ़ोq((व्योम __iomem *)ra->reg);
+	ra->value = readq((void __iomem *)ra->reg);
 	ra->value &= ra->mask;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rapl_mmio_ग_लिखो_raw(पूर्णांक cpu, काष्ठा reg_action *ra)
-अणु
+static int rapl_mmio_write_raw(int cpu, struct reg_action *ra)
+{
 	u64 val;
 
-	अगर (!ra->reg)
-		वापस -EINVAL;
+	if (!ra->reg)
+		return -EINVAL;
 
-	val = पढ़ोq((व्योम __iomem *)ra->reg);
+	val = readq((void __iomem *)ra->reg);
 	val &= ~ra->mask;
 	val |= ra->value;
-	ग_लिखोq(val, (व्योम __iomem *)ra->reg);
-	वापस 0;
-पूर्ण
+	writeq(val, (void __iomem *)ra->reg);
+	return 0;
+}
 
-पूर्णांक proc_thermal_rapl_add(काष्ठा pci_dev *pdev, काष्ठा proc_thermal_device *proc_priv)
-अणु
-	स्थिर काष्ठा rapl_mmio_regs *rapl_regs = &rapl_mmio_शेष;
-	क्रमागत rapl_करोमुख्य_reg_id reg;
-	क्रमागत rapl_करोमुख्य_type करोमुख्य;
-	पूर्णांक ret;
+int proc_thermal_rapl_add(struct pci_dev *pdev, struct proc_thermal_device *proc_priv)
+{
+	const struct rapl_mmio_regs *rapl_regs = &rapl_mmio_default;
+	enum rapl_domain_reg_id reg;
+	enum rapl_domain_type domain;
+	int ret;
 
-	अगर (!rapl_regs)
-		वापस 0;
+	if (!rapl_regs)
+		return 0;
 
-	क्रम (करोमुख्य = RAPL_DOMAIN_PACKAGE; करोमुख्य < RAPL_DOMAIN_MAX; करोमुख्य++) अणु
-		क्रम (reg = RAPL_DOMAIN_REG_LIMIT; reg < RAPL_DOMAIN_REG_MAX; reg++)
-			अगर (rapl_regs->regs[करोमुख्य][reg])
-				rapl_mmio_priv.regs[करोमुख्य][reg] =
+	for (domain = RAPL_DOMAIN_PACKAGE; domain < RAPL_DOMAIN_MAX; domain++) {
+		for (reg = RAPL_DOMAIN_REG_LIMIT; reg < RAPL_DOMAIN_REG_MAX; reg++)
+			if (rapl_regs->regs[domain][reg])
+				rapl_mmio_priv.regs[domain][reg] =
 						(u64)proc_priv->mmio_base +
-						rapl_regs->regs[करोमुख्य][reg];
-		rapl_mmio_priv.limits[करोमुख्य] = rapl_regs->limits[करोमुख्य];
-	पूर्ण
+						rapl_regs->regs[domain][reg];
+		rapl_mmio_priv.limits[domain] = rapl_regs->limits[domain];
+	}
 	rapl_mmio_priv.reg_unit = (u64)proc_priv->mmio_base + rapl_regs->reg_unit;
 
-	rapl_mmio_priv.पढ़ो_raw = rapl_mmio_पढ़ो_raw;
-	rapl_mmio_priv.ग_लिखो_raw = rapl_mmio_ग_लिखो_raw;
+	rapl_mmio_priv.read_raw = rapl_mmio_read_raw;
+	rapl_mmio_priv.write_raw = rapl_mmio_write_raw;
 
-	rapl_mmio_priv.control_type = घातercap_रेजिस्टर_control_type(शून्य, "intel-rapl-mmio", शून्य);
-	अगर (IS_ERR(rapl_mmio_priv.control_type)) अणु
+	rapl_mmio_priv.control_type = powercap_register_control_type(NULL, "intel-rapl-mmio", NULL);
+	if (IS_ERR(rapl_mmio_priv.control_type)) {
 		pr_debug("failed to register powercap control_type.\n");
-		वापस PTR_ERR(rapl_mmio_priv.control_type);
-	पूर्ण
+		return PTR_ERR(rapl_mmio_priv.control_type);
+	}
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "powercap/rapl:online",
-				rapl_mmio_cpu_online, rapl_mmio_cpu_करोwn_prep);
-	अगर (ret < 0) अणु
-		घातercap_unरेजिस्टर_control_type(rapl_mmio_priv.control_type);
-		rapl_mmio_priv.control_type = शून्य;
-		वापस ret;
-	पूर्ण
+				rapl_mmio_cpu_online, rapl_mmio_cpu_down_prep);
+	if (ret < 0) {
+		powercap_unregister_control_type(rapl_mmio_priv.control_type);
+		rapl_mmio_priv.control_type = NULL;
+		return ret;
+	}
 	rapl_mmio_priv.pcap_rapl_online = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(proc_thermal_rapl_add);
 
-व्योम proc_thermal_rapl_हटाओ(व्योम)
-अणु
-	अगर (IS_ERR_OR_शून्य(rapl_mmio_priv.control_type))
-		वापस;
+void proc_thermal_rapl_remove(void)
+{
+	if (IS_ERR_OR_NULL(rapl_mmio_priv.control_type))
+		return;
 
-	cpuhp_हटाओ_state(rapl_mmio_priv.pcap_rapl_online);
-	घातercap_unरेजिस्टर_control_type(rapl_mmio_priv.control_type);
-पूर्ण
-EXPORT_SYMBOL_GPL(proc_thermal_rapl_हटाओ);
+	cpuhp_remove_state(rapl_mmio_priv.pcap_rapl_online);
+	powercap_unregister_control_type(rapl_mmio_priv.control_type);
+}
+EXPORT_SYMBOL_GPL(proc_thermal_rapl_remove);
 
 MODULE_LICENSE("GPL v2");

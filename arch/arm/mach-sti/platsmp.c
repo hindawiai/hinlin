@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  arch/arm/mach-sti/platsmp.c
  *
@@ -11,91 +10,91 @@
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
  */
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/memblock.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/smp.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/memblock.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/smp_scu.h>
+#include <asm/cacheflush.h>
+#include <asm/smp_plat.h>
+#include <asm/smp_scu.h>
 
-#समावेश "smp.h"
+#include "smp.h"
 
-अटल u32 __iomem *cpu_strt_ptr;
+static u32 __iomem *cpu_strt_ptr;
 
-अटल पूर्णांक sti_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	अचिन्हित दीर्घ entry_pa = __pa_symbol(secondary_startup);
+static int sti_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	unsigned long entry_pa = __pa_symbol(secondary_startup);
 
 	/*
 	 * Secondary CPU is initialised and started by a U-BOOTROM firmware.
-	 * Secondary CPU is spinning and रुकोing क्रम a ग_लिखो at cpu_strt_ptr.
+	 * Secondary CPU is spinning and waiting for a write at cpu_strt_ptr.
 	 * Writing secondary_startup address at cpu_strt_ptr makes it to
 	 * jump directly to secondary_startup().
 	 */
-	__raw_ग_लिखोl(entry_pa, cpu_strt_ptr);
+	__raw_writel(entry_pa, cpu_strt_ptr);
 
-	/* wmb so that data is actually written beक्रमe cache flush is करोne */
+	/* wmb so that data is actually written before cache flush is done */
 	smp_wmb();
 	sync_cache_w(cpu_strt_ptr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init sti_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *scu_base;
+static void __init sti_smp_prepare_cpus(unsigned int max_cpus)
+{
+	struct device_node *np;
+	void __iomem *scu_base;
 	u32 release_phys;
-	पूर्णांक cpu;
+	int cpu;
 
-	np = of_find_compatible_node(शून्य, शून्य, "arm,cortex-a9-scu");
+	np = of_find_compatible_node(NULL, NULL, "arm,cortex-a9-scu");
 
-	अगर (np) अणु
+	if (np) {
 		scu_base = of_iomap(np, 0);
 		scu_enable(scu_base);
 		of_node_put(np);
-	पूर्ण
+	}
 
-	अगर (max_cpus <= 1)
-		वापस;
+	if (max_cpus <= 1)
+		return;
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 
-		np = of_get_cpu_node(cpu, शून्य);
+		np = of_get_cpu_node(cpu, NULL);
 
-		अगर (!np)
-			जारी;
+		if (!np)
+			continue;
 
-		अगर (of_property_पढ़ो_u32(np, "cpu-release-addr",
-						&release_phys)) अणु
+		if (of_property_read_u32(np, "cpu-release-addr",
+						&release_phys)) {
 			pr_err("CPU %d: missing or invalid cpu-release-addr "
 				"property\n", cpu);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * cpu-release-addr is usually configured in SBC DMEM but can
 		 * also be in RAM.
 		 */
 
-		अगर (!memblock_is_memory(release_phys))
+		if (!memblock_is_memory(release_phys))
 			cpu_strt_ptr =
-				ioremap(release_phys, माप(release_phys));
-		अन्यथा
+				ioremap(release_phys, sizeof(release_phys));
+		else
 			cpu_strt_ptr =
 				(u32 __iomem *)phys_to_virt(release_phys);
 
 		set_cpu_possible(cpu, true);
-	पूर्ण
-पूर्ण
+	}
+}
 
-स्थिर काष्ठा smp_operations sti_smp_ops __initस्थिर = अणु
+const struct smp_operations sti_smp_ops __initconst = {
 	.smp_prepare_cpus	= sti_smp_prepare_cpus,
 	.smp_boot_secondary	= sti_boot_secondary,
-पूर्ण;
+};

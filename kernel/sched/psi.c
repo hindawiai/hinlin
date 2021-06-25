@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Pressure stall inक्रमmation क्रम CPU, memory and IO
+ * Pressure stall information for CPU, memory and IO
  *
  * Copyright (c) 2018 Facebook, Inc.
  * Author: Johannes Weiner <hannes@cmpxchg.org>
@@ -9,90 +8,90 @@
  * Copyright (c) 2018 Google, Inc.
  *
  * When CPU, memory and IO are contended, tasks experience delays that
- * reduce throughput and पूर्णांकroduce latencies पूर्णांकo the workload. Memory
- * and IO contention, in addition, can cause a full loss of क्रमward
+ * reduce throughput and introduce latencies into the workload. Memory
+ * and IO contention, in addition, can cause a full loss of forward
  * progress in which the CPU goes idle.
  *
- * This code aggregates inभागidual task delays पूर्णांकo resource pressure
+ * This code aggregates individual task delays into resource pressure
  * metrics that indicate problems with both workload health and
  * resource utilization.
  *
  *			Model
  *
- * The समय in which a task can execute on a CPU is our baseline क्रम
- * productivity. Pressure expresses the amount of समय in which this
+ * The time in which a task can execute on a CPU is our baseline for
+ * productivity. Pressure expresses the amount of time in which this
  * potential cannot be realized due to resource contention.
  *
  * This concept of productivity has two components: the workload and
  * the CPU. To measure the impact of pressure on both, we define two
- * contention states क्रम a resource: SOME and FULL.
+ * contention states for a resource: SOME and FULL.
  *
  * In the SOME state of a given resource, one or more tasks are
  * delayed on that resource. This affects the workload's ability to
- * perक्रमm work, but the CPU may still be executing other tasks.
+ * perform work, but the CPU may still be executing other tasks.
  *
  * In the FULL state of a given resource, all non-idle tasks are
  * delayed on that resource such that nobody is advancing and the CPU
  * goes idle. This leaves both workload and CPU unproductive.
  *
- * Naturally, the FULL state करोesn't exist क्रम the CPU resource at the
- * प्रणाली level, but exist at the cgroup level, means all non-idle tasks
+ * Naturally, the FULL state doesn't exist for the CPU resource at the
+ * system level, but exist at the cgroup level, means all non-idle tasks
  * in a cgroup are delayed on the CPU resource which used by others outside
  * of the cgroup or throttled by the cgroup cpu.max configuration.
  *
  *	SOME = nr_delayed_tasks != 0
  *	FULL = nr_delayed_tasks != 0 && nr_running_tasks == 0
  *
- * The percentage of wallघड़ी समय spent in those compound stall
- * states gives pressure numbers between 0 and 100 क्रम each resource,
- * where the SOME percentage indicates workload slowकरोwns and the FULL
+ * The percentage of wallclock time spent in those compound stall
+ * states gives pressure numbers between 0 and 100 for each resource,
+ * where the SOME percentage indicates workload slowdowns and the FULL
  * percentage indicates reduced CPU utilization:
  *
- *	%SOME = समय(SOME) / period
- *	%FULL = समय(FULL) / period
+ *	%SOME = time(SOME) / period
+ *	%FULL = time(FULL) / period
  *
  *			Multiple CPUs
  *
  * The more tasks and available CPUs there are, the more work can be
- * perक्रमmed concurrently. This means that the potential that can go
+ * performed concurrently. This means that the potential that can go
  * unrealized due to resource contention *also* scales with non-idle
  * tasks and CPUs.
  *
  * Consider a scenario where 257 number crunching tasks are trying to
  * run concurrently on 256 CPUs. If we simply aggregated the task
  * states, we would have to conclude a CPU SOME pressure number of
- * 100%, since *somebody* is रुकोing on a runqueue at all
- * बार. However, that is clearly not the amount of contention the
+ * 100%, since *somebody* is waiting on a runqueue at all
+ * times. However, that is clearly not the amount of contention the
  * workload is experiencing: only one out of 256 possible execution
- * thपढ़ोs will be contended at any given समय, or about 0.4%.
+ * threads will be contended at any given time, or about 0.4%.
  *
  * Conversely, consider a scenario of 4 tasks and 4 CPUs where at any
- * given समय *one* of the tasks is delayed due to a lack of memory.
+ * given time *one* of the tasks is delayed due to a lack of memory.
  * Again, looking purely at the task state would yield a memory FULL
- * pressure number of 0%, since *somebody* is always making क्रमward
+ * pressure number of 0%, since *somebody* is always making forward
  * progress. But again this wouldn't capture the amount of execution
  * potential lost, which is 1 out of 4 CPUs, or 25%.
  *
  * To calculate wasted potential (pressure) with multiple processors,
  * we have to base our calculation on the number of non-idle tasks in
  * conjunction with the number of available CPUs, which is the number
- * of potential execution thपढ़ोs. SOME becomes then the proportion of
- * delayed tasks to possible thपढ़ोs, and FULL is the share of possible
- * thपढ़ोs that are unproductive due to delays:
+ * of potential execution threads. SOME becomes then the proportion of
+ * delayed tasks to possible threads, and FULL is the share of possible
+ * threads that are unproductive due to delays:
  *
- *	thपढ़ोs = min(nr_nonidle_tasks, nr_cpus)
- *	   SOME = min(nr_delayed_tasks / thपढ़ोs, 1)
- *	   FULL = (thपढ़ोs - min(nr_running_tasks, thपढ़ोs)) / thपढ़ोs
+ *	threads = min(nr_nonidle_tasks, nr_cpus)
+ *	   SOME = min(nr_delayed_tasks / threads, 1)
+ *	   FULL = (threads - min(nr_running_tasks, threads)) / threads
  *
  * For the 257 number crunchers on 256 CPUs, this yields:
  *
- *	thपढ़ोs = min(257, 256)
+ *	threads = min(257, 256)
  *	   SOME = min(1 / 256, 1)             = 0.4%
  *	   FULL = (256 - min(257, 256)) / 256 = 0%
  *
  * For the 1 out of 4 memory-delayed tasks, this yields:
  *
- *	thपढ़ोs = min(4, 4)
+ *	threads = min(4, 4)
  *	   SOME = min(1 / 4, 1)               = 25%
  *	   FULL = (4 - min(3, 4)) / 4         = 25%
  *
@@ -101,20 +100,20 @@
  *
  *			Implementation
  *
- * To assess the precise समय spent in each such state, we would have
- * to मुक्तze the प्रणाली on task changes and start/stop the state
- * घड़ीs accordingly. Obviously that करोesn't scale in practice.
+ * To assess the precise time spent in each such state, we would have
+ * to freeze the system on task changes and start/stop the state
+ * clocks accordingly. Obviously that doesn't scale in practice.
  *
  * Because the scheduler aims to distribute the compute load evenly
  * among the available CPUs, we can track task state locally to each
- * CPU and, at much lower frequency, extrapolate the global state क्रम
- * the cumulative stall बार and the running averages.
+ * CPU and, at much lower frequency, extrapolate the global state for
+ * the cumulative stall times and the running averages.
  *
  * For each runqueue, we track:
  *
- *	   tSOME[cpu] = समय(nr_delayed_tasks[cpu] != 0)
- *	   tFULL[cpu] = समय(nr_delayed_tasks[cpu] && !nr_running_tasks[cpu])
- *	tNONIDLE[cpu] = समय(nr_nonidle_tasks[cpu] != 0)
+ *	   tSOME[cpu] = time(nr_delayed_tasks[cpu] != 0)
+ *	   tFULL[cpu] = time(nr_delayed_tasks[cpu] && !nr_running_tasks[cpu])
+ *	tNONIDLE[cpu] = time(nr_nonidle_tasks[cpu] != 0)
  *
  * and then periodically aggregate:
  *
@@ -131,768 +130,768 @@
  * sampling of the aggregate task states would be.
  */
 
-#समावेश "../workqueue_internal.h"
-#समावेश <linux/sched/loadavg.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/cgroup.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/file.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/psi.h>
-#समावेश "sched.h"
+#include "../workqueue_internal.h"
+#include <linux/sched/loadavg.h>
+#include <linux/seq_file.h>
+#include <linux/proc_fs.h>
+#include <linux/seqlock.h>
+#include <linux/uaccess.h>
+#include <linux/cgroup.h>
+#include <linux/module.h>
+#include <linux/sched.h>
+#include <linux/ctype.h>
+#include <linux/file.h>
+#include <linux/poll.h>
+#include <linux/psi.h>
+#include "sched.h"
 
-अटल पूर्णांक psi_bug __पढ़ो_mostly;
+static int psi_bug __read_mostly;
 
 DEFINE_STATIC_KEY_FALSE(psi_disabled);
 
-#अगर_घोषित CONFIG_PSI_DEFAULT_DISABLED
-अटल bool psi_enable;
-#अन्यथा
-अटल bool psi_enable = true;
-#पूर्ण_अगर
-अटल पूर्णांक __init setup_psi(अक्षर *str)
-अणु
-	वापस kstrtobool(str, &psi_enable) == 0;
-पूर्ण
+#ifdef CONFIG_PSI_DEFAULT_DISABLED
+static bool psi_enable;
+#else
+static bool psi_enable = true;
+#endif
+static int __init setup_psi(char *str)
+{
+	return kstrtobool(str, &psi_enable) == 0;
+}
 __setup("psi=", setup_psi);
 
 /* Running averages - we need to be higher-res than loadavg */
-#घोषणा PSI_FREQ	(2*HZ+1)	/* 2 sec पूर्णांकervals */
-#घोषणा EXP_10s		1677		/* 1/exp(2s/10s) as fixed-poपूर्णांक */
-#घोषणा EXP_60s		1981		/* 1/exp(2s/60s) */
-#घोषणा EXP_300s	2034		/* 1/exp(2s/300s) */
+#define PSI_FREQ	(2*HZ+1)	/* 2 sec intervals */
+#define EXP_10s		1677		/* 1/exp(2s/10s) as fixed-point */
+#define EXP_60s		1981		/* 1/exp(2s/60s) */
+#define EXP_300s	2034		/* 1/exp(2s/300s) */
 
 /* PSI trigger definitions */
-#घोषणा WINDOW_MIN_US 500000	/* Min winकरोw size is 500ms */
-#घोषणा WINDOW_MAX_US 10000000	/* Max winकरोw size is 10s */
-#घोषणा UPDATES_PER_WINDOW 10	/* 10 updates per winकरोw */
+#define WINDOW_MIN_US 500000	/* Min window size is 500ms */
+#define WINDOW_MAX_US 10000000	/* Max window size is 10s */
+#define UPDATES_PER_WINDOW 10	/* 10 updates per window */
 
 /* Sampling frequency in nanoseconds */
-अटल u64 psi_period __पढ़ो_mostly;
+static u64 psi_period __read_mostly;
 
 /* System-level pressure and stall tracking */
-अटल DEFINE_PER_CPU(काष्ठा psi_group_cpu, प्रणाली_group_pcpu);
-काष्ठा psi_group psi_प्रणाली = अणु
-	.pcpu = &प्रणाली_group_pcpu,
-पूर्ण;
+static DEFINE_PER_CPU(struct psi_group_cpu, system_group_pcpu);
+struct psi_group psi_system = {
+	.pcpu = &system_group_pcpu,
+};
 
-अटल व्योम psi_avgs_work(काष्ठा work_काष्ठा *work);
+static void psi_avgs_work(struct work_struct *work);
 
-अटल व्योम group_init(काष्ठा psi_group *group)
-अणु
-	पूर्णांक cpu;
+static void group_init(struct psi_group *group)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		seqcount_init(&per_cpu_ptr(group->pcpu, cpu)->seq);
-	group->avg_last_update = sched_घड़ी();
+	group->avg_last_update = sched_clock();
 	group->avg_next_update = group->avg_last_update + psi_period;
 	INIT_DELAYED_WORK(&group->avgs_work, psi_avgs_work);
 	mutex_init(&group->avgs_lock);
 	/* Init trigger-related members */
 	mutex_init(&group->trigger_lock);
 	INIT_LIST_HEAD(&group->triggers);
-	स_रखो(group->nr_triggers, 0, माप(group->nr_triggers));
+	memset(group->nr_triggers, 0, sizeof(group->nr_triggers));
 	group->poll_states = 0;
 	group->poll_min_period = U32_MAX;
-	स_रखो(group->polling_total, 0, माप(group->polling_total));
-	group->polling_next_update = ULदीर्घ_उच्च;
+	memset(group->polling_total, 0, sizeof(group->polling_total));
+	group->polling_next_update = ULLONG_MAX;
 	group->polling_until = 0;
-	rcu_assign_poपूर्णांकer(group->poll_task, शून्य);
-पूर्ण
+	rcu_assign_pointer(group->poll_task, NULL);
+}
 
-व्योम __init psi_init(व्योम)
-अणु
-	अगर (!psi_enable) अणु
-		अटल_branch_enable(&psi_disabled);
-		वापस;
-	पूर्ण
+void __init psi_init(void)
+{
+	if (!psi_enable) {
+		static_branch_enable(&psi_disabled);
+		return;
+	}
 
-	psi_period = jअगरfies_to_nsecs(PSI_FREQ);
-	group_init(&psi_प्रणाली);
-पूर्ण
+	psi_period = jiffies_to_nsecs(PSI_FREQ);
+	group_init(&psi_system);
+}
 
-अटल bool test_state(अचिन्हित पूर्णांक *tasks, क्रमागत psi_states state)
-अणु
-	चयन (state) अणु
-	हाल PSI_IO_SOME:
-		वापस unlikely(tasks[NR_IOWAIT]);
-	हाल PSI_IO_FULL:
-		वापस unlikely(tasks[NR_IOWAIT] && !tasks[NR_RUNNING]);
-	हाल PSI_MEM_SOME:
-		वापस unlikely(tasks[NR_MEMSTALL]);
-	हाल PSI_MEM_FULL:
-		वापस unlikely(tasks[NR_MEMSTALL] && !tasks[NR_RUNNING]);
-	हाल PSI_CPU_SOME:
-		वापस unlikely(tasks[NR_RUNNING] > tasks[NR_ONCPU]);
-	हाल PSI_CPU_FULL:
-		वापस unlikely(tasks[NR_RUNNING] && !tasks[NR_ONCPU]);
-	हाल PSI_NONIDLE:
-		वापस tasks[NR_IOWAIT] || tasks[NR_MEMSTALL] ||
+static bool test_state(unsigned int *tasks, enum psi_states state)
+{
+	switch (state) {
+	case PSI_IO_SOME:
+		return unlikely(tasks[NR_IOWAIT]);
+	case PSI_IO_FULL:
+		return unlikely(tasks[NR_IOWAIT] && !tasks[NR_RUNNING]);
+	case PSI_MEM_SOME:
+		return unlikely(tasks[NR_MEMSTALL]);
+	case PSI_MEM_FULL:
+		return unlikely(tasks[NR_MEMSTALL] && !tasks[NR_RUNNING]);
+	case PSI_CPU_SOME:
+		return unlikely(tasks[NR_RUNNING] > tasks[NR_ONCPU]);
+	case PSI_CPU_FULL:
+		return unlikely(tasks[NR_RUNNING] && !tasks[NR_ONCPU]);
+	case PSI_NONIDLE:
+		return tasks[NR_IOWAIT] || tasks[NR_MEMSTALL] ||
 			tasks[NR_RUNNING];
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल व्योम get_recent_बार(काष्ठा psi_group *group, पूर्णांक cpu,
-			     क्रमागत psi_aggregators aggregator, u32 *बार,
+static void get_recent_times(struct psi_group *group, int cpu,
+			     enum psi_aggregators aggregator, u32 *times,
 			     u32 *pchanged_states)
-अणु
-	काष्ठा psi_group_cpu *groupc = per_cpu_ptr(group->pcpu, cpu);
+{
+	struct psi_group_cpu *groupc = per_cpu_ptr(group->pcpu, cpu);
 	u64 now, state_start;
-	क्रमागत psi_states s;
-	अचिन्हित पूर्णांक seq;
+	enum psi_states s;
+	unsigned int seq;
 	u32 state_mask;
 
 	*pchanged_states = 0;
 
 	/* Snapshot a coherent view of the CPU state */
-	करो अणु
-		seq = पढ़ो_seqcount_begin(&groupc->seq);
-		now = cpu_घड़ी(cpu);
-		स_नकल(बार, groupc->बार, माप(groupc->बार));
+	do {
+		seq = read_seqcount_begin(&groupc->seq);
+		now = cpu_clock(cpu);
+		memcpy(times, groupc->times, sizeof(groupc->times));
 		state_mask = groupc->state_mask;
 		state_start = groupc->state_start;
-	पूर्ण जबतक (पढ़ो_seqcount_retry(&groupc->seq, seq));
+	} while (read_seqcount_retry(&groupc->seq, seq));
 
-	/* Calculate state समय deltas against the previous snapshot */
-	क्रम (s = 0; s < NR_PSI_STATES; s++) अणु
+	/* Calculate state time deltas against the previous snapshot */
+	for (s = 0; s < NR_PSI_STATES; s++) {
 		u32 delta;
 		/*
-		 * In addition to alपढ़ोy concluded states, we also
+		 * In addition to already concluded states, we also
 		 * incorporate currently active states on the CPU,
-		 * since states may last क्रम many sampling periods.
+		 * since states may last for many sampling periods.
 		 *
 		 * This way we keep our delta sampling buckets small
-		 * (u32) and our reported pressure बंद to what's
+		 * (u32) and our reported pressure close to what's
 		 * actually happening.
 		 */
-		अगर (state_mask & (1 << s))
-			बार[s] += now - state_start;
+		if (state_mask & (1 << s))
+			times[s] += now - state_start;
 
-		delta = बार[s] - groupc->बार_prev[aggregator][s];
-		groupc->बार_prev[aggregator][s] = बार[s];
+		delta = times[s] - groupc->times_prev[aggregator][s];
+		groupc->times_prev[aggregator][s] = times[s];
 
-		बार[s] = delta;
-		अगर (delta)
+		times[s] = delta;
+		if (delta)
 			*pchanged_states |= (1 << s);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम calc_avgs(अचिन्हित दीर्घ avg[3], पूर्णांक missed_periods,
-		      u64 समय, u64 period)
-अणु
-	अचिन्हित दीर्घ pct;
+static void calc_avgs(unsigned long avg[3], int missed_periods,
+		      u64 time, u64 period)
+{
+	unsigned long pct;
 
-	/* Fill in zeroes क्रम periods of no activity */
-	अगर (missed_periods) अणु
+	/* Fill in zeroes for periods of no activity */
+	if (missed_periods) {
 		avg[0] = calc_load_n(avg[0], EXP_10s, 0, missed_periods);
 		avg[1] = calc_load_n(avg[1], EXP_60s, 0, missed_periods);
 		avg[2] = calc_load_n(avg[2], EXP_300s, 0, missed_periods);
-	पूर्ण
+	}
 
 	/* Sample the most recent active period */
-	pct = भाग_u64(समय * 100, period);
+	pct = div_u64(time * 100, period);
 	pct *= FIXED_1;
 	avg[0] = calc_load(avg[0], EXP_10s, pct);
 	avg[1] = calc_load(avg[1], EXP_60s, pct);
 	avg[2] = calc_load(avg[2], EXP_300s, pct);
-पूर्ण
+}
 
-अटल व्योम collect_percpu_बार(काष्ठा psi_group *group,
-				 क्रमागत psi_aggregators aggregator,
+static void collect_percpu_times(struct psi_group *group,
+				 enum psi_aggregators aggregator,
 				 u32 *pchanged_states)
-अणु
-	u64 deltas[NR_PSI_STATES - 1] = अणु 0, पूर्ण;
-	अचिन्हित दीर्घ nonidle_total = 0;
+{
+	u64 deltas[NR_PSI_STATES - 1] = { 0, };
+	unsigned long nonidle_total = 0;
 	u32 changed_states = 0;
-	पूर्णांक cpu;
-	पूर्णांक s;
+	int cpu;
+	int s;
 
 	/*
-	 * Collect the per-cpu समय buckets and average them पूर्णांकo a
-	 * single समय sample that is normalized to wallघड़ी समय.
+	 * Collect the per-cpu time buckets and average them into a
+	 * single time sample that is normalized to wallclock time.
 	 *
-	 * For averaging, each CPU is weighted by its non-idle समय in
-	 * the sampling period. This eliminates artअगरacts from uneven
+	 * For averaging, each CPU is weighted by its non-idle time in
+	 * the sampling period. This eliminates artifacts from uneven
 	 * loading, or even entirely idle CPUs.
 	 */
-	क्रम_each_possible_cpu(cpu) अणु
-		u32 बार[NR_PSI_STATES];
+	for_each_possible_cpu(cpu) {
+		u32 times[NR_PSI_STATES];
 		u32 nonidle;
 		u32 cpu_changed_states;
 
-		get_recent_बार(group, cpu, aggregator, बार,
+		get_recent_times(group, cpu, aggregator, times,
 				&cpu_changed_states);
 		changed_states |= cpu_changed_states;
 
-		nonidle = nsecs_to_jअगरfies(बार[PSI_NONIDLE]);
+		nonidle = nsecs_to_jiffies(times[PSI_NONIDLE]);
 		nonidle_total += nonidle;
 
-		क्रम (s = 0; s < PSI_NONIDLE; s++)
-			deltas[s] += (u64)बार[s] * nonidle;
-	पूर्ण
+		for (s = 0; s < PSI_NONIDLE; s++)
+			deltas[s] += (u64)times[s] * nonidle;
+	}
 
 	/*
-	 * Integrate the sample पूर्णांकo the running statistics that are
-	 * reported to userspace: the cumulative stall बार and the
+	 * Integrate the sample into the running statistics that are
+	 * reported to userspace: the cumulative stall times and the
 	 * decaying averages.
 	 *
 	 * Pressure percentages are sampled at PSI_FREQ. We might be
 	 * called more often when the user polls more frequently than
 	 * that; we might be called less often when there is no task
-	 * activity, thus no data, and घड़ी ticks are sporadic. The
+	 * activity, thus no data, and clock ticks are sporadic. The
 	 * below handles both.
 	 */
 
 	/* total= */
-	क्रम (s = 0; s < NR_PSI_STATES - 1; s++)
+	for (s = 0; s < NR_PSI_STATES - 1; s++)
 		group->total[aggregator][s] +=
-				भाग_u64(deltas[s], max(nonidle_total, 1UL));
+				div_u64(deltas[s], max(nonidle_total, 1UL));
 
-	अगर (pchanged_states)
+	if (pchanged_states)
 		*pchanged_states = changed_states;
-पूर्ण
+}
 
-अटल u64 update_averages(काष्ठा psi_group *group, u64 now)
-अणु
-	अचिन्हित दीर्घ missed_periods = 0;
+static u64 update_averages(struct psi_group *group, u64 now)
+{
+	unsigned long missed_periods = 0;
 	u64 expires, period;
 	u64 avg_next_update;
-	पूर्णांक s;
+	int s;
 
 	/* avgX= */
 	expires = group->avg_next_update;
-	अगर (now - expires >= psi_period)
-		missed_periods = भाग_u64(now - expires, psi_period);
+	if (now - expires >= psi_period)
+		missed_periods = div_u64(now - expires, psi_period);
 
 	/*
-	 * The periodic घड़ी tick can get delayed क्रम various
-	 * reasons, especially on loaded प्रणालीs. To aव्योम घड़ी
-	 * drअगरt, we schedule the घड़ी in fixed psi_period पूर्णांकervals.
+	 * The periodic clock tick can get delayed for various
+	 * reasons, especially on loaded systems. To avoid clock
+	 * drift, we schedule the clock in fixed psi_period intervals.
 	 * But the deltas we sample out of the per-cpu buckets above
-	 * are based on the actual समय elapsing between घड़ी ticks.
+	 * are based on the actual time elapsing between clock ticks.
 	 */
 	avg_next_update = expires + ((1 + missed_periods) * psi_period);
 	period = now - (group->avg_last_update + (missed_periods * psi_period));
 	group->avg_last_update = now;
 
-	क्रम (s = 0; s < NR_PSI_STATES - 1; s++) अणु
+	for (s = 0; s < NR_PSI_STATES - 1; s++) {
 		u32 sample;
 
 		sample = group->total[PSI_AVGS][s] - group->avg_total[s];
 		/*
-		 * Due to the lockless sampling of the समय buckets,
-		 * recorded समय deltas can slip पूर्णांकo the next period,
+		 * Due to the lockless sampling of the time buckets,
+		 * recorded time deltas can slip into the next period,
 		 * which under full pressure can result in samples in
 		 * excess of the period length.
 		 *
-		 * We करोn't want to report non-sensical pressures in
-		 * excess of 100%, nor करो we want to drop such events
-		 * on the न्यूनमान. Instead we punt any overage पूर्णांकo the
-		 * future until pressure subsides. By करोing this we
-		 * करोn't underreport the occurring pressure curve, we
+		 * We don't want to report non-sensical pressures in
+		 * excess of 100%, nor do we want to drop such events
+		 * on the floor. Instead we punt any overage into the
+		 * future until pressure subsides. By doing this we
+		 * don't underreport the occurring pressure curve, we
 		 * just report it delayed by one period length.
 		 *
 		 * The error isn't cumulative. As soon as another
 		 * delta slips from a period P to P+1, by definition
-		 * it मुक्तs up its समय T in P.
+		 * it frees up its time T in P.
 		 */
-		अगर (sample > period)
+		if (sample > period)
 			sample = period;
 		group->avg_total[s] += sample;
 		calc_avgs(group->avg[s], missed_periods, sample, period);
-	पूर्ण
+	}
 
-	वापस avg_next_update;
-पूर्ण
+	return avg_next_update;
+}
 
-अटल व्योम psi_avgs_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा psi_group *group;
+static void psi_avgs_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct psi_group *group;
 	u32 changed_states;
 	bool nonidle;
 	u64 now;
 
 	dwork = to_delayed_work(work);
-	group = container_of(dwork, काष्ठा psi_group, avgs_work);
+	group = container_of(dwork, struct psi_group, avgs_work);
 
 	mutex_lock(&group->avgs_lock);
 
-	now = sched_घड़ी();
+	now = sched_clock();
 
-	collect_percpu_बार(group, PSI_AVGS, &changed_states);
+	collect_percpu_times(group, PSI_AVGS, &changed_states);
 	nonidle = changed_states & (1 << PSI_NONIDLE);
 	/*
 	 * If there is task activity, periodically fold the per-cpu
-	 * बार and feed samples पूर्णांकo the running averages. If things
-	 * are idle and there is no data to process, stop the घड़ी.
+	 * times and feed samples into the running averages. If things
+	 * are idle and there is no data to process, stop the clock.
 	 * Once restarted, we'll catch up the running averages in one
 	 * go - see calc_avgs() and missed_periods.
 	 */
-	अगर (now >= group->avg_next_update)
+	if (now >= group->avg_next_update)
 		group->avg_next_update = update_averages(group, now);
 
-	अगर (nonidle) अणु
-		schedule_delayed_work(dwork, nsecs_to_jअगरfies(
+	if (nonidle) {
+		schedule_delayed_work(dwork, nsecs_to_jiffies(
 				group->avg_next_update - now) + 1);
-	पूर्ण
+	}
 
 	mutex_unlock(&group->avgs_lock);
-पूर्ण
+}
 
-/* Trigger tracking winकरोw manipulations */
-अटल व्योम winकरोw_reset(काष्ठा psi_winकरोw *win, u64 now, u64 value,
+/* Trigger tracking window manipulations */
+static void window_reset(struct psi_window *win, u64 now, u64 value,
 			 u64 prev_growth)
-अणु
-	win->start_समय = now;
+{
+	win->start_time = now;
 	win->start_value = value;
 	win->prev_growth = prev_growth;
-पूर्ण
+}
 
 /*
- * PSI growth tracking winकरोw update and growth calculation routine.
+ * PSI growth tracking window update and growth calculation routine.
  *
- * This approximates a sliding tracking winकरोw by पूर्णांकerpolating
- * partially elapsed winकरोws using historical growth data from the
- * previous पूर्णांकervals. This minimizes memory requirements (by not storing
- * all the पूर्णांकermediate values in the previous winकरोw) and simplअगरies
- * the calculations. It works well because PSI संकेत changes only in
- * positive direction and over relatively small winकरोw sizes the growth
- * is बंद to linear.
+ * This approximates a sliding tracking window by interpolating
+ * partially elapsed windows using historical growth data from the
+ * previous intervals. This minimizes memory requirements (by not storing
+ * all the intermediate values in the previous window) and simplifies
+ * the calculations. It works well because PSI signal changes only in
+ * positive direction and over relatively small window sizes the growth
+ * is close to linear.
  */
-अटल u64 winकरोw_update(काष्ठा psi_winकरोw *win, u64 now, u64 value)
-अणु
+static u64 window_update(struct psi_window *win, u64 now, u64 value)
+{
 	u64 elapsed;
 	u64 growth;
 
-	elapsed = now - win->start_समय;
+	elapsed = now - win->start_time;
 	growth = value - win->start_value;
 	/*
-	 * After each tracking winकरोw passes win->start_value and
-	 * win->start_समय get reset and win->prev_growth stores
-	 * the average per-winकरोw growth of the previous winकरोw.
-	 * win->prev_growth is then used to पूर्णांकerpolate additional
-	 * growth from the previous winकरोw assuming it was linear.
+	 * After each tracking window passes win->start_value and
+	 * win->start_time get reset and win->prev_growth stores
+	 * the average per-window growth of the previous window.
+	 * win->prev_growth is then used to interpolate additional
+	 * growth from the previous window assuming it was linear.
 	 */
-	अगर (elapsed > win->size)
-		winकरोw_reset(win, now, value, growth);
-	अन्यथा अणु
-		u32 reमुख्यing;
+	if (elapsed > win->size)
+		window_reset(win, now, value, growth);
+	else {
+		u32 remaining;
 
-		reमुख्यing = win->size - elapsed;
-		growth += भाग64_u64(win->prev_growth * reमुख्यing, win->size);
-	पूर्ण
+		remaining = win->size - elapsed;
+		growth += div64_u64(win->prev_growth * remaining, win->size);
+	}
 
-	वापस growth;
-पूर्ण
+	return growth;
+}
 
-अटल व्योम init_triggers(काष्ठा psi_group *group, u64 now)
-अणु
-	काष्ठा psi_trigger *t;
+static void init_triggers(struct psi_group *group, u64 now)
+{
+	struct psi_trigger *t;
 
-	list_क्रम_each_entry(t, &group->triggers, node)
-		winकरोw_reset(&t->win, now,
+	list_for_each_entry(t, &group->triggers, node)
+		window_reset(&t->win, now,
 				group->total[PSI_POLL][t->state], 0);
-	स_नकल(group->polling_total, group->total[PSI_POLL],
-		   माप(group->polling_total));
+	memcpy(group->polling_total, group->total[PSI_POLL],
+		   sizeof(group->polling_total));
 	group->polling_next_update = now + group->poll_min_period;
-पूर्ण
+}
 
-अटल u64 update_triggers(काष्ठा psi_group *group, u64 now)
-अणु
-	काष्ठा psi_trigger *t;
+static u64 update_triggers(struct psi_group *group, u64 now)
+{
+	struct psi_trigger *t;
 	bool new_stall = false;
 	u64 *total = group->total[PSI_POLL];
 
 	/*
 	 * On subsequent updates, calculate growth deltas and let
-	 * watchers know when their specअगरied thresholds are exceeded.
+	 * watchers know when their specified thresholds are exceeded.
 	 */
-	list_क्रम_each_entry(t, &group->triggers, node) अणु
+	list_for_each_entry(t, &group->triggers, node) {
 		u64 growth;
 
-		/* Check क्रम stall activity */
-		अगर (group->polling_total[t->state] == total[t->state])
-			जारी;
+		/* Check for stall activity */
+		if (group->polling_total[t->state] == total[t->state])
+			continue;
 
 		/*
 		 * Multiple triggers might be looking at the same state,
 		 * remember to update group->polling_total[] once we've
 		 * been through all of them. Also remember to extend the
-		 * polling समय अगर we see new stall activity.
+		 * polling time if we see new stall activity.
 		 */
 		new_stall = true;
 
 		/* Calculate growth since last update */
-		growth = winकरोw_update(&t->win, now, total[t->state]);
-		अगर (growth < t->threshold)
-			जारी;
+		growth = window_update(&t->win, now, total[t->state]);
+		if (growth < t->threshold)
+			continue;
 
-		/* Limit event संकेतing to once per winकरोw */
-		अगर (now < t->last_event_समय + t->win.size)
-			जारी;
+		/* Limit event signaling to once per window */
+		if (now < t->last_event_time + t->win.size)
+			continue;
 
 		/* Generate an event */
-		अगर (cmpxchg(&t->event, 0, 1) == 0)
-			wake_up_पूर्णांकerruptible(&t->event_रुको);
-		t->last_event_समय = now;
-	पूर्ण
+		if (cmpxchg(&t->event, 0, 1) == 0)
+			wake_up_interruptible(&t->event_wait);
+		t->last_event_time = now;
+	}
 
-	अगर (new_stall)
-		स_नकल(group->polling_total, total,
-				माप(group->polling_total));
+	if (new_stall)
+		memcpy(group->polling_total, total,
+				sizeof(group->polling_total));
 
-	वापस now + group->poll_min_period;
-पूर्ण
+	return now + group->poll_min_period;
+}
 
-/* Schedule polling अगर it's not alपढ़ोy scheduled. */
-अटल व्योम psi_schedule_poll_work(काष्ठा psi_group *group, अचिन्हित दीर्घ delay)
-अणु
-	काष्ठा task_काष्ठा *task;
+/* Schedule polling if it's not already scheduled. */
+static void psi_schedule_poll_work(struct psi_group *group, unsigned long delay)
+{
+	struct task_struct *task;
 
 	/*
-	 * Do not reschedule अगर alपढ़ोy scheduled.
-	 * Possible race with a समयr scheduled after this check but beक्रमe
-	 * mod_समयr below can be tolerated because group->polling_next_update
+	 * Do not reschedule if already scheduled.
+	 * Possible race with a timer scheduled after this check but before
+	 * mod_timer below can be tolerated because group->polling_next_update
 	 * will keep updates on schedule.
 	 */
-	अगर (समयr_pending(&group->poll_समयr))
-		वापस;
+	if (timer_pending(&group->poll_timer))
+		return;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	task = rcu_dereference(group->poll_task);
 	/*
-	 * kworker might be शून्य in हाल psi_trigger_destroy races with
+	 * kworker might be NULL in case psi_trigger_destroy races with
 	 * psi_task_change (hotpath) which can't use locks
 	 */
-	अगर (likely(task))
-		mod_समयr(&group->poll_समयr, jअगरfies + delay);
+	if (likely(task))
+		mod_timer(&group->poll_timer, jiffies + delay);
 
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
-अटल व्योम psi_poll_work(काष्ठा psi_group *group)
-अणु
+static void psi_poll_work(struct psi_group *group)
+{
 	u32 changed_states;
 	u64 now;
 
 	mutex_lock(&group->trigger_lock);
 
-	now = sched_घड़ी();
+	now = sched_clock();
 
-	collect_percpu_बार(group, PSI_POLL, &changed_states);
+	collect_percpu_times(group, PSI_POLL, &changed_states);
 
-	अगर (changed_states & group->poll_states) अणु
-		/* Initialize trigger winकरोws when entering polling mode */
-		अगर (now > group->polling_until)
+	if (changed_states & group->poll_states) {
+		/* Initialize trigger windows when entering polling mode */
+		if (now > group->polling_until)
 			init_triggers(group, now);
 
 		/*
-		 * Keep the monitor active क्रम at least the duration of the
-		 * minimum tracking winकरोw as दीर्घ as monitor states are
+		 * Keep the monitor active for at least the duration of the
+		 * minimum tracking window as long as monitor states are
 		 * changing.
 		 */
 		group->polling_until = now +
 			group->poll_min_period * UPDATES_PER_WINDOW;
-	पूर्ण
+	}
 
-	अगर (now > group->polling_until) अणु
-		group->polling_next_update = ULदीर्घ_उच्च;
-		जाओ out;
-	पूर्ण
+	if (now > group->polling_until) {
+		group->polling_next_update = ULLONG_MAX;
+		goto out;
+	}
 
-	अगर (now >= group->polling_next_update)
+	if (now >= group->polling_next_update)
 		group->polling_next_update = update_triggers(group, now);
 
 	psi_schedule_poll_work(group,
-		nsecs_to_jअगरfies(group->polling_next_update - now) + 1);
+		nsecs_to_jiffies(group->polling_next_update - now) + 1);
 
 out:
 	mutex_unlock(&group->trigger_lock);
-पूर्ण
+}
 
-अटल पूर्णांक psi_poll_worker(व्योम *data)
-अणु
-	काष्ठा psi_group *group = (काष्ठा psi_group *)data;
+static int psi_poll_worker(void *data)
+{
+	struct psi_group *group = (struct psi_group *)data;
 
-	sched_set_fअगरo_low(current);
+	sched_set_fifo_low(current);
 
-	जबतक (true) अणु
-		रुको_event_पूर्णांकerruptible(group->poll_रुको,
+	while (true) {
+		wait_event_interruptible(group->poll_wait,
 				atomic_cmpxchg(&group->poll_wakeup, 1, 0) ||
-				kthपढ़ो_should_stop());
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+				kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 
 		psi_poll_work(group);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल व्योम poll_समयr_fn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा psi_group *group = from_समयr(group, t, poll_समयr);
+static void poll_timer_fn(struct timer_list *t)
+{
+	struct psi_group *group = from_timer(group, t, poll_timer);
 
 	atomic_set(&group->poll_wakeup, 1);
-	wake_up_पूर्णांकerruptible(&group->poll_रुको);
-पूर्ण
+	wake_up_interruptible(&group->poll_wait);
+}
 
-अटल व्योम record_बार(काष्ठा psi_group_cpu *groupc, u64 now)
-अणु
+static void record_times(struct psi_group_cpu *groupc, u64 now)
+{
 	u32 delta;
 
 	delta = now - groupc->state_start;
 	groupc->state_start = now;
 
-	अगर (groupc->state_mask & (1 << PSI_IO_SOME)) अणु
-		groupc->बार[PSI_IO_SOME] += delta;
-		अगर (groupc->state_mask & (1 << PSI_IO_FULL))
-			groupc->बार[PSI_IO_FULL] += delta;
-	पूर्ण
+	if (groupc->state_mask & (1 << PSI_IO_SOME)) {
+		groupc->times[PSI_IO_SOME] += delta;
+		if (groupc->state_mask & (1 << PSI_IO_FULL))
+			groupc->times[PSI_IO_FULL] += delta;
+	}
 
-	अगर (groupc->state_mask & (1 << PSI_MEM_SOME)) अणु
-		groupc->बार[PSI_MEM_SOME] += delta;
-		अगर (groupc->state_mask & (1 << PSI_MEM_FULL))
-			groupc->बार[PSI_MEM_FULL] += delta;
-	पूर्ण
+	if (groupc->state_mask & (1 << PSI_MEM_SOME)) {
+		groupc->times[PSI_MEM_SOME] += delta;
+		if (groupc->state_mask & (1 << PSI_MEM_FULL))
+			groupc->times[PSI_MEM_FULL] += delta;
+	}
 
-	अगर (groupc->state_mask & (1 << PSI_CPU_SOME)) अणु
-		groupc->बार[PSI_CPU_SOME] += delta;
-		अगर (groupc->state_mask & (1 << PSI_CPU_FULL))
-			groupc->बार[PSI_CPU_FULL] += delta;
-	पूर्ण
+	if (groupc->state_mask & (1 << PSI_CPU_SOME)) {
+		groupc->times[PSI_CPU_SOME] += delta;
+		if (groupc->state_mask & (1 << PSI_CPU_FULL))
+			groupc->times[PSI_CPU_FULL] += delta;
+	}
 
-	अगर (groupc->state_mask & (1 << PSI_NONIDLE))
-		groupc->बार[PSI_NONIDLE] += delta;
-पूर्ण
+	if (groupc->state_mask & (1 << PSI_NONIDLE))
+		groupc->times[PSI_NONIDLE] += delta;
+}
 
-अटल व्योम psi_group_change(काष्ठा psi_group *group, पूर्णांक cpu,
-			     अचिन्हित पूर्णांक clear, अचिन्हित पूर्णांक set, u64 now,
-			     bool wake_घड़ी)
-अणु
-	काष्ठा psi_group_cpu *groupc;
+static void psi_group_change(struct psi_group *group, int cpu,
+			     unsigned int clear, unsigned int set, u64 now,
+			     bool wake_clock)
+{
+	struct psi_group_cpu *groupc;
 	u32 state_mask = 0;
-	अचिन्हित पूर्णांक t, m;
-	क्रमागत psi_states s;
+	unsigned int t, m;
+	enum psi_states s;
 
 	groupc = per_cpu_ptr(group->pcpu, cpu);
 
 	/*
 	 * First we assess the aggregate resource states this CPU's
 	 * tasks have been in since the last change, and account any
-	 * SOME and FULL समय these may have resulted in.
+	 * SOME and FULL time these may have resulted in.
 	 *
 	 * Then we update the task counts according to the state
 	 * change requested through the @clear and @set bits.
 	 */
-	ग_लिखो_seqcount_begin(&groupc->seq);
+	write_seqcount_begin(&groupc->seq);
 
-	record_बार(groupc, now);
+	record_times(groupc, now);
 
-	क्रम (t = 0, m = clear; m; m &= ~(1 << t), t++) अणु
-		अगर (!(m & (1 << t)))
-			जारी;
-		अगर (groupc->tasks[t]) अणु
+	for (t = 0, m = clear; m; m &= ~(1 << t), t++) {
+		if (!(m & (1 << t)))
+			continue;
+		if (groupc->tasks[t]) {
 			groupc->tasks[t]--;
-		पूर्ण अन्यथा अगर (!psi_bug) अणु
-			prपूर्णांकk_deferred(KERN_ERR "psi: task underflow! cpu=%d t=%d tasks=[%u %u %u %u] clear=%x set=%x\n",
+		} else if (!psi_bug) {
+			printk_deferred(KERN_ERR "psi: task underflow! cpu=%d t=%d tasks=[%u %u %u %u] clear=%x set=%x\n",
 					cpu, t, groupc->tasks[0],
 					groupc->tasks[1], groupc->tasks[2],
 					groupc->tasks[3], clear, set);
 			psi_bug = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (t = 0; set; set &= ~(1 << t), t++)
-		अगर (set & (1 << t))
+	for (t = 0; set; set &= ~(1 << t), t++)
+		if (set & (1 << t))
 			groupc->tasks[t]++;
 
 	/* Calculate state mask representing active states */
-	क्रम (s = 0; s < NR_PSI_STATES; s++) अणु
-		अगर (test_state(groupc->tasks, s))
+	for (s = 0; s < NR_PSI_STATES; s++) {
+		if (test_state(groupc->tasks, s))
 			state_mask |= (1 << s);
-	पूर्ण
+	}
 
 	/*
 	 * Since we care about lost potential, a memstall is FULL
 	 * when there are no other working tasks, but also when
 	 * the CPU is actively reclaiming and nothing productive
-	 * could run even अगर it were runnable. So when the current
+	 * could run even if it were runnable. So when the current
 	 * task in a cgroup is in_memstall, the corresponding groupc
 	 * on that cpu is in PSI_MEM_FULL state.
 	 */
-	अगर (unlikely(groupc->tasks[NR_ONCPU] && cpu_curr(cpu)->in_memstall))
+	if (unlikely(groupc->tasks[NR_ONCPU] && cpu_curr(cpu)->in_memstall))
 		state_mask |= (1 << PSI_MEM_FULL);
 
 	groupc->state_mask = state_mask;
 
-	ग_लिखो_seqcount_end(&groupc->seq);
+	write_seqcount_end(&groupc->seq);
 
-	अगर (state_mask & group->poll_states)
+	if (state_mask & group->poll_states)
 		psi_schedule_poll_work(group, 1);
 
-	अगर (wake_घड़ी && !delayed_work_pending(&group->avgs_work))
+	if (wake_clock && !delayed_work_pending(&group->avgs_work))
 		schedule_delayed_work(&group->avgs_work, PSI_FREQ);
-पूर्ण
+}
 
-अटल काष्ठा psi_group *iterate_groups(काष्ठा task_काष्ठा *task, व्योम **iter)
-अणु
-#अगर_घोषित CONFIG_CGROUPS
-	काष्ठा cgroup *cgroup = शून्य;
+static struct psi_group *iterate_groups(struct task_struct *task, void **iter)
+{
+#ifdef CONFIG_CGROUPS
+	struct cgroup *cgroup = NULL;
 
-	अगर (!*iter)
+	if (!*iter)
 		cgroup = task->cgroups->dfl_cgrp;
-	अन्यथा अगर (*iter == &psi_प्रणाली)
-		वापस शून्य;
-	अन्यथा
+	else if (*iter == &psi_system)
+		return NULL;
+	else
 		cgroup = cgroup_parent(*iter);
 
-	अगर (cgroup && cgroup_parent(cgroup)) अणु
+	if (cgroup && cgroup_parent(cgroup)) {
 		*iter = cgroup;
-		वापस cgroup_psi(cgroup);
-	पूर्ण
-#अन्यथा
-	अगर (*iter)
-		वापस शून्य;
-#पूर्ण_अगर
-	*iter = &psi_प्रणाली;
-	वापस &psi_प्रणाली;
-पूर्ण
+		return cgroup_psi(cgroup);
+	}
+#else
+	if (*iter)
+		return NULL;
+#endif
+	*iter = &psi_system;
+	return &psi_system;
+}
 
-अटल व्योम psi_flags_change(काष्ठा task_काष्ठा *task, पूर्णांक clear, पूर्णांक set)
-अणु
-	अगर (((task->psi_flags & set) ||
+static void psi_flags_change(struct task_struct *task, int clear, int set)
+{
+	if (((task->psi_flags & set) ||
 	     (task->psi_flags & clear) != clear) &&
-	    !psi_bug) अणु
-		prपूर्णांकk_deferred(KERN_ERR "psi: inconsistent task state! task=%d:%s cpu=%d psi_flags=%x clear=%x set=%x\n",
+	    !psi_bug) {
+		printk_deferred(KERN_ERR "psi: inconsistent task state! task=%d:%s cpu=%d psi_flags=%x clear=%x set=%x\n",
 				task->pid, task->comm, task_cpu(task),
 				task->psi_flags, clear, set);
 		psi_bug = 1;
-	पूर्ण
+	}
 
 	task->psi_flags &= ~clear;
 	task->psi_flags |= set;
-पूर्ण
+}
 
-व्योम psi_task_change(काष्ठा task_काष्ठा *task, पूर्णांक clear, पूर्णांक set)
-अणु
-	पूर्णांक cpu = task_cpu(task);
-	काष्ठा psi_group *group;
-	bool wake_घड़ी = true;
-	व्योम *iter = शून्य;
+void psi_task_change(struct task_struct *task, int clear, int set)
+{
+	int cpu = task_cpu(task);
+	struct psi_group *group;
+	bool wake_clock = true;
+	void *iter = NULL;
 	u64 now;
 
-	अगर (!task->pid)
-		वापस;
+	if (!task->pid)
+		return;
 
 	psi_flags_change(task, clear, set);
 
-	now = cpu_घड़ी(cpu);
+	now = cpu_clock(cpu);
 	/*
-	 * Periodic aggregation shuts off अगर there is a period of no
-	 * task changes, so we wake it back up अगर necessary. However,
-	 * करोn't करो this अगर the task change is the aggregation worker
-	 * itself going to sleep, or we'll ping-pong क्रमever.
+	 * Periodic aggregation shuts off if there is a period of no
+	 * task changes, so we wake it back up if necessary. However,
+	 * don't do this if the task change is the aggregation worker
+	 * itself going to sleep, or we'll ping-pong forever.
 	 */
-	अगर (unlikely((clear & TSK_RUNNING) &&
+	if (unlikely((clear & TSK_RUNNING) &&
 		     (task->flags & PF_WQ_WORKER) &&
 		     wq_worker_last_func(task) == psi_avgs_work))
-		wake_घड़ी = false;
+		wake_clock = false;
 
-	जबतक ((group = iterate_groups(task, &iter)))
-		psi_group_change(group, cpu, clear, set, now, wake_घड़ी);
-पूर्ण
+	while ((group = iterate_groups(task, &iter)))
+		psi_group_change(group, cpu, clear, set, now, wake_clock);
+}
 
-व्योम psi_task_चयन(काष्ठा task_काष्ठा *prev, काष्ठा task_काष्ठा *next,
+void psi_task_switch(struct task_struct *prev, struct task_struct *next,
 		     bool sleep)
-अणु
-	काष्ठा psi_group *group, *common = शून्य;
-	पूर्णांक cpu = task_cpu(prev);
-	व्योम *iter;
-	u64 now = cpu_घड़ी(cpu);
+{
+	struct psi_group *group, *common = NULL;
+	int cpu = task_cpu(prev);
+	void *iter;
+	u64 now = cpu_clock(cpu);
 
-	अगर (next->pid) अणु
+	if (next->pid) {
 		bool identical_state;
 
 		psi_flags_change(next, 0, TSK_ONCPU);
 		/*
-		 * When चयनing between tasks that have an identical
-		 * runसमय state, the cgroup that contains both tasks
-		 * runसमय state, the cgroup that contains both tasks
+		 * When switching between tasks that have an identical
+		 * runtime state, the cgroup that contains both tasks
+		 * runtime state, the cgroup that contains both tasks
 		 * we reach the first common ancestor. Iterate @next's
 		 * ancestors only until we encounter @prev's ONCPU.
 		 */
 		identical_state = prev->psi_flags == next->psi_flags;
-		iter = शून्य;
-		जबतक ((group = iterate_groups(next, &iter))) अणु
-			अगर (identical_state &&
-			    per_cpu_ptr(group->pcpu, cpu)->tasks[NR_ONCPU]) अणु
+		iter = NULL;
+		while ((group = iterate_groups(next, &iter))) {
+			if (identical_state &&
+			    per_cpu_ptr(group->pcpu, cpu)->tasks[NR_ONCPU]) {
 				common = group;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			psi_group_change(group, cpu, 0, TSK_ONCPU, now, true);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (prev->pid) अणु
-		पूर्णांक clear = TSK_ONCPU, set = 0;
+	if (prev->pid) {
+		int clear = TSK_ONCPU, set = 0;
 
 		/*
 		 * When we're going to sleep, psi_dequeue() lets us handle
 		 * TSK_RUNNING and TSK_IOWAIT here, where we can combine it
 		 * with TSK_ONCPU and save walking common ancestors twice.
 		 */
-		अगर (sleep) अणु
+		if (sleep) {
 			clear |= TSK_RUNNING;
-			अगर (prev->in_ioरुको)
+			if (prev->in_iowait)
 				set |= TSK_IOWAIT;
-		पूर्ण
+		}
 
 		psi_flags_change(prev, clear, set);
 
-		iter = शून्य;
-		जबतक ((group = iterate_groups(prev, &iter)) && group != common)
+		iter = NULL;
+		while ((group = iterate_groups(prev, &iter)) && group != common)
 			psi_group_change(group, cpu, clear, set, now, true);
 
 		/*
 		 * TSK_ONCPU is handled up to the common ancestor. If we're tasked
-		 * with dequeuing too, finish that क्रम the rest of the hierarchy.
+		 * with dequeuing too, finish that for the rest of the hierarchy.
 		 */
-		अगर (sleep) अणु
+		if (sleep) {
 			clear &= ~TSK_ONCPU;
-			क्रम (; group; group = iterate_groups(prev, &iter))
+			for (; group; group = iterate_groups(prev, &iter))
 				psi_group_change(group, cpu, clear, set, now, true);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * psi_memstall_enter - mark the beginning of a memory stall section
  * @flags: flags to handle nested sections
  *
  * Marks the calling task as being stalled due to a lack of memory,
- * such as रुकोing क्रम a refault or perक्रमming reclaim.
+ * such as waiting for a refault or performing reclaim.
  */
-व्योम psi_memstall_enter(अचिन्हित दीर्घ *flags)
-अणु
-	काष्ठा rq_flags rf;
-	काष्ठा rq *rq;
+void psi_memstall_enter(unsigned long *flags)
+{
+	struct rq_flags rf;
+	struct rq *rq;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस;
+	if (static_branch_likely(&psi_disabled))
+		return;
 
 	*flags = current->in_memstall;
-	अगर (*flags)
-		वापस;
+	if (*flags)
+		return;
 	/*
 	 * in_memstall setting & accounting needs to be atomic wrt
 	 * changes to the task's scheduling state, otherwise we can
@@ -904,24 +903,24 @@ out:
 	psi_task_change(current, 0, TSK_MEMSTALL);
 
 	rq_unlock_irq(rq, &rf);
-पूर्ण
+}
 
 /**
  * psi_memstall_leave - mark the end of an memory stall section
  * @flags: flags to handle nested memdelay sections
  *
- * Marks the calling task as no दीर्घer stalled due to lack of memory.
+ * Marks the calling task as no longer stalled due to lack of memory.
  */
-व्योम psi_memstall_leave(अचिन्हित दीर्घ *flags)
-अणु
-	काष्ठा rq_flags rf;
-	काष्ठा rq *rq;
+void psi_memstall_leave(unsigned long *flags)
+{
+	struct rq_flags rf;
+	struct rq *rq;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस;
+	if (static_branch_likely(&psi_disabled))
+		return;
 
-	अगर (*flags)
-		वापस;
+	if (*flags)
+		return;
 	/*
 	 * in_memstall clearing & accounting needs to be atomic wrt
 	 * changes to the task's scheduling state, otherwise we could
@@ -933,65 +932,65 @@ out:
 	psi_task_change(current, TSK_MEMSTALL, 0);
 
 	rq_unlock_irq(rq, &rf);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_CGROUPS
-पूर्णांक psi_cgroup_alloc(काष्ठा cgroup *cgroup)
-अणु
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस 0;
+#ifdef CONFIG_CGROUPS
+int psi_cgroup_alloc(struct cgroup *cgroup)
+{
+	if (static_branch_likely(&psi_disabled))
+		return 0;
 
-	cgroup->psi.pcpu = alloc_percpu(काष्ठा psi_group_cpu);
-	अगर (!cgroup->psi.pcpu)
-		वापस -ENOMEM;
+	cgroup->psi.pcpu = alloc_percpu(struct psi_group_cpu);
+	if (!cgroup->psi.pcpu)
+		return -ENOMEM;
 	group_init(&cgroup->psi);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम psi_cgroup_मुक्त(काष्ठा cgroup *cgroup)
-अणु
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस;
+void psi_cgroup_free(struct cgroup *cgroup)
+{
+	if (static_branch_likely(&psi_disabled))
+		return;
 
 	cancel_delayed_work_sync(&cgroup->psi.avgs_work);
-	मुक्त_percpu(cgroup->psi.pcpu);
-	/* All triggers must be हटाओd by now */
+	free_percpu(cgroup->psi.pcpu);
+	/* All triggers must be removed by now */
 	WARN_ONCE(cgroup->psi.poll_states, "psi: trigger leak\n");
-पूर्ण
+}
 
 /**
- * cgroup_move_task - move task to a dअगरferent cgroup
+ * cgroup_move_task - move task to a different cgroup
  * @task: the task
  * @to: the target css_set
  *
  * Move task to a new cgroup and safely migrate its associated stall
- * state between the dअगरferent groups.
+ * state between the different groups.
  *
  * This function acquires the task's rq lock to lock out concurrent
- * changes to the task's scheduling state and - in हाल the task is
+ * changes to the task's scheduling state and - in case the task is
  * running - concurrent changes to its stall state.
  */
-व्योम cgroup_move_task(काष्ठा task_काष्ठा *task, काष्ठा css_set *to)
-अणु
-	अचिन्हित पूर्णांक task_flags;
-	काष्ठा rq_flags rf;
-	काष्ठा rq *rq;
+void cgroup_move_task(struct task_struct *task, struct css_set *to)
+{
+	unsigned int task_flags;
+	struct rq_flags rf;
+	struct rq *rq;
 
-	अगर (अटल_branch_likely(&psi_disabled)) अणु
+	if (static_branch_likely(&psi_disabled)) {
 		/*
-		 * Lame to करो this here, but the scheduler cannot be locked
+		 * Lame to do this here, but the scheduler cannot be locked
 		 * from the outside, so we move cgroups from inside sched/.
 		 */
-		rcu_assign_poपूर्णांकer(task->cgroups, to);
-		वापस;
-	पूर्ण
+		rcu_assign_pointer(task->cgroups, to);
+		return;
+	}
 
 	rq = task_rq_lock(task, &rf);
 
 	/*
 	 * We may race with schedule() dropping the rq lock between
-	 * deactivating prev and चयनing to next. Because the psi
-	 * updates from the deactivation are deferred to the चयन
+	 * deactivating prev and switching to next. Because the psi
+	 * updates from the deactivation are deferred to the switch
 	 * callback to save cgroup tree updates, the task's scheduling
 	 * state here is not coherent with its psi state:
 	 *
@@ -1008,381 +1007,381 @@ out:
 	 *                                psi_task_change() // new cgroup
 	 *                                rq_unlock()
 	 *     rq_lock()
-	 *   psi_sched_चयन() // करोes deferred updates in new cgroup
+	 *   psi_sched_switch() // does deferred updates in new cgroup
 	 *
 	 * Don't rely on the scheduling state. Use psi_flags instead.
 	 */
 	task_flags = task->psi_flags;
 
-	अगर (task_flags)
+	if (task_flags)
 		psi_task_change(task, task_flags, 0);
 
 	/* See comment above */
-	rcu_assign_poपूर्णांकer(task->cgroups, to);
+	rcu_assign_pointer(task->cgroups, to);
 
-	अगर (task_flags)
+	if (task_flags)
 		psi_task_change(task, 0, task_flags);
 
 	task_rq_unlock(rq, task, &rf);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CGROUPS */
+}
+#endif /* CONFIG_CGROUPS */
 
-पूर्णांक psi_show(काष्ठा seq_file *m, काष्ठा psi_group *group, क्रमागत psi_res res)
-अणु
-	पूर्णांक full;
+int psi_show(struct seq_file *m, struct psi_group *group, enum psi_res res)
+{
+	int full;
 	u64 now;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस -EOPNOTSUPP;
+	if (static_branch_likely(&psi_disabled))
+		return -EOPNOTSUPP;
 
-	/* Update averages beक्रमe reporting them */
+	/* Update averages before reporting them */
 	mutex_lock(&group->avgs_lock);
-	now = sched_घड़ी();
-	collect_percpu_बार(group, PSI_AVGS, शून्य);
-	अगर (now >= group->avg_next_update)
+	now = sched_clock();
+	collect_percpu_times(group, PSI_AVGS, NULL);
+	if (now >= group->avg_next_update)
 		group->avg_next_update = update_averages(group, now);
 	mutex_unlock(&group->avgs_lock);
 
-	क्रम (full = 0; full < 2; full++) अणु
-		अचिन्हित दीर्घ avg[3];
+	for (full = 0; full < 2; full++) {
+		unsigned long avg[3];
 		u64 total;
-		पूर्णांक w;
+		int w;
 
-		क्रम (w = 0; w < 3; w++)
+		for (w = 0; w < 3; w++)
 			avg[w] = group->avg[res * 2 + full][w];
-		total = भाग_u64(group->total[PSI_AVGS][res * 2 + full],
+		total = div_u64(group->total[PSI_AVGS][res * 2 + full],
 				NSEC_PER_USEC);
 
-		seq_म_लिखो(m, "%s avg10=%lu.%02lu avg60=%lu.%02lu avg300=%lu.%02lu total=%llu\n",
+		seq_printf(m, "%s avg10=%lu.%02lu avg60=%lu.%02lu avg300=%lu.%02lu total=%llu\n",
 			   full ? "full" : "some",
 			   LOAD_INT(avg[0]), LOAD_FRAC(avg[0]),
 			   LOAD_INT(avg[1]), LOAD_FRAC(avg[1]),
 			   LOAD_INT(avg[2]), LOAD_FRAC(avg[2]),
 			   total);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक psi_io_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	वापस psi_show(m, &psi_प्रणाली, PSI_IO);
-पूर्ण
+static int psi_io_show(struct seq_file *m, void *v)
+{
+	return psi_show(m, &psi_system, PSI_IO);
+}
 
-अटल पूर्णांक psi_memory_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	वापस psi_show(m, &psi_प्रणाली, PSI_MEM);
-पूर्ण
+static int psi_memory_show(struct seq_file *m, void *v)
+{
+	return psi_show(m, &psi_system, PSI_MEM);
+}
 
-अटल पूर्णांक psi_cpu_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	वापस psi_show(m, &psi_प्रणाली, PSI_CPU);
-पूर्ण
+static int psi_cpu_show(struct seq_file *m, void *v)
+{
+	return psi_show(m, &psi_system, PSI_CPU);
+}
 
-अटल पूर्णांक psi_खोलो(काष्ठा file *file, पूर्णांक (*psi_show)(काष्ठा seq_file *, व्योम *))
-अणु
-	अगर (file->f_mode & FMODE_WRITE && !capable(CAP_SYS_RESOURCE))
-		वापस -EPERM;
+static int psi_open(struct file *file, int (*psi_show)(struct seq_file *, void *))
+{
+	if (file->f_mode & FMODE_WRITE && !capable(CAP_SYS_RESOURCE))
+		return -EPERM;
 
-	वापस single_खोलो(file, psi_show, शून्य);
-पूर्ण
+	return single_open(file, psi_show, NULL);
+}
 
-अटल पूर्णांक psi_io_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस psi_खोलो(file, psi_io_show);
-पूर्ण
+static int psi_io_open(struct inode *inode, struct file *file)
+{
+	return psi_open(file, psi_io_show);
+}
 
-अटल पूर्णांक psi_memory_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस psi_खोलो(file, psi_memory_show);
-पूर्ण
+static int psi_memory_open(struct inode *inode, struct file *file)
+{
+	return psi_open(file, psi_memory_show);
+}
 
-अटल पूर्णांक psi_cpu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस psi_खोलो(file, psi_cpu_show);
-पूर्ण
+static int psi_cpu_open(struct inode *inode, struct file *file)
+{
+	return psi_open(file, psi_cpu_show);
+}
 
-काष्ठा psi_trigger *psi_trigger_create(काष्ठा psi_group *group,
-			अक्षर *buf, माप_प्रकार nbytes, क्रमागत psi_res res)
-अणु
-	काष्ठा psi_trigger *t;
-	क्रमागत psi_states state;
+struct psi_trigger *psi_trigger_create(struct psi_group *group,
+			char *buf, size_t nbytes, enum psi_res res)
+{
+	struct psi_trigger *t;
+	enum psi_states state;
 	u32 threshold_us;
-	u32 winकरोw_us;
+	u32 window_us;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (static_branch_likely(&psi_disabled))
+		return ERR_PTR(-EOPNOTSUPP);
 
-	अगर (माला_पूछो(buf, "some %u %u", &threshold_us, &winकरोw_us) == 2)
+	if (sscanf(buf, "some %u %u", &threshold_us, &window_us) == 2)
 		state = PSI_IO_SOME + res * 2;
-	अन्यथा अगर (माला_पूछो(buf, "full %u %u", &threshold_us, &winकरोw_us) == 2)
+	else if (sscanf(buf, "full %u %u", &threshold_us, &window_us) == 2)
 		state = PSI_IO_FULL + res * 2;
-	अन्यथा
-		वापस ERR_PTR(-EINVAL);
+	else
+		return ERR_PTR(-EINVAL);
 
-	अगर (state >= PSI_NONIDLE)
-		वापस ERR_PTR(-EINVAL);
+	if (state >= PSI_NONIDLE)
+		return ERR_PTR(-EINVAL);
 
-	अगर (winकरोw_us < WINDOW_MIN_US ||
-		winकरोw_us > WINDOW_MAX_US)
-		वापस ERR_PTR(-EINVAL);
+	if (window_us < WINDOW_MIN_US ||
+		window_us > WINDOW_MAX_US)
+		return ERR_PTR(-EINVAL);
 
 	/* Check threshold */
-	अगर (threshold_us == 0 || threshold_us > winकरोw_us)
-		वापस ERR_PTR(-EINVAL);
+	if (threshold_us == 0 || threshold_us > window_us)
+		return ERR_PTR(-EINVAL);
 
-	t = kदो_स्मृति(माप(*t), GFP_KERNEL);
-	अगर (!t)
-		वापस ERR_PTR(-ENOMEM);
+	t = kmalloc(sizeof(*t), GFP_KERNEL);
+	if (!t)
+		return ERR_PTR(-ENOMEM);
 
 	t->group = group;
 	t->state = state;
 	t->threshold = threshold_us * NSEC_PER_USEC;
-	t->win.size = winकरोw_us * NSEC_PER_USEC;
-	winकरोw_reset(&t->win, 0, 0, 0);
+	t->win.size = window_us * NSEC_PER_USEC;
+	window_reset(&t->win, 0, 0, 0);
 
 	t->event = 0;
-	t->last_event_समय = 0;
-	init_रुकोqueue_head(&t->event_रुको);
+	t->last_event_time = 0;
+	init_waitqueue_head(&t->event_wait);
 	kref_init(&t->refcount);
 
 	mutex_lock(&group->trigger_lock);
 
-	अगर (!rcu_access_poपूर्णांकer(group->poll_task)) अणु
-		काष्ठा task_काष्ठा *task;
+	if (!rcu_access_pointer(group->poll_task)) {
+		struct task_struct *task;
 
-		task = kthपढ़ो_create(psi_poll_worker, group, "psimon");
-		अगर (IS_ERR(task)) अणु
-			kमुक्त(t);
+		task = kthread_create(psi_poll_worker, group, "psimon");
+		if (IS_ERR(task)) {
+			kfree(t);
 			mutex_unlock(&group->trigger_lock);
-			वापस ERR_CAST(task);
-		पूर्ण
+			return ERR_CAST(task);
+		}
 		atomic_set(&group->poll_wakeup, 0);
-		init_रुकोqueue_head(&group->poll_रुको);
+		init_waitqueue_head(&group->poll_wait);
 		wake_up_process(task);
-		समयr_setup(&group->poll_समयr, poll_समयr_fn, 0);
-		rcu_assign_poपूर्णांकer(group->poll_task, task);
-	पूर्ण
+		timer_setup(&group->poll_timer, poll_timer_fn, 0);
+		rcu_assign_pointer(group->poll_task, task);
+	}
 
 	list_add(&t->node, &group->triggers);
 	group->poll_min_period = min(group->poll_min_period,
-		भाग_u64(t->win.size, UPDATES_PER_WINDOW));
+		div_u64(t->win.size, UPDATES_PER_WINDOW));
 	group->nr_triggers[t->state]++;
 	group->poll_states |= (1 << t->state);
 
 	mutex_unlock(&group->trigger_lock);
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-अटल व्योम psi_trigger_destroy(काष्ठा kref *ref)
-अणु
-	काष्ठा psi_trigger *t = container_of(ref, काष्ठा psi_trigger, refcount);
-	काष्ठा psi_group *group = t->group;
-	काष्ठा task_काष्ठा *task_to_destroy = शून्य;
+static void psi_trigger_destroy(struct kref *ref)
+{
+	struct psi_trigger *t = container_of(ref, struct psi_trigger, refcount);
+	struct psi_group *group = t->group;
+	struct task_struct *task_to_destroy = NULL;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस;
+	if (static_branch_likely(&psi_disabled))
+		return;
 
 	/*
-	 * Wakeup रुकोers to stop polling. Can happen अगर cgroup is deleted
+	 * Wakeup waiters to stop polling. Can happen if cgroup is deleted
 	 * from under a polling process.
 	 */
-	wake_up_पूर्णांकerruptible(&t->event_रुको);
+	wake_up_interruptible(&t->event_wait);
 
 	mutex_lock(&group->trigger_lock);
 
-	अगर (!list_empty(&t->node)) अणु
-		काष्ठा psi_trigger *पंचांगp;
-		u64 period = ULदीर्घ_उच्च;
+	if (!list_empty(&t->node)) {
+		struct psi_trigger *tmp;
+		u64 period = ULLONG_MAX;
 
 		list_del(&t->node);
 		group->nr_triggers[t->state]--;
-		अगर (!group->nr_triggers[t->state])
+		if (!group->nr_triggers[t->state])
 			group->poll_states &= ~(1 << t->state);
-		/* reset min update period क्रम the reमुख्यing triggers */
-		list_क्रम_each_entry(पंचांगp, &group->triggers, node)
-			period = min(period, भाग_u64(पंचांगp->win.size,
+		/* reset min update period for the remaining triggers */
+		list_for_each_entry(tmp, &group->triggers, node)
+			period = min(period, div_u64(tmp->win.size,
 					UPDATES_PER_WINDOW));
 		group->poll_min_period = period;
 		/* Destroy poll_task when the last trigger is destroyed */
-		अगर (group->poll_states == 0) अणु
+		if (group->poll_states == 0) {
 			group->polling_until = 0;
-			task_to_destroy = rcu_dereference_रक्षित(
+			task_to_destroy = rcu_dereference_protected(
 					group->poll_task,
 					lockdep_is_held(&group->trigger_lock));
-			rcu_assign_poपूर्णांकer(group->poll_task, शून्य);
-		पूर्ण
-	पूर्ण
+			rcu_assign_pointer(group->poll_task, NULL);
+		}
+	}
 
 	mutex_unlock(&group->trigger_lock);
 
 	/*
-	 * Wait क्रम both *trigger_ptr from psi_trigger_replace and
-	 * poll_task RCUs to complete their पढ़ो-side critical sections
-	 * beक्रमe destroying the trigger and optionally the poll_task
+	 * Wait for both *trigger_ptr from psi_trigger_replace and
+	 * poll_task RCUs to complete their read-side critical sections
+	 * before destroying the trigger and optionally the poll_task
 	 */
 	synchronize_rcu();
 	/*
 	 * Destroy the kworker after releasing trigger_lock to prevent a
-	 * deadlock जबतक रुकोing क्रम psi_poll_work to acquire trigger_lock
+	 * deadlock while waiting for psi_poll_work to acquire trigger_lock
 	 */
-	अगर (task_to_destroy) अणु
+	if (task_to_destroy) {
 		/*
 		 * After the RCU grace period has expired, the worker
-		 * can no दीर्घer be found through group->poll_task.
-		 * But it might have been alपढ़ोy scheduled beक्रमe
-		 * that - deschedule it cleanly beक्रमe destroying it.
+		 * can no longer be found through group->poll_task.
+		 * But it might have been already scheduled before
+		 * that - deschedule it cleanly before destroying it.
 		 */
-		del_समयr_sync(&group->poll_समयr);
-		kthपढ़ो_stop(task_to_destroy);
-	पूर्ण
-	kमुक्त(t);
-पूर्ण
+		del_timer_sync(&group->poll_timer);
+		kthread_stop(task_to_destroy);
+	}
+	kfree(t);
+}
 
-व्योम psi_trigger_replace(व्योम **trigger_ptr, काष्ठा psi_trigger *new)
-अणु
-	काष्ठा psi_trigger *old = *trigger_ptr;
+void psi_trigger_replace(void **trigger_ptr, struct psi_trigger *new)
+{
+	struct psi_trigger *old = *trigger_ptr;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस;
+	if (static_branch_likely(&psi_disabled))
+		return;
 
-	rcu_assign_poपूर्णांकer(*trigger_ptr, new);
-	अगर (old)
+	rcu_assign_pointer(*trigger_ptr, new);
+	if (old)
 		kref_put(&old->refcount, psi_trigger_destroy);
-पूर्ण
+}
 
-__poll_t psi_trigger_poll(व्योम **trigger_ptr,
-				काष्ठा file *file, poll_table *रुको)
-अणु
+__poll_t psi_trigger_poll(void **trigger_ptr,
+				struct file *file, poll_table *wait)
+{
 	__poll_t ret = DEFAULT_POLLMASK;
-	काष्ठा psi_trigger *t;
+	struct psi_trigger *t;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस DEFAULT_POLLMASK | EPOLLERR | EPOLLPRI;
+	if (static_branch_likely(&psi_disabled))
+		return DEFAULT_POLLMASK | EPOLLERR | EPOLLPRI;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	t = rcu_dereference(*(व्योम __rcu __क्रमce **)trigger_ptr);
-	अगर (!t) अणु
-		rcu_पढ़ो_unlock();
-		वापस DEFAULT_POLLMASK | EPOLLERR | EPOLLPRI;
-	पूर्ण
+	t = rcu_dereference(*(void __rcu __force **)trigger_ptr);
+	if (!t) {
+		rcu_read_unlock();
+		return DEFAULT_POLLMASK | EPOLLERR | EPOLLPRI;
+	}
 	kref_get(&t->refcount);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	poll_रुको(file, &t->event_रुको, रुको);
+	poll_wait(file, &t->event_wait, wait);
 
-	अगर (cmpxchg(&t->event, 1, 0) == 1)
+	if (cmpxchg(&t->event, 1, 0) == 1)
 		ret |= EPOLLPRI;
 
 	kref_put(&t->refcount, psi_trigger_destroy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार psi_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			 माप_प्रकार nbytes, क्रमागत psi_res res)
-अणु
-	अक्षर buf[32];
-	माप_प्रकार buf_size;
-	काष्ठा seq_file *seq;
-	काष्ठा psi_trigger *new;
+static ssize_t psi_write(struct file *file, const char __user *user_buf,
+			 size_t nbytes, enum psi_res res)
+{
+	char buf[32];
+	size_t buf_size;
+	struct seq_file *seq;
+	struct psi_trigger *new;
 
-	अगर (अटल_branch_likely(&psi_disabled))
-		वापस -EOPNOTSUPP;
+	if (static_branch_likely(&psi_disabled))
+		return -EOPNOTSUPP;
 
-	अगर (!nbytes)
-		वापस -EINVAL;
+	if (!nbytes)
+		return -EINVAL;
 
-	buf_size = min(nbytes, माप(buf));
-	अगर (copy_from_user(buf, user_buf, buf_size))
-		वापस -EFAULT;
+	buf_size = min(nbytes, sizeof(buf));
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
 
 	buf[buf_size - 1] = '\0';
 
-	new = psi_trigger_create(&psi_प्रणाली, buf, nbytes, res);
-	अगर (IS_ERR(new))
-		वापस PTR_ERR(new);
+	new = psi_trigger_create(&psi_system, buf, nbytes, res);
+	if (IS_ERR(new))
+		return PTR_ERR(new);
 
-	seq = file->निजी_data;
-	/* Take seq->lock to protect seq->निजी from concurrent ग_लिखोs */
+	seq = file->private_data;
+	/* Take seq->lock to protect seq->private from concurrent writes */
 	mutex_lock(&seq->lock);
-	psi_trigger_replace(&seq->निजी, new);
+	psi_trigger_replace(&seq->private, new);
 	mutex_unlock(&seq->lock);
 
-	वापस nbytes;
-पूर्ण
+	return nbytes;
+}
 
-अटल sमाप_प्रकार psi_io_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			    माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	वापस psi_ग_लिखो(file, user_buf, nbytes, PSI_IO);
-पूर्ण
+static ssize_t psi_io_write(struct file *file, const char __user *user_buf,
+			    size_t nbytes, loff_t *ppos)
+{
+	return psi_write(file, user_buf, nbytes, PSI_IO);
+}
 
-अटल sमाप_प्रकार psi_memory_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-				माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	वापस psi_ग_लिखो(file, user_buf, nbytes, PSI_MEM);
-पूर्ण
+static ssize_t psi_memory_write(struct file *file, const char __user *user_buf,
+				size_t nbytes, loff_t *ppos)
+{
+	return psi_write(file, user_buf, nbytes, PSI_MEM);
+}
 
-अटल sमाप_प्रकार psi_cpu_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
-			     माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	वापस psi_ग_लिखो(file, user_buf, nbytes, PSI_CPU);
-पूर्ण
+static ssize_t psi_cpu_write(struct file *file, const char __user *user_buf,
+			     size_t nbytes, loff_t *ppos)
+{
+	return psi_write(file, user_buf, nbytes, PSI_CPU);
+}
 
-अटल __poll_t psi_fop_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
+static __poll_t psi_fop_poll(struct file *file, poll_table *wait)
+{
+	struct seq_file *seq = file->private_data;
 
-	वापस psi_trigger_poll(&seq->निजी, file, रुको);
-पूर्ण
+	return psi_trigger_poll(&seq->private, file, wait);
+}
 
-अटल पूर्णांक psi_fop_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा seq_file *seq = file->निजी_data;
+static int psi_fop_release(struct inode *inode, struct file *file)
+{
+	struct seq_file *seq = file->private_data;
 
-	psi_trigger_replace(&seq->निजी, शून्य);
-	वापस single_release(inode, file);
-पूर्ण
+	psi_trigger_replace(&seq->private, NULL);
+	return single_release(inode, file);
+}
 
-अटल स्थिर काष्ठा proc_ops psi_io_proc_ops = अणु
-	.proc_खोलो	= psi_io_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops psi_io_proc_ops = {
+	.proc_open	= psi_io_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
-	.proc_ग_लिखो	= psi_io_ग_लिखो,
+	.proc_write	= psi_io_write,
 	.proc_poll	= psi_fop_poll,
 	.proc_release	= psi_fop_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proc_ops psi_memory_proc_ops = अणु
-	.proc_खोलो	= psi_memory_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops psi_memory_proc_ops = {
+	.proc_open	= psi_memory_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
-	.proc_ग_लिखो	= psi_memory_ग_लिखो,
+	.proc_write	= psi_memory_write,
 	.proc_poll	= psi_fop_poll,
 	.proc_release	= psi_fop_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा proc_ops psi_cpu_proc_ops = अणु
-	.proc_खोलो	= psi_cpu_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
+static const struct proc_ops psi_cpu_proc_ops = {
+	.proc_open	= psi_cpu_open,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
-	.proc_ग_लिखो	= psi_cpu_ग_लिखो,
+	.proc_write	= psi_cpu_write,
 	.proc_poll	= psi_fop_poll,
 	.proc_release	= psi_fop_release,
-पूर्ण;
+};
 
-अटल पूर्णांक __init psi_proc_init(व्योम)
-अणु
-	अगर (psi_enable) अणु
-		proc_सूची_गढ़ो("pressure", शून्य);
-		proc_create("pressure/io", 0666, शून्य, &psi_io_proc_ops);
-		proc_create("pressure/memory", 0666, शून्य, &psi_memory_proc_ops);
-		proc_create("pressure/cpu", 0666, शून्य, &psi_cpu_proc_ops);
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int __init psi_proc_init(void)
+{
+	if (psi_enable) {
+		proc_mkdir("pressure", NULL);
+		proc_create("pressure/io", 0666, NULL, &psi_io_proc_ops);
+		proc_create("pressure/memory", 0666, NULL, &psi_memory_proc_ops);
+		proc_create("pressure/cpu", 0666, NULL, &psi_cpu_proc_ops);
+	}
+	return 0;
+}
 module_init(psi_proc_init);

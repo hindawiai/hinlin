@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,22 +21,22 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "mem.h"
-#समावेश "vmm.h"
+#include "mem.h"
+#include "vmm.h"
 
-#समावेश <nvअगर/class.h>
+#include <nvif/class.h>
 
-स्थिर काष्ठा nvkm_mmu_func
-nv04_mmu = अणु
+const struct nvkm_mmu_func
+nv04_mmu = {
 	.dma_bits = 32,
-	.mmu = अणुअणु -1, -1, NVIF_CLASS_MMU_NV04पूर्णपूर्ण,
-	.mem = अणुअणु -1, -1, NVIF_CLASS_MEM_NV04पूर्ण, nv04_mem_new, nv04_mem_map पूर्ण,
-	.vmm = अणुअणु -1, -1, NVIF_CLASS_VMM_NV04पूर्ण, nv04_vmm_new, true पूर्ण,
-पूर्ण;
+	.mmu = {{ -1, -1, NVIF_CLASS_MMU_NV04}},
+	.mem = {{ -1, -1, NVIF_CLASS_MEM_NV04}, nv04_mem_new, nv04_mem_map },
+	.vmm = {{ -1, -1, NVIF_CLASS_VMM_NV04}, nv04_vmm_new, true },
+};
 
-पूर्णांक
-nv04_mmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	     काष्ठा nvkm_mmu **pmmu)
-अणु
-	वापस nvkm_mmu_new_(&nv04_mmu, device, type, inst, pmmu);
-पूर्ण
+int
+nv04_mmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	     struct nvkm_mmu **pmmu)
+{
+	return nvkm_mmu_new_(&nv04_mmu, device, type, inst, pmmu);
+}

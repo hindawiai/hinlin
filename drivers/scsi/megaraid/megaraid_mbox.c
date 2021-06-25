@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  *			Linux MegaRAID device driver
  *
  * Copyright (c) 2003-2004  LSI Logic Corporation.
  *
- * खाता		: megaraid_mbox.c
+ * FILE		: megaraid_mbox.c
  * Version	: v2.20.5.1 (Nov 16 2006)
  *
  * Authors:
@@ -66,72 +65,72 @@
  * For history of changes, see Documentation/scsi/ChangeLog.megaraid
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश "megaraid_mbox.h"
+#include <linux/slab.h>
+#include <linux/module.h>
+#include "megaraid_mbox.h"
 
-अटल पूर्णांक megaraid_init(व्योम);
-अटल व्योम megaraid_निकास(व्योम);
+static int megaraid_init(void);
+static void megaraid_exit(void);
 
-अटल पूर्णांक megaraid_probe_one(काष्ठा pci_dev*, स्थिर काष्ठा pci_device_id *);
-अटल व्योम megaraid_detach_one(काष्ठा pci_dev *);
-अटल व्योम megaraid_mbox_shutकरोwn(काष्ठा pci_dev *);
+static int megaraid_probe_one(struct pci_dev*, const struct pci_device_id *);
+static void megaraid_detach_one(struct pci_dev *);
+static void megaraid_mbox_shutdown(struct pci_dev *);
 
-अटल पूर्णांक megaraid_io_attach(adapter_t *);
-अटल व्योम megaraid_io_detach(adapter_t *);
+static int megaraid_io_attach(adapter_t *);
+static void megaraid_io_detach(adapter_t *);
 
-अटल पूर्णांक megaraid_init_mbox(adapter_t *);
-अटल व्योम megaraid_fini_mbox(adapter_t *);
+static int megaraid_init_mbox(adapter_t *);
+static void megaraid_fini_mbox(adapter_t *);
 
-अटल पूर्णांक megaraid_alloc_cmd_packets(adapter_t *);
-अटल व्योम megaraid_मुक्त_cmd_packets(adapter_t *);
+static int megaraid_alloc_cmd_packets(adapter_t *);
+static void megaraid_free_cmd_packets(adapter_t *);
 
-अटल पूर्णांक megaraid_mbox_setup_dma_pools(adapter_t *);
-अटल व्योम megaraid_mbox_tearकरोwn_dma_pools(adapter_t *);
+static int megaraid_mbox_setup_dma_pools(adapter_t *);
+static void megaraid_mbox_teardown_dma_pools(adapter_t *);
 
-अटल पूर्णांक megaraid_sysfs_alloc_resources(adapter_t *);
-अटल व्योम megaraid_sysfs_मुक्त_resources(adapter_t *);
+static int megaraid_sysfs_alloc_resources(adapter_t *);
+static void megaraid_sysfs_free_resources(adapter_t *);
 
-अटल पूर्णांक megaraid_पात_handler(काष्ठा scsi_cmnd *);
-अटल पूर्णांक megaraid_reset_handler(काष्ठा scsi_cmnd *);
+static int megaraid_abort_handler(struct scsi_cmnd *);
+static int megaraid_reset_handler(struct scsi_cmnd *);
 
-अटल पूर्णांक mbox_post_sync_cmd(adapter_t *, uपूर्णांक8_t []);
-अटल पूर्णांक mbox_post_sync_cmd_fast(adapter_t *, uपूर्णांक8_t []);
-अटल पूर्णांक megaraid_busyरुको_mbox(mraid_device_t *);
-अटल पूर्णांक megaraid_mbox_product_info(adapter_t *);
-अटल पूर्णांक megaraid_mbox_extended_cdb(adapter_t *);
-अटल पूर्णांक megaraid_mbox_support_ha(adapter_t *, uपूर्णांक16_t *);
-अटल पूर्णांक megaraid_mbox_support_अक्रमom_del(adapter_t *);
-अटल पूर्णांक megaraid_mbox_get_max_sg(adapter_t *);
-अटल व्योम megaraid_mbox_क्रमागत_raid_scsi(adapter_t *);
-अटल व्योम megaraid_mbox_flush_cache(adapter_t *);
-अटल पूर्णांक megaraid_mbox_fire_sync_cmd(adapter_t *);
+static int mbox_post_sync_cmd(adapter_t *, uint8_t []);
+static int mbox_post_sync_cmd_fast(adapter_t *, uint8_t []);
+static int megaraid_busywait_mbox(mraid_device_t *);
+static int megaraid_mbox_product_info(adapter_t *);
+static int megaraid_mbox_extended_cdb(adapter_t *);
+static int megaraid_mbox_support_ha(adapter_t *, uint16_t *);
+static int megaraid_mbox_support_random_del(adapter_t *);
+static int megaraid_mbox_get_max_sg(adapter_t *);
+static void megaraid_mbox_enum_raid_scsi(adapter_t *);
+static void megaraid_mbox_flush_cache(adapter_t *);
+static int megaraid_mbox_fire_sync_cmd(adapter_t *);
 
-अटल व्योम megaraid_mbox_display_scb(adapter_t *, scb_t *);
-अटल व्योम megaraid_mbox_setup_device_map(adapter_t *);
+static void megaraid_mbox_display_scb(adapter_t *, scb_t *);
+static void megaraid_mbox_setup_device_map(adapter_t *);
 
-अटल पूर्णांक megaraid_queue_command(काष्ठा Scsi_Host *, काष्ठा scsi_cmnd *);
-अटल scb_t *megaraid_mbox_build_cmd(adapter_t *, काष्ठा scsi_cmnd *, पूर्णांक *);
-अटल व्योम megaraid_mbox_runpendq(adapter_t *, scb_t *);
-अटल व्योम megaraid_mbox_prepare_pthru(adapter_t *, scb_t *,
-		काष्ठा scsi_cmnd *);
-अटल व्योम megaraid_mbox_prepare_epthru(adapter_t *, scb_t *,
-		काष्ठा scsi_cmnd *);
+static int megaraid_queue_command(struct Scsi_Host *, struct scsi_cmnd *);
+static scb_t *megaraid_mbox_build_cmd(adapter_t *, struct scsi_cmnd *, int *);
+static void megaraid_mbox_runpendq(adapter_t *, scb_t *);
+static void megaraid_mbox_prepare_pthru(adapter_t *, scb_t *,
+		struct scsi_cmnd *);
+static void megaraid_mbox_prepare_epthru(adapter_t *, scb_t *,
+		struct scsi_cmnd *);
 
-अटल irqवापस_t megaraid_isr(पूर्णांक, व्योम *);
+static irqreturn_t megaraid_isr(int, void *);
 
-अटल व्योम megaraid_mbox_dpc(अचिन्हित दीर्घ);
+static void megaraid_mbox_dpc(unsigned long);
 
-अटल sमाप_प्रकार megaraid_sysfs_show_app_hndl(काष्ठा device *, काष्ठा device_attribute *attr, अक्षर *);
-अटल sमाप_प्रकार megaraid_sysfs_show_ldnum(काष्ठा device *, काष्ठा device_attribute *attr, अक्षर *);
+static ssize_t megaraid_sysfs_show_app_hndl(struct device *, struct device_attribute *attr, char *);
+static ssize_t megaraid_sysfs_show_ldnum(struct device *, struct device_attribute *attr, char *);
 
-अटल पूर्णांक megaraid_cmm_रेजिस्टर(adapter_t *);
-अटल पूर्णांक megaraid_cmm_unरेजिस्टर(adapter_t *);
-अटल पूर्णांक megaraid_mbox_mm_handler(अचिन्हित दीर्घ, uioc_t *, uपूर्णांक32_t);
-अटल पूर्णांक megaraid_mbox_mm_command(adapter_t *, uioc_t *);
-अटल व्योम megaraid_mbox_mm_करोne(adapter_t *, scb_t *);
-अटल पूर्णांक gather_hbainfo(adapter_t *, mraid_hba_info_t *);
-अटल पूर्णांक रुको_till_fw_empty(adapter_t *);
+static int megaraid_cmm_register(adapter_t *);
+static int megaraid_cmm_unregister(adapter_t *);
+static int megaraid_mbox_mm_handler(unsigned long, uioc_t *, uint32_t);
+static int megaraid_mbox_mm_command(adapter_t *, uioc_t *);
+static void megaraid_mbox_mm_done(adapter_t *, scb_t *);
+static int gather_hbainfo(adapter_t *, mraid_hba_info_t *);
+static int wait_till_fw_empty(adapter_t *);
 
 
 
@@ -141,299 +140,299 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION(MEGARAID_VERSION);
 
 /*
- * ### modules parameters क्रम driver ###
+ * ### modules parameters for driver ###
  */
 
 /*
  * Set to enable driver to expose unconfigured disk to kernel
  */
-अटल पूर्णांक megaraid_expose_unconf_disks = 0;
-module_param_named(unconf_disks, megaraid_expose_unconf_disks, पूर्णांक, 0);
+static int megaraid_expose_unconf_disks = 0;
+module_param_named(unconf_disks, megaraid_expose_unconf_disks, int, 0);
 MODULE_PARM_DESC(unconf_disks,
 	"Set to expose unconfigured disks to kernel (default=0)");
 
 /*
- * driver रुको समय अगर the adapter's mailbox is busy
+ * driver wait time if the adapter's mailbox is busy
  */
-अटल अचिन्हित पूर्णांक max_mbox_busy_रुको = MBOX_BUSY_WAIT;
-module_param_named(busy_रुको, max_mbox_busy_रुको, पूर्णांक, 0);
-MODULE_PARM_DESC(busy_रुको,
+static unsigned int max_mbox_busy_wait = MBOX_BUSY_WAIT;
+module_param_named(busy_wait, max_mbox_busy_wait, int, 0);
+MODULE_PARM_DESC(busy_wait,
 	"Max wait for mailbox in microseconds if busy (default=10)");
 
 /*
  * number of sectors per IO command
  */
-अटल अचिन्हित पूर्णांक megaraid_max_sectors = MBOX_MAX_SECTORS;
-module_param_named(max_sectors, megaraid_max_sectors, पूर्णांक, 0);
+static unsigned int megaraid_max_sectors = MBOX_MAX_SECTORS;
+module_param_named(max_sectors, megaraid_max_sectors, int, 0);
 MODULE_PARM_DESC(max_sectors,
 	"Maximum number of sectors per IO command (default=128)");
 
 /*
  * number of commands per logical unit
  */
-अटल अचिन्हित पूर्णांक megaraid_cmd_per_lun = MBOX_DEF_CMD_PER_LUN;
-module_param_named(cmd_per_lun, megaraid_cmd_per_lun, पूर्णांक, 0);
+static unsigned int megaraid_cmd_per_lun = MBOX_DEF_CMD_PER_LUN;
+module_param_named(cmd_per_lun, megaraid_cmd_per_lun, int, 0);
 MODULE_PARM_DESC(cmd_per_lun,
 	"Maximum number of commands per logical unit (default=64)");
 
 
 /*
- * Fast driver load option, skip scanning क्रम physical devices during load.
+ * Fast driver load option, skip scanning for physical devices during load.
  * This would result in non-disk devices being skipped during driver load
- * समय. These can be later added though, using /proc/scsi/scsi
+ * time. These can be later added though, using /proc/scsi/scsi
  */
-अटल अचिन्हित पूर्णांक megaraid_fast_load = 0;
-module_param_named(fast_load, megaraid_fast_load, पूर्णांक, 0);
+static unsigned int megaraid_fast_load = 0;
+module_param_named(fast_load, megaraid_fast_load, int, 0);
 MODULE_PARM_DESC(fast_load,
 	"Faster loading of the driver, skips physical devices! (default=0)");
 
 
 /*
- * mraid_debug level - threshold क्रम amount of inक्रमmation to be displayed by
+ * mraid_debug level - threshold for amount of information to be displayed by
  * the driver. This level can be changed through modules parameters, ioctl or
- * sysfs/proc पूर्णांकerface. By शेष, prपूर्णांक the announcement messages only.
+ * sysfs/proc interface. By default, print the announcement messages only.
  */
-पूर्णांक mraid_debug_level = CL_ANN;
-module_param_named(debug_level, mraid_debug_level, पूर्णांक, 0);
+int mraid_debug_level = CL_ANN;
+module_param_named(debug_level, mraid_debug_level, int, 0);
 MODULE_PARM_DESC(debug_level, "Debug level for driver (default=0)");
 
 /*
- * PCI table क्रम all supported controllers.
+ * PCI table for all supported controllers.
  */
-अटल काष्ठा pci_device_id pci_id_table_g[] =  अणु
-	अणु
+static struct pci_device_id pci_id_table_g[] =  {
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4_DI_DISCOVERY,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4_DI_DISCOVERY,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_LSI_LOGIC,
 		PCI_DEVICE_ID_PERC4_SC,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4_SC,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_LSI_LOGIC,
 		PCI_DEVICE_ID_PERC4_DC,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4_DC,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_LSI_LOGIC,
 		PCI_DEVICE_ID_VERDE,
 		PCI_ANY_ID,
 		PCI_ANY_ID,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4_DI_EVERGLADES,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4_DI_EVERGLADES,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4E_SI_BIGBEND,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4E_SI_BIGBEND,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4E_DI_KOBUK,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4E_DI_KOBUK,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4E_DI_CORVETTE,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4E_DI_CORVETTE,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4E_DI_EXPEDITION,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4E_DI_EXPEDITION,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_DELL,
 		PCI_DEVICE_ID_PERC4E_DI_GUADALUPE,
 		PCI_VENDOR_ID_DELL,
 		PCI_SUBSYS_ID_PERC4E_DI_GUADALUPE,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_LSI_LOGIC,
 		PCI_DEVICE_ID_DOBSON,
 		PCI_ANY_ID,
 		PCI_ANY_ID,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_AMI,
 		PCI_DEVICE_ID_AMI_MEGARAID3,
 		PCI_ANY_ID,
 		PCI_ANY_ID,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_LSI_LOGIC,
 		PCI_DEVICE_ID_AMI_MEGARAID3,
 		PCI_ANY_ID,
 		PCI_ANY_ID,
-	पूर्ण,
-	अणु
+	},
+	{
 		PCI_VENDOR_ID_LSI_LOGIC,
 		PCI_DEVICE_ID_LINDSAY,
 		PCI_ANY_ID,
 		PCI_ANY_ID,
-	पूर्ण,
-	अणु0पूर्ण	/* Terminating entry */
-पूर्ण;
+	},
+	{0}	/* Terminating entry */
+};
 MODULE_DEVICE_TABLE(pci, pci_id_table_g);
 
 
-अटल काष्ठा pci_driver megaraid_pci_driver = अणु
+static struct pci_driver megaraid_pci_driver = {
 	.name		= "megaraid",
 	.id_table	= pci_id_table_g,
 	.probe		= megaraid_probe_one,
-	.हटाओ		= megaraid_detach_one,
-	.shutकरोwn	= megaraid_mbox_shutकरोwn,
-पूर्ण;
+	.remove		= megaraid_detach_one,
+	.shutdown	= megaraid_mbox_shutdown,
+};
 
 
 
-// definitions क्रम the device attributes क्रम exporting logical drive number
-// क्रम a scsi address (Host, Channel, Id, Lun)
+// definitions for the device attributes for exporting logical drive number
+// for a scsi address (Host, Channel, Id, Lun)
 
-अटल DEVICE_ATTR(megaraid_mbox_app_hndl, S_IRUSR, megaraid_sysfs_show_app_hndl,
-		   शून्य);
+static DEVICE_ATTR(megaraid_mbox_app_hndl, S_IRUSR, megaraid_sysfs_show_app_hndl,
+		   NULL);
 
-// Host ढाँचा initializer क्रम megaraid mbox sysfs device attributes
-अटल काष्ठा device_attribute *megaraid_shost_attrs[] = अणु
+// Host template initializer for megaraid mbox sysfs device attributes
+static struct device_attribute *megaraid_shost_attrs[] = {
 	&dev_attr_megaraid_mbox_app_hndl,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 
-अटल DEVICE_ATTR(megaraid_mbox_ld, S_IRUSR, megaraid_sysfs_show_ldnum, शून्य);
+static DEVICE_ATTR(megaraid_mbox_ld, S_IRUSR, megaraid_sysfs_show_ldnum, NULL);
 
-// Host ढाँचा initializer क्रम megaraid mbox sysfs device attributes
-अटल काष्ठा device_attribute *megaraid_sdev_attrs[] = अणु
+// Host template initializer for megaraid mbox sysfs device attributes
+static struct device_attribute *megaraid_sdev_attrs[] = {
 	&dev_attr_megaraid_mbox_ld,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 /*
- * Scsi host ढाँचा क्रम megaraid unअगरied driver
+ * Scsi host template for megaraid unified driver
  */
-अटल काष्ठा scsi_host_ढाँचा megaraid_ढाँचा_g = अणु
+static struct scsi_host_template megaraid_template_g = {
 	.module				= THIS_MODULE,
 	.name				= "LSI Logic MegaRAID driver",
 	.proc_name			= "megaraid",
 	.queuecommand			= megaraid_queue_command,
-	.eh_पात_handler		= megaraid_पात_handler,
+	.eh_abort_handler		= megaraid_abort_handler,
 	.eh_host_reset_handler		= megaraid_reset_handler,
 	.change_queue_depth		= scsi_change_queue_depth,
-	.no_ग_लिखो_same			= 1,
+	.no_write_same			= 1,
 	.sdev_attrs			= megaraid_sdev_attrs,
 	.shost_attrs			= megaraid_shost_attrs,
-पूर्ण;
+};
 
 
 /**
  * megaraid_init - module load hook
  *
- * We रेजिस्टर ourselves as hotplug enabled module and let PCI subप्रणाली
+ * We register ourselves as hotplug enabled module and let PCI subsystem
  * discover our adapters.
  */
-अटल पूर्णांक __init
-megaraid_init(व्योम)
-अणु
-	पूर्णांक	rval;
+static int __init
+megaraid_init(void)
+{
+	int	rval;
 
 	// Announce the driver version
 	con_log(CL_ANN, (KERN_INFO "megaraid: %s %s\n", MEGARAID_VERSION,
 		MEGARAID_EXT_VERSION));
 
 	// check validity of module parameters
-	अगर (megaraid_cmd_per_lun > MBOX_MAX_SCSI_CMDS) अणु
+	if (megaraid_cmd_per_lun > MBOX_MAX_SCSI_CMDS) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid mailbox: max commands per lun reset to %d\n",
 			MBOX_MAX_SCSI_CMDS));
 
 		megaraid_cmd_per_lun = MBOX_MAX_SCSI_CMDS;
-	पूर्ण
+	}
 
 
-	// रेजिस्टर as a PCI hot-plug driver module
-	rval = pci_रेजिस्टर_driver(&megaraid_pci_driver);
-	अगर (rval < 0) अणु
+	// register as a PCI hot-plug driver module
+	rval = pci_register_driver(&megaraid_pci_driver);
+	if (rval < 0) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: could not register hotplug support.\n"));
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
- * megaraid_निकास - driver unload entry poपूर्णांक
+ * megaraid_exit - driver unload entry point
  *
  * We simply unwrap the megaraid_init routine here.
  */
-अटल व्योम __निकास
-megaraid_निकास(व्योम)
-अणु
+static void __exit
+megaraid_exit(void)
+{
 	con_log(CL_DLEVEL1, (KERN_NOTICE "megaraid: unloading framework\n"));
 
-	// unरेजिस्टर as PCI hotplug driver
-	pci_unरेजिस्टर_driver(&megaraid_pci_driver);
+	// unregister as PCI hotplug driver
+	pci_unregister_driver(&megaraid_pci_driver);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * megaraid_probe_one - PCI hotplug entry poपूर्णांक
+ * megaraid_probe_one - PCI hotplug entry point
  * @pdev	: handle to this controller's PCI configuration space
  * @id		: pci device id of the class of controllers
  *
  * This routine should be called whenever a new adapter is detected by the
- * PCI hotplug susbप्रणाली.
+ * PCI hotplug susbsystem.
  */
-अटल पूर्णांक
-megaraid_probe_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
+static int
+megaraid_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
+{
 	adapter_t	*adapter;
 
 
 	// detected a new controller
 	con_log(CL_ANN, (KERN_INFO
 		"megaraid: probe new device %#4.04x:%#4.04x:%#4.04x:%#4.04x: ",
-		pdev->venकरोr, pdev->device, pdev->subप्रणाली_venकरोr,
-		pdev->subप्रणाली_device));
+		pdev->vendor, pdev->device, pdev->subsystem_vendor,
+		pdev->subsystem_device));
 
 	con_log(CL_ANN, ("bus %d:slot %d:func %d\n", pdev->bus->number,
 		PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn)));
 
-	अगर (pci_enable_device(pdev)) अणु
+	if (pci_enable_device(pdev)) {
 		con_log(CL_ANN, (KERN_WARNING
 				"megaraid: pci_enable_device failed\n"));
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	// Enable bus-mastering on this controller
 	pci_set_master(pdev);
 
-	// Allocate the per driver initialization काष्ठाure
-	adapter = kzalloc(माप(adapter_t), GFP_KERNEL);
+	// Allocate the per driver initialization structure
+	adapter = kzalloc(sizeof(adapter_t), GFP_KERNEL);
 
-	अगर (adapter == शून्य) अणु
+	if (adapter == NULL) {
 		con_log(CL_ANN, (KERN_WARNING
 		"megaraid: out of memory, %s %d.\n", __func__, __LINE__));
 
-		जाओ out_probe_one;
-	पूर्ण
+		goto out_probe_one;
+	}
 
 
 	// set up PCI related soft state and other pre-known parameters
@@ -443,20 +442,20 @@ megaraid_probe_one(काष्ठा pci_dev *pdev, स्थिर काष�
 
 	atomic_set(&adapter->being_detached, 0);
 
-	// Setup the शेष DMA mask. This would be changed later on
+	// Setup the default DMA mask. This would be changed later on
 	// depending on hardware capabilities
-	अगर (dma_set_mask(&adapter->pdev->dev, DMA_BIT_MASK(32))) अणु
+	if (dma_set_mask(&adapter->pdev->dev, DMA_BIT_MASK(32))) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: dma_set_mask failed:%d\n", __LINE__));
 
-		जाओ out_मुक्त_adapter;
-	पूर्ण
+		goto out_free_adapter;
+	}
 
 
-	// Initialize the synchronization lock क्रम kernel and LLD
+	// Initialize the synchronization lock for kernel and LLD
 	spin_lock_init(&adapter->lock);
 
-	// Initialize the command queues: the list of मुक्त SCBs and the list
+	// Initialize the command queues: the list of free SCBs and the list
 	// of pending SCBs.
 	INIT_LIST_HEAD(&adapter->kscb_pool);
 	spin_lock_init(SCSI_FREE_LIST_LOCK(adapter));
@@ -469,131 +468,131 @@ megaraid_probe_one(काष्ठा pci_dev *pdev, स्थिर काष�
 
 
 	// Start the mailbox based controller
-	अगर (megaraid_init_mbox(adapter) != 0) अणु
+	if (megaraid_init_mbox(adapter) != 0) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: mailbox adapter did not initialize\n"));
 
-		जाओ out_मुक्त_adapter;
-	पूर्ण
+		goto out_free_adapter;
+	}
 
 	// Register with LSI Common Management Module
-	अगर (megaraid_cmm_रेजिस्टर(adapter) != 0) अणु
+	if (megaraid_cmm_register(adapter) != 0) {
 
 		con_log(CL_ANN, (KERN_WARNING
 		"megaraid: could not register with management module\n"));
 
-		जाओ out_fini_mbox;
-	पूर्ण
+		goto out_fini_mbox;
+	}
 
 	// setup adapter handle in PCI soft state
 	pci_set_drvdata(pdev, adapter);
 
 	// attach with scsi mid-layer
-	अगर (megaraid_io_attach(adapter) != 0) अणु
+	if (megaraid_io_attach(adapter) != 0) {
 
 		con_log(CL_ANN, (KERN_WARNING "megaraid: io attach failed\n"));
 
-		जाओ out_cmm_unreg;
-	पूर्ण
+		goto out_cmm_unreg;
+	}
 
-	वापस 0;
+	return 0;
 
 out_cmm_unreg:
-	megaraid_cmm_unरेजिस्टर(adapter);
+	megaraid_cmm_unregister(adapter);
 out_fini_mbox:
 	megaraid_fini_mbox(adapter);
-out_मुक्त_adapter:
-	kमुक्त(adapter);
+out_free_adapter:
+	kfree(adapter);
 out_probe_one:
 	pci_disable_device(pdev);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 
 /**
  * megaraid_detach_one - release framework resources and call LLD release routine
- * @pdev	: handle क्रम our PCI configuration space
+ * @pdev	: handle for our PCI configuration space
  *
- * This routine is called during driver unload. We मुक्त all the allocated
+ * This routine is called during driver unload. We free all the allocated
  * resources and call the corresponding LLD so that it can also release all
  * its resources.
  *
- * This routine is also called from the PCI hotplug प्रणाली.
+ * This routine is also called from the PCI hotplug system.
  */
-अटल व्योम
-megaraid_detach_one(काष्ठा pci_dev *pdev)
-अणु
+static void
+megaraid_detach_one(struct pci_dev *pdev)
+{
 	adapter_t		*adapter;
-	काष्ठा Scsi_Host	*host;
+	struct Scsi_Host	*host;
 
 
 	// Start a rollback on this adapter
 	adapter = pci_get_drvdata(pdev);
 
-	अगर (!adapter) अणु
+	if (!adapter) {
 		con_log(CL_ANN, (KERN_CRIT
 		"megaraid: Invalid detach on %#4.04x:%#4.04x:%#4.04x:%#4.04x\n",
-			pdev->venकरोr, pdev->device, pdev->subप्रणाली_venकरोr,
-			pdev->subप्रणाली_device));
+			pdev->vendor, pdev->device, pdev->subsystem_vendor,
+			pdev->subsystem_device));
 
-		वापस;
-	पूर्ण
-	अन्यथा अणु
+		return;
+	}
+	else {
 		con_log(CL_ANN, (KERN_NOTICE
 		"megaraid: detaching device %#4.04x:%#4.04x:%#4.04x:%#4.04x\n",
-			pdev->venकरोr, pdev->device, pdev->subप्रणाली_venकरोr,
-			pdev->subप्रणाली_device));
-	पूर्ण
+			pdev->vendor, pdev->device, pdev->subsystem_vendor,
+			pdev->subsystem_device));
+	}
 
 
 	host = adapter->host;
 
-	// करो not allow any more requests from the management module क्रम this
+	// do not allow any more requests from the management module for this
 	// adapter.
-	// FIXME: How करो we account क्रम the request which might still be
+	// FIXME: How do we account for the request which might still be
 	// pending with us?
 	atomic_set(&adapter->being_detached, 1);
 
-	// detach from the IO sub-प्रणाली
+	// detach from the IO sub-system
 	megaraid_io_detach(adapter);
 
-	// Unरेजिस्टर from common management module
+	// Unregister from common management module
 	//
-	// FIXME: this must वापस success or failure क्रम conditions अगर there
+	// FIXME: this must return success or failure for conditions if there
 	// is a command pending with LLD or not.
-	megaraid_cmm_unरेजिस्टर(adapter);
+	megaraid_cmm_unregister(adapter);
 
 	// finalize the mailbox based controller and release all resources
 	megaraid_fini_mbox(adapter);
 
-	kमुक्त(adapter);
+	kfree(adapter);
 
 	scsi_host_put(host);
 
 	pci_disable_device(pdev);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * megaraid_mbox_shutकरोwn - PCI shutकरोwn क्रम megaraid HBA
+ * megaraid_mbox_shutdown - PCI shutdown for megaraid HBA
  * @pdev		: generic driver model device
  *
- * Shutकरोwn notअगरication, perक्रमm flush cache.
+ * Shutdown notification, perform flush cache.
  */
-अटल व्योम
-megaraid_mbox_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
+static void
+megaraid_mbox_shutdown(struct pci_dev *pdev)
+{
 	adapter_t		*adapter = pci_get_drvdata(pdev);
-	अटल पूर्णांक		counter;
+	static int		counter;
 
-	अगर (!adapter) अणु
+	if (!adapter) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: null device in shutdown\n"));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	// flush caches now
 	con_log(CL_ANN, (KERN_INFO "megaraid: flushing adapter %d...",
@@ -602,28 +601,28 @@ megaraid_mbox_shutकरोwn(काष्ठा pci_dev *pdev)
 	megaraid_mbox_flush_cache(adapter);
 
 	con_log(CL_ANN, ("done\n"));
-पूर्ण
+}
 
 
 /**
- * megaraid_io_attach - attach a device with the IO subप्रणाली
+ * megaraid_io_attach - attach a device with the IO subsystem
  * @adapter		: controller's soft state
  *
- * Attach this device with the IO subप्रणाली.
+ * Attach this device with the IO subsystem.
  */
-अटल पूर्णांक
+static int
 megaraid_io_attach(adapter_t *adapter)
-अणु
-	काष्ठा Scsi_Host	*host;
+{
+	struct Scsi_Host	*host;
 
-	// Initialize SCSI Host काष्ठाure
-	host = scsi_host_alloc(&megaraid_ढाँचा_g, 8);
-	अगर (!host) अणु
+	// Initialize SCSI Host structure
+	host = scsi_host_alloc(&megaraid_template_g, 8);
+	if (!host) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid mbox: scsi_register failed\n"));
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	SCSIHOST2ADAP(host)	= (caddr_t)adapter;
 	adapter->host		= host;
@@ -640,78 +639,78 @@ megaraid_io_attach(adapter_t *adapter)
 	host->max_lun		= adapter->max_lun;
 
 
-	// notअगरy mid-layer about the new controller
-	अगर (scsi_add_host(host, &adapter->pdev->dev)) अणु
+	// notify mid-layer about the new controller
+	if (scsi_add_host(host, &adapter->pdev->dev)) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid mbox: scsi_add_host failed\n"));
 
 		scsi_host_put(host);
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	scsi_scan_host(host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * megaraid_io_detach - detach a device from the IO subप्रणाली
+ * megaraid_io_detach - detach a device from the IO subsystem
  * @adapter		: controller's soft state
  *
- * Detach this device from the IO subप्रणाली.
+ * Detach this device from the IO subsystem.
  */
-अटल व्योम
+static void
 megaraid_io_detach(adapter_t *adapter)
-अणु
-	काष्ठा Scsi_Host	*host;
+{
+	struct Scsi_Host	*host;
 
 	con_log(CL_DLEVEL1, (KERN_INFO "megaraid: io detach\n"));
 
 	host = adapter->host;
 
-	scsi_हटाओ_host(host);
+	scsi_remove_host(host);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /*
  * START: Mailbox Low Level Driver
  *
- * This is section specअगरic to the single mailbox based controllers
+ * This is section specific to the single mailbox based controllers
  */
 
 /**
  * megaraid_init_mbox - initialize controller
  * @adapter		: our soft state
  *
- * - Allocate 16-byte aligned mailbox memory क्रम firmware handshake
+ * - Allocate 16-byte aligned mailbox memory for firmware handshake
  * - Allocate controller's memory resources
  * - Find out all initialization data
- * - Allocate memory required क्रम all the commands
- * - Use पूर्णांकernal library of FW routines, build up complete soft state
+ * - Allocate memory required for all the commands
+ * - Use internal library of FW routines, build up complete soft state
  */
-अटल पूर्णांक
+static int
 megaraid_init_mbox(adapter_t *adapter)
-अणु
-	काष्ठा pci_dev		*pdev;
+{
+	struct pci_dev		*pdev;
 	mraid_device_t		*raid_dev;
-	पूर्णांक			i;
-	uपूर्णांक32_t		magic64;
+	int			i;
+	uint32_t		magic64;
 
 
 	adapter->ito	= MBOX_TIMEOUT;
 	pdev		= adapter->pdev;
 
 	/*
-	 * Allocate and initialize the init data काष्ठाure क्रम mailbox
+	 * Allocate and initialize the init data structure for mailbox
 	 * controllers
 	 */
-	raid_dev = kzalloc(माप(mraid_device_t), GFP_KERNEL);
-	अगर (raid_dev == शून्य) वापस -1;
+	raid_dev = kzalloc(sizeof(mraid_device_t), GFP_KERNEL);
+	if (raid_dev == NULL) return -1;
 
 
 	/*
@@ -724,37 +723,37 @@ megaraid_init_mbox(adapter_t *adapter)
 	// our baseport
 	raid_dev->baseport = pci_resource_start(pdev, 0);
 
-	अगर (pci_request_regions(pdev, "MegaRAID: LSI Logic Corporation") != 0) अणु
+	if (pci_request_regions(pdev, "MegaRAID: LSI Logic Corporation") != 0) {
 
 		con_log(CL_ANN, (KERN_WARNING
 				"megaraid: mem region busy\n"));
 
-		जाओ out_मुक्त_raid_dev;
-	पूर्ण
+		goto out_free_raid_dev;
+	}
 
 	raid_dev->baseaddr = ioremap(raid_dev->baseport, 128);
 
-	अगर (!raid_dev->baseaddr) अणु
+	if (!raid_dev->baseaddr) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: could not map hba memory\n") );
 
-		जाओ out_release_regions;
-	पूर्ण
+		goto out_release_regions;
+	}
 
-	/* initialize the mutual exclusion lock क्रम the mailbox */
+	/* initialize the mutual exclusion lock for the mailbox */
 	spin_lock_init(&raid_dev->mailbox_lock);
 
-	/* allocate memory required क्रम commands */
-	अगर (megaraid_alloc_cmd_packets(adapter) != 0)
-		जाओ out_iounmap;
+	/* allocate memory required for commands */
+	if (megaraid_alloc_cmd_packets(adapter) != 0)
+		goto out_iounmap;
 
 	/*
 	 * Issue SYNC cmd to flush the pending cmds in the adapter
-	 * and initialize its पूर्णांकernal state
+	 * and initialize its internal state
 	 */
 
-	अगर (megaraid_mbox_fire_sync_cmd(adapter))
+	if (megaraid_mbox_fire_sync_cmd(adapter))
 		con_log(CL_ANN, ("megaraid: sync cmd failed\n"));
 
 	/*
@@ -762,60 +761,60 @@ megaraid_init_mbox(adapter_t *adapter)
 	 * FW routines
 	 */
 
-	/* request IRQ and रेजिस्टर the पूर्णांकerrupt service routine */
-	अगर (request_irq(adapter->irq, megaraid_isr, IRQF_SHARED, "megaraid",
-		adapter)) अणु
+	/* request IRQ and register the interrupt service routine */
+	if (request_irq(adapter->irq, megaraid_isr, IRQF_SHARED, "megaraid",
+		adapter)) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: Couldn't register IRQ %d!\n", adapter->irq));
-		जाओ out_alloc_cmds;
+		goto out_alloc_cmds;
 
-	पूर्ण
+	}
 
 	// Product info
-	अगर (megaraid_mbox_product_info(adapter) != 0)
-		जाओ out_मुक्त_irq;
+	if (megaraid_mbox_product_info(adapter) != 0)
+		goto out_free_irq;
 
 	// Do we support extended CDBs
 	adapter->max_cdb_sz = 10;
-	अगर (megaraid_mbox_extended_cdb(adapter) == 0) अणु
+	if (megaraid_mbox_extended_cdb(adapter) == 0) {
 		adapter->max_cdb_sz = 16;
-	पूर्ण
+	}
 
 	/*
-	 * Do we support cluster environment, अगर we करो, what is the initiator
+	 * Do we support cluster environment, if we do, what is the initiator
 	 * id.
 	 * NOTE: In a non-cluster aware firmware environment, the LLD should
-	 * वापस 7 as initiator id.
+	 * return 7 as initiator id.
 	 */
 	adapter->ha		= 0;
 	adapter->init_id	= -1;
-	अगर (megaraid_mbox_support_ha(adapter, &adapter->init_id) == 0) अणु
+	if (megaraid_mbox_support_ha(adapter, &adapter->init_id) == 0) {
 		adapter->ha = 1;
-	पूर्ण
+	}
 
 	/*
 	 * Prepare the device ids array to have the mapping between the kernel
 	 * device address and megaraid device address.
 	 * We export the physical devices on their actual addresses. The
-	 * logical drives are exported on a भव SCSI channel
+	 * logical drives are exported on a virtual SCSI channel
 	 */
 	megaraid_mbox_setup_device_map(adapter);
 
-	// If the firmware supports अक्रमom deletion, update the device id map
-	अगर (megaraid_mbox_support_अक्रमom_del(adapter)) अणु
+	// If the firmware supports random deletion, update the device id map
+	if (megaraid_mbox_support_random_del(adapter)) {
 
 		// Change the logical drives numbers in device_ids array one
-		// slot in device_ids is reserved क्रम target id, that's why
+		// slot in device_ids is reserved for target id, that's why
 		// "<=" below
-		क्रम (i = 0; i <= MAX_LOGICAL_DRIVES_40LD; i++) अणु
+		for (i = 0; i <= MAX_LOGICAL_DRIVES_40LD; i++) {
 			adapter->device_ids[adapter->max_channel][i] += 0x80;
-		पूर्ण
+		}
 		adapter->device_ids[adapter->max_channel][adapter->init_id] =
 			0xFF;
 
-		raid_dev->अक्रमom_del_supported = 1;
-	पूर्ण
+		raid_dev->random_del_supported = 1;
+	}
 
 	/*
 	 * find out the maximum number of scatter-gather elements supported by
@@ -823,9 +822,9 @@ megaraid_init_mbox(adapter_t *adapter)
 	 */
 	adapter->sglen = megaraid_mbox_get_max_sg(adapter);
 
-	// क्रमागतerate RAID and SCSI channels so that all devices on SCSI
+	// enumerate RAID and SCSI channels so that all devices on SCSI
 	// channels can later be exported, including disk devices
-	megaraid_mbox_क्रमागत_raid_scsi(adapter);
+	megaraid_mbox_enum_raid_scsi(adapter);
 
 	/*
 	 * Other parameters required by upper layer
@@ -843,95 +842,95 @@ megaraid_init_mbox(adapter_t *adapter)
 	 * Allocate resources required to issue FW calls, when sysfs is
 	 * accessed
 	 */
-	अगर (megaraid_sysfs_alloc_resources(adapter) != 0)
-		जाओ out_मुक्त_irq;
+	if (megaraid_sysfs_alloc_resources(adapter) != 0)
+		goto out_free_irq;
 
 	// Set the DMA mask to 64-bit. All supported controllers as capable of
 	// DMA in this range
-	pci_पढ़ो_config_dword(adapter->pdev, PCI_CONF_AMISIG64, &magic64);
+	pci_read_config_dword(adapter->pdev, PCI_CONF_AMISIG64, &magic64);
 
-	अगर (((magic64 == HBA_SIGNATURE_64_BIT) &&
-		((adapter->pdev->subप्रणाली_device !=
+	if (((magic64 == HBA_SIGNATURE_64_BIT) &&
+		((adapter->pdev->subsystem_device !=
 		PCI_SUBSYS_ID_MEGARAID_SATA_150_6) &&
-		(adapter->pdev->subप्रणाली_device !=
+		(adapter->pdev->subsystem_device !=
 		PCI_SUBSYS_ID_MEGARAID_SATA_150_4))) ||
-		(adapter->pdev->venकरोr == PCI_VENDOR_ID_LSI_LOGIC &&
+		(adapter->pdev->vendor == PCI_VENDOR_ID_LSI_LOGIC &&
 		adapter->pdev->device == PCI_DEVICE_ID_VERDE) ||
-		(adapter->pdev->venकरोr == PCI_VENDOR_ID_LSI_LOGIC &&
+		(adapter->pdev->vendor == PCI_VENDOR_ID_LSI_LOGIC &&
 		adapter->pdev->device == PCI_DEVICE_ID_DOBSON) ||
-		(adapter->pdev->venकरोr == PCI_VENDOR_ID_LSI_LOGIC &&
+		(adapter->pdev->vendor == PCI_VENDOR_ID_LSI_LOGIC &&
 		adapter->pdev->device == PCI_DEVICE_ID_LINDSAY) ||
-		(adapter->pdev->venकरोr == PCI_VENDOR_ID_DELL &&
+		(adapter->pdev->vendor == PCI_VENDOR_ID_DELL &&
 		adapter->pdev->device == PCI_DEVICE_ID_PERC4_DI_EVERGLADES) ||
-		(adapter->pdev->venकरोr == PCI_VENDOR_ID_DELL &&
-		adapter->pdev->device == PCI_DEVICE_ID_PERC4E_DI_KOBUK)) अणु
-		अगर (dma_set_mask(&adapter->pdev->dev, DMA_BIT_MASK(64))) अणु
+		(adapter->pdev->vendor == PCI_VENDOR_ID_DELL &&
+		adapter->pdev->device == PCI_DEVICE_ID_PERC4E_DI_KOBUK)) {
+		if (dma_set_mask(&adapter->pdev->dev, DMA_BIT_MASK(64))) {
 			con_log(CL_ANN, (KERN_WARNING
 				"megaraid: DMA mask for 64-bit failed\n"));
 
-			अगर (dma_set_mask(&adapter->pdev->dev,
-						DMA_BIT_MASK(32))) अणु
+			if (dma_set_mask(&adapter->pdev->dev,
+						DMA_BIT_MASK(32))) {
 				con_log(CL_ANN, (KERN_WARNING
 					"megaraid: 32-bit DMA mask failed\n"));
-				जाओ out_मुक्त_sysfs_res;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out_free_sysfs_res;
+			}
+		}
+	}
 
-	// setup tasklet क्रम DPC
+	// setup tasklet for DPC
 	tasklet_init(&adapter->dpc_h, megaraid_mbox_dpc,
-			(अचिन्हित दीर्घ)adapter);
+			(unsigned long)adapter);
 
 	con_log(CL_DLEVEL1, (KERN_INFO
 		"megaraid mbox hba successfully initialized\n"));
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_sysfs_res:
-	megaraid_sysfs_मुक्त_resources(adapter);
-out_मुक्त_irq:
-	मुक्त_irq(adapter->irq, adapter);
+out_free_sysfs_res:
+	megaraid_sysfs_free_resources(adapter);
+out_free_irq:
+	free_irq(adapter->irq, adapter);
 out_alloc_cmds:
-	megaraid_मुक्त_cmd_packets(adapter);
+	megaraid_free_cmd_packets(adapter);
 out_iounmap:
 	iounmap(raid_dev->baseaddr);
 out_release_regions:
 	pci_release_regions(pdev);
-out_मुक्त_raid_dev:
-	kमुक्त(raid_dev);
+out_free_raid_dev:
+	kfree(raid_dev);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 
 /**
- * megaraid_fini_mbox - unकरो controller initialization
+ * megaraid_fini_mbox - undo controller initialization
  * @adapter		: our soft state
  */
-अटल व्योम
+static void
 megaraid_fini_mbox(adapter_t *adapter)
-अणु
+{
 	mraid_device_t *raid_dev = ADAP2RAIDDEV(adapter);
 
 	// flush all caches
 	megaraid_mbox_flush_cache(adapter);
 
-	tasklet_समाप्त(&adapter->dpc_h);
+	tasklet_kill(&adapter->dpc_h);
 
-	megaraid_sysfs_मुक्त_resources(adapter);
+	megaraid_sysfs_free_resources(adapter);
 
-	megaraid_मुक्त_cmd_packets(adapter);
+	megaraid_free_cmd_packets(adapter);
 
-	मुक्त_irq(adapter->irq, adapter);
+	free_irq(adapter->irq, adapter);
 
 	iounmap(raid_dev->baseaddr);
 
 	pci_release_regions(adapter->pdev);
 
-	kमुक्त(raid_dev);
+	kfree(raid_dev);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
@@ -939,119 +938,119 @@ megaraid_fini_mbox(adapter_t *adapter)
  * @adapter		: soft state of the raid controller
  *
  * Allocate and align the shared mailbox. This mailbox is used to issue
- * all the commands. For IO based controllers, the mailbox is also रेजिस्टरed
- * with the FW. Allocate memory क्रम all commands as well.
+ * all the commands. For IO based controllers, the mailbox is also registered
+ * with the FW. Allocate memory for all commands as well.
  * This is our big allocator.
  */
-अटल पूर्णांक
+static int
 megaraid_alloc_cmd_packets(adapter_t *adapter)
-अणु
+{
 	mraid_device_t		*raid_dev = ADAP2RAIDDEV(adapter);
-	काष्ठा pci_dev		*pdev;
-	अचिन्हित दीर्घ		align;
+	struct pci_dev		*pdev;
+	unsigned long		align;
 	scb_t			*scb;
 	mbox_ccb_t		*ccb;
-	काष्ठा mraid_pci_blk	*epthru_pci_blk;
-	काष्ठा mraid_pci_blk	*sg_pci_blk;
-	काष्ठा mraid_pci_blk	*mbox_pci_blk;
-	पूर्णांक			i;
+	struct mraid_pci_blk	*epthru_pci_blk;
+	struct mraid_pci_blk	*sg_pci_blk;
+	struct mraid_pci_blk	*mbox_pci_blk;
+	int			i;
 
 	pdev = adapter->pdev;
 
 	/*
 	 * Setup the mailbox
-	 * Allocate the common 16-byte aligned memory क्रम the handshake
+	 * Allocate the common 16-byte aligned memory for the handshake
 	 * mailbox.
 	 */
 	raid_dev->una_mbox64 = dma_alloc_coherent(&adapter->pdev->dev,
-						  माप(mbox64_t),
+						  sizeof(mbox64_t),
 						  &raid_dev->una_mbox64_dma,
 						  GFP_KERNEL);
 
-	अगर (!raid_dev->una_mbox64) अणु
+	if (!raid_dev->una_mbox64) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
 			__LINE__));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
 	 * Align the mailbox at 16-byte boundary
 	 */
 	raid_dev->mbox	= &raid_dev->una_mbox64->mbox32;
 
-	raid_dev->mbox	= (mbox_t *)((((अचिन्हित दीर्घ)raid_dev->mbox) + 15) &
+	raid_dev->mbox	= (mbox_t *)((((unsigned long)raid_dev->mbox) + 15) &
 				(~0UL ^ 0xFUL));
 
-	raid_dev->mbox64 = (mbox64_t *)(((अचिन्हित दीर्घ)raid_dev->mbox) - 8);
+	raid_dev->mbox64 = (mbox64_t *)(((unsigned long)raid_dev->mbox) - 8);
 
-	align = ((व्योम *)raid_dev->mbox -
-			((व्योम *)&raid_dev->una_mbox64->mbox32));
+	align = ((void *)raid_dev->mbox -
+			((void *)&raid_dev->una_mbox64->mbox32));
 
-	raid_dev->mbox_dma = (अचिन्हित दीर्घ)raid_dev->una_mbox64_dma + 8 +
+	raid_dev->mbox_dma = (unsigned long)raid_dev->una_mbox64_dma + 8 +
 			align;
 
-	// Allocate memory क्रम commands issued पूर्णांकernally
+	// Allocate memory for commands issued internally
 	adapter->ibuf = dma_alloc_coherent(&pdev->dev, MBOX_IBUF_SIZE,
 					   &adapter->ibuf_dma_h, GFP_KERNEL);
-	अगर (!adapter->ibuf) अणु
+	if (!adapter->ibuf) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
 			__LINE__));
 
-		जाओ out_मुक्त_common_mbox;
-	पूर्ण
+		goto out_free_common_mbox;
+	}
 
-	// Allocate memory क्रम our SCSI Command Blocks and their associated
+	// Allocate memory for our SCSI Command Blocks and their associated
 	// memory
 
 	/*
-	 * Allocate memory क्रम the base list of scb. Later allocate memory क्रम
-	 * CCBs and embedded components of each CCB and poपूर्णांक the poपूर्णांकers in
+	 * Allocate memory for the base list of scb. Later allocate memory for
+	 * CCBs and embedded components of each CCB and point the pointers in
 	 * scb to the allocated components
 	 * NOTE: The code to allocate SCB will be duplicated in all the LLD
-	 * since the calling routine करोes not yet know the number of available
+	 * since the calling routine does not yet know the number of available
 	 * commands.
 	 */
-	adapter->kscb_list = kसुस्मृति(MBOX_MAX_SCSI_CMDS, माप(scb_t), GFP_KERNEL);
+	adapter->kscb_list = kcalloc(MBOX_MAX_SCSI_CMDS, sizeof(scb_t), GFP_KERNEL);
 
-	अगर (adapter->kscb_list == शून्य) अणु
+	if (adapter->kscb_list == NULL) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
 			__LINE__));
-		जाओ out_मुक्त_ibuf;
-	पूर्ण
+		goto out_free_ibuf;
+	}
 
-	// memory allocation क्रम our command packets
-	अगर (megaraid_mbox_setup_dma_pools(adapter) != 0) अणु
+	// memory allocation for our command packets
+	if (megaraid_mbox_setup_dma_pools(adapter) != 0) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
 			__LINE__));
-		जाओ out_मुक्त_scb_list;
-	पूर्ण
+		goto out_free_scb_list;
+	}
 
-	// Adjust the scb poपूर्णांकers and link in the मुक्त pool
+	// Adjust the scb pointers and link in the free pool
 	epthru_pci_blk	= raid_dev->epthru_pool;
 	sg_pci_blk	= raid_dev->sg_pool;
 	mbox_pci_blk	= raid_dev->mbox_pool;
 
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) अणु
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) {
 		scb			= adapter->kscb_list + i;
 		ccb			= raid_dev->ccb_list + i;
 
 		ccb->mbox	= (mbox_t *)(mbox_pci_blk[i].vaddr + 16);
-		ccb->raw_mbox	= (uपूर्णांक8_t *)ccb->mbox;
+		ccb->raw_mbox	= (uint8_t *)ccb->mbox;
 		ccb->mbox64	= (mbox64_t *)(mbox_pci_blk[i].vaddr + 8);
-		ccb->mbox_dma_h	= (अचिन्हित दीर्घ)mbox_pci_blk[i].dma_addr + 16;
+		ccb->mbox_dma_h	= (unsigned long)mbox_pci_blk[i].dma_addr + 16;
 
 		// make sure the mailbox is aligned properly
-		अगर (ccb->mbox_dma_h & 0x0F) अणु
+		if (ccb->mbox_dma_h & 0x0F) {
 			con_log(CL_ANN, (KERN_CRIT
 				"megaraid mbox: not aligned on 16-bytes\n"));
 
-			जाओ out_tearकरोwn_dma_pools;
-		पूर्ण
+			goto out_teardown_dma_pools;
+		}
 
 		ccb->epthru		= (mraid_epassthru_t *)
 						epthru_pci_blk[i].vaddr;
@@ -1069,220 +1068,220 @@ megaraid_alloc_cmd_packets(adapter_t *adapter)
 
 		scb->sno		= i;	// command index
 
-		scb->scp		= शून्य;
+		scb->scp		= NULL;
 		scb->state		= SCB_FREE;
 		scb->dma_direction	= DMA_NONE;
 		scb->dma_type		= MRAID_DMA_NONE;
 		scb->dev_channel	= -1;
 		scb->dev_target		= -1;
 
-		// put scb in the मुक्त pool
+		// put scb in the free pool
 		list_add_tail(&scb->list, &adapter->kscb_pool);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-out_tearकरोwn_dma_pools:
-	megaraid_mbox_tearकरोwn_dma_pools(adapter);
-out_मुक्त_scb_list:
-	kमुक्त(adapter->kscb_list);
-out_मुक्त_ibuf:
-	dma_मुक्त_coherent(&pdev->dev, MBOX_IBUF_SIZE, (व्योम *)adapter->ibuf,
+out_teardown_dma_pools:
+	megaraid_mbox_teardown_dma_pools(adapter);
+out_free_scb_list:
+	kfree(adapter->kscb_list);
+out_free_ibuf:
+	dma_free_coherent(&pdev->dev, MBOX_IBUF_SIZE, (void *)adapter->ibuf,
 		adapter->ibuf_dma_h);
-out_मुक्त_common_mbox:
-	dma_मुक्त_coherent(&adapter->pdev->dev, माप(mbox64_t),
+out_free_common_mbox:
+	dma_free_coherent(&adapter->pdev->dev, sizeof(mbox64_t),
 		(caddr_t)raid_dev->una_mbox64, raid_dev->una_mbox64_dma);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 
 /**
- * megaraid_मुक्त_cmd_packets - मुक्त memory
+ * megaraid_free_cmd_packets - free memory
  * @adapter		: soft state of the raid controller
  *
- * Release memory resources allocated क्रम commands.
+ * Release memory resources allocated for commands.
  */
-अटल व्योम
-megaraid_मुक्त_cmd_packets(adapter_t *adapter)
-अणु
+static void
+megaraid_free_cmd_packets(adapter_t *adapter)
+{
 	mraid_device_t *raid_dev = ADAP2RAIDDEV(adapter);
 
-	megaraid_mbox_tearकरोwn_dma_pools(adapter);
+	megaraid_mbox_teardown_dma_pools(adapter);
 
-	kमुक्त(adapter->kscb_list);
+	kfree(adapter->kscb_list);
 
-	dma_मुक्त_coherent(&adapter->pdev->dev, MBOX_IBUF_SIZE,
-		(व्योम *)adapter->ibuf, adapter->ibuf_dma_h);
+	dma_free_coherent(&adapter->pdev->dev, MBOX_IBUF_SIZE,
+		(void *)adapter->ibuf, adapter->ibuf_dma_h);
 
-	dma_मुक्त_coherent(&adapter->pdev->dev, माप(mbox64_t),
+	dma_free_coherent(&adapter->pdev->dev, sizeof(mbox64_t),
 		(caddr_t)raid_dev->una_mbox64, raid_dev->una_mbox64_dma);
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * megaraid_mbox_setup_dma_pools - setup dma pool क्रम command packets
+ * megaraid_mbox_setup_dma_pools - setup dma pool for command packets
  * @adapter		: HBA soft state
  *
- * Setup the dma pools क्रम mailbox, passthru and extended passthru काष्ठाures,
+ * Setup the dma pools for mailbox, passthru and extended passthru structures,
  * and scatter-gather lists.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_setup_dma_pools(adapter_t *adapter)
-अणु
+{
 	mraid_device_t		*raid_dev = ADAP2RAIDDEV(adapter);
-	काष्ठा mraid_pci_blk	*epthru_pci_blk;
-	काष्ठा mraid_pci_blk	*sg_pci_blk;
-	काष्ठा mraid_pci_blk	*mbox_pci_blk;
-	पूर्णांक			i;
+	struct mraid_pci_blk	*epthru_pci_blk;
+	struct mraid_pci_blk	*sg_pci_blk;
+	struct mraid_pci_blk	*mbox_pci_blk;
+	int			i;
 
 
 
-	// Allocate memory क्रम 16-bytes aligned mailboxes
+	// Allocate memory for 16-bytes aligned mailboxes
 	raid_dev->mbox_pool_handle = dma_pool_create("megaraid mbox pool",
 						&adapter->pdev->dev,
-						माप(mbox64_t) + 16,
+						sizeof(mbox64_t) + 16,
 						16, 0);
 
-	अगर (raid_dev->mbox_pool_handle == शून्य) अणु
-		जाओ fail_setup_dma_pool;
-	पूर्ण
+	if (raid_dev->mbox_pool_handle == NULL) {
+		goto fail_setup_dma_pool;
+	}
 
 	mbox_pci_blk = raid_dev->mbox_pool;
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) अणु
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) {
 		mbox_pci_blk[i].vaddr = dma_pool_alloc(
 						raid_dev->mbox_pool_handle,
 						GFP_KERNEL,
 						&mbox_pci_blk[i].dma_addr);
-		अगर (!mbox_pci_blk[i].vaddr) अणु
-			जाओ fail_setup_dma_pool;
-		पूर्ण
-	पूर्ण
+		if (!mbox_pci_blk[i].vaddr) {
+			goto fail_setup_dma_pool;
+		}
+	}
 
 	/*
-	 * Allocate memory क्रम each embedded passthru strucuture poपूर्णांकer
-	 * Request क्रम a 128 bytes aligned काष्ठाure क्रम each passthru command
-	 * काष्ठाure
+	 * Allocate memory for each embedded passthru strucuture pointer
+	 * Request for a 128 bytes aligned structure for each passthru command
+	 * structure
 	 * Since passthru and extended passthru commands are exclusive, they
-	 * share common memory pool. Passthru काष्ठाures piggyback on memory
+	 * share common memory pool. Passthru structures piggyback on memory
 	 * allocated to extended passthru since passthru is smaller of the two
 	 */
 	raid_dev->epthru_pool_handle = dma_pool_create("megaraid mbox pthru",
-			&adapter->pdev->dev, माप(mraid_epassthru_t), 128, 0);
+			&adapter->pdev->dev, sizeof(mraid_epassthru_t), 128, 0);
 
-	अगर (raid_dev->epthru_pool_handle == शून्य) अणु
-		जाओ fail_setup_dma_pool;
-	पूर्ण
+	if (raid_dev->epthru_pool_handle == NULL) {
+		goto fail_setup_dma_pool;
+	}
 
 	epthru_pci_blk = raid_dev->epthru_pool;
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) अणु
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) {
 		epthru_pci_blk[i].vaddr = dma_pool_alloc(
 						raid_dev->epthru_pool_handle,
 						GFP_KERNEL,
 						&epthru_pci_blk[i].dma_addr);
-		अगर (!epthru_pci_blk[i].vaddr) अणु
-			जाओ fail_setup_dma_pool;
-		पूर्ण
-	पूर्ण
+		if (!epthru_pci_blk[i].vaddr) {
+			goto fail_setup_dma_pool;
+		}
+	}
 
 
-	// Allocate memory क्रम each scatter-gather list. Request क्रम 512 bytes
-	// alignment क्रम each sg list
+	// Allocate memory for each scatter-gather list. Request for 512 bytes
+	// alignment for each sg list
 	raid_dev->sg_pool_handle = dma_pool_create("megaraid mbox sg",
 					&adapter->pdev->dev,
-					माप(mbox_sgl64) * MBOX_MAX_SG_SIZE,
+					sizeof(mbox_sgl64) * MBOX_MAX_SG_SIZE,
 					512, 0);
 
-	अगर (raid_dev->sg_pool_handle == शून्य) अणु
-		जाओ fail_setup_dma_pool;
-	पूर्ण
+	if (raid_dev->sg_pool_handle == NULL) {
+		goto fail_setup_dma_pool;
+	}
 
 	sg_pci_blk = raid_dev->sg_pool;
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) अणु
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) {
 		sg_pci_blk[i].vaddr = dma_pool_alloc(
 						raid_dev->sg_pool_handle,
 						GFP_KERNEL,
 						&sg_pci_blk[i].dma_addr);
-		अगर (!sg_pci_blk[i].vaddr) अणु
-			जाओ fail_setup_dma_pool;
-		पूर्ण
-	पूर्ण
+		if (!sg_pci_blk[i].vaddr) {
+			goto fail_setup_dma_pool;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 fail_setup_dma_pool:
-	megaraid_mbox_tearकरोwn_dma_pools(adapter);
-	वापस -1;
-पूर्ण
+	megaraid_mbox_teardown_dma_pools(adapter);
+	return -1;
+}
 
 
 /**
- * megaraid_mbox_tearकरोwn_dma_pools - tearकरोwn dma pools क्रम command packets
+ * megaraid_mbox_teardown_dma_pools - teardown dma pools for command packets
  * @adapter		: HBA soft state
  *
- * Tearकरोwn the dma pool क्रम mailbox, passthru and extended passthru
- * काष्ठाures, and scatter-gather lists.
+ * Teardown the dma pool for mailbox, passthru and extended passthru
+ * structures, and scatter-gather lists.
  */
-अटल व्योम
-megaraid_mbox_tearकरोwn_dma_pools(adapter_t *adapter)
-अणु
+static void
+megaraid_mbox_teardown_dma_pools(adapter_t *adapter)
+{
 	mraid_device_t		*raid_dev = ADAP2RAIDDEV(adapter);
-	काष्ठा mraid_pci_blk	*epthru_pci_blk;
-	काष्ठा mraid_pci_blk	*sg_pci_blk;
-	काष्ठा mraid_pci_blk	*mbox_pci_blk;
-	पूर्णांक			i;
+	struct mraid_pci_blk	*epthru_pci_blk;
+	struct mraid_pci_blk	*sg_pci_blk;
+	struct mraid_pci_blk	*mbox_pci_blk;
+	int			i;
 
 
 	sg_pci_blk = raid_dev->sg_pool;
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS && sg_pci_blk[i].vaddr; i++) अणु
-		dma_pool_मुक्त(raid_dev->sg_pool_handle, sg_pci_blk[i].vaddr,
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS && sg_pci_blk[i].vaddr; i++) {
+		dma_pool_free(raid_dev->sg_pool_handle, sg_pci_blk[i].vaddr,
 			sg_pci_blk[i].dma_addr);
-	पूर्ण
+	}
 	dma_pool_destroy(raid_dev->sg_pool_handle);
 
 
 	epthru_pci_blk = raid_dev->epthru_pool;
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS && epthru_pci_blk[i].vaddr; i++) अणु
-		dma_pool_मुक्त(raid_dev->epthru_pool_handle,
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS && epthru_pci_blk[i].vaddr; i++) {
+		dma_pool_free(raid_dev->epthru_pool_handle,
 			epthru_pci_blk[i].vaddr, epthru_pci_blk[i].dma_addr);
-	पूर्ण
+	}
 	dma_pool_destroy(raid_dev->epthru_pool_handle);
 
 
 	mbox_pci_blk = raid_dev->mbox_pool;
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS && mbox_pci_blk[i].vaddr; i++) अणु
-		dma_pool_मुक्त(raid_dev->mbox_pool_handle,
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS && mbox_pci_blk[i].vaddr; i++) {
+		dma_pool_free(raid_dev->mbox_pool_handle,
 			mbox_pci_blk[i].vaddr, mbox_pci_blk[i].dma_addr);
-	पूर्ण
+	}
 	dma_pool_destroy(raid_dev->mbox_pool_handle);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * megaraid_alloc_scb - detach and वापस a scb from the मुक्त list
+ * megaraid_alloc_scb - detach and return a scb from the free list
  * @adapter	: controller's soft state
- * @scp		: poपूर्णांकer to the scsi command to be executed
+ * @scp		: pointer to the scsi command to be executed
  *
- * Return the scb from the head of the मुक्त list. %शून्य अगर there are none
+ * Return the scb from the head of the free list. %NULL if there are none
  * available.
  */
-अटल scb_t *
-megaraid_alloc_scb(adapter_t *adapter, काष्ठा scsi_cmnd *scp)
-अणु
-	काष्ठा list_head	*head = &adapter->kscb_pool;
-	scb_t			*scb = शून्य;
-	अचिन्हित दीर्घ		flags;
+static scb_t *
+megaraid_alloc_scb(adapter_t *adapter, struct scsi_cmnd *scp)
+{
+	struct list_head	*head = &adapter->kscb_pool;
+	scb_t			*scb = NULL;
+	unsigned long		flags;
 
-	// detach scb from मुक्त pool
+	// detach scb from free pool
 	spin_lock_irqsave(SCSI_FREE_LIST_LOCK(adapter), flags);
 
-	अगर (list_empty(head)) अणु
+	if (list_empty(head)) {
 		spin_unlock_irqrestore(SCSI_FREE_LIST_LOCK(adapter), flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	scb = list_entry(head->next, scb_t, list);
 	list_del_init(&scb->list);
@@ -1293,36 +1292,36 @@ megaraid_alloc_scb(adapter_t *adapter, काष्ठा scsi_cmnd *scp)
 	scb->scp	= scp;
 	scb->dma_type	= MRAID_DMA_NONE;
 
-	वापस scb;
-पूर्ण
+	return scb;
+}
 
 
 /**
- * megaraid_dealloc_scb - वापस the scb to the मुक्त pool
+ * megaraid_dealloc_scb - return the scb to the free pool
  * @adapter	: controller's soft state
- * @scb		: scb to be मुक्तd
+ * @scb		: scb to be freed
  *
- * Return the scb back to the मुक्त list of scbs. The caller must 'flush' the
- * SCB beक्रमe calling us. E.g., perक्रमming pci_unamp and/or pci_sync etc.
- * NOTE NOTE: Make sure the scb is not on any list beक्रमe calling this
+ * Return the scb back to the free list of scbs. The caller must 'flush' the
+ * SCB before calling us. E.g., performing pci_unamp and/or pci_sync etc.
+ * NOTE NOTE: Make sure the scb is not on any list before calling this
  * routine.
  */
-अटल अंतरभूत व्योम
+static inline void
 megaraid_dealloc_scb(adapter_t *adapter, scb_t *scb)
-अणु
-	अचिन्हित दीर्घ		flags;
+{
+	unsigned long		flags;
 
-	// put scb in the मुक्त pool
+	// put scb in the free pool
 	scb->state	= SCB_FREE;
-	scb->scp	= शून्य;
+	scb->scp	= NULL;
 	spin_lock_irqsave(SCSI_FREE_LIST_LOCK(adapter), flags);
 
 	list_add(&scb->list, &adapter->kscb_pool);
 
 	spin_unlock_irqrestore(SCSI_FREE_LIST_LOCK(adapter), flags);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
@@ -1332,14 +1331,14 @@ megaraid_dealloc_scb(adapter_t *adapter, scb_t *scb)
  *
  * Prepare the scatter-gather list.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_mksgl(adapter_t *adapter, scb_t *scb)
-अणु
-	काष्ठा scatterlist	*sgl;
+{
+	struct scatterlist	*sgl;
 	mbox_ccb_t		*ccb;
-	काष्ठा scsi_cmnd	*scp;
-	पूर्णांक			sgcnt;
-	पूर्णांक			i;
+	struct scsi_cmnd	*scp;
+	int			sgcnt;
+	int			i;
 
 
 	scp	= scb->scp;
@@ -1348,20 +1347,20 @@ megaraid_mbox_mksgl(adapter_t *adapter, scb_t *scb)
 	sgcnt = scsi_dma_map(scp);
 	BUG_ON(sgcnt < 0 || sgcnt > adapter->sglen);
 
-	// no mapping required अगर no data to be transferred
-	अगर (!sgcnt)
-		वापस 0;
+	// no mapping required if no data to be transferred
+	if (!sgcnt)
+		return 0;
 
 	scb->dma_type = MRAID_DMA_WSG;
 
-	scsi_क्रम_each_sg(scp, sgl, sgcnt, i) अणु
+	scsi_for_each_sg(scp, sgl, sgcnt, i) {
 		ccb->sgl64[i].address	= sg_dma_address(sgl);
 		ccb->sgl64[i].length	= sg_dma_len(sgl);
-	पूर्ण
+	}
 
 	// Return count of SG nodes
-	वापस sgcnt;
-पूर्ण
+	return sgcnt;
+}
 
 
 /**
@@ -1369,17 +1368,17 @@ megaraid_mbox_mksgl(adapter_t *adapter, scb_t *scb)
  * @adapter	: controller's soft state
  * @scb		: command to be issued
  *
- * Post the command to the controller अगर mailbox is available.
+ * Post the command to the controller if mailbox is available.
  */
-अटल पूर्णांक
+static int
 mbox_post_cmd(adapter_t *adapter, scb_t *scb)
-अणु
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 	mbox64_t	*mbox64;
 	mbox_t		*mbox;
 	mbox_ccb_t	*ccb;
-	अचिन्हित दीर्घ	flags;
-	अचिन्हित पूर्णांक	i = 0;
+	unsigned long	flags;
+	unsigned int	i = 0;
 
 
 	ccb	= (mbox_ccb_t *)scb->ccb;
@@ -1387,29 +1386,29 @@ mbox_post_cmd(adapter_t *adapter, scb_t *scb)
 	mbox64	= raid_dev->mbox64;
 
 	/*
-	 * Check क्रम busy mailbox. If it is, वापस failure - the caller
+	 * Check for busy mailbox. If it is, return failure - the caller
 	 * should retry later.
 	 */
 	spin_lock_irqsave(MAILBOX_LOCK(raid_dev), flags);
 
-	अगर (unlikely(mbox->busy)) अणु
-		करो अणु
+	if (unlikely(mbox->busy)) {
+		do {
 			udelay(1);
 			i++;
 			rmb();
-		पूर्ण जबतक(mbox->busy && (i < max_mbox_busy_रुको));
+		} while(mbox->busy && (i < max_mbox_busy_wait));
 
-		अगर (mbox->busy) अणु
+		if (mbox->busy) {
 
 			spin_unlock_irqrestore(MAILBOX_LOCK(raid_dev), flags);
 
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 
 	// Copy this command's mailbox data into "adapter's" mailbox
-	स_नकल((caddr_t)mbox64, (caddr_t)ccb->mbox64, 22);
+	memcpy((caddr_t)mbox64, (caddr_t)ccb->mbox64, 22);
 	mbox->cmdid = scb->sno;
 
 	adapter->outstanding_cmds++;
@@ -1423,103 +1422,103 @@ mbox_post_cmd(adapter_t *adapter, scb_t *scb)
 
 	spin_unlock_irqrestore(MAILBOX_LOCK(raid_dev), flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * megaraid_queue_command_lck - generic queue entry poपूर्णांक क्रम all LLDs
- * @scp		: poपूर्णांकer to the scsi command to be executed
- * @करोne	: callback routine to be called after the cmd has be completed
+ * megaraid_queue_command_lck - generic queue entry point for all LLDs
+ * @scp		: pointer to the scsi command to be executed
+ * @done	: callback routine to be called after the cmd has be completed
  *
- * Queue entry poपूर्णांक क्रम mailbox based controllers.
+ * Queue entry point for mailbox based controllers.
  */
-अटल पूर्णांक
-megaraid_queue_command_lck(काष्ठा scsi_cmnd *scp, व्योम (*करोne)(काष्ठा scsi_cmnd *))
-अणु
+static int
+megaraid_queue_command_lck(struct scsi_cmnd *scp, void (*done)(struct scsi_cmnd *))
+{
 	adapter_t	*adapter;
 	scb_t		*scb;
-	पूर्णांक		अगर_busy;
+	int		if_busy;
 
 	adapter		= SCP2ADAPTER(scp);
-	scp->scsi_करोne	= करोne;
+	scp->scsi_done	= done;
 	scp->result	= 0;
 
 	/*
 	 * Allocate and build a SCB request
-	 * अगर_busy flag will be set अगर megaraid_mbox_build_cmd() command could
-	 * not allocate scb. We will वापस non-zero status in that हाल.
+	 * if_busy flag will be set if megaraid_mbox_build_cmd() command could
+	 * not allocate scb. We will return non-zero status in that case.
 	 * NOTE: scb can be null even though certain commands completed
 	 * successfully, e.g., MODE_SENSE and TEST_UNIT_READY, it would
-	 * वापस 0 in that हाल, and we would करो the callback right away.
+	 * return 0 in that case, and we would do the callback right away.
 	 */
-	अगर_busy	= 0;
-	scb = megaraid_mbox_build_cmd(adapter, scp, &अगर_busy);
-	अगर (!scb) अणु	// command alपढ़ोy completed
-		करोne(scp);
-		वापस 0;
-	पूर्ण
+	if_busy	= 0;
+	scb = megaraid_mbox_build_cmd(adapter, scp, &if_busy);
+	if (!scb) {	// command already completed
+		done(scp);
+		return 0;
+	}
 
 	megaraid_mbox_runpendq(adapter, scb);
-	वापस अगर_busy;
-पूर्ण
+	return if_busy;
+}
 
-अटल DEF_SCSI_QCMD(megaraid_queue_command)
+static DEF_SCSI_QCMD(megaraid_queue_command)
 
 /**
- * megaraid_mbox_build_cmd - transक्रमm the mid-layer scsi commands
+ * megaraid_mbox_build_cmd - transform the mid-layer scsi commands
  * @adapter	: controller's soft state
- * @scp		: mid-layer scsi command poपूर्णांकer
- * @busy	: set अगर request could not be completed because of lack of
+ * @scp		: mid-layer scsi command pointer
+ * @busy	: set if request could not be completed because of lack of
  *		resources
  *
- * Transक्रमm the mid-layer scsi command to megaraid firmware lingua.
- * Convert the command issued by mid-layer to क्रमmat understood by megaraid
+ * Transform the mid-layer scsi command to megaraid firmware lingua.
+ * Convert the command issued by mid-layer to format understood by megaraid
  * firmware. We also complete certain commands without sending them to firmware.
  */
-अटल scb_t *
-megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, पूर्णांक *busy)
-अणु
+static scb_t *
+megaraid_mbox_build_cmd(adapter_t *adapter, struct scsi_cmnd *scp, int *busy)
+{
 	mraid_device_t		*rdev = ADAP2RAIDDEV(adapter);
-	पूर्णांक			channel;
-	पूर्णांक			target;
-	पूर्णांक			islogical;
+	int			channel;
+	int			target;
+	int			islogical;
 	mbox_ccb_t		*ccb;
 	mraid_passthru_t	*pthru;
 	mbox64_t		*mbox64;
 	mbox_t			*mbox;
 	scb_t			*scb;
-	अक्षर			skip[] = "skipping";
-	अक्षर			scan[] = "scanning";
-	अक्षर			*ss;
+	char			skip[] = "skipping";
+	char			scan[] = "scanning";
+	char			*ss;
 
 
 	/*
-	 * Get the appropriate device map क्रम the device this command is
-	 * पूर्णांकended क्रम
+	 * Get the appropriate device map for the device this command is
+	 * intended for
 	 */
 	MRAID_GET_DEVICE_MAP(adapter, scp, channel, target, islogical);
 
 	/*
 	 * Logical drive commands
 	 */
-	अगर (islogical) अणु
-		चयन (scp->cmnd[0]) अणु
-		हाल TEST_UNIT_READY:
+	if (islogical) {
+		switch (scp->cmnd[0]) {
+		case TEST_UNIT_READY:
 			/*
 			 * Do we support clustering and is the support enabled
-			 * If no, वापस success always
+			 * If no, return success always
 			 */
-			अगर (!adapter->ha) अणु
+			if (!adapter->ha) {
 				scp->result = (DID_OK << 16);
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
-			अगर (!(scb = megaraid_alloc_scb(adapter, scp))) अणु
+			if (!(scb = megaraid_alloc_scb(adapter, scp))) {
 				scp->result = (DID_ERROR << 16);
 				*busy = 1;
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			scb->dma_direction	= scp->sc_data_direction;
 			scb->dev_channel	= 0xFF;
@@ -1534,34 +1533,34 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 			ccb->raw_mbox[2]	= RESERVATION_STATUS;
 			ccb->raw_mbox[3]	= target;
 
-			वापस scb;
+			return scb;
 
-		हाल MODE_SENSE:
-		अणु
-			काष्ठा scatterlist	*sgl;
+		case MODE_SENSE:
+		{
+			struct scatterlist	*sgl;
 			caddr_t			vaddr;
 
 			sgl = scsi_sglist(scp);
-			अगर (sg_page(sgl)) अणु
+			if (sg_page(sgl)) {
 				vaddr = (caddr_t) sg_virt(&sgl[0]);
 
-				स_रखो(vaddr, 0, scp->cmnd[4]);
-			पूर्ण
-			अन्यथा अणु
+				memset(vaddr, 0, scp->cmnd[4]);
+			}
+			else {
 				con_log(CL_ANN, (KERN_WARNING
 						 "megaraid mailbox: invalid sg:%d\n",
 						 __LINE__));
-			पूर्ण
-		पूर्ण
+			}
+		}
 		scp->result = (DID_OK << 16);
-		वापस शून्य;
+		return NULL;
 
-		हाल INQUIRY:
+		case INQUIRY:
 			/*
-			 * Display the channel scan क्रम logical drives
-			 * Do not display scan क्रम a channel अगर alपढ़ोy करोne.
+			 * Display the channel scan for logical drives
+			 * Do not display scan for a channel if already done.
 			 */
-			अगर (!(rdev->last_disp & (1L << SCP2CHANNEL(scp)))) अणु
+			if (!(rdev->last_disp & (1L << SCP2CHANNEL(scp)))) {
 
 				con_log(CL_ANN, (KERN_INFO
 					"scsi[%d]: scanning scsi channel %d",
@@ -1572,39 +1571,39 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 					" [virtual] for logical drives\n"));
 
 				rdev->last_disp |= (1L << SCP2CHANNEL(scp));
-			पूर्ण
+			}
 
-			अगर (scp->cmnd[1] & MEGA_SCSI_INQ_EVPD) अणु
+			if (scp->cmnd[1] & MEGA_SCSI_INQ_EVPD) {
 				scp->sense_buffer[0] = 0x70;
 				scp->sense_buffer[2] = ILLEGAL_REQUEST;
 				scp->sense_buffer[12] = MEGA_INVALID_FIELD_IN_CDB;
 				scp->result = CHECK_CONDITION << 1;
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			fallthrough;
 
-		हाल READ_CAPACITY:
+		case READ_CAPACITY:
 			/*
-			 * Do not allow LUN > 0 क्रम logical drives and
-			 * requests क्रम more than 40 logical drives
+			 * Do not allow LUN > 0 for logical drives and
+			 * requests for more than 40 logical drives
 			 */
-			अगर (SCP2LUN(scp)) अणु
+			if (SCP2LUN(scp)) {
 				scp->result = (DID_BAD_TARGET << 16);
-				वापस शून्य;
-			पूर्ण
-			अगर ((target % 0x80) >= MAX_LOGICAL_DRIVES_40LD) अणु
+				return NULL;
+			}
+			if ((target % 0x80) >= MAX_LOGICAL_DRIVES_40LD) {
 				scp->result = (DID_BAD_TARGET << 16);
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 
 			/* Allocate a SCB and initialize passthru */
-			अगर (!(scb = megaraid_alloc_scb(adapter, scp))) अणु
+			if (!(scb = megaraid_alloc_scb(adapter, scp))) {
 				scp->result = (DID_ERROR << 16);
 				*busy = 1;
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			ccb			= (mbox_ccb_t *)scb->ccb;
 			scb->dev_channel	= 0xFF;
@@ -1613,13 +1612,13 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 			mbox			= ccb->mbox;
 			mbox64			= ccb->mbox64;
 
-			pthru->समयout		= 0;
+			pthru->timeout		= 0;
 			pthru->ars		= 1;
 			pthru->reqsenselen	= 14;
 			pthru->islogical	= 1;
 			pthru->logdrv		= target;
 			pthru->cdblen		= scp->cmd_len;
-			स_नकल(pthru->cdb, scp->cmnd, scp->cmd_len);
+			memcpy(pthru->cdb, scp->cmnd, scp->cmd_len);
 
 			mbox->cmd		= MBOXCMD_PASSTHRU64;
 			scb->dma_direction	= scp->sc_data_direction;
@@ -1630,26 +1629,26 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 							scb);
 
 			mbox->xferaddr		= 0xFFFFFFFF;
-			mbox64->xferaddr_lo	= (uपूर्णांक32_t )ccb->pthru_dma_h;
+			mbox64->xferaddr_lo	= (uint32_t )ccb->pthru_dma_h;
 			mbox64->xferaddr_hi	= 0;
 
-			वापस scb;
+			return scb;
 
-		हाल READ_6:
-		हाल WRITE_6:
-		हाल READ_10:
-		हाल WRITE_10:
-		हाल READ_12:
-		हाल WRITE_12:
+		case READ_6:
+		case WRITE_6:
+		case READ_10:
+		case WRITE_10:
+		case READ_12:
+		case WRITE_12:
 
 			/*
 			 * Allocate a SCB and initialize mailbox
 			 */
-			अगर (!(scb = megaraid_alloc_scb(adapter, scp))) अणु
+			if (!(scb = megaraid_alloc_scb(adapter, scp))) {
 				scp->result = (DID_ERROR << 16);
 				*busy = 1;
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 			ccb			= (mbox_ccb_t *)scb->ccb;
 			scb->dev_channel	= 0xFF;
 			scb->dev_target		= target;
@@ -1658,8 +1657,8 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 			mbox->logdrv		= target;
 
 			/*
-			 * A little HACK: 2nd bit is zero क्रम all scsi पढ़ो
-			 * commands and is set क्रम all scsi ग_लिखो commands
+			 * A little HACK: 2nd bit is zero for all scsi read
+			 * commands and is set for all scsi write commands
 			 */
 			mbox->cmd = (scp->cmnd[0] & 0x02) ?  MBOXCMD_LWRITE64:
 					MBOXCMD_LREAD64 ;
@@ -1667,85 +1666,85 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 			/*
 			 * 6-byte READ(0x08) or WRITE(0x0A) cdb
 			 */
-			अगर (scp->cmd_len == 6) अणु
-				mbox->numsectors = (uपूर्णांक32_t)scp->cmnd[4];
+			if (scp->cmd_len == 6) {
+				mbox->numsectors = (uint32_t)scp->cmnd[4];
 				mbox->lba =
-					((uपूर्णांक32_t)scp->cmnd[1] << 16)	|
-					((uपूर्णांक32_t)scp->cmnd[2] << 8)	|
-					(uपूर्णांक32_t)scp->cmnd[3];
+					((uint32_t)scp->cmnd[1] << 16)	|
+					((uint32_t)scp->cmnd[2] << 8)	|
+					(uint32_t)scp->cmnd[3];
 
 				mbox->lba &= 0x1FFFFF;
-			पूर्ण
+			}
 
 			/*
 			 * 10-byte READ(0x28) or WRITE(0x2A) cdb
 			 */
-			अन्यथा अगर (scp->cmd_len == 10) अणु
+			else if (scp->cmd_len == 10) {
 				mbox->numsectors =
-					(uपूर्णांक32_t)scp->cmnd[8] |
-					((uपूर्णांक32_t)scp->cmnd[7] << 8);
+					(uint32_t)scp->cmnd[8] |
+					((uint32_t)scp->cmnd[7] << 8);
 				mbox->lba =
-					((uपूर्णांक32_t)scp->cmnd[2] << 24) |
-					((uपूर्णांक32_t)scp->cmnd[3] << 16) |
-					((uपूर्णांक32_t)scp->cmnd[4] << 8) |
-					(uपूर्णांक32_t)scp->cmnd[5];
-			पूर्ण
+					((uint32_t)scp->cmnd[2] << 24) |
+					((uint32_t)scp->cmnd[3] << 16) |
+					((uint32_t)scp->cmnd[4] << 8) |
+					(uint32_t)scp->cmnd[5];
+			}
 
 			/*
 			 * 12-byte READ(0xA8) or WRITE(0xAA) cdb
 			 */
-			अन्यथा अगर (scp->cmd_len == 12) अणु
+			else if (scp->cmd_len == 12) {
 				mbox->lba =
-					((uपूर्णांक32_t)scp->cmnd[2] << 24) |
-					((uपूर्णांक32_t)scp->cmnd[3] << 16) |
-					((uपूर्णांक32_t)scp->cmnd[4] << 8) |
-					(uपूर्णांक32_t)scp->cmnd[5];
+					((uint32_t)scp->cmnd[2] << 24) |
+					((uint32_t)scp->cmnd[3] << 16) |
+					((uint32_t)scp->cmnd[4] << 8) |
+					(uint32_t)scp->cmnd[5];
 
 				mbox->numsectors =
-					((uपूर्णांक32_t)scp->cmnd[6] << 24) |
-					((uपूर्णांक32_t)scp->cmnd[7] << 16) |
-					((uपूर्णांक32_t)scp->cmnd[8] << 8) |
-					(uपूर्णांक32_t)scp->cmnd[9];
-			पूर्ण
-			अन्यथा अणु
+					((uint32_t)scp->cmnd[6] << 24) |
+					((uint32_t)scp->cmnd[7] << 16) |
+					((uint32_t)scp->cmnd[8] << 8) |
+					(uint32_t)scp->cmnd[9];
+			}
+			else {
 				con_log(CL_ANN, (KERN_WARNING
 					"megaraid: unsupported CDB length\n"));
 
 				megaraid_dealloc_scb(adapter, scb);
 
 				scp->result = (DID_ERROR << 16);
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			scb->dma_direction = scp->sc_data_direction;
 
 			// Calculate Scatter-Gather info
-			mbox64->xferaddr_lo	= (uपूर्णांक32_t )ccb->sgl_dma_h;
+			mbox64->xferaddr_lo	= (uint32_t )ccb->sgl_dma_h;
 			mbox->numsge		= megaraid_mbox_mksgl(adapter,
 							scb);
 			mbox->xferaddr		= 0xFFFFFFFF;
 			mbox64->xferaddr_hi	= 0;
 
-			वापस scb;
+			return scb;
 
-		हाल RESERVE:
-		हाल RELEASE:
+		case RESERVE:
+		case RELEASE:
 			/*
 			 * Do we support clustering and is the support enabled
 			 */
-			अगर (!adapter->ha) अणु
+			if (!adapter->ha) {
 				scp->result = (DID_BAD_TARGET << 16);
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			/*
 			 * Allocate a SCB and initialize mailbox
 			 */
-			अगर (!(scb = megaraid_alloc_scb(adapter, scp))) अणु
+			if (!(scb = megaraid_alloc_scb(adapter, scp))) {
 				scp->result = (DID_ERROR << 16);
 				*busy = 1;
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			ccb			= (mbox_ccb_t *)scb->ccb;
 			scb->dev_channel	= 0xFF;
@@ -1757,37 +1756,37 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 			ccb->raw_mbox[3]	= target;
 			scb->dma_direction	= scp->sc_data_direction;
 
-			वापस scb;
+			return scb;
 
-		शेष:
+		default:
 			scp->result = (DID_BAD_TARGET << 16);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु // Passthru device commands
+			return NULL;
+		}
+	}
+	else { // Passthru device commands
 
 		// Do not allow access to target id > 15 or LUN > 7
-		अगर (target > 15 || SCP2LUN(scp) > 7) अणु
+		if (target > 15 || SCP2LUN(scp) > 7) {
 			scp->result = (DID_BAD_TARGET << 16);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		// अगर fast load option was set and scan क्रम last device is
+		// if fast load option was set and scan for last device is
 		// over, reset the fast_load flag so that during a possible
 		// next scan, devices can be made available
-		अगर (rdev->fast_load && (target == 15) &&
-			(SCP2CHANNEL(scp) == adapter->max_channel -1)) अणु
+		if (rdev->fast_load && (target == 15) &&
+			(SCP2CHANNEL(scp) == adapter->max_channel -1)) {
 
 			con_log(CL_ANN, (KERN_INFO
 			"megaraid[%d]: physical device scan re-enabled\n",
 				adapter->host->host_no));
 			rdev->fast_load = 0;
-		पूर्ण
+		}
 
 		/*
-		 * Display the channel scan क्रम physical devices
+		 * Display the channel scan for physical devices
 		 */
-		अगर (!(rdev->last_disp & (1L << SCP2CHANNEL(scp)))) अणु
+		if (!(rdev->last_disp & (1L << SCP2CHANNEL(scp)))) {
 
 			ss = rdev->fast_load ? skip : scan;
 
@@ -1800,20 +1799,20 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 				" for non-raid devices\n"));
 
 			rdev->last_disp |= (1L << SCP2CHANNEL(scp));
-		पूर्ण
+		}
 
-		// disable channel sweep अगर fast load option given
-		अगर (rdev->fast_load) अणु
+		// disable channel sweep if fast load option given
+		if (rdev->fast_load) {
 			scp->result = (DID_BAD_TARGET << 16);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		// Allocate a SCB and initialize passthru
-		अगर (!(scb = megaraid_alloc_scb(adapter, scp))) अणु
+		if (!(scb = megaraid_alloc_scb(adapter, scp))) {
 			scp->result = (DID_ERROR << 16);
 			*busy = 1;
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		ccb			= (mbox_ccb_t *)scb->ccb;
 		scb->dev_channel	= channel;
@@ -1823,29 +1822,29 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
 		mbox64			= ccb->mbox64;
 
 		// Does this firmware support extended CDBs
-		अगर (adapter->max_cdb_sz == 16) अणु
+		if (adapter->max_cdb_sz == 16) {
 			mbox->cmd		= MBOXCMD_EXTPTHRU;
 
 			megaraid_mbox_prepare_epthru(adapter, scb, scp);
 
-			mbox64->xferaddr_lo	= (uपूर्णांक32_t)ccb->epthru_dma_h;
+			mbox64->xferaddr_lo	= (uint32_t)ccb->epthru_dma_h;
 			mbox64->xferaddr_hi	= 0;
 			mbox->xferaddr		= 0xFFFFFFFF;
-		पूर्ण
-		अन्यथा अणु
+		}
+		else {
 			mbox->cmd = MBOXCMD_PASSTHRU64;
 
 			megaraid_mbox_prepare_pthru(adapter, scb, scp);
 
-			mbox64->xferaddr_lo	= (uपूर्णांक32_t)ccb->pthru_dma_h;
+			mbox64->xferaddr_lo	= (uint32_t)ccb->pthru_dma_h;
 			mbox64->xferaddr_hi	= 0;
 			mbox->xferaddr		= 0xFFFFFFFF;
-		पूर्ण
-		वापस scb;
-	पूर्ण
+		}
+		return scb;
+	}
 
 	// NOT REACHED
-पूर्ण
+}
 
 
 /**
@@ -1853,54 +1852,54 @@ megaraid_mbox_build_cmd(adapter_t *adapter, काष्ठा scsi_cmnd *scp, �
  * @adapter	: controller's soft state
  * @scb_q	: SCB to be queued in the pending list
  *
- * Scan the pending list क्रम commands which are not yet issued and try to
- * post to the controller. The SCB can be a null poपूर्णांकer, which would indicate
+ * Scan the pending list for commands which are not yet issued and try to
+ * post to the controller. The SCB can be a null pointer, which would indicate
  * no SCB to be queue, just try to execute the ones in the pending list.
  *
- * NOTE: We करो not actually traverse the pending list. The SCBs are plucked
+ * NOTE: We do not actually traverse the pending list. The SCBs are plucked
  * out from the head of the pending list. If it is successfully issued, the
  * next SCB is at the head now.
  */
-अटल व्योम
+static void
 megaraid_mbox_runpendq(adapter_t *adapter, scb_t *scb_q)
-अणु
+{
 	scb_t			*scb;
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 
 	spin_lock_irqsave(PENDING_LIST_LOCK(adapter), flags);
 
-	अगर (scb_q) अणु
+	if (scb_q) {
 		scb_q->state = SCB_PENDQ;
 		list_add_tail(&scb_q->list, &adapter->pend_list);
-	पूर्ण
+	}
 
-	// अगर the adapter in not in quiescent mode, post the commands to FW
-	अगर (adapter->quiescent) अणु
+	// if the adapter in not in quiescent mode, post the commands to FW
+	if (adapter->quiescent) {
 		spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter), flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	जबतक (!list_empty(&adapter->pend_list)) अणु
+	while (!list_empty(&adapter->pend_list)) {
 
-		निश्चित_spin_locked(PENDING_LIST_LOCK(adapter));
+		assert_spin_locked(PENDING_LIST_LOCK(adapter));
 
 		scb = list_entry(adapter->pend_list.next, scb_t, list);
 
-		// हटाओ the scb from the pending list and try to
+		// remove the scb from the pending list and try to
 		// issue. If we are unable to issue it, put back in
-		// the pending list and वापस
+		// the pending list and return
 
 		list_del_init(&scb->list);
 
 		spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter), flags);
 
-		// अगर mailbox was busy, वापस SCB back to pending
+		// if mailbox was busy, return SCB back to pending
 		// list. Make sure to add at the head, since that's
-		// where it would have been हटाओd from
+		// where it would have been removed from
 
 		scb->state = SCB_ISSUED;
 
-		अगर (mbox_post_cmd(adapter, scb) != 0) अणु
+		if (mbox_post_cmd(adapter, scb) != 0) {
 
 			spin_lock_irqsave(PENDING_LIST_LOCK(adapter), flags);
 
@@ -1911,43 +1910,43 @@ megaraid_mbox_runpendq(adapter_t *adapter, scb_t *scb_q)
 			spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter),
 				flags);
 
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		spin_lock_irqsave(PENDING_LIST_LOCK(adapter), flags);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter), flags);
 
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * megaraid_mbox_prepare_pthru - prepare a command क्रम physical devices
- * @adapter	: poपूर्णांकer to controller's soft state
+ * megaraid_mbox_prepare_pthru - prepare a command for physical devices
+ * @adapter	: pointer to controller's soft state
  * @scb		: scsi control block
  * @scp		: scsi command from the mid-layer
  *
- * Prepare a command क्रम the scsi physical devices.
+ * Prepare a command for the scsi physical devices.
  */
-अटल व्योम
+static void
 megaraid_mbox_prepare_pthru(adapter_t *adapter, scb_t *scb,
-		काष्ठा scsi_cmnd *scp)
-अणु
+		struct scsi_cmnd *scp)
+{
 	mbox_ccb_t		*ccb;
 	mraid_passthru_t	*pthru;
-	uपूर्णांक8_t			channel;
-	uपूर्णांक8_t			target;
+	uint8_t			channel;
+	uint8_t			target;
 
 	ccb	= (mbox_ccb_t *)scb->ccb;
 	pthru	= ccb->pthru;
 	channel	= scb->dev_channel;
 	target	= scb->dev_target;
 
-	// 0=6sec, 1=60sec, 2=10min, 3=3hrs, 4=NO समयout
-	pthru->समयout		= 4;	
+	// 0=6sec, 1=60sec, 2=10min, 3=3hrs, 4=NO timeout
+	pthru->timeout		= 4;	
 	pthru->ars		= 1;
 	pthru->islogical	= 0;
 	pthru->channel		= 0;
@@ -1956,47 +1955,47 @@ megaraid_mbox_prepare_pthru(adapter_t *adapter, scb_t *scb,
 	pthru->reqsenselen	= 14;
 	pthru->cdblen		= scp->cmd_len;
 
-	स_नकल(pthru->cdb, scp->cmnd, scp->cmd_len);
+	memcpy(pthru->cdb, scp->cmnd, scp->cmd_len);
 
-	अगर (scsi_bufflen(scp)) अणु
+	if (scsi_bufflen(scp)) {
 		pthru->dataxferlen	= scsi_bufflen(scp);
 		pthru->dataxferaddr	= ccb->sgl_dma_h;
 		pthru->numsge		= megaraid_mbox_mksgl(adapter, scb);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		pthru->dataxferaddr	= 0;
 		pthru->dataxferlen	= 0;
 		pthru->numsge		= 0;
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
 
 /**
- * megaraid_mbox_prepare_epthru - prepare a command क्रम physical devices
- * @adapter	: poपूर्णांकer to controller's soft state
+ * megaraid_mbox_prepare_epthru - prepare a command for physical devices
+ * @adapter	: pointer to controller's soft state
  * @scb		: scsi control block
  * @scp		: scsi command from the mid-layer
  *
- * Prepare a command क्रम the scsi physical devices. This routine prepares
- * commands क्रम devices which can take extended CDBs (>10 bytes).
+ * Prepare a command for the scsi physical devices. This routine prepares
+ * commands for devices which can take extended CDBs (>10 bytes).
  */
-अटल व्योम
+static void
 megaraid_mbox_prepare_epthru(adapter_t *adapter, scb_t *scb,
-		काष्ठा scsi_cmnd *scp)
-अणु
+		struct scsi_cmnd *scp)
+{
 	mbox_ccb_t		*ccb;
 	mraid_epassthru_t	*epthru;
-	uपूर्णांक8_t			channel;
-	uपूर्णांक8_t			target;
+	uint8_t			channel;
+	uint8_t			target;
 
 	ccb	= (mbox_ccb_t *)scb->ccb;
 	epthru	= ccb->epthru;
 	channel	= scb->dev_channel;
 	target	= scb->dev_target;
 
-	// 0=6sec, 1=60sec, 2=10min, 3=3hrs, 4=NO समयout
-	epthru->समयout		= 4;	
+	// 0=6sec, 1=60sec, 2=10min, 3=3hrs, 4=NO timeout
+	epthru->timeout		= 4;	
 	epthru->ars		= 1;
 	epthru->islogical	= 0;
 	epthru->channel		= 0;
@@ -2005,44 +2004,44 @@ megaraid_mbox_prepare_epthru(adapter_t *adapter, scb_t *scb,
 	epthru->reqsenselen	= 14;
 	epthru->cdblen		= scp->cmd_len;
 
-	स_नकल(epthru->cdb, scp->cmnd, scp->cmd_len);
+	memcpy(epthru->cdb, scp->cmnd, scp->cmd_len);
 
-	अगर (scsi_bufflen(scp)) अणु
+	if (scsi_bufflen(scp)) {
 		epthru->dataxferlen	= scsi_bufflen(scp);
 		epthru->dataxferaddr	= ccb->sgl_dma_h;
 		epthru->numsge		= megaraid_mbox_mksgl(adapter, scb);
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		epthru->dataxferaddr	= 0;
 		epthru->dataxferlen	= 0;
 		epthru->numsge		= 0;
-	पूर्ण
-	वापस;
-पूर्ण
+	}
+	return;
+}
 
 
 /**
- * megaraid_ack_sequence - पूर्णांकerrupt ack sequence क्रम memory mapped HBAs
+ * megaraid_ack_sequence - interrupt ack sequence for memory mapped HBAs
  * @adapter	: controller's soft state
  *
- * Interrupt acknowledgement sequence क्रम memory mapped HBAs. Find out the
- * completed command and put them on the completed list क्रम later processing.
+ * Interrupt acknowledgement sequence for memory mapped HBAs. Find out the
+ * completed command and put them on the completed list for later processing.
  *
- * Returns:	1 अगर the पूर्णांकerrupt is valid, 0 otherwise
+ * Returns:	1 if the interrupt is valid, 0 otherwise
  */
-अटल पूर्णांक
+static int
 megaraid_ack_sequence(adapter_t *adapter)
-अणु
+{
 	mraid_device_t		*raid_dev = ADAP2RAIDDEV(adapter);
 	mbox_t			*mbox;
 	scb_t			*scb;
-	uपूर्णांक8_t			nstatus;
-	uपूर्णांक8_t			completed[MBOX_MAX_FIRMWARE_STATUS];
-	काष्ठा list_head	clist;
-	पूर्णांक			handled;
-	uपूर्णांक32_t		dword;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			i, j;
+	uint8_t			nstatus;
+	uint8_t			completed[MBOX_MAX_FIRMWARE_STATUS];
+	struct list_head	clist;
+	int			handled;
+	uint32_t		dword;
+	unsigned long		flags;
+	int			i, j;
 
 
 	mbox	= raid_dev->mbox;
@@ -2050,71 +2049,71 @@ megaraid_ack_sequence(adapter_t *adapter)
 	// move the SCBs from the firmware completed array to our local list
 	INIT_LIST_HEAD(&clist);
 
-	// loop till F/W has more commands क्रम us to complete
+	// loop till F/W has more commands for us to complete
 	handled = 0;
 	spin_lock_irqsave(MAILBOX_LOCK(raid_dev), flags);
-	करो अणु
+	do {
 		/*
-		 * Check अगर a valid पूर्णांकerrupt is pending. If found, क्रमce the
-		 * पूर्णांकerrupt line low.
+		 * Check if a valid interrupt is pending. If found, force the
+		 * interrupt line low.
 		 */
 		dword = RDOUTDOOR(raid_dev);
-		अगर (dword != 0x10001234) अवरोध;
+		if (dword != 0x10001234) break;
 
 		handled = 1;
 
 		WROUTDOOR(raid_dev, 0x10001234);
 
 		nstatus = 0;
-		// रुको क्रम valid numstatus to post
-		क्रम (i = 0; i < 0xFFFFF; i++) अणु
-			अगर (mbox->numstatus != 0xFF) अणु
+		// wait for valid numstatus to post
+		for (i = 0; i < 0xFFFFF; i++) {
+			if (mbox->numstatus != 0xFF) {
 				nstatus = mbox->numstatus;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			rmb();
-		पूर्ण
+		}
 		mbox->numstatus = 0xFF;
 
 		adapter->outstanding_cmds -= nstatus;
 
-		क्रम (i = 0; i < nstatus; i++) अणु
+		for (i = 0; i < nstatus; i++) {
 
-			// रुको क्रम valid command index to post
-			क्रम (j = 0; j < 0xFFFFF; j++) अणु
-				अगर (mbox->completed[i] != 0xFF) अवरोध;
+			// wait for valid command index to post
+			for (j = 0; j < 0xFFFFF; j++) {
+				if (mbox->completed[i] != 0xFF) break;
 				rmb();
-			पूर्ण
+			}
 			completed[i]		= mbox->completed[i];
 			mbox->completed[i]	= 0xFF;
 
-			अगर (completed[i] == 0xFF) अणु
+			if (completed[i] == 0xFF) {
 				con_log(CL_ANN, (KERN_CRIT
 				"megaraid: command posting timed out\n"));
 
 				BUG();
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			// Get SCB associated with this command id
-			अगर (completed[i] >= MBOX_MAX_SCSI_CMDS) अणु
+			if (completed[i] >= MBOX_MAX_SCSI_CMDS) {
 				// a cmm command
 				scb = adapter->uscb_list + (completed[i] -
 						MBOX_MAX_SCSI_CMDS);
-			पूर्ण
-			अन्यथा अणु
+			}
+			else {
 				// an os command
 				scb = adapter->kscb_list + completed[i];
-			पूर्ण
+			}
 
 			scb->status = mbox->status;
 			list_add_tail(&scb->list, &clist);
-		पूर्ण
+		}
 
-		// Acknowledge पूर्णांकerrupt
+		// Acknowledge interrupt
 		WRINDOOR(raid_dev, 0x02);
 
-	पूर्ण जबतक(1);
+	} while(1);
 
 	spin_unlock_irqrestore(MAILBOX_LOCK(raid_dev), flags);
 
@@ -2128,70 +2127,70 @@ megaraid_ack_sequence(adapter_t *adapter)
 	spin_unlock_irqrestore(COMPLETED_LIST_LOCK(adapter), flags);
 
 
-	// schedule the DPC अगर there is some work क्रम it
-	अगर (handled)
+	// schedule the DPC if there is some work for it
+	if (handled)
 		tasklet_schedule(&adapter->dpc_h);
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
 
 /**
- * megaraid_isr - isr क्रम memory based mailbox based controllers
+ * megaraid_isr - isr for memory based mailbox based controllers
  * @irq		: irq
- * @devp	: poपूर्णांकer to our soft state
+ * @devp	: pointer to our soft state
  *
- * Interrupt service routine क्रम memory-mapped mailbox controllers.
+ * Interrupt service routine for memory-mapped mailbox controllers.
  */
-अटल irqवापस_t
-megaraid_isr(पूर्णांक irq, व्योम *devp)
-अणु
+static irqreturn_t
+megaraid_isr(int irq, void *devp)
+{
 	adapter_t	*adapter = devp;
-	पूर्णांक		handled;
+	int		handled;
 
 	handled = megaraid_ack_sequence(adapter);
 
 	/* Loop through any pending requests */
-	अगर (!adapter->quiescent) अणु
-		megaraid_mbox_runpendq(adapter, शून्य);
-	पूर्ण
+	if (!adapter->quiescent) {
+		megaraid_mbox_runpendq(adapter, NULL);
+	}
 
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
 
 /**
  * megaraid_mbox_dpc - the tasklet to complete the commands from completed list
- * @devp	: poपूर्णांकer to HBA soft state
+ * @devp	: pointer to HBA soft state
  *
  * Pick up the commands from the completed list and send back to the owners.
- * This is a reentrant function and करोes not assume any locks are held जबतक
+ * This is a reentrant function and does not assume any locks are held while
  * it is being called.
  */
-अटल व्योम
-megaraid_mbox_dpc(अचिन्हित दीर्घ devp)
-अणु
+static void
+megaraid_mbox_dpc(unsigned long devp)
+{
 	adapter_t		*adapter = (adapter_t *)devp;
 	mraid_device_t		*raid_dev;
-	काष्ठा list_head	clist;
-	काष्ठा scatterlist	*sgl;
+	struct list_head	clist;
+	struct scatterlist	*sgl;
 	scb_t			*scb;
-	scb_t			*पंचांगp;
-	काष्ठा scsi_cmnd	*scp;
+	scb_t			*tmp;
+	struct scsi_cmnd	*scp;
 	mraid_passthru_t	*pthru;
 	mraid_epassthru_t	*epthru;
 	mbox_ccb_t		*ccb;
-	पूर्णांक			islogical;
-	पूर्णांक			pdev_index;
-	पूर्णांक			pdev_state;
+	int			islogical;
+	int			pdev_index;
+	int			pdev_state;
 	mbox_t			*mbox;
-	अचिन्हित दीर्घ		flags;
-	uपूर्णांक8_t			c;
-	पूर्णांक			status;
+	unsigned long		flags;
+	uint8_t			c;
+	int			status;
 	uioc_t			*kioc;
 
 
-	अगर (!adapter) वापस;
+	if (!adapter) return;
 
 	raid_dev = ADAP2RAIDDEV(adapter);
 
@@ -2205,7 +2204,7 @@ megaraid_mbox_dpc(अचिन्हित दीर्घ devp)
 	spin_unlock_irqrestore(COMPLETED_LIST_LOCK(adapter), flags);
 
 
-	list_क्रम_each_entry_safe(scb, पंचांगp, &clist, list) अणु
+	list_for_each_entry_safe(scb, tmp, &clist, list) {
 
 		status		= scb->status;
 		scp		= scb->scp;
@@ -2215,182 +2214,182 @@ megaraid_mbox_dpc(अचिन्हित दीर्घ devp)
 		mbox		= ccb->mbox;
 
 		// Make sure f/w has completed a valid command
-		अगर (scb->state != SCB_ISSUED) अणु
+		if (scb->state != SCB_ISSUED) {
 			con_log(CL_ANN, (KERN_CRIT
 			"megaraid critical err: invalid command %d:%d:%p\n",
 				scb->sno, scb->state, scp));
 			BUG();
-			जारी;	// Must never happen!
-		पूर्ण
+			continue;	// Must never happen!
+		}
 
-		// check क्रम the management command and complete it right away
-		अगर (scb->sno >= MBOX_MAX_SCSI_CMDS) अणु
+		// check for the management command and complete it right away
+		if (scb->sno >= MBOX_MAX_SCSI_CMDS) {
 			scb->state	= SCB_FREE;
 			scb->status	= status;
 
-			// हटाओ from local clist
+			// remove from local clist
 			list_del_init(&scb->list);
 
 			kioc			= (uioc_t *)scb->gp;
 			kioc->status		= 0;
 
-			megaraid_mbox_mm_करोne(adapter, scb);
+			megaraid_mbox_mm_done(adapter, scb);
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		// Was an पात issued क्रम this command earlier
-		अगर (scb->state & SCB_ABORT) अणु
+		// Was an abort issued for this command earlier
+		if (scb->state & SCB_ABORT) {
 			con_log(CL_ANN, (KERN_NOTICE
 			"megaraid: aborted cmd [%x] completed\n",
 				scb->sno));
-		पूर्ण
+		}
 
 		/*
 		 * If the inquiry came of a disk drive which is not part of
 		 * any RAID array, expose it to the kernel. For this to be
 		 * enabled, user must set the "megaraid_expose_unconf_disks"
-		 * flag to 1 by specअगरying it on module parameter list.
+		 * flag to 1 by specifying it on module parameter list.
 		 * This would enable data migration off drives from other
 		 * configurations.
 		 */
 		islogical = MRAID_IS_LOGICAL(adapter, scp);
-		अगर (scp->cmnd[0] == INQUIRY && status == 0 && islogical == 0
-				&& IS_RAID_CH(raid_dev, scb->dev_channel)) अणु
+		if (scp->cmnd[0] == INQUIRY && status == 0 && islogical == 0
+				&& IS_RAID_CH(raid_dev, scb->dev_channel)) {
 
 			sgl = scsi_sglist(scp);
-			अगर (sg_page(sgl)) अणु
-				c = *(अचिन्हित अक्षर *) sg_virt(&sgl[0]);
-			पूर्ण अन्यथा अणु
+			if (sg_page(sgl)) {
+				c = *(unsigned char *) sg_virt(&sgl[0]);
+			} else {
 				con_log(CL_ANN, (KERN_WARNING
 						 "megaraid mailbox: invalid sg:%d\n",
 						 __LINE__));
 				c = 0;
-			पूर्ण
+			}
 
-			अगर ((c & 0x1F ) == TYPE_DISK) अणु
+			if ((c & 0x1F ) == TYPE_DISK) {
 				pdev_index = (scb->dev_channel * 16) +
 					scb->dev_target;
 				pdev_state =
 					raid_dev->pdrv_state[pdev_index] & 0x0F;
 
-				अगर (pdev_state == PDRV_ONLINE		||
+				if (pdev_state == PDRV_ONLINE		||
 					pdev_state == PDRV_FAILED	||
 					pdev_state == PDRV_RBLD		||
 					pdev_state == PDRV_HOTSPARE	||
-					megaraid_expose_unconf_disks == 0) अणु
+					megaraid_expose_unconf_disks == 0) {
 
 					status = 0xF0;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		// Convert MegaRAID status to Linux error code
-		चयन (status) अणु
+		switch (status) {
 
-		हाल 0x00:
+		case 0x00:
 
 			scp->result = (DID_OK << 16);
-			अवरोध;
+			break;
 
-		हाल 0x02:
+		case 0x02:
 
 			/* set sense_buffer and result fields */
-			अगर (mbox->cmd == MBOXCMD_PASSTHRU ||
-				mbox->cmd == MBOXCMD_PASSTHRU64) अणु
+			if (mbox->cmd == MBOXCMD_PASSTHRU ||
+				mbox->cmd == MBOXCMD_PASSTHRU64) {
 
-				स_नकल(scp->sense_buffer, pthru->reqsensearea,
+				memcpy(scp->sense_buffer, pthru->reqsensearea,
 						14);
 
 				scp->result = DRIVER_SENSE << 24 |
 					DID_OK << 16 | CHECK_CONDITION << 1;
-			पूर्ण
-			अन्यथा अणु
-				अगर (mbox->cmd == MBOXCMD_EXTPTHRU) अणु
+			}
+			else {
+				if (mbox->cmd == MBOXCMD_EXTPTHRU) {
 
-					स_नकल(scp->sense_buffer,
+					memcpy(scp->sense_buffer,
 						epthru->reqsensearea, 14);
 
 					scp->result = DRIVER_SENSE << 24 |
 						DID_OK << 16 |
 						CHECK_CONDITION << 1;
-				पूर्ण अन्यथा अणु
+				} else {
 					scp->sense_buffer[0] = 0x70;
 					scp->sense_buffer[2] = ABORTED_COMMAND;
 					scp->result = CHECK_CONDITION << 1;
-				पूर्ण
-			पूर्ण
-			अवरोध;
+				}
+			}
+			break;
 
-		हाल 0x08:
+		case 0x08:
 
 			scp->result = DID_BUS_BUSY << 16 | status;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
 			/*
 			 * If TEST_UNIT_READY fails, we know RESERVATION_STATUS
 			 * failed
 			 */
-			अगर (scp->cmnd[0] == TEST_UNIT_READY) अणु
+			if (scp->cmnd[0] == TEST_UNIT_READY) {
 				scp->result = DID_ERROR << 16 |
 					RESERVATION_CONFLICT << 1;
-			पूर्ण
-			अन्यथा
+			}
+			else
 			/*
-			 * Error code वापसed is 1 अगर Reserve or Release
+			 * Error code returned is 1 if Reserve or Release
 			 * failed or the input parameter is invalid
 			 */
-			अगर (status == 1 && (scp->cmnd[0] == RESERVE ||
-					 scp->cmnd[0] == RELEASE)) अणु
+			if (status == 1 && (scp->cmnd[0] == RESERVE ||
+					 scp->cmnd[0] == RELEASE)) {
 
 				scp->result = DID_ERROR << 16 |
 					RESERVATION_CONFLICT << 1;
-			पूर्ण
-			अन्यथा अणु
+			}
+			else {
 				scp->result = DID_BAD_TARGET << 16 | status;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		// prपूर्णांक a debug message क्रम all failed commands
-		अगर (status) अणु
+		// print a debug message for all failed commands
+		if (status) {
 			megaraid_mbox_display_scb(adapter, scb);
-		पूर्ण
+		}
 
 		scsi_dma_unmap(scp);
 
-		// हटाओ from local clist
+		// remove from local clist
 		list_del_init(&scb->list);
 
-		// put back in मुक्त list
+		// put back in free list
 		megaraid_dealloc_scb(adapter, scb);
 
 		// send the scsi packet back to kernel
-		scp->scsi_करोne(scp);
-	पूर्ण
+		scp->scsi_done(scp);
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * megaraid_पात_handler - पात the scsi command
- * @scp		: command to be पातed
+ * megaraid_abort_handler - abort the scsi command
+ * @scp		: command to be aborted
  *
  * Abort a previous SCSI request. Only commands on the pending list can be
- * पातed. All the commands issued to the F/W must complete.
+ * aborted. All the commands issued to the F/W must complete.
  **/
-अटल पूर्णांक
-megaraid_पात_handler(काष्ठा scsi_cmnd *scp)
-अणु
+static int
+megaraid_abort_handler(struct scsi_cmnd *scp)
+{
 	adapter_t		*adapter;
 	mraid_device_t		*raid_dev;
 	scb_t			*scb;
-	scb_t			*पंचांगp;
-	पूर्णांक			found;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			i;
+	scb_t			*tmp;
+	int			found;
+	unsigned long		flags;
+	int			i;
 
 
 	adapter		= SCP2ADAPTER(scp);
@@ -2401,22 +2400,22 @@ megaraid_पात_handler(काष्ठा scsi_cmnd *scp)
 		scp->cmnd[0], SCP2CHANNEL(scp),
 		SCP2TARGET(scp), SCP2LUN(scp)));
 
-	// If FW has stopped responding, simply वापस failure
-	अगर (raid_dev->hw_error) अणु
+	// If FW has stopped responding, simply return failure
+	if (raid_dev->hw_error) {
 		con_log(CL_ANN, (KERN_NOTICE
 			"megaraid: hw error, not aborting\n"));
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 
 	// There might a race here, where the command was completed by the
-	// firmware and now it is on the completed list. Beक्रमe we could
-	// complete the command to the kernel in dpc, the पात came.
-	// Find out अगर this is the हाल to aव्योम the race.
-	scb = शून्य;
+	// firmware and now it is on the completed list. Before we could
+	// complete the command to the kernel in dpc, the abort came.
+	// Find out if this is the case to avoid the race.
+	scb = NULL;
 	spin_lock_irqsave(COMPLETED_LIST_LOCK(adapter), flags);
-	list_क्रम_each_entry_safe(scb, पंचांगp, &adapter->completed_list, list) अणु
+	list_for_each_entry_safe(scb, tmp, &adapter->completed_list, list) {
 
-		अगर (scb->scp == scp) अणु	// Found command
+		if (scb->scp == scp) {	// Found command
 
 			list_del_init(&scb->list);	// from completed list
 
@@ -2425,26 +2424,26 @@ megaraid_पात_handler(काष्ठा scsi_cmnd *scp)
 				scb->sno, scb->dev_channel, scb->dev_target));
 
 			scp->result = (DID_ABORT << 16);
-			scp->scsi_करोne(scp);
+			scp->scsi_done(scp);
 
 			megaraid_dealloc_scb(adapter, scb);
 
 			spin_unlock_irqrestore(COMPLETED_LIST_LOCK(adapter),
 				flags);
 
-			वापस SUCCESS;
-		पूर्ण
-	पूर्ण
+			return SUCCESS;
+		}
+	}
 	spin_unlock_irqrestore(COMPLETED_LIST_LOCK(adapter), flags);
 
 
-	// Find out अगर this command is still on the pending list. If it is and
-	// was never issued, पात and वापस success. If the command is owned
-	// by the firmware, we must रुको क्रम it to complete by the FW.
+	// Find out if this command is still on the pending list. If it is and
+	// was never issued, abort and return success. If the command is owned
+	// by the firmware, we must wait for it to complete by the FW.
 	spin_lock_irqsave(PENDING_LIST_LOCK(adapter), flags);
-	list_क्रम_each_entry_safe(scb, पंचांगp, &adapter->pend_list, list) अणु
+	list_for_each_entry_safe(scb, tmp, &adapter->pend_list, list) {
 
-		अगर (scb->scp == scp) अणु	// Found command
+		if (scb->scp == scp) {	// Found command
 
 			list_del_init(&scb->list);	// from pending list
 
@@ -2455,104 +2454,104 @@ megaraid_पात_handler(काष्ठा scsi_cmnd *scp)
 				scb->dev_channel, scb->dev_target));
 
 			scp->result = (DID_ABORT << 16);
-			scp->scsi_करोne(scp);
+			scp->scsi_done(scp);
 
 			megaraid_dealloc_scb(adapter, scb);
 
 			spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter),
 				flags);
 
-			वापस SUCCESS;
-		पूर्ण
-	पूर्ण
+			return SUCCESS;
+		}
+	}
 	spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter), flags);
 
 
-	// Check करो we even own this command, in which हाल this would be
+	// Check do we even own this command, in which case this would be
 	// owned by the firmware. The only way to locate the FW scb is to
-	// traverse through the list of all SCB, since driver करोes not
-	// मुख्यtain these SCBs on any list
+	// traverse through the list of all SCB, since driver does not
+	// maintain these SCBs on any list
 	found = 0;
 	spin_lock_irq(&adapter->lock);
-	क्रम (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) अणु
+	for (i = 0; i < MBOX_MAX_SCSI_CMDS; i++) {
 		scb = adapter->kscb_list + i;
 
-		अगर (scb->scp == scp) अणु
+		if (scb->scp == scp) {
 
 			found = 1;
 
-			अगर (!(scb->state & SCB_ISSUED)) अणु
+			if (!(scb->state & SCB_ISSUED)) {
 				con_log(CL_ANN, (KERN_WARNING
 				"megaraid abort: %d[%d:%d], invalid state\n",
 				scb->sno, scb->dev_channel, scb->dev_target));
 				BUG();
-			पूर्ण
-			अन्यथा अणु
+			}
+			else {
 				con_log(CL_ANN, (KERN_WARNING
 				"megaraid abort: %d[%d:%d], fw owner\n",
 				scb->sno, scb->dev_channel, scb->dev_target));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	spin_unlock_irq(&adapter->lock);
 
-	अगर (!found) अणु
+	if (!found) {
 		con_log(CL_ANN, (KERN_WARNING "megaraid abort: do now own\n"));
 
-		// FIXME: Should there be a callback क्रम this command?
-		वापस SUCCESS;
-	पूर्ण
+		// FIXME: Should there be a callback for this command?
+		return SUCCESS;
+	}
 
-	// We cannot actually पात a command owned by firmware, वापस
-	// failure and रुको क्रम reset. In host reset handler, we will find out
-	// अगर the HBA is still live
-	वापस FAILED;
-पूर्ण
+	// We cannot actually abort a command owned by firmware, return
+	// failure and wait for reset. In host reset handler, we will find out
+	// if the HBA is still live
+	return FAILED;
+}
 
 /**
- * megaraid_reset_handler - device reset handler क्रम mailbox based driver
+ * megaraid_reset_handler - device reset handler for mailbox based driver
  * @scp		: reference command
  *
- * Reset handler क्रम the mailbox based controller. First try to find out अगर
- * the FW is still live, in which हाल the outstanding commands counter mut go
- * करोwn to 0. If that happens, also issue the reservation reset command to
+ * Reset handler for the mailbox based controller. First try to find out if
+ * the FW is still live, in which case the outstanding commands counter mut go
+ * down to 0. If that happens, also issue the reservation reset command to
  * relinquish (possible) reservations on the logical drives connected to this
  * host.
  **/
-अटल पूर्णांक
-megaraid_reset_handler(काष्ठा scsi_cmnd *scp)
-अणु
+static int
+megaraid_reset_handler(struct scsi_cmnd *scp)
+{
 	adapter_t	*adapter;
 	scb_t		*scb;
-	scb_t		*पंचांगp;
+	scb_t		*tmp;
 	mraid_device_t	*raid_dev;
-	अचिन्हित दीर्घ	flags;
-	uपूर्णांक8_t		raw_mbox[माप(mbox_t)];
-	पूर्णांक		rval;
-	पूर्णांक		recovery_winकरोw;
-	पूर्णांक		i;
+	unsigned long	flags;
+	uint8_t		raw_mbox[sizeof(mbox_t)];
+	int		rval;
+	int		recovery_window;
+	int		i;
 	uioc_t		*kioc;
 
 	adapter		= SCP2ADAPTER(scp);
 	raid_dev	= ADAP2RAIDDEV(adapter);
 
-	// वापस failure अगर adapter is not responding
-	अगर (raid_dev->hw_error) अणु
+	// return failure if adapter is not responding
+	if (raid_dev->hw_error) {
 		con_log(CL_ANN, (KERN_NOTICE
 			"megaraid: hw error, cannot reset\n"));
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 
 	// Under exceptional conditions, FW can take up to 3 minutes to
-	// complete command processing. Wait क्रम additional 2 minutes क्रम the
-	// pending commands counter to go करोwn to 0. If it करोesn't, let the
+	// complete command processing. Wait for additional 2 minutes for the
+	// pending commands counter to go down to 0. If it doesn't, let the
 	// controller be marked offline
 	// Also, reset all the commands currently owned by the driver
 	spin_lock_irqsave(PENDING_LIST_LOCK(adapter), flags);
-	list_क्रम_each_entry_safe(scb, पंचांगp, &adapter->pend_list, list) अणु
+	list_for_each_entry_safe(scb, tmp, &adapter->pend_list, list) {
 		list_del_init(&scb->list);	// from pending list
 
-		अगर (scb->sno >= MBOX_MAX_SCSI_CMDS) अणु
+		if (scb->sno >= MBOX_MAX_SCSI_CMDS) {
 			con_log(CL_ANN, (KERN_WARNING
 			"megaraid: IOCTL packet with %d[%d:%d] being reset\n",
 			scb->sno, scb->dev_channel, scb->dev_target));
@@ -2562,101 +2561,101 @@ megaraid_reset_handler(काष्ठा scsi_cmnd *scp)
 			kioc			= (uioc_t *)scb->gp;
 			kioc->status		= -EFAULT;
 
-			megaraid_mbox_mm_करोne(adapter, scb);
-		पूर्ण अन्यथा अणु
-			अगर (scb->scp == scp) अणु	// Found command
+			megaraid_mbox_mm_done(adapter, scb);
+		} else {
+			if (scb->scp == scp) {	// Found command
 				con_log(CL_ANN, (KERN_WARNING
 					"megaraid: %d[%d:%d], reset from pending list\n",
 					scb->sno, scb->dev_channel, scb->dev_target));
-			पूर्ण अन्यथा अणु
+			} else {
 				con_log(CL_ANN, (KERN_WARNING
 				"megaraid: IO packet with %d[%d:%d] being reset\n",
 				scb->sno, scb->dev_channel, scb->dev_target));
-			पूर्ण
+			}
 
 			scb->scp->result = (DID_RESET << 16);
-			scb->scp->scsi_करोne(scb->scp);
+			scb->scp->scsi_done(scb->scp);
 
 			megaraid_dealloc_scb(adapter, scb);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(PENDING_LIST_LOCK(adapter), flags);
 
-	अगर (adapter->outstanding_cmds) अणु
+	if (adapter->outstanding_cmds) {
 		con_log(CL_ANN, (KERN_NOTICE
 			"megaraid: %d outstanding commands. Max wait %d sec\n",
 			adapter->outstanding_cmds,
 			(MBOX_RESET_WAIT + MBOX_RESET_EXT_WAIT)));
-	पूर्ण
+	}
 
-	recovery_winकरोw = MBOX_RESET_WAIT + MBOX_RESET_EXT_WAIT;
+	recovery_window = MBOX_RESET_WAIT + MBOX_RESET_EXT_WAIT;
 
-	क्रम (i = 0; i < recovery_winकरोw; i++) अणु
+	for (i = 0; i < recovery_window; i++) {
 
 		megaraid_ack_sequence(adapter);
 
-		// prपूर्णांक a message once every 5 seconds only
-		अगर (!(i % 5)) अणु
+		// print a message once every 5 seconds only
+		if (!(i % 5)) {
 			con_log(CL_ANN, (
 			"megaraid mbox: Wait for %d commands to complete:%d\n",
 				adapter->outstanding_cmds,
 				(MBOX_RESET_WAIT + MBOX_RESET_EXT_WAIT) - i));
-		पूर्ण
+		}
 
-		// bailout अगर no recovery happened in reset समय
-		अगर (adapter->outstanding_cmds == 0) अणु
-			अवरोध;
-		पूर्ण
+		// bailout if no recovery happened in reset time
+		if (adapter->outstanding_cmds == 0) {
+			break;
+		}
 
 		msleep(1000);
-	पूर्ण
+	}
 
 	spin_lock(&adapter->lock);
 
 	// If still outstanding commands, bail out
-	अगर (adapter->outstanding_cmds) अणु
+	if (adapter->outstanding_cmds) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid mbox: critical hardware error!\n"));
 
 		raid_dev->hw_error = 1;
 
 		rval = FAILED;
-		जाओ out;
-	पूर्ण
-	अन्यथा अणु
+		goto out;
+	}
+	else {
 		con_log(CL_ANN, (KERN_NOTICE
 		"megaraid mbox: reset sequence completed successfully\n"));
-	पूर्ण
+	}
 
 
 	// If the controller supports clustering, reset reservations
-	अगर (!adapter->ha) अणु
+	if (!adapter->ha) {
 		rval = SUCCESS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	// clear reservations अगर any
+	// clear reservations if any
 	raw_mbox[0] = CLUSTER_CMD;
 	raw_mbox[2] = RESET_RESERVATIONS;
 
 	rval = SUCCESS;
-	अगर (mbox_post_sync_cmd_fast(adapter, raw_mbox) == 0) अणु
+	if (mbox_post_sync_cmd_fast(adapter, raw_mbox) == 0) {
 		con_log(CL_ANN,
 			(KERN_INFO "megaraid: reservation reset\n"));
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		rval = FAILED;
 		con_log(CL_ANN, (KERN_WARNING
 				"megaraid: reservation reset failed\n"));
-	पूर्ण
+	}
 
  out:
 	spin_unlock(&adapter->lock);
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /*
- * START: पूर्णांकernal commands library
+ * START: internal commands library
  *
  * This section of the driver has the common routine used by the driver and
  * also has all the FW routines
@@ -2667,29 +2666,29 @@ megaraid_reset_handler(काष्ठा scsi_cmnd *scp)
  * @adapter	: controller's soft state
  * @raw_mbox	: the mailbox
  *
- * Issue a scb in synchronous and non-पूर्णांकerrupt mode क्रम mailbox based
+ * Issue a scb in synchronous and non-interrupt mode for mailbox based
  * controllers.
  */
-अटल पूर्णांक
-mbox_post_sync_cmd(adapter_t *adapter, uपूर्णांक8_t raw_mbox[])
-अणु
+static int
+mbox_post_sync_cmd(adapter_t *adapter, uint8_t raw_mbox[])
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 	mbox_t		*mbox;
-	uपूर्णांक8_t		status;
-	पूर्णांक		i;
+	uint8_t		status;
+	int		i;
 
 	mbox	= raid_dev->mbox;
 
 	/*
-	 * Wait until mailbox is मुक्त
+	 * Wait until mailbox is free
 	 */
-	अगर (megaraid_busyरुको_mbox(raid_dev) != 0)
-		जाओ blocked_mailbox;
+	if (megaraid_busywait_mbox(raid_dev) != 0)
+		goto blocked_mailbox;
 
 	/*
-	 * Copy mailbox data पूर्णांकo host काष्ठाure
+	 * Copy mailbox data into host structure
 	 */
-	स_नकल((caddr_t)mbox, (caddr_t)raw_mbox, 16);
+	memcpy((caddr_t)mbox, (caddr_t)raw_mbox, 16);
 	mbox->cmdid		= 0xFE;
 	mbox->busy		= 1;
 	mbox->poll		= 0;
@@ -2700,95 +2699,95 @@ mbox_post_sync_cmd(adapter_t *adapter, uपूर्णांक8_t raw_mbox[])
 	wmb();
 	WRINDOOR(raid_dev, raid_dev->mbox_dma | 0x1);
 
-	// रुको क्रम maximum 1 second क्रम status to post. If the status is not
-	// available within 1 second, assume FW is initializing and रुको
-	// क्रम an extended amount of समय
-	अगर (mbox->numstatus == 0xFF) अणु	// status not yet available
+	// wait for maximum 1 second for status to post. If the status is not
+	// available within 1 second, assume FW is initializing and wait
+	// for an extended amount of time
+	if (mbox->numstatus == 0xFF) {	// status not yet available
 		udelay(25);
 
-		क्रम (i = 0; mbox->numstatus == 0xFF && i < 1000; i++) अणु
+		for (i = 0; mbox->numstatus == 0xFF && i < 1000; i++) {
 			rmb();
 			msleep(1);
-		पूर्ण
+		}
 
 
-		अगर (i == 1000) अणु
+		if (i == 1000) {
 			con_log(CL_ANN, (KERN_NOTICE
 				"megaraid mailbox: wait for FW to boot      "));
 
-			क्रम (i = 0; (mbox->numstatus == 0xFF) &&
-					(i < MBOX_RESET_WAIT); i++) अणु
+			for (i = 0; (mbox->numstatus == 0xFF) &&
+					(i < MBOX_RESET_WAIT); i++) {
 				rmb();
 				con_log(CL_ANN, ("\b\b\b\b\b[%03d]",
 							MBOX_RESET_WAIT - i));
 				msleep(1000);
-			पूर्ण
+			}
 
-			अगर (i == MBOX_RESET_WAIT) अणु
+			if (i == MBOX_RESET_WAIT) {
 
 				con_log(CL_ANN, (
 				"\nmegaraid mailbox: status not available\n"));
 
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 			con_log(CL_ANN, ("\b\b\b\b\b[ok] \n"));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	// रुको क्रम maximum 1 second क्रम poll semaphore
-	अगर (mbox->poll != 0x77) अणु
+	// wait for maximum 1 second for poll semaphore
+	if (mbox->poll != 0x77) {
 		udelay(25);
 
-		क्रम (i = 0; (mbox->poll != 0x77) && (i < 1000); i++) अणु
+		for (i = 0; (mbox->poll != 0x77) && (i < 1000); i++) {
 			rmb();
 			msleep(1);
-		पूर्ण
+		}
 
-		अगर (i == 1000) अणु
+		if (i == 1000) {
 			con_log(CL_ANN, (KERN_WARNING
 			"megaraid mailbox: could not get poll semaphore\n"));
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 	WRINDOOR(raid_dev, raid_dev->mbox_dma | 0x2);
 	wmb();
 
-	// रुको क्रम maximum 1 second क्रम acknowledgement
-	अगर (RDINDOOR(raid_dev) & 0x2) अणु
+	// wait for maximum 1 second for acknowledgement
+	if (RDINDOOR(raid_dev) & 0x2) {
 		udelay(25);
 
-		क्रम (i = 0; (RDINDOOR(raid_dev) & 0x2) && (i < 1000); i++) अणु
+		for (i = 0; (RDINDOOR(raid_dev) & 0x2) && (i < 1000); i++) {
 			rmb();
 			msleep(1);
-		पूर्ण
+		}
 
-		अगर (i == 1000) अणु
+		if (i == 1000) {
 			con_log(CL_ANN, (KERN_WARNING
 				"megaraid mailbox: could not acknowledge\n"));
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 	mbox->poll	= 0;
 	mbox->ack	= 0x77;
 
 	status = mbox->status;
 
 	// invalidate the completed command id array. After command
-	// completion, firmware would ग_लिखो the valid id.
+	// completion, firmware would write the valid id.
 	mbox->numstatus	= 0xFF;
 	mbox->status	= 0xFF;
-	क्रम (i = 0; i < MBOX_MAX_FIRMWARE_STATUS; i++) अणु
+	for (i = 0; i < MBOX_MAX_FIRMWARE_STATUS; i++) {
 		mbox->completed[i] = 0xFF;
-	पूर्ण
+	}
 
-	वापस status;
+	return status;
 
 blocked_mailbox:
 
 	con_log(CL_ANN, (KERN_WARNING "megaraid: blocked mailbox\n") );
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 
 /**
@@ -2796,25 +2795,25 @@ blocked_mailbox:
  * @adapter	: controller's soft state
  * @raw_mbox	: the mailbox
  *
- * Issue a scb in synchronous and non-पूर्णांकerrupt mode क्रम mailbox based
+ * Issue a scb in synchronous and non-interrupt mode for mailbox based
  * controllers. This is a faster version of the synchronous command and
- * thereक्रमe can be called in पूर्णांकerrupt-context as well.
+ * therefore can be called in interrupt-context as well.
  */
-अटल पूर्णांक
-mbox_post_sync_cmd_fast(adapter_t *adapter, uपूर्णांक8_t raw_mbox[])
-अणु
+static int
+mbox_post_sync_cmd_fast(adapter_t *adapter, uint8_t raw_mbox[])
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 	mbox_t		*mbox;
-	दीर्घ		i;
+	long		i;
 
 
 	mbox	= raid_dev->mbox;
 
-	// वापस immediately अगर the mailbox is busy
-	अगर (mbox->busy) वापस -1;
+	// return immediately if the mailbox is busy
+	if (mbox->busy) return -1;
 
-	// Copy mailbox data पूर्णांकo host काष्ठाure
-	स_नकल((caddr_t)mbox, (caddr_t)raw_mbox, 14);
+	// Copy mailbox data into host structure
+	memcpy((caddr_t)mbox, (caddr_t)raw_mbox, 14);
 	mbox->cmdid		= 0xFE;
 	mbox->busy		= 1;
 	mbox->poll		= 0;
@@ -2825,192 +2824,192 @@ mbox_post_sync_cmd_fast(adapter_t *adapter, uपूर्णांक8_t raw_mbo
 	wmb();
 	WRINDOOR(raid_dev, raid_dev->mbox_dma | 0x1);
 
-	क्रम (i = 0; i < MBOX_SYNC_WAIT_CNT; i++) अणु
-		अगर (mbox->numstatus != 0xFF) अवरोध;
+	for (i = 0; i < MBOX_SYNC_WAIT_CNT; i++) {
+		if (mbox->numstatus != 0xFF) break;
 		rmb();
 		udelay(MBOX_SYNC_DELAY_200);
-	पूर्ण
+	}
 
-	अगर (i == MBOX_SYNC_WAIT_CNT) अणु
+	if (i == MBOX_SYNC_WAIT_CNT) {
 		// We may need to re-calibrate the counter
 		con_log(CL_ANN, (KERN_CRIT
 			"megaraid: fast sync command timed out\n"));
-	पूर्ण
+	}
 
 	WRINDOOR(raid_dev, raid_dev->mbox_dma | 0x2);
 	wmb();
 
-	वापस mbox->status;
-पूर्ण
+	return mbox->status;
+}
 
 
 /**
- * megaraid_busyरुको_mbox() - Wait until the controller's mailbox is available
+ * megaraid_busywait_mbox() - Wait until the controller's mailbox is available
  * @raid_dev	: RAID device (HBA) soft state
  *
  * Wait until the controller's mailbox is available to accept more commands.
- * Wait क्रम at most 1 second.
+ * Wait for at most 1 second.
  */
-अटल पूर्णांक
-megaraid_busyरुको_mbox(mraid_device_t *raid_dev)
-अणु
+static int
+megaraid_busywait_mbox(mraid_device_t *raid_dev)
+{
 	mbox_t	*mbox = raid_dev->mbox;
-	पूर्णांक	i = 0;
+	int	i = 0;
 
-	अगर (mbox->busy) अणु
+	if (mbox->busy) {
 		udelay(25);
-		क्रम (i = 0; mbox->busy && i < 1000; i++)
+		for (i = 0; mbox->busy && i < 1000; i++)
 			msleep(1);
-	पूर्ण
+	}
 
-	अगर (i < 1000) वापस 0;
-	अन्यथा वापस -1;
-पूर्ण
+	if (i < 1000) return 0;
+	else return -1;
+}
 
 
 /**
- * megaraid_mbox_product_info - some अटल inक्रमmation about the controller
+ * megaraid_mbox_product_info - some static information about the controller
  * @adapter	: our soft state
  *
  * Issue commands to the controller to grab some parameters required by our
  * caller.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_product_info(adapter_t *adapter)
-अणु
+{
 	mraid_device_t		*raid_dev = ADAP2RAIDDEV(adapter);
 	mbox_t			*mbox;
-	uपूर्णांक8_t			raw_mbox[माप(mbox_t)];
+	uint8_t			raw_mbox[sizeof(mbox_t)];
 	mraid_pinfo_t		*pinfo;
 	dma_addr_t		pinfo_dma_h;
 	mraid_inquiry3_t	*mraid_inq3;
-	पूर्णांक			i;
+	int			i;
 
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(raw_mbox));
+	memset((caddr_t)raw_mbox, 0, sizeof(raw_mbox));
 	mbox = (mbox_t *)raw_mbox;
 
 	/*
 	 * Issue an ENQUIRY3 command to find out certain adapter parameters,
 	 * e.g., max channels, max commands etc.
 	 */
-	pinfo = dma_alloc_coherent(&adapter->pdev->dev, माप(mraid_pinfo_t),
+	pinfo = dma_alloc_coherent(&adapter->pdev->dev, sizeof(mraid_pinfo_t),
 				   &pinfo_dma_h, GFP_KERNEL);
-	अगर (pinfo == शून्य) अणु
+	if (pinfo == NULL) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
 			__LINE__));
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	mbox->xferaddr = (uपूर्णांक32_t)adapter->ibuf_dma_h;
-	स_रखो((व्योम *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
+	mbox->xferaddr = (uint32_t)adapter->ibuf_dma_h;
+	memset((void *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
 
 	raw_mbox[0] = FC_NEW_CONFIG;
 	raw_mbox[2] = NC_SUBOP_ENQUIRY3;
 	raw_mbox[3] = ENQ3_GET_SOLICITED_FULL;
 
 	// Issue the command
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) != 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) != 0) {
 
 		con_log(CL_ANN, (KERN_WARNING "megaraid: Inquiry3 failed\n"));
 
-		dma_मुक्त_coherent(&adapter->pdev->dev, माप(mraid_pinfo_t),
+		dma_free_coherent(&adapter->pdev->dev, sizeof(mraid_pinfo_t),
 			pinfo, pinfo_dma_h);
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * Collect inक्रमmation about state of each physical drive
+	 * Collect information about state of each physical drive
 	 * attached to the controller. We will expose all the disks
 	 * which are not part of RAID
 	 */
 	mraid_inq3 = (mraid_inquiry3_t *)adapter->ibuf;
-	क्रम (i = 0; i < MBOX_MAX_PHYSICAL_DRIVES; i++) अणु
+	for (i = 0; i < MBOX_MAX_PHYSICAL_DRIVES; i++) {
 		raid_dev->pdrv_state[i] = mraid_inq3->pdrv_state[i];
-	पूर्ण
+	}
 
 	/*
-	 * Get product info क्रम inक्रमmation like number of channels,
+	 * Get product info for information like number of channels,
 	 * maximum commands supported.
 	 */
-	स_रखो((caddr_t)raw_mbox, 0, माप(raw_mbox));
-	mbox->xferaddr = (uपूर्णांक32_t)pinfo_dma_h;
+	memset((caddr_t)raw_mbox, 0, sizeof(raw_mbox));
+	mbox->xferaddr = (uint32_t)pinfo_dma_h;
 
 	raw_mbox[0] = FC_NEW_CONFIG;
 	raw_mbox[2] = NC_SUBOP_PRODUCT_INFO;
 
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) != 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) != 0) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: product info failed\n"));
 
-		dma_मुक्त_coherent(&adapter->pdev->dev, माप(mraid_pinfo_t),
+		dma_free_coherent(&adapter->pdev->dev, sizeof(mraid_pinfo_t),
 			pinfo, pinfo_dma_h);
 
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/*
-	 * Setup some parameters क्रम host, as required by our caller
+	 * Setup some parameters for host, as required by our caller
 	 */
 	adapter->max_channel = pinfo->nchannels;
 
 	/*
 	 * we will export all the logical drives on a single channel.
-	 * Add 1 since inquires करो not come क्रम inititor ID
+	 * Add 1 since inquires do not come for inititor ID
 	 */
 	adapter->max_target	= MAX_LOGICAL_DRIVES_40LD + 1;
-	adapter->max_lun	= 8;	// up to 8 LUNs क्रम non-disk devices
+	adapter->max_lun	= 8;	// up to 8 LUNs for non-disk devices
 
 	/*
-	 * These are the maximum outstanding commands क्रम the scsi-layer
+	 * These are the maximum outstanding commands for the scsi-layer
 	 */
 	adapter->max_cmds	= MBOX_MAX_SCSI_CMDS;
 
-	स_रखो(adapter->fw_version, 0, VERSION_SIZE);
-	स_रखो(adapter->bios_version, 0, VERSION_SIZE);
+	memset(adapter->fw_version, 0, VERSION_SIZE);
+	memset(adapter->bios_version, 0, VERSION_SIZE);
 
-	स_नकल(adapter->fw_version, pinfo->fw_version, 4);
+	memcpy(adapter->fw_version, pinfo->fw_version, 4);
 	adapter->fw_version[4] = 0;
 
-	स_नकल(adapter->bios_version, pinfo->bios_version, 4);
+	memcpy(adapter->bios_version, pinfo->bios_version, 4);
 	adapter->bios_version[4] = 0;
 
 	con_log(CL_ANN, (KERN_NOTICE
 		"megaraid: fw version:[%s] bios version:[%s]\n",
 		adapter->fw_version, adapter->bios_version));
 
-	dma_मुक्त_coherent(&adapter->pdev->dev, माप(mraid_pinfo_t), pinfo,
+	dma_free_coherent(&adapter->pdev->dev, sizeof(mraid_pinfo_t), pinfo,
 			pinfo_dma_h);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /**
- * megaraid_mbox_extended_cdb - check क्रम support क्रम extended CDBs
- * @adapter	: soft state क्रम the controller
+ * megaraid_mbox_extended_cdb - check for support for extended CDBs
+ * @adapter	: soft state for the controller
  *
  * This routine check whether the controller in question supports extended
  * ( > 10 bytes ) CDBs.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_extended_cdb(adapter_t *adapter)
-अणु
+{
 	mbox_t		*mbox;
-	uपूर्णांक8_t		raw_mbox[माप(mbox_t)];
-	पूर्णांक		rval;
+	uint8_t		raw_mbox[sizeof(mbox_t)];
+	int		rval;
 
 	mbox = (mbox_t *)raw_mbox;
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(raw_mbox));
-	mbox->xferaddr	= (uपूर्णांक32_t)adapter->ibuf_dma_h;
+	memset((caddr_t)raw_mbox, 0, sizeof(raw_mbox));
+	mbox->xferaddr	= (uint32_t)adapter->ibuf_dma_h;
 
-	स_रखो((व्योम *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
+	memset((void *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
 
 	raw_mbox[0] = MAIN_MISC_OPCODE;
 	raw_mbox[2] = SUPPORT_EXT_CDB;
@@ -3019,168 +3018,168 @@ megaraid_mbox_extended_cdb(adapter_t *adapter)
 	 * Issue the command
 	 */
 	rval = 0;
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) != 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) != 0) {
 		rval = -1;
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
  * megaraid_mbox_support_ha - Do we support clustering
- * @adapter	: soft state क्रम the controller
+ * @adapter	: soft state for the controller
  * @init_id	: ID of the initiator
  *
- * Determine अगर the firmware supports clustering and the ID of the initiator.
+ * Determine if the firmware supports clustering and the ID of the initiator.
  */
-अटल पूर्णांक
-megaraid_mbox_support_ha(adapter_t *adapter, uपूर्णांक16_t *init_id)
-अणु
+static int
+megaraid_mbox_support_ha(adapter_t *adapter, uint16_t *init_id)
+{
 	mbox_t		*mbox;
-	uपूर्णांक8_t		raw_mbox[माप(mbox_t)];
-	पूर्णांक		rval;
+	uint8_t		raw_mbox[sizeof(mbox_t)];
+	int		rval;
 
 
 	mbox = (mbox_t *)raw_mbox;
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(raw_mbox));
+	memset((caddr_t)raw_mbox, 0, sizeof(raw_mbox));
 
-	mbox->xferaddr = (uपूर्णांक32_t)adapter->ibuf_dma_h;
+	mbox->xferaddr = (uint32_t)adapter->ibuf_dma_h;
 
-	स_रखो((व्योम *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
+	memset((void *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
 
 	raw_mbox[0] = GET_TARGET_ID;
 
 	// Issue the command
 	*init_id = 7;
 	rval =  -1;
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) == 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) == 0) {
 
-		*init_id = *(uपूर्णांक8_t *)adapter->ibuf;
+		*init_id = *(uint8_t *)adapter->ibuf;
 
 		con_log(CL_ANN, (KERN_INFO
 			"megaraid: cluster firmware, initiator ID: %d\n",
 			*init_id));
 
 		rval =  0;
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
- * megaraid_mbox_support_अक्रमom_del - Do we support अक्रमom deletion
- * @adapter	: soft state क्रम the controller
+ * megaraid_mbox_support_random_del - Do we support random deletion
+ * @adapter	: soft state for the controller
  *
- * Determine अगर the firmware supports अक्रमom deletion.
+ * Determine if the firmware supports random deletion.
  * Return:	1 is operation supported, 0 otherwise
  */
-अटल पूर्णांक
-megaraid_mbox_support_अक्रमom_del(adapter_t *adapter)
-अणु
-	uपूर्णांक8_t		raw_mbox[माप(mbox_t)];
-	पूर्णांक		rval;
+static int
+megaraid_mbox_support_random_del(adapter_t *adapter)
+{
+	uint8_t		raw_mbox[sizeof(mbox_t)];
+	int		rval;
 
 	/*
-	 * Newer firmware on Dell CERC expect a dअगरferent
-	 * अक्रमom deletion handling, so disable it.
+	 * Newer firmware on Dell CERC expect a different
+	 * random deletion handling, so disable it.
 	 */
-	अगर (adapter->pdev->venकरोr == PCI_VENDOR_ID_AMI &&
+	if (adapter->pdev->vendor == PCI_VENDOR_ID_AMI &&
 	    adapter->pdev->device == PCI_DEVICE_ID_AMI_MEGARAID3 &&
-	    adapter->pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_DELL &&
-	    adapter->pdev->subप्रणाली_device == PCI_SUBSYS_ID_CERC_ATA100_4CH &&
+	    adapter->pdev->subsystem_vendor == PCI_VENDOR_ID_DELL &&
+	    adapter->pdev->subsystem_device == PCI_SUBSYS_ID_CERC_ATA100_4CH &&
 	    (adapter->fw_version[0] > '6' ||
 	     (adapter->fw_version[0] == '6' &&
 	      adapter->fw_version[2] > '6') ||
 	     (adapter->fw_version[0] == '6'
 	      && adapter->fw_version[2] == '6'
-	      && adapter->fw_version[3] > '1'))) अणु
+	      && adapter->fw_version[3] > '1'))) {
 		con_log(CL_DLEVEL1, ("megaraid: disable random deletion\n"));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(mbox_t));
+	memset((caddr_t)raw_mbox, 0, sizeof(mbox_t));
 
 	raw_mbox[0] = FC_DEL_LOGDRV;
 	raw_mbox[2] = OP_SUP_DEL_LOGDRV;
 
 	// Issue the command
 	rval = 0;
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) == 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) == 0) {
 
 		con_log(CL_DLEVEL1, ("megaraid: supports random deletion\n"));
 
 		rval =  1;
-	पूर्ण
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
  * megaraid_mbox_get_max_sg - maximum sg elements supported by the firmware
- * @adapter	: soft state क्रम the controller
+ * @adapter	: soft state for the controller
  *
  * Find out the maximum number of scatter-gather elements supported by the
  * firmware.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_get_max_sg(adapter_t *adapter)
-अणु
+{
 	mbox_t		*mbox;
-	uपूर्णांक8_t		raw_mbox[माप(mbox_t)];
-	पूर्णांक		nsg;
+	uint8_t		raw_mbox[sizeof(mbox_t)];
+	int		nsg;
 
 
 	mbox = (mbox_t *)raw_mbox;
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(mbox_t));
+	memset((caddr_t)raw_mbox, 0, sizeof(mbox_t));
 
-	mbox->xferaddr = (uपूर्णांक32_t)adapter->ibuf_dma_h;
+	mbox->xferaddr = (uint32_t)adapter->ibuf_dma_h;
 
-	स_रखो((व्योम *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
+	memset((void *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
 
 	raw_mbox[0] = MAIN_MISC_OPCODE;
 	raw_mbox[2] = GET_MAX_SG_SUPPORT;
 
 	// Issue the command
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) == 0) अणु
-		nsg =  *(uपूर्णांक8_t *)adapter->ibuf;
-	पूर्ण
-	अन्यथा अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) == 0) {
+		nsg =  *(uint8_t *)adapter->ibuf;
+	}
+	else {
 		nsg =  MBOX_DEFAULT_SG_SIZE;
-	पूर्ण
+	}
 
-	अगर (nsg > MBOX_MAX_SG_SIZE) nsg = MBOX_MAX_SG_SIZE;
+	if (nsg > MBOX_MAX_SG_SIZE) nsg = MBOX_MAX_SG_SIZE;
 
-	वापस nsg;
-पूर्ण
+	return nsg;
+}
 
 
 /**
- * megaraid_mbox_क्रमागत_raid_scsi - क्रमागतerate the RAID and SCSI channels
- * @adapter	: soft state क्रम the controller
+ * megaraid_mbox_enum_raid_scsi - enumerate the RAID and SCSI channels
+ * @adapter	: soft state for the controller
  *
- * Enumerate the RAID and SCSI channels क्रम ROMB platक्रमms so that channels
+ * Enumerate the RAID and SCSI channels for ROMB platforms so that channels
  * can be exported as regular SCSI channels.
  */
-अटल व्योम
-megaraid_mbox_क्रमागत_raid_scsi(adapter_t *adapter)
-अणु
+static void
+megaraid_mbox_enum_raid_scsi(adapter_t *adapter)
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 	mbox_t		*mbox;
-	uपूर्णांक8_t		raw_mbox[माप(mbox_t)];
+	uint8_t		raw_mbox[sizeof(mbox_t)];
 
 
 	mbox = (mbox_t *)raw_mbox;
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(mbox_t));
+	memset((caddr_t)raw_mbox, 0, sizeof(mbox_t));
 
-	mbox->xferaddr = (uपूर्णांक32_t)adapter->ibuf_dma_h;
+	mbox->xferaddr = (uint32_t)adapter->ibuf_dma_h;
 
-	स_रखो((व्योम *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
+	memset((void *)adapter->ibuf, 0, MBOX_IBUF_SIZE);
 
 	raw_mbox[0] = CHNL_CLASS;
 	raw_mbox[2] = GET_CHNL_CLASS;
@@ -3188,75 +3187,75 @@ megaraid_mbox_क्रमागत_raid_scsi(adapter_t *adapter)
 	// Issue the command. If the command fails, all channels are RAID
 	// channels
 	raid_dev->channel_class = 0xFF;
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) == 0) अणु
-		raid_dev->channel_class =  *(uपूर्णांक8_t *)adapter->ibuf;
-	पूर्ण
+	if (mbox_post_sync_cmd(adapter, raw_mbox) == 0) {
+		raid_dev->channel_class =  *(uint8_t *)adapter->ibuf;
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
  * megaraid_mbox_flush_cache - flush adapter and disks cache
- * @adapter		: soft state क्रम the controller
+ * @adapter		: soft state for the controller
  *
  * Flush adapter cache followed by disks cache.
  */
-अटल व्योम
+static void
 megaraid_mbox_flush_cache(adapter_t *adapter)
-अणु
-	uपूर्णांक8_t	raw_mbox[माप(mbox_t)];
+{
+	uint8_t	raw_mbox[sizeof(mbox_t)];
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(mbox_t));
+	memset((caddr_t)raw_mbox, 0, sizeof(mbox_t));
 
 	raw_mbox[0] = FLUSH_ADAPTER;
 
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) != 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) != 0) {
 		con_log(CL_ANN, ("megaraid: flush adapter failed\n"));
-	पूर्ण
+	}
 
 	raw_mbox[0] = FLUSH_SYSTEM;
 
-	अगर (mbox_post_sync_cmd(adapter, raw_mbox) != 0) अणु
+	if (mbox_post_sync_cmd(adapter, raw_mbox) != 0) {
 		con_log(CL_ANN, ("megaraid: flush disks cache failed\n"));
-	पूर्ण
+	}
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
  * megaraid_mbox_fire_sync_cmd - fire the sync cmd
- * @adapter		: soft state क्रम the controller
+ * @adapter		: soft state for the controller
  *
- * Clears the pending cmds in FW and reinits its RAID काष्ठाs.
+ * Clears the pending cmds in FW and reinits its RAID structs.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_fire_sync_cmd(adapter_t *adapter)
-अणु
+{
 	mbox_t	*mbox;
-	uपूर्णांक8_t	raw_mbox[माप(mbox_t)];
+	uint8_t	raw_mbox[sizeof(mbox_t)];
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
-	पूर्णांक	status = 0;
-	पूर्णांक i;
-	uपूर्णांक32_t dword;
+	int	status = 0;
+	int i;
+	uint32_t dword;
 
 	mbox = (mbox_t *)raw_mbox;
 
-	स_रखो((caddr_t)raw_mbox, 0, माप(mbox_t));
+	memset((caddr_t)raw_mbox, 0, sizeof(mbox_t));
 
 	raw_mbox[0] = 0xFF;
 
 	mbox	= raid_dev->mbox;
 
-	/* Wait until mailbox is मुक्त */
-	अगर (megaraid_busyरुको_mbox(raid_dev) != 0) अणु
+	/* Wait until mailbox is free */
+	if (megaraid_busywait_mbox(raid_dev) != 0) {
 		status = 1;
-		जाओ blocked_mailbox;
-	पूर्ण
+		goto blocked_mailbox;
+	}
 
-	/* Copy mailbox data पूर्णांकo host काष्ठाure */
-	स_नकल((caddr_t)mbox, (caddr_t)raw_mbox, 16);
+	/* Copy mailbox data into host structure */
+	memcpy((caddr_t)mbox, (caddr_t)raw_mbox, 16);
 	mbox->cmdid		= 0xFE;
 	mbox->busy		= 1;
 	mbox->poll		= 0;
@@ -3267,56 +3266,56 @@ megaraid_mbox_fire_sync_cmd(adapter_t *adapter)
 	wmb();
 	WRINDOOR(raid_dev, raid_dev->mbox_dma | 0x1);
 
-	/* Wait क्रम maximum 1 min क्रम status to post.
+	/* Wait for maximum 1 min for status to post.
 	 * If the Firmware SUPPORTS the ABOVE COMMAND,
 	 * mbox->cmd will be set to 0
-	 * अन्यथा
+	 * else
 	 * the firmware will reject the command with
 	 * mbox->numstatus set to 1
 	 */
 
 	i = 0;
 	status = 0;
-	जबतक (!mbox->numstatus && mbox->cmd == 0xFF) अणु
+	while (!mbox->numstatus && mbox->cmd == 0xFF) {
 		rmb();
 		msleep(1);
 		i++;
-		अगर (i > 1000 * 60) अणु
+		if (i > 1000 * 60) {
 			status = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (mbox->numstatus == 1)
+			break;
+		}
+	}
+	if (mbox->numstatus == 1)
 		status = 1; /*cmd not supported*/
 
-	/* Check क्रम पूर्णांकerrupt line */
+	/* Check for interrupt line */
 	dword = RDOUTDOOR(raid_dev);
 	WROUTDOOR(raid_dev, dword);
 	WRINDOOR(raid_dev,2);
 
-	वापस status;
+	return status;
 
 blocked_mailbox:
 	con_log(CL_ANN, (KERN_WARNING "megaraid: blocked mailbox\n"));
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- * megaraid_mbox_display_scb - display SCB inक्रमmation, mostly debug purposes
+ * megaraid_mbox_display_scb - display SCB information, mostly debug purposes
  * @adapter		: controller's soft state
  * @scb			: SCB to be displayed
  *
- * Diplay inक्रमmation about the given SCB अगरf the current debug level is
+ * Diplay information about the given SCB iff the current debug level is
  * verbose.
  */
-अटल व्योम
+static void
 megaraid_mbox_display_scb(adapter_t *adapter, scb_t *scb)
-अणु
+{
 	mbox_ccb_t		*ccb;
-	काष्ठा scsi_cmnd	*scp;
+	struct scsi_cmnd	*scp;
 	mbox_t			*mbox;
-	पूर्णांक			level;
-	पूर्णांक			i;
+	int			level;
+	int			i;
 
 
 	ccb	= (mbox_ccb_t *)scb->ccb;
@@ -3333,18 +3332,18 @@ megaraid_mbox_display_scb(adapter_t *adapter, scb_t *scb)
 		mbox->numsectors, mbox->lba, mbox->xferaddr, mbox->logdrv,
 		mbox->numsge));
 
-	अगर (!scp) वापस;
+	if (!scp) return;
 
 	con_log(level, (KERN_NOTICE "scsi cmnd: "));
 
-	क्रम (i = 0; i < scp->cmd_len; i++) अणु
+	for (i = 0; i < scp->cmd_len; i++) {
 		con_log(level, ("%#2.02x ", scp->cmnd[i]));
-	पूर्ण
+	}
 
 	con_log(level, ("\n"));
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
@@ -3354,18 +3353,18 @@ megaraid_mbox_display_scb(adapter_t *adapter, scb_t *scb)
  * Manage the device ids to have an appropriate mapping between the kernel
  * scsi addresses and megaraid scsi and logical drive addresses. We export
  * scsi devices on their actual addresses, whereas the logical drives are
- * exported on a भव scsi channel.
+ * exported on a virtual scsi channel.
  */
-अटल व्योम
+static void
 megaraid_mbox_setup_device_map(adapter_t *adapter)
-अणु
-	uपूर्णांक8_t		c;
-	uपूर्णांक8_t		t;
+{
+	uint8_t		c;
+	uint8_t		t;
 
 	/*
 	 * First fill the values on the logical drive channel
 	 */
-	क्रम (t = 0; t < LSI_MAX_LOGICAL_DRIVES_64LD; t++)
+	for (t = 0; t < LSI_MAX_LOGICAL_DRIVES_64LD; t++)
 		adapter->device_ids[adapter->max_channel][t] =
 			(t < adapter->init_id) ?  t : t - 1;
 
@@ -3374,65 +3373,65 @@ megaraid_mbox_setup_device_map(adapter_t *adapter)
 	/*
 	 * Fill the values on the physical devices channels
 	 */
-	क्रम (c = 0; c < adapter->max_channel; c++)
-		क्रम (t = 0; t < LSI_MAX_LOGICAL_DRIVES_64LD; t++)
+	for (c = 0; c < adapter->max_channel; c++)
+		for (t = 0; t < LSI_MAX_LOGICAL_DRIVES_64LD; t++)
 			adapter->device_ids[c][t] = (c << 8) | t;
-पूर्ण
+}
 
 
 /*
- * END: पूर्णांकernal commands library
+ * END: internal commands library
  */
 
 /*
- * START: Interface क्रम the common management module
+ * START: Interface for the common management module
  *
- * This is the module, which पूर्णांकerfaces with the common management module to
- * provide support क्रम ioctl and sysfs
+ * This is the module, which interfaces with the common management module to
+ * provide support for ioctl and sysfs
  */
 
 /**
- * megaraid_cmm_रेजिस्टर - रेजिस्टर with the management module
+ * megaraid_cmm_register - register with the management module
  * @adapter		: HBA soft state
  *
  * Register with the management module, which allows applications to issue
- * ioctl calls to the drivers. This पूर्णांकerface is used by the management module
+ * ioctl calls to the drivers. This interface is used by the management module
  * to setup sysfs support as well.
  */
-अटल पूर्णांक
-megaraid_cmm_रेजिस्टर(adapter_t *adapter)
-अणु
+static int
+megaraid_cmm_register(adapter_t *adapter)
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 	mraid_mmadp_t	adp;
 	scb_t		*scb;
 	mbox_ccb_t	*ccb;
-	पूर्णांक		rval;
-	पूर्णांक		i;
+	int		rval;
+	int		i;
 
-	// Allocate memory क्रम the base list of scb क्रम management module.
-	adapter->uscb_list = kसुस्मृति(MBOX_MAX_USER_CMDS, माप(scb_t), GFP_KERNEL);
+	// Allocate memory for the base list of scb for management module.
+	adapter->uscb_list = kcalloc(MBOX_MAX_USER_CMDS, sizeof(scb_t), GFP_KERNEL);
 
-	अगर (adapter->uscb_list == शून्य) अणु
+	if (adapter->uscb_list == NULL) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
 			__LINE__));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 
-	// Initialize the synchronization parameters क्रम resources क्रम
-	// commands क्रम management module
+	// Initialize the synchronization parameters for resources for
+	// commands for management module
 	INIT_LIST_HEAD(&adapter->uscb_pool);
 
 	spin_lock_init(USER_FREE_LIST_LOCK(adapter));
 
 
 
-	// link all the packets. Note, CCB क्रम commands, coming from the
-	// commom management module, mailbox physical address are alपढ़ोy
-	// setup by it. We just need placeholder क्रम that in our local command
+	// link all the packets. Note, CCB for commands, coming from the
+	// commom management module, mailbox physical address are already
+	// setup by it. We just need placeholder for that in our local command
 	// control blocks
-	क्रम (i = 0; i < MBOX_MAX_USER_CMDS; i++) अणु
+	for (i = 0; i < MBOX_MAX_USER_CMDS; i++) {
 
 		scb			= adapter->uscb_list + i;
 		ccb			= raid_dev->uccb_list + i;
@@ -3440,7 +3439,7 @@ megaraid_cmm_रेजिस्टर(adapter_t *adapter)
 		scb->ccb		= (caddr_t)ccb;
 		ccb->mbox64		= raid_dev->umbox64 + i;
 		ccb->mbox		= &ccb->mbox64->mbox32;
-		ccb->raw_mbox		= (uपूर्णांक8_t *)ccb->mbox;
+		ccb->raw_mbox		= (uint8_t *)ccb->mbox;
 
 		scb->gp			= 0;
 
@@ -3448,108 +3447,108 @@ megaraid_cmm_रेजिस्टर(adapter_t *adapter)
 		// COMMANDS COMING FROM IO SUBSYSTEM (MID-LAYER)
 		scb->sno		= i + MBOX_MAX_SCSI_CMDS;
 
-		scb->scp		= शून्य;
+		scb->scp		= NULL;
 		scb->state		= SCB_FREE;
 		scb->dma_direction	= DMA_NONE;
 		scb->dma_type		= MRAID_DMA_NONE;
 		scb->dev_channel	= -1;
 		scb->dev_target		= -1;
 
-		// put scb in the मुक्त pool
+		// put scb in the free pool
 		list_add_tail(&scb->list, &adapter->uscb_pool);
-	पूर्ण
+	}
 
 	adp.unique_id		= adapter->unique_id;
 	adp.drvr_type		= DRVRTYPE_MBOX;
-	adp.drvr_data		= (अचिन्हित दीर्घ)adapter;
+	adp.drvr_data		= (unsigned long)adapter;
 	adp.pdev		= adapter->pdev;
 	adp.issue_uioc		= megaraid_mbox_mm_handler;
-	adp.समयout		= MBOX_RESET_WAIT + MBOX_RESET_EXT_WAIT;
+	adp.timeout		= MBOX_RESET_WAIT + MBOX_RESET_EXT_WAIT;
 	adp.max_kioc		= MBOX_MAX_USER_CMDS;
 
-	अगर ((rval = mraid_mm_रेजिस्टर_adp(&adp)) != 0) अणु
+	if ((rval = mraid_mm_register_adp(&adp)) != 0) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid mbox: did not register with CMM\n"));
 
-		kमुक्त(adapter->uscb_list);
-	पूर्ण
+		kfree(adapter->uscb_list);
+	}
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
- * megaraid_cmm_unरेजिस्टर - un-रेजिस्टर with the management module
+ * megaraid_cmm_unregister - un-register with the management module
  * @adapter		: HBA soft state
  *
- * Un-रेजिस्टर with the management module.
- * FIXME: mgmt module must वापस failure क्रम unरेजिस्टर अगर it has pending
+ * Un-register with the management module.
+ * FIXME: mgmt module must return failure for unregister if it has pending
  * commands in LLD.
  */
-अटल पूर्णांक
-megaraid_cmm_unरेजिस्टर(adapter_t *adapter)
-अणु
-	kमुक्त(adapter->uscb_list);
-	mraid_mm_unरेजिस्टर_adp(adapter->unique_id);
-	वापस 0;
-पूर्ण
+static int
+megaraid_cmm_unregister(adapter_t *adapter)
+{
+	kfree(adapter->uscb_list);
+	mraid_mm_unregister_adp(adapter->unique_id);
+	return 0;
+}
 
 
 /**
- * megaraid_mbox_mm_handler - पूर्णांकerface क्रम CMM to issue commands to LLD
- * @drvr_data		: LLD specअगरic data
- * @kioc		: CMM पूर्णांकerface packet
+ * megaraid_mbox_mm_handler - interface for CMM to issue commands to LLD
+ * @drvr_data		: LLD specific data
+ * @kioc		: CMM interface packet
  * @action		: command action
  *
  * This routine is invoked whenever the Common Management Module (CMM) has a
- * command क्रम us. The 'action' parameter specअगरies अगर this is a new command
+ * command for us. The 'action' parameter specifies if this is a new command
  * or otherwise.
  */
-अटल पूर्णांक
-megaraid_mbox_mm_handler(अचिन्हित दीर्घ drvr_data, uioc_t *kioc, uपूर्णांक32_t action)
-अणु
+static int
+megaraid_mbox_mm_handler(unsigned long drvr_data, uioc_t *kioc, uint32_t action)
+{
 	adapter_t *adapter;
 
-	अगर (action != IOCTL_ISSUE) अणु
+	if (action != IOCTL_ISSUE) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: unsupported management action:%#2x\n",
 			action));
-		वापस (-ENOTSUPP);
-	पूर्ण
+		return (-ENOTSUPP);
+	}
 
 	adapter = (adapter_t *)drvr_data;
 
 	// make sure this adapter is not being detached right now.
-	अगर (atomic_पढ़ो(&adapter->being_detached)) अणु
+	if (atomic_read(&adapter->being_detached)) {
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: reject management request, detaching\n"));
-		वापस (-ENODEV);
-	पूर्ण
+		return (-ENODEV);
+	}
 
-	चयन (kioc->opcode) अणु
+	switch (kioc->opcode) {
 
-	हाल GET_ADAP_INFO:
+	case GET_ADAP_INFO:
 
 		kioc->status =  gather_hbainfo(adapter, (mraid_hba_info_t *)
-					(अचिन्हित दीर्घ)kioc->buf_vaddr);
+					(unsigned long)kioc->buf_vaddr);
 
-		kioc->करोne(kioc);
+		kioc->done(kioc);
 
-		वापस kioc->status;
+		return kioc->status;
 
-	हाल MBOX_CMD:
+	case MBOX_CMD:
 
-		वापस megaraid_mbox_mm_command(adapter, kioc);
+		return megaraid_mbox_mm_command(adapter, kioc);
 
-	शेष:
+	default:
 		kioc->status = (-EINVAL);
-		kioc->करोne(kioc);
-		वापस (-EINVAL);
-	पूर्ण
+		kioc->done(kioc);
+		return (-EINVAL);
+	}
 
-	वापस 0;	// not reached
-पूर्ण
+	return 0;	// not reached
+}
 
 /**
  * megaraid_mbox_mm_command - issues commands routed through CMM
@@ -3558,28 +3557,28 @@ megaraid_mbox_mm_handler(अचिन्हित दीर्घ drvr_data, uio
  *
  * Issues commands, which are routed through the management module.
  */
-अटल पूर्णांक
+static int
 megaraid_mbox_mm_command(adapter_t *adapter, uioc_t *kioc)
-अणु
-	काष्ठा list_head	*head = &adapter->uscb_pool;
+{
+	struct list_head	*head = &adapter->uscb_pool;
 	mbox64_t		*mbox64;
-	uपूर्णांक8_t			*raw_mbox;
+	uint8_t			*raw_mbox;
 	scb_t			*scb;
 	mbox_ccb_t		*ccb;
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 
-	// detach one scb from मुक्त pool
+	// detach one scb from free pool
 	spin_lock_irqsave(USER_FREE_LIST_LOCK(adapter), flags);
 
-	अगर (list_empty(head)) अणु	// should never happen because of CMM
+	if (list_empty(head)) {	// should never happen because of CMM
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid mbox: bug in cmm handler, lost resources\n"));
 
 		spin_unlock_irqrestore(USER_FREE_LIST_LOCK(adapter), flags);
 
-		वापस (-EINVAL);
-	पूर्ण
+		return (-EINVAL);
+	}
 
 	scb = list_entry(head->next, scb_t, list);
 	list_del_init(&scb->list);
@@ -3591,20 +3590,20 @@ megaraid_mbox_mm_command(adapter_t *adapter, uioc_t *kioc)
 	scb->dma_direction	= DMA_NONE;
 
 	ccb		= (mbox_ccb_t *)scb->ccb;
-	mbox64		= (mbox64_t *)(अचिन्हित दीर्घ)kioc->cmdbuf;
-	raw_mbox	= (uपूर्णांक8_t *)&mbox64->mbox32;
+	mbox64		= (mbox64_t *)(unsigned long)kioc->cmdbuf;
+	raw_mbox	= (uint8_t *)&mbox64->mbox32;
 
-	स_नकल(ccb->mbox64, mbox64, माप(mbox64_t));
+	memcpy(ccb->mbox64, mbox64, sizeof(mbox64_t));
 
-	scb->gp		= (अचिन्हित दीर्घ)kioc;
+	scb->gp		= (unsigned long)kioc;
 
 	/*
-	 * If it is a logdrv अक्रमom delete operation, we have to रुको till
+	 * If it is a logdrv random delete operation, we have to wait till
 	 * there are no outstanding cmds at the fw and then issue it directly
 	 */
-	अगर (raw_mbox[0] == FC_DEL_LOGDRV && raw_mbox[2] == OP_DEL_LOGDRV) अणु
+	if (raw_mbox[0] == FC_DEL_LOGDRV && raw_mbox[2] == OP_DEL_LOGDRV) {
 
-		अगर (रुको_till_fw_empty(adapter)) अणु
+		if (wait_till_fw_empty(adapter)) {
 			con_log(CL_ANN, (KERN_NOTICE
 				"megaraid mbox: LD delete, timed out\n"));
 
@@ -3612,15 +3611,15 @@ megaraid_mbox_mm_command(adapter_t *adapter, uioc_t *kioc)
 
 			scb->status = -1;
 
-			megaraid_mbox_mm_करोne(adapter, scb);
+			megaraid_mbox_mm_done(adapter, scb);
 
-			वापस (-ETIME);
-		पूर्ण
+			return (-ETIME);
+		}
 
 		INIT_LIST_HEAD(&scb->list);
 
 		scb->state = SCB_ISSUED;
-		अगर (mbox_post_cmd(adapter, scb) != 0) अणु
+		if (mbox_post_cmd(adapter, scb) != 0) {
 
 			con_log(CL_ANN, (KERN_NOTICE
 				"megaraid mbox: LD delete, mailbox busy\n"));
@@ -3629,26 +3628,26 @@ megaraid_mbox_mm_command(adapter_t *adapter, uioc_t *kioc)
 
 			scb->status = -1;
 
-			megaraid_mbox_mm_करोne(adapter, scb);
+			megaraid_mbox_mm_done(adapter, scb);
 
-			वापस (-EBUSY);
-		पूर्ण
+			return (-EBUSY);
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	// put the command on the pending list and execute
 	megaraid_mbox_runpendq(adapter, scb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक
-रुको_till_fw_empty(adapter_t *adapter)
-अणु
-	अचिन्हित दीर्घ	flags = 0;
-	पूर्णांक		i;
+static int
+wait_till_fw_empty(adapter_t *adapter)
+{
+	unsigned long	flags = 0;
+	int		i;
 
 
 	/*
@@ -3659,46 +3658,46 @@ megaraid_mbox_mm_command(adapter_t *adapter, uioc_t *kioc)
 	spin_unlock_irqrestore(&adapter->lock, flags);
 
 	/*
-	 * Wait till there are no more cmds outstanding at FW. Try क्रम at most
+	 * Wait till there are no more cmds outstanding at FW. Try for at most
 	 * 60 seconds
 	 */
-	क्रम (i = 0; i < 60 && adapter->outstanding_cmds; i++) अणु
+	for (i = 0; i < 60 && adapter->outstanding_cmds; i++) {
 		con_log(CL_DLEVEL1, (KERN_INFO
 			"megaraid: FW has %d pending commands\n",
 			adapter->outstanding_cmds));
 
 		msleep(1000);
-	पूर्ण
+	}
 
-	वापस adapter->outstanding_cmds;
-पूर्ण
+	return adapter->outstanding_cmds;
+}
 
 
 /**
- * megaraid_mbox_mm_करोne - callback क्रम CMM commands
+ * megaraid_mbox_mm_done - callback for CMM commands
  * @adapter	: HBA soft state
  * @scb		: completed command
  *
- * Callback routine क्रम पूर्णांकernal commands originated from the management
+ * Callback routine for internal commands originated from the management
  * module.
  */
-अटल व्योम
-megaraid_mbox_mm_करोne(adapter_t *adapter, scb_t *scb)
-अणु
+static void
+megaraid_mbox_mm_done(adapter_t *adapter, scb_t *scb)
+{
 	uioc_t			*kioc;
 	mbox64_t		*mbox64;
-	uपूर्णांक8_t			*raw_mbox;
-	अचिन्हित दीर्घ		flags;
+	uint8_t			*raw_mbox;
+	unsigned long		flags;
 
 	kioc			= (uioc_t *)scb->gp;
-	mbox64			= (mbox64_t *)(अचिन्हित दीर्घ)kioc->cmdbuf;
+	mbox64			= (mbox64_t *)(unsigned long)kioc->cmdbuf;
 	mbox64->mbox32.status	= scb->status;
-	raw_mbox		= (uपूर्णांक8_t *)&mbox64->mbox32;
+	raw_mbox		= (uint8_t *)&mbox64->mbox32;
 
 
-	// put scb in the मुक्त pool
+	// put scb in the free pool
 	scb->state	= SCB_FREE;
-	scb->scp	= शून्य;
+	scb->scp	= NULL;
 
 	spin_lock_irqsave(USER_FREE_LIST_LOCK(adapter), flags);
 
@@ -3706,33 +3705,33 @@ megaraid_mbox_mm_करोne(adapter_t *adapter, scb_t *scb)
 
 	spin_unlock_irqrestore(USER_FREE_LIST_LOCK(adapter), flags);
 
-	// अगर a delete logical drive operation succeeded, restart the
+	// if a delete logical drive operation succeeded, restart the
 	// controller
-	अगर (raw_mbox[0] == FC_DEL_LOGDRV && raw_mbox[2] == OP_DEL_LOGDRV) अणु
+	if (raw_mbox[0] == FC_DEL_LOGDRV && raw_mbox[2] == OP_DEL_LOGDRV) {
 
 		adapter->quiescent--;
 
-		megaraid_mbox_runpendq(adapter, शून्य);
-	पूर्ण
+		megaraid_mbox_runpendq(adapter, NULL);
+	}
 
-	kioc->करोne(kioc);
+	kioc->done(kioc);
 
-	वापस;
-पूर्ण
+	return;
+}
 
 
 /**
- * gather_hbainfo - HBA अक्षरacteristics क्रम the applications
+ * gather_hbainfo - HBA characteristics for the applications
  * @adapter		: HBA soft state
- * @hinfo		: poपूर्णांकer to the caller's host info strucuture
+ * @hinfo		: pointer to the caller's host info strucuture
  */
-अटल पूर्णांक
+static int
 gather_hbainfo(adapter_t *adapter, mraid_hba_info_t *hinfo)
-अणु
-	hinfo->pci_venकरोr_id	= adapter->pdev->venकरोr;
+{
+	hinfo->pci_vendor_id	= adapter->pdev->vendor;
 	hinfo->pci_device_id	= adapter->pdev->device;
-	hinfo->subsys_venकरोr_id	= adapter->pdev->subप्रणाली_venकरोr;
-	hinfo->subsys_device_id	= adapter->pdev->subप्रणाली_device;
+	hinfo->subsys_vendor_id	= adapter->pdev->subsystem_vendor;
+	hinfo->subsys_device_id	= adapter->pdev->subsystem_device;
 
 	hinfo->pci_bus		= adapter->pdev->bus->number;
 	hinfo->pci_dev_fn	= adapter->pdev->devfn;
@@ -3743,11 +3742,11 @@ gather_hbainfo(adapter_t *adapter, mraid_hba_info_t *hinfo)
 	hinfo->unique_id	= (hinfo->pci_bus << 8) | adapter->pdev->devfn;
 	hinfo->host_no		= adapter->host->host_no;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * END: Interface क्रम the common management module
+ * END: Interface for the common management module
  */
 
 
@@ -3757,28 +3756,28 @@ gather_hbainfo(adapter_t *adapter, mraid_hba_info_t *hinfo)
  * @adapter	: controller's soft state
  *
  * Allocate packets required to issue FW calls whenever the sysfs attributes
- * are पढ़ो. These attributes would require up-to-date inक्रमmation from the
- * FW. Also set up resources क्रम mutual exclusion to share these resources and
- * the रुको queue.
+ * are read. These attributes would require up-to-date information from the
+ * FW. Also set up resources for mutual exclusion to share these resources and
+ * the wait queue.
  *
  * Return 0 on success.
  * Return -ERROR_CODE on failure.
  */
-अटल पूर्णांक
+static int
 megaraid_sysfs_alloc_resources(adapter_t *adapter)
-अणु
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
-	पूर्णांक		rval = 0;
+	int		rval = 0;
 
-	raid_dev->sysfs_uioc = kदो_स्मृति(माप(uioc_t), GFP_KERNEL);
+	raid_dev->sysfs_uioc = kmalloc(sizeof(uioc_t), GFP_KERNEL);
 
-	raid_dev->sysfs_mbox64 = kदो_स्मृति(माप(mbox64_t), GFP_KERNEL);
+	raid_dev->sysfs_mbox64 = kmalloc(sizeof(mbox64_t), GFP_KERNEL);
 
 	raid_dev->sysfs_buffer = dma_alloc_coherent(&adapter->pdev->dev,
 			PAGE_SIZE, &raid_dev->sysfs_buffer_dma, GFP_KERNEL);
 
-	अगर (!raid_dev->sysfs_uioc || !raid_dev->sysfs_mbox64 ||
-		!raid_dev->sysfs_buffer) अणु
+	if (!raid_dev->sysfs_uioc || !raid_dev->sysfs_mbox64 ||
+		!raid_dev->sysfs_buffer) {
 
 		con_log(CL_ANN, (KERN_WARNING
 			"megaraid: out of memory, %s %d\n", __func__,
@@ -3786,82 +3785,82 @@ megaraid_sysfs_alloc_resources(adapter_t *adapter)
 
 		rval = -ENOMEM;
 
-		megaraid_sysfs_मुक्त_resources(adapter);
-	पूर्ण
+		megaraid_sysfs_free_resources(adapter);
+	}
 
 	mutex_init(&raid_dev->sysfs_mtx);
 
-	init_रुकोqueue_head(&raid_dev->sysfs_रुको_q);
+	init_waitqueue_head(&raid_dev->sysfs_wait_q);
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
- * megaraid_sysfs_मुक्त_resources - मुक्त sysfs related resources
+ * megaraid_sysfs_free_resources - free sysfs related resources
  * @adapter	: controller's soft state
  *
- * Free packets allocated क्रम sysfs FW commands
+ * Free packets allocated for sysfs FW commands
  */
-अटल व्योम
-megaraid_sysfs_मुक्त_resources(adapter_t *adapter)
-अणु
+static void
+megaraid_sysfs_free_resources(adapter_t *adapter)
+{
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 
-	kमुक्त(raid_dev->sysfs_uioc);
-	kमुक्त(raid_dev->sysfs_mbox64);
+	kfree(raid_dev->sysfs_uioc);
+	kfree(raid_dev->sysfs_mbox64);
 
-	अगर (raid_dev->sysfs_buffer) अणु
-		dma_मुक्त_coherent(&adapter->pdev->dev, PAGE_SIZE,
+	if (raid_dev->sysfs_buffer) {
+		dma_free_coherent(&adapter->pdev->dev, PAGE_SIZE,
 			raid_dev->sysfs_buffer, raid_dev->sysfs_buffer_dma);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /**
- * megaraid_sysfs_get_ldmap_करोne - callback क्रम get ldmap
+ * megaraid_sysfs_get_ldmap_done - callback for get ldmap
  * @uioc	: completed packet
  *
- * Callback routine called in the ISR/tasklet context क्रम get ldmap call
+ * Callback routine called in the ISR/tasklet context for get ldmap call
  */
-अटल व्योम
-megaraid_sysfs_get_ldmap_करोne(uioc_t *uioc)
-अणु
+static void
+megaraid_sysfs_get_ldmap_done(uioc_t *uioc)
+{
 	adapter_t	*adapter = (adapter_t *)uioc->buf_vaddr;
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 
 	uioc->status = 0;
 
-	wake_up(&raid_dev->sysfs_रुको_q);
-पूर्ण
+	wake_up(&raid_dev->sysfs_wait_q);
+}
 
 /**
- * megaraid_sysfs_get_ldmap_समयout - समयout handling क्रम get ldmap
- * @t	: समयd out समयr
+ * megaraid_sysfs_get_ldmap_timeout - timeout handling for get ldmap
+ * @t	: timed out timer
  *
- * Timeout routine to recover and वापस to application, in हाल the adapter
- * has stopped responding. A समयout of 60 seconds क्रम this command seems like
+ * Timeout routine to recover and return to application, in case the adapter
+ * has stopped responding. A timeout of 60 seconds for this command seems like
  * a good value.
  */
-अटल व्योम
-megaraid_sysfs_get_ldmap_समयout(काष्ठा समयr_list *t)
-अणु
-	काष्ठा uioc_समयout *समयout = from_समयr(समयout, t, समयr);
-	uioc_t		*uioc = समयout->uioc;
+static void
+megaraid_sysfs_get_ldmap_timeout(struct timer_list *t)
+{
+	struct uioc_timeout *timeout = from_timer(timeout, t, timer);
+	uioc_t		*uioc = timeout->uioc;
 	adapter_t	*adapter = (adapter_t *)uioc->buf_vaddr;
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
 
 	uioc->status = -ETIME;
 
-	wake_up(&raid_dev->sysfs_रुको_q);
-पूर्ण
+	wake_up(&raid_dev->sysfs_wait_q);
+}
 
 
 /**
  * megaraid_sysfs_get_ldmap - get update logical drive map
  * @adapter	: controller's soft state
  *
- * This routine will be called whenever user पढ़ोs the logical drive
+ * This routine will be called whenever user reads the logical drive
  * attributes, go get the current logical drive mapping table from the
  * firmware. We use the management API's to issue commands to the controller.
  *
@@ -3869,25 +3868,25 @@ megaraid_sysfs_get_ldmap_समयout(काष्ठा समयr_list *t)
  * implemented in context of "get ld map" command only. If required, the
  * command issuance logical can be trivially pulled out and implemented as a
  * standalone library. For now, this should suffice since there is no other
- * user of this पूर्णांकerface.
+ * user of this interface.
  *
  * Return 0 on success.
  * Return -1 on failure.
  */
-अटल पूर्णांक
+static int
 megaraid_sysfs_get_ldmap(adapter_t *adapter)
-अणु
+{
 	mraid_device_t		*raid_dev = ADAP2RAIDDEV(adapter);
 	uioc_t			*uioc;
 	mbox64_t		*mbox64;
 	mbox_t			*mbox;
-	अक्षर			*raw_mbox;
-	काष्ठा uioc_समयout	समयout;
+	char			*raw_mbox;
+	struct uioc_timeout	timeout;
 	caddr_t			ldmap;
-	पूर्णांक			rval = 0;
+	int			rval = 0;
 
 	/*
-	 * Allow only one पढ़ो at a समय to go through the sysfs attributes
+	 * Allow only one read at a time to go through the sysfs attributes
 	 */
 	mutex_lock(&raid_dev->sysfs_mtx);
 
@@ -3895,149 +3894,149 @@ megaraid_sysfs_get_ldmap(adapter_t *adapter)
 	mbox64	= raid_dev->sysfs_mbox64;
 	ldmap	= raid_dev->sysfs_buffer;
 
-	स_रखो(uioc, 0, माप(uioc_t));
-	स_रखो(mbox64, 0, माप(mbox64_t));
-	स_रखो(ldmap, 0, माप(raid_dev->curr_ldmap));
+	memset(uioc, 0, sizeof(uioc_t));
+	memset(mbox64, 0, sizeof(mbox64_t));
+	memset(ldmap, 0, sizeof(raid_dev->curr_ldmap));
 
 	mbox		= &mbox64->mbox32;
-	raw_mbox	= (अक्षर *)mbox;
-	uioc->cmdbuf    = (uपूर्णांक64_t)(अचिन्हित दीर्घ)mbox64;
+	raw_mbox	= (char *)mbox;
+	uioc->cmdbuf    = (uint64_t)(unsigned long)mbox64;
 	uioc->buf_vaddr	= (caddr_t)adapter;
 	uioc->status	= -ENODATA;
-	uioc->करोne	= megaraid_sysfs_get_ldmap_करोne;
+	uioc->done	= megaraid_sysfs_get_ldmap_done;
 
 	/*
 	 * Prepare the mailbox packet to get the current logical drive mapping
 	 * table
 	 */
-	mbox->xferaddr = (uपूर्णांक32_t)raid_dev->sysfs_buffer_dma;
+	mbox->xferaddr = (uint32_t)raid_dev->sysfs_buffer_dma;
 
 	raw_mbox[0] = FC_DEL_LOGDRV;
 	raw_mbox[2] = OP_GET_LDID_MAP;
 
 	/*
-	 * Setup a समयr to recover from a non-responding controller
+	 * Setup a timer to recover from a non-responding controller
 	 */
-	समयout.uioc = uioc;
-	समयr_setup_on_stack(&समयout.समयr,
-			     megaraid_sysfs_get_ldmap_समयout, 0);
+	timeout.uioc = uioc;
+	timer_setup_on_stack(&timeout.timer,
+			     megaraid_sysfs_get_ldmap_timeout, 0);
 
-	समयout.समयr.expires		= jअगरfies + 60 * HZ;
-	add_समयr(&समयout.समयr);
+	timeout.timer.expires		= jiffies + 60 * HZ;
+	add_timer(&timeout.timer);
 
 	/*
 	 * Send the command to the firmware
 	 */
 	rval = megaraid_mbox_mm_command(adapter, uioc);
 
-	अगर (rval == 0) अणु	// command successfully issued
-		रुको_event(raid_dev->sysfs_रुको_q, (uioc->status != -ENODATA));
+	if (rval == 0) {	// command successfully issued
+		wait_event(raid_dev->sysfs_wait_q, (uioc->status != -ENODATA));
 
 		/*
-		 * Check अगर the command समयd out
+		 * Check if the command timed out
 		 */
-		अगर (uioc->status == -ETIME) अणु
+		if (uioc->status == -ETIME) {
 			con_log(CL_ANN, (KERN_NOTICE
 				"megaraid: sysfs get ld map timed out\n"));
 
 			rval = -ETIME;
-		पूर्ण
-		अन्यथा अणु
+		}
+		else {
 			rval = mbox->status;
-		पूर्ण
+		}
 
-		अगर (rval == 0) अणु
-			स_नकल(raid_dev->curr_ldmap, ldmap,
-				माप(raid_dev->curr_ldmap));
-		पूर्ण
-		अन्यथा अणु
+		if (rval == 0) {
+			memcpy(raid_dev->curr_ldmap, ldmap,
+				sizeof(raid_dev->curr_ldmap));
+		}
+		else {
 			con_log(CL_ANN, (KERN_NOTICE
 				"megaraid: get ld map failed with %x\n", rval));
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु
+		}
+	}
+	else {
 		con_log(CL_ANN, (KERN_NOTICE
 			"megaraid: could not issue ldmap command:%x\n", rval));
-	पूर्ण
+	}
 
 
-	del_समयr_sync(&समयout.समयr);
-	destroy_समयr_on_stack(&समयout.समयr);
+	del_timer_sync(&timeout.timer);
+	destroy_timer_on_stack(&timeout.timer);
 
 	mutex_unlock(&raid_dev->sysfs_mtx);
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 
 /**
- * megaraid_sysfs_show_app_hndl - display application handle क्रम this adapter
- * @dev		: class device object representation क्रम the host
+ * megaraid_sysfs_show_app_hndl - display application handle for this adapter
+ * @dev		: class device object representation for the host
  * @attr	: device attribute (unused)
  * @buf		: buffer to send data to
  *
- * Display the handle used by the applications जबतक executing management
+ * Display the handle used by the applications while executing management
  * tasks on the adapter. We invoke a management module API to get the adapter
- * handle, since we करो not पूर्णांकerface with applications directly.
+ * handle, since we do not interface with applications directly.
  */
-अटल sमाप_प्रकार
-megaraid_sysfs_show_app_hndl(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+static ssize_t
+megaraid_sysfs_show_app_hndl(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
 	adapter_t	*adapter = (adapter_t *)SCSIHOST2ADAP(shost);
-	uपूर्णांक32_t	app_hndl;
+	uint32_t	app_hndl;
 
 	app_hndl = mraid_mm_adapter_app_handle(adapter->unique_id);
 
-	वापस snम_लिखो(buf, 8, "%u\n", app_hndl);
-पूर्ण
+	return snprintf(buf, 8, "%u\n", app_hndl);
+}
 
 
 /**
- * megaraid_sysfs_show_ldnum - display the logical drive number क्रम this device
- * @dev		: device object representation क्रम the scsi device
+ * megaraid_sysfs_show_ldnum - display the logical drive number for this device
+ * @dev		: device object representation for the scsi device
  * @attr	: device attribute to show
  * @buf		: buffer to send data to
  *
- * Display the logical drive number क्रम the device in question, अगर it a valid
- * logical drive. For physical devices, "-1" is वापसed.
+ * Display the logical drive number for the device in question, if it a valid
+ * logical drive. For physical devices, "-1" is returned.
  *
- * The logical drive number is displayed in following क्रमmat:
+ * The logical drive number is displayed in following format:
  *
  * <SCSI ID> <LD NUM> <LD STICKY ID> <APP ADAPTER HANDLE>
  *
- *   <पूर्णांक>     <पूर्णांक>       <पूर्णांक>            <पूर्णांक>
+ *   <int>     <int>       <int>            <int>
  */
-अटल sमाप_प्रकार
-megaraid_sysfs_show_ldnum(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+static ssize_t
+megaraid_sysfs_show_ldnum(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct scsi_device *sdev = to_scsi_device(dev);
 	adapter_t	*adapter = (adapter_t *)SCSIHOST2ADAP(sdev->host);
 	mraid_device_t	*raid_dev = ADAP2RAIDDEV(adapter);
-	पूर्णांक		scsi_id = -1;
-	पूर्णांक		logical_drv = -1;
-	पूर्णांक		ldid_map = -1;
-	uपूर्णांक32_t	app_hndl = 0;
-	पूर्णांक		mapped_sdev_id;
-	पूर्णांक		rval;
-	पूर्णांक		i;
+	int		scsi_id = -1;
+	int		logical_drv = -1;
+	int		ldid_map = -1;
+	uint32_t	app_hndl = 0;
+	int		mapped_sdev_id;
+	int		rval;
+	int		i;
 
-	अगर (raid_dev->अक्रमom_del_supported &&
-			MRAID_IS_LOGICAL_SDEV(adapter, sdev)) अणु
+	if (raid_dev->random_del_supported &&
+			MRAID_IS_LOGICAL_SDEV(adapter, sdev)) {
 
 		rval = megaraid_sysfs_get_ldmap(adapter);
-		अगर (rval == 0) अणु
+		if (rval == 0) {
 
-			क्रम (i = 0; i < MAX_LOGICAL_DRIVES_40LD; i++) अणु
+			for (i = 0; i < MAX_LOGICAL_DRIVES_40LD; i++) {
 
 				mapped_sdev_id = sdev->id;
 
-				अगर (sdev->id > adapter->init_id) अणु
+				if (sdev->id > adapter->init_id) {
 					mapped_sdev_id -= 1;
-				पूर्ण
+				}
 
-				अगर (raid_dev->curr_ldmap[i] == mapped_sdev_id) अणु
+				if (raid_dev->curr_ldmap[i] == mapped_sdev_id) {
 
 					scsi_id = sdev->id;
 
@@ -4048,24 +4047,24 @@ megaraid_sysfs_show_ldnum(काष्ठा device *dev, काष्ठा dev
 					app_hndl = mraid_mm_adapter_app_handle(
 							adapter->unique_id);
 
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अन्यथा अणु
+					break;
+				}
+			}
+		}
+		else {
 			con_log(CL_ANN, (KERN_NOTICE
 				"megaraid: sysfs get ld map failed: %x\n",
 				rval));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस snम_लिखो(buf, 36, "%d %d %d %d\n", scsi_id, logical_drv,
+	return snprintf(buf, 36, "%d %d %d %d\n", scsi_id, logical_drv,
 			ldid_map, app_hndl);
-पूर्ण
+}
 
 
 /*
  * END: Mailbox Low Level Driver
  */
 module_init(megaraid_init);
-module_निकास(megaraid_निकास);
+module_exit(megaraid_exit);

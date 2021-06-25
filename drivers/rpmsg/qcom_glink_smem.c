@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2016, Linaro Ltd
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rpmsg.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/soc/qcom/sस्मृति.स>
-#समावेश <linux/sizes.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/list.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/syscon.h>
+#include <linux/slab.h>
+#include <linux/rpmsg.h>
+#include <linux/idr.h>
+#include <linux/circ_buf.h>
+#include <linux/soc/qcom/smem.h>
+#include <linux/sizes.h>
+#include <linux/delay.h>
+#include <linux/regmap.h>
+#include <linux/workqueue.h>
+#include <linux/list.h>
 
-#समावेश <linux/rpmsg/qcom_glink.h>
+#include <linux/rpmsg/qcom_glink.h>
 
-#समावेश "qcom_glink_native.h"
+#include "qcom_glink_native.h"
 
-#घोषणा FIFO_FULL_RESERVE 8
-#घोषणा FIFO_ALIGNMENT 8
-#घोषणा TX_BLOCKED_CMD_RESERVE 8 /* size of काष्ठा पढ़ो_notअगर_request */
+#define FIFO_FULL_RESERVE 8
+#define FIFO_ALIGNMENT 8
+#define TX_BLOCKED_CMD_RESERVE 8 /* size of struct read_notif_request */
 
-#घोषणा SMEM_GLINK_NATIVE_XPRT_DESCRIPTOR	478
-#घोषणा SMEM_GLINK_NATIVE_XPRT_FIFO_0		479
-#घोषणा SMEM_GLINK_NATIVE_XPRT_FIFO_1		480
+#define SMEM_GLINK_NATIVE_XPRT_DESCRIPTOR	478
+#define SMEM_GLINK_NATIVE_XPRT_FIFO_0		479
+#define SMEM_GLINK_NATIVE_XPRT_FIFO_1		480
 
-काष्ठा glink_smem_pipe अणु
-	काष्ठा qcom_glink_pipe native;
+struct glink_smem_pipe {
+	struct qcom_glink_pipe native;
 
 	__le32 *tail;
 	__le32 *head;
 
-	व्योम *fअगरo;
+	void *fifo;
 
-	पूर्णांक remote_pid;
-पूर्ण;
+	int remote_pid;
+};
 
-#घोषणा to_smem_pipe(p) container_of(p, काष्ठा glink_smem_pipe, native)
+#define to_smem_pipe(p) container_of(p, struct glink_smem_pipe, native)
 
-अटल माप_प्रकार glink_smem_rx_avail(काष्ठा qcom_glink_pipe *np)
-अणु
-	काष्ठा glink_smem_pipe *pipe = to_smem_pipe(np);
-	माप_प्रकार len;
-	व्योम *fअगरo;
+static size_t glink_smem_rx_avail(struct qcom_glink_pipe *np)
+{
+	struct glink_smem_pipe *pipe = to_smem_pipe(np);
+	size_t len;
+	void *fifo;
 	u32 head;
 	u32 tail;
 
-	अगर (!pipe->fअगरo) अणु
-		fअगरo = qcom_smem_get(pipe->remote_pid,
+	if (!pipe->fifo) {
+		fifo = qcom_smem_get(pipe->remote_pid,
 				     SMEM_GLINK_NATIVE_XPRT_FIFO_1, &len);
-		अगर (IS_ERR(fअगरo)) अणु
+		if (IS_ERR(fifo)) {
 			pr_err("failed to acquire RX fifo handle: %ld\n",
-			       PTR_ERR(fअगरo));
-			वापस 0;
-		पूर्ण
+			       PTR_ERR(fifo));
+			return 0;
+		}
 
-		pipe->fअगरo = fअगरo;
+		pipe->fifo = fifo;
 		pipe->native.length = len;
-	पूर्ण
+	}
 
 	head = le32_to_cpu(*pipe->head);
 	tail = le32_to_cpu(*pipe->tail);
 
-	अगर (head < tail)
-		वापस pipe->native.length - tail + head;
-	अन्यथा
-		वापस head - tail;
-पूर्ण
+	if (head < tail)
+		return pipe->native.length - tail + head;
+	else
+		return head - tail;
+}
 
-अटल व्योम glink_smem_rx_peak(काष्ठा qcom_glink_pipe *np,
-			       व्योम *data, अचिन्हित पूर्णांक offset, माप_प्रकार count)
-अणु
-	काष्ठा glink_smem_pipe *pipe = to_smem_pipe(np);
-	माप_प्रकार len;
+static void glink_smem_rx_peak(struct qcom_glink_pipe *np,
+			       void *data, unsigned int offset, size_t count)
+{
+	struct glink_smem_pipe *pipe = to_smem_pipe(np);
+	size_t len;
 	u32 tail;
 
 	tail = le32_to_cpu(*pipe->tail);
 	tail += offset;
-	अगर (tail >= pipe->native.length)
+	if (tail >= pipe->native.length)
 		tail -= pipe->native.length;
 
-	len = min_t(माप_प्रकार, count, pipe->native.length - tail);
-	अगर (len)
-		स_नकल_fromio(data, pipe->fअगरo + tail, len);
+	len = min_t(size_t, count, pipe->native.length - tail);
+	if (len)
+		memcpy_fromio(data, pipe->fifo + tail, len);
 
-	अगर (len != count)
-		स_नकल_fromio(data + len, pipe->fअगरo, (count - len));
-पूर्ण
+	if (len != count)
+		memcpy_fromio(data + len, pipe->fifo, (count - len));
+}
 
-अटल व्योम glink_smem_rx_advance(काष्ठा qcom_glink_pipe *np,
-				  माप_प्रकार count)
-अणु
-	काष्ठा glink_smem_pipe *pipe = to_smem_pipe(np);
+static void glink_smem_rx_advance(struct qcom_glink_pipe *np,
+				  size_t count)
+{
+	struct glink_smem_pipe *pipe = to_smem_pipe(np);
 	u32 tail;
 
 	tail = le32_to_cpu(*pipe->tail);
 
 	tail += count;
-	अगर (tail >= pipe->native.length)
+	if (tail >= pipe->native.length)
 		tail -= pipe->native.length;
 
 	*pipe->tail = cpu_to_le32(tail);
-पूर्ण
+}
 
-अटल माप_प्रकार glink_smem_tx_avail(काष्ठा qcom_glink_pipe *np)
-अणु
-	काष्ठा glink_smem_pipe *pipe = to_smem_pipe(np);
+static size_t glink_smem_tx_avail(struct qcom_glink_pipe *np)
+{
+	struct glink_smem_pipe *pipe = to_smem_pipe(np);
 	u32 head;
 	u32 tail;
 	u32 avail;
@@ -122,128 +121,128 @@
 	head = le32_to_cpu(*pipe->head);
 	tail = le32_to_cpu(*pipe->tail);
 
-	अगर (tail <= head)
+	if (tail <= head)
 		avail = pipe->native.length - head + tail;
-	अन्यथा
+	else
 		avail = tail - head;
 
-	अगर (avail < (FIFO_FULL_RESERVE + TX_BLOCKED_CMD_RESERVE))
+	if (avail < (FIFO_FULL_RESERVE + TX_BLOCKED_CMD_RESERVE))
 		avail = 0;
-	अन्यथा
+	else
 		avail -= FIFO_FULL_RESERVE + TX_BLOCKED_CMD_RESERVE;
 
-	वापस avail;
-पूर्ण
+	return avail;
+}
 
-अटल अचिन्हित पूर्णांक glink_smem_tx_ग_लिखो_one(काष्ठा glink_smem_pipe *pipe,
-					    अचिन्हित पूर्णांक head,
-					    स्थिर व्योम *data, माप_प्रकार count)
-अणु
-	माप_प्रकार len;
+static unsigned int glink_smem_tx_write_one(struct glink_smem_pipe *pipe,
+					    unsigned int head,
+					    const void *data, size_t count)
+{
+	size_t len;
 
-	len = min_t(माप_प्रकार, count, pipe->native.length - head);
-	अगर (len)
-		स_नकल(pipe->fअगरo + head, data, len);
+	len = min_t(size_t, count, pipe->native.length - head);
+	if (len)
+		memcpy(pipe->fifo + head, data, len);
 
-	अगर (len != count)
-		स_नकल(pipe->fअगरo, data + len, count - len);
+	if (len != count)
+		memcpy(pipe->fifo, data + len, count - len);
 
 	head += count;
-	अगर (head >= pipe->native.length)
+	if (head >= pipe->native.length)
 		head -= pipe->native.length;
 
-	वापस head;
-पूर्ण
+	return head;
+}
 
-अटल व्योम glink_smem_tx_ग_लिखो(काष्ठा qcom_glink_pipe *glink_pipe,
-				स्थिर व्योम *hdr, माप_प्रकार hlen,
-				स्थिर व्योम *data, माप_प्रकार dlen)
-अणु
-	काष्ठा glink_smem_pipe *pipe = to_smem_pipe(glink_pipe);
-	अचिन्हित पूर्णांक head;
+static void glink_smem_tx_write(struct qcom_glink_pipe *glink_pipe,
+				const void *hdr, size_t hlen,
+				const void *data, size_t dlen)
+{
+	struct glink_smem_pipe *pipe = to_smem_pipe(glink_pipe);
+	unsigned int head;
 
 	head = le32_to_cpu(*pipe->head);
 
-	head = glink_smem_tx_ग_लिखो_one(pipe, head, hdr, hlen);
-	head = glink_smem_tx_ग_लिखो_one(pipe, head, data, dlen);
+	head = glink_smem_tx_write_one(pipe, head, hdr, hlen);
+	head = glink_smem_tx_write_one(pipe, head, data, dlen);
 
 	/* Ensure head is always aligned to 8 bytes */
 	head = ALIGN(head, 8);
-	अगर (head >= pipe->native.length)
+	if (head >= pipe->native.length)
 		head -= pipe->native.length;
 
-	/* Ensure ordering of fअगरo and head update */
+	/* Ensure ordering of fifo and head update */
 	wmb();
 
 	*pipe->head = cpu_to_le32(head);
-पूर्ण
+}
 
-अटल व्योम qcom_glink_smem_release(काष्ठा device *dev)
-अणु
-	kमुक्त(dev);
-पूर्ण
+static void qcom_glink_smem_release(struct device *dev)
+{
+	kfree(dev);
+}
 
-काष्ठा qcom_glink *qcom_glink_smem_रेजिस्टर(काष्ठा device *parent,
-					    काष्ठा device_node *node)
-अणु
-	काष्ठा glink_smem_pipe *rx_pipe;
-	काष्ठा glink_smem_pipe *tx_pipe;
-	काष्ठा qcom_glink *glink;
-	काष्ठा device *dev;
+struct qcom_glink *qcom_glink_smem_register(struct device *parent,
+					    struct device_node *node)
+{
+	struct glink_smem_pipe *rx_pipe;
+	struct glink_smem_pipe *tx_pipe;
+	struct qcom_glink *glink;
+	struct device *dev;
 	u32 remote_pid;
 	__le32 *descs;
-	माप_प्रकार size;
-	पूर्णांक ret;
+	size_t size;
+	int ret;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	dev->parent = parent;
 	dev->of_node = node;
 	dev->release = qcom_glink_smem_release;
 	dev_set_name(dev, "%s:%pOFn", dev_name(parent->parent), node);
-	ret = device_रेजिस्टर(dev);
-	अगर (ret) अणु
+	ret = device_register(dev);
+	if (ret) {
 		pr_err("failed to register glink edge\n");
 		put_device(dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	ret = of_property_पढ़ो_u32(dev->of_node, "qcom,remote-pid",
+	ret = of_property_read_u32(dev->of_node, "qcom,remote-pid",
 				   &remote_pid);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to parse qcom,remote-pid\n");
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
-	rx_pipe = devm_kzalloc(dev, माप(*rx_pipe), GFP_KERNEL);
-	tx_pipe = devm_kzalloc(dev, माप(*tx_pipe), GFP_KERNEL);
-	अगर (!rx_pipe || !tx_pipe) अणु
+	rx_pipe = devm_kzalloc(dev, sizeof(*rx_pipe), GFP_KERNEL);
+	tx_pipe = devm_kzalloc(dev, sizeof(*tx_pipe), GFP_KERNEL);
+	if (!rx_pipe || !tx_pipe) {
 		ret = -ENOMEM;
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
 	ret = qcom_smem_alloc(remote_pid,
 			      SMEM_GLINK_NATIVE_XPRT_DESCRIPTOR, 32);
-	अगर (ret && ret != -EEXIST) अणु
+	if (ret && ret != -EEXIST) {
 		dev_err(dev, "failed to allocate glink descriptors\n");
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
 	descs = qcom_smem_get(remote_pid,
 			      SMEM_GLINK_NATIVE_XPRT_DESCRIPTOR, &size);
-	अगर (IS_ERR(descs)) अणु
+	if (IS_ERR(descs)) {
 		dev_err(dev, "failed to acquire xprt descriptor\n");
 		ret = PTR_ERR(descs);
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
-	अगर (size != 32) अणु
+	if (size != 32) {
 		dev_err(dev, "glink descriptor of invalid size\n");
 		ret = -EINVAL;
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
 	tx_pipe->tail = &descs[0];
 	tx_pipe->head = &descs[1];
@@ -252,18 +251,18 @@
 
 	ret = qcom_smem_alloc(remote_pid, SMEM_GLINK_NATIVE_XPRT_FIFO_0,
 			      SZ_16K);
-	अगर (ret && ret != -EEXIST) अणु
+	if (ret && ret != -EEXIST) {
 		dev_err(dev, "failed to allocate TX fifo\n");
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
-	tx_pipe->fअगरo = qcom_smem_get(remote_pid, SMEM_GLINK_NATIVE_XPRT_FIFO_0,
+	tx_pipe->fifo = qcom_smem_get(remote_pid, SMEM_GLINK_NATIVE_XPRT_FIFO_0,
 				      &tx_pipe->native.length);
-	अगर (IS_ERR(tx_pipe->fअगरo)) अणु
+	if (IS_ERR(tx_pipe->fifo)) {
 		dev_err(dev, "failed to acquire TX fifo\n");
-		ret = PTR_ERR(tx_pipe->fअगरo);
-		जाओ err_put_dev;
-	पूर्ण
+		ret = PTR_ERR(tx_pipe->fifo);
+		goto err_put_dev;
+	}
 
 	rx_pipe->native.avail = glink_smem_rx_avail;
 	rx_pipe->native.peak = glink_smem_rx_peak;
@@ -271,7 +270,7 @@
 	rx_pipe->remote_pid = remote_pid;
 
 	tx_pipe->native.avail = glink_smem_tx_avail;
-	tx_pipe->native.ग_लिखो = glink_smem_tx_ग_लिखो;
+	tx_pipe->native.write = glink_smem_tx_write;
 	tx_pipe->remote_pid = remote_pid;
 
 	*rx_pipe->tail = 0;
@@ -281,26 +280,26 @@
 					GLINK_FEATURE_INTENT_REUSE,
 					&rx_pipe->native, &tx_pipe->native,
 					false);
-	अगर (IS_ERR(glink)) अणु
+	if (IS_ERR(glink)) {
 		ret = PTR_ERR(glink);
-		जाओ err_put_dev;
-	पूर्ण
+		goto err_put_dev;
+	}
 
-	वापस glink;
+	return glink;
 
 err_put_dev:
-	device_unरेजिस्टर(dev);
+	device_unregister(dev);
 
-	वापस ERR_PTR(ret);
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_glink_smem_रेजिस्टर);
+	return ERR_PTR(ret);
+}
+EXPORT_SYMBOL_GPL(qcom_glink_smem_register);
 
-व्योम qcom_glink_smem_unरेजिस्टर(काष्ठा qcom_glink *glink)
-अणु
-	qcom_glink_native_हटाओ(glink);
-	qcom_glink_native_unरेजिस्टर(glink);
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_glink_smem_unरेजिस्टर);
+void qcom_glink_smem_unregister(struct qcom_glink *glink)
+{
+	qcom_glink_native_remove(glink);
+	qcom_glink_native_unregister(glink);
+}
+EXPORT_SYMBOL_GPL(qcom_glink_smem_unregister);
 
 MODULE_AUTHOR("Bjorn Andersson <bjorn.andersson@linaro.org>");
 MODULE_DESCRIPTION("Qualcomm GLINK SMEM driver");

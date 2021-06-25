@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/mm/memory.c
  *
@@ -16,22 +15,22 @@
  * pages started 02.12.91, seems to work. - Linus.
  *
  * Tested sharing by executing about 30 /bin/sh: under the old kernel it
- * would have taken more than the 6M I have मुक्त, but it worked well as
+ * would have taken more than the 6M I have free, but it worked well as
  * far as I could see.
  *
- * Also corrected some "invalidate()"s - I wasn't करोing enough of them.
+ * Also corrected some "invalidate()"s - I wasn't doing enough of them.
  */
 
 /*
  * Real VM (paging to/from disk) started 18.12.91. Much more work and
- * thought has to go पूर्णांकo this. Oh, well..
- * 19.12.91  -  works, somewhat. Someबार I get faults, करोn't know why.
+ * thought has to go into this. Oh, well..
+ * 19.12.91  -  works, somewhat. Sometimes I get faults, don't know why.
  *		Found it. Everything seems to work now.
  * 20.12.91  -  Ok, making the swap-device changeable like the root.
  */
 
 /*
- * 05.04.94  -  Multi-page memory management added क्रम v1.1.
+ * 05.04.94  -  Multi-page memory management added for v1.1.
  *              Idea by Alex Bligh (alex@cconcepts.co.uk)
  *
  * 16.07.99  -  Support of BIGMEM added by Gerhard Wichert, Siemens AG
@@ -40,725 +39,725 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/coredump.h>
-#समावेश <linux/sched/numa_balancing.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/memremap.h>
-#समावेश <linux/ksm.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/export.h>
-#समावेश <linux/delayacct.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pfn_t.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/memcontrol.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/migrate.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/userfaultfd_k.h>
-#समावेश <linux/dax.h>
-#समावेश <linux/oom.h>
-#समावेश <linux/numa.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/kernel_stat.h>
+#include <linux/mm.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/coredump.h>
+#include <linux/sched/numa_balancing.h>
+#include <linux/sched/task.h>
+#include <linux/hugetlb.h>
+#include <linux/mman.h>
+#include <linux/swap.h>
+#include <linux/highmem.h>
+#include <linux/pagemap.h>
+#include <linux/memremap.h>
+#include <linux/ksm.h>
+#include <linux/rmap.h>
+#include <linux/export.h>
+#include <linux/delayacct.h>
+#include <linux/init.h>
+#include <linux/pfn_t.h>
+#include <linux/writeback.h>
+#include <linux/memcontrol.h>
+#include <linux/mmu_notifier.h>
+#include <linux/swapops.h>
+#include <linux/elf.h>
+#include <linux/gfp.h>
+#include <linux/migrate.h>
+#include <linux/string.h>
+#include <linux/debugfs.h>
+#include <linux/userfaultfd_k.h>
+#include <linux/dax.h>
+#include <linux/oom.h>
+#include <linux/numa.h>
+#include <linux/perf_event.h>
+#include <linux/ptrace.h>
+#include <linux/vmalloc.h>
 
-#समावेश <trace/events/kस्मृति.स>
+#include <trace/events/kmem.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/pgभाग.स>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
+#include <asm/io.h>
+#include <asm/mmu_context.h>
+#include <asm/pgalloc.h>
+#include <linux/uaccess.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
 
-#समावेश "pgalloc-track.h"
-#समावेश "internal.h"
+#include "pgalloc-track.h"
+#include "internal.h"
 
-#अगर defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
-#warning Unक्रमtunate NUMA and NUMA Balancing config, growing page-frame क्रम last_cpupid.
-#पूर्ण_अगर
+#if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
+#warning Unfortunate NUMA and NUMA Balancing config, growing page-frame for last_cpupid.
+#endif
 
-#अगर_अघोषित CONFIG_NEED_MULTIPLE_NODES
-/* use the per-pgdat data instead क्रम discontigmem - mbligh */
-अचिन्हित दीर्घ max_mapnr;
+#ifndef CONFIG_NEED_MULTIPLE_NODES
+/* use the per-pgdat data instead for discontigmem - mbligh */
+unsigned long max_mapnr;
 EXPORT_SYMBOL(max_mapnr);
 
-काष्ठा page *mem_map;
+struct page *mem_map;
 EXPORT_SYMBOL(mem_map);
-#पूर्ण_अगर
+#endif
 
 /*
- * A number of key प्रणालीs in x86 including ioremap() rely on the assumption
+ * A number of key systems in x86 including ioremap() rely on the assumption
  * that high_memory defines the upper bound on direct map memory, then end
  * of ZONE_NORMAL.  Under CONFIG_DISCONTIG this means that max_low_pfn and
  * highstart_pfn must be the same; there must be no gap between ZONE_NORMAL
  * and ZONE_HIGHMEM.
  */
-व्योम *high_memory;
+void *high_memory;
 EXPORT_SYMBOL(high_memory);
 
 /*
- * Ranकरोmize the address space (stacks, mmaps, brk, etc.).
+ * Randomize the address space (stacks, mmaps, brk, etc.).
  *
- * ( When CONFIG_COMPAT_BRK=y we exclude brk from अक्रमomization,
+ * ( When CONFIG_COMPAT_BRK=y we exclude brk from randomization,
  *   as ancient (libc5 based) binaries can segfault. )
  */
-पूर्णांक अक्रमomize_va_space __पढ़ो_mostly =
-#अगर_घोषित CONFIG_COMPAT_BRK
+int randomize_va_space __read_mostly =
+#ifdef CONFIG_COMPAT_BRK
 					1;
-#अन्यथा
+#else
 					2;
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित arch_faults_on_old_pte
-अटल अंतरभूत bool arch_faults_on_old_pte(व्योम)
-अणु
+#ifndef arch_faults_on_old_pte
+static inline bool arch_faults_on_old_pte(void)
+{
 	/*
-	 * Those arches which करोn't have hw access flag feature need to
-	 * implement their own helper. By शेष, "true" means pagefault
+	 * Those arches which don't have hw access flag feature need to
+	 * implement their own helper. By default, "true" means pagefault
 	 * will be hit on old pte.
 	 */
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+	return true;
+}
+#endif
 
-#अगर_अघोषित arch_wants_old_prefaulted_pte
-अटल अंतरभूत bool arch_wants_old_prefaulted_pte(व्योम)
-अणु
+#ifndef arch_wants_old_prefaulted_pte
+static inline bool arch_wants_old_prefaulted_pte(void)
+{
 	/*
 	 * Transitioning a PTE from 'old' to 'young' can be expensive on
-	 * some architectures, even अगर it's perक्रमmed in hardware. By
-	 * शेष, "false" means prefaulted entries will be 'young'.
+	 * some architectures, even if it's performed in hardware. By
+	 * default, "false" means prefaulted entries will be 'young'.
 	 */
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+	return false;
+}
+#endif
 
-अटल पूर्णांक __init disable_अक्रमmaps(अक्षर *s)
-अणु
-	अक्रमomize_va_space = 0;
-	वापस 1;
-पूर्ण
-__setup("norandmaps", disable_अक्रमmaps);
+static int __init disable_randmaps(char *s)
+{
+	randomize_va_space = 0;
+	return 1;
+}
+__setup("norandmaps", disable_randmaps);
 
-अचिन्हित दीर्घ zero_pfn __पढ़ो_mostly;
+unsigned long zero_pfn __read_mostly;
 EXPORT_SYMBOL(zero_pfn);
 
-अचिन्हित दीर्घ highest_memmap_pfn __पढ़ो_mostly;
+unsigned long highest_memmap_pfn __read_mostly;
 
 /*
  * CONFIG_MMU architectures set up ZERO_PAGE in their paging_init()
  */
-अटल पूर्णांक __init init_zero_pfn(व्योम)
-अणु
+static int __init init_zero_pfn(void)
+{
 	zero_pfn = page_to_pfn(ZERO_PAGE(0));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(init_zero_pfn);
 
-व्योम mm_trace_rss_stat(काष्ठा mm_काष्ठा *mm, पूर्णांक member, दीर्घ count)
-अणु
+void mm_trace_rss_stat(struct mm_struct *mm, int member, long count)
+{
 	trace_rss_stat(mm, member, count);
-पूर्ण
+}
 
-#अगर defined(SPLIT_RSS_COUNTING)
+#if defined(SPLIT_RSS_COUNTING)
 
-व्योम sync_mm_rss(काष्ठा mm_काष्ठा *mm)
-अणु
-	पूर्णांक i;
+void sync_mm_rss(struct mm_struct *mm)
+{
+	int i;
 
-	क्रम (i = 0; i < NR_MM_COUNTERS; i++) अणु
-		अगर (current->rss_stat.count[i]) अणु
+	for (i = 0; i < NR_MM_COUNTERS; i++) {
+		if (current->rss_stat.count[i]) {
 			add_mm_counter(mm, i, current->rss_stat.count[i]);
 			current->rss_stat.count[i] = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	current->rss_stat.events = 0;
-पूर्ण
+}
 
-अटल व्योम add_mm_counter_fast(काष्ठा mm_काष्ठा *mm, पूर्णांक member, पूर्णांक val)
-अणु
-	काष्ठा task_काष्ठा *task = current;
+static void add_mm_counter_fast(struct mm_struct *mm, int member, int val)
+{
+	struct task_struct *task = current;
 
-	अगर (likely(task->mm == mm))
+	if (likely(task->mm == mm))
 		task->rss_stat.count[member] += val;
-	अन्यथा
+	else
 		add_mm_counter(mm, member, val);
-पूर्ण
-#घोषणा inc_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, 1)
-#घोषणा dec_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, -1)
+}
+#define inc_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, 1)
+#define dec_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, -1)
 
 /* sync counter once per 64 page faults */
-#घोषणा TASK_RSS_EVENTS_THRESH	(64)
-अटल व्योम check_sync_rss_stat(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (unlikely(task != current))
-		वापस;
-	अगर (unlikely(task->rss_stat.events++ > TASK_RSS_EVENTS_THRESH))
+#define TASK_RSS_EVENTS_THRESH	(64)
+static void check_sync_rss_stat(struct task_struct *task)
+{
+	if (unlikely(task != current))
+		return;
+	if (unlikely(task->rss_stat.events++ > TASK_RSS_EVENTS_THRESH))
 		sync_mm_rss(task->mm);
-पूर्ण
-#अन्यथा /* SPLIT_RSS_COUNTING */
+}
+#else /* SPLIT_RSS_COUNTING */
 
-#घोषणा inc_mm_counter_fast(mm, member) inc_mm_counter(mm, member)
-#घोषणा dec_mm_counter_fast(mm, member) dec_mm_counter(mm, member)
+#define inc_mm_counter_fast(mm, member) inc_mm_counter(mm, member)
+#define dec_mm_counter_fast(mm, member) dec_mm_counter(mm, member)
 
-अटल व्योम check_sync_rss_stat(काष्ठा task_काष्ठा *task)
-अणु
-पूर्ण
+static void check_sync_rss_stat(struct task_struct *task)
+{
+}
 
-#पूर्ण_अगर /* SPLIT_RSS_COUNTING */
+#endif /* SPLIT_RSS_COUNTING */
 
 /*
- * Note: this करोesn't मुक्त the actual pages themselves. That
+ * Note: this doesn't free the actual pages themselves. That
  * has been handled earlier when unmapping all the memory regions.
  */
-अटल व्योम मुक्त_pte_range(काष्ठा mmu_gather *tlb, pmd_t *pmd,
-			   अचिन्हित दीर्घ addr)
-अणु
+static void free_pte_range(struct mmu_gather *tlb, pmd_t *pmd,
+			   unsigned long addr)
+{
 	pgtable_t token = pmd_pgtable(*pmd);
 	pmd_clear(pmd);
-	pte_मुक्त_tlb(tlb, token, addr);
+	pte_free_tlb(tlb, token, addr);
 	mm_dec_nr_ptes(tlb->mm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम मुक्त_pmd_range(काष्ठा mmu_gather *tlb, pud_t *pud,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing)
-अणु
+static inline void free_pmd_range(struct mmu_gather *tlb, pud_t *pud,
+				unsigned long addr, unsigned long end,
+				unsigned long floor, unsigned long ceiling)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ start;
+	unsigned long next;
+	unsigned long start;
 
 	start = addr;
 	pmd = pmd_offset(pud, addr);
-	करो अणु
+	do {
 		next = pmd_addr_end(addr, end);
-		अगर (pmd_none_or_clear_bad(pmd))
-			जारी;
-		मुक्त_pte_range(tlb, pmd, addr);
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
+		if (pmd_none_or_clear_bad(pmd))
+			continue;
+		free_pte_range(tlb, pmd, addr);
+	} while (pmd++, addr = next, addr != end);
 
 	start &= PUD_MASK;
-	अगर (start < न्यूनमान)
-		वापस;
-	अगर (उच्चमानing) अणु
-		उच्चमानing &= PUD_MASK;
-		अगर (!उच्चमानing)
-			वापस;
-	पूर्ण
-	अगर (end - 1 > उच्चमानing - 1)
-		वापस;
+	if (start < floor)
+		return;
+	if (ceiling) {
+		ceiling &= PUD_MASK;
+		if (!ceiling)
+			return;
+	}
+	if (end - 1 > ceiling - 1)
+		return;
 
 	pmd = pmd_offset(pud, start);
 	pud_clear(pud);
-	pmd_मुक्त_tlb(tlb, pmd, start);
+	pmd_free_tlb(tlb, pmd, start);
 	mm_dec_nr_pmds(tlb->mm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम मुक्त_pud_range(काष्ठा mmu_gather *tlb, p4d_t *p4d,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing)
-अणु
+static inline void free_pud_range(struct mmu_gather *tlb, p4d_t *p4d,
+				unsigned long addr, unsigned long end,
+				unsigned long floor, unsigned long ceiling)
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ start;
+	unsigned long next;
+	unsigned long start;
 
 	start = addr;
 	pud = pud_offset(p4d, addr);
-	करो अणु
+	do {
 		next = pud_addr_end(addr, end);
-		अगर (pud_none_or_clear_bad(pud))
-			जारी;
-		मुक्त_pmd_range(tlb, pud, addr, next, न्यूनमान, उच्चमानing);
-	पूर्ण जबतक (pud++, addr = next, addr != end);
+		if (pud_none_or_clear_bad(pud))
+			continue;
+		free_pmd_range(tlb, pud, addr, next, floor, ceiling);
+	} while (pud++, addr = next, addr != end);
 
 	start &= P4D_MASK;
-	अगर (start < न्यूनमान)
-		वापस;
-	अगर (उच्चमानing) अणु
-		उच्चमानing &= P4D_MASK;
-		अगर (!उच्चमानing)
-			वापस;
-	पूर्ण
-	अगर (end - 1 > उच्चमानing - 1)
-		वापस;
+	if (start < floor)
+		return;
+	if (ceiling) {
+		ceiling &= P4D_MASK;
+		if (!ceiling)
+			return;
+	}
+	if (end - 1 > ceiling - 1)
+		return;
 
 	pud = pud_offset(p4d, start);
 	p4d_clear(p4d);
-	pud_मुक्त_tlb(tlb, pud, start);
+	pud_free_tlb(tlb, pud, start);
 	mm_dec_nr_puds(tlb->mm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम मुक्त_p4d_range(काष्ठा mmu_gather *tlb, pgd_t *pgd,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing)
-अणु
+static inline void free_p4d_range(struct mmu_gather *tlb, pgd_t *pgd,
+				unsigned long addr, unsigned long end,
+				unsigned long floor, unsigned long ceiling)
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ start;
+	unsigned long next;
+	unsigned long start;
 
 	start = addr;
 	p4d = p4d_offset(pgd, addr);
-	करो अणु
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none_or_clear_bad(p4d))
-			जारी;
-		मुक्त_pud_range(tlb, p4d, addr, next, न्यूनमान, उच्चमानing);
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
+		if (p4d_none_or_clear_bad(p4d))
+			continue;
+		free_pud_range(tlb, p4d, addr, next, floor, ceiling);
+	} while (p4d++, addr = next, addr != end);
 
-	start &= PGसूची_MASK;
-	अगर (start < न्यूनमान)
-		वापस;
-	अगर (उच्चमानing) अणु
-		उच्चमानing &= PGसूची_MASK;
-		अगर (!उच्चमानing)
-			वापस;
-	पूर्ण
-	अगर (end - 1 > उच्चमानing - 1)
-		वापस;
+	start &= PGDIR_MASK;
+	if (start < floor)
+		return;
+	if (ceiling) {
+		ceiling &= PGDIR_MASK;
+		if (!ceiling)
+			return;
+	}
+	if (end - 1 > ceiling - 1)
+		return;
 
 	p4d = p4d_offset(pgd, start);
 	pgd_clear(pgd);
-	p4d_मुक्त_tlb(tlb, p4d, start);
-पूर्ण
+	p4d_free_tlb(tlb, p4d, start);
+}
 
 /*
- * This function मुक्तs user-level page tables of a process.
+ * This function frees user-level page tables of a process.
  */
-व्योम मुक्त_pgd_range(काष्ठा mmu_gather *tlb,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing)
-अणु
+void free_pgd_range(struct mmu_gather *tlb,
+			unsigned long addr, unsigned long end,
+			unsigned long floor, unsigned long ceiling)
+{
 	pgd_t *pgd;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	/*
 	 * The next few lines have given us lots of grief...
 	 *
 	 * Why are we testing PMD* at this top level?  Because often
-	 * there will be no work to करो at all, and we'd prefer not to
-	 * go all the way करोwn to the bottom just to discover that.
+	 * there will be no work to do at all, and we'd prefer not to
+	 * go all the way down to the bottom just to discover that.
 	 *
 	 * Why all these "- 1"s?  Because 0 represents both the bottom
-	 * of the address space and the top of it (using -1 क्रम the
-	 * top wouldn't help much: the masks would करो the wrong thing).
-	 * The rule is that addr 0 and न्यूनमान 0 refer to the bottom of
-	 * the address space, but end 0 and उच्चमानing 0 refer to the top
+	 * of the address space and the top of it (using -1 for the
+	 * top wouldn't help much: the masks would do the wrong thing).
+	 * The rule is that addr 0 and floor 0 refer to the bottom of
+	 * the address space, but end 0 and ceiling 0 refer to the top
 	 * Comparisons need to use "end - 1" and "ceiling - 1" (though
-	 * that end 0 हाल should be mythical).
+	 * that end 0 case should be mythical).
 	 *
-	 * Wherever addr is brought up or उच्चमानing brought करोwn, we must
-	 * be careful to reject "the opposite 0" beक्रमe it confuses the
-	 * subsequent tests.  But what about where end is brought करोwn
-	 * by PMD_SIZE below? no, end can't go करोwn to 0 there.
+	 * Wherever addr is brought up or ceiling brought down, we must
+	 * be careful to reject "the opposite 0" before it confuses the
+	 * subsequent tests.  But what about where end is brought down
+	 * by PMD_SIZE below? no, end can't go down to 0 there.
 	 *
-	 * Whereas we round start (addr) and उच्चमानing करोwn, by dअगरferent
-	 * masks at dअगरferent levels, in order to test whether a table
-	 * now has no other vmas using it, so can be मुक्तd, we करोn't
-	 * bother to round न्यूनमान or end up - the tests करोn't need that.
+	 * Whereas we round start (addr) and ceiling down, by different
+	 * masks at different levels, in order to test whether a table
+	 * now has no other vmas using it, so can be freed, we don't
+	 * bother to round floor or end up - the tests don't need that.
 	 */
 
 	addr &= PMD_MASK;
-	अगर (addr < न्यूनमान) अणु
+	if (addr < floor) {
 		addr += PMD_SIZE;
-		अगर (!addr)
-			वापस;
-	पूर्ण
-	अगर (उच्चमानing) अणु
-		उच्चमानing &= PMD_MASK;
-		अगर (!उच्चमानing)
-			वापस;
-	पूर्ण
-	अगर (end - 1 > उच्चमानing - 1)
+		if (!addr)
+			return;
+	}
+	if (ceiling) {
+		ceiling &= PMD_MASK;
+		if (!ceiling)
+			return;
+	}
+	if (end - 1 > ceiling - 1)
 		end -= PMD_SIZE;
-	अगर (addr > end - 1)
-		वापस;
+	if (addr > end - 1)
+		return;
 	/*
 	 * We add page table cache pages with PAGE_SIZE,
-	 * (see pte_मुक्त_tlb()), flush the tlb अगर we need
+	 * (see pte_free_tlb()), flush the tlb if we need
 	 */
 	tlb_change_page_size(tlb, PAGE_SIZE);
 	pgd = pgd_offset(tlb->mm, addr);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none_or_clear_bad(pgd))
-			जारी;
-		मुक्त_p4d_range(tlb, pgd, addr, next, न्यूनमान, उच्चमानing);
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
-पूर्ण
+		if (pgd_none_or_clear_bad(pgd))
+			continue;
+		free_p4d_range(tlb, pgd, addr, next, floor, ceiling);
+	} while (pgd++, addr = next, addr != end);
+}
 
-व्योम मुक्त_pgtables(काष्ठा mmu_gather *tlb, काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ न्यूनमान, अचिन्हित दीर्घ उच्चमानing)
-अणु
-	जबतक (vma) अणु
-		काष्ठा vm_area_काष्ठा *next = vma->vm_next;
-		अचिन्हित दीर्घ addr = vma->vm_start;
+void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *vma,
+		unsigned long floor, unsigned long ceiling)
+{
+	while (vma) {
+		struct vm_area_struct *next = vma->vm_next;
+		unsigned long addr = vma->vm_start;
 
 		/*
-		 * Hide vma from rmap and truncate_pagecache beक्रमe मुक्तing
+		 * Hide vma from rmap and truncate_pagecache before freeing
 		 * pgtables
 		 */
 		unlink_anon_vmas(vma);
 		unlink_file_vma(vma);
 
-		अगर (is_vm_hugetlb_page(vma)) अणु
-			hugetlb_मुक्त_pgd_range(tlb, addr, vma->vm_end,
-				न्यूनमान, next ? next->vm_start : उच्चमानing);
-		पूर्ण अन्यथा अणु
+		if (is_vm_hugetlb_page(vma)) {
+			hugetlb_free_pgd_range(tlb, addr, vma->vm_end,
+				floor, next ? next->vm_start : ceiling);
+		} else {
 			/*
-			 * Optimization: gather nearby vmas पूर्णांकo one call करोwn
+			 * Optimization: gather nearby vmas into one call down
 			 */
-			जबतक (next && next->vm_start <= vma->vm_end + PMD_SIZE
-			       && !is_vm_hugetlb_page(next)) अणु
+			while (next && next->vm_start <= vma->vm_end + PMD_SIZE
+			       && !is_vm_hugetlb_page(next)) {
 				vma = next;
 				next = vma->vm_next;
 				unlink_anon_vmas(vma);
 				unlink_file_vma(vma);
-			पूर्ण
-			मुक्त_pgd_range(tlb, addr, vma->vm_end,
-				न्यूनमान, next ? next->vm_start : उच्चमानing);
-		पूर्ण
+			}
+			free_pgd_range(tlb, addr, vma->vm_end,
+				floor, next ? next->vm_start : ceiling);
+		}
 		vma = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक __pte_alloc(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
-अणु
+int __pte_alloc(struct mm_struct *mm, pmd_t *pmd)
+{
 	spinlock_t *ptl;
 	pgtable_t new = pte_alloc_one(mm);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
 	/*
 	 * Ensure all pte setup (eg. pte page lock and page clearing) are
-	 * visible beक्रमe the pte is made visible to other CPUs by being
-	 * put पूर्णांकo page tables.
+	 * visible before the pte is made visible to other CPUs by being
+	 * put into page tables.
 	 *
-	 * The other side of the story is the poपूर्णांकer chasing in the page
+	 * The other side of the story is the pointer chasing in the page
 	 * table walking code (when walking the page table without locking;
-	 * ie. most of the समय). Fortunately, these data accesses consist
+	 * ie. most of the time). Fortunately, these data accesses consist
 	 * of a chain of data-dependent loads, meaning most CPUs (alpha
-	 * being the notable exception) will alपढ़ोy guarantee loads are
-	 * seen in-order. See the alpha page table accessors क्रम the
+	 * being the notable exception) will already guarantee loads are
+	 * seen in-order. See the alpha page table accessors for the
 	 * smp_rmb() barriers in page table walking code.
 	 */
-	smp_wmb(); /* Could be smp_wmb__xxx(beक्रमe|after)_spin_lock */
+	smp_wmb(); /* Could be smp_wmb__xxx(before|after)_spin_lock */
 
 	ptl = pmd_lock(mm, pmd);
-	अगर (likely(pmd_none(*pmd))) अणु	/* Has another populated it ? */
+	if (likely(pmd_none(*pmd))) {	/* Has another populated it ? */
 		mm_inc_nr_ptes(mm);
 		pmd_populate(mm, pmd, new);
-		new = शून्य;
-	पूर्ण
+		new = NULL;
+	}
 	spin_unlock(ptl);
-	अगर (new)
-		pte_मुक्त(mm, new);
-	वापस 0;
-पूर्ण
+	if (new)
+		pte_free(mm, new);
+	return 0;
+}
 
-पूर्णांक __pte_alloc_kernel(pmd_t *pmd)
-अणु
+int __pte_alloc_kernel(pmd_t *pmd)
+{
 	pte_t *new = pte_alloc_one_kernel(&init_mm);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
 	smp_wmb(); /* See comment in __pte_alloc */
 
 	spin_lock(&init_mm.page_table_lock);
-	अगर (likely(pmd_none(*pmd))) अणु	/* Has another populated it ? */
+	if (likely(pmd_none(*pmd))) {	/* Has another populated it ? */
 		pmd_populate_kernel(&init_mm, pmd, new);
-		new = शून्य;
-	पूर्ण
+		new = NULL;
+	}
 	spin_unlock(&init_mm.page_table_lock);
-	अगर (new)
-		pte_मुक्त_kernel(&init_mm, new);
-	वापस 0;
-पूर्ण
+	if (new)
+		pte_free_kernel(&init_mm, new);
+	return 0;
+}
 
-अटल अंतरभूत व्योम init_rss_vec(पूर्णांक *rss)
-अणु
-	स_रखो(rss, 0, माप(पूर्णांक) * NR_MM_COUNTERS);
-पूर्ण
+static inline void init_rss_vec(int *rss)
+{
+	memset(rss, 0, sizeof(int) * NR_MM_COUNTERS);
+}
 
-अटल अंतरभूत व्योम add_mm_rss_vec(काष्ठा mm_काष्ठा *mm, पूर्णांक *rss)
-अणु
-	पूर्णांक i;
+static inline void add_mm_rss_vec(struct mm_struct *mm, int *rss)
+{
+	int i;
 
-	अगर (current->mm == mm)
+	if (current->mm == mm)
 		sync_mm_rss(mm);
-	क्रम (i = 0; i < NR_MM_COUNTERS; i++)
-		अगर (rss[i])
+	for (i = 0; i < NR_MM_COUNTERS; i++)
+		if (rss[i])
 			add_mm_counter(mm, i, rss[i]);
-पूर्ण
+}
 
 /*
- * This function is called to prपूर्णांक an error when a bad pte
+ * This function is called to print an error when a bad pte
  * is found. For example, we might have a PFN-mapped pte in
- * a region that करोesn't allow it.
+ * a region that doesn't allow it.
  *
  * The calling function must still handle the error.
  */
-अटल व्योम prपूर्णांक_bad_pte(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			  pte_t pte, काष्ठा page *page)
-अणु
+static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
+			  pte_t pte, struct page *page)
+{
 	pgd_t *pgd = pgd_offset(vma->vm_mm, addr);
 	p4d_t *p4d = p4d_offset(pgd, addr);
 	pud_t *pud = pud_offset(p4d, addr);
 	pmd_t *pmd = pmd_offset(pud, addr);
-	काष्ठा address_space *mapping;
+	struct address_space *mapping;
 	pgoff_t index;
-	अटल अचिन्हित दीर्घ resume;
-	अटल अचिन्हित दीर्घ nr_shown;
-	अटल अचिन्हित दीर्घ nr_unshown;
+	static unsigned long resume;
+	static unsigned long nr_shown;
+	static unsigned long nr_unshown;
 
 	/*
-	 * Allow a burst of 60 reports, then keep quiet क्रम that minute;
+	 * Allow a burst of 60 reports, then keep quiet for that minute;
 	 * or allow a steady drip of one report per second.
 	 */
-	अगर (nr_shown == 60) अणु
-		अगर (समय_beक्रमe(jअगरfies, resume)) अणु
+	if (nr_shown == 60) {
+		if (time_before(jiffies, resume)) {
 			nr_unshown++;
-			वापस;
-		पूर्ण
-		अगर (nr_unshown) अणु
+			return;
+		}
+		if (nr_unshown) {
 			pr_alert("BUG: Bad page map: %lu messages suppressed\n",
 				 nr_unshown);
 			nr_unshown = 0;
-		पूर्ण
+		}
 		nr_shown = 0;
-	पूर्ण
-	अगर (nr_shown++ == 0)
-		resume = jअगरfies + 60 * HZ;
+	}
+	if (nr_shown++ == 0)
+		resume = jiffies + 60 * HZ;
 
-	mapping = vma->vm_file ? vma->vm_file->f_mapping : शून्य;
+	mapping = vma->vm_file ? vma->vm_file->f_mapping : NULL;
 	index = linear_page_index(vma, addr);
 
 	pr_alert("BUG: Bad page map in process %s  pte:%08llx pmd:%08llx\n",
 		 current->comm,
-		 (दीर्घ दीर्घ)pte_val(pte), (दीर्घ दीर्घ)pmd_val(*pmd));
-	अगर (page)
+		 (long long)pte_val(pte), (long long)pmd_val(*pmd));
+	if (page)
 		dump_page(page, "bad pte");
 	pr_alert("addr:%px vm_flags:%08lx anon_vma:%px mapping:%px index:%lx\n",
-		 (व्योम *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
+		 (void *)addr, vma->vm_flags, vma->anon_vma, mapping, index);
 	pr_alert("file:%pD fault:%ps mmap:%ps readpage:%ps\n",
 		 vma->vm_file,
-		 vma->vm_ops ? vma->vm_ops->fault : शून्य,
-		 vma->vm_file ? vma->vm_file->f_op->mmap : शून्य,
-		 mapping ? mapping->a_ops->पढ़ोpage : शून्य);
+		 vma->vm_ops ? vma->vm_ops->fault : NULL,
+		 vma->vm_file ? vma->vm_file->f_op->mmap : NULL,
+		 mapping ? mapping->a_ops->readpage : NULL);
 	dump_stack();
-	add_taपूर्णांक(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
-पूर्ण
+	add_taint(TAINT_BAD_PAGE, LOCKDEP_NOW_UNRELIABLE);
+}
 
 /*
- * vm_normal_page -- This function माला_लो the "struct page" associated with a pte.
+ * vm_normal_page -- This function gets the "struct page" associated with a pte.
  *
- * "Special" mappings करो not wish to be associated with a "struct page" (either
- * it करोesn't exist, or it exists but they don't want to touch it). In this
- * हाल, शून्य is वापसed here. "Normal" mappings करो have a काष्ठा page.
+ * "Special" mappings do not wish to be associated with a "struct page" (either
+ * it doesn't exist, or it exists but they don't want to touch it). In this
+ * case, NULL is returned here. "Normal" mappings do have a struct page.
  *
- * There are 2 broad हालs. Firstly, an architecture may define a pte_special()
- * pte bit, in which हाल this function is trivial. Secondly, an architecture
+ * There are 2 broad cases. Firstly, an architecture may define a pte_special()
+ * pte bit, in which case this function is trivial. Secondly, an architecture
  * may not have a spare pte bit, which requires a more complicated scheme,
  * described below.
  *
  * A raw VM_PFNMAP mapping (ie. one that is not COWed) is always considered a
- * special mapping (even अगर there are underlying and valid "struct pages").
+ * special mapping (even if there are underlying and valid "struct pages").
  * COWed pages of a VM_PFNMAP are always normal.
  *
  * The way we recognize COWed pages within VM_PFNMAP mappings is through the
  * rules set up by "remap_pfn_range()": the vma will have the VM_PFNMAP bit
- * set, and the vm_pgoff will poपूर्णांक to the first PFN mapped: thus every special
+ * set, and the vm_pgoff will point to the first PFN mapped: thus every special
  * mapping will always honor the rule
  *
  *	pfn_of_page == vma->vm_pgoff + ((addr - vma->vm_start) >> PAGE_SHIFT)
  *
- * And क्रम normal mappings this is false.
+ * And for normal mappings this is false.
  *
- * This restricts such mappings to be a linear translation from भव address
- * to pfn. To get around this restriction, we allow arbitrary mappings so दीर्घ
- * as the vma is not a COW mapping; in that हाल, we know that all ptes are
+ * This restricts such mappings to be a linear translation from virtual address
+ * to pfn. To get around this restriction, we allow arbitrary mappings so long
+ * as the vma is not a COW mapping; in that case, we know that all ptes are
  * special (because none can have been COWed).
  *
  *
  * In order to support COW of arbitrary special mappings, we have VM_MIXEDMAP.
  *
- * VM_MIXEDMAP mappings can likewise contain memory with or without "काष्ठा
- * page" backing, however the dअगरference is that _all_ pages with a काष्ठा
+ * VM_MIXEDMAP mappings can likewise contain memory with or without "struct
+ * page" backing, however the difference is that _all_ pages with a struct
  * page (that is, those where pfn_valid is true) are refcounted and considered
  * normal pages by the VM. The disadvantage is that pages are refcounted
- * (which can be slower and simply not an option क्रम some PFNMAP users). The
- * advantage is that we करोn't have to follow the strict linearity rule of
+ * (which can be slower and simply not an option for some PFNMAP users). The
+ * advantage is that we don't have to follow the strict linearity rule of
  * PFNMAP mappings in order to support COWable mappings.
  *
  */
-काष्ठा page *vm_normal_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+struct page *vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
 			    pte_t pte)
-अणु
-	अचिन्हित दीर्घ pfn = pte_pfn(pte);
+{
+	unsigned long pfn = pte_pfn(pte);
 
-	अगर (IS_ENABLED(CONFIG_ARCH_HAS_PTE_SPECIAL)) अणु
-		अगर (likely(!pte_special(pte)))
-			जाओ check_pfn;
-		अगर (vma->vm_ops && vma->vm_ops->find_special_page)
-			वापस vma->vm_ops->find_special_page(vma, addr);
-		अगर (vma->vm_flags & (VM_PFNMAP | VM_MIXEDMAP))
-			वापस शून्य;
-		अगर (is_zero_pfn(pfn))
-			वापस शून्य;
-		अगर (pte_devmap(pte))
-			वापस शून्य;
+	if (IS_ENABLED(CONFIG_ARCH_HAS_PTE_SPECIAL)) {
+		if (likely(!pte_special(pte)))
+			goto check_pfn;
+		if (vma->vm_ops && vma->vm_ops->find_special_page)
+			return vma->vm_ops->find_special_page(vma, addr);
+		if (vma->vm_flags & (VM_PFNMAP | VM_MIXEDMAP))
+			return NULL;
+		if (is_zero_pfn(pfn))
+			return NULL;
+		if (pte_devmap(pte))
+			return NULL;
 
-		prपूर्णांक_bad_pte(vma, addr, pte, शून्य);
-		वापस शून्य;
-	पूर्ण
+		print_bad_pte(vma, addr, pte, NULL);
+		return NULL;
+	}
 
-	/* !CONFIG_ARCH_HAS_PTE_SPECIAL हाल follows: */
+	/* !CONFIG_ARCH_HAS_PTE_SPECIAL case follows: */
 
-	अगर (unlikely(vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP))) अणु
-		अगर (vma->vm_flags & VM_MIXEDMAP) अणु
-			अगर (!pfn_valid(pfn))
-				वापस शून्य;
-			जाओ out;
-		पूर्ण अन्यथा अणु
-			अचिन्हित दीर्घ off;
+	if (unlikely(vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP))) {
+		if (vma->vm_flags & VM_MIXEDMAP) {
+			if (!pfn_valid(pfn))
+				return NULL;
+			goto out;
+		} else {
+			unsigned long off;
 			off = (addr - vma->vm_start) >> PAGE_SHIFT;
-			अगर (pfn == vma->vm_pgoff + off)
-				वापस शून्य;
-			अगर (!is_cow_mapping(vma->vm_flags))
-				वापस शून्य;
-		पूर्ण
-	पूर्ण
+			if (pfn == vma->vm_pgoff + off)
+				return NULL;
+			if (!is_cow_mapping(vma->vm_flags))
+				return NULL;
+		}
+	}
 
-	अगर (is_zero_pfn(pfn))
-		वापस शून्य;
+	if (is_zero_pfn(pfn))
+		return NULL;
 
 check_pfn:
-	अगर (unlikely(pfn > highest_memmap_pfn)) अणु
-		prपूर्णांक_bad_pte(vma, addr, pte, शून्य);
-		वापस शून्य;
-	पूर्ण
+	if (unlikely(pfn > highest_memmap_pfn)) {
+		print_bad_pte(vma, addr, pte, NULL);
+		return NULL;
+	}
 
 	/*
 	 * NOTE! We still have PageReserved() pages in the page tables.
 	 * eg. VDSO mappings can cause them to exist.
 	 */
 out:
-	वापस pfn_to_page(pfn);
-पूर्ण
+	return pfn_to_page(pfn);
+}
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-काष्ठा page *vm_normal_page_pmd(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+struct page *vm_normal_page_pmd(struct vm_area_struct *vma, unsigned long addr,
 				pmd_t pmd)
-अणु
-	अचिन्हित दीर्घ pfn = pmd_pfn(pmd);
+{
+	unsigned long pfn = pmd_pfn(pmd);
 
 	/*
 	 * There is no pmd_special() but there may be special pmds, e.g.
 	 * in a direct-access (dax) mapping, so let's just replicate the
-	 * !CONFIG_ARCH_HAS_PTE_SPECIAL हाल from vm_normal_page() here.
+	 * !CONFIG_ARCH_HAS_PTE_SPECIAL case from vm_normal_page() here.
 	 */
-	अगर (unlikely(vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP))) अणु
-		अगर (vma->vm_flags & VM_MIXEDMAP) अणु
-			अगर (!pfn_valid(pfn))
-				वापस शून्य;
-			जाओ out;
-		पूर्ण अन्यथा अणु
-			अचिन्हित दीर्घ off;
+	if (unlikely(vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP))) {
+		if (vma->vm_flags & VM_MIXEDMAP) {
+			if (!pfn_valid(pfn))
+				return NULL;
+			goto out;
+		} else {
+			unsigned long off;
 			off = (addr - vma->vm_start) >> PAGE_SHIFT;
-			अगर (pfn == vma->vm_pgoff + off)
-				वापस शून्य;
-			अगर (!is_cow_mapping(vma->vm_flags))
-				वापस शून्य;
-		पूर्ण
-	पूर्ण
+			if (pfn == vma->vm_pgoff + off)
+				return NULL;
+			if (!is_cow_mapping(vma->vm_flags))
+				return NULL;
+		}
+	}
 
-	अगर (pmd_devmap(pmd))
-		वापस शून्य;
-	अगर (is_huge_zero_pmd(pmd))
-		वापस शून्य;
-	अगर (unlikely(pfn > highest_memmap_pfn))
-		वापस शून्य;
+	if (pmd_devmap(pmd))
+		return NULL;
+	if (is_huge_zero_pmd(pmd))
+		return NULL;
+	if (unlikely(pfn > highest_memmap_pfn))
+		return NULL;
 
 	/*
 	 * NOTE! We still have PageReserved() pages in the page tables.
 	 * eg. VDSO mappings can cause them to exist.
 	 */
 out:
-	वापस pfn_to_page(pfn);
-पूर्ण
-#पूर्ण_अगर
+	return pfn_to_page(pfn);
+}
+#endif
 
 /*
  * copy one vm_area from one task to the other. Assumes the page tables
- * alपढ़ोy present in the new task to be cleared in the whole range
+ * already present in the new task to be cleared in the whole range
  * covered by this vma.
  */
 
-अटल अचिन्हित दीर्घ
-copy_nonpresent_pte(काष्ठा mm_काष्ठा *dst_mm, काष्ठा mm_काष्ठा *src_mm,
-		pte_t *dst_pte, pte_t *src_pte, काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, पूर्णांक *rss)
-अणु
-	अचिन्हित दीर्घ vm_flags = vma->vm_flags;
+static unsigned long
+copy_nonpresent_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
+		unsigned long addr, int *rss)
+{
+	unsigned long vm_flags = vma->vm_flags;
 	pte_t pte = *src_pte;
-	काष्ठा page *page;
+	struct page *page;
 	swp_entry_t entry = pte_to_swp_entry(pte);
 
-	अगर (likely(!non_swap_entry(entry))) अणु
-		अगर (swap_duplicate(entry) < 0)
-			वापस entry.val;
+	if (likely(!non_swap_entry(entry))) {
+		if (swap_duplicate(entry) < 0)
+			return entry.val;
 
 		/* make sure dst_mm is on swapoff's mmlist. */
-		अगर (unlikely(list_empty(&dst_mm->mmlist))) अणु
+		if (unlikely(list_empty(&dst_mm->mmlist))) {
 			spin_lock(&mmlist_lock);
-			अगर (list_empty(&dst_mm->mmlist))
+			if (list_empty(&dst_mm->mmlist))
 				list_add(&dst_mm->mmlist,
 						&src_mm->mmlist);
 			spin_unlock(&mmlist_lock);
-		पूर्ण
+		}
 		rss[MM_SWAPENTS]++;
-	पूर्ण अन्यथा अगर (is_migration_entry(entry)) अणु
+	} else if (is_migration_entry(entry)) {
 		page = migration_entry_to_page(entry);
 
 		rss[mm_counter(page)]++;
 
-		अगर (is_ग_लिखो_migration_entry(entry) &&
-				is_cow_mapping(vm_flags)) अणु
+		if (is_write_migration_entry(entry) &&
+				is_cow_mapping(vm_flags)) {
 			/*
 			 * COW mappings require pages in both
-			 * parent and child to be set to पढ़ो.
+			 * parent and child to be set to read.
 			 */
-			make_migration_entry_पढ़ो(&entry);
+			make_migration_entry_read(&entry);
 			pte = swp_entry_to_pte(entry);
-			अगर (pte_swp_soft_dirty(*src_pte))
+			if (pte_swp_soft_dirty(*src_pte))
 				pte = pte_swp_mksoft_dirty(pte);
-			अगर (pte_swp_uffd_wp(*src_pte))
+			if (pte_swp_uffd_wp(*src_pte))
 				pte = pte_swp_mkuffd_wp(pte);
 			set_pte_at(src_mm, addr, src_pte, pte);
-		पूर्ण
-	पूर्ण अन्यथा अगर (is_device_निजी_entry(entry)) अणु
-		page = device_निजी_entry_to_page(entry);
+		}
+	} else if (is_device_private_entry(entry)) {
+		page = device_private_entry_to_page(entry);
 
 		/*
-		 * Update rss count even क्रम unaddressable pages, as
+		 * Update rss count even for unaddressable pages, as
 		 * they should treated just like normal pages in this
 		 * respect.
 		 *
 		 * We will likely want to have some new rss counters
-		 * क्रम unaddressable pages, at some poपूर्णांक. But क्रम now
+		 * for unaddressable pages, at some point. But for now
 		 * keep things as they are.
 		 */
 		get_page(page);
@@ -766,190 +765,190 @@ copy_nonpresent_pte(काष्ठा mm_काष्ठा *dst_mm, काष�
 		page_dup_rmap(page, false);
 
 		/*
-		 * We करो not preserve soft-dirty inक्रमmation, because so
-		 * far, checkpoपूर्णांक/restore is the only feature that
-		 * requires that. And checkpoपूर्णांक/restore करोes not work
+		 * We do not preserve soft-dirty information, because so
+		 * far, checkpoint/restore is the only feature that
+		 * requires that. And checkpoint/restore does not work
 		 * when a device driver is involved (you cannot easily
 		 * save and restore device driver state).
 		 */
-		अगर (is_ग_लिखो_device_निजी_entry(entry) &&
-		    is_cow_mapping(vm_flags)) अणु
-			make_device_निजी_entry_पढ़ो(&entry);
+		if (is_write_device_private_entry(entry) &&
+		    is_cow_mapping(vm_flags)) {
+			make_device_private_entry_read(&entry);
 			pte = swp_entry_to_pte(entry);
-			अगर (pte_swp_uffd_wp(*src_pte))
+			if (pte_swp_uffd_wp(*src_pte))
 				pte = pte_swp_mkuffd_wp(pte);
 			set_pte_at(src_mm, addr, src_pte, pte);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	set_pte_at(dst_mm, addr, dst_pte, pte);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Copy a present and normal page अगर necessary.
+ * Copy a present and normal page if necessary.
  *
- * NOTE! The usual हाल is that this करोesn't need to करो
- * anything, and can just वापस a positive value. That
+ * NOTE! The usual case is that this doesn't need to do
+ * anything, and can just return a positive value. That
  * will let the caller know that it can just increase
  * the page refcount and re-use the pte the traditional
  * way.
  *
- * But _अगर_ we need to copy it because it needs to be
+ * But _if_ we need to copy it because it needs to be
  * pinned in the parent (and the child should get its own
  * copy rather than just a reference to the same page),
- * we'll करो that here and वापस zero to let the caller
- * know we're करोne.
+ * we'll do that here and return zero to let the caller
+ * know we're done.
  *
- * And अगर we need a pre-allocated page but करोn't yet have
- * one, वापस a negative error to let the pपुनः_स्मृतिation
- * code know so that it can करो so outside the page table
+ * And if we need a pre-allocated page but don't yet have
+ * one, return a negative error to let the preallocation
+ * code know so that it can do so outside the page table
  * lock.
  */
-अटल अंतरभूत पूर्णांक
-copy_present_page(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma,
-		  pte_t *dst_pte, pte_t *src_pte, अचिन्हित दीर्घ addr, पूर्णांक *rss,
-		  काष्ठा page **pपुनः_स्मृति, pte_t pte, काष्ठा page *page)
-अणु
-	काष्ठा page *new_page;
+static inline int
+copy_present_page(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma,
+		  pte_t *dst_pte, pte_t *src_pte, unsigned long addr, int *rss,
+		  struct page **prealloc, pte_t pte, struct page *page)
+{
+	struct page *new_page;
 
 	/*
-	 * What we want to करो is to check whether this page may
+	 * What we want to do is to check whether this page may
 	 * have been pinned by the parent process.  If so,
 	 * instead of wrprotect the pte on both sides, we copy
 	 * the page immediately so that we'll always guarantee
-	 * the pinned page won't be अक्रमomly replaced in the
+	 * the pinned page won't be randomly replaced in the
 	 * future.
 	 *
 	 * The page pinning checks are just "has this mm ever
-	 * seen pinning", aदीर्घ with the (inexact) check of
-	 * the page count. That might give false positives क्रम
-	 * क्रम pinning, but it will work correctly.
+	 * seen pinning", along with the (inexact) check of
+	 * the page count. That might give false positives for
+	 * for pinning, but it will work correctly.
 	 */
-	अगर (likely(!page_needs_cow_क्रम_dma(src_vma, page)))
-		वापस 1;
+	if (likely(!page_needs_cow_for_dma(src_vma, page)))
+		return 1;
 
-	new_page = *pपुनः_स्मृति;
-	अगर (!new_page)
-		वापस -EAGAIN;
+	new_page = *prealloc;
+	if (!new_page)
+		return -EAGAIN;
 
 	/*
-	 * We have a pपुनः_स्मृति page, all good!  Take it
+	 * We have a prealloc page, all good!  Take it
 	 * over and copy the page & arm it.
 	 */
-	*pपुनः_स्मृति = शून्य;
+	*prealloc = NULL;
 	copy_user_highpage(new_page, page, addr, src_vma);
 	__SetPageUptodate(new_page);
 	page_add_new_anon_rmap(new_page, dst_vma, addr, false);
 	lru_cache_add_inactive_or_unevictable(new_page, dst_vma);
 	rss[mm_counter(new_page)]++;
 
-	/* All करोne, just insert the new page copy in the child */
+	/* All done, just insert the new page copy in the child */
 	pte = mk_pte(new_page, dst_vma->vm_page_prot);
-	pte = maybe_mkग_लिखो(pte_सूची_गढ़ोty(pte), dst_vma);
+	pte = maybe_mkwrite(pte_mkdirty(pte), dst_vma);
 	set_pte_at(dst_vma->vm_mm, addr, dst_pte, pte);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Copy one pte.  Returns 0 अगर succeeded, or -EAGAIN अगर one pपुनः_स्मृतिated page
+ * Copy one pte.  Returns 0 if succeeded, or -EAGAIN if one preallocated page
  * is required to copy this pte.
  */
-अटल अंतरभूत पूर्णांक
-copy_present_pte(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma,
-		 pte_t *dst_pte, pte_t *src_pte, अचिन्हित दीर्घ addr, पूर्णांक *rss,
-		 काष्ठा page **pपुनः_स्मृति)
-अणु
-	काष्ठा mm_काष्ठा *src_mm = src_vma->vm_mm;
-	अचिन्हित दीर्घ vm_flags = src_vma->vm_flags;
+static inline int
+copy_present_pte(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma,
+		 pte_t *dst_pte, pte_t *src_pte, unsigned long addr, int *rss,
+		 struct page **prealloc)
+{
+	struct mm_struct *src_mm = src_vma->vm_mm;
+	unsigned long vm_flags = src_vma->vm_flags;
 	pte_t pte = *src_pte;
-	काष्ठा page *page;
+	struct page *page;
 
 	page = vm_normal_page(src_vma, addr, pte);
-	अगर (page) अणु
-		पूर्णांक retval;
+	if (page) {
+		int retval;
 
 		retval = copy_present_page(dst_vma, src_vma, dst_pte, src_pte,
-					   addr, rss, pपुनः_स्मृति, pte, page);
-		अगर (retval <= 0)
-			वापस retval;
+					   addr, rss, prealloc, pte, page);
+		if (retval <= 0)
+			return retval;
 
 		get_page(page);
 		page_dup_rmap(page, false);
 		rss[mm_counter(page)]++;
-	पूर्ण
+	}
 
 	/*
-	 * If it's a COW mapping, ग_लिखो protect it both
+	 * If it's a COW mapping, write protect it both
 	 * in the parent and the child
 	 */
-	अगर (is_cow_mapping(vm_flags) && pte_ग_लिखो(pte)) अणु
+	if (is_cow_mapping(vm_flags) && pte_write(pte)) {
 		ptep_set_wrprotect(src_mm, addr, src_pte);
 		pte = pte_wrprotect(pte);
-	पूर्ण
+	}
 
 	/*
 	 * If it's a shared mapping, mark it clean in
 	 * the child
 	 */
-	अगर (vm_flags & VM_SHARED)
+	if (vm_flags & VM_SHARED)
 		pte = pte_mkclean(pte);
 	pte = pte_mkold(pte);
 
 	/*
-	 * Make sure the _PAGE_UFFD_WP bit is cleared अगर the new VMA
-	 * करोes not have the VM_UFFD_WP, which means that the uffd
-	 * विभाजन event is not enabled.
+	 * Make sure the _PAGE_UFFD_WP bit is cleared if the new VMA
+	 * does not have the VM_UFFD_WP, which means that the uffd
+	 * fork event is not enabled.
 	 */
-	अगर (!(vm_flags & VM_UFFD_WP))
+	if (!(vm_flags & VM_UFFD_WP))
 		pte = pte_clear_uffd_wp(pte);
 
 	set_pte_at(dst_vma->vm_mm, addr, dst_pte, pte);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा page *
-page_copy_pपुनः_स्मृति(काष्ठा mm_काष्ठा *src_mm, काष्ठा vm_area_काष्ठा *vma,
-		   अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा page *new_page;
+static inline struct page *
+page_copy_prealloc(struct mm_struct *src_mm, struct vm_area_struct *vma,
+		   unsigned long addr)
+{
+	struct page *new_page;
 
 	new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, addr);
-	अगर (!new_page)
-		वापस शून्य;
+	if (!new_page)
+		return NULL;
 
-	अगर (mem_cgroup_अक्षरge(new_page, src_mm, GFP_KERNEL)) अणु
+	if (mem_cgroup_charge(new_page, src_mm, GFP_KERNEL)) {
 		put_page(new_page);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	cgroup_throttle_swaprate(new_page, GFP_KERNEL);
 
-	वापस new_page;
-पूर्ण
+	return new_page;
+}
 
-अटल पूर्णांक
-copy_pte_range(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma,
-	       pmd_t *dst_pmd, pmd_t *src_pmd, अचिन्हित दीर्घ addr,
-	       अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mm_काष्ठा *dst_mm = dst_vma->vm_mm;
-	काष्ठा mm_काष्ठा *src_mm = src_vma->vm_mm;
+static int
+copy_pte_range(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma,
+	       pmd_t *dst_pmd, pmd_t *src_pmd, unsigned long addr,
+	       unsigned long end)
+{
+	struct mm_struct *dst_mm = dst_vma->vm_mm;
+	struct mm_struct *src_mm = src_vma->vm_mm;
 	pte_t *orig_src_pte, *orig_dst_pte;
 	pte_t *src_pte, *dst_pte;
 	spinlock_t *src_ptl, *dst_ptl;
-	पूर्णांक progress, ret = 0;
-	पूर्णांक rss[NR_MM_COUNTERS];
-	swp_entry_t entry = (swp_entry_t)अणु0पूर्ण;
-	काष्ठा page *pपुनः_स्मृति = शून्य;
+	int progress, ret = 0;
+	int rss[NR_MM_COUNTERS];
+	swp_entry_t entry = (swp_entry_t){0};
+	struct page *prealloc = NULL;
 
 again:
 	progress = 0;
 	init_rss_vec(rss);
 
 	dst_pte = pte_alloc_map_lock(dst_mm, dst_pmd, addr, &dst_ptl);
-	अगर (!dst_pte) अणु
+	if (!dst_pte) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	src_pte = pte_offset_map(src_pmd, addr);
 	src_ptl = pte_lockptr(src_mm, src_pmd);
 	spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
@@ -957,51 +956,51 @@ again:
 	orig_dst_pte = dst_pte;
 	arch_enter_lazy_mmu_mode();
 
-	करो अणु
+	do {
 		/*
-		 * We are holding two locks at this poपूर्णांक - either of them
+		 * We are holding two locks at this point - either of them
 		 * could generate latencies in another task on another CPU.
 		 */
-		अगर (progress >= 32) अणु
+		if (progress >= 32) {
 			progress = 0;
-			अगर (need_resched() ||
-			    spin_needअवरोध(src_ptl) || spin_needअवरोध(dst_ptl))
-				अवरोध;
-		पूर्ण
-		अगर (pte_none(*src_pte)) अणु
+			if (need_resched() ||
+			    spin_needbreak(src_ptl) || spin_needbreak(dst_ptl))
+				break;
+		}
+		if (pte_none(*src_pte)) {
 			progress++;
-			जारी;
-		पूर्ण
-		अगर (unlikely(!pte_present(*src_pte))) अणु
+			continue;
+		}
+		if (unlikely(!pte_present(*src_pte))) {
 			entry.val = copy_nonpresent_pte(dst_mm, src_mm,
 							dst_pte, src_pte,
 							src_vma, addr, rss);
-			अगर (entry.val)
-				अवरोध;
+			if (entry.val)
+				break;
 			progress += 8;
-			जारी;
-		पूर्ण
-		/* copy_present_pte() will clear `*pपुनः_स्मृति' अगर consumed */
+			continue;
+		}
+		/* copy_present_pte() will clear `*prealloc' if consumed */
 		ret = copy_present_pte(dst_vma, src_vma, dst_pte, src_pte,
-				       addr, rss, &pपुनः_स्मृति);
+				       addr, rss, &prealloc);
 		/*
-		 * If we need a pre-allocated page क्रम this pte, drop the
+		 * If we need a pre-allocated page for this pte, drop the
 		 * locks, allocate, and try again.
 		 */
-		अगर (unlikely(ret == -EAGAIN))
-			अवरोध;
-		अगर (unlikely(pपुनः_स्मृति)) अणु
+		if (unlikely(ret == -EAGAIN))
+			break;
+		if (unlikely(prealloc)) {
 			/*
-			 * pre-alloc page cannot be reused by next समय so as
+			 * pre-alloc page cannot be reused by next time so as
 			 * to strictly follow mempolicy (e.g., alloc_page_vma()
 			 * will allocate page according to address).  This
-			 * could only happen अगर one pinned pte changed.
+			 * could only happen if one pinned pte changed.
 			 */
-			put_page(pपुनः_स्मृति);
-			pपुनः_स्मृति = शून्य;
-		पूर्ण
+			put_page(prealloc);
+			prealloc = NULL;
+		}
 		progress += 8;
-	पूर्ण जबतक (dst_pte++, src_pte++, addr += PAGE_SIZE, addr != end);
+	} while (dst_pte++, src_pte++, addr += PAGE_SIZE, addr != end);
 
 	arch_leave_lazy_mmu_mode();
 	spin_unlock(src_ptl);
@@ -1010,214 +1009,214 @@ again:
 	pte_unmap_unlock(orig_dst_pte, dst_ptl);
 	cond_resched();
 
-	अगर (entry.val) अणु
-		अगर (add_swap_count_continuation(entry, GFP_KERNEL) < 0) अणु
+	if (entry.val) {
+		if (add_swap_count_continuation(entry, GFP_KERNEL) < 0) {
 			ret = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		entry.val = 0;
-	पूर्ण अन्यथा अगर (ret) अणु
+	} else if (ret) {
 		WARN_ON_ONCE(ret != -EAGAIN);
-		pपुनः_स्मृति = page_copy_pपुनः_स्मृति(src_mm, src_vma, addr);
-		अगर (!pपुनः_स्मृति)
-			वापस -ENOMEM;
+		prealloc = page_copy_prealloc(src_mm, src_vma, addr);
+		if (!prealloc)
+			return -ENOMEM;
 		/* We've captured and resolved the error. Reset, try again. */
 		ret = 0;
-	पूर्ण
-	अगर (addr != end)
-		जाओ again;
+	}
+	if (addr != end)
+		goto again;
 out:
-	अगर (unlikely(pपुनः_स्मृति))
-		put_page(pपुनः_स्मृति);
-	वापस ret;
-पूर्ण
+	if (unlikely(prealloc))
+		put_page(prealloc);
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
-copy_pmd_range(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma,
-	       pud_t *dst_pud, pud_t *src_pud, अचिन्हित दीर्घ addr,
-	       अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mm_काष्ठा *dst_mm = dst_vma->vm_mm;
-	काष्ठा mm_काष्ठा *src_mm = src_vma->vm_mm;
+static inline int
+copy_pmd_range(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma,
+	       pud_t *dst_pud, pud_t *src_pud, unsigned long addr,
+	       unsigned long end)
+{
+	struct mm_struct *dst_mm = dst_vma->vm_mm;
+	struct mm_struct *src_mm = src_vma->vm_mm;
 	pmd_t *src_pmd, *dst_pmd;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	dst_pmd = pmd_alloc(dst_mm, dst_pud, addr);
-	अगर (!dst_pmd)
-		वापस -ENOMEM;
+	if (!dst_pmd)
+		return -ENOMEM;
 	src_pmd = pmd_offset(src_pud, addr);
-	करो अणु
+	do {
 		next = pmd_addr_end(addr, end);
-		अगर (is_swap_pmd(*src_pmd) || pmd_trans_huge(*src_pmd)
-			|| pmd_devmap(*src_pmd)) अणु
-			पूर्णांक err;
+		if (is_swap_pmd(*src_pmd) || pmd_trans_huge(*src_pmd)
+			|| pmd_devmap(*src_pmd)) {
+			int err;
 			VM_BUG_ON_VMA(next-addr != HPAGE_PMD_SIZE, src_vma);
 			err = copy_huge_pmd(dst_mm, src_mm,
 					    dst_pmd, src_pmd, addr, src_vma);
-			अगर (err == -ENOMEM)
-				वापस -ENOMEM;
-			अगर (!err)
-				जारी;
+			if (err == -ENOMEM)
+				return -ENOMEM;
+			if (!err)
+				continue;
 			/* fall through */
-		पूर्ण
-		अगर (pmd_none_or_clear_bad(src_pmd))
-			जारी;
-		अगर (copy_pte_range(dst_vma, src_vma, dst_pmd, src_pmd,
+		}
+		if (pmd_none_or_clear_bad(src_pmd))
+			continue;
+		if (copy_pte_range(dst_vma, src_vma, dst_pmd, src_pmd,
 				   addr, next))
-			वापस -ENOMEM;
-	पूर्ण जबतक (dst_pmd++, src_pmd++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+			return -ENOMEM;
+	} while (dst_pmd++, src_pmd++, addr = next, addr != end);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-copy_pud_range(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma,
-	       p4d_t *dst_p4d, p4d_t *src_p4d, अचिन्हित दीर्घ addr,
-	       अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mm_काष्ठा *dst_mm = dst_vma->vm_mm;
-	काष्ठा mm_काष्ठा *src_mm = src_vma->vm_mm;
+static inline int
+copy_pud_range(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma,
+	       p4d_t *dst_p4d, p4d_t *src_p4d, unsigned long addr,
+	       unsigned long end)
+{
+	struct mm_struct *dst_mm = dst_vma->vm_mm;
+	struct mm_struct *src_mm = src_vma->vm_mm;
 	pud_t *src_pud, *dst_pud;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	dst_pud = pud_alloc(dst_mm, dst_p4d, addr);
-	अगर (!dst_pud)
-		वापस -ENOMEM;
+	if (!dst_pud)
+		return -ENOMEM;
 	src_pud = pud_offset(src_p4d, addr);
-	करो अणु
+	do {
 		next = pud_addr_end(addr, end);
-		अगर (pud_trans_huge(*src_pud) || pud_devmap(*src_pud)) अणु
-			पूर्णांक err;
+		if (pud_trans_huge(*src_pud) || pud_devmap(*src_pud)) {
+			int err;
 
 			VM_BUG_ON_VMA(next-addr != HPAGE_PUD_SIZE, src_vma);
 			err = copy_huge_pud(dst_mm, src_mm,
 					    dst_pud, src_pud, addr, src_vma);
-			अगर (err == -ENOMEM)
-				वापस -ENOMEM;
-			अगर (!err)
-				जारी;
+			if (err == -ENOMEM)
+				return -ENOMEM;
+			if (!err)
+				continue;
 			/* fall through */
-		पूर्ण
-		अगर (pud_none_or_clear_bad(src_pud))
-			जारी;
-		अगर (copy_pmd_range(dst_vma, src_vma, dst_pud, src_pud,
+		}
+		if (pud_none_or_clear_bad(src_pud))
+			continue;
+		if (copy_pmd_range(dst_vma, src_vma, dst_pud, src_pud,
 				   addr, next))
-			वापस -ENOMEM;
-	पूर्ण जबतक (dst_pud++, src_pud++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+			return -ENOMEM;
+	} while (dst_pud++, src_pud++, addr = next, addr != end);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-copy_p4d_range(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma,
-	       pgd_t *dst_pgd, pgd_t *src_pgd, अचिन्हित दीर्घ addr,
-	       अचिन्हित दीर्घ end)
-अणु
-	काष्ठा mm_काष्ठा *dst_mm = dst_vma->vm_mm;
+static inline int
+copy_p4d_range(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma,
+	       pgd_t *dst_pgd, pgd_t *src_pgd, unsigned long addr,
+	       unsigned long end)
+{
+	struct mm_struct *dst_mm = dst_vma->vm_mm;
 	p4d_t *src_p4d, *dst_p4d;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	dst_p4d = p4d_alloc(dst_mm, dst_pgd, addr);
-	अगर (!dst_p4d)
-		वापस -ENOMEM;
+	if (!dst_p4d)
+		return -ENOMEM;
 	src_p4d = p4d_offset(src_pgd, addr);
-	करो अणु
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none_or_clear_bad(src_p4d))
-			जारी;
-		अगर (copy_pud_range(dst_vma, src_vma, dst_p4d, src_p4d,
+		if (p4d_none_or_clear_bad(src_p4d))
+			continue;
+		if (copy_pud_range(dst_vma, src_vma, dst_p4d, src_p4d,
 				   addr, next))
-			वापस -ENOMEM;
-	पूर्ण जबतक (dst_p4d++, src_p4d++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+			return -ENOMEM;
+	} while (dst_p4d++, src_p4d++, addr = next, addr != end);
+	return 0;
+}
 
-पूर्णांक
-copy_page_range(काष्ठा vm_area_काष्ठा *dst_vma, काष्ठा vm_area_काष्ठा *src_vma)
-अणु
+int
+copy_page_range(struct vm_area_struct *dst_vma, struct vm_area_struct *src_vma)
+{
 	pgd_t *src_pgd, *dst_pgd;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ addr = src_vma->vm_start;
-	अचिन्हित दीर्घ end = src_vma->vm_end;
-	काष्ठा mm_काष्ठा *dst_mm = dst_vma->vm_mm;
-	काष्ठा mm_काष्ठा *src_mm = src_vma->vm_mm;
-	काष्ठा mmu_notअगरier_range range;
+	unsigned long next;
+	unsigned long addr = src_vma->vm_start;
+	unsigned long end = src_vma->vm_end;
+	struct mm_struct *dst_mm = dst_vma->vm_mm;
+	struct mm_struct *src_mm = src_vma->vm_mm;
+	struct mmu_notifier_range range;
 	bool is_cow;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * Don't copy ptes where a page fault will fill them correctly.
-	 * Fork becomes much lighter when there are big shared or निजी
-	 * पढ़ोonly mappings. The tradeoff is that copy_page_range is more
+	 * Fork becomes much lighter when there are big shared or private
+	 * readonly mappings. The tradeoff is that copy_page_range is more
 	 * efficient than faulting.
 	 */
-	अगर (!(src_vma->vm_flags & (VM_HUGETLB | VM_PFNMAP | VM_MIXEDMAP)) &&
+	if (!(src_vma->vm_flags & (VM_HUGETLB | VM_PFNMAP | VM_MIXEDMAP)) &&
 	    !src_vma->anon_vma)
-		वापस 0;
+		return 0;
 
-	अगर (is_vm_hugetlb_page(src_vma))
-		वापस copy_hugetlb_page_range(dst_mm, src_mm, src_vma);
+	if (is_vm_hugetlb_page(src_vma))
+		return copy_hugetlb_page_range(dst_mm, src_mm, src_vma);
 
-	अगर (unlikely(src_vma->vm_flags & VM_PFNMAP)) अणु
+	if (unlikely(src_vma->vm_flags & VM_PFNMAP)) {
 		/*
-		 * We करो not मुक्त on error हालs below as हटाओ_vma
-		 * माला_लो called on error from higher level routine
+		 * We do not free on error cases below as remove_vma
+		 * gets called on error from higher level routine
 		 */
 		ret = track_pfn_copy(src_vma);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/*
 	 * We need to invalidate the secondary MMU mappings only when
-	 * there could be a permission करोwngrade on the ptes of the
-	 * parent mm. And a permission करोwngrade will only happen अगर
-	 * is_cow_mapping() वापसs true.
+	 * there could be a permission downgrade on the ptes of the
+	 * parent mm. And a permission downgrade will only happen if
+	 * is_cow_mapping() returns true.
 	 */
 	is_cow = is_cow_mapping(src_vma->vm_flags);
 
-	अगर (is_cow) अणु
-		mmu_notअगरier_range_init(&range, MMU_NOTIFY_PROTECTION_PAGE,
+	if (is_cow) {
+		mmu_notifier_range_init(&range, MMU_NOTIFY_PROTECTION_PAGE,
 					0, src_vma, src_mm, addr, end);
-		mmu_notअगरier_invalidate_range_start(&range);
+		mmu_notifier_invalidate_range_start(&range);
 		/*
-		 * Disabling preemption is not needed क्रम the ग_लिखो side, as
-		 * the पढ़ो side करोesn't spin, but goes to the mmap_lock.
+		 * Disabling preemption is not needed for the write side, as
+		 * the read side doesn't spin, but goes to the mmap_lock.
 		 *
-		 * Use the raw variant of the seqcount_t ग_लिखो API to aव्योम
+		 * Use the raw variant of the seqcount_t write API to avoid
 		 * lockdep complaining about preemptibility.
 		 */
-		mmap_निश्चित_ग_लिखो_locked(src_mm);
-		raw_ग_लिखो_seqcount_begin(&src_mm->ग_लिखो_protect_seq);
-	पूर्ण
+		mmap_assert_write_locked(src_mm);
+		raw_write_seqcount_begin(&src_mm->write_protect_seq);
+	}
 
 	ret = 0;
 	dst_pgd = pgd_offset(dst_mm, addr);
 	src_pgd = pgd_offset(src_mm, addr);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none_or_clear_bad(src_pgd))
-			जारी;
-		अगर (unlikely(copy_p4d_range(dst_vma, src_vma, dst_pgd, src_pgd,
-					    addr, next))) अणु
+		if (pgd_none_or_clear_bad(src_pgd))
+			continue;
+		if (unlikely(copy_p4d_range(dst_vma, src_vma, dst_pgd, src_pgd,
+					    addr, next))) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (dst_pgd++, src_pgd++, addr = next, addr != end);
+			break;
+		}
+	} while (dst_pgd++, src_pgd++, addr = next, addr != end);
 
-	अगर (is_cow) अणु
-		raw_ग_लिखो_seqcount_end(&src_mm->ग_लिखो_protect_seq);
-		mmu_notअगरier_invalidate_range_end(&range);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (is_cow) {
+		raw_write_seqcount_end(&src_mm->write_protect_seq);
+		mmu_notifier_invalidate_range_end(&range);
+	}
+	return ret;
+}
 
-अटल अचिन्हित दीर्घ zap_pte_range(काष्ठा mmu_gather *tlb,
-				काष्ठा vm_area_काष्ठा *vma, pmd_t *pmd,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				काष्ठा zap_details *details)
-अणु
-	काष्ठा mm_काष्ठा *mm = tlb->mm;
-	पूर्णांक क्रमce_flush = 0;
-	पूर्णांक rss[NR_MM_COUNTERS];
+static unsigned long zap_pte_range(struct mmu_gather *tlb,
+				struct vm_area_struct *vma, pmd_t *pmd,
+				unsigned long addr, unsigned long end,
+				struct zap_details *details)
+{
+	struct mm_struct *mm = tlb->mm;
+	int force_flush = 0;
+	int rss[NR_MM_COUNTERS];
 	spinlock_t *ptl;
 	pte_t *start_pte;
 	pte_t *pte;
@@ -1230,387 +1229,387 @@ again:
 	pte = start_pte;
 	flush_tlb_batched_pending(mm);
 	arch_enter_lazy_mmu_mode();
-	करो अणु
+	do {
 		pte_t ptent = *pte;
-		अगर (pte_none(ptent))
-			जारी;
+		if (pte_none(ptent))
+			continue;
 
-		अगर (need_resched())
-			अवरोध;
+		if (need_resched())
+			break;
 
-		अगर (pte_present(ptent)) अणु
-			काष्ठा page *page;
+		if (pte_present(ptent)) {
+			struct page *page;
 
 			page = vm_normal_page(vma, addr, ptent);
-			अगर (unlikely(details) && page) अणु
+			if (unlikely(details) && page) {
 				/*
 				 * unmap_shared_mapping_pages() wants to
 				 * invalidate cache without truncating:
-				 * unmap shared but keep निजी pages.
+				 * unmap shared but keep private pages.
 				 */
-				अगर (details->check_mapping &&
+				if (details->check_mapping &&
 				    details->check_mapping != page_rmapping(page))
-					जारी;
-			पूर्ण
+					continue;
+			}
 			ptent = ptep_get_and_clear_full(mm, addr, pte,
 							tlb->fullmm);
-			tlb_हटाओ_tlb_entry(tlb, pte, addr);
-			अगर (unlikely(!page))
-				जारी;
+			tlb_remove_tlb_entry(tlb, pte, addr);
+			if (unlikely(!page))
+				continue;
 
-			अगर (!PageAnon(page)) अणु
-				अगर (pte_dirty(ptent)) अणु
-					क्रमce_flush = 1;
+			if (!PageAnon(page)) {
+				if (pte_dirty(ptent)) {
+					force_flush = 1;
 					set_page_dirty(page);
-				पूर्ण
-				अगर (pte_young(ptent) &&
+				}
+				if (pte_young(ptent) &&
 				    likely(!(vma->vm_flags & VM_SEQ_READ)))
 					mark_page_accessed(page);
-			पूर्ण
+			}
 			rss[mm_counter(page)]--;
-			page_हटाओ_rmap(page, false);
-			अगर (unlikely(page_mapcount(page) < 0))
-				prपूर्णांक_bad_pte(vma, addr, ptent, page);
-			अगर (unlikely(__tlb_हटाओ_page(tlb, page))) अणु
-				क्रमce_flush = 1;
+			page_remove_rmap(page, false);
+			if (unlikely(page_mapcount(page) < 0))
+				print_bad_pte(vma, addr, ptent, page);
+			if (unlikely(__tlb_remove_page(tlb, page))) {
+				force_flush = 1;
 				addr += PAGE_SIZE;
-				अवरोध;
-			पूर्ण
-			जारी;
-		पूर्ण
+				break;
+			}
+			continue;
+		}
 
 		entry = pte_to_swp_entry(ptent);
-		अगर (is_device_निजी_entry(entry)) अणु
-			काष्ठा page *page = device_निजी_entry_to_page(entry);
+		if (is_device_private_entry(entry)) {
+			struct page *page = device_private_entry_to_page(entry);
 
-			अगर (unlikely(details && details->check_mapping)) अणु
+			if (unlikely(details && details->check_mapping)) {
 				/*
 				 * unmap_shared_mapping_pages() wants to
 				 * invalidate cache without truncating:
-				 * unmap shared but keep निजी pages.
+				 * unmap shared but keep private pages.
 				 */
-				अगर (details->check_mapping !=
+				if (details->check_mapping !=
 				    page_rmapping(page))
-					जारी;
-			पूर्ण
+					continue;
+			}
 
 			pte_clear_not_present_full(mm, addr, pte, tlb->fullmm);
 			rss[mm_counter(page)]--;
-			page_हटाओ_rmap(page, false);
+			page_remove_rmap(page, false);
 			put_page(page);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* If details->check_mapping, we leave swap entries. */
-		अगर (unlikely(details))
-			जारी;
+		if (unlikely(details))
+			continue;
 
-		अगर (!non_swap_entry(entry))
+		if (!non_swap_entry(entry))
 			rss[MM_SWAPENTS]--;
-		अन्यथा अगर (is_migration_entry(entry)) अणु
-			काष्ठा page *page;
+		else if (is_migration_entry(entry)) {
+			struct page *page;
 
 			page = migration_entry_to_page(entry);
 			rss[mm_counter(page)]--;
-		पूर्ण
-		अगर (unlikely(!मुक्त_swap_and_cache(entry)))
-			prपूर्णांक_bad_pte(vma, addr, ptent, शून्य);
+		}
+		if (unlikely(!free_swap_and_cache(entry)))
+			print_bad_pte(vma, addr, ptent, NULL);
 		pte_clear_not_present_full(mm, addr, pte, tlb->fullmm);
-	पूर्ण जबतक (pte++, addr += PAGE_SIZE, addr != end);
+	} while (pte++, addr += PAGE_SIZE, addr != end);
 
 	add_mm_rss_vec(mm, rss);
 	arch_leave_lazy_mmu_mode();
 
-	/* Do the actual TLB flush beक्रमe dropping ptl */
-	अगर (क्रमce_flush)
+	/* Do the actual TLB flush before dropping ptl */
+	if (force_flush)
 		tlb_flush_mmu_tlbonly(tlb);
 	pte_unmap_unlock(start_pte, ptl);
 
 	/*
-	 * If we क्रमced a TLB flush (either due to running out of
+	 * If we forced a TLB flush (either due to running out of
 	 * batch buffers or because we needed to flush dirty TLB
-	 * entries beक्रमe releasing the ptl), मुक्त the batched
-	 * memory too. Restart अगर we didn't करो everything.
+	 * entries before releasing the ptl), free the batched
+	 * memory too. Restart if we didn't do everything.
 	 */
-	अगर (क्रमce_flush) अणु
-		क्रमce_flush = 0;
+	if (force_flush) {
+		force_flush = 0;
 		tlb_flush_mmu(tlb);
-	पूर्ण
+	}
 
-	अगर (addr != end) अणु
+	if (addr != end) {
 		cond_resched();
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ zap_pmd_range(काष्ठा mmu_gather *tlb,
-				काष्ठा vm_area_काष्ठा *vma, pud_t *pud,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				काष्ठा zap_details *details)
-अणु
+static inline unsigned long zap_pmd_range(struct mmu_gather *tlb,
+				struct vm_area_struct *vma, pud_t *pud,
+				unsigned long addr, unsigned long end,
+				struct zap_details *details)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	pmd = pmd_offset(pud, addr);
-	करो अणु
+	do {
 		next = pmd_addr_end(addr, end);
-		अगर (is_swap_pmd(*pmd) || pmd_trans_huge(*pmd) || pmd_devmap(*pmd)) अणु
-			अगर (next - addr != HPAGE_PMD_SIZE)
-				__split_huge_pmd(vma, pmd, addr, false, शून्य);
-			अन्यथा अगर (zap_huge_pmd(tlb, vma, pmd, addr))
-				जाओ next;
+		if (is_swap_pmd(*pmd) || pmd_trans_huge(*pmd) || pmd_devmap(*pmd)) {
+			if (next - addr != HPAGE_PMD_SIZE)
+				__split_huge_pmd(vma, pmd, addr, false, NULL);
+			else if (zap_huge_pmd(tlb, vma, pmd, addr))
+				goto next;
 			/* fall through */
-		पूर्ण अन्यथा अगर (details && details->single_page &&
+		} else if (details && details->single_page &&
 			   PageTransCompound(details->single_page) &&
-			   next - addr == HPAGE_PMD_SIZE && pmd_none(*pmd)) अणु
+			   next - addr == HPAGE_PMD_SIZE && pmd_none(*pmd)) {
 			spinlock_t *ptl = pmd_lock(tlb->mm, pmd);
 			/*
-			 * Take and drop THP pmd lock so that we cannot वापस
-			 * prematurely, जबतक zap_huge_pmd() has cleared *pmd,
+			 * Take and drop THP pmd lock so that we cannot return
+			 * prematurely, while zap_huge_pmd() has cleared *pmd,
 			 * but not yet decremented compound_mapcount().
 			 */
 			spin_unlock(ptl);
-		पूर्ण
+		}
 
 		/*
 		 * Here there can be other concurrent MADV_DONTNEED or
-		 * trans huge page faults running, and अगर the pmd is
+		 * trans huge page faults running, and if the pmd is
 		 * none or trans huge it can change under us. This is
-		 * because MADV_DONTNEED holds the mmap_lock in पढ़ो
+		 * because MADV_DONTNEED holds the mmap_lock in read
 		 * mode.
 		 */
-		अगर (pmd_none_or_trans_huge_or_clear_bad(pmd))
-			जाओ next;
+		if (pmd_none_or_trans_huge_or_clear_bad(pmd))
+			goto next;
 		next = zap_pte_range(tlb, vma, pmd, addr, next, details);
 next:
 		cond_resched();
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
+	} while (pmd++, addr = next, addr != end);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ zap_pud_range(काष्ठा mmu_gather *tlb,
-				काष्ठा vm_area_काष्ठा *vma, p4d_t *p4d,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				काष्ठा zap_details *details)
-अणु
+static inline unsigned long zap_pud_range(struct mmu_gather *tlb,
+				struct vm_area_struct *vma, p4d_t *p4d,
+				unsigned long addr, unsigned long end,
+				struct zap_details *details)
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	pud = pud_offset(p4d, addr);
-	करो अणु
+	do {
 		next = pud_addr_end(addr, end);
-		अगर (pud_trans_huge(*pud) || pud_devmap(*pud)) अणु
-			अगर (next - addr != HPAGE_PUD_SIZE) अणु
-				mmap_निश्चित_locked(tlb->mm);
+		if (pud_trans_huge(*pud) || pud_devmap(*pud)) {
+			if (next - addr != HPAGE_PUD_SIZE) {
+				mmap_assert_locked(tlb->mm);
 				split_huge_pud(vma, pud, addr);
-			पूर्ण अन्यथा अगर (zap_huge_pud(tlb, vma, pud, addr))
-				जाओ next;
+			} else if (zap_huge_pud(tlb, vma, pud, addr))
+				goto next;
 			/* fall through */
-		पूर्ण
-		अगर (pud_none_or_clear_bad(pud))
-			जारी;
+		}
+		if (pud_none_or_clear_bad(pud))
+			continue;
 		next = zap_pmd_range(tlb, vma, pud, addr, next, details);
 next:
 		cond_resched();
-	पूर्ण जबतक (pud++, addr = next, addr != end);
+	} while (pud++, addr = next, addr != end);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ zap_p4d_range(काष्ठा mmu_gather *tlb,
-				काष्ठा vm_area_काष्ठा *vma, pgd_t *pgd,
-				अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				काष्ठा zap_details *details)
-अणु
+static inline unsigned long zap_p4d_range(struct mmu_gather *tlb,
+				struct vm_area_struct *vma, pgd_t *pgd,
+				unsigned long addr, unsigned long end,
+				struct zap_details *details)
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	p4d = p4d_offset(pgd, addr);
-	करो अणु
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none_or_clear_bad(p4d))
-			जारी;
+		if (p4d_none_or_clear_bad(p4d))
+			continue;
 		next = zap_pud_range(tlb, vma, p4d, addr, next, details);
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
+	} while (p4d++, addr = next, addr != end);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-व्योम unmap_page_range(काष्ठा mmu_gather *tlb,
-			     काष्ठा vm_area_काष्ठा *vma,
-			     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			     काष्ठा zap_details *details)
-अणु
+void unmap_page_range(struct mmu_gather *tlb,
+			     struct vm_area_struct *vma,
+			     unsigned long addr, unsigned long end,
+			     struct zap_details *details)
+{
 	pgd_t *pgd;
-	अचिन्हित दीर्घ next;
+	unsigned long next;
 
 	BUG_ON(addr >= end);
 	tlb_start_vma(tlb, vma);
 	pgd = pgd_offset(vma->vm_mm, addr);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none_or_clear_bad(pgd))
-			जारी;
+		if (pgd_none_or_clear_bad(pgd))
+			continue;
 		next = zap_p4d_range(tlb, vma, pgd, addr, next, details);
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
+	} while (pgd++, addr = next, addr != end);
 	tlb_end_vma(tlb, vma);
-पूर्ण
+}
 
 
-अटल व्योम unmap_single_vma(काष्ठा mmu_gather *tlb,
-		काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start_addr,
-		अचिन्हित दीर्घ end_addr,
-		काष्ठा zap_details *details)
-अणु
-	अचिन्हित दीर्घ start = max(vma->vm_start, start_addr);
-	अचिन्हित दीर्घ end;
+static void unmap_single_vma(struct mmu_gather *tlb,
+		struct vm_area_struct *vma, unsigned long start_addr,
+		unsigned long end_addr,
+		struct zap_details *details)
+{
+	unsigned long start = max(vma->vm_start, start_addr);
+	unsigned long end;
 
-	अगर (start >= vma->vm_end)
-		वापस;
+	if (start >= vma->vm_end)
+		return;
 	end = min(vma->vm_end, end_addr);
-	अगर (end <= vma->vm_start)
-		वापस;
+	if (end <= vma->vm_start)
+		return;
 
-	अगर (vma->vm_file)
+	if (vma->vm_file)
 		uprobe_munmap(vma, start, end);
 
-	अगर (unlikely(vma->vm_flags & VM_PFNMAP))
+	if (unlikely(vma->vm_flags & VM_PFNMAP))
 		untrack_pfn(vma, 0, 0);
 
-	अगर (start != end) अणु
-		अगर (unlikely(is_vm_hugetlb_page(vma))) अणु
+	if (start != end) {
+		if (unlikely(is_vm_hugetlb_page(vma))) {
 			/*
 			 * It is undesirable to test vma->vm_file as it
-			 * should be non-null क्रम valid hugetlb area.
-			 * However, vm_file will be शून्य in the error
+			 * should be non-null for valid hugetlb area.
+			 * However, vm_file will be NULL in the error
 			 * cleanup path of mmap_region. When
 			 * hugetlbfs ->mmap method fails,
-			 * mmap_region() nullअगरies vma->vm_file
-			 * beक्रमe calling this function to clean up.
+			 * mmap_region() nullifies vma->vm_file
+			 * before calling this function to clean up.
 			 * Since no pte has actually been setup, it is
-			 * safe to करो nothing in this हाल.
+			 * safe to do nothing in this case.
 			 */
-			अगर (vma->vm_file) अणु
-				i_mmap_lock_ग_लिखो(vma->vm_file->f_mapping);
-				__unmap_hugepage_range_final(tlb, vma, start, end, शून्य);
-				i_mmap_unlock_ग_लिखो(vma->vm_file->f_mapping);
-			पूर्ण
-		पूर्ण अन्यथा
+			if (vma->vm_file) {
+				i_mmap_lock_write(vma->vm_file->f_mapping);
+				__unmap_hugepage_range_final(tlb, vma, start, end, NULL);
+				i_mmap_unlock_write(vma->vm_file->f_mapping);
+			}
+		} else
 			unmap_page_range(tlb, vma, start, end, details);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * unmap_vmas - unmap a range of memory covered by a list of vma's
- * @tlb: address of the caller's काष्ठा mmu_gather
+ * @tlb: address of the caller's struct mmu_gather
  * @vma: the starting vma
- * @start_addr: भव address at which to start unmapping
- * @end_addr: भव address at which to end unmapping
+ * @start_addr: virtual address at which to start unmapping
+ * @end_addr: virtual address at which to end unmapping
  *
  * Unmap all pages in the vma list.
  *
  * Only addresses between `start' and `end' will be unmapped.
  *
- * The VMA list must be sorted in ascending भव address order.
+ * The VMA list must be sorted in ascending virtual address order.
  *
  * unmap_vmas() assumes that the caller will flush the whole unmapped address
- * range after unmap_vmas() वापसs.  So the only responsibility here is to
- * ensure that any thus-far unmapped pages are flushed beक्रमe unmap_vmas()
+ * range after unmap_vmas() returns.  So the only responsibility here is to
+ * ensure that any thus-far unmapped pages are flushed before unmap_vmas()
  * drops the lock and schedules.
  */
-व्योम unmap_vmas(काष्ठा mmu_gather *tlb,
-		काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start_addr,
-		अचिन्हित दीर्घ end_addr)
-अणु
-	काष्ठा mmu_notअगरier_range range;
+void unmap_vmas(struct mmu_gather *tlb,
+		struct vm_area_struct *vma, unsigned long start_addr,
+		unsigned long end_addr)
+{
+	struct mmu_notifier_range range;
 
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_UNMAP, 0, vma, vma->vm_mm,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_UNMAP, 0, vma, vma->vm_mm,
 				start_addr, end_addr);
-	mmu_notअगरier_invalidate_range_start(&range);
-	क्रम ( ; vma && vma->vm_start < end_addr; vma = vma->vm_next)
-		unmap_single_vma(tlb, vma, start_addr, end_addr, शून्य);
-	mmu_notअगरier_invalidate_range_end(&range);
-पूर्ण
+	mmu_notifier_invalidate_range_start(&range);
+	for ( ; vma && vma->vm_start < end_addr; vma = vma->vm_next)
+		unmap_single_vma(tlb, vma, start_addr, end_addr, NULL);
+	mmu_notifier_invalidate_range_end(&range);
+}
 
 /**
- * zap_page_range - हटाओ user pages in a given range
- * @vma: vm_area_काष्ठा holding the applicable pages
+ * zap_page_range - remove user pages in a given range
+ * @vma: vm_area_struct holding the applicable pages
  * @start: starting address of pages to zap
  * @size: number of bytes to zap
  *
  * Caller must protect the VMA list
  */
-व्योम zap_page_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-		अचिन्हित दीर्घ size)
-अणु
-	काष्ठा mmu_notअगरier_range range;
-	काष्ठा mmu_gather tlb;
+void zap_page_range(struct vm_area_struct *vma, unsigned long start,
+		unsigned long size)
+{
+	struct mmu_notifier_range range;
+	struct mmu_gather tlb;
 
 	lru_add_drain();
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, vma->vm_mm,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, vma->vm_mm,
 				start, start + size);
 	tlb_gather_mmu(&tlb, vma->vm_mm);
 	update_hiwater_rss(vma->vm_mm);
-	mmu_notअगरier_invalidate_range_start(&range);
-	क्रम ( ; vma && vma->vm_start < range.end; vma = vma->vm_next)
-		unmap_single_vma(&tlb, vma, start, range.end, शून्य);
-	mmu_notअगरier_invalidate_range_end(&range);
+	mmu_notifier_invalidate_range_start(&range);
+	for ( ; vma && vma->vm_start < range.end; vma = vma->vm_next)
+		unmap_single_vma(&tlb, vma, start, range.end, NULL);
+	mmu_notifier_invalidate_range_end(&range);
 	tlb_finish_mmu(&tlb);
-पूर्ण
+}
 
 /**
- * zap_page_range_single - हटाओ user pages in a given range
- * @vma: vm_area_काष्ठा holding the applicable pages
+ * zap_page_range_single - remove user pages in a given range
+ * @vma: vm_area_struct holding the applicable pages
  * @address: starting address of pages to zap
  * @size: number of bytes to zap
  * @details: details of shared cache invalidation
  *
- * The range must fit पूर्णांकo one VMA.
+ * The range must fit into one VMA.
  */
-अटल व्योम zap_page_range_single(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-		अचिन्हित दीर्घ size, काष्ठा zap_details *details)
-अणु
-	काष्ठा mmu_notअगरier_range range;
-	काष्ठा mmu_gather tlb;
+static void zap_page_range_single(struct vm_area_struct *vma, unsigned long address,
+		unsigned long size, struct zap_details *details)
+{
+	struct mmu_notifier_range range;
+	struct mmu_gather tlb;
 
 	lru_add_drain();
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, vma->vm_mm,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, vma->vm_mm,
 				address, address + size);
 	tlb_gather_mmu(&tlb, vma->vm_mm);
 	update_hiwater_rss(vma->vm_mm);
-	mmu_notअगरier_invalidate_range_start(&range);
+	mmu_notifier_invalidate_range_start(&range);
 	unmap_single_vma(&tlb, vma, address, range.end, details);
-	mmu_notअगरier_invalidate_range_end(&range);
+	mmu_notifier_invalidate_range_end(&range);
 	tlb_finish_mmu(&tlb);
-पूर्ण
+}
 
 /**
- * zap_vma_ptes - हटाओ ptes mapping the vma
- * @vma: vm_area_काष्ठा holding ptes to be zapped
+ * zap_vma_ptes - remove ptes mapping the vma
+ * @vma: vm_area_struct holding ptes to be zapped
  * @address: starting address of pages to zap
  * @size: number of bytes to zap
  *
- * This function only unmaps ptes asचिन्हित to VM_PFNMAP vmas.
+ * This function only unmaps ptes assigned to VM_PFNMAP vmas.
  *
  * The entire address range must be fully contained within the vma.
  *
  */
-व्योम zap_vma_ptes(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-		अचिन्हित दीर्घ size)
-अणु
-	अगर (address < vma->vm_start || address + size > vma->vm_end ||
+void zap_vma_ptes(struct vm_area_struct *vma, unsigned long address,
+		unsigned long size)
+{
+	if (address < vma->vm_start || address + size > vma->vm_end ||
 	    		!(vma->vm_flags & VM_PFNMAP))
-		वापस;
+		return;
 
-	zap_page_range_single(vma, address, size, शून्य);
-पूर्ण
+	zap_page_range_single(vma, address, size, NULL);
+}
 EXPORT_SYMBOL_GPL(zap_vma_ptes);
 
-अटल pmd_t *walk_to_pmd(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
+static pmd_t *walk_to_pmd(struct mm_struct *mm, unsigned long addr)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -1618,152 +1617,152 @@ EXPORT_SYMBOL_GPL(zap_vma_ptes);
 
 	pgd = pgd_offset(mm, addr);
 	p4d = p4d_alloc(mm, pgd, addr);
-	अगर (!p4d)
-		वापस शून्य;
+	if (!p4d)
+		return NULL;
 	pud = pud_alloc(mm, p4d, addr);
-	अगर (!pud)
-		वापस शून्य;
+	if (!pud)
+		return NULL;
 	pmd = pmd_alloc(mm, pud, addr);
-	अगर (!pmd)
-		वापस शून्य;
+	if (!pmd)
+		return NULL;
 
 	VM_BUG_ON(pmd_trans_huge(*pmd));
-	वापस pmd;
-पूर्ण
+	return pmd;
+}
 
-pte_t *__get_locked_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+pte_t *__get_locked_pte(struct mm_struct *mm, unsigned long addr,
 			spinlock_t **ptl)
-अणु
+{
 	pmd_t *pmd = walk_to_pmd(mm, addr);
 
-	अगर (!pmd)
-		वापस शून्य;
-	वापस pte_alloc_map_lock(mm, pmd, addr, ptl);
-पूर्ण
+	if (!pmd)
+		return NULL;
+	return pte_alloc_map_lock(mm, pmd, addr, ptl);
+}
 
-अटल पूर्णांक validate_page_beक्रमe_insert(काष्ठा page *page)
-अणु
-	अगर (PageAnon(page) || PageSlab(page) || page_has_type(page))
-		वापस -EINVAL;
+static int validate_page_before_insert(struct page *page)
+{
+	if (PageAnon(page) || PageSlab(page) || page_has_type(page))
+		return -EINVAL;
 	flush_dcache_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक insert_page_पूर्णांकo_pte_locked(काष्ठा mm_काष्ठा *mm, pte_t *pte,
-			अचिन्हित दीर्घ addr, काष्ठा page *page, pgprot_t prot)
-अणु
-	अगर (!pte_none(*pte))
-		वापस -EBUSY;
+static int insert_page_into_pte_locked(struct mm_struct *mm, pte_t *pte,
+			unsigned long addr, struct page *page, pgprot_t prot)
+{
+	if (!pte_none(*pte))
+		return -EBUSY;
 	/* Ok, finally just insert the thing.. */
 	get_page(page);
 	inc_mm_counter_fast(mm, mm_counter_file(page));
 	page_add_file_rmap(page, false);
 	set_pte_at(mm, addr, pte, mk_pte(page, prot));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This is the old fallback क्रम page remapping.
+ * This is the old fallback for page remapping.
  *
  * For historical reasons, it only allows reserved pages. Only
  * old drivers should use this, and they needed to mark their
- * pages reserved क्रम the old functions anyway.
+ * pages reserved for the old functions anyway.
  */
-अटल पूर्णांक insert_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			काष्ठा page *page, pgprot_t prot)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	पूर्णांक retval;
+static int insert_page(struct vm_area_struct *vma, unsigned long addr,
+			struct page *page, pgprot_t prot)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	int retval;
 	pte_t *pte;
 	spinlock_t *ptl;
 
-	retval = validate_page_beक्रमe_insert(page);
-	अगर (retval)
-		जाओ out;
+	retval = validate_page_before_insert(page);
+	if (retval)
+		goto out;
 	retval = -ENOMEM;
 	pte = get_locked_pte(mm, addr, &ptl);
-	अगर (!pte)
-		जाओ out;
-	retval = insert_page_पूर्णांकo_pte_locked(mm, pte, addr, page, prot);
+	if (!pte)
+		goto out;
+	retval = insert_page_into_pte_locked(mm, pte, addr, page, prot);
 	pte_unmap_unlock(pte, ptl);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#अगर_घोषित pte_index
-अटल पूर्णांक insert_page_in_batch_locked(काष्ठा mm_काष्ठा *mm, pte_t *pte,
-			अचिन्हित दीर्घ addr, काष्ठा page *page, pgprot_t prot)
-अणु
-	पूर्णांक err;
+#ifdef pte_index
+static int insert_page_in_batch_locked(struct mm_struct *mm, pte_t *pte,
+			unsigned long addr, struct page *page, pgprot_t prot)
+{
+	int err;
 
-	अगर (!page_count(page))
-		वापस -EINVAL;
-	err = validate_page_beक्रमe_insert(page);
-	अगर (err)
-		वापस err;
-	वापस insert_page_पूर्णांकo_pte_locked(mm, pte, addr, page, prot);
-पूर्ण
+	if (!page_count(page))
+		return -EINVAL;
+	err = validate_page_before_insert(page);
+	if (err)
+		return err;
+	return insert_page_into_pte_locked(mm, pte, addr, page, prot);
+}
 
 /* insert_pages() amortizes the cost of spinlock operations
  * when inserting pages in a loop. Arch *must* define pte_index.
  */
-अटल पूर्णांक insert_pages(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			काष्ठा page **pages, अचिन्हित दीर्घ *num, pgprot_t prot)
-अणु
-	pmd_t *pmd = शून्य;
+static int insert_pages(struct vm_area_struct *vma, unsigned long addr,
+			struct page **pages, unsigned long *num, pgprot_t prot)
+{
+	pmd_t *pmd = NULL;
 	pte_t *start_pte, *pte;
 	spinlock_t *pte_lock;
-	काष्ठा mm_काष्ठा *स्थिर mm = vma->vm_mm;
-	अचिन्हित दीर्घ curr_page_idx = 0;
-	अचिन्हित दीर्घ reमुख्यing_pages_total = *num;
-	अचिन्हित दीर्घ pages_to_ग_लिखो_in_pmd;
-	पूर्णांक ret;
+	struct mm_struct *const mm = vma->vm_mm;
+	unsigned long curr_page_idx = 0;
+	unsigned long remaining_pages_total = *num;
+	unsigned long pages_to_write_in_pmd;
+	int ret;
 more:
 	ret = -EFAULT;
 	pmd = walk_to_pmd(mm, addr);
-	अगर (!pmd)
-		जाओ out;
+	if (!pmd)
+		goto out;
 
-	pages_to_ग_लिखो_in_pmd = min_t(अचिन्हित दीर्घ,
-		reमुख्यing_pages_total, PTRS_PER_PTE - pte_index(addr));
+	pages_to_write_in_pmd = min_t(unsigned long,
+		remaining_pages_total, PTRS_PER_PTE - pte_index(addr));
 
-	/* Allocate the PTE अगर necessary; takes PMD lock once only. */
+	/* Allocate the PTE if necessary; takes PMD lock once only. */
 	ret = -ENOMEM;
-	अगर (pte_alloc(mm, pmd))
-		जाओ out;
+	if (pte_alloc(mm, pmd))
+		goto out;
 
-	जबतक (pages_to_ग_लिखो_in_pmd) अणु
-		पूर्णांक pte_idx = 0;
-		स्थिर पूर्णांक batch_size = min_t(पूर्णांक, pages_to_ग_लिखो_in_pmd, 8);
+	while (pages_to_write_in_pmd) {
+		int pte_idx = 0;
+		const int batch_size = min_t(int, pages_to_write_in_pmd, 8);
 
 		start_pte = pte_offset_map_lock(mm, pmd, addr, &pte_lock);
-		क्रम (pte = start_pte; pte_idx < batch_size; ++pte, ++pte_idx) अणु
-			पूर्णांक err = insert_page_in_batch_locked(mm, pte,
+		for (pte = start_pte; pte_idx < batch_size; ++pte, ++pte_idx) {
+			int err = insert_page_in_batch_locked(mm, pte,
 				addr, pages[curr_page_idx], prot);
-			अगर (unlikely(err)) अणु
+			if (unlikely(err)) {
 				pte_unmap_unlock(start_pte, pte_lock);
 				ret = err;
-				reमुख्यing_pages_total -= pte_idx;
-				जाओ out;
-			पूर्ण
+				remaining_pages_total -= pte_idx;
+				goto out;
+			}
 			addr += PAGE_SIZE;
 			++curr_page_idx;
-		पूर्ण
+		}
 		pte_unmap_unlock(start_pte, pte_lock);
-		pages_to_ग_लिखो_in_pmd -= batch_size;
-		reमुख्यing_pages_total -= batch_size;
-	पूर्ण
-	अगर (reमुख्यing_pages_total)
-		जाओ more;
+		pages_to_write_in_pmd -= batch_size;
+		remaining_pages_total -= batch_size;
+	}
+	if (remaining_pages_total)
+		goto more;
 	ret = 0;
 out:
-	*num = reमुख्यing_pages_total;
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर  /* अगरdef pte_index */
+	*num = remaining_pages_total;
+	return ret;
+}
+#endif  /* ifdef pte_index */
 
 /**
- * vm_insert_pages - insert multiple pages पूर्णांकo user vma, batching the pmd lock.
+ * vm_insert_pages - insert multiple pages into user vma, batching the pmd lock.
  * @vma: user vma to map to
  * @addr: target start user address of these pages
  * @pages: source kernel pages
@@ -1772,249 +1771,249 @@ out:
  *
  * Preferred over vm_insert_page() when inserting multiple pages.
  *
- * In हाल of error, we may have mapped a subset of the provided
- * pages. It is the caller's responsibility to account क्रम this हाल.
+ * In case of error, we may have mapped a subset of the provided
+ * pages. It is the caller's responsibility to account for this case.
  *
  * The same restrictions apply as in vm_insert_page().
  */
-पूर्णांक vm_insert_pages(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			काष्ठा page **pages, अचिन्हित दीर्घ *num)
-अणु
-#अगर_घोषित pte_index
-	स्थिर अचिन्हित दीर्घ end_addr = addr + (*num * PAGE_SIZE) - 1;
+int vm_insert_pages(struct vm_area_struct *vma, unsigned long addr,
+			struct page **pages, unsigned long *num)
+{
+#ifdef pte_index
+	const unsigned long end_addr = addr + (*num * PAGE_SIZE) - 1;
 
-	अगर (addr < vma->vm_start || end_addr >= vma->vm_end)
-		वापस -EFAULT;
-	अगर (!(vma->vm_flags & VM_MIXEDMAP)) अणु
-		BUG_ON(mmap_पढ़ो_trylock(vma->vm_mm));
+	if (addr < vma->vm_start || end_addr >= vma->vm_end)
+		return -EFAULT;
+	if (!(vma->vm_flags & VM_MIXEDMAP)) {
+		BUG_ON(mmap_read_trylock(vma->vm_mm));
 		BUG_ON(vma->vm_flags & VM_PFNMAP);
 		vma->vm_flags |= VM_MIXEDMAP;
-	पूर्ण
+	}
 	/* Defer page refcount checking till we're about to map that page. */
-	वापस insert_pages(vma, addr, pages, num, vma->vm_page_prot);
-#अन्यथा
-	अचिन्हित दीर्घ idx = 0, pgcount = *num;
-	पूर्णांक err = -EINVAL;
+	return insert_pages(vma, addr, pages, num, vma->vm_page_prot);
+#else
+	unsigned long idx = 0, pgcount = *num;
+	int err = -EINVAL;
 
-	क्रम (; idx < pgcount; ++idx) अणु
+	for (; idx < pgcount; ++idx) {
 		err = vm_insert_page(vma, addr + (PAGE_SIZE * idx), pages[idx]);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 	*num = pgcount - idx;
-	वापस err;
-#पूर्ण_अगर  /* अगरdef pte_index */
-पूर्ण
+	return err;
+#endif  /* ifdef pte_index */
+}
 EXPORT_SYMBOL(vm_insert_pages);
 
 /**
- * vm_insert_page - insert single page पूर्णांकo user vma
+ * vm_insert_page - insert single page into user vma
  * @vma: user vma to map to
  * @addr: target user address of this page
  * @page: source kernel page
  *
- * This allows drivers to insert inभागidual pages they've allocated
- * पूर्णांकo a user vma.
+ * This allows drivers to insert individual pages they've allocated
+ * into a user vma.
  *
- * The page has to be a nice clean _inभागidual_ kernel allocation.
+ * The page has to be a nice clean _individual_ kernel allocation.
  * If you allocate a compound page, you need to have marked it as
  * such (__GFP_COMP), or manually just split the page up yourself
  * (see split_page()).
  *
- * NOTE! Traditionally this was करोne with "remap_pfn_range()" which
- * took an arbitrary page protection parameter. This करोesn't allow
+ * NOTE! Traditionally this was done with "remap_pfn_range()" which
+ * took an arbitrary page protection parameter. This doesn't allow
  * that. Your vma protection will have to be set up correctly, which
- * means that अगर you want a shared writable mapping, you'd better
- * ask क्रम a shared writable mapping!
+ * means that if you want a shared writable mapping, you'd better
+ * ask for a shared writable mapping!
  *
- * The page करोes not need to be reserved.
+ * The page does not need to be reserved.
  *
  * Usually this function is called from f_op->mmap() handler
- * under mm->mmap_lock ग_लिखो-lock, so it can change vma->vm_flags.
- * Caller must set VM_MIXEDMAP on vma अगर it wants to call this
- * function from other places, क्रम example from page-fault handler.
+ * under mm->mmap_lock write-lock, so it can change vma->vm_flags.
+ * Caller must set VM_MIXEDMAP on vma if it wants to call this
+ * function from other places, for example from page-fault handler.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक vm_insert_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			काष्ठा page *page)
-अणु
-	अगर (addr < vma->vm_start || addr >= vma->vm_end)
-		वापस -EFAULT;
-	अगर (!page_count(page))
-		वापस -EINVAL;
-	अगर (!(vma->vm_flags & VM_MIXEDMAP)) अणु
-		BUG_ON(mmap_पढ़ो_trylock(vma->vm_mm));
+int vm_insert_page(struct vm_area_struct *vma, unsigned long addr,
+			struct page *page)
+{
+	if (addr < vma->vm_start || addr >= vma->vm_end)
+		return -EFAULT;
+	if (!page_count(page))
+		return -EINVAL;
+	if (!(vma->vm_flags & VM_MIXEDMAP)) {
+		BUG_ON(mmap_read_trylock(vma->vm_mm));
 		BUG_ON(vma->vm_flags & VM_PFNMAP);
 		vma->vm_flags |= VM_MIXEDMAP;
-	पूर्ण
-	वापस insert_page(vma, addr, page, vma->vm_page_prot);
-पूर्ण
+	}
+	return insert_page(vma, addr, page, vma->vm_page_prot);
+}
 EXPORT_SYMBOL(vm_insert_page);
 
 /*
- * __vm_map_pages - maps range of kernel pages पूर्णांकo user vma
+ * __vm_map_pages - maps range of kernel pages into user vma
  * @vma: user vma to map to
- * @pages: poपूर्णांकer to array of source kernel pages
+ * @pages: pointer to array of source kernel pages
  * @num: number of pages in page array
  * @offset: user's requested vm_pgoff
  *
- * This allows drivers to map range of kernel pages पूर्णांकo a user vma.
+ * This allows drivers to map range of kernel pages into a user vma.
  *
  * Return: 0 on success and error code otherwise.
  */
-अटल पूर्णांक __vm_map_pages(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
-				अचिन्हित दीर्घ num, अचिन्हित दीर्घ offset)
-अणु
-	अचिन्हित दीर्घ count = vma_pages(vma);
-	अचिन्हित दीर्घ uaddr = vma->vm_start;
-	पूर्णांक ret, i;
+static int __vm_map_pages(struct vm_area_struct *vma, struct page **pages,
+				unsigned long num, unsigned long offset)
+{
+	unsigned long count = vma_pages(vma);
+	unsigned long uaddr = vma->vm_start;
+	int ret, i;
 
-	/* Fail अगर the user requested offset is beyond the end of the object */
-	अगर (offset >= num)
-		वापस -ENXIO;
+	/* Fail if the user requested offset is beyond the end of the object */
+	if (offset >= num)
+		return -ENXIO;
 
-	/* Fail अगर the user requested size exceeds available object size */
-	अगर (count > num - offset)
-		वापस -ENXIO;
+	/* Fail if the user requested size exceeds available object size */
+	if (count > num - offset)
+		return -ENXIO;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		ret = vm_insert_page(vma, uaddr, pages[offset + i]);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		uaddr += PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vm_map_pages - maps range of kernel pages starts with non zero offset
  * @vma: user vma to map to
- * @pages: poपूर्णांकer to array of source kernel pages
+ * @pages: pointer to array of source kernel pages
  * @num: number of pages in page array
  *
- * Maps an object consisting of @num pages, catering क्रम the user's
+ * Maps an object consisting of @num pages, catering for the user's
  * requested vm_pgoff
  *
- * If we fail to insert any page पूर्णांकo the vma, the function will वापस
+ * If we fail to insert any page into the vma, the function will return
  * immediately leaving any previously inserted pages present.  Callers
- * from the mmap handler may immediately वापस the error as their caller
+ * from the mmap handler may immediately return the error as their caller
  * will destroy the vma, removing any successfully inserted pages. Other
- * callers should make their own arrangements क्रम calling unmap_region().
+ * callers should make their own arrangements for calling unmap_region().
  *
  * Context: Process context. Called by mmap handlers.
  * Return: 0 on success and error code otherwise.
  */
-पूर्णांक vm_map_pages(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
-				अचिन्हित दीर्घ num)
-अणु
-	वापस __vm_map_pages(vma, pages, num, vma->vm_pgoff);
-पूर्ण
+int vm_map_pages(struct vm_area_struct *vma, struct page **pages,
+				unsigned long num)
+{
+	return __vm_map_pages(vma, pages, num, vma->vm_pgoff);
+}
 EXPORT_SYMBOL(vm_map_pages);
 
 /**
  * vm_map_pages_zero - map range of kernel pages starts with zero offset
  * @vma: user vma to map to
- * @pages: poपूर्णांकer to array of source kernel pages
+ * @pages: pointer to array of source kernel pages
  * @num: number of pages in page array
  *
  * Similar to vm_map_pages(), except that it explicitly sets the offset
- * to 0. This function is पूर्णांकended क्रम the drivers that did not consider
+ * to 0. This function is intended for the drivers that did not consider
  * vm_pgoff.
  *
  * Context: Process context. Called by mmap handlers.
  * Return: 0 on success and error code otherwise.
  */
-पूर्णांक vm_map_pages_zero(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
-				अचिन्हित दीर्घ num)
-अणु
-	वापस __vm_map_pages(vma, pages, num, 0);
-पूर्ण
+int vm_map_pages_zero(struct vm_area_struct *vma, struct page **pages,
+				unsigned long num)
+{
+	return __vm_map_pages(vma, pages, num, 0);
+}
 EXPORT_SYMBOL(vm_map_pages_zero);
 
-अटल vm_fault_t insert_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			pfn_t pfn, pgprot_t prot, bool mkग_लिखो)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+static vm_fault_t insert_pfn(struct vm_area_struct *vma, unsigned long addr,
+			pfn_t pfn, pgprot_t prot, bool mkwrite)
+{
+	struct mm_struct *mm = vma->vm_mm;
 	pte_t *pte, entry;
 	spinlock_t *ptl;
 
 	pte = get_locked_pte(mm, addr, &ptl);
-	अगर (!pte)
-		वापस VM_FAULT_OOM;
-	अगर (!pte_none(*pte)) अणु
-		अगर (mkग_लिखो) अणु
+	if (!pte)
+		return VM_FAULT_OOM;
+	if (!pte_none(*pte)) {
+		if (mkwrite) {
 			/*
-			 * For पढ़ो faults on निजी mappings the PFN passed
-			 * in may not match the PFN we have mapped अगर the
-			 * mapped PFN is a ग_लिखोable COW page.  In the mkग_लिखो
-			 * हाल we are creating a writable PTE क्रम a shared
+			 * For read faults on private mappings the PFN passed
+			 * in may not match the PFN we have mapped if the
+			 * mapped PFN is a writeable COW page.  In the mkwrite
+			 * case we are creating a writable PTE for a shared
 			 * mapping and we expect the PFNs to match. If they
-			 * करोn't match, we are likely racing with block
+			 * don't match, we are likely racing with block
 			 * allocation and mapping invalidation so just skip the
 			 * update.
 			 */
-			अगर (pte_pfn(*pte) != pfn_t_to_pfn(pfn)) अणु
+			if (pte_pfn(*pte) != pfn_t_to_pfn(pfn)) {
 				WARN_ON_ONCE(!is_zero_pfn(pte_pfn(*pte)));
-				जाओ out_unlock;
-			पूर्ण
+				goto out_unlock;
+			}
 			entry = pte_mkyoung(*pte);
-			entry = maybe_mkग_लिखो(pte_सूची_गढ़ोty(entry), vma);
-			अगर (ptep_set_access_flags(vma, addr, pte, entry, 1))
+			entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+			if (ptep_set_access_flags(vma, addr, pte, entry, 1))
 				update_mmu_cache(vma, addr, pte);
-		पूर्ण
-		जाओ out_unlock;
-	पूर्ण
+		}
+		goto out_unlock;
+	}
 
 	/* Ok, finally just insert the thing.. */
-	अगर (pfn_t_devmap(pfn))
+	if (pfn_t_devmap(pfn))
 		entry = pte_mkdevmap(pfn_t_pte(pfn, prot));
-	अन्यथा
+	else
 		entry = pte_mkspecial(pfn_t_pte(pfn, prot));
 
-	अगर (mkग_लिखो) अणु
+	if (mkwrite) {
 		entry = pte_mkyoung(entry);
-		entry = maybe_mkग_लिखो(pte_सूची_गढ़ोty(entry), vma);
-	पूर्ण
+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+	}
 
 	set_pte_at(mm, addr, pte, entry);
-	update_mmu_cache(vma, addr, pte); /* XXX: why not क्रम insert_page? */
+	update_mmu_cache(vma, addr, pte); /* XXX: why not for insert_page? */
 
 out_unlock:
 	pte_unmap_unlock(pte, ptl);
-	वापस VM_FAULT_NOPAGE;
-पूर्ण
+	return VM_FAULT_NOPAGE;
+}
 
 /**
- * vmf_insert_pfn_prot - insert single pfn पूर्णांकo user vma with specअगरied pgprot
+ * vmf_insert_pfn_prot - insert single pfn into user vma with specified pgprot
  * @vma: user vma to map to
  * @addr: target user address of this page
  * @pfn: source kernel pfn
- * @pgprot: pgprot flags क्रम the inserted page
+ * @pgprot: pgprot flags for the inserted page
  *
  * This is exactly like vmf_insert_pfn(), except that it allows drivers
  * to override pgprot on a per-page basis.
  *
- * This only makes sense क्रम IO mappings, and it makes no sense क्रम
+ * This only makes sense for IO mappings, and it makes no sense for
  * COW mappings.  In general, using multiple vmas is preferable;
- * vmf_insert_pfn_prot should only be used अगर using multiple VMAs is
+ * vmf_insert_pfn_prot should only be used if using multiple VMAs is
  * impractical.
  *
- * See vmf_insert_mixed_prot() क्रम a discussion of the implication of using
- * a value of @pgprot dअगरferent from that of @vma->vm_page_prot.
+ * See vmf_insert_mixed_prot() for a discussion of the implication of using
+ * a value of @pgprot different from that of @vma->vm_page_prot.
  *
  * Context: Process context.  May allocate using %GFP_KERNEL.
  * Return: vm_fault_t value.
  */
-vm_fault_t vmf_insert_pfn_prot(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ pfn, pgprot_t pgprot)
-अणु
+vm_fault_t vmf_insert_pfn_prot(struct vm_area_struct *vma, unsigned long addr,
+			unsigned long pfn, pgprot_t pgprot)
+{
 	/*
-	 * Technically, architectures with pte_special can aव्योम all these
-	 * restrictions (same क्रम remap_pfn_range).  However we would like
+	 * Technically, architectures with pte_special can avoid all these
+	 * restrictions (same for remap_pfn_range).  However we would like
 	 * consistency in testing and feature parity among all, so we should
-	 * try to keep these invariants in place क्रम everybody.
+	 * try to keep these invariants in place for everybody.
 	 */
 	BUG_ON(!(vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP)));
 	BUG_ON((vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP)) ==
@@ -2022,271 +2021,271 @@ vm_fault_t vmf_insert_pfn_prot(काष्ठा vm_area_काष्ठा *vm
 	BUG_ON((vma->vm_flags & VM_PFNMAP) && is_cow_mapping(vma->vm_flags));
 	BUG_ON((vma->vm_flags & VM_MIXEDMAP) && pfn_valid(pfn));
 
-	अगर (addr < vma->vm_start || addr >= vma->vm_end)
-		वापस VM_FAULT_SIGBUS;
+	if (addr < vma->vm_start || addr >= vma->vm_end)
+		return VM_FAULT_SIGBUS;
 
-	अगर (!pfn_modअगरy_allowed(pfn, pgprot))
-		वापस VM_FAULT_SIGBUS;
+	if (!pfn_modify_allowed(pfn, pgprot))
+		return VM_FAULT_SIGBUS;
 
 	track_pfn_insert(vma, &pgprot, __pfn_to_pfn_t(pfn, PFN_DEV));
 
-	वापस insert_pfn(vma, addr, __pfn_to_pfn_t(pfn, PFN_DEV), pgprot,
+	return insert_pfn(vma, addr, __pfn_to_pfn_t(pfn, PFN_DEV), pgprot,
 			false);
-पूर्ण
+}
 EXPORT_SYMBOL(vmf_insert_pfn_prot);
 
 /**
- * vmf_insert_pfn - insert single pfn पूर्णांकo user vma
+ * vmf_insert_pfn - insert single pfn into user vma
  * @vma: user vma to map to
  * @addr: target user address of this page
  * @pfn: source kernel pfn
  *
- * Similar to vm_insert_page, this allows drivers to insert inभागidual pages
- * they've allocated पूर्णांकo a user vma. Same comments apply.
+ * Similar to vm_insert_page, this allows drivers to insert individual pages
+ * they've allocated into a user vma. Same comments apply.
  *
  * This function should only be called from a vm_ops->fault handler, and
- * in that हाल the handler should वापस the result of this function.
+ * in that case the handler should return the result of this function.
  *
  * vma cannot be a COW mapping.
  *
- * As this is called only क्रम pages that करो not currently exist, we
- * करो not need to flush old भव caches or the TLB.
+ * As this is called only for pages that do not currently exist, we
+ * do not need to flush old virtual caches or the TLB.
  *
  * Context: Process context.  May allocate using %GFP_KERNEL.
  * Return: vm_fault_t value.
  */
-vm_fault_t vmf_insert_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ pfn)
-अणु
-	वापस vmf_insert_pfn_prot(vma, addr, pfn, vma->vm_page_prot);
-पूर्ण
+vm_fault_t vmf_insert_pfn(struct vm_area_struct *vma, unsigned long addr,
+			unsigned long pfn)
+{
+	return vmf_insert_pfn_prot(vma, addr, pfn, vma->vm_page_prot);
+}
 EXPORT_SYMBOL(vmf_insert_pfn);
 
-अटल bool vm_mixed_ok(काष्ठा vm_area_काष्ठा *vma, pfn_t pfn)
-अणु
-	/* these checks mirror the पात conditions in vm_normal_page */
-	अगर (vma->vm_flags & VM_MIXEDMAP)
-		वापस true;
-	अगर (pfn_t_devmap(pfn))
-		वापस true;
-	अगर (pfn_t_special(pfn))
-		वापस true;
-	अगर (is_zero_pfn(pfn_t_to_pfn(pfn)))
-		वापस true;
-	वापस false;
-पूर्ण
+static bool vm_mixed_ok(struct vm_area_struct *vma, pfn_t pfn)
+{
+	/* these checks mirror the abort conditions in vm_normal_page */
+	if (vma->vm_flags & VM_MIXEDMAP)
+		return true;
+	if (pfn_t_devmap(pfn))
+		return true;
+	if (pfn_t_special(pfn))
+		return true;
+	if (is_zero_pfn(pfn_t_to_pfn(pfn)))
+		return true;
+	return false;
+}
 
-अटल vm_fault_t __vm_insert_mixed(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, pfn_t pfn, pgprot_t pgprot,
-		bool mkग_लिखो)
-अणु
-	पूर्णांक err;
+static vm_fault_t __vm_insert_mixed(struct vm_area_struct *vma,
+		unsigned long addr, pfn_t pfn, pgprot_t pgprot,
+		bool mkwrite)
+{
+	int err;
 
 	BUG_ON(!vm_mixed_ok(vma, pfn));
 
-	अगर (addr < vma->vm_start || addr >= vma->vm_end)
-		वापस VM_FAULT_SIGBUS;
+	if (addr < vma->vm_start || addr >= vma->vm_end)
+		return VM_FAULT_SIGBUS;
 
 	track_pfn_insert(vma, &pgprot, pfn);
 
-	अगर (!pfn_modअगरy_allowed(pfn_t_to_pfn(pfn), pgprot))
-		वापस VM_FAULT_SIGBUS;
+	if (!pfn_modify_allowed(pfn_t_to_pfn(pfn), pgprot))
+		return VM_FAULT_SIGBUS;
 
 	/*
-	 * If we करोn't have pte special, then we have to use the pfn_valid()
+	 * If we don't have pte special, then we have to use the pfn_valid()
 	 * based VM_MIXEDMAP scheme (see vm_normal_page), and thus we *must*
-	 * refcount the page अगर pfn_valid is true (hence insert_page rather
-	 * than insert_pfn).  If a zero_pfn were inserted पूर्णांकo a VM_MIXEDMAP
+	 * refcount the page if pfn_valid is true (hence insert_page rather
+	 * than insert_pfn).  If a zero_pfn were inserted into a VM_MIXEDMAP
 	 * without pte special, it would there be refcounted as a normal page.
 	 */
-	अगर (!IS_ENABLED(CONFIG_ARCH_HAS_PTE_SPECIAL) &&
-	    !pfn_t_devmap(pfn) && pfn_t_valid(pfn)) अणु
-		काष्ठा page *page;
+	if (!IS_ENABLED(CONFIG_ARCH_HAS_PTE_SPECIAL) &&
+	    !pfn_t_devmap(pfn) && pfn_t_valid(pfn)) {
+		struct page *page;
 
 		/*
-		 * At this poपूर्णांक we are committed to insert_page()
-		 * regardless of whether the caller specअगरied flags that
+		 * At this point we are committed to insert_page()
+		 * regardless of whether the caller specified flags that
 		 * result in pfn_t_has_page() == false.
 		 */
 		page = pfn_to_page(pfn_t_to_pfn(pfn));
 		err = insert_page(vma, addr, page, pgprot);
-	पूर्ण अन्यथा अणु
-		वापस insert_pfn(vma, addr, pfn, pgprot, mkग_लिखो);
-	पूर्ण
+	} else {
+		return insert_pfn(vma, addr, pfn, pgprot, mkwrite);
+	}
 
-	अगर (err == -ENOMEM)
-		वापस VM_FAULT_OOM;
-	अगर (err < 0 && err != -EBUSY)
-		वापस VM_FAULT_SIGBUS;
+	if (err == -ENOMEM)
+		return VM_FAULT_OOM;
+	if (err < 0 && err != -EBUSY)
+		return VM_FAULT_SIGBUS;
 
-	वापस VM_FAULT_NOPAGE;
-पूर्ण
+	return VM_FAULT_NOPAGE;
+}
 
 /**
- * vmf_insert_mixed_prot - insert single pfn पूर्णांकo user vma with specअगरied pgprot
+ * vmf_insert_mixed_prot - insert single pfn into user vma with specified pgprot
  * @vma: user vma to map to
  * @addr: target user address of this page
  * @pfn: source kernel pfn
- * @pgprot: pgprot flags क्रम the inserted page
+ * @pgprot: pgprot flags for the inserted page
  *
  * This is exactly like vmf_insert_mixed(), except that it allows drivers
  * to override pgprot on a per-page basis.
  *
  * Typically this function should be used by drivers to set caching- and
- * encryption bits dअगरferent than those of @vma->vm_page_prot, because
- * the caching- or encryption mode may not be known at mmap() समय.
- * This is ok as दीर्घ as @vma->vm_page_prot is not used by the core vm
- * to set caching and encryption bits क्रम those vmas (except क्रम COW pages).
- * This is ensured by core vm only modअगरying these page table entries using
- * functions that करोn't touch caching- or encryption bits, using pte_modअगरy()
- * अगर needed. (See क्रम example mprotect()).
- * Also when new page-table entries are created, this is only करोne using the
+ * encryption bits different than those of @vma->vm_page_prot, because
+ * the caching- or encryption mode may not be known at mmap() time.
+ * This is ok as long as @vma->vm_page_prot is not used by the core vm
+ * to set caching and encryption bits for those vmas (except for COW pages).
+ * This is ensured by core vm only modifying these page table entries using
+ * functions that don't touch caching- or encryption bits, using pte_modify()
+ * if needed. (See for example mprotect()).
+ * Also when new page-table entries are created, this is only done using the
  * fault() callback, and never using the value of vma->vm_page_prot,
- * except क्रम page-table entries that poपूर्णांक to anonymous pages as the result
+ * except for page-table entries that point to anonymous pages as the result
  * of COW.
  *
  * Context: Process context.  May allocate using %GFP_KERNEL.
  * Return: vm_fault_t value.
  */
-vm_fault_t vmf_insert_mixed_prot(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+vm_fault_t vmf_insert_mixed_prot(struct vm_area_struct *vma, unsigned long addr,
 				 pfn_t pfn, pgprot_t pgprot)
-अणु
-	वापस __vm_insert_mixed(vma, addr, pfn, pgprot, false);
-पूर्ण
+{
+	return __vm_insert_mixed(vma, addr, pfn, pgprot, false);
+}
 EXPORT_SYMBOL(vmf_insert_mixed_prot);
 
-vm_fault_t vmf_insert_mixed(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+vm_fault_t vmf_insert_mixed(struct vm_area_struct *vma, unsigned long addr,
 		pfn_t pfn)
-अणु
-	वापस __vm_insert_mixed(vma, addr, pfn, vma->vm_page_prot, false);
-पूर्ण
+{
+	return __vm_insert_mixed(vma, addr, pfn, vma->vm_page_prot, false);
+}
 EXPORT_SYMBOL(vmf_insert_mixed);
 
 /*
- *  If the insertion of PTE failed because someone अन्यथा alपढ़ोy added a
- *  dअगरferent entry in the mean समय, we treat that as success as we assume
+ *  If the insertion of PTE failed because someone else already added a
+ *  different entry in the mean time, we treat that as success as we assume
  *  the same entry was actually inserted.
  */
-vm_fault_t vmf_insert_mixed_mkग_लिखो(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, pfn_t pfn)
-अणु
-	वापस __vm_insert_mixed(vma, addr, pfn, vma->vm_page_prot, true);
-पूर्ण
-EXPORT_SYMBOL(vmf_insert_mixed_mkग_लिखो);
+vm_fault_t vmf_insert_mixed_mkwrite(struct vm_area_struct *vma,
+		unsigned long addr, pfn_t pfn)
+{
+	return __vm_insert_mixed(vma, addr, pfn, vma->vm_page_prot, true);
+}
+EXPORT_SYMBOL(vmf_insert_mixed_mkwrite);
 
 /*
- * maps a range of physical memory पूर्णांकo the requested pages. the old
- * mappings are हटाओd. any references to nonexistent pages results
+ * maps a range of physical memory into the requested pages. the old
+ * mappings are removed. any references to nonexistent pages results
  * in null mappings (currently treated as "copy-on-access")
  */
-अटल पूर्णांक remap_pte_range(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			अचिन्हित दीर्घ pfn, pgprot_t prot)
-अणु
+static int remap_pte_range(struct mm_struct *mm, pmd_t *pmd,
+			unsigned long addr, unsigned long end,
+			unsigned long pfn, pgprot_t prot)
+{
 	pte_t *pte, *mapped_pte;
 	spinlock_t *ptl;
-	पूर्णांक err = 0;
+	int err = 0;
 
 	mapped_pte = pte = pte_alloc_map_lock(mm, pmd, addr, &ptl);
-	अगर (!pte)
-		वापस -ENOMEM;
+	if (!pte)
+		return -ENOMEM;
 	arch_enter_lazy_mmu_mode();
-	करो अणु
+	do {
 		BUG_ON(!pte_none(*pte));
-		अगर (!pfn_modअगरy_allowed(pfn, prot)) अणु
+		if (!pfn_modify_allowed(pfn, prot)) {
 			err = -EACCES;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		set_pte_at(mm, addr, pte, pte_mkspecial(pfn_pte(pfn, prot)));
 		pfn++;
-	पूर्ण जबतक (pte++, addr += PAGE_SIZE, addr != end);
+	} while (pte++, addr += PAGE_SIZE, addr != end);
 	arch_leave_lazy_mmu_mode();
 	pte_unmap_unlock(mapped_pte, ptl);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक remap_pmd_range(काष्ठा mm_काष्ठा *mm, pud_t *pud,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			अचिन्हित दीर्घ pfn, pgprot_t prot)
-अणु
+static inline int remap_pmd_range(struct mm_struct *mm, pud_t *pud,
+			unsigned long addr, unsigned long end,
+			unsigned long pfn, pgprot_t prot)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
-	पूर्णांक err;
+	unsigned long next;
+	int err;
 
 	pfn -= addr >> PAGE_SHIFT;
 	pmd = pmd_alloc(mm, pud, addr);
-	अगर (!pmd)
-		वापस -ENOMEM;
+	if (!pmd)
+		return -ENOMEM;
 	VM_BUG_ON(pmd_trans_huge(*pmd));
-	करो अणु
+	do {
 		next = pmd_addr_end(addr, end);
 		err = remap_pte_range(mm, pmd, addr, next,
 				pfn + (addr >> PAGE_SHIFT), prot);
-		अगर (err)
-			वापस err;
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	} while (pmd++, addr = next, addr != end);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक remap_pud_range(काष्ठा mm_काष्ठा *mm, p4d_t *p4d,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			अचिन्हित दीर्घ pfn, pgprot_t prot)
-अणु
+static inline int remap_pud_range(struct mm_struct *mm, p4d_t *p4d,
+			unsigned long addr, unsigned long end,
+			unsigned long pfn, pgprot_t prot)
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
-	पूर्णांक err;
+	unsigned long next;
+	int err;
 
 	pfn -= addr >> PAGE_SHIFT;
 	pud = pud_alloc(mm, p4d, addr);
-	अगर (!pud)
-		वापस -ENOMEM;
-	करो अणु
+	if (!pud)
+		return -ENOMEM;
+	do {
 		next = pud_addr_end(addr, end);
 		err = remap_pmd_range(mm, pud, addr, next,
 				pfn + (addr >> PAGE_SHIFT), prot);
-		अगर (err)
-			वापस err;
-	पूर्ण जबतक (pud++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	} while (pud++, addr = next, addr != end);
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक remap_p4d_range(काष्ठा mm_काष्ठा *mm, pgd_t *pgd,
-			अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			अचिन्हित दीर्घ pfn, pgprot_t prot)
-अणु
+static inline int remap_p4d_range(struct mm_struct *mm, pgd_t *pgd,
+			unsigned long addr, unsigned long end,
+			unsigned long pfn, pgprot_t prot)
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
-	पूर्णांक err;
+	unsigned long next;
+	int err;
 
 	pfn -= addr >> PAGE_SHIFT;
 	p4d = p4d_alloc(mm, pgd, addr);
-	अगर (!p4d)
-		वापस -ENOMEM;
-	करो अणु
+	if (!p4d)
+		return -ENOMEM;
+	do {
 		next = p4d_addr_end(addr, end);
 		err = remap_pud_range(mm, p4d, addr, next,
 				pfn + (addr >> PAGE_SHIFT), prot);
-		अगर (err)
-			वापस err;
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
-	वापस 0;
-पूर्ण
+		if (err)
+			return err;
+	} while (p4d++, addr = next, addr != end);
+	return 0;
+}
 
 /*
- * Variant of remap_pfn_range that करोes not call track_pfn_remap.  The caller
+ * Variant of remap_pfn_range that does not call track_pfn_remap.  The caller
  * must have pre-validated the caching bits of the pgprot_t.
  */
-पूर्णांक remap_pfn_range_notrack(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size, pgprot_t prot)
-अणु
+int remap_pfn_range_notrack(struct vm_area_struct *vma, unsigned long addr,
+		unsigned long pfn, unsigned long size, pgprot_t prot)
+{
 	pgd_t *pgd;
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ end = addr + PAGE_ALIGN(size);
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	पूर्णांक err;
+	unsigned long next;
+	unsigned long end = addr + PAGE_ALIGN(size);
+	struct mm_struct *mm = vma->vm_mm;
+	int err;
 
-	अगर (WARN_ON_ONCE(!PAGE_ALIGNED(addr)))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(!PAGE_ALIGNED(addr)))
+		return -EINVAL;
 
 	/*
 	 * Physically remapped pages are special. Tell the
@@ -2294,23 +2293,23 @@ EXPORT_SYMBOL(vmf_insert_mixed_mkग_लिखो);
 	 *   VM_IO tells people not to look at these pages
 	 *	(accesses can have side effects).
 	 *   VM_PFNMAP tells the core MM that the base pages are just
-	 *	raw PFN mappings, and करो not have a "struct page" associated
+	 *	raw PFN mappings, and do not have a "struct page" associated
 	 *	with them.
 	 *   VM_DONTEXPAND
 	 *      Disable vma merging and expanding with mremap().
 	 *   VM_DONTDUMP
 	 *      Omit vma from core dump, even when VM_IO turned off.
 	 *
-	 * There's a horrible special हाल to handle copy-on-ग_लिखो
+	 * There's a horrible special case to handle copy-on-write
 	 * behaviour that some programs depend on. We mark the "original"
 	 * un-COW'ed pages by matching them up with "vma->vm_pgoff".
-	 * See vm_normal_page() क्रम details.
+	 * See vm_normal_page() for details.
 	 */
-	अगर (is_cow_mapping(vma->vm_flags)) अणु
-		अगर (addr != vma->vm_start || end != vma->vm_end)
-			वापस -EINVAL;
+	if (is_cow_mapping(vma->vm_flags)) {
+		if (addr != vma->vm_start || end != vma->vm_end)
+			return -EINVAL;
 		vma->vm_pgoff = pfn;
-	पूर्ण
+	}
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP;
 
@@ -2318,16 +2317,16 @@ EXPORT_SYMBOL(vmf_insert_mixed_mkग_लिखो);
 	pfn -= addr >> PAGE_SHIFT;
 	pgd = pgd_offset(mm, addr);
 	flush_cache_range(vma, addr, end);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
 		err = remap_p4d_range(mm, pgd, addr, next,
 				pfn + (addr >> PAGE_SHIFT), prot);
-		अगर (err)
-			वापस err;
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
+		if (err)
+			return err;
+	} while (pgd++, addr = next, addr != end);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * remap_pfn_range - remap kernel memory to userspace
@@ -2335,26 +2334,26 @@ EXPORT_SYMBOL(vmf_insert_mixed_mkग_लिखो);
  * @addr: target page aligned user address to start at
  * @pfn: page frame number of kernel physical memory address
  * @size: size of mapping area
- * @prot: page protection flags क्रम this mapping
+ * @prot: page protection flags for this mapping
  *
- * Note: this is only safe अगर the mm semaphore is held when called.
+ * Note: this is only safe if the mm semaphore is held when called.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक remap_pfn_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-		    अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size, pgprot_t prot)
-अणु
-	पूर्णांक err;
+int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
+		    unsigned long pfn, unsigned long size, pgprot_t prot)
+{
+	int err;
 
 	err = track_pfn_remap(vma, &prot, pfn, addr, PAGE_ALIGN(size));
-	अगर (err)
-		वापस -EINVAL;
+	if (err)
+		return -EINVAL;
 
 	err = remap_pfn_range_notrack(vma, addr, pfn, size, prot);
-	अगर (err)
+	if (err)
 		untrack_pfn(vma, pfn, PAGE_ALIGN(size));
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(remap_pfn_range);
 
 /**
@@ -2363,22 +2362,22 @@ EXPORT_SYMBOL(remap_pfn_range);
  * @start: start of the physical memory to be mapped
  * @len: size of area
  *
- * This is a simplअगरied io_remap_pfn_range() क्रम common driver use. The
+ * This is a simplified io_remap_pfn_range() for common driver use. The
  * driver just needs to give us the physical memory range to be mapped,
- * we'll figure out the rest from the vma inक्रमmation.
+ * we'll figure out the rest from the vma information.
  *
  * NOTE! Some drivers might want to tweak vma->vm_page_prot first to get
- * whatever ग_लिखो-combining details or similar.
+ * whatever write-combining details or similar.
  *
  * Return: %0 on success, negative error code otherwise.
  */
-पूर्णांक vm_iomap_memory(काष्ठा vm_area_काष्ठा *vma, phys_addr_t start, अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ vm_len, pfn, pages;
+int vm_iomap_memory(struct vm_area_struct *vma, phys_addr_t start, unsigned long len)
+{
+	unsigned long vm_len, pfn, pages;
 
 	/* Check that the physical memory area passed in looks valid */
-	अगर (start + len < start)
-		वापस -EINVAL;
+	if (start + len < start)
+		return -EINVAL;
 	/*
 	 * You *really* shouldn't map things that aren't page-aligned,
 	 * but we've historically allowed it because IO memory might
@@ -2387,491 +2386,491 @@ EXPORT_SYMBOL(remap_pfn_range);
 	len += start & ~PAGE_MASK;
 	pfn = start >> PAGE_SHIFT;
 	pages = (len + ~PAGE_MASK) >> PAGE_SHIFT;
-	अगर (pfn + pages < pfn)
-		वापस -EINVAL;
+	if (pfn + pages < pfn)
+		return -EINVAL;
 
-	/* We start the mapping 'vm_pgoff' pages पूर्णांकo the area */
-	अगर (vma->vm_pgoff > pages)
-		वापस -EINVAL;
+	/* We start the mapping 'vm_pgoff' pages into the area */
+	if (vma->vm_pgoff > pages)
+		return -EINVAL;
 	pfn += vma->vm_pgoff;
 	pages -= vma->vm_pgoff;
 
 	/* Can we fit all of the mapping? */
 	vm_len = vma->vm_end - vma->vm_start;
-	अगर (vm_len >> PAGE_SHIFT > pages)
-		वापस -EINVAL;
+	if (vm_len >> PAGE_SHIFT > pages)
+		return -EINVAL;
 
 	/* Ok, let it rip */
-	वापस io_remap_pfn_range(vma, vma->vm_start, pfn, vm_len, vma->vm_page_prot);
-पूर्ण
+	return io_remap_pfn_range(vma, vma->vm_start, pfn, vm_len, vma->vm_page_prot);
+}
 EXPORT_SYMBOL(vm_iomap_memory);
 
-अटल पूर्णांक apply_to_pte_range(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
-				     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				     pte_fn_t fn, व्योम *data, bool create,
+static int apply_to_pte_range(struct mm_struct *mm, pmd_t *pmd,
+				     unsigned long addr, unsigned long end,
+				     pte_fn_t fn, void *data, bool create,
 				     pgtbl_mod_mask *mask)
-अणु
+{
 	pte_t *pte, *mapped_pte;
-	पूर्णांक err = 0;
+	int err = 0;
 	spinlock_t *ptl;
 
-	अगर (create) अणु
+	if (create) {
 		mapped_pte = pte = (mm == &init_mm) ?
 			pte_alloc_kernel_track(pmd, addr, mask) :
 			pte_alloc_map_lock(mm, pmd, addr, &ptl);
-		अगर (!pte)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+		if (!pte)
+			return -ENOMEM;
+	} else {
 		mapped_pte = pte = (mm == &init_mm) ?
 			pte_offset_kernel(pmd, addr) :
 			pte_offset_map_lock(mm, pmd, addr, &ptl);
-	पूर्ण
+	}
 
 	BUG_ON(pmd_huge(*pmd));
 
 	arch_enter_lazy_mmu_mode();
 
-	अगर (fn) अणु
-		करो अणु
-			अगर (create || !pte_none(*pte)) अणु
+	if (fn) {
+		do {
+			if (create || !pte_none(*pte)) {
 				err = fn(pte++, addr, data);
-				अगर (err)
-					अवरोध;
-			पूर्ण
-		पूर्ण जबतक (addr += PAGE_SIZE, addr != end);
-	पूर्ण
+				if (err)
+					break;
+			}
+		} while (addr += PAGE_SIZE, addr != end);
+	}
 	*mask |= PGTBL_PTE_MODIFIED;
 
 	arch_leave_lazy_mmu_mode();
 
-	अगर (mm != &init_mm)
+	if (mm != &init_mm)
 		pte_unmap_unlock(mapped_pte, ptl);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक apply_to_pmd_range(काष्ठा mm_काष्ठा *mm, pud_t *pud,
-				     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				     pte_fn_t fn, व्योम *data, bool create,
+static int apply_to_pmd_range(struct mm_struct *mm, pud_t *pud,
+				     unsigned long addr, unsigned long end,
+				     pte_fn_t fn, void *data, bool create,
 				     pgtbl_mod_mask *mask)
-अणु
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
-	पूर्णांक err = 0;
+	unsigned long next;
+	int err = 0;
 
 	BUG_ON(pud_huge(*pud));
 
-	अगर (create) अणु
+	if (create) {
 		pmd = pmd_alloc_track(mm, pud, addr, mask);
-		अगर (!pmd)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+		if (!pmd)
+			return -ENOMEM;
+	} else {
 		pmd = pmd_offset(pud, addr);
-	पूर्ण
-	करो अणु
+	}
+	do {
 		next = pmd_addr_end(addr, end);
-		अगर (pmd_none(*pmd) && !create)
-			जारी;
-		अगर (WARN_ON_ONCE(pmd_leaf(*pmd)))
-			वापस -EINVAL;
-		अगर (!pmd_none(*pmd) && WARN_ON_ONCE(pmd_bad(*pmd))) अणु
-			अगर (!create)
-				जारी;
+		if (pmd_none(*pmd) && !create)
+			continue;
+		if (WARN_ON_ONCE(pmd_leaf(*pmd)))
+			return -EINVAL;
+		if (!pmd_none(*pmd) && WARN_ON_ONCE(pmd_bad(*pmd))) {
+			if (!create)
+				continue;
 			pmd_clear_bad(pmd);
-		पूर्ण
+		}
 		err = apply_to_pte_range(mm, pmd, addr, next,
 					 fn, data, create, mask);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (pmd++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक apply_to_pud_range(काष्ठा mm_काष्ठा *mm, p4d_t *p4d,
-				     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				     pte_fn_t fn, व्योम *data, bool create,
+static int apply_to_pud_range(struct mm_struct *mm, p4d_t *p4d,
+				     unsigned long addr, unsigned long end,
+				     pte_fn_t fn, void *data, bool create,
 				     pgtbl_mod_mask *mask)
-अणु
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
-	पूर्णांक err = 0;
+	unsigned long next;
+	int err = 0;
 
-	अगर (create) अणु
+	if (create) {
 		pud = pud_alloc_track(mm, p4d, addr, mask);
-		अगर (!pud)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+		if (!pud)
+			return -ENOMEM;
+	} else {
 		pud = pud_offset(p4d, addr);
-	पूर्ण
-	करो अणु
+	}
+	do {
 		next = pud_addr_end(addr, end);
-		अगर (pud_none(*pud) && !create)
-			जारी;
-		अगर (WARN_ON_ONCE(pud_leaf(*pud)))
-			वापस -EINVAL;
-		अगर (!pud_none(*pud) && WARN_ON_ONCE(pud_bad(*pud))) अणु
-			अगर (!create)
-				जारी;
+		if (pud_none(*pud) && !create)
+			continue;
+		if (WARN_ON_ONCE(pud_leaf(*pud)))
+			return -EINVAL;
+		if (!pud_none(*pud) && WARN_ON_ONCE(pud_bad(*pud))) {
+			if (!create)
+				continue;
 			pud_clear_bad(pud);
-		पूर्ण
+		}
 		err = apply_to_pmd_range(mm, pud, addr, next,
 					 fn, data, create, mask);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (pud++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (pud++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक apply_to_p4d_range(काष्ठा mm_काष्ठा *mm, pgd_t *pgd,
-				     अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-				     pte_fn_t fn, व्योम *data, bool create,
+static int apply_to_p4d_range(struct mm_struct *mm, pgd_t *pgd,
+				     unsigned long addr, unsigned long end,
+				     pte_fn_t fn, void *data, bool create,
 				     pgtbl_mod_mask *mask)
-अणु
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
-	पूर्णांक err = 0;
+	unsigned long next;
+	int err = 0;
 
-	अगर (create) अणु
+	if (create) {
 		p4d = p4d_alloc_track(mm, pgd, addr, mask);
-		अगर (!p4d)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+		if (!p4d)
+			return -ENOMEM;
+	} else {
 		p4d = p4d_offset(pgd, addr);
-	पूर्ण
-	करो अणु
+	}
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none(*p4d) && !create)
-			जारी;
-		अगर (WARN_ON_ONCE(p4d_leaf(*p4d)))
-			वापस -EINVAL;
-		अगर (!p4d_none(*p4d) && WARN_ON_ONCE(p4d_bad(*p4d))) अणु
-			अगर (!create)
-				जारी;
+		if (p4d_none(*p4d) && !create)
+			continue;
+		if (WARN_ON_ONCE(p4d_leaf(*p4d)))
+			return -EINVAL;
+		if (!p4d_none(*p4d) && WARN_ON_ONCE(p4d_bad(*p4d))) {
+			if (!create)
+				continue;
 			p4d_clear_bad(p4d);
-		पूर्ण
+		}
 		err = apply_to_pud_range(mm, p4d, addr, next,
 					 fn, data, create, mask);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (p4d++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __apply_to_page_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-				 अचिन्हित दीर्घ size, pte_fn_t fn,
-				 व्योम *data, bool create)
-अणु
+static int __apply_to_page_range(struct mm_struct *mm, unsigned long addr,
+				 unsigned long size, pte_fn_t fn,
+				 void *data, bool create)
+{
 	pgd_t *pgd;
-	अचिन्हित दीर्घ start = addr, next;
-	अचिन्हित दीर्घ end = addr + size;
+	unsigned long start = addr, next;
+	unsigned long end = addr + size;
 	pgtbl_mod_mask mask = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (WARN_ON(addr >= end))
-		वापस -EINVAL;
+	if (WARN_ON(addr >= end))
+		return -EINVAL;
 
 	pgd = pgd_offset(mm, addr);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none(*pgd) && !create)
-			जारी;
-		अगर (WARN_ON_ONCE(pgd_leaf(*pgd)))
-			वापस -EINVAL;
-		अगर (!pgd_none(*pgd) && WARN_ON_ONCE(pgd_bad(*pgd))) अणु
-			अगर (!create)
-				जारी;
+		if (pgd_none(*pgd) && !create)
+			continue;
+		if (WARN_ON_ONCE(pgd_leaf(*pgd)))
+			return -EINVAL;
+		if (!pgd_none(*pgd) && WARN_ON_ONCE(pgd_bad(*pgd))) {
+			if (!create)
+				continue;
 			pgd_clear_bad(pgd);
-		पूर्ण
+		}
 		err = apply_to_p4d_range(mm, pgd, addr, next,
 					 fn, data, create, &mask);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (pgd++, addr = next, addr != end);
 
-	अगर (mask & ARCH_PAGE_TABLE_SYNC_MASK)
+	if (mask & ARCH_PAGE_TABLE_SYNC_MASK)
 		arch_sync_kernel_mappings(start, start + size);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Scan a region of भव memory, filling in page tables as necessary
+ * Scan a region of virtual memory, filling in page tables as necessary
  * and calling a provided function on each leaf page table.
  */
-पूर्णांक apply_to_page_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ size, pte_fn_t fn, व्योम *data)
-अणु
-	वापस __apply_to_page_range(mm, addr, size, fn, data, true);
-पूर्ण
+int apply_to_page_range(struct mm_struct *mm, unsigned long addr,
+			unsigned long size, pte_fn_t fn, void *data)
+{
+	return __apply_to_page_range(mm, addr, size, fn, data, true);
+}
 EXPORT_SYMBOL_GPL(apply_to_page_range);
 
 /*
- * Scan a region of भव memory, calling a provided function on
+ * Scan a region of virtual memory, calling a provided function on
  * each leaf page table where it exists.
  *
- * Unlike apply_to_page_range, this करोes _not_ fill in page tables
- * where they are असलent.
+ * Unlike apply_to_page_range, this does _not_ fill in page tables
+ * where they are absent.
  */
-पूर्णांक apply_to_existing_page_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-				 अचिन्हित दीर्घ size, pte_fn_t fn, व्योम *data)
-अणु
-	वापस __apply_to_page_range(mm, addr, size, fn, data, false);
-पूर्ण
+int apply_to_existing_page_range(struct mm_struct *mm, unsigned long addr,
+				 unsigned long size, pte_fn_t fn, void *data)
+{
+	return __apply_to_page_range(mm, addr, size, fn, data, false);
+}
 EXPORT_SYMBOL_GPL(apply_to_existing_page_range);
 
 /*
  * handle_pte_fault chooses page fault handler according to an entry which was
- * पढ़ो non-atomically.  Beक्रमe making any commiपंचांगent, on those architectures
+ * read non-atomically.  Before making any commitment, on those architectures
  * or configurations (e.g. i386 with PAE) which might give a mix of unmatched
- * parts, करो_swap_page must check under lock beक्रमe unmapping the pte and
- * proceeding (but करो_wp_page is only called after alपढ़ोy making such a check;
- * and करो_anonymous_page can safely check later on).
+ * parts, do_swap_page must check under lock before unmapping the pte and
+ * proceeding (but do_wp_page is only called after already making such a check;
+ * and do_anonymous_page can safely check later on).
  */
-अटल अंतरभूत पूर्णांक pte_unmap_same(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
+static inline int pte_unmap_same(struct mm_struct *mm, pmd_t *pmd,
 				pte_t *page_table, pte_t orig_pte)
-अणु
-	पूर्णांक same = 1;
-#अगर defined(CONFIG_SMP) || defined(CONFIG_PREEMPTION)
-	अगर (माप(pte_t) > माप(अचिन्हित दीर्घ)) अणु
+{
+	int same = 1;
+#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPTION)
+	if (sizeof(pte_t) > sizeof(unsigned long)) {
 		spinlock_t *ptl = pte_lockptr(mm, pmd);
 		spin_lock(ptl);
 		same = pte_same(*page_table, orig_pte);
 		spin_unlock(ptl);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	pte_unmap(page_table);
-	वापस same;
-पूर्ण
+	return same;
+}
 
-अटल अंतरभूत bool cow_user_page(काष्ठा page *dst, काष्ठा page *src,
-				 काष्ठा vm_fault *vmf)
-अणु
+static inline bool cow_user_page(struct page *dst, struct page *src,
+				 struct vm_fault *vmf)
+{
 	bool ret;
-	व्योम *kaddr;
-	व्योम __user *uaddr;
+	void *kaddr;
+	void __user *uaddr;
 	bool locked = false;
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	अचिन्हित दीर्घ addr = vmf->address;
+	struct vm_area_struct *vma = vmf->vma;
+	struct mm_struct *mm = vma->vm_mm;
+	unsigned long addr = vmf->address;
 
-	अगर (likely(src)) अणु
+	if (likely(src)) {
 		copy_user_highpage(dst, src, addr, vma);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	/*
-	 * If the source page was a PFN mapping, we करोn't have
-	 * a "struct page" क्रम it. We करो a best-efक्रमt copy by
+	 * If the source page was a PFN mapping, we don't have
+	 * a "struct page" for it. We do a best-effort copy by
 	 * just copying from the original user address. If that
 	 * fails, we just zero-fill it. Live with it.
 	 */
 	kaddr = kmap_atomic(dst);
-	uaddr = (व्योम __user *)(addr & PAGE_MASK);
+	uaddr = (void __user *)(addr & PAGE_MASK);
 
 	/*
 	 * On architectures with software "accessed" bits, we would
-	 * take a द्विगुन page fault, so mark it accessed here.
+	 * take a double page fault, so mark it accessed here.
 	 */
-	अगर (arch_faults_on_old_pte() && !pte_young(vmf->orig_pte)) अणु
+	if (arch_faults_on_old_pte() && !pte_young(vmf->orig_pte)) {
 		pte_t entry;
 
 		vmf->pte = pte_offset_map_lock(mm, vmf->pmd, addr, &vmf->ptl);
 		locked = true;
-		अगर (!likely(pte_same(*vmf->pte, vmf->orig_pte))) अणु
+		if (!likely(pte_same(*vmf->pte, vmf->orig_pte))) {
 			/*
-			 * Other thपढ़ो has alपढ़ोy handled the fault
+			 * Other thread has already handled the fault
 			 * and update local tlb only
 			 */
 			update_mmu_tlb(vma, addr, vmf->pte);
 			ret = false;
-			जाओ pte_unlock;
-		पूर्ण
+			goto pte_unlock;
+		}
 
 		entry = pte_mkyoung(vmf->orig_pte);
-		अगर (ptep_set_access_flags(vma, addr, vmf->pte, entry, 0))
+		if (ptep_set_access_flags(vma, addr, vmf->pte, entry, 0))
 			update_mmu_cache(vma, addr, vmf->pte);
-	पूर्ण
+	}
 
 	/*
 	 * This really shouldn't fail, because the page is there
-	 * in the page tables. But it might just be unपढ़ोable,
-	 * in which हाल we just give up and fill the result with
+	 * in the page tables. But it might just be unreadable,
+	 * in which case we just give up and fill the result with
 	 * zeroes.
 	 */
-	अगर (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE)) अणु
-		अगर (locked)
-			जाओ warn;
+	if (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE)) {
+		if (locked)
+			goto warn;
 
-		/* Re-validate under PTL अगर the page is still mapped */
+		/* Re-validate under PTL if the page is still mapped */
 		vmf->pte = pte_offset_map_lock(mm, vmf->pmd, addr, &vmf->ptl);
 		locked = true;
-		अगर (!likely(pte_same(*vmf->pte, vmf->orig_pte))) अणु
+		if (!likely(pte_same(*vmf->pte, vmf->orig_pte))) {
 			/* The PTE changed under us, update local tlb */
 			update_mmu_tlb(vma, addr, vmf->pte);
 			ret = false;
-			जाओ pte_unlock;
-		पूर्ण
+			goto pte_unlock;
+		}
 
 		/*
 		 * The same page can be mapped back since last copy attempt.
 		 * Try to copy again under PTL.
 		 */
-		अगर (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE)) अणु
+		if (__copy_from_user_inatomic(kaddr, uaddr, PAGE_SIZE)) {
 			/*
-			 * Give a warn in हाल there can be some obscure
-			 * use-हाल
+			 * Give a warn in case there can be some obscure
+			 * use-case
 			 */
 warn:
 			WARN_ON_ONCE(1);
 			clear_page(kaddr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = true;
 
 pte_unlock:
-	अगर (locked)
+	if (locked)
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
 	kunmap_atomic(kaddr);
 	flush_dcache_page(dst);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल gfp_t __get_fault_gfp_mask(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा file *vm_file = vma->vm_file;
+static gfp_t __get_fault_gfp_mask(struct vm_area_struct *vma)
+{
+	struct file *vm_file = vma->vm_file;
 
-	अगर (vm_file)
-		वापस mapping_gfp_mask(vm_file->f_mapping) | __GFP_FS | __GFP_IO;
+	if (vm_file)
+		return mapping_gfp_mask(vm_file->f_mapping) | __GFP_FS | __GFP_IO;
 
 	/*
-	 * Special mappings (e.g. VDSO) करो not have any file so fake
-	 * a शेष GFP_KERNEL क्रम them.
+	 * Special mappings (e.g. VDSO) do not have any file so fake
+	 * a default GFP_KERNEL for them.
 	 */
-	वापस GFP_KERNEL;
-पूर्ण
+	return GFP_KERNEL;
+}
 
 /*
- * Notअगरy the address space that the page is about to become writable so that
- * it can prohibit this or रुको क्रम the page to get पूर्णांकo an appropriate state.
+ * Notify the address space that the page is about to become writable so that
+ * it can prohibit this or wait for the page to get into an appropriate state.
  *
- * We करो this without the lock held, so that it can sleep अगर it needs to.
+ * We do this without the lock held, so that it can sleep if it needs to.
  */
-अटल vm_fault_t करो_page_mkग_लिखो(काष्ठा vm_fault *vmf)
-अणु
+static vm_fault_t do_page_mkwrite(struct vm_fault *vmf)
+{
 	vm_fault_t ret;
-	काष्ठा page *page = vmf->page;
-	अचिन्हित पूर्णांक old_flags = vmf->flags;
+	struct page *page = vmf->page;
+	unsigned int old_flags = vmf->flags;
 
 	vmf->flags = FAULT_FLAG_WRITE|FAULT_FLAG_MKWRITE;
 
-	अगर (vmf->vma->vm_file &&
-	    IS_SWAPखाता(vmf->vma->vm_file->f_mapping->host))
-		वापस VM_FAULT_SIGBUS;
+	if (vmf->vma->vm_file &&
+	    IS_SWAPFILE(vmf->vma->vm_file->f_mapping->host))
+		return VM_FAULT_SIGBUS;
 
-	ret = vmf->vma->vm_ops->page_mkग_लिखो(vmf);
+	ret = vmf->vma->vm_ops->page_mkwrite(vmf);
 	/* Restore original flags so that caller is not surprised */
 	vmf->flags = old_flags;
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))
-		वापस ret;
-	अगर (unlikely(!(ret & VM_FAULT_LOCKED))) अणु
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))
+		return ret;
+	if (unlikely(!(ret & VM_FAULT_LOCKED))) {
 		lock_page(page);
-		अगर (!page->mapping) अणु
+		if (!page->mapping) {
 			unlock_page(page);
-			वापस 0; /* retry */
-		पूर्ण
+			return 0; /* retry */
+		}
 		ret |= VM_FAULT_LOCKED;
-	पूर्ण अन्यथा
+	} else
 		VM_BUG_ON_PAGE(!PageLocked(page), page);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Handle dirtying of a page in shared file mapping on a ग_लिखो fault.
+ * Handle dirtying of a page in shared file mapping on a write fault.
  *
  * The function expects the page to be locked and unlocks it.
  */
-अटल vm_fault_t fault_dirty_shared_page(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा address_space *mapping;
-	काष्ठा page *page = vmf->page;
+static vm_fault_t fault_dirty_shared_page(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct address_space *mapping;
+	struct page *page = vmf->page;
 	bool dirtied;
-	bool page_mkग_लिखो = vma->vm_ops && vma->vm_ops->page_mkग_लिखो;
+	bool page_mkwrite = vma->vm_ops && vma->vm_ops->page_mkwrite;
 
 	dirtied = set_page_dirty(page);
 	VM_BUG_ON_PAGE(PageAnon(page), page);
 	/*
 	 * Take a local copy of the address_space - page.mapping may be zeroed
-	 * by truncate after unlock_page().   The address_space itself reमुख्यs
+	 * by truncate after unlock_page().   The address_space itself remains
 	 * pinned by vma->vm_file's reference.  We rely on unlock_page()'s
-	 * release semantics to prevent the compiler from unकरोing this copying.
+	 * release semantics to prevent the compiler from undoing this copying.
 	 */
 	mapping = page_rmapping(page);
 	unlock_page(page);
 
-	अगर (!page_mkग_लिखो)
-		file_update_समय(vma->vm_file);
+	if (!page_mkwrite)
+		file_update_time(vma->vm_file);
 
 	/*
-	 * Throttle page dirtying rate करोwn to ग_लिखोback speed.
+	 * Throttle page dirtying rate down to writeback speed.
 	 *
-	 * mapping may be शून्य here because some device drivers करो not
+	 * mapping may be NULL here because some device drivers do not
 	 * set page.mapping but still dirty their pages
 	 *
-	 * Drop the mmap_lock beक्रमe रुकोing on IO, अगर we can. The file
+	 * Drop the mmap_lock before waiting on IO, if we can. The file
 	 * is pinning the mapping, as per above.
 	 */
-	अगर ((dirtied || page_mkग_लिखो) && mapping) अणु
-		काष्ठा file *fpin;
+	if ((dirtied || page_mkwrite) && mapping) {
+		struct file *fpin;
 
-		fpin = maybe_unlock_mmap_क्रम_io(vmf, शून्य);
+		fpin = maybe_unlock_mmap_for_io(vmf, NULL);
 		balance_dirty_pages_ratelimited(mapping);
-		अगर (fpin) अणु
+		if (fpin) {
 			fput(fpin);
-			वापस VM_FAULT_RETRY;
-		पूर्ण
-	पूर्ण
+			return VM_FAULT_RETRY;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Handle ग_लिखो page faults क्रम pages that can be reused in the current vma
+ * Handle write page faults for pages that can be reused in the current vma
  *
  * This can happen either due to the mapping being with the VM_SHARED flag,
  * or due to us being the last reference standing to the page. In either
- * हाल, all we need to करो here is to mark the page as writable and update
+ * case, all we need to do here is to mark the page as writable and update
  * any related book-keeping.
  */
-अटल अंतरभूत व्योम wp_page_reuse(काष्ठा vm_fault *vmf)
+static inline void wp_page_reuse(struct vm_fault *vmf)
 	__releases(vmf->ptl)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page = vmf->page;
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page = vmf->page;
 	pte_t entry;
 	/*
-	 * Clear the pages cpupid inक्रमmation as the existing
-	 * inक्रमmation potentially beदीर्घs to a now completely
+	 * Clear the pages cpupid information as the existing
+	 * information potentially belongs to a now completely
 	 * unrelated process.
 	 */
-	अगर (page)
+	if (page)
 		page_cpupid_xchg_last(page, (1 << LAST_CPUPID_SHIFT) - 1);
 
 	flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
 	entry = pte_mkyoung(vmf->orig_pte);
-	entry = maybe_mkग_लिखो(pte_सूची_गढ़ोty(entry), vma);
-	अगर (ptep_set_access_flags(vma, vmf->address, vmf->pte, entry, 1))
+	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+	if (ptep_set_access_flags(vma, vmf->address, vmf->pte, entry, 1))
 		update_mmu_cache(vma, vmf->address, vmf->pte);
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
 	count_vm_event(PGREUSE);
-पूर्ण
+}
 
 /*
- * Handle the हाल of a page which we actually need to copy to a new page.
+ * Handle the case of a page which we actually need to copy to a new page.
  *
  * Called with mmap_lock locked and the old page referenced, but
  * without the ptl held.
@@ -2879,321 +2878,321 @@ pte_unlock:
  * High level logic flow:
  *
  * - Allocate a page, copy the content of the old page to the new one.
- * - Handle book keeping and accounting - cgroups, mmu-notअगरiers, etc.
+ * - Handle book keeping and accounting - cgroups, mmu-notifiers, etc.
  * - Take the PTL. If the pte changed, bail out and release the allocated page
  * - If the pte is still the way we remember it, update the page table and all
  *   relevant references. This includes dropping the reference the page-table
  *   held to the old page, as well as updating the rmap.
- * - In any हाल, unlock the PTL and drop the reference we took to the old page.
+ * - In any case, unlock the PTL and drop the reference we took to the old page.
  */
-अटल vm_fault_t wp_page_copy(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा page *old_page = vmf->page;
-	काष्ठा page *new_page = शून्य;
+static vm_fault_t wp_page_copy(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct mm_struct *mm = vma->vm_mm;
+	struct page *old_page = vmf->page;
+	struct page *new_page = NULL;
 	pte_t entry;
-	पूर्णांक page_copied = 0;
-	काष्ठा mmu_notअगरier_range range;
+	int page_copied = 0;
+	struct mmu_notifier_range range;
 
-	अगर (unlikely(anon_vma_prepare(vma)))
-		जाओ oom;
+	if (unlikely(anon_vma_prepare(vma)))
+		goto oom;
 
-	अगर (is_zero_pfn(pte_pfn(vmf->orig_pte))) अणु
+	if (is_zero_pfn(pte_pfn(vmf->orig_pte))) {
 		new_page = alloc_zeroed_user_highpage_movable(vma,
 							      vmf->address);
-		अगर (!new_page)
-			जाओ oom;
-	पूर्ण अन्यथा अणु
+		if (!new_page)
+			goto oom;
+	} else {
 		new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma,
 				vmf->address);
-		अगर (!new_page)
-			जाओ oom;
+		if (!new_page)
+			goto oom;
 
-		अगर (!cow_user_page(new_page, old_page, vmf)) अणु
+		if (!cow_user_page(new_page, old_page, vmf)) {
 			/*
-			 * COW failed, अगर the fault was solved by other,
+			 * COW failed, if the fault was solved by other,
 			 * it's fine. If not, userspace would re-fault on
 			 * the same address and we will handle the fault
 			 * from the second attempt.
 			 */
 			put_page(new_page);
-			अगर (old_page)
+			if (old_page)
 				put_page(old_page);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (mem_cgroup_अक्षरge(new_page, mm, GFP_KERNEL))
-		जाओ oom_मुक्त_new;
+	if (mem_cgroup_charge(new_page, mm, GFP_KERNEL))
+		goto oom_free_new;
 	cgroup_throttle_swaprate(new_page, GFP_KERNEL);
 
 	__SetPageUptodate(new_page);
 
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm,
 				vmf->address & PAGE_MASK,
 				(vmf->address & PAGE_MASK) + PAGE_SIZE);
-	mmu_notअगरier_invalidate_range_start(&range);
+	mmu_notifier_invalidate_range_start(&range);
 
 	/*
 	 * Re-check the pte - we dropped the lock
 	 */
 	vmf->pte = pte_offset_map_lock(mm, vmf->pmd, vmf->address, &vmf->ptl);
-	अगर (likely(pte_same(*vmf->pte, vmf->orig_pte))) अणु
-		अगर (old_page) अणु
-			अगर (!PageAnon(old_page)) अणु
+	if (likely(pte_same(*vmf->pte, vmf->orig_pte))) {
+		if (old_page) {
+			if (!PageAnon(old_page)) {
 				dec_mm_counter_fast(mm,
 						mm_counter_file(old_page));
 				inc_mm_counter_fast(mm, MM_ANONPAGES);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			inc_mm_counter_fast(mm, MM_ANONPAGES);
-		पूर्ण
+		}
 		flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
 		entry = mk_pte(new_page, vma->vm_page_prot);
 		entry = pte_sw_mkyoung(entry);
-		entry = maybe_mkग_लिखो(pte_सूची_गढ़ोty(entry), vma);
+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
 
 		/*
-		 * Clear the pte entry and flush it first, beक्रमe updating the
-		 * pte with the new entry, to keep TLBs on dअगरferent CPUs in
+		 * Clear the pte entry and flush it first, before updating the
+		 * pte with the new entry, to keep TLBs on different CPUs in
 		 * sync. This code used to set the new PTE then flush TLBs, but
-		 * that left a winकरोw where the new PTE could be loaded पूर्णांकo
-		 * some TLBs जबतक the old PTE reमुख्यs in others.
+		 * that left a window where the new PTE could be loaded into
+		 * some TLBs while the old PTE remains in others.
 		 */
-		ptep_clear_flush_notअगरy(vma, vmf->address, vmf->pte);
+		ptep_clear_flush_notify(vma, vmf->address, vmf->pte);
 		page_add_new_anon_rmap(new_page, vma, vmf->address, false);
 		lru_cache_add_inactive_or_unevictable(new_page, vma);
 		/*
-		 * We call the notअगरy macro here because, when using secondary
-		 * mmu page tables (such as kvm shaकरोw page tables), we want the
-		 * new page to be mapped directly पूर्णांकo the secondary page table.
+		 * We call the notify macro here because, when using secondary
+		 * mmu page tables (such as kvm shadow page tables), we want the
+		 * new page to be mapped directly into the secondary page table.
 		 */
-		set_pte_at_notअगरy(mm, vmf->address, vmf->pte, entry);
+		set_pte_at_notify(mm, vmf->address, vmf->pte, entry);
 		update_mmu_cache(vma, vmf->address, vmf->pte);
-		अगर (old_page) अणु
+		if (old_page) {
 			/*
-			 * Only after चयनing the pte to the new page may
-			 * we हटाओ the mapcount here. Otherwise another
+			 * Only after switching the pte to the new page may
+			 * we remove the mapcount here. Otherwise another
 			 * process may come and find the rmap count decremented
-			 * beक्रमe the pte is चयनed to the new page, and
-			 * "reuse" the old page writing पूर्णांकo it जबतक our pte
-			 * here still poपूर्णांकs पूर्णांकo it and can be पढ़ो by other
-			 * thपढ़ोs.
+			 * before the pte is switched to the new page, and
+			 * "reuse" the old page writing into it while our pte
+			 * here still points into it and can be read by other
+			 * threads.
 			 *
 			 * The critical issue is to order this
-			 * page_हटाओ_rmap with the ptp_clear_flush above.
-			 * Those stores are ordered by (अगर nothing अन्यथा,)
+			 * page_remove_rmap with the ptp_clear_flush above.
+			 * Those stores are ordered by (if nothing else,)
 			 * the barrier present in the atomic_add_negative
-			 * in page_हटाओ_rmap.
+			 * in page_remove_rmap.
 			 *
 			 * Then the TLB flush in ptep_clear_flush ensures that
-			 * no process can access the old page beक्रमe the
+			 * no process can access the old page before the
 			 * decremented mapcount is visible. And the old page
 			 * cannot be reused until after the decremented
 			 * mapcount is visible. So transitively, TLBs to
-			 * old page will be flushed beक्रमe it can be reused.
+			 * old page will be flushed before it can be reused.
 			 */
-			page_हटाओ_rmap(old_page, false);
-		पूर्ण
+			page_remove_rmap(old_page, false);
+		}
 
 		/* Free the old page.. */
 		new_page = old_page;
 		page_copied = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		update_mmu_tlb(vma, vmf->address, vmf->pte);
-	पूर्ण
+	}
 
-	अगर (new_page)
+	if (new_page)
 		put_page(new_page);
 
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
 	/*
-	 * No need to द्विगुन call mmu_notअगरier->invalidate_range() callback as
-	 * the above ptep_clear_flush_notअगरy() did alपढ़ोy call it.
+	 * No need to double call mmu_notifier->invalidate_range() callback as
+	 * the above ptep_clear_flush_notify() did already call it.
 	 */
-	mmu_notअगरier_invalidate_range_only_end(&range);
-	अगर (old_page) अणु
+	mmu_notifier_invalidate_range_only_end(&range);
+	if (old_page) {
 		/*
 		 * Don't let another task, with possibly unlocked vma,
 		 * keep the mlocked page.
 		 */
-		अगर (page_copied && (vma->vm_flags & VM_LOCKED)) अणु
+		if (page_copied && (vma->vm_flags & VM_LOCKED)) {
 			lock_page(old_page);	/* LRU manipulation */
-			अगर (PageMlocked(old_page))
+			if (PageMlocked(old_page))
 				munlock_vma_page(old_page);
 			unlock_page(old_page);
-		पूर्ण
+		}
 		put_page(old_page);
-	पूर्ण
-	वापस page_copied ? VM_FAULT_WRITE : 0;
-oom_मुक्त_new:
+	}
+	return page_copied ? VM_FAULT_WRITE : 0;
+oom_free_new:
 	put_page(new_page);
 oom:
-	अगर (old_page)
+	if (old_page)
 		put_page(old_page);
-	वापस VM_FAULT_OOM;
-पूर्ण
+	return VM_FAULT_OOM;
+}
 
 /**
- * finish_mkग_लिखो_fault - finish page fault क्रम a shared mapping, making PTE
- *			  ग_लिखोable once the page is prepared
+ * finish_mkwrite_fault - finish page fault for a shared mapping, making PTE
+ *			  writeable once the page is prepared
  *
- * @vmf: काष्ठाure describing the fault
+ * @vmf: structure describing the fault
  *
- * This function handles all that is needed to finish a ग_लिखो page fault in a
- * shared mapping due to PTE being पढ़ो-only once the mapped page is prepared.
- * It handles locking of PTE and modअगरying it.
+ * This function handles all that is needed to finish a write page fault in a
+ * shared mapping due to PTE being read-only once the mapped page is prepared.
+ * It handles locking of PTE and modifying it.
  *
  * The function expects the page to be locked or other protection against
- * concurrent faults / ग_लिखोback (such as DAX radix tree locks).
+ * concurrent faults / writeback (such as DAX radix tree locks).
  *
- * Return: %VM_FAULT_WRITE on success, %0 when PTE got changed beक्रमe
+ * Return: %VM_FAULT_WRITE on success, %0 when PTE got changed before
  * we acquired PTE lock.
  */
-vm_fault_t finish_mkग_लिखो_fault(काष्ठा vm_fault *vmf)
-अणु
+vm_fault_t finish_mkwrite_fault(struct vm_fault *vmf)
+{
 	WARN_ON_ONCE(!(vmf->vma->vm_flags & VM_SHARED));
 	vmf->pte = pte_offset_map_lock(vmf->vma->vm_mm, vmf->pmd, vmf->address,
 				       &vmf->ptl);
 	/*
-	 * We might have raced with another page fault जबतक we released the
+	 * We might have raced with another page fault while we released the
 	 * pte_offset_map_lock.
 	 */
-	अगर (!pte_same(*vmf->pte, vmf->orig_pte)) अणु
+	if (!pte_same(*vmf->pte, vmf->orig_pte)) {
 		update_mmu_tlb(vmf->vma, vmf->address, vmf->pte);
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
-		वापस VM_FAULT_NOPAGE;
-	पूर्ण
+		return VM_FAULT_NOPAGE;
+	}
 	wp_page_reuse(vmf);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Handle ग_लिखो page faults क्रम VM_MIXEDMAP or VM_PFNMAP क्रम a VM_SHARED
+ * Handle write page faults for VM_MIXEDMAP or VM_PFNMAP for a VM_SHARED
  * mapping
  */
-अटल vm_fault_t wp_pfn_shared(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+static vm_fault_t wp_pfn_shared(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 
-	अगर (vma->vm_ops && vma->vm_ops->pfn_mkग_लिखो) अणु
+	if (vma->vm_ops && vma->vm_ops->pfn_mkwrite) {
 		vm_fault_t ret;
 
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
 		vmf->flags |= FAULT_FLAG_MKWRITE;
-		ret = vma->vm_ops->pfn_mkग_लिखो(vmf);
-		अगर (ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE))
-			वापस ret;
-		वापस finish_mkग_लिखो_fault(vmf);
-	पूर्ण
+		ret = vma->vm_ops->pfn_mkwrite(vmf);
+		if (ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE))
+			return ret;
+		return finish_mkwrite_fault(vmf);
+	}
 	wp_page_reuse(vmf);
-	वापस VM_FAULT_WRITE;
-पूर्ण
+	return VM_FAULT_WRITE;
+}
 
-अटल vm_fault_t wp_page_shared(काष्ठा vm_fault *vmf)
+static vm_fault_t wp_page_shared(struct vm_fault *vmf)
 	__releases(vmf->ptl)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+{
+	struct vm_area_struct *vma = vmf->vma;
 	vm_fault_t ret = VM_FAULT_WRITE;
 
 	get_page(vmf->page);
 
-	अगर (vma->vm_ops && vma->vm_ops->page_mkग_लिखो) अणु
-		vm_fault_t पंचांगp;
+	if (vma->vm_ops && vma->vm_ops->page_mkwrite) {
+		vm_fault_t tmp;
 
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
-		पंचांगp = करो_page_mkग_लिखो(vmf);
-		अगर (unlikely(!पंचांगp || (पंचांगp &
-				      (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))) अणु
+		tmp = do_page_mkwrite(vmf);
+		if (unlikely(!tmp || (tmp &
+				      (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))) {
 			put_page(vmf->page);
-			वापस पंचांगp;
-		पूर्ण
-		पंचांगp = finish_mkग_लिखो_fault(vmf);
-		अगर (unlikely(पंचांगp & (VM_FAULT_ERROR | VM_FAULT_NOPAGE))) अणु
+			return tmp;
+		}
+		tmp = finish_mkwrite_fault(vmf);
+		if (unlikely(tmp & (VM_FAULT_ERROR | VM_FAULT_NOPAGE))) {
 			unlock_page(vmf->page);
 			put_page(vmf->page);
-			वापस पंचांगp;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return tmp;
+		}
+	} else {
 		wp_page_reuse(vmf);
 		lock_page(vmf->page);
-	पूर्ण
+	}
 	ret |= fault_dirty_shared_page(vmf);
 	put_page(vmf->page);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This routine handles present pages, when users try to ग_लिखो
- * to a shared page. It is करोne by copying the page to a new address
- * and decrementing the shared-page counter क्रम the old page.
+ * This routine handles present pages, when users try to write
+ * to a shared page. It is done by copying the page to a new address
+ * and decrementing the shared-page counter for the old page.
  *
  * Note that this routine assumes that the protection checks have been
- * करोne by the caller (the low-level page fault routine in most हालs).
- * Thus we can safely just mark it writable once we've करोne any necessary
+ * done by the caller (the low-level page fault routine in most cases).
+ * Thus we can safely just mark it writable once we've done any necessary
  * COW.
  *
- * We also mark the page dirty at this poपूर्णांक even though the page will
- * change only once the ग_लिखो actually happens. This aव्योमs a few races,
+ * We also mark the page dirty at this point even though the page will
+ * change only once the write actually happens. This avoids a few races,
  * and potentially makes it more efficient.
  *
  * We enter with non-exclusive mmap_lock (to exclude vma changes,
  * but allow concurrent faults), with pte both mapped and locked.
- * We वापस with mmap_lock still held, but pte unmapped and unlocked.
+ * We return with mmap_lock still held, but pte unmapped and unlocked.
  */
-अटल vm_fault_t करो_wp_page(काष्ठा vm_fault *vmf)
+static vm_fault_t do_wp_page(struct vm_fault *vmf)
 	__releases(vmf->ptl)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+{
+	struct vm_area_struct *vma = vmf->vma;
 
-	अगर (userfaultfd_pte_wp(vma, *vmf->pte)) अणु
+	if (userfaultfd_pte_wp(vma, *vmf->pte)) {
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
-		वापस handle_userfault(vmf, VM_UFFD_WP);
-	पूर्ण
+		return handle_userfault(vmf, VM_UFFD_WP);
+	}
 
 	/*
-	 * Userfaultfd ग_लिखो-protect can defer flushes. Ensure the TLB
-	 * is flushed in this हाल beक्रमe copying.
+	 * Userfaultfd write-protect can defer flushes. Ensure the TLB
+	 * is flushed in this case before copying.
 	 */
-	अगर (unlikely(userfaultfd_wp(vmf->vma) &&
+	if (unlikely(userfaultfd_wp(vmf->vma) &&
 		     mm_tlb_flush_pending(vmf->vma->vm_mm)))
 		flush_tlb_page(vmf->vma, vmf->address);
 
 	vmf->page = vm_normal_page(vma, vmf->address, vmf->orig_pte);
-	अगर (!vmf->page) अणु
+	if (!vmf->page) {
 		/*
-		 * VM_MIXEDMAP !pfn_valid() हाल, or VM_SOFTसूचीTY clear on a
+		 * VM_MIXEDMAP !pfn_valid() case, or VM_SOFTDIRTY clear on a
 		 * VM_PFNMAP VMA.
 		 *
-		 * We should not cow pages in a shared ग_लिखोable mapping.
-		 * Just mark the pages writable and/or call ops->pfn_mkग_लिखो.
+		 * We should not cow pages in a shared writeable mapping.
+		 * Just mark the pages writable and/or call ops->pfn_mkwrite.
 		 */
-		अगर ((vma->vm_flags & (VM_WRITE|VM_SHARED)) ==
+		if ((vma->vm_flags & (VM_WRITE|VM_SHARED)) ==
 				     (VM_WRITE|VM_SHARED))
-			वापस wp_pfn_shared(vmf);
+			return wp_pfn_shared(vmf);
 
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
-		वापस wp_page_copy(vmf);
-	पूर्ण
+		return wp_page_copy(vmf);
+	}
 
 	/*
 	 * Take out anonymous pages first, anonymous shared vmas are
 	 * not dirty accountable.
 	 */
-	अगर (PageAnon(vmf->page)) अणु
-		काष्ठा page *page = vmf->page;
+	if (PageAnon(vmf->page)) {
+		struct page *page = vmf->page;
 
-		/* PageKsm() करोesn't necessarily उठाओ the page refcount */
-		अगर (PageKsm(page) || page_count(page) != 1)
-			जाओ copy;
-		अगर (!trylock_page(page))
-			जाओ copy;
-		अगर (PageKsm(page) || page_mapcount(page) != 1 || page_count(page) != 1) अणु
+		/* PageKsm() doesn't necessarily raise the page refcount */
+		if (PageKsm(page) || page_count(page) != 1)
+			goto copy;
+		if (!trylock_page(page))
+			goto copy;
+		if (PageKsm(page) || page_mapcount(page) != 1 || page_count(page) != 1) {
 			unlock_page(page);
-			जाओ copy;
-		पूर्ण
+			goto copy;
+		}
 		/*
 		 * Ok, we've got the only map reference, and the only
 		 * page count reference, and the page is locked,
@@ -3201,11 +3200,11 @@ vm_fault_t finish_mkग_लिखो_fault(काष्ठा vm_fault *vmf)
 		 */
 		unlock_page(page);
 		wp_page_reuse(vmf);
-		वापस VM_FAULT_WRITE;
-	पूर्ण अन्यथा अगर (unlikely((vma->vm_flags & (VM_WRITE|VM_SHARED)) ==
-					(VM_WRITE|VM_SHARED))) अणु
-		वापस wp_page_shared(vmf);
-	पूर्ण
+		return VM_FAULT_WRITE;
+	} else if (unlikely((vma->vm_flags & (VM_WRITE|VM_SHARED)) ==
+					(VM_WRITE|VM_SHARED))) {
+		return wp_page_shared(vmf);
+	}
 copy:
 	/*
 	 * Ok, we need to copy. Oh, well..
@@ -3213,56 +3212,56 @@ copy:
 	get_page(vmf->page);
 
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-	वापस wp_page_copy(vmf);
-पूर्ण
+	return wp_page_copy(vmf);
+}
 
-अटल व्योम unmap_mapping_range_vma(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ start_addr, अचिन्हित दीर्घ end_addr,
-		काष्ठा zap_details *details)
-अणु
+static void unmap_mapping_range_vma(struct vm_area_struct *vma,
+		unsigned long start_addr, unsigned long end_addr,
+		struct zap_details *details)
+{
 	zap_page_range_single(vma, start_addr, end_addr - start_addr, details);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम unmap_mapping_range_tree(काष्ठा rb_root_cached *root,
-					    काष्ठा zap_details *details)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+static inline void unmap_mapping_range_tree(struct rb_root_cached *root,
+					    struct zap_details *details)
+{
+	struct vm_area_struct *vma;
 	pgoff_t vba, vea, zba, zea;
 
-	vma_पूर्णांकerval_tree_क्रमeach(vma, root,
-			details->first_index, details->last_index) अणु
+	vma_interval_tree_foreach(vma, root,
+			details->first_index, details->last_index) {
 
 		vba = vma->vm_pgoff;
 		vea = vba + vma_pages(vma) - 1;
 		zba = details->first_index;
-		अगर (zba < vba)
+		if (zba < vba)
 			zba = vba;
 		zea = details->last_index;
-		अगर (zea > vea)
+		if (zea > vea)
 			zea = vea;
 
 		unmap_mapping_range_vma(vma,
 			((zba - vba) << PAGE_SHIFT) + vma->vm_start,
 			((zea - vba + 1) << PAGE_SHIFT) + vma->vm_start,
 				details);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * unmap_mapping_page() - Unmap single page from processes.
  * @page: The locked page to be unmapped.
  *
  * Unmap this page from any userspace process which still has it mmaped.
- * Typically, क्रम efficiency, the range of nearby pages has alपढ़ोy been
+ * Typically, for efficiency, the range of nearby pages has already been
  * unmapped by unmap_mapping_pages() or unmap_mapping_range().  But once
  * truncation or invalidation holds the lock on a page, it may find that
  * the page has been remapped again: and then uses unmap_mapping_page()
  * to unmap it finally.
  */
-व्योम unmap_mapping_page(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
-	काष्ठा zap_details details = अणु पूर्ण;
+void unmap_mapping_page(struct page *page)
+{
+	struct address_space *mapping = page->mapping;
+	struct zap_details details = { };
 
 	VM_BUG_ON(!PageLocked(page));
 	VM_BUG_ON(PageTail(page));
@@ -3272,400 +3271,400 @@ copy:
 	details.last_index = page->index + thp_nr_pages(page) - 1;
 	details.single_page = page;
 
-	i_mmap_lock_ग_लिखो(mapping);
-	अगर (unlikely(!RB_EMPTY_ROOT(&mapping->i_mmap.rb_root)))
+	i_mmap_lock_write(mapping);
+	if (unlikely(!RB_EMPTY_ROOT(&mapping->i_mmap.rb_root)))
 		unmap_mapping_range_tree(&mapping->i_mmap, &details);
-	i_mmap_unlock_ग_लिखो(mapping);
-पूर्ण
+	i_mmap_unlock_write(mapping);
+}
 
 /**
  * unmap_mapping_pages() - Unmap pages from processes.
  * @mapping: The address space containing pages to be unmapped.
  * @start: Index of first page to be unmapped.
  * @nr: Number of pages to be unmapped.  0 to unmap to end of file.
- * @even_cows: Whether to unmap even निजी COWed pages.
+ * @even_cows: Whether to unmap even private COWed pages.
  *
  * Unmap the pages in this address space from any userspace process which
- * has them mmaped.  Generally, you want to हटाओ COWed pages as well when
+ * has them mmaped.  Generally, you want to remove COWed pages as well when
  * a file is being truncated, but not when invalidating pages from the page
  * cache.
  */
-व्योम unmap_mapping_pages(काष्ठा address_space *mapping, pgoff_t start,
+void unmap_mapping_pages(struct address_space *mapping, pgoff_t start,
 		pgoff_t nr, bool even_cows)
-अणु
-	काष्ठा zap_details details = अणु पूर्ण;
+{
+	struct zap_details details = { };
 
-	details.check_mapping = even_cows ? शून्य : mapping;
+	details.check_mapping = even_cows ? NULL : mapping;
 	details.first_index = start;
 	details.last_index = start + nr - 1;
-	अगर (details.last_index < details.first_index)
-		details.last_index = अच_दीर्घ_उच्च;
+	if (details.last_index < details.first_index)
+		details.last_index = ULONG_MAX;
 
-	i_mmap_lock_ग_लिखो(mapping);
-	अगर (unlikely(!RB_EMPTY_ROOT(&mapping->i_mmap.rb_root)))
+	i_mmap_lock_write(mapping);
+	if (unlikely(!RB_EMPTY_ROOT(&mapping->i_mmap.rb_root)))
 		unmap_mapping_range_tree(&mapping->i_mmap, &details);
-	i_mmap_unlock_ग_लिखो(mapping);
-पूर्ण
+	i_mmap_unlock_write(mapping);
+}
 
 /**
- * unmap_mapping_range - unmap the portion of all mmaps in the specअगरied
- * address_space corresponding to the specअगरied byte range in the underlying
+ * unmap_mapping_range - unmap the portion of all mmaps in the specified
+ * address_space corresponding to the specified byte range in the underlying
  * file.
  *
  * @mapping: the address space containing mmaps to be unmapped.
  * @holebegin: byte in first page to unmap, relative to the start of
- * the underlying file.  This will be rounded करोwn to a PAGE_SIZE
- * boundary.  Note that this is dअगरferent from truncate_pagecache(), which
+ * the underlying file.  This will be rounded down to a PAGE_SIZE
+ * boundary.  Note that this is different from truncate_pagecache(), which
  * must keep the partial page.  In contrast, we must get rid of
  * partial pages.
  * @holelen: size of prospective hole in bytes.  This will be rounded
  * up to a PAGE_SIZE boundary.  A holelen of zero truncates to the
  * end of the file.
- * @even_cows: 1 when truncating a file, unmap even निजी COWed pages;
- * but 0 when invalidating pagecache, करोn't throw away निजी data.
+ * @even_cows: 1 when truncating a file, unmap even private COWed pages;
+ * but 0 when invalidating pagecache, don't throw away private data.
  */
-व्योम unmap_mapping_range(काष्ठा address_space *mapping,
-		loff_t स्थिर holebegin, loff_t स्थिर holelen, पूर्णांक even_cows)
-अणु
+void unmap_mapping_range(struct address_space *mapping,
+		loff_t const holebegin, loff_t const holelen, int even_cows)
+{
 	pgoff_t hba = holebegin >> PAGE_SHIFT;
 	pgoff_t hlen = (holelen + PAGE_SIZE - 1) >> PAGE_SHIFT;
 
-	/* Check क्रम overflow. */
-	अगर (माप(holelen) > माप(hlen)) अणु
-		दीर्घ दीर्घ holeend =
+	/* Check for overflow. */
+	if (sizeof(holelen) > sizeof(hlen)) {
+		long long holeend =
 			(holebegin + holelen + PAGE_SIZE - 1) >> PAGE_SHIFT;
-		अगर (holeend & ~(दीर्घ दीर्घ)अच_दीर्घ_उच्च)
-			hlen = अच_दीर्घ_उच्च - hba + 1;
-	पूर्ण
+		if (holeend & ~(long long)ULONG_MAX)
+			hlen = ULONG_MAX - hba + 1;
+	}
 
 	unmap_mapping_pages(mapping, hba, hlen, even_cows);
-पूर्ण
+}
 EXPORT_SYMBOL(unmap_mapping_range);
 
 /*
  * We enter with non-exclusive mmap_lock (to exclude vma changes,
  * but allow concurrent faults), and pte mapped but not yet locked.
- * We वापस with pte unmapped and unlocked.
+ * We return with pte unmapped and unlocked.
  *
- * We वापस with the mmap_lock locked or unlocked in the same हालs
- * as करोes filemap_fault().
+ * We return with the mmap_lock locked or unlocked in the same cases
+ * as does filemap_fault().
  */
-vm_fault_t करो_swap_page(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page = शून्य, *swapcache;
+vm_fault_t do_swap_page(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page = NULL, *swapcache;
 	swp_entry_t entry;
 	pte_t pte;
-	पूर्णांक locked;
-	पूर्णांक exclusive = 0;
+	int locked;
+	int exclusive = 0;
 	vm_fault_t ret = 0;
-	व्योम *shaकरोw = शून्य;
+	void *shadow = NULL;
 
-	अगर (!pte_unmap_same(vma->vm_mm, vmf->pmd, vmf->pte, vmf->orig_pte))
-		जाओ out;
+	if (!pte_unmap_same(vma->vm_mm, vmf->pmd, vmf->pte, vmf->orig_pte))
+		goto out;
 
 	entry = pte_to_swp_entry(vmf->orig_pte);
-	अगर (unlikely(non_swap_entry(entry))) अणु
-		अगर (is_migration_entry(entry)) अणु
-			migration_entry_रुको(vma->vm_mm, vmf->pmd,
+	if (unlikely(non_swap_entry(entry))) {
+		if (is_migration_entry(entry)) {
+			migration_entry_wait(vma->vm_mm, vmf->pmd,
 					     vmf->address);
-		पूर्ण अन्यथा अगर (is_device_निजी_entry(entry)) अणु
-			vmf->page = device_निजी_entry_to_page(entry);
+		} else if (is_device_private_entry(entry)) {
+			vmf->page = device_private_entry_to_page(entry);
 			ret = vmf->page->pgmap->ops->migrate_to_ram(vmf);
-		पूर्ण अन्यथा अगर (is_hwpoison_entry(entry)) अणु
+		} else if (is_hwpoison_entry(entry)) {
 			ret = VM_FAULT_HWPOISON;
-		पूर्ण अन्यथा अणु
-			prपूर्णांक_bad_pte(vma, vmf->address, vmf->orig_pte, शून्य);
+		} else {
+			print_bad_pte(vma, vmf->address, vmf->orig_pte, NULL);
 			ret = VM_FAULT_SIGBUS;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
 
 	delayacct_set_flag(current, DELAYACCT_PF_SWAPIN);
 	page = lookup_swap_cache(entry, vma, vmf->address);
 	swapcache = page;
 
-	अगर (!page) अणु
-		काष्ठा swap_info_काष्ठा *si = swp_swap_info(entry);
+	if (!page) {
+		struct swap_info_struct *si = swp_swap_info(entry);
 
-		अगर (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&
-		    __swap_count(entry) == 1) अणु
+		if (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&
+		    __swap_count(entry) == 1) {
 			/* skip swapcache */
 			page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma,
 							vmf->address);
-			अगर (page) अणु
+			if (page) {
 				__SetPageLocked(page);
 				__SetPageSwapBacked(page);
 
-				अगर (mem_cgroup_swapin_अक्षरge_page(page,
-					vma->vm_mm, GFP_KERNEL, entry)) अणु
+				if (mem_cgroup_swapin_charge_page(page,
+					vma->vm_mm, GFP_KERNEL, entry)) {
 					ret = VM_FAULT_OOM;
-					जाओ out_page;
-				पूर्ण
-				mem_cgroup_swapin_unअक्षरge_swap(entry);
+					goto out_page;
+				}
+				mem_cgroup_swapin_uncharge_swap(entry);
 
-				shaकरोw = get_shaकरोw_from_swap_cache(entry);
-				अगर (shaकरोw)
-					workingset_refault(page, shaकरोw);
+				shadow = get_shadow_from_swap_cache(entry);
+				if (shadow)
+					workingset_refault(page, shadow);
 
 				lru_cache_add(page);
 
-				/* To provide entry to swap_पढ़ोpage() */
-				set_page_निजी(page, entry.val);
-				swap_पढ़ोpage(page, true);
-				set_page_निजी(page, 0);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			page = swapin_पढ़ोahead(entry, GFP_HIGHUSER_MOVABLE,
+				/* To provide entry to swap_readpage() */
+				set_page_private(page, entry.val);
+				swap_readpage(page, true);
+				set_page_private(page, 0);
+			}
+		} else {
+			page = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE,
 						vmf);
 			swapcache = page;
-		पूर्ण
+		}
 
-		अगर (!page) अणु
+		if (!page) {
 			/*
-			 * Back out अगर somebody अन्यथा faulted in this pte
-			 * जबतक we released the pte lock.
+			 * Back out if somebody else faulted in this pte
+			 * while we released the pte lock.
 			 */
 			vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,
 					vmf->address, &vmf->ptl);
-			अगर (likely(pte_same(*vmf->pte, vmf->orig_pte)))
+			if (likely(pte_same(*vmf->pte, vmf->orig_pte)))
 				ret = VM_FAULT_OOM;
 			delayacct_clear_flag(current, DELAYACCT_PF_SWAPIN);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		/* Had to पढ़ो the page from swap area: Major fault */
+		/* Had to read the page from swap area: Major fault */
 		ret = VM_FAULT_MAJOR;
 		count_vm_event(PGMAJFAULT);
 		count_memcg_event_mm(vma->vm_mm, PGMAJFAULT);
-	पूर्ण अन्यथा अगर (PageHWPoison(page)) अणु
+	} else if (PageHWPoison(page)) {
 		/*
-		 * hwpoisoned dirty swapcache pages are kept क्रम समाप्तing
-		 * owner processes (which may be unknown at hwpoison समय)
+		 * hwpoisoned dirty swapcache pages are kept for killing
+		 * owner processes (which may be unknown at hwpoison time)
 		 */
 		ret = VM_FAULT_HWPOISON;
 		delayacct_clear_flag(current, DELAYACCT_PF_SWAPIN);
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	locked = lock_page_or_retry(page, vma->vm_mm, vmf->flags);
 
 	delayacct_clear_flag(current, DELAYACCT_PF_SWAPIN);
-	अगर (!locked) अणु
+	if (!locked) {
 		ret |= VM_FAULT_RETRY;
-		जाओ out_release;
-	पूर्ण
+		goto out_release;
+	}
 
 	/*
-	 * Make sure try_to_मुक्त_swap or reuse_swap_page or swapoff did not
+	 * Make sure try_to_free_swap or reuse_swap_page or swapoff did not
 	 * release the swapcache from under us.  The page pin, and pte_same
-	 * test below, are not enough to exclude that.  Even अगर it is still
+	 * test below, are not enough to exclude that.  Even if it is still
 	 * swapcache, we need to check that the page's swap has not changed.
 	 */
-	अगर (unlikely((!PageSwapCache(page) ||
-			page_निजी(page) != entry.val)) && swapcache)
-		जाओ out_page;
+	if (unlikely((!PageSwapCache(page) ||
+			page_private(page) != entry.val)) && swapcache)
+		goto out_page;
 
 	page = ksm_might_need_to_copy(page, vma, vmf->address);
-	अगर (unlikely(!page)) अणु
+	if (unlikely(!page)) {
 		ret = VM_FAULT_OOM;
 		page = swapcache;
-		जाओ out_page;
-	पूर्ण
+		goto out_page;
+	}
 
 	cgroup_throttle_swaprate(page, GFP_KERNEL);
 
 	/*
-	 * Back out अगर somebody अन्यथा alपढ़ोy faulted in this pte.
+	 * Back out if somebody else already faulted in this pte.
 	 */
 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
 			&vmf->ptl);
-	अगर (unlikely(!pte_same(*vmf->pte, vmf->orig_pte)))
-		जाओ out_nomap;
+	if (unlikely(!pte_same(*vmf->pte, vmf->orig_pte)))
+		goto out_nomap;
 
-	अगर (unlikely(!PageUptodate(page))) अणु
+	if (unlikely(!PageUptodate(page))) {
 		ret = VM_FAULT_SIGBUS;
-		जाओ out_nomap;
-	पूर्ण
+		goto out_nomap;
+	}
 
 	/*
 	 * The page isn't present yet, go ahead with the fault.
 	 *
 	 * Be careful about the sequence of operations here.
 	 * To get its accounting right, reuse_swap_page() must be called
-	 * जबतक the page is counted on swap but not yet in mapcount i.e.
-	 * beक्रमe page_add_anon_rmap() and swap_मुक्त(); try_to_मुक्त_swap()
-	 * must be called after the swap_मुक्त(), or it will never succeed.
+	 * while the page is counted on swap but not yet in mapcount i.e.
+	 * before page_add_anon_rmap() and swap_free(); try_to_free_swap()
+	 * must be called after the swap_free(), or it will never succeed.
 	 */
 
 	inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
 	dec_mm_counter_fast(vma->vm_mm, MM_SWAPENTS);
 	pte = mk_pte(page, vma->vm_page_prot);
-	अगर ((vmf->flags & FAULT_FLAG_WRITE) && reuse_swap_page(page, शून्य)) अणु
-		pte = maybe_mkग_लिखो(pte_सूची_गढ़ोty(pte), vma);
+	if ((vmf->flags & FAULT_FLAG_WRITE) && reuse_swap_page(page, NULL)) {
+		pte = maybe_mkwrite(pte_mkdirty(pte), vma);
 		vmf->flags &= ~FAULT_FLAG_WRITE;
 		ret |= VM_FAULT_WRITE;
 		exclusive = RMAP_EXCLUSIVE;
-	पूर्ण
+	}
 	flush_icache_page(vma, page);
-	अगर (pte_swp_soft_dirty(vmf->orig_pte))
+	if (pte_swp_soft_dirty(vmf->orig_pte))
 		pte = pte_mksoft_dirty(pte);
-	अगर (pte_swp_uffd_wp(vmf->orig_pte)) अणु
+	if (pte_swp_uffd_wp(vmf->orig_pte)) {
 		pte = pte_mkuffd_wp(pte);
 		pte = pte_wrprotect(pte);
-	पूर्ण
+	}
 	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, pte);
-	arch_करो_swap_page(vma->vm_mm, vma, vmf->address, pte, vmf->orig_pte);
+	arch_do_swap_page(vma->vm_mm, vma, vmf->address, pte, vmf->orig_pte);
 	vmf->orig_pte = pte;
 
 	/* ksm created a completely new copy */
-	अगर (unlikely(page != swapcache && swapcache)) अणु
+	if (unlikely(page != swapcache && swapcache)) {
 		page_add_new_anon_rmap(page, vma, vmf->address, false);
 		lru_cache_add_inactive_or_unevictable(page, vma);
-	पूर्ण अन्यथा अणु
-		करो_page_add_anon_rmap(page, vma, vmf->address, exclusive);
-	पूर्ण
+	} else {
+		do_page_add_anon_rmap(page, vma, vmf->address, exclusive);
+	}
 
-	swap_मुक्त(entry);
-	अगर (mem_cgroup_swap_full(page) ||
+	swap_free(entry);
+	if (mem_cgroup_swap_full(page) ||
 	    (vma->vm_flags & VM_LOCKED) || PageMlocked(page))
-		try_to_मुक्त_swap(page);
+		try_to_free_swap(page);
 	unlock_page(page);
-	अगर (page != swapcache && swapcache) अणु
+	if (page != swapcache && swapcache) {
 		/*
-		 * Hold the lock to aव्योम the swap entry to be reused
-		 * until we take the PT lock क्रम the pte_same() check
-		 * (to aव्योम false positives from pte_same). For
-		 * further safety release the lock after the swap_मुक्त
+		 * Hold the lock to avoid the swap entry to be reused
+		 * until we take the PT lock for the pte_same() check
+		 * (to avoid false positives from pte_same). For
+		 * further safety release the lock after the swap_free
 		 * so that the swap count won't change under a
 		 * parallel locked swapcache.
 		 */
 		unlock_page(swapcache);
 		put_page(swapcache);
-	पूर्ण
+	}
 
-	अगर (vmf->flags & FAULT_FLAG_WRITE) अणु
-		ret |= करो_wp_page(vmf);
-		अगर (ret & VM_FAULT_ERROR)
+	if (vmf->flags & FAULT_FLAG_WRITE) {
+		ret |= do_wp_page(vmf);
+		if (ret & VM_FAULT_ERROR)
 			ret &= VM_FAULT_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* No need to invalidate - it was non-present beक्रमe */
+	/* No need to invalidate - it was non-present before */
 	update_mmu_cache(vma, vmf->address, vmf->pte);
 unlock:
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
 out:
-	वापस ret;
+	return ret;
 out_nomap:
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
 out_page:
 	unlock_page(page);
 out_release:
 	put_page(page);
-	अगर (page != swapcache && swapcache) अणु
+	if (page != swapcache && swapcache) {
 		unlock_page(swapcache);
 		put_page(swapcache);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
  * We enter with non-exclusive mmap_lock (to exclude vma changes,
  * but allow concurrent faults), and pte mapped but not yet locked.
- * We वापस with mmap_lock still held, but pte unmapped and unlocked.
+ * We return with mmap_lock still held, but pte unmapped and unlocked.
  */
-अटल vm_fault_t करो_anonymous_page(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page;
+static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page;
 	vm_fault_t ret = 0;
 	pte_t entry;
 
 	/* File mapping without ->vm_ops ? */
-	अगर (vma->vm_flags & VM_SHARED)
-		वापस VM_FAULT_SIGBUS;
+	if (vma->vm_flags & VM_SHARED)
+		return VM_FAULT_SIGBUS;
 
 	/*
 	 * Use pte_alloc() instead of pte_alloc_map().  We can't run
 	 * pte_offset_map() on pmds where a huge pmd might be created
-	 * from a dअगरferent thपढ़ो.
+	 * from a different thread.
 	 *
-	 * pte_alloc_map() is safe to use under mmap_ग_लिखो_lock(mm) or when
-	 * parallel thपढ़ोs are excluded by other means.
+	 * pte_alloc_map() is safe to use under mmap_write_lock(mm) or when
+	 * parallel threads are excluded by other means.
 	 *
-	 * Here we only have mmap_पढ़ो_lock(mm).
+	 * Here we only have mmap_read_lock(mm).
 	 */
-	अगर (pte_alloc(vma->vm_mm, vmf->pmd))
-		वापस VM_FAULT_OOM;
+	if (pte_alloc(vma->vm_mm, vmf->pmd))
+		return VM_FAULT_OOM;
 
 	/* See comment in handle_pte_fault() */
-	अगर (unlikely(pmd_trans_unstable(vmf->pmd)))
-		वापस 0;
+	if (unlikely(pmd_trans_unstable(vmf->pmd)))
+		return 0;
 
-	/* Use the zero-page क्रम पढ़ोs */
-	अगर (!(vmf->flags & FAULT_FLAG_WRITE) &&
-			!mm_क्रमbids_zeropage(vma->vm_mm)) अणु
+	/* Use the zero-page for reads */
+	if (!(vmf->flags & FAULT_FLAG_WRITE) &&
+			!mm_forbids_zeropage(vma->vm_mm)) {
 		entry = pte_mkspecial(pfn_pte(my_zero_pfn(vmf->address),
 						vma->vm_page_prot));
 		vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,
 				vmf->address, &vmf->ptl);
-		अगर (!pte_none(*vmf->pte)) अणु
+		if (!pte_none(*vmf->pte)) {
 			update_mmu_tlb(vma, vmf->address, vmf->pte);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 		ret = check_stable_address_space(vma->vm_mm);
-		अगर (ret)
-			जाओ unlock;
+		if (ret)
+			goto unlock;
 		/* Deliver the page fault to userland, check inside PT lock */
-		अगर (userfaultfd_missing(vma)) अणु
+		if (userfaultfd_missing(vma)) {
 			pte_unmap_unlock(vmf->pte, vmf->ptl);
-			वापस handle_userfault(vmf, VM_UFFD_MISSING);
-		पूर्ण
-		जाओ setpte;
-	पूर्ण
+			return handle_userfault(vmf, VM_UFFD_MISSING);
+		}
+		goto setpte;
+	}
 
-	/* Allocate our own निजी page. */
-	अगर (unlikely(anon_vma_prepare(vma)))
-		जाओ oom;
+	/* Allocate our own private page. */
+	if (unlikely(anon_vma_prepare(vma)))
+		goto oom;
 	page = alloc_zeroed_user_highpage_movable(vma, vmf->address);
-	अगर (!page)
-		जाओ oom;
+	if (!page)
+		goto oom;
 
-	अगर (mem_cgroup_अक्षरge(page, vma->vm_mm, GFP_KERNEL))
-		जाओ oom_मुक्त_page;
+	if (mem_cgroup_charge(page, vma->vm_mm, GFP_KERNEL))
+		goto oom_free_page;
 	cgroup_throttle_swaprate(page, GFP_KERNEL);
 
 	/*
 	 * The memory barrier inside __SetPageUptodate makes sure that
-	 * preceding stores to the page contents become visible beक्रमe
-	 * the set_pte_at() ग_लिखो.
+	 * preceding stores to the page contents become visible before
+	 * the set_pte_at() write.
 	 */
 	__SetPageUptodate(page);
 
 	entry = mk_pte(page, vma->vm_page_prot);
 	entry = pte_sw_mkyoung(entry);
-	अगर (vma->vm_flags & VM_WRITE)
-		entry = pte_mkग_लिखो(pte_सूची_गढ़ोty(entry));
+	if (vma->vm_flags & VM_WRITE)
+		entry = pte_mkwrite(pte_mkdirty(entry));
 
 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
 			&vmf->ptl);
-	अगर (!pte_none(*vmf->pte)) अणु
+	if (!pte_none(*vmf->pte)) {
 		update_mmu_cache(vma, vmf->address, vmf->pte);
-		जाओ release;
-	पूर्ण
+		goto release;
+	}
 
 	ret = check_stable_address_space(vma->vm_mm);
-	अगर (ret)
-		जाओ release;
+	if (ret)
+		goto release;
 
 	/* Deliver the page fault to userland, check inside PT lock */
-	अगर (userfaultfd_missing(vma)) अणु
+	if (userfaultfd_missing(vma)) {
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
 		put_page(page);
-		वापस handle_userfault(vmf, VM_UFFD_MISSING);
-	पूर्ण
+		return handle_userfault(vmf, VM_UFFD_MISSING);
+	}
 
 	inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
 	page_add_new_anon_rmap(page, vma, vmf->address, false);
@@ -3673,33 +3672,33 @@ out_release:
 setpte:
 	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, entry);
 
-	/* No need to invalidate - it was non-present beक्रमe */
+	/* No need to invalidate - it was non-present before */
 	update_mmu_cache(vma, vmf->address, vmf->pte);
 unlock:
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-	वापस ret;
+	return ret;
 release:
 	put_page(page);
-	जाओ unlock;
-oom_मुक्त_page:
+	goto unlock;
+oom_free_page:
 	put_page(page);
 oom:
-	वापस VM_FAULT_OOM;
-पूर्ण
+	return VM_FAULT_OOM;
+}
 
 /*
  * The mmap_lock must have been held on entry, and may have been
- * released depending on flags and vma->vm_ops->fault() वापस value.
+ * released depending on flags and vma->vm_ops->fault() return value.
  * See filemap_fault() and __lock_page_retry().
  */
-अटल vm_fault_t __करो_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+static vm_fault_t __do_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 	vm_fault_t ret;
 
 	/*
-	 * Pपुनः_स्मृतिate pte beक्रमe we take page_lock because this might lead to
-	 * deadlocks क्रम memcg reclaim which रुकोs क्रम pages under ग_लिखोback:
+	 * Preallocate pte before we take page_lock because this might lead to
+	 * deadlocks for memcg reclaim which waits for pages under writeback:
 	 *				lock_page(A)
 	 *				SetPageWriteback(A)
 	 *				unlock_page(A)
@@ -3707,98 +3706,98 @@ oom:
 	 *				lock_page(B)
 	 * pte_alloc_one
 	 *   shrink_page_list
-	 *     रुको_on_page_ग_लिखोback(A)
+	 *     wait_on_page_writeback(A)
 	 *				SetPageWriteback(B)
 	 *				unlock_page(B)
-	 *				# flush A, B to clear the ग_लिखोback
+	 *				# flush A, B to clear the writeback
 	 */
-	अगर (pmd_none(*vmf->pmd) && !vmf->pपुनः_स्मृति_pte) अणु
-		vmf->pपुनः_स्मृति_pte = pte_alloc_one(vma->vm_mm);
-		अगर (!vmf->pपुनः_स्मृति_pte)
-			वापस VM_FAULT_OOM;
+	if (pmd_none(*vmf->pmd) && !vmf->prealloc_pte) {
+		vmf->prealloc_pte = pte_alloc_one(vma->vm_mm);
+		if (!vmf->prealloc_pte)
+			return VM_FAULT_OOM;
 		smp_wmb(); /* See comment in __pte_alloc() */
-	पूर्ण
+	}
 
 	ret = vma->vm_ops->fault(vmf);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY |
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY |
 			    VM_FAULT_DONE_COW)))
-		वापस ret;
+		return ret;
 
-	अगर (unlikely(PageHWPoison(vmf->page))) अणु
-		अगर (ret & VM_FAULT_LOCKED)
+	if (unlikely(PageHWPoison(vmf->page))) {
+		if (ret & VM_FAULT_LOCKED)
 			unlock_page(vmf->page);
 		put_page(vmf->page);
-		vmf->page = शून्य;
-		वापस VM_FAULT_HWPOISON;
-	पूर्ण
+		vmf->page = NULL;
+		return VM_FAULT_HWPOISON;
+	}
 
-	अगर (unlikely(!(ret & VM_FAULT_LOCKED)))
+	if (unlikely(!(ret & VM_FAULT_LOCKED)))
 		lock_page(vmf->page);
-	अन्यथा
+	else
 		VM_BUG_ON_PAGE(!PageLocked(vmf->page), vmf->page);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-अटल व्योम deposit_pपुनः_स्मृति_pte(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+static void deposit_prealloc_pte(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 
-	pgtable_trans_huge_deposit(vma->vm_mm, vmf->pmd, vmf->pपुनः_स्मृति_pte);
+	pgtable_trans_huge_deposit(vma->vm_mm, vmf->pmd, vmf->prealloc_pte);
 	/*
-	 * We are going to consume the pपुनः_स्मृति table,
+	 * We are going to consume the prealloc table,
 	 * count that as nr_ptes.
 	 */
 	mm_inc_nr_ptes(vma->vm_mm);
-	vmf->pपुनः_स्मृति_pte = शून्य;
-पूर्ण
+	vmf->prealloc_pte = NULL;
+}
 
-vm_fault_t करो_set_pmd(काष्ठा vm_fault *vmf, काष्ठा page *page)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	bool ग_लिखो = vmf->flags & FAULT_FLAG_WRITE;
-	अचिन्हित दीर्घ haddr = vmf->address & HPAGE_PMD_MASK;
+vm_fault_t do_set_pmd(struct vm_fault *vmf, struct page *page)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	bool write = vmf->flags & FAULT_FLAG_WRITE;
+	unsigned long haddr = vmf->address & HPAGE_PMD_MASK;
 	pmd_t entry;
-	पूर्णांक i;
+	int i;
 	vm_fault_t ret = VM_FAULT_FALLBACK;
 
-	अगर (!transhuge_vma_suitable(vma, haddr))
-		वापस ret;
+	if (!transhuge_vma_suitable(vma, haddr))
+		return ret;
 
 	page = compound_head(page);
-	अगर (compound_order(page) != HPAGE_PMD_ORDER)
-		वापस ret;
+	if (compound_order(page) != HPAGE_PMD_ORDER)
+		return ret;
 
 	/*
-	 * Archs like ppc64 need additional space to store inक्रमmation
-	 * related to pte entry. Use the pपुनः_स्मृतिated table क्रम that.
+	 * Archs like ppc64 need additional space to store information
+	 * related to pte entry. Use the preallocated table for that.
 	 */
-	अगर (arch_needs_pgtable_deposit() && !vmf->pपुनः_स्मृति_pte) अणु
-		vmf->pपुनः_स्मृति_pte = pte_alloc_one(vma->vm_mm);
-		अगर (!vmf->pपुनः_स्मृति_pte)
-			वापस VM_FAULT_OOM;
+	if (arch_needs_pgtable_deposit() && !vmf->prealloc_pte) {
+		vmf->prealloc_pte = pte_alloc_one(vma->vm_mm);
+		if (!vmf->prealloc_pte)
+			return VM_FAULT_OOM;
 		smp_wmb(); /* See comment in __pte_alloc() */
-	पूर्ण
+	}
 
 	vmf->ptl = pmd_lock(vma->vm_mm, vmf->pmd);
-	अगर (unlikely(!pmd_none(*vmf->pmd)))
-		जाओ out;
+	if (unlikely(!pmd_none(*vmf->pmd)))
+		goto out;
 
-	क्रम (i = 0; i < HPAGE_PMD_NR; i++)
+	for (i = 0; i < HPAGE_PMD_NR; i++)
 		flush_icache_page(vma, page + i);
 
 	entry = mk_huge_pmd(page, vma->vm_page_prot);
-	अगर (ग_लिखो)
-		entry = maybe_pmd_mkग_लिखो(pmd_सूची_गढ़ोty(entry), vma);
+	if (write)
+		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
 
 	add_mm_counter(vma->vm_mm, mm_counter_file(page), HPAGE_PMD_NR);
 	page_add_file_rmap(page, true);
 	/*
 	 * deposit and withdraw with pmd lock held
 	 */
-	अगर (arch_needs_pgtable_deposit())
-		deposit_pपुनः_स्मृति_pte(vmf);
+	if (arch_needs_pgtable_deposit())
+		deposit_prealloc_pte(vmf);
 
 	set_pmd_at(vma->vm_mm, haddr, vmf->pmd, entry);
 
@@ -3806,179 +3805,179 @@ vm_fault_t करो_set_pmd(काष्ठा vm_fault *vmf, काष्ठ�
 
 	/* fault is handled */
 	ret = 0;
-	count_vm_event(THP_खाता_MAPPED);
+	count_vm_event(THP_FILE_MAPPED);
 out:
 	spin_unlock(vmf->ptl);
-	वापस ret;
-पूर्ण
-#अन्यथा
-vm_fault_t करो_set_pmd(काष्ठा vm_fault *vmf, काष्ठा page *page)
-अणु
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#else
+vm_fault_t do_set_pmd(struct vm_fault *vmf, struct page *page)
+{
+	return VM_FAULT_FALLBACK;
+}
+#endif
 
-व्योम करो_set_pte(काष्ठा vm_fault *vmf, काष्ठा page *page, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	bool ग_लिखो = vmf->flags & FAULT_FLAG_WRITE;
+void do_set_pte(struct vm_fault *vmf, struct page *page, unsigned long addr)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	bool write = vmf->flags & FAULT_FLAG_WRITE;
 	bool prefault = vmf->address != addr;
 	pte_t entry;
 
 	flush_icache_page(vma, page);
 	entry = mk_pte(page, vma->vm_page_prot);
 
-	अगर (prefault && arch_wants_old_prefaulted_pte())
+	if (prefault && arch_wants_old_prefaulted_pte())
 		entry = pte_mkold(entry);
-	अन्यथा
+	else
 		entry = pte_sw_mkyoung(entry);
 
-	अगर (ग_लिखो)
-		entry = maybe_mkग_लिखो(pte_सूची_गढ़ोty(entry), vma);
-	/* copy-on-ग_लिखो page */
-	अगर (ग_लिखो && !(vma->vm_flags & VM_SHARED)) अणु
+	if (write)
+		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+	/* copy-on-write page */
+	if (write && !(vma->vm_flags & VM_SHARED)) {
 		inc_mm_counter_fast(vma->vm_mm, MM_ANONPAGES);
 		page_add_new_anon_rmap(page, vma, addr, false);
 		lru_cache_add_inactive_or_unevictable(page, vma);
-	पूर्ण अन्यथा अणु
+	} else {
 		inc_mm_counter_fast(vma->vm_mm, mm_counter_file(page));
 		page_add_file_rmap(page, false);
-	पूर्ण
+	}
 	set_pte_at(vma->vm_mm, addr, vmf->pte, entry);
-पूर्ण
+}
 
 /**
  * finish_fault - finish page fault once we have prepared the page to fault
  *
- * @vmf: काष्ठाure describing the fault
+ * @vmf: structure describing the fault
  *
  * This function handles all that is needed to finish a page fault once the
- * page to fault in is prepared. It handles locking of PTEs, inserts PTE क्रम
- * given page, adds reverse page mapping, handles memcg अक्षरges and LRU
+ * page to fault in is prepared. It handles locking of PTEs, inserts PTE for
+ * given page, adds reverse page mapping, handles memcg charges and LRU
  * addition.
  *
  * The function expects the page to be locked and on success it consumes a
- * reference of a page being mapped (क्रम the PTE which maps it).
+ * reference of a page being mapped (for the PTE which maps it).
  *
- * Return: %0 on success, %VM_FAULT_ code in हाल of error.
+ * Return: %0 on success, %VM_FAULT_ code in case of error.
  */
-vm_fault_t finish_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page;
+vm_fault_t finish_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page;
 	vm_fault_t ret;
 
 	/* Did we COW the page? */
-	अगर ((vmf->flags & FAULT_FLAG_WRITE) && !(vma->vm_flags & VM_SHARED))
+	if ((vmf->flags & FAULT_FLAG_WRITE) && !(vma->vm_flags & VM_SHARED))
 		page = vmf->cow_page;
-	अन्यथा
+	else
 		page = vmf->page;
 
 	/*
-	 * check even क्रम पढ़ो faults because we might have lost our CoWed
+	 * check even for read faults because we might have lost our CoWed
 	 * page
 	 */
-	अगर (!(vma->vm_flags & VM_SHARED)) अणु
+	if (!(vma->vm_flags & VM_SHARED)) {
 		ret = check_stable_address_space(vma->vm_mm);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (pmd_none(*vmf->pmd)) अणु
-		अगर (PageTransCompound(page)) अणु
-			ret = करो_set_pmd(vmf, page);
-			अगर (ret != VM_FAULT_FALLBACK)
-				वापस ret;
-		पूर्ण
+	if (pmd_none(*vmf->pmd)) {
+		if (PageTransCompound(page)) {
+			ret = do_set_pmd(vmf, page);
+			if (ret != VM_FAULT_FALLBACK)
+				return ret;
+		}
 
-		अगर (unlikely(pte_alloc(vma->vm_mm, vmf->pmd)))
-			वापस VM_FAULT_OOM;
-	पूर्ण
+		if (unlikely(pte_alloc(vma->vm_mm, vmf->pmd)))
+			return VM_FAULT_OOM;
+	}
 
 	/* See comment in handle_pte_fault() */
-	अगर (pmd_devmap_trans_unstable(vmf->pmd))
-		वापस 0;
+	if (pmd_devmap_trans_unstable(vmf->pmd))
+		return 0;
 
 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd,
 				      vmf->address, &vmf->ptl);
 	ret = 0;
 	/* Re-check under ptl */
-	अगर (likely(pte_none(*vmf->pte)))
-		करो_set_pte(vmf, page, vmf->address);
-	अन्यथा
+	if (likely(pte_none(*vmf->pte)))
+		do_set_pte(vmf, page, vmf->address);
+	else
 		ret = VM_FAULT_NOPAGE;
 
 	update_mmu_tlb(vma, vmf->address, vmf->pte);
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित दीर्घ fault_around_bytes __पढ़ो_mostly =
-	roundकरोwn_घात_of_two(65536);
+static unsigned long fault_around_bytes __read_mostly =
+	rounddown_pow_of_two(65536);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल पूर्णांक fault_around_bytes_get(व्योम *data, u64 *val)
-अणु
+#ifdef CONFIG_DEBUG_FS
+static int fault_around_bytes_get(void *data, u64 *val)
+{
 	*val = fault_around_bytes;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * fault_around_bytes must be rounded करोwn to the nearest page order as it's
- * what करो_fault_around() expects to see.
+ * fault_around_bytes must be rounded down to the nearest page order as it's
+ * what do_fault_around() expects to see.
  */
-अटल पूर्णांक fault_around_bytes_set(व्योम *data, u64 val)
-अणु
-	अगर (val / PAGE_SIZE > PTRS_PER_PTE)
-		वापस -EINVAL;
-	अगर (val > PAGE_SIZE)
-		fault_around_bytes = roundकरोwn_घात_of_two(val);
-	अन्यथा
-		fault_around_bytes = PAGE_SIZE; /* roundकरोwn_घात_of_two(0) is undefined */
-	वापस 0;
-पूर्ण
+static int fault_around_bytes_set(void *data, u64 val)
+{
+	if (val / PAGE_SIZE > PTRS_PER_PTE)
+		return -EINVAL;
+	if (val > PAGE_SIZE)
+		fault_around_bytes = rounddown_pow_of_two(val);
+	else
+		fault_around_bytes = PAGE_SIZE; /* rounddown_pow_of_two(0) is undefined */
+	return 0;
+}
 DEFINE_DEBUGFS_ATTRIBUTE(fault_around_bytes_fops,
 		fault_around_bytes_get, fault_around_bytes_set, "%llu\n");
 
-अटल पूर्णांक __init fault_around_debugfs(व्योम)
-अणु
-	debugfs_create_file_unsafe("fault_around_bytes", 0644, शून्य, शून्य,
+static int __init fault_around_debugfs(void)
+{
+	debugfs_create_file_unsafe("fault_around_bytes", 0644, NULL, NULL,
 				   &fault_around_bytes_fops);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(fault_around_debugfs);
-#पूर्ण_अगर
+#endif
 
 /*
- * करो_fault_around() tries to map few pages around the fault address. The hope
+ * do_fault_around() tries to map few pages around the fault address. The hope
  * is that the pages will be needed soon and this will lower the number of
  * faults to handle.
  *
- * It uses vm_ops->map_pages() to map the pages, which skips the page अगर it's
- * not पढ़ोy to be mapped: not up-to-date, locked, etc.
+ * It uses vm_ops->map_pages() to map the pages, which skips the page if it's
+ * not ready to be mapped: not up-to-date, locked, etc.
  *
  * This function is called with the page table lock taken. In the split ptlock
- * हाल the page table lock only protects only those entries which beदीर्घ to
+ * case the page table lock only protects only those entries which belong to
  * the page table corresponding to the fault address.
  *
- * This function करोesn't cross the VMA boundaries, in order to call map_pages()
+ * This function doesn't cross the VMA boundaries, in order to call map_pages()
  * only once.
  *
  * fault_around_bytes defines how many bytes we'll try to map.
- * करो_fault_around() expects it to be set to a घातer of two less than or equal
+ * do_fault_around() expects it to be set to a power of two less than or equal
  * to PTRS_PER_PTE.
  *
- * The भव address of the area that we map is naturally aligned to
- * fault_around_bytes rounded करोwn to the machine page size
- * (and thereक्रमe to page order).  This way it's easier to guarantee
- * that we करोn't cross page table boundaries.
+ * The virtual address of the area that we map is naturally aligned to
+ * fault_around_bytes rounded down to the machine page size
+ * (and therefore to page order).  This way it's easier to guarantee
+ * that we don't cross page table boundaries.
  */
-अटल vm_fault_t करो_fault_around(काष्ठा vm_fault *vmf)
-अणु
-	अचिन्हित दीर्घ address = vmf->address, nr_pages, mask;
+static vm_fault_t do_fault_around(struct vm_fault *vmf)
+{
+	unsigned long address = vmf->address, nr_pages, mask;
 	pgoff_t start_pgoff = vmf->pgoff;
 	pgoff_t end_pgoff;
-	पूर्णांक off;
+	int off;
 
 	nr_pages = READ_ONCE(fault_around_bytes) >> PAGE_SHIFT;
 	mask = ~(nr_pages * PAGE_SIZE - 1) & PAGE_MASK;
@@ -3997,66 +3996,66 @@ late_initcall(fault_around_debugfs);
 	end_pgoff = min3(end_pgoff, vma_pages(vmf->vma) + vmf->vma->vm_pgoff - 1,
 			start_pgoff + nr_pages - 1);
 
-	अगर (pmd_none(*vmf->pmd)) अणु
-		vmf->pपुनः_स्मृति_pte = pte_alloc_one(vmf->vma->vm_mm);
-		अगर (!vmf->pपुनः_स्मृति_pte)
-			वापस VM_FAULT_OOM;
+	if (pmd_none(*vmf->pmd)) {
+		vmf->prealloc_pte = pte_alloc_one(vmf->vma->vm_mm);
+		if (!vmf->prealloc_pte)
+			return VM_FAULT_OOM;
 		smp_wmb(); /* See comment in __pte_alloc() */
-	पूर्ण
+	}
 
-	वापस vmf->vma->vm_ops->map_pages(vmf, start_pgoff, end_pgoff);
-पूर्ण
+	return vmf->vma->vm_ops->map_pages(vmf, start_pgoff, end_pgoff);
+}
 
-अटल vm_fault_t करो_पढ़ो_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+static vm_fault_t do_read_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 	vm_fault_t ret = 0;
 
 	/*
 	 * Let's call ->map_pages() first and use ->fault() as fallback
-	 * अगर page by the offset is not पढ़ोy to be mapped (cold cache or
+	 * if page by the offset is not ready to be mapped (cold cache or
 	 * something).
 	 */
-	अगर (vma->vm_ops->map_pages && fault_around_bytes >> PAGE_SHIFT > 1) अणु
-		ret = करो_fault_around(vmf);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (vma->vm_ops->map_pages && fault_around_bytes >> PAGE_SHIFT > 1) {
+		ret = do_fault_around(vmf);
+		if (ret)
+			return ret;
+	}
 
-	ret = __करो_fault(vmf);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
-		वापस ret;
+	ret = __do_fault(vmf);
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
+		return ret;
 
 	ret |= finish_fault(vmf);
 	unlock_page(vmf->page);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
 		put_page(vmf->page);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल vm_fault_t करो_cow_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+static vm_fault_t do_cow_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 	vm_fault_t ret;
 
-	अगर (unlikely(anon_vma_prepare(vma)))
-		वापस VM_FAULT_OOM;
+	if (unlikely(anon_vma_prepare(vma)))
+		return VM_FAULT_OOM;
 
 	vmf->cow_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, vmf->address);
-	अगर (!vmf->cow_page)
-		वापस VM_FAULT_OOM;
+	if (!vmf->cow_page)
+		return VM_FAULT_OOM;
 
-	अगर (mem_cgroup_अक्षरge(vmf->cow_page, vma->vm_mm, GFP_KERNEL)) अणु
+	if (mem_cgroup_charge(vmf->cow_page, vma->vm_mm, GFP_KERNEL)) {
 		put_page(vmf->cow_page);
-		वापस VM_FAULT_OOM;
-	पूर्ण
+		return VM_FAULT_OOM;
+	}
 	cgroup_throttle_swaprate(vmf->cow_page, GFP_KERNEL);
 
-	ret = __करो_fault(vmf);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
-		जाओ unअक्षरge_out;
-	अगर (ret & VM_FAULT_DONE_COW)
-		वापस ret;
+	ret = __do_fault(vmf);
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
+		goto uncharge_out;
+	if (ret & VM_FAULT_DONE_COW)
+		return ret;
 
 	copy_user_highpage(vmf->cow_page, vmf->page, vmf->address, vma);
 	__SetPageUptodate(vmf->cow_page);
@@ -4064,74 +4063,74 @@ late_initcall(fault_around_debugfs);
 	ret |= finish_fault(vmf);
 	unlock_page(vmf->page);
 	put_page(vmf->page);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
-		जाओ unअक्षरge_out;
-	वापस ret;
-unअक्षरge_out:
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
+		goto uncharge_out;
+	return ret;
+uncharge_out:
 	put_page(vmf->cow_page);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल vm_fault_t करो_shared_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	vm_fault_t ret, पंचांगp;
+static vm_fault_t do_shared_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	vm_fault_t ret, tmp;
 
-	ret = __करो_fault(vmf);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
-		वापस ret;
+	ret = __do_fault(vmf);
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
+		return ret;
 
 	/*
-	 * Check अगर the backing address space wants to know that the page is
+	 * Check if the backing address space wants to know that the page is
 	 * about to become writable
 	 */
-	अगर (vma->vm_ops->page_mkग_लिखो) अणु
+	if (vma->vm_ops->page_mkwrite) {
 		unlock_page(vmf->page);
-		पंचांगp = करो_page_mkग_लिखो(vmf);
-		अगर (unlikely(!पंचांगp ||
-				(पंचांगp & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))) अणु
+		tmp = do_page_mkwrite(vmf);
+		if (unlikely(!tmp ||
+				(tmp & (VM_FAULT_ERROR | VM_FAULT_NOPAGE)))) {
 			put_page(vmf->page);
-			वापस पंचांगp;
-		पूर्ण
-	पूर्ण
+			return tmp;
+		}
+	}
 
 	ret |= finish_fault(vmf);
-	अगर (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE |
-					VM_FAULT_RETRY))) अणु
+	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE |
+					VM_FAULT_RETRY))) {
 		unlock_page(vmf->page);
 		put_page(vmf->page);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret |= fault_dirty_shared_page(vmf);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * We enter with non-exclusive mmap_lock (to exclude vma changes,
  * but allow concurrent faults).
  * The mmap_lock may have been released depending on flags and our
- * वापस value.  See filemap_fault() and __lock_page_or_retry().
- * If mmap_lock is released, vma may become invalid (क्रम example
- * by other thपढ़ो calling munmap()).
+ * return value.  See filemap_fault() and __lock_page_or_retry().
+ * If mmap_lock is released, vma may become invalid (for example
+ * by other thread calling munmap()).
  */
-अटल vm_fault_t करो_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा mm_काष्ठा *vm_mm = vma->vm_mm;
+static vm_fault_t do_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct mm_struct *vm_mm = vma->vm_mm;
 	vm_fault_t ret;
 
 	/*
 	 * The VMA was not fully populated on mmap() or missing VM_DONTEXPAND
 	 */
-	अगर (!vma->vm_ops->fault) अणु
+	if (!vma->vm_ops->fault) {
 		/*
 		 * If we find a migration pmd entry or a none pmd entry, which
-		 * should never happen, वापस SIGBUS
+		 * should never happen, return SIGBUS
 		 */
-		अगर (unlikely(!pmd_present(*vmf->pmd)))
+		if (unlikely(!pmd_present(*vmf->pmd)))
 			ret = VM_FAULT_SIGBUS;
-		अन्यथा अणु
+		else {
 			vmf->pte = pte_offset_map_lock(vmf->vma->vm_mm,
 						       vmf->pmd,
 						       vmf->address,
@@ -4140,252 +4139,252 @@ unअक्षरge_out:
 			 * Make sure this is not a temporary clearing of pte
 			 * by holding ptl and checking again. A R/M/W update
 			 * of pte involves: take ptl, clearing the pte so that
-			 * we करोn't have concurrent modअगरication by hardware
+			 * we don't have concurrent modification by hardware
 			 * followed by an update.
 			 */
-			अगर (unlikely(pte_none(*vmf->pte)))
+			if (unlikely(pte_none(*vmf->pte)))
 				ret = VM_FAULT_SIGBUS;
-			अन्यथा
+			else
 				ret = VM_FAULT_NOPAGE;
 
 			pte_unmap_unlock(vmf->pte, vmf->ptl);
-		पूर्ण
-	पूर्ण अन्यथा अगर (!(vmf->flags & FAULT_FLAG_WRITE))
-		ret = करो_पढ़ो_fault(vmf);
-	अन्यथा अगर (!(vma->vm_flags & VM_SHARED))
-		ret = करो_cow_fault(vmf);
-	अन्यथा
-		ret = करो_shared_fault(vmf);
+		}
+	} else if (!(vmf->flags & FAULT_FLAG_WRITE))
+		ret = do_read_fault(vmf);
+	else if (!(vma->vm_flags & VM_SHARED))
+		ret = do_cow_fault(vmf);
+	else
+		ret = do_shared_fault(vmf);
 
-	/* pपुनः_स्मृतिated pagetable is unused: मुक्त it */
-	अगर (vmf->pपुनः_स्मृति_pte) अणु
-		pte_मुक्त(vm_mm, vmf->pपुनः_स्मृति_pte);
-		vmf->pपुनः_स्मृति_pte = शून्य;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	/* preallocated pagetable is unused: free it */
+	if (vmf->prealloc_pte) {
+		pte_free(vm_mm, vmf->prealloc_pte);
+		vmf->prealloc_pte = NULL;
+	}
+	return ret;
+}
 
-अटल पूर्णांक numa_migrate_prep(काष्ठा page *page, काष्ठा vm_area_काष्ठा *vma,
-				अचिन्हित दीर्घ addr, पूर्णांक page_nid,
-				पूर्णांक *flags)
-अणु
+static int numa_migrate_prep(struct page *page, struct vm_area_struct *vma,
+				unsigned long addr, int page_nid,
+				int *flags)
+{
 	get_page(page);
 
 	count_vm_numa_event(NUMA_HINT_FAULTS);
-	अगर (page_nid == numa_node_id()) अणु
+	if (page_nid == numa_node_id()) {
 		count_vm_numa_event(NUMA_HINT_FAULTS_LOCAL);
 		*flags |= TNF_FAULT_LOCAL;
-	पूर्ण
+	}
 
-	वापस mpol_misplaced(page, vma, addr);
-पूर्ण
+	return mpol_misplaced(page, vma, addr);
+}
 
-अटल vm_fault_t करो_numa_page(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा page *page = शून्य;
-	पूर्णांक page_nid = NUMA_NO_NODE;
-	पूर्णांक last_cpupid;
-	पूर्णांक target_nid;
+static vm_fault_t do_numa_page(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct page *page = NULL;
+	int page_nid = NUMA_NO_NODE;
+	int last_cpupid;
+	int target_nid;
 	pte_t pte, old_pte;
-	bool was_writable = pte_savedग_लिखो(vmf->orig_pte);
-	पूर्णांक flags = 0;
+	bool was_writable = pte_savedwrite(vmf->orig_pte);
+	int flags = 0;
 
 	/*
-	 * The "pte" at this poपूर्णांक cannot be used safely without
+	 * The "pte" at this point cannot be used safely without
 	 * validation through pte_unmap_same(). It's of NUMA type but
-	 * the pfn may be screwed अगर the पढ़ो is non atomic.
+	 * the pfn may be screwed if the read is non atomic.
 	 */
 	vmf->ptl = pte_lockptr(vma->vm_mm, vmf->pmd);
 	spin_lock(vmf->ptl);
-	अगर (unlikely(!pte_same(*vmf->pte, vmf->orig_pte))) अणु
+	if (unlikely(!pte_same(*vmf->pte, vmf->orig_pte))) {
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Get the normal PTE  */
 	old_pte = ptep_get(vmf->pte);
-	pte = pte_modअगरy(old_pte, vma->vm_page_prot);
+	pte = pte_modify(old_pte, vma->vm_page_prot);
 
 	page = vm_normal_page(vma, vmf->address, pte);
-	अगर (!page)
-		जाओ out_map;
+	if (!page)
+		goto out_map;
 
 	/* TODO: handle PTE-mapped THP */
-	अगर (PageCompound(page))
-		जाओ out_map;
+	if (PageCompound(page))
+		goto out_map;
 
 	/*
-	 * Aव्योम grouping on RO pages in general. RO pages shouldn't hurt as
+	 * Avoid grouping on RO pages in general. RO pages shouldn't hurt as
 	 * much anyway since they can be in shared cache state. This misses
-	 * the हाल where a mapping is writable but the process never ग_लिखोs
-	 * to it but pte_ग_लिखो माला_लो cleared during protection updates and
+	 * the case where a mapping is writable but the process never writes
+	 * to it but pte_write gets cleared during protection updates and
 	 * pte_dirty has unpredictable behaviour between PTE scan updates,
-	 * background ग_लिखोback, dirty balancing and application behaviour.
+	 * background writeback, dirty balancing and application behaviour.
 	 */
-	अगर (!was_writable)
+	if (!was_writable)
 		flags |= TNF_NO_GROUP;
 
 	/*
-	 * Flag अगर the page is shared between multiple address spaces. This
+	 * Flag if the page is shared between multiple address spaces. This
 	 * is later used when determining whether to group tasks together
 	 */
-	अगर (page_mapcount(page) > 1 && (vma->vm_flags & VM_SHARED))
+	if (page_mapcount(page) > 1 && (vma->vm_flags & VM_SHARED))
 		flags |= TNF_SHARED;
 
 	last_cpupid = page_cpupid_last(page);
 	page_nid = page_to_nid(page);
 	target_nid = numa_migrate_prep(page, vma, vmf->address, page_nid,
 			&flags);
-	अगर (target_nid == NUMA_NO_NODE) अणु
+	if (target_nid == NUMA_NO_NODE) {
 		put_page(page);
-		जाओ out_map;
-	पूर्ण
+		goto out_map;
+	}
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
 
 	/* Migrate to the requested node */
-	अगर (migrate_misplaced_page(page, vma, target_nid)) अणु
+	if (migrate_misplaced_page(page, vma, target_nid)) {
 		page_nid = target_nid;
 		flags |= TNF_MIGRATED;
-	पूर्ण अन्यथा अणु
+	} else {
 		flags |= TNF_MIGRATE_FAIL;
 		vmf->pte = pte_offset_map(vmf->pmd, vmf->address);
 		spin_lock(vmf->ptl);
-		अगर (unlikely(!pte_same(*vmf->pte, vmf->orig_pte))) अणु
+		if (unlikely(!pte_same(*vmf->pte, vmf->orig_pte))) {
 			pte_unmap_unlock(vmf->pte, vmf->ptl);
-			जाओ out;
-		पूर्ण
-		जाओ out_map;
-	पूर्ण
+			goto out;
+		}
+		goto out_map;
+	}
 
 out:
-	अगर (page_nid != NUMA_NO_NODE)
+	if (page_nid != NUMA_NO_NODE)
 		task_numa_fault(last_cpupid, page_nid, 1, flags);
-	वापस 0;
+	return 0;
 out_map:
 	/*
 	 * Make it present again, depending on how arch implements
 	 * non-accessible ptes, some can allow access by kernel mode.
 	 */
-	old_pte = ptep_modअगरy_prot_start(vma, vmf->address, vmf->pte);
-	pte = pte_modअगरy(old_pte, vma->vm_page_prot);
+	old_pte = ptep_modify_prot_start(vma, vmf->address, vmf->pte);
+	pte = pte_modify(old_pte, vma->vm_page_prot);
 	pte = pte_mkyoung(pte);
-	अगर (was_writable)
-		pte = pte_mkग_लिखो(pte);
-	ptep_modअगरy_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
+	if (was_writable)
+		pte = pte_mkwrite(pte);
+	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
 	update_mmu_cache(vma, vmf->address, vmf->pte);
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल अंतरभूत vm_fault_t create_huge_pmd(काष्ठा vm_fault *vmf)
-अणु
-	अगर (vma_is_anonymous(vmf->vma))
-		वापस करो_huge_pmd_anonymous_page(vmf);
-	अगर (vmf->vma->vm_ops->huge_fault)
-		वापस vmf->vma->vm_ops->huge_fault(vmf, PE_SIZE_PMD);
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
+static inline vm_fault_t create_huge_pmd(struct vm_fault *vmf)
+{
+	if (vma_is_anonymous(vmf->vma))
+		return do_huge_pmd_anonymous_page(vmf);
+	if (vmf->vma->vm_ops->huge_fault)
+		return vmf->vma->vm_ops->huge_fault(vmf, PE_SIZE_PMD);
+	return VM_FAULT_FALLBACK;
+}
 
-/* `अंतरभूत' is required to aव्योम gcc 4.1.2 build error */
-अटल अंतरभूत vm_fault_t wp_huge_pmd(काष्ठा vm_fault *vmf, pmd_t orig_pmd)
-अणु
-	अगर (vma_is_anonymous(vmf->vma)) अणु
-		अगर (userfaultfd_huge_pmd_wp(vmf->vma, orig_pmd))
-			वापस handle_userfault(vmf, VM_UFFD_WP);
-		वापस करो_huge_pmd_wp_page(vmf, orig_pmd);
-	पूर्ण
-	अगर (vmf->vma->vm_ops->huge_fault) अणु
+/* `inline' is required to avoid gcc 4.1.2 build error */
+static inline vm_fault_t wp_huge_pmd(struct vm_fault *vmf, pmd_t orig_pmd)
+{
+	if (vma_is_anonymous(vmf->vma)) {
+		if (userfaultfd_huge_pmd_wp(vmf->vma, orig_pmd))
+			return handle_userfault(vmf, VM_UFFD_WP);
+		return do_huge_pmd_wp_page(vmf, orig_pmd);
+	}
+	if (vmf->vma->vm_ops->huge_fault) {
 		vm_fault_t ret = vmf->vma->vm_ops->huge_fault(vmf, PE_SIZE_PMD);
 
-		अगर (!(ret & VM_FAULT_FALLBACK))
-			वापस ret;
-	पूर्ण
+		if (!(ret & VM_FAULT_FALLBACK))
+			return ret;
+	}
 
-	/* COW or ग_लिखो-notअगरy handled on pte level: split pmd. */
-	__split_huge_pmd(vmf->vma, vmf->pmd, vmf->address, false, शून्य);
+	/* COW or write-notify handled on pte level: split pmd. */
+	__split_huge_pmd(vmf->vma, vmf->pmd, vmf->address, false, NULL);
 
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
+	return VM_FAULT_FALLBACK;
+}
 
-अटल vm_fault_t create_huge_pud(काष्ठा vm_fault *vmf)
-अणु
-#अगर defined(CONFIG_TRANSPARENT_HUGEPAGE) &&			\
+static vm_fault_t create_huge_pud(struct vm_fault *vmf)
+{
+#if defined(CONFIG_TRANSPARENT_HUGEPAGE) &&			\
 	defined(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD)
-	/* No support क्रम anonymous transparent PUD pages yet */
-	अगर (vma_is_anonymous(vmf->vma))
-		जाओ split;
-	अगर (vmf->vma->vm_ops->huge_fault) अणु
+	/* No support for anonymous transparent PUD pages yet */
+	if (vma_is_anonymous(vmf->vma))
+		goto split;
+	if (vmf->vma->vm_ops->huge_fault) {
 		vm_fault_t ret = vmf->vma->vm_ops->huge_fault(vmf, PE_SIZE_PUD);
 
-		अगर (!(ret & VM_FAULT_FALLBACK))
-			वापस ret;
-	पूर्ण
+		if (!(ret & VM_FAULT_FALLBACK))
+			return ret;
+	}
 split:
-	/* COW or ग_लिखो-notअगरy not handled on PUD level: split pud.*/
+	/* COW or write-notify not handled on PUD level: split pud.*/
 	__split_huge_pud(vmf->vma, vmf->pud, vmf->address);
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+	return VM_FAULT_FALLBACK;
+}
 
-अटल vm_fault_t wp_huge_pud(काष्ठा vm_fault *vmf, pud_t orig_pud)
-अणु
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
-	/* No support क्रम anonymous transparent PUD pages yet */
-	अगर (vma_is_anonymous(vmf->vma))
-		वापस VM_FAULT_FALLBACK;
-	अगर (vmf->vma->vm_ops->huge_fault)
-		वापस vmf->vma->vm_ops->huge_fault(vmf, PE_SIZE_PUD);
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
+static vm_fault_t wp_huge_pud(struct vm_fault *vmf, pud_t orig_pud)
+{
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+	/* No support for anonymous transparent PUD pages yet */
+	if (vma_is_anonymous(vmf->vma))
+		return VM_FAULT_FALLBACK;
+	if (vmf->vma->vm_ops->huge_fault)
+		return vmf->vma->vm_ops->huge_fault(vmf, PE_SIZE_PUD);
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+	return VM_FAULT_FALLBACK;
+}
 
 /*
  * These routines also need to handle stuff like marking pages dirty
- * and/or accessed क्रम architectures that करोn't करो it in hardware (most
+ * and/or accessed for architectures that don't do it in hardware (most
  * RISC architectures).  The early dirtying is also good on the i386.
  *
  * There is also a hook called "update_mmu_cache()" that architectures
- * with बाह्यal mmu caches can use to update those (ie the Sparc or
+ * with external mmu caches can use to update those (ie the Sparc or
  * PowerPC hashed page tables that act as extended TLBs).
  *
  * We enter with non-exclusive mmap_lock (to exclude vma changes, but allow
  * concurrent faults).
  *
- * The mmap_lock may have been released depending on flags and our वापस value.
+ * The mmap_lock may have been released depending on flags and our return value.
  * See filemap_fault() and __lock_page_or_retry().
  */
-अटल vm_fault_t handle_pte_fault(काष्ठा vm_fault *vmf)
-अणु
+static vm_fault_t handle_pte_fault(struct vm_fault *vmf)
+{
 	pte_t entry;
 
-	अगर (unlikely(pmd_none(*vmf->pmd))) अणु
+	if (unlikely(pmd_none(*vmf->pmd))) {
 		/*
 		 * Leave __pte_alloc() until later: because vm_ops->fault may
-		 * want to allocate huge page, and अगर we expose page table
-		 * क्रम an instant, it will be dअगरficult to retract from
+		 * want to allocate huge page, and if we expose page table
+		 * for an instant, it will be difficult to retract from
 		 * concurrent faults and from rmap lookups.
 		 */
-		vmf->pte = शून्य;
-	पूर्ण अन्यथा अणु
+		vmf->pte = NULL;
+	} else {
 		/*
 		 * If a huge pmd materialized under us just retry later.  Use
 		 * pmd_trans_unstable() via pmd_devmap_trans_unstable() instead
 		 * of pmd_trans_huge() to ensure the pmd didn't become
 		 * pmd_trans_huge under us and then back to pmd_none, as a
 		 * result of MADV_DONTNEED running immediately after a huge pmd
-		 * fault in a dअगरferent thपढ़ो of this mm, in turn leading to a
+		 * fault in a different thread of this mm, in turn leading to a
 		 * misleading pmd_trans_huge() retval. All we have to ensure is
 		 * that it is a regular pmd that we can walk with
-		 * pte_offset_map() and we can करो that through an atomic पढ़ो
+		 * pte_offset_map() and we can do that through an atomic read
 		 * in C, which is what pmd_trans_unstable() provides.
 		 */
-		अगर (pmd_devmap_trans_unstable(vmf->pmd))
-			वापस 0;
+		if (pmd_devmap_trans_unstable(vmf->pmd))
+			return 0;
 		/*
-		 * A regular pmd is established and it can't morph पूर्णांकo a huge
-		 * pmd from under us anymore at this poपूर्णांक because we hold the
-		 * mmap_lock पढ़ो mode and khugepaged takes it in ग_लिखो mode.
+		 * A regular pmd is established and it can't morph into a huge
+		 * pmd from under us anymore at this point because we hold the
+		 * mmap_lock read mode and khugepaged takes it in write mode.
 		 * So now it's safe to run pte_offset_map().
 		 */
 		vmf->pte = pte_offset_map(vmf->pmd, vmf->address);
@@ -4396,228 +4395,228 @@ split:
 		 * e.g.ppc44x-defconfig has CONFIG_PTE_64BIT=y and
 		 * CONFIG_32BIT=y, so READ_ONCE cannot guarantee atomic
 		 * accesses.  The code below just needs a consistent view
-		 * क्रम the अगरs and we later द्विगुन check anyway with the
-		 * ptl lock held. So here a barrier will करो.
+		 * for the ifs and we later double check anyway with the
+		 * ptl lock held. So here a barrier will do.
 		 */
 		barrier();
-		अगर (pte_none(vmf->orig_pte)) अणु
+		if (pte_none(vmf->orig_pte)) {
 			pte_unmap(vmf->pte);
-			vmf->pte = शून्य;
-		पूर्ण
-	पूर्ण
+			vmf->pte = NULL;
+		}
+	}
 
-	अगर (!vmf->pte) अणु
-		अगर (vma_is_anonymous(vmf->vma))
-			वापस करो_anonymous_page(vmf);
-		अन्यथा
-			वापस करो_fault(vmf);
-	पूर्ण
+	if (!vmf->pte) {
+		if (vma_is_anonymous(vmf->vma))
+			return do_anonymous_page(vmf);
+		else
+			return do_fault(vmf);
+	}
 
-	अगर (!pte_present(vmf->orig_pte))
-		वापस करो_swap_page(vmf);
+	if (!pte_present(vmf->orig_pte))
+		return do_swap_page(vmf);
 
-	अगर (pte_protnone(vmf->orig_pte) && vma_is_accessible(vmf->vma))
-		वापस करो_numa_page(vmf);
+	if (pte_protnone(vmf->orig_pte) && vma_is_accessible(vmf->vma))
+		return do_numa_page(vmf);
 
 	vmf->ptl = pte_lockptr(vmf->vma->vm_mm, vmf->pmd);
 	spin_lock(vmf->ptl);
 	entry = vmf->orig_pte;
-	अगर (unlikely(!pte_same(*vmf->pte, entry))) अणु
+	if (unlikely(!pte_same(*vmf->pte, entry))) {
 		update_mmu_tlb(vmf->vma, vmf->address, vmf->pte);
-		जाओ unlock;
-	पूर्ण
-	अगर (vmf->flags & FAULT_FLAG_WRITE) अणु
-		अगर (!pte_ग_लिखो(entry))
-			वापस करो_wp_page(vmf);
-		entry = pte_सूची_गढ़ोty(entry);
-	पूर्ण
+		goto unlock;
+	}
+	if (vmf->flags & FAULT_FLAG_WRITE) {
+		if (!pte_write(entry))
+			return do_wp_page(vmf);
+		entry = pte_mkdirty(entry);
+	}
 	entry = pte_mkyoung(entry);
-	अगर (ptep_set_access_flags(vmf->vma, vmf->address, vmf->pte, entry,
-				vmf->flags & FAULT_FLAG_WRITE)) अणु
+	if (ptep_set_access_flags(vmf->vma, vmf->address, vmf->pte, entry,
+				vmf->flags & FAULT_FLAG_WRITE)) {
 		update_mmu_cache(vmf->vma, vmf->address, vmf->pte);
-	पूर्ण अन्यथा अणु
-		/* Skip spurious TLB flush क्रम retried page fault */
-		अगर (vmf->flags & FAULT_FLAG_TRIED)
-			जाओ unlock;
+	} else {
+		/* Skip spurious TLB flush for retried page fault */
+		if (vmf->flags & FAULT_FLAG_TRIED)
+			goto unlock;
 		/*
-		 * This is needed only क्रम protection faults but the arch code
-		 * is not yet telling us अगर this is a protection fault or not.
-		 * This still aव्योमs useless tlb flushes क्रम .text page faults
-		 * with thपढ़ोs.
+		 * This is needed only for protection faults but the arch code
+		 * is not yet telling us if this is a protection fault or not.
+		 * This still avoids useless tlb flushes for .text page faults
+		 * with threads.
 		 */
-		अगर (vmf->flags & FAULT_FLAG_WRITE)
+		if (vmf->flags & FAULT_FLAG_WRITE)
 			flush_tlb_fix_spurious_fault(vmf->vma, vmf->address);
-	पूर्ण
+	}
 unlock:
 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * By the समय we get here, we alपढ़ोy hold the mm semaphore
+ * By the time we get here, we already hold the mm semaphore
  *
  * The mmap_lock may have been released depending on flags and our
- * वापस value.  See filemap_fault() and __lock_page_or_retry().
+ * return value.  See filemap_fault() and __lock_page_or_retry().
  */
-अटल vm_fault_t __handle_mm_fault(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ address, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा vm_fault vmf = अणु
+static vm_fault_t __handle_mm_fault(struct vm_area_struct *vma,
+		unsigned long address, unsigned int flags)
+{
+	struct vm_fault vmf = {
 		.vma = vma,
 		.address = address & PAGE_MASK,
 		.flags = flags,
 		.pgoff = linear_page_index(vma, address),
 		.gfp_mask = __get_fault_gfp_mask(vma),
-	पूर्ण;
-	अचिन्हित पूर्णांक dirty = flags & FAULT_FLAG_WRITE;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	};
+	unsigned int dirty = flags & FAULT_FLAG_WRITE;
+	struct mm_struct *mm = vma->vm_mm;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	vm_fault_t ret;
 
 	pgd = pgd_offset(mm, address);
 	p4d = p4d_alloc(mm, pgd, address);
-	अगर (!p4d)
-		वापस VM_FAULT_OOM;
+	if (!p4d)
+		return VM_FAULT_OOM;
 
 	vmf.pud = pud_alloc(mm, p4d, address);
-	अगर (!vmf.pud)
-		वापस VM_FAULT_OOM;
+	if (!vmf.pud)
+		return VM_FAULT_OOM;
 retry_pud:
-	अगर (pud_none(*vmf.pud) && __transparent_hugepage_enabled(vma)) अणु
+	if (pud_none(*vmf.pud) && __transparent_hugepage_enabled(vma)) {
 		ret = create_huge_pud(&vmf);
-		अगर (!(ret & VM_FAULT_FALLBACK))
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		if (!(ret & VM_FAULT_FALLBACK))
+			return ret;
+	} else {
 		pud_t orig_pud = *vmf.pud;
 
 		barrier();
-		अगर (pud_trans_huge(orig_pud) || pud_devmap(orig_pud)) अणु
+		if (pud_trans_huge(orig_pud) || pud_devmap(orig_pud)) {
 
-			/* NUMA हाल क्रम anonymous PUDs would go here */
+			/* NUMA case for anonymous PUDs would go here */
 
-			अगर (dirty && !pud_ग_लिखो(orig_pud)) अणु
+			if (dirty && !pud_write(orig_pud)) {
 				ret = wp_huge_pud(&vmf, orig_pud);
-				अगर (!(ret & VM_FAULT_FALLBACK))
-					वापस ret;
-			पूर्ण अन्यथा अणु
+				if (!(ret & VM_FAULT_FALLBACK))
+					return ret;
+			} else {
 				huge_pud_set_accessed(&vmf, orig_pud);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+		}
+	}
 
 	vmf.pmd = pmd_alloc(mm, vmf.pud, address);
-	अगर (!vmf.pmd)
-		वापस VM_FAULT_OOM;
+	if (!vmf.pmd)
+		return VM_FAULT_OOM;
 
 	/* Huge pud page fault raced with pmd_alloc? */
-	अगर (pud_trans_unstable(vmf.pud))
-		जाओ retry_pud;
+	if (pud_trans_unstable(vmf.pud))
+		goto retry_pud;
 
-	अगर (pmd_none(*vmf.pmd) && __transparent_hugepage_enabled(vma)) अणु
+	if (pmd_none(*vmf.pmd) && __transparent_hugepage_enabled(vma)) {
 		ret = create_huge_pmd(&vmf);
-		अगर (!(ret & VM_FAULT_FALLBACK))
-			वापस ret;
-	पूर्ण अन्यथा अणु
+		if (!(ret & VM_FAULT_FALLBACK))
+			return ret;
+	} else {
 		pmd_t orig_pmd = *vmf.pmd;
 
 		barrier();
-		अगर (unlikely(is_swap_pmd(orig_pmd))) अणु
+		if (unlikely(is_swap_pmd(orig_pmd))) {
 			VM_BUG_ON(thp_migration_supported() &&
 					  !is_pmd_migration_entry(orig_pmd));
-			अगर (is_pmd_migration_entry(orig_pmd))
-				pmd_migration_entry_रुको(mm, vmf.pmd);
-			वापस 0;
-		पूर्ण
-		अगर (pmd_trans_huge(orig_pmd) || pmd_devmap(orig_pmd)) अणु
-			अगर (pmd_protnone(orig_pmd) && vma_is_accessible(vma))
-				वापस करो_huge_pmd_numa_page(&vmf, orig_pmd);
+			if (is_pmd_migration_entry(orig_pmd))
+				pmd_migration_entry_wait(mm, vmf.pmd);
+			return 0;
+		}
+		if (pmd_trans_huge(orig_pmd) || pmd_devmap(orig_pmd)) {
+			if (pmd_protnone(orig_pmd) && vma_is_accessible(vma))
+				return do_huge_pmd_numa_page(&vmf, orig_pmd);
 
-			अगर (dirty && !pmd_ग_लिखो(orig_pmd)) अणु
+			if (dirty && !pmd_write(orig_pmd)) {
 				ret = wp_huge_pmd(&vmf, orig_pmd);
-				अगर (!(ret & VM_FAULT_FALLBACK))
-					वापस ret;
-			पूर्ण अन्यथा अणु
+				if (!(ret & VM_FAULT_FALLBACK))
+					return ret;
+			} else {
 				huge_pmd_set_accessed(&vmf, orig_pmd);
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+		}
+	}
 
-	वापस handle_pte_fault(&vmf);
-पूर्ण
+	return handle_pte_fault(&vmf);
+}
 
 /**
  * mm_account_fault - Do page fault accounting
  *
- * @regs: the pt_regs काष्ठा poपूर्णांकer.  When set to शून्य, will skip accounting
- *        of perf event counters, but we'll still करो the per-task accounting to
+ * @regs: the pt_regs struct pointer.  When set to NULL, will skip accounting
+ *        of perf event counters, but we'll still do the per-task accounting to
  *        the task who triggered this page fault.
  * @address: the faulted address.
  * @flags: the fault flags.
  * @ret: the fault retcode.
  *
- * This will take care of most of the page fault accounting.  Meanजबतक, it
+ * This will take care of most of the page fault accounting.  Meanwhile, it
  * will also include the PERF_COUNT_SW_PAGE_FAULTS_[MAJ|MIN] perf counter
  * updates.  However, note that the handling of PERF_COUNT_SW_PAGE_FAULTS should
  * still be in per-arch page fault handlers at the entry of page fault.
  */
-अटल अंतरभूत व्योम mm_account_fault(काष्ठा pt_regs *regs,
-				    अचिन्हित दीर्घ address, अचिन्हित पूर्णांक flags,
+static inline void mm_account_fault(struct pt_regs *regs,
+				    unsigned long address, unsigned int flags,
 				    vm_fault_t ret)
-अणु
+{
 	bool major;
 
 	/*
-	 * We करोn't करो accounting क्रम some specअगरic faults:
+	 * We don't do accounting for some specific faults:
 	 *
 	 * - Unsuccessful faults (e.g. when the address wasn't valid).  That
-	 *   includes arch_vma_access_permitted() failing beक्रमe reaching here.
+	 *   includes arch_vma_access_permitted() failing before reaching here.
 	 *   So this is not a "this many hardware page faults" counter.  We
-	 *   should use the hw profiling क्रम that.
+	 *   should use the hw profiling for that.
 	 *
 	 * - Incomplete faults (VM_FAULT_RETRY).  They will only be counted
 	 *   once they're completed.
 	 */
-	अगर (ret & (VM_FAULT_ERROR | VM_FAULT_RETRY))
-		वापस;
+	if (ret & (VM_FAULT_ERROR | VM_FAULT_RETRY))
+		return;
 
 	/*
 	 * We define the fault as a major fault when the final successful fault
-	 * is VM_FAULT_MAJOR, or अगर it retried (which implies that we couldn't
+	 * is VM_FAULT_MAJOR, or if it retried (which implies that we couldn't
 	 * handle it immediately previously).
 	 */
 	major = (ret & VM_FAULT_MAJOR) || (flags & FAULT_FLAG_TRIED);
 
-	अगर (major)
+	if (major)
 		current->maj_flt++;
-	अन्यथा
+	else
 		current->min_flt++;
 
 	/*
-	 * If the fault is करोne क्रम GUP, regs will be शून्य.  We only करो the
-	 * accounting क्रम the per thपढ़ो fault counters who triggered the
+	 * If the fault is done for GUP, regs will be NULL.  We only do the
+	 * accounting for the per thread fault counters who triggered the
 	 * fault, and we skip the perf event updates.
 	 */
-	अगर (!regs)
-		वापस;
+	if (!regs)
+		return;
 
-	अगर (major)
+	if (major)
 		perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MAJ, 1, regs, address);
-	अन्यथा
+	else
 		perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS_MIN, 1, regs, address);
-पूर्ण
+}
 
 /*
- * By the समय we get here, we alपढ़ोy hold the mm semaphore
+ * By the time we get here, we already hold the mm semaphore
  *
  * The mmap_lock may have been released depending on flags and our
- * वापस value.  See filemap_fault() and __lock_page_or_retry().
+ * return value.  See filemap_fault() and __lock_page_or_retry().
  */
-vm_fault_t handle_mm_fault(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-			   अचिन्हित पूर्णांक flags, काष्ठा pt_regs *regs)
-अणु
+vm_fault_t handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
+			   unsigned int flags, struct pt_regs *regs)
+{
 	vm_fault_t ret;
 
 	__set_current_state(TASK_RUNNING);
@@ -4625,120 +4624,120 @@ vm_fault_t handle_mm_fault(काष्ठा vm_area_काष्ठा *vma, �
 	count_vm_event(PGFAULT);
 	count_memcg_event_mm(vma->vm_mm, PGFAULT);
 
-	/* करो counter updates beक्रमe entering really critical section. */
+	/* do counter updates before entering really critical section. */
 	check_sync_rss_stat(current);
 
-	अगर (!arch_vma_access_permitted(vma, flags & FAULT_FLAG_WRITE,
+	if (!arch_vma_access_permitted(vma, flags & FAULT_FLAG_WRITE,
 					    flags & FAULT_FLAG_INSTRUCTION,
 					    flags & FAULT_FLAG_REMOTE))
-		वापस VM_FAULT_संक_अंश;
+		return VM_FAULT_SIGSEGV;
 
 	/*
-	 * Enable the memcg OOM handling क्रम faults triggered in user
+	 * Enable the memcg OOM handling for faults triggered in user
 	 * space.  Kernel faults are handled more gracefully.
 	 */
-	अगर (flags & FAULT_FLAG_USER)
+	if (flags & FAULT_FLAG_USER)
 		mem_cgroup_enter_user_fault();
 
-	अगर (unlikely(is_vm_hugetlb_page(vma)))
+	if (unlikely(is_vm_hugetlb_page(vma)))
 		ret = hugetlb_fault(vma->vm_mm, vma, address, flags);
-	अन्यथा
+	else
 		ret = __handle_mm_fault(vma, address, flags);
 
-	अगर (flags & FAULT_FLAG_USER) अणु
-		mem_cgroup_निकास_user_fault();
+	if (flags & FAULT_FLAG_USER) {
+		mem_cgroup_exit_user_fault();
 		/*
 		 * The task may have entered a memcg OOM situation but
-		 * अगर the allocation error was handled gracefully (no
-		 * VM_FAULT_OOM), there is no need to समाप्त anything.
+		 * if the allocation error was handled gracefully (no
+		 * VM_FAULT_OOM), there is no need to kill anything.
 		 * Just clean up the OOM state peacefully.
 		 */
-		अगर (task_in_memcg_oom(current) && !(ret & VM_FAULT_OOM))
+		if (task_in_memcg_oom(current) && !(ret & VM_FAULT_OOM))
 			mem_cgroup_oom_synchronize(false);
-	पूर्ण
+	}
 
 	mm_account_fault(regs, address, flags, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(handle_mm_fault);
 
-#अगर_अघोषित __PAGETABLE_P4D_FOLDED
+#ifndef __PAGETABLE_P4D_FOLDED
 /*
  * Allocate p4d page table.
- * We've alपढ़ोy handled the fast-path in-line.
+ * We've already handled the fast-path in-line.
  */
-पूर्णांक __p4d_alloc(काष्ठा mm_काष्ठा *mm, pgd_t *pgd, अचिन्हित दीर्घ address)
-अणु
+int __p4d_alloc(struct mm_struct *mm, pgd_t *pgd, unsigned long address)
+{
 	p4d_t *new = p4d_alloc_one(mm, address);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
 	smp_wmb(); /* See comment in __pte_alloc */
 
 	spin_lock(&mm->page_table_lock);
-	अगर (pgd_present(*pgd))		/* Another has populated it */
-		p4d_मुक्त(mm, new);
-	अन्यथा
+	if (pgd_present(*pgd))		/* Another has populated it */
+		p4d_free(mm, new);
+	else
 		pgd_populate(mm, pgd, new);
 	spin_unlock(&mm->page_table_lock);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* __PAGETABLE_P4D_FOLDED */
+	return 0;
+}
+#endif /* __PAGETABLE_P4D_FOLDED */
 
-#अगर_अघोषित __PAGETABLE_PUD_FOLDED
+#ifndef __PAGETABLE_PUD_FOLDED
 /*
  * Allocate page upper directory.
- * We've alपढ़ोy handled the fast-path in-line.
+ * We've already handled the fast-path in-line.
  */
-पूर्णांक __pud_alloc(काष्ठा mm_काष्ठा *mm, p4d_t *p4d, अचिन्हित दीर्घ address)
-अणु
+int __pud_alloc(struct mm_struct *mm, p4d_t *p4d, unsigned long address)
+{
 	pud_t *new = pud_alloc_one(mm, address);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
 	smp_wmb(); /* See comment in __pte_alloc */
 
 	spin_lock(&mm->page_table_lock);
-	अगर (!p4d_present(*p4d)) अणु
+	if (!p4d_present(*p4d)) {
 		mm_inc_nr_puds(mm);
 		p4d_populate(mm, p4d, new);
-	पूर्ण अन्यथा	/* Another has populated it */
-		pud_मुक्त(mm, new);
+	} else	/* Another has populated it */
+		pud_free(mm, new);
 	spin_unlock(&mm->page_table_lock);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* __PAGETABLE_PUD_FOLDED */
+	return 0;
+}
+#endif /* __PAGETABLE_PUD_FOLDED */
 
-#अगर_अघोषित __PAGETABLE_PMD_FOLDED
+#ifndef __PAGETABLE_PMD_FOLDED
 /*
  * Allocate page middle directory.
- * We've alपढ़ोy handled the fast-path in-line.
+ * We've already handled the fast-path in-line.
  */
-पूर्णांक __pmd_alloc(काष्ठा mm_काष्ठा *mm, pud_t *pud, अचिन्हित दीर्घ address)
-अणु
+int __pmd_alloc(struct mm_struct *mm, pud_t *pud, unsigned long address)
+{
 	spinlock_t *ptl;
 	pmd_t *new = pmd_alloc_one(mm, address);
-	अगर (!new)
-		वापस -ENOMEM;
+	if (!new)
+		return -ENOMEM;
 
 	smp_wmb(); /* See comment in __pte_alloc */
 
 	ptl = pud_lock(mm, pud);
-	अगर (!pud_present(*pud)) अणु
+	if (!pud_present(*pud)) {
 		mm_inc_nr_pmds(mm);
 		pud_populate(mm, pud, new);
-	पूर्ण अन्यथा	/* Another has populated it */
-		pmd_मुक्त(mm, new);
+	} else	/* Another has populated it */
+		pmd_free(mm, new);
 	spin_unlock(ptl);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* __PAGETABLE_PMD_FOLDED */
+	return 0;
+}
+#endif /* __PAGETABLE_PMD_FOLDED */
 
-पूर्णांक follow_invalidate_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
-			  काष्ठा mmu_notअगरier_range *range, pte_t **ptepp,
+int follow_invalidate_pte(struct mm_struct *mm, unsigned long address,
+			  struct mmu_notifier_range *range, pte_t **ptepp,
 			  pmd_t **pmdpp, spinlock_t **ptlp)
-अणु
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -4746,579 +4745,579 @@ EXPORT_SYMBOL_GPL(handle_mm_fault);
 	pte_t *ptep;
 
 	pgd = pgd_offset(mm, address);
-	अगर (pgd_none(*pgd) || unlikely(pgd_bad(*pgd)))
-		जाओ out;
+	if (pgd_none(*pgd) || unlikely(pgd_bad(*pgd)))
+		goto out;
 
 	p4d = p4d_offset(pgd, address);
-	अगर (p4d_none(*p4d) || unlikely(p4d_bad(*p4d)))
-		जाओ out;
+	if (p4d_none(*p4d) || unlikely(p4d_bad(*p4d)))
+		goto out;
 
 	pud = pud_offset(p4d, address);
-	अगर (pud_none(*pud) || unlikely(pud_bad(*pud)))
-		जाओ out;
+	if (pud_none(*pud) || unlikely(pud_bad(*pud)))
+		goto out;
 
 	pmd = pmd_offset(pud, address);
 	VM_BUG_ON(pmd_trans_huge(*pmd));
 
-	अगर (pmd_huge(*pmd)) अणु
-		अगर (!pmdpp)
-			जाओ out;
+	if (pmd_huge(*pmd)) {
+		if (!pmdpp)
+			goto out;
 
-		अगर (range) अणु
-			mmu_notअगरier_range_init(range, MMU_NOTIFY_CLEAR, 0,
-						शून्य, mm, address & PMD_MASK,
+		if (range) {
+			mmu_notifier_range_init(range, MMU_NOTIFY_CLEAR, 0,
+						NULL, mm, address & PMD_MASK,
 						(address & PMD_MASK) + PMD_SIZE);
-			mmu_notअगरier_invalidate_range_start(range);
-		पूर्ण
+			mmu_notifier_invalidate_range_start(range);
+		}
 		*ptlp = pmd_lock(mm, pmd);
-		अगर (pmd_huge(*pmd)) अणु
+		if (pmd_huge(*pmd)) {
 			*pmdpp = pmd;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		spin_unlock(*ptlp);
-		अगर (range)
-			mmu_notअगरier_invalidate_range_end(range);
-	पूर्ण
+		if (range)
+			mmu_notifier_invalidate_range_end(range);
+	}
 
-	अगर (pmd_none(*pmd) || unlikely(pmd_bad(*pmd)))
-		जाओ out;
+	if (pmd_none(*pmd) || unlikely(pmd_bad(*pmd)))
+		goto out;
 
-	अगर (range) अणु
-		mmu_notअगरier_range_init(range, MMU_NOTIFY_CLEAR, 0, शून्य, mm,
+	if (range) {
+		mmu_notifier_range_init(range, MMU_NOTIFY_CLEAR, 0, NULL, mm,
 					address & PAGE_MASK,
 					(address & PAGE_MASK) + PAGE_SIZE);
-		mmu_notअगरier_invalidate_range_start(range);
-	पूर्ण
+		mmu_notifier_invalidate_range_start(range);
+	}
 	ptep = pte_offset_map_lock(mm, pmd, address, ptlp);
-	अगर (!pte_present(*ptep))
-		जाओ unlock;
+	if (!pte_present(*ptep))
+		goto unlock;
 	*ptepp = ptep;
-	वापस 0;
+	return 0;
 unlock:
 	pte_unmap_unlock(ptep, *ptlp);
-	अगर (range)
-		mmu_notअगरier_invalidate_range_end(range);
+	if (range)
+		mmu_notifier_invalidate_range_end(range);
 out:
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
- * follow_pte - look up PTE at a user भव address
- * @mm: the mm_काष्ठा of the target address space
- * @address: user भव address
+ * follow_pte - look up PTE at a user virtual address
+ * @mm: the mm_struct of the target address space
+ * @address: user virtual address
  * @ptepp: location to store found PTE
- * @ptlp: location to store the lock क्रम the PTE
+ * @ptlp: location to store the lock for the PTE
  *
- * On a successful वापस, the poपूर्णांकer to the PTE is stored in @ptepp;
+ * On a successful return, the pointer to the PTE is stored in @ptepp;
  * the corresponding lock is taken and its location is stored in @ptlp.
  * The contents of the PTE are only stable until @ptlp is released;
- * any further use, अगर any, must be रक्षित against invalidation
- * with MMU notअगरiers.
+ * any further use, if any, must be protected against invalidation
+ * with MMU notifiers.
  *
  * Only IO mappings and raw PFN mappings are allowed.  The mmap semaphore
- * should be taken क्रम पढ़ो.
+ * should be taken for read.
  *
  * KVM uses this function.  While it is arguably less bad than ``follow_pfn``,
  * it is not a good general-purpose API.
  *
  * Return: zero on success, -ve otherwise.
  */
-पूर्णांक follow_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address,
+int follow_pte(struct mm_struct *mm, unsigned long address,
 	       pte_t **ptepp, spinlock_t **ptlp)
-अणु
-	वापस follow_invalidate_pte(mm, address, शून्य, ptepp, शून्य, ptlp);
-पूर्ण
+{
+	return follow_invalidate_pte(mm, address, NULL, ptepp, NULL, ptlp);
+}
 EXPORT_SYMBOL_GPL(follow_pte);
 
 /**
- * follow_pfn - look up PFN at a user भव address
+ * follow_pfn - look up PFN at a user virtual address
  * @vma: memory mapping
- * @address: user भव address
+ * @address: user virtual address
  * @pfn: location to store found PFN
  *
  * Only IO mappings and raw PFN mappings are allowed.
  *
- * This function करोes not allow the caller to पढ़ो the permissions
+ * This function does not allow the caller to read the permissions
  * of the PTE.  Do not use it.
  *
  * Return: zero and the pfn at @pfn on success, -ve otherwise.
  */
-पूर्णांक follow_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-	अचिन्हित दीर्घ *pfn)
-अणु
-	पूर्णांक ret = -EINVAL;
+int follow_pfn(struct vm_area_struct *vma, unsigned long address,
+	unsigned long *pfn)
+{
+	int ret = -EINVAL;
 	spinlock_t *ptl;
 	pte_t *ptep;
 
-	अगर (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		वापस ret;
+	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
+		return ret;
 
 	ret = follow_pte(vma->vm_mm, address, &ptep, &ptl);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	*pfn = pte_pfn(*ptep);
 	pte_unmap_unlock(ptep, ptl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(follow_pfn);
 
-#अगर_घोषित CONFIG_HAVE_IOREMAP_PROT
-पूर्णांक follow_phys(काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ address, अचिन्हित पूर्णांक flags,
-		अचिन्हित दीर्घ *prot, resource_माप_प्रकार *phys)
-अणु
-	पूर्णांक ret = -EINVAL;
+#ifdef CONFIG_HAVE_IOREMAP_PROT
+int follow_phys(struct vm_area_struct *vma,
+		unsigned long address, unsigned int flags,
+		unsigned long *prot, resource_size_t *phys)
+{
+	int ret = -EINVAL;
 	pte_t *ptep, pte;
 	spinlock_t *ptl;
 
-	अगर (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		जाओ out;
+	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
+		goto out;
 
-	अगर (follow_pte(vma->vm_mm, address, &ptep, &ptl))
-		जाओ out;
+	if (follow_pte(vma->vm_mm, address, &ptep, &ptl))
+		goto out;
 	pte = *ptep;
 
-	अगर ((flags & FOLL_WRITE) && !pte_ग_लिखो(pte))
-		जाओ unlock;
+	if ((flags & FOLL_WRITE) && !pte_write(pte))
+		goto unlock;
 
 	*prot = pgprot_val(pte_pgprot(pte));
-	*phys = (resource_माप_प्रकार)pte_pfn(pte) << PAGE_SHIFT;
+	*phys = (resource_size_t)pte_pfn(pte) << PAGE_SHIFT;
 
 	ret = 0;
 unlock:
 	pte_unmap_unlock(ptep, ptl);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * generic_access_phys - generic implementation क्रम iomem mmap access
+ * generic_access_phys - generic implementation for iomem mmap access
  * @vma: the vma to access
  * @addr: userspace address, not relative offset within @vma
- * @buf: buffer to पढ़ो/ग_लिखो
+ * @buf: buffer to read/write
  * @len: length of transfer
- * @ग_लिखो: set to FOLL_WRITE when writing, otherwise पढ़ोing
+ * @write: set to FOLL_WRITE when writing, otherwise reading
  *
- * This is a generic implementation क्रम &vm_operations_काष्ठा.access क्रम an
+ * This is a generic implementation for &vm_operations_struct.access for an
  * iomem mapping. This callback is used by access_process_vm() when the @vma is
  * not page based.
  */
-पूर्णांक generic_access_phys(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-			व्योम *buf, पूर्णांक len, पूर्णांक ग_लिखो)
-अणु
-	resource_माप_प्रकार phys_addr;
-	अचिन्हित दीर्घ prot = 0;
-	व्योम __iomem *maddr;
+int generic_access_phys(struct vm_area_struct *vma, unsigned long addr,
+			void *buf, int len, int write)
+{
+	resource_size_t phys_addr;
+	unsigned long prot = 0;
+	void __iomem *maddr;
 	pte_t *ptep, pte;
 	spinlock_t *ptl;
-	पूर्णांक offset = offset_in_page(addr);
-	पूर्णांक ret = -EINVAL;
+	int offset = offset_in_page(addr);
+	int ret = -EINVAL;
 
-	अगर (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		वापस -EINVAL;
+	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
+		return -EINVAL;
 
 retry:
-	अगर (follow_pte(vma->vm_mm, addr, &ptep, &ptl))
-		वापस -EINVAL;
+	if (follow_pte(vma->vm_mm, addr, &ptep, &ptl))
+		return -EINVAL;
 	pte = *ptep;
 	pte_unmap_unlock(ptep, ptl);
 
 	prot = pgprot_val(pte_pgprot(pte));
-	phys_addr = (resource_माप_प्रकार)pte_pfn(pte) << PAGE_SHIFT;
+	phys_addr = (resource_size_t)pte_pfn(pte) << PAGE_SHIFT;
 
-	अगर ((ग_लिखो & FOLL_WRITE) && !pte_ग_लिखो(pte))
-		वापस -EINVAL;
+	if ((write & FOLL_WRITE) && !pte_write(pte))
+		return -EINVAL;
 
 	maddr = ioremap_prot(phys_addr, PAGE_ALIGN(len + offset), prot);
-	अगर (!maddr)
-		वापस -ENOMEM;
+	if (!maddr)
+		return -ENOMEM;
 
-	अगर (follow_pte(vma->vm_mm, addr, &ptep, &ptl))
-		जाओ out_unmap;
+	if (follow_pte(vma->vm_mm, addr, &ptep, &ptl))
+		goto out_unmap;
 
-	अगर (!pte_same(pte, *ptep)) अणु
+	if (!pte_same(pte, *ptep)) {
 		pte_unmap_unlock(ptep, ptl);
 		iounmap(maddr);
 
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
-	अगर (ग_लिखो)
-		स_नकल_toio(maddr + offset, buf, len);
-	अन्यथा
-		स_नकल_fromio(buf, maddr + offset, len);
+	if (write)
+		memcpy_toio(maddr + offset, buf, len);
+	else
+		memcpy_fromio(buf, maddr + offset, len);
 	ret = len;
 	pte_unmap_unlock(ptep, ptl);
 out_unmap:
 	iounmap(maddr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(generic_access_phys);
-#पूर्ण_अगर
+#endif
 
 /*
  * Access another process' address space as given in mm.
  */
-पूर्णांक __access_remote_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, व्योम *buf,
-		       पूर्णांक len, अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	व्योम *old_buf = buf;
-	पूर्णांक ग_लिखो = gup_flags & FOLL_WRITE;
+int __access_remote_vm(struct mm_struct *mm, unsigned long addr, void *buf,
+		       int len, unsigned int gup_flags)
+{
+	struct vm_area_struct *vma;
+	void *old_buf = buf;
+	int write = gup_flags & FOLL_WRITE;
 
-	अगर (mmap_पढ़ो_lock_समाप्तable(mm))
-		वापस 0;
+	if (mmap_read_lock_killable(mm))
+		return 0;
 
 	/* ignore errors, just check how much was successfully transferred */
-	जबतक (len) अणु
-		पूर्णांक bytes, ret, offset;
-		व्योम *maddr;
-		काष्ठा page *page = शून्य;
+	while (len) {
+		int bytes, ret, offset;
+		void *maddr;
+		struct page *page = NULL;
 
 		ret = get_user_pages_remote(mm, addr, 1,
-				gup_flags, &page, &vma, शून्य);
-		अगर (ret <= 0) अणु
-#अगर_अघोषित CONFIG_HAVE_IOREMAP_PROT
-			अवरोध;
-#अन्यथा
+				gup_flags, &page, &vma, NULL);
+		if (ret <= 0) {
+#ifndef CONFIG_HAVE_IOREMAP_PROT
+			break;
+#else
 			/*
-			 * Check अगर this is a VM_IO | VM_PFNMAP VMA, which
-			 * we can access using slightly dअगरferent code.
+			 * Check if this is a VM_IO | VM_PFNMAP VMA, which
+			 * we can access using slightly different code.
 			 */
 			vma = find_vma(mm, addr);
-			अगर (!vma || vma->vm_start > addr)
-				अवरोध;
-			अगर (vma->vm_ops && vma->vm_ops->access)
+			if (!vma || vma->vm_start > addr)
+				break;
+			if (vma->vm_ops && vma->vm_ops->access)
 				ret = vma->vm_ops->access(vma, addr, buf,
-							  len, ग_लिखो);
-			अगर (ret <= 0)
-				अवरोध;
+							  len, write);
+			if (ret <= 0)
+				break;
 			bytes = ret;
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
+#endif
+		} else {
 			bytes = len;
 			offset = addr & (PAGE_SIZE-1);
-			अगर (bytes > PAGE_SIZE-offset)
+			if (bytes > PAGE_SIZE-offset)
 				bytes = PAGE_SIZE-offset;
 
 			maddr = kmap(page);
-			अगर (ग_लिखो) अणु
+			if (write) {
 				copy_to_user_page(vma, page, addr,
 						  maddr + offset, buf, bytes);
 				set_page_dirty_lock(page);
-			पूर्ण अन्यथा अणु
+			} else {
 				copy_from_user_page(vma, page, addr,
 						    buf, maddr + offset, bytes);
-			पूर्ण
+			}
 			kunmap(page);
 			put_page(page);
-		पूर्ण
+		}
 		len -= bytes;
 		buf += bytes;
 		addr += bytes;
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
+	}
+	mmap_read_unlock(mm);
 
-	वापस buf - old_buf;
-पूर्ण
+	return buf - old_buf;
+}
 
 /**
  * access_remote_vm - access another process' address space
- * @mm:		the mm_काष्ठा of the target address space
+ * @mm:		the mm_struct of the target address space
  * @addr:	start address to access
  * @buf:	source or destination buffer
  * @len:	number of bytes to transfer
- * @gup_flags:	flags modअगरying lookup behaviour
+ * @gup_flags:	flags modifying lookup behaviour
  *
  * The caller must hold a reference on @mm.
  *
  * Return: number of bytes copied from source to destination.
  */
-पूर्णांक access_remote_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-		व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags)
-अणु
-	वापस __access_remote_vm(mm, addr, buf, len, gup_flags);
-पूर्ण
+int access_remote_vm(struct mm_struct *mm, unsigned long addr,
+		void *buf, int len, unsigned int gup_flags)
+{
+	return __access_remote_vm(mm, addr, buf, len, gup_flags);
+}
 
 /*
  * Access another process' address space.
  * Source/target buffer must be kernel space,
  * Do not walk the page table directly, use get_user_pages
  */
-पूर्णांक access_process_vm(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr,
-		व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा mm_काष्ठा *mm;
-	पूर्णांक ret;
+int access_process_vm(struct task_struct *tsk, unsigned long addr,
+		void *buf, int len, unsigned int gup_flags)
+{
+	struct mm_struct *mm;
+	int ret;
 
 	mm = get_task_mm(tsk);
-	अगर (!mm)
-		वापस 0;
+	if (!mm)
+		return 0;
 
 	ret = __access_remote_vm(mm, addr, buf, len, gup_flags);
 
 	mmput(mm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(access_process_vm);
 
 /*
- * Prपूर्णांक the name of a VMA.
+ * Print the name of a VMA.
  */
-व्योम prपूर्णांक_vma_addr(अक्षर *prefix, अचिन्हित दीर्घ ip)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
+void print_vma_addr(char *prefix, unsigned long ip)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
 
 	/*
 	 * we might be running from an atomic context so we cannot sleep
 	 */
-	अगर (!mmap_पढ़ो_trylock(mm))
-		वापस;
+	if (!mmap_read_trylock(mm))
+		return;
 
 	vma = find_vma(mm, ip);
-	अगर (vma && vma->vm_file) अणु
-		काष्ठा file *f = vma->vm_file;
-		अक्षर *buf = (अक्षर *)__get_मुक्त_page(GFP_NOWAIT);
-		अगर (buf) अणु
-			अक्षर *p;
+	if (vma && vma->vm_file) {
+		struct file *f = vma->vm_file;
+		char *buf = (char *)__get_free_page(GFP_NOWAIT);
+		if (buf) {
+			char *p;
 
 			p = file_path(f, buf, PAGE_SIZE);
-			अगर (IS_ERR(p))
+			if (IS_ERR(p))
 				p = "?";
-			prपूर्णांकk("%s%s[%lx+%lx]", prefix, kbasename(p),
+			printk("%s%s[%lx+%lx]", prefix, kbasename(p),
 					vma->vm_start,
 					vma->vm_end - vma->vm_start);
-			मुक्त_page((अचिन्हित दीर्घ)buf);
-		पूर्ण
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
-पूर्ण
+			free_page((unsigned long)buf);
+		}
+	}
+	mmap_read_unlock(mm);
+}
 
-#अगर defined(CONFIG_PROVE_LOCKING) || defined(CONFIG_DEBUG_ATOMIC_SLEEP)
-व्योम __might_fault(स्थिर अक्षर *file, पूर्णांक line)
-अणु
+#if defined(CONFIG_PROVE_LOCKING) || defined(CONFIG_DEBUG_ATOMIC_SLEEP)
+void __might_fault(const char *file, int line)
+{
 	/*
-	 * Some code (nfs/sunrpc) uses socket ops on kernel memory जबतक
-	 * holding the mmap_lock, this is safe because kernel memory करोesn't
-	 * get paged out, thereक्रमe we'll never actually fault, and the
+	 * Some code (nfs/sunrpc) uses socket ops on kernel memory while
+	 * holding the mmap_lock, this is safe because kernel memory doesn't
+	 * get paged out, therefore we'll never actually fault, and the
 	 * below annotations will generate false positives.
 	 */
-	अगर (uaccess_kernel())
-		वापस;
-	अगर (pagefault_disabled())
-		वापस;
+	if (uaccess_kernel())
+		return;
+	if (pagefault_disabled())
+		return;
 	__might_sleep(file, line, 0);
-#अगर defined(CONFIG_DEBUG_ATOMIC_SLEEP)
-	अगर (current->mm)
-		might_lock_पढ़ो(&current->mm->mmap_lock);
-#पूर्ण_अगर
-पूर्ण
+#if defined(CONFIG_DEBUG_ATOMIC_SLEEP)
+	if (current->mm)
+		might_lock_read(&current->mm->mmap_lock);
+#endif
+}
 EXPORT_SYMBOL(__might_fault);
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_TRANSPARENT_HUGEPAGE) || defined(CONFIG_HUGETLBFS)
+#if defined(CONFIG_TRANSPARENT_HUGEPAGE) || defined(CONFIG_HUGETLBFS)
 /*
- * Process all subpages of the specअगरied huge page with the specअगरied
+ * Process all subpages of the specified huge page with the specified
  * operation.  The target subpage will be processed last to keep its
  * cache lines hot.
  */
-अटल अंतरभूत व्योम process_huge_page(
-	अचिन्हित दीर्घ addr_hपूर्णांक, अचिन्हित पूर्णांक pages_per_huge_page,
-	व्योम (*process_subpage)(अचिन्हित दीर्घ addr, पूर्णांक idx, व्योम *arg),
-	व्योम *arg)
-अणु
-	पूर्णांक i, n, base, l;
-	अचिन्हित दीर्घ addr = addr_hपूर्णांक &
-		~(((अचिन्हित दीर्घ)pages_per_huge_page << PAGE_SHIFT) - 1);
+static inline void process_huge_page(
+	unsigned long addr_hint, unsigned int pages_per_huge_page,
+	void (*process_subpage)(unsigned long addr, int idx, void *arg),
+	void *arg)
+{
+	int i, n, base, l;
+	unsigned long addr = addr_hint &
+		~(((unsigned long)pages_per_huge_page << PAGE_SHIFT) - 1);
 
 	/* Process target subpage last to keep its cache lines hot */
 	might_sleep();
-	n = (addr_hपूर्णांक - addr) / PAGE_SIZE;
-	अगर (2 * n <= pages_per_huge_page) अणु
+	n = (addr_hint - addr) / PAGE_SIZE;
+	if (2 * n <= pages_per_huge_page) {
 		/* If target subpage in first half of huge page */
 		base = 0;
 		l = n;
 		/* Process subpages at the end of huge page */
-		क्रम (i = pages_per_huge_page - 1; i >= 2 * n; i--) अणु
+		for (i = pages_per_huge_page - 1; i >= 2 * n; i--) {
 			cond_resched();
 			process_subpage(addr + i * PAGE_SIZE, i, arg);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* If target subpage in second half of huge page */
 		base = pages_per_huge_page - 2 * (pages_per_huge_page - n);
 		l = pages_per_huge_page - n;
 		/* Process subpages at the begin of huge page */
-		क्रम (i = 0; i < base; i++) अणु
+		for (i = 0; i < base; i++) {
 			cond_resched();
 			process_subpage(addr + i * PAGE_SIZE, i, arg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
-	 * Process reमुख्यing subpages in left-right-left-right pattern
+	 * Process remaining subpages in left-right-left-right pattern
 	 * towards the target subpage
 	 */
-	क्रम (i = 0; i < l; i++) अणु
-		पूर्णांक left_idx = base + i;
-		पूर्णांक right_idx = base + 2 * l - 1 - i;
+	for (i = 0; i < l; i++) {
+		int left_idx = base + i;
+		int right_idx = base + 2 * l - 1 - i;
 
 		cond_resched();
 		process_subpage(addr + left_idx * PAGE_SIZE, left_idx, arg);
 		cond_resched();
 		process_subpage(addr + right_idx * PAGE_SIZE, right_idx, arg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम clear_gigantic_page(काष्ठा page *page,
-				अचिन्हित दीर्घ addr,
-				अचिन्हित पूर्णांक pages_per_huge_page)
-अणु
-	पूर्णांक i;
-	काष्ठा page *p = page;
+static void clear_gigantic_page(struct page *page,
+				unsigned long addr,
+				unsigned int pages_per_huge_page)
+{
+	int i;
+	struct page *p = page;
 
 	might_sleep();
-	क्रम (i = 0; i < pages_per_huge_page;
-	     i++, p = mem_map_next(p, page, i)) अणु
+	for (i = 0; i < pages_per_huge_page;
+	     i++, p = mem_map_next(p, page, i)) {
 		cond_resched();
 		clear_user_highpage(p, addr + i * PAGE_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम clear_subpage(अचिन्हित दीर्घ addr, पूर्णांक idx, व्योम *arg)
-अणु
-	काष्ठा page *page = arg;
+static void clear_subpage(unsigned long addr, int idx, void *arg)
+{
+	struct page *page = arg;
 
 	clear_user_highpage(page + idx, addr);
-पूर्ण
+}
 
-व्योम clear_huge_page(काष्ठा page *page,
-		     अचिन्हित दीर्घ addr_hपूर्णांक, अचिन्हित पूर्णांक pages_per_huge_page)
-अणु
-	अचिन्हित दीर्घ addr = addr_hपूर्णांक &
-		~(((अचिन्हित दीर्घ)pages_per_huge_page << PAGE_SHIFT) - 1);
+void clear_huge_page(struct page *page,
+		     unsigned long addr_hint, unsigned int pages_per_huge_page)
+{
+	unsigned long addr = addr_hint &
+		~(((unsigned long)pages_per_huge_page << PAGE_SHIFT) - 1);
 
-	अगर (unlikely(pages_per_huge_page > MAX_ORDER_NR_PAGES)) अणु
+	if (unlikely(pages_per_huge_page > MAX_ORDER_NR_PAGES)) {
 		clear_gigantic_page(page, addr, pages_per_huge_page);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	process_huge_page(addr_hपूर्णांक, pages_per_huge_page, clear_subpage, page);
-पूर्ण
+	process_huge_page(addr_hint, pages_per_huge_page, clear_subpage, page);
+}
 
-अटल व्योम copy_user_gigantic_page(काष्ठा page *dst, काष्ठा page *src,
-				    अचिन्हित दीर्घ addr,
-				    काष्ठा vm_area_काष्ठा *vma,
-				    अचिन्हित पूर्णांक pages_per_huge_page)
-अणु
-	पूर्णांक i;
-	काष्ठा page *dst_base = dst;
-	काष्ठा page *src_base = src;
+static void copy_user_gigantic_page(struct page *dst, struct page *src,
+				    unsigned long addr,
+				    struct vm_area_struct *vma,
+				    unsigned int pages_per_huge_page)
+{
+	int i;
+	struct page *dst_base = dst;
+	struct page *src_base = src;
 
-	क्रम (i = 0; i < pages_per_huge_page; ) अणु
+	for (i = 0; i < pages_per_huge_page; ) {
 		cond_resched();
 		copy_user_highpage(dst, src, addr + i*PAGE_SIZE, vma);
 
 		i++;
 		dst = mem_map_next(dst, dst_base, i);
 		src = mem_map_next(src, src_base, i);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा copy_subpage_arg अणु
-	काष्ठा page *dst;
-	काष्ठा page *src;
-	काष्ठा vm_area_काष्ठा *vma;
-पूर्ण;
+struct copy_subpage_arg {
+	struct page *dst;
+	struct page *src;
+	struct vm_area_struct *vma;
+};
 
-अटल व्योम copy_subpage(अचिन्हित दीर्घ addr, पूर्णांक idx, व्योम *arg)
-अणु
-	काष्ठा copy_subpage_arg *copy_arg = arg;
+static void copy_subpage(unsigned long addr, int idx, void *arg)
+{
+	struct copy_subpage_arg *copy_arg = arg;
 
 	copy_user_highpage(copy_arg->dst + idx, copy_arg->src + idx,
 			   addr, copy_arg->vma);
-पूर्ण
+}
 
-व्योम copy_user_huge_page(काष्ठा page *dst, काष्ठा page *src,
-			 अचिन्हित दीर्घ addr_hपूर्णांक, काष्ठा vm_area_काष्ठा *vma,
-			 अचिन्हित पूर्णांक pages_per_huge_page)
-अणु
-	अचिन्हित दीर्घ addr = addr_hपूर्णांक &
-		~(((अचिन्हित दीर्घ)pages_per_huge_page << PAGE_SHIFT) - 1);
-	काष्ठा copy_subpage_arg arg = अणु
+void copy_user_huge_page(struct page *dst, struct page *src,
+			 unsigned long addr_hint, struct vm_area_struct *vma,
+			 unsigned int pages_per_huge_page)
+{
+	unsigned long addr = addr_hint &
+		~(((unsigned long)pages_per_huge_page << PAGE_SHIFT) - 1);
+	struct copy_subpage_arg arg = {
 		.dst = dst,
 		.src = src,
 		.vma = vma,
-	पूर्ण;
+	};
 
-	अगर (unlikely(pages_per_huge_page > MAX_ORDER_NR_PAGES)) अणु
+	if (unlikely(pages_per_huge_page > MAX_ORDER_NR_PAGES)) {
 		copy_user_gigantic_page(dst, src, addr, vma,
 					pages_per_huge_page);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	process_huge_page(addr_hपूर्णांक, pages_per_huge_page, copy_subpage, &arg);
-पूर्ण
+	process_huge_page(addr_hint, pages_per_huge_page, copy_subpage, &arg);
+}
 
-दीर्घ copy_huge_page_from_user(काष्ठा page *dst_page,
-				स्थिर व्योम __user *usr_src,
-				अचिन्हित पूर्णांक pages_per_huge_page,
+long copy_huge_page_from_user(struct page *dst_page,
+				const void __user *usr_src,
+				unsigned int pages_per_huge_page,
 				bool allow_pagefault)
-अणु
-	व्योम *src = (व्योम *)usr_src;
-	व्योम *page_kaddr;
-	अचिन्हित दीर्घ i, rc = 0;
-	अचिन्हित दीर्घ ret_val = pages_per_huge_page * PAGE_SIZE;
-	काष्ठा page *subpage = dst_page;
+{
+	void *src = (void *)usr_src;
+	void *page_kaddr;
+	unsigned long i, rc = 0;
+	unsigned long ret_val = pages_per_huge_page * PAGE_SIZE;
+	struct page *subpage = dst_page;
 
-	क्रम (i = 0; i < pages_per_huge_page;
-	     i++, subpage = mem_map_next(subpage, dst_page, i)) अणु
-		अगर (allow_pagefault)
+	for (i = 0; i < pages_per_huge_page;
+	     i++, subpage = mem_map_next(subpage, dst_page, i)) {
+		if (allow_pagefault)
 			page_kaddr = kmap(subpage);
-		अन्यथा
+		else
 			page_kaddr = kmap_atomic(subpage);
 		rc = copy_from_user(page_kaddr,
-				(स्थिर व्योम __user *)(src + i * PAGE_SIZE),
+				(const void __user *)(src + i * PAGE_SIZE),
 				PAGE_SIZE);
-		अगर (allow_pagefault)
+		if (allow_pagefault)
 			kunmap(subpage);
-		अन्यथा
+		else
 			kunmap_atomic(page_kaddr);
 
 		ret_val -= (PAGE_SIZE - rc);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 
 		cond_resched();
-	पूर्ण
-	वापस ret_val;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
+	}
+	return ret_val;
+}
+#endif /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
 
-#अगर USE_SPLIT_PTE_PTLOCKS && ALLOC_SPLIT_PTLOCKS
+#if USE_SPLIT_PTE_PTLOCKS && ALLOC_SPLIT_PTLOCKS
 
-अटल काष्ठा kmem_cache *page_ptl_cachep;
+static struct kmem_cache *page_ptl_cachep;
 
-व्योम __init ptlock_cache_init(व्योम)
-अणु
-	page_ptl_cachep = kmem_cache_create("page->ptl", माप(spinlock_t), 0,
-			SLAB_PANIC, शून्य);
-पूर्ण
+void __init ptlock_cache_init(void)
+{
+	page_ptl_cachep = kmem_cache_create("page->ptl", sizeof(spinlock_t), 0,
+			SLAB_PANIC, NULL);
+}
 
-bool ptlock_alloc(काष्ठा page *page)
-अणु
+bool ptlock_alloc(struct page *page)
+{
 	spinlock_t *ptl;
 
 	ptl = kmem_cache_alloc(page_ptl_cachep, GFP_KERNEL);
-	अगर (!ptl)
-		वापस false;
+	if (!ptl)
+		return false;
 	page->ptl = ptl;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम ptlock_मुक्त(काष्ठा page *page)
-अणु
-	kmem_cache_मुक्त(page_ptl_cachep, page->ptl);
-पूर्ण
-#पूर्ण_अगर
+void ptlock_free(struct page *page)
+{
+	kmem_cache_free(page_ptl_cachep, page->ptl);
+}
+#endif

@@ -1,67 +1,66 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2015, Michael Neuling, IBM Corp.
  *
  * Original: Michael Neuling 4/12/2013
  * Edited: Rashmica Gupta 4/12/2015
  *
- * See अगर the altivec state is leaked out of an पातed transaction due to
+ * See if the altivec state is leaked out of an aborted transaction due to
  * kernel vmx copy loops.
  *
- * When the transaction पातs, VSR values should rollback to the values
- * they held beक्रमe the transaction commenced. Using VSRs जबतक transaction
- * is suspended should not affect the checkpoपूर्णांकed values.
+ * When the transaction aborts, VSR values should rollback to the values
+ * they held before the transaction commenced. Using VSRs while transaction
+ * is suspended should not affect the checkpointed values.
  *
- * (1) ग_लिखो A to a VSR
+ * (1) write A to a VSR
  * (2) start transaction
  * (3) suspend transaction
  * (4) change the VSR to B
  * (5) trigger kernel vmx copy loop
- * (6) पात transaction
+ * (6) abort transaction
  * (7) check that the VSR value is A
  */
 
-#समावेश <पूर्णांकtypes.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <sys/mman.h>
-#समावेश <माला.स>
-#समावेश <निश्चित.स>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <string.h>
+#include <assert.h>
 
-#समावेश "tm.h"
-#समावेश "utils.h"
+#include "tm.h"
+#include "utils.h"
 
-पूर्णांक test_vmxcopy()
-अणु
-	दीर्घ द्विगुन vecin = 1.3;
-	दीर्घ द्विगुन vecout;
-	अचिन्हित दीर्घ pgsize = getpagesize();
-	पूर्णांक i;
-	पूर्णांक fd;
-	पूर्णांक size = pgsize*16;
-	अक्षर क्षणिक_ख[] = "/tmp/page_faultXXXXXX";
-	अक्षर buf[pgsize];
-	अक्षर *a;
-	uपूर्णांक64_t पातed = 0;
+int test_vmxcopy()
+{
+	long double vecin = 1.3;
+	long double vecout;
+	unsigned long pgsize = getpagesize();
+	int i;
+	int fd;
+	int size = pgsize*16;
+	char tmpfile[] = "/tmp/page_faultXXXXXX";
+	char buf[pgsize];
+	char *a;
+	uint64_t aborted = 0;
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 	SKIP_IF(!is_ppc64le());
 
-	fd = mkstemp(क्षणिक_ख);
-	निश्चित(fd >= 0);
+	fd = mkstemp(tmpfile);
+	assert(fd >= 0);
 
-	स_रखो(buf, 0, pgsize);
-	क्रम (i = 0; i < size; i += pgsize)
-		निश्चित(ग_लिखो(fd, buf, pgsize) == pgsize);
+	memset(buf, 0, pgsize);
+	for (i = 0; i < size; i += pgsize)
+		assert(write(fd, buf, pgsize) == pgsize);
 
-	unlink(क्षणिक_ख);
+	unlink(tmpfile);
 
-	a = mmap(शून्य, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-	निश्चित(a != MAP_FAILED);
+	a = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+	assert(a != MAP_FAILED);
 
-	यंत्र __अस्थिर__(
+	asm __volatile__(
 		"lxvd2x 40,0,%[vecinptr];"	/* set 40 to initial value*/
 		"tbegin.;"
 		"beq	3f;"
@@ -80,26 +79,26 @@
 
 		"5:;"
 		"stxvd2x 40,0,%[vecoutptr];"
-		: [res]"=&r"(पातed)
+		: [res]"=&r"(aborted)
 		: [vecinptr]"r"(&vecin),
 		  [vecoutptr]"r"(&vecout),
 		  [map]"r"(a)
 		: "memory", "r0", "r3", "r4", "r5", "r6", "r7");
 
-	अगर (पातed && (vecin != vecout))अणु
-		म_लिखो("FAILED: vector state leaked on abort %f != %f\n",
-		       (द्विगुन)vecin, (द्विगुन)vecout);
-		वापस 1;
-	पूर्ण
+	if (aborted && (vecin != vecout)){
+		printf("FAILED: vector state leaked on abort %f != %f\n",
+		       (double)vecin, (double)vecout);
+		return 1;
+	}
 
 	munmap(a, size);
 
-	बंद(fd);
+	close(fd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(test_vmxcopy, "tm_vmxcopy");
-पूर्ण
+int main(void)
+{
+	return test_harness(test_vmxcopy, "tm_vmxcopy");
+}

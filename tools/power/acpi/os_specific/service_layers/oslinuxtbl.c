@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: oslinuxtbl - Linux OSL क्रम obtaining ACPI tables
+ * Module Name: oslinuxtbl - Linux OSL for obtaining ACPI tables
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश "acpidump.h"
+#include "acpidump.h"
 
-#घोषणा _COMPONENT          ACPI_OS_SERVICES
+#define _COMPONENT          ACPI_OS_SERVICES
 ACPI_MODULE_NAME("oslinuxtbl")
 
-#अगर_अघोषित PATH_MAX
-#घोषणा PATH_MAX 256
-#पूर्ण_अगर
-/* List of inक्रमmation about obtained ACPI tables */
-प्रकार काष्ठा osl_table_info अणु
-	काष्ठा osl_table_info *next;
+#ifndef PATH_MAX
+#define PATH_MAX 256
+#endif
+/* List of information about obtained ACPI tables */
+typedef struct osl_table_info {
+	struct osl_table_info *next;
 	u32 instance;
-	अक्षर signature[ACPI_NAMESEG_SIZE];
+	char signature[ACPI_NAMESEG_SIZE];
 
-पूर्ण osl_table_info;
+} osl_table_info;
 
 /* Local prototypes */
 
-अटल acpi_status osl_table_initialize(व्योम);
+static acpi_status osl_table_initialize(void);
 
-अटल acpi_status
-osl_table_name_from_file(अक्षर *filename, अक्षर *signature, u32 *instance);
+static acpi_status
+osl_table_name_from_file(char *filename, char *signature, u32 *instance);
 
-अटल acpi_status osl_add_table_to_list(अक्षर *signature, u32 instance);
+static acpi_status osl_add_table_to_list(char *signature, u32 instance);
 
-अटल acpi_status
-osl_पढ़ो_table_from_file(अक्षर *filename,
+static acpi_status
+osl_read_table_from_file(char *filename,
 			 acpi_size file_offset,
-			 काष्ठा acpi_table_header **table);
+			 struct acpi_table_header **table);
 
-अटल acpi_status
+static acpi_status
 osl_map_table(acpi_size address,
-	      अक्षर *signature, काष्ठा acpi_table_header **table);
+	      char *signature, struct acpi_table_header **table);
 
-अटल व्योम osl_unmap_table(काष्ठा acpi_table_header *table);
+static void osl_unmap_table(struct acpi_table_header *table);
 
-अटल acpi_physical_address
-osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्षर *keyword);
+static acpi_physical_address
+osl_find_rsdp_via_efi_by_keyword(FILE * file, const char *keyword);
 
-अटल acpi_physical_address osl_find_rsdp_via_efi(व्योम);
+static acpi_physical_address osl_find_rsdp_via_efi(void);
 
-अटल acpi_status osl_load_rsdp(व्योम);
+static acpi_status osl_load_rsdp(void);
 
-अटल acpi_status osl_list_customized_tables(अक्षर *directory);
+static acpi_status osl_list_customized_tables(char *directory);
 
-अटल acpi_status
-osl_get_customized_table(अक्षर *pathname,
-			 अक्षर *signature,
+static acpi_status
+osl_get_customized_table(char *pathname,
+			 char *signature,
 			 u32 instance,
-			 काष्ठा acpi_table_header **table,
+			 struct acpi_table_header **table,
 			 acpi_physical_address *address);
 
-अटल acpi_status osl_list_bios_tables(व्योम);
+static acpi_status osl_list_bios_tables(void);
 
-अटल acpi_status
-osl_get_bios_table(अक्षर *signature,
+static acpi_status
+osl_get_bios_table(char *signature,
 		   u32 instance,
-		   काष्ठा acpi_table_header **table,
+		   struct acpi_table_header **table,
 		   acpi_physical_address *address);
 
-अटल acpi_status osl_get_last_status(acpi_status शेष_status);
+static acpi_status osl_get_last_status(acpi_status default_status);
 
 /* File locations */
 
-#घोषणा DYNAMIC_TABLE_सूची   "/sys/firmware/acpi/tables/dynamic"
-#घोषणा STATIC_TABLE_सूची    "/sys/firmware/acpi/tables"
-#घोषणा EFI_SYSTAB          "/sys/firmware/efi/systab"
+#define DYNAMIC_TABLE_DIR   "/sys/firmware/acpi/tables/dynamic"
+#define STATIC_TABLE_DIR    "/sys/firmware/acpi/tables"
+#define EFI_SYSTAB          "/sys/firmware/efi/systab"
 
-/* Should we get dynamically loaded SSDTs from DYNAMIC_TABLE_सूची? */
+/* Should we get dynamically loaded SSDTs from DYNAMIC_TABLE_DIR? */
 
 u8 gbl_dump_dynamic_tables = TRUE;
 
@@ -84,12 +83,12 @@ u8 gbl_dump_dynamic_tables = TRUE;
 
 u8 gbl_table_list_initialized = FALSE;
 
-/* Local copies of मुख्य ACPI tables */
+/* Local copies of main ACPI tables */
 
-काष्ठा acpi_table_rsdp gbl_rsdp;
-काष्ठा acpi_table_fadt *gbl_fadt = शून्य;
-काष्ठा acpi_table_rsdt *gbl_rsdt = शून्य;
-काष्ठा acpi_table_xsdt *gbl_xsdt = शून्य;
+struct acpi_table_rsdp gbl_rsdp;
+struct acpi_table_fadt *gbl_fadt = NULL;
+struct acpi_table_rsdt *gbl_rsdt = NULL;
+struct acpi_table_xsdt *gbl_xsdt = NULL;
 
 /* Table addresses */
 
@@ -100,52 +99,52 @@ acpi_physical_address gbl_rsdp_address = 0;
 
 u8 gbl_revision = 0;
 
-काष्ठा osl_table_info *gbl_table_list_head = शून्य;
+struct osl_table_info *gbl_table_list_head = NULL;
 u32 gbl_table_count = 0;
 
 /******************************************************************************
  *
  * FUNCTION:    osl_get_last_status
  *
- * PARAMETERS:  शेष_status  - Default error status to वापस
+ * PARAMETERS:  default_status  - Default error status to return
  *
- * RETURN:      Status; Converted from त्रुटि_सं.
+ * RETURN:      Status; Converted from errno.
  *
- * DESCRIPTION: Get last त्रुटि_सं and convert it to acpi_status.
+ * DESCRIPTION: Get last errno and convert it to acpi_status.
  *
  *****************************************************************************/
 
-अटल acpi_status osl_get_last_status(acpi_status शेष_status)
-अणु
+static acpi_status osl_get_last_status(acpi_status default_status)
+{
 
-	चयन (त्रुटि_सं) अणु
-	हाल EACCES:
-	हाल EPERM:
+	switch (errno) {
+	case EACCES:
+	case EPERM:
 
-		वापस (AE_ACCESS);
+		return (AE_ACCESS);
 
-	हाल ENOENT:
+	case ENOENT:
 
-		वापस (AE_NOT_FOUND);
+		return (AE_NOT_FOUND);
 
-	हाल ENOMEM:
+	case ENOMEM:
 
-		वापस (AE_NO_MEMORY);
+		return (AE_NO_MEMORY);
 
-	शेष:
+	default:
 
-		वापस (शेष_status);
-	पूर्ण
-पूर्ण
+		return (default_status);
+	}
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_get_table_by_address
  *
  * PARAMETERS:  address         - Physical address of the ACPI table
- *              table           - Where a poपूर्णांकer to the table is वापसed
+ *              table           - Where a pointer to the table is returned
  *
- * RETURN:      Status; Table buffer is वापसed अगर AE_OK.
+ * RETURN:      Status; Table buffer is returned if AE_OK.
  *              AE_NOT_FOUND: A valid table was not found at the address
  *
  * DESCRIPTION: Get an ACPI table via a physical memory address.
@@ -154,112 +153,112 @@ u32 gbl_table_count = 0;
 
 acpi_status
 acpi_os_get_table_by_address(acpi_physical_address address,
-			     काष्ठा acpi_table_header **table)
-अणु
+			     struct acpi_table_header **table)
+{
 	u32 table_length;
-	काष्ठा acpi_table_header *mapped_table;
-	काष्ठा acpi_table_header *local_table = शून्य;
+	struct acpi_table_header *mapped_table;
+	struct acpi_table_header *local_table = NULL;
 	acpi_status status = AE_OK;
 
-	/* Get मुख्य ACPI tables from memory on first invocation of this function */
+	/* Get main ACPI tables from memory on first invocation of this function */
 
 	status = osl_table_initialize();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* Map the table and validate it */
 
-	status = osl_map_table(address, शून्य, &mapped_table);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	status = osl_map_table(address, NULL, &mapped_table);
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	/* Copy table to local buffer and वापस it */
+	/* Copy table to local buffer and return it */
 
 	table_length = ap_get_table_length(mapped_table);
-	अगर (table_length == 0) अणु
+	if (table_length == 0) {
 		status = AE_BAD_HEADER;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	local_table = सुस्मृति(1, table_length);
-	अगर (!local_table) अणु
+	local_table = calloc(1, table_length);
+	if (!local_table) {
 		status = AE_NO_MEMORY;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	स_नकल(local_table, mapped_table, table_length);
+	memcpy(local_table, mapped_table, table_length);
 
-निकास:
+exit:
 	osl_unmap_table(mapped_table);
 	*table = local_table;
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_get_table_by_name
  *
- * PARAMETERS:  signature       - ACPI Signature क्रम desired table. Must be
- *                                a null terminated 4-अक्षरacter string.
- *              instance        - Multiple table support क्रम SSDT/UEFI (0...n)
- *                                Must be 0 क्रम other tables.
- *              table           - Where a poपूर्णांकer to the table is वापसed
- *              address         - Where the table physical address is वापसed
+ * PARAMETERS:  signature       - ACPI Signature for desired table. Must be
+ *                                a null terminated 4-character string.
+ *              instance        - Multiple table support for SSDT/UEFI (0...n)
+ *                                Must be 0 for other tables.
+ *              table           - Where a pointer to the table is returned
+ *              address         - Where the table physical address is returned
  *
- * RETURN:      Status; Table buffer and physical address वापसed अगर AE_OK.
+ * RETURN:      Status; Table buffer and physical address returned if AE_OK.
  *              AE_LIMIT: Instance is beyond valid limit
  *              AE_NOT_FOUND: A table with the signature was not found
  *
- * NOTE:        Assumes the input signature is upperहाल.
+ * NOTE:        Assumes the input signature is uppercase.
  *
  *****************************************************************************/
 
 acpi_status
-acpi_os_get_table_by_name(अक्षर *signature,
+acpi_os_get_table_by_name(char *signature,
 			  u32 instance,
-			  काष्ठा acpi_table_header **table,
+			  struct acpi_table_header **table,
 			  acpi_physical_address *address)
-अणु
+{
 	acpi_status status;
 
-	/* Get मुख्य ACPI tables from memory on first invocation of this function */
+	/* Get main ACPI tables from memory on first invocation of this function */
 
 	status = osl_table_initialize();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
-	/* Not a मुख्य ACPI table, attempt to extract it from the RSDT/XSDT */
+	/* Not a main ACPI table, attempt to extract it from the RSDT/XSDT */
 
-	अगर (!gbl_dump_customized_tables) अणु
+	if (!gbl_dump_customized_tables) {
 
 		/* Attempt to get the table from the memory */
 
 		status =
 		    osl_get_bios_table(signature, instance, table, address);
-	पूर्ण अन्यथा अणु
-		/* Attempt to get the table from the अटल directory */
+	} else {
+		/* Attempt to get the table from the static directory */
 
-		status = osl_get_customized_table(STATIC_TABLE_सूची, signature,
+		status = osl_get_customized_table(STATIC_TABLE_DIR, signature,
 						  instance, table, address);
-	पूर्ण
+	}
 
-	अगर (ACPI_FAILURE(status) && status == AE_LIMIT) अणु
-		अगर (gbl_dump_dynamic_tables) अणु
+	if (ACPI_FAILURE(status) && status == AE_LIMIT) {
+		if (gbl_dump_dynamic_tables) {
 
 			/* Attempt to get a dynamic table */
 
 			status =
-			    osl_get_customized_table(DYNAMIC_TABLE_सूची,
+			    osl_get_customized_table(DYNAMIC_TABLE_DIR,
 						     signature, instance, table,
 						     address);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /******************************************************************************
  *
@@ -268,122 +267,122 @@ acpi_os_get_table_by_name(अक्षर *signature,
  * PARAMETERS:  signature       - Table signature
  *              instance        - Table instance
  *
- * RETURN:      Status; Successfully added अगर AE_OK.
+ * RETURN:      Status; Successfully added if AE_OK.
  *              AE_NO_MEMORY: Memory allocation error
  *
- * DESCRIPTION: Insert a table काष्ठाure पूर्णांकo OSL table list.
+ * DESCRIPTION: Insert a table structure into OSL table list.
  *
  *****************************************************************************/
 
-अटल acpi_status osl_add_table_to_list(अक्षर *signature, u32 instance)
-अणु
-	काष्ठा osl_table_info *new_info;
-	काष्ठा osl_table_info *next;
+static acpi_status osl_add_table_to_list(char *signature, u32 instance)
+{
+	struct osl_table_info *new_info;
+	struct osl_table_info *next;
 	u32 next_instance = 0;
 	u8 found = FALSE;
 
-	new_info = सुस्मृति(1, माप(काष्ठा osl_table_info));
-	अगर (!new_info) अणु
-		वापस (AE_NO_MEMORY);
-	पूर्ण
+	new_info = calloc(1, sizeof(struct osl_table_info));
+	if (!new_info) {
+		return (AE_NO_MEMORY);
+	}
 
 	ACPI_COPY_NAMESEG(new_info->signature, signature);
 
-	अगर (!gbl_table_list_head) अणु
+	if (!gbl_table_list_head) {
 		gbl_table_list_head = new_info;
-	पूर्ण अन्यथा अणु
+	} else {
 		next = gbl_table_list_head;
-		जबतक (1) अणु
-			अगर (ACPI_COMPARE_NAMESEG(next->signature, signature)) अणु
-				अगर (next->instance == instance) अणु
+		while (1) {
+			if (ACPI_COMPARE_NAMESEG(next->signature, signature)) {
+				if (next->instance == instance) {
 					found = TRUE;
-				पूर्ण
-				अगर (next->instance >= next_instance) अणु
+				}
+				if (next->instance >= next_instance) {
 					next_instance = next->instance + 1;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (!next->next) अणु
-				अवरोध;
-			पूर्ण
+			if (!next->next) {
+				break;
+			}
 			next = next->next;
-		पूर्ण
+		}
 		next->next = new_info;
-	पूर्ण
+	}
 
-	अगर (found) अणु
-		अगर (instance) अणु
-			ख_लिखो(मानक_त्रुटि,
+	if (found) {
+		if (instance) {
+			fprintf(stderr,
 				"%4.4s: Warning unmatched table instance %d, expected %d\n",
 				signature, instance, next_instance);
-		पूर्ण
+		}
 		instance = next_instance;
-	पूर्ण
+	}
 
 	new_info->instance = instance;
 	gbl_table_count++;
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    acpi_os_get_table_by_index
  *
  * PARAMETERS:  index           - Which table to get
- *              table           - Where a poपूर्णांकer to the table is वापसed
- *              instance        - Where a poपूर्णांकer to the table instance no. is
- *                                वापसed
- *              address         - Where the table physical address is वापसed
+ *              table           - Where a pointer to the table is returned
+ *              instance        - Where a pointer to the table instance no. is
+ *                                returned
+ *              address         - Where the table physical address is returned
  *
- * RETURN:      Status; Table buffer and physical address वापसed अगर AE_OK.
+ * RETURN:      Status; Table buffer and physical address returned if AE_OK.
  *              AE_LIMIT: Index is beyond valid limit
  *
  * DESCRIPTION: Get an ACPI table via an index value (0 through n). Returns
  *              AE_LIMIT when an invalid index is reached. Index is not
- *              necessarily an index पूर्णांकo the RSDT/XSDT.
+ *              necessarily an index into the RSDT/XSDT.
  *
  *****************************************************************************/
 
 acpi_status
 acpi_os_get_table_by_index(u32 index,
-			   काष्ठा acpi_table_header **table,
+			   struct acpi_table_header **table,
 			   u32 *instance, acpi_physical_address *address)
-अणु
-	काष्ठा osl_table_info *info;
+{
+	struct osl_table_info *info;
 	acpi_status status;
 	u32 i;
 
-	/* Get मुख्य ACPI tables from memory on first invocation of this function */
+	/* Get main ACPI tables from memory on first invocation of this function */
 
 	status = osl_table_initialize();
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस (status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return (status);
+	}
 
 	/* Validate Index */
 
-	अगर (index >= gbl_table_count) अणु
-		वापस (AE_LIMIT);
-	पूर्ण
+	if (index >= gbl_table_count) {
+		return (AE_LIMIT);
+	}
 
-	/* Poपूर्णांक to the table list entry specअगरied by the Index argument */
+	/* Point to the table list entry specified by the Index argument */
 
 	info = gbl_table_list_head;
-	क्रम (i = 0; i < index; i++) अणु
+	for (i = 0; i < index; i++) {
 		info = info->next;
-	पूर्ण
+	}
 
 	/* Now we can just get the table via the signature */
 
 	status = acpi_os_get_table_by_name(info->signature, info->instance,
 					   table, address);
 
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 		*instance = info->instance;
-	पूर्ण
-	वापस (status);
-पूर्ण
+	}
+	return (status);
+}
 
 /******************************************************************************
  *
@@ -392,30 +391,30 @@ acpi_os_get_table_by_index(u32 index,
  * PARAMETERS:  keyword         - Character string indicating ACPI GUID version
  *                                in the EFI table
  *
- * RETURN:      RSDP address अगर found
+ * RETURN:      RSDP address if found
  *
  * DESCRIPTION: Find RSDP address via EFI using keyword indicating the ACPI
  *              GUID version.
  *
  *****************************************************************************/
 
-अटल acpi_physical_address
-osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्षर *keyword)
-अणु
-	अक्षर buffer[80];
-	अचिन्हित दीर्घ दीर्घ address = 0;
-	अक्षर क्रमmat[32];
+static acpi_physical_address
+osl_find_rsdp_via_efi_by_keyword(FILE * file, const char *keyword)
+{
+	char buffer[80];
+	unsigned long long address = 0;
+	char format[32];
 
-	snम_लिखो(क्रमmat, 32, "%s=%s", keyword, "%llx");
-	ख_जाओ(file, 0, शुरू_से);
-	जबतक (ख_माला_लो(buffer, 80, file)) अणु
-		अगर (माला_पूछो(buffer, क्रमmat, &address) == 1) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	snprintf(format, 32, "%s=%s", keyword, "%llx");
+	fseek(file, 0, SEEK_SET);
+	while (fgets(buffer, 80, file)) {
+		if (sscanf(buffer, format, &address) == 1) {
+			break;
+		}
+	}
 
-	वापस ((acpi_physical_address)(address));
-पूर्ण
+	return ((acpi_physical_address)(address));
+}
 
 /******************************************************************************
  *
@@ -423,29 +422,29 @@ osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्�
  *
  * PARAMETERS:  None
  *
- * RETURN:      RSDP address अगर found
+ * RETURN:      RSDP address if found
  *
  * DESCRIPTION: Find RSDP address via EFI.
  *
  *****************************************************************************/
 
-अटल acpi_physical_address osl_find_rsdp_via_efi(व्योम)
-अणु
-	खाता *file;
+static acpi_physical_address osl_find_rsdp_via_efi(void)
+{
+	FILE *file;
 	acpi_physical_address address = 0;
 
-	file = ख_खोलो(EFI_SYSTAB, "r");
-	अगर (file) अणु
+	file = fopen(EFI_SYSTAB, "r");
+	if (file) {
 		address = osl_find_rsdp_via_efi_by_keyword(file, "ACPI20");
-		अगर (!address) अणु
+		if (!address) {
 			address =
 			    osl_find_rsdp_via_efi_by_keyword(file, "ACPI");
-		पूर्ण
-		ख_बंद(file);
-	पूर्ण
+		}
+		fclose(file);
+	}
 
-	वापस (address);
-पूर्ण
+	return (address);
+}
 
 /******************************************************************************
  *
@@ -459,50 +458,50 @@ osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्�
  *
  *****************************************************************************/
 
-अटल acpi_status osl_load_rsdp(व्योम)
-अणु
-	काष्ठा acpi_table_header *mapped_table;
+static acpi_status osl_load_rsdp(void)
+{
+	struct acpi_table_header *mapped_table;
 	u8 *rsdp_address;
 	acpi_physical_address rsdp_base;
 	acpi_size rsdp_size;
 
 	/* Get RSDP from memory */
 
-	rsdp_size = माप(काष्ठा acpi_table_rsdp);
-	अगर (gbl_rsdp_base) अणु
+	rsdp_size = sizeof(struct acpi_table_rsdp);
+	if (gbl_rsdp_base) {
 		rsdp_base = gbl_rsdp_base;
-	पूर्ण अन्यथा अणु
+	} else {
 		rsdp_base = osl_find_rsdp_via_efi();
-	पूर्ण
+	}
 
-	अगर (!rsdp_base) अणु
+	if (!rsdp_base) {
 		rsdp_base = ACPI_HI_RSDP_WINDOW_BASE;
 		rsdp_size = ACPI_HI_RSDP_WINDOW_SIZE;
-	पूर्ण
+	}
 
 	rsdp_address = acpi_os_map_memory(rsdp_base, rsdp_size);
-	अगर (!rsdp_address) अणु
-		वापस (osl_get_last_status(AE_BAD_ADDRESS));
-	पूर्ण
+	if (!rsdp_address) {
+		return (osl_get_last_status(AE_BAD_ADDRESS));
+	}
 
-	/* Search low memory क्रम the RSDP */
+	/* Search low memory for the RSDP */
 
-	mapped_table = ACPI_CAST_PTR(काष्ठा acpi_table_header,
-				     acpi_tb_scan_memory_क्रम_rsdp(rsdp_address,
+	mapped_table = ACPI_CAST_PTR(struct acpi_table_header,
+				     acpi_tb_scan_memory_for_rsdp(rsdp_address,
 								  rsdp_size));
-	अगर (!mapped_table) अणु
+	if (!mapped_table) {
 		acpi_os_unmap_memory(rsdp_address, rsdp_size);
-		वापस (AE_NOT_FOUND);
-	पूर्ण
+		return (AE_NOT_FOUND);
+	}
 
 	gbl_rsdp_address =
 	    rsdp_base + (ACPI_CAST8(mapped_table) - rsdp_address);
 
-	स_नकल(&gbl_rsdp, mapped_table, माप(काष्ठा acpi_table_rsdp));
+	memcpy(&gbl_rsdp, mapped_table, sizeof(struct acpi_table_rsdp));
 	acpi_os_unmap_memory(rsdp_address, rsdp_size);
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -510,21 +509,21 @@ osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्�
  *
  * PARAMETERS:  None
  *
- * RETURN:      TRUE अगर XSDT is allowed to be used.
+ * RETURN:      TRUE if XSDT is allowed to be used.
  *
- * DESCRIPTION: This function collects logic that can be used to determine अगर
+ * DESCRIPTION: This function collects logic that can be used to determine if
  *              XSDT should be used instead of RSDT.
  *
  *****************************************************************************/
 
-अटल u8 osl_can_use_xsdt(व्योम)
-अणु
-	अगर (gbl_revision && !acpi_gbl_करो_not_use_xsdt) अणु
-		वापस (TRUE);
-	पूर्ण अन्यथा अणु
-		वापस (FALSE);
-	पूर्ण
-पूर्ण
+static u8 osl_can_use_xsdt(void)
+{
+	if (gbl_revision && !acpi_gbl_do_not_use_xsdt) {
+		return (TRUE);
+	} else {
+		return (FALSE);
+	}
+}
 
 /******************************************************************************
  *
@@ -534,140 +533,140 @@ osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्�
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Initialize ACPI table data. Get and store मुख्य ACPI tables to
+ * DESCRIPTION: Initialize ACPI table data. Get and store main ACPI tables to
  *              local variables. Main ACPI tables include RSDT, FADT, RSDT,
  *              and/or XSDT.
  *
  *****************************************************************************/
 
-अटल acpi_status osl_table_initialize(व्योम)
-अणु
+static acpi_status osl_table_initialize(void)
+{
 	acpi_status status;
 	acpi_physical_address address;
 
-	अगर (gbl_table_list_initialized) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if (gbl_table_list_initialized) {
+		return (AE_OK);
+	}
 
-	अगर (!gbl_dump_customized_tables) अणु
+	if (!gbl_dump_customized_tables) {
 
 		/* Get RSDP from memory */
 
 		status = osl_load_rsdp();
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		/* Get XSDT from memory */
 
-		अगर (gbl_rsdp.revision && !gbl_करो_not_dump_xsdt) अणु
-			अगर (gbl_xsdt) अणु
-				मुक्त(gbl_xsdt);
-				gbl_xsdt = शून्य;
-			पूर्ण
+		if (gbl_rsdp.revision && !gbl_do_not_dump_xsdt) {
+			if (gbl_xsdt) {
+				free(gbl_xsdt);
+				gbl_xsdt = NULL;
+			}
 
 			gbl_revision = 2;
 			status = osl_get_bios_table(ACPI_SIG_XSDT, 0,
-						    ACPI_CAST_PTR(काष्ठा
+						    ACPI_CAST_PTR(struct
 								  acpi_table_header
 								  *, &gbl_xsdt),
 						    &address);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस (status);
-			पूर्ण
-		पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return (status);
+			}
+		}
 
 		/* Get RSDT from memory */
 
-		अगर (gbl_rsdp.rsdt_physical_address) अणु
-			अगर (gbl_rsdt) अणु
-				मुक्त(gbl_rsdt);
-				gbl_rsdt = शून्य;
-			पूर्ण
+		if (gbl_rsdp.rsdt_physical_address) {
+			if (gbl_rsdt) {
+				free(gbl_rsdt);
+				gbl_rsdt = NULL;
+			}
 
 			status = osl_get_bios_table(ACPI_SIG_RSDT, 0,
-						    ACPI_CAST_PTR(काष्ठा
+						    ACPI_CAST_PTR(struct
 								  acpi_table_header
 								  *, &gbl_rsdt),
 						    &address);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस (status);
-			पूर्ण
-		पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return (status);
+			}
+		}
 
 		/* Get FADT from memory */
 
-		अगर (gbl_fadt) अणु
-			मुक्त(gbl_fadt);
-			gbl_fadt = शून्य;
-		पूर्ण
+		if (gbl_fadt) {
+			free(gbl_fadt);
+			gbl_fadt = NULL;
+		}
 
 		status = osl_get_bios_table(ACPI_SIG_FADT, 0,
-					    ACPI_CAST_PTR(काष्ठा
+					    ACPI_CAST_PTR(struct
 							  acpi_table_header *,
 							  &gbl_fadt),
 					    &gbl_fadt_address);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		/* Add mandatory tables to global table list first */
 
 		status = osl_add_table_to_list(ACPI_RSDP_NAME, 0);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		status = osl_add_table_to_list(ACPI_SIG_RSDT, 0);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
-		अगर (gbl_revision == 2) अणु
+		if (gbl_revision == 2) {
 			status = osl_add_table_to_list(ACPI_SIG_XSDT, 0);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस (status);
-			पूर्ण
-		पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return (status);
+			}
+		}
 
 		status = osl_add_table_to_list(ACPI_SIG_DSDT, 0);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		status = osl_add_table_to_list(ACPI_SIG_FACS, 0);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		/* Add all tables found in the memory */
 
 		status = osl_list_bios_tables();
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Add all tables found in the अटल directory */
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	} else {
+		/* Add all tables found in the static directory */
 
-		status = osl_list_customized_tables(STATIC_TABLE_सूची);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण
+		status = osl_list_customized_tables(STATIC_TABLE_DIR);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	}
 
-	अगर (gbl_dump_dynamic_tables) अणु
+	if (gbl_dump_dynamic_tables) {
 
 		/* Add all dynamically loaded tables in the dynamic directory */
 
-		status = osl_list_customized_tables(DYNAMIC_TABLE_सूची);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
-	पूर्ण
+		status = osl_list_customized_tables(DYNAMIC_TABLE_DIR);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
+	}
 
 	gbl_table_list_initialized = TRUE;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
@@ -675,18 +674,18 @@ osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्�
  *
  * PARAMETERS:  None
  *
- * RETURN:      Status; Table list is initialized अगर AE_OK.
+ * RETURN:      Status; Table list is initialized if AE_OK.
  *
  * DESCRIPTION: Add ACPI tables to the table list from memory.
  *
- * NOTE:        This works on Linux as table customization करोes not modअगरy the
+ * NOTE:        This works on Linux as table customization does not modify the
  *              addresses stored in RSDP/RSDT/XSDT/FADT.
  *
  *****************************************************************************/
 
-अटल acpi_status osl_list_bios_tables(व्योम)
-अणु
-	काष्ठा acpi_table_header *mapped_table = शून्य;
+static acpi_status osl_list_bios_tables(void)
+{
+	struct acpi_table_header *mapped_table = NULL;
 	u8 *table_data;
 	u8 number_of_tables;
 	u8 item_size;
@@ -694,83 +693,83 @@ osl_find_rsdp_via_efi_by_keyword(खाता * file, स्थिर अक्�
 	acpi_status status = AE_OK;
 	u32 i;
 
-	अगर (osl_can_use_xsdt()) अणु
-		item_size = माप(u64);
+	if (osl_can_use_xsdt()) {
+		item_size = sizeof(u64);
 		table_data =
-		    ACPI_CAST8(gbl_xsdt) + माप(काष्ठा acpi_table_header);
+		    ACPI_CAST8(gbl_xsdt) + sizeof(struct acpi_table_header);
 		number_of_tables =
 		    (u8)((gbl_xsdt->header.length -
-			  माप(काष्ठा acpi_table_header))
+			  sizeof(struct acpi_table_header))
 			 / item_size);
-	पूर्ण अन्यथा अणु		/* Use RSDT अगर XSDT is not available */
+	} else {		/* Use RSDT if XSDT is not available */
 
-		item_size = माप(u32);
+		item_size = sizeof(u32);
 		table_data =
-		    ACPI_CAST8(gbl_rsdt) + माप(काष्ठा acpi_table_header);
+		    ACPI_CAST8(gbl_rsdt) + sizeof(struct acpi_table_header);
 		number_of_tables =
 		    (u8)((gbl_rsdt->header.length -
-			  माप(काष्ठा acpi_table_header))
+			  sizeof(struct acpi_table_header))
 			 / item_size);
-	पूर्ण
+	}
 
-	/* Search RSDT/XSDT क्रम the requested table */
+	/* Search RSDT/XSDT for the requested table */
 
-	क्रम (i = 0; i < number_of_tables; ++i, table_data += item_size) अणु
-		अगर (osl_can_use_xsdt()) अणु
+	for (i = 0; i < number_of_tables; ++i, table_data += item_size) {
+		if (osl_can_use_xsdt()) {
 			table_address =
 			    (acpi_physical_address)(*ACPI_CAST64(table_data));
-		पूर्ण अन्यथा अणु
+		} else {
 			table_address =
 			    (acpi_physical_address)(*ACPI_CAST32(table_data));
-		पूर्ण
+		}
 
-		/* Skip शून्य entries in RSDT/XSDT */
+		/* Skip NULL entries in RSDT/XSDT */
 
-		अगर (table_address == 0) अणु
-			जारी;
-		पूर्ण
+		if (table_address == 0) {
+			continue;
+		}
 
-		status = osl_map_table(table_address, शून्य, &mapped_table);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		status = osl_map_table(table_address, NULL, &mapped_table);
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		osl_add_table_to_list(mapped_table->signature, 0);
 		osl_unmap_table(mapped_table);
-	पूर्ण
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    osl_get_bios_table
  *
- * PARAMETERS:  signature       - ACPI Signature क्रम common table. Must be
- *                                a null terminated 4-अक्षरacter string.
- *              instance        - Multiple table support क्रम SSDT/UEFI (0...n)
- *                                Must be 0 क्रम other tables.
- *              table           - Where a poपूर्णांकer to the table is वापसed
- *              address         - Where the table physical address is वापसed
+ * PARAMETERS:  signature       - ACPI Signature for common table. Must be
+ *                                a null terminated 4-character string.
+ *              instance        - Multiple table support for SSDT/UEFI (0...n)
+ *                                Must be 0 for other tables.
+ *              table           - Where a pointer to the table is returned
+ *              address         - Where the table physical address is returned
  *
- * RETURN:      Status; Table buffer and physical address वापसed अगर AE_OK.
+ * RETURN:      Status; Table buffer and physical address returned if AE_OK.
  *              AE_LIMIT: Instance is beyond valid limit
  *              AE_NOT_FOUND: A table with the signature was not found
  *
  * DESCRIPTION: Get a BIOS provided ACPI table
  *
- * NOTE:        Assumes the input signature is upperहाल.
+ * NOTE:        Assumes the input signature is uppercase.
  *
  *****************************************************************************/
 
-अटल acpi_status
-osl_get_bios_table(अक्षर *signature,
+static acpi_status
+osl_get_bios_table(char *signature,
 		   u32 instance,
-		   काष्ठा acpi_table_header **table,
+		   struct acpi_table_header **table,
 		   acpi_physical_address *address)
-अणु
-	काष्ठा acpi_table_header *local_table = शून्य;
-	काष्ठा acpi_table_header *mapped_table = शून्य;
+{
+	struct acpi_table_header *local_table = NULL;
+	struct acpi_table_header *mapped_table = NULL;
 	u8 *table_data;
 	u8 number_of_tables;
 	u8 item_size;
@@ -783,11 +782,11 @@ osl_get_bios_table(अक्षर *signature,
 
 	/* Handle special tables whose addresses are not in RSDT/XSDT */
 
-	अगर (ACPI_COMPARE_NAMESEG(signature, ACPI_RSDP_NAME) ||
+	if (ACPI_COMPARE_NAMESEG(signature, ACPI_RSDP_NAME) ||
 	    ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_RSDT) ||
 	    ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_XSDT) ||
 	    ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_DSDT) ||
-	    ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_FACS)) अणु
+	    ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_FACS)) {
 
 find_next_instance:
 
@@ -798,187 +797,187 @@ find_next_instance:
 		 * careful about the FADT length and validate table addresses.
 		 * Note: The 64-bit addresses have priority.
 		 */
-		अगर (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_DSDT)) अणु
-			अगर (current_instance < 2) अणु
-				अगर ((gbl_fadt->header.length >=
+		if (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_DSDT)) {
+			if (current_instance < 2) {
+				if ((gbl_fadt->header.length >=
 				     MIN_FADT_FOR_XDSDT) && gbl_fadt->Xdsdt
-				    && current_instance == 0) अणु
+				    && current_instance == 0) {
 					table_address =
 					    (acpi_physical_address)gbl_fadt->
 					    Xdsdt;
-				पूर्ण अन्यथा
-				    अगर ((gbl_fadt->header.length >=
+				} else
+				    if ((gbl_fadt->header.length >=
 					 MIN_FADT_FOR_DSDT)
 					&& gbl_fadt->dsdt !=
-					first_table_address) अणु
+					first_table_address) {
 					table_address =
 					    (acpi_physical_address)gbl_fadt->
 					    dsdt;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_FACS)) अणु
-			अगर (current_instance < 2) अणु
-				अगर ((gbl_fadt->header.length >=
+				}
+			}
+		} else if (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_FACS)) {
+			if (current_instance < 2) {
+				if ((gbl_fadt->header.length >=
 				     MIN_FADT_FOR_XFACS) && gbl_fadt->Xfacs
-				    && current_instance == 0) अणु
+				    && current_instance == 0) {
 					table_address =
 					    (acpi_physical_address)gbl_fadt->
 					    Xfacs;
-				पूर्ण अन्यथा
-				    अगर ((gbl_fadt->header.length >=
+				} else
+				    if ((gbl_fadt->header.length >=
 					 MIN_FADT_FOR_FACS)
 					&& gbl_fadt->facs !=
-					first_table_address) अणु
+					first_table_address) {
 					table_address =
 					    (acpi_physical_address)gbl_fadt->
 					    facs;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_XSDT)) अणु
-			अगर (!gbl_revision) अणु
-				वापस (AE_BAD_SIGNATURE);
-			पूर्ण
-			अगर (current_instance == 0) अणु
+				}
+			}
+		} else if (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_XSDT)) {
+			if (!gbl_revision) {
+				return (AE_BAD_SIGNATURE);
+			}
+			if (current_instance == 0) {
 				table_address =
 				    (acpi_physical_address)gbl_rsdp.
 				    xsdt_physical_address;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_RSDT)) अणु
-			अगर (current_instance == 0) अणु
+			}
+		} else if (ACPI_COMPARE_NAMESEG(signature, ACPI_SIG_RSDT)) {
+			if (current_instance == 0) {
 				table_address =
 				    (acpi_physical_address)gbl_rsdp.
 				    rsdt_physical_address;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (current_instance == 0) अणु
+			}
+		} else {
+			if (current_instance == 0) {
 				table_address =
 				    (acpi_physical_address)gbl_rsdp_address;
 				signature = ACPI_SIG_RSDP;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (table_address == 0) अणु
-			जाओ निकास_find_table;
-		पूर्ण
+		if (table_address == 0) {
+			goto exit_find_table;
+		}
 
 		/* Now we can get the requested special table */
 
 		status = osl_map_table(table_address, signature, &mapped_table);
-		अगर (ACPI_FAILURE(status)) अणु
-			वापस (status);
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			return (status);
+		}
 
 		table_length = ap_get_table_length(mapped_table);
-		अगर (first_table_address == 0) अणु
+		if (first_table_address == 0) {
 			first_table_address = table_address;
-		पूर्ण
+		}
 
 		/* Match table instance */
 
-		अगर (current_instance != instance) अणु
+		if (current_instance != instance) {
 			osl_unmap_table(mapped_table);
-			mapped_table = शून्य;
+			mapped_table = NULL;
 			current_instance++;
-			जाओ find_next_instance;
-		पूर्ण
-	पूर्ण अन्यथा अणु		/* Case क्रम a normal ACPI table */
+			goto find_next_instance;
+		}
+	} else {		/* Case for a normal ACPI table */
 
-		अगर (osl_can_use_xsdt()) अणु
-			item_size = माप(u64);
+		if (osl_can_use_xsdt()) {
+			item_size = sizeof(u64);
 			table_data =
 			    ACPI_CAST8(gbl_xsdt) +
-			    माप(काष्ठा acpi_table_header);
+			    sizeof(struct acpi_table_header);
 			number_of_tables =
 			    (u8)((gbl_xsdt->header.length -
-				  माप(काष्ठा acpi_table_header))
+				  sizeof(struct acpi_table_header))
 				 / item_size);
-		पूर्ण अन्यथा अणु	/* Use RSDT अगर XSDT is not available */
+		} else {	/* Use RSDT if XSDT is not available */
 
-			item_size = माप(u32);
+			item_size = sizeof(u32);
 			table_data =
 			    ACPI_CAST8(gbl_rsdt) +
-			    माप(काष्ठा acpi_table_header);
+			    sizeof(struct acpi_table_header);
 			number_of_tables =
 			    (u8)((gbl_rsdt->header.length -
-				  माप(काष्ठा acpi_table_header))
+				  sizeof(struct acpi_table_header))
 				 / item_size);
-		पूर्ण
+		}
 
-		/* Search RSDT/XSDT क्रम the requested table */
+		/* Search RSDT/XSDT for the requested table */
 
-		क्रम (i = 0; i < number_of_tables; ++i, table_data += item_size) अणु
-			अगर (osl_can_use_xsdt()) अणु
+		for (i = 0; i < number_of_tables; ++i, table_data += item_size) {
+			if (osl_can_use_xsdt()) {
 				table_address =
 				    (acpi_physical_address)(*ACPI_CAST64
 							    (table_data));
-			पूर्ण अन्यथा अणु
+			} else {
 				table_address =
 				    (acpi_physical_address)(*ACPI_CAST32
 							    (table_data));
-			पूर्ण
+			}
 
-			/* Skip शून्य entries in RSDT/XSDT */
+			/* Skip NULL entries in RSDT/XSDT */
 
-			अगर (table_address == 0) अणु
-				जारी;
-			पूर्ण
+			if (table_address == 0) {
+				continue;
+			}
 
 			status =
-			    osl_map_table(table_address, शून्य, &mapped_table);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस (status);
-			पूर्ण
+			    osl_map_table(table_address, NULL, &mapped_table);
+			if (ACPI_FAILURE(status)) {
+				return (status);
+			}
 			table_length = mapped_table->length;
 
 			/* Does this table match the requested signature? */
 
-			अगर (!ACPI_COMPARE_NAMESEG
-			    (mapped_table->signature, signature)) अणु
+			if (!ACPI_COMPARE_NAMESEG
+			    (mapped_table->signature, signature)) {
 				osl_unmap_table(mapped_table);
-				mapped_table = शून्य;
-				जारी;
-			पूर्ण
+				mapped_table = NULL;
+				continue;
+			}
 
-			/* Match table instance (क्रम SSDT/UEFI tables) */
+			/* Match table instance (for SSDT/UEFI tables) */
 
-			अगर (current_instance != instance) अणु
+			if (current_instance != instance) {
 				osl_unmap_table(mapped_table);
-				mapped_table = शून्य;
+				mapped_table = NULL;
 				current_instance++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-निकास_find_table:
+exit_find_table:
 
-	अगर (!mapped_table) अणु
-		वापस (AE_LIMIT);
-	पूर्ण
+	if (!mapped_table) {
+		return (AE_LIMIT);
+	}
 
-	अगर (table_length == 0) अणु
+	if (table_length == 0) {
 		status = AE_BAD_HEADER;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Copy table to local buffer and वापस it */
+	/* Copy table to local buffer and return it */
 
-	local_table = सुस्मृति(1, table_length);
-	अगर (!local_table) अणु
+	local_table = calloc(1, table_length);
+	if (!local_table) {
 		status = AE_NO_MEMORY;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	स_नकल(local_table, mapped_table, table_length);
+	memcpy(local_table, mapped_table, table_length);
 	*address = table_address;
 	*table = local_table;
 
-निकास:
+exit:
 	osl_unmap_table(mapped_table);
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /******************************************************************************
  *
@@ -986,30 +985,30 @@ find_next_instance:
  *
  * PARAMETERS:  directory           - Directory that contains the tables
  *
- * RETURN:      Status; Table list is initialized अगर AE_OK.
+ * RETURN:      Status; Table list is initialized if AE_OK.
  *
  * DESCRIPTION: Add ACPI tables to the table list from a directory.
  *
  *****************************************************************************/
 
-अटल acpi_status osl_list_customized_tables(अक्षर *directory)
-अणु
-	व्योम *table_dir;
+static acpi_status osl_list_customized_tables(char *directory)
+{
+	void *table_dir;
 	u32 instance;
-	अक्षर temp_name[ACPI_NAMESEG_SIZE];
-	अक्षर *filename;
+	char temp_name[ACPI_NAMESEG_SIZE];
+	char *filename;
 	acpi_status status = AE_OK;
 
 	/* Open the requested directory */
 
-	table_dir = acpi_os_खोलो_directory(directory, "*", REQUEST_खाता_ONLY);
-	अगर (!table_dir) अणु
-		वापस (osl_get_last_status(AE_NOT_FOUND));
-	पूर्ण
+	table_dir = acpi_os_open_directory(directory, "*", REQUEST_FILE_ONLY);
+	if (!table_dir) {
+		return (osl_get_last_status(AE_NOT_FOUND));
+	}
 
 	/* Examine all entries in this directory */
 
-	जबतक ((filename = acpi_os_get_next_filename(table_dir))) अणु
+	while ((filename = acpi_os_get_next_filename(table_dir))) {
 
 		/* Extract table name and instance number */
 
@@ -1018,110 +1017,110 @@ find_next_instance:
 
 		/* Ignore meaningless files */
 
-		अगर (ACPI_FAILURE(status)) अणु
-			जारी;
-		पूर्ण
+		if (ACPI_FAILURE(status)) {
+			continue;
+		}
 
 		/* Add new info node to global table list */
 
 		status = osl_add_table_to_list(temp_name, instance);
-		अगर (ACPI_FAILURE(status)) अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (ACPI_FAILURE(status)) {
+			break;
+		}
+	}
 
-	acpi_os_बंद_directory(table_dir);
-	वापस (status);
-पूर्ण
+	acpi_os_close_directory(table_dir);
+	return (status);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    osl_map_table
  *
  * PARAMETERS:  address             - Address of the table in memory
- *              signature           - Optional ACPI Signature क्रम desired table.
- *                                    Null terminated 4-अक्षरacter string.
- *              table               - Where a poपूर्णांकer to the mapped table is
- *                                    वापसed
+ *              signature           - Optional ACPI Signature for desired table.
+ *                                    Null terminated 4-character string.
+ *              table               - Where a pointer to the mapped table is
+ *                                    returned
  *
- * RETURN:      Status; Mapped table is वापसed अगर AE_OK.
+ * RETURN:      Status; Mapped table is returned if AE_OK.
  *              AE_NOT_FOUND: A valid table was not found at the address
  *
- * DESCRIPTION: Map entire ACPI table पूर्णांकo caller's address space.
+ * DESCRIPTION: Map entire ACPI table into caller's address space.
  *
  *****************************************************************************/
 
-अटल acpi_status
+static acpi_status
 osl_map_table(acpi_size address,
-	      अक्षर *signature, काष्ठा acpi_table_header **table)
-अणु
-	काष्ठा acpi_table_header *mapped_table;
+	      char *signature, struct acpi_table_header **table)
+{
+	struct acpi_table_header *mapped_table;
 	u32 length;
 
-	अगर (!address) अणु
-		वापस (AE_BAD_ADDRESS);
-	पूर्ण
+	if (!address) {
+		return (AE_BAD_ADDRESS);
+	}
 
 	/*
 	 * Map the header so we can get the table length.
-	 * Use माप (काष्ठा acpi_table_header) as:
+	 * Use sizeof (struct acpi_table_header) as:
 	 * 1. it is bigger than 24 to include RSDP->Length
-	 * 2. it is smaller than माप (काष्ठा acpi_table_rsdp)
+	 * 2. it is smaller than sizeof (struct acpi_table_rsdp)
 	 */
 	mapped_table =
-	    acpi_os_map_memory(address, माप(काष्ठा acpi_table_header));
-	अगर (!mapped_table) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not map table header at 0x%8.8X%8.8X\n",
+	    acpi_os_map_memory(address, sizeof(struct acpi_table_header));
+	if (!mapped_table) {
+		fprintf(stderr, "Could not map table header at 0x%8.8X%8.8X\n",
 			ACPI_FORMAT_UINT64(address));
-		वापस (osl_get_last_status(AE_BAD_ADDRESS));
-	पूर्ण
+		return (osl_get_last_status(AE_BAD_ADDRESS));
+	}
 
-	/* If specअगरied, signature must match */
+	/* If specified, signature must match */
 
-	अगर (signature) अणु
-		अगर (ACPI_VALIDATE_RSDP_SIG(signature)) अणु
-			अगर (!ACPI_VALIDATE_RSDP_SIG(mapped_table->signature)) अणु
+	if (signature) {
+		if (ACPI_VALIDATE_RSDP_SIG(signature)) {
+			if (!ACPI_VALIDATE_RSDP_SIG(mapped_table->signature)) {
 				acpi_os_unmap_memory(mapped_table,
-						     माप(काष्ठा
+						     sizeof(struct
 							    acpi_table_header));
-				वापस (AE_BAD_SIGNATURE);
-			पूर्ण
-		पूर्ण अन्यथा
-		    अगर (!ACPI_COMPARE_NAMESEG
-			(signature, mapped_table->signature)) अणु
+				return (AE_BAD_SIGNATURE);
+			}
+		} else
+		    if (!ACPI_COMPARE_NAMESEG
+			(signature, mapped_table->signature)) {
 			acpi_os_unmap_memory(mapped_table,
-					     माप(काष्ठा acpi_table_header));
-			वापस (AE_BAD_SIGNATURE);
-		पूर्ण
-	पूर्ण
+					     sizeof(struct acpi_table_header));
+			return (AE_BAD_SIGNATURE);
+		}
+	}
 
 	/* Map the entire table */
 
 	length = ap_get_table_length(mapped_table);
-	acpi_os_unmap_memory(mapped_table, माप(काष्ठा acpi_table_header));
-	अगर (length == 0) अणु
-		वापस (AE_BAD_HEADER);
-	पूर्ण
+	acpi_os_unmap_memory(mapped_table, sizeof(struct acpi_table_header));
+	if (length == 0) {
+		return (AE_BAD_HEADER);
+	}
 
 	mapped_table = acpi_os_map_memory(address, length);
-	अगर (!mapped_table) अणु
-		ख_लिखो(मानक_त्रुटि,
+	if (!mapped_table) {
+		fprintf(stderr,
 			"Could not map table at 0x%8.8X%8.8X length %8.8X\n",
 			ACPI_FORMAT_UINT64(address), length);
-		वापस (osl_get_last_status(AE_INVALID_TABLE_LENGTH));
-	पूर्ण
+		return (osl_get_last_status(AE_INVALID_TABLE_LENGTH));
+	}
 
-	(व्योम)ap_is_valid_checksum(mapped_table);
+	(void)ap_is_valid_checksum(mapped_table);
 
 	*table = mapped_table;
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    osl_unmap_table
  *
- * PARAMETERS:  table               - A poपूर्णांकer to the mapped table
+ * PARAMETERS:  table               - A pointer to the mapped table
  *
  * RETURN:      None
  *
@@ -1129,174 +1128,174 @@ osl_map_table(acpi_size address,
  *
  *****************************************************************************/
 
-अटल व्योम osl_unmap_table(काष्ठा acpi_table_header *table)
-अणु
-	अगर (table) अणु
+static void osl_unmap_table(struct acpi_table_header *table)
+{
+	if (table) {
 		acpi_os_unmap_memory(table, ap_get_table_length(table));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /******************************************************************************
  *
  * FUNCTION:    osl_table_name_from_file
  *
  * PARAMETERS:  filename            - File that contains the desired table
- *              signature           - Poपूर्णांकer to 4-अक्षरacter buffer to store
+ *              signature           - Pointer to 4-character buffer to store
  *                                    extracted table signature.
- *              instance            - Poपूर्णांकer to पूर्णांकeger to store extracted
+ *              instance            - Pointer to integer to store extracted
  *                                    table instance number.
  *
- * RETURN:      Status; Table name is extracted अगर AE_OK.
+ * RETURN:      Status; Table name is extracted if AE_OK.
  *
  * DESCRIPTION: Extract table signature and instance number from a table file
  *              name.
  *
  *****************************************************************************/
 
-अटल acpi_status
-osl_table_name_from_file(अक्षर *filename, अक्षर *signature, u32 *instance)
-अणु
+static acpi_status
+osl_table_name_from_file(char *filename, char *signature, u32 *instance)
+{
 
 	/* Ignore meaningless files */
 
-	अगर (म_माप(filename) < ACPI_NAMESEG_SIZE) अणु
-		वापस (AE_BAD_SIGNATURE);
-	पूर्ण
+	if (strlen(filename) < ACPI_NAMESEG_SIZE) {
+		return (AE_BAD_SIGNATURE);
+	}
 
 	/* Extract instance number */
 
-	अगर (है_अंक((पूर्णांक)filename[ACPI_NAMESEG_SIZE])) अणु
-		माला_पूछो(&filename[ACPI_NAMESEG_SIZE], "%u", instance);
-	पूर्ण अन्यथा अगर (म_माप(filename) != ACPI_NAMESEG_SIZE) अणु
-		वापस (AE_BAD_SIGNATURE);
-	पूर्ण अन्यथा अणु
+	if (isdigit((int)filename[ACPI_NAMESEG_SIZE])) {
+		sscanf(&filename[ACPI_NAMESEG_SIZE], "%u", instance);
+	} else if (strlen(filename) != ACPI_NAMESEG_SIZE) {
+		return (AE_BAD_SIGNATURE);
+	} else {
 		*instance = 0;
-	पूर्ण
+	}
 
 	/* Extract signature */
 
 	ACPI_COPY_NAMESEG(signature, filename);
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /******************************************************************************
  *
- * FUNCTION:    osl_पढ़ो_table_from_file
+ * FUNCTION:    osl_read_table_from_file
  *
  * PARAMETERS:  filename            - File that contains the desired table
  *              file_offset         - Offset of the table in file
- *              table               - Where a poपूर्णांकer to the table is वापसed
+ *              table               - Where a pointer to the table is returned
  *
- * RETURN:      Status; Table buffer is वापसed अगर AE_OK.
+ * RETURN:      Status; Table buffer is returned if AE_OK.
  *
  * DESCRIPTION: Read a ACPI table from a file.
  *
  *****************************************************************************/
 
-अटल acpi_status
-osl_पढ़ो_table_from_file(अक्षर *filename,
+static acpi_status
+osl_read_table_from_file(char *filename,
 			 acpi_size file_offset,
-			 काष्ठा acpi_table_header **table)
-अणु
-	खाता *table_file;
-	काष्ठा acpi_table_header header;
-	काष्ठा acpi_table_header *local_table = शून्य;
+			 struct acpi_table_header **table)
+{
+	FILE *table_file;
+	struct acpi_table_header header;
+	struct acpi_table_header *local_table = NULL;
 	u32 table_length;
 	s32 count;
 	acpi_status status = AE_OK;
 
 	/* Open the file */
 
-	table_file = ख_खोलो(filename, "rb");
-	अगर (table_file == शून्य) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not open table file: %s\n", filename);
-		वापस (osl_get_last_status(AE_NOT_FOUND));
-	पूर्ण
+	table_file = fopen(filename, "rb");
+	if (table_file == NULL) {
+		fprintf(stderr, "Could not open table file: %s\n", filename);
+		return (osl_get_last_status(AE_NOT_FOUND));
+	}
 
-	ख_जाओ(table_file, file_offset, शुरू_से);
+	fseek(table_file, file_offset, SEEK_SET);
 
 	/* Read the Table header to get the table length */
 
-	count = ख_पढ़ो(&header, 1, माप(काष्ठा acpi_table_header), table_file);
-	अगर (count != माप(काष्ठा acpi_table_header)) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not read table header: %s\n", filename);
+	count = fread(&header, 1, sizeof(struct acpi_table_header), table_file);
+	if (count != sizeof(struct acpi_table_header)) {
+		fprintf(stderr, "Could not read table header: %s\n", filename);
 		status = AE_BAD_HEADER;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
+#ifdef ACPI_OBSOLETE_FUNCTIONS
 
-	/* If signature is specअगरied, it must match the table */
+	/* If signature is specified, it must match the table */
 
-	अगर (signature) अणु
-		अगर (ACPI_VALIDATE_RSDP_SIG(signature)) अणु
-			अगर (!ACPI_VALIDATE_RSDP_SIG(header.signature)) अणु
-				ख_लिखो(मानक_त्रुटि,
+	if (signature) {
+		if (ACPI_VALIDATE_RSDP_SIG(signature)) {
+			if (!ACPI_VALIDATE_RSDP_SIG(header.signature)) {
+				fprintf(stderr,
 					"Incorrect RSDP signature: found %8.8s\n",
 					header.signature);
 				status = AE_BAD_SIGNATURE;
-				जाओ निकास;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!ACPI_COMPARE_NAMESEG(signature, header.signature)) अणु
-			ख_लिखो(मानक_त्रुटि,
+				goto exit;
+			}
+		} else if (!ACPI_COMPARE_NAMESEG(signature, header.signature)) {
+			fprintf(stderr,
 				"Incorrect signature: Expecting %4.4s, found %4.4s\n",
 				signature, header.signature);
 			status = AE_BAD_SIGNATURE;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+			goto exit;
+		}
+	}
+#endif
 
 	table_length = ap_get_table_length(&header);
-	अगर (table_length == 0) अणु
+	if (table_length == 0) {
 		status = AE_BAD_HEADER;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Read the entire table पूर्णांकo a local buffer */
+	/* Read the entire table into a local buffer */
 
-	local_table = सुस्मृति(1, table_length);
-	अगर (!local_table) अणु
-		ख_लिखो(मानक_त्रुटि,
+	local_table = calloc(1, table_length);
+	if (!local_table) {
+		fprintf(stderr,
 			"%4.4s: Could not allocate buffer for table of length %X\n",
 			header.signature, table_length);
 		status = AE_NO_MEMORY;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	ख_जाओ(table_file, file_offset, शुरू_से);
+	fseek(table_file, file_offset, SEEK_SET);
 
-	count = ख_पढ़ो(local_table, 1, table_length, table_file);
-	अगर (count != table_length) अणु
-		ख_लिखो(मानक_त्रुटि, "%4.4s: Could not read table content\n",
+	count = fread(local_table, 1, table_length, table_file);
+	if (count != table_length) {
+		fprintf(stderr, "%4.4s: Could not read table content\n",
 			header.signature);
 		status = AE_INVALID_TABLE_LENGTH;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* Validate checksum */
 
-	(व्योम)ap_is_valid_checksum(local_table);
+	(void)ap_is_valid_checksum(local_table);
 
-निकास:
-	ख_बंद(table_file);
+exit:
+	fclose(table_file);
 	*table = local_table;
-	वापस (status);
-पूर्ण
+	return (status);
+}
 
 /******************************************************************************
  *
  * FUNCTION:    osl_get_customized_table
  *
  * PARAMETERS:  pathname        - Directory to find Linux customized table
- *              signature       - ACPI Signature क्रम desired table. Must be
- *                                a null terminated 4-अक्षरacter string.
- *              instance        - Multiple table support क्रम SSDT/UEFI (0...n)
- *                                Must be 0 क्रम other tables.
- *              table           - Where a poपूर्णांकer to the table is वापसed
- *              address         - Where the table physical address is वापसed
+ *              signature       - ACPI Signature for desired table. Must be
+ *                                a null terminated 4-character string.
+ *              instance        - Multiple table support for SSDT/UEFI (0...n)
+ *                                Must be 0 for other tables.
+ *              table           - Where a pointer to the table is returned
+ *              address         - Where the table physical address is returned
  *
- * RETURN:      Status; Table buffer is वापसed अगर AE_OK.
+ * RETURN:      Status; Table buffer is returned if AE_OK.
  *              AE_LIMIT: Instance is beyond valid limit
  *              AE_NOT_FOUND: A table with the signature was not found
  *
@@ -1304,36 +1303,36 @@ osl_पढ़ो_table_from_file(अक्षर *filename,
  *
  *****************************************************************************/
 
-अटल acpi_status
-osl_get_customized_table(अक्षर *pathname,
-			 अक्षर *signature,
+static acpi_status
+osl_get_customized_table(char *pathname,
+			 char *signature,
 			 u32 instance,
-			 काष्ठा acpi_table_header **table,
+			 struct acpi_table_header **table,
 			 acpi_physical_address *address)
-अणु
-	व्योम *table_dir;
+{
+	void *table_dir;
 	u32 current_instance = 0;
-	अक्षर temp_name[ACPI_NAMESEG_SIZE];
-	अक्षर table_filename[PATH_MAX];
-	अक्षर *filename;
+	char temp_name[ACPI_NAMESEG_SIZE];
+	char table_filename[PATH_MAX];
+	char *filename;
 	acpi_status status;
 
-	/* Open the directory क्रम customized tables */
+	/* Open the directory for customized tables */
 
-	table_dir = acpi_os_खोलो_directory(pathname, "*", REQUEST_खाता_ONLY);
-	अगर (!table_dir) अणु
-		वापस (osl_get_last_status(AE_NOT_FOUND));
-	पूर्ण
+	table_dir = acpi_os_open_directory(pathname, "*", REQUEST_FILE_ONLY);
+	if (!table_dir) {
+		return (osl_get_last_status(AE_NOT_FOUND));
+	}
 
 	/* Attempt to find the table in the directory */
 
-	जबतक ((filename = acpi_os_get_next_filename(table_dir))) अणु
+	while ((filename = acpi_os_get_next_filename(table_dir))) {
 
 		/* Ignore meaningless files */
 
-		अगर (!ACPI_COMPARE_NAMESEG(filename, signature)) अणु
-			जारी;
-		पूर्ण
+		if (!ACPI_COMPARE_NAMESEG(filename, signature)) {
+			continue;
+		}
 
 		/* Extract table name and instance number */
 
@@ -1343,32 +1342,32 @@ osl_get_customized_table(अक्षर *pathname,
 
 		/* Ignore meaningless files */
 
-		अगर (ACPI_FAILURE(status) || current_instance != instance) अणु
-			जारी;
-		पूर्ण
+		if (ACPI_FAILURE(status) || current_instance != instance) {
+			continue;
+		}
 
 		/* Create the table pathname */
 
-		अगर (instance != 0) अणु
-			प्र_लिखो(table_filename, "%s/%4.4s%d", pathname,
+		if (instance != 0) {
+			sprintf(table_filename, "%s/%4.4s%d", pathname,
 				temp_name, instance);
-		पूर्ण अन्यथा अणु
-			प्र_लिखो(table_filename, "%s/%4.4s", pathname,
+		} else {
+			sprintf(table_filename, "%s/%4.4s", pathname,
 				temp_name);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	acpi_os_बंद_directory(table_dir);
+	acpi_os_close_directory(table_dir);
 
-	अगर (!filename) अणु
-		वापस (AE_LIMIT);
-	पूर्ण
+	if (!filename) {
+		return (AE_LIMIT);
+	}
 
-	/* There is no physical address saved क्रम customized tables, use zero */
+	/* There is no physical address saved for customized tables, use zero */
 
 	*address = 0;
-	status = osl_पढ़ो_table_from_file(table_filename, 0, table);
+	status = osl_read_table_from_file(table_filename, 0, table);
 
-	वापस (status);
-पूर्ण
+	return (status);
+}

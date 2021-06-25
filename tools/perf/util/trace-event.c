@@ -1,120 +1,119 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/err.h>
-#समावेश <traceevent/event-parse.h>
-#समावेश <api/fs/tracing_path.h>
-#समावेश <api/fs/fs.h>
-#समावेश "trace-event.h"
-#समावेश "machine.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <linux/kernel.h>
+#include <linux/err.h>
+#include <traceevent/event-parse.h>
+#include <api/fs/tracing_path.h>
+#include <api/fs/fs.h>
+#include "trace-event.h"
+#include "machine.h"
 
 /*
- * global trace_event object used by trace_event__tp_क्रमmat
+ * global trace_event object used by trace_event__tp_format
  *
- * TODO There's no cleanup call क्रम this. Add some sort of
- * __निकास function support and call trace_event__cleanup
+ * TODO There's no cleanup call for this. Add some sort of
+ * __exit function support and call trace_event__cleanup
  * there.
  */
-अटल काष्ठा trace_event tevent;
-अटल bool tevent_initialized;
+static struct trace_event tevent;
+static bool tevent_initialized;
 
-पूर्णांक trace_event__init(काष्ठा trace_event *t)
-अणु
-	काष्ठा tep_handle *pevent = tep_alloc();
+int trace_event__init(struct trace_event *t)
+{
+	struct tep_handle *pevent = tep_alloc();
 
-	अगर (pevent) अणु
+	if (pevent) {
 		t->plugin_list = tep_load_plugins(pevent);
 		t->pevent  = pevent;
-	पूर्ण
+	}
 
-	वापस pevent ? 0 : -1;
-पूर्ण
+	return pevent ? 0 : -1;
+}
 
-अटल पूर्णांक trace_event__init2(व्योम)
-अणु
-	पूर्णांक be = tep_is_bigendian();
-	काष्ठा tep_handle *pevent;
+static int trace_event__init2(void)
+{
+	int be = tep_is_bigendian();
+	struct tep_handle *pevent;
 
-	अगर (trace_event__init(&tevent))
-		वापस -1;
+	if (trace_event__init(&tevent))
+		return -1;
 
 	pevent = tevent.pevent;
 	tep_set_flag(pevent, TEP_NSEC_OUTPUT);
 	tep_set_file_bigendian(pevent, be);
 	tep_set_local_bigendian(pevent, be);
 	tevent_initialized = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक trace_event__रेजिस्टर_resolver(काष्ठा machine *machine,
+int trace_event__register_resolver(struct machine *machine,
 				   tep_func_resolver_t *func)
-अणु
-	अगर (!tevent_initialized && trace_event__init2())
-		वापस -1;
+{
+	if (!tevent_initialized && trace_event__init2())
+		return -1;
 
-	वापस tep_set_function_resolver(tevent.pevent, func, machine);
-पूर्ण
+	return tep_set_function_resolver(tevent.pevent, func, machine);
+}
 
-व्योम trace_event__cleanup(काष्ठा trace_event *t)
-अणु
+void trace_event__cleanup(struct trace_event *t)
+{
 	tep_unload_plugins(t->plugin_list, t->pevent);
-	tep_मुक्त(t->pevent);
-पूर्ण
+	tep_free(t->pevent);
+}
 
 /*
- * Returns poपूर्णांकer with encoded error via <linux/err.h> पूर्णांकerface.
+ * Returns pointer with encoded error via <linux/err.h> interface.
  */
-अटल काष्ठा tep_event*
-tp_क्रमmat(स्थिर अक्षर *sys, स्थिर अक्षर *name)
-अणु
-	अक्षर *tp_dir = get_events_file(sys);
-	काष्ठा tep_handle *pevent = tevent.pevent;
-	काष्ठा tep_event *event = शून्य;
-	अक्षर path[PATH_MAX];
-	माप_प्रकार size;
-	अक्षर *data;
-	पूर्णांक err;
+static struct tep_event*
+tp_format(const char *sys, const char *name)
+{
+	char *tp_dir = get_events_file(sys);
+	struct tep_handle *pevent = tevent.pevent;
+	struct tep_event *event = NULL;
+	char path[PATH_MAX];
+	size_t size;
+	char *data;
+	int err;
 
-	अगर (!tp_dir)
-		वापस ERR_PTR(-त्रुटि_सं);
+	if (!tp_dir)
+		return ERR_PTR(-errno);
 
-	scnम_लिखो(path, PATH_MAX, "%s/%s/format", tp_dir, name);
+	scnprintf(path, PATH_MAX, "%s/%s/format", tp_dir, name);
 	put_events_file(tp_dir);
 
-	err = filename__पढ़ो_str(path, &data, &size);
-	अगर (err)
-		वापस ERR_PTR(err);
+	err = filename__read_str(path, &data, &size);
+	if (err)
+		return ERR_PTR(err);
 
-	tep_parse_क्रमmat(pevent, &event, data, size, sys);
+	tep_parse_format(pevent, &event, data, size, sys);
 
-	मुक्त(data);
-	वापस event;
-पूर्ण
+	free(data);
+	return event;
+}
 
 /*
- * Returns poपूर्णांकer with encoded error via <linux/err.h> पूर्णांकerface.
+ * Returns pointer with encoded error via <linux/err.h> interface.
  */
-काष्ठा tep_event*
-trace_event__tp_क्रमmat(स्थिर अक्षर *sys, स्थिर अक्षर *name)
-अणु
-	अगर (!tevent_initialized && trace_event__init2())
-		वापस ERR_PTR(-ENOMEM);
+struct tep_event*
+trace_event__tp_format(const char *sys, const char *name)
+{
+	if (!tevent_initialized && trace_event__init2())
+		return ERR_PTR(-ENOMEM);
 
-	वापस tp_क्रमmat(sys, name);
-पूर्ण
+	return tp_format(sys, name);
+}
 
-काष्ठा tep_event *trace_event__tp_क्रमmat_id(पूर्णांक id)
-अणु
-	अगर (!tevent_initialized && trace_event__init2())
-		वापस ERR_PTR(-ENOMEM);
+struct tep_event *trace_event__tp_format_id(int id)
+{
+	if (!tevent_initialized && trace_event__init2())
+		return ERR_PTR(-ENOMEM);
 
-	वापस tep_find_event(tevent.pevent, id);
-पूर्ण
+	return tep_find_event(tevent.pevent, id);
+}

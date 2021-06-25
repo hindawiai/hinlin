@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश "../../boot/regs.c"
+#include "../../boot/regs.c"

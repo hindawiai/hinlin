@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Apple Motion Sensor driver
  *
@@ -7,58 +6,58 @@
  * Copyright (C) 2006 Michael Hanselmann (linux-kernel@hansmi.ch)
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <यंत्र/pmac_pfunc.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/of_platform.h>
+#include <asm/pmac_pfunc.h>
 
-#समावेश "ams.h"
+#include "ams.h"
 
 /* There is only one motion sensor per machine */
-काष्ठा ams ams_info;
+struct ams ams_info;
 
-अटल bool verbose;
+static bool verbose;
 module_param(verbose, bool, 0644);
 MODULE_PARM_DESC(verbose, "Show free falls and shocks in kernel output");
 
 /* Call with ams_info.lock held! */
-व्योम ams_sensors(s8 *x, s8 *y, s8 *z)
-अणु
+void ams_sensors(s8 *x, s8 *y, s8 *z)
+{
 	u32 orient = ams_info.vflag? ams_info.orient1 : ams_info.orient2;
 
-	अगर (orient & 0x80)
+	if (orient & 0x80)
 		/* X and Y swapped */
 		ams_info.get_xyz(y, x, z);
-	अन्यथा
+	else
 		ams_info.get_xyz(x, y, z);
 
-	अगर (orient & 0x04)
+	if (orient & 0x04)
 		*z = ~(*z);
-	अगर (orient & 0x02)
+	if (orient & 0x02)
 		*y = ~(*y);
-	अगर (orient & 0x01)
+	if (orient & 0x01)
 		*x = ~(*x);
-पूर्ण
+}
 
-अटल sमाप_प्रकार ams_show_current(काष्ठा device *dev,
-	काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
+static ssize_t ams_show_current(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
 	s8 x, y, z;
 
 	mutex_lock(&ams_info.lock);
 	ams_sensors(&x, &y, &z);
 	mutex_unlock(&ams_info.lock);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d %d %d\n", x, y, z);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d %d %d\n", x, y, z);
+}
 
-अटल DEVICE_ATTR(current, S_IRUGO, ams_show_current, शून्य);
+static DEVICE_ATTR(current, S_IRUGO, ams_show_current, NULL);
 
-अटल व्योम ams_handle_irq(व्योम *data)
-अणु
-	क्रमागत ams_irq irq = *((क्रमागत ams_irq *)data);
+static void ams_handle_irq(void *data)
+{
+	enum ams_irq irq = *((enum ams_irq *)data);
 
 	spin_lock(&ams_info.irq_lock);
 
@@ -66,28 +65,28 @@ MODULE_PARM_DESC(verbose, "Show free falls and shocks in kernel output");
 	schedule_work(&ams_info.worker);
 
 	spin_unlock(&ams_info.irq_lock);
-पूर्ण
+}
 
-अटल क्रमागत ams_irq ams_मुक्तfall_irq_data = AMS_IRQ_FREEFALL;
-अटल काष्ठा pmf_irq_client ams_मुक्तfall_client = अणु
+static enum ams_irq ams_freefall_irq_data = AMS_IRQ_FREEFALL;
+static struct pmf_irq_client ams_freefall_client = {
 	.owner = THIS_MODULE,
 	.handler = ams_handle_irq,
-	.data = &ams_मुक्तfall_irq_data,
-पूर्ण;
+	.data = &ams_freefall_irq_data,
+};
 
-अटल क्रमागत ams_irq ams_shock_irq_data = AMS_IRQ_SHOCK;
-अटल काष्ठा pmf_irq_client ams_shock_client = अणु
+static enum ams_irq ams_shock_irq_data = AMS_IRQ_SHOCK;
+static struct pmf_irq_client ams_shock_client = {
 	.owner = THIS_MODULE,
 	.handler = ams_handle_irq,
 	.data = &ams_shock_irq_data,
-पूर्ण;
+};
 
 /* Once hard disk parking is implemented in the kernel, this function can
  * trigger it.
  */
-अटल व्योम ams_worker(काष्ठा work_काष्ठा *work)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ams_worker(struct work_struct *work)
+{
+	unsigned long flags;
 	u8 irqs_to_clear;
 
 	mutex_lock(&ams_info.lock);
@@ -95,144 +94,144 @@ MODULE_PARM_DESC(verbose, "Show free falls and shocks in kernel output");
 	spin_lock_irqsave(&ams_info.irq_lock, flags);
 	irqs_to_clear = ams_info.worker_irqs;
 
-	अगर (ams_info.worker_irqs & AMS_IRQ_FREEFALL) अणु
-		अगर (verbose)
-			prपूर्णांकk(KERN_INFO "ams: freefall detected!\n");
+	if (ams_info.worker_irqs & AMS_IRQ_FREEFALL) {
+		if (verbose)
+			printk(KERN_INFO "ams: freefall detected!\n");
 
 		ams_info.worker_irqs &= ~AMS_IRQ_FREEFALL;
-	पूर्ण
+	}
 
-	अगर (ams_info.worker_irqs & AMS_IRQ_SHOCK) अणु
-		अगर (verbose)
-			prपूर्णांकk(KERN_INFO "ams: shock detected!\n");
+	if (ams_info.worker_irqs & AMS_IRQ_SHOCK) {
+		if (verbose)
+			printk(KERN_INFO "ams: shock detected!\n");
 
 		ams_info.worker_irqs &= ~AMS_IRQ_SHOCK;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&ams_info.irq_lock, flags);
 
 	ams_info.clear_irq(irqs_to_clear);
 
 	mutex_unlock(&ams_info.lock);
-पूर्ण
+}
 
 /* Call with ams_info.lock held! */
-पूर्णांक ams_sensor_attach(व्योम)
-अणु
-	पूर्णांक result;
-	स्थिर u32 *prop;
+int ams_sensor_attach(void)
+{
+	int result;
+	const u32 *prop;
 
 	/* Get orientation */
-	prop = of_get_property(ams_info.of_node, "orientation", शून्य);
-	अगर (!prop)
-		वापस -ENODEV;
+	prop = of_get_property(ams_info.of_node, "orientation", NULL);
+	if (!prop)
+		return -ENODEV;
 	ams_info.orient1 = *prop;
 	ams_info.orient2 = *(prop + 1);
 
-	/* Register मुक्तfall पूर्णांकerrupt handler */
-	result = pmf_रेजिस्टर_irq_client(ams_info.of_node,
+	/* Register freefall interrupt handler */
+	result = pmf_register_irq_client(ams_info.of_node,
 			"accel-int-1",
-			&ams_मुक्तfall_client);
-	अगर (result < 0)
-		वापस -ENODEV;
+			&ams_freefall_client);
+	if (result < 0)
+		return -ENODEV;
 
 	/* Reset saved irqs */
 	ams_info.worker_irqs = 0;
 
-	/* Register shock पूर्णांकerrupt handler */
-	result = pmf_रेजिस्टर_irq_client(ams_info.of_node,
+	/* Register shock interrupt handler */
+	result = pmf_register_irq_client(ams_info.of_node,
 			"accel-int-2",
 			&ams_shock_client);
-	अगर (result < 0)
-		जाओ release_मुक्तfall;
+	if (result < 0)
+		goto release_freefall;
 
 	/* Create device */
-	ams_info.of_dev = of_platक्रमm_device_create(ams_info.of_node, "ams", शून्य);
-	अगर (!ams_info.of_dev) अणु
+	ams_info.of_dev = of_platform_device_create(ams_info.of_node, "ams", NULL);
+	if (!ams_info.of_dev) {
 		result = -ENODEV;
-		जाओ release_shock;
-	पूर्ण
+		goto release_shock;
+	}
 
 	/* Create attributes */
 	result = device_create_file(&ams_info.of_dev->dev, &dev_attr_current);
-	अगर (result)
-		जाओ release_of;
+	if (result)
+		goto release_of;
 
-	ams_info.vflag = !!(ams_info.get_venकरोr() & 0x10);
+	ams_info.vflag = !!(ams_info.get_vendor() & 0x10);
 
 	/* Init input device */
 	result = ams_input_init();
-	अगर (result)
-		जाओ release_device_file;
+	if (result)
+		goto release_device_file;
 
-	वापस result;
+	return result;
 release_device_file:
-	device_हटाओ_file(&ams_info.of_dev->dev, &dev_attr_current);
+	device_remove_file(&ams_info.of_dev->dev, &dev_attr_current);
 release_of:
-	of_device_unरेजिस्टर(ams_info.of_dev);
+	of_device_unregister(ams_info.of_dev);
 release_shock:
-	pmf_unरेजिस्टर_irq_client(&ams_shock_client);
-release_मुक्तfall:
-	pmf_unरेजिस्टर_irq_client(&ams_मुक्तfall_client);
-	वापस result;
-पूर्ण
+	pmf_unregister_irq_client(&ams_shock_client);
+release_freefall:
+	pmf_unregister_irq_client(&ams_freefall_client);
+	return result;
+}
 
-पूर्णांक __init ams_init(व्योम)
-अणु
-	काष्ठा device_node *np;
+int __init ams_init(void)
+{
+	struct device_node *np;
 
 	spin_lock_init(&ams_info.irq_lock);
 	mutex_init(&ams_info.lock);
 	INIT_WORK(&ams_info.worker, ams_worker);
 
-#अगर_घोषित CONFIG_SENSORS_AMS_I2C
-	np = of_find_node_by_name(शून्य, "accelerometer");
-	अगर (np && of_device_is_compatible(np, "AAPL,accelerometer_1"))
+#ifdef CONFIG_SENSORS_AMS_I2C
+	np = of_find_node_by_name(NULL, "accelerometer");
+	if (np && of_device_is_compatible(np, "AAPL,accelerometer_1"))
 		/* Found I2C motion sensor */
-		वापस ams_i2c_init(np);
-#पूर्ण_अगर
+		return ams_i2c_init(np);
+#endif
 
-#अगर_घोषित CONFIG_SENSORS_AMS_PMU
-	np = of_find_node_by_name(शून्य, "sms");
-	अगर (np && of_device_is_compatible(np, "sms"))
+#ifdef CONFIG_SENSORS_AMS_PMU
+	np = of_find_node_by_name(NULL, "sms");
+	if (np && of_device_is_compatible(np, "sms"))
 		/* Found PMU motion sensor */
-		वापस ams_pmu_init(np);
-#पूर्ण_अगर
-	वापस -ENODEV;
-पूर्ण
+		return ams_pmu_init(np);
+#endif
+	return -ENODEV;
+}
 
-व्योम ams_sensor_detach(व्योम)
-अणु
+void ams_sensor_detach(void)
+{
 	/* Remove input device */
-	ams_input_निकास();
+	ams_input_exit();
 
 	/* Remove attributes */
-	device_हटाओ_file(&ams_info.of_dev->dev, &dev_attr_current);
+	device_remove_file(&ams_info.of_dev->dev, &dev_attr_current);
 
-	/* Flush पूर्णांकerrupt worker
+	/* Flush interrupt worker
 	 *
-	 * We करो this after ams_info.निकास(), because an पूर्णांकerrupt might
-	 * have arrived beक्रमe disabling them.
+	 * We do this after ams_info.exit(), because an interrupt might
+	 * have arrived before disabling them.
 	 */
 	flush_work(&ams_info.worker);
 
 	/* Remove device */
-	of_device_unरेजिस्टर(ams_info.of_dev);
+	of_device_unregister(ams_info.of_dev);
 
 	/* Remove handler */
-	pmf_unरेजिस्टर_irq_client(&ams_shock_client);
-	pmf_unरेजिस्टर_irq_client(&ams_मुक्तfall_client);
-पूर्ण
+	pmf_unregister_irq_client(&ams_shock_client);
+	pmf_unregister_irq_client(&ams_freefall_client);
+}
 
-अटल व्योम __निकास ams_निकास(व्योम)
-अणु
-	/* Shut करोwn implementation */
-	ams_info.निकास();
-पूर्ण
+static void __exit ams_exit(void)
+{
+	/* Shut down implementation */
+	ams_info.exit();
+}
 
 MODULE_AUTHOR("Stelian Pop, Michael Hanselmann");
 MODULE_DESCRIPTION("Apple Motion Sensor driver");
 MODULE_LICENSE("GPL");
 
 module_init(ams_init);
-module_निकास(ams_निकास);
+module_exit(ams_exit);

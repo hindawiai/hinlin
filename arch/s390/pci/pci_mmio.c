@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Access to PCI I/O memory from user space programs.
  *
  * Copyright IBM Corp. 2014
  * Author(s): Alexey Ishchuk <aishchuk@linux.vnet.ibm.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pci.h>
-#समावेश <यंत्र/pci_पन.स>
-#समावेश <यंत्र/pci_debug.h>
+#include <linux/kernel.h>
+#include <linux/syscalls.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/pci.h>
+#include <asm/pci_io.h>
+#include <asm/pci_debug.h>
 
-अटल अंतरभूत व्योम zpci_err_mmio(u8 cc, u8 status, u64 offset)
-अणु
-	काष्ठा अणु
+static inline void zpci_err_mmio(u8 cc, u8 status, u64 offset)
+{
+	struct {
 		u64 offset;
 		u8 cc;
 		u8 status;
-	पूर्ण data = अणुoffset, cc, statusपूर्ण;
+	} data = {offset, cc, status};
 
-	zpci_err_hex(&data, माप(data));
-पूर्ण
+	zpci_err_hex(&data, sizeof(data));
+}
 
-अटल अंतरभूत पूर्णांक __pcistb_mio_inuser(
-		व्योम __iomem *ioaddr, स्थिर व्योम __user *src,
+static inline int __pcistb_mio_inuser(
+		void __iomem *ioaddr, const void __user *src,
 		u64 len, u8 *status)
-अणु
-	पूर्णांक cc = -ENXIO;
+{
+	int cc = -ENXIO;
 
-	यंत्र अस्थिर (
+	asm volatile (
 		"       sacf 256\n"
 		"0:     .insn   rsy,0xeb00000000d4,%[len],%[ioaddr],%[src]\n"
 		"1:     ipm     %[cc]\n"
@@ -40,29 +39,29 @@
 		"2:     sacf 768\n"
 		EX_TABLE(0b, 2b) EX_TABLE(1b, 2b)
 		: [cc] "+d" (cc), [len] "+d" (len)
-		: [ioaddr] "a" (ioaddr), [src] "Q" (*((u8 __क्रमce *)src))
+		: [ioaddr] "a" (ioaddr), [src] "Q" (*((u8 __force *)src))
 		: "cc", "memory");
 	*status = len >> 24 & 0xff;
-	वापस cc;
-पूर्ण
+	return cc;
+}
 
-अटल अंतरभूत पूर्णांक __pcistg_mio_inuser(
-		व्योम __iomem *ioaddr, स्थिर व्योम __user *src,
+static inline int __pcistg_mio_inuser(
+		void __iomem *ioaddr, const void __user *src,
 		u64 ulen, u8 *status)
-अणु
-	रेजिस्टर u64 addr यंत्र("2") = (u64 __क्रमce) ioaddr;
-	रेजिस्टर u64 len यंत्र("3") = ulen;
-	पूर्णांक cc = -ENXIO;
+{
+	register u64 addr asm("2") = (u64 __force) ioaddr;
+	register u64 len asm("3") = ulen;
+	int cc = -ENXIO;
 	u64 val = 0;
 	u64 cnt = ulen;
-	u8 पंचांगp;
+	u8 tmp;
 
 	/*
-	 * copy 0 < @len <= 8 bytes from @src पूर्णांकo the right most bytes of
-	 * a रेजिस्टर, then store it to PCI at @ioaddr जबतक in secondary
+	 * copy 0 < @len <= 8 bytes from @src into the right most bytes of
+	 * a register, then store it to PCI at @ioaddr while in secondary
 	 * address space. pcistg then uses the user mappings.
 	 */
-	यंत्र अस्थिर (
+	asm volatile (
 		"       sacf    256\n"
 		"0:     llgc    %[tmp],0(%[src])\n"
 		"       sllg    %[val],%[val],8\n"
@@ -76,139 +75,139 @@
 		EX_TABLE(0b, 3b) EX_TABLE(1b, 3b) EX_TABLE(2b, 3b)
 		:
 		[src] "+a" (src), [cnt] "+d" (cnt),
-		[val] "+d" (val), [पंचांगp] "=d" (पंचांगp),
+		[val] "+d" (val), [tmp] "=d" (tmp),
 		[len] "+d" (len), [cc] "+d" (cc),
 		[ioaddr] "+a" (addr)
 		:: "cc", "memory");
 	*status = len >> 24 & 0xff;
 
-	/* did we पढ़ो everything from user memory? */
-	अगर (!cc && cnt != 0)
+	/* did we read everything from user memory? */
+	if (!cc && cnt != 0)
 		cc = -EFAULT;
 
-	वापस cc;
-पूर्ण
+	return cc;
+}
 
-अटल अंतरभूत पूर्णांक __स_नकल_toio_inuser(व्योम __iomem *dst,
-				   स्थिर व्योम __user *src, माप_प्रकार n)
-अणु
-	पूर्णांक size, rc = 0;
+static inline int __memcpy_toio_inuser(void __iomem *dst,
+				   const void __user *src, size_t n)
+{
+	int size, rc = 0;
 	u8 status = 0;
 
-	अगर (!src)
-		वापस -EINVAL;
+	if (!src)
+		return -EINVAL;
 
-	जबतक (n > 0) अणु
-		size = zpci_get_max_ग_लिखो_size((u64 __क्रमce) dst,
-					       (u64 __क्रमce) src, n,
+	while (n > 0) {
+		size = zpci_get_max_write_size((u64 __force) dst,
+					       (u64 __force) src, n,
 					       ZPCI_MAX_WRITE_SIZE);
-		अगर (size > 8) /* मुख्य path */
+		if (size > 8) /* main path */
 			rc = __pcistb_mio_inuser(dst, src, size, &status);
-		अन्यथा
+		else
 			rc = __pcistg_mio_inuser(dst, src, size, &status);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 		src += size;
 		dst += size;
 		n -= size;
-	पूर्ण
-	अगर (rc)
-		zpci_err_mmio(rc, status, (__क्रमce u64) dst);
-	वापस rc;
-पूर्ण
+	}
+	if (rc)
+		zpci_err_mmio(rc, status, (__force u64) dst);
+	return rc;
+}
 
-SYSCALL_DEFINE3(s390_pci_mmio_ग_लिखो, अचिन्हित दीर्घ, mmio_addr,
-		स्थिर व्योम __user *, user_buffer, माप_प्रकार, length)
-अणु
+SYSCALL_DEFINE3(s390_pci_mmio_write, unsigned long, mmio_addr,
+		const void __user *, user_buffer, size_t, length)
+{
 	u8 local_buf[64];
-	व्योम __iomem *io_addr;
-	व्योम *buf;
-	काष्ठा vm_area_काष्ठा *vma;
+	void __iomem *io_addr;
+	void *buf;
+	struct vm_area_struct *vma;
 	pte_t *ptep;
 	spinlock_t *ptl;
-	दीर्घ ret;
+	long ret;
 
-	अगर (!zpci_is_enabled())
-		वापस -ENODEV;
+	if (!zpci_is_enabled())
+		return -ENODEV;
 
-	अगर (length <= 0 || PAGE_SIZE - (mmio_addr & ~PAGE_MASK) < length)
-		वापस -EINVAL;
+	if (length <= 0 || PAGE_SIZE - (mmio_addr & ~PAGE_MASK) < length)
+		return -EINVAL;
 
 	/*
-	 * We only support ग_लिखो access to MIO capable devices अगर we are on
-	 * a MIO enabled प्रणाली. Otherwise we would have to check क्रम every
-	 * address अगर it is a special ZPCI_ADDR and would have to करो
-	 * a pfn lookup which we करोn't need क्रम MIO capable devices.  Currently
+	 * We only support write access to MIO capable devices if we are on
+	 * a MIO enabled system. Otherwise we would have to check for every
+	 * address if it is a special ZPCI_ADDR and would have to do
+	 * a pfn lookup which we don't need for MIO capable devices.  Currently
 	 * ISM devices are the only devices without MIO support and there is no
-	 * known need क्रम accessing these from userspace.
+	 * known need for accessing these from userspace.
 	 */
-	अगर (अटल_branch_likely(&have_mio)) अणु
-		ret = __स_नकल_toio_inuser((व्योम  __iomem *) mmio_addr,
+	if (static_branch_likely(&have_mio)) {
+		ret = __memcpy_toio_inuser((void  __iomem *) mmio_addr,
 					user_buffer,
 					length);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (length > 64) अणु
-		buf = kदो_स्मृति(length, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा
+	if (length > 64) {
+		buf = kmalloc(length, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
+	} else
 		buf = local_buf;
 
 	ret = -EFAULT;
-	अगर (copy_from_user(buf, user_buffer, length))
-		जाओ out_मुक्त;
+	if (copy_from_user(buf, user_buffer, length))
+		goto out_free;
 
-	mmap_पढ़ो_lock(current->mm);
+	mmap_read_lock(current->mm);
 	ret = -EINVAL;
 	vma = find_vma(current->mm, mmio_addr);
-	अगर (!vma)
-		जाओ out_unlock_mmap;
-	अगर (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		जाओ out_unlock_mmap;
+	if (!vma)
+		goto out_unlock_mmap;
+	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
+		goto out_unlock_mmap;
 	ret = -EACCES;
-	अगर (!(vma->vm_flags & VM_WRITE))
-		जाओ out_unlock_mmap;
+	if (!(vma->vm_flags & VM_WRITE))
+		goto out_unlock_mmap;
 
 	ret = follow_pte(vma->vm_mm, mmio_addr, &ptep, &ptl);
-	अगर (ret)
-		जाओ out_unlock_mmap;
+	if (ret)
+		goto out_unlock_mmap;
 
-	io_addr = (व्योम __iomem *)((pte_pfn(*ptep) << PAGE_SHIFT) |
+	io_addr = (void __iomem *)((pte_pfn(*ptep) << PAGE_SHIFT) |
 			(mmio_addr & ~PAGE_MASK));
 
-	अगर ((अचिन्हित दीर्घ) io_addr < ZPCI_IOMAP_ADDR_BASE)
-		जाओ out_unlock_pt;
+	if ((unsigned long) io_addr < ZPCI_IOMAP_ADDR_BASE)
+		goto out_unlock_pt;
 
-	ret = zpci_स_नकल_toio(io_addr, buf, length);
+	ret = zpci_memcpy_toio(io_addr, buf, length);
 out_unlock_pt:
 	pte_unmap_unlock(ptep, ptl);
 out_unlock_mmap:
-	mmap_पढ़ो_unlock(current->mm);
-out_मुक्त:
-	अगर (buf != local_buf)
-		kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	mmap_read_unlock(current->mm);
+out_free:
+	if (buf != local_buf)
+		kfree(buf);
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक __pcilg_mio_inuser(
-		व्योम __user *dst, स्थिर व्योम __iomem *ioaddr,
+static inline int __pcilg_mio_inuser(
+		void __user *dst, const void __iomem *ioaddr,
 		u64 ulen, u8 *status)
-अणु
-	रेजिस्टर u64 addr यंत्र("2") = (u64 __क्रमce) ioaddr;
-	रेजिस्टर u64 len यंत्र("3") = ulen;
+{
+	register u64 addr asm("2") = (u64 __force) ioaddr;
+	register u64 len asm("3") = ulen;
 	u64 cnt = ulen;
-	पूर्णांक shअगरt = ulen * 8;
-	पूर्णांक cc = -ENXIO;
-	u64 val, पंचांगp;
+	int shift = ulen * 8;
+	int cc = -ENXIO;
+	u64 val, tmp;
 
 	/*
-	 * पढ़ो 0 < @len <= 8 bytes from the PCI memory mapped at @ioaddr (in
-	 * user space) पूर्णांकo a रेजिस्टर using pcilg then store these bytes at
+	 * read 0 < @len <= 8 bytes from the PCI memory mapped at @ioaddr (in
+	 * user space) into a register using pcilg then store these bytes at
 	 * user address @dst
 	 */
-	यंत्र अस्थिर (
+	asm volatile (
 		"       sacf    256\n"
 		"0:     .insn   rre,0xb9d60000,%[val],%[ioaddr]\n"
 		"1:     ipm     %[cc]\n"
@@ -224,116 +223,116 @@ out_मुक्त:
 		EX_TABLE(0b, 4b) EX_TABLE(1b, 4b) EX_TABLE(3b, 4b)
 		:
 		[cc] "+d" (cc), [val] "=d" (val), [len] "+d" (len),
-		[dst] "+a" (dst), [cnt] "+d" (cnt), [पंचांगp] "=d" (पंचांगp),
-		[shअगरt] "+d" (shअगरt)
+		[dst] "+a" (dst), [cnt] "+d" (cnt), [tmp] "=d" (tmp),
+		[shift] "+d" (shift)
 		:
 		[ioaddr] "a" (addr)
 		: "cc", "memory");
 
-	/* did we ग_लिखो everything to the user space buffer? */
-	अगर (!cc && cnt != 0)
+	/* did we write everything to the user space buffer? */
+	if (!cc && cnt != 0)
 		cc = -EFAULT;
 
 	*status = len >> 24 & 0xff;
-	वापस cc;
-पूर्ण
+	return cc;
+}
 
-अटल अंतरभूत पूर्णांक __स_नकल_fromio_inuser(व्योम __user *dst,
-				     स्थिर व्योम __iomem *src,
-				     अचिन्हित दीर्घ n)
-अणु
-	पूर्णांक size, rc = 0;
+static inline int __memcpy_fromio_inuser(void __user *dst,
+				     const void __iomem *src,
+				     unsigned long n)
+{
+	int size, rc = 0;
 	u8 status;
 
-	जबतक (n > 0) अणु
-		size = zpci_get_max_ग_लिखो_size((u64 __क्रमce) src,
-					       (u64 __क्रमce) dst, n,
+	while (n > 0) {
+		size = zpci_get_max_write_size((u64 __force) src,
+					       (u64 __force) dst, n,
 					       ZPCI_MAX_READ_SIZE);
 		rc = __pcilg_mio_inuser(dst, src, size, &status);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 		src += size;
 		dst += size;
 		n -= size;
-	पूर्ण
-	अगर (rc)
-		zpci_err_mmio(rc, status, (__क्रमce u64) dst);
-	वापस rc;
-पूर्ण
+	}
+	if (rc)
+		zpci_err_mmio(rc, status, (__force u64) dst);
+	return rc;
+}
 
-SYSCALL_DEFINE3(s390_pci_mmio_पढ़ो, अचिन्हित दीर्घ, mmio_addr,
-		व्योम __user *, user_buffer, माप_प्रकार, length)
-अणु
+SYSCALL_DEFINE3(s390_pci_mmio_read, unsigned long, mmio_addr,
+		void __user *, user_buffer, size_t, length)
+{
 	u8 local_buf[64];
-	व्योम __iomem *io_addr;
-	व्योम *buf;
-	काष्ठा vm_area_काष्ठा *vma;
+	void __iomem *io_addr;
+	void *buf;
+	struct vm_area_struct *vma;
 	pte_t *ptep;
 	spinlock_t *ptl;
-	दीर्घ ret;
+	long ret;
 
-	अगर (!zpci_is_enabled())
-		वापस -ENODEV;
+	if (!zpci_is_enabled())
+		return -ENODEV;
 
-	अगर (length <= 0 || PAGE_SIZE - (mmio_addr & ~PAGE_MASK) < length)
-		वापस -EINVAL;
+	if (length <= 0 || PAGE_SIZE - (mmio_addr & ~PAGE_MASK) < length)
+		return -EINVAL;
 
 	/*
-	 * We only support पढ़ो access to MIO capable devices अगर we are on
-	 * a MIO enabled प्रणाली. Otherwise we would have to check क्रम every
-	 * address अगर it is a special ZPCI_ADDR and would have to करो
-	 * a pfn lookup which we करोn't need क्रम MIO capable devices.  Currently
+	 * We only support read access to MIO capable devices if we are on
+	 * a MIO enabled system. Otherwise we would have to check for every
+	 * address if it is a special ZPCI_ADDR and would have to do
+	 * a pfn lookup which we don't need for MIO capable devices.  Currently
 	 * ISM devices are the only devices without MIO support and there is no
-	 * known need क्रम accessing these from userspace.
+	 * known need for accessing these from userspace.
 	 */
-	अगर (अटल_branch_likely(&have_mio)) अणु
-		ret = __स_नकल_fromio_inuser(
-				user_buffer, (स्थिर व्योम __iomem *)mmio_addr,
+	if (static_branch_likely(&have_mio)) {
+		ret = __memcpy_fromio_inuser(
+				user_buffer, (const void __iomem *)mmio_addr,
 				length);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (length > 64) अणु
-		buf = kदो_स्मृति(length, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
+	if (length > 64) {
+		buf = kmalloc(length, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
+	} else {
 		buf = local_buf;
-	पूर्ण
+	}
 
-	mmap_पढ़ो_lock(current->mm);
+	mmap_read_lock(current->mm);
 	ret = -EINVAL;
 	vma = find_vma(current->mm, mmio_addr);
-	अगर (!vma)
-		जाओ out_unlock_mmap;
-	अगर (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		जाओ out_unlock_mmap;
+	if (!vma)
+		goto out_unlock_mmap;
+	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
+		goto out_unlock_mmap;
 	ret = -EACCES;
-	अगर (!(vma->vm_flags & VM_WRITE))
-		जाओ out_unlock_mmap;
+	if (!(vma->vm_flags & VM_WRITE))
+		goto out_unlock_mmap;
 
 	ret = follow_pte(vma->vm_mm, mmio_addr, &ptep, &ptl);
-	अगर (ret)
-		जाओ out_unlock_mmap;
+	if (ret)
+		goto out_unlock_mmap;
 
-	io_addr = (व्योम __iomem *)((pte_pfn(*ptep) << PAGE_SHIFT) |
+	io_addr = (void __iomem *)((pte_pfn(*ptep) << PAGE_SHIFT) |
 			(mmio_addr & ~PAGE_MASK));
 
-	अगर ((अचिन्हित दीर्घ) io_addr < ZPCI_IOMAP_ADDR_BASE) अणु
+	if ((unsigned long) io_addr < ZPCI_IOMAP_ADDR_BASE) {
 		ret = -EFAULT;
-		जाओ out_unlock_pt;
-	पूर्ण
-	ret = zpci_स_नकल_fromio(buf, io_addr, length);
+		goto out_unlock_pt;
+	}
+	ret = zpci_memcpy_fromio(buf, io_addr, length);
 
 out_unlock_pt:
 	pte_unmap_unlock(ptep, ptl);
 out_unlock_mmap:
-	mmap_पढ़ो_unlock(current->mm);
+	mmap_read_unlock(current->mm);
 
-	अगर (!ret && copy_to_user(user_buffer, buf, length))
+	if (!ret && copy_to_user(user_buffer, buf, length))
 		ret = -EFAULT;
 
-	अगर (buf != local_buf)
-		kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	if (buf != local_buf)
+		kfree(buf);
+	return ret;
+}

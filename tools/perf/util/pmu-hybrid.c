@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/list.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/zभाग.स>
-#समावेश <sys/types.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <stdbool.h>
-#समावेश <मानकतर्क.स>
-#समावेश <क्षेत्र.स>
-#समावेश <api/fs/fs.h>
-#समावेश "fncache.h"
-#समावेश "pmu-hybrid.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/list.h>
+#include <linux/compiler.h>
+#include <linux/string.h>
+#include <linux/zalloc.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <locale.h>
+#include <api/fs/fs.h>
+#include "fncache.h"
+#include "pmu-hybrid.h"
 
 LIST_HEAD(perf_pmu__hybrid_pmus);
 
-bool perf_pmu__hybrid_mounted(स्थिर अक्षर *name)
-अणु
-	अक्षर path[PATH_MAX];
-	स्थिर अक्षर *sysfs;
-	खाता *file;
-	पूर्णांक n, cpu;
+bool perf_pmu__hybrid_mounted(const char *name)
+{
+	char path[PATH_MAX];
+	const char *sysfs;
+	FILE *file;
+	int n, cpu;
 
-	अगर (म_भेदन(name, "cpu_", 4))
-		वापस false;
+	if (strncmp(name, "cpu_", 4))
+		return false;
 
-	sysfs = sysfs__mountpoपूर्णांक();
-	अगर (!sysfs)
-		वापस false;
+	sysfs = sysfs__mountpoint();
+	if (!sysfs)
+		return false;
 
-	snम_लिखो(path, PATH_MAX, CPUS_TEMPLATE_CPU, sysfs, name);
-	अगर (!file_available(path))
-		वापस false;
+	snprintf(path, PATH_MAX, CPUS_TEMPLATE_CPU, sysfs, name);
+	if (!file_available(path))
+		return false;
 
-	file = ख_खोलो(path, "r");
-	अगर (!file)
-		वापस false;
+	file = fopen(path, "r");
+	if (!file)
+		return false;
 
-	n = ख_पूछो(file, "%u", &cpu);
-	ख_बंद(file);
-	अगर (n <= 0)
-		वापस false;
+	n = fscanf(file, "%u", &cpu);
+	fclose(file);
+	if (n <= 0)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-काष्ठा perf_pmu *perf_pmu__find_hybrid_pmu(स्थिर अक्षर *name)
-अणु
-	काष्ठा perf_pmu *pmu;
+struct perf_pmu *perf_pmu__find_hybrid_pmu(const char *name)
+{
+	struct perf_pmu *pmu;
 
-	अगर (!name)
-		वापस शून्य;
+	if (!name)
+		return NULL;
 
-	perf_pmu__क्रम_each_hybrid_pmu(pmu) अणु
-		अगर (!म_भेद(name, pmu->name))
-			वापस pmu;
-	पूर्ण
+	perf_pmu__for_each_hybrid_pmu(pmu) {
+		if (!strcmp(name, pmu->name))
+			return pmu;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-bool perf_pmu__is_hybrid(स्थिर अक्षर *name)
-अणु
-	वापस perf_pmu__find_hybrid_pmu(name) != शून्य;
-पूर्ण
+bool perf_pmu__is_hybrid(const char *name)
+{
+	return perf_pmu__find_hybrid_pmu(name) != NULL;
+}
 
-अक्षर *perf_pmu__hybrid_type_to_pmu(स्थिर अक्षर *type)
-अणु
-	अक्षर *pmu_name = शून्य;
+char *perf_pmu__hybrid_type_to_pmu(const char *type)
+{
+	char *pmu_name = NULL;
 
-	अगर (aप्र_लिखो(&pmu_name, "cpu_%s", type) < 0)
-		वापस शून्य;
+	if (asprintf(&pmu_name, "cpu_%s", type) < 0)
+		return NULL;
 
-	अगर (perf_pmu__is_hybrid(pmu_name))
-		वापस pmu_name;
+	if (perf_pmu__is_hybrid(pmu_name))
+		return pmu_name;
 
 	/*
 	 * pmu may be not scanned, check the sysfs.
 	 */
-	अगर (perf_pmu__hybrid_mounted(pmu_name))
-		वापस pmu_name;
+	if (perf_pmu__hybrid_mounted(pmu_name))
+		return pmu_name;
 
-	मुक्त(pmu_name);
-	वापस शून्य;
-पूर्ण
+	free(pmu_name);
+	return NULL;
+}

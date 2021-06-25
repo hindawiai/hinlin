@@ -1,313 +1,312 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
-#घोषणा _GNU_SOURCE
-#समावेश <निश्चित.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <sched.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकघोष.स>
+// SPDX-License-Identifier: LGPL-2.1
+#define _GNU_SOURCE
+#include <assert.h>
+#include <pthread.h>
+#include <sched.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
 
-#समावेश "rseq.h"
+#include "rseq.h"
 
-#घोषणा ARRAY_SIZE(arr)	(माप(arr) / माप((arr)[0]))
+#define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
 
-काष्ठा percpu_lock_entry अणु
-	पूर्णांकptr_t v;
-पूर्ण __attribute__((aligned(128)));
+struct percpu_lock_entry {
+	intptr_t v;
+} __attribute__((aligned(128)));
 
-काष्ठा percpu_lock अणु
-	काष्ठा percpu_lock_entry c[CPU_SETSIZE];
-पूर्ण;
+struct percpu_lock {
+	struct percpu_lock_entry c[CPU_SETSIZE];
+};
 
-काष्ठा test_data_entry अणु
-	पूर्णांकptr_t count;
-पूर्ण __attribute__((aligned(128)));
+struct test_data_entry {
+	intptr_t count;
+} __attribute__((aligned(128)));
 
-काष्ठा spinlock_test_data अणु
-	काष्ठा percpu_lock lock;
-	काष्ठा test_data_entry c[CPU_SETSIZE];
-	पूर्णांक reps;
-पूर्ण;
+struct spinlock_test_data {
+	struct percpu_lock lock;
+	struct test_data_entry c[CPU_SETSIZE];
+	int reps;
+};
 
-काष्ठा percpu_list_node अणु
-	पूर्णांकptr_t data;
-	काष्ठा percpu_list_node *next;
-पूर्ण;
+struct percpu_list_node {
+	intptr_t data;
+	struct percpu_list_node *next;
+};
 
-काष्ठा percpu_list_entry अणु
-	काष्ठा percpu_list_node *head;
-पूर्ण __attribute__((aligned(128)));
+struct percpu_list_entry {
+	struct percpu_list_node *head;
+} __attribute__((aligned(128)));
 
-काष्ठा percpu_list अणु
-	काष्ठा percpu_list_entry c[CPU_SETSIZE];
-पूर्ण;
+struct percpu_list {
+	struct percpu_list_entry c[CPU_SETSIZE];
+};
 
 /* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
-पूर्णांक rseq_this_cpu_lock(काष्ठा percpu_lock *lock)
-अणु
-	पूर्णांक cpu;
+int rseq_this_cpu_lock(struct percpu_lock *lock)
+{
+	int cpu;
 
-	क्रम (;;) अणु
-		पूर्णांक ret;
+	for (;;) {
+		int ret;
 
 		cpu = rseq_cpu_start();
 		ret = rseq_cmpeqv_storev(&lock->c[cpu].v,
 					 0, 1, cpu);
-		अगर (rseq_likely(!ret))
-			अवरोध;
-		/* Retry अगर comparison fails or rseq पातs. */
-	पूर्ण
+		if (rseq_likely(!ret))
+			break;
+		/* Retry if comparison fails or rseq aborts. */
+	}
 	/*
 	 * Acquire semantic when taking lock after control dependency.
 	 * Matches rseq_smp_store_release().
 	 */
 	rseq_smp_acquire__after_ctrl_dep();
-	वापस cpu;
-पूर्ण
+	return cpu;
+}
 
-व्योम rseq_percpu_unlock(काष्ठा percpu_lock *lock, पूर्णांक cpu)
-अणु
-	निश्चित(lock->c[cpu].v == 1);
+void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
+{
+	assert(lock->c[cpu].v == 1);
 	/*
 	 * Release lock, with release semantic. Matches
 	 * rseq_smp_acquire__after_ctrl_dep().
 	 */
 	rseq_smp_store_release(&lock->c[cpu].v, 0);
-पूर्ण
+}
 
-व्योम *test_percpu_spinlock_thपढ़ो(व्योम *arg)
-अणु
-	काष्ठा spinlock_test_data *data = arg;
-	पूर्णांक i, cpu;
+void *test_percpu_spinlock_thread(void *arg)
+{
+	struct spinlock_test_data *data = arg;
+	int i, cpu;
 
-	अगर (rseq_रेजिस्टर_current_thपढ़ो()) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-		पात();
-	पूर्ण
-	क्रम (i = 0; i < data->reps; i++) अणु
+	if (rseq_register_current_thread()) {
+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
+			errno, strerror(errno));
+		abort();
+	}
+	for (i = 0; i < data->reps; i++) {
 		cpu = rseq_this_cpu_lock(&data->lock);
 		data->c[cpu].count++;
 		rseq_percpu_unlock(&data->lock, cpu);
-	पूर्ण
-	अगर (rseq_unरेजिस्टर_current_thपढ़ो()) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-		पात();
-	पूर्ण
+	}
+	if (rseq_unregister_current_thread()) {
+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
+			errno, strerror(errno));
+		abort();
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * A simple test which implements a sharded counter using a per-cpu
  * lock.  Obviously real applications might prefer to simply use a
- * per-cpu increment; however, this is reasonable क्रम a test and the
+ * per-cpu increment; however, this is reasonable for a test and the
  * lock can be extended to synchronize more complicated operations.
  */
-व्योम test_percpu_spinlock(व्योम)
-अणु
-	स्थिर पूर्णांक num_thपढ़ोs = 200;
-	पूर्णांक i;
-	uपूर्णांक64_t sum;
-	pthपढ़ो_t test_thपढ़ोs[num_thपढ़ोs];
-	काष्ठा spinlock_test_data data;
+void test_percpu_spinlock(void)
+{
+	const int num_threads = 200;
+	int i;
+	uint64_t sum;
+	pthread_t test_threads[num_threads];
+	struct spinlock_test_data data;
 
-	स_रखो(&data, 0, माप(data));
+	memset(&data, 0, sizeof(data));
 	data.reps = 5000;
 
-	क्रम (i = 0; i < num_thपढ़ोs; i++)
-		pthपढ़ो_create(&test_thपढ़ोs[i], शून्य,
-			       test_percpu_spinlock_thपढ़ो, &data);
+	for (i = 0; i < num_threads; i++)
+		pthread_create(&test_threads[i], NULL,
+			       test_percpu_spinlock_thread, &data);
 
-	क्रम (i = 0; i < num_thपढ़ोs; i++)
-		pthपढ़ो_join(test_thपढ़ोs[i], शून्य);
+	for (i = 0; i < num_threads; i++)
+		pthread_join(test_threads[i], NULL);
 
 	sum = 0;
-	क्रम (i = 0; i < CPU_SETSIZE; i++)
+	for (i = 0; i < CPU_SETSIZE; i++)
 		sum += data.c[i].count;
 
-	निश्चित(sum == (uपूर्णांक64_t)data.reps * num_thपढ़ोs);
-पूर्ण
+	assert(sum == (uint64_t)data.reps * num_threads);
+}
 
-व्योम this_cpu_list_push(काष्ठा percpu_list *list,
-			काष्ठा percpu_list_node *node,
-			पूर्णांक *_cpu)
-अणु
-	पूर्णांक cpu;
+void this_cpu_list_push(struct percpu_list *list,
+			struct percpu_list_node *node,
+			int *_cpu)
+{
+	int cpu;
 
-	क्रम (;;) अणु
-		पूर्णांकptr_t *targetptr, newval, expect;
-		पूर्णांक ret;
+	for (;;) {
+		intptr_t *targetptr, newval, expect;
+		int ret;
 
 		cpu = rseq_cpu_start();
 		/* Load list->c[cpu].head with single-copy atomicity. */
-		expect = (पूर्णांकptr_t)RSEQ_READ_ONCE(list->c[cpu].head);
-		newval = (पूर्णांकptr_t)node;
-		targetptr = (पूर्णांकptr_t *)&list->c[cpu].head;
-		node->next = (काष्ठा percpu_list_node *)expect;
+		expect = (intptr_t)RSEQ_READ_ONCE(list->c[cpu].head);
+		newval = (intptr_t)node;
+		targetptr = (intptr_t *)&list->c[cpu].head;
+		node->next = (struct percpu_list_node *)expect;
 		ret = rseq_cmpeqv_storev(targetptr, expect, newval, cpu);
-		अगर (rseq_likely(!ret))
-			अवरोध;
-		/* Retry अगर comparison fails or rseq पातs. */
-	पूर्ण
-	अगर (_cpu)
+		if (rseq_likely(!ret))
+			break;
+		/* Retry if comparison fails or rseq aborts. */
+	}
+	if (_cpu)
 		*_cpu = cpu;
-पूर्ण
+}
 
 /*
  * Unlike a traditional lock-less linked list; the availability of a
  * rseq primitive allows us to implement pop without concerns over
  * ABA-type races.
  */
-काष्ठा percpu_list_node *this_cpu_list_pop(काष्ठा percpu_list *list,
-					   पूर्णांक *_cpu)
-अणु
-	क्रम (;;) अणु
-		काष्ठा percpu_list_node *head;
-		पूर्णांकptr_t *targetptr, expectnot, *load;
+struct percpu_list_node *this_cpu_list_pop(struct percpu_list *list,
+					   int *_cpu)
+{
+	for (;;) {
+		struct percpu_list_node *head;
+		intptr_t *targetptr, expectnot, *load;
 		off_t offset;
-		पूर्णांक ret, cpu;
+		int ret, cpu;
 
 		cpu = rseq_cpu_start();
-		targetptr = (पूर्णांकptr_t *)&list->c[cpu].head;
-		expectnot = (पूर्णांकptr_t)शून्य;
-		offset = दुरत्व(काष्ठा percpu_list_node, next);
-		load = (पूर्णांकptr_t *)&head;
+		targetptr = (intptr_t *)&list->c[cpu].head;
+		expectnot = (intptr_t)NULL;
+		offset = offsetof(struct percpu_list_node, next);
+		load = (intptr_t *)&head;
 		ret = rseq_cmpnev_storeoffp_load(targetptr, expectnot,
 						 offset, load, cpu);
-		अगर (rseq_likely(!ret)) अणु
-			अगर (_cpu)
+		if (rseq_likely(!ret)) {
+			if (_cpu)
 				*_cpu = cpu;
-			वापस head;
-		पूर्ण
-		अगर (ret > 0)
-			वापस शून्य;
-		/* Retry अगर rseq पातs. */
-	पूर्ण
-पूर्ण
+			return head;
+		}
+		if (ret > 0)
+			return NULL;
+		/* Retry if rseq aborts. */
+	}
+}
 
 /*
  * __percpu_list_pop is not safe against concurrent accesses. Should
- * only be used on lists that are not concurrently modअगरied.
+ * only be used on lists that are not concurrently modified.
  */
-काष्ठा percpu_list_node *__percpu_list_pop(काष्ठा percpu_list *list, पूर्णांक cpu)
-अणु
-	काष्ठा percpu_list_node *node;
+struct percpu_list_node *__percpu_list_pop(struct percpu_list *list, int cpu)
+{
+	struct percpu_list_node *node;
 
 	node = list->c[cpu].head;
-	अगर (!node)
-		वापस शून्य;
+	if (!node)
+		return NULL;
 	list->c[cpu].head = node->next;
-	वापस node;
-पूर्ण
+	return node;
+}
 
-व्योम *test_percpu_list_thपढ़ो(व्योम *arg)
-अणु
-	पूर्णांक i;
-	काष्ठा percpu_list *list = (काष्ठा percpu_list *)arg;
+void *test_percpu_list_thread(void *arg)
+{
+	int i;
+	struct percpu_list *list = (struct percpu_list *)arg;
 
-	अगर (rseq_रेजिस्टर_current_thपढ़ो()) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-		पात();
-	पूर्ण
+	if (rseq_register_current_thread()) {
+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
+			errno, strerror(errno));
+		abort();
+	}
 
-	क्रम (i = 0; i < 100000; i++) अणु
-		काष्ठा percpu_list_node *node;
+	for (i = 0; i < 100000; i++) {
+		struct percpu_list_node *node;
 
-		node = this_cpu_list_pop(list, शून्य);
+		node = this_cpu_list_pop(list, NULL);
 		sched_yield();  /* encourage shuffling */
-		अगर (node)
-			this_cpu_list_push(list, node, शून्य);
-	पूर्ण
+		if (node)
+			this_cpu_list_push(list, node, NULL);
+	}
 
-	अगर (rseq_unरेजिस्टर_current_thपढ़ो()) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-		पात();
-	पूर्ण
+	if (rseq_unregister_current_thread()) {
+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
+			errno, strerror(errno));
+		abort();
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Simultaneous modअगरication to a per-cpu linked list from many thपढ़ोs.  */
-व्योम test_percpu_list(व्योम)
-अणु
-	पूर्णांक i, j;
-	uपूर्णांक64_t sum = 0, expected_sum = 0;
-	काष्ठा percpu_list list;
-	pthपढ़ो_t test_thपढ़ोs[200];
+/* Simultaneous modification to a per-cpu linked list from many threads.  */
+void test_percpu_list(void)
+{
+	int i, j;
+	uint64_t sum = 0, expected_sum = 0;
+	struct percpu_list list;
+	pthread_t test_threads[200];
 	cpu_set_t allowed_cpus;
 
-	स_रखो(&list, 0, माप(list));
+	memset(&list, 0, sizeof(list));
 
-	/* Generate list entries क्रम every usable cpu. */
-	sched_getaffinity(0, माप(allowed_cpus), &allowed_cpus);
-	क्रम (i = 0; i < CPU_SETSIZE; i++) अणु
-		अगर (!CPU_ISSET(i, &allowed_cpus))
-			जारी;
-		क्रम (j = 1; j <= 100; j++) अणु
-			काष्ठा percpu_list_node *node;
+	/* Generate list entries for every usable cpu. */
+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
+	for (i = 0; i < CPU_SETSIZE; i++) {
+		if (!CPU_ISSET(i, &allowed_cpus))
+			continue;
+		for (j = 1; j <= 100; j++) {
+			struct percpu_list_node *node;
 
 			expected_sum += j;
 
-			node = दो_स्मृति(माप(*node));
-			निश्चित(node);
+			node = malloc(sizeof(*node));
+			assert(node);
 			node->data = j;
 			node->next = list.c[i].head;
 			list.c[i].head = node;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < 200; i++)
-		pthपढ़ो_create(&test_thपढ़ोs[i], शून्य,
-		       test_percpu_list_thपढ़ो, &list);
+	for (i = 0; i < 200; i++)
+		pthread_create(&test_threads[i], NULL,
+		       test_percpu_list_thread, &list);
 
-	क्रम (i = 0; i < 200; i++)
-		pthपढ़ो_join(test_thपढ़ोs[i], शून्य);
+	for (i = 0; i < 200; i++)
+		pthread_join(test_threads[i], NULL);
 
-	क्रम (i = 0; i < CPU_SETSIZE; i++) अणु
-		काष्ठा percpu_list_node *node;
+	for (i = 0; i < CPU_SETSIZE; i++) {
+		struct percpu_list_node *node;
 
-		अगर (!CPU_ISSET(i, &allowed_cpus))
-			जारी;
+		if (!CPU_ISSET(i, &allowed_cpus))
+			continue;
 
-		जबतक ((node = __percpu_list_pop(&list, i))) अणु
+		while ((node = __percpu_list_pop(&list, i))) {
 			sum += node->data;
-			मुक्त(node);
-		पूर्ण
-	पूर्ण
+			free(node);
+		}
+	}
 
 	/*
-	 * All entries should now be accounted क्रम (unless some बाह्यal
-	 * actor is पूर्णांकerfering with our allowed affinity जबतक this
+	 * All entries should now be accounted for (unless some external
+	 * actor is interfering with our allowed affinity while this
 	 * test is running).
 	 */
-	निश्चित(sum == expected_sum);
-पूर्ण
+	assert(sum == expected_sum);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अगर (rseq_रेजिस्टर_current_thपढ़ो()) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-		जाओ error;
-	पूर्ण
-	म_लिखो("spinlock\n");
+int main(int argc, char **argv)
+{
+	if (rseq_register_current_thread()) {
+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
+			errno, strerror(errno));
+		goto error;
+	}
+	printf("spinlock\n");
 	test_percpu_spinlock();
-	म_लिखो("percpu_list\n");
+	printf("percpu_list\n");
 	test_percpu_list();
-	अगर (rseq_unरेजिस्टर_current_thपढ़ो()) अणु
-		ख_लिखो(मानक_त्रुटि, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-		जाओ error;
-	पूर्ण
-	वापस 0;
+	if (rseq_unregister_current_thread()) {
+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
+			errno, strerror(errno));
+		goto error;
+	}
+	return 0;
 
 error:
-	वापस -1;
-पूर्ण
+	return -1;
+}

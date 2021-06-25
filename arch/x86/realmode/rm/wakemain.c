@@ -1,84 +1,83 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "wakeup.h"
-#समावेश "boot.h"
+// SPDX-License-Identifier: GPL-2.0
+#include "wakeup.h"
+#include "boot.h"
 
-अटल व्योम udelay(पूर्णांक loops)
-अणु
-	जबतक (loops--)
+static void udelay(int loops)
+{
+	while (loops--)
 		io_delay();	/* Approximately 1 us */
-पूर्ण
+}
 
-अटल व्योम beep(अचिन्हित पूर्णांक hz)
-अणु
+static void beep(unsigned int hz)
+{
 	u8 enable;
 
-	अगर (!hz) अणु
+	if (!hz) {
 		enable = 0x00;		/* Turn off speaker */
-	पूर्ण अन्यथा अणु
-		u16 भाग = 1193181/hz;
+	} else {
+		u16 div = 1193181/hz;
 
 		outb(0xb6, 0x43);	/* Ctr 2, squarewave, load, binary */
 		io_delay();
-		outb(भाग, 0x42);	/* LSB of counter */
+		outb(div, 0x42);	/* LSB of counter */
 		io_delay();
-		outb(भाग >> 8, 0x42);	/* MSB of counter */
+		outb(div >> 8, 0x42);	/* MSB of counter */
 		io_delay();
 
 		enable = 0x03;		/* Turn on speaker */
-	पूर्ण
-	inb(0x61);		/* Dummy पढ़ो of System Control Port B */
+	}
+	inb(0x61);		/* Dummy read of System Control Port B */
 	io_delay();
-	outb(enable, 0x61);	/* Enable समयr 2 output to speaker */
+	outb(enable, 0x61);	/* Enable timer 2 output to speaker */
 	io_delay();
-पूर्ण
+}
 
-#घोषणा DOT_HZ		880
-#घोषणा DASH_HZ		587
-#घोषणा US_PER_DOT	125000
+#define DOT_HZ		880
+#define DASH_HZ		587
+#define US_PER_DOT	125000
 
 /* Okay, this is totally silly, but it's kind of fun. */
-अटल व्योम send_morse(स्थिर अक्षर *pattern)
-अणु
-	अक्षर s;
+static void send_morse(const char *pattern)
+{
+	char s;
 
-	जबतक ((s = *pattern++)) अणु
-		चयन (s) अणु
-		हाल '.':
+	while ((s = *pattern++)) {
+		switch (s) {
+		case '.':
 			beep(DOT_HZ);
 			udelay(US_PER_DOT);
 			beep(0);
 			udelay(US_PER_DOT);
-			अवरोध;
-		हाल '-':
+			break;
+		case '-':
 			beep(DASH_HZ);
 			udelay(US_PER_DOT * 3);
 			beep(0);
 			udelay(US_PER_DOT);
-			अवरोध;
-		शेष:	/* Assume it's a space */
+			break;
+		default:	/* Assume it's a space */
 			udelay(US_PER_DOT * 3);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-व्योम मुख्य(व्योम)
-अणु
-	/* Kill machine अगर काष्ठाures are wrong */
-	अगर (wakeup_header.real_magic != 0x12345678)
-		जबतक (1)
+void main(void)
+{
+	/* Kill machine if structures are wrong */
+	if (wakeup_header.real_magic != 0x12345678)
+		while (1)
 			;
 
-	अगर (wakeup_header.realmode_flags & 4)
+	if (wakeup_header.realmode_flags & 4)
 		send_morse("...-");
 
-	अगर (wakeup_header.realmode_flags & 1)
-		यंत्र अस्थिर("lcallw   $0xc000,$3");
+	if (wakeup_header.realmode_flags & 1)
+		asm volatile("lcallw   $0xc000,$3");
 
-	अगर (wakeup_header.realmode_flags & 2) अणु
+	if (wakeup_header.realmode_flags & 2) {
 		/* Need to call BIOS */
 		probe_cards(0);
 		set_mode(wakeup_header.video_mode);
-	पूर्ण
-पूर्ण
+	}
+}

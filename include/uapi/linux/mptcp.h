@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_MPTCP_H
-#घोषणा _UAPI_MPTCP_H
+/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+#ifndef _UAPI_MPTCP_H
+#define _UAPI_MPTCP_H
 
-#समावेश <linux/स्थिर.h>
-#समावेश <linux/types.h>
+#include <linux/const.h>
+#include <linux/types.h>
 
-#घोषणा MPTCP_SUBFLOW_FLAG_MCAP_REM		_BITUL(0)
-#घोषणा MPTCP_SUBFLOW_FLAG_MCAP_LOC		_BITUL(1)
-#घोषणा MPTCP_SUBFLOW_FLAG_JOIN_REM		_BITUL(2)
-#घोषणा MPTCP_SUBFLOW_FLAG_JOIN_LOC		_BITUL(3)
-#घोषणा MPTCP_SUBFLOW_FLAG_BKUP_REM		_BITUL(4)
-#घोषणा MPTCP_SUBFLOW_FLAG_BKUP_LOC		_BITUL(5)
-#घोषणा MPTCP_SUBFLOW_FLAG_FULLY_ESTABLISHED	_BITUL(6)
-#घोषणा MPTCP_SUBFLOW_FLAG_CONNECTED		_BITUL(7)
-#घोषणा MPTCP_SUBFLOW_FLAG_MAPVALID		_BITUL(8)
+#define MPTCP_SUBFLOW_FLAG_MCAP_REM		_BITUL(0)
+#define MPTCP_SUBFLOW_FLAG_MCAP_LOC		_BITUL(1)
+#define MPTCP_SUBFLOW_FLAG_JOIN_REM		_BITUL(2)
+#define MPTCP_SUBFLOW_FLAG_JOIN_LOC		_BITUL(3)
+#define MPTCP_SUBFLOW_FLAG_BKUP_REM		_BITUL(4)
+#define MPTCP_SUBFLOW_FLAG_BKUP_LOC		_BITUL(5)
+#define MPTCP_SUBFLOW_FLAG_FULLY_ESTABLISHED	_BITUL(6)
+#define MPTCP_SUBFLOW_FLAG_CONNECTED		_BITUL(7)
+#define MPTCP_SUBFLOW_FLAG_MAPVALID		_BITUL(8)
 
-क्रमागत अणु
+enum {
 	MPTCP_SUBFLOW_ATTR_UNSPEC,
 	MPTCP_SUBFLOW_ATTR_TOKEN_REM,
 	MPTCP_SUBFLOW_ATTR_TOKEN_LOC,
@@ -30,20 +29,20 @@
 	MPTCP_SUBFLOW_ATTR_ID_LOC,
 	MPTCP_SUBFLOW_ATTR_PAD,
 	__MPTCP_SUBFLOW_ATTR_MAX
-पूर्ण;
+};
 
-#घोषणा MPTCP_SUBFLOW_ATTR_MAX (__MPTCP_SUBFLOW_ATTR_MAX - 1)
+#define MPTCP_SUBFLOW_ATTR_MAX (__MPTCP_SUBFLOW_ATTR_MAX - 1)
 
-/* netlink पूर्णांकerface */
-#घोषणा MPTCP_PM_NAME		"mptcp_pm"
-#घोषणा MPTCP_PM_CMD_GRP_NAME	"mptcp_pm_cmds"
-#घोषणा MPTCP_PM_EV_GRP_NAME	"mptcp_pm_events"
-#घोषणा MPTCP_PM_VER		0x1
+/* netlink interface */
+#define MPTCP_PM_NAME		"mptcp_pm"
+#define MPTCP_PM_CMD_GRP_NAME	"mptcp_pm_cmds"
+#define MPTCP_PM_EV_GRP_NAME	"mptcp_pm_events"
+#define MPTCP_PM_VER		0x1
 
 /*
- * ATTR types defined क्रम MPTCP
+ * ATTR types defined for MPTCP
  */
-क्रमागत अणु
+enum {
 	MPTCP_PM_ATTR_UNSPEC,
 
 	MPTCP_PM_ATTR_ADDR,				/* nested address */
@@ -51,31 +50,31 @@
 	MPTCP_PM_ATTR_SUBFLOWS,				/* u32 */
 
 	__MPTCP_PM_ATTR_MAX
-पूर्ण;
+};
 
-#घोषणा MPTCP_PM_ATTR_MAX (__MPTCP_PM_ATTR_MAX - 1)
+#define MPTCP_PM_ATTR_MAX (__MPTCP_PM_ATTR_MAX - 1)
 
-क्रमागत अणु
+enum {
 	MPTCP_PM_ADDR_ATTR_UNSPEC,
 
 	MPTCP_PM_ADDR_ATTR_FAMILY,			/* u16 */
 	MPTCP_PM_ADDR_ATTR_ID,				/* u8 */
-	MPTCP_PM_ADDR_ATTR_ADDR4,			/* काष्ठा in_addr */
-	MPTCP_PM_ADDR_ATTR_ADDR6,			/* काष्ठा in6_addr */
+	MPTCP_PM_ADDR_ATTR_ADDR4,			/* struct in_addr */
+	MPTCP_PM_ADDR_ATTR_ADDR6,			/* struct in6_addr */
 	MPTCP_PM_ADDR_ATTR_PORT,			/* u16 */
 	MPTCP_PM_ADDR_ATTR_FLAGS,			/* u32 */
 	MPTCP_PM_ADDR_ATTR_IF_IDX,			/* s32 */
 
 	__MPTCP_PM_ADDR_ATTR_MAX
-पूर्ण;
+};
 
-#घोषणा MPTCP_PM_ADDR_ATTR_MAX (__MPTCP_PM_ADDR_ATTR_MAX - 1)
+#define MPTCP_PM_ADDR_ATTR_MAX (__MPTCP_PM_ADDR_ATTR_MAX - 1)
 
-#घोषणा MPTCP_PM_ADDR_FLAG_SIGNAL			(1 << 0)
-#घोषणा MPTCP_PM_ADDR_FLAG_SUBFLOW			(1 << 1)
-#घोषणा MPTCP_PM_ADDR_FLAG_BACKUP			(1 << 2)
+#define MPTCP_PM_ADDR_FLAG_SIGNAL			(1 << 0)
+#define MPTCP_PM_ADDR_FLAG_SUBFLOW			(1 << 1)
+#define MPTCP_PM_ADDR_FLAG_BACKUP			(1 << 2)
 
-क्रमागत अणु
+enum {
 	MPTCP_PM_CMD_UNSPEC,
 
 	MPTCP_PM_CMD_ADD_ADDR,
@@ -87,33 +86,33 @@
 	MPTCP_PM_CMD_SET_FLAGS,
 
 	__MPTCP_PM_CMD_AFTER_LAST
-पूर्ण;
+};
 
-#घोषणा MPTCP_INFO_FLAG_FALLBACK		_BITUL(0)
-#घोषणा MPTCP_INFO_FLAG_REMOTE_KEY_RECEIVED	_BITUL(1)
+#define MPTCP_INFO_FLAG_FALLBACK		_BITUL(0)
+#define MPTCP_INFO_FLAG_REMOTE_KEY_RECEIVED	_BITUL(1)
 
-काष्ठा mptcp_info अणु
+struct mptcp_info {
 	__u8	mptcpi_subflows;
-	__u8	mptcpi_add_addr_संकेत;
+	__u8	mptcpi_add_addr_signal;
 	__u8	mptcpi_add_addr_accepted;
 	__u8	mptcpi_subflows_max;
-	__u8	mptcpi_add_addr_संकेत_max;
+	__u8	mptcpi_add_addr_signal_max;
 	__u8	mptcpi_add_addr_accepted_max;
 	__u32	mptcpi_flags;
 	__u32	mptcpi_token;
-	__u64	mptcpi_ग_लिखो_seq;
+	__u64	mptcpi_write_seq;
 	__u64	mptcpi_snd_una;
 	__u64	mptcpi_rcv_nxt;
 	__u8	mptcpi_local_addr_used;
 	__u8	mptcpi_local_addr_max;
-पूर्ण;
+};
 
 /*
  * MPTCP_EVENT_CREATED: token, family, saddr4 | saddr6, daddr4 | daddr6,
  *                      sport, dport
- * A new MPTCP connection has been created. It is the good समय to allocate
- * memory and send ADD_ADDR अगर needed. Depending on the traffic-patterns
- * it can take a दीर्घ समय until the MPTCP_EVENT_ESTABLISHED is sent.
+ * A new MPTCP connection has been created. It is the good time to allocate
+ * memory and send ADD_ADDR if needed. Depending on the traffic-patterns
+ * it can take a long time until the MPTCP_EVENT_ESTABLISHED is sent.
  *
  * MPTCP_EVENT_ESTABLISHED: token, family, saddr4 | saddr6, daddr4 | daddr6,
  *			    sport, dport
@@ -130,19 +129,19 @@
  *
  * MPTCP_EVENT_SUB_ESTABLISHED: token, family, saddr4 | saddr6,
  *                              daddr4 | daddr6, sport, dport, backup,
- *                              अगर_idx [, error]
+ *                              if_idx [, error]
  * A new subflow has been established. 'error' should not be set.
  *
  * MPTCP_EVENT_SUB_CLOSED: token, family, saddr4 | saddr6, daddr4 | daddr6,
- *                         sport, dport, backup, अगर_idx [, error]
- * A subflow has been बंदd. An error (copy of sk_err) could be set अगर an
- * error has been detected क्रम this subflow.
+ *                         sport, dport, backup, if_idx [, error]
+ * A subflow has been closed. An error (copy of sk_err) could be set if an
+ * error has been detected for this subflow.
  *
  * MPTCP_EVENT_SUB_PRIORITY: token, family, saddr4 | saddr6, daddr4 | daddr6,
- *                           sport, dport, backup, अगर_idx [, error]
+ *                           sport, dport, backup, if_idx [, error]
  *       The priority of a subflow has changed. 'error' should not be set.
  */
-क्रमागत mptcp_event_type अणु
+enum mptcp_event_type {
 	MPTCP_EVENT_UNSPEC = 0,
 	MPTCP_EVENT_CREATED = 1,
 	MPTCP_EVENT_ESTABLISHED = 2,
@@ -155,9 +154,9 @@
 	MPTCP_EVENT_SUB_CLOSED = 11,
 
 	MPTCP_EVENT_SUB_PRIORITY = 13,
-पूर्ण;
+};
 
-क्रमागत mptcp_event_attr अणु
+enum mptcp_event_attr {
 	MPTCP_ATTR_UNSPEC = 0,
 
 	MPTCP_ATTR_TOKEN,	/* u32 */
@@ -165,9 +164,9 @@
 	MPTCP_ATTR_LOC_ID,	/* u8 */
 	MPTCP_ATTR_REM_ID,	/* u8 */
 	MPTCP_ATTR_SADDR4,	/* be32 */
-	MPTCP_ATTR_SADDR6,	/* काष्ठा in6_addr */
+	MPTCP_ATTR_SADDR6,	/* struct in6_addr */
 	MPTCP_ATTR_DADDR4,	/* be32 */
-	MPTCP_ATTR_DADDR6,	/* काष्ठा in6_addr */
+	MPTCP_ATTR_DADDR6,	/* struct in6_addr */
 	MPTCP_ATTR_SPORT,	/* be16 */
 	MPTCP_ATTR_DPORT,	/* be16 */
 	MPTCP_ATTR_BACKUP,	/* u8 */
@@ -179,17 +178,17 @@
 	MPTCP_ATTR_RESET_FLAGS, /* u32 */
 
 	__MPTCP_ATTR_AFTER_LAST
-पूर्ण;
+};
 
-#घोषणा MPTCP_ATTR_MAX (__MPTCP_ATTR_AFTER_LAST - 1)
+#define MPTCP_ATTR_MAX (__MPTCP_ATTR_AFTER_LAST - 1)
 
 /* MPTCP Reset reason codes, rfc8684 */
-#घोषणा MPTCP_RST_EUNSPEC	0
-#घोषणा MPTCP_RST_EMPTCP	1
-#घोषणा MPTCP_RST_ERESOURCE	2
-#घोषणा MPTCP_RST_EPROHIBIT	3
-#घोषणा MPTCP_RST_EWQ2BIG	4
-#घोषणा MPTCP_RST_EBADPERF	5
-#घोषणा MPTCP_RST_EMIDDLEBOX	6
+#define MPTCP_RST_EUNSPEC	0
+#define MPTCP_RST_EMPTCP	1
+#define MPTCP_RST_ERESOURCE	2
+#define MPTCP_RST_EPROHIBIT	3
+#define MPTCP_RST_EWQ2BIG	4
+#define MPTCP_RST_EBADPERF	5
+#define MPTCP_RST_EMIDDLEBOX	6
 
-#पूर्ण_अगर /* _UAPI_MPTCP_H */
+#endif /* _UAPI_MPTCP_H */

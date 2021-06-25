@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Freescale Management Complex (MC) bus driver MSI support
  *
  * Copyright (C) 2015-2016 Freescale Semiconductor, Inc.
- * Author: German Rivera <German.Rivera@मुक्तscale.com>
+ * Author: German Rivera <German.Rivera@freescale.com>
  *
  */
 
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/msi.h>
-#समावेश <linux/acpi_iort.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/msi.h>
+#include <linux/acpi_iort.h>
 
-#समावेश "fsl-mc-private.h"
+#include "fsl-mc-private.h"
 
-#अगर_घोषित GENERIC_MSI_DOMAIN_OPS
+#ifdef GENERIC_MSI_DOMAIN_OPS
 /*
- * Generate a unique ID identअगरying the पूर्णांकerrupt (only used within the MSI
- * irqकरोमुख्य.  Combine the icid with the पूर्णांकerrupt index.
+ * Generate a unique ID identifying the interrupt (only used within the MSI
+ * irqdomain.  Combine the icid with the interrupt index.
  */
-अटल irq_hw_number_t fsl_mc_करोमुख्य_calc_hwirq(काष्ठा fsl_mc_device *dev,
-						काष्ठा msi_desc *desc)
-अणु
+static irq_hw_number_t fsl_mc_domain_calc_hwirq(struct fsl_mc_device *dev,
+						struct msi_desc *desc)
+{
 	/*
-	 * Make the base hwirq value क्रम ICID*10000 so it is पढ़ोable
-	 * as a decimal value in /proc/पूर्णांकerrupts.
+	 * Make the base hwirq value for ICID*10000 so it is readable
+	 * as a decimal value in /proc/interrupts.
 	 */
-	वापस (irq_hw_number_t)(desc->fsl_mc.msi_index + (dev->icid * 10000));
-पूर्ण
+	return (irq_hw_number_t)(desc->fsl_mc.msi_index + (dev->icid * 10000));
+}
 
-अटल व्योम fsl_mc_msi_set_desc(msi_alloc_info_t *arg,
-				काष्ठा msi_desc *desc)
-अणु
+static void fsl_mc_msi_set_desc(msi_alloc_info_t *arg,
+				struct msi_desc *desc)
+{
 	arg->desc = desc;
-	arg->hwirq = fsl_mc_करोमुख्य_calc_hwirq(to_fsl_mc_device(desc->dev),
+	arg->hwirq = fsl_mc_domain_calc_hwirq(to_fsl_mc_device(desc->dev),
 					      desc);
-पूर्ण
-#अन्यथा
-#घोषणा fsl_mc_msi_set_desc शून्य
-#पूर्ण_अगर
+}
+#else
+#define fsl_mc_msi_set_desc NULL
+#endif
 
-अटल व्योम fsl_mc_msi_update_करोm_ops(काष्ठा msi_करोमुख्य_info *info)
-अणु
-	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
+static void fsl_mc_msi_update_dom_ops(struct msi_domain_info *info)
+{
+	struct msi_domain_ops *ops = info->ops;
 
-	अगर (!ops)
-		वापस;
+	if (!ops)
+		return;
 
 	/*
 	 * set_desc should not be set by the caller
 	 */
-	अगर (!ops->set_desc)
+	if (!ops->set_desc)
 		ops->set_desc = fsl_mc_msi_set_desc;
-पूर्ण
+}
 
-अटल व्योम __fsl_mc_msi_ग_लिखो_msg(काष्ठा fsl_mc_device *mc_bus_dev,
-				   काष्ठा fsl_mc_device_irq *mc_dev_irq)
-अणु
-	पूर्णांक error;
-	काष्ठा fsl_mc_device *owner_mc_dev = mc_dev_irq->mc_dev;
-	काष्ठा msi_desc *msi_desc = mc_dev_irq->msi_desc;
-	काष्ठा dprc_irq_cfg irq_cfg;
+static void __fsl_mc_msi_write_msg(struct fsl_mc_device *mc_bus_dev,
+				   struct fsl_mc_device_irq *mc_dev_irq)
+{
+	int error;
+	struct fsl_mc_device *owner_mc_dev = mc_dev_irq->mc_dev;
+	struct msi_desc *msi_desc = mc_dev_irq->msi_desc;
+	struct dprc_irq_cfg irq_cfg;
 
 	/*
 	 * msi_desc->msg.address is 0x0 when this function is invoked in
-	 * the मुक्त_irq() code path. In this हाल, क्रम the MC, we करोn't
-	 * really need to "unprogram" the MSI, so we just वापस.
+	 * the free_irq() code path. In this case, for the MC, we don't
+	 * really need to "unprogram" the MSI, so we just return.
 	 */
-	अगर (msi_desc->msg.address_lo == 0x0 && msi_desc->msg.address_hi == 0x0)
-		वापस;
+	if (msi_desc->msg.address_lo == 0x0 && msi_desc->msg.address_hi == 0x0)
+		return;
 
-	अगर (!owner_mc_dev)
-		वापस;
+	if (!owner_mc_dev)
+		return;
 
 	irq_cfg.paddr = ((u64)msi_desc->msg.address_hi << 32) |
 			msi_desc->msg.address_lo;
 	irq_cfg.val = msi_desc->msg.data;
 	irq_cfg.irq_num = msi_desc->irq;
 
-	अगर (owner_mc_dev == mc_bus_dev) अणु
+	if (owner_mc_dev == mc_bus_dev) {
 		/*
-		 * IRQ is क्रम the mc_bus_dev's DPRC itself
+		 * IRQ is for the mc_bus_dev's DPRC itself
 		 */
 		error = dprc_set_irq(mc_bus_dev->mc_io,
 				     MC_CMD_FLAG_INTR_DIS | MC_CMD_FLAG_PRI,
 				     mc_bus_dev->mc_handle,
 				     mc_dev_irq->dev_irq_index,
 				     &irq_cfg);
-		अगर (error < 0) अणु
+		if (error < 0) {
 			dev_err(&owner_mc_dev->dev,
 				"dprc_set_irq() failed: %d\n", error);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
-		 * IRQ is क्रम क्रम a child device of mc_bus_dev
+		 * IRQ is for for a child device of mc_bus_dev
 		 */
 		error = dprc_set_obj_irq(mc_bus_dev->mc_io,
 					 MC_CMD_FLAG_INTR_DIS | MC_CMD_FLAG_PRI,
@@ -106,23 +105,23 @@
 					 owner_mc_dev->obj_desc.id,
 					 mc_dev_irq->dev_irq_index,
 					 &irq_cfg);
-		अगर (error < 0) अणु
+		if (error < 0) {
 			dev_err(&owner_mc_dev->dev,
 				"dprc_obj_set_irq() failed: %d\n", error);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * NOTE: This function is invoked with पूर्णांकerrupts disabled
+ * NOTE: This function is invoked with interrupts disabled
  */
-अटल व्योम fsl_mc_msi_ग_लिखो_msg(काष्ठा irq_data *irq_data,
-				 काष्ठा msi_msg *msg)
-अणु
-	काष्ठा msi_desc *msi_desc = irq_data_get_msi_desc(irq_data);
-	काष्ठा fsl_mc_device *mc_bus_dev = to_fsl_mc_device(msi_desc->dev);
-	काष्ठा fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
-	काष्ठा fsl_mc_device_irq *mc_dev_irq =
+static void fsl_mc_msi_write_msg(struct irq_data *irq_data,
+				 struct msi_msg *msg)
+{
+	struct msi_desc *msi_desc = irq_data_get_msi_desc(irq_data);
+	struct fsl_mc_device *mc_bus_dev = to_fsl_mc_device(msi_desc->dev);
+	struct fsl_mc_bus *mc_bus = to_fsl_mc_bus(mc_bus_dev);
+	struct fsl_mc_device_irq *mc_dev_irq =
 		&mc_bus->irq_resources[msi_desc->fsl_mc.msi_index];
 
 	msi_desc->msg = *msg;
@@ -130,173 +129,173 @@
 	/*
 	 * Program the MSI (paddr, value) pair in the device:
 	 */
-	__fsl_mc_msi_ग_लिखो_msg(mc_bus_dev, mc_dev_irq);
-पूर्ण
+	__fsl_mc_msi_write_msg(mc_bus_dev, mc_dev_irq);
+}
 
-अटल व्योम fsl_mc_msi_update_chip_ops(काष्ठा msi_करोमुख्य_info *info)
-अणु
-	काष्ठा irq_chip *chip = info->chip;
+static void fsl_mc_msi_update_chip_ops(struct msi_domain_info *info)
+{
+	struct irq_chip *chip = info->chip;
 
-	अगर (!chip)
-		वापस;
+	if (!chip)
+		return;
 
 	/*
-	 * irq_ग_लिखो_msi_msg should not be set by the caller
+	 * irq_write_msi_msg should not be set by the caller
 	 */
-	अगर (!chip->irq_ग_लिखो_msi_msg)
-		chip->irq_ग_लिखो_msi_msg = fsl_mc_msi_ग_लिखो_msg;
-पूर्ण
+	if (!chip->irq_write_msi_msg)
+		chip->irq_write_msi_msg = fsl_mc_msi_write_msg;
+}
 
 /**
- * fsl_mc_msi_create_irq_करोमुख्य - Create a fsl-mc MSI पूर्णांकerrupt करोमुख्य
- * @np:		Optional device-tree node of the पूर्णांकerrupt controller
- * @info:	MSI करोमुख्य info
- * @parent:	Parent irq करोमुख्य
+ * fsl_mc_msi_create_irq_domain - Create a fsl-mc MSI interrupt domain
+ * @np:		Optional device-tree node of the interrupt controller
+ * @info:	MSI domain info
+ * @parent:	Parent irq domain
  *
- * Updates the करोमुख्य and chip ops and creates a fsl-mc MSI
- * पूर्णांकerrupt करोमुख्य.
+ * Updates the domain and chip ops and creates a fsl-mc MSI
+ * interrupt domain.
  *
  * Returns:
- * A करोमुख्य poपूर्णांकer or शून्य in हाल of failure.
+ * A domain pointer or NULL in case of failure.
  */
-काष्ठा irq_करोमुख्य *fsl_mc_msi_create_irq_करोमुख्य(काष्ठा fwnode_handle *fwnode,
-						काष्ठा msi_करोमुख्य_info *info,
-						काष्ठा irq_करोमुख्य *parent)
-अणु
-	काष्ठा irq_करोमुख्य *करोमुख्य;
+struct irq_domain *fsl_mc_msi_create_irq_domain(struct fwnode_handle *fwnode,
+						struct msi_domain_info *info,
+						struct irq_domain *parent)
+{
+	struct irq_domain *domain;
 
-	अगर (WARN_ON((info->flags & MSI_FLAG_LEVEL_CAPABLE)))
+	if (WARN_ON((info->flags & MSI_FLAG_LEVEL_CAPABLE)))
 		info->flags &= ~MSI_FLAG_LEVEL_CAPABLE;
-	अगर (info->flags & MSI_FLAG_USE_DEF_DOM_OPS)
-		fsl_mc_msi_update_करोm_ops(info);
-	अगर (info->flags & MSI_FLAG_USE_DEF_CHIP_OPS)
+	if (info->flags & MSI_FLAG_USE_DEF_DOM_OPS)
+		fsl_mc_msi_update_dom_ops(info);
+	if (info->flags & MSI_FLAG_USE_DEF_CHIP_OPS)
 		fsl_mc_msi_update_chip_ops(info);
 
-	करोमुख्य = msi_create_irq_करोमुख्य(fwnode, info, parent);
-	अगर (करोमुख्य)
-		irq_करोमुख्य_update_bus_token(करोमुख्य, DOMAIN_BUS_FSL_MC_MSI);
+	domain = msi_create_irq_domain(fwnode, info, parent);
+	if (domain)
+		irq_domain_update_bus_token(domain, DOMAIN_BUS_FSL_MC_MSI);
 
-	वापस करोमुख्य;
-पूर्ण
+	return domain;
+}
 
-काष्ठा irq_करोमुख्य *fsl_mc_find_msi_करोमुख्य(काष्ठा device *dev)
-अणु
-	काष्ठा device *root_dprc_dev;
-	काष्ठा device *bus_dev;
-	काष्ठा irq_करोमुख्य *msi_करोमुख्य;
-	काष्ठा fsl_mc_device *mc_dev = to_fsl_mc_device(dev);
+struct irq_domain *fsl_mc_find_msi_domain(struct device *dev)
+{
+	struct device *root_dprc_dev;
+	struct device *bus_dev;
+	struct irq_domain *msi_domain;
+	struct fsl_mc_device *mc_dev = to_fsl_mc_device(dev);
 
 	fsl_mc_get_root_dprc(dev, &root_dprc_dev);
 	bus_dev = root_dprc_dev->parent;
 
-	अगर (bus_dev->of_node) अणु
-		msi_करोमुख्य = of_msi_map_get_device_करोमुख्य(dev,
+	if (bus_dev->of_node) {
+		msi_domain = of_msi_map_get_device_domain(dev,
 						  mc_dev->icid,
 						  DOMAIN_BUS_FSL_MC_MSI);
 
 		/*
-		 * अगर the msi-map property is missing assume that all the
-		 * child containers inherit the करोमुख्य from the parent
+		 * if the msi-map property is missing assume that all the
+		 * child containers inherit the domain from the parent
 		 */
-		अगर (!msi_करोमुख्य)
+		if (!msi_domain)
 
-			msi_करोमुख्य = of_msi_get_करोमुख्य(bus_dev,
+			msi_domain = of_msi_get_domain(bus_dev,
 						bus_dev->of_node,
 						DOMAIN_BUS_FSL_MC_MSI);
-	पूर्ण अन्यथा अणु
-		msi_करोमुख्य = iort_get_device_करोमुख्य(dev, mc_dev->icid,
+	} else {
+		msi_domain = iort_get_device_domain(dev, mc_dev->icid,
 						    DOMAIN_BUS_FSL_MC_MSI);
-	पूर्ण
+	}
 
-	वापस msi_करोमुख्य;
-पूर्ण
+	return msi_domain;
+}
 
-अटल व्योम fsl_mc_msi_मुक्त_descs(काष्ठा device *dev)
-अणु
-	काष्ठा msi_desc *desc, *पंचांगp;
+static void fsl_mc_msi_free_descs(struct device *dev)
+{
+	struct msi_desc *desc, *tmp;
 
-	list_क्रम_each_entry_safe(desc, पंचांगp, dev_to_msi_list(dev), list) अणु
+	list_for_each_entry_safe(desc, tmp, dev_to_msi_list(dev), list) {
 		list_del(&desc->list);
-		मुक्त_msi_entry(desc);
-	पूर्ण
-पूर्ण
+		free_msi_entry(desc);
+	}
+}
 
-अटल पूर्णांक fsl_mc_msi_alloc_descs(काष्ठा device *dev, अचिन्हित पूर्णांक irq_count)
+static int fsl_mc_msi_alloc_descs(struct device *dev, unsigned int irq_count)
 
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक error;
-	काष्ठा msi_desc *msi_desc;
+{
+	unsigned int i;
+	int error;
+	struct msi_desc *msi_desc;
 
-	क्रम (i = 0; i < irq_count; i++) अणु
-		msi_desc = alloc_msi_entry(dev, 1, शून्य);
-		अगर (!msi_desc) अणु
+	for (i = 0; i < irq_count; i++) {
+		msi_desc = alloc_msi_entry(dev, 1, NULL);
+		if (!msi_desc) {
 			dev_err(dev, "Failed to allocate msi entry\n");
 			error = -ENOMEM;
-			जाओ cleanup_msi_descs;
-		पूर्ण
+			goto cleanup_msi_descs;
+		}
 
 		msi_desc->fsl_mc.msi_index = i;
 		INIT_LIST_HEAD(&msi_desc->list);
 		list_add_tail(&msi_desc->list, dev_to_msi_list(dev));
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup_msi_descs:
-	fsl_mc_msi_मुक्त_descs(dev);
-	वापस error;
-पूर्ण
+	fsl_mc_msi_free_descs(dev);
+	return error;
+}
 
-पूर्णांक fsl_mc_msi_करोमुख्य_alloc_irqs(काष्ठा device *dev,
-				 अचिन्हित पूर्णांक irq_count)
-अणु
-	काष्ठा irq_करोमुख्य *msi_करोमुख्य;
-	पूर्णांक error;
+int fsl_mc_msi_domain_alloc_irqs(struct device *dev,
+				 unsigned int irq_count)
+{
+	struct irq_domain *msi_domain;
+	int error;
 
-	अगर (!list_empty(dev_to_msi_list(dev)))
-		वापस -EINVAL;
+	if (!list_empty(dev_to_msi_list(dev)))
+		return -EINVAL;
 
 	error = fsl_mc_msi_alloc_descs(dev, irq_count);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
-	msi_करोमुख्य = dev_get_msi_करोमुख्य(dev);
-	अगर (!msi_करोमुख्य) अणु
+	msi_domain = dev_get_msi_domain(dev);
+	if (!msi_domain) {
 		error = -EINVAL;
-		जाओ cleanup_msi_descs;
-	पूर्ण
+		goto cleanup_msi_descs;
+	}
 
 	/*
 	 * NOTE: Calling this function will trigger the invocation of the
 	 * its_fsl_mc_msi_prepare() callback
 	 */
-	error = msi_करोमुख्य_alloc_irqs(msi_करोमुख्य, dev, irq_count);
+	error = msi_domain_alloc_irqs(msi_domain, dev, irq_count);
 
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "Failed to allocate IRQs\n");
-		जाओ cleanup_msi_descs;
-	पूर्ण
+		goto cleanup_msi_descs;
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup_msi_descs:
-	fsl_mc_msi_मुक्त_descs(dev);
-	वापस error;
-पूर्ण
+	fsl_mc_msi_free_descs(dev);
+	return error;
+}
 
-व्योम fsl_mc_msi_करोमुख्य_मुक्त_irqs(काष्ठा device *dev)
-अणु
-	काष्ठा irq_करोमुख्य *msi_करोमुख्य;
+void fsl_mc_msi_domain_free_irqs(struct device *dev)
+{
+	struct irq_domain *msi_domain;
 
-	msi_करोमुख्य = dev_get_msi_करोमुख्य(dev);
-	अगर (!msi_करोमुख्य)
-		वापस;
+	msi_domain = dev_get_msi_domain(dev);
+	if (!msi_domain)
+		return;
 
-	msi_करोमुख्य_मुक्त_irqs(msi_करोमुख्य, dev);
+	msi_domain_free_irqs(msi_domain, dev);
 
-	अगर (list_empty(dev_to_msi_list(dev)))
-		वापस;
+	if (list_empty(dev_to_msi_list(dev)))
+		return;
 
-	fsl_mc_msi_मुक्त_descs(dev);
-पूर्ण
+	fsl_mc_msi_free_descs(dev);
+}

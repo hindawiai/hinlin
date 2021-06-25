@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*  D-Link DL2000-based Gigabit Ethernet Adapter Linux driver */
 /*
     Copyright (c) 2001, 2002 by D-Link Corporation
@@ -8,47 +7,47 @@
 
 */
 
-#अगर_अघोषित __DL2K_H__
-#घोषणा __DL2K_H__
+#ifndef __DL2K_H__
+#define __DL2K_H__
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/bitops.h>
-#समावेश <यंत्र/processor.h>	/* Processor type क्रम cache alignment. */
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/समय.स>
-#घोषणा TX_RING_SIZE	256
-#घोषणा TX_QUEUE_LEN	(TX_RING_SIZE - 1) /* Limit ring entries actually used.*/
-#घोषणा RX_RING_SIZE 	256
-#घोषणा TX_TOTAL_SIZE	TX_RING_SIZE*माप(काष्ठा netdev_desc)
-#घोषणा RX_TOTAL_SIZE	RX_RING_SIZE*माप(काष्ठा netdev_desc)
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/crc32.h>
+#include <linux/ethtool.h>
+#include <linux/mii.h>
+#include <linux/bitops.h>
+#include <asm/processor.h>	/* Processor type for cache alignment. */
+#include <asm/io.h>
+#include <linux/uaccess.h>
+#include <linux/delay.h>
+#include <linux/spinlock.h>
+#include <linux/time.h>
+#define TX_RING_SIZE	256
+#define TX_QUEUE_LEN	(TX_RING_SIZE - 1) /* Limit ring entries actually used.*/
+#define RX_RING_SIZE 	256
+#define TX_TOTAL_SIZE	TX_RING_SIZE*sizeof(struct netdev_desc)
+#define RX_TOTAL_SIZE	RX_RING_SIZE*sizeof(struct netdev_desc)
 
-/* Offsets to the device रेजिस्टरs.
-   Unlike software-only प्रणालीs, device drivers पूर्णांकeract with complex hardware.
-   It's not useful to define symbolic names क्रम every रेजिस्टर bit in the
-   device.  The name can only partially करोcument the semantics and make
-   the driver दीर्घer and more dअगरficult to पढ़ो.
+/* Offsets to the device registers.
+   Unlike software-only systems, device drivers interact with complex hardware.
+   It's not useful to define symbolic names for every register bit in the
+   device.  The name can only partially document the semantics and make
+   the driver longer and more difficult to read.
    In general, only the important configuration values or bits changed
-   multiple बार should be defined symbolically.
+   multiple times should be defined symbolically.
 */
-क्रमागत dl2x_offsets अणु
-	/* I/O रेजिस्टर offsets */
+enum dl2x_offsets {
+	/* I/O register offsets */
 	DMACtrl = 0x00,
 	RxDMAStatus = 0x08,
 	TFDListPtr0 = 0x10,
@@ -64,7 +63,7 @@
 	RxDMAIntCtrl = 0x28,
 	DebugCtrl = 0x2c,
 	ASICCtrl = 0x30,
-	FअगरoCtrl = 0x38,
+	FifoCtrl = 0x38,
 	RxEarlyThresh = 0x3a,
 	FlowOffThresh = 0x3c,
 	FlowOnThresh = 0x3e,
@@ -97,7 +96,7 @@
 	IPCheckSumErrors = 0xc2,
 	UDPCheckSumErrors = 0xc4,
 	TxJumboFrames = 0xf4,
-	/* Ethernet MIB statistic रेजिस्टर offsets */
+	/* Ethernet MIB statistic register offsets */
 	OctetRcvOk = 0xa8,
 	McstOctetRcvOk = 0xac,
 	BcstOctetRcvOk = 0xb0,
@@ -123,7 +122,7 @@
 	MacControlFramesXmtd = 0xfa,
 	FramesAbortXSColls = 0xfc,
 	FramesWEXDeferal = 0xfe,
-	/* RMON statistic रेजिस्टर offsets */
+	/* RMON statistic register offsets */
 	EtherStatsCollisions = 0x100,
 	EtherStatsOctetsTransmit = 0x104,
 	EtherStatsPktsTransmit = 0x108,
@@ -145,10 +144,10 @@
 	EtherStatsPkts256to511Octets = 0x148,
 	EtherStatsPkts512to1023Octets = 0x14c,
 	EtherStatsPkts1024to1518Octets = 0x150,
-पूर्ण;
+};
 
-/* Bits in the पूर्णांकerrupt status/mask रेजिस्टरs. */
-क्रमागत IntStatus_bits अणु
+/* Bits in the interrupt status/mask registers. */
+enum IntStatus_bits {
 	InterruptStatus = 0x0001,
 	HostError = 0x0002,
 	MACCtrlFrame = 0x0008,
@@ -162,10 +161,10 @@
 	RxDMAComplete = 0x0400,
 	RFDListEnd = 0x0800,
 	RxDMAPriority = 0x1000,
-पूर्ण;
+};
 
-/* Bits in the ReceiveMode रेजिस्टर. */
-क्रमागत ReceiveMode_bits अणु
+/* Bits in the ReceiveMode register. */
+enum ReceiveMode_bits {
 	ReceiveUnicast = 0x0001,
 	ReceiveMulticast = 0x0002,
 	ReceiveBroadcast = 0x0004,
@@ -174,9 +173,9 @@
 	ReceiveIPMulticast = 0x0020,
 	ReceiveVLANMatch = 0x0100,
 	ReceiveVLANHash = 0x0200,
-पूर्ण;
+};
 /* Bits in MACCtrl. */
-क्रमागत MACCtrl_bits अणु
+enum MACCtrl_bits {
 	DuplexSelect = 0x20,
 	TxFlowControlEnable = 0x80,
 	RxFlowControlEnable = 0x0100,
@@ -192,13 +191,13 @@
 	RxEnable = 0x08000000,
 	RxDisable = 0x10000000,
 	RxEnabled = 0x20000000,
-पूर्ण;
+};
 
-क्रमागत ASICCtrl_LoWord_bits अणु
+enum ASICCtrl_LoWord_bits {
 	PhyMedia = 0x0080,
-पूर्ण;
+};
 
-क्रमागत ASICCtrl_HiWord_bits अणु
+enum ASICCtrl_HiWord_bits {
 	GlobalReset = 0x0001,
 	RxReset = 0x0002,
 	TxReset = 0x0004,
@@ -207,14 +206,14 @@
 	NetworkReset = 0x0020,
 	HostReset = 0x0040,
 	ResetBusy = 0x0400,
-पूर्ण;
+};
 
-#घोषणा IPG_AC_LED_MODE		BIT(14)
-#घोषणा IPG_AC_LED_SPEED	BIT(27)
-#घोषणा IPG_AC_LED_MODE_BIT_1	BIT(29)
+#define IPG_AC_LED_MODE		BIT(14)
+#define IPG_AC_LED_SPEED	BIT(27)
+#define IPG_AC_LED_MODE_BIT_1	BIT(29)
 
 /* Transmit Frame Control bits */
-क्रमागत TFC_bits अणु
+enum TFC_bits {
 	DwordAlign = 0x00000000,
 	WordAlignDisable = 0x00030000,
 	WordAlign = 0x00020000,
@@ -224,15 +223,15 @@
 	FCSAppendDisable = 0x00200000,
 	TxIndicate = 0x00400000,
 	TxDMAIndicate = 0x00800000,
-	FragCountShअगरt = 24,
+	FragCountShift = 24,
 	VLANTagInsert = 0x0000000010000000,
 	TFDDone = 0x80000000,
-	VIDShअगरt = 32,
-	UsePriorityShअगरt = 48,
-पूर्ण;
+	VIDShift = 32,
+	UsePriorityShift = 48,
+};
 
 /* Receive Frames Status bits */
-क्रमागत RFS_bits अणु
+enum RFS_bits {
 	RxFIFOOverrun = 0x00010000,
 	RxRuntFrame = 0x00020000,
 	RxAlignmentError = 0x00040000,
@@ -249,18 +248,18 @@
 	FrameStart = 0x20000000,
 	FrameEnd = 0x40000000,
 	RFDDone = 0x80000000,
-	TCIShअगरt = 32,
+	TCIShift = 32,
 	RFS_Errors = 0x003f0000,
-पूर्ण;
+};
 
-#घोषणा MII_RESET_TIME_OUT		10000
-/* MII रेजिस्टर */
-क्रमागत _mii_reg अणु
+#define MII_RESET_TIME_OUT		10000
+/* MII register */
+enum _mii_reg {
 	MII_PHY_SCR = 16,
-पूर्ण;
+};
 
-/* PCS रेजिस्टर */
-क्रमागत _pcs_reg अणु
+/* PCS register */
+enum _pcs_reg {
 	PCS_BMCR = 0,
 	PCS_BMSR = 1,
 	PCS_ANAR = 4,
@@ -269,20 +268,20 @@
 	PCS_ANNPT = 7,
 	PCS_ANLPRNP = 8,
 	PCS_ESR = 15,
-पूर्ण;
+};
 
 /* IEEE Extened Status Register */
-क्रमागत _mii_esr अणु
+enum _mii_esr {
 	MII_ESR_1000BX_FD = 0x8000,
 	MII_ESR_1000BX_HD = 0x4000,
 	MII_ESR_1000BT_FD = 0x2000,
 	MII_ESR_1000BT_HD = 0x1000,
-पूर्ण;
-/* PHY Specअगरic Control Register */
-#अगर 0
-प्रकार जोड़ t_MII_PHY_SCR अणु
+};
+/* PHY Specific Control Register */
+#if 0
+typedef union t_MII_PHY_SCR {
 	u16 image;
-	काष्ठा अणु
+	struct {
 		u16 disable_jabber:1;	// bit 0
 		u16 polarity_reversal:1;	// bit 1
 		u16 SEQ_test:1;	// bit 2
@@ -291,49 +290,49 @@
 		u16 mdi_crossover_mode:2;	// bit 6:5
 		u16 enable_ext_dist:1;	// bit 7
 		u16 _bit_8_9:2;	// bit 9:8
-		u16 क्रमce_link:1;	// bit 10
-		u16 निश्चित_CRS:1;	// bit 11
-		u16 rcv_fअगरo_depth:2;	// bit 13:12
-		u16 xmit_fअगरo_depth:2;	// bit 15:14
-	पूर्ण bits;
-पूर्ण PHY_SCR_t, *PPHY_SCR_t;
-#पूर्ण_अगर
+		u16 force_link:1;	// bit 10
+		u16 assert_CRS:1;	// bit 11
+		u16 rcv_fifo_depth:2;	// bit 13:12
+		u16 xmit_fifo_depth:2;	// bit 15:14
+	} bits;
+} PHY_SCR_t, *PPHY_SCR_t;
+#endif
 
-प्रकार क्रमागत t_MII_ADMIN_STATUS अणु
+typedef enum t_MII_ADMIN_STATUS {
 	adm_reset,
 	adm_operational,
 	adm_loopback,
-	adm_घातer_करोwn,
+	adm_power_down,
 	adm_isolate
-पूर्ण MII_ADMIN_t, *PMII_ADMIN_t;
+} MII_ADMIN_t, *PMII_ADMIN_t;
 
 /* Physical Coding Sublayer Management (PCS) */
-/* PCS control and status रेजिस्टरs biपंचांगap as the same as MII */
-/* PCS Extended Status रेजिस्टर biपंचांगap as the same as MII */
+/* PCS control and status registers bitmap as the same as MII */
+/* PCS Extended Status register bitmap as the same as MII */
 /* PCS ANAR */
-क्रमागत _pcs_anar अणु
+enum _pcs_anar {
 	PCS_ANAR_NEXT_PAGE = 0x8000,
 	PCS_ANAR_REMOTE_FAULT = 0x3000,
 	PCS_ANAR_ASYMMETRIC = 0x0100,
 	PCS_ANAR_PAUSE = 0x0080,
 	PCS_ANAR_HALF_DUPLEX = 0x0040,
 	PCS_ANAR_FULL_DUPLEX = 0x0020,
-पूर्ण;
+};
 /* PCS ANLPAR */
-क्रमागत _pcs_anlpar अणु
+enum _pcs_anlpar {
 	PCS_ANLPAR_NEXT_PAGE = PCS_ANAR_NEXT_PAGE,
 	PCS_ANLPAR_REMOTE_FAULT = PCS_ANAR_REMOTE_FAULT,
 	PCS_ANLPAR_ASYMMETRIC = PCS_ANAR_ASYMMETRIC,
 	PCS_ANLPAR_PAUSE = PCS_ANAR_PAUSE,
 	PCS_ANLPAR_HALF_DUPLEX = PCS_ANAR_HALF_DUPLEX,
 	PCS_ANLPAR_FULL_DUPLEX = PCS_ANAR_FULL_DUPLEX,
-पूर्ण;
+};
 
-प्रकार काष्ठा t_SROM अणु
+typedef struct t_SROM {
 	u16 config_param;	/* 0x00 */
 	u16 asic_ctrl;		/* 0x02 */
-	u16 sub_venकरोr_id;	/* 0x04 */
-	u16 sub_प्रणाली_id;	/* 0x06 */
+	u16 sub_vendor_id;	/* 0x04 */
+	u16 sub_system_id;	/* 0x06 */
 	u16 pci_base_1;		/* 0x08 (IP1000A only) */
 	u16 pci_base_2;		/* 0x0a (IP1000A only) */
 	u16 led_mode;		/* 0x0c (IP1000A only) */
@@ -342,94 +341,94 @@
 	u8 reserved2[10];	/* 0x26-0x2f */
 	u8 sib[204];		/* 0x30-0xfb */
 	u32 crc;		/* 0xfc-0xff */
-पूर्ण SROM_t, *PSROM_t;
+} SROM_t, *PSROM_t;
 
 /* Ioctl custom data */
-काष्ठा ioctl_data अणु
-	अक्षर signature[10];
-	पूर्णांक cmd;
-	पूर्णांक len;
-	अक्षर *data;
-पूर्ण;
+struct ioctl_data {
+	char signature[10];
+	int cmd;
+	int len;
+	char *data;
+};
 
 /* The Rx and Tx buffer descriptors. */
-काष्ठा netdev_desc अणु
+struct netdev_desc {
 	__le64 next_desc;
 	__le64 status;
 	__le64 fraginfo;
-पूर्ण;
+};
 
-#घोषणा PRIV_ALIGN	15	/* Required alignment mask */
-/* Use  __attribute__((aligned (L1_CACHE_BYTES)))  to मुख्यtain alignment
-   within the काष्ठाure. */
-काष्ठा netdev_निजी अणु
-	/* Descriptor rings first क्रम alignment. */
-	काष्ठा netdev_desc *rx_ring;
-	काष्ठा netdev_desc *tx_ring;
-	काष्ठा sk_buff *rx_skbuff[RX_RING_SIZE];
-	काष्ठा sk_buff *tx_skbuff[TX_RING_SIZE];
+#define PRIV_ALIGN	15	/* Required alignment mask */
+/* Use  __attribute__((aligned (L1_CACHE_BYTES)))  to maintain alignment
+   within the structure. */
+struct netdev_private {
+	/* Descriptor rings first for alignment. */
+	struct netdev_desc *rx_ring;
+	struct netdev_desc *tx_ring;
+	struct sk_buff *rx_skbuff[RX_RING_SIZE];
+	struct sk_buff *tx_skbuff[TX_RING_SIZE];
 	dma_addr_t tx_ring_dma;
 	dma_addr_t rx_ring_dma;
-	काष्ठा pci_dev *pdev;
-	व्योम __iomem *ioaddr;
-	व्योम __iomem *eeprom_addr;
+	struct pci_dev *pdev;
+	void __iomem *ioaddr;
+	void __iomem *eeprom_addr;
 	spinlock_t tx_lock;
 	spinlock_t rx_lock;
-	अचिन्हित पूर्णांक rx_buf_sz;		/* Based on MTU+slack. */
-	अचिन्हित पूर्णांक speed;		/* Operating speed */
-	अचिन्हित पूर्णांक vlan;		/* VLAN Id */
-	अचिन्हित पूर्णांक chip_id;		/* PCI table chip id */
-	अचिन्हित पूर्णांक rx_coalesce; 	/* Maximum frames each RxDMAComplete पूर्णांकr */
-	अचिन्हित पूर्णांक rx_समयout; 	/* Wait समय between RxDMAComplete पूर्णांकr */
-	अचिन्हित पूर्णांक tx_coalesce;	/* Maximum frames each tx पूर्णांकerrupt */
-	अचिन्हित पूर्णांक full_duplex:1;	/* Full-duplex operation requested. */
-	अचिन्हित पूर्णांक an_enable:2;	/* Auto-Negotiated Enable */
-	अचिन्हित पूर्णांक jumbo:1;		/* Jumbo frame enable */
-	अचिन्हित पूर्णांक coalesce:1;	/* Rx coalescing enable */
-	अचिन्हित पूर्णांक tx_flow:1;		/* Tx flow control enable */
-	अचिन्हित पूर्णांक rx_flow:1;		/* Rx flow control enable */
-	अचिन्हित पूर्णांक phy_media:1;	/* 1: fiber, 0: copper */
-	अचिन्हित पूर्णांक link_status:1;	/* Current link status */
-	काष्ठा netdev_desc *last_tx;	/* Last Tx descriptor used. */
-	अचिन्हित दीर्घ cur_rx, old_rx;	/* Producer/consumer ring indices */
-	अचिन्हित दीर्घ cur_tx, old_tx;
-	काष्ठा समयr_list समयr;
-	पूर्णांक wake_polarity;
-	अक्षर name[256];		/* net device description */
+	unsigned int rx_buf_sz;		/* Based on MTU+slack. */
+	unsigned int speed;		/* Operating speed */
+	unsigned int vlan;		/* VLAN Id */
+	unsigned int chip_id;		/* PCI table chip id */
+	unsigned int rx_coalesce; 	/* Maximum frames each RxDMAComplete intr */
+	unsigned int rx_timeout; 	/* Wait time between RxDMAComplete intr */
+	unsigned int tx_coalesce;	/* Maximum frames each tx interrupt */
+	unsigned int full_duplex:1;	/* Full-duplex operation requested. */
+	unsigned int an_enable:2;	/* Auto-Negotiated Enable */
+	unsigned int jumbo:1;		/* Jumbo frame enable */
+	unsigned int coalesce:1;	/* Rx coalescing enable */
+	unsigned int tx_flow:1;		/* Tx flow control enable */
+	unsigned int rx_flow:1;		/* Rx flow control enable */
+	unsigned int phy_media:1;	/* 1: fiber, 0: copper */
+	unsigned int link_status:1;	/* Current link status */
+	struct netdev_desc *last_tx;	/* Last Tx descriptor used. */
+	unsigned long cur_rx, old_rx;	/* Producer/consumer ring indices */
+	unsigned long cur_tx, old_tx;
+	struct timer_list timer;
+	int wake_polarity;
+	char name[256];		/* net device description */
 	u8 duplex_polarity;
 	u16 mcast_filter[4];
 	u16 advertising;	/* NWay media advertisement */
 	u16 negotiate;		/* Negotiated media */
-	पूर्णांक phy_addr;		/* PHY addresses. */
-	u16 led_mode;		/* LED mode पढ़ो from EEPROM (IP1000A only) */
-पूर्ण;
+	int phy_addr;		/* PHY addresses. */
+	u16 led_mode;		/* LED mode read from EEPROM (IP1000A only) */
+};
 
 /* The station address location in the EEPROM. */
-/* The काष्ठा pci_device_id consist of:
-        venकरोr, device          Venकरोr and device ID to match (or PCI_ANY_ID)
-        subvenकरोr, subdevice    Subप्रणाली venकरोr and device ID to match (or PCI_ANY_ID)
+/* The struct pci_device_id consist of:
+        vendor, device          Vendor and device ID to match (or PCI_ANY_ID)
+        subvendor, subdevice    Subsystem vendor and device ID to match (or PCI_ANY_ID)
         class                   Device class to match. The class_mask tells which bits
         class_mask              of the class are honored during the comparison.
-        driver_data             Data निजी to the driver.
+        driver_data             Data private to the driver.
 */
-#घोषणा CHIP_IP1000A	1
+#define CHIP_IP1000A	1
 
-अटल स्थिर काष्ठा pci_device_id rio_pci_tbl[] = अणु
-	अणु0x1186, 0x4000, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
-	अणु0x13f0, 0x1021, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
-	अणु PCI_VDEVICE(SUNDANCE,	0x1023), CHIP_IP1000A पूर्ण,
-	अणु PCI_VDEVICE(SUNDANCE,	0x2021), CHIP_IP1000A पूर्ण,
-	अणु PCI_VDEVICE(DLINK,	0x9021), CHIP_IP1000A पूर्ण,
-	अणु PCI_VDEVICE(DLINK,	0x4020), CHIP_IP1000A पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct pci_device_id rio_pci_tbl[] = {
+	{0x1186, 0x4000, PCI_ANY_ID, PCI_ANY_ID, },
+	{0x13f0, 0x1021, PCI_ANY_ID, PCI_ANY_ID, },
+	{ PCI_VDEVICE(SUNDANCE,	0x1023), CHIP_IP1000A },
+	{ PCI_VDEVICE(SUNDANCE,	0x2021), CHIP_IP1000A },
+	{ PCI_VDEVICE(DLINK,	0x9021), CHIP_IP1000A },
+	{ PCI_VDEVICE(DLINK,	0x4020), CHIP_IP1000A },
+	{ }
+};
 MODULE_DEVICE_TABLE (pci, rio_pci_tbl);
-#घोषणा TX_TIMEOUT  (4*HZ)
-#घोषणा PACKET_SIZE		1536
-#घोषणा MAX_JUMBO		8000
-#घोषणा RIO_IO_SIZE             340
-#घोषणा DEFAULT_RXC		5
-#घोषणा DEFAULT_RXT		750
-#घोषणा DEFAULT_TXC		1
-#घोषणा MAX_TXC			8
-#पूर्ण_अगर				/* __DL2K_H__ */
+#define TX_TIMEOUT  (4*HZ)
+#define PACKET_SIZE		1536
+#define MAX_JUMBO		8000
+#define RIO_IO_SIZE             340
+#define DEFAULT_RXC		5
+#define DEFAULT_RXT		750
+#define DEFAULT_TXC		1
+#define MAX_TXC			8
+#endif				/* __DL2K_H__ */

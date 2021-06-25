@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/etherdevice.h>
+#include <linux/etherdevice.h>
 
-#समावेश "dsa_priv.h"
+#include "dsa_priv.h"
 
-#घोषणा QCA_HDR_LEN	2
-#घोषणा QCA_HDR_VERSION	0x2
+#define QCA_HDR_LEN	2
+#define QCA_HDR_VERSION	0x2
 
-#घोषणा QCA_HDR_RECV_VERSION_MASK	GENMASK(15, 14)
-#घोषणा QCA_HDR_RECV_VERSION_S		14
-#घोषणा QCA_HDR_RECV_PRIORITY_MASK	GENMASK(13, 11)
-#घोषणा QCA_HDR_RECV_PRIORITY_S		11
-#घोषणा QCA_HDR_RECV_TYPE_MASK		GENMASK(10, 6)
-#घोषणा QCA_HDR_RECV_TYPE_S		6
-#घोषणा QCA_HDR_RECV_FRAME_IS_TAGGED	BIT(3)
-#घोषणा QCA_HDR_RECV_SOURCE_PORT_MASK	GENMASK(2, 0)
+#define QCA_HDR_RECV_VERSION_MASK	GENMASK(15, 14)
+#define QCA_HDR_RECV_VERSION_S		14
+#define QCA_HDR_RECV_PRIORITY_MASK	GENMASK(13, 11)
+#define QCA_HDR_RECV_PRIORITY_S		11
+#define QCA_HDR_RECV_TYPE_MASK		GENMASK(10, 6)
+#define QCA_HDR_RECV_TYPE_S		6
+#define QCA_HDR_RECV_FRAME_IS_TAGGED	BIT(3)
+#define QCA_HDR_RECV_SOURCE_PORT_MASK	GENMASK(2, 0)
 
-#घोषणा QCA_HDR_XMIT_VERSION_MASK	GENMASK(15, 14)
-#घोषणा QCA_HDR_XMIT_VERSION_S		14
-#घोषणा QCA_HDR_XMIT_PRIORITY_MASK	GENMASK(13, 11)
-#घोषणा QCA_HDR_XMIT_PRIORITY_S		11
-#घोषणा QCA_HDR_XMIT_CONTROL_MASK	GENMASK(10, 8)
-#घोषणा QCA_HDR_XMIT_CONTROL_S		8
-#घोषणा QCA_HDR_XMIT_FROM_CPU		BIT(7)
-#घोषणा QCA_HDR_XMIT_DP_BIT_MASK	GENMASK(6, 0)
+#define QCA_HDR_XMIT_VERSION_MASK	GENMASK(15, 14)
+#define QCA_HDR_XMIT_VERSION_S		14
+#define QCA_HDR_XMIT_PRIORITY_MASK	GENMASK(13, 11)
+#define QCA_HDR_XMIT_PRIORITY_S		11
+#define QCA_HDR_XMIT_CONTROL_MASK	GENMASK(10, 8)
+#define QCA_HDR_XMIT_CONTROL_S		8
+#define QCA_HDR_XMIT_FROM_CPU		BIT(7)
+#define QCA_HDR_XMIT_DP_BIT_MASK	GENMASK(6, 0)
 
-अटल काष्ठा sk_buff *qca_tag_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा dsa_port *dp = dsa_slave_to_port(dev);
+static struct sk_buff *qca_tag_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct dsa_port *dp = dsa_slave_to_port(dev);
 	__be16 *phdr;
 	u16 hdr;
 
 	skb_push(skb, QCA_HDR_LEN);
 
-	स_हटाओ(skb->data, skb->data + QCA_HDR_LEN, 2 * ETH_ALEN);
+	memmove(skb->data, skb->data + QCA_HDR_LEN, 2 * ETH_ALEN);
 	phdr = (__be16 *)(skb->data + 2 * ETH_ALEN);
 
-	/* Set the version field, and set destination port inक्रमmation */
+	/* Set the version field, and set destination port information */
 	hdr = QCA_HDR_VERSION << QCA_HDR_XMIT_VERSION_S |
 		QCA_HDR_XMIT_FROM_CPU | BIT(dp->index);
 
 	*phdr = htons(hdr);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *qca_tag_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-				   काष्ठा packet_type *pt)
-अणु
+static struct sk_buff *qca_tag_rcv(struct sk_buff *skb, struct net_device *dev,
+				   struct packet_type *pt)
+{
 	u8 ver;
 	u16  hdr;
-	पूर्णांक port;
+	int port;
 	__be16 *phdr;
 
-	अगर (unlikely(!pskb_may_pull(skb, QCA_HDR_LEN)))
-		वापस शून्य;
+	if (unlikely(!pskb_may_pull(skb, QCA_HDR_LEN)))
+		return NULL;
 
-	/* The QCA header is added by the चयन between src addr and Ethertype
-	 * At this poपूर्णांक, skb->data poपूर्णांकs to ethertype so header should be
-	 * right beक्रमe
+	/* The QCA header is added by the switch between src addr and Ethertype
+	 * At this point, skb->data points to ethertype so header should be
+	 * right before
 	 */
 	phdr = (__be16 *)(skb->data - 2);
 	hdr = ntohs(*phdr);
 
 	/* Make sure the version is correct */
 	ver = (hdr & QCA_HDR_RECV_VERSION_MASK) >> QCA_HDR_RECV_VERSION_S;
-	अगर (unlikely(ver != QCA_HDR_VERSION))
-		वापस शून्य;
+	if (unlikely(ver != QCA_HDR_VERSION))
+		return NULL;
 
 	/* Remove QCA tag and recalculate checksum */
 	skb_pull_rcsum(skb, QCA_HDR_LEN);
-	स_हटाओ(skb->data - ETH_HLEN, skb->data - ETH_HLEN - QCA_HDR_LEN,
+	memmove(skb->data - ETH_HLEN, skb->data - ETH_HLEN - QCA_HDR_LEN,
 		ETH_HLEN - QCA_HDR_LEN);
 
-	/* Get source port inक्रमmation */
+	/* Get source port information */
 	port = (hdr & QCA_HDR_RECV_SOURCE_PORT_MASK);
 
 	skb->dev = dsa_master_find_slave(dev, 0, port);
-	अगर (!skb->dev)
-		वापस शून्य;
+	if (!skb->dev)
+		return NULL;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल स्थिर काष्ठा dsa_device_ops qca_netdev_ops = अणु
+static const struct dsa_device_ops qca_netdev_ops = {
 	.name	= "qca",
 	.proto	= DSA_TAG_PROTO_QCA,
 	.xmit	= qca_tag_xmit,
 	.rcv	= qca_tag_rcv,
 	.overhead = QCA_HDR_LEN,
-पूर्ण;
+};
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_DSA_TAG_DRIVER(DSA_TAG_PROTO_QCA);

@@ -1,1166 +1,1165 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_WAIT_H
-#घोषणा _LINUX_WAIT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_WAIT_H
+#define _LINUX_WAIT_H
 /*
- * Linux रुको queue related types and methods
+ * Linux wait queue related types and methods
  */
-#समावेश <linux/list.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/spinlock.h>
+#include <linux/list.h>
+#include <linux/stddef.h>
+#include <linux/spinlock.h>
 
-#समावेश <यंत्र/current.h>
-#समावेश <uapi/linux/रुको.h>
+#include <asm/current.h>
+#include <uapi/linux/wait.h>
 
-प्रकार काष्ठा रुको_queue_entry रुको_queue_entry_t;
+typedef struct wait_queue_entry wait_queue_entry_t;
 
-प्रकार पूर्णांक (*रुको_queue_func_t)(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode, पूर्णांक flags, व्योम *key);
-पूर्णांक शेष_wake_function(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode, पूर्णांक flags, व्योम *key);
+typedef int (*wait_queue_func_t)(struct wait_queue_entry *wq_entry, unsigned mode, int flags, void *key);
+int default_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, int flags, void *key);
 
-/* रुको_queue_entry::flags */
-#घोषणा WQ_FLAG_EXCLUSIVE	0x01
-#घोषणा WQ_FLAG_WOKEN		0x02
-#घोषणा WQ_FLAG_BOOKMARK	0x04
-#घोषणा WQ_FLAG_CUSTOM		0x08
-#घोषणा WQ_FLAG_DONE		0x10
-#घोषणा WQ_FLAG_PRIORITY	0x20
+/* wait_queue_entry::flags */
+#define WQ_FLAG_EXCLUSIVE	0x01
+#define WQ_FLAG_WOKEN		0x02
+#define WQ_FLAG_BOOKMARK	0x04
+#define WQ_FLAG_CUSTOM		0x08
+#define WQ_FLAG_DONE		0x10
+#define WQ_FLAG_PRIORITY	0x20
 
 /*
- * A single रुको-queue entry काष्ठाure:
+ * A single wait-queue entry structure:
  */
-काष्ठा रुको_queue_entry अणु
-	अचिन्हित पूर्णांक		flags;
-	व्योम			*निजी;
-	रुको_queue_func_t	func;
-	काष्ठा list_head	entry;
-पूर्ण;
+struct wait_queue_entry {
+	unsigned int		flags;
+	void			*private;
+	wait_queue_func_t	func;
+	struct list_head	entry;
+};
 
-काष्ठा रुको_queue_head अणु
+struct wait_queue_head {
 	spinlock_t		lock;
-	काष्ठा list_head	head;
-पूर्ण;
-प्रकार काष्ठा रुको_queue_head रुको_queue_head_t;
+	struct list_head	head;
+};
+typedef struct wait_queue_head wait_queue_head_t;
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
 /*
- * Macros क्रम declaration and initialisaton of the datatypes
+ * Macros for declaration and initialisaton of the datatypes
  */
 
-#घोषणा __WAITQUEUE_INITIALIZER(name, tsk) अणु					\
-	.निजी	= tsk,							\
-	.func		= शेष_wake_function,				\
-	.entry		= अणु शून्य, शून्य पूर्ण पूर्ण
+#define __WAITQUEUE_INITIALIZER(name, tsk) {					\
+	.private	= tsk,							\
+	.func		= default_wake_function,				\
+	.entry		= { NULL, NULL } }
 
-#घोषणा DECLARE_WAITQUEUE(name, tsk)						\
-	काष्ठा रुको_queue_entry name = __WAITQUEUE_INITIALIZER(name, tsk)
+#define DECLARE_WAITQUEUE(name, tsk)						\
+	struct wait_queue_entry name = __WAITQUEUE_INITIALIZER(name, tsk)
 
-#घोषणा __WAIT_QUEUE_HEAD_INITIALIZER(name) अणु					\
+#define __WAIT_QUEUE_HEAD_INITIALIZER(name) {					\
 	.lock		= __SPIN_LOCK_UNLOCKED(name.lock),			\
-	.head		= अणु &(name).head, &(name).head पूर्ण पूर्ण
+	.head		= { &(name).head, &(name).head } }
 
-#घोषणा DECLARE_WAIT_QUEUE_HEAD(name) \
-	काष्ठा रुको_queue_head name = __WAIT_QUEUE_HEAD_INITIALIZER(name)
+#define DECLARE_WAIT_QUEUE_HEAD(name) \
+	struct wait_queue_head name = __WAIT_QUEUE_HEAD_INITIALIZER(name)
 
-बाह्य व्योम __init_रुकोqueue_head(काष्ठा रुको_queue_head *wq_head, स्थिर अक्षर *name, काष्ठा lock_class_key *);
+extern void __init_waitqueue_head(struct wait_queue_head *wq_head, const char *name, struct lock_class_key *);
 
-#घोषणा init_रुकोqueue_head(wq_head)						\
-	करो अणु									\
-		अटल काष्ठा lock_class_key __key;				\
+#define init_waitqueue_head(wq_head)						\
+	do {									\
+		static struct lock_class_key __key;				\
 										\
-		__init_रुकोqueue_head((wq_head), #wq_head, &__key);		\
-	पूर्ण जबतक (0)
+		__init_waitqueue_head((wq_head), #wq_head, &__key);		\
+	} while (0)
 
-#अगर_घोषित CONFIG_LOCKDEP
+#ifdef CONFIG_LOCKDEP
 # define __WAIT_QUEUE_HEAD_INIT_ONSTACK(name) \
-	(अणु init_रुकोqueue_head(&name); name; पूर्ण)
+	({ init_waitqueue_head(&name); name; })
 # define DECLARE_WAIT_QUEUE_HEAD_ONSTACK(name) \
-	काष्ठा रुको_queue_head name = __WAIT_QUEUE_HEAD_INIT_ONSTACK(name)
-#अन्यथा
+	struct wait_queue_head name = __WAIT_QUEUE_HEAD_INIT_ONSTACK(name)
+#else
 # define DECLARE_WAIT_QUEUE_HEAD_ONSTACK(name) DECLARE_WAIT_QUEUE_HEAD(name)
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत व्योम init_रुकोqueue_entry(काष्ठा रुको_queue_entry *wq_entry, काष्ठा task_काष्ठा *p)
-अणु
+static inline void init_waitqueue_entry(struct wait_queue_entry *wq_entry, struct task_struct *p)
+{
 	wq_entry->flags		= 0;
-	wq_entry->निजी	= p;
-	wq_entry->func		= शेष_wake_function;
-पूर्ण
+	wq_entry->private	= p;
+	wq_entry->func		= default_wake_function;
+}
 
-अटल अंतरभूत व्योम
-init_रुकोqueue_func_entry(काष्ठा रुको_queue_entry *wq_entry, रुको_queue_func_t func)
-अणु
+static inline void
+init_waitqueue_func_entry(struct wait_queue_entry *wq_entry, wait_queue_func_t func)
+{
 	wq_entry->flags		= 0;
-	wq_entry->निजी	= शून्य;
+	wq_entry->private	= NULL;
 	wq_entry->func		= func;
-पूर्ण
+}
 
 /**
- * रुकोqueue_active -- locklessly test क्रम रुकोers on the queue
- * @wq_head: the रुकोqueue to test क्रम रुकोers
+ * waitqueue_active -- locklessly test for waiters on the queue
+ * @wq_head: the waitqueue to test for waiters
  *
- * वापसs true अगर the रुको list is not empty
+ * returns true if the wait list is not empty
  *
  * NOTE: this function is lockless and requires care, incorrect usage _will_
  * lead to sporadic and non-obvious failure.
  *
- * Use either जबतक holding रुको_queue_head::lock or when used क्रम wakeups
+ * Use either while holding wait_queue_head::lock or when used for wakeups
  * with an extra smp_mb() like::
  *
- *      CPU0 - waker                    CPU1 - रुकोer
+ *      CPU0 - waker                    CPU1 - waiter
  *
- *                                      क्रम (;;) अणु
- *      @cond = true;                     prepare_to_रुको(&wq_head, &रुको, state);
+ *                                      for (;;) {
+ *      @cond = true;                     prepare_to_wait(&wq_head, &wait, state);
  *      smp_mb();                         // smp_mb() from set_current_state()
- *      अगर (रुकोqueue_active(wq_head))         अगर (@cond)
- *        wake_up(wq_head);                      अवरोध;
+ *      if (waitqueue_active(wq_head))         if (@cond)
+ *        wake_up(wq_head);                      break;
  *                                        schedule();
- *                                      पूर्ण
- *                                      finish_रुको(&wq_head, &रुको);
+ *                                      }
+ *                                      finish_wait(&wq_head, &wait);
  *
- * Because without the explicit smp_mb() it's possible क्रम the
- * रुकोqueue_active() load to get hoisted over the @cond store such that we'll
- * observe an empty रुको list जबतक the रुकोer might not observe @cond.
+ * Because without the explicit smp_mb() it's possible for the
+ * waitqueue_active() load to get hoisted over the @cond store such that we'll
+ * observe an empty wait list while the waiter might not observe @cond.
  *
- * Also note that this 'optimization' trades a spin_lock() क्रम an smp_mb(),
+ * Also note that this 'optimization' trades a spin_lock() for an smp_mb(),
  * which (when the lock is uncontended) are of roughly equal cost.
  */
-अटल अंतरभूत पूर्णांक रुकोqueue_active(काष्ठा रुको_queue_head *wq_head)
-अणु
-	वापस !list_empty(&wq_head->head);
-पूर्ण
+static inline int waitqueue_active(struct wait_queue_head *wq_head)
+{
+	return !list_empty(&wq_head->head);
+}
 
 /**
- * wq_has_single_sleeper - check अगर there is only one sleeper
- * @wq_head: रुको queue head
+ * wq_has_single_sleeper - check if there is only one sleeper
+ * @wq_head: wait queue head
  *
  * Returns true of wq_head has only one sleeper on the list.
  *
- * Please refer to the comment क्रम रुकोqueue_active.
+ * Please refer to the comment for waitqueue_active.
  */
-अटल अंतरभूत bool wq_has_single_sleeper(काष्ठा रुको_queue_head *wq_head)
-अणु
-	वापस list_is_singular(&wq_head->head);
-पूर्ण
+static inline bool wq_has_single_sleeper(struct wait_queue_head *wq_head)
+{
+	return list_is_singular(&wq_head->head);
+}
 
 /**
- * wq_has_sleeper - check अगर there are any रुकोing processes
- * @wq_head: रुको queue head
+ * wq_has_sleeper - check if there are any waiting processes
+ * @wq_head: wait queue head
  *
- * Returns true अगर wq_head has रुकोing processes
+ * Returns true if wq_head has waiting processes
  *
- * Please refer to the comment क्रम रुकोqueue_active.
+ * Please refer to the comment for waitqueue_active.
  */
-अटल अंतरभूत bool wq_has_sleeper(काष्ठा रुको_queue_head *wq_head)
-अणु
+static inline bool wq_has_sleeper(struct wait_queue_head *wq_head)
+{
 	/*
 	 * We need to be sure we are in sync with the
-	 * add_रुको_queue modअगरications to the रुको queue.
+	 * add_wait_queue modifications to the wait queue.
 	 *
 	 * This memory barrier should be paired with one on the
-	 * रुकोing side.
+	 * waiting side.
 	 */
 	smp_mb();
-	वापस रुकोqueue_active(wq_head);
-पूर्ण
+	return waitqueue_active(wq_head);
+}
 
-बाह्य व्योम add_रुको_queue(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry);
-बाह्य व्योम add_रुको_queue_exclusive(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry);
-बाह्य व्योम add_रुको_queue_priority(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry);
-बाह्य व्योम हटाओ_रुको_queue(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry);
+extern void add_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
+extern void add_wait_queue_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
+extern void add_wait_queue_priority(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
+extern void remove_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
 
-अटल अंतरभूत व्योम __add_रुको_queue(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry)
-अणु
-	काष्ठा list_head *head = &wq_head->head;
-	काष्ठा रुको_queue_entry *wq;
+static inline void __add_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
+{
+	struct list_head *head = &wq_head->head;
+	struct wait_queue_entry *wq;
 
-	list_क्रम_each_entry(wq, &wq_head->head, entry) अणु
-		अगर (!(wq->flags & WQ_FLAG_PRIORITY))
-			अवरोध;
+	list_for_each_entry(wq, &wq_head->head, entry) {
+		if (!(wq->flags & WQ_FLAG_PRIORITY))
+			break;
 		head = &wq->entry;
-	पूर्ण
+	}
 	list_add(&wq_entry->entry, head);
-पूर्ण
+}
 
 /*
- * Used क्रम wake-one thपढ़ोs:
+ * Used for wake-one threads:
  */
-अटल अंतरभूत व्योम
-__add_रुको_queue_exclusive(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry)
-अणु
+static inline void
+__add_wait_queue_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
+{
 	wq_entry->flags |= WQ_FLAG_EXCLUSIVE;
-	__add_रुको_queue(wq_head, wq_entry);
-पूर्ण
+	__add_wait_queue(wq_head, wq_entry);
+}
 
-अटल अंतरभूत व्योम __add_रुको_queue_entry_tail(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry)
-अणु
+static inline void __add_wait_queue_entry_tail(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
+{
 	list_add_tail(&wq_entry->entry, &wq_head->head);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-__add_रुको_queue_entry_tail_exclusive(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry)
-अणु
+static inline void
+__add_wait_queue_entry_tail_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
+{
 	wq_entry->flags |= WQ_FLAG_EXCLUSIVE;
-	__add_रुको_queue_entry_tail(wq_head, wq_entry);
-पूर्ण
+	__add_wait_queue_entry_tail(wq_head, wq_entry);
+}
 
-अटल अंतरभूत व्योम
-__हटाओ_रुको_queue(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry)
-अणु
+static inline void
+__remove_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry)
+{
 	list_del(&wq_entry->entry);
-पूर्ण
+}
 
-व्योम __wake_up(काष्ठा रुको_queue_head *wq_head, अचिन्हित पूर्णांक mode, पूर्णांक nr, व्योम *key);
-व्योम __wake_up_locked_key(काष्ठा रुको_queue_head *wq_head, अचिन्हित पूर्णांक mode, व्योम *key);
-व्योम __wake_up_locked_key_bookmark(काष्ठा रुको_queue_head *wq_head,
-		अचिन्हित पूर्णांक mode, व्योम *key, रुको_queue_entry_t *bookmark);
-व्योम __wake_up_sync_key(काष्ठा रुको_queue_head *wq_head, अचिन्हित पूर्णांक mode, व्योम *key);
-व्योम __wake_up_locked_sync_key(काष्ठा रुको_queue_head *wq_head, अचिन्हित पूर्णांक mode, व्योम *key);
-व्योम __wake_up_locked(काष्ठा रुको_queue_head *wq_head, अचिन्हित पूर्णांक mode, पूर्णांक nr);
-व्योम __wake_up_sync(काष्ठा रुको_queue_head *wq_head, अचिन्हित पूर्णांक mode);
+void __wake_up(struct wait_queue_head *wq_head, unsigned int mode, int nr, void *key);
+void __wake_up_locked_key(struct wait_queue_head *wq_head, unsigned int mode, void *key);
+void __wake_up_locked_key_bookmark(struct wait_queue_head *wq_head,
+		unsigned int mode, void *key, wait_queue_entry_t *bookmark);
+void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode, void *key);
+void __wake_up_locked_sync_key(struct wait_queue_head *wq_head, unsigned int mode, void *key);
+void __wake_up_locked(struct wait_queue_head *wq_head, unsigned int mode, int nr);
+void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode);
 
-#घोषणा wake_up(x)			__wake_up(x, TASK_NORMAL, 1, शून्य)
-#घोषणा wake_up_nr(x, nr)		__wake_up(x, TASK_NORMAL, nr, शून्य)
-#घोषणा wake_up_all(x)			__wake_up(x, TASK_NORMAL, 0, शून्य)
-#घोषणा wake_up_locked(x)		__wake_up_locked((x), TASK_NORMAL, 1)
-#घोषणा wake_up_all_locked(x)		__wake_up_locked((x), TASK_NORMAL, 0)
+#define wake_up(x)			__wake_up(x, TASK_NORMAL, 1, NULL)
+#define wake_up_nr(x, nr)		__wake_up(x, TASK_NORMAL, nr, NULL)
+#define wake_up_all(x)			__wake_up(x, TASK_NORMAL, 0, NULL)
+#define wake_up_locked(x)		__wake_up_locked((x), TASK_NORMAL, 1)
+#define wake_up_all_locked(x)		__wake_up_locked((x), TASK_NORMAL, 0)
 
-#घोषणा wake_up_पूर्णांकerruptible(x)	__wake_up(x, TASK_INTERRUPTIBLE, 1, शून्य)
-#घोषणा wake_up_पूर्णांकerruptible_nr(x, nr)	__wake_up(x, TASK_INTERRUPTIBLE, nr, शून्य)
-#घोषणा wake_up_पूर्णांकerruptible_all(x)	__wake_up(x, TASK_INTERRUPTIBLE, 0, शून्य)
-#घोषणा wake_up_पूर्णांकerruptible_sync(x)	__wake_up_sync((x), TASK_INTERRUPTIBLE)
+#define wake_up_interruptible(x)	__wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
+#define wake_up_interruptible_nr(x, nr)	__wake_up(x, TASK_INTERRUPTIBLE, nr, NULL)
+#define wake_up_interruptible_all(x)	__wake_up(x, TASK_INTERRUPTIBLE, 0, NULL)
+#define wake_up_interruptible_sync(x)	__wake_up_sync((x), TASK_INTERRUPTIBLE)
 
 /*
- * Wakeup macros to be used to report events to the tarमाला_लो.
+ * Wakeup macros to be used to report events to the targets.
  */
-#घोषणा poll_to_key(m) ((व्योम *)(__क्रमce uपूर्णांकptr_t)(__poll_t)(m))
-#घोषणा key_to_poll(m) ((__क्रमce __poll_t)(uपूर्णांकptr_t)(व्योम *)(m))
-#घोषणा wake_up_poll(x, m)							\
+#define poll_to_key(m) ((void *)(__force uintptr_t)(__poll_t)(m))
+#define key_to_poll(m) ((__force __poll_t)(uintptr_t)(void *)(m))
+#define wake_up_poll(x, m)							\
 	__wake_up(x, TASK_NORMAL, 1, poll_to_key(m))
-#घोषणा wake_up_locked_poll(x, m)						\
+#define wake_up_locked_poll(x, m)						\
 	__wake_up_locked_key((x), TASK_NORMAL, poll_to_key(m))
-#घोषणा wake_up_पूर्णांकerruptible_poll(x, m)					\
+#define wake_up_interruptible_poll(x, m)					\
 	__wake_up(x, TASK_INTERRUPTIBLE, 1, poll_to_key(m))
-#घोषणा wake_up_पूर्णांकerruptible_sync_poll(x, m)					\
+#define wake_up_interruptible_sync_poll(x, m)					\
 	__wake_up_sync_key((x), TASK_INTERRUPTIBLE, poll_to_key(m))
-#घोषणा wake_up_पूर्णांकerruptible_sync_poll_locked(x, m)				\
+#define wake_up_interruptible_sync_poll_locked(x, m)				\
 	__wake_up_locked_sync_key((x), TASK_INTERRUPTIBLE, poll_to_key(m))
 
-#घोषणा ___रुको_cond_समयout(condition)						\
-(अणु										\
+#define ___wait_cond_timeout(condition)						\
+({										\
 	bool __cond = (condition);						\
-	अगर (__cond && !__ret)							\
+	if (__cond && !__ret)							\
 		__ret = 1;							\
 	__cond || !__ret;							\
-पूर्ण)
+})
 
-#घोषणा ___रुको_is_पूर्णांकerruptible(state)						\
-	(!__builtin_स्थिरant_p(state) ||					\
+#define ___wait_is_interruptible(state)						\
+	(!__builtin_constant_p(state) ||					\
 		state == TASK_INTERRUPTIBLE || state == TASK_KILLABLE)		\
 
-बाह्य व्योम init_रुको_entry(काष्ठा रुको_queue_entry *wq_entry, पूर्णांक flags);
+extern void init_wait_entry(struct wait_queue_entry *wq_entry, int flags);
 
 /*
- * The below macro ___रुको_event() has an explicit shaकरोw of the __ret
- * variable when used from the रुको_event_*() macros.
+ * The below macro ___wait_event() has an explicit shadow of the __ret
+ * variable when used from the wait_event_*() macros.
  *
- * This is so that both can use the ___रुको_cond_समयout() स्थिरruct
+ * This is so that both can use the ___wait_cond_timeout() construct
  * to wrap the condition.
  *
- * The type inconsistency of the रुको_event_*() __ret variable is also
- * on purpose; we use दीर्घ where we can वापस समयout values and पूर्णांक
+ * The type inconsistency of the wait_event_*() __ret variable is also
+ * on purpose; we use long where we can return timeout values and int
  * otherwise.
  */
 
-#घोषणा ___रुको_event(wq_head, condition, state, exclusive, ret, cmd)		\
-(अणु										\
+#define ___wait_event(wq_head, condition, state, exclusive, ret, cmd)		\
+({										\
 	__label__ __out;							\
-	काष्ठा रुको_queue_entry __wq_entry;					\
-	दीर्घ __ret = ret;	/* explicit shaकरोw */				\
+	struct wait_queue_entry __wq_entry;					\
+	long __ret = ret;	/* explicit shadow */				\
 										\
-	init_रुको_entry(&__wq_entry, exclusive ? WQ_FLAG_EXCLUSIVE : 0);	\
-	क्रम (;;) अणु								\
-		दीर्घ __पूर्णांक = prepare_to_रुको_event(&wq_head, &__wq_entry, state);\
+	init_wait_entry(&__wq_entry, exclusive ? WQ_FLAG_EXCLUSIVE : 0);	\
+	for (;;) {								\
+		long __int = prepare_to_wait_event(&wq_head, &__wq_entry, state);\
 										\
-		अगर (condition)							\
-			अवरोध;							\
+		if (condition)							\
+			break;							\
 										\
-		अगर (___रुको_is_पूर्णांकerruptible(state) && __पूर्णांक) अणु			\
-			__ret = __पूर्णांक;						\
-			जाओ __out;						\
-		पूर्ण								\
+		if (___wait_is_interruptible(state) && __int) {			\
+			__ret = __int;						\
+			goto __out;						\
+		}								\
 										\
 		cmd;								\
-	पूर्ण									\
-	finish_रुको(&wq_head, &__wq_entry);					\
+	}									\
+	finish_wait(&wq_head, &__wq_entry);					\
 __out:	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event(wq_head, condition)					\
-	(व्योम)___रुको_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
+#define __wait_event(wq_head, condition)					\
+	(void)___wait_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
 			    schedule())
 
 /**
- * रुको_event - sleep until a condition माला_लो true
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event - sleep until a condition gets true
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  */
-#घोषणा रुको_event(wq_head, condition)						\
-करो अणु										\
+#define wait_event(wq_head, condition)						\
+do {										\
 	might_sleep();								\
-	अगर (condition)								\
-		अवरोध;								\
-	__रुको_event(wq_head, condition);					\
-पूर्ण जबतक (0)
+	if (condition)								\
+		break;								\
+	__wait_event(wq_head, condition);					\
+} while (0)
 
-#घोषणा __io_रुको_event(wq_head, condition)					\
-	(व्योम)___रुको_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
+#define __io_wait_event(wq_head, condition)					\
+	(void)___wait_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
 			    io_schedule())
 
 /*
- * io_रुको_event() -- like रुको_event() but with io_schedule()
+ * io_wait_event() -- like wait_event() but with io_schedule()
  */
-#घोषणा io_रुको_event(wq_head, condition)					\
-करो अणु										\
+#define io_wait_event(wq_head, condition)					\
+do {										\
 	might_sleep();								\
-	अगर (condition)								\
-		अवरोध;								\
-	__io_रुको_event(wq_head, condition);					\
-पूर्ण जबतक (0)
+	if (condition)								\
+		break;								\
+	__io_wait_event(wq_head, condition);					\
+} while (0)
 
-#घोषणा __रुको_event_मुक्तzable(wq_head, condition)				\
-	___रुको_event(wq_head, condition, TASK_INTERRUPTIBLE, 0, 0,		\
-			    मुक्तzable_schedule())
+#define __wait_event_freezable(wq_head, condition)				\
+	___wait_event(wq_head, condition, TASK_INTERRUPTIBLE, 0, 0,		\
+			    freezable_schedule())
 
 /**
- * रुको_event_मुक्तzable - sleep (or मुक्तze) until a condition माला_लो true
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_freezable - sleep (or freeze) until a condition gets true
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE -- so as not to contribute
- * to प्रणाली load) until the @condition evaluates to true. The
- * @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * to system load) until the @condition evaluates to true. The
+ * @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  */
-#घोषणा रुको_event_मुक्तzable(wq_head, condition)				\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_freezable(wq_head, condition)				\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_मुक्तzable(wq_head, condition);		\
+	if (!(condition))							\
+		__ret = __wait_event_freezable(wq_head, condition);		\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_समयout(wq_head, condition, समयout)			\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      TASK_UNINTERRUPTIBLE, 0, समयout,				\
-		      __ret = schedule_समयout(__ret))
+#define __wait_event_timeout(wq_head, condition, timeout)			\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      TASK_UNINTERRUPTIBLE, 0, timeout,				\
+		      __ret = schedule_timeout(__ret))
 
 /**
- * रुको_event_समयout - sleep until a condition माला_लो true or a समयout elapses
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, in jअगरfies
+ * wait_event_timeout - sleep until a condition gets true or a timeout elapses
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, in jiffies
  *
  * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  * Returns:
- * 0 अगर the @condition evaluated to %false after the @समयout elapsed,
- * 1 अगर the @condition evaluated to %true after the @समयout elapsed,
- * or the reमुख्यing jअगरfies (at least 1) अगर the @condition evaluated
- * to %true beक्रमe the @समयout elapsed.
+ * 0 if the @condition evaluated to %false after the @timeout elapsed,
+ * 1 if the @condition evaluated to %true after the @timeout elapsed,
+ * or the remaining jiffies (at least 1) if the @condition evaluated
+ * to %true before the @timeout elapsed.
  */
-#घोषणा रुको_event_समयout(wq_head, condition, समयout)				\
-(अणु										\
-	दीर्घ __ret = समयout;							\
+#define wait_event_timeout(wq_head, condition, timeout)				\
+({										\
+	long __ret = timeout;							\
 	might_sleep();								\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_समयout(wq_head, condition, समयout);	\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_timeout(wq_head, condition, timeout);	\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_मुक्तzable_समयout(wq_head, condition, समयout)		\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      TASK_INTERRUPTIBLE, 0, समयout,				\
-		      __ret = मुक्तzable_schedule_समयout(__ret))
+#define __wait_event_freezable_timeout(wq_head, condition, timeout)		\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      TASK_INTERRUPTIBLE, 0, timeout,				\
+		      __ret = freezable_schedule_timeout(__ret))
 
 /*
- * like रुको_event_समयout() -- except it uses TASK_INTERRUPTIBLE to aव्योम
- * increasing load and is मुक्तzable.
+ * like wait_event_timeout() -- except it uses TASK_INTERRUPTIBLE to avoid
+ * increasing load and is freezable.
  */
-#घोषणा रुको_event_मुक्तzable_समयout(wq_head, condition, समयout)		\
-(अणु										\
-	दीर्घ __ret = समयout;							\
+#define wait_event_freezable_timeout(wq_head, condition, timeout)		\
+({										\
+	long __ret = timeout;							\
 	might_sleep();								\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_मुक्तzable_समयout(wq_head, condition, समयout); \
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_freezable_timeout(wq_head, condition, timeout); \
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_exclusive_cmd(wq_head, condition, cmd1, cmd2)		\
-	(व्योम)___रुको_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 1, 0,	\
+#define __wait_event_exclusive_cmd(wq_head, condition, cmd1, cmd2)		\
+	(void)___wait_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 1, 0,	\
 			    cmd1; schedule(); cmd2)
 /*
- * Just like रुको_event_cmd(), except it sets exclusive flag
+ * Just like wait_event_cmd(), except it sets exclusive flag
  */
-#घोषणा रुको_event_exclusive_cmd(wq_head, condition, cmd1, cmd2)		\
-करो अणु										\
-	अगर (condition)								\
-		अवरोध;								\
-	__रुको_event_exclusive_cmd(wq_head, condition, cmd1, cmd2);		\
-पूर्ण जबतक (0)
+#define wait_event_exclusive_cmd(wq_head, condition, cmd1, cmd2)		\
+do {										\
+	if (condition)								\
+		break;								\
+	__wait_event_exclusive_cmd(wq_head, condition, cmd1, cmd2);		\
+} while (0)
 
-#घोषणा __रुको_event_cmd(wq_head, condition, cmd1, cmd2)			\
-	(व्योम)___रुको_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
+#define __wait_event_cmd(wq_head, condition, cmd1, cmd2)			\
+	(void)___wait_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
 			    cmd1; schedule(); cmd2)
 
 /**
- * रुको_event_cmd - sleep until a condition माला_लो true
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @cmd1: the command will be executed beक्रमe sleep
+ * wait_event_cmd - sleep until a condition gets true
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @cmd1: the command will be executed before sleep
  * @cmd2: the command will be executed after sleep
  *
  * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  */
-#घोषणा रुको_event_cmd(wq_head, condition, cmd1, cmd2)				\
-करो अणु										\
-	अगर (condition)								\
-		अवरोध;								\
-	__रुको_event_cmd(wq_head, condition, cmd1, cmd2);			\
-पूर्ण जबतक (0)
+#define wait_event_cmd(wq_head, condition, cmd1, cmd2)				\
+do {										\
+	if (condition)								\
+		break;								\
+	__wait_event_cmd(wq_head, condition, cmd1, cmd2);			\
+} while (0)
 
-#घोषणा __रुको_event_पूर्णांकerruptible(wq_head, condition)				\
-	___रुको_event(wq_head, condition, TASK_INTERRUPTIBLE, 0, 0,		\
+#define __wait_event_interruptible(wq_head, condition)				\
+	___wait_event(wq_head, condition, TASK_INTERRUPTIBLE, 0, 0,		\
 		      schedule())
 
 /**
- * रुको_event_पूर्णांकerruptible - sleep until a condition माला_लो true
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_interruptible - sleep until a condition gets true
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a
- * संकेत and 0 अगर @condition evaluated to true.
+ * The function will return -ERESTARTSYS if it was interrupted by a
+ * signal and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible(wq_head, condition)				\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_interruptible(wq_head, condition)				\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_पूर्णांकerruptible(wq_head, condition);		\
+	if (!(condition))							\
+		__ret = __wait_event_interruptible(wq_head, condition);		\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_पूर्णांकerruptible_समयout(wq_head, condition, समयout)		\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      TASK_INTERRUPTIBLE, 0, समयout,				\
-		      __ret = schedule_समयout(__ret))
+#define __wait_event_interruptible_timeout(wq_head, condition, timeout)		\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      TASK_INTERRUPTIBLE, 0, timeout,				\
+		      __ret = schedule_timeout(__ret))
 
 /**
- * रुको_event_पूर्णांकerruptible_समयout - sleep until a condition माला_लो true or a समयout elapses
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, in jअगरfies
+ * wait_event_interruptible_timeout - sleep until a condition gets true or a timeout elapses
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, in jiffies
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  * Returns:
- * 0 अगर the @condition evaluated to %false after the @समयout elapsed,
- * 1 अगर the @condition evaluated to %true after the @समयout elapsed,
- * the reमुख्यing jअगरfies (at least 1) अगर the @condition evaluated
- * to %true beक्रमe the @समयout elapsed, or -%ERESTARTSYS अगर it was
- * पूर्णांकerrupted by a संकेत.
+ * 0 if the @condition evaluated to %false after the @timeout elapsed,
+ * 1 if the @condition evaluated to %true after the @timeout elapsed,
+ * the remaining jiffies (at least 1) if the @condition evaluated
+ * to %true before the @timeout elapsed, or -%ERESTARTSYS if it was
+ * interrupted by a signal.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_समयout(wq_head, condition, समयout)		\
-(अणु										\
-	दीर्घ __ret = समयout;							\
+#define wait_event_interruptible_timeout(wq_head, condition, timeout)		\
+({										\
+	long __ret = timeout;							\
 	might_sleep();								\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_पूर्णांकerruptible_समयout(wq_head,		\
-						condition, समयout);		\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_interruptible_timeout(wq_head,		\
+						condition, timeout);		\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_hrसमयout(wq_head, condition, समयout, state)		\
-(अणु										\
-	पूर्णांक __ret = 0;								\
-	काष्ठा hrसमयr_sleeper __t;						\
+#define __wait_event_hrtimeout(wq_head, condition, timeout, state)		\
+({										\
+	int __ret = 0;								\
+	struct hrtimer_sleeper __t;						\
 										\
-	hrसमयr_init_sleeper_on_stack(&__t, CLOCK_MONOTONIC,			\
+	hrtimer_init_sleeper_on_stack(&__t, CLOCK_MONOTONIC,			\
 				      HRTIMER_MODE_REL);			\
-	अगर ((समयout) != KTIME_MAX)						\
-		hrसमयr_start_range_ns(&__t.समयr, समयout,			\
-				       current->समयr_slack_ns,			\
+	if ((timeout) != KTIME_MAX)						\
+		hrtimer_start_range_ns(&__t.timer, timeout,			\
+				       current->timer_slack_ns,			\
 				       HRTIMER_MODE_REL);			\
 										\
-	__ret = ___रुको_event(wq_head, condition, state, 0, 0,			\
-		अगर (!__t.task) अणु						\
+	__ret = ___wait_event(wq_head, condition, state, 0, 0,			\
+		if (!__t.task) {						\
 			__ret = -ETIME;						\
-			अवरोध;							\
-		पूर्ण								\
+			break;							\
+		}								\
 		schedule());							\
 										\
-	hrसमयr_cancel(&__t.समयr);						\
-	destroy_hrसमयr_on_stack(&__t.समयr);					\
+	hrtimer_cancel(&__t.timer);						\
+	destroy_hrtimer_on_stack(&__t.timer);					\
 	__ret;									\
-पूर्ण)
+})
 
 /**
- * रुको_event_hrसमयout - sleep until a condition माला_लो true or a समयout elapses
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, as a kसमय_प्रकार
+ * wait_event_hrtimeout - sleep until a condition gets true or a timeout elapses
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, as a ktime_t
  *
  * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function वापसs 0 अगर @condition became true, or -ETIME अगर the समयout
+ * The function returns 0 if @condition became true, or -ETIME if the timeout
  * elapsed.
  */
-#घोषणा रुको_event_hrसमयout(wq_head, condition, समयout)			\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_hrtimeout(wq_head, condition, timeout)			\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_hrसमयout(wq_head, condition, समयout,	\
+	if (!(condition))							\
+		__ret = __wait_event_hrtimeout(wq_head, condition, timeout,	\
 					       TASK_UNINTERRUPTIBLE);		\
 	__ret;									\
-पूर्ण)
+})
 
 /**
- * रुको_event_पूर्णांकerruptible_hrसमयout - sleep until a condition माला_लो true or a समयout elapses
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, as a kसमय_प्रकार
+ * wait_event_interruptible_hrtimeout - sleep until a condition gets true or a timeout elapses
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, as a ktime_t
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function वापसs 0 अगर @condition became true, -ERESTARTSYS अगर it was
- * पूर्णांकerrupted by a संकेत, or -ETIME अगर the समयout elapsed.
+ * The function returns 0 if @condition became true, -ERESTARTSYS if it was
+ * interrupted by a signal, or -ETIME if the timeout elapsed.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_hrसमयout(wq, condition, समयout)		\
-(अणु										\
-	दीर्घ __ret = 0;								\
+#define wait_event_interruptible_hrtimeout(wq, condition, timeout)		\
+({										\
+	long __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_hrसमयout(wq, condition, समयout,		\
+	if (!(condition))							\
+		__ret = __wait_event_hrtimeout(wq, condition, timeout,		\
 					       TASK_INTERRUPTIBLE);		\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_पूर्णांकerruptible_exclusive(wq, condition)			\
-	___रुको_event(wq, condition, TASK_INTERRUPTIBLE, 1, 0,			\
+#define __wait_event_interruptible_exclusive(wq, condition)			\
+	___wait_event(wq, condition, TASK_INTERRUPTIBLE, 1, 0,			\
 		      schedule())
 
-#घोषणा रुको_event_पूर्णांकerruptible_exclusive(wq, condition)			\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_interruptible_exclusive(wq, condition)			\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_पूर्णांकerruptible_exclusive(wq, condition);	\
+	if (!(condition))							\
+		__ret = __wait_event_interruptible_exclusive(wq, condition);	\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_समाप्तable_exclusive(wq, condition)				\
-	___रुको_event(wq, condition, TASK_KILLABLE, 1, 0,			\
+#define __wait_event_killable_exclusive(wq, condition)				\
+	___wait_event(wq, condition, TASK_KILLABLE, 1, 0,			\
 		      schedule())
 
-#घोषणा रुको_event_समाप्तable_exclusive(wq, condition)				\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_killable_exclusive(wq, condition)				\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_समाप्तable_exclusive(wq, condition);		\
+	if (!(condition))							\
+		__ret = __wait_event_killable_exclusive(wq, condition);		\
 	__ret;									\
-पूर्ण)
+})
 
 
-#घोषणा __रुको_event_मुक्तzable_exclusive(wq, condition)				\
-	___रुको_event(wq, condition, TASK_INTERRUPTIBLE, 1, 0,			\
-			मुक्तzable_schedule())
+#define __wait_event_freezable_exclusive(wq, condition)				\
+	___wait_event(wq, condition, TASK_INTERRUPTIBLE, 1, 0,			\
+			freezable_schedule())
 
-#घोषणा रुको_event_मुक्तzable_exclusive(wq, condition)				\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_freezable_exclusive(wq, condition)				\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_मुक्तzable_exclusive(wq, condition);	\
+	if (!(condition))							\
+		__ret = __wait_event_freezable_exclusive(wq, condition);	\
 	__ret;									\
-पूर्ण)
+})
 
 /**
- * रुको_event_idle - रुको क्रम a condition without contributing to प्रणाली load
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_idle - wait for a condition without contributing to system load
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_IDLE) until the
  * @condition evaluates to true.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  */
-#घोषणा रुको_event_idle(wq_head, condition)					\
-करो अणु										\
+#define wait_event_idle(wq_head, condition)					\
+do {										\
 	might_sleep();								\
-	अगर (!(condition))							\
-		___रुको_event(wq_head, condition, TASK_IDLE, 0, 0, schedule());	\
-पूर्ण जबतक (0)
+	if (!(condition))							\
+		___wait_event(wq_head, condition, TASK_IDLE, 0, 0, schedule());	\
+} while (0)
 
 /**
- * रुको_event_idle_exclusive - रुको क्रम a condition with contributing to प्रणाली load
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_idle_exclusive - wait for a condition with contributing to system load
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_IDLE) until the
  * @condition evaluates to true.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
- * The process is put on the रुको queue with an WQ_FLAG_EXCLUSIVE flag
- * set thus अगर other processes रुको on the same list, when this
+ * The process is put on the wait queue with an WQ_FLAG_EXCLUSIVE flag
+ * set thus if other processes wait on the same list, when this
  * process is woken further processes are not considered.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  */
-#घोषणा रुको_event_idle_exclusive(wq_head, condition)				\
-करो अणु										\
+#define wait_event_idle_exclusive(wq_head, condition)				\
+do {										\
 	might_sleep();								\
-	अगर (!(condition))							\
-		___रुको_event(wq_head, condition, TASK_IDLE, 1, 0, schedule());	\
-पूर्ण जबतक (0)
+	if (!(condition))							\
+		___wait_event(wq_head, condition, TASK_IDLE, 1, 0, schedule());	\
+} while (0)
 
-#घोषणा __रुको_event_idle_समयout(wq_head, condition, समयout)			\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      TASK_IDLE, 0, समयout,					\
-		      __ret = schedule_समयout(__ret))
+#define __wait_event_idle_timeout(wq_head, condition, timeout)			\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      TASK_IDLE, 0, timeout,					\
+		      __ret = schedule_timeout(__ret))
 
 /**
- * रुको_event_idle_समयout - sleep without load until a condition becomes true or a समयout elapses
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, in jअगरfies
+ * wait_event_idle_timeout - sleep without load until a condition becomes true or a timeout elapses
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, in jiffies
  *
  * The process is put to sleep (TASK_IDLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  * Returns:
- * 0 अगर the @condition evaluated to %false after the @समयout elapsed,
- * 1 अगर the @condition evaluated to %true after the @समयout elapsed,
- * or the reमुख्यing jअगरfies (at least 1) अगर the @condition evaluated
- * to %true beक्रमe the @समयout elapsed.
+ * 0 if the @condition evaluated to %false after the @timeout elapsed,
+ * 1 if the @condition evaluated to %true after the @timeout elapsed,
+ * or the remaining jiffies (at least 1) if the @condition evaluated
+ * to %true before the @timeout elapsed.
  */
-#घोषणा रुको_event_idle_समयout(wq_head, condition, समयout)			\
-(अणु										\
-	दीर्घ __ret = समयout;							\
+#define wait_event_idle_timeout(wq_head, condition, timeout)			\
+({										\
+	long __ret = timeout;							\
 	might_sleep();								\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_idle_समयout(wq_head, condition, समयout);	\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_idle_timeout(wq_head, condition, timeout);	\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_idle_exclusive_समयout(wq_head, condition, समयout)	\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      TASK_IDLE, 1, समयout,					\
-		      __ret = schedule_समयout(__ret))
+#define __wait_event_idle_exclusive_timeout(wq_head, condition, timeout)	\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      TASK_IDLE, 1, timeout,					\
+		      __ret = schedule_timeout(__ret))
 
 /**
- * रुको_event_idle_exclusive_समयout - sleep without load until a condition becomes true or a समयout elapses
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, in jअगरfies
+ * wait_event_idle_exclusive_timeout - sleep without load until a condition becomes true or a timeout elapses
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, in jiffies
  *
  * The process is put to sleep (TASK_IDLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
- * The process is put on the रुको queue with an WQ_FLAG_EXCLUSIVE flag
- * set thus अगर other processes रुको on the same list, when this
+ * The process is put on the wait queue with an WQ_FLAG_EXCLUSIVE flag
+ * set thus if other processes wait on the same list, when this
  * process is woken further processes are not considered.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  * Returns:
- * 0 अगर the @condition evaluated to %false after the @समयout elapsed,
- * 1 अगर the @condition evaluated to %true after the @समयout elapsed,
- * or the reमुख्यing jअगरfies (at least 1) अगर the @condition evaluated
- * to %true beक्रमe the @समयout elapsed.
+ * 0 if the @condition evaluated to %false after the @timeout elapsed,
+ * 1 if the @condition evaluated to %true after the @timeout elapsed,
+ * or the remaining jiffies (at least 1) if the @condition evaluated
+ * to %true before the @timeout elapsed.
  */
-#घोषणा रुको_event_idle_exclusive_समयout(wq_head, condition, समयout)		\
-(अणु										\
-	दीर्घ __ret = समयout;							\
+#define wait_event_idle_exclusive_timeout(wq_head, condition, timeout)		\
+({										\
+	long __ret = timeout;							\
 	might_sleep();								\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_idle_exclusive_समयout(wq_head, condition, समयout);\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_idle_exclusive_timeout(wq_head, condition, timeout);\
 	__ret;									\
-पूर्ण)
+})
 
-बाह्य पूर्णांक करो_रुको_पूर्णांकr(रुको_queue_head_t *, रुको_queue_entry_t *);
-बाह्य पूर्णांक करो_रुको_पूर्णांकr_irq(रुको_queue_head_t *, रुको_queue_entry_t *);
+extern int do_wait_intr(wait_queue_head_t *, wait_queue_entry_t *);
+extern int do_wait_intr_irq(wait_queue_head_t *, wait_queue_entry_t *);
 
-#घोषणा __रुको_event_पूर्णांकerruptible_locked(wq, condition, exclusive, fn)		\
-(अणु										\
-	पूर्णांक __ret;								\
-	DEFINE_WAIT(__रुको);							\
-	अगर (exclusive)								\
-		__रुको.flags |= WQ_FLAG_EXCLUSIVE;				\
-	करो अणु									\
-		__ret = fn(&(wq), &__रुको);					\
-		अगर (__ret)							\
-			अवरोध;							\
-	पूर्ण जबतक (!(condition));							\
-	__हटाओ_रुको_queue(&(wq), &__रुको);					\
+#define __wait_event_interruptible_locked(wq, condition, exclusive, fn)		\
+({										\
+	int __ret;								\
+	DEFINE_WAIT(__wait);							\
+	if (exclusive)								\
+		__wait.flags |= WQ_FLAG_EXCLUSIVE;				\
+	do {									\
+		__ret = fn(&(wq), &__wait);					\
+		if (__ret)							\
+			break;							\
+	} while (!(condition));							\
+	__remove_wait_queue(&(wq), &__wait);					\
 	__set_current_state(TASK_RUNNING);					\
 	__ret;									\
-पूर्ण)
+})
 
 
 /**
- * रुको_event_पूर्णांकerruptible_locked - sleep until a condition माला_लो true
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_interruptible_locked - sleep until a condition gets true
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq is woken up.
  *
  * It must be called with wq.lock being held.  This spinlock is
- * unlocked जबतक sleeping but @condition testing is करोne जबतक lock
- * is held and when this macro निकासs the lock is held.
+ * unlocked while sleeping but @condition testing is done while lock
+ * is held and when this macro exits the lock is held.
  *
  * The lock is locked/unlocked using spin_lock()/spin_unlock()
  * functions which must match the way they are locked/unlocked outside
  * of this macro.
  *
  * wake_up_locked() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a
- * संकेत and 0 अगर @condition evaluated to true.
+ * The function will return -ERESTARTSYS if it was interrupted by a
+ * signal and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_locked(wq, condition)				\
+#define wait_event_interruptible_locked(wq, condition)				\
 	((condition)								\
-	 ? 0 : __रुको_event_पूर्णांकerruptible_locked(wq, condition, 0, करो_रुको_पूर्णांकr))
+	 ? 0 : __wait_event_interruptible_locked(wq, condition, 0, do_wait_intr))
 
 /**
- * रुको_event_पूर्णांकerruptible_locked_irq - sleep until a condition माला_लो true
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_interruptible_locked_irq - sleep until a condition gets true
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq is woken up.
  *
  * It must be called with wq.lock being held.  This spinlock is
- * unlocked जबतक sleeping but @condition testing is करोne जबतक lock
- * is held and when this macro निकासs the lock is held.
+ * unlocked while sleeping but @condition testing is done while lock
+ * is held and when this macro exits the lock is held.
  *
  * The lock is locked/unlocked using spin_lock_irq()/spin_unlock_irq()
  * functions which must match the way they are locked/unlocked outside
  * of this macro.
  *
  * wake_up_locked() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a
- * संकेत and 0 अगर @condition evaluated to true.
+ * The function will return -ERESTARTSYS if it was interrupted by a
+ * signal and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_locked_irq(wq, condition)			\
+#define wait_event_interruptible_locked_irq(wq, condition)			\
 	((condition)								\
-	 ? 0 : __रुको_event_पूर्णांकerruptible_locked(wq, condition, 0, करो_रुको_पूर्णांकr_irq))
+	 ? 0 : __wait_event_interruptible_locked(wq, condition, 0, do_wait_intr_irq))
 
 /**
- * रुको_event_पूर्णांकerruptible_exclusive_locked - sleep exclusively until a condition माला_लो true
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_interruptible_exclusive_locked - sleep exclusively until a condition gets true
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq is woken up.
  *
  * It must be called with wq.lock being held.  This spinlock is
- * unlocked जबतक sleeping but @condition testing is करोne जबतक lock
- * is held and when this macro निकासs the lock is held.
+ * unlocked while sleeping but @condition testing is done while lock
+ * is held and when this macro exits the lock is held.
  *
  * The lock is locked/unlocked using spin_lock()/spin_unlock()
  * functions which must match the way they are locked/unlocked outside
  * of this macro.
  *
- * The process is put on the रुको queue with an WQ_FLAG_EXCLUSIVE flag
- * set thus when other process रुकोs process on the list अगर this
+ * The process is put on the wait queue with an WQ_FLAG_EXCLUSIVE flag
+ * set thus when other process waits process on the list if this
  * process is awaken further processes are not considered.
  *
  * wake_up_locked() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a
- * संकेत and 0 अगर @condition evaluated to true.
+ * The function will return -ERESTARTSYS if it was interrupted by a
+ * signal and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_exclusive_locked(wq, condition)		\
+#define wait_event_interruptible_exclusive_locked(wq, condition)		\
 	((condition)								\
-	 ? 0 : __रुको_event_पूर्णांकerruptible_locked(wq, condition, 1, करो_रुको_पूर्णांकr))
+	 ? 0 : __wait_event_interruptible_locked(wq, condition, 1, do_wait_intr))
 
 /**
- * रुको_event_पूर्णांकerruptible_exclusive_locked_irq - sleep until a condition माला_लो true
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_interruptible_exclusive_locked_irq - sleep until a condition gets true
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq is woken up.
  *
  * It must be called with wq.lock being held.  This spinlock is
- * unlocked जबतक sleeping but @condition testing is करोne जबतक lock
- * is held and when this macro निकासs the lock is held.
+ * unlocked while sleeping but @condition testing is done while lock
+ * is held and when this macro exits the lock is held.
  *
  * The lock is locked/unlocked using spin_lock_irq()/spin_unlock_irq()
  * functions which must match the way they are locked/unlocked outside
  * of this macro.
  *
- * The process is put on the रुको queue with an WQ_FLAG_EXCLUSIVE flag
- * set thus when other process रुकोs process on the list अगर this
+ * The process is put on the wait queue with an WQ_FLAG_EXCLUSIVE flag
+ * set thus when other process waits process on the list if this
  * process is awaken further processes are not considered.
  *
  * wake_up_locked() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a
- * संकेत and 0 अगर @condition evaluated to true.
+ * The function will return -ERESTARTSYS if it was interrupted by a
+ * signal and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_exclusive_locked_irq(wq, condition)		\
+#define wait_event_interruptible_exclusive_locked_irq(wq, condition)		\
 	((condition)								\
-	 ? 0 : __रुको_event_पूर्णांकerruptible_locked(wq, condition, 1, करो_रुको_पूर्णांकr_irq))
+	 ? 0 : __wait_event_interruptible_locked(wq, condition, 1, do_wait_intr_irq))
 
 
-#घोषणा __रुको_event_समाप्तable(wq, condition)					\
-	___रुको_event(wq, condition, TASK_KILLABLE, 0, 0, schedule())
+#define __wait_event_killable(wq, condition)					\
+	___wait_event(wq, condition, TASK_KILLABLE, 0, 0, schedule())
 
 /**
- * रुको_event_समाप्तable - sleep until a condition माला_लो true
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * wait_event_killable - sleep until a condition gets true
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_KILLABLE) until the
- * @condition evaluates to true or a संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or a signal is received.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * The function will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a
- * संकेत and 0 अगर @condition evaluated to true.
+ * The function will return -ERESTARTSYS if it was interrupted by a
+ * signal and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_समाप्तable(wq_head, condition)					\
-(अणु										\
-	पूर्णांक __ret = 0;								\
+#define wait_event_killable(wq_head, condition)					\
+({										\
+	int __ret = 0;								\
 	might_sleep();								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_समाप्तable(wq_head, condition);		\
+	if (!(condition))							\
+		__ret = __wait_event_killable(wq_head, condition);		\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_समाप्तable_समयout(wq_head, condition, समयout)		\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      TASK_KILLABLE, 0, समयout,				\
-		      __ret = schedule_समयout(__ret))
+#define __wait_event_killable_timeout(wq_head, condition, timeout)		\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      TASK_KILLABLE, 0, timeout,				\
+		      __ret = schedule_timeout(__ret))
 
 /**
- * रुको_event_समाप्तable_समयout - sleep until a condition माला_लो true or a समयout elapses
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout, in jअगरfies
+ * wait_event_killable_timeout - sleep until a condition gets true or a timeout elapses
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout, in jiffies
  *
  * The process is put to sleep (TASK_KILLABLE) until the
- * @condition evaluates to true or a समाप्त संकेत is received.
- * The @condition is checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or a kill signal is received.
+ * The @condition is checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
  * Returns:
- * 0 अगर the @condition evaluated to %false after the @समयout elapsed,
- * 1 अगर the @condition evaluated to %true after the @समयout elapsed,
- * the reमुख्यing jअगरfies (at least 1) अगर the @condition evaluated
- * to %true beक्रमe the @समयout elapsed, or -%ERESTARTSYS अगर it was
- * पूर्णांकerrupted by a समाप्त संकेत.
+ * 0 if the @condition evaluated to %false after the @timeout elapsed,
+ * 1 if the @condition evaluated to %true after the @timeout elapsed,
+ * the remaining jiffies (at least 1) if the @condition evaluated
+ * to %true before the @timeout elapsed, or -%ERESTARTSYS if it was
+ * interrupted by a kill signal.
  *
- * Only समाप्त संकेतs पूर्णांकerrupt this process.
+ * Only kill signals interrupt this process.
  */
-#घोषणा रुको_event_समाप्तable_समयout(wq_head, condition, समयout)		\
-(अणु										\
-	दीर्घ __ret = समयout;							\
+#define wait_event_killable_timeout(wq_head, condition, timeout)		\
+({										\
+	long __ret = timeout;							\
 	might_sleep();								\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_समाप्तable_समयout(wq_head,			\
-						condition, समयout);		\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_killable_timeout(wq_head,			\
+						condition, timeout);		\
 	__ret;									\
-पूर्ण)
+})
 
 
-#घोषणा __रुको_event_lock_irq(wq_head, condition, lock, cmd)			\
-	(व्योम)___रुको_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
+#define __wait_event_lock_irq(wq_head, condition, lock, cmd)			\
+	(void)___wait_event(wq_head, condition, TASK_UNINTERRUPTIBLE, 0, 0,	\
 			    spin_unlock_irq(&lock);				\
 			    cmd;						\
 			    schedule();						\
 			    spin_lock_irq(&lock))
 
 /**
- * रुको_event_lock_irq_cmd - sleep until a condition माला_लो true. The
+ * wait_event_lock_irq_cmd - sleep until a condition gets true. The
  *			     condition is checked under the lock. This
  *			     is expected to be called with the lock
  *			     taken.
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @lock: a locked spinlock_t, which will be released beक्रमe cmd
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @lock: a locked spinlock_t, which will be released before cmd
  *	  and schedule() and reacquired afterwards.
- * @cmd: a command which is invoked outside the critical section beक्रमe
+ * @cmd: a command which is invoked outside the critical section before
  *	 sleep
  *
  * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * This is supposed to be called जबतक holding the lock. The lock is
- * dropped beक्रमe invoking the cmd and going to sleep and is reacquired
+ * This is supposed to be called while holding the lock. The lock is
+ * dropped before invoking the cmd and going to sleep and is reacquired
  * afterwards.
  */
-#घोषणा रुको_event_lock_irq_cmd(wq_head, condition, lock, cmd)			\
-करो अणु										\
-	अगर (condition)								\
-		अवरोध;								\
-	__रुको_event_lock_irq(wq_head, condition, lock, cmd);			\
-पूर्ण जबतक (0)
+#define wait_event_lock_irq_cmd(wq_head, condition, lock, cmd)			\
+do {										\
+	if (condition)								\
+		break;								\
+	__wait_event_lock_irq(wq_head, condition, lock, cmd);			\
+} while (0)
 
 /**
- * रुको_event_lock_irq - sleep until a condition माला_लो true. The
+ * wait_event_lock_irq - sleep until a condition gets true. The
  *			 condition is checked under the lock. This
  *			 is expected to be called with the lock
  *			 taken.
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @lock: a locked spinlock_t, which will be released beक्रमe schedule()
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @lock: a locked spinlock_t, which will be released before schedule()
  *	  and reacquired afterwards.
  *
  * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
- * @condition evaluates to true. The @condition is checked each समय
- * the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true. The @condition is checked each time
+ * the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * This is supposed to be called जबतक holding the lock. The lock is
- * dropped beक्रमe going to sleep and is reacquired afterwards.
+ * This is supposed to be called while holding the lock. The lock is
+ * dropped before going to sleep and is reacquired afterwards.
  */
-#घोषणा रुको_event_lock_irq(wq_head, condition, lock)				\
-करो अणु										\
-	अगर (condition)								\
-		अवरोध;								\
-	__रुको_event_lock_irq(wq_head, condition, lock, );			\
-पूर्ण जबतक (0)
+#define wait_event_lock_irq(wq_head, condition, lock)				\
+do {										\
+	if (condition)								\
+		break;								\
+	__wait_event_lock_irq(wq_head, condition, lock, );			\
+} while (0)
 
 
-#घोषणा __रुको_event_पूर्णांकerruptible_lock_irq(wq_head, condition, lock, cmd)	\
-	___रुको_event(wq_head, condition, TASK_INTERRUPTIBLE, 0, 0,		\
+#define __wait_event_interruptible_lock_irq(wq_head, condition, lock, cmd)	\
+	___wait_event(wq_head, condition, TASK_INTERRUPTIBLE, 0, 0,		\
 		      spin_unlock_irq(&lock);					\
 		      cmd;							\
 		      schedule();						\
 		      spin_lock_irq(&lock))
 
 /**
- * रुको_event_पूर्णांकerruptible_lock_irq_cmd - sleep until a condition माला_लो true.
+ * wait_event_interruptible_lock_irq_cmd - sleep until a condition gets true.
  *		The condition is checked under the lock. This is expected to
  *		be called with the lock taken.
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @lock: a locked spinlock_t, which will be released beक्रमe cmd and
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @lock: a locked spinlock_t, which will be released before cmd and
  *	  schedule() and reacquired afterwards.
- * @cmd: a command which is invoked outside the critical section beक्रमe
+ * @cmd: a command which is invoked outside the critical section before
  *	 sleep
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or a संकेत is received. The @condition is
- * checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or a signal is received. The @condition is
+ * checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * This is supposed to be called जबतक holding the lock. The lock is
- * dropped beक्रमe invoking the cmd and going to sleep and is reacquired
+ * This is supposed to be called while holding the lock. The lock is
+ * dropped before invoking the cmd and going to sleep and is reacquired
  * afterwards.
  *
- * The macro will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a संकेत
- * and 0 अगर @condition evaluated to true.
+ * The macro will return -ERESTARTSYS if it was interrupted by a signal
+ * and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_lock_irq_cmd(wq_head, condition, lock, cmd)	\
-(अणु										\
-	पूर्णांक __ret = 0;								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_पूर्णांकerruptible_lock_irq(wq_head,		\
+#define wait_event_interruptible_lock_irq_cmd(wq_head, condition, lock, cmd)	\
+({										\
+	int __ret = 0;								\
+	if (!(condition))							\
+		__ret = __wait_event_interruptible_lock_irq(wq_head,		\
 						condition, lock, cmd);		\
 	__ret;									\
-पूर्ण)
+})
 
 /**
- * रुको_event_पूर्णांकerruptible_lock_irq - sleep until a condition माला_लो true.
+ * wait_event_interruptible_lock_irq - sleep until a condition gets true.
  *		The condition is checked under the lock. This is expected
  *		to be called with the lock taken.
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @lock: a locked spinlock_t, which will be released beक्रमe schedule()
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @lock: a locked spinlock_t, which will be released before schedule()
  *	  and reacquired afterwards.
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or संकेत is received. The @condition is
- * checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or signal is received. The @condition is
+ * checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * This is supposed to be called जबतक holding the lock. The lock is
- * dropped beक्रमe going to sleep and is reacquired afterwards.
+ * This is supposed to be called while holding the lock. The lock is
+ * dropped before going to sleep and is reacquired afterwards.
  *
- * The macro will वापस -ERESTARTSYS अगर it was पूर्णांकerrupted by a संकेत
- * and 0 अगर @condition evaluated to true.
+ * The macro will return -ERESTARTSYS if it was interrupted by a signal
+ * and 0 if @condition evaluated to true.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_lock_irq(wq_head, condition, lock)		\
-(अणु										\
-	पूर्णांक __ret = 0;								\
-	अगर (!(condition))							\
-		__ret = __रुको_event_पूर्णांकerruptible_lock_irq(wq_head,		\
+#define wait_event_interruptible_lock_irq(wq_head, condition, lock)		\
+({										\
+	int __ret = 0;								\
+	if (!(condition))							\
+		__ret = __wait_event_interruptible_lock_irq(wq_head,		\
 						condition, lock,);		\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा __रुको_event_lock_irq_समयout(wq_head, condition, lock, समयout, state)	\
-	___रुको_event(wq_head, ___रुको_cond_समयout(condition),			\
-		      state, 0, समयout,					\
+#define __wait_event_lock_irq_timeout(wq_head, condition, lock, timeout, state)	\
+	___wait_event(wq_head, ___wait_cond_timeout(condition),			\
+		      state, 0, timeout,					\
 		      spin_unlock_irq(&lock);					\
-		      __ret = schedule_समयout(__ret);				\
+		      __ret = schedule_timeout(__ret);				\
 		      spin_lock_irq(&lock));
 
 /**
- * रुको_event_पूर्णांकerruptible_lock_irq_समयout - sleep until a condition माला_लो
- *		true or a समयout elapses. The condition is checked under
+ * wait_event_interruptible_lock_irq_timeout - sleep until a condition gets
+ *		true or a timeout elapses. The condition is checked under
  *		the lock. This is expected to be called with the lock taken.
- * @wq_head: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @lock: a locked spinlock_t, which will be released beक्रमe schedule()
+ * @wq_head: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @lock: a locked spinlock_t, which will be released before schedule()
  *	  and reacquired afterwards.
- * @समयout: समयout, in jअगरfies
+ * @timeout: timeout, in jiffies
  *
  * The process is put to sleep (TASK_INTERRUPTIBLE) until the
- * @condition evaluates to true or संकेत is received. The @condition is
- * checked each समय the रुकोqueue @wq_head is woken up.
+ * @condition evaluates to true or signal is received. The @condition is
+ * checked each time the waitqueue @wq_head is woken up.
  *
  * wake_up() has to be called after changing any variable that could
- * change the result of the रुको condition.
+ * change the result of the wait condition.
  *
- * This is supposed to be called जबतक holding the lock. The lock is
- * dropped beक्रमe going to sleep and is reacquired afterwards.
+ * This is supposed to be called while holding the lock. The lock is
+ * dropped before going to sleep and is reacquired afterwards.
  *
- * The function वापसs 0 अगर the @समयout elapsed, -ERESTARTSYS अगर it
- * was पूर्णांकerrupted by a संकेत, and the reमुख्यing jअगरfies otherwise
- * अगर the condition evaluated to true beक्रमe the समयout elapsed.
+ * The function returns 0 if the @timeout elapsed, -ERESTARTSYS if it
+ * was interrupted by a signal, and the remaining jiffies otherwise
+ * if the condition evaluated to true before the timeout elapsed.
  */
-#घोषणा रुको_event_पूर्णांकerruptible_lock_irq_समयout(wq_head, condition, lock,	\
-						  समयout)			\
-(अणु										\
-	दीर्घ __ret = समयout;							\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_lock_irq_समयout(				\
-					wq_head, condition, lock, समयout,	\
+#define wait_event_interruptible_lock_irq_timeout(wq_head, condition, lock,	\
+						  timeout)			\
+({										\
+	long __ret = timeout;							\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_lock_irq_timeout(				\
+					wq_head, condition, lock, timeout,	\
 					TASK_INTERRUPTIBLE);			\
 	__ret;									\
-पूर्ण)
+})
 
-#घोषणा रुको_event_lock_irq_समयout(wq_head, condition, lock, समयout)		\
-(अणु										\
-	दीर्घ __ret = समयout;							\
-	अगर (!___रुको_cond_समयout(condition))					\
-		__ret = __रुको_event_lock_irq_समयout(				\
-					wq_head, condition, lock, समयout,	\
+#define wait_event_lock_irq_timeout(wq_head, condition, lock, timeout)		\
+({										\
+	long __ret = timeout;							\
+	if (!___wait_cond_timeout(condition))					\
+		__ret = __wait_event_lock_irq_timeout(				\
+					wq_head, condition, lock, timeout,	\
 					TASK_UNINTERRUPTIBLE);			\
 	__ret;									\
-पूर्ण)
+})
 
 /*
- * Waitqueues which are हटाओd from the रुकोqueue_head at wakeup समय
+ * Waitqueues which are removed from the waitqueue_head at wakeup time
  */
-व्योम prepare_to_रुको(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry, पूर्णांक state);
-व्योम prepare_to_रुको_exclusive(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry, पूर्णांक state);
-दीर्घ prepare_to_रुको_event(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry, पूर्णांक state);
-व्योम finish_रुको(काष्ठा रुको_queue_head *wq_head, काष्ठा रुको_queue_entry *wq_entry);
-दीर्घ रुको_woken(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode, दीर्घ समयout);
-पूर्णांक woken_wake_function(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode, पूर्णांक sync, व्योम *key);
-पूर्णांक स्वतःहटाओ_wake_function(काष्ठा रुको_queue_entry *wq_entry, अचिन्हित mode, पूर्णांक sync, व्योम *key);
+void prepare_to_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry, int state);
+void prepare_to_wait_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry, int state);
+long prepare_to_wait_event(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry, int state);
+void finish_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
+long wait_woken(struct wait_queue_entry *wq_entry, unsigned mode, long timeout);
+int woken_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, int sync, void *key);
+int autoremove_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, int sync, void *key);
 
-#घोषणा DEFINE_WAIT_FUNC(name, function)					\
-	काष्ठा रुको_queue_entry name = अणु					\
-		.निजी	= current,					\
+#define DEFINE_WAIT_FUNC(name, function)					\
+	struct wait_queue_entry name = {					\
+		.private	= current,					\
 		.func		= function,					\
 		.entry		= LIST_HEAD_INIT((name).entry),			\
-	पूर्ण
+	}
 
-#घोषणा DEFINE_WAIT(name) DEFINE_WAIT_FUNC(name, स्वतःहटाओ_wake_function)
+#define DEFINE_WAIT(name) DEFINE_WAIT_FUNC(name, autoremove_wake_function)
 
-#घोषणा init_रुको(रुको)								\
-	करो अणु									\
-		(रुको)->निजी = current;					\
-		(रुको)->func = स्वतःहटाओ_wake_function;			\
-		INIT_LIST_HEAD(&(रुको)->entry);					\
-		(रुको)->flags = 0;						\
-	पूर्ण जबतक (0)
+#define init_wait(wait)								\
+	do {									\
+		(wait)->private = current;					\
+		(wait)->func = autoremove_wake_function;			\
+		INIT_LIST_HEAD(&(wait)->entry);					\
+		(wait)->flags = 0;						\
+	} while (0)
 
-bool try_invoke_on_locked_करोwn_task(काष्ठा task_काष्ठा *p, bool (*func)(काष्ठा task_काष्ठा *t, व्योम *arg), व्योम *arg);
+bool try_invoke_on_locked_down_task(struct task_struct *p, bool (*func)(struct task_struct *t, void *arg), void *arg);
 
-#पूर्ण_अगर /* _LINUX_WAIT_H */
+#endif /* _LINUX_WAIT_H */

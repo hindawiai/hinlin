@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* orinoco_cs.c (क्रमmerly known as dldwd_cs.c)
+/* orinoco_cs.c (formerly known as dldwd_cs.c)
  *
- * A driver क्रम "Hermes" chipset based PCMCIA wireless adaptors, such
+ * A driver for "Hermes" chipset based PCMCIA wireless adaptors, such
  * as the Lucent WavelanIEEE/Orinoco cards and their OEM (Cabletron/
  * EnteraSys RoamAbout 802.11, ELSA Airlancer, Melco Buffalo and others).
  * It should also be usable on various Prism II based cards such as the
  * Linksys, D-Link and Farallon Skyline. It should also work on Symbol
  * cards such as the 3Com AirConnect and Ericsson WLAN.
  *
- * Copyright notice & release notes in file मुख्य.c
+ * Copyright notice & release notes in file main.c
  */
 
-#घोषणा DRIVER_NAME "orinoco_cs"
-#घोषणा PFX DRIVER_NAME ": "
+#define DRIVER_NAME "orinoco_cs"
+#define PFX DRIVER_NAME ": "
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/ds.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/ds.h>
 
-#समावेश "orinoco.h"
+#include "orinoco.h"
 
 /********************************************************************/
 /* Module stuff							    */
@@ -34,167 +33,167 @@ MODULE_LICENSE("Dual MPL/GPL");
 
 /* Module parameters */
 
-/* Some D-Link cards have buggy CIS. They करो work at 5v properly, but
- * करोn't have any CIS entry क्रम it. This workaround it... */
-अटल पूर्णांक ignore_cis_vcc; /* = 0 */
-module_param(ignore_cis_vcc, पूर्णांक, 0);
+/* Some D-Link cards have buggy CIS. They do work at 5v properly, but
+ * don't have any CIS entry for it. This workaround it... */
+static int ignore_cis_vcc; /* = 0 */
+module_param(ignore_cis_vcc, int, 0);
 MODULE_PARM_DESC(ignore_cis_vcc, "Allow voltage mismatch between card and socket");
 
 /********************************************************************/
-/* Data काष्ठाures						    */
+/* Data structures						    */
 /********************************************************************/
 
-/* PCMCIA specअगरic device inक्रमmation (goes in the card field of
- * काष्ठा orinoco_निजी */
-काष्ठा orinoco_pccard अणु
-	काष्ठा pcmcia_device	*p_dev;
+/* PCMCIA specific device information (goes in the card field of
+ * struct orinoco_private */
+struct orinoco_pccard {
+	struct pcmcia_device	*p_dev;
 
 	/* Used to handle hard reset */
 	/* yuck, we need this hack to work around the insanity of the
 	 * PCMCIA layer */
-	अचिन्हित दीर्घ hard_reset_in_progress;
-पूर्ण;
+	unsigned long hard_reset_in_progress;
+};
 
 
 /********************************************************************/
 /* Function prototypes						    */
 /********************************************************************/
 
-अटल पूर्णांक orinoco_cs_config(काष्ठा pcmcia_device *link);
-अटल व्योम orinoco_cs_release(काष्ठा pcmcia_device *link);
-अटल व्योम orinoco_cs_detach(काष्ठा pcmcia_device *p_dev);
+static int orinoco_cs_config(struct pcmcia_device *link);
+static void orinoco_cs_release(struct pcmcia_device *link);
+static void orinoco_cs_detach(struct pcmcia_device *p_dev);
 
 /********************************************************************/
 /* Device methods						    */
 /********************************************************************/
 
-अटल पूर्णांक
-orinoco_cs_hard_reset(काष्ठा orinoco_निजी *priv)
-अणु
-	काष्ठा orinoco_pccard *card = priv->card;
-	काष्ठा pcmcia_device *link = card->p_dev;
-	पूर्णांक err;
+static int
+orinoco_cs_hard_reset(struct orinoco_private *priv)
+{
+	struct orinoco_pccard *card = priv->card;
+	struct pcmcia_device *link = card->p_dev;
+	int err;
 
 	/* We need atomic ops here, because we're not holding the lock */
 	set_bit(0, &card->hard_reset_in_progress);
 
 	err = pcmcia_reset_card(link->socket);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	msleep(100);
 	clear_bit(0, &card->hard_reset_in_progress);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /********************************************************************/
 /* PCMCIA stuff							    */
 /********************************************************************/
 
-अटल पूर्णांक
-orinoco_cs_probe(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा orinoco_निजी *priv;
-	काष्ठा orinoco_pccard *card;
+static int
+orinoco_cs_probe(struct pcmcia_device *link)
+{
+	struct orinoco_private *priv;
+	struct orinoco_pccard *card;
 
-	priv = alloc_orinocodev(माप(*card), &link->dev,
-				orinoco_cs_hard_reset, शून्य);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = alloc_orinocodev(sizeof(*card), &link->dev,
+				orinoco_cs_hard_reset, NULL);
+	if (!priv)
+		return -ENOMEM;
 	card = priv->card;
 
-	/* Link both काष्ठाures together */
+	/* Link both structures together */
 	card->p_dev = link;
 	link->priv = priv;
 
-	वापस orinoco_cs_config(link);
-पूर्ण				/* orinoco_cs_attach */
+	return orinoco_cs_config(link);
+}				/* orinoco_cs_attach */
 
-अटल व्योम orinoco_cs_detach(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा orinoco_निजी *priv = link->priv;
+static void orinoco_cs_detach(struct pcmcia_device *link)
+{
+	struct orinoco_private *priv = link->priv;
 
-	orinoco_अगर_del(priv);
+	orinoco_if_del(priv);
 
 	orinoco_cs_release(link);
 
-	wiphy_unरेजिस्टर(priv_to_wiphy(priv));
-	मुक्त_orinocodev(priv);
-पूर्ण				/* orinoco_cs_detach */
+	wiphy_unregister(priv_to_wiphy(priv));
+	free_orinocodev(priv);
+}				/* orinoco_cs_detach */
 
-अटल पूर्णांक orinoco_cs_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
-अणु
-	अगर (p_dev->config_index == 0)
-		वापस -EINVAL;
+static int orinoco_cs_config_check(struct pcmcia_device *p_dev, void *priv_data)
+{
+	if (p_dev->config_index == 0)
+		return -EINVAL;
 
-	वापस pcmcia_request_io(p_dev);
-पूर्ण;
+	return pcmcia_request_io(p_dev);
+};
 
-अटल पूर्णांक
-orinoco_cs_config(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा orinoco_निजी *priv = link->priv;
-	काष्ठा hermes *hw = &priv->hw;
-	पूर्णांक ret;
-	व्योम __iomem *mem;
+static int
+orinoco_cs_config(struct pcmcia_device *link)
+{
+	struct orinoco_private *priv = link->priv;
+	struct hermes *hw = &priv->hw;
+	int ret;
+	void __iomem *mem;
 
 	link->config_flags |= CONF_AUTO_SET_VPP | CONF_AUTO_CHECK_VCC |
 		CONF_AUTO_SET_IO | CONF_ENABLE_IRQ;
-	अगर (ignore_cis_vcc)
+	if (ignore_cis_vcc)
 		link->config_flags &= ~CONF_AUTO_CHECK_VCC;
-	ret = pcmcia_loop_config(link, orinoco_cs_config_check, शून्य);
-	अगर (ret) अणु
-		अगर (!ignore_cis_vcc)
-			prपूर्णांकk(KERN_ERR PFX "GetNextTuple(): No matching "
+	ret = pcmcia_loop_config(link, orinoco_cs_config_check, NULL);
+	if (ret) {
+		if (!ignore_cis_vcc)
+			printk(KERN_ERR PFX "GetNextTuple(): No matching "
 			       "CIS configuration.  Maybe you need the "
 			       "ignore_cis_vcc=1 parameter.\n");
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	mem = ioport_map(link->resource[0]->start,
 			resource_size(link->resource[0]));
-	अगर (!mem)
-		जाओ failed;
+	if (!mem)
+		goto failed;
 
-	/* We initialize the hermes काष्ठाure beक्रमe completing PCMCIA
-	 * configuration just in हाल the पूर्णांकerrupt handler माला_लो
+	/* We initialize the hermes structure before completing PCMCIA
+	 * configuration just in case the interrupt handler gets
 	 * called. */
-	hermes_काष्ठा_init(hw, mem, HERMES_16BIT_REGSPACING);
+	hermes_struct_init(hw, mem, HERMES_16BIT_REGSPACING);
 
-	ret = pcmcia_request_irq(link, orinoco_पूर्णांकerrupt);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_irq(link, orinoco_interrupt);
+	if (ret)
+		goto failed;
 
 	ret = pcmcia_enable_device(link);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 
-	/* Initialise the मुख्य driver */
-	अगर (orinoco_init(priv) != 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "orinoco_init() failed\n");
-		जाओ failed;
-	पूर्ण
+	/* Initialise the main driver */
+	if (orinoco_init(priv) != 0) {
+		printk(KERN_ERR PFX "orinoco_init() failed\n");
+		goto failed;
+	}
 
-	/* Register an पूर्णांकerface with the stack */
-	अगर (orinoco_अगर_add(priv, link->resource[0]->start,
-			   link->irq, शून्य) != 0) अणु
-		prपूर्णांकk(KERN_ERR PFX "orinoco_if_add() failed\n");
-		जाओ failed;
-	पूर्ण
+	/* Register an interface with the stack */
+	if (orinoco_if_add(priv, link->resource[0]->start,
+			   link->irq, NULL) != 0) {
+		printk(KERN_ERR PFX "orinoco_if_add() failed\n");
+		goto failed;
+	}
 
-	वापस 0;
+	return 0;
 
  failed:
 	orinoco_cs_release(link);
-	वापस -ENODEV;
-पूर्ण				/* orinoco_cs_config */
+	return -ENODEV;
+}				/* orinoco_cs_config */
 
-अटल व्योम
-orinoco_cs_release(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा orinoco_निजी *priv = link->priv;
-	अचिन्हित दीर्घ flags;
+static void
+orinoco_cs_release(struct pcmcia_device *link)
+{
+	struct orinoco_private *priv = link->priv;
+	unsigned long flags;
 
 	/* We're committed to taking the device away now, so mark the
 	 * hardware as unavailable */
@@ -203,42 +202,42 @@ orinoco_cs_release(काष्ठा pcmcia_device *link)
 	priv->hw.ops->unlock_irqrestore(&priv->lock, &flags);
 
 	pcmcia_disable_device(link);
-	अगर (priv->hw.iobase)
+	if (priv->hw.iobase)
 		ioport_unmap(priv->hw.iobase);
-पूर्ण				/* orinoco_cs_release */
+}				/* orinoco_cs_release */
 
-अटल पूर्णांक orinoco_cs_suspend(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा orinoco_निजी *priv = link->priv;
-	काष्ठा orinoco_pccard *card = priv->card;
+static int orinoco_cs_suspend(struct pcmcia_device *link)
+{
+	struct orinoco_private *priv = link->priv;
+	struct orinoco_pccard *card = priv->card;
 
 	/* This is probably racy, but I can't think of
-	   a better way, लघु of rewriting the PCMCIA
+	   a better way, short of rewriting the PCMCIA
 	   layer to not suck :-( */
-	अगर (!test_bit(0, &card->hard_reset_in_progress))
-		orinoco_करोwn(priv);
+	if (!test_bit(0, &card->hard_reset_in_progress))
+		orinoco_down(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक orinoco_cs_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा orinoco_निजी *priv = link->priv;
-	काष्ठा orinoco_pccard *card = priv->card;
-	पूर्णांक err = 0;
+static int orinoco_cs_resume(struct pcmcia_device *link)
+{
+	struct orinoco_private *priv = link->priv;
+	struct orinoco_pccard *card = priv->card;
+	int err = 0;
 
-	अगर (!test_bit(0, &card->hard_reset_in_progress))
+	if (!test_bit(0, &card->hard_reset_in_progress))
 		err = orinoco_up(priv);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /********************************************************************/
 /* Module initialization					    */
 /********************************************************************/
 
-अटल स्थिर काष्ठा pcmcia_device_id orinoco_cs_ids[] = अणु
+static const struct pcmcia_device_id orinoco_cs_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0x0101, 0x0777), /* 3Com AirConnect PCI 777A */
 	PCMCIA_DEVICE_MANF_CARD(0x016b, 0x0001), /* Ericsson WLAN Card C11 */
 	PCMCIA_DEVICE_MANF_CARD(0x01eb, 0x080a), /* Nortel Networks eMobility 802.11 Wireless Adapter */
@@ -273,11 +272,11 @@ orinoco_cs_release(काष्ठा pcmcia_device *link)
 	PCMCIA_DEVICE_PROD_ID12("SAMSUNG", "11Mbps WLAN Card", 0x43d74cb4, 0x579bd91b),
 	PCMCIA_DEVICE_PROD_ID12("Symbol Technologies", "LA4111 Spectrum24 Wireless LAN PC Card", 0x3f02b4d6, 0x3663cb0e),
 	PCMCIA_DEVICE_MANF_CARD_PROD_ID3(0x0156, 0x0002, "Version 01.01", 0xd27deb1a), /* Lucent Orinoco */
-#अगर_घोषित CONFIG_HERMES_PRISM
-	/* Only entries that certainly identअगरy Prism chipset */
+#ifdef CONFIG_HERMES_PRISM
+	/* Only entries that certainly identify Prism chipset */
 	PCMCIA_DEVICE_MANF_CARD(0x000b, 0x7100), /* SonicWALL Long Range Wireless Card */
 	PCMCIA_DEVICE_MANF_CARD(0x000b, 0x7300), /* Sohoware NCP110, Philips 802.11b */
-	PCMCIA_DEVICE_MANF_CARD(0x0089, 0x0002), /* AnyPoपूर्णांक(TM) Wireless II PC Card */
+	PCMCIA_DEVICE_MANF_CARD(0x0089, 0x0002), /* AnyPoint(TM) Wireless II PC Card */
 	PCMCIA_DEVICE_MANF_CARD(0x0126, 0x8000), /* PROXIM RangeLAN-DS/LAN PC CARD */
 	PCMCIA_DEVICE_MANF_CARD(0x0138, 0x0002), /* Compaq WL100 11 Mbps Wireless Adapter */
 	PCMCIA_DEVICE_MANF_CARD(0x01ff, 0x0008), /* Intermec MobileLAN 11Mbps 802.11b WLAN Card */
@@ -325,18 +324,18 @@ orinoco_cs_release(काष्ठा pcmcia_device *link)
 
 	/* This may be Agere or Intersil Firmware */
 	PCMCIA_DEVICE_MANF_CARD(0x0156, 0x0002),
-#पूर्ण_अगर
-	PCMCIA_DEVICE_शून्य,
-पूर्ण;
+#endif
+	PCMCIA_DEVICE_NULL,
+};
 MODULE_DEVICE_TABLE(pcmcia, orinoco_cs_ids);
 
-अटल काष्ठा pcmcia_driver orinoco_driver = अणु
+static struct pcmcia_driver orinoco_driver = {
 	.owner		= THIS_MODULE,
 	.name		= DRIVER_NAME,
 	.probe		= orinoco_cs_probe,
-	.हटाओ		= orinoco_cs_detach,
+	.remove		= orinoco_cs_detach,
 	.id_table       = orinoco_cs_ids,
 	.suspend	= orinoco_cs_suspend,
 	.resume		= orinoco_cs_resume,
-पूर्ण;
+};
 module_pcmcia_driver(orinoco_driver);

@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __RTL8723B_DM_H__
-#घोषणा __RTL8723B_DM_H__
+#ifndef __RTL8723B_DM_H__
+#define __RTL8723B_DM_H__
 /*  */
 /*  Description: */
 /*  */
-/*  This file is क्रम 8723B dynamic mechanism only */
+/*  This file is for 8723B dynamic mechanism only */
 /*  */
 /*  */
 /*  */
 
 /*  */
-/*  काष्ठाure and define */
+/*  structure and define */
 /*  */
 
 /*  */
 /*  function prototype */
 /*  */
 
-व्योम rtl8723b_init_dm_priv(काष्ठा adapter *padapter);
+void rtl8723b_init_dm_priv(struct adapter *padapter);
 
-व्योम rtl8723b_InitHalDm(काष्ठा adapter *padapter);
-व्योम rtl8723b_HalDmWatchDog(काष्ठा adapter *padapter);
-व्योम rtl8723b_HalDmWatchDog_in_LPS(काष्ठा adapter *padapter);
-व्योम rtl8723b_hal_dm_in_lps(काष्ठा adapter *padapter);
+void rtl8723b_InitHalDm(struct adapter *padapter);
+void rtl8723b_HalDmWatchDog(struct adapter *padapter);
+void rtl8723b_HalDmWatchDog_in_LPS(struct adapter *padapter);
+void rtl8723b_hal_dm_in_lps(struct adapter *padapter);
 
 
-#पूर्ण_अगर
+#endif

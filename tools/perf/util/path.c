@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * I'm tired of करोing "vsnprintf()" etc just to खोलो a
+ * I'm tired of doing "vsnprintf()" etc just to open a
  * file, so here's a "return static buffer with printf"
- * पूर्णांकerface क्रम paths.
+ * interface for paths.
  *
  * It's obviously not thread-safe. Sue me. But it's quite
- * useful क्रम करोing things like
+ * useful for doing things like
  *
- *   f = खोलो(mkpath("%s/%s.perf", base, name), O_RDONLY);
+ *   f = open(mkpath("%s/%s.perf", base, name), O_RDONLY);
  *
- * which is what it's deचिन्हित क्रम.
+ * which is what it's designed for.
  */
-#समावेश "path.h"
-#समावेश "cache.h"
-#समावेश <linux/kernel.h>
-#समावेश <सीमा.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <dirent.h>
-#समावेश <unistd.h>
+#include "path.h"
+#include "cache.h"
+#include <linux/kernel.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
 
-अटल अक्षर bad_path[] = "/bad-path/";
+static char bad_path[] = "/bad-path/";
 /*
  * One hack:
  */
-अटल अक्षर *get_pathname(व्योम)
-अणु
-	अटल अक्षर pathname_array[4][PATH_MAX];
-	अटल पूर्णांक idx;
+static char *get_pathname(void)
+{
+	static char pathname_array[4][PATH_MAX];
+	static int idx;
 
-	वापस pathname_array[3 & ++idx];
-पूर्ण
+	return pathname_array[3 & ++idx];
+}
 
-अटल अक्षर *cleanup_path(अक्षर *path)
-अणु
+static char *cleanup_path(char *path)
+{
 	/* Clean it up */
-	अगर (!स_भेद(path, "./", 2)) अणु
+	if (!memcmp(path, "./", 2)) {
 		path += 2;
-		जबतक (*path == '/')
+		while (*path == '/')
 			path++;
-	पूर्ण
-	वापस path;
-पूर्ण
+	}
+	return path;
+}
 
-अक्षर *mkpath(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	अचिन्हित len;
-	अक्षर *pathname = get_pathname();
+char *mkpath(const char *fmt, ...)
+{
+	va_list args;
+	unsigned len;
+	char *pathname = get_pathname();
 
-	बहु_शुरू(args, fmt);
-	len = vsnम_लिखो(pathname, PATH_MAX, fmt, args);
-	बहु_पूर्ण(args);
-	अगर (len >= PATH_MAX)
-		वापस bad_path;
-	वापस cleanup_path(pathname);
-पूर्ण
+	va_start(args, fmt);
+	len = vsnprintf(pathname, PATH_MAX, fmt, args);
+	va_end(args);
+	if (len >= PATH_MAX)
+		return bad_path;
+	return cleanup_path(pathname);
+}
 
-पूर्णांक path__join(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *path1, स्थिर अक्षर *path2)
-अणु
-	वापस scnम_लिखो(bf, size, "%s%s%s", path1, path1[0] ? "/" : "", path2);
-पूर्ण
+int path__join(char *bf, size_t size, const char *path1, const char *path2)
+{
+	return scnprintf(bf, size, "%s%s%s", path1, path1[0] ? "/" : "", path2);
+}
 
-पूर्णांक path__join3(अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *path1, स्थिर अक्षर *path2, स्थिर अक्षर *path3)
-अणु
-	वापस scnम_लिखो(bf, size, "%s%s%s%s%s", path1, path1[0] ? "/" : "",
+int path__join3(char *bf, size_t size, const char *path1, const char *path2, const char *path3)
+{
+	return scnprintf(bf, size, "%s%s%s%s%s", path1, path1[0] ? "/" : "",
 			 path2, path2[0] ? "/" : "", path3);
-पूर्ण
+}
 
-bool is_regular_file(स्थिर अक्षर *file)
-अणु
-	काष्ठा stat st;
+bool is_regular_file(const char *file)
+{
+	struct stat st;
 
-	अगर (stat(file, &st))
-		वापस false;
+	if (stat(file, &st))
+		return false;
 
-	वापस S_ISREG(st.st_mode);
-पूर्ण
+	return S_ISREG(st.st_mode);
+}
 
-/* Helper function क्रम fileप्रणालीs that वापस a dent->d_type DT_UNKNOWN */
-bool is_directory(स्थिर अक्षर *base_path, स्थिर काष्ठा dirent *dent)
-अणु
-	अक्षर path[PATH_MAX];
-	काष्ठा stat st;
+/* Helper function for filesystems that return a dent->d_type DT_UNKNOWN */
+bool is_directory(const char *base_path, const struct dirent *dent)
+{
+	char path[PATH_MAX];
+	struct stat st;
 
-	प्र_लिखो(path, "%s/%s", base_path, dent->d_name);
-	अगर (stat(path, &st))
-		वापस false;
+	sprintf(path, "%s/%s", base_path, dent->d_name);
+	if (stat(path, &st))
+		return false;
 
-	वापस S_ISसूची(st.st_mode);
-पूर्ण
+	return S_ISDIR(st.st_mode);
+}

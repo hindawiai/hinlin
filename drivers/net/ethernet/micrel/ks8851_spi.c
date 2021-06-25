@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* drivers/net/ethernet/micrel/ks8851.c
  *
  * Copyright 2009 Simtec Electronics
@@ -7,265 +6,265 @@
  *	Ben Dooks <ben@simtec.co.uk>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
+#include <linux/cache.h>
+#include <linux/crc32.h>
+#include <linux/mii.h>
+#include <linux/regulator/consumer.h>
 
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_net.h>
+#include <linux/spi/spi.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+#include <linux/of_net.h>
 
-#समावेश "ks8851.h"
+#include "ks8851.h"
 
-अटल पूर्णांक msg_enable;
+static int msg_enable;
 
 /**
- * काष्ठा ks8851_net_spi - KS8851 SPI driver निजी data
+ * struct ks8851_net_spi - KS8851 SPI driver private data
  * @lock: Lock to ensure that the device is not accessed when busy.
- * @tx_work: Work queue क्रम tx packets
- * @ks8851: KS8851 driver common निजी data
+ * @tx_work: Work queue for tx packets
+ * @ks8851: KS8851 driver common private data
  * @spidev: The spi device we're bound to.
  * @spi_msg1: pre-setup SPI transfer with one message, @spi_xfer1.
  * @spi_msg2: pre-setup SPI transfer with two messages, @spi_xfer2.
- * @spi_xfer1: @spi_msg1 SPI transfer काष्ठाure
- * @spi_xfer2: @spi_msg2 SPI transfer काष्ठाure
+ * @spi_xfer1: @spi_msg1 SPI transfer structure
+ * @spi_xfer2: @spi_msg2 SPI transfer structure
  *
- * The @lock ensures that the chip is रक्षित when certain operations are
- * in progress. When the पढ़ो or ग_लिखो packet transfer is in progress, most
- * of the chip रेजिस्टरs are not ccessible until the transfer is finished and
- * the DMA has been de-निश्चितed.
+ * The @lock ensures that the chip is protected when certain operations are
+ * in progress. When the read or write packet transfer is in progress, most
+ * of the chip registers are not ccessible until the transfer is finished and
+ * the DMA has been de-asserted.
  */
-काष्ठा ks8851_net_spi अणु
-	काष्ठा ks8851_net	ks8851;
-	काष्ठा mutex		lock;
-	काष्ठा work_काष्ठा	tx_work;
-	काष्ठा spi_device	*spidev;
-	काष्ठा spi_message	spi_msg1;
-	काष्ठा spi_message	spi_msg2;
-	काष्ठा spi_transfer	spi_xfer1;
-	काष्ठा spi_transfer	spi_xfer2[2];
-पूर्ण;
+struct ks8851_net_spi {
+	struct ks8851_net	ks8851;
+	struct mutex		lock;
+	struct work_struct	tx_work;
+	struct spi_device	*spidev;
+	struct spi_message	spi_msg1;
+	struct spi_message	spi_msg2;
+	struct spi_transfer	spi_xfer1;
+	struct spi_transfer	spi_xfer2[2];
+};
 
-#घोषणा to_ks8851_spi(ks) container_of((ks), काष्ठा ks8851_net_spi, ks8851)
+#define to_ks8851_spi(ks) container_of((ks), struct ks8851_net_spi, ks8851)
 
 /* SPI frame opcodes */
-#घोषणा KS_SPIOP_RD	0x00
-#घोषणा KS_SPIOP_WR	0x40
-#घोषणा KS_SPIOP_RXFIFO	0x80
-#घोषणा KS_SPIOP_TXFIFO	0xC0
+#define KS_SPIOP_RD	0x00
+#define KS_SPIOP_WR	0x40
+#define KS_SPIOP_RXFIFO	0x80
+#define KS_SPIOP_TXFIFO	0xC0
 
-/* shअगरt क्रम byte-enable data */
-#घोषणा BYTE_EN(_x)	((_x) << 2)
+/* shift for byte-enable data */
+#define BYTE_EN(_x)	((_x) << 2)
 
-/* turn रेजिस्टर number and byte-enable mask पूर्णांकo data क्रम start of packet */
-#घोषणा MK_OP(_byteen, _reg)	\
+/* turn register number and byte-enable mask into data for start of packet */
+#define MK_OP(_byteen, _reg)	\
 	(BYTE_EN(_byteen) | (_reg) << (8 + 2) | (_reg) >> 6)
 
 /**
- * ks8851_lock_spi - रेजिस्टर access lock
+ * ks8851_lock_spi - register access lock
  * @ks: The chip state
  * @flags: Spinlock flags
  *
- * Claim chip रेजिस्टर access lock
+ * Claim chip register access lock
  */
-अटल व्योम ks8851_lock_spi(काष्ठा ks8851_net *ks, अचिन्हित दीर्घ *flags)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
+static void ks8851_lock_spi(struct ks8851_net *ks, unsigned long *flags)
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
 
 	mutex_lock(&kss->lock);
-पूर्ण
+}
 
 /**
- * ks8851_unlock_spi - रेजिस्टर access unlock
+ * ks8851_unlock_spi - register access unlock
  * @ks: The chip state
  * @flags: Spinlock flags
  *
- * Release chip रेजिस्टर access lock
+ * Release chip register access lock
  */
-अटल व्योम ks8851_unlock_spi(काष्ठा ks8851_net *ks, अचिन्हित दीर्घ *flags)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
+static void ks8851_unlock_spi(struct ks8851_net *ks, unsigned long *flags)
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
 
 	mutex_unlock(&kss->lock);
-पूर्ण
+}
 
-/* SPI रेजिस्टर पढ़ो/ग_लिखो calls.
+/* SPI register read/write calls.
  *
- * All these calls issue SPI transactions to access the chip's रेजिस्टरs. They
+ * All these calls issue SPI transactions to access the chip's registers. They
  * all require that the necessary lock is held to prevent accesses when the
  * chip is busy transferring packet data (RX/TX FIFO accesses).
  */
 
 /**
- * ks8851_wrreg16_spi - ग_लिखो 16bit रेजिस्टर value to chip via SPI
+ * ks8851_wrreg16_spi - write 16bit register value to chip via SPI
  * @ks: The chip state
- * @reg: The रेजिस्टर address
- * @val: The value to ग_लिखो
+ * @reg: The register address
+ * @val: The value to write
  *
- * Issue a ग_लिखो to put the value @val पूर्णांकo the रेजिस्टर specअगरied in @reg.
+ * Issue a write to put the value @val into the register specified in @reg.
  */
-अटल व्योम ks8851_wrreg16_spi(काष्ठा ks8851_net *ks, अचिन्हित पूर्णांक reg,
-			       अचिन्हित पूर्णांक val)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
-	काष्ठा spi_transfer *xfer = &kss->spi_xfer1;
-	काष्ठा spi_message *msg = &kss->spi_msg1;
+static void ks8851_wrreg16_spi(struct ks8851_net *ks, unsigned int reg,
+			       unsigned int val)
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
+	struct spi_transfer *xfer = &kss->spi_xfer1;
+	struct spi_message *msg = &kss->spi_msg1;
 	__le16 txb[2];
-	पूर्णांक ret;
+	int ret;
 
 	txb[0] = cpu_to_le16(MK_OP(reg & 2 ? 0xC : 0x03, reg) | KS_SPIOP_WR);
 	txb[1] = cpu_to_le16(val);
 
 	xfer->tx_buf = txb;
-	xfer->rx_buf = शून्य;
+	xfer->rx_buf = NULL;
 	xfer->len = 4;
 
 	ret = spi_sync(kss->spidev, msg);
-	अगर (ret < 0)
+	if (ret < 0)
 		netdev_err(ks->netdev, "spi_sync() failed\n");
-पूर्ण
+}
 
 /**
- * ks8851_rdreg - issue पढ़ो रेजिस्टर command and वापस the data
+ * ks8851_rdreg - issue read register command and return the data
  * @ks: The device state
- * @op: The रेजिस्टर address and byte enables in message क्रमmat.
- * @rxb: The RX buffer to वापस the result पूर्णांकo
+ * @op: The register address and byte enables in message format.
+ * @rxb: The RX buffer to return the result into
  * @rxl: The length of data expected.
  *
- * This is the low level पढ़ो call that issues the necessary spi message(s)
- * to पढ़ो data from the रेजिस्टर specअगरied in @op.
+ * This is the low level read call that issues the necessary spi message(s)
+ * to read data from the register specified in @op.
  */
-अटल व्योम ks8851_rdreg(काष्ठा ks8851_net *ks, अचिन्हित पूर्णांक op,
-			 u8 *rxb, अचिन्हित पूर्णांक rxl)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
-	काष्ठा spi_transfer *xfer;
-	काष्ठा spi_message *msg;
+static void ks8851_rdreg(struct ks8851_net *ks, unsigned int op,
+			 u8 *rxb, unsigned int rxl)
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
+	struct spi_transfer *xfer;
+	struct spi_message *msg;
 	__le16 *txb = (__le16 *)ks->txd;
 	u8 *trx = ks->rxd;
-	पूर्णांक ret;
+	int ret;
 
 	txb[0] = cpu_to_le16(op | KS_SPIOP_RD);
 
-	अगर (kss->spidev->master->flags & SPI_MASTER_HALF_DUPLEX) अणु
+	if (kss->spidev->master->flags & SPI_MASTER_HALF_DUPLEX) {
 		msg = &kss->spi_msg2;
 		xfer = kss->spi_xfer2;
 
 		xfer->tx_buf = txb;
-		xfer->rx_buf = शून्य;
+		xfer->rx_buf = NULL;
 		xfer->len = 2;
 
 		xfer++;
-		xfer->tx_buf = शून्य;
+		xfer->tx_buf = NULL;
 		xfer->rx_buf = trx;
 		xfer->len = rxl;
-	पूर्ण अन्यथा अणु
+	} else {
 		msg = &kss->spi_msg1;
 		xfer = &kss->spi_xfer1;
 
 		xfer->tx_buf = txb;
 		xfer->rx_buf = trx;
 		xfer->len = rxl + 2;
-	पूर्ण
+	}
 
 	ret = spi_sync(kss->spidev, msg);
-	अगर (ret < 0)
+	if (ret < 0)
 		netdev_err(ks->netdev, "read: spi_sync() failed\n");
-	अन्यथा अगर (kss->spidev->master->flags & SPI_MASTER_HALF_DUPLEX)
-		स_नकल(rxb, trx, rxl);
-	अन्यथा
-		स_नकल(rxb, trx + 2, rxl);
-पूर्ण
+	else if (kss->spidev->master->flags & SPI_MASTER_HALF_DUPLEX)
+		memcpy(rxb, trx, rxl);
+	else
+		memcpy(rxb, trx + 2, rxl);
+}
 
 /**
- * ks8851_rdreg16_spi - पढ़ो 16 bit रेजिस्टर from device via SPI
- * @ks: The chip inक्रमmation
- * @reg: The रेजिस्टर address
+ * ks8851_rdreg16_spi - read 16 bit register from device via SPI
+ * @ks: The chip information
+ * @reg: The register address
  *
- * Read a 16bit रेजिस्टर from the chip, वापसing the result
+ * Read a 16bit register from the chip, returning the result
  */
-अटल अचिन्हित पूर्णांक ks8851_rdreg16_spi(काष्ठा ks8851_net *ks, अचिन्हित पूर्णांक reg)
-अणु
+static unsigned int ks8851_rdreg16_spi(struct ks8851_net *ks, unsigned int reg)
+{
 	__le16 rx = 0;
 
 	ks8851_rdreg(ks, MK_OP(reg & 2 ? 0xC : 0x3, reg), (u8 *)&rx, 2);
-	वापस le16_to_cpu(rx);
-पूर्ण
+	return le16_to_cpu(rx);
+}
 
 /**
- * ks8851_rdfअगरo_spi - पढ़ो data from the receive fअगरo via SPI
+ * ks8851_rdfifo_spi - read data from the receive fifo via SPI
  * @ks: The device state.
  * @buff: The buffer address
- * @len: The length of the data to पढ़ो
+ * @len: The length of the data to read
  *
- * Issue an RXQ FIFO पढ़ो command and पढ़ो the @len amount of data from
- * the FIFO पूर्णांकo the buffer specअगरied by @buff.
+ * Issue an RXQ FIFO read command and read the @len amount of data from
+ * the FIFO into the buffer specified by @buff.
  */
-अटल व्योम ks8851_rdfअगरo_spi(काष्ठा ks8851_net *ks, u8 *buff, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
-	काष्ठा spi_transfer *xfer = kss->spi_xfer2;
-	काष्ठा spi_message *msg = &kss->spi_msg2;
+static void ks8851_rdfifo_spi(struct ks8851_net *ks, u8 *buff, unsigned int len)
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
+	struct spi_transfer *xfer = kss->spi_xfer2;
+	struct spi_message *msg = &kss->spi_msg2;
 	u8 txb[1];
-	पूर्णांक ret;
+	int ret;
 
-	netअगर_dbg(ks, rx_status, ks->netdev,
+	netif_dbg(ks, rx_status, ks->netdev,
 		  "%s: %d@%p\n", __func__, len, buff);
 
 	/* set the operation we're issuing */
 	txb[0] = KS_SPIOP_RXFIFO;
 
 	xfer->tx_buf = txb;
-	xfer->rx_buf = शून्य;
+	xfer->rx_buf = NULL;
 	xfer->len = 1;
 
 	xfer++;
 	xfer->rx_buf = buff;
-	xfer->tx_buf = शून्य;
+	xfer->tx_buf = NULL;
 	xfer->len = len;
 
 	ret = spi_sync(kss->spidev, msg);
-	अगर (ret < 0)
+	if (ret < 0)
 		netdev_err(ks->netdev, "%s: spi_sync() failed\n", __func__);
-पूर्ण
+}
 
 /**
- * ks8851_wrfअगरo_spi - ग_लिखो packet to TX FIFO via SPI
+ * ks8851_wrfifo_spi - write packet to TX FIFO via SPI
  * @ks: The device state.
  * @txp: The sk_buff to transmit.
  * @irq: IRQ on completion of the packet.
  *
  * Send the @txp to the chip. This means creating the relevant packet header
- * specअगरying the length of the packet and the other inक्रमmation the chip
+ * specifying the length of the packet and the other information the chip
  * needs, such as IRQ on completion. Send the header and the packet data to
  * the device.
  */
-अटल व्योम ks8851_wrfअगरo_spi(काष्ठा ks8851_net *ks, काष्ठा sk_buff *txp,
+static void ks8851_wrfifo_spi(struct ks8851_net *ks, struct sk_buff *txp,
 			      bool irq)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
-	काष्ठा spi_transfer *xfer = kss->spi_xfer2;
-	काष्ठा spi_message *msg = &kss->spi_msg2;
-	अचिन्हित पूर्णांक fid = 0;
-	पूर्णांक ret;
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
+	struct spi_transfer *xfer = kss->spi_xfer2;
+	struct spi_message *msg = &kss->spi_msg2;
+	unsigned int fid = 0;
+	int ret;
 
-	netअगर_dbg(ks, tx_queued, ks->netdev, "%s: skb %p, %d@%p, irq %d\n",
+	netif_dbg(ks, tx_queued, ks->netdev, "%s: skb %p, %d@%p, irq %d\n",
 		  __func__, txp, txp->len, txp->data, irq);
 
 	fid = ks->fid++;
 	fid &= TXFR_TXFID_MASK;
 
-	अगर (irq)
+	if (irq)
 		fid |= TXFR_TXIC;	/* irq on completion */
 
 	/* start header at txb[1] to align txw entries */
@@ -274,78 +273,78 @@
 	ks->txh.txw[2] = cpu_to_le16(txp->len);
 
 	xfer->tx_buf = &ks->txh.txb[1];
-	xfer->rx_buf = शून्य;
+	xfer->rx_buf = NULL;
 	xfer->len = 5;
 
 	xfer++;
 	xfer->tx_buf = txp->data;
-	xfer->rx_buf = शून्य;
+	xfer->rx_buf = NULL;
 	xfer->len = ALIGN(txp->len, 4);
 
 	ret = spi_sync(kss->spidev, msg);
-	अगर (ret < 0)
+	if (ret < 0)
 		netdev_err(ks->netdev, "%s: spi_sync() failed\n", __func__);
-पूर्ण
+}
 
 /**
  * ks8851_rx_skb_spi - receive skbuff
  * @ks: The device state
  * @skb: The skbuff
  */
-अटल व्योम ks8851_rx_skb_spi(काष्ठा ks8851_net *ks, काष्ठा sk_buff *skb)
-अणु
-	netअगर_rx_ni(skb);
-पूर्ण
+static void ks8851_rx_skb_spi(struct ks8851_net *ks, struct sk_buff *skb)
+{
+	netif_rx_ni(skb);
+}
 
 /**
  * ks8851_tx_work - process tx packet(s)
  * @work: The work strucutre what was scheduled.
  *
- * This is called when a number of packets have been scheduled क्रम
+ * This is called when a number of packets have been scheduled for
  * transmission and need to be sent to the device.
  */
-अटल व्योम ks8851_tx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ks8851_net_spi *kss;
-	काष्ठा ks8851_net *ks;
-	अचिन्हित दीर्घ flags;
-	काष्ठा sk_buff *txb;
+static void ks8851_tx_work(struct work_struct *work)
+{
+	struct ks8851_net_spi *kss;
+	struct ks8851_net *ks;
+	unsigned long flags;
+	struct sk_buff *txb;
 	bool last;
 
-	kss = container_of(work, काष्ठा ks8851_net_spi, tx_work);
+	kss = container_of(work, struct ks8851_net_spi, tx_work);
 	ks = &kss->ks8851;
 	last = skb_queue_empty(&ks->txq);
 
 	ks8851_lock_spi(ks, &flags);
 
-	जबतक (!last) अणु
+	while (!last) {
 		txb = skb_dequeue(&ks->txq);
 		last = skb_queue_empty(&ks->txq);
 
-		अगर (txb) अणु
+		if (txb) {
 			ks8851_wrreg16_spi(ks, KS_RXQCR,
 					   ks->rc_rxqcr | RXQCR_SDA);
-			ks8851_wrfअगरo_spi(ks, txb, last);
+			ks8851_wrfifo_spi(ks, txb, last);
 			ks8851_wrreg16_spi(ks, KS_RXQCR, ks->rc_rxqcr);
 			ks8851_wrreg16_spi(ks, KS_TXQCR, TXQCR_METFE);
 
-			ks8851_करोne_tx(ks, txb);
-		पूर्ण
-	पूर्ण
+			ks8851_done_tx(ks, txb);
+		}
+	}
 
 	ks8851_unlock_spi(ks, &flags);
-पूर्ण
+}
 
 /**
  * ks8851_flush_tx_work_spi - flush outstanding TX work
  * @ks: The device state
  */
-अटल व्योम ks8851_flush_tx_work_spi(काष्ठा ks8851_net *ks)
-अणु
-	काष्ठा ks8851_net_spi *kss = to_ks8851_spi(ks);
+static void ks8851_flush_tx_work_spi(struct ks8851_net *ks)
+{
+	struct ks8851_net_spi *kss = to_ks8851_spi(ks);
 
 	flush_work(&kss->tx_work);
-पूर्ण
+}
 
 /**
  * calc_txlen - calculate size of message to send packet
@@ -354,63 +353,63 @@
  * Returns the size of the TXFIFO message needed to send
  * this packet.
  */
-अटल अचिन्हित पूर्णांक calc_txlen(अचिन्हित पूर्णांक len)
-अणु
-	वापस ALIGN(len + 4, 4);
-पूर्ण
+static unsigned int calc_txlen(unsigned int len)
+{
+	return ALIGN(len + 4, 4);
+}
 
 /**
  * ks8851_start_xmit_spi - transmit packet using SPI
  * @skb: The buffer to transmit
  * @dev: The device used to transmit the packet.
  *
- * Called by the network layer to transmit the @skb. Queue the packet क्रम
+ * Called by the network layer to transmit the @skb. Queue the packet for
  * the device and schedule the necessary work to transmit the packet when
- * it is मुक्त.
+ * it is free.
  *
- * We करो this to firstly aव्योम sleeping with the network device locked,
+ * We do this to firstly avoid sleeping with the network device locked,
  * and secondly so we can round up more than one packet to transmit which
- * means we can try and aव्योम generating too many transmit करोne पूर्णांकerrupts.
+ * means we can try and avoid generating too many transmit done interrupts.
  */
-अटल netdev_tx_t ks8851_start_xmit_spi(काष्ठा sk_buff *skb,
-					 काष्ठा net_device *dev)
-अणु
-	अचिन्हित पूर्णांक needed = calc_txlen(skb->len);
-	काष्ठा ks8851_net *ks = netdev_priv(dev);
+static netdev_tx_t ks8851_start_xmit_spi(struct sk_buff *skb,
+					 struct net_device *dev)
+{
+	unsigned int needed = calc_txlen(skb->len);
+	struct ks8851_net *ks = netdev_priv(dev);
 	netdev_tx_t ret = NETDEV_TX_OK;
-	काष्ठा ks8851_net_spi *kss;
+	struct ks8851_net_spi *kss;
 
 	kss = to_ks8851_spi(ks);
 
-	netअगर_dbg(ks, tx_queued, ks->netdev,
+	netif_dbg(ks, tx_queued, ks->netdev,
 		  "%s: skb %p, %d@%p\n", __func__, skb, skb->len, skb->data);
 
 	spin_lock(&ks->statelock);
 
-	अगर (needed > ks->tx_space) अणु
-		netअगर_stop_queue(dev);
+	if (needed > ks->tx_space) {
+		netif_stop_queue(dev);
 		ret = NETDEV_TX_BUSY;
-	पूर्ण अन्यथा अणु
+	} else {
 		ks->tx_space -= needed;
 		skb_queue_tail(&ks->txq, skb);
-	पूर्ण
+	}
 
 	spin_unlock(&ks->statelock);
 	schedule_work(&kss->tx_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ks8851_probe_spi(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *dev = &spi->dev;
-	काष्ठा ks8851_net_spi *kss;
-	काष्ठा net_device *netdev;
-	काष्ठा ks8851_net *ks;
+static int ks8851_probe_spi(struct spi_device *spi)
+{
+	struct device *dev = &spi->dev;
+	struct ks8851_net_spi *kss;
+	struct net_device *netdev;
+	struct ks8851_net *ks;
 
-	netdev = devm_alloc_etherdev(dev, माप(काष्ठा ks8851_net_spi));
-	अगर (!netdev)
-		वापस -ENOMEM;
+	netdev = devm_alloc_etherdev(dev, sizeof(struct ks8851_net_spi));
+	if (!netdev)
+		return -ENOMEM;
 
 	spi->bits_per_word = 8;
 
@@ -420,15 +419,15 @@
 	ks->unlock = ks8851_unlock_spi;
 	ks->rdreg16 = ks8851_rdreg16_spi;
 	ks->wrreg16 = ks8851_wrreg16_spi;
-	ks->rdfअगरo = ks8851_rdfअगरo_spi;
-	ks->wrfअगरo = ks8851_wrfअगरo_spi;
+	ks->rdfifo = ks8851_rdfifo_spi;
+	ks->wrfifo = ks8851_wrfifo_spi;
 	ks->start_xmit = ks8851_start_xmit_spi;
 	ks->rx_skb = ks8851_rx_skb_spi;
 	ks->flush_tx_work = ks8851_flush_tx_work_spi;
 
-#घोषणा STD_IRQ (IRQ_LCI |	/* Link Change */	\
-		 IRQ_TXI |	/* TX करोne */		\
-		 IRQ_RXI |	/* RX करोne */		\
+#define STD_IRQ (IRQ_LCI |	/* Link Change */	\
+		 IRQ_TXI |	/* TX done */		\
+		 IRQ_RXI |	/* RX done */		\
 		 IRQ_SPIBEI |	/* SPI bus error */	\
 		 IRQ_TXPSI |	/* TX process stop */	\
 		 IRQ_RXPSI)	/* RX process stop */
@@ -450,35 +449,35 @@
 
 	netdev->irq = spi->irq;
 
-	वापस ks8851_probe_common(netdev, dev, msg_enable);
-पूर्ण
+	return ks8851_probe_common(netdev, dev, msg_enable);
+}
 
-अटल पूर्णांक ks8851_हटाओ_spi(काष्ठा spi_device *spi)
-अणु
-	वापस ks8851_हटाओ_common(&spi->dev);
-पूर्ण
+static int ks8851_remove_spi(struct spi_device *spi)
+{
+	return ks8851_remove_common(&spi->dev);
+}
 
-अटल स्थिर काष्ठा of_device_id ks8851_match_table[] = अणु
-	अणु .compatible = "micrel,ks8851" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ks8851_match_table[] = {
+	{ .compatible = "micrel,ks8851" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ks8851_match_table);
 
-अटल काष्ठा spi_driver ks8851_driver = अणु
-	.driver = अणु
+static struct spi_driver ks8851_driver = {
+	.driver = {
 		.name = "ks8851",
 		.of_match_table = ks8851_match_table,
 		.pm = &ks8851_pm_ops,
-	पूर्ण,
+	},
 	.probe = ks8851_probe_spi,
-	.हटाओ = ks8851_हटाओ_spi,
-पूर्ण;
+	.remove = ks8851_remove_spi,
+};
 module_spi_driver(ks8851_driver);
 
 MODULE_DESCRIPTION("KS8851 Network driver");
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");
 MODULE_LICENSE("GPL");
 
-module_param_named(message, msg_enable, पूर्णांक, 0);
+module_param_named(message, msg_enable, int, 0);
 MODULE_PARM_DESC(message, "Message verbosity level (0=none, 31=all)");
 MODULE_ALIAS("spi:ks8851");

@@ -1,571 +1,570 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश <vmlinux.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include <vmlinux.h>
+#include <bpf/bpf_core_read.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
-#समावेश "profiler.h"
+#include "profiler.h"
 
-#अगर_अघोषित शून्य
-#घोषणा शून्य 0
-#पूर्ण_अगर
+#ifndef NULL
+#define NULL 0
+#endif
 
-#घोषणा O_WRONLY 00000001
-#घोषणा O_RDWR 00000002
-#घोषणा O_सूचीECTORY 00200000
-#घोषणा __O_TMPखाता 020000000
-#घोषणा O_TMPखाता (__O_TMPखाता | O_सूचीECTORY)
-#घोषणा MAX_ERRNO 4095
-#घोषणा S_IFMT 00170000
-#घोषणा S_IFSOCK 0140000
-#घोषणा S_IFLNK 0120000
-#घोषणा S_IFREG 0100000
-#घोषणा S_IFBLK 0060000
-#घोषणा S_IFसूची 0040000
-#घोषणा S_IFCHR 0020000
-#घोषणा S_IFIFO 0010000
-#घोषणा S_ISUID 0004000
-#घोषणा S_ISGID 0002000
-#घोषणा S_ISVTX 0001000
-#घोषणा S_ISLNK(m) (((m)&S_IFMT) == S_IFLNK)
-#घोषणा S_ISसूची(m) (((m)&S_IFMT) == S_IFसूची)
-#घोषणा S_ISCHR(m) (((m)&S_IFMT) == S_IFCHR)
-#घोषणा S_ISBLK(m) (((m)&S_IFMT) == S_IFBLK)
-#घोषणा S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
-#घोषणा S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
-#घोषणा IS_ERR_VALUE(x) (अचिन्हित दीर्घ)(व्योम*)(x) >= (अचिन्हित दीर्घ)-MAX_ERRNO
+#define O_WRONLY 00000001
+#define O_RDWR 00000002
+#define O_DIRECTORY 00200000
+#define __O_TMPFILE 020000000
+#define O_TMPFILE (__O_TMPFILE | O_DIRECTORY)
+#define MAX_ERRNO 4095
+#define S_IFMT 00170000
+#define S_IFSOCK 0140000
+#define S_IFLNK 0120000
+#define S_IFREG 0100000
+#define S_IFBLK 0060000
+#define S_IFDIR 0040000
+#define S_IFCHR 0020000
+#define S_IFIFO 0010000
+#define S_ISUID 0004000
+#define S_ISGID 0002000
+#define S_ISVTX 0001000
+#define S_ISLNK(m) (((m)&S_IFMT) == S_IFLNK)
+#define S_ISDIR(m) (((m)&S_IFMT) == S_IFDIR)
+#define S_ISCHR(m) (((m)&S_IFMT) == S_IFCHR)
+#define S_ISBLK(m) (((m)&S_IFMT) == S_IFBLK)
+#define S_ISFIFO(m) (((m)&S_IFMT) == S_IFIFO)
+#define S_ISSOCK(m) (((m)&S_IFMT) == S_IFSOCK)
+#define IS_ERR_VALUE(x) (unsigned long)(void*)(x) >= (unsigned long)-MAX_ERRNO
 
-#घोषणा KILL_DATA_ARRAY_SIZE 8
+#define KILL_DATA_ARRAY_SIZE 8
 
-काष्ठा var_समाप्त_data_arr_t अणु
-	काष्ठा var_समाप्त_data_t array[KILL_DATA_ARRAY_SIZE];
-पूर्ण;
+struct var_kill_data_arr_t {
+	struct var_kill_data_t array[KILL_DATA_ARRAY_SIZE];
+};
 
-जोड़ any_profiler_data_t अणु
-	काष्ठा var_exec_data_t var_exec;
-	काष्ठा var_समाप्त_data_t var_समाप्त;
-	काष्ठा var_sysctl_data_t var_sysctl;
-	काष्ठा var_filemod_data_t var_filemod;
-	काष्ठा var_विभाजन_data_t var_विभाजन;
-	काष्ठा var_समाप्त_data_arr_t var_समाप्त_data_arr;
-पूर्ण;
+union any_profiler_data_t {
+	struct var_exec_data_t var_exec;
+	struct var_kill_data_t var_kill;
+	struct var_sysctl_data_t var_sysctl;
+	struct var_filemod_data_t var_filemod;
+	struct var_fork_data_t var_fork;
+	struct var_kill_data_arr_t var_kill_data_arr;
+};
 
-अस्थिर काष्ठा profiler_config_काष्ठा bpf_config = अणुपूर्ण;
+volatile struct profiler_config_struct bpf_config = {};
 
-#घोषणा FETCH_CGROUPS_FROM_BPF (bpf_config.fetch_cgroups_from_bpf)
-#घोषणा CGROUP_FS_INODE (bpf_config.cgroup_fs_inode)
-#घोषणा CGROUP_LOGIN_SESSION_INODE \
+#define FETCH_CGROUPS_FROM_BPF (bpf_config.fetch_cgroups_from_bpf)
+#define CGROUP_FS_INODE (bpf_config.cgroup_fs_inode)
+#define CGROUP_LOGIN_SESSION_INODE \
 	(bpf_config.cgroup_login_session_inode)
-#घोषणा KILL_SIGNALS (bpf_config.समाप्त_संकेतs_mask)
-#घोषणा STALE_INFO (bpf_config.stale_info_secs)
-#घोषणा INODE_FILTER (bpf_config.inode_filter)
-#घोषणा READ_ENVIRON_FROM_EXEC (bpf_config.पढ़ो_environ_from_exec)
-#घोषणा ENABLE_CGROUP_V1_RESOLVER (bpf_config.enable_cgroup_v1_resolver)
+#define KILL_SIGNALS (bpf_config.kill_signals_mask)
+#define STALE_INFO (bpf_config.stale_info_secs)
+#define INODE_FILTER (bpf_config.inode_filter)
+#define READ_ENVIRON_FROM_EXEC (bpf_config.read_environ_from_exec)
+#define ENABLE_CGROUP_V1_RESOLVER (bpf_config.enable_cgroup_v1_resolver)
 
-काष्ठा kernfs_iattrs___52 अणु
-	काष्ठा iattr ia_iattr;
-पूर्ण;
+struct kernfs_iattrs___52 {
+	struct iattr ia_iattr;
+};
 
-काष्ठा kernfs_node___52 अणु
-	जोड़ /* kernfs_node_id */ अणु
-		काष्ठा अणु
+struct kernfs_node___52 {
+	union /* kernfs_node_id */ {
+		struct {
 			u32 ino;
 			u32 generation;
-		पूर्ण;
+		};
 		u64 id;
-	पूर्ण id;
-पूर्ण;
+	} id;
+};
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uपूर्णांक(max_entries, 1);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uint(max_entries, 1);
 	__type(key, u32);
-	__type(value, जोड़ any_profiler_data_t);
-पूर्ण data_heap SEC(".maps");
+	__type(value, union any_profiler_data_t);
+} data_heap SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-	__uपूर्णांक(key_size, माप(पूर्णांक));
-	__uपूर्णांक(value_size, माप(पूर्णांक));
-पूर्ण events SEC(".maps");
+struct {
+	__uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+	__uint(key_size, sizeof(int));
+	__uint(value_size, sizeof(int));
+} events SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
-	__uपूर्णांक(max_entries, KILL_DATA_ARRAY_SIZE);
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, KILL_DATA_ARRAY_SIZE);
 	__type(key, u32);
-	__type(value, काष्ठा var_समाप्त_data_arr_t);
-पूर्ण var_tpid_to_data SEC(".maps");
+	__type(value, struct var_kill_data_arr_t);
+} var_tpid_to_data SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-	__uपूर्णांक(max_entries, profiler_bpf_max_function_id);
+struct {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uint(max_entries, profiler_bpf_max_function_id);
 	__type(key, u32);
-	__type(value, काष्ठा bpf_func_stats_data);
-पूर्ण bpf_func_stats SEC(".maps");
+	__type(value, struct bpf_func_stats_data);
+} bpf_func_stats SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
 	__type(key, u32);
 	__type(value, bool);
-	__uपूर्णांक(max_entries, 16);
-पूर्ण allowed_devices SEC(".maps");
+	__uint(max_entries, 16);
+} allowed_devices SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
 	__type(key, u64);
 	__type(value, bool);
-	__uपूर्णांक(max_entries, 1024);
-पूर्ण allowed_file_inodes SEC(".maps");
+	__uint(max_entries, 1024);
+} allowed_file_inodes SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
 	__type(key, u64);
 	__type(value, bool);
-	__uपूर्णांक(max_entries, 1024);
-पूर्ण allowed_directory_inodes SEC(".maps");
+	__uint(max_entries, 1024);
+} allowed_directory_inodes SEC(".maps");
 
-काष्ठा अणु
-	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
 	__type(key, u32);
 	__type(value, bool);
-	__uपूर्णांक(max_entries, 16);
-पूर्ण disallowed_exec_inodes SEC(".maps");
+	__uint(max_entries, 16);
+} disallowed_exec_inodes SEC(".maps");
 
-#अगर_अघोषित ARRAY_SIZE
-#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप(arr[0]))
-#पूर्ण_अगर
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+#endif
 
-अटल INLINE bool IS_ERR(स्थिर व्योम* ptr)
-अणु
-	वापस IS_ERR_VALUE((अचिन्हित दीर्घ)ptr);
-पूर्ण
+static INLINE bool IS_ERR(const void* ptr)
+{
+	return IS_ERR_VALUE((unsigned long)ptr);
+}
 
-अटल INLINE u32 get_userspace_pid()
-अणु
-	वापस bpf_get_current_pid_tgid() >> 32;
-पूर्ण
+static INLINE u32 get_userspace_pid()
+{
+	return bpf_get_current_pid_tgid() >> 32;
+}
 
-अटल INLINE bool is_init_process(u32 tgid)
-अणु
-	वापस tgid == 1 || tgid == 0;
-पूर्ण
+static INLINE bool is_init_process(u32 tgid)
+{
+	return tgid == 1 || tgid == 0;
+}
 
-अटल INLINE अचिन्हित दीर्घ
-probe_पढ़ो_lim(व्योम* dst, व्योम* src, अचिन्हित दीर्घ len, अचिन्हित दीर्घ max)
-अणु
+static INLINE unsigned long
+probe_read_lim(void* dst, void* src, unsigned long len, unsigned long max)
+{
 	len = len < max ? len : max;
-	अगर (len > 1) अणु
-		अगर (bpf_probe_पढ़ो(dst, len, src))
-			वापस 0;
-	पूर्ण अन्यथा अगर (len == 1) अणु
-		अगर (bpf_probe_पढ़ो(dst, 1, src))
-			वापस 0;
-	पूर्ण
-	वापस len;
-पूर्ण
+	if (len > 1) {
+		if (bpf_probe_read(dst, len, src))
+			return 0;
+	} else if (len == 1) {
+		if (bpf_probe_read(dst, 1, src))
+			return 0;
+	}
+	return len;
+}
 
-अटल INLINE पूर्णांक get_var_spid_index(काष्ठा var_समाप्त_data_arr_t* arr_काष्ठा,
-				     पूर्णांक spid)
-अणु
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-	क्रम (पूर्णांक i = 0; i < ARRAY_SIZE(arr_काष्ठा->array); i++)
-		अगर (arr_काष्ठा->array[i].meta.pid == spid)
-			वापस i;
-	वापस -1;
-पूर्ण
+static INLINE int get_var_spid_index(struct var_kill_data_arr_t* arr_struct,
+				     int spid)
+{
+#ifdef UNROLL
+#pragma unroll
+#endif
+	for (int i = 0; i < ARRAY_SIZE(arr_struct->array); i++)
+		if (arr_struct->array[i].meta.pid == spid)
+			return i;
+	return -1;
+}
 
-अटल INLINE व्योम populate_ancestors(काष्ठा task_काष्ठा* task,
-				      काष्ठा ancestors_data_t* ancestors_data)
-अणु
-	काष्ठा task_काष्ठा* parent = task;
+static INLINE void populate_ancestors(struct task_struct* task,
+				      struct ancestors_data_t* ancestors_data)
+{
+	struct task_struct* parent = task;
 	u32 num_ancestors, ppid;
 
 	ancestors_data->num_ancestors = 0;
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-	क्रम (num_ancestors = 0; num_ancestors < MAX_ANCESTORS; num_ancestors++) अणु
+#ifdef UNROLL
+#pragma unroll
+#endif
+	for (num_ancestors = 0; num_ancestors < MAX_ANCESTORS; num_ancestors++) {
 		parent = BPF_CORE_READ(parent, real_parent);
-		अगर (parent == शून्य)
-			अवरोध;
+		if (parent == NULL)
+			break;
 		ppid = BPF_CORE_READ(parent, tgid);
-		अगर (is_init_process(ppid))
-			अवरोध;
+		if (is_init_process(ppid))
+			break;
 		ancestors_data->ancestor_pids[num_ancestors] = ppid;
 		ancestors_data->ancestor_exec_ids[num_ancestors] =
 			BPF_CORE_READ(parent, self_exec_id);
-		ancestors_data->ancestor_start_बार[num_ancestors] =
-			BPF_CORE_READ(parent, start_समय);
+		ancestors_data->ancestor_start_times[num_ancestors] =
+			BPF_CORE_READ(parent, start_time);
 		ancestors_data->num_ancestors = num_ancestors;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल INLINE व्योम* पढ़ो_full_cgroup_path(काष्ठा kernfs_node* cgroup_node,
-					  काष्ठा kernfs_node* cgroup_root_node,
-					  व्योम* payload,
-					  पूर्णांक* root_pos)
-अणु
-	व्योम* payload_start = payload;
-	माप_प्रकार filepart_length;
+static INLINE void* read_full_cgroup_path(struct kernfs_node* cgroup_node,
+					  struct kernfs_node* cgroup_root_node,
+					  void* payload,
+					  int* root_pos)
+{
+	void* payload_start = payload;
+	size_t filepart_length;
 
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-	क्रम (पूर्णांक i = 0; i < MAX_CGROUPS_PATH_DEPTH; i++) अणु
+#ifdef UNROLL
+#pragma unroll
+#endif
+	for (int i = 0; i < MAX_CGROUPS_PATH_DEPTH; i++) {
 		filepart_length =
-			bpf_probe_पढ़ो_str(payload, MAX_PATH, BPF_CORE_READ(cgroup_node, name));
-		अगर (!cgroup_node)
-			वापस payload;
-		अगर (cgroup_node == cgroup_root_node)
+			bpf_probe_read_str(payload, MAX_PATH, BPF_CORE_READ(cgroup_node, name));
+		if (!cgroup_node)
+			return payload;
+		if (cgroup_node == cgroup_root_node)
 			*root_pos = payload - payload_start;
-		अगर (filepart_length <= MAX_PATH) अणु
+		if (filepart_length <= MAX_PATH) {
 			barrier_var(filepart_length);
 			payload += filepart_length;
-		पूर्ण
+		}
 		cgroup_node = BPF_CORE_READ(cgroup_node, parent);
-	पूर्ण
-	वापस payload;
-पूर्ण
+	}
+	return payload;
+}
 
-अटल ino_t get_inode_from_kernfs(काष्ठा kernfs_node* node)
-अणु
-	काष्ठा kernfs_node___52* node52 = (व्योम*)node;
+static ino_t get_inode_from_kernfs(struct kernfs_node* node)
+{
+	struct kernfs_node___52* node52 = (void*)node;
 
-	अगर (bpf_core_field_exists(node52->id.ino)) अणु
+	if (bpf_core_field_exists(node52->id.ino)) {
 		barrier_var(node52);
-		वापस BPF_CORE_READ(node52, id.ino);
-	पूर्ण अन्यथा अणु
+		return BPF_CORE_READ(node52, id.ino);
+	} else {
 		barrier_var(node);
-		वापस (u64)BPF_CORE_READ(node, id);
-	पूर्ण
-पूर्ण
+		return (u64)BPF_CORE_READ(node, id);
+	}
+}
 
-बाह्य bool CONFIG_CGROUP_PIDS __kconfig __weak;
-क्रमागत cgroup_subsys_id___local अणु
-	pids_cgrp_id___local = 123, /* value करोesn't matter */
-पूर्ण;
+extern bool CONFIG_CGROUP_PIDS __kconfig __weak;
+enum cgroup_subsys_id___local {
+	pids_cgrp_id___local = 123, /* value doesn't matter */
+};
 
-अटल INLINE व्योम* populate_cgroup_info(काष्ठा cgroup_data_t* cgroup_data,
-					 काष्ठा task_काष्ठा* task,
-					 व्योम* payload)
-अणु
-	काष्ठा kernfs_node* root_kernfs =
+static INLINE void* populate_cgroup_info(struct cgroup_data_t* cgroup_data,
+					 struct task_struct* task,
+					 void* payload)
+{
+	struct kernfs_node* root_kernfs =
 		BPF_CORE_READ(task, nsproxy, cgroup_ns, root_cset, dfl_cgrp, kn);
-	काष्ठा kernfs_node* proc_kernfs = BPF_CORE_READ(task, cgroups, dfl_cgrp, kn);
+	struct kernfs_node* proc_kernfs = BPF_CORE_READ(task, cgroups, dfl_cgrp, kn);
 
-#अगर __has_builtin(__builtin_preserve_क्रमागत_value)
-	अगर (ENABLE_CGROUP_V1_RESOLVER && CONFIG_CGROUP_PIDS) अणु
-		पूर्णांक cgrp_id = bpf_core_क्रमागत_value(क्रमागत cgroup_subsys_id___local,
+#if __has_builtin(__builtin_preserve_enum_value)
+	if (ENABLE_CGROUP_V1_RESOLVER && CONFIG_CGROUP_PIDS) {
+		int cgrp_id = bpf_core_enum_value(enum cgroup_subsys_id___local,
 						  pids_cgrp_id___local);
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-		क्रम (पूर्णांक i = 0; i < CGROUP_SUBSYS_COUNT; i++) अणु
-			काष्ठा cgroup_subsys_state* subsys =
+#ifdef UNROLL
+#pragma unroll
+#endif
+		for (int i = 0; i < CGROUP_SUBSYS_COUNT; i++) {
+			struct cgroup_subsys_state* subsys =
 				BPF_CORE_READ(task, cgroups, subsys[i]);
-			अगर (subsys != शून्य) अणु
-				पूर्णांक subsys_id = BPF_CORE_READ(subsys, ss, id);
-				अगर (subsys_id == cgrp_id) अणु
+			if (subsys != NULL) {
+				int subsys_id = BPF_CORE_READ(subsys, ss, id);
+				if (subsys_id == cgrp_id) {
 					proc_kernfs = BPF_CORE_READ(subsys, cgroup, kn);
 					root_kernfs = BPF_CORE_READ(subsys, ss, root, kf_root, kn);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+					break;
+				}
+			}
+		}
+	}
+#endif
 
 	cgroup_data->cgroup_root_inode = get_inode_from_kernfs(root_kernfs);
 	cgroup_data->cgroup_proc_inode = get_inode_from_kernfs(proc_kernfs);
 
-	अगर (bpf_core_field_exists(root_kernfs->iattr->ia_mसमय)) अणु
-		cgroup_data->cgroup_root_mसमय =
-			BPF_CORE_READ(root_kernfs, iattr, ia_mसमय.tv_nsec);
-		cgroup_data->cgroup_proc_mसमय =
-			BPF_CORE_READ(proc_kernfs, iattr, ia_mसमय.tv_nsec);
-	पूर्ण अन्यथा अणु
-		काष्ठा kernfs_iattrs___52* root_iattr =
-			(काष्ठा kernfs_iattrs___52*)BPF_CORE_READ(root_kernfs, iattr);
-		cgroup_data->cgroup_root_mसमय =
-			BPF_CORE_READ(root_iattr, ia_iattr.ia_mसमय.tv_nsec);
+	if (bpf_core_field_exists(root_kernfs->iattr->ia_mtime)) {
+		cgroup_data->cgroup_root_mtime =
+			BPF_CORE_READ(root_kernfs, iattr, ia_mtime.tv_nsec);
+		cgroup_data->cgroup_proc_mtime =
+			BPF_CORE_READ(proc_kernfs, iattr, ia_mtime.tv_nsec);
+	} else {
+		struct kernfs_iattrs___52* root_iattr =
+			(struct kernfs_iattrs___52*)BPF_CORE_READ(root_kernfs, iattr);
+		cgroup_data->cgroup_root_mtime =
+			BPF_CORE_READ(root_iattr, ia_iattr.ia_mtime.tv_nsec);
 
-		काष्ठा kernfs_iattrs___52* proc_iattr =
-			(काष्ठा kernfs_iattrs___52*)BPF_CORE_READ(proc_kernfs, iattr);
-		cgroup_data->cgroup_proc_mसमय =
-			BPF_CORE_READ(proc_iattr, ia_iattr.ia_mसमय.tv_nsec);
-	पूर्ण
+		struct kernfs_iattrs___52* proc_iattr =
+			(struct kernfs_iattrs___52*)BPF_CORE_READ(proc_kernfs, iattr);
+		cgroup_data->cgroup_proc_mtime =
+			BPF_CORE_READ(proc_iattr, ia_iattr.ia_mtime.tv_nsec);
+	}
 
 	cgroup_data->cgroup_root_length = 0;
 	cgroup_data->cgroup_proc_length = 0;
 	cgroup_data->cgroup_full_length = 0;
 
-	माप_प्रकार cgroup_root_length =
-		bpf_probe_पढ़ो_str(payload, MAX_PATH, BPF_CORE_READ(root_kernfs, name));
+	size_t cgroup_root_length =
+		bpf_probe_read_str(payload, MAX_PATH, BPF_CORE_READ(root_kernfs, name));
 	barrier_var(cgroup_root_length);
-	अगर (cgroup_root_length <= MAX_PATH) अणु
+	if (cgroup_root_length <= MAX_PATH) {
 		barrier_var(cgroup_root_length);
 		cgroup_data->cgroup_root_length = cgroup_root_length;
 		payload += cgroup_root_length;
-	पूर्ण
+	}
 
-	माप_प्रकार cgroup_proc_length =
-		bpf_probe_पढ़ो_str(payload, MAX_PATH, BPF_CORE_READ(proc_kernfs, name));
+	size_t cgroup_proc_length =
+		bpf_probe_read_str(payload, MAX_PATH, BPF_CORE_READ(proc_kernfs, name));
 	barrier_var(cgroup_proc_length);
-	अगर (cgroup_proc_length <= MAX_PATH) अणु
+	if (cgroup_proc_length <= MAX_PATH) {
 		barrier_var(cgroup_proc_length);
 		cgroup_data->cgroup_proc_length = cgroup_proc_length;
 		payload += cgroup_proc_length;
-	पूर्ण
+	}
 
-	अगर (FETCH_CGROUPS_FROM_BPF) अणु
+	if (FETCH_CGROUPS_FROM_BPF) {
 		cgroup_data->cgroup_full_path_root_pos = -1;
-		व्योम* payload_end_pos = पढ़ो_full_cgroup_path(proc_kernfs, root_kernfs, payload,
+		void* payload_end_pos = read_full_cgroup_path(proc_kernfs, root_kernfs, payload,
 							      &cgroup_data->cgroup_full_path_root_pos);
 		cgroup_data->cgroup_full_length = payload_end_pos - payload;
 		payload = payload_end_pos;
-	पूर्ण
+	}
 
-	वापस (व्योम*)payload;
-पूर्ण
+	return (void*)payload;
+}
 
-अटल INLINE व्योम* populate_var_metadata(काष्ठा var_metadata_t* metadata,
-					  काष्ठा task_काष्ठा* task,
-					  u32 pid, व्योम* payload)
-अणु
+static INLINE void* populate_var_metadata(struct var_metadata_t* metadata,
+					  struct task_struct* task,
+					  u32 pid, void* payload)
+{
 	u64 uid_gid = bpf_get_current_uid_gid();
 
 	metadata->uid = (u32)uid_gid;
 	metadata->gid = uid_gid >> 32;
 	metadata->pid = pid;
 	metadata->exec_id = BPF_CORE_READ(task, self_exec_id);
-	metadata->start_समय = BPF_CORE_READ(task, start_समय);
+	metadata->start_time = BPF_CORE_READ(task, start_time);
 	metadata->comm_length = 0;
 
-	माप_प्रकार comm_length = bpf_core_पढ़ो_str(payload, TASK_COMM_LEN, &task->comm);
+	size_t comm_length = bpf_core_read_str(payload, TASK_COMM_LEN, &task->comm);
 	barrier_var(comm_length);
-	अगर (comm_length <= TASK_COMM_LEN) अणु
+	if (comm_length <= TASK_COMM_LEN) {
 		barrier_var(comm_length);
 		metadata->comm_length = comm_length;
 		payload += comm_length;
-	पूर्ण
+	}
 
-	वापस (व्योम*)payload;
-पूर्ण
+	return (void*)payload;
+}
 
-अटल INLINE काष्ठा var_समाप्त_data_t*
-get_var_समाप्त_data(काष्ठा pt_regs* ctx, पूर्णांक spid, पूर्णांक tpid, पूर्णांक sig)
-अणु
-	पूर्णांक zero = 0;
-	काष्ठा var_समाप्त_data_t* समाप्त_data = bpf_map_lookup_elem(&data_heap, &zero);
+static INLINE struct var_kill_data_t*
+get_var_kill_data(struct pt_regs* ctx, int spid, int tpid, int sig)
+{
+	int zero = 0;
+	struct var_kill_data_t* kill_data = bpf_map_lookup_elem(&data_heap, &zero);
 
-	अगर (समाप्त_data == शून्य)
-		वापस शून्य;
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
+	if (kill_data == NULL)
+		return NULL;
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 
-	व्योम* payload = populate_var_metadata(&समाप्त_data->meta, task, spid, समाप्त_data->payload);
-	payload = populate_cgroup_info(&समाप्त_data->cgroup_data, task, payload);
-	माप_प्रकार payload_length = payload - (व्योम*)समाप्त_data->payload;
-	समाप्त_data->payload_length = payload_length;
-	populate_ancestors(task, &समाप्त_data->ancestors_info);
-	समाप्त_data->meta.type = KILL_EVENT;
-	समाप्त_data->समाप्त_target_pid = tpid;
-	समाप्त_data->समाप्त_sig = sig;
-	समाप्त_data->समाप्त_count = 1;
-	समाप्त_data->last_समाप्त_समय = bpf_kसमय_get_ns();
-	वापस समाप्त_data;
-पूर्ण
+	void* payload = populate_var_metadata(&kill_data->meta, task, spid, kill_data->payload);
+	payload = populate_cgroup_info(&kill_data->cgroup_data, task, payload);
+	size_t payload_length = payload - (void*)kill_data->payload;
+	kill_data->payload_length = payload_length;
+	populate_ancestors(task, &kill_data->ancestors_info);
+	kill_data->meta.type = KILL_EVENT;
+	kill_data->kill_target_pid = tpid;
+	kill_data->kill_sig = sig;
+	kill_data->kill_count = 1;
+	kill_data->last_kill_time = bpf_ktime_get_ns();
+	return kill_data;
+}
 
-अटल INLINE पूर्णांक trace_var_sys_समाप्त(व्योम* ctx, पूर्णांक tpid, पूर्णांक sig)
-अणु
-	अगर ((KILL_SIGNALS & (1ULL << sig)) == 0)
-		वापस 0;
+static INLINE int trace_var_sys_kill(void* ctx, int tpid, int sig)
+{
+	if ((KILL_SIGNALS & (1ULL << sig)) == 0)
+		return 0;
 
 	u32 spid = get_userspace_pid();
-	काष्ठा var_समाप्त_data_arr_t* arr_काष्ठा = bpf_map_lookup_elem(&var_tpid_to_data, &tpid);
+	struct var_kill_data_arr_t* arr_struct = bpf_map_lookup_elem(&var_tpid_to_data, &tpid);
 
-	अगर (arr_काष्ठा == शून्य) अणु
-		काष्ठा var_समाप्त_data_t* समाप्त_data = get_var_समाप्त_data(ctx, spid, tpid, sig);
-		पूर्णांक zero = 0;
+	if (arr_struct == NULL) {
+		struct var_kill_data_t* kill_data = get_var_kill_data(ctx, spid, tpid, sig);
+		int zero = 0;
 
-		अगर (समाप्त_data == शून्य)
-			वापस 0;
-		arr_काष्ठा = bpf_map_lookup_elem(&data_heap, &zero);
-		अगर (arr_काष्ठा == शून्य)
-			वापस 0;
-		bpf_probe_पढ़ो(&arr_काष्ठा->array[0], माप(arr_काष्ठा->array[0]), समाप्त_data);
-	पूर्ण अन्यथा अणु
-		पूर्णांक index = get_var_spid_index(arr_काष्ठा, spid);
+		if (kill_data == NULL)
+			return 0;
+		arr_struct = bpf_map_lookup_elem(&data_heap, &zero);
+		if (arr_struct == NULL)
+			return 0;
+		bpf_probe_read(&arr_struct->array[0], sizeof(arr_struct->array[0]), kill_data);
+	} else {
+		int index = get_var_spid_index(arr_struct, spid);
 
-		अगर (index == -1) अणु
-			काष्ठा var_समाप्त_data_t* समाप्त_data =
-				get_var_समाप्त_data(ctx, spid, tpid, sig);
-			अगर (समाप्त_data == शून्य)
-				वापस 0;
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-			क्रम (पूर्णांक i = 0; i < ARRAY_SIZE(arr_काष्ठा->array); i++)
-				अगर (arr_काष्ठा->array[i].meta.pid == 0) अणु
-					bpf_probe_पढ़ो(&arr_काष्ठा->array[i],
-						       माप(arr_काष्ठा->array[i]), समाप्त_data);
+		if (index == -1) {
+			struct var_kill_data_t* kill_data =
+				get_var_kill_data(ctx, spid, tpid, sig);
+			if (kill_data == NULL)
+				return 0;
+#ifdef UNROLL
+#pragma unroll
+#endif
+			for (int i = 0; i < ARRAY_SIZE(arr_struct->array); i++)
+				if (arr_struct->array[i].meta.pid == 0) {
+					bpf_probe_read(&arr_struct->array[i],
+						       sizeof(arr_struct->array[i]), kill_data);
 					bpf_map_update_elem(&var_tpid_to_data, &tpid,
-							    arr_काष्ठा, 0);
+							    arr_struct, 0);
 
-					वापस 0;
-				पूर्ण
-			वापस 0;
-		पूर्ण
+					return 0;
+				}
+			return 0;
+		}
 
-		काष्ठा var_समाप्त_data_t* समाप्त_data = &arr_काष्ठा->array[index];
+		struct var_kill_data_t* kill_data = &arr_struct->array[index];
 
 		u64 delta_sec =
-			(bpf_kसमय_get_ns() - समाप्त_data->last_समाप्त_समय) / 1000000000;
+			(bpf_ktime_get_ns() - kill_data->last_kill_time) / 1000000000;
 
-		अगर (delta_sec < STALE_INFO) अणु
-			समाप्त_data->समाप्त_count++;
-			समाप्त_data->last_समाप्त_समय = bpf_kसमय_get_ns();
-			bpf_probe_पढ़ो(&arr_काष्ठा->array[index],
-				       माप(arr_काष्ठा->array[index]),
-				       समाप्त_data);
-		पूर्ण अन्यथा अणु
-			काष्ठा var_समाप्त_data_t* समाप्त_data =
-				get_var_समाप्त_data(ctx, spid, tpid, sig);
-			अगर (समाप्त_data == शून्य)
-				वापस 0;
-			bpf_probe_पढ़ो(&arr_काष्ठा->array[index],
-				       माप(arr_काष्ठा->array[index]),
-				       समाप्त_data);
-		पूर्ण
-	पूर्ण
-	bpf_map_update_elem(&var_tpid_to_data, &tpid, arr_काष्ठा, 0);
-	वापस 0;
-पूर्ण
+		if (delta_sec < STALE_INFO) {
+			kill_data->kill_count++;
+			kill_data->last_kill_time = bpf_ktime_get_ns();
+			bpf_probe_read(&arr_struct->array[index],
+				       sizeof(arr_struct->array[index]),
+				       kill_data);
+		} else {
+			struct var_kill_data_t* kill_data =
+				get_var_kill_data(ctx, spid, tpid, sig);
+			if (kill_data == NULL)
+				return 0;
+			bpf_probe_read(&arr_struct->array[index],
+				       sizeof(arr_struct->array[index]),
+				       kill_data);
+		}
+	}
+	bpf_map_update_elem(&var_tpid_to_data, &tpid, arr_struct, 0);
+	return 0;
+}
 
-अटल INLINE व्योम bpf_stats_enter(काष्ठा bpf_func_stats_ctx* bpf_stat_ctx,
-				   क्रमागत bpf_function_id func_id)
-अणु
-	पूर्णांक func_id_key = func_id;
+static INLINE void bpf_stats_enter(struct bpf_func_stats_ctx* bpf_stat_ctx,
+				   enum bpf_function_id func_id)
+{
+	int func_id_key = func_id;
 
-	bpf_stat_ctx->start_समय_ns = bpf_kसमय_get_ns();
+	bpf_stat_ctx->start_time_ns = bpf_ktime_get_ns();
 	bpf_stat_ctx->bpf_func_stats_data_val =
 		bpf_map_lookup_elem(&bpf_func_stats, &func_id_key);
-	अगर (bpf_stat_ctx->bpf_func_stats_data_val)
+	if (bpf_stat_ctx->bpf_func_stats_data_val)
 		bpf_stat_ctx->bpf_func_stats_data_val->num_executions++;
-पूर्ण
+}
 
-अटल INLINE व्योम bpf_stats_निकास(काष्ठा bpf_func_stats_ctx* bpf_stat_ctx)
-अणु
-	अगर (bpf_stat_ctx->bpf_func_stats_data_val)
-		bpf_stat_ctx->bpf_func_stats_data_val->समय_elapsed_ns +=
-			bpf_kसमय_get_ns() - bpf_stat_ctx->start_समय_ns;
-पूर्ण
+static INLINE void bpf_stats_exit(struct bpf_func_stats_ctx* bpf_stat_ctx)
+{
+	if (bpf_stat_ctx->bpf_func_stats_data_val)
+		bpf_stat_ctx->bpf_func_stats_data_val->time_elapsed_ns +=
+			bpf_ktime_get_ns() - bpf_stat_ctx->start_time_ns;
+}
 
-अटल INLINE व्योम
-bpf_stats_pre_submit_var_perf_event(काष्ठा bpf_func_stats_ctx* bpf_stat_ctx,
-				    काष्ठा var_metadata_t* meta)
-अणु
-	अगर (bpf_stat_ctx->bpf_func_stats_data_val) अणु
+static INLINE void
+bpf_stats_pre_submit_var_perf_event(struct bpf_func_stats_ctx* bpf_stat_ctx,
+				    struct var_metadata_t* meta)
+{
+	if (bpf_stat_ctx->bpf_func_stats_data_val) {
 		bpf_stat_ctx->bpf_func_stats_data_val->num_perf_events++;
 		meta->bpf_stats_num_perf_events =
 			bpf_stat_ctx->bpf_func_stats_data_val->num_perf_events;
-	पूर्ण
-	meta->bpf_stats_start_kसमय_ns = bpf_stat_ctx->start_समय_ns;
+	}
+	meta->bpf_stats_start_ktime_ns = bpf_stat_ctx->start_time_ns;
 	meta->cpu_id = bpf_get_smp_processor_id();
-पूर्ण
+}
 
-अटल INLINE माप_प्रकार
-पढ़ो_असलolute_file_path_from_dentry(काष्ठा dentry* filp_dentry, व्योम* payload)
-अणु
-	माप_प्रकार length = 0;
-	माप_प्रकार filepart_length;
-	काष्ठा dentry* parent_dentry;
+static INLINE size_t
+read_absolute_file_path_from_dentry(struct dentry* filp_dentry, void* payload)
+{
+	size_t length = 0;
+	size_t filepart_length;
+	struct dentry* parent_dentry;
 
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-	क्रम (पूर्णांक i = 0; i < MAX_PATH_DEPTH; i++) अणु
-		filepart_length = bpf_probe_पढ़ो_str(payload, MAX_PATH,
+#ifdef UNROLL
+#pragma unroll
+#endif
+	for (int i = 0; i < MAX_PATH_DEPTH; i++) {
+		filepart_length = bpf_probe_read_str(payload, MAX_PATH,
 						     BPF_CORE_READ(filp_dentry, d_name.name));
 		barrier_var(filepart_length);
-		अगर (filepart_length > MAX_PATH)
-			अवरोध;
+		if (filepart_length > MAX_PATH)
+			break;
 		barrier_var(filepart_length);
 		payload += filepart_length;
 		length += filepart_length;
 
 		parent_dentry = BPF_CORE_READ(filp_dentry, d_parent);
-		अगर (filp_dentry == parent_dentry)
-			अवरोध;
+		if (filp_dentry == parent_dentry)
+			break;
 		filp_dentry = parent_dentry;
-	पूर्ण
+	}
 
-	वापस length;
-पूर्ण
+	return length;
+}
 
-अटल INLINE bool
-is_ancestor_in_allowed_inodes(काष्ठा dentry* filp_dentry)
-अणु
-	काष्ठा dentry* parent_dentry;
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-	क्रम (पूर्णांक i = 0; i < MAX_PATH_DEPTH; i++) अणु
+static INLINE bool
+is_ancestor_in_allowed_inodes(struct dentry* filp_dentry)
+{
+	struct dentry* parent_dentry;
+#ifdef UNROLL
+#pragma unroll
+#endif
+	for (int i = 0; i < MAX_PATH_DEPTH; i++) {
 		u64 dir_ino = BPF_CORE_READ(filp_dentry, d_inode, i_ino);
 		bool* allowed_dir = bpf_map_lookup_elem(&allowed_directory_inodes, &dir_ino);
 
-		अगर (allowed_dir != शून्य)
-			वापस true;
+		if (allowed_dir != NULL)
+			return true;
 		parent_dentry = BPF_CORE_READ(filp_dentry, d_parent);
-		अगर (filp_dentry == parent_dentry)
-			अवरोध;
+		if (filp_dentry == parent_dentry)
+			break;
 		filp_dentry = parent_dentry;
-	पूर्ण
-	वापस false;
-पूर्ण
+	}
+	return false;
+}
 
-अटल INLINE bool is_dentry_allowed_क्रम_filemod(काष्ठा dentry* file_dentry,
+static INLINE bool is_dentry_allowed_for_filemod(struct dentry* file_dentry,
 						 u32* device_id,
 						 u64* file_ino)
-अणु
+{
 	u32 dev_id = BPF_CORE_READ(file_dentry, d_sb, s_dev);
 	*device_id = dev_id;
 	bool* allowed_device = bpf_map_lookup_elem(&allowed_devices, &dev_id);
 
-	अगर (allowed_device == शून्य)
-		वापस false;
+	if (allowed_device == NULL)
+		return false;
 
 	u64 ino = BPF_CORE_READ(file_dentry, d_inode, i_ino);
 	*file_ino = ino;
 	bool* allowed_file = bpf_map_lookup_elem(&allowed_file_inodes, &ino);
 
-	अगर (allowed_file == शून्य)
-		अगर (!is_ancestor_in_allowed_inodes(BPF_CORE_READ(file_dentry, d_parent)))
-			वापस false;
-	वापस true;
-पूर्ण
+	if (allowed_file == NULL)
+		if (!is_ancestor_in_allowed_inodes(BPF_CORE_READ(file_dentry, d_parent)))
+			return false;
+	return true;
+}
 
 SEC("kprobe/proc_sys_write")
-sमाप_प्रकार BPF_KPROBE(kprobe__proc_sys_ग_लिखो,
-		   काष्ठा file* filp, स्थिर अक्षर* buf,
-		   माप_प्रकार count, loff_t* ppos)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
-	bpf_stats_enter(&stats_ctx, profiler_bpf_proc_sys_ग_लिखो);
+ssize_t BPF_KPROBE(kprobe__proc_sys_write,
+		   struct file* filp, const char* buf,
+		   size_t count, loff_t* ppos)
+{
+	struct bpf_func_stats_ctx stats_ctx;
+	bpf_stats_enter(&stats_ctx, profiler_bpf_proc_sys_write);
 
 	u32 pid = get_userspace_pid();
-	पूर्णांक zero = 0;
-	काष्ठा var_sysctl_data_t* sysctl_data =
+	int zero = 0;
+	struct var_sysctl_data_t* sysctl_data =
 		bpf_map_lookup_elem(&data_heap, &zero);
-	अगर (!sysctl_data)
-		जाओ out;
+	if (!sysctl_data)
+		goto out;
 
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 	sysctl_data->meta.type = SYSCTL_EVENT;
-	व्योम* payload = populate_var_metadata(&sysctl_data->meta, task, pid, sysctl_data->payload);
+	void* payload = populate_var_metadata(&sysctl_data->meta, task, pid, sysctl_data->payload);
 	payload = populate_cgroup_info(&sysctl_data->cgroup_data, task, payload);
 
 	populate_ancestors(task, &sysctl_data->ancestors_info);
@@ -573,230 +572,230 @@ sमाप_प्रकार BPF_KPROBE(kprobe__proc_sys_ग_लिखो,
 	sysctl_data->sysctl_val_length = 0;
 	sysctl_data->sysctl_path_length = 0;
 
-	माप_प्रकार sysctl_val_length = bpf_probe_पढ़ो_str(payload, CTL_MAXNAME, buf);
+	size_t sysctl_val_length = bpf_probe_read_str(payload, CTL_MAXNAME, buf);
 	barrier_var(sysctl_val_length);
-	अगर (sysctl_val_length <= CTL_MAXNAME) अणु
+	if (sysctl_val_length <= CTL_MAXNAME) {
 		barrier_var(sysctl_val_length);
 		sysctl_data->sysctl_val_length = sysctl_val_length;
 		payload += sysctl_val_length;
-	पूर्ण
+	}
 
-	माप_प्रकार sysctl_path_length = bpf_probe_पढ़ो_str(payload, MAX_PATH,
+	size_t sysctl_path_length = bpf_probe_read_str(payload, MAX_PATH,
 						       BPF_CORE_READ(filp, f_path.dentry, d_name.name));
 	barrier_var(sysctl_path_length);
-	अगर (sysctl_path_length <= MAX_PATH) अणु
+	if (sysctl_path_length <= MAX_PATH) {
 		barrier_var(sysctl_path_length);
 		sysctl_data->sysctl_path_length = sysctl_path_length;
 		payload += sysctl_path_length;
-	पूर्ण
+	}
 
 	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &sysctl_data->meta);
-	अचिन्हित दीर्घ data_len = payload - (व्योम*)sysctl_data;
-	data_len = data_len > माप(काष्ठा var_sysctl_data_t)
-		? माप(काष्ठा var_sysctl_data_t)
+	unsigned long data_len = payload - (void*)sysctl_data;
+	data_len = data_len > sizeof(struct var_sysctl_data_t)
+		? sizeof(struct var_sysctl_data_t)
 		: data_len;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, sysctl_data, data_len);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
 
 SEC("tracepoint/syscalls/sys_enter_kill")
-पूर्णांक tracepoपूर्णांक__syscalls__sys_enter_समाप्त(काष्ठा trace_event_raw_sys_enter* ctx)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
+int tracepoint__syscalls__sys_enter_kill(struct trace_event_raw_sys_enter* ctx)
+{
+	struct bpf_func_stats_ctx stats_ctx;
 
-	bpf_stats_enter(&stats_ctx, profiler_bpf_sys_enter_समाप्त);
-	पूर्णांक pid = ctx->args[0];
-	पूर्णांक sig = ctx->args[1];
-	पूर्णांक ret = trace_var_sys_समाप्त(ctx, pid, sig);
-	bpf_stats_निकास(&stats_ctx);
-	वापस ret;
-पूर्ण;
+	bpf_stats_enter(&stats_ctx, profiler_bpf_sys_enter_kill);
+	int pid = ctx->args[0];
+	int sig = ctx->args[1];
+	int ret = trace_var_sys_kill(ctx, pid, sig);
+	bpf_stats_exit(&stats_ctx);
+	return ret;
+};
 
 SEC("raw_tracepoint/sched_process_exit")
-पूर्णांक raw_tracepoपूर्णांक__sched_process_निकास(व्योम* ctx)
-अणु
-	पूर्णांक zero = 0;
-	काष्ठा bpf_func_stats_ctx stats_ctx;
-	bpf_stats_enter(&stats_ctx, profiler_bpf_sched_process_निकास);
+int raw_tracepoint__sched_process_exit(void* ctx)
+{
+	int zero = 0;
+	struct bpf_func_stats_ctx stats_ctx;
+	bpf_stats_enter(&stats_ctx, profiler_bpf_sched_process_exit);
 
 	u32 tpid = get_userspace_pid();
 
-	काष्ठा var_समाप्त_data_arr_t* arr_काष्ठा = bpf_map_lookup_elem(&var_tpid_to_data, &tpid);
-	काष्ठा var_समाप्त_data_t* समाप्त_data = bpf_map_lookup_elem(&data_heap, &zero);
+	struct var_kill_data_arr_t* arr_struct = bpf_map_lookup_elem(&var_tpid_to_data, &tpid);
+	struct var_kill_data_t* kill_data = bpf_map_lookup_elem(&data_heap, &zero);
 
-	अगर (arr_काष्ठा == शून्य || समाप्त_data == शून्य)
-		जाओ out;
+	if (arr_struct == NULL || kill_data == NULL)
+		goto out;
 
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
-	काष्ठा kernfs_node* proc_kernfs = BPF_CORE_READ(task, cgroups, dfl_cgrp, kn);
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
+	struct kernfs_node* proc_kernfs = BPF_CORE_READ(task, cgroups, dfl_cgrp, kn);
 
-#अगर_घोषित UNROLL
-#आशय unroll
-#पूर्ण_अगर
-	क्रम (पूर्णांक i = 0; i < ARRAY_SIZE(arr_काष्ठा->array); i++) अणु
-		काष्ठा var_समाप्त_data_t* past_समाप्त_data = &arr_काष्ठा->array[i];
+#ifdef UNROLL
+#pragma unroll
+#endif
+	for (int i = 0; i < ARRAY_SIZE(arr_struct->array); i++) {
+		struct var_kill_data_t* past_kill_data = &arr_struct->array[i];
 
-		अगर (past_समाप्त_data != शून्य && past_समाप्त_data->समाप्त_target_pid == tpid) अणु
-			bpf_probe_पढ़ो(समाप्त_data, माप(*past_समाप्त_data), past_समाप्त_data);
-			व्योम* payload = समाप्त_data->payload;
-			माप_प्रकार offset = समाप्त_data->payload_length;
-			अगर (offset >= MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN)
-				वापस 0;
+		if (past_kill_data != NULL && past_kill_data->kill_target_pid == tpid) {
+			bpf_probe_read(kill_data, sizeof(*past_kill_data), past_kill_data);
+			void* payload = kill_data->payload;
+			size_t offset = kill_data->payload_length;
+			if (offset >= MAX_METADATA_PAYLOAD_LEN + MAX_CGROUP_PAYLOAD_LEN)
+				return 0;
 			payload += offset;
 
-			समाप्त_data->समाप्त_target_name_length = 0;
-			समाप्त_data->समाप्त_target_cgroup_proc_length = 0;
+			kill_data->kill_target_name_length = 0;
+			kill_data->kill_target_cgroup_proc_length = 0;
 
-			माप_प्रकार comm_length = bpf_core_पढ़ो_str(payload, TASK_COMM_LEN, &task->comm);
+			size_t comm_length = bpf_core_read_str(payload, TASK_COMM_LEN, &task->comm);
 			barrier_var(comm_length);
-			अगर (comm_length <= TASK_COMM_LEN) अणु
+			if (comm_length <= TASK_COMM_LEN) {
 				barrier_var(comm_length);
-				समाप्त_data->समाप्त_target_name_length = comm_length;
+				kill_data->kill_target_name_length = comm_length;
 				payload += comm_length;
-			पूर्ण
+			}
 
-			माप_प्रकार cgroup_proc_length = bpf_probe_पढ़ो_str(payload, KILL_TARGET_LEN,
+			size_t cgroup_proc_length = bpf_probe_read_str(payload, KILL_TARGET_LEN,
 								       BPF_CORE_READ(proc_kernfs, name));
 			barrier_var(cgroup_proc_length);
-			अगर (cgroup_proc_length <= KILL_TARGET_LEN) अणु
+			if (cgroup_proc_length <= KILL_TARGET_LEN) {
 				barrier_var(cgroup_proc_length);
-				समाप्त_data->समाप्त_target_cgroup_proc_length = cgroup_proc_length;
+				kill_data->kill_target_cgroup_proc_length = cgroup_proc_length;
 				payload += cgroup_proc_length;
-			पूर्ण
+			}
 
-			bpf_stats_pre_submit_var_perf_event(&stats_ctx, &समाप्त_data->meta);
-			अचिन्हित दीर्घ data_len = (व्योम*)payload - (व्योम*)समाप्त_data;
-			data_len = data_len > माप(काष्ठा var_समाप्त_data_t)
-				? माप(काष्ठा var_समाप्त_data_t)
+			bpf_stats_pre_submit_var_perf_event(&stats_ctx, &kill_data->meta);
+			unsigned long data_len = (void*)payload - (void*)kill_data;
+			data_len = data_len > sizeof(struct var_kill_data_t)
+				? sizeof(struct var_kill_data_t)
 				: data_len;
-			bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, समाप्त_data, data_len);
-		पूर्ण
-	पूर्ण
+			bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, kill_data, data_len);
+		}
+	}
 	bpf_map_delete_elem(&var_tpid_to_data, &tpid);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
 
 SEC("raw_tracepoint/sched_process_exec")
-पूर्णांक raw_tracepoपूर्णांक__sched_process_exec(काष्ठा bpf_raw_tracepoपूर्णांक_args* ctx)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
+int raw_tracepoint__sched_process_exec(struct bpf_raw_tracepoint_args* ctx)
+{
+	struct bpf_func_stats_ctx stats_ctx;
 	bpf_stats_enter(&stats_ctx, profiler_bpf_sched_process_exec);
 
-	काष्ठा linux_binprm* bprm = (काष्ठा linux_binprm*)ctx->args[2];
+	struct linux_binprm* bprm = (struct linux_binprm*)ctx->args[2];
 	u64 inode = BPF_CORE_READ(bprm, file, f_inode, i_ino);
 
 	bool* should_filter_binprm = bpf_map_lookup_elem(&disallowed_exec_inodes, &inode);
-	अगर (should_filter_binprm != शून्य)
-		जाओ out;
+	if (should_filter_binprm != NULL)
+		goto out;
 
-	पूर्णांक zero = 0;
-	काष्ठा var_exec_data_t* proc_exec_data = bpf_map_lookup_elem(&data_heap, &zero);
-	अगर (!proc_exec_data)
-		जाओ out;
+	int zero = 0;
+	struct var_exec_data_t* proc_exec_data = bpf_map_lookup_elem(&data_heap, &zero);
+	if (!proc_exec_data)
+		goto out;
 
-	अगर (INODE_FILTER && inode != INODE_FILTER)
-		वापस 0;
+	if (INODE_FILTER && inode != INODE_FILTER)
+		return 0;
 
 	u32 pid = get_userspace_pid();
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 
 	proc_exec_data->meta.type = EXEC_EVENT;
 	proc_exec_data->bin_path_length = 0;
 	proc_exec_data->cmdline_length = 0;
 	proc_exec_data->environment_length = 0;
-	व्योम* payload = populate_var_metadata(&proc_exec_data->meta, task, pid,
+	void* payload = populate_var_metadata(&proc_exec_data->meta, task, pid,
 					      proc_exec_data->payload);
 	payload = populate_cgroup_info(&proc_exec_data->cgroup_data, task, payload);
 
-	काष्ठा task_काष्ठा* parent_task = BPF_CORE_READ(task, real_parent);
+	struct task_struct* parent_task = BPF_CORE_READ(task, real_parent);
 	proc_exec_data->parent_pid = BPF_CORE_READ(parent_task, tgid);
 	proc_exec_data->parent_uid = BPF_CORE_READ(parent_task, real_cred, uid.val);
 	proc_exec_data->parent_exec_id = BPF_CORE_READ(parent_task, self_exec_id);
-	proc_exec_data->parent_start_समय = BPF_CORE_READ(parent_task, start_समय);
+	proc_exec_data->parent_start_time = BPF_CORE_READ(parent_task, start_time);
 
-	स्थिर अक्षर* filename = BPF_CORE_READ(bprm, filename);
-	माप_प्रकार bin_path_length = bpf_probe_पढ़ो_str(payload, MAX_खाताNAME_LEN, filename);
+	const char* filename = BPF_CORE_READ(bprm, filename);
+	size_t bin_path_length = bpf_probe_read_str(payload, MAX_FILENAME_LEN, filename);
 	barrier_var(bin_path_length);
-	अगर (bin_path_length <= MAX_खाताNAME_LEN) अणु
+	if (bin_path_length <= MAX_FILENAME_LEN) {
 		barrier_var(bin_path_length);
 		proc_exec_data->bin_path_length = bin_path_length;
 		payload += bin_path_length;
-	पूर्ण
+	}
 
-	व्योम* arg_start = (व्योम*)BPF_CORE_READ(task, mm, arg_start);
-	व्योम* arg_end = (व्योम*)BPF_CORE_READ(task, mm, arg_end);
-	अचिन्हित पूर्णांक cmdline_length = probe_पढ़ो_lim(payload, arg_start,
+	void* arg_start = (void*)BPF_CORE_READ(task, mm, arg_start);
+	void* arg_end = (void*)BPF_CORE_READ(task, mm, arg_end);
+	unsigned int cmdline_length = probe_read_lim(payload, arg_start,
 						     arg_end - arg_start, MAX_ARGS_LEN);
 
-	अगर (cmdline_length <= MAX_ARGS_LEN) अणु
+	if (cmdline_length <= MAX_ARGS_LEN) {
 		barrier_var(cmdline_length);
 		proc_exec_data->cmdline_length = cmdline_length;
 		payload += cmdline_length;
-	पूर्ण
+	}
 
-	अगर (READ_ENVIRON_FROM_EXEC) अणु
-		व्योम* env_start = (व्योम*)BPF_CORE_READ(task, mm, env_start);
-		व्योम* env_end = (व्योम*)BPF_CORE_READ(task, mm, env_end);
-		अचिन्हित दीर्घ env_len = probe_पढ़ो_lim(payload, env_start,
+	if (READ_ENVIRON_FROM_EXEC) {
+		void* env_start = (void*)BPF_CORE_READ(task, mm, env_start);
+		void* env_end = (void*)BPF_CORE_READ(task, mm, env_end);
+		unsigned long env_len = probe_read_lim(payload, env_start,
 						       env_end - env_start, MAX_ENVIRON_LEN);
-		अगर (cmdline_length <= MAX_ENVIRON_LEN) अणु
+		if (cmdline_length <= MAX_ENVIRON_LEN) {
 			proc_exec_data->environment_length = env_len;
 			payload += env_len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &proc_exec_data->meta);
-	अचिन्हित दीर्घ data_len = payload - (व्योम*)proc_exec_data;
-	data_len = data_len > माप(काष्ठा var_exec_data_t)
-		? माप(काष्ठा var_exec_data_t)
+	unsigned long data_len = payload - (void*)proc_exec_data;
+	data_len = data_len > sizeof(struct var_exec_data_t)
+		? sizeof(struct var_exec_data_t)
 		: data_len;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, proc_exec_data, data_len);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
 
 SEC("kretprobe/do_filp_open")
-पूर्णांक kprobe_ret__करो_filp_खोलो(काष्ठा pt_regs* ctx)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
-	bpf_stats_enter(&stats_ctx, profiler_bpf_करो_filp_खोलो_ret);
+int kprobe_ret__do_filp_open(struct pt_regs* ctx)
+{
+	struct bpf_func_stats_ctx stats_ctx;
+	bpf_stats_enter(&stats_ctx, profiler_bpf_do_filp_open_ret);
 
-	काष्ठा file* filp = (काष्ठा file*)PT_REGS_RC_CORE(ctx);
+	struct file* filp = (struct file*)PT_REGS_RC_CORE(ctx);
 
-	अगर (filp == शून्य || IS_ERR(filp))
-		जाओ out;
-	अचिन्हित पूर्णांक flags = BPF_CORE_READ(filp, f_flags);
-	अगर ((flags & (O_RDWR | O_WRONLY)) == 0)
-		जाओ out;
-	अगर ((flags & O_TMPखाता) > 0)
-		जाओ out;
-	काष्ठा inode* file_inode = BPF_CORE_READ(filp, f_inode);
+	if (filp == NULL || IS_ERR(filp))
+		goto out;
+	unsigned int flags = BPF_CORE_READ(filp, f_flags);
+	if ((flags & (O_RDWR | O_WRONLY)) == 0)
+		goto out;
+	if ((flags & O_TMPFILE) > 0)
+		goto out;
+	struct inode* file_inode = BPF_CORE_READ(filp, f_inode);
 	umode_t mode = BPF_CORE_READ(file_inode, i_mode);
-	अगर (S_ISसूची(mode) || S_ISCHR(mode) || S_ISBLK(mode) || S_ISFIFO(mode) ||
+	if (S_ISDIR(mode) || S_ISCHR(mode) || S_ISBLK(mode) || S_ISFIFO(mode) ||
 	    S_ISSOCK(mode))
-		जाओ out;
+		goto out;
 
-	काष्ठा dentry* filp_dentry = BPF_CORE_READ(filp, f_path.dentry);
+	struct dentry* filp_dentry = BPF_CORE_READ(filp, f_path.dentry);
 	u32 device_id = 0;
 	u64 file_ino = 0;
-	अगर (!is_dentry_allowed_क्रम_filemod(filp_dentry, &device_id, &file_ino))
-		जाओ out;
+	if (!is_dentry_allowed_for_filemod(filp_dentry, &device_id, &file_ino))
+		goto out;
 
-	पूर्णांक zero = 0;
-	काष्ठा var_filemod_data_t* filemod_data = bpf_map_lookup_elem(&data_heap, &zero);
-	अगर (!filemod_data)
-		जाओ out;
+	int zero = 0;
+	struct var_filemod_data_t* filemod_data = bpf_map_lookup_elem(&data_heap, &zero);
+	if (!filemod_data)
+		goto out;
 
 	u32 pid = get_userspace_pid();
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 
-	filemod_data->meta.type = खाताMOD_EVENT;
-	filemod_data->भ_शेष_type = FMOD_OPEN;
+	filemod_data->meta.type = FILEMOD_EVENT;
+	filemod_data->fmod_type = FMOD_OPEN;
 	filemod_data->dst_flags = flags;
 	filemod_data->src_inode = 0;
 	filemod_data->dst_inode = file_ino;
@@ -805,52 +804,52 @@ SEC("kretprobe/do_filp_open")
 	filemod_data->src_filepath_length = 0;
 	filemod_data->dst_filepath_length = 0;
 
-	व्योम* payload = populate_var_metadata(&filemod_data->meta, task, pid,
+	void* payload = populate_var_metadata(&filemod_data->meta, task, pid,
 					      filemod_data->payload);
 	payload = populate_cgroup_info(&filemod_data->cgroup_data, task, payload);
 
-	माप_प्रकार len = पढ़ो_असलolute_file_path_from_dentry(filp_dentry, payload);
+	size_t len = read_absolute_file_path_from_dentry(filp_dentry, payload);
 	barrier_var(len);
-	अगर (len <= MAX_खाताPATH_LENGTH) अणु
+	if (len <= MAX_FILEPATH_LENGTH) {
 		barrier_var(len);
 		payload += len;
 		filemod_data->dst_filepath_length = len;
-	पूर्ण
+	}
 	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &filemod_data->meta);
-	अचिन्हित दीर्घ data_len = payload - (व्योम*)filemod_data;
-	data_len = data_len > माप(*filemod_data) ? माप(*filemod_data) : data_len;
+	unsigned long data_len = payload - (void*)filemod_data;
+	data_len = data_len > sizeof(*filemod_data) ? sizeof(*filemod_data) : data_len;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, filemod_data, data_len);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
 
 SEC("kprobe/vfs_link")
-पूर्णांक BPF_KPROBE(kprobe__vfs_link,
-	       काष्ठा dentry* old_dentry, काष्ठा inode* dir,
-	       काष्ठा dentry* new_dentry, काष्ठा inode** delegated_inode)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
+int BPF_KPROBE(kprobe__vfs_link,
+	       struct dentry* old_dentry, struct inode* dir,
+	       struct dentry* new_dentry, struct inode** delegated_inode)
+{
+	struct bpf_func_stats_ctx stats_ctx;
 	bpf_stats_enter(&stats_ctx, profiler_bpf_vfs_link);
 
 	u32 src_device_id = 0;
 	u64 src_file_ino = 0;
 	u32 dst_device_id = 0;
 	u64 dst_file_ino = 0;
-	अगर (!is_dentry_allowed_क्रम_filemod(old_dentry, &src_device_id, &src_file_ino) &&
-	    !is_dentry_allowed_क्रम_filemod(new_dentry, &dst_device_id, &dst_file_ino))
-		जाओ out;
+	if (!is_dentry_allowed_for_filemod(old_dentry, &src_device_id, &src_file_ino) &&
+	    !is_dentry_allowed_for_filemod(new_dentry, &dst_device_id, &dst_file_ino))
+		goto out;
 
-	पूर्णांक zero = 0;
-	काष्ठा var_filemod_data_t* filemod_data = bpf_map_lookup_elem(&data_heap, &zero);
-	अगर (!filemod_data)
-		जाओ out;
+	int zero = 0;
+	struct var_filemod_data_t* filemod_data = bpf_map_lookup_elem(&data_heap, &zero);
+	if (!filemod_data)
+		goto out;
 
 	u32 pid = get_userspace_pid();
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 
-	filemod_data->meta.type = खाताMOD_EVENT;
-	filemod_data->भ_शेष_type = FMOD_LINK;
+	filemod_data->meta.type = FILEMOD_EVENT;
+	filemod_data->fmod_type = FMOD_LINK;
 	filemod_data->dst_flags = 0;
 	filemod_data->src_inode = src_file_ino;
 	filemod_data->dst_inode = dst_file_ino;
@@ -859,57 +858,57 @@ SEC("kprobe/vfs_link")
 	filemod_data->src_filepath_length = 0;
 	filemod_data->dst_filepath_length = 0;
 
-	व्योम* payload = populate_var_metadata(&filemod_data->meta, task, pid,
+	void* payload = populate_var_metadata(&filemod_data->meta, task, pid,
 					      filemod_data->payload);
 	payload = populate_cgroup_info(&filemod_data->cgroup_data, task, payload);
 
-	माप_प्रकार len = पढ़ो_असलolute_file_path_from_dentry(old_dentry, payload);
+	size_t len = read_absolute_file_path_from_dentry(old_dentry, payload);
 	barrier_var(len);
-	अगर (len <= MAX_खाताPATH_LENGTH) अणु
+	if (len <= MAX_FILEPATH_LENGTH) {
 		barrier_var(len);
 		payload += len;
 		filemod_data->src_filepath_length = len;
-	पूर्ण
+	}
 
-	len = पढ़ो_असलolute_file_path_from_dentry(new_dentry, payload);
+	len = read_absolute_file_path_from_dentry(new_dentry, payload);
 	barrier_var(len);
-	अगर (len <= MAX_खाताPATH_LENGTH) अणु
+	if (len <= MAX_FILEPATH_LENGTH) {
 		barrier_var(len);
 		payload += len;
 		filemod_data->dst_filepath_length = len;
-	पूर्ण
+	}
 
 	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &filemod_data->meta);
-	अचिन्हित दीर्घ data_len = payload - (व्योम*)filemod_data;
-	data_len = data_len > माप(*filemod_data) ? माप(*filemod_data) : data_len;
+	unsigned long data_len = payload - (void*)filemod_data;
+	data_len = data_len > sizeof(*filemod_data) ? sizeof(*filemod_data) : data_len;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, filemod_data, data_len);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
 
 SEC("kprobe/vfs_symlink")
-पूर्णांक BPF_KPROBE(kprobe__vfs_symlink, काष्ठा inode* dir, काष्ठा dentry* dentry,
-	       स्थिर अक्षर* oldname)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
+int BPF_KPROBE(kprobe__vfs_symlink, struct inode* dir, struct dentry* dentry,
+	       const char* oldname)
+{
+	struct bpf_func_stats_ctx stats_ctx;
 	bpf_stats_enter(&stats_ctx, profiler_bpf_vfs_symlink);
 
 	u32 dst_device_id = 0;
 	u64 dst_file_ino = 0;
-	अगर (!is_dentry_allowed_क्रम_filemod(dentry, &dst_device_id, &dst_file_ino))
-		जाओ out;
+	if (!is_dentry_allowed_for_filemod(dentry, &dst_device_id, &dst_file_ino))
+		goto out;
 
-	पूर्णांक zero = 0;
-	काष्ठा var_filemod_data_t* filemod_data = bpf_map_lookup_elem(&data_heap, &zero);
-	अगर (!filemod_data)
-		जाओ out;
+	int zero = 0;
+	struct var_filemod_data_t* filemod_data = bpf_map_lookup_elem(&data_heap, &zero);
+	if (!filemod_data)
+		goto out;
 
 	u32 pid = get_userspace_pid();
-	काष्ठा task_काष्ठा* task = (काष्ठा task_काष्ठा*)bpf_get_current_task();
+	struct task_struct* task = (struct task_struct*)bpf_get_current_task();
 
-	filemod_data->meta.type = खाताMOD_EVENT;
-	filemod_data->भ_शेष_type = FMOD_SYMLINK;
+	filemod_data->meta.type = FILEMOD_EVENT;
+	filemod_data->fmod_type = FMOD_SYMLINK;
 	filemod_data->dst_flags = 0;
 	filemod_data->src_inode = 0;
 	filemod_data->dst_inode = dst_file_ino;
@@ -918,60 +917,60 @@ SEC("kprobe/vfs_symlink")
 	filemod_data->src_filepath_length = 0;
 	filemod_data->dst_filepath_length = 0;
 
-	व्योम* payload = populate_var_metadata(&filemod_data->meta, task, pid,
+	void* payload = populate_var_metadata(&filemod_data->meta, task, pid,
 					      filemod_data->payload);
 	payload = populate_cgroup_info(&filemod_data->cgroup_data, task, payload);
 
-	माप_प्रकार len = bpf_probe_पढ़ो_str(payload, MAX_खाताPATH_LENGTH, oldname);
+	size_t len = bpf_probe_read_str(payload, MAX_FILEPATH_LENGTH, oldname);
 	barrier_var(len);
-	अगर (len <= MAX_खाताPATH_LENGTH) अणु
+	if (len <= MAX_FILEPATH_LENGTH) {
 		barrier_var(len);
 		payload += len;
 		filemod_data->src_filepath_length = len;
-	पूर्ण
-	len = पढ़ो_असलolute_file_path_from_dentry(dentry, payload);
+	}
+	len = read_absolute_file_path_from_dentry(dentry, payload);
 	barrier_var(len);
-	अगर (len <= MAX_खाताPATH_LENGTH) अणु
+	if (len <= MAX_FILEPATH_LENGTH) {
 		barrier_var(len);
 		payload += len;
 		filemod_data->dst_filepath_length = len;
-	पूर्ण
+	}
 	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &filemod_data->meta);
-	अचिन्हित दीर्घ data_len = payload - (व्योम*)filemod_data;
-	data_len = data_len > माप(*filemod_data) ? माप(*filemod_data) : data_len;
+	unsigned long data_len = payload - (void*)filemod_data;
+	data_len = data_len > sizeof(*filemod_data) ? sizeof(*filemod_data) : data_len;
 	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, filemod_data, data_len);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
 
 SEC("raw_tracepoint/sched_process_fork")
-पूर्णांक raw_tracepoपूर्णांक__sched_process_विभाजन(काष्ठा bpf_raw_tracepoपूर्णांक_args* ctx)
-अणु
-	काष्ठा bpf_func_stats_ctx stats_ctx;
-	bpf_stats_enter(&stats_ctx, profiler_bpf_sched_process_विभाजन);
+int raw_tracepoint__sched_process_fork(struct bpf_raw_tracepoint_args* ctx)
+{
+	struct bpf_func_stats_ctx stats_ctx;
+	bpf_stats_enter(&stats_ctx, profiler_bpf_sched_process_fork);
 
-	पूर्णांक zero = 0;
-	काष्ठा var_विभाजन_data_t* विभाजन_data = bpf_map_lookup_elem(&data_heap, &zero);
-	अगर (!विभाजन_data)
-		जाओ out;
+	int zero = 0;
+	struct var_fork_data_t* fork_data = bpf_map_lookup_elem(&data_heap, &zero);
+	if (!fork_data)
+		goto out;
 
-	काष्ठा task_काष्ठा* parent = (काष्ठा task_काष्ठा*)ctx->args[0];
-	काष्ठा task_काष्ठा* child = (काष्ठा task_काष्ठा*)ctx->args[1];
-	विभाजन_data->meta.type = FORK_EVENT;
+	struct task_struct* parent = (struct task_struct*)ctx->args[0];
+	struct task_struct* child = (struct task_struct*)ctx->args[1];
+	fork_data->meta.type = FORK_EVENT;
 
-	व्योम* payload = populate_var_metadata(&विभाजन_data->meta, child,
-					      BPF_CORE_READ(child, pid), विभाजन_data->payload);
-	विभाजन_data->parent_pid = BPF_CORE_READ(parent, pid);
-	विभाजन_data->parent_exec_id = BPF_CORE_READ(parent, self_exec_id);
-	विभाजन_data->parent_start_समय = BPF_CORE_READ(parent, start_समय);
-	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &विभाजन_data->meta);
+	void* payload = populate_var_metadata(&fork_data->meta, child,
+					      BPF_CORE_READ(child, pid), fork_data->payload);
+	fork_data->parent_pid = BPF_CORE_READ(parent, pid);
+	fork_data->parent_exec_id = BPF_CORE_READ(parent, self_exec_id);
+	fork_data->parent_start_time = BPF_CORE_READ(parent, start_time);
+	bpf_stats_pre_submit_var_perf_event(&stats_ctx, &fork_data->meta);
 
-	अचिन्हित दीर्घ data_len = payload - (व्योम*)विभाजन_data;
-	data_len = data_len > माप(*विभाजन_data) ? माप(*विभाजन_data) : data_len;
-	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, विभाजन_data, data_len);
+	unsigned long data_len = payload - (void*)fork_data;
+	data_len = data_len > sizeof(*fork_data) ? sizeof(*fork_data) : data_len;
+	bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, fork_data, data_len);
 out:
-	bpf_stats_निकास(&stats_ctx);
-	वापस 0;
-पूर्ण
-अक्षर _license[] SEC("license") = "GPL";
+	bpf_stats_exit(&stats_ctx);
+	return 0;
+}
+char _license[] SEC("license") = "GPL";

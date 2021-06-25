@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ucall support. A ucall is a "hypercall to userspace".
  *
  * Copyright (C) 2018, Red Hat, Inc.
  */
-#समावेश "kvm_util.h"
+#include "kvm_util.h"
 
-#घोषणा UCALL_PIO_PORT ((uपूर्णांक16_t)0x1000)
+#define UCALL_PIO_PORT ((uint16_t)0x1000)
 
-व्योम ucall_init(काष्ठा kvm_vm *vm, व्योम *arg)
-अणु
-पूर्ण
+void ucall_init(struct kvm_vm *vm, void *arg)
+{
+}
 
-व्योम ucall_uninit(काष्ठा kvm_vm *vm)
-अणु
-पूर्ण
+void ucall_uninit(struct kvm_vm *vm)
+{
+}
 
-व्योम ucall(uपूर्णांक64_t cmd, पूर्णांक nargs, ...)
-अणु
-	काष्ठा ucall uc = अणु
+void ucall(uint64_t cmd, int nargs, ...)
+{
+	struct ucall uc = {
 		.cmd = cmd,
-	पूर्ण;
-	बहु_सूची va;
-	पूर्णांक i;
+	};
+	va_list va;
+	int i;
 
 	nargs = nargs <= UCALL_MAX_ARGS ? nargs : UCALL_MAX_ARGS;
 
-	बहु_शुरू(va, nargs);
-	क्रम (i = 0; i < nargs; ++i)
-		uc.args[i] = बहु_तर्क(va, uपूर्णांक64_t);
-	बहु_पूर्ण(va);
+	va_start(va, nargs);
+	for (i = 0; i < nargs; ++i)
+		uc.args[i] = va_arg(va, uint64_t);
+	va_end(va);
 
-	यंत्र अस्थिर("in %[port], %%al"
+	asm volatile("in %[port], %%al"
 		: : [port] "d" (UCALL_PIO_PORT), "D" (&uc) : "rax", "memory");
-पूर्ण
+}
 
-uपूर्णांक64_t get_ucall(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpu_id, काष्ठा ucall *uc)
-अणु
-	काष्ठा kvm_run *run = vcpu_state(vm, vcpu_id);
-	काष्ठा ucall ucall = अणुपूर्ण;
+uint64_t get_ucall(struct kvm_vm *vm, uint32_t vcpu_id, struct ucall *uc)
+{
+	struct kvm_run *run = vcpu_state(vm, vcpu_id);
+	struct ucall ucall = {};
 
-	अगर (uc)
-		स_रखो(uc, 0, माप(*uc));
+	if (uc)
+		memset(uc, 0, sizeof(*uc));
 
-	अगर (run->निकास_reason == KVM_EXIT_IO && run->io.port == UCALL_PIO_PORT) अणु
-		काष्ठा kvm_regs regs;
+	if (run->exit_reason == KVM_EXIT_IO && run->io.port == UCALL_PIO_PORT) {
+		struct kvm_regs regs;
 
 		vcpu_regs_get(vm, vcpu_id, &regs);
-		स_नकल(&ucall, addr_gva2hva(vm, (vm_vaddr_t)regs.rdi),
-		       माप(ucall));
+		memcpy(&ucall, addr_gva2hva(vm, (vm_vaddr_t)regs.rdi),
+		       sizeof(ucall));
 
 		vcpu_run_complete_io(vm, vcpu_id);
-		अगर (uc)
-			स_नकल(uc, &ucall, माप(ucall));
-	पूर्ण
+		if (uc)
+			memcpy(uc, &ucall, sizeof(ucall));
+	}
 
-	वापस ucall.cmd;
-पूर्ण
+	return ucall.cmd;
+}

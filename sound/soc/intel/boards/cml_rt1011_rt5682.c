@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 // Copyright(c) 2019 Intel Corporation.
 
 /*
- * Intel Cometlake I2S Machine driver क्रम RT1011 + RT5682 codec
+ * Intel Cometlake I2S Machine driver for RT1011 + RT5682 codec
  */
 
-#समावेश <linux/input.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/acpi.h>
-#समावेश <sound/core.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/rt5682.h>
-#समावेश <sound/soc-acpi.h>
-#समावेश "../../codecs/rt1011.h"
-#समावेश "../../codecs/rt5682.h"
-#समावेश "../../codecs/hdac_hdmi.h"
-#समावेश "hda_dsp_common.h"
+#include <linux/input.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/dmi.h>
+#include <linux/slab.h>
+#include <linux/acpi.h>
+#include <sound/core.h>
+#include <sound/jack.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/rt5682.h>
+#include <sound/soc-acpi.h>
+#include "../../codecs/rt1011.h"
+#include "../../codecs/rt5682.h"
+#include "../../codecs/hdac_hdmi.h"
+#include "hda_dsp_common.h"
 
-/* The platक्रमm घड़ी outमाला_दो 24Mhz घड़ी to codec as I2S MCLK */
-#घोषणा CML_PLAT_CLK	24000000
-#घोषणा CML_RT1011_CODEC_DAI "rt1011-aif"
-#घोषणा CML_RT5682_CODEC_DAI "rt5682-aif1"
-#घोषणा NAME_SIZE 32
+/* The platform clock outputs 24Mhz clock to codec as I2S MCLK */
+#define CML_PLAT_CLK	24000000
+#define CML_RT1011_CODEC_DAI "rt1011-aif"
+#define CML_RT5682_CODEC_DAI "rt5682-aif1"
+#define NAME_SIZE 32
 
-#घोषणा SOF_RT1011_SPEAKER_WL		BIT(0)
-#घोषणा SOF_RT1011_SPEAKER_WR		BIT(1)
-#घोषणा SOF_RT1011_SPEAKER_TL		BIT(2)
-#घोषणा SOF_RT1011_SPEAKER_TR		BIT(3)
+#define SOF_RT1011_SPEAKER_WL		BIT(0)
+#define SOF_RT1011_SPEAKER_WR		BIT(1)
+#define SOF_RT1011_SPEAKER_TL		BIT(2)
+#define SOF_RT1011_SPEAKER_TR		BIT(3)
 
 /* Default: Woofer speakers  */
-अटल अचिन्हित दीर्घ sof_rt1011_quirk = SOF_RT1011_SPEAKER_WL |
+static unsigned long sof_rt1011_quirk = SOF_RT1011_SPEAKER_WL |
 					SOF_RT1011_SPEAKER_WR;
 
-अटल पूर्णांक sof_rt1011_quirk_cb(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
-	sof_rt1011_quirk = (अचिन्हित दीर्घ)id->driver_data;
-	वापस 1;
-पूर्ण
+static int sof_rt1011_quirk_cb(const struct dmi_system_id *id)
+{
+	sof_rt1011_quirk = (unsigned long)id->driver_data;
+	return 1;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id sof_rt1011_quirk_table[] = अणु
-	अणु
+static const struct dmi_system_id sof_rt1011_quirk_table[] = {
+	{
 		.callback = sof_rt1011_quirk_cb,
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Google"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Helios"),
-	पूर्ण,
-		.driver_data = (व्योम *)(SOF_RT1011_SPEAKER_WL | SOF_RT1011_SPEAKER_WR |
+	},
+		.driver_data = (void *)(SOF_RT1011_SPEAKER_WL | SOF_RT1011_SPEAKER_WR |
 					SOF_RT1011_SPEAKER_TL | SOF_RT1011_SPEAKER_TR),
-	पूर्ण,
-	अणु
-	पूर्ण
-पूर्ण;
+	},
+	{
+	}
+};
 
-अटल काष्ठा snd_soc_jack hdmi_jack[3];
+static struct snd_soc_jack hdmi_jack[3];
 
-काष्ठा hdmi_pcm अणु
-	काष्ठा list_head head;
-	काष्ठा snd_soc_dai *codec_dai;
-	पूर्णांक device;
-पूर्ण;
+struct hdmi_pcm {
+	struct list_head head;
+	struct snd_soc_dai *codec_dai;
+	int device;
+};
 
-काष्ठा card_निजी अणु
-	अक्षर codec_name[SND_ACPI_I2C_ID_LEN];
-	काष्ठा snd_soc_jack headset;
-	काष्ठा list_head hdmi_pcm_list;
+struct card_private {
+	char codec_name[SND_ACPI_I2C_ID_LEN];
+	struct snd_soc_jack headset;
+	struct list_head hdmi_pcm_list;
 	bool common_hdmi_codec_drv;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new cml_controls[] = अणु
+static const struct snd_kcontrol_new cml_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Headphone Jack"),
 	SOC_DAPM_PIN_SWITCH("Headset Mic"),
 	SOC_DAPM_PIN_SWITCH("WL Ext Spk"),
 	SOC_DAPM_PIN_SWITCH("WR Ext Spk"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new cml_rt1011_tt_controls[] = अणु
+static const struct snd_kcontrol_new cml_rt1011_tt_controls[] = {
 	SOC_DAPM_PIN_SWITCH("TL Ext Spk"),
 	SOC_DAPM_PIN_SWITCH("TR Ext Spk"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget cml_rt1011_rt5682_widमाला_लो[] = अणु
-	SND_SOC_DAPM_SPK("WL Ext Spk", शून्य),
-	SND_SOC_DAPM_SPK("WR Ext Spk", शून्य),
-	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
-	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
-	SND_SOC_DAPM_MIC("SoC DMIC", शून्य),
-पूर्ण;
+static const struct snd_soc_dapm_widget cml_rt1011_rt5682_widgets[] = {
+	SND_SOC_DAPM_SPK("WL Ext Spk", NULL),
+	SND_SOC_DAPM_SPK("WR Ext Spk", NULL),
+	SND_SOC_DAPM_HP("Headphone Jack", NULL),
+	SND_SOC_DAPM_MIC("Headset Mic", NULL),
+	SND_SOC_DAPM_MIC("SoC DMIC", NULL),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget cml_rt1011_tt_widमाला_लो[] = अणु
-	SND_SOC_DAPM_SPK("TL Ext Spk", शून्य),
-	SND_SOC_DAPM_SPK("TR Ext Spk", शून्य),
-पूर्ण;
+static const struct snd_soc_dapm_widget cml_rt1011_tt_widgets[] = {
+	SND_SOC_DAPM_SPK("TL Ext Spk", NULL),
+	SND_SOC_DAPM_SPK("TR Ext Spk", NULL),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cml_rt1011_rt5682_map[] = अणु
+static const struct snd_soc_dapm_route cml_rt1011_rt5682_map[] = {
 	/*WL/WR speaker*/
-	अणु"WL Ext Spk", शून्य, "WL SPO"पूर्ण,
-	अणु"WR Ext Spk", शून्य, "WR SPO"पूर्ण,
+	{"WL Ext Spk", NULL, "WL SPO"},
+	{"WR Ext Spk", NULL, "WR SPO"},
 
-	/* HP jack connectors - unknown अगर we have jack detection */
-	अणु "Headphone Jack", शून्य, "HPOL" पूर्ण,
-	अणु "Headphone Jack", शून्य, "HPOR" पूर्ण,
+	/* HP jack connectors - unknown if we have jack detection */
+	{ "Headphone Jack", NULL, "HPOL" },
+	{ "Headphone Jack", NULL, "HPOR" },
 
 	/* other jacks */
-	अणु "IN1P", शून्य, "Headset Mic" पूर्ण,
+	{ "IN1P", NULL, "Headset Mic" },
 
 	/* DMIC */
-	अणु"DMic", शून्य, "SoC DMIC"पूर्ण,
-पूर्ण;
+	{"DMic", NULL, "SoC DMIC"},
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route cml_rt1011_tt_map[] = अणु
+static const struct snd_soc_dapm_route cml_rt1011_tt_map[] = {
 	/*TL/TR speaker*/
-	अणु"TL Ext Spk", शून्य, "TL SPO" पूर्ण,
-	अणु"TR Ext Spk", शून्य, "TR SPO" पूर्ण,
-पूर्ण;
+	{"TL Ext Spk", NULL, "TL SPO" },
+	{"TR Ext Spk", NULL, "TR SPO" },
+};
 
-अटल पूर्णांक cml_rt5682_codec_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा card_निजी *ctx = snd_soc_card_get_drvdata(rtd->card);
-	काष्ठा snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
-	काष्ठा snd_soc_jack *jack;
-	पूर्णांक ret;
+static int cml_rt5682_codec_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct card_private *ctx = snd_soc_card_get_drvdata(rtd->card);
+	struct snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
+	struct snd_soc_jack *jack;
+	int ret;
 
-	/* need to enable ASRC function क्रम 24MHz mclk rate */
+	/* need to enable ASRC function for 24MHz mclk rate */
 	rt5682_sel_asrc_clk_src(component, RT5682_DA_STEREO1_FILTER |
 					RT5682_AD_STEREO1_FILTER,
 					RT5682_CLK_SEL_I2S1_ASRC);
@@ -142,11 +141,11 @@
 				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
 				    SND_JACK_BTN_1 | SND_JACK_BTN_2 |
 				    SND_JACK_BTN_3,
-				    &ctx->headset, शून्य, 0);
-	अगर (ret) अणु
+				    &ctx->headset, NULL, 0);
+	if (ret) {
 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	jack = &ctx->headset;
 
@@ -154,55 +153,55 @@
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_1, KEY_VOICECOMMAND);
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_2, KEY_VOLUMEUP);
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_3, KEY_VOLUMEDOWN);
-	ret = snd_soc_component_set_jack(component, jack, शून्य);
-	अगर (ret)
+	ret = snd_soc_component_set_jack(component, jack, NULL);
+	if (ret)
 		dev_err(rtd->dev, "Headset Jack call-back failed: %d\n", ret);
 
-	वापस ret;
-पूर्ण;
+	return ret;
+};
 
-अटल व्योम cml_rt5682_codec_निकास(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
+static void cml_rt5682_codec_exit(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
 
-	snd_soc_component_set_jack(component, शून्य, शून्य);
-पूर्ण
+	snd_soc_component_set_jack(component, NULL, NULL);
+}
 
-अटल पूर्णांक cml_rt1011_spk_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा snd_soc_card *card = rtd->card;
+static int cml_rt1011_spk_init(struct snd_soc_pcm_runtime *rtd)
+{
+	int ret = 0;
+	struct snd_soc_card *card = rtd->card;
 
-	अगर (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_TL |
-				SOF_RT1011_SPEAKER_TR)) अणु
+	if (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_TL |
+				SOF_RT1011_SPEAKER_TR)) {
 
 		ret = snd_soc_add_card_controls(card, cml_rt1011_tt_controls,
 					ARRAY_SIZE(cml_rt1011_tt_controls));
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = snd_soc_dapm_new_controls(&card->dapm,
-					cml_rt1011_tt_widमाला_लो,
-					ARRAY_SIZE(cml_rt1011_tt_widमाला_लो));
-		अगर (ret)
-			वापस ret;
+					cml_rt1011_tt_widgets,
+					ARRAY_SIZE(cml_rt1011_tt_widgets));
+		if (ret)
+			return ret;
 
 		ret = snd_soc_dapm_add_routes(&card->dapm, cml_rt1011_tt_map,
 					ARRAY_SIZE(cml_rt1011_tt_map));
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cml_rt5682_hw_params(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	पूर्णांक clk_id, clk_freq, pll_out, ret;
+static int cml_rt5682_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	int clk_id, clk_freq, pll_out, ret;
 
 	clk_id = RT5682_PLL1_S_MCLK;
 	clk_freq = CML_PLAT_CLK;
@@ -210,13 +209,13 @@
 	pll_out = params_rate(params) * 512;
 
 	ret = snd_soc_dai_set_pll(codec_dai, 0, clk_id, clk_freq, pll_out);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(rtd->dev, "snd_soc_dai_set_pll err = %d\n", ret);
 
-	/* Configure sysclk क्रम codec */
+	/* Configure sysclk for codec */
 	ret = snd_soc_dai_set_sysclk(codec_dai, RT5682_SCLK_S_PLL1,
 				     pll_out, SND_SOC_CLOCK_IN);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(rtd->dev, "snd_soc_dai_set_sysclk err = %d\n", ret);
 
 	/*
@@ -225,155 +224,155 @@
 	 */
 	ret = snd_soc_dai_set_tdm_slot(codec_dai, 0x0, 0x0, 2,
 				       params_width(params));
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(rtd->dev, "set TDM slot err:%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cml_rt1011_hw_params(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai;
-	काष्ठा snd_soc_card *card = rtd->card;
-	पूर्णांक srate, i, ret = 0;
+static int cml_rt1011_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai;
+	struct snd_soc_card *card = rtd->card;
+	int srate, i, ret = 0;
 
 	srate = params_rate(params);
 
-	क्रम_each_rtd_codec_dais(rtd, i, codec_dai) अणु
+	for_each_rtd_codec_dais(rtd, i, codec_dai) {
 
 		/* 100 Fs to drive 24 bit data */
 		ret = snd_soc_dai_set_pll(codec_dai, 0, RT1011_PLL1_S_BCLK,
 					  100 * srate, 256 * srate);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(card->dev, "codec_dai clock not set\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = snd_soc_dai_set_sysclk(codec_dai,
 					     RT1011_FS_SYS_PRE_S_PLL1,
 					     256 * srate, SND_SOC_CLOCK_IN);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(card->dev, "codec_dai clock not set\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/*
 		 * Codec TDM is configured as 24 bit capture/ playback.
-		 * 2 CH PB is करोne over 4 codecs - 2 Woofers and 2 Tweeters.
+		 * 2 CH PB is done over 4 codecs - 2 Woofers and 2 Tweeters.
 		 * The Left woofer and tweeter plays the Left playback data
 		 * and  similar by the Right.
 		 * Hence 2 codecs (1 T and 1 W pair) share same Rx slot.
-		 * The feedback is captured क्रम each codec inभागidually.
-		 * Hence all 4 codecs use 1 Tx slot each क्रम feedback.
+		 * The feedback is captured for each codec individually.
+		 * Hence all 4 codecs use 1 Tx slot each for feedback.
 		 */
-		अगर (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_WL |
-					SOF_RT1011_SPEAKER_WR)) अणु
-			अगर (!म_भेद(codec_dai->component->name, "i2c-10EC1011:00")) अणु
+		if (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_WL |
+					SOF_RT1011_SPEAKER_WR)) {
+			if (!strcmp(codec_dai->component->name, "i2c-10EC1011:00")) {
 				ret = snd_soc_dai_set_tdm_slot(codec_dai,
 							       0x4, 0x1, 4, 24);
-				अगर (ret < 0)
-					अवरोध;
-			पूर्ण
+				if (ret < 0)
+					break;
+			}
 
-			अगर (!म_भेद(codec_dai->component->name, "i2c-10EC1011:01")) अणु
+			if (!strcmp(codec_dai->component->name, "i2c-10EC1011:01")) {
 				ret = snd_soc_dai_set_tdm_slot(codec_dai,
 							       0x8, 0x2, 4, 24);
-				अगर (ret < 0)
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				if (ret < 0)
+					break;
+			}
+		}
 
-		अगर (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_TL |
-					SOF_RT1011_SPEAKER_TR)) अणु
-			अगर (!म_भेद(codec_dai->component->name, "i2c-10EC1011:02")) अणु
+		if (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_TL |
+					SOF_RT1011_SPEAKER_TR)) {
+			if (!strcmp(codec_dai->component->name, "i2c-10EC1011:02")) {
 				ret = snd_soc_dai_set_tdm_slot(codec_dai,
 							       0x1, 0x1, 4, 24);
-				अगर (ret < 0)
-					अवरोध;
-			पूर्ण
+				if (ret < 0)
+					break;
+			}
 
-			अगर (!म_भेद(codec_dai->component->name, "i2c-10EC1011:03")) अणु
+			if (!strcmp(codec_dai->component->name, "i2c-10EC1011:03")) {
 				ret = snd_soc_dai_set_tdm_slot(codec_dai,
 							       0x2, 0x2, 4, 24);
-				अगर (ret < 0)
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (ret < 0)
+				if (ret < 0)
+					break;
+			}
+		}
+	}
+	if (ret < 0)
 		dev_err(rtd->dev,
 			"set codec TDM slot for %s failed with error %d\n",
 			codec_dai->component->name, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा snd_soc_ops cml_rt5682_ops = अणु
+static struct snd_soc_ops cml_rt5682_ops = {
 	.hw_params = cml_rt5682_hw_params,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_ops cml_rt1011_ops = अणु
+static const struct snd_soc_ops cml_rt1011_ops = {
 	.hw_params = cml_rt1011_hw_params,
-पूर्ण;
+};
 
-अटल पूर्णांक sof_card_late_probe(काष्ठा snd_soc_card *card)
-अणु
-	काष्ठा card_निजी *ctx = snd_soc_card_get_drvdata(card);
-	काष्ठा snd_soc_component *component = शून्य;
-	अक्षर jack_name[NAME_SIZE];
-	काष्ठा hdmi_pcm *pcm;
-	पूर्णांक ret, i = 0;
+static int sof_card_late_probe(struct snd_soc_card *card)
+{
+	struct card_private *ctx = snd_soc_card_get_drvdata(card);
+	struct snd_soc_component *component = NULL;
+	char jack_name[NAME_SIZE];
+	struct hdmi_pcm *pcm;
+	int ret, i = 0;
 
-	अगर (list_empty(&ctx->hdmi_pcm_list))
-		वापस -EINVAL;
+	if (list_empty(&ctx->hdmi_pcm_list))
+		return -EINVAL;
 
-	अगर (ctx->common_hdmi_codec_drv) अणु
-		pcm = list_first_entry(&ctx->hdmi_pcm_list, काष्ठा hdmi_pcm,
+	if (ctx->common_hdmi_codec_drv) {
+		pcm = list_first_entry(&ctx->hdmi_pcm_list, struct hdmi_pcm,
 				       head);
 		component = pcm->codec_dai->component;
-		वापस hda_dsp_hdmi_build_controls(card, component);
-	पूर्ण
+		return hda_dsp_hdmi_build_controls(card, component);
+	}
 
-	list_क्रम_each_entry(pcm, &ctx->hdmi_pcm_list, head) अणु
+	list_for_each_entry(pcm, &ctx->hdmi_pcm_list, head) {
 		component = pcm->codec_dai->component;
-		snम_लिखो(jack_name, माप(jack_name),
+		snprintf(jack_name, sizeof(jack_name),
 			 "HDMI/DP, pcm=%d Jack", pcm->device);
 		ret = snd_soc_card_jack_new(card, jack_name,
 					    SND_JACK_AVOUT, &hdmi_jack[i],
-					    शून्य, 0);
-		अगर (ret)
-			वापस ret;
+					    NULL, 0);
+		if (ret)
+			return ret;
 
 		ret = hdac_hdmi_jack_init(pcm->codec_dai, pcm->device,
 					  &hdmi_jack[i]);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		i++;
-	पूर्ण
+	}
 
-	वापस hdac_hdmi_jack_port_init(component, &card->dapm);
-पूर्ण
+	return hdac_hdmi_jack_port_init(component, &card->dapm);
+}
 
-अटल पूर्णांक hdmi_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा card_निजी *ctx = snd_soc_card_get_drvdata(rtd->card);
-	काष्ठा snd_soc_dai *dai = asoc_rtd_to_codec(rtd, 0);
-	काष्ठा hdmi_pcm *pcm;
+static int hdmi_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct card_private *ctx = snd_soc_card_get_drvdata(rtd->card);
+	struct snd_soc_dai *dai = asoc_rtd_to_codec(rtd, 0);
+	struct hdmi_pcm *pcm;
 
-	pcm = devm_kzalloc(rtd->card->dev, माप(*pcm), GFP_KERNEL);
-	अगर (!pcm)
-		वापस -ENOMEM;
+	pcm = devm_kzalloc(rtd->card->dev, sizeof(*pcm), GFP_KERNEL);
+	if (!pcm)
+		return -ENOMEM;
 
 	pcm->device = dai->id;
 	pcm->codec_dai = dai;
 
 	list_add_tail(&pcm->head, &ctx->hdmi_pcm_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Cometlake digital audio पूर्णांकerface glue - connects codec <--> CPU */
+/* Cometlake digital audio interface glue - connects codec <--> CPU */
 
 SND_SOC_DAILINK_DEF(ssp0_pin,
 	DAILINK_COMP_ARRAY(COMP_CPU("SSP0 Pin")));
@@ -419,68 +418,68 @@ SND_SOC_DAILINK_DEF(idisp3_pin,
 SND_SOC_DAILINK_DEF(idisp3_codec,
 	DAILINK_COMP_ARRAY(COMP_CODEC("ehdaudio0D2", "intel-hdmi-hifi3")));
 
-SND_SOC_DAILINK_DEF(platक्रमm,
+SND_SOC_DAILINK_DEF(platform,
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("0000:00:1f.3")));
 
-अटल काष्ठा snd_soc_dai_link cml_rt1011_rt5682_dailink[] = अणु
+static struct snd_soc_dai_link cml_rt1011_rt5682_dailink[] = {
 	/* Back End DAI links */
-	अणु
+	{
 		/* SSP0 - Codec */
 		.name = "SSP0-Codec",
 		.id = 0,
 		.init = cml_rt5682_codec_init,
-		.निकास = cml_rt5682_codec_निकास,
-		.ignore_pmकरोwn_समय = 1,
+		.exit = cml_rt5682_codec_exit,
+		.ignore_pmdown_time = 1,
 		.ops = &cml_rt5682_ops,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
 		.no_pcm = 1,
-		SND_SOC_DAILINK_REG(ssp0_pin, ssp0_codec, platक्रमm),
-	पूर्ण,
-	अणु
+		SND_SOC_DAILINK_REG(ssp0_pin, ssp0_codec, platform),
+	},
+	{
 		.name = "dmic01",
 		.id = 1,
 		.ignore_suspend = 1,
 		.dpcm_capture = 1,
 		.no_pcm = 1,
-		SND_SOC_DAILINK_REG(dmic_pin, dmic_codec, platक्रमm),
-	पूर्ण,
-	अणु
+		SND_SOC_DAILINK_REG(dmic_pin, dmic_codec, platform),
+	},
+	{
 		.name = "dmic16k",
 		.id = 2,
 		.ignore_suspend = 1,
 		.dpcm_capture = 1,
 		.no_pcm = 1,
-		SND_SOC_DAILINK_REG(dmic16k_pin, dmic_codec, platक्रमm),
-	पूर्ण,
-	अणु
+		SND_SOC_DAILINK_REG(dmic16k_pin, dmic_codec, platform),
+	},
+	{
 		.name = "iDisp1",
 		.id = 3,
 		.init = hdmi_init,
 		.dpcm_playback = 1,
 		.no_pcm = 1,
-		SND_SOC_DAILINK_REG(idisp1_pin, idisp1_codec, platक्रमm),
-	पूर्ण,
-	अणु
+		SND_SOC_DAILINK_REG(idisp1_pin, idisp1_codec, platform),
+	},
+	{
 		.name = "iDisp2",
 		.id = 4,
 		.init = hdmi_init,
 		.dpcm_playback = 1,
 		.no_pcm = 1,
-		SND_SOC_DAILINK_REG(idisp2_pin, idisp2_codec, platक्रमm),
-	पूर्ण,
-	अणु
+		SND_SOC_DAILINK_REG(idisp2_pin, idisp2_codec, platform),
+	},
+	{
 		.name = "iDisp3",
 		.id = 5,
 		.init = hdmi_init,
 		.dpcm_playback = 1,
 		.no_pcm = 1,
-		SND_SOC_DAILINK_REG(idisp3_pin, idisp3_codec, platक्रमm),
-	पूर्ण,
-	अणु
+		SND_SOC_DAILINK_REG(idisp3_pin, idisp3_codec, platform),
+	},
+	{
 		/*
 		 * SSP1 - Codec : added to end of list ensuring
-		 * reuse of common topologies क्रम other end poपूर्णांकs
+		 * reuse of common topologies for other end points
 		 * and changing only SSP1's codec
 		 */
 		.name = "SSP1-Codec",
@@ -490,104 +489,104 @@ SND_SOC_DAILINK_DEF(platक्रमm,
 		.no_pcm = 1,
 		.init = cml_rt1011_spk_init,
 		.ops = &cml_rt1011_ops,
-		SND_SOC_DAILINK_REG(ssp1_pin, ssp1_codec_2spk, platक्रमm),
-	पूर्ण,
-पूर्ण;
+		SND_SOC_DAILINK_REG(ssp1_pin, ssp1_codec_2spk, platform),
+	},
+};
 
-अटल काष्ठा snd_soc_codec_conf rt1011_conf[] = अणु
-	अणु
+static struct snd_soc_codec_conf rt1011_conf[] = {
+	{
 		.dlc = COMP_CODEC_CONF("i2c-10EC1011:00"),
 		.name_prefix = "WL",
-	पूर्ण,
-	अणु
+	},
+	{
 		.dlc = COMP_CODEC_CONF("i2c-10EC1011:01"),
 		.name_prefix = "WR",
-	पूर्ण,
-	/* single configuration काष्ठाure क्रम 2 and 4 channels */
-	अणु
+	},
+	/* single configuration structure for 2 and 4 channels */
+	{
 		.dlc = COMP_CODEC_CONF("i2c-10EC1011:02"),
 		.name_prefix = "TL",
-	पूर्ण,
-	अणु
+	},
+	{
 		.dlc = COMP_CODEC_CONF("i2c-10EC1011:03"),
 		.name_prefix = "TR",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-/* Cometlake audio machine driver क्रम RT1011 and RT5682 */
-अटल काष्ठा snd_soc_card snd_soc_card_cml = अणु
+/* Cometlake audio machine driver for RT1011 and RT5682 */
+static struct snd_soc_card snd_soc_card_cml = {
 	.name = "cml_rt1011_rt5682",
 	.owner = THIS_MODULE,
 	.dai_link = cml_rt1011_rt5682_dailink,
 	.num_links = ARRAY_SIZE(cml_rt1011_rt5682_dailink),
 	.codec_conf = rt1011_conf,
 	.num_configs = ARRAY_SIZE(rt1011_conf),
-	.dapm_widमाला_लो = cml_rt1011_rt5682_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(cml_rt1011_rt5682_widमाला_लो),
+	.dapm_widgets = cml_rt1011_rt5682_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(cml_rt1011_rt5682_widgets),
 	.dapm_routes = cml_rt1011_rt5682_map,
 	.num_dapm_routes = ARRAY_SIZE(cml_rt1011_rt5682_map),
 	.controls = cml_controls,
 	.num_controls = ARRAY_SIZE(cml_controls),
 	.fully_routed = true,
 	.late_probe = sof_card_late_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_cml_rt1011_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_dai_link *dai_link;
-	काष्ठा card_निजी *ctx;
-	काष्ठा snd_soc_acpi_mach *mach;
-	स्थिर अक्षर *platक्रमm_name;
-	पूर्णांक ret, i;
+static int snd_cml_rt1011_probe(struct platform_device *pdev)
+{
+	struct snd_soc_dai_link *dai_link;
+	struct card_private *ctx;
+	struct snd_soc_acpi_mach *mach;
+	const char *platform_name;
+	int ret, i;
 
-	ctx = devm_kzalloc(&pdev->dev, माप(*ctx), GFP_KERNEL);
-	अगर (!ctx)
-		वापस -ENOMEM;
+	ctx = devm_kzalloc(&pdev->dev, sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return -ENOMEM;
 
 	INIT_LIST_HEAD(&ctx->hdmi_pcm_list);
-	mach = pdev->dev.platक्रमm_data;
+	mach = pdev->dev.platform_data;
 	snd_soc_card_cml.dev = &pdev->dev;
-	platक्रमm_name = mach->mach_params.platक्रमm;
+	platform_name = mach->mach_params.platform;
 
-	dmi_check_प्रणाली(sof_rt1011_quirk_table);
+	dmi_check_system(sof_rt1011_quirk_table);
 
 	dev_dbg(&pdev->dev, "sof_rt1011_quirk = %lx\n", sof_rt1011_quirk);
 
 	/* when 4 speaker is available, update codec config */
-	अगर (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_TL |
-				SOF_RT1011_SPEAKER_TR)) अणु
-		क्रम_each_card_prelinks(&snd_soc_card_cml, i, dai_link) अणु
-			अगर (!म_भेद(dai_link->codecs[0].dai_name,
-				    CML_RT1011_CODEC_DAI)) अणु
+	if (sof_rt1011_quirk & (SOF_RT1011_SPEAKER_TL |
+				SOF_RT1011_SPEAKER_TR)) {
+		for_each_card_prelinks(&snd_soc_card_cml, i, dai_link) {
+			if (!strcmp(dai_link->codecs[0].dai_name,
+				    CML_RT1011_CODEC_DAI)) {
 				dai_link->codecs = ssp1_codec_4spk;
 				dai_link->num_codecs = ARRAY_SIZE(ssp1_codec_4spk);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* set platक्रमm name क्रम each dailink */
-	ret = snd_soc_fixup_dai_links_platक्रमm_name(&snd_soc_card_cml,
-						    platक्रमm_name);
-	अगर (ret)
-		वापस ret;
+	/* set platform name for each dailink */
+	ret = snd_soc_fixup_dai_links_platform_name(&snd_soc_card_cml,
+						    platform_name);
+	if (ret)
+		return ret;
 
 	ctx->common_hdmi_codec_drv = mach->mach_params.common_hdmi_codec_drv;
 
 	snd_soc_card_set_drvdata(&snd_soc_card_cml, ctx);
 
-	वापस devm_snd_soc_रेजिस्टर_card(&pdev->dev, &snd_soc_card_cml);
-पूर्ण
+	return devm_snd_soc_register_card(&pdev->dev, &snd_soc_card_cml);
+}
 
-अटल काष्ठा platक्रमm_driver snd_cml_rt1011_rt5682_driver = अणु
+static struct platform_driver snd_cml_rt1011_rt5682_driver = {
 	.probe = snd_cml_rt1011_probe,
-	.driver = अणु
+	.driver = {
 		.name = "cml_rt1011_rt5682",
 		.pm = &snd_soc_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(snd_cml_rt1011_rt5682_driver);
+	},
+};
+module_platform_driver(snd_cml_rt1011_rt5682_driver);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_DESCRIPTION("Cometlake Audio Machine driver - RT1011 and RT5682 in I2S mode");
 MODULE_AUTHOR("Naveen Manohar <naveen.m@intel.com>");
 MODULE_AUTHOR("Sathya Prakash M R <sathya.prakash.m.r@intel.com>");

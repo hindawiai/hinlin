@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * PowerNV OPAL high level पूर्णांकerfaces
+ * PowerNV OPAL high level interfaces
  *
  * Copyright 2011 IBM Corp.
  */
 
-#घोषणा pr_fmt(fmt)	"opal: " fmt
+#define pr_fmt(fmt)	"opal: " fmt
 
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/types.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/kmsg_dump.h>
-#समावेश <linux/console.h>
-#समावेश <linux/sched/debug.h>
+#include <linux/printk.h>
+#include <linux/types.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
+#include <linux/of_platform.h>
+#include <linux/of_address.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/kobject.h>
+#include <linux/delay.h>
+#include <linux/memblock.h>
+#include <linux/kthread.h>
+#include <linux/freezer.h>
+#include <linux/kmsg_dump.h>
+#include <linux/console.h>
+#include <linux/sched/debug.h>
 
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/firmware.h>
-#समावेश <यंत्र/mce.h>
-#समावेश <यंत्र/imc-pmu.h>
-#समावेश <यंत्र/bug.h>
+#include <asm/machdep.h>
+#include <asm/opal.h>
+#include <asm/firmware.h>
+#include <asm/mce.h>
+#include <asm/imc-pmu.h>
+#include <asm/bug.h>
 
-#समावेश "powernv.h"
+#include "powernv.h"
 
-#घोषणा OPAL_MSG_QUEUE_MAX 16
+#define OPAL_MSG_QUEUE_MAX 16
 
-काष्ठा opal_msg_node अणु
-	काष्ठा list_head	list;
-	काष्ठा opal_msg		msg;
-पूर्ण;
+struct opal_msg_node {
+	struct list_head	list;
+	struct opal_msg		msg;
+};
 
-अटल DEFINE_SPINLOCK(msg_list_lock);
-अटल LIST_HEAD(msg_list);
+static DEFINE_SPINLOCK(msg_list_lock);
+static LIST_HEAD(msg_list);
 
 /* /sys/firmware/opal */
-काष्ठा kobject *opal_kobj;
+struct kobject *opal_kobj;
 
-काष्ठा opal अणु
+struct opal {
 	u64 base;
 	u64 entry;
 	u64 size;
-पूर्ण opal;
+} opal;
 
-काष्ठा mcheck_recoverable_range अणु
+struct mcheck_recoverable_range {
 	u64 start_addr;
 	u64 end_addr;
 	u64 recover_addr;
-पूर्ण;
+};
 
-अटल पूर्णांक msg_list_size;
+static int msg_list_size;
 
-अटल काष्ठा mcheck_recoverable_range *mc_recoverable_range;
-अटल पूर्णांक mc_recoverable_range_len;
+static struct mcheck_recoverable_range *mc_recoverable_range;
+static int mc_recoverable_range_len;
 
-काष्ठा device_node *opal_node;
-अटल DEFINE_SPINLOCK(opal_ग_लिखो_lock);
-अटल काष्ठा atomic_notअगरier_head opal_msg_notअगरier_head[OPAL_MSG_TYPE_MAX];
-अटल uपूर्णांक32_t opal_heartbeat;
-अटल काष्ठा task_काष्ठा *kopald_tsk;
-अटल काष्ठा opal_msg *opal_msg;
-अटल u32 opal_msg_size __ro_after_init;
+struct device_node *opal_node;
+static DEFINE_SPINLOCK(opal_write_lock);
+static struct atomic_notifier_head opal_msg_notifier_head[OPAL_MSG_TYPE_MAX];
+static uint32_t opal_heartbeat;
+static struct task_struct *kopald_tsk;
+static struct opal_msg *opal_msg;
+static u32 opal_msg_size __ro_after_init;
 
-व्योम opal_configure_cores(व्योम)
-अणु
+void opal_configure_cores(void)
+{
 	u64 reinit_flags = 0;
 
 	/* Do the actual re-init, This will clobber all FPRs, VRs, etc...
 	 *
-	 * It will preserve non अस्थिर GPRs and HSPRG0/1. It will
+	 * It will preserve non volatile GPRs and HSPRG0/1. It will
 	 * also restore HIDs and other SPRs to their original value
 	 * but it might clobber a bunch.
 	 */
-#अगर_घोषित __BIG_ENDIAN__
+#ifdef __BIG_ENDIAN__
 	reinit_flags |= OPAL_REINIT_CPUS_HILE_BE;
-#अन्यथा
+#else
 	reinit_flags |= OPAL_REINIT_CPUS_HILE_LE;
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * POWER9 always support running hash:
 	 *  ie. Host hash  supports  hash guests
 	 *      Host radix supports  hash/radix guests
 	 */
-	अगर (early_cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+	if (early_cpu_has_feature(CPU_FTR_ARCH_300)) {
 		reinit_flags |= OPAL_REINIT_CPUS_MMU_HASH;
-		अगर (early_radix_enabled())
+		if (early_radix_enabled())
 			reinit_flags |= OPAL_REINIT_CPUS_MMU_RADIX;
-	पूर्ण
+	}
 
 	opal_reinit_cpus(reinit_flags);
 
 	/* Restore some bits */
-	अगर (cur_cpu_spec->cpu_restore)
+	if (cur_cpu_spec->cpu_restore)
 		cur_cpu_spec->cpu_restore();
-पूर्ण
+}
 
-पूर्णांक __init early_init_dt_scan_opal(अचिन्हित दीर्घ node,
-				   स्थिर अक्षर *uname, पूर्णांक depth, व्योम *data)
-अणु
-	स्थिर व्योम *basep, *entryp, *sizep;
-	पूर्णांक basesz, entrysz, runबारz;
+int __init early_init_dt_scan_opal(unsigned long node,
+				   const char *uname, int depth, void *data)
+{
+	const void *basep, *entryp, *sizep;
+	int basesz, entrysz, runtimesz;
 
-	अगर (depth != 1 || म_भेद(uname, "ibm,opal") != 0)
-		वापस 0;
+	if (depth != 1 || strcmp(uname, "ibm,opal") != 0)
+		return 0;
 
 	basep  = of_get_flat_dt_prop(node, "opal-base-address", &basesz);
 	entryp = of_get_flat_dt_prop(node, "opal-entry-address", &entrysz);
-	sizep = of_get_flat_dt_prop(node, "opal-runtime-size", &runबारz);
+	sizep = of_get_flat_dt_prop(node, "opal-runtime-size", &runtimesz);
 
-	अगर (!basep || !entryp || !sizep)
-		वापस 1;
+	if (!basep || !entryp || !sizep)
+		return 1;
 
-	opal.base = of_पढ़ो_number(basep, basesz/4);
-	opal.entry = of_पढ़ो_number(entryp, entrysz/4);
-	opal.size = of_पढ़ो_number(sizep, runबारz/4);
+	opal.base = of_read_number(basep, basesz/4);
+	opal.entry = of_read_number(entryp, entrysz/4);
+	opal.size = of_read_number(sizep, runtimesz/4);
 
 	pr_debug("OPAL Base  = 0x%llx (basep=%p basesz=%d)\n",
 		 opal.base, basep, basesz);
 	pr_debug("OPAL Entry = 0x%llx (entryp=%p basesz=%d)\n",
 		 opal.entry, entryp, entrysz);
 	pr_debug("OPAL Entry = 0x%llx (sizep=%p runtimesz=%d)\n",
-		 opal.size, sizep, runबारz);
+		 opal.size, sizep, runtimesz);
 
-	अगर (of_flat_dt_is_compatible(node, "ibm,opal-v3")) अणु
-		घातerpc_firmware_features |= FW_FEATURE_OPAL;
+	if (of_flat_dt_is_compatible(node, "ibm,opal-v3")) {
+		powerpc_firmware_features |= FW_FEATURE_OPAL;
 		pr_debug("OPAL detected !\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		panic("OPAL != V3 detected, no longer supported.\n");
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक __init early_init_dt_scan_recoverable_ranges(अचिन्हित दीर्घ node,
-				   स्थिर अक्षर *uname, पूर्णांक depth, व्योम *data)
-अणु
-	पूर्णांक i, psize, size;
-	स्थिर __be32 *prop;
+int __init early_init_dt_scan_recoverable_ranges(unsigned long node,
+				   const char *uname, int depth, void *data)
+{
+	int i, psize, size;
+	const __be32 *prop;
 
-	अगर (depth != 1 || म_भेद(uname, "ibm,opal") != 0)
-		वापस 0;
+	if (depth != 1 || strcmp(uname, "ibm,opal") != 0)
+		return 0;
 
 	prop = of_get_flat_dt_prop(node, "mcheck-recoverable-ranges", &psize);
 
-	अगर (!prop)
-		वापस 1;
+	if (!prop)
+		return 1;
 
 	pr_debug("Found machine check recoverable ranges.\n");
 
@@ -165,51 +164,51 @@
 	 * Calculate number of available entries.
 	 *
 	 * Each recoverable address range entry is (start address, len,
-	 * recovery address), 2 cells each क्रम start and recovery address,
-	 * 1 cell क्रम len, totalling 5 cells per entry.
+	 * recovery address), 2 cells each for start and recovery address,
+	 * 1 cell for len, totalling 5 cells per entry.
 	 */
-	mc_recoverable_range_len = psize / (माप(*prop) * 5);
+	mc_recoverable_range_len = psize / (sizeof(*prop) * 5);
 
 	/* Sanity check */
-	अगर (!mc_recoverable_range_len)
-		वापस 1;
+	if (!mc_recoverable_range_len)
+		return 1;
 
 	/* Size required to hold all the entries. */
 	size = mc_recoverable_range_len *
-			माप(काष्ठा mcheck_recoverable_range);
+			sizeof(struct mcheck_recoverable_range);
 
 	/*
 	 * Allocate a buffer to hold the MC recoverable ranges.
 	 */
 	mc_recoverable_range = memblock_alloc(size, __alignof__(u64));
-	अगर (!mc_recoverable_range)
+	if (!mc_recoverable_range)
 		panic("%s: Failed to allocate %u bytes align=0x%lx\n",
 		      __func__, size, __alignof__(u64));
 
-	क्रम (i = 0; i < mc_recoverable_range_len; i++) अणु
+	for (i = 0; i < mc_recoverable_range_len; i++) {
 		mc_recoverable_range[i].start_addr =
-					of_पढ़ो_number(prop + (i * 5) + 0, 2);
+					of_read_number(prop + (i * 5) + 0, 2);
 		mc_recoverable_range[i].end_addr =
 					mc_recoverable_range[i].start_addr +
-					of_पढ़ो_number(prop + (i * 5) + 2, 1);
+					of_read_number(prop + (i * 5) + 2, 1);
 		mc_recoverable_range[i].recover_addr =
-					of_पढ़ो_number(prop + (i * 5) + 3, 2);
+					of_read_number(prop + (i * 5) + 3, 2);
 
 		pr_debug("Machine check recoverable range: %llx..%llx: %llx\n",
 				mc_recoverable_range[i].start_addr,
 				mc_recoverable_range[i].end_addr,
 				mc_recoverable_range[i].recover_addr);
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-अटल पूर्णांक __init opal_रेजिस्टर_exception_handlers(व्योम)
-अणु
-#अगर_घोषित __BIG_ENDIAN__
+static int __init opal_register_exception_handlers(void)
+{
+#ifdef __BIG_ENDIAN__
 	u64 glue;
 
-	अगर (!(घातerpc_firmware_features & FW_FEATURE_OPAL))
-		वापस -ENODEV;
+	if (!(powerpc_firmware_features & FW_FEATURE_OPAL))
+		return -ENODEV;
 
 	/* Hookup some exception handlers except machine check. We use the
 	 * fwnmi area at 0x7000 to provide the glue space to OPAL
@@ -218,1032 +217,1032 @@
 
 	/*
 	 * Only ancient OPAL firmware requires this.
-	 * Specअगरically, firmware from FW810.00 (released June 2014)
+	 * Specifically, firmware from FW810.00 (released June 2014)
 	 * through FW810.20 (Released October 2014).
 	 *
-	 * Check अगर we are running on newer (post Oct 2014) firmware that
-	 * exports the OPAL_HANDLE_HMI token. If yes, then करोn't ask OPAL to
-	 * patch the HMI पूर्णांकerrupt and we catch it directly in Linux.
+	 * Check if we are running on newer (post Oct 2014) firmware that
+	 * exports the OPAL_HANDLE_HMI token. If yes, then don't ask OPAL to
+	 * patch the HMI interrupt and we catch it directly in Linux.
 	 *
 	 * For older firmware (i.e < FW810.20), we fallback to old behavior and
 	 * let OPAL patch the HMI vector and handle it inside OPAL firmware.
 	 *
 	 * For newer firmware we catch/handle the HMI directly in Linux.
 	 */
-	अगर (!opal_check_token(OPAL_HANDLE_HMI)) अणु
+	if (!opal_check_token(OPAL_HANDLE_HMI)) {
 		pr_info("Old firmware detected, OPAL handles HMIs.\n");
-		opal_रेजिस्टर_exception_handler(
-				OPAL_HYPERVISOR_MAINTEन_अंकCE_HANDLER,
+		opal_register_exception_handler(
+				OPAL_HYPERVISOR_MAINTENANCE_HANDLER,
 				0, glue);
 		glue += 128;
-	पूर्ण
+	}
 
 	/*
 	 * Only applicable to ancient firmware, all modern
-	 * (post March 2015/skiboot 5.0) firmware will just वापस
+	 * (post March 2015/skiboot 5.0) firmware will just return
 	 * OPAL_UNSUPPORTED.
 	 */
-	opal_रेजिस्टर_exception_handler(OPAL_SOFTPATCH_HANDLER, 0, glue);
-#पूर्ण_अगर
+	opal_register_exception_handler(OPAL_SOFTPATCH_HANDLER, 0, glue);
+#endif
 
-	वापस 0;
-पूर्ण
-machine_early_initcall(घातernv, opal_रेजिस्टर_exception_handlers);
+	return 0;
+}
+machine_early_initcall(powernv, opal_register_exception_handlers);
 
-अटल व्योम queue_replay_msg(व्योम *msg)
-अणु
-	काष्ठा opal_msg_node *msg_node;
+static void queue_replay_msg(void *msg)
+{
+	struct opal_msg_node *msg_node;
 
-	अगर (msg_list_size < OPAL_MSG_QUEUE_MAX) अणु
-		msg_node = kzalloc(माप(*msg_node), GFP_ATOMIC);
-		अगर (msg_node) अणु
+	if (msg_list_size < OPAL_MSG_QUEUE_MAX) {
+		msg_node = kzalloc(sizeof(*msg_node), GFP_ATOMIC);
+		if (msg_node) {
 			INIT_LIST_HEAD(&msg_node->list);
-			स_नकल(&msg_node->msg, msg, माप(काष्ठा opal_msg));
+			memcpy(&msg_node->msg, msg, sizeof(struct opal_msg));
 			list_add_tail(&msg_node->list, &msg_list);
 			msg_list_size++;
-		पूर्ण अन्यथा
+		} else
 			pr_warn_once("message queue no memory\n");
 
-		अगर (msg_list_size >= OPAL_MSG_QUEUE_MAX)
+		if (msg_list_size >= OPAL_MSG_QUEUE_MAX)
 			pr_warn_once("message queue full\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dequeue_replay_msg(क्रमागत opal_msg_type msg_type)
-अणु
-	काष्ठा opal_msg_node *msg_node, *पंचांगp;
+static void dequeue_replay_msg(enum opal_msg_type msg_type)
+{
+	struct opal_msg_node *msg_node, *tmp;
 
-	list_क्रम_each_entry_safe(msg_node, पंचांगp, &msg_list, list) अणु
-		अगर (be32_to_cpu(msg_node->msg.msg_type) != msg_type)
-			जारी;
+	list_for_each_entry_safe(msg_node, tmp, &msg_list, list) {
+		if (be32_to_cpu(msg_node->msg.msg_type) != msg_type)
+			continue;
 
-		atomic_notअगरier_call_chain(&opal_msg_notअगरier_head[msg_type],
+		atomic_notifier_call_chain(&opal_msg_notifier_head[msg_type],
 					msg_type,
 					&msg_node->msg);
 
 		list_del(&msg_node->list);
-		kमुक्त(msg_node);
+		kfree(msg_node);
 		msg_list_size--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Opal message notअगरier based on message type. Allow subscribers to get
- * notअगरied क्रम specअगरic messgae type.
+ * Opal message notifier based on message type. Allow subscribers to get
+ * notified for specific messgae type.
  */
-पूर्णांक opal_message_notअगरier_रेजिस्टर(क्रमागत opal_msg_type msg_type,
-					काष्ठा notअगरier_block *nb)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
+int opal_message_notifier_register(enum opal_msg_type msg_type,
+					struct notifier_block *nb)
+{
+	int ret;
+	unsigned long flags;
 
-	अगर (!nb || msg_type >= OPAL_MSG_TYPE_MAX) अणु
+	if (!nb || msg_type >= OPAL_MSG_TYPE_MAX) {
 		pr_warn("%s: Invalid arguments, msg_type:%d\n",
 			__func__, msg_type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&msg_list_lock, flags);
-	ret = atomic_notअगरier_chain_रेजिस्टर(
-		&opal_msg_notअगरier_head[msg_type], nb);
+	ret = atomic_notifier_chain_register(
+		&opal_msg_notifier_head[msg_type], nb);
 
 	/*
 	 * If the registration succeeded, replay any queued messages that came
-	 * in prior to the notअगरier chain registration. msg_list_lock held here
+	 * in prior to the notifier chain registration. msg_list_lock held here
 	 * to ensure they're delivered prior to any subsequent messages.
 	 */
-	अगर (ret == 0)
+	if (ret == 0)
 		dequeue_replay_msg(msg_type);
 
 	spin_unlock_irqrestore(&msg_list_lock, flags);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(opal_message_notअगरier_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(opal_message_notifier_register);
 
-पूर्णांक opal_message_notअगरier_unरेजिस्टर(क्रमागत opal_msg_type msg_type,
-				     काष्ठा notअगरier_block *nb)
-अणु
-	वापस atomic_notअगरier_chain_unरेजिस्टर(
-			&opal_msg_notअगरier_head[msg_type], nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(opal_message_notअगरier_unरेजिस्टर);
+int opal_message_notifier_unregister(enum opal_msg_type msg_type,
+				     struct notifier_block *nb)
+{
+	return atomic_notifier_chain_unregister(
+			&opal_msg_notifier_head[msg_type], nb);
+}
+EXPORT_SYMBOL_GPL(opal_message_notifier_unregister);
 
-अटल व्योम opal_message_करो_notअगरy(uपूर्णांक32_t msg_type, व्योम *msg)
-अणु
-	अचिन्हित दीर्घ flags;
+static void opal_message_do_notify(uint32_t msg_type, void *msg)
+{
+	unsigned long flags;
 	bool queued = false;
 
 	spin_lock_irqsave(&msg_list_lock, flags);
-	अगर (opal_msg_notअगरier_head[msg_type].head == शून्य) अणु
+	if (opal_msg_notifier_head[msg_type].head == NULL) {
 		/*
-		 * Queue up the msg since no notअगरiers have रेजिस्टरed
-		 * yet क्रम this msg_type.
+		 * Queue up the msg since no notifiers have registered
+		 * yet for this msg_type.
 		 */
 		queue_replay_msg(msg);
 		queued = true;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&msg_list_lock, flags);
 
-	अगर (queued)
-		वापस;
+	if (queued)
+		return;
 
-	/* notअगरy subscribers */
-	atomic_notअगरier_call_chain(&opal_msg_notअगरier_head[msg_type],
+	/* notify subscribers */
+	atomic_notifier_call_chain(&opal_msg_notifier_head[msg_type],
 					msg_type, msg);
-पूर्ण
+}
 
-अटल व्योम opal_handle_message(व्योम)
-अणु
+static void opal_handle_message(void)
+{
 	s64 ret;
 	u32 type;
 
 	ret = opal_get_msg(__pa(opal_msg), opal_msg_size);
 	/* No opal message pending. */
-	अगर (ret == OPAL_RESOURCE)
-		वापस;
+	if (ret == OPAL_RESOURCE)
+		return;
 
-	/* check क्रम errors. */
-	अगर (ret) अणु
+	/* check for errors. */
+	if (ret) {
 		pr_warn("%s: Failed to retrieve opal message, err=%lld\n",
 			__func__, ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	type = be32_to_cpu(opal_msg->msg_type);
 
 	/* Sanity check */
-	अगर (type >= OPAL_MSG_TYPE_MAX) अणु
+	if (type >= OPAL_MSG_TYPE_MAX) {
 		pr_warn_once("%s: Unknown message type: %u\n", __func__, type);
-		वापस;
-	पूर्ण
-	opal_message_करो_notअगरy(type, (व्योम *)opal_msg);
-पूर्ण
+		return;
+	}
+	opal_message_do_notify(type, (void *)opal_msg);
+}
 
-अटल irqवापस_t opal_message_notअगरy(पूर्णांक irq, व्योम *data)
-अणु
+static irqreturn_t opal_message_notify(int irq, void *data)
+{
 	opal_handle_message();
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init opal_message_init(काष्ठा device_node *opal_node)
-अणु
-	पूर्णांक ret, i, irq;
+static int __init opal_message_init(struct device_node *opal_node)
+{
+	int ret, i, irq;
 
-	ret = of_property_पढ़ो_u32(opal_node, "opal-msg-size", &opal_msg_size);
-	अगर (ret) अणु
+	ret = of_property_read_u32(opal_node, "opal-msg-size", &opal_msg_size);
+	if (ret) {
 		pr_notice("Failed to read opal-msg-size property\n");
-		opal_msg_size = माप(काष्ठा opal_msg);
-	पूर्ण
+		opal_msg_size = sizeof(struct opal_msg);
+	}
 
-	opal_msg = kदो_स्मृति(opal_msg_size, GFP_KERNEL);
-	अगर (!opal_msg) अणु
-		opal_msg_size = माप(काष्ठा opal_msg);
+	opal_msg = kmalloc(opal_msg_size, GFP_KERNEL);
+	if (!opal_msg) {
+		opal_msg_size = sizeof(struct opal_msg);
 		/* Try to allocate fixed message size */
-		opal_msg = kदो_स्मृति(opal_msg_size, GFP_KERNEL);
-		BUG_ON(opal_msg == शून्य);
-	पूर्ण
+		opal_msg = kmalloc(opal_msg_size, GFP_KERNEL);
+		BUG_ON(opal_msg == NULL);
+	}
 
-	क्रम (i = 0; i < OPAL_MSG_TYPE_MAX; i++)
-		ATOMIC_INIT_NOTIFIER_HEAD(&opal_msg_notअगरier_head[i]);
+	for (i = 0; i < OPAL_MSG_TYPE_MAX; i++)
+		ATOMIC_INIT_NOTIFIER_HEAD(&opal_msg_notifier_head[i]);
 
 	irq = opal_event_request(ilog2(OPAL_EVENT_MSG_PENDING));
-	अगर (!irq) अणु
+	if (!irq) {
 		pr_err("%s: Can't register OPAL event irq (%d)\n",
 		       __func__, irq);
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
-	ret = request_irq(irq, opal_message_notअगरy,
-			IRQ_TYPE_LEVEL_HIGH, "opal-msg", शून्य);
-	अगर (ret) अणु
+	ret = request_irq(irq, opal_message_notify,
+			IRQ_TYPE_LEVEL_HIGH, "opal-msg", NULL);
+	if (ret) {
 		pr_err("%s: Can't request OPAL event irq (%d)\n",
 		       __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक opal_get_अक्षरs(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count)
-अणु
+int opal_get_chars(uint32_t vtermno, char *buf, int count)
+{
 	s64 rc;
 	__be64 evt, len;
 
-	अगर (!opal.entry)
-		वापस -ENODEV;
+	if (!opal.entry)
+		return -ENODEV;
 	opal_poll_events(&evt);
-	अगर ((be64_to_cpu(evt) & OPAL_EVENT_CONSOLE_INPUT) == 0)
-		वापस 0;
+	if ((be64_to_cpu(evt) & OPAL_EVENT_CONSOLE_INPUT) == 0)
+		return 0;
 	len = cpu_to_be64(count);
-	rc = opal_console_पढ़ो(vtermno, &len, buf);
-	अगर (rc == OPAL_SUCCESS)
-		वापस be64_to_cpu(len);
-	वापस 0;
-पूर्ण
+	rc = opal_console_read(vtermno, &len, buf);
+	if (rc == OPAL_SUCCESS)
+		return be64_to_cpu(len);
+	return 0;
+}
 
-अटल पूर्णांक __opal_put_अक्षरs(uपूर्णांक32_t vtermno, स्थिर अक्षर *data, पूर्णांक total_len, bool atomic)
-अणु
-	अचिन्हित दीर्घ flags = 0 /* shut up gcc */;
-	पूर्णांक written;
+static int __opal_put_chars(uint32_t vtermno, const char *data, int total_len, bool atomic)
+{
+	unsigned long flags = 0 /* shut up gcc */;
+	int written;
 	__be64 olen;
 	s64 rc;
 
-	अगर (!opal.entry)
-		वापस -ENODEV;
+	if (!opal.entry)
+		return -ENODEV;
 
-	अगर (atomic)
-		spin_lock_irqsave(&opal_ग_लिखो_lock, flags);
-	rc = opal_console_ग_लिखो_buffer_space(vtermno, &olen);
-	अगर (rc || be64_to_cpu(olen) < total_len) अणु
-		/* Closed -> drop अक्षरacters */
-		अगर (rc)
+	if (atomic)
+		spin_lock_irqsave(&opal_write_lock, flags);
+	rc = opal_console_write_buffer_space(vtermno, &olen);
+	if (rc || be64_to_cpu(olen) < total_len) {
+		/* Closed -> drop characters */
+		if (rc)
 			written = total_len;
-		अन्यथा
+		else
 			written = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Should not get a partial ग_लिखो here because space is available. */
+	/* Should not get a partial write here because space is available. */
 	olen = cpu_to_be64(total_len);
-	rc = opal_console_ग_लिखो(vtermno, &olen, data);
-	अगर (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
-		अगर (rc == OPAL_BUSY_EVENT)
-			opal_poll_events(शून्य);
+	rc = opal_console_write(vtermno, &olen, data);
+	if (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
+		if (rc == OPAL_BUSY_EVENT)
+			opal_poll_events(NULL);
 		written = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Closed or other error drop */
-	अगर (rc != OPAL_SUCCESS) अणु
+	if (rc != OPAL_SUCCESS) {
 		written = opal_error_code(rc);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	written = be64_to_cpu(olen);
-	अगर (written < total_len) अणु
-		अगर (atomic) अणु
+	if (written < total_len) {
+		if (atomic) {
 			/* Should not happen */
 			pr_warn("atomic console write returned partial "
 				"len=%d written=%d\n", total_len, written);
-		पूर्ण
-		अगर (!written)
+		}
+		if (!written)
 			written = -EAGAIN;
-	पूर्ण
+	}
 
 out:
-	अगर (atomic)
-		spin_unlock_irqrestore(&opal_ग_लिखो_lock, flags);
+	if (atomic)
+		spin_unlock_irqrestore(&opal_write_lock, flags);
 
-	वापस written;
-पूर्ण
+	return written;
+}
 
-पूर्णांक opal_put_अक्षरs(uपूर्णांक32_t vtermno, स्थिर अक्षर *data, पूर्णांक total_len)
-अणु
-	वापस __opal_put_अक्षरs(vtermno, data, total_len, false);
-पूर्ण
+int opal_put_chars(uint32_t vtermno, const char *data, int total_len)
+{
+	return __opal_put_chars(vtermno, data, total_len, false);
+}
 
 /*
- * opal_put_अक्षरs_atomic will not perक्रमm partial-ग_लिखोs. Data will be
+ * opal_put_chars_atomic will not perform partial-writes. Data will be
  * atomically written to the terminal or not at all. This is not strictly
  * true at the moment because console space can race with OPAL's console
- * ग_लिखोs.
+ * writes.
  */
-पूर्णांक opal_put_अक्षरs_atomic(uपूर्णांक32_t vtermno, स्थिर अक्षर *data, पूर्णांक total_len)
-अणु
-	वापस __opal_put_अक्षरs(vtermno, data, total_len, true);
-पूर्ण
+int opal_put_chars_atomic(uint32_t vtermno, const char *data, int total_len)
+{
+	return __opal_put_chars(vtermno, data, total_len, true);
+}
 
-अटल s64 __opal_flush_console(uपूर्णांक32_t vtermno)
-अणु
+static s64 __opal_flush_console(uint32_t vtermno)
+{
 	s64 rc;
 
-	अगर (!opal_check_token(OPAL_CONSOLE_FLUSH)) अणु
+	if (!opal_check_token(OPAL_CONSOLE_FLUSH)) {
 		__be64 evt;
 
 		/*
 		 * If OPAL_CONSOLE_FLUSH is not implemented in the firmware,
 		 * the console can still be flushed by calling the polling
-		 * function जबतक it has OPAL_EVENT_CONSOLE_OUTPUT events.
+		 * function while it has OPAL_EVENT_CONSOLE_OUTPUT events.
 		 */
 		WARN_ONCE(1, "opal: OPAL_CONSOLE_FLUSH missing.\n");
 
 		opal_poll_events(&evt);
-		अगर (!(be64_to_cpu(evt) & OPAL_EVENT_CONSOLE_OUTPUT))
-			वापस OPAL_SUCCESS;
-		वापस OPAL_BUSY;
+		if (!(be64_to_cpu(evt) & OPAL_EVENT_CONSOLE_OUTPUT))
+			return OPAL_SUCCESS;
+		return OPAL_BUSY;
 
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = opal_console_flush(vtermno);
-		अगर (rc == OPAL_BUSY_EVENT) अणु
-			opal_poll_events(शून्य);
+		if (rc == OPAL_BUSY_EVENT) {
+			opal_poll_events(NULL);
 			rc = OPAL_BUSY;
-		पूर्ण
-		वापस rc;
-	पूर्ण
+		}
+		return rc;
+	}
 
-पूर्ण
+}
 
 /*
  * opal_flush_console spins until the console is flushed
  */
-पूर्णांक opal_flush_console(uपूर्णांक32_t vtermno)
-अणु
-	क्रम (;;) अणु
+int opal_flush_console(uint32_t vtermno)
+{
+	for (;;) {
 		s64 rc = __opal_flush_console(vtermno);
 
-		अगर (rc == OPAL_BUSY || rc == OPAL_PARTIAL) अणु
+		if (rc == OPAL_BUSY || rc == OPAL_PARTIAL) {
 			mdelay(1);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		वापस opal_error_code(rc);
-	पूर्ण
-पूर्ण
+		return opal_error_code(rc);
+	}
+}
 
 /*
- * opal_flush_अक्षरs is an hvc पूर्णांकerface that sleeps until the console is
- * flushed अगर रुको, otherwise it will वापस -EBUSY अगर the console has data,
- * -EAGAIN अगर it has data and some of it was flushed.
+ * opal_flush_chars is an hvc interface that sleeps until the console is
+ * flushed if wait, otherwise it will return -EBUSY if the console has data,
+ * -EAGAIN if it has data and some of it was flushed.
  */
-पूर्णांक opal_flush_अक्षरs(uपूर्णांक32_t vtermno, bool रुको)
-अणु
-	क्रम (;;) अणु
+int opal_flush_chars(uint32_t vtermno, bool wait)
+{
+	for (;;) {
 		s64 rc = __opal_flush_console(vtermno);
 
-		अगर (rc == OPAL_BUSY || rc == OPAL_PARTIAL) अणु
-			अगर (रुको) अणु
+		if (rc == OPAL_BUSY || rc == OPAL_PARTIAL) {
+			if (wait) {
 				msleep(OPAL_BUSY_DELAY_MS);
-				जारी;
-			पूर्ण
-			अगर (rc == OPAL_PARTIAL)
-				वापस -EAGAIN;
-		पूर्ण
+				continue;
+			}
+			if (rc == OPAL_PARTIAL)
+				return -EAGAIN;
+		}
 
-		वापस opal_error_code(rc);
-	पूर्ण
-पूर्ण
+		return opal_error_code(rc);
+	}
+}
 
-अटल पूर्णांक opal_recover_mce(काष्ठा pt_regs *regs,
-					काष्ठा machine_check_event *evt)
-अणु
-	पूर्णांक recovered = 0;
+static int opal_recover_mce(struct pt_regs *regs,
+					struct machine_check_event *evt)
+{
+	int recovered = 0;
 
-	अगर (!(regs->msr & MSR_RI)) अणु
+	if (!(regs->msr & MSR_RI)) {
 		/* If MSR_RI isn't set, we cannot recover */
 		pr_err("Machine check interrupt unrecoverable: MSR(RI=0)\n");
 		recovered = 0;
-	पूर्ण अन्यथा अगर (evt->disposition == MCE_DISPOSITION_RECOVERED) अणु
-		/* Platक्रमm corrected itself */
+	} else if (evt->disposition == MCE_DISPOSITION_RECOVERED) {
+		/* Platform corrected itself */
 		recovered = 1;
-	पूर्ण अन्यथा अगर (evt->severity == MCE_SEV_FATAL) अणु
+	} else if (evt->severity == MCE_SEV_FATAL) {
 		/* Fatal machine check */
 		pr_err("Machine check interrupt is fatal\n");
 		recovered = 0;
-	पूर्ण
+	}
 
-	अगर (!recovered && evt->sync_error) अणु
+	if (!recovered && evt->sync_error) {
 		/*
-		 * Try to समाप्त processes अगर we get a synchronous machine check
-		 * (e.g., one caused by execution of this inकाष्ठाion). This
-		 * will devolve पूर्णांकo a panic अगर we try to समाप्त init or are in
-		 * an पूर्णांकerrupt etc.
+		 * Try to kill processes if we get a synchronous machine check
+		 * (e.g., one caused by execution of this instruction). This
+		 * will devolve into a panic if we try to kill init or are in
+		 * an interrupt etc.
 		 *
-		 * TODO: Queue up this address क्रम hwpoisioning later.
-		 * TODO: This is not quite right क्रम d-side machine
+		 * TODO: Queue up this address for hwpoisioning later.
+		 * TODO: This is not quite right for d-side machine
 		 *       checks ->nip is not necessarily the important
 		 *       address.
 		 */
-		अगर ((user_mode(regs))) अणु
+		if ((user_mode(regs))) {
 			_exception(SIGBUS, regs, BUS_MCEERR_AR, regs->nip);
 			recovered = 1;
-		पूर्ण अन्यथा अगर (die_will_crash()) अणु
+		} else if (die_will_crash()) {
 			/*
-			 * die() would समाप्त the kernel, so better to go via
-			 * the platक्रमm reboot code that will log the
+			 * die() would kill the kernel, so better to go via
+			 * the platform reboot code that will log the
 			 * machine check.
 			 */
 			recovered = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			die_mce("Machine check", regs, SIGBUS);
 			recovered = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस recovered;
-पूर्ण
+	return recovered;
+}
 
-व्योम __noवापस pnv_platक्रमm_error_reboot(काष्ठा pt_regs *regs, स्थिर अक्षर *msg)
-अणु
+void __noreturn pnv_platform_error_reboot(struct pt_regs *regs, const char *msg)
+{
 	panic_flush_kmsg_start();
 
 	pr_emerg("Hardware platform error: %s\n", msg);
-	अगर (regs)
+	if (regs)
 		show_regs(regs);
 	smp_send_stop();
 
 	panic_flush_kmsg_end();
 
 	/*
-	 * Don't bother to shut things करोwn because this will
-	 * xstop the प्रणाली.
+	 * Don't bother to shut things down because this will
+	 * xstop the system.
 	 */
-	अगर (opal_cec_reboot2(OPAL_REBOOT_PLATFORM_ERROR, msg)
-						== OPAL_UNSUPPORTED) अणु
+	if (opal_cec_reboot2(OPAL_REBOOT_PLATFORM_ERROR, msg)
+						== OPAL_UNSUPPORTED) {
 		pr_emerg("Reboot type %d not supported for %s\n",
 				OPAL_REBOOT_PLATFORM_ERROR, msg);
-	पूर्ण
+	}
 
 	/*
 	 * We reached here. There can be three possibilities:
-	 * 1. We are running on a firmware level that करो not support
+	 * 1. We are running on a firmware level that do not support
 	 *    opal_cec_reboot2()
-	 * 2. We are running on a firmware level that करो not support
+	 * 2. We are running on a firmware level that do not support
 	 *    OPAL_REBOOT_PLATFORM_ERROR reboot type.
-	 * 3. We are running on FSP based प्रणाली that करोes not need
-	 *    opal to trigger checkstop explicitly क्रम error analysis.
-	 *    The FSP PRD component would have alपढ़ोy got notअगरied
+	 * 3. We are running on FSP based system that does not need
+	 *    opal to trigger checkstop explicitly for error analysis.
+	 *    The FSP PRD component would have already got notified
 	 *    about this error through other channels.
-	 * 4. We are running on a newer skiboot that by शेष करोes
+	 * 4. We are running on a newer skiboot that by default does
 	 *    not cause a checkstop, drops us back to the kernel to
-	 *    extract context and state at the समय of the error.
+	 *    extract context and state at the time of the error.
 	 */
 
 	panic(msg);
-पूर्ण
+}
 
-पूर्णांक opal_machine_check(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा machine_check_event evt;
+int opal_machine_check(struct pt_regs *regs)
+{
+	struct machine_check_event evt;
 
-	अगर (!get_mce_event(&evt, MCE_EVENT_RELEASE))
-		वापस 0;
+	if (!get_mce_event(&evt, MCE_EVENT_RELEASE))
+		return 0;
 
-	/* Prपूर्णांक things out */
-	अगर (evt.version != MCE_V1) अणु
+	/* Print things out */
+	if (evt.version != MCE_V1) {
 		pr_err("Machine Check Exception, Unknown event version %d !\n",
 		       evt.version);
-		वापस 0;
-	पूर्ण
-	machine_check_prपूर्णांक_event_info(&evt, user_mode(regs), false);
+		return 0;
+	}
+	machine_check_print_event_info(&evt, user_mode(regs), false);
 
-	अगर (opal_recover_mce(regs, &evt))
-		वापस 1;
+	if (opal_recover_mce(regs, &evt))
+		return 1;
 
-	pnv_platक्रमm_error_reboot(regs, "Unrecoverable Machine Check exception");
-पूर्ण
+	pnv_platform_error_reboot(regs, "Unrecoverable Machine Check exception");
+}
 
 /* Early hmi handler called in real mode. */
-पूर्णांक opal_hmi_exception_early(काष्ठा pt_regs *regs)
-अणु
+int opal_hmi_exception_early(struct pt_regs *regs)
+{
 	s64 rc;
 
 	/*
 	 * call opal hmi handler. Pass paca address as token.
-	 * The वापस value OPAL_SUCCESS is an indication that there is
-	 * an HMI event generated रुकोing to pull by Linux.
+	 * The return value OPAL_SUCCESS is an indication that there is
+	 * an HMI event generated waiting to pull by Linux.
 	 */
 	rc = opal_handle_hmi();
-	अगर (rc == OPAL_SUCCESS) अणु
+	if (rc == OPAL_SUCCESS) {
 		local_paca->hmi_event_available = 1;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
-पूर्णांक opal_hmi_exception_early2(काष्ठा pt_regs *regs)
-अणु
+int opal_hmi_exception_early2(struct pt_regs *regs)
+{
 	s64 rc;
 	__be64 out_flags;
 
 	/*
 	 * call opal hmi handler.
-	 * Check 64-bit flag mask to find out अगर an event was generated,
+	 * Check 64-bit flag mask to find out if an event was generated,
 	 * and whether TB is still valid or not etc.
 	 */
 	rc = opal_handle_hmi2(&out_flags);
-	अगर (rc != OPAL_SUCCESS)
-		वापस 0;
+	if (rc != OPAL_SUCCESS)
+		return 0;
 
-	अगर (be64_to_cpu(out_flags) & OPAL_HMI_FLAGS_NEW_EVENT)
+	if (be64_to_cpu(out_flags) & OPAL_HMI_FLAGS_NEW_EVENT)
 		local_paca->hmi_event_available = 1;
-	अगर (be64_to_cpu(out_flags) & OPAL_HMI_FLAGS_TOD_TB_FAIL)
+	if (be64_to_cpu(out_flags) & OPAL_HMI_FLAGS_TOD_TB_FAIL)
 		tb_invalid = true;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* HMI exception handler called in भव mode when irqs are next enabled. */
-पूर्णांक opal_handle_hmi_exception(काष्ठा pt_regs *regs)
-अणु
+/* HMI exception handler called in virtual mode when irqs are next enabled. */
+int opal_handle_hmi_exception(struct pt_regs *regs)
+{
 	/*
-	 * Check अगर HMI event is available.
-	 * अगर Yes, then wake kopald to process them.
+	 * Check if HMI event is available.
+	 * if Yes, then wake kopald to process them.
 	 */
-	अगर (!local_paca->hmi_event_available)
-		वापस 0;
+	if (!local_paca->hmi_event_available)
+		return 0;
 
 	local_paca->hmi_event_available = 0;
 	opal_wake_poller();
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल uपूर्णांक64_t find_recovery_address(uपूर्णांक64_t nip)
-अणु
-	पूर्णांक i;
+static uint64_t find_recovery_address(uint64_t nip)
+{
+	int i;
 
-	क्रम (i = 0; i < mc_recoverable_range_len; i++)
-		अगर ((nip >= mc_recoverable_range[i].start_addr) &&
+	for (i = 0; i < mc_recoverable_range_len; i++)
+		if ((nip >= mc_recoverable_range[i].start_addr) &&
 		    (nip < mc_recoverable_range[i].end_addr))
-		    वापस mc_recoverable_range[i].recover_addr;
-	वापस 0;
-पूर्ण
+		    return mc_recoverable_range[i].recover_addr;
+	return 0;
+}
 
-bool opal_mce_check_early_recovery(काष्ठा pt_regs *regs)
-अणु
-	uपूर्णांक64_t recover_addr = 0;
+bool opal_mce_check_early_recovery(struct pt_regs *regs)
+{
+	uint64_t recover_addr = 0;
 
-	अगर (!opal.base || !opal.size)
-		जाओ out;
+	if (!opal.base || !opal.size)
+		goto out;
 
-	अगर ((regs->nip >= opal.base) &&
+	if ((regs->nip >= opal.base) &&
 			(regs->nip < (opal.base + opal.size)))
 		recover_addr = find_recovery_address(regs->nip);
 
 	/*
-	 * Setup regs->nip to rfi पूर्णांकo fixup address.
+	 * Setup regs->nip to rfi into fixup address.
 	 */
-	अगर (recover_addr)
+	if (recover_addr)
 		regs->nip = recover_addr;
 
 out:
-	वापस !!recover_addr;
-पूर्ण
+	return !!recover_addr;
+}
 
-अटल पूर्णांक opal_sysfs_init(व्योम)
-अणु
+static int opal_sysfs_init(void)
+{
 	opal_kobj = kobject_create_and_add("opal", firmware_kobj);
-	अगर (!opal_kobj) अणु
+	if (!opal_kobj) {
 		pr_warn("kobject_create_and_add opal failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार export_attr_पढ़ो(काष्ठा file *fp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr, अक्षर *buf,
-				loff_t off, माप_प्रकार count)
-अणु
-	वापस memory_पढ़ो_from_buffer(buf, count, &off, bin_attr->निजी,
+static ssize_t export_attr_read(struct file *fp, struct kobject *kobj,
+				struct bin_attribute *bin_attr, char *buf,
+				loff_t off, size_t count)
+{
+	return memory_read_from_buffer(buf, count, &off, bin_attr->private,
 				       bin_attr->size);
-पूर्ण
+}
 
-अटल पूर्णांक opal_add_one_export(काष्ठा kobject *parent, स्थिर अक्षर *export_name,
-			       काष्ठा device_node *np, स्थिर अक्षर *prop_name)
-अणु
-	काष्ठा bin_attribute *attr = शून्य;
-	स्थिर अक्षर *name = शून्य;
+static int opal_add_one_export(struct kobject *parent, const char *export_name,
+			       struct device_node *np, const char *prop_name)
+{
+	struct bin_attribute *attr = NULL;
+	const char *name = NULL;
 	u64 vals[2];
-	पूर्णांक rc;
+	int rc;
 
-	rc = of_property_पढ़ो_u64_array(np, prop_name, &vals[0], 2);
-	अगर (rc)
-		जाओ out;
+	rc = of_property_read_u64_array(np, prop_name, &vals[0], 2);
+	if (rc)
+		goto out;
 
-	attr = kzalloc(माप(*attr), GFP_KERNEL);
-	अगर (!attr) अणु
+	attr = kzalloc(sizeof(*attr), GFP_KERNEL);
+	if (!attr) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	name = kstrdup(export_name, GFP_KERNEL);
-	अगर (!name) अणु
+	if (!name) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	sysfs_bin_attr_init(attr);
 	attr->attr.name = name;
 	attr->attr.mode = 0400;
-	attr->पढ़ो = export_attr_पढ़ो;
-	attr->निजी = __va(vals[0]);
+	attr->read = export_attr_read;
+	attr->private = __va(vals[0]);
 	attr->size = vals[1];
 
 	rc = sysfs_create_bin_file(parent, attr);
 out:
-	अगर (rc) अणु
-		kमुक्त(name);
-		kमुक्त(attr);
-	पूर्ण
+	if (rc) {
+		kfree(name);
+		kfree(attr);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम opal_add_exported_attrs(काष्ठा device_node *np,
-				    काष्ठा kobject *kobj)
-अणु
-	काष्ठा device_node *child;
-	काष्ठा property *prop;
+static void opal_add_exported_attrs(struct device_node *np,
+				    struct kobject *kobj)
+{
+	struct device_node *child;
+	struct property *prop;
 
-	क्रम_each_property_of_node(np, prop) अणु
-		पूर्णांक rc;
+	for_each_property_of_node(np, prop) {
+		int rc;
 
-		अगर (!म_भेद(prop->name, "name") ||
-		    !म_भेद(prop->name, "phandle"))
-			जारी;
+		if (!strcmp(prop->name, "name") ||
+		    !strcmp(prop->name, "phandle"))
+			continue;
 
 		rc = opal_add_one_export(kobj, prop->name, np, prop->name);
-		अगर (rc) अणु
+		if (rc) {
 			pr_warn("Unable to add export %pOF/%s, rc = %d!\n",
 				np, prop->name, rc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_child_of_node(np, child) अणु
-		काष्ठा kobject *child_kobj;
+	for_each_child_of_node(np, child) {
+		struct kobject *child_kobj;
 
 		child_kobj = kobject_create_and_add(child->name, kobj);
-		अगर (!child_kobj) अणु
+		if (!child_kobj) {
 			pr_err("Unable to create export dir for %pOF\n", child);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		opal_add_exported_attrs(child, child_kobj);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * opal_export_attrs: creates a sysfs node क्रम each property listed in
+ * opal_export_attrs: creates a sysfs node for each property listed in
  * the device-tree under /ibm,opal/firmware/exports/
  * All new sysfs nodes are created under /opal/exports/.
- * This allows क्रम reserved memory regions (e.g. HDAT) to be पढ़ो.
- * The new sysfs nodes are only पढ़ोable by root.
+ * This allows for reserved memory regions (e.g. HDAT) to be read.
+ * The new sysfs nodes are only readable by root.
  */
-अटल व्योम opal_export_attrs(व्योम)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा kobject *kobj;
-	पूर्णांक rc;
+static void opal_export_attrs(void)
+{
+	struct device_node *np;
+	struct kobject *kobj;
+	int rc;
 
 	np = of_find_node_by_path("/ibm,opal/firmware/exports");
-	अगर (!np)
-		वापस;
+	if (!np)
+		return;
 
 	/* Create new 'exports' directory - /sys/firmware/opal/exports */
 	kobj = kobject_create_and_add("exports", opal_kobj);
-	अगर (!kobj) अणु
+	if (!kobj) {
 		pr_warn("kobject_create_and_add() of exports failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	opal_add_exported_attrs(np, kobj);
 
 	/*
-	 * NB: symbol_map existed beक्रमe the generic export पूर्णांकerface so it
+	 * NB: symbol_map existed before the generic export interface so it
 	 * lives under the top level opal_kobj.
 	 */
 	rc = opal_add_one_export(opal_kobj, "symbol_map",
 				 np->parent, "symbol-map");
-	अगर (rc)
+	if (rc)
 		pr_warn("Error %d creating OPAL symbols file\n", rc);
 
 	of_node_put(np);
-पूर्ण
+}
 
-अटल व्योम __init opal_dump_region_init(व्योम)
-अणु
-	व्योम *addr;
-	uपूर्णांक64_t size;
-	पूर्णांक rc;
+static void __init opal_dump_region_init(void)
+{
+	void *addr;
+	uint64_t size;
+	int rc;
 
-	अगर (!opal_check_token(OPAL_REGISTER_DUMP_REGION))
-		वापस;
+	if (!opal_check_token(OPAL_REGISTER_DUMP_REGION))
+		return;
 
 	/* Register kernel log buffer */
 	addr = log_buf_addr_get();
-	अगर (addr == शून्य)
-		वापस;
+	if (addr == NULL)
+		return;
 
 	size = log_buf_len_get();
-	अगर (size == 0)
-		वापस;
+	if (size == 0)
+		return;
 
-	rc = opal_रेजिस्टर_dump_region(OPAL_DUMP_REGION_LOG_BUF,
+	rc = opal_register_dump_region(OPAL_DUMP_REGION_LOG_BUF,
 				       __pa(addr), size);
 	/* Don't warn if this is just an older OPAL that doesn't
 	 * know about that call
 	 */
-	अगर (rc && rc != OPAL_UNSUPPORTED)
+	if (rc && rc != OPAL_UNSUPPORTED)
 		pr_warn("DUMP: Failed to register kernel log buffer. "
 			"rc = %d\n", rc);
-पूर्ण
+}
 
-अटल व्योम opal_pdev_init(स्थिर अक्षर *compatible)
-अणु
-	काष्ठा device_node *np;
+static void opal_pdev_init(const char *compatible)
+{
+	struct device_node *np;
 
-	क्रम_each_compatible_node(np, शून्य, compatible)
-		of_platक्रमm_device_create(np, शून्य, शून्य);
-पूर्ण
+	for_each_compatible_node(np, NULL, compatible)
+		of_platform_device_create(np, NULL, NULL);
+}
 
-अटल व्योम __init opal_imc_init_dev(व्योम)
-अणु
-	काष्ठा device_node *np;
+static void __init opal_imc_init_dev(void)
+{
+	struct device_node *np;
 
-	np = of_find_compatible_node(शून्य, शून्य, IMC_DTB_COMPAT);
-	अगर (np)
-		of_platक्रमm_device_create(np, शून्य, शून्य);
-पूर्ण
+	np = of_find_compatible_node(NULL, NULL, IMC_DTB_COMPAT);
+	if (np)
+		of_platform_device_create(np, NULL, NULL);
+}
 
-अटल पूर्णांक kopald(व्योम *unused)
-अणु
-	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(opal_heartbeat) + 1;
+static int kopald(void *unused)
+{
+	unsigned long timeout = msecs_to_jiffies(opal_heartbeat) + 1;
 
-	set_मुक्तzable();
-	करो अणु
-		try_to_मुक्तze();
+	set_freezable();
+	do {
+		try_to_freeze();
 
 		opal_handle_events();
 
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (opal_have_pending_events())
+		if (opal_have_pending_events())
 			__set_current_state(TASK_RUNNING);
-		अन्यथा
-			schedule_समयout(समयout);
+		else
+			schedule_timeout(timeout);
 
-	पूर्ण जबतक (!kthपढ़ो_should_stop());
+	} while (!kthread_should_stop());
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम opal_wake_poller(व्योम)
-अणु
-	अगर (kopald_tsk)
+void opal_wake_poller(void)
+{
+	if (kopald_tsk)
 		wake_up_process(kopald_tsk);
-पूर्ण
+}
 
-अटल व्योम opal_init_heartbeat(व्योम)
-अणु
+static void opal_init_heartbeat(void)
+{
 	/* Old firwmware, we assume the HVC heartbeat is sufficient */
-	अगर (of_property_पढ़ो_u32(opal_node, "ibm,heartbeat-ms",
+	if (of_property_read_u32(opal_node, "ibm,heartbeat-ms",
 				 &opal_heartbeat) != 0)
 		opal_heartbeat = 0;
 
-	अगर (opal_heartbeat)
-		kopald_tsk = kthपढ़ो_run(kopald, शून्य, "kopald");
-पूर्ण
+	if (opal_heartbeat)
+		kopald_tsk = kthread_run(kopald, NULL, "kopald");
+}
 
-अटल पूर्णांक __init opal_init(व्योम)
-अणु
-	काष्ठा device_node *np, *consoles, *leds;
-	पूर्णांक rc;
+static int __init opal_init(void)
+{
+	struct device_node *np, *consoles, *leds;
+	int rc;
 
 	opal_node = of_find_node_by_path("/ibm,opal");
-	अगर (!opal_node) अणु
+	if (!opal_node) {
 		pr_warn("Device node not found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Register OPAL consoles अगर any ports */
+	/* Register OPAL consoles if any ports */
 	consoles = of_find_node_by_path("/ibm,opal/consoles");
-	अगर (consoles) अणु
-		क्रम_each_child_of_node(consoles, np) अणु
-			अगर (!of_node_name_eq(np, "serial"))
-				जारी;
-			of_platक्रमm_device_create(np, शून्य, शून्य);
-		पूर्ण
+	if (consoles) {
+		for_each_child_of_node(consoles, np) {
+			if (!of_node_name_eq(np, "serial"))
+				continue;
+			of_platform_device_create(np, NULL, NULL);
+		}
 		of_node_put(consoles);
-	पूर्ण
+	}
 
-	/* Initialise OPAL messaging प्रणाली */
+	/* Initialise OPAL messaging system */
 	opal_message_init(opal_node);
 
-	/* Initialise OPAL asynchronous completion पूर्णांकerface */
+	/* Initialise OPAL asynchronous completion interface */
 	opal_async_comp_init();
 
-	/* Initialise OPAL sensor पूर्णांकerface */
+	/* Initialise OPAL sensor interface */
 	opal_sensor_init();
 
-	/* Initialise OPAL hypervisor मुख्यtainence पूर्णांकerrupt handling */
+	/* Initialise OPAL hypervisor maintainence interrupt handling */
 	opal_hmi_handler_init();
 
-	/* Create i2c platक्रमm devices */
+	/* Create i2c platform devices */
 	opal_pdev_init("ibm,opal-i2c");
 
-	/* Handle non-अस्थिर memory devices */
+	/* Handle non-volatile memory devices */
 	opal_pdev_init("pmem-region");
 
-	/* Setup a heatbeat thपढ़ो अगर requested by OPAL */
+	/* Setup a heatbeat thread if requested by OPAL */
 	opal_init_heartbeat();
 
 	/* Detect In-Memory Collection counters and create devices*/
 	opal_imc_init_dev();
 
-	/* Create leds platक्रमm devices */
+	/* Create leds platform devices */
 	leds = of_find_node_by_path("/ibm,opal/leds");
-	अगर (leds) अणु
-		of_platक्रमm_device_create(leds, "opal_leds", शून्य);
+	if (leds) {
+		of_platform_device_create(leds, "opal_leds", NULL);
 		of_node_put(leds);
-	पूर्ण
+	}
 
-	/* Initialise OPAL message log पूर्णांकerface */
+	/* Initialise OPAL message log interface */
 	opal_msglog_init();
 
 	/* Create "opal" kobject under /sys/firmware */
 	rc = opal_sysfs_init();
-	अगर (rc == 0) अणु
-		/* Setup dump region पूर्णांकerface */
+	if (rc == 0) {
+		/* Setup dump region interface */
 		opal_dump_region_init();
-		/* Setup error log पूर्णांकerface */
+		/* Setup error log interface */
 		rc = opal_elog_init();
-		/* Setup code update पूर्णांकerface */
+		/* Setup code update interface */
 		opal_flash_update_init();
-		/* Setup platक्रमm dump extract पूर्णांकerface */
-		opal_platक्रमm_dump_init();
-		/* Setup प्रणाली parameters पूर्णांकerface */
+		/* Setup platform dump extract interface */
+		opal_platform_dump_init();
+		/* Setup system parameters interface */
 		opal_sys_param_init();
-		/* Setup message log sysfs पूर्णांकerface. */
+		/* Setup message log sysfs interface. */
 		opal_msglog_sysfs_init();
 		/* Add all export properties*/
 		opal_export_attrs();
-	पूर्ण
+	}
 
-	/* Initialize platक्रमm devices: IPMI backend, PRD & flash पूर्णांकerface */
+	/* Initialize platform devices: IPMI backend, PRD & flash interface */
 	opal_pdev_init("ibm,opal-ipmi");
 	opal_pdev_init("ibm,opal-flash");
 	opal_pdev_init("ibm,opal-prd");
 
-	/* Initialise platक्रमm device: oppanel पूर्णांकerface */
+	/* Initialise platform device: oppanel interface */
 	opal_pdev_init("ibm,opal-oppanel");
 
-	/* Initialise OPAL kmsg dumper क्रम flushing console on panic */
+	/* Initialise OPAL kmsg dumper for flushing console on panic */
 	opal_kmsg_init();
 
-	/* Initialise OPAL घातercap पूर्णांकerface */
-	opal_घातercap_init();
+	/* Initialise OPAL powercap interface */
+	opal_powercap_init();
 
-	/* Initialise OPAL Power-Shअगरting-Ratio पूर्णांकerface */
+	/* Initialise OPAL Power-Shifting-Ratio interface */
 	opal_psr_init();
 
 	/* Initialise OPAL sensor groups */
 	opal_sensor_groups_init();
 
-	/* Initialise OPAL Power control पूर्णांकerface */
-	opal_घातer_control_init();
+	/* Initialise OPAL Power control interface */
+	opal_power_control_init();
 
 	/* Initialize OPAL secure variables */
 	opal_pdev_init("ibm,secvar-backend");
 
-	वापस 0;
-पूर्ण
-machine_subsys_initcall(घातernv, opal_init);
+	return 0;
+}
+machine_subsys_initcall(powernv, opal_init);
 
-व्योम opal_shutकरोwn(व्योम)
-अणु
-	दीर्घ rc = OPAL_BUSY;
+void opal_shutdown(void)
+{
+	long rc = OPAL_BUSY;
 
-	opal_event_shutकरोwn();
+	opal_event_shutdown();
 
 	/*
 	 * Then sync with OPAL which ensure anything that can
-	 * potentially ग_लिखो to our memory has completed such
+	 * potentially write to our memory has completed such
 	 * as an ongoing dump retrieval
 	 */
-	जबतक (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) अणु
+	while (rc == OPAL_BUSY || rc == OPAL_BUSY_EVENT) {
 		rc = opal_sync_host_reboot();
-		अगर (rc == OPAL_BUSY)
-			opal_poll_events(शून्य);
-		अन्यथा
+		if (rc == OPAL_BUSY)
+			opal_poll_events(NULL);
+		else
 			mdelay(10);
-	पूर्ण
+	}
 
-	/* Unरेजिस्टर memory dump region */
-	अगर (opal_check_token(OPAL_UNREGISTER_DUMP_REGION))
-		opal_unरेजिस्टर_dump_region(OPAL_DUMP_REGION_LOG_BUF);
-पूर्ण
+	/* Unregister memory dump region */
+	if (opal_check_token(OPAL_UNREGISTER_DUMP_REGION))
+		opal_unregister_dump_region(OPAL_DUMP_REGION_LOG_BUF);
+}
 
 /* Export this so that test modules can use it */
 EXPORT_SYMBOL_GPL(opal_invalid_call);
-EXPORT_SYMBOL_GPL(opal_xscom_पढ़ो);
-EXPORT_SYMBOL_GPL(opal_xscom_ग_लिखो);
+EXPORT_SYMBOL_GPL(opal_xscom_read);
+EXPORT_SYMBOL_GPL(opal_xscom_write);
 EXPORT_SYMBOL_GPL(opal_ipmi_send);
 EXPORT_SYMBOL_GPL(opal_ipmi_recv);
-EXPORT_SYMBOL_GPL(opal_flash_पढ़ो);
-EXPORT_SYMBOL_GPL(opal_flash_ग_लिखो);
+EXPORT_SYMBOL_GPL(opal_flash_read);
+EXPORT_SYMBOL_GPL(opal_flash_write);
 EXPORT_SYMBOL_GPL(opal_flash_erase);
 EXPORT_SYMBOL_GPL(opal_prd_msg);
 EXPORT_SYMBOL_GPL(opal_check_token);
 
-/* Convert a region of vदो_स्मृति memory to an opal sg list */
-काष्ठा opal_sg_list *opal_vदो_स्मृति_to_sg_list(व्योम *vदो_स्मृति_addr,
-					     अचिन्हित दीर्घ vदो_स्मृति_size)
-अणु
-	काष्ठा opal_sg_list *sg, *first = शून्य;
-	अचिन्हित दीर्घ i = 0;
+/* Convert a region of vmalloc memory to an opal sg list */
+struct opal_sg_list *opal_vmalloc_to_sg_list(void *vmalloc_addr,
+					     unsigned long vmalloc_size)
+{
+	struct opal_sg_list *sg, *first = NULL;
+	unsigned long i = 0;
 
 	sg = kzalloc(PAGE_SIZE, GFP_KERNEL);
-	अगर (!sg)
-		जाओ nomem;
+	if (!sg)
+		goto nomem;
 
 	first = sg;
 
-	जबतक (vदो_स्मृति_size > 0) अणु
-		uपूर्णांक64_t data = vदो_स्मृति_to_pfn(vदो_स्मृति_addr) << PAGE_SHIFT;
-		uपूर्णांक64_t length = min(vदो_स्मृति_size, PAGE_SIZE);
+	while (vmalloc_size > 0) {
+		uint64_t data = vmalloc_to_pfn(vmalloc_addr) << PAGE_SHIFT;
+		uint64_t length = min(vmalloc_size, PAGE_SIZE);
 
 		sg->entry[i].data = cpu_to_be64(data);
 		sg->entry[i].length = cpu_to_be64(length);
 		i++;
 
-		अगर (i >= SG_ENTRIES_PER_NODE) अणु
-			काष्ठा opal_sg_list *next;
+		if (i >= SG_ENTRIES_PER_NODE) {
+			struct opal_sg_list *next;
 
 			next = kzalloc(PAGE_SIZE, GFP_KERNEL);
-			अगर (!next)
-				जाओ nomem;
+			if (!next)
+				goto nomem;
 
 			sg->length = cpu_to_be64(
-					i * माप(काष्ठा opal_sg_entry) + 16);
+					i * sizeof(struct opal_sg_entry) + 16);
 			i = 0;
 			sg->next = cpu_to_be64(__pa(next));
 			sg = next;
-		पूर्ण
+		}
 
-		vदो_स्मृति_addr += length;
-		vदो_स्मृति_size -= length;
-	पूर्ण
+		vmalloc_addr += length;
+		vmalloc_size -= length;
+	}
 
-	sg->length = cpu_to_be64(i * माप(काष्ठा opal_sg_entry) + 16);
+	sg->length = cpu_to_be64(i * sizeof(struct opal_sg_entry) + 16);
 
-	वापस first;
+	return first;
 
 nomem:
 	pr_err("%s : Failed to allocate memory\n", __func__);
-	opal_मुक्त_sg_list(first);
-	वापस शून्य;
-पूर्ण
+	opal_free_sg_list(first);
+	return NULL;
+}
 
-व्योम opal_मुक्त_sg_list(काष्ठा opal_sg_list *sg)
-अणु
-	जबतक (sg) अणु
-		uपूर्णांक64_t next = be64_to_cpu(sg->next);
+void opal_free_sg_list(struct opal_sg_list *sg)
+{
+	while (sg) {
+		uint64_t next = be64_to_cpu(sg->next);
 
-		kमुक्त(sg);
+		kfree(sg);
 
-		अगर (next)
+		if (next)
 			sg = __va(next);
-		अन्यथा
-			sg = शून्य;
-	पूर्ण
-पूर्ण
+		else
+			sg = NULL;
+	}
+}
 
-पूर्णांक opal_error_code(पूर्णांक rc)
-अणु
-	चयन (rc) अणु
-	हाल OPAL_SUCCESS:		वापस 0;
+int opal_error_code(int rc)
+{
+	switch (rc) {
+	case OPAL_SUCCESS:		return 0;
 
-	हाल OPAL_PARAMETER:		वापस -EINVAL;
-	हाल OPAL_ASYNC_COMPLETION:	वापस -EINPROGRESS;
-	हाल OPAL_BUSY:
-	हाल OPAL_BUSY_EVENT:		वापस -EBUSY;
-	हाल OPAL_NO_MEM:		वापस -ENOMEM;
-	हाल OPAL_PERMISSION:		वापस -EPERM;
+	case OPAL_PARAMETER:		return -EINVAL;
+	case OPAL_ASYNC_COMPLETION:	return -EINPROGRESS;
+	case OPAL_BUSY:
+	case OPAL_BUSY_EVENT:		return -EBUSY;
+	case OPAL_NO_MEM:		return -ENOMEM;
+	case OPAL_PERMISSION:		return -EPERM;
 
-	हाल OPAL_UNSUPPORTED:		वापस -EIO;
-	हाल OPAL_HARDWARE:		वापस -EIO;
-	हाल OPAL_INTERNAL_ERROR:	वापस -EIO;
-	हाल OPAL_TIMEOUT:		वापस -ETIMEDOUT;
-	शेष:
+	case OPAL_UNSUPPORTED:		return -EIO;
+	case OPAL_HARDWARE:		return -EIO;
+	case OPAL_INTERNAL_ERROR:	return -EIO;
+	case OPAL_TIMEOUT:		return -ETIMEDOUT;
+	default:
 		pr_err("%s: unexpected OPAL error %d\n", __func__, rc);
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+		return -EIO;
+	}
+}
 
-व्योम घातernv_set_nmmu_ptcr(अचिन्हित दीर्घ ptcr)
-अणु
-	पूर्णांक rc;
+void powernv_set_nmmu_ptcr(unsigned long ptcr)
+{
+	int rc;
 
-	अगर (firmware_has_feature(FW_FEATURE_OPAL)) अणु
+	if (firmware_has_feature(FW_FEATURE_OPAL)) {
 		rc = opal_nmmu_set_ptcr(-1UL, ptcr);
-		अगर (rc != OPAL_SUCCESS && rc != OPAL_UNSUPPORTED)
+		if (rc != OPAL_SUCCESS && rc != OPAL_UNSUPPORTED)
 			pr_warn("%s: Unable to set nest mmu ptcr\n", __func__);
-	पूर्ण
-पूर्ण
+	}
+}
 
 EXPORT_SYMBOL_GPL(opal_poll_events);
-EXPORT_SYMBOL_GPL(opal_rtc_पढ़ो);
-EXPORT_SYMBOL_GPL(opal_rtc_ग_लिखो);
-EXPORT_SYMBOL_GPL(opal_tpo_पढ़ो);
-EXPORT_SYMBOL_GPL(opal_tpo_ग_लिखो);
+EXPORT_SYMBOL_GPL(opal_rtc_read);
+EXPORT_SYMBOL_GPL(opal_rtc_write);
+EXPORT_SYMBOL_GPL(opal_tpo_read);
+EXPORT_SYMBOL_GPL(opal_tpo_write);
 EXPORT_SYMBOL_GPL(opal_i2c_request);
-/* Export these symbols क्रम PowerNV LED class driver */
+/* Export these symbols for PowerNV LED class driver */
 EXPORT_SYMBOL_GPL(opal_leds_get_ind);
 EXPORT_SYMBOL_GPL(opal_leds_set_ind);
-/* Export this symbol क्रम PowerNV Operator Panel class driver */
-EXPORT_SYMBOL_GPL(opal_ग_लिखो_oppanel_async);
-/* Export this क्रम KVM */
-EXPORT_SYMBOL_GPL(opal_पूर्णांक_set_mfrr);
-EXPORT_SYMBOL_GPL(opal_पूर्णांक_eoi);
+/* Export this symbol for PowerNV Operator Panel class driver */
+EXPORT_SYMBOL_GPL(opal_write_oppanel_async);
+/* Export this for KVM */
+EXPORT_SYMBOL_GPL(opal_int_set_mfrr);
+EXPORT_SYMBOL_GPL(opal_int_eoi);
 EXPORT_SYMBOL_GPL(opal_error_code);
-/* Export the below symbol क्रम NX compression */
+/* Export the below symbol for NX compression */
 EXPORT_SYMBOL(opal_nx_coproc_init);

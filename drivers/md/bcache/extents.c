@@ -1,624 +1,623 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2010 Kent Overstreet <kent.overstreet@gmail.com>
  *
- * Uses a block device as cache क्रम other block devices; optimized क्रम SSDs.
- * All allocation is करोne in buckets, which should match the erase block size
+ * Uses a block device as cache for other block devices; optimized for SSDs.
+ * All allocation is done in buckets, which should match the erase block size
  * of the device.
  *
  * Buckets containing cached data are kept on a heap sorted by priority;
  * bucket priority is increased on cache hit, and periodically all the buckets
- * on the heap have their priority scaled करोwn. This currently is just used as
- * an LRU but in the future should allow क्रम more पूर्णांकelligent heuristics.
+ * on the heap have their priority scaled down. This currently is just used as
+ * an LRU but in the future should allow for more intelligent heuristics.
  *
- * Buckets have an 8 bit counter; मुक्तing is accomplished by incrementing the
- * counter. Garbage collection is used to हटाओ stale poपूर्णांकers.
+ * Buckets have an 8 bit counter; freeing is accomplished by incrementing the
+ * counter. Garbage collection is used to remove stale pointers.
  *
- * Indexing is करोne via a btree; nodes are not necessarily fully sorted, rather
+ * Indexing is done via a btree; nodes are not necessarily fully sorted, rather
  * as keys are inserted we only sort the pages that have not yet been written.
  * When garbage collection is run, we resort the entire node.
  *
- * All configuration is करोne via sysfs; see Documentation/admin-guide/bcache.rst.
+ * All configuration is done via sysfs; see Documentation/admin-guide/bcache.rst.
  */
 
-#समावेश "bcache.h"
-#समावेश "btree.h"
-#समावेश "debug.h"
-#समावेश "extents.h"
-#समावेश "writeback.h"
+#include "bcache.h"
+#include "btree.h"
+#include "debug.h"
+#include "extents.h"
+#include "writeback.h"
 
-अटल व्योम sort_key_next(काष्ठा btree_iter *iter,
-			  काष्ठा btree_iter_set *i)
-अणु
+static void sort_key_next(struct btree_iter *iter,
+			  struct btree_iter_set *i)
+{
 	i->k = bkey_next(i->k);
 
-	अगर (i->k == i->end)
+	if (i->k == i->end)
 		*i = iter->data[--iter->used];
-पूर्ण
+}
 
-अटल bool bch_key_sort_cmp(काष्ठा btree_iter_set l,
-			     काष्ठा btree_iter_set r)
-अणु
-	पूर्णांक64_t c = bkey_cmp(l.k, r.k);
+static bool bch_key_sort_cmp(struct btree_iter_set l,
+			     struct btree_iter_set r)
+{
+	int64_t c = bkey_cmp(l.k, r.k);
 
-	वापस c ? c > 0 : l.k < r.k;
-पूर्ण
+	return c ? c > 0 : l.k < r.k;
+}
 
-अटल bool __ptr_invalid(काष्ठा cache_set *c, स्थिर काष्ठा bkey *k)
-अणु
-	अचिन्हित पूर्णांक i;
+static bool __ptr_invalid(struct cache_set *c, const struct bkey *k)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++)
-		अगर (ptr_available(c, k, i)) अणु
-			काष्ठा cache *ca = c->cache;
-			माप_प्रकार bucket = PTR_BUCKET_NR(c, k, i);
-			माप_प्रकार r = bucket_reमुख्यder(c, PTR_OFFSET(k, i));
+	for (i = 0; i < KEY_PTRS(k); i++)
+		if (ptr_available(c, k, i)) {
+			struct cache *ca = c->cache;
+			size_t bucket = PTR_BUCKET_NR(c, k, i);
+			size_t r = bucket_remainder(c, PTR_OFFSET(k, i));
 
-			अगर (KEY_SIZE(k) + r > c->cache->sb.bucket_size ||
+			if (KEY_SIZE(k) + r > c->cache->sb.bucket_size ||
 			    bucket <  ca->sb.first_bucket ||
 			    bucket >= ca->sb.nbuckets)
-				वापस true;
-		पूर्ण
+				return true;
+		}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Common among btree and extent ptrs */
 
-अटल स्थिर अक्षर *bch_ptr_status(काष्ठा cache_set *c, स्थिर काष्ठा bkey *k)
-अणु
-	अचिन्हित पूर्णांक i;
+static const char *bch_ptr_status(struct cache_set *c, const struct bkey *k)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++)
-		अगर (ptr_available(c, k, i)) अणु
-			काष्ठा cache *ca = c->cache;
-			माप_प्रकार bucket = PTR_BUCKET_NR(c, k, i);
-			माप_प्रकार r = bucket_reमुख्यder(c, PTR_OFFSET(k, i));
+	for (i = 0; i < KEY_PTRS(k); i++)
+		if (ptr_available(c, k, i)) {
+			struct cache *ca = c->cache;
+			size_t bucket = PTR_BUCKET_NR(c, k, i);
+			size_t r = bucket_remainder(c, PTR_OFFSET(k, i));
 
-			अगर (KEY_SIZE(k) + r > c->cache->sb.bucket_size)
-				वापस "bad, length too big";
-			अगर (bucket <  ca->sb.first_bucket)
-				वापस "bad, short offset";
-			अगर (bucket >= ca->sb.nbuckets)
-				वापस "bad, offset past end of device";
-			अगर (ptr_stale(c, k, i))
-				वापस "stale";
-		पूर्ण
+			if (KEY_SIZE(k) + r > c->cache->sb.bucket_size)
+				return "bad, length too big";
+			if (bucket <  ca->sb.first_bucket)
+				return "bad, short offset";
+			if (bucket >= ca->sb.nbuckets)
+				return "bad, offset past end of device";
+			if (ptr_stale(c, k, i))
+				return "stale";
+		}
 
-	अगर (!bkey_cmp(k, &ZERO_KEY))
-		वापस "bad, null key";
-	अगर (!KEY_PTRS(k))
-		वापस "bad, no pointers";
-	अगर (!KEY_SIZE(k))
-		वापस "zeroed key";
-	वापस "";
-पूर्ण
+	if (!bkey_cmp(k, &ZERO_KEY))
+		return "bad, null key";
+	if (!KEY_PTRS(k))
+		return "bad, no pointers";
+	if (!KEY_SIZE(k))
+		return "zeroed key";
+	return "";
+}
 
-व्योम bch_extent_to_text(अक्षर *buf, माप_प्रकार size, स्थिर काष्ठा bkey *k)
-अणु
-	अचिन्हित पूर्णांक i = 0;
-	अक्षर *out = buf, *end = buf + size;
+void bch_extent_to_text(char *buf, size_t size, const struct bkey *k)
+{
+	unsigned int i = 0;
+	char *out = buf, *end = buf + size;
 
-#घोषणा p(...)	(out += scnम_लिखो(out, end - out, __VA_ARGS__))
+#define p(...)	(out += scnprintf(out, end - out, __VA_ARGS__))
 
 	p("%llu:%llu len %llu -> [", KEY_INODE(k), KEY_START(k), KEY_SIZE(k));
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++) अणु
-		अगर (i)
+	for (i = 0; i < KEY_PTRS(k); i++) {
+		if (i)
 			p(", ");
 
-		अगर (PTR_DEV(k, i) == PTR_CHECK_DEV)
+		if (PTR_DEV(k, i) == PTR_CHECK_DEV)
 			p("check dev");
-		अन्यथा
+		else
 			p("%llu:%llu gen %llu", PTR_DEV(k, i),
 			  PTR_OFFSET(k, i), PTR_GEN(k, i));
-	पूर्ण
+	}
 
 	p("]");
 
-	अगर (KEY_सूचीTY(k))
+	if (KEY_DIRTY(k))
 		p(" dirty");
-	अगर (KEY_CSUM(k))
+	if (KEY_CSUM(k))
 		p(" cs%llu %llx", KEY_CSUM(k), k->ptr[1]);
-#अघोषित p
-पूर्ण
+#undef p
+}
 
-अटल व्योम bch_bkey_dump(काष्ठा btree_keys *keys, स्थिर काष्ठा bkey *k)
-अणु
-	काष्ठा btree *b = container_of(keys, काष्ठा btree, keys);
-	अचिन्हित पूर्णांक j;
-	अक्षर buf[80];
+static void bch_bkey_dump(struct btree_keys *keys, const struct bkey *k)
+{
+	struct btree *b = container_of(keys, struct btree, keys);
+	unsigned int j;
+	char buf[80];
 
-	bch_extent_to_text(buf, माप(buf), k);
+	bch_extent_to_text(buf, sizeof(buf), k);
 	pr_cont(" %s", buf);
 
-	क्रम (j = 0; j < KEY_PTRS(k); j++) अणु
-		माप_प्रकार n = PTR_BUCKET_NR(b->c, k, j);
+	for (j = 0; j < KEY_PTRS(k); j++) {
+		size_t n = PTR_BUCKET_NR(b->c, k, j);
 
 		pr_cont(" bucket %zu", n);
-		अगर (n >= b->c->cache->sb.first_bucket && n < b->c->cache->sb.nbuckets)
+		if (n >= b->c->cache->sb.first_bucket && n < b->c->cache->sb.nbuckets)
 			pr_cont(" prio %i",
 				PTR_BUCKET(b->c, k, j)->prio);
-	पूर्ण
+	}
 
 	pr_cont(" %s\n", bch_ptr_status(b->c, k));
-पूर्ण
+}
 
 /* Btree ptrs */
 
-bool __bch_btree_ptr_invalid(काष्ठा cache_set *c, स्थिर काष्ठा bkey *k)
-अणु
-	अक्षर buf[80];
+bool __bch_btree_ptr_invalid(struct cache_set *c, const struct bkey *k)
+{
+	char buf[80];
 
-	अगर (!KEY_PTRS(k) || !KEY_SIZE(k) || KEY_सूचीTY(k))
-		जाओ bad;
+	if (!KEY_PTRS(k) || !KEY_SIZE(k) || KEY_DIRTY(k))
+		goto bad;
 
-	अगर (__ptr_invalid(c, k))
-		जाओ bad;
+	if (__ptr_invalid(c, k))
+		goto bad;
 
-	वापस false;
+	return false;
 bad:
-	bch_extent_to_text(buf, माप(buf), k);
+	bch_extent_to_text(buf, sizeof(buf), k);
 	cache_bug(c, "spotted btree ptr %s: %s", buf, bch_ptr_status(c, k));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool bch_btree_ptr_invalid(काष्ठा btree_keys *bk, स्थिर काष्ठा bkey *k)
-अणु
-	काष्ठा btree *b = container_of(bk, काष्ठा btree, keys);
+static bool bch_btree_ptr_invalid(struct btree_keys *bk, const struct bkey *k)
+{
+	struct btree *b = container_of(bk, struct btree, keys);
 
-	वापस __bch_btree_ptr_invalid(b->c, k);
-पूर्ण
+	return __bch_btree_ptr_invalid(b->c, k);
+}
 
-अटल bool btree_ptr_bad_expensive(काष्ठा btree *b, स्थिर काष्ठा bkey *k)
-अणु
-	अचिन्हित पूर्णांक i;
-	अक्षर buf[80];
-	काष्ठा bucket *g;
+static bool btree_ptr_bad_expensive(struct btree *b, const struct bkey *k)
+{
+	unsigned int i;
+	char buf[80];
+	struct bucket *g;
 
-	अगर (mutex_trylock(&b->c->bucket_lock)) अणु
-		क्रम (i = 0; i < KEY_PTRS(k); i++)
-			अगर (ptr_available(b->c, k, i)) अणु
+	if (mutex_trylock(&b->c->bucket_lock)) {
+		for (i = 0; i < KEY_PTRS(k); i++)
+			if (ptr_available(b->c, k, i)) {
 				g = PTR_BUCKET(b->c, k, i);
 
-				अगर (KEY_सूचीTY(k) ||
+				if (KEY_DIRTY(k) ||
 				    g->prio != BTREE_PRIO ||
 				    (b->c->gc_mark_valid &&
 				     GC_MARK(g) != GC_MARK_METADATA))
-					जाओ err;
-			पूर्ण
+					goto err;
+			}
 
 		mutex_unlock(&b->c->bucket_lock);
-	पूर्ण
+	}
 
-	वापस false;
+	return false;
 err:
 	mutex_unlock(&b->c->bucket_lock);
-	bch_extent_to_text(buf, माप(buf), k);
+	bch_extent_to_text(buf, sizeof(buf), k);
 	btree_bug(b,
 "inconsistent btree pointer %s: bucket %zi pin %i prio %i gen %i last_gc %i mark %llu",
-		  buf, PTR_BUCKET_NR(b->c, k, i), atomic_पढ़ो(&g->pin),
+		  buf, PTR_BUCKET_NR(b->c, k, i), atomic_read(&g->pin),
 		  g->prio, g->gen, g->last_gc, GC_MARK(g));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool bch_btree_ptr_bad(काष्ठा btree_keys *bk, स्थिर काष्ठा bkey *k)
-अणु
-	काष्ठा btree *b = container_of(bk, काष्ठा btree, keys);
-	अचिन्हित पूर्णांक i;
+static bool bch_btree_ptr_bad(struct btree_keys *bk, const struct bkey *k)
+{
+	struct btree *b = container_of(bk, struct btree, keys);
+	unsigned int i;
 
-	अगर (!bkey_cmp(k, &ZERO_KEY) ||
+	if (!bkey_cmp(k, &ZERO_KEY) ||
 	    !KEY_PTRS(k) ||
 	    bch_ptr_invalid(bk, k))
-		वापस true;
+		return true;
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++)
-		अगर (!ptr_available(b->c, k, i) ||
+	for (i = 0; i < KEY_PTRS(k); i++)
+		if (!ptr_available(b->c, k, i) ||
 		    ptr_stale(b->c, k, i))
-			वापस true;
+			return true;
 
-	अगर (expensive_debug_checks(b->c) &&
+	if (expensive_debug_checks(b->c) &&
 	    btree_ptr_bad_expensive(b, k))
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool bch_btree_ptr_insert_fixup(काष्ठा btree_keys *bk,
-				       काष्ठा bkey *insert,
-				       काष्ठा btree_iter *iter,
-				       काष्ठा bkey *replace_key)
-अणु
-	काष्ठा btree *b = container_of(bk, काष्ठा btree, keys);
+static bool bch_btree_ptr_insert_fixup(struct btree_keys *bk,
+				       struct bkey *insert,
+				       struct btree_iter *iter,
+				       struct bkey *replace_key)
+{
+	struct btree *b = container_of(bk, struct btree, keys);
 
-	अगर (!KEY_OFFSET(insert))
-		btree_current_ग_लिखो(b)->prio_blocked++;
+	if (!KEY_OFFSET(insert))
+		btree_current_write(b)->prio_blocked++;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-स्थिर काष्ठा btree_keys_ops bch_btree_keys_ops = अणु
+const struct btree_keys_ops bch_btree_keys_ops = {
 	.sort_cmp	= bch_key_sort_cmp,
 	.insert_fixup	= bch_btree_ptr_insert_fixup,
 	.key_invalid	= bch_btree_ptr_invalid,
 	.key_bad	= bch_btree_ptr_bad,
 	.key_to_text	= bch_extent_to_text,
 	.key_dump	= bch_bkey_dump,
-पूर्ण;
+};
 
 /* Extents */
 
 /*
- * Returns true अगर l > r - unless l == r, in which हाल वापसs true अगर l is
+ * Returns true if l > r - unless l == r, in which case returns true if l is
  * older than r.
  *
- * Necessary क्रम btree_sort_fixup() - अगर there are multiple keys that compare
- * equal in dअगरferent sets, we have to process them newest to oldest.
+ * Necessary for btree_sort_fixup() - if there are multiple keys that compare
+ * equal in different sets, we have to process them newest to oldest.
  */
-अटल bool bch_extent_sort_cmp(काष्ठा btree_iter_set l,
-				काष्ठा btree_iter_set r)
-अणु
-	पूर्णांक64_t c = bkey_cmp(&START_KEY(l.k), &START_KEY(r.k));
+static bool bch_extent_sort_cmp(struct btree_iter_set l,
+				struct btree_iter_set r)
+{
+	int64_t c = bkey_cmp(&START_KEY(l.k), &START_KEY(r.k));
 
-	वापस c ? c > 0 : l.k < r.k;
-पूर्ण
+	return c ? c > 0 : l.k < r.k;
+}
 
-अटल काष्ठा bkey *bch_extent_sort_fixup(काष्ठा btree_iter *iter,
-					  काष्ठा bkey *पंचांगp)
-अणु
-	जबतक (iter->used > 1) अणु
-		काष्ठा btree_iter_set *top = iter->data, *i = top + 1;
+static struct bkey *bch_extent_sort_fixup(struct btree_iter *iter,
+					  struct bkey *tmp)
+{
+	while (iter->used > 1) {
+		struct btree_iter_set *top = iter->data, *i = top + 1;
 
-		अगर (iter->used > 2 &&
+		if (iter->used > 2 &&
 		    bch_extent_sort_cmp(i[0], i[1]))
 			i++;
 
-		अगर (bkey_cmp(top->k, &START_KEY(i->k)) <= 0)
-			अवरोध;
+		if (bkey_cmp(top->k, &START_KEY(i->k)) <= 0)
+			break;
 
-		अगर (!KEY_SIZE(i->k)) अणु
+		if (!KEY_SIZE(i->k)) {
 			sort_key_next(iter, i);
-			heap_sअगरt(iter, i - top, bch_extent_sort_cmp);
-			जारी;
-		पूर्ण
+			heap_sift(iter, i - top, bch_extent_sort_cmp);
+			continue;
+		}
 
-		अगर (top->k > i->k) अणु
-			अगर (bkey_cmp(top->k, i->k) >= 0)
+		if (top->k > i->k) {
+			if (bkey_cmp(top->k, i->k) >= 0)
 				sort_key_next(iter, i);
-			अन्यथा
+			else
 				bch_cut_front(top->k, i->k);
 
-			heap_sअगरt(iter, i - top, bch_extent_sort_cmp);
-		पूर्ण अन्यथा अणु
+			heap_sift(iter, i - top, bch_extent_sort_cmp);
+		} else {
 			/* can't happen because of comparison func */
 			BUG_ON(!bkey_cmp(&START_KEY(top->k), &START_KEY(i->k)));
 
-			अगर (bkey_cmp(i->k, top->k) < 0) अणु
-				bkey_copy(पंचांगp, top->k);
+			if (bkey_cmp(i->k, top->k) < 0) {
+				bkey_copy(tmp, top->k);
 
-				bch_cut_back(&START_KEY(i->k), पंचांगp);
+				bch_cut_back(&START_KEY(i->k), tmp);
 				bch_cut_front(i->k, top->k);
-				heap_sअगरt(iter, 0, bch_extent_sort_cmp);
+				heap_sift(iter, 0, bch_extent_sort_cmp);
 
-				वापस पंचांगp;
-			पूर्ण अन्यथा अणु
+				return tmp;
+			} else {
 				bch_cut_back(&START_KEY(i->k), top->k);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम bch_subtract_dirty(काष्ठा bkey *k,
-			   काष्ठा cache_set *c,
-			   uपूर्णांक64_t offset,
-			   पूर्णांक sectors)
-अणु
-	अगर (KEY_सूचीTY(k))
+static void bch_subtract_dirty(struct bkey *k,
+			   struct cache_set *c,
+			   uint64_t offset,
+			   int sectors)
+{
+	if (KEY_DIRTY(k))
 		bcache_dev_sectors_dirty_add(c, KEY_INODE(k),
 					     offset, -sectors);
-पूर्ण
+}
 
-अटल bool bch_extent_insert_fixup(काष्ठा btree_keys *b,
-				    काष्ठा bkey *insert,
-				    काष्ठा btree_iter *iter,
-				    काष्ठा bkey *replace_key)
-अणु
-	काष्ठा cache_set *c = container_of(b, काष्ठा btree, keys)->c;
+static bool bch_extent_insert_fixup(struct btree_keys *b,
+				    struct bkey *insert,
+				    struct btree_iter *iter,
+				    struct bkey *replace_key)
+{
+	struct cache_set *c = container_of(b, struct btree, keys)->c;
 
-	uपूर्णांक64_t old_offset;
-	अचिन्हित पूर्णांक old_size, sectors_found = 0;
+	uint64_t old_offset;
+	unsigned int old_size, sectors_found = 0;
 
 	BUG_ON(!KEY_OFFSET(insert));
 	BUG_ON(!KEY_SIZE(insert));
 
-	जबतक (1) अणु
-		काष्ठा bkey *k = bch_btree_iter_next(iter);
+	while (1) {
+		struct bkey *k = bch_btree_iter_next(iter);
 
-		अगर (!k)
-			अवरोध;
+		if (!k)
+			break;
 
-		अगर (bkey_cmp(&START_KEY(k), insert) >= 0) अणु
-			अगर (KEY_SIZE(k))
-				अवरोध;
-			अन्यथा
-				जारी;
-		पूर्ण
+		if (bkey_cmp(&START_KEY(k), insert) >= 0) {
+			if (KEY_SIZE(k))
+				break;
+			else
+				continue;
+		}
 
-		अगर (bkey_cmp(k, &START_KEY(insert)) <= 0)
-			जारी;
+		if (bkey_cmp(k, &START_KEY(insert)) <= 0)
+			continue;
 
 		old_offset = KEY_START(k);
 		old_size = KEY_SIZE(k);
 
 		/*
 		 * We might overlap with 0 size extents; we can't skip these
-		 * because अगर they're in the set we're inserting to we have to
-		 * adjust them so they करोn't overlap with the key we're
-		 * inserting. But we करोn't want to check them क्रम replace
+		 * because if they're in the set we're inserting to we have to
+		 * adjust them so they don't overlap with the key we're
+		 * inserting. But we don't want to check them for replace
 		 * operations.
 		 */
 
-		अगर (replace_key && KEY_SIZE(k)) अणु
+		if (replace_key && KEY_SIZE(k)) {
 			/*
 			 * k might have been split since we inserted/found the
 			 * key we're replacing
 			 */
-			अचिन्हित पूर्णांक i;
-			uपूर्णांक64_t offset = KEY_START(k) -
+			unsigned int i;
+			uint64_t offset = KEY_START(k) -
 				KEY_START(replace_key);
 
 			/* But it must be a subset of the replace key */
-			अगर (KEY_START(k) < KEY_START(replace_key) ||
+			if (KEY_START(k) < KEY_START(replace_key) ||
 			    KEY_OFFSET(k) > KEY_OFFSET(replace_key))
-				जाओ check_failed;
+				goto check_failed;
 
 			/* We didn't find a key that we were supposed to */
-			अगर (KEY_START(k) > KEY_START(insert) + sectors_found)
-				जाओ check_failed;
+			if (KEY_START(k) > KEY_START(insert) + sectors_found)
+				goto check_failed;
 
-			अगर (!bch_bkey_equal_header(k, replace_key))
-				जाओ check_failed;
+			if (!bch_bkey_equal_header(k, replace_key))
+				goto check_failed;
 
 			/* skip past gen */
 			offset <<= 8;
 
 			BUG_ON(!KEY_PTRS(replace_key));
 
-			क्रम (i = 0; i < KEY_PTRS(replace_key); i++)
-				अगर (k->ptr[i] != replace_key->ptr[i] + offset)
-					जाओ check_failed;
+			for (i = 0; i < KEY_PTRS(replace_key); i++)
+				if (k->ptr[i] != replace_key->ptr[i] + offset)
+					goto check_failed;
 
 			sectors_found = KEY_OFFSET(k) - KEY_START(insert);
-		पूर्ण
+		}
 
-		अगर (bkey_cmp(insert, k) < 0 &&
-		    bkey_cmp(&START_KEY(insert), &START_KEY(k)) > 0) अणु
+		if (bkey_cmp(insert, k) < 0 &&
+		    bkey_cmp(&START_KEY(insert), &START_KEY(k)) > 0) {
 			/*
 			 * We overlapped in the middle of an existing key: that
-			 * means we have to split the old key. But we have to करो
-			 * slightly dअगरferent things depending on whether the
+			 * means we have to split the old key. But we have to do
+			 * slightly different things depending on whether the
 			 * old key has been written out yet.
 			 */
 
-			काष्ठा bkey *top;
+			struct bkey *top;
 
 			bch_subtract_dirty(k, c, KEY_START(insert),
 				       KEY_SIZE(insert));
 
-			अगर (bkey_written(b, k)) अणु
+			if (bkey_written(b, k)) {
 				/*
 				 * We insert a new key to cover the top of the
-				 * old key, and the old key is modअगरied in place
+				 * old key, and the old key is modified in place
 				 * to represent the bottom split.
 				 *
 				 * It's completely arbitrary whether the new key
 				 * is the top or the bottom, but it has to match
-				 * up with what btree_sort_fixup() करोes - it
-				 * करोesn't check क्रम this kind of overlap, it
-				 * depends on us inserting a new key क्रम the top
+				 * up with what btree_sort_fixup() does - it
+				 * doesn't check for this kind of overlap, it
+				 * depends on us inserting a new key for the top
 				 * here.
 				 */
 				top = bch_bset_search(b, bset_tree_last(b),
 						      insert);
 				bch_bset_insert(b, top, k);
-			पूर्ण अन्यथा अणु
+			} else {
 				BKEY_PADDED(key) temp;
 				bkey_copy(&temp.key, k);
 				bch_bset_insert(b, k, &temp.key);
 				top = bkey_next(k);
-			पूर्ण
+			}
 
 			bch_cut_front(insert, top);
 			bch_cut_back(&START_KEY(insert), k);
 			bch_bset_fix_invalidated_key(b, k);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (bkey_cmp(insert, k) < 0) अणु
+		if (bkey_cmp(insert, k) < 0) {
 			bch_cut_front(insert, k);
-		पूर्ण अन्यथा अणु
-			अगर (bkey_cmp(&START_KEY(insert), &START_KEY(k)) > 0)
+		} else {
+			if (bkey_cmp(&START_KEY(insert), &START_KEY(k)) > 0)
 				old_offset = KEY_START(insert);
 
-			अगर (bkey_written(b, k) &&
-			    bkey_cmp(&START_KEY(insert), &START_KEY(k)) <= 0) अणु
+			if (bkey_written(b, k) &&
+			    bkey_cmp(&START_KEY(insert), &START_KEY(k)) <= 0) {
 				/*
-				 * Completely overwrote, so we करोn't have to
+				 * Completely overwrote, so we don't have to
 				 * invalidate the binary search tree
 				 */
 				bch_cut_front(k, k);
-			पूर्ण अन्यथा अणु
+			} else {
 				__bch_cut_back(&START_KEY(insert), k);
 				bch_bset_fix_invalidated_key(b, k);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		bch_subtract_dirty(k, c, old_offset, old_size - KEY_SIZE(k));
-	पूर्ण
+	}
 
 check_failed:
-	अगर (replace_key) अणु
-		अगर (!sectors_found) अणु
-			वापस true;
-		पूर्ण अन्यथा अगर (sectors_found < KEY_SIZE(insert)) अणु
+	if (replace_key) {
+		if (!sectors_found) {
+			return true;
+		} else if (sectors_found < KEY_SIZE(insert)) {
 			SET_KEY_OFFSET(insert, KEY_OFFSET(insert) -
 				       (KEY_SIZE(insert) - sectors_found));
 			SET_KEY_SIZE(insert, sectors_found);
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	अगर (KEY_सूचीTY(insert))
+	if (KEY_DIRTY(insert))
 		bcache_dev_sectors_dirty_add(c, KEY_INODE(insert),
 					     KEY_START(insert),
 					     KEY_SIZE(insert));
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool __bch_extent_invalid(काष्ठा cache_set *c, स्थिर काष्ठा bkey *k)
-अणु
-	अक्षर buf[80];
+bool __bch_extent_invalid(struct cache_set *c, const struct bkey *k)
+{
+	char buf[80];
 
-	अगर (!KEY_SIZE(k))
-		वापस true;
+	if (!KEY_SIZE(k))
+		return true;
 
-	अगर (KEY_SIZE(k) > KEY_OFFSET(k))
-		जाओ bad;
+	if (KEY_SIZE(k) > KEY_OFFSET(k))
+		goto bad;
 
-	अगर (__ptr_invalid(c, k))
-		जाओ bad;
+	if (__ptr_invalid(c, k))
+		goto bad;
 
-	वापस false;
+	return false;
 bad:
-	bch_extent_to_text(buf, माप(buf), k);
+	bch_extent_to_text(buf, sizeof(buf), k);
 	cache_bug(c, "spotted extent %s: %s", buf, bch_ptr_status(c, k));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool bch_extent_invalid(काष्ठा btree_keys *bk, स्थिर काष्ठा bkey *k)
-अणु
-	काष्ठा btree *b = container_of(bk, काष्ठा btree, keys);
+static bool bch_extent_invalid(struct btree_keys *bk, const struct bkey *k)
+{
+	struct btree *b = container_of(bk, struct btree, keys);
 
-	वापस __bch_extent_invalid(b->c, k);
-पूर्ण
+	return __bch_extent_invalid(b->c, k);
+}
 
-अटल bool bch_extent_bad_expensive(काष्ठा btree *b, स्थिर काष्ठा bkey *k,
-				     अचिन्हित पूर्णांक ptr)
-अणु
-	काष्ठा bucket *g = PTR_BUCKET(b->c, k, ptr);
-	अक्षर buf[80];
+static bool bch_extent_bad_expensive(struct btree *b, const struct bkey *k,
+				     unsigned int ptr)
+{
+	struct bucket *g = PTR_BUCKET(b->c, k, ptr);
+	char buf[80];
 
-	अगर (mutex_trylock(&b->c->bucket_lock)) अणु
-		अगर (b->c->gc_mark_valid &&
+	if (mutex_trylock(&b->c->bucket_lock)) {
+		if (b->c->gc_mark_valid &&
 		    (!GC_MARK(g) ||
 		     GC_MARK(g) == GC_MARK_METADATA ||
-		     (GC_MARK(g) != GC_MARK_सूचीTY && KEY_सूचीTY(k))))
-			जाओ err;
+		     (GC_MARK(g) != GC_MARK_DIRTY && KEY_DIRTY(k))))
+			goto err;
 
-		अगर (g->prio == BTREE_PRIO)
-			जाओ err;
+		if (g->prio == BTREE_PRIO)
+			goto err;
 
 		mutex_unlock(&b->c->bucket_lock);
-	पूर्ण
+	}
 
-	वापस false;
+	return false;
 err:
 	mutex_unlock(&b->c->bucket_lock);
-	bch_extent_to_text(buf, माप(buf), k);
+	bch_extent_to_text(buf, sizeof(buf), k);
 	btree_bug(b,
 "inconsistent extent pointer %s:\nbucket %zu pin %i prio %i gen %i last_gc %i mark %llu",
-		  buf, PTR_BUCKET_NR(b->c, k, ptr), atomic_पढ़ो(&g->pin),
+		  buf, PTR_BUCKET_NR(b->c, k, ptr), atomic_read(&g->pin),
 		  g->prio, g->gen, g->last_gc, GC_MARK(g));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool bch_extent_bad(काष्ठा btree_keys *bk, स्थिर काष्ठा bkey *k)
-अणु
-	काष्ठा btree *b = container_of(bk, काष्ठा btree, keys);
-	अचिन्हित पूर्णांक i, stale;
-	अक्षर buf[80];
+static bool bch_extent_bad(struct btree_keys *bk, const struct bkey *k)
+{
+	struct btree *b = container_of(bk, struct btree, keys);
+	unsigned int i, stale;
+	char buf[80];
 
-	अगर (!KEY_PTRS(k) ||
+	if (!KEY_PTRS(k) ||
 	    bch_extent_invalid(bk, k))
-		वापस true;
+		return true;
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++)
-		अगर (!ptr_available(b->c, k, i))
-			वापस true;
+	for (i = 0; i < KEY_PTRS(k); i++)
+		if (!ptr_available(b->c, k, i))
+			return true;
 
-	क्रम (i = 0; i < KEY_PTRS(k); i++) अणु
+	for (i = 0; i < KEY_PTRS(k); i++) {
 		stale = ptr_stale(b->c, k, i);
 
-		अगर (stale && KEY_सूचीTY(k)) अणु
-			bch_extent_to_text(buf, माप(buf), k);
+		if (stale && KEY_DIRTY(k)) {
+			bch_extent_to_text(buf, sizeof(buf), k);
 			pr_info("stale dirty pointer, stale %u, key: %s\n",
 				stale, buf);
-		पूर्ण
+		}
 
 		btree_bug_on(stale > BUCKET_GC_GEN_MAX, b,
 			     "key too stale: %i, need_gc %u",
 			     stale, b->c->need_gc);
 
-		अगर (stale)
-			वापस true;
+		if (stale)
+			return true;
 
-		अगर (expensive_debug_checks(b->c) &&
+		if (expensive_debug_checks(b->c) &&
 		    bch_extent_bad_expensive(b, k, i))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल uपूर्णांक64_t merge_chksums(काष्ठा bkey *l, काष्ठा bkey *r)
-अणु
-	वापस (l->ptr[KEY_PTRS(l)] + r->ptr[KEY_PTRS(r)]) &
-		~((uपूर्णांक64_t)1 << 63);
-पूर्ण
+static uint64_t merge_chksums(struct bkey *l, struct bkey *r)
+{
+	return (l->ptr[KEY_PTRS(l)] + r->ptr[KEY_PTRS(r)]) &
+		~((uint64_t)1 << 63);
+}
 
-अटल bool bch_extent_merge(काष्ठा btree_keys *bk,
-			     काष्ठा bkey *l,
-			     काष्ठा bkey *r)
-अणु
-	काष्ठा btree *b = container_of(bk, काष्ठा btree, keys);
-	अचिन्हित पूर्णांक i;
+static bool bch_extent_merge(struct btree_keys *bk,
+			     struct bkey *l,
+			     struct bkey *r)
+{
+	struct btree *b = container_of(bk, struct btree, keys);
+	unsigned int i;
 
-	अगर (key_merging_disabled(b->c))
-		वापस false;
+	if (key_merging_disabled(b->c))
+		return false;
 
-	क्रम (i = 0; i < KEY_PTRS(l); i++)
-		अगर (l->ptr[i] + MAKE_PTR(0, KEY_SIZE(l), 0) != r->ptr[i] ||
+	for (i = 0; i < KEY_PTRS(l); i++)
+		if (l->ptr[i] + MAKE_PTR(0, KEY_SIZE(l), 0) != r->ptr[i] ||
 		    PTR_BUCKET_NR(b->c, l, i) != PTR_BUCKET_NR(b->c, r, i))
-			वापस false;
+			return false;
 
-	/* Keys with no poपूर्णांकers aren't restricted to one bucket and could
+	/* Keys with no pointers aren't restricted to one bucket and could
 	 * overflow KEY_SIZE
 	 */
-	अगर (KEY_SIZE(l) + KEY_SIZE(r) > अच_लघु_उच्च) अणु
-		SET_KEY_OFFSET(l, KEY_OFFSET(l) + अच_लघु_उच्च - KEY_SIZE(l));
-		SET_KEY_SIZE(l, अच_लघु_उच्च);
+	if (KEY_SIZE(l) + KEY_SIZE(r) > USHRT_MAX) {
+		SET_KEY_OFFSET(l, KEY_OFFSET(l) + USHRT_MAX - KEY_SIZE(l));
+		SET_KEY_SIZE(l, USHRT_MAX);
 
 		bch_cut_front(l, r);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (KEY_CSUM(l)) अणु
-		अगर (KEY_CSUM(r))
+	if (KEY_CSUM(l)) {
+		if (KEY_CSUM(r))
 			l->ptr[KEY_PTRS(l)] = merge_chksums(l, r);
-		अन्यथा
+		else
 			SET_KEY_CSUM(l, 0);
-	पूर्ण
+	}
 
 	SET_KEY_OFFSET(l, KEY_OFFSET(l) + KEY_SIZE(r));
 	SET_KEY_SIZE(l, KEY_SIZE(l) + KEY_SIZE(r));
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-स्थिर काष्ठा btree_keys_ops bch_extent_keys_ops = अणु
+const struct btree_keys_ops bch_extent_keys_ops = {
 	.sort_cmp	= bch_extent_sort_cmp,
 	.sort_fixup	= bch_extent_sort_fixup,
 	.insert_fixup	= bch_extent_insert_fixup,
@@ -628,4 +627,4 @@ err:
 	.key_to_text	= bch_extent_to_text,
 	.key_dump	= bch_bkey_dump,
 	.is_extents	= true,
-पूर्ण;
+};

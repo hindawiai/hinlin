@@ -1,51 +1,50 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 Pengutronix
  */
 
-#अगर_अघोषित IMX_VDOA_H
-#घोषणा IMX_VDOA_H
+#ifndef IMX_VDOA_H
+#define IMX_VDOA_H
 
-काष्ठा vकरोa_data;
-काष्ठा vकरोa_ctx;
+struct vdoa_data;
+struct vdoa_ctx;
 
-#अगर (defined CONFIG_VIDEO_IMX_VDOA || defined CONFIG_VIDEO_IMX_VDOA_MODULE)
+#if (defined CONFIG_VIDEO_IMX_VDOA || defined CONFIG_VIDEO_IMX_VDOA_MODULE)
 
-काष्ठा vकरोa_ctx *vकरोa_context_create(काष्ठा vकरोa_data *vकरोa);
-पूर्णांक vकरोa_context_configure(काष्ठा vकरोa_ctx *ctx,
-			   अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
-			   u32 pixelक्रमmat);
-व्योम vकरोa_context_destroy(काष्ठा vकरोa_ctx *ctx);
+struct vdoa_ctx *vdoa_context_create(struct vdoa_data *vdoa);
+int vdoa_context_configure(struct vdoa_ctx *ctx,
+			   unsigned int width, unsigned int height,
+			   u32 pixelformat);
+void vdoa_context_destroy(struct vdoa_ctx *ctx);
 
-व्योम vकरोa_device_run(काष्ठा vकरोa_ctx *ctx, dma_addr_t dst, dma_addr_t src);
-पूर्णांक vकरोa_रुको_क्रम_completion(काष्ठा vकरोa_ctx *ctx);
+void vdoa_device_run(struct vdoa_ctx *ctx, dma_addr_t dst, dma_addr_t src);
+int vdoa_wait_for_completion(struct vdoa_ctx *ctx);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत काष्ठा vकरोa_ctx *vकरोa_context_create(काष्ठा vकरोa_data *vकरोa)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct vdoa_ctx *vdoa_context_create(struct vdoa_data *vdoa)
+{
+	return NULL;
+}
 
-अटल अंतरभूत पूर्णांक vकरोa_context_configure(काष्ठा vकरोa_ctx *ctx,
-					 अचिन्हित पूर्णांक width,
-					 अचिन्हित पूर्णांक height,
-					 u32 pixelक्रमmat)
-अणु
-	वापस 0;
-पूर्ण
+static inline int vdoa_context_configure(struct vdoa_ctx *ctx,
+					 unsigned int width,
+					 unsigned int height,
+					 u32 pixelformat)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम vकरोa_context_destroy(काष्ठा vकरोa_ctx *ctx) अणु पूर्ण;
+static inline void vdoa_context_destroy(struct vdoa_ctx *ctx) { };
 
-अटल अंतरभूत व्योम vकरोa_device_run(काष्ठा vकरोa_ctx *ctx,
-				   dma_addr_t dst, dma_addr_t src) अणु पूर्ण;
+static inline void vdoa_device_run(struct vdoa_ctx *ctx,
+				   dma_addr_t dst, dma_addr_t src) { };
 
-अटल अंतरभूत पूर्णांक vकरोa_रुको_क्रम_completion(काष्ठा vकरोa_ctx *ctx)
-अणु
-	वापस 0;
-पूर्ण;
+static inline int vdoa_wait_for_completion(struct vdoa_ctx *ctx)
+{
+	return 0;
+};
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* IMX_VDOA_H */
+#endif /* IMX_VDOA_H */

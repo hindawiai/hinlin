@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * SL811HS रेजिस्टर declarations and HCD data काष्ठाures
+ * SL811HS register declarations and HCD data structures
  *
  * Copyright (C) 2004 Psion Teklogix
  * Copyright (C) 2004 David Brownell
@@ -9,27 +8,27 @@
  */
 
 /*
- * SL811HS has transfer रेजिस्टरs, and control रेजिस्टरs.  In host/master
- * mode one set of रेजिस्टरs is used; in peripheral/slave mode, another.
- *  - SL11H only has some "A" transfer रेजिस्टरs from 0x00-0x04
- *  - SL811HS also has "B" रेजिस्टरs from 0x08-0x0c
+ * SL811HS has transfer registers, and control registers.  In host/master
+ * mode one set of registers is used; in peripheral/slave mode, another.
+ *  - SL11H only has some "A" transfer registers from 0x00-0x04
+ *  - SL811HS also has "B" registers from 0x08-0x0c
  *  - SL811S (or HS in slave mode) has four A+B sets, at 00, 10, 20, 30
  */
 
-#घोषणा SL811_EP_A(base)	((base) + 0)
-#घोषणा SL811_EP_B(base)	((base) + 8)
+#define SL811_EP_A(base)	((base) + 0)
+#define SL811_EP_B(base)	((base) + 8)
 
-#घोषणा SL811_HOST_BUF		0x00
-#घोषणा SL811_PERIPH_EP0	0x00
-#घोषणा SL811_PERIPH_EP1	0x10
-#घोषणा SL811_PERIPH_EP2	0x20
-#घोषणा SL811_PERIPH_EP3	0x30
+#define SL811_HOST_BUF		0x00
+#define SL811_PERIPH_EP0	0x00
+#define SL811_PERIPH_EP1	0x10
+#define SL811_PERIPH_EP2	0x20
+#define SL811_PERIPH_EP3	0x30
 
 
 /* TRANSFER REGISTERS:  host and peripheral sides are similar
- * except क्रम the control models (master vs slave).
+ * except for the control models (master vs slave).
  */
-#घोषणा SL11H_HOSTCTLREG	0
+#define SL11H_HOSTCTLREG	0
 #	define SL11H_HCTLMASK_ARM	0x01
 #	define SL11H_HCTLMASK_ENABLE	0x02
 #	define SL11H_HCTLMASK_IN	0x00
@@ -38,9 +37,9 @@
 #	define SL11H_HCTLMASK_AFTERSOF	0x20
 #	define SL11H_HCTLMASK_TOGGLE	0x40
 #	define SL11H_HCTLMASK_PREAMBLE	0x80
-#घोषणा SL11H_BUFADDRREG	1
-#घोषणा SL11H_BUFLNTHREG	2
-#घोषणा SL11H_PKTSTATREG	3	/* पढ़ो */
+#define SL11H_BUFADDRREG	1
+#define SL11H_BUFLNTHREG	2
+#define SL11H_PKTSTATREG	3	/* read */
 #	define SL11H_STATMASK_ACK	0x01
 #	define SL11H_STATMASK_ERROR	0x02
 #	define SL11H_STATMASK_TMOUT	0x04
@@ -49,7 +48,7 @@
 #	define SL11H_STATMASK_OVF	0x20
 #	define SL11H_STATMASK_NAK	0x40
 #	define SL11H_STATMASK_STALL	0x80
-#घोषणा SL11H_PIDEPREG		3	/* ग_लिखो */
+#define SL11H_PIDEPREG		3	/* write */
 #	define	SL_SETUP	0xd0
 #	define	SL_IN		0x90
 #	define	SL_OUT		0x10
@@ -59,13 +58,13 @@
 #	define	SL_STALL	0xe0
 #	define	SL_DATA0	0x30
 #	define	SL_DATA1	0xb0
-#घोषणा SL11H_XFERCNTREG	4	/* पढ़ो */
-#घोषणा SL11H_DEVADDRREG	4	/* ग_लिखो */
+#define SL11H_XFERCNTREG	4	/* read */
+#define SL11H_DEVADDRREG	4	/* write */
 
 
-/* CONTROL REGISTERS:  host and peripheral are very dअगरferent.
+/* CONTROL REGISTERS:  host and peripheral are very different.
  */
-#घोषणा SL11H_CTLREG1		5
+#define SL11H_CTLREG1		5
 #	define SL11H_CTL1MASK_SOF_ENA	0x01
 #	define SL11H_CTL1MASK_FORCE	0x18
 #		define SL11H_CTL1MASK_NORMAL	0x00
@@ -74,101 +73,101 @@
 #		define SL11H_CTL1MASK_K		0x18	/* resume */
 #	define SL11H_CTL1MASK_LSPD	0x20
 #	define SL11H_CTL1MASK_SUSPEND	0x40
-#घोषणा SL11H_IRQ_ENABLE	6
+#define SL11H_IRQ_ENABLE	6
 #	define SL11H_INTMASK_DONE_A	0x01
 #	define SL11H_INTMASK_DONE_B	0x02
 #	define SL11H_INTMASK_SOFINTR	0x10
 #	define SL11H_INTMASK_INSRMV	0x20	/* to/from SE0 */
 #	define SL11H_INTMASK_RD		0x40
 #	define SL11H_INTMASK_DP		0x80	/* only in INTSTATREG */
-#घोषणा SL11S_ADDRESS		7
+#define SL11S_ADDRESS		7
 
-/* 0x08-0x0c are क्रम the B buffer (not in SL11) */
+/* 0x08-0x0c are for the B buffer (not in SL11) */
 
-#घोषणा SL11H_IRQ_STATUS	0x0D	/* ग_लिखो to ack */
-#घोषणा SL11H_HWREVREG		0x0E	/* पढ़ो */
+#define SL11H_IRQ_STATUS	0x0D	/* write to ack */
+#define SL11H_HWREVREG		0x0E	/* read */
 #	define SL11H_HWRMASK_HWREV	0xF0
-#घोषणा SL11H_SOFLOWREG		0x0E	/* ग_लिखो */
-#घोषणा SL11H_SOFTMRREG		0x0F	/* पढ़ो */
+#define SL11H_SOFLOWREG		0x0E	/* write */
+#define SL11H_SOFTMRREG		0x0F	/* read */
 
-/* a ग_लिखो to this रेजिस्टर enables SL811HS features.
- * HOST flag presumably overrides the chip input संकेत?
+/* a write to this register enables SL811HS features.
+ * HOST flag presumably overrides the chip input signal?
  */
-#घोषणा SL811HS_CTLREG2		0x0F
+#define SL811HS_CTLREG2		0x0F
 #	define SL811HS_CTL2MASK_SOF_MASK	0x3F
 #	define SL811HS_CTL2MASK_DSWAP		0x40
 #	define SL811HS_CTL2MASK_HOST		0x80
 
-#घोषणा SL811HS_CTL2_INIT	(SL811HS_CTL2MASK_HOST | 0x2e)
+#define SL811HS_CTL2_INIT	(SL811HS_CTL2MASK_HOST | 0x2e)
 
 
-/* DATA BUFFERS: रेजिस्टरs from 0x10..0xff are क्रम data buffers;
+/* DATA BUFFERS: registers from 0x10..0xff are for data buffers;
  * that's 240 bytes, which we'll split evenly between A and B sides.
  * Only ISO can use more than 64 bytes per packet.
- * (The SL11S has 0x40..0xff क्रम buffers.)
+ * (The SL11S has 0x40..0xff for buffers.)
  */
-#घोषणा H_MAXPACKET	120		/* bytes in A or B fअगरos */
+#define H_MAXPACKET	120		/* bytes in A or B fifos */
 
-#घोषणा SL11H_DATA_START	0x10
-#घोषणा	SL811HS_PACKET_BUF(is_a)	((is_a) \
+#define SL11H_DATA_START	0x10
+#define	SL811HS_PACKET_BUF(is_a)	((is_a) \
 		? SL11H_DATA_START \
 		: (SL11H_DATA_START + H_MAXPACKET))
 
 /*-------------------------------------------------------------------------*/
 
-#घोषणा	LOG2_PERIODIC_SIZE	5	/* arbitrary; this matches OHCI */
-#घोषणा	PERIODIC_SIZE		(1 << LOG2_PERIODIC_SIZE)
+#define	LOG2_PERIODIC_SIZE	5	/* arbitrary; this matches OHCI */
+#define	PERIODIC_SIZE		(1 << LOG2_PERIODIC_SIZE)
 
-काष्ठा sl811 अणु
+struct sl811 {
 	spinlock_t		lock;
-	व्योम __iomem		*addr_reg;
-	व्योम __iomem		*data_reg;
-	काष्ठा sl811_platक्रमm_data	*board;
+	void __iomem		*addr_reg;
+	void __iomem		*data_reg;
+	struct sl811_platform_data	*board;
 
-	अचिन्हित दीर्घ		stat_insrmv;
-	अचिन्हित दीर्घ		stat_wake;
-	अचिन्हित दीर्घ		stat_sof;
-	अचिन्हित दीर्घ		stat_a;
-	अचिन्हित दीर्घ		stat_b;
-	अचिन्हित दीर्घ		stat_lost;
-	अचिन्हित दीर्घ		stat_overrun;
+	unsigned long		stat_insrmv;
+	unsigned long		stat_wake;
+	unsigned long		stat_sof;
+	unsigned long		stat_a;
+	unsigned long		stat_b;
+	unsigned long		stat_lost;
+	unsigned long		stat_overrun;
 
 	/* sw model */
-	काष्ठा समयr_list	समयr;
-	काष्ठा sl811h_ep	*next_periodic;
-	काष्ठा sl811h_ep	*next_async;
+	struct timer_list	timer;
+	struct sl811h_ep	*next_periodic;
+	struct sl811h_ep	*next_async;
 
-	काष्ठा sl811h_ep	*active_a;
-	अचिन्हित दीर्घ		jअगरfies_a;
-	काष्ठा sl811h_ep	*active_b;
-	अचिन्हित दीर्घ		jअगरfies_b;
+	struct sl811h_ep	*active_a;
+	unsigned long		jiffies_a;
+	struct sl811h_ep	*active_b;
+	unsigned long		jiffies_b;
 
 	u32			port1;
 	u8			ctrl1, ctrl2, irq_enable;
 	u16			frame;
 
 	/* async schedule: control, bulk */
-	काष्ठा list_head	async;
+	struct list_head	async;
 
-	/* periodic schedule: पूर्णांकerrupt, iso */
+	/* periodic schedule: interrupt, iso */
 	u16			load[PERIODIC_SIZE];
-	काष्ठा sl811h_ep	*periodic[PERIODIC_SIZE];
-	अचिन्हित		periodic_count;
-पूर्ण;
+	struct sl811h_ep	*periodic[PERIODIC_SIZE];
+	unsigned		periodic_count;
+};
 
-अटल अंतरभूत काष्ठा sl811 *hcd_to_sl811(काष्ठा usb_hcd *hcd)
-अणु
-	वापस (काष्ठा sl811 *) (hcd->hcd_priv);
-पूर्ण
+static inline struct sl811 *hcd_to_sl811(struct usb_hcd *hcd)
+{
+	return (struct sl811 *) (hcd->hcd_priv);
+}
 
-अटल अंतरभूत काष्ठा usb_hcd *sl811_to_hcd(काष्ठा sl811 *sl811)
-अणु
-	वापस container_of((व्योम *) sl811, काष्ठा usb_hcd, hcd_priv);
-पूर्ण
+static inline struct usb_hcd *sl811_to_hcd(struct sl811 *sl811)
+{
+	return container_of((void *) sl811, struct usb_hcd, hcd_priv);
+}
 
-काष्ठा sl811h_ep अणु
-	काष्ठा usb_host_endpoपूर्णांक *hep;
-	काष्ठा usb_device	*udev;
+struct sl811h_ep {
+	struct usb_host_endpoint *hep;
+	struct usb_device	*udev;
 
 	u8			defctrl;
 	u8			maxpacket;
@@ -183,68 +182,68 @@
 	u16			period;
 	u16			branch;
 	u16			load;
-	काष्ठा sl811h_ep	*next;
+	struct sl811h_ep	*next;
 
 	/* async schedule */
-	काष्ठा list_head	schedule;
-पूर्ण;
+	struct list_head	schedule;
+};
 
 /*-------------------------------------------------------------------------*/
 
-/* These रेजिस्टर utilities should work क्रम the SL811S रेजिस्टर API too
+/* These register utilities should work for the SL811S register API too
  * NOTE:  caller must hold sl811->lock.
  */
 
-अटल अंतरभूत u8 sl811_पढ़ो(काष्ठा sl811 *sl811, पूर्णांक reg)
-अणु
-	ग_लिखोb(reg, sl811->addr_reg);
-	वापस पढ़ोb(sl811->data_reg);
-पूर्ण
+static inline u8 sl811_read(struct sl811 *sl811, int reg)
+{
+	writeb(reg, sl811->addr_reg);
+	return readb(sl811->data_reg);
+}
 
-अटल अंतरभूत व्योम sl811_ग_लिखो(काष्ठा sl811 *sl811, पूर्णांक reg, u8 val)
-अणु
-	ग_लिखोb(reg, sl811->addr_reg);
-	ग_लिखोb(val, sl811->data_reg);
-पूर्ण
+static inline void sl811_write(struct sl811 *sl811, int reg, u8 val)
+{
+	writeb(reg, sl811->addr_reg);
+	writeb(val, sl811->data_reg);
+}
 
-अटल अंतरभूत व्योम
-sl811_ग_लिखो_buf(काष्ठा sl811 *sl811, पूर्णांक addr, स्थिर व्योम *buf, माप_प्रकार count)
-अणु
-	स्थिर u8	*data;
-	व्योम __iomem	*data_reg;
+static inline void
+sl811_write_buf(struct sl811 *sl811, int addr, const void *buf, size_t count)
+{
+	const u8	*data;
+	void __iomem	*data_reg;
 
-	अगर (!count)
-		वापस;
-	ग_लिखोb(addr, sl811->addr_reg);
+	if (!count)
+		return;
+	writeb(addr, sl811->addr_reg);
 
 	data = buf;
 	data_reg = sl811->data_reg;
-	करो अणु
-		ग_लिखोb(*data++, data_reg);
-	पूर्ण जबतक (--count);
-पूर्ण
+	do {
+		writeb(*data++, data_reg);
+	} while (--count);
+}
 
-अटल अंतरभूत व्योम
-sl811_पढ़ो_buf(काष्ठा sl811 *sl811, पूर्णांक addr, व्योम *buf, माप_प्रकार count)
-अणु
+static inline void
+sl811_read_buf(struct sl811 *sl811, int addr, void *buf, size_t count)
+{
 	u8 		*data;
-	व्योम __iomem	*data_reg;
+	void __iomem	*data_reg;
 
-	अगर (!count)
-		वापस;
-	ग_लिखोb(addr, sl811->addr_reg);
+	if (!count)
+		return;
+	writeb(addr, sl811->addr_reg);
 
 	data = buf;
 	data_reg = sl811->data_reg;
-	करो अणु
-		*data++ = पढ़ोb(data_reg);
-	पूर्ण जबतक (--count);
-पूर्ण
+	do {
+		*data++ = readb(data_reg);
+	} while (--count);
+}
 
 /*-------------------------------------------------------------------------*/
 
-#अगर_घोषित PACKET_TRACE
+#ifdef PACKET_TRACE
 #    define PACKET		pr_debug("sl811: "stuff)
-#अन्यथा
-#    define PACKET(stuff...)	करोअणुपूर्णजबतक(0)
-#पूर्ण_अगर
+#else
+#    define PACKET(stuff...)	do{}while(0)
+#endif

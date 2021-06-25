@@ -1,120 +1,119 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_POWERPC_BOOK3S_64_TLBFLUSH_HASH_H
-#घोषणा _ASM_POWERPC_BOOK3S_64_TLBFLUSH_HASH_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_POWERPC_BOOK3S_64_TLBFLUSH_HASH_H
+#define _ASM_POWERPC_BOOK3S_64_TLBFLUSH_HASH_H
 
 /*
- * TLB flushing क्रम 64-bit hash-MMU CPUs
+ * TLB flushing for 64-bit hash-MMU CPUs
  */
 
-#समावेश <linux/percpu.h>
-#समावेश <यंत्र/page.h>
+#include <linux/percpu.h>
+#include <asm/page.h>
 
-#घोषणा PPC64_TLB_BATCH_NR 192
+#define PPC64_TLB_BATCH_NR 192
 
-काष्ठा ppc64_tlb_batch अणु
-	पूर्णांक			active;
-	अचिन्हित दीर्घ		index;
-	काष्ठा mm_काष्ठा	*mm;
+struct ppc64_tlb_batch {
+	int			active;
+	unsigned long		index;
+	struct mm_struct	*mm;
 	real_pte_t		pte[PPC64_TLB_BATCH_NR];
-	अचिन्हित दीर्घ		vpn[PPC64_TLB_BATCH_NR];
-	अचिन्हित पूर्णांक		psize;
-	पूर्णांक			ssize;
-पूर्ण;
-DECLARE_PER_CPU(काष्ठा ppc64_tlb_batch, ppc64_tlb_batch);
+	unsigned long		vpn[PPC64_TLB_BATCH_NR];
+	unsigned int		psize;
+	int			ssize;
+};
+DECLARE_PER_CPU(struct ppc64_tlb_batch, ppc64_tlb_batch);
 
-बाह्य व्योम __flush_tlb_pending(काष्ठा ppc64_tlb_batch *batch);
+extern void __flush_tlb_pending(struct ppc64_tlb_batch *batch);
 
-#घोषणा __HAVE_ARCH_ENTER_LAZY_MMU_MODE
+#define __HAVE_ARCH_ENTER_LAZY_MMU_MODE
 
-अटल अंतरभूत व्योम arch_enter_lazy_mmu_mode(व्योम)
-अणु
-	काष्ठा ppc64_tlb_batch *batch;
+static inline void arch_enter_lazy_mmu_mode(void)
+{
+	struct ppc64_tlb_batch *batch;
 
-	अगर (radix_enabled())
-		वापस;
+	if (radix_enabled())
+		return;
 	batch = this_cpu_ptr(&ppc64_tlb_batch);
 	batch->active = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_leave_lazy_mmu_mode(व्योम)
-अणु
-	काष्ठा ppc64_tlb_batch *batch;
+static inline void arch_leave_lazy_mmu_mode(void)
+{
+	struct ppc64_tlb_batch *batch;
 
-	अगर (radix_enabled())
-		वापस;
+	if (radix_enabled())
+		return;
 	batch = this_cpu_ptr(&ppc64_tlb_batch);
 
-	अगर (batch->index)
+	if (batch->index)
 		__flush_tlb_pending(batch);
 	batch->active = 0;
-पूर्ण
+}
 
-#घोषणा arch_flush_lazy_mmu_mode()      करो अणुपूर्ण जबतक (0)
+#define arch_flush_lazy_mmu_mode()      do {} while (0)
 
-बाह्य व्योम hash__tlbiel_all(अचिन्हित पूर्णांक action);
+extern void hash__tlbiel_all(unsigned int action);
 
-बाह्य व्योम flush_hash_page(अचिन्हित दीर्घ vpn, real_pte_t pte, पूर्णांक psize,
-			    पूर्णांक ssize, अचिन्हित दीर्घ flags);
-बाह्य व्योम flush_hash_range(अचिन्हित दीर्घ number, पूर्णांक local);
-बाह्य व्योम flush_hash_hugepage(अचिन्हित दीर्घ vsid, अचिन्हित दीर्घ addr,
-				pmd_t *pmdp, अचिन्हित पूर्णांक psize, पूर्णांक ssize,
-				अचिन्हित दीर्घ flags);
-अटल अंतरभूत व्योम hash__local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-पूर्ण
+extern void flush_hash_page(unsigned long vpn, real_pte_t pte, int psize,
+			    int ssize, unsigned long flags);
+extern void flush_hash_range(unsigned long number, int local);
+extern void flush_hash_hugepage(unsigned long vsid, unsigned long addr,
+				pmd_t *pmdp, unsigned int psize, int ssize,
+				unsigned long flags);
+static inline void hash__local_flush_tlb_mm(struct mm_struct *mm)
+{
+}
 
-अटल अंतरभूत व्योम hash__flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-पूर्ण
+static inline void hash__flush_tlb_mm(struct mm_struct *mm)
+{
+}
 
-अटल अंतरभूत व्योम hash__local_flush_all_mm(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline void hash__local_flush_all_mm(struct mm_struct *mm)
+{
 	/*
-	 * There's no Page Walk Cache क्रम hash, so what is needed is
-	 * the same as flush_tlb_mm(), which करोesn't really make sense
-	 * with hash. So the only thing we could करो is flush the
-	 * entire LPID! Punt क्रम now, as it's not being used.
+	 * There's no Page Walk Cache for hash, so what is needed is
+	 * the same as flush_tlb_mm(), which doesn't really make sense
+	 * with hash. So the only thing we could do is flush the
+	 * entire LPID! Punt for now, as it's not being used.
 	 */
 	WARN_ON_ONCE(1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम hash__flush_all_mm(काष्ठा mm_काष्ठा *mm)
-अणु
+static inline void hash__flush_all_mm(struct mm_struct *mm)
+{
 	/*
-	 * There's no Page Walk Cache क्रम hash, so what is needed is
-	 * the same as flush_tlb_mm(), which करोesn't really make sense
-	 * with hash. So the only thing we could करो is flush the
-	 * entire LPID! Punt क्रम now, as it's not being used.
+	 * There's no Page Walk Cache for hash, so what is needed is
+	 * the same as flush_tlb_mm(), which doesn't really make sense
+	 * with hash. So the only thing we could do is flush the
+	 * entire LPID! Punt for now, as it's not being used.
 	 */
 	WARN_ON_ONCE(1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम hash__local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
-					  अचिन्हित दीर्घ vmaddr)
-अणु
-पूर्ण
+static inline void hash__local_flush_tlb_page(struct vm_area_struct *vma,
+					  unsigned long vmaddr)
+{
+}
 
-अटल अंतरभूत व्योम hash__flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
-				    अचिन्हित दीर्घ vmaddr)
-अणु
-पूर्ण
+static inline void hash__flush_tlb_page(struct vm_area_struct *vma,
+				    unsigned long vmaddr)
+{
+}
 
-अटल अंतरभूत व्योम hash__flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
-				     अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-पूर्ण
+static inline void hash__flush_tlb_range(struct vm_area_struct *vma,
+				     unsigned long start, unsigned long end)
+{
+}
 
-अटल अंतरभूत व्योम hash__flush_tlb_kernel_range(अचिन्हित दीर्घ start,
-					    अचिन्हित दीर्घ end)
-अणु
-पूर्ण
+static inline void hash__flush_tlb_kernel_range(unsigned long start,
+					    unsigned long end)
+{
+}
 
 
-काष्ठा mmu_gather;
-बाह्य व्योम hash__tlb_flush(काष्ठा mmu_gather *tlb);
-/* Private function क्रम use by PCI IO mapping code */
-बाह्य व्योम __flush_hash_table_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-बाह्य व्योम flush_tlb_pmd_range(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
-				अचिन्हित दीर्घ addr);
-#पूर्ण_अगर /*  _ASM_POWERPC_BOOK3S_64_TLBFLUSH_HASH_H */
+struct mmu_gather;
+extern void hash__tlb_flush(struct mmu_gather *tlb);
+/* Private function for use by PCI IO mapping code */
+extern void __flush_hash_table_range(unsigned long start, unsigned long end);
+extern void flush_tlb_pmd_range(struct mm_struct *mm, pmd_t *pmd,
+				unsigned long addr);
+#endif /*  _ASM_POWERPC_BOOK3S_64_TLBFLUSH_HASH_H */

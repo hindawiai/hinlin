@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Trapped io support
  *
@@ -7,133 +6,133 @@
  *
  * Intercept io operations by trapping.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/io_trapped.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/bitops.h>
+#include <linux/vmalloc.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <asm/mmu_context.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/io_trapped.h>
 
-#घोषणा TRAPPED_PAGES_MAX 16
+#define TRAPPED_PAGES_MAX 16
 
-#अगर_घोषित CONFIG_HAS_IOPORT_MAP
+#ifdef CONFIG_HAS_IOPORT_MAP
 LIST_HEAD(trapped_io);
 EXPORT_SYMBOL_GPL(trapped_io);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAS_IOMEM
+#endif
+#ifdef CONFIG_HAS_IOMEM
 LIST_HEAD(trapped_mem);
 EXPORT_SYMBOL_GPL(trapped_mem);
-#पूर्ण_अगर
-अटल DEFINE_SPINLOCK(trapped_lock);
+#endif
+static DEFINE_SPINLOCK(trapped_lock);
 
-अटल पूर्णांक trapped_io_disable __पढ़ो_mostly;
+static int trapped_io_disable __read_mostly;
 
-अटल पूर्णांक __init trapped_io_setup(अक्षर *__unused)
-अणु
+static int __init trapped_io_setup(char *__unused)
+{
 	trapped_io_disable = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("noiotrap", trapped_io_setup);
 
-पूर्णांक रेजिस्टर_trapped_io(काष्ठा trapped_io *tiop)
-अणु
-	काष्ठा resource *res;
-	अचिन्हित दीर्घ len = 0, flags = 0;
-	काष्ठा page *pages[TRAPPED_PAGES_MAX];
-	पूर्णांक k, n;
+int register_trapped_io(struct trapped_io *tiop)
+{
+	struct resource *res;
+	unsigned long len = 0, flags = 0;
+	struct page *pages[TRAPPED_PAGES_MAX];
+	int k, n;
 
-	अगर (unlikely(trapped_io_disable))
-		वापस 0;
+	if (unlikely(trapped_io_disable))
+		return 0;
 
-	/* काष्ठाure must be page aligned */
-	अगर ((अचिन्हित दीर्घ)tiop & (PAGE_SIZE - 1))
-		जाओ bad;
+	/* structure must be page aligned */
+	if ((unsigned long)tiop & (PAGE_SIZE - 1))
+		goto bad;
 
-	क्रम (k = 0; k < tiop->num_resources; k++) अणु
+	for (k = 0; k < tiop->num_resources; k++) {
 		res = tiop->resource + k;
 		len += roundup(resource_size(res), PAGE_SIZE);
 		flags |= res->flags;
-	पूर्ण
+	}
 
 	/* support IORESOURCE_IO _or_ MEM, not both */
-	अगर (hweight_दीर्घ(flags) != 1)
-		जाओ bad;
+	if (hweight_long(flags) != 1)
+		goto bad;
 
 	n = len >> PAGE_SHIFT;
 
-	अगर (n >= TRAPPED_PAGES_MAX)
-		जाओ bad;
+	if (n >= TRAPPED_PAGES_MAX)
+		goto bad;
 
-	क्रम (k = 0; k < n; k++)
+	for (k = 0; k < n; k++)
 		pages[k] = virt_to_page(tiop);
 
 	tiop->virt_base = vmap(pages, n, VM_MAP, PAGE_NONE);
-	अगर (!tiop->virt_base)
-		जाओ bad;
+	if (!tiop->virt_base)
+		goto bad;
 
 	len = 0;
-	क्रम (k = 0; k < tiop->num_resources; k++) अणु
+	for (k = 0; k < tiop->num_resources; k++) {
 		res = tiop->resource + k;
 		pr_info("trapped io 0x%08lx overrides %s 0x%08lx\n",
-		       (अचिन्हित दीर्घ)(tiop->virt_base + len),
+		       (unsigned long)(tiop->virt_base + len),
 		       res->flags & IORESOURCE_IO ? "io" : "mmio",
-		       (अचिन्हित दीर्घ)res->start);
+		       (unsigned long)res->start);
 		len += roundup(resource_size(res), PAGE_SIZE);
-	पूर्ण
+	}
 
 	tiop->magic = IO_TRAPPED_MAGIC;
 	INIT_LIST_HEAD(&tiop->list);
 	spin_lock_irq(&trapped_lock);
-#अगर_घोषित CONFIG_HAS_IOPORT_MAP
-	अगर (flags & IORESOURCE_IO)
+#ifdef CONFIG_HAS_IOPORT_MAP
+	if (flags & IORESOURCE_IO)
 		list_add(&tiop->list, &trapped_io);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAS_IOMEM
-	अगर (flags & IORESOURCE_MEM)
+#endif
+#ifdef CONFIG_HAS_IOMEM
+	if (flags & IORESOURCE_MEM)
 		list_add(&tiop->list, &trapped_mem);
-#पूर्ण_अगर
+#endif
 	spin_unlock_irq(&trapped_lock);
 
-	वापस 0;
+	return 0;
  bad:
 	pr_warn("unable to install trapped io filter\n");
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-व्योम __iomem *match_trapped_io_handler(काष्ठा list_head *list,
-				       अचिन्हित दीर्घ offset,
-				       अचिन्हित दीर्घ size)
-अणु
-	अचिन्हित दीर्घ voffs;
-	काष्ठा trapped_io *tiop;
-	काष्ठा resource *res;
-	पूर्णांक k, len;
-	अचिन्हित दीर्घ flags;
+void __iomem *match_trapped_io_handler(struct list_head *list,
+				       unsigned long offset,
+				       unsigned long size)
+{
+	unsigned long voffs;
+	struct trapped_io *tiop;
+	struct resource *res;
+	int k, len;
+	unsigned long flags;
 
 	spin_lock_irqsave(&trapped_lock, flags);
-	list_क्रम_each_entry(tiop, list, list) अणु
+	list_for_each_entry(tiop, list, list) {
 		voffs = 0;
-		क्रम (k = 0; k < tiop->num_resources; k++) अणु
+		for (k = 0; k < tiop->num_resources; k++) {
 			res = tiop->resource + k;
-			अगर (res->start == offset) अणु
+			if (res->start == offset) {
 				spin_unlock_irqrestore(&trapped_lock, flags);
-				वापस tiop->virt_base + voffs;
-			पूर्ण
+				return tiop->virt_base + voffs;
+			}
 
 			len = resource_size(res);
 			voffs += roundup(len, PAGE_SIZE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&trapped_lock, flags);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा trapped_io *lookup_tiop(अचिन्हित दीर्घ address)
-अणु
+static struct trapped_io *lookup_tiop(unsigned long address)
+{
 	pgd_t *pgd_k;
 	p4d_t *p4d_k;
 	pud_t *pud_k;
@@ -142,156 +141,156 @@ __setup("noiotrap", trapped_io_setup);
 	pte_t entry;
 
 	pgd_k = swapper_pg_dir + pgd_index(address);
-	अगर (!pgd_present(*pgd_k))
-		वापस शून्य;
+	if (!pgd_present(*pgd_k))
+		return NULL;
 
 	p4d_k = p4d_offset(pgd_k, address);
-	अगर (!p4d_present(*p4d_k))
-		वापस शून्य;
+	if (!p4d_present(*p4d_k))
+		return NULL;
 
 	pud_k = pud_offset(p4d_k, address);
-	अगर (!pud_present(*pud_k))
-		वापस शून्य;
+	if (!pud_present(*pud_k))
+		return NULL;
 
 	pmd_k = pmd_offset(pud_k, address);
-	अगर (!pmd_present(*pmd_k))
-		वापस शून्य;
+	if (!pmd_present(*pmd_k))
+		return NULL;
 
 	pte_k = pte_offset_kernel(pmd_k, address);
 	entry = *pte_k;
 
-	वापस pfn_to_kaddr(pte_pfn(entry));
-पूर्ण
+	return pfn_to_kaddr(pte_pfn(entry));
+}
 
-अटल अचिन्हित दीर्घ lookup_address(काष्ठा trapped_io *tiop,
-				    अचिन्हित दीर्घ address)
-अणु
-	काष्ठा resource *res;
-	अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)tiop->virt_base;
-	अचिन्हित दीर्घ len;
-	पूर्णांक k;
+static unsigned long lookup_address(struct trapped_io *tiop,
+				    unsigned long address)
+{
+	struct resource *res;
+	unsigned long vaddr = (unsigned long)tiop->virt_base;
+	unsigned long len;
+	int k;
 
-	क्रम (k = 0; k < tiop->num_resources; k++) अणु
+	for (k = 0; k < tiop->num_resources; k++) {
 		res = tiop->resource + k;
 		len = roundup(resource_size(res), PAGE_SIZE);
-		अगर (address < (vaddr + len))
-			वापस res->start + (address - vaddr);
+		if (address < (vaddr + len))
+			return res->start + (address - vaddr);
 		vaddr += len;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ copy_word(अचिन्हित दीर्घ src_addr, पूर्णांक src_len,
-				    अचिन्हित दीर्घ dst_addr, पूर्णांक dst_len)
-अणु
-	अचिन्हित दीर्घ दीर्घ पंचांगp = 0;
+static unsigned long long copy_word(unsigned long src_addr, int src_len,
+				    unsigned long dst_addr, int dst_len)
+{
+	unsigned long long tmp = 0;
 
-	चयन (src_len) अणु
-	हाल 1:
-		पंचांगp = __raw_पढ़ोb(src_addr);
-		अवरोध;
-	हाल 2:
-		पंचांगp = __raw_पढ़ोw(src_addr);
-		अवरोध;
-	हाल 4:
-		पंचांगp = __raw_पढ़ोl(src_addr);
-		अवरोध;
-	हाल 8:
-		पंचांगp = __raw_पढ़ोq(src_addr);
-		अवरोध;
-	पूर्ण
+	switch (src_len) {
+	case 1:
+		tmp = __raw_readb(src_addr);
+		break;
+	case 2:
+		tmp = __raw_readw(src_addr);
+		break;
+	case 4:
+		tmp = __raw_readl(src_addr);
+		break;
+	case 8:
+		tmp = __raw_readq(src_addr);
+		break;
+	}
 
-	चयन (dst_len) अणु
-	हाल 1:
-		__raw_ग_लिखोb(पंचांगp, dst_addr);
-		अवरोध;
-	हाल 2:
-		__raw_ग_लिखोw(पंचांगp, dst_addr);
-		अवरोध;
-	हाल 4:
-		__raw_ग_लिखोl(पंचांगp, dst_addr);
-		अवरोध;
-	हाल 8:
-		__raw_ग_लिखोq(पंचांगp, dst_addr);
-		अवरोध;
-	पूर्ण
+	switch (dst_len) {
+	case 1:
+		__raw_writeb(tmp, dst_addr);
+		break;
+	case 2:
+		__raw_writew(tmp, dst_addr);
+		break;
+	case 4:
+		__raw_writel(tmp, dst_addr);
+		break;
+	case 8:
+		__raw_writeq(tmp, dst_addr);
+		break;
+	}
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-अटल अचिन्हित दीर्घ from_device(व्योम *dst, स्थिर व्योम *src, अचिन्हित दीर्घ cnt)
-अणु
-	काष्ठा trapped_io *tiop;
-	अचिन्हित दीर्घ src_addr = (अचिन्हित दीर्घ)src;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
+static unsigned long from_device(void *dst, const void *src, unsigned long cnt)
+{
+	struct trapped_io *tiop;
+	unsigned long src_addr = (unsigned long)src;
+	unsigned long long tmp;
 
 	pr_debug("trapped io read 0x%08lx (%ld)\n", src_addr, cnt);
 	tiop = lookup_tiop(src_addr);
 	WARN_ON(!tiop || (tiop->magic != IO_TRAPPED_MAGIC));
 
 	src_addr = lookup_address(tiop, src_addr);
-	अगर (!src_addr)
-		वापस cnt;
+	if (!src_addr)
+		return cnt;
 
-	पंचांगp = copy_word(src_addr,
-			max_t(अचिन्हित दीर्घ, cnt,
+	tmp = copy_word(src_addr,
+			max_t(unsigned long, cnt,
 			      (tiop->minimum_bus_width / 8)),
-			(अचिन्हित दीर्घ)dst, cnt);
+			(unsigned long)dst, cnt);
 
-	pr_debug("trapped io read 0x%08lx -> 0x%08llx\n", src_addr, पंचांगp);
-	वापस 0;
-पूर्ण
+	pr_debug("trapped io read 0x%08lx -> 0x%08llx\n", src_addr, tmp);
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ to_device(व्योम *dst, स्थिर व्योम *src, अचिन्हित दीर्घ cnt)
-अणु
-	काष्ठा trapped_io *tiop;
-	अचिन्हित दीर्घ dst_addr = (अचिन्हित दीर्घ)dst;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
+static unsigned long to_device(void *dst, const void *src, unsigned long cnt)
+{
+	struct trapped_io *tiop;
+	unsigned long dst_addr = (unsigned long)dst;
+	unsigned long long tmp;
 
 	pr_debug("trapped io write 0x%08lx (%ld)\n", dst_addr, cnt);
 	tiop = lookup_tiop(dst_addr);
 	WARN_ON(!tiop || (tiop->magic != IO_TRAPPED_MAGIC));
 
 	dst_addr = lookup_address(tiop, dst_addr);
-	अगर (!dst_addr)
-		वापस cnt;
+	if (!dst_addr)
+		return cnt;
 
-	पंचांगp = copy_word((अचिन्हित दीर्घ)src, cnt,
-			dst_addr, max_t(अचिन्हित दीर्घ, cnt,
+	tmp = copy_word((unsigned long)src, cnt,
+			dst_addr, max_t(unsigned long, cnt,
 					(tiop->minimum_bus_width / 8)));
 
-	pr_debug("trapped io write 0x%08lx -> 0x%08llx\n", dst_addr, पंचांगp);
-	वापस 0;
-पूर्ण
+	pr_debug("trapped io write 0x%08lx -> 0x%08llx\n", dst_addr, tmp);
+	return 0;
+}
 
-अटल काष्ठा mem_access trapped_io_access = अणु
+static struct mem_access trapped_io_access = {
 	from_device,
 	to_device,
-पूर्ण;
+};
 
-पूर्णांक handle_trapped_io(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address)
-अणु
+int handle_trapped_io(struct pt_regs *regs, unsigned long address)
+{
 	mm_segment_t oldfs;
-	insn_माप_प्रकार inकाष्ठाion;
-	पूर्णांक पंचांगp;
+	insn_size_t instruction;
+	int tmp;
 
-	अगर (trapped_io_disable)
-		वापस 0;
-	अगर (!lookup_tiop(address))
-		वापस 0;
+	if (trapped_io_disable)
+		return 0;
+	if (!lookup_tiop(address))
+		return 0;
 
 	WARN_ON(user_mode(regs));
 
 	oldfs = get_fs();
 	set_fs(KERNEL_DS);
-	अगर (copy_from_user(&inकाष्ठाion, (व्योम *)(regs->pc),
-			   माप(inकाष्ठाion))) अणु
+	if (copy_from_user(&instruction, (void *)(regs->pc),
+			   sizeof(instruction))) {
 		set_fs(oldfs);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	पंचांगp = handle_unaligned_access(inकाष्ठाion, regs,
+	tmp = handle_unaligned_access(instruction, regs,
 				      &trapped_io_access, 1, address);
 	set_fs(oldfs);
-	वापस पंचांगp == 0;
-पूर्ण
+	return tmp == 0;
+}

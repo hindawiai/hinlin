@@ -1,153 +1,152 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_SETUP_H
-#घोषणा _ASM_X86_SETUP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_SETUP_H
+#define _ASM_X86_SETUP_H
 
-#समावेश <uapi/यंत्र/setup.h>
+#include <uapi/asm/setup.h>
 
-#घोषणा COMMAND_LINE_SIZE 2048
+#define COMMAND_LINE_SIZE 2048
 
-#समावेश <linux/linkage.h>
-#समावेश <यंत्र/page_types.h>
+#include <linux/linkage.h>
+#include <asm/page_types.h>
 
-#अगर_घोषित __i386__
+#ifdef __i386__
 
-#समावेश <linux/pfn.h>
+#include <linux/pfn.h>
 /*
- * Reserved space क्रम vदो_स्मृति and iomap - defined in यंत्र/page.h
+ * Reserved space for vmalloc and iomap - defined in asm/page.h
  */
-#घोषणा MAXMEM_PFN	PFN_DOWN(MAXMEM)
-#घोषणा MAX_NONPAE_PFN	(1 << 20)
+#define MAXMEM_PFN	PFN_DOWN(MAXMEM)
+#define MAX_NONPAE_PFN	(1 << 20)
 
-#पूर्ण_अगर /* __i386__ */
+#endif /* __i386__ */
 
-#घोषणा PARAM_SIZE 4096		/* माप(काष्ठा boot_params) */
+#define PARAM_SIZE 4096		/* sizeof(struct boot_params) */
 
-#घोषणा OLD_CL_MAGIC		0xA33F
-#घोषणा OLD_CL_ADDRESS		0x020	/* Relative to real mode data */
-#घोषणा NEW_CL_POINTER		0x228	/* Relative to real mode data */
+#define OLD_CL_MAGIC		0xA33F
+#define OLD_CL_ADDRESS		0x020	/* Relative to real mode data */
+#define NEW_CL_POINTER		0x228	/* Relative to real mode data */
 
-#अगर_अघोषित __ASSEMBLY__
-#समावेश <यंत्र/bootparam.h>
-#समावेश <यंत्र/x86_init.h>
+#ifndef __ASSEMBLY__
+#include <asm/bootparam.h>
+#include <asm/x86_init.h>
 
-बाह्य u64 relocated_ramdisk;
+extern u64 relocated_ramdisk;
 
-/* Interrupt control क्रम vSMPowered x86_64 प्रणालीs */
-#अगर_घोषित CONFIG_X86_64
-व्योम vsmp_init(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम vsmp_init(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+/* Interrupt control for vSMPowered x86_64 systems */
+#ifdef CONFIG_X86_64
+void vsmp_init(void);
+#else
+static inline void vsmp_init(void) { }
+#endif
 
-काष्ठा pt_regs;
+struct pt_regs;
 
-व्योम setup_bios_corruption_check(व्योम);
-व्योम early_platक्रमm_quirks(व्योम);
+void setup_bios_corruption_check(void);
+void early_platform_quirks(void);
 
-बाह्य अचिन्हित दीर्घ saved_video_mode;
+extern unsigned long saved_video_mode;
 
-बाह्य व्योम reserve_standard_io_resources(व्योम);
-बाह्य व्योम i386_reserve_resources(व्योम);
-बाह्य अचिन्हित दीर्घ __startup_64(अचिन्हित दीर्घ physaddr, काष्ठा boot_params *bp);
-बाह्य अचिन्हित दीर्घ __startup_secondary_64(व्योम);
-बाह्य व्योम startup_64_setup_env(अचिन्हित दीर्घ physbase);
-बाह्य व्योम early_setup_idt(व्योम);
-बाह्य व्योम __init करो_early_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr);
+extern void reserve_standard_io_resources(void);
+extern void i386_reserve_resources(void);
+extern unsigned long __startup_64(unsigned long physaddr, struct boot_params *bp);
+extern unsigned long __startup_secondary_64(void);
+extern void startup_64_setup_env(unsigned long physbase);
+extern void early_setup_idt(void);
+extern void __init do_early_exception(struct pt_regs *regs, int trapnr);
 
-#अगर_घोषित CONFIG_X86_INTEL_MID
-बाह्य व्योम x86_पूर्णांकel_mid_early_setup(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम x86_पूर्णांकel_mid_early_setup(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_INTEL_MID
+extern void x86_intel_mid_early_setup(void);
+#else
+static inline void x86_intel_mid_early_setup(void) { }
+#endif
 
-#अगर_घोषित CONFIG_X86_INTEL_CE
-बाह्य व्योम x86_ce4100_early_setup(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम x86_ce4100_early_setup(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_X86_INTEL_CE
+extern void x86_ce4100_early_setup(void);
+#else
+static inline void x86_ce4100_early_setup(void) { }
+#endif
 
-#अगर_अघोषित _SETUP
+#ifndef _SETUP
 
-#समावेश <यंत्र/espfix.h>
-#समावेश <linux/kernel.h>
+#include <asm/espfix.h>
+#include <linux/kernel.h>
 
 /*
- * This is set up by the setup-routine at boot-समय
+ * This is set up by the setup-routine at boot-time
  */
-बाह्य काष्ठा boot_params boot_params;
-बाह्य अक्षर _text[];
+extern struct boot_params boot_params;
+extern char _text[];
 
-अटल अंतरभूत bool kaslr_enabled(व्योम)
-अणु
-	वापस IS_ENABLED(CONFIG_RANDOMIZE_MEMORY) &&
+static inline bool kaslr_enabled(void)
+{
+	return IS_ENABLED(CONFIG_RANDOMIZE_MEMORY) &&
 		!!(boot_params.hdr.loadflags & KASLR_FLAG);
-पूर्ण
+}
 
 /*
- * Apply no अक्रमomization अगर KASLR was disabled at boot or अगर KASAN
- * is enabled. KASAN shaकरोw mappings rely on regions being PGD aligned.
+ * Apply no randomization if KASLR was disabled at boot or if KASAN
+ * is enabled. KASAN shadow mappings rely on regions being PGD aligned.
  */
-अटल अंतरभूत bool kaslr_memory_enabled(व्योम)
-अणु
-	वापस kaslr_enabled() && !IS_ENABLED(CONFIG_KASAN);
-पूर्ण
+static inline bool kaslr_memory_enabled(void)
+{
+	return kaslr_enabled() && !IS_ENABLED(CONFIG_KASAN);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ kaslr_offset(व्योम)
-अणु
-	वापस (अचिन्हित दीर्घ)&_text - __START_KERNEL;
-पूर्ण
+static inline unsigned long kaslr_offset(void)
+{
+	return (unsigned long)&_text - __START_KERNEL;
+}
 
 /*
  * Do NOT EVER look at the BIOS memory size location.
- * It करोes not work on many machines.
+ * It does not work on many machines.
  */
-#घोषणा LOWMEMSIZE()	(0x9f000)
+#define LOWMEMSIZE()	(0x9f000)
 
 /* exceedingly early brk-like allocator */
-बाह्य अचिन्हित दीर्घ _brk_end;
-व्योम *extend_brk(माप_प्रकार size, माप_प्रकार align);
+extern unsigned long _brk_end;
+void *extend_brk(size_t size, size_t align);
 
 /*
  * Reserve space in the brk section.  The name must be unique within
  * the file, and somewhat descriptive.  The size is in bytes.  Must be
  * used at file scope.
  *
- * (This uses a temp function to wrap the यंत्र so we can pass it the
+ * (This uses a temp function to wrap the asm so we can pass it the
  * size parameter; otherwise we wouldn't be able to.  We can't use a
  * "section" attribute on a normal variable because it always ends up
  * being @progbits, which ends up allocating space in the vmlinux
  * executable.)
  */
-#घोषणा RESERVE_BRK(name,sz)						\
-	अटल व्योम __section(".discard.text") __used notrace		\
-	__brk_reservation_fn_##name##__(व्योम) अणु				\
-		यंत्र अस्थिर (						\
+#define RESERVE_BRK(name,sz)						\
+	static void __section(".discard.text") __used notrace		\
+	__brk_reservation_fn_##name##__(void) {				\
+		asm volatile (						\
 			".pushsection .brk_reservation,\"aw\",@nobits;" \
 			".brk." #name ":"				\
 			" 1:.skip %c0;"					\
 			" .size .brk." #name ", . - 1b;"		\
 			" .popsection"					\
 			: : "i" (sz));					\
-	पूर्ण
+	}
 
-बाह्य व्योम probe_roms(व्योम);
-#अगर_घोषित __i386__
+extern void probe_roms(void);
+#ifdef __i386__
 
-यंत्रlinkage व्योम __init i386_start_kernel(व्योम);
+asmlinkage void __init i386_start_kernel(void);
 
-#अन्यथा
-यंत्रlinkage व्योम __init x86_64_start_kernel(अक्षर *real_mode);
-यंत्रlinkage व्योम __init x86_64_start_reservations(अक्षर *real_mode_data);
+#else
+asmlinkage void __init x86_64_start_kernel(char *real_mode);
+asmlinkage void __init x86_64_start_reservations(char *real_mode_data);
 
-#पूर्ण_अगर /* __i386__ */
-#पूर्ण_अगर /* _SETUP */
-#अन्यथा
-#घोषणा RESERVE_BRK(name,sz)				\
+#endif /* __i386__ */
+#endif /* _SETUP */
+#else
+#define RESERVE_BRK(name,sz)				\
 	.pushsection .brk_reservation,"aw",@nobits;	\
 .brk.name:						\
 1:	.skip sz;					\
 	.size .brk.name,.-1b;				\
 	.popsection
-#पूर्ण_अगर /* __ASSEMBLY__ */
-#पूर्ण_अगर /* _ASM_X86_SETUP_H */
+#endif /* __ASSEMBLY__ */
+#endif /* _ASM_X86_SETUP_H */

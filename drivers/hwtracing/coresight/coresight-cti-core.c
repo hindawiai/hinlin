@@ -1,118 +1,117 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018 Linaro Limited, All rights reserved.
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/coresight.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/cpuhotplug.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/property.h>
-#समावेश <linux/spinlock.h>
+#include <linux/amba/bus.h>
+#include <linux/atomic.h>
+#include <linux/bits.h>
+#include <linux/coresight.h>
+#include <linux/cpu_pm.h>
+#include <linux/cpuhotplug.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/pm_runtime.h>
+#include <linux/property.h>
+#include <linux/spinlock.h>
 
-#समावेश "coresight-priv.h"
-#समावेश "coresight-cti.h"
+#include "coresight-priv.h"
+#include "coresight-cti.h"
 
 /**
  * CTI devices can be associated with a PE, or be connected to CoreSight
  * hardware. We have a list of all CTIs irrespective of CPU bound or
  * otherwise.
  *
- * We assume that the non-CPU CTIs are always घातered as we करो with sinks etc.
+ * We assume that the non-CPU CTIs are always powered as we do with sinks etc.
  *
- * We leave the client to figure out अगर all the CTIs are पूर्णांकerconnected with
- * the same CTM, in general this is the हाल but करोes not always have to be.
+ * We leave the client to figure out if all the CTIs are interconnected with
+ * the same CTM, in general this is the case but does not always have to be.
  */
 
 /* net of CTI devices connected via CTM */
-अटल LIST_HEAD(ect_net);
+static LIST_HEAD(ect_net);
 
 /* protect the list */
-अटल DEFINE_MUTEX(ect_mutex);
+static DEFINE_MUTEX(ect_mutex);
 
-#घोषणा csdev_to_cti_drvdata(csdev)	\
+#define csdev_to_cti_drvdata(csdev)	\
 	dev_get_drvdata(csdev->dev.parent)
 
-/* घातer management handling */
-अटल पूर्णांक nr_cti_cpu;
+/* power management handling */
+static int nr_cti_cpu;
 
-/* quick lookup list क्रम CPU bound CTIs when घातer handling */
-अटल काष्ठा cti_drvdata *cti_cpu_drvdata[NR_CPUS];
+/* quick lookup list for CPU bound CTIs when power handling */
+static struct cti_drvdata *cti_cpu_drvdata[NR_CPUS];
 
 /*
  * CTI naming. CTI bound to cores will have the name cti_cpu<N> where
  * N is the CPU ID. System CTIs will have the name cti_sys<I> where I
  * is an index allocated by order of discovery.
  *
- * CTI device name list - क्रम CTI not bound to cores.
+ * CTI device name list - for CTI not bound to cores.
  */
 DEFINE_CORESIGHT_DEVLIST(cti_sys_devs, "cti_sys");
 
-/* ग_लिखो set of regs to hardware - call with spinlock claimed */
-व्योम cti_ग_लिखो_all_hw_regs(काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_config *config = &drvdata->config;
-	पूर्णांक i;
+/* write set of regs to hardware - call with spinlock claimed */
+void cti_write_all_hw_regs(struct cti_drvdata *drvdata)
+{
+	struct cti_config *config = &drvdata->config;
+	int i;
 
 	CS_UNLOCK(drvdata->base);
 
-	/* disable CTI beक्रमe writing रेजिस्टरs */
-	ग_लिखोl_relaxed(0, drvdata->base + CTICONTROL);
+	/* disable CTI before writing registers */
+	writel_relaxed(0, drvdata->base + CTICONTROL);
 
-	/* ग_लिखो the CTI trigger रेजिस्टरs */
-	क्रम (i = 0; i < config->nr_trig_max; i++) अणु
-		ग_लिखोl_relaxed(config->ctiinen[i], drvdata->base + CTIINEN(i));
-		ग_लिखोl_relaxed(config->ctiouten[i],
+	/* write the CTI trigger registers */
+	for (i = 0; i < config->nr_trig_max; i++) {
+		writel_relaxed(config->ctiinen[i], drvdata->base + CTIINEN(i));
+		writel_relaxed(config->ctiouten[i],
 			       drvdata->base + CTIOUTEN(i));
-	पूर्ण
+	}
 
 	/* other regs */
-	ग_लिखोl_relaxed(config->ctigate, drvdata->base + CTIGATE);
-	ग_लिखोl_relaxed(config->asicctl, drvdata->base + ASICCTL);
-	ग_लिखोl_relaxed(config->ctiappset, drvdata->base + CTIAPPSET);
+	writel_relaxed(config->ctigate, drvdata->base + CTIGATE);
+	writel_relaxed(config->asicctl, drvdata->base + ASICCTL);
+	writel_relaxed(config->ctiappset, drvdata->base + CTIAPPSET);
 
 	/* re-enable CTI */
-	ग_लिखोl_relaxed(1, drvdata->base + CTICONTROL);
+	writel_relaxed(1, drvdata->base + CTICONTROL);
 
 	CS_LOCK(drvdata->base);
-पूर्ण
+}
 
-/* ग_लिखो regs to hardware and enable */
-अटल पूर्णांक cti_enable_hw(काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_config *config = &drvdata->config;
-	काष्ठा device *dev = &drvdata->csdev->dev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = 0;
+/* write regs to hardware and enable */
+static int cti_enable_hw(struct cti_drvdata *drvdata)
+{
+	struct cti_config *config = &drvdata->config;
+	struct device *dev = &drvdata->csdev->dev;
+	unsigned long flags;
+	int rc = 0;
 
-	pm_runसमय_get_sync(dev->parent);
+	pm_runtime_get_sync(dev->parent);
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 
-	/* no need to करो anything अगर enabled or unघातered*/
-	अगर (config->hw_enabled || !config->hw_घातered)
-		जाओ cti_state_unchanged;
+	/* no need to do anything if enabled or unpowered*/
+	if (config->hw_enabled || !config->hw_powered)
+		goto cti_state_unchanged;
 
 	/* claim the device */
 	rc = coresight_claim_device(drvdata->csdev);
-	अगर (rc)
-		जाओ cti_err_not_enabled;
+	if (rc)
+		goto cti_err_not_enabled;
 
-	cti_ग_लिखो_all_hw_regs(drvdata);
+	cti_write_all_hw_regs(drvdata);
 
 	config->hw_enabled = true;
 	atomic_inc(&drvdata->config.enable_req_count);
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
-	वापस rc;
+	return rc;
 
 cti_state_unchanged:
 	atomic_inc(&drvdata->config.enable_req_count);
@@ -120,151 +119,151 @@ cti_state_unchanged:
 	/* cannot enable due to error */
 cti_err_not_enabled:
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
-	pm_runसमय_put(dev->parent);
-	वापस rc;
-पूर्ण
+	pm_runtime_put(dev->parent);
+	return rc;
+}
 
 /* re-enable CTI on CPU when using CPU hotplug */
-अटल व्योम cti_cpuhp_enable_hw(काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_config *config = &drvdata->config;
+static void cti_cpuhp_enable_hw(struct cti_drvdata *drvdata)
+{
+	struct cti_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
-	config->hw_घातered = true;
+	config->hw_powered = true;
 
-	/* no need to करो anything अगर no enable request */
-	अगर (!atomic_पढ़ो(&drvdata->config.enable_req_count))
-		जाओ cti_hp_not_enabled;
+	/* no need to do anything if no enable request */
+	if (!atomic_read(&drvdata->config.enable_req_count))
+		goto cti_hp_not_enabled;
 
 	/* try to claim the device */
-	अगर (coresight_claim_device(drvdata->csdev))
-		जाओ cti_hp_not_enabled;
+	if (coresight_claim_device(drvdata->csdev))
+		goto cti_hp_not_enabled;
 
-	cti_ग_लिखो_all_hw_regs(drvdata);
+	cti_write_all_hw_regs(drvdata);
 	config->hw_enabled = true;
 	spin_unlock(&drvdata->spinlock);
-	वापस;
+	return;
 
 	/* did not re-enable due to no claim / no request */
 cti_hp_not_enabled:
 	spin_unlock(&drvdata->spinlock);
-पूर्ण
+}
 
 /* disable hardware */
-अटल पूर्णांक cti_disable_hw(काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_config *config = &drvdata->config;
-	काष्ठा device *dev = &drvdata->csdev->dev;
-	काष्ठा coresight_device *csdev = drvdata->csdev;
+static int cti_disable_hw(struct cti_drvdata *drvdata)
+{
+	struct cti_config *config = &drvdata->config;
+	struct device *dev = &drvdata->csdev->dev;
+	struct coresight_device *csdev = drvdata->csdev;
 
 	spin_lock(&drvdata->spinlock);
 
 	/* check refcount - disable on 0 */
-	अगर (atomic_dec_वापस(&drvdata->config.enable_req_count) > 0)
-		जाओ cti_not_disabled;
+	if (atomic_dec_return(&drvdata->config.enable_req_count) > 0)
+		goto cti_not_disabled;
 
-	/* no need to करो anything अगर disabled or cpu unघातered */
-	अगर (!config->hw_enabled || !config->hw_घातered)
-		जाओ cti_not_disabled;
+	/* no need to do anything if disabled or cpu unpowered */
+	if (!config->hw_enabled || !config->hw_powered)
+		goto cti_not_disabled;
 
 	CS_UNLOCK(drvdata->base);
 
 	/* disable CTI */
-	ग_लिखोl_relaxed(0, drvdata->base + CTICONTROL);
+	writel_relaxed(0, drvdata->base + CTICONTROL);
 	config->hw_enabled = false;
 
 	coresight_disclaim_device_unlocked(csdev);
 	CS_LOCK(drvdata->base);
 	spin_unlock(&drvdata->spinlock);
-	pm_runसमय_put(dev);
-	वापस 0;
+	pm_runtime_put(dev);
+	return 0;
 
 	/* not disabled this call */
 cti_not_disabled:
 	spin_unlock(&drvdata->spinlock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम cti_ग_लिखो_single_reg(काष्ठा cti_drvdata *drvdata, पूर्णांक offset, u32 value)
-अणु
+void cti_write_single_reg(struct cti_drvdata *drvdata, int offset, u32 value)
+{
 	CS_UNLOCK(drvdata->base);
-	ग_लिखोl_relaxed(value, drvdata->base + offset);
+	writel_relaxed(value, drvdata->base + offset);
 	CS_LOCK(drvdata->base);
-पूर्ण
+}
 
-व्योम cti_ग_लिखो_पूर्णांकack(काष्ठा device *dev, u32 ackval)
-अणु
-	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	काष्ठा cti_config *config = &drvdata->config;
+void cti_write_intack(struct device *dev, u32 ackval)
+{
+	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	struct cti_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
-	/* ग_लिखो अगर enabled */
-	अगर (cti_active(config))
-		cti_ग_लिखो_single_reg(drvdata, CTIINTACK, ackval);
+	/* write if enabled */
+	if (cti_active(config))
+		cti_write_single_reg(drvdata, CTIINTACK, ackval);
 	spin_unlock(&drvdata->spinlock);
-पूर्ण
+}
 
 /*
- * Look at the HW DEVID रेजिस्टर क्रम some of the HW settings.
+ * Look at the HW DEVID register for some of the HW settings.
  * DEVID[15:8] - max number of in / out triggers.
  */
-#घोषणा CTI_DEVID_MAXTRIGS(devid_val) ((पूर्णांक) BMVAL(devid_val, 8, 15))
+#define CTI_DEVID_MAXTRIGS(devid_val) ((int) BMVAL(devid_val, 8, 15))
 
 /* DEVID[19:16] - number of CTM channels */
-#घोषणा CTI_DEVID_CTMCHANNELS(devid_val) ((पूर्णांक) BMVAL(devid_val, 16, 19))
+#define CTI_DEVID_CTMCHANNELS(devid_val) ((int) BMVAL(devid_val, 16, 19))
 
-अटल व्योम cti_set_शेष_config(काष्ठा device *dev,
-				   काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_config *config = &drvdata->config;
+static void cti_set_default_config(struct device *dev,
+				   struct cti_drvdata *drvdata)
+{
+	struct cti_config *config = &drvdata->config;
 	u32 devid;
 
-	devid = पढ़ोl_relaxed(drvdata->base + CORESIGHT_DEVID);
+	devid = readl_relaxed(drvdata->base + CORESIGHT_DEVID);
 	config->nr_trig_max = CTI_DEVID_MAXTRIGS(devid);
 
 	/*
 	 * no current hardware should exceed this, but protect the driver
-	 * in हाल of fault / out of spec hw
+	 * in case of fault / out of spec hw
 	 */
-	अगर (config->nr_trig_max > CTIINOUTEN_MAX) अणु
+	if (config->nr_trig_max > CTIINOUTEN_MAX) {
 		dev_warn_once(dev,
 			"Limiting HW MaxTrig value(%d) to driver max(%d)\n",
 			config->nr_trig_max, CTIINOUTEN_MAX);
 		config->nr_trig_max = CTIINOUTEN_MAX;
-	पूर्ण
+	}
 
-	config->nr_cपंचांग_channels = CTI_DEVID_CTMCHANNELS(devid);
+	config->nr_ctm_channels = CTI_DEVID_CTMCHANNELS(devid);
 
-	/* Most regs शेष to 0 as zalloc'ed except...*/
+	/* Most regs default to 0 as zalloc'ed except...*/
 	config->trig_filter_enable = true;
-	config->ctigate = GENMASK(config->nr_cपंचांग_channels - 1, 0);
+	config->ctigate = GENMASK(config->nr_ctm_channels - 1, 0);
 	atomic_set(&config->enable_req_count, 0);
-पूर्ण
+}
 
 /*
- * Add a connection entry to the list of connections क्रम this
+ * Add a connection entry to the list of connections for this
  * CTI device.
  */
-पूर्णांक cti_add_connection_entry(काष्ठा device *dev, काष्ठा cti_drvdata *drvdata,
-			     काष्ठा cti_trig_con *tc,
-			     काष्ठा coresight_device *csdev,
-			     स्थिर अक्षर *assoc_dev_name)
-अणु
-	काष्ठा cti_device *cti_dev = &drvdata->ctidev;
+int cti_add_connection_entry(struct device *dev, struct cti_drvdata *drvdata,
+			     struct cti_trig_con *tc,
+			     struct coresight_device *csdev,
+			     const char *assoc_dev_name)
+{
+	struct cti_device *cti_dev = &drvdata->ctidev;
 
 	tc->con_dev = csdev;
 	/*
 	 * Prefer actual associated CS device dev name to supplied value -
 	 * which is likely to be node name / other conn name.
 	 */
-	अगर (csdev)
+	if (csdev)
 		tc->con_dev_name = dev_name(&csdev->dev);
-	अन्यथा अगर (assoc_dev_name != शून्य) अणु
+	else if (assoc_dev_name != NULL) {
 		tc->con_dev_name = devm_kstrdup(dev,
 						assoc_dev_name, GFP_KERNEL);
-		अगर (!tc->con_dev_name)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!tc->con_dev_name)
+			return -ENOMEM;
+	}
 	list_add_tail(&tc->node, &cti_dev->trig_cons);
 	cti_dev->nr_trig_con++;
 
@@ -272,216 +271,216 @@ cti_not_disabled:
 	drvdata->config.trig_in_use |= tc->con_in->used_mask;
 	drvdata->config.trig_out_use |= tc->con_out->used_mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* create a trigger connection with appropriately sized संकेत groups */
-काष्ठा cti_trig_con *cti_allocate_trig_con(काष्ठा device *dev, पूर्णांक in_sigs,
-					   पूर्णांक out_sigs)
-अणु
-	काष्ठा cti_trig_con *tc = शून्य;
-	काष्ठा cti_trig_grp *in = शून्य, *out = शून्य;
+/* create a trigger connection with appropriately sized signal groups */
+struct cti_trig_con *cti_allocate_trig_con(struct device *dev, int in_sigs,
+					   int out_sigs)
+{
+	struct cti_trig_con *tc = NULL;
+	struct cti_trig_grp *in = NULL, *out = NULL;
 
-	tc = devm_kzalloc(dev, माप(काष्ठा cti_trig_con), GFP_KERNEL);
-	अगर (!tc)
-		वापस tc;
+	tc = devm_kzalloc(dev, sizeof(struct cti_trig_con), GFP_KERNEL);
+	if (!tc)
+		return tc;
 
 	in = devm_kzalloc(dev,
-			  दुरत्व(काष्ठा cti_trig_grp, sig_types[in_sigs]),
+			  offsetof(struct cti_trig_grp, sig_types[in_sigs]),
 			  GFP_KERNEL);
-	अगर (!in)
-		वापस शून्य;
+	if (!in)
+		return NULL;
 
 	out = devm_kzalloc(dev,
-			   दुरत्व(काष्ठा cti_trig_grp, sig_types[out_sigs]),
+			   offsetof(struct cti_trig_grp, sig_types[out_sigs]),
 			   GFP_KERNEL);
-	अगर (!out)
-		वापस शून्य;
+	if (!out)
+		return NULL;
 
 	tc->con_in = in;
 	tc->con_out = out;
 	tc->con_in->nr_sigs = in_sigs;
 	tc->con_out->nr_sigs = out_sigs;
-	वापस tc;
-पूर्ण
+	return tc;
+}
 
 /*
- * Add a शेष connection अगर nothing अन्यथा is specअगरied.
+ * Add a default connection if nothing else is specified.
  * single connection based on max in/out info, no assoc device
  */
-पूर्णांक cti_add_शेष_connection(काष्ठा device *dev, काष्ठा cti_drvdata *drvdata)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक n_trigs = drvdata->config.nr_trig_max;
+int cti_add_default_connection(struct device *dev, struct cti_drvdata *drvdata)
+{
+	int ret = 0;
+	int n_trigs = drvdata->config.nr_trig_max;
 	u32 n_trig_mask = GENMASK(n_trigs - 1, 0);
-	काष्ठा cti_trig_con *tc = शून्य;
+	struct cti_trig_con *tc = NULL;
 
 	/*
-	 * Assume max trigs क्रम in and out,
-	 * all used, शेष sig types allocated
+	 * Assume max trigs for in and out,
+	 * all used, default sig types allocated
 	 */
 	tc = cti_allocate_trig_con(dev, n_trigs, n_trigs);
-	अगर (!tc)
-		वापस -ENOMEM;
+	if (!tc)
+		return -ENOMEM;
 
 	tc->con_in->used_mask = n_trig_mask;
 	tc->con_out->used_mask = n_trig_mask;
-	ret = cti_add_connection_entry(dev, drvdata, tc, शून्य, "default");
-	वापस ret;
-पूर्ण
+	ret = cti_add_connection_entry(dev, drvdata, tc, NULL, "default");
+	return ret;
+}
 
 /** cti channel api **/
-/* attach/detach channel from trigger - ग_लिखो through अगर enabled. */
-पूर्णांक cti_channel_trig_op(काष्ठा device *dev, क्रमागत cti_chan_op op,
-			क्रमागत cti_trig_dir direction, u32 channel_idx,
+/* attach/detach channel from trigger - write through if enabled. */
+int cti_channel_trig_op(struct device *dev, enum cti_chan_op op,
+			enum cti_trig_dir direction, u32 channel_idx,
 			u32 trigger_idx)
-अणु
-	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	काष्ठा cti_config *config = &drvdata->config;
-	u32 trig_biपंचांगask;
-	u32 chan_biपंचांगask;
+{
+	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	struct cti_config *config = &drvdata->config;
+	u32 trig_bitmask;
+	u32 chan_bitmask;
 	u32 reg_value;
-	पूर्णांक reg_offset;
+	int reg_offset;
 
 	/* ensure indexes in range */
-	अगर ((channel_idx >= config->nr_cपंचांग_channels) ||
+	if ((channel_idx >= config->nr_ctm_channels) ||
 	   (trigger_idx >= config->nr_trig_max))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	trig_biपंचांगask = BIT(trigger_idx);
+	trig_bitmask = BIT(trigger_idx);
 
-	/* ensure रेजिस्टरed triggers and not out filtered */
-	अगर (direction == CTI_TRIG_IN)	अणु
-		अगर (!(trig_biपंचांगask & config->trig_in_use))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (!(trig_biपंचांगask & config->trig_out_use))
-			वापस -EINVAL;
+	/* ensure registered triggers and not out filtered */
+	if (direction == CTI_TRIG_IN)	{
+		if (!(trig_bitmask & config->trig_in_use))
+			return -EINVAL;
+	} else {
+		if (!(trig_bitmask & config->trig_out_use))
+			return -EINVAL;
 
-		अगर ((config->trig_filter_enable) &&
-		    (config->trig_out_filter & trig_biपंचांगask))
-			वापस -EINVAL;
-	पूर्ण
+		if ((config->trig_filter_enable) &&
+		    (config->trig_out_filter & trig_bitmask))
+			return -EINVAL;
+	}
 
-	/* update the local रेजिस्टर values */
-	chan_biपंचांगask = BIT(channel_idx);
+	/* update the local register values */
+	chan_bitmask = BIT(channel_idx);
 	reg_offset = (direction == CTI_TRIG_IN ? CTIINEN(trigger_idx) :
 		      CTIOUTEN(trigger_idx));
 
 	spin_lock(&drvdata->spinlock);
 
-	/* पढ़ो - modअगरy ग_लिखो - the trigger / channel enable value */
+	/* read - modify write - the trigger / channel enable value */
 	reg_value = direction == CTI_TRIG_IN ? config->ctiinen[trigger_idx] :
 		     config->ctiouten[trigger_idx];
-	अगर (op == CTI_CHAN_ATTACH)
-		reg_value |= chan_biपंचांगask;
-	अन्यथा
-		reg_value &= ~chan_biपंचांगask;
+	if (op == CTI_CHAN_ATTACH)
+		reg_value |= chan_bitmask;
+	else
+		reg_value &= ~chan_bitmask;
 
-	/* ग_लिखो local copy */
-	अगर (direction == CTI_TRIG_IN)
+	/* write local copy */
+	if (direction == CTI_TRIG_IN)
 		config->ctiinen[trigger_idx] = reg_value;
-	अन्यथा
+	else
 		config->ctiouten[trigger_idx] = reg_value;
 
-	/* ग_लिखो through अगर enabled */
-	अगर (cti_active(config))
-		cti_ग_लिखो_single_reg(drvdata, reg_offset, reg_value);
+	/* write through if enabled */
+	if (cti_active(config))
+		cti_write_single_reg(drvdata, reg_offset, reg_value);
 	spin_unlock(&drvdata->spinlock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cti_channel_gate_op(काष्ठा device *dev, क्रमागत cti_chan_gate_op op,
+int cti_channel_gate_op(struct device *dev, enum cti_chan_gate_op op,
 			u32 channel_idx)
-अणु
-	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	काष्ठा cti_config *config = &drvdata->config;
-	u32 chan_biपंचांगask;
+{
+	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	struct cti_config *config = &drvdata->config;
+	u32 chan_bitmask;
 	u32 reg_value;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (channel_idx >= config->nr_cपंचांग_channels)
-		वापस -EINVAL;
+	if (channel_idx >= config->nr_ctm_channels)
+		return -EINVAL;
 
-	chan_biपंचांगask = BIT(channel_idx);
+	chan_bitmask = BIT(channel_idx);
 
 	spin_lock(&drvdata->spinlock);
 	reg_value = config->ctigate;
-	चयन (op) अणु
-	हाल CTI_GATE_CHAN_ENABLE:
-		reg_value |= chan_biपंचांगask;
-		अवरोध;
+	switch (op) {
+	case CTI_GATE_CHAN_ENABLE:
+		reg_value |= chan_bitmask;
+		break;
 
-	हाल CTI_GATE_CHAN_DISABLE:
-		reg_value &= ~chan_biपंचांगask;
-		अवरोध;
+	case CTI_GATE_CHAN_DISABLE:
+		reg_value &= ~chan_bitmask;
+		break;
 
-	शेष:
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
-	अगर (err == 0) अणु
+		break;
+	}
+	if (err == 0) {
 		config->ctigate = reg_value;
-		अगर (cti_active(config))
-			cti_ग_लिखो_single_reg(drvdata, CTIGATE, reg_value);
-	पूर्ण
+		if (cti_active(config))
+			cti_write_single_reg(drvdata, CTIGATE, reg_value);
+	}
 	spin_unlock(&drvdata->spinlock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cti_channel_setop(काष्ठा device *dev, क्रमागत cti_chan_set_op op,
+int cti_channel_setop(struct device *dev, enum cti_chan_set_op op,
 		      u32 channel_idx)
-अणु
-	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	काष्ठा cti_config *config = &drvdata->config;
-	u32 chan_biपंचांगask;
+{
+	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	struct cti_config *config = &drvdata->config;
+	u32 chan_bitmask;
 	u32 reg_value;
 	u32 reg_offset;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (channel_idx >= config->nr_cपंचांग_channels)
-		वापस -EINVAL;
+	if (channel_idx >= config->nr_ctm_channels)
+		return -EINVAL;
 
-	chan_biपंचांगask = BIT(channel_idx);
+	chan_bitmask = BIT(channel_idx);
 
 	spin_lock(&drvdata->spinlock);
 	reg_value = config->ctiappset;
-	चयन (op) अणु
-	हाल CTI_CHAN_SET:
-		config->ctiappset |= chan_biपंचांगask;
+	switch (op) {
+	case CTI_CHAN_SET:
+		config->ctiappset |= chan_bitmask;
 		reg_value  = config->ctiappset;
 		reg_offset = CTIAPPSET;
-		अवरोध;
+		break;
 
-	हाल CTI_CHAN_CLR:
-		config->ctiappset &= ~chan_biपंचांगask;
-		reg_value = chan_biपंचांगask;
+	case CTI_CHAN_CLR:
+		config->ctiappset &= ~chan_bitmask;
+		reg_value = chan_bitmask;
 		reg_offset = CTIAPPCLEAR;
-		अवरोध;
+		break;
 
-	हाल CTI_CHAN_PULSE:
-		config->ctiappset &= ~chan_biपंचांगask;
-		reg_value = chan_biपंचांगask;
+	case CTI_CHAN_PULSE:
+		config->ctiappset &= ~chan_bitmask;
+		reg_value = chan_bitmask;
 		reg_offset = CTIAPPPULSE;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर ((err == 0) && cti_active(config))
-		cti_ग_लिखो_single_reg(drvdata, reg_offset, reg_value);
+	if ((err == 0) && cti_active(config))
+		cti_write_single_reg(drvdata, reg_offset, reg_value);
 	spin_unlock(&drvdata->spinlock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool cti_add_sysfs_link(काष्ठा cti_drvdata *drvdata,
-			       काष्ठा cti_trig_con *tc)
-अणु
-	काष्ठा coresight_sysfs_link link_info;
-	पूर्णांक link_err = 0;
+static bool cti_add_sysfs_link(struct cti_drvdata *drvdata,
+			       struct cti_trig_con *tc)
+{
+	struct coresight_sysfs_link link_info;
+	int link_err = 0;
 
 	link_info.orig = drvdata->csdev;
 	link_info.orig_name = tc->con_dev_name;
@@ -489,434 +488,434 @@ cti_not_disabled:
 	link_info.target_name = dev_name(&drvdata->csdev->dev);
 
 	link_err = coresight_add_sysfs_link(&link_info);
-	अगर (link_err)
+	if (link_err)
 		dev_warn(&drvdata->csdev->dev,
 			 "Failed to set CTI sysfs link %s<=>%s\n",
 			 link_info.orig_name, link_info.target_name);
-	वापस !link_err;
-पूर्ण
+	return !link_err;
+}
 
-अटल व्योम cti_हटाओ_sysfs_link(काष्ठा cti_drvdata *drvdata,
-				  काष्ठा cti_trig_con *tc)
-अणु
-	काष्ठा coresight_sysfs_link link_info;
+static void cti_remove_sysfs_link(struct cti_drvdata *drvdata,
+				  struct cti_trig_con *tc)
+{
+	struct coresight_sysfs_link link_info;
 
 	link_info.orig = drvdata->csdev;
 	link_info.orig_name = tc->con_dev_name;
 	link_info.target = tc->con_dev;
 	link_info.target_name = dev_name(&drvdata->csdev->dev);
-	coresight_हटाओ_sysfs_link(&link_info);
-पूर्ण
+	coresight_remove_sysfs_link(&link_info);
+}
 
 /*
- * Look क्रम a matching connection device name in the list of connections.
- * If found then swap in the csdev name, set trig con association poपूर्णांकer
- * and वापस found.
+ * Look for a matching connection device name in the list of connections.
+ * If found then swap in the csdev name, set trig con association pointer
+ * and return found.
  */
-अटल bool
-cti_match_fixup_csdev(काष्ठा cti_device *ctidev, स्थिर अक्षर *node_name,
-		      काष्ठा coresight_device *csdev)
-अणु
-	काष्ठा cti_trig_con *tc;
-	काष्ठा cti_drvdata *drvdata = container_of(ctidev, काष्ठा cti_drvdata,
+static bool
+cti_match_fixup_csdev(struct cti_device *ctidev, const char *node_name,
+		      struct coresight_device *csdev)
+{
+	struct cti_trig_con *tc;
+	struct cti_drvdata *drvdata = container_of(ctidev, struct cti_drvdata,
 						   ctidev);
 
-	list_क्रम_each_entry(tc, &ctidev->trig_cons, node) अणु
-		अगर (tc->con_dev_name) अणु
-			अगर (!म_भेद(node_name, tc->con_dev_name)) अणु
+	list_for_each_entry(tc, &ctidev->trig_cons, node) {
+		if (tc->con_dev_name) {
+			if (!strcmp(node_name, tc->con_dev_name)) {
 				/* match: so swap in csdev name & dev */
 				tc->con_dev_name = dev_name(&csdev->dev);
 				tc->con_dev = csdev;
 				/* try to set sysfs link */
-				अगर (cti_add_sysfs_link(drvdata, tc))
-					वापस true;
-				/* link failed - हटाओ CTI reference */
-				tc->con_dev = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+				if (cti_add_sysfs_link(drvdata, tc))
+					return true;
+				/* link failed - remove CTI reference */
+				tc->con_dev = NULL;
+				break;
+			}
+		}
+	}
+	return false;
+}
 
 /*
- * Search the cti list to add an associated CTI पूर्णांकo the supplied CS device
- * This will set the association अगर CTI declared beक्रमe the CS device.
- * (called from coresight_रेजिस्टर() with coresight_mutex locked).
+ * Search the cti list to add an associated CTI into the supplied CS device
+ * This will set the association if CTI declared before the CS device.
+ * (called from coresight_register() with coresight_mutex locked).
  */
-अटल व्योम cti_add_assoc_to_csdev(काष्ठा coresight_device *csdev)
-अणु
-	काष्ठा cti_drvdata *ect_item;
-	काष्ठा cti_device *ctidev;
-	स्थिर अक्षर *node_name = शून्य;
+static void cti_add_assoc_to_csdev(struct coresight_device *csdev)
+{
+	struct cti_drvdata *ect_item;
+	struct cti_device *ctidev;
+	const char *node_name = NULL;
 
 	/* protect the list */
 	mutex_lock(&ect_mutex);
 
-	/* निकास अगर current is an ECT device.*/
-	अगर ((csdev->type == CORESIGHT_DEV_TYPE_ECT) || list_empty(&ect_net))
-		जाओ cti_add_करोne;
+	/* exit if current is an ECT device.*/
+	if ((csdev->type == CORESIGHT_DEV_TYPE_ECT) || list_empty(&ect_net))
+		goto cti_add_done;
 
-	/* अगर we didn't find the csdev previously we used the fwnode name */
+	/* if we didn't find the csdev previously we used the fwnode name */
 	node_name = cti_plat_get_node_name(dev_fwnode(csdev->dev.parent));
-	अगर (!node_name)
-		जाओ cti_add_करोne;
+	if (!node_name)
+		goto cti_add_done;
 
-	/* क्रम each CTI in list... */
-	list_क्रम_each_entry(ect_item, &ect_net, node) अणु
+	/* for each CTI in list... */
+	list_for_each_entry(ect_item, &ect_net, node) {
 		ctidev = &ect_item->ctidev;
-		अगर (cti_match_fixup_csdev(ctidev, node_name, csdev)) अणु
+		if (cti_match_fixup_csdev(ctidev, node_name, csdev)) {
 			/*
-			 * अगर we found a matching csdev then update the ECT
-			 * association poपूर्णांकer क्रम the device with this CTI.
+			 * if we found a matching csdev then update the ECT
+			 * association pointer for the device with this CTI.
 			 */
 			csdev->ect_dev = ect_item->csdev;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-cti_add_करोne:
+			break;
+		}
+	}
+cti_add_done:
 	mutex_unlock(&ect_mutex);
-पूर्ण
+}
 
 /*
  * Removing the associated devices is easier.
- * A CTI will not have a value क्रम csdev->ect_dev.
+ * A CTI will not have a value for csdev->ect_dev.
  */
-अटल व्योम cti_हटाओ_assoc_from_csdev(काष्ठा coresight_device *csdev)
-अणु
-	काष्ठा cti_drvdata *ctidrv;
-	काष्ठा cti_trig_con *tc;
-	काष्ठा cti_device *ctidev;
+static void cti_remove_assoc_from_csdev(struct coresight_device *csdev)
+{
+	struct cti_drvdata *ctidrv;
+	struct cti_trig_con *tc;
+	struct cti_device *ctidev;
 
 	mutex_lock(&ect_mutex);
-	अगर (csdev->ect_dev) अणु
+	if (csdev->ect_dev) {
 		ctidrv = csdev_to_cti_drvdata(csdev->ect_dev);
 		ctidev = &ctidrv->ctidev;
-		list_क्रम_each_entry(tc, &ctidev->trig_cons, node) अणु
-			अगर (tc->con_dev == csdev) अणु
-				cti_हटाओ_sysfs_link(ctidrv, tc);
-				tc->con_dev = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		csdev->ect_dev = शून्य;
-	पूर्ण
+		list_for_each_entry(tc, &ctidev->trig_cons, node) {
+			if (tc->con_dev == csdev) {
+				cti_remove_sysfs_link(ctidrv, tc);
+				tc->con_dev = NULL;
+				break;
+			}
+		}
+		csdev->ect_dev = NULL;
+	}
 	mutex_unlock(&ect_mutex);
-पूर्ण
+}
 
 /*
- * Operations to add and हटाओ associated CTI.
+ * Operations to add and remove associated CTI.
  * Register to coresight core driver as call back function.
  */
-अटल काष्ठा cti_assoc_op cti_assoc_ops = अणु
+static struct cti_assoc_op cti_assoc_ops = {
 	.add = cti_add_assoc_to_csdev,
-	.हटाओ = cti_हटाओ_assoc_from_csdev
-पूर्ण;
+	.remove = cti_remove_assoc_from_csdev
+};
 
 /*
  * Update the cross references where the associated device was found
- * जबतक we were building the connection info. This will occur अगर the
- * assoc device was रेजिस्टरed beक्रमe the CTI.
+ * while we were building the connection info. This will occur if the
+ * assoc device was registered before the CTI.
  */
-अटल व्योम cti_update_conn_xrefs(काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_trig_con *tc;
-	काष्ठा cti_device *ctidev = &drvdata->ctidev;
+static void cti_update_conn_xrefs(struct cti_drvdata *drvdata)
+{
+	struct cti_trig_con *tc;
+	struct cti_device *ctidev = &drvdata->ctidev;
 
-	list_क्रम_each_entry(tc, &ctidev->trig_cons, node) अणु
-		अगर (tc->con_dev) अणु
-			/* अगर we can set the sysfs link */
-			अगर (cti_add_sysfs_link(drvdata, tc))
+	list_for_each_entry(tc, &ctidev->trig_cons, node) {
+		if (tc->con_dev) {
+			/* if we can set the sysfs link */
+			if (cti_add_sysfs_link(drvdata, tc))
 				/* set the CTI/csdev association */
 				coresight_set_assoc_ectdev_mutex(tc->con_dev,
 							 drvdata->csdev);
-			अन्यथा
-				/* otherwise हटाओ reference from CTI */
-				tc->con_dev = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			else
+				/* otherwise remove reference from CTI */
+				tc->con_dev = NULL;
+		}
+	}
+}
 
-अटल व्योम cti_हटाओ_conn_xrefs(काष्ठा cti_drvdata *drvdata)
-अणु
-	काष्ठा cti_trig_con *tc;
-	काष्ठा cti_device *ctidev = &drvdata->ctidev;
+static void cti_remove_conn_xrefs(struct cti_drvdata *drvdata)
+{
+	struct cti_trig_con *tc;
+	struct cti_device *ctidev = &drvdata->ctidev;
 
-	list_क्रम_each_entry(tc, &ctidev->trig_cons, node) अणु
-		अगर (tc->con_dev) अणु
+	list_for_each_entry(tc, &ctidev->trig_cons, node) {
+		if (tc->con_dev) {
 			coresight_set_assoc_ectdev_mutex(tc->con_dev,
-							 शून्य);
-			cti_हटाओ_sysfs_link(drvdata, tc);
-			tc->con_dev = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+							 NULL);
+			cti_remove_sysfs_link(drvdata, tc);
+			tc->con_dev = NULL;
+		}
+	}
+}
 
 /** cti PM callbacks **/
-अटल पूर्णांक cti_cpu_pm_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ cmd,
-			     व्योम *v)
-अणु
-	काष्ठा cti_drvdata *drvdata;
-	काष्ठा coresight_device *csdev;
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	पूर्णांक notअगरy_res = NOTIFY_OK;
+static int cti_cpu_pm_notify(struct notifier_block *nb, unsigned long cmd,
+			     void *v)
+{
+	struct cti_drvdata *drvdata;
+	struct coresight_device *csdev;
+	unsigned int cpu = smp_processor_id();
+	int notify_res = NOTIFY_OK;
 
-	अगर (!cti_cpu_drvdata[cpu])
-		वापस NOTIFY_OK;
+	if (!cti_cpu_drvdata[cpu])
+		return NOTIFY_OK;
 
 	drvdata = cti_cpu_drvdata[cpu];
 	csdev = drvdata->csdev;
 
-	अगर (WARN_ON_ONCE(drvdata->ctidev.cpu != cpu))
-		वापस NOTIFY_BAD;
+	if (WARN_ON_ONCE(drvdata->ctidev.cpu != cpu))
+		return NOTIFY_BAD;
 
 	spin_lock(&drvdata->spinlock);
 
-	चयन (cmd) अणु
-	हाल CPU_PM_ENTER:
-		/* CTI regs all अटल - we have a copy & nothing to save */
-		drvdata->config.hw_घातered = false;
-		अगर (drvdata->config.hw_enabled)
+	switch (cmd) {
+	case CPU_PM_ENTER:
+		/* CTI regs all static - we have a copy & nothing to save */
+		drvdata->config.hw_powered = false;
+		if (drvdata->config.hw_enabled)
 			coresight_disclaim_device(csdev);
-		अवरोध;
+		break;
 
-	हाल CPU_PM_ENTER_FAILED:
-		drvdata->config.hw_घातered = true;
-		अगर (drvdata->config.hw_enabled) अणु
-			अगर (coresight_claim_device(csdev))
+	case CPU_PM_ENTER_FAILED:
+		drvdata->config.hw_powered = true;
+		if (drvdata->config.hw_enabled) {
+			if (coresight_claim_device(csdev))
 				drvdata->config.hw_enabled = false;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CPU_PM_EXIT:
-		/* ग_लिखो hardware रेजिस्टरs to re-enable. */
-		drvdata->config.hw_घातered = true;
+	case CPU_PM_EXIT:
+		/* write hardware registers to re-enable. */
+		drvdata->config.hw_powered = true;
 		drvdata->config.hw_enabled = false;
 
 		/* check enable reference count to enable HW */
-		अगर (atomic_पढ़ो(&drvdata->config.enable_req_count)) अणु
-			/* check we can claim the device as we re-घातer */
-			अगर (coresight_claim_device(csdev))
-				जाओ cti_notअगरy_निकास;
+		if (atomic_read(&drvdata->config.enable_req_count)) {
+			/* check we can claim the device as we re-power */
+			if (coresight_claim_device(csdev))
+				goto cti_notify_exit;
 
 			drvdata->config.hw_enabled = true;
-			cti_ग_लिखो_all_hw_regs(drvdata);
-		पूर्ण
-		अवरोध;
+			cti_write_all_hw_regs(drvdata);
+		}
+		break;
 
-	शेष:
-		notअगरy_res = NOTIFY_DONE;
-		अवरोध;
-	पूर्ण
+	default:
+		notify_res = NOTIFY_DONE;
+		break;
+	}
 
-cti_notअगरy_निकास:
+cti_notify_exit:
 	spin_unlock(&drvdata->spinlock);
-	वापस notअगरy_res;
-पूर्ण
+	return notify_res;
+}
 
-अटल काष्ठा notअगरier_block cti_cpu_pm_nb = अणु
-	.notअगरier_call = cti_cpu_pm_notअगरy,
-पूर्ण;
+static struct notifier_block cti_cpu_pm_nb = {
+	.notifier_call = cti_cpu_pm_notify,
+};
 
 /* CPU HP handlers */
-अटल पूर्णांक cti_starting_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cti_drvdata *drvdata = cti_cpu_drvdata[cpu];
+static int cti_starting_cpu(unsigned int cpu)
+{
+	struct cti_drvdata *drvdata = cti_cpu_drvdata[cpu];
 
-	अगर (!drvdata)
-		वापस 0;
+	if (!drvdata)
+		return 0;
 
 	cti_cpuhp_enable_hw(drvdata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cti_dying_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cti_drvdata *drvdata = cti_cpu_drvdata[cpu];
+static int cti_dying_cpu(unsigned int cpu)
+{
+	struct cti_drvdata *drvdata = cti_cpu_drvdata[cpu];
 
-	अगर (!drvdata)
-		वापस 0;
+	if (!drvdata)
+		return 0;
 
 	spin_lock(&drvdata->spinlock);
-	drvdata->config.hw_घातered = false;
-	अगर (drvdata->config.hw_enabled)
+	drvdata->config.hw_powered = false;
+	if (drvdata->config.hw_enabled)
 		coresight_disclaim_device(drvdata->csdev);
 	spin_unlock(&drvdata->spinlock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cti_pm_setup(काष्ठा cti_drvdata *drvdata)
-अणु
-	पूर्णांक ret;
+static int cti_pm_setup(struct cti_drvdata *drvdata)
+{
+	int ret;
 
-	अगर (drvdata->ctidev.cpu == -1)
-		वापस 0;
+	if (drvdata->ctidev.cpu == -1)
+		return 0;
 
-	अगर (nr_cti_cpu)
-		जाओ करोne;
+	if (nr_cti_cpu)
+		goto done;
 
-	cpus_पढ़ो_lock();
+	cpus_read_lock();
 	ret = cpuhp_setup_state_nocalls_cpuslocked(
 			CPUHP_AP_ARM_CORESIGHT_CTI_STARTING,
 			"arm/coresight_cti:starting",
 			cti_starting_cpu, cti_dying_cpu);
-	अगर (ret) अणु
-		cpus_पढ़ो_unlock();
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		cpus_read_unlock();
+		return ret;
+	}
 
-	ret = cpu_pm_रेजिस्टर_notअगरier(&cti_cpu_pm_nb);
-	cpus_पढ़ो_unlock();
-	अगर (ret) अणु
-		cpuhp_हटाओ_state_nocalls(CPUHP_AP_ARM_CORESIGHT_CTI_STARTING);
-		वापस ret;
-	पूर्ण
+	ret = cpu_pm_register_notifier(&cti_cpu_pm_nb);
+	cpus_read_unlock();
+	if (ret) {
+		cpuhp_remove_state_nocalls(CPUHP_AP_ARM_CORESIGHT_CTI_STARTING);
+		return ret;
+	}
 
-करोne:
+done:
 	nr_cti_cpu++;
 	cti_cpu_drvdata[drvdata->ctidev.cpu] = drvdata;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* release PM registrations */
-अटल व्योम cti_pm_release(काष्ठा cti_drvdata *drvdata)
-अणु
-	अगर (drvdata->ctidev.cpu == -1)
-		वापस;
+static void cti_pm_release(struct cti_drvdata *drvdata)
+{
+	if (drvdata->ctidev.cpu == -1)
+		return;
 
-	cti_cpu_drvdata[drvdata->ctidev.cpu] = शून्य;
-	अगर (--nr_cti_cpu == 0) अणु
-		cpu_pm_unरेजिस्टर_notअगरier(&cti_cpu_pm_nb);
-		cpuhp_हटाओ_state_nocalls(CPUHP_AP_ARM_CORESIGHT_CTI_STARTING);
-	पूर्ण
-पूर्ण
+	cti_cpu_drvdata[drvdata->ctidev.cpu] = NULL;
+	if (--nr_cti_cpu == 0) {
+		cpu_pm_unregister_notifier(&cti_cpu_pm_nb);
+		cpuhp_remove_state_nocalls(CPUHP_AP_ARM_CORESIGHT_CTI_STARTING);
+	}
+}
 
 /** cti ect operations **/
-पूर्णांक cti_enable(काष्ठा coresight_device *csdev)
-अणु
-	काष्ठा cti_drvdata *drvdata = csdev_to_cti_drvdata(csdev);
+int cti_enable(struct coresight_device *csdev)
+{
+	struct cti_drvdata *drvdata = csdev_to_cti_drvdata(csdev);
 
-	वापस cti_enable_hw(drvdata);
-पूर्ण
+	return cti_enable_hw(drvdata);
+}
 
-पूर्णांक cti_disable(काष्ठा coresight_device *csdev)
-अणु
-	काष्ठा cti_drvdata *drvdata = csdev_to_cti_drvdata(csdev);
+int cti_disable(struct coresight_device *csdev)
+{
+	struct cti_drvdata *drvdata = csdev_to_cti_drvdata(csdev);
 
-	वापस cti_disable_hw(drvdata);
-पूर्ण
+	return cti_disable_hw(drvdata);
+}
 
-अटल स्थिर काष्ठा coresight_ops_ect cti_ops_ect = अणु
+static const struct coresight_ops_ect cti_ops_ect = {
 	.enable = cti_enable,
 	.disable = cti_disable,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा coresight_ops cti_ops = अणु
+static const struct coresight_ops cti_ops = {
 	.ect_ops = &cti_ops_ect,
-पूर्ण;
+};
 
 /*
- * Free up CTI specअगरic resources
- * called by dev->release, need to call करोwn to underlying csdev release.
+ * Free up CTI specific resources
+ * called by dev->release, need to call down to underlying csdev release.
  */
-अटल व्योम cti_device_release(काष्ठा device *dev)
-अणु
-	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	काष्ठा cti_drvdata *ect_item, *ect_पंचांगp;
+static void cti_device_release(struct device *dev)
+{
+	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	struct cti_drvdata *ect_item, *ect_tmp;
 
 	mutex_lock(&ect_mutex);
 	cti_pm_release(drvdata);
 
-	/* हटाओ from the list */
-	list_क्रम_each_entry_safe(ect_item, ect_पंचांगp, &ect_net, node) अणु
-		अगर (ect_item == drvdata) अणु
+	/* remove from the list */
+	list_for_each_entry_safe(ect_item, ect_tmp, &ect_net, node) {
+		if (ect_item == drvdata) {
 			list_del(&ect_item->node);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&ect_mutex);
 
-	अगर (drvdata->csdev_release)
+	if (drvdata->csdev_release)
 		drvdata->csdev_release(dev);
-पूर्ण
-अटल व्योम cti_हटाओ(काष्ठा amba_device *adev)
-अणु
-	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(&adev->dev);
+}
+static void cti_remove(struct amba_device *adev)
+{
+	struct cti_drvdata *drvdata = dev_get_drvdata(&adev->dev);
 
 	mutex_lock(&ect_mutex);
-	cti_हटाओ_conn_xrefs(drvdata);
+	cti_remove_conn_xrefs(drvdata);
 	mutex_unlock(&ect_mutex);
 
-	coresight_unरेजिस्टर(drvdata->csdev);
-पूर्ण
+	coresight_unregister(drvdata->csdev);
+}
 
-अटल पूर्णांक cti_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
-अणु
-	पूर्णांक ret = 0;
-	व्योम __iomem *base;
-	काष्ठा device *dev = &adev->dev;
-	काष्ठा cti_drvdata *drvdata = शून्य;
-	काष्ठा coresight_desc cti_desc;
-	काष्ठा coresight_platक्रमm_data *pdata = शून्य;
-	काष्ठा resource *res = &adev->res;
+static int cti_probe(struct amba_device *adev, const struct amba_id *id)
+{
+	int ret = 0;
+	void __iomem *base;
+	struct device *dev = &adev->dev;
+	struct cti_drvdata *drvdata = NULL;
+	struct coresight_desc cti_desc;
+	struct coresight_platform_data *pdata = NULL;
+	struct resource *res = &adev->res;
 
 	/* driver data*/
-	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
-	अगर (!drvdata)
-		वापस -ENOMEM;
+	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
+	if (!drvdata)
+		return -ENOMEM;
 
-	/* Validity क्रम the resource is alपढ़ोy checked by the AMBA core */
+	/* Validity for the resource is already checked by the AMBA core */
 	base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	drvdata->base = base;
 	cti_desc.access = CSDEV_ACCESS_IOMEM(base);
 
 	dev_set_drvdata(dev, drvdata);
 
-	/* शेष CTI device info  */
+	/* default CTI device info  */
 	drvdata->ctidev.cpu = -1;
 	drvdata->ctidev.nr_trig_con = 0;
-	drvdata->ctidev.cपंचांग_id = 0;
+	drvdata->ctidev.ctm_id = 0;
 	INIT_LIST_HEAD(&drvdata->ctidev.trig_cons);
 
 	spin_lock_init(&drvdata->spinlock);
 
 	/* initialise CTI driver config values */
-	cti_set_शेष_config(dev, drvdata);
+	cti_set_default_config(dev, drvdata);
 
-	pdata = coresight_cti_get_platक्रमm_data(dev);
-	अगर (IS_ERR(pdata)) अणु
+	pdata = coresight_cti_get_platform_data(dev);
+	if (IS_ERR(pdata)) {
 		dev_err(dev, "coresight_cti_get_platform_data err\n");
-		वापस  PTR_ERR(pdata);
-	पूर्ण
+		return  PTR_ERR(pdata);
+	}
 
-	/* शेष to घातered - could change on PM notअगरications */
-	drvdata->config.hw_घातered = true;
+	/* default to powered - could change on PM notifications */
+	drvdata->config.hw_powered = true;
 
-	/* set up device name - will depend अगर cpu bound or otherwise */
-	अगर (drvdata->ctidev.cpu >= 0)
-		cti_desc.name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "cti_cpu%d",
+	/* set up device name - will depend if cpu bound or otherwise */
+	if (drvdata->ctidev.cpu >= 0)
+		cti_desc.name = devm_kasprintf(dev, GFP_KERNEL, "cti_cpu%d",
 					       drvdata->ctidev.cpu);
-	अन्यथा
+	else
 		cti_desc.name = coresight_alloc_device_name(&cti_sys_devs, dev);
-	अगर (!cti_desc.name)
-		वापस -ENOMEM;
+	if (!cti_desc.name)
+		return -ENOMEM;
 
-	/* setup CPU घातer management handling क्रम CPU bound CTI devices. */
+	/* setup CPU power management handling for CPU bound CTI devices. */
 	ret = cti_pm_setup(drvdata);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* create dynamic attributes क्रम connections */
+	/* create dynamic attributes for connections */
 	ret = cti_create_cons_sysfs(dev, drvdata);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s: create dynamic sysfs entries failed\n",
 			cti_desc.name);
-		जाओ pm_release;
-	पूर्ण
+		goto pm_release;
+	}
 
 	/* set up coresight component description */
 	cti_desc.pdata = pdata;
@@ -925,11 +924,11 @@ cti_notअगरy_निकास:
 	cti_desc.ops = &cti_ops;
 	cti_desc.groups = drvdata->ctidev.con_groups;
 	cti_desc.dev = dev;
-	drvdata->csdev = coresight_रेजिस्टर(&cti_desc);
-	अगर (IS_ERR(drvdata->csdev)) अणु
+	drvdata->csdev = coresight_register(&cti_desc);
+	if (IS_ERR(drvdata->csdev)) {
 		ret = PTR_ERR(drvdata->csdev);
-		जाओ pm_release;
-	पूर्ण
+		goto pm_release;
+	}
 
 	/* add to list of CTI devices */
 	mutex_lock(&ect_mutex);
@@ -942,67 +941,67 @@ cti_notअगरy_निकास:
 	drvdata->csdev_release = drvdata->csdev->dev.release;
 	drvdata->csdev->dev.release = cti_device_release;
 
-	/* all करोne - dec pm refcount */
-	pm_runसमय_put(&adev->dev);
+	/* all done - dec pm refcount */
+	pm_runtime_put(&adev->dev);
 	dev_info(&drvdata->csdev->dev, "CTI initialized\n");
-	वापस 0;
+	return 0;
 
 pm_release:
 	cti_pm_release(drvdata);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा amba_cs_uci_id uci_id_cti[] = अणु
-	अणु
+static struct amba_cs_uci_id uci_id_cti[] = {
+	{
 		/*  CTI UCI data */
 		.devarch	= 0x47701a14, /* CTI v2 */
 		.devarch_mask	= 0xfff0ffff,
 		.devtype	= 0x00000014, /* maj(0x4-debug) min(0x1-ECT) */
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा amba_id cti_ids[] = अणु
+static const struct amba_id cti_ids[] = {
 	CS_AMBA_ID(0x000bb906), /* Coresight CTI (SoC 400), C-A72, C-A57 */
 	CS_AMBA_ID(0x000bb922), /* CTI - C-A8 */
 	CS_AMBA_ID(0x000bb9a8), /* CTI - C-A53 */
 	CS_AMBA_ID(0x000bb9aa), /* CTI - C-A73 */
 	CS_AMBA_UCI_ID(0x000bb9da, uci_id_cti), /* CTI - C-A35 */
 	CS_AMBA_UCI_ID(0x000bb9ed, uci_id_cti), /* Coresight CTI (SoC 600) */
-	अणु 0, 0पूर्ण,
-पूर्ण;
+	{ 0, 0},
+};
 
 MODULE_DEVICE_TABLE(amba, cti_ids);
 
-अटल काष्ठा amba_driver cti_driver = अणु
-	.drv = अणु
+static struct amba_driver cti_driver = {
+	.drv = {
 		.name	= "coresight-cti",
 		.owner = THIS_MODULE,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe		= cti_probe,
-	.हटाओ		= cti_हटाओ,
+	.remove		= cti_remove,
 	.id_table	= cti_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cti_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init cti_init(void)
+{
+	int ret;
 
-	ret = amba_driver_रेजिस्टर(&cti_driver);
-	अगर (ret)
+	ret = amba_driver_register(&cti_driver);
+	if (ret)
 		pr_info("Error registering cti driver\n");
 	coresight_set_cti_ops(&cti_assoc_ops);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास cti_निकास(व्योम)
-अणु
-	coresight_हटाओ_cti_ops();
-	amba_driver_unरेजिस्टर(&cti_driver);
-पूर्ण
+static void __exit cti_exit(void)
+{
+	coresight_remove_cti_ops();
+	amba_driver_unregister(&cti_driver);
+}
 
 module_init(cti_init);
-module_निकास(cti_निकास);
+module_exit(cti_exit);
 
 MODULE_AUTHOR("Mike Leach <mike.leach@linaro.org>");
 MODULE_DESCRIPTION("Arm CoreSight CTI Driver");

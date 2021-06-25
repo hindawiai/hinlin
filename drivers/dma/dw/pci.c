@@ -1,53 +1,52 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PCI driver क्रम the Synopsys DesignWare DMA Controller
+ * PCI driver for the Synopsys DesignWare DMA Controller
  *
  * Copyright (C) 2013 Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/device.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/device.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल पूर्णांक dw_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *pid)
-अणु
-	स्थिर काष्ठा dw_dma_chip_pdata *drv_data = (व्योम *)pid->driver_data;
-	काष्ठा dw_dma_chip_pdata *data;
-	काष्ठा dw_dma_chip *chip;
-	पूर्णांक ret;
+static int dw_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pid)
+{
+	const struct dw_dma_chip_pdata *drv_data = (void *)pid->driver_data;
+	struct dw_dma_chip_pdata *data;
+	struct dw_dma_chip *chip;
+	int ret;
 
 	ret = pcim_enable_device(pdev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pcim_iomap_regions(pdev, 1 << 0, pci_name(pdev));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "I/O memory remapping failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	pci_set_master(pdev);
 	pci_try_set_mwi(pdev);
 
 	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	data = devm_kmemdup(&pdev->dev, drv_data, माप(*drv_data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kmemdup(&pdev->dev, drv_data, sizeof(*drv_data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	chip = devm_kzalloc(&pdev->dev, माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
 	chip->dev = &pdev->dev;
 	chip->id = pdev->devfn;
@@ -58,92 +57,92 @@
 	data->chip = chip;
 
 	ret = data->probe(chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	dw_dma_acpi_controller_रेजिस्टर(chip->dw);
+	dw_dma_acpi_controller_register(chip->dw);
 
 	pci_set_drvdata(pdev, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dw_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = pci_get_drvdata(pdev);
-	काष्ठा dw_dma_chip *chip = data->chip;
-	पूर्णांक ret;
+static void dw_pci_remove(struct pci_dev *pdev)
+{
+	struct dw_dma_chip_pdata *data = pci_get_drvdata(pdev);
+	struct dw_dma_chip *chip = data->chip;
+	int ret;
 
-	dw_dma_acpi_controller_मुक्त(chip->dw);
+	dw_dma_acpi_controller_free(chip->dw);
 
-	ret = data->हटाओ(chip);
-	अगर (ret)
+	ret = data->remove(chip);
+	if (ret)
 		dev_warn(&pdev->dev, "can't remove device properly: %d\n", ret);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
-अटल पूर्णांक dw_pci_suspend_late(काष्ठा device *dev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = dev_get_drvdata(dev);
-	काष्ठा dw_dma_chip *chip = data->chip;
+static int dw_pci_suspend_late(struct device *dev)
+{
+	struct dw_dma_chip_pdata *data = dev_get_drvdata(dev);
+	struct dw_dma_chip *chip = data->chip;
 
-	वापस करो_dw_dma_disable(chip);
-पूर्ण;
+	return do_dw_dma_disable(chip);
+};
 
-अटल पूर्णांक dw_pci_resume_early(काष्ठा device *dev)
-अणु
-	काष्ठा dw_dma_chip_pdata *data = dev_get_drvdata(dev);
-	काष्ठा dw_dma_chip *chip = data->chip;
+static int dw_pci_resume_early(struct device *dev)
+{
+	struct dw_dma_chip_pdata *data = dev_get_drvdata(dev);
+	struct dw_dma_chip *chip = data->chip;
 
-	वापस करो_dw_dma_enable(chip);
-पूर्ण;
+	return do_dw_dma_enable(chip);
+};
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल स्थिर काष्ठा dev_pm_ops dw_pci_dev_pm_ops = अणु
+static const struct dev_pm_ops dw_pci_dev_pm_ops = {
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(dw_pci_suspend_late, dw_pci_resume_early)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id dw_pci_id_table[] = अणु
+static const struct pci_device_id dw_pci_id_table[] = {
 	/* Medfield (GPDMA) */
-	अणु PCI_VDEVICE(INTEL, 0x0827), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
+	{ PCI_VDEVICE(INTEL, 0x0827), (kernel_ulong_t)&dw_dma_chip_pdata },
 
 	/* BayTrail */
-	अणु PCI_VDEVICE(INTEL, 0x0f06), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x0f40), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
+	{ PCI_VDEVICE(INTEL, 0x0f06), (kernel_ulong_t)&dw_dma_chip_pdata },
+	{ PCI_VDEVICE(INTEL, 0x0f40), (kernel_ulong_t)&dw_dma_chip_pdata },
 
-	/* Merrअगरield */
-	अणु PCI_VDEVICE(INTEL, 0x11a2), (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
+	/* Merrifield */
+	{ PCI_VDEVICE(INTEL, 0x11a2), (kernel_ulong_t)&idma32_chip_pdata },
 
 	/* Braswell */
-	अणु PCI_VDEVICE(INTEL, 0x2286), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x22c0), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
+	{ PCI_VDEVICE(INTEL, 0x2286), (kernel_ulong_t)&dw_dma_chip_pdata },
+	{ PCI_VDEVICE(INTEL, 0x22c0), (kernel_ulong_t)&dw_dma_chip_pdata },
 
 	/* Elkhart Lake iDMA 32-bit (PSE DMA) */
-	अणु PCI_VDEVICE(INTEL, 0x4bb4), (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x4bb5), (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x4bb6), (kernel_uदीर्घ_t)&idma32_chip_pdata पूर्ण,
+	{ PCI_VDEVICE(INTEL, 0x4bb4), (kernel_ulong_t)&idma32_chip_pdata },
+	{ PCI_VDEVICE(INTEL, 0x4bb5), (kernel_ulong_t)&idma32_chip_pdata },
+	{ PCI_VDEVICE(INTEL, 0x4bb6), (kernel_ulong_t)&idma32_chip_pdata },
 
 	/* Haswell */
-	अणु PCI_VDEVICE(INTEL, 0x9c60), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
+	{ PCI_VDEVICE(INTEL, 0x9c60), (kernel_ulong_t)&dw_dma_chip_pdata },
 
 	/* Broadwell */
-	अणु PCI_VDEVICE(INTEL, 0x9ce0), (kernel_uदीर्घ_t)&dw_dma_chip_pdata पूर्ण,
+	{ PCI_VDEVICE(INTEL, 0x9ce0), (kernel_ulong_t)&dw_dma_chip_pdata },
 
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 MODULE_DEVICE_TABLE(pci, dw_pci_id_table);
 
-अटल काष्ठा pci_driver dw_pci_driver = अणु
+static struct pci_driver dw_pci_driver = {
 	.name		= "dw_dmac_pci",
 	.id_table	= dw_pci_id_table,
 	.probe		= dw_pci_probe,
-	.हटाओ		= dw_pci_हटाओ,
-	.driver	= अणु
+	.remove		= dw_pci_remove,
+	.driver	= {
 		.pm	= &dw_pci_dev_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_pci_driver(dw_pci_driver);
 

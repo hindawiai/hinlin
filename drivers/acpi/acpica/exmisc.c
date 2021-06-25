@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: exmisc - ACPI AML (p-code) execution - specअगरic opcodes
+ * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acinterp.h"
-#समावेश "amlcode.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acinterp.h"
+#include "amlcode.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exmisc")
 
 /*******************************************************************************
@@ -21,432 +20,432 @@ ACPI_MODULE_NAME("exmisc")
  * FUNCTION:    acpi_ex_get_object_reference
  *
  * PARAMETERS:  obj_desc            - Create a reference to this object
- *              वापस_desc         - Where to store the reference
+ *              return_desc         - Where to store the reference
  *              walk_state          - Current state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Obtain and वापस a "reference" to the target object
- *              Common code क्रम the ref_of_op and the cond_ref_of_op.
+ * DESCRIPTION: Obtain and return a "reference" to the target object
+ *              Common code for the ref_of_op and the cond_ref_of_op.
  *
  ******************************************************************************/
 acpi_status
-acpi_ex_get_object_reference(जोड़ acpi_opeअक्रम_object *obj_desc,
-			     जोड़ acpi_opeअक्रम_object **वापस_desc,
-			     काष्ठा acpi_walk_state *walk_state)
-अणु
-	जोड़ acpi_opeअक्रम_object *reference_obj;
-	जोड़ acpi_opeअक्रम_object *referenced_obj;
+acpi_ex_get_object_reference(union acpi_operand_object *obj_desc,
+			     union acpi_operand_object **return_desc,
+			     struct acpi_walk_state *walk_state)
+{
+	union acpi_operand_object *reference_obj;
+	union acpi_operand_object *referenced_obj;
 
 	ACPI_FUNCTION_TRACE_PTR(ex_get_object_reference, obj_desc);
 
-	*वापस_desc = शून्य;
+	*return_desc = NULL;
 
-	चयन (ACPI_GET_DESCRIPTOR_TYPE(obj_desc)) अणु
-	हाल ACPI_DESC_TYPE_OPERAND:
+	switch (ACPI_GET_DESCRIPTOR_TYPE(obj_desc)) {
+	case ACPI_DESC_TYPE_OPERAND:
 
-		अगर (obj_desc->common.type != ACPI_TYPE_LOCAL_REFERENCE) अणु
-			वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-		पूर्ण
+		if (obj_desc->common.type != ACPI_TYPE_LOCAL_REFERENCE) {
+			return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+		}
 
 		/*
 		 * Must be a reference to a Local or Arg
 		 */
-		चयन (obj_desc->reference.class) अणु
-		हाल ACPI_REFCLASS_LOCAL:
-		हाल ACPI_REFCLASS_ARG:
-		हाल ACPI_REFCLASS_DEBUG:
+		switch (obj_desc->reference.class) {
+		case ACPI_REFCLASS_LOCAL:
+		case ACPI_REFCLASS_ARG:
+		case ACPI_REFCLASS_DEBUG:
 
-			/* The referenced object is the pseuकरो-node क्रम the local/arg */
+			/* The referenced object is the pseudo-node for the local/arg */
 
 			referenced_obj = obj_desc->reference.object;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO, "Invalid Reference Class 0x%2.2X",
 				    obj_desc->reference.class));
-			वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-		पूर्ण
-		अवरोध;
+			return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+		}
+		break;
 
-	हाल ACPI_DESC_TYPE_NAMED:
+	case ACPI_DESC_TYPE_NAMED:
 		/*
-		 * A named reference that has alपढ़ोy been resolved to a Node
+		 * A named reference that has already been resolved to a Node
 		 */
 		referenced_obj = obj_desc;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO, "Invalid descriptor type 0x%X",
 			    ACPI_GET_DESCRIPTOR_TYPE(obj_desc)));
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
 	/* Create a new reference object */
 
 	reference_obj =
-	    acpi_ut_create_पूर्णांकernal_object(ACPI_TYPE_LOCAL_REFERENCE);
-	अगर (!reference_obj) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	    acpi_ut_create_internal_object(ACPI_TYPE_LOCAL_REFERENCE);
+	if (!reference_obj) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	reference_obj->reference.class = ACPI_REFCLASS_REFOF;
 	reference_obj->reference.object = referenced_obj;
-	*वापस_desc = reference_obj;
+	*return_desc = reference_obj;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC,
 			  "Object %p Type [%s], returning Reference %p\n",
 			  obj_desc, acpi_ut_get_object_type_name(obj_desc),
-			  *वापस_desc));
+			  *return_desc));
 
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_करो_math_op
+ * FUNCTION:    acpi_ex_do_math_op
  *
  * PARAMETERS:  opcode              - AML opcode
- *              पूर्णांकeger0            - Integer opeअक्रम #0
- *              पूर्णांकeger1            - Integer opeअक्रम #1
+ *              integer0            - Integer operand #0
+ *              integer1            - Integer operand #1
  *
  * RETURN:      Integer result of the operation
  *
  * DESCRIPTION: Execute a math AML opcode. The purpose of having all of the
- *              math functions here is to prevent a lot of poपूर्णांकer dereferencing
- *              to obtain the opeअक्रमs.
+ *              math functions here is to prevent a lot of pointer dereferencing
+ *              to obtain the operands.
  *
  ******************************************************************************/
 
-u64 acpi_ex_करो_math_op(u16 opcode, u64 पूर्णांकeger0, u64 पूर्णांकeger1)
-अणु
+u64 acpi_ex_do_math_op(u16 opcode, u64 integer0, u64 integer1)
+{
 
 	ACPI_FUNCTION_ENTRY();
 
-	चयन (opcode) अणु
-	हाल AML_ADD_OP:	/* Add (Integer0, Integer1, Result) */
+	switch (opcode) {
+	case AML_ADD_OP:	/* Add (Integer0, Integer1, Result) */
 
-		वापस (पूर्णांकeger0 + पूर्णांकeger1);
+		return (integer0 + integer1);
 
-	हाल AML_BIT_AND_OP:	/* And (Integer0, Integer1, Result) */
+	case AML_BIT_AND_OP:	/* And (Integer0, Integer1, Result) */
 
-		वापस (पूर्णांकeger0 & पूर्णांकeger1);
+		return (integer0 & integer1);
 
-	हाल AML_BIT_न_अंकD_OP:	/* NAnd (Integer0, Integer1, Result) */
+	case AML_BIT_NAND_OP:	/* NAnd (Integer0, Integer1, Result) */
 
-		वापस (~(पूर्णांकeger0 & पूर्णांकeger1));
+		return (~(integer0 & integer1));
 
-	हाल AML_BIT_OR_OP:	/* Or (Integer0, Integer1, Result) */
+	case AML_BIT_OR_OP:	/* Or (Integer0, Integer1, Result) */
 
-		वापस (पूर्णांकeger0 | पूर्णांकeger1);
+		return (integer0 | integer1);
 
-	हाल AML_BIT_NOR_OP:	/* NOr (Integer0, Integer1, Result) */
+	case AML_BIT_NOR_OP:	/* NOr (Integer0, Integer1, Result) */
 
-		वापस (~(पूर्णांकeger0 | पूर्णांकeger1));
+		return (~(integer0 | integer1));
 
-	हाल AML_BIT_XOR_OP:	/* XOr (Integer0, Integer1, Result) */
+	case AML_BIT_XOR_OP:	/* XOr (Integer0, Integer1, Result) */
 
-		वापस (पूर्णांकeger0 ^ पूर्णांकeger1);
+		return (integer0 ^ integer1);
 
-	हाल AML_MULTIPLY_OP:	/* Multiply (Integer0, Integer1, Result) */
+	case AML_MULTIPLY_OP:	/* Multiply (Integer0, Integer1, Result) */
 
-		वापस (पूर्णांकeger0 * पूर्णांकeger1);
+		return (integer0 * integer1);
 
-	हाल AML_SHIFT_LEFT_OP:	/* shअगरt_left (Opeअक्रम, shअगरt_count, Result) */
-
-		/*
-		 * We need to check अगर the shअगरtcount is larger than the पूर्णांकeger bit
-		 * width since the behavior of this is not well-defined in the C language.
-		 */
-		अगर (पूर्णांकeger1 >= acpi_gbl_पूर्णांकeger_bit_width) अणु
-			वापस (0);
-		पूर्ण
-		वापस (पूर्णांकeger0 << पूर्णांकeger1);
-
-	हाल AML_SHIFT_RIGHT_OP:	/* shअगरt_right (Opeअक्रम, shअगरt_count, Result) */
+	case AML_SHIFT_LEFT_OP:	/* shift_left (Operand, shift_count, Result) */
 
 		/*
-		 * We need to check अगर the shअगरtcount is larger than the पूर्णांकeger bit
+		 * We need to check if the shiftcount is larger than the integer bit
 		 * width since the behavior of this is not well-defined in the C language.
 		 */
-		अगर (पूर्णांकeger1 >= acpi_gbl_पूर्णांकeger_bit_width) अणु
-			वापस (0);
-		पूर्ण
-		वापस (पूर्णांकeger0 >> पूर्णांकeger1);
+		if (integer1 >= acpi_gbl_integer_bit_width) {
+			return (0);
+		}
+		return (integer0 << integer1);
 
-	हाल AML_SUBTRACT_OP:	/* Subtract (Integer0, Integer1, Result) */
+	case AML_SHIFT_RIGHT_OP:	/* shift_right (Operand, shift_count, Result) */
 
-		वापस (पूर्णांकeger0 - पूर्णांकeger1);
+		/*
+		 * We need to check if the shiftcount is larger than the integer bit
+		 * width since the behavior of this is not well-defined in the C language.
+		 */
+		if (integer1 >= acpi_gbl_integer_bit_width) {
+			return (0);
+		}
+		return (integer0 >> integer1);
 
-	शेष:
+	case AML_SUBTRACT_OP:	/* Subtract (Integer0, Integer1, Result) */
 
-		वापस (0);
-	पूर्ण
-पूर्ण
+		return (integer0 - integer1);
+
+	default:
+
+		return (0);
+	}
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_करो_logical_numeric_op
+ * FUNCTION:    acpi_ex_do_logical_numeric_op
  *
  * PARAMETERS:  opcode              - AML opcode
- *              पूर्णांकeger0            - Integer opeअक्रम #0
- *              पूर्णांकeger1            - Integer opeअक्रम #1
+ *              integer0            - Integer operand #0
+ *              integer1            - Integer operand #1
  *              logical_result      - TRUE/FALSE result of the operation
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Execute a logical "Numeric" AML opcode. For these Numeric
- *              चालकs (LAnd and LOr), both opeअक्रमs must be पूर्णांकegers.
+ *              operators (LAnd and LOr), both operands must be integers.
  *
  *              Note: cleanest machine code seems to be produced by the code
- *              below, rather than using statements of the क्रमm:
+ *              below, rather than using statements of the form:
  *                  Result = (Integer0 && Integer1);
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_करो_logical_numeric_op(u16 opcode,
-			      u64 पूर्णांकeger0, u64 पूर्णांकeger1, u8 *logical_result)
-अणु
+acpi_ex_do_logical_numeric_op(u16 opcode,
+			      u64 integer0, u64 integer1, u8 *logical_result)
+{
 	acpi_status status = AE_OK;
 	u8 local_result = FALSE;
 
-	ACPI_FUNCTION_TRACE(ex_करो_logical_numeric_op);
+	ACPI_FUNCTION_TRACE(ex_do_logical_numeric_op);
 
-	चयन (opcode) अणु
-	हाल AML_LOGICAL_AND_OP:	/* LAnd (Integer0, Integer1) */
+	switch (opcode) {
+	case AML_LOGICAL_AND_OP:	/* LAnd (Integer0, Integer1) */
 
-		अगर (पूर्णांकeger0 && पूर्णांकeger1) अणु
+		if (integer0 && integer1) {
 			local_result = TRUE;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल AML_LOGICAL_OR_OP:	/* LOr (Integer0, Integer1) */
+	case AML_LOGICAL_OR_OP:	/* LOr (Integer0, Integer1) */
 
-		अगर (पूर्णांकeger0 || पूर्णांकeger1) अणु
+		if (integer0 || integer1) {
 			local_result = TRUE;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO,
 			    "Invalid numeric logical opcode: %X", opcode));
 		status = AE_AML_INTERNAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Return the logical result and status */
 
 	*logical_result = local_result;
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_करो_logical_op
+ * FUNCTION:    acpi_ex_do_logical_op
  *
  * PARAMETERS:  opcode              - AML opcode
- *              opeअक्रम0            - opeअक्रम #0
- *              opeअक्रम1            - opeअक्रम #1
+ *              operand0            - operand #0
+ *              operand1            - operand #1
  *              logical_result      - TRUE/FALSE result of the operation
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Execute a logical AML opcode. The purpose of having all of the
- *              functions here is to prevent a lot of poपूर्णांकer dereferencing
- *              to obtain the opeअक्रमs and to simplअगरy the generation of the
- *              logical value. For the Numeric चालकs (LAnd and LOr), both
- *              opeअक्रमs must be पूर्णांकegers. For the other logical चालकs,
- *              opeअक्रमs can be any combination of Integer/String/Buffer. The
- *              first opeअक्रम determines the type to which the second opeअक्रम
+ *              functions here is to prevent a lot of pointer dereferencing
+ *              to obtain the operands and to simplify the generation of the
+ *              logical value. For the Numeric operators (LAnd and LOr), both
+ *              operands must be integers. For the other logical operators,
+ *              operands can be any combination of Integer/String/Buffer. The
+ *              first operand determines the type to which the second operand
  *              will be converted.
  *
  *              Note: cleanest machine code seems to be produced by the code
- *              below, rather than using statements of the क्रमm:
- *                  Result = (Opeअक्रम0 == Opeअक्रम1);
+ *              below, rather than using statements of the form:
+ *                  Result = (Operand0 == Operand1);
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_करो_logical_op(u16 opcode,
-		      जोड़ acpi_opeअक्रम_object *opeअक्रम0,
-		      जोड़ acpi_opeअक्रम_object *opeअक्रम1, u8 * logical_result)
-अणु
-	जोड़ acpi_opeअक्रम_object *local_opeअक्रम1 = opeअक्रम1;
-	u64 पूर्णांकeger0;
-	u64 पूर्णांकeger1;
+acpi_ex_do_logical_op(u16 opcode,
+		      union acpi_operand_object *operand0,
+		      union acpi_operand_object *operand1, u8 * logical_result)
+{
+	union acpi_operand_object *local_operand1 = operand1;
+	u64 integer0;
+	u64 integer1;
 	u32 length0;
 	u32 length1;
 	acpi_status status = AE_OK;
 	u8 local_result = FALSE;
-	पूर्णांक compare;
+	int compare;
 
-	ACPI_FUNCTION_TRACE(ex_करो_logical_op);
+	ACPI_FUNCTION_TRACE(ex_do_logical_op);
 
 	/*
-	 * Convert the second opeअक्रम अगर necessary. The first opeअक्रम
-	 * determines the type of the second opeअक्रम, (See the Data Types
-	 * section of the ACPI 3.0+ specअगरication.)  Both object types are
-	 * guaranteed to be either Integer/String/Buffer by the opeअक्रम
+	 * Convert the second operand if necessary. The first operand
+	 * determines the type of the second operand, (See the Data Types
+	 * section of the ACPI 3.0+ specification.)  Both object types are
+	 * guaranteed to be either Integer/String/Buffer by the operand
 	 * resolution mechanism.
 	 */
-	चयन (opeअक्रम0->common.type) अणु
-	हाल ACPI_TYPE_INTEGER:
+	switch (operand0->common.type) {
+	case ACPI_TYPE_INTEGER:
 
-		status = acpi_ex_convert_to_पूर्णांकeger(opeअक्रम1, &local_opeअक्रम1,
+		status = acpi_ex_convert_to_integer(operand1, &local_operand1,
 						    ACPI_IMPLICIT_CONVERSION);
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_STRING:
+	case ACPI_TYPE_STRING:
 
 		status =
-		    acpi_ex_convert_to_string(opeअक्रम1, &local_opeअक्रम1,
+		    acpi_ex_convert_to_string(operand1, &local_operand1,
 					      ACPI_IMPLICIT_CONVERT_HEX);
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_BUFFER:
 
-		status = acpi_ex_convert_to_buffer(opeअक्रम1, &local_opeअक्रम1);
-		अवरोध;
+		status = acpi_ex_convert_to_buffer(operand1, &local_operand1);
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO,
 			    "Invalid object type for logical operator: %X",
-			    opeअक्रम0->common.type));
+			    operand0->common.type));
 		status = AE_AML_INTERNAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ cleanup;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto cleanup;
+	}
 
 	/*
-	 * Two हालs: 1) Both Integers, 2) Both Strings or Buffers
+	 * Two cases: 1) Both Integers, 2) Both Strings or Buffers
 	 */
-	अगर (opeअक्रम0->common.type == ACPI_TYPE_INTEGER) अणु
+	if (operand0->common.type == ACPI_TYPE_INTEGER) {
 		/*
-		 * 1) Both opeअक्रमs are of type पूर्णांकeger
-		 *    Note: local_opeअक्रम1 may have changed above
+		 * 1) Both operands are of type integer
+		 *    Note: local_operand1 may have changed above
 		 */
-		पूर्णांकeger0 = opeअक्रम0->पूर्णांकeger.value;
-		पूर्णांकeger1 = local_opeअक्रम1->पूर्णांकeger.value;
+		integer0 = operand0->integer.value;
+		integer1 = local_operand1->integer.value;
 
-		चयन (opcode) अणु
-		हाल AML_LOGICAL_EQUAL_OP:	/* LEqual (Opeअक्रम0, Opeअक्रम1) */
+		switch (opcode) {
+		case AML_LOGICAL_EQUAL_OP:	/* LEqual (Operand0, Operand1) */
 
-			अगर (पूर्णांकeger0 == पूर्णांकeger1) अणु
+			if (integer0 == integer1) {
 				local_result = TRUE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल AML_LOGICAL_GREATER_OP:	/* LGreater (Opeअक्रम0, Opeअक्रम1) */
+		case AML_LOGICAL_GREATER_OP:	/* LGreater (Operand0, Operand1) */
 
-			अगर (पूर्णांकeger0 > पूर्णांकeger1) अणु
+			if (integer0 > integer1) {
 				local_result = TRUE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल AML_LOGICAL_LESS_OP:	/* LLess (Opeअक्रम0, Opeअक्रम1) */
+		case AML_LOGICAL_LESS_OP:	/* LLess (Operand0, Operand1) */
 
-			अगर (पूर्णांकeger0 < पूर्णांकeger1) अणु
+			if (integer0 < integer1) {
 				local_result = TRUE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO,
 				    "Invalid comparison opcode: %X", opcode));
 			status = AE_AML_INTERNAL;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		/*
-		 * 2) Both opeअक्रमs are Strings or both are Buffers
+		 * 2) Both operands are Strings or both are Buffers
 		 *    Note: Code below takes advantage of common Buffer/String
-		 *          object fields. local_opeअक्रम1 may have changed above. Use
-		 *          स_भेद to handle nulls in buffers.
+		 *          object fields. local_operand1 may have changed above. Use
+		 *          memcmp to handle nulls in buffers.
 		 */
-		length0 = opeअक्रम0->buffer.length;
-		length1 = local_opeअक्रम1->buffer.length;
+		length0 = operand0->buffer.length;
+		length1 = local_operand1->buffer.length;
 
 		/* Lexicographic compare: compare the data bytes */
 
-		compare = स_भेद(opeअक्रम0->buffer.poपूर्णांकer,
-				 local_opeअक्रम1->buffer.poपूर्णांकer,
+		compare = memcmp(operand0->buffer.pointer,
+				 local_operand1->buffer.pointer,
 				 (length0 > length1) ? length1 : length0);
 
-		चयन (opcode) अणु
-		हाल AML_LOGICAL_EQUAL_OP:	/* LEqual (Opeअक्रम0, Opeअक्रम1) */
+		switch (opcode) {
+		case AML_LOGICAL_EQUAL_OP:	/* LEqual (Operand0, Operand1) */
 
 			/* Length and all bytes must be equal */
 
-			अगर ((length0 == length1) && (compare == 0)) अणु
+			if ((length0 == length1) && (compare == 0)) {
 
 				/* Length and all bytes match ==> TRUE */
 
 				local_result = TRUE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल AML_LOGICAL_GREATER_OP:	/* LGreater (Opeअक्रम0, Opeअक्रम1) */
+		case AML_LOGICAL_GREATER_OP:	/* LGreater (Operand0, Operand1) */
 
-			अगर (compare > 0) अणु
+			if (compare > 0) {
 				local_result = TRUE;
-				जाओ cleanup;	/* TRUE */
-			पूर्ण
-			अगर (compare < 0) अणु
-				जाओ cleanup;	/* FALSE */
-			पूर्ण
+				goto cleanup;	/* TRUE */
+			}
+			if (compare < 0) {
+				goto cleanup;	/* FALSE */
+			}
 
-			/* Bytes match (to लघुest length), compare lengths */
+			/* Bytes match (to shortest length), compare lengths */
 
-			अगर (length0 > length1) अणु
+			if (length0 > length1) {
 				local_result = TRUE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल AML_LOGICAL_LESS_OP:	/* LLess (Opeअक्रम0, Opeअक्रम1) */
+		case AML_LOGICAL_LESS_OP:	/* LLess (Operand0, Operand1) */
 
-			अगर (compare > 0) अणु
-				जाओ cleanup;	/* FALSE */
-			पूर्ण
-			अगर (compare < 0) अणु
+			if (compare > 0) {
+				goto cleanup;	/* FALSE */
+			}
+			if (compare < 0) {
 				local_result = TRUE;
-				जाओ cleanup;	/* TRUE */
-			पूर्ण
+				goto cleanup;	/* TRUE */
+			}
 
-			/* Bytes match (to लघुest length), compare lengths */
+			/* Bytes match (to shortest length), compare lengths */
 
-			अगर (length0 < length1) अणु
+			if (length0 < length1) {
 				local_result = TRUE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO,
 				    "Invalid comparison opcode: %X", opcode));
 			status = AE_AML_INTERNAL;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 cleanup:
 
-	/* New object was created अगर implicit conversion perक्रमmed - delete */
+	/* New object was created if implicit conversion performed - delete */
 
-	अगर (local_opeअक्रम1 != opeअक्रम1) अणु
-		acpi_ut_हटाओ_reference(local_opeअक्रम1);
-	पूर्ण
+	if (local_operand1 != operand1) {
+		acpi_ut_remove_reference(local_operand1);
+	}
 
 	/* Return the logical result and status */
 
 	*logical_result = local_result;
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}

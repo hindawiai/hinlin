@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVIF_PARENT_H__
-#घोषणा __NVIF_PARENT_H__
-#समावेश <nvअगर/os.h>
-काष्ठा nvअगर_object;
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVIF_PARENT_H__
+#define __NVIF_PARENT_H__
+#include <nvif/os.h>
+struct nvif_object;
 
-काष्ठा nvअगर_parent अणु
-	स्थिर काष्ठा nvअगर_parent_func अणु
-		व्योम (*debugf)(काष्ठा nvअगर_object *, स्थिर अक्षर *fmt, ...) __म_लिखो(2, 3);
-		व्योम (*errorf)(काष्ठा nvअगर_object *, स्थिर अक्षर *fmt, ...) __म_लिखो(2, 3);
-	पूर्ण *func;
-पूर्ण;
+struct nvif_parent {
+	const struct nvif_parent_func {
+		void (*debugf)(struct nvif_object *, const char *fmt, ...) __printf(2, 3);
+		void (*errorf)(struct nvif_object *, const char *fmt, ...) __printf(2, 3);
+	} *func;
+};
 
-अटल अंतरभूत व्योम
-nvअगर_parent_dtor(काष्ठा nvअगर_parent *parent)
-अणु
-	parent->func = शून्य;
-पूर्ण
+static inline void
+nvif_parent_dtor(struct nvif_parent *parent)
+{
+	parent->func = NULL;
+}
 
-अटल अंतरभूत व्योम
-nvअगर_parent_ctor(स्थिर काष्ठा nvअगर_parent_func *func, काष्ठा nvअगर_parent *parent)
-अणु
+static inline void
+nvif_parent_ctor(const struct nvif_parent_func *func, struct nvif_parent *parent)
+{
 	parent->func = func;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

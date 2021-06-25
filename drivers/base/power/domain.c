@@ -1,1984 +1,1983 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * drivers/base/घातer/करोमुख्य.c - Common code related to device घातer करोमुख्यs.
+ * drivers/base/power/domain.c - Common code related to device power domains.
  *
  * Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
-#घोषणा pr_fmt(fmt) "PM: " fmt
+#define pr_fmt(fmt) "PM: " fmt
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/pm_घड़ी.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/export.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/debugfs.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/pm_opp.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_qos.h>
+#include <linux/pm_clock.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/sched.h>
+#include <linux/suspend.h>
+#include <linux/export.h>
+#include <linux/cpu.h>
+#include <linux/debugfs.h>
 
-#समावेश "power.h"
+#include "power.h"
 
-#घोषणा GENPD_RETRY_MAX_MS	250		/* Approximate */
+#define GENPD_RETRY_MAX_MS	250		/* Approximate */
 
-#घोषणा GENPD_DEV_CALLBACK(genpd, type, callback, dev)		\
-(अणु								\
-	type (*__routine)(काष्ठा device *__d); 			\
+#define GENPD_DEV_CALLBACK(genpd, type, callback, dev)		\
+({								\
+	type (*__routine)(struct device *__d); 			\
 	type __ret = (type)0;					\
 								\
 	__routine = genpd->dev_ops.callback; 			\
-	अगर (__routine) अणु					\
+	if (__routine) {					\
 		__ret = __routine(dev); 			\
-	पूर्ण							\
+	}							\
 	__ret;							\
-पूर्ण)
+})
 
-अटल LIST_HEAD(gpd_list);
-अटल DEFINE_MUTEX(gpd_list_lock);
+static LIST_HEAD(gpd_list);
+static DEFINE_MUTEX(gpd_list_lock);
 
-काष्ठा genpd_lock_ops अणु
-	व्योम (*lock)(काष्ठा generic_pm_करोमुख्य *genpd);
-	व्योम (*lock_nested)(काष्ठा generic_pm_करोमुख्य *genpd, पूर्णांक depth);
-	पूर्णांक (*lock_पूर्णांकerruptible)(काष्ठा generic_pm_करोमुख्य *genpd);
-	व्योम (*unlock)(काष्ठा generic_pm_करोमुख्य *genpd);
-पूर्ण;
+struct genpd_lock_ops {
+	void (*lock)(struct generic_pm_domain *genpd);
+	void (*lock_nested)(struct generic_pm_domain *genpd, int depth);
+	int (*lock_interruptible)(struct generic_pm_domain *genpd);
+	void (*unlock)(struct generic_pm_domain *genpd);
+};
 
-अटल व्योम genpd_lock_mtx(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
+static void genpd_lock_mtx(struct generic_pm_domain *genpd)
+{
 	mutex_lock(&genpd->mlock);
-पूर्ण
+}
 
-अटल व्योम genpd_lock_nested_mtx(काष्ठा generic_pm_करोमुख्य *genpd,
-					पूर्णांक depth)
-अणु
+static void genpd_lock_nested_mtx(struct generic_pm_domain *genpd,
+					int depth)
+{
 	mutex_lock_nested(&genpd->mlock, depth);
-पूर्ण
+}
 
-अटल पूर्णांक genpd_lock_पूर्णांकerruptible_mtx(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	वापस mutex_lock_पूर्णांकerruptible(&genpd->mlock);
-पूर्ण
+static int genpd_lock_interruptible_mtx(struct generic_pm_domain *genpd)
+{
+	return mutex_lock_interruptible(&genpd->mlock);
+}
 
-अटल व्योम genpd_unlock_mtx(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	वापस mutex_unlock(&genpd->mlock);
-पूर्ण
+static void genpd_unlock_mtx(struct generic_pm_domain *genpd)
+{
+	return mutex_unlock(&genpd->mlock);
+}
 
-अटल स्थिर काष्ठा genpd_lock_ops genpd_mtx_ops = अणु
+static const struct genpd_lock_ops genpd_mtx_ops = {
 	.lock = genpd_lock_mtx,
 	.lock_nested = genpd_lock_nested_mtx,
-	.lock_पूर्णांकerruptible = genpd_lock_पूर्णांकerruptible_mtx,
+	.lock_interruptible = genpd_lock_interruptible_mtx,
 	.unlock = genpd_unlock_mtx,
-पूर्ण;
+};
 
-अटल व्योम genpd_lock_spin(काष्ठा generic_pm_करोमुख्य *genpd)
+static void genpd_lock_spin(struct generic_pm_domain *genpd)
 	__acquires(&genpd->slock)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&genpd->slock, flags);
 	genpd->lock_flags = flags;
-पूर्ण
+}
 
-अटल व्योम genpd_lock_nested_spin(काष्ठा generic_pm_करोमुख्य *genpd,
-					पूर्णांक depth)
+static void genpd_lock_nested_spin(struct generic_pm_domain *genpd,
+					int depth)
 	__acquires(&genpd->slock)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave_nested(&genpd->slock, flags, depth);
 	genpd->lock_flags = flags;
-पूर्ण
+}
 
-अटल पूर्णांक genpd_lock_पूर्णांकerruptible_spin(काष्ठा generic_pm_करोमुख्य *genpd)
+static int genpd_lock_interruptible_spin(struct generic_pm_domain *genpd)
 	__acquires(&genpd->slock)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&genpd->slock, flags);
 	genpd->lock_flags = flags;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम genpd_unlock_spin(काष्ठा generic_pm_करोमुख्य *genpd)
+static void genpd_unlock_spin(struct generic_pm_domain *genpd)
 	__releases(&genpd->slock)
-अणु
+{
 	spin_unlock_irqrestore(&genpd->slock, genpd->lock_flags);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा genpd_lock_ops genpd_spin_ops = अणु
+static const struct genpd_lock_ops genpd_spin_ops = {
 	.lock = genpd_lock_spin,
 	.lock_nested = genpd_lock_nested_spin,
-	.lock_पूर्णांकerruptible = genpd_lock_पूर्णांकerruptible_spin,
+	.lock_interruptible = genpd_lock_interruptible_spin,
 	.unlock = genpd_unlock_spin,
-पूर्ण;
+};
 
-#घोषणा genpd_lock(p)			p->lock_ops->lock(p)
-#घोषणा genpd_lock_nested(p, d)		p->lock_ops->lock_nested(p, d)
-#घोषणा genpd_lock_पूर्णांकerruptible(p)	p->lock_ops->lock_पूर्णांकerruptible(p)
-#घोषणा genpd_unlock(p)			p->lock_ops->unlock(p)
+#define genpd_lock(p)			p->lock_ops->lock(p)
+#define genpd_lock_nested(p, d)		p->lock_ops->lock_nested(p, d)
+#define genpd_lock_interruptible(p)	p->lock_ops->lock_interruptible(p)
+#define genpd_unlock(p)			p->lock_ops->unlock(p)
 
-#घोषणा genpd_status_on(genpd)		(genpd->status == GENPD_STATE_ON)
-#घोषणा genpd_is_irq_safe(genpd)	(genpd->flags & GENPD_FLAG_IRQ_SAFE)
-#घोषणा genpd_is_always_on(genpd)	(genpd->flags & GENPD_FLAG_ALWAYS_ON)
-#घोषणा genpd_is_active_wakeup(genpd)	(genpd->flags & GENPD_FLAG_ACTIVE_WAKEUP)
-#घोषणा genpd_is_cpu_करोमुख्य(genpd)	(genpd->flags & GENPD_FLAG_CPU_DOMAIN)
-#घोषणा genpd_is_rpm_always_on(genpd)	(genpd->flags & GENPD_FLAG_RPM_ALWAYS_ON)
+#define genpd_status_on(genpd)		(genpd->status == GENPD_STATE_ON)
+#define genpd_is_irq_safe(genpd)	(genpd->flags & GENPD_FLAG_IRQ_SAFE)
+#define genpd_is_always_on(genpd)	(genpd->flags & GENPD_FLAG_ALWAYS_ON)
+#define genpd_is_active_wakeup(genpd)	(genpd->flags & GENPD_FLAG_ACTIVE_WAKEUP)
+#define genpd_is_cpu_domain(genpd)	(genpd->flags & GENPD_FLAG_CPU_DOMAIN)
+#define genpd_is_rpm_always_on(genpd)	(genpd->flags & GENPD_FLAG_RPM_ALWAYS_ON)
 
-अटल अंतरभूत bool irq_safe_dev_in_no_sleep_करोमुख्य(काष्ठा device *dev,
-		स्थिर काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
+static inline bool irq_safe_dev_in_no_sleep_domain(struct device *dev,
+		const struct generic_pm_domain *genpd)
+{
 	bool ret;
 
-	ret = pm_runसमय_is_irq_safe(dev) && !genpd_is_irq_safe(genpd);
+	ret = pm_runtime_is_irq_safe(dev) && !genpd_is_irq_safe(genpd);
 
 	/*
-	 * Warn once अगर an IRQ safe device is attached to a no sleep करोमुख्य, as
-	 * to indicate a suboptimal configuration क्रम PM. For an always on
-	 * करोमुख्य this isn't case, thus don't warn.
+	 * Warn once if an IRQ safe device is attached to a no sleep domain, as
+	 * to indicate a suboptimal configuration for PM. For an always on
+	 * domain this isn't case, thus don't warn.
 	 */
-	अगर (ret && !genpd_is_always_on(genpd))
+	if (ret && !genpd_is_always_on(genpd))
 		dev_warn_once(dev, "PM domain %s will not be powered off\n",
 				genpd->name);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक genpd_runसमय_suspend(काष्ठा device *dev);
-
-/*
- * Get the generic PM करोमुख्य क्रम a particular काष्ठा device.
- * This validates the काष्ठा device poपूर्णांकer, the PM करोमुख्य poपूर्णांकer,
- * and checks that the PM करोमुख्य poपूर्णांकer is a real generic PM करोमुख्य.
- * Any failure results in शून्य being वापसed.
- */
-अटल काष्ठा generic_pm_करोमुख्य *dev_to_genpd_safe(काष्ठा device *dev)
-अणु
-	अगर (IS_ERR_OR_शून्य(dev) || IS_ERR_OR_शून्य(dev->pm_करोमुख्य))
-		वापस शून्य;
-
-	/* A genpd's always have its ->runसमय_suspend() callback asचिन्हित. */
-	अगर (dev->pm_करोमुख्य->ops.runसमय_suspend == genpd_runसमय_suspend)
-		वापस pd_to_genpd(dev->pm_करोमुख्य);
-
-	वापस शून्य;
-पूर्ण
+static int genpd_runtime_suspend(struct device *dev);
 
 /*
- * This should only be used where we are certain that the pm_करोमुख्य
- * attached to the device is a genpd करोमुख्य.
+ * Get the generic PM domain for a particular struct device.
+ * This validates the struct device pointer, the PM domain pointer,
+ * and checks that the PM domain pointer is a real generic PM domain.
+ * Any failure results in NULL being returned.
  */
-अटल काष्ठा generic_pm_करोमुख्य *dev_to_genpd(काष्ठा device *dev)
-अणु
-	अगर (IS_ERR_OR_शून्य(dev->pm_करोमुख्य))
-		वापस ERR_PTR(-EINVAL);
+static struct generic_pm_domain *dev_to_genpd_safe(struct device *dev)
+{
+	if (IS_ERR_OR_NULL(dev) || IS_ERR_OR_NULL(dev->pm_domain))
+		return NULL;
 
-	वापस pd_to_genpd(dev->pm_करोमुख्य);
-पूर्ण
+	/* A genpd's always have its ->runtime_suspend() callback assigned. */
+	if (dev->pm_domain->ops.runtime_suspend == genpd_runtime_suspend)
+		return pd_to_genpd(dev->pm_domain);
 
-अटल पूर्णांक genpd_stop_dev(स्थिर काष्ठा generic_pm_करोमुख्य *genpd,
-			  काष्ठा device *dev)
-अणु
-	वापस GENPD_DEV_CALLBACK(genpd, पूर्णांक, stop, dev);
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक genpd_start_dev(स्थिर काष्ठा generic_pm_करोमुख्य *genpd,
-			   काष्ठा device *dev)
-अणु
-	वापस GENPD_DEV_CALLBACK(genpd, पूर्णांक, start, dev);
-पूर्ण
+/*
+ * This should only be used where we are certain that the pm_domain
+ * attached to the device is a genpd domain.
+ */
+static struct generic_pm_domain *dev_to_genpd(struct device *dev)
+{
+	if (IS_ERR_OR_NULL(dev->pm_domain))
+		return ERR_PTR(-EINVAL);
 
-अटल bool genpd_sd_counter_dec(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
+	return pd_to_genpd(dev->pm_domain);
+}
+
+static int genpd_stop_dev(const struct generic_pm_domain *genpd,
+			  struct device *dev)
+{
+	return GENPD_DEV_CALLBACK(genpd, int, stop, dev);
+}
+
+static int genpd_start_dev(const struct generic_pm_domain *genpd,
+			   struct device *dev)
+{
+	return GENPD_DEV_CALLBACK(genpd, int, start, dev);
+}
+
+static bool genpd_sd_counter_dec(struct generic_pm_domain *genpd)
+{
 	bool ret = false;
 
-	अगर (!WARN_ON(atomic_पढ़ो(&genpd->sd_count) == 0))
+	if (!WARN_ON(atomic_read(&genpd->sd_count) == 0))
 		ret = !!atomic_dec_and_test(&genpd->sd_count);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम genpd_sd_counter_inc(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
+static void genpd_sd_counter_inc(struct generic_pm_domain *genpd)
+{
 	atomic_inc(&genpd->sd_count);
 	smp_mb__after_atomic();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल काष्ठा dentry *genpd_debugfs_dir;
+#ifdef CONFIG_DEBUG_FS
+static struct dentry *genpd_debugfs_dir;
 
-अटल व्योम genpd_debug_add(काष्ठा generic_pm_करोमुख्य *genpd);
+static void genpd_debug_add(struct generic_pm_domain *genpd);
 
-अटल व्योम genpd_debug_हटाओ(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा dentry *d;
+static void genpd_debug_remove(struct generic_pm_domain *genpd)
+{
+	struct dentry *d;
 
 	d = debugfs_lookup(genpd->name, genpd_debugfs_dir);
-	debugfs_हटाओ(d);
-पूर्ण
+	debugfs_remove(d);
+}
 
-अटल व्योम genpd_update_accounting(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	kसमय_प्रकार delta, now;
+static void genpd_update_accounting(struct generic_pm_domain *genpd)
+{
+	ktime_t delta, now;
 
-	now = kसमय_get();
-	delta = kसमय_sub(now, genpd->accounting_समय);
+	now = ktime_get();
+	delta = ktime_sub(now, genpd->accounting_time);
 
 	/*
 	 * If genpd->status is active, it means we are just
-	 * out of off and so update the idle समय and vice
+	 * out of off and so update the idle time and vice
 	 * versa.
 	 */
-	अगर (genpd->status == GENPD_STATE_ON) अणु
-		पूर्णांक state_idx = genpd->state_idx;
+	if (genpd->status == GENPD_STATE_ON) {
+		int state_idx = genpd->state_idx;
 
-		genpd->states[state_idx].idle_समय =
-			kसमय_add(genpd->states[state_idx].idle_समय, delta);
-	पूर्ण अन्यथा अणु
-		genpd->on_समय = kसमय_add(genpd->on_समय, delta);
-	पूर्ण
+		genpd->states[state_idx].idle_time =
+			ktime_add(genpd->states[state_idx].idle_time, delta);
+	} else {
+		genpd->on_time = ktime_add(genpd->on_time, delta);
+	}
 
-	genpd->accounting_समय = now;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम genpd_debug_add(काष्ठा generic_pm_करोमुख्य *genpd) अणुपूर्ण
-अटल अंतरभूत व्योम genpd_debug_हटाओ(काष्ठा generic_pm_करोमुख्य *genpd) अणुपूर्ण
-अटल अंतरभूत व्योम genpd_update_accounting(काष्ठा generic_pm_करोमुख्य *genpd) अणुपूर्ण
-#पूर्ण_अगर
+	genpd->accounting_time = now;
+}
+#else
+static inline void genpd_debug_add(struct generic_pm_domain *genpd) {}
+static inline void genpd_debug_remove(struct generic_pm_domain *genpd) {}
+static inline void genpd_update_accounting(struct generic_pm_domain *genpd) {}
+#endif
 
-अटल पूर्णांक _genpd_reeval_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *genpd,
-					   अचिन्हित पूर्णांक state)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *pd_data;
-	काष्ठा pm_करोमुख्य_data *pdd;
-	काष्ठा gpd_link *link;
+static int _genpd_reeval_performance_state(struct generic_pm_domain *genpd,
+					   unsigned int state)
+{
+	struct generic_pm_domain_data *pd_data;
+	struct pm_domain_data *pdd;
+	struct gpd_link *link;
 
 	/* New requested state is same as Max requested state */
-	अगर (state == genpd->perक्रमmance_state)
-		वापस state;
+	if (state == genpd->performance_state)
+		return state;
 
 	/* New requested state is higher than Max requested state */
-	अगर (state > genpd->perक्रमmance_state)
-		वापस state;
+	if (state > genpd->performance_state)
+		return state;
 
-	/* Traverse all devices within the करोमुख्य */
-	list_क्रम_each_entry(pdd, &genpd->dev_list, list_node) अणु
+	/* Traverse all devices within the domain */
+	list_for_each_entry(pdd, &genpd->dev_list, list_node) {
 		pd_data = to_gpd_data(pdd);
 
-		अगर (pd_data->perक्रमmance_state > state)
-			state = pd_data->perक्रमmance_state;
-	पूर्ण
+		if (pd_data->performance_state > state)
+			state = pd_data->performance_state;
+	}
 
 	/*
-	 * Traverse all sub-करोमुख्यs within the करोमुख्य. This can be
-	 * करोne without any additional locking as the link->perक्रमmance_state
-	 * field is रक्षित by the parent genpd->lock, which is alपढ़ोy taken.
+	 * Traverse all sub-domains within the domain. This can be
+	 * done without any additional locking as the link->performance_state
+	 * field is protected by the parent genpd->lock, which is already taken.
 	 *
-	 * Also note that link->perक्रमmance_state (subकरोमुख्य's perक्रमmance state
-	 * requirement to parent करोमुख्य) is dअगरferent from
-	 * link->child->perक्रमmance_state (current perक्रमmance state requirement
-	 * of the devices/sub-करोमुख्यs of the subकरोमुख्य) and so can have a
-	 * dअगरferent value.
+	 * Also note that link->performance_state (subdomain's performance state
+	 * requirement to parent domain) is different from
+	 * link->child->performance_state (current performance state requirement
+	 * of the devices/sub-domains of the subdomain) and so can have a
+	 * different value.
 	 *
-	 * Note that we also take vote from घातered-off sub-करोमुख्यs पूर्णांकo account
-	 * as the same is करोne क्रम devices right now.
+	 * Note that we also take vote from powered-off sub-domains into account
+	 * as the same is done for devices right now.
 	 */
-	list_क्रम_each_entry(link, &genpd->parent_links, parent_node) अणु
-		अगर (link->perक्रमmance_state > state)
-			state = link->perक्रमmance_state;
-	पूर्ण
+	list_for_each_entry(link, &genpd->parent_links, parent_node) {
+		if (link->performance_state > state)
+			state = link->performance_state;
+	}
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अटल पूर्णांक genpd_xlate_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *genpd,
-					 काष्ठा generic_pm_करोमुख्य *parent,
-					 अचिन्हित पूर्णांक pstate)
-अणु
-	अगर (!parent->set_perक्रमmance_state)
-		वापस pstate;
+static int genpd_xlate_performance_state(struct generic_pm_domain *genpd,
+					 struct generic_pm_domain *parent,
+					 unsigned int pstate)
+{
+	if (!parent->set_performance_state)
+		return pstate;
 
-	वापस dev_pm_opp_xlate_perक्रमmance_state(genpd->opp_table,
+	return dev_pm_opp_xlate_performance_state(genpd->opp_table,
 						  parent->opp_table,
 						  pstate);
-पूर्ण
+}
 
-अटल पूर्णांक _genpd_set_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *genpd,
-					अचिन्हित पूर्णांक state, पूर्णांक depth)
-अणु
-	काष्ठा generic_pm_करोमुख्य *parent;
-	काष्ठा gpd_link *link;
-	पूर्णांक parent_state, ret;
+static int _genpd_set_performance_state(struct generic_pm_domain *genpd,
+					unsigned int state, int depth)
+{
+	struct generic_pm_domain *parent;
+	struct gpd_link *link;
+	int parent_state, ret;
 
-	अगर (state == genpd->perक्रमmance_state)
-		वापस 0;
+	if (state == genpd->performance_state)
+		return 0;
 
 	/* Propagate to parents of genpd */
-	list_क्रम_each_entry(link, &genpd->child_links, child_node) अणु
+	list_for_each_entry(link, &genpd->child_links, child_node) {
 		parent = link->parent;
 
-		/* Find parent's perक्रमmance state */
-		ret = genpd_xlate_perक्रमmance_state(genpd, parent, state);
-		अगर (unlikely(ret < 0))
-			जाओ err;
+		/* Find parent's performance state */
+		ret = genpd_xlate_performance_state(genpd, parent, state);
+		if (unlikely(ret < 0))
+			goto err;
 
 		parent_state = ret;
 
 		genpd_lock_nested(parent, depth + 1);
 
-		link->prev_perक्रमmance_state = link->perक्रमmance_state;
-		link->perक्रमmance_state = parent_state;
-		parent_state = _genpd_reeval_perक्रमmance_state(parent,
+		link->prev_performance_state = link->performance_state;
+		link->performance_state = parent_state;
+		parent_state = _genpd_reeval_performance_state(parent,
 						parent_state);
-		ret = _genpd_set_perक्रमmance_state(parent, parent_state, depth + 1);
-		अगर (ret)
-			link->perक्रमmance_state = link->prev_perक्रमmance_state;
+		ret = _genpd_set_performance_state(parent, parent_state, depth + 1);
+		if (ret)
+			link->performance_state = link->prev_performance_state;
 
 		genpd_unlock(parent);
 
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
-	अगर (genpd->set_perक्रमmance_state) अणु
-		ret = genpd->set_perक्रमmance_state(genpd, state);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+	if (genpd->set_performance_state) {
+		ret = genpd->set_performance_state(genpd, state);
+		if (ret)
+			goto err;
+	}
 
-	genpd->perक्रमmance_state = state;
-	वापस 0;
+	genpd->performance_state = state;
+	return 0;
 
 err:
 	/* Encountered an error, lets rollback */
-	list_क्रम_each_entry_जारी_reverse(link, &genpd->child_links,
-					     child_node) अणु
+	list_for_each_entry_continue_reverse(link, &genpd->child_links,
+					     child_node) {
 		parent = link->parent;
 
 		genpd_lock_nested(parent, depth + 1);
 
-		parent_state = link->prev_perक्रमmance_state;
-		link->perक्रमmance_state = parent_state;
+		parent_state = link->prev_performance_state;
+		link->performance_state = parent_state;
 
-		parent_state = _genpd_reeval_perक्रमmance_state(parent,
+		parent_state = _genpd_reeval_performance_state(parent,
 						parent_state);
-		अगर (_genpd_set_perक्रमmance_state(parent, parent_state, depth + 1)) अणु
+		if (_genpd_set_performance_state(parent, parent_state, depth + 1)) {
 			pr_err("%s: Failed to roll back to %d performance state\n",
 			       parent->name, parent_state);
-		पूर्ण
+		}
 
 		genpd_unlock(parent);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * dev_pm_genpd_set_perक्रमmance_state- Set perक्रमmance state of device's घातer
- * करोमुख्य.
+ * dev_pm_genpd_set_performance_state- Set performance state of device's power
+ * domain.
  *
- * @dev: Device क्रम which the perक्रमmance-state needs to be set.
- * @state: Target perक्रमmance state of the device. This can be set as 0 when the
- *	   device करोesn't have any perक्रमmance state स्थिरraपूर्णांकs left (And so
+ * @dev: Device for which the performance-state needs to be set.
+ * @state: Target performance state of the device. This can be set as 0 when the
+ *	   device doesn't have any performance state constraints left (And so
  *	   the device wouldn't participate anymore to find the target
- *	   perक्रमmance state of the genpd).
+ *	   performance state of the genpd).
  *
  * It is assumed that the users guarantee that the genpd wouldn't be detached
- * जबतक this routine is getting called.
+ * while this routine is getting called.
  *
  * Returns 0 on success and negative error values on failures.
  */
-पूर्णांक dev_pm_genpd_set_perक्रमmance_state(काष्ठा device *dev, अचिन्हित पूर्णांक state)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	अचिन्हित पूर्णांक prev;
-	पूर्णांक ret;
+int dev_pm_genpd_set_performance_state(struct device *dev, unsigned int state)
+{
+	struct generic_pm_domain *genpd;
+	struct generic_pm_domain_data *gpd_data;
+	unsigned int prev;
+	int ret;
 
 	genpd = dev_to_genpd_safe(dev);
-	अगर (!genpd)
-		वापस -ENODEV;
+	if (!genpd)
+		return -ENODEV;
 
-	अगर (WARN_ON(!dev->घातer.subsys_data ||
-		     !dev->घातer.subsys_data->करोमुख्य_data))
-		वापस -EINVAL;
+	if (WARN_ON(!dev->power.subsys_data ||
+		     !dev->power.subsys_data->domain_data))
+		return -EINVAL;
 
 	genpd_lock(genpd);
 
-	gpd_data = to_gpd_data(dev->घातer.subsys_data->करोमुख्य_data);
-	prev = gpd_data->perक्रमmance_state;
-	gpd_data->perक्रमmance_state = state;
+	gpd_data = to_gpd_data(dev->power.subsys_data->domain_data);
+	prev = gpd_data->performance_state;
+	gpd_data->performance_state = state;
 
-	state = _genpd_reeval_perक्रमmance_state(genpd, state);
-	ret = _genpd_set_perक्रमmance_state(genpd, state, 0);
-	अगर (ret)
-		gpd_data->perक्रमmance_state = prev;
+	state = _genpd_reeval_performance_state(genpd, state);
+	ret = _genpd_set_performance_state(genpd, state, 0);
+	if (ret)
+		gpd_data->performance_state = prev;
 
 	genpd_unlock(genpd);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(dev_pm_genpd_set_perक्रमmance_state);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_genpd_set_performance_state);
 
 /**
- * dev_pm_genpd_set_next_wakeup - Notअगरy PM framework of an impending wakeup.
+ * dev_pm_genpd_set_next_wakeup - Notify PM framework of an impending wakeup.
  *
  * @dev: Device to handle
- * @next: impending पूर्णांकerrupt/wakeup क्रम the device
+ * @next: impending interrupt/wakeup for the device
  *
  *
- * Allow devices to inक्रमm of the next wakeup. It's assumed that the users
- * guarantee that the genpd wouldn't be detached जबतक this routine is getting
- * called. Additionally, it's also assumed that @dev isn't runसमय suspended
+ * Allow devices to inform of the next wakeup. It's assumed that the users
+ * guarantee that the genpd wouldn't be detached while this routine is getting
+ * called. Additionally, it's also assumed that @dev isn't runtime suspended
  * (RPM_SUSPENDED)."
  * Although devices are expected to update the next_wakeup after the end of
- * their useहाल as well, it is possible the devices themselves may not know
- * about that, so stale @next will be ignored when घातering off the करोमुख्य.
+ * their usecase as well, it is possible the devices themselves may not know
+ * about that, so stale @next will be ignored when powering off the domain.
  */
-व्योम dev_pm_genpd_set_next_wakeup(काष्ठा device *dev, kसमय_प्रकार next)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	काष्ठा generic_pm_करोमुख्य *genpd;
+void dev_pm_genpd_set_next_wakeup(struct device *dev, ktime_t next)
+{
+	struct generic_pm_domain_data *gpd_data;
+	struct generic_pm_domain *genpd;
 
 	genpd = dev_to_genpd_safe(dev);
-	अगर (!genpd)
-		वापस;
+	if (!genpd)
+		return;
 
-	gpd_data = to_gpd_data(dev->घातer.subsys_data->करोमुख्य_data);
+	gpd_data = to_gpd_data(dev->power.subsys_data->domain_data);
 	gpd_data->next_wakeup = next;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dev_pm_genpd_set_next_wakeup);
 
-अटल पूर्णांक _genpd_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd, bool समयd)
-अणु
-	अचिन्हित पूर्णांक state_idx = genpd->state_idx;
-	kसमय_प्रकार समय_start;
+static int _genpd_power_on(struct generic_pm_domain *genpd, bool timed)
+{
+	unsigned int state_idx = genpd->state_idx;
+	ktime_t time_start;
 	s64 elapsed_ns;
-	पूर्णांक ret;
+	int ret;
 
-	/* Notअगरy consumers that we are about to घातer on. */
-	ret = raw_notअगरier_call_chain_robust(&genpd->घातer_notअगरiers,
+	/* Notify consumers that we are about to power on. */
+	ret = raw_notifier_call_chain_robust(&genpd->power_notifiers,
 					     GENPD_NOTIFY_PRE_ON,
-					     GENPD_NOTIFY_OFF, शून्य);
-	ret = notअगरier_to_त्रुटि_सं(ret);
-	अगर (ret)
-		वापस ret;
+					     GENPD_NOTIFY_OFF, NULL);
+	ret = notifier_to_errno(ret);
+	if (ret)
+		return ret;
 
-	अगर (!genpd->घातer_on)
-		जाओ out;
+	if (!genpd->power_on)
+		goto out;
 
-	अगर (!समयd) अणु
-		ret = genpd->घातer_on(genpd);
-		अगर (ret)
-			जाओ err;
+	if (!timed) {
+		ret = genpd->power_on(genpd);
+		if (ret)
+			goto err;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	समय_start = kसमय_get();
-	ret = genpd->घातer_on(genpd);
-	अगर (ret)
-		जाओ err;
+	time_start = ktime_get();
+	ret = genpd->power_on(genpd);
+	if (ret)
+		goto err;
 
-	elapsed_ns = kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), समय_start));
-	अगर (elapsed_ns <= genpd->states[state_idx].घातer_on_latency_ns)
-		जाओ out;
+	elapsed_ns = ktime_to_ns(ktime_sub(ktime_get(), time_start));
+	if (elapsed_ns <= genpd->states[state_idx].power_on_latency_ns)
+		goto out;
 
-	genpd->states[state_idx].घातer_on_latency_ns = elapsed_ns;
-	genpd->max_off_समय_changed = true;
+	genpd->states[state_idx].power_on_latency_ns = elapsed_ns;
+	genpd->max_off_time_changed = true;
 	pr_debug("%s: Power-%s latency exceeded, new value %lld ns\n",
 		 genpd->name, "on", elapsed_ns);
 
 out:
-	raw_notअगरier_call_chain(&genpd->घातer_notअगरiers, GENPD_NOTIFY_ON, शून्य);
-	वापस 0;
+	raw_notifier_call_chain(&genpd->power_notifiers, GENPD_NOTIFY_ON, NULL);
+	return 0;
 err:
-	raw_notअगरier_call_chain(&genpd->घातer_notअगरiers, GENPD_NOTIFY_OFF,
-				शून्य);
-	वापस ret;
-पूर्ण
+	raw_notifier_call_chain(&genpd->power_notifiers, GENPD_NOTIFY_OFF,
+				NULL);
+	return ret;
+}
 
-अटल पूर्णांक _genpd_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd, bool समयd)
-अणु
-	अचिन्हित पूर्णांक state_idx = genpd->state_idx;
-	kसमय_प्रकार समय_start;
+static int _genpd_power_off(struct generic_pm_domain *genpd, bool timed)
+{
+	unsigned int state_idx = genpd->state_idx;
+	ktime_t time_start;
 	s64 elapsed_ns;
-	पूर्णांक ret;
+	int ret;
 
-	/* Notअगरy consumers that we are about to घातer off. */
-	ret = raw_notअगरier_call_chain_robust(&genpd->घातer_notअगरiers,
+	/* Notify consumers that we are about to power off. */
+	ret = raw_notifier_call_chain_robust(&genpd->power_notifiers,
 					     GENPD_NOTIFY_PRE_OFF,
-					     GENPD_NOTIFY_ON, शून्य);
-	ret = notअगरier_to_त्रुटि_सं(ret);
-	अगर (ret)
-		वापस ret;
+					     GENPD_NOTIFY_ON, NULL);
+	ret = notifier_to_errno(ret);
+	if (ret)
+		return ret;
 
-	अगर (!genpd->घातer_off)
-		जाओ out;
+	if (!genpd->power_off)
+		goto out;
 
-	अगर (!समयd) अणु
-		ret = genpd->घातer_off(genpd);
-		अगर (ret)
-			जाओ busy;
+	if (!timed) {
+		ret = genpd->power_off(genpd);
+		if (ret)
+			goto busy;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	समय_start = kसमय_get();
-	ret = genpd->घातer_off(genpd);
-	अगर (ret)
-		जाओ busy;
+	time_start = ktime_get();
+	ret = genpd->power_off(genpd);
+	if (ret)
+		goto busy;
 
-	elapsed_ns = kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), समय_start));
-	अगर (elapsed_ns <= genpd->states[state_idx].घातer_off_latency_ns)
-		जाओ out;
+	elapsed_ns = ktime_to_ns(ktime_sub(ktime_get(), time_start));
+	if (elapsed_ns <= genpd->states[state_idx].power_off_latency_ns)
+		goto out;
 
-	genpd->states[state_idx].घातer_off_latency_ns = elapsed_ns;
-	genpd->max_off_समय_changed = true;
+	genpd->states[state_idx].power_off_latency_ns = elapsed_ns;
+	genpd->max_off_time_changed = true;
 	pr_debug("%s: Power-%s latency exceeded, new value %lld ns\n",
 		 genpd->name, "off", elapsed_ns);
 
 out:
-	raw_notअगरier_call_chain(&genpd->घातer_notअगरiers, GENPD_NOTIFY_OFF,
-				शून्य);
-	वापस 0;
+	raw_notifier_call_chain(&genpd->power_notifiers, GENPD_NOTIFY_OFF,
+				NULL);
+	return 0;
 busy:
-	raw_notअगरier_call_chain(&genpd->घातer_notअगरiers, GENPD_NOTIFY_ON, शून्य);
-	वापस ret;
-पूर्ण
+	raw_notifier_call_chain(&genpd->power_notifiers, GENPD_NOTIFY_ON, NULL);
+	return ret;
+}
 
 /**
- * genpd_queue_घातer_off_work - Queue up the execution of genpd_घातer_off().
- * @genpd: PM करोमुख्य to घातer off.
+ * genpd_queue_power_off_work - Queue up the execution of genpd_power_off().
+ * @genpd: PM domain to power off.
  *
- * Queue up the execution of genpd_घातer_off() unless it's alपढ़ोy been करोne
- * beक्रमe.
+ * Queue up the execution of genpd_power_off() unless it's already been done
+ * before.
  */
-अटल व्योम genpd_queue_घातer_off_work(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	queue_work(pm_wq, &genpd->घातer_off_work);
-पूर्ण
+static void genpd_queue_power_off_work(struct generic_pm_domain *genpd)
+{
+	queue_work(pm_wq, &genpd->power_off_work);
+}
 
 /**
- * genpd_घातer_off - Remove घातer from a given PM करोमुख्य.
- * @genpd: PM करोमुख्य to घातer करोwn.
- * @one_dev_on: If invoked from genpd's ->runसमय_suspend|resume() callback, the
- * RPM status of the releated device is in an पूर्णांकermediate state, not yet turned
- * पूर्णांकo RPM_SUSPENDED. This means genpd_घातer_off() must allow one device to not
- * be RPM_SUSPENDED, जबतक it tries to घातer off the PM करोमुख्य.
+ * genpd_power_off - Remove power from a given PM domain.
+ * @genpd: PM domain to power down.
+ * @one_dev_on: If invoked from genpd's ->runtime_suspend|resume() callback, the
+ * RPM status of the releated device is in an intermediate state, not yet turned
+ * into RPM_SUSPENDED. This means genpd_power_off() must allow one device to not
+ * be RPM_SUSPENDED, while it tries to power off the PM domain.
  *
- * If all of the @genpd's devices have been suspended and all of its subकरोमुख्यs
- * have been घातered करोwn, हटाओ घातer from @genpd.
+ * If all of the @genpd's devices have been suspended and all of its subdomains
+ * have been powered down, remove power from @genpd.
  */
-अटल पूर्णांक genpd_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd, bool one_dev_on,
-			   अचिन्हित पूर्णांक depth)
-अणु
-	काष्ठा pm_करोमुख्य_data *pdd;
-	काष्ठा gpd_link *link;
-	अचिन्हित पूर्णांक not_suspended = 0;
-	पूर्णांक ret;
+static int genpd_power_off(struct generic_pm_domain *genpd, bool one_dev_on,
+			   unsigned int depth)
+{
+	struct pm_domain_data *pdd;
+	struct gpd_link *link;
+	unsigned int not_suspended = 0;
+	int ret;
 
 	/*
-	 * Do not try to घातer off the करोमुख्य in the following situations:
-	 * (1) The करोमुख्य is alपढ़ोy in the "power off" state.
+	 * Do not try to power off the domain in the following situations:
+	 * (1) The domain is already in the "power off" state.
 	 * (2) System suspend is in progress.
 	 */
-	अगर (!genpd_status_on(genpd) || genpd->prepared_count > 0)
-		वापस 0;
+	if (!genpd_status_on(genpd) || genpd->prepared_count > 0)
+		return 0;
 
 	/*
-	 * Abort घातer off क्रम the PM करोमुख्य in the following situations:
-	 * (1) The करोमुख्य is configured as always on.
-	 * (2) When the करोमुख्य has a subकरोमुख्य being घातered on.
+	 * Abort power off for the PM domain in the following situations:
+	 * (1) The domain is configured as always on.
+	 * (2) When the domain has a subdomain being powered on.
 	 */
-	अगर (genpd_is_always_on(genpd) ||
+	if (genpd_is_always_on(genpd) ||
 			genpd_is_rpm_always_on(genpd) ||
-			atomic_पढ़ो(&genpd->sd_count) > 0)
-		वापस -EBUSY;
+			atomic_read(&genpd->sd_count) > 0)
+		return -EBUSY;
 
-	list_क्रम_each_entry(pdd, &genpd->dev_list, list_node) अणु
-		क्रमागत pm_qos_flags_status stat;
+	list_for_each_entry(pdd, &genpd->dev_list, list_node) {
+		enum pm_qos_flags_status stat;
 
 		stat = dev_pm_qos_flags(pdd->dev, PM_QOS_FLAG_NO_POWER_OFF);
-		अगर (stat > PM_QOS_FLAGS_NONE)
-			वापस -EBUSY;
+		if (stat > PM_QOS_FLAGS_NONE)
+			return -EBUSY;
 
 		/*
-		 * Do not allow PM करोमुख्य to be घातered off, when an IRQ safe
-		 * device is part of a non-IRQ safe करोमुख्य.
+		 * Do not allow PM domain to be powered off, when an IRQ safe
+		 * device is part of a non-IRQ safe domain.
 		 */
-		अगर (!pm_runसमय_suspended(pdd->dev) ||
-			irq_safe_dev_in_no_sleep_करोमुख्य(pdd->dev, genpd))
+		if (!pm_runtime_suspended(pdd->dev) ||
+			irq_safe_dev_in_no_sleep_domain(pdd->dev, genpd))
 			not_suspended++;
-	पूर्ण
+	}
 
-	अगर (not_suspended > 1 || (not_suspended == 1 && !one_dev_on))
-		वापस -EBUSY;
+	if (not_suspended > 1 || (not_suspended == 1 && !one_dev_on))
+		return -EBUSY;
 
-	अगर (genpd->gov && genpd->gov->घातer_करोwn_ok) अणु
-		अगर (!genpd->gov->घातer_करोwn_ok(&genpd->करोमुख्य))
-			वापस -EAGAIN;
-	पूर्ण
+	if (genpd->gov && genpd->gov->power_down_ok) {
+		if (!genpd->gov->power_down_ok(&genpd->domain))
+			return -EAGAIN;
+	}
 
 	/* Default to shallowest state. */
-	अगर (!genpd->gov)
+	if (!genpd->gov)
 		genpd->state_idx = 0;
 
-	/* Don't घातer off, अगर a child करोमुख्य is रुकोing to घातer on. */
-	अगर (atomic_पढ़ो(&genpd->sd_count) > 0)
-		वापस -EBUSY;
+	/* Don't power off, if a child domain is waiting to power on. */
+	if (atomic_read(&genpd->sd_count) > 0)
+		return -EBUSY;
 
-	ret = _genpd_घातer_off(genpd, true);
-	अगर (ret) अणु
+	ret = _genpd_power_off(genpd, true);
+	if (ret) {
 		genpd->states[genpd->state_idx].rejected++;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	genpd->status = GENPD_STATE_OFF;
 	genpd_update_accounting(genpd);
 	genpd->states[genpd->state_idx].usage++;
 
-	list_क्रम_each_entry(link, &genpd->child_links, child_node) अणु
+	list_for_each_entry(link, &genpd->child_links, child_node) {
 		genpd_sd_counter_dec(link->parent);
 		genpd_lock_nested(link->parent, depth + 1);
-		genpd_घातer_off(link->parent, false, depth + 1);
+		genpd_power_off(link->parent, false, depth + 1);
 		genpd_unlock(link->parent);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * genpd_घातer_on - Restore घातer to a given PM करोमुख्य and its parents.
- * @genpd: PM करोमुख्य to घातer up.
- * @depth: nesting count क्रम lockdep.
+ * genpd_power_on - Restore power to a given PM domain and its parents.
+ * @genpd: PM domain to power up.
+ * @depth: nesting count for lockdep.
  *
- * Restore घातer to @genpd and all of its parents so that it is possible to
- * resume a device beदीर्घing to it.
+ * Restore power to @genpd and all of its parents so that it is possible to
+ * resume a device belonging to it.
  */
-अटल पूर्णांक genpd_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd, अचिन्हित पूर्णांक depth)
-अणु
-	काष्ठा gpd_link *link;
-	पूर्णांक ret = 0;
+static int genpd_power_on(struct generic_pm_domain *genpd, unsigned int depth)
+{
+	struct gpd_link *link;
+	int ret = 0;
 
-	अगर (genpd_status_on(genpd))
-		वापस 0;
+	if (genpd_status_on(genpd))
+		return 0;
 
 	/*
-	 * The list is guaranteed not to change जबतक the loop below is being
-	 * executed, unless one of the parents' .घातer_on() callbacks fiddles
+	 * The list is guaranteed not to change while the loop below is being
+	 * executed, unless one of the parents' .power_on() callbacks fiddles
 	 * with it.
 	 */
-	list_क्रम_each_entry(link, &genpd->child_links, child_node) अणु
-		काष्ठा generic_pm_करोमुख्य *parent = link->parent;
+	list_for_each_entry(link, &genpd->child_links, child_node) {
+		struct generic_pm_domain *parent = link->parent;
 
 		genpd_sd_counter_inc(parent);
 
 		genpd_lock_nested(parent, depth + 1);
-		ret = genpd_घातer_on(parent, depth + 1);
+		ret = genpd_power_on(parent, depth + 1);
 		genpd_unlock(parent);
 
-		अगर (ret) अणु
+		if (ret) {
 			genpd_sd_counter_dec(parent);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	ret = _genpd_घातer_on(genpd, true);
-	अगर (ret)
-		जाओ err;
+	ret = _genpd_power_on(genpd, true);
+	if (ret)
+		goto err;
 
 	genpd->status = GENPD_STATE_ON;
 	genpd_update_accounting(genpd);
 
-	वापस 0;
+	return 0;
 
  err:
-	list_क्रम_each_entry_जारी_reverse(link,
+	list_for_each_entry_continue_reverse(link,
 					&genpd->child_links,
-					child_node) अणु
+					child_node) {
 		genpd_sd_counter_dec(link->parent);
 		genpd_lock_nested(link->parent, depth + 1);
-		genpd_घातer_off(link->parent, false, depth + 1);
+		genpd_power_off(link->parent, false, depth + 1);
 		genpd_unlock(link->parent);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक genpd_dev_pm_start(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = dev_to_genpd(dev);
+static int genpd_dev_pm_start(struct device *dev)
+{
+	struct generic_pm_domain *genpd = dev_to_genpd(dev);
 
-	वापस genpd_start_dev(genpd, dev);
-पूर्ण
+	return genpd_start_dev(genpd, dev);
+}
 
-अटल पूर्णांक genpd_dev_pm_qos_notअगरier(काष्ठा notअगरier_block *nb,
-				     अचिन्हित दीर्घ val, व्योम *ptr)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	काष्ठा device *dev;
+static int genpd_dev_pm_qos_notifier(struct notifier_block *nb,
+				     unsigned long val, void *ptr)
+{
+	struct generic_pm_domain_data *gpd_data;
+	struct device *dev;
 
-	gpd_data = container_of(nb, काष्ठा generic_pm_करोमुख्य_data, nb);
+	gpd_data = container_of(nb, struct generic_pm_domain_data, nb);
 	dev = gpd_data->base.dev;
 
-	क्रम (;;) अणु
-		काष्ठा generic_pm_करोमुख्य *genpd;
-		काष्ठा pm_करोमुख्य_data *pdd;
+	for (;;) {
+		struct generic_pm_domain *genpd;
+		struct pm_domain_data *pdd;
 
-		spin_lock_irq(&dev->घातer.lock);
+		spin_lock_irq(&dev->power.lock);
 
-		pdd = dev->घातer.subsys_data ?
-				dev->घातer.subsys_data->करोमुख्य_data : शून्य;
-		अगर (pdd) अणु
-			to_gpd_data(pdd)->td.स्थिरraपूर्णांक_changed = true;
+		pdd = dev->power.subsys_data ?
+				dev->power.subsys_data->domain_data : NULL;
+		if (pdd) {
+			to_gpd_data(pdd)->td.constraint_changed = true;
 			genpd = dev_to_genpd(dev);
-		पूर्ण अन्यथा अणु
+		} else {
 			genpd = ERR_PTR(-ENODATA);
-		पूर्ण
+		}
 
-		spin_unlock_irq(&dev->घातer.lock);
+		spin_unlock_irq(&dev->power.lock);
 
-		अगर (!IS_ERR(genpd)) अणु
+		if (!IS_ERR(genpd)) {
 			genpd_lock(genpd);
-			genpd->max_off_समय_changed = true;
+			genpd->max_off_time_changed = true;
 			genpd_unlock(genpd);
-		पूर्ण
+		}
 
 		dev = dev->parent;
-		अगर (!dev || dev->घातer.ignore_children)
-			अवरोध;
-	पूर्ण
+		if (!dev || dev->power.ignore_children)
+			break;
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /**
- * genpd_घातer_off_work_fn - Power off PM करोमुख्य whose subकरोमुख्य count is 0.
- * @work: Work काष्ठाure used क्रम scheduling the execution of this function.
+ * genpd_power_off_work_fn - Power off PM domain whose subdomain count is 0.
+ * @work: Work structure used for scheduling the execution of this function.
  */
-अटल व्योम genpd_घातer_off_work_fn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
+static void genpd_power_off_work_fn(struct work_struct *work)
+{
+	struct generic_pm_domain *genpd;
 
-	genpd = container_of(work, काष्ठा generic_pm_करोमुख्य, घातer_off_work);
+	genpd = container_of(work, struct generic_pm_domain, power_off_work);
 
 	genpd_lock(genpd);
-	genpd_घातer_off(genpd, false, 0);
+	genpd_power_off(genpd, false, 0);
 	genpd_unlock(genpd);
-पूर्ण
+}
 
 /**
- * __genpd_runसमय_suspend - walk the hierarchy of ->runसमय_suspend() callbacks
+ * __genpd_runtime_suspend - walk the hierarchy of ->runtime_suspend() callbacks
  * @dev: Device to handle.
  */
-अटल पूर्णांक __genpd_runसमय_suspend(काष्ठा device *dev)
-अणु
-	पूर्णांक (*cb)(काष्ठा device *__dev);
+static int __genpd_runtime_suspend(struct device *dev)
+{
+	int (*cb)(struct device *__dev);
 
-	अगर (dev->type && dev->type->pm)
-		cb = dev->type->pm->runसमय_suspend;
-	अन्यथा अगर (dev->class && dev->class->pm)
-		cb = dev->class->pm->runसमय_suspend;
-	अन्यथा अगर (dev->bus && dev->bus->pm)
-		cb = dev->bus->pm->runसमय_suspend;
-	अन्यथा
-		cb = शून्य;
+	if (dev->type && dev->type->pm)
+		cb = dev->type->pm->runtime_suspend;
+	else if (dev->class && dev->class->pm)
+		cb = dev->class->pm->runtime_suspend;
+	else if (dev->bus && dev->bus->pm)
+		cb = dev->bus->pm->runtime_suspend;
+	else
+		cb = NULL;
 
-	अगर (!cb && dev->driver && dev->driver->pm)
-		cb = dev->driver->pm->runसमय_suspend;
+	if (!cb && dev->driver && dev->driver->pm)
+		cb = dev->driver->pm->runtime_suspend;
 
-	वापस cb ? cb(dev) : 0;
-पूर्ण
+	return cb ? cb(dev) : 0;
+}
 
 /**
- * __genpd_runसमय_resume - walk the hierarchy of ->runसमय_resume() callbacks
+ * __genpd_runtime_resume - walk the hierarchy of ->runtime_resume() callbacks
  * @dev: Device to handle.
  */
-अटल पूर्णांक __genpd_runसमय_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक (*cb)(काष्ठा device *__dev);
+static int __genpd_runtime_resume(struct device *dev)
+{
+	int (*cb)(struct device *__dev);
 
-	अगर (dev->type && dev->type->pm)
-		cb = dev->type->pm->runसमय_resume;
-	अन्यथा अगर (dev->class && dev->class->pm)
-		cb = dev->class->pm->runसमय_resume;
-	अन्यथा अगर (dev->bus && dev->bus->pm)
-		cb = dev->bus->pm->runसमय_resume;
-	अन्यथा
-		cb = शून्य;
+	if (dev->type && dev->type->pm)
+		cb = dev->type->pm->runtime_resume;
+	else if (dev->class && dev->class->pm)
+		cb = dev->class->pm->runtime_resume;
+	else if (dev->bus && dev->bus->pm)
+		cb = dev->bus->pm->runtime_resume;
+	else
+		cb = NULL;
 
-	अगर (!cb && dev->driver && dev->driver->pm)
-		cb = dev->driver->pm->runसमय_resume;
+	if (!cb && dev->driver && dev->driver->pm)
+		cb = dev->driver->pm->runtime_resume;
 
-	वापस cb ? cb(dev) : 0;
-पूर्ण
+	return cb ? cb(dev) : 0;
+}
 
 /**
- * genpd_runसमय_suspend - Suspend a device beदीर्घing to I/O PM करोमुख्य.
+ * genpd_runtime_suspend - Suspend a device belonging to I/O PM domain.
  * @dev: Device to suspend.
  *
- * Carry out a runसमय suspend of a device under the assumption that its
- * pm_करोमुख्य field poपूर्णांकs to the करोमुख्य member of an object of type
- * काष्ठा generic_pm_करोमुख्य representing a PM करोमुख्य consisting of I/O devices.
+ * Carry out a runtime suspend of a device under the assumption that its
+ * pm_domain field points to the domain member of an object of type
+ * struct generic_pm_domain representing a PM domain consisting of I/O devices.
  */
-अटल पूर्णांक genpd_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	bool (*suspend_ok)(काष्ठा device *__dev);
-	काष्ठा gpd_timing_data *td = &dev_gpd_data(dev)->td;
-	bool runसमय_pm = pm_runसमय_enabled(dev);
-	kसमय_प्रकार समय_start;
+static int genpd_runtime_suspend(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	bool (*suspend_ok)(struct device *__dev);
+	struct gpd_timing_data *td = &dev_gpd_data(dev)->td;
+	bool runtime_pm = pm_runtime_enabled(dev);
+	ktime_t time_start;
 	s64 elapsed_ns;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
 	/*
-	 * A runसमय PM centric subप्रणाली/driver may re-use the runसमय PM
-	 * callbacks क्रम other purposes than runसमय PM. In those scenarios
-	 * runसमय PM is disabled. Under these circumstances, we shall skip
+	 * A runtime PM centric subsystem/driver may re-use the runtime PM
+	 * callbacks for other purposes than runtime PM. In those scenarios
+	 * runtime PM is disabled. Under these circumstances, we shall skip
 	 * validating/measuring the PM QoS latency.
 	 */
-	suspend_ok = genpd->gov ? genpd->gov->suspend_ok : शून्य;
-	अगर (runसमय_pm && suspend_ok && !suspend_ok(dev))
-		वापस -EBUSY;
+	suspend_ok = genpd->gov ? genpd->gov->suspend_ok : NULL;
+	if (runtime_pm && suspend_ok && !suspend_ok(dev))
+		return -EBUSY;
 
 	/* Measure suspend latency. */
-	समय_start = 0;
-	अगर (runसमय_pm)
-		समय_start = kसमय_get();
+	time_start = 0;
+	if (runtime_pm)
+		time_start = ktime_get();
 
-	ret = __genpd_runसमय_suspend(dev);
-	अगर (ret)
-		वापस ret;
+	ret = __genpd_runtime_suspend(dev);
+	if (ret)
+		return ret;
 
 	ret = genpd_stop_dev(genpd, dev);
-	अगर (ret) अणु
-		__genpd_runसमय_resume(dev);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		__genpd_runtime_resume(dev);
+		return ret;
+	}
 
-	/* Update suspend latency value अगर the measured समय exceeds it. */
-	अगर (runसमय_pm) अणु
-		elapsed_ns = kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), समय_start));
-		अगर (elapsed_ns > td->suspend_latency_ns) अणु
+	/* Update suspend latency value if the measured time exceeds it. */
+	if (runtime_pm) {
+		elapsed_ns = ktime_to_ns(ktime_sub(ktime_get(), time_start));
+		if (elapsed_ns > td->suspend_latency_ns) {
 			td->suspend_latency_ns = elapsed_ns;
 			dev_dbg(dev, "suspend latency exceeded, %lld ns\n",
 				elapsed_ns);
-			genpd->max_off_समय_changed = true;
-			td->स्थिरraपूर्णांक_changed = true;
-		पूर्ण
-	पूर्ण
+			genpd->max_off_time_changed = true;
+			td->constraint_changed = true;
+		}
+	}
 
 	/*
-	 * If घातer.irq_safe is set, this routine may be run with
-	 * IRQs disabled, so suspend only अगर the PM करोमुख्य also is irq_safe.
+	 * If power.irq_safe is set, this routine may be run with
+	 * IRQs disabled, so suspend only if the PM domain also is irq_safe.
 	 */
-	अगर (irq_safe_dev_in_no_sleep_करोमुख्य(dev, genpd))
-		वापस 0;
+	if (irq_safe_dev_in_no_sleep_domain(dev, genpd))
+		return 0;
 
 	genpd_lock(genpd);
-	genpd_घातer_off(genpd, true, 0);
+	genpd_power_off(genpd, true, 0);
 	genpd_unlock(genpd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * genpd_runसमय_resume - Resume a device beदीर्घing to I/O PM करोमुख्य.
+ * genpd_runtime_resume - Resume a device belonging to I/O PM domain.
  * @dev: Device to resume.
  *
- * Carry out a runसमय resume of a device under the assumption that its
- * pm_करोमुख्य field poपूर्णांकs to the करोमुख्य member of an object of type
- * काष्ठा generic_pm_करोमुख्य representing a PM करोमुख्य consisting of I/O devices.
+ * Carry out a runtime resume of a device under the assumption that its
+ * pm_domain field points to the domain member of an object of type
+ * struct generic_pm_domain representing a PM domain consisting of I/O devices.
  */
-अटल पूर्णांक genpd_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	काष्ठा gpd_timing_data *td = &dev_gpd_data(dev)->td;
-	bool runसमय_pm = pm_runसमय_enabled(dev);
-	kसमय_प्रकार समय_start;
+static int genpd_runtime_resume(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	struct gpd_timing_data *td = &dev_gpd_data(dev)->td;
+	bool runtime_pm = pm_runtime_enabled(dev);
+	ktime_t time_start;
 	s64 elapsed_ns;
-	पूर्णांक ret;
-	bool समयd = true;
+	int ret;
+	bool timed = true;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
 	/*
-	 * As we करोn't घातer off a non IRQ safe करोमुख्य, which holds
-	 * an IRQ safe device, we करोn't need to restore घातer to it.
+	 * As we don't power off a non IRQ safe domain, which holds
+	 * an IRQ safe device, we don't need to restore power to it.
 	 */
-	अगर (irq_safe_dev_in_no_sleep_करोमुख्य(dev, genpd)) अणु
-		समयd = false;
-		जाओ out;
-	पूर्ण
+	if (irq_safe_dev_in_no_sleep_domain(dev, genpd)) {
+		timed = false;
+		goto out;
+	}
 
 	genpd_lock(genpd);
-	ret = genpd_घातer_on(genpd, 0);
+	ret = genpd_power_on(genpd, 0);
 	genpd_unlock(genpd);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
  out:
 	/* Measure resume latency. */
-	समय_start = 0;
-	अगर (समयd && runसमय_pm)
-		समय_start = kसमय_get();
+	time_start = 0;
+	if (timed && runtime_pm)
+		time_start = ktime_get();
 
 	ret = genpd_start_dev(genpd, dev);
-	अगर (ret)
-		जाओ err_घातeroff;
+	if (ret)
+		goto err_poweroff;
 
-	ret = __genpd_runसमय_resume(dev);
-	अगर (ret)
-		जाओ err_stop;
+	ret = __genpd_runtime_resume(dev);
+	if (ret)
+		goto err_stop;
 
-	/* Update resume latency value अगर the measured समय exceeds it. */
-	अगर (समयd && runसमय_pm) अणु
-		elapsed_ns = kसमय_प्रकारo_ns(kसमय_sub(kसमय_get(), समय_start));
-		अगर (elapsed_ns > td->resume_latency_ns) अणु
+	/* Update resume latency value if the measured time exceeds it. */
+	if (timed && runtime_pm) {
+		elapsed_ns = ktime_to_ns(ktime_sub(ktime_get(), time_start));
+		if (elapsed_ns > td->resume_latency_ns) {
 			td->resume_latency_ns = elapsed_ns;
 			dev_dbg(dev, "resume latency exceeded, %lld ns\n",
 				elapsed_ns);
-			genpd->max_off_समय_changed = true;
-			td->स्थिरraपूर्णांक_changed = true;
-		पूर्ण
-	पूर्ण
+			genpd->max_off_time_changed = true;
+			td->constraint_changed = true;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 err_stop:
 	genpd_stop_dev(genpd, dev);
-err_घातeroff:
-	अगर (!pm_runसमय_is_irq_safe(dev) || genpd_is_irq_safe(genpd)) अणु
+err_poweroff:
+	if (!pm_runtime_is_irq_safe(dev) || genpd_is_irq_safe(genpd)) {
 		genpd_lock(genpd);
-		genpd_घातer_off(genpd, true, 0);
+		genpd_power_off(genpd, true, 0);
 		genpd_unlock(genpd);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool pd_ignore_unused;
-अटल पूर्णांक __init pd_ignore_unused_setup(अक्षर *__unused)
-अणु
+static bool pd_ignore_unused;
+static int __init pd_ignore_unused_setup(char *__unused)
+{
 	pd_ignore_unused = true;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("pd_ignore_unused", pd_ignore_unused_setup);
 
 /**
- * genpd_घातer_off_unused - Power off all PM करोमुख्यs with no devices in use.
+ * genpd_power_off_unused - Power off all PM domains with no devices in use.
  */
-अटल पूर्णांक __init genpd_घातer_off_unused(व्योम)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
+static int __init genpd_power_off_unused(void)
+{
+	struct generic_pm_domain *genpd;
 
-	अगर (pd_ignore_unused) अणु
+	if (pd_ignore_unused) {
 		pr_warn("genpd: Not disabling unused power domains\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&gpd_list_lock);
 
-	list_क्रम_each_entry(genpd, &gpd_list, gpd_list_node)
-		genpd_queue_घातer_off_work(genpd);
+	list_for_each_entry(genpd, &gpd_list, gpd_list_node)
+		genpd_queue_power_off_work(genpd);
 
 	mutex_unlock(&gpd_list_lock);
 
-	वापस 0;
-पूर्ण
-late_initcall(genpd_घातer_off_unused);
+	return 0;
+}
+late_initcall(genpd_power_off_unused);
 
-#अगर_घोषित CONFIG_PM_SLEEP
+#ifdef CONFIG_PM_SLEEP
 
 /**
- * genpd_sync_घातer_off - Synchronously घातer off a PM करोमुख्य and its parents.
- * @genpd: PM करोमुख्य to घातer off, अगर possible.
+ * genpd_sync_power_off - Synchronously power off a PM domain and its parents.
+ * @genpd: PM domain to power off, if possible.
  * @use_lock: use the lock.
- * @depth: nesting count क्रम lockdep.
+ * @depth: nesting count for lockdep.
  *
- * Check अगर the given PM करोमुख्य can be घातered off (during प्रणाली suspend or
- * hibernation) and करो that अगर so.  Also, in that हाल propagate to its parents.
+ * Check if the given PM domain can be powered off (during system suspend or
+ * hibernation) and do that if so.  Also, in that case propagate to its parents.
  *
- * This function is only called in "noirq" and "syscore" stages of प्रणाली घातer
+ * This function is only called in "noirq" and "syscore" stages of system power
  * transitions. The "noirq" callbacks may be executed asynchronously, thus in
- * these हालs the lock must be held.
+ * these cases the lock must be held.
  */
-अटल व्योम genpd_sync_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd, bool use_lock,
-				 अचिन्हित पूर्णांक depth)
-अणु
-	काष्ठा gpd_link *link;
+static void genpd_sync_power_off(struct generic_pm_domain *genpd, bool use_lock,
+				 unsigned int depth)
+{
+	struct gpd_link *link;
 
-	अगर (!genpd_status_on(genpd) || genpd_is_always_on(genpd))
-		वापस;
+	if (!genpd_status_on(genpd) || genpd_is_always_on(genpd))
+		return;
 
-	अगर (genpd->suspended_count != genpd->device_count
-	    || atomic_पढ़ो(&genpd->sd_count) > 0)
-		वापस;
+	if (genpd->suspended_count != genpd->device_count
+	    || atomic_read(&genpd->sd_count) > 0)
+		return;
 
 	/* Choose the deepest state when suspending */
 	genpd->state_idx = genpd->state_count - 1;
-	अगर (_genpd_घातer_off(genpd, false))
-		वापस;
+	if (_genpd_power_off(genpd, false))
+		return;
 
 	genpd->status = GENPD_STATE_OFF;
 
-	list_क्रम_each_entry(link, &genpd->child_links, child_node) अणु
+	list_for_each_entry(link, &genpd->child_links, child_node) {
 		genpd_sd_counter_dec(link->parent);
 
-		अगर (use_lock)
+		if (use_lock)
 			genpd_lock_nested(link->parent, depth + 1);
 
-		genpd_sync_घातer_off(link->parent, use_lock, depth + 1);
+		genpd_sync_power_off(link->parent, use_lock, depth + 1);
 
-		अगर (use_lock)
+		if (use_lock)
 			genpd_unlock(link->parent);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * genpd_sync_घातer_on - Synchronously घातer on a PM करोमुख्य and its parents.
- * @genpd: PM करोमुख्य to घातer on.
+ * genpd_sync_power_on - Synchronously power on a PM domain and its parents.
+ * @genpd: PM domain to power on.
  * @use_lock: use the lock.
- * @depth: nesting count क्रम lockdep.
+ * @depth: nesting count for lockdep.
  *
- * This function is only called in "noirq" and "syscore" stages of प्रणाली घातer
+ * This function is only called in "noirq" and "syscore" stages of system power
  * transitions. The "noirq" callbacks may be executed asynchronously, thus in
- * these हालs the lock must be held.
+ * these cases the lock must be held.
  */
-अटल व्योम genpd_sync_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd, bool use_lock,
-				अचिन्हित पूर्णांक depth)
-अणु
-	काष्ठा gpd_link *link;
+static void genpd_sync_power_on(struct generic_pm_domain *genpd, bool use_lock,
+				unsigned int depth)
+{
+	struct gpd_link *link;
 
-	अगर (genpd_status_on(genpd))
-		वापस;
+	if (genpd_status_on(genpd))
+		return;
 
-	list_क्रम_each_entry(link, &genpd->child_links, child_node) अणु
+	list_for_each_entry(link, &genpd->child_links, child_node) {
 		genpd_sd_counter_inc(link->parent);
 
-		अगर (use_lock)
+		if (use_lock)
 			genpd_lock_nested(link->parent, depth + 1);
 
-		genpd_sync_घातer_on(link->parent, use_lock, depth + 1);
+		genpd_sync_power_on(link->parent, use_lock, depth + 1);
 
-		अगर (use_lock)
+		if (use_lock)
 			genpd_unlock(link->parent);
-	पूर्ण
+	}
 
-	_genpd_घातer_on(genpd, false);
+	_genpd_power_on(genpd, false);
 	genpd->status = GENPD_STATE_ON;
-पूर्ण
+}
 
 /**
- * genpd_prepare - Start घातer transition of a device in a PM करोमुख्य.
+ * genpd_prepare - Start power transition of a device in a PM domain.
  * @dev: Device to start the transition of.
  *
- * Start a घातer transition of a device (during a प्रणाली-wide घातer transition)
- * under the assumption that its pm_करोमुख्य field poपूर्णांकs to the करोमुख्य member of
- * an object of type काष्ठा generic_pm_करोमुख्य representing a PM करोमुख्य
+ * Start a power transition of a device (during a system-wide power transition)
+ * under the assumption that its pm_domain field points to the domain member of
+ * an object of type struct generic_pm_domain representing a PM domain
  * consisting of I/O devices.
  */
-अटल पूर्णांक genpd_prepare(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret;
+static int genpd_prepare(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	int ret;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
 	genpd_lock(genpd);
 
-	अगर (genpd->prepared_count++ == 0)
+	if (genpd->prepared_count++ == 0)
 		genpd->suspended_count = 0;
 
 	genpd_unlock(genpd);
 
 	ret = pm_generic_prepare(dev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		genpd_lock(genpd);
 
 		genpd->prepared_count--;
 
 		genpd_unlock(genpd);
-	पूर्ण
+	}
 
-	/* Never वापस 1, as genpd करोn't cope with the direct_complete path. */
-	वापस ret >= 0 ? 0 : ret;
-पूर्ण
+	/* Never return 1, as genpd don't cope with the direct_complete path. */
+	return ret >= 0 ? 0 : ret;
+}
 
 /**
  * genpd_finish_suspend - Completion of suspend or hibernation of device in an
- *   I/O pm करोमुख्य.
+ *   I/O pm domain.
  * @dev: Device to suspend.
- * @घातeroff: Specअगरies अगर this is a घातeroff_noirq or suspend_noirq callback.
+ * @poweroff: Specifies if this is a poweroff_noirq or suspend_noirq callback.
  *
- * Stop the device and हटाओ घातer from the करोमुख्य अगर all devices in it have
+ * Stop the device and remove power from the domain if all devices in it have
  * been stopped.
  */
-अटल पूर्णांक genpd_finish_suspend(काष्ठा device *dev, bool घातeroff)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret = 0;
+static int genpd_finish_suspend(struct device *dev, bool poweroff)
+{
+	struct generic_pm_domain *genpd;
+	int ret = 0;
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
-	अगर (घातeroff)
-		ret = pm_generic_घातeroff_noirq(dev);
-	अन्यथा
+	if (poweroff)
+		ret = pm_generic_poweroff_noirq(dev);
+	else
 		ret = pm_generic_suspend_noirq(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (device_wakeup_path(dev) && genpd_is_active_wakeup(genpd))
-		वापस 0;
+	if (device_wakeup_path(dev) && genpd_is_active_wakeup(genpd))
+		return 0;
 
-	अगर (genpd->dev_ops.stop && genpd->dev_ops.start &&
-	    !pm_runसमय_status_suspended(dev)) अणु
+	if (genpd->dev_ops.stop && genpd->dev_ops.start &&
+	    !pm_runtime_status_suspended(dev)) {
 		ret = genpd_stop_dev(genpd, dev);
-		अगर (ret) अणु
-			अगर (घातeroff)
+		if (ret) {
+			if (poweroff)
 				pm_generic_restore_noirq(dev);
-			अन्यथा
+			else
 				pm_generic_resume_noirq(dev);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	genpd_lock(genpd);
 	genpd->suspended_count++;
-	genpd_sync_घातer_off(genpd, true, 0);
+	genpd_sync_power_off(genpd, true, 0);
 	genpd_unlock(genpd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * genpd_suspend_noirq - Completion of suspend of device in an I/O PM करोमुख्य.
+ * genpd_suspend_noirq - Completion of suspend of device in an I/O PM domain.
  * @dev: Device to suspend.
  *
- * Stop the device and हटाओ घातer from the करोमुख्य अगर all devices in it have
+ * Stop the device and remove power from the domain if all devices in it have
  * been stopped.
  */
-अटल पूर्णांक genpd_suspend_noirq(काष्ठा device *dev)
-अणु
+static int genpd_suspend_noirq(struct device *dev)
+{
 	dev_dbg(dev, "%s()\n", __func__);
 
-	वापस genpd_finish_suspend(dev, false);
-पूर्ण
+	return genpd_finish_suspend(dev, false);
+}
 
 /**
- * genpd_resume_noirq - Start of resume of device in an I/O PM करोमुख्य.
+ * genpd_resume_noirq - Start of resume of device in an I/O PM domain.
  * @dev: Device to resume.
  *
- * Restore घातer to the device's PM करोमुख्य, अगर necessary, and start the device.
+ * Restore power to the device's PM domain, if necessary, and start the device.
  */
-अटल पूर्णांक genpd_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret;
+static int genpd_resume_noirq(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	int ret;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
-	अगर (device_wakeup_path(dev) && genpd_is_active_wakeup(genpd))
-		वापस pm_generic_resume_noirq(dev);
+	if (device_wakeup_path(dev) && genpd_is_active_wakeup(genpd))
+		return pm_generic_resume_noirq(dev);
 
 	genpd_lock(genpd);
-	genpd_sync_घातer_on(genpd, true, 0);
+	genpd_sync_power_on(genpd, true, 0);
 	genpd->suspended_count--;
 	genpd_unlock(genpd);
 
-	अगर (genpd->dev_ops.stop && genpd->dev_ops.start &&
-	    !pm_runसमय_status_suspended(dev)) अणु
+	if (genpd->dev_ops.stop && genpd->dev_ops.start &&
+	    !pm_runtime_status_suspended(dev)) {
 		ret = genpd_start_dev(genpd, dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस pm_generic_resume_noirq(dev);
-पूर्ण
+	return pm_generic_resume_noirq(dev);
+}
 
 /**
- * genpd_मुक्तze_noirq - Completion of मुक्तzing a device in an I/O PM करोमुख्य.
- * @dev: Device to मुक्तze.
+ * genpd_freeze_noirq - Completion of freezing a device in an I/O PM domain.
+ * @dev: Device to freeze.
  *
- * Carry out a late मुक्तze of a device under the assumption that its
- * pm_करोमुख्य field poपूर्णांकs to the करोमुख्य member of an object of type
- * काष्ठा generic_pm_करोमुख्य representing a घातer करोमुख्य consisting of I/O
+ * Carry out a late freeze of a device under the assumption that its
+ * pm_domain field points to the domain member of an object of type
+ * struct generic_pm_domain representing a power domain consisting of I/O
  * devices.
  */
-अटल पूर्णांक genpd_मुक्तze_noirq(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret = 0;
+static int genpd_freeze_noirq(struct device *dev)
+{
+	const struct generic_pm_domain *genpd;
+	int ret = 0;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
-	ret = pm_generic_मुक्तze_noirq(dev);
-	अगर (ret)
-		वापस ret;
+	ret = pm_generic_freeze_noirq(dev);
+	if (ret)
+		return ret;
 
-	अगर (genpd->dev_ops.stop && genpd->dev_ops.start &&
-	    !pm_runसमय_status_suspended(dev))
+	if (genpd->dev_ops.stop && genpd->dev_ops.start &&
+	    !pm_runtime_status_suspended(dev))
 		ret = genpd_stop_dev(genpd, dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * genpd_thaw_noirq - Early thaw of device in an I/O PM करोमुख्य.
+ * genpd_thaw_noirq - Early thaw of device in an I/O PM domain.
  * @dev: Device to thaw.
  *
- * Start the device, unless घातer has been हटाओd from the करोमुख्य alपढ़ोy
- * beक्रमe the प्रणाली transition.
+ * Start the device, unless power has been removed from the domain already
+ * before the system transition.
  */
-अटल पूर्णांक genpd_thaw_noirq(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret = 0;
+static int genpd_thaw_noirq(struct device *dev)
+{
+	const struct generic_pm_domain *genpd;
+	int ret = 0;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
-	अगर (genpd->dev_ops.stop && genpd->dev_ops.start &&
-	    !pm_runसमय_status_suspended(dev)) अणु
+	if (genpd->dev_ops.stop && genpd->dev_ops.start &&
+	    !pm_runtime_status_suspended(dev)) {
 		ret = genpd_start_dev(genpd, dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस pm_generic_thaw_noirq(dev);
-पूर्ण
+	return pm_generic_thaw_noirq(dev);
+}
 
 /**
- * genpd_घातeroff_noirq - Completion of hibernation of device in an
- *   I/O PM करोमुख्य.
- * @dev: Device to घातeroff.
+ * genpd_poweroff_noirq - Completion of hibernation of device in an
+ *   I/O PM domain.
+ * @dev: Device to poweroff.
  *
- * Stop the device and हटाओ घातer from the करोमुख्य अगर all devices in it have
+ * Stop the device and remove power from the domain if all devices in it have
  * been stopped.
  */
-अटल पूर्णांक genpd_घातeroff_noirq(काष्ठा device *dev)
-अणु
+static int genpd_poweroff_noirq(struct device *dev)
+{
 	dev_dbg(dev, "%s()\n", __func__);
 
-	वापस genpd_finish_suspend(dev, true);
-पूर्ण
+	return genpd_finish_suspend(dev, true);
+}
 
 /**
- * genpd_restore_noirq - Start of restore of device in an I/O PM करोमुख्य.
+ * genpd_restore_noirq - Start of restore of device in an I/O PM domain.
  * @dev: Device to resume.
  *
- * Make sure the करोमुख्य will be in the same घातer state as beक्रमe the
- * hibernation the प्रणाली is resuming from and start the device अगर necessary.
+ * Make sure the domain will be in the same power state as before the
+ * hibernation the system is resuming from and start the device if necessary.
  */
-अटल पूर्णांक genpd_restore_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret = 0;
+static int genpd_restore_noirq(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	int ret = 0;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस -EINVAL;
+	if (IS_ERR(genpd))
+		return -EINVAL;
 
 	/*
-	 * At this poपूर्णांक suspended_count == 0 means we are being run क्रम the
-	 * first समय क्रम the given करोमुख्य in the present cycle.
+	 * At this point suspended_count == 0 means we are being run for the
+	 * first time for the given domain in the present cycle.
 	 */
 	genpd_lock(genpd);
-	अगर (genpd->suspended_count++ == 0) अणु
+	if (genpd->suspended_count++ == 0) {
 		/*
-		 * The boot kernel might put the करोमुख्य पूर्णांकo arbitrary state,
-		 * so make it appear as घातered off to genpd_sync_घातer_on(),
-		 * so that it tries to घातer it on in हाल it was really off.
+		 * The boot kernel might put the domain into arbitrary state,
+		 * so make it appear as powered off to genpd_sync_power_on(),
+		 * so that it tries to power it on in case it was really off.
 		 */
 		genpd->status = GENPD_STATE_OFF;
-	पूर्ण
+	}
 
-	genpd_sync_घातer_on(genpd, true, 0);
+	genpd_sync_power_on(genpd, true, 0);
 	genpd_unlock(genpd);
 
-	अगर (genpd->dev_ops.stop && genpd->dev_ops.start &&
-	    !pm_runसमय_status_suspended(dev)) अणु
+	if (genpd->dev_ops.stop && genpd->dev_ops.start &&
+	    !pm_runtime_status_suspended(dev)) {
 		ret = genpd_start_dev(genpd, dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस pm_generic_restore_noirq(dev);
-पूर्ण
+	return pm_generic_restore_noirq(dev);
+}
 
 /**
- * genpd_complete - Complete घातer transition of a device in a घातer करोमुख्य.
+ * genpd_complete - Complete power transition of a device in a power domain.
  * @dev: Device to complete the transition of.
  *
- * Complete a घातer transition of a device (during a प्रणाली-wide घातer
- * transition) under the assumption that its pm_करोमुख्य field poपूर्णांकs to the
- * करोमुख्य member of an object of type काष्ठा generic_pm_करोमुख्य representing
- * a घातer करोमुख्य consisting of I/O devices.
+ * Complete a power transition of a device (during a system-wide power
+ * transition) under the assumption that its pm_domain field points to the
+ * domain member of an object of type struct generic_pm_domain representing
+ * a power domain consisting of I/O devices.
  */
-अटल व्योम genpd_complete(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
+static void genpd_complete(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
 	genpd = dev_to_genpd(dev);
-	अगर (IS_ERR(genpd))
-		वापस;
+	if (IS_ERR(genpd))
+		return;
 
 	pm_generic_complete(dev);
 
 	genpd_lock(genpd);
 
 	genpd->prepared_count--;
-	अगर (!genpd->prepared_count)
-		genpd_queue_घातer_off_work(genpd);
+	if (!genpd->prepared_count)
+		genpd_queue_power_off_work(genpd);
 
 	genpd_unlock(genpd);
-पूर्ण
+}
 
-अटल व्योम genpd_चयन_state(काष्ठा device *dev, bool suspend)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
+static void genpd_switch_state(struct device *dev, bool suspend)
+{
+	struct generic_pm_domain *genpd;
 	bool use_lock;
 
 	genpd = dev_to_genpd_safe(dev);
-	अगर (!genpd)
-		वापस;
+	if (!genpd)
+		return;
 
 	use_lock = genpd_is_irq_safe(genpd);
 
-	अगर (use_lock)
+	if (use_lock)
 		genpd_lock(genpd);
 
-	अगर (suspend) अणु
+	if (suspend) {
 		genpd->suspended_count++;
-		genpd_sync_घातer_off(genpd, use_lock, 0);
-	पूर्ण अन्यथा अणु
-		genpd_sync_घातer_on(genpd, use_lock, 0);
+		genpd_sync_power_off(genpd, use_lock, 0);
+	} else {
+		genpd_sync_power_on(genpd, use_lock, 0);
 		genpd->suspended_count--;
-	पूर्ण
+	}
 
-	अगर (use_lock)
+	if (use_lock)
 		genpd_unlock(genpd);
-पूर्ण
+}
 
 /**
- * dev_pm_genpd_suspend - Synchronously try to suspend the genpd क्रम @dev
+ * dev_pm_genpd_suspend - Synchronously try to suspend the genpd for @dev
  * @dev: The device that is attached to the genpd, that can be suspended.
  *
- * This routine should typically be called क्रम a device that needs to be
+ * This routine should typically be called for a device that needs to be
  * suspended during the syscore suspend phase. It may also be called during
  * suspend-to-idle to suspend a corresponding CPU device that is attached to a
  * genpd.
  */
-व्योम dev_pm_genpd_suspend(काष्ठा device *dev)
-अणु
-	genpd_चयन_state(dev, true);
-पूर्ण
+void dev_pm_genpd_suspend(struct device *dev)
+{
+	genpd_switch_state(dev, true);
+}
 EXPORT_SYMBOL_GPL(dev_pm_genpd_suspend);
 
 /**
- * dev_pm_genpd_resume - Synchronously try to resume the genpd क्रम @dev
+ * dev_pm_genpd_resume - Synchronously try to resume the genpd for @dev
  * @dev: The device that is attached to the genpd, which needs to be resumed.
  *
- * This routine should typically be called क्रम a device that needs to be resumed
+ * This routine should typically be called for a device that needs to be resumed
  * during the syscore resume phase. It may also be called during suspend-to-idle
  * to resume a corresponding CPU device that is attached to a genpd.
  */
-व्योम dev_pm_genpd_resume(काष्ठा device *dev)
-अणु
-	genpd_चयन_state(dev, false);
-पूर्ण
+void dev_pm_genpd_resume(struct device *dev)
+{
+	genpd_switch_state(dev, false);
+}
 EXPORT_SYMBOL_GPL(dev_pm_genpd_resume);
 
-#अन्यथा /* !CONFIG_PM_SLEEP */
+#else /* !CONFIG_PM_SLEEP */
 
-#घोषणा genpd_prepare		शून्य
-#घोषणा genpd_suspend_noirq	शून्य
-#घोषणा genpd_resume_noirq	शून्य
-#घोषणा genpd_मुक्तze_noirq	शून्य
-#घोषणा genpd_thaw_noirq	शून्य
-#घोषणा genpd_घातeroff_noirq	शून्य
-#घोषणा genpd_restore_noirq	शून्य
-#घोषणा genpd_complete		शून्य
+#define genpd_prepare		NULL
+#define genpd_suspend_noirq	NULL
+#define genpd_resume_noirq	NULL
+#define genpd_freeze_noirq	NULL
+#define genpd_thaw_noirq	NULL
+#define genpd_poweroff_noirq	NULL
+#define genpd_restore_noirq	NULL
+#define genpd_complete		NULL
 
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#endif /* CONFIG_PM_SLEEP */
 
-अटल काष्ठा generic_pm_करोमुख्य_data *genpd_alloc_dev_data(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	पूर्णांक ret;
+static struct generic_pm_domain_data *genpd_alloc_dev_data(struct device *dev)
+{
+	struct generic_pm_domain_data *gpd_data;
+	int ret;
 
 	ret = dev_pm_get_subsys_data(dev);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	gpd_data = kzalloc(माप(*gpd_data), GFP_KERNEL);
-	अगर (!gpd_data) अणु
+	gpd_data = kzalloc(sizeof(*gpd_data), GFP_KERNEL);
+	if (!gpd_data) {
 		ret = -ENOMEM;
-		जाओ err_put;
-	पूर्ण
+		goto err_put;
+	}
 
 	gpd_data->base.dev = dev;
-	gpd_data->td.स्थिरraपूर्णांक_changed = true;
-	gpd_data->td.effective_स्थिरraपूर्णांक_ns = PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS;
-	gpd_data->nb.notअगरier_call = genpd_dev_pm_qos_notअगरier;
+	gpd_data->td.constraint_changed = true;
+	gpd_data->td.effective_constraint_ns = PM_QOS_RESUME_LATENCY_NO_CONSTRAINT_NS;
+	gpd_data->nb.notifier_call = genpd_dev_pm_qos_notifier;
 	gpd_data->next_wakeup = KTIME_MAX;
 
-	spin_lock_irq(&dev->घातer.lock);
+	spin_lock_irq(&dev->power.lock);
 
-	अगर (dev->घातer.subsys_data->करोमुख्य_data) अणु
+	if (dev->power.subsys_data->domain_data) {
 		ret = -EINVAL;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dev->घातer.subsys_data->करोमुख्य_data = &gpd_data->base;
+	dev->power.subsys_data->domain_data = &gpd_data->base;
 
-	spin_unlock_irq(&dev->घातer.lock);
+	spin_unlock_irq(&dev->power.lock);
 
-	वापस gpd_data;
+	return gpd_data;
 
- err_मुक्त:
-	spin_unlock_irq(&dev->घातer.lock);
-	kमुक्त(gpd_data);
+ err_free:
+	spin_unlock_irq(&dev->power.lock);
+	kfree(gpd_data);
  err_put:
 	dev_pm_put_subsys_data(dev);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल व्योम genpd_मुक्त_dev_data(काष्ठा device *dev,
-				काष्ठा generic_pm_करोमुख्य_data *gpd_data)
-अणु
-	spin_lock_irq(&dev->घातer.lock);
+static void genpd_free_dev_data(struct device *dev,
+				struct generic_pm_domain_data *gpd_data)
+{
+	spin_lock_irq(&dev->power.lock);
 
-	dev->घातer.subsys_data->करोमुख्य_data = शून्य;
+	dev->power.subsys_data->domain_data = NULL;
 
-	spin_unlock_irq(&dev->घातer.lock);
+	spin_unlock_irq(&dev->power.lock);
 
-	kमुक्त(gpd_data);
+	kfree(gpd_data);
 	dev_pm_put_subsys_data(dev);
-पूर्ण
+}
 
-अटल व्योम genpd_update_cpumask(काष्ठा generic_pm_करोमुख्य *genpd,
-				 पूर्णांक cpu, bool set, अचिन्हित पूर्णांक depth)
-अणु
-	काष्ठा gpd_link *link;
+static void genpd_update_cpumask(struct generic_pm_domain *genpd,
+				 int cpu, bool set, unsigned int depth)
+{
+	struct gpd_link *link;
 
-	अगर (!genpd_is_cpu_करोमुख्य(genpd))
-		वापस;
+	if (!genpd_is_cpu_domain(genpd))
+		return;
 
-	list_क्रम_each_entry(link, &genpd->child_links, child_node) अणु
-		काष्ठा generic_pm_करोमुख्य *parent = link->parent;
+	list_for_each_entry(link, &genpd->child_links, child_node) {
+		struct generic_pm_domain *parent = link->parent;
 
 		genpd_lock_nested(parent, depth + 1);
 		genpd_update_cpumask(parent, cpu, set, depth + 1);
 		genpd_unlock(parent);
-	पूर्ण
+	}
 
-	अगर (set)
+	if (set)
 		cpumask_set_cpu(cpu, genpd->cpus);
-	अन्यथा
+	else
 		cpumask_clear_cpu(cpu, genpd->cpus);
-पूर्ण
+}
 
-अटल व्योम genpd_set_cpumask(काष्ठा generic_pm_करोमुख्य *genpd, पूर्णांक cpu)
-अणु
-	अगर (cpu >= 0)
+static void genpd_set_cpumask(struct generic_pm_domain *genpd, int cpu)
+{
+	if (cpu >= 0)
 		genpd_update_cpumask(genpd, cpu, true, 0);
-पूर्ण
+}
 
-अटल व्योम genpd_clear_cpumask(काष्ठा generic_pm_करोमुख्य *genpd, पूर्णांक cpu)
-अणु
-	अगर (cpu >= 0)
+static void genpd_clear_cpumask(struct generic_pm_domain *genpd, int cpu)
+{
+	if (cpu >= 0)
 		genpd_update_cpumask(genpd, cpu, false, 0);
-पूर्ण
+}
 
-अटल पूर्णांक genpd_get_cpu(काष्ठा generic_pm_करोमुख्य *genpd, काष्ठा device *dev)
-अणु
-	पूर्णांक cpu;
+static int genpd_get_cpu(struct generic_pm_domain *genpd, struct device *dev)
+{
+	int cpu;
 
-	अगर (!genpd_is_cpu_करोमुख्य(genpd))
-		वापस -1;
+	if (!genpd_is_cpu_domain(genpd))
+		return -1;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (get_cpu_device(cpu) == dev)
-			वापस cpu;
-	पूर्ण
+	for_each_possible_cpu(cpu) {
+		if (get_cpu_device(cpu) == dev)
+			return cpu;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक genpd_add_device(काष्ठा generic_pm_करोमुख्य *genpd, काष्ठा device *dev,
-			    काष्ठा device *base_dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	पूर्णांक ret;
+static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
+			    struct device *base_dev)
+{
+	struct generic_pm_domain_data *gpd_data;
+	int ret;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
-	अगर (IS_ERR_OR_शून्य(genpd) || IS_ERR_OR_शून्य(dev))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(genpd) || IS_ERR_OR_NULL(dev))
+		return -EINVAL;
 
 	gpd_data = genpd_alloc_dev_data(dev);
-	अगर (IS_ERR(gpd_data))
-		वापस PTR_ERR(gpd_data);
+	if (IS_ERR(gpd_data))
+		return PTR_ERR(gpd_data);
 
 	gpd_data->cpu = genpd_get_cpu(genpd, base_dev);
 
 	ret = genpd->attach_dev ? genpd->attach_dev(genpd, dev) : 0;
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	genpd_lock(genpd);
 
 	genpd_set_cpumask(genpd, gpd_data->cpu);
-	dev_pm_करोमुख्य_set(dev, &genpd->करोमुख्य);
+	dev_pm_domain_set(dev, &genpd->domain);
 
 	genpd->device_count++;
-	genpd->max_off_समय_changed = true;
+	genpd->max_off_time_changed = true;
 
 	list_add_tail(&gpd_data->base.list_node, &genpd->dev_list);
 
 	genpd_unlock(genpd);
  out:
-	अगर (ret)
-		genpd_मुक्त_dev_data(dev, gpd_data);
-	अन्यथा
-		dev_pm_qos_add_notअगरier(dev, &gpd_data->nb,
+	if (ret)
+		genpd_free_dev_data(dev, gpd_data);
+	else
+		dev_pm_qos_add_notifier(dev, &gpd_data->nb,
 					DEV_PM_QOS_RESUME_LATENCY);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pm_genpd_add_device - Add a device to an I/O PM करोमुख्य.
- * @genpd: PM करोमुख्य to add the device to.
+ * pm_genpd_add_device - Add a device to an I/O PM domain.
+ * @genpd: PM domain to add the device to.
  * @dev: Device to be added.
  */
-पूर्णांक pm_genpd_add_device(काष्ठा generic_pm_करोमुख्य *genpd, काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+int pm_genpd_add_device(struct generic_pm_domain *genpd, struct device *dev)
+{
+	int ret;
 
 	mutex_lock(&gpd_list_lock);
 	ret = genpd_add_device(genpd, dev, dev);
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(pm_genpd_add_device);
 
-अटल पूर्णांक genpd_हटाओ_device(काष्ठा generic_pm_करोमुख्य *genpd,
-			       काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	काष्ठा pm_करोमुख्य_data *pdd;
-	पूर्णांक ret = 0;
+static int genpd_remove_device(struct generic_pm_domain *genpd,
+			       struct device *dev)
+{
+	struct generic_pm_domain_data *gpd_data;
+	struct pm_domain_data *pdd;
+	int ret = 0;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
-	pdd = dev->घातer.subsys_data->करोमुख्य_data;
+	pdd = dev->power.subsys_data->domain_data;
 	gpd_data = to_gpd_data(pdd);
-	dev_pm_qos_हटाओ_notअगरier(dev, &gpd_data->nb,
+	dev_pm_qos_remove_notifier(dev, &gpd_data->nb,
 				   DEV_PM_QOS_RESUME_LATENCY);
 
 	genpd_lock(genpd);
 
-	अगर (genpd->prepared_count > 0) अणु
+	if (genpd->prepared_count > 0) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	genpd->device_count--;
-	genpd->max_off_समय_changed = true;
+	genpd->max_off_time_changed = true;
 
 	genpd_clear_cpumask(genpd, gpd_data->cpu);
-	dev_pm_करोमुख्य_set(dev, शून्य);
+	dev_pm_domain_set(dev, NULL);
 
 	list_del_init(&pdd->list_node);
 
 	genpd_unlock(genpd);
 
-	अगर (genpd->detach_dev)
+	if (genpd->detach_dev)
 		genpd->detach_dev(genpd, dev);
 
-	genpd_मुक्त_dev_data(dev, gpd_data);
+	genpd_free_dev_data(dev, gpd_data);
 
-	वापस 0;
+	return 0;
 
  out:
 	genpd_unlock(genpd);
-	dev_pm_qos_add_notअगरier(dev, &gpd_data->nb, DEV_PM_QOS_RESUME_LATENCY);
+	dev_pm_qos_add_notifier(dev, &gpd_data->nb, DEV_PM_QOS_RESUME_LATENCY);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * pm_genpd_हटाओ_device - Remove a device from an I/O PM करोमुख्य.
- * @dev: Device to be हटाओd.
+ * pm_genpd_remove_device - Remove a device from an I/O PM domain.
+ * @dev: Device to be removed.
  */
-पूर्णांक pm_genpd_हटाओ_device(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = dev_to_genpd_safe(dev);
+int pm_genpd_remove_device(struct device *dev)
+{
+	struct generic_pm_domain *genpd = dev_to_genpd_safe(dev);
 
-	अगर (!genpd)
-		वापस -EINVAL;
+	if (!genpd)
+		return -EINVAL;
 
-	वापस genpd_हटाओ_device(genpd, dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_genpd_हटाओ_device);
+	return genpd_remove_device(genpd, dev);
+}
+EXPORT_SYMBOL_GPL(pm_genpd_remove_device);
 
 /**
- * dev_pm_genpd_add_notअगरier - Add a genpd घातer on/off notअगरier क्रम @dev
+ * dev_pm_genpd_add_notifier - Add a genpd power on/off notifier for @dev
  *
- * @dev: Device that should be associated with the notअगरier
- * @nb: The notअगरier block to रेजिस्टर
+ * @dev: Device that should be associated with the notifier
+ * @nb: The notifier block to register
  *
- * Users may call this function to add a genpd घातer on/off notअगरier क्रम an
- * attached @dev. Only one notअगरier per device is allowed. The notअगरier is
- * sent when genpd is घातering on/off the PM करोमुख्य.
+ * Users may call this function to add a genpd power on/off notifier for an
+ * attached @dev. Only one notifier per device is allowed. The notifier is
+ * sent when genpd is powering on/off the PM domain.
  *
  * It is assumed that the user guarantee that the genpd wouldn't be detached
- * जबतक this routine is getting called.
+ * while this routine is getting called.
  *
  * Returns 0 on success and negative error values on failures.
  */
-पूर्णांक dev_pm_genpd_add_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	पूर्णांक ret;
+int dev_pm_genpd_add_notifier(struct device *dev, struct notifier_block *nb)
+{
+	struct generic_pm_domain *genpd;
+	struct generic_pm_domain_data *gpd_data;
+	int ret;
 
 	genpd = dev_to_genpd_safe(dev);
-	अगर (!genpd)
-		वापस -ENODEV;
+	if (!genpd)
+		return -ENODEV;
 
-	अगर (WARN_ON(!dev->घातer.subsys_data ||
-		     !dev->घातer.subsys_data->करोमुख्य_data))
-		वापस -EINVAL;
+	if (WARN_ON(!dev->power.subsys_data ||
+		     !dev->power.subsys_data->domain_data))
+		return -EINVAL;
 
-	gpd_data = to_gpd_data(dev->घातer.subsys_data->करोमुख्य_data);
-	अगर (gpd_data->घातer_nb)
-		वापस -EEXIST;
+	gpd_data = to_gpd_data(dev->power.subsys_data->domain_data);
+	if (gpd_data->power_nb)
+		return -EEXIST;
 
 	genpd_lock(genpd);
-	ret = raw_notअगरier_chain_रेजिस्टर(&genpd->घातer_notअगरiers, nb);
+	ret = raw_notifier_chain_register(&genpd->power_notifiers, nb);
 	genpd_unlock(genpd);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(dev, "failed to add notifier for PM domain %s\n",
 			 genpd->name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	gpd_data->घातer_nb = nb;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(dev_pm_genpd_add_notअगरier);
+	gpd_data->power_nb = nb;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dev_pm_genpd_add_notifier);
 
 /**
- * dev_pm_genpd_हटाओ_notअगरier - Remove a genpd घातer on/off notअगरier क्रम @dev
+ * dev_pm_genpd_remove_notifier - Remove a genpd power on/off notifier for @dev
  *
- * @dev: Device that is associated with the notअगरier
+ * @dev: Device that is associated with the notifier
  *
- * Users may call this function to हटाओ a genpd घातer on/off notअगरier क्रम an
+ * Users may call this function to remove a genpd power on/off notifier for an
  * attached @dev.
  *
  * It is assumed that the user guarantee that the genpd wouldn't be detached
- * जबतक this routine is getting called.
+ * while this routine is getting called.
  *
  * Returns 0 on success and negative error values on failures.
  */
-पूर्णांक dev_pm_genpd_हटाओ_notअगरier(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
-	पूर्णांक ret;
+int dev_pm_genpd_remove_notifier(struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	struct generic_pm_domain_data *gpd_data;
+	int ret;
 
 	genpd = dev_to_genpd_safe(dev);
-	अगर (!genpd)
-		वापस -ENODEV;
+	if (!genpd)
+		return -ENODEV;
 
-	अगर (WARN_ON(!dev->घातer.subsys_data ||
-		     !dev->घातer.subsys_data->करोमुख्य_data))
-		वापस -EINVAL;
+	if (WARN_ON(!dev->power.subsys_data ||
+		     !dev->power.subsys_data->domain_data))
+		return -EINVAL;
 
-	gpd_data = to_gpd_data(dev->घातer.subsys_data->करोमुख्य_data);
-	अगर (!gpd_data->घातer_nb)
-		वापस -ENODEV;
+	gpd_data = to_gpd_data(dev->power.subsys_data->domain_data);
+	if (!gpd_data->power_nb)
+		return -ENODEV;
 
 	genpd_lock(genpd);
-	ret = raw_notअगरier_chain_unरेजिस्टर(&genpd->घातer_notअगरiers,
-					    gpd_data->घातer_nb);
+	ret = raw_notifier_chain_unregister(&genpd->power_notifiers,
+					    gpd_data->power_nb);
 	genpd_unlock(genpd);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(dev, "failed to remove notifier for PM domain %s\n",
 			 genpd->name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	gpd_data->घातer_nb = शून्य;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(dev_pm_genpd_हटाओ_notअगरier);
+	gpd_data->power_nb = NULL;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(dev_pm_genpd_remove_notifier);
 
-अटल पूर्णांक genpd_add_subकरोमुख्य(काष्ठा generic_pm_करोमुख्य *genpd,
-			       काष्ठा generic_pm_करोमुख्य *subकरोमुख्य)
-अणु
-	काष्ठा gpd_link *link, *itr;
-	पूर्णांक ret = 0;
+static int genpd_add_subdomain(struct generic_pm_domain *genpd,
+			       struct generic_pm_domain *subdomain)
+{
+	struct gpd_link *link, *itr;
+	int ret = 0;
 
-	अगर (IS_ERR_OR_शून्य(genpd) || IS_ERR_OR_शून्य(subकरोमुख्य)
-	    || genpd == subकरोमुख्य)
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(genpd) || IS_ERR_OR_NULL(subdomain)
+	    || genpd == subdomain)
+		return -EINVAL;
 
 	/*
-	 * If the करोमुख्य can be घातered on/off in an IRQ safe
-	 * context, ensure that the subकरोमुख्य can also be
-	 * घातered on/off in that context.
+	 * If the domain can be powered on/off in an IRQ safe
+	 * context, ensure that the subdomain can also be
+	 * powered on/off in that context.
 	 */
-	अगर (!genpd_is_irq_safe(genpd) && genpd_is_irq_safe(subकरोमुख्य)) अणु
+	if (!genpd_is_irq_safe(genpd) && genpd_is_irq_safe(subdomain)) {
 		WARN(1, "Parent %s of subdomain %s must be IRQ safe\n",
-				genpd->name, subकरोमुख्य->name);
-		वापस -EINVAL;
-	पूर्ण
+				genpd->name, subdomain->name);
+		return -EINVAL;
+	}
 
-	link = kzalloc(माप(*link), GFP_KERNEL);
-	अगर (!link)
-		वापस -ENOMEM;
+	link = kzalloc(sizeof(*link), GFP_KERNEL);
+	if (!link)
+		return -ENOMEM;
 
-	genpd_lock(subकरोमुख्य);
+	genpd_lock(subdomain);
 	genpd_lock_nested(genpd, SINGLE_DEPTH_NESTING);
 
-	अगर (!genpd_status_on(genpd) && genpd_status_on(subकरोमुख्य)) अणु
+	if (!genpd_status_on(genpd) && genpd_status_on(subdomain)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	list_क्रम_each_entry(itr, &genpd->parent_links, parent_node) अणु
-		अगर (itr->child == subकरोमुख्य && itr->parent == genpd) अणु
+	list_for_each_entry(itr, &genpd->parent_links, parent_node) {
+		if (itr->child == subdomain && itr->parent == genpd) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	link->parent = genpd;
 	list_add_tail(&link->parent_node, &genpd->parent_links);
-	link->child = subकरोमुख्य;
-	list_add_tail(&link->child_node, &subकरोमुख्य->child_links);
-	अगर (genpd_status_on(subकरोमुख्य))
+	link->child = subdomain;
+	list_add_tail(&link->child_node, &subdomain->child_links);
+	if (genpd_status_on(subdomain))
 		genpd_sd_counter_inc(genpd);
 
  out:
 	genpd_unlock(genpd);
-	genpd_unlock(subकरोमुख्य);
-	अगर (ret)
-		kमुक्त(link);
-	वापस ret;
-पूर्ण
+	genpd_unlock(subdomain);
+	if (ret)
+		kfree(link);
+	return ret;
+}
 
 /**
- * pm_genpd_add_subकरोमुख्य - Add a subकरोमुख्य to an I/O PM करोमुख्य.
- * @genpd: Leader PM करोमुख्य to add the subकरोमुख्य to.
- * @subकरोमुख्य: Subकरोमुख्य to be added.
+ * pm_genpd_add_subdomain - Add a subdomain to an I/O PM domain.
+ * @genpd: Leader PM domain to add the subdomain to.
+ * @subdomain: Subdomain to be added.
  */
-पूर्णांक pm_genpd_add_subकरोमुख्य(काष्ठा generic_pm_करोमुख्य *genpd,
-			   काष्ठा generic_pm_करोमुख्य *subकरोमुख्य)
-अणु
-	पूर्णांक ret;
+int pm_genpd_add_subdomain(struct generic_pm_domain *genpd,
+			   struct generic_pm_domain *subdomain)
+{
+	int ret;
 
 	mutex_lock(&gpd_list_lock);
-	ret = genpd_add_subकरोमुख्य(genpd, subकरोमुख्य);
+	ret = genpd_add_subdomain(genpd, subdomain);
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_genpd_add_subकरोमुख्य);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pm_genpd_add_subdomain);
 
 /**
- * pm_genpd_हटाओ_subकरोमुख्य - Remove a subकरोमुख्य from an I/O PM करोमुख्य.
- * @genpd: Leader PM करोमुख्य to हटाओ the subकरोमुख्य from.
- * @subकरोमुख्य: Subकरोमुख्य to be हटाओd.
+ * pm_genpd_remove_subdomain - Remove a subdomain from an I/O PM domain.
+ * @genpd: Leader PM domain to remove the subdomain from.
+ * @subdomain: Subdomain to be removed.
  */
-पूर्णांक pm_genpd_हटाओ_subकरोमुख्य(काष्ठा generic_pm_करोमुख्य *genpd,
-			      काष्ठा generic_pm_करोमुख्य *subकरोमुख्य)
-अणु
-	काष्ठा gpd_link *l, *link;
-	पूर्णांक ret = -EINVAL;
+int pm_genpd_remove_subdomain(struct generic_pm_domain *genpd,
+			      struct generic_pm_domain *subdomain)
+{
+	struct gpd_link *l, *link;
+	int ret = -EINVAL;
 
-	अगर (IS_ERR_OR_शून्य(genpd) || IS_ERR_OR_शून्य(subकरोमुख्य))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(genpd) || IS_ERR_OR_NULL(subdomain))
+		return -EINVAL;
 
-	genpd_lock(subकरोमुख्य);
+	genpd_lock(subdomain);
 	genpd_lock_nested(genpd, SINGLE_DEPTH_NESTING);
 
-	अगर (!list_empty(&subकरोमुख्य->parent_links) || subकरोमुख्य->device_count) अणु
+	if (!list_empty(&subdomain->parent_links) || subdomain->device_count) {
 		pr_warn("%s: unable to remove subdomain %s\n",
-			genpd->name, subकरोमुख्य->name);
+			genpd->name, subdomain->name);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	list_क्रम_each_entry_safe(link, l, &genpd->parent_links, parent_node) अणु
-		अगर (link->child != subकरोमुख्य)
-			जारी;
+	list_for_each_entry_safe(link, l, &genpd->parent_links, parent_node) {
+		if (link->child != subdomain)
+			continue;
 
 		list_del(&link->parent_node);
 		list_del(&link->child_node);
-		kमुक्त(link);
-		अगर (genpd_status_on(subकरोमुख्य))
+		kfree(link);
+		if (genpd_status_on(subdomain))
 			genpd_sd_counter_dec(genpd);
 
 		ret = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
 	genpd_unlock(genpd);
-	genpd_unlock(subकरोमुख्य);
+	genpd_unlock(subdomain);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_genpd_हटाओ_subकरोमुख्य);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pm_genpd_remove_subdomain);
 
-अटल व्योम genpd_मुक्त_शेष_घातer_state(काष्ठा genpd_घातer_state *states,
-					   अचिन्हित पूर्णांक state_count)
-अणु
-	kमुक्त(states);
-पूर्ण
+static void genpd_free_default_power_state(struct genpd_power_state *states,
+					   unsigned int state_count)
+{
+	kfree(states);
+}
 
-अटल पूर्णांक genpd_set_शेष_घातer_state(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा genpd_घातer_state *state;
+static int genpd_set_default_power_state(struct generic_pm_domain *genpd)
+{
+	struct genpd_power_state *state;
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस -ENOMEM;
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return -ENOMEM;
 
 	genpd->states = state;
 	genpd->state_count = 1;
-	genpd->मुक्त_states = genpd_मुक्त_शेष_घातer_state;
+	genpd->free_states = genpd_free_default_power_state;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम genpd_lock_init(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	अगर (genpd->flags & GENPD_FLAG_IRQ_SAFE) अणु
+static void genpd_lock_init(struct generic_pm_domain *genpd)
+{
+	if (genpd->flags & GENPD_FLAG_IRQ_SAFE) {
 		spin_lock_init(&genpd->slock);
 		genpd->lock_ops = &genpd_spin_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_init(&genpd->mlock);
 		genpd->lock_ops = &genpd_mtx_ops;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * pm_genpd_init - Initialize a generic I/O PM करोमुख्य object.
- * @genpd: PM करोमुख्य object to initialize.
- * @gov: PM करोमुख्य governor to associate with the करोमुख्य (may be शून्य).
- * @is_off: Initial value of the करोमुख्य's घातer_is_off field.
+ * pm_genpd_init - Initialize a generic I/O PM domain object.
+ * @genpd: PM domain object to initialize.
+ * @gov: PM domain governor to associate with the domain (may be NULL).
+ * @is_off: Initial value of the domain's power_is_off field.
  *
- * Returns 0 on successful initialization, अन्यथा a negative error code.
+ * Returns 0 on successful initialization, else a negative error code.
  */
-पूर्णांक pm_genpd_init(काष्ठा generic_pm_करोमुख्य *genpd,
-		  काष्ठा dev_घातer_governor *gov, bool is_off)
-अणु
-	पूर्णांक ret;
+int pm_genpd_init(struct generic_pm_domain *genpd,
+		  struct dev_power_governor *gov, bool is_off)
+{
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(genpd))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(genpd))
+		return -EINVAL;
 
 	INIT_LIST_HEAD(&genpd->parent_links);
 	INIT_LIST_HEAD(&genpd->child_links);
 	INIT_LIST_HEAD(&genpd->dev_list);
-	RAW_INIT_NOTIFIER_HEAD(&genpd->घातer_notअगरiers);
+	RAW_INIT_NOTIFIER_HEAD(&genpd->power_notifiers);
 	genpd_lock_init(genpd);
 	genpd->gov = gov;
-	INIT_WORK(&genpd->घातer_off_work, genpd_घातer_off_work_fn);
+	INIT_WORK(&genpd->power_off_work, genpd_power_off_work_fn);
 	atomic_set(&genpd->sd_count, 0);
 	genpd->status = is_off ? GENPD_STATE_OFF : GENPD_STATE_ON;
 	genpd->device_count = 0;
-	genpd->max_off_समय_ns = -1;
-	genpd->max_off_समय_changed = true;
-	genpd->provider = शून्य;
+	genpd->max_off_time_ns = -1;
+	genpd->max_off_time_changed = true;
+	genpd->provider = NULL;
 	genpd->has_provider = false;
-	genpd->accounting_समय = kसमय_get();
-	genpd->करोमुख्य.ops.runसमय_suspend = genpd_runसमय_suspend;
-	genpd->करोमुख्य.ops.runसमय_resume = genpd_runसमय_resume;
-	genpd->करोमुख्य.ops.prepare = genpd_prepare;
-	genpd->करोमुख्य.ops.suspend_noirq = genpd_suspend_noirq;
-	genpd->करोमुख्य.ops.resume_noirq = genpd_resume_noirq;
-	genpd->करोमुख्य.ops.मुक्तze_noirq = genpd_मुक्तze_noirq;
-	genpd->करोमुख्य.ops.thaw_noirq = genpd_thaw_noirq;
-	genpd->करोमुख्य.ops.घातeroff_noirq = genpd_घातeroff_noirq;
-	genpd->करोमुख्य.ops.restore_noirq = genpd_restore_noirq;
-	genpd->करोमुख्य.ops.complete = genpd_complete;
-	genpd->करोमुख्य.start = genpd_dev_pm_start;
+	genpd->accounting_time = ktime_get();
+	genpd->domain.ops.runtime_suspend = genpd_runtime_suspend;
+	genpd->domain.ops.runtime_resume = genpd_runtime_resume;
+	genpd->domain.ops.prepare = genpd_prepare;
+	genpd->domain.ops.suspend_noirq = genpd_suspend_noirq;
+	genpd->domain.ops.resume_noirq = genpd_resume_noirq;
+	genpd->domain.ops.freeze_noirq = genpd_freeze_noirq;
+	genpd->domain.ops.thaw_noirq = genpd_thaw_noirq;
+	genpd->domain.ops.poweroff_noirq = genpd_poweroff_noirq;
+	genpd->domain.ops.restore_noirq = genpd_restore_noirq;
+	genpd->domain.ops.complete = genpd_complete;
+	genpd->domain.start = genpd_dev_pm_start;
 
-	अगर (genpd->flags & GENPD_FLAG_PM_CLK) अणु
+	if (genpd->flags & GENPD_FLAG_PM_CLK) {
 		genpd->dev_ops.stop = pm_clk_suspend;
 		genpd->dev_ops.start = pm_clk_resume;
-	पूर्ण
+	}
 
-	/* Always-on करोमुख्यs must be घातered on at initialization. */
-	अगर ((genpd_is_always_on(genpd) || genpd_is_rpm_always_on(genpd)) &&
+	/* Always-on domains must be powered on at initialization. */
+	if ((genpd_is_always_on(genpd) || genpd_is_rpm_always_on(genpd)) &&
 			!genpd_status_on(genpd))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (genpd_is_cpu_करोमुख्य(genpd) &&
+	if (genpd_is_cpu_domain(genpd) &&
 	    !zalloc_cpumask_var(&genpd->cpus, GFP_KERNEL))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
-	/* Use only one "off" state अगर there were no states declared */
-	अगर (genpd->state_count == 0) अणु
-		ret = genpd_set_शेष_घातer_state(genpd);
-		अगर (ret) अणु
-			अगर (genpd_is_cpu_करोमुख्य(genpd))
-				मुक्त_cpumask_var(genpd->cpus);
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!gov && genpd->state_count > 1) अणु
+	/* Use only one "off" state if there were no states declared */
+	if (genpd->state_count == 0) {
+		ret = genpd_set_default_power_state(genpd);
+		if (ret) {
+			if (genpd_is_cpu_domain(genpd))
+				free_cpumask_var(genpd->cpus);
+			return ret;
+		}
+	} else if (!gov && genpd->state_count > 1) {
 		pr_warn("%s: no governor for states\n", genpd->name);
-	पूर्ण
+	}
 
 	device_initialize(&genpd->dev);
 	dev_set_name(&genpd->dev, "%s", genpd->name);
@@ -1988,175 +1987,175 @@ EXPORT_SYMBOL_GPL(pm_genpd_हटाओ_subकरोमुख्य);
 	genpd_debug_add(genpd);
 	mutex_unlock(&gpd_list_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pm_genpd_init);
 
-अटल पूर्णांक genpd_हटाओ(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा gpd_link *l, *link;
+static int genpd_remove(struct generic_pm_domain *genpd)
+{
+	struct gpd_link *l, *link;
 
-	अगर (IS_ERR_OR_शून्य(genpd))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(genpd))
+		return -EINVAL;
 
 	genpd_lock(genpd);
 
-	अगर (genpd->has_provider) अणु
+	if (genpd->has_provider) {
 		genpd_unlock(genpd);
 		pr_err("Provider present, unable to remove %s\n", genpd->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (!list_empty(&genpd->parent_links) || genpd->device_count) अणु
+	if (!list_empty(&genpd->parent_links) || genpd->device_count) {
 		genpd_unlock(genpd);
 		pr_err("%s: unable to remove %s\n", __func__, genpd->name);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	list_क्रम_each_entry_safe(link, l, &genpd->child_links, child_node) अणु
+	list_for_each_entry_safe(link, l, &genpd->child_links, child_node) {
 		list_del(&link->parent_node);
 		list_del(&link->child_node);
-		kमुक्त(link);
-	पूर्ण
+		kfree(link);
+	}
 
-	genpd_debug_हटाओ(genpd);
+	genpd_debug_remove(genpd);
 	list_del(&genpd->gpd_list_node);
 	genpd_unlock(genpd);
-	cancel_work_sync(&genpd->घातer_off_work);
-	अगर (genpd_is_cpu_करोमुख्य(genpd))
-		मुक्त_cpumask_var(genpd->cpus);
-	अगर (genpd->मुक्त_states)
-		genpd->मुक्त_states(genpd->states, genpd->state_count);
+	cancel_work_sync(&genpd->power_off_work);
+	if (genpd_is_cpu_domain(genpd))
+		free_cpumask_var(genpd->cpus);
+	if (genpd->free_states)
+		genpd->free_states(genpd->states, genpd->state_count);
 
 	pr_debug("%s: removed %s\n", __func__, genpd->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * pm_genpd_हटाओ - Remove a generic I/O PM करोमुख्य
- * @genpd: Poपूर्णांकer to PM करोमुख्य that is to be हटाओd.
+ * pm_genpd_remove - Remove a generic I/O PM domain
+ * @genpd: Pointer to PM domain that is to be removed.
  *
- * To हटाओ the PM करोमुख्य, this function:
- *  - Removes the PM करोमुख्य as a subकरोमुख्य to any parent करोमुख्यs,
- *    अगर it was added.
- *  - Removes the PM करोमुख्य from the list of रेजिस्टरed PM करोमुख्यs.
+ * To remove the PM domain, this function:
+ *  - Removes the PM domain as a subdomain to any parent domains,
+ *    if it was added.
+ *  - Removes the PM domain from the list of registered PM domains.
  *
- * The PM करोमुख्य will only be हटाओd, अगर the associated provider has
- * been हटाओd, it is not a parent to any other PM करोमुख्य and has no
+ * The PM domain will only be removed, if the associated provider has
+ * been removed, it is not a parent to any other PM domain and has no
  * devices associated with it.
  */
-पूर्णांक pm_genpd_हटाओ(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	पूर्णांक ret;
+int pm_genpd_remove(struct generic_pm_domain *genpd)
+{
+	int ret;
 
 	mutex_lock(&gpd_list_lock);
-	ret = genpd_हटाओ(genpd);
+	ret = genpd_remove(genpd);
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_genpd_हटाओ);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pm_genpd_remove);
 
-#अगर_घोषित CONFIG_PM_GENERIC_DOMAINS_OF
+#ifdef CONFIG_PM_GENERIC_DOMAINS_OF
 
 /*
- * Device Tree based PM करोमुख्य providers.
+ * Device Tree based PM domain providers.
  *
- * The code below implements generic device tree based PM करोमुख्य providers that
- * bind device tree nodes with generic PM करोमुख्यs रेजिस्टरed in the प्रणाली.
+ * The code below implements generic device tree based PM domain providers that
+ * bind device tree nodes with generic PM domains registered in the system.
  *
- * Any driver that रेजिस्टरs generic PM करोमुख्यs and needs to support binding of
- * devices to these करोमुख्यs is supposed to रेजिस्टर a PM करोमुख्य provider, which
- * maps a PM करोमुख्य specअगरier retrieved from the device tree to a PM करोमुख्य.
+ * Any driver that registers generic PM domains and needs to support binding of
+ * devices to these domains is supposed to register a PM domain provider, which
+ * maps a PM domain specifier retrieved from the device tree to a PM domain.
  *
- * Two simple mapping functions have been provided क्रम convenience:
- *  - genpd_xlate_simple() क्रम 1:1 device tree node to PM करोमुख्य mapping.
- *  - genpd_xlate_onecell() क्रम mapping of multiple PM करोमुख्यs per node by
+ * Two simple mapping functions have been provided for convenience:
+ *  - genpd_xlate_simple() for 1:1 device tree node to PM domain mapping.
+ *  - genpd_xlate_onecell() for mapping of multiple PM domains per node by
  *    index.
  */
 
 /**
- * काष्ठा of_genpd_provider - PM करोमुख्य provider registration काष्ठाure
- * @link: Entry in global list of PM करोमुख्य providers
- * @node: Poपूर्णांकer to device tree node of PM करोमुख्य provider
- * @xlate: Provider-specअगरic xlate callback mapping a set of specअगरier cells
- *         पूर्णांकo a PM करोमुख्य.
- * @data: context poपूर्णांकer to be passed पूर्णांकo @xlate callback
+ * struct of_genpd_provider - PM domain provider registration structure
+ * @link: Entry in global list of PM domain providers
+ * @node: Pointer to device tree node of PM domain provider
+ * @xlate: Provider-specific xlate callback mapping a set of specifier cells
+ *         into a PM domain.
+ * @data: context pointer to be passed into @xlate callback
  */
-काष्ठा of_genpd_provider अणु
-	काष्ठा list_head link;
-	काष्ठा device_node *node;
+struct of_genpd_provider {
+	struct list_head link;
+	struct device_node *node;
 	genpd_xlate_t xlate;
-	व्योम *data;
-पूर्ण;
+	void *data;
+};
 
-/* List of रेजिस्टरed PM करोमुख्य providers. */
-अटल LIST_HEAD(of_genpd_providers);
+/* List of registered PM domain providers. */
+static LIST_HEAD(of_genpd_providers);
 /* Mutex to protect the list above. */
-अटल DEFINE_MUTEX(of_genpd_mutex);
+static DEFINE_MUTEX(of_genpd_mutex);
 
 /**
- * genpd_xlate_simple() - Xlate function क्रम direct node-करोमुख्य mapping
- * @genpdspec: OF phandle args to map पूर्णांकo a PM करोमुख्य
- * @data: xlate function निजी data - poपूर्णांकer to काष्ठा generic_pm_करोमुख्य
+ * genpd_xlate_simple() - Xlate function for direct node-domain mapping
+ * @genpdspec: OF phandle args to map into a PM domain
+ * @data: xlate function private data - pointer to struct generic_pm_domain
  *
- * This is a generic xlate function that can be used to model PM करोमुख्यs that
- * have their own device tree nodes. The निजी data of xlate function needs
- * to be a valid poपूर्णांकer to काष्ठा generic_pm_करोमुख्य.
+ * This is a generic xlate function that can be used to model PM domains that
+ * have their own device tree nodes. The private data of xlate function needs
+ * to be a valid pointer to struct generic_pm_domain.
  */
-अटल काष्ठा generic_pm_करोमुख्य *genpd_xlate_simple(
-					काष्ठा of_phandle_args *genpdspec,
-					व्योम *data)
-अणु
-	वापस data;
-पूर्ण
+static struct generic_pm_domain *genpd_xlate_simple(
+					struct of_phandle_args *genpdspec,
+					void *data)
+{
+	return data;
+}
 
 /**
  * genpd_xlate_onecell() - Xlate function using a single index.
- * @genpdspec: OF phandle args to map पूर्णांकo a PM करोमुख्य
- * @data: xlate function निजी data - poपूर्णांकer to काष्ठा genpd_onecell_data
+ * @genpdspec: OF phandle args to map into a PM domain
+ * @data: xlate function private data - pointer to struct genpd_onecell_data
  *
- * This is a generic xlate function that can be used to model simple PM करोमुख्य
- * controllers that have one device tree node and provide multiple PM करोमुख्यs.
- * A single cell is used as an index पूर्णांकo an array of PM करोमुख्यs specअगरied in
- * the genpd_onecell_data काष्ठा when रेजिस्टरing the provider.
+ * This is a generic xlate function that can be used to model simple PM domain
+ * controllers that have one device tree node and provide multiple PM domains.
+ * A single cell is used as an index into an array of PM domains specified in
+ * the genpd_onecell_data struct when registering the provider.
  */
-अटल काष्ठा generic_pm_करोमुख्य *genpd_xlate_onecell(
-					काष्ठा of_phandle_args *genpdspec,
-					व्योम *data)
-अणु
-	काष्ठा genpd_onecell_data *genpd_data = data;
-	अचिन्हित पूर्णांक idx = genpdspec->args[0];
+static struct generic_pm_domain *genpd_xlate_onecell(
+					struct of_phandle_args *genpdspec,
+					void *data)
+{
+	struct genpd_onecell_data *genpd_data = data;
+	unsigned int idx = genpdspec->args[0];
 
-	अगर (genpdspec->args_count != 1)
-		वापस ERR_PTR(-EINVAL);
+	if (genpdspec->args_count != 1)
+		return ERR_PTR(-EINVAL);
 
-	अगर (idx >= genpd_data->num_करोमुख्यs) अणु
+	if (idx >= genpd_data->num_domains) {
 		pr_err("%s: invalid domain index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (!genpd_data->करोमुख्यs[idx])
-		वापस ERR_PTR(-ENOENT);
+	if (!genpd_data->domains[idx])
+		return ERR_PTR(-ENOENT);
 
-	वापस genpd_data->करोमुख्यs[idx];
-पूर्ण
+	return genpd_data->domains[idx];
+}
 
 /**
- * genpd_add_provider() - Register a PM करोमुख्य provider क्रम a node
- * @np: Device node poपूर्णांकer associated with the PM करोमुख्य provider.
- * @xlate: Callback क्रम decoding PM करोमुख्य from phandle arguments.
- * @data: Context poपूर्णांकer क्रम @xlate callback.
+ * genpd_add_provider() - Register a PM domain provider for a node
+ * @np: Device node pointer associated with the PM domain provider.
+ * @xlate: Callback for decoding PM domain from phandle arguments.
+ * @data: Context pointer for @xlate callback.
  */
-अटल पूर्णांक genpd_add_provider(काष्ठा device_node *np, genpd_xlate_t xlate,
-			      व्योम *data)
-अणु
-	काष्ठा of_genpd_provider *cp;
+static int genpd_add_provider(struct device_node *np, genpd_xlate_t xlate,
+			      void *data)
+{
+	struct of_genpd_provider *cp;
 
-	cp = kzalloc(माप(*cp), GFP_KERNEL);
-	अगर (!cp)
-		वापस -ENOMEM;
+	cp = kzalloc(sizeof(*cp), GFP_KERNEL);
+	if (!cp)
+		return -ENOMEM;
 
 	cp->node = of_node_get(np);
 	cp->data = data;
@@ -2168,66 +2167,66 @@ EXPORT_SYMBOL_GPL(pm_genpd_हटाओ);
 	mutex_unlock(&of_genpd_mutex);
 	pr_debug("Added domain provider from %pOF\n", np);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool genpd_present(स्थिर काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	स्थिर काष्ठा generic_pm_करोमुख्य *gpd;
+static bool genpd_present(const struct generic_pm_domain *genpd)
+{
+	const struct generic_pm_domain *gpd;
 
-	list_क्रम_each_entry(gpd, &gpd_list, gpd_list_node)
-		अगर (gpd == genpd)
-			वापस true;
-	वापस false;
-पूर्ण
+	list_for_each_entry(gpd, &gpd_list, gpd_list_node)
+		if (gpd == genpd)
+			return true;
+	return false;
+}
 
 /**
- * of_genpd_add_provider_simple() - Register a simple PM करोमुख्य provider
- * @np: Device node poपूर्णांकer associated with the PM करोमुख्य provider.
- * @genpd: Poपूर्णांकer to PM करोमुख्य associated with the PM करोमुख्य provider.
+ * of_genpd_add_provider_simple() - Register a simple PM domain provider
+ * @np: Device node pointer associated with the PM domain provider.
+ * @genpd: Pointer to PM domain associated with the PM domain provider.
  */
-पूर्णांक of_genpd_add_provider_simple(काष्ठा device_node *np,
-				 काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	पूर्णांक ret = -EINVAL;
+int of_genpd_add_provider_simple(struct device_node *np,
+				 struct generic_pm_domain *genpd)
+{
+	int ret = -EINVAL;
 
-	अगर (!np || !genpd)
-		वापस -EINVAL;
+	if (!np || !genpd)
+		return -EINVAL;
 
 	mutex_lock(&gpd_list_lock);
 
-	अगर (!genpd_present(genpd))
-		जाओ unlock;
+	if (!genpd_present(genpd))
+		goto unlock;
 
 	genpd->dev.of_node = np;
 
 	/* Parse genpd OPP table */
-	अगर (genpd->set_perक्रमmance_state) अणु
+	if (genpd->set_performance_state) {
 		ret = dev_pm_opp_of_add_table(&genpd->dev);
-		अगर (ret) अणु
-			अगर (ret != -EPROBE_DEFER)
+		if (ret) {
+			if (ret != -EPROBE_DEFER)
 				dev_err(&genpd->dev, "Failed to add OPP table: %d\n",
 					ret);
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
 		/*
-		 * Save table क्रम faster processing जबतक setting perक्रमmance
+		 * Save table for faster processing while setting performance
 		 * state.
 		 */
 		genpd->opp_table = dev_pm_opp_get_opp_table(&genpd->dev);
 		WARN_ON(IS_ERR(genpd->opp_table));
-	पूर्ण
+	}
 
 	ret = genpd_add_provider(np, genpd_xlate_simple, genpd);
-	अगर (ret) अणु
-		अगर (genpd->set_perक्रमmance_state) अणु
+	if (ret) {
+		if (genpd->set_performance_state) {
 			dev_pm_opp_put_opp_table(genpd->opp_table);
-			dev_pm_opp_of_हटाओ_table(&genpd->dev);
-		पूर्ण
+			dev_pm_opp_of_remove_table(&genpd->dev);
+		}
 
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	genpd->provider = &np->fwnode;
 	genpd->has_provider = true;
@@ -2235,1031 +2234,1031 @@ EXPORT_SYMBOL_GPL(pm_genpd_हटाओ);
 unlock:
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(of_genpd_add_provider_simple);
 
 /**
- * of_genpd_add_provider_onecell() - Register a onecell PM करोमुख्य provider
- * @np: Device node poपूर्णांकer associated with the PM करोमुख्य provider.
- * @data: Poपूर्णांकer to the data associated with the PM करोमुख्य provider.
+ * of_genpd_add_provider_onecell() - Register a onecell PM domain provider
+ * @np: Device node pointer associated with the PM domain provider.
+ * @data: Pointer to the data associated with the PM domain provider.
  */
-पूर्णांक of_genpd_add_provider_onecell(काष्ठा device_node *np,
-				  काष्ठा genpd_onecell_data *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = -EINVAL;
+int of_genpd_add_provider_onecell(struct device_node *np,
+				  struct genpd_onecell_data *data)
+{
+	struct generic_pm_domain *genpd;
+	unsigned int i;
+	int ret = -EINVAL;
 
-	अगर (!np || !data)
-		वापस -EINVAL;
+	if (!np || !data)
+		return -EINVAL;
 
 	mutex_lock(&gpd_list_lock);
 
-	अगर (!data->xlate)
+	if (!data->xlate)
 		data->xlate = genpd_xlate_onecell;
 
-	क्रम (i = 0; i < data->num_करोमुख्यs; i++) अणु
-		genpd = data->करोमुख्यs[i];
+	for (i = 0; i < data->num_domains; i++) {
+		genpd = data->domains[i];
 
-		अगर (!genpd)
-			जारी;
-		अगर (!genpd_present(genpd))
-			जाओ error;
+		if (!genpd)
+			continue;
+		if (!genpd_present(genpd))
+			goto error;
 
 		genpd->dev.of_node = np;
 
 		/* Parse genpd OPP table */
-		अगर (genpd->set_perक्रमmance_state) अणु
+		if (genpd->set_performance_state) {
 			ret = dev_pm_opp_of_add_table_indexed(&genpd->dev, i);
-			अगर (ret) अणु
-				अगर (ret != -EPROBE_DEFER)
+			if (ret) {
+				if (ret != -EPROBE_DEFER)
 					dev_err(&genpd->dev, "Failed to add OPP table for index %d: %d\n",
 						i, ret);
-				जाओ error;
-			पूर्ण
+				goto error;
+			}
 
 			/*
-			 * Save table क्रम faster processing जबतक setting
-			 * perक्रमmance state.
+			 * Save table for faster processing while setting
+			 * performance state.
 			 */
 			genpd->opp_table = dev_pm_opp_get_opp_table(&genpd->dev);
 			WARN_ON(IS_ERR(genpd->opp_table));
-		पूर्ण
+		}
 
 		genpd->provider = &np->fwnode;
 		genpd->has_provider = true;
-	पूर्ण
+	}
 
 	ret = genpd_add_provider(np, data->xlate, data);
-	अगर (ret < 0)
-		जाओ error;
+	if (ret < 0)
+		goto error;
 
 	mutex_unlock(&gpd_list_lock);
 
-	वापस 0;
+	return 0;
 
 error:
-	जबतक (i--) अणु
-		genpd = data->करोमुख्यs[i];
+	while (i--) {
+		genpd = data->domains[i];
 
-		अगर (!genpd)
-			जारी;
+		if (!genpd)
+			continue;
 
-		genpd->provider = शून्य;
+		genpd->provider = NULL;
 		genpd->has_provider = false;
 
-		अगर (genpd->set_perक्रमmance_state) अणु
+		if (genpd->set_performance_state) {
 			dev_pm_opp_put_opp_table(genpd->opp_table);
-			dev_pm_opp_of_हटाओ_table(&genpd->dev);
-		पूर्ण
-	पूर्ण
+			dev_pm_opp_of_remove_table(&genpd->dev);
+		}
+	}
 
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(of_genpd_add_provider_onecell);
 
 /**
- * of_genpd_del_provider() - Remove a previously रेजिस्टरed PM करोमुख्य provider
- * @np: Device node poपूर्णांकer associated with the PM करोमुख्य provider
+ * of_genpd_del_provider() - Remove a previously registered PM domain provider
+ * @np: Device node pointer associated with the PM domain provider
  */
-व्योम of_genpd_del_provider(काष्ठा device_node *np)
-अणु
-	काष्ठा of_genpd_provider *cp, *पंचांगp;
-	काष्ठा generic_pm_करोमुख्य *gpd;
+void of_genpd_del_provider(struct device_node *np)
+{
+	struct of_genpd_provider *cp, *tmp;
+	struct generic_pm_domain *gpd;
 
 	mutex_lock(&gpd_list_lock);
 	mutex_lock(&of_genpd_mutex);
-	list_क्रम_each_entry_safe(cp, पंचांगp, &of_genpd_providers, link) अणु
-		अगर (cp->node == np) अणु
+	list_for_each_entry_safe(cp, tmp, &of_genpd_providers, link) {
+		if (cp->node == np) {
 			/*
-			 * For each PM करोमुख्य associated with the
+			 * For each PM domain associated with the
 			 * provider, set the 'has_provider' to false
-			 * so that the PM करोमुख्य can be safely हटाओd.
+			 * so that the PM domain can be safely removed.
 			 */
-			list_क्रम_each_entry(gpd, &gpd_list, gpd_list_node) अणु
-				अगर (gpd->provider == &np->fwnode) अणु
+			list_for_each_entry(gpd, &gpd_list, gpd_list_node) {
+				if (gpd->provider == &np->fwnode) {
 					gpd->has_provider = false;
 
-					अगर (!gpd->set_perक्रमmance_state)
-						जारी;
+					if (!gpd->set_performance_state)
+						continue;
 
 					dev_pm_opp_put_opp_table(gpd->opp_table);
-					dev_pm_opp_of_हटाओ_table(&gpd->dev);
-				पूर्ण
-			पूर्ण
+					dev_pm_opp_of_remove_table(&gpd->dev);
+				}
+			}
 
 			fwnode_dev_initialized(&cp->node->fwnode, false);
 			list_del(&cp->link);
 			of_node_put(cp->node);
-			kमुक्त(cp);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			kfree(cp);
+			break;
+		}
+	}
 	mutex_unlock(&of_genpd_mutex);
 	mutex_unlock(&gpd_list_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(of_genpd_del_provider);
 
 /**
- * genpd_get_from_provider() - Look-up PM करोमुख्य
- * @genpdspec: OF phandle args to use क्रम look-up
+ * genpd_get_from_provider() - Look-up PM domain
+ * @genpdspec: OF phandle args to use for look-up
  *
- * Looks क्रम a PM करोमुख्य provider under the node specअगरied by @genpdspec and अगर
+ * Looks for a PM domain provider under the node specified by @genpdspec and if
  * found, uses xlate function of the provider to map phandle args to a PM
- * करोमुख्य.
+ * domain.
  *
- * Returns a valid poपूर्णांकer to काष्ठा generic_pm_करोमुख्य on success or ERR_PTR()
+ * Returns a valid pointer to struct generic_pm_domain on success or ERR_PTR()
  * on failure.
  */
-अटल काष्ठा generic_pm_करोमुख्य *genpd_get_from_provider(
-					काष्ठा of_phandle_args *genpdspec)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = ERR_PTR(-ENOENT);
-	काष्ठा of_genpd_provider *provider;
+static struct generic_pm_domain *genpd_get_from_provider(
+					struct of_phandle_args *genpdspec)
+{
+	struct generic_pm_domain *genpd = ERR_PTR(-ENOENT);
+	struct of_genpd_provider *provider;
 
-	अगर (!genpdspec)
-		वापस ERR_PTR(-EINVAL);
+	if (!genpdspec)
+		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&of_genpd_mutex);
 
-	/* Check अगर we have such a provider in our array */
-	list_क्रम_each_entry(provider, &of_genpd_providers, link) अणु
-		अगर (provider->node == genpdspec->np)
+	/* Check if we have such a provider in our array */
+	list_for_each_entry(provider, &of_genpd_providers, link) {
+		if (provider->node == genpdspec->np)
 			genpd = provider->xlate(genpdspec, provider->data);
-		अगर (!IS_ERR(genpd))
-			अवरोध;
-	पूर्ण
+		if (!IS_ERR(genpd))
+			break;
+	}
 
 	mutex_unlock(&of_genpd_mutex);
 
-	वापस genpd;
-पूर्ण
+	return genpd;
+}
 
 /**
- * of_genpd_add_device() - Add a device to an I/O PM करोमुख्य
- * @genpdspec: OF phandle args to use क्रम look-up PM करोमुख्य
+ * of_genpd_add_device() - Add a device to an I/O PM domain
+ * @genpdspec: OF phandle args to use for look-up PM domain
  * @dev: Device to be added.
  *
- * Looks-up an I/O PM करोमुख्य based upon phandle args provided and adds
- * the device to the PM करोमुख्य. Returns a negative error code on failure.
+ * Looks-up an I/O PM domain based upon phandle args provided and adds
+ * the device to the PM domain. Returns a negative error code on failure.
  */
-पूर्णांक of_genpd_add_device(काष्ठा of_phandle_args *genpdspec, काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret;
+int of_genpd_add_device(struct of_phandle_args *genpdspec, struct device *dev)
+{
+	struct generic_pm_domain *genpd;
+	int ret;
 
 	mutex_lock(&gpd_list_lock);
 
 	genpd = genpd_get_from_provider(genpdspec);
-	अगर (IS_ERR(genpd)) अणु
+	if (IS_ERR(genpd)) {
 		ret = PTR_ERR(genpd);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = genpd_add_device(genpd, dev, dev);
 
 out:
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(of_genpd_add_device);
 
 /**
- * of_genpd_add_subकरोमुख्य - Add a subकरोमुख्य to an I/O PM करोमुख्य.
- * @parent_spec: OF phandle args to use क्रम parent PM करोमुख्य look-up
- * @subकरोमुख्य_spec: OF phandle args to use क्रम subकरोमुख्य look-up
+ * of_genpd_add_subdomain - Add a subdomain to an I/O PM domain.
+ * @parent_spec: OF phandle args to use for parent PM domain look-up
+ * @subdomain_spec: OF phandle args to use for subdomain look-up
  *
- * Looks-up a parent PM करोमुख्य and subकरोमुख्य based upon phandle args
- * provided and adds the subकरोमुख्य to the parent PM करोमुख्य. Returns a
+ * Looks-up a parent PM domain and subdomain based upon phandle args
+ * provided and adds the subdomain to the parent PM domain. Returns a
  * negative error code on failure.
  */
-पूर्णांक of_genpd_add_subकरोमुख्य(काष्ठा of_phandle_args *parent_spec,
-			   काष्ठा of_phandle_args *subकरोमुख्य_spec)
-अणु
-	काष्ठा generic_pm_करोमुख्य *parent, *subकरोमुख्य;
-	पूर्णांक ret;
+int of_genpd_add_subdomain(struct of_phandle_args *parent_spec,
+			   struct of_phandle_args *subdomain_spec)
+{
+	struct generic_pm_domain *parent, *subdomain;
+	int ret;
 
 	mutex_lock(&gpd_list_lock);
 
 	parent = genpd_get_from_provider(parent_spec);
-	अगर (IS_ERR(parent)) अणु
+	if (IS_ERR(parent)) {
 		ret = PTR_ERR(parent);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	subकरोमुख्य = genpd_get_from_provider(subकरोमुख्य_spec);
-	अगर (IS_ERR(subकरोमुख्य)) अणु
-		ret = PTR_ERR(subकरोमुख्य);
-		जाओ out;
-	पूर्ण
+	subdomain = genpd_get_from_provider(subdomain_spec);
+	if (IS_ERR(subdomain)) {
+		ret = PTR_ERR(subdomain);
+		goto out;
+	}
 
-	ret = genpd_add_subकरोमुख्य(parent, subकरोमुख्य);
+	ret = genpd_add_subdomain(parent, subdomain);
 
 out:
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret == -ENOENT ? -EPROBE_DEFER : ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_genpd_add_subकरोमुख्य);
+	return ret == -ENOENT ? -EPROBE_DEFER : ret;
+}
+EXPORT_SYMBOL_GPL(of_genpd_add_subdomain);
 
 /**
- * of_genpd_हटाओ_subकरोमुख्य - Remove a subकरोमुख्य from an I/O PM करोमुख्य.
- * @parent_spec: OF phandle args to use क्रम parent PM करोमुख्य look-up
- * @subकरोमुख्य_spec: OF phandle args to use क्रम subकरोमुख्य look-up
+ * of_genpd_remove_subdomain - Remove a subdomain from an I/O PM domain.
+ * @parent_spec: OF phandle args to use for parent PM domain look-up
+ * @subdomain_spec: OF phandle args to use for subdomain look-up
  *
- * Looks-up a parent PM करोमुख्य and subकरोमुख्य based upon phandle args
- * provided and हटाओs the subकरोमुख्य from the parent PM करोमुख्य. Returns a
+ * Looks-up a parent PM domain and subdomain based upon phandle args
+ * provided and removes the subdomain from the parent PM domain. Returns a
  * negative error code on failure.
  */
-पूर्णांक of_genpd_हटाओ_subकरोमुख्य(काष्ठा of_phandle_args *parent_spec,
-			      काष्ठा of_phandle_args *subकरोमुख्य_spec)
-अणु
-	काष्ठा generic_pm_करोमुख्य *parent, *subकरोमुख्य;
-	पूर्णांक ret;
+int of_genpd_remove_subdomain(struct of_phandle_args *parent_spec,
+			      struct of_phandle_args *subdomain_spec)
+{
+	struct generic_pm_domain *parent, *subdomain;
+	int ret;
 
 	mutex_lock(&gpd_list_lock);
 
 	parent = genpd_get_from_provider(parent_spec);
-	अगर (IS_ERR(parent)) अणु
+	if (IS_ERR(parent)) {
 		ret = PTR_ERR(parent);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	subकरोमुख्य = genpd_get_from_provider(subकरोमुख्य_spec);
-	अगर (IS_ERR(subकरोमुख्य)) अणु
-		ret = PTR_ERR(subकरोमुख्य);
-		जाओ out;
-	पूर्ण
+	subdomain = genpd_get_from_provider(subdomain_spec);
+	if (IS_ERR(subdomain)) {
+		ret = PTR_ERR(subdomain);
+		goto out;
+	}
 
-	ret = pm_genpd_हटाओ_subकरोमुख्य(parent, subकरोमुख्य);
+	ret = pm_genpd_remove_subdomain(parent, subdomain);
 
 out:
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_genpd_हटाओ_subकरोमुख्य);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(of_genpd_remove_subdomain);
 
 /**
- * of_genpd_हटाओ_last - Remove the last PM करोमुख्य रेजिस्टरed क्रम a provider
- * @provider: Poपूर्णांकer to device काष्ठाure associated with provider
+ * of_genpd_remove_last - Remove the last PM domain registered for a provider
+ * @provider: Pointer to device structure associated with provider
  *
- * Find the last PM करोमुख्य that was added by a particular provider and
- * हटाओ this PM करोमुख्य from the list of PM करोमुख्यs. The provider is
- * identअगरied by the 'provider' device काष्ठाure that is passed. The PM
- * करोमुख्य will only be हटाओd, अगर the provider associated with करोमुख्य
- * has been हटाओd.
+ * Find the last PM domain that was added by a particular provider and
+ * remove this PM domain from the list of PM domains. The provider is
+ * identified by the 'provider' device structure that is passed. The PM
+ * domain will only be removed, if the provider associated with domain
+ * has been removed.
  *
- * Returns a valid poपूर्णांकer to काष्ठा generic_pm_करोमुख्य on success or
+ * Returns a valid pointer to struct generic_pm_domain on success or
  * ERR_PTR() on failure.
  */
-काष्ठा generic_pm_करोमुख्य *of_genpd_हटाओ_last(काष्ठा device_node *np)
-अणु
-	काष्ठा generic_pm_करोमुख्य *gpd, *पंचांगp, *genpd = ERR_PTR(-ENOENT);
-	पूर्णांक ret;
+struct generic_pm_domain *of_genpd_remove_last(struct device_node *np)
+{
+	struct generic_pm_domain *gpd, *tmp, *genpd = ERR_PTR(-ENOENT);
+	int ret;
 
-	अगर (IS_ERR_OR_शून्य(np))
-		वापस ERR_PTR(-EINVAL);
+	if (IS_ERR_OR_NULL(np))
+		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&gpd_list_lock);
-	list_क्रम_each_entry_safe(gpd, पंचांगp, &gpd_list, gpd_list_node) अणु
-		अगर (gpd->provider == &np->fwnode) अणु
-			ret = genpd_हटाओ(gpd);
+	list_for_each_entry_safe(gpd, tmp, &gpd_list, gpd_list_node) {
+		if (gpd->provider == &np->fwnode) {
+			ret = genpd_remove(gpd);
 			genpd = ret ? ERR_PTR(ret) : gpd;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&gpd_list_lock);
 
-	वापस genpd;
-पूर्ण
-EXPORT_SYMBOL_GPL(of_genpd_हटाओ_last);
+	return genpd;
+}
+EXPORT_SYMBOL_GPL(of_genpd_remove_last);
 
-अटल व्योम genpd_release_dev(काष्ठा device *dev)
-अणु
+static void genpd_release_dev(struct device *dev)
+{
 	of_node_put(dev->of_node);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-अटल काष्ठा bus_type genpd_bus_type = अणु
+static struct bus_type genpd_bus_type = {
 	.name		= "genpd",
-पूर्ण;
+};
 
 /**
- * genpd_dev_pm_detach - Detach a device from its PM करोमुख्य.
+ * genpd_dev_pm_detach - Detach a device from its PM domain.
  * @dev: Device to detach.
- * @घातer_off: Currently not used
+ * @power_off: Currently not used
  *
- * Try to locate a corresponding generic PM करोमुख्य, which the device was
+ * Try to locate a corresponding generic PM domain, which the device was
  * attached to previously. If such is found, the device is detached from it.
  */
-अटल व्योम genpd_dev_pm_detach(काष्ठा device *dev, bool घातer_off)
-अणु
-	काष्ठा generic_pm_करोमुख्य *pd;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = 0;
+static void genpd_dev_pm_detach(struct device *dev, bool power_off)
+{
+	struct generic_pm_domain *pd;
+	unsigned int i;
+	int ret = 0;
 
 	pd = dev_to_genpd(dev);
-	अगर (IS_ERR(pd))
-		वापस;
+	if (IS_ERR(pd))
+		return;
 
 	dev_dbg(dev, "removing from PM domain %s\n", pd->name);
 
-	क्रम (i = 1; i < GENPD_RETRY_MAX_MS; i <<= 1) अणु
-		ret = genpd_हटाओ_device(pd, dev);
-		अगर (ret != -EAGAIN)
-			अवरोध;
+	for (i = 1; i < GENPD_RETRY_MAX_MS; i <<= 1) {
+		ret = genpd_remove_device(pd, dev);
+		if (ret != -EAGAIN)
+			break;
 
 		mdelay(i);
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to remove from PM domain %s: %d",
 			pd->name, ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Check अगर PM करोमुख्य can be घातered off after removing this device. */
-	genpd_queue_घातer_off_work(pd);
+	/* Check if PM domain can be powered off after removing this device. */
+	genpd_queue_power_off_work(pd);
 
-	/* Unरेजिस्टर the device अगर it was created by genpd. */
-	अगर (dev->bus == &genpd_bus_type)
-		device_unरेजिस्टर(dev);
-पूर्ण
+	/* Unregister the device if it was created by genpd. */
+	if (dev->bus == &genpd_bus_type)
+		device_unregister(dev);
+}
 
-अटल व्योम genpd_dev_pm_sync(काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य *pd;
+static void genpd_dev_pm_sync(struct device *dev)
+{
+	struct generic_pm_domain *pd;
 
 	pd = dev_to_genpd(dev);
-	अगर (IS_ERR(pd))
-		वापस;
+	if (IS_ERR(pd))
+		return;
 
-	genpd_queue_घातer_off_work(pd);
-पूर्ण
+	genpd_queue_power_off_work(pd);
+}
 
-अटल पूर्णांक __genpd_dev_pm_attach(काष्ठा device *dev, काष्ठा device *base_dev,
-				 अचिन्हित पूर्णांक index, bool घातer_on)
-अणु
-	काष्ठा of_phandle_args pd_args;
-	काष्ठा generic_pm_करोमुख्य *pd;
-	पूर्णांक ret;
+static int __genpd_dev_pm_attach(struct device *dev, struct device *base_dev,
+				 unsigned int index, bool power_on)
+{
+	struct of_phandle_args pd_args;
+	struct generic_pm_domain *pd;
+	int ret;
 
 	ret = of_parse_phandle_with_args(dev->of_node, "power-domains",
 				"#power-domain-cells", index, &pd_args);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&gpd_list_lock);
 	pd = genpd_get_from_provider(&pd_args);
 	of_node_put(pd_args.np);
-	अगर (IS_ERR(pd)) अणु
+	if (IS_ERR(pd)) {
 		mutex_unlock(&gpd_list_lock);
 		dev_dbg(dev, "%s() failed to find PM domain: %ld\n",
 			__func__, PTR_ERR(pd));
-		वापस driver_deferred_probe_check_state(base_dev);
-	पूर्ण
+		return driver_deferred_probe_check_state(base_dev);
+	}
 
 	dev_dbg(dev, "adding to PM domain %s\n", pd->name);
 
 	ret = genpd_add_device(pd, dev, base_dev);
 	mutex_unlock(&gpd_list_lock);
 
-	अगर (ret < 0) अणु
-		अगर (ret != -EPROBE_DEFER)
+	if (ret < 0) {
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to add to PM domain %s: %d",
 				pd->name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	dev->pm_करोमुख्य->detach = genpd_dev_pm_detach;
-	dev->pm_करोमुख्य->sync = genpd_dev_pm_sync;
+	dev->pm_domain->detach = genpd_dev_pm_detach;
+	dev->pm_domain->sync = genpd_dev_pm_sync;
 
-	अगर (घातer_on) अणु
+	if (power_on) {
 		genpd_lock(pd);
-		ret = genpd_घातer_on(pd, 0);
+		ret = genpd_power_on(pd, 0);
 		genpd_unlock(pd);
-	पूर्ण
+	}
 
-	अगर (ret)
-		genpd_हटाओ_device(pd, dev);
+	if (ret)
+		genpd_remove_device(pd, dev);
 
-	वापस ret ? -EPROBE_DEFER : 1;
-पूर्ण
+	return ret ? -EPROBE_DEFER : 1;
+}
 
 /**
- * genpd_dev_pm_attach - Attach a device to its PM करोमुख्य using DT.
+ * genpd_dev_pm_attach - Attach a device to its PM domain using DT.
  * @dev: Device to attach.
  *
- * Parse device's OF node to find a PM करोमुख्य specअगरier. If such is found,
- * attaches the device to retrieved pm_करोमुख्य ops.
+ * Parse device's OF node to find a PM domain specifier. If such is found,
+ * attaches the device to retrieved pm_domain ops.
  *
- * Returns 1 on successfully attached PM करोमुख्य, 0 when the device करोn't need a
- * PM करोमुख्य or when multiple घातer-करोमुख्यs exists क्रम it, अन्यथा a negative error
- * code. Note that अगर a घातer-करोमुख्य exists क्रम the device, but it cannot be
- * found or turned on, then वापस -EPROBE_DEFER to ensure that the device is
+ * Returns 1 on successfully attached PM domain, 0 when the device don't need a
+ * PM domain or when multiple power-domains exists for it, else a negative error
+ * code. Note that if a power-domain exists for the device, but it cannot be
+ * found or turned on, then return -EPROBE_DEFER to ensure that the device is
  * not probed and to re-try again later.
  */
-पूर्णांक genpd_dev_pm_attach(काष्ठा device *dev)
-अणु
-	अगर (!dev->of_node)
-		वापस 0;
+int genpd_dev_pm_attach(struct device *dev)
+{
+	if (!dev->of_node)
+		return 0;
 
 	/*
-	 * Devices with multiple PM करोमुख्यs must be attached separately, as we
-	 * can only attach one PM करोमुख्य per device.
+	 * Devices with multiple PM domains must be attached separately, as we
+	 * can only attach one PM domain per device.
 	 */
-	अगर (of_count_phandle_with_args(dev->of_node, "power-domains",
+	if (of_count_phandle_with_args(dev->of_node, "power-domains",
 				       "#power-domain-cells") != 1)
-		वापस 0;
+		return 0;
 
-	वापस __genpd_dev_pm_attach(dev, dev, 0, true);
-पूर्ण
+	return __genpd_dev_pm_attach(dev, dev, 0, true);
+}
 EXPORT_SYMBOL_GPL(genpd_dev_pm_attach);
 
 /**
- * genpd_dev_pm_attach_by_id - Associate a device with one of its PM करोमुख्यs.
- * @dev: The device used to lookup the PM करोमुख्य.
- * @index: The index of the PM करोमुख्य.
+ * genpd_dev_pm_attach_by_id - Associate a device with one of its PM domains.
+ * @dev: The device used to lookup the PM domain.
+ * @index: The index of the PM domain.
  *
- * Parse device's OF node to find a PM करोमुख्य specअगरier at the provided @index.
- * If such is found, creates a भव device and attaches it to the retrieved
- * pm_करोमुख्य ops. To deal with detaching of the भव device, the ->detach()
- * callback in the काष्ठा dev_pm_करोमुख्य are asचिन्हित to genpd_dev_pm_detach().
+ * Parse device's OF node to find a PM domain specifier at the provided @index.
+ * If such is found, creates a virtual device and attaches it to the retrieved
+ * pm_domain ops. To deal with detaching of the virtual device, the ->detach()
+ * callback in the struct dev_pm_domain are assigned to genpd_dev_pm_detach().
  *
- * Returns the created भव device अगर successfully attached PM करोमुख्य, शून्य
- * when the device करोn't need a PM करोमुख्य, अन्यथा an ERR_PTR() in हाल of
- * failures. If a घातer-करोमुख्य exists क्रम the device, but cannot be found or
- * turned on, then ERR_PTR(-EPROBE_DEFER) is वापसed to ensure that the device
+ * Returns the created virtual device if successfully attached PM domain, NULL
+ * when the device don't need a PM domain, else an ERR_PTR() in case of
+ * failures. If a power-domain exists for the device, but cannot be found or
+ * turned on, then ERR_PTR(-EPROBE_DEFER) is returned to ensure that the device
  * is not probed and to re-try again later.
  */
-काष्ठा device *genpd_dev_pm_attach_by_id(काष्ठा device *dev,
-					 अचिन्हित पूर्णांक index)
-अणु
-	काष्ठा device *virt_dev;
-	पूर्णांक num_करोमुख्यs;
-	पूर्णांक ret;
+struct device *genpd_dev_pm_attach_by_id(struct device *dev,
+					 unsigned int index)
+{
+	struct device *virt_dev;
+	int num_domains;
+	int ret;
 
-	अगर (!dev->of_node)
-		वापस शून्य;
+	if (!dev->of_node)
+		return NULL;
 
-	/* Verअगरy that the index is within a valid range. */
-	num_करोमुख्यs = of_count_phandle_with_args(dev->of_node, "power-domains",
+	/* Verify that the index is within a valid range. */
+	num_domains = of_count_phandle_with_args(dev->of_node, "power-domains",
 						 "#power-domain-cells");
-	अगर (index >= num_करोमुख्यs)
-		वापस शून्य;
+	if (index >= num_domains)
+		return NULL;
 
-	/* Allocate and रेजिस्टर device on the genpd bus. */
-	virt_dev = kzalloc(माप(*virt_dev), GFP_KERNEL);
-	अगर (!virt_dev)
-		वापस ERR_PTR(-ENOMEM);
+	/* Allocate and register device on the genpd bus. */
+	virt_dev = kzalloc(sizeof(*virt_dev), GFP_KERNEL);
+	if (!virt_dev)
+		return ERR_PTR(-ENOMEM);
 
 	dev_set_name(virt_dev, "genpd:%u:%s", index, dev_name(dev));
 	virt_dev->bus = &genpd_bus_type;
 	virt_dev->release = genpd_release_dev;
 	virt_dev->of_node = of_node_get(dev->of_node);
 
-	ret = device_रेजिस्टर(virt_dev);
-	अगर (ret) अणु
+	ret = device_register(virt_dev);
+	if (ret) {
 		put_device(virt_dev);
-		वापस ERR_PTR(ret);
-	पूर्ण
+		return ERR_PTR(ret);
+	}
 
-	/* Try to attach the device to the PM करोमुख्य at the specअगरied index. */
+	/* Try to attach the device to the PM domain at the specified index. */
 	ret = __genpd_dev_pm_attach(virt_dev, dev, index, false);
-	अगर (ret < 1) अणु
-		device_unरेजिस्टर(virt_dev);
-		वापस ret ? ERR_PTR(ret) : शून्य;
-	पूर्ण
+	if (ret < 1) {
+		device_unregister(virt_dev);
+		return ret ? ERR_PTR(ret) : NULL;
+	}
 
-	pm_runसमय_enable(virt_dev);
-	genpd_queue_घातer_off_work(dev_to_genpd(virt_dev));
+	pm_runtime_enable(virt_dev);
+	genpd_queue_power_off_work(dev_to_genpd(virt_dev));
 
-	वापस virt_dev;
-पूर्ण
+	return virt_dev;
+}
 EXPORT_SYMBOL_GPL(genpd_dev_pm_attach_by_id);
 
 /**
- * genpd_dev_pm_attach_by_name - Associate a device with one of its PM करोमुख्यs.
- * @dev: The device used to lookup the PM करोमुख्य.
- * @name: The name of the PM करोमुख्य.
+ * genpd_dev_pm_attach_by_name - Associate a device with one of its PM domains.
+ * @dev: The device used to lookup the PM domain.
+ * @name: The name of the PM domain.
  *
- * Parse device's OF node to find a PM करोमुख्य specअगरier using the
- * घातer-करोमुख्य-names DT property. For further description see
+ * Parse device's OF node to find a PM domain specifier using the
+ * power-domain-names DT property. For further description see
  * genpd_dev_pm_attach_by_id().
  */
-काष्ठा device *genpd_dev_pm_attach_by_name(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	पूर्णांक index;
+struct device *genpd_dev_pm_attach_by_name(struct device *dev, const char *name)
+{
+	int index;
 
-	अगर (!dev->of_node)
-		वापस शून्य;
+	if (!dev->of_node)
+		return NULL;
 
 	index = of_property_match_string(dev->of_node, "power-domain-names",
 					 name);
-	अगर (index < 0)
-		वापस शून्य;
+	if (index < 0)
+		return NULL;
 
-	वापस genpd_dev_pm_attach_by_id(dev, index);
-पूर्ण
+	return genpd_dev_pm_attach_by_id(dev, index);
+}
 
-अटल स्थिर काष्ठा of_device_id idle_state_match[] = अणु
-	अणु .compatible = "domain-idle-state", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id idle_state_match[] = {
+	{ .compatible = "domain-idle-state", },
+	{ }
+};
 
-अटल पूर्णांक genpd_parse_state(काष्ठा genpd_घातer_state *genpd_state,
-				    काष्ठा device_node *state_node)
-अणु
-	पूर्णांक err;
+static int genpd_parse_state(struct genpd_power_state *genpd_state,
+				    struct device_node *state_node)
+{
+	int err;
 	u32 residency;
-	u32 entry_latency, निकास_latency;
+	u32 entry_latency, exit_latency;
 
-	err = of_property_पढ़ो_u32(state_node, "entry-latency-us",
+	err = of_property_read_u32(state_node, "entry-latency-us",
 						&entry_latency);
-	अगर (err) अणु
+	if (err) {
 		pr_debug(" * %pOF missing entry-latency-us property\n",
 			 state_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = of_property_पढ़ो_u32(state_node, "exit-latency-us",
-						&निकास_latency);
-	अगर (err) अणु
+	err = of_property_read_u32(state_node, "exit-latency-us",
+						&exit_latency);
+	if (err) {
 		pr_debug(" * %pOF missing exit-latency-us property\n",
 			 state_node);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	err = of_property_पढ़ो_u32(state_node, "min-residency-us", &residency);
-	अगर (!err)
+	err = of_property_read_u32(state_node, "min-residency-us", &residency);
+	if (!err)
 		genpd_state->residency_ns = 1000 * residency;
 
-	genpd_state->घातer_on_latency_ns = 1000 * निकास_latency;
-	genpd_state->घातer_off_latency_ns = 1000 * entry_latency;
+	genpd_state->power_on_latency_ns = 1000 * exit_latency;
+	genpd_state->power_off_latency_ns = 1000 * entry_latency;
 	genpd_state->fwnode = &state_node->fwnode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक genpd_iterate_idle_states(काष्ठा device_node *dn,
-				     काष्ठा genpd_घातer_state *states)
-अणु
-	पूर्णांक ret;
-	काष्ठा of_phandle_iterator it;
-	काष्ठा device_node *np;
-	पूर्णांक i = 0;
+static int genpd_iterate_idle_states(struct device_node *dn,
+				     struct genpd_power_state *states)
+{
+	int ret;
+	struct of_phandle_iterator it;
+	struct device_node *np;
+	int i = 0;
 
-	ret = of_count_phandle_with_args(dn, "domain-idle-states", शून्य);
-	अगर (ret <= 0)
-		वापस ret == -ENOENT ? 0 : ret;
+	ret = of_count_phandle_with_args(dn, "domain-idle-states", NULL);
+	if (ret <= 0)
+		return ret == -ENOENT ? 0 : ret;
 
 	/* Loop over the phandles until all the requested entry is found */
-	of_क्रम_each_phandle(&it, ret, dn, "domain-idle-states", शून्य, 0) अणु
+	of_for_each_phandle(&it, ret, dn, "domain-idle-states", NULL, 0) {
 		np = it.node;
-		अगर (!of_match_node(idle_state_match, np))
-			जारी;
-		अगर (states) अणु
+		if (!of_match_node(idle_state_match, np))
+			continue;
+		if (states) {
 			ret = genpd_parse_state(&states[i], np);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("Parsing idle state node %pOF failed with err %d\n",
 				       np, ret);
 				of_node_put(np);
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 		i++;
-	पूर्ण
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 /**
- * of_genpd_parse_idle_states: Return array of idle states क्रम the genpd.
+ * of_genpd_parse_idle_states: Return array of idle states for the genpd.
  *
  * @dn: The genpd device node
- * @states: The poपूर्णांकer to which the state array will be saved.
- * @n: The count of elements in the array वापसed from this function.
+ * @states: The pointer to which the state array will be saved.
+ * @n: The count of elements in the array returned from this function.
  *
- * Returns the device states parsed from the OF node. The memory क्रम the states
+ * Returns the device states parsed from the OF node. The memory for the states
  * is allocated by this function and is the responsibility of the caller to
- * मुक्त the memory after use. If any or zero compatible करोमुख्य idle states is
- * found it वापसs 0 and in हाल of errors, a negative error code is वापसed.
+ * free the memory after use. If any or zero compatible domain idle states is
+ * found it returns 0 and in case of errors, a negative error code is returned.
  */
-पूर्णांक of_genpd_parse_idle_states(काष्ठा device_node *dn,
-			काष्ठा genpd_घातer_state **states, पूर्णांक *n)
-अणु
-	काष्ठा genpd_घातer_state *st;
-	पूर्णांक ret;
+int of_genpd_parse_idle_states(struct device_node *dn,
+			struct genpd_power_state **states, int *n)
+{
+	struct genpd_power_state *st;
+	int ret;
 
-	ret = genpd_iterate_idle_states(dn, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+	ret = genpd_iterate_idle_states(dn, NULL);
+	if (ret < 0)
+		return ret;
 
-	अगर (!ret) अणु
-		*states = शून्य;
+	if (!ret) {
+		*states = NULL;
 		*n = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	st = kसुस्मृति(ret, माप(*st), GFP_KERNEL);
-	अगर (!st)
-		वापस -ENOMEM;
+	st = kcalloc(ret, sizeof(*st), GFP_KERNEL);
+	if (!st)
+		return -ENOMEM;
 
 	ret = genpd_iterate_idle_states(dn, st);
-	अगर (ret <= 0) अणु
-		kमुक्त(st);
-		वापस ret < 0 ? ret : -EINVAL;
-	पूर्ण
+	if (ret <= 0) {
+		kfree(st);
+		return ret < 0 ? ret : -EINVAL;
+	}
 
 	*states = st;
 	*n = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(of_genpd_parse_idle_states);
 
 /**
- * pm_genpd_opp_to_perक्रमmance_state - Gets perक्रमmance state of the genpd from its OPP node.
+ * pm_genpd_opp_to_performance_state - Gets performance state of the genpd from its OPP node.
  *
- * @genpd_dev: Genpd's device क्रम which the perक्रमmance-state needs to be found.
- * @opp: काष्ठा dev_pm_opp of the OPP क्रम which we need to find perक्रमmance
+ * @genpd_dev: Genpd's device for which the performance-state needs to be found.
+ * @opp: struct dev_pm_opp of the OPP for which we need to find performance
  *	state.
  *
- * Returns perक्रमmance state encoded in the OPP of the genpd. This calls
- * platक्रमm specअगरic genpd->opp_to_perक्रमmance_state() callback to translate
- * घातer करोमुख्य OPP to perक्रमmance state.
+ * Returns performance state encoded in the OPP of the genpd. This calls
+ * platform specific genpd->opp_to_performance_state() callback to translate
+ * power domain OPP to performance state.
  *
- * Returns perक्रमmance state on success and 0 on failure.
+ * Returns performance state on success and 0 on failure.
  */
-अचिन्हित पूर्णांक pm_genpd_opp_to_perक्रमmance_state(काष्ठा device *genpd_dev,
-					       काष्ठा dev_pm_opp *opp)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = शून्य;
-	पूर्णांक state;
+unsigned int pm_genpd_opp_to_performance_state(struct device *genpd_dev,
+					       struct dev_pm_opp *opp)
+{
+	struct generic_pm_domain *genpd = NULL;
+	int state;
 
-	genpd = container_of(genpd_dev, काष्ठा generic_pm_करोमुख्य, dev);
+	genpd = container_of(genpd_dev, struct generic_pm_domain, dev);
 
-	अगर (unlikely(!genpd->opp_to_perक्रमmance_state))
-		वापस 0;
+	if (unlikely(!genpd->opp_to_performance_state))
+		return 0;
 
 	genpd_lock(genpd);
-	state = genpd->opp_to_perक्रमmance_state(genpd, opp);
+	state = genpd->opp_to_performance_state(genpd, opp);
 	genpd_unlock(genpd);
 
-	वापस state;
-पूर्ण
-EXPORT_SYMBOL_GPL(pm_genpd_opp_to_perक्रमmance_state);
+	return state;
+}
+EXPORT_SYMBOL_GPL(pm_genpd_opp_to_performance_state);
 
-अटल पूर्णांक __init genpd_bus_init(व्योम)
-अणु
-	वापस bus_रेजिस्टर(&genpd_bus_type);
-पूर्ण
+static int __init genpd_bus_init(void)
+{
+	return bus_register(&genpd_bus_type);
+}
 core_initcall(genpd_bus_init);
 
-#पूर्ण_अगर /* CONFIG_PM_GENERIC_DOMAINS_OF */
+#endif /* CONFIG_PM_GENERIC_DOMAINS_OF */
 
 
 /***        debugfs support        ***/
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 /*
- * TODO: This function is a slightly modअगरied version of rtpm_status_show
+ * TODO: This function is a slightly modified version of rtpm_status_show
  * from sysfs.c, so generalize it.
  */
-अटल व्योम rtpm_status_str(काष्ठा seq_file *s, काष्ठा device *dev)
-अणु
-	अटल स्थिर अक्षर * स्थिर status_lookup[] = अणु
+static void rtpm_status_str(struct seq_file *s, struct device *dev)
+{
+	static const char * const status_lookup[] = {
 		[RPM_ACTIVE] = "active",
 		[RPM_RESUMING] = "resuming",
 		[RPM_SUSPENDED] = "suspended",
 		[RPM_SUSPENDING] = "suspending"
-	पूर्ण;
-	स्थिर अक्षर *p = "";
+	};
+	const char *p = "";
 
-	अगर (dev->घातer.runसमय_error)
+	if (dev->power.runtime_error)
 		p = "error";
-	अन्यथा अगर (dev->घातer.disable_depth)
+	else if (dev->power.disable_depth)
 		p = "unsupported";
-	अन्यथा अगर (dev->घातer.runसमय_status < ARRAY_SIZE(status_lookup))
-		p = status_lookup[dev->घातer.runसमय_status];
-	अन्यथा
+	else if (dev->power.runtime_status < ARRAY_SIZE(status_lookup))
+		p = status_lookup[dev->power.runtime_status];
+	else
 		WARN_ON(1);
 
-	seq_म_लिखो(s, "%-25s  ", p);
-पूर्ण
+	seq_printf(s, "%-25s  ", p);
+}
 
-अटल व्योम perf_status_str(काष्ठा seq_file *s, काष्ठा device *dev)
-अणु
-	काष्ठा generic_pm_करोमुख्य_data *gpd_data;
+static void perf_status_str(struct seq_file *s, struct device *dev)
+{
+	struct generic_pm_domain_data *gpd_data;
 
-	gpd_data = to_gpd_data(dev->घातer.subsys_data->करोमुख्य_data);
-	seq_put_decimal_ull(s, "", gpd_data->perक्रमmance_state);
-पूर्ण
+	gpd_data = to_gpd_data(dev->power.subsys_data->domain_data);
+	seq_put_decimal_ull(s, "", gpd_data->performance_state);
+}
 
-अटल पूर्णांक genpd_summary_one(काष्ठा seq_file *s,
-			काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	अटल स्थिर अक्षर * स्थिर status_lookup[] = अणु
+static int genpd_summary_one(struct seq_file *s,
+			struct generic_pm_domain *genpd)
+{
+	static const char * const status_lookup[] = {
 		[GENPD_STATE_ON] = "on",
 		[GENPD_STATE_OFF] = "off"
-	पूर्ण;
-	काष्ठा pm_करोमुख्य_data *pm_data;
-	स्थिर अक्षर *kobj_path;
-	काष्ठा gpd_link *link;
-	अक्षर state[16];
-	पूर्णांक ret;
+	};
+	struct pm_domain_data *pm_data;
+	const char *kobj_path;
+	struct gpd_link *link;
+	char state[16];
+	int ret;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	अगर (WARN_ON(genpd->status >= ARRAY_SIZE(status_lookup)))
-		जाओ निकास;
-	अगर (!genpd_status_on(genpd))
-		snम_लिखो(state, माप(state), "%s-%u",
+	if (WARN_ON(genpd->status >= ARRAY_SIZE(status_lookup)))
+		goto exit;
+	if (!genpd_status_on(genpd))
+		snprintf(state, sizeof(state), "%s-%u",
 			 status_lookup[genpd->status], genpd->state_idx);
-	अन्यथा
-		snम_लिखो(state, माप(state), "%s",
+	else
+		snprintf(state, sizeof(state), "%s",
 			 status_lookup[genpd->status]);
-	seq_म_लिखो(s, "%-30s  %-50s %u", genpd->name, state, genpd->perक्रमmance_state);
+	seq_printf(s, "%-30s  %-50s %u", genpd->name, state, genpd->performance_state);
 
 	/*
-	 * Modअगरications on the list require holding locks on both
+	 * Modifications on the list require holding locks on both
 	 * parent and child, so we are safe.
 	 * Also genpd->name is immutable.
 	 */
-	list_क्रम_each_entry(link, &genpd->parent_links, parent_node) अणु
-		अगर (list_is_first(&link->parent_node, &genpd->parent_links))
-			seq_म_लिखो(s, "\n%48s", " ");
-		seq_म_लिखो(s, "%s", link->child->name);
-		अगर (!list_is_last(&link->parent_node, &genpd->parent_links))
-			seq_माला_दो(s, ", ");
-	पूर्ण
+	list_for_each_entry(link, &genpd->parent_links, parent_node) {
+		if (list_is_first(&link->parent_node, &genpd->parent_links))
+			seq_printf(s, "\n%48s", " ");
+		seq_printf(s, "%s", link->child->name);
+		if (!list_is_last(&link->parent_node, &genpd->parent_links))
+			seq_puts(s, ", ");
+	}
 
-	list_क्रम_each_entry(pm_data, &genpd->dev_list, list_node) अणु
+	list_for_each_entry(pm_data, &genpd->dev_list, list_node) {
 		kobj_path = kobject_get_path(&pm_data->dev->kobj,
 				genpd_is_irq_safe(genpd) ?
 				GFP_ATOMIC : GFP_KERNEL);
-		अगर (kobj_path == शून्य)
-			जारी;
+		if (kobj_path == NULL)
+			continue;
 
-		seq_म_लिखो(s, "\n    %-50s  ", kobj_path);
+		seq_printf(s, "\n    %-50s  ", kobj_path);
 		rtpm_status_str(s, pm_data->dev);
 		perf_status_str(s, pm_data->dev);
-		kमुक्त(kobj_path);
-	पूर्ण
+		kfree(kobj_path);
+	}
 
-	seq_माला_दो(s, "\n");
-निकास:
+	seq_puts(s, "\n");
+exit:
 	genpd_unlock(genpd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक summary_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
-	पूर्णांक ret = 0;
+static int summary_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd;
+	int ret = 0;
 
-	seq_माला_दो(s, "domain                          status          children                           performance\n");
-	seq_माला_दो(s, "    /device                                             runtime status\n");
-	seq_माला_दो(s, "----------------------------------------------------------------------------------------------\n");
+	seq_puts(s, "domain                          status          children                           performance\n");
+	seq_puts(s, "    /device                                             runtime status\n");
+	seq_puts(s, "----------------------------------------------------------------------------------------------\n");
 
-	ret = mutex_lock_पूर्णांकerruptible(&gpd_list_lock);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = mutex_lock_interruptible(&gpd_list_lock);
+	if (ret)
+		return -ERESTARTSYS;
 
-	list_क्रम_each_entry(genpd, &gpd_list, gpd_list_node) अणु
+	list_for_each_entry(genpd, &gpd_list, gpd_list_node) {
 		ret = genpd_summary_one(s, genpd);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 	mutex_unlock(&gpd_list_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक status_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	अटल स्थिर अक्षर * स्थिर status_lookup[] = अणु
+static int status_show(struct seq_file *s, void *data)
+{
+	static const char * const status_lookup[] = {
 		[GENPD_STATE_ON] = "on",
 		[GENPD_STATE_OFF] = "off"
-	पूर्ण;
+	};
 
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-	पूर्णांक ret = 0;
+	struct generic_pm_domain *genpd = s->private;
+	int ret = 0;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	अगर (WARN_ON_ONCE(genpd->status >= ARRAY_SIZE(status_lookup)))
-		जाओ निकास;
+	if (WARN_ON_ONCE(genpd->status >= ARRAY_SIZE(status_lookup)))
+		goto exit;
 
-	अगर (genpd->status == GENPD_STATE_OFF)
-		seq_म_लिखो(s, "%s-%u\n", status_lookup[genpd->status],
+	if (genpd->status == GENPD_STATE_OFF)
+		seq_printf(s, "%s-%u\n", status_lookup[genpd->status],
 			genpd->state_idx);
-	अन्यथा
-		seq_म_लिखो(s, "%s\n", status_lookup[genpd->status]);
-निकास:
+	else
+		seq_printf(s, "%s\n", status_lookup[genpd->status]);
+exit:
 	genpd_unlock(genpd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sub_करोमुख्यs_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-	काष्ठा gpd_link *link;
-	पूर्णांक ret = 0;
+static int sub_domains_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd = s->private;
+	struct gpd_link *link;
+	int ret = 0;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	list_क्रम_each_entry(link, &genpd->parent_links, parent_node)
-		seq_म_लिखो(s, "%s\n", link->child->name);
+	list_for_each_entry(link, &genpd->parent_links, parent_node)
+		seq_printf(s, "%s\n", link->child->name);
 
 	genpd_unlock(genpd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक idle_states_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = 0;
+static int idle_states_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd = s->private;
+	unsigned int i;
+	int ret = 0;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	seq_माला_दो(s, "State          Time Spent(ms) Usage          Rejected\n");
+	seq_puts(s, "State          Time Spent(ms) Usage          Rejected\n");
 
-	क्रम (i = 0; i < genpd->state_count; i++) अणु
-		kसमय_प्रकार delta = 0;
+	for (i = 0; i < genpd->state_count; i++) {
+		ktime_t delta = 0;
 		s64 msecs;
 
-		अगर ((genpd->status == GENPD_STATE_OFF) &&
+		if ((genpd->status == GENPD_STATE_OFF) &&
 				(genpd->state_idx == i))
-			delta = kसमय_sub(kसमय_get(), genpd->accounting_समय);
+			delta = ktime_sub(ktime_get(), genpd->accounting_time);
 
-		msecs = kसमय_प्रकारo_ms(
-			kसमय_add(genpd->states[i].idle_समय, delta));
-		seq_म_लिखो(s, "S%-13i %-14lld %-14llu %llu\n", i, msecs,
+		msecs = ktime_to_ms(
+			ktime_add(genpd->states[i].idle_time, delta));
+		seq_printf(s, "S%-13i %-14lld %-14llu %llu\n", i, msecs,
 			      genpd->states[i].usage, genpd->states[i].rejected);
-	पूर्ण
+	}
 
 	genpd_unlock(genpd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक active_समय_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-	kसमय_प्रकार delta = 0;
-	पूर्णांक ret = 0;
+static int active_time_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd = s->private;
+	ktime_t delta = 0;
+	int ret = 0;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	अगर (genpd->status == GENPD_STATE_ON)
-		delta = kसमय_sub(kसमय_get(), genpd->accounting_समय);
+	if (genpd->status == GENPD_STATE_ON)
+		delta = ktime_sub(ktime_get(), genpd->accounting_time);
 
-	seq_म_लिखो(s, "%lld ms\n", kसमय_प्रकारo_ms(
-				kसमय_add(genpd->on_समय, delta)));
+	seq_printf(s, "%lld ms\n", ktime_to_ms(
+				ktime_add(genpd->on_time, delta)));
 
 	genpd_unlock(genpd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक total_idle_समय_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-	kसमय_प्रकार delta = 0, total = 0;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret = 0;
+static int total_idle_time_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd = s->private;
+	ktime_t delta = 0, total = 0;
+	unsigned int i;
+	int ret = 0;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	क्रम (i = 0; i < genpd->state_count; i++) अणु
+	for (i = 0; i < genpd->state_count; i++) {
 
-		अगर ((genpd->status == GENPD_STATE_OFF) &&
+		if ((genpd->status == GENPD_STATE_OFF) &&
 				(genpd->state_idx == i))
-			delta = kसमय_sub(kसमय_get(), genpd->accounting_समय);
+			delta = ktime_sub(ktime_get(), genpd->accounting_time);
 
-		total = kसमय_add(total, genpd->states[i].idle_समय);
-	पूर्ण
-	total = kसमय_add(total, delta);
+		total = ktime_add(total, genpd->states[i].idle_time);
+	}
+	total = ktime_add(total, delta);
 
-	seq_म_लिखो(s, "%lld ms\n", kसमय_प्रकारo_ms(total));
+	seq_printf(s, "%lld ms\n", ktime_to_ms(total));
 
 	genpd_unlock(genpd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक devices_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-	काष्ठा pm_करोमुख्य_data *pm_data;
-	स्थिर अक्षर *kobj_path;
-	पूर्णांक ret = 0;
+static int devices_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd = s->private;
+	struct pm_domain_data *pm_data;
+	const char *kobj_path;
+	int ret = 0;
 
-	ret = genpd_lock_पूर्णांकerruptible(genpd);
-	अगर (ret)
-		वापस -ERESTARTSYS;
+	ret = genpd_lock_interruptible(genpd);
+	if (ret)
+		return -ERESTARTSYS;
 
-	list_क्रम_each_entry(pm_data, &genpd->dev_list, list_node) अणु
+	list_for_each_entry(pm_data, &genpd->dev_list, list_node) {
 		kobj_path = kobject_get_path(&pm_data->dev->kobj,
 				genpd_is_irq_safe(genpd) ?
 				GFP_ATOMIC : GFP_KERNEL);
-		अगर (kobj_path == शून्य)
-			जारी;
+		if (kobj_path == NULL)
+			continue;
 
-		seq_म_लिखो(s, "%s\n", kobj_path);
-		kमुक्त(kobj_path);
-	पूर्ण
-
-	genpd_unlock(genpd);
-	वापस ret;
-पूर्ण
-
-अटल पूर्णांक perf_state_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd = s->निजी;
-
-	अगर (genpd_lock_पूर्णांकerruptible(genpd))
-		वापस -ERESTARTSYS;
-
-	seq_म_लिखो(s, "%u\n", genpd->perक्रमmance_state);
+		seq_printf(s, "%s\n", kobj_path);
+		kfree(kobj_path);
+	}
 
 	genpd_unlock(genpd);
-	वापस 0;
-पूर्ण
+	return ret;
+}
+
+static int perf_state_show(struct seq_file *s, void *data)
+{
+	struct generic_pm_domain *genpd = s->private;
+
+	if (genpd_lock_interruptible(genpd))
+		return -ERESTARTSYS;
+
+	seq_printf(s, "%u\n", genpd->performance_state);
+
+	genpd_unlock(genpd);
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(summary);
 DEFINE_SHOW_ATTRIBUTE(status);
-DEFINE_SHOW_ATTRIBUTE(sub_करोमुख्यs);
+DEFINE_SHOW_ATTRIBUTE(sub_domains);
 DEFINE_SHOW_ATTRIBUTE(idle_states);
-DEFINE_SHOW_ATTRIBUTE(active_समय);
-DEFINE_SHOW_ATTRIBUTE(total_idle_समय);
+DEFINE_SHOW_ATTRIBUTE(active_time);
+DEFINE_SHOW_ATTRIBUTE(total_idle_time);
 DEFINE_SHOW_ATTRIBUTE(devices);
 DEFINE_SHOW_ATTRIBUTE(perf_state);
 
-अटल व्योम genpd_debug_add(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा dentry *d;
+static void genpd_debug_add(struct generic_pm_domain *genpd)
+{
+	struct dentry *d;
 
-	अगर (!genpd_debugfs_dir)
-		वापस;
+	if (!genpd_debugfs_dir)
+		return;
 
 	d = debugfs_create_dir(genpd->name, genpd_debugfs_dir);
 
 	debugfs_create_file("current_state", 0444,
 			    d, genpd, &status_fops);
 	debugfs_create_file("sub_domains", 0444,
-			    d, genpd, &sub_करोमुख्यs_fops);
+			    d, genpd, &sub_domains_fops);
 	debugfs_create_file("idle_states", 0444,
 			    d, genpd, &idle_states_fops);
 	debugfs_create_file("active_time", 0444,
-			    d, genpd, &active_समय_fops);
+			    d, genpd, &active_time_fops);
 	debugfs_create_file("total_idle_time", 0444,
-			    d, genpd, &total_idle_समय_fops);
+			    d, genpd, &total_idle_time_fops);
 	debugfs_create_file("devices", 0444,
 			    d, genpd, &devices_fops);
-	अगर (genpd->set_perक्रमmance_state)
+	if (genpd->set_performance_state)
 		debugfs_create_file("perf_state", 0444,
 				    d, genpd, &perf_state_fops);
-पूर्ण
+}
 
-अटल पूर्णांक __init genpd_debug_init(व्योम)
-अणु
-	काष्ठा generic_pm_करोमुख्य *genpd;
+static int __init genpd_debug_init(void)
+{
+	struct generic_pm_domain *genpd;
 
-	genpd_debugfs_dir = debugfs_create_dir("pm_genpd", शून्य);
+	genpd_debugfs_dir = debugfs_create_dir("pm_genpd", NULL);
 
 	debugfs_create_file("pm_genpd_summary", S_IRUGO, genpd_debugfs_dir,
-			    शून्य, &summary_fops);
+			    NULL, &summary_fops);
 
-	list_क्रम_each_entry(genpd, &gpd_list, gpd_list_node)
+	list_for_each_entry(genpd, &gpd_list, gpd_list_node)
 		genpd_debug_add(genpd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 late_initcall(genpd_debug_init);
 
-अटल व्योम __निकास genpd_debug_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(genpd_debugfs_dir);
-पूर्ण
-__निकासcall(genpd_debug_निकास);
-#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+static void __exit genpd_debug_exit(void)
+{
+	debugfs_remove_recursive(genpd_debugfs_dir);
+}
+__exitcall(genpd_debug_exit);
+#endif /* CONFIG_DEBUG_FS */

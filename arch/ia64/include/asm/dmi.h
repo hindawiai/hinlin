@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_DMI_H
-#घोषणा _ASM_DMI_H 1
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_DMI_H
+#define _ASM_DMI_H 1
 
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/slab.h>
+#include <asm/io.h>
 
-/* Use normal IO mappings क्रम DMI */
-#घोषणा dmi_early_remap		ioremap
-#घोषणा dmi_early_unmap(x, l)	iounmap(x)
-#घोषणा dmi_remap		ioremap
-#घोषणा dmi_unmap		iounmap
-#घोषणा dmi_alloc(l)		kzalloc(l, GFP_ATOMIC)
+/* Use normal IO mappings for DMI */
+#define dmi_early_remap		ioremap
+#define dmi_early_unmap(x, l)	iounmap(x)
+#define dmi_remap		ioremap
+#define dmi_unmap		iounmap
+#define dmi_alloc(l)		kzalloc(l, GFP_ATOMIC)
 
-#पूर्ण_अगर
+#endif

@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2017 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/iio/hw-consumer.h>
-#समावेश <linux/iio/buffer_impl.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/hw-consumer.h>
+#include <linux/iio/buffer_impl.h>
 
 /**
- * काष्ठा iio_hw_consumer - IIO hw consumer block
+ * struct iio_hw_consumer - IIO hw consumer block
  * @buffers: hardware buffers list head.
  * @channels: IIO provider channels.
  */
-काष्ठा iio_hw_consumer अणु
-	काष्ठा list_head buffers;
-	काष्ठा iio_channel *channels;
-पूर्ण;
+struct iio_hw_consumer {
+	struct list_head buffers;
+	struct iio_channel *channels;
+};
 
-काष्ठा hw_consumer_buffer अणु
-	काष्ठा list_head head;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा iio_buffer buffer;
-	दीर्घ scan_mask[];
-पूर्ण;
+struct hw_consumer_buffer {
+	struct list_head head;
+	struct iio_dev *indio_dev;
+	struct iio_buffer buffer;
+	long scan_mask[];
+};
 
-अटल काष्ठा hw_consumer_buffer *iio_buffer_to_hw_consumer_buffer(
-	काष्ठा iio_buffer *buffer)
-अणु
-	वापस container_of(buffer, काष्ठा hw_consumer_buffer, buffer);
-पूर्ण
+static struct hw_consumer_buffer *iio_buffer_to_hw_consumer_buffer(
+	struct iio_buffer *buffer)
+{
+	return container_of(buffer, struct hw_consumer_buffer, buffer);
+}
 
-अटल व्योम iio_hw_buf_release(काष्ठा iio_buffer *buffer)
-अणु
-	काष्ठा hw_consumer_buffer *hw_buf =
+static void iio_hw_buf_release(struct iio_buffer *buffer)
+{
+	struct hw_consumer_buffer *hw_buf =
 		iio_buffer_to_hw_consumer_buffer(buffer);
-	kमुक्त(hw_buf);
-पूर्ण
+	kfree(hw_buf);
+}
 
-अटल स्थिर काष्ठा iio_buffer_access_funcs iio_hw_buf_access = अणु
+static const struct iio_buffer_access_funcs iio_hw_buf_access = {
 	.release = &iio_hw_buf_release,
 	.modes = INDIO_BUFFER_HARDWARE,
-पूर्ण;
+};
 
-अटल काष्ठा hw_consumer_buffer *iio_hw_consumer_get_buffer(
-	काष्ठा iio_hw_consumer *hwc, काष्ठा iio_dev *indio_dev)
-अणु
-	माप_प्रकार mask_size = BITS_TO_LONGS(indio_dev->masklength) * माप(दीर्घ);
-	काष्ठा hw_consumer_buffer *buf;
+static struct hw_consumer_buffer *iio_hw_consumer_get_buffer(
+	struct iio_hw_consumer *hwc, struct iio_dev *indio_dev)
+{
+	size_t mask_size = BITS_TO_LONGS(indio_dev->masklength) * sizeof(long);
+	struct hw_consumer_buffer *buf;
 
-	list_क्रम_each_entry(buf, &hwc->buffers, head) अणु
-		अगर (buf->indio_dev == indio_dev)
-			वापस buf;
-	पूर्ण
+	list_for_each_entry(buf, &hwc->buffers, head) {
+		if (buf->indio_dev == indio_dev)
+			return buf;
+	}
 
-	buf = kzalloc(माप(*buf) + mask_size, GFP_KERNEL);
-	अगर (!buf)
-		वापस शून्य;
+	buf = kzalloc(sizeof(*buf) + mask_size, GFP_KERNEL);
+	if (!buf)
+		return NULL;
 
 	buf->buffer.access = &iio_hw_buf_access;
 	buf->indio_dev = indio_dev;
@@ -72,105 +71,105 @@
 	iio_buffer_init(&buf->buffer);
 	list_add_tail(&buf->head, &hwc->buffers);
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /**
  * iio_hw_consumer_alloc() - Allocate IIO hardware consumer
- * @dev: Poपूर्णांकer to consumer device.
+ * @dev: Pointer to consumer device.
  *
  * Returns a valid iio_hw_consumer on success or a ERR_PTR() on failure.
  */
-काष्ठा iio_hw_consumer *iio_hw_consumer_alloc(काष्ठा device *dev)
-अणु
-	काष्ठा hw_consumer_buffer *buf;
-	काष्ठा iio_hw_consumer *hwc;
-	काष्ठा iio_channel *chan;
-	पूर्णांक ret;
+struct iio_hw_consumer *iio_hw_consumer_alloc(struct device *dev)
+{
+	struct hw_consumer_buffer *buf;
+	struct iio_hw_consumer *hwc;
+	struct iio_channel *chan;
+	int ret;
 
-	hwc = kzalloc(माप(*hwc), GFP_KERNEL);
-	अगर (!hwc)
-		वापस ERR_PTR(-ENOMEM);
+	hwc = kzalloc(sizeof(*hwc), GFP_KERNEL);
+	if (!hwc)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&hwc->buffers);
 
 	hwc->channels = iio_channel_get_all(dev);
-	अगर (IS_ERR(hwc->channels)) अणु
+	if (IS_ERR(hwc->channels)) {
 		ret = PTR_ERR(hwc->channels);
-		जाओ err_मुक्त_hwc;
-	पूर्ण
+		goto err_free_hwc;
+	}
 
 	chan = &hwc->channels[0];
-	जबतक (chan->indio_dev) अणु
+	while (chan->indio_dev) {
 		buf = iio_hw_consumer_get_buffer(hwc, chan->indio_dev);
-		अगर (!buf) अणु
+		if (!buf) {
 			ret = -ENOMEM;
-			जाओ err_put_buffers;
-		पूर्ण
+			goto err_put_buffers;
+		}
 		set_bit(chan->channel->scan_index, buf->buffer.scan_mask);
 		chan++;
-	पूर्ण
+	}
 
-	वापस hwc;
+	return hwc;
 
 err_put_buffers:
-	list_क्रम_each_entry(buf, &hwc->buffers, head)
+	list_for_each_entry(buf, &hwc->buffers, head)
 		iio_buffer_put(&buf->buffer);
 	iio_channel_release_all(hwc->channels);
-err_मुक्त_hwc:
-	kमुक्त(hwc);
-	वापस ERR_PTR(ret);
-पूर्ण
+err_free_hwc:
+	kfree(hwc);
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(iio_hw_consumer_alloc);
 
 /**
- * iio_hw_consumer_मुक्त() - Free IIO hardware consumer
- * @hwc: hw consumer to मुक्त.
+ * iio_hw_consumer_free() - Free IIO hardware consumer
+ * @hwc: hw consumer to free.
  */
-व्योम iio_hw_consumer_मुक्त(काष्ठा iio_hw_consumer *hwc)
-अणु
-	काष्ठा hw_consumer_buffer *buf, *n;
+void iio_hw_consumer_free(struct iio_hw_consumer *hwc)
+{
+	struct hw_consumer_buffer *buf, *n;
 
 	iio_channel_release_all(hwc->channels);
-	list_क्रम_each_entry_safe(buf, n, &hwc->buffers, head)
+	list_for_each_entry_safe(buf, n, &hwc->buffers, head)
 		iio_buffer_put(&buf->buffer);
-	kमुक्त(hwc);
-पूर्ण
-EXPORT_SYMBOL_GPL(iio_hw_consumer_मुक्त);
+	kfree(hwc);
+}
+EXPORT_SYMBOL_GPL(iio_hw_consumer_free);
 
-अटल व्योम devm_iio_hw_consumer_release(काष्ठा device *dev, व्योम *res)
-अणु
-	iio_hw_consumer_मुक्त(*(काष्ठा iio_hw_consumer **)res);
-पूर्ण
+static void devm_iio_hw_consumer_release(struct device *dev, void *res)
+{
+	iio_hw_consumer_free(*(struct iio_hw_consumer **)res);
+}
 
 /**
  * devm_iio_hw_consumer_alloc - Resource-managed iio_hw_consumer_alloc()
- * @dev: Poपूर्णांकer to consumer device.
+ * @dev: Pointer to consumer device.
  *
  * Managed iio_hw_consumer_alloc. iio_hw_consumer allocated with this function
- * is स्वतःmatically मुक्तd on driver detach.
+ * is automatically freed on driver detach.
  *
- * वापसs poपूर्णांकer to allocated iio_hw_consumer on success, शून्य on failure.
+ * returns pointer to allocated iio_hw_consumer on success, NULL on failure.
  */
-काष्ठा iio_hw_consumer *devm_iio_hw_consumer_alloc(काष्ठा device *dev)
-अणु
-	काष्ठा iio_hw_consumer **ptr, *iio_hwc;
+struct iio_hw_consumer *devm_iio_hw_consumer_alloc(struct device *dev)
+{
+	struct iio_hw_consumer **ptr, *iio_hwc;
 
-	ptr = devres_alloc(devm_iio_hw_consumer_release, माप(*ptr),
+	ptr = devres_alloc(devm_iio_hw_consumer_release, sizeof(*ptr),
 			   GFP_KERNEL);
-	अगर (!ptr)
-		वापस शून्य;
+	if (!ptr)
+		return NULL;
 
 	iio_hwc = iio_hw_consumer_alloc(dev);
-	अगर (IS_ERR(iio_hwc)) अणु
-		devres_मुक्त(ptr);
-	पूर्ण अन्यथा अणु
+	if (IS_ERR(iio_hwc)) {
+		devres_free(ptr);
+	} else {
 		*ptr = iio_hwc;
 		devres_add(dev, ptr);
-	पूर्ण
+	}
 
-	वापस iio_hwc;
-पूर्ण
+	return iio_hwc;
+}
 EXPORT_SYMBOL_GPL(devm_iio_hw_consumer_alloc);
 
 /**
@@ -179,37 +178,37 @@ EXPORT_SYMBOL_GPL(devm_iio_hw_consumer_alloc);
  *
  * Returns 0 on success.
  */
-पूर्णांक iio_hw_consumer_enable(काष्ठा iio_hw_consumer *hwc)
-अणु
-	काष्ठा hw_consumer_buffer *buf;
-	पूर्णांक ret;
+int iio_hw_consumer_enable(struct iio_hw_consumer *hwc)
+{
+	struct hw_consumer_buffer *buf;
+	int ret;
 
-	list_क्रम_each_entry(buf, &hwc->buffers, head) अणु
-		ret = iio_update_buffers(buf->indio_dev, &buf->buffer, शून्य);
-		अगर (ret)
-			जाओ err_disable_buffers;
-	पूर्ण
+	list_for_each_entry(buf, &hwc->buffers, head) {
+		ret = iio_update_buffers(buf->indio_dev, &buf->buffer, NULL);
+		if (ret)
+			goto err_disable_buffers;
+	}
 
-	वापस 0;
+	return 0;
 
 err_disable_buffers:
-	list_क्रम_each_entry_जारी_reverse(buf, &hwc->buffers, head)
-		iio_update_buffers(buf->indio_dev, शून्य, &buf->buffer);
-	वापस ret;
-पूर्ण
+	list_for_each_entry_continue_reverse(buf, &hwc->buffers, head)
+		iio_update_buffers(buf->indio_dev, NULL, &buf->buffer);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(iio_hw_consumer_enable);
 
 /**
  * iio_hw_consumer_disable() - Disable IIO hardware consumer
  * @hwc: iio_hw_consumer to disable.
  */
-व्योम iio_hw_consumer_disable(काष्ठा iio_hw_consumer *hwc)
-अणु
-	काष्ठा hw_consumer_buffer *buf;
+void iio_hw_consumer_disable(struct iio_hw_consumer *hwc)
+{
+	struct hw_consumer_buffer *buf;
 
-	list_क्रम_each_entry(buf, &hwc->buffers, head)
-		iio_update_buffers(buf->indio_dev, शून्य, &buf->buffer);
-पूर्ण
+	list_for_each_entry(buf, &hwc->buffers, head)
+		iio_update_buffers(buf->indio_dev, NULL, &buf->buffer);
+}
 EXPORT_SYMBOL_GPL(iio_hw_consumer_disable);
 
 MODULE_AUTHOR("Lars-Peter Clausen <lars@metafoo.de>");

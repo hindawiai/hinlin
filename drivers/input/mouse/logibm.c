@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) 1999-2001 Vojtech Pavlik
  *
  *  Based on the work of:
  *	James Banks		Matthew Dillon
- *	David Giller		Nathan Lareकरो
+ *	David Giller		Nathan Laredo
  *	Linus Torvalds		Johan Myreen
- *	Clअगरf Matthews		Philip Blundell
+ *	Cliff Matthews		Philip Blundell
  *	Russell King
  */
 
 /*
- * Logitech Bus Mouse Driver क्रम Linux
+ * Logitech Bus Mouse Driver for Linux
  */
 
 /*
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/init.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/init.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Logitech busmouse driver");
 MODULE_LICENSE("GPL");
 
-#घोषणा	LOGIBM_BASE		0x23c
-#घोषणा	LOGIBM_EXTENT		4
+#define	LOGIBM_BASE		0x23c
+#define	LOGIBM_EXTENT		4
 
-#घोषणा	LOGIBM_DATA_PORT	LOGIBM_BASE + 0
-#घोषणा	LOGIBM_SIGNATURE_PORT	LOGIBM_BASE + 1
-#घोषणा	LOGIBM_CONTROL_PORT	LOGIBM_BASE + 2
-#घोषणा	LOGIBM_CONFIG_PORT	LOGIBM_BASE + 3
+#define	LOGIBM_DATA_PORT	LOGIBM_BASE + 0
+#define	LOGIBM_SIGNATURE_PORT	LOGIBM_BASE + 1
+#define	LOGIBM_CONTROL_PORT	LOGIBM_BASE + 2
+#define	LOGIBM_CONFIG_PORT	LOGIBM_BASE + 3
 
-#घोषणा	LOGIBM_ENABLE_IRQ	0x00
-#घोषणा	LOGIBM_DISABLE_IRQ	0x10
-#घोषणा	LOGIBM_READ_X_LOW	0x80
-#घोषणा	LOGIBM_READ_X_HIGH	0xa0
-#घोषणा	LOGIBM_READ_Y_LOW	0xc0
-#घोषणा	LOGIBM_READ_Y_HIGH	0xe0
+#define	LOGIBM_ENABLE_IRQ	0x00
+#define	LOGIBM_DISABLE_IRQ	0x10
+#define	LOGIBM_READ_X_LOW	0x80
+#define	LOGIBM_READ_X_HIGH	0xa0
+#define	LOGIBM_READ_Y_LOW	0xc0
+#define	LOGIBM_READ_Y_HIGH	0xe0
 
-#घोषणा LOGIBM_DEFAULT_MODE	0x90
-#घोषणा LOGIBM_CONFIG_BYTE	0x91
-#घोषणा LOGIBM_SIGNATURE_BYTE	0xa5
+#define LOGIBM_DEFAULT_MODE	0x90
+#define LOGIBM_CONFIG_BYTE	0x91
+#define LOGIBM_SIGNATURE_BYTE	0xa5
 
-#घोषणा LOGIBM_IRQ		5
+#define LOGIBM_IRQ		5
 
-अटल पूर्णांक logibm_irq = LOGIBM_IRQ;
-module_param_hw_named(irq, logibm_irq, uपूर्णांक, irq, 0);
+static int logibm_irq = LOGIBM_IRQ;
+module_param_hw_named(irq, logibm_irq, uint, irq, 0);
 MODULE_PARM_DESC(irq, "IRQ number (5=default)");
 
-अटल काष्ठा input_dev *logibm_dev;
+static struct input_dev *logibm_dev;
 
-अटल irqवापस_t logibm_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अक्षर dx, dy;
-	अचिन्हित अक्षर buttons;
+static irqreturn_t logibm_interrupt(int irq, void *dev_id)
+{
+	char dx, dy;
+	unsigned char buttons;
 
 	outb(LOGIBM_READ_X_LOW, LOGIBM_CONTROL_PORT);
 	dx = (inb(LOGIBM_DATA_PORT) & 0xf);
@@ -83,58 +82,58 @@ MODULE_PARM_DESC(irq, "IRQ number (5=default)");
 	input_sync(logibm_dev);
 
 	outb(LOGIBM_ENABLE_IRQ, LOGIBM_CONTROL_PORT);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक logibm_खोलो(काष्ठा input_dev *dev)
-अणु
-	अगर (request_irq(logibm_irq, logibm_पूर्णांकerrupt, 0, "logibm", शून्य)) अणु
-		prपूर्णांकk(KERN_ERR "logibm.c: Can't allocate irq %d\n", logibm_irq);
-		वापस -EBUSY;
-	पूर्ण
+static int logibm_open(struct input_dev *dev)
+{
+	if (request_irq(logibm_irq, logibm_interrupt, 0, "logibm", NULL)) {
+		printk(KERN_ERR "logibm.c: Can't allocate irq %d\n", logibm_irq);
+		return -EBUSY;
+	}
 	outb(LOGIBM_ENABLE_IRQ, LOGIBM_CONTROL_PORT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम logibm_बंद(काष्ठा input_dev *dev)
-अणु
+static void logibm_close(struct input_dev *dev)
+{
 	outb(LOGIBM_DISABLE_IRQ, LOGIBM_CONTROL_PORT);
-	मुक्त_irq(logibm_irq, शून्य);
-पूर्ण
+	free_irq(logibm_irq, NULL);
+}
 
-अटल पूर्णांक __init logibm_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init logibm_init(void)
+{
+	int err;
 
-	अगर (!request_region(LOGIBM_BASE, LOGIBM_EXTENT, "logibm")) अणु
-		prपूर्णांकk(KERN_ERR "logibm.c: Can't allocate ports at %#x\n", LOGIBM_BASE);
-		वापस -EBUSY;
-	पूर्ण
+	if (!request_region(LOGIBM_BASE, LOGIBM_EXTENT, "logibm")) {
+		printk(KERN_ERR "logibm.c: Can't allocate ports at %#x\n", LOGIBM_BASE);
+		return -EBUSY;
+	}
 
 	outb(LOGIBM_CONFIG_BYTE, LOGIBM_CONFIG_PORT);
 	outb(LOGIBM_SIGNATURE_BYTE, LOGIBM_SIGNATURE_PORT);
 	udelay(100);
 
-	अगर (inb(LOGIBM_SIGNATURE_PORT) != LOGIBM_SIGNATURE_BYTE) अणु
-		prपूर्णांकk(KERN_INFO "logibm.c: Didn't find Logitech busmouse at %#x\n", LOGIBM_BASE);
+	if (inb(LOGIBM_SIGNATURE_PORT) != LOGIBM_SIGNATURE_BYTE) {
+		printk(KERN_INFO "logibm.c: Didn't find Logitech busmouse at %#x\n", LOGIBM_BASE);
 		err = -ENODEV;
-		जाओ err_release_region;
-	पूर्ण
+		goto err_release_region;
+	}
 
 	outb(LOGIBM_DEFAULT_MODE, LOGIBM_CONFIG_PORT);
 	outb(LOGIBM_DISABLE_IRQ, LOGIBM_CONTROL_PORT);
 
 	logibm_dev = input_allocate_device();
-	अगर (!logibm_dev) अणु
-		prपूर्णांकk(KERN_ERR "logibm.c: Not enough memory for input device\n");
+	if (!logibm_dev) {
+		printk(KERN_ERR "logibm.c: Not enough memory for input device\n");
 		err = -ENOMEM;
-		जाओ err_release_region;
-	पूर्ण
+		goto err_release_region;
+	}
 
 	logibm_dev->name = "Logitech bus mouse";
 	logibm_dev->phys = "isa023c/input0";
 	logibm_dev->id.bustype = BUS_ISA;
-	logibm_dev->id.venकरोr  = 0x0003;
+	logibm_dev->id.vendor  = 0x0003;
 	logibm_dev->id.product = 0x0001;
 	logibm_dev->id.version = 0x0100;
 
@@ -143,28 +142,28 @@ MODULE_PARM_DESC(irq, "IRQ number (5=default)");
 		BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
 	logibm_dev->relbit[0] = BIT_MASK(REL_X) | BIT_MASK(REL_Y);
 
-	logibm_dev->खोलो  = logibm_खोलो;
-	logibm_dev->बंद = logibm_बंद;
+	logibm_dev->open  = logibm_open;
+	logibm_dev->close = logibm_close;
 
-	err = input_रेजिस्टर_device(logibm_dev);
-	अगर (err)
-		जाओ err_मुक्त_dev;
+	err = input_register_device(logibm_dev);
+	if (err)
+		goto err_free_dev;
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_dev:
-	input_मुक्त_device(logibm_dev);
+ err_free_dev:
+	input_free_device(logibm_dev);
  err_release_region:
 	release_region(LOGIBM_BASE, LOGIBM_EXTENT);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास logibm_निकास(व्योम)
-अणु
-	input_unरेजिस्टर_device(logibm_dev);
+static void __exit logibm_exit(void)
+{
+	input_unregister_device(logibm_dev);
 	release_region(LOGIBM_BASE, LOGIBM_EXTENT);
-पूर्ण
+}
 
 module_init(logibm_init);
-module_निकास(logibm_निकास);
+module_exit(logibm_exit);

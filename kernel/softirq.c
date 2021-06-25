@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *	linux/kernel/softirq.c
  *
@@ -8,43 +7,43 @@
  *	Rewritten. Old one was good in 2.2, but in 2.3 it was immoral. --ANK (990903)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/local_lock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/smpboot.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/रुको_bit.h>
+#include <linux/export.h>
+#include <linux/kernel_stat.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/local_lock.h>
+#include <linux/mm.h>
+#include <linux/notifier.h>
+#include <linux/percpu.h>
+#include <linux/cpu.h>
+#include <linux/freezer.h>
+#include <linux/kthread.h>
+#include <linux/rcupdate.h>
+#include <linux/ftrace.h>
+#include <linux/smp.h>
+#include <linux/smpboot.h>
+#include <linux/tick.h>
+#include <linux/irq.h>
+#include <linux/wait_bit.h>
 
-#समावेश <यंत्र/softirq_stack.h>
+#include <asm/softirq_stack.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/irq.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/irq.h>
 
 /*
    - No shared variables, all the data are CPU local.
    - If a softirq needs serialization, let it serialize itself
      by its own spinlocks.
-   - Even अगर softirq is serialized, only local cpu is marked क्रम
+   - Even if softirq is serialized, only local cpu is marked for
      execution. Hence, we get something sort of weak cpu binding.
      Though it is still not clear, will it result in better locality
      or will not.
 
    Examples:
-   - NET RX softirq. It is multithपढ़ोed and करोes not require
+   - NET RX softirq. It is multithreaded and does not require
      any global serialization.
    - NET TX softirq. It kicks software netdevice queues, hence
      it is logically serialized per device, but this serialization
@@ -52,57 +51,57 @@
    - Tasklets: serialized wrt itself.
  */
 
-#अगर_अघोषित __ARCH_IRQ_STAT
+#ifndef __ARCH_IRQ_STAT
 DEFINE_PER_CPU_ALIGNED(irq_cpustat_t, irq_stat);
 EXPORT_PER_CPU_SYMBOL(irq_stat);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
+static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
 
-DEFINE_PER_CPU(काष्ठा task_काष्ठा *, ksoftirqd);
+DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
 
-स्थिर अक्षर * स्थिर softirq_to_name[NR_SOFTIRQS] = अणु
+const char * const softirq_to_name[NR_SOFTIRQS] = {
 	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "IRQ_POLL",
 	"TASKLET", "SCHED", "HRTIMER", "RCU"
-पूर्ण;
+};
 
 /*
- * we cannot loop indefinitely here to aव्योम userspace starvation,
- * but we also करोn't want to पूर्णांकroduce a worst हाल 1/HZ latency
+ * we cannot loop indefinitely here to avoid userspace starvation,
+ * but we also don't want to introduce a worst case 1/HZ latency
  * to the pending events, so lets the scheduler to balance
- * the softirq load क्रम us.
+ * the softirq load for us.
  */
-अटल व्योम wakeup_softirqd(व्योम)
-अणु
+static void wakeup_softirqd(void)
+{
 	/* Interrupts are disabled: no need to stop preemption */
-	काष्ठा task_काष्ठा *tsk = __this_cpu_पढ़ो(ksoftirqd);
+	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
 
-	अगर (tsk && tsk->state != TASK_RUNNING)
+	if (tsk && tsk->state != TASK_RUNNING)
 		wake_up_process(tsk);
-पूर्ण
+}
 
 /*
- * If ksoftirqd is scheduled, we करो not want to process pending softirqs
+ * If ksoftirqd is scheduled, we do not want to process pending softirqs
  * right now. Let ksoftirqd handle this at its own rate, to get fairness,
- * unless we're करोing some of the synchronous softirqs.
+ * unless we're doing some of the synchronous softirqs.
  */
-#घोषणा SOFTIRQ_NOW_MASK ((1 << HI_SOFTIRQ) | (1 << TASKLET_SOFTIRQ))
-अटल bool ksoftirqd_running(अचिन्हित दीर्घ pending)
-अणु
-	काष्ठा task_काष्ठा *tsk = __this_cpu_पढ़ो(ksoftirqd);
+#define SOFTIRQ_NOW_MASK ((1 << HI_SOFTIRQ) | (1 << TASKLET_SOFTIRQ))
+static bool ksoftirqd_running(unsigned long pending)
+{
+	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
 
-	अगर (pending & SOFTIRQ_NOW_MASK)
-		वापस false;
-	वापस tsk && (tsk->state == TASK_RUNNING) &&
-		!__kthपढ़ो_should_park(tsk);
-पूर्ण
+	if (pending & SOFTIRQ_NOW_MASK)
+		return false;
+	return tsk && (tsk->state == TASK_RUNNING) &&
+		!__kthread_should_park(tsk);
+}
 
-#अगर_घोषित CONFIG_TRACE_IRQFLAGS
-DEFINE_PER_CPU(पूर्णांक, hardirqs_enabled);
-DEFINE_PER_CPU(पूर्णांक, hardirq_context);
+#ifdef CONFIG_TRACE_IRQFLAGS
+DEFINE_PER_CPU(int, hardirqs_enabled);
+DEFINE_PER_CPU(int, hardirq_context);
 EXPORT_PER_CPU_SYMBOL_GPL(hardirqs_enabled);
 EXPORT_PER_CPU_SYMBOL_GPL(hardirq_context);
-#पूर्ण_अगर
+#endif
 
 /*
  * SOFTIRQ_OFFSET usage:
@@ -119,136 +118,136 @@ EXPORT_PER_CPU_SYMBOL_GPL(hardirq_context);
  * This lets us distinguish between whether we are currently processing
  * softirq and whether we just have bh disabled.
  */
-#अगर_घोषित CONFIG_PREEMPT_RT
+#ifdef CONFIG_PREEMPT_RT
 
 /*
- * RT accounts क्रम BH disabled sections in task::softirqs_disabled_cnt and
+ * RT accounts for BH disabled sections in task::softirqs_disabled_cnt and
  * also in per CPU softirq_ctrl::cnt. This is necessary to allow tasks in a
  * softirq disabled section to be preempted.
  *
- * The per task counter is used क्रम softirq_count(), in_softirq() and
+ * The per task counter is used for softirq_count(), in_softirq() and
  * in_serving_softirqs() because these counts are only valid when the task
  * holding softirq_ctrl::lock is running.
  *
- * The per CPU counter prevents poपूर्णांकless wakeups of ksoftirqd in हाल that
+ * The per CPU counter prevents pointless wakeups of ksoftirqd in case that
  * the task which is in a softirq disabled section is preempted or blocks.
  */
-काष्ठा softirq_ctrl अणु
+struct softirq_ctrl {
 	local_lock_t	lock;
-	पूर्णांक		cnt;
-पूर्ण;
+	int		cnt;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा softirq_ctrl, softirq_ctrl) = अणु
+static DEFINE_PER_CPU(struct softirq_ctrl, softirq_ctrl) = {
 	.lock	= INIT_LOCAL_LOCK(softirq_ctrl.lock),
-पूर्ण;
+};
 
 /**
- * local_bh_blocked() - Check क्रम idle whether BH processing is blocked
+ * local_bh_blocked() - Check for idle whether BH processing is blocked
  *
- * Returns false अगर the per CPU softirq::cnt is 0 otherwise true.
+ * Returns false if the per CPU softirq::cnt is 0 otherwise true.
  *
  * This is invoked from the idle task to guard against false positive
  * softirq pending warnings, which would happen when the task which holds
  * softirq_ctrl::lock was the only running task on the CPU and blocks on
  * some other lock.
  */
-bool local_bh_blocked(व्योम)
-अणु
-	वापस __this_cpu_पढ़ो(softirq_ctrl.cnt) != 0;
-पूर्ण
+bool local_bh_blocked(void)
+{
+	return __this_cpu_read(softirq_ctrl.cnt) != 0;
+}
 
-व्योम __local_bh_disable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक newcnt;
+void __local_bh_disable_ip(unsigned long ip, unsigned int cnt)
+{
+	unsigned long flags;
+	int newcnt;
 
 	WARN_ON_ONCE(in_hardirq());
 
-	/* First entry of a task पूर्णांकo a BH disabled section? */
-	अगर (!current->softirq_disable_cnt) अणु
-		अगर (preemptible()) अणु
+	/* First entry of a task into a BH disabled section? */
+	if (!current->softirq_disable_cnt) {
+		if (preemptible()) {
 			local_lock(&softirq_ctrl.lock);
 			/* Required to meet the RCU bottomhalf requirements. */
-			rcu_पढ़ो_lock();
-		पूर्ण अन्यथा अणु
-			DEBUG_LOCKS_WARN_ON(this_cpu_पढ़ो(softirq_ctrl.cnt));
-		पूर्ण
-	पूर्ण
+			rcu_read_lock();
+		} else {
+			DEBUG_LOCKS_WARN_ON(this_cpu_read(softirq_ctrl.cnt));
+		}
+	}
 
 	/*
 	 * Track the per CPU softirq disabled state. On RT this is per CPU
 	 * state to allow preemption of bottom half disabled sections.
 	 */
-	newcnt = __this_cpu_add_वापस(softirq_ctrl.cnt, cnt);
+	newcnt = __this_cpu_add_return(softirq_ctrl.cnt, cnt);
 	/*
 	 * Reflect the result in the task state to prevent recursion on the
 	 * local lock and to make softirq_count() & al work.
 	 */
 	current->softirq_disable_cnt = newcnt;
 
-	अगर (IS_ENABLED(CONFIG_TRACE_IRQFLAGS) && newcnt == cnt) अणु
+	if (IS_ENABLED(CONFIG_TRACE_IRQFLAGS) && newcnt == cnt) {
 		raw_local_irq_save(flags);
 		lockdep_softirqs_off(ip);
 		raw_local_irq_restore(flags);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(__local_bh_disable_ip);
 
-अटल व्योम __local_bh_enable(अचिन्हित पूर्णांक cnt, bool unlock)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक newcnt;
+static void __local_bh_enable(unsigned int cnt, bool unlock)
+{
+	unsigned long flags;
+	int newcnt;
 
 	DEBUG_LOCKS_WARN_ON(current->softirq_disable_cnt !=
-			    this_cpu_पढ़ो(softirq_ctrl.cnt));
+			    this_cpu_read(softirq_ctrl.cnt));
 
-	अगर (IS_ENABLED(CONFIG_TRACE_IRQFLAGS) && softirq_count() == cnt) अणु
+	if (IS_ENABLED(CONFIG_TRACE_IRQFLAGS) && softirq_count() == cnt) {
 		raw_local_irq_save(flags);
 		lockdep_softirqs_on(_RET_IP_);
 		raw_local_irq_restore(flags);
-	पूर्ण
+	}
 
-	newcnt = __this_cpu_sub_वापस(softirq_ctrl.cnt, cnt);
+	newcnt = __this_cpu_sub_return(softirq_ctrl.cnt, cnt);
 	current->softirq_disable_cnt = newcnt;
 
-	अगर (!newcnt && unlock) अणु
-		rcu_पढ़ो_unlock();
+	if (!newcnt && unlock) {
+		rcu_read_unlock();
 		local_unlock(&softirq_ctrl.lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __local_bh_enable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt)
-अणु
+void __local_bh_enable_ip(unsigned long ip, unsigned int cnt)
+{
 	bool preempt_on = preemptible();
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	u32 pending;
-	पूर्णांक curcnt;
+	int curcnt;
 
 	WARN_ON_ONCE(in_irq());
-	lockdep_निश्चित_irqs_enabled();
+	lockdep_assert_irqs_enabled();
 
 	local_irq_save(flags);
-	curcnt = __this_cpu_पढ़ो(softirq_ctrl.cnt);
+	curcnt = __this_cpu_read(softirq_ctrl.cnt);
 
 	/*
-	 * If this is not reenabling soft पूर्णांकerrupts, no poपूर्णांक in trying to
+	 * If this is not reenabling soft interrupts, no point in trying to
 	 * run pending ones.
 	 */
-	अगर (curcnt != cnt)
-		जाओ out;
+	if (curcnt != cnt)
+		goto out;
 
 	pending = local_softirq_pending();
-	अगर (!pending || ksoftirqd_running(pending))
-		जाओ out;
+	if (!pending || ksoftirqd_running(pending))
+		goto out;
 
 	/*
 	 * If this was called from non preemptible context, wake up the
 	 * softirq daemon.
 	 */
-	अगर (!preempt_on) अणु
+	if (!preempt_on) {
 		wakeup_softirqd();
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Adjust softirq count to SOFTIRQ_OFFSET which makes
@@ -256,64 +255,64 @@ EXPORT_SYMBOL(__local_bh_disable_ip);
 	 */
 	cnt = SOFTIRQ_OFFSET;
 	__local_bh_enable(cnt, false);
-	__करो_softirq();
+	__do_softirq();
 
 out:
 	__local_bh_enable(cnt, preempt_on);
 	local_irq_restore(flags);
-पूर्ण
+}
 EXPORT_SYMBOL(__local_bh_enable_ip);
 
 /*
- * Invoked from ksoftirqd_run() outside of the पूर्णांकerrupt disabled section
- * to acquire the per CPU local lock क्रम reentrancy protection.
+ * Invoked from ksoftirqd_run() outside of the interrupt disabled section
+ * to acquire the per CPU local lock for reentrancy protection.
  */
-अटल अंतरभूत व्योम ksoftirqd_run_begin(व्योम)
-अणु
+static inline void ksoftirqd_run_begin(void)
+{
 	__local_bh_disable_ip(_RET_IP_, SOFTIRQ_OFFSET);
 	local_irq_disable();
-पूर्ण
+}
 
 /* Counterpart to ksoftirqd_run_begin() */
-अटल अंतरभूत व्योम ksoftirqd_run_end(व्योम)
-अणु
+static inline void ksoftirqd_run_end(void)
+{
 	__local_bh_enable(SOFTIRQ_OFFSET, true);
-	WARN_ON_ONCE(in_पूर्णांकerrupt());
+	WARN_ON_ONCE(in_interrupt());
 	local_irq_enable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम softirq_handle_begin(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम softirq_handle_end(व्योम) अणु पूर्ण
+static inline void softirq_handle_begin(void) { }
+static inline void softirq_handle_end(void) { }
 
-अटल अंतरभूत bool should_wake_ksoftirqd(व्योम)
-अणु
-	वापस !this_cpu_पढ़ो(softirq_ctrl.cnt);
-पूर्ण
+static inline bool should_wake_ksoftirqd(void)
+{
+	return !this_cpu_read(softirq_ctrl.cnt);
+}
 
-अटल अंतरभूत व्योम invoke_softirq(व्योम)
-अणु
-	अगर (should_wake_ksoftirqd())
+static inline void invoke_softirq(void)
+{
+	if (should_wake_ksoftirqd())
 		wakeup_softirqd();
-पूर्ण
+}
 
-#अन्यथा /* CONFIG_PREEMPT_RT */
+#else /* CONFIG_PREEMPT_RT */
 
 /*
- * This one is क्रम softirq.c-पूर्णांकernal use, where hardirqs are disabled
+ * This one is for softirq.c-internal use, where hardirqs are disabled
  * legitimately:
  */
-#अगर_घोषित CONFIG_TRACE_IRQFLAGS
-व्योम __local_bh_disable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt)
-अणु
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_TRACE_IRQFLAGS
+void __local_bh_disable_ip(unsigned long ip, unsigned int cnt)
+{
+	unsigned long flags;
 
 	WARN_ON_ONCE(in_irq());
 
 	raw_local_irq_save(flags);
 	/*
-	 * The preempt tracer hooks पूर्णांकo preempt_count_add and will अवरोध
-	 * lockdep because it calls back पूर्णांकo lockdep after SOFTIRQ_OFFSET
-	 * is set and beक्रमe current->softirq_enabled is cleared.
+	 * The preempt tracer hooks into preempt_count_add and will break
+	 * lockdep because it calls back into lockdep after SOFTIRQ_OFFSET
+	 * is set and before current->softirq_enabled is cleared.
 	 * We must manually increment preempt_count here and manually
 	 * call the trace_preempt_off later.
 	 */
@@ -321,213 +320,213 @@ EXPORT_SYMBOL(__local_bh_enable_ip);
 	/*
 	 * Were softirqs turned off above:
 	 */
-	अगर (softirq_count() == (cnt & SOFTIRQ_MASK))
+	if (softirq_count() == (cnt & SOFTIRQ_MASK))
 		lockdep_softirqs_off(ip);
 	raw_local_irq_restore(flags);
 
-	अगर (preempt_count() == cnt) अणु
-#अगर_घोषित CONFIG_DEBUG_PREEMPT
+	if (preempt_count() == cnt) {
+#ifdef CONFIG_DEBUG_PREEMPT
 		current->preempt_disable_ip = get_lock_parent_ip();
-#पूर्ण_अगर
+#endif
 		trace_preempt_off(CALLER_ADDR0, get_lock_parent_ip());
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(__local_bh_disable_ip);
-#पूर्ण_अगर /* CONFIG_TRACE_IRQFLAGS */
+#endif /* CONFIG_TRACE_IRQFLAGS */
 
-अटल व्योम __local_bh_enable(अचिन्हित पूर्णांक cnt)
-अणु
-	lockdep_निश्चित_irqs_disabled();
+static void __local_bh_enable(unsigned int cnt)
+{
+	lockdep_assert_irqs_disabled();
 
-	अगर (preempt_count() == cnt)
+	if (preempt_count() == cnt)
 		trace_preempt_on(CALLER_ADDR0, get_lock_parent_ip());
 
-	अगर (softirq_count() == (cnt & SOFTIRQ_MASK))
+	if (softirq_count() == (cnt & SOFTIRQ_MASK))
 		lockdep_softirqs_on(_RET_IP_);
 
 	__preempt_count_sub(cnt);
-पूर्ण
+}
 
 /*
- * Special-हाल - softirqs can safely be enabled by __करो_softirq(),
+ * Special-case - softirqs can safely be enabled by __do_softirq(),
  * without processing still-pending softirqs:
  */
-व्योम _local_bh_enable(व्योम)
-अणु
+void _local_bh_enable(void)
+{
 	WARN_ON_ONCE(in_irq());
 	__local_bh_enable(SOFTIRQ_DISABLE_OFFSET);
-पूर्ण
+}
 EXPORT_SYMBOL(_local_bh_enable);
 
-व्योम __local_bh_enable_ip(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक cnt)
-अणु
+void __local_bh_enable_ip(unsigned long ip, unsigned int cnt)
+{
 	WARN_ON_ONCE(in_irq());
-	lockdep_निश्चित_irqs_enabled();
-#अगर_घोषित CONFIG_TRACE_IRQFLAGS
+	lockdep_assert_irqs_enabled();
+#ifdef CONFIG_TRACE_IRQFLAGS
 	local_irq_disable();
-#पूर्ण_अगर
+#endif
 	/*
 	 * Are softirqs going to be turned on now:
 	 */
-	अगर (softirq_count() == SOFTIRQ_DISABLE_OFFSET)
+	if (softirq_count() == SOFTIRQ_DISABLE_OFFSET)
 		lockdep_softirqs_on(ip);
 	/*
-	 * Keep preemption disabled until we are करोne with
+	 * Keep preemption disabled until we are done with
 	 * softirq processing:
 	 */
 	__preempt_count_sub(cnt - 1);
 
-	अगर (unlikely(!in_पूर्णांकerrupt() && local_softirq_pending())) अणु
+	if (unlikely(!in_interrupt() && local_softirq_pending())) {
 		/*
-		 * Run softirq अगर any pending. And करो it in its own stack
-		 * as we may be calling this deep in a task call stack alपढ़ोy.
+		 * Run softirq if any pending. And do it in its own stack
+		 * as we may be calling this deep in a task call stack already.
 		 */
-		करो_softirq();
-	पूर्ण
+		do_softirq();
+	}
 
 	preempt_count_dec();
-#अगर_घोषित CONFIG_TRACE_IRQFLAGS
+#ifdef CONFIG_TRACE_IRQFLAGS
 	local_irq_enable();
-#पूर्ण_अगर
+#endif
 	preempt_check_resched();
-पूर्ण
+}
 EXPORT_SYMBOL(__local_bh_enable_ip);
 
-अटल अंतरभूत व्योम softirq_handle_begin(व्योम)
-अणु
+static inline void softirq_handle_begin(void)
+{
 	__local_bh_disable_ip(_RET_IP_, SOFTIRQ_OFFSET);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम softirq_handle_end(व्योम)
-अणु
+static inline void softirq_handle_end(void)
+{
 	__local_bh_enable(SOFTIRQ_OFFSET);
-	WARN_ON_ONCE(in_पूर्णांकerrupt());
-पूर्ण
+	WARN_ON_ONCE(in_interrupt());
+}
 
-अटल अंतरभूत व्योम ksoftirqd_run_begin(व्योम)
-अणु
+static inline void ksoftirqd_run_begin(void)
+{
 	local_irq_disable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ksoftirqd_run_end(व्योम)
-अणु
+static inline void ksoftirqd_run_end(void)
+{
 	local_irq_enable();
-पूर्ण
+}
 
-अटल अंतरभूत bool should_wake_ksoftirqd(व्योम)
-अणु
-	वापस true;
-पूर्ण
+static inline bool should_wake_ksoftirqd(void)
+{
+	return true;
+}
 
-अटल अंतरभूत व्योम invoke_softirq(व्योम)
-अणु
-	अगर (ksoftirqd_running(local_softirq_pending()))
-		वापस;
+static inline void invoke_softirq(void)
+{
+	if (ksoftirqd_running(local_softirq_pending()))
+		return;
 
-	अगर (!क्रमce_irqthपढ़ोs || !__this_cpu_पढ़ो(ksoftirqd)) अणु
-#अगर_घोषित CONFIG_HAVE_IRQ_EXIT_ON_IRQ_STACK
+	if (!force_irqthreads || !__this_cpu_read(ksoftirqd)) {
+#ifdef CONFIG_HAVE_IRQ_EXIT_ON_IRQ_STACK
 		/*
-		 * We can safely execute softirq on the current stack अगर
+		 * We can safely execute softirq on the current stack if
 		 * it is the irq stack, because it should be near empty
 		 * at this stage.
 		 */
-		__करो_softirq();
-#अन्यथा
+		__do_softirq();
+#else
 		/*
-		 * Otherwise, irq_निकास() is called on the task stack that can
-		 * be potentially deep alपढ़ोy. So call softirq in its own stack
+		 * Otherwise, irq_exit() is called on the task stack that can
+		 * be potentially deep already. So call softirq in its own stack
 		 * to prevent from any overrun.
 		 */
-		करो_softirq_own_stack();
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
+		do_softirq_own_stack();
+#endif
+	} else {
 		wakeup_softirqd();
-	पूर्ण
-पूर्ण
+	}
+}
 
-यंत्रlinkage __visible व्योम करो_softirq(व्योम)
-अणु
+asmlinkage __visible void do_softirq(void)
+{
 	__u32 pending;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (in_पूर्णांकerrupt())
-		वापस;
+	if (in_interrupt())
+		return;
 
 	local_irq_save(flags);
 
 	pending = local_softirq_pending();
 
-	अगर (pending && !ksoftirqd_running(pending))
-		करो_softirq_own_stack();
+	if (pending && !ksoftirqd_running(pending))
+		do_softirq_own_stack();
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-#पूर्ण_अगर /* !CONFIG_PREEMPT_RT */
+#endif /* !CONFIG_PREEMPT_RT */
 
 /*
- * We restart softirq processing क्रम at most MAX_SOFTIRQ_RESTART बार,
- * but अवरोध the loop अगर need_resched() is set or after 2 ms.
- * The MAX_SOFTIRQ_TIME provides a nice upper bound in most हालs, but in
- * certain हालs, such as stop_machine(), jअगरfies may cease to
+ * We restart softirq processing for at most MAX_SOFTIRQ_RESTART times,
+ * but break the loop if need_resched() is set or after 2 ms.
+ * The MAX_SOFTIRQ_TIME provides a nice upper bound in most cases, but in
+ * certain cases, such as stop_machine(), jiffies may cease to
  * increment and so we need the MAX_SOFTIRQ_RESTART limit as
- * well to make sure we eventually वापस from this method.
+ * well to make sure we eventually return from this method.
  *
  * These limits have been established via experimentation.
  * The two things to balance is latency against fairness -
  * we want to handle softirqs as soon as possible, but they
  * should not be able to lock up the box.
  */
-#घोषणा MAX_SOFTIRQ_TIME  msecs_to_jअगरfies(2)
-#घोषणा MAX_SOFTIRQ_RESTART 10
+#define MAX_SOFTIRQ_TIME  msecs_to_jiffies(2)
+#define MAX_SOFTIRQ_RESTART 10
 
-#अगर_घोषित CONFIG_TRACE_IRQFLAGS
+#ifdef CONFIG_TRACE_IRQFLAGS
 /*
- * When we run softirqs from irq_निकास() and thus on the hardirq stack we need
+ * When we run softirqs from irq_exit() and thus on the hardirq stack we need
  * to keep the lockdep irq context tracking as tight as possible in order to
- * not miss-qualअगरy lock contexts and miss possible deadlocks.
+ * not miss-qualify lock contexts and miss possible deadlocks.
  */
 
-अटल अंतरभूत bool lockdep_softirq_start(व्योम)
-अणु
+static inline bool lockdep_softirq_start(void)
+{
 	bool in_hardirq = false;
 
-	अगर (lockdep_hardirq_context()) अणु
+	if (lockdep_hardirq_context()) {
 		in_hardirq = true;
-		lockdep_hardirq_निकास();
-	पूर्ण
+		lockdep_hardirq_exit();
+	}
 
 	lockdep_softirq_enter();
 
-	वापस in_hardirq;
-पूर्ण
+	return in_hardirq;
+}
 
-अटल अंतरभूत व्योम lockdep_softirq_end(bool in_hardirq)
-अणु
-	lockdep_softirq_निकास();
+static inline void lockdep_softirq_end(bool in_hardirq)
+{
+	lockdep_softirq_exit();
 
-	अगर (in_hardirq)
+	if (in_hardirq)
 		lockdep_hardirq_enter();
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool lockdep_softirq_start(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम lockdep_softirq_end(bool in_hardirq) अणु पूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline bool lockdep_softirq_start(void) { return false; }
+static inline void lockdep_softirq_end(bool in_hardirq) { }
+#endif
 
-यंत्रlinkage __visible व्योम __softirq_entry __करो_softirq(व्योम)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + MAX_SOFTIRQ_TIME;
-	अचिन्हित दीर्घ old_flags = current->flags;
-	पूर्णांक max_restart = MAX_SOFTIRQ_RESTART;
-	काष्ठा softirq_action *h;
+asmlinkage __visible void __softirq_entry __do_softirq(void)
+{
+	unsigned long end = jiffies + MAX_SOFTIRQ_TIME;
+	unsigned long old_flags = current->flags;
+	int max_restart = MAX_SOFTIRQ_RESTART;
+	struct softirq_action *h;
 	bool in_hardirq;
 	__u32 pending;
-	पूर्णांक softirq_bit;
+	int softirq_bit;
 
 	/*
-	 * Mask out PF_MEMALLOC as the current task context is borrowed क्रम the
+	 * Mask out PF_MEMALLOC as the current task context is borrowed for the
 	 * softirq. A softirq handled, such as network RX, might set PF_MEMALLOC
-	 * again अगर the socket is related to swapping.
+	 * again if the socket is related to swapping.
 	 */
 	current->flags &= ~PF_MEMALLOC;
 
@@ -538,16 +537,16 @@ EXPORT_SYMBOL(__local_bh_enable_ip);
 	account_softirq_enter(current);
 
 restart:
-	/* Reset the pending biपंचांगask beक्रमe enabling irqs */
+	/* Reset the pending bitmask before enabling irqs */
 	set_softirq_pending(0);
 
 	local_irq_enable();
 
 	h = softirq_vec;
 
-	जबतक ((softirq_bit = ffs(pending))) अणु
-		अचिन्हित पूर्णांक vec_nr;
-		पूर्णांक prev_count;
+	while ((softirq_bit = ffs(pending))) {
+		unsigned int vec_nr;
+		int prev_count;
 
 		h += softirq_bit - 1;
 
@@ -558,443 +557,443 @@ restart:
 
 		trace_softirq_entry(vec_nr);
 		h->action(h);
-		trace_softirq_निकास(vec_nr);
-		अगर (unlikely(prev_count != preempt_count())) अणु
+		trace_softirq_exit(vec_nr);
+		if (unlikely(prev_count != preempt_count())) {
 			pr_err("huh, entered softirq %u %s %p with preempt_count %08x, exited with %08x?\n",
 			       vec_nr, softirq_to_name[vec_nr], h->action,
 			       prev_count, preempt_count());
 			preempt_count_set(prev_count);
-		पूर्ण
+		}
 		h++;
 		pending >>= softirq_bit;
-	पूर्ण
+	}
 
-	अगर (!IS_ENABLED(CONFIG_PREEMPT_RT) &&
-	    __this_cpu_पढ़ो(ksoftirqd) == current)
+	if (!IS_ENABLED(CONFIG_PREEMPT_RT) &&
+	    __this_cpu_read(ksoftirqd) == current)
 		rcu_softirq_qs();
 
 	local_irq_disable();
 
 	pending = local_softirq_pending();
-	अगर (pending) अणु
-		अगर (समय_beक्रमe(jअगरfies, end) && !need_resched() &&
+	if (pending) {
+		if (time_before(jiffies, end) && !need_resched() &&
 		    --max_restart)
-			जाओ restart;
+			goto restart;
 
 		wakeup_softirqd();
-	पूर्ण
+	}
 
-	account_softirq_निकास(current);
+	account_softirq_exit(current);
 	lockdep_softirq_end(in_hardirq);
 	softirq_handle_end();
 	current_restore_flags(old_flags, PF_MEMALLOC);
-पूर्ण
+}
 
 /**
- * irq_enter_rcu - Enter an पूर्णांकerrupt context with RCU watching
+ * irq_enter_rcu - Enter an interrupt context with RCU watching
  */
-व्योम irq_enter_rcu(व्योम)
-अणु
+void irq_enter_rcu(void)
+{
 	__irq_enter_raw();
 
-	अगर (is_idle_task(current) && (irq_count() == HARसूचीQ_OFFSET))
+	if (is_idle_task(current) && (irq_count() == HARDIRQ_OFFSET))
 		tick_irq_enter();
 
 	account_hardirq_enter(current);
-पूर्ण
+}
 
 /**
- * irq_enter - Enter an पूर्णांकerrupt context including RCU update
+ * irq_enter - Enter an interrupt context including RCU update
  */
-व्योम irq_enter(व्योम)
-अणु
+void irq_enter(void)
+{
 	rcu_irq_enter();
 	irq_enter_rcu();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tick_irq_निकास(व्योम)
-अणु
-#अगर_घोषित CONFIG_NO_HZ_COMMON
-	पूर्णांक cpu = smp_processor_id();
+static inline void tick_irq_exit(void)
+{
+#ifdef CONFIG_NO_HZ_COMMON
+	int cpu = smp_processor_id();
 
-	/* Make sure that समयr wheel updates are propagated */
-	अगर ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu)) अणु
-		अगर (!in_irq())
-			tick_nohz_irq_निकास();
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	/* Make sure that timer wheel updates are propagated */
+	if ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu)) {
+		if (!in_irq())
+			tick_nohz_irq_exit();
+	}
+#endif
+}
 
-अटल अंतरभूत व्योम __irq_निकास_rcu(व्योम)
-अणु
-#अगर_अघोषित __ARCH_IRQ_EXIT_IRQS_DISABLED
+static inline void __irq_exit_rcu(void)
+{
+#ifndef __ARCH_IRQ_EXIT_IRQS_DISABLED
 	local_irq_disable();
-#अन्यथा
-	lockdep_निश्चित_irqs_disabled();
-#पूर्ण_अगर
-	account_hardirq_निकास(current);
-	preempt_count_sub(HARसूचीQ_OFFSET);
-	अगर (!in_पूर्णांकerrupt() && local_softirq_pending())
+#else
+	lockdep_assert_irqs_disabled();
+#endif
+	account_hardirq_exit(current);
+	preempt_count_sub(HARDIRQ_OFFSET);
+	if (!in_interrupt() && local_softirq_pending())
 		invoke_softirq();
 
-	tick_irq_निकास();
-पूर्ण
+	tick_irq_exit();
+}
 
 /**
- * irq_निकास_rcu() - Exit an पूर्णांकerrupt context without updating RCU
+ * irq_exit_rcu() - Exit an interrupt context without updating RCU
  *
- * Also processes softirqs अगर needed and possible.
+ * Also processes softirqs if needed and possible.
  */
-व्योम irq_निकास_rcu(व्योम)
-अणु
-	__irq_निकास_rcu();
+void irq_exit_rcu(void)
+{
+	__irq_exit_rcu();
 	 /* must be last! */
-	lockdep_hardirq_निकास();
-पूर्ण
+	lockdep_hardirq_exit();
+}
 
 /**
- * irq_निकास - Exit an पूर्णांकerrupt context, update RCU and lockdep
+ * irq_exit - Exit an interrupt context, update RCU and lockdep
  *
- * Also processes softirqs अगर needed and possible.
+ * Also processes softirqs if needed and possible.
  */
-व्योम irq_निकास(व्योम)
-अणु
-	__irq_निकास_rcu();
-	rcu_irq_निकास();
+void irq_exit(void)
+{
+	__irq_exit_rcu();
+	rcu_irq_exit();
 	 /* must be last! */
-	lockdep_hardirq_निकास();
-पूर्ण
+	lockdep_hardirq_exit();
+}
 
 /*
  * This function must run with irqs disabled!
  */
-अंतरभूत व्योम उठाओ_softirq_irqoff(अचिन्हित पूर्णांक nr)
-अणु
-	__उठाओ_softirq_irqoff(nr);
+inline void raise_softirq_irqoff(unsigned int nr)
+{
+	__raise_softirq_irqoff(nr);
 
 	/*
-	 * If we're in an interrupt or softirq, we're करोne
+	 * If we're in an interrupt or softirq, we're done
 	 * (this also catches softirq-disabled code). We will
-	 * actually run the softirq once we वापस from
+	 * actually run the softirq once we return from
 	 * the irq or softirq.
 	 *
 	 * Otherwise we wake up ksoftirqd to make sure we
 	 * schedule the softirq soon.
 	 */
-	अगर (!in_पूर्णांकerrupt() && should_wake_ksoftirqd())
+	if (!in_interrupt() && should_wake_ksoftirqd())
 		wakeup_softirqd();
-पूर्ण
+}
 
-व्योम उठाओ_softirq(अचिन्हित पूर्णांक nr)
-अणु
-	अचिन्हित दीर्घ flags;
+void raise_softirq(unsigned int nr)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	उठाओ_softirq_irqoff(nr);
+	raise_softirq_irqoff(nr);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम __उठाओ_softirq_irqoff(अचिन्हित पूर्णांक nr)
-अणु
-	lockdep_निश्चित_irqs_disabled();
-	trace_softirq_उठाओ(nr);
+void __raise_softirq_irqoff(unsigned int nr)
+{
+	lockdep_assert_irqs_disabled();
+	trace_softirq_raise(nr);
 	or_softirq_pending(1UL << nr);
-पूर्ण
+}
 
-व्योम खोलो_softirq(पूर्णांक nr, व्योम (*action)(काष्ठा softirq_action *))
-अणु
+void open_softirq(int nr, void (*action)(struct softirq_action *))
+{
 	softirq_vec[nr].action = action;
-पूर्ण
+}
 
 /*
  * Tasklets
  */
-काष्ठा tasklet_head अणु
-	काष्ठा tasklet_काष्ठा *head;
-	काष्ठा tasklet_काष्ठा **tail;
-पूर्ण;
+struct tasklet_head {
+	struct tasklet_struct *head;
+	struct tasklet_struct **tail;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा tasklet_head, tasklet_vec);
-अटल DEFINE_PER_CPU(काष्ठा tasklet_head, tasklet_hi_vec);
+static DEFINE_PER_CPU(struct tasklet_head, tasklet_vec);
+static DEFINE_PER_CPU(struct tasklet_head, tasklet_hi_vec);
 
-अटल व्योम __tasklet_schedule_common(काष्ठा tasklet_काष्ठा *t,
-				      काष्ठा tasklet_head __percpu *headp,
-				      अचिन्हित पूर्णांक softirq_nr)
-अणु
-	काष्ठा tasklet_head *head;
-	अचिन्हित दीर्घ flags;
+static void __tasklet_schedule_common(struct tasklet_struct *t,
+				      struct tasklet_head __percpu *headp,
+				      unsigned int softirq_nr)
+{
+	struct tasklet_head *head;
+	unsigned long flags;
 
 	local_irq_save(flags);
 	head = this_cpu_ptr(headp);
-	t->next = शून्य;
+	t->next = NULL;
 	*head->tail = t;
 	head->tail = &(t->next);
-	उठाओ_softirq_irqoff(softirq_nr);
+	raise_softirq_irqoff(softirq_nr);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-व्योम __tasklet_schedule(काष्ठा tasklet_काष्ठा *t)
-अणु
+void __tasklet_schedule(struct tasklet_struct *t)
+{
 	__tasklet_schedule_common(t, &tasklet_vec,
 				  TASKLET_SOFTIRQ);
-पूर्ण
+}
 EXPORT_SYMBOL(__tasklet_schedule);
 
-व्योम __tasklet_hi_schedule(काष्ठा tasklet_काष्ठा *t)
-अणु
+void __tasklet_hi_schedule(struct tasklet_struct *t)
+{
 	__tasklet_schedule_common(t, &tasklet_hi_vec,
 				  HI_SOFTIRQ);
-पूर्ण
+}
 EXPORT_SYMBOL(__tasklet_hi_schedule);
 
-अटल bool tasklet_clear_sched(काष्ठा tasklet_काष्ठा *t)
-अणु
-	अगर (test_and_clear_bit(TASKLET_STATE_SCHED, &t->state)) अणु
+static bool tasklet_clear_sched(struct tasklet_struct *t)
+{
+	if (test_and_clear_bit(TASKLET_STATE_SCHED, &t->state)) {
 		wake_up_var(&t->state);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	WARN_ONCE(1, "tasklet SCHED state not set: %s %pS\n",
 		  t->use_callback ? "callback" : "func",
-		  t->use_callback ? (व्योम *)t->callback : (व्योम *)t->func);
+		  t->use_callback ? (void *)t->callback : (void *)t->func);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम tasklet_action_common(काष्ठा softirq_action *a,
-				  काष्ठा tasklet_head *tl_head,
-				  अचिन्हित पूर्णांक softirq_nr)
-अणु
-	काष्ठा tasklet_काष्ठा *list;
+static void tasklet_action_common(struct softirq_action *a,
+				  struct tasklet_head *tl_head,
+				  unsigned int softirq_nr)
+{
+	struct tasklet_struct *list;
 
 	local_irq_disable();
 	list = tl_head->head;
-	tl_head->head = शून्य;
+	tl_head->head = NULL;
 	tl_head->tail = &tl_head->head;
 	local_irq_enable();
 
-	जबतक (list) अणु
-		काष्ठा tasklet_काष्ठा *t = list;
+	while (list) {
+		struct tasklet_struct *t = list;
 
 		list = list->next;
 
-		अगर (tasklet_trylock(t)) अणु
-			अगर (!atomic_पढ़ो(&t->count)) अणु
-				अगर (tasklet_clear_sched(t)) अणु
-					अगर (t->use_callback)
+		if (tasklet_trylock(t)) {
+			if (!atomic_read(&t->count)) {
+				if (tasklet_clear_sched(t)) {
+					if (t->use_callback)
 						t->callback(t);
-					अन्यथा
+					else
 						t->func(t->data);
-				पूर्ण
+				}
 				tasklet_unlock(t);
-				जारी;
-			पूर्ण
+				continue;
+			}
 			tasklet_unlock(t);
-		पूर्ण
+		}
 
 		local_irq_disable();
-		t->next = शून्य;
+		t->next = NULL;
 		*tl_head->tail = t;
 		tl_head->tail = &t->next;
-		__उठाओ_softirq_irqoff(softirq_nr);
+		__raise_softirq_irqoff(softirq_nr);
 		local_irq_enable();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल __latent_entropy व्योम tasklet_action(काष्ठा softirq_action *a)
-अणु
+static __latent_entropy void tasklet_action(struct softirq_action *a)
+{
 	tasklet_action_common(a, this_cpu_ptr(&tasklet_vec), TASKLET_SOFTIRQ);
-पूर्ण
+}
 
-अटल __latent_entropy व्योम tasklet_hi_action(काष्ठा softirq_action *a)
-अणु
+static __latent_entropy void tasklet_hi_action(struct softirq_action *a)
+{
 	tasklet_action_common(a, this_cpu_ptr(&tasklet_hi_vec), HI_SOFTIRQ);
-पूर्ण
+}
 
-व्योम tasklet_setup(काष्ठा tasklet_काष्ठा *t,
-		   व्योम (*callback)(काष्ठा tasklet_काष्ठा *))
-अणु
-	t->next = शून्य;
+void tasklet_setup(struct tasklet_struct *t,
+		   void (*callback)(struct tasklet_struct *))
+{
+	t->next = NULL;
 	t->state = 0;
 	atomic_set(&t->count, 0);
 	t->callback = callback;
 	t->use_callback = true;
 	t->data = 0;
-पूर्ण
+}
 EXPORT_SYMBOL(tasklet_setup);
 
-व्योम tasklet_init(काष्ठा tasklet_काष्ठा *t,
-		  व्योम (*func)(अचिन्हित दीर्घ), अचिन्हित दीर्घ data)
-अणु
-	t->next = शून्य;
+void tasklet_init(struct tasklet_struct *t,
+		  void (*func)(unsigned long), unsigned long data)
+{
+	t->next = NULL;
 	t->state = 0;
 	atomic_set(&t->count, 0);
 	t->func = func;
 	t->use_callback = false;
 	t->data = data;
-पूर्ण
+}
 EXPORT_SYMBOL(tasklet_init);
 
-#अगर defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
+#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
 /*
- * Do not use in new code. Waiting क्रम tasklets from atomic contexts is
- * error prone and should be aव्योमed.
+ * Do not use in new code. Waiting for tasklets from atomic contexts is
+ * error prone and should be avoided.
  */
-व्योम tasklet_unlock_spin_रुको(काष्ठा tasklet_काष्ठा *t)
-अणु
-	जबतक (test_bit(TASKLET_STATE_RUN, &(t)->state)) अणु
-		अगर (IS_ENABLED(CONFIG_PREEMPT_RT)) अणु
+void tasklet_unlock_spin_wait(struct tasklet_struct *t)
+{
+	while (test_bit(TASKLET_STATE_RUN, &(t)->state)) {
+		if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
 			/*
 			 * Prevent a live lock when current preempted soft
-			 * पूर्णांकerrupt processing or prevents ksoftirqd from
-			 * running. If the tasklet runs on a dअगरferent CPU
-			 * then this has no effect other than करोing the BH
-			 * disable/enable dance क्रम nothing.
+			 * interrupt processing or prevents ksoftirqd from
+			 * running. If the tasklet runs on a different CPU
+			 * then this has no effect other than doing the BH
+			 * disable/enable dance for nothing.
 			 */
 			local_bh_disable();
 			local_bh_enable();
-		पूर्ण अन्यथा अणु
+		} else {
 			cpu_relax();
-		पूर्ण
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(tasklet_unlock_spin_रुको);
-#पूर्ण_अगर
+		}
+	}
+}
+EXPORT_SYMBOL(tasklet_unlock_spin_wait);
+#endif
 
-व्योम tasklet_समाप्त(काष्ठा tasklet_काष्ठा *t)
-अणु
-	अगर (in_पूर्णांकerrupt())
+void tasklet_kill(struct tasklet_struct *t)
+{
+	if (in_interrupt())
 		pr_notice("Attempt to kill tasklet from interrupt\n");
 
-	जबतक (test_and_set_bit(TASKLET_STATE_SCHED, &t->state))
-		रुको_var_event(&t->state, !test_bit(TASKLET_STATE_SCHED, &t->state));
+	while (test_and_set_bit(TASKLET_STATE_SCHED, &t->state))
+		wait_var_event(&t->state, !test_bit(TASKLET_STATE_SCHED, &t->state));
 
-	tasklet_unlock_रुको(t);
+	tasklet_unlock_wait(t);
 	tasklet_clear_sched(t);
-पूर्ण
-EXPORT_SYMBOL(tasklet_समाप्त);
+}
+EXPORT_SYMBOL(tasklet_kill);
 
-#अगर defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
-व्योम tasklet_unlock(काष्ठा tasklet_काष्ठा *t)
-अणु
-	smp_mb__beक्रमe_atomic();
+#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
+void tasklet_unlock(struct tasklet_struct *t)
+{
+	smp_mb__before_atomic();
 	clear_bit(TASKLET_STATE_RUN, &t->state);
 	smp_mb__after_atomic();
 	wake_up_var(&t->state);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(tasklet_unlock);
 
-व्योम tasklet_unlock_रुको(काष्ठा tasklet_काष्ठा *t)
-अणु
-	रुको_var_event(&t->state, !test_bit(TASKLET_STATE_RUN, &t->state));
-पूर्ण
-EXPORT_SYMBOL_GPL(tasklet_unlock_रुको);
-#पूर्ण_अगर
+void tasklet_unlock_wait(struct tasklet_struct *t)
+{
+	wait_var_event(&t->state, !test_bit(TASKLET_STATE_RUN, &t->state));
+}
+EXPORT_SYMBOL_GPL(tasklet_unlock_wait);
+#endif
 
-व्योम __init softirq_init(व्योम)
-अणु
-	पूर्णांक cpu;
+void __init softirq_init(void)
+{
+	int cpu;
 
-	क्रम_each_possible_cpu(cpu) अणु
+	for_each_possible_cpu(cpu) {
 		per_cpu(tasklet_vec, cpu).tail =
 			&per_cpu(tasklet_vec, cpu).head;
 		per_cpu(tasklet_hi_vec, cpu).tail =
 			&per_cpu(tasklet_hi_vec, cpu).head;
-	पूर्ण
+	}
 
-	खोलो_softirq(TASKLET_SOFTIRQ, tasklet_action);
-	खोलो_softirq(HI_SOFTIRQ, tasklet_hi_action);
-पूर्ण
+	open_softirq(TASKLET_SOFTIRQ, tasklet_action);
+	open_softirq(HI_SOFTIRQ, tasklet_hi_action);
+}
 
-अटल पूर्णांक ksoftirqd_should_run(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस local_softirq_pending();
-पूर्ण
+static int ksoftirqd_should_run(unsigned int cpu)
+{
+	return local_softirq_pending();
+}
 
-अटल व्योम run_ksoftirqd(अचिन्हित पूर्णांक cpu)
-अणु
+static void run_ksoftirqd(unsigned int cpu)
+{
 	ksoftirqd_run_begin();
-	अगर (local_softirq_pending()) अणु
+	if (local_softirq_pending()) {
 		/*
-		 * We can safely run softirq on अंतरभूत stack, as we are not deep
+		 * We can safely run softirq on inline stack, as we are not deep
 		 * in the task stack here.
 		 */
-		__करो_softirq();
+		__do_softirq();
 		ksoftirqd_run_end();
 		cond_resched();
-		वापस;
-	पूर्ण
+		return;
+	}
 	ksoftirqd_run_end();
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल पूर्णांक takeover_tasklets(अचिन्हित पूर्णांक cpu)
-अणु
+#ifdef CONFIG_HOTPLUG_CPU
+static int takeover_tasklets(unsigned int cpu)
+{
 	/* CPU is dead, so no lock needed. */
 	local_irq_disable();
 
-	/* Find end, append list क्रम that CPU. */
-	अगर (&per_cpu(tasklet_vec, cpu).head != per_cpu(tasklet_vec, cpu).tail) अणु
-		*__this_cpu_पढ़ो(tasklet_vec.tail) = per_cpu(tasklet_vec, cpu).head;
-		__this_cpu_ग_लिखो(tasklet_vec.tail, per_cpu(tasklet_vec, cpu).tail);
-		per_cpu(tasklet_vec, cpu).head = शून्य;
+	/* Find end, append list for that CPU. */
+	if (&per_cpu(tasklet_vec, cpu).head != per_cpu(tasklet_vec, cpu).tail) {
+		*__this_cpu_read(tasklet_vec.tail) = per_cpu(tasklet_vec, cpu).head;
+		__this_cpu_write(tasklet_vec.tail, per_cpu(tasklet_vec, cpu).tail);
+		per_cpu(tasklet_vec, cpu).head = NULL;
 		per_cpu(tasklet_vec, cpu).tail = &per_cpu(tasklet_vec, cpu).head;
-	पूर्ण
-	उठाओ_softirq_irqoff(TASKLET_SOFTIRQ);
+	}
+	raise_softirq_irqoff(TASKLET_SOFTIRQ);
 
-	अगर (&per_cpu(tasklet_hi_vec, cpu).head != per_cpu(tasklet_hi_vec, cpu).tail) अणु
-		*__this_cpu_पढ़ो(tasklet_hi_vec.tail) = per_cpu(tasklet_hi_vec, cpu).head;
-		__this_cpu_ग_लिखो(tasklet_hi_vec.tail, per_cpu(tasklet_hi_vec, cpu).tail);
-		per_cpu(tasklet_hi_vec, cpu).head = शून्य;
+	if (&per_cpu(tasklet_hi_vec, cpu).head != per_cpu(tasklet_hi_vec, cpu).tail) {
+		*__this_cpu_read(tasklet_hi_vec.tail) = per_cpu(tasklet_hi_vec, cpu).head;
+		__this_cpu_write(tasklet_hi_vec.tail, per_cpu(tasklet_hi_vec, cpu).tail);
+		per_cpu(tasklet_hi_vec, cpu).head = NULL;
 		per_cpu(tasklet_hi_vec, cpu).tail = &per_cpu(tasklet_hi_vec, cpu).head;
-	पूर्ण
-	उठाओ_softirq_irqoff(HI_SOFTIRQ);
+	}
+	raise_softirq_irqoff(HI_SOFTIRQ);
 
 	local_irq_enable();
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा takeover_tasklets	शून्य
-#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
+	return 0;
+}
+#else
+#define takeover_tasklets	NULL
+#endif /* CONFIG_HOTPLUG_CPU */
 
-अटल काष्ठा smp_hotplug_thपढ़ो softirq_thपढ़ोs = अणु
+static struct smp_hotplug_thread softirq_threads = {
 	.store			= &ksoftirqd,
-	.thपढ़ो_should_run	= ksoftirqd_should_run,
-	.thपढ़ो_fn		= run_ksoftirqd,
-	.thपढ़ो_comm		= "ksoftirqd/%u",
-पूर्ण;
+	.thread_should_run	= ksoftirqd_should_run,
+	.thread_fn		= run_ksoftirqd,
+	.thread_comm		= "ksoftirqd/%u",
+};
 
-अटल __init पूर्णांक spawn_ksoftirqd(व्योम)
-अणु
-	cpuhp_setup_state_nocalls(CPUHP_SOFTIRQ_DEAD, "softirq:dead", शून्य,
+static __init int spawn_ksoftirqd(void)
+{
+	cpuhp_setup_state_nocalls(CPUHP_SOFTIRQ_DEAD, "softirq:dead", NULL,
 				  takeover_tasklets);
-	BUG_ON(smpboot_रेजिस्टर_percpu_thपढ़ो(&softirq_thपढ़ोs));
+	BUG_ON(smpboot_register_percpu_thread(&softirq_threads));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(spawn_ksoftirqd);
 
 /*
  * [ These __weak aliases are kept in a separate compilation unit, so that
- *   GCC करोes not अंतरभूत them incorrectly. ]
+ *   GCC does not inline them incorrectly. ]
  */
 
-पूर्णांक __init __weak early_irq_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int __init __weak early_irq_init(void)
+{
+	return 0;
+}
 
-पूर्णांक __init __weak arch_probe_nr_irqs(व्योम)
-अणु
-	वापस NR_IRQS_LEGACY;
-पूर्ण
+int __init __weak arch_probe_nr_irqs(void)
+{
+	return NR_IRQS_LEGACY;
+}
 
-पूर्णांक __init __weak arch_early_irq_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int __init __weak arch_early_irq_init(void)
+{
+	return 0;
+}
 
-अचिन्हित पूर्णांक __weak arch_dynirq_lower_bound(अचिन्हित पूर्णांक from)
-अणु
-	वापस from;
-पूर्ण
+unsigned int __weak arch_dynirq_lower_bound(unsigned int from)
+{
+	return from;
+}

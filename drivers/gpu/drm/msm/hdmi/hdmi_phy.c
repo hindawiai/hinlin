@@ -1,227 +1,226 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/of_device.h>
+#include <linux/of_device.h>
 
-#समावेश "hdmi.h"
+#include "hdmi.h"
 
-अटल पूर्णांक msm_hdmi_phy_resource_init(काष्ठा hdmi_phy *phy)
-अणु
-	काष्ठा hdmi_phy_cfg *cfg = phy->cfg;
-	काष्ठा device *dev = &phy->pdev->dev;
-	पूर्णांक i, ret;
+static int msm_hdmi_phy_resource_init(struct hdmi_phy *phy)
+{
+	struct hdmi_phy_cfg *cfg = phy->cfg;
+	struct device *dev = &phy->pdev->dev;
+	int i, ret;
 
-	phy->regs = devm_kसुस्मृति(dev, cfg->num_regs, माप(phy->regs[0]),
+	phy->regs = devm_kcalloc(dev, cfg->num_regs, sizeof(phy->regs[0]),
 				 GFP_KERNEL);
-	अगर (!phy->regs)
-		वापस -ENOMEM;
+	if (!phy->regs)
+		return -ENOMEM;
 
-	phy->clks = devm_kसुस्मृति(dev, cfg->num_clks, माप(phy->clks[0]),
+	phy->clks = devm_kcalloc(dev, cfg->num_clks, sizeof(phy->clks[0]),
 				 GFP_KERNEL);
-	अगर (!phy->clks)
-		वापस -ENOMEM;
+	if (!phy->clks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < cfg->num_regs; i++) अणु
-		काष्ठा regulator *reg;
+	for (i = 0; i < cfg->num_regs; i++) {
+		struct regulator *reg;
 
 		reg = devm_regulator_get(dev, cfg->reg_names[i]);
-		अगर (IS_ERR(reg)) अणु
+		if (IS_ERR(reg)) {
 			ret = PTR_ERR(reg);
-			अगर (ret != -EPROBE_DEFER) अणु
+			if (ret != -EPROBE_DEFER) {
 				DRM_DEV_ERROR(dev,
 					      "failed to get phy regulator: %s (%d)\n",
 					      cfg->reg_names[i], ret);
-			पूर्ण
+			}
 
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		phy->regs[i] = reg;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < cfg->num_clks; i++) अणु
-		काष्ठा clk *clk;
+	for (i = 0; i < cfg->num_clks; i++) {
+		struct clk *clk;
 
 		clk = msm_clk_get(phy->pdev, cfg->clk_names[i]);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			ret = PTR_ERR(clk);
 			DRM_DEV_ERROR(dev, "failed to get phy clock: %s (%d)\n",
 				cfg->clk_names[i], ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		phy->clks[i] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक msm_hdmi_phy_resource_enable(काष्ठा hdmi_phy *phy)
-अणु
-	काष्ठा hdmi_phy_cfg *cfg = phy->cfg;
-	काष्ठा device *dev = &phy->pdev->dev;
-	पूर्णांक i, ret = 0;
+int msm_hdmi_phy_resource_enable(struct hdmi_phy *phy)
+{
+	struct hdmi_phy_cfg *cfg = phy->cfg;
+	struct device *dev = &phy->pdev->dev;
+	int i, ret = 0;
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 
-	क्रम (i = 0; i < cfg->num_regs; i++) अणु
+	for (i = 0; i < cfg->num_regs; i++) {
 		ret = regulator_enable(phy->regs[i]);
-		अगर (ret)
+		if (ret)
 			DRM_DEV_ERROR(dev, "failed to enable regulator: %s (%d)\n",
 				cfg->reg_names[i], ret);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < cfg->num_clks; i++) अणु
+	for (i = 0; i < cfg->num_clks; i++) {
 		ret = clk_prepare_enable(phy->clks[i]);
-		अगर (ret)
+		if (ret)
 			DRM_DEV_ERROR(dev, "failed to enable clock: %s (%d)\n",
 				cfg->clk_names[i], ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम msm_hdmi_phy_resource_disable(काष्ठा hdmi_phy *phy)
-अणु
-	काष्ठा hdmi_phy_cfg *cfg = phy->cfg;
-	काष्ठा device *dev = &phy->pdev->dev;
-	पूर्णांक i;
+void msm_hdmi_phy_resource_disable(struct hdmi_phy *phy)
+{
+	struct hdmi_phy_cfg *cfg = phy->cfg;
+	struct device *dev = &phy->pdev->dev;
+	int i;
 
-	क्रम (i = cfg->num_clks - 1; i >= 0; i--)
+	for (i = cfg->num_clks - 1; i >= 0; i--)
 		clk_disable_unprepare(phy->clks[i]);
 
-	क्रम (i = cfg->num_regs - 1; i >= 0; i--)
+	for (i = cfg->num_regs - 1; i >= 0; i--)
 		regulator_disable(phy->regs[i]);
 
-	pm_runसमय_put_sync(dev);
-पूर्ण
+	pm_runtime_put_sync(dev);
+}
 
-व्योम msm_hdmi_phy_घातerup(काष्ठा hdmi_phy *phy, अचिन्हित दीर्घ पूर्णांक pixघड़ी)
-अणु
-	अगर (!phy || !phy->cfg->घातerup)
-		वापस;
+void msm_hdmi_phy_powerup(struct hdmi_phy *phy, unsigned long int pixclock)
+{
+	if (!phy || !phy->cfg->powerup)
+		return;
 
-	phy->cfg->घातerup(phy, pixघड़ी);
-पूर्ण
+	phy->cfg->powerup(phy, pixclock);
+}
 
-व्योम msm_hdmi_phy_घातerकरोwn(काष्ठा hdmi_phy *phy)
-अणु
-	अगर (!phy || !phy->cfg->घातerकरोwn)
-		वापस;
+void msm_hdmi_phy_powerdown(struct hdmi_phy *phy)
+{
+	if (!phy || !phy->cfg->powerdown)
+		return;
 
-	phy->cfg->घातerकरोwn(phy);
-पूर्ण
+	phy->cfg->powerdown(phy);
+}
 
-अटल पूर्णांक msm_hdmi_phy_pll_init(काष्ठा platक्रमm_device *pdev,
-			     क्रमागत hdmi_phy_type type)
-अणु
-	पूर्णांक ret;
+static int msm_hdmi_phy_pll_init(struct platform_device *pdev,
+			     enum hdmi_phy_type type)
+{
+	int ret;
 
-	चयन (type) अणु
-	हाल MSM_HDMI_PHY_8960:
+	switch (type) {
+	case MSM_HDMI_PHY_8960:
 		ret = msm_hdmi_pll_8960_init(pdev);
-		अवरोध;
-	हाल MSM_HDMI_PHY_8996:
+		break;
+	case MSM_HDMI_PHY_8996:
 		ret = msm_hdmi_pll_8996_init(pdev);
-		अवरोध;
+		break;
 	/*
-	 * we करोn't have PLL support for these, don't report an error क्रम now
+	 * we don't have PLL support for these, don't report an error for now
 	 */
-	हाल MSM_HDMI_PHY_8x60:
-	हाल MSM_HDMI_PHY_8x74:
-	शेष:
+	case MSM_HDMI_PHY_8x60:
+	case MSM_HDMI_PHY_8x74:
+	default:
 		ret = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक msm_hdmi_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा hdmi_phy *phy;
-	पूर्णांक ret;
+static int msm_hdmi_phy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct hdmi_phy *phy;
+	int ret;
 
-	phy = devm_kzalloc(dev, माप(*phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस -ENODEV;
+	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
+	if (!phy)
+		return -ENODEV;
 
-	phy->cfg = (काष्ठा hdmi_phy_cfg *)of_device_get_match_data(dev);
-	अगर (!phy->cfg)
-		वापस -ENODEV;
+	phy->cfg = (struct hdmi_phy_cfg *)of_device_get_match_data(dev);
+	if (!phy->cfg)
+		return -ENODEV;
 
 	phy->mmio = msm_ioremap(pdev, "hdmi_phy", "HDMI_PHY");
-	अगर (IS_ERR(phy->mmio)) अणु
+	if (IS_ERR(phy->mmio)) {
 		DRM_DEV_ERROR(dev, "%s: failed to map phy base\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	phy->pdev = pdev;
 
 	ret = msm_hdmi_phy_resource_init(phy);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	ret = msm_hdmi_phy_resource_enable(phy);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = msm_hdmi_phy_pll_init(pdev, phy->cfg->type);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev, "couldn't init PLL\n");
 		msm_hdmi_phy_resource_disable(phy);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	msm_hdmi_phy_resource_disable(phy);
 
-	platक्रमm_set_drvdata(pdev, phy);
+	platform_set_drvdata(pdev, phy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक msm_hdmi_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	pm_runसमय_disable(&pdev->dev);
+static int msm_hdmi_phy_remove(struct platform_device *pdev)
+{
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id msm_hdmi_phy_dt_match[] = अणु
-	अणु .compatible = "qcom,hdmi-phy-8660",
-	  .data = &msm_hdmi_phy_8x60_cfg पूर्ण,
-	अणु .compatible = "qcom,hdmi-phy-8960",
-	  .data = &msm_hdmi_phy_8960_cfg पूर्ण,
-	अणु .compatible = "qcom,hdmi-phy-8974",
-	  .data = &msm_hdmi_phy_8x74_cfg पूर्ण,
-	अणु .compatible = "qcom,hdmi-phy-8084",
-	  .data = &msm_hdmi_phy_8x74_cfg पूर्ण,
-	अणु .compatible = "qcom,hdmi-phy-8996",
-	  .data = &msm_hdmi_phy_8996_cfg पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id msm_hdmi_phy_dt_match[] = {
+	{ .compatible = "qcom,hdmi-phy-8660",
+	  .data = &msm_hdmi_phy_8x60_cfg },
+	{ .compatible = "qcom,hdmi-phy-8960",
+	  .data = &msm_hdmi_phy_8960_cfg },
+	{ .compatible = "qcom,hdmi-phy-8974",
+	  .data = &msm_hdmi_phy_8x74_cfg },
+	{ .compatible = "qcom,hdmi-phy-8084",
+	  .data = &msm_hdmi_phy_8x74_cfg },
+	{ .compatible = "qcom,hdmi-phy-8996",
+	  .data = &msm_hdmi_phy_8996_cfg },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver msm_hdmi_phy_platक्रमm_driver = अणु
+static struct platform_driver msm_hdmi_phy_platform_driver = {
 	.probe      = msm_hdmi_phy_probe,
-	.हटाओ     = msm_hdmi_phy_हटाओ,
-	.driver     = अणु
+	.remove     = msm_hdmi_phy_remove,
+	.driver     = {
 		.name   = "msm_hdmi_phy",
 		.of_match_table = msm_hdmi_phy_dt_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-व्योम __init msm_hdmi_phy_driver_रेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_रेजिस्टर(&msm_hdmi_phy_platक्रमm_driver);
-पूर्ण
+void __init msm_hdmi_phy_driver_register(void)
+{
+	platform_driver_register(&msm_hdmi_phy_platform_driver);
+}
 
-व्योम __निकास msm_hdmi_phy_driver_unरेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&msm_hdmi_phy_platक्रमm_driver);
-पूर्ण
+void __exit msm_hdmi_phy_driver_unregister(void)
+{
+	platform_driver_unregister(&msm_hdmi_phy_platform_driver);
+}

@@ -1,3 +1,2 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश "../../../../lib/fdt_rw.c"
+// SPDX-License-Identifier: GPL-2.0-only
+#include "../../../../lib/fdt_rw.c"

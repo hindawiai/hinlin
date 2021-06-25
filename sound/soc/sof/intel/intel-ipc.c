@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may करो so under either license.
+// redistributing this file, you may do so under either license.
 //
 // Copyright(c) 2019 Intel Corporation. All rights reserved.
 //
-// Authors: Guennadi Liakhovetski <guennadi.liakhovetski@linux.पूर्णांकel.com>
+// Authors: Guennadi Liakhovetski <guennadi.liakhovetski@linux.intel.com>
 
-/* Intel-specअगरic SOF IPC code */
+/* Intel-specific SOF IPC code */
 
-#समावेश <linux/device.h>
-#समावेश <linux/export.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include <linux/module.h>
+#include <linux/types.h>
 
-#समावेश <sound/pcm.h>
-#समावेश <sound/sof/stream.h>
+#include <sound/pcm.h>
+#include <sound/sof/stream.h>
 
-#समावेश "../ops.h"
-#समावेश "../sof-priv.h"
+#include "../ops.h"
+#include "../sof-priv.h"
 
-काष्ठा पूर्णांकel_stream अणु
-	माप_प्रकार posn_offset;
-पूर्ण;
+struct intel_stream {
+	size_t posn_offset;
+};
 
 /* Mailbox-based Intel IPC implementation */
-व्योम पूर्णांकel_ipc_msg_data(काष्ठा snd_sof_dev *sdev,
-			काष्ठा snd_pcm_substream *substream,
-			व्योम *p, माप_प्रकार sz)
-अणु
-	अगर (!substream || !sdev->stream_box.size) अणु
-		sof_mailbox_पढ़ो(sdev, sdev->dsp_box.offset, p, sz);
-	पूर्ण अन्यथा अणु
-		काष्ठा पूर्णांकel_stream *stream = substream->runसमय->निजी_data;
+void intel_ipc_msg_data(struct snd_sof_dev *sdev,
+			struct snd_pcm_substream *substream,
+			void *p, size_t sz)
+{
+	if (!substream || !sdev->stream_box.size) {
+		sof_mailbox_read(sdev, sdev->dsp_box.offset, p, sz);
+	} else {
+		struct intel_stream *stream = substream->runtime->private_data;
 
-		/* The stream might alपढ़ोy be बंदd */
-		अगर (stream)
-			sof_mailbox_पढ़ो(sdev, stream->posn_offset, p, sz);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_NS(पूर्णांकel_ipc_msg_data, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
+		/* The stream might already be closed */
+		if (stream)
+			sof_mailbox_read(sdev, stream->posn_offset, p, sz);
+	}
+}
+EXPORT_SYMBOL_NS(intel_ipc_msg_data, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
 
-पूर्णांक पूर्णांकel_ipc_pcm_params(काष्ठा snd_sof_dev *sdev,
-			 काष्ठा snd_pcm_substream *substream,
-			 स्थिर काष्ठा sof_ipc_pcm_params_reply *reply)
-अणु
-	काष्ठा पूर्णांकel_stream *stream = substream->runसमय->निजी_data;
-	माप_प्रकार posn_offset = reply->posn_offset;
+int intel_ipc_pcm_params(struct snd_sof_dev *sdev,
+			 struct snd_pcm_substream *substream,
+			 const struct sof_ipc_pcm_params_reply *reply)
+{
+	struct intel_stream *stream = substream->runtime->private_data;
+	size_t posn_offset = reply->posn_offset;
 
-	/* check अगर offset is overflow or it is not aligned */
-	अगर (posn_offset > sdev->stream_box.size ||
-	    posn_offset % माप(काष्ठा sof_ipc_stream_posn) != 0)
-		वापस -EINVAL;
+	/* check if offset is overflow or it is not aligned */
+	if (posn_offset > sdev->stream_box.size ||
+	    posn_offset % sizeof(struct sof_ipc_stream_posn) != 0)
+		return -EINVAL;
 
 	stream->posn_offset = sdev->stream_box.offset + posn_offset;
 
 	dev_dbg(sdev->dev, "pcm: stream dir %d, posn mailbox offset is %zu",
 		substream->stream, stream->posn_offset);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_NS(पूर्णांकel_ipc_pcm_params, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
+	return 0;
+}
+EXPORT_SYMBOL_NS(intel_ipc_pcm_params, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
 
-पूर्णांक पूर्णांकel_pcm_खोलो(काष्ठा snd_sof_dev *sdev,
-		   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा पूर्णांकel_stream *stream = kदो_स्मृति(माप(*stream), GFP_KERNEL);
+int intel_pcm_open(struct snd_sof_dev *sdev,
+		   struct snd_pcm_substream *substream)
+{
+	struct intel_stream *stream = kmalloc(sizeof(*stream), GFP_KERNEL);
 
-	अगर (!stream)
-		वापस -ENOMEM;
+	if (!stream)
+		return -ENOMEM;
 
 	/* binding pcm substream to hda stream */
-	substream->runसमय->निजी_data = stream;
+	substream->runtime->private_data = stream;
 
 	/* align to DMA minimum transfer size */
-	snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 4);
+	snd_pcm_hw_constraint_step(substream->runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 4);
 
-	/* aव्योम circular buffer wrap in middle of period */
-	snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(substream->runसमय,
+	/* avoid circular buffer wrap in middle of period */
+	snd_pcm_hw_constraint_integer(substream->runtime,
 				      SNDRV_PCM_HW_PARAM_PERIODS);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_NS(पूर्णांकel_pcm_खोलो, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
+	return 0;
+}
+EXPORT_SYMBOL_NS(intel_pcm_open, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
 
-पूर्णांक पूर्णांकel_pcm_बंद(काष्ठा snd_sof_dev *sdev,
-		    काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा पूर्णांकel_stream *stream = substream->runसमय->निजी_data;
+int intel_pcm_close(struct snd_sof_dev *sdev,
+		    struct snd_pcm_substream *substream)
+{
+	struct intel_stream *stream = substream->runtime->private_data;
 
-	substream->runसमय->निजी_data = शून्य;
-	kमुक्त(stream);
+	substream->runtime->private_data = NULL;
+	kfree(stream);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_NS(पूर्णांकel_pcm_बंद, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
+	return 0;
+}
+EXPORT_SYMBOL_NS(intel_pcm_close, SND_SOC_SOF_INTEL_HIFI_EP_IPC);
 
 MODULE_LICENSE("Dual BSD/GPL");

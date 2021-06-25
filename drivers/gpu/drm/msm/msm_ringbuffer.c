@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#समावेश "msm_ringbuffer.h"
-#समावेश "msm_gpu.h"
+#include "msm_ringbuffer.h"
+#include "msm_gpu.h"
 
-काष्ठा msm_ringbuffer *msm_ringbuffer_new(काष्ठा msm_gpu *gpu, पूर्णांक id,
-		व्योम *memptrs, uपूर्णांक64_t memptrs_iova)
-अणु
-	काष्ठा msm_ringbuffer *ring;
-	अक्षर name[32];
-	पूर्णांक ret;
+struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int id,
+		void *memptrs, uint64_t memptrs_iova)
+{
+	struct msm_ringbuffer *ring;
+	char name[32];
+	int ret;
 
-	/* We assume everwhere that MSM_GPU_RINGBUFFER_SZ is a घातer of 2 */
-	BUILD_BUG_ON(!is_घातer_of_2(MSM_GPU_RINGBUFFER_SZ));
+	/* We assume everwhere that MSM_GPU_RINGBUFFER_SZ is a power of 2 */
+	BUILD_BUG_ON(!is_power_of_2(MSM_GPU_RINGBUFFER_SZ));
 
-	ring = kzalloc(माप(*ring), GFP_KERNEL);
-	अगर (!ring) अणु
+	ring = kzalloc(sizeof(*ring), GFP_KERNEL);
+	if (!ring) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	ring->gpu = gpu;
 	ring->id = id;
@@ -31,11 +30,11 @@
 		check_apriv(gpu, MSM_BO_WC | MSM_BO_GPU_READONLY),
 		gpu->aspace, &ring->bo, &ring->iova);
 
-	अगर (IS_ERR(ring->start)) अणु
+	if (IS_ERR(ring->start)) {
 		ret = PTR_ERR(ring->start);
 		ring->start = 0;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	msm_gem_object_set_name(ring->bo, "ring%d", id);
 
@@ -50,25 +49,25 @@
 	spin_lock_init(&ring->submit_lock);
 	spin_lock_init(&ring->preempt_lock);
 
-	snम_लिखो(name, माप(name), "gpu-ring-%d", ring->id);
+	snprintf(name, sizeof(name), "gpu-ring-%d", ring->id);
 
 	ring->fctx = msm_fence_context_alloc(gpu->dev, name);
 
-	वापस ring;
+	return ring;
 
 fail:
 	msm_ringbuffer_destroy(ring);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-व्योम msm_ringbuffer_destroy(काष्ठा msm_ringbuffer *ring)
-अणु
-	अगर (IS_ERR_OR_शून्य(ring))
-		वापस;
+void msm_ringbuffer_destroy(struct msm_ringbuffer *ring)
+{
+	if (IS_ERR_OR_NULL(ring))
+		return;
 
-	msm_fence_context_मुक्त(ring->fctx);
+	msm_fence_context_free(ring->fctx);
 
 	msm_gem_kernel_put(ring->bo, ring->gpu->aspace, false);
 
-	kमुक्त(ring);
-पूर्ण
+	kfree(ring);
+}

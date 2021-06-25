@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_NOPS_H
-#घोषणा _ASM_X86_NOPS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_NOPS_H
+#define _ASM_X86_NOPS_H
 
 /*
- * Define nops क्रम use with alternative() and क्रम tracing.
+ * Define nops for use with alternative() and for tracing.
  */
 
-#अगर_अघोषित CONFIG_64BIT
+#ifndef CONFIG_64BIT
 
 /*
  * Generic 32bit nops from GAS:
@@ -22,18 +21,18 @@
  * 8: leal %ds:0x0(%esi,%eiz,1),%esi
  *
  * Except 5 and 8, which are DS prefixed 4 and 7 resp, where GAS would emit 2
- * nop inकाष्ठाions.
+ * nop instructions.
  */
-#घोषणा BYTES_NOP1	0x90
-#घोषणा BYTES_NOP2	0x89,0xf6
-#घोषणा BYTES_NOP3	0x8d,0x76,0x00
-#घोषणा BYTES_NOP4	0x8d,0x74,0x26,0x00
-#घोषणा BYTES_NOP5	0x3e,BYTES_NOP4
-#घोषणा BYTES_NOP6	0x8d,0xb6,0x00,0x00,0x00,0x00
-#घोषणा BYTES_NOP7	0x8d,0xb4,0x26,0x00,0x00,0x00,0x00
-#घोषणा BYTES_NOP8	0x3e,BYTES_NOP7
+#define BYTES_NOP1	0x90
+#define BYTES_NOP2	0x89,0xf6
+#define BYTES_NOP3	0x8d,0x76,0x00
+#define BYTES_NOP4	0x8d,0x74,0x26,0x00
+#define BYTES_NOP5	0x3e,BYTES_NOP4
+#define BYTES_NOP6	0x8d,0xb6,0x00,0x00,0x00,0x00
+#define BYTES_NOP7	0x8d,0xb4,0x26,0x00,0x00,0x00,0x00
+#define BYTES_NOP8	0x3e,BYTES_NOP7
 
-#अन्यथा
+#else
 
 /*
  * Generic 64bit nops from GAS:
@@ -47,36 +46,36 @@
  * 7: nopl 0x00000000(%eax)
  * 8: nopl 0x00000000(%eax,%eax,1)
  */
-#घोषणा BYTES_NOP1	0x90
-#घोषणा BYTES_NOP2	0x66,BYTES_NOP1
-#घोषणा BYTES_NOP3	0x0f,0x1f,0x00
-#घोषणा BYTES_NOP4	0x0f,0x1f,0x40,0x00
-#घोषणा BYTES_NOP5	0x0f,0x1f,0x44,0x00,0x00
-#घोषणा BYTES_NOP6	0x66,BYTES_NOP5
-#घोषणा BYTES_NOP7	0x0f,0x1f,0x80,0x00,0x00,0x00,0x00
-#घोषणा BYTES_NOP8	0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00
+#define BYTES_NOP1	0x90
+#define BYTES_NOP2	0x66,BYTES_NOP1
+#define BYTES_NOP3	0x0f,0x1f,0x00
+#define BYTES_NOP4	0x0f,0x1f,0x40,0x00
+#define BYTES_NOP5	0x0f,0x1f,0x44,0x00,0x00
+#define BYTES_NOP6	0x66,BYTES_NOP5
+#define BYTES_NOP7	0x0f,0x1f,0x80,0x00,0x00,0x00,0x00
+#define BYTES_NOP8	0x0f,0x1f,0x84,0x00,0x00,0x00,0x00,0x00
 
-#पूर्ण_अगर /* CONFIG_64BIT */
+#endif /* CONFIG_64BIT */
 
-#अगर_घोषित __ASSEMBLY__
-#घोषणा _ASM_MK_NOP(x) .byte x
-#अन्यथा
-#घोषणा _ASM_MK_NOP(x) ".byte " __stringअगरy(x) "\n"
-#पूर्ण_अगर
+#ifdef __ASSEMBLY__
+#define _ASM_MK_NOP(x) .byte x
+#else
+#define _ASM_MK_NOP(x) ".byte " __stringify(x) "\n"
+#endif
 
-#घोषणा ASM_NOP1 _ASM_MK_NOP(BYTES_NOP1)
-#घोषणा ASM_NOP2 _ASM_MK_NOP(BYTES_NOP2)
-#घोषणा ASM_NOP3 _ASM_MK_NOP(BYTES_NOP3)
-#घोषणा ASM_NOP4 _ASM_MK_NOP(BYTES_NOP4)
-#घोषणा ASM_NOP5 _ASM_MK_NOP(BYTES_NOP5)
-#घोषणा ASM_NOP6 _ASM_MK_NOP(BYTES_NOP6)
-#घोषणा ASM_NOP7 _ASM_MK_NOP(BYTES_NOP7)
-#घोषणा ASM_NOP8 _ASM_MK_NOP(BYTES_NOP8)
+#define ASM_NOP1 _ASM_MK_NOP(BYTES_NOP1)
+#define ASM_NOP2 _ASM_MK_NOP(BYTES_NOP2)
+#define ASM_NOP3 _ASM_MK_NOP(BYTES_NOP3)
+#define ASM_NOP4 _ASM_MK_NOP(BYTES_NOP4)
+#define ASM_NOP5 _ASM_MK_NOP(BYTES_NOP5)
+#define ASM_NOP6 _ASM_MK_NOP(BYTES_NOP6)
+#define ASM_NOP7 _ASM_MK_NOP(BYTES_NOP7)
+#define ASM_NOP8 _ASM_MK_NOP(BYTES_NOP8)
 
-#घोषणा ASM_NOP_MAX 8
+#define ASM_NOP_MAX 8
 
-#अगर_अघोषित __ASSEMBLY__
-बाह्य स्थिर अचिन्हित अक्षर * स्थिर x86_nops[];
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+extern const unsigned char * const x86_nops[];
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_NOPS_H */
+#endif /* _ASM_X86_NOPS_H */

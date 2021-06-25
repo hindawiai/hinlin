@@ -1,122 +1,121 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Input Power Event -> APM Bridge
  *
- *  Copyright (c) 2007 Riअक्षरd Purdie
+ *  Copyright (c) 2007 Richard Purdie
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/apm-emulation.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/tty.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/apm-emulation.h>
 
-अटल व्योम प्रणाली_घातer_event(अचिन्हित पूर्णांक keycode)
-अणु
-	चयन (keycode) अणु
-	हाल KEY_SUSPEND:
+static void system_power_event(unsigned int keycode)
+{
+	switch (keycode) {
+	case KEY_SUSPEND:
 		apm_queue_event(APM_USER_SUSPEND);
 		pr_info("Requesting system suspend...\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम apmघातer_event(काष्ठा input_handle *handle, अचिन्हित पूर्णांक type,
-			   अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	/* only react on key करोwn events */
-	अगर (value != 1)
-		वापस;
+static void apmpower_event(struct input_handle *handle, unsigned int type,
+			   unsigned int code, int value)
+{
+	/* only react on key down events */
+	if (value != 1)
+		return;
 
-	चयन (type) अणु
-	हाल EV_PWR:
-		प्रणाली_घातer_event(code);
-		अवरोध;
+	switch (type) {
+	case EV_PWR:
+		system_power_event(code);
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक apmघातer_connect(काष्ठा input_handler *handler,
-					  काष्ठा input_dev *dev,
-					  स्थिर काष्ठा input_device_id *id)
-अणु
-	काष्ठा input_handle *handle;
-	पूर्णांक error;
+static int apmpower_connect(struct input_handler *handler,
+					  struct input_dev *dev,
+					  const struct input_device_id *id)
+{
+	struct input_handle *handle;
+	int error;
 
-	handle = kzalloc(माप(काष्ठा input_handle), GFP_KERNEL);
-	अगर (!handle)
-		वापस -ENOMEM;
+	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
+	if (!handle)
+		return -ENOMEM;
 
 	handle->dev = dev;
 	handle->handler = handler;
 	handle->name = "apm-power";
 
-	error = input_रेजिस्टर_handle(handle);
-	अगर (error) अणु
+	error = input_register_handle(handle);
+	if (error) {
 		pr_err("Failed to register input power handler, error %d\n",
 		       error);
-		kमुक्त(handle);
-		वापस error;
-	पूर्ण
+		kfree(handle);
+		return error;
+	}
 
-	error = input_खोलो_device(handle);
-	अगर (error) अणु
+	error = input_open_device(handle);
+	if (error) {
 		pr_err("Failed to open input power device, error %d\n", error);
-		input_unरेजिस्टर_handle(handle);
-		kमुक्त(handle);
-		वापस error;
-	पूर्ण
+		input_unregister_handle(handle);
+		kfree(handle);
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम apmघातer_disconnect(काष्ठा input_handle *handle)
-अणु
-	input_बंद_device(handle);
-	input_unरेजिस्टर_handle(handle);
-	kमुक्त(handle);
-पूर्ण
+static void apmpower_disconnect(struct input_handle *handle)
+{
+	input_close_device(handle);
+	input_unregister_handle(handle);
+	kfree(handle);
+}
 
-अटल स्थिर काष्ठा input_device_id apmघातer_ids[] = अणु
-	अणु
+static const struct input_device_id apmpower_ids[] = {
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
-		.evbit = अणु BIT_MASK(EV_PWR) पूर्ण,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+		.evbit = { BIT_MASK(EV_PWR) },
+	},
+	{ },
+};
 
-MODULE_DEVICE_TABLE(input, apmघातer_ids);
+MODULE_DEVICE_TABLE(input, apmpower_ids);
 
-अटल काष्ठा input_handler apmघातer_handler = अणु
-	.event =	apmघातer_event,
-	.connect =	apmघातer_connect,
-	.disconnect =	apmघातer_disconnect,
+static struct input_handler apmpower_handler = {
+	.event =	apmpower_event,
+	.connect =	apmpower_connect,
+	.disconnect =	apmpower_disconnect,
 	.name =		"apm-power",
-	.id_table =	apmघातer_ids,
-पूर्ण;
+	.id_table =	apmpower_ids,
+};
 
-अटल पूर्णांक __init apmघातer_init(व्योम)
-अणु
-	वापस input_रेजिस्टर_handler(&apmघातer_handler);
-पूर्ण
+static int __init apmpower_init(void)
+{
+	return input_register_handler(&apmpower_handler);
+}
 
-अटल व्योम __निकास apmघातer_निकास(व्योम)
-अणु
-	input_unरेजिस्टर_handler(&apmघातer_handler);
-पूर्ण
+static void __exit apmpower_exit(void)
+{
+	input_unregister_handler(&apmpower_handler);
+}
 
-module_init(apmघातer_init);
-module_निकास(apmघातer_निकास);
+module_init(apmpower_init);
+module_exit(apmpower_exit);
 
 MODULE_AUTHOR("Richard Purdie <rpurdie@rpsys.net>");
 MODULE_DESCRIPTION("Input Power Event -> APM Bridge");

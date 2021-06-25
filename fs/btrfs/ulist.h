@@ -1,75 +1,74 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2011 STRATO AG
  * written by Arne Jansen <sensille@gmx.net>
  */
 
-#अगर_अघोषित BTRFS_ULIST_H
-#घोषणा BTRFS_ULIST_H
+#ifndef BTRFS_ULIST_H
+#define BTRFS_ULIST_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
 
 /*
- * ulist is a generic data काष्ठाure to hold a collection of unique u64
+ * ulist is a generic data structure to hold a collection of unique u64
  * values. The only operations it supports is adding to the list and
- * क्रमागतerating it.
- * It is possible to store an auxiliary value aदीर्घ with the key.
+ * enumerating it.
+ * It is possible to store an auxiliary value along with the key.
  *
  */
-काष्ठा ulist_iterator अणु
-	काष्ठा list_head *cur_list;  /* hपूर्णांक to start search */
-पूर्ण;
+struct ulist_iterator {
+	struct list_head *cur_list;  /* hint to start search */
+};
 
 /*
  * element of the list
  */
-काष्ठा ulist_node अणु
+struct ulist_node {
 	u64 val;		/* value to store */
-	u64 aux;		/* auxiliary value saved aदीर्घ with the val */
+	u64 aux;		/* auxiliary value saved along with the val */
 
-	काष्ठा list_head list;  /* used to link node */
-	काष्ठा rb_node rb_node;	/* used to speed up search */
-पूर्ण;
+	struct list_head list;  /* used to link node */
+	struct rb_node rb_node;	/* used to speed up search */
+};
 
-काष्ठा ulist अणु
+struct ulist {
 	/*
 	 * number of elements stored in list
 	 */
-	अचिन्हित दीर्घ nnodes;
+	unsigned long nnodes;
 
-	काष्ठा list_head nodes;
-	काष्ठा rb_root root;
-पूर्ण;
+	struct list_head nodes;
+	struct rb_root root;
+};
 
-व्योम ulist_init(काष्ठा ulist *ulist);
-व्योम ulist_release(काष्ठा ulist *ulist);
-व्योम ulist_reinit(काष्ठा ulist *ulist);
-काष्ठा ulist *ulist_alloc(gfp_t gfp_mask);
-व्योम ulist_मुक्त(काष्ठा ulist *ulist);
-पूर्णांक ulist_add(काष्ठा ulist *ulist, u64 val, u64 aux, gfp_t gfp_mask);
-पूर्णांक ulist_add_merge(काष्ठा ulist *ulist, u64 val, u64 aux,
+void ulist_init(struct ulist *ulist);
+void ulist_release(struct ulist *ulist);
+void ulist_reinit(struct ulist *ulist);
+struct ulist *ulist_alloc(gfp_t gfp_mask);
+void ulist_free(struct ulist *ulist);
+int ulist_add(struct ulist *ulist, u64 val, u64 aux, gfp_t gfp_mask);
+int ulist_add_merge(struct ulist *ulist, u64 val, u64 aux,
 		    u64 *old_aux, gfp_t gfp_mask);
-पूर्णांक ulist_del(काष्ठा ulist *ulist, u64 val, u64 aux);
+int ulist_del(struct ulist *ulist, u64 val, u64 aux);
 
-/* just like ulist_add_merge() but take a poपूर्णांकer क्रम the aux data */
-अटल अंतरभूत पूर्णांक ulist_add_merge_ptr(काष्ठा ulist *ulist, u64 val, व्योम *aux,
-				      व्योम **old_aux, gfp_t gfp_mask)
-अणु
-#अगर BITS_PER_LONG == 32
-	u64 old64 = (uपूर्णांकptr_t)*old_aux;
-	पूर्णांक ret = ulist_add_merge(ulist, val, (uपूर्णांकptr_t)aux, &old64, gfp_mask);
-	*old_aux = (व्योम *)((uपूर्णांकptr_t)old64);
-	वापस ret;
-#अन्यथा
-	वापस ulist_add_merge(ulist, val, (u64)aux, (u64 *)old_aux, gfp_mask);
-#पूर्ण_अगर
-पूर्ण
+/* just like ulist_add_merge() but take a pointer for the aux data */
+static inline int ulist_add_merge_ptr(struct ulist *ulist, u64 val, void *aux,
+				      void **old_aux, gfp_t gfp_mask)
+{
+#if BITS_PER_LONG == 32
+	u64 old64 = (uintptr_t)*old_aux;
+	int ret = ulist_add_merge(ulist, val, (uintptr_t)aux, &old64, gfp_mask);
+	*old_aux = (void *)((uintptr_t)old64);
+	return ret;
+#else
+	return ulist_add_merge(ulist, val, (u64)aux, (u64 *)old_aux, gfp_mask);
+#endif
+}
 
-काष्ठा ulist_node *ulist_next(काष्ठा ulist *ulist,
-			      काष्ठा ulist_iterator *uiter);
+struct ulist_node *ulist_next(struct ulist *ulist,
+			      struct ulist_iterator *uiter);
 
-#घोषणा ULIST_ITER_INIT(uiter) ((uiter)->cur_list = शून्य)
+#define ULIST_ITER_INIT(uiter) ((uiter)->cur_list = NULL)
 
-#पूर्ण_अगर
+#endif

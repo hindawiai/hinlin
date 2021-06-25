@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित S390_DEVICE_H
-#घोषणा S390_DEVICE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef S390_DEVICE_H
+#define S390_DEVICE_H
 
-#समावेश <यंत्र/ccwdev.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश "io_sch.h"
+#include <asm/ccwdev.h>
+#include <linux/atomic.h>
+#include <linux/timer.h>
+#include <linux/wait.h>
+#include <linux/notifier.h>
+#include <linux/kernel_stat.h>
+#include "io_sch.h"
 
 /*
  * states of the device statemachine
  */
-क्रमागत dev_state अणु
+enum dev_state {
 	DEV_STATE_NOT_OPER,
 	DEV_STATE_SENSE_ID,
 	DEV_STATE_OFFLINE,
@@ -23,10 +22,10 @@
 	DEV_STATE_W4SENSE,
 	DEV_STATE_DISBAND_PGID,
 	DEV_STATE_BOXED,
-	/* states to रुको क्रम i/o completion beक्रमe करोing something */
+	/* states to wait for i/o completion before doing something */
 	DEV_STATE_TIMEOUT_KILL,
 	DEV_STATE_QUIESCE,
-	/* special states क्रम devices gone not operational */
+	/* special states for devices gone not operational */
 	DEV_STATE_DISCONNECTED,
 	DEV_STATE_DISCONNECTED_SENSE_ID,
 	DEV_STATE_CMFCHANGE,
@@ -34,115 +33,115 @@
 	DEV_STATE_STEAL_LOCK,
 	/* last element! */
 	NR_DEV_STATES
-पूर्ण;
+};
 
 /*
  * asynchronous events of the device statemachine
  */
-क्रमागत dev_event अणु
+enum dev_event {
 	DEV_EVENT_NOTOPER,
 	DEV_EVENT_INTERRUPT,
 	DEV_EVENT_TIMEOUT,
 	DEV_EVENT_VERIFY,
 	/* last element! */
 	NR_DEV_EVENTS
-पूर्ण;
+};
 
-काष्ठा ccw_device;
+struct ccw_device;
 
 /*
  * action called through jumptable
  */
-प्रकार व्योम (fsm_func_t)(काष्ठा ccw_device *, क्रमागत dev_event);
-बाह्य fsm_func_t *dev_jumptable[NR_DEV_STATES][NR_DEV_EVENTS];
+typedef void (fsm_func_t)(struct ccw_device *, enum dev_event);
+extern fsm_func_t *dev_jumptable[NR_DEV_STATES][NR_DEV_EVENTS];
 
-अटल अंतरभूत व्योम
-dev_fsm_event(काष्ठा ccw_device *cdev, क्रमागत dev_event dev_event)
-अणु
-	पूर्णांक state = cdev->निजी->state;
+static inline void
+dev_fsm_event(struct ccw_device *cdev, enum dev_event dev_event)
+{
+	int state = cdev->private->state;
 
-	अगर (dev_event == DEV_EVENT_INTERRUPT) अणु
-		अगर (state == DEV_STATE_ONLINE)
-			inc_irq_stat(cdev->निजी->पूर्णांक_class);
-		अन्यथा अगर (state != DEV_STATE_CMFCHANGE &&
+	if (dev_event == DEV_EVENT_INTERRUPT) {
+		if (state == DEV_STATE_ONLINE)
+			inc_irq_stat(cdev->private->int_class);
+		else if (state != DEV_STATE_CMFCHANGE &&
 			 state != DEV_STATE_CMFUPDATE)
 			inc_irq_stat(IRQIO_CIO);
-	पूर्ण
+	}
 	dev_jumptable[state][dev_event](cdev, dev_event);
-पूर्ण
+}
 
 /*
- * Delivers 1 अगर the device state is final.
+ * Delivers 1 if the device state is final.
  */
-अटल अंतरभूत पूर्णांक
-dev_fsm_final_state(काष्ठा ccw_device *cdev)
-अणु
-	वापस (cdev->निजी->state == DEV_STATE_NOT_OPER ||
-		cdev->निजी->state == DEV_STATE_OFFLINE ||
-		cdev->निजी->state == DEV_STATE_ONLINE ||
-		cdev->निजी->state == DEV_STATE_BOXED);
-पूर्ण
+static inline int
+dev_fsm_final_state(struct ccw_device *cdev)
+{
+	return (cdev->private->state == DEV_STATE_NOT_OPER ||
+		cdev->private->state == DEV_STATE_OFFLINE ||
+		cdev->private->state == DEV_STATE_ONLINE ||
+		cdev->private->state == DEV_STATE_BOXED);
+}
 
-पूर्णांक __init io_subchannel_init(व्योम);
+int __init io_subchannel_init(void);
 
-व्योम io_subchannel_recog_करोne(काष्ठा ccw_device *cdev);
-व्योम io_subchannel_init_config(काष्ठा subchannel *sch);
+void io_subchannel_recog_done(struct ccw_device *cdev);
+void io_subchannel_init_config(struct subchannel *sch);
 
-पूर्णांक ccw_device_cancel_halt_clear(काष्ठा ccw_device *);
+int ccw_device_cancel_halt_clear(struct ccw_device *);
 
-पूर्णांक ccw_device_is_orphan(काष्ठा ccw_device *);
+int ccw_device_is_orphan(struct ccw_device *);
 
-व्योम ccw_device_recognition(काष्ठा ccw_device *);
-पूर्णांक ccw_device_online(काष्ठा ccw_device *);
-पूर्णांक ccw_device_offline(काष्ठा ccw_device *);
-व्योम ccw_device_update_sense_data(काष्ठा ccw_device *);
-पूर्णांक ccw_device_test_sense_data(काष्ठा ccw_device *);
-पूर्णांक ccw_purge_blacklisted(व्योम);
-व्योम ccw_device_sched_toकरो(काष्ठा ccw_device *cdev, क्रमागत cdev_toकरो toकरो);
-काष्ठा ccw_device *get_ccwdev_by_dev_id(काष्ठा ccw_dev_id *dev_id);
+void ccw_device_recognition(struct ccw_device *);
+int ccw_device_online(struct ccw_device *);
+int ccw_device_offline(struct ccw_device *);
+void ccw_device_update_sense_data(struct ccw_device *);
+int ccw_device_test_sense_data(struct ccw_device *);
+int ccw_purge_blacklisted(void);
+void ccw_device_sched_todo(struct ccw_device *cdev, enum cdev_todo todo);
+struct ccw_device *get_ccwdev_by_dev_id(struct ccw_dev_id *dev_id);
 
-/* Function prototypes क्रम device status and basic sense stuff. */
-व्योम ccw_device_accumulate_irb(काष्ठा ccw_device *, काष्ठा irb *);
-व्योम ccw_device_accumulate_basic_sense(काष्ठा ccw_device *, काष्ठा irb *);
-पूर्णांक ccw_device_accumulate_and_sense(काष्ठा ccw_device *, काष्ठा irb *);
-पूर्णांक ccw_device_करो_sense(काष्ठा ccw_device *, काष्ठा irb *);
+/* Function prototypes for device status and basic sense stuff. */
+void ccw_device_accumulate_irb(struct ccw_device *, struct irb *);
+void ccw_device_accumulate_basic_sense(struct ccw_device *, struct irb *);
+int ccw_device_accumulate_and_sense(struct ccw_device *, struct irb *);
+int ccw_device_do_sense(struct ccw_device *, struct irb *);
 
-/* Function prototype क्रम पूर्णांकernal request handling. */
-पूर्णांक lpm_adjust(पूर्णांक lpm, पूर्णांक mask);
-व्योम ccw_request_start(काष्ठा ccw_device *);
-पूर्णांक ccw_request_cancel(काष्ठा ccw_device *cdev);
-व्योम ccw_request_handler(काष्ठा ccw_device *cdev);
-व्योम ccw_request_समयout(काष्ठा ccw_device *cdev);
-व्योम ccw_request_notoper(काष्ठा ccw_device *cdev);
+/* Function prototype for internal request handling. */
+int lpm_adjust(int lpm, int mask);
+void ccw_request_start(struct ccw_device *);
+int ccw_request_cancel(struct ccw_device *cdev);
+void ccw_request_handler(struct ccw_device *cdev);
+void ccw_request_timeout(struct ccw_device *cdev);
+void ccw_request_notoper(struct ccw_device *cdev);
 
-/* Function prototypes क्रम sense id stuff. */
-व्योम ccw_device_sense_id_start(काष्ठा ccw_device *);
-व्योम ccw_device_sense_id_करोne(काष्ठा ccw_device *, पूर्णांक);
+/* Function prototypes for sense id stuff. */
+void ccw_device_sense_id_start(struct ccw_device *);
+void ccw_device_sense_id_done(struct ccw_device *, int);
 
-/* Function prototypes क्रम path grouping stuff. */
-व्योम ccw_device_verअगरy_start(काष्ठा ccw_device *);
-व्योम ccw_device_verअगरy_करोne(काष्ठा ccw_device *, पूर्णांक);
+/* Function prototypes for path grouping stuff. */
+void ccw_device_verify_start(struct ccw_device *);
+void ccw_device_verify_done(struct ccw_device *, int);
 
-व्योम ccw_device_disband_start(काष्ठा ccw_device *);
-व्योम ccw_device_disband_करोne(काष्ठा ccw_device *, पूर्णांक);
+void ccw_device_disband_start(struct ccw_device *);
+void ccw_device_disband_done(struct ccw_device *, int);
 
-पूर्णांक ccw_device_stlck(काष्ठा ccw_device *);
+int ccw_device_stlck(struct ccw_device *);
 
-/* Helper function क्रम machine check handling. */
-व्योम ccw_device_trigger_reprobe(काष्ठा ccw_device *);
-व्योम ccw_device_समाप्त_io(काष्ठा ccw_device *);
-पूर्णांक ccw_device_notअगरy(काष्ठा ccw_device *, पूर्णांक);
-व्योम ccw_device_set_disconnected(काष्ठा ccw_device *cdev);
-व्योम ccw_device_set_notoper(काष्ठा ccw_device *cdev);
+/* Helper function for machine check handling. */
+void ccw_device_trigger_reprobe(struct ccw_device *);
+void ccw_device_kill_io(struct ccw_device *);
+int ccw_device_notify(struct ccw_device *, int);
+void ccw_device_set_disconnected(struct ccw_device *cdev);
+void ccw_device_set_notoper(struct ccw_device *cdev);
 
-व्योम ccw_device_समयout(काष्ठा समयr_list *t);
-व्योम ccw_device_set_समयout(काष्ठा ccw_device *, पूर्णांक);
-व्योम ccw_device_schedule_recovery(व्योम);
+void ccw_device_timeout(struct timer_list *t);
+void ccw_device_set_timeout(struct ccw_device *, int);
+void ccw_device_schedule_recovery(void);
 
 /* Channel measurement facility related */
-व्योम retry_set_schib(काष्ठा ccw_device *cdev);
-व्योम cmf_retry_copy_block(काष्ठा ccw_device *);
-पूर्णांक cmf_reenable(काष्ठा ccw_device *);
-व्योम cmf_reactivate(व्योम);
-बाह्य काष्ठा device_attribute dev_attr_cmb_enable;
-#पूर्ण_अगर
+void retry_set_schib(struct ccw_device *cdev);
+void cmf_retry_copy_block(struct ccw_device *);
+int cmf_reenable(struct ccw_device *);
+void cmf_reactivate(void);
+extern struct device_attribute dev_attr_cmb_enable;
+#endif

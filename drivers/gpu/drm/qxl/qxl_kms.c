@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,26 +23,26 @@
  *          Alon Levy
  */
 
-#समावेश <linux/io-mapping.h>
-#समावेश <linux/pci.h>
+#include <linux/io-mapping.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_probe_helper.h>
 
-#समावेश "qxl_drv.h"
-#समावेश "qxl_object.h"
+#include "qxl_drv.h"
+#include "qxl_object.h"
 
-पूर्णांक qxl_log_level;
+int qxl_log_level;
 
-अटल bool qxl_check_device(काष्ठा qxl_device *qdev)
-अणु
-	काष्ठा qxl_rom *rom = qdev->rom;
+static bool qxl_check_device(struct qxl_device *qdev)
+{
+	struct qxl_rom *rom = qdev->rom;
 
-	अगर (rom->magic != 0x4f525851) अणु
+	if (rom->magic != 0x4f525851) {
 		DRM_ERROR("bad rom signature %x\n", rom->magic);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	DRM_INFO("Device Version %d.%d\n", rom->id, rom->update_id);
 	DRM_INFO("Compression level %d log level %d\n", rom->compression_level,
@@ -55,24 +54,24 @@
 
 	qdev->vram_size = rom->surface0_area_size;
 	DRM_INFO("RAM header offset: 0x%x\n", rom->ram_header_offset);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम setup_hw_slot(काष्ठा qxl_device *qdev, काष्ठा qxl_memslot *slot)
-अणु
+static void setup_hw_slot(struct qxl_device *qdev, struct qxl_memslot *slot)
+{
 	qdev->ram_header->mem_slot.mem_start = slot->start_phys_addr;
 	qdev->ram_header->mem_slot.mem_end = slot->start_phys_addr + slot->size;
 	qxl_io_memslot_add(qdev, qdev->rom->slots_start + slot->index);
-पूर्ण
+}
 
-अटल व्योम setup_slot(काष्ठा qxl_device *qdev,
-		       काष्ठा qxl_memslot *slot,
-		       अचिन्हित पूर्णांक slot_index,
-		       स्थिर अक्षर *slot_name,
-		       अचिन्हित दीर्घ start_phys_addr,
-		       अचिन्हित दीर्घ size)
-अणु
-	uपूर्णांक64_t high_bits;
+static void setup_slot(struct qxl_device *qdev,
+		       struct qxl_memslot *slot,
+		       unsigned int slot_index,
+		       const char *slot_name,
+		       unsigned long start_phys_addr,
+		       unsigned long size)
+{
+	uint64_t high_bits;
 
 	slot->index = slot_index;
 	slot->name = slot_name;
@@ -90,27 +89,27 @@
 
 	DRM_INFO("slot %d (%s): base 0x%08lx, size 0x%08lx\n",
 		 slot->index, slot->name,
-		 (अचिन्हित दीर्घ)slot->start_phys_addr,
-		 (अचिन्हित दीर्घ)slot->size);
-पूर्ण
+		 (unsigned long)slot->start_phys_addr,
+		 (unsigned long)slot->size);
+}
 
-व्योम qxl_reinit_memslots(काष्ठा qxl_device *qdev)
-अणु
-	setup_hw_slot(qdev, &qdev->मुख्य_slot);
+void qxl_reinit_memslots(struct qxl_device *qdev)
+{
+	setup_hw_slot(qdev, &qdev->main_slot);
 	setup_hw_slot(qdev, &qdev->surfaces_slot);
-पूर्ण
+}
 
-अटल व्योम qxl_gc_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qxl_device *qdev = container_of(work, काष्ठा qxl_device, gc_work);
+static void qxl_gc_work(struct work_struct *work)
+{
+	struct qxl_device *qdev = container_of(work, struct qxl_device, gc_work);
 
 	qxl_garbage_collect(qdev);
-पूर्ण
+}
 
-पूर्णांक qxl_device_init(काष्ठा qxl_device *qdev,
-		    काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक r, sb;
+int qxl_device_init(struct qxl_device *qdev,
+		    struct pci_dev *pdev)
+{
+	int r, sb;
 
 	pci_set_drvdata(pdev, &qdev->ddev);
 
@@ -126,12 +125,12 @@
 	qdev->io_base = pci_resource_start(pdev, 3);
 
 	qdev->vram_mapping = io_mapping_create_wc(qdev->vram_base, pci_resource_len(pdev, 0));
-	अगर (!qdev->vram_mapping) अणु
+	if (!qdev->vram_mapping) {
 		pr_err("Unable to create vram_mapping");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (pci_resource_len(pdev, 4) > 0) अणु
+	if (pci_resource_len(pdev, 4) > 0) {
 		/* 64bit surface bar present */
 		sb = 4;
 		qdev->surfaceram_base = pci_resource_start(pdev, sb);
@@ -139,8 +138,8 @@
 		qdev->surface_mapping =
 			io_mapping_create_wc(qdev->surfaceram_base,
 					     qdev->surfaceram_size);
-	पूर्ण
-	अगर (qdev->surface_mapping == शून्य) अणु
+	}
+	if (qdev->surface_mapping == NULL) {
 		/* 64bit surface bar not present (or mapping failed) */
 		sb = 1;
 		qdev->surfaceram_base = pci_resource_start(pdev, sb);
@@ -148,88 +147,88 @@
 		qdev->surface_mapping =
 			io_mapping_create_wc(qdev->surfaceram_base,
 					     qdev->surfaceram_size);
-		अगर (!qdev->surface_mapping) अणु
+		if (!qdev->surface_mapping) {
 			pr_err("Unable to create surface_mapping");
 			r = -ENOMEM;
-			जाओ vram_mapping_मुक्त;
-		पूर्ण
-	पूर्ण
+			goto vram_mapping_free;
+		}
+	}
 
 	DRM_DEBUG_KMS("qxl: vram %llx-%llx(%dM %dk), surface %llx-%llx(%dM %dk, %s)\n",
-		 (अचिन्हित दीर्घ दीर्घ)qdev->vram_base,
-		 (अचिन्हित दीर्घ दीर्घ)pci_resource_end(pdev, 0),
-		 (पूर्णांक)pci_resource_len(pdev, 0) / 1024 / 1024,
-		 (पूर्णांक)pci_resource_len(pdev, 0) / 1024,
-		 (अचिन्हित दीर्घ दीर्घ)qdev->surfaceram_base,
-		 (अचिन्हित दीर्घ दीर्घ)pci_resource_end(pdev, sb),
-		 (पूर्णांक)qdev->surfaceram_size / 1024 / 1024,
-		 (पूर्णांक)qdev->surfaceram_size / 1024,
+		 (unsigned long long)qdev->vram_base,
+		 (unsigned long long)pci_resource_end(pdev, 0),
+		 (int)pci_resource_len(pdev, 0) / 1024 / 1024,
+		 (int)pci_resource_len(pdev, 0) / 1024,
+		 (unsigned long long)qdev->surfaceram_base,
+		 (unsigned long long)pci_resource_end(pdev, sb),
+		 (int)qdev->surfaceram_size / 1024 / 1024,
+		 (int)qdev->surfaceram_size / 1024,
 		 (sb == 4) ? "64bit" : "32bit");
 
 	qdev->rom = ioremap(qdev->rom_base, qdev->rom_size);
-	अगर (!qdev->rom) अणु
+	if (!qdev->rom) {
 		pr_err("Unable to ioremap ROM\n");
 		r = -ENOMEM;
-		जाओ surface_mapping_मुक्त;
-	पूर्ण
+		goto surface_mapping_free;
+	}
 
-	अगर (!qxl_check_device(qdev)) अणु
+	if (!qxl_check_device(qdev)) {
 		r = -ENODEV;
-		जाओ rom_unmap;
-	पूर्ण
+		goto rom_unmap;
+	}
 
 	r = qxl_bo_init(qdev);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("bo init failed %d\n", r);
-		जाओ rom_unmap;
-	पूर्ण
+		goto rom_unmap;
+	}
 
 	qdev->ram_header = ioremap(qdev->vram_base +
 				   qdev->rom->ram_header_offset,
-				   माप(*qdev->ram_header));
-	अगर (!qdev->ram_header) अणु
+				   sizeof(*qdev->ram_header));
+	if (!qdev->ram_header) {
 		DRM_ERROR("Unable to ioremap RAM header\n");
 		r = -ENOMEM;
-		जाओ bo_fini;
-	पूर्ण
+		goto bo_fini;
+	}
 
 	qdev->command_ring = qxl_ring_create(&(qdev->ram_header->cmd_ring_hdr),
-					     माप(काष्ठा qxl_command),
+					     sizeof(struct qxl_command),
 					     QXL_COMMAND_RING_SIZE,
 					     qdev->io_base + QXL_IO_NOTIFY_CMD,
 					     false,
 					     &qdev->display_event);
-	अगर (!qdev->command_ring) अणु
+	if (!qdev->command_ring) {
 		DRM_ERROR("Unable to create command ring\n");
 		r = -ENOMEM;
-		जाओ ram_header_unmap;
-	पूर्ण
+		goto ram_header_unmap;
+	}
 
 	qdev->cursor_ring = qxl_ring_create(
 				&(qdev->ram_header->cursor_ring_hdr),
-				माप(काष्ठा qxl_command),
+				sizeof(struct qxl_command),
 				QXL_CURSOR_RING_SIZE,
 				qdev->io_base + QXL_IO_NOTIFY_CURSOR,
 				false,
 				&qdev->cursor_event);
 
-	अगर (!qdev->cursor_ring) अणु
+	if (!qdev->cursor_ring) {
 		DRM_ERROR("Unable to create cursor ring\n");
 		r = -ENOMEM;
-		जाओ command_ring_मुक्त;
-	पूर्ण
+		goto command_ring_free;
+	}
 
 	qdev->release_ring = qxl_ring_create(
 				&(qdev->ram_header->release_ring_hdr),
-				माप(uपूर्णांक64_t),
+				sizeof(uint64_t),
 				QXL_RELEASE_RING_SIZE, 0, true,
-				शून्य);
+				NULL);
 
-	अगर (!qdev->release_ring) अणु
+	if (!qdev->release_ring) {
 		DRM_ERROR("Unable to create release ring\n");
 		r = -ENOMEM;
-		जाओ cursor_ring_मुक्त;
-	पूर्ण
+		goto cursor_ring_free;
+	}
 
 	idr_init_base(&qdev->release_idr, 1);
 	spin_lock_init(&qdev->release_idr_lock);
@@ -240,75 +239,75 @@
 
 	mutex_init(&qdev->async_io_mutex);
 
-	/* reset the device पूर्णांकo a known state - no memslots, no primary
+	/* reset the device into a known state - no memslots, no primary
 	 * created, no surfaces. */
 	qxl_io_reset(qdev);
 
-	/* must initialize irq beक्रमe first async io - slot creation */
+	/* must initialize irq before first async io - slot creation */
 	r = qxl_irq_init(qdev);
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("Unable to init qxl irq\n");
-		जाओ release_ring_मुक्त;
-	पूर्ण
+		goto release_ring_free;
+	}
 
 	/*
-	 * Note that भव is surface0. We rely on the single ioremap करोne
-	 * beक्रमe.
+	 * Note that virtual is surface0. We rely on the single ioremap done
+	 * before.
 	 */
-	setup_slot(qdev, &qdev->मुख्य_slot, 0, "main",
-		   (अचिन्हित दीर्घ)qdev->vram_base,
-		   (अचिन्हित दीर्घ)qdev->rom->ram_header_offset);
+	setup_slot(qdev, &qdev->main_slot, 0, "main",
+		   (unsigned long)qdev->vram_base,
+		   (unsigned long)qdev->rom->ram_header_offset);
 	setup_slot(qdev, &qdev->surfaces_slot, 1, "surfaces",
-		   (अचिन्हित दीर्घ)qdev->surfaceram_base,
-		   (अचिन्हित दीर्घ)qdev->surfaceram_size);
+		   (unsigned long)qdev->surfaceram_base,
+		   (unsigned long)qdev->surfaceram_size);
 
 	INIT_WORK(&qdev->gc_work, qxl_gc_work);
 
-	वापस 0;
+	return 0;
 
-release_ring_मुक्त:
-	qxl_ring_मुक्त(qdev->release_ring);
-cursor_ring_मुक्त:
-	qxl_ring_मुक्त(qdev->cursor_ring);
-command_ring_मुक्त:
-	qxl_ring_मुक्त(qdev->command_ring);
+release_ring_free:
+	qxl_ring_free(qdev->release_ring);
+cursor_ring_free:
+	qxl_ring_free(qdev->cursor_ring);
+command_ring_free:
+	qxl_ring_free(qdev->command_ring);
 ram_header_unmap:
 	iounmap(qdev->ram_header);
 bo_fini:
 	qxl_bo_fini(qdev);
 rom_unmap:
 	iounmap(qdev->rom);
-surface_mapping_मुक्त:
-	io_mapping_मुक्त(qdev->surface_mapping);
-vram_mapping_मुक्त:
-	io_mapping_मुक्त(qdev->vram_mapping);
-	वापस r;
-पूर्ण
+surface_mapping_free:
+	io_mapping_free(qdev->surface_mapping);
+vram_mapping_free:
+	io_mapping_free(qdev->vram_mapping);
+	return r;
+}
 
-व्योम qxl_device_fini(काष्ठा qxl_device *qdev)
-अणु
-	पूर्णांक cur_idx;
+void qxl_device_fini(struct qxl_device *qdev)
+{
+	int cur_idx;
 
-	/* check अगर qxl_device_init() was successful (gc_work is initialized last) */
-	अगर (!qdev->gc_work.func)
-		वापस;
+	/* check if qxl_device_init() was successful (gc_work is initialized last) */
+	if (!qdev->gc_work.func)
+		return;
 
-	क्रम (cur_idx = 0; cur_idx < 3; cur_idx++) अणु
-		अगर (!qdev->current_release_bo[cur_idx])
-			जारी;
+	for (cur_idx = 0; cur_idx < 3; cur_idx++) {
+		if (!qdev->current_release_bo[cur_idx])
+			continue;
 		qxl_bo_unpin(qdev->current_release_bo[cur_idx]);
 		qxl_bo_unref(&qdev->current_release_bo[cur_idx]);
 		qdev->current_release_bo_offset[cur_idx] = 0;
-		qdev->current_release_bo[cur_idx] = शून्य;
-	पूर्ण
+		qdev->current_release_bo[cur_idx] = NULL;
+	}
 
 	/*
 	 * Ask host to release resources (+fill release ring),
-	 * then रुको क्रम the release actually happening.
+	 * then wait for the release actually happening.
 	 */
-	qxl_io_notअगरy_oom(qdev);
-	रुको_event_समयout(qdev->release_event,
-			   atomic_पढ़ो(&qdev->release_count) == 0,
+	qxl_io_notify_oom(qdev);
+	wait_event_timeout(qdev->release_event,
+			   atomic_read(&qdev->release_count) == 0,
 			   HZ);
 	flush_work(&qdev->gc_work);
 	qxl_surf_evict(qdev);
@@ -316,12 +315,12 @@ vram_mapping_मुक्त:
 
 	qxl_gem_fini(qdev);
 	qxl_bo_fini(qdev);
-	qxl_ring_मुक्त(qdev->command_ring);
-	qxl_ring_मुक्त(qdev->cursor_ring);
-	qxl_ring_मुक्त(qdev->release_ring);
-	io_mapping_मुक्त(qdev->surface_mapping);
-	io_mapping_मुक्त(qdev->vram_mapping);
+	qxl_ring_free(qdev->command_ring);
+	qxl_ring_free(qdev->cursor_ring);
+	qxl_ring_free(qdev->release_ring);
+	io_mapping_free(qdev->surface_mapping);
+	io_mapping_free(qdev->vram_mapping);
 	iounmap(qdev->ram_header);
 	iounmap(qdev->rom);
-	qdev->rom = शून्य;
-पूर्ण
+	qdev->rom = NULL;
+}

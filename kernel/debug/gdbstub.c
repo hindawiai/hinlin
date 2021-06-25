@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * Kernel Debug Core
  *
- * Maपूर्णांकainer: Jason Wessel <jason.wessel@windriver.com>
+ * Maintainer: Jason Wessel <jason.wessel@windriver.com>
  *
  * Copyright (C) 2000-2001 VERITAS Software Corporation.
  * Copyright (C) 2002-2004 Timesys Corporation
@@ -17,9 +16,9 @@
  * Contributors at various stages not listed above:
  *  Jason Wessel ( jason.wessel@windriver.com )
  *  George Anzinger <george@mvista.com>
- *  Anurekh Saxena (anurekh.saxena@बारys.com)
+ *  Anurekh Saxena (anurekh.saxena@timesys.com)
  *  Lake Stevens Instrument Division (Glenn Engel)
- *  Jim Kingकरोn, Cygnus Support.
+ *  Jim Kingdon, Cygnus Support.
  *
  * Original KGDB stub: David Grothe <dave@gcom.com>,
  * Tigran Aivazian <tigran@sco.com>
@@ -29,79 +28,79 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/kgdb.h>
-#समावेश <linux/kdb.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश "debug_core.h"
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/kgdb.h>
+#include <linux/kdb.h>
+#include <linux/serial_core.h>
+#include <linux/reboot.h>
+#include <linux/uaccess.h>
+#include <asm/cacheflush.h>
+#include <asm/unaligned.h>
+#include "debug_core.h"
 
-#घोषणा KGDB_MAX_THREAD_QUERY 17
+#define KGDB_MAX_THREAD_QUERY 17
 
 /* Our I/O buffers. */
-अटल अक्षर			remcom_in_buffer[BUFMAX];
-अटल अक्षर			remcom_out_buffer[BUFMAX];
-अटल पूर्णांक			gdbstub_use_prev_in_buf;
-अटल पूर्णांक			gdbstub_prev_in_buf_pos;
+static char			remcom_in_buffer[BUFMAX];
+static char			remcom_out_buffer[BUFMAX];
+static int			gdbstub_use_prev_in_buf;
+static int			gdbstub_prev_in_buf_pos;
 
-/* Storage क्रम the रेजिस्टरs, in GDB क्रमmat. */
-अटल अचिन्हित दीर्घ		gdb_regs[(NUMREGBYTES +
-					माप(अचिन्हित दीर्घ) - 1) /
-					माप(अचिन्हित दीर्घ)];
+/* Storage for the registers, in GDB format. */
+static unsigned long		gdb_regs[(NUMREGBYTES +
+					sizeof(unsigned long) - 1) /
+					sizeof(unsigned long)];
 
 /*
  * GDB remote protocol parser:
  */
 
-#अगर_घोषित CONFIG_KGDB_KDB
-अटल पूर्णांक gdbstub_पढ़ो_रुको(व्योम)
-अणु
-	पूर्णांक ret = -1;
-	पूर्णांक i;
+#ifdef CONFIG_KGDB_KDB
+static int gdbstub_read_wait(void)
+{
+	int ret = -1;
+	int i;
 
-	अगर (unlikely(gdbstub_use_prev_in_buf)) अणु
-		अगर (gdbstub_prev_in_buf_pos < gdbstub_use_prev_in_buf)
-			वापस remcom_in_buffer[gdbstub_prev_in_buf_pos++];
-		अन्यथा
+	if (unlikely(gdbstub_use_prev_in_buf)) {
+		if (gdbstub_prev_in_buf_pos < gdbstub_use_prev_in_buf)
+			return remcom_in_buffer[gdbstub_prev_in_buf_pos++];
+		else
 			gdbstub_use_prev_in_buf = 0;
-	पूर्ण
+	}
 
-	/* poll any additional I/O पूर्णांकerfaces that are defined */
-	जबतक (ret < 0)
-		क्रम (i = 0; kdb_poll_funcs[i] != शून्य; i++) अणु
+	/* poll any additional I/O interfaces that are defined */
+	while (ret < 0)
+		for (i = 0; kdb_poll_funcs[i] != NULL; i++) {
 			ret = kdb_poll_funcs[i]();
-			अगर (ret > 0)
-				अवरोध;
-		पूर्ण
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक gdbstub_पढ़ो_रुको(व्योम)
-अणु
-	पूर्णांक ret = dbg_io_ops->पढ़ो_अक्षर();
-	जबतक (ret == NO_POLL_CHAR)
-		ret = dbg_io_ops->पढ़ो_अक्षर();
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
-/* scan क्रम the sequence $<data>#<checksum> */
-अटल व्योम get_packet(अक्षर *buffer)
-अणु
-	अचिन्हित अक्षर checksum;
-	अचिन्हित अक्षर xmitcsum;
-	पूर्णांक count;
-	अक्षर ch;
+			if (ret > 0)
+				break;
+		}
+	return ret;
+}
+#else
+static int gdbstub_read_wait(void)
+{
+	int ret = dbg_io_ops->read_char();
+	while (ret == NO_POLL_CHAR)
+		ret = dbg_io_ops->read_char();
+	return ret;
+}
+#endif
+/* scan for the sequence $<data>#<checksum> */
+static void get_packet(char *buffer)
+{
+	unsigned char checksum;
+	unsigned char xmitcsum;
+	int count;
+	char ch;
 
-	करो अणु
+	do {
 		/*
-		 * Spin and रुको around क्रम the start अक्षरacter, ignore all
-		 * other अक्षरacters:
+		 * Spin and wait around for the start character, ignore all
+		 * other characters:
 		 */
-		जबतक ((ch = (gdbstub_पढ़ो_रुको())) != '$')
+		while ((ch = (gdbstub_read_wait())) != '$')
 			/* nothing */;
 
 		kgdb_connected = 1;
@@ -111,73 +110,73 @@
 		count = 0;
 
 		/*
-		 * now, पढ़ो until a # or end of buffer is found:
+		 * now, read until a # or end of buffer is found:
 		 */
-		जबतक (count < (BUFMAX - 1)) अणु
-			ch = gdbstub_पढ़ो_रुको();
-			अगर (ch == '#')
-				अवरोध;
+		while (count < (BUFMAX - 1)) {
+			ch = gdbstub_read_wait();
+			if (ch == '#')
+				break;
 			checksum = checksum + ch;
 			buffer[count] = ch;
 			count = count + 1;
-		पूर्ण
+		}
 
-		अगर (ch == '#') अणु
-			xmitcsum = hex_to_bin(gdbstub_पढ़ो_रुको()) << 4;
-			xmitcsum += hex_to_bin(gdbstub_पढ़ो_रुको());
+		if (ch == '#') {
+			xmitcsum = hex_to_bin(gdbstub_read_wait()) << 4;
+			xmitcsum += hex_to_bin(gdbstub_read_wait());
 
-			अगर (checksum != xmitcsum)
+			if (checksum != xmitcsum)
 				/* failed checksum */
-				dbg_io_ops->ग_लिखो_अक्षर('-');
-			अन्यथा
+				dbg_io_ops->write_char('-');
+			else
 				/* successful transfer */
-				dbg_io_ops->ग_लिखो_अक्षर('+');
-			अगर (dbg_io_ops->flush)
+				dbg_io_ops->write_char('+');
+			if (dbg_io_ops->flush)
 				dbg_io_ops->flush();
-		पूर्ण
+		}
 		buffer[count] = 0;
-	पूर्ण जबतक (checksum != xmitcsum);
-पूर्ण
+	} while (checksum != xmitcsum);
+}
 
 /*
  * Send the packet in buffer.
- * Check क्रम gdb connection अगर asked क्रम.
+ * Check for gdb connection if asked for.
  */
-अटल व्योम put_packet(अक्षर *buffer)
-अणु
-	अचिन्हित अक्षर checksum;
-	पूर्णांक count;
-	अक्षर ch;
+static void put_packet(char *buffer)
+{
+	unsigned char checksum;
+	int count;
+	char ch;
 
 	/*
 	 * $<packet info>#<checksum>.
 	 */
-	जबतक (1) अणु
-		dbg_io_ops->ग_लिखो_अक्षर('$');
+	while (1) {
+		dbg_io_ops->write_char('$');
 		checksum = 0;
 		count = 0;
 
-		जबतक ((ch = buffer[count])) अणु
-			dbg_io_ops->ग_लिखो_अक्षर(ch);
+		while ((ch = buffer[count])) {
+			dbg_io_ops->write_char(ch);
 			checksum += ch;
 			count++;
-		पूर्ण
+		}
 
-		dbg_io_ops->ग_लिखो_अक्षर('#');
-		dbg_io_ops->ग_लिखो_अक्षर(hex_asc_hi(checksum));
-		dbg_io_ops->ग_लिखो_अक्षर(hex_asc_lo(checksum));
-		अगर (dbg_io_ops->flush)
+		dbg_io_ops->write_char('#');
+		dbg_io_ops->write_char(hex_asc_hi(checksum));
+		dbg_io_ops->write_char(hex_asc_lo(checksum));
+		if (dbg_io_ops->flush)
 			dbg_io_ops->flush();
 
 		/* Now see what we get in reply. */
-		ch = gdbstub_पढ़ो_रुको();
+		ch = gdbstub_read_wait();
 
-		अगर (ch == 3)
-			ch = gdbstub_पढ़ो_रुको();
+		if (ch == 3)
+			ch = gdbstub_read_wait();
 
-		/* If we get an ACK, we are करोne. */
-		अगर (ch == '+')
-			वापस;
+		/* If we get an ACK, we are done. */
+		if (ch == '+')
+			return;
 
 		/*
 		 * If we get the start of another packet, this means
@@ -185,41 +184,41 @@
 		 * the packet being sent, and stop trying to send this
 		 * packet.
 		 */
-		अगर (ch == '$') अणु
-			dbg_io_ops->ग_लिखो_अक्षर('-');
-			अगर (dbg_io_ops->flush)
+		if (ch == '$') {
+			dbg_io_ops->write_char('-');
+			if (dbg_io_ops->flush)
 				dbg_io_ops->flush();
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल अक्षर gdbmsgbuf[BUFMAX + 1];
+static char gdbmsgbuf[BUFMAX + 1];
 
-व्योम gdbstub_msg_ग_लिखो(स्थिर अक्षर *s, पूर्णांक len)
-अणु
-	अक्षर *bufptr;
-	पूर्णांक wcount;
-	पूर्णांक i;
+void gdbstub_msg_write(const char *s, int len)
+{
+	char *bufptr;
+	int wcount;
+	int i;
 
-	अगर (len == 0)
-		len = म_माप(s);
+	if (len == 0)
+		len = strlen(s);
 
 	/* 'O'utput */
 	gdbmsgbuf[0] = 'O';
 
 	/* Fill and send buffers... */
-	जबतक (len > 0) अणु
+	while (len > 0) {
 		bufptr = gdbmsgbuf + 1;
 
-		/* Calculate how many this समय */
-		अगर ((len << 1) > (BUFMAX - 2))
+		/* Calculate how many this time */
+		if ((len << 1) > (BUFMAX - 2))
 			wcount = (BUFMAX - 2) >> 1;
-		अन्यथा
+		else
 			wcount = len;
 
-		/* Pack in hex अक्षरs */
-		क्रम (i = 0; i < wcount; i++)
+		/* Pack in hex chars */
+		for (i = 0; i < wcount; i++)
 			bufptr = hex_byte_pack(bufptr, s[i]);
 		*bufptr = '\0';
 
@@ -229,557 +228,557 @@
 
 		/* Write packet */
 		put_packet(gdbmsgbuf);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Convert the memory poपूर्णांकed to by mem पूर्णांकo hex, placing result in
- * buf.  Return a poपूर्णांकer to the last अक्षर put in buf (null). May
- * वापस an error.
+ * Convert the memory pointed to by mem into hex, placing result in
+ * buf.  Return a pointer to the last char put in buf (null). May
+ * return an error.
  */
-अक्षर *kgdb_mem2hex(अक्षर *mem, अक्षर *buf, पूर्णांक count)
-अणु
-	अक्षर *पंचांगp;
-	पूर्णांक err;
+char *kgdb_mem2hex(char *mem, char *buf, int count)
+{
+	char *tmp;
+	int err;
 
 	/*
-	 * We use the upper half of buf as an पूर्णांकermediate buffer क्रम the
+	 * We use the upper half of buf as an intermediate buffer for the
 	 * raw memory copy.  Hex conversion will work against this one.
 	 */
-	पंचांगp = buf + count;
+	tmp = buf + count;
 
-	err = copy_from_kernel_nofault(पंचांगp, mem, count);
-	अगर (err)
-		वापस शून्य;
-	जबतक (count > 0) अणु
-		buf = hex_byte_pack(buf, *पंचांगp);
-		पंचांगp++;
+	err = copy_from_kernel_nofault(tmp, mem, count);
+	if (err)
+		return NULL;
+	while (count > 0) {
+		buf = hex_byte_pack(buf, *tmp);
+		tmp++;
 		count--;
-	पूर्ण
+	}
 	*buf = 0;
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /*
- * Convert the hex array poपूर्णांकed to by buf पूर्णांकo binary to be placed in
- * mem.  Return a poपूर्णांकer to the अक्षरacter AFTER the last byte
- * written.  May वापस an error.
+ * Convert the hex array pointed to by buf into binary to be placed in
+ * mem.  Return a pointer to the character AFTER the last byte
+ * written.  May return an error.
  */
-पूर्णांक kgdb_hex2mem(अक्षर *buf, अक्षर *mem, पूर्णांक count)
-अणु
-	अक्षर *पंचांगp_raw;
-	अक्षर *पंचांगp_hex;
+int kgdb_hex2mem(char *buf, char *mem, int count)
+{
+	char *tmp_raw;
+	char *tmp_hex;
 
 	/*
-	 * We use the upper half of buf as an पूर्णांकermediate buffer क्रम the
+	 * We use the upper half of buf as an intermediate buffer for the
 	 * raw memory that is converted from hex.
 	 */
-	पंचांगp_raw = buf + count * 2;
+	tmp_raw = buf + count * 2;
 
-	पंचांगp_hex = पंचांगp_raw - 1;
-	जबतक (पंचांगp_hex >= buf) अणु
-		पंचांगp_raw--;
-		*पंचांगp_raw = hex_to_bin(*पंचांगp_hex--);
-		*पंचांगp_raw |= hex_to_bin(*पंचांगp_hex--) << 4;
-	पूर्ण
+	tmp_hex = tmp_raw - 1;
+	while (tmp_hex >= buf) {
+		tmp_raw--;
+		*tmp_raw = hex_to_bin(*tmp_hex--);
+		*tmp_raw |= hex_to_bin(*tmp_hex--) << 4;
+	}
 
-	वापस copy_to_kernel_nofault(mem, पंचांगp_raw, count);
-पूर्ण
+	return copy_to_kernel_nofault(mem, tmp_raw, count);
+}
 
 /*
- * While we find nice hex अक्षरs, build a दीर्घ_val.
- * Return number of अक्षरs processed.
+ * While we find nice hex chars, build a long_val.
+ * Return number of chars processed.
  */
-पूर्णांक kgdb_hex2दीर्घ(अक्षर **ptr, अचिन्हित दीर्घ *दीर्घ_val)
-अणु
-	पूर्णांक hex_val;
-	पूर्णांक num = 0;
-	पूर्णांक negate = 0;
+int kgdb_hex2long(char **ptr, unsigned long *long_val)
+{
+	int hex_val;
+	int num = 0;
+	int negate = 0;
 
-	*दीर्घ_val = 0;
+	*long_val = 0;
 
-	अगर (**ptr == '-') अणु
+	if (**ptr == '-') {
 		negate = 1;
 		(*ptr)++;
-	पूर्ण
-	जबतक (**ptr) अणु
+	}
+	while (**ptr) {
 		hex_val = hex_to_bin(**ptr);
-		अगर (hex_val < 0)
-			अवरोध;
+		if (hex_val < 0)
+			break;
 
-		*दीर्घ_val = (*दीर्घ_val << 4) | hex_val;
+		*long_val = (*long_val << 4) | hex_val;
 		num++;
 		(*ptr)++;
-	पूर्ण
+	}
 
-	अगर (negate)
-		*दीर्घ_val = -*दीर्घ_val;
+	if (negate)
+		*long_val = -*long_val;
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
 /*
- * Copy the binary array poपूर्णांकed to by buf पूर्णांकo mem.  Fix $, #, and
+ * Copy the binary array pointed to by buf into mem.  Fix $, #, and
  * 0x7d escaped with 0x7d. Return -EFAULT on failure or 0 on success.
- * The input buf is overwritten with the result to ग_लिखो to mem.
+ * The input buf is overwritten with the result to write to mem.
  */
-अटल पूर्णांक kgdb_ebin2mem(अक्षर *buf, अक्षर *mem, पूर्णांक count)
-अणु
-	पूर्णांक size = 0;
-	अक्षर *c = buf;
+static int kgdb_ebin2mem(char *buf, char *mem, int count)
+{
+	int size = 0;
+	char *c = buf;
 
-	जबतक (count-- > 0) अणु
+	while (count-- > 0) {
 		c[size] = *buf++;
-		अगर (c[size] == 0x7d)
+		if (c[size] == 0x7d)
 			c[size] = *buf++ ^ 0x20;
 		size++;
-	पूर्ण
+	}
 
-	वापस copy_to_kernel_nofault(mem, c, size);
-पूर्ण
+	return copy_to_kernel_nofault(mem, c, size);
+}
 
-#अगर DBG_MAX_REG_NUM > 0
-व्योम pt_regs_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक i;
-	पूर्णांक idx = 0;
-	अक्षर *ptr = (अक्षर *)gdb_regs;
+#if DBG_MAX_REG_NUM > 0
+void pt_regs_to_gdb_regs(unsigned long *gdb_regs, struct pt_regs *regs)
+{
+	int i;
+	int idx = 0;
+	char *ptr = (char *)gdb_regs;
 
-	क्रम (i = 0; i < DBG_MAX_REG_NUM; i++) अणु
+	for (i = 0; i < DBG_MAX_REG_NUM; i++) {
 		dbg_get_reg(i, ptr + idx, regs);
 		idx += dbg_reg_def[i].size;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम gdb_regs_to_pt_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक i;
-	पूर्णांक idx = 0;
-	अक्षर *ptr = (अक्षर *)gdb_regs;
+void gdb_regs_to_pt_regs(unsigned long *gdb_regs, struct pt_regs *regs)
+{
+	int i;
+	int idx = 0;
+	char *ptr = (char *)gdb_regs;
 
-	क्रम (i = 0; i < DBG_MAX_REG_NUM; i++) अणु
+	for (i = 0; i < DBG_MAX_REG_NUM; i++) {
 		dbg_set_reg(i, ptr + idx, regs);
 		idx += dbg_reg_def[i].size;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* DBG_MAX_REG_NUM > 0 */
+	}
+}
+#endif /* DBG_MAX_REG_NUM > 0 */
 
 /* Write memory due to an 'M' or 'X' packet. */
-अटल पूर्णांक ग_लिखो_mem_msg(पूर्णांक binary)
-अणु
-	अक्षर *ptr = &remcom_in_buffer[1];
-	अचिन्हित दीर्घ addr;
-	अचिन्हित दीर्घ length;
-	पूर्णांक err;
+static int write_mem_msg(int binary)
+{
+	char *ptr = &remcom_in_buffer[1];
+	unsigned long addr;
+	unsigned long length;
+	int err;
 
-	अगर (kgdb_hex2दीर्घ(&ptr, &addr) > 0 && *(ptr++) == ',' &&
-	    kgdb_hex2दीर्घ(&ptr, &length) > 0 && *(ptr++) == ':') अणु
-		अगर (binary)
-			err = kgdb_ebin2mem(ptr, (अक्षर *)addr, length);
-		अन्यथा
-			err = kgdb_hex2mem(ptr, (अक्षर *)addr, length);
-		अगर (err)
-			वापस err;
-		अगर (CACHE_FLUSH_IS_SAFE)
+	if (kgdb_hex2long(&ptr, &addr) > 0 && *(ptr++) == ',' &&
+	    kgdb_hex2long(&ptr, &length) > 0 && *(ptr++) == ':') {
+		if (binary)
+			err = kgdb_ebin2mem(ptr, (char *)addr, length);
+		else
+			err = kgdb_hex2mem(ptr, (char *)addr, length);
+		if (err)
+			return err;
+		if (CACHE_FLUSH_IS_SAFE)
 			flush_icache_range(addr, addr + length);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम error_packet(अक्षर *pkt, पूर्णांक error)
-अणु
+static void error_packet(char *pkt, int error)
+{
 	error = -error;
 	pkt[0] = 'E';
 	pkt[1] = hex_asc[(error / 10)];
 	pkt[2] = hex_asc[(error % 10)];
 	pkt[3] = '\0';
-पूर्ण
+}
 
 /*
- * Thपढ़ो ID accessors. We represent a flat TID space to GDB, where
- * the per CPU idle thपढ़ोs (which under Linux all have PID 0) are
+ * Thread ID accessors. We represent a flat TID space to GDB, where
+ * the per CPU idle threads (which under Linux all have PID 0) are
  * remapped to negative TIDs.
  */
 
-#घोषणा BUF_THREAD_ID_SIZE	8
+#define BUF_THREAD_ID_SIZE	8
 
-अटल अक्षर *pack_thपढ़ोid(अक्षर *pkt, अचिन्हित अक्षर *id)
-अणु
-	अचिन्हित अक्षर *limit;
-	पूर्णांक lzero = 1;
+static char *pack_threadid(char *pkt, unsigned char *id)
+{
+	unsigned char *limit;
+	int lzero = 1;
 
 	limit = id + (BUF_THREAD_ID_SIZE / 2);
-	जबतक (id < limit) अणु
-		अगर (!lzero || *id != 0) अणु
+	while (id < limit) {
+		if (!lzero || *id != 0) {
 			pkt = hex_byte_pack(pkt, *id);
 			lzero = 0;
-		पूर्ण
+		}
 		id++;
-	पूर्ण
+	}
 
-	अगर (lzero)
+	if (lzero)
 		pkt = hex_byte_pack(pkt, 0);
 
-	वापस pkt;
-पूर्ण
+	return pkt;
+}
 
-अटल व्योम पूर्णांक_to_thपढ़ोref(अचिन्हित अक्षर *id, पूर्णांक value)
-अणु
+static void int_to_threadref(unsigned char *id, int value)
+{
 	put_unaligned_be32(value, id);
-पूर्ण
+}
 
-अटल काष्ठा task_काष्ठा *getthपढ़ो(काष्ठा pt_regs *regs, पूर्णांक tid)
-अणु
+static struct task_struct *getthread(struct pt_regs *regs, int tid)
+{
 	/*
-	 * Non-positive TIDs are remapped to the cpu shaकरोw inक्रमmation
+	 * Non-positive TIDs are remapped to the cpu shadow information
 	 */
-	अगर (tid == 0 || tid == -1)
-		tid = -atomic_पढ़ो(&kgdb_active) - 2;
-	अगर (tid < -1 && tid > -NR_CPUS - 2) अणु
-		अगर (kgdb_info[-tid - 2].task)
-			वापस kgdb_info[-tid - 2].task;
-		अन्यथा
-			वापस idle_task(-tid - 2);
-	पूर्ण
-	अगर (tid <= 0) अणु
-		prपूर्णांकk(KERN_ERR "KGDB: Internal thread select error\n");
+	if (tid == 0 || tid == -1)
+		tid = -atomic_read(&kgdb_active) - 2;
+	if (tid < -1 && tid > -NR_CPUS - 2) {
+		if (kgdb_info[-tid - 2].task)
+			return kgdb_info[-tid - 2].task;
+		else
+			return idle_task(-tid - 2);
+	}
+	if (tid <= 0) {
+		printk(KERN_ERR "KGDB: Internal thread select error\n");
 		dump_stack();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
-	 * find_task_by_pid_ns() करोes not take the tasklist lock anymore
+	 * find_task_by_pid_ns() does not take the tasklist lock anymore
 	 * but is nicely RCU locked - hence is a pretty resilient
 	 * thing to use:
 	 */
-	वापस find_task_by_pid_ns(tid, &init_pid_ns);
-पूर्ण
+	return find_task_by_pid_ns(tid, &init_pid_ns);
+}
 
 
 /*
  * Remap normal tasks to their real PID,
- * CPU shaकरोw thपढ़ोs are mapped to -CPU - 2
+ * CPU shadow threads are mapped to -CPU - 2
  */
-अटल अंतरभूत पूर्णांक shaकरोw_pid(पूर्णांक realpid)
-अणु
-	अगर (realpid)
-		वापस realpid;
+static inline int shadow_pid(int realpid)
+{
+	if (realpid)
+		return realpid;
 
-	वापस -raw_smp_processor_id() - 2;
-पूर्ण
+	return -raw_smp_processor_id() - 2;
+}
 
 /*
  * All the functions that start with gdb_cmd are the various
- * operations to implement the handlers क्रम the gdbserial protocol
- * where KGDB is communicating with an बाह्यal debugger
+ * operations to implement the handlers for the gdbserial protocol
+ * where KGDB is communicating with an external debugger
  */
 
 /* Handle the '?' status packets */
-अटल व्योम gdb_cmd_status(काष्ठा kgdb_state *ks)
-अणु
+static void gdb_cmd_status(struct kgdb_state *ks)
+{
 	/*
 	 * We know that this packet is only sent
 	 * during initial connect.  So to be safe,
-	 * we clear out our अवरोधpoपूर्णांकs now in हाल
+	 * we clear out our breakpoints now in case
 	 * GDB is reconnecting.
 	 */
-	dbg_हटाओ_all_अवरोध();
+	dbg_remove_all_break();
 
 	remcom_out_buffer[0] = 'S';
 	hex_byte_pack(&remcom_out_buffer[1], ks->signo);
-पूर्ण
+}
 
-अटल व्योम gdb_get_regs_helper(काष्ठा kgdb_state *ks)
-अणु
-	काष्ठा task_काष्ठा *thपढ़ो;
-	व्योम *local_debuggerinfo;
-	पूर्णांक i;
+static void gdb_get_regs_helper(struct kgdb_state *ks)
+{
+	struct task_struct *thread;
+	void *local_debuggerinfo;
+	int i;
 
-	thपढ़ो = kgdb_usethपढ़ो;
-	अगर (!thपढ़ो) अणु
-		thपढ़ो = kgdb_info[ks->cpu].task;
+	thread = kgdb_usethread;
+	if (!thread) {
+		thread = kgdb_info[ks->cpu].task;
 		local_debuggerinfo = kgdb_info[ks->cpu].debuggerinfo;
-	पूर्ण अन्यथा अणु
-		local_debuggerinfo = शून्य;
-		क्रम_each_online_cpu(i) अणु
+	} else {
+		local_debuggerinfo = NULL;
+		for_each_online_cpu(i) {
 			/*
 			 * Try to find the task on some other
-			 * or possibly this node अगर we करो not
+			 * or possibly this node if we do not
 			 * find the matching task then we try
 			 * to approximate the results.
 			 */
-			अगर (thपढ़ो == kgdb_info[i].task)
+			if (thread == kgdb_info[i].task)
 				local_debuggerinfo = kgdb_info[i].debuggerinfo;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * All thपढ़ोs that करोn't have debuggerinfo should be
+	 * All threads that don't have debuggerinfo should be
 	 * in schedule() sleeping, since all other CPUs
-	 * are in kgdb_रुको, and thus have debuggerinfo.
+	 * are in kgdb_wait, and thus have debuggerinfo.
 	 */
-	अगर (local_debuggerinfo) अणु
+	if (local_debuggerinfo) {
 		pt_regs_to_gdb_regs(gdb_regs, local_debuggerinfo);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Pull stuff saved during चयन_to; nothing
-		 * अन्यथा is accessible (or even particularly
+		 * Pull stuff saved during switch_to; nothing
+		 * else is accessible (or even particularly
 		 * relevant).
 		 *
-		 * This should be enough क्रम a stack trace.
+		 * This should be enough for a stack trace.
 		 */
-		sleeping_thपढ़ो_to_gdb_regs(gdb_regs, thपढ़ो);
-	पूर्ण
-पूर्ण
+		sleeping_thread_to_gdb_regs(gdb_regs, thread);
+	}
+}
 
-/* Handle the 'g' get रेजिस्टरs request */
-अटल व्योम gdb_cmd_getregs(काष्ठा kgdb_state *ks)
-अणु
+/* Handle the 'g' get registers request */
+static void gdb_cmd_getregs(struct kgdb_state *ks)
+{
 	gdb_get_regs_helper(ks);
-	kgdb_mem2hex((अक्षर *)gdb_regs, remcom_out_buffer, NUMREGBYTES);
-पूर्ण
+	kgdb_mem2hex((char *)gdb_regs, remcom_out_buffer, NUMREGBYTES);
+}
 
-/* Handle the 'G' set रेजिस्टरs request */
-अटल व्योम gdb_cmd_setregs(काष्ठा kgdb_state *ks)
-अणु
-	kgdb_hex2mem(&remcom_in_buffer[1], (अक्षर *)gdb_regs, NUMREGBYTES);
+/* Handle the 'G' set registers request */
+static void gdb_cmd_setregs(struct kgdb_state *ks)
+{
+	kgdb_hex2mem(&remcom_in_buffer[1], (char *)gdb_regs, NUMREGBYTES);
 
-	अगर (kgdb_usethपढ़ो && kgdb_usethपढ़ो != current) अणु
+	if (kgdb_usethread && kgdb_usethread != current) {
 		error_packet(remcom_out_buffer, -EINVAL);
-	पूर्ण अन्यथा अणु
+	} else {
 		gdb_regs_to_pt_regs(gdb_regs, ks->linux_regs);
-		म_नकल(remcom_out_buffer, "OK");
-	पूर्ण
-पूर्ण
+		strcpy(remcom_out_buffer, "OK");
+	}
+}
 
-/* Handle the 'm' memory पढ़ो bytes */
-अटल व्योम gdb_cmd_memपढ़ो(काष्ठा kgdb_state *ks)
-अणु
-	अक्षर *ptr = &remcom_in_buffer[1];
-	अचिन्हित दीर्घ length;
-	अचिन्हित दीर्घ addr;
-	अक्षर *err;
+/* Handle the 'm' memory read bytes */
+static void gdb_cmd_memread(struct kgdb_state *ks)
+{
+	char *ptr = &remcom_in_buffer[1];
+	unsigned long length;
+	unsigned long addr;
+	char *err;
 
-	अगर (kgdb_hex2दीर्घ(&ptr, &addr) > 0 && *ptr++ == ',' &&
-					kgdb_hex2दीर्घ(&ptr, &length) > 0) अणु
-		err = kgdb_mem2hex((अक्षर *)addr, remcom_out_buffer, length);
-		अगर (!err)
+	if (kgdb_hex2long(&ptr, &addr) > 0 && *ptr++ == ',' &&
+					kgdb_hex2long(&ptr, &length) > 0) {
+		err = kgdb_mem2hex((char *)addr, remcom_out_buffer, length);
+		if (!err)
 			error_packet(remcom_out_buffer, -EINVAL);
-	पूर्ण अन्यथा अणु
+	} else {
 		error_packet(remcom_out_buffer, -EINVAL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Handle the 'M' memory ग_लिखो bytes */
-अटल व्योम gdb_cmd_memग_लिखो(काष्ठा kgdb_state *ks)
-अणु
-	पूर्णांक err = ग_लिखो_mem_msg(0);
+/* Handle the 'M' memory write bytes */
+static void gdb_cmd_memwrite(struct kgdb_state *ks)
+{
+	int err = write_mem_msg(0);
 
-	अगर (err)
+	if (err)
 		error_packet(remcom_out_buffer, err);
-	अन्यथा
-		म_नकल(remcom_out_buffer, "OK");
-पूर्ण
+	else
+		strcpy(remcom_out_buffer, "OK");
+}
 
-#अगर DBG_MAX_REG_NUM > 0
-अटल अक्षर *gdb_hex_reg_helper(पूर्णांक regnum, अक्षर *out)
-अणु
-	पूर्णांक i;
-	पूर्णांक offset = 0;
+#if DBG_MAX_REG_NUM > 0
+static char *gdb_hex_reg_helper(int regnum, char *out)
+{
+	int i;
+	int offset = 0;
 
-	क्रम (i = 0; i < regnum; i++)
+	for (i = 0; i < regnum; i++)
 		offset += dbg_reg_def[i].size;
-	वापस kgdb_mem2hex((अक्षर *)gdb_regs + offset, out,
+	return kgdb_mem2hex((char *)gdb_regs + offset, out,
 			    dbg_reg_def[i].size);
-पूर्ण
+}
 
-/* Handle the 'p' inभागidual रेजिस्टर get */
-अटल व्योम gdb_cmd_reg_get(काष्ठा kgdb_state *ks)
-अणु
-	अचिन्हित दीर्घ regnum;
-	अक्षर *ptr = &remcom_in_buffer[1];
+/* Handle the 'p' individual register get */
+static void gdb_cmd_reg_get(struct kgdb_state *ks)
+{
+	unsigned long regnum;
+	char *ptr = &remcom_in_buffer[1];
 
-	kgdb_hex2दीर्घ(&ptr, &regnum);
-	अगर (regnum >= DBG_MAX_REG_NUM) अणु
+	kgdb_hex2long(&ptr, &regnum);
+	if (regnum >= DBG_MAX_REG_NUM) {
 		error_packet(remcom_out_buffer, -EINVAL);
-		वापस;
-	पूर्ण
+		return;
+	}
 	gdb_get_regs_helper(ks);
 	gdb_hex_reg_helper(regnum, remcom_out_buffer);
-पूर्ण
+}
 
-/* Handle the 'P' inभागidual रेजिस्टर set */
-अटल व्योम gdb_cmd_reg_set(काष्ठा kgdb_state *ks)
-अणु
-	अचिन्हित दीर्घ regnum;
-	अक्षर *ptr = &remcom_in_buffer[1];
-	पूर्णांक i = 0;
+/* Handle the 'P' individual register set */
+static void gdb_cmd_reg_set(struct kgdb_state *ks)
+{
+	unsigned long regnum;
+	char *ptr = &remcom_in_buffer[1];
+	int i = 0;
 
-	kgdb_hex2दीर्घ(&ptr, &regnum);
-	अगर (*ptr++ != '=' ||
-	    !(!kgdb_usethपढ़ो || kgdb_usethपढ़ो == current) ||
-	    !dbg_get_reg(regnum, gdb_regs, ks->linux_regs)) अणु
+	kgdb_hex2long(&ptr, &regnum);
+	if (*ptr++ != '=' ||
+	    !(!kgdb_usethread || kgdb_usethread == current) ||
+	    !dbg_get_reg(regnum, gdb_regs, ks->linux_regs)) {
 		error_packet(remcom_out_buffer, -EINVAL);
-		वापस;
-	पूर्ण
-	स_रखो(gdb_regs, 0, माप(gdb_regs));
-	जबतक (i < माप(gdb_regs) * 2)
-		अगर (hex_to_bin(ptr[i]) >= 0)
+		return;
+	}
+	memset(gdb_regs, 0, sizeof(gdb_regs));
+	while (i < sizeof(gdb_regs) * 2)
+		if (hex_to_bin(ptr[i]) >= 0)
 			i++;
-		अन्यथा
-			अवरोध;
+		else
+			break;
 	i = i / 2;
-	kgdb_hex2mem(ptr, (अक्षर *)gdb_regs, i);
+	kgdb_hex2mem(ptr, (char *)gdb_regs, i);
 	dbg_set_reg(regnum, gdb_regs, ks->linux_regs);
-	म_नकल(remcom_out_buffer, "OK");
-पूर्ण
-#पूर्ण_अगर /* DBG_MAX_REG_NUM > 0 */
+	strcpy(remcom_out_buffer, "OK");
+}
+#endif /* DBG_MAX_REG_NUM > 0 */
 
-/* Handle the 'X' memory binary ग_लिखो bytes */
-अटल व्योम gdb_cmd_binग_लिखो(काष्ठा kgdb_state *ks)
-अणु
-	पूर्णांक err = ग_लिखो_mem_msg(1);
+/* Handle the 'X' memory binary write bytes */
+static void gdb_cmd_binwrite(struct kgdb_state *ks)
+{
+	int err = write_mem_msg(1);
 
-	अगर (err)
+	if (err)
 		error_packet(remcom_out_buffer, err);
-	अन्यथा
-		म_नकल(remcom_out_buffer, "OK");
-पूर्ण
+	else
+		strcpy(remcom_out_buffer, "OK");
+}
 
-/* Handle the 'D' or 'k', detach or समाप्त packets */
-अटल व्योम gdb_cmd_detachसमाप्त(काष्ठा kgdb_state *ks)
-अणु
-	पूर्णांक error;
+/* Handle the 'D' or 'k', detach or kill packets */
+static void gdb_cmd_detachkill(struct kgdb_state *ks)
+{
+	int error;
 
-	/* The detach हाल */
-	अगर (remcom_in_buffer[0] == 'D') अणु
-		error = dbg_हटाओ_all_अवरोध();
-		अगर (error < 0) अणु
+	/* The detach case */
+	if (remcom_in_buffer[0] == 'D') {
+		error = dbg_remove_all_break();
+		if (error < 0) {
 			error_packet(remcom_out_buffer, error);
-		पूर्ण अन्यथा अणु
-			म_नकल(remcom_out_buffer, "OK");
+		} else {
+			strcpy(remcom_out_buffer, "OK");
 			kgdb_connected = 0;
-		पूर्ण
+		}
 		put_packet(remcom_out_buffer);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Assume the समाप्त हाल, with no निकास code checking,
-		 * trying to क्रमce detach the debugger:
+		 * Assume the kill case, with no exit code checking,
+		 * trying to force detach the debugger:
 		 */
-		dbg_हटाओ_all_अवरोध();
+		dbg_remove_all_break();
 		kgdb_connected = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Handle the 'R' reboot packets */
-अटल पूर्णांक gdb_cmd_reboot(काष्ठा kgdb_state *ks)
-अणु
+static int gdb_cmd_reboot(struct kgdb_state *ks)
+{
 	/* For now, only honor R0 */
-	अगर (म_भेद(remcom_in_buffer, "R0") == 0) अणु
-		prपूर्णांकk(KERN_CRIT "Executing emergency reboot\n");
-		म_नकल(remcom_out_buffer, "OK");
+	if (strcmp(remcom_in_buffer, "R0") == 0) {
+		printk(KERN_CRIT "Executing emergency reboot\n");
+		strcpy(remcom_out_buffer, "OK");
 		put_packet(remcom_out_buffer);
 
 		/*
-		 * Execution should not वापस from
+		 * Execution should not return from
 		 * machine_emergency_restart()
 		 */
 		machine_emergency_restart();
 		kgdb_connected = 0;
 
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return 1;
+	}
+	return 0;
+}
 
 /* Handle the 'q' query packets */
-अटल व्योम gdb_cmd_query(काष्ठा kgdb_state *ks)
-अणु
-	काष्ठा task_काष्ठा *g;
-	काष्ठा task_काष्ठा *p;
-	अचिन्हित अक्षर thref[BUF_THREAD_ID_SIZE];
-	अक्षर *ptr;
-	पूर्णांक i;
-	पूर्णांक cpu;
-	पूर्णांक finished = 0;
+static void gdb_cmd_query(struct kgdb_state *ks)
+{
+	struct task_struct *g;
+	struct task_struct *p;
+	unsigned char thref[BUF_THREAD_ID_SIZE];
+	char *ptr;
+	int i;
+	int cpu;
+	int finished = 0;
 
-	चयन (remcom_in_buffer[1]) अणु
-	हाल 's':
-	हाल 'f':
-		अगर (स_भेद(remcom_in_buffer + 2, "ThreadInfo", 10))
-			अवरोध;
+	switch (remcom_in_buffer[1]) {
+	case 's':
+	case 'f':
+		if (memcmp(remcom_in_buffer + 2, "ThreadInfo", 10))
+			break;
 
 		i = 0;
 		remcom_out_buffer[0] = 'm';
 		ptr = remcom_out_buffer + 1;
-		अगर (remcom_in_buffer[1] == 'f') अणु
-			/* Each cpu is a shaकरोw thपढ़ो */
-			क्रम_each_online_cpu(cpu) अणु
+		if (remcom_in_buffer[1] == 'f') {
+			/* Each cpu is a shadow thread */
+			for_each_online_cpu(cpu) {
 				ks->thr_query = 0;
-				पूर्णांक_to_thपढ़ोref(thref, -cpu - 2);
-				ptr = pack_thपढ़ोid(ptr, thref);
+				int_to_threadref(thref, -cpu - 2);
+				ptr = pack_threadid(ptr, thref);
 				*(ptr++) = ',';
 				i++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		क्रम_each_process_thपढ़ो(g, p) अणु
-			अगर (i >= ks->thr_query && !finished) अणु
-				पूर्णांक_to_thपढ़ोref(thref, p->pid);
-				ptr = pack_thपढ़ोid(ptr, thref);
+		for_each_process_thread(g, p) {
+			if (i >= ks->thr_query && !finished) {
+				int_to_threadref(thref, p->pid);
+				ptr = pack_threadid(ptr, thref);
 				*(ptr++) = ',';
 				ks->thr_query++;
-				अगर (ks->thr_query % KGDB_MAX_THREAD_QUERY == 0)
+				if (ks->thr_query % KGDB_MAX_THREAD_QUERY == 0)
 					finished = 1;
-			पूर्ण
+			}
 			i++;
-		पूर्ण
+		}
 
 		*(--ptr) = '\0';
-		अवरोध;
+		break;
 
-	हाल 'C':
-		/* Current thपढ़ो id */
-		म_नकल(remcom_out_buffer, "QC");
-		ks->thपढ़ोid = shaकरोw_pid(current->pid);
-		पूर्णांक_to_thपढ़ोref(thref, ks->thपढ़ोid);
-		pack_thपढ़ोid(remcom_out_buffer + 2, thref);
-		अवरोध;
-	हाल 'T':
-		अगर (स_भेद(remcom_in_buffer + 1, "ThreadExtraInfo,", 16))
-			अवरोध;
+	case 'C':
+		/* Current thread id */
+		strcpy(remcom_out_buffer, "QC");
+		ks->threadid = shadow_pid(current->pid);
+		int_to_threadref(thref, ks->threadid);
+		pack_threadid(remcom_out_buffer + 2, thref);
+		break;
+	case 'T':
+		if (memcmp(remcom_in_buffer + 1, "ThreadExtraInfo,", 16))
+			break;
 
-		ks->thपढ़ोid = 0;
+		ks->threadid = 0;
 		ptr = remcom_in_buffer + 17;
-		kgdb_hex2दीर्घ(&ptr, &ks->thपढ़ोid);
-		अगर (!getthपढ़ो(ks->linux_regs, ks->thपढ़ोid)) अणु
+		kgdb_hex2long(&ptr, &ks->threadid);
+		if (!getthread(ks->linux_regs, ks->threadid)) {
 			error_packet(remcom_out_buffer, -EINVAL);
-			अवरोध;
-		पूर्ण
-		अगर ((पूर्णांक)ks->thपढ़ोid > 0) अणु
-			kgdb_mem2hex(getthपढ़ो(ks->linux_regs,
-					ks->thपढ़ोid)->comm,
+			break;
+		}
+		if ((int)ks->threadid > 0) {
+			kgdb_mem2hex(getthread(ks->linux_regs,
+					ks->threadid)->comm,
 					remcom_out_buffer, 16);
-		पूर्ण अन्यथा अणु
-			अटल अक्षर पंचांगpstr[23 + BUF_THREAD_ID_SIZE];
+		} else {
+			static char tmpstr[23 + BUF_THREAD_ID_SIZE];
 
-			प्र_लिखो(पंचांगpstr, "shadowCPU%d",
-					(पूर्णांक)(-ks->thपढ़ोid - 2));
-			kgdb_mem2hex(पंचांगpstr, remcom_out_buffer, म_माप(पंचांगpstr));
-		पूर्ण
-		अवरोध;
-#अगर_घोषित CONFIG_KGDB_KDB
-	हाल 'R':
-		अगर (म_भेदन(remcom_in_buffer, "qRcmd,", 6) == 0) अणु
-			पूर्णांक len = म_माप(remcom_in_buffer + 6);
+			sprintf(tmpstr, "shadowCPU%d",
+					(int)(-ks->threadid - 2));
+			kgdb_mem2hex(tmpstr, remcom_out_buffer, strlen(tmpstr));
+		}
+		break;
+#ifdef CONFIG_KGDB_KDB
+	case 'R':
+		if (strncmp(remcom_in_buffer, "qRcmd,", 6) == 0) {
+			int len = strlen(remcom_in_buffer + 6);
 
-			अगर ((len % 2) != 0) अणु
-				म_नकल(remcom_out_buffer, "E01");
-				अवरोध;
-			पूर्ण
+			if ((len % 2) != 0) {
+				strcpy(remcom_out_buffer, "E01");
+				break;
+			}
 			kgdb_hex2mem(remcom_in_buffer + 6,
 				     remcom_out_buffer, len);
 			len = len / 2;
@@ -789,282 +788,282 @@
 			kdb_parse(remcom_out_buffer);
 			kdb_common_deinit_state();
 
-			म_नकल(remcom_out_buffer, "OK");
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_HAVE_ARCH_KGDB_QXFER_PKT
-	हाल 'S':
-		अगर (!म_भेदन(remcom_in_buffer, "qSupported:", 11))
-			म_नकल(remcom_out_buffer, kgdb_arch_gdb_stub_feature);
-		अवरोध;
-	हाल 'X':
-		अगर (!म_भेदन(remcom_in_buffer, "qXfer:", 6))
+			strcpy(remcom_out_buffer, "OK");
+		}
+		break;
+#endif
+#ifdef CONFIG_HAVE_ARCH_KGDB_QXFER_PKT
+	case 'S':
+		if (!strncmp(remcom_in_buffer, "qSupported:", 11))
+			strcpy(remcom_out_buffer, kgdb_arch_gdb_stub_feature);
+		break;
+	case 'X':
+		if (!strncmp(remcom_in_buffer, "qXfer:", 6))
 			kgdb_arch_handle_qxfer_pkt(remcom_in_buffer,
 						   remcom_out_buffer);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+#endif
+	default:
+		break;
+	}
+}
 
 /* Handle the 'H' task query packets */
-अटल व्योम gdb_cmd_task(काष्ठा kgdb_state *ks)
-अणु
-	काष्ठा task_काष्ठा *thपढ़ो;
-	अक्षर *ptr;
+static void gdb_cmd_task(struct kgdb_state *ks)
+{
+	struct task_struct *thread;
+	char *ptr;
 
-	चयन (remcom_in_buffer[1]) अणु
-	हाल 'g':
+	switch (remcom_in_buffer[1]) {
+	case 'g':
 		ptr = &remcom_in_buffer[2];
-		kgdb_hex2दीर्घ(&ptr, &ks->thपढ़ोid);
-		thपढ़ो = getthपढ़ो(ks->linux_regs, ks->thपढ़ोid);
-		अगर (!thपढ़ो && ks->thपढ़ोid > 0) अणु
+		kgdb_hex2long(&ptr, &ks->threadid);
+		thread = getthread(ks->linux_regs, ks->threadid);
+		if (!thread && ks->threadid > 0) {
 			error_packet(remcom_out_buffer, -EINVAL);
-			अवरोध;
-		पूर्ण
-		kgdb_usethपढ़ो = thपढ़ो;
-		ks->kgdb_usethपढ़ोid = ks->thपढ़ोid;
-		म_नकल(remcom_out_buffer, "OK");
-		अवरोध;
-	हाल 'c':
+			break;
+		}
+		kgdb_usethread = thread;
+		ks->kgdb_usethreadid = ks->threadid;
+		strcpy(remcom_out_buffer, "OK");
+		break;
+	case 'c':
 		ptr = &remcom_in_buffer[2];
-		kgdb_hex2दीर्घ(&ptr, &ks->thपढ़ोid);
-		अगर (!ks->thपढ़ोid) अणु
-			kgdb_contthपढ़ो = शून्य;
-		पूर्ण अन्यथा अणु
-			thपढ़ो = getthपढ़ो(ks->linux_regs, ks->thपढ़ोid);
-			अगर (!thपढ़ो && ks->thपढ़ोid > 0) अणु
+		kgdb_hex2long(&ptr, &ks->threadid);
+		if (!ks->threadid) {
+			kgdb_contthread = NULL;
+		} else {
+			thread = getthread(ks->linux_regs, ks->threadid);
+			if (!thread && ks->threadid > 0) {
 				error_packet(remcom_out_buffer, -EINVAL);
-				अवरोध;
-			पूर्ण
-			kgdb_contthपढ़ो = thपढ़ो;
-		पूर्ण
-		म_नकल(remcom_out_buffer, "OK");
-		अवरोध;
-	पूर्ण
-पूर्ण
+				break;
+			}
+			kgdb_contthread = thread;
+		}
+		strcpy(remcom_out_buffer, "OK");
+		break;
+	}
+}
 
-/* Handle the 'T' thपढ़ो query packets */
-अटल व्योम gdb_cmd_thपढ़ो(काष्ठा kgdb_state *ks)
-अणु
-	अक्षर *ptr = &remcom_in_buffer[1];
-	काष्ठा task_काष्ठा *thपढ़ो;
+/* Handle the 'T' thread query packets */
+static void gdb_cmd_thread(struct kgdb_state *ks)
+{
+	char *ptr = &remcom_in_buffer[1];
+	struct task_struct *thread;
 
-	kgdb_hex2दीर्घ(&ptr, &ks->thपढ़ोid);
-	thपढ़ो = getthपढ़ो(ks->linux_regs, ks->thपढ़ोid);
-	अगर (thपढ़ो)
-		म_नकल(remcom_out_buffer, "OK");
-	अन्यथा
+	kgdb_hex2long(&ptr, &ks->threadid);
+	thread = getthread(ks->linux_regs, ks->threadid);
+	if (thread)
+		strcpy(remcom_out_buffer, "OK");
+	else
 		error_packet(remcom_out_buffer, -EINVAL);
-पूर्ण
+}
 
-/* Handle the 'z' or 'Z' अवरोधpoपूर्णांक हटाओ or set packets */
-अटल व्योम gdb_cmd_अवरोध(काष्ठा kgdb_state *ks)
-अणु
+/* Handle the 'z' or 'Z' breakpoint remove or set packets */
+static void gdb_cmd_break(struct kgdb_state *ks)
+{
 	/*
 	 * Since GDB-5.3, it's been drafted that '0' is a software
-	 * अवरोधpoपूर्णांक, '1' is a hardware breakpoint, so let's करो that.
+	 * breakpoint, '1' is a hardware breakpoint, so let's do that.
 	 */
-	अक्षर *bpt_type = &remcom_in_buffer[1];
-	अक्षर *ptr = &remcom_in_buffer[2];
-	अचिन्हित दीर्घ addr;
-	अचिन्हित दीर्घ length;
-	पूर्णांक error = 0;
+	char *bpt_type = &remcom_in_buffer[1];
+	char *ptr = &remcom_in_buffer[2];
+	unsigned long addr;
+	unsigned long length;
+	int error = 0;
 
-	अगर (arch_kgdb_ops.set_hw_अवरोधpoपूर्णांक && *bpt_type >= '1') अणु
+	if (arch_kgdb_ops.set_hw_breakpoint && *bpt_type >= '1') {
 		/* Unsupported */
-		अगर (*bpt_type > '4')
-			वापस;
-	पूर्ण अन्यथा अणु
-		अगर (*bpt_type != '0' && *bpt_type != '1')
+		if (*bpt_type > '4')
+			return;
+	} else {
+		if (*bpt_type != '0' && *bpt_type != '1')
 			/* Unsupported. */
-			वापस;
-	पूर्ण
+			return;
+	}
 
 	/*
-	 * Test अगर this is a hardware अवरोधpoपूर्णांक, and
-	 * अगर we support it:
+	 * Test if this is a hardware breakpoint, and
+	 * if we support it:
 	 */
-	अगर (*bpt_type == '1' && !(arch_kgdb_ops.flags & KGDB_HW_BREAKPOINT))
+	if (*bpt_type == '1' && !(arch_kgdb_ops.flags & KGDB_HW_BREAKPOINT))
 		/* Unsupported. */
-		वापस;
+		return;
 
-	अगर (*(ptr++) != ',') अणु
+	if (*(ptr++) != ',') {
 		error_packet(remcom_out_buffer, -EINVAL);
-		वापस;
-	पूर्ण
-	अगर (!kgdb_hex2दीर्घ(&ptr, &addr)) अणु
+		return;
+	}
+	if (!kgdb_hex2long(&ptr, &addr)) {
 		error_packet(remcom_out_buffer, -EINVAL);
-		वापस;
-	पूर्ण
-	अगर (*(ptr++) != ',' ||
-		!kgdb_hex2दीर्घ(&ptr, &length)) अणु
+		return;
+	}
+	if (*(ptr++) != ',' ||
+		!kgdb_hex2long(&ptr, &length)) {
 		error_packet(remcom_out_buffer, -EINVAL);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (remcom_in_buffer[0] == 'Z' && *bpt_type == '0')
-		error = dbg_set_sw_अवरोध(addr);
-	अन्यथा अगर (remcom_in_buffer[0] == 'z' && *bpt_type == '0')
-		error = dbg_हटाओ_sw_अवरोध(addr);
-	अन्यथा अगर (remcom_in_buffer[0] == 'Z')
-		error = arch_kgdb_ops.set_hw_अवरोधpoपूर्णांक(addr,
-			(पूर्णांक)length, *bpt_type - '0');
-	अन्यथा अगर (remcom_in_buffer[0] == 'z')
-		error = arch_kgdb_ops.हटाओ_hw_अवरोधpoपूर्णांक(addr,
-			(पूर्णांक) length, *bpt_type - '0');
+	if (remcom_in_buffer[0] == 'Z' && *bpt_type == '0')
+		error = dbg_set_sw_break(addr);
+	else if (remcom_in_buffer[0] == 'z' && *bpt_type == '0')
+		error = dbg_remove_sw_break(addr);
+	else if (remcom_in_buffer[0] == 'Z')
+		error = arch_kgdb_ops.set_hw_breakpoint(addr,
+			(int)length, *bpt_type - '0');
+	else if (remcom_in_buffer[0] == 'z')
+		error = arch_kgdb_ops.remove_hw_breakpoint(addr,
+			(int) length, *bpt_type - '0');
 
-	अगर (error == 0)
-		म_नकल(remcom_out_buffer, "OK");
-	अन्यथा
+	if (error == 0)
+		strcpy(remcom_out_buffer, "OK");
+	else
 		error_packet(remcom_out_buffer, error);
-पूर्ण
+}
 
-/* Handle the 'C' संकेत / exception passing packets */
-अटल पूर्णांक gdb_cmd_exception_pass(काष्ठा kgdb_state *ks)
-अणु
+/* Handle the 'C' signal / exception passing packets */
+static int gdb_cmd_exception_pass(struct kgdb_state *ks)
+{
 	/* C09 == pass exception
 	 * C15 == detach kgdb, pass exception
 	 */
-	अगर (remcom_in_buffer[1] == '0' && remcom_in_buffer[2] == '9') अणु
+	if (remcom_in_buffer[1] == '0' && remcom_in_buffer[2] == '9') {
 
 		ks->pass_exception = 1;
 		remcom_in_buffer[0] = 'c';
 
-	पूर्ण अन्यथा अगर (remcom_in_buffer[1] == '1' && remcom_in_buffer[2] == '5') अणु
+	} else if (remcom_in_buffer[1] == '1' && remcom_in_buffer[2] == '5') {
 
 		ks->pass_exception = 1;
 		remcom_in_buffer[0] = 'D';
-		dbg_हटाओ_all_अवरोध();
+		dbg_remove_all_break();
 		kgdb_connected = 0;
-		वापस 1;
+		return 1;
 
-	पूर्ण अन्यथा अणु
-		gdbstub_msg_ग_लिखो("KGDB only knows signal 9 (pass)"
+	} else {
+		gdbstub_msg_write("KGDB only knows signal 9 (pass)"
 			" and 15 (pass and disconnect)\n"
 			"Executing a continue without signal passing\n", 0);
 		remcom_in_buffer[0] = 'c';
-	पूर्ण
+	}
 
 	/* Indicate fall through */
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /*
- * This function perक्रमms all gdbserial command processing
+ * This function performs all gdbserial command processing
  */
-पूर्णांक gdb_serial_stub(काष्ठा kgdb_state *ks)
-अणु
-	पूर्णांक error = 0;
-	पूर्णांक पंचांगp;
+int gdb_serial_stub(struct kgdb_state *ks)
+{
+	int error = 0;
+	int tmp;
 
 	/* Initialize comm buffer and globals. */
-	स_रखो(remcom_out_buffer, 0, माप(remcom_out_buffer));
-	kgdb_usethपढ़ो = kgdb_info[ks->cpu].task;
-	ks->kgdb_usethपढ़ोid = shaकरोw_pid(kgdb_info[ks->cpu].task->pid);
+	memset(remcom_out_buffer, 0, sizeof(remcom_out_buffer));
+	kgdb_usethread = kgdb_info[ks->cpu].task;
+	ks->kgdb_usethreadid = shadow_pid(kgdb_info[ks->cpu].task->pid);
 	ks->pass_exception = 0;
 
-	अगर (kgdb_connected) अणु
-		अचिन्हित अक्षर thref[BUF_THREAD_ID_SIZE];
-		अक्षर *ptr;
+	if (kgdb_connected) {
+		unsigned char thref[BUF_THREAD_ID_SIZE];
+		char *ptr;
 
 		/* Reply to host that an exception has occurred */
 		ptr = remcom_out_buffer;
 		*ptr++ = 'T';
 		ptr = hex_byte_pack(ptr, ks->signo);
-		ptr += म_माप(म_नकल(ptr, "thread:"));
-		पूर्णांक_to_thपढ़ोref(thref, shaकरोw_pid(current->pid));
-		ptr = pack_thपढ़ोid(ptr, thref);
+		ptr += strlen(strcpy(ptr, "thread:"));
+		int_to_threadref(thref, shadow_pid(current->pid));
+		ptr = pack_threadid(ptr, thref);
 		*ptr++ = ';';
 		put_packet(remcom_out_buffer);
-	पूर्ण
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		error = 0;
 
 		/* Clear the out buffer. */
-		स_रखो(remcom_out_buffer, 0, माप(remcom_out_buffer));
+		memset(remcom_out_buffer, 0, sizeof(remcom_out_buffer));
 
 		get_packet(remcom_in_buffer);
 
-		चयन (remcom_in_buffer[0]) अणु
-		हाल '?': /* gdbserial status */
+		switch (remcom_in_buffer[0]) {
+		case '?': /* gdbserial status */
 			gdb_cmd_status(ks);
-			अवरोध;
-		हाल 'g': /* वापस the value of the CPU रेजिस्टरs */
+			break;
+		case 'g': /* return the value of the CPU registers */
 			gdb_cmd_getregs(ks);
-			अवरोध;
-		हाल 'G': /* set the value of the CPU रेजिस्टरs - वापस OK */
+			break;
+		case 'G': /* set the value of the CPU registers - return OK */
 			gdb_cmd_setregs(ks);
-			अवरोध;
-		हाल 'm': /* mAA..AA,LLLL  Read LLLL bytes at address AA..AA */
-			gdb_cmd_memपढ़ो(ks);
-			अवरोध;
-		हाल 'M': /* MAA..AA,LLLL: Write LLLL bytes at address AA..AA */
-			gdb_cmd_memग_लिखो(ks);
-			अवरोध;
-#अगर DBG_MAX_REG_NUM > 0
-		हाल 'p': /* pXX Return gdb रेजिस्टर XX (in hex) */
+			break;
+		case 'm': /* mAA..AA,LLLL  Read LLLL bytes at address AA..AA */
+			gdb_cmd_memread(ks);
+			break;
+		case 'M': /* MAA..AA,LLLL: Write LLLL bytes at address AA..AA */
+			gdb_cmd_memwrite(ks);
+			break;
+#if DBG_MAX_REG_NUM > 0
+		case 'p': /* pXX Return gdb register XX (in hex) */
 			gdb_cmd_reg_get(ks);
-			अवरोध;
-		हाल 'P': /* PXX=aaaa Set gdb रेजिस्टर XX to aaaa (in hex) */
+			break;
+		case 'P': /* PXX=aaaa Set gdb register XX to aaaa (in hex) */
 			gdb_cmd_reg_set(ks);
-			अवरोध;
-#पूर्ण_अगर /* DBG_MAX_REG_NUM > 0 */
-		हाल 'X': /* XAA..AA,LLLL: Write LLLL bytes at address AA..AA */
-			gdb_cmd_binग_लिखो(ks);
-			अवरोध;
-			/* समाप्त or detach. KGDB should treat this like a
-			 * जारी.
+			break;
+#endif /* DBG_MAX_REG_NUM > 0 */
+		case 'X': /* XAA..AA,LLLL: Write LLLL bytes at address AA..AA */
+			gdb_cmd_binwrite(ks);
+			break;
+			/* kill or detach. KGDB should treat this like a
+			 * continue.
 			 */
-		हाल 'D': /* Debugger detach */
-		हाल 'k': /* Debugger detach via समाप्त */
-			gdb_cmd_detachसमाप्त(ks);
-			जाओ शेष_handle;
-		हाल 'R': /* Reboot */
-			अगर (gdb_cmd_reboot(ks))
-				जाओ शेष_handle;
-			अवरोध;
-		हाल 'q': /* query command */
+		case 'D': /* Debugger detach */
+		case 'k': /* Debugger detach via kill */
+			gdb_cmd_detachkill(ks);
+			goto default_handle;
+		case 'R': /* Reboot */
+			if (gdb_cmd_reboot(ks))
+				goto default_handle;
+			break;
+		case 'q': /* query command */
 			gdb_cmd_query(ks);
-			अवरोध;
-		हाल 'H': /* task related */
+			break;
+		case 'H': /* task related */
 			gdb_cmd_task(ks);
-			अवरोध;
-		हाल 'T': /* Query thपढ़ो status */
-			gdb_cmd_thपढ़ो(ks);
-			अवरोध;
-		हाल 'z': /* Break poपूर्णांक हटाओ */
-		हाल 'Z': /* Break poपूर्णांक set */
-			gdb_cmd_अवरोध(ks);
-			अवरोध;
-#अगर_घोषित CONFIG_KGDB_KDB
-		हाल '3': /* Escape पूर्णांकo back पूर्णांकo kdb */
-			अगर (remcom_in_buffer[1] == '\0') अणु
-				gdb_cmd_detachसमाप्त(ks);
-				वापस DBG_PASS_EVENT;
-			पूर्ण
-#पूर्ण_अगर
+			break;
+		case 'T': /* Query thread status */
+			gdb_cmd_thread(ks);
+			break;
+		case 'z': /* Break point remove */
+		case 'Z': /* Break point set */
+			gdb_cmd_break(ks);
+			break;
+#ifdef CONFIG_KGDB_KDB
+		case '3': /* Escape into back into kdb */
+			if (remcom_in_buffer[1] == '\0') {
+				gdb_cmd_detachkill(ks);
+				return DBG_PASS_EVENT;
+			}
+#endif
 			fallthrough;
-		हाल 'C': /* Exception passing */
-			पंचांगp = gdb_cmd_exception_pass(ks);
-			अगर (पंचांगp > 0)
-				जाओ शेष_handle;
-			अगर (पंचांगp == 0)
-				अवरोध;
-			fallthrough;	/* on पंचांगp < 0 */
-		हाल 'c': /* Continue packet */
-		हाल 's': /* Single step packet */
-			अगर (kgdb_contthपढ़ो && kgdb_contthपढ़ो != current) अणु
-				/* Can't चयन thपढ़ोs in kgdb */
+		case 'C': /* Exception passing */
+			tmp = gdb_cmd_exception_pass(ks);
+			if (tmp > 0)
+				goto default_handle;
+			if (tmp == 0)
+				break;
+			fallthrough;	/* on tmp < 0 */
+		case 'c': /* Continue packet */
+		case 's': /* Single step packet */
+			if (kgdb_contthread && kgdb_contthread != current) {
+				/* Can't switch threads in kgdb */
 				error_packet(remcom_out_buffer, -EINVAL);
-				अवरोध;
-			पूर्ण
-			fallthrough;	/* to शेष processing */
-		शेष:
-शेष_handle:
+				break;
+			}
+			fallthrough;	/* to default processing */
+		default:
+default_handle:
 			error = kgdb_arch_handle_exception(ks->ex_vector,
 						ks->signo,
 						ks->err_code,
@@ -1073,88 +1072,88 @@
 						ks->linux_regs);
 			/*
 			 * Leave cmd processing on error, detach,
-			 * समाप्त, जारी, or single step.
+			 * kill, continue, or single step.
 			 */
-			अगर (error >= 0 || remcom_in_buffer[0] == 'D' ||
-			    remcom_in_buffer[0] == 'k') अणु
+			if (error >= 0 || remcom_in_buffer[0] == 'D' ||
+			    remcom_in_buffer[0] == 'k') {
 				error = 0;
-				जाओ kgdb_निकास;
-			पूर्ण
+				goto kgdb_exit;
+			}
 
-		पूर्ण
+		}
 
 		/* reply to the request */
 		put_packet(remcom_out_buffer);
-	पूर्ण
+	}
 
-kgdb_निकास:
-	अगर (ks->pass_exception)
+kgdb_exit:
+	if (ks->pass_exception)
 		error = 1;
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक gdbstub_state(काष्ठा kgdb_state *ks, अक्षर *cmd)
-अणु
-	पूर्णांक error;
+int gdbstub_state(struct kgdb_state *ks, char *cmd)
+{
+	int error;
 
-	चयन (cmd[0]) अणु
-	हाल 'e':
+	switch (cmd[0]) {
+	case 'e':
 		error = kgdb_arch_handle_exception(ks->ex_vector,
 						   ks->signo,
 						   ks->err_code,
 						   remcom_in_buffer,
 						   remcom_out_buffer,
 						   ks->linux_regs);
-		वापस error;
-	हाल 's':
-	हाल 'c':
-		strscpy(remcom_in_buffer, cmd, माप(remcom_in_buffer));
-		वापस 0;
-	हाल '$':
-		strscpy(remcom_in_buffer, cmd, माप(remcom_in_buffer));
-		gdbstub_use_prev_in_buf = म_माप(remcom_in_buffer);
+		return error;
+	case 's':
+	case 'c':
+		strscpy(remcom_in_buffer, cmd, sizeof(remcom_in_buffer));
+		return 0;
+	case '$':
+		strscpy(remcom_in_buffer, cmd, sizeof(remcom_in_buffer));
+		gdbstub_use_prev_in_buf = strlen(remcom_in_buffer);
 		gdbstub_prev_in_buf_pos = 0;
-		वापस 0;
-	पूर्ण
-	dbg_io_ops->ग_लिखो_अक्षर('+');
+		return 0;
+	}
+	dbg_io_ops->write_char('+');
 	put_packet(remcom_out_buffer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * gdbstub_निकास - Send an निकास message to GDB
- * @status: The निकास code to report.
+ * gdbstub_exit - Send an exit message to GDB
+ * @status: The exit code to report.
  */
-व्योम gdbstub_निकास(पूर्णांक status)
-अणु
-	अचिन्हित अक्षर checksum, ch, buffer[3];
-	पूर्णांक loop;
+void gdbstub_exit(int status)
+{
+	unsigned char checksum, ch, buffer[3];
+	int loop;
 
-	अगर (!kgdb_connected)
-		वापस;
+	if (!kgdb_connected)
+		return;
 	kgdb_connected = 0;
 
-	अगर (!dbg_io_ops || dbg_kdb_mode)
-		वापस;
+	if (!dbg_io_ops || dbg_kdb_mode)
+		return;
 
 	buffer[0] = 'W';
 	buffer[1] = hex_asc_hi(status);
 	buffer[2] = hex_asc_lo(status);
 
-	dbg_io_ops->ग_लिखो_अक्षर('$');
+	dbg_io_ops->write_char('$');
 	checksum = 0;
 
-	क्रम (loop = 0; loop < 3; loop++) अणु
+	for (loop = 0; loop < 3; loop++) {
 		ch = buffer[loop];
 		checksum += ch;
-		dbg_io_ops->ग_लिखो_अक्षर(ch);
-	पूर्ण
+		dbg_io_ops->write_char(ch);
+	}
 
-	dbg_io_ops->ग_लिखो_अक्षर('#');
-	dbg_io_ops->ग_लिखो_अक्षर(hex_asc_hi(checksum));
-	dbg_io_ops->ग_लिखो_अक्षर(hex_asc_lo(checksum));
+	dbg_io_ops->write_char('#');
+	dbg_io_ops->write_char(hex_asc_hi(checksum));
+	dbg_io_ops->write_char(hex_asc_lo(checksum));
 
 	/* make sure the output is flushed, lest the bootloader clobber it */
-	अगर (dbg_io_ops->flush)
+	if (dbg_io_ops->flush)
 		dbg_io_ops->flush();
-पूर्ण
+}

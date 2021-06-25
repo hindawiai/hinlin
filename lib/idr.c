@@ -1,366 +1,365 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/export.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/xarray.h>
+// SPDX-License-Identifier: GPL-2.0-only
+#include <linux/bitmap.h>
+#include <linux/bug.h>
+#include <linux/export.h>
+#include <linux/idr.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/xarray.h>
 
 /**
  * idr_alloc_u32() - Allocate an ID.
  * @idr: IDR handle.
- * @ptr: Poपूर्णांकer to be associated with the new ID.
- * @nextid: Poपूर्णांकer to an ID.
+ * @ptr: Pointer to be associated with the new ID.
+ * @nextid: Pointer to an ID.
  * @max: The maximum ID to allocate (inclusive).
  * @gfp: Memory allocation flags.
  *
- * Allocates an unused ID in the range specअगरied by @nextid and @max.
+ * Allocates an unused ID in the range specified by @nextid and @max.
  * Note that @max is inclusive whereas the @end parameter to idr_alloc()
- * is exclusive.  The new ID is asचिन्हित to @nextid beक्रमe the poपूर्णांकer
- * is inserted पूर्णांकo the IDR, so अगर @nextid poपूर्णांकs पूर्णांकo the object poपूर्णांकed
+ * is exclusive.  The new ID is assigned to @nextid before the pointer
+ * is inserted into the IDR, so if @nextid points into the object pointed
  * to by @ptr, a concurrent lookup will not find an uninitialised ID.
  *
  * The caller should provide their own locking to ensure that two
- * concurrent modअगरications to the IDR are not possible.  Read-only
- * accesses to the IDR may be करोne under the RCU पढ़ो lock or may
- * exclude simultaneous ग_लिखोrs.
+ * concurrent modifications to the IDR are not possible.  Read-only
+ * accesses to the IDR may be done under the RCU read lock or may
+ * exclude simultaneous writers.
  *
- * Return: 0 अगर an ID was allocated, -ENOMEM अगर memory allocation failed,
- * or -ENOSPC अगर no मुक्त IDs could be found.  If an error occurred,
+ * Return: 0 if an ID was allocated, -ENOMEM if memory allocation failed,
+ * or -ENOSPC if no free IDs could be found.  If an error occurred,
  * @nextid is unchanged.
  */
-पूर्णांक idr_alloc_u32(काष्ठा idr *idr, व्योम *ptr, u32 *nextid,
-			अचिन्हित दीर्घ max, gfp_t gfp)
-अणु
-	काष्ठा radix_tree_iter iter;
-	व्योम __rcu **slot;
-	अचिन्हित पूर्णांक base = idr->idr_base;
-	अचिन्हित पूर्णांक id = *nextid;
+int idr_alloc_u32(struct idr *idr, void *ptr, u32 *nextid,
+			unsigned long max, gfp_t gfp)
+{
+	struct radix_tree_iter iter;
+	void __rcu **slot;
+	unsigned int base = idr->idr_base;
+	unsigned int id = *nextid;
 
-	अगर (WARN_ON_ONCE(!(idr->idr_rt.xa_flags & ROOT_IS_IDR)))
+	if (WARN_ON_ONCE(!(idr->idr_rt.xa_flags & ROOT_IS_IDR)))
 		idr->idr_rt.xa_flags |= IDR_RT_MARKER;
 
 	id = (id < base) ? 0 : id - base;
 	radix_tree_iter_init(&iter, id);
-	slot = idr_get_मुक्त(&idr->idr_rt, &iter, gfp, max - base);
-	अगर (IS_ERR(slot))
-		वापस PTR_ERR(slot);
+	slot = idr_get_free(&idr->idr_rt, &iter, gfp, max - base);
+	if (IS_ERR(slot))
+		return PTR_ERR(slot);
 
 	*nextid = iter.index + base;
 	/* there is a memory barrier inside radix_tree_iter_replace() */
 	radix_tree_iter_replace(&idr->idr_rt, &iter, slot, ptr);
 	radix_tree_iter_tag_clear(&idr->idr_rt, &iter, IDR_FREE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(idr_alloc_u32);
 
 /**
  * idr_alloc() - Allocate an ID.
  * @idr: IDR handle.
- * @ptr: Poपूर्णांकer to be associated with the new ID.
+ * @ptr: Pointer to be associated with the new ID.
  * @start: The minimum ID (inclusive).
  * @end: The maximum ID (exclusive).
  * @gfp: Memory allocation flags.
  *
- * Allocates an unused ID in the range specअगरied by @start and @end.  If
- * @end is <= 0, it is treated as one larger than %पूर्णांक_उच्च.  This allows
- * callers to use @start + N as @end as दीर्घ as N is within पूर्णांकeger range.
+ * Allocates an unused ID in the range specified by @start and @end.  If
+ * @end is <= 0, it is treated as one larger than %INT_MAX.  This allows
+ * callers to use @start + N as @end as long as N is within integer range.
  *
  * The caller should provide their own locking to ensure that two
- * concurrent modअगरications to the IDR are not possible.  Read-only
- * accesses to the IDR may be करोne under the RCU पढ़ो lock or may
- * exclude simultaneous ग_लिखोrs.
+ * concurrent modifications to the IDR are not possible.  Read-only
+ * accesses to the IDR may be done under the RCU read lock or may
+ * exclude simultaneous writers.
  *
- * Return: The newly allocated ID, -ENOMEM अगर memory allocation failed,
- * or -ENOSPC अगर no मुक्त IDs could be found.
+ * Return: The newly allocated ID, -ENOMEM if memory allocation failed,
+ * or -ENOSPC if no free IDs could be found.
  */
-पूर्णांक idr_alloc(काष्ठा idr *idr, व्योम *ptr, पूर्णांक start, पूर्णांक end, gfp_t gfp)
-अणु
+int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
+{
 	u32 id = start;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (WARN_ON_ONCE(start < 0))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(start < 0))
+		return -EINVAL;
 
-	ret = idr_alloc_u32(idr, ptr, &id, end > 0 ? end - 1 : पूर्णांक_उच्च, gfp);
-	अगर (ret)
-		वापस ret;
+	ret = idr_alloc_u32(idr, ptr, &id, end > 0 ? end - 1 : INT_MAX, gfp);
+	if (ret)
+		return ret;
 
-	वापस id;
-पूर्ण
+	return id;
+}
 EXPORT_SYMBOL_GPL(idr_alloc);
 
 /**
  * idr_alloc_cyclic() - Allocate an ID cyclically.
  * @idr: IDR handle.
- * @ptr: Poपूर्णांकer to be associated with the new ID.
+ * @ptr: Pointer to be associated with the new ID.
  * @start: The minimum ID (inclusive).
  * @end: The maximum ID (exclusive).
  * @gfp: Memory allocation flags.
  *
- * Allocates an unused ID in the range specअगरied by @nextid and @end.  If
- * @end is <= 0, it is treated as one larger than %पूर्णांक_उच्च.  This allows
- * callers to use @start + N as @end as दीर्घ as N is within पूर्णांकeger range.
- * The search क्रम an unused ID will start at the last ID allocated and will
- * wrap around to @start अगर no मुक्त IDs are found beक्रमe reaching @end.
+ * Allocates an unused ID in the range specified by @nextid and @end.  If
+ * @end is <= 0, it is treated as one larger than %INT_MAX.  This allows
+ * callers to use @start + N as @end as long as N is within integer range.
+ * The search for an unused ID will start at the last ID allocated and will
+ * wrap around to @start if no free IDs are found before reaching @end.
  *
  * The caller should provide their own locking to ensure that two
- * concurrent modअगरications to the IDR are not possible.  Read-only
- * accesses to the IDR may be करोne under the RCU पढ़ो lock or may
- * exclude simultaneous ग_लिखोrs.
+ * concurrent modifications to the IDR are not possible.  Read-only
+ * accesses to the IDR may be done under the RCU read lock or may
+ * exclude simultaneous writers.
  *
- * Return: The newly allocated ID, -ENOMEM अगर memory allocation failed,
- * or -ENOSPC अगर no मुक्त IDs could be found.
+ * Return: The newly allocated ID, -ENOMEM if memory allocation failed,
+ * or -ENOSPC if no free IDs could be found.
  */
-पूर्णांक idr_alloc_cyclic(काष्ठा idr *idr, व्योम *ptr, पूर्णांक start, पूर्णांक end, gfp_t gfp)
-अणु
+int idr_alloc_cyclic(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
+{
 	u32 id = idr->idr_next;
-	पूर्णांक err, max = end > 0 ? end - 1 : पूर्णांक_उच्च;
+	int err, max = end > 0 ? end - 1 : INT_MAX;
 
-	अगर ((पूर्णांक)id < start)
+	if ((int)id < start)
 		id = start;
 
 	err = idr_alloc_u32(idr, ptr, &id, max, gfp);
-	अगर ((err == -ENOSPC) && (id > start)) अणु
+	if ((err == -ENOSPC) && (id > start)) {
 		id = start;
 		err = idr_alloc_u32(idr, ptr, &id, max, gfp);
-	पूर्ण
-	अगर (err)
-		वापस err;
+	}
+	if (err)
+		return err;
 
 	idr->idr_next = id + 1;
-	वापस id;
-पूर्ण
+	return id;
+}
 EXPORT_SYMBOL(idr_alloc_cyclic);
 
 /**
- * idr_हटाओ() - Remove an ID from the IDR.
+ * idr_remove() - Remove an ID from the IDR.
  * @idr: IDR handle.
- * @id: Poपूर्णांकer ID.
+ * @id: Pointer ID.
  *
  * Removes this ID from the IDR.  If the ID was not previously in the IDR,
- * this function वापसs %शून्य.
+ * this function returns %NULL.
  *
- * Since this function modअगरies the IDR, the caller should provide their
- * own locking to ensure that concurrent modअगरication of the same IDR is
+ * Since this function modifies the IDR, the caller should provide their
+ * own locking to ensure that concurrent modification of the same IDR is
  * not possible.
  *
- * Return: The poपूर्णांकer क्रमmerly associated with this ID.
+ * Return: The pointer formerly associated with this ID.
  */
-व्योम *idr_हटाओ(काष्ठा idr *idr, अचिन्हित दीर्घ id)
-अणु
-	वापस radix_tree_delete_item(&idr->idr_rt, id - idr->idr_base, शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(idr_हटाओ);
+void *idr_remove(struct idr *idr, unsigned long id)
+{
+	return radix_tree_delete_item(&idr->idr_rt, id - idr->idr_base, NULL);
+}
+EXPORT_SYMBOL_GPL(idr_remove);
 
 /**
- * idr_find() - Return poपूर्णांकer क्रम given ID.
+ * idr_find() - Return pointer for given ID.
  * @idr: IDR handle.
- * @id: Poपूर्णांकer ID.
+ * @id: Pointer ID.
  *
- * Looks up the poपूर्णांकer associated with this ID.  A %शून्य poपूर्णांकer may
- * indicate that @id is not allocated or that the %शून्य poपूर्णांकer was
+ * Looks up the pointer associated with this ID.  A %NULL pointer may
+ * indicate that @id is not allocated or that the %NULL pointer was
  * associated with this ID.
  *
- * This function can be called under rcu_पढ़ो_lock(), given that the leaf
- * poपूर्णांकers lअगरeबार are correctly managed.
+ * This function can be called under rcu_read_lock(), given that the leaf
+ * pointers lifetimes are correctly managed.
  *
- * Return: The poपूर्णांकer associated with this ID.
+ * Return: The pointer associated with this ID.
  */
-व्योम *idr_find(स्थिर काष्ठा idr *idr, अचिन्हित दीर्घ id)
-अणु
-	वापस radix_tree_lookup(&idr->idr_rt, id - idr->idr_base);
-पूर्ण
+void *idr_find(const struct idr *idr, unsigned long id)
+{
+	return radix_tree_lookup(&idr->idr_rt, id - idr->idr_base);
+}
 EXPORT_SYMBOL_GPL(idr_find);
 
 /**
- * idr_क्रम_each() - Iterate through all stored poपूर्णांकers.
+ * idr_for_each() - Iterate through all stored pointers.
  * @idr: IDR handle.
- * @fn: Function to be called क्रम each poपूर्णांकer.
+ * @fn: Function to be called for each pointer.
  * @data: Data passed to callback function.
  *
- * The callback function will be called क्रम each entry in @idr, passing
+ * The callback function will be called for each entry in @idr, passing
  * the ID, the entry and @data.
  *
- * If @fn वापसs anything other than %0, the iteration stops and that
- * value is वापसed from this function.
+ * If @fn returns anything other than %0, the iteration stops and that
+ * value is returned from this function.
  *
- * idr_क्रम_each() can be called concurrently with idr_alloc() and
- * idr_हटाओ() अगर रक्षित by RCU.  Newly added entries may not be
+ * idr_for_each() can be called concurrently with idr_alloc() and
+ * idr_remove() if protected by RCU.  Newly added entries may not be
  * seen and deleted entries may be seen, but adding and removing entries
  * will not cause other entries to be skipped, nor spurious ones to be seen.
  */
-पूर्णांक idr_क्रम_each(स्थिर काष्ठा idr *idr,
-		पूर्णांक (*fn)(पूर्णांक id, व्योम *p, व्योम *data), व्योम *data)
-अणु
-	काष्ठा radix_tree_iter iter;
-	व्योम __rcu **slot;
-	पूर्णांक base = idr->idr_base;
+int idr_for_each(const struct idr *idr,
+		int (*fn)(int id, void *p, void *data), void *data)
+{
+	struct radix_tree_iter iter;
+	void __rcu **slot;
+	int base = idr->idr_base;
 
-	radix_tree_क्रम_each_slot(slot, &idr->idr_rt, &iter, 0) अणु
-		पूर्णांक ret;
-		अचिन्हित दीर्घ id = iter.index + base;
+	radix_tree_for_each_slot(slot, &idr->idr_rt, &iter, 0) {
+		int ret;
+		unsigned long id = iter.index + base;
 
-		अगर (WARN_ON_ONCE(id > पूर्णांक_उच्च))
-			अवरोध;
+		if (WARN_ON_ONCE(id > INT_MAX))
+			break;
 		ret = fn(id, rcu_dereference_raw(*slot), data);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(idr_क्रम_each);
+	return 0;
+}
+EXPORT_SYMBOL(idr_for_each);
 
 /**
  * idr_get_next_ul() - Find next populated entry.
  * @idr: IDR handle.
- * @nextid: Poपूर्णांकer to an ID.
+ * @nextid: Pointer to an ID.
  *
  * Returns the next populated entry in the tree with an ID greater than
- * or equal to the value poपूर्णांकed to by @nextid.  On निकास, @nextid is updated
- * to the ID of the found value.  To use in a loop, the value poपूर्णांकed to by
+ * or equal to the value pointed to by @nextid.  On exit, @nextid is updated
+ * to the ID of the found value.  To use in a loop, the value pointed to by
  * nextid must be incremented by the user.
  */
-व्योम *idr_get_next_ul(काष्ठा idr *idr, अचिन्हित दीर्घ *nextid)
-अणु
-	काष्ठा radix_tree_iter iter;
-	व्योम __rcu **slot;
-	व्योम *entry = शून्य;
-	अचिन्हित दीर्घ base = idr->idr_base;
-	अचिन्हित दीर्घ id = *nextid;
+void *idr_get_next_ul(struct idr *idr, unsigned long *nextid)
+{
+	struct radix_tree_iter iter;
+	void __rcu **slot;
+	void *entry = NULL;
+	unsigned long base = idr->idr_base;
+	unsigned long id = *nextid;
 
 	id = (id < base) ? 0 : id - base;
-	radix_tree_क्रम_each_slot(slot, &idr->idr_rt, &iter, id) अणु
+	radix_tree_for_each_slot(slot, &idr->idr_rt, &iter, id) {
 		entry = rcu_dereference_raw(*slot);
-		अगर (!entry)
-			जारी;
-		अगर (!xa_is_पूर्णांकernal(entry))
-			अवरोध;
-		अगर (slot != &idr->idr_rt.xa_head && !xa_is_retry(entry))
-			अवरोध;
+		if (!entry)
+			continue;
+		if (!xa_is_internal(entry))
+			break;
+		if (slot != &idr->idr_rt.xa_head && !xa_is_retry(entry))
+			break;
 		slot = radix_tree_iter_retry(&iter);
-	पूर्ण
-	अगर (!slot)
-		वापस शून्य;
+	}
+	if (!slot)
+		return NULL;
 
 	*nextid = iter.index + base;
-	वापस entry;
-पूर्ण
+	return entry;
+}
 EXPORT_SYMBOL(idr_get_next_ul);
 
 /**
  * idr_get_next() - Find next populated entry.
  * @idr: IDR handle.
- * @nextid: Poपूर्णांकer to an ID.
+ * @nextid: Pointer to an ID.
  *
  * Returns the next populated entry in the tree with an ID greater than
- * or equal to the value poपूर्णांकed to by @nextid.  On निकास, @nextid is updated
- * to the ID of the found value.  To use in a loop, the value poपूर्णांकed to by
+ * or equal to the value pointed to by @nextid.  On exit, @nextid is updated
+ * to the ID of the found value.  To use in a loop, the value pointed to by
  * nextid must be incremented by the user.
  */
-व्योम *idr_get_next(काष्ठा idr *idr, पूर्णांक *nextid)
-अणु
-	अचिन्हित दीर्घ id = *nextid;
-	व्योम *entry = idr_get_next_ul(idr, &id);
+void *idr_get_next(struct idr *idr, int *nextid)
+{
+	unsigned long id = *nextid;
+	void *entry = idr_get_next_ul(idr, &id);
 
-	अगर (WARN_ON_ONCE(id > पूर्णांक_उच्च))
-		वापस शून्य;
+	if (WARN_ON_ONCE(id > INT_MAX))
+		return NULL;
 	*nextid = id;
-	वापस entry;
-पूर्ण
+	return entry;
+}
 EXPORT_SYMBOL(idr_get_next);
 
 /**
- * idr_replace() - replace poपूर्णांकer क्रम given ID.
+ * idr_replace() - replace pointer for given ID.
  * @idr: IDR handle.
- * @ptr: New poपूर्णांकer to associate with the ID.
+ * @ptr: New pointer to associate with the ID.
  * @id: ID to change.
  *
- * Replace the poपूर्णांकer रेजिस्टरed with an ID and वापस the old value.
- * This function can be called under the RCU पढ़ो lock concurrently with
- * idr_alloc() and idr_हटाओ() (as दीर्घ as the ID being हटाओd is not
+ * Replace the pointer registered with an ID and return the old value.
+ * This function can be called under the RCU read lock concurrently with
+ * idr_alloc() and idr_remove() (as long as the ID being removed is not
  * the one being replaced!).
  *
  * Returns: the old value on success.  %-ENOENT indicates that @id was not
  * found.  %-EINVAL indicates that @ptr was not valid.
  */
-व्योम *idr_replace(काष्ठा idr *idr, व्योम *ptr, अचिन्हित दीर्घ id)
-अणु
-	काष्ठा radix_tree_node *node;
-	व्योम __rcu **slot = शून्य;
-	व्योम *entry;
+void *idr_replace(struct idr *idr, void *ptr, unsigned long id)
+{
+	struct radix_tree_node *node;
+	void __rcu **slot = NULL;
+	void *entry;
 
 	id -= idr->idr_base;
 
 	entry = __radix_tree_lookup(&idr->idr_rt, id, &node, &slot);
-	अगर (!slot || radix_tree_tag_get(&idr->idr_rt, id, IDR_FREE))
-		वापस ERR_PTR(-ENOENT);
+	if (!slot || radix_tree_tag_get(&idr->idr_rt, id, IDR_FREE))
+		return ERR_PTR(-ENOENT);
 
 	__radix_tree_replace(&idr->idr_rt, node, slot, ptr);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 EXPORT_SYMBOL(idr_replace);
 
 /**
  * DOC: IDA description
  *
- * The IDA is an ID allocator which करोes not provide the ability to
- * associate an ID with a poपूर्णांकer.  As such, it only needs to store one
+ * The IDA is an ID allocator which does not provide the ability to
+ * associate an ID with a pointer.  As such, it only needs to store one
  * bit per ID, and so is more space efficient than an IDR.  To use an IDA,
- * define it using DEFINE_IDA() (or embed a &काष्ठा ida in a data काष्ठाure,
+ * define it using DEFINE_IDA() (or embed a &struct ida in a data structure,
  * then initialise it using ida_init()).  To allocate a new ID, call
  * ida_alloc(), ida_alloc_min(), ida_alloc_max() or ida_alloc_range().
- * To मुक्त an ID, call ida_मुक्त().
+ * To free an ID, call ida_free().
  *
  * ida_destroy() can be used to dispose of an IDA without needing to
- * मुक्त the inभागidual IDs in it.  You can use ida_is_empty() to find
+ * free the individual IDs in it.  You can use ida_is_empty() to find
  * out whether the IDA has any IDs currently allocated.
  *
  * The IDA handles its own locking.  It is safe to call any of the IDA
  * functions without synchronisation in your code.
  *
- * IDs are currently limited to the range [0-पूर्णांक_उच्च].  If this is an awkward
- * limitation, it should be quite straightक्रमward to उठाओ the maximum.
+ * IDs are currently limited to the range [0-INT_MAX].  If this is an awkward
+ * limitation, it should be quite straightforward to raise the maximum.
  */
 
 /*
  * Developer's notes:
  *
- * The IDA uses the functionality provided by the XArray to store biपंचांगaps in
- * each entry.  The XA_FREE_MARK is only cleared when all bits in the biपंचांगap
+ * The IDA uses the functionality provided by the XArray to store bitmaps in
+ * each entry.  The XA_FREE_MARK is only cleared when all bits in the bitmap
  * have been set.
  *
  * I considered telling the XArray that each slot is an order-10 node
  * and indexing by bit number, but the XArray can't allow a single multi-index
- * entry in the head, which would signअगरicantly increase memory consumption
- * क्रम the IDA.  So instead we भागide the index by the number of bits in the
- * leaf biपंचांगap beक्रमe करोing a radix tree lookup.
+ * entry in the head, which would significantly increase memory consumption
+ * for the IDA.  So instead we divide the index by the number of bits in the
+ * leaf bitmap before doing a radix tree lookup.
  *
- * As an optimisation, अगर there are only a few low bits set in any given
- * leaf, instead of allocating a 128-byte biपंचांगap, we store the bits
+ * As an optimisation, if there are only a few low bits set in any given
+ * leaf, instead of allocating a 128-byte bitmap, we store the bits
  * as a value entry.  Value entries never have the XA_FREE_MARK cleared
- * because we can always convert them पूर्णांकo a biपंचांगap entry.
+ * because we can always convert them into a bitmap entry.
  *
  * It would be possible to optimise further; once we've run out of a
- * single 128-byte biपंचांगap, we currently चयन to a 576-byte node, put
- * the 128-byte biपंचांगap in the first entry and then start allocating extra
+ * single 128-byte bitmap, we currently switch to a 576-byte node, put
+ * the 128-byte bitmap in the first entry and then start allocating extra
  * 128-byte entries.  We could instead use the 512 bytes of the node's
- * data as a biपंचांगap beक्रमe moving to that scheme.  I करो not believe this
- * is a worthजबतक optimisation; Rयंत्रus Villemoes surveyed the current
+ * data as a bitmap before moving to that scheme.  I do not believe this
+ * is a worthwhile optimisation; Rasmus Villemoes surveyed the current
  * users of the IDA and almost none of them use more than 1024 entries.
- * Those that करो use more than the 8192 IDs that the 512 bytes would
+ * Those that do use more than the 8192 IDs that the 512 bytes would
  * provide.
  *
- * The IDA always uses a lock to alloc/मुक्त.  If we add a 'test_bit'
+ * The IDA always uses a lock to alloc/free.  If we add a 'test_bit'
  * equivalent, it will still need locking.  Going to RCU lookup would require
- * using RCU to मुक्त biपंचांगaps, and that's not trivial without embedding an
- * RCU head in the biपंचांगap, which adds a 2-poपूर्णांकer overhead to each 128-byte
- * biपंचांगap, which is excessive.
+ * using RCU to free bitmaps, and that's not trivial without embedding an
+ * RCU head in the bitmap, which adds a 2-pointer overhead to each 128-byte
+ * bitmap, which is excessive.
  */
 
 /**
@@ -371,229 +370,229 @@ EXPORT_SYMBOL(idr_replace);
  * @gfp: Memory allocation flags.
  *
  * Allocate an ID between @min and @max, inclusive.  The allocated ID will
- * not exceed %पूर्णांक_उच्च, even अगर @max is larger.
+ * not exceed %INT_MAX, even if @max is larger.
  *
  * Context: Any context. It is safe to call this function without
  * locking in your code.
- * Return: The allocated ID, or %-ENOMEM अगर memory could not be allocated,
- * or %-ENOSPC अगर there are no मुक्त IDs.
+ * Return: The allocated ID, or %-ENOMEM if memory could not be allocated,
+ * or %-ENOSPC if there are no free IDs.
  */
-पूर्णांक ida_alloc_range(काष्ठा ida *ida, अचिन्हित पूर्णांक min, अचिन्हित पूर्णांक max,
+int ida_alloc_range(struct ida *ida, unsigned int min, unsigned int max,
 			gfp_t gfp)
-अणु
+{
 	XA_STATE(xas, &ida->xa, min / IDA_BITMAP_BITS);
-	अचिन्हित bit = min % IDA_BITMAP_BITS;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ida_biपंचांगap *biपंचांगap, *alloc = शून्य;
+	unsigned bit = min % IDA_BITMAP_BITS;
+	unsigned long flags;
+	struct ida_bitmap *bitmap, *alloc = NULL;
 
-	अगर ((पूर्णांक)min < 0)
-		वापस -ENOSPC;
+	if ((int)min < 0)
+		return -ENOSPC;
 
-	अगर ((पूर्णांक)max < 0)
-		max = पूर्णांक_उच्च;
+	if ((int)max < 0)
+		max = INT_MAX;
 
 retry:
 	xas_lock_irqsave(&xas, flags);
 next:
-	biपंचांगap = xas_find_marked(&xas, max / IDA_BITMAP_BITS, XA_FREE_MARK);
-	अगर (xas.xa_index > min / IDA_BITMAP_BITS)
+	bitmap = xas_find_marked(&xas, max / IDA_BITMAP_BITS, XA_FREE_MARK);
+	if (xas.xa_index > min / IDA_BITMAP_BITS)
 		bit = 0;
-	अगर (xas.xa_index * IDA_BITMAP_BITS + bit > max)
-		जाओ nospc;
+	if (xas.xa_index * IDA_BITMAP_BITS + bit > max)
+		goto nospc;
 
-	अगर (xa_is_value(biपंचांगap)) अणु
-		अचिन्हित दीर्घ पंचांगp = xa_to_value(biपंचांगap);
+	if (xa_is_value(bitmap)) {
+		unsigned long tmp = xa_to_value(bitmap);
 
-		अगर (bit < BITS_PER_XA_VALUE) अणु
-			bit = find_next_zero_bit(&पंचांगp, BITS_PER_XA_VALUE, bit);
-			अगर (xas.xa_index * IDA_BITMAP_BITS + bit > max)
-				जाओ nospc;
-			अगर (bit < BITS_PER_XA_VALUE) अणु
-				पंचांगp |= 1UL << bit;
-				xas_store(&xas, xa_mk_value(पंचांगp));
-				जाओ out;
-			पूर्ण
-		पूर्ण
-		biपंचांगap = alloc;
-		अगर (!biपंचांगap)
-			biपंचांगap = kzalloc(माप(*biपंचांगap), GFP_NOWAIT);
-		अगर (!biपंचांगap)
-			जाओ alloc;
-		biपंचांगap->biपंचांगap[0] = पंचांगp;
-		xas_store(&xas, biपंचांगap);
-		अगर (xas_error(&xas)) अणु
-			biपंचांगap->biपंचांगap[0] = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (bit < BITS_PER_XA_VALUE) {
+			bit = find_next_zero_bit(&tmp, BITS_PER_XA_VALUE, bit);
+			if (xas.xa_index * IDA_BITMAP_BITS + bit > max)
+				goto nospc;
+			if (bit < BITS_PER_XA_VALUE) {
+				tmp |= 1UL << bit;
+				xas_store(&xas, xa_mk_value(tmp));
+				goto out;
+			}
+		}
+		bitmap = alloc;
+		if (!bitmap)
+			bitmap = kzalloc(sizeof(*bitmap), GFP_NOWAIT);
+		if (!bitmap)
+			goto alloc;
+		bitmap->bitmap[0] = tmp;
+		xas_store(&xas, bitmap);
+		if (xas_error(&xas)) {
+			bitmap->bitmap[0] = 0;
+			goto out;
+		}
+	}
 
-	अगर (biपंचांगap) अणु
-		bit = find_next_zero_bit(biपंचांगap->biपंचांगap, IDA_BITMAP_BITS, bit);
-		अगर (xas.xa_index * IDA_BITMAP_BITS + bit > max)
-			जाओ nospc;
-		अगर (bit == IDA_BITMAP_BITS)
-			जाओ next;
+	if (bitmap) {
+		bit = find_next_zero_bit(bitmap->bitmap, IDA_BITMAP_BITS, bit);
+		if (xas.xa_index * IDA_BITMAP_BITS + bit > max)
+			goto nospc;
+		if (bit == IDA_BITMAP_BITS)
+			goto next;
 
-		__set_bit(bit, biपंचांगap->biपंचांगap);
-		अगर (biपंचांगap_full(biपंचांगap->biपंचांगap, IDA_BITMAP_BITS))
+		__set_bit(bit, bitmap->bitmap);
+		if (bitmap_full(bitmap->bitmap, IDA_BITMAP_BITS))
 			xas_clear_mark(&xas, XA_FREE_MARK);
-	पूर्ण अन्यथा अणु
-		अगर (bit < BITS_PER_XA_VALUE) अणु
-			biपंचांगap = xa_mk_value(1UL << bit);
-		पूर्ण अन्यथा अणु
-			biपंचांगap = alloc;
-			अगर (!biपंचांगap)
-				biपंचांगap = kzalloc(माप(*biपंचांगap), GFP_NOWAIT);
-			अगर (!biपंचांगap)
-				जाओ alloc;
-			__set_bit(bit, biपंचांगap->biपंचांगap);
-		पूर्ण
-		xas_store(&xas, biपंचांगap);
-	पूर्ण
+	} else {
+		if (bit < BITS_PER_XA_VALUE) {
+			bitmap = xa_mk_value(1UL << bit);
+		} else {
+			bitmap = alloc;
+			if (!bitmap)
+				bitmap = kzalloc(sizeof(*bitmap), GFP_NOWAIT);
+			if (!bitmap)
+				goto alloc;
+			__set_bit(bit, bitmap->bitmap);
+		}
+		xas_store(&xas, bitmap);
+	}
 out:
 	xas_unlock_irqrestore(&xas, flags);
-	अगर (xas_nomem(&xas, gfp)) अणु
+	if (xas_nomem(&xas, gfp)) {
 		xas.xa_index = min / IDA_BITMAP_BITS;
 		bit = min % IDA_BITMAP_BITS;
-		जाओ retry;
-	पूर्ण
-	अगर (biपंचांगap != alloc)
-		kमुक्त(alloc);
-	अगर (xas_error(&xas))
-		वापस xas_error(&xas);
-	वापस xas.xa_index * IDA_BITMAP_BITS + bit;
+		goto retry;
+	}
+	if (bitmap != alloc)
+		kfree(alloc);
+	if (xas_error(&xas))
+		return xas_error(&xas);
+	return xas.xa_index * IDA_BITMAP_BITS + bit;
 alloc:
 	xas_unlock_irqrestore(&xas, flags);
-	alloc = kzalloc(माप(*biपंचांगap), gfp);
-	अगर (!alloc)
-		वापस -ENOMEM;
+	alloc = kzalloc(sizeof(*bitmap), gfp);
+	if (!alloc)
+		return -ENOMEM;
 	xas_set(&xas, min / IDA_BITMAP_BITS);
 	bit = min % IDA_BITMAP_BITS;
-	जाओ retry;
+	goto retry;
 nospc:
 	xas_unlock_irqrestore(&xas, flags);
-	kमुक्त(alloc);
-	वापस -ENOSPC;
-पूर्ण
+	kfree(alloc);
+	return -ENOSPC;
+}
 EXPORT_SYMBOL(ida_alloc_range);
 
 /**
- * ida_मुक्त() - Release an allocated ID.
+ * ida_free() - Release an allocated ID.
  * @ida: IDA handle.
  * @id: Previously allocated ID.
  *
  * Context: Any context. It is safe to call this function without
  * locking in your code.
  */
-व्योम ida_मुक्त(काष्ठा ida *ida, अचिन्हित पूर्णांक id)
-अणु
+void ida_free(struct ida *ida, unsigned int id)
+{
 	XA_STATE(xas, &ida->xa, id / IDA_BITMAP_BITS);
-	अचिन्हित bit = id % IDA_BITMAP_BITS;
-	काष्ठा ida_biपंचांगap *biपंचांगap;
-	अचिन्हित दीर्घ flags;
+	unsigned bit = id % IDA_BITMAP_BITS;
+	struct ida_bitmap *bitmap;
+	unsigned long flags;
 
-	BUG_ON((पूर्णांक)id < 0);
+	BUG_ON((int)id < 0);
 
 	xas_lock_irqsave(&xas, flags);
-	biपंचांगap = xas_load(&xas);
+	bitmap = xas_load(&xas);
 
-	अगर (xa_is_value(biपंचांगap)) अणु
-		अचिन्हित दीर्घ v = xa_to_value(biपंचांगap);
-		अगर (bit >= BITS_PER_XA_VALUE)
-			जाओ err;
-		अगर (!(v & (1UL << bit)))
-			जाओ err;
+	if (xa_is_value(bitmap)) {
+		unsigned long v = xa_to_value(bitmap);
+		if (bit >= BITS_PER_XA_VALUE)
+			goto err;
+		if (!(v & (1UL << bit)))
+			goto err;
 		v &= ~(1UL << bit);
-		अगर (!v)
-			जाओ delete;
+		if (!v)
+			goto delete;
 		xas_store(&xas, xa_mk_value(v));
-	पूर्ण अन्यथा अणु
-		अगर (!test_bit(bit, biपंचांगap->biपंचांगap))
-			जाओ err;
-		__clear_bit(bit, biपंचांगap->biपंचांगap);
+	} else {
+		if (!test_bit(bit, bitmap->bitmap))
+			goto err;
+		__clear_bit(bit, bitmap->bitmap);
 		xas_set_mark(&xas, XA_FREE_MARK);
-		अगर (biपंचांगap_empty(biपंचांगap->biपंचांगap, IDA_BITMAP_BITS)) अणु
-			kमुक्त(biपंचांगap);
+		if (bitmap_empty(bitmap->bitmap, IDA_BITMAP_BITS)) {
+			kfree(bitmap);
 delete:
-			xas_store(&xas, शून्य);
-		पूर्ण
-	पूर्ण
+			xas_store(&xas, NULL);
+		}
+	}
 	xas_unlock_irqrestore(&xas, flags);
-	वापस;
+	return;
  err:
 	xas_unlock_irqrestore(&xas, flags);
 	WARN(1, "ida_free called for id=%d which is not allocated.\n", id);
-पूर्ण
-EXPORT_SYMBOL(ida_मुक्त);
+}
+EXPORT_SYMBOL(ida_free);
 
 /**
  * ida_destroy() - Free all IDs.
  * @ida: IDA handle.
  *
- * Calling this function मुक्तs all IDs and releases all resources used
- * by an IDA.  When this call वापसs, the IDA is empty and can be reused
- * or मुक्तd.  If the IDA is alपढ़ोy empty, there is no need to call this
+ * Calling this function frees all IDs and releases all resources used
+ * by an IDA.  When this call returns, the IDA is empty and can be reused
+ * or freed.  If the IDA is already empty, there is no need to call this
  * function.
  *
  * Context: Any context. It is safe to call this function without
  * locking in your code.
  */
-व्योम ida_destroy(काष्ठा ida *ida)
-अणु
+void ida_destroy(struct ida *ida)
+{
 	XA_STATE(xas, &ida->xa, 0);
-	काष्ठा ida_biपंचांगap *biपंचांगap;
-	अचिन्हित दीर्घ flags;
+	struct ida_bitmap *bitmap;
+	unsigned long flags;
 
 	xas_lock_irqsave(&xas, flags);
-	xas_क्रम_each(&xas, biपंचांगap, अच_दीर्घ_उच्च) अणु
-		अगर (!xa_is_value(biपंचांगap))
-			kमुक्त(biपंचांगap);
-		xas_store(&xas, शून्य);
-	पूर्ण
+	xas_for_each(&xas, bitmap, ULONG_MAX) {
+		if (!xa_is_value(bitmap))
+			kfree(bitmap);
+		xas_store(&xas, NULL);
+	}
 	xas_unlock_irqrestore(&xas, flags);
-पूर्ण
+}
 EXPORT_SYMBOL(ida_destroy);
 
-#अगर_अघोषित __KERNEL__
-बाह्य व्योम xa_dump_index(अचिन्हित दीर्घ index, अचिन्हित पूर्णांक shअगरt);
-#घोषणा IDA_CHUNK_SHIFT		ilog2(IDA_BITMAP_BITS)
+#ifndef __KERNEL__
+extern void xa_dump_index(unsigned long index, unsigned int shift);
+#define IDA_CHUNK_SHIFT		ilog2(IDA_BITMAP_BITS)
 
-अटल व्योम ida_dump_entry(व्योम *entry, अचिन्हित दीर्घ index)
-अणु
-	अचिन्हित दीर्घ i;
+static void ida_dump_entry(void *entry, unsigned long index)
+{
+	unsigned long i;
 
-	अगर (!entry)
-		वापस;
+	if (!entry)
+		return;
 
-	अगर (xa_is_node(entry)) अणु
-		काष्ठा xa_node *node = xa_to_node(entry);
-		अचिन्हित पूर्णांक shअगरt = node->shअगरt + IDA_CHUNK_SHIFT +
+	if (xa_is_node(entry)) {
+		struct xa_node *node = xa_to_node(entry);
+		unsigned int shift = node->shift + IDA_CHUNK_SHIFT +
 			XA_CHUNK_SHIFT;
 
-		xa_dump_index(index * IDA_BITMAP_BITS, shअगरt);
+		xa_dump_index(index * IDA_BITMAP_BITS, shift);
 		xa_dump_node(node);
-		क्रम (i = 0; i < XA_CHUNK_SIZE; i++)
+		for (i = 0; i < XA_CHUNK_SIZE; i++)
 			ida_dump_entry(node->slots[i],
-					index | (i << node->shअगरt));
-	पूर्ण अन्यथा अगर (xa_is_value(entry)) अणु
+					index | (i << node->shift));
+	} else if (xa_is_value(entry)) {
 		xa_dump_index(index * IDA_BITMAP_BITS, ilog2(BITS_PER_LONG));
 		pr_cont("value: data %lx [%px]\n", xa_to_value(entry), entry);
-	पूर्ण अन्यथा अणु
-		काष्ठा ida_biपंचांगap *biपंचांगap = entry;
+	} else {
+		struct ida_bitmap *bitmap = entry;
 
 		xa_dump_index(index * IDA_BITMAP_BITS, IDA_CHUNK_SHIFT);
-		pr_cont("bitmap: %p data", biपंचांगap);
-		क्रम (i = 0; i < IDA_BITMAP_LONGS; i++)
-			pr_cont(" %lx", biपंचांगap->biपंचांगap[i]);
+		pr_cont("bitmap: %p data", bitmap);
+		for (i = 0; i < IDA_BITMAP_LONGS; i++)
+			pr_cont(" %lx", bitmap->bitmap[i]);
 		pr_cont("\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ida_dump(काष्ठा ida *ida)
-अणु
-	काष्ठा xarray *xa = &ida->xa;
+static void ida_dump(struct ida *ida)
+{
+	struct xarray *xa = &ida->xa;
 	pr_debug("ida: %p node %p free %d\n", ida, xa->xa_head,
 				xa->xa_flags >> ROOT_TAG_SHIFT);
 	ida_dump_entry(xa->xa_head, 0);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

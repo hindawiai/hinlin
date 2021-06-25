@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2018-2020, Intel Corporation. */
 
-#समावेश "ice_common.h"
+#include "ice_common.h"
 
 /* These are training packet headers used to program flow director filters. */
-अटल स्थिर u8 ice_fdir_tcpv4_pkt[] = अणु
+static const u8 ice_fdir_tcpv4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x28, 0x00, 0x01, 0x00, 0x00, 0x40, 0x06,
@@ -13,35 +12,35 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00,
 	0x20, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_udpv4_pkt[] = अणु
+static const u8 ice_fdir_udpv4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x1C, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_sctpv4_pkt[] = अणु
+static const u8 ice_fdir_sctpv4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x20, 0x00, 0x00, 0x40, 0x00, 0x40, 0x84,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_pkt[] = अणु
+static const u8 ice_fdir_ipv4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x14, 0x00, 0x00, 0x40, 0x00, 0x40, 0x10,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_udp4_gtpu4_pkt[] = अणु
+static const u8 ice_fdir_udp4_gtpu4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x4c, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -54,9 +53,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_tcp4_gtpu4_pkt[] = अणु
+static const u8 ice_fdir_tcp4_gtpu4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x58, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -70,9 +69,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_icmp4_gtpu4_pkt[] = अणु
+static const u8 ice_fdir_icmp4_gtpu4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x4c, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -85,9 +84,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_gtpu4_pkt[] = अणु
+static const u8 ice_fdir_ipv4_gtpu4_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x44, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -99,18 +98,18 @@
 	0x00, 0x14, 0x00, 0x00, 0x40, 0x00, 0x40, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_l2tpv3_pkt[] = अणु
+static const u8 ice_fdir_ipv4_l2tpv3_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x14, 0x00, 0x00, 0x40, 0x00, 0x40, 0x73,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_l2tpv3_pkt[] = अणु
+static const u8 ice_fdir_ipv6_l2tpv3_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x73, 0x40, 0x00, 0x00,
@@ -120,18 +119,18 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_esp_pkt[] = अणु
+static const u8 ice_fdir_ipv4_esp_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x14, 0x00, 0x00, 0x40, 0x00, 0x40, 0x32,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_esp_pkt[] = अणु
+static const u8 ice_fdir_ipv6_esp_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x32, 0x40, 0x00, 0x00,
@@ -140,9 +139,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_ah_pkt[] = अणु
+static const u8 ice_fdir_ipv4_ah_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x14, 0x00, 0x00, 0x40, 0x00, 0x40, 0x33,
@@ -150,9 +149,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_ah_pkt[] = अणु
+static const u8 ice_fdir_ipv6_ah_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x33, 0x40, 0x00, 0x00,
@@ -162,9 +161,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_nat_t_esp_pkt[] = अणु
+static const u8 ice_fdir_ipv4_nat_t_esp_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x1C, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -172,9 +171,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x11, 0x94, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_nat_t_esp_pkt[] = अणु
+static const u8 ice_fdir_ipv6_nat_t_esp_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x08, 0x11, 0x40, 0x00, 0x00,
@@ -183,9 +182,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x11, 0x94, 0x00, 0x00, 0x00, 0x08,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_pfcp_node_pkt[] = अणु
+static const u8 ice_fdir_ipv4_pfcp_node_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x2C, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -194,9 +193,9 @@
 	0x00, 0x00, 0x20, 0x00, 0x00, 0x10, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv4_pfcp_session_pkt[] = अणु
+static const u8 ice_fdir_ipv4_pfcp_session_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x2C, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -205,9 +204,9 @@
 	0x00, 0x00, 0x21, 0x00, 0x00, 0x10, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_pfcp_node_pkt[] = अणु
+static const u8 ice_fdir_ipv6_pfcp_node_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x18, 0x11, 0x40, 0x00, 0x00,
@@ -218,9 +217,9 @@
 	0x22, 0x65, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00,
 	0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_pfcp_session_pkt[] = अणु
+static const u8 ice_fdir_ipv6_pfcp_session_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x18, 0x11, 0x40, 0x00, 0x00,
@@ -231,15 +230,15 @@
 	0x22, 0x65, 0x00, 0x00, 0x00, 0x00, 0x21, 0x00,
 	0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_non_ip_l2_pkt[] = अणु
+static const u8 ice_fdir_non_ip_l2_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_tcpv6_pkt[] = अणु
+static const u8 ice_fdir_tcpv6_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x14, 0x06, 0x40, 0x00, 0x00,
@@ -250,9 +249,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x50, 0x00, 0x20, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_udpv6_pkt[] = अणु
+static const u8 ice_fdir_udpv6_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x08, 0x11, 0x40, 0x00, 0x00,
@@ -261,9 +260,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x08, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_sctpv6_pkt[] = अणु
+static const u8 ice_fdir_sctpv6_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x0C, 0x84, 0x40, 0x00, 0x00,
@@ -273,9 +272,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ipv6_pkt[] = अणु
+static const u8 ice_fdir_ipv6_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x86, 0xDD, 0x60, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x3B, 0x40, 0x00, 0x00,
@@ -283,9 +282,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_tcp4_tun_pkt[] = अणु
+static const u8 ice_fdir_tcp4_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x5a, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -299,9 +298,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x50, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_udp4_tun_pkt[] = अणु
+static const u8 ice_fdir_udp4_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x4e, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -314,9 +313,9 @@
 	0x40, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_sctp4_tun_pkt[] = अणु
+static const u8 ice_fdir_sctp4_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x52, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -329,9 +328,9 @@
 	0x40, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ip4_tun_pkt[] = अणु
+static const u8 ice_fdir_ip4_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x46, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -343,9 +342,9 @@
 	0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00,
 	0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_tcp6_tun_pkt[] = अणु
+static const u8 ice_fdir_tcp6_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x6e, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -362,9 +361,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x20, 0x00,
 	0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_udp6_tun_pkt[] = अणु
+static const u8 ice_fdir_udp6_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x62, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -379,9 +378,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_sctp6_tun_pkt[] = अणु
+static const u8 ice_fdir_sctp6_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x66, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -397,9 +396,9 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
-अटल स्थिर u8 ice_fdir_ip6_tun_pkt[] = अणु
+static const u8 ice_fdir_ip6_tun_pkt[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00,
 	0x00, 0x5a, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11,
@@ -413,165 +412,165 @@
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-पूर्ण;
+};
 
 /* Flow Director no-op training packet table */
-अटल स्थिर काष्ठा ice_fdir_base_pkt ice_fdir_pkt[] = अणु
-	अणु
+static const struct ice_fdir_base_pkt ice_fdir_pkt[] = {
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_TCP,
-		माप(ice_fdir_tcpv4_pkt), ice_fdir_tcpv4_pkt,
-		माप(ice_fdir_tcp4_tun_pkt), ice_fdir_tcp4_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_tcpv4_pkt), ice_fdir_tcpv4_pkt,
+		sizeof(ice_fdir_tcp4_tun_pkt), ice_fdir_tcp4_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_UDP,
-		माप(ice_fdir_udpv4_pkt), ice_fdir_udpv4_pkt,
-		माप(ice_fdir_udp4_tun_pkt), ice_fdir_udp4_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_udpv4_pkt), ice_fdir_udpv4_pkt,
+		sizeof(ice_fdir_udp4_tun_pkt), ice_fdir_udp4_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_SCTP,
-		माप(ice_fdir_sctpv4_pkt), ice_fdir_sctpv4_pkt,
-		माप(ice_fdir_sctp4_tun_pkt), ice_fdir_sctp4_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_sctpv4_pkt), ice_fdir_sctpv4_pkt,
+		sizeof(ice_fdir_sctp4_tun_pkt), ice_fdir_sctp4_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_OTHER,
-		माप(ice_fdir_ipv4_pkt), ice_fdir_ipv4_pkt,
-		माप(ice_fdir_ip4_tun_pkt), ice_fdir_ip4_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv4_pkt), ice_fdir_ipv4_pkt,
+		sizeof(ice_fdir_ip4_tun_pkt), ice_fdir_ip4_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_UDP,
-		माप(ice_fdir_udp4_gtpu4_pkt),
+		sizeof(ice_fdir_udp4_gtpu4_pkt),
 		ice_fdir_udp4_gtpu4_pkt,
-		माप(ice_fdir_udp4_gtpu4_pkt),
+		sizeof(ice_fdir_udp4_gtpu4_pkt),
 		ice_fdir_udp4_gtpu4_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_TCP,
-		माप(ice_fdir_tcp4_gtpu4_pkt),
+		sizeof(ice_fdir_tcp4_gtpu4_pkt),
 		ice_fdir_tcp4_gtpu4_pkt,
-		माप(ice_fdir_tcp4_gtpu4_pkt),
+		sizeof(ice_fdir_tcp4_gtpu4_pkt),
 		ice_fdir_tcp4_gtpu4_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_ICMP,
-		माप(ice_fdir_icmp4_gtpu4_pkt),
+		sizeof(ice_fdir_icmp4_gtpu4_pkt),
 		ice_fdir_icmp4_gtpu4_pkt,
-		माप(ice_fdir_icmp4_gtpu4_pkt),
+		sizeof(ice_fdir_icmp4_gtpu4_pkt),
 		ice_fdir_icmp4_gtpu4_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_OTHER,
-		माप(ice_fdir_ipv4_gtpu4_pkt),
+		sizeof(ice_fdir_ipv4_gtpu4_pkt),
 		ice_fdir_ipv4_gtpu4_pkt,
-		माप(ice_fdir_ipv4_gtpu4_pkt),
+		sizeof(ice_fdir_ipv4_gtpu4_pkt),
 		ice_fdir_ipv4_gtpu4_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_L2TPV3,
-		माप(ice_fdir_ipv4_l2tpv3_pkt), ice_fdir_ipv4_l2tpv3_pkt,
-		माप(ice_fdir_ipv4_l2tpv3_pkt), ice_fdir_ipv4_l2tpv3_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv4_l2tpv3_pkt), ice_fdir_ipv4_l2tpv3_pkt,
+		sizeof(ice_fdir_ipv4_l2tpv3_pkt), ice_fdir_ipv4_l2tpv3_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_L2TPV3,
-		माप(ice_fdir_ipv6_l2tpv3_pkt), ice_fdir_ipv6_l2tpv3_pkt,
-		माप(ice_fdir_ipv6_l2tpv3_pkt), ice_fdir_ipv6_l2tpv3_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv6_l2tpv3_pkt), ice_fdir_ipv6_l2tpv3_pkt,
+		sizeof(ice_fdir_ipv6_l2tpv3_pkt), ice_fdir_ipv6_l2tpv3_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_ESP,
-		माप(ice_fdir_ipv4_esp_pkt), ice_fdir_ipv4_esp_pkt,
-		माप(ice_fdir_ipv4_esp_pkt), ice_fdir_ipv4_esp_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv4_esp_pkt), ice_fdir_ipv4_esp_pkt,
+		sizeof(ice_fdir_ipv4_esp_pkt), ice_fdir_ipv4_esp_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_ESP,
-		माप(ice_fdir_ipv6_esp_pkt), ice_fdir_ipv6_esp_pkt,
-		माप(ice_fdir_ipv6_esp_pkt), ice_fdir_ipv6_esp_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv6_esp_pkt), ice_fdir_ipv6_esp_pkt,
+		sizeof(ice_fdir_ipv6_esp_pkt), ice_fdir_ipv6_esp_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_AH,
-		माप(ice_fdir_ipv4_ah_pkt), ice_fdir_ipv4_ah_pkt,
-		माप(ice_fdir_ipv4_ah_pkt), ice_fdir_ipv4_ah_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv4_ah_pkt), ice_fdir_ipv4_ah_pkt,
+		sizeof(ice_fdir_ipv4_ah_pkt), ice_fdir_ipv4_ah_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_AH,
-		माप(ice_fdir_ipv6_ah_pkt), ice_fdir_ipv6_ah_pkt,
-		माप(ice_fdir_ipv6_ah_pkt), ice_fdir_ipv6_ah_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_ipv6_ah_pkt), ice_fdir_ipv6_ah_pkt,
+		sizeof(ice_fdir_ipv6_ah_pkt), ice_fdir_ipv6_ah_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_NAT_T_ESP,
-		माप(ice_fdir_ipv4_nat_t_esp_pkt),
+		sizeof(ice_fdir_ipv4_nat_t_esp_pkt),
 		ice_fdir_ipv4_nat_t_esp_pkt,
-		माप(ice_fdir_ipv4_nat_t_esp_pkt),
+		sizeof(ice_fdir_ipv4_nat_t_esp_pkt),
 		ice_fdir_ipv4_nat_t_esp_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_NAT_T_ESP,
-		माप(ice_fdir_ipv6_nat_t_esp_pkt),
+		sizeof(ice_fdir_ipv6_nat_t_esp_pkt),
 		ice_fdir_ipv6_nat_t_esp_pkt,
-		माप(ice_fdir_ipv6_nat_t_esp_pkt),
+		sizeof(ice_fdir_ipv6_nat_t_esp_pkt),
 		ice_fdir_ipv6_nat_t_esp_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_PFCP_NODE,
-		माप(ice_fdir_ipv4_pfcp_node_pkt),
+		sizeof(ice_fdir_ipv4_pfcp_node_pkt),
 		ice_fdir_ipv4_pfcp_node_pkt,
-		माप(ice_fdir_ipv4_pfcp_node_pkt),
+		sizeof(ice_fdir_ipv4_pfcp_node_pkt),
 		ice_fdir_ipv4_pfcp_node_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV4_PFCP_SESSION,
-		माप(ice_fdir_ipv4_pfcp_session_pkt),
+		sizeof(ice_fdir_ipv4_pfcp_session_pkt),
 		ice_fdir_ipv4_pfcp_session_pkt,
-		माप(ice_fdir_ipv4_pfcp_session_pkt),
+		sizeof(ice_fdir_ipv4_pfcp_session_pkt),
 		ice_fdir_ipv4_pfcp_session_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_PFCP_NODE,
-		माप(ice_fdir_ipv6_pfcp_node_pkt),
+		sizeof(ice_fdir_ipv6_pfcp_node_pkt),
 		ice_fdir_ipv6_pfcp_node_pkt,
-		माप(ice_fdir_ipv6_pfcp_node_pkt),
+		sizeof(ice_fdir_ipv6_pfcp_node_pkt),
 		ice_fdir_ipv6_pfcp_node_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_PFCP_SESSION,
-		माप(ice_fdir_ipv6_pfcp_session_pkt),
+		sizeof(ice_fdir_ipv6_pfcp_session_pkt),
 		ice_fdir_ipv6_pfcp_session_pkt,
-		माप(ice_fdir_ipv6_pfcp_session_pkt),
+		sizeof(ice_fdir_ipv6_pfcp_session_pkt),
 		ice_fdir_ipv6_pfcp_session_pkt,
-	पूर्ण,
-	अणु
+	},
+	{
 		ICE_FLTR_PTYPE_NON_IP_L2,
-		माप(ice_fdir_non_ip_l2_pkt), ice_fdir_non_ip_l2_pkt,
-		माप(ice_fdir_non_ip_l2_pkt), ice_fdir_non_ip_l2_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_non_ip_l2_pkt), ice_fdir_non_ip_l2_pkt,
+		sizeof(ice_fdir_non_ip_l2_pkt), ice_fdir_non_ip_l2_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_TCP,
-		माप(ice_fdir_tcpv6_pkt), ice_fdir_tcpv6_pkt,
-		माप(ice_fdir_tcp6_tun_pkt), ice_fdir_tcp6_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_tcpv6_pkt), ice_fdir_tcpv6_pkt,
+		sizeof(ice_fdir_tcp6_tun_pkt), ice_fdir_tcp6_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_UDP,
-		माप(ice_fdir_udpv6_pkt), ice_fdir_udpv6_pkt,
-		माप(ice_fdir_udp6_tun_pkt), ice_fdir_udp6_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_udpv6_pkt), ice_fdir_udpv6_pkt,
+		sizeof(ice_fdir_udp6_tun_pkt), ice_fdir_udp6_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_SCTP,
-		माप(ice_fdir_sctpv6_pkt), ice_fdir_sctpv6_pkt,
-		माप(ice_fdir_sctp6_tun_pkt), ice_fdir_sctp6_tun_pkt,
-	पूर्ण,
-	अणु
+		sizeof(ice_fdir_sctpv6_pkt), ice_fdir_sctpv6_pkt,
+		sizeof(ice_fdir_sctp6_tun_pkt), ice_fdir_sctp6_tun_pkt,
+	},
+	{
 		ICE_FLTR_PTYPE_NONF_IPV6_OTHER,
-		माप(ice_fdir_ipv6_pkt), ice_fdir_ipv6_pkt,
-		माप(ice_fdir_ip6_tun_pkt), ice_fdir_ip6_tun_pkt,
-	पूर्ण,
-पूर्ण;
+		sizeof(ice_fdir_ipv6_pkt), ice_fdir_ipv6_pkt,
+		sizeof(ice_fdir_ip6_tun_pkt), ice_fdir_ip6_tun_pkt,
+	},
+};
 
-#घोषणा ICE_Fसूची_NUM_PKT ARRAY_SIZE(ice_fdir_pkt)
+#define ICE_FDIR_NUM_PKT ARRAY_SIZE(ice_fdir_pkt)
 
 /**
  * ice_set_dflt_val_fd_desc
- * @fd_fltr_ctx: poपूर्णांकer to fd filter descriptor
+ * @fd_fltr_ctx: pointer to fd filter descriptor
  */
-अटल व्योम ice_set_dflt_val_fd_desc(काष्ठा ice_fd_fltr_desc_ctx *fd_fltr_ctx)
-अणु
+static void ice_set_dflt_val_fd_desc(struct ice_fd_fltr_desc_ctx *fd_fltr_ctx)
+{
 	fd_fltr_ctx->comp_q = ICE_FXD_FLTR_QW0_COMP_Q_ZERO;
 	fd_fltr_ctx->comp_report = ICE_FXD_FLTR_QW0_COMP_REPORT_SW_FAIL;
 	fd_fltr_ctx->fd_space = ICE_FXD_FLTR_QW0_FD_SPACE_GUAR_BEST;
@@ -591,17 +590,17 @@
 	fd_fltr_ctx->fdid_prio = ICE_FXD_FLTR_QW1_FDID_PRI_ONE;
 	fd_fltr_ctx->fdid_mdid = ICE_FXD_FLTR_QW1_FDID_MDID_FD;
 	fd_fltr_ctx->fdid = ICE_FXD_FLTR_QW1_FDID_ZERO;
-पूर्ण
+}
 
 /**
  * ice_set_fd_desc_val
- * @ctx: poपूर्णांकer to fd filter descriptor context
+ * @ctx: pointer to fd filter descriptor context
  * @fdir_desc: populated with fd filter descriptor values
  */
-अटल व्योम
-ice_set_fd_desc_val(काष्ठा ice_fd_fltr_desc_ctx *ctx,
-		    काष्ठा ice_fltr_desc *fdir_desc)
-अणु
+static void
+ice_set_fd_desc_val(struct ice_fd_fltr_desc_ctx *ctx,
+		    struct ice_fltr_desc *fdir_desc)
+{
 	u64 qword;
 
 	/* prep QW0 of FD filter programming desc */
@@ -655,47 +654,47 @@ ice_set_fd_desc_val(काष्ठा ice_fd_fltr_desc_ctx *ctx,
 	qword |= ((u64)ctx->fdid << ICE_FXD_FLTR_QW1_FDID_S) &
 		 ICE_FXD_FLTR_QW1_FDID_M;
 	fdir_desc->dtype_cmd_vsi_fdid = cpu_to_le64(qword);
-पूर्ण
+}
 
 /**
- * ice_fdir_get_prgm_desc - set a fdir descriptor from a fdir filter काष्ठा
- * @hw: poपूर्णांकer to the hardware काष्ठाure
+ * ice_fdir_get_prgm_desc - set a fdir descriptor from a fdir filter struct
+ * @hw: pointer to the hardware structure
  * @input: filter
  * @fdesc: filter descriptor
- * @add: अगर add is true, this is an add operation, false implies delete
+ * @add: if add is true, this is an add operation, false implies delete
  */
-व्योम
-ice_fdir_get_prgm_desc(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input,
-		       काष्ठा ice_fltr_desc *fdesc, bool add)
-अणु
-	काष्ठा ice_fd_fltr_desc_ctx fdir_fltr_ctx = अणु 0 पूर्ण;
+void
+ice_fdir_get_prgm_desc(struct ice_hw *hw, struct ice_fdir_fltr *input,
+		       struct ice_fltr_desc *fdesc, bool add)
+{
+	struct ice_fd_fltr_desc_ctx fdir_fltr_ctx = { 0 };
 
-	/* set शेष context info */
+	/* set default context info */
 	ice_set_dflt_val_fd_desc(&fdir_fltr_ctx);
 
 	/* change sideband filtering values */
 	fdir_fltr_ctx.fdid = input->fltr_id;
-	अगर (input->dest_ctl == ICE_FLTR_PRGM_DESC_DEST_DROP_PKT) अणु
+	if (input->dest_ctl == ICE_FLTR_PRGM_DESC_DEST_DROP_PKT) {
 		fdir_fltr_ctx.drop = ICE_FXD_FLTR_QW0_DROP_YES;
 		fdir_fltr_ctx.qindex = 0;
-	पूर्ण अन्यथा अगर (input->dest_ctl ==
-		   ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_OTHER) अणु
+	} else if (input->dest_ctl ==
+		   ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_OTHER) {
 		fdir_fltr_ctx.drop = ICE_FXD_FLTR_QW0_DROP_NO;
 		fdir_fltr_ctx.qindex = 0;
-	पूर्ण अन्यथा अणु
-		अगर (input->dest_ctl ==
-		    ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_QGROUP)
+	} else {
+		if (input->dest_ctl ==
+		    ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_QGROUP)
 			fdir_fltr_ctx.toq = input->q_region;
 		fdir_fltr_ctx.drop = ICE_FXD_FLTR_QW0_DROP_NO;
 		fdir_fltr_ctx.qindex = input->q_index;
-	पूर्ण
+	}
 	fdir_fltr_ctx.cnt_ena = input->cnt_ena;
 	fdir_fltr_ctx.cnt_index = input->cnt_index;
 	fdir_fltr_ctx.fd_vsi = ice_get_hw_vsi_num(hw, input->dest_vsi);
 	fdir_fltr_ctx.evict_ena = ICE_FXD_FLTR_QW0_EVICT_ENA_FALSE;
-	अगर (input->dest_ctl == ICE_FLTR_PRGM_DESC_DEST_सूचीECT_PKT_OTHER)
+	if (input->dest_ctl == ICE_FLTR_PRGM_DESC_DEST_DIRECT_PKT_OTHER)
 		fdir_fltr_ctx.toq_prio = 0;
-	अन्यथा
+	else
 		fdir_fltr_ctx.toq_prio = 3;
 	fdir_fltr_ctx.pcmd = add ? ICE_FXD_FLTR_QW1_PCMD_ADD :
 		ICE_FXD_FLTR_QW1_PCMD_REMOVE;
@@ -706,241 +705,241 @@ ice_fdir_get_prgm_desc(काष्ठा ice_hw *hw, काष्ठा ice_fdi
 	fdir_fltr_ctx.desc_prof = 1;
 	fdir_fltr_ctx.desc_prof_prio = 3;
 	ice_set_fd_desc_val(&fdir_fltr_ctx, fdesc);
-पूर्ण
+}
 
 /**
- * ice_alloc_fd_res_cntr - obtain counter resource क्रम FD type
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @cntr_id: वापसs counter index
+ * ice_alloc_fd_res_cntr - obtain counter resource for FD type
+ * @hw: pointer to the hardware structure
+ * @cntr_id: returns counter index
  */
-क्रमागत ice_status ice_alloc_fd_res_cntr(काष्ठा ice_hw *hw, u16 *cntr_id)
-अणु
-	वापस ice_alloc_res_cntr(hw, ICE_AQC_RES_TYPE_Fसूची_COUNTER_BLOCK,
+enum ice_status ice_alloc_fd_res_cntr(struct ice_hw *hw, u16 *cntr_id)
+{
+	return ice_alloc_res_cntr(hw, ICE_AQC_RES_TYPE_FDIR_COUNTER_BLOCK,
 				  ICE_AQC_RES_TYPE_FLAG_DEDICATED, 1, cntr_id);
-पूर्ण
+}
 
 /**
- * ice_मुक्त_fd_res_cntr - Free counter resource क्रम FD type
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @cntr_id: counter index to be मुक्तd
+ * ice_free_fd_res_cntr - Free counter resource for FD type
+ * @hw: pointer to the hardware structure
+ * @cntr_id: counter index to be freed
  */
-क्रमागत ice_status ice_मुक्त_fd_res_cntr(काष्ठा ice_hw *hw, u16 cntr_id)
-अणु
-	वापस ice_मुक्त_res_cntr(hw, ICE_AQC_RES_TYPE_Fसूची_COUNTER_BLOCK,
+enum ice_status ice_free_fd_res_cntr(struct ice_hw *hw, u16 cntr_id)
+{
+	return ice_free_res_cntr(hw, ICE_AQC_RES_TYPE_FDIR_COUNTER_BLOCK,
 				 ICE_AQC_RES_TYPE_FLAG_DEDICATED, 1, cntr_id);
-पूर्ण
+}
 
 /**
- * ice_alloc_fd_guar_item - allocate resource क्रम FD guaranteed entries
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @cntr_id: वापसs counter index
+ * ice_alloc_fd_guar_item - allocate resource for FD guaranteed entries
+ * @hw: pointer to the hardware structure
+ * @cntr_id: returns counter index
  * @num_fltr: number of filter entries to be allocated
  */
-क्रमागत ice_status
-ice_alloc_fd_guar_item(काष्ठा ice_hw *hw, u16 *cntr_id, u16 num_fltr)
-अणु
-	वापस ice_alloc_res_cntr(hw, ICE_AQC_RES_TYPE_Fसूची_GUARANTEED_ENTRIES,
+enum ice_status
+ice_alloc_fd_guar_item(struct ice_hw *hw, u16 *cntr_id, u16 num_fltr)
+{
+	return ice_alloc_res_cntr(hw, ICE_AQC_RES_TYPE_FDIR_GUARANTEED_ENTRIES,
 				  ICE_AQC_RES_TYPE_FLAG_DEDICATED, num_fltr,
 				  cntr_id);
-पूर्ण
+}
 
 /**
- * ice_alloc_fd_shrd_item - allocate resource क्रम flow director shared entries
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @cntr_id: वापसs counter index
+ * ice_alloc_fd_shrd_item - allocate resource for flow director shared entries
+ * @hw: pointer to the hardware structure
+ * @cntr_id: returns counter index
  * @num_fltr: number of filter entries to be allocated
  */
-क्रमागत ice_status
-ice_alloc_fd_shrd_item(काष्ठा ice_hw *hw, u16 *cntr_id, u16 num_fltr)
-अणु
-	वापस ice_alloc_res_cntr(hw, ICE_AQC_RES_TYPE_Fसूची_SHARED_ENTRIES,
+enum ice_status
+ice_alloc_fd_shrd_item(struct ice_hw *hw, u16 *cntr_id, u16 num_fltr)
+{
+	return ice_alloc_res_cntr(hw, ICE_AQC_RES_TYPE_FDIR_SHARED_ENTRIES,
 				  ICE_AQC_RES_TYPE_FLAG_DEDICATED, num_fltr,
 				  cntr_id);
-पूर्ण
+}
 
 /**
  * ice_get_fdir_cnt_all - get the number of Flow Director filters
- * @hw: hardware data काष्ठाure
+ * @hw: hardware data structure
  *
  * Returns the number of filters available on device
  */
-पूर्णांक ice_get_fdir_cnt_all(काष्ठा ice_hw *hw)
-अणु
-	वापस hw->func_caps.fd_fltr_guar + hw->func_caps.fd_fltr_best_efक्रमt;
-पूर्ण
+int ice_get_fdir_cnt_all(struct ice_hw *hw)
+{
+	return hw->func_caps.fd_fltr_guar + hw->func_caps.fd_fltr_best_effort;
+}
 
 /**
- * ice_pkt_insert_ipv6_addr - insert a be32 IPv6 address पूर्णांकo a memory buffer
+ * ice_pkt_insert_ipv6_addr - insert a be32 IPv6 address into a memory buffer
  * @pkt: packet buffer
- * @offset: offset पूर्णांकo buffer
- * @addr: IPv6 address to convert and insert पूर्णांकo pkt at offset
+ * @offset: offset into buffer
+ * @addr: IPv6 address to convert and insert into pkt at offset
  */
-अटल व्योम ice_pkt_insert_ipv6_addr(u8 *pkt, पूर्णांक offset, __be32 *addr)
-अणु
-	पूर्णांक idx;
+static void ice_pkt_insert_ipv6_addr(u8 *pkt, int offset, __be32 *addr)
+{
+	int idx;
 
-	क्रम (idx = 0; idx < ICE_IPV6_ADDR_LEN_AS_U32; idx++)
-		स_नकल(pkt + offset + idx * माप(*addr), &addr[idx],
-		       माप(*addr));
-पूर्ण
+	for (idx = 0; idx < ICE_IPV6_ADDR_LEN_AS_U32; idx++)
+		memcpy(pkt + offset + idx * sizeof(*addr), &addr[idx],
+		       sizeof(*addr));
+}
 
 /**
- * ice_pkt_insert_u6_qfi - insert a u6 value QFI पूर्णांकo a memory buffer क्रम GTPU
+ * ice_pkt_insert_u6_qfi - insert a u6 value QFI into a memory buffer for GTPU
  * @pkt: packet buffer
- * @offset: offset पूर्णांकo buffer
- * @data: 8 bit value to convert and insert पूर्णांकo pkt at offset
+ * @offset: offset into buffer
+ * @data: 8 bit value to convert and insert into pkt at offset
  *
- * This function is deचिन्हित क्रम inserting QFI (6 bits) क्रम GTPU.
+ * This function is designed for inserting QFI (6 bits) for GTPU.
  */
-अटल व्योम ice_pkt_insert_u6_qfi(u8 *pkt, पूर्णांक offset, u8 data)
-अणु
+static void ice_pkt_insert_u6_qfi(u8 *pkt, int offset, u8 data)
+{
 	u8 ret;
 
 	ret = (data & 0x3F) + (*(pkt + offset) & 0xC0);
-	स_नकल(pkt + offset, &ret, माप(ret));
-पूर्ण
+	memcpy(pkt + offset, &ret, sizeof(ret));
+}
 
 /**
- * ice_pkt_insert_u8 - insert a u8 value पूर्णांकo a memory buffer.
+ * ice_pkt_insert_u8 - insert a u8 value into a memory buffer.
  * @pkt: packet buffer
- * @offset: offset पूर्णांकo buffer
- * @data: 8 bit value to convert and insert पूर्णांकo pkt at offset
+ * @offset: offset into buffer
+ * @data: 8 bit value to convert and insert into pkt at offset
  */
-अटल व्योम ice_pkt_insert_u8(u8 *pkt, पूर्णांक offset, u8 data)
-अणु
-	स_नकल(pkt + offset, &data, माप(data));
-पूर्ण
+static void ice_pkt_insert_u8(u8 *pkt, int offset, u8 data)
+{
+	memcpy(pkt + offset, &data, sizeof(data));
+}
 
 /**
- * ice_pkt_insert_u8_tc - insert a u8 value पूर्णांकo a memory buffer क्रम TC ipv6.
+ * ice_pkt_insert_u8_tc - insert a u8 value into a memory buffer for TC ipv6.
  * @pkt: packet buffer
- * @offset: offset पूर्णांकo buffer
- * @data: 8 bit value to convert and insert पूर्णांकo pkt at offset
+ * @offset: offset into buffer
+ * @data: 8 bit value to convert and insert into pkt at offset
  *
- * This function is deचिन्हित क्रम inserting Traffic Class (TC) क्रम IPv6,
+ * This function is designed for inserting Traffic Class (TC) for IPv6,
  * since that TC is not aligned in number of bytes. Here we split it out
- * पूर्णांकo two part and fill each byte with data copy from pkt, then insert
+ * into two part and fill each byte with data copy from pkt, then insert
  * the two bytes data one by one.
  */
-अटल व्योम ice_pkt_insert_u8_tc(u8 *pkt, पूर्णांक offset, u8 data)
-अणु
+static void ice_pkt_insert_u8_tc(u8 *pkt, int offset, u8 data)
+{
 	u8 high, low;
 
 	high = (data >> 4) + (*(pkt + offset) & 0xF0);
-	स_नकल(pkt + offset, &high, माप(high));
+	memcpy(pkt + offset, &high, sizeof(high));
 
 	low = (*(pkt + offset + 1) & 0x0F) + ((data & 0x0F) << 4);
-	स_नकल(pkt + offset + 1, &low, माप(low));
-पूर्ण
+	memcpy(pkt + offset + 1, &low, sizeof(low));
+}
 
 /**
- * ice_pkt_insert_u16 - insert a be16 value पूर्णांकo a memory buffer
+ * ice_pkt_insert_u16 - insert a be16 value into a memory buffer
  * @pkt: packet buffer
- * @offset: offset पूर्णांकo buffer
- * @data: 16 bit value to convert and insert पूर्णांकo pkt at offset
+ * @offset: offset into buffer
+ * @data: 16 bit value to convert and insert into pkt at offset
  */
-अटल व्योम ice_pkt_insert_u16(u8 *pkt, पूर्णांक offset, __be16 data)
-अणु
-	स_नकल(pkt + offset, &data, माप(data));
-पूर्ण
+static void ice_pkt_insert_u16(u8 *pkt, int offset, __be16 data)
+{
+	memcpy(pkt + offset, &data, sizeof(data));
+}
 
 /**
- * ice_pkt_insert_u32 - insert a be32 value पूर्णांकo a memory buffer
+ * ice_pkt_insert_u32 - insert a be32 value into a memory buffer
  * @pkt: packet buffer
- * @offset: offset पूर्णांकo buffer
- * @data: 32 bit value to convert and insert पूर्णांकo pkt at offset
+ * @offset: offset into buffer
+ * @data: 32 bit value to convert and insert into pkt at offset
  */
-अटल व्योम ice_pkt_insert_u32(u8 *pkt, पूर्णांक offset, __be32 data)
-अणु
-	स_नकल(pkt + offset, &data, माप(data));
-पूर्ण
+static void ice_pkt_insert_u32(u8 *pkt, int offset, __be32 data)
+{
+	memcpy(pkt + offset, &data, sizeof(data));
+}
 
 /**
- * ice_pkt_insert_mac_addr - insert a MAC addr पूर्णांकo a memory buffer.
+ * ice_pkt_insert_mac_addr - insert a MAC addr into a memory buffer.
  * @pkt: packet buffer
- * @addr: MAC address to convert and insert पूर्णांकo pkt at offset
+ * @addr: MAC address to convert and insert into pkt at offset
  */
-अटल व्योम ice_pkt_insert_mac_addr(u8 *pkt, u8 *addr)
-अणु
+static void ice_pkt_insert_mac_addr(u8 *pkt, u8 *addr)
+{
 	ether_addr_copy(pkt, addr);
-पूर्ण
+}
 
 /**
  * ice_fdir_get_gen_prgm_pkt - generate a training packet
- * @hw: poपूर्णांकer to the hardware काष्ठाure
- * @input: flow director filter data काष्ठाure
- * @pkt: poपूर्णांकer to वापस filter packet
+ * @hw: pointer to the hardware structure
+ * @input: flow director filter data structure
+ * @pkt: pointer to return filter packet
  * @frag: generate a fragment packet
  * @tun: true implies generate a tunnel packet
  */
-क्रमागत ice_status
-ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input,
+enum ice_status
+ice_fdir_get_gen_prgm_pkt(struct ice_hw *hw, struct ice_fdir_fltr *input,
 			  u8 *pkt, bool frag, bool tun)
-अणु
-	क्रमागत ice_fltr_ptype flow;
+{
+	enum ice_fltr_ptype flow;
 	u16 tnl_port;
 	u8 *loc;
 	u16 idx;
 
-	अगर (input->flow_type == ICE_FLTR_PTYPE_NONF_IPV4_OTHER) अणु
-		चयन (input->ip.v4.proto) अणु
-		हाल IPPROTO_TCP:
+	if (input->flow_type == ICE_FLTR_PTYPE_NONF_IPV4_OTHER) {
+		switch (input->ip.v4.proto) {
+		case IPPROTO_TCP:
 			flow = ICE_FLTR_PTYPE_NONF_IPV4_TCP;
-			अवरोध;
-		हाल IPPROTO_UDP:
+			break;
+		case IPPROTO_UDP:
 			flow = ICE_FLTR_PTYPE_NONF_IPV4_UDP;
-			अवरोध;
-		हाल IPPROTO_SCTP:
+			break;
+		case IPPROTO_SCTP:
 			flow = ICE_FLTR_PTYPE_NONF_IPV4_SCTP;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			flow = ICE_FLTR_PTYPE_NONF_IPV4_OTHER;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (input->flow_type == ICE_FLTR_PTYPE_NONF_IPV6_OTHER) अणु
-		चयन (input->ip.v6.proto) अणु
-		हाल IPPROTO_TCP:
+			break;
+		}
+	} else if (input->flow_type == ICE_FLTR_PTYPE_NONF_IPV6_OTHER) {
+		switch (input->ip.v6.proto) {
+		case IPPROTO_TCP:
 			flow = ICE_FLTR_PTYPE_NONF_IPV6_TCP;
-			अवरोध;
-		हाल IPPROTO_UDP:
+			break;
+		case IPPROTO_UDP:
 			flow = ICE_FLTR_PTYPE_NONF_IPV6_UDP;
-			अवरोध;
-		हाल IPPROTO_SCTP:
+			break;
+		case IPPROTO_SCTP:
 			flow = ICE_FLTR_PTYPE_NONF_IPV6_SCTP;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			flow = ICE_FLTR_PTYPE_NONF_IPV6_OTHER;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		flow = input->flow_type;
-	पूर्ण
+	}
 
-	क्रम (idx = 0; idx < ICE_Fसूची_NUM_PKT; idx++)
-		अगर (ice_fdir_pkt[idx].flow == flow)
-			अवरोध;
-	अगर (idx == ICE_Fसूची_NUM_PKT)
-		वापस ICE_ERR_PARAM;
-	अगर (!tun) अणु
-		स_नकल(pkt, ice_fdir_pkt[idx].pkt, ice_fdir_pkt[idx].pkt_len);
+	for (idx = 0; idx < ICE_FDIR_NUM_PKT; idx++)
+		if (ice_fdir_pkt[idx].flow == flow)
+			break;
+	if (idx == ICE_FDIR_NUM_PKT)
+		return ICE_ERR_PARAM;
+	if (!tun) {
+		memcpy(pkt, ice_fdir_pkt[idx].pkt, ice_fdir_pkt[idx].pkt_len);
 		loc = pkt;
-	पूर्ण अन्यथा अणु
-		अगर (!ice_get_खोलो_tunnel_port(hw, &tnl_port))
-			वापस ICE_ERR_DOES_NOT_EXIST;
-		अगर (!ice_fdir_pkt[idx].tun_pkt)
-			वापस ICE_ERR_PARAM;
-		स_नकल(pkt, ice_fdir_pkt[idx].tun_pkt,
+	} else {
+		if (!ice_get_open_tunnel_port(hw, &tnl_port))
+			return ICE_ERR_DOES_NOT_EXIST;
+		if (!ice_fdir_pkt[idx].tun_pkt)
+			return ICE_ERR_PARAM;
+		memcpy(pkt, ice_fdir_pkt[idx].tun_pkt,
 		       ice_fdir_pkt[idx].tun_pkt_len);
 		ice_pkt_insert_u16(pkt, ICE_IPV4_UDP_DST_PORT_OFFSET,
 				   htons(tnl_port));
-		loc = &pkt[ICE_Fसूची_TUN_PKT_OFF];
-	पूर्ण
+		loc = &pkt[ICE_FDIR_TUN_PKT_OFF];
+	}
 
 	/* Reverse the src and dst, since the HW expects them to be from Tx
 	 * perspective. The input from user is from Rx filter perspective.
 	 */
-	चयन (flow) अणु
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_TCP:
+	switch (flow) {
+	case ICE_FLTR_PTYPE_NONF_IPV4_TCP:
 		ice_pkt_insert_u32(loc, ICE_IPV4_DST_ADDR_OFFSET,
 				   input->ip.v4.src_ip);
 		ice_pkt_insert_u16(loc, ICE_IPV4_TCP_DST_PORT_OFFSET,
@@ -952,10 +951,10 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8(loc, ICE_IPV4_TOS_OFFSET, input->ip.v4.tos);
 		ice_pkt_insert_u8(loc, ICE_IPV4_TTL_OFFSET, input->ip.v4.ttl);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अगर (frag)
-			loc[20] = ICE_Fसूची_IPV4_PKT_FLAG_DF;
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_UDP:
+		if (frag)
+			loc[20] = ICE_FDIR_IPV4_PKT_FLAG_DF;
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_UDP:
 		ice_pkt_insert_u32(loc, ICE_IPV4_DST_ADDR_OFFSET,
 				   input->ip.v4.src_ip);
 		ice_pkt_insert_u16(loc, ICE_IPV4_UDP_DST_PORT_OFFSET,
@@ -969,8 +968,8 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
 		ice_pkt_insert_mac_addr(loc + ETH_ALEN,
 					input->ext_data.src_mac);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_SCTP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_SCTP:
 		ice_pkt_insert_u32(loc, ICE_IPV4_DST_ADDR_OFFSET,
 				   input->ip.v4.src_ip);
 		ice_pkt_insert_u16(loc, ICE_IPV4_SCTP_DST_PORT_OFFSET,
@@ -982,8 +981,8 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8(loc, ICE_IPV4_TOS_OFFSET, input->ip.v4.tos);
 		ice_pkt_insert_u8(loc, ICE_IPV4_TTL_OFFSET, input->ip.v4.ttl);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_OTHER:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_OTHER:
 		ice_pkt_insert_u32(loc, ICE_IPV4_DST_ADDR_OFFSET,
 				   input->ip.v4.src_ip);
 		ice_pkt_insert_u32(loc, ICE_IPV4_SRC_ADDR_OFFSET,
@@ -993,11 +992,11 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8(loc, ICE_IPV4_PROTO_OFFSET,
 				  input->ip.v4.proto);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_UDP:
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_TCP:
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_ICMP:
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_OTHER:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_UDP:
+	case ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_TCP:
+	case ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_ICMP:
+	case ICE_FLTR_PTYPE_NONF_IPV4_GTPU_IPV4_OTHER:
 		ice_pkt_insert_u32(loc, ICE_IPV4_DST_ADDR_OFFSET,
 				   input->ip.v4.src_ip);
 		ice_pkt_insert_u32(loc, ICE_IPV4_SRC_ADDR_OFFSET,
@@ -1006,62 +1005,62 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 				   input->gtpu_data.teid);
 		ice_pkt_insert_u6_qfi(loc, ICE_IPV4_GTPU_QFI_OFFSET,
 				      input->gtpu_data.qfi);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_L2TPV3:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_L2TPV3:
 		ice_pkt_insert_u32(loc, ICE_IPV4_L2TPV3_SESS_ID_OFFSET,
 				   input->l2tpv3_data.session_id);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_L2TPV3:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_L2TPV3:
 		ice_pkt_insert_u32(loc, ICE_IPV6_L2TPV3_SESS_ID_OFFSET,
 				   input->l2tpv3_data.session_id);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_ESP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_ESP:
 		ice_pkt_insert_u32(loc, ICE_IPV4_ESP_SPI_OFFSET,
 				   input->ip.v4.sec_parm_idx);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_ESP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_ESP:
 		ice_pkt_insert_u32(loc, ICE_IPV6_ESP_SPI_OFFSET,
 				   input->ip.v6.sec_parm_idx);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_AH:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_AH:
 		ice_pkt_insert_u32(loc, ICE_IPV4_AH_SPI_OFFSET,
 				   input->ip.v4.sec_parm_idx);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_AH:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_AH:
 		ice_pkt_insert_u32(loc, ICE_IPV6_AH_SPI_OFFSET,
 				   input->ip.v6.sec_parm_idx);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_NAT_T_ESP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_NAT_T_ESP:
 		ice_pkt_insert_u32(loc, ICE_IPV4_DST_ADDR_OFFSET,
 				   input->ip.v4.src_ip);
 		ice_pkt_insert_u32(loc, ICE_IPV4_SRC_ADDR_OFFSET,
 				   input->ip.v4.dst_ip);
 		ice_pkt_insert_u32(loc, ICE_IPV4_NAT_T_ESP_SPI_OFFSET,
 				   input->ip.v4.sec_parm_idx);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_NAT_T_ESP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_NAT_T_ESP:
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_DST_ADDR_OFFSET,
 					 input->ip.v6.src_ip);
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_SRC_ADDR_OFFSET,
 					 input->ip.v6.dst_ip);
 		ice_pkt_insert_u32(loc, ICE_IPV6_NAT_T_ESP_SPI_OFFSET,
 				   input->ip.v6.sec_parm_idx);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_PFCP_NODE:
-	हाल ICE_FLTR_PTYPE_NONF_IPV4_PFCP_SESSION:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV4_PFCP_NODE:
+	case ICE_FLTR_PTYPE_NONF_IPV4_PFCP_SESSION:
 		ice_pkt_insert_u16(loc, ICE_IPV4_UDP_SRC_PORT_OFFSET,
 				   input->ip.v4.dst_port);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_PFCP_NODE:
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_PFCP_SESSION:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_PFCP_NODE:
+	case ICE_FLTR_PTYPE_NONF_IPV6_PFCP_SESSION:
 		ice_pkt_insert_u16(loc, ICE_IPV6_UDP_SRC_PORT_OFFSET,
 				   input->ip.v6.dst_port);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NON_IP_L2:
+		break;
+	case ICE_FLTR_PTYPE_NON_IP_L2:
 		ice_pkt_insert_u16(loc, ICE_MAC_ETHTYPE_OFFSET,
 				   input->ext_data.ether_type);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_TCP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_TCP:
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_DST_ADDR_OFFSET,
 					 input->ip.v6.src_ip);
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_SRC_ADDR_OFFSET,
@@ -1073,8 +1072,8 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8_tc(loc, ICE_IPV6_TC_OFFSET, input->ip.v6.tc);
 		ice_pkt_insert_u8(loc, ICE_IPV6_HLIM_OFFSET, input->ip.v6.hlim);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_UDP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_UDP:
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_DST_ADDR_OFFSET,
 					 input->ip.v6.src_ip);
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_SRC_ADDR_OFFSET,
@@ -1086,8 +1085,8 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8_tc(loc, ICE_IPV6_TC_OFFSET, input->ip.v6.tc);
 		ice_pkt_insert_u8(loc, ICE_IPV6_HLIM_OFFSET, input->ip.v6.hlim);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_SCTP:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_SCTP:
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_DST_ADDR_OFFSET,
 					 input->ip.v6.src_ip);
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_SRC_ADDR_OFFSET,
@@ -1099,8 +1098,8 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8_tc(loc, ICE_IPV6_TC_OFFSET, input->ip.v6.tc);
 		ice_pkt_insert_u8(loc, ICE_IPV6_HLIM_OFFSET, input->ip.v6.hlim);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अवरोध;
-	हाल ICE_FLTR_PTYPE_NONF_IPV6_OTHER:
+		break;
+	case ICE_FLTR_PTYPE_NONF_IPV6_OTHER:
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_DST_ADDR_OFFSET,
 					 input->ip.v6.src_ip);
 		ice_pkt_insert_ipv6_addr(loc, ICE_IPV6_SRC_ADDR_OFFSET,
@@ -1110,196 +1109,196 @@ ice_fdir_get_gen_prgm_pkt(काष्ठा ice_hw *hw, काष्ठा ice_
 		ice_pkt_insert_u8(loc, ICE_IPV6_PROTO_OFFSET,
 				  input->ip.v6.proto);
 		ice_pkt_insert_mac_addr(loc, input->ext_data.dst_mac);
-		अवरोध;
-	शेष:
-		वापस ICE_ERR_PARAM;
-	पूर्ण
+		break;
+	default:
+		return ICE_ERR_PARAM;
+	}
 
-	अगर (input->flex_fltr)
+	if (input->flex_fltr)
 		ice_pkt_insert_u16(loc, input->flex_offset, input->flex_word);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * ice_fdir_has_frag - करोes flow type have 2 ptypes
+ * ice_fdir_has_frag - does flow type have 2 ptypes
  * @flow: flow ptype
  *
- * वापसs true is there is a fragment packet क्रम this ptype
+ * returns true is there is a fragment packet for this ptype
  */
-bool ice_fdir_has_frag(क्रमागत ice_fltr_ptype flow)
-अणु
-	अगर (flow == ICE_FLTR_PTYPE_NONF_IPV4_OTHER)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+bool ice_fdir_has_frag(enum ice_fltr_ptype flow)
+{
+	if (flow == ICE_FLTR_PTYPE_NONF_IPV4_OTHER)
+		return true;
+	else
+		return false;
+}
 
 /**
  * ice_fdir_find_fltr_by_idx - find filter with idx
- * @hw: poपूर्णांकer to hardware काष्ठाure
+ * @hw: pointer to hardware structure
  * @fltr_idx: index to find.
  *
- * Returns poपूर्णांकer to filter अगर found or null
+ * Returns pointer to filter if found or null
  */
-काष्ठा ice_fdir_fltr *
-ice_fdir_find_fltr_by_idx(काष्ठा ice_hw *hw, u32 fltr_idx)
-अणु
-	काष्ठा ice_fdir_fltr *rule;
+struct ice_fdir_fltr *
+ice_fdir_find_fltr_by_idx(struct ice_hw *hw, u32 fltr_idx)
+{
+	struct ice_fdir_fltr *rule;
 
-	list_क्रम_each_entry(rule, &hw->fdir_list_head, fltr_node) अणु
+	list_for_each_entry(rule, &hw->fdir_list_head, fltr_node) {
 		/* rule ID found in the list */
-		अगर (fltr_idx == rule->fltr_id)
-			वापस rule;
-		अगर (fltr_idx < rule->fltr_id)
-			अवरोध;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (fltr_idx == rule->fltr_id)
+			return rule;
+		if (fltr_idx < rule->fltr_id)
+			break;
+	}
+	return NULL;
+}
 
 /**
  * ice_fdir_list_add_fltr - add a new node to the flow director filter list
- * @hw: hardware काष्ठाure
- * @fltr: filter node to add to काष्ठाure
+ * @hw: hardware structure
+ * @fltr: filter node to add to structure
  */
-व्योम ice_fdir_list_add_fltr(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *fltr)
-अणु
-	काष्ठा ice_fdir_fltr *rule, *parent = शून्य;
+void ice_fdir_list_add_fltr(struct ice_hw *hw, struct ice_fdir_fltr *fltr)
+{
+	struct ice_fdir_fltr *rule, *parent = NULL;
 
-	list_क्रम_each_entry(rule, &hw->fdir_list_head, fltr_node) अणु
+	list_for_each_entry(rule, &hw->fdir_list_head, fltr_node) {
 		/* rule ID found or pass its spot in the list */
-		अगर (rule->fltr_id >= fltr->fltr_id)
-			अवरोध;
+		if (rule->fltr_id >= fltr->fltr_id)
+			break;
 		parent = rule;
-	पूर्ण
+	}
 
-	अगर (parent)
+	if (parent)
 		list_add(&fltr->fltr_node, &parent->fltr_node);
-	अन्यथा
+	else
 		list_add(&fltr->fltr_node, &hw->fdir_list_head);
-पूर्ण
+}
 
 /**
  * ice_fdir_update_cntrs - increment / decrement filter counter
- * @hw: poपूर्णांकer to hardware काष्ठाure
+ * @hw: pointer to hardware structure
  * @flow: filter flow type
  * @add: true implies filters added
  */
-व्योम
-ice_fdir_update_cntrs(काष्ठा ice_hw *hw, क्रमागत ice_fltr_ptype flow, bool add)
-अणु
-	पूर्णांक incr;
+void
+ice_fdir_update_cntrs(struct ice_hw *hw, enum ice_fltr_ptype flow, bool add)
+{
+	int incr;
 
 	incr = add ? 1 : -1;
 	hw->fdir_active_fltr += incr;
 
-	अगर (flow == ICE_FLTR_PTYPE_NONF_NONE || flow >= ICE_FLTR_PTYPE_MAX)
+	if (flow == ICE_FLTR_PTYPE_NONF_NONE || flow >= ICE_FLTR_PTYPE_MAX)
 		ice_debug(hw, ICE_DBG_SW, "Unknown filter type %d\n", flow);
-	अन्यथा
+	else
 		hw->fdir_fltr_cnt[flow] += incr;
-पूर्ण
+}
 
 /**
  * ice_cmp_ipv6_addr - compare 2 IP v6 addresses
  * @a: IP v6 address
  * @b: IP v6 address
  *
- * Returns 0 on equal, वापसs non-0 अगर dअगरferent
+ * Returns 0 on equal, returns non-0 if different
  */
-अटल पूर्णांक ice_cmp_ipv6_addr(__be32 *a, __be32 *b)
-अणु
-	वापस स_भेद(a, b, 4 * माप(__be32));
-पूर्ण
+static int ice_cmp_ipv6_addr(__be32 *a, __be32 *b)
+{
+	return memcmp(a, b, 4 * sizeof(__be32));
+}
 
 /**
  * ice_fdir_comp_rules - compare 2 filters
- * @a: a Flow Director filter data काष्ठाure
- * @b: a Flow Director filter data काष्ठाure
- * @v6: bool true अगर v6 filter
+ * @a: a Flow Director filter data structure
+ * @b: a Flow Director filter data structure
+ * @v6: bool true if v6 filter
  *
- * Returns true अगर the filters match
+ * Returns true if the filters match
  */
-अटल bool
-ice_fdir_comp_rules(काष्ठा ice_fdir_fltr *a,  काष्ठा ice_fdir_fltr *b, bool v6)
-अणु
-	क्रमागत ice_fltr_ptype flow_type = a->flow_type;
+static bool
+ice_fdir_comp_rules(struct ice_fdir_fltr *a,  struct ice_fdir_fltr *b, bool v6)
+{
+	enum ice_fltr_ptype flow_type = a->flow_type;
 
-	/* The calling function alपढ़ोy checks that the two filters have the
+	/* The calling function already checks that the two filters have the
 	 * same flow_type.
 	 */
-	अगर (!v6) अणु
-		अगर (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_TCP ||
+	if (!v6) {
+		if (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_TCP ||
 		    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_UDP ||
-		    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_SCTP) अणु
-			अगर (a->ip.v4.dst_ip == b->ip.v4.dst_ip &&
+		    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_SCTP) {
+			if (a->ip.v4.dst_ip == b->ip.v4.dst_ip &&
 			    a->ip.v4.src_ip == b->ip.v4.src_ip &&
 			    a->ip.v4.dst_port == b->ip.v4.dst_port &&
 			    a->ip.v4.src_port == b->ip.v4.src_port)
-				वापस true;
-		पूर्ण अन्यथा अगर (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_OTHER) अणु
-			अगर (a->ip.v4.dst_ip == b->ip.v4.dst_ip &&
+				return true;
+		} else if (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_OTHER) {
+			if (a->ip.v4.dst_ip == b->ip.v4.dst_ip &&
 			    a->ip.v4.src_ip == b->ip.v4.src_ip &&
 			    a->ip.v4.l4_header == b->ip.v4.l4_header &&
 			    a->ip.v4.proto == b->ip.v4.proto &&
 			    a->ip.v4.ip_ver == b->ip.v4.ip_ver &&
 			    a->ip.v4.tos == b->ip.v4.tos)
-				वापस true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (flow_type == ICE_FLTR_PTYPE_NONF_IPV6_UDP ||
+				return true;
+		}
+	} else {
+		if (flow_type == ICE_FLTR_PTYPE_NONF_IPV6_UDP ||
 		    flow_type == ICE_FLTR_PTYPE_NONF_IPV6_TCP ||
-		    flow_type == ICE_FLTR_PTYPE_NONF_IPV6_SCTP) अणु
-			अगर (a->ip.v6.dst_port == b->ip.v6.dst_port &&
+		    flow_type == ICE_FLTR_PTYPE_NONF_IPV6_SCTP) {
+			if (a->ip.v6.dst_port == b->ip.v6.dst_port &&
 			    a->ip.v6.src_port == b->ip.v6.src_port &&
 			    !ice_cmp_ipv6_addr(a->ip.v6.dst_ip,
 					       b->ip.v6.dst_ip) &&
 			    !ice_cmp_ipv6_addr(a->ip.v6.src_ip,
 					       b->ip.v6.src_ip))
-				वापस true;
-		पूर्ण अन्यथा अगर (flow_type == ICE_FLTR_PTYPE_NONF_IPV6_OTHER) अणु
-			अगर (a->ip.v6.dst_port == b->ip.v6.dst_port &&
+				return true;
+		} else if (flow_type == ICE_FLTR_PTYPE_NONF_IPV6_OTHER) {
+			if (a->ip.v6.dst_port == b->ip.v6.dst_port &&
 			    a->ip.v6.src_port == b->ip.v6.src_port)
-				वापस true;
-		पूर्ण
-	पूर्ण
+				return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * ice_fdir_is_dup_fltr - test अगर filter is alपढ़ोy in list क्रम PF
- * @hw: hardware data काष्ठाure
- * @input: Flow Director filter data काष्ठाure
+ * ice_fdir_is_dup_fltr - test if filter is already in list for PF
+ * @hw: hardware data structure
+ * @input: Flow Director filter data structure
  *
- * Returns true अगर the filter is found in the list
+ * Returns true if the filter is found in the list
  */
-bool ice_fdir_is_dup_fltr(काष्ठा ice_hw *hw, काष्ठा ice_fdir_fltr *input)
-अणु
-	काष्ठा ice_fdir_fltr *rule;
+bool ice_fdir_is_dup_fltr(struct ice_hw *hw, struct ice_fdir_fltr *input)
+{
+	struct ice_fdir_fltr *rule;
 	bool ret = false;
 
-	list_क्रम_each_entry(rule, &hw->fdir_list_head, fltr_node) अणु
-		क्रमागत ice_fltr_ptype flow_type;
+	list_for_each_entry(rule, &hw->fdir_list_head, fltr_node) {
+		enum ice_fltr_ptype flow_type;
 
-		अगर (rule->flow_type != input->flow_type)
-			जारी;
+		if (rule->flow_type != input->flow_type)
+			continue;
 
 		flow_type = input->flow_type;
-		अगर (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_TCP ||
+		if (flow_type == ICE_FLTR_PTYPE_NONF_IPV4_TCP ||
 		    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_UDP ||
 		    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_SCTP ||
 		    flow_type == ICE_FLTR_PTYPE_NONF_IPV4_OTHER)
 			ret = ice_fdir_comp_rules(rule, input, false);
-		अन्यथा
+		else
 			ret = ice_fdir_comp_rules(rule, input, true);
-		अगर (ret) अणु
-			अगर (rule->fltr_id == input->fltr_id &&
+		if (ret) {
+			if (rule->fltr_id == input->fltr_id &&
 			    rule->q_index != input->q_index)
 				ret = false;
-			अन्यथा
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			else
+				break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

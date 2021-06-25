@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * OF helpers क्रम usb devices.
+ * OF helpers for usb devices.
  *
  * This file is released under the GPLv2
  */
 
-#अगर_अघोषित __LINUX_USB_OF_H
-#घोषणा __LINUX_USB_OF_H
+#ifndef __LINUX_USB_OF_H
+#define __LINUX_USB_OF_H
 
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/phy.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/phy.h>
 
-काष्ठा usb_device;
+struct usb_device;
 
-#अगर IS_ENABLED(CONFIG_OF)
-क्रमागत usb_dr_mode of_usb_get_dr_mode_by_phy(काष्ठा device_node *np, पूर्णांक arg0);
-bool of_usb_host_tpl_support(काष्ठा device_node *np);
-पूर्णांक of_usb_update_otg_caps(काष्ठा device_node *np,
-			काष्ठा usb_otg_caps *otg_caps);
-काष्ठा device_node *usb_of_get_device_node(काष्ठा usb_device *hub, पूर्णांक port1);
-bool usb_of_has_combined_node(काष्ठा usb_device *udev);
-काष्ठा device_node *usb_of_get_पूर्णांकerface_node(काष्ठा usb_device *udev,
-		u8 config, u8 अगरnum);
-काष्ठा device *usb_of_get_companion_dev(काष्ठा device *dev);
-#अन्यथा
-अटल अंतरभूत क्रमागत usb_dr_mode
-of_usb_get_dr_mode_by_phy(काष्ठा device_node *np, पूर्णांक arg0)
-अणु
-	वापस USB_DR_MODE_UNKNOWN;
-पूर्ण
-अटल अंतरभूत bool of_usb_host_tpl_support(काष्ठा device_node *np)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत पूर्णांक of_usb_update_otg_caps(काष्ठा device_node *np,
-				काष्ठा usb_otg_caps *otg_caps)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत काष्ठा device_node *
-usb_of_get_device_node(काष्ठा usb_device *hub, पूर्णांक port1)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत bool usb_of_has_combined_node(काष्ठा usb_device *udev)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत काष्ठा device_node *
-usb_of_get_पूर्णांकerface_node(काष्ठा usb_device *udev, u8 config, u8 अगरnum)
-अणु
-	वापस शून्य;
-पूर्ण
-अटल अंतरभूत काष्ठा device *usb_of_get_companion_dev(काष्ठा device *dev)
-अणु
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_OF)
+enum usb_dr_mode of_usb_get_dr_mode_by_phy(struct device_node *np, int arg0);
+bool of_usb_host_tpl_support(struct device_node *np);
+int of_usb_update_otg_caps(struct device_node *np,
+			struct usb_otg_caps *otg_caps);
+struct device_node *usb_of_get_device_node(struct usb_device *hub, int port1);
+bool usb_of_has_combined_node(struct usb_device *udev);
+struct device_node *usb_of_get_interface_node(struct usb_device *udev,
+		u8 config, u8 ifnum);
+struct device *usb_of_get_companion_dev(struct device *dev);
+#else
+static inline enum usb_dr_mode
+of_usb_get_dr_mode_by_phy(struct device_node *np, int arg0)
+{
+	return USB_DR_MODE_UNKNOWN;
+}
+static inline bool of_usb_host_tpl_support(struct device_node *np)
+{
+	return false;
+}
+static inline int of_usb_update_otg_caps(struct device_node *np,
+				struct usb_otg_caps *otg_caps)
+{
+	return 0;
+}
+static inline struct device_node *
+usb_of_get_device_node(struct usb_device *hub, int port1)
+{
+	return NULL;
+}
+static inline bool usb_of_has_combined_node(struct usb_device *udev)
+{
+	return false;
+}
+static inline struct device_node *
+usb_of_get_interface_node(struct usb_device *udev, u8 config, u8 ifnum)
+{
+	return NULL;
+}
+static inline struct device *usb_of_get_companion_dev(struct device *dev)
+{
+	return NULL;
+}
+#endif
 
-#अगर IS_ENABLED(CONFIG_OF) && IS_ENABLED(CONFIG_USB_SUPPORT)
-क्रमागत usb_phy_पूर्णांकerface of_usb_get_phy_mode(काष्ठा device_node *np);
-#अन्यथा
-अटल अंतरभूत क्रमागत usb_phy_पूर्णांकerface of_usb_get_phy_mode(काष्ठा device_node *np)
-अणु
-	वापस USBPHY_INTERFACE_MODE_UNKNOWN;
-पूर्ण
+#if IS_ENABLED(CONFIG_OF) && IS_ENABLED(CONFIG_USB_SUPPORT)
+enum usb_phy_interface of_usb_get_phy_mode(struct device_node *np);
+#else
+static inline enum usb_phy_interface of_usb_get_phy_mode(struct device_node *np)
+{
+	return USBPHY_INTERFACE_MODE_UNKNOWN;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __LINUX_USB_OF_H */
+#endif /* __LINUX_USB_OF_H */

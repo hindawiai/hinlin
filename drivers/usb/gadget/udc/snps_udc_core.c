@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * amd5536.c -- AMD 5536 UDC high/full speed USB device controller
  *
@@ -8,219 +7,219 @@
  */
 
 /*
- * This file करोes the core driver implementation क्रम the UDC that is based
- * on Synopsys device controller IP (dअगरferent than HS OTG IP) that is either
- * connected through PCI bus or पूर्णांकegrated to SoC platक्रमms.
+ * This file does the core driver implementation for the UDC that is based
+ * on Synopsys device controller IP (different than HS OTG IP) that is either
+ * connected through PCI bus or integrated to SoC platforms.
  */
 
 /* Driver strings */
-#घोषणा UDC_MOD_DESCRIPTION		"Synopsys USB Device Controller"
-#घोषणा UDC_DRIVER_VERSION_STRING	"01.00.0206"
+#define UDC_MOD_DESCRIPTION		"Synopsys USB Device Controller"
+#define UDC_DRIVER_VERSION_STRING	"01.00.0206"
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश "amd5536udc.h"
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/timer.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/ioctl.h>
+#include <linux/fs.h>
+#include <linux/dmapool.h>
+#include <linux/prefetch.h>
+#include <linux/moduleparam.h>
+#include <asm/byteorder.h>
+#include <asm/unaligned.h>
+#include "amd5536udc.h"
 
-अटल व्योम udc_setup_endpoपूर्णांकs(काष्ठा udc *dev);
-अटल व्योम udc_soft_reset(काष्ठा udc *dev);
-अटल काष्ठा udc_request *udc_alloc_bna_dummy(काष्ठा udc_ep *ep);
-अटल व्योम udc_मुक्त_request(काष्ठा usb_ep *usbep, काष्ठा usb_request *usbreq);
+static void udc_setup_endpoints(struct udc *dev);
+static void udc_soft_reset(struct udc *dev);
+static struct udc_request *udc_alloc_bna_dummy(struct udc_ep *ep);
+static void udc_free_request(struct usb_ep *usbep, struct usb_request *usbreq);
 
 /* description */
-अटल स्थिर अक्षर mod_desc[] = UDC_MOD_DESCRIPTION;
-अटल स्थिर अक्षर name[] = "udc";
+static const char mod_desc[] = UDC_MOD_DESCRIPTION;
+static const char name[] = "udc";
 
-/* काष्ठाure to hold endpoपूर्णांक function poपूर्णांकers */
-अटल स्थिर काष्ठा usb_ep_ops udc_ep_ops;
+/* structure to hold endpoint function pointers */
+static const struct usb_ep_ops udc_ep_ops;
 
 /* received setup data */
-अटल जोड़ udc_setup_data setup_data;
+static union udc_setup_data setup_data;
 
-/* poपूर्णांकer to device object */
-अटल काष्ठा udc *udc;
+/* pointer to device object */
+static struct udc *udc;
 
-/* irq spin lock क्रम soft reset */
-अटल DEFINE_SPINLOCK(udc_irq_spinlock);
+/* irq spin lock for soft reset */
+static DEFINE_SPINLOCK(udc_irq_spinlock);
 /* stall spin lock */
-अटल DEFINE_SPINLOCK(udc_stall_spinlock);
+static DEFINE_SPINLOCK(udc_stall_spinlock);
 
 /*
-* slave mode: pending bytes in rx fअगरo after nyet,
-* used अगर EPIN irq came but no req was available
+* slave mode: pending bytes in rx fifo after nyet,
+* used if EPIN irq came but no req was available
 */
-अटल अचिन्हित पूर्णांक udc_rxfअगरo_pending;
+static unsigned int udc_rxfifo_pending;
 
-/* count soft resets after suspend to aव्योम loop */
-अटल पूर्णांक soft_reset_occured;
-अटल पूर्णांक soft_reset_after_usbreset_occured;
+/* count soft resets after suspend to avoid loop */
+static int soft_reset_occured;
+static int soft_reset_after_usbreset_occured;
 
-/* समयr */
-अटल काष्ठा समयr_list udc_समयr;
-अटल पूर्णांक stop_समयr;
+/* timer */
+static struct timer_list udc_timer;
+static int stop_timer;
 
 /* set_rde -- Is used to control enabling of RX DMA. Problem is
- * that UDC has only one bit (RDE) to enable/disable RX DMA क्रम
- * all OUT endpoपूर्णांकs. So we have to handle race conditions like
- * when OUT data reaches the fअगरo but no request was queued yet.
+ * that UDC has only one bit (RDE) to enable/disable RX DMA for
+ * all OUT endpoints. So we have to handle race conditions like
+ * when OUT data reaches the fifo but no request was queued yet.
  * This cannot be solved by letting the RX DMA disabled until a
- * request माला_लो queued because there may be other OUT packets
- * in the FIFO (important क्रम not blocking control traffic).
- * The value of set_rde controls the correspondig समयr.
+ * request gets queued because there may be other OUT packets
+ * in the FIFO (important for not blocking control traffic).
+ * The value of set_rde controls the correspondig timer.
  *
  * set_rde -1 == not used, means it is alloed to be set to 0 or 1
- * set_rde  0 == करो not touch RDE, करो no start the RDE समयr
- * set_rde  1 == समयr function will look whether FIFO has data
- * set_rde  2 == set by समयr function to enable RX DMA on next call
+ * set_rde  0 == do not touch RDE, do no start the RDE timer
+ * set_rde  1 == timer function will look whether FIFO has data
+ * set_rde  2 == set by timer function to enable RX DMA on next call
  */
-अटल पूर्णांक set_rde = -1;
+static int set_rde = -1;
 
-अटल DECLARE_COMPLETION(on_निकास);
-अटल काष्ठा समयr_list udc_pollstall_समयr;
-अटल पूर्णांक stop_pollstall_समयr;
-अटल DECLARE_COMPLETION(on_pollstall_निकास);
+static DECLARE_COMPLETION(on_exit);
+static struct timer_list udc_pollstall_timer;
+static int stop_pollstall_timer;
+static DECLARE_COMPLETION(on_pollstall_exit);
 
-/* endpoपूर्णांक names used क्रम prपूर्णांक */
-अटल स्थिर अक्षर ep0_string[] = "ep0in";
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा usb_ep_caps caps;
-पूर्ण ep_info[] = अणु
-#घोषणा EP_INFO(_name, _caps) \
-	अणु \
+/* endpoint names used for print */
+static const char ep0_string[] = "ep0in";
+static const struct {
+	const char *name;
+	const struct usb_ep_caps caps;
+} ep_info[] = {
+#define EP_INFO(_name, _caps) \
+	{ \
 		.name = _name, \
 		.caps = _caps, \
-	पूर्ण
+	}
 
 	EP_INFO(ep0_string,
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep1in-int",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep2in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep3in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep4in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep5in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep6in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep7in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep8in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep9in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep10in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep11in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep12in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep13in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep14in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep15in-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep0out",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep1out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep2out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep3out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep4out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep5out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep6out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep7out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep8out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep9out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep10out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep11out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep12out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep13out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep14out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep15out-bulk",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK, USB_EP_CAPS_DIR_OUT)),
 
-#अघोषित EP_INFO
-पूर्ण;
+#undef EP_INFO
+};
 
 /* buffer fill mode */
-अटल पूर्णांक use_dma_bufferfill_mode;
-/* tx buffer size क्रम high speed */
-अटल अचिन्हित दीर्घ hs_tx_buf = UDC_EPIN_BUFF_SIZE;
+static int use_dma_bufferfill_mode;
+/* tx buffer size for high speed */
+static unsigned long hs_tx_buf = UDC_EPIN_BUFF_SIZE;
 
 /*---------------------------------------------------------------------------*/
-/* Prपूर्णांकs UDC device रेजिस्टरs and endpoपूर्णांक irq रेजिस्टरs */
-अटल व्योम prपूर्णांक_regs(काष्ठा udc *dev)
-अणु
+/* Prints UDC device registers and endpoint irq registers */
+static void print_regs(struct udc *dev)
+{
 	DBG(dev, "------- Device registers -------\n");
-	DBG(dev, "dev config     = %08x\n", पढ़ोl(&dev->regs->cfg));
-	DBG(dev, "dev control    = %08x\n", पढ़ोl(&dev->regs->ctl));
-	DBG(dev, "dev status     = %08x\n", पढ़ोl(&dev->regs->sts));
+	DBG(dev, "dev config     = %08x\n", readl(&dev->regs->cfg));
+	DBG(dev, "dev control    = %08x\n", readl(&dev->regs->ctl));
+	DBG(dev, "dev status     = %08x\n", readl(&dev->regs->sts));
 	DBG(dev, "\n");
-	DBG(dev, "dev int's      = %08x\n", पढ़ोl(&dev->regs->irqsts));
-	DBG(dev, "dev intmask    = %08x\n", पढ़ोl(&dev->regs->irqmsk));
+	DBG(dev, "dev int's      = %08x\n", readl(&dev->regs->irqsts));
+	DBG(dev, "dev intmask    = %08x\n", readl(&dev->regs->irqmsk));
 	DBG(dev, "\n");
-	DBG(dev, "dev ep int's   = %08x\n", पढ़ोl(&dev->regs->ep_irqsts));
-	DBG(dev, "dev ep intmask = %08x\n", पढ़ोl(&dev->regs->ep_irqmsk));
+	DBG(dev, "dev ep int's   = %08x\n", readl(&dev->regs->ep_irqsts));
+	DBG(dev, "dev ep intmask = %08x\n", readl(&dev->regs->ep_irqmsk));
 	DBG(dev, "\n");
 	DBG(dev, "USE DMA        = %d\n", use_dma);
-	अगर (use_dma && use_dma_ppb && !use_dma_ppb_du) अणु
+	if (use_dma && use_dma_ppb && !use_dma_ppb_du) {
 		DBG(dev, "DMA mode       = PPBNDU (packet per buffer "
 			"WITHOUT desc. update)\n");
 		dev_info(dev->dev, "DMA mode (%s)\n", "PPBNDU");
-	पूर्ण अन्यथा अगर (use_dma && use_dma_ppb && use_dma_ppb_du) अणु
+	} else if (use_dma && use_dma_ppb && use_dma_ppb_du) {
 		DBG(dev, "DMA mode       = PPBDU (packet per buffer "
 			"WITH desc. update)\n");
 		dev_info(dev->dev, "DMA mode (%s)\n", "PPBDU");
-	पूर्ण
-	अगर (use_dma && use_dma_bufferfill_mode) अणु
+	}
+	if (use_dma && use_dma_bufferfill_mode) {
 		DBG(dev, "DMA mode       = BF (buffer fill mode)\n");
 		dev_info(dev->dev, "DMA mode (%s)\n", "BF");
-	पूर्ण
-	अगर (!use_dma)
+	}
+	if (!use_dma)
 		dev_info(dev->dev, "FIFO mode\n");
 	DBG(dev, "-------------------------------------------------------\n");
-पूर्ण
+}
 
-/* Masks unused पूर्णांकerrupts */
-पूर्णांक udc_mask_unused_पूर्णांकerrupts(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+/* Masks unused interrupts */
+int udc_mask_unused_interrupts(struct udc *dev)
+{
+	u32 tmp;
 
-	/* mask all dev पूर्णांकerrupts */
-	पंचांगp =	AMD_BIT(UDC_DEVINT_SVC) |
+	/* mask all dev interrupts */
+	tmp =	AMD_BIT(UDC_DEVINT_SVC) |
 		AMD_BIT(UDC_DEVINT_ENUM) |
 		AMD_BIT(UDC_DEVINT_US) |
 		AMD_BIT(UDC_DEVINT_UR) |
@@ -228,610 +227,610 @@
 		AMD_BIT(UDC_DEVINT_SI) |
 		AMD_BIT(UDC_DEVINT_SOF)|
 		AMD_BIT(UDC_DEVINT_SC);
-	ग_लिखोl(पंचांगp, &dev->regs->irqmsk);
+	writel(tmp, &dev->regs->irqmsk);
 
-	/* mask all ep पूर्णांकerrupts */
-	ग_लिखोl(UDC_EPINT_MSK_DISABLE_ALL, &dev->regs->ep_irqmsk);
+	/* mask all ep interrupts */
+	writel(UDC_EPINT_MSK_DISABLE_ALL, &dev->regs->ep_irqmsk);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(udc_mask_unused_पूर्णांकerrupts);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(udc_mask_unused_interrupts);
 
-/* Enables endpoपूर्णांक 0 पूर्णांकerrupts */
-अटल पूर्णांक udc_enable_ep0_पूर्णांकerrupts(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+/* Enables endpoint 0 interrupts */
+static int udc_enable_ep0_interrupts(struct udc *dev)
+{
+	u32 tmp;
 
 	DBG(dev, "udc_enable_ep0_interrupts()\n");
 
-	/* पढ़ो irq mask */
-	पंचांगp = पढ़ोl(&dev->regs->ep_irqmsk);
+	/* read irq mask */
+	tmp = readl(&dev->regs->ep_irqmsk);
 	/* enable ep0 irq's */
-	पंचांगp &= AMD_UNMASK_BIT(UDC_EPINT_IN_EP0)
+	tmp &= AMD_UNMASK_BIT(UDC_EPINT_IN_EP0)
 		& AMD_UNMASK_BIT(UDC_EPINT_OUT_EP0);
-	ग_लिखोl(पंचांगp, &dev->regs->ep_irqmsk);
+	writel(tmp, &dev->regs->ep_irqmsk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Enables device पूर्णांकerrupts क्रम SET_INTF and SET_CONFIG */
-पूर्णांक udc_enable_dev_setup_पूर्णांकerrupts(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+/* Enables device interrupts for SET_INTF and SET_CONFIG */
+int udc_enable_dev_setup_interrupts(struct udc *dev)
+{
+	u32 tmp;
 
 	DBG(dev, "enable device interrupts for setup data\n");
 
-	/* पढ़ो irq mask */
-	पंचांगp = पढ़ोl(&dev->regs->irqmsk);
+	/* read irq mask */
+	tmp = readl(&dev->regs->irqmsk);
 
 	/* enable SET_INTERFACE, SET_CONFIG and other needed irq's */
-	पंचांगp &= AMD_UNMASK_BIT(UDC_DEVINT_SI)
+	tmp &= AMD_UNMASK_BIT(UDC_DEVINT_SI)
 		& AMD_UNMASK_BIT(UDC_DEVINT_SC)
 		& AMD_UNMASK_BIT(UDC_DEVINT_UR)
 		& AMD_UNMASK_BIT(UDC_DEVINT_SVC)
 		& AMD_UNMASK_BIT(UDC_DEVINT_ENUM);
-	ग_लिखोl(पंचांगp, &dev->regs->irqmsk);
+	writel(tmp, &dev->regs->irqmsk);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(udc_enable_dev_setup_पूर्णांकerrupts);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(udc_enable_dev_setup_interrupts);
 
-/* Calculates fअगरo start of endpoपूर्णांक based on preceding endpoपूर्णांकs */
-अटल पूर्णांक udc_set_txfअगरo_addr(काष्ठा udc_ep *ep)
-अणु
-	काष्ठा udc	*dev;
-	u32 पंचांगp;
-	पूर्णांक i;
+/* Calculates fifo start of endpoint based on preceding endpoints */
+static int udc_set_txfifo_addr(struct udc_ep *ep)
+{
+	struct udc	*dev;
+	u32 tmp;
+	int i;
 
-	अगर (!ep || !(ep->in))
-		वापस -EINVAL;
+	if (!ep || !(ep->in))
+		return -EINVAL;
 
 	dev = ep->dev;
-	ep->txfअगरo = dev->txfअगरo;
+	ep->txfifo = dev->txfifo;
 
 	/* traverse ep's */
-	क्रम (i = 0; i < ep->num; i++) अणु
-		अगर (dev->ep[i].regs) अणु
-			/* पढ़ो fअगरo size */
-			पंचांगp = पढ़ोl(&dev->ep[i].regs->bufin_framक्रमागत);
-			पंचांगp = AMD_GETBITS(पंचांगp, UDC_EPIN_BUFF_SIZE);
-			ep->txfअगरo += पंचांगp;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i = 0; i < ep->num; i++) {
+		if (dev->ep[i].regs) {
+			/* read fifo size */
+			tmp = readl(&dev->ep[i].regs->bufin_framenum);
+			tmp = AMD_GETBITS(tmp, UDC_EPIN_BUFF_SIZE);
+			ep->txfifo += tmp;
+		}
+	}
+	return 0;
+}
 
 /* CNAK pending field: bit0 = ep0in, bit16 = ep0out */
-अटल u32 cnak_pending;
+static u32 cnak_pending;
 
-अटल व्योम UDC_QUEUE_CNAK(काष्ठा udc_ep *ep, अचिन्हित num)
-अणु
-	अगर (पढ़ोl(&ep->regs->ctl) & AMD_BIT(UDC_EPCTL_NAK)) अणु
+static void UDC_QUEUE_CNAK(struct udc_ep *ep, unsigned num)
+{
+	if (readl(&ep->regs->ctl) & AMD_BIT(UDC_EPCTL_NAK)) {
 		DBG(ep->dev, "NAK could not be cleared for ep%d\n", num);
 		cnak_pending |= 1 << (num);
 		ep->naking = 1;
-	पूर्ण अन्यथा
+	} else
 		cnak_pending = cnak_pending & (~(1 << (num)));
-पूर्ण
+}
 
 
-/* Enables endpoपूर्णांक, is called by gadget driver */
-अटल पूर्णांक
-udc_ep_enable(काष्ठा usb_ep *usbep, स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा udc_ep		*ep;
-	काष्ठा udc		*dev;
-	u32			पंचांगp;
-	अचिन्हित दीर्घ		अगरlags;
+/* Enables endpoint, is called by gadget driver */
+static int
+udc_ep_enable(struct usb_ep *usbep, const struct usb_endpoint_descriptor *desc)
+{
+	struct udc_ep		*ep;
+	struct udc		*dev;
+	u32			tmp;
+	unsigned long		iflags;
 	u8 udc_csr_epix;
-	अचिन्हित		maxpacket;
+	unsigned		maxpacket;
 
-	अगर (!usbep
+	if (!usbep
 			|| usbep->name == ep0_string
 			|| !desc
 			|| desc->bDescriptorType != USB_DT_ENDPOINT)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
+	ep = container_of(usbep, struct udc_ep, ep);
 	dev = ep->dev;
 
 	DBG(dev, "udc_ep_enable() ep %d\n", ep->num);
 
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
-	spin_lock_irqsave(&dev->lock, अगरlags);
+	spin_lock_irqsave(&dev->lock, iflags);
 	ep->ep.desc = desc;
 
 	ep->halted = 0;
 
 	/* set traffic type */
-	पंचांगp = पढ़ोl(&dev->ep[ep->num].regs->ctl);
-	पंचांगp = AMD_ADDBITS(पंचांगp, desc->bmAttributes, UDC_EPCTL_ET);
-	ग_लिखोl(पंचांगp, &dev->ep[ep->num].regs->ctl);
+	tmp = readl(&dev->ep[ep->num].regs->ctl);
+	tmp = AMD_ADDBITS(tmp, desc->bmAttributes, UDC_EPCTL_ET);
+	writel(tmp, &dev->ep[ep->num].regs->ctl);
 
 	/* set max packet size */
-	maxpacket = usb_endpoपूर्णांक_maxp(desc);
-	पंचांगp = पढ़ोl(&dev->ep[ep->num].regs->bufout_maxpkt);
-	पंचांगp = AMD_ADDBITS(पंचांगp, maxpacket, UDC_EP_MAX_PKT_SIZE);
+	maxpacket = usb_endpoint_maxp(desc);
+	tmp = readl(&dev->ep[ep->num].regs->bufout_maxpkt);
+	tmp = AMD_ADDBITS(tmp, maxpacket, UDC_EP_MAX_PKT_SIZE);
 	ep->ep.maxpacket = maxpacket;
-	ग_लिखोl(पंचांगp, &dev->ep[ep->num].regs->bufout_maxpkt);
+	writel(tmp, &dev->ep[ep->num].regs->bufout_maxpkt);
 
 	/* IN ep */
-	अगर (ep->in) अणु
+	if (ep->in) {
 
-		/* ep ix in UDC CSR रेजिस्टर space */
+		/* ep ix in UDC CSR register space */
 		udc_csr_epix = ep->num;
 
-		/* set buffer size (tx fअगरo entries) */
-		पंचांगp = पढ़ोl(&dev->ep[ep->num].regs->bufin_framक्रमागत);
-		/* द्विगुन buffering: fअगरo size = 2 x max packet size */
-		पंचांगp = AMD_ADDBITS(
-				पंचांगp,
+		/* set buffer size (tx fifo entries) */
+		tmp = readl(&dev->ep[ep->num].regs->bufin_framenum);
+		/* double buffering: fifo size = 2 x max packet size */
+		tmp = AMD_ADDBITS(
+				tmp,
 				maxpacket * UDC_EPIN_BUFF_SIZE_MULT
 					  / UDC_DWORD_BYTES,
 				UDC_EPIN_BUFF_SIZE);
-		ग_लिखोl(पंचांगp, &dev->ep[ep->num].regs->bufin_framक्रमागत);
+		writel(tmp, &dev->ep[ep->num].regs->bufin_framenum);
 
-		/* calc. tx fअगरo base addr */
-		udc_set_txfअगरo_addr(ep);
+		/* calc. tx fifo base addr */
+		udc_set_txfifo_addr(ep);
 
-		/* flush fअगरo */
-		पंचांगp = पढ़ोl(&ep->regs->ctl);
-		पंचांगp |= AMD_BIT(UDC_EPCTL_F);
-		ग_लिखोl(पंचांगp, &ep->regs->ctl);
+		/* flush fifo */
+		tmp = readl(&ep->regs->ctl);
+		tmp |= AMD_BIT(UDC_EPCTL_F);
+		writel(tmp, &ep->regs->ctl);
 
 	/* OUT ep */
-	पूर्ण अन्यथा अणु
-		/* ep ix in UDC CSR रेजिस्टर space */
+	} else {
+		/* ep ix in UDC CSR register space */
 		udc_csr_epix = ep->num - UDC_CSR_EP_OUT_IX_OFS;
 
 		/* set max packet size UDC CSR	*/
-		पंचांगp = पढ़ोl(&dev->csr->ne[ep->num - UDC_CSR_EP_OUT_IX_OFS]);
-		पंचांगp = AMD_ADDBITS(पंचांगp, maxpacket,
+		tmp = readl(&dev->csr->ne[ep->num - UDC_CSR_EP_OUT_IX_OFS]);
+		tmp = AMD_ADDBITS(tmp, maxpacket,
 					UDC_CSR_NE_MAX_PKT);
-		ग_लिखोl(पंचांगp, &dev->csr->ne[ep->num - UDC_CSR_EP_OUT_IX_OFS]);
+		writel(tmp, &dev->csr->ne[ep->num - UDC_CSR_EP_OUT_IX_OFS]);
 
-		अगर (use_dma && !ep->in) अणु
+		if (use_dma && !ep->in) {
 			/* alloc and init BNA dummy request */
 			ep->bna_dummy_req = udc_alloc_bna_dummy(ep);
 			ep->bna_occurred = 0;
-		पूर्ण
+		}
 
-		अगर (ep->num != UDC_EP0OUT_IX)
+		if (ep->num != UDC_EP0OUT_IX)
 			dev->data_ep_enabled = 1;
-	पूर्ण
+	}
 
 	/* set ep values */
-	पंचांगp = पढ़ोl(&dev->csr->ne[udc_csr_epix]);
+	tmp = readl(&dev->csr->ne[udc_csr_epix]);
 	/* max packet */
-	पंचांगp = AMD_ADDBITS(पंचांगp, maxpacket, UDC_CSR_NE_MAX_PKT);
+	tmp = AMD_ADDBITS(tmp, maxpacket, UDC_CSR_NE_MAX_PKT);
 	/* ep number */
-	पंचांगp = AMD_ADDBITS(पंचांगp, desc->bEndpoपूर्णांकAddress, UDC_CSR_NE_NUM);
+	tmp = AMD_ADDBITS(tmp, desc->bEndpointAddress, UDC_CSR_NE_NUM);
 	/* ep direction */
-	पंचांगp = AMD_ADDBITS(पंचांगp, ep->in, UDC_CSR_NE_सूची);
+	tmp = AMD_ADDBITS(tmp, ep->in, UDC_CSR_NE_DIR);
 	/* ep type */
-	पंचांगp = AMD_ADDBITS(पंचांगp, desc->bmAttributes, UDC_CSR_NE_TYPE);
+	tmp = AMD_ADDBITS(tmp, desc->bmAttributes, UDC_CSR_NE_TYPE);
 	/* ep config */
-	पंचांगp = AMD_ADDBITS(पंचांगp, ep->dev->cur_config, UDC_CSR_NE_CFG);
-	/* ep पूर्णांकerface */
-	पंचांगp = AMD_ADDBITS(पंचांगp, ep->dev->cur_पूर्णांकf, UDC_CSR_NE_INTF);
+	tmp = AMD_ADDBITS(tmp, ep->dev->cur_config, UDC_CSR_NE_CFG);
+	/* ep interface */
+	tmp = AMD_ADDBITS(tmp, ep->dev->cur_intf, UDC_CSR_NE_INTF);
 	/* ep alt */
-	पंचांगp = AMD_ADDBITS(पंचांगp, ep->dev->cur_alt, UDC_CSR_NE_ALT);
-	/* ग_लिखो reg */
-	ग_लिखोl(पंचांगp, &dev->csr->ne[udc_csr_epix]);
+	tmp = AMD_ADDBITS(tmp, ep->dev->cur_alt, UDC_CSR_NE_ALT);
+	/* write reg */
+	writel(tmp, &dev->csr->ne[udc_csr_epix]);
 
 	/* enable ep irq */
-	पंचांगp = पढ़ोl(&dev->regs->ep_irqmsk);
-	पंचांगp &= AMD_UNMASK_BIT(ep->num);
-	ग_लिखोl(पंचांगp, &dev->regs->ep_irqmsk);
+	tmp = readl(&dev->regs->ep_irqmsk);
+	tmp &= AMD_UNMASK_BIT(ep->num);
+	writel(tmp, &dev->regs->ep_irqmsk);
 
 	/*
 	 * clear NAK by writing CNAK
-	 * aव्योम BNA क्रम OUT DMA, करोn't clear NAK until DMA desc. written
+	 * avoid BNA for OUT DMA, don't clear NAK until DMA desc. written
 	 */
-	अगर (!use_dma || ep->in) अणु
-		पंचांगp = पढ़ोl(&ep->regs->ctl);
-		पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-		ग_लिखोl(पंचांगp, &ep->regs->ctl);
+	if (!use_dma || ep->in) {
+		tmp = readl(&ep->regs->ctl);
+		tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+		writel(tmp, &ep->regs->ctl);
 		ep->naking = 0;
 		UDC_QUEUE_CNAK(ep, ep->num);
-	पूर्ण
-	पंचांगp = desc->bEndpoपूर्णांकAddress;
+	}
+	tmp = desc->bEndpointAddress;
 	DBG(dev, "%s enabled\n", usbep->name);
 
-	spin_unlock_irqrestore(&dev->lock, अगरlags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&dev->lock, iflags);
+	return 0;
+}
 
-/* Resets endpoपूर्णांक */
-अटल व्योम ep_init(काष्ठा udc_regs __iomem *regs, काष्ठा udc_ep *ep)
-अणु
-	u32		पंचांगp;
+/* Resets endpoint */
+static void ep_init(struct udc_regs __iomem *regs, struct udc_ep *ep)
+{
+	u32		tmp;
 
 	VDBG(ep->dev, "ep-%d reset\n", ep->num);
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 	ep->ep.ops = &udc_ep_ops;
 	INIT_LIST_HEAD(&ep->queue);
 
 	usb_ep_set_maxpacket_limit(&ep->ep,(u16) ~0);
 	/* set NAK */
-	पंचांगp = पढ़ोl(&ep->regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_EPCTL_SNAK);
-	ग_लिखोl(पंचांगp, &ep->regs->ctl);
+	tmp = readl(&ep->regs->ctl);
+	tmp |= AMD_BIT(UDC_EPCTL_SNAK);
+	writel(tmp, &ep->regs->ctl);
 	ep->naking = 1;
 
-	/* disable पूर्णांकerrupt */
-	पंचांगp = पढ़ोl(&regs->ep_irqmsk);
-	पंचांगp |= AMD_BIT(ep->num);
-	ग_लिखोl(पंचांगp, &regs->ep_irqmsk);
+	/* disable interrupt */
+	tmp = readl(&regs->ep_irqmsk);
+	tmp |= AMD_BIT(ep->num);
+	writel(tmp, &regs->ep_irqmsk);
 
-	अगर (ep->in) अणु
-		/* unset P and IN bit of potential क्रमmer DMA */
-		पंचांगp = पढ़ोl(&ep->regs->ctl);
-		पंचांगp &= AMD_UNMASK_BIT(UDC_EPCTL_P);
-		ग_लिखोl(पंचांगp, &ep->regs->ctl);
+	if (ep->in) {
+		/* unset P and IN bit of potential former DMA */
+		tmp = readl(&ep->regs->ctl);
+		tmp &= AMD_UNMASK_BIT(UDC_EPCTL_P);
+		writel(tmp, &ep->regs->ctl);
 
-		पंचांगp = पढ़ोl(&ep->regs->sts);
-		पंचांगp |= AMD_BIT(UDC_EPSTS_IN);
-		ग_लिखोl(पंचांगp, &ep->regs->sts);
+		tmp = readl(&ep->regs->sts);
+		tmp |= AMD_BIT(UDC_EPSTS_IN);
+		writel(tmp, &ep->regs->sts);
 
-		/* flush the fअगरo */
-		पंचांगp = पढ़ोl(&ep->regs->ctl);
-		पंचांगp |= AMD_BIT(UDC_EPCTL_F);
-		ग_लिखोl(पंचांगp, &ep->regs->ctl);
+		/* flush the fifo */
+		tmp = readl(&ep->regs->ctl);
+		tmp |= AMD_BIT(UDC_EPCTL_F);
+		writel(tmp, &ep->regs->ctl);
 
-	पूर्ण
-	/* reset desc poपूर्णांकer */
-	ग_लिखोl(0, &ep->regs->desptr);
-पूर्ण
+	}
+	/* reset desc pointer */
+	writel(0, &ep->regs->desptr);
+}
 
-/* Disables endpoपूर्णांक, is called by gadget driver */
-अटल पूर्णांक udc_ep_disable(काष्ठा usb_ep *usbep)
-अणु
-	काष्ठा udc_ep	*ep = शून्य;
-	अचिन्हित दीर्घ	अगरlags;
+/* Disables endpoint, is called by gadget driver */
+static int udc_ep_disable(struct usb_ep *usbep)
+{
+	struct udc_ep	*ep = NULL;
+	unsigned long	iflags;
 
-	अगर (!usbep)
-		वापस -EINVAL;
+	if (!usbep)
+		return -EINVAL;
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
-	अगर (usbep->name == ep0_string || !ep->ep.desc)
-		वापस -EINVAL;
+	ep = container_of(usbep, struct udc_ep, ep);
+	if (usbep->name == ep0_string || !ep->ep.desc)
+		return -EINVAL;
 
 	DBG(ep->dev, "Disable ep-%d\n", ep->num);
 
-	spin_lock_irqsave(&ep->dev->lock, अगरlags);
-	udc_मुक्त_request(&ep->ep, &ep->bna_dummy_req->req);
+	spin_lock_irqsave(&ep->dev->lock, iflags);
+	udc_free_request(&ep->ep, &ep->bna_dummy_req->req);
 	empty_req_queue(ep);
 	ep_init(ep->dev->regs, ep);
-	spin_unlock_irqrestore(&ep->dev->lock, अगरlags);
+	spin_unlock_irqrestore(&ep->dev->lock, iflags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Allocates request packet, called by gadget driver */
-अटल काष्ठा usb_request *
-udc_alloc_request(काष्ठा usb_ep *usbep, gfp_t gfp)
-अणु
-	काष्ठा udc_request	*req;
-	काष्ठा udc_data_dma	*dma_desc;
-	काष्ठा udc_ep	*ep;
+static struct usb_request *
+udc_alloc_request(struct usb_ep *usbep, gfp_t gfp)
+{
+	struct udc_request	*req;
+	struct udc_data_dma	*dma_desc;
+	struct udc_ep	*ep;
 
-	अगर (!usbep)
-		वापस शून्य;
+	if (!usbep)
+		return NULL;
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
+	ep = container_of(usbep, struct udc_ep, ep);
 
 	VDBG(ep->dev, "udc_alloc_req(): ep%d\n", ep->num);
-	req = kzalloc(माप(काष्ठा udc_request), gfp);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(struct udc_request), gfp);
+	if (!req)
+		return NULL;
 
 	req->req.dma = DMA_DONT_USE;
 	INIT_LIST_HEAD(&req->queue);
 
-	अगर (ep->dma) अणु
+	if (ep->dma) {
 		/* ep0 in requests are allocated from data pool here */
 		dma_desc = dma_pool_alloc(ep->dev->data_requests, gfp,
 						&req->td_phys);
-		अगर (!dma_desc) अणु
-			kमुक्त(req);
-			वापस शून्य;
-		पूर्ण
+		if (!dma_desc) {
+			kfree(req);
+			return NULL;
+		}
 
 		VDBG(ep->dev, "udc_alloc_req: req = %p dma_desc = %p, "
 				"td_phys = %lx\n",
 				req, dma_desc,
-				(अचिन्हित दीर्घ)req->td_phys);
+				(unsigned long)req->td_phys);
 		/* prevent from using desc. - set HOST BUSY */
 		dma_desc->status = AMD_ADDBITS(dma_desc->status,
 						UDC_DMA_STP_STS_BS_HOST_BUSY,
 						UDC_DMA_STP_STS_BS);
 		dma_desc->bufptr = cpu_to_le32(DMA_DONT_USE);
 		req->td_data = dma_desc;
-		req->td_data_last = शून्य;
+		req->td_data_last = NULL;
 		req->chain_len = 1;
-	पूर्ण
+	}
 
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
-/* मुक्तs pci pool descriptors of a DMA chain */
-अटल व्योम udc_मुक्त_dma_chain(काष्ठा udc *dev, काष्ठा udc_request *req)
-अणु
-	काष्ठा udc_data_dma *td = req->td_data;
-	अचिन्हित पूर्णांक i;
+/* frees pci pool descriptors of a DMA chain */
+static void udc_free_dma_chain(struct udc *dev, struct udc_request *req)
+{
+	struct udc_data_dma *td = req->td_data;
+	unsigned int i;
 
 	dma_addr_t addr_next = 0x00;
 	dma_addr_t addr = (dma_addr_t)td->next;
 
 	DBG(dev, "free chain req = %p\n", req);
 
-	/* करो not मुक्त first desc., will be करोne by मुक्त क्रम request */
-	क्रम (i = 1; i < req->chain_len; i++) अणु
+	/* do not free first desc., will be done by free for request */
+	for (i = 1; i < req->chain_len; i++) {
 		td = phys_to_virt(addr);
 		addr_next = (dma_addr_t)td->next;
-		dma_pool_मुक्त(dev->data_requests, td, addr);
+		dma_pool_free(dev->data_requests, td, addr);
 		addr = addr_next;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Frees request packet, called by gadget driver */
-अटल व्योम
-udc_मुक्त_request(काष्ठा usb_ep *usbep, काष्ठा usb_request *usbreq)
-अणु
-	काष्ठा udc_ep	*ep;
-	काष्ठा udc_request	*req;
+static void
+udc_free_request(struct usb_ep *usbep, struct usb_request *usbreq)
+{
+	struct udc_ep	*ep;
+	struct udc_request	*req;
 
-	अगर (!usbep || !usbreq)
-		वापस;
+	if (!usbep || !usbreq)
+		return;
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
-	req = container_of(usbreq, काष्ठा udc_request, req);
+	ep = container_of(usbep, struct udc_ep, ep);
+	req = container_of(usbreq, struct udc_request, req);
 	VDBG(ep->dev, "free_req req=%p\n", req);
 	BUG_ON(!list_empty(&req->queue));
-	अगर (req->td_data) अणु
+	if (req->td_data) {
 		VDBG(ep->dev, "req->td_data=%p\n", req->td_data);
 
-		/* मुक्त dma chain अगर created */
-		अगर (req->chain_len > 1)
-			udc_मुक्त_dma_chain(ep->dev, req);
+		/* free dma chain if created */
+		if (req->chain_len > 1)
+			udc_free_dma_chain(ep->dev, req);
 
-		dma_pool_मुक्त(ep->dev->data_requests, req->td_data,
+		dma_pool_free(ep->dev->data_requests, req->td_data,
 							req->td_phys);
-	पूर्ण
-	kमुक्त(req);
-पूर्ण
+	}
+	kfree(req);
+}
 
-/* Init BNA dummy descriptor क्रम HOST BUSY and poपूर्णांकing to itself */
-अटल व्योम udc_init_bna_dummy(काष्ठा udc_request *req)
-अणु
-	अगर (req) अणु
+/* Init BNA dummy descriptor for HOST BUSY and pointing to itself */
+static void udc_init_bna_dummy(struct udc_request *req)
+{
+	if (req) {
 		/* set last bit */
 		req->td_data->status |= AMD_BIT(UDC_DMA_IN_STS_L);
-		/* set next poपूर्णांकer to itself */
+		/* set next pointer to itself */
 		req->td_data->next = req->td_phys;
 		/* set HOST BUSY */
 		req->td_data->status
 			= AMD_ADDBITS(req->td_data->status,
 					UDC_DMA_STP_STS_BS_DMA_DONE,
 					UDC_DMA_STP_STS_BS);
-#अगर_घोषित UDC_VERBOSE
+#ifdef UDC_VERBOSE
 		pr_debug("bna desc = %p, sts = %08x\n",
 			req->td_data, req->td_data->status);
-#पूर्ण_अगर
-	पूर्ण
-पूर्ण
+#endif
+	}
+}
 
 /* Allocate BNA dummy descriptor */
-अटल काष्ठा udc_request *udc_alloc_bna_dummy(काष्ठा udc_ep *ep)
-अणु
-	काष्ठा udc_request *req = शून्य;
-	काष्ठा usb_request *_req = शून्य;
+static struct udc_request *udc_alloc_bna_dummy(struct udc_ep *ep)
+{
+	struct udc_request *req = NULL;
+	struct usb_request *_req = NULL;
 
 	/* alloc the dummy request */
 	_req = udc_alloc_request(&ep->ep, GFP_ATOMIC);
-	अगर (_req) अणु
-		req = container_of(_req, काष्ठा udc_request, req);
+	if (_req) {
+		req = container_of(_req, struct udc_request, req);
 		ep->bna_dummy_req = req;
 		udc_init_bna_dummy(req);
-	पूर्ण
-	वापस req;
-पूर्ण
+	}
+	return req;
+}
 
-/* Write data to TX fअगरo क्रम IN packets */
-अटल व्योम
-udc_txfअगरo_ग_लिखो(काष्ठा udc_ep *ep, काष्ठा usb_request *req)
-अणु
+/* Write data to TX fifo for IN packets */
+static void
+udc_txfifo_write(struct udc_ep *ep, struct usb_request *req)
+{
 	u8			*req_buf;
 	u32			*buf;
-	पूर्णांक			i, j;
-	अचिन्हित		bytes = 0;
-	अचिन्हित		reमुख्यing = 0;
+	int			i, j;
+	unsigned		bytes = 0;
+	unsigned		remaining = 0;
 
-	अगर (!req || !ep)
-		वापस;
+	if (!req || !ep)
+		return;
 
 	req_buf = req->buf + req->actual;
 	prefetch(req_buf);
-	reमुख्यing = req->length - req->actual;
+	remaining = req->length - req->actual;
 
 	buf = (u32 *) req_buf;
 
 	bytes = ep->ep.maxpacket;
-	अगर (bytes > reमुख्यing)
-		bytes = reमुख्यing;
+	if (bytes > remaining)
+		bytes = remaining;
 
 	/* dwords first */
-	क्रम (i = 0; i < bytes / UDC_DWORD_BYTES; i++)
-		ग_लिखोl(*(buf + i), ep->txfअगरo);
+	for (i = 0; i < bytes / UDC_DWORD_BYTES; i++)
+		writel(*(buf + i), ep->txfifo);
 
-	/* reमुख्यing bytes must be written by byte access */
-	क्रम (j = 0; j < bytes % UDC_DWORD_BYTES; j++) अणु
-		ग_लिखोb((u8)(*(buf + i) >> (j << UDC_BITS_PER_BYTE_SHIFT)),
-							ep->txfअगरo);
-	पूर्ण
+	/* remaining bytes must be written by byte access */
+	for (j = 0; j < bytes % UDC_DWORD_BYTES; j++) {
+		writeb((u8)(*(buf + i) >> (j << UDC_BITS_PER_BYTE_SHIFT)),
+							ep->txfifo);
+	}
 
-	/* dummy ग_लिखो confirm */
-	ग_लिखोl(0, &ep->regs->confirm);
-पूर्ण
+	/* dummy write confirm */
+	writel(0, &ep->regs->confirm);
+}
 
-/* Read dwords from RX fअगरo क्रम OUT transfers */
-अटल पूर्णांक udc_rxfअगरo_पढ़ो_dwords(काष्ठा udc *dev, u32 *buf, पूर्णांक dwords)
-अणु
-	पूर्णांक i;
+/* Read dwords from RX fifo for OUT transfers */
+static int udc_rxfifo_read_dwords(struct udc *dev, u32 *buf, int dwords)
+{
+	int i;
 
 	VDBG(dev, "udc_read_dwords(): %d dwords\n", dwords);
 
-	क्रम (i = 0; i < dwords; i++)
-		*(buf + i) = पढ़ोl(dev->rxfअगरo);
-	वापस 0;
-पूर्ण
+	for (i = 0; i < dwords; i++)
+		*(buf + i) = readl(dev->rxfifo);
+	return 0;
+}
 
-/* Read bytes from RX fअगरo क्रम OUT transfers */
-अटल पूर्णांक udc_rxfअगरo_पढ़ो_bytes(काष्ठा udc *dev, u8 *buf, पूर्णांक bytes)
-अणु
-	पूर्णांक i, j;
-	u32 पंचांगp;
+/* Read bytes from RX fifo for OUT transfers */
+static int udc_rxfifo_read_bytes(struct udc *dev, u8 *buf, int bytes)
+{
+	int i, j;
+	u32 tmp;
 
 	VDBG(dev, "udc_read_bytes(): %d bytes\n", bytes);
 
 	/* dwords first */
-	क्रम (i = 0; i < bytes / UDC_DWORD_BYTES; i++)
-		*((u32 *)(buf + (i<<2))) = पढ़ोl(dev->rxfअगरo);
+	for (i = 0; i < bytes / UDC_DWORD_BYTES; i++)
+		*((u32 *)(buf + (i<<2))) = readl(dev->rxfifo);
 
-	/* reमुख्यing bytes must be पढ़ो by byte access */
-	अगर (bytes % UDC_DWORD_BYTES) अणु
-		पंचांगp = पढ़ोl(dev->rxfअगरo);
-		क्रम (j = 0; j < bytes % UDC_DWORD_BYTES; j++) अणु
-			*(buf + (i<<2) + j) = (u8)(पंचांगp & UDC_BYTE_MASK);
-			पंचांगp = पंचांगp >> UDC_BITS_PER_BYTE;
-		पूर्ण
-	पूर्ण
+	/* remaining bytes must be read by byte access */
+	if (bytes % UDC_DWORD_BYTES) {
+		tmp = readl(dev->rxfifo);
+		for (j = 0; j < bytes % UDC_DWORD_BYTES; j++) {
+			*(buf + (i<<2) + j) = (u8)(tmp & UDC_BYTE_MASK);
+			tmp = tmp >> UDC_BITS_PER_BYTE;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Read data from RX fअगरo क्रम OUT transfers */
-अटल पूर्णांक
-udc_rxfअगरo_पढ़ो(काष्ठा udc_ep *ep, काष्ठा udc_request *req)
-अणु
+/* Read data from RX fifo for OUT transfers */
+static int
+udc_rxfifo_read(struct udc_ep *ep, struct udc_request *req)
+{
 	u8 *buf;
-	अचिन्हित buf_space;
-	अचिन्हित bytes = 0;
-	अचिन्हित finished = 0;
+	unsigned buf_space;
+	unsigned bytes = 0;
+	unsigned finished = 0;
 
 	/* received number bytes */
-	bytes = पढ़ोl(&ep->regs->sts);
+	bytes = readl(&ep->regs->sts);
 	bytes = AMD_GETBITS(bytes, UDC_EPSTS_RX_PKT_SIZE);
 
 	buf_space = req->req.length - req->req.actual;
 	buf = req->req.buf + req->req.actual;
-	अगर (bytes > buf_space) अणु
-		अगर ((buf_space % ep->ep.maxpacket) != 0) अणु
+	if (bytes > buf_space) {
+		if ((buf_space % ep->ep.maxpacket) != 0) {
 			DBG(ep->dev,
 				"%s: rx %d bytes, rx-buf space = %d bytesn\n",
 				ep->ep.name, bytes, buf_space);
 			req->req.status = -EOVERFLOW;
-		पूर्ण
+		}
 		bytes = buf_space;
-	पूर्ण
+	}
 	req->req.actual += bytes;
 
 	/* last packet ? */
-	अगर (((bytes % ep->ep.maxpacket) != 0) || (!bytes)
+	if (((bytes % ep->ep.maxpacket) != 0) || (!bytes)
 		|| ((req->req.actual == req->req.length) && !req->req.zero))
 		finished = 1;
 
-	/* पढ़ो rx fअगरo bytes */
+	/* read rx fifo bytes */
 	VDBG(ep->dev, "ep %s: rxfifo read %d bytes\n", ep->ep.name, bytes);
-	udc_rxfअगरo_पढ़ो_bytes(ep->dev, buf, bytes);
+	udc_rxfifo_read_bytes(ep->dev, buf, bytes);
 
-	वापस finished;
-पूर्ण
+	return finished;
+}
 
 /* Creates or re-inits a DMA chain */
-अटल पूर्णांक udc_create_dma_chain(
-	काष्ठा udc_ep *ep,
-	काष्ठा udc_request *req,
-	अचिन्हित दीर्घ buf_len, gfp_t gfp_flags
+static int udc_create_dma_chain(
+	struct udc_ep *ep,
+	struct udc_request *req,
+	unsigned long buf_len, gfp_t gfp_flags
 )
-अणु
-	अचिन्हित दीर्घ bytes = req->req.length;
-	अचिन्हित पूर्णांक i;
+{
+	unsigned long bytes = req->req.length;
+	unsigned int i;
 	dma_addr_t dma_addr;
-	काष्ठा udc_data_dma	*td = शून्य;
-	काष्ठा udc_data_dma	*last = शून्य;
-	अचिन्हित दीर्घ txbytes;
-	अचिन्हित create_new_chain = 0;
-	अचिन्हित len;
+	struct udc_data_dma	*td = NULL;
+	struct udc_data_dma	*last = NULL;
+	unsigned long txbytes;
+	unsigned create_new_chain = 0;
+	unsigned len;
 
 	VDBG(ep->dev, "udc_create_dma_chain: bytes=%ld buf_len=%ld\n",
 	     bytes, buf_len);
 	dma_addr = DMA_DONT_USE;
 
-	/* unset L bit in first desc क्रम OUT */
-	अगर (!ep->in)
+	/* unset L bit in first desc for OUT */
+	if (!ep->in)
 		req->td_data->status &= AMD_CLEAR_BIT(UDC_DMA_IN_STS_L);
 
-	/* alloc only new desc's अगर not alपढ़ोy available */
+	/* alloc only new desc's if not already available */
 	len = req->req.length / ep->ep.maxpacket;
-	अगर (req->req.length % ep->ep.maxpacket)
+	if (req->req.length % ep->ep.maxpacket)
 		len++;
 
-	अगर (len > req->chain_len) अणु
-		/* लघुer chain alपढ़ोy allocated beक्रमe */
-		अगर (req->chain_len > 1)
-			udc_मुक्त_dma_chain(ep->dev, req);
+	if (len > req->chain_len) {
+		/* shorter chain already allocated before */
+		if (req->chain_len > 1)
+			udc_free_dma_chain(ep->dev, req);
 		req->chain_len = len;
 		create_new_chain = 1;
-	पूर्ण
+	}
 
 	td = req->td_data;
 	/* gen. required number of descriptors and buffers */
-	क्रम (i = buf_len; i < bytes; i += buf_len) अणु
+	for (i = buf_len; i < bytes; i += buf_len) {
 		/* create or determine next desc. */
-		अगर (create_new_chain) अणु
+		if (create_new_chain) {
 			td = dma_pool_alloc(ep->dev->data_requests,
 					    gfp_flags, &dma_addr);
-			अगर (!td)
-				वापस -ENOMEM;
+			if (!td)
+				return -ENOMEM;
 
 			td->status = 0;
-		पूर्ण अन्यथा अगर (i == buf_len) अणु
+		} else if (i == buf_len) {
 			/* first td */
-			td = (काष्ठा udc_data_dma *)phys_to_virt(
+			td = (struct udc_data_dma *)phys_to_virt(
 						req->td_data->next);
 			td->status = 0;
-		पूर्ण अन्यथा अणु
-			td = (काष्ठा udc_data_dma *)phys_to_virt(last->next);
+		} else {
+			td = (struct udc_data_dma *)phys_to_virt(last->next);
 			td->status = 0;
-		पूर्ण
+		}
 
-		अगर (td)
+		if (td)
 			td->bufptr = req->req.dma + i; /* assign buffer */
-		अन्यथा
-			अवरोध;
+		else
+			break;
 
-		/* लघु packet ? */
-		अगर ((bytes - i) >= buf_len) अणु
+		/* short packet ? */
+		if ((bytes - i) >= buf_len) {
 			txbytes = buf_len;
-		पूर्ण अन्यथा अणु
-			/* लघु packet */
+		} else {
+			/* short packet */
 			txbytes = bytes - i;
-		पूर्ण
+		}
 
 		/* link td and assign tx bytes */
-		अगर (i == buf_len) अणु
-			अगर (create_new_chain)
+		if (i == buf_len) {
+			if (create_new_chain)
 				req->td_data->next = dma_addr;
 			/*
-			 * अन्यथा
+			 * else
 			 *	req->td_data->next = virt_to_phys(td);
 			 */
-			/* ग_लिखो tx bytes */
-			अगर (ep->in) अणु
+			/* write tx bytes */
+			if (ep->in) {
 				/* first desc */
 				req->td_data->status =
 					AMD_ADDBITS(req->td_data->status,
@@ -841,84 +840,84 @@ udc_rxfअगरo_पढ़ो(काष्ठा udc_ep *ep, काष्ठा
 				td->status = AMD_ADDBITS(td->status,
 							txbytes,
 							UDC_DMA_IN_STS_TXBYTES);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (create_new_chain)
+			}
+		} else {
+			if (create_new_chain)
 				last->next = dma_addr;
 			/*
-			 * अन्यथा
+			 * else
 			 *	last->next = virt_to_phys(td);
 			 */
-			अगर (ep->in) अणु
-				/* ग_लिखो tx bytes */
+			if (ep->in) {
+				/* write tx bytes */
 				td->status = AMD_ADDBITS(td->status,
 							txbytes,
 							UDC_DMA_IN_STS_TXBYTES);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		last = td;
-	पूर्ण
+	}
 	/* set last bit */
-	अगर (td) अणु
+	if (td) {
 		td->status |= AMD_BIT(UDC_DMA_IN_STS_L);
-		/* last desc. poपूर्णांकs to itself */
+		/* last desc. points to itself */
 		req->td_data_last = td;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* create/re-init a DMA descriptor or a DMA descriptor chain */
-अटल पूर्णांक prep_dma(काष्ठा udc_ep *ep, काष्ठा udc_request *req, gfp_t gfp)
-अणु
-	पूर्णांक	retval = 0;
-	u32	पंचांगp;
+static int prep_dma(struct udc_ep *ep, struct udc_request *req, gfp_t gfp)
+{
+	int	retval = 0;
+	u32	tmp;
 
 	VDBG(ep->dev, "prep_dma\n");
 	VDBG(ep->dev, "prep_dma ep%d req->td_data=%p\n",
 			ep->num, req->td_data);
 
-	/* set buffer poपूर्णांकer */
+	/* set buffer pointer */
 	req->td_data->bufptr = req->req.dma;
 
 	/* set last bit */
 	req->td_data->status |= AMD_BIT(UDC_DMA_IN_STS_L);
 
-	/* build/re-init dma chain अगर maxpkt scatter mode, not क्रम EP0 */
-	अगर (use_dma_ppb) अणु
+	/* build/re-init dma chain if maxpkt scatter mode, not for EP0 */
+	if (use_dma_ppb) {
 
 		retval = udc_create_dma_chain(ep, req, ep->ep.maxpacket, gfp);
-		अगर (retval != 0) अणु
-			अगर (retval == -ENOMEM)
+		if (retval != 0) {
+			if (retval == -ENOMEM)
 				DBG(ep->dev, "Out of DMA memory\n");
-			वापस retval;
-		पूर्ण
-		अगर (ep->in) अणु
-			अगर (req->req.length == ep->ep.maxpacket) अणु
-				/* ग_लिखो tx bytes */
+			return retval;
+		}
+		if (ep->in) {
+			if (req->req.length == ep->ep.maxpacket) {
+				/* write tx bytes */
 				req->td_data->status =
 					AMD_ADDBITS(req->td_data->status,
 						ep->ep.maxpacket,
 						UDC_DMA_IN_STS_TXBYTES);
 
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण
+	}
 
-	अगर (ep->in) अणु
+	if (ep->in) {
 		VDBG(ep->dev, "IN: use_dma_ppb=%d req->req.len=%d "
 				"maxpacket=%d ep%d\n",
 				use_dma_ppb, req->req.length,
 				ep->ep.maxpacket, ep->num);
 		/*
-		 * अगर bytes < max packet then tx bytes must
+		 * if bytes < max packet then tx bytes must
 		 * be written in packet per buffer mode
 		 */
-		अगर (!use_dma_ppb || req->req.length < ep->ep.maxpacket
+		if (!use_dma_ppb || req->req.length < ep->ep.maxpacket
 				|| ep->num == UDC_EP0OUT_IX
-				|| ep->num == UDC_EP0IN_IX) अणु
-			/* ग_लिखो tx bytes */
+				|| ep->num == UDC_EP0IN_IX) {
+			/* write tx bytes */
 			req->td_data->status =
 				AMD_ADDBITS(req->td_data->status,
 						req->req.length,
@@ -928,13 +927,13 @@ udc_rxfअगरo_पढ़ो(काष्ठा udc_ep *ep, काष्ठा
 				AMD_ADDBITS(req->td_data->status,
 						0,
 						UDC_DMA_IN_STS_FRAMENUM);
-		पूर्ण
+		}
 		/* set HOST BUSY */
 		req->td_data->status =
 			AMD_ADDBITS(req->td_data->status,
 				UDC_DMA_STP_STS_BS_HOST_BUSY,
 				UDC_DMA_STP_STS_BS);
-	पूर्ण अन्यथा अणु
+	} else {
 		VDBG(ep->dev, "OUT set host ready\n");
 		/* set HOST READY */
 		req->td_data->status =
@@ -943,43 +942,43 @@ udc_rxfअगरo_पढ़ो(काष्ठा udc_ep *ep, काष्ठा
 				UDC_DMA_STP_STS_BS);
 
 		/* clear NAK by writing CNAK */
-		अगर (ep->naking) अणु
-			पंचांगp = पढ़ोl(&ep->regs->ctl);
-			पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
+		if (ep->naking) {
+			tmp = readl(&ep->regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+			writel(tmp, &ep->regs->ctl);
 			ep->naking = 0;
 			UDC_QUEUE_CNAK(ep, ep->num);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /* Completes request packet ... caller MUST hold lock */
-अटल व्योम
-complete_req(काष्ठा udc_ep *ep, काष्ठा udc_request *req, पूर्णांक sts)
+static void
+complete_req(struct udc_ep *ep, struct udc_request *req, int sts)
 __releases(ep->dev->lock)
 __acquires(ep->dev->lock)
-अणु
-	काष्ठा udc		*dev;
-	अचिन्हित		halted;
+{
+	struct udc		*dev;
+	unsigned		halted;
 
 	VDBG(ep->dev, "complete_req(): ep%d\n", ep->num);
 
 	dev = ep->dev;
 	/* unmap DMA */
-	अगर (ep->dma)
+	if (ep->dma)
 		usb_gadget_unmap_request(&dev->gadget, &req->req, ep->in);
 
 	halted = ep->halted;
 	ep->halted = 1;
 
-	/* set new status अगर pending */
-	अगर (req->req.status == -EINPROGRESS)
+	/* set new status if pending */
+	if (req->req.status == -EINPROGRESS)
 		req->req.status = sts;
 
-	/* हटाओ from ep queue */
+	/* remove from ep queue */
 	list_del_init(&req->queue);
 
 	VDBG(ep->dev, "req %p => complete %d bytes at %s with sts %d\n",
@@ -989,451 +988,451 @@ __acquires(ep->dev->lock)
 	usb_gadget_giveback_request(&ep->ep, &req->req);
 	spin_lock(&dev->lock);
 	ep->halted = halted;
-पूर्ण
+}
 
-/* Iterates to the end of a DMA chain and वापसs last descriptor */
-अटल काष्ठा udc_data_dma *udc_get_last_dma_desc(काष्ठा udc_request *req)
-अणु
-	काष्ठा udc_data_dma	*td;
+/* Iterates to the end of a DMA chain and returns last descriptor */
+static struct udc_data_dma *udc_get_last_dma_desc(struct udc_request *req)
+{
+	struct udc_data_dma	*td;
 
 	td = req->td_data;
-	जबतक (td && !(td->status & AMD_BIT(UDC_DMA_IN_STS_L)))
+	while (td && !(td->status & AMD_BIT(UDC_DMA_IN_STS_L)))
 		td = phys_to_virt(td->next);
 
-	वापस td;
+	return td;
 
-पूर्ण
+}
 
 /* Iterates to the end of a DMA chain and counts bytes received */
-अटल u32 udc_get_ppbdu_rxbytes(काष्ठा udc_request *req)
-अणु
-	काष्ठा udc_data_dma	*td;
+static u32 udc_get_ppbdu_rxbytes(struct udc_request *req)
+{
+	struct udc_data_dma	*td;
 	u32 count;
 
 	td = req->td_data;
 	/* received number bytes */
 	count = AMD_GETBITS(td->status, UDC_DMA_OUT_STS_RXBYTES);
 
-	जबतक (td && !(td->status & AMD_BIT(UDC_DMA_IN_STS_L))) अणु
+	while (td && !(td->status & AMD_BIT(UDC_DMA_IN_STS_L))) {
 		td = phys_to_virt(td->next);
 		/* received number bytes */
-		अगर (td) अणु
+		if (td) {
 			count += AMD_GETBITS(td->status,
 				UDC_DMA_OUT_STS_RXBYTES);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस count;
+	return count;
 
-पूर्ण
+}
 
 /* Enabling RX DMA */
-अटल व्योम udc_set_rde(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+static void udc_set_rde(struct udc *dev)
+{
+	u32 tmp;
 
 	VDBG(dev, "udc_set_rde()\n");
-	/* stop RDE समयr */
-	अगर (समयr_pending(&udc_समयr)) अणु
+	/* stop RDE timer */
+	if (timer_pending(&udc_timer)) {
 		set_rde = 0;
-		mod_समयr(&udc_समयr, jअगरfies - 1);
-	पूर्ण
+		mod_timer(&udc_timer, jiffies - 1);
+	}
 	/* set RDE */
-	पंचांगp = पढ़ोl(&dev->regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_DEVCTL_RDE);
-	ग_लिखोl(पंचांगp, &dev->regs->ctl);
-पूर्ण
+	tmp = readl(&dev->regs->ctl);
+	tmp |= AMD_BIT(UDC_DEVCTL_RDE);
+	writel(tmp, &dev->regs->ctl);
+}
 
 /* Queues a request packet, called by gadget driver */
-अटल पूर्णांक
-udc_queue(काष्ठा usb_ep *usbep, काष्ठा usb_request *usbreq, gfp_t gfp)
-अणु
-	पूर्णांक			retval = 0;
-	u8			खोलो_rxfअगरo = 0;
-	अचिन्हित दीर्घ		अगरlags;
-	काष्ठा udc_ep		*ep;
-	काष्ठा udc_request	*req;
-	काष्ठा udc		*dev;
-	u32			पंचांगp;
+static int
+udc_queue(struct usb_ep *usbep, struct usb_request *usbreq, gfp_t gfp)
+{
+	int			retval = 0;
+	u8			open_rxfifo = 0;
+	unsigned long		iflags;
+	struct udc_ep		*ep;
+	struct udc_request	*req;
+	struct udc		*dev;
+	u32			tmp;
 
-	/* check the inमाला_दो */
-	req = container_of(usbreq, काष्ठा udc_request, req);
+	/* check the inputs */
+	req = container_of(usbreq, struct udc_request, req);
 
-	अगर (!usbep || !usbreq || !usbreq->complete || !usbreq->buf
+	if (!usbep || !usbreq || !usbreq->complete || !usbreq->buf
 			|| !list_empty(&req->queue))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
-	अगर (!ep->ep.desc && (ep->num != 0 && ep->num != UDC_EP0OUT_IX))
-		वापस -EINVAL;
+	ep = container_of(usbep, struct udc_ep, ep);
+	if (!ep->ep.desc && (ep->num != 0 && ep->num != UDC_EP0OUT_IX))
+		return -EINVAL;
 
 	VDBG(ep->dev, "udc_queue(): ep%d-in=%d\n", ep->num, ep->in);
 	dev = ep->dev;
 
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
-	/* map dma (usually करोne beक्रमe) */
-	अगर (ep->dma) अणु
+	/* map dma (usually done before) */
+	if (ep->dma) {
 		VDBG(dev, "DMA map req %p\n", req);
 		retval = usb_gadget_map_request(&udc->gadget, usbreq, ep->in);
-		अगर (retval)
-			वापस retval;
-	पूर्ण
+		if (retval)
+			return retval;
+	}
 
 	VDBG(dev, "%s queue req %p, len %d req->td_data=%p buf %p\n",
 			usbep->name, usbreq, usbreq->length,
 			req->td_data, usbreq->buf);
 
-	spin_lock_irqsave(&dev->lock, अगरlags);
+	spin_lock_irqsave(&dev->lock, iflags);
 	usbreq->actual = 0;
 	usbreq->status = -EINPROGRESS;
-	req->dma_करोne = 0;
+	req->dma_done = 0;
 
-	/* on empty queue just करो first transfer */
-	अगर (list_empty(&ep->queue)) अणु
+	/* on empty queue just do first transfer */
+	if (list_empty(&ep->queue)) {
 		/* zlp */
-		अगर (usbreq->length == 0) अणु
+		if (usbreq->length == 0) {
 			/* IN zlp's are handled by hardware */
 			complete_req(ep, req, 0);
 			VDBG(dev, "%s: zlp\n", ep->ep.name);
 			/*
-			 * अगर set_config or set_पूर्णांकf is रुकोing क्रम ack by zlp
+			 * if set_config or set_intf is waiting for ack by zlp
 			 * then set CSR_DONE
 			 */
-			अगर (dev->set_cfg_not_acked) अणु
-				पंचांगp = पढ़ोl(&dev->regs->ctl);
-				पंचांगp |= AMD_BIT(UDC_DEVCTL_CSR_DONE);
-				ग_लिखोl(पंचांगp, &dev->regs->ctl);
+			if (dev->set_cfg_not_acked) {
+				tmp = readl(&dev->regs->ctl);
+				tmp |= AMD_BIT(UDC_DEVCTL_CSR_DONE);
+				writel(tmp, &dev->regs->ctl);
 				dev->set_cfg_not_acked = 0;
-			पूर्ण
+			}
 			/* setup command is ACK'ed now by zlp */
-			अगर (dev->रुकोing_zlp_ack_ep0in) अणु
+			if (dev->waiting_zlp_ack_ep0in) {
 				/* clear NAK by writing CNAK in EP0_IN */
-				पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
-				पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-				ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
+				tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
+				tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+				writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
 				dev->ep[UDC_EP0IN_IX].naking = 0;
 				UDC_QUEUE_CNAK(&dev->ep[UDC_EP0IN_IX],
 							UDC_EP0IN_IX);
-				dev->रुकोing_zlp_ack_ep0in = 0;
-			पूर्ण
-			जाओ finished;
-		पूर्ण
-		अगर (ep->dma) अणु
+				dev->waiting_zlp_ack_ep0in = 0;
+			}
+			goto finished;
+		}
+		if (ep->dma) {
 			retval = prep_dma(ep, req, GFP_ATOMIC);
-			अगर (retval != 0)
-				जाओ finished;
-			/* ग_लिखो desc poपूर्णांकer to enable DMA */
-			अगर (ep->in) अणु
+			if (retval != 0)
+				goto finished;
+			/* write desc pointer to enable DMA */
+			if (ep->in) {
 				/* set HOST READY */
 				req->td_data->status =
 					AMD_ADDBITS(req->td_data->status,
 						UDC_DMA_IN_STS_BS_HOST_READY,
 						UDC_DMA_IN_STS_BS);
-			पूर्ण
+			}
 
-			/* disabled rx dma जबतक descriptor update */
-			अगर (!ep->in) अणु
-				/* stop RDE समयr */
-				अगर (समयr_pending(&udc_समयr)) अणु
+			/* disabled rx dma while descriptor update */
+			if (!ep->in) {
+				/* stop RDE timer */
+				if (timer_pending(&udc_timer)) {
 					set_rde = 0;
-					mod_समयr(&udc_समयr, jअगरfies - 1);
-				पूर्ण
+					mod_timer(&udc_timer, jiffies - 1);
+				}
 				/* clear RDE */
-				पंचांगp = पढ़ोl(&dev->regs->ctl);
-				पंचांगp &= AMD_UNMASK_BIT(UDC_DEVCTL_RDE);
-				ग_लिखोl(पंचांगp, &dev->regs->ctl);
-				खोलो_rxfअगरo = 1;
+				tmp = readl(&dev->regs->ctl);
+				tmp &= AMD_UNMASK_BIT(UDC_DEVCTL_RDE);
+				writel(tmp, &dev->regs->ctl);
+				open_rxfifo = 1;
 
 				/*
-				 * अगर BNA occurred then let BNA dummy desc.
-				 * poपूर्णांक to current desc.
+				 * if BNA occurred then let BNA dummy desc.
+				 * point to current desc.
 				 */
-				अगर (ep->bna_occurred) अणु
+				if (ep->bna_occurred) {
 					VDBG(dev, "copy to BNA dummy desc.\n");
-					स_नकल(ep->bna_dummy_req->td_data,
+					memcpy(ep->bna_dummy_req->td_data,
 						req->td_data,
-						माप(काष्ठा udc_data_dma));
-				पूर्ण
-			पूर्ण
-			/* ग_लिखो desc poपूर्णांकer */
-			ग_लिखोl(req->td_phys, &ep->regs->desptr);
+						sizeof(struct udc_data_dma));
+				}
+			}
+			/* write desc pointer */
+			writel(req->td_phys, &ep->regs->desptr);
 
 			/* clear NAK by writing CNAK */
-			अगर (ep->naking) अणु
-				पंचांगp = पढ़ोl(&ep->regs->ctl);
-				पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-				ग_लिखोl(पंचांगp, &ep->regs->ctl);
+			if (ep->naking) {
+				tmp = readl(&ep->regs->ctl);
+				tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+				writel(tmp, &ep->regs->ctl);
 				ep->naking = 0;
 				UDC_QUEUE_CNAK(ep, ep->num);
-			पूर्ण
+			}
 
-			अगर (ep->in) अणु
+			if (ep->in) {
 				/* enable ep irq */
-				पंचांगp = पढ़ोl(&dev->regs->ep_irqmsk);
-				पंचांगp &= AMD_UNMASK_BIT(ep->num);
-				ग_लिखोl(पंचांगp, &dev->regs->ep_irqmsk);
-			पूर्ण
-		पूर्ण अन्यथा अगर (ep->in) अणु
+				tmp = readl(&dev->regs->ep_irqmsk);
+				tmp &= AMD_UNMASK_BIT(ep->num);
+				writel(tmp, &dev->regs->ep_irqmsk);
+			}
+		} else if (ep->in) {
 				/* enable ep irq */
-				पंचांगp = पढ़ोl(&dev->regs->ep_irqmsk);
-				पंचांगp &= AMD_UNMASK_BIT(ep->num);
-				ग_लिखोl(पंचांगp, &dev->regs->ep_irqmsk);
-			पूर्ण
+				tmp = readl(&dev->regs->ep_irqmsk);
+				tmp &= AMD_UNMASK_BIT(ep->num);
+				writel(tmp, &dev->regs->ep_irqmsk);
+			}
 
-	पूर्ण अन्यथा अगर (ep->dma) अणु
+	} else if (ep->dma) {
 
 		/*
-		 * prep_dma not used क्रम OUT ep's, this is not possible
-		 * क्रम PPB modes, because of chain creation reasons
+		 * prep_dma not used for OUT ep's, this is not possible
+		 * for PPB modes, because of chain creation reasons
 		 */
-		अगर (ep->in) अणु
+		if (ep->in) {
 			retval = prep_dma(ep, req, GFP_ATOMIC);
-			अगर (retval != 0)
-				जाओ finished;
-		पूर्ण
-	पूर्ण
+			if (retval != 0)
+				goto finished;
+		}
+	}
 	VDBG(dev, "list_add\n");
 	/* add request to ep queue */
-	अगर (req) अणु
+	if (req) {
 
 		list_add_tail(&req->queue, &ep->queue);
 
-		/* खोलो rxfअगरo अगर out data queued */
-		अगर (खोलो_rxfअगरo) अणु
+		/* open rxfifo if out data queued */
+		if (open_rxfifo) {
 			/* enable DMA */
 			req->dma_going = 1;
 			udc_set_rde(dev);
-			अगर (ep->num != UDC_EP0OUT_IX)
+			if (ep->num != UDC_EP0OUT_IX)
 				dev->data_ep_queued = 1;
-		पूर्ण
+		}
 		/* stop OUT naking */
-		अगर (!ep->in) अणु
-			अगर (!use_dma && udc_rxfअगरo_pending) अणु
+		if (!ep->in) {
+			if (!use_dma && udc_rxfifo_pending) {
 				DBG(dev, "udc_queue(): pending bytes in "
 					"rxfifo after nyet\n");
 				/*
-				 * पढ़ो pending bytes afer nyet:
+				 * read pending bytes afer nyet:
 				 * referring to isr
 				 */
-				अगर (udc_rxfअगरo_पढ़ो(ep, req)) अणु
+				if (udc_rxfifo_read(ep, req)) {
 					/* finish */
 					complete_req(ep, req, 0);
-				पूर्ण
-				udc_rxfअगरo_pending = 0;
+				}
+				udc_rxfifo_pending = 0;
 
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 finished:
-	spin_unlock_irqrestore(&dev->lock, अगरlags);
-	वापस retval;
-पूर्ण
+	spin_unlock_irqrestore(&dev->lock, iflags);
+	return retval;
+}
 
-/* Empty request queue of an endpoपूर्णांक; caller holds spinlock */
-व्योम empty_req_queue(काष्ठा udc_ep *ep)
-अणु
-	काष्ठा udc_request	*req;
+/* Empty request queue of an endpoint; caller holds spinlock */
+void empty_req_queue(struct udc_ep *ep)
+{
+	struct udc_request	*req;
 
 	ep->halted = 1;
-	जबतक (!list_empty(&ep->queue)) अणु
+	while (!list_empty(&ep->queue)) {
 		req = list_entry(ep->queue.next,
-			काष्ठा udc_request,
+			struct udc_request,
 			queue);
 		complete_req(ep, req, -ESHUTDOWN);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(empty_req_queue);
 
 /* Dequeues a request packet, called by gadget driver */
-अटल पूर्णांक udc_dequeue(काष्ठा usb_ep *usbep, काष्ठा usb_request *usbreq)
-अणु
-	काष्ठा udc_ep		*ep;
-	काष्ठा udc_request	*req;
-	अचिन्हित		halted;
-	अचिन्हित दीर्घ		अगरlags;
+static int udc_dequeue(struct usb_ep *usbep, struct usb_request *usbreq)
+{
+	struct udc_ep		*ep;
+	struct udc_request	*req;
+	unsigned		halted;
+	unsigned long		iflags;
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
-	अगर (!usbep || !usbreq || (!ep->ep.desc && (ep->num != 0
+	ep = container_of(usbep, struct udc_ep, ep);
+	if (!usbep || !usbreq || (!ep->ep.desc && (ep->num != 0
 				&& ep->num != UDC_EP0OUT_IX)))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	req = container_of(usbreq, काष्ठा udc_request, req);
+	req = container_of(usbreq, struct udc_request, req);
 
-	spin_lock_irqsave(&ep->dev->lock, अगरlags);
+	spin_lock_irqsave(&ep->dev->lock, iflags);
 	halted = ep->halted;
 	ep->halted = 1;
 	/* request in processing or next one */
-	अगर (ep->queue.next == &req->queue) अणु
-		अगर (ep->dma && req->dma_going) अणु
-			अगर (ep->in)
+	if (ep->queue.next == &req->queue) {
+		if (ep->dma && req->dma_going) {
+			if (ep->in)
 				ep->cancel_transfer = 1;
-			अन्यथा अणु
-				u32 पंचांगp;
+			else {
+				u32 tmp;
 				u32 dma_sts;
 				/* stop potential receive DMA */
-				पंचांगp = पढ़ोl(&udc->regs->ctl);
-				ग_लिखोl(पंचांगp & AMD_UNMASK_BIT(UDC_DEVCTL_RDE),
+				tmp = readl(&udc->regs->ctl);
+				writel(tmp & AMD_UNMASK_BIT(UDC_DEVCTL_RDE),
 							&udc->regs->ctl);
 				/*
 				 * Cancel transfer later in ISR
-				 * अगर descriptor was touched.
+				 * if descriptor was touched.
 				 */
 				dma_sts = AMD_GETBITS(req->td_data->status,
 							UDC_DMA_OUT_STS_BS);
-				अगर (dma_sts != UDC_DMA_OUT_STS_BS_HOST_READY)
+				if (dma_sts != UDC_DMA_OUT_STS_BS_HOST_READY)
 					ep->cancel_transfer = 1;
-				अन्यथा अणु
+				else {
 					udc_init_bna_dummy(ep->req);
-					ग_लिखोl(ep->bna_dummy_req->td_phys,
+					writel(ep->bna_dummy_req->td_phys,
 						&ep->regs->desptr);
-				पूर्ण
-				ग_लिखोl(पंचांगp, &udc->regs->ctl);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+				writel(tmp, &udc->regs->ctl);
+			}
+		}
+	}
 	complete_req(ep, req, -ECONNRESET);
 	ep->halted = halted;
 
-	spin_unlock_irqrestore(&ep->dev->lock, अगरlags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&ep->dev->lock, iflags);
+	return 0;
+}
 
-/* Halt or clear halt of endpoपूर्णांक */
-अटल पूर्णांक
-udc_set_halt(काष्ठा usb_ep *usbep, पूर्णांक halt)
-अणु
-	काष्ठा udc_ep	*ep;
-	u32 पंचांगp;
-	अचिन्हित दीर्घ अगरlags;
-	पूर्णांक retval = 0;
+/* Halt or clear halt of endpoint */
+static int
+udc_set_halt(struct usb_ep *usbep, int halt)
+{
+	struct udc_ep	*ep;
+	u32 tmp;
+	unsigned long iflags;
+	int retval = 0;
 
-	अगर (!usbep)
-		वापस -EINVAL;
+	if (!usbep)
+		return -EINVAL;
 
 	pr_debug("set_halt %s: halt=%d\n", usbep->name, halt);
 
-	ep = container_of(usbep, काष्ठा udc_ep, ep);
-	अगर (!ep->ep.desc && (ep->num != 0 && ep->num != UDC_EP0OUT_IX))
-		वापस -EINVAL;
-	अगर (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	ep = container_of(usbep, struct udc_ep, ep);
+	if (!ep->ep.desc && (ep->num != 0 && ep->num != UDC_EP0OUT_IX))
+		return -EINVAL;
+	if (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
-	spin_lock_irqsave(&udc_stall_spinlock, अगरlags);
+	spin_lock_irqsave(&udc_stall_spinlock, iflags);
 	/* halt or clear halt */
-	अगर (halt) अणु
-		अगर (ep->num == 0)
+	if (halt) {
+		if (ep->num == 0)
 			ep->dev->stall_ep0in = 1;
-		अन्यथा अणु
+		else {
 			/*
 			 * set STALL
-			 * rxfअगरo empty not taken पूर्णांकo acount
+			 * rxfifo empty not taken into acount
 			 */
-			पंचांगp = पढ़ोl(&ep->regs->ctl);
-			पंचांगp |= AMD_BIT(UDC_EPCTL_S);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
+			tmp = readl(&ep->regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_S);
+			writel(tmp, &ep->regs->ctl);
 			ep->halted = 1;
 
-			/* setup poll समयr */
-			अगर (!समयr_pending(&udc_pollstall_समयr)) अणु
-				udc_pollstall_समयr.expires = jअगरfies +
+			/* setup poll timer */
+			if (!timer_pending(&udc_pollstall_timer)) {
+				udc_pollstall_timer.expires = jiffies +
 					HZ * UDC_POLLSTALL_TIMER_USECONDS
 					/ (1000 * 1000);
-				अगर (!stop_pollstall_समयr) अणु
+				if (!stop_pollstall_timer) {
 					DBG(ep->dev, "start polltimer\n");
-					add_समयr(&udc_pollstall_समयr);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* ep is halted by set_halt() beक्रमe */
-		अगर (ep->halted) अणु
-			पंचांगp = पढ़ोl(&ep->regs->ctl);
+					add_timer(&udc_pollstall_timer);
+				}
+			}
+		}
+	} else {
+		/* ep is halted by set_halt() before */
+		if (ep->halted) {
+			tmp = readl(&ep->regs->ctl);
 			/* clear stall bit */
-			पंचांगp = पंचांगp & AMD_CLEAR_BIT(UDC_EPCTL_S);
+			tmp = tmp & AMD_CLEAR_BIT(UDC_EPCTL_S);
 			/* clear NAK by writing CNAK */
-			पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+			writel(tmp, &ep->regs->ctl);
 			ep->halted = 0;
 			UDC_QUEUE_CNAK(ep, ep->num);
-		पूर्ण
-	पूर्ण
-	spin_unlock_irqrestore(&udc_stall_spinlock, अगरlags);
-	वापस retval;
-पूर्ण
+		}
+	}
+	spin_unlock_irqrestore(&udc_stall_spinlock, iflags);
+	return retval;
+}
 
-/* gadget पूर्णांकerface */
-अटल स्थिर काष्ठा usb_ep_ops udc_ep_ops = अणु
+/* gadget interface */
+static const struct usb_ep_ops udc_ep_ops = {
 	.enable		= udc_ep_enable,
 	.disable	= udc_ep_disable,
 
 	.alloc_request	= udc_alloc_request,
-	.मुक्त_request	= udc_मुक्त_request,
+	.free_request	= udc_free_request,
 
 	.queue		= udc_queue,
 	.dequeue	= udc_dequeue,
 
 	.set_halt	= udc_set_halt,
-	/* fअगरo ops not implemented */
-पूर्ण;
+	/* fifo ops not implemented */
+};
 
 /*-------------------------------------------------------------------------*/
 
 /* Get frame counter (not implemented) */
-अटल पूर्णांक udc_get_frame(काष्ठा usb_gadget *gadget)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int udc_get_frame(struct usb_gadget *gadget)
+{
+	return -EOPNOTSUPP;
+}
 
 /* Initiates a remote wakeup */
-अटल पूर्णांक udc_remote_wakeup(काष्ठा udc *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	u32 पंचांगp;
+static int udc_remote_wakeup(struct udc *dev)
+{
+	unsigned long flags;
+	u32 tmp;
 
 	DBG(dev, "UDC initiates remote wakeup\n");
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	पंचांगp = पढ़ोl(&dev->regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_DEVCTL_RES);
-	ग_लिखोl(पंचांगp, &dev->regs->ctl);
-	पंचांगp &= AMD_CLEAR_BIT(UDC_DEVCTL_RES);
-	ग_लिखोl(पंचांगp, &dev->regs->ctl);
+	tmp = readl(&dev->regs->ctl);
+	tmp |= AMD_BIT(UDC_DEVCTL_RES);
+	writel(tmp, &dev->regs->ctl);
+	tmp &= AMD_CLEAR_BIT(UDC_DEVCTL_RES);
+	writel(tmp, &dev->regs->ctl);
 
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Remote wakeup gadget पूर्णांकerface */
-अटल पूर्णांक udc_wakeup(काष्ठा usb_gadget *gadget)
-अणु
-	काष्ठा udc		*dev;
+/* Remote wakeup gadget interface */
+static int udc_wakeup(struct usb_gadget *gadget)
+{
+	struct udc		*dev;
 
-	अगर (!gadget)
-		वापस -EINVAL;
-	dev = container_of(gadget, काष्ठा udc, gadget);
+	if (!gadget)
+		return -EINVAL;
+	dev = container_of(gadget, struct udc, gadget);
 	udc_remote_wakeup(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक amd5536_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक amd5536_udc_stop(काष्ठा usb_gadget *g);
+static int amd5536_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver);
+static int amd5536_udc_stop(struct usb_gadget *g);
 
-अटल स्थिर काष्ठा usb_gadget_ops udc_ops = अणु
+static const struct usb_gadget_ops udc_ops = {
 	.wakeup		= udc_wakeup,
 	.get_frame	= udc_get_frame,
 	.udc_start	= amd5536_udc_start,
 	.udc_stop	= amd5536_udc_stop,
-पूर्ण;
+};
 
-/* Setups endpoपूर्णांक parameters, adds endpoपूर्णांकs to linked list */
-अटल व्योम make_ep_lists(काष्ठा udc *dev)
-अणु
+/* Setups endpoint parameters, adds endpoints to linked list */
+static void make_ep_lists(struct udc *dev)
+{
 	/* make gadget ep lists */
 	INIT_LIST_HEAD(&dev->gadget.ep_list);
 	list_add_tail(&dev->ep[UDC_EPIN_STATUS_IX].ep.ep_list,
@@ -1443,952 +1442,952 @@ udc_set_halt(काष्ठा usb_ep *usbep, पूर्णांक halt)
 	list_add_tail(&dev->ep[UDC_EPOUT_IX].ep.ep_list,
 						&dev->gadget.ep_list);
 
-	/* fअगरo config */
-	dev->ep[UDC_EPIN_STATUS_IX].fअगरo_depth = UDC_EPIN_SMALLINT_BUFF_SIZE;
-	अगर (dev->gadget.speed == USB_SPEED_FULL)
-		dev->ep[UDC_EPIN_IX].fअगरo_depth = UDC_FS_EPIN_BUFF_SIZE;
-	अन्यथा अगर (dev->gadget.speed == USB_SPEED_HIGH)
-		dev->ep[UDC_EPIN_IX].fअगरo_depth = hs_tx_buf;
-	dev->ep[UDC_EPOUT_IX].fअगरo_depth = UDC_RXFIFO_SIZE;
-पूर्ण
+	/* fifo config */
+	dev->ep[UDC_EPIN_STATUS_IX].fifo_depth = UDC_EPIN_SMALLINT_BUFF_SIZE;
+	if (dev->gadget.speed == USB_SPEED_FULL)
+		dev->ep[UDC_EPIN_IX].fifo_depth = UDC_FS_EPIN_BUFF_SIZE;
+	else if (dev->gadget.speed == USB_SPEED_HIGH)
+		dev->ep[UDC_EPIN_IX].fifo_depth = hs_tx_buf;
+	dev->ep[UDC_EPOUT_IX].fifo_depth = UDC_RXFIFO_SIZE;
+}
 
 /* Inits UDC context */
-व्योम udc_basic_init(काष्ठा udc *dev)
-अणु
-	u32	पंचांगp;
+void udc_basic_init(struct udc *dev)
+{
+	u32	tmp;
 
 	DBG(dev, "udc_basic_init()\n");
 
 	dev->gadget.speed = USB_SPEED_UNKNOWN;
 
-	/* stop RDE समयr */
-	अगर (समयr_pending(&udc_समयr)) अणु
+	/* stop RDE timer */
+	if (timer_pending(&udc_timer)) {
 		set_rde = 0;
-		mod_समयr(&udc_समयr, jअगरfies - 1);
-	पूर्ण
-	/* stop poll stall समयr */
-	अगर (समयr_pending(&udc_pollstall_समयr))
-		mod_समयr(&udc_pollstall_समयr, jअगरfies - 1);
+		mod_timer(&udc_timer, jiffies - 1);
+	}
+	/* stop poll stall timer */
+	if (timer_pending(&udc_pollstall_timer))
+		mod_timer(&udc_pollstall_timer, jiffies - 1);
 	/* disable DMA */
-	पंचांगp = पढ़ोl(&dev->regs->ctl);
-	पंचांगp &= AMD_UNMASK_BIT(UDC_DEVCTL_RDE);
-	पंचांगp &= AMD_UNMASK_BIT(UDC_DEVCTL_TDE);
-	ग_लिखोl(पंचांगp, &dev->regs->ctl);
+	tmp = readl(&dev->regs->ctl);
+	tmp &= AMD_UNMASK_BIT(UDC_DEVCTL_RDE);
+	tmp &= AMD_UNMASK_BIT(UDC_DEVCTL_TDE);
+	writel(tmp, &dev->regs->ctl);
 
 	/* enable dynamic CSR programming */
-	पंचांगp = पढ़ोl(&dev->regs->cfg);
-	पंचांगp |= AMD_BIT(UDC_DEVCFG_CSR_PRG);
-	/* set self घातered */
-	पंचांगp |= AMD_BIT(UDC_DEVCFG_SP);
+	tmp = readl(&dev->regs->cfg);
+	tmp |= AMD_BIT(UDC_DEVCFG_CSR_PRG);
+	/* set self powered */
+	tmp |= AMD_BIT(UDC_DEVCFG_SP);
 	/* set remote wakeupable */
-	पंचांगp |= AMD_BIT(UDC_DEVCFG_RWKP);
-	ग_लिखोl(पंचांगp, &dev->regs->cfg);
+	tmp |= AMD_BIT(UDC_DEVCFG_RWKP);
+	writel(tmp, &dev->regs->cfg);
 
 	make_ep_lists(dev);
 
 	dev->data_ep_enabled = 0;
 	dev->data_ep_queued = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(udc_basic_init);
 
-/* init रेजिस्टरs at driver load समय */
-अटल पूर्णांक startup_रेजिस्टरs(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+/* init registers at driver load time */
+static int startup_registers(struct udc *dev)
+{
+	u32 tmp;
 
 	/* init controller by soft reset */
 	udc_soft_reset(dev);
 
-	/* mask not needed पूर्णांकerrupts */
-	udc_mask_unused_पूर्णांकerrupts(dev);
+	/* mask not needed interrupts */
+	udc_mask_unused_interrupts(dev);
 
-	/* put पूर्णांकo initial config */
+	/* put into initial config */
 	udc_basic_init(dev);
-	/* link up all endpoपूर्णांकs */
-	udc_setup_endpoपूर्णांकs(dev);
+	/* link up all endpoints */
+	udc_setup_endpoints(dev);
 
 	/* program speed */
-	पंचांगp = पढ़ोl(&dev->regs->cfg);
-	अगर (use_fullspeed)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_DEVCFG_SPD_FS, UDC_DEVCFG_SPD);
-	अन्यथा
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_DEVCFG_SPD_HS, UDC_DEVCFG_SPD);
-	ग_लिखोl(पंचांगp, &dev->regs->cfg);
+	tmp = readl(&dev->regs->cfg);
+	if (use_fullspeed)
+		tmp = AMD_ADDBITS(tmp, UDC_DEVCFG_SPD_FS, UDC_DEVCFG_SPD);
+	else
+		tmp = AMD_ADDBITS(tmp, UDC_DEVCFG_SPD_HS, UDC_DEVCFG_SPD);
+	writel(tmp, &dev->regs->cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Sets initial endpoपूर्णांक parameters */
-अटल व्योम udc_setup_endpoपूर्णांकs(काष्ठा udc *dev)
-अणु
-	काष्ठा udc_ep	*ep;
-	u32	पंचांगp;
+/* Sets initial endpoint parameters */
+static void udc_setup_endpoints(struct udc *dev)
+{
+	struct udc_ep	*ep;
+	u32	tmp;
 	u32	reg;
 
 	DBG(dev, "udc_setup_endpoints()\n");
 
-	/* पढ़ो क्रमागत speed */
-	पंचांगp = पढ़ोl(&dev->regs->sts);
-	पंचांगp = AMD_GETBITS(पंचांगp, UDC_DEVSTS_ENUM_SPEED);
-	अगर (पंचांगp == UDC_DEVSTS_ENUM_SPEED_HIGH)
+	/* read enum speed */
+	tmp = readl(&dev->regs->sts);
+	tmp = AMD_GETBITS(tmp, UDC_DEVSTS_ENUM_SPEED);
+	if (tmp == UDC_DEVSTS_ENUM_SPEED_HIGH)
 		dev->gadget.speed = USB_SPEED_HIGH;
-	अन्यथा अगर (पंचांगp == UDC_DEVSTS_ENUM_SPEED_FULL)
+	else if (tmp == UDC_DEVSTS_ENUM_SPEED_FULL)
 		dev->gadget.speed = USB_SPEED_FULL;
 
 	/* set basic ep parameters */
-	क्रम (पंचांगp = 0; पंचांगp < UDC_EP_NUM; पंचांगp++) अणु
-		ep = &dev->ep[पंचांगp];
+	for (tmp = 0; tmp < UDC_EP_NUM; tmp++) {
+		ep = &dev->ep[tmp];
 		ep->dev = dev;
-		ep->ep.name = ep_info[पंचांगp].name;
-		ep->ep.caps = ep_info[पंचांगp].caps;
-		ep->num = पंचांगp;
-		/* txfअगरo size is calculated at enable समय */
-		ep->txfअगरo = dev->txfअगरo;
+		ep->ep.name = ep_info[tmp].name;
+		ep->ep.caps = ep_info[tmp].caps;
+		ep->num = tmp;
+		/* txfifo size is calculated at enable time */
+		ep->txfifo = dev->txfifo;
 
-		/* fअगरo size */
-		अगर (पंचांगp < UDC_EPIN_NUM) अणु
-			ep->fअगरo_depth = UDC_TXFIFO_SIZE;
+		/* fifo size */
+		if (tmp < UDC_EPIN_NUM) {
+			ep->fifo_depth = UDC_TXFIFO_SIZE;
 			ep->in = 1;
-		पूर्ण अन्यथा अणु
-			ep->fअगरo_depth = UDC_RXFIFO_SIZE;
+		} else {
+			ep->fifo_depth = UDC_RXFIFO_SIZE;
 			ep->in = 0;
 
-		पूर्ण
-		ep->regs = &dev->ep_regs[पंचांगp];
+		}
+		ep->regs = &dev->ep_regs[tmp];
 		/*
-		 * ep will be reset only अगर ep was not enabled beक्रमe to aव्योम
-		 * disabling ep पूर्णांकerrupts when ENUM पूर्णांकerrupt occurs but ep is
+		 * ep will be reset only if ep was not enabled before to avoid
+		 * disabling ep interrupts when ENUM interrupt occurs but ep is
 		 * not enabled by gadget driver
 		 */
-		अगर (!ep->ep.desc)
+		if (!ep->ep.desc)
 			ep_init(dev->regs, ep);
 
-		अगर (use_dma) अणु
+		if (use_dma) {
 			/*
 			 * ep->dma is not really used, just to indicate that
-			 * DMA is active: हटाओ this
+			 * DMA is active: remove this
 			 * dma regs = dev control regs
 			 */
 			ep->dma = &dev->regs->ctl;
 
-			/* nak OUT endpoपूर्णांकs until enable - not क्रम ep0 */
-			अगर (पंचांगp != UDC_EP0IN_IX && पंचांगp != UDC_EP0OUT_IX
-						&& पंचांगp > UDC_EPIN_NUM) अणु
+			/* nak OUT endpoints until enable - not for ep0 */
+			if (tmp != UDC_EP0IN_IX && tmp != UDC_EP0OUT_IX
+						&& tmp > UDC_EPIN_NUM) {
 				/* set NAK */
-				reg = पढ़ोl(&dev->ep[पंचांगp].regs->ctl);
+				reg = readl(&dev->ep[tmp].regs->ctl);
 				reg |= AMD_BIT(UDC_EPCTL_SNAK);
-				ग_लिखोl(reg, &dev->ep[पंचांगp].regs->ctl);
-				dev->ep[पंचांगp].naking = 1;
+				writel(reg, &dev->ep[tmp].regs->ctl);
+				dev->ep[tmp].naking = 1;
 
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	/* EP0 max packet */
-	अगर (dev->gadget.speed == USB_SPEED_FULL) अणु
+	if (dev->gadget.speed == USB_SPEED_FULL) {
 		usb_ep_set_maxpacket_limit(&dev->ep[UDC_EP0IN_IX].ep,
 					   UDC_FS_EP0IN_MAX_PKT_SIZE);
 		usb_ep_set_maxpacket_limit(&dev->ep[UDC_EP0OUT_IX].ep,
 					   UDC_FS_EP0OUT_MAX_PKT_SIZE);
-	पूर्ण अन्यथा अगर (dev->gadget.speed == USB_SPEED_HIGH) अणु
+	} else if (dev->gadget.speed == USB_SPEED_HIGH) {
 		usb_ep_set_maxpacket_limit(&dev->ep[UDC_EP0IN_IX].ep,
 					   UDC_EP0IN_MAX_PKT_SIZE);
 		usb_ep_set_maxpacket_limit(&dev->ep[UDC_EP0OUT_IX].ep,
 					   UDC_EP0OUT_MAX_PKT_SIZE);
-	पूर्ण
+	}
 
 	/*
-	 * with suspend bug workaround, ep0 params क्रम gadget driver
+	 * with suspend bug workaround, ep0 params for gadget driver
 	 * are set at gadget driver bind() call
 	 */
 	dev->gadget.ep0 = &dev->ep[UDC_EP0IN_IX].ep;
 	dev->ep[UDC_EP0IN_IX].halted = 0;
 	INIT_LIST_HEAD(&dev->gadget.ep0->ep_list);
 
-	/* init cfg/alt/पूर्णांक */
+	/* init cfg/alt/int */
 	dev->cur_config = 0;
-	dev->cur_पूर्णांकf = 0;
+	dev->cur_intf = 0;
 	dev->cur_alt = 0;
-पूर्ण
+}
 
-/* Bringup after Connect event, initial bringup to be पढ़ोy क्रम ep0 events */
-अटल व्योम usb_connect(काष्ठा udc *dev)
-अणु
-	/* Return अगर alपढ़ोy connected */
-	अगर (dev->connected)
-		वापस;
+/* Bringup after Connect event, initial bringup to be ready for ep0 events */
+static void usb_connect(struct udc *dev)
+{
+	/* Return if already connected */
+	if (dev->connected)
+		return;
 
 	dev_info(dev->dev, "USB Connect\n");
 
 	dev->connected = 1;
 
-	/* put पूर्णांकo initial config */
+	/* put into initial config */
 	udc_basic_init(dev);
 
-	/* enable device setup पूर्णांकerrupts */
-	udc_enable_dev_setup_पूर्णांकerrupts(dev);
-पूर्ण
+	/* enable device setup interrupts */
+	udc_enable_dev_setup_interrupts(dev);
+}
 
 /*
  * Calls gadget with disconnect event and resets the UDC and makes
- * initial bringup to be पढ़ोy क्रम ep0 events
+ * initial bringup to be ready for ep0 events
  */
-अटल व्योम usb_disconnect(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+static void usb_disconnect(struct udc *dev)
+{
+	u32 tmp;
 
-	/* Return अगर alपढ़ोy disconnected */
-	अगर (!dev->connected)
-		वापस;
+	/* Return if already disconnected */
+	if (!dev->connected)
+		return;
 
 	dev_info(dev->dev, "USB Disconnect\n");
 
 	dev->connected = 0;
 
-	/* mask पूर्णांकerrupts */
-	udc_mask_unused_पूर्णांकerrupts(dev);
+	/* mask interrupts */
+	udc_mask_unused_interrupts(dev);
 
-	अगर (dev->driver) अणु
+	if (dev->driver) {
 		spin_unlock(&dev->lock);
 		dev->driver->disconnect(&dev->gadget);
 		spin_lock(&dev->lock);
 
 		/* empty queues */
-		क्रम (पंचांगp = 0; पंचांगp < UDC_EP_NUM; पंचांगp++)
-			empty_req_queue(&dev->ep[पंचांगp]);
-	पूर्ण
+		for (tmp = 0; tmp < UDC_EP_NUM; tmp++)
+			empty_req_queue(&dev->ep[tmp]);
+	}
 
 	/* disable ep0 */
 	ep_init(dev->regs, &dev->ep[UDC_EP0IN_IX]);
 
-	अगर (!soft_reset_occured) अणु
+	if (!soft_reset_occured) {
 		/* init controller by soft reset */
 		udc_soft_reset(dev);
 		soft_reset_occured++;
-	पूर्ण
+	}
 
-	/* re-enable dev पूर्णांकerrupts */
-	udc_enable_dev_setup_पूर्णांकerrupts(dev);
+	/* re-enable dev interrupts */
+	udc_enable_dev_setup_interrupts(dev);
 	/* back to full speed ? */
-	अगर (use_fullspeed) अणु
-		पंचांगp = पढ़ोl(&dev->regs->cfg);
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_DEVCFG_SPD_FS, UDC_DEVCFG_SPD);
-		ग_लिखोl(पंचांगp, &dev->regs->cfg);
-	पूर्ण
-पूर्ण
+	if (use_fullspeed) {
+		tmp = readl(&dev->regs->cfg);
+		tmp = AMD_ADDBITS(tmp, UDC_DEVCFG_SPD_FS, UDC_DEVCFG_SPD);
+		writel(tmp, &dev->regs->cfg);
+	}
+}
 
 /* Reset the UDC core */
-अटल व्योम udc_soft_reset(काष्ठा udc *dev)
-अणु
-	अचिन्हित दीर्घ	flags;
+static void udc_soft_reset(struct udc *dev)
+{
+	unsigned long	flags;
 
 	DBG(dev, "Soft reset\n");
 	/*
-	 * reset possible रुकोing पूर्णांकerrupts, because पूर्णांक.
+	 * reset possible waiting interrupts, because int.
 	 * status is lost after soft reset,
-	 * ep पूर्णांक. status reset
+	 * ep int. status reset
 	 */
-	ग_लिखोl(UDC_EPINT_MSK_DISABLE_ALL, &dev->regs->ep_irqsts);
-	/* device पूर्णांक. status reset */
-	ग_लिखोl(UDC_DEV_MSK_DISABLE, &dev->regs->irqsts);
+	writel(UDC_EPINT_MSK_DISABLE_ALL, &dev->regs->ep_irqsts);
+	/* device int. status reset */
+	writel(UDC_DEV_MSK_DISABLE, &dev->regs->irqsts);
 
-	/* Don't करो this क्रम Broadcom UDC since this is a reserved
+	/* Don't do this for Broadcom UDC since this is a reserved
 	 * bit.
 	 */
-	अगर (dev->chiprev != UDC_BCM_REV) अणु
+	if (dev->chiprev != UDC_BCM_REV) {
 		spin_lock_irqsave(&udc_irq_spinlock, flags);
-		ग_लिखोl(AMD_BIT(UDC_DEVCFG_SOFTRESET), &dev->regs->cfg);
-		पढ़ोl(&dev->regs->cfg);
+		writel(AMD_BIT(UDC_DEVCFG_SOFTRESET), &dev->regs->cfg);
+		readl(&dev->regs->cfg);
 		spin_unlock_irqrestore(&udc_irq_spinlock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* RDE समयr callback to set RDE bit */
-अटल व्योम udc_समयr_function(काष्ठा समयr_list *unused)
-अणु
-	u32 पंचांगp;
+/* RDE timer callback to set RDE bit */
+static void udc_timer_function(struct timer_list *unused)
+{
+	u32 tmp;
 
 	spin_lock_irq(&udc_irq_spinlock);
 
-	अगर (set_rde > 0) अणु
+	if (set_rde > 0) {
 		/*
-		 * खोलो the fअगरo अगर fअगरo was filled on last समयr call
+		 * open the fifo if fifo was filled on last timer call
 		 * conditionally
 		 */
-		अगर (set_rde > 1) अणु
+		if (set_rde > 1) {
 			/* set RDE to receive setup data */
-			पंचांगp = पढ़ोl(&udc->regs->ctl);
-			पंचांगp |= AMD_BIT(UDC_DEVCTL_RDE);
-			ग_लिखोl(पंचांगp, &udc->regs->ctl);
+			tmp = readl(&udc->regs->ctl);
+			tmp |= AMD_BIT(UDC_DEVCTL_RDE);
+			writel(tmp, &udc->regs->ctl);
 			set_rde = -1;
-		पूर्ण अन्यथा अगर (पढ़ोl(&udc->regs->sts)
-				& AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY)) अणु
+		} else if (readl(&udc->regs->sts)
+				& AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY)) {
 			/*
-			 * अगर fअगरo empty setup polling, करो not just
-			 * खोलो the fअगरo
+			 * if fifo empty setup polling, do not just
+			 * open the fifo
 			 */
-			udc_समयr.expires = jअगरfies + HZ/UDC_RDE_TIMER_DIV;
-			अगर (!stop_समयr)
-				add_समयr(&udc_समयr);
-		पूर्ण अन्यथा अणु
+			udc_timer.expires = jiffies + HZ/UDC_RDE_TIMER_DIV;
+			if (!stop_timer)
+				add_timer(&udc_timer);
+		} else {
 			/*
-			 * fअगरo contains data now, setup समयr क्रम खोलोing
-			 * the fअगरo when समयr expires to be able to receive
-			 * setup packets, when data packets माला_लो queued by
-			 * gadget layer then समयr will क्रमced to expire with
+			 * fifo contains data now, setup timer for opening
+			 * the fifo when timer expires to be able to receive
+			 * setup packets, when data packets gets queued by
+			 * gadget layer then timer will forced to expire with
 			 * set_rde=0 (RDE is set in udc_queue())
 			 */
 			set_rde++;
-			/* debug: lhadmot_समयr_start = 221070 */
-			udc_समयr.expires = jअगरfies + HZ*UDC_RDE_TIMER_SECONDS;
-			अगर (!stop_समयr)
-				add_समयr(&udc_समयr);
-		पूर्ण
+			/* debug: lhadmot_timer_start = 221070 */
+			udc_timer.expires = jiffies + HZ*UDC_RDE_TIMER_SECONDS;
+			if (!stop_timer)
+				add_timer(&udc_timer);
+		}
 
-	पूर्ण अन्यथा
+	} else
 		set_rde = -1; /* RDE was set by udc_queue() */
 	spin_unlock_irq(&udc_irq_spinlock);
-	अगर (stop_समयr)
-		complete(&on_निकास);
+	if (stop_timer)
+		complete(&on_exit);
 
-पूर्ण
+}
 
-/* Handle halt state, used in stall poll समयr */
-अटल व्योम udc_handle_halt_state(काष्ठा udc_ep *ep)
-अणु
-	u32 पंचांगp;
-	/* set stall as दीर्घ not halted */
-	अगर (ep->halted == 1) अणु
-		पंचांगp = पढ़ोl(&ep->regs->ctl);
+/* Handle halt state, used in stall poll timer */
+static void udc_handle_halt_state(struct udc_ep *ep)
+{
+	u32 tmp;
+	/* set stall as long not halted */
+	if (ep->halted == 1) {
+		tmp = readl(&ep->regs->ctl);
 		/* STALL cleared ? */
-		अगर (!(पंचांगp & AMD_BIT(UDC_EPCTL_S))) अणु
+		if (!(tmp & AMD_BIT(UDC_EPCTL_S))) {
 			/*
-			 * FIXME: MSC spec requires that stall reमुख्यs
+			 * FIXME: MSC spec requires that stall remains
 			 * even on receivng of CLEAR_FEATURE HALT. So
 			 * we would set STALL again here to be compliant.
-			 * But with current mass storage drivers this करोes
+			 * But with current mass storage drivers this does
 			 * not work (would produce endless host retries).
 			 * So we clear halt on CLEAR_FEATURE.
 			 *
 			DBG(ep->dev, "ep %d: set STALL again\n", ep->num);
-			पंचांगp |= AMD_BIT(UDC_EPCTL_S);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);*/
+			tmp |= AMD_BIT(UDC_EPCTL_S);
+			writel(tmp, &ep->regs->ctl);*/
 
 			/* clear NAK by writing CNAK */
-			पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+			writel(tmp, &ep->regs->ctl);
 			ep->halted = 0;
 			UDC_QUEUE_CNAK(ep, ep->num);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* Stall समयr callback to poll S bit and set it again after */
-अटल व्योम udc_pollstall_समयr_function(काष्ठा समयr_list *unused)
-अणु
-	काष्ठा udc_ep *ep;
-	पूर्णांक halted = 0;
+/* Stall timer callback to poll S bit and set it again after */
+static void udc_pollstall_timer_function(struct timer_list *unused)
+{
+	struct udc_ep *ep;
+	int halted = 0;
 
 	spin_lock_irq(&udc_stall_spinlock);
 	/*
-	 * only one IN and OUT endpoपूर्णांकs are handled
+	 * only one IN and OUT endpoints are handled
 	 * IN poll stall
 	 */
 	ep = &udc->ep[UDC_EPIN_IX];
 	udc_handle_halt_state(ep);
-	अगर (ep->halted)
+	if (ep->halted)
 		halted = 1;
 	/* OUT poll stall */
 	ep = &udc->ep[UDC_EPOUT_IX];
 	udc_handle_halt_state(ep);
-	अगर (ep->halted)
+	if (ep->halted)
 		halted = 1;
 
-	/* setup समयr again when still halted */
-	अगर (!stop_pollstall_समयr && halted) अणु
-		udc_pollstall_समयr.expires = jअगरfies +
+	/* setup timer again when still halted */
+	if (!stop_pollstall_timer && halted) {
+		udc_pollstall_timer.expires = jiffies +
 					HZ * UDC_POLLSTALL_TIMER_USECONDS
 					/ (1000 * 1000);
-		add_समयr(&udc_pollstall_समयr);
-	पूर्ण
+		add_timer(&udc_pollstall_timer);
+	}
 	spin_unlock_irq(&udc_stall_spinlock);
 
-	अगर (stop_pollstall_समयr)
-		complete(&on_pollstall_निकास);
-पूर्ण
+	if (stop_pollstall_timer)
+		complete(&on_pollstall_exit);
+}
 
-/* Inits endpoपूर्णांक 0 so that SETUP packets are processed */
-अटल व्योम activate_control_endpoपूर्णांकs(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+/* Inits endpoint 0 so that SETUP packets are processed */
+static void activate_control_endpoints(struct udc *dev)
+{
+	u32 tmp;
 
 	DBG(dev, "activate_control_endpoints\n");
 
-	/* flush fअगरo */
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_EPCTL_F);
-	ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
+	/* flush fifo */
+	tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
+	tmp |= AMD_BIT(UDC_EPCTL_F);
+	writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
 
 	/* set ep0 directions */
 	dev->ep[UDC_EP0IN_IX].in = 1;
 	dev->ep[UDC_EP0OUT_IX].in = 0;
 
-	/* set buffer size (tx fअगरo entries) of EP0_IN */
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->bufin_framक्रमागत);
-	अगर (dev->gadget.speed == USB_SPEED_FULL)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_FS_EPIN0_BUFF_SIZE,
+	/* set buffer size (tx fifo entries) of EP0_IN */
+	tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->bufin_framenum);
+	if (dev->gadget.speed == USB_SPEED_FULL)
+		tmp = AMD_ADDBITS(tmp, UDC_FS_EPIN0_BUFF_SIZE,
 					UDC_EPIN_BUFF_SIZE);
-	अन्यथा अगर (dev->gadget.speed == USB_SPEED_HIGH)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_EPIN0_BUFF_SIZE,
+	else if (dev->gadget.speed == USB_SPEED_HIGH)
+		tmp = AMD_ADDBITS(tmp, UDC_EPIN0_BUFF_SIZE,
 					UDC_EPIN_BUFF_SIZE);
-	ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->bufin_framक्रमागत);
+	writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->bufin_framenum);
 
 	/* set max packet size of EP0_IN */
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->bufout_maxpkt);
-	अगर (dev->gadget.speed == USB_SPEED_FULL)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_FS_EP0IN_MAX_PKT_SIZE,
+	tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->bufout_maxpkt);
+	if (dev->gadget.speed == USB_SPEED_FULL)
+		tmp = AMD_ADDBITS(tmp, UDC_FS_EP0IN_MAX_PKT_SIZE,
 					UDC_EP_MAX_PKT_SIZE);
-	अन्यथा अगर (dev->gadget.speed == USB_SPEED_HIGH)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_EP0IN_MAX_PKT_SIZE,
+	else if (dev->gadget.speed == USB_SPEED_HIGH)
+		tmp = AMD_ADDBITS(tmp, UDC_EP0IN_MAX_PKT_SIZE,
 				UDC_EP_MAX_PKT_SIZE);
-	ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->bufout_maxpkt);
+	writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->bufout_maxpkt);
 
 	/* set max packet size of EP0_OUT */
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->bufout_maxpkt);
-	अगर (dev->gadget.speed == USB_SPEED_FULL)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_FS_EP0OUT_MAX_PKT_SIZE,
+	tmp = readl(&dev->ep[UDC_EP0OUT_IX].regs->bufout_maxpkt);
+	if (dev->gadget.speed == USB_SPEED_FULL)
+		tmp = AMD_ADDBITS(tmp, UDC_FS_EP0OUT_MAX_PKT_SIZE,
 					UDC_EP_MAX_PKT_SIZE);
-	अन्यथा अगर (dev->gadget.speed == USB_SPEED_HIGH)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_EP0OUT_MAX_PKT_SIZE,
+	else if (dev->gadget.speed == USB_SPEED_HIGH)
+		tmp = AMD_ADDBITS(tmp, UDC_EP0OUT_MAX_PKT_SIZE,
 					UDC_EP_MAX_PKT_SIZE);
-	ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0OUT_IX].regs->bufout_maxpkt);
+	writel(tmp, &dev->ep[UDC_EP0OUT_IX].regs->bufout_maxpkt);
 
 	/* set max packet size of EP0 in UDC CSR */
-	पंचांगp = पढ़ोl(&dev->csr->ne[0]);
-	अगर (dev->gadget.speed == USB_SPEED_FULL)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_FS_EP0OUT_MAX_PKT_SIZE,
+	tmp = readl(&dev->csr->ne[0]);
+	if (dev->gadget.speed == USB_SPEED_FULL)
+		tmp = AMD_ADDBITS(tmp, UDC_FS_EP0OUT_MAX_PKT_SIZE,
 					UDC_CSR_NE_MAX_PKT);
-	अन्यथा अगर (dev->gadget.speed == USB_SPEED_HIGH)
-		पंचांगp = AMD_ADDBITS(पंचांगp, UDC_EP0OUT_MAX_PKT_SIZE,
+	else if (dev->gadget.speed == USB_SPEED_HIGH)
+		tmp = AMD_ADDBITS(tmp, UDC_EP0OUT_MAX_PKT_SIZE,
 					UDC_CSR_NE_MAX_PKT);
-	ग_लिखोl(पंचांगp, &dev->csr->ne[0]);
+	writel(tmp, &dev->csr->ne[0]);
 
-	अगर (use_dma) अणु
+	if (use_dma) {
 		dev->ep[UDC_EP0OUT_IX].td->status |=
 			AMD_BIT(UDC_DMA_OUT_STS_L);
-		/* ग_लिखो dma desc address */
-		ग_लिखोl(dev->ep[UDC_EP0OUT_IX].td_stp_dma,
+		/* write dma desc address */
+		writel(dev->ep[UDC_EP0OUT_IX].td_stp_dma,
 			&dev->ep[UDC_EP0OUT_IX].regs->subptr);
-		ग_लिखोl(dev->ep[UDC_EP0OUT_IX].td_phys,
+		writel(dev->ep[UDC_EP0OUT_IX].td_phys,
 			&dev->ep[UDC_EP0OUT_IX].regs->desptr);
-		/* stop RDE समयr */
-		अगर (समयr_pending(&udc_समयr)) अणु
+		/* stop RDE timer */
+		if (timer_pending(&udc_timer)) {
 			set_rde = 0;
-			mod_समयr(&udc_समयr, jअगरfies - 1);
-		पूर्ण
-		/* stop pollstall समयr */
-		अगर (समयr_pending(&udc_pollstall_समयr))
-			mod_समयr(&udc_pollstall_समयr, jअगरfies - 1);
+			mod_timer(&udc_timer, jiffies - 1);
+		}
+		/* stop pollstall timer */
+		if (timer_pending(&udc_pollstall_timer))
+			mod_timer(&udc_pollstall_timer, jiffies - 1);
 		/* enable DMA */
-		पंचांगp = पढ़ोl(&dev->regs->ctl);
-		पंचांगp |= AMD_BIT(UDC_DEVCTL_MODE)
+		tmp = readl(&dev->regs->ctl);
+		tmp |= AMD_BIT(UDC_DEVCTL_MODE)
 				| AMD_BIT(UDC_DEVCTL_RDE)
 				| AMD_BIT(UDC_DEVCTL_TDE);
-		अगर (use_dma_bufferfill_mode)
-			पंचांगp |= AMD_BIT(UDC_DEVCTL_BF);
-		अन्यथा अगर (use_dma_ppb_du)
-			पंचांगp |= AMD_BIT(UDC_DEVCTL_DU);
-		ग_लिखोl(पंचांगp, &dev->regs->ctl);
-	पूर्ण
+		if (use_dma_bufferfill_mode)
+			tmp |= AMD_BIT(UDC_DEVCTL_BF);
+		else if (use_dma_ppb_du)
+			tmp |= AMD_BIT(UDC_DEVCTL_DU);
+		writel(tmp, &dev->regs->ctl);
+	}
 
-	/* clear NAK by writing CNAK क्रम EP0IN */
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-	ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
+	/* clear NAK by writing CNAK for EP0IN */
+	tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
+	tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+	writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
 	dev->ep[UDC_EP0IN_IX].naking = 0;
 	UDC_QUEUE_CNAK(&dev->ep[UDC_EP0IN_IX], UDC_EP0IN_IX);
 
-	/* clear NAK by writing CNAK क्रम EP0OUT */
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-	ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0OUT_IX].regs->ctl);
+	/* clear NAK by writing CNAK for EP0OUT */
+	tmp = readl(&dev->ep[UDC_EP0OUT_IX].regs->ctl);
+	tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+	writel(tmp, &dev->ep[UDC_EP0OUT_IX].regs->ctl);
 	dev->ep[UDC_EP0OUT_IX].naking = 0;
 	UDC_QUEUE_CNAK(&dev->ep[UDC_EP0OUT_IX], UDC_EP0OUT_IX);
-पूर्ण
+}
 
-/* Make endpoपूर्णांक 0 पढ़ोy क्रम control traffic */
-अटल पूर्णांक setup_ep0(काष्ठा udc *dev)
-अणु
-	activate_control_endpoपूर्णांकs(dev);
-	/* enable ep0 पूर्णांकerrupts */
-	udc_enable_ep0_पूर्णांकerrupts(dev);
-	/* enable device setup पूर्णांकerrupts */
-	udc_enable_dev_setup_पूर्णांकerrupts(dev);
+/* Make endpoint 0 ready for control traffic */
+static int setup_ep0(struct udc *dev)
+{
+	activate_control_endpoints(dev);
+	/* enable ep0 interrupts */
+	udc_enable_ep0_interrupts(dev);
+	/* enable device setup interrupts */
+	udc_enable_dev_setup_interrupts(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called by gadget driver to रेजिस्टर itself */
-अटल पूर्णांक amd5536_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा udc *dev = to_amd5536_udc(g);
-	u32 पंचांगp;
+/* Called by gadget driver to register itself */
+static int amd5536_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver)
+{
+	struct udc *dev = to_amd5536_udc(g);
+	u32 tmp;
 
-	driver->driver.bus = शून्य;
+	driver->driver.bus = NULL;
 	dev->driver = driver;
 
 	/* Some gadget drivers use both ep0 directions.
-	 * NOTE: to gadget driver, ep0 is just one endpoपूर्णांक...
+	 * NOTE: to gadget driver, ep0 is just one endpoint...
 	 */
 	dev->ep[UDC_EP0OUT_IX].ep.driver_data =
 		dev->ep[UDC_EP0IN_IX].ep.driver_data;
 
-	/* get पढ़ोy क्रम ep0 traffic */
+	/* get ready for ep0 traffic */
 	setup_ep0(dev);
 
 	/* clear SD */
-	पंचांगp = पढ़ोl(&dev->regs->ctl);
-	पंचांगp = पंचांगp & AMD_CLEAR_BIT(UDC_DEVCTL_SD);
-	ग_लिखोl(पंचांगp, &dev->regs->ctl);
+	tmp = readl(&dev->regs->ctl);
+	tmp = tmp & AMD_CLEAR_BIT(UDC_DEVCTL_SD);
+	writel(tmp, &dev->regs->ctl);
 
 	usb_connect(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* shutकरोwn requests and disconnect from gadget */
-अटल व्योम
-shutकरोwn(काष्ठा udc *dev, काष्ठा usb_gadget_driver *driver)
+/* shutdown requests and disconnect from gadget */
+static void
+shutdown(struct udc *dev, struct usb_gadget_driver *driver)
 __releases(dev->lock)
 __acquires(dev->lock)
-अणु
-	पूर्णांक पंचांगp;
+{
+	int tmp;
 
 	/* empty queues and init hardware */
 	udc_basic_init(dev);
 
-	क्रम (पंचांगp = 0; पंचांगp < UDC_EP_NUM; पंचांगp++)
-		empty_req_queue(&dev->ep[पंचांगp]);
+	for (tmp = 0; tmp < UDC_EP_NUM; tmp++)
+		empty_req_queue(&dev->ep[tmp]);
 
-	udc_setup_endpoपूर्णांकs(dev);
-पूर्ण
+	udc_setup_endpoints(dev);
+}
 
-/* Called by gadget driver to unरेजिस्टर itself */
-अटल पूर्णांक amd5536_udc_stop(काष्ठा usb_gadget *g)
-अणु
-	काष्ठा udc *dev = to_amd5536_udc(g);
-	अचिन्हित दीर्घ flags;
-	u32 पंचांगp;
+/* Called by gadget driver to unregister itself */
+static int amd5536_udc_stop(struct usb_gadget *g)
+{
+	struct udc *dev = to_amd5536_udc(g);
+	unsigned long flags;
+	u32 tmp;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	udc_mask_unused_पूर्णांकerrupts(dev);
-	shutकरोwn(dev, शून्य);
+	udc_mask_unused_interrupts(dev);
+	shutdown(dev, NULL);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	dev->driver = शून्य;
+	dev->driver = NULL;
 
 	/* set SD */
-	पंचांगp = पढ़ोl(&dev->regs->ctl);
-	पंचांगp |= AMD_BIT(UDC_DEVCTL_SD);
-	ग_लिखोl(पंचांगp, &dev->regs->ctl);
+	tmp = readl(&dev->regs->ctl);
+	tmp |= AMD_BIT(UDC_DEVCTL_SD);
+	writel(tmp, &dev->regs->ctl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Clear pending NAK bits */
-अटल व्योम udc_process_cnak_queue(काष्ठा udc *dev)
-अणु
-	u32 पंचांगp;
+static void udc_process_cnak_queue(struct udc *dev)
+{
+	u32 tmp;
 	u32 reg;
 
 	/* check epin's */
 	DBG(dev, "CNAK pending queue processing\n");
-	क्रम (पंचांगp = 0; पंचांगp < UDC_EPIN_NUM_USED; पंचांगp++) अणु
-		अगर (cnak_pending & (1 << पंचांगp)) अणु
-			DBG(dev, "CNAK pending for ep%d\n", पंचांगp);
+	for (tmp = 0; tmp < UDC_EPIN_NUM_USED; tmp++) {
+		if (cnak_pending & (1 << tmp)) {
+			DBG(dev, "CNAK pending for ep%d\n", tmp);
 			/* clear NAK by writing CNAK */
-			reg = पढ़ोl(&dev->ep[पंचांगp].regs->ctl);
+			reg = readl(&dev->ep[tmp].regs->ctl);
 			reg |= AMD_BIT(UDC_EPCTL_CNAK);
-			ग_लिखोl(reg, &dev->ep[पंचांगp].regs->ctl);
-			dev->ep[पंचांगp].naking = 0;
-			UDC_QUEUE_CNAK(&dev->ep[पंचांगp], dev->ep[पंचांगp].num);
-		पूर्ण
-	पूर्ण
+			writel(reg, &dev->ep[tmp].regs->ctl);
+			dev->ep[tmp].naking = 0;
+			UDC_QUEUE_CNAK(&dev->ep[tmp], dev->ep[tmp].num);
+		}
+	}
 	/* ...	and ep0out */
-	अगर (cnak_pending & (1 << UDC_EP0OUT_IX)) अणु
+	if (cnak_pending & (1 << UDC_EP0OUT_IX)) {
 		DBG(dev, "CNAK pending for ep%d\n", UDC_EP0OUT_IX);
 		/* clear NAK by writing CNAK */
-		reg = पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->ctl);
+		reg = readl(&dev->ep[UDC_EP0OUT_IX].regs->ctl);
 		reg |= AMD_BIT(UDC_EPCTL_CNAK);
-		ग_लिखोl(reg, &dev->ep[UDC_EP0OUT_IX].regs->ctl);
+		writel(reg, &dev->ep[UDC_EP0OUT_IX].regs->ctl);
 		dev->ep[UDC_EP0OUT_IX].naking = 0;
 		UDC_QUEUE_CNAK(&dev->ep[UDC_EP0OUT_IX],
 				dev->ep[UDC_EP0OUT_IX].num);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Enabling RX DMA after setup packet */
-अटल व्योम udc_ep0_set_rde(काष्ठा udc *dev)
-अणु
-	अगर (use_dma) अणु
+static void udc_ep0_set_rde(struct udc *dev)
+{
+	if (use_dma) {
 		/*
-		 * only enable RXDMA when no data endpoपूर्णांक enabled
+		 * only enable RXDMA when no data endpoint enabled
 		 * or data is queued
 		 */
-		अगर (!dev->data_ep_enabled || dev->data_ep_queued) अणु
+		if (!dev->data_ep_enabled || dev->data_ep_queued) {
 			udc_set_rde(dev);
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * setup समयr क्रम enabling RDE (to not enable
-			 * RXFIFO DMA क्रम data endpoपूर्णांकs to early)
+			 * setup timer for enabling RDE (to not enable
+			 * RXFIFO DMA for data endpoints to early)
 			 */
-			अगर (set_rde != 0 && !समयr_pending(&udc_समयr)) अणु
-				udc_समयr.expires =
-					jअगरfies + HZ/UDC_RDE_TIMER_DIV;
+			if (set_rde != 0 && !timer_pending(&udc_timer)) {
+				udc_timer.expires =
+					jiffies + HZ/UDC_RDE_TIMER_DIV;
 				set_rde = 1;
-				अगर (!stop_समयr)
-					add_समयr(&udc_समयr);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				if (!stop_timer)
+					add_timer(&udc_timer);
+			}
+		}
+	}
+}
 
 
-/* Interrupt handler क्रम data OUT traffic */
-अटल irqवापस_t udc_data_out_isr(काष्ठा udc *dev, पूर्णांक ep_ix)
-अणु
-	irqवापस_t		ret_val = IRQ_NONE;
-	u32			पंचांगp;
-	काष्ठा udc_ep		*ep;
-	काष्ठा udc_request	*req;
-	अचिन्हित पूर्णांक		count;
-	काष्ठा udc_data_dma	*td = शून्य;
-	अचिन्हित		dma_करोne;
+/* Interrupt handler for data OUT traffic */
+static irqreturn_t udc_data_out_isr(struct udc *dev, int ep_ix)
+{
+	irqreturn_t		ret_val = IRQ_NONE;
+	u32			tmp;
+	struct udc_ep		*ep;
+	struct udc_request	*req;
+	unsigned int		count;
+	struct udc_data_dma	*td = NULL;
+	unsigned		dma_done;
 
 	VDBG(dev, "ep%d irq\n", ep_ix);
 	ep = &dev->ep[ep_ix];
 
-	पंचांगp = पढ़ोl(&ep->regs->sts);
-	अगर (use_dma) अणु
+	tmp = readl(&ep->regs->sts);
+	if (use_dma) {
 		/* BNA event ? */
-		अगर (पंचांगp & AMD_BIT(UDC_EPSTS_BNA)) अणु
+		if (tmp & AMD_BIT(UDC_EPSTS_BNA)) {
 			DBG(dev, "BNA ep%dout occurred - DESPTR = %x\n",
-					ep->num, पढ़ोl(&ep->regs->desptr));
+					ep->num, readl(&ep->regs->desptr));
 			/* clear BNA */
-			ग_लिखोl(पंचांगp | AMD_BIT(UDC_EPSTS_BNA), &ep->regs->sts);
-			अगर (!ep->cancel_transfer)
+			writel(tmp | AMD_BIT(UDC_EPSTS_BNA), &ep->regs->sts);
+			if (!ep->cancel_transfer)
 				ep->bna_occurred = 1;
-			अन्यथा
+			else
 				ep->cancel_transfer = 0;
 			ret_val = IRQ_HANDLED;
-			जाओ finished;
-		पूर्ण
-	पूर्ण
+			goto finished;
+		}
+	}
 	/* HE event ? */
-	अगर (पंचांगp & AMD_BIT(UDC_EPSTS_HE)) अणु
+	if (tmp & AMD_BIT(UDC_EPSTS_HE)) {
 		dev_err(dev->dev, "HE ep%dout occurred\n", ep->num);
 
 		/* clear HE */
-		ग_लिखोl(पंचांगp | AMD_BIT(UDC_EPSTS_HE), &ep->regs->sts);
+		writel(tmp | AMD_BIT(UDC_EPSTS_HE), &ep->regs->sts);
 		ret_val = IRQ_HANDLED;
-		जाओ finished;
-	पूर्ण
+		goto finished;
+	}
 
-	अगर (!list_empty(&ep->queue)) अणु
+	if (!list_empty(&ep->queue)) {
 
 		/* next request */
 		req = list_entry(ep->queue.next,
-			काष्ठा udc_request, queue);
-	पूर्ण अन्यथा अणु
-		req = शून्य;
-		udc_rxfअगरo_pending = 1;
-	पूर्ण
+			struct udc_request, queue);
+	} else {
+		req = NULL;
+		udc_rxfifo_pending = 1;
+	}
 	VDBG(dev, "req = %p\n", req);
-	/* fअगरo mode */
-	अगर (!use_dma) अणु
+	/* fifo mode */
+	if (!use_dma) {
 
-		/* पढ़ो fअगरo */
-		अगर (req && udc_rxfअगरo_पढ़ो(ep, req)) अणु
+		/* read fifo */
+		if (req && udc_rxfifo_read(ep, req)) {
 			ret_val = IRQ_HANDLED;
 
 			/* finish */
 			complete_req(ep, req, 0);
 			/* next request */
-			अगर (!list_empty(&ep->queue) && !ep->halted) अणु
+			if (!list_empty(&ep->queue) && !ep->halted) {
 				req = list_entry(ep->queue.next,
-					काष्ठा udc_request, queue);
-			पूर्ण अन्यथा
-				req = शून्य;
-		पूर्ण
+					struct udc_request, queue);
+			} else
+				req = NULL;
+		}
 
 	/* DMA */
-	पूर्ण अन्यथा अगर (!ep->cancel_transfer && req) अणु
+	} else if (!ep->cancel_transfer && req) {
 		ret_val = IRQ_HANDLED;
 
-		/* check क्रम DMA करोne */
-		अगर (!use_dma_ppb) अणु
-			dma_करोne = AMD_GETBITS(req->td_data->status,
+		/* check for DMA done */
+		if (!use_dma_ppb) {
+			dma_done = AMD_GETBITS(req->td_data->status,
 						UDC_DMA_OUT_STS_BS);
 		/* packet per buffer mode - rx bytes */
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * अगर BNA occurred then recover desc. from
+			 * if BNA occurred then recover desc. from
 			 * BNA dummy desc.
 			 */
-			अगर (ep->bna_occurred) अणु
+			if (ep->bna_occurred) {
 				VDBG(dev, "Recover desc. from BNA dummy\n");
-				स_नकल(req->td_data, ep->bna_dummy_req->td_data,
-						माप(काष्ठा udc_data_dma));
+				memcpy(req->td_data, ep->bna_dummy_req->td_data,
+						sizeof(struct udc_data_dma));
 				ep->bna_occurred = 0;
 				udc_init_bna_dummy(ep->req);
-			पूर्ण
+			}
 			td = udc_get_last_dma_desc(req);
-			dma_करोne = AMD_GETBITS(td->status, UDC_DMA_OUT_STS_BS);
-		पूर्ण
-		अगर (dma_करोne == UDC_DMA_OUT_STS_BS_DMA_DONE) अणु
+			dma_done = AMD_GETBITS(td->status, UDC_DMA_OUT_STS_BS);
+		}
+		if (dma_done == UDC_DMA_OUT_STS_BS_DMA_DONE) {
 			/* buffer fill mode - rx bytes */
-			अगर (!use_dma_ppb) अणु
+			if (!use_dma_ppb) {
 				/* received number bytes */
 				count = AMD_GETBITS(req->td_data->status,
 						UDC_DMA_OUT_STS_RXBYTES);
 				VDBG(dev, "rx bytes=%u\n", count);
 			/* packet per buffer mode - rx bytes */
-			पूर्ण अन्यथा अणु
+			} else {
 				VDBG(dev, "req->td_data=%p\n", req->td_data);
 				VDBG(dev, "last desc = %p\n", td);
 				/* received number bytes */
-				अगर (use_dma_ppb_du) अणु
+				if (use_dma_ppb_du) {
 					/* every desc. counts bytes */
 					count = udc_get_ppbdu_rxbytes(req);
-				पूर्ण अन्यथा अणु
+				} else {
 					/* last desc. counts bytes */
 					count = AMD_GETBITS(td->status,
 						UDC_DMA_OUT_STS_RXBYTES);
-					अगर (!count && req->req.length
-						== UDC_DMA_MAXPACKET) अणु
+					if (!count && req->req.length
+						== UDC_DMA_MAXPACKET) {
 						/*
 						 * on 64k packets the RXBYTES
 						 * field is zero
 						 */
 						count = UDC_DMA_MAXPACKET;
-					पूर्ण
-				पूर्ण
+					}
+				}
 				VDBG(dev, "last desc rx bytes=%u\n", count);
-			पूर्ण
+			}
 
-			पंचांगp = req->req.length - req->req.actual;
-			अगर (count > पंचांगp) अणु
-				अगर ((पंचांगp % ep->ep.maxpacket) != 0) अणु
+			tmp = req->req.length - req->req.actual;
+			if (count > tmp) {
+				if ((tmp % ep->ep.maxpacket) != 0) {
 					DBG(dev, "%s: rx %db, space=%db\n",
-						ep->ep.name, count, पंचांगp);
+						ep->ep.name, count, tmp);
 					req->req.status = -EOVERFLOW;
-				पूर्ण
-				count = पंचांगp;
-			पूर्ण
+				}
+				count = tmp;
+			}
 			req->req.actual += count;
 			req->dma_going = 0;
 			/* complete request */
 			complete_req(ep, req, 0);
 
 			/* next request */
-			अगर (!list_empty(&ep->queue) && !ep->halted) अणु
+			if (!list_empty(&ep->queue) && !ep->halted) {
 				req = list_entry(ep->queue.next,
-					काष्ठा udc_request,
+					struct udc_request,
 					queue);
 				/*
-				 * DMA may be alपढ़ोy started by udc_queue()
+				 * DMA may be already started by udc_queue()
 				 * called by gadget drivers completion
 				 * routine. This happens when queue
 				 * holds one request only.
 				 */
-				अगर (req->dma_going == 0) अणु
+				if (req->dma_going == 0) {
 					/* next dma */
-					अगर (prep_dma(ep, req, GFP_ATOMIC) != 0)
-						जाओ finished;
-					/* ग_लिखो desc poपूर्णांकer */
-					ग_लिखोl(req->td_phys,
+					if (prep_dma(ep, req, GFP_ATOMIC) != 0)
+						goto finished;
+					/* write desc pointer */
+					writel(req->td_phys,
 						&ep->regs->desptr);
 					req->dma_going = 1;
 					/* enable DMA */
 					udc_set_rde(dev);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				/*
 				 * implant BNA dummy descriptor to allow
-				 * RXFIFO खोलोing by RDE
+				 * RXFIFO opening by RDE
 				 */
-				अगर (ep->bna_dummy_req) अणु
-					/* ग_लिखो desc poपूर्णांकer */
-					ग_लिखोl(ep->bna_dummy_req->td_phys,
+				if (ep->bna_dummy_req) {
+					/* write desc pointer */
+					writel(ep->bna_dummy_req->td_phys,
 						&ep->regs->desptr);
 					ep->bna_occurred = 0;
-				पूर्ण
+				}
 
 				/*
-				 * schedule समयr क्रम setting RDE अगर queue
-				 * reमुख्यs empty to allow ep0 packets pass
+				 * schedule timer for setting RDE if queue
+				 * remains empty to allow ep0 packets pass
 				 * through
 				 */
-				अगर (set_rde != 0
-						&& !समयr_pending(&udc_समयr)) अणु
-					udc_समयr.expires =
-						jअगरfies
+				if (set_rde != 0
+						&& !timer_pending(&udc_timer)) {
+					udc_timer.expires =
+						jiffies
 						+ HZ*UDC_RDE_TIMER_SECONDS;
 					set_rde = 1;
-					अगर (!stop_समयr)
-						add_समयr(&udc_समयr);
-				पूर्ण
-				अगर (ep->num != UDC_EP0OUT_IX)
+					if (!stop_timer)
+						add_timer(&udc_timer);
+				}
+				if (ep->num != UDC_EP0OUT_IX)
 					dev->data_ep_queued = 0;
-			पूर्ण
+			}
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			* RX DMA must be reenabled क्रम each desc in PPBDU mode
-			* and must be enabled क्रम PPBNDU mode in हाल of BNA
+			* RX DMA must be reenabled for each desc in PPBDU mode
+			* and must be enabled for PPBNDU mode in case of BNA
 			*/
 			udc_set_rde(dev);
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (ep->cancel_transfer) अणु
+	} else if (ep->cancel_transfer) {
 		ret_val = IRQ_HANDLED;
 		ep->cancel_transfer = 0;
-	पूर्ण
+	}
 
 	/* check pending CNAKS */
-	अगर (cnak_pending) अणु
-		/* CNAk processing when rxfअगरo empty only */
-		अगर (पढ़ोl(&dev->regs->sts) & AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY))
+	if (cnak_pending) {
+		/* CNAk processing when rxfifo empty only */
+		if (readl(&dev->regs->sts) & AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY))
 			udc_process_cnak_queue(dev);
-	पूर्ण
+	}
 
 	/* clear OUT bits in ep status */
-	ग_लिखोl(UDC_EPSTS_OUT_CLEAR, &ep->regs->sts);
+	writel(UDC_EPSTS_OUT_CLEAR, &ep->regs->sts);
 finished:
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-/* Interrupt handler क्रम data IN traffic */
-अटल irqवापस_t udc_data_in_isr(काष्ठा udc *dev, पूर्णांक ep_ix)
-अणु
-	irqवापस_t ret_val = IRQ_NONE;
-	u32 पंचांगp;
+/* Interrupt handler for data IN traffic */
+static irqreturn_t udc_data_in_isr(struct udc *dev, int ep_ix)
+{
+	irqreturn_t ret_val = IRQ_NONE;
+	u32 tmp;
 	u32 epsts;
-	काष्ठा udc_ep *ep;
-	काष्ठा udc_request *req;
-	काष्ठा udc_data_dma *td;
-	अचिन्हित len;
+	struct udc_ep *ep;
+	struct udc_request *req;
+	struct udc_data_dma *td;
+	unsigned len;
 
 	ep = &dev->ep[ep_ix];
 
-	epsts = पढ़ोl(&ep->regs->sts);
-	अगर (use_dma) अणु
+	epsts = readl(&ep->regs->sts);
+	if (use_dma) {
 		/* BNA ? */
-		अगर (epsts & AMD_BIT(UDC_EPSTS_BNA)) अणु
+		if (epsts & AMD_BIT(UDC_EPSTS_BNA)) {
 			dev_err(dev->dev,
 				"BNA ep%din occurred - DESPTR = %08lx\n",
 				ep->num,
-				(अचिन्हित दीर्घ) पढ़ोl(&ep->regs->desptr));
+				(unsigned long) readl(&ep->regs->desptr));
 
 			/* clear BNA */
-			ग_लिखोl(epsts, &ep->regs->sts);
+			writel(epsts, &ep->regs->sts);
 			ret_val = IRQ_HANDLED;
-			जाओ finished;
-		पूर्ण
-	पूर्ण
+			goto finished;
+		}
+	}
 	/* HE event ? */
-	अगर (epsts & AMD_BIT(UDC_EPSTS_HE)) अणु
+	if (epsts & AMD_BIT(UDC_EPSTS_HE)) {
 		dev_err(dev->dev,
 			"HE ep%dn occurred - DESPTR = %08lx\n",
-			ep->num, (अचिन्हित दीर्घ) पढ़ोl(&ep->regs->desptr));
+			ep->num, (unsigned long) readl(&ep->regs->desptr));
 
 		/* clear HE */
-		ग_लिखोl(epsts | AMD_BIT(UDC_EPSTS_HE), &ep->regs->sts);
+		writel(epsts | AMD_BIT(UDC_EPSTS_HE), &ep->regs->sts);
 		ret_val = IRQ_HANDLED;
-		जाओ finished;
-	पूर्ण
+		goto finished;
+	}
 
 	/* DMA completion */
-	अगर (epsts & AMD_BIT(UDC_EPSTS_TDC)) अणु
+	if (epsts & AMD_BIT(UDC_EPSTS_TDC)) {
 		VDBG(dev, "TDC set- completion\n");
 		ret_val = IRQ_HANDLED;
-		अगर (!ep->cancel_transfer && !list_empty(&ep->queue)) अणु
+		if (!ep->cancel_transfer && !list_empty(&ep->queue)) {
 			req = list_entry(ep->queue.next,
-					काष्ठा udc_request, queue);
+					struct udc_request, queue);
 			/*
 			 * length bytes transferred
-			 * check dma करोne of last desc. in PPBDU mode
+			 * check dma done of last desc. in PPBDU mode
 			 */
-			अगर (use_dma_ppb_du) अणु
+			if (use_dma_ppb_du) {
 				td = udc_get_last_dma_desc(req);
-				अगर (td)
+				if (td)
 					req->req.actual = req->req.length;
-			पूर्ण अन्यथा अणु
+			} else {
 				/* assume all bytes transferred */
 				req->req.actual = req->req.length;
-			पूर्ण
+			}
 
-			अगर (req->req.actual == req->req.length) अणु
+			if (req->req.actual == req->req.length) {
 				/* complete req */
 				complete_req(ep, req, 0);
 				req->dma_going = 0;
 				/* further request available ? */
-				अगर (list_empty(&ep->queue)) अणु
-					/* disable पूर्णांकerrupt */
-					पंचांगp = पढ़ोl(&dev->regs->ep_irqmsk);
-					पंचांगp |= AMD_BIT(ep->num);
-					ग_लिखोl(पंचांगp, &dev->regs->ep_irqmsk);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				if (list_empty(&ep->queue)) {
+					/* disable interrupt */
+					tmp = readl(&dev->regs->ep_irqmsk);
+					tmp |= AMD_BIT(ep->num);
+					writel(tmp, &dev->regs->ep_irqmsk);
+				}
+			}
+		}
 		ep->cancel_transfer = 0;
 
-	पूर्ण
+	}
 	/*
-	 * status reg has IN bit set and TDC not set (अगर TDC was handled,
+	 * status reg has IN bit set and TDC not set (if TDC was handled,
 	 * IN must not be handled (UDC defect) ?
 	 */
-	अगर ((epsts & AMD_BIT(UDC_EPSTS_IN))
-			&& !(epsts & AMD_BIT(UDC_EPSTS_TDC))) अणु
+	if ((epsts & AMD_BIT(UDC_EPSTS_IN))
+			&& !(epsts & AMD_BIT(UDC_EPSTS_TDC))) {
 		ret_val = IRQ_HANDLED;
-		अगर (!list_empty(&ep->queue)) अणु
+		if (!list_empty(&ep->queue)) {
 			/* next request */
 			req = list_entry(ep->queue.next,
-					काष्ठा udc_request, queue);
+					struct udc_request, queue);
 			/* FIFO mode */
-			अगर (!use_dma) अणु
-				/* ग_लिखो fअगरo */
-				udc_txfअगरo_ग_लिखो(ep, &req->req);
+			if (!use_dma) {
+				/* write fifo */
+				udc_txfifo_write(ep, &req->req);
 				len = req->req.length - req->req.actual;
-				अगर (len > ep->ep.maxpacket)
+				if (len > ep->ep.maxpacket)
 					len = ep->ep.maxpacket;
 				req->req.actual += len;
-				अगर (req->req.actual == req->req.length
-					|| (len != ep->ep.maxpacket)) अणु
+				if (req->req.actual == req->req.length
+					|| (len != ep->ep.maxpacket)) {
 					/* complete req */
 					complete_req(ep, req, 0);
-				पूर्ण
+				}
 			/* DMA */
-			पूर्ण अन्यथा अगर (req && !req->dma_going) अणु
+			} else if (req && !req->dma_going) {
 				VDBG(dev, "IN DMA : req=%p req->td_data=%p\n",
 					req, req->td_data);
-				अगर (req->td_data) अणु
+				if (req->td_data) {
 
 					req->dma_going = 1;
 
 					/*
 					 * unset L bit of first desc.
-					 * क्रम chain
+					 * for chain
 					 */
-					अगर (use_dma_ppb && req->req.length >
-							ep->ep.maxpacket) अणु
+					if (use_dma_ppb && req->req.length >
+							ep->ep.maxpacket) {
 						req->td_data->status &=
 							AMD_CLEAR_BIT(
 							UDC_DMA_IN_STS_L);
-					पूर्ण
+					}
 
-					/* ग_लिखो desc poपूर्णांकer */
-					ग_लिखोl(req->td_phys, &ep->regs->desptr);
+					/* write desc pointer */
+					writel(req->td_phys, &ep->regs->desptr);
 
 					/* set HOST READY */
 					req->td_data->status =
@@ -2398,79 +2397,79 @@ finished:
 						UDC_DMA_IN_STS_BS);
 
 					/* set poll demand bit */
-					पंचांगp = पढ़ोl(&ep->regs->ctl);
-					पंचांगp |= AMD_BIT(UDC_EPCTL_P);
-					ग_लिखोl(पंचांगp, &ep->regs->ctl);
-				पूर्ण
-			पूर्ण
+					tmp = readl(&ep->regs->ctl);
+					tmp |= AMD_BIT(UDC_EPCTL_P);
+					writel(tmp, &ep->regs->ctl);
+				}
+			}
 
-		पूर्ण अन्यथा अगर (!use_dma && ep->in) अणु
-			/* disable पूर्णांकerrupt */
-			पंचांगp = पढ़ोl(
+		} else if (!use_dma && ep->in) {
+			/* disable interrupt */
+			tmp = readl(
 				&dev->regs->ep_irqmsk);
-			पंचांगp |= AMD_BIT(ep->num);
-			ग_लिखोl(पंचांगp,
+			tmp |= AMD_BIT(ep->num);
+			writel(tmp,
 				&dev->regs->ep_irqmsk);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/* clear status bits */
-	ग_लिखोl(epsts, &ep->regs->sts);
+	writel(epsts, &ep->regs->sts);
 
 finished:
-	वापस ret_val;
+	return ret_val;
 
-पूर्ण
+}
 
-/* Interrupt handler क्रम Control OUT traffic */
-अटल irqवापस_t udc_control_out_isr(काष्ठा udc *dev)
+/* Interrupt handler for Control OUT traffic */
+static irqreturn_t udc_control_out_isr(struct udc *dev)
 __releases(dev->lock)
 __acquires(dev->lock)
-अणु
-	irqवापस_t ret_val = IRQ_NONE;
-	u32 पंचांगp;
-	पूर्णांक setup_supported;
+{
+	irqreturn_t ret_val = IRQ_NONE;
+	u32 tmp;
+	int setup_supported;
 	u32 count;
-	पूर्णांक set = 0;
-	काष्ठा udc_ep	*ep;
-	काष्ठा udc_ep	*ep_पंचांगp;
+	int set = 0;
+	struct udc_ep	*ep;
+	struct udc_ep	*ep_tmp;
 
 	ep = &dev->ep[UDC_EP0OUT_IX];
 
 	/* clear irq */
-	ग_लिखोl(AMD_BIT(UDC_EPINT_OUT_EP0), &dev->regs->ep_irqsts);
+	writel(AMD_BIT(UDC_EPINT_OUT_EP0), &dev->regs->ep_irqsts);
 
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->sts);
-	/* check BNA and clear अगर set */
-	अगर (पंचांगp & AMD_BIT(UDC_EPSTS_BNA)) अणु
+	tmp = readl(&dev->ep[UDC_EP0OUT_IX].regs->sts);
+	/* check BNA and clear if set */
+	if (tmp & AMD_BIT(UDC_EPSTS_BNA)) {
 		VDBG(dev, "ep0: BNA set\n");
-		ग_लिखोl(AMD_BIT(UDC_EPSTS_BNA),
+		writel(AMD_BIT(UDC_EPSTS_BNA),
 			&dev->ep[UDC_EP0OUT_IX].regs->sts);
 		ep->bna_occurred = 1;
 		ret_val = IRQ_HANDLED;
-		जाओ finished;
-	पूर्ण
+		goto finished;
+	}
 
 	/* type of data: SETUP or DATA 0 bytes */
-	पंचांगp = AMD_GETBITS(पंचांगp, UDC_EPSTS_OUT);
-	VDBG(dev, "data_typ = %x\n", पंचांगp);
+	tmp = AMD_GETBITS(tmp, UDC_EPSTS_OUT);
+	VDBG(dev, "data_typ = %x\n", tmp);
 
 	/* setup data */
-	अगर (पंचांगp == UDC_EPSTS_OUT_SETUP) अणु
+	if (tmp == UDC_EPSTS_OUT_SETUP) {
 		ret_val = IRQ_HANDLED;
 
 		ep->dev->stall_ep0in = 0;
-		dev->रुकोing_zlp_ack_ep0in = 0;
+		dev->waiting_zlp_ack_ep0in = 0;
 
-		/* set NAK क्रम EP0_IN */
-		पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
-		पंचांगp |= AMD_BIT(UDC_EPCTL_SNAK);
-		ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
+		/* set NAK for EP0_IN */
+		tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
+		tmp |= AMD_BIT(UDC_EPCTL_SNAK);
+		writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
 		dev->ep[UDC_EP0IN_IX].naking = 1;
 		/* get setup data */
-		अगर (use_dma) अणु
+		if (use_dma) {
 
 			/* clear OUT bits in ep status */
-			ग_लिखोl(UDC_EPSTS_OUT_CLEAR,
+			writel(UDC_EPSTS_OUT_CLEAR,
 				&dev->ep[UDC_EP0OUT_IX].regs->sts);
 
 			setup_data.data[0] =
@@ -2480,63 +2479,63 @@ __acquires(dev->lock)
 			/* set HOST READY */
 			dev->ep[UDC_EP0OUT_IX].td_stp->status =
 					UDC_DMA_STP_STS_BS_HOST_READY;
-		पूर्ण अन्यथा अणु
-			/* पढ़ो fअगरo */
-			udc_rxfअगरo_पढ़ो_dwords(dev, setup_data.data, 2);
-		पूर्ण
+		} else {
+			/* read fifo */
+			udc_rxfifo_read_dwords(dev, setup_data.data, 2);
+		}
 
 		/* determine direction of control data */
-		अगर ((setup_data.request.bRequestType & USB_सूची_IN) != 0) अणु
+		if ((setup_data.request.bRequestType & USB_DIR_IN) != 0) {
 			dev->gadget.ep0 = &dev->ep[UDC_EP0IN_IX].ep;
 			/* enable RDE */
 			udc_ep0_set_rde(dev);
 			set = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev->gadget.ep0 = &dev->ep[UDC_EP0OUT_IX].ep;
 			/*
-			 * implant BNA dummy descriptor to allow RXFIFO खोलोing
+			 * implant BNA dummy descriptor to allow RXFIFO opening
 			 * by RDE
 			 */
-			अगर (ep->bna_dummy_req) अणु
-				/* ग_लिखो desc poपूर्णांकer */
-				ग_लिखोl(ep->bna_dummy_req->td_phys,
+			if (ep->bna_dummy_req) {
+				/* write desc pointer */
+				writel(ep->bna_dummy_req->td_phys,
 					&dev->ep[UDC_EP0OUT_IX].regs->desptr);
 				ep->bna_occurred = 0;
-			पूर्ण
+			}
 
 			set = 1;
 			dev->ep[UDC_EP0OUT_IX].naking = 1;
 			/*
-			 * setup समयr क्रम enabling RDE (to not enable
-			 * RXFIFO DMA क्रम data to early)
+			 * setup timer for enabling RDE (to not enable
+			 * RXFIFO DMA for data to early)
 			 */
 			set_rde = 1;
-			अगर (!समयr_pending(&udc_समयr)) अणु
-				udc_समयr.expires = jअगरfies +
+			if (!timer_pending(&udc_timer)) {
+				udc_timer.expires = jiffies +
 							HZ/UDC_RDE_TIMER_DIV;
-				अगर (!stop_समयr)
-					add_समयr(&udc_समयr);
-			पूर्ण
-		पूर्ण
+				if (!stop_timer)
+					add_timer(&udc_timer);
+			}
+		}
 
 		/*
 		 * mass storage reset must be processed here because
 		 * next packet may be a CLEAR_FEATURE HALT which would not
 		 * clear the stall bit when no STALL handshake was received
-		 * beक्रमe (स्वतःstall can cause this)
+		 * before (autostall can cause this)
 		 */
-		अगर (setup_data.data[0] == UDC_MSCRES_DWORD0
-				&& setup_data.data[1] == UDC_MSCRES_DWORD1) अणु
+		if (setup_data.data[0] == UDC_MSCRES_DWORD0
+				&& setup_data.data[1] == UDC_MSCRES_DWORD1) {
 			DBG(dev, "MSC Reset\n");
 			/*
 			 * clear stall bits
-			 * only one IN and OUT endpoपूर्णांकs are handled
+			 * only one IN and OUT endpoints are handled
 			 */
-			ep_पंचांगp = &udc->ep[UDC_EPIN_IX];
-			udc_set_halt(&ep_पंचांगp->ep, 0);
-			ep_पंचांगp = &udc->ep[UDC_EPOUT_IX];
-			udc_set_halt(&ep_पंचांगp->ep, 0);
-		पूर्ण
+			ep_tmp = &udc->ep[UDC_EPIN_IX];
+			udc_set_halt(&ep_tmp->ep, 0);
+			ep_tmp = &udc->ep[UDC_EPOUT_IX];
+			udc_set_halt(&ep_tmp->ep, 0);
+		}
 
 		/* call gadget with setup data received */
 		spin_unlock(&dev->lock);
@@ -2544,48 +2543,48 @@ __acquires(dev->lock)
 						&setup_data.request);
 		spin_lock(&dev->lock);
 
-		पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
-		/* ep0 in वापसs data (not zlp) on IN phase */
-		अगर (setup_supported >= 0 && setup_supported <
-				UDC_EP0IN_MAXPACKET) अणु
+		tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
+		/* ep0 in returns data (not zlp) on IN phase */
+		if (setup_supported >= 0 && setup_supported <
+				UDC_EP0IN_MAXPACKET) {
 			/* clear NAK by writing CNAK in EP0_IN */
-			पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-			ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+			writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
 			dev->ep[UDC_EP0IN_IX].naking = 0;
 			UDC_QUEUE_CNAK(&dev->ep[UDC_EP0IN_IX], UDC_EP0IN_IX);
 
-		/* अगर unsupported request then stall */
-		पूर्ण अन्यथा अगर (setup_supported < 0) अणु
-			पंचांगp |= AMD_BIT(UDC_EPCTL_S);
-			ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
-		पूर्ण अन्यथा
-			dev->रुकोing_zlp_ack_ep0in = 1;
+		/* if unsupported request then stall */
+		} else if (setup_supported < 0) {
+			tmp |= AMD_BIT(UDC_EPCTL_S);
+			writel(tmp, &dev->ep[UDC_EP0IN_IX].regs->ctl);
+		} else
+			dev->waiting_zlp_ack_ep0in = 1;
 
 
 		/* clear NAK by writing CNAK in EP0_OUT */
-		अगर (!set) अणु
-			पंचांगp = पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->ctl);
-			पंचांगp |= AMD_BIT(UDC_EPCTL_CNAK);
-			ग_लिखोl(पंचांगp, &dev->ep[UDC_EP0OUT_IX].regs->ctl);
+		if (!set) {
+			tmp = readl(&dev->ep[UDC_EP0OUT_IX].regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_CNAK);
+			writel(tmp, &dev->ep[UDC_EP0OUT_IX].regs->ctl);
 			dev->ep[UDC_EP0OUT_IX].naking = 0;
 			UDC_QUEUE_CNAK(&dev->ep[UDC_EP0OUT_IX], UDC_EP0OUT_IX);
-		पूर्ण
+		}
 
-		अगर (!use_dma) अणु
+		if (!use_dma) {
 			/* clear OUT bits in ep status */
-			ग_लिखोl(UDC_EPSTS_OUT_CLEAR,
+			writel(UDC_EPSTS_OUT_CLEAR,
 				&dev->ep[UDC_EP0OUT_IX].regs->sts);
-		पूर्ण
+		}
 
 	/* data packet 0 bytes */
-	पूर्ण अन्यथा अगर (पंचांगp == UDC_EPSTS_OUT_DATA) अणु
+	} else if (tmp == UDC_EPSTS_OUT_DATA) {
 		/* clear OUT bits in ep status */
-		ग_लिखोl(UDC_EPSTS_OUT_CLEAR, &dev->ep[UDC_EP0OUT_IX].regs->sts);
+		writel(UDC_EPSTS_OUT_CLEAR, &dev->ep[UDC_EP0OUT_IX].regs->sts);
 
 		/* get setup data: only 0 packet */
-		अगर (use_dma) अणु
-			/* no req अगर 0 packet, just reactivate */
-			अगर (list_empty(&dev->ep[UDC_EP0OUT_IX].queue)) अणु
+		if (use_dma) {
+			/* no req if 0 packet, just reactivate */
+			if (list_empty(&dev->ep[UDC_EP0OUT_IX].queue)) {
 				VDBG(dev, "ZLP\n");
 
 				/* set HOST READY */
@@ -2598,93 +2597,93 @@ __acquires(dev->lock)
 				udc_ep0_set_rde(dev);
 				ret_val = IRQ_HANDLED;
 
-			पूर्ण अन्यथा अणु
-				/* control ग_लिखो */
+			} else {
+				/* control write */
 				ret_val |= udc_data_out_isr(dev, UDC_EP0OUT_IX);
-				/* re-program desc. poपूर्णांकer क्रम possible ZLPs */
-				ग_लिखोl(dev->ep[UDC_EP0OUT_IX].td_phys,
+				/* re-program desc. pointer for possible ZLPs */
+				writel(dev->ep[UDC_EP0OUT_IX].td_phys,
 					&dev->ep[UDC_EP0OUT_IX].regs->desptr);
 				/* enable RDE */
 				udc_ep0_set_rde(dev);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 
 			/* received number bytes */
-			count = पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->sts);
+			count = readl(&dev->ep[UDC_EP0OUT_IX].regs->sts);
 			count = AMD_GETBITS(count, UDC_EPSTS_RX_PKT_SIZE);
-			/* out data क्रम fअगरo mode not working */
+			/* out data for fifo mode not working */
 			count = 0;
 
 			/* 0 packet or real data ? */
-			अगर (count != 0) अणु
+			if (count != 0) {
 				ret_val |= udc_data_out_isr(dev, UDC_EP0OUT_IX);
-			पूर्ण अन्यथा अणु
-				/* dummy पढ़ो confirm */
-				पढ़ोl(&dev->ep[UDC_EP0OUT_IX].regs->confirm);
+			} else {
+				/* dummy read confirm */
+				readl(&dev->ep[UDC_EP0OUT_IX].regs->confirm);
 				ret_val = IRQ_HANDLED;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* check pending CNAKS */
-	अगर (cnak_pending) अणु
-		/* CNAk processing when rxfअगरo empty only */
-		अगर (पढ़ोl(&dev->regs->sts) & AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY))
+	if (cnak_pending) {
+		/* CNAk processing when rxfifo empty only */
+		if (readl(&dev->regs->sts) & AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY))
 			udc_process_cnak_queue(dev);
-	पूर्ण
+	}
 
 finished:
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-/* Interrupt handler क्रम Control IN traffic */
-अटल irqवापस_t udc_control_in_isr(काष्ठा udc *dev)
-अणु
-	irqवापस_t ret_val = IRQ_NONE;
-	u32 पंचांगp;
-	काष्ठा udc_ep *ep;
-	काष्ठा udc_request *req;
-	अचिन्हित len;
+/* Interrupt handler for Control IN traffic */
+static irqreturn_t udc_control_in_isr(struct udc *dev)
+{
+	irqreturn_t ret_val = IRQ_NONE;
+	u32 tmp;
+	struct udc_ep *ep;
+	struct udc_request *req;
+	unsigned len;
 
 	ep = &dev->ep[UDC_EP0IN_IX];
 
 	/* clear irq */
-	ग_लिखोl(AMD_BIT(UDC_EPINT_IN_EP0), &dev->regs->ep_irqsts);
+	writel(AMD_BIT(UDC_EPINT_IN_EP0), &dev->regs->ep_irqsts);
 
-	पंचांगp = पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->sts);
+	tmp = readl(&dev->ep[UDC_EP0IN_IX].regs->sts);
 	/* DMA completion */
-	अगर (पंचांगp & AMD_BIT(UDC_EPSTS_TDC)) अणु
+	if (tmp & AMD_BIT(UDC_EPSTS_TDC)) {
 		VDBG(dev, "isr: TDC clear\n");
 		ret_val = IRQ_HANDLED;
 
 		/* clear TDC bit */
-		ग_लिखोl(AMD_BIT(UDC_EPSTS_TDC),
+		writel(AMD_BIT(UDC_EPSTS_TDC),
 				&dev->ep[UDC_EP0IN_IX].regs->sts);
 
 	/* status reg has IN bit set ? */
-	पूर्ण अन्यथा अगर (पंचांगp & AMD_BIT(UDC_EPSTS_IN)) अणु
+	} else if (tmp & AMD_BIT(UDC_EPSTS_IN)) {
 		ret_val = IRQ_HANDLED;
 
-		अगर (ep->dma) अणु
+		if (ep->dma) {
 			/* clear IN bit */
-			ग_लिखोl(AMD_BIT(UDC_EPSTS_IN),
+			writel(AMD_BIT(UDC_EPSTS_IN),
 				&dev->ep[UDC_EP0IN_IX].regs->sts);
-		पूर्ण
-		अगर (dev->stall_ep0in) अणु
+		}
+		if (dev->stall_ep0in) {
 			DBG(dev, "stall ep0in\n");
 			/* halt ep0in */
-			पंचांगp = पढ़ोl(&ep->regs->ctl);
-			पंचांगp |= AMD_BIT(UDC_EPCTL_S);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
-		पूर्ण अन्यथा अणु
-			अगर (!list_empty(&ep->queue)) अणु
+			tmp = readl(&ep->regs->ctl);
+			tmp |= AMD_BIT(UDC_EPCTL_S);
+			writel(tmp, &ep->regs->ctl);
+		} else {
+			if (!list_empty(&ep->queue)) {
 				/* next request */
 				req = list_entry(ep->queue.next,
-						काष्ठा udc_request, queue);
+						struct udc_request, queue);
 
-				अगर (ep->dma) अणु
-					/* ग_लिखो desc poपूर्णांकer */
-					ग_लिखोl(req->td_phys, &ep->regs->desptr);
+				if (ep->dma) {
+					/* write desc pointer */
+					writel(req->td_phys, &ep->regs->desptr);
 					/* set HOST READY */
 					req->td_data->status =
 						AMD_ADDBITS(
@@ -2693,10 +2692,10 @@ finished:
 						UDC_DMA_STP_STS_BS);
 
 					/* set poll demand bit */
-					पंचांगp =
-					पढ़ोl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
-					पंचांगp |= AMD_BIT(UDC_EPCTL_P);
-					ग_लिखोl(पंचांगp,
+					tmp =
+					readl(&dev->ep[UDC_EP0IN_IX].regs->ctl);
+					tmp |= AMD_BIT(UDC_EPCTL_P);
+					writel(tmp,
 					&dev->ep[UDC_EP0IN_IX].regs->ctl);
 
 					/* all bytes will be transferred */
@@ -2705,179 +2704,179 @@ finished:
 					/* complete req */
 					complete_req(ep, req, 0);
 
-				पूर्ण अन्यथा अणु
-					/* ग_लिखो fअगरo */
-					udc_txfअगरo_ग_लिखो(ep, &req->req);
+				} else {
+					/* write fifo */
+					udc_txfifo_write(ep, &req->req);
 
 					/* lengh bytes transferred */
 					len = req->req.length - req->req.actual;
-					अगर (len > ep->ep.maxpacket)
+					if (len > ep->ep.maxpacket)
 						len = ep->ep.maxpacket;
 
 					req->req.actual += len;
-					अगर (req->req.actual == req->req.length
-						|| (len != ep->ep.maxpacket)) अणु
+					if (req->req.actual == req->req.length
+						|| (len != ep->ep.maxpacket)) {
 						/* complete req */
 						complete_req(ep, req, 0);
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-			पूर्ण
-		पूर्ण
+			}
+		}
 		ep->halted = 0;
 		dev->stall_ep0in = 0;
-		अगर (!ep->dma) अणु
+		if (!ep->dma) {
 			/* clear IN bit */
-			ग_लिखोl(AMD_BIT(UDC_EPSTS_IN),
+			writel(AMD_BIT(UDC_EPSTS_IN),
 				&dev->ep[UDC_EP0IN_IX].regs->sts);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
 
-/* Interrupt handler क्रम global device events */
-अटल irqवापस_t udc_dev_isr(काष्ठा udc *dev, u32 dev_irq)
+/* Interrupt handler for global device events */
+static irqreturn_t udc_dev_isr(struct udc *dev, u32 dev_irq)
 __releases(dev->lock)
 __acquires(dev->lock)
-अणु
-	irqवापस_t ret_val = IRQ_NONE;
-	u32 पंचांगp;
+{
+	irqreturn_t ret_val = IRQ_NONE;
+	u32 tmp;
 	u32 cfg;
-	काष्ठा udc_ep *ep;
+	struct udc_ep *ep;
 	u16 i;
 	u8 udc_csr_epix;
 
 	/* SET_CONFIG irq ? */
-	अगर (dev_irq & AMD_BIT(UDC_DEVINT_SC)) अणु
+	if (dev_irq & AMD_BIT(UDC_DEVINT_SC)) {
 		ret_val = IRQ_HANDLED;
 
-		/* पढ़ो config value */
-		पंचांगp = पढ़ोl(&dev->regs->sts);
-		cfg = AMD_GETBITS(पंचांगp, UDC_DEVSTS_CFG);
+		/* read config value */
+		tmp = readl(&dev->regs->sts);
+		cfg = AMD_GETBITS(tmp, UDC_DEVSTS_CFG);
 		DBG(dev, "SET_CONFIG interrupt: config=%d\n", cfg);
 		dev->cur_config = cfg;
 		dev->set_cfg_not_acked = 1;
 
-		/* make usb request क्रम gadget driver */
-		स_रखो(&setup_data, 0 , माप(जोड़ udc_setup_data));
+		/* make usb request for gadget driver */
+		memset(&setup_data, 0 , sizeof(union udc_setup_data));
 		setup_data.request.bRequest = USB_REQ_SET_CONFIGURATION;
 		setup_data.request.wValue = cpu_to_le16(dev->cur_config);
 
-		/* programm the NE रेजिस्टरs */
-		क्रम (i = 0; i < UDC_EP_NUM; i++) अणु
+		/* programm the NE registers */
+		for (i = 0; i < UDC_EP_NUM; i++) {
 			ep = &dev->ep[i];
-			अगर (ep->in) अणु
+			if (ep->in) {
 
-				/* ep ix in UDC CSR रेजिस्टर space */
+				/* ep ix in UDC CSR register space */
 				udc_csr_epix = ep->num;
 
 
 			/* OUT ep */
-			पूर्ण अन्यथा अणु
-				/* ep ix in UDC CSR रेजिस्टर space */
+			} else {
+				/* ep ix in UDC CSR register space */
 				udc_csr_epix = ep->num - UDC_CSR_EP_OUT_IX_OFS;
-			पूर्ण
+			}
 
-			पंचांगp = पढ़ोl(&dev->csr->ne[udc_csr_epix]);
+			tmp = readl(&dev->csr->ne[udc_csr_epix]);
 			/* ep cfg */
-			पंचांगp = AMD_ADDBITS(पंचांगp, ep->dev->cur_config,
+			tmp = AMD_ADDBITS(tmp, ep->dev->cur_config,
 						UDC_CSR_NE_CFG);
-			/* ग_लिखो reg */
-			ग_लिखोl(पंचांगp, &dev->csr->ne[udc_csr_epix]);
+			/* write reg */
+			writel(tmp, &dev->csr->ne[udc_csr_epix]);
 
 			/* clear stall bits */
 			ep->halted = 0;
-			पंचांगp = पढ़ोl(&ep->regs->ctl);
-			पंचांगp = पंचांगp & AMD_CLEAR_BIT(UDC_EPCTL_S);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
-		पूर्ण
+			tmp = readl(&ep->regs->ctl);
+			tmp = tmp & AMD_CLEAR_BIT(UDC_EPCTL_S);
+			writel(tmp, &ep->regs->ctl);
+		}
 		/* call gadget zero with setup data received */
 		spin_unlock(&dev->lock);
-		पंचांगp = dev->driver->setup(&dev->gadget, &setup_data.request);
+		tmp = dev->driver->setup(&dev->gadget, &setup_data.request);
 		spin_lock(&dev->lock);
 
-	पूर्ण /* SET_INTERFACE ? */
-	अगर (dev_irq & AMD_BIT(UDC_DEVINT_SI)) अणु
+	} /* SET_INTERFACE ? */
+	if (dev_irq & AMD_BIT(UDC_DEVINT_SI)) {
 		ret_val = IRQ_HANDLED;
 
 		dev->set_cfg_not_acked = 1;
-		/* पढ़ो पूर्णांकerface and alt setting values */
-		पंचांगp = पढ़ोl(&dev->regs->sts);
-		dev->cur_alt = AMD_GETBITS(पंचांगp, UDC_DEVSTS_ALT);
-		dev->cur_पूर्णांकf = AMD_GETBITS(पंचांगp, UDC_DEVSTS_INTF);
+		/* read interface and alt setting values */
+		tmp = readl(&dev->regs->sts);
+		dev->cur_alt = AMD_GETBITS(tmp, UDC_DEVSTS_ALT);
+		dev->cur_intf = AMD_GETBITS(tmp, UDC_DEVSTS_INTF);
 
-		/* make usb request क्रम gadget driver */
-		स_रखो(&setup_data, 0 , माप(जोड़ udc_setup_data));
+		/* make usb request for gadget driver */
+		memset(&setup_data, 0 , sizeof(union udc_setup_data));
 		setup_data.request.bRequest = USB_REQ_SET_INTERFACE;
 		setup_data.request.bRequestType = USB_RECIP_INTERFACE;
 		setup_data.request.wValue = cpu_to_le16(dev->cur_alt);
-		setup_data.request.wIndex = cpu_to_le16(dev->cur_पूर्णांकf);
+		setup_data.request.wIndex = cpu_to_le16(dev->cur_intf);
 
 		DBG(dev, "SET_INTERFACE interrupt: alt=%d intf=%d\n",
-				dev->cur_alt, dev->cur_पूर्णांकf);
+				dev->cur_alt, dev->cur_intf);
 
-		/* programm the NE रेजिस्टरs */
-		क्रम (i = 0; i < UDC_EP_NUM; i++) अणु
+		/* programm the NE registers */
+		for (i = 0; i < UDC_EP_NUM; i++) {
 			ep = &dev->ep[i];
-			अगर (ep->in) अणु
+			if (ep->in) {
 
-				/* ep ix in UDC CSR रेजिस्टर space */
+				/* ep ix in UDC CSR register space */
 				udc_csr_epix = ep->num;
 
 
 			/* OUT ep */
-			पूर्ण अन्यथा अणु
-				/* ep ix in UDC CSR रेजिस्टर space */
+			} else {
+				/* ep ix in UDC CSR register space */
 				udc_csr_epix = ep->num - UDC_CSR_EP_OUT_IX_OFS;
-			पूर्ण
+			}
 
 			/* UDC CSR reg */
 			/* set ep values */
-			पंचांगp = पढ़ोl(&dev->csr->ne[udc_csr_epix]);
-			/* ep पूर्णांकerface */
-			पंचांगp = AMD_ADDBITS(पंचांगp, ep->dev->cur_पूर्णांकf,
+			tmp = readl(&dev->csr->ne[udc_csr_epix]);
+			/* ep interface */
+			tmp = AMD_ADDBITS(tmp, ep->dev->cur_intf,
 						UDC_CSR_NE_INTF);
-			/* पंचांगp = AMD_ADDBITS(पंचांगp, 2, UDC_CSR_NE_INTF); */
+			/* tmp = AMD_ADDBITS(tmp, 2, UDC_CSR_NE_INTF); */
 			/* ep alt */
-			पंचांगp = AMD_ADDBITS(पंचांगp, ep->dev->cur_alt,
+			tmp = AMD_ADDBITS(tmp, ep->dev->cur_alt,
 						UDC_CSR_NE_ALT);
-			/* ग_लिखो reg */
-			ग_लिखोl(पंचांगp, &dev->csr->ne[udc_csr_epix]);
+			/* write reg */
+			writel(tmp, &dev->csr->ne[udc_csr_epix]);
 
 			/* clear stall bits */
 			ep->halted = 0;
-			पंचांगp = पढ़ोl(&ep->regs->ctl);
-			पंचांगp = पंचांगp & AMD_CLEAR_BIT(UDC_EPCTL_S);
-			ग_लिखोl(पंचांगp, &ep->regs->ctl);
-		पूर्ण
+			tmp = readl(&ep->regs->ctl);
+			tmp = tmp & AMD_CLEAR_BIT(UDC_EPCTL_S);
+			writel(tmp, &ep->regs->ctl);
+		}
 
 		/* call gadget zero with setup data received */
 		spin_unlock(&dev->lock);
-		पंचांगp = dev->driver->setup(&dev->gadget, &setup_data.request);
+		tmp = dev->driver->setup(&dev->gadget, &setup_data.request);
 		spin_lock(&dev->lock);
 
-	पूर्ण /* USB reset */
-	अगर (dev_irq & AMD_BIT(UDC_DEVINT_UR)) अणु
+	} /* USB reset */
+	if (dev_irq & AMD_BIT(UDC_DEVINT_UR)) {
 		DBG(dev, "USB Reset interrupt\n");
 		ret_val = IRQ_HANDLED;
 
 		/* allow soft reset when suspend occurs */
 		soft_reset_occured = 0;
 
-		dev->रुकोing_zlp_ack_ep0in = 0;
+		dev->waiting_zlp_ack_ep0in = 0;
 		dev->set_cfg_not_acked = 0;
 
-		/* mask not needed पूर्णांकerrupts */
-		udc_mask_unused_पूर्णांकerrupts(dev);
+		/* mask not needed interrupts */
+		udc_mask_unused_interrupts(dev);
 
 		/* call gadget to resume and reset configs etc. */
 		spin_unlock(&dev->lock);
-		अगर (dev->sys_suspended && dev->driver->resume) अणु
+		if (dev->sys_suspended && dev->driver->resume) {
 			dev->driver->resume(&dev->gadget);
 			dev->sys_suspended = 0;
-		पूर्ण
+		}
 		usb_gadget_udc_reset(&dev->gadget, dev->driver);
 		spin_lock(&dev->lock);
 
@@ -2885,47 +2884,47 @@ __acquires(dev->lock)
 		empty_req_queue(&dev->ep[UDC_EP0IN_IX]);
 		ep_init(dev->regs, &dev->ep[UDC_EP0IN_IX]);
 
-		/* soft reset when rxfअगरo not empty */
-		पंचांगp = पढ़ोl(&dev->regs->sts);
-		अगर (!(पंचांगp & AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY))
-				&& !soft_reset_after_usbreset_occured) अणु
+		/* soft reset when rxfifo not empty */
+		tmp = readl(&dev->regs->sts);
+		if (!(tmp & AMD_BIT(UDC_DEVSTS_RXFIFO_EMPTY))
+				&& !soft_reset_after_usbreset_occured) {
 			udc_soft_reset(dev);
 			soft_reset_after_usbreset_occured++;
-		पूर्ण
+		}
 
 		/*
-		 * DMA reset to समाप्त potential old DMA hw hang,
-		 * POLL bit is alपढ़ोy reset by ep_init() through
+		 * DMA reset to kill potential old DMA hw hang,
+		 * POLL bit is already reset by ep_init() through
 		 * disconnect()
 		 */
 		DBG(dev, "DMA machine reset\n");
-		पंचांगp = पढ़ोl(&dev->regs->cfg);
-		ग_लिखोl(पंचांगp | AMD_BIT(UDC_DEVCFG_DMARST), &dev->regs->cfg);
-		ग_लिखोl(पंचांगp, &dev->regs->cfg);
+		tmp = readl(&dev->regs->cfg);
+		writel(tmp | AMD_BIT(UDC_DEVCFG_DMARST), &dev->regs->cfg);
+		writel(tmp, &dev->regs->cfg);
 
-		/* put पूर्णांकo initial config */
+		/* put into initial config */
 		udc_basic_init(dev);
 
-		/* enable device setup पूर्णांकerrupts */
-		udc_enable_dev_setup_पूर्णांकerrupts(dev);
+		/* enable device setup interrupts */
+		udc_enable_dev_setup_interrupts(dev);
 
-		/* enable suspend पूर्णांकerrupt */
-		पंचांगp = पढ़ोl(&dev->regs->irqmsk);
-		पंचांगp &= AMD_UNMASK_BIT(UDC_DEVINT_US);
-		ग_लिखोl(पंचांगp, &dev->regs->irqmsk);
+		/* enable suspend interrupt */
+		tmp = readl(&dev->regs->irqmsk);
+		tmp &= AMD_UNMASK_BIT(UDC_DEVINT_US);
+		writel(tmp, &dev->regs->irqmsk);
 
-	पूर्ण /* USB suspend */
-	अगर (dev_irq & AMD_BIT(UDC_DEVINT_US)) अणु
+	} /* USB suspend */
+	if (dev_irq & AMD_BIT(UDC_DEVINT_US)) {
 		DBG(dev, "USB Suspend interrupt\n");
 		ret_val = IRQ_HANDLED;
-		अगर (dev->driver->suspend) अणु
+		if (dev->driver->suspend) {
 			spin_unlock(&dev->lock);
 			dev->sys_suspended = 1;
 			dev->driver->suspend(&dev->gadget);
 			spin_lock(&dev->lock);
-		पूर्ण
-	पूर्ण /* new speed ? */
-	अगर (dev_irq & AMD_BIT(UDC_DEVINT_ENUM)) अणु
+		}
+	} /* new speed ? */
+	if (dev_irq & AMD_BIT(UDC_DEVINT_ENUM)) {
 		DBG(dev, "ENUM interrupt\n");
 		ret_val = IRQ_HANDLED;
 		soft_reset_after_usbreset_occured = 0;
@@ -2934,259 +2933,259 @@ __acquires(dev->lock)
 		empty_req_queue(&dev->ep[UDC_EP0IN_IX]);
 		ep_init(dev->regs, &dev->ep[UDC_EP0IN_IX]);
 
-		/* link up all endpoपूर्णांकs */
-		udc_setup_endpoपूर्णांकs(dev);
+		/* link up all endpoints */
+		udc_setup_endpoints(dev);
 		dev_info(dev->dev, "Connect: %s\n",
 			 usb_speed_string(dev->gadget.speed));
 
 		/* init ep 0 */
-		activate_control_endpoपूर्णांकs(dev);
+		activate_control_endpoints(dev);
 
-		/* enable ep0 पूर्णांकerrupts */
-		udc_enable_ep0_पूर्णांकerrupts(dev);
-	पूर्ण
-	/* session valid change पूर्णांकerrupt */
-	अगर (dev_irq & AMD_BIT(UDC_DEVINT_SVC)) अणु
+		/* enable ep0 interrupts */
+		udc_enable_ep0_interrupts(dev);
+	}
+	/* session valid change interrupt */
+	if (dev_irq & AMD_BIT(UDC_DEVINT_SVC)) {
 		DBG(dev, "USB SVC interrupt\n");
 		ret_val = IRQ_HANDLED;
 
 		/* check that session is not valid to detect disconnect */
-		पंचांगp = पढ़ोl(&dev->regs->sts);
-		अगर (!(पंचांगp & AMD_BIT(UDC_DEVSTS_SESSVLD))) अणु
-			/* disable suspend पूर्णांकerrupt */
-			पंचांगp = पढ़ोl(&dev->regs->irqmsk);
-			पंचांगp |= AMD_BIT(UDC_DEVINT_US);
-			ग_लिखोl(पंचांगp, &dev->regs->irqmsk);
+		tmp = readl(&dev->regs->sts);
+		if (!(tmp & AMD_BIT(UDC_DEVSTS_SESSVLD))) {
+			/* disable suspend interrupt */
+			tmp = readl(&dev->regs->irqmsk);
+			tmp |= AMD_BIT(UDC_DEVINT_US);
+			writel(tmp, &dev->regs->irqmsk);
 			DBG(dev, "USB Disconnect (session valid low)\n");
 			/* cleanup on disconnect */
 			usb_disconnect(udc);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 
-/* Interrupt Service Routine, see Linux Kernel Doc क्रम parameters */
-irqवापस_t udc_irq(पूर्णांक irq, व्योम *pdev)
-अणु
-	काष्ठा udc *dev = pdev;
+/* Interrupt Service Routine, see Linux Kernel Doc for parameters */
+irqreturn_t udc_irq(int irq, void *pdev)
+{
+	struct udc *dev = pdev;
 	u32 reg;
 	u16 i;
 	u32 ep_irq;
-	irqवापस_t ret_val = IRQ_NONE;
+	irqreturn_t ret_val = IRQ_NONE;
 
 	spin_lock(&dev->lock);
 
-	/* check क्रम ep irq */
-	reg = पढ़ोl(&dev->regs->ep_irqsts);
-	अगर (reg) अणु
-		अगर (reg & AMD_BIT(UDC_EPINT_OUT_EP0))
+	/* check for ep irq */
+	reg = readl(&dev->regs->ep_irqsts);
+	if (reg) {
+		if (reg & AMD_BIT(UDC_EPINT_OUT_EP0))
 			ret_val |= udc_control_out_isr(dev);
-		अगर (reg & AMD_BIT(UDC_EPINT_IN_EP0))
+		if (reg & AMD_BIT(UDC_EPINT_IN_EP0))
 			ret_val |= udc_control_in_isr(dev);
 
 		/*
-		 * data endpoपूर्णांक
+		 * data endpoint
 		 * iterate ep's
 		 */
-		क्रम (i = 1; i < UDC_EP_NUM; i++) अणु
+		for (i = 1; i < UDC_EP_NUM; i++) {
 			ep_irq = 1 << i;
-			अगर (!(reg & ep_irq) || i == UDC_EPINT_OUT_EP0)
-				जारी;
+			if (!(reg & ep_irq) || i == UDC_EPINT_OUT_EP0)
+				continue;
 
 			/* clear irq status */
-			ग_लिखोl(ep_irq, &dev->regs->ep_irqsts);
+			writel(ep_irq, &dev->regs->ep_irqsts);
 
-			/* irq क्रम out ep ? */
-			अगर (i > UDC_EPIN_NUM)
+			/* irq for out ep ? */
+			if (i > UDC_EPIN_NUM)
 				ret_val |= udc_data_out_isr(dev, i);
-			अन्यथा
+			else
 				ret_val |= udc_data_in_isr(dev, i);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
 
-	/* check क्रम dev irq */
-	reg = पढ़ोl(&dev->regs->irqsts);
-	अगर (reg) अणु
+	/* check for dev irq */
+	reg = readl(&dev->regs->irqsts);
+	if (reg) {
 		/* clear irq */
-		ग_लिखोl(reg, &dev->regs->irqsts);
+		writel(reg, &dev->regs->irqsts);
 		ret_val |= udc_dev_isr(dev, reg);
-	पूर्ण
+	}
 
 
 	spin_unlock(&dev->lock);
-	वापस ret_val;
-पूर्ण
+	return ret_val;
+}
 EXPORT_SYMBOL_GPL(udc_irq);
 
-/* Tears करोwn device */
-व्योम gadget_release(काष्ठा device *pdev)
-अणु
-	काष्ठा amd5536udc *dev = dev_get_drvdata(pdev);
-	kमुक्त(dev);
-पूर्ण
+/* Tears down device */
+void gadget_release(struct device *pdev)
+{
+	struct amd5536udc *dev = dev_get_drvdata(pdev);
+	kfree(dev);
+}
 EXPORT_SYMBOL_GPL(gadget_release);
 
-/* Cleanup on device हटाओ */
-व्योम udc_हटाओ(काष्ठा udc *dev)
-अणु
-	/* हटाओ समयr */
-	stop_समयr++;
-	अगर (समयr_pending(&udc_समयr))
-		रुको_क्रम_completion(&on_निकास);
-	del_समयr_sync(&udc_समयr);
-	/* हटाओ pollstall समयr */
-	stop_pollstall_समयr++;
-	अगर (समयr_pending(&udc_pollstall_समयr))
-		रुको_क्रम_completion(&on_pollstall_निकास);
-	del_समयr_sync(&udc_pollstall_समयr);
-	udc = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(udc_हटाओ);
+/* Cleanup on device remove */
+void udc_remove(struct udc *dev)
+{
+	/* remove timer */
+	stop_timer++;
+	if (timer_pending(&udc_timer))
+		wait_for_completion(&on_exit);
+	del_timer_sync(&udc_timer);
+	/* remove pollstall timer */
+	stop_pollstall_timer++;
+	if (timer_pending(&udc_pollstall_timer))
+		wait_for_completion(&on_pollstall_exit);
+	del_timer_sync(&udc_pollstall_timer);
+	udc = NULL;
+}
+EXPORT_SYMBOL_GPL(udc_remove);
 
-/* मुक्त all the dma pools */
-व्योम मुक्त_dma_pools(काष्ठा udc *dev)
-अणु
-	dma_pool_मुक्त(dev->stp_requests, dev->ep[UDC_EP0OUT_IX].td,
+/* free all the dma pools */
+void free_dma_pools(struct udc *dev)
+{
+	dma_pool_free(dev->stp_requests, dev->ep[UDC_EP0OUT_IX].td,
 		      dev->ep[UDC_EP0OUT_IX].td_phys);
-	dma_pool_मुक्त(dev->stp_requests, dev->ep[UDC_EP0OUT_IX].td_stp,
+	dma_pool_free(dev->stp_requests, dev->ep[UDC_EP0OUT_IX].td_stp,
 		      dev->ep[UDC_EP0OUT_IX].td_stp_dma);
 	dma_pool_destroy(dev->stp_requests);
 	dma_pool_destroy(dev->data_requests);
-पूर्ण
-EXPORT_SYMBOL_GPL(मुक्त_dma_pools);
+}
+EXPORT_SYMBOL_GPL(free_dma_pools);
 
 /* create dma pools on init */
-पूर्णांक init_dma_pools(काष्ठा udc *dev)
-अणु
-	काष्ठा udc_stp_dma	*td_stp;
-	काष्ठा udc_data_dma	*td_data;
-	पूर्णांक retval;
+int init_dma_pools(struct udc *dev)
+{
+	struct udc_stp_dma	*td_stp;
+	struct udc_data_dma	*td_data;
+	int retval;
 
 	/* consistent DMA mode setting ? */
-	अगर (use_dma_ppb) अणु
+	if (use_dma_ppb) {
 		use_dma_bufferfill_mode = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		use_dma_ppb_du = 0;
 		use_dma_bufferfill_mode = 1;
-	पूर्ण
+	}
 
 	/* DMA setup */
 	dev->data_requests = dma_pool_create("data_requests", dev->dev,
-		माप(काष्ठा udc_data_dma), 0, 0);
-	अगर (!dev->data_requests) अणु
+		sizeof(struct udc_data_dma), 0, 0);
+	if (!dev->data_requests) {
 		DBG(dev, "can't get request data pool\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* EP0 in dma regs = dev control regs */
 	dev->ep[UDC_EP0IN_IX].dma = &dev->regs->ctl;
 
-	/* dma desc क्रम setup data */
+	/* dma desc for setup data */
 	dev->stp_requests = dma_pool_create("setup requests", dev->dev,
-		माप(काष्ठा udc_stp_dma), 0, 0);
-	अगर (!dev->stp_requests) अणु
+		sizeof(struct udc_stp_dma), 0, 0);
+	if (!dev->stp_requests) {
 		DBG(dev, "can't get stp request pool\n");
 		retval = -ENOMEM;
-		जाओ err_create_dma_pool;
-	पूर्ण
+		goto err_create_dma_pool;
+	}
 	/* setup */
 	td_stp = dma_pool_alloc(dev->stp_requests, GFP_KERNEL,
 				&dev->ep[UDC_EP0OUT_IX].td_stp_dma);
-	अगर (!td_stp) अणु
+	if (!td_stp) {
 		retval = -ENOMEM;
-		जाओ err_alloc_dma;
-	पूर्ण
+		goto err_alloc_dma;
+	}
 	dev->ep[UDC_EP0OUT_IX].td_stp = td_stp;
 
 	/* data: 0 packets !? */
 	td_data = dma_pool_alloc(dev->stp_requests, GFP_KERNEL,
 				&dev->ep[UDC_EP0OUT_IX].td_phys);
-	अगर (!td_data) अणु
+	if (!td_data) {
 		retval = -ENOMEM;
-		जाओ err_alloc_phys;
-	पूर्ण
+		goto err_alloc_phys;
+	}
 	dev->ep[UDC_EP0OUT_IX].td = td_data;
-	वापस 0;
+	return 0;
 
 err_alloc_phys:
-	dma_pool_मुक्त(dev->stp_requests, dev->ep[UDC_EP0OUT_IX].td_stp,
+	dma_pool_free(dev->stp_requests, dev->ep[UDC_EP0OUT_IX].td_stp,
 		      dev->ep[UDC_EP0OUT_IX].td_stp_dma);
 err_alloc_dma:
 	dma_pool_destroy(dev->stp_requests);
-	dev->stp_requests = शून्य;
+	dev->stp_requests = NULL;
 err_create_dma_pool:
 	dma_pool_destroy(dev->data_requests);
-	dev->data_requests = शून्य;
-	वापस retval;
-पूर्ण
+	dev->data_requests = NULL;
+	return retval;
+}
 EXPORT_SYMBOL_GPL(init_dma_pools);
 
 /* general probe */
-पूर्णांक udc_probe(काष्ठा udc *dev)
-अणु
-	अक्षर		पंचांगp[128];
+int udc_probe(struct udc *dev)
+{
+	char		tmp[128];
 	u32		reg;
-	पूर्णांक		retval;
+	int		retval;
 
-	/* device काष्ठा setup */
+	/* device struct setup */
 	dev->gadget.ops = &udc_ops;
 
 	dev_set_name(&dev->gadget.dev, "gadget");
 	dev->gadget.name = name;
 	dev->gadget.max_speed = USB_SPEED_HIGH;
 
-	/* init रेजिस्टरs, पूर्णांकerrupts, ... */
-	startup_रेजिस्टरs(dev);
+	/* init registers, interrupts, ... */
+	startup_registers(dev);
 
 	dev_info(dev->dev, "%s\n", mod_desc);
 
-	snम_लिखो(पंचांगp, माप(पंचांगp), "%d", dev->irq);
+	snprintf(tmp, sizeof(tmp), "%d", dev->irq);
 
-	/* Prपूर्णांक this device info क्रम AMD chips only*/
-	अगर (dev->chiprev == UDC_HSA0_REV ||
-	    dev->chiprev == UDC_HSB1_REV) अणु
+	/* Print this device info for AMD chips only*/
+	if (dev->chiprev == UDC_HSA0_REV ||
+	    dev->chiprev == UDC_HSB1_REV) {
 		dev_info(dev->dev, "irq %s, pci mem %08lx, chip rev %02x(Geode5536 %s)\n",
-			 पंचांगp, dev->phys_addr, dev->chiprev,
+			 tmp, dev->phys_addr, dev->chiprev,
 			 (dev->chiprev == UDC_HSA0_REV) ?
 			 "A0" : "B1");
-		म_नकल(पंचांगp, UDC_DRIVER_VERSION_STRING);
-		अगर (dev->chiprev == UDC_HSA0_REV) अणु
+		strcpy(tmp, UDC_DRIVER_VERSION_STRING);
+		if (dev->chiprev == UDC_HSA0_REV) {
 			dev_err(dev->dev, "chip revision is A0; too old\n");
 			retval = -ENODEV;
-			जाओ finished;
-		पूर्ण
+			goto finished;
+		}
 		dev_info(dev->dev,
-			 "driver version: %s(for Geode5536 B1)\n", पंचांगp);
-	पूर्ण
+			 "driver version: %s(for Geode5536 B1)\n", tmp);
+	}
 
 	udc = dev;
 
 	retval = usb_add_gadget_udc_release(udc->dev, &dev->gadget,
 					    gadget_release);
-	अगर (retval)
-		जाओ finished;
+	if (retval)
+		goto finished;
 
-	/* समयr init */
-	समयr_setup(&udc_समयr, udc_समयr_function, 0);
-	समयr_setup(&udc_pollstall_समयr, udc_pollstall_समयr_function, 0);
+	/* timer init */
+	timer_setup(&udc_timer, udc_timer_function, 0);
+	timer_setup(&udc_pollstall_timer, udc_pollstall_timer_function, 0);
 
 	/* set SD */
-	reg = पढ़ोl(&dev->regs->ctl);
+	reg = readl(&dev->regs->ctl);
 	reg |= AMD_BIT(UDC_DEVCTL_SD);
-	ग_लिखोl(reg, &dev->regs->ctl);
+	writel(reg, &dev->regs->ctl);
 
-	/* prपूर्णांक dev रेजिस्टर info */
-	prपूर्णांक_regs(dev);
+	/* print dev register info */
+	print_regs(dev);
 
-	वापस 0;
+	return 0;
 
 finished:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(udc_probe);
 
 MODULE_DESCRIPTION(UDC_MOD_DESCRIPTION);

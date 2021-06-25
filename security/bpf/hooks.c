@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Copyright (C) 2020 Google LLC.
  */
-#समावेश <linux/lsm_hooks.h>
-#समावेश <linux/bpf_lsm.h>
+#include <linux/lsm_hooks.h>
+#include <linux/bpf_lsm.h>
 
-अटल काष्ठा security_hook_list bpf_lsm_hooks[] __lsm_ro_after_init = अणु
-	#घोषणा LSM_HOOK(RET, DEFAULT, NAME, ...) \
+static struct security_hook_list bpf_lsm_hooks[] __lsm_ro_after_init = {
+	#define LSM_HOOK(RET, DEFAULT, NAME, ...) \
 	LSM_HOOK_INIT(NAME, bpf_lsm_##NAME),
-	#समावेश <linux/lsm_hook_defs.h>
-	#अघोषित LSM_HOOK
-	LSM_HOOK_INIT(inode_मुक्त_security, bpf_inode_storage_मुक्त),
-	LSM_HOOK_INIT(task_मुक्त, bpf_task_storage_मुक्त),
-पूर्ण;
+	#include <linux/lsm_hook_defs.h>
+	#undef LSM_HOOK
+	LSM_HOOK_INIT(inode_free_security, bpf_inode_storage_free),
+	LSM_HOOK_INIT(task_free, bpf_task_storage_free),
+};
 
-अटल पूर्णांक __init bpf_lsm_init(व्योम)
-अणु
+static int __init bpf_lsm_init(void)
+{
 	security_add_hooks(bpf_lsm_hooks, ARRAY_SIZE(bpf_lsm_hooks), "bpf");
 	pr_info("LSM support for eBPF active\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा lsm_blob_sizes bpf_lsm_blob_sizes __lsm_ro_after_init = अणु
-	.lbs_inode = माप(काष्ठा bpf_storage_blob),
-	.lbs_task = माप(काष्ठा bpf_storage_blob),
-पूर्ण;
+struct lsm_blob_sizes bpf_lsm_blob_sizes __lsm_ro_after_init = {
+	.lbs_inode = sizeof(struct bpf_storage_blob),
+	.lbs_task = sizeof(struct bpf_storage_blob),
+};
 
-DEFINE_LSM(bpf) = अणु
+DEFINE_LSM(bpf) = {
 	.name = "bpf",
 	.init = bpf_lsm_init,
 	.blobs = &bpf_lsm_blob_sizes
-पूर्ण;
+};

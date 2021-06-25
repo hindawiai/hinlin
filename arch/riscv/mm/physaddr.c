@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/types.h>
-#समावेश <linux/mmdebug.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/sections.h>
+#include <linux/types.h>
+#include <linux/mmdebug.h>
+#include <linux/mm.h>
+#include <asm/page.h>
+#include <asm/sections.h>
 
-phys_addr_t __virt_to_phys(अचिन्हित दीर्घ x)
-अणु
+phys_addr_t __virt_to_phys(unsigned long x)
+{
 	phys_addr_t y = x - PAGE_OFFSET;
 
 	/*
@@ -16,16 +15,16 @@ phys_addr_t __virt_to_phys(अचिन्हित दीर्घ x)
 	 */
 	WARN(y >= KERN_VIRT_SIZE,
 	     "virt_to_phys used for non-linear address: %pK (%pS)\n",
-	     (व्योम *)x, (व्योम *)x);
+	     (void *)x, (void *)x);
 
-	वापस __va_to_pa_nodebug(x);
-पूर्ण
+	return __va_to_pa_nodebug(x);
+}
 EXPORT_SYMBOL(__virt_to_phys);
 
-phys_addr_t __phys_addr_symbol(अचिन्हित दीर्घ x)
-अणु
-	अचिन्हित दीर्घ kernel_start = (अचिन्हित दीर्घ)kernel_virt_addr;
-	अचिन्हित दीर्घ kernel_end = (अचिन्हित दीर्घ)_end;
+phys_addr_t __phys_addr_symbol(unsigned long x)
+{
+	unsigned long kernel_start = (unsigned long)kernel_virt_addr;
+	unsigned long kernel_end = (unsigned long)_end;
 
 	/*
 	 * Boundary checking aginst the kernel image mapping.
@@ -33,6 +32,6 @@ phys_addr_t __phys_addr_symbol(अचिन्हित दीर्घ x)
 	 */
 	VIRTUAL_BUG_ON(x < kernel_start || x > kernel_end);
 
-	वापस __va_to_pa_nodebug(x);
-पूर्ण
+	return __va_to_pa_nodebug(x);
+}
 EXPORT_SYMBOL(__phys_addr_symbol);

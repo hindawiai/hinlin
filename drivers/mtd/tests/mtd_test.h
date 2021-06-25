@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/sched/संकेत.स>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/mtd/mtd.h>
+#include <linux/sched/signal.h>
 
-अटल अंतरभूत पूर्णांक mtdtest_relax(व्योम)
-अणु
+static inline int mtdtest_relax(void)
+{
 	cond_resched();
-	अगर (संकेत_pending(current)) अणु
+	if (signal_pending(current)) {
 		pr_info("aborting test due to pending signal!\n");
-		वापस -EINTR;
-	पूर्ण
+		return -EINTR;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mtdtest_erase_eraseblock(काष्ठा mtd_info *mtd, अचिन्हित पूर्णांक ebnum);
-पूर्णांक mtdtest_scan_क्रम_bad_eraseblocks(काष्ठा mtd_info *mtd, अचिन्हित अक्षर *bbt,
-					अचिन्हित पूर्णांक eb, पूर्णांक ebcnt);
-पूर्णांक mtdtest_erase_good_eraseblocks(काष्ठा mtd_info *mtd, अचिन्हित अक्षर *bbt,
-				अचिन्हित पूर्णांक eb, पूर्णांक ebcnt);
+int mtdtest_erase_eraseblock(struct mtd_info *mtd, unsigned int ebnum);
+int mtdtest_scan_for_bad_eraseblocks(struct mtd_info *mtd, unsigned char *bbt,
+					unsigned int eb, int ebcnt);
+int mtdtest_erase_good_eraseblocks(struct mtd_info *mtd, unsigned char *bbt,
+				unsigned int eb, int ebcnt);
 
-पूर्णांक mtdtest_पढ़ो(काष्ठा mtd_info *mtd, loff_t addr, माप_प्रकार size, व्योम *buf);
-पूर्णांक mtdtest_ग_लिखो(काष्ठा mtd_info *mtd, loff_t addr, माप_प्रकार size,
-		स्थिर व्योम *buf);
+int mtdtest_read(struct mtd_info *mtd, loff_t addr, size_t size, void *buf);
+int mtdtest_write(struct mtd_info *mtd, loff_t addr, size_t size,
+		const void *buf);

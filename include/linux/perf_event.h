@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Perक्रमmance events:
+ * Performance events:
  *
  *    Copyright (C) 2008-2009, Thomas Gleixner <tglx@linutronix.de>
  *    Copyright (C) 2008-2011, Red Hat, Inc., Ingo Molnar
@@ -12,199 +11,199 @@
  *
  * For licencing details see kernel-base/COPYING
  */
-#अगर_अघोषित _LINUX_PERF_EVENT_H
-#घोषणा _LINUX_PERF_EVENT_H
+#ifndef _LINUX_PERF_EVENT_H
+#define _LINUX_PERF_EVENT_H
 
-#समावेश <uapi/linux/perf_event.h>
-#समावेश <uapi/linux/bpf_perf_event.h>
+#include <uapi/linux/perf_event.h>
+#include <uapi/linux/bpf_perf_event.h>
 
 /*
- * Kernel-पूर्णांकernal data types and definitions:
+ * Kernel-internal data types and definitions:
  */
 
-#अगर_घोषित CONFIG_PERF_EVENTS
-# include <यंत्र/perf_event.h>
-# include <यंत्र/local64.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PERF_EVENTS
+# include <asm/perf_event.h>
+# include <asm/local64.h>
+#endif
 
-काष्ठा perf_guest_info_callbacks अणु
-	पूर्णांक				(*is_in_guest)(व्योम);
-	पूर्णांक				(*is_user_mode)(व्योम);
-	अचिन्हित दीर्घ			(*get_guest_ip)(व्योम);
-	व्योम				(*handle_पूर्णांकel_pt_पूर्णांकr)(व्योम);
-पूर्ण;
+struct perf_guest_info_callbacks {
+	int				(*is_in_guest)(void);
+	int				(*is_user_mode)(void);
+	unsigned long			(*get_guest_ip)(void);
+	void				(*handle_intel_pt_intr)(void);
+};
 
-#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
-#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
-#पूर्ण_अगर
+#ifdef CONFIG_HAVE_HW_BREAKPOINT
+#include <asm/hw_breakpoint.h>
+#endif
 
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/अटल_key.h>
-#समावेश <linux/jump_label_ratelimit.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/perf_regs.h>
-#समावेश <linux/cgroup.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/security.h>
-#समावेश <यंत्र/local.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/rculist.h>
+#include <linux/rcupdate.h>
+#include <linux/spinlock.h>
+#include <linux/hrtimer.h>
+#include <linux/fs.h>
+#include <linux/pid_namespace.h>
+#include <linux/workqueue.h>
+#include <linux/ftrace.h>
+#include <linux/cpu.h>
+#include <linux/irq_work.h>
+#include <linux/static_key.h>
+#include <linux/jump_label_ratelimit.h>
+#include <linux/atomic.h>
+#include <linux/sysfs.h>
+#include <linux/perf_regs.h>
+#include <linux/cgroup.h>
+#include <linux/refcount.h>
+#include <linux/security.h>
+#include <asm/local.h>
 
-काष्ठा perf_callchain_entry अणु
+struct perf_callchain_entry {
 	__u64				nr;
 	__u64				ip[]; /* /proc/sys/kernel/perf_event_max_stack */
-पूर्ण;
+};
 
-काष्ठा perf_callchain_entry_ctx अणु
-	काष्ठा perf_callchain_entry *entry;
+struct perf_callchain_entry_ctx {
+	struct perf_callchain_entry *entry;
 	u32			    max_stack;
 	u32			    nr;
-	लघु			    contexts;
+	short			    contexts;
 	bool			    contexts_maxed;
-पूर्ण;
+};
 
-प्रकार अचिन्हित दीर्घ (*perf_copy_f)(व्योम *dst, स्थिर व्योम *src,
-				     अचिन्हित दीर्घ off, अचिन्हित दीर्घ len);
+typedef unsigned long (*perf_copy_f)(void *dst, const void *src,
+				     unsigned long off, unsigned long len);
 
-काष्ठा perf_raw_frag अणु
-	जोड़ अणु
-		काष्ठा perf_raw_frag	*next;
-		अचिन्हित दीर्घ		pad;
-	पूर्ण;
+struct perf_raw_frag {
+	union {
+		struct perf_raw_frag	*next;
+		unsigned long		pad;
+	};
 	perf_copy_f			copy;
-	व्योम				*data;
+	void				*data;
 	u32				size;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा perf_raw_record अणु
-	काष्ठा perf_raw_frag		frag;
+struct perf_raw_record {
+	struct perf_raw_frag		frag;
 	u32				size;
-पूर्ण;
+};
 
 /*
  * branch stack layout:
  *  nr: number of taken branches stored in entries[]
  *  hw_idx: The low level index of raw branch records
- *          क्रम the most recent branch.
+ *          for the most recent branch.
  *          -1ULL means invalid/unknown.
  *
  * Note that nr can vary from sample to sample
  * branches (to, from) are stored from most recent
  * to least recent, i.e., entries[0] contains the most
  * recent branch.
- * The entries[] is an असलtraction of raw branch records,
+ * The entries[] is an abstraction of raw branch records,
  * which may not be stored in age order in HW, e.g. Intel LBR.
  * The hw_idx is to expose the low level index of raw
- * branch record क्रम the most recent branch aka entries[0].
+ * branch record for the most recent branch aka entries[0].
  * The hw_idx index is between -1 (unknown) and max depth,
  * which can be retrieved in /sys/devices/cpu/caps/branches.
  * For the architectures whose raw branch records are
- * alपढ़ोy stored in age order, the hw_idx should be 0.
+ * already stored in age order, the hw_idx should be 0.
  */
-काष्ठा perf_branch_stack अणु
+struct perf_branch_stack {
 	__u64				nr;
 	__u64				hw_idx;
-	काष्ठा perf_branch_entry	entries[];
-पूर्ण;
+	struct perf_branch_entry	entries[];
+};
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
 /*
- * extra PMU रेजिस्टर associated with an event
+ * extra PMU register associated with an event
  */
-काष्ठा hw_perf_event_extra अणु
-	u64		config;	/* रेजिस्टर value */
-	अचिन्हित पूर्णांक	reg;	/* रेजिस्टर address or index */
-	पूर्णांक		alloc;	/* extra रेजिस्टर alपढ़ोy allocated */
-	पूर्णांक		idx;	/* index in shared_regs->regs[] */
-पूर्ण;
+struct hw_perf_event_extra {
+	u64		config;	/* register value */
+	unsigned int	reg;	/* register address or index */
+	int		alloc;	/* extra register already allocated */
+	int		idx;	/* index in shared_regs->regs[] */
+};
 
 /**
- * काष्ठा hw_perf_event - perक्रमmance event hardware details:
+ * struct hw_perf_event - performance event hardware details:
  */
-काष्ठा hw_perf_event अणु
-#अगर_घोषित CONFIG_PERF_EVENTS
-	जोड़ अणु
-		काष्ठा अणु /* hardware */
+struct hw_perf_event {
+#ifdef CONFIG_PERF_EVENTS
+	union {
+		struct { /* hardware */
 			u64		config;
 			u64		last_tag;
-			अचिन्हित दीर्घ	config_base;
-			अचिन्हित दीर्घ	event_base;
-			पूर्णांक		event_base_rdpmc;
-			पूर्णांक		idx;
-			पूर्णांक		last_cpu;
-			पूर्णांक		flags;
+			unsigned long	config_base;
+			unsigned long	event_base;
+			int		event_base_rdpmc;
+			int		idx;
+			int		last_cpu;
+			int		flags;
 
-			काष्ठा hw_perf_event_extra extra_reg;
-			काष्ठा hw_perf_event_extra branch_reg;
-		पूर्ण;
-		काष्ठा अणु /* software */
-			काष्ठा hrसमयr	hrसमयr;
-		पूर्ण;
-		काष्ठा अणु /* tracepoपूर्णांक */
-			/* क्रम tp_event->class */
-			काष्ठा list_head	tp_list;
-		पूर्ण;
-		काष्ठा अणु /* amd_घातer */
+			struct hw_perf_event_extra extra_reg;
+			struct hw_perf_event_extra branch_reg;
+		};
+		struct { /* software */
+			struct hrtimer	hrtimer;
+		};
+		struct { /* tracepoint */
+			/* for tp_event->class */
+			struct list_head	tp_list;
+		};
+		struct { /* amd_power */
 			u64	pwr_acc;
 			u64	ptsc;
-		पूर्ण;
-#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
-		काष्ठा अणु /* अवरोधpoपूर्णांक */
+		};
+#ifdef CONFIG_HAVE_HW_BREAKPOINT
+		struct { /* breakpoint */
 			/*
-			 * Crufty hack to aव्योम the chicken and egg
-			 * problem hw_अवरोधpoपूर्णांक has with context
+			 * Crufty hack to avoid the chicken and egg
+			 * problem hw_breakpoint has with context
 			 * creation and event initalization.
 			 */
-			काष्ठा arch_hw_अवरोधpoपूर्णांक	info;
-			काष्ठा list_head		bp_list;
-		पूर्ण;
-#पूर्ण_अगर
-		काष्ठा अणु /* amd_iommu */
+			struct arch_hw_breakpoint	info;
+			struct list_head		bp_list;
+		};
+#endif
+		struct { /* amd_iommu */
 			u8	iommu_bank;
 			u8	iommu_cntr;
 			u16	padding;
 			u64	conf;
 			u64	conf1;
-		पूर्ण;
-	पूर्ण;
+		};
+	};
 	/*
-	 * If the event is a per task event, this will poपूर्णांक to the task in
+	 * If the event is a per task event, this will point to the task in
 	 * question. See the comment in perf_event_alloc().
 	 */
-	काष्ठा task_काष्ठा		*target;
+	struct task_struct		*target;
 
 	/*
 	 * PMU would store hardware filter configuration
 	 * here.
 	 */
-	व्योम				*addr_filters;
+	void				*addr_filters;
 
 	/* Last sync'ed generation of filters */
-	अचिन्हित दीर्घ			addr_filters_gen;
+	unsigned long			addr_filters_gen;
 
 /*
  * hw_perf_event::state flags; used to track the PERF_EF_* state.
  */
-#घोषणा PERF_HES_STOPPED	0x01 /* the counter is stopped */
-#घोषणा PERF_HES_UPTODATE	0x02 /* event->count up-to-date */
-#घोषणा PERF_HES_ARCH		0x04
+#define PERF_HES_STOPPED	0x01 /* the counter is stopped */
+#define PERF_HES_UPTODATE	0x02 /* event->count up-to-date */
+#define PERF_HES_ARCH		0x04
 
-	पूर्णांक				state;
+	int				state;
 
 	/*
 	 * The last observed hardware counter value, updated with a
-	 * local64_cmpxchg() such that pmu::पढ़ो() can be called nested.
+	 * local64_cmpxchg() such that pmu::read() can be called nested.
 	 */
 	local64_t			prev_count;
 
@@ -213,8 +212,8 @@
 	 */
 	u64				sample_period;
 
-	जोड़ अणु
-		काष्ठा अणु /* Sampling */
+	union {
+		struct { /* Sampling */
 			/*
 			 * The period we started this sample with.
 			 */
@@ -223,130 +222,130 @@
 			/*
 			 * However much is left of the current period;
 			 * note that this is a full 64bit value and
-			 * allows क्रम generation of periods दीर्घer
+			 * allows for generation of periods longer
 			 * than hardware might allow.
 			 */
 			local64_t			period_left;
-		पूर्ण;
-		काष्ठा अणु /* Topकरोwn events counting क्रम context चयन */
+		};
+		struct { /* Topdown events counting for context switch */
 			u64				saved_metric;
 			u64				saved_slots;
-		पूर्ण;
-	पूर्ण;
+		};
+	};
 
 	/*
-	 * State क्रम throttling the event, see __perf_event_overflow() and
+	 * State for throttling the event, see __perf_event_overflow() and
 	 * perf_adjust_freq_unthr_context().
 	 */
-	u64                             पूर्णांकerrupts_seq;
-	u64				पूर्णांकerrupts;
+	u64                             interrupts_seq;
+	u64				interrupts;
 
 	/*
-	 * State क्रम freq target events, see __perf_event_overflow() and
+	 * State for freq target events, see __perf_event_overflow() and
 	 * perf_adjust_freq_unthr_context().
 	 */
-	u64				freq_समय_stamp;
+	u64				freq_time_stamp;
 	u64				freq_count_stamp;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-काष्ठा perf_event;
+struct perf_event;
 
 /*
- * Common implementation detail of pmu::अणुstart,commit,cancelपूर्ण_txn
+ * Common implementation detail of pmu::{start,commit,cancel}_txn
  */
-#घोषणा PERF_PMU_TXN_ADD  0x1		/* txn to add/schedule event on PMU */
-#घोषणा PERF_PMU_TXN_READ 0x2		/* txn to पढ़ो event group from PMU */
+#define PERF_PMU_TXN_ADD  0x1		/* txn to add/schedule event on PMU */
+#define PERF_PMU_TXN_READ 0x2		/* txn to read event group from PMU */
 
 /**
  * pmu::capabilities flags
  */
-#घोषणा PERF_PMU_CAP_NO_INTERRUPT		0x0001
-#घोषणा PERF_PMU_CAP_NO_NMI			0x0002
-#घोषणा PERF_PMU_CAP_AUX_NO_SG			0x0004
-#घोषणा PERF_PMU_CAP_EXTENDED_REGS		0x0008
-#घोषणा PERF_PMU_CAP_EXCLUSIVE			0x0010
-#घोषणा PERF_PMU_CAP_ITRACE			0x0020
-#घोषणा PERF_PMU_CAP_HETEROGENEOUS_CPUS		0x0040
-#घोषणा PERF_PMU_CAP_NO_EXCLUDE			0x0080
-#घोषणा PERF_PMU_CAP_AUX_OUTPUT			0x0100
-#घोषणा PERF_PMU_CAP_EXTENDED_HW_TYPE		0x0200
+#define PERF_PMU_CAP_NO_INTERRUPT		0x0001
+#define PERF_PMU_CAP_NO_NMI			0x0002
+#define PERF_PMU_CAP_AUX_NO_SG			0x0004
+#define PERF_PMU_CAP_EXTENDED_REGS		0x0008
+#define PERF_PMU_CAP_EXCLUSIVE			0x0010
+#define PERF_PMU_CAP_ITRACE			0x0020
+#define PERF_PMU_CAP_HETEROGENEOUS_CPUS		0x0040
+#define PERF_PMU_CAP_NO_EXCLUDE			0x0080
+#define PERF_PMU_CAP_AUX_OUTPUT			0x0100
+#define PERF_PMU_CAP_EXTENDED_HW_TYPE		0x0200
 
-काष्ठा perf_output_handle;
+struct perf_output_handle;
 
 /**
- * काष्ठा pmu - generic perक्रमmance monitoring unit
+ * struct pmu - generic performance monitoring unit
  */
-काष्ठा pmu अणु
-	काष्ठा list_head		entry;
+struct pmu {
+	struct list_head		entry;
 
-	काष्ठा module			*module;
-	काष्ठा device			*dev;
-	स्थिर काष्ठा attribute_group	**attr_groups;
-	स्थिर काष्ठा attribute_group	**attr_update;
-	स्थिर अक्षर			*name;
-	पूर्णांक				type;
+	struct module			*module;
+	struct device			*dev;
+	const struct attribute_group	**attr_groups;
+	const struct attribute_group	**attr_update;
+	const char			*name;
+	int				type;
 
 	/*
 	 * various common per-pmu feature flags
 	 */
-	पूर्णांक				capabilities;
+	int				capabilities;
 
-	पूर्णांक __percpu			*pmu_disable_count;
-	काष्ठा perf_cpu_context __percpu *pmu_cpu_context;
+	int __percpu			*pmu_disable_count;
+	struct perf_cpu_context __percpu *pmu_cpu_context;
 	atomic_t			exclusive_cnt; /* < 0: cpu; > 0: tsk */
-	पूर्णांक				task_ctx_nr;
-	पूर्णांक				hrसमयr_पूर्णांकerval_ms;
+	int				task_ctx_nr;
+	int				hrtimer_interval_ms;
 
-	/* number of address filters this PMU can करो */
-	अचिन्हित पूर्णांक			nr_addr_filters;
+	/* number of address filters this PMU can do */
+	unsigned int			nr_addr_filters;
 
 	/*
 	 * Fully disable/enable this PMU, can be used to protect from the PMI
-	 * as well as क्रम lazy/batch writing of the MSRs.
+	 * as well as for lazy/batch writing of the MSRs.
 	 */
-	व्योम (*pmu_enable)		(काष्ठा pmu *pmu); /* optional */
-	व्योम (*pmu_disable)		(काष्ठा pmu *pmu); /* optional */
+	void (*pmu_enable)		(struct pmu *pmu); /* optional */
+	void (*pmu_disable)		(struct pmu *pmu); /* optional */
 
 	/*
-	 * Try and initialize the event क्रम this PMU.
+	 * Try and initialize the event for this PMU.
 	 *
 	 * Returns:
-	 *  -ENOENT	-- @event is not क्रम this PMU
+	 *  -ENOENT	-- @event is not for this PMU
 	 *
-	 *  -ENODEV	-- @event is क्रम this PMU but PMU not present
-	 *  -EBUSY	-- @event is क्रम this PMU but PMU temporarily unavailable
-	 *  -EINVAL	-- @event is क्रम this PMU but @event is not valid
-	 *  -EOPNOTSUPP -- @event is क्रम this PMU, @event is valid, but not supported
-	 *  -EACCES	-- @event is क्रम this PMU, @event is valid, but no privileges
+	 *  -ENODEV	-- @event is for this PMU but PMU not present
+	 *  -EBUSY	-- @event is for this PMU but PMU temporarily unavailable
+	 *  -EINVAL	-- @event is for this PMU but @event is not valid
+	 *  -EOPNOTSUPP -- @event is for this PMU, @event is valid, but not supported
+	 *  -EACCES	-- @event is for this PMU, @event is valid, but no privileges
 	 *
-	 *  0		-- @event is क्रम this PMU and valid
+	 *  0		-- @event is for this PMU and valid
 	 *
-	 * Other error वापस values are allowed.
+	 * Other error return values are allowed.
 	 */
-	पूर्णांक (*event_init)		(काष्ठा perf_event *event);
+	int (*event_init)		(struct perf_event *event);
 
 	/*
-	 * Notअगरication that the event was mapped or unmapped.  Called
+	 * Notification that the event was mapped or unmapped.  Called
 	 * in the context of the mapping task.
 	 */
-	व्योम (*event_mapped)		(काष्ठा perf_event *event, काष्ठा mm_काष्ठा *mm); /* optional */
-	व्योम (*event_unmapped)		(काष्ठा perf_event *event, काष्ठा mm_काष्ठा *mm); /* optional */
+	void (*event_mapped)		(struct perf_event *event, struct mm_struct *mm); /* optional */
+	void (*event_unmapped)		(struct perf_event *event, struct mm_struct *mm); /* optional */
 
 	/*
-	 * Flags क्रम ->add()/->del()/ ->start()/->stop(). There are
+	 * Flags for ->add()/->del()/ ->start()/->stop(). There are
 	 * matching hw_perf_event::state flags.
 	 */
-#घोषणा PERF_EF_START	0x01		/* start the counter when adding    */
-#घोषणा PERF_EF_RELOAD	0x02		/* reload the counter when starting */
-#घोषणा PERF_EF_UPDATE	0x04		/* update the counter when stopping */
+#define PERF_EF_START	0x01		/* start the counter when adding    */
+#define PERF_EF_RELOAD	0x02		/* reload the counter when starting */
+#define PERF_EF_UPDATE	0x04		/* update the counter when stopping */
 
 	/*
-	 * Adds/Removes a counter to/from the PMU, can be करोne inside a
+	 * Adds/Removes a counter to/from the PMU, can be done inside a
 	 * transaction, see the ->*_txn() methods.
 	 *
 	 * The add/del callbacks will reserve all hardware resources required
-	 * to service the event, this includes any counter स्थिरraपूर्णांक
+	 * to service the event, this includes any counter constraint
 	 * scheduling etc.
 	 *
 	 * Called with IRQs disabled and the PMU disabled on the CPU the event
@@ -356,17 +355,17 @@
 	 *  as ->add() followed by ->stop().
 	 *
 	 * ->del() must always PERF_EF_UPDATE stop an event. If it calls
-	 *  ->stop() that must deal with alपढ़ोy being stopped without
+	 *  ->stop() that must deal with already being stopped without
 	 *  PERF_EF_UPDATE.
 	 */
-	पूर्णांक  (*add)			(काष्ठा perf_event *event, पूर्णांक flags);
-	व्योम (*del)			(काष्ठा perf_event *event, पूर्णांक flags);
+	int  (*add)			(struct perf_event *event, int flags);
+	void (*del)			(struct perf_event *event, int flags);
 
 	/*
 	 * Starts/Stops a counter present on the PMU.
 	 *
 	 * The PMI handler should stop the counter when perf_event_overflow()
-	 * वापसs !0. ->start() will be used to जारी.
+	 * returns !0. ->start() will be used to continue.
 	 *
 	 * Also used to change the sample period.
 	 *
@@ -374,14 +373,14 @@
 	 * is on -- will be called from NMI context with the PMU generates
 	 * NMIs.
 	 *
-	 * ->stop() with PERF_EF_UPDATE will पढ़ो the counter and update
-	 *  period/count values like ->पढ़ो() would.
+	 * ->stop() with PERF_EF_UPDATE will read the counter and update
+	 *  period/count values like ->read() would.
 	 *
 	 * ->start() with PERF_EF_RELOAD will reprogram the counter
 	 *  value, must be preceded by a ->stop() with PERF_EF_UPDATE.
 	 */
-	व्योम (*start)			(काष्ठा perf_event *event, पूर्णांक flags);
-	व्योम (*stop)			(काष्ठा perf_event *event, पूर्णांक flags);
+	void (*start)			(struct perf_event *event, int flags);
+	void (*stop)			(struct perf_event *event, int flags);
 
 	/*
 	 * Updates the counter value of the event.
@@ -389,414 +388,414 @@
 	 * For sampling capable PMUs this will also update the software period
 	 * hw_perf_event::period_left field.
 	 */
-	व्योम (*पढ़ो)			(काष्ठा perf_event *event);
+	void (*read)			(struct perf_event *event);
 
 	/*
 	 * Group events scheduling is treated as a transaction, add
-	 * group events as a whole and perक्रमm one schedulability test.
+	 * group events as a whole and perform one schedulability test.
 	 * If the test fails, roll back the whole group
 	 *
-	 * Start the transaction, after this ->add() करोesn't need to
-	 * करो schedulability tests.
+	 * Start the transaction, after this ->add() doesn't need to
+	 * do schedulability tests.
 	 *
 	 * Optional.
 	 */
-	व्योम (*start_txn)		(काष्ठा pmu *pmu, अचिन्हित पूर्णांक txn_flags);
+	void (*start_txn)		(struct pmu *pmu, unsigned int txn_flags);
 	/*
 	 * If ->start_txn() disabled the ->add() schedulability test
-	 * then ->commit_txn() is required to perक्रमm one. On success
-	 * the transaction is बंदd. On error the transaction is kept
-	 * खोलो until ->cancel_txn() is called.
+	 * then ->commit_txn() is required to perform one. On success
+	 * the transaction is closed. On error the transaction is kept
+	 * open until ->cancel_txn() is called.
 	 *
 	 * Optional.
 	 */
-	पूर्णांक  (*commit_txn)		(काष्ठा pmu *pmu);
+	int  (*commit_txn)		(struct pmu *pmu);
 	/*
 	 * Will cancel the transaction, assumes ->del() is called
-	 * क्रम each successful ->add() during the transaction.
+	 * for each successful ->add() during the transaction.
 	 *
 	 * Optional.
 	 */
-	व्योम (*cancel_txn)		(काष्ठा pmu *pmu);
+	void (*cancel_txn)		(struct pmu *pmu);
 
 	/*
-	 * Will वापस the value क्रम perf_event_mmap_page::index क्रम this event,
-	 * अगर no implementation is provided it will शेष to: event->hw.idx + 1.
+	 * Will return the value for perf_event_mmap_page::index for this event,
+	 * if no implementation is provided it will default to: event->hw.idx + 1.
 	 */
-	पूर्णांक (*event_idx)		(काष्ठा perf_event *event); /*optional */
+	int (*event_idx)		(struct perf_event *event); /*optional */
 
 	/*
-	 * context-चयनes callback
+	 * context-switches callback
 	 */
-	व्योम (*sched_task)		(काष्ठा perf_event_context *ctx,
+	void (*sched_task)		(struct perf_event_context *ctx,
 					bool sched_in);
 
 	/*
-	 * Kmem cache of PMU specअगरic data
+	 * Kmem cache of PMU specific data
 	 */
-	काष्ठा kmem_cache		*task_ctx_cache;
+	struct kmem_cache		*task_ctx_cache;
 
 	/*
-	 * PMU specअगरic parts of task perf event context (i.e. ctx->task_ctx_data)
+	 * PMU specific parts of task perf event context (i.e. ctx->task_ctx_data)
 	 * can be synchronized using this function. See Intel LBR callstack support
-	 * implementation and Perf core context चयन handling callbacks क्रम usage
+	 * implementation and Perf core context switch handling callbacks for usage
 	 * examples.
 	 */
-	व्योम (*swap_task_ctx)		(काष्ठा perf_event_context *prev,
-					 काष्ठा perf_event_context *next);
+	void (*swap_task_ctx)		(struct perf_event_context *prev,
+					 struct perf_event_context *next);
 					/* optional */
 
 	/*
-	 * Set up pmu-निजी data काष्ठाures क्रम an AUX area
+	 * Set up pmu-private data structures for an AUX area
 	 */
-	व्योम *(*setup_aux)		(काष्ठा perf_event *event, व्योम **pages,
-					 पूर्णांक nr_pages, bool overग_लिखो);
+	void *(*setup_aux)		(struct perf_event *event, void **pages,
+					 int nr_pages, bool overwrite);
 					/* optional */
 
 	/*
-	 * Free pmu-निजी AUX data काष्ठाures
+	 * Free pmu-private AUX data structures
 	 */
-	व्योम (*मुक्त_aux)		(व्योम *aux); /* optional */
+	void (*free_aux)		(void *aux); /* optional */
 
 	/*
 	 * Take a snapshot of the AUX buffer without touching the event
-	 * state, so that preempting ->start()/->stop() callbacks करोes
-	 * not पूर्णांकerfere with their logic. Called in PMI context.
+	 * state, so that preempting ->start()/->stop() callbacks does
+	 * not interfere with their logic. Called in PMI context.
 	 *
 	 * Returns the size of AUX data copied to the output handle.
 	 *
 	 * Optional.
 	 */
-	दीर्घ (*snapshot_aux)		(काष्ठा perf_event *event,
-					 काष्ठा perf_output_handle *handle,
-					 अचिन्हित दीर्घ size);
+	long (*snapshot_aux)		(struct perf_event *event,
+					 struct perf_output_handle *handle,
+					 unsigned long size);
 
 	/*
 	 * Validate address range filters: make sure the HW supports the
-	 * requested configuration and number of filters; वापस 0 अगर the
-	 * supplied filters are valid, -त्रुटि_सं otherwise.
+	 * requested configuration and number of filters; return 0 if the
+	 * supplied filters are valid, -errno otherwise.
 	 *
 	 * Runs in the context of the ioctl()ing process and is not serialized
 	 * with the rest of the PMU callbacks.
 	 */
-	पूर्णांक (*addr_filters_validate)	(काष्ठा list_head *filters);
+	int (*addr_filters_validate)	(struct list_head *filters);
 					/* optional */
 
 	/*
 	 * Synchronize address range filter configuration:
-	 * translate hw-agnostic filters पूर्णांकo hardware configuration in
+	 * translate hw-agnostic filters into hardware configuration in
 	 * event::hw::addr_filters.
 	 *
-	 * Runs as a part of filter sync sequence that is करोne in ->start()
+	 * Runs as a part of filter sync sequence that is done in ->start()
 	 * callback by calling perf_event_addr_filters_sync().
 	 *
-	 * May (and should) traverse event::addr_filters::list, क्रम which its
+	 * May (and should) traverse event::addr_filters::list, for which its
 	 * caller provides necessary serialization.
 	 */
-	व्योम (*addr_filters_sync)	(काष्ठा perf_event *event);
+	void (*addr_filters_sync)	(struct perf_event *event);
 					/* optional */
 
 	/*
-	 * Check अगर event can be used क्रम aux_output purposes क्रम
+	 * Check if event can be used for aux_output purposes for
 	 * events of this PMU.
 	 *
-	 * Runs from perf_event_खोलो(). Should वापस 0 क्रम "no match"
-	 * or non-zero क्रम "match".
+	 * Runs from perf_event_open(). Should return 0 for "no match"
+	 * or non-zero for "match".
 	 */
-	पूर्णांक (*aux_output_match)		(काष्ठा perf_event *event);
+	int (*aux_output_match)		(struct perf_event *event);
 					/* optional */
 
 	/*
-	 * Filter events क्रम PMU-specअगरic reasons.
+	 * Filter events for PMU-specific reasons.
 	 */
-	पूर्णांक (*filter_match)		(काष्ठा perf_event *event); /* optional */
+	int (*filter_match)		(struct perf_event *event); /* optional */
 
 	/*
-	 * Check period value क्रम PERF_EVENT_IOC_PERIOD ioctl.
+	 * Check period value for PERF_EVENT_IOC_PERIOD ioctl.
 	 */
-	पूर्णांक (*check_period)		(काष्ठा perf_event *event, u64 value); /* optional */
-पूर्ण;
+	int (*check_period)		(struct perf_event *event, u64 value); /* optional */
+};
 
-क्रमागत perf_addr_filter_action_t अणु
+enum perf_addr_filter_action_t {
 	PERF_ADDR_FILTER_ACTION_STOP = 0,
 	PERF_ADDR_FILTER_ACTION_START,
 	PERF_ADDR_FILTER_ACTION_FILTER,
-पूर्ण;
+};
 
 /**
- * काष्ठा perf_addr_filter - address range filter definition
+ * struct perf_addr_filter - address range filter definition
  * @entry:	event's filter list linkage
- * @path:	object file's path क्रम file-based filters
+ * @path:	object file's path for file-based filters
  * @offset:	filter range offset
  * @size:	filter range size (size==0 means single address trigger)
  * @action:	filter/start/stop
  *
- * This is a hardware-agnostic filter configuration as specअगरied by the user.
+ * This is a hardware-agnostic filter configuration as specified by the user.
  */
-काष्ठा perf_addr_filter अणु
-	काष्ठा list_head	entry;
-	काष्ठा path		path;
-	अचिन्हित दीर्घ		offset;
-	अचिन्हित दीर्घ		size;
-	क्रमागत perf_addr_filter_action_t	action;
-पूर्ण;
+struct perf_addr_filter {
+	struct list_head	entry;
+	struct path		path;
+	unsigned long		offset;
+	unsigned long		size;
+	enum perf_addr_filter_action_t	action;
+};
 
 /**
- * काष्ठा perf_addr_filters_head - container क्रम address range filters
- * @list:	list of filters क्रम this event
+ * struct perf_addr_filters_head - container for address range filters
+ * @list:	list of filters for this event
  * @lock:	spinlock that serializes accesses to the @list and event's
  *		(and its children's) filter generations.
  * @nr_file_filters:	number of file-based filters
  *
- * A child event will use parent's @list (and thereक्रमe @lock), so they are
+ * A child event will use parent's @list (and therefore @lock), so they are
  * bundled together; see perf_event_addr_filters().
  */
-काष्ठा perf_addr_filters_head अणु
-	काष्ठा list_head	list;
+struct perf_addr_filters_head {
+	struct list_head	list;
 	raw_spinlock_t		lock;
-	अचिन्हित पूर्णांक		nr_file_filters;
-पूर्ण;
+	unsigned int		nr_file_filters;
+};
 
-काष्ठा perf_addr_filter_range अणु
-	अचिन्हित दीर्घ		start;
-	अचिन्हित दीर्घ		size;
-पूर्ण;
+struct perf_addr_filter_range {
+	unsigned long		start;
+	unsigned long		size;
+};
 
 /**
- * क्रमागत perf_event_state - the states of an event:
+ * enum perf_event_state - the states of an event:
  */
-क्रमागत perf_event_state अणु
+enum perf_event_state {
 	PERF_EVENT_STATE_DEAD		= -4,
 	PERF_EVENT_STATE_EXIT		= -3,
 	PERF_EVENT_STATE_ERROR		= -2,
 	PERF_EVENT_STATE_OFF		= -1,
 	PERF_EVENT_STATE_INACTIVE	=  0,
 	PERF_EVENT_STATE_ACTIVE		=  1,
-पूर्ण;
+};
 
-काष्ठा file;
-काष्ठा perf_sample_data;
+struct file;
+struct perf_sample_data;
 
-प्रकार व्योम (*perf_overflow_handler_t)(काष्ठा perf_event *,
-					काष्ठा perf_sample_data *,
-					काष्ठा pt_regs *regs);
+typedef void (*perf_overflow_handler_t)(struct perf_event *,
+					struct perf_sample_data *,
+					struct pt_regs *regs);
 
 /*
  * Event capabilities. For event_caps and groups caps.
  *
  * PERF_EV_CAP_SOFTWARE: Is a software event.
- * PERF_EV_CAP_READ_ACTIVE_PKG: A CPU event (or cgroup event) that can be पढ़ो
+ * PERF_EV_CAP_READ_ACTIVE_PKG: A CPU event (or cgroup event) that can be read
  * from any CPU in the package where it is active.
  * PERF_EV_CAP_SIBLING: An event with this flag must be a group sibling and
  * cannot be a group leader. If an event with this flag is detached from the
- * group it is scheduled out and moved पूर्णांकo an unrecoverable ERROR state.
+ * group it is scheduled out and moved into an unrecoverable ERROR state.
  */
-#घोषणा PERF_EV_CAP_SOFTWARE		BIT(0)
-#घोषणा PERF_EV_CAP_READ_ACTIVE_PKG	BIT(1)
-#घोषणा PERF_EV_CAP_SIBLING		BIT(2)
+#define PERF_EV_CAP_SOFTWARE		BIT(0)
+#define PERF_EV_CAP_READ_ACTIVE_PKG	BIT(1)
+#define PERF_EV_CAP_SIBLING		BIT(2)
 
-#घोषणा SWEVENT_HLIST_BITS		8
-#घोषणा SWEVENT_HLIST_SIZE		(1 << SWEVENT_HLIST_BITS)
+#define SWEVENT_HLIST_BITS		8
+#define SWEVENT_HLIST_SIZE		(1 << SWEVENT_HLIST_BITS)
 
-काष्ठा swevent_hlist अणु
-	काष्ठा hlist_head		heads[SWEVENT_HLIST_SIZE];
-	काष्ठा rcu_head			rcu_head;
-पूर्ण;
+struct swevent_hlist {
+	struct hlist_head		heads[SWEVENT_HLIST_SIZE];
+	struct rcu_head			rcu_head;
+};
 
-#घोषणा PERF_ATTACH_CONTEXT	0x01
-#घोषणा PERF_ATTACH_GROUP	0x02
-#घोषणा PERF_ATTACH_TASK	0x04
-#घोषणा PERF_ATTACH_TASK_DATA	0x08
-#घोषणा PERF_ATTACH_ITRACE	0x10
-#घोषणा PERF_ATTACH_SCHED_CB	0x20
-#घोषणा PERF_ATTACH_CHILD	0x40
+#define PERF_ATTACH_CONTEXT	0x01
+#define PERF_ATTACH_GROUP	0x02
+#define PERF_ATTACH_TASK	0x04
+#define PERF_ATTACH_TASK_DATA	0x08
+#define PERF_ATTACH_ITRACE	0x10
+#define PERF_ATTACH_SCHED_CB	0x20
+#define PERF_ATTACH_CHILD	0x40
 
-काष्ठा perf_cgroup;
-काष्ठा perf_buffer;
+struct perf_cgroup;
+struct perf_buffer;
 
-काष्ठा pmu_event_list अणु
+struct pmu_event_list {
 	raw_spinlock_t		lock;
-	काष्ठा list_head	list;
-पूर्ण;
+	struct list_head	list;
+};
 
-#घोषणा क्रम_each_sibling_event(sibling, event)			\
-	अगर ((event)->group_leader == (event))			\
-		list_क्रम_each_entry((sibling), &(event)->sibling_list, sibling_list)
+#define for_each_sibling_event(sibling, event)			\
+	if ((event)->group_leader == (event))			\
+		list_for_each_entry((sibling), &(event)->sibling_list, sibling_list)
 
 /**
- * काष्ठा perf_event - perक्रमmance event kernel representation:
+ * struct perf_event - performance event kernel representation:
  */
-काष्ठा perf_event अणु
-#अगर_घोषित CONFIG_PERF_EVENTS
+struct perf_event {
+#ifdef CONFIG_PERF_EVENTS
 	/*
 	 * entry onto perf_event_context::event_list;
-	 *   modअगरications require ctx->lock
+	 *   modifications require ctx->lock
 	 *   RCU safe iterations.
 	 */
-	काष्ठा list_head		event_entry;
+	struct list_head		event_entry;
 
 	/*
-	 * Locked क्रम modअगरication by both ctx->mutex and ctx->lock; holding
-	 * either sufficies क्रम पढ़ो.
+	 * Locked for modification by both ctx->mutex and ctx->lock; holding
+	 * either sufficies for read.
 	 */
-	काष्ठा list_head		sibling_list;
-	काष्ठा list_head		active_list;
+	struct list_head		sibling_list;
+	struct list_head		active_list;
 	/*
 	 * Node on the pinned or flexible tree located at the event context;
 	 */
-	काष्ठा rb_node			group_node;
+	struct rb_node			group_node;
 	u64				group_index;
 	/*
 	 * We need storage to track the entries in perf_pmu_migrate_context; we
 	 * cannot use the event_entry because of RCU and we want to keep the
-	 * group in tact which aव्योमs us using the other two entries.
+	 * group in tact which avoids us using the other two entries.
 	 */
-	काष्ठा list_head		migrate_entry;
+	struct list_head		migrate_entry;
 
-	काष्ठा hlist_node		hlist_entry;
-	काष्ठा list_head		active_entry;
-	पूर्णांक				nr_siblings;
+	struct hlist_node		hlist_entry;
+	struct list_head		active_entry;
+	int				nr_siblings;
 
 	/* Not serialized. Only written during event initialization. */
-	पूर्णांक				event_caps;
-	/* The cumulative AND of all event_caps क्रम events in this group. */
-	पूर्णांक				group_caps;
+	int				event_caps;
+	/* The cumulative AND of all event_caps for events in this group. */
+	int				group_caps;
 
-	काष्ठा perf_event		*group_leader;
-	काष्ठा pmu			*pmu;
-	व्योम				*pmu_निजी;
+	struct perf_event		*group_leader;
+	struct pmu			*pmu;
+	void				*pmu_private;
 
-	क्रमागत perf_event_state		state;
-	अचिन्हित पूर्णांक			attach_state;
+	enum perf_event_state		state;
+	unsigned int			attach_state;
 	local64_t			count;
 	atomic64_t			child_count;
 
 	/*
-	 * These are the total समय in nanoseconds that the event
+	 * These are the total time in nanoseconds that the event
 	 * has been enabled (i.e. eligible to run, and the task has
-	 * been scheduled in, अगर this is a per-task event)
+	 * been scheduled in, if this is a per-task event)
 	 * and running (scheduled onto the CPU), respectively.
 	 */
-	u64				total_समय_enabled;
-	u64				total_समय_running;
+	u64				total_time_enabled;
+	u64				total_time_running;
 	u64				tstamp;
 
 	/*
-	 * बारtamp shaकरोws the actual context timing but it can
-	 * be safely used in NMI पूर्णांकerrupt context. It reflects the
-	 * context समय as it was when the event was last scheduled in.
+	 * timestamp shadows the actual context timing but it can
+	 * be safely used in NMI interrupt context. It reflects the
+	 * context time as it was when the event was last scheduled in.
 	 *
-	 * ctx_समय alपढ़ोy accounts क्रम ctx->बारtamp. Thereक्रमe to
-	 * compute ctx_समय क्रम a sample, simply add perf_घड़ी().
+	 * ctx_time already accounts for ctx->timestamp. Therefore to
+	 * compute ctx_time for a sample, simply add perf_clock().
 	 */
-	u64				shaकरोw_ctx_समय;
+	u64				shadow_ctx_time;
 
-	काष्ठा perf_event_attr		attr;
+	struct perf_event_attr		attr;
 	u16				header_size;
 	u16				id_header_size;
-	u16				पढ़ो_size;
-	काष्ठा hw_perf_event		hw;
+	u16				read_size;
+	struct hw_perf_event		hw;
 
-	काष्ठा perf_event_context	*ctx;
-	atomic_दीर्घ_t			refcount;
+	struct perf_event_context	*ctx;
+	atomic_long_t			refcount;
 
 	/*
-	 * These accumulate total समय (in nanoseconds) that children
+	 * These accumulate total time (in nanoseconds) that children
 	 * events have been enabled and running, respectively.
 	 */
-	atomic64_t			child_total_समय_enabled;
-	atomic64_t			child_total_समय_running;
+	atomic64_t			child_total_time_enabled;
+	atomic64_t			child_total_time_running;
 
 	/*
 	 * Protect attach/detach and child_list:
 	 */
-	काष्ठा mutex			child_mutex;
-	काष्ठा list_head		child_list;
-	काष्ठा perf_event		*parent;
+	struct mutex			child_mutex;
+	struct list_head		child_list;
+	struct perf_event		*parent;
 
-	पूर्णांक				oncpu;
-	पूर्णांक				cpu;
+	int				oncpu;
+	int				cpu;
 
-	काष्ठा list_head		owner_entry;
-	काष्ठा task_काष्ठा		*owner;
+	struct list_head		owner_entry;
+	struct task_struct		*owner;
 
 	/* mmap bits */
-	काष्ठा mutex			mmap_mutex;
+	struct mutex			mmap_mutex;
 	atomic_t			mmap_count;
 
-	काष्ठा perf_buffer		*rb;
-	काष्ठा list_head		rb_entry;
-	अचिन्हित दीर्घ			rcu_batches;
-	पूर्णांक				rcu_pending;
+	struct perf_buffer		*rb;
+	struct list_head		rb_entry;
+	unsigned long			rcu_batches;
+	int				rcu_pending;
 
 	/* poll related */
-	रुको_queue_head_t		रुकोq;
-	काष्ठा fasync_काष्ठा		*fasync;
+	wait_queue_head_t		waitq;
+	struct fasync_struct		*fasync;
 
-	/* delayed work क्रम NMIs and such */
-	पूर्णांक				pending_wakeup;
-	पूर्णांक				pending_समाप्त;
-	पूर्णांक				pending_disable;
-	अचिन्हित दीर्घ			pending_addr;	/* SIGTRAP */
-	काष्ठा irq_work			pending;
+	/* delayed work for NMIs and such */
+	int				pending_wakeup;
+	int				pending_kill;
+	int				pending_disable;
+	unsigned long			pending_addr;	/* SIGTRAP */
+	struct irq_work			pending;
 
 	atomic_t			event_limit;
 
 	/* address range filters */
-	काष्ठा perf_addr_filters_head	addr_filters;
-	/* vma address array क्रम file-based filders */
-	काष्ठा perf_addr_filter_range	*addr_filter_ranges;
-	अचिन्हित दीर्घ			addr_filters_gen;
+	struct perf_addr_filters_head	addr_filters;
+	/* vma address array for file-based filders */
+	struct perf_addr_filter_range	*addr_filter_ranges;
+	unsigned long			addr_filters_gen;
 
-	/* क्रम aux_output events */
-	काष्ठा perf_event		*aux_event;
+	/* for aux_output events */
+	struct perf_event		*aux_event;
 
-	व्योम (*destroy)(काष्ठा perf_event *);
-	काष्ठा rcu_head			rcu_head;
+	void (*destroy)(struct perf_event *);
+	struct rcu_head			rcu_head;
 
-	काष्ठा pid_namespace		*ns;
+	struct pid_namespace		*ns;
 	u64				id;
 
-	u64				(*घड़ी)(व्योम);
+	u64				(*clock)(void);
 	perf_overflow_handler_t		overflow_handler;
-	व्योम				*overflow_handler_context;
-#अगर_घोषित CONFIG_BPF_SYSCALL
+	void				*overflow_handler_context;
+#ifdef CONFIG_BPF_SYSCALL
 	perf_overflow_handler_t		orig_overflow_handler;
-	काष्ठा bpf_prog			*prog;
-#पूर्ण_अगर
+	struct bpf_prog			*prog;
+#endif
 
-#अगर_घोषित CONFIG_EVENT_TRACING
-	काष्ठा trace_event_call		*tp_event;
-	काष्ठा event_filter		*filter;
-#अगर_घोषित CONFIG_FUNCTION_TRACER
-	काष्ठा ftrace_ops               ftrace_ops;
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef CONFIG_EVENT_TRACING
+	struct trace_event_call		*tp_event;
+	struct event_filter		*filter;
+#ifdef CONFIG_FUNCTION_TRACER
+	struct ftrace_ops               ftrace_ops;
+#endif
+#endif
 
-#अगर_घोषित CONFIG_CGROUP_PERF
-	काष्ठा perf_cgroup		*cgrp; /* cgroup event is attach to */
-#पूर्ण_अगर
+#ifdef CONFIG_CGROUP_PERF
+	struct perf_cgroup		*cgrp; /* cgroup event is attach to */
+#endif
 
-#अगर_घोषित CONFIG_SECURITY
-	व्योम *security;
-#पूर्ण_अगर
-	काष्ठा list_head		sb_list;
-#पूर्ण_अगर /* CONFIG_PERF_EVENTS */
-पूर्ण;
+#ifdef CONFIG_SECURITY
+	void *security;
+#endif
+	struct list_head		sb_list;
+#endif /* CONFIG_PERF_EVENTS */
+};
 
 
-काष्ठा perf_event_groups अणु
-	काष्ठा rb_root	tree;
+struct perf_event_groups {
+	struct rb_root	tree;
 	u64		index;
-पूर्ण;
+};
 
 /**
- * काष्ठा perf_event_context - event context काष्ठाure
+ * struct perf_event_context - event context structure
  *
- * Used as a container क्रम task events and CPU events as well:
+ * Used as a container for task events and CPU events as well:
  */
-काष्ठा perf_event_context अणु
-	काष्ठा pmu			*pmu;
+struct perf_event_context {
+	struct pmu			*pmu;
 	/*
 	 * Protect the states of the events in the list,
 	 * nr_active, and the list:
@@ -804,806 +803,806 @@
 	raw_spinlock_t			lock;
 	/*
 	 * Protect the list of events.  Locking either mutex or lock
-	 * is sufficient to ensure the list करोesn't change; to change
+	 * is sufficient to ensure the list doesn't change; to change
 	 * the list you need to lock both the mutex and the spinlock.
 	 */
-	काष्ठा mutex			mutex;
+	struct mutex			mutex;
 
-	काष्ठा list_head		active_ctx_list;
-	काष्ठा perf_event_groups	pinned_groups;
-	काष्ठा perf_event_groups	flexible_groups;
-	काष्ठा list_head		event_list;
+	struct list_head		active_ctx_list;
+	struct perf_event_groups	pinned_groups;
+	struct perf_event_groups	flexible_groups;
+	struct list_head		event_list;
 
-	काष्ठा list_head		pinned_active;
-	काष्ठा list_head		flexible_active;
+	struct list_head		pinned_active;
+	struct list_head		flexible_active;
 
-	पूर्णांक				nr_events;
-	पूर्णांक				nr_active;
-	पूर्णांक				is_active;
-	पूर्णांक				nr_stat;
-	पूर्णांक				nr_freq;
-	पूर्णांक				rotate_disable;
+	int				nr_events;
+	int				nr_active;
+	int				is_active;
+	int				nr_stat;
+	int				nr_freq;
+	int				rotate_disable;
 	/*
 	 * Set when nr_events != nr_active, except tolerant to events not
-	 * necessary to be active due to scheduling स्थिरraपूर्णांकs, such as cgroups.
+	 * necessary to be active due to scheduling constraints, such as cgroups.
 	 */
-	पूर्णांक				rotate_necessary;
+	int				rotate_necessary;
 	refcount_t			refcount;
-	काष्ठा task_काष्ठा		*task;
+	struct task_struct		*task;
 
 	/*
-	 * Context घड़ी, runs when context enabled.
+	 * Context clock, runs when context enabled.
 	 */
-	u64				समय;
-	u64				बारtamp;
+	u64				time;
+	u64				timestamp;
 
 	/*
 	 * These fields let us detect when two contexts have both
 	 * been cloned (inherited) from a common ancestor.
 	 */
-	काष्ठा perf_event_context	*parent_ctx;
+	struct perf_event_context	*parent_ctx;
 	u64				parent_gen;
 	u64				generation;
-	पूर्णांक				pin_count;
-#अगर_घोषित CONFIG_CGROUP_PERF
-	पूर्णांक				nr_cgroups;	 /* cgroup evts */
-#पूर्ण_अगर
-	व्योम				*task_ctx_data; /* pmu specअगरic data */
-	काष्ठा rcu_head			rcu_head;
-पूर्ण;
+	int				pin_count;
+#ifdef CONFIG_CGROUP_PERF
+	int				nr_cgroups;	 /* cgroup evts */
+#endif
+	void				*task_ctx_data; /* pmu specific data */
+	struct rcu_head			rcu_head;
+};
 
 /*
  * Number of contexts where an event can trigger:
  *	task, softirq, hardirq, nmi.
  */
-#घोषणा PERF_NR_CONTEXTS	4
+#define PERF_NR_CONTEXTS	4
 
 /**
- * काष्ठा perf_event_cpu_context - per cpu event context काष्ठाure
+ * struct perf_event_cpu_context - per cpu event context structure
  */
-काष्ठा perf_cpu_context अणु
-	काष्ठा perf_event_context	ctx;
-	काष्ठा perf_event_context	*task_ctx;
-	पूर्णांक				active_oncpu;
-	पूर्णांक				exclusive;
+struct perf_cpu_context {
+	struct perf_event_context	ctx;
+	struct perf_event_context	*task_ctx;
+	int				active_oncpu;
+	int				exclusive;
 
-	raw_spinlock_t			hrसमयr_lock;
-	काष्ठा hrसमयr			hrसमयr;
-	kसमय_प्रकार				hrसमयr_पूर्णांकerval;
-	अचिन्हित पूर्णांक			hrसमयr_active;
+	raw_spinlock_t			hrtimer_lock;
+	struct hrtimer			hrtimer;
+	ktime_t				hrtimer_interval;
+	unsigned int			hrtimer_active;
 
-#अगर_घोषित CONFIG_CGROUP_PERF
-	काष्ठा perf_cgroup		*cgrp;
-	काष्ठा list_head		cgrp_cpuctx_entry;
-#पूर्ण_अगर
+#ifdef CONFIG_CGROUP_PERF
+	struct perf_cgroup		*cgrp;
+	struct list_head		cgrp_cpuctx_entry;
+#endif
 
-	काष्ठा list_head		sched_cb_entry;
-	पूर्णांक				sched_cb_usage;
+	struct list_head		sched_cb_entry;
+	int				sched_cb_usage;
 
-	पूर्णांक				online;
+	int				online;
 	/*
-	 * Per-CPU storage क्रम iterators used in visit_groups_merge. The शेष
+	 * Per-CPU storage for iterators used in visit_groups_merge. The default
 	 * storage is of size 2 to hold the CPU and any CPU event iterators.
 	 */
-	पूर्णांक				heap_size;
-	काष्ठा perf_event		**heap;
-	काष्ठा perf_event		*heap_शेष[2];
-पूर्ण;
+	int				heap_size;
+	struct perf_event		**heap;
+	struct perf_event		*heap_default[2];
+};
 
-काष्ठा perf_output_handle अणु
-	काष्ठा perf_event		*event;
-	काष्ठा perf_buffer		*rb;
-	अचिन्हित दीर्घ			wakeup;
-	अचिन्हित दीर्घ			size;
+struct perf_output_handle {
+	struct perf_event		*event;
+	struct perf_buffer		*rb;
+	unsigned long			wakeup;
+	unsigned long			size;
 	u64				aux_flags;
-	जोड़ अणु
-		व्योम			*addr;
-		अचिन्हित दीर्घ		head;
-	पूर्ण;
-	पूर्णांक				page;
-पूर्ण;
+	union {
+		void			*addr;
+		unsigned long		head;
+	};
+	int				page;
+};
 
-काष्ठा bpf_perf_event_data_kern अणु
+struct bpf_perf_event_data_kern {
 	bpf_user_pt_regs_t *regs;
-	काष्ठा perf_sample_data *data;
-	काष्ठा perf_event *event;
-पूर्ण;
+	struct perf_sample_data *data;
+	struct perf_event *event;
+};
 
-#अगर_घोषित CONFIG_CGROUP_PERF
+#ifdef CONFIG_CGROUP_PERF
 
 /*
- * perf_cgroup_info keeps track of समय_enabled क्रम a cgroup.
- * This is a per-cpu dynamically allocated data काष्ठाure.
+ * perf_cgroup_info keeps track of time_enabled for a cgroup.
+ * This is a per-cpu dynamically allocated data structure.
  */
-काष्ठा perf_cgroup_info अणु
-	u64				समय;
-	u64				बारtamp;
-पूर्ण;
+struct perf_cgroup_info {
+	u64				time;
+	u64				timestamp;
+};
 
-काष्ठा perf_cgroup अणु
-	काष्ठा cgroup_subsys_state	css;
-	काष्ठा perf_cgroup_info	__percpu *info;
-पूर्ण;
+struct perf_cgroup {
+	struct cgroup_subsys_state	css;
+	struct perf_cgroup_info	__percpu *info;
+};
 
 /*
- * Must ensure cgroup is pinned (css_get) beक्रमe calling
+ * Must ensure cgroup is pinned (css_get) before calling
  * this function. In other words, we cannot call this function
- * अगर there is no cgroup event क्रम the current CPU context.
+ * if there is no cgroup event for the current CPU context.
  */
-अटल अंतरभूत काष्ठा perf_cgroup *
-perf_cgroup_from_task(काष्ठा task_काष्ठा *task, काष्ठा perf_event_context *ctx)
-अणु
-	वापस container_of(task_css_check(task, perf_event_cgrp_id,
+static inline struct perf_cgroup *
+perf_cgroup_from_task(struct task_struct *task, struct perf_event_context *ctx)
+{
+	return container_of(task_css_check(task, perf_event_cgrp_id,
 					   ctx ? lockdep_is_held(&ctx->lock)
 					       : true),
-			    काष्ठा perf_cgroup, css);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_CGROUP_PERF */
+			    struct perf_cgroup, css);
+}
+#endif /* CONFIG_CGROUP_PERF */
 
-#अगर_घोषित CONFIG_PERF_EVENTS
+#ifdef CONFIG_PERF_EVENTS
 
-बाह्य व्योम *perf_aux_output_begin(काष्ठा perf_output_handle *handle,
-				   काष्ठा perf_event *event);
-बाह्य व्योम perf_aux_output_end(काष्ठा perf_output_handle *handle,
-				अचिन्हित दीर्घ size);
-बाह्य पूर्णांक perf_aux_output_skip(काष्ठा perf_output_handle *handle,
-				अचिन्हित दीर्घ size);
-बाह्य व्योम *perf_get_aux(काष्ठा perf_output_handle *handle);
-बाह्य व्योम perf_aux_output_flag(काष्ठा perf_output_handle *handle, u64 flags);
-बाह्य व्योम perf_event_itrace_started(काष्ठा perf_event *event);
+extern void *perf_aux_output_begin(struct perf_output_handle *handle,
+				   struct perf_event *event);
+extern void perf_aux_output_end(struct perf_output_handle *handle,
+				unsigned long size);
+extern int perf_aux_output_skip(struct perf_output_handle *handle,
+				unsigned long size);
+extern void *perf_get_aux(struct perf_output_handle *handle);
+extern void perf_aux_output_flag(struct perf_output_handle *handle, u64 flags);
+extern void perf_event_itrace_started(struct perf_event *event);
 
-बाह्य पूर्णांक perf_pmu_रेजिस्टर(काष्ठा pmu *pmu, स्थिर अक्षर *name, पूर्णांक type);
-बाह्य व्योम perf_pmu_unरेजिस्टर(काष्ठा pmu *pmu);
+extern int perf_pmu_register(struct pmu *pmu, const char *name, int type);
+extern void perf_pmu_unregister(struct pmu *pmu);
 
-बाह्य व्योम __perf_event_task_sched_in(काष्ठा task_काष्ठा *prev,
-				       काष्ठा task_काष्ठा *task);
-बाह्य व्योम __perf_event_task_sched_out(काष्ठा task_काष्ठा *prev,
-					काष्ठा task_काष्ठा *next);
-बाह्य पूर्णांक perf_event_init_task(काष्ठा task_काष्ठा *child, u64 clone_flags);
-बाह्य व्योम perf_event_निकास_task(काष्ठा task_काष्ठा *child);
-बाह्य व्योम perf_event_मुक्त_task(काष्ठा task_काष्ठा *task);
-बाह्य व्योम perf_event_delayed_put(काष्ठा task_काष्ठा *task);
-बाह्य काष्ठा file *perf_event_get(अचिन्हित पूर्णांक fd);
-बाह्य स्थिर काष्ठा perf_event *perf_get_event(काष्ठा file *file);
-बाह्य स्थिर काष्ठा perf_event_attr *perf_event_attrs(काष्ठा perf_event *event);
-बाह्य व्योम perf_event_prपूर्णांक_debug(व्योम);
-बाह्य व्योम perf_pmu_disable(काष्ठा pmu *pmu);
-बाह्य व्योम perf_pmu_enable(काष्ठा pmu *pmu);
-बाह्य व्योम perf_sched_cb_dec(काष्ठा pmu *pmu);
-बाह्य व्योम perf_sched_cb_inc(काष्ठा pmu *pmu);
-बाह्य पूर्णांक perf_event_task_disable(व्योम);
-बाह्य पूर्णांक perf_event_task_enable(व्योम);
+extern void __perf_event_task_sched_in(struct task_struct *prev,
+				       struct task_struct *task);
+extern void __perf_event_task_sched_out(struct task_struct *prev,
+					struct task_struct *next);
+extern int perf_event_init_task(struct task_struct *child, u64 clone_flags);
+extern void perf_event_exit_task(struct task_struct *child);
+extern void perf_event_free_task(struct task_struct *task);
+extern void perf_event_delayed_put(struct task_struct *task);
+extern struct file *perf_event_get(unsigned int fd);
+extern const struct perf_event *perf_get_event(struct file *file);
+extern const struct perf_event_attr *perf_event_attrs(struct perf_event *event);
+extern void perf_event_print_debug(void);
+extern void perf_pmu_disable(struct pmu *pmu);
+extern void perf_pmu_enable(struct pmu *pmu);
+extern void perf_sched_cb_dec(struct pmu *pmu);
+extern void perf_sched_cb_inc(struct pmu *pmu);
+extern int perf_event_task_disable(void);
+extern int perf_event_task_enable(void);
 
-बाह्य व्योम perf_pmu_resched(काष्ठा pmu *pmu);
+extern void perf_pmu_resched(struct pmu *pmu);
 
-बाह्य पूर्णांक perf_event_refresh(काष्ठा perf_event *event, पूर्णांक refresh);
-बाह्य व्योम perf_event_update_userpage(काष्ठा perf_event *event);
-बाह्य पूर्णांक perf_event_release_kernel(काष्ठा perf_event *event);
-बाह्य काष्ठा perf_event *
-perf_event_create_kernel_counter(काष्ठा perf_event_attr *attr,
-				पूर्णांक cpu,
-				काष्ठा task_काष्ठा *task,
+extern int perf_event_refresh(struct perf_event *event, int refresh);
+extern void perf_event_update_userpage(struct perf_event *event);
+extern int perf_event_release_kernel(struct perf_event *event);
+extern struct perf_event *
+perf_event_create_kernel_counter(struct perf_event_attr *attr,
+				int cpu,
+				struct task_struct *task,
 				perf_overflow_handler_t callback,
-				व्योम *context);
-बाह्य व्योम perf_pmu_migrate_context(काष्ठा pmu *pmu,
-				पूर्णांक src_cpu, पूर्णांक dst_cpu);
-पूर्णांक perf_event_पढ़ो_local(काष्ठा perf_event *event, u64 *value,
+				void *context);
+extern void perf_pmu_migrate_context(struct pmu *pmu,
+				int src_cpu, int dst_cpu);
+int perf_event_read_local(struct perf_event *event, u64 *value,
 			  u64 *enabled, u64 *running);
-बाह्य u64 perf_event_पढ़ो_value(काष्ठा perf_event *event,
+extern u64 perf_event_read_value(struct perf_event *event,
 				 u64 *enabled, u64 *running);
 
 
-काष्ठा perf_sample_data अणु
+struct perf_sample_data {
 	/*
 	 * Fields set by perf_sample_data_init(), group so as to
 	 * minimize the cachelines touched.
 	 */
 	u64				addr;
-	काष्ठा perf_raw_record		*raw;
-	काष्ठा perf_branch_stack	*br_stack;
+	struct perf_raw_record		*raw;
+	struct perf_branch_stack	*br_stack;
 	u64				period;
-	जोड़ perf_sample_weight	weight;
+	union perf_sample_weight	weight;
 	u64				txn;
-	जोड़  perf_mem_data_src	data_src;
+	union  perf_mem_data_src	data_src;
 
 	/*
-	 * The other fields, optionally अणुset,usedपूर्ण by
-	 * perf_अणुprepare,outputपूर्ण_sample().
+	 * The other fields, optionally {set,used} by
+	 * perf_{prepare,output}_sample().
 	 */
 	u64				type;
 	u64				ip;
-	काष्ठा अणु
+	struct {
 		u32	pid;
 		u32	tid;
-	पूर्ण				tid_entry;
-	u64				समय;
+	}				tid_entry;
+	u64				time;
 	u64				id;
 	u64				stream_id;
-	काष्ठा अणु
+	struct {
 		u32	cpu;
 		u32	reserved;
-	पूर्ण				cpu_entry;
-	काष्ठा perf_callchain_entry	*callchain;
+	}				cpu_entry;
+	struct perf_callchain_entry	*callchain;
 	u64				aux_size;
 
-	काष्ठा perf_regs		regs_user;
-	काष्ठा perf_regs		regs_पूर्णांकr;
+	struct perf_regs		regs_user;
+	struct perf_regs		regs_intr;
 	u64				stack_user_size;
 
 	u64				phys_addr;
 	u64				cgroup;
 	u64				data_page_size;
 	u64				code_page_size;
-पूर्ण ____cacheline_aligned;
+} ____cacheline_aligned;
 
-/* शेष value क्रम data source */
-#घोषणा PERF_MEM_NA (PERF_MEM_S(OP, NA)   |\
+/* default value for data source */
+#define PERF_MEM_NA (PERF_MEM_S(OP, NA)   |\
 		    PERF_MEM_S(LVL, NA)   |\
 		    PERF_MEM_S(SNOOP, NA) |\
 		    PERF_MEM_S(LOCK, NA)  |\
 		    PERF_MEM_S(TLB, NA))
 
-अटल अंतरभूत व्योम perf_sample_data_init(काष्ठा perf_sample_data *data,
+static inline void perf_sample_data_init(struct perf_sample_data *data,
 					 u64 addr, u64 period)
-अणु
-	/* reमुख्यing काष्ठा members initialized in perf_prepare_sample() */
+{
+	/* remaining struct members initialized in perf_prepare_sample() */
 	data->addr = addr;
-	data->raw  = शून्य;
-	data->br_stack = शून्य;
+	data->raw  = NULL;
+	data->br_stack = NULL;
 	data->period = period;
 	data->weight.full = 0;
 	data->data_src.val = PERF_MEM_NA;
 	data->txn = 0;
-पूर्ण
+}
 
-बाह्य व्योम perf_output_sample(काष्ठा perf_output_handle *handle,
-			       काष्ठा perf_event_header *header,
-			       काष्ठा perf_sample_data *data,
-			       काष्ठा perf_event *event);
-बाह्य व्योम perf_prepare_sample(काष्ठा perf_event_header *header,
-				काष्ठा perf_sample_data *data,
-				काष्ठा perf_event *event,
-				काष्ठा pt_regs *regs);
+extern void perf_output_sample(struct perf_output_handle *handle,
+			       struct perf_event_header *header,
+			       struct perf_sample_data *data,
+			       struct perf_event *event);
+extern void perf_prepare_sample(struct perf_event_header *header,
+				struct perf_sample_data *data,
+				struct perf_event *event,
+				struct pt_regs *regs);
 
-बाह्य पूर्णांक perf_event_overflow(काष्ठा perf_event *event,
-				 काष्ठा perf_sample_data *data,
-				 काष्ठा pt_regs *regs);
+extern int perf_event_overflow(struct perf_event *event,
+				 struct perf_sample_data *data,
+				 struct pt_regs *regs);
 
-बाह्य व्योम perf_event_output_क्रमward(काष्ठा perf_event *event,
-				     काष्ठा perf_sample_data *data,
-				     काष्ठा pt_regs *regs);
-बाह्य व्योम perf_event_output_backward(काष्ठा perf_event *event,
-				       काष्ठा perf_sample_data *data,
-				       काष्ठा pt_regs *regs);
-बाह्य पूर्णांक perf_event_output(काष्ठा perf_event *event,
-			     काष्ठा perf_sample_data *data,
-			     काष्ठा pt_regs *regs);
+extern void perf_event_output_forward(struct perf_event *event,
+				     struct perf_sample_data *data,
+				     struct pt_regs *regs);
+extern void perf_event_output_backward(struct perf_event *event,
+				       struct perf_sample_data *data,
+				       struct pt_regs *regs);
+extern int perf_event_output(struct perf_event *event,
+			     struct perf_sample_data *data,
+			     struct pt_regs *regs);
 
-अटल अंतरभूत bool
-is_शेष_overflow_handler(काष्ठा perf_event *event)
-अणु
-	अगर (likely(event->overflow_handler == perf_event_output_क्रमward))
-		वापस true;
-	अगर (unlikely(event->overflow_handler == perf_event_output_backward))
-		वापस true;
-	वापस false;
-पूर्ण
+static inline bool
+is_default_overflow_handler(struct perf_event *event)
+{
+	if (likely(event->overflow_handler == perf_event_output_forward))
+		return true;
+	if (unlikely(event->overflow_handler == perf_event_output_backward))
+		return true;
+	return false;
+}
 
-बाह्य व्योम
-perf_event_header__init_id(काष्ठा perf_event_header *header,
-			   काष्ठा perf_sample_data *data,
-			   काष्ठा perf_event *event);
-बाह्य व्योम
-perf_event__output_id_sample(काष्ठा perf_event *event,
-			     काष्ठा perf_output_handle *handle,
-			     काष्ठा perf_sample_data *sample);
+extern void
+perf_event_header__init_id(struct perf_event_header *header,
+			   struct perf_sample_data *data,
+			   struct perf_event *event);
+extern void
+perf_event__output_id_sample(struct perf_event *event,
+			     struct perf_output_handle *handle,
+			     struct perf_sample_data *sample);
 
-बाह्य व्योम
-perf_log_lost_samples(काष्ठा perf_event *event, u64 lost);
+extern void
+perf_log_lost_samples(struct perf_event *event, u64 lost);
 
-अटल अंतरभूत bool event_has_any_exclude_flag(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_event_attr *attr = &event->attr;
+static inline bool event_has_any_exclude_flag(struct perf_event *event)
+{
+	struct perf_event_attr *attr = &event->attr;
 
-	वापस attr->exclude_idle || attr->exclude_user ||
+	return attr->exclude_idle || attr->exclude_user ||
 	       attr->exclude_kernel || attr->exclude_hv ||
 	       attr->exclude_guest || attr->exclude_host;
-पूर्ण
+}
 
-अटल अंतरभूत bool is_sampling_event(काष्ठा perf_event *event)
-अणु
-	वापस event->attr.sample_period != 0;
-पूर्ण
+static inline bool is_sampling_event(struct perf_event *event)
+{
+	return event->attr.sample_period != 0;
+}
 
 /*
- * Return 1 क्रम a software event, 0 क्रम a hardware event
+ * Return 1 for a software event, 0 for a hardware event
  */
-अटल अंतरभूत पूर्णांक is_software_event(काष्ठा perf_event *event)
-अणु
-	वापस event->event_caps & PERF_EV_CAP_SOFTWARE;
-पूर्ण
+static inline int is_software_event(struct perf_event *event)
+{
+	return event->event_caps & PERF_EV_CAP_SOFTWARE;
+}
 
 /*
- * Return 1 क्रम event in sw context, 0 क्रम event in hw context
+ * Return 1 for event in sw context, 0 for event in hw context
  */
-अटल अंतरभूत पूर्णांक in_software_context(काष्ठा perf_event *event)
-अणु
-	वापस event->ctx->pmu->task_ctx_nr == perf_sw_context;
-पूर्ण
+static inline int in_software_context(struct perf_event *event)
+{
+	return event->ctx->pmu->task_ctx_nr == perf_sw_context;
+}
 
-अटल अंतरभूत पूर्णांक is_exclusive_pmu(काष्ठा pmu *pmu)
-अणु
-	वापस pmu->capabilities & PERF_PMU_CAP_EXCLUSIVE;
-पूर्ण
+static inline int is_exclusive_pmu(struct pmu *pmu)
+{
+	return pmu->capabilities & PERF_PMU_CAP_EXCLUSIVE;
+}
 
-बाह्य काष्ठा अटल_key perf_swevent_enabled[PERF_COUNT_SW_MAX];
+extern struct static_key perf_swevent_enabled[PERF_COUNT_SW_MAX];
 
-बाह्य व्योम ___perf_sw_event(u32, u64, काष्ठा pt_regs *, u64);
-बाह्य व्योम __perf_sw_event(u32, u64, काष्ठा pt_regs *, u64);
+extern void ___perf_sw_event(u32, u64, struct pt_regs *, u64);
+extern void __perf_sw_event(u32, u64, struct pt_regs *, u64);
 
-#अगर_अघोषित perf_arch_fetch_caller_regs
-अटल अंतरभूत व्योम perf_arch_fetch_caller_regs(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ip) अणु पूर्ण
-#पूर्ण_अगर
+#ifndef perf_arch_fetch_caller_regs
+static inline void perf_arch_fetch_caller_regs(struct pt_regs *regs, unsigned long ip) { }
+#endif
 
 /*
- * When generating a perf sample in-line, instead of from an पूर्णांकerrupt /
+ * When generating a perf sample in-line, instead of from an interrupt /
  * exception, we lack a pt_regs. This is typically used from software events
- * like: SW_CONTEXT_SWITCHES, SW_MIGRATIONS and the tie-in with tracepoपूर्णांकs.
+ * like: SW_CONTEXT_SWITCHES, SW_MIGRATIONS and the tie-in with tracepoints.
  *
- * We typically करोn't need a full set, but (क्रम x86) करो require:
- * - ip क्रम PERF_SAMPLE_IP
- * - cs क्रम user_mode() tests
- * - sp क्रम PERF_SAMPLE_CALLCHAIN
- * - eflags क्रम MISC bits and CALLCHAIN (see: perf_hw_regs())
+ * We typically don't need a full set, but (for x86) do require:
+ * - ip for PERF_SAMPLE_IP
+ * - cs for user_mode() tests
+ * - sp for PERF_SAMPLE_CALLCHAIN
+ * - eflags for MISC bits and CALLCHAIN (see: perf_hw_regs())
  *
- * NOTE: assumes @regs is otherwise alपढ़ोy 0 filled; this is important क्रम
+ * NOTE: assumes @regs is otherwise already 0 filled; this is important for
  * things like PERF_SAMPLE_REGS_INTR.
  */
-अटल अंतरभूत व्योम perf_fetch_caller_regs(काष्ठा pt_regs *regs)
-अणु
+static inline void perf_fetch_caller_regs(struct pt_regs *regs)
+{
 	perf_arch_fetch_caller_regs(regs, CALLER_ADDR0);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम
-perf_sw_event(u32 event_id, u64 nr, काष्ठा pt_regs *regs, u64 addr)
-अणु
-	अगर (अटल_key_false(&perf_swevent_enabled[event_id]))
+static __always_inline void
+perf_sw_event(u32 event_id, u64 nr, struct pt_regs *regs, u64 addr)
+{
+	if (static_key_false(&perf_swevent_enabled[event_id]))
 		__perf_sw_event(event_id, nr, regs, addr);
-पूर्ण
+}
 
-DECLARE_PER_CPU(काष्ठा pt_regs, __perf_regs[4]);
+DECLARE_PER_CPU(struct pt_regs, __perf_regs[4]);
 
 /*
- * 'Special' version क्रम the scheduler, it hard assumes no recursion,
+ * 'Special' version for the scheduler, it hard assumes no recursion,
  * which is guaranteed by us not actually scheduling inside other swevents
  * because those disable preemption.
  */
-अटल __always_अंतरभूत व्योम __perf_sw_event_sched(u32 event_id, u64 nr, u64 addr)
-अणु
-	काष्ठा pt_regs *regs = this_cpu_ptr(&__perf_regs[0]);
+static __always_inline void __perf_sw_event_sched(u32 event_id, u64 nr, u64 addr)
+{
+	struct pt_regs *regs = this_cpu_ptr(&__perf_regs[0]);
 
 	perf_fetch_caller_regs(regs);
 	___perf_sw_event(event_id, nr, regs, addr);
-पूर्ण
+}
 
-बाह्य काष्ठा अटल_key_false perf_sched_events;
+extern struct static_key_false perf_sched_events;
 
-अटल __always_अंतरभूत bool __perf_sw_enabled(पूर्णांक swevt)
-अणु
-	वापस अटल_key_false(&perf_swevent_enabled[swevt]);
-पूर्ण
+static __always_inline bool __perf_sw_enabled(int swevt)
+{
+	return static_key_false(&perf_swevent_enabled[swevt]);
+}
 
-अटल अंतरभूत व्योम perf_event_task_migrate(काष्ठा task_काष्ठा *task)
-अणु
-	अगर (__perf_sw_enabled(PERF_COUNT_SW_CPU_MIGRATIONS))
+static inline void perf_event_task_migrate(struct task_struct *task)
+{
+	if (__perf_sw_enabled(PERF_COUNT_SW_CPU_MIGRATIONS))
 		task->sched_migrated = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम perf_event_task_sched_in(काष्ठा task_काष्ठा *prev,
-					    काष्ठा task_काष्ठा *task)
-अणु
-	अगर (अटल_branch_unlikely(&perf_sched_events))
+static inline void perf_event_task_sched_in(struct task_struct *prev,
+					    struct task_struct *task)
+{
+	if (static_branch_unlikely(&perf_sched_events))
 		__perf_event_task_sched_in(prev, task);
 
-	अगर (__perf_sw_enabled(PERF_COUNT_SW_CPU_MIGRATIONS) &&
-	    task->sched_migrated) अणु
+	if (__perf_sw_enabled(PERF_COUNT_SW_CPU_MIGRATIONS) &&
+	    task->sched_migrated) {
 		__perf_sw_event_sched(PERF_COUNT_SW_CPU_MIGRATIONS, 1, 0);
 		task->sched_migrated = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम perf_event_task_sched_out(काष्ठा task_काष्ठा *prev,
-					     काष्ठा task_काष्ठा *next)
-अणु
-	अगर (__perf_sw_enabled(PERF_COUNT_SW_CONTEXT_SWITCHES))
+static inline void perf_event_task_sched_out(struct task_struct *prev,
+					     struct task_struct *next)
+{
+	if (__perf_sw_enabled(PERF_COUNT_SW_CONTEXT_SWITCHES))
 		__perf_sw_event_sched(PERF_COUNT_SW_CONTEXT_SWITCHES, 1, 0);
 
-#अगर_घोषित CONFIG_CGROUP_PERF
-	अगर (__perf_sw_enabled(PERF_COUNT_SW_CGROUP_SWITCHES) &&
-	    perf_cgroup_from_task(prev, शून्य) !=
-	    perf_cgroup_from_task(next, शून्य))
+#ifdef CONFIG_CGROUP_PERF
+	if (__perf_sw_enabled(PERF_COUNT_SW_CGROUP_SWITCHES) &&
+	    perf_cgroup_from_task(prev, NULL) !=
+	    perf_cgroup_from_task(next, NULL))
 		__perf_sw_event_sched(PERF_COUNT_SW_CGROUP_SWITCHES, 1, 0);
-#पूर्ण_अगर
+#endif
 
-	अगर (अटल_branch_unlikely(&perf_sched_events))
+	if (static_branch_unlikely(&perf_sched_events))
 		__perf_event_task_sched_out(prev, next);
-पूर्ण
+}
 
-बाह्य व्योम perf_event_mmap(काष्ठा vm_area_काष्ठा *vma);
+extern void perf_event_mmap(struct vm_area_struct *vma);
 
-बाह्य व्योम perf_event_ksymbol(u16 ksym_type, u64 addr, u32 len,
-			       bool unरेजिस्टर, स्थिर अक्षर *sym);
-बाह्य व्योम perf_event_bpf_event(काष्ठा bpf_prog *prog,
-				 क्रमागत perf_bpf_event_type type,
+extern void perf_event_ksymbol(u16 ksym_type, u64 addr, u32 len,
+			       bool unregister, const char *sym);
+extern void perf_event_bpf_event(struct bpf_prog *prog,
+				 enum perf_bpf_event_type type,
 				 u16 flags);
 
-बाह्य काष्ठा perf_guest_info_callbacks *perf_guest_cbs;
-बाह्य पूर्णांक perf_रेजिस्टर_guest_info_callbacks(काष्ठा perf_guest_info_callbacks *callbacks);
-बाह्य पूर्णांक perf_unरेजिस्टर_guest_info_callbacks(काष्ठा perf_guest_info_callbacks *callbacks);
+extern struct perf_guest_info_callbacks *perf_guest_cbs;
+extern int perf_register_guest_info_callbacks(struct perf_guest_info_callbacks *callbacks);
+extern int perf_unregister_guest_info_callbacks(struct perf_guest_info_callbacks *callbacks);
 
-बाह्य व्योम perf_event_exec(व्योम);
-बाह्य व्योम perf_event_comm(काष्ठा task_काष्ठा *tsk, bool exec);
-बाह्य व्योम perf_event_namespaces(काष्ठा task_काष्ठा *tsk);
-बाह्य व्योम perf_event_विभाजन(काष्ठा task_काष्ठा *tsk);
-बाह्य व्योम perf_event_text_poke(स्थिर व्योम *addr,
-				 स्थिर व्योम *old_bytes, माप_प्रकार old_len,
-				 स्थिर व्योम *new_bytes, माप_प्रकार new_len);
+extern void perf_event_exec(void);
+extern void perf_event_comm(struct task_struct *tsk, bool exec);
+extern void perf_event_namespaces(struct task_struct *tsk);
+extern void perf_event_fork(struct task_struct *tsk);
+extern void perf_event_text_poke(const void *addr,
+				 const void *old_bytes, size_t old_len,
+				 const void *new_bytes, size_t new_len);
 
 /* Callchains */
-DECLARE_PER_CPU(काष्ठा perf_callchain_entry, perf_callchain_entry);
+DECLARE_PER_CPU(struct perf_callchain_entry, perf_callchain_entry);
 
-बाह्य व्योम perf_callchain_user(काष्ठा perf_callchain_entry_ctx *entry, काष्ठा pt_regs *regs);
-बाह्य व्योम perf_callchain_kernel(काष्ठा perf_callchain_entry_ctx *entry, काष्ठा pt_regs *regs);
-बाह्य काष्ठा perf_callchain_entry *
-get_perf_callchain(काष्ठा pt_regs *regs, u32 init_nr, bool kernel, bool user,
+extern void perf_callchain_user(struct perf_callchain_entry_ctx *entry, struct pt_regs *regs);
+extern void perf_callchain_kernel(struct perf_callchain_entry_ctx *entry, struct pt_regs *regs);
+extern struct perf_callchain_entry *
+get_perf_callchain(struct pt_regs *regs, u32 init_nr, bool kernel, bool user,
 		   u32 max_stack, bool crosstask, bool add_mark);
-बाह्य काष्ठा perf_callchain_entry *perf_callchain(काष्ठा perf_event *event, काष्ठा pt_regs *regs);
-बाह्य पूर्णांक get_callchain_buffers(पूर्णांक max_stack);
-बाह्य व्योम put_callchain_buffers(व्योम);
-बाह्य काष्ठा perf_callchain_entry *get_callchain_entry(पूर्णांक *rctx);
-बाह्य व्योम put_callchain_entry(पूर्णांक rctx);
+extern struct perf_callchain_entry *perf_callchain(struct perf_event *event, struct pt_regs *regs);
+extern int get_callchain_buffers(int max_stack);
+extern void put_callchain_buffers(void);
+extern struct perf_callchain_entry *get_callchain_entry(int *rctx);
+extern void put_callchain_entry(int rctx);
 
-बाह्य पूर्णांक sysctl_perf_event_max_stack;
-बाह्य पूर्णांक sysctl_perf_event_max_contexts_per_stack;
+extern int sysctl_perf_event_max_stack;
+extern int sysctl_perf_event_max_contexts_per_stack;
 
-अटल अंतरभूत पूर्णांक perf_callchain_store_context(काष्ठा perf_callchain_entry_ctx *ctx, u64 ip)
-अणु
-	अगर (ctx->contexts < sysctl_perf_event_max_contexts_per_stack) अणु
-		काष्ठा perf_callchain_entry *entry = ctx->entry;
+static inline int perf_callchain_store_context(struct perf_callchain_entry_ctx *ctx, u64 ip)
+{
+	if (ctx->contexts < sysctl_perf_event_max_contexts_per_stack) {
+		struct perf_callchain_entry *entry = ctx->entry;
 		entry->ip[entry->nr++] = ip;
 		++ctx->contexts;
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		ctx->contexts_maxed = true;
-		वापस -1; /* no more room, stop walking the stack */
-	पूर्ण
-पूर्ण
+		return -1; /* no more room, stop walking the stack */
+	}
+}
 
-अटल अंतरभूत पूर्णांक perf_callchain_store(काष्ठा perf_callchain_entry_ctx *ctx, u64 ip)
-अणु
-	अगर (ctx->nr < ctx->max_stack && !ctx->contexts_maxed) अणु
-		काष्ठा perf_callchain_entry *entry = ctx->entry;
+static inline int perf_callchain_store(struct perf_callchain_entry_ctx *ctx, u64 ip)
+{
+	if (ctx->nr < ctx->max_stack && !ctx->contexts_maxed) {
+		struct perf_callchain_entry *entry = ctx->entry;
 		entry->ip[entry->nr++] = ip;
 		++ctx->nr;
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस -1; /* no more room, stop walking the stack */
-	पूर्ण
-पूर्ण
+		return 0;
+	} else {
+		return -1; /* no more room, stop walking the stack */
+	}
+}
 
-बाह्य पूर्णांक sysctl_perf_event_paranoid;
-बाह्य पूर्णांक sysctl_perf_event_mlock;
-बाह्य पूर्णांक sysctl_perf_event_sample_rate;
-बाह्य पूर्णांक sysctl_perf_cpu_समय_max_percent;
+extern int sysctl_perf_event_paranoid;
+extern int sysctl_perf_event_mlock;
+extern int sysctl_perf_event_sample_rate;
+extern int sysctl_perf_cpu_time_max_percent;
 
-बाह्य व्योम perf_sample_event_took(u64 sample_len_ns);
+extern void perf_sample_event_took(u64 sample_len_ns);
 
-पूर्णांक perf_proc_update_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos);
-पूर्णांक perf_cpu_समय_max_percent_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos);
-पूर्णांक perf_event_max_stack_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos);
+int perf_proc_update_handler(struct ctl_table *table, int write,
+		void *buffer, size_t *lenp, loff_t *ppos);
+int perf_cpu_time_max_percent_handler(struct ctl_table *table, int write,
+		void *buffer, size_t *lenp, loff_t *ppos);
+int perf_event_max_stack_handler(struct ctl_table *table, int write,
+		void *buffer, size_t *lenp, loff_t *ppos);
 
-/* Access to perf_event_खोलो(2) syscall. */
-#घोषणा PERF_SECURITY_OPEN		0
+/* Access to perf_event_open(2) syscall. */
+#define PERF_SECURITY_OPEN		0
 
-/* Finer grained perf_event_खोलो(2) access control. */
-#घोषणा PERF_SECURITY_CPU		1
-#घोषणा PERF_SECURITY_KERNEL		2
-#घोषणा PERF_SECURITY_TRACEPOINT	3
+/* Finer grained perf_event_open(2) access control. */
+#define PERF_SECURITY_CPU		1
+#define PERF_SECURITY_KERNEL		2
+#define PERF_SECURITY_TRACEPOINT	3
 
-अटल अंतरभूत पूर्णांक perf_is_paranoid(व्योम)
-अणु
-	वापस sysctl_perf_event_paranoid > -1;
-पूर्ण
+static inline int perf_is_paranoid(void)
+{
+	return sysctl_perf_event_paranoid > -1;
+}
 
-अटल अंतरभूत पूर्णांक perf_allow_kernel(काष्ठा perf_event_attr *attr)
-अणु
-	अगर (sysctl_perf_event_paranoid > 1 && !perfmon_capable())
-		वापस -EACCES;
+static inline int perf_allow_kernel(struct perf_event_attr *attr)
+{
+	if (sysctl_perf_event_paranoid > 1 && !perfmon_capable())
+		return -EACCES;
 
-	वापस security_perf_event_खोलो(attr, PERF_SECURITY_KERNEL);
-पूर्ण
+	return security_perf_event_open(attr, PERF_SECURITY_KERNEL);
+}
 
-अटल अंतरभूत पूर्णांक perf_allow_cpu(काष्ठा perf_event_attr *attr)
-अणु
-	अगर (sysctl_perf_event_paranoid > 0 && !perfmon_capable())
-		वापस -EACCES;
+static inline int perf_allow_cpu(struct perf_event_attr *attr)
+{
+	if (sysctl_perf_event_paranoid > 0 && !perfmon_capable())
+		return -EACCES;
 
-	वापस security_perf_event_खोलो(attr, PERF_SECURITY_CPU);
-पूर्ण
+	return security_perf_event_open(attr, PERF_SECURITY_CPU);
+}
 
-अटल अंतरभूत पूर्णांक perf_allow_tracepoपूर्णांक(काष्ठा perf_event_attr *attr)
-अणु
-	अगर (sysctl_perf_event_paranoid > -1 && !perfmon_capable())
-		वापस -EPERM;
+static inline int perf_allow_tracepoint(struct perf_event_attr *attr)
+{
+	if (sysctl_perf_event_paranoid > -1 && !perfmon_capable())
+		return -EPERM;
 
-	वापस security_perf_event_खोलो(attr, PERF_SECURITY_TRACEPOINT);
-पूर्ण
+	return security_perf_event_open(attr, PERF_SECURITY_TRACEPOINT);
+}
 
-बाह्य व्योम perf_event_init(व्योम);
-बाह्य व्योम perf_tp_event(u16 event_type, u64 count, व्योम *record,
-			  पूर्णांक entry_size, काष्ठा pt_regs *regs,
-			  काष्ठा hlist_head *head, पूर्णांक rctx,
-			  काष्ठा task_काष्ठा *task);
-बाह्य व्योम perf_bp_event(काष्ठा perf_event *event, व्योम *data);
+extern void perf_event_init(void);
+extern void perf_tp_event(u16 event_type, u64 count, void *record,
+			  int entry_size, struct pt_regs *regs,
+			  struct hlist_head *head, int rctx,
+			  struct task_struct *task);
+extern void perf_bp_event(struct perf_event *event, void *data);
 
-#अगर_अघोषित perf_misc_flags
+#ifndef perf_misc_flags
 # define perf_misc_flags(regs) \
 		(user_mode(regs) ? PERF_RECORD_MISC_USER : PERF_RECORD_MISC_KERNEL)
-# define perf_inकाष्ठाion_poपूर्णांकer(regs)	inकाष्ठाion_poपूर्णांकer(regs)
-#पूर्ण_अगर
-#अगर_अघोषित perf_arch_bpf_user_pt_regs
+# define perf_instruction_pointer(regs)	instruction_pointer(regs)
+#endif
+#ifndef perf_arch_bpf_user_pt_regs
 # define perf_arch_bpf_user_pt_regs(regs) regs
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत bool has_branch_stack(काष्ठा perf_event *event)
-अणु
-	वापस event->attr.sample_type & PERF_SAMPLE_BRANCH_STACK;
-पूर्ण
+static inline bool has_branch_stack(struct perf_event *event)
+{
+	return event->attr.sample_type & PERF_SAMPLE_BRANCH_STACK;
+}
 
-अटल अंतरभूत bool needs_branch_stack(काष्ठा perf_event *event)
-अणु
-	वापस event->attr.branch_sample_type != 0;
-पूर्ण
+static inline bool needs_branch_stack(struct perf_event *event)
+{
+	return event->attr.branch_sample_type != 0;
+}
 
-अटल अंतरभूत bool has_aux(काष्ठा perf_event *event)
-अणु
-	वापस event->pmu->setup_aux;
-पूर्ण
+static inline bool has_aux(struct perf_event *event)
+{
+	return event->pmu->setup_aux;
+}
 
-अटल अंतरभूत bool is_ग_लिखो_backward(काष्ठा perf_event *event)
-अणु
-	वापस !!event->attr.ग_लिखो_backward;
-पूर्ण
+static inline bool is_write_backward(struct perf_event *event)
+{
+	return !!event->attr.write_backward;
+}
 
-अटल अंतरभूत bool has_addr_filter(काष्ठा perf_event *event)
-अणु
-	वापस event->pmu->nr_addr_filters;
-पूर्ण
+static inline bool has_addr_filter(struct perf_event *event)
+{
+	return event->pmu->nr_addr_filters;
+}
 
 /*
  * An inherited event uses parent's filters
  */
-अटल अंतरभूत काष्ठा perf_addr_filters_head *
-perf_event_addr_filters(काष्ठा perf_event *event)
-अणु
-	काष्ठा perf_addr_filters_head *अगरh = &event->addr_filters;
+static inline struct perf_addr_filters_head *
+perf_event_addr_filters(struct perf_event *event)
+{
+	struct perf_addr_filters_head *ifh = &event->addr_filters;
 
-	अगर (event->parent)
-		अगरh = &event->parent->addr_filters;
+	if (event->parent)
+		ifh = &event->parent->addr_filters;
 
-	वापस अगरh;
-पूर्ण
+	return ifh;
+}
 
-बाह्य व्योम perf_event_addr_filters_sync(काष्ठा perf_event *event);
+extern void perf_event_addr_filters_sync(struct perf_event *event);
 
-बाह्य पूर्णांक perf_output_begin(काष्ठा perf_output_handle *handle,
-			     काष्ठा perf_sample_data *data,
-			     काष्ठा perf_event *event, अचिन्हित पूर्णांक size);
-बाह्य पूर्णांक perf_output_begin_क्रमward(काष्ठा perf_output_handle *handle,
-				     काष्ठा perf_sample_data *data,
-				     काष्ठा perf_event *event,
-				     अचिन्हित पूर्णांक size);
-बाह्य पूर्णांक perf_output_begin_backward(काष्ठा perf_output_handle *handle,
-				      काष्ठा perf_sample_data *data,
-				      काष्ठा perf_event *event,
-				      अचिन्हित पूर्णांक size);
+extern int perf_output_begin(struct perf_output_handle *handle,
+			     struct perf_sample_data *data,
+			     struct perf_event *event, unsigned int size);
+extern int perf_output_begin_forward(struct perf_output_handle *handle,
+				     struct perf_sample_data *data,
+				     struct perf_event *event,
+				     unsigned int size);
+extern int perf_output_begin_backward(struct perf_output_handle *handle,
+				      struct perf_sample_data *data,
+				      struct perf_event *event,
+				      unsigned int size);
 
-बाह्य व्योम perf_output_end(काष्ठा perf_output_handle *handle);
-बाह्य अचिन्हित पूर्णांक perf_output_copy(काष्ठा perf_output_handle *handle,
-			     स्थिर व्योम *buf, अचिन्हित पूर्णांक len);
-बाह्य अचिन्हित पूर्णांक perf_output_skip(काष्ठा perf_output_handle *handle,
-				     अचिन्हित पूर्णांक len);
-बाह्य दीर्घ perf_output_copy_aux(काष्ठा perf_output_handle *aux_handle,
-				 काष्ठा perf_output_handle *handle,
-				 अचिन्हित दीर्घ from, अचिन्हित दीर्घ to);
-बाह्य पूर्णांक perf_swevent_get_recursion_context(व्योम);
-बाह्य व्योम perf_swevent_put_recursion_context(पूर्णांक rctx);
-बाह्य u64 perf_swevent_set_period(काष्ठा perf_event *event);
-बाह्य व्योम perf_event_enable(काष्ठा perf_event *event);
-बाह्य व्योम perf_event_disable(काष्ठा perf_event *event);
-बाह्य व्योम perf_event_disable_local(काष्ठा perf_event *event);
-बाह्य व्योम perf_event_disable_inatomic(काष्ठा perf_event *event);
-बाह्य व्योम perf_event_task_tick(व्योम);
-बाह्य पूर्णांक perf_event_account_पूर्णांकerrupt(काष्ठा perf_event *event);
-बाह्य पूर्णांक perf_event_period(काष्ठा perf_event *event, u64 value);
-बाह्य u64 perf_event_छोड़ो(काष्ठा perf_event *event, bool reset);
-#अन्यथा /* !CONFIG_PERF_EVENTS: */
-अटल अंतरभूत व्योम *
-perf_aux_output_begin(काष्ठा perf_output_handle *handle,
-		      काष्ठा perf_event *event)				अणु वापस शून्य; पूर्ण
-अटल अंतरभूत व्योम
-perf_aux_output_end(काष्ठा perf_output_handle *handle, अचिन्हित दीर्घ size)
-									अणु पूर्ण
-अटल अंतरभूत पूर्णांक
-perf_aux_output_skip(काष्ठा perf_output_handle *handle,
-		     अचिन्हित दीर्घ size)				अणु वापस -EINVAL; पूर्ण
-अटल अंतरभूत व्योम *
-perf_get_aux(काष्ठा perf_output_handle *handle)				अणु वापस शून्य; पूर्ण
-अटल अंतरभूत व्योम
-perf_event_task_migrate(काष्ठा task_काष्ठा *task)			अणु पूर्ण
-अटल अंतरभूत व्योम
-perf_event_task_sched_in(काष्ठा task_काष्ठा *prev,
-			 काष्ठा task_काष्ठा *task)			अणु पूर्ण
-अटल अंतरभूत व्योम
-perf_event_task_sched_out(काष्ठा task_काष्ठा *prev,
-			  काष्ठा task_काष्ठा *next)			अणु पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_init_task(काष्ठा task_काष्ठा *child,
-				       u64 clone_flags)			अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम perf_event_निकास_task(काष्ठा task_काष्ठा *child)	अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_मुक्त_task(काष्ठा task_काष्ठा *task)	अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_delayed_put(काष्ठा task_काष्ठा *task)	अणु पूर्ण
-अटल अंतरभूत काष्ठा file *perf_event_get(अचिन्हित पूर्णांक fd)	अणु वापस ERR_PTR(-EINVAL); पूर्ण
-अटल अंतरभूत स्थिर काष्ठा perf_event *perf_get_event(काष्ठा file *file)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-अटल अंतरभूत स्थिर काष्ठा perf_event_attr *perf_event_attrs(काष्ठा perf_event *event)
-अणु
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_पढ़ो_local(काष्ठा perf_event *event, u64 *value,
+extern void perf_output_end(struct perf_output_handle *handle);
+extern unsigned int perf_output_copy(struct perf_output_handle *handle,
+			     const void *buf, unsigned int len);
+extern unsigned int perf_output_skip(struct perf_output_handle *handle,
+				     unsigned int len);
+extern long perf_output_copy_aux(struct perf_output_handle *aux_handle,
+				 struct perf_output_handle *handle,
+				 unsigned long from, unsigned long to);
+extern int perf_swevent_get_recursion_context(void);
+extern void perf_swevent_put_recursion_context(int rctx);
+extern u64 perf_swevent_set_period(struct perf_event *event);
+extern void perf_event_enable(struct perf_event *event);
+extern void perf_event_disable(struct perf_event *event);
+extern void perf_event_disable_local(struct perf_event *event);
+extern void perf_event_disable_inatomic(struct perf_event *event);
+extern void perf_event_task_tick(void);
+extern int perf_event_account_interrupt(struct perf_event *event);
+extern int perf_event_period(struct perf_event *event, u64 value);
+extern u64 perf_event_pause(struct perf_event *event, bool reset);
+#else /* !CONFIG_PERF_EVENTS: */
+static inline void *
+perf_aux_output_begin(struct perf_output_handle *handle,
+		      struct perf_event *event)				{ return NULL; }
+static inline void
+perf_aux_output_end(struct perf_output_handle *handle, unsigned long size)
+									{ }
+static inline int
+perf_aux_output_skip(struct perf_output_handle *handle,
+		     unsigned long size)				{ return -EINVAL; }
+static inline void *
+perf_get_aux(struct perf_output_handle *handle)				{ return NULL; }
+static inline void
+perf_event_task_migrate(struct task_struct *task)			{ }
+static inline void
+perf_event_task_sched_in(struct task_struct *prev,
+			 struct task_struct *task)			{ }
+static inline void
+perf_event_task_sched_out(struct task_struct *prev,
+			  struct task_struct *next)			{ }
+static inline int perf_event_init_task(struct task_struct *child,
+				       u64 clone_flags)			{ return 0; }
+static inline void perf_event_exit_task(struct task_struct *child)	{ }
+static inline void perf_event_free_task(struct task_struct *task)	{ }
+static inline void perf_event_delayed_put(struct task_struct *task)	{ }
+static inline struct file *perf_event_get(unsigned int fd)	{ return ERR_PTR(-EINVAL); }
+static inline const struct perf_event *perf_get_event(struct file *file)
+{
+	return ERR_PTR(-EINVAL);
+}
+static inline const struct perf_event_attr *perf_event_attrs(struct perf_event *event)
+{
+	return ERR_PTR(-EINVAL);
+}
+static inline int perf_event_read_local(struct perf_event *event, u64 *value,
 					u64 *enabled, u64 *running)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत व्योम perf_event_prपूर्णांक_debug(व्योम)				अणु पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_task_disable(व्योम)				अणु वापस -EINVAL; पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_task_enable(व्योम)				अणु वापस -EINVAL; पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_refresh(काष्ठा perf_event *event, पूर्णांक refresh)
-अणु
-	वापस -EINVAL;
-पूर्ण
+{
+	return -EINVAL;
+}
+static inline void perf_event_print_debug(void)				{ }
+static inline int perf_event_task_disable(void)				{ return -EINVAL; }
+static inline int perf_event_task_enable(void)				{ return -EINVAL; }
+static inline int perf_event_refresh(struct perf_event *event, int refresh)
+{
+	return -EINVAL;
+}
 
-अटल अंतरभूत व्योम
-perf_sw_event(u32 event_id, u64 nr, काष्ठा pt_regs *regs, u64 addr)	अणु पूर्ण
-अटल अंतरभूत व्योम
-perf_bp_event(काष्ठा perf_event *event, व्योम *data)			अणु पूर्ण
+static inline void
+perf_sw_event(u32 event_id, u64 nr, struct pt_regs *regs, u64 addr)	{ }
+static inline void
+perf_bp_event(struct perf_event *event, void *data)			{ }
 
-अटल अंतरभूत पूर्णांक perf_रेजिस्टर_guest_info_callbacks
-(काष्ठा perf_guest_info_callbacks *callbacks)				अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक perf_unरेजिस्टर_guest_info_callbacks
-(काष्ठा perf_guest_info_callbacks *callbacks)				अणु वापस 0; पूर्ण
+static inline int perf_register_guest_info_callbacks
+(struct perf_guest_info_callbacks *callbacks)				{ return 0; }
+static inline int perf_unregister_guest_info_callbacks
+(struct perf_guest_info_callbacks *callbacks)				{ return 0; }
 
-अटल अंतरभूत व्योम perf_event_mmap(काष्ठा vm_area_काष्ठा *vma)		अणु पूर्ण
+static inline void perf_event_mmap(struct vm_area_struct *vma)		{ }
 
-प्रकार पूर्णांक (perf_ksymbol_get_name_f)(अक्षर *name, पूर्णांक name_len, व्योम *data);
-अटल अंतरभूत व्योम perf_event_ksymbol(u16 ksym_type, u64 addr, u32 len,
-				      bool unरेजिस्टर, स्थिर अक्षर *sym)	अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_bpf_event(काष्ठा bpf_prog *prog,
-					क्रमागत perf_bpf_event_type type,
-					u16 flags)			अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_exec(व्योम)				अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_comm(काष्ठा task_काष्ठा *tsk, bool exec)	अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_namespaces(काष्ठा task_काष्ठा *tsk)	अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_विभाजन(काष्ठा task_काष्ठा *tsk)		अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_text_poke(स्थिर व्योम *addr,
-					स्थिर व्योम *old_bytes,
-					माप_प्रकार old_len,
-					स्थिर व्योम *new_bytes,
-					माप_प्रकार new_len)			अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_init(व्योम)				अणु पूर्ण
-अटल अंतरभूत पूर्णांक  perf_swevent_get_recursion_context(व्योम)		अणु वापस -1; पूर्ण
-अटल अंतरभूत व्योम perf_swevent_put_recursion_context(पूर्णांक rctx)		अणु पूर्ण
-अटल अंतरभूत u64 perf_swevent_set_period(काष्ठा perf_event *event)	अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम perf_event_enable(काष्ठा perf_event *event)		अणु पूर्ण
-अटल अंतरभूत व्योम perf_event_disable(काष्ठा perf_event *event)		अणु पूर्ण
-अटल अंतरभूत पूर्णांक __perf_event_disable(व्योम *info)			अणु वापस -1; पूर्ण
-अटल अंतरभूत व्योम perf_event_task_tick(व्योम)				अणु पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_release_kernel(काष्ठा perf_event *event)	अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक perf_event_period(काष्ठा perf_event *event, u64 value)
-अणु
-	वापस -EINVAL;
-पूर्ण
-अटल अंतरभूत u64 perf_event_छोड़ो(काष्ठा perf_event *event, bool reset)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+typedef int (perf_ksymbol_get_name_f)(char *name, int name_len, void *data);
+static inline void perf_event_ksymbol(u16 ksym_type, u64 addr, u32 len,
+				      bool unregister, const char *sym)	{ }
+static inline void perf_event_bpf_event(struct bpf_prog *prog,
+					enum perf_bpf_event_type type,
+					u16 flags)			{ }
+static inline void perf_event_exec(void)				{ }
+static inline void perf_event_comm(struct task_struct *tsk, bool exec)	{ }
+static inline void perf_event_namespaces(struct task_struct *tsk)	{ }
+static inline void perf_event_fork(struct task_struct *tsk)		{ }
+static inline void perf_event_text_poke(const void *addr,
+					const void *old_bytes,
+					size_t old_len,
+					const void *new_bytes,
+					size_t new_len)			{ }
+static inline void perf_event_init(void)				{ }
+static inline int  perf_swevent_get_recursion_context(void)		{ return -1; }
+static inline void perf_swevent_put_recursion_context(int rctx)		{ }
+static inline u64 perf_swevent_set_period(struct perf_event *event)	{ return 0; }
+static inline void perf_event_enable(struct perf_event *event)		{ }
+static inline void perf_event_disable(struct perf_event *event)		{ }
+static inline int __perf_event_disable(void *info)			{ return -1; }
+static inline void perf_event_task_tick(void)				{ }
+static inline int perf_event_release_kernel(struct perf_event *event)	{ return 0; }
+static inline int perf_event_period(struct perf_event *event, u64 value)
+{
+	return -EINVAL;
+}
+static inline u64 perf_event_pause(struct perf_event *event, bool reset)
+{
+	return 0;
+}
+#endif
 
-#अगर defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_INTEL)
-बाह्य व्योम perf_restore_debug_store(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम perf_restore_debug_store(व्योम)			अणु पूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_INTEL)
+extern void perf_restore_debug_store(void);
+#else
+static inline void perf_restore_debug_store(void)			{ }
+#endif
 
-अटल __always_अंतरभूत bool perf_raw_frag_last(स्थिर काष्ठा perf_raw_frag *frag)
-अणु
-	वापस frag->pad < माप(u64);
-पूर्ण
+static __always_inline bool perf_raw_frag_last(const struct perf_raw_frag *frag)
+{
+	return frag->pad < sizeof(u64);
+}
 
-#घोषणा perf_output_put(handle, x) perf_output_copy((handle), &(x), माप(x))
+#define perf_output_put(handle, x) perf_output_copy((handle), &(x), sizeof(x))
 
-काष्ठा perf_pmu_events_attr अणु
-	काष्ठा device_attribute attr;
+struct perf_pmu_events_attr {
+	struct device_attribute attr;
 	u64 id;
-	स्थिर अक्षर *event_str;
-पूर्ण;
+	const char *event_str;
+};
 
-काष्ठा perf_pmu_events_ht_attr अणु
-	काष्ठा device_attribute			attr;
+struct perf_pmu_events_ht_attr {
+	struct device_attribute			attr;
 	u64					id;
-	स्थिर अक्षर				*event_str_ht;
-	स्थिर अक्षर				*event_str_noht;
-पूर्ण;
+	const char				*event_str_ht;
+	const char				*event_str_noht;
+};
 
-काष्ठा perf_pmu_events_hybrid_attr अणु
-	काष्ठा device_attribute			attr;
+struct perf_pmu_events_hybrid_attr {
+	struct device_attribute			attr;
 	u64					id;
-	स्थिर अक्षर				*event_str;
+	const char				*event_str;
 	u64					pmu_type;
-पूर्ण;
+};
 
-काष्ठा perf_pmu_क्रमmat_hybrid_attr अणु
-	काष्ठा device_attribute			attr;
+struct perf_pmu_format_hybrid_attr {
+	struct device_attribute			attr;
 	u64					pmu_type;
-पूर्ण;
+};
 
-sमाप_प्रकार perf_event_sysfs_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *page);
+ssize_t perf_event_sysfs_show(struct device *dev, struct device_attribute *attr,
+			      char *page);
 
-#घोषणा PMU_EVENT_ATTR(_name, _var, _id, _show)				\
-अटल काष्ठा perf_pmu_events_attr _var = अणु				\
-	.attr = __ATTR(_name, 0444, _show, शून्य),			\
+#define PMU_EVENT_ATTR(_name, _var, _id, _show)				\
+static struct perf_pmu_events_attr _var = {				\
+	.attr = __ATTR(_name, 0444, _show, NULL),			\
 	.id   =  _id,							\
-पूर्ण;
+};
 
-#घोषणा PMU_EVENT_ATTR_STRING(_name, _var, _str)			    \
-अटल काष्ठा perf_pmu_events_attr _var = अणु				    \
-	.attr		= __ATTR(_name, 0444, perf_event_sysfs_show, शून्य), \
+#define PMU_EVENT_ATTR_STRING(_name, _var, _str)			    \
+static struct perf_pmu_events_attr _var = {				    \
+	.attr		= __ATTR(_name, 0444, perf_event_sysfs_show, NULL), \
 	.id		= 0,						    \
 	.event_str	= _str,						    \
-पूर्ण;
+};
 
-#घोषणा PMU_FORMAT_ATTR(_name, _क्रमmat)					\
-अटल sमाप_प्रकार								\
-_name##_show(काष्ठा device *dev,					\
-			       काष्ठा device_attribute *attr,		\
-			       अक्षर *page)				\
-अणु									\
-	BUILD_BUG_ON(माप(_क्रमmat) >= PAGE_SIZE);			\
-	वापस प्र_लिखो(page, _क्रमmat "\n");				\
-पूर्ण									\
+#define PMU_FORMAT_ATTR(_name, _format)					\
+static ssize_t								\
+_name##_show(struct device *dev,					\
+			       struct device_attribute *attr,		\
+			       char *page)				\
+{									\
+	BUILD_BUG_ON(sizeof(_format) >= PAGE_SIZE);			\
+	return sprintf(page, _format "\n");				\
+}									\
 									\
-अटल काष्ठा device_attribute क्रमmat_attr_##_name = __ATTR_RO(_name)
+static struct device_attribute format_attr_##_name = __ATTR_RO(_name)
 
-/* Perक्रमmance counter hotplug functions */
-#अगर_घोषित CONFIG_PERF_EVENTS
-पूर्णांक perf_event_init_cpu(अचिन्हित पूर्णांक cpu);
-पूर्णांक perf_event_निकास_cpu(अचिन्हित पूर्णांक cpu);
-#अन्यथा
-#घोषणा perf_event_init_cpu	शून्य
-#घोषणा perf_event_निकास_cpu	शून्य
-#पूर्ण_अगर
+/* Performance counter hotplug functions */
+#ifdef CONFIG_PERF_EVENTS
+int perf_event_init_cpu(unsigned int cpu);
+int perf_event_exit_cpu(unsigned int cpu);
+#else
+#define perf_event_init_cpu	NULL
+#define perf_event_exit_cpu	NULL
+#endif
 
-बाह्य व्योम __weak arch_perf_update_userpage(काष्ठा perf_event *event,
-					     काष्ठा perf_event_mmap_page *userpg,
+extern void __weak arch_perf_update_userpage(struct perf_event *event,
+					     struct perf_event_mmap_page *userpg,
 					     u64 now);
 
-#अगर_घोषित CONFIG_MMU
-बाह्य __weak u64 arch_perf_get_page_size(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
-#पूर्ण_अगर
+#ifdef CONFIG_MMU
+extern __weak u64 arch_perf_get_page_size(struct mm_struct *mm, unsigned long addr);
+#endif
 
-#पूर्ण_अगर /* _LINUX_PERF_EVENT_H */
+#endif /* _LINUX_PERF_EVENT_H */

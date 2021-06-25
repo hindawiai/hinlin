@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
-#अगर_अघोषित _ROCKCHIP_DRM_FBDEV_H
-#घोषणा _ROCKCHIP_DRM_FBDEV_H
+#ifndef _ROCKCHIP_DRM_FBDEV_H
+#define _ROCKCHIP_DRM_FBDEV_H
 
-#अगर_घोषित CONFIG_DRM_FBDEV_EMULATION
-पूर्णांक rockchip_drm_fbdev_init(काष्ठा drm_device *dev);
-व्योम rockchip_drm_fbdev_fini(काष्ठा drm_device *dev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक rockchip_drm_fbdev_init(काष्ठा drm_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_DRM_FBDEV_EMULATION
+int rockchip_drm_fbdev_init(struct drm_device *dev);
+void rockchip_drm_fbdev_fini(struct drm_device *dev);
+#else
+static inline int rockchip_drm_fbdev_init(struct drm_device *dev)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम rockchip_drm_fbdev_fini(काष्ठा drm_device *dev)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void rockchip_drm_fbdev_fini(struct drm_device *dev)
+{
+}
+#endif
 
-#पूर्ण_अगर /* _ROCKCHIP_DRM_FBDEV_H */
+#endif /* _ROCKCHIP_DRM_FBDEV_H */

@@ -1,56 +1,55 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 or BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause
 
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/net.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/highस्मृति.स>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/net.h>
+#include <linux/scatterlist.h>
+#include <linux/highmem.h>
 
-#समावेश <rdma/iw_cm.h>
-#समावेश <rdma/ib_verbs.h>
+#include <rdma/iw_cm.h>
+#include <rdma/ib_verbs.h>
 
-#समावेश "siw.h"
-#समावेश "siw_verbs.h"
-#समावेश "siw_mem.h"
+#include "siw.h"
+#include "siw_verbs.h"
+#include "siw_mem.h"
 
 /*
  * siw_rx_umem()
  *
- * Receive data of @len पूर्णांकo target referenced by @dest_addr.
+ * Receive data of @len into target referenced by @dest_addr.
  *
  * @srx:	Receive Context
  * @umem:	siw representation of target memory
- * @dest_addr:	user भव address
+ * @dest_addr:	user virtual address
  * @len:	number of bytes to place
  */
-अटल पूर्णांक siw_rx_umem(काष्ठा siw_rx_stream *srx, काष्ठा siw_umem *umem,
-		       u64 dest_addr, पूर्णांक len)
-अणु
-	पूर्णांक copied = 0;
+static int siw_rx_umem(struct siw_rx_stream *srx, struct siw_umem *umem,
+		       u64 dest_addr, int len)
+{
+	int copied = 0;
 
-	जबतक (len) अणु
-		काष्ठा page *p;
-		पूर्णांक pg_off, bytes, rv;
-		व्योम *dest;
+	while (len) {
+		struct page *p;
+		int pg_off, bytes, rv;
+		void *dest;
 
 		p = siw_get_upage(umem, dest_addr);
-		अगर (unlikely(!p)) अणु
+		if (unlikely(!p)) {
 			pr_warn("siw: %s: [QP %u]: bogus addr: %pK, %pK\n",
 				__func__, qp_id(rx_qp(srx)),
-				(व्योम *)(uपूर्णांकptr_t)dest_addr,
-				(व्योम *)(uपूर्णांकptr_t)umem->fp_addr);
-			/* siw पूर्णांकernal error */
+				(void *)(uintptr_t)dest_addr,
+				(void *)(uintptr_t)umem->fp_addr);
+			/* siw internal error */
 			srx->skb_copied += copied;
 			srx->skb_new -= copied;
 
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 		pg_off = dest_addr & ~PAGE_MASK;
-		bytes = min(len, (पूर्णांक)PAGE_SIZE - pg_off);
+		bytes = min(len, (int)PAGE_SIZE - pg_off);
 
 		siw_dbg_qp(rx_qp(srx), "page %pK, bytes=%u\n", p, bytes);
 
@@ -58,7 +57,7 @@
 		rv = skb_copy_bits(srx->skb, srx->skb_offset, dest + pg_off,
 				   bytes);
 
-		अगर (unlikely(rv)) अणु
+		if (unlikely(rv)) {
 			kunmap_atomic(dest);
 			srx->skb_copied += copied;
 			srx->skb_new -= copied;
@@ -66,294 +65,294 @@
 			pr_warn("siw: [QP %u]: %s, len %d, page %p, rv %d\n",
 				qp_id(rx_qp(srx)), __func__, len, p, rv);
 
-			वापस -EFAULT;
-		पूर्ण
-		अगर (srx->mpa_crc_hd) अणु
-			अगर (rdma_is_kernel_res(&rx_qp(srx)->base_qp.res)) अणु
+			return -EFAULT;
+		}
+		if (srx->mpa_crc_hd) {
+			if (rdma_is_kernel_res(&rx_qp(srx)->base_qp.res)) {
 				crypto_shash_update(srx->mpa_crc_hd,
 					(u8 *)(dest + pg_off), bytes);
 				kunmap_atomic(dest);
-			पूर्ण अन्यथा अणु
+			} else {
 				kunmap_atomic(dest);
 				/*
 				 * Do CRC on original, not target buffer.
 				 * Some user land applications may
-				 * concurrently ग_लिखो the target buffer,
+				 * concurrently write the target buffer,
 				 * which would yield a broken CRC.
 				 * Walking the skb twice is very ineffcient.
-				 * Folding the CRC पूर्णांकo skb_copy_bits()
+				 * Folding the CRC into skb_copy_bits()
 				 * would be much better, but is currently
 				 * not supported.
 				 */
 				siw_crc_skb(srx, bytes);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			kunmap_atomic(dest);
-		पूर्ण
+		}
 		srx->skb_offset += bytes;
 		copied += bytes;
 		len -= bytes;
 		dest_addr += bytes;
 		pg_off = 0;
-	पूर्ण
+	}
 	srx->skb_copied += copied;
 	srx->skb_new -= copied;
 
-	वापस copied;
-पूर्ण
+	return copied;
+}
 
-अटल पूर्णांक siw_rx_kva(काष्ठा siw_rx_stream *srx, व्योम *kva, पूर्णांक len)
-अणु
-	पूर्णांक rv;
+static int siw_rx_kva(struct siw_rx_stream *srx, void *kva, int len)
+{
+	int rv;
 
 	siw_dbg_qp(rx_qp(srx), "kva: 0x%pK, len: %u\n", kva, len);
 
 	rv = skb_copy_bits(srx->skb, srx->skb_offset, kva, len);
-	अगर (unlikely(rv)) अणु
+	if (unlikely(rv)) {
 		pr_warn("siw: [QP %u]: %s, len %d, kva 0x%pK, rv %d\n",
 			qp_id(rx_qp(srx)), __func__, len, kva, rv);
 
-		वापस rv;
-	पूर्ण
-	अगर (srx->mpa_crc_hd)
+		return rv;
+	}
+	if (srx->mpa_crc_hd)
 		crypto_shash_update(srx->mpa_crc_hd, (u8 *)kva, len);
 
 	srx->skb_offset += len;
 	srx->skb_copied += len;
 	srx->skb_new -= len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक siw_rx_pbl(काष्ठा siw_rx_stream *srx, पूर्णांक *pbl_idx,
-		      काष्ठा siw_mem *mem, u64 addr, पूर्णांक len)
-अणु
-	काष्ठा siw_pbl *pbl = mem->pbl;
+static int siw_rx_pbl(struct siw_rx_stream *srx, int *pbl_idx,
+		      struct siw_mem *mem, u64 addr, int len)
+{
+	struct siw_pbl *pbl = mem->pbl;
 	u64 offset = addr - mem->va;
-	पूर्णांक copied = 0;
+	int copied = 0;
 
-	जबतक (len) अणु
-		पूर्णांक bytes;
+	while (len) {
+		int bytes;
 		dma_addr_t buf_addr =
 			siw_pbl_get_buffer(pbl, offset, &bytes, pbl_idx);
-		अगर (!buf_addr)
-			अवरोध;
+		if (!buf_addr)
+			break;
 
 		bytes = min(bytes, len);
-		अगर (siw_rx_kva(srx, (व्योम *)(uपूर्णांकptr_t)buf_addr, bytes) ==
-		    bytes) अणु
+		if (siw_rx_kva(srx, (void *)(uintptr_t)buf_addr, bytes) ==
+		    bytes) {
 			copied += bytes;
 			offset += bytes;
 			len -= bytes;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस copied;
-पूर्ण
+		} else {
+			break;
+		}
+	}
+	return copied;
+}
 
 /*
  * siw_rresp_check_ntoh()
  *
  * Check incoming RRESP fragment header against expected
- * header values and update expected values क्रम potential next
+ * header values and update expected values for potential next
  * fragment.
  *
- * NOTE: This function must be called only अगर a RRESP DDP segment
- *       starts but not क्रम fragmented consecutive pieces of an
- *       alपढ़ोy started DDP segment.
+ * NOTE: This function must be called only if a RRESP DDP segment
+ *       starts but not for fragmented consecutive pieces of an
+ *       already started DDP segment.
  */
-अटल पूर्णांक siw_rresp_check_ntoh(काष्ठा siw_rx_stream *srx,
-				काष्ठा siw_rx_fpdu *frx)
-अणु
-	काष्ठा iwarp_rdma_rresp *rresp = &srx->hdr.rresp;
-	काष्ठा siw_wqe *wqe = &frx->wqe_active;
-	क्रमागत ddp_ecode ecode;
+static int siw_rresp_check_ntoh(struct siw_rx_stream *srx,
+				struct siw_rx_fpdu *frx)
+{
+	struct iwarp_rdma_rresp *rresp = &srx->hdr.rresp;
+	struct siw_wqe *wqe = &frx->wqe_active;
+	enum ddp_ecode ecode;
 
 	u32 sink_stag = be32_to_cpu(rresp->sink_stag);
 	u64 sink_to = be64_to_cpu(rresp->sink_to);
 
-	अगर (frx->first_ddp_seg) अणु
+	if (frx->first_ddp_seg) {
 		srx->ddp_stag = wqe->sqe.sge[0].lkey;
 		srx->ddp_to = wqe->sqe.sge[0].laddr;
 		frx->pbl_idx = 0;
-	पूर्ण
+	}
 	/* Below checks extend beyond the semantics of DDP, and
-	 * पूर्णांकo RDMAP:
-	 * We check अगर the पढ़ो response matches exactly the
-	 * पढ़ो request which was send to the remote peer to
-	 * trigger this पढ़ो response. RFC5040/5041 करो not
-	 * always have a proper error code क्रम the detected
-	 * error हालs. We choose 'base or bounds error' क्रम
-	 * हालs where the inbound STag is valid, but offset
-	 * or length करो not match our response receive state.
+	 * into RDMAP:
+	 * We check if the read response matches exactly the
+	 * read request which was send to the remote peer to
+	 * trigger this read response. RFC5040/5041 do not
+	 * always have a proper error code for the detected
+	 * error cases. We choose 'base or bounds error' for
+	 * cases where the inbound STag is valid, but offset
+	 * or length do not match our response receive state.
 	 */
-	अगर (unlikely(srx->ddp_stag != sink_stag)) अणु
+	if (unlikely(srx->ddp_stag != sink_stag)) {
 		pr_warn("siw: [QP %u]: rresp stag: %08x != %08x\n",
 			qp_id(rx_qp(srx)), sink_stag, srx->ddp_stag);
 		ecode = DDP_ECODE_T_INVALID_STAG;
-		जाओ error;
-	पूर्ण
-	अगर (unlikely(srx->ddp_to != sink_to)) अणु
+		goto error;
+	}
+	if (unlikely(srx->ddp_to != sink_to)) {
 		pr_warn("siw: [QP %u]: rresp off: %016llx != %016llx\n",
-			qp_id(rx_qp(srx)), (अचिन्हित दीर्घ दीर्घ)sink_to,
-			(अचिन्हित दीर्घ दीर्घ)srx->ddp_to);
+			qp_id(rx_qp(srx)), (unsigned long long)sink_to,
+			(unsigned long long)srx->ddp_to);
 		ecode = DDP_ECODE_T_BASE_BOUNDS;
-		जाओ error;
-	पूर्ण
-	अगर (unlikely(!frx->more_ddp_segs &&
-		     (wqe->processed + srx->fpdu_part_rem != wqe->bytes))) अणु
+		goto error;
+	}
+	if (unlikely(!frx->more_ddp_segs &&
+		     (wqe->processed + srx->fpdu_part_rem != wqe->bytes))) {
 		pr_warn("siw: [QP %u]: rresp len: %d != %d\n",
 			qp_id(rx_qp(srx)),
 			wqe->processed + srx->fpdu_part_rem, wqe->bytes);
 		ecode = DDP_ECODE_T_BASE_BOUNDS;
-		जाओ error;
-	पूर्ण
-	वापस 0;
+		goto error;
+	}
+	return 0;
 error:
 	siw_init_terminate(rx_qp(srx), TERM_ERROR_LAYER_DDP,
 			   DDP_ETYPE_TAGGED_BUF, ecode, 0);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
- * siw_ग_लिखो_check_ntoh()
+ * siw_write_check_ntoh()
  *
  * Check incoming WRITE fragment header against expected
- * header values and update expected values क्रम potential next
+ * header values and update expected values for potential next
  * fragment
  *
- * NOTE: This function must be called only अगर a WRITE DDP segment
- *       starts but not क्रम fragmented consecutive pieces of an
- *       alपढ़ोy started DDP segment.
+ * NOTE: This function must be called only if a WRITE DDP segment
+ *       starts but not for fragmented consecutive pieces of an
+ *       already started DDP segment.
  */
-अटल पूर्णांक siw_ग_लिखो_check_ntoh(काष्ठा siw_rx_stream *srx,
-				काष्ठा siw_rx_fpdu *frx)
-अणु
-	काष्ठा iwarp_rdma_ग_लिखो *ग_लिखो = &srx->hdr.rग_लिखो;
-	क्रमागत ddp_ecode ecode;
+static int siw_write_check_ntoh(struct siw_rx_stream *srx,
+				struct siw_rx_fpdu *frx)
+{
+	struct iwarp_rdma_write *write = &srx->hdr.rwrite;
+	enum ddp_ecode ecode;
 
-	u32 sink_stag = be32_to_cpu(ग_लिखो->sink_stag);
-	u64 sink_to = be64_to_cpu(ग_लिखो->sink_to);
+	u32 sink_stag = be32_to_cpu(write->sink_stag);
+	u64 sink_to = be64_to_cpu(write->sink_to);
 
-	अगर (frx->first_ddp_seg) अणु
+	if (frx->first_ddp_seg) {
 		srx->ddp_stag = sink_stag;
 		srx->ddp_to = sink_to;
 		frx->pbl_idx = 0;
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(srx->ddp_stag != sink_stag)) अणु
+	} else {
+		if (unlikely(srx->ddp_stag != sink_stag)) {
 			pr_warn("siw: [QP %u]: write stag: %08x != %08x\n",
 				qp_id(rx_qp(srx)), sink_stag,
 				srx->ddp_stag);
 			ecode = DDP_ECODE_T_INVALID_STAG;
-			जाओ error;
-		पूर्ण
-		अगर (unlikely(srx->ddp_to != sink_to)) अणु
+			goto error;
+		}
+		if (unlikely(srx->ddp_to != sink_to)) {
 			pr_warn("siw: [QP %u]: write off: %016llx != %016llx\n",
 				qp_id(rx_qp(srx)),
-				(अचिन्हित दीर्घ दीर्घ)sink_to,
-				(अचिन्हित दीर्घ दीर्घ)srx->ddp_to);
+				(unsigned long long)sink_to,
+				(unsigned long long)srx->ddp_to);
 			ecode = DDP_ECODE_T_BASE_BOUNDS;
-			जाओ error;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+			goto error;
+		}
+	}
+	return 0;
 error:
 	siw_init_terminate(rx_qp(srx), TERM_ERROR_LAYER_DDP,
 			   DDP_ETYPE_TAGGED_BUF, ecode, 0);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * siw_send_check_ntoh()
  *
  * Check incoming SEND fragment header against expected
- * header values and update expected MSN अगर no next
+ * header values and update expected MSN if no next
  * fragment expected
  *
- * NOTE: This function must be called only अगर a SEND DDP segment
- *       starts but not क्रम fragmented consecutive pieces of an
- *       alपढ़ोy started DDP segment.
+ * NOTE: This function must be called only if a SEND DDP segment
+ *       starts but not for fragmented consecutive pieces of an
+ *       already started DDP segment.
  */
-अटल पूर्णांक siw_send_check_ntoh(काष्ठा siw_rx_stream *srx,
-			       काष्ठा siw_rx_fpdu *frx)
-अणु
-	काष्ठा iwarp_send_inv *send = &srx->hdr.send_inv;
-	काष्ठा siw_wqe *wqe = &frx->wqe_active;
-	क्रमागत ddp_ecode ecode;
+static int siw_send_check_ntoh(struct siw_rx_stream *srx,
+			       struct siw_rx_fpdu *frx)
+{
+	struct iwarp_send_inv *send = &srx->hdr.send_inv;
+	struct siw_wqe *wqe = &frx->wqe_active;
+	enum ddp_ecode ecode;
 
 	u32 ddp_msn = be32_to_cpu(send->ddp_msn);
 	u32 ddp_mo = be32_to_cpu(send->ddp_mo);
 	u32 ddp_qn = be32_to_cpu(send->ddp_qn);
 
-	अगर (unlikely(ddp_qn != RDMAP_UNTAGGED_QN_SEND)) अणु
+	if (unlikely(ddp_qn != RDMAP_UNTAGGED_QN_SEND)) {
 		pr_warn("siw: [QP %u]: invalid ddp qn %d for send\n",
 			qp_id(rx_qp(srx)), ddp_qn);
 		ecode = DDP_ECODE_UT_INVALID_QN;
-		जाओ error;
-	पूर्ण
-	अगर (unlikely(ddp_msn != srx->ddp_msn[RDMAP_UNTAGGED_QN_SEND])) अणु
+		goto error;
+	}
+	if (unlikely(ddp_msn != srx->ddp_msn[RDMAP_UNTAGGED_QN_SEND])) {
 		pr_warn("siw: [QP %u]: send msn: %u != %u\n",
 			qp_id(rx_qp(srx)), ddp_msn,
 			srx->ddp_msn[RDMAP_UNTAGGED_QN_SEND]);
 		ecode = DDP_ECODE_UT_INVALID_MSN_RANGE;
-		जाओ error;
-	पूर्ण
-	अगर (unlikely(ddp_mo != wqe->processed)) अणु
+		goto error;
+	}
+	if (unlikely(ddp_mo != wqe->processed)) {
 		pr_warn("siw: [QP %u], send mo: %u != %u\n",
 			qp_id(rx_qp(srx)), ddp_mo, wqe->processed);
 		ecode = DDP_ECODE_UT_INVALID_MO;
-		जाओ error;
-	पूर्ण
-	अगर (frx->first_ddp_seg) अणु
-		/* initialize user memory ग_लिखो position */
+		goto error;
+	}
+	if (frx->first_ddp_seg) {
+		/* initialize user memory write position */
 		frx->sge_idx = 0;
 		frx->sge_off = 0;
 		frx->pbl_idx = 0;
 
-		/* only valid क्रम SEND_INV and SEND_SE_INV operations */
+		/* only valid for SEND_INV and SEND_SE_INV operations */
 		srx->inval_stag = be32_to_cpu(send->inval_stag);
-	पूर्ण
-	अगर (unlikely(wqe->bytes < wqe->processed + srx->fpdu_part_rem)) अणु
+	}
+	if (unlikely(wqe->bytes < wqe->processed + srx->fpdu_part_rem)) {
 		siw_dbg_qp(rx_qp(srx), "receive space short: %d - %d < %d\n",
 			   wqe->bytes, wqe->processed, srx->fpdu_part_rem);
 		wqe->wc_status = SIW_WC_LOC_LEN_ERR;
 		ecode = DDP_ECODE_UT_INVALID_MSN_NOBUF;
-		जाओ error;
-	पूर्ण
-	वापस 0;
+		goto error;
+	}
+	return 0;
 error:
 	siw_init_terminate(rx_qp(srx), TERM_ERROR_LAYER_DDP,
 			   DDP_ETYPE_UNTAGGED_BUF, ecode, 0);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल काष्ठा siw_wqe *siw_rqe_get(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_rqe *rqe;
-	काष्ठा siw_srq *srq;
-	काष्ठा siw_wqe *wqe = शून्य;
+static struct siw_wqe *siw_rqe_get(struct siw_qp *qp)
+{
+	struct siw_rqe *rqe;
+	struct siw_srq *srq;
+	struct siw_wqe *wqe = NULL;
 	bool srq_event = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	srq = qp->srq;
-	अगर (srq) अणु
+	if (srq) {
 		spin_lock_irqsave(&srq->lock, flags);
-		अगर (unlikely(!srq->num_rqe))
-			जाओ out;
+		if (unlikely(!srq->num_rqe))
+			goto out;
 
 		rqe = &srq->recvq[srq->rq_get % srq->num_rqe];
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(!qp->recvq))
-			जाओ out;
+	} else {
+		if (unlikely(!qp->recvq))
+			goto out;
 
 		rqe = &qp->recvq[qp->rq_get % qp->attrs.rq_size];
-	पूर्ण
-	अगर (likely(rqe->flags == SIW_WQE_VALID)) अणु
-		पूर्णांक num_sge = rqe->num_sge;
+	}
+	if (likely(rqe->flags == SIW_WQE_VALID)) {
+		int num_sge = rqe->num_sge;
 
-		अगर (likely(num_sge <= SIW_MAX_SGE)) अणु
-			पूर्णांक i = 0;
+		if (likely(num_sge <= SIW_MAX_SGE)) {
+			int i = 0;
 
 			wqe = rx_wqe(&qp->rx_untagged);
 			rx_type(wqe) = SIW_OP_RECEIVE;
@@ -364,204 +363,204 @@ error:
 			wqe->rqe.id = rqe->id;
 			wqe->rqe.num_sge = num_sge;
 
-			जबतक (i < num_sge) अणु
+			while (i < num_sge) {
 				wqe->rqe.sge[i].laddr = rqe->sge[i].laddr;
 				wqe->rqe.sge[i].lkey = rqe->sge[i].lkey;
 				wqe->rqe.sge[i].length = rqe->sge[i].length;
 				wqe->bytes += wqe->rqe.sge[i].length;
-				wqe->mem[i] = शून्य;
+				wqe->mem[i] = NULL;
 				i++;
-			पूर्ण
+			}
 			/* can be re-used by appl */
 			smp_store_mb(rqe->flags, 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			siw_dbg_qp(qp, "too many sge's: %d\n", rqe->num_sge);
-			अगर (srq)
+			if (srq)
 				spin_unlock_irqrestore(&srq->lock, flags);
-			वापस शून्य;
-		पूर्ण
-		अगर (!srq) अणु
+			return NULL;
+		}
+		if (!srq) {
 			qp->rq_get++;
-		पूर्ण अन्यथा अणु
-			अगर (srq->armed) अणु
+		} else {
+			if (srq->armed) {
 				/* Test SRQ limit */
 				u32 off = (srq->rq_get + srq->limit) %
 					  srq->num_rqe;
-				काष्ठा siw_rqe *rqe2 = &srq->recvq[off];
+				struct siw_rqe *rqe2 = &srq->recvq[off];
 
-				अगर (!(rqe2->flags & SIW_WQE_VALID)) अणु
+				if (!(rqe2->flags & SIW_WQE_VALID)) {
 					srq->armed = false;
 					srq_event = true;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			srq->rq_get++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	अगर (srq) अणु
+	if (srq) {
 		spin_unlock_irqrestore(&srq->lock, flags);
-		अगर (srq_event)
+		if (srq_event)
 			siw_srq_event(srq, IB_EVENT_SRQ_LIMIT_REACHED);
-	पूर्ण
-	वापस wqe;
-पूर्ण
+	}
+	return wqe;
+}
 
 /*
  * siw_proc_send:
  *
- * Process one incoming SEND and place data पूर्णांकo memory referenced by
+ * Process one incoming SEND and place data into memory referenced by
  * receive wqe.
  *
  * Function supports partially received sends (suspending/resuming
  * current receive wqe processing)
  *
- * वापस value:
+ * return value:
  *	0:       reached the end of a DDP segment
  *	-EAGAIN: to be called again to finish the DDP segment
  */
-पूर्णांक siw_proc_send(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
-	काष्ठा siw_rx_fpdu *frx = &qp->rx_untagged;
-	काष्ठा siw_wqe *wqe;
+int siw_proc_send(struct siw_qp *qp)
+{
+	struct siw_rx_stream *srx = &qp->rx_stream;
+	struct siw_rx_fpdu *frx = &qp->rx_untagged;
+	struct siw_wqe *wqe;
 	u32 data_bytes; /* all data bytes available */
 	u32 rcvd_bytes; /* sum of data bytes rcvd */
-	पूर्णांक rv = 0;
+	int rv = 0;
 
-	अगर (frx->first_ddp_seg) अणु
+	if (frx->first_ddp_seg) {
 		wqe = siw_rqe_get(qp);
-		अगर (unlikely(!wqe)) अणु
+		if (unlikely(!wqe)) {
 			siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 					   DDP_ETYPE_UNTAGGED_BUF,
 					   DDP_ECODE_UT_INVALID_MSN_NOBUF, 0);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -ENOENT;
+		}
+	} else {
 		wqe = rx_wqe(frx);
-	पूर्ण
-	अगर (srx->state == SIW_GET_DATA_START) अणु
+	}
+	if (srx->state == SIW_GET_DATA_START) {
 		rv = siw_send_check_ntoh(srx, frx);
-		अगर (unlikely(rv)) अणु
+		if (unlikely(rv)) {
 			siw_qp_event(qp, IB_EVENT_QP_FATAL);
-			वापस rv;
-		पूर्ण
-		अगर (!srx->fpdu_part_rem) /* zero length SEND */
-			वापस 0;
-	पूर्ण
+			return rv;
+		}
+		if (!srx->fpdu_part_rem) /* zero length SEND */
+			return 0;
+	}
 	data_bytes = min(srx->fpdu_part_rem, srx->skb_new);
 	rcvd_bytes = 0;
 
 	/* A zero length SEND will skip below loop */
-	जबतक (data_bytes) अणु
-		काष्ठा ib_pd *pd;
-		काष्ठा siw_mem **mem, *mem_p;
-		काष्ठा siw_sge *sge;
-		u32 sge_bytes; /* data bytes avail क्रम SGE */
+	while (data_bytes) {
+		struct ib_pd *pd;
+		struct siw_mem **mem, *mem_p;
+		struct siw_sge *sge;
+		u32 sge_bytes; /* data bytes avail for SGE */
 
 		sge = &wqe->rqe.sge[frx->sge_idx];
 
-		अगर (!sge->length) अणु
+		if (!sge->length) {
 			/* just skip empty sge's */
 			frx->sge_idx++;
 			frx->sge_off = 0;
 			frx->pbl_idx = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		sge_bytes = min(data_bytes, sge->length - frx->sge_off);
 		mem = &wqe->mem[frx->sge_idx];
 
 		/*
 		 * check with QP's PD if no SRQ present, SRQ's PD otherwise
 		 */
-		pd = qp->srq == शून्य ? qp->pd : qp->srq->base_srq.pd;
+		pd = qp->srq == NULL ? qp->pd : qp->srq->base_srq.pd;
 
 		rv = siw_check_sge(pd, sge, mem, IB_ACCESS_LOCAL_WRITE,
 				   frx->sge_off, sge_bytes);
-		अगर (unlikely(rv)) अणु
+		if (unlikely(rv)) {
 			siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 					   DDP_ETYPE_CATASTROPHIC,
 					   DDP_ECODE_CATASTROPHIC, 0);
 
 			siw_qp_event(qp, IB_EVENT_QP_ACCESS_ERR);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mem_p = *mem;
-		अगर (mem_p->mem_obj == शून्य)
+		if (mem_p->mem_obj == NULL)
 			rv = siw_rx_kva(srx,
-				(व्योम *)(uपूर्णांकptr_t)(sge->laddr + frx->sge_off),
+				(void *)(uintptr_t)(sge->laddr + frx->sge_off),
 				sge_bytes);
-		अन्यथा अगर (!mem_p->is_pbl)
+		else if (!mem_p->is_pbl)
 			rv = siw_rx_umem(srx, mem_p->umem,
 					 sge->laddr + frx->sge_off, sge_bytes);
-		अन्यथा
+		else
 			rv = siw_rx_pbl(srx, &frx->pbl_idx, mem_p,
 					sge->laddr + frx->sge_off, sge_bytes);
 
-		अगर (unlikely(rv != sge_bytes)) अणु
+		if (unlikely(rv != sge_bytes)) {
 			wqe->processed += rcvd_bytes;
 
 			siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 					   DDP_ETYPE_CATASTROPHIC,
 					   DDP_ECODE_CATASTROPHIC, 0);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		frx->sge_off += rv;
 
-		अगर (frx->sge_off == sge->length) अणु
+		if (frx->sge_off == sge->length) {
 			frx->sge_idx++;
 			frx->sge_off = 0;
 			frx->pbl_idx = 0;
-		पूर्ण
+		}
 		data_bytes -= rv;
 		rcvd_bytes += rv;
 
 		srx->fpdu_part_rem -= rv;
 		srx->fpdu_part_rcvd += rv;
-	पूर्ण
+	}
 	wqe->processed += rcvd_bytes;
 
-	अगर (!srx->fpdu_part_rem)
-		वापस 0;
+	if (!srx->fpdu_part_rem)
+		return 0;
 
-	वापस (rv < 0) ? rv : -EAGAIN;
-पूर्ण
+	return (rv < 0) ? rv : -EAGAIN;
+}
 
 /*
- * siw_proc_ग_लिखो:
+ * siw_proc_write:
  *
  * Place incoming WRITE after referencing and checking target buffer
 
  * Function supports partially received WRITEs (suspending/resuming
  * current receive processing)
  *
- * वापस value:
+ * return value:
  *	0:       reached the end of a DDP segment
  *	-EAGAIN: to be called again to finish the DDP segment
  */
-पूर्णांक siw_proc_ग_लिखो(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
-	काष्ठा siw_rx_fpdu *frx = &qp->rx_tagged;
-	काष्ठा siw_mem *mem;
-	पूर्णांक bytes, rv;
+int siw_proc_write(struct siw_qp *qp)
+{
+	struct siw_rx_stream *srx = &qp->rx_stream;
+	struct siw_rx_fpdu *frx = &qp->rx_tagged;
+	struct siw_mem *mem;
+	int bytes, rv;
 
-	अगर (srx->state == SIW_GET_DATA_START) अणु
-		अगर (!srx->fpdu_part_rem) /* zero length WRITE */
-			वापस 0;
+	if (srx->state == SIW_GET_DATA_START) {
+		if (!srx->fpdu_part_rem) /* zero length WRITE */
+			return 0;
 
-		rv = siw_ग_लिखो_check_ntoh(srx, frx);
-		अगर (unlikely(rv)) अणु
+		rv = siw_write_check_ntoh(srx, frx);
+		if (unlikely(rv)) {
 			siw_qp_event(qp, IB_EVENT_QP_FATAL);
-			वापस rv;
-		पूर्ण
-	पूर्ण
+			return rv;
+		}
+	}
 	bytes = min(srx->fpdu_part_rem, srx->skb_new);
 
-	अगर (frx->first_ddp_seg) अणु
-		काष्ठा siw_wqe *wqe = rx_wqe(frx);
+	if (frx->first_ddp_seg) {
+		struct siw_wqe *wqe = rx_wqe(frx);
 
 		rx_mem(frx) = siw_mem_id2obj(qp->sdev, srx->ddp_stag >> 8);
-		अगर (unlikely(!rx_mem(frx))) अणु
+		if (unlikely(!rx_mem(frx))) {
 			siw_dbg_qp(qp,
 				   "sink stag not found/invalid, stag 0x%08x\n",
 				   srx->ddp_stag);
@@ -569,143 +568,143 @@ out:
 			siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 					   DDP_ETYPE_TAGGED_BUF,
 					   DDP_ECODE_T_INVALID_STAG, 0);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		wqe->rqe.num_sge = 1;
 		rx_type(wqe) = SIW_OP_WRITE;
 		wqe->wr_status = SIW_WR_INPROGRESS;
-	पूर्ण
+	}
 	mem = rx_mem(frx);
 
 	/*
-	 * Check अगर application re-रेजिस्टरed memory with dअगरferent
+	 * Check if application re-registered memory with different
 	 * key field of STag.
 	 */
-	अगर (unlikely(mem->stag != srx->ddp_stag)) अणु
+	if (unlikely(mem->stag != srx->ddp_stag)) {
 		siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 				   DDP_ETYPE_TAGGED_BUF,
 				   DDP_ECODE_T_INVALID_STAG, 0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	rv = siw_check_mem(qp->pd, mem, srx->ddp_to + srx->fpdu_part_rcvd,
 			   IB_ACCESS_REMOTE_WRITE, bytes);
-	अगर (unlikely(rv)) अणु
+	if (unlikely(rv)) {
 		siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 				   DDP_ETYPE_TAGGED_BUF, siw_tagged_error(-rv),
 				   0);
 
 		siw_qp_event(qp, IB_EVENT_QP_ACCESS_ERR);
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mem->mem_obj == शून्य)
+	if (mem->mem_obj == NULL)
 		rv = siw_rx_kva(srx,
-			(व्योम *)(uपूर्णांकptr_t)(srx->ddp_to + srx->fpdu_part_rcvd),
+			(void *)(uintptr_t)(srx->ddp_to + srx->fpdu_part_rcvd),
 			bytes);
-	अन्यथा अगर (!mem->is_pbl)
+	else if (!mem->is_pbl)
 		rv = siw_rx_umem(srx, mem->umem,
 				 srx->ddp_to + srx->fpdu_part_rcvd, bytes);
-	अन्यथा
+	else
 		rv = siw_rx_pbl(srx, &frx->pbl_idx, mem,
 				srx->ddp_to + srx->fpdu_part_rcvd, bytes);
 
-	अगर (unlikely(rv != bytes)) अणु
+	if (unlikely(rv != bytes)) {
 		siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 				   DDP_ETYPE_CATASTROPHIC,
 				   DDP_ECODE_CATASTROPHIC, 0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	srx->fpdu_part_rem -= rv;
 	srx->fpdu_part_rcvd += rv;
 
-	अगर (!srx->fpdu_part_rem) अणु
+	if (!srx->fpdu_part_rem) {
 		srx->ddp_to += srx->fpdu_part_rcvd;
-		वापस 0;
-	पूर्ण
-	वापस -EAGAIN;
-पूर्ण
+		return 0;
+	}
+	return -EAGAIN;
+}
 
 /*
  * Inbound RREQ's cannot carry user data.
  */
-पूर्णांक siw_proc_rreq(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
+int siw_proc_rreq(struct siw_qp *qp)
+{
+	struct siw_rx_stream *srx = &qp->rx_stream;
 
-	अगर (!srx->fpdu_part_rem)
-		वापस 0;
+	if (!srx->fpdu_part_rem)
+		return 0;
 
 	pr_warn("siw: [QP %u]: rreq with mpa len %d\n", qp_id(qp),
 		be16_to_cpu(srx->hdr.ctrl.mpa_len));
 
-	वापस -EPROTO;
-पूर्ण
+	return -EPROTO;
+}
 
 /*
  * siw_init_rresp:
  *
- * Process inbound RDMA READ REQ. Produce a pseuकरो READ RESPONSE WQE.
- * Put it at the tail of the IRQ, अगर there is another WQE currently in
+ * Process inbound RDMA READ REQ. Produce a pseudo READ RESPONSE WQE.
+ * Put it at the tail of the IRQ, if there is another WQE currently in
  * transmit processing. If not, make it the current WQE to be processed
  * and schedule transmit processing.
  *
  * Can be called from softirq context and from process
- * context (RREAD socket loopback हाल!)
+ * context (RREAD socket loopback case!)
  *
- * वापस value:
+ * return value:
  *	0:      success,
  *		failure code otherwise
  */
 
-अटल पूर्णांक siw_init_rresp(काष्ठा siw_qp *qp, काष्ठा siw_rx_stream *srx)
-अणु
-	काष्ठा siw_wqe *tx_work = tx_wqe(qp);
-	काष्ठा siw_sqe *resp;
+static int siw_init_rresp(struct siw_qp *qp, struct siw_rx_stream *srx)
+{
+	struct siw_wqe *tx_work = tx_wqe(qp);
+	struct siw_sqe *resp;
 
-	uपूर्णांक64_t raddr = be64_to_cpu(srx->hdr.rreq.sink_to),
+	uint64_t raddr = be64_to_cpu(srx->hdr.rreq.sink_to),
 		 laddr = be64_to_cpu(srx->hdr.rreq.source_to);
-	uपूर्णांक32_t length = be32_to_cpu(srx->hdr.rreq.पढ़ो_size),
+	uint32_t length = be32_to_cpu(srx->hdr.rreq.read_size),
 		 lkey = be32_to_cpu(srx->hdr.rreq.source_stag),
 		 rkey = be32_to_cpu(srx->hdr.rreq.sink_stag),
 		 msn = be32_to_cpu(srx->hdr.rreq.ddp_msn);
 
-	पूर्णांक run_sq = 1, rv = 0;
-	अचिन्हित दीर्घ flags;
+	int run_sq = 1, rv = 0;
+	unsigned long flags;
 
-	अगर (unlikely(msn != srx->ddp_msn[RDMAP_UNTAGGED_QN_RDMA_READ])) अणु
+	if (unlikely(msn != srx->ddp_msn[RDMAP_UNTAGGED_QN_RDMA_READ])) {
 		siw_init_terminate(qp, TERM_ERROR_LAYER_DDP,
 				   DDP_ETYPE_UNTAGGED_BUF,
 				   DDP_ECODE_UT_INVALID_MSN_RANGE, 0);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 	spin_lock_irqsave(&qp->sq_lock, flags);
 
-	अगर (unlikely(!qp->attrs.irq_size)) अणु
+	if (unlikely(!qp->attrs.irq_size)) {
 		run_sq = 0;
-		जाओ error_irq;
-	पूर्ण
-	अगर (tx_work->wr_status == SIW_WR_IDLE) अणु
+		goto error_irq;
+	}
+	if (tx_work->wr_status == SIW_WR_IDLE) {
 		/*
 		 * immediately schedule READ response w/o
 		 * consuming IRQ entry: IRQ must be empty.
 		 */
 		tx_work->processed = 0;
-		tx_work->mem[0] = शून्य;
+		tx_work->mem[0] = NULL;
 		tx_work->wr_status = SIW_WR_QUEUED;
 		resp = &tx_work->sqe;
-	पूर्ण अन्यथा अणु
-		resp = irq_alloc_मुक्त(qp);
+	} else {
+		resp = irq_alloc_free(qp);
 		run_sq = 0;
-	पूर्ण
-	अगर (likely(resp)) अणु
+	}
+	if (likely(resp)) {
 		resp->opcode = SIW_OP_READ_RESPONSE;
 
 		resp->sge[0].length = length;
 		resp->sge[0].laddr = laddr;
 		resp->sge[0].lkey = lkey;
 
-		/* Keep aside message sequence number क्रम potential
+		/* Keep aside message sequence number for potential
 		 * error reporting during Read Response generation.
 		 */
 		resp->sge[1].length = msn;
@@ -714,9 +713,9 @@ out:
 		resp->rkey = rkey;
 		resp->num_sge = length ? 1 : 0;
 
-		/* RRESP now valid as current TX wqe or placed पूर्णांकo IRQ */
+		/* RRESP now valid as current TX wqe or placed into IRQ */
 		smp_store_mb(resp->flags, SIW_WQE_VALID);
-	पूर्ण अन्यथा अणु
+	} else {
 error_irq:
 		pr_warn("siw: [QP %u]: IRQ exceeded or null, size %d\n",
 			qp_id(qp), qp->attrs.irq_size);
@@ -725,35 +724,35 @@ error_irq:
 				   RDMAP_ETYPE_REMOTE_OPERATION,
 				   RDMAP_ECODE_CATASTROPHIC_STREAM, 0);
 		rv = -EPROTO;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&qp->sq_lock, flags);
 
-	अगर (run_sq)
+	if (run_sq)
 		rv = siw_sq_start(qp);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
  * Only called at start of Read.Resonse processing.
- * Transfer pending Read from tip of ORQ पूर्णांकo currrent rx wqe,
- * but keep ORQ entry valid until Read.Response processing करोne.
+ * Transfer pending Read from tip of ORQ into currrent rx wqe,
+ * but keep ORQ entry valid until Read.Response processing done.
  * No Queue locking needed.
  */
-अटल पूर्णांक siw_orqe_start_rx(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_sqe *orqe;
-	काष्ठा siw_wqe *wqe = शून्य;
+static int siw_orqe_start_rx(struct siw_qp *qp)
+{
+	struct siw_sqe *orqe;
+	struct siw_wqe *wqe = NULL;
 
-	अगर (unlikely(!qp->attrs.orq_size))
-		वापस -EPROTO;
+	if (unlikely(!qp->attrs.orq_size))
+		return -EPROTO;
 
 	/* make sure ORQ indices are current */
 	smp_mb();
 
 	orqe = orq_get_current(qp);
-	अगर (READ_ONCE(orqe->flags) & SIW_WQE_VALID) अणु
+	if (READ_ONCE(orqe->flags) & SIW_WQE_VALID) {
 		/* RRESP is a TAGGED RDMAP operation */
 		wqe = rx_wqe(&qp->rx_tagged);
 		wqe->sqe.id = orqe->id;
@@ -765,76 +764,76 @@ error_irq:
 		wqe->sqe.num_sge = 1;
 		wqe->bytes = orqe->sge[0].length;
 		wqe->processed = 0;
-		wqe->mem[0] = शून्य;
-		/* make sure WQE is completely written beक्रमe valid */
+		wqe->mem[0] = NULL;
+		/* make sure WQE is completely written before valid */
 		smp_wmb();
 		wqe->wr_status = SIW_WR_INPROGRESS;
 
-		वापस 0;
-	पूर्ण
-	वापस -EPROTO;
-पूर्ण
+		return 0;
+	}
+	return -EPROTO;
+}
 
 /*
  * siw_proc_rresp:
  *
- * Place incoming RRESP data पूर्णांकo memory referenced by RREQ WQE
+ * Place incoming RRESP data into memory referenced by RREQ WQE
  * which is at the tip of the ORQ
  *
  * Function supports partially received RRESP's (suspending/resuming
  * current receive processing)
  */
-पूर्णांक siw_proc_rresp(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
-	काष्ठा siw_rx_fpdu *frx = &qp->rx_tagged;
-	काष्ठा siw_wqe *wqe = rx_wqe(frx);
-	काष्ठा siw_mem **mem, *mem_p;
-	काष्ठा siw_sge *sge;
-	पूर्णांक bytes, rv;
+int siw_proc_rresp(struct siw_qp *qp)
+{
+	struct siw_rx_stream *srx = &qp->rx_stream;
+	struct siw_rx_fpdu *frx = &qp->rx_tagged;
+	struct siw_wqe *wqe = rx_wqe(frx);
+	struct siw_mem **mem, *mem_p;
+	struct siw_sge *sge;
+	int bytes, rv;
 
-	अगर (frx->first_ddp_seg) अणु
-		अगर (unlikely(wqe->wr_status != SIW_WR_IDLE)) अणु
+	if (frx->first_ddp_seg) {
+		if (unlikely(wqe->wr_status != SIW_WR_IDLE)) {
 			pr_warn("siw: [QP %u]: proc RRESP: status %d, op %d\n",
 				qp_id(qp), wqe->wr_status, wqe->sqe.opcode);
 			rv = -EPROTO;
-			जाओ error_term;
-		पूर्ण
+			goto error_term;
+		}
 		/*
 		 * fetch pending RREQ from orq
 		 */
 		rv = siw_orqe_start_rx(qp);
-		अगर (rv) अणु
+		if (rv) {
 			pr_warn("siw: [QP %u]: ORQ empty, size %d\n",
 				qp_id(qp), qp->attrs.orq_size);
-			जाओ error_term;
-		पूर्ण
+			goto error_term;
+		}
 		rv = siw_rresp_check_ntoh(srx, frx);
-		अगर (unlikely(rv)) अणु
+		if (unlikely(rv)) {
 			siw_qp_event(qp, IB_EVENT_QP_FATAL);
-			वापस rv;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(wqe->wr_status != SIW_WR_INPROGRESS)) अणु
+			return rv;
+		}
+	} else {
+		if (unlikely(wqe->wr_status != SIW_WR_INPROGRESS)) {
 			pr_warn("siw: [QP %u]: resume RRESP: status %d\n",
 				qp_id(qp), wqe->wr_status);
 			rv = -EPROTO;
-			जाओ error_term;
-		पूर्ण
-	पूर्ण
-	अगर (!srx->fpdu_part_rem) /* zero length RRESPONSE */
-		वापस 0;
+			goto error_term;
+		}
+	}
+	if (!srx->fpdu_part_rem) /* zero length RRESPONSE */
+		return 0;
 
 	sge = wqe->sqe.sge; /* there is only one */
 	mem = &wqe->mem[0];
 
-	अगर (!(*mem)) अणु
+	if (!(*mem)) {
 		/*
 		 * check target memory which resolves memory on first fragment
 		 */
 		rv = siw_check_sge(qp->pd, sge, mem, IB_ACCESS_LOCAL_WRITE, 0,
 				   wqe->bytes);
-		अगर (unlikely(rv)) अणु
+		if (unlikely(rv)) {
 			siw_dbg_qp(qp, "target mem check: %d\n", rv);
 			wqe->wc_status = SIW_WC_LOC_PROT_ERR;
 
@@ -844,86 +843,86 @@ error_irq:
 
 			siw_qp_event(qp, IB_EVENT_QP_ACCESS_ERR);
 
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	mem_p = *mem;
 
 	bytes = min(srx->fpdu_part_rem, srx->skb_new);
 
-	अगर (mem_p->mem_obj == शून्य)
+	if (mem_p->mem_obj == NULL)
 		rv = siw_rx_kva(srx,
-			(व्योम *)(uपूर्णांकptr_t)(sge->laddr + wqe->processed),
+			(void *)(uintptr_t)(sge->laddr + wqe->processed),
 			bytes);
-	अन्यथा अगर (!mem_p->is_pbl)
+	else if (!mem_p->is_pbl)
 		rv = siw_rx_umem(srx, mem_p->umem, sge->laddr + wqe->processed,
 				 bytes);
-	अन्यथा
+	else
 		rv = siw_rx_pbl(srx, &frx->pbl_idx, mem_p,
 				sge->laddr + wqe->processed, bytes);
-	अगर (rv != bytes) अणु
+	if (rv != bytes) {
 		wqe->wc_status = SIW_WC_GENERAL_ERR;
 		rv = -EINVAL;
-		जाओ error_term;
-	पूर्ण
+		goto error_term;
+	}
 	srx->fpdu_part_rem -= rv;
 	srx->fpdu_part_rcvd += rv;
 	wqe->processed += rv;
 
-	अगर (!srx->fpdu_part_rem) अणु
+	if (!srx->fpdu_part_rem) {
 		srx->ddp_to += srx->fpdu_part_rcvd;
-		वापस 0;
-	पूर्ण
-	वापस -EAGAIN;
+		return 0;
+	}
+	return -EAGAIN;
 
 error_term:
 	siw_init_terminate(qp, TERM_ERROR_LAYER_DDP, DDP_ETYPE_CATASTROPHIC,
 			   DDP_ECODE_CATASTROPHIC, 0);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-पूर्णांक siw_proc_terminate(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
-	काष्ठा sk_buff *skb = srx->skb;
-	काष्ठा iwarp_terminate *term = &srx->hdr.terminate;
-	जोड़ iwarp_hdr term_info;
+int siw_proc_terminate(struct siw_qp *qp)
+{
+	struct siw_rx_stream *srx = &qp->rx_stream;
+	struct sk_buff *skb = srx->skb;
+	struct iwarp_terminate *term = &srx->hdr.terminate;
+	union iwarp_hdr term_info;
 	u8 *infop = (u8 *)&term_info;
-	क्रमागत rdma_opcode op;
-	u16 to_copy = माप(काष्ठा iwarp_ctrl);
+	enum rdma_opcode op;
+	u16 to_copy = sizeof(struct iwarp_ctrl);
 
 	pr_warn("siw: got TERMINATE. layer %d, type %d, code %d\n",
 		__rdmap_term_layer(term), __rdmap_term_etype(term),
 		__rdmap_term_ecode(term));
 
-	अगर (be32_to_cpu(term->ddp_qn) != RDMAP_UNTAGGED_QN_TERMINATE ||
+	if (be32_to_cpu(term->ddp_qn) != RDMAP_UNTAGGED_QN_TERMINATE ||
 	    be32_to_cpu(term->ddp_msn) !=
 		    qp->rx_stream.ddp_msn[RDMAP_UNTAGGED_QN_TERMINATE] ||
-	    be32_to_cpu(term->ddp_mo) != 0) अणु
+	    be32_to_cpu(term->ddp_mo) != 0) {
 		pr_warn("siw: rx bogus TERM [QN x%08x, MSN x%08x, MO x%08x]\n",
 			be32_to_cpu(term->ddp_qn), be32_to_cpu(term->ddp_msn),
 			be32_to_cpu(term->ddp_mo));
-		वापस -ECONNRESET;
-	पूर्ण
+		return -ECONNRESET;
+	}
 	/*
-	 * Receive reमुख्यing pieces of TERM अगर indicated
+	 * Receive remaining pieces of TERM if indicated
 	 */
-	अगर (!term->flag_m)
-		वापस -ECONNRESET;
+	if (!term->flag_m)
+		return -ECONNRESET;
 
-	/* Do not take the efक्रमt to reassemble a network fragmented
+	/* Do not take the effort to reassemble a network fragmented
 	 * TERM message
 	 */
-	अगर (srx->skb_new < माप(काष्ठा iwarp_ctrl_tagged))
-		वापस -ECONNRESET;
+	if (srx->skb_new < sizeof(struct iwarp_ctrl_tagged))
+		return -ECONNRESET;
 
-	स_रखो(infop, 0, माप(term_info));
+	memset(infop, 0, sizeof(term_info));
 
 	skb_copy_bits(skb, srx->skb_offset, infop, to_copy);
 
 	op = __rdmap_get_opcode(&term_info.ctrl);
-	अगर (op >= RDMAP_TERMINATE)
-		जाओ out;
+	if (op >= RDMAP_TERMINATE)
+		goto out;
 
 	infop += to_copy;
 	srx->skb_offset += to_copy;
@@ -935,20 +934,20 @@ error_term:
 	to_copy = iwarp_pktinfo[op].hdr_len - to_copy;
 
 	/* Again, no network fragmented TERM's */
-	अगर (to_copy + MPA_CRC_SIZE > srx->skb_new)
-		वापस -ECONNRESET;
+	if (to_copy + MPA_CRC_SIZE > srx->skb_new)
+		return -ECONNRESET;
 
 	skb_copy_bits(skb, srx->skb_offset, infop, to_copy);
 
-	अगर (term->flag_r) अणु
+	if (term->flag_r) {
 		siw_dbg_qp(qp, "TERM reports RDMAP hdr type %u, len %u (%s)\n",
 			   op, be16_to_cpu(term_info.ctrl.mpa_len),
 			   term->flag_m ? "valid" : "invalid");
-	पूर्ण अन्यथा अगर (term->flag_d) अणु
+	} else if (term->flag_d) {
 		siw_dbg_qp(qp, "TERM reports DDP hdr type %u, len %u (%s)\n",
 			   op, be16_to_cpu(term_info.ctrl.mpa_len),
 			   term->flag_m ? "valid" : "invalid");
-	पूर्ण
+	}
 out:
 	srx->skb_new -= to_copy;
 	srx->skb_offset += to_copy;
@@ -956,72 +955,72 @@ out:
 	srx->fpdu_part_rcvd += to_copy;
 	srx->fpdu_part_rem -= to_copy;
 
-	वापस -ECONNRESET;
-पूर्ण
+	return -ECONNRESET;
+}
 
-अटल पूर्णांक siw_get_trailer(काष्ठा siw_qp *qp, काष्ठा siw_rx_stream *srx)
-अणु
-	काष्ठा sk_buff *skb = srx->skb;
+static int siw_get_trailer(struct siw_qp *qp, struct siw_rx_stream *srx)
+{
+	struct sk_buff *skb = srx->skb;
 	u8 *tbuf = (u8 *)&srx->trailer.crc - srx->pad;
 	__wsum crc_in, crc_own = 0;
 
 	siw_dbg_qp(qp, "expected %d, available %d, pad %u\n",
 		   srx->fpdu_part_rem, srx->skb_new, srx->pad);
 
-	अगर (srx->skb_new < srx->fpdu_part_rem)
-		वापस -EAGAIN;
+	if (srx->skb_new < srx->fpdu_part_rem)
+		return -EAGAIN;
 
 	skb_copy_bits(skb, srx->skb_offset, tbuf, srx->fpdu_part_rem);
 
-	अगर (srx->mpa_crc_hd && srx->pad)
+	if (srx->mpa_crc_hd && srx->pad)
 		crypto_shash_update(srx->mpa_crc_hd, tbuf, srx->pad);
 
 	srx->skb_new -= srx->fpdu_part_rem;
 	srx->skb_offset += srx->fpdu_part_rem;
 	srx->skb_copied += srx->fpdu_part_rem;
 
-	अगर (!srx->mpa_crc_hd)
-		वापस 0;
+	if (!srx->mpa_crc_hd)
+		return 0;
 
 	/*
 	 * CRC32 is computed, transmitted and received directly in NBO,
 	 * so there's never a reason to convert byte order.
 	 */
 	crypto_shash_final(srx->mpa_crc_hd, (u8 *)&crc_own);
-	crc_in = (__क्रमce __wsum)srx->trailer.crc;
+	crc_in = (__force __wsum)srx->trailer.crc;
 
-	अगर (unlikely(crc_in != crc_own)) अणु
+	if (unlikely(crc_in != crc_own)) {
 		pr_warn("siw: crc error. in: %08x, own %08x, op %u\n",
 			crc_in, crc_own, qp->rx_stream.rdmap_op);
 
 		siw_init_terminate(qp, TERM_ERROR_LAYER_LLP,
 				   LLP_ETYPE_MPA,
 				   LLP_ECODE_RECEIVED_CRC, 0);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-#घोषणा MIN_DDP_HDR माप(काष्ठा iwarp_ctrl_tagged)
+#define MIN_DDP_HDR sizeof(struct iwarp_ctrl_tagged)
 
-अटल पूर्णांक siw_get_hdr(काष्ठा siw_rx_stream *srx)
-अणु
-	काष्ठा sk_buff *skb = srx->skb;
-	काष्ठा siw_qp *qp = rx_qp(srx);
-	काष्ठा iwarp_ctrl *c_hdr = &srx->hdr.ctrl;
-	काष्ठा siw_rx_fpdu *frx;
+static int siw_get_hdr(struct siw_rx_stream *srx)
+{
+	struct sk_buff *skb = srx->skb;
+	struct siw_qp *qp = rx_qp(srx);
+	struct iwarp_ctrl *c_hdr = &srx->hdr.ctrl;
+	struct siw_rx_fpdu *frx;
 	u8 opcode;
-	पूर्णांक bytes;
+	int bytes;
 
-	अगर (srx->fpdu_part_rcvd < MIN_DDP_HDR) अणु
+	if (srx->fpdu_part_rcvd < MIN_DDP_HDR) {
 		/*
 		 * copy a mimimum sized (tagged) DDP frame control part
 		 */
-		bytes = min_t(पूर्णांक, srx->skb_new,
+		bytes = min_t(int, srx->skb_new,
 			      MIN_DDP_HDR - srx->fpdu_part_rcvd);
 
 		skb_copy_bits(skb, srx->skb_offset,
-			      (अक्षर *)c_hdr + srx->fpdu_part_rcvd, bytes);
+			      (char *)c_hdr + srx->fpdu_part_rcvd, bytes);
 
 		srx->fpdu_part_rcvd += bytes;
 
@@ -1029,220 +1028,220 @@ out:
 		srx->skb_offset += bytes;
 		srx->skb_copied += bytes;
 
-		अगर (srx->fpdu_part_rcvd < MIN_DDP_HDR)
-			वापस -EAGAIN;
+		if (srx->fpdu_part_rcvd < MIN_DDP_HDR)
+			return -EAGAIN;
 
-		अगर (unlikely(__ddp_get_version(c_hdr) != DDP_VERSION)) अणु
-			क्रमागत ddp_etype etype;
-			क्रमागत ddp_ecode ecode;
+		if (unlikely(__ddp_get_version(c_hdr) != DDP_VERSION)) {
+			enum ddp_etype etype;
+			enum ddp_ecode ecode;
 
 			pr_warn("siw: received ddp version unsupported %d\n",
 				__ddp_get_version(c_hdr));
 
-			अगर (c_hdr->ddp_rdmap_ctrl & DDP_FLAG_TAGGED) अणु
+			if (c_hdr->ddp_rdmap_ctrl & DDP_FLAG_TAGGED) {
 				etype = DDP_ETYPE_TAGGED_BUF;
 				ecode = DDP_ECODE_T_VERSION;
-			पूर्ण अन्यथा अणु
+			} else {
 				etype = DDP_ETYPE_UNTAGGED_BUF;
 				ecode = DDP_ECODE_UT_VERSION;
-			पूर्ण
+			}
 			siw_init_terminate(rx_qp(srx), TERM_ERROR_LAYER_DDP,
 					   etype, ecode, 0);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (unlikely(__rdmap_get_version(c_hdr) != RDMAP_VERSION)) अणु
+			return -EINVAL;
+		}
+		if (unlikely(__rdmap_get_version(c_hdr) != RDMAP_VERSION)) {
 			pr_warn("siw: received rdmap version unsupported %d\n",
 				__rdmap_get_version(c_hdr));
 
 			siw_init_terminate(rx_qp(srx), TERM_ERROR_LAYER_RDMAP,
 					   RDMAP_ETYPE_REMOTE_OPERATION,
 					   RDMAP_ECODE_VERSION, 0);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		opcode = __rdmap_get_opcode(c_hdr);
 
-		अगर (opcode > RDMAP_TERMINATE) अणु
+		if (opcode > RDMAP_TERMINATE) {
 			pr_warn("siw: received unknown packet type %u\n",
 				opcode);
 
 			siw_init_terminate(rx_qp(srx), TERM_ERROR_LAYER_RDMAP,
 					   RDMAP_ETYPE_REMOTE_OPERATION,
 					   RDMAP_ECODE_OPCODE, 0);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		siw_dbg_qp(rx_qp(srx), "new header, opcode %u\n", opcode);
-	पूर्ण अन्यथा अणु
+	} else {
 		opcode = __rdmap_get_opcode(c_hdr);
-	पूर्ण
+	}
 	set_rx_fpdu_context(qp, opcode);
 	frx = qp->rx_fpdu;
 
 	/*
 	 * Figure out len of current hdr: variable length of
-	 * iwarp hdr may क्रमce us to copy hdr inक्रमmation in
-	 * two steps. Only tagged DDP messages are alपढ़ोy
+	 * iwarp hdr may force us to copy hdr information in
+	 * two steps. Only tagged DDP messages are already
 	 * completely received.
 	 */
-	अगर (iwarp_pktinfo[opcode].hdr_len > माप(काष्ठा iwarp_ctrl_tagged)) अणु
+	if (iwarp_pktinfo[opcode].hdr_len > sizeof(struct iwarp_ctrl_tagged)) {
 		bytes = iwarp_pktinfo[opcode].hdr_len - MIN_DDP_HDR;
 
-		अगर (srx->skb_new < bytes)
-			वापस -EAGAIN;
+		if (srx->skb_new < bytes)
+			return -EAGAIN;
 
 		skb_copy_bits(skb, srx->skb_offset,
-			      (अक्षर *)c_hdr + srx->fpdu_part_rcvd, bytes);
+			      (char *)c_hdr + srx->fpdu_part_rcvd, bytes);
 
 		srx->fpdu_part_rcvd += bytes;
 
 		srx->skb_new -= bytes;
 		srx->skb_offset += bytes;
 		srx->skb_copied += bytes;
-	पूर्ण
+	}
 
 	/*
-	 * DDP/RDMAP header receive completed. Check अगर the current
-	 * DDP segment starts a new RDMAP message or जारीs a previously
+	 * DDP/RDMAP header receive completed. Check if the current
+	 * DDP segment starts a new RDMAP message or continues a previously
 	 * started RDMAP message.
 	 *
 	 * Alternating reception of DDP segments (or FPDUs) from incomplete
-	 * tagged and untagged RDMAP messages is supported, as दीर्घ as
-	 * the current tagged or untagged message माला_लो eventually completed
-	 * w/o पूर्णांकersection from another message of the same type
-	 * (tagged/untagged). E.g., a WRITE can get पूर्णांकersected by a SEND,
+	 * tagged and untagged RDMAP messages is supported, as long as
+	 * the current tagged or untagged message gets eventually completed
+	 * w/o intersection from another message of the same type
+	 * (tagged/untagged). E.g., a WRITE can get intersected by a SEND,
 	 * but not by a READ RESPONSE etc.
 	 */
-	अगर (srx->mpa_crc_hd) अणु
+	if (srx->mpa_crc_hd) {
 		/*
 		 * Restart CRC computation
 		 */
 		crypto_shash_init(srx->mpa_crc_hd);
 		crypto_shash_update(srx->mpa_crc_hd, (u8 *)c_hdr,
 				    srx->fpdu_part_rcvd);
-	पूर्ण
-	अगर (frx->more_ddp_segs) अणु
+	}
+	if (frx->more_ddp_segs) {
 		frx->first_ddp_seg = 0;
-		अगर (frx->prev_rdmap_op != opcode) अणु
+		if (frx->prev_rdmap_op != opcode) {
 			pr_warn("siw: packet intersection: %u : %u\n",
 				frx->prev_rdmap_op, opcode);
 			/*
 			 * The last inbound RDMA operation of same type
 			 * (tagged or untagged) is left unfinished.
 			 * To complete it in error, make it the current
-			 * operation again, even with the header alपढ़ोy
+			 * operation again, even with the header already
 			 * overwritten. For error handling, only the opcode
 			 * and current rx context are relevant.
 			 */
 			set_rx_fpdu_context(qp, frx->prev_rdmap_op);
 			__rdmap_set_opcode(c_hdr, frx->prev_rdmap_op);
-			वापस -EPROTO;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EPROTO;
+		}
+	} else {
 		frx->prev_rdmap_op = opcode;
 		frx->first_ddp_seg = 1;
-	पूर्ण
+	}
 	frx->more_ddp_segs = c_hdr->ddp_rdmap_ctrl & DDP_FLAG_LAST ? 0 : 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक siw_check_tx_fence(काष्ठा siw_qp *qp)
-अणु
-	काष्ठा siw_wqe *tx_रुकोing = tx_wqe(qp);
-	काष्ठा siw_sqe *rreq;
-	पूर्णांक resume_tx = 0, rv = 0;
-	अचिन्हित दीर्घ flags;
+static int siw_check_tx_fence(struct siw_qp *qp)
+{
+	struct siw_wqe *tx_waiting = tx_wqe(qp);
+	struct siw_sqe *rreq;
+	int resume_tx = 0, rv = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&qp->orq_lock, flags);
 
 	rreq = orq_get_current(qp);
 
-	/* मुक्त current orq entry */
+	/* free current orq entry */
 	WRITE_ONCE(rreq->flags, 0);
 
-	अगर (qp->tx_ctx.orq_fence) अणु
-		अगर (unlikely(tx_रुकोing->wr_status != SIW_WR_QUEUED)) अणु
+	if (qp->tx_ctx.orq_fence) {
+		if (unlikely(tx_waiting->wr_status != SIW_WR_QUEUED)) {
 			pr_warn("siw: [QP %u]: fence resume: bad status %d\n",
-				qp_id(qp), tx_रुकोing->wr_status);
+				qp_id(qp), tx_waiting->wr_status);
 			rv = -EPROTO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		/* resume SQ processing */
-		अगर (tx_रुकोing->sqe.opcode == SIW_OP_READ ||
-		    tx_रुकोing->sqe.opcode == SIW_OP_READ_LOCAL_INV) अणु
+		if (tx_waiting->sqe.opcode == SIW_OP_READ ||
+		    tx_waiting->sqe.opcode == SIW_OP_READ_LOCAL_INV) {
 			rreq = orq_get_tail(qp);
-			अगर (unlikely(!rreq)) अणु
+			if (unlikely(!rreq)) {
 				pr_warn("siw: [QP %u]: no ORQE\n", qp_id(qp));
 				rv = -EPROTO;
-				जाओ out;
-			पूर्ण
-			siw_पढ़ो_to_orq(rreq, &tx_रुकोing->sqe);
+				goto out;
+			}
+			siw_read_to_orq(rreq, &tx_waiting->sqe);
 
 			qp->orq_put++;
 			qp->tx_ctx.orq_fence = 0;
 			resume_tx = 1;
 
-		पूर्ण अन्यथा अगर (siw_orq_empty(qp)) अणु
+		} else if (siw_orq_empty(qp)) {
 			qp->tx_ctx.orq_fence = 0;
 			resume_tx = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("siw: [QP %u]: fence resume: orq idx: %d:%d\n",
 				qp_id(qp), qp->orq_get, qp->orq_put);
 			rv = -EPROTO;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	qp->orq_get++;
 out:
 	spin_unlock_irqrestore(&qp->orq_lock, flags);
 
-	अगर (resume_tx)
+	if (resume_tx)
 		rv = siw_sq_start(qp);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
  * siw_rdmap_complete()
  *
  * Complete processing of an RDMA message after receiving all
- * DDP segmens or ABort processing after encountering error हाल.
+ * DDP segmens or ABort processing after encountering error case.
  *
- *   o SENDs + RRESPs will need क्रम completion,
- *   o RREQs need क्रम  READ RESPONSE initialization
+ *   o SENDs + RRESPs will need for completion,
+ *   o RREQs need for  READ RESPONSE initialization
  *   o WRITEs need memory dereferencing
  *
  * TODO: Failed WRITEs need local error to be surfaced.
  */
-अटल पूर्णांक siw_rdmap_complete(काष्ठा siw_qp *qp, पूर्णांक error)
-अणु
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
-	काष्ठा siw_wqe *wqe = rx_wqe(qp->rx_fpdu);
-	क्रमागत siw_wc_status wc_status = wqe->wc_status;
+static int siw_rdmap_complete(struct siw_qp *qp, int error)
+{
+	struct siw_rx_stream *srx = &qp->rx_stream;
+	struct siw_wqe *wqe = rx_wqe(qp->rx_fpdu);
+	enum siw_wc_status wc_status = wqe->wc_status;
 	u8 opcode = __rdmap_get_opcode(&srx->hdr.ctrl);
-	पूर्णांक rv = 0;
+	int rv = 0;
 
-	चयन (opcode) अणु
-	हाल RDMAP_SEND_SE:
-	हाल RDMAP_SEND_SE_INVAL:
+	switch (opcode) {
+	case RDMAP_SEND_SE:
+	case RDMAP_SEND_SE_INVAL:
 		wqe->rqe.flags |= SIW_WQE_SOLICITED;
 		fallthrough;
 
-	हाल RDMAP_SEND:
-	हाल RDMAP_SEND_INVAL:
-		अगर (wqe->wr_status == SIW_WR_IDLE)
-			अवरोध;
+	case RDMAP_SEND:
+	case RDMAP_SEND_INVAL:
+		if (wqe->wr_status == SIW_WR_IDLE)
+			break;
 
 		srx->ddp_msn[RDMAP_UNTAGGED_QN_SEND]++;
 
-		अगर (error != 0 && wc_status == SIW_WC_SUCCESS)
+		if (error != 0 && wc_status == SIW_WC_SUCCESS)
 			wc_status = SIW_WC_GENERAL_ERR;
 		/*
 		 * Handle STag invalidation request
 		 */
-		अगर (wc_status == SIW_WC_SUCCESS &&
+		if (wc_status == SIW_WC_SUCCESS &&
 		    (opcode == RDMAP_SEND_INVAL ||
-		     opcode == RDMAP_SEND_SE_INVAL)) अणु
+		     opcode == RDMAP_SEND_SE_INVAL)) {
 			rv = siw_invalidate_stag(qp->pd, srx->inval_stag);
-			अगर (rv) अणु
+			if (rv) {
 				siw_init_terminate(
 					qp, TERM_ERROR_LAYER_RDMAP,
 					rv == -EACCES ?
@@ -1251,110 +1250,110 @@ out:
 					RDMAP_ECODE_CANNOT_INVALIDATE, 0);
 
 				wc_status = SIW_WC_REM_INV_REQ_ERR;
-			पूर्ण
+			}
 			rv = siw_rqe_complete(qp, &wqe->rqe, wqe->processed,
 					      rv ? 0 : srx->inval_stag,
 					      wc_status);
-		पूर्ण अन्यथा अणु
+		} else {
 			rv = siw_rqe_complete(qp, &wqe->rqe, wqe->processed,
 					      0, wc_status);
-		पूर्ण
+		}
 		siw_wqe_put_mem(wqe, SIW_OP_RECEIVE);
-		अवरोध;
+		break;
 
-	हाल RDMAP_RDMA_READ_RESP:
-		अगर (wqe->wr_status == SIW_WR_IDLE)
-			अवरोध;
+	case RDMAP_RDMA_READ_RESP:
+		if (wqe->wr_status == SIW_WR_IDLE)
+			break;
 
-		अगर (error != 0) अणु
-			अगर ((srx->state == SIW_GET_HDR &&
+		if (error != 0) {
+			if ((srx->state == SIW_GET_HDR &&
 			     qp->rx_fpdu->first_ddp_seg) || error == -ENODATA)
 				/* possible RREQ in ORQ left untouched */
-				अवरोध;
+				break;
 
-			अगर (wc_status == SIW_WC_SUCCESS)
+			if (wc_status == SIW_WC_SUCCESS)
 				wc_status = SIW_WC_GENERAL_ERR;
-		पूर्ण अन्यथा अगर (rdma_is_kernel_res(&qp->base_qp.res) &&
-			   rx_type(wqe) == SIW_OP_READ_LOCAL_INV) अणु
+		} else if (rdma_is_kernel_res(&qp->base_qp.res) &&
+			   rx_type(wqe) == SIW_OP_READ_LOCAL_INV) {
 			/*
 			 * Handle any STag invalidation request
 			 */
 			rv = siw_invalidate_stag(qp->pd, wqe->sqe.sge[0].lkey);
-			अगर (rv) अणु
+			if (rv) {
 				siw_init_terminate(qp, TERM_ERROR_LAYER_RDMAP,
 						   RDMAP_ETYPE_CATASTROPHIC,
 						   RDMAP_ECODE_UNSPECIFIED, 0);
 
-				अगर (wc_status == SIW_WC_SUCCESS) अणु
+				if (wc_status == SIW_WC_SUCCESS) {
 					wc_status = SIW_WC_GENERAL_ERR;
 					error = rv;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		/*
-		 * All errors turn the wqe पूर्णांकo संकेतled.
+		 * All errors turn the wqe into signalled.
 		 */
-		अगर ((wqe->sqe.flags & SIW_WQE_SIGNALLED) || error != 0)
+		if ((wqe->sqe.flags & SIW_WQE_SIGNALLED) || error != 0)
 			rv = siw_sqe_complete(qp, &wqe->sqe, wqe->processed,
 					      wc_status);
 		siw_wqe_put_mem(wqe, SIW_OP_READ);
 
-		अगर (!error) अणु
+		if (!error) {
 			rv = siw_check_tx_fence(qp);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Disable current ORQ element */
-			अगर (qp->attrs.orq_size)
+			if (qp->attrs.orq_size)
 				WRITE_ONCE(orq_get_current(qp)->flags, 0);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल RDMAP_RDMA_READ_REQ:
-		अगर (!error) अणु
+	case RDMAP_RDMA_READ_REQ:
+		if (!error) {
 			rv = siw_init_rresp(qp, srx);
 			srx->ddp_msn[RDMAP_UNTAGGED_QN_RDMA_READ]++;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल RDMAP_RDMA_WRITE:
-		अगर (wqe->wr_status == SIW_WR_IDLE)
-			अवरोध;
+	case RDMAP_RDMA_WRITE:
+		if (wqe->wr_status == SIW_WR_IDLE)
+			break;
 
 		/*
-		 * Free References from memory object अगर
+		 * Free References from memory object if
 		 * attached to receive context (inbound WRITE).
 		 * While a zero-length WRITE is allowed,
 		 * no memory reference got created.
 		 */
-		अगर (rx_mem(&qp->rx_tagged)) अणु
+		if (rx_mem(&qp->rx_tagged)) {
 			siw_mem_put(rx_mem(&qp->rx_tagged));
-			rx_mem(&qp->rx_tagged) = शून्य;
-		पूर्ण
-		अवरोध;
+			rx_mem(&qp->rx_tagged) = NULL;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 	wqe->wr_status = SIW_WR_IDLE;
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
  * siw_tcp_rx_data()
  *
  * Main routine to consume inbound TCP payload
  *
- * @rd_desc:	पढ़ो descriptor
+ * @rd_desc:	read descriptor
  * @skb:	socket buffer
  * @off:	offset in skb
  * @len:	skb->len - offset : payload in skb
  */
-पूर्णांक siw_tcp_rx_data(पढ़ो_descriptor_t *rd_desc, काष्ठा sk_buff *skb,
-		    अचिन्हित पूर्णांक off, माप_प्रकार len)
-अणु
-	काष्ठा siw_qp *qp = rd_desc->arg.data;
-	काष्ठा siw_rx_stream *srx = &qp->rx_stream;
-	पूर्णांक rv;
+int siw_tcp_rx_data(read_descriptor_t *rd_desc, struct sk_buff *skb,
+		    unsigned int off, size_t len)
+{
+	struct siw_qp *qp = rd_desc->arg.data;
+	struct siw_rx_stream *srx = &qp->rx_stream;
+	int rv;
 
 	srx->skb = skb;
 	srx->skb_new = skb->len - off;
@@ -1363,50 +1362,50 @@ out:
 
 	siw_dbg_qp(qp, "new data, len %d\n", srx->skb_new);
 
-	जबतक (srx->skb_new) अणु
-		पूर्णांक run_completion = 1;
+	while (srx->skb_new) {
+		int run_completion = 1;
 
-		अगर (unlikely(srx->rx_suspend)) अणु
+		if (unlikely(srx->rx_suspend)) {
 			/* Do not process any more data */
 			srx->skb_copied += srx->skb_new;
-			अवरोध;
-		पूर्ण
-		चयन (srx->state) अणु
-		हाल SIW_GET_HDR:
+			break;
+		}
+		switch (srx->state) {
+		case SIW_GET_HDR:
 			rv = siw_get_hdr(srx);
-			अगर (!rv) अणु
+			if (!rv) {
 				srx->fpdu_part_rem =
 					be16_to_cpu(srx->hdr.ctrl.mpa_len) -
 					srx->fpdu_part_rcvd + MPA_HDR_SIZE;
 
-				अगर (srx->fpdu_part_rem)
+				if (srx->fpdu_part_rem)
 					srx->pad = -srx->fpdu_part_rem & 0x3;
-				अन्यथा
+				else
 					srx->pad = 0;
 
 				srx->state = SIW_GET_DATA_START;
 				srx->fpdu_part_rcvd = 0;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल SIW_GET_DATA_MORE:
+		case SIW_GET_DATA_MORE:
 			/*
 			 * Another data fragment of the same DDP segment.
-			 * Setting first_ddp_seg = 0 aव्योमs repeating
+			 * Setting first_ddp_seg = 0 avoids repeating
 			 * initializations that shall occur only once per
 			 * DDP segment.
 			 */
 			qp->rx_fpdu->first_ddp_seg = 0;
 			fallthrough;
 
-		हाल SIW_GET_DATA_START:
+		case SIW_GET_DATA_START:
 			/*
-			 * Headers will be checked by the opcode-specअगरic
+			 * Headers will be checked by the opcode-specific
 			 * data receive function below.
 			 */
 			rv = iwarp_pktinfo[qp->rx_stream.rdmap_op].rx_data(qp);
-			अगर (!rv) अणु
-				पूर्णांक mpa_len =
+			if (!rv) {
+				int mpa_len =
 					be16_to_cpu(srx->hdr.ctrl.mpa_len)
 					+ MPA_HDR_SIZE;
 
@@ -1414,44 +1413,44 @@ out:
 						      + MPA_CRC_SIZE;
 				srx->fpdu_part_rcvd = 0;
 				srx->state = SIW_GET_TRAILER;
-			पूर्ण अन्यथा अणु
-				अगर (unlikely(rv == -ECONNRESET))
+			} else {
+				if (unlikely(rv == -ECONNRESET))
 					run_completion = 0;
-				अन्यथा
+				else
 					srx->state = SIW_GET_DATA_MORE;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल SIW_GET_TRAILER:
+		case SIW_GET_TRAILER:
 			/*
-			 * पढ़ो CRC + any padding
+			 * read CRC + any padding
 			 */
 			rv = siw_get_trailer(qp, srx);
-			अगर (likely(!rv)) अणु
+			if (likely(!rv)) {
 				/*
 				 * FPDU completed.
-				 * complete RDMAP message अगर last fragment
+				 * complete RDMAP message if last fragment
 				 */
 				srx->state = SIW_GET_HDR;
 				srx->fpdu_part_rcvd = 0;
 
-				अगर (!(srx->hdr.ctrl.ddp_rdmap_ctrl &
+				if (!(srx->hdr.ctrl.ddp_rdmap_ctrl &
 				      DDP_FLAG_LAST))
 					/* more frags */
-					अवरोध;
+					break;
 
 				rv = siw_rdmap_complete(qp, 0);
 				run_completion = 0;
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		शेष:
+		default:
 			pr_warn("QP[%u]: RX out of state\n", qp_id(qp));
 			rv = -EPROTO;
 			run_completion = 0;
-		पूर्ण
-		अगर (unlikely(rv != 0 && rv != -EAGAIN)) अणु
-			अगर ((srx->state > SIW_GET_HDR ||
+		}
+		if (unlikely(rv != 0 && rv != -EAGAIN)) {
+			if ((srx->state > SIW_GET_HDR ||
 			     qp->rx_fpdu->more_ddp_segs) && run_completion)
 				siw_rdmap_complete(qp, rv);
 
@@ -1460,13 +1459,13 @@ out:
 
 			siw_qp_cm_drop(qp, 1);
 
-			अवरोध;
-		पूर्ण
-		अगर (rv) अणु
+			break;
+		}
+		if (rv) {
 			siw_dbg_qp(qp, "fpdu fragment, state %d, missing %d\n",
 				   srx->state, srx->fpdu_part_rem);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस srx->skb_copied;
-पूर्ण
+			break;
+		}
+	}
+	return srx->skb_copied;
+}

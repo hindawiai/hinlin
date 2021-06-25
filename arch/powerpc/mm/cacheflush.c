@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/kprobes.h>
+#include <linux/highmem.h>
+#include <linux/kprobes.h>
 
 /**
- * flush_coherent_icache() - अगर a CPU has a coherent icache, flush it
- * Return true अगर the cache was flushed, false otherwise
+ * flush_coherent_icache() - if a CPU has a coherent icache, flush it
+ * Return true if the cache was flushed, false otherwise
  */
-अटल अंतरभूत bool flush_coherent_icache(व्योम)
-अणु
+static inline bool flush_coherent_icache(void)
+{
 	/*
 	 * For a snooping icache, we still need a dummy icbi to purge all the
-	 * prefetched inकाष्ठाions from the अगरetch buffers. We also need a sync
-	 * beक्रमe the icbi to order the the actual stores to memory that might
-	 * have modअगरied inकाष्ठाions with the icbi.
+	 * prefetched instructions from the ifetch buffers. We also need a sync
+	 * before the icbi to order the the actual stores to memory that might
+	 * have modified instructions with the icbi.
 	 */
-	अगर (cpu_has_feature(CPU_FTR_COHERENT_ICACHE)) अणु
+	if (cpu_has_feature(CPU_FTR_COHERENT_ICACHE)) {
 		mb(); /* sync */
-		icbi((व्योम *)PAGE_OFFSET);
+		icbi((void *)PAGE_OFFSET);
 		mb(); /* sync */
 		isync();
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
  * invalidate_icache_range() - Flush the icache by issuing icbi across an address range
  * @start: the start address
  * @stop: the stop address (exclusive)
  */
-अटल व्योम invalidate_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ stop)
-अणु
-	अचिन्हित दीर्घ shअगरt = l1_icache_shअगरt();
-	अचिन्हित दीर्घ bytes = l1_icache_bytes();
-	अक्षर *addr = (अक्षर *)(start & ~(bytes - 1));
-	अचिन्हित दीर्घ size = stop - (अचिन्हित दीर्घ)addr + (bytes - 1);
-	अचिन्हित दीर्घ i;
+static void invalidate_icache_range(unsigned long start, unsigned long stop)
+{
+	unsigned long shift = l1_icache_shift();
+	unsigned long bytes = l1_icache_bytes();
+	char *addr = (char *)(start & ~(bytes - 1));
+	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
+	unsigned long i;
 
-	क्रम (i = 0; i < size >> shअगरt; i++, addr += bytes)
+	for (i = 0; i < size >> shift; i++, addr += bytes)
 		icbi(addr);
 
 	mb(); /* sync */
 	isync();
-पूर्ण
+}
 
 /**
- * flush_icache_range: Write any modअगरied data cache blocks out to memory
- * and invalidate the corresponding blocks in the inकाष्ठाion cache
+ * flush_icache_range: Write any modified data cache blocks out to memory
+ * and invalidate the corresponding blocks in the instruction cache
  *
- * Generic code will call this after writing memory, beक्रमe executing from it.
+ * Generic code will call this after writing memory, before executing from it.
  *
  * @start: the start address
  * @stop: the stop address (exclusive)
  */
-व्योम flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ stop)
-अणु
-	अगर (flush_coherent_icache())
-		वापस;
+void flush_icache_range(unsigned long start, unsigned long stop)
+{
+	if (flush_coherent_icache())
+		return;
 
 	clean_dcache_range(start, stop);
 
-	अगर (IS_ENABLED(CONFIG_44x)) अणु
+	if (IS_ENABLED(CONFIG_44x)) {
 		/*
 		 * Flash invalidate on 44x because we are passed kmapped
-		 * addresses and this करोesn't work क्रम userspace pages due to
-		 * the भवly tagged icache.
+		 * addresses and this doesn't work for userspace pages due to
+		 * the virtually tagged icache.
 		 */
-		iccci((व्योम *)start);
+		iccci((void *)start);
 		mb(); /* sync */
 		isync();
-	पूर्ण अन्यथा
+	} else
 		invalidate_icache_range(start, stop);
-पूर्ण
+}
 EXPORT_SYMBOL(flush_icache_range);
 
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 /**
  * flush_dcache_icache_phys() - Flush a page by it's physical address
  * @physaddr: the physical address of the page
  */
-अटल व्योम flush_dcache_icache_phys(अचिन्हित दीर्घ physaddr)
-अणु
-	अचिन्हित दीर्घ bytes = l1_dcache_bytes();
-	अचिन्हित दीर्घ nb = PAGE_SIZE / bytes;
-	अचिन्हित दीर्घ addr = physaddr & PAGE_MASK;
-	अचिन्हित दीर्घ msr, msr0;
-	अचिन्हित दीर्घ loop1 = addr, loop2 = addr;
+static void flush_dcache_icache_phys(unsigned long physaddr)
+{
+	unsigned long bytes = l1_dcache_bytes();
+	unsigned long nb = PAGE_SIZE / bytes;
+	unsigned long addr = physaddr & PAGE_MASK;
+	unsigned long msr, msr0;
+	unsigned long loop1 = addr, loop2 = addr;
 
 	msr0 = mfmsr();
 	msr = msr0 & ~MSR_DR;
 	/*
-	 * This must reमुख्य as ASM to prevent potential memory accesses
-	 * जबतक the data MMU is disabled
+	 * This must remain as ASM to prevent potential memory accesses
+	 * while the data MMU is disabled
 	 */
-	यंत्र अस्थिर(
+	asm volatile(
 		"   mtctr %2;\n"
 		"   mtmsr %3;\n"
 		"   isync;\n"
@@ -114,96 +113,96 @@ EXPORT_SYMBOL(flush_icache_range);
 		: "+&r" (loop1), "+&r" (loop2)
 		: "r" (nb), "r" (msr), "i" (bytes), "r" (msr0)
 		: "ctr", "memory");
-पूर्ण
+}
 NOKPROBE_SYMBOL(flush_dcache_icache_phys)
-#अन्यथा
-अटल व्योम flush_dcache_icache_phys(अचिन्हित दीर्घ physaddr)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#else
+static void flush_dcache_icache_phys(unsigned long physaddr)
+{
+}
+#endif
 
 /**
  * __flush_dcache_icache(): Flush a particular page from the data cache to RAM.
- * Note: this is necessary because the inकाष्ठाion cache करोes *not*
+ * Note: this is necessary because the instruction cache does *not*
  * snoop from the data cache.
  *
  * @p: the address of the page to flush
  */
-अटल व्योम __flush_dcache_icache(व्योम *p)
-अणु
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)p & PAGE_MASK;
+static void __flush_dcache_icache(void *p)
+{
+	unsigned long addr = (unsigned long)p & PAGE_MASK;
 
 	clean_dcache_range(addr, addr + PAGE_SIZE);
 
 	/*
-	 * We करोn't flush the icache on 44x. Those have a भव icache and we
-	 * करोn't have access to the virtual address here (it's not the page
+	 * We don't flush the icache on 44x. Those have a virtual icache and we
+	 * don't have access to the virtual address here (it's not the page
 	 * vaddr but where it's mapped in user space). The flushing of the
-	 * icache on these is handled अन्यथाwhere, when a change in the address
-	 * space occurs, beक्रमe वापसing to user space.
+	 * icache on these is handled elsewhere, when a change in the address
+	 * space occurs, before returning to user space.
 	 */
 
-	अगर (mmu_has_feature(MMU_FTR_TYPE_44x))
-		वापस;
+	if (mmu_has_feature(MMU_FTR_TYPE_44x))
+		return;
 
 	invalidate_icache_range(addr, addr + PAGE_SIZE);
-पूर्ण
+}
 
-अटल व्योम flush_dcache_icache_hugepage(काष्ठा page *page)
-अणु
-	पूर्णांक i;
-	पूर्णांक nr = compound_nr(page);
+static void flush_dcache_icache_hugepage(struct page *page)
+{
+	int i;
+	int nr = compound_nr(page);
 
-	अगर (!PageHighMem(page)) अणु
-		क्रम (i = 0; i < nr; i++)
+	if (!PageHighMem(page)) {
+		for (i = 0; i < nr; i++)
 			__flush_dcache_icache(lowmem_page_address(page + i));
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < nr; i++) अणु
-			व्योम *start = kmap_local_page(page + i);
+	} else {
+		for (i = 0; i < nr; i++) {
+			void *start = kmap_local_page(page + i);
 
 			__flush_dcache_icache(start);
 			kunmap_local(start);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम flush_dcache_icache_page(काष्ठा page *page)
-अणु
-	अगर (flush_coherent_icache())
-		वापस;
+void flush_dcache_icache_page(struct page *page)
+{
+	if (flush_coherent_icache())
+		return;
 
-	अगर (PageCompound(page))
-		वापस flush_dcache_icache_hugepage(page);
+	if (PageCompound(page))
+		return flush_dcache_icache_hugepage(page);
 
-	अगर (!PageHighMem(page)) अणु
+	if (!PageHighMem(page)) {
 		__flush_dcache_icache(lowmem_page_address(page));
-	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_BOOKE) || माप(phys_addr_t) > माप(व्योम *)) अणु
-		व्योम *start = kmap_local_page(page);
+	} else if (IS_ENABLED(CONFIG_BOOKE) || sizeof(phys_addr_t) > sizeof(void *)) {
+		void *start = kmap_local_page(page);
 
 		__flush_dcache_icache(start);
 		kunmap_local(start);
-	पूर्ण अन्यथा अणु
+	} else {
 		flush_dcache_icache_phys(page_to_phys(page));
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(flush_dcache_icache_page);
 
-व्योम clear_user_page(व्योम *page, अचिन्हित दीर्घ vaddr, काष्ठा page *pg)
-अणु
+void clear_user_page(void *page, unsigned long vaddr, struct page *pg)
+{
 	clear_page(page);
 
 	/*
-	 * We shouldn't have to करो this, but some versions of glibc
+	 * We shouldn't have to do this, but some versions of glibc
 	 * require it (ld.so assumes zero filled pages are icache clean)
 	 * - Anton
 	 */
 	flush_dcache_page(pg);
-पूर्ण
+}
 EXPORT_SYMBOL(clear_user_page);
 
-व्योम copy_user_page(व्योम *vto, व्योम *vfrom, अचिन्हित दीर्घ vaddr,
-		    काष्ठा page *pg)
-अणु
+void copy_user_page(void *vto, void *vfrom, unsigned long vaddr,
+		    struct page *pg)
+{
 	copy_page(vto, vfrom);
 
 	/*
@@ -216,20 +215,20 @@ EXPORT_SYMBOL(clear_user_page);
 	 * not marked executable.
 	 * - Anton
 	 */
-#अगर 0
-	अगर (!vma->vm_file && ((vma->vm_flags & VM_EXEC) == 0))
-		वापस;
-#पूर्ण_अगर
+#if 0
+	if (!vma->vm_file && ((vma->vm_flags & VM_EXEC) == 0))
+		return;
+#endif
 
 	flush_dcache_page(pg);
-पूर्ण
+}
 
-व्योम flush_icache_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
-			     अचिन्हित दीर्घ addr, पूर्णांक len)
-अणु
-	व्योम *maddr;
+void flush_icache_user_page(struct vm_area_struct *vma, struct page *page,
+			     unsigned long addr, int len)
+{
+	void *maddr;
 
 	maddr = kmap_local_page(page) + (addr & ~PAGE_MASK);
-	flush_icache_range((अचिन्हित दीर्घ)maddr, (अचिन्हित दीर्घ)maddr + len);
+	flush_icache_range((unsigned long)maddr, (unsigned long)maddr + len);
 	kunmap_local(maddr);
-पूर्ण
+}

@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
 // Copyright (c) 2018, Linaro Limited
 
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dapm.h>
-#समावेश <sound/pcm.h>
-#समावेश <linux/spinlock.h>
-#समावेश <sound/compress_driver.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/of_device.h>
-#समावेश <sound/pcm_params.h>
-#समावेश "q6asm.h"
-#समावेश "q6routing.h"
-#समावेश "q6dsp-errno.h"
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <sound/soc.h>
+#include <sound/soc-dapm.h>
+#include <sound/pcm.h>
+#include <linux/spinlock.h>
+#include <sound/compress_driver.h>
+#include <asm/dma.h>
+#include <linux/dma-mapping.h>
+#include <linux/of_device.h>
+#include <sound/pcm_params.h>
+#include "q6asm.h"
+#include "q6routing.h"
+#include "q6dsp-errno.h"
 
-#घोषणा DRV_NAME	"q6asm-fe-dai"
+#define DRV_NAME	"q6asm-fe-dai"
 
-#घोषणा PLAYBACK_MIN_NUM_PERIODS    2
-#घोषणा PLAYBACK_MAX_NUM_PERIODS   8
-#घोषणा PLAYBACK_MAX_PERIOD_SIZE    65536
-#घोषणा PLAYBACK_MIN_PERIOD_SIZE    128
-#घोषणा CAPTURE_MIN_NUM_PERIODS     2
-#घोषणा CAPTURE_MAX_NUM_PERIODS     8
-#घोषणा CAPTURE_MAX_PERIOD_SIZE     4096
-#घोषणा CAPTURE_MIN_PERIOD_SIZE     320
-#घोषणा SID_MASK_DEFAULT	0xF
+#define PLAYBACK_MIN_NUM_PERIODS    2
+#define PLAYBACK_MAX_NUM_PERIODS   8
+#define PLAYBACK_MAX_PERIOD_SIZE    65536
+#define PLAYBACK_MIN_PERIOD_SIZE    128
+#define CAPTURE_MIN_NUM_PERIODS     2
+#define CAPTURE_MAX_NUM_PERIODS     8
+#define CAPTURE_MAX_PERIOD_SIZE     4096
+#define CAPTURE_MIN_PERIOD_SIZE     320
+#define SID_MASK_DEFAULT	0xF
 
-/* Default values used अगर user space करोes not set */
-#घोषणा COMPR_PLAYBACK_MIN_FRAGMENT_SIZE (8 * 1024)
-#घोषणा COMPR_PLAYBACK_MAX_FRAGMENT_SIZE (128 * 1024)
-#घोषणा COMPR_PLAYBACK_MIN_NUM_FRAGMENTS (4)
-#घोषणा COMPR_PLAYBACK_MAX_NUM_FRAGMENTS (16 * 4)
+/* Default values used if user space does not set */
+#define COMPR_PLAYBACK_MIN_FRAGMENT_SIZE (8 * 1024)
+#define COMPR_PLAYBACK_MAX_FRAGMENT_SIZE (128 * 1024)
+#define COMPR_PLAYBACK_MIN_NUM_FRAGMENTS (4)
+#define COMPR_PLAYBACK_MAX_NUM_FRAGMENTS (16 * 4)
 
-#घोषणा ALAC_CH_LAYOUT_MONO   ((101 << 16) | 1)
-#घोषणा ALAC_CH_LAYOUT_STEREO ((101 << 16) | 2)
+#define ALAC_CH_LAYOUT_MONO   ((101 << 16) | 1)
+#define ALAC_CH_LAYOUT_STEREO ((101 << 16) | 2)
 
-क्रमागत stream_state अणु
+enum stream_state {
 	Q6ASM_STREAM_IDLE = 0,
 	Q6ASM_STREAM_STOPPED,
 	Q6ASM_STREAM_RUNNING,
-पूर्ण;
+};
 
-काष्ठा q6यंत्र_dai_rtd अणु
-	काष्ठा snd_pcm_substream *substream;
-	काष्ठा snd_compr_stream *cstream;
-	काष्ठा snd_codec codec;
-	काष्ठा snd_dma_buffer dma_buffer;
+struct q6asm_dai_rtd {
+	struct snd_pcm_substream *substream;
+	struct snd_compr_stream *cstream;
+	struct snd_codec codec;
+	struct snd_dma_buffer dma_buffer;
 	spinlock_t lock;
 	phys_addr_t phys;
-	अचिन्हित पूर्णांक pcm_size;
-	अचिन्हित पूर्णांक pcm_count;
-	अचिन्हित पूर्णांक pcm_irq_pos;       /* IRQ position */
-	अचिन्हित पूर्णांक periods;
-	अचिन्हित पूर्णांक bytes_sent;
-	अचिन्हित पूर्णांक bytes_received;
-	अचिन्हित पूर्णांक copied_total;
-	uपूर्णांक16_t bits_per_sample;
-	uपूर्णांक16_t source; /* Encoding source bit mask */
-	काष्ठा audio_client *audio_client;
-	uपूर्णांक32_t next_track_stream_id;
+	unsigned int pcm_size;
+	unsigned int pcm_count;
+	unsigned int pcm_irq_pos;       /* IRQ position */
+	unsigned int periods;
+	unsigned int bytes_sent;
+	unsigned int bytes_received;
+	unsigned int copied_total;
+	uint16_t bits_per_sample;
+	uint16_t source; /* Encoding source bit mask */
+	struct audio_client *audio_client;
+	uint32_t next_track_stream_id;
 	bool next_track;
-	uपूर्णांक32_t stream_id;
-	uपूर्णांक16_t session_id;
-	क्रमागत stream_state state;
-	uपूर्णांक32_t initial_samples_drop;
-	uपूर्णांक32_t trailing_samples_drop;
-	bool notअगरy_on_drain;
-पूर्ण;
+	uint32_t stream_id;
+	uint16_t session_id;
+	enum stream_state state;
+	uint32_t initial_samples_drop;
+	uint32_t trailing_samples_drop;
+	bool notify_on_drain;
+};
 
-काष्ठा q6यंत्र_dai_data अणु
-	काष्ठा snd_soc_dai_driver *dais;
-	पूर्णांक num_dais;
-	दीर्घ दीर्घ पूर्णांक sid;
-पूर्ण;
+struct q6asm_dai_data {
+	struct snd_soc_dai_driver *dais;
+	int num_dais;
+	long long int sid;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware q6यंत्र_dai_hardware_capture = अणु
+static const struct snd_pcm_hardware q6asm_dai_hardware_capture = {
 	.info =                 (SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_BATCH |
 				SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				SNDRV_PCM_INFO_MMAP_VALID |
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME),
-	.क्रमmats =              (SNDRV_PCM_FMTBIT_S16_LE |
+	.formats =              (SNDRV_PCM_FMTBIT_S16_LE |
 				SNDRV_PCM_FMTBIT_S24_LE),
 	.rates =                SNDRV_PCM_RATE_8000_48000,
 	.rate_min =             8000,
@@ -100,16 +99,16 @@
 	.period_bytes_max =     CAPTURE_MAX_PERIOD_SIZE,
 	.periods_min =          CAPTURE_MIN_NUM_PERIODS,
 	.periods_max =          CAPTURE_MAX_NUM_PERIODS,
-	.fअगरo_size =            0,
-पूर्ण;
+	.fifo_size =            0,
+};
 
-अटल काष्ठा snd_pcm_hardware q6यंत्र_dai_hardware_playback = अणु
+static struct snd_pcm_hardware q6asm_dai_hardware_playback = {
 	.info =                 (SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_BATCH |
 				SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				SNDRV_PCM_INFO_MMAP_VALID |
 				SNDRV_PCM_INFO_INTERLEAVED |
 				SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME),
-	.क्रमmats =              (SNDRV_PCM_FMTBIT_S16_LE |
+	.formats =              (SNDRV_PCM_FMTBIT_S16_LE |
 				SNDRV_PCM_FMTBIT_S24_LE),
 	.rates =                SNDRV_PCM_RATE_8000_192000,
 	.rate_min =             8000,
@@ -122,425 +121,425 @@
 	.period_bytes_max =     PLAYBACK_MAX_PERIOD_SIZE,
 	.periods_min =          PLAYBACK_MIN_NUM_PERIODS,
 	.periods_max =          PLAYBACK_MAX_NUM_PERIODS,
-	.fअगरo_size =            0,
-पूर्ण;
+	.fifo_size =            0,
+};
 
-#घोषणा Q6ASM_FEDAI_DRIVER(num) अणु \
-		.playback = अणु						\
+#define Q6ASM_FEDAI_DRIVER(num) { \
+		.playback = {						\
 			.stream_name = "MultiMedia"#num" Playback",	\
 			.rates = (SNDRV_PCM_RATE_8000_192000|		\
 					SNDRV_PCM_RATE_KNOT),		\
-			.क्रमmats = (SNDRV_PCM_FMTBIT_S16_LE |		\
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |		\
 					SNDRV_PCM_FMTBIT_S24_LE),	\
 			.channels_min = 1,				\
 			.channels_max = 8,				\
 			.rate_min =     8000,				\
 			.rate_max =	192000,				\
-		पूर्ण,							\
-		.capture = अणु						\
+		},							\
+		.capture = {						\
 			.stream_name = "MultiMedia"#num" Capture",	\
 			.rates = (SNDRV_PCM_RATE_8000_48000|		\
 					SNDRV_PCM_RATE_KNOT),		\
-			.क्रमmats = (SNDRV_PCM_FMTBIT_S16_LE |		\
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |		\
 				    SNDRV_PCM_FMTBIT_S24_LE),		\
 			.channels_min = 1,				\
 			.channels_max = 4,				\
 			.rate_min =     8000,				\
 			.rate_max =	48000,				\
-		पूर्ण,							\
+		},							\
 		.name = "MultiMedia"#num,				\
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA##num,			\
-	पूर्ण
+	}
 
 /* Conventional and unconventional sample rate supported */
-अटल अचिन्हित पूर्णांक supported_sample_rates[] = अणु
+static unsigned int supported_sample_rates[] = {
 	8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000,
 	88200, 96000, 176400, 192000
-पूर्ण;
+};
 
-अटल काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरraपूर्णांकs_sample_rates = अणु
+static struct snd_pcm_hw_constraint_list constraints_sample_rates = {
 	.count = ARRAY_SIZE(supported_sample_rates),
 	.list = supported_sample_rates,
 	.mask = 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_compr_codec_caps q6यंत्र_compr_caps = अणु
+static const struct snd_compr_codec_caps q6asm_compr_caps = {
 	.num_descriptors = 1,
 	.descriptor[0].max_ch = 2,
-	.descriptor[0].sample_rates = अणु	8000, 11025, 12000, 16000, 22050,
+	.descriptor[0].sample_rates = {	8000, 11025, 12000, 16000, 22050,
 					24000, 32000, 44100, 48000, 88200,
-					96000, 176400, 192000 पूर्ण,
+					96000, 176400, 192000 },
 	.descriptor[0].num_sample_rates = 13,
 	.descriptor[0].bit_rate[0] = 320,
 	.descriptor[0].bit_rate[1] = 128,
 	.descriptor[0].num_bitrates = 2,
 	.descriptor[0].profiles = 0,
 	.descriptor[0].modes = SND_AUDIOCHANMODE_MP3_STEREO,
-	.descriptor[0].क्रमmats = 0,
-पूर्ण;
+	.descriptor[0].formats = 0,
+};
 
-अटल व्योम event_handler(uपूर्णांक32_t opcode, uपूर्णांक32_t token,
-			  व्योम *payload, व्योम *priv)
-अणु
-	काष्ठा q6यंत्र_dai_rtd *prtd = priv;
-	काष्ठा snd_pcm_substream *substream = prtd->substream;
+static void event_handler(uint32_t opcode, uint32_t token,
+			  void *payload, void *priv)
+{
+	struct q6asm_dai_rtd *prtd = priv;
+	struct snd_pcm_substream *substream = prtd->substream;
 
-	चयन (opcode) अणु
-	हाल ASM_CLIENT_EVENT_CMD_RUN_DONE:
-		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-			q6यंत्र_ग_लिखो_async(prtd->audio_client, prtd->stream_id,
+	switch (opcode) {
+	case ASM_CLIENT_EVENT_CMD_RUN_DONE:
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+			q6asm_write_async(prtd->audio_client, prtd->stream_id,
 				   prtd->pcm_count, 0, 0, 0);
-		अवरोध;
-	हाल ASM_CLIENT_EVENT_CMD_EOS_DONE:
+		break;
+	case ASM_CLIENT_EVENT_CMD_EOS_DONE:
 		prtd->state = Q6ASM_STREAM_STOPPED;
-		अवरोध;
-	हाल ASM_CLIENT_EVENT_DATA_WRITE_DONE: अणु
+		break;
+	case ASM_CLIENT_EVENT_DATA_WRITE_DONE: {
 		prtd->pcm_irq_pos += prtd->pcm_count;
 		snd_pcm_period_elapsed(substream);
-		अगर (prtd->state == Q6ASM_STREAM_RUNNING)
-			q6यंत्र_ग_लिखो_async(prtd->audio_client, prtd->stream_id,
+		if (prtd->state == Q6ASM_STREAM_RUNNING)
+			q6asm_write_async(prtd->audio_client, prtd->stream_id,
 					   prtd->pcm_count, 0, 0, 0);
 
-		अवरोध;
-		पूर्ण
-	हाल ASM_CLIENT_EVENT_DATA_READ_DONE:
+		break;
+		}
+	case ASM_CLIENT_EVENT_DATA_READ_DONE:
 		prtd->pcm_irq_pos += prtd->pcm_count;
 		snd_pcm_period_elapsed(substream);
-		अगर (prtd->state == Q6ASM_STREAM_RUNNING)
-			q6यंत्र_पढ़ो(prtd->audio_client, prtd->stream_id);
+		if (prtd->state == Q6ASM_STREAM_RUNNING)
+			q6asm_read(prtd->audio_client, prtd->stream_id);
 
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक q6यंत्र_dai_prepare(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *soc_prtd = asoc_substream_to_rtd(substream);
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	काष्ठा q6यंत्र_dai_data *pdata;
-	काष्ठा device *dev = component->dev;
-	पूर्णांक ret, i;
+static int q6asm_dai_prepare(struct snd_soc_component *component,
+			     struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *soc_prtd = asoc_substream_to_rtd(substream);
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	struct q6asm_dai_data *pdata;
+	struct device *dev = component->dev;
+	int ret, i;
 
 	pdata = snd_soc_component_get_drvdata(component);
-	अगर (!pdata)
-		वापस -EINVAL;
+	if (!pdata)
+		return -EINVAL;
 
-	अगर (!prtd || !prtd->audio_client) अणु
+	if (!prtd || !prtd->audio_client) {
 		dev_err(dev, "%s: private data null or audio client freed\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	prtd->pcm_count = snd_pcm_lib_period_bytes(substream);
 	prtd->pcm_irq_pos = 0;
 	/* rate and channels are sent to audio driver */
-	अगर (prtd->state) अणु
-		/* clear the previous setup अगर any  */
-		q6यंत्र_cmd(prtd->audio_client, prtd->stream_id, CMD_CLOSE);
-		q6यंत्र_unmap_memory_regions(substream->stream,
+	if (prtd->state) {
+		/* clear the previous setup if any  */
+		q6asm_cmd(prtd->audio_client, prtd->stream_id, CMD_CLOSE);
+		q6asm_unmap_memory_regions(substream->stream,
 					   prtd->audio_client);
-		q6routing_stream_बंद(soc_prtd->dai_link->id,
+		q6routing_stream_close(soc_prtd->dai_link->id,
 					 substream->stream);
-	पूर्ण
+	}
 
-	ret = q6यंत्र_map_memory_regions(substream->stream, prtd->audio_client,
+	ret = q6asm_map_memory_regions(substream->stream, prtd->audio_client,
 				       prtd->phys,
 				       (prtd->pcm_size / prtd->periods),
 				       prtd->periods);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Audio Start: Buffer Allocation failed rc = %d\n",
 							ret);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		ret = q6यंत्र_खोलो_ग_लिखो(prtd->audio_client, prtd->stream_id,
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		ret = q6asm_open_write(prtd->audio_client, prtd->stream_id,
 				       FORMAT_LINEAR_PCM,
 				       0, prtd->bits_per_sample, false);
-	पूर्ण अन्यथा अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
-		ret = q6यंत्र_खोलो_पढ़ो(prtd->audio_client, prtd->stream_id,
+	} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		ret = q6asm_open_read(prtd->audio_client, prtd->stream_id,
 				      FORMAT_LINEAR_PCM,
 				      prtd->bits_per_sample);
-	पूर्ण
+	}
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "%s: q6asm_open_write failed\n", __func__);
-		q6यंत्र_audio_client_मुक्त(prtd->audio_client);
-		prtd->audio_client = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+		q6asm_audio_client_free(prtd->audio_client);
+		prtd->audio_client = NULL;
+		return -ENOMEM;
+	}
 
-	prtd->session_id = q6यंत्र_get_session_id(prtd->audio_client);
-	ret = q6routing_stream_खोलो(soc_prtd->dai_link->id, LEGACY_PCM_MODE,
+	prtd->session_id = q6asm_get_session_id(prtd->audio_client);
+	ret = q6routing_stream_open(soc_prtd->dai_link->id, LEGACY_PCM_MODE,
 			      prtd->session_id, substream->stream);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "%s: stream reg failed ret:%d\n", __func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		ret = q6यंत्र_media_क्रमmat_block_multi_ch_pcm(
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		ret = q6asm_media_format_block_multi_ch_pcm(
 				prtd->audio_client, prtd->stream_id,
-				runसमय->rate, runसमय->channels, शून्य,
+				runtime->rate, runtime->channels, NULL,
 				prtd->bits_per_sample);
-	पूर्ण अन्यथा अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
-		ret = q6यंत्र_enc_cfg_blk_pcm_क्रमmat_support(prtd->audio_client,
+	} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		ret = q6asm_enc_cfg_blk_pcm_format_support(prtd->audio_client,
 							   prtd->stream_id,
-							   runसमय->rate,
-							   runसमय->channels,
+							   runtime->rate,
+							   runtime->channels,
 							   prtd->bits_per_sample);
 
 		/* Queue the buffers */
-		क्रम (i = 0; i < runसमय->periods; i++)
-			q6यंत्र_पढ़ो(prtd->audio_client, prtd->stream_id);
+		for (i = 0; i < runtime->periods; i++)
+			q6asm_read(prtd->audio_client, prtd->stream_id);
 
-	पूर्ण
-	अगर (ret < 0)
+	}
+	if (ret < 0)
 		dev_info(dev, "%s: CMD Format block failed\n", __func__);
 
 	prtd->state = Q6ASM_STREAM_RUNNING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_dai_trigger(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
+static int q6asm_dai_trigger(struct snd_soc_component *component,
+			     struct snd_pcm_substream *substream, int cmd)
+{
+	int ret = 0;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		ret = q6यंत्र_run_noरुको(prtd->audio_client, prtd->stream_id,
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		ret = q6asm_run_nowait(prtd->audio_client, prtd->stream_id,
 				       0, 0, 0);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 		prtd->state = Q6ASM_STREAM_STOPPED;
-		ret = q6यंत्र_cmd_noरुको(prtd->audio_client, prtd->stream_id,
+		ret = q6asm_cmd_nowait(prtd->audio_client, prtd->stream_id,
 				       CMD_EOS);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		ret = q6यंत्र_cmd_noरुको(prtd->audio_client, prtd->stream_id,
+		break;
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		ret = q6asm_cmd_nowait(prtd->audio_client, prtd->stream_id,
 				       CMD_PAUSE);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक q6यंत्र_dai_खोलो(काष्ठा snd_soc_component *component,
-			  काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *soc_prtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_prtd, 0);
-	काष्ठा q6यंत्र_dai_rtd *prtd;
-	काष्ठा q6यंत्र_dai_data *pdata;
-	काष्ठा device *dev = component->dev;
-	पूर्णांक ret = 0;
-	पूर्णांक stream_id;
+static int q6asm_dai_open(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *soc_prtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(soc_prtd, 0);
+	struct q6asm_dai_rtd *prtd;
+	struct q6asm_dai_data *pdata;
+	struct device *dev = component->dev;
+	int ret = 0;
+	int stream_id;
 
 	stream_id = cpu_dai->driver->id;
 
 	pdata = snd_soc_component_get_drvdata(component);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(dev, "Drv data not found ..\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	prtd = kzalloc(माप(काष्ठा q6यंत्र_dai_rtd), GFP_KERNEL);
-	अगर (prtd == शून्य)
-		वापस -ENOMEM;
+	prtd = kzalloc(sizeof(struct q6asm_dai_rtd), GFP_KERNEL);
+	if (prtd == NULL)
+		return -ENOMEM;
 
 	prtd->substream = substream;
-	prtd->audio_client = q6यंत्र_audio_client_alloc(dev,
-				(q6यंत्र_cb)event_handler, prtd, stream_id,
+	prtd->audio_client = q6asm_audio_client_alloc(dev,
+				(q6asm_cb)event_handler, prtd, stream_id,
 				LEGACY_PCM_MODE);
-	अगर (IS_ERR(prtd->audio_client)) अणु
+	if (IS_ERR(prtd->audio_client)) {
 		dev_info(dev, "%s: Could not allocate memory\n", __func__);
 		ret = PTR_ERR(prtd->audio_client);
-		kमुक्त(prtd);
-		वापस ret;
-	पूर्ण
+		kfree(prtd);
+		return ret;
+	}
 
 	/* DSP expects stream id from 1 */
 	prtd->stream_id = 1;
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		runसमय->hw = q6यंत्र_dai_hardware_playback;
-	अन्यथा अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-		runसमय->hw = q6यंत्र_dai_hardware_capture;
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		runtime->hw = q6asm_dai_hardware_playback;
+	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+		runtime->hw = q6asm_dai_hardware_capture;
 
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
+	ret = snd_pcm_hw_constraint_list(runtime, 0,
 				SNDRV_PCM_HW_PARAM_RATE,
-				&स्थिरraपूर्णांकs_sample_rates);
-	अगर (ret < 0)
+				&constraints_sample_rates);
+	if (ret < 0)
 		dev_info(dev, "snd_pcm_hw_constraint_list failed\n");
 	/* Ensure that buffer size is a multiple of period size */
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
+	ret = snd_pcm_hw_constraint_integer(runtime,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_info(dev, "snd_pcm_hw_constraint_integer failed\n");
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
-		ret = snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय,
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		ret = snd_pcm_hw_constraint_minmax(runtime,
 			SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
 			PLAYBACK_MIN_NUM_PERIODS * PLAYBACK_MIN_PERIOD_SIZE,
 			PLAYBACK_MAX_NUM_PERIODS * PLAYBACK_MAX_PERIOD_SIZE);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "constraint for buffer bytes min max ret = %d\n",
 				ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
+	ret = snd_pcm_hw_constraint_step(runtime, 0,
 		SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "constraint for period bytes step ret = %d\n",
 								ret);
-	पूर्ण
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0,
+	}
+	ret = snd_pcm_hw_constraint_step(runtime, 0,
 		SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 32);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "constraint for buffer bytes step ret = %d\n",
 								ret);
-	पूर्ण
+	}
 
-	runसमय->निजी_data = prtd;
+	runtime->private_data = prtd;
 
-	snd_soc_set_runसमय_hwparams(substream, &q6यंत्र_dai_hardware_playback);
+	snd_soc_set_runtime_hwparams(substream, &q6asm_dai_hardware_playback);
 
-	runसमय->dma_bytes = q6यंत्र_dai_hardware_playback.buffer_bytes_max;
+	runtime->dma_bytes = q6asm_dai_hardware_playback.buffer_bytes_max;
 
 
-	अगर (pdata->sid < 0)
+	if (pdata->sid < 0)
 		prtd->phys = substream->dma_buffer.addr;
-	अन्यथा
+	else
 		prtd->phys = substream->dma_buffer.addr | (pdata->sid << 32);
 
-	snd_pcm_set_runसमय_buffer(substream, &substream->dma_buffer);
+	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_dai_बंद(काष्ठा snd_soc_component *component,
-			   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *soc_prtd = asoc_substream_to_rtd(substream);
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
+static int q6asm_dai_close(struct snd_soc_component *component,
+			   struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *soc_prtd = asoc_substream_to_rtd(substream);
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
 
-	अगर (prtd->audio_client) अणु
-		अगर (prtd->state)
-			q6यंत्र_cmd(prtd->audio_client, prtd->stream_id,
+	if (prtd->audio_client) {
+		if (prtd->state)
+			q6asm_cmd(prtd->audio_client, prtd->stream_id,
 				  CMD_CLOSE);
 
-		q6यंत्र_unmap_memory_regions(substream->stream,
+		q6asm_unmap_memory_regions(substream->stream,
 					   prtd->audio_client);
-		q6यंत्र_audio_client_मुक्त(prtd->audio_client);
-		prtd->audio_client = शून्य;
-	पूर्ण
-	q6routing_stream_बंद(soc_prtd->dai_link->id,
+		q6asm_audio_client_free(prtd->audio_client);
+		prtd->audio_client = NULL;
+	}
+	q6routing_stream_close(soc_prtd->dai_link->id,
 						substream->stream);
-	kमुक्त(prtd);
-	वापस 0;
-पूर्ण
+	kfree(prtd);
+	return 0;
+}
 
-अटल snd_pcm_uframes_t q6यंत्र_dai_poपूर्णांकer(काष्ठा snd_soc_component *component,
-					   काष्ठा snd_pcm_substream *substream)
-अणु
+static snd_pcm_uframes_t q6asm_dai_pointer(struct snd_soc_component *component,
+					   struct snd_pcm_substream *substream)
+{
 
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
 
-	अगर (prtd->pcm_irq_pos >= prtd->pcm_size)
+	if (prtd->pcm_irq_pos >= prtd->pcm_size)
 		prtd->pcm_irq_pos = 0;
 
-	वापस bytes_to_frames(runसमय, (prtd->pcm_irq_pos));
-पूर्ण
+	return bytes_to_frames(runtime, (prtd->pcm_irq_pos));
+}
 
-अटल पूर्णांक q6यंत्र_dai_mmap(काष्ठा snd_soc_component *component,
-			  काष्ठा snd_pcm_substream *substream,
-			  काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा device *dev = component->dev;
+static int q6asm_dai_mmap(struct snd_soc_component *component,
+			  struct snd_pcm_substream *substream,
+			  struct vm_area_struct *vma)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct device *dev = component->dev;
 
-	वापस dma_mmap_coherent(dev, vma,
-			runसमय->dma_area, runसमय->dma_addr,
-			runसमय->dma_bytes);
-पूर्ण
+	return dma_mmap_coherent(dev, vma,
+			runtime->dma_area, runtime->dma_addr,
+			runtime->dma_bytes);
+}
 
-अटल पूर्णांक q6यंत्र_dai_hw_params(काष्ठा snd_soc_component *component,
-			       काष्ठा snd_pcm_substream *substream,
-			       काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
+static int q6asm_dai_hw_params(struct snd_soc_component *component,
+			       struct snd_pcm_substream *substream,
+			       struct snd_pcm_hw_params *params)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
 
 	prtd->pcm_size = params_buffer_bytes(params);
 	prtd->periods = params_periods(params);
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		prtd->bits_per_sample = 16;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		prtd->bits_per_sample = 24;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम compress_event_handler(uपूर्णांक32_t opcode, uपूर्णांक32_t token,
-				   व्योम *payload, व्योम *priv)
-अणु
-	काष्ठा q6यंत्र_dai_rtd *prtd = priv;
-	काष्ठा snd_compr_stream *substream = prtd->cstream;
-	अचिन्हित दीर्घ flags;
+static void compress_event_handler(uint32_t opcode, uint32_t token,
+				   void *payload, void *priv)
+{
+	struct q6asm_dai_rtd *prtd = priv;
+	struct snd_compr_stream *substream = prtd->cstream;
+	unsigned long flags;
 	u32 wflags = 0;
-	uपूर्णांक64_t avail;
-	uपूर्णांक32_t bytes_written, bytes_to_ग_लिखो;
+	uint64_t avail;
+	uint32_t bytes_written, bytes_to_write;
 	bool is_last_buffer = false;
 
-	चयन (opcode) अणु
-	हाल ASM_CLIENT_EVENT_CMD_RUN_DONE:
+	switch (opcode) {
+	case ASM_CLIENT_EVENT_CMD_RUN_DONE:
 		spin_lock_irqsave(&prtd->lock, flags);
-		अगर (!prtd->bytes_sent) अणु
-			q6यंत्र_stream_हटाओ_initial_silence(prtd->audio_client,
+		if (!prtd->bytes_sent) {
+			q6asm_stream_remove_initial_silence(prtd->audio_client,
 						    prtd->stream_id,
 						    prtd->initial_samples_drop);
 
-			q6यंत्र_ग_लिखो_async(prtd->audio_client, prtd->stream_id,
+			q6asm_write_async(prtd->audio_client, prtd->stream_id,
 					  prtd->pcm_count, 0, 0, 0);
 			prtd->bytes_sent += prtd->pcm_count;
-		पूर्ण
+		}
 
 		spin_unlock_irqrestore(&prtd->lock, flags);
-		अवरोध;
+		break;
 
-	हाल ASM_CLIENT_EVENT_CMD_EOS_DONE:
+	case ASM_CLIENT_EVENT_CMD_EOS_DONE:
 		spin_lock_irqsave(&prtd->lock, flags);
-		अगर (prtd->notअगरy_on_drain) अणु
-			अगर (substream->partial_drain) अणु
+		if (prtd->notify_on_drain) {
+			if (substream->partial_drain) {
 				/*
-				 * Close old stream and make it stale, चयन
+				 * Close old stream and make it stale, switch
 				 * the active stream now!
 				 */
-				q6यंत्र_cmd_noरुको(prtd->audio_client,
+				q6asm_cmd_nowait(prtd->audio_client,
 						 prtd->stream_id,
 						 CMD_CLOSE);
 				/*
@@ -548,185 +547,185 @@
 				 * toggling this between 1 and 2.
 				 */
 				prtd->stream_id = (prtd->stream_id == 1 ? 2 : 1);
-			पूर्ण
+			}
 
-			snd_compr_drain_notअगरy(prtd->cstream);
-			prtd->notअगरy_on_drain = false;
+			snd_compr_drain_notify(prtd->cstream);
+			prtd->notify_on_drain = false;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			prtd->state = Q6ASM_STREAM_STOPPED;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&prtd->lock, flags);
-		अवरोध;
+		break;
 
-	हाल ASM_CLIENT_EVENT_DATA_WRITE_DONE:
+	case ASM_CLIENT_EVENT_DATA_WRITE_DONE:
 		spin_lock_irqsave(&prtd->lock, flags);
 
 		bytes_written = token >> ASM_WRITE_TOKEN_LEN_SHIFT;
 		prtd->copied_total += bytes_written;
 		snd_compr_fragment_elapsed(substream);
 
-		अगर (prtd->state != Q6ASM_STREAM_RUNNING) अणु
+		if (prtd->state != Q6ASM_STREAM_RUNNING) {
 			spin_unlock_irqrestore(&prtd->lock, flags);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		avail = prtd->bytes_received - prtd->bytes_sent;
-		अगर (avail > prtd->pcm_count) अणु
-			bytes_to_ग_लिखो = prtd->pcm_count;
-		पूर्ण अन्यथा अणु
-			अगर (substream->partial_drain || prtd->notअगरy_on_drain)
+		if (avail > prtd->pcm_count) {
+			bytes_to_write = prtd->pcm_count;
+		} else {
+			if (substream->partial_drain || prtd->notify_on_drain)
 				is_last_buffer = true;
-			bytes_to_ग_लिखो = avail;
-		पूर्ण
+			bytes_to_write = avail;
+		}
 
-		अगर (bytes_to_ग_लिखो) अणु
-			अगर (substream->partial_drain && is_last_buffer) अणु
+		if (bytes_to_write) {
+			if (substream->partial_drain && is_last_buffer) {
 				wflags |= ASM_LAST_BUFFER_FLAG;
-				q6यंत्र_stream_हटाओ_trailing_silence(prtd->audio_client,
+				q6asm_stream_remove_trailing_silence(prtd->audio_client,
 						     prtd->stream_id,
 						     prtd->trailing_samples_drop);
-			पूर्ण
+			}
 
-			q6यंत्र_ग_लिखो_async(prtd->audio_client, prtd->stream_id,
-					  bytes_to_ग_लिखो, 0, 0, wflags);
+			q6asm_write_async(prtd->audio_client, prtd->stream_id,
+					  bytes_to_write, 0, 0, wflags);
 
-			prtd->bytes_sent += bytes_to_ग_लिखो;
-		पूर्ण
+			prtd->bytes_sent += bytes_to_write;
+		}
 
-		अगर (prtd->notअगरy_on_drain && is_last_buffer)
-			q6यंत्र_cmd_noरुको(prtd->audio_client,
+		if (prtd->notify_on_drain && is_last_buffer)
+			q6asm_cmd_nowait(prtd->audio_client,
 					 prtd->stream_id, CMD_EOS);
 
 		spin_unlock_irqrestore(&prtd->lock, flags);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_खोलो(काष्ठा snd_soc_component *component,
-				काष्ठा snd_compr_stream *stream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = stream->निजी_data;
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	काष्ठा q6यंत्र_dai_data *pdata;
-	काष्ठा device *dev = component->dev;
-	काष्ठा q6यंत्र_dai_rtd *prtd;
-	पूर्णांक stream_id, size, ret;
+static int q6asm_dai_compr_open(struct snd_soc_component *component,
+				struct snd_compr_stream *stream)
+{
+	struct snd_soc_pcm_runtime *rtd = stream->private_data;
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	struct q6asm_dai_data *pdata;
+	struct device *dev = component->dev;
+	struct q6asm_dai_rtd *prtd;
+	int stream_id, size, ret;
 
 	stream_id = cpu_dai->driver->id;
 	pdata = snd_soc_component_get_drvdata(component);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(dev, "Drv data not found ..\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	prtd = kzalloc(माप(*prtd), GFP_KERNEL);
-	अगर (!prtd)
-		वापस -ENOMEM;
+	prtd = kzalloc(sizeof(*prtd), GFP_KERNEL);
+	if (!prtd)
+		return -ENOMEM;
 
 	/* DSP expects stream id from 1 */
 	prtd->stream_id = 1;
 
 	prtd->cstream = stream;
-	prtd->audio_client = q6यंत्र_audio_client_alloc(dev,
-					(q6यंत्र_cb)compress_event_handler,
+	prtd->audio_client = q6asm_audio_client_alloc(dev,
+					(q6asm_cb)compress_event_handler,
 					prtd, stream_id, LEGACY_PCM_MODE);
-	अगर (IS_ERR(prtd->audio_client)) अणु
+	if (IS_ERR(prtd->audio_client)) {
 		dev_err(dev, "Could not allocate memory\n");
 		ret = PTR_ERR(prtd->audio_client);
-		जाओ मुक्त_prtd;
-	पूर्ण
+		goto free_prtd;
+	}
 
 	size = COMPR_PLAYBACK_MAX_FRAGMENT_SIZE *
 			COMPR_PLAYBACK_MAX_NUM_FRAGMENTS;
 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, dev, size,
 				  &prtd->dma_buffer);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Cannot allocate buffer(s)\n");
-		जाओ मुक्त_client;
-	पूर्ण
+		goto free_client;
+	}
 
-	अगर (pdata->sid < 0)
+	if (pdata->sid < 0)
 		prtd->phys = prtd->dma_buffer.addr;
-	अन्यथा
+	else
 		prtd->phys = prtd->dma_buffer.addr | (pdata->sid << 32);
 
-	snd_compr_set_runसमय_buffer(stream, &prtd->dma_buffer);
+	snd_compr_set_runtime_buffer(stream, &prtd->dma_buffer);
 	spin_lock_init(&prtd->lock);
-	runसमय->निजी_data = prtd;
+	runtime->private_data = prtd;
 
-	वापस 0;
+	return 0;
 
-मुक्त_client:
-	q6यंत्र_audio_client_मुक्त(prtd->audio_client);
-मुक्त_prtd:
-	kमुक्त(prtd);
+free_client:
+	q6asm_audio_client_free(prtd->audio_client);
+free_prtd:
+	kfree(prtd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_मुक्त(काष्ठा snd_soc_component *component,
-				काष्ठा snd_compr_stream *stream)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	काष्ठा snd_soc_pcm_runसमय *rtd = stream->निजी_data;
+static int q6asm_dai_compr_free(struct snd_soc_component *component,
+				struct snd_compr_stream *stream)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd = stream->private_data;
 
-	अगर (prtd->audio_client) अणु
-		अगर (prtd->state) अणु
-			q6यंत्र_cmd(prtd->audio_client, prtd->stream_id,
+	if (prtd->audio_client) {
+		if (prtd->state) {
+			q6asm_cmd(prtd->audio_client, prtd->stream_id,
 				  CMD_CLOSE);
-			अगर (prtd->next_track_stream_id) अणु
-				q6यंत्र_cmd(prtd->audio_client,
+			if (prtd->next_track_stream_id) {
+				q6asm_cmd(prtd->audio_client,
 					  prtd->next_track_stream_id,
 					  CMD_CLOSE);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		snd_dma_मुक्त_pages(&prtd->dma_buffer);
-		q6यंत्र_unmap_memory_regions(stream->direction,
+		snd_dma_free_pages(&prtd->dma_buffer);
+		q6asm_unmap_memory_regions(stream->direction,
 					   prtd->audio_client);
-		q6यंत्र_audio_client_मुक्त(prtd->audio_client);
-		prtd->audio_client = शून्य;
-	पूर्ण
-	q6routing_stream_बंद(rtd->dai_link->id, stream->direction);
-	kमुक्त(prtd);
+		q6asm_audio_client_free(prtd->audio_client);
+		prtd->audio_client = NULL;
+	}
+	q6routing_stream_close(rtd->dai_link->id, stream->direction);
+	kfree(prtd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __q6यंत्र_dai_compr_set_codec_params(काष्ठा snd_soc_component *component,
-					      काष्ठा snd_compr_stream *stream,
-					      काष्ठा snd_codec *codec,
-					      पूर्णांक stream_id)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	काष्ठा q6यंत्र_flac_cfg flac_cfg;
-	काष्ठा q6यंत्र_wma_cfg wma_cfg;
-	काष्ठा q6यंत्र_alac_cfg alac_cfg;
-	काष्ठा q6यंत्र_ape_cfg ape_cfg;
-	अचिन्हित पूर्णांक wma_v9 = 0;
-	काष्ठा device *dev = component->dev;
-	पूर्णांक ret;
-	जोड़ snd_codec_options *codec_options;
-	काष्ठा snd_dec_flac *flac;
-	काष्ठा snd_dec_wma *wma;
-	काष्ठा snd_dec_alac *alac;
-	काष्ठा snd_dec_ape *ape;
+static int __q6asm_dai_compr_set_codec_params(struct snd_soc_component *component,
+					      struct snd_compr_stream *stream,
+					      struct snd_codec *codec,
+					      int stream_id)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	struct q6asm_flac_cfg flac_cfg;
+	struct q6asm_wma_cfg wma_cfg;
+	struct q6asm_alac_cfg alac_cfg;
+	struct q6asm_ape_cfg ape_cfg;
+	unsigned int wma_v9 = 0;
+	struct device *dev = component->dev;
+	int ret;
+	union snd_codec_options *codec_options;
+	struct snd_dec_flac *flac;
+	struct snd_dec_wma *wma;
+	struct snd_dec_alac *alac;
+	struct snd_dec_ape *ape;
 
 	codec_options = &(prtd->codec.options);
 
-	स_नकल(&prtd->codec, codec, माप(*codec));
+	memcpy(&prtd->codec, codec, sizeof(*codec));
 
-	चयन (codec->id) अणु
-	हाल SND_AUDIOCODEC_FLAC:
+	switch (codec->id) {
+	case SND_AUDIOCODEC_FLAC:
 
-		स_रखो(&flac_cfg, 0x0, माप(काष्ठा q6यंत्र_flac_cfg));
+		memset(&flac_cfg, 0x0, sizeof(struct q6asm_flac_cfg));
 		flac = &codec_options->flac_d;
 
 		flac_cfg.ch_cfg = codec->ch_in;
@@ -738,19 +737,19 @@
 		flac_cfg.max_frame_size = flac->max_frame_size;
 		flac_cfg.min_frame_size = flac->min_frame_size;
 
-		ret = q6यंत्र_stream_media_क्रमmat_block_flac(prtd->audio_client,
+		ret = q6asm_stream_media_format_block_flac(prtd->audio_client,
 							   stream_id,
 							   &flac_cfg);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "FLAC CMD Format block failed:%d\n", ret);
-			वापस -EIO;
-		पूर्ण
-		अवरोध;
+			return -EIO;
+		}
+		break;
 
-	हाल SND_AUDIOCODEC_WMA:
+	case SND_AUDIOCODEC_WMA:
 		wma = &codec_options->wma_d;
 
-		स_रखो(&wma_cfg, 0x0, माप(काष्ठा q6यंत्र_wma_cfg));
+		memset(&wma_cfg, 0x0, sizeof(struct q6asm_wma_cfg));
 
 		wma_cfg.sample_rate =  codec->sample_rate;
 		wma_cfg.num_channels = codec->ch_in;
@@ -761,58 +760,58 @@
 		wma_cfg.adv_enc_options = wma->adv_encoder_option;
 		wma_cfg.adv_enc_options2 = wma->adv_encoder_option2;
 
-		अगर (wma_cfg.num_channels == 1)
+		if (wma_cfg.num_channels == 1)
 			wma_cfg.channel_mask = 4; /* Mono Center */
-		अन्यथा अगर (wma_cfg.num_channels == 2)
+		else if (wma_cfg.num_channels == 2)
 			wma_cfg.channel_mask = 3; /* Stereo FL/FR */
-		अन्यथा
-			वापस -EINVAL;
+		else
+			return -EINVAL;
 
 		/* check the codec profile */
-		चयन (codec->profile) अणु
-		हाल SND_AUDIOPROखाता_WMA9:
+		switch (codec->profile) {
+		case SND_AUDIOPROFILE_WMA9:
 			wma_cfg.fmtag = 0x161;
 			wma_v9 = 1;
-			अवरोध;
+			break;
 
-		हाल SND_AUDIOPROखाता_WMA10:
+		case SND_AUDIOPROFILE_WMA10:
 			wma_cfg.fmtag = 0x166;
-			अवरोध;
+			break;
 
-		हाल SND_AUDIOPROखाता_WMA9_PRO:
+		case SND_AUDIOPROFILE_WMA9_PRO:
 			wma_cfg.fmtag = 0x162;
-			अवरोध;
+			break;
 
-		हाल SND_AUDIOPROखाता_WMA9_LOSSLESS:
+		case SND_AUDIOPROFILE_WMA9_LOSSLESS:
 			wma_cfg.fmtag = 0x163;
-			अवरोध;
+			break;
 
-		हाल SND_AUDIOPROखाता_WMA10_LOSSLESS:
+		case SND_AUDIOPROFILE_WMA10_LOSSLESS:
 			wma_cfg.fmtag = 0x167;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			dev_err(dev, "Unknown WMA profile:%x\n",
 				codec->profile);
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		अगर (wma_v9)
-			ret = q6यंत्र_stream_media_क्रमmat_block_wma_v9(
+		if (wma_v9)
+			ret = q6asm_stream_media_format_block_wma_v9(
 					prtd->audio_client, stream_id,
 					&wma_cfg);
-		अन्यथा
-			ret = q6यंत्र_stream_media_क्रमmat_block_wma_v10(
+		else
+			ret = q6asm_stream_media_format_block_wma_v10(
 					prtd->audio_client, stream_id,
 					&wma_cfg);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "WMA9 CMD failed:%d\n", ret);
-			वापस -EIO;
-		पूर्ण
-		अवरोध;
+			return -EIO;
+		}
+		break;
 
-	हाल SND_AUDIOCODEC_ALAC:
-		स_रखो(&alac_cfg, 0x0, माप(alac_cfg));
+	case SND_AUDIOCODEC_ALAC:
+		memset(&alac_cfg, 0x0, sizeof(alac_cfg));
 		alac = &codec_options->alac_d;
 
 		alac_cfg.sample_rate = codec->sample_rate;
@@ -828,25 +827,25 @@
 		alac_cfg.compatible_version = alac->compatible_version;
 		alac_cfg.max_frame_bytes = alac->max_frame_bytes;
 
-		चयन (codec->ch_in) अणु
-		हाल 1:
+		switch (codec->ch_in) {
+		case 1:
 			alac_cfg.channel_layout_tag = ALAC_CH_LAYOUT_MONO;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			alac_cfg.channel_layout_tag = ALAC_CH_LAYOUT_STEREO;
-			अवरोध;
-		पूर्ण
-		ret = q6यंत्र_stream_media_क्रमmat_block_alac(prtd->audio_client,
+			break;
+		}
+		ret = q6asm_stream_media_format_block_alac(prtd->audio_client,
 							   stream_id,
 							   &alac_cfg);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "ALAC CMD Format block failed:%d\n", ret);
-			वापस -EIO;
-		पूर्ण
-		अवरोध;
+			return -EIO;
+		}
+		break;
 
-	हाल SND_AUDIOCODEC_APE:
-		स_रखो(&ape_cfg, 0x0, माप(ape_cfg));
+	case SND_AUDIOCODEC_APE:
+		memset(&ape_cfg, 0x0, sizeof(ape_cfg));
 		ape = &codec_options->ape_d;
 
 		ape_cfg.sample_rate = codec->sample_rate;
@@ -855,193 +854,193 @@
 
 		ape_cfg.compatible_version = ape->compatible_version;
 		ape_cfg.compression_level = ape->compression_level;
-		ape_cfg.क्रमmat_flags = ape->क्रमmat_flags;
+		ape_cfg.format_flags = ape->format_flags;
 		ape_cfg.blocks_per_frame = ape->blocks_per_frame;
 		ape_cfg.final_frame_blocks = ape->final_frame_blocks;
 		ape_cfg.total_frames = ape->total_frames;
 		ape_cfg.seek_table_present = ape->seek_table_present;
 
-		ret = q6यंत्र_stream_media_क्रमmat_block_ape(prtd->audio_client,
+		ret = q6asm_stream_media_format_block_ape(prtd->audio_client,
 							  stream_id,
 							  &ape_cfg);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "APE CMD Format block failed:%d\n", ret);
-			वापस -EIO;
-		पूर्ण
-		अवरोध;
+			return -EIO;
+		}
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_set_params(काष्ठा snd_soc_component *component,
-				      काष्ठा snd_compr_stream *stream,
-				      काष्ठा snd_compr_params *params)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	काष्ठा snd_soc_pcm_runसमय *rtd = stream->निजी_data;
-	पूर्णांक dir = stream->direction;
-	काष्ठा q6यंत्र_dai_data *pdata;
-	काष्ठा device *dev = component->dev;
-	पूर्णांक ret;
+static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
+				      struct snd_compr_stream *stream,
+				      struct snd_compr_params *params)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd = stream->private_data;
+	int dir = stream->direction;
+	struct q6asm_dai_data *pdata;
+	struct device *dev = component->dev;
+	int ret;
 
 	pdata = snd_soc_component_get_drvdata(component);
-	अगर (!pdata)
-		वापस -EINVAL;
+	if (!pdata)
+		return -EINVAL;
 
-	अगर (!prtd || !prtd->audio_client) अणु
+	if (!prtd || !prtd->audio_client) {
 		dev_err(dev, "private data null or audio client freed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	prtd->periods = runसमय->fragments;
-	prtd->pcm_count = runसमय->fragment_size;
-	prtd->pcm_size = runसमय->fragments * runसमय->fragment_size;
+	prtd->periods = runtime->fragments;
+	prtd->pcm_count = runtime->fragment_size;
+	prtd->pcm_size = runtime->fragments * runtime->fragment_size;
 	prtd->bits_per_sample = 16;
 
-	अगर (dir == SND_COMPRESS_PLAYBACK) अणु
-		ret = q6यंत्र_खोलो_ग_लिखो(prtd->audio_client, prtd->stream_id, params->codec.id,
+	if (dir == SND_COMPRESS_PLAYBACK) {
+		ret = q6asm_open_write(prtd->audio_client, prtd->stream_id, params->codec.id,
 				params->codec.profile, prtd->bits_per_sample,
 				true);
 
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "q6asm_open_write failed\n");
-			q6यंत्र_audio_client_मुक्त(prtd->audio_client);
-			prtd->audio_client = शून्य;
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			q6asm_audio_client_free(prtd->audio_client);
+			prtd->audio_client = NULL;
+			return ret;
+		}
+	}
 
-	prtd->session_id = q6यंत्र_get_session_id(prtd->audio_client);
-	ret = q6routing_stream_खोलो(rtd->dai_link->id, LEGACY_PCM_MODE,
+	prtd->session_id = q6asm_get_session_id(prtd->audio_client);
+	ret = q6routing_stream_open(rtd->dai_link->id, LEGACY_PCM_MODE,
 			      prtd->session_id, dir);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Stream reg failed ret:%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = __q6यंत्र_dai_compr_set_codec_params(component, stream,
+	ret = __q6asm_dai_compr_set_codec_params(component, stream,
 						 &params->codec,
 						 prtd->stream_id);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "codec param setup failed ret:%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = q6यंत्र_map_memory_regions(dir, prtd->audio_client, prtd->phys,
+	ret = q6asm_map_memory_regions(dir, prtd->audio_client, prtd->phys,
 				       (prtd->pcm_size / prtd->periods),
 				       prtd->periods);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Buffer Mapping failed ret:%d\n", ret);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	prtd->state = Q6ASM_STREAM_RUNNING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_set_metadata(काष्ठा snd_soc_component *component,
-					काष्ठा snd_compr_stream *stream,
-					काष्ठा snd_compr_metadata *metadata)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	पूर्णांक ret = 0;
+static int q6asm_dai_compr_set_metadata(struct snd_soc_component *component,
+					struct snd_compr_stream *stream,
+					struct snd_compr_metadata *metadata)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	int ret = 0;
 
-	चयन (metadata->key) अणु
-	हाल SNDRV_COMPRESS_ENCODER_PADDING:
+	switch (metadata->key) {
+	case SNDRV_COMPRESS_ENCODER_PADDING:
 		prtd->trailing_samples_drop = metadata->value[0];
-		अवरोध;
-	हाल SNDRV_COMPRESS_ENCODER_DELAY:
+		break;
+	case SNDRV_COMPRESS_ENCODER_DELAY:
 		prtd->initial_samples_drop = metadata->value[0];
-		अगर (prtd->next_track_stream_id) अणु
-			ret = q6यंत्र_खोलो_ग_लिखो(prtd->audio_client,
+		if (prtd->next_track_stream_id) {
+			ret = q6asm_open_write(prtd->audio_client,
 					       prtd->next_track_stream_id,
 					       prtd->codec.id,
 					       prtd->codec.profile,
 					       prtd->bits_per_sample,
 				       true);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(component->dev, "q6asm_open_write failed\n");
-				वापस ret;
-			पूर्ण
-			ret = __q6यंत्र_dai_compr_set_codec_params(component, stream,
+				return ret;
+			}
+			ret = __q6asm_dai_compr_set_codec_params(component, stream,
 								 &prtd->codec,
 								 prtd->next_track_stream_id);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				dev_err(component->dev, "q6asm_open_write failed\n");
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
-			ret = q6यंत्र_stream_हटाओ_initial_silence(prtd->audio_client,
+			ret = q6asm_stream_remove_initial_silence(prtd->audio_client,
 						    prtd->next_track_stream_id,
 						    prtd->initial_samples_drop);
 			prtd->next_track_stream_id = 0;
 
-		पूर्ण
+		}
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_trigger(काष्ठा snd_soc_component *component,
-				   काष्ठा snd_compr_stream *stream, पूर्णांक cmd)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	पूर्णांक ret = 0;
+static int q6asm_dai_compr_trigger(struct snd_soc_component *component,
+				   struct snd_compr_stream *stream, int cmd)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	int ret = 0;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		ret = q6यंत्र_run_noरुको(prtd->audio_client, prtd->stream_id,
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		ret = q6asm_run_nowait(prtd->audio_client, prtd->stream_id,
 				       0, 0, 0);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 		prtd->state = Q6ASM_STREAM_STOPPED;
-		ret = q6यंत्र_cmd_noरुको(prtd->audio_client, prtd->stream_id,
+		ret = q6asm_cmd_nowait(prtd->audio_client, prtd->stream_id,
 				       CMD_EOS);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		ret = q6यंत्र_cmd_noरुको(prtd->audio_client, prtd->stream_id,
+		break;
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		ret = q6asm_cmd_nowait(prtd->audio_client, prtd->stream_id,
 				       CMD_PAUSE);
-		अवरोध;
-	हाल SND_COMPR_TRIGGER_NEXT_TRACK:
+		break;
+	case SND_COMPR_TRIGGER_NEXT_TRACK:
 		prtd->next_track = true;
 		prtd->next_track_stream_id = (prtd->stream_id == 1 ? 2 : 1);
-		अवरोध;
-	हाल SND_COMPR_TRIGGER_DRAIN:
-	हाल SND_COMPR_TRIGGER_PARTIAL_DRAIN:
-		prtd->notअगरy_on_drain = true;
-		अवरोध;
-	शेष:
+		break;
+	case SND_COMPR_TRIGGER_DRAIN:
+	case SND_COMPR_TRIGGER_PARTIAL_DRAIN:
+		prtd->notify_on_drain = true;
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_poपूर्णांकer(काष्ठा snd_soc_component *component,
-				   काष्ठा snd_compr_stream *stream,
-				   काष्ठा snd_compr_tstamp *tstamp)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	अचिन्हित दीर्घ flags;
+static int q6asm_dai_compr_pointer(struct snd_soc_component *component,
+				   struct snd_compr_stream *stream,
+				   struct snd_compr_tstamp *tstamp)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&prtd->lock, flags);
 
@@ -1050,96 +1049,96 @@
 
 	spin_unlock_irqrestore(&prtd->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_compr_copy(काष्ठा snd_soc_component *component,
-			    काष्ठा snd_compr_stream *stream, अक्षर __user *buf,
-			    माप_प्रकार count)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	अचिन्हित दीर्घ flags;
+static int q6asm_compr_copy(struct snd_soc_component *component,
+			    struct snd_compr_stream *stream, char __user *buf,
+			    size_t count)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	unsigned long flags;
 	u32 wflags = 0;
-	पूर्णांक avail, bytes_in_flight = 0;
-	व्योम *dstn;
-	माप_प्रकार copy;
-	u32 app_poपूर्णांकer;
+	int avail, bytes_in_flight = 0;
+	void *dstn;
+	size_t copy;
+	u32 app_pointer;
 	u32 bytes_received;
 
 	bytes_received = prtd->bytes_received;
 
 	/**
-	 * Make sure that next track data poपूर्णांकer is aligned at 32 bit boundary
+	 * Make sure that next track data pointer is aligned at 32 bit boundary
 	 * This is a Mandatory requirement from DSP data buffers alignment
 	 */
-	अगर (prtd->next_track)
+	if (prtd->next_track)
 		bytes_received = ALIGN(prtd->bytes_received, prtd->pcm_count);
 
-	app_poपूर्णांकer = bytes_received/prtd->pcm_size;
-	app_poपूर्णांकer = bytes_received -  (app_poपूर्णांकer * prtd->pcm_size);
-	dstn = prtd->dma_buffer.area + app_poपूर्णांकer;
+	app_pointer = bytes_received/prtd->pcm_size;
+	app_pointer = bytes_received -  (app_pointer * prtd->pcm_size);
+	dstn = prtd->dma_buffer.area + app_pointer;
 
-	अगर (count < prtd->pcm_size - app_poपूर्णांकer) अणु
-		अगर (copy_from_user(dstn, buf, count))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		copy = prtd->pcm_size - app_poपूर्णांकer;
-		अगर (copy_from_user(dstn, buf, copy))
-			वापस -EFAULT;
-		अगर (copy_from_user(prtd->dma_buffer.area, buf + copy,
+	if (count < prtd->pcm_size - app_pointer) {
+		if (copy_from_user(dstn, buf, count))
+			return -EFAULT;
+	} else {
+		copy = prtd->pcm_size - app_pointer;
+		if (copy_from_user(dstn, buf, copy))
+			return -EFAULT;
+		if (copy_from_user(prtd->dma_buffer.area, buf + copy,
 				   count - copy))
-			वापस -EFAULT;
-	पूर्ण
+			return -EFAULT;
+	}
 
 	spin_lock_irqsave(&prtd->lock, flags);
 
 	bytes_in_flight = prtd->bytes_received - prtd->copied_total;
 
-	अगर (prtd->next_track) अणु
+	if (prtd->next_track) {
 		prtd->next_track = false;
 		prtd->copied_total = ALIGN(prtd->copied_total, prtd->pcm_count);
 		prtd->bytes_sent = ALIGN(prtd->bytes_sent, prtd->pcm_count);
-	पूर्ण
+	}
 
 	prtd->bytes_received = bytes_received + count;
 
-	/* Kick off the data to dsp अगर its starving!! */
-	अगर (prtd->state == Q6ASM_STREAM_RUNNING && (bytes_in_flight == 0)) अणु
-		uपूर्णांक32_t bytes_to_ग_लिखो = prtd->pcm_count;
+	/* Kick off the data to dsp if its starving!! */
+	if (prtd->state == Q6ASM_STREAM_RUNNING && (bytes_in_flight == 0)) {
+		uint32_t bytes_to_write = prtd->pcm_count;
 
 		avail = prtd->bytes_received - prtd->bytes_sent;
 
-		अगर (avail < prtd->pcm_count)
-			bytes_to_ग_लिखो = avail;
+		if (avail < prtd->pcm_count)
+			bytes_to_write = avail;
 
-		q6यंत्र_ग_लिखो_async(prtd->audio_client, prtd->stream_id,
-				  bytes_to_ग_लिखो, 0, 0, wflags);
-		prtd->bytes_sent += bytes_to_ग_लिखो;
-	पूर्ण
+		q6asm_write_async(prtd->audio_client, prtd->stream_id,
+				  bytes_to_write, 0, 0, wflags);
+		prtd->bytes_sent += bytes_to_write;
+	}
 
 	spin_unlock_irqrestore(&prtd->lock, flags);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_mmap(काष्ठा snd_soc_component *component,
-				काष्ठा snd_compr_stream *stream,
-				काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा snd_compr_runसमय *runसमय = stream->runसमय;
-	काष्ठा q6यंत्र_dai_rtd *prtd = runसमय->निजी_data;
-	काष्ठा device *dev = component->dev;
+static int q6asm_dai_compr_mmap(struct snd_soc_component *component,
+				struct snd_compr_stream *stream,
+				struct vm_area_struct *vma)
+{
+	struct snd_compr_runtime *runtime = stream->runtime;
+	struct q6asm_dai_rtd *prtd = runtime->private_data;
+	struct device *dev = component->dev;
 
-	वापस dma_mmap_coherent(dev, vma,
+	return dma_mmap_coherent(dev, vma,
 			prtd->dma_buffer.area, prtd->dma_buffer.addr,
 			prtd->dma_buffer.bytes);
-पूर्ण
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_get_caps(काष्ठा snd_soc_component *component,
-				    काष्ठा snd_compr_stream *stream,
-				    काष्ठा snd_compr_caps *caps)
-अणु
+static int q6asm_dai_compr_get_caps(struct snd_soc_component *component,
+				    struct snd_compr_stream *stream,
+				    struct snd_compr_caps *caps)
+{
 	caps->direction = SND_COMPRESS_PLAYBACK;
 	caps->min_fragment_size = COMPR_PLAYBACK_MIN_FRAGMENT_SIZE;
 	caps->max_fragment_size = COMPR_PLAYBACK_MAX_FRAGMENT_SIZE;
@@ -1152,89 +1151,89 @@
 	caps->codecs[3] = SND_AUDIOCODEC_ALAC;
 	caps->codecs[4] = SND_AUDIOCODEC_APE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_dai_compr_get_codec_caps(काष्ठा snd_soc_component *component,
-					  काष्ठा snd_compr_stream *stream,
-					  काष्ठा snd_compr_codec_caps *codec)
-अणु
-	चयन (codec->codec) अणु
-	हाल SND_AUDIOCODEC_MP3:
-		*codec = q6यंत्र_compr_caps;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+static int q6asm_dai_compr_get_codec_caps(struct snd_soc_component *component,
+					  struct snd_compr_stream *stream,
+					  struct snd_compr_codec_caps *codec)
+{
+	switch (codec->codec) {
+	case SND_AUDIOCODEC_MP3:
+		*codec = q6asm_compr_caps;
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_compress_ops q6यंत्र_dai_compress_ops = अणु
-	.खोलो		= q6यंत्र_dai_compr_खोलो,
-	.मुक्त		= q6यंत्र_dai_compr_मुक्त,
-	.set_params	= q6यंत्र_dai_compr_set_params,
-	.set_metadata	= q6यंत्र_dai_compr_set_metadata,
-	.poपूर्णांकer	= q6यंत्र_dai_compr_poपूर्णांकer,
-	.trigger	= q6यंत्र_dai_compr_trigger,
-	.get_caps	= q6यंत्र_dai_compr_get_caps,
-	.get_codec_caps	= q6यंत्र_dai_compr_get_codec_caps,
-	.mmap		= q6यंत्र_dai_compr_mmap,
-	.copy		= q6यंत्र_compr_copy,
-पूर्ण;
+static struct snd_compress_ops q6asm_dai_compress_ops = {
+	.open		= q6asm_dai_compr_open,
+	.free		= q6asm_dai_compr_free,
+	.set_params	= q6asm_dai_compr_set_params,
+	.set_metadata	= q6asm_dai_compr_set_metadata,
+	.pointer	= q6asm_dai_compr_pointer,
+	.trigger	= q6asm_dai_compr_trigger,
+	.get_caps	= q6asm_dai_compr_get_caps,
+	.get_codec_caps	= q6asm_dai_compr_get_codec_caps,
+	.mmap		= q6asm_dai_compr_mmap,
+	.copy		= q6asm_compr_copy,
+};
 
-अटल पूर्णांक q6यंत्र_dai_pcm_new(काष्ठा snd_soc_component *component,
-			     काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_pcm_substream *psubstream, *csubstream;
-	काष्ठा snd_pcm *pcm = rtd->pcm;
-	काष्ठा device *dev;
-	पूर्णांक size, ret;
+static int q6asm_dai_pcm_new(struct snd_soc_component *component,
+			     struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_pcm_substream *psubstream, *csubstream;
+	struct snd_pcm *pcm = rtd->pcm;
+	struct device *dev;
+	int size, ret;
 
 	dev = component->dev;
-	size = q6यंत्र_dai_hardware_playback.buffer_bytes_max;
+	size = q6asm_dai_hardware_playback.buffer_bytes_max;
 	psubstream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
-	अगर (psubstream) अणु
+	if (psubstream) {
 		ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, dev, size,
 					  &psubstream->dma_buffer);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Cannot allocate buffer(s)\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	csubstream = pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream;
-	अगर (csubstream) अणु
+	if (csubstream) {
 		ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, dev, size,
 					  &csubstream->dma_buffer);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Cannot allocate buffer(s)\n");
-			अगर (psubstream)
-				snd_dma_मुक्त_pages(&psubstream->dma_buffer);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			if (psubstream)
+				snd_dma_free_pages(&psubstream->dma_buffer);
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम q6यंत्र_dai_pcm_मुक्त(काष्ठा snd_soc_component *component,
-			       काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक i;
+static void q6asm_dai_pcm_free(struct snd_soc_component *component,
+			       struct snd_pcm *pcm)
+{
+	struct snd_pcm_substream *substream;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pcm->streams); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(pcm->streams); i++) {
 		substream = pcm->streams[i].substream;
-		अगर (substream) अणु
-			snd_dma_मुक्त_pages(&substream->dma_buffer);
-			substream->dma_buffer.area = शून्य;
+		if (substream) {
+			snd_dma_free_pages(&substream->dma_buffer);
+			substream->dma_buffer.area = NULL;
 			substream->dma_buffer.addr = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget q6यंत्र_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget q6asm_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_IN("MM_DL1", "MultiMedia1 Playback", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_IN("MM_DL2", "MultiMedia2 Playback", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_IN("MM_DL3", "MultiMedia3 Playback", 0, SND_SOC_NOPM, 0, 0),
@@ -1251,25 +1250,25 @@
 	SND_SOC_DAPM_AIF_OUT("MM_UL6", "MultiMedia6 Capture", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("MM_UL7", "MultiMedia7 Capture", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("MM_UL8", "MultiMedia8 Capture", 0, SND_SOC_NOPM, 0, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver q6यंत्र_fe_dai_component = अणु
+static const struct snd_soc_component_driver q6asm_fe_dai_component = {
 	.name		= DRV_NAME,
-	.खोलो		= q6यंत्र_dai_खोलो,
-	.hw_params	= q6यंत्र_dai_hw_params,
-	.बंद		= q6यंत्र_dai_बंद,
-	.prepare	= q6यंत्र_dai_prepare,
-	.trigger	= q6यंत्र_dai_trigger,
-	.poपूर्णांकer	= q6यंत्र_dai_poपूर्णांकer,
-	.mmap		= q6यंत्र_dai_mmap,
-	.pcm_स्थिरruct	= q6यंत्र_dai_pcm_new,
-	.pcm_deकाष्ठा	= q6यंत्र_dai_pcm_मुक्त,
-	.compress_ops	= &q6यंत्र_dai_compress_ops,
-	.dapm_widमाला_लो	= q6यंत्र_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(q6यंत्र_dapm_widमाला_लो),
-पूर्ण;
+	.open		= q6asm_dai_open,
+	.hw_params	= q6asm_dai_hw_params,
+	.close		= q6asm_dai_close,
+	.prepare	= q6asm_dai_prepare,
+	.trigger	= q6asm_dai_trigger,
+	.pointer	= q6asm_dai_pointer,
+	.mmap		= q6asm_dai_mmap,
+	.pcm_construct	= q6asm_dai_pcm_new,
+	.pcm_destruct	= q6asm_dai_pcm_free,
+	.compress_ops	= &q6asm_dai_compress_ops,
+	.dapm_widgets	= q6asm_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(q6asm_dapm_widgets),
+};
 
-अटल काष्ठा snd_soc_dai_driver q6यंत्र_fe_dais_ढाँचा[] = अणु
+static struct snd_soc_dai_driver q6asm_fe_dais_template[] = {
 	Q6ASM_FEDAI_DRIVER(1),
 	Q6ASM_FEDAI_DRIVER(2),
 	Q6ASM_FEDAI_DRIVER(3),
@@ -1278,100 +1277,100 @@
 	Q6ASM_FEDAI_DRIVER(6),
 	Q6ASM_FEDAI_DRIVER(7),
 	Q6ASM_FEDAI_DRIVER(8),
-पूर्ण;
+};
 
-अटल पूर्णांक of_q6यंत्र_parse_dai_data(काष्ठा device *dev,
-				    काष्ठा q6यंत्र_dai_data *pdata)
-अणु
-	काष्ठा snd_soc_dai_driver *dai_drv;
-	काष्ठा snd_soc_pcm_stream empty_stream;
-	काष्ठा device_node *node;
-	पूर्णांक ret, id, dir, idx = 0;
+static int of_q6asm_parse_dai_data(struct device *dev,
+				    struct q6asm_dai_data *pdata)
+{
+	struct snd_soc_dai_driver *dai_drv;
+	struct snd_soc_pcm_stream empty_stream;
+	struct device_node *node;
+	int ret, id, dir, idx = 0;
 
 
 	pdata->num_dais = of_get_child_count(dev->of_node);
-	अगर (!pdata->num_dais) अणु
+	if (!pdata->num_dais) {
 		dev_err(dev, "No dais found in DT\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pdata->dais = devm_kसुस्मृति(dev, pdata->num_dais, माप(*dai_drv),
+	pdata->dais = devm_kcalloc(dev, pdata->num_dais, sizeof(*dai_drv),
 				   GFP_KERNEL);
-	अगर (!pdata->dais)
-		वापस -ENOMEM;
+	if (!pdata->dais)
+		return -ENOMEM;
 
-	स_रखो(&empty_stream, 0, माप(empty_stream));
+	memset(&empty_stream, 0, sizeof(empty_stream));
 
-	क्रम_each_child_of_node(dev->of_node, node) अणु
-		ret = of_property_पढ़ो_u32(node, "reg", &id);
-		अगर (ret || id >= MAX_SESSIONS || id < 0) अणु
+	for_each_child_of_node(dev->of_node, node) {
+		ret = of_property_read_u32(node, "reg", &id);
+		if (ret || id >= MAX_SESSIONS || id < 0) {
 			dev_err(dev, "valid dai id not found:%d\n", ret);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		dai_drv = &pdata->dais[idx++];
-		*dai_drv = q6यंत्र_fe_dais_ढाँचा[id];
+		*dai_drv = q6asm_fe_dais_template[id];
 
-		ret = of_property_पढ़ो_u32(node, "direction", &dir);
-		अगर (ret)
-			जारी;
+		ret = of_property_read_u32(node, "direction", &dir);
+		if (ret)
+			continue;
 
-		अगर (dir == Q6ASM_DAI_RX)
+		if (dir == Q6ASM_DAI_RX)
 			dai_drv->capture = empty_stream;
-		अन्यथा अगर (dir == Q6ASM_DAI_TX)
+		else if (dir == Q6ASM_DAI_TX)
 			dai_drv->playback = empty_stream;
 
-		अगर (of_property_पढ़ो_bool(node, "is-compress-dai"))
+		if (of_property_read_bool(node, "is-compress-dai"))
 			dai_drv->compress_new = snd_soc_new_compress;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक q6यंत्र_dai_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *node = dev->of_node;
-	काष्ठा of_phandle_args args;
-	काष्ठा q6यंत्र_dai_data *pdata;
-	पूर्णांक rc;
+static int q6asm_dai_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->of_node;
+	struct of_phandle_args args;
+	struct q6asm_dai_data *pdata;
+	int rc;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
 	rc = of_parse_phandle_with_fixed_args(node, "iommus", 1, 0, &args);
-	अगर (rc < 0)
+	if (rc < 0)
 		pdata->sid = -1;
-	अन्यथा
+	else
 		pdata->sid = args.args[0] & SID_MASK_DEFAULT;
 
 	dev_set_drvdata(dev, pdata);
 
-	rc = of_q6यंत्र_parse_dai_data(dev, pdata);
-	अगर (rc)
-		वापस rc;
+	rc = of_q6asm_parse_dai_data(dev, pdata);
+	if (rc)
+		return rc;
 
-	वापस devm_snd_soc_रेजिस्टर_component(dev, &q6यंत्र_fe_dai_component,
+	return devm_snd_soc_register_component(dev, &q6asm_fe_dai_component,
 					       pdata->dais, pdata->num_dais);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id q6यंत्र_dai_device_id[] = अणु
-	अणु .compatible = "qcom,q6asm-dais" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, q6यंत्र_dai_device_id);
-#पूर्ण_अगर
+#ifdef CONFIG_OF
+static const struct of_device_id q6asm_dai_device_id[] = {
+	{ .compatible = "qcom,q6asm-dais" },
+	{},
+};
+MODULE_DEVICE_TABLE(of, q6asm_dai_device_id);
+#endif
 
-अटल काष्ठा platक्रमm_driver q6यंत्र_dai_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver q6asm_dai_platform_driver = {
+	.driver = {
 		.name = "q6asm-dai",
-		.of_match_table = of_match_ptr(q6यंत्र_dai_device_id),
-	पूर्ण,
-	.probe = q6यंत्र_dai_probe,
-पूर्ण;
-module_platक्रमm_driver(q6यंत्र_dai_platक्रमm_driver);
+		.of_match_table = of_match_ptr(q6asm_dai_device_id),
+	},
+	.probe = q6asm_dai_probe,
+};
+module_platform_driver(q6asm_dai_platform_driver);
 
 MODULE_DESCRIPTION("Q6ASM dai driver");
 MODULE_LICENSE("GPL v2");

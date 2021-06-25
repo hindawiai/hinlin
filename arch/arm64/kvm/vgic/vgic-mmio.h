@@ -1,228 +1,227 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2015, 2016 ARM Ltd.
  */
-#अगर_अघोषित __KVM_ARM_VGIC_MMIO_H__
-#घोषणा __KVM_ARM_VGIC_MMIO_H__
+#ifndef __KVM_ARM_VGIC_MMIO_H__
+#define __KVM_ARM_VGIC_MMIO_H__
 
-काष्ठा vgic_रेजिस्टर_region अणु
-	अचिन्हित पूर्णांक reg_offset;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक bits_per_irq;
-	अचिन्हित पूर्णांक access_flags;
-	जोड़ अणु
-		अचिन्हित दीर्घ (*पढ़ो)(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-				      अचिन्हित पूर्णांक len);
-		अचिन्हित दीर्घ (*its_पढ़ो)(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-					  gpa_t addr, अचिन्हित पूर्णांक len);
-	पूर्ण;
-	जोड़ अणु
-		व्योम (*ग_लिखो)(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-			      अचिन्हित पूर्णांक len, अचिन्हित दीर्घ val);
-		व्योम (*its_ग_लिखो)(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-				  gpa_t addr, अचिन्हित पूर्णांक len,
-				  अचिन्हित दीर्घ val);
-	पूर्ण;
-	अचिन्हित दीर्घ (*uaccess_पढ़ो)(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-				      अचिन्हित पूर्णांक len);
-	जोड़ अणु
-		पूर्णांक (*uaccess_ग_लिखो)(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-				     अचिन्हित पूर्णांक len, अचिन्हित दीर्घ val);
-		पूर्णांक (*uaccess_its_ग_लिखो)(काष्ठा kvm *kvm, काष्ठा vgic_its *its,
-					 gpa_t addr, अचिन्हित पूर्णांक len,
-					 अचिन्हित दीर्घ val);
-	पूर्ण;
-पूर्ण;
+struct vgic_register_region {
+	unsigned int reg_offset;
+	unsigned int len;
+	unsigned int bits_per_irq;
+	unsigned int access_flags;
+	union {
+		unsigned long (*read)(struct kvm_vcpu *vcpu, gpa_t addr,
+				      unsigned int len);
+		unsigned long (*its_read)(struct kvm *kvm, struct vgic_its *its,
+					  gpa_t addr, unsigned int len);
+	};
+	union {
+		void (*write)(struct kvm_vcpu *vcpu, gpa_t addr,
+			      unsigned int len, unsigned long val);
+		void (*its_write)(struct kvm *kvm, struct vgic_its *its,
+				  gpa_t addr, unsigned int len,
+				  unsigned long val);
+	};
+	unsigned long (*uaccess_read)(struct kvm_vcpu *vcpu, gpa_t addr,
+				      unsigned int len);
+	union {
+		int (*uaccess_write)(struct kvm_vcpu *vcpu, gpa_t addr,
+				     unsigned int len, unsigned long val);
+		int (*uaccess_its_write)(struct kvm *kvm, struct vgic_its *its,
+					 gpa_t addr, unsigned int len,
+					 unsigned long val);
+	};
+};
 
-बाह्य काष्ठा kvm_io_device_ops kvm_io_gic_ops;
+extern struct kvm_io_device_ops kvm_io_gic_ops;
 
-#घोषणा VGIC_ACCESS_8bit	1
-#घोषणा VGIC_ACCESS_32bit	2
-#घोषणा VGIC_ACCESS_64bit	4
+#define VGIC_ACCESS_8bit	1
+#define VGIC_ACCESS_32bit	2
+#define VGIC_ACCESS_64bit	4
 
 /*
  * Generate a mask that covers the number of bytes required to address
- * up to 1024 पूर्णांकerrupts, each represented by <bits> bits. This assumes
- * that <bits> is a घातer of two.
+ * up to 1024 interrupts, each represented by <bits> bits. This assumes
+ * that <bits> is a power of two.
  */
-#घोषणा VGIC_ADDR_IRQ_MASK(bits) (((bits) * 1024 / 8) - 1)
+#define VGIC_ADDR_IRQ_MASK(bits) (((bits) * 1024 / 8) - 1)
 
 /*
- * (addr & mask) gives us the _byte_ offset क्रम the INT ID.
- * We multiply this by 8 the get the _bit_ offset, then भागide this by
+ * (addr & mask) gives us the _byte_ offset for the INT ID.
+ * We multiply this by 8 the get the _bit_ offset, then divide this by
  * the number of bits to learn the actual INT ID.
- * But instead of a भागision (which requires a "long long div" implementation),
- * we shअगरt by the binary logarithm of <bits>.
- * This assumes that <bits> is a घातer of two.
+ * But instead of a division (which requires a "long long div" implementation),
+ * we shift by the binary logarithm of <bits>.
+ * This assumes that <bits> is a power of two.
  */
-#घोषणा VGIC_ADDR_TO_INTID(addr, bits)  (((addr) & VGIC_ADDR_IRQ_MASK(bits)) * \
+#define VGIC_ADDR_TO_INTID(addr, bits)  (((addr) & VGIC_ADDR_IRQ_MASK(bits)) * \
 					8 >> ilog2(bits))
 
 /*
- * Some VGIC रेजिस्टरs store per-IRQ inक्रमmation, with a dअगरferent number
- * of bits per IRQ. For those रेजिस्टरs this macro is used.
- * The _WITH_LENGTH version instantiates रेजिस्टरs with a fixed length
+ * Some VGIC registers store per-IRQ information, with a different number
+ * of bits per IRQ. For those registers this macro is used.
+ * The _WITH_LENGTH version instantiates registers with a fixed length
  * and is mutually exclusive with the _PER_IRQ version.
  */
-#घोषणा REGISTER_DESC_WITH_BITS_PER_IRQ(off, rd, wr, ur, uw, bpi, acc)	\
-	अणु								\
+#define REGISTER_DESC_WITH_BITS_PER_IRQ(off, rd, wr, ur, uw, bpi, acc)	\
+	{								\
 		.reg_offset = off,					\
 		.bits_per_irq = bpi,					\
 		.len = bpi * 1024 / 8,					\
 		.access_flags = acc,					\
-		.पढ़ो = rd,						\
-		.ग_लिखो = wr,						\
-		.uaccess_पढ़ो = ur,					\
-		.uaccess_ग_लिखो = uw,					\
-	पूर्ण
+		.read = rd,						\
+		.write = wr,						\
+		.uaccess_read = ur,					\
+		.uaccess_write = uw,					\
+	}
 
-#घोषणा REGISTER_DESC_WITH_LENGTH(off, rd, wr, length, acc)		\
-	अणु								\
+#define REGISTER_DESC_WITH_LENGTH(off, rd, wr, length, acc)		\
+	{								\
 		.reg_offset = off,					\
 		.bits_per_irq = 0,					\
 		.len = length,						\
 		.access_flags = acc,					\
-		.पढ़ो = rd,						\
-		.ग_लिखो = wr,						\
-	पूर्ण
+		.read = rd,						\
+		.write = wr,						\
+	}
 
-#घोषणा REGISTER_DESC_WITH_LENGTH_UACCESS(off, rd, wr, urd, uwr, length, acc) \
-	अणु								\
+#define REGISTER_DESC_WITH_LENGTH_UACCESS(off, rd, wr, urd, uwr, length, acc) \
+	{								\
 		.reg_offset = off,					\
 		.bits_per_irq = 0,					\
 		.len = length,						\
 		.access_flags = acc,					\
-		.पढ़ो = rd,						\
-		.ग_लिखो = wr,						\
-		.uaccess_पढ़ो = urd,					\
-		.uaccess_ग_लिखो = uwr,					\
-	पूर्ण
+		.read = rd,						\
+		.write = wr,						\
+		.uaccess_read = urd,					\
+		.uaccess_write = uwr,					\
+	}
 
-अचिन्हित दीर्घ vgic_data_mmio_bus_to_host(स्थिर व्योम *val, अचिन्हित पूर्णांक len);
+unsigned long vgic_data_mmio_bus_to_host(const void *val, unsigned int len);
 
-व्योम vgic_data_host_to_mmio_bus(व्योम *buf, अचिन्हित पूर्णांक len,
-				अचिन्हित दीर्घ data);
+void vgic_data_host_to_mmio_bus(void *buf, unsigned int len,
+				unsigned long data);
 
-अचिन्हित दीर्घ extract_bytes(u64 data, अचिन्हित पूर्णांक offset,
-			    अचिन्हित पूर्णांक num);
+unsigned long extract_bytes(u64 data, unsigned int offset,
+			    unsigned int num);
 
-u64 update_64bit_reg(u64 reg, अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक len,
-		     अचिन्हित दीर्घ val);
+u64 update_64bit_reg(u64 reg, unsigned int offset, unsigned int len,
+		     unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_raz(काष्ठा kvm_vcpu *vcpu,
-				 gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_raz(struct kvm_vcpu *vcpu,
+				 gpa_t addr, unsigned int len);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_rao(काष्ठा kvm_vcpu *vcpu,
-				 gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_rao(struct kvm_vcpu *vcpu,
+				 gpa_t addr, unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_wi(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-			अचिन्हित पूर्णांक len, अचिन्हित दीर्घ val);
+void vgic_mmio_write_wi(struct kvm_vcpu *vcpu, gpa_t addr,
+			unsigned int len, unsigned long val);
 
-पूर्णांक vgic_mmio_uaccess_ग_लिखो_wi(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-			       अचिन्हित पूर्णांक len, अचिन्हित दीर्घ val);
+int vgic_mmio_uaccess_write_wi(struct kvm_vcpu *vcpu, gpa_t addr,
+			       unsigned int len, unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_group(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-				   अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_group(struct kvm_vcpu *vcpu, gpa_t addr,
+				   unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_group(काष्ठा kvm_vcpu *vcpu, gpa_t addr,
-			   अचिन्हित पूर्णांक len, अचिन्हित दीर्घ val);
+void vgic_mmio_write_group(struct kvm_vcpu *vcpu, gpa_t addr,
+			   unsigned int len, unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_enable(काष्ठा kvm_vcpu *vcpu,
-				    gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_enable(struct kvm_vcpu *vcpu,
+				    gpa_t addr, unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_senable(काष्ठा kvm_vcpu *vcpu,
-			     gpa_t addr, अचिन्हित पूर्णांक len,
-			     अचिन्हित दीर्घ val);
+void vgic_mmio_write_senable(struct kvm_vcpu *vcpu,
+			     gpa_t addr, unsigned int len,
+			     unsigned long val);
 
-व्योम vgic_mmio_ग_लिखो_cenable(काष्ठा kvm_vcpu *vcpu,
-			     gpa_t addr, अचिन्हित पूर्णांक len,
-			     अचिन्हित दीर्घ val);
+void vgic_mmio_write_cenable(struct kvm_vcpu *vcpu,
+			     gpa_t addr, unsigned int len,
+			     unsigned long val);
 
-पूर्णांक vgic_uaccess_ग_लिखो_senable(काष्ठा kvm_vcpu *vcpu,
-			       gpa_t addr, अचिन्हित पूर्णांक len,
-			       अचिन्हित दीर्घ val);
+int vgic_uaccess_write_senable(struct kvm_vcpu *vcpu,
+			       gpa_t addr, unsigned int len,
+			       unsigned long val);
 
-पूर्णांक vgic_uaccess_ग_लिखो_cenable(काष्ठा kvm_vcpu *vcpu,
-			       gpa_t addr, अचिन्हित पूर्णांक len,
-			       अचिन्हित दीर्घ val);
+int vgic_uaccess_write_cenable(struct kvm_vcpu *vcpu,
+			       gpa_t addr, unsigned int len,
+			       unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_pending(काष्ठा kvm_vcpu *vcpu,
-				     gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_pending(struct kvm_vcpu *vcpu,
+				     gpa_t addr, unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_spending(काष्ठा kvm_vcpu *vcpu,
-			      gpa_t addr, अचिन्हित पूर्णांक len,
-			      अचिन्हित दीर्घ val);
+void vgic_mmio_write_spending(struct kvm_vcpu *vcpu,
+			      gpa_t addr, unsigned int len,
+			      unsigned long val);
 
-व्योम vgic_mmio_ग_लिखो_cpending(काष्ठा kvm_vcpu *vcpu,
-			      gpa_t addr, अचिन्हित पूर्णांक len,
-			      अचिन्हित दीर्घ val);
+void vgic_mmio_write_cpending(struct kvm_vcpu *vcpu,
+			      gpa_t addr, unsigned int len,
+			      unsigned long val);
 
-पूर्णांक vgic_uaccess_ग_लिखो_spending(काष्ठा kvm_vcpu *vcpu,
-				gpa_t addr, अचिन्हित पूर्णांक len,
-				अचिन्हित दीर्घ val);
+int vgic_uaccess_write_spending(struct kvm_vcpu *vcpu,
+				gpa_t addr, unsigned int len,
+				unsigned long val);
 
-पूर्णांक vgic_uaccess_ग_लिखो_cpending(काष्ठा kvm_vcpu *vcpu,
-				gpa_t addr, अचिन्हित पूर्णांक len,
-				अचिन्हित दीर्घ val);
+int vgic_uaccess_write_cpending(struct kvm_vcpu *vcpu,
+				gpa_t addr, unsigned int len,
+				unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_active(काष्ठा kvm_vcpu *vcpu,
-				    gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_active(struct kvm_vcpu *vcpu,
+				    gpa_t addr, unsigned int len);
 
-अचिन्हित दीर्घ vgic_uaccess_पढ़ो_active(काष्ठा kvm_vcpu *vcpu,
-				    gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_uaccess_read_active(struct kvm_vcpu *vcpu,
+				    gpa_t addr, unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_cactive(काष्ठा kvm_vcpu *vcpu,
-			     gpa_t addr, अचिन्हित पूर्णांक len,
-			     अचिन्हित दीर्घ val);
+void vgic_mmio_write_cactive(struct kvm_vcpu *vcpu,
+			     gpa_t addr, unsigned int len,
+			     unsigned long val);
 
-व्योम vgic_mmio_ग_लिखो_sactive(काष्ठा kvm_vcpu *vcpu,
-			     gpa_t addr, अचिन्हित पूर्णांक len,
-			     अचिन्हित दीर्घ val);
+void vgic_mmio_write_sactive(struct kvm_vcpu *vcpu,
+			     gpa_t addr, unsigned int len,
+			     unsigned long val);
 
-पूर्णांक vgic_mmio_uaccess_ग_लिखो_cactive(काष्ठा kvm_vcpu *vcpu,
-				    gpa_t addr, अचिन्हित पूर्णांक len,
-				    अचिन्हित दीर्घ val);
+int vgic_mmio_uaccess_write_cactive(struct kvm_vcpu *vcpu,
+				    gpa_t addr, unsigned int len,
+				    unsigned long val);
 
-पूर्णांक vgic_mmio_uaccess_ग_लिखो_sactive(काष्ठा kvm_vcpu *vcpu,
-				    gpa_t addr, अचिन्हित पूर्णांक len,
-				    अचिन्हित दीर्घ val);
+int vgic_mmio_uaccess_write_sactive(struct kvm_vcpu *vcpu,
+				    gpa_t addr, unsigned int len,
+				    unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_priority(काष्ठा kvm_vcpu *vcpu,
-				      gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_priority(struct kvm_vcpu *vcpu,
+				      gpa_t addr, unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_priority(काष्ठा kvm_vcpu *vcpu,
-			      gpa_t addr, अचिन्हित पूर्णांक len,
-			      अचिन्हित दीर्घ val);
+void vgic_mmio_write_priority(struct kvm_vcpu *vcpu,
+			      gpa_t addr, unsigned int len,
+			      unsigned long val);
 
-अचिन्हित दीर्घ vgic_mmio_पढ़ो_config(काष्ठा kvm_vcpu *vcpu,
-				    gpa_t addr, अचिन्हित पूर्णांक len);
+unsigned long vgic_mmio_read_config(struct kvm_vcpu *vcpu,
+				    gpa_t addr, unsigned int len);
 
-व्योम vgic_mmio_ग_लिखो_config(काष्ठा kvm_vcpu *vcpu,
-			    gpa_t addr, अचिन्हित पूर्णांक len,
-			    अचिन्हित दीर्घ val);
+void vgic_mmio_write_config(struct kvm_vcpu *vcpu,
+			    gpa_t addr, unsigned int len,
+			    unsigned long val);
 
-पूर्णांक vgic_uaccess(काष्ठा kvm_vcpu *vcpu, काष्ठा vgic_io_device *dev,
-		 bool is_ग_लिखो, पूर्णांक offset, u32 *val);
+int vgic_uaccess(struct kvm_vcpu *vcpu, struct vgic_io_device *dev,
+		 bool is_write, int offset, u32 *val);
 
-u64 vgic_पढ़ो_irq_line_level_info(काष्ठा kvm_vcpu *vcpu, u32 पूर्णांकid);
+u64 vgic_read_irq_line_level_info(struct kvm_vcpu *vcpu, u32 intid);
 
-व्योम vgic_ग_लिखो_irq_line_level_info(काष्ठा kvm_vcpu *vcpu, u32 पूर्णांकid,
-				    स्थिर u64 val);
+void vgic_write_irq_line_level_info(struct kvm_vcpu *vcpu, u32 intid,
+				    const u64 val);
 
-अचिन्हित पूर्णांक vgic_v2_init_dist_iodev(काष्ठा vgic_io_device *dev);
+unsigned int vgic_v2_init_dist_iodev(struct vgic_io_device *dev);
 
-अचिन्हित पूर्णांक vgic_v3_init_dist_iodev(काष्ठा vgic_io_device *dev);
+unsigned int vgic_v3_init_dist_iodev(struct vgic_io_device *dev);
 
 u64 vgic_sanitise_outer_cacheability(u64 reg);
 u64 vgic_sanitise_inner_cacheability(u64 reg);
 u64 vgic_sanitise_shareability(u64 reg);
-u64 vgic_sanitise_field(u64 reg, u64 field_mask, पूर्णांक field_shअगरt,
+u64 vgic_sanitise_field(u64 reg, u64 field_mask, int field_shift,
 			u64 (*sanitise_fn)(u64));
 
-/* Find the proper रेजिस्टर handler entry given a certain address offset */
-स्थिर काष्ठा vgic_रेजिस्टर_region *
-vgic_find_mmio_region(स्थिर काष्ठा vgic_रेजिस्टर_region *regions,
-		      पूर्णांक nr_regions, अचिन्हित पूर्णांक offset);
+/* Find the proper register handler entry given a certain address offset */
+const struct vgic_register_region *
+vgic_find_mmio_region(const struct vgic_register_region *regions,
+		      int nr_regions, unsigned int offset);
 
-#पूर्ण_अगर
+#endif

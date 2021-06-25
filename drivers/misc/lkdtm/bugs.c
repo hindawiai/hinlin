@@ -1,203 +1,202 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * This is क्रम all the tests related to logic bugs (e.g. bad dereferences,
+ * This is for all the tests related to logic bugs (e.g. bad dereferences,
  * bad alignment, bad loops, bad locking, bad scheduling, deep stacks, and
- * lockups) aदीर्घ with other things that करोn't fit well पूर्णांकo existing LKDTM
+ * lockups) along with other things that don't fit well into existing LKDTM
  * test source files.
  */
-#समावेश "lkdtm.h"
-#समावेश <linux/list.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/slab.h>
+#include "lkdtm.h"
+#include <linux/list.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include <linux/sched/task_stack.h>
+#include <linux/uaccess.h>
+#include <linux/slab.h>
 
-#अगर IS_ENABLED(CONFIG_X86_32) && !IS_ENABLED(CONFIG_UML)
-#समावेश <यंत्र/desc.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_X86_32) && !IS_ENABLED(CONFIG_UML)
+#include <asm/desc.h>
+#endif
 
-काष्ठा lkdपंचांग_list अणु
-	काष्ठा list_head node;
-पूर्ण;
+struct lkdtm_list {
+	struct list_head node;
+};
 
 /*
- * Make sure our attempts to over run the kernel stack करोesn't trigger
+ * Make sure our attempts to over run the kernel stack doesn't trigger
  * a compiler warning when CONFIG_FRAME_WARN is set. Then make sure we
- * recurse past the end of THREAD_SIZE by शेष.
+ * recurse past the end of THREAD_SIZE by default.
  */
-#अगर defined(CONFIG_FRAME_WARN) && (CONFIG_FRAME_WARN > 0)
-#घोषणा REC_STACK_SIZE (_AC(CONFIG_FRAME_WARN, UL) / 2)
-#अन्यथा
-#घोषणा REC_STACK_SIZE (THREAD_SIZE / 8)
-#पूर्ण_अगर
-#घोषणा REC_NUM_DEFAULT ((THREAD_SIZE / REC_STACK_SIZE) * 2)
+#if defined(CONFIG_FRAME_WARN) && (CONFIG_FRAME_WARN > 0)
+#define REC_STACK_SIZE (_AC(CONFIG_FRAME_WARN, UL) / 2)
+#else
+#define REC_STACK_SIZE (THREAD_SIZE / 8)
+#endif
+#define REC_NUM_DEFAULT ((THREAD_SIZE / REC_STACK_SIZE) * 2)
 
-अटल पूर्णांक recur_count = REC_NUM_DEFAULT;
+static int recur_count = REC_NUM_DEFAULT;
 
-अटल DEFINE_SPINLOCK(lock_me_up);
+static DEFINE_SPINLOCK(lock_me_up);
 
 /*
- * Make sure compiler करोes not optimize this function or stack frame away:
- * - function marked noअंतरभूत
- * - stack variables are marked अस्थिर
- * - stack variables are written (स_रखो()) and पढ़ो (pr_info())
- * - function has बाह्यal effects (pr_info())
+ * Make sure compiler does not optimize this function or stack frame away:
+ * - function marked noinline
+ * - stack variables are marked volatile
+ * - stack variables are written (memset()) and read (pr_info())
+ * - function has external effects (pr_info())
  * */
-अटल पूर्णांक noअंतरभूत recursive_loop(पूर्णांक reमुख्यing)
-अणु
-	अस्थिर अक्षर buf[REC_STACK_SIZE];
+static int noinline recursive_loop(int remaining)
+{
+	volatile char buf[REC_STACK_SIZE];
 
-	स_रखो((व्योम *)buf, reमुख्यing & 0xFF, माप(buf));
-	pr_info("loop %d/%d ...\n", (पूर्णांक)buf[reमुख्यing % माप(buf)],
+	memset((void *)buf, remaining & 0xFF, sizeof(buf));
+	pr_info("loop %d/%d ...\n", (int)buf[remaining % sizeof(buf)],
 		recur_count);
-	अगर (!reमुख्यing)
-		वापस 0;
-	अन्यथा
-		वापस recursive_loop(reमुख्यing - 1);
-पूर्ण
+	if (!remaining)
+		return 0;
+	else
+		return recursive_loop(remaining - 1);
+}
 
-/* If the depth is negative, use the शेष, otherwise keep parameter. */
-व्योम __init lkdपंचांग_bugs_init(पूर्णांक *recur_param)
-अणु
-	अगर (*recur_param < 0)
+/* If the depth is negative, use the default, otherwise keep parameter. */
+void __init lkdtm_bugs_init(int *recur_param)
+{
+	if (*recur_param < 0)
 		*recur_param = recur_count;
-	अन्यथा
+	else
 		recur_count = *recur_param;
-पूर्ण
+}
 
-व्योम lkdपंचांग_PANIC(व्योम)
-अणु
+void lkdtm_PANIC(void)
+{
 	panic("dumptest");
-पूर्ण
+}
 
-व्योम lkdपंचांग_BUG(व्योम)
-अणु
+void lkdtm_BUG(void)
+{
 	BUG();
-पूर्ण
+}
 
-अटल पूर्णांक warn_counter;
+static int warn_counter;
 
-व्योम lkdपंचांग_WARNING(व्योम)
-अणु
+void lkdtm_WARNING(void)
+{
 	WARN_ON(++warn_counter);
-पूर्ण
+}
 
-व्योम lkdपंचांग_WARNING_MESSAGE(व्योम)
-अणु
+void lkdtm_WARNING_MESSAGE(void)
+{
 	WARN(1, "Warning message trigger count: %d\n", ++warn_counter);
-पूर्ण
+}
 
-व्योम lkdपंचांग_EXCEPTION(व्योम)
-अणु
-	*((अस्थिर पूर्णांक *) 0) = 0;
-पूर्ण
+void lkdtm_EXCEPTION(void)
+{
+	*((volatile int *) 0) = 0;
+}
 
-व्योम lkdपंचांग_LOOP(व्योम)
-अणु
-	क्रम (;;)
+void lkdtm_LOOP(void)
+{
+	for (;;)
 		;
-पूर्ण
+}
 
-व्योम lkdपंचांग_EXHAUST_STACK(व्योम)
-अणु
+void lkdtm_EXHAUST_STACK(void)
+{
 	pr_info("Calling function with %lu frame size to depth %d ...\n",
 		REC_STACK_SIZE, recur_count);
 	recursive_loop(recur_count);
 	pr_info("FAIL: survived without exhausting stack?!\n");
-पूर्ण
+}
 
-अटल noअंतरभूत व्योम __lkdपंचांग_CORRUPT_STACK(व्योम *stack)
-अणु
-	स_रखो(stack, '\xff', 64);
-पूर्ण
+static noinline void __lkdtm_CORRUPT_STACK(void *stack)
+{
+	memset(stack, '\xff', 64);
+}
 
-/* This should trip the stack canary, not corrupt the वापस address. */
-noअंतरभूत व्योम lkdपंचांग_CORRUPT_STACK(व्योम)
-अणु
-	/* Use शेष अक्षर array length that triggers stack protection. */
-	अक्षर data[8] __aligned(माप(व्योम *));
+/* This should trip the stack canary, not corrupt the return address. */
+noinline void lkdtm_CORRUPT_STACK(void)
+{
+	/* Use default char array length that triggers stack protection. */
+	char data[8] __aligned(sizeof(void *));
 
 	pr_info("Corrupting stack containing char array ...\n");
-	__lkdपंचांग_CORRUPT_STACK((व्योम *)&data);
-पूर्ण
+	__lkdtm_CORRUPT_STACK((void *)&data);
+}
 
 /* Same as above but will only get a canary with -fstack-protector-strong */
-noअंतरभूत व्योम lkdपंचांग_CORRUPT_STACK_STRONG(व्योम)
-अणु
-	जोड़ अणु
-		अचिन्हित लघु लघुs[4];
-		अचिन्हित दीर्घ *ptr;
-	पूर्ण data __aligned(माप(व्योम *));
+noinline void lkdtm_CORRUPT_STACK_STRONG(void)
+{
+	union {
+		unsigned short shorts[4];
+		unsigned long *ptr;
+	} data __aligned(sizeof(void *));
 
 	pr_info("Corrupting stack containing union ...\n");
-	__lkdपंचांग_CORRUPT_STACK((व्योम *)&data);
-पूर्ण
+	__lkdtm_CORRUPT_STACK((void *)&data);
+}
 
-अटल pid_t stack_pid;
-अटल अचिन्हित दीर्घ stack_addr;
+static pid_t stack_pid;
+static unsigned long stack_addr;
 
-व्योम lkdपंचांग_REPORT_STACK(व्योम)
-अणु
-	अस्थिर uपूर्णांकptr_t magic;
+void lkdtm_REPORT_STACK(void)
+{
+	volatile uintptr_t magic;
 	pid_t pid = task_pid_nr(current);
 
-	अगर (pid != stack_pid) अणु
+	if (pid != stack_pid) {
 		pr_info("Starting stack offset tracking for pid %d\n", pid);
 		stack_pid = pid;
-		stack_addr = (uपूर्णांकptr_t)&magic;
-	पूर्ण
+		stack_addr = (uintptr_t)&magic;
+	}
 
-	pr_info("Stack offset: %d\n", (पूर्णांक)(stack_addr - (uपूर्णांकptr_t)&magic));
-पूर्ण
+	pr_info("Stack offset: %d\n", (int)(stack_addr - (uintptr_t)&magic));
+}
 
-व्योम lkdपंचांग_UNALIGNED_LOAD_STORE_WRITE(व्योम)
-अणु
-	अटल u8 data[5] __attribute__((aligned(4))) = अणु1, 2, 3, 4, 5पूर्ण;
+void lkdtm_UNALIGNED_LOAD_STORE_WRITE(void)
+{
+	static u8 data[5] __attribute__((aligned(4))) = {1, 2, 3, 4, 5};
 	u32 *p;
 	u32 val = 0x12345678;
 
 	p = (u32 *)(data + 1);
-	अगर (*p == 0)
+	if (*p == 0)
 		val = 0x87654321;
 	*p = val;
-पूर्ण
+}
 
-व्योम lkdपंचांग_SOFTLOCKUP(व्योम)
-अणु
+void lkdtm_SOFTLOCKUP(void)
+{
 	preempt_disable();
-	क्रम (;;)
+	for (;;)
 		cpu_relax();
-पूर्ण
+}
 
-व्योम lkdपंचांग_HARDLOCKUP(व्योम)
-अणु
+void lkdtm_HARDLOCKUP(void)
+{
 	local_irq_disable();
-	क्रम (;;)
+	for (;;)
 		cpu_relax();
-पूर्ण
+}
 
-व्योम lkdपंचांग_SPINLOCKUP(व्योम)
-अणु
+void lkdtm_SPINLOCKUP(void)
+{
 	/* Must be called twice to trigger. */
 	spin_lock(&lock_me_up);
-	/* Let sparse know we पूर्णांकended to निकास holding the lock. */
+	/* Let sparse know we intended to exit holding the lock. */
 	__release(&lock_me_up);
-पूर्ण
+}
 
-व्योम lkdपंचांग_HUNG_TASK(व्योम)
-अणु
+void lkdtm_HUNG_TASK(void)
+{
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	schedule();
-पूर्ण
+}
 
-अस्थिर अचिन्हित पूर्णांक huge = पूर्णांक_उच्च - 2;
-अस्थिर अचिन्हित पूर्णांक ignored;
+volatile unsigned int huge = INT_MAX - 2;
+volatile unsigned int ignored;
 
-व्योम lkdपंचांग_OVERFLOW_SIGNED(व्योम)
-अणु
-	पूर्णांक value;
+void lkdtm_OVERFLOW_SIGNED(void)
+{
+	int value;
 
 	value = huge;
 	pr_info("Normal signed addition ...\n");
@@ -207,12 +206,12 @@ noअंतरभूत व्योम lkdपंचांग_CORRUPT_STACK_STRO
 	pr_info("Overflowing signed addition ...\n");
 	value += 4;
 	ignored = value;
-पूर्ण
+}
 
 
-व्योम lkdपंचांग_OVERFLOW_UNSIGNED(व्योम)
-अणु
-	अचिन्हित पूर्णांक value;
+void lkdtm_OVERFLOW_UNSIGNED(void)
+{
+	unsigned int value;
 
 	value = huge;
 	pr_info("Normal unsigned addition ...\n");
@@ -222,67 +221,67 @@ noअंतरभूत व्योम lkdपंचांग_CORRUPT_STACK_STRO
 	pr_info("Overflowing unsigned addition ...\n");
 	value += 4;
 	ignored = value;
-पूर्ण
+}
 
 /* Intentionally using old-style flex array definition of 1 byte. */
-काष्ठा array_bounds_flex_array अणु
-	पूर्णांक one;
-	पूर्णांक two;
-	अक्षर data[1];
-पूर्ण;
+struct array_bounds_flex_array {
+	int one;
+	int two;
+	char data[1];
+};
 
-काष्ठा array_bounds अणु
-	पूर्णांक one;
-	पूर्णांक two;
-	अक्षर data[8];
-	पूर्णांक three;
-पूर्ण;
+struct array_bounds {
+	int one;
+	int two;
+	char data[8];
+	int three;
+};
 
-व्योम lkdपंचांग_ARRAY_BOUNDS(व्योम)
-अणु
-	काष्ठा array_bounds_flex_array *not_checked;
-	काष्ठा array_bounds *checked;
-	अस्थिर पूर्णांक i;
+void lkdtm_ARRAY_BOUNDS(void)
+{
+	struct array_bounds_flex_array *not_checked;
+	struct array_bounds *checked;
+	volatile int i;
 
-	not_checked = kदो_स्मृति(माप(*not_checked) * 2, GFP_KERNEL);
-	checked = kदो_स्मृति(माप(*checked) * 2, GFP_KERNEL);
+	not_checked = kmalloc(sizeof(*not_checked) * 2, GFP_KERNEL);
+	checked = kmalloc(sizeof(*checked) * 2, GFP_KERNEL);
 
 	pr_info("Array access within bounds ...\n");
 	/* For both, touch all bytes in the actual member size. */
-	क्रम (i = 0; i < माप(checked->data); i++)
+	for (i = 0; i < sizeof(checked->data); i++)
 		checked->data[i] = 'A';
 	/*
 	 * For the uninstrumented flex array member, also touch 1 byte
-	 * beyond to verअगरy it is correctly uninstrumented.
+	 * beyond to verify it is correctly uninstrumented.
 	 */
-	क्रम (i = 0; i < माप(not_checked->data) + 1; i++)
+	for (i = 0; i < sizeof(not_checked->data) + 1; i++)
 		not_checked->data[i] = 'A';
 
 	pr_info("Array access beyond bounds ...\n");
-	क्रम (i = 0; i < माप(checked->data) + 1; i++)
+	for (i = 0; i < sizeof(checked->data) + 1; i++)
 		checked->data[i] = 'B';
 
-	kमुक्त(not_checked);
-	kमुक्त(checked);
+	kfree(not_checked);
+	kfree(checked);
 	pr_err("FAIL: survived array bounds overflow!\n");
-पूर्ण
+}
 
-व्योम lkdपंचांग_CORRUPT_LIST_ADD(व्योम)
-अणु
+void lkdtm_CORRUPT_LIST_ADD(void)
+{
 	/*
 	 * Initially, an empty list via LIST_HEAD:
 	 *	test_head.next = &test_head
 	 *	test_head.prev = &test_head
 	 */
 	LIST_HEAD(test_head);
-	काष्ठा lkdपंचांग_list good, bad;
-	व्योम *target[2] = अणु पूर्ण;
-	व्योम *redirection = &target;
+	struct lkdtm_list good, bad;
+	void *target[2] = { };
+	void *redirection = &target;
 
 	pr_info("attempting good list addition\n");
 
 	/*
-	 * Adding to the list perक्रमms these actions:
+	 * Adding to the list performs these actions:
 	 *	test_head.next->prev = &good.node
 	 *	good.node.next = test_head.next
 	 *	good.node.prev = test_head
@@ -299,18 +298,18 @@ noअंतरभूत व्योम lkdपंचांग_CORRUPT_STACK_STRO
 	test_head.next = redirection;
 	list_add(&bad.node, &test_head);
 
-	अगर (target[0] == शून्य && target[1] == शून्य)
+	if (target[0] == NULL && target[1] == NULL)
 		pr_err("Overwrite did not happen, but no BUG?!\n");
-	अन्यथा
+	else
 		pr_err("list_add() corruption not detected!\n");
-पूर्ण
+}
 
-व्योम lkdपंचांग_CORRUPT_LIST_DEL(व्योम)
-अणु
+void lkdtm_CORRUPT_LIST_DEL(void)
+{
 	LIST_HEAD(test_head);
-	काष्ठा lkdपंचांग_list item;
-	व्योम *target[2] = अणु पूर्ण;
-	व्योम *redirection = &target;
+	struct lkdtm_list item;
+	void *target[2] = { };
+	void *redirection = &target;
 
 	list_add(&item.node, &test_head);
 
@@ -324,229 +323,229 @@ noअंतरभूत व्योम lkdपंचांग_CORRUPT_STACK_STRO
 	item.node.next = redirection;
 	list_del(&item.node);
 
-	अगर (target[0] == शून्य && target[1] == शून्य)
+	if (target[0] == NULL && target[1] == NULL)
 		pr_err("Overwrite did not happen, but no BUG?!\n");
-	अन्यथा
+	else
 		pr_err("list_del() corruption not detected!\n");
-पूर्ण
+}
 
 /* Test that VMAP_STACK is actually allocating with a leading guard page */
-व्योम lkdपंचांग_STACK_GUARD_PAGE_LEADING(व्योम)
-अणु
-	स्थिर अचिन्हित अक्षर *stack = task_stack_page(current);
-	स्थिर अचिन्हित अक्षर *ptr = stack - 1;
-	अस्थिर अचिन्हित अक्षर byte;
+void lkdtm_STACK_GUARD_PAGE_LEADING(void)
+{
+	const unsigned char *stack = task_stack_page(current);
+	const unsigned char *ptr = stack - 1;
+	volatile unsigned char byte;
 
 	pr_info("attempting bad read from page below current stack\n");
 
 	byte = *ptr;
 
 	pr_err("FAIL: accessed page before stack! (byte: %x)\n", byte);
-पूर्ण
+}
 
 /* Test that VMAP_STACK is actually allocating with a trailing guard page */
-व्योम lkdपंचांग_STACK_GUARD_PAGE_TRAILING(व्योम)
-अणु
-	स्थिर अचिन्हित अक्षर *stack = task_stack_page(current);
-	स्थिर अचिन्हित अक्षर *ptr = stack + THREAD_SIZE;
-	अस्थिर अचिन्हित अक्षर byte;
+void lkdtm_STACK_GUARD_PAGE_TRAILING(void)
+{
+	const unsigned char *stack = task_stack_page(current);
+	const unsigned char *ptr = stack + THREAD_SIZE;
+	volatile unsigned char byte;
 
 	pr_info("attempting bad read from page above current stack\n");
 
 	byte = *ptr;
 
 	pr_err("FAIL: accessed page after stack! (byte: %x)\n", byte);
-पूर्ण
+}
 
-व्योम lkdपंचांग_UNSET_SMEP(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_X86_64) && !IS_ENABLED(CONFIG_UML)
-#घोषणा MOV_CR4_DEPTH	64
-	व्योम (*direct_ग_लिखो_cr4)(अचिन्हित दीर्घ val);
-	अचिन्हित अक्षर *insn;
-	अचिन्हित दीर्घ cr4;
-	पूर्णांक i;
+void lkdtm_UNSET_SMEP(void)
+{
+#if IS_ENABLED(CONFIG_X86_64) && !IS_ENABLED(CONFIG_UML)
+#define MOV_CR4_DEPTH	64
+	void (*direct_write_cr4)(unsigned long val);
+	unsigned char *insn;
+	unsigned long cr4;
+	int i;
 
-	cr4 = native_पढ़ो_cr4();
+	cr4 = native_read_cr4();
 
-	अगर ((cr4 & X86_CR4_SMEP) != X86_CR4_SMEP) अणु
+	if ((cr4 & X86_CR4_SMEP) != X86_CR4_SMEP) {
 		pr_err("FAIL: SMEP not in use\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 	cr4 &= ~(X86_CR4_SMEP);
 
 	pr_info("trying to clear SMEP normally\n");
-	native_ग_लिखो_cr4(cr4);
-	अगर (cr4 == native_पढ़ो_cr4()) अणु
+	native_write_cr4(cr4);
+	if (cr4 == native_read_cr4()) {
 		pr_err("FAIL: pinning SMEP failed!\n");
 		cr4 |= X86_CR4_SMEP;
 		pr_info("restoring SMEP\n");
-		native_ग_लिखो_cr4(cr4);
-		वापस;
-	पूर्ण
+		native_write_cr4(cr4);
+		return;
+	}
 	pr_info("ok: SMEP did not get cleared\n");
 
 	/*
-	 * To test the post-ग_लिखो pinning verअगरication we need to call
-	 * directly पूर्णांकo the middle of native_ग_लिखो_cr4() where the
-	 * cr4 ग_लिखो happens, skipping any pinning. This searches क्रम
-	 * the cr4 writing inकाष्ठाion.
+	 * To test the post-write pinning verification we need to call
+	 * directly into the middle of native_write_cr4() where the
+	 * cr4 write happens, skipping any pinning. This searches for
+	 * the cr4 writing instruction.
 	 */
-	insn = (अचिन्हित अक्षर *)native_ग_लिखो_cr4;
-	क्रम (i = 0; i < MOV_CR4_DEPTH; i++) अणु
+	insn = (unsigned char *)native_write_cr4;
+	for (i = 0; i < MOV_CR4_DEPTH; i++) {
 		/* mov %rdi, %cr4 */
-		अगर (insn[i] == 0x0f && insn[i+1] == 0x22 && insn[i+2] == 0xe7)
-			अवरोध;
+		if (insn[i] == 0x0f && insn[i+1] == 0x22 && insn[i+2] == 0xe7)
+			break;
 		/* mov %rdi,%rax; mov %rax, %cr4 */
-		अगर (insn[i]   == 0x48 && insn[i+1] == 0x89 &&
+		if (insn[i]   == 0x48 && insn[i+1] == 0x89 &&
 		    insn[i+2] == 0xf8 && insn[i+3] == 0x0f &&
 		    insn[i+4] == 0x22 && insn[i+5] == 0xe0)
-			अवरोध;
-	पूर्ण
-	अगर (i >= MOV_CR4_DEPTH) अणु
+			break;
+	}
+	if (i >= MOV_CR4_DEPTH) {
 		pr_info("ok: cannot locate cr4 writing call gadget\n");
-		वापस;
-	पूर्ण
-	direct_ग_लिखो_cr4 = (व्योम *)(insn + i);
+		return;
+	}
+	direct_write_cr4 = (void *)(insn + i);
 
 	pr_info("trying to clear SMEP with call gadget\n");
-	direct_ग_लिखो_cr4(cr4);
-	अगर (native_पढ़ो_cr4() & X86_CR4_SMEP) अणु
+	direct_write_cr4(cr4);
+	if (native_read_cr4() & X86_CR4_SMEP) {
 		pr_info("ok: SMEP removal was reverted\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("FAIL: cleared SMEP not detected!\n");
 		cr4 |= X86_CR4_SMEP;
 		pr_info("restoring SMEP\n");
-		native_ग_लिखो_cr4(cr4);
-	पूर्ण
-#अन्यथा
+		native_write_cr4(cr4);
+	}
+#else
 	pr_err("XFAIL: this test is x86_64-only\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-व्योम lkdपंचांग_DOUBLE_FAULT(व्योम)
-अणु
-#अगर IS_ENABLED(CONFIG_X86_32) && !IS_ENABLED(CONFIG_UML)
+void lkdtm_DOUBLE_FAULT(void)
+{
+#if IS_ENABLED(CONFIG_X86_32) && !IS_ENABLED(CONFIG_UML)
 	/*
 	 * Trigger #DF by setting the stack limit to zero.  This clobbers
 	 * a GDT TLS slot, which is okay because the current task will die
-	 * anyway due to the द्विगुन fault.
+	 * anyway due to the double fault.
 	 */
-	काष्ठा desc_काष्ठा d = अणु
+	struct desc_struct d = {
 		.type = 3,	/* expand-up, writable, accessed data */
 		.p = 1,		/* present */
 		.d = 1,		/* 32-bit */
 		.g = 0,		/* limit in bytes */
-		.s = 1,		/* not प्रणाली */
-	पूर्ण;
+		.s = 1,		/* not system */
+	};
 
 	local_irq_disable();
-	ग_लिखो_gdt_entry(get_cpu_gdt_rw(smp_processor_id()),
+	write_gdt_entry(get_cpu_gdt_rw(smp_processor_id()),
 			GDT_ENTRY_TLS_MIN, &d, DESCTYPE_S);
 
 	/*
 	 * Put our zero-limit segment in SS and then trigger a fault.  The
 	 * 4-byte access to (%esp) will fault with #SS, and the attempt to
 	 * deliver the fault will recursively cause #SS and result in #DF.
-	 * This whole process happens जबतक NMIs and MCEs are blocked by the
-	 * MOV SS winकरोw.  This is nice because an NMI with an invalid SS
-	 * would also द्विगुन-fault, resulting in the NMI or MCE being lost.
+	 * This whole process happens while NMIs and MCEs are blocked by the
+	 * MOV SS window.  This is nice because an NMI with an invalid SS
+	 * would also double-fault, resulting in the NMI or MCE being lost.
 	 */
-	यंत्र अस्थिर ("movw %0, %%ss; addl $0, (%%esp)" ::
-		      "r" ((अचिन्हित लघु)(GDT_ENTRY_TLS_MIN << 3)));
+	asm volatile ("movw %0, %%ss; addl $0, (%%esp)" ::
+		      "r" ((unsigned short)(GDT_ENTRY_TLS_MIN << 3)));
 
 	pr_err("FAIL: tried to double fault but didn't die\n");
-#अन्यथा
+#else
 	pr_err("XFAIL: this test is ia32-only\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#अगर_घोषित CONFIG_ARM64
-अटल noअंतरभूत व्योम change_pac_parameters(व्योम)
-अणु
-	अगर (IS_ENABLED(CONFIG_ARM64_PTR_AUTH)) अणु
+#ifdef CONFIG_ARM64
+static noinline void change_pac_parameters(void)
+{
+	if (IS_ENABLED(CONFIG_ARM64_PTR_AUTH)) {
 		/* Reset the keys of current task */
-		ptrauth_thपढ़ो_init_kernel(current);
-		ptrauth_thपढ़ो_चयन_kernel(current);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		ptrauth_thread_init_kernel(current);
+		ptrauth_thread_switch_kernel(current);
+	}
+}
+#endif
 
-noअंतरभूत व्योम lkdपंचांग_CORRUPT_PAC(व्योम)
-अणु
-#अगर_घोषित CONFIG_ARM64
-#घोषणा CORRUPT_PAC_ITERATE	10
-	पूर्णांक i;
+noinline void lkdtm_CORRUPT_PAC(void)
+{
+#ifdef CONFIG_ARM64
+#define CORRUPT_PAC_ITERATE	10
+	int i;
 
-	अगर (!IS_ENABLED(CONFIG_ARM64_PTR_AUTH))
+	if (!IS_ENABLED(CONFIG_ARM64_PTR_AUTH))
 		pr_err("FAIL: kernel not built with CONFIG_ARM64_PTR_AUTH\n");
 
-	अगर (!प्रणाली_supports_address_auth()) अणु
+	if (!system_supports_address_auth()) {
 		pr_err("FAIL: CPU lacks pointer authentication feature\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pr_info("changing PAC parameters to force function return failure...\n");
 	/*
-	 * PAC is a hash value computed from input keys, वापस address and
-	 * stack poपूर्णांकer. As pac has fewer bits so there is a chance of
-	 * collision, so iterate few बार to reduce the collision probability.
+	 * PAC is a hash value computed from input keys, return address and
+	 * stack pointer. As pac has fewer bits so there is a chance of
+	 * collision, so iterate few times to reduce the collision probability.
 	 */
-	क्रम (i = 0; i < CORRUPT_PAC_ITERATE; i++)
+	for (i = 0; i < CORRUPT_PAC_ITERATE; i++)
 		change_pac_parameters();
 
 	pr_err("FAIL: survived PAC changes! Kernel may be unstable from here\n");
-#अन्यथा
+#else
 	pr_err("XFAIL: this test is arm64-only\n");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-व्योम lkdपंचांग_FORTIFY_OBJECT(व्योम)
-अणु
-	काष्ठा target अणु
-		अक्षर a[10];
-	पूर्ण target[2] = अणुपूर्ण;
-	पूर्णांक result;
+void lkdtm_FORTIFY_OBJECT(void)
+{
+	struct target {
+		char a[10];
+	} target[2] = {};
+	int result;
 
 	/*
-	 * Using अस्थिर prevents the compiler from determining the value of
-	 * 'size' at compile समय. Without that, we would get a compile error
-	 * rather than a runसमय error.
+	 * Using volatile prevents the compiler from determining the value of
+	 * 'size' at compile time. Without that, we would get a compile error
+	 * rather than a runtime error.
 	 */
-	अस्थिर पूर्णांक size = 11;
+	volatile int size = 11;
 
 	pr_info("trying to read past the end of a struct\n");
 
-	result = स_भेद(&target[0], &target[1], size);
+	result = memcmp(&target[0], &target[1], size);
 
-	/* Prपूर्णांक result to prevent the code from being eliminated */
+	/* Print result to prevent the code from being eliminated */
 	pr_err("FAIL: fortify did not catch an object overread!\n"
 	       "\"%d\" was the memcmp result.\n", result);
-पूर्ण
+}
 
-व्योम lkdपंचांग_FORTIFY_SUBOBJECT(व्योम)
-अणु
-	काष्ठा target अणु
-		अक्षर a[10];
-		अक्षर b[10];
-	पूर्ण target;
-	अक्षर *src;
+void lkdtm_FORTIFY_SUBOBJECT(void)
+{
+	struct target {
+		char a[10];
+		char b[10];
+	} target;
+	char *src;
 
-	src = kदो_स्मृति(20, GFP_KERNEL);
+	src = kmalloc(20, GFP_KERNEL);
 	strscpy(src, "over ten bytes", 20);
 
 	pr_info("trying to strcpy past the end of a member of a struct\n");
 
 	/*
-	 * म_नकलन(target.a, src, 20); will hit a compile error because the
-	 * compiler knows at build समय that target.a < 20 bytes. Use म_नकल()
-	 * to क्रमce a runसमय error.
+	 * strncpy(target.a, src, 20); will hit a compile error because the
+	 * compiler knows at build time that target.a < 20 bytes. Use strcpy()
+	 * to force a runtime error.
 	 */
-	म_नकल(target.a, src);
+	strcpy(target.a, src);
 
 	/* Use target.a to prevent the code from being eliminated */
 	pr_err("FAIL: fortify did not catch an sub-object overrun!\n"
 	       "\"%s\" was copied.\n", target.a);
 
-	kमुक्त(src);
-पूर्ण
+	kfree(src);
+}

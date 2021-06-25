@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 // pe-file.exe and pe-file.exe.debug built with;
 // x86_64-w64-mingw32-gcc -o pe-file.exe pe-file.c
@@ -9,7 +8,7 @@
 // x86_64-w64-mingw32-objcopy --strip-debug
 //   --add-gnu-debuglink=pe-file.exe.debug pe-file.exe
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर स्थिर *argv[])
-अणु
-	वापस 0;
-पूर्ण
+int main(int argc, char const *argv[])
+{
+	return 0;
+}

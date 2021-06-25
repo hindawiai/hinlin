@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2016-2017, Linaro Ltd
  */
 
-#अगर_अघोषित __QCOM_GLINK_NATIVE_H__
-#घोषणा __QCOM_GLINK_NATIVE_H__
+#ifndef __QCOM_GLINK_NATIVE_H__
+#define __QCOM_GLINK_NATIVE_H__
 
-#घोषणा GLINK_FEATURE_INTENT_REUSE	BIT(0)
-#घोषणा GLINK_FEATURE_MIGRATION		BIT(1)
-#घोषणा GLINK_FEATURE_TRACER_PKT	BIT(2)
+#define GLINK_FEATURE_INTENT_REUSE	BIT(0)
+#define GLINK_FEATURE_MIGRATION		BIT(1)
+#define GLINK_FEATURE_TRACER_PKT	BIT(2)
 
-काष्ठा qcom_glink_pipe अणु
-	माप_प्रकार length;
+struct qcom_glink_pipe {
+	size_t length;
 
-	माप_प्रकार (*avail)(काष्ठा qcom_glink_pipe *glink_pipe);
+	size_t (*avail)(struct qcom_glink_pipe *glink_pipe);
 
-	व्योम (*peak)(काष्ठा qcom_glink_pipe *glink_pipe, व्योम *data,
-		     अचिन्हित पूर्णांक offset, माप_प्रकार count);
-	व्योम (*advance)(काष्ठा qcom_glink_pipe *glink_pipe, माप_प्रकार count);
+	void (*peak)(struct qcom_glink_pipe *glink_pipe, void *data,
+		     unsigned int offset, size_t count);
+	void (*advance)(struct qcom_glink_pipe *glink_pipe, size_t count);
 
-	व्योम (*ग_लिखो)(काष्ठा qcom_glink_pipe *glink_pipe,
-		      स्थिर व्योम *hdr, माप_प्रकार hlen,
-		      स्थिर व्योम *data, माप_प्रकार dlen);
-पूर्ण;
+	void (*write)(struct qcom_glink_pipe *glink_pipe,
+		      const void *hdr, size_t hlen,
+		      const void *data, size_t dlen);
+};
 
-काष्ठा qcom_glink;
+struct qcom_glink;
 
-काष्ठा qcom_glink *qcom_glink_native_probe(काष्ठा device *dev,
-					   अचिन्हित दीर्घ features,
-					   काष्ठा qcom_glink_pipe *rx,
-					   काष्ठा qcom_glink_pipe *tx,
-					   bool पूर्णांकentless);
-व्योम qcom_glink_native_हटाओ(काष्ठा qcom_glink *glink);
+struct qcom_glink *qcom_glink_native_probe(struct device *dev,
+					   unsigned long features,
+					   struct qcom_glink_pipe *rx,
+					   struct qcom_glink_pipe *tx,
+					   bool intentless);
+void qcom_glink_native_remove(struct qcom_glink *glink);
 
-व्योम qcom_glink_native_unरेजिस्टर(काष्ठा qcom_glink *glink);
-#पूर्ण_अगर
+void qcom_glink_native_unregister(struct qcom_glink *glink);
+#endif

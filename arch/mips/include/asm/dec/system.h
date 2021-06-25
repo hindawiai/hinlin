@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *	include/यंत्र-mips/dec/प्रणाली.h
+ *	include/asm-mips/dec/system.h
  *
- *	Generic DECstation/DECप्रणाली bits.
+ *	Generic DECstation/DECsystem bits.
  *
  *	Copyright (C) 2005, 2006  Maciej W. Rozycki
  */
-#अगर_अघोषित __ASM_DEC_SYSTEM_H
-#घोषणा __ASM_DEC_SYSTEM_H
+#ifndef __ASM_DEC_SYSTEM_H
+#define __ASM_DEC_SYSTEM_H
 
-बाह्य अचिन्हित दीर्घ dec_kn_slot_base, dec_kn_slot_size;
-बाह्य पूर्णांक dec_tc_bus;
+extern unsigned long dec_kn_slot_base, dec_kn_slot_size;
+extern int dec_tc_bus;
 
-#पूर्ण_अगर /* __ASM_DEC_SYSTEM_H */
+#endif /* __ASM_DEC_SYSTEM_H */

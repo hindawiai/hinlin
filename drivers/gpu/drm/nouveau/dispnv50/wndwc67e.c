@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2021 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,24 +19,24 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "wndw.h"
-#समावेश "atom.h"
+#include "wndw.h"
+#include "atom.h"
 
-#समावेश <nvअगर/pushc37b.h>
+#include <nvif/pushc37b.h>
 
-#समावेश <nvhw/class/clc57e.h>
+#include <nvhw/class/clc57e.h>
 
-अटल पूर्णांक
-wndwc67e_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
-अणु
-	काष्ठा nvअगर_push *push = wndw->wndw.push;
-	पूर्णांक ret;
+static int
+wndwc67e_image_set(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
+{
+	struct nvif_push *push = wndw->wndw.push;
+	int ret;
 
-	अगर ((ret = PUSH_WAIT(push, 17)))
-		वापस ret;
+	if ((ret = PUSH_WAIT(push, 17)))
+		return ret;
 
 	PUSH_MTHD(push, NVC57E, SET_PRESENT_CONTROL,
-		  NVVAL(NVC57E, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.पूर्णांकerval) |
+		  NVVAL(NVC57E, SET_PRESENT_CONTROL, MIN_PRESENT_INTERVAL, asyw->image.interval) |
 		  NVVAL(NVC57E, SET_PRESENT_CONTROL, BEGIN_MODE, asyw->image.mode) |
 		  NVDEF(NVC57E, SET_PRESENT_CONTROL, TIMESTAMP_MODE, DISABLE));
 
@@ -49,7 +48,7 @@ wndwc67e_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_w
 		  NVVAL(NVC57E, SET_STORAGE, BLOCK_HEIGHT, asyw->image.blockh),
 
 				SET_PARAMS,
-		  NVVAL(NVC57E, SET_PARAMS, FORMAT, asyw->image.क्रमmat) |
+		  NVVAL(NVC57E, SET_PARAMS, FORMAT, asyw->image.format) |
 		  NVDEF(NVC57E, SET_PARAMS, CLAMP_BEFORE_BLEND, DISABLE) |
 		  NVDEF(NVC57E, SET_PARAMS, SWAP_UV, DISABLE) |
 		  NVDEF(NVC57E, SET_PARAMS, FMT_ROUNDING_MODE, ROUND_TO_NEAREST),
@@ -72,11 +71,11 @@ wndwc67e_image_set(काष्ठा nv50_wndw *wndw, काष्ठा nv50_w
 	PUSH_MTHD(push, NVC57E, SET_SIZE_OUT,
 		  NVVAL(NVC57E, SET_SIZE_OUT, WIDTH, asyw->state.crtc_w) |
 		  NVVAL(NVC57E, SET_SIZE_OUT, HEIGHT, asyw->state.crtc_h));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nv50_wndw_func
-wndwc67e = अणु
+static const struct nv50_wndw_func
+wndwc67e = {
 	.acquire = wndwc37e_acquire,
 	.release = wndwc37e_release,
 	.sema_set = wndwc37e_sema_set,
@@ -84,7 +83,7 @@ wndwc67e = अणु
 	.ntfy_set = wndwc37e_ntfy_set,
 	.ntfy_clr = wndwc37e_ntfy_clr,
 	.ntfy_reset = corec37d_ntfy_init,
-	.ntfy_रुको_begun = base507c_ntfy_रुको_begun,
+	.ntfy_wait_begun = base507c_ntfy_wait_begun,
 	.ilut = wndwc57e_ilut,
 	.ilut_identity = true,
 	.ilut_size = 1024,
@@ -97,11 +96,11 @@ wndwc67e = अणु
 	.image_clr = wndwc37e_image_clr,
 	.blend_set = wndwc37e_blend_set,
 	.update = wndwc37e_update,
-पूर्ण;
+};
 
-पूर्णांक
-wndwc67e_new(काष्ठा nouveau_drm *drm, क्रमागत drm_plane_type type, पूर्णांक index,
-	     s32 oclass, काष्ठा nv50_wndw **pwndw)
-अणु
-	वापस wndwc37e_new_(&wndwc67e, drm, type, index, oclass, BIT(index >> 1), pwndw);
-पूर्ण
+int
+wndwc67e_new(struct nouveau_drm *drm, enum drm_plane_type type, int index,
+	     s32 oclass, struct nv50_wndw **pwndw)
+{
+	return wndwc37e_new_(&wndwc67e, drm, type, index, oclass, BIT(index >> 1), pwndw);
+}

@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /****************************************************************************
- * Driver क्रम Solarflare network controllers and boards
+ * Driver for Solarflare network controllers and boards
  * Copyright 2008-2013 Solarflare Communications Inc.
  * Copyright 2019-2020 Xilinx Inc.
  */
 
-#अगर_अघोषित EFX_MCDI_PORT_H
-#घोषणा EFX_MCDI_PORT_H
+#ifndef EFX_MCDI_PORT_H
+#define EFX_MCDI_PORT_H
 
-#समावेश "net_driver.h"
+#include "net_driver.h"
 
-u32 efx_mcdi_phy_get_caps(काष्ठा efx_nic *efx);
-bool efx_mcdi_mac_check_fault(काष्ठा efx_nic *efx);
-पूर्णांक efx_mcdi_port_probe(काष्ठा efx_nic *efx);
-व्योम efx_mcdi_port_हटाओ(काष्ठा efx_nic *efx);
+u32 efx_mcdi_phy_get_caps(struct efx_nic *efx);
+bool efx_mcdi_mac_check_fault(struct efx_nic *efx);
+int efx_mcdi_port_probe(struct efx_nic *efx);
+void efx_mcdi_port_remove(struct efx_nic *efx);
 
-#पूर्ण_अगर /* EFX_MCDI_PORT_H */
+#endif /* EFX_MCDI_PORT_H */

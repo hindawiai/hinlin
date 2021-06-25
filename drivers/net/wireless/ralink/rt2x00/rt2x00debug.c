@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	<http://rt2x00.serialmonkey.com>
@@ -8,53 +7,53 @@
 
 /*
 	Module: rt2x00lib
-	Abstract: rt2x00 debugfs specअगरic routines.
+	Abstract: rt2x00 debugfs specific routines.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
+#include <linux/debugfs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/poll.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
 
-#समावेश "rt2x00.h"
-#समावेश "rt2x00lib.h"
-#समावेश "rt2x00dump.h"
+#include "rt2x00.h"
+#include "rt2x00lib.h"
+#include "rt2x00dump.h"
 
-#घोषणा MAX_LINE_LENGTH 64
+#define MAX_LINE_LENGTH 64
 
-काष्ठा rt2x00debug_crypto अणु
-	अचिन्हित दीर्घ success;
-	अचिन्हित दीर्घ icv_error;
-	अचिन्हित दीर्घ mic_error;
-	अचिन्हित दीर्घ key_error;
-पूर्ण;
+struct rt2x00debug_crypto {
+	unsigned long success;
+	unsigned long icv_error;
+	unsigned long mic_error;
+	unsigned long key_error;
+};
 
-काष्ठा rt2x00debug_पूर्णांकf अणु
+struct rt2x00debug_intf {
 	/*
-	 * Poपूर्णांकer to driver काष्ठाure where
-	 * this debugfs entry beदीर्घs to.
+	 * Pointer to driver structure where
+	 * this debugfs entry belongs to.
 	 */
-	काष्ठा rt2x00_dev *rt2x00dev;
+	struct rt2x00_dev *rt2x00dev;
 
 	/*
-	 * Reference to the rt2x00debug काष्ठाure
+	 * Reference to the rt2x00debug structure
 	 * which can be used to communicate with
-	 * the रेजिस्टरs.
+	 * the registers.
 	 */
-	स्थिर काष्ठा rt2x00debug *debug;
+	const struct rt2x00debug *debug;
 
 	/*
-	 * Debugfs entries क्रम:
+	 * Debugfs entries for:
 	 * - driver folder
 	 *   - driver file
 	 *   - chipset file
 	 *   - device state flags file
 	 *   - device capability flags file
 	 *   - hardware restart file
-	 *   - रेजिस्टर folder
+	 *   - register folder
 	 *     - csr offset/value files
 	 *     - eeprom offset/value files
 	 *     - bbp offset/value files
@@ -65,104 +64,104 @@
 	 *     - queue stats file
 	 *     - crypto stats file
 	 */
-	काष्ठा dentry *driver_folder;
+	struct dentry *driver_folder;
 
 	/*
-	 * The frame dump file only allows a single पढ़ोer,
+	 * The frame dump file only allows a single reader,
 	 * so we need to store the current state here.
 	 */
-	अचिन्हित दीर्घ frame_dump_flags;
-#घोषणा FRAME_DUMP_खाता_OPEN	1
+	unsigned long frame_dump_flags;
+#define FRAME_DUMP_FILE_OPEN	1
 
 	/*
-	 * We queue each frame beक्रमe dumping it to the user,
-	 * per पढ़ो command we will pass a single skb काष्ठाure
+	 * We queue each frame before dumping it to the user,
+	 * per read command we will pass a single skb structure
 	 * so we should be prepared to queue multiple sk buffers
-	 * beक्रमe sending it to userspace.
+	 * before sending it to userspace.
 	 */
-	काष्ठा sk_buff_head frame_dump_skbqueue;
-	रुको_queue_head_t frame_dump_रुकोqueue;
+	struct sk_buff_head frame_dump_skbqueue;
+	wait_queue_head_t frame_dump_waitqueue;
 
 	/*
 	 * HW crypto statistics.
 	 * All statistics are stored separately per cipher type.
 	 */
-	काष्ठा rt2x00debug_crypto crypto_stats[CIPHER_MAX];
+	struct rt2x00debug_crypto crypto_stats[CIPHER_MAX];
 
 	/*
 	 * Driver and chipset files will use a data buffer
-	 * that has been created in advance. This will simplअगरy
+	 * that has been created in advance. This will simplify
 	 * the code since we can use the debugfs functions.
 	 */
-	काष्ठा debugfs_blob_wrapper driver_blob;
-	काष्ठा debugfs_blob_wrapper chipset_blob;
+	struct debugfs_blob_wrapper driver_blob;
+	struct debugfs_blob_wrapper chipset_blob;
 
 	/*
-	 * Requested offset क्रम each रेजिस्टर type.
+	 * Requested offset for each register type.
 	 */
-	अचिन्हित पूर्णांक offset_csr;
-	अचिन्हित पूर्णांक offset_eeprom;
-	अचिन्हित पूर्णांक offset_bbp;
-	अचिन्हित पूर्णांक offset_rf;
-	अचिन्हित पूर्णांक offset_rfcsr;
-पूर्ण;
+	unsigned int offset_csr;
+	unsigned int offset_eeprom;
+	unsigned int offset_bbp;
+	unsigned int offset_rf;
+	unsigned int offset_rfcsr;
+};
 
-व्योम rt2x00debug_update_crypto(काष्ठा rt2x00_dev *rt2x00dev,
-			       काष्ठा rxकरोne_entry_desc *rxdesc)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = rt2x00dev->debugfs_पूर्णांकf;
-	क्रमागत cipher cipher = rxdesc->cipher;
-	क्रमागत rx_crypto status = rxdesc->cipher_status;
+void rt2x00debug_update_crypto(struct rt2x00_dev *rt2x00dev,
+			       struct rxdone_entry_desc *rxdesc)
+{
+	struct rt2x00debug_intf *intf = rt2x00dev->debugfs_intf;
+	enum cipher cipher = rxdesc->cipher;
+	enum rx_crypto status = rxdesc->cipher_status;
 
-	अगर (cipher == CIPHER_TKIP_NO_MIC)
+	if (cipher == CIPHER_TKIP_NO_MIC)
 		cipher = CIPHER_TKIP;
-	अगर (cipher == CIPHER_NONE || cipher >= CIPHER_MAX)
-		वापस;
+	if (cipher == CIPHER_NONE || cipher >= CIPHER_MAX)
+		return;
 
 	/* Remove CIPHER_NONE index */
 	cipher--;
 
-	पूर्णांकf->crypto_stats[cipher].success += (status == RX_CRYPTO_SUCCESS);
-	पूर्णांकf->crypto_stats[cipher].icv_error += (status == RX_CRYPTO_FAIL_ICV);
-	पूर्णांकf->crypto_stats[cipher].mic_error += (status == RX_CRYPTO_FAIL_MIC);
-	पूर्णांकf->crypto_stats[cipher].key_error += (status == RX_CRYPTO_FAIL_KEY);
-पूर्ण
+	intf->crypto_stats[cipher].success += (status == RX_CRYPTO_SUCCESS);
+	intf->crypto_stats[cipher].icv_error += (status == RX_CRYPTO_FAIL_ICV);
+	intf->crypto_stats[cipher].mic_error += (status == RX_CRYPTO_FAIL_MIC);
+	intf->crypto_stats[cipher].key_error += (status == RX_CRYPTO_FAIL_KEY);
+}
 
-व्योम rt2x00debug_dump_frame(काष्ठा rt2x00_dev *rt2x00dev,
-			    क्रमागत rt2x00_dump_type type, काष्ठा queue_entry *entry)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = rt2x00dev->debugfs_पूर्णांकf;
-	काष्ठा sk_buff *skb = entry->skb;
-	काष्ठा skb_frame_desc *skbdesc = get_skb_frame_desc(skb);
-	काष्ठा sk_buff *skbcopy;
-	काष्ठा rt2x00dump_hdr *dump_hdr;
-	काष्ठा बारpec64 बारtamp;
+void rt2x00debug_dump_frame(struct rt2x00_dev *rt2x00dev,
+			    enum rt2x00_dump_type type, struct queue_entry *entry)
+{
+	struct rt2x00debug_intf *intf = rt2x00dev->debugfs_intf;
+	struct sk_buff *skb = entry->skb;
+	struct skb_frame_desc *skbdesc = get_skb_frame_desc(skb);
+	struct sk_buff *skbcopy;
+	struct rt2x00dump_hdr *dump_hdr;
+	struct timespec64 timestamp;
 	u32 data_len;
 
-	अगर (likely(!test_bit(FRAME_DUMP_खाता_OPEN, &पूर्णांकf->frame_dump_flags)))
-		वापस;
+	if (likely(!test_bit(FRAME_DUMP_FILE_OPEN, &intf->frame_dump_flags)))
+		return;
 
-	kसमय_get_ts64(&बारtamp);
+	ktime_get_ts64(&timestamp);
 
-	अगर (skb_queue_len(&पूर्णांकf->frame_dump_skbqueue) > 20) अणु
+	if (skb_queue_len(&intf->frame_dump_skbqueue) > 20) {
 		rt2x00_dbg(rt2x00dev, "txrx dump queue length exceeded\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	data_len = skb->len;
-	अगर (skbdesc->flags & SKBDESC_DESC_IN_SKB)
+	if (skbdesc->flags & SKBDESC_DESC_IN_SKB)
 		data_len -= skbdesc->desc_len;
 
-	skbcopy = alloc_skb(माप(*dump_hdr) + skbdesc->desc_len + data_len,
+	skbcopy = alloc_skb(sizeof(*dump_hdr) + skbdesc->desc_len + data_len,
 			    GFP_ATOMIC);
-	अगर (!skbcopy) अणु
+	if (!skbcopy) {
 		rt2x00_dbg(rt2x00dev, "Failed to copy skb for dump\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dump_hdr = skb_put(skbcopy, माप(*dump_hdr));
+	dump_hdr = skb_put(skbcopy, sizeof(*dump_hdr));
 	dump_hdr->version = cpu_to_le32(DUMP_HEADER_VERSION);
-	dump_hdr->header_length = cpu_to_le32(माप(*dump_hdr));
+	dump_hdr->header_length = cpu_to_le32(sizeof(*dump_hdr));
 	dump_hdr->desc_length = cpu_to_le32(skbdesc->desc_len);
 	dump_hdr->data_length = cpu_to_le32(data_len);
 	dump_hdr->chip_rt = cpu_to_le16(rt2x00dev->chip.rt);
@@ -171,327 +170,327 @@
 	dump_hdr->type = cpu_to_le16(type);
 	dump_hdr->queue_index = entry->queue->qid;
 	dump_hdr->entry_index = entry->entry_idx;
-	dump_hdr->बारtamp_sec = cpu_to_le32(बारtamp.tv_sec);
-	dump_hdr->बारtamp_usec = cpu_to_le32(बारtamp.tv_nsec /
+	dump_hdr->timestamp_sec = cpu_to_le32(timestamp.tv_sec);
+	dump_hdr->timestamp_usec = cpu_to_le32(timestamp.tv_nsec /
 					       NSEC_PER_USEC);
 
-	अगर (!(skbdesc->flags & SKBDESC_DESC_IN_SKB))
+	if (!(skbdesc->flags & SKBDESC_DESC_IN_SKB))
 		skb_put_data(skbcopy, skbdesc->desc, skbdesc->desc_len);
 	skb_put_data(skbcopy, skb->data, skb->len);
 
-	skb_queue_tail(&पूर्णांकf->frame_dump_skbqueue, skbcopy);
-	wake_up_पूर्णांकerruptible(&पूर्णांकf->frame_dump_रुकोqueue);
+	skb_queue_tail(&intf->frame_dump_skbqueue, skbcopy);
+	wake_up_interruptible(&intf->frame_dump_waitqueue);
 
 	/*
-	 * Verअगरy that the file has not been बंदd जबतक we were working.
+	 * Verify that the file has not been closed while we were working.
 	 */
-	अगर (!test_bit(FRAME_DUMP_खाता_OPEN, &पूर्णांकf->frame_dump_flags))
-		skb_queue_purge(&पूर्णांकf->frame_dump_skbqueue);
-पूर्ण
+	if (!test_bit(FRAME_DUMP_FILE_OPEN, &intf->frame_dump_flags))
+		skb_queue_purge(&intf->frame_dump_skbqueue);
+}
 EXPORT_SYMBOL_GPL(rt2x00debug_dump_frame);
 
-अटल पूर्णांक rt2x00debug_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = inode->i_निजी;
+static int rt2x00debug_file_open(struct inode *inode, struct file *file)
+{
+	struct rt2x00debug_intf *intf = inode->i_private;
 
-	file->निजी_data = inode->i_निजी;
+	file->private_data = inode->i_private;
 
-	अगर (!try_module_get(पूर्णांकf->debug->owner))
-		वापस -EBUSY;
+	if (!try_module_get(intf->debug->owner))
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2x00debug_file_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;
+static int rt2x00debug_file_release(struct inode *inode, struct file *file)
+{
+	struct rt2x00debug_intf *intf = file->private_data;
 
-	module_put(पूर्णांकf->debug->owner);
+	module_put(intf->debug->owner);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2x00debug_खोलो_queue_dump(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = inode->i_निजी;
-	पूर्णांक retval;
+static int rt2x00debug_open_queue_dump(struct inode *inode, struct file *file)
+{
+	struct rt2x00debug_intf *intf = inode->i_private;
+	int retval;
 
-	retval = rt2x00debug_file_खोलो(inode, file);
-	अगर (retval)
-		वापस retval;
+	retval = rt2x00debug_file_open(inode, file);
+	if (retval)
+		return retval;
 
-	अगर (test_and_set_bit(FRAME_DUMP_खाता_OPEN, &पूर्णांकf->frame_dump_flags)) अणु
+	if (test_and_set_bit(FRAME_DUMP_FILE_OPEN, &intf->frame_dump_flags)) {
 		rt2x00debug_file_release(inode, file);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2x00debug_release_queue_dump(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = inode->i_निजी;
+static int rt2x00debug_release_queue_dump(struct inode *inode, struct file *file)
+{
+	struct rt2x00debug_intf *intf = inode->i_private;
 
-	skb_queue_purge(&पूर्णांकf->frame_dump_skbqueue);
+	skb_queue_purge(&intf->frame_dump_skbqueue);
 
-	clear_bit(FRAME_DUMP_खाता_OPEN, &पूर्णांकf->frame_dump_flags);
+	clear_bit(FRAME_DUMP_FILE_OPEN, &intf->frame_dump_flags);
 
-	वापस rt2x00debug_file_release(inode, file);
-पूर्ण
+	return rt2x00debug_file_release(inode, file);
+}
 
-अटल sमाप_प्रकार rt2x00debug_पढ़ो_queue_dump(काष्ठा file *file,
-					   अक्षर __user *buf,
-					   माप_प्रकार length,
+static ssize_t rt2x00debug_read_queue_dump(struct file *file,
+					   char __user *buf,
+					   size_t length,
 					   loff_t *offset)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;
-	काष्ठा sk_buff *skb;
-	माप_प्रकार status;
-	पूर्णांक retval;
+{
+	struct rt2x00debug_intf *intf = file->private_data;
+	struct sk_buff *skb;
+	size_t status;
+	int retval;
 
-	अगर (file->f_flags & O_NONBLOCK)
-		वापस -EAGAIN;
+	if (file->f_flags & O_NONBLOCK)
+		return -EAGAIN;
 
 	retval =
-	    रुको_event_पूर्णांकerruptible(पूर्णांकf->frame_dump_रुकोqueue,
+	    wait_event_interruptible(intf->frame_dump_waitqueue,
 				     (skb =
-				     skb_dequeue(&पूर्णांकf->frame_dump_skbqueue)));
-	अगर (retval)
-		वापस retval;
+				     skb_dequeue(&intf->frame_dump_skbqueue)));
+	if (retval)
+		return retval;
 
-	status = min_t(माप_प्रकार, skb->len, length);
-	अगर (copy_to_user(buf, skb->data, status)) अणु
+	status = min_t(size_t, skb->len, length);
+	if (copy_to_user(buf, skb->data, status)) {
 		status = -EFAULT;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	*offset += status;
 
-निकास:
-	kमुक्त_skb(skb);
+exit:
+	kfree_skb(skb);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल __poll_t rt2x00debug_poll_queue_dump(काष्ठा file *file,
-						poll_table *रुको)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;
+static __poll_t rt2x00debug_poll_queue_dump(struct file *file,
+						poll_table *wait)
+{
+	struct rt2x00debug_intf *intf = file->private_data;
 
-	poll_रुको(file, &पूर्णांकf->frame_dump_रुकोqueue, रुको);
+	poll_wait(file, &intf->frame_dump_waitqueue, wait);
 
-	अगर (!skb_queue_empty(&पूर्णांकf->frame_dump_skbqueue))
-		वापस EPOLLOUT | EPOLLWRNORM;
+	if (!skb_queue_empty(&intf->frame_dump_skbqueue))
+		return EPOLLOUT | EPOLLWRNORM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations rt2x00debug_fop_queue_dump = अणु
+static const struct file_operations rt2x00debug_fop_queue_dump = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= rt2x00debug_पढ़ो_queue_dump,
+	.read		= rt2x00debug_read_queue_dump,
 	.poll		= rt2x00debug_poll_queue_dump,
-	.खोलो		= rt2x00debug_खोलो_queue_dump,
+	.open		= rt2x00debug_open_queue_dump,
 	.release	= rt2x00debug_release_queue_dump,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.llseek		= default_llseek,
+};
 
-अटल sमाप_प्रकार rt2x00debug_पढ़ो_queue_stats(काष्ठा file *file,
-					    अक्षर __user *buf,
-					    माप_प्रकार length,
+static ssize_t rt2x00debug_read_queue_stats(struct file *file,
+					    char __user *buf,
+					    size_t length,
 					    loff_t *offset)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;
-	काष्ठा data_queue *queue;
-	अचिन्हित दीर्घ irqflags;
-	अचिन्हित पूर्णांक lines = 1 + पूर्णांकf->rt2x00dev->data_queues;
-	माप_प्रकार size;
-	अक्षर *data;
-	अक्षर *temp;
+{
+	struct rt2x00debug_intf *intf = file->private_data;
+	struct data_queue *queue;
+	unsigned long irqflags;
+	unsigned int lines = 1 + intf->rt2x00dev->data_queues;
+	size_t size;
+	char *data;
+	char *temp;
 
-	अगर (*offset)
-		वापस 0;
+	if (*offset)
+		return 0;
 
-	data = kसुस्मृति(lines, MAX_LINE_LENGTH, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kcalloc(lines, MAX_LINE_LENGTH, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	temp = data +
-	    प्र_लिखो(data, "qid\tflags\t\tcount\tlimit\tlength\tindex\tdma done\tdone\n");
+	    sprintf(data, "qid\tflags\t\tcount\tlimit\tlength\tindex\tdma done\tdone\n");
 
-	queue_क्रम_each(पूर्णांकf->rt2x00dev, queue) अणु
+	queue_for_each(intf->rt2x00dev, queue) {
 		spin_lock_irqsave(&queue->index_lock, irqflags);
 
-		temp += प्र_लिखो(temp, "%d\t0x%.8x\t%d\t%d\t%d\t%d\t%d\t\t%d\n",
-				queue->qid, (अचिन्हित पूर्णांक)queue->flags,
+		temp += sprintf(temp, "%d\t0x%.8x\t%d\t%d\t%d\t%d\t%d\t\t%d\n",
+				queue->qid, (unsigned int)queue->flags,
 				queue->count, queue->limit, queue->length,
 				queue->index[Q_INDEX],
 				queue->index[Q_INDEX_DMA_DONE],
 				queue->index[Q_INDEX_DONE]);
 
 		spin_unlock_irqrestore(&queue->index_lock, irqflags);
-	पूर्ण
+	}
 
-	size = म_माप(data);
+	size = strlen(data);
 	size = min(size, length);
 
-	अगर (copy_to_user(buf, data, size)) अणु
-		kमुक्त(data);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(buf, data, size)) {
+		kfree(data);
+		return -EFAULT;
+	}
 
-	kमुक्त(data);
+	kfree(data);
 
 	*offset += size;
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल स्थिर काष्ठा file_operations rt2x00debug_fop_queue_stats = अणु
+static const struct file_operations rt2x00debug_fop_queue_stats = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= rt2x00debug_पढ़ो_queue_stats,
-	.खोलो		= rt2x00debug_file_खोलो,
+	.read		= rt2x00debug_read_queue_stats,
+	.open		= rt2x00debug_file_open,
 	.release	= rt2x00debug_file_release,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.llseek		= default_llseek,
+};
 
-#अगर_घोषित CONFIG_RT2X00_LIB_CRYPTO
-अटल sमाप_प्रकार rt2x00debug_पढ़ो_crypto_stats(काष्ठा file *file,
-					     अक्षर __user *buf,
-					     माप_प्रकार length,
+#ifdef CONFIG_RT2X00_LIB_CRYPTO
+static ssize_t rt2x00debug_read_crypto_stats(struct file *file,
+					     char __user *buf,
+					     size_t length,
 					     loff_t *offset)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;
-	अटल स्थिर अक्षर * स्थिर name[] = अणु "WEP64", "WEP128", "TKIP", "AES" पूर्ण;
-	अक्षर *data;
-	अक्षर *temp;
-	माप_प्रकार size;
-	अचिन्हित पूर्णांक i;
+{
+	struct rt2x00debug_intf *intf = file->private_data;
+	static const char * const name[] = { "WEP64", "WEP128", "TKIP", "AES" };
+	char *data;
+	char *temp;
+	size_t size;
+	unsigned int i;
 
-	अगर (*offset)
-		वापस 0;
+	if (*offset)
+		return 0;
 
-	data = kसुस्मृति(1 + CIPHER_MAX, MAX_LINE_LENGTH, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kcalloc(1 + CIPHER_MAX, MAX_LINE_LENGTH, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	temp = data;
-	temp += प्र_लिखो(data, "cipher\tsuccess\ticv err\tmic err\tkey err\n");
+	temp += sprintf(data, "cipher\tsuccess\ticv err\tmic err\tkey err\n");
 
-	क्रम (i = 0; i < CIPHER_MAX; i++) अणु
-		temp += प्र_लिखो(temp, "%s\t%lu\t%lu\t%lu\t%lu\n", name[i],
-				पूर्णांकf->crypto_stats[i].success,
-				पूर्णांकf->crypto_stats[i].icv_error,
-				पूर्णांकf->crypto_stats[i].mic_error,
-				पूर्णांकf->crypto_stats[i].key_error);
-	पूर्ण
+	for (i = 0; i < CIPHER_MAX; i++) {
+		temp += sprintf(temp, "%s\t%lu\t%lu\t%lu\t%lu\n", name[i],
+				intf->crypto_stats[i].success,
+				intf->crypto_stats[i].icv_error,
+				intf->crypto_stats[i].mic_error,
+				intf->crypto_stats[i].key_error);
+	}
 
-	size = म_माप(data);
+	size = strlen(data);
 	size = min(size, length);
 
-	अगर (copy_to_user(buf, data, size)) अणु
-		kमुक्त(data);
-		वापस -EFAULT;
-	पूर्ण
+	if (copy_to_user(buf, data, size)) {
+		kfree(data);
+		return -EFAULT;
+	}
 
-	kमुक्त(data);
+	kfree(data);
 
 	*offset += size;
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल स्थिर काष्ठा file_operations rt2x00debug_fop_crypto_stats = अणु
+static const struct file_operations rt2x00debug_fop_crypto_stats = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= rt2x00debug_पढ़ो_crypto_stats,
-	.खोलो		= rt2x00debug_file_खोलो,
+	.read		= rt2x00debug_read_crypto_stats,
+	.open		= rt2x00debug_file_open,
 	.release	= rt2x00debug_file_release,
-	.llseek		= शेष_llseek,
-पूर्ण;
-#पूर्ण_अगर
+	.llseek		= default_llseek,
+};
+#endif
 
-#घोषणा RT2X00DEBUGFS_OPS_READ(__name, __क्रमmat, __type)	\
-अटल sमाप_प्रकार rt2x00debug_पढ़ो_##__name(काष्ठा file *file,	\
-					 अक्षर __user *buf,	\
-					 माप_प्रकार length,		\
+#define RT2X00DEBUGFS_OPS_READ(__name, __format, __type)	\
+static ssize_t rt2x00debug_read_##__name(struct file *file,	\
+					 char __user *buf,	\
+					 size_t length,		\
 					 loff_t *offset)	\
-अणु								\
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;	\
-	स्थिर काष्ठा rt2x00debug *debug = पूर्णांकf->debug;		\
-	अक्षर line[16];						\
-	माप_प्रकार size;						\
-	अचिन्हित पूर्णांक index = पूर्णांकf->offset_##__name;		\
+{								\
+	struct rt2x00debug_intf *intf = file->private_data;	\
+	const struct rt2x00debug *debug = intf->debug;		\
+	char line[16];						\
+	size_t size;						\
+	unsigned int index = intf->offset_##__name;		\
 	__type value;						\
 								\
-	अगर (*offset)						\
-		वापस 0;					\
+	if (*offset)						\
+		return 0;					\
 								\
-	अगर (index >= debug->__name.word_count)			\
-		वापस -EINVAL;					\
+	if (index >= debug->__name.word_count)			\
+		return -EINVAL;					\
 								\
 	index += (debug->__name.word_base /			\
 		  debug->__name.word_size);			\
 								\
-	अगर (debug->__name.flags & RT2X00DEBUGFS_OFFSET)		\
+	if (debug->__name.flags & RT2X00DEBUGFS_OFFSET)		\
 		index *= debug->__name.word_size;		\
 								\
-	value = debug->__name.पढ़ो(पूर्णांकf->rt2x00dev, index);	\
+	value = debug->__name.read(intf->rt2x00dev, index);	\
 								\
-	size = प्र_लिखो(line, __क्रमmat, value);			\
+	size = sprintf(line, __format, value);			\
 								\
-	वापस simple_पढ़ो_from_buffer(buf, length, offset, line, size); \
-पूर्ण
+	return simple_read_from_buffer(buf, length, offset, line, size); \
+}
 
-#घोषणा RT2X00DEBUGFS_OPS_WRITE(__name, __type)			\
-अटल sमाप_प्रकार rt2x00debug_ग_लिखो_##__name(काष्ठा file *file,	\
-					  स्थिर अक्षर __user *buf,\
-					  माप_प्रकार length,	\
+#define RT2X00DEBUGFS_OPS_WRITE(__name, __type)			\
+static ssize_t rt2x00debug_write_##__name(struct file *file,	\
+					  const char __user *buf,\
+					  size_t length,	\
 					  loff_t *offset)	\
-अणु								\
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = file->निजी_data;	\
-	स्थिर काष्ठा rt2x00debug *debug = पूर्णांकf->debug;		\
-	अक्षर line[17];						\
-	माप_प्रकार size;						\
-	अचिन्हित पूर्णांक index = पूर्णांकf->offset_##__name;		\
+{								\
+	struct rt2x00debug_intf *intf = file->private_data;	\
+	const struct rt2x00debug *debug = intf->debug;		\
+	char line[17];						\
+	size_t size;						\
+	unsigned int index = intf->offset_##__name;		\
 	__type value;						\
 								\
-	अगर (*offset)						\
-		वापस 0;					\
+	if (*offset)						\
+		return 0;					\
 								\
-	अगर (index >= debug->__name.word_count)			\
-		वापस -EINVAL;					\
+	if (index >= debug->__name.word_count)			\
+		return -EINVAL;					\
 								\
-	अगर (length > माप(line))				\
-		वापस -EINVAL;					\
+	if (length > sizeof(line))				\
+		return -EINVAL;					\
 								\
-	अगर (copy_from_user(line, buf, length))			\
-		वापस -EFAULT;					\
+	if (copy_from_user(line, buf, length))			\
+		return -EFAULT;					\
 	line[16] = 0;						\
 						\
-	size = म_माप(line);					\
-	value = simple_म_से_अदीर्घ(line, शून्य, 0);			\
+	size = strlen(line);					\
+	value = simple_strtoul(line, NULL, 0);			\
 								\
 	index += (debug->__name.word_base /			\
 		  debug->__name.word_size);			\
 								\
-	अगर (debug->__name.flags & RT2X00DEBUGFS_OFFSET)		\
+	if (debug->__name.flags & RT2X00DEBUGFS_OFFSET)		\
 		index *= debug->__name.word_size;		\
 								\
-	debug->__name.ग_लिखो(पूर्णांकf->rt2x00dev, index, value);	\
+	debug->__name.write(intf->rt2x00dev, index, value);	\
 								\
 	*offset += size;					\
-	वापस size;						\
-पूर्ण
+	return size;						\
+}
 
-#घोषणा RT2X00DEBUGFS_OPS(__name, __क्रमmat, __type)		\
-RT2X00DEBUGFS_OPS_READ(__name, __क्रमmat, __type);		\
+#define RT2X00DEBUGFS_OPS(__name, __format, __type)		\
+RT2X00DEBUGFS_OPS_READ(__name, __format, __type);		\
 RT2X00DEBUGFS_OPS_WRITE(__name, __type);			\
 								\
-अटल स्थिर काष्ठा file_operations rt2x00debug_fop_##__name = अणु\
+static const struct file_operations rt2x00debug_fop_##__name = {\
 	.owner		= THIS_MODULE,				\
-	.पढ़ो		= rt2x00debug_पढ़ो_##__name,		\
-	.ग_लिखो		= rt2x00debug_ग_लिखो_##__name,		\
-	.खोलो		= rt2x00debug_file_खोलो,		\
+	.read		= rt2x00debug_read_##__name,		\
+	.write		= rt2x00debug_write_##__name,		\
+	.open		= rt2x00debug_file_open,		\
 	.release	= rt2x00debug_file_release,		\
 	.llseek		= generic_file_llseek,			\
-पूर्ण;
+};
 
 RT2X00DEBUGFS_OPS(csr, "0x%.8x\n", u32);
 RT2X00DEBUGFS_OPS(eeprom, "0x%.4x\n", u16);
@@ -499,226 +498,226 @@ RT2X00DEBUGFS_OPS(bbp, "0x%.2x\n", u8);
 RT2X00DEBUGFS_OPS(rf, "0x%.8x\n", u32);
 RT2X00DEBUGFS_OPS(rfcsr, "0x%.2x\n", u8);
 
-अटल sमाप_प्रकार rt2x00debug_पढ़ो_dev_flags(काष्ठा file *file,
-					  अक्षर __user *buf,
-					  माप_प्रकार length,
+static ssize_t rt2x00debug_read_dev_flags(struct file *file,
+					  char __user *buf,
+					  size_t length,
 					  loff_t *offset)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf =	file->निजी_data;
-	अक्षर line[16];
-	माप_प्रकार size;
+{
+	struct rt2x00debug_intf *intf =	file->private_data;
+	char line[16];
+	size_t size;
 
-	अगर (*offset)
-		वापस 0;
+	if (*offset)
+		return 0;
 
-	size = प्र_लिखो(line, "0x%.8x\n", (अचिन्हित पूर्णांक)पूर्णांकf->rt2x00dev->flags);
+	size = sprintf(line, "0x%.8x\n", (unsigned int)intf->rt2x00dev->flags);
 
-	वापस simple_पढ़ो_from_buffer(buf, length, offset, line, size);
-पूर्ण
+	return simple_read_from_buffer(buf, length, offset, line, size);
+}
 
-अटल स्थिर काष्ठा file_operations rt2x00debug_fop_dev_flags = अणु
+static const struct file_operations rt2x00debug_fop_dev_flags = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= rt2x00debug_पढ़ो_dev_flags,
-	.खोलो		= rt2x00debug_file_खोलो,
+	.read		= rt2x00debug_read_dev_flags,
+	.open		= rt2x00debug_file_open,
 	.release	= rt2x00debug_file_release,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.llseek		= default_llseek,
+};
 
-अटल sमाप_प्रकार rt2x00debug_पढ़ो_cap_flags(काष्ठा file *file,
-					  अक्षर __user *buf,
-					  माप_प्रकार length,
+static ssize_t rt2x00debug_read_cap_flags(struct file *file,
+					  char __user *buf,
+					  size_t length,
 					  loff_t *offset)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf =	file->निजी_data;
-	अक्षर line[16];
-	माप_प्रकार size;
+{
+	struct rt2x00debug_intf *intf =	file->private_data;
+	char line[16];
+	size_t size;
 
-	अगर (*offset)
-		वापस 0;
+	if (*offset)
+		return 0;
 
-	size = प्र_लिखो(line, "0x%.8x\n", (अचिन्हित पूर्णांक)पूर्णांकf->rt2x00dev->cap_flags);
+	size = sprintf(line, "0x%.8x\n", (unsigned int)intf->rt2x00dev->cap_flags);
 
-	वापस simple_पढ़ो_from_buffer(buf, length, offset, line, size);
-पूर्ण
+	return simple_read_from_buffer(buf, length, offset, line, size);
+}
 
-अटल स्थिर काष्ठा file_operations rt2x00debug_fop_cap_flags = अणु
+static const struct file_operations rt2x00debug_fop_cap_flags = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= rt2x00debug_पढ़ो_cap_flags,
-	.खोलो		= rt2x00debug_file_खोलो,
+	.read		= rt2x00debug_read_cap_flags,
+	.open		= rt2x00debug_file_open,
 	.release	= rt2x00debug_file_release,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.llseek		= default_llseek,
+};
 
-अटल sमाप_प्रकार rt2x00debug_ग_लिखो_restart_hw(काष्ठा file *file,
-					    स्थिर अक्षर __user *buf,
-					    माप_प्रकार length,
+static ssize_t rt2x00debug_write_restart_hw(struct file *file,
+					    const char __user *buf,
+					    size_t length,
 					    loff_t *offset)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf =	file->निजी_data;
-	काष्ठा rt2x00_dev *rt2x00dev = पूर्णांकf->rt2x00dev;
-	अटल अचिन्हित दीर्घ last_reset = INITIAL_JIFFIES;
+{
+	struct rt2x00debug_intf *intf =	file->private_data;
+	struct rt2x00_dev *rt2x00dev = intf->rt2x00dev;
+	static unsigned long last_reset = INITIAL_JIFFIES;
 
-	अगर (!rt2x00_has_cap_restart_hw(rt2x00dev))
-		वापस -EOPNOTSUPP;
+	if (!rt2x00_has_cap_restart_hw(rt2x00dev))
+		return -EOPNOTSUPP;
 
-	अगर (समय_beक्रमe(jअगरfies, last_reset + msecs_to_jअगरfies(2000)))
-		वापस -EBUSY;
+	if (time_before(jiffies, last_reset + msecs_to_jiffies(2000)))
+		return -EBUSY;
 
-	last_reset = jअगरfies;
+	last_reset = jiffies;
 
 	ieee80211_restart_hw(rt2x00dev->hw);
-	वापस length;
-पूर्ण
+	return length;
+}
 
-अटल स्थिर काष्ठा file_operations rt2x00debug_restart_hw = अणु
+static const struct file_operations rt2x00debug_restart_hw = {
 	.owner = THIS_MODULE,
-	.ग_लिखो = rt2x00debug_ग_लिखो_restart_hw,
-	.खोलो = simple_खोलो,
+	.write = rt2x00debug_write_restart_hw,
+	.open = simple_open,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-अटल व्योम rt2x00debug_create_file_driver(स्थिर अक्षर *name,
-					   काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf,
-					   काष्ठा debugfs_blob_wrapper *blob)
-अणु
-	अक्षर *data;
+static void rt2x00debug_create_file_driver(const char *name,
+					   struct rt2x00debug_intf *intf,
+					   struct debugfs_blob_wrapper *blob)
+{
+	char *data;
 
 	data = kzalloc(3 * MAX_LINE_LENGTH, GFP_KERNEL);
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
 	blob->data = data;
-	data += प्र_लिखो(data, "driver:\t%s\n", पूर्णांकf->rt2x00dev->ops->name);
-	data += प्र_लिखो(data, "version:\t%s\n", DRV_VERSION);
-	blob->size = म_माप(blob->data);
+	data += sprintf(data, "driver:\t%s\n", intf->rt2x00dev->ops->name);
+	data += sprintf(data, "version:\t%s\n", DRV_VERSION);
+	blob->size = strlen(blob->data);
 
-	debugfs_create_blob(name, 0400, पूर्णांकf->driver_folder, blob);
-पूर्ण
+	debugfs_create_blob(name, 0400, intf->driver_folder, blob);
+}
 
-अटल व्योम rt2x00debug_create_file_chipset(स्थिर अक्षर *name,
-					    काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf,
-					    काष्ठा debugfs_blob_wrapper *blob)
-अणु
-	स्थिर काष्ठा rt2x00debug *debug = पूर्णांकf->debug;
-	अक्षर *data;
+static void rt2x00debug_create_file_chipset(const char *name,
+					    struct rt2x00debug_intf *intf,
+					    struct debugfs_blob_wrapper *blob)
+{
+	const struct rt2x00debug *debug = intf->debug;
+	char *data;
 
 	data = kzalloc(9 * MAX_LINE_LENGTH, GFP_KERNEL);
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
 	blob->data = data;
-	data += प्र_लिखो(data, "rt chip:\t%04x\n", पूर्णांकf->rt2x00dev->chip.rt);
-	data += प्र_लिखो(data, "rf chip:\t%04x\n", पूर्णांकf->rt2x00dev->chip.rf);
-	data += प्र_लिखो(data, "revision:\t%04x\n", पूर्णांकf->rt2x00dev->chip.rev);
-	data += प्र_लिखो(data, "\n");
-	data += प्र_लिखो(data, "register\tbase\twords\twordsize\n");
-#घोषणा RT2X00DEBUGFS_SPRINTF_REGISTER(__name)			\
-अणु								\
-	अगर (debug->__name.पढ़ो)					\
-		data += प्र_लिखो(data, __stringअगरy(__name)	\
+	data += sprintf(data, "rt chip:\t%04x\n", intf->rt2x00dev->chip.rt);
+	data += sprintf(data, "rf chip:\t%04x\n", intf->rt2x00dev->chip.rf);
+	data += sprintf(data, "revision:\t%04x\n", intf->rt2x00dev->chip.rev);
+	data += sprintf(data, "\n");
+	data += sprintf(data, "register\tbase\twords\twordsize\n");
+#define RT2X00DEBUGFS_SPRINTF_REGISTER(__name)			\
+{								\
+	if (debug->__name.read)					\
+		data += sprintf(data, __stringify(__name)	\
 				"\t%d\t%d\t%d\n",		\
 				debug->__name.word_base,	\
 				debug->__name.word_count,	\
 				debug->__name.word_size);	\
-पूर्ण
+}
 	RT2X00DEBUGFS_SPRINTF_REGISTER(csr);
 	RT2X00DEBUGFS_SPRINTF_REGISTER(eeprom);
 	RT2X00DEBUGFS_SPRINTF_REGISTER(bbp);
 	RT2X00DEBUGFS_SPRINTF_REGISTER(rf);
 	RT2X00DEBUGFS_SPRINTF_REGISTER(rfcsr);
-#अघोषित RT2X00DEBUGFS_SPRINTF_REGISTER
+#undef RT2X00DEBUGFS_SPRINTF_REGISTER
 
-	blob->size = म_माप(blob->data);
+	blob->size = strlen(blob->data);
 
-	debugfs_create_blob(name, 0400, पूर्णांकf->driver_folder, blob);
-पूर्ण
+	debugfs_create_blob(name, 0400, intf->driver_folder, blob);
+}
 
-व्योम rt2x00debug_रेजिस्टर(काष्ठा rt2x00_dev *rt2x00dev)
-अणु
-	स्थिर काष्ठा rt2x00debug *debug = rt2x00dev->ops->debugfs;
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf;
-	काष्ठा dentry *queue_folder;
-	काष्ठा dentry *रेजिस्टर_folder;
+void rt2x00debug_register(struct rt2x00_dev *rt2x00dev)
+{
+	const struct rt2x00debug *debug = rt2x00dev->ops->debugfs;
+	struct rt2x00debug_intf *intf;
+	struct dentry *queue_folder;
+	struct dentry *register_folder;
 
-	पूर्णांकf = kzalloc(माप(काष्ठा rt2x00debug_पूर्णांकf), GFP_KERNEL);
-	अगर (!पूर्णांकf) अणु
+	intf = kzalloc(sizeof(struct rt2x00debug_intf), GFP_KERNEL);
+	if (!intf) {
 		rt2x00_err(rt2x00dev, "Failed to allocate debug handler\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	पूर्णांकf->debug = debug;
-	पूर्णांकf->rt2x00dev = rt2x00dev;
-	rt2x00dev->debugfs_पूर्णांकf = पूर्णांकf;
+	intf->debug = debug;
+	intf->rt2x00dev = rt2x00dev;
+	rt2x00dev->debugfs_intf = intf;
 
-	पूर्णांकf->driver_folder =
-	    debugfs_create_dir(पूर्णांकf->rt2x00dev->ops->name,
+	intf->driver_folder =
+	    debugfs_create_dir(intf->rt2x00dev->ops->name,
 			       rt2x00dev->hw->wiphy->debugfsdir);
 
-	rt2x00debug_create_file_driver("driver", पूर्णांकf, &पूर्णांकf->driver_blob);
-	rt2x00debug_create_file_chipset("chipset", पूर्णांकf, &पूर्णांकf->chipset_blob);
-	debugfs_create_file("dev_flags", 0400, पूर्णांकf->driver_folder, पूर्णांकf,
+	rt2x00debug_create_file_driver("driver", intf, &intf->driver_blob);
+	rt2x00debug_create_file_chipset("chipset", intf, &intf->chipset_blob);
+	debugfs_create_file("dev_flags", 0400, intf->driver_folder, intf,
 			    &rt2x00debug_fop_dev_flags);
-	debugfs_create_file("cap_flags", 0400, पूर्णांकf->driver_folder, पूर्णांकf,
+	debugfs_create_file("cap_flags", 0400, intf->driver_folder, intf,
 			    &rt2x00debug_fop_cap_flags);
-	debugfs_create_file("restart_hw", 0200, पूर्णांकf->driver_folder, पूर्णांकf,
+	debugfs_create_file("restart_hw", 0200, intf->driver_folder, intf,
 			    &rt2x00debug_restart_hw);
 
-	रेजिस्टर_folder = debugfs_create_dir("register", पूर्णांकf->driver_folder);
+	register_folder = debugfs_create_dir("register", intf->driver_folder);
 
-#घोषणा RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(__पूर्णांकf, __name)		\
-(अणु									\
-	अगर (debug->__name.पढ़ो) अणु					\
-		debugfs_create_u32(__stringअगरy(__name) "_offset", 0600,	\
-				   रेजिस्टर_folder,			\
-				   &(__पूर्णांकf)->offset_##__name);		\
+#define RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(__intf, __name)		\
+({									\
+	if (debug->__name.read) {					\
+		debugfs_create_u32(__stringify(__name) "_offset", 0600,	\
+				   register_folder,			\
+				   &(__intf)->offset_##__name);		\
 									\
-		debugfs_create_file(__stringअगरy(__name) "_value", 0600,	\
-				    रेजिस्टर_folder, (__पूर्णांकf),		\
+		debugfs_create_file(__stringify(__name) "_value", 0600,	\
+				    register_folder, (__intf),		\
 				    &rt2x00debug_fop_##__name);		\
-	पूर्ण								\
-पूर्ण)
+	}								\
+})
 
-	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(पूर्णांकf, csr);
-	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(पूर्णांकf, eeprom);
-	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(पूर्णांकf, bbp);
-	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(पूर्णांकf, rf);
-	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(पूर्णांकf, rfcsr);
+	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(intf, csr);
+	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(intf, eeprom);
+	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(intf, bbp);
+	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(intf, rf);
+	RT2X00DEBUGFS_CREATE_REGISTER_ENTRY(intf, rfcsr);
 
-#अघोषित RT2X00DEBUGFS_CREATE_REGISTER_ENTRY
+#undef RT2X00DEBUGFS_CREATE_REGISTER_ENTRY
 
-	queue_folder = debugfs_create_dir("queue", पूर्णांकf->driver_folder);
+	queue_folder = debugfs_create_dir("queue", intf->driver_folder);
 
-	debugfs_create_file("dump", 0400, queue_folder, पूर्णांकf,
+	debugfs_create_file("dump", 0400, queue_folder, intf,
 			    &rt2x00debug_fop_queue_dump);
 
-	skb_queue_head_init(&पूर्णांकf->frame_dump_skbqueue);
-	init_रुकोqueue_head(&पूर्णांकf->frame_dump_रुकोqueue);
+	skb_queue_head_init(&intf->frame_dump_skbqueue);
+	init_waitqueue_head(&intf->frame_dump_waitqueue);
 
-	debugfs_create_file("queue", 0400, queue_folder, पूर्णांकf,
+	debugfs_create_file("queue", 0400, queue_folder, intf,
 			    &rt2x00debug_fop_queue_stats);
 
-#अगर_घोषित CONFIG_RT2X00_LIB_CRYPTO
-	अगर (rt2x00_has_cap_hw_crypto(rt2x00dev))
-		debugfs_create_file("crypto", 0444, queue_folder, पूर्णांकf,
+#ifdef CONFIG_RT2X00_LIB_CRYPTO
+	if (rt2x00_has_cap_hw_crypto(rt2x00dev))
+		debugfs_create_file("crypto", 0444, queue_folder, intf,
 				    &rt2x00debug_fop_crypto_stats);
-#पूर्ण_अगर
+#endif
 
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम rt2x00debug_deरेजिस्टर(काष्ठा rt2x00_dev *rt2x00dev)
-अणु
-	काष्ठा rt2x00debug_पूर्णांकf *पूर्णांकf = rt2x00dev->debugfs_पूर्णांकf;
+void rt2x00debug_deregister(struct rt2x00_dev *rt2x00dev)
+{
+	struct rt2x00debug_intf *intf = rt2x00dev->debugfs_intf;
 
-	अगर (unlikely(!पूर्णांकf))
-		वापस;
+	if (unlikely(!intf))
+		return;
 
-	skb_queue_purge(&पूर्णांकf->frame_dump_skbqueue);
+	skb_queue_purge(&intf->frame_dump_skbqueue);
 
-	debugfs_हटाओ_recursive(पूर्णांकf->driver_folder);
-	kमुक्त(पूर्णांकf->chipset_blob.data);
-	kमुक्त(पूर्णांकf->driver_blob.data);
-	kमुक्त(पूर्णांकf);
+	debugfs_remove_recursive(intf->driver_folder);
+	kfree(intf->chipset_blob.data);
+	kfree(intf->driver_blob.data);
+	kfree(intf);
 
-	rt2x00dev->debugfs_पूर्णांकf = शून्य;
-पूर्ण
+	rt2x00dev->debugfs_intf = NULL;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/gpio/gpio-mb86s7x.c
  *
@@ -7,184 +6,184 @@
  *  Copyright (C) 2015 Linaro Ltd.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/ioport.h>
+#include <linux/of_device.h>
+#include <linux/gpio/driver.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <linux/slab.h>
 
-#समावेश "gpiolib.h"
-#समावेश "gpiolib-acpi.h"
+#include "gpiolib.h"
+#include "gpiolib-acpi.h"
 
 /*
- * Only first 8bits of a रेजिस्टर correspond to each pin,
- * so there are 4 रेजिस्टरs क्रम 32 pins.
+ * Only first 8bits of a register correspond to each pin,
+ * so there are 4 registers for 32 pins.
  */
-#घोषणा PDR(x)	(0x0 + x / 8 * 4)
-#घोषणा DDR(x)	(0x10 + x / 8 * 4)
-#घोषणा PFR(x)	(0x20 + x / 8 * 4)
+#define PDR(x)	(0x0 + x / 8 * 4)
+#define DDR(x)	(0x10 + x / 8 * 4)
+#define PFR(x)	(0x20 + x / 8 * 4)
 
-#घोषणा OFFSET(x)	BIT((x) % 8)
+#define OFFSET(x)	BIT((x) % 8)
 
-काष्ठा mb86s70_gpio_chip अणु
-	काष्ठा gpio_chip gc;
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
+struct mb86s70_gpio_chip {
+	struct gpio_chip gc;
+	void __iomem *base;
+	struct clk *clk;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल पूर्णांक mb86s70_gpio_request(काष्ठा gpio_chip *gc, अचिन्हित gpio)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
+static int mb86s70_gpio_request(struct gpio_chip *gc, unsigned gpio)
+{
+	struct mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&gchip->lock, flags);
 
-	val = पढ़ोl(gchip->base + PFR(gpio));
+	val = readl(gchip->base + PFR(gpio));
 	val &= ~OFFSET(gpio);
-	ग_लिखोl(val, gchip->base + PFR(gpio));
+	writel(val, gchip->base + PFR(gpio));
 
 	spin_unlock_irqrestore(&gchip->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mb86s70_gpio_मुक्त(काष्ठा gpio_chip *gc, अचिन्हित gpio)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
+static void mb86s70_gpio_free(struct gpio_chip *gc, unsigned gpio)
+{
+	struct mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&gchip->lock, flags);
 
-	val = पढ़ोl(gchip->base + PFR(gpio));
+	val = readl(gchip->base + PFR(gpio));
 	val |= OFFSET(gpio);
-	ग_लिखोl(val, gchip->base + PFR(gpio));
+	writel(val, gchip->base + PFR(gpio));
 
 	spin_unlock_irqrestore(&gchip->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक mb86s70_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित gpio)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर val;
+static int mb86s70_gpio_direction_input(struct gpio_chip *gc, unsigned gpio)
+{
+	struct mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
+	unsigned long flags;
+	unsigned char val;
 
 	spin_lock_irqsave(&gchip->lock, flags);
 
-	val = पढ़ोl(gchip->base + DDR(gpio));
+	val = readl(gchip->base + DDR(gpio));
 	val &= ~OFFSET(gpio);
-	ग_लिखोl(val, gchip->base + DDR(gpio));
+	writel(val, gchip->base + DDR(gpio));
 
 	spin_unlock_irqrestore(&gchip->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mb86s70_gpio_direction_output(काष्ठा gpio_chip *gc,
-					 अचिन्हित gpio, पूर्णांक value)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर val;
+static int mb86s70_gpio_direction_output(struct gpio_chip *gc,
+					 unsigned gpio, int value)
+{
+	struct mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
+	unsigned long flags;
+	unsigned char val;
 
 	spin_lock_irqsave(&gchip->lock, flags);
 
-	val = पढ़ोl(gchip->base + PDR(gpio));
-	अगर (value)
+	val = readl(gchip->base + PDR(gpio));
+	if (value)
 		val |= OFFSET(gpio);
-	अन्यथा
+	else
 		val &= ~OFFSET(gpio);
-	ग_लिखोl(val, gchip->base + PDR(gpio));
+	writel(val, gchip->base + PDR(gpio));
 
-	val = पढ़ोl(gchip->base + DDR(gpio));
+	val = readl(gchip->base + DDR(gpio));
 	val |= OFFSET(gpio);
-	ग_लिखोl(val, gchip->base + DDR(gpio));
+	writel(val, gchip->base + DDR(gpio));
 
 	spin_unlock_irqrestore(&gchip->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mb86s70_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित gpio)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
+static int mb86s70_gpio_get(struct gpio_chip *gc, unsigned gpio)
+{
+	struct mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
 
-	वापस !!(पढ़ोl(gchip->base + PDR(gpio)) & OFFSET(gpio));
-पूर्ण
+	return !!(readl(gchip->base + PDR(gpio)) & OFFSET(gpio));
+}
 
-अटल व्योम mb86s70_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित gpio, पूर्णांक value)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर val;
+static void mb86s70_gpio_set(struct gpio_chip *gc, unsigned gpio, int value)
+{
+	struct mb86s70_gpio_chip *gchip = gpiochip_get_data(gc);
+	unsigned long flags;
+	unsigned char val;
 
 	spin_lock_irqsave(&gchip->lock, flags);
 
-	val = पढ़ोl(gchip->base + PDR(gpio));
-	अगर (value)
+	val = readl(gchip->base + PDR(gpio));
+	if (value)
 		val |= OFFSET(gpio);
-	अन्यथा
+	else
 		val &= ~OFFSET(gpio);
-	ग_लिखोl(val, gchip->base + PDR(gpio));
+	writel(val, gchip->base + PDR(gpio));
 
 	spin_unlock_irqrestore(&gchip->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक mb86s70_gpio_to_irq(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक irq, index;
+static int mb86s70_gpio_to_irq(struct gpio_chip *gc, unsigned int offset)
+{
+	int irq, index;
 
-	क्रम (index = 0;; index++) अणु
-		irq = platक्रमm_get_irq(to_platक्रमm_device(gc->parent), index);
-		अगर (irq < 0)
-			वापस irq;
-		अगर (irq == 0)
-			अवरोध;
-		अगर (irq_get_irq_data(irq)->hwirq == offset)
-			वापस irq;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	for (index = 0;; index++) {
+		irq = platform_get_irq(to_platform_device(gc->parent), index);
+		if (irq < 0)
+			return irq;
+		if (irq == 0)
+			break;
+		if (irq_get_irq_data(irq)->hwirq == offset)
+			return irq;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक mb86s70_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip;
-	पूर्णांक ret;
+static int mb86s70_gpio_probe(struct platform_device *pdev)
+{
+	struct mb86s70_gpio_chip *gchip;
+	int ret;
 
-	gchip = devm_kzalloc(&pdev->dev, माप(*gchip), GFP_KERNEL);
-	अगर (gchip == शून्य)
-		वापस -ENOMEM;
+	gchip = devm_kzalloc(&pdev->dev, sizeof(*gchip), GFP_KERNEL);
+	if (gchip == NULL)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, gchip);
+	platform_set_drvdata(pdev, gchip);
 
-	gchip->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(gchip->base))
-		वापस PTR_ERR(gchip->base);
+	gchip->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(gchip->base))
+		return PTR_ERR(gchip->base);
 
-	gchip->clk = devm_clk_get_optional(&pdev->dev, शून्य);
-	अगर (IS_ERR(gchip->clk))
-		वापस PTR_ERR(gchip->clk);
+	gchip->clk = devm_clk_get_optional(&pdev->dev, NULL);
+	if (IS_ERR(gchip->clk))
+		return PTR_ERR(gchip->clk);
 
 	ret = clk_prepare_enable(gchip->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	spin_lock_init(&gchip->lock);
 
 	gchip->gc.direction_output = mb86s70_gpio_direction_output;
 	gchip->gc.direction_input = mb86s70_gpio_direction_input;
 	gchip->gc.request = mb86s70_gpio_request;
-	gchip->gc.मुक्त = mb86s70_gpio_मुक्त;
+	gchip->gc.free = mb86s70_gpio_free;
 	gchip->gc.get = mb86s70_gpio_get;
 	gchip->gc.set = mb86s70_gpio_set;
 	gchip->gc.to_irq = mb86s70_gpio_to_irq;
@@ -195,52 +194,52 @@
 	gchip->gc.base = -1;
 
 	ret = gpiochip_add_data(&gchip->gc, gchip);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "couldn't register gpio driver\n");
 		clk_disable_unprepare(gchip->clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	acpi_gpiochip_request_पूर्णांकerrupts(&gchip->gc);
+	acpi_gpiochip_request_interrupts(&gchip->gc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mb86s70_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mb86s70_gpio_chip *gchip = platक्रमm_get_drvdata(pdev);
+static int mb86s70_gpio_remove(struct platform_device *pdev)
+{
+	struct mb86s70_gpio_chip *gchip = platform_get_drvdata(pdev);
 
-	acpi_gpiochip_मुक्त_पूर्णांकerrupts(&gchip->gc);
-	gpiochip_हटाओ(&gchip->gc);
+	acpi_gpiochip_free_interrupts(&gchip->gc);
+	gpiochip_remove(&gchip->gc);
 	clk_disable_unprepare(gchip->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id mb86s70_gpio_dt_ids[] = अणु
-	अणु .compatible = "fujitsu,mb86s70-gpio" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id mb86s70_gpio_dt_ids[] = {
+	{ .compatible = "fujitsu,mb86s70-gpio" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mb86s70_gpio_dt_ids);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id mb86s70_gpio_acpi_ids[] = अणु
-	अणु "SCX0007" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id mb86s70_gpio_acpi_ids[] = {
+	{ "SCX0007" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(acpi, mb86s70_gpio_acpi_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver mb86s70_gpio_driver = अणु
-	.driver = अणु
+static struct platform_driver mb86s70_gpio_driver = {
+	.driver = {
 		.name = "mb86s70-gpio",
 		.of_match_table = mb86s70_gpio_dt_ids,
 		.acpi_match_table = ACPI_PTR(mb86s70_gpio_acpi_ids),
-	पूर्ण,
+	},
 	.probe = mb86s70_gpio_probe,
-	.हटाओ = mb86s70_gpio_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(mb86s70_gpio_driver);
+	.remove = mb86s70_gpio_remove,
+};
+module_platform_driver(mb86s70_gpio_driver);
 
 MODULE_DESCRIPTION("MB86S7x GPIO Driver");
 MODULE_ALIAS("platform:mb86s70-gpio");

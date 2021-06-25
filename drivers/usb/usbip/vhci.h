@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  * Copyright (C) 2015 Nobuo Iwata
  */
 
-#अगर_अघोषित __USBIP_VHCI_H
-#घोषणा __USBIP_VHCI_H
+#ifndef __USBIP_VHCI_H
+#define __USBIP_VHCI_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/types.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश <linux/रुको.h>
+#include <linux/device.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/sysfs.h>
+#include <linux/types.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include <linux/wait.h>
 
-काष्ठा vhci_device अणु
-	काष्ठा usb_device *udev;
+struct vhci_device {
+	struct usb_device *udev;
 
 	/*
-	 * devid specअगरies a remote usb device uniquely instead
+	 * devid specifies a remote usb device uniquely instead
 	 * of combination of busnum and devnum.
 	 */
 	__u32 devid;
 
 	/* speed of a remote device */
-	क्रमागत usb_device_speed speed;
+	enum usb_device_speed speed;
 
 	/* vhci root-hub port to which this device is attached */
 	__u32 rhport;
 
-	काष्ठा usbip_device ud;
+	struct usbip_device ud;
 
-	/* lock क्रम the below link lists */
+	/* lock for the below link lists */
 	spinlock_t priv_lock;
 
 	/* vhci_priv is linked to one of them. */
-	काष्ठा list_head priv_tx;
-	काष्ठा list_head priv_rx;
+	struct list_head priv_tx;
+	struct list_head priv_rx;
 
 	/* vhci_unlink is linked to one of them */
-	काष्ठा list_head unlink_tx;
-	काष्ठा list_head unlink_rx;
+	struct list_head unlink_tx;
+	struct list_head unlink_rx;
 
-	/* vhci_tx thपढ़ो sleeps क्रम this queue */
-	रुको_queue_head_t रुकोq_tx;
-पूर्ण;
+	/* vhci_tx thread sleeps for this queue */
+	wait_queue_head_t waitq_tx;
+};
 
 /* urb->hcpriv, use container_of() */
-काष्ठा vhci_priv अणु
-	अचिन्हित दीर्घ seqnum;
-	काष्ठा list_head list;
+struct vhci_priv {
+	unsigned long seqnum;
+	struct list_head list;
 
-	काष्ठा vhci_device *vdev;
-	काष्ठा urb *urb;
-पूर्ण;
+	struct vhci_device *vdev;
+	struct urb *urb;
+};
 
-काष्ठा vhci_unlink अणु
+struct vhci_unlink {
 	/* seqnum of this request */
-	अचिन्हित दीर्घ seqnum;
+	unsigned long seqnum;
 
-	काष्ठा list_head list;
+	struct list_head list;
 
 	/* seqnum of the unlink target */
-	अचिन्हित दीर्घ unlink_seqnum;
-पूर्ण;
+	unsigned long unlink_seqnum;
+};
 
-क्रमागत hub_speed अणु
+enum hub_speed {
 	HUB_SPEED_HIGH = 0,
 	HUB_SPEED_SUPER,
-पूर्ण;
+};
 
 /* Number of supported ports. Value has an upperbound of USB_MAXCHILDREN */
-#अगर_घोषित CONFIG_USBIP_VHCI_HC_PORTS
-#घोषणा VHCI_HC_PORTS CONFIG_USBIP_VHCI_HC_PORTS
-#अन्यथा
-#घोषणा VHCI_HC_PORTS 8
-#पूर्ण_अगर
+#ifdef CONFIG_USBIP_VHCI_HC_PORTS
+#define VHCI_HC_PORTS CONFIG_USBIP_VHCI_HC_PORTS
+#else
+#define VHCI_HC_PORTS 8
+#endif
 
 /* Each VHCI has 2 hubs (USB2 and USB3), each has VHCI_HC_PORTS ports */
-#घोषणा VHCI_PORTS	(VHCI_HC_PORTS*2)
+#define VHCI_PORTS	(VHCI_HC_PORTS*2)
 
-#अगर_घोषित CONFIG_USBIP_VHCI_NR_HCS
-#घोषणा VHCI_NR_HCS CONFIG_USBIP_VHCI_NR_HCS
-#अन्यथा
-#घोषणा VHCI_NR_HCS 1
-#पूर्ण_अगर
+#ifdef CONFIG_USBIP_VHCI_NR_HCS
+#define VHCI_NR_HCS CONFIG_USBIP_VHCI_NR_HCS
+#else
+#define VHCI_NR_HCS 1
+#endif
 
-#घोषणा MAX_STATUS_NAME 16
+#define MAX_STATUS_NAME 16
 
-काष्ठा vhci अणु
+struct vhci {
 	spinlock_t lock;
 
-	काष्ठा platक्रमm_device *pdev;
+	struct platform_device *pdev;
 
-	काष्ठा vhci_hcd *vhci_hcd_hs;
-	काष्ठा vhci_hcd *vhci_hcd_ss;
-पूर्ण;
+	struct vhci_hcd *vhci_hcd_hs;
+	struct vhci_hcd *vhci_hcd_ss;
+};
 
-/* क्रम usb_hcd.hcd_priv[0] */
-काष्ठा vhci_hcd अणु
-	काष्ठा vhci *vhci;
+/* for usb_hcd.hcd_priv[0] */
+struct vhci_hcd {
+	struct vhci *vhci;
 
 	u32 port_status[VHCI_HC_PORTS];
 
-	अचिन्हित resuming:1;
-	अचिन्हित दीर्घ re_समयout;
+	unsigned resuming:1;
+	unsigned long re_timeout;
 
 	atomic_t seqnum;
 
@@ -116,60 +115,60 @@
 	 * wIndex shows the port number and begins from 1.
 	 * But, the index of this array begins from 0.
 	 */
-	काष्ठा vhci_device vdev[VHCI_HC_PORTS];
-पूर्ण;
+	struct vhci_device vdev[VHCI_HC_PORTS];
+};
 
-बाह्य पूर्णांक vhci_num_controllers;
-बाह्य काष्ठा vhci *vhcis;
-बाह्य काष्ठा attribute_group vhci_attr_group;
+extern int vhci_num_controllers;
+extern struct vhci *vhcis;
+extern struct attribute_group vhci_attr_group;
 
 /* vhci_hcd.c */
-व्योम rh_port_connect(काष्ठा vhci_device *vdev, क्रमागत usb_device_speed speed);
+void rh_port_connect(struct vhci_device *vdev, enum usb_device_speed speed);
 
 /* vhci_sysfs.c */
-पूर्णांक vhci_init_attr_group(व्योम);
-व्योम vhci_finish_attr_group(व्योम);
+int vhci_init_attr_group(void);
+void vhci_finish_attr_group(void);
 
 /* vhci_rx.c */
-काष्ठा urb *pickup_urb_and_मुक्त_priv(काष्ठा vhci_device *vdev, __u32 seqnum);
-पूर्णांक vhci_rx_loop(व्योम *data);
+struct urb *pickup_urb_and_free_priv(struct vhci_device *vdev, __u32 seqnum);
+int vhci_rx_loop(void *data);
 
 /* vhci_tx.c */
-पूर्णांक vhci_tx_loop(व्योम *data);
+int vhci_tx_loop(void *data);
 
-अटल अंतरभूत __u32 port_to_rhport(__u32 port)
-अणु
-	वापस port % VHCI_HC_PORTS;
-पूर्ण
+static inline __u32 port_to_rhport(__u32 port)
+{
+	return port % VHCI_HC_PORTS;
+}
 
-अटल अंतरभूत पूर्णांक port_to_pdev_nr(__u32 port)
-अणु
-	वापस port / VHCI_PORTS;
-पूर्ण
+static inline int port_to_pdev_nr(__u32 port)
+{
+	return port / VHCI_PORTS;
+}
 
-अटल अंतरभूत काष्ठा vhci_hcd *hcd_to_vhci_hcd(काष्ठा usb_hcd *hcd)
-अणु
-	वापस (काष्ठा vhci_hcd *) (hcd->hcd_priv);
-पूर्ण
+static inline struct vhci_hcd *hcd_to_vhci_hcd(struct usb_hcd *hcd)
+{
+	return (struct vhci_hcd *) (hcd->hcd_priv);
+}
 
-अटल अंतरभूत काष्ठा device *hcd_dev(काष्ठा usb_hcd *hcd)
-अणु
-	वापस (hcd)->self.controller;
-पूर्ण
+static inline struct device *hcd_dev(struct usb_hcd *hcd)
+{
+	return (hcd)->self.controller;
+}
 
-अटल अंतरभूत स्थिर अक्षर *hcd_name(काष्ठा usb_hcd *hcd)
-अणु
-	वापस (hcd)->self.bus_name;
-पूर्ण
+static inline const char *hcd_name(struct usb_hcd *hcd)
+{
+	return (hcd)->self.bus_name;
+}
 
-अटल अंतरभूत काष्ठा usb_hcd *vhci_hcd_to_hcd(काष्ठा vhci_hcd *vhci_hcd)
-अणु
-	वापस container_of((व्योम *) vhci_hcd, काष्ठा usb_hcd, hcd_priv);
-पूर्ण
+static inline struct usb_hcd *vhci_hcd_to_hcd(struct vhci_hcd *vhci_hcd)
+{
+	return container_of((void *) vhci_hcd, struct usb_hcd, hcd_priv);
+}
 
-अटल अंतरभूत काष्ठा vhci_hcd *vdev_to_vhci_hcd(काष्ठा vhci_device *vdev)
-अणु
-	वापस container_of((व्योम *)(vdev - vdev->rhport), काष्ठा vhci_hcd, vdev);
-पूर्ण
+static inline struct vhci_hcd *vdev_to_vhci_hcd(struct vhci_device *vdev)
+{
+	return container_of((void *)(vdev - vdev->rhport), struct vhci_hcd, vdev);
+}
 
-#पूर्ण_अगर /* __USBIP_VHCI_H */
+#endif /* __USBIP_VHCI_H */

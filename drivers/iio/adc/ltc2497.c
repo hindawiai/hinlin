@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ltc2497.c - Driver क्रम Analog Devices/Linear Technology LTC2497 ADC
+ * ltc2497.c - Driver for Analog Devices/Linear Technology LTC2497 ADC
  *
  * Copyright (C) 2017 Analog Devices Inc.
  *
- * Datasheet: http://cds.linear.com/करोcs/en/datasheet/2497fd.pdf
+ * Datasheet: http://cds.linear.com/docs/en/datasheet/2497fd.pdf
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/driver.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/driver.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
 
-#समावेश "ltc2497.h"
+#include "ltc2497.h"
 
-काष्ठा ltc2497_driverdata अणु
+struct ltc2497_driverdata {
 	/* this must be the first member */
-	काष्ठा ltc2497core_driverdata common_ddata;
-	काष्ठा i2c_client *client;
+	struct ltc2497core_driverdata common_ddata;
+	struct i2c_client *client;
 	/*
-	 * DMA (thus cache coherency मुख्यtenance) requires the
+	 * DMA (thus cache coherency maintenance) requires the
 	 * transfer buffers to live in their own cache lines.
 	 */
 	__be32 buf ____cacheline_aligned;
-पूर्ण;
+};
 
-अटल पूर्णांक ltc2497_result_and_measure(काष्ठा ltc2497core_driverdata *ddata,
-				      u8 address, पूर्णांक *val)
-अणु
-	काष्ठा ltc2497_driverdata *st =
-		container_of(ddata, काष्ठा ltc2497_driverdata, common_ddata);
-	पूर्णांक ret;
+static int ltc2497_result_and_measure(struct ltc2497core_driverdata *ddata,
+				      u8 address, int *val)
+{
+	struct ltc2497_driverdata *st =
+		container_of(ddata, struct ltc2497_driverdata, common_ddata);
+	int ret;
 
-	अगर (val) अणु
-		ret = i2c_master_recv(st->client, (अक्षर *)&st->buf, 3);
-		अगर (ret < 0) अणु
+	if (val) {
+		ret = i2c_master_recv(st->client, (char *)&st->buf, 3);
+		if (ret < 0) {
 			dev_err(&st->client->dev, "i2c_master_recv failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		*val = (be32_to_cpu(st->buf) >> 14) - (1 << 17);
-	पूर्ण
+	}
 
-	ret = i2c_smbus_ग_लिखो_byte(st->client,
+	ret = i2c_smbus_write_byte(st->client,
 				   LTC2497_ENABLE | address);
-	अगर (ret)
+	if (ret)
 		dev_err(&st->client->dev, "i2c transfer failed: %pe\n",
 			ERR_PTR(ret));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ltc2497_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा ltc2497_driverdata *st;
-	काष्ठा device *dev = &client->dev;
+static int ltc2497_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct iio_dev *indio_dev;
+	struct ltc2497_driverdata *st;
+	struct device *dev = &client->dev;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C |
 				     I2C_FUNC_SMBUS_WRITE_BYTE))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*st));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*st));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	st = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
 	st->client = client;
 	st->common_ddata.result_and_measure = ltc2497_result_and_measure;
 
-	वापस ltc2497core_probe(dev, indio_dev);
-पूर्ण
+	return ltc2497core_probe(dev, indio_dev);
+}
 
-अटल पूर्णांक ltc2497_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+static int ltc2497_remove(struct i2c_client *client)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	ltc2497core_हटाओ(indio_dev);
+	ltc2497core_remove(indio_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id ltc2497_id[] = अणु
-	अणु "ltc2497", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id ltc2497_id[] = {
+	{ "ltc2497", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, ltc2497_id);
 
-अटल स्थिर काष्ठा of_device_id ltc2497_of_match[] = अणु
-	अणु .compatible = "lltc,ltc2497", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ltc2497_of_match[] = {
+	{ .compatible = "lltc,ltc2497", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ltc2497_of_match);
 
-अटल काष्ठा i2c_driver ltc2497_driver = अणु
-	.driver = अणु
+static struct i2c_driver ltc2497_driver = {
+	.driver = {
 		.name = "ltc2497",
 		.of_match_table = ltc2497_of_match,
-	पूर्ण,
+	},
 	.probe = ltc2497_probe,
-	.हटाओ = ltc2497_हटाओ,
+	.remove = ltc2497_remove,
 	.id_table = ltc2497_id,
-पूर्ण;
+};
 module_i2c_driver(ltc2497_driver);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");

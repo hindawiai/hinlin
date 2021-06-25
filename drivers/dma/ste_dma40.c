@@ -1,86 +1,85 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Ericsson AB 2007-2008
  * Copyright (C) ST-Ericsson SA 2008-2010
- * Author: Per Forlin <per.क्रमlin@stericsson.com> क्रम ST-Ericsson
- * Author: Jonas Aaberg <jonas.aberg@stericsson.com> क्रम ST-Ericsson
+ * Author: Per Forlin <per.forlin@stericsson.com> for ST-Ericsson
+ * Author: Jonas Aaberg <jonas.aberg@stericsson.com> for ST-Ericsson
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/amba/bus.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/platक्रमm_data/dma-ste-dma40.h>
+#include <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/dmaengine.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/log2.h>
+#include <linux/pm.h>
+#include <linux/pm_runtime.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_dma.h>
+#include <linux/amba/bus.h>
+#include <linux/regulator/consumer.h>
+#include <linux/platform_data/dma-ste-dma40.h>
 
-#समावेश "dmaengine.h"
-#समावेश "ste_dma40_ll.h"
+#include "dmaengine.h"
+#include "ste_dma40_ll.h"
 
-#घोषणा D40_NAME "dma40"
+#define D40_NAME "dma40"
 
-#घोषणा D40_PHY_CHAN -1
+#define D40_PHY_CHAN -1
 
 /* For masking out/in 2 bit channel positions */
-#घोषणा D40_CHAN_POS(chan)  (2 * (chan / 2))
-#घोषणा D40_CHAN_POS_MASK(chan) (0x3 << D40_CHAN_POS(chan))
+#define D40_CHAN_POS(chan)  (2 * (chan / 2))
+#define D40_CHAN_POS_MASK(chan) (0x3 << D40_CHAN_POS(chan))
 
-/* Maximum iterations taken beक्रमe giving up suspending a channel */
-#घोषणा D40_SUSPEND_MAX_IT 500
+/* Maximum iterations taken before giving up suspending a channel */
+#define D40_SUSPEND_MAX_IT 500
 
 /* Milliseconds */
-#घोषणा DMA40_AUTOSUSPEND_DELAY	100
+#define DMA40_AUTOSUSPEND_DELAY	100
 
 /* Hardware requirement on LCLA alignment */
-#घोषणा LCLA_ALIGNMENT 0x40000
+#define LCLA_ALIGNMENT 0x40000
 
 /* Max number of links per event group */
-#घोषणा D40_LCLA_LINK_PER_EVENT_GRP 128
-#घोषणा D40_LCLA_END D40_LCLA_LINK_PER_EVENT_GRP
+#define D40_LCLA_LINK_PER_EVENT_GRP 128
+#define D40_LCLA_END D40_LCLA_LINK_PER_EVENT_GRP
 
 /* Max number of logical channels per physical channel */
-#घोषणा D40_MAX_LOG_CHAN_PER_PHY 32
+#define D40_MAX_LOG_CHAN_PER_PHY 32
 
-/* Attempts beक्रमe giving up to trying to get pages that are aligned */
-#घोषणा MAX_LCLA_ALLOC_ATTEMPTS 256
+/* Attempts before giving up to trying to get pages that are aligned */
+#define MAX_LCLA_ALLOC_ATTEMPTS 256
 
-/* Bit markings क्रम allocation map */
-#घोषणा D40_ALLOC_FREE		BIT(31)
-#घोषणा D40_ALLOC_PHY		BIT(30)
-#घोषणा D40_ALLOC_LOG_FREE	0
+/* Bit markings for allocation map */
+#define D40_ALLOC_FREE		BIT(31)
+#define D40_ALLOC_PHY		BIT(30)
+#define D40_ALLOC_LOG_FREE	0
 
-#घोषणा D40_MEMCPY_MAX_CHANS	8
+#define D40_MEMCPY_MAX_CHANS	8
 
-/* Reserved event lines क्रम स_नकल only. */
-#घोषणा DB8500_DMA_MEMCPY_EV_0	51
-#घोषणा DB8500_DMA_MEMCPY_EV_1	56
-#घोषणा DB8500_DMA_MEMCPY_EV_2	57
-#घोषणा DB8500_DMA_MEMCPY_EV_3	58
-#घोषणा DB8500_DMA_MEMCPY_EV_4	59
-#घोषणा DB8500_DMA_MEMCPY_EV_5	60
+/* Reserved event lines for memcpy only. */
+#define DB8500_DMA_MEMCPY_EV_0	51
+#define DB8500_DMA_MEMCPY_EV_1	56
+#define DB8500_DMA_MEMCPY_EV_2	57
+#define DB8500_DMA_MEMCPY_EV_3	58
+#define DB8500_DMA_MEMCPY_EV_4	59
+#define DB8500_DMA_MEMCPY_EV_5	60
 
-अटल पूर्णांक dma40_स_नकल_channels[] = अणु
+static int dma40_memcpy_channels[] = {
 	DB8500_DMA_MEMCPY_EV_0,
 	DB8500_DMA_MEMCPY_EV_1,
 	DB8500_DMA_MEMCPY_EV_2,
 	DB8500_DMA_MEMCPY_EV_3,
 	DB8500_DMA_MEMCPY_EV_4,
 	DB8500_DMA_MEMCPY_EV_5,
-पूर्ण;
+};
 
-/* Default configuration क्रम physical स_नकल */
-अटल स्थिर काष्ठा stedma40_chan_cfg dma40_स_नकल_conf_phy = अणु
+/* Default configuration for physical memcpy */
+static const struct stedma40_chan_cfg dma40_memcpy_conf_phy = {
 	.mode = STEDMA40_MODE_PHYSICAL,
 	.dir = DMA_MEM_TO_MEM,
 
@@ -91,10 +90,10 @@
 	.dst_info.data_width = DMA_SLAVE_BUSWIDTH_1_BYTE,
 	.dst_info.psize = STEDMA40_PSIZE_PHY_1,
 	.dst_info.flow_ctrl = STEDMA40_NO_FLOW_CTRL,
-पूर्ण;
+};
 
-/* Default configuration क्रम logical स_नकल */
-अटल स्थिर काष्ठा stedma40_chan_cfg dma40_स_नकल_conf_log = अणु
+/* Default configuration for logical memcpy */
+static const struct stedma40_chan_cfg dma40_memcpy_conf_log = {
 	.mode = STEDMA40_MODE_LOGICAL,
 	.dir = DMA_MEM_TO_MEM,
 
@@ -105,68 +104,68 @@
 	.dst_info.data_width = DMA_SLAVE_BUSWIDTH_1_BYTE,
 	.dst_info.psize = STEDMA40_PSIZE_LOG_1,
 	.dst_info.flow_ctrl = STEDMA40_NO_FLOW_CTRL,
-पूर्ण;
+};
 
 /**
- * क्रमागत 40_command - The dअगरferent commands and/or statuses.
+ * enum 40_command - The different commands and/or statuses.
  *
  * @D40_DMA_STOP: DMA channel command STOP or status STOPPED,
  * @D40_DMA_RUN: The DMA channel is RUNNING of the command RUN.
  * @D40_DMA_SUSPEND_REQ: Request the DMA to SUSPEND as soon as possible.
  * @D40_DMA_SUSPENDED: The DMA channel is SUSPENDED.
  */
-क्रमागत d40_command अणु
+enum d40_command {
 	D40_DMA_STOP		= 0,
 	D40_DMA_RUN		= 1,
 	D40_DMA_SUSPEND_REQ	= 2,
 	D40_DMA_SUSPENDED	= 3
-पूर्ण;
+};
 
 /*
- * क्रमागत d40_events - The dअगरferent Event Enables क्रम the event lines.
+ * enum d40_events - The different Event Enables for the event lines.
  *
  * @D40_DEACTIVATE_EVENTLINE: De-activate Event line, stopping the logical chan.
  * @D40_ACTIVATE_EVENTLINE: Activate the Event line, to start a logical chan.
- * @D40_SUSPEND_REQ_EVENTLINE: Requesting क्रम suspending a event line.
- * @D40_ROUND_EVENTLINE: Status check क्रम event line.
+ * @D40_SUSPEND_REQ_EVENTLINE: Requesting for suspending a event line.
+ * @D40_ROUND_EVENTLINE: Status check for event line.
  */
 
-क्रमागत d40_events अणु
+enum d40_events {
 	D40_DEACTIVATE_EVENTLINE	= 0,
 	D40_ACTIVATE_EVENTLINE		= 1,
 	D40_SUSPEND_REQ_EVENTLINE	= 2,
 	D40_ROUND_EVENTLINE		= 3
-पूर्ण;
+};
 
 /*
- * These are the रेजिस्टरs that has to be saved and later restored
- * when the DMA hw is घातered off.
- * TODO: Add save/restore of D40_DREG_GCC on dma40 v3 or later, अगर that works.
+ * These are the registers that has to be saved and later restored
+ * when the DMA hw is powered off.
+ * TODO: Add save/restore of D40_DREG_GCC on dma40 v3 or later, if that works.
  */
-अटल __maybe_unused u32 d40_backup_regs[] = अणु
+static __maybe_unused u32 d40_backup_regs[] = {
 	D40_DREG_LCPA,
 	D40_DREG_LCLA,
 	D40_DREG_PRMSE,
 	D40_DREG_PRMSO,
 	D40_DREG_PRMOE,
 	D40_DREG_PRMOO,
-पूर्ण;
+};
 
-#घोषणा BACKUP_REGS_SZ ARRAY_SIZE(d40_backup_regs)
+#define BACKUP_REGS_SZ ARRAY_SIZE(d40_backup_regs)
 
 /*
  * since 9540 and 8540 has the same HW revision
- * use v4a क्रम 9540 or ealier
- * use v4b क्रम 8540 or later
+ * use v4a for 9540 or ealier
+ * use v4b for 8540 or later
  * HW revision:
  * DB8500ed has revision 0
  * DB8500v1 has revision 2
  * DB8500v2 has revision 3
  * AP9540v1 has revision 4
  * DB8540v1 has revision 4
- * TODO: Check अगर all these रेजिस्टरs have to be saved/restored on dma40 v4a
+ * TODO: Check if all these registers have to be saved/restored on dma40 v4a
  */
-अटल u32 d40_backup_regs_v4a[] = अणु
+static u32 d40_backup_regs_v4a[] = {
 	D40_DREG_PSEG1,
 	D40_DREG_PSEG2,
 	D40_DREG_PSEG3,
@@ -183,11 +182,11 @@
 	D40_DREG_RCEG2,
 	D40_DREG_RCEG3,
 	D40_DREG_RCEG4,
-पूर्ण;
+};
 
-#घोषणा BACKUP_REGS_SZ_V4A ARRAY_SIZE(d40_backup_regs_v4a)
+#define BACKUP_REGS_SZ_V4A ARRAY_SIZE(d40_backup_regs_v4a)
 
-अटल u32 d40_backup_regs_v4b[] = अणु
+static u32 d40_backup_regs_v4b[] = {
 	D40_DREG_CPSEG1,
 	D40_DREG_CPSEG2,
 	D40_DREG_CPSEG3,
@@ -208,11 +207,11 @@
 	D40_DREG_CRCEG3,
 	D40_DREG_CRCEG4,
 	D40_DREG_CRCEG5,
-पूर्ण;
+};
 
-#घोषणा BACKUP_REGS_SZ_V4B ARRAY_SIZE(d40_backup_regs_v4b)
+#define BACKUP_REGS_SZ_V4B ARRAY_SIZE(d40_backup_regs_v4b)
 
-अटल __maybe_unused u32 d40_backup_regs_chan[] = अणु
+static __maybe_unused u32 d40_backup_regs_chan[] = {
 	D40_CHAN_REG_SSCFG,
 	D40_CHAN_REG_SSELT,
 	D40_CHAN_REG_SSPTR,
@@ -221,449 +220,449 @@
 	D40_CHAN_REG_SDELT,
 	D40_CHAN_REG_SDPTR,
 	D40_CHAN_REG_SDLNK,
-पूर्ण;
+};
 
-#घोषणा BACKUP_REGS_SZ_MAX ((BACKUP_REGS_SZ_V4A > BACKUP_REGS_SZ_V4B) ? \
+#define BACKUP_REGS_SZ_MAX ((BACKUP_REGS_SZ_V4A > BACKUP_REGS_SZ_V4B) ? \
 			     BACKUP_REGS_SZ_V4A : BACKUP_REGS_SZ_V4B)
 
 /**
- * काष्ठा d40_पूर्णांकerrupt_lookup - lookup table क्रम पूर्णांकerrupt handler
+ * struct d40_interrupt_lookup - lookup table for interrupt handler
  *
- * @src: Interrupt mask रेजिस्टर.
- * @clr: Interrupt clear रेजिस्टर.
- * @is_error: true अगर this is an error पूर्णांकerrupt.
+ * @src: Interrupt mask register.
+ * @clr: Interrupt clear register.
+ * @is_error: true if this is an error interrupt.
  * @offset: start delta in the lookup_log_chans in d40_base. If equals to
  * D40_PHY_CHAN, the lookup_phy_chans shall be used instead.
  */
-काष्ठा d40_पूर्णांकerrupt_lookup अणु
+struct d40_interrupt_lookup {
 	u32 src;
 	u32 clr;
 	bool is_error;
-	पूर्णांक offset;
-पूर्ण;
+	int offset;
+};
 
 
-अटल काष्ठा d40_पूर्णांकerrupt_lookup il_v4a[] = अणु
-	अणुD40_DREG_LCTIS0, D40_DREG_LCICR0, false,  0पूर्ण,
-	अणुD40_DREG_LCTIS1, D40_DREG_LCICR1, false, 32पूर्ण,
-	अणुD40_DREG_LCTIS2, D40_DREG_LCICR2, false, 64पूर्ण,
-	अणुD40_DREG_LCTIS3, D40_DREG_LCICR3, false, 96पूर्ण,
-	अणुD40_DREG_LCEIS0, D40_DREG_LCICR0, true,   0पूर्ण,
-	अणुD40_DREG_LCEIS1, D40_DREG_LCICR1, true,  32पूर्ण,
-	अणुD40_DREG_LCEIS2, D40_DREG_LCICR2, true,  64पूर्ण,
-	अणुD40_DREG_LCEIS3, D40_DREG_LCICR3, true,  96पूर्ण,
-	अणुD40_DREG_PCTIS,  D40_DREG_PCICR,  false, D40_PHY_CHANपूर्ण,
-	अणुD40_DREG_PCEIS,  D40_DREG_PCICR,  true,  D40_PHY_CHANपूर्ण,
-पूर्ण;
+static struct d40_interrupt_lookup il_v4a[] = {
+	{D40_DREG_LCTIS0, D40_DREG_LCICR0, false,  0},
+	{D40_DREG_LCTIS1, D40_DREG_LCICR1, false, 32},
+	{D40_DREG_LCTIS2, D40_DREG_LCICR2, false, 64},
+	{D40_DREG_LCTIS3, D40_DREG_LCICR3, false, 96},
+	{D40_DREG_LCEIS0, D40_DREG_LCICR0, true,   0},
+	{D40_DREG_LCEIS1, D40_DREG_LCICR1, true,  32},
+	{D40_DREG_LCEIS2, D40_DREG_LCICR2, true,  64},
+	{D40_DREG_LCEIS3, D40_DREG_LCICR3, true,  96},
+	{D40_DREG_PCTIS,  D40_DREG_PCICR,  false, D40_PHY_CHAN},
+	{D40_DREG_PCEIS,  D40_DREG_PCICR,  true,  D40_PHY_CHAN},
+};
 
-अटल काष्ठा d40_पूर्णांकerrupt_lookup il_v4b[] = अणु
-	अणुD40_DREG_CLCTIS1, D40_DREG_CLCICR1, false,  0पूर्ण,
-	अणुD40_DREG_CLCTIS2, D40_DREG_CLCICR2, false, 32पूर्ण,
-	अणुD40_DREG_CLCTIS3, D40_DREG_CLCICR3, false, 64पूर्ण,
-	अणुD40_DREG_CLCTIS4, D40_DREG_CLCICR4, false, 96पूर्ण,
-	अणुD40_DREG_CLCTIS5, D40_DREG_CLCICR5, false, 128पूर्ण,
-	अणुD40_DREG_CLCEIS1, D40_DREG_CLCICR1, true,   0पूर्ण,
-	अणुD40_DREG_CLCEIS2, D40_DREG_CLCICR2, true,  32पूर्ण,
-	अणुD40_DREG_CLCEIS3, D40_DREG_CLCICR3, true,  64पूर्ण,
-	अणुD40_DREG_CLCEIS4, D40_DREG_CLCICR4, true,  96पूर्ण,
-	अणुD40_DREG_CLCEIS5, D40_DREG_CLCICR5, true,  128पूर्ण,
-	अणुD40_DREG_CPCTIS,  D40_DREG_CPCICR,  false, D40_PHY_CHANपूर्ण,
-	अणुD40_DREG_CPCEIS,  D40_DREG_CPCICR,  true,  D40_PHY_CHANपूर्ण,
-पूर्ण;
+static struct d40_interrupt_lookup il_v4b[] = {
+	{D40_DREG_CLCTIS1, D40_DREG_CLCICR1, false,  0},
+	{D40_DREG_CLCTIS2, D40_DREG_CLCICR2, false, 32},
+	{D40_DREG_CLCTIS3, D40_DREG_CLCICR3, false, 64},
+	{D40_DREG_CLCTIS4, D40_DREG_CLCICR4, false, 96},
+	{D40_DREG_CLCTIS5, D40_DREG_CLCICR5, false, 128},
+	{D40_DREG_CLCEIS1, D40_DREG_CLCICR1, true,   0},
+	{D40_DREG_CLCEIS2, D40_DREG_CLCICR2, true,  32},
+	{D40_DREG_CLCEIS3, D40_DREG_CLCICR3, true,  64},
+	{D40_DREG_CLCEIS4, D40_DREG_CLCICR4, true,  96},
+	{D40_DREG_CLCEIS5, D40_DREG_CLCICR5, true,  128},
+	{D40_DREG_CPCTIS,  D40_DREG_CPCICR,  false, D40_PHY_CHAN},
+	{D40_DREG_CPCEIS,  D40_DREG_CPCICR,  true,  D40_PHY_CHAN},
+};
 
 /**
- * काष्ठा d40_reg_val - simple lookup काष्ठा
+ * struct d40_reg_val - simple lookup struct
  *
- * @reg: The रेजिस्टर.
- * @val: The value that beदीर्घs to the रेजिस्टर in reg.
+ * @reg: The register.
+ * @val: The value that belongs to the register in reg.
  */
-काष्ठा d40_reg_val अणु
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित पूर्णांक val;
-पूर्ण;
+struct d40_reg_val {
+	unsigned int reg;
+	unsigned int val;
+};
 
-अटल __initdata काष्ठा d40_reg_val dma_init_reg_v4a[] = अणु
+static __initdata struct d40_reg_val dma_init_reg_v4a[] = {
 	/* Clock every part of the DMA block from start */
-	अणु .reg = D40_DREG_GCC,    .val = D40_DREG_GCC_ENABLE_ALLपूर्ण,
+	{ .reg = D40_DREG_GCC,    .val = D40_DREG_GCC_ENABLE_ALL},
 
 	/* Interrupts on all logical channels */
-	अणु .reg = D40_DREG_LCMIS0, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCMIS1, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCMIS2, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCMIS3, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCICR0, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCICR1, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCICR2, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCICR3, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCTIS0, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCTIS1, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCTIS2, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_LCTIS3, .val = 0xFFFFFFFFपूर्ण
-पूर्ण;
-अटल __initdata काष्ठा d40_reg_val dma_init_reg_v4b[] = अणु
+	{ .reg = D40_DREG_LCMIS0, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCMIS1, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCMIS2, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCMIS3, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCICR0, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCICR1, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCICR2, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCICR3, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCTIS0, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCTIS1, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCTIS2, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_LCTIS3, .val = 0xFFFFFFFF}
+};
+static __initdata struct d40_reg_val dma_init_reg_v4b[] = {
 	/* Clock every part of the DMA block from start */
-	अणु .reg = D40_DREG_GCC,    .val = D40_DREG_GCC_ENABLE_ALLपूर्ण,
+	{ .reg = D40_DREG_GCC,    .val = D40_DREG_GCC_ENABLE_ALL},
 
 	/* Interrupts on all logical channels */
-	अणु .reg = D40_DREG_CLCMIS1, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCMIS2, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCMIS3, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCMIS4, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCMIS5, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCICR1, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCICR2, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCICR3, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCICR4, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCICR5, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCTIS1, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCTIS2, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCTIS3, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCTIS4, .val = 0xFFFFFFFFपूर्ण,
-	अणु .reg = D40_DREG_CLCTIS5, .val = 0xFFFFFFFFपूर्ण
-पूर्ण;
+	{ .reg = D40_DREG_CLCMIS1, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCMIS2, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCMIS3, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCMIS4, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCMIS5, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCICR1, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCICR2, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCICR3, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCICR4, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCICR5, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCTIS1, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCTIS2, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCTIS3, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCTIS4, .val = 0xFFFFFFFF},
+	{ .reg = D40_DREG_CLCTIS5, .val = 0xFFFFFFFF}
+};
 
 /**
- * काष्ठा d40_lli_pool - Structure क्रम keeping LLIs in memory
+ * struct d40_lli_pool - Structure for keeping LLIs in memory
  *
- * @base: Poपूर्णांकer to memory area when the pre_alloc_lli's are not large
- * enough, IE bigger than the most common हाल, 1 dst and 1 src. शून्य अगर
+ * @base: Pointer to memory area when the pre_alloc_lli's are not large
+ * enough, IE bigger than the most common case, 1 dst and 1 src. NULL if
  * pre_alloc_lli is used.
- * @dma_addr: DMA address, अगर mapped
+ * @dma_addr: DMA address, if mapped
  * @size: The size in bytes of the memory at base or the size of pre_alloc_lli.
- * @pre_alloc_lli: Pre allocated area क्रम the most common हाल of transfers,
+ * @pre_alloc_lli: Pre allocated area for the most common case of transfers,
  * one buffer to one buffer.
  */
-काष्ठा d40_lli_pool अणु
-	व्योम	*base;
-	पूर्णांक	 size;
+struct d40_lli_pool {
+	void	*base;
+	int	 size;
 	dma_addr_t	dma_addr;
-	/* Space क्रम dst and src, plus an extra क्रम padding */
-	u8	 pre_alloc_lli[3 * माप(काष्ठा d40_phy_lli)];
-पूर्ण;
+	/* Space for dst and src, plus an extra for padding */
+	u8	 pre_alloc_lli[3 * sizeof(struct d40_phy_lli)];
+};
 
 /**
- * काष्ठा d40_desc - A descriptor is one DMA job.
+ * struct d40_desc - A descriptor is one DMA job.
  *
- * @lli_phy: LLI settings क्रम physical channel. Both src and dst=
- * poपूर्णांकs पूर्णांकo the lli_pool, to base अगर lli_len > 1 or to pre_alloc_lli अगर
+ * @lli_phy: LLI settings for physical channel. Both src and dst=
+ * points into the lli_pool, to base if lli_len > 1 or to pre_alloc_lli if
  * lli_len equals one.
- * @lli_log: Same as above but क्रम logical channels.
+ * @lli_log: Same as above but for logical channels.
  * @lli_pool: The pool with two entries pre-allocated.
  * @lli_len: Number of llis of current descriptor.
  * @lli_current: Number of transferred llis.
  * @lcla_alloc: Number of LCLA entries allocated.
- * @txd: DMA engine काष्ठा. Used क्रम among other things क्रम communication
+ * @txd: DMA engine struct. Used for among other things for communication
  * during a transfer.
  * @node: List entry.
- * @is_in_client_list: true अगर the client owns this descriptor.
- * @cyclic: true अगर this is a cyclic job
+ * @is_in_client_list: true if the client owns this descriptor.
+ * @cyclic: true if this is a cyclic job
  *
- * This descriptor is used क्रम both logical and physical transfers.
+ * This descriptor is used for both logical and physical transfers.
  */
-काष्ठा d40_desc अणु
+struct d40_desc {
 	/* LLI physical */
-	काष्ठा d40_phy_lli_bidir	 lli_phy;
+	struct d40_phy_lli_bidir	 lli_phy;
 	/* LLI logical */
-	काष्ठा d40_log_lli_bidir	 lli_log;
+	struct d40_log_lli_bidir	 lli_log;
 
-	काष्ठा d40_lli_pool		 lli_pool;
-	पूर्णांक				 lli_len;
-	पूर्णांक				 lli_current;
-	पूर्णांक				 lcla_alloc;
+	struct d40_lli_pool		 lli_pool;
+	int				 lli_len;
+	int				 lli_current;
+	int				 lcla_alloc;
 
-	काष्ठा dma_async_tx_descriptor	 txd;
-	काष्ठा list_head		 node;
+	struct dma_async_tx_descriptor	 txd;
+	struct list_head		 node;
 
 	bool				 is_in_client_list;
 	bool				 cyclic;
-पूर्ण;
+};
 
 /**
- * काष्ठा d40_lcla_pool - LCLA pool settings and data.
+ * struct d40_lcla_pool - LCLA pool settings and data.
  *
- * @base: The भव address of LCLA. 18 bit aligned.
- * @dma_addr: DMA address, अगर mapped
- * @base_unaligned: The orignal kदो_स्मृति poपूर्णांकer, अगर kदो_स्मृति is used.
- * This poपूर्णांकer is only there क्रम clean-up on error.
- * @pages: The number of pages needed क्रम all physical channels.
- * Only used later क्रम clean-up on error
- * @lock: Lock to protect the content in this काष्ठा.
+ * @base: The virtual address of LCLA. 18 bit aligned.
+ * @dma_addr: DMA address, if mapped
+ * @base_unaligned: The orignal kmalloc pointer, if kmalloc is used.
+ * This pointer is only there for clean-up on error.
+ * @pages: The number of pages needed for all physical channels.
+ * Only used later for clean-up on error
+ * @lock: Lock to protect the content in this struct.
  * @alloc_map: big map over which LCLA entry is own by which job.
  */
-काष्ठा d40_lcla_pool अणु
-	व्योम		*base;
+struct d40_lcla_pool {
+	void		*base;
 	dma_addr_t	dma_addr;
-	व्योम		*base_unaligned;
-	पूर्णांक		 pages;
+	void		*base_unaligned;
+	int		 pages;
 	spinlock_t	 lock;
-	काष्ठा d40_desc	**alloc_map;
-पूर्ण;
+	struct d40_desc	**alloc_map;
+};
 
 /**
- * काष्ठा d40_phy_res - काष्ठा क्रम handling eventlines mapped to physical
+ * struct d40_phy_res - struct for handling eventlines mapped to physical
  * channels.
  *
  * @lock: A lock protection this entity.
- * @reserved: True अगर used by secure world or otherwise.
+ * @reserved: True if used by secure world or otherwise.
  * @num: The physical channel number of this entity.
  * @allocated_src: Bit mapped to show which src event line's are mapped to
- * this physical channel. Can also be मुक्त or physically allocated.
- * @allocated_dst: Same as क्रम src but is dst.
+ * this physical channel. Can also be free or physically allocated.
+ * @allocated_dst: Same as for src but is dst.
  * allocated_dst and allocated_src uses the D40_ALLOC* defines as well as
  * event line number.
- * @use_soft_lli: To mark अगर the linked lists of channel are managed by SW.
+ * @use_soft_lli: To mark if the linked lists of channel are managed by SW.
  */
-काष्ठा d40_phy_res अणु
+struct d40_phy_res {
 	spinlock_t lock;
 	bool	   reserved;
-	पूर्णांक	   num;
+	int	   num;
 	u32	   allocated_src;
 	u32	   allocated_dst;
 	bool	   use_soft_lli;
-पूर्ण;
+};
 
-काष्ठा d40_base;
+struct d40_base;
 
 /**
- * काष्ठा d40_chan - Struct that describes a channel.
+ * struct d40_chan - Struct that describes a channel.
  *
- * @lock: A spinlock to protect this काष्ठा.
- * @log_num: The logical number, अगर any of this channel.
- * @pending_tx: The number of pending transfers. Used between पूर्णांकerrupt handler
+ * @lock: A spinlock to protect this struct.
+ * @log_num: The logical number, if any of this channel.
+ * @pending_tx: The number of pending transfers. Used between interrupt handler
  * and tasklet.
  * @busy: Set to true when transfer is ongoing on this channel.
- * @phy_chan: Poपूर्णांकer to physical channel which this instance runs on. If this
- * poपूर्णांक is शून्य, then the channel is not allocated.
+ * @phy_chan: Pointer to physical channel which this instance runs on. If this
+ * point is NULL, then the channel is not allocated.
  * @chan: DMA engine handle.
- * @tasklet: Tasklet that माला_लो scheduled from पूर्णांकerrupt context to complete a
+ * @tasklet: Tasklet that gets scheduled from interrupt context to complete a
  * transfer and call client callback.
  * @client: Cliented owned descriptor list.
  * @pending_queue: Submitted jobs, to be issued by issue_pending()
  * @active: Active descriptor.
- * @करोne: Completed jobs
+ * @done: Completed jobs
  * @queue: Queued jobs.
  * @prepare_queue: Prepared jobs.
  * @dma_cfg: The client configuration of this dma channel.
  * @slave_config: DMA slave configuration.
  * @configured: whether the dma_cfg configuration is valid
- * @base: Poपूर्णांकer to the device instance काष्ठा.
- * @src_def_cfg: Default cfg रेजिस्टर setting क्रम src.
- * @dst_def_cfg: Default cfg रेजिस्टर setting क्रम dst.
+ * @base: Pointer to the device instance struct.
+ * @src_def_cfg: Default cfg register setting for src.
+ * @dst_def_cfg: Default cfg register setting for dst.
  * @log_def: Default logical channel settings.
- * @lcpa: Poपूर्णांकer to dst and src lcpa settings.
- * @runसमय_addr: runसमय configured address.
- * @runसमय_direction: runसमय configured direction.
+ * @lcpa: Pointer to dst and src lcpa settings.
+ * @runtime_addr: runtime configured address.
+ * @runtime_direction: runtime configured direction.
  *
- * This काष्ठा can either "be" a logical or a physical channel.
+ * This struct can either "be" a logical or a physical channel.
  */
-काष्ठा d40_chan अणु
+struct d40_chan {
 	spinlock_t			 lock;
-	पूर्णांक				 log_num;
-	पूर्णांक				 pending_tx;
+	int				 log_num;
+	int				 pending_tx;
 	bool				 busy;
-	काष्ठा d40_phy_res		*phy_chan;
-	काष्ठा dma_chan			 chan;
-	काष्ठा tasklet_काष्ठा		 tasklet;
-	काष्ठा list_head		 client;
-	काष्ठा list_head		 pending_queue;
-	काष्ठा list_head		 active;
-	काष्ठा list_head		 करोne;
-	काष्ठा list_head		 queue;
-	काष्ठा list_head		 prepare_queue;
-	काष्ठा stedma40_chan_cfg	 dma_cfg;
-	काष्ठा dma_slave_config		 slave_config;
+	struct d40_phy_res		*phy_chan;
+	struct dma_chan			 chan;
+	struct tasklet_struct		 tasklet;
+	struct list_head		 client;
+	struct list_head		 pending_queue;
+	struct list_head		 active;
+	struct list_head		 done;
+	struct list_head		 queue;
+	struct list_head		 prepare_queue;
+	struct stedma40_chan_cfg	 dma_cfg;
+	struct dma_slave_config		 slave_config;
 	bool				 configured;
-	काष्ठा d40_base			*base;
-	/* Default रेजिस्टर configurations */
+	struct d40_base			*base;
+	/* Default register configurations */
 	u32				 src_def_cfg;
 	u32				 dst_def_cfg;
-	काष्ठा d40_def_lcsp		 log_def;
-	काष्ठा d40_log_lli_full		*lcpa;
-	/* Runसमय reconfiguration */
-	dma_addr_t			runसमय_addr;
-	क्रमागत dma_transfer_direction	runसमय_direction;
-पूर्ण;
+	struct d40_def_lcsp		 log_def;
+	struct d40_log_lli_full		*lcpa;
+	/* Runtime reconfiguration */
+	dma_addr_t			runtime_addr;
+	enum dma_transfer_direction	runtime_direction;
+};
 
 /**
- * काष्ठा d40_gen_dmac - generic values to represent u8500/u8540 DMA
+ * struct d40_gen_dmac - generic values to represent u8500/u8540 DMA
  * controller
  *
- * @backup: the poपूर्णांकer to the रेजिस्टरs address array क्रम backup
- * @backup_size: the size of the रेजिस्टरs address array क्रम backup
- * @realसमय_en: the realसमय enable रेजिस्टर
- * @realसमय_clear: the realसमय clear रेजिस्टर
- * @high_prio_en: the high priority enable रेजिस्टर
- * @high_prio_clear: the high priority clear रेजिस्टर
- * @पूर्णांकerrupt_en: the पूर्णांकerrupt enable रेजिस्टर
- * @पूर्णांकerrupt_clear: the पूर्णांकerrupt clear रेजिस्टर
- * @il: the poपूर्णांकer to काष्ठा d40_पूर्णांकerrupt_lookup
- * @il_size: the size of d40_पूर्णांकerrupt_lookup array
- * @init_reg: the poपूर्णांकer to the काष्ठा d40_reg_val
+ * @backup: the pointer to the registers address array for backup
+ * @backup_size: the size of the registers address array for backup
+ * @realtime_en: the realtime enable register
+ * @realtime_clear: the realtime clear register
+ * @high_prio_en: the high priority enable register
+ * @high_prio_clear: the high priority clear register
+ * @interrupt_en: the interrupt enable register
+ * @interrupt_clear: the interrupt clear register
+ * @il: the pointer to struct d40_interrupt_lookup
+ * @il_size: the size of d40_interrupt_lookup array
+ * @init_reg: the pointer to the struct d40_reg_val
  * @init_reg_size: the size of d40_reg_val array
  */
-काष्ठा d40_gen_dmac अणु
+struct d40_gen_dmac {
 	u32				*backup;
 	u32				 backup_size;
-	u32				 realसमय_en;
-	u32				 realसमय_clear;
+	u32				 realtime_en;
+	u32				 realtime_clear;
 	u32				 high_prio_en;
 	u32				 high_prio_clear;
-	u32				 पूर्णांकerrupt_en;
-	u32				 पूर्णांकerrupt_clear;
-	काष्ठा d40_पूर्णांकerrupt_lookup	*il;
+	u32				 interrupt_en;
+	u32				 interrupt_clear;
+	struct d40_interrupt_lookup	*il;
 	u32				 il_size;
-	काष्ठा d40_reg_val		*init_reg;
+	struct d40_reg_val		*init_reg;
 	u32				 init_reg_size;
-पूर्ण;
+};
 
 /**
- * काष्ठा d40_base - The big global काष्ठा, one क्रम each probe'd instance.
+ * struct d40_base - The big global struct, one for each probe'd instance.
  *
- * @पूर्णांकerrupt_lock: Lock used to make sure one पूर्णांकerrupt is handle a समय.
- * @execmd_lock: Lock क्रम execute command usage since several channels share
- * the same physical रेजिस्टर.
- * @dev: The device काष्ठाure.
- * @virtbase: The भव base address of the DMA's रेजिस्टर.
+ * @interrupt_lock: Lock used to make sure one interrupt is handle a time.
+ * @execmd_lock: Lock for execute command usage since several channels share
+ * the same physical register.
+ * @dev: The device structure.
+ * @virtbase: The virtual base address of the DMA's register.
  * @rev: silicon revision detected.
- * @clk: Poपूर्णांकer to the DMA घड़ी काष्ठाure.
- * @phy_start: Physical memory start of the DMA रेजिस्टरs.
- * @phy_size: Size of the DMA रेजिस्टर map.
+ * @clk: Pointer to the DMA clock structure.
+ * @phy_start: Physical memory start of the DMA registers.
+ * @phy_size: Size of the DMA register map.
  * @irq: The IRQ number.
- * @num_स_नकल_chans: The number of channels used क्रम स_नकल (mem-to-mem
+ * @num_memcpy_chans: The number of channels used for memcpy (mem-to-mem
  * transfers).
  * @num_phy_chans: The number of physical channels. Read from HW. This
- * is the number of available channels क्रम this driver, not counting "Secure
+ * is the number of available channels for this driver, not counting "Secure
  * mode" allocated physical channels.
  * @num_log_chans: The number of logical channels. Calculated from
  * num_phy_chans.
- * @dma_both: dma_device channels that can करो both स_नकल and slave transfers.
- * @dma_slave: dma_device channels that can करो only करो slave transfers.
- * @dma_स_नकल: dma_device channels that can करो only करो स_नकल transfers.
- * @phy_chans: Room क्रम all possible physical channels in प्रणाली.
- * @log_chans: Room क्रम all possible logical channels in प्रणाली.
- * @lookup_log_chans: Used to map पूर्णांकerrupt number to logical channel. Poपूर्णांकs
+ * @dma_both: dma_device channels that can do both memcpy and slave transfers.
+ * @dma_slave: dma_device channels that can do only do slave transfers.
+ * @dma_memcpy: dma_device channels that can do only do memcpy transfers.
+ * @phy_chans: Room for all possible physical channels in system.
+ * @log_chans: Room for all possible logical channels in system.
+ * @lookup_log_chans: Used to map interrupt number to logical channel. Points
  * to log_chans entries.
- * @lookup_phy_chans: Used to map पूर्णांकerrupt number to physical channel. Poपूर्णांकs
+ * @lookup_phy_chans: Used to map interrupt number to physical channel. Points
  * to phy_chans entries.
- * @plat_data: Poपूर्णांकer to provided platक्रमm_data which is the driver
+ * @plat_data: Pointer to provided platform_data which is the driver
  * configuration.
- * @lcpa_regulator: Poपूर्णांकer to hold the regulator क्रम the esram bank क्रम lcla.
+ * @lcpa_regulator: Pointer to hold the regulator for the esram bank for lcla.
  * @phy_res: Vector containing all physical channels.
  * @lcla_pool: lcla pool settings and data.
- * @lcpa_base: The भव mapped address of LCPA.
+ * @lcpa_base: The virtual mapped address of LCPA.
  * @phy_lcpa: The physical address of the LCPA.
  * @lcpa_size: The size of the LCPA area.
- * @desc_slab: cache क्रम descriptors.
- * @reg_val_backup: Here the values of some hardware रेजिस्टरs are stored
- * beक्रमe the DMA is घातered off. They are restored when the घातer is back on.
- * @reg_val_backup_v4: Backup of रेजिस्टरs that only निकासs on dma40 v3 and
+ * @desc_slab: cache for descriptors.
+ * @reg_val_backup: Here the values of some hardware registers are stored
+ * before the DMA is powered off. They are restored when the power is back on.
+ * @reg_val_backup_v4: Backup of registers that only exits on dma40 v3 and
  * later
- * @reg_val_backup_chan: Backup data क्रम standard channel parameter रेजिस्टरs.
- * @regs_पूर्णांकerrupt: Scratch space क्रम रेजिस्टरs during पूर्णांकerrupt.
- * @gcc_pwr_off_mask: Mask to मुख्यtain the channels that can be turned off.
- * @gen_dmac: the काष्ठा क्रम generic रेजिस्टरs values to represent u8500/8540
+ * @reg_val_backup_chan: Backup data for standard channel parameter registers.
+ * @regs_interrupt: Scratch space for registers during interrupt.
+ * @gcc_pwr_off_mask: Mask to maintain the channels that can be turned off.
+ * @gen_dmac: the struct for generic registers values to represent u8500/8540
  * DMA controller
  */
-काष्ठा d40_base अणु
-	spinlock_t			 पूर्णांकerrupt_lock;
+struct d40_base {
+	spinlock_t			 interrupt_lock;
 	spinlock_t			 execmd_lock;
-	काष्ठा device			 *dev;
-	व्योम __iomem			 *virtbase;
+	struct device			 *dev;
+	void __iomem			 *virtbase;
 	u8				  rev:4;
-	काष्ठा clk			 *clk;
+	struct clk			 *clk;
 	phys_addr_t			  phy_start;
-	resource_माप_प्रकार			  phy_size;
-	पूर्णांक				  irq;
-	पूर्णांक				  num_स_नकल_chans;
-	पूर्णांक				  num_phy_chans;
-	पूर्णांक				  num_log_chans;
-	काष्ठा dma_device		  dma_both;
-	काष्ठा dma_device		  dma_slave;
-	काष्ठा dma_device		  dma_स_नकल;
-	काष्ठा d40_chan			 *phy_chans;
-	काष्ठा d40_chan			 *log_chans;
-	काष्ठा d40_chan			**lookup_log_chans;
-	काष्ठा d40_chan			**lookup_phy_chans;
-	काष्ठा stedma40_platक्रमm_data	 *plat_data;
-	काष्ठा regulator		 *lcpa_regulator;
+	resource_size_t			  phy_size;
+	int				  irq;
+	int				  num_memcpy_chans;
+	int				  num_phy_chans;
+	int				  num_log_chans;
+	struct dma_device		  dma_both;
+	struct dma_device		  dma_slave;
+	struct dma_device		  dma_memcpy;
+	struct d40_chan			 *phy_chans;
+	struct d40_chan			 *log_chans;
+	struct d40_chan			**lookup_log_chans;
+	struct d40_chan			**lookup_phy_chans;
+	struct stedma40_platform_data	 *plat_data;
+	struct regulator		 *lcpa_regulator;
 	/* Physical half channels */
-	काष्ठा d40_phy_res		 *phy_res;
-	काष्ठा d40_lcla_pool		  lcla_pool;
-	व्योम				 *lcpa_base;
+	struct d40_phy_res		 *phy_res;
+	struct d40_lcla_pool		  lcla_pool;
+	void				 *lcpa_base;
 	dma_addr_t			  phy_lcpa;
-	resource_माप_प्रकार			  lcpa_size;
-	काष्ठा kmem_cache		 *desc_slab;
+	resource_size_t			  lcpa_size;
+	struct kmem_cache		 *desc_slab;
 	u32				  reg_val_backup[BACKUP_REGS_SZ];
 	u32				  reg_val_backup_v4[BACKUP_REGS_SZ_MAX];
 	u32				 *reg_val_backup_chan;
-	u32				 *regs_पूर्णांकerrupt;
+	u32				 *regs_interrupt;
 	u16				  gcc_pwr_off_mask;
-	काष्ठा d40_gen_dmac		  gen_dmac;
-पूर्ण;
+	struct d40_gen_dmac		  gen_dmac;
+};
 
-अटल काष्ठा device *chan2dev(काष्ठा d40_chan *d40c)
-अणु
-	वापस &d40c->chan.dev->device;
-पूर्ण
+static struct device *chan2dev(struct d40_chan *d40c)
+{
+	return &d40c->chan.dev->device;
+}
 
-अटल bool chan_is_physical(काष्ठा d40_chan *chan)
-अणु
-	वापस chan->log_num == D40_PHY_CHAN;
-पूर्ण
+static bool chan_is_physical(struct d40_chan *chan)
+{
+	return chan->log_num == D40_PHY_CHAN;
+}
 
-अटल bool chan_is_logical(काष्ठा d40_chan *chan)
-अणु
-	वापस !chan_is_physical(chan);
-पूर्ण
+static bool chan_is_logical(struct d40_chan *chan)
+{
+	return !chan_is_physical(chan);
+}
 
-अटल व्योम __iomem *chan_base(काष्ठा d40_chan *chan)
-अणु
-	वापस chan->base->virtbase + D40_DREG_PCBASE +
+static void __iomem *chan_base(struct d40_chan *chan)
+{
+	return chan->base->virtbase + D40_DREG_PCBASE +
 	       chan->phy_chan->num * D40_DREG_PCDELTA;
-पूर्ण
+}
 
-#घोषणा d40_err(dev, क्रमmat, arg...)		\
-	dev_err(dev, "[%s] " क्रमmat, __func__, ## arg)
+#define d40_err(dev, format, arg...)		\
+	dev_err(dev, "[%s] " format, __func__, ## arg)
 
-#घोषणा chan_err(d40c, क्रमmat, arg...)		\
-	d40_err(chan2dev(d40c), क्रमmat, ## arg)
+#define chan_err(d40c, format, arg...)		\
+	d40_err(chan2dev(d40c), format, ## arg)
 
-अटल पूर्णांक d40_set_runसमय_config_ग_लिखो(काष्ठा dma_chan *chan,
-				  काष्ठा dma_slave_config *config,
-				  क्रमागत dma_transfer_direction direction);
+static int d40_set_runtime_config_write(struct dma_chan *chan,
+				  struct dma_slave_config *config,
+				  enum dma_transfer_direction direction);
 
-अटल पूर्णांक d40_pool_lli_alloc(काष्ठा d40_chan *d40c, काष्ठा d40_desc *d40d,
-			      पूर्णांक lli_len)
-अणु
+static int d40_pool_lli_alloc(struct d40_chan *d40c, struct d40_desc *d40d,
+			      int lli_len)
+{
 	bool is_log = chan_is_logical(d40c);
 	u32 align;
-	व्योम *base;
+	void *base;
 
-	अगर (is_log)
-		align = माप(काष्ठा d40_log_lli);
-	अन्यथा
-		align = माप(काष्ठा d40_phy_lli);
+	if (is_log)
+		align = sizeof(struct d40_log_lli);
+	else
+		align = sizeof(struct d40_phy_lli);
 
-	अगर (lli_len == 1) अणु
+	if (lli_len == 1) {
 		base = d40d->lli_pool.pre_alloc_lli;
-		d40d->lli_pool.size = माप(d40d->lli_pool.pre_alloc_lli);
-		d40d->lli_pool.base = शून्य;
-	पूर्ण अन्यथा अणु
+		d40d->lli_pool.size = sizeof(d40d->lli_pool.pre_alloc_lli);
+		d40d->lli_pool.base = NULL;
+	} else {
 		d40d->lli_pool.size = lli_len * 2 * align;
 
-		base = kदो_स्मृति(d40d->lli_pool.size + align, GFP_NOWAIT);
+		base = kmalloc(d40d->lli_pool.size + align, GFP_NOWAIT);
 		d40d->lli_pool.base = base;
 
-		अगर (d40d->lli_pool.base == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
+		if (d40d->lli_pool.base == NULL)
+			return -ENOMEM;
+	}
 
-	अगर (is_log) अणु
+	if (is_log) {
 		d40d->lli_log.src = PTR_ALIGN(base, align);
 		d40d->lli_log.dst = d40d->lli_log.src + lli_len;
 
 		d40d->lli_pool.dma_addr = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		d40d->lli_phy.src = PTR_ALIGN(base, align);
 		d40d->lli_phy.dst = d40d->lli_phy.src + lli_len;
 
@@ -672,174 +671,174 @@
 							 d40d->lli_pool.size,
 							 DMA_TO_DEVICE);
 
-		अगर (dma_mapping_error(d40c->base->dev,
-				      d40d->lli_pool.dma_addr)) अणु
-			kमुक्त(d40d->lli_pool.base);
-			d40d->lli_pool.base = शून्य;
+		if (dma_mapping_error(d40c->base->dev,
+				      d40d->lli_pool.dma_addr)) {
+			kfree(d40d->lli_pool.base);
+			d40d->lli_pool.base = NULL;
 			d40d->lli_pool.dma_addr = 0;
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+			return -ENOMEM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम d40_pool_lli_मुक्त(काष्ठा d40_chan *d40c, काष्ठा d40_desc *d40d)
-अणु
-	अगर (d40d->lli_pool.dma_addr)
+static void d40_pool_lli_free(struct d40_chan *d40c, struct d40_desc *d40d)
+{
+	if (d40d->lli_pool.dma_addr)
 		dma_unmap_single(d40c->base->dev, d40d->lli_pool.dma_addr,
 				 d40d->lli_pool.size, DMA_TO_DEVICE);
 
-	kमुक्त(d40d->lli_pool.base);
-	d40d->lli_pool.base = शून्य;
+	kfree(d40d->lli_pool.base);
+	d40d->lli_pool.base = NULL;
 	d40d->lli_pool.size = 0;
-	d40d->lli_log.src = शून्य;
-	d40d->lli_log.dst = शून्य;
-	d40d->lli_phy.src = शून्य;
-	d40d->lli_phy.dst = शून्य;
-पूर्ण
+	d40d->lli_log.src = NULL;
+	d40d->lli_log.dst = NULL;
+	d40d->lli_phy.src = NULL;
+	d40d->lli_phy.dst = NULL;
+}
 
-अटल पूर्णांक d40_lcla_alloc_one(काष्ठा d40_chan *d40c,
-			      काष्ठा d40_desc *d40d)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	पूर्णांक ret = -EINVAL;
+static int d40_lcla_alloc_one(struct d40_chan *d40c,
+			      struct d40_desc *d40d)
+{
+	unsigned long flags;
+	int i;
+	int ret = -EINVAL;
 
 	spin_lock_irqsave(&d40c->base->lcla_pool.lock, flags);
 
 	/*
-	 * Allocate both src and dst at the same समय, thereक्रमe the half
+	 * Allocate both src and dst at the same time, therefore the half
 	 * start on 1 since 0 can't be used since zero is used as end marker.
 	 */
-	क्रम (i = 1 ; i < D40_LCLA_LINK_PER_EVENT_GRP / 2; i++) अणु
-		पूर्णांक idx = d40c->phy_chan->num * D40_LCLA_LINK_PER_EVENT_GRP + i;
+	for (i = 1 ; i < D40_LCLA_LINK_PER_EVENT_GRP / 2; i++) {
+		int idx = d40c->phy_chan->num * D40_LCLA_LINK_PER_EVENT_GRP + i;
 
-		अगर (!d40c->base->lcla_pool.alloc_map[idx]) अणु
+		if (!d40c->base->lcla_pool.alloc_map[idx]) {
 			d40c->base->lcla_pool.alloc_map[idx] = d40d;
 			d40d->lcla_alloc++;
 			ret = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	spin_unlock_irqrestore(&d40c->base->lcla_pool.lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक d40_lcla_मुक्त_all(काष्ठा d40_chan *d40c,
-			     काष्ठा d40_desc *d40d)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	पूर्णांक ret = -EINVAL;
+static int d40_lcla_free_all(struct d40_chan *d40c,
+			     struct d40_desc *d40d)
+{
+	unsigned long flags;
+	int i;
+	int ret = -EINVAL;
 
-	अगर (chan_is_physical(d40c))
-		वापस 0;
+	if (chan_is_physical(d40c))
+		return 0;
 
 	spin_lock_irqsave(&d40c->base->lcla_pool.lock, flags);
 
-	क्रम (i = 1 ; i < D40_LCLA_LINK_PER_EVENT_GRP / 2; i++) अणु
-		पूर्णांक idx = d40c->phy_chan->num * D40_LCLA_LINK_PER_EVENT_GRP + i;
+	for (i = 1 ; i < D40_LCLA_LINK_PER_EVENT_GRP / 2; i++) {
+		int idx = d40c->phy_chan->num * D40_LCLA_LINK_PER_EVENT_GRP + i;
 
-		अगर (d40c->base->lcla_pool.alloc_map[idx] == d40d) अणु
-			d40c->base->lcla_pool.alloc_map[idx] = शून्य;
+		if (d40c->base->lcla_pool.alloc_map[idx] == d40d) {
+			d40c->base->lcla_pool.alloc_map[idx] = NULL;
 			d40d->lcla_alloc--;
-			अगर (d40d->lcla_alloc == 0) अणु
+			if (d40d->lcla_alloc == 0) {
 				ret = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	spin_unlock_irqrestore(&d40c->base->lcla_pool.lock, flags);
 
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल व्योम d40_desc_हटाओ(काष्ठा d40_desc *d40d)
-अणु
+static void d40_desc_remove(struct d40_desc *d40d)
+{
 	list_del(&d40d->node);
-पूर्ण
+}
 
-अटल काष्ठा d40_desc *d40_desc_get(काष्ठा d40_chan *d40c)
-अणु
-	काष्ठा d40_desc *desc = शून्य;
+static struct d40_desc *d40_desc_get(struct d40_chan *d40c)
+{
+	struct d40_desc *desc = NULL;
 
-	अगर (!list_empty(&d40c->client)) अणु
-		काष्ठा d40_desc *d;
-		काष्ठा d40_desc *_d;
+	if (!list_empty(&d40c->client)) {
+		struct d40_desc *d;
+		struct d40_desc *_d;
 
-		list_क्रम_each_entry_safe(d, _d, &d40c->client, node) अणु
-			अगर (async_tx_test_ack(&d->txd)) अणु
-				d40_desc_हटाओ(d);
+		list_for_each_entry_safe(d, _d, &d40c->client, node) {
+			if (async_tx_test_ack(&d->txd)) {
+				d40_desc_remove(d);
 				desc = d;
-				स_रखो(desc, 0, माप(*desc));
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				memset(desc, 0, sizeof(*desc));
+				break;
+			}
+		}
+	}
 
-	अगर (!desc)
+	if (!desc)
 		desc = kmem_cache_zalloc(d40c->base->desc_slab, GFP_NOWAIT);
 
-	अगर (desc)
+	if (desc)
 		INIT_LIST_HEAD(&desc->node);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-अटल व्योम d40_desc_मुक्त(काष्ठा d40_chan *d40c, काष्ठा d40_desc *d40d)
-अणु
+static void d40_desc_free(struct d40_chan *d40c, struct d40_desc *d40d)
+{
 
-	d40_pool_lli_मुक्त(d40c, d40d);
-	d40_lcla_मुक्त_all(d40c, d40d);
-	kmem_cache_मुक्त(d40c->base->desc_slab, d40d);
-पूर्ण
+	d40_pool_lli_free(d40c, d40d);
+	d40_lcla_free_all(d40c, d40d);
+	kmem_cache_free(d40c->base->desc_slab, d40d);
+}
 
-अटल व्योम d40_desc_submit(काष्ठा d40_chan *d40c, काष्ठा d40_desc *desc)
-अणु
+static void d40_desc_submit(struct d40_chan *d40c, struct d40_desc *desc)
+{
 	list_add_tail(&desc->node, &d40c->active);
-पूर्ण
+}
 
-अटल व्योम d40_phy_lli_load(काष्ठा d40_chan *chan, काष्ठा d40_desc *desc)
-अणु
-	काष्ठा d40_phy_lli *lli_dst = desc->lli_phy.dst;
-	काष्ठा d40_phy_lli *lli_src = desc->lli_phy.src;
-	व्योम __iomem *base = chan_base(chan);
+static void d40_phy_lli_load(struct d40_chan *chan, struct d40_desc *desc)
+{
+	struct d40_phy_lli *lli_dst = desc->lli_phy.dst;
+	struct d40_phy_lli *lli_src = desc->lli_phy.src;
+	void __iomem *base = chan_base(chan);
 
-	ग_लिखोl(lli_src->reg_cfg, base + D40_CHAN_REG_SSCFG);
-	ग_लिखोl(lli_src->reg_elt, base + D40_CHAN_REG_SSELT);
-	ग_लिखोl(lli_src->reg_ptr, base + D40_CHAN_REG_SSPTR);
-	ग_लिखोl(lli_src->reg_lnk, base + D40_CHAN_REG_SSLNK);
+	writel(lli_src->reg_cfg, base + D40_CHAN_REG_SSCFG);
+	writel(lli_src->reg_elt, base + D40_CHAN_REG_SSELT);
+	writel(lli_src->reg_ptr, base + D40_CHAN_REG_SSPTR);
+	writel(lli_src->reg_lnk, base + D40_CHAN_REG_SSLNK);
 
-	ग_लिखोl(lli_dst->reg_cfg, base + D40_CHAN_REG_SDCFG);
-	ग_लिखोl(lli_dst->reg_elt, base + D40_CHAN_REG_SDELT);
-	ग_लिखोl(lli_dst->reg_ptr, base + D40_CHAN_REG_SDPTR);
-	ग_लिखोl(lli_dst->reg_lnk, base + D40_CHAN_REG_SDLNK);
-पूर्ण
+	writel(lli_dst->reg_cfg, base + D40_CHAN_REG_SDCFG);
+	writel(lli_dst->reg_elt, base + D40_CHAN_REG_SDELT);
+	writel(lli_dst->reg_ptr, base + D40_CHAN_REG_SDPTR);
+	writel(lli_dst->reg_lnk, base + D40_CHAN_REG_SDLNK);
+}
 
-अटल व्योम d40_desc_करोne(काष्ठा d40_chan *d40c, काष्ठा d40_desc *desc)
-अणु
-	list_add_tail(&desc->node, &d40c->करोne);
-पूर्ण
+static void d40_desc_done(struct d40_chan *d40c, struct d40_desc *desc)
+{
+	list_add_tail(&desc->node, &d40c->done);
+}
 
-अटल व्योम d40_log_lli_to_lcxa(काष्ठा d40_chan *chan, काष्ठा d40_desc *desc)
-अणु
-	काष्ठा d40_lcla_pool *pool = &chan->base->lcla_pool;
-	काष्ठा d40_log_lli_bidir *lli = &desc->lli_log;
-	पूर्णांक lli_current = desc->lli_current;
-	पूर्णांक lli_len = desc->lli_len;
+static void d40_log_lli_to_lcxa(struct d40_chan *chan, struct d40_desc *desc)
+{
+	struct d40_lcla_pool *pool = &chan->base->lcla_pool;
+	struct d40_log_lli_bidir *lli = &desc->lli_log;
+	int lli_current = desc->lli_current;
+	int lli_len = desc->lli_len;
 	bool cyclic = desc->cyclic;
-	पूर्णांक curr_lcla = -EINVAL;
-	पूर्णांक first_lcla = 0;
+	int curr_lcla = -EINVAL;
+	int first_lcla = 0;
 	bool use_esram_lcla = chan->base->plat_data->use_esram_lcla;
 	bool linkback;
 
 	/*
-	 * We may have partially running cyclic transfers, in हाल we did't get
+	 * We may have partially running cyclic transfers, in case we did't get
 	 * enough LCLA entries.
 	 */
 	linkback = cyclic && lli_current == 0;
@@ -848,146 +847,146 @@
 	 * For linkback, we need one LCLA even with only one link, because we
 	 * can't link back to the one in LCPA space
 	 */
-	अगर (linkback || (lli_len - lli_current > 1)) अणु
+	if (linkback || (lli_len - lli_current > 1)) {
 		/*
-		 * If the channel is expected to use only soft_lli करोn't
-		 * allocate a lcla. This is to aव्योम a HW issue that exists
+		 * If the channel is expected to use only soft_lli don't
+		 * allocate a lcla. This is to avoid a HW issue that exists
 		 * in some controller during a peripheral to memory transfer
 		 * that uses linked lists.
 		 */
-		अगर (!(chan->phy_chan->use_soft_lli &&
+		if (!(chan->phy_chan->use_soft_lli &&
 			chan->dma_cfg.dir == DMA_DEV_TO_MEM))
 			curr_lcla = d40_lcla_alloc_one(chan, desc);
 
 		first_lcla = curr_lcla;
-	पूर्ण
+	}
 
 	/*
 	 * For linkback, we normally load the LCPA in the loop since we need to
-	 * link it to the second LCLA and not the first.  However, अगर we
+	 * link it to the second LCLA and not the first.  However, if we
 	 * couldn't even get a first LCLA, then we have to run in LCPA and
 	 * reload manually.
 	 */
-	अगर (!linkback || curr_lcla == -EINVAL) अणु
-		अचिन्हित पूर्णांक flags = 0;
+	if (!linkback || curr_lcla == -EINVAL) {
+		unsigned int flags = 0;
 
-		अगर (curr_lcla == -EINVAL)
+		if (curr_lcla == -EINVAL)
 			flags |= LLI_TERM_INT;
 
-		d40_log_lli_lcpa_ग_लिखो(chan->lcpa,
+		d40_log_lli_lcpa_write(chan->lcpa,
 				       &lli->dst[lli_current],
 				       &lli->src[lli_current],
 				       curr_lcla,
 				       flags);
 		lli_current++;
-	पूर्ण
+	}
 
-	अगर (curr_lcla < 0)
-		जाओ set_current;
+	if (curr_lcla < 0)
+		goto set_current;
 
-	क्रम (; lli_current < lli_len; lli_current++) अणु
-		अचिन्हित पूर्णांक lcla_offset = chan->phy_chan->num * 1024 +
+	for (; lli_current < lli_len; lli_current++) {
+		unsigned int lcla_offset = chan->phy_chan->num * 1024 +
 					   8 * curr_lcla * 2;
-		काष्ठा d40_log_lli *lcla = pool->base + lcla_offset;
-		अचिन्हित पूर्णांक flags = 0;
-		पूर्णांक next_lcla;
+		struct d40_log_lli *lcla = pool->base + lcla_offset;
+		unsigned int flags = 0;
+		int next_lcla;
 
-		अगर (lli_current + 1 < lli_len)
+		if (lli_current + 1 < lli_len)
 			next_lcla = d40_lcla_alloc_one(chan, desc);
-		अन्यथा
+		else
 			next_lcla = linkback ? first_lcla : -EINVAL;
 
-		अगर (cyclic || next_lcla == -EINVAL)
+		if (cyclic || next_lcla == -EINVAL)
 			flags |= LLI_TERM_INT;
 
-		अगर (linkback && curr_lcla == first_lcla) अणु
+		if (linkback && curr_lcla == first_lcla) {
 			/* First link goes in both LCPA and LCLA */
-			d40_log_lli_lcpa_ग_लिखो(chan->lcpa,
+			d40_log_lli_lcpa_write(chan->lcpa,
 					       &lli->dst[lli_current],
 					       &lli->src[lli_current],
 					       next_lcla, flags);
-		पूर्ण
+		}
 
 		/*
-		 * One unused LCLA in the cyclic हाल अगर the very first
+		 * One unused LCLA in the cyclic case if the very first
 		 * next_lcla fails...
 		 */
-		d40_log_lli_lcla_ग_लिखो(lcla,
+		d40_log_lli_lcla_write(lcla,
 				       &lli->dst[lli_current],
 				       &lli->src[lli_current],
 				       next_lcla, flags);
 
 		/*
-		 * Cache मुख्यtenance is not needed अगर lcla is
+		 * Cache maintenance is not needed if lcla is
 		 * mapped in esram
 		 */
-		अगर (!use_esram_lcla) अणु
-			dma_sync_single_range_क्रम_device(chan->base->dev,
+		if (!use_esram_lcla) {
+			dma_sync_single_range_for_device(chan->base->dev,
 						pool->dma_addr, lcla_offset,
-						2 * माप(काष्ठा d40_log_lli),
+						2 * sizeof(struct d40_log_lli),
 						DMA_TO_DEVICE);
-		पूर्ण
+		}
 		curr_lcla = next_lcla;
 
-		अगर (curr_lcla == -EINVAL || curr_lcla == first_lcla) अणु
+		if (curr_lcla == -EINVAL || curr_lcla == first_lcla) {
 			lli_current++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
  set_current:
 	desc->lli_current = lli_current;
-पूर्ण
+}
 
-अटल व्योम d40_desc_load(काष्ठा d40_chan *d40c, काष्ठा d40_desc *d40d)
-अणु
-	अगर (chan_is_physical(d40c)) अणु
+static void d40_desc_load(struct d40_chan *d40c, struct d40_desc *d40d)
+{
+	if (chan_is_physical(d40c)) {
 		d40_phy_lli_load(d40c, d40d);
 		d40d->lli_current = d40d->lli_len;
-	पूर्ण अन्यथा
+	} else
 		d40_log_lli_to_lcxa(d40c, d40d);
-पूर्ण
+}
 
-अटल काष्ठा d40_desc *d40_first_active_get(काष्ठा d40_chan *d40c)
-अणु
-	वापस list_first_entry_or_null(&d40c->active, काष्ठा d40_desc, node);
-पूर्ण
+static struct d40_desc *d40_first_active_get(struct d40_chan *d40c)
+{
+	return list_first_entry_or_null(&d40c->active, struct d40_desc, node);
+}
 
-/* हटाओ desc from current queue and add it to the pending_queue */
-अटल व्योम d40_desc_queue(काष्ठा d40_chan *d40c, काष्ठा d40_desc *desc)
-अणु
-	d40_desc_हटाओ(desc);
+/* remove desc from current queue and add it to the pending_queue */
+static void d40_desc_queue(struct d40_chan *d40c, struct d40_desc *desc)
+{
+	d40_desc_remove(desc);
 	desc->is_in_client_list = false;
 	list_add_tail(&desc->node, &d40c->pending_queue);
-पूर्ण
+}
 
-अटल काष्ठा d40_desc *d40_first_pending(काष्ठा d40_chan *d40c)
-अणु
-	वापस list_first_entry_or_null(&d40c->pending_queue, काष्ठा d40_desc,
+static struct d40_desc *d40_first_pending(struct d40_chan *d40c)
+{
+	return list_first_entry_or_null(&d40c->pending_queue, struct d40_desc,
 					node);
-पूर्ण
+}
 
-अटल काष्ठा d40_desc *d40_first_queued(काष्ठा d40_chan *d40c)
-अणु
-	वापस list_first_entry_or_null(&d40c->queue, काष्ठा d40_desc, node);
-पूर्ण
+static struct d40_desc *d40_first_queued(struct d40_chan *d40c)
+{
+	return list_first_entry_or_null(&d40c->queue, struct d40_desc, node);
+}
 
-अटल काष्ठा d40_desc *d40_first_करोne(काष्ठा d40_chan *d40c)
-अणु
-	वापस list_first_entry_or_null(&d40c->करोne, काष्ठा d40_desc, node);
-पूर्ण
+static struct d40_desc *d40_first_done(struct d40_chan *d40c)
+{
+	return list_first_entry_or_null(&d40c->done, struct d40_desc, node);
+}
 
-अटल पूर्णांक d40_psize_2_burst_size(bool is_log, पूर्णांक psize)
-अणु
-	अगर (is_log) अणु
-		अगर (psize == STEDMA40_PSIZE_LOG_1)
-			वापस 1;
-	पूर्ण अन्यथा अणु
-		अगर (psize == STEDMA40_PSIZE_PHY_1)
-			वापस 1;
-	पूर्ण
+static int d40_psize_2_burst_size(bool is_log, int psize)
+{
+	if (is_log) {
+		if (psize == STEDMA40_PSIZE_LOG_1)
+			return 1;
+	} else {
+		if (psize == STEDMA40_PSIZE_PHY_1)
+			return 1;
+	}
 
-	वापस 2 << psize;
-पूर्ण
+	return 2 << psize;
+}
 
 /*
  * The dma only supports transmitting packages up to
@@ -995,359 +994,359 @@
  *
  * Calculate the total number of dma elements required to send the entire sg list.
  */
-अटल पूर्णांक d40_size_2_dmalen(पूर्णांक size, u32 data_width1, u32 data_width2)
-अणु
-	पूर्णांक dmalen;
+static int d40_size_2_dmalen(int size, u32 data_width1, u32 data_width2)
+{
+	int dmalen;
 	u32 max_w = max(data_width1, data_width2);
 	u32 min_w = min(data_width1, data_width2);
 	u32 seg_max = ALIGN(STEDMA40_MAX_SEG_SIZE * min_w, max_w);
 
-	अगर (seg_max > STEDMA40_MAX_SEG_SIZE)
+	if (seg_max > STEDMA40_MAX_SEG_SIZE)
 		seg_max -= max_w;
 
-	अगर (!IS_ALIGNED(size, max_w))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(size, max_w))
+		return -EINVAL;
 
-	अगर (size <= seg_max)
+	if (size <= seg_max)
 		dmalen = 1;
-	अन्यथा अणु
+	else {
 		dmalen = size / seg_max;
-		अगर (dmalen * seg_max < size)
+		if (dmalen * seg_max < size)
 			dmalen++;
-	पूर्ण
-	वापस dmalen;
-पूर्ण
+	}
+	return dmalen;
+}
 
-अटल पूर्णांक d40_sg_2_dmalen(काष्ठा scatterlist *sgl, पूर्णांक sg_len,
+static int d40_sg_2_dmalen(struct scatterlist *sgl, int sg_len,
 			   u32 data_width1, u32 data_width2)
-अणु
-	काष्ठा scatterlist *sg;
-	पूर्णांक i;
-	पूर्णांक len = 0;
-	पूर्णांक ret;
+{
+	struct scatterlist *sg;
+	int i;
+	int len = 0;
+	int ret;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		ret = d40_size_2_dmalen(sg_dma_len(sg),
 					data_width1, data_width2);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		len += ret;
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल पूर्णांक __d40_execute_command_phy(काष्ठा d40_chan *d40c,
-				     क्रमागत d40_command command)
-अणु
+static int __d40_execute_command_phy(struct d40_chan *d40c,
+				     enum d40_command command)
+{
 	u32 status;
-	पूर्णांक i;
-	व्योम __iomem *active_reg;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+	int i;
+	void __iomem *active_reg;
+	int ret = 0;
+	unsigned long flags;
 	u32 wmask;
 
-	अगर (command == D40_DMA_STOP) अणु
+	if (command == D40_DMA_STOP) {
 		ret = __d40_execute_command_phy(d40c, D40_DMA_SUSPEND_REQ);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	spin_lock_irqsave(&d40c->base->execmd_lock, flags);
 
-	अगर (d40c->phy_chan->num % 2 == 0)
+	if (d40c->phy_chan->num % 2 == 0)
 		active_reg = d40c->base->virtbase + D40_DREG_ACTIVE;
-	अन्यथा
+	else
 		active_reg = d40c->base->virtbase + D40_DREG_ACTIVO;
 
-	अगर (command == D40_DMA_SUSPEND_REQ) अणु
-		status = (पढ़ोl(active_reg) &
+	if (command == D40_DMA_SUSPEND_REQ) {
+		status = (readl(active_reg) &
 			  D40_CHAN_POS_MASK(d40c->phy_chan->num)) >>
 			D40_CHAN_POS(d40c->phy_chan->num);
 
-		अगर (status == D40_DMA_SUSPENDED || status == D40_DMA_STOP)
-			जाओ unlock;
-	पूर्ण
+		if (status == D40_DMA_SUSPENDED || status == D40_DMA_STOP)
+			goto unlock;
+	}
 
 	wmask = 0xffffffff & ~(D40_CHAN_POS_MASK(d40c->phy_chan->num));
-	ग_लिखोl(wmask | (command << D40_CHAN_POS(d40c->phy_chan->num)),
+	writel(wmask | (command << D40_CHAN_POS(d40c->phy_chan->num)),
 	       active_reg);
 
-	अगर (command == D40_DMA_SUSPEND_REQ) अणु
+	if (command == D40_DMA_SUSPEND_REQ) {
 
-		क्रम (i = 0 ; i < D40_SUSPEND_MAX_IT; i++) अणु
-			status = (पढ़ोl(active_reg) &
+		for (i = 0 ; i < D40_SUSPEND_MAX_IT; i++) {
+			status = (readl(active_reg) &
 				  D40_CHAN_POS_MASK(d40c->phy_chan->num)) >>
 				D40_CHAN_POS(d40c->phy_chan->num);
 
 			cpu_relax();
 			/*
-			 * Reduce the number of bus accesses जबतक
-			 * रुकोing क्रम the DMA to suspend.
+			 * Reduce the number of bus accesses while
+			 * waiting for the DMA to suspend.
 			 */
 			udelay(3);
 
-			अगर (status == D40_DMA_STOP ||
+			if (status == D40_DMA_STOP ||
 			    status == D40_DMA_SUSPENDED)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		अगर (i == D40_SUSPEND_MAX_IT) अणु
+		if (i == D40_SUSPEND_MAX_IT) {
 			chan_err(d40c,
 				"unable to suspend the chl %d (log: %d) status %x\n",
 				d40c->phy_chan->num, d40c->log_num,
 				status);
 			dump_stack();
 			ret = -EBUSY;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
  unlock:
 	spin_unlock_irqrestore(&d40c->base->execmd_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम d40_term_all(काष्ठा d40_chan *d40c)
-अणु
-	काष्ठा d40_desc *d40d;
-	काष्ठा d40_desc *_d;
+static void d40_term_all(struct d40_chan *d40c)
+{
+	struct d40_desc *d40d;
+	struct d40_desc *_d;
 
 	/* Release completed descriptors */
-	जबतक ((d40d = d40_first_करोne(d40c))) अणु
-		d40_desc_हटाओ(d40d);
-		d40_desc_मुक्त(d40c, d40d);
-	पूर्ण
+	while ((d40d = d40_first_done(d40c))) {
+		d40_desc_remove(d40d);
+		d40_desc_free(d40c, d40d);
+	}
 
 	/* Release active descriptors */
-	जबतक ((d40d = d40_first_active_get(d40c))) अणु
-		d40_desc_हटाओ(d40d);
-		d40_desc_मुक्त(d40c, d40d);
-	पूर्ण
+	while ((d40d = d40_first_active_get(d40c))) {
+		d40_desc_remove(d40d);
+		d40_desc_free(d40c, d40d);
+	}
 
-	/* Release queued descriptors रुकोing क्रम transfer */
-	जबतक ((d40d = d40_first_queued(d40c))) अणु
-		d40_desc_हटाओ(d40d);
-		d40_desc_मुक्त(d40c, d40d);
-	पूर्ण
+	/* Release queued descriptors waiting for transfer */
+	while ((d40d = d40_first_queued(d40c))) {
+		d40_desc_remove(d40d);
+		d40_desc_free(d40c, d40d);
+	}
 
 	/* Release pending descriptors */
-	जबतक ((d40d = d40_first_pending(d40c))) अणु
-		d40_desc_हटाओ(d40d);
-		d40_desc_मुक्त(d40c, d40d);
-	पूर्ण
+	while ((d40d = d40_first_pending(d40c))) {
+		d40_desc_remove(d40d);
+		d40_desc_free(d40c, d40d);
+	}
 
 	/* Release client owned descriptors */
-	अगर (!list_empty(&d40c->client))
-		list_क्रम_each_entry_safe(d40d, _d, &d40c->client, node) अणु
-			d40_desc_हटाओ(d40d);
-			d40_desc_मुक्त(d40c, d40d);
-		पूर्ण
+	if (!list_empty(&d40c->client))
+		list_for_each_entry_safe(d40d, _d, &d40c->client, node) {
+			d40_desc_remove(d40d);
+			d40_desc_free(d40c, d40d);
+		}
 
 	/* Release descriptors in prepare queue */
-	अगर (!list_empty(&d40c->prepare_queue))
-		list_क्रम_each_entry_safe(d40d, _d,
-					 &d40c->prepare_queue, node) अणु
-			d40_desc_हटाओ(d40d);
-			d40_desc_मुक्त(d40c, d40d);
-		पूर्ण
+	if (!list_empty(&d40c->prepare_queue))
+		list_for_each_entry_safe(d40d, _d,
+					 &d40c->prepare_queue, node) {
+			d40_desc_remove(d40d);
+			d40_desc_free(d40c, d40d);
+		}
 
 	d40c->pending_tx = 0;
-पूर्ण
+}
 
-अटल व्योम __d40_config_set_event(काष्ठा d40_chan *d40c,
-				   क्रमागत d40_events event_type, u32 event,
-				   पूर्णांक reg)
-अणु
-	व्योम __iomem *addr = chan_base(d40c) + reg;
-	पूर्णांक tries;
+static void __d40_config_set_event(struct d40_chan *d40c,
+				   enum d40_events event_type, u32 event,
+				   int reg)
+{
+	void __iomem *addr = chan_base(d40c) + reg;
+	int tries;
 	u32 status;
 
-	चयन (event_type) अणु
+	switch (event_type) {
 
-	हाल D40_DEACTIVATE_EVENTLINE:
+	case D40_DEACTIVATE_EVENTLINE:
 
-		ग_लिखोl((D40_DEACTIVATE_EVENTLINE << D40_EVENTLINE_POS(event))
+		writel((D40_DEACTIVATE_EVENTLINE << D40_EVENTLINE_POS(event))
 		       | ~D40_EVENTLINE_MASK(event), addr);
-		अवरोध;
+		break;
 
-	हाल D40_SUSPEND_REQ_EVENTLINE:
-		status = (पढ़ोl(addr) & D40_EVENTLINE_MASK(event)) >>
+	case D40_SUSPEND_REQ_EVENTLINE:
+		status = (readl(addr) & D40_EVENTLINE_MASK(event)) >>
 			  D40_EVENTLINE_POS(event);
 
-		अगर (status == D40_DEACTIVATE_EVENTLINE ||
+		if (status == D40_DEACTIVATE_EVENTLINE ||
 		    status == D40_SUSPEND_REQ_EVENTLINE)
-			अवरोध;
+			break;
 
-		ग_लिखोl((D40_SUSPEND_REQ_EVENTLINE << D40_EVENTLINE_POS(event))
+		writel((D40_SUSPEND_REQ_EVENTLINE << D40_EVENTLINE_POS(event))
 		       | ~D40_EVENTLINE_MASK(event), addr);
 
-		क्रम (tries = 0 ; tries < D40_SUSPEND_MAX_IT; tries++) अणु
+		for (tries = 0 ; tries < D40_SUSPEND_MAX_IT; tries++) {
 
-			status = (पढ़ोl(addr) & D40_EVENTLINE_MASK(event)) >>
+			status = (readl(addr) & D40_EVENTLINE_MASK(event)) >>
 				  D40_EVENTLINE_POS(event);
 
 			cpu_relax();
 			/*
-			 * Reduce the number of bus accesses जबतक
-			 * रुकोing क्रम the DMA to suspend.
+			 * Reduce the number of bus accesses while
+			 * waiting for the DMA to suspend.
 			 */
 			udelay(3);
 
-			अगर (status == D40_DEACTIVATE_EVENTLINE)
-				अवरोध;
-		पूर्ण
+			if (status == D40_DEACTIVATE_EVENTLINE)
+				break;
+		}
 
-		अगर (tries == D40_SUSPEND_MAX_IT) अणु
+		if (tries == D40_SUSPEND_MAX_IT) {
 			chan_err(d40c,
 				"unable to stop the event_line chl %d (log: %d)"
 				"status %x\n", d40c->phy_chan->num,
 				 d40c->log_num, status);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल D40_ACTIVATE_EVENTLINE:
+	case D40_ACTIVATE_EVENTLINE:
 	/*
-	 * The hardware someबार करोesn't रेजिस्टर the enable when src and dst
+	 * The hardware sometimes doesn't register the enable when src and dst
 	 * event lines are active on the same logical channel.  Retry to ensure
-	 * it करोes.  Usually only one retry is sufficient.
+	 * it does.  Usually only one retry is sufficient.
 	 */
 		tries = 100;
-		जबतक (--tries) अणु
-			ग_लिखोl((D40_ACTIVATE_EVENTLINE <<
+		while (--tries) {
+			writel((D40_ACTIVATE_EVENTLINE <<
 				D40_EVENTLINE_POS(event)) |
 				~D40_EVENTLINE_MASK(event), addr);
 
-			अगर (पढ़ोl(addr) & D40_EVENTLINE_MASK(event))
-				अवरोध;
-		पूर्ण
+			if (readl(addr) & D40_EVENTLINE_MASK(event))
+				break;
+		}
 
-		अगर (tries != 99)
+		if (tries != 99)
 			dev_dbg(chan2dev(d40c),
 				"[%s] workaround enable S%cLNK (%d tries)\n",
 				__func__, reg == D40_CHAN_REG_SSLNK ? 'S' : 'D',
 				100 - tries);
 
 		WARN_ON(!tries);
-		अवरोध;
+		break;
 
-	हाल D40_ROUND_EVENTLINE:
+	case D40_ROUND_EVENTLINE:
 		BUG();
-		अवरोध;
+		break;
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम d40_config_set_event(काष्ठा d40_chan *d40c,
-				 क्रमागत d40_events event_type)
-अणु
+static void d40_config_set_event(struct d40_chan *d40c,
+				 enum d40_events event_type)
+{
 	u32 event = D40_TYPE_TO_EVENT(d40c->dma_cfg.dev_type);
 
-	/* Enable event line connected to device (or स_नकल) */
-	अगर ((d40c->dma_cfg.dir == DMA_DEV_TO_MEM) ||
+	/* Enable event line connected to device (or memcpy) */
+	if ((d40c->dma_cfg.dir == DMA_DEV_TO_MEM) ||
 	    (d40c->dma_cfg.dir == DMA_DEV_TO_DEV))
 		__d40_config_set_event(d40c, event_type, event,
 				       D40_CHAN_REG_SSLNK);
 
-	अगर (d40c->dma_cfg.dir !=  DMA_DEV_TO_MEM)
+	if (d40c->dma_cfg.dir !=  DMA_DEV_TO_MEM)
 		__d40_config_set_event(d40c, event_type, event,
 				       D40_CHAN_REG_SDLNK);
-पूर्ण
+}
 
-अटल u32 d40_chan_has_events(काष्ठा d40_chan *d40c)
-अणु
-	व्योम __iomem *chanbase = chan_base(d40c);
+static u32 d40_chan_has_events(struct d40_chan *d40c)
+{
+	void __iomem *chanbase = chan_base(d40c);
 	u32 val;
 
-	val = पढ़ोl(chanbase + D40_CHAN_REG_SSLNK);
-	val |= पढ़ोl(chanbase + D40_CHAN_REG_SDLNK);
+	val = readl(chanbase + D40_CHAN_REG_SSLNK);
+	val |= readl(chanbase + D40_CHAN_REG_SDLNK);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक
-__d40_execute_command_log(काष्ठा d40_chan *d40c, क्रमागत d40_command command)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+static int
+__d40_execute_command_log(struct d40_chan *d40c, enum d40_command command)
+{
+	unsigned long flags;
+	int ret = 0;
 	u32 active_status;
-	व्योम __iomem *active_reg;
+	void __iomem *active_reg;
 
-	अगर (d40c->phy_chan->num % 2 == 0)
+	if (d40c->phy_chan->num % 2 == 0)
 		active_reg = d40c->base->virtbase + D40_DREG_ACTIVE;
-	अन्यथा
+	else
 		active_reg = d40c->base->virtbase + D40_DREG_ACTIVO;
 
 
 	spin_lock_irqsave(&d40c->phy_chan->lock, flags);
 
-	चयन (command) अणु
-	हाल D40_DMA_STOP:
-	हाल D40_DMA_SUSPEND_REQ:
+	switch (command) {
+	case D40_DMA_STOP:
+	case D40_DMA_SUSPEND_REQ:
 
-		active_status = (पढ़ोl(active_reg) &
+		active_status = (readl(active_reg) &
 				 D40_CHAN_POS_MASK(d40c->phy_chan->num)) >>
 				 D40_CHAN_POS(d40c->phy_chan->num);
 
-		अगर (active_status == D40_DMA_RUN)
+		if (active_status == D40_DMA_RUN)
 			d40_config_set_event(d40c, D40_SUSPEND_REQ_EVENTLINE);
-		अन्यथा
+		else
 			d40_config_set_event(d40c, D40_DEACTIVATE_EVENTLINE);
 
-		अगर (!d40_chan_has_events(d40c) && (command == D40_DMA_STOP))
+		if (!d40_chan_has_events(d40c) && (command == D40_DMA_STOP))
 			ret = __d40_execute_command_phy(d40c, command);
 
-		अवरोध;
+		break;
 
-	हाल D40_DMA_RUN:
+	case D40_DMA_RUN:
 
 		d40_config_set_event(d40c, D40_ACTIVATE_EVENTLINE);
 		ret = __d40_execute_command_phy(d40c, command);
-		अवरोध;
+		break;
 
-	हाल D40_DMA_SUSPENDED:
+	case D40_DMA_SUSPENDED:
 		BUG();
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	spin_unlock_irqrestore(&d40c->phy_chan->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक d40_channel_execute_command(काष्ठा d40_chan *d40c,
-				       क्रमागत d40_command command)
-अणु
-	अगर (chan_is_logical(d40c))
-		वापस __d40_execute_command_log(d40c, command);
-	अन्यथा
-		वापस __d40_execute_command_phy(d40c, command);
-पूर्ण
+static int d40_channel_execute_command(struct d40_chan *d40c,
+				       enum d40_command command)
+{
+	if (chan_is_logical(d40c))
+		return __d40_execute_command_log(d40c, command);
+	else
+		return __d40_execute_command_phy(d40c, command);
+}
 
-अटल u32 d40_get_prmo(काष्ठा d40_chan *d40c)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक phy_map[] = अणु
+static u32 d40_get_prmo(struct d40_chan *d40c)
+{
+	static const unsigned int phy_map[] = {
 		[STEDMA40_PCHAN_BASIC_MODE]
 			= D40_DREG_PRMO_PCHAN_BASIC,
 		[STEDMA40_PCHAN_MODULO_MODE]
 			= D40_DREG_PRMO_PCHAN_MODULO,
 		[STEDMA40_PCHAN_DOUBLE_DST_MODE]
 			= D40_DREG_PRMO_PCHAN_DOUBLE_DST,
-	पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक log_map[] = अणु
+	};
+	static const unsigned int log_map[] = {
 		[STEDMA40_LCHAN_SRC_PHY_DST_LOG]
 			= D40_DREG_PRMO_LCHAN_SRC_PHY_DST_LOG,
 		[STEDMA40_LCHAN_SRC_LOG_DST_PHY]
 			= D40_DREG_PRMO_LCHAN_SRC_LOG_DST_PHY,
 		[STEDMA40_LCHAN_SRC_LOG_DST_LOG]
 			= D40_DREG_PRMO_LCHAN_SRC_LOG_DST_LOG,
-	पूर्ण;
+	};
 
-	अगर (chan_is_physical(d40c))
-		वापस phy_map[d40c->dma_cfg.mode_opt];
-	अन्यथा
-		वापस log_map[d40c->dma_cfg.mode_opt];
-पूर्ण
+	if (chan_is_physical(d40c))
+		return phy_map[d40c->dma_cfg.mode_opt];
+	else
+		return log_map[d40c->dma_cfg.mode_opt];
+}
 
-अटल व्योम d40_config_ग_लिखो(काष्ठा d40_chan *d40c)
-अणु
+static void d40_config_write(struct d40_chan *d40c)
+{
 	u32 addr_base;
 	u32 var;
 
@@ -1356,120 +1355,120 @@ __d40_execute_command_log(काष्ठा d40_chan *d40c, क्रमाग�
 	/* Setup channel mode to logical or physical */
 	var = ((u32)(chan_is_logical(d40c)) + 1) <<
 		D40_CHAN_POS(d40c->phy_chan->num);
-	ग_लिखोl(var, d40c->base->virtbase + D40_DREG_PRMSE + addr_base);
+	writel(var, d40c->base->virtbase + D40_DREG_PRMSE + addr_base);
 
-	/* Setup operational mode option रेजिस्टर */
+	/* Setup operational mode option register */
 	var = d40_get_prmo(d40c) << D40_CHAN_POS(d40c->phy_chan->num);
 
-	ग_लिखोl(var, d40c->base->virtbase + D40_DREG_PRMOE + addr_base);
+	writel(var, d40c->base->virtbase + D40_DREG_PRMOE + addr_base);
 
-	अगर (chan_is_logical(d40c)) अणु
-		पूर्णांक lidx = (d40c->phy_chan->num << D40_SREG_ELEM_LOG_LIDX_POS)
+	if (chan_is_logical(d40c)) {
+		int lidx = (d40c->phy_chan->num << D40_SREG_ELEM_LOG_LIDX_POS)
 			   & D40_SREG_ELEM_LOG_LIDX_MASK;
-		व्योम __iomem *chanbase = chan_base(d40c);
+		void __iomem *chanbase = chan_base(d40c);
 
-		/* Set शेष config क्रम CFG reg */
-		ग_लिखोl(d40c->src_def_cfg, chanbase + D40_CHAN_REG_SSCFG);
-		ग_लिखोl(d40c->dst_def_cfg, chanbase + D40_CHAN_REG_SDCFG);
+		/* Set default config for CFG reg */
+		writel(d40c->src_def_cfg, chanbase + D40_CHAN_REG_SSCFG);
+		writel(d40c->dst_def_cfg, chanbase + D40_CHAN_REG_SDCFG);
 
-		/* Set LIDX क्रम lcla */
-		ग_लिखोl(lidx, chanbase + D40_CHAN_REG_SSELT);
-		ग_लिखोl(lidx, chanbase + D40_CHAN_REG_SDELT);
+		/* Set LIDX for lcla */
+		writel(lidx, chanbase + D40_CHAN_REG_SSELT);
+		writel(lidx, chanbase + D40_CHAN_REG_SDELT);
 
 		/* Clear LNK which will be used by d40_chan_has_events() */
-		ग_लिखोl(0, chanbase + D40_CHAN_REG_SSLNK);
-		ग_लिखोl(0, chanbase + D40_CHAN_REG_SDLNK);
-	पूर्ण
-पूर्ण
+		writel(0, chanbase + D40_CHAN_REG_SSLNK);
+		writel(0, chanbase + D40_CHAN_REG_SDLNK);
+	}
+}
 
-अटल u32 d40_residue(काष्ठा d40_chan *d40c)
-अणु
+static u32 d40_residue(struct d40_chan *d40c)
+{
 	u32 num_elt;
 
-	अगर (chan_is_logical(d40c))
-		num_elt = (पढ़ोl(&d40c->lcpa->lcsp2) & D40_MEM_LCSP2_ECNT_MASK)
+	if (chan_is_logical(d40c))
+		num_elt = (readl(&d40c->lcpa->lcsp2) & D40_MEM_LCSP2_ECNT_MASK)
 			>> D40_MEM_LCSP2_ECNT_POS;
-	अन्यथा अणु
-		u32 val = पढ़ोl(chan_base(d40c) + D40_CHAN_REG_SDELT);
+	else {
+		u32 val = readl(chan_base(d40c) + D40_CHAN_REG_SDELT);
 		num_elt = (val & D40_SREG_ELEM_PHY_ECNT_MASK)
 			  >> D40_SREG_ELEM_PHY_ECNT_POS;
-	पूर्ण
+	}
 
-	वापस num_elt * d40c->dma_cfg.dst_info.data_width;
-पूर्ण
+	return num_elt * d40c->dma_cfg.dst_info.data_width;
+}
 
-अटल bool d40_tx_is_linked(काष्ठा d40_chan *d40c)
-अणु
+static bool d40_tx_is_linked(struct d40_chan *d40c)
+{
 	bool is_link;
 
-	अगर (chan_is_logical(d40c))
-		is_link = पढ़ोl(&d40c->lcpa->lcsp3) &  D40_MEM_LCSP3_DLOS_MASK;
-	अन्यथा
-		is_link = पढ़ोl(chan_base(d40c) + D40_CHAN_REG_SDLNK)
+	if (chan_is_logical(d40c))
+		is_link = readl(&d40c->lcpa->lcsp3) &  D40_MEM_LCSP3_DLOS_MASK;
+	else
+		is_link = readl(chan_base(d40c) + D40_CHAN_REG_SDLNK)
 			  & D40_SREG_LNK_PHYS_LNK_MASK;
 
-	वापस is_link;
-पूर्ण
+	return is_link;
+}
 
-अटल पूर्णांक d40_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
-	पूर्णांक res = 0;
-	अचिन्हित दीर्घ flags;
+static int d40_pause(struct dma_chan *chan)
+{
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
+	int res = 0;
+	unsigned long flags;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Channel is not allocated!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!d40c->busy)
-		वापस 0;
+	if (!d40c->busy)
+		return 0;
 
 	spin_lock_irqsave(&d40c->lock, flags);
-	pm_runसमय_get_sync(d40c->base->dev);
+	pm_runtime_get_sync(d40c->base->dev);
 
 	res = d40_channel_execute_command(d40c, D40_DMA_SUSPEND_REQ);
 
-	pm_runसमय_mark_last_busy(d40c->base->dev);
-	pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
+	pm_runtime_mark_last_busy(d40c->base->dev);
+	pm_runtime_put_autosuspend(d40c->base->dev);
 	spin_unlock_irqrestore(&d40c->lock, flags);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक d40_resume(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
-	पूर्णांक res = 0;
-	अचिन्हित दीर्घ flags;
+static int d40_resume(struct dma_chan *chan)
+{
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
+	int res = 0;
+	unsigned long flags;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Channel is not allocated!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!d40c->busy)
-		वापस 0;
+	if (!d40c->busy)
+		return 0;
 
 	spin_lock_irqsave(&d40c->lock, flags);
-	pm_runसमय_get_sync(d40c->base->dev);
+	pm_runtime_get_sync(d40c->base->dev);
 
 	/* If bytes left to transfer or linked tx resume job */
-	अगर (d40_residue(d40c) || d40_tx_is_linked(d40c))
+	if (d40_residue(d40c) || d40_tx_is_linked(d40c))
 		res = d40_channel_execute_command(d40c, D40_DMA_RUN);
 
-	pm_runसमय_mark_last_busy(d40c->base->dev);
-	pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
+	pm_runtime_mark_last_busy(d40c->base->dev);
+	pm_runtime_put_autosuspend(d40c->base->dev);
 	spin_unlock_irqrestore(&d40c->lock, flags);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल dma_cookie_t d40_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा d40_chan *d40c = container_of(tx->chan,
-					     काष्ठा d40_chan,
+static dma_cookie_t d40_tx_submit(struct dma_async_tx_descriptor *tx)
+{
+	struct d40_chan *d40c = container_of(tx->chan,
+					     struct d40_chan,
 					     chan);
-	काष्ठा d40_desc *d40d = container_of(tx, काष्ठा d40_desc, txd);
-	अचिन्हित दीर्घ flags;
+	struct d40_desc *d40d = container_of(tx, struct d40_desc, txd);
+	unsigned long flags;
 	dma_cookie_t cookie;
 
 	spin_lock_irqsave(&d40c->lock, flags);
@@ -1477,30 +1476,30 @@ __d40_execute_command_log(काष्ठा d40_chan *d40c, क्रमाग�
 	d40_desc_queue(d40c, d40d);
 	spin_unlock_irqrestore(&d40c->lock, flags);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल पूर्णांक d40_start(काष्ठा d40_chan *d40c)
-अणु
-	वापस d40_channel_execute_command(d40c, D40_DMA_RUN);
-पूर्ण
+static int d40_start(struct d40_chan *d40c)
+{
+	return d40_channel_execute_command(d40c, D40_DMA_RUN);
+}
 
-अटल काष्ठा d40_desc *d40_queue_start(काष्ठा d40_chan *d40c)
-अणु
-	काष्ठा d40_desc *d40d;
-	पूर्णांक err;
+static struct d40_desc *d40_queue_start(struct d40_chan *d40c)
+{
+	struct d40_desc *d40d;
+	int err;
 
-	/* Start queued jobs, अगर any */
+	/* Start queued jobs, if any */
 	d40d = d40_first_queued(d40c);
 
-	अगर (d40d != शून्य) अणु
-		अगर (!d40c->busy) अणु
+	if (d40d != NULL) {
+		if (!d40c->busy) {
 			d40c->busy = true;
-			pm_runसमय_get_sync(d40c->base->dev);
-		पूर्ण
+			pm_runtime_get_sync(d40c->base->dev);
+		}
 
 		/* Remove from queue */
-		d40_desc_हटाओ(d40d);
+		d40_desc_remove(d40d);
 
 		/* Add to active queue */
 		d40_desc_submit(d40c, d40d);
@@ -1511,225 +1510,225 @@ __d40_execute_command_log(काष्ठा d40_chan *d40c, क्रमाग�
 		/* Start dma job */
 		err = d40_start(d40c);
 
-		अगर (err)
-			वापस शून्य;
-	पूर्ण
+		if (err)
+			return NULL;
+	}
 
-	वापस d40d;
-पूर्ण
+	return d40d;
+}
 
-/* called from पूर्णांकerrupt context */
-अटल व्योम dma_tc_handle(काष्ठा d40_chan *d40c)
-अणु
-	काष्ठा d40_desc *d40d;
+/* called from interrupt context */
+static void dma_tc_handle(struct d40_chan *d40c)
+{
+	struct d40_desc *d40d;
 
 	/* Get first active entry from list */
 	d40d = d40_first_active_get(d40c);
 
-	अगर (d40d == शून्य)
-		वापस;
+	if (d40d == NULL)
+		return;
 
-	अगर (d40d->cyclic) अणु
+	if (d40d->cyclic) {
 		/*
 		 * If this was a paritially loaded list, we need to reloaded
 		 * it, and only when the list is completed.  We need to check
-		 * क्रम करोne because the पूर्णांकerrupt will hit क्रम every link, and
+		 * for done because the interrupt will hit for every link, and
 		 * not just the last one.
 		 */
-		अगर (d40d->lli_current < d40d->lli_len
+		if (d40d->lli_current < d40d->lli_len
 		    && !d40_tx_is_linked(d40c)
-		    && !d40_residue(d40c)) अणु
-			d40_lcla_मुक्त_all(d40c, d40d);
+		    && !d40_residue(d40c)) {
+			d40_lcla_free_all(d40c, d40d);
 			d40_desc_load(d40c, d40d);
-			(व्योम) d40_start(d40c);
+			(void) d40_start(d40c);
 
-			अगर (d40d->lli_current == d40d->lli_len)
+			if (d40d->lli_current == d40d->lli_len)
 				d40d->lli_current = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		d40_lcla_मुक्त_all(d40c, d40d);
+		}
+	} else {
+		d40_lcla_free_all(d40c, d40d);
 
-		अगर (d40d->lli_current < d40d->lli_len) अणु
+		if (d40d->lli_current < d40d->lli_len) {
 			d40_desc_load(d40c, d40d);
 			/* Start dma job */
-			(व्योम) d40_start(d40c);
-			वापस;
-		पूर्ण
+			(void) d40_start(d40c);
+			return;
+		}
 
-		अगर (d40_queue_start(d40c) == शून्य) अणु
+		if (d40_queue_start(d40c) == NULL) {
 			d40c->busy = false;
 
-			pm_runसमय_mark_last_busy(d40c->base->dev);
-			pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
-		पूर्ण
+			pm_runtime_mark_last_busy(d40c->base->dev);
+			pm_runtime_put_autosuspend(d40c->base->dev);
+		}
 
-		d40_desc_हटाओ(d40d);
-		d40_desc_करोne(d40c, d40d);
-	पूर्ण
+		d40_desc_remove(d40d);
+		d40_desc_done(d40c, d40d);
+	}
 
 	d40c->pending_tx++;
 	tasklet_schedule(&d40c->tasklet);
 
-पूर्ण
+}
 
-अटल व्योम dma_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा d40_chan *d40c = from_tasklet(d40c, t, tasklet);
-	काष्ठा d40_desc *d40d;
-	अचिन्हित दीर्घ flags;
+static void dma_tasklet(struct tasklet_struct *t)
+{
+	struct d40_chan *d40c = from_tasklet(d40c, t, tasklet);
+	struct d40_desc *d40d;
+	unsigned long flags;
 	bool callback_active;
-	काष्ठा dmaengine_desc_callback cb;
+	struct dmaengine_desc_callback cb;
 
 	spin_lock_irqsave(&d40c->lock, flags);
 
-	/* Get first entry from the करोne list */
-	d40d = d40_first_करोne(d40c);
-	अगर (d40d == शून्य) अणु
-		/* Check अगर we have reached here क्रम cyclic job */
+	/* Get first entry from the done list */
+	d40d = d40_first_done(d40c);
+	if (d40d == NULL) {
+		/* Check if we have reached here for cyclic job */
 		d40d = d40_first_active_get(d40c);
-		अगर (d40d == शून्य || !d40d->cyclic)
-			जाओ check_pending_tx;
-	पूर्ण
+		if (d40d == NULL || !d40d->cyclic)
+			goto check_pending_tx;
+	}
 
-	अगर (!d40d->cyclic)
+	if (!d40d->cyclic)
 		dma_cookie_complete(&d40d->txd);
 
 	/*
 	 * If terminating a channel pending_tx is set to zero.
-	 * This prevents any finished active jobs to वापस to the client.
+	 * This prevents any finished active jobs to return to the client.
 	 */
-	अगर (d40c->pending_tx == 0) अणु
+	if (d40c->pending_tx == 0) {
 		spin_unlock_irqrestore(&d40c->lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Callback to client */
 	callback_active = !!(d40d->txd.flags & DMA_PREP_INTERRUPT);
 	dmaengine_desc_get_callback(&d40d->txd, &cb);
 
-	अगर (!d40d->cyclic) अणु
-		अगर (async_tx_test_ack(&d40d->txd)) अणु
-			d40_desc_हटाओ(d40d);
-			d40_desc_मुक्त(d40c, d40d);
-		पूर्ण अन्यथा अगर (!d40d->is_in_client_list) अणु
-			d40_desc_हटाओ(d40d);
-			d40_lcla_मुक्त_all(d40c, d40d);
+	if (!d40d->cyclic) {
+		if (async_tx_test_ack(&d40d->txd)) {
+			d40_desc_remove(d40d);
+			d40_desc_free(d40c, d40d);
+		} else if (!d40d->is_in_client_list) {
+			d40_desc_remove(d40d);
+			d40_lcla_free_all(d40c, d40d);
 			list_add_tail(&d40d->node, &d40c->client);
 			d40d->is_in_client_list = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	d40c->pending_tx--;
 
-	अगर (d40c->pending_tx)
+	if (d40c->pending_tx)
 		tasklet_schedule(&d40c->tasklet);
 
 	spin_unlock_irqrestore(&d40c->lock, flags);
 
-	अगर (callback_active)
-		dmaengine_desc_callback_invoke(&cb, शून्य);
+	if (callback_active)
+		dmaengine_desc_callback_invoke(&cb, NULL);
 
-	वापस;
+	return;
  check_pending_tx:
-	/* Rescue manouver अगर receiving द्विगुन पूर्णांकerrupts */
-	अगर (d40c->pending_tx > 0)
+	/* Rescue manouver if receiving double interrupts */
+	if (d40c->pending_tx > 0)
 		d40c->pending_tx--;
 	spin_unlock_irqrestore(&d40c->lock, flags);
-पूर्ण
+}
 
-अटल irqवापस_t d40_handle_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	पूर्णांक i;
+static irqreturn_t d40_handle_interrupt(int irq, void *data)
+{
+	int i;
 	u32 idx;
 	u32 row;
-	दीर्घ chan = -1;
-	काष्ठा d40_chan *d40c;
-	काष्ठा d40_base *base = data;
-	u32 *regs = base->regs_पूर्णांकerrupt;
-	काष्ठा d40_पूर्णांकerrupt_lookup *il = base->gen_dmac.il;
+	long chan = -1;
+	struct d40_chan *d40c;
+	struct d40_base *base = data;
+	u32 *regs = base->regs_interrupt;
+	struct d40_interrupt_lookup *il = base->gen_dmac.il;
 	u32 il_size = base->gen_dmac.il_size;
 
-	spin_lock(&base->पूर्णांकerrupt_lock);
+	spin_lock(&base->interrupt_lock);
 
-	/* Read पूर्णांकerrupt status of both logical and physical channels */
-	क्रम (i = 0; i < il_size; i++)
-		regs[i] = पढ़ोl(base->virtbase + il[i].src);
+	/* Read interrupt status of both logical and physical channels */
+	for (i = 0; i < il_size; i++)
+		regs[i] = readl(base->virtbase + il[i].src);
 
-	क्रम (;;) अणु
+	for (;;) {
 
-		chan = find_next_bit((अचिन्हित दीर्घ *)regs,
+		chan = find_next_bit((unsigned long *)regs,
 				     BITS_PER_LONG * il_size, chan + 1);
 
 		/* No more set bits found? */
-		अगर (chan == BITS_PER_LONG * il_size)
-			अवरोध;
+		if (chan == BITS_PER_LONG * il_size)
+			break;
 
 		row = chan / BITS_PER_LONG;
 		idx = chan & (BITS_PER_LONG - 1);
 
-		अगर (il[row].offset == D40_PHY_CHAN)
+		if (il[row].offset == D40_PHY_CHAN)
 			d40c = base->lookup_phy_chans[idx];
-		अन्यथा
+		else
 			d40c = base->lookup_log_chans[il[row].offset + idx];
 
-		अगर (!d40c) अणु
+		if (!d40c) {
 			/*
-			 * No error because this can happen अगर something अन्यथा
-			 * in the प्रणाली is using the channel.
+			 * No error because this can happen if something else
+			 * in the system is using the channel.
 			 */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* ACK पूर्णांकerrupt */
-		ग_लिखोl(BIT(idx), base->virtbase + il[row].clr);
+		/* ACK interrupt */
+		writel(BIT(idx), base->virtbase + il[row].clr);
 
 		spin_lock(&d40c->lock);
 
-		अगर (!il[row].is_error)
+		if (!il[row].is_error)
 			dma_tc_handle(d40c);
-		अन्यथा
+		else
 			d40_err(base->dev, "IRQ chan: %ld offset %d idx %d\n",
 				chan, il[row].offset, idx);
 
 		spin_unlock(&d40c->lock);
-	पूर्ण
+	}
 
-	spin_unlock(&base->पूर्णांकerrupt_lock);
+	spin_unlock(&base->interrupt_lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक d40_validate_conf(काष्ठा d40_chan *d40c,
-			     काष्ठा stedma40_chan_cfg *conf)
-अणु
-	पूर्णांक res = 0;
+static int d40_validate_conf(struct d40_chan *d40c,
+			     struct stedma40_chan_cfg *conf)
+{
+	int res = 0;
 	bool is_log = conf->mode == STEDMA40_MODE_LOGICAL;
 
-	अगर (!conf->dir) अणु
+	if (!conf->dir) {
 		chan_err(d40c, "Invalid direction.\n");
 		res = -EINVAL;
-	पूर्ण
+	}
 
-	अगर ((is_log && conf->dev_type > d40c->base->num_log_chans)  ||
+	if ((is_log && conf->dev_type > d40c->base->num_log_chans)  ||
 	    (!is_log && conf->dev_type > d40c->base->num_phy_chans) ||
-	    (conf->dev_type < 0)) अणु
+	    (conf->dev_type < 0)) {
 		chan_err(d40c, "Invalid device type (%d)\n", conf->dev_type);
 		res = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (conf->dir == DMA_DEV_TO_DEV) अणु
+	if (conf->dir == DMA_DEV_TO_DEV) {
 		/*
 		 * DMAC HW supports it. Will be added to this driver,
-		 * in हाल any dma client requires it.
+		 * in case any dma client requires it.
 		 */
 		chan_err(d40c, "periph to periph not supported\n");
 		res = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (d40_psize_2_burst_size(is_log, conf->src_info.psize) *
+	if (d40_psize_2_burst_size(is_log, conf->src_info.psize) *
 	    conf->src_info.data_width !=
 	    d40_psize_2_burst_size(is_log, conf->dst_info.psize) *
-	    conf->dst_info.data_width) अणु
+	    conf->dst_info.data_width) {
 		/*
 		 * The DMAC hardware only supports
 		 * src (burst x width) == dst (burst x width)
@@ -1737,385 +1736,385 @@ __d40_execute_command_log(काष्ठा d40_chan *d40c, क्रमाग�
 
 		chan_err(d40c, "src (burst x width) != dst (burst x width)\n");
 		res = -EINVAL;
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल bool d40_alloc_mask_set(काष्ठा d40_phy_res *phy,
-			       bool is_src, पूर्णांक log_event_line, bool is_log,
+static bool d40_alloc_mask_set(struct d40_phy_res *phy,
+			       bool is_src, int log_event_line, bool is_log,
 			       bool *first_user)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 	spin_lock_irqsave(&phy->lock, flags);
 
 	*first_user = ((phy->allocated_src | phy->allocated_dst)
 			== D40_ALLOC_FREE);
 
-	अगर (!is_log) अणु
-		/* Physical पूर्णांकerrupts are masked per physical full channel */
-		अगर (phy->allocated_src == D40_ALLOC_FREE &&
-		    phy->allocated_dst == D40_ALLOC_FREE) अणु
+	if (!is_log) {
+		/* Physical interrupts are masked per physical full channel */
+		if (phy->allocated_src == D40_ALLOC_FREE &&
+		    phy->allocated_dst == D40_ALLOC_FREE) {
 			phy->allocated_dst = D40_ALLOC_PHY;
 			phy->allocated_src = D40_ALLOC_PHY;
-			जाओ found_unlock;
-		पूर्ण अन्यथा
-			जाओ not_found_unlock;
-	पूर्ण
+			goto found_unlock;
+		} else
+			goto not_found_unlock;
+	}
 
 	/* Logical channel */
-	अगर (is_src) अणु
-		अगर (phy->allocated_src == D40_ALLOC_PHY)
-			जाओ not_found_unlock;
+	if (is_src) {
+		if (phy->allocated_src == D40_ALLOC_PHY)
+			goto not_found_unlock;
 
-		अगर (phy->allocated_src == D40_ALLOC_FREE)
+		if (phy->allocated_src == D40_ALLOC_FREE)
 			phy->allocated_src = D40_ALLOC_LOG_FREE;
 
-		अगर (!(phy->allocated_src & BIT(log_event_line))) अणु
+		if (!(phy->allocated_src & BIT(log_event_line))) {
 			phy->allocated_src |= BIT(log_event_line);
-			जाओ found_unlock;
-		पूर्ण अन्यथा
-			जाओ not_found_unlock;
-	पूर्ण अन्यथा अणु
-		अगर (phy->allocated_dst == D40_ALLOC_PHY)
-			जाओ not_found_unlock;
+			goto found_unlock;
+		} else
+			goto not_found_unlock;
+	} else {
+		if (phy->allocated_dst == D40_ALLOC_PHY)
+			goto not_found_unlock;
 
-		अगर (phy->allocated_dst == D40_ALLOC_FREE)
+		if (phy->allocated_dst == D40_ALLOC_FREE)
 			phy->allocated_dst = D40_ALLOC_LOG_FREE;
 
-		अगर (!(phy->allocated_dst & BIT(log_event_line))) अणु
+		if (!(phy->allocated_dst & BIT(log_event_line))) {
 			phy->allocated_dst |= BIT(log_event_line);
-			जाओ found_unlock;
-		पूर्ण
-	पूर्ण
+			goto found_unlock;
+		}
+	}
  not_found_unlock:
 	spin_unlock_irqrestore(&phy->lock, flags);
-	वापस false;
+	return false;
  found_unlock:
 	spin_unlock_irqrestore(&phy->lock, flags);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool d40_alloc_mask_मुक्त(काष्ठा d40_phy_res *phy, bool is_src,
-			       पूर्णांक log_event_line)
-अणु
-	अचिन्हित दीर्घ flags;
-	bool is_मुक्त = false;
+static bool d40_alloc_mask_free(struct d40_phy_res *phy, bool is_src,
+			       int log_event_line)
+{
+	unsigned long flags;
+	bool is_free = false;
 
 	spin_lock_irqsave(&phy->lock, flags);
-	अगर (!log_event_line) अणु
+	if (!log_event_line) {
 		phy->allocated_dst = D40_ALLOC_FREE;
 		phy->allocated_src = D40_ALLOC_FREE;
-		is_मुक्त = true;
-		जाओ unlock;
-	पूर्ण
+		is_free = true;
+		goto unlock;
+	}
 
 	/* Logical channel */
-	अगर (is_src) अणु
+	if (is_src) {
 		phy->allocated_src &= ~BIT(log_event_line);
-		अगर (phy->allocated_src == D40_ALLOC_LOG_FREE)
+		if (phy->allocated_src == D40_ALLOC_LOG_FREE)
 			phy->allocated_src = D40_ALLOC_FREE;
-	पूर्ण अन्यथा अणु
+	} else {
 		phy->allocated_dst &= ~BIT(log_event_line);
-		अगर (phy->allocated_dst == D40_ALLOC_LOG_FREE)
+		if (phy->allocated_dst == D40_ALLOC_LOG_FREE)
 			phy->allocated_dst = D40_ALLOC_FREE;
-	पूर्ण
+	}
 
-	is_मुक्त = ((phy->allocated_src | phy->allocated_dst) ==
+	is_free = ((phy->allocated_src | phy->allocated_dst) ==
 		   D40_ALLOC_FREE);
  unlock:
 	spin_unlock_irqrestore(&phy->lock, flags);
 
-	वापस is_मुक्त;
-पूर्ण
+	return is_free;
+}
 
-अटल पूर्णांक d40_allocate_channel(काष्ठा d40_chan *d40c, bool *first_phy_user)
-अणु
-	पूर्णांक dev_type = d40c->dma_cfg.dev_type;
-	पूर्णांक event_group;
-	पूर्णांक event_line;
-	काष्ठा d40_phy_res *phys;
-	पूर्णांक i;
-	पूर्णांक j;
-	पूर्णांक log_num;
-	पूर्णांक num_phy_chans;
+static int d40_allocate_channel(struct d40_chan *d40c, bool *first_phy_user)
+{
+	int dev_type = d40c->dma_cfg.dev_type;
+	int event_group;
+	int event_line;
+	struct d40_phy_res *phys;
+	int i;
+	int j;
+	int log_num;
+	int num_phy_chans;
 	bool is_src;
 	bool is_log = d40c->dma_cfg.mode == STEDMA40_MODE_LOGICAL;
 
 	phys = d40c->base->phy_res;
 	num_phy_chans = d40c->base->num_phy_chans;
 
-	अगर (d40c->dma_cfg.dir == DMA_DEV_TO_MEM) अणु
+	if (d40c->dma_cfg.dir == DMA_DEV_TO_MEM) {
 		log_num = 2 * dev_type;
 		is_src = true;
-	पूर्ण अन्यथा अगर (d40c->dma_cfg.dir == DMA_MEM_TO_DEV ||
-		   d40c->dma_cfg.dir == DMA_MEM_TO_MEM) अणु
-		/* dst event lines are used क्रम logical स_नकल */
+	} else if (d40c->dma_cfg.dir == DMA_MEM_TO_DEV ||
+		   d40c->dma_cfg.dir == DMA_MEM_TO_MEM) {
+		/* dst event lines are used for logical memcpy */
 		log_num = 2 * dev_type + 1;
 		is_src = false;
-	पूर्ण अन्यथा
-		वापस -EINVAL;
+	} else
+		return -EINVAL;
 
 	event_group = D40_TYPE_TO_GROUP(dev_type);
 	event_line = D40_TYPE_TO_EVENT(dev_type);
 
-	अगर (!is_log) अणु
-		अगर (d40c->dma_cfg.dir == DMA_MEM_TO_MEM) अणु
+	if (!is_log) {
+		if (d40c->dma_cfg.dir == DMA_MEM_TO_MEM) {
 			/* Find physical half channel */
-			अगर (d40c->dma_cfg.use_fixed_channel) अणु
+			if (d40c->dma_cfg.use_fixed_channel) {
 				i = d40c->dma_cfg.phy_channel;
-				अगर (d40_alloc_mask_set(&phys[i], is_src,
+				if (d40_alloc_mask_set(&phys[i], is_src,
 						       0, is_log,
 						       first_phy_user))
-					जाओ found_phy;
-			पूर्ण अन्यथा अणु
-				क्रम (i = 0; i < num_phy_chans; i++) अणु
-					अगर (d40_alloc_mask_set(&phys[i], is_src,
+					goto found_phy;
+			} else {
+				for (i = 0; i < num_phy_chans; i++) {
+					if (d40_alloc_mask_set(&phys[i], is_src,
 						       0, is_log,
 						       first_phy_user))
-						जाओ found_phy;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा
-			क्रम (j = 0; j < d40c->base->num_phy_chans; j += 8) अणु
-				पूर्णांक phy_num = j  + event_group * 2;
-				क्रम (i = phy_num; i < phy_num + 2; i++) अणु
-					अगर (d40_alloc_mask_set(&phys[i],
+						goto found_phy;
+				}
+			}
+		} else
+			for (j = 0; j < d40c->base->num_phy_chans; j += 8) {
+				int phy_num = j  + event_group * 2;
+				for (i = phy_num; i < phy_num + 2; i++) {
+					if (d40_alloc_mask_set(&phys[i],
 							       is_src,
 							       0,
 							       is_log,
 							       first_phy_user))
-						जाओ found_phy;
-				पूर्ण
-			पूर्ण
-		वापस -EINVAL;
+						goto found_phy;
+				}
+			}
+		return -EINVAL;
 found_phy:
 		d40c->phy_chan = &phys[i];
 		d40c->log_num = D40_PHY_CHAN;
-		जाओ out;
-	पूर्ण
-	अगर (dev_type == -1)
-		वापस -EINVAL;
+		goto out;
+	}
+	if (dev_type == -1)
+		return -EINVAL;
 
 	/* Find logical channel */
-	क्रम (j = 0; j < d40c->base->num_phy_chans; j += 8) अणु
-		पूर्णांक phy_num = j + event_group * 2;
+	for (j = 0; j < d40c->base->num_phy_chans; j += 8) {
+		int phy_num = j + event_group * 2;
 
-		अगर (d40c->dma_cfg.use_fixed_channel) अणु
+		if (d40c->dma_cfg.use_fixed_channel) {
 			i = d40c->dma_cfg.phy_channel;
 
-			अगर ((i != phy_num) && (i != phy_num + 1)) अणु
+			if ((i != phy_num) && (i != phy_num + 1)) {
 				dev_err(chan2dev(d40c),
 					"invalid fixed phy channel %d\n", i);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			अगर (d40_alloc_mask_set(&phys[i], is_src, event_line,
+			if (d40_alloc_mask_set(&phys[i], is_src, event_line,
 					       is_log, first_phy_user))
-				जाओ found_log;
+				goto found_log;
 
 			dev_err(chan2dev(d40c),
 				"could not allocate fixed phy channel %d\n", i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/*
-		 * Spपढ़ो logical channels across all available physical rather
+		 * Spread logical channels across all available physical rather
 		 * than pack every logical channel at the first available phy
 		 * channels.
 		 */
-		अगर (is_src) अणु
-			क्रम (i = phy_num; i < phy_num + 2; i++) अणु
-				अगर (d40_alloc_mask_set(&phys[i], is_src,
+		if (is_src) {
+			for (i = phy_num; i < phy_num + 2; i++) {
+				if (d40_alloc_mask_set(&phys[i], is_src,
 						       event_line, is_log,
 						       first_phy_user))
-					जाओ found_log;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			क्रम (i = phy_num + 1; i >= phy_num; i--) अणु
-				अगर (d40_alloc_mask_set(&phys[i], is_src,
+					goto found_log;
+			}
+		} else {
+			for (i = phy_num + 1; i >= phy_num; i--) {
+				if (d40_alloc_mask_set(&phys[i], is_src,
 						       event_line, is_log,
 						       first_phy_user))
-					जाओ found_log;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस -EINVAL;
+					goto found_log;
+			}
+		}
+	}
+	return -EINVAL;
 
 found_log:
 	d40c->phy_chan = &phys[i];
 	d40c->log_num = log_num;
 out:
 
-	अगर (is_log)
+	if (is_log)
 		d40c->base->lookup_log_chans[d40c->log_num] = d40c;
-	अन्यथा
+	else
 		d40c->base->lookup_phy_chans[d40c->phy_chan->num] = d40c;
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल पूर्णांक d40_config_स_नकल(काष्ठा d40_chan *d40c)
-अणु
+static int d40_config_memcpy(struct d40_chan *d40c)
+{
 	dma_cap_mask_t cap = d40c->chan.device->cap_mask;
 
-	अगर (dma_has_cap(DMA_MEMCPY, cap) && !dma_has_cap(DMA_SLAVE, cap)) अणु
-		d40c->dma_cfg = dma40_स_नकल_conf_log;
-		d40c->dma_cfg.dev_type = dma40_स_नकल_channels[d40c->chan.chan_id];
+	if (dma_has_cap(DMA_MEMCPY, cap) && !dma_has_cap(DMA_SLAVE, cap)) {
+		d40c->dma_cfg = dma40_memcpy_conf_log;
+		d40c->dma_cfg.dev_type = dma40_memcpy_channels[d40c->chan.chan_id];
 
 		d40_log_cfg(&d40c->dma_cfg,
 			    &d40c->log_def.lcsp1, &d40c->log_def.lcsp3);
 
-	पूर्ण अन्यथा अगर (dma_has_cap(DMA_MEMCPY, cap) &&
-		   dma_has_cap(DMA_SLAVE, cap)) अणु
-		d40c->dma_cfg = dma40_स_नकल_conf_phy;
+	} else if (dma_has_cap(DMA_MEMCPY, cap) &&
+		   dma_has_cap(DMA_SLAVE, cap)) {
+		d40c->dma_cfg = dma40_memcpy_conf_phy;
 
-		/* Generate पूर्णांकerrrupt at end of transfer or relink. */
+		/* Generate interrrupt at end of transfer or relink. */
 		d40c->dst_def_cfg |= BIT(D40_SREG_CFG_TIM_POS);
 
-		/* Generate पूर्णांकerrupt on error. */
+		/* Generate interrupt on error. */
 		d40c->src_def_cfg |= BIT(D40_SREG_CFG_EIM_POS);
 		d40c->dst_def_cfg |= BIT(D40_SREG_CFG_EIM_POS);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		chan_err(d40c, "No memcpy\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक d40_मुक्त_dma(काष्ठा d40_chan *d40c)
-अणु
+static int d40_free_dma(struct d40_chan *d40c)
+{
 
-	पूर्णांक res = 0;
+	int res = 0;
 	u32 event = D40_TYPE_TO_EVENT(d40c->dma_cfg.dev_type);
-	काष्ठा d40_phy_res *phy = d40c->phy_chan;
+	struct d40_phy_res *phy = d40c->phy_chan;
 	bool is_src;
 
 	/* Terminate all queued and active transfers */
 	d40_term_all(d40c);
 
-	अगर (phy == शून्य) अणु
+	if (phy == NULL) {
 		chan_err(d40c, "phy == null\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (phy->allocated_src == D40_ALLOC_FREE &&
-	    phy->allocated_dst == D40_ALLOC_FREE) अणु
+	if (phy->allocated_src == D40_ALLOC_FREE &&
+	    phy->allocated_dst == D40_ALLOC_FREE) {
 		chan_err(d40c, "channel already free\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (d40c->dma_cfg.dir == DMA_MEM_TO_DEV ||
+	if (d40c->dma_cfg.dir == DMA_MEM_TO_DEV ||
 	    d40c->dma_cfg.dir == DMA_MEM_TO_MEM)
 		is_src = false;
-	अन्यथा अगर (d40c->dma_cfg.dir == DMA_DEV_TO_MEM)
+	else if (d40c->dma_cfg.dir == DMA_DEV_TO_MEM)
 		is_src = true;
-	अन्यथा अणु
+	else {
 		chan_err(d40c, "Unknown direction\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pm_runसमय_get_sync(d40c->base->dev);
+	pm_runtime_get_sync(d40c->base->dev);
 	res = d40_channel_execute_command(d40c, D40_DMA_STOP);
-	अगर (res) अणु
+	if (res) {
 		chan_err(d40c, "stop failed\n");
-		जाओ mark_last_busy;
-	पूर्ण
+		goto mark_last_busy;
+	}
 
-	d40_alloc_mask_मुक्त(phy, is_src, chan_is_logical(d40c) ? event : 0);
+	d40_alloc_mask_free(phy, is_src, chan_is_logical(d40c) ? event : 0);
 
-	अगर (chan_is_logical(d40c))
-		d40c->base->lookup_log_chans[d40c->log_num] = शून्य;
-	अन्यथा
-		d40c->base->lookup_phy_chans[phy->num] = शून्य;
+	if (chan_is_logical(d40c))
+		d40c->base->lookup_log_chans[d40c->log_num] = NULL;
+	else
+		d40c->base->lookup_phy_chans[phy->num] = NULL;
 
-	अगर (d40c->busy) अणु
-		pm_runसमय_mark_last_busy(d40c->base->dev);
-		pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
-	पूर्ण
+	if (d40c->busy) {
+		pm_runtime_mark_last_busy(d40c->base->dev);
+		pm_runtime_put_autosuspend(d40c->base->dev);
+	}
 
 	d40c->busy = false;
-	d40c->phy_chan = शून्य;
+	d40c->phy_chan = NULL;
 	d40c->configured = false;
  mark_last_busy:
-	pm_runसमय_mark_last_busy(d40c->base->dev);
-	pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
-	वापस res;
-पूर्ण
+	pm_runtime_mark_last_busy(d40c->base->dev);
+	pm_runtime_put_autosuspend(d40c->base->dev);
+	return res;
+}
 
-अटल bool d40_is_छोड़ोd(काष्ठा d40_chan *d40c)
-अणु
-	व्योम __iomem *chanbase = chan_base(d40c);
-	bool is_छोड़ोd = false;
-	अचिन्हित दीर्घ flags;
-	व्योम __iomem *active_reg;
+static bool d40_is_paused(struct d40_chan *d40c)
+{
+	void __iomem *chanbase = chan_base(d40c);
+	bool is_paused = false;
+	unsigned long flags;
+	void __iomem *active_reg;
 	u32 status;
 	u32 event = D40_TYPE_TO_EVENT(d40c->dma_cfg.dev_type);
 
 	spin_lock_irqsave(&d40c->lock, flags);
 
-	अगर (chan_is_physical(d40c)) अणु
-		अगर (d40c->phy_chan->num % 2 == 0)
+	if (chan_is_physical(d40c)) {
+		if (d40c->phy_chan->num % 2 == 0)
 			active_reg = d40c->base->virtbase + D40_DREG_ACTIVE;
-		अन्यथा
+		else
 			active_reg = d40c->base->virtbase + D40_DREG_ACTIVO;
 
-		status = (पढ़ोl(active_reg) &
+		status = (readl(active_reg) &
 			  D40_CHAN_POS_MASK(d40c->phy_chan->num)) >>
 			D40_CHAN_POS(d40c->phy_chan->num);
-		अगर (status == D40_DMA_SUSPENDED || status == D40_DMA_STOP)
-			is_छोड़ोd = true;
-		जाओ unlock;
-	पूर्ण
+		if (status == D40_DMA_SUSPENDED || status == D40_DMA_STOP)
+			is_paused = true;
+		goto unlock;
+	}
 
-	अगर (d40c->dma_cfg.dir == DMA_MEM_TO_DEV ||
-	    d40c->dma_cfg.dir == DMA_MEM_TO_MEM) अणु
-		status = पढ़ोl(chanbase + D40_CHAN_REG_SDLNK);
-	पूर्ण अन्यथा अगर (d40c->dma_cfg.dir == DMA_DEV_TO_MEM) अणु
-		status = पढ़ोl(chanbase + D40_CHAN_REG_SSLNK);
-	पूर्ण अन्यथा अणु
+	if (d40c->dma_cfg.dir == DMA_MEM_TO_DEV ||
+	    d40c->dma_cfg.dir == DMA_MEM_TO_MEM) {
+		status = readl(chanbase + D40_CHAN_REG_SDLNK);
+	} else if (d40c->dma_cfg.dir == DMA_DEV_TO_MEM) {
+		status = readl(chanbase + D40_CHAN_REG_SSLNK);
+	} else {
 		chan_err(d40c, "Unknown direction\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	status = (status & D40_EVENTLINE_MASK(event)) >>
 		D40_EVENTLINE_POS(event);
 
-	अगर (status != D40_DMA_RUN)
-		is_छोड़ोd = true;
+	if (status != D40_DMA_RUN)
+		is_paused = true;
  unlock:
 	spin_unlock_irqrestore(&d40c->lock, flags);
-	वापस is_छोड़ोd;
+	return is_paused;
 
-पूर्ण
+}
 
-अटल u32 stedma40_residue(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा d40_chan *d40c =
-		container_of(chan, काष्ठा d40_chan, chan);
+static u32 stedma40_residue(struct dma_chan *chan)
+{
+	struct d40_chan *d40c =
+		container_of(chan, struct d40_chan, chan);
 	u32 bytes_left;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&d40c->lock, flags);
 	bytes_left = d40_residue(d40c);
 	spin_unlock_irqrestore(&d40c->lock, flags);
 
-	वापस bytes_left;
-पूर्ण
+	return bytes_left;
+}
 
-अटल पूर्णांक
-d40_prep_sg_log(काष्ठा d40_chan *chan, काष्ठा d40_desc *desc,
-		काष्ठा scatterlist *sg_src, काष्ठा scatterlist *sg_dst,
-		अचिन्हित पूर्णांक sg_len, dma_addr_t src_dev_addr,
+static int
+d40_prep_sg_log(struct d40_chan *chan, struct d40_desc *desc,
+		struct scatterlist *sg_src, struct scatterlist *sg_dst,
+		unsigned int sg_len, dma_addr_t src_dev_addr,
 		dma_addr_t dst_dev_addr)
-अणु
-	काष्ठा stedma40_chan_cfg *cfg = &chan->dma_cfg;
-	काष्ठा stedma40_half_channel_info *src_info = &cfg->src_info;
-	काष्ठा stedma40_half_channel_info *dst_info = &cfg->dst_info;
-	पूर्णांक ret;
+{
+	struct stedma40_chan_cfg *cfg = &chan->dma_cfg;
+	struct stedma40_half_channel_info *src_info = &cfg->src_info;
+	struct stedma40_half_channel_info *dst_info = &cfg->dst_info;
+	int ret;
 
 	ret = d40_log_sg_to_lli(sg_src, sg_len,
 				src_dev_addr,
@@ -2131,22 +2130,22 @@ d40_prep_sg_log(काष्ठा d40_chan *chan, काष्ठा d40_desc *
 				dst_info->data_width,
 				src_info->data_width);
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-अटल पूर्णांक
-d40_prep_sg_phy(काष्ठा d40_chan *chan, काष्ठा d40_desc *desc,
-		काष्ठा scatterlist *sg_src, काष्ठा scatterlist *sg_dst,
-		अचिन्हित पूर्णांक sg_len, dma_addr_t src_dev_addr,
+static int
+d40_prep_sg_phy(struct d40_chan *chan, struct d40_desc *desc,
+		struct scatterlist *sg_src, struct scatterlist *sg_dst,
+		unsigned int sg_len, dma_addr_t src_dev_addr,
 		dma_addr_t dst_dev_addr)
-अणु
-	काष्ठा stedma40_chan_cfg *cfg = &chan->dma_cfg;
-	काष्ठा stedma40_half_channel_info *src_info = &cfg->src_info;
-	काष्ठा stedma40_half_channel_info *dst_info = &cfg->dst_info;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक ret;
+{
+	struct stedma40_chan_cfg *cfg = &chan->dma_cfg;
+	struct stedma40_half_channel_info *src_info = &cfg->src_info;
+	struct stedma40_half_channel_info *dst_info = &cfg->dst_info;
+	unsigned long flags = 0;
+	int ret;
 
-	अगर (desc->cyclic)
+	if (desc->cyclic)
 		flags |= LLI_CYCLIC | LLI_TERM_INT;
 
 	ret = d40_phy_sg_to_lli(sg_src, sg_len, src_dev_addr,
@@ -2161,37 +2160,37 @@ d40_prep_sg_phy(काष्ठा d40_chan *chan, काष्ठा d40_desc *
 				chan->dst_def_cfg,
 				dst_info, src_info, flags);
 
-	dma_sync_single_क्रम_device(chan->base->dev, desc->lli_pool.dma_addr,
+	dma_sync_single_for_device(chan->base->dev, desc->lli_pool.dma_addr,
 				   desc->lli_pool.size, DMA_TO_DEVICE);
 
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 
-अटल काष्ठा d40_desc *
-d40_prep_desc(काष्ठा d40_chan *chan, काष्ठा scatterlist *sg,
-	      अचिन्हित पूर्णांक sg_len, अचिन्हित दीर्घ dma_flags)
-अणु
-	काष्ठा stedma40_chan_cfg *cfg;
-	काष्ठा d40_desc *desc;
-	पूर्णांक ret;
+static struct d40_desc *
+d40_prep_desc(struct d40_chan *chan, struct scatterlist *sg,
+	      unsigned int sg_len, unsigned long dma_flags)
+{
+	struct stedma40_chan_cfg *cfg;
+	struct d40_desc *desc;
+	int ret;
 
 	desc = d40_desc_get(chan);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
 	cfg = &chan->dma_cfg;
 	desc->lli_len = d40_sg_2_dmalen(sg, sg_len, cfg->src_info.data_width,
 					cfg->dst_info.data_width);
-	अगर (desc->lli_len < 0) अणु
+	if (desc->lli_len < 0) {
 		chan_err(chan, "Unaligned size\n");
-		जाओ मुक्त_desc;
-	पूर्ण
+		goto free_desc;
+	}
 
 	ret = d40_pool_lli_alloc(chan, desc, desc->lli_len);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		chan_err(chan, "Could not allocate lli\n");
-		जाओ मुक्त_desc;
-	पूर्ण
+		goto free_desc;
+	}
 
 	desc->lli_current = 0;
 	desc->txd.flags = dma_flags;
@@ -2199,158 +2198,158 @@ d40_prep_desc(काष्ठा d40_chan *chan, काष्ठा scatterlist 
 
 	dma_async_tx_descriptor_init(&desc->txd, &chan->chan);
 
-	वापस desc;
- मुक्त_desc:
-	d40_desc_मुक्त(chan, desc);
-	वापस शून्य;
-पूर्ण
+	return desc;
+ free_desc:
+	d40_desc_free(chan, desc);
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-d40_prep_sg(काष्ठा dma_chan *dchan, काष्ठा scatterlist *sg_src,
-	    काष्ठा scatterlist *sg_dst, अचिन्हित पूर्णांक sg_len,
-	    क्रमागत dma_transfer_direction direction, अचिन्हित दीर्घ dma_flags)
-अणु
-	काष्ठा d40_chan *chan = container_of(dchan, काष्ठा d40_chan, chan);
+static struct dma_async_tx_descriptor *
+d40_prep_sg(struct dma_chan *dchan, struct scatterlist *sg_src,
+	    struct scatterlist *sg_dst, unsigned int sg_len,
+	    enum dma_transfer_direction direction, unsigned long dma_flags)
+{
+	struct d40_chan *chan = container_of(dchan, struct d40_chan, chan);
 	dma_addr_t src_dev_addr;
 	dma_addr_t dst_dev_addr;
-	काष्ठा d40_desc *desc;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+	struct d40_desc *desc;
+	unsigned long flags;
+	int ret;
 
-	अगर (!chan->phy_chan) अणु
+	if (!chan->phy_chan) {
 		chan_err(chan, "Cannot prepare unallocated channel\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	d40_set_runसमय_config_ग_लिखो(dchan, &chan->slave_config, direction);
+	d40_set_runtime_config_write(dchan, &chan->slave_config, direction);
 
 	spin_lock_irqsave(&chan->lock, flags);
 
 	desc = d40_prep_desc(chan, sg_src, sg_len, dma_flags);
-	अगर (desc == शून्य)
-		जाओ unlock;
+	if (desc == NULL)
+		goto unlock;
 
-	अगर (sg_next(&sg_src[sg_len - 1]) == sg_src)
+	if (sg_next(&sg_src[sg_len - 1]) == sg_src)
 		desc->cyclic = true;
 
 	src_dev_addr = 0;
 	dst_dev_addr = 0;
-	अगर (direction == DMA_DEV_TO_MEM)
-		src_dev_addr = chan->runसमय_addr;
-	अन्यथा अगर (direction == DMA_MEM_TO_DEV)
-		dst_dev_addr = chan->runसमय_addr;
+	if (direction == DMA_DEV_TO_MEM)
+		src_dev_addr = chan->runtime_addr;
+	else if (direction == DMA_MEM_TO_DEV)
+		dst_dev_addr = chan->runtime_addr;
 
-	अगर (chan_is_logical(chan))
+	if (chan_is_logical(chan))
 		ret = d40_prep_sg_log(chan, desc, sg_src, sg_dst,
 				      sg_len, src_dev_addr, dst_dev_addr);
-	अन्यथा
+	else
 		ret = d40_prep_sg_phy(chan, desc, sg_src, sg_dst,
 				      sg_len, src_dev_addr, dst_dev_addr);
 
-	अगर (ret) अणु
+	if (ret) {
 		chan_err(chan, "Failed to prepare %s sg job: %d\n",
 			 chan_is_logical(chan) ? "log" : "phy", ret);
-		जाओ मुक्त_desc;
-	पूर्ण
+		goto free_desc;
+	}
 
 	/*
 	 * add descriptor to the prepare queue in order to be able
-	 * to मुक्त them later in terminate_all
+	 * to free them later in terminate_all
 	 */
 	list_add_tail(&desc->node, &chan->prepare_queue);
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	वापस &desc->txd;
- मुक्त_desc:
-	d40_desc_मुक्त(chan, desc);
+	return &desc->txd;
+ free_desc:
+	d40_desc_free(chan, desc);
  unlock:
 	spin_unlock_irqrestore(&chan->lock, flags);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-bool stedma40_filter(काष्ठा dma_chan *chan, व्योम *data)
-अणु
-	काष्ठा stedma40_chan_cfg *info = data;
-	काष्ठा d40_chan *d40c =
-		container_of(chan, काष्ठा d40_chan, chan);
-	पूर्णांक err;
+bool stedma40_filter(struct dma_chan *chan, void *data)
+{
+	struct stedma40_chan_cfg *info = data;
+	struct d40_chan *d40c =
+		container_of(chan, struct d40_chan, chan);
+	int err;
 
-	अगर (data) अणु
+	if (data) {
 		err = d40_validate_conf(d40c, info);
-		अगर (!err)
+		if (!err)
 			d40c->dma_cfg = *info;
-	पूर्ण अन्यथा
-		err = d40_config_स_नकल(d40c);
+	} else
+		err = d40_config_memcpy(d40c);
 
-	अगर (!err)
+	if (!err)
 		d40c->configured = true;
 
-	वापस err == 0;
-पूर्ण
+	return err == 0;
+}
 EXPORT_SYMBOL(stedma40_filter);
 
-अटल व्योम __d40_set_prio_rt(काष्ठा d40_chan *d40c, पूर्णांक dev_type, bool src)
-अणु
-	bool realसमय = d40c->dma_cfg.realसमय;
+static void __d40_set_prio_rt(struct d40_chan *d40c, int dev_type, bool src)
+{
+	bool realtime = d40c->dma_cfg.realtime;
 	bool highprio = d40c->dma_cfg.high_priority;
 	u32 rtreg;
 	u32 event = D40_TYPE_TO_EVENT(dev_type);
 	u32 group = D40_TYPE_TO_GROUP(dev_type);
 	u32 bit = BIT(event);
 	u32 prioreg;
-	काष्ठा d40_gen_dmac *dmac = &d40c->base->gen_dmac;
+	struct d40_gen_dmac *dmac = &d40c->base->gen_dmac;
 
-	rtreg = realसमय ? dmac->realसमय_en : dmac->realसमय_clear;
+	rtreg = realtime ? dmac->realtime_en : dmac->realtime_clear;
 	/*
-	 * Due to a hardware bug, in some हालs a logical channel triggered by
+	 * Due to a hardware bug, in some cases a logical channel triggered by
 	 * a high priority destination event line can generate extra packet
 	 * transactions.
 	 *
-	 * The workaround is to not set the high priority level क्रम the
+	 * The workaround is to not set the high priority level for the
 	 * destination event lines that trigger logical channels.
 	 */
-	अगर (!src && chan_is_logical(d40c))
+	if (!src && chan_is_logical(d40c))
 		highprio = false;
 
 	prioreg = highprio ? dmac->high_prio_en : dmac->high_prio_clear;
 
 	/* Destination event lines are stored in the upper halfword */
-	अगर (!src)
+	if (!src)
 		bit <<= 16;
 
-	ग_लिखोl(bit, d40c->base->virtbase + prioreg + group * 4);
-	ग_लिखोl(bit, d40c->base->virtbase + rtreg + group * 4);
-पूर्ण
+	writel(bit, d40c->base->virtbase + prioreg + group * 4);
+	writel(bit, d40c->base->virtbase + rtreg + group * 4);
+}
 
-अटल व्योम d40_set_prio_realसमय(काष्ठा d40_chan *d40c)
-अणु
-	अगर (d40c->base->rev < 3)
-		वापस;
+static void d40_set_prio_realtime(struct d40_chan *d40c)
+{
+	if (d40c->base->rev < 3)
+		return;
 
-	अगर ((d40c->dma_cfg.dir ==  DMA_DEV_TO_MEM) ||
+	if ((d40c->dma_cfg.dir ==  DMA_DEV_TO_MEM) ||
 	    (d40c->dma_cfg.dir == DMA_DEV_TO_DEV))
 		__d40_set_prio_rt(d40c, d40c->dma_cfg.dev_type, true);
 
-	अगर ((d40c->dma_cfg.dir ==  DMA_MEM_TO_DEV) ||
+	if ((d40c->dma_cfg.dir ==  DMA_MEM_TO_DEV) ||
 	    (d40c->dma_cfg.dir == DMA_DEV_TO_DEV))
 		__d40_set_prio_rt(d40c, d40c->dma_cfg.dev_type, false);
-पूर्ण
+}
 
-#घोषणा D40_DT_FLAGS_MODE(flags)       ((flags >> 0) & 0x1)
-#घोषणा D40_DT_FLAGS_सूची(flags)        ((flags >> 1) & 0x1)
-#घोषणा D40_DT_FLAGS_BIG_ENDIAN(flags) ((flags >> 2) & 0x1)
-#घोषणा D40_DT_FLAGS_FIXED_CHAN(flags) ((flags >> 3) & 0x1)
-#घोषणा D40_DT_FLAGS_HIGH_PRIO(flags)  ((flags >> 4) & 0x1)
+#define D40_DT_FLAGS_MODE(flags)       ((flags >> 0) & 0x1)
+#define D40_DT_FLAGS_DIR(flags)        ((flags >> 1) & 0x1)
+#define D40_DT_FLAGS_BIG_ENDIAN(flags) ((flags >> 2) & 0x1)
+#define D40_DT_FLAGS_FIXED_CHAN(flags) ((flags >> 3) & 0x1)
+#define D40_DT_FLAGS_HIGH_PRIO(flags)  ((flags >> 4) & 0x1)
 
-अटल काष्ठा dma_chan *d40_xlate(काष्ठा of_phandle_args *dma_spec,
-				  काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा stedma40_chan_cfg cfg;
+static struct dma_chan *d40_xlate(struct of_phandle_args *dma_spec,
+				  struct of_dma *ofdma)
+{
+	struct stedma40_chan_cfg cfg;
 	dma_cap_mask_t cap;
 	u32 flags;
 
-	स_रखो(&cfg, 0, माप(काष्ठा stedma40_chan_cfg));
+	memset(&cfg, 0, sizeof(struct stedma40_chan_cfg));
 
 	dma_cap_zero(cap);
 	dma_cap_set(DMA_SLAVE, cap);
@@ -2358,70 +2357,70 @@ EXPORT_SYMBOL(stedma40_filter);
 	cfg.dev_type = dma_spec->args[0];
 	flags = dma_spec->args[2];
 
-	चयन (D40_DT_FLAGS_MODE(flags)) अणु
-	हाल 0: cfg.mode = STEDMA40_MODE_LOGICAL; अवरोध;
-	हाल 1: cfg.mode = STEDMA40_MODE_PHYSICAL; अवरोध;
-	पूर्ण
+	switch (D40_DT_FLAGS_MODE(flags)) {
+	case 0: cfg.mode = STEDMA40_MODE_LOGICAL; break;
+	case 1: cfg.mode = STEDMA40_MODE_PHYSICAL; break;
+	}
 
-	चयन (D40_DT_FLAGS_सूची(flags)) अणु
-	हाल 0:
+	switch (D40_DT_FLAGS_DIR(flags)) {
+	case 0:
 		cfg.dir = DMA_MEM_TO_DEV;
 		cfg.dst_info.big_endian = D40_DT_FLAGS_BIG_ENDIAN(flags);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		cfg.dir = DMA_DEV_TO_MEM;
 		cfg.src_info.big_endian = D40_DT_FLAGS_BIG_ENDIAN(flags);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (D40_DT_FLAGS_FIXED_CHAN(flags)) अणु
+	if (D40_DT_FLAGS_FIXED_CHAN(flags)) {
 		cfg.phy_channel = dma_spec->args[1];
 		cfg.use_fixed_channel = true;
-	पूर्ण
+	}
 
-	अगर (D40_DT_FLAGS_HIGH_PRIO(flags))
+	if (D40_DT_FLAGS_HIGH_PRIO(flags))
 		cfg.high_priority = true;
 
-	वापस dma_request_channel(cap, stedma40_filter, &cfg);
-पूर्ण
+	return dma_request_channel(cap, stedma40_filter, &cfg);
+}
 
 /* DMA ENGINE functions */
-अटल पूर्णांक d40_alloc_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
-	काष्ठा d40_chan *d40c =
-		container_of(chan, काष्ठा d40_chan, chan);
-	bool is_मुक्त_phy;
+static int d40_alloc_chan_resources(struct dma_chan *chan)
+{
+	int err;
+	unsigned long flags;
+	struct d40_chan *d40c =
+		container_of(chan, struct d40_chan, chan);
+	bool is_free_phy;
 	spin_lock_irqsave(&d40c->lock, flags);
 
 	dma_cookie_init(chan);
 
-	/* If no dma configuration is set use शेष configuration (स_नकल) */
-	अगर (!d40c->configured) अणु
-		err = d40_config_स_नकल(d40c);
-		अगर (err) अणु
+	/* If no dma configuration is set use default configuration (memcpy) */
+	if (!d40c->configured) {
+		err = d40_config_memcpy(d40c);
+		if (err) {
 			chan_err(d40c, "Failed to configure memcpy channel\n");
-			जाओ mark_last_busy;
-		पूर्ण
-	पूर्ण
+			goto mark_last_busy;
+		}
+	}
 
-	err = d40_allocate_channel(d40c, &is_मुक्त_phy);
-	अगर (err) अणु
+	err = d40_allocate_channel(d40c, &is_free_phy);
+	if (err) {
 		chan_err(d40c, "Failed to allocate channel\n");
 		d40c->configured = false;
-		जाओ mark_last_busy;
-	पूर्ण
+		goto mark_last_busy;
+	}
 
-	pm_runसमय_get_sync(d40c->base->dev);
+	pm_runtime_get_sync(d40c->base->dev);
 
-	d40_set_prio_realसमय(d40c);
+	d40_set_prio_realtime(d40c);
 
-	अगर (chan_is_logical(d40c)) अणु
-		अगर (d40c->dma_cfg.dir == DMA_DEV_TO_MEM)
+	if (chan_is_logical(d40c)) {
+		if (d40c->dma_cfg.dir == DMA_DEV_TO_MEM)
 			d40c->lcpa = d40c->base->lcpa_base +
 				d40c->dma_cfg.dev_type * D40_LCPA_CHAN_SIZE;
-		अन्यथा
+		else
 			d40c->lcpa = d40c->base->lcpa_base +
 				d40c->dma_cfg.dev_type *
 				D40_LCPA_CHAN_SIZE + D40_LCPA_CHAN_DST_DELTA;
@@ -2429,7 +2428,7 @@ EXPORT_SYMBOL(stedma40_filter);
 		/* Unmask the Global Interrupt Mask. */
 		d40c->src_def_cfg |= BIT(D40_SREG_CFG_LOG_GIM_POS);
 		d40c->dst_def_cfg |= BIT(D40_SREG_CFG_LOG_GIM_POS);
-	पूर्ण
+	}
 
 	dev_dbg(chan2dev(d40c), "allocated %s channel (phy %d%s)\n",
 		 chan_is_logical(d40c) ? "logical" : "physical",
@@ -2438,48 +2437,48 @@ EXPORT_SYMBOL(stedma40_filter);
 
 
 	/*
-	 * Only ग_लिखो channel configuration to the DMA अगर the physical
-	 * resource is मुक्त. In हाल of multiple logical channels
-	 * on the same physical resource, only the first ग_लिखो is necessary.
+	 * Only write channel configuration to the DMA if the physical
+	 * resource is free. In case of multiple logical channels
+	 * on the same physical resource, only the first write is necessary.
 	 */
-	अगर (is_मुक्त_phy)
-		d40_config_ग_लिखो(d40c);
+	if (is_free_phy)
+		d40_config_write(d40c);
  mark_last_busy:
-	pm_runसमय_mark_last_busy(d40c->base->dev);
-	pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
+	pm_runtime_mark_last_busy(d40c->base->dev);
+	pm_runtime_put_autosuspend(d40c->base->dev);
 	spin_unlock_irqrestore(&d40c->lock, flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम d40_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा d40_chan *d40c =
-		container_of(chan, काष्ठा d40_chan, chan);
-	पूर्णांक err;
-	अचिन्हित दीर्घ flags;
+static void d40_free_chan_resources(struct dma_chan *chan)
+{
+	struct d40_chan *d40c =
+		container_of(chan, struct d40_chan, chan);
+	int err;
+	unsigned long flags;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Cannot free unallocated channel\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&d40c->lock, flags);
 
-	err = d40_मुक्त_dma(d40c);
+	err = d40_free_dma(d40c);
 
-	अगर (err)
+	if (err)
 		chan_err(d40c, "Failed to free channel\n");
 	spin_unlock_irqrestore(&d40c->lock, flags);
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *d40_prep_स_नकल(काष्ठा dma_chan *chan,
+static struct dma_async_tx_descriptor *d40_prep_memcpy(struct dma_chan *chan,
 						       dma_addr_t dst,
 						       dma_addr_t src,
-						       माप_प्रकार size,
-						       अचिन्हित दीर्घ dma_flags)
-अणु
-	काष्ठा scatterlist dst_sg;
-	काष्ठा scatterlist src_sg;
+						       size_t size,
+						       unsigned long dma_flags)
+{
+	struct scatterlist dst_sg;
+	struct scatterlist src_sg;
 
 	sg_init_table(&dst_sg, 1);
 	sg_init_table(&src_sg, 1);
@@ -2490,194 +2489,194 @@ EXPORT_SYMBOL(stedma40_filter);
 	sg_dma_len(&dst_sg) = size;
 	sg_dma_len(&src_sg) = size;
 
-	वापस d40_prep_sg(chan, &src_sg, &dst_sg, 1,
+	return d40_prep_sg(chan, &src_sg, &dst_sg, 1,
 			   DMA_MEM_TO_MEM, dma_flags);
-पूर्ण
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-d40_prep_slave_sg(काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		  अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
-		  अचिन्हित दीर्घ dma_flags, व्योम *context)
-अणु
-	अगर (!is_slave_direction(direction))
-		वापस शून्य;
+static struct dma_async_tx_descriptor *
+d40_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
+		  unsigned int sg_len, enum dma_transfer_direction direction,
+		  unsigned long dma_flags, void *context)
+{
+	if (!is_slave_direction(direction))
+		return NULL;
 
-	वापस d40_prep_sg(chan, sgl, sgl, sg_len, direction, dma_flags);
-पूर्ण
+	return d40_prep_sg(chan, sgl, sgl, sg_len, direction, dma_flags);
+}
 
-अटल काष्ठा dma_async_tx_descriptor *
-dma40_prep_dma_cyclic(काष्ठा dma_chan *chan, dma_addr_t dma_addr,
-		     माप_प्रकार buf_len, माप_प्रकार period_len,
-		     क्रमागत dma_transfer_direction direction, अचिन्हित दीर्घ flags)
-अणु
-	अचिन्हित पूर्णांक periods = buf_len / period_len;
-	काष्ठा dma_async_tx_descriptor *txd;
-	काष्ठा scatterlist *sg;
-	पूर्णांक i;
+static struct dma_async_tx_descriptor *
+dma40_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t dma_addr,
+		     size_t buf_len, size_t period_len,
+		     enum dma_transfer_direction direction, unsigned long flags)
+{
+	unsigned int periods = buf_len / period_len;
+	struct dma_async_tx_descriptor *txd;
+	struct scatterlist *sg;
+	int i;
 
-	sg = kसुस्मृति(periods + 1, माप(काष्ठा scatterlist), GFP_NOWAIT);
-	अगर (!sg)
-		वापस शून्य;
+	sg = kcalloc(periods + 1, sizeof(struct scatterlist), GFP_NOWAIT);
+	if (!sg)
+		return NULL;
 
-	क्रम (i = 0; i < periods; i++) अणु
+	for (i = 0; i < periods; i++) {
 		sg_dma_address(&sg[i]) = dma_addr;
 		sg_dma_len(&sg[i]) = period_len;
 		dma_addr += period_len;
-	पूर्ण
+	}
 
 	sg_chain(sg, periods + 1, sg);
 
 	txd = d40_prep_sg(chan, sg, sg, periods, direction,
 			  DMA_PREP_INTERRUPT);
 
-	kमुक्त(sg);
+	kfree(sg);
 
-	वापस txd;
-पूर्ण
+	return txd;
+}
 
-अटल क्रमागत dma_status d40_tx_status(काष्ठा dma_chan *chan,
+static enum dma_status d40_tx_status(struct dma_chan *chan,
 				     dma_cookie_t cookie,
-				     काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
-	क्रमागत dma_status ret;
+				     struct dma_tx_state *txstate)
+{
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
+	enum dma_status ret;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Cannot read status of unallocated channel\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = dma_cookie_status(chan, cookie, txstate);
-	अगर (ret != DMA_COMPLETE && txstate)
+	if (ret != DMA_COMPLETE && txstate)
 		dma_set_residue(txstate, stedma40_residue(chan));
 
-	अगर (d40_is_छोड़ोd(d40c))
+	if (d40_is_paused(d40c))
 		ret = DMA_PAUSED;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम d40_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
-	अचिन्हित दीर्घ flags;
+static void d40_issue_pending(struct dma_chan *chan)
+{
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
+	unsigned long flags;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Channel is not allocated!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&d40c->lock, flags);
 
 	list_splice_tail_init(&d40c->pending_queue, &d40c->queue);
 
-	/* Busy means that queued jobs are alपढ़ोy being processed */
-	अगर (!d40c->busy)
-		(व्योम) d40_queue_start(d40c);
+	/* Busy means that queued jobs are already being processed */
+	if (!d40c->busy)
+		(void) d40_queue_start(d40c);
 
 	spin_unlock_irqrestore(&d40c->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक d40_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
-	पूर्णांक ret;
+static int d40_terminate_all(struct dma_chan *chan)
+{
+	unsigned long flags;
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
+	int ret;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Channel is not allocated!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&d40c->lock, flags);
 
-	pm_runसमय_get_sync(d40c->base->dev);
+	pm_runtime_get_sync(d40c->base->dev);
 	ret = d40_channel_execute_command(d40c, D40_DMA_STOP);
-	अगर (ret)
+	if (ret)
 		chan_err(d40c, "Failed to stop channel\n");
 
 	d40_term_all(d40c);
-	pm_runसमय_mark_last_busy(d40c->base->dev);
-	pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
-	अगर (d40c->busy) अणु
-		pm_runसमय_mark_last_busy(d40c->base->dev);
-		pm_runसमय_put_स्वतःsuspend(d40c->base->dev);
-	पूर्ण
+	pm_runtime_mark_last_busy(d40c->base->dev);
+	pm_runtime_put_autosuspend(d40c->base->dev);
+	if (d40c->busy) {
+		pm_runtime_mark_last_busy(d40c->base->dev);
+		pm_runtime_put_autosuspend(d40c->base->dev);
+	}
 	d40c->busy = false;
 
 	spin_unlock_irqrestore(&d40c->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
-			    काष्ठा stedma40_half_channel_info *info,
+static int
+dma40_config_to_halfchannel(struct d40_chan *d40c,
+			    struct stedma40_half_channel_info *info,
 			    u32 maxburst)
-अणु
-	पूर्णांक psize;
+{
+	int psize;
 
-	अगर (chan_is_logical(d40c)) अणु
-		अगर (maxburst >= 16)
+	if (chan_is_logical(d40c)) {
+		if (maxburst >= 16)
 			psize = STEDMA40_PSIZE_LOG_16;
-		अन्यथा अगर (maxburst >= 8)
+		else if (maxburst >= 8)
 			psize = STEDMA40_PSIZE_LOG_8;
-		अन्यथा अगर (maxburst >= 4)
+		else if (maxburst >= 4)
 			psize = STEDMA40_PSIZE_LOG_4;
-		अन्यथा
+		else
 			psize = STEDMA40_PSIZE_LOG_1;
-	पूर्ण अन्यथा अणु
-		अगर (maxburst >= 16)
+	} else {
+		if (maxburst >= 16)
 			psize = STEDMA40_PSIZE_PHY_16;
-		अन्यथा अगर (maxburst >= 8)
+		else if (maxburst >= 8)
 			psize = STEDMA40_PSIZE_PHY_8;
-		अन्यथा अगर (maxburst >= 4)
+		else if (maxburst >= 4)
 			psize = STEDMA40_PSIZE_PHY_4;
-		अन्यथा
+		else
 			psize = STEDMA40_PSIZE_PHY_1;
-	पूर्ण
+	}
 
 	info->psize = psize;
 	info->flow_ctrl = STEDMA40_NO_FLOW_CTRL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक d40_set_runसमय_config(काष्ठा dma_chan *chan,
-				  काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
+static int d40_set_runtime_config(struct dma_chan *chan,
+				  struct dma_slave_config *config)
+{
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
 
-	स_नकल(&d40c->slave_config, config, माप(*config));
+	memcpy(&d40c->slave_config, config, sizeof(*config));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Runसमय reconfiguration extension */
-अटल पूर्णांक d40_set_runसमय_config_ग_लिखो(काष्ठा dma_chan *chan,
-				  काष्ठा dma_slave_config *config,
-				  क्रमागत dma_transfer_direction direction)
-अणु
-	काष्ठा d40_chan *d40c = container_of(chan, काष्ठा d40_chan, chan);
-	काष्ठा stedma40_chan_cfg *cfg = &d40c->dma_cfg;
-	क्रमागत dma_slave_buswidth src_addr_width, dst_addr_width;
+/* Runtime reconfiguration extension */
+static int d40_set_runtime_config_write(struct dma_chan *chan,
+				  struct dma_slave_config *config,
+				  enum dma_transfer_direction direction)
+{
+	struct d40_chan *d40c = container_of(chan, struct d40_chan, chan);
+	struct stedma40_chan_cfg *cfg = &d40c->dma_cfg;
+	enum dma_slave_buswidth src_addr_width, dst_addr_width;
 	dma_addr_t config_addr;
 	u32 src_maxburst, dst_maxburst;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (d40c->phy_chan == शून्य) अणु
+	if (d40c->phy_chan == NULL) {
 		chan_err(d40c, "Channel is not allocated!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	src_addr_width = config->src_addr_width;
 	src_maxburst = config->src_maxburst;
 	dst_addr_width = config->dst_addr_width;
 	dst_maxburst = config->dst_maxburst;
 
-	अगर (direction == DMA_DEV_TO_MEM) अणु
+	if (direction == DMA_DEV_TO_MEM) {
 		config_addr = config->src_addr;
 
-		अगर (cfg->dir != DMA_DEV_TO_MEM)
+		if (cfg->dir != DMA_DEV_TO_MEM)
 			dev_dbg(d40c->base->dev,
 				"channel was not configured for peripheral "
 				"to memory transfer (%d) overriding\n",
@@ -2685,15 +2684,15 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 		cfg->dir = DMA_DEV_TO_MEM;
 
 		/* Configure the memory side */
-		अगर (dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+		if (dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 			dst_addr_width = src_addr_width;
-		अगर (dst_maxburst == 0)
+		if (dst_maxburst == 0)
 			dst_maxburst = src_maxburst;
 
-	पूर्ण अन्यथा अगर (direction == DMA_MEM_TO_DEV) अणु
+	} else if (direction == DMA_MEM_TO_DEV) {
 		config_addr = config->dst_addr;
 
-		अगर (cfg->dir != DMA_MEM_TO_DEV)
+		if (cfg->dir != DMA_MEM_TO_DEV)
 			dev_dbg(d40c->base->dev,
 				"channel was not configured for memory "
 				"to peripheral transfer (%d) overriding\n",
@@ -2701,71 +2700,71 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 		cfg->dir = DMA_MEM_TO_DEV;
 
 		/* Configure the memory side */
-		अगर (src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+		if (src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 			src_addr_width = dst_addr_width;
-		अगर (src_maxburst == 0)
+		if (src_maxburst == 0)
 			src_maxburst = dst_maxburst;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(d40c->base->dev,
 			"unrecognized channel direction %d\n",
 			direction);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (config_addr <= 0) अणु
+	if (config_addr <= 0) {
 		dev_err(d40c->base->dev, "no address supplied\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (src_maxburst * src_addr_width != dst_maxburst * dst_addr_width) अणु
+	if (src_maxburst * src_addr_width != dst_maxburst * dst_addr_width) {
 		dev_err(d40c->base->dev,
 			"src/dst width/maxburst mismatch: %d*%d != %d*%d\n",
 			src_maxburst,
 			src_addr_width,
 			dst_maxburst,
 			dst_addr_width);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (src_maxburst > 16) अणु
+	if (src_maxburst > 16) {
 		src_maxburst = 16;
 		dst_maxburst = src_maxburst * src_addr_width / dst_addr_width;
-	पूर्ण अन्यथा अगर (dst_maxburst > 16) अणु
+	} else if (dst_maxburst > 16) {
 		dst_maxburst = 16;
 		src_maxburst = dst_maxburst * dst_addr_width / src_addr_width;
-	पूर्ण
+	}
 
 	/* Only valid widths are; 1, 2, 4 and 8. */
-	अगर (src_addr_width <= DMA_SLAVE_BUSWIDTH_UNDEFINED ||
+	if (src_addr_width <= DMA_SLAVE_BUSWIDTH_UNDEFINED ||
 	    src_addr_width >  DMA_SLAVE_BUSWIDTH_8_BYTES   ||
 	    dst_addr_width <= DMA_SLAVE_BUSWIDTH_UNDEFINED ||
 	    dst_addr_width >  DMA_SLAVE_BUSWIDTH_8_BYTES   ||
-	    !is_घातer_of_2(src_addr_width) ||
-	    !is_घातer_of_2(dst_addr_width))
-		वापस -EINVAL;
+	    !is_power_of_2(src_addr_width) ||
+	    !is_power_of_2(dst_addr_width))
+		return -EINVAL;
 
 	cfg->src_info.data_width = src_addr_width;
 	cfg->dst_info.data_width = dst_addr_width;
 
 	ret = dma40_config_to_halfchannel(d40c, &cfg->src_info,
 					  src_maxburst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = dma40_config_to_halfchannel(d40c, &cfg->dst_info,
 					  dst_maxburst);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Fill in रेजिस्टर values */
-	अगर (chan_is_logical(d40c))
+	/* Fill in register values */
+	if (chan_is_logical(d40c))
 		d40_log_cfg(cfg, &d40c->log_def.lcsp1, &d40c->log_def.lcsp3);
-	अन्यथा
+	else
 		d40_phy_cfg(cfg, &d40c->src_def_cfg, &d40c->dst_def_cfg);
 
 	/* These settings will take precedence later */
-	d40c->runसमय_addr = config_addr;
-	d40c->runसमय_direction = direction;
+	d40c->runtime_addr = config_addr;
+	d40c->runtime_direction = direction;
 	dev_dbg(d40c->base->dev,
 		"configured channel %s for %s, data width %d/%d, "
 		"maxburst %d/%d elements, LE, no flow control\n",
@@ -2774,21 +2773,21 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 		src_addr_width, dst_addr_width,
 		src_maxburst, dst_maxburst);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Initialization functions */
 
-अटल व्योम __init d40_chan_init(काष्ठा d40_base *base, काष्ठा dma_device *dma,
-				 काष्ठा d40_chan *chans, पूर्णांक offset,
-				 पूर्णांक num_chans)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा d40_chan *d40c;
+static void __init d40_chan_init(struct d40_base *base, struct dma_device *dma,
+				 struct d40_chan *chans, int offset,
+				 int num_chans)
+{
+	int i = 0;
+	struct d40_chan *d40c;
 
 	INIT_LIST_HEAD(&dma->channels);
 
-	क्रम (i = offset; i < offset + num_chans; i++) अणु
+	for (i = offset; i < offset + num_chans; i++) {
 		d40c = &chans[i];
 		d40c->base = base;
 		d40c->chan.device = dma;
@@ -2797,7 +2796,7 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 
 		d40c->log_num = D40_PHY_CHAN;
 
-		INIT_LIST_HEAD(&d40c->करोne);
+		INIT_LIST_HEAD(&d40c->done);
 		INIT_LIST_HEAD(&d40c->active);
 		INIT_LIST_HEAD(&d40c->queue);
 		INIT_LIST_HEAD(&d40c->pending_queue);
@@ -2808,45 +2807,45 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 
 		list_add_tail(&d40c->chan.device_node,
 			      &dma->channels);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम d40_ops_init(काष्ठा d40_base *base, काष्ठा dma_device *dev)
-अणु
-	अगर (dma_has_cap(DMA_SLAVE, dev->cap_mask)) अणु
+static void d40_ops_init(struct d40_base *base, struct dma_device *dev)
+{
+	if (dma_has_cap(DMA_SLAVE, dev->cap_mask)) {
 		dev->device_prep_slave_sg = d40_prep_slave_sg;
 		dev->directions = BIT(DMA_DEV_TO_MEM) | BIT(DMA_MEM_TO_DEV);
-	पूर्ण
+	}
 
-	अगर (dma_has_cap(DMA_MEMCPY, dev->cap_mask)) अणु
-		dev->device_prep_dma_स_नकल = d40_prep_स_नकल;
+	if (dma_has_cap(DMA_MEMCPY, dev->cap_mask)) {
+		dev->device_prep_dma_memcpy = d40_prep_memcpy;
 		dev->directions = BIT(DMA_MEM_TO_MEM);
 		/*
 		 * This controller can only access address at even
 		 * 32bit boundaries, i.e. 2^2
 		 */
 		dev->copy_align = DMAENGINE_ALIGN_4_BYTES;
-	पूर्ण
+	}
 
-	अगर (dma_has_cap(DMA_CYCLIC, dev->cap_mask))
+	if (dma_has_cap(DMA_CYCLIC, dev->cap_mask))
 		dev->device_prep_dma_cyclic = dma40_prep_dma_cyclic;
 
 	dev->device_alloc_chan_resources = d40_alloc_chan_resources;
-	dev->device_मुक्त_chan_resources = d40_मुक्त_chan_resources;
+	dev->device_free_chan_resources = d40_free_chan_resources;
 	dev->device_issue_pending = d40_issue_pending;
 	dev->device_tx_status = d40_tx_status;
-	dev->device_config = d40_set_runसमय_config;
-	dev->device_छोड़ो = d40_छोड़ो;
+	dev->device_config = d40_set_runtime_config;
+	dev->device_pause = d40_pause;
 	dev->device_resume = d40_resume;
 	dev->device_terminate_all = d40_terminate_all;
 	dev->residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
 	dev->dev = base->dev;
-पूर्ण
+}
 
-अटल पूर्णांक __init d40_dmaengine_init(काष्ठा d40_base *base,
-				     पूर्णांक num_reserved_chans)
-अणु
-	पूर्णांक err ;
+static int __init d40_dmaengine_init(struct d40_base *base,
+				     int num_reserved_chans)
+{
+	int err ;
 
 	d40_chan_init(base, &base->dma_slave, base->log_chans,
 		      0, base->num_log_chans);
@@ -2857,28 +2856,28 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 
 	d40_ops_init(base, &base->dma_slave);
 
-	err = dmaenginem_async_device_रेजिस्टर(&base->dma_slave);
+	err = dmaenginem_async_device_register(&base->dma_slave);
 
-	अगर (err) अणु
+	if (err) {
 		d40_err(base->dev, "Failed to register slave channels\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	d40_chan_init(base, &base->dma_स_नकल, base->log_chans,
-		      base->num_log_chans, base->num_स_नकल_chans);
+	d40_chan_init(base, &base->dma_memcpy, base->log_chans,
+		      base->num_log_chans, base->num_memcpy_chans);
 
-	dma_cap_zero(base->dma_स_नकल.cap_mask);
-	dma_cap_set(DMA_MEMCPY, base->dma_स_नकल.cap_mask);
+	dma_cap_zero(base->dma_memcpy.cap_mask);
+	dma_cap_set(DMA_MEMCPY, base->dma_memcpy.cap_mask);
 
-	d40_ops_init(base, &base->dma_स_नकल);
+	d40_ops_init(base, &base->dma_memcpy);
 
-	err = dmaenginem_async_device_रेजिस्टर(&base->dma_स_नकल);
+	err = dmaenginem_async_device_register(&base->dma_memcpy);
 
-	अगर (err) अणु
+	if (err) {
 		d40_err(base->dev,
 			"Failed to register memcpy only channels\n");
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	d40_chan_init(base, &base->dma_both, base->phy_chans,
 		      0, num_reserved_chans);
@@ -2889,76 +2888,76 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 	dma_cap_set(DMA_CYCLIC, base->dma_slave.cap_mask);
 
 	d40_ops_init(base, &base->dma_both);
-	err = dmaenginem_async_device_रेजिस्टर(&base->dma_both);
+	err = dmaenginem_async_device_register(&base->dma_both);
 
-	अगर (err) अणु
+	if (err) {
 		d40_err(base->dev,
 			"Failed to register logical and physical capable channels\n");
-		जाओ निकास;
-	पूर्ण
-	वापस 0;
- निकास:
-	वापस err;
-पूर्ण
+		goto exit;
+	}
+	return 0;
+ exit:
+	return err;
+}
 
 /* Suspend resume functionality */
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक dma40_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा d40_base *base = dev_get_drvdata(dev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int dma40_suspend(struct device *dev)
+{
+	struct d40_base *base = dev_get_drvdata(dev);
+	int ret;
 
-	ret = pm_runसमय_क्रमce_suspend(dev);
-	अगर (ret)
-		वापस ret;
+	ret = pm_runtime_force_suspend(dev);
+	if (ret)
+		return ret;
 
-	अगर (base->lcpa_regulator)
+	if (base->lcpa_regulator)
 		ret = regulator_disable(base->lcpa_regulator);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dma40_resume(काष्ठा device *dev)
-अणु
-	काष्ठा d40_base *base = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int dma40_resume(struct device *dev)
+{
+	struct d40_base *base = dev_get_drvdata(dev);
+	int ret = 0;
 
-	अगर (base->lcpa_regulator) अणु
+	if (base->lcpa_regulator) {
 		ret = regulator_enable(base->lcpa_regulator);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस pm_runसमय_क्रमce_resume(dev);
-पूर्ण
-#पूर्ण_अगर
+	return pm_runtime_force_resume(dev);
+}
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम dma40_backup(व्योम __iomem *baseaddr, u32 *backup,
-			 u32 *regaddr, पूर्णांक num, bool save)
-अणु
-	पूर्णांक i;
+#ifdef CONFIG_PM
+static void dma40_backup(void __iomem *baseaddr, u32 *backup,
+			 u32 *regaddr, int num, bool save)
+{
+	int i;
 
-	क्रम (i = 0; i < num; i++) अणु
-		व्योम __iomem *addr = baseaddr + regaddr[i];
+	for (i = 0; i < num; i++) {
+		void __iomem *addr = baseaddr + regaddr[i];
 
-		अगर (save)
-			backup[i] = पढ़ोl_relaxed(addr);
-		अन्यथा
-			ग_लिखोl_relaxed(backup[i], addr);
-	पूर्ण
-पूर्ण
+		if (save)
+			backup[i] = readl_relaxed(addr);
+		else
+			writel_relaxed(backup[i], addr);
+	}
+}
 
-अटल व्योम d40_save_restore_रेजिस्टरs(काष्ठा d40_base *base, bool save)
-अणु
-	पूर्णांक i;
+static void d40_save_restore_registers(struct d40_base *base, bool save)
+{
+	int i;
 
-	/* Save/Restore channel specअगरic रेजिस्टरs */
-	क्रम (i = 0; i < base->num_phy_chans; i++) अणु
-		व्योम __iomem *addr;
-		पूर्णांक idx;
+	/* Save/Restore channel specific registers */
+	for (i = 0; i < base->num_phy_chans; i++) {
+		void __iomem *addr;
+		int idx;
 
-		अगर (base->phy_res[i].reserved)
-			जारी;
+		if (base->phy_res[i].reserved)
+			continue;
 
 		addr = base->virtbase + D40_DREG_PCBASE + i * D40_DREG_PCDELTA;
 		idx = i * ARRAY_SIZE(d40_backup_regs_chan);
@@ -2967,71 +2966,71 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 			     d40_backup_regs_chan,
 			     ARRAY_SIZE(d40_backup_regs_chan),
 			     save);
-	पूर्ण
+	}
 
-	/* Save/Restore global रेजिस्टरs */
+	/* Save/Restore global registers */
 	dma40_backup(base->virtbase, base->reg_val_backup,
 		     d40_backup_regs, ARRAY_SIZE(d40_backup_regs),
 		     save);
 
-	/* Save/Restore रेजिस्टरs only existing on dma40 v3 and later */
-	अगर (base->gen_dmac.backup)
+	/* Save/Restore registers only existing on dma40 v3 and later */
+	if (base->gen_dmac.backup)
 		dma40_backup(base->virtbase, base->reg_val_backup_v4,
 			     base->gen_dmac.backup,
 			base->gen_dmac.backup_size,
 			save);
-पूर्ण
+}
 
-अटल पूर्णांक dma40_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा d40_base *base = dev_get_drvdata(dev);
+static int dma40_runtime_suspend(struct device *dev)
+{
+	struct d40_base *base = dev_get_drvdata(dev);
 
-	d40_save_restore_रेजिस्टरs(base, true);
+	d40_save_restore_registers(base, true);
 
-	/* Don't disable/enable घड़ीs क्रम v1 due to HW bugs */
-	अगर (base->rev != 1)
-		ग_लिखोl_relaxed(base->gcc_pwr_off_mask,
+	/* Don't disable/enable clocks for v1 due to HW bugs */
+	if (base->rev != 1)
+		writel_relaxed(base->gcc_pwr_off_mask,
 			       base->virtbase + D40_DREG_GCC);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dma40_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा d40_base *base = dev_get_drvdata(dev);
+static int dma40_runtime_resume(struct device *dev)
+{
+	struct d40_base *base = dev_get_drvdata(dev);
 
-	d40_save_restore_रेजिस्टरs(base, false);
+	d40_save_restore_registers(base, false);
 
-	ग_लिखोl_relaxed(D40_DREG_GCC_ENABLE_ALL,
+	writel_relaxed(D40_DREG_GCC_ENABLE_ALL,
 		       base->virtbase + D40_DREG_GCC);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops dma40_pm_ops = अणु
+static const struct dev_pm_ops dma40_pm_ops = {
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(dma40_suspend, dma40_resume)
-	SET_RUNTIME_PM_OPS(dma40_runसमय_suspend,
-				dma40_runसमय_resume,
-				शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(dma40_runtime_suspend,
+				dma40_runtime_resume,
+				NULL)
+};
 
 /* Initialization functions. */
 
-अटल पूर्णांक __init d40_phy_res_init(काष्ठा d40_base *base)
-अणु
-	पूर्णांक i;
-	पूर्णांक num_phy_chans_avail = 0;
+static int __init d40_phy_res_init(struct d40_base *base)
+{
+	int i;
+	int num_phy_chans_avail = 0;
 	u32 val[2];
-	पूर्णांक odd_even_bit = -2;
-	पूर्णांक gcc = D40_DREG_GCC_ENA;
+	int odd_even_bit = -2;
+	int gcc = D40_DREG_GCC_ENA;
 
-	val[0] = पढ़ोl(base->virtbase + D40_DREG_PRSME);
-	val[1] = पढ़ोl(base->virtbase + D40_DREG_PRSMO);
+	val[0] = readl(base->virtbase + D40_DREG_PRSME);
+	val[1] = readl(base->virtbase + D40_DREG_PRSMO);
 
-	क्रम (i = 0; i < base->num_phy_chans; i++) अणु
+	for (i = 0; i < base->num_phy_chans; i++) {
 		base->phy_res[i].num = i;
 		odd_even_bit += 2 * ((i % 2) == 0);
-		अगर (((val[i % 2] >> odd_even_bit) & 3) == 1) अणु
+		if (((val[i % 2] >> odd_even_bit) & 3) == 1) {
 			/* Mark security only channels as occupied */
 			base->phy_res[i].allocated_src = D40_ALLOC_PHY;
 			base->phy_res[i].allocated_dst = D40_ALLOC_PHY;
@@ -3042,18 +3041,18 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 						       D40_DREG_GCC_DST);
 
 
-		पूर्ण अन्यथा अणु
+		} else {
 			base->phy_res[i].allocated_src = D40_ALLOC_FREE;
 			base->phy_res[i].allocated_dst = D40_ALLOC_FREE;
 			base->phy_res[i].reserved = false;
 			num_phy_chans_avail++;
-		पूर्ण
+		}
 		spin_lock_init(&base->phy_res[i].lock);
-	पूर्ण
+	}
 
 	/* Mark disabled channels as occupied */
-	क्रम (i = 0; base->plat_data->disabled_channels[i] != -1; i++) अणु
-		पूर्णांक chan = base->plat_data->disabled_channels[i];
+	for (i = 0; base->plat_data->disabled_channels[i] != -1; i++) {
+		int chan = base->plat_data->disabled_channels[i];
 
 		base->phy_res[chan].allocated_src = D40_ALLOC_PHY;
 		base->phy_res[chan].allocated_dst = D40_ALLOC_PHY;
@@ -3063,103 +3062,103 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 		gcc |= D40_DREG_GCC_EVTGRP_ENA(D40_PHYS_TO_GROUP(chan),
 					       D40_DREG_GCC_DST);
 		num_phy_chans_avail--;
-	पूर्ण
+	}
 
 	/* Mark soft_lli channels */
-	क्रम (i = 0; i < base->plat_data->num_of_soft_lli_chans; i++) अणु
-		पूर्णांक chan = base->plat_data->soft_lli_chans[i];
+	for (i = 0; i < base->plat_data->num_of_soft_lli_chans; i++) {
+		int chan = base->plat_data->soft_lli_chans[i];
 
 		base->phy_res[chan].use_soft_lli = true;
-	पूर्ण
+	}
 
 	dev_info(base->dev, "%d of %d physical DMA channels available\n",
 		 num_phy_chans_avail, base->num_phy_chans);
 
-	/* Verअगरy settings extended vs standard */
-	val[0] = पढ़ोl(base->virtbase + D40_DREG_PRTYP);
+	/* Verify settings extended vs standard */
+	val[0] = readl(base->virtbase + D40_DREG_PRTYP);
 
-	क्रम (i = 0; i < base->num_phy_chans; i++) अणु
+	for (i = 0; i < base->num_phy_chans; i++) {
 
-		अगर (base->phy_res[i].allocated_src == D40_ALLOC_FREE &&
+		if (base->phy_res[i].allocated_src == D40_ALLOC_FREE &&
 		    (val[0] & 0x3) != 1)
 			dev_info(base->dev,
 				 "[%s] INFO: channel %d is misconfigured (%d)\n",
 				 __func__, i, val[0] & 0x3);
 
 		val[0] = val[0] >> 2;
-	पूर्ण
+	}
 
 	/*
-	 * To keep things simple, Enable all घड़ीs initially.
-	 * The घड़ीs will get managed later post channel allocation.
-	 * The घड़ीs क्रम the event lines on which reserved channels exists
+	 * To keep things simple, Enable all clocks initially.
+	 * The clocks will get managed later post channel allocation.
+	 * The clocks for the event lines on which reserved channels exists
 	 * are not managed here.
 	 */
-	ग_लिखोl(D40_DREG_GCC_ENABLE_ALL, base->virtbase + D40_DREG_GCC);
+	writel(D40_DREG_GCC_ENABLE_ALL, base->virtbase + D40_DREG_GCC);
 	base->gcc_pwr_off_mask = gcc;
 
-	वापस num_phy_chans_avail;
-पूर्ण
+	return num_phy_chans_avail;
+}
 
-अटल काष्ठा d40_base * __init d40_hw_detect_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा stedma40_platक्रमm_data *plat_data = dev_get_platdata(&pdev->dev);
-	काष्ठा clk *clk;
-	व्योम __iomem *virtbase;
-	काष्ठा resource *res;
-	काष्ठा d40_base *base;
-	पूर्णांक num_log_chans;
-	पूर्णांक num_phy_chans;
-	पूर्णांक num_स_नकल_chans;
-	पूर्णांक clk_ret = -EINVAL;
-	पूर्णांक i;
+static struct d40_base * __init d40_hw_detect_init(struct platform_device *pdev)
+{
+	struct stedma40_platform_data *plat_data = dev_get_platdata(&pdev->dev);
+	struct clk *clk;
+	void __iomem *virtbase;
+	struct resource *res;
+	struct d40_base *base;
+	int num_log_chans;
+	int num_phy_chans;
+	int num_memcpy_chans;
+	int clk_ret = -EINVAL;
+	int i;
 	u32 pid;
 	u32 cid;
 	u8 rev;
 
-	clk = clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(clk)) अणु
+	clk = clk_get(&pdev->dev, NULL);
+	if (IS_ERR(clk)) {
 		d40_err(&pdev->dev, "No matching clock found\n");
-		जाओ check_prepare_enabled;
-	पूर्ण
+		goto check_prepare_enabled;
+	}
 
 	clk_ret = clk_prepare_enable(clk);
-	अगर (clk_ret) अणु
+	if (clk_ret) {
 		d40_err(&pdev->dev, "Failed to prepare/enable clock\n");
-		जाओ disable_unprepare;
-	पूर्ण
+		goto disable_unprepare;
+	}
 
-	/* Get IO क्रम DMAC base address */
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "base");
-	अगर (!res)
-		जाओ disable_unprepare;
+	/* Get IO for DMAC base address */
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "base");
+	if (!res)
+		goto disable_unprepare;
 
-	अगर (request_mem_region(res->start, resource_size(res),
-			       D40_NAME " I/O base") == शून्य)
-		जाओ release_region;
+	if (request_mem_region(res->start, resource_size(res),
+			       D40_NAME " I/O base") == NULL)
+		goto release_region;
 
 	virtbase = ioremap(res->start, resource_size(res));
-	अगर (!virtbase)
-		जाओ release_region;
+	if (!virtbase)
+		goto release_region;
 
 	/* This is just a regular AMBA PrimeCell ID actually */
-	क्रम (pid = 0, i = 0; i < 4; i++)
-		pid |= (पढ़ोl(virtbase + resource_size(res) - 0x20 + 4 * i)
+	for (pid = 0, i = 0; i < 4; i++)
+		pid |= (readl(virtbase + resource_size(res) - 0x20 + 4 * i)
 			& 255) << (i * 8);
-	क्रम (cid = 0, i = 0; i < 4; i++)
-		cid |= (पढ़ोl(virtbase + resource_size(res) - 0x10 + 4 * i)
+	for (cid = 0, i = 0; i < 4; i++)
+		cid |= (readl(virtbase + resource_size(res) - 0x10 + 4 * i)
 			& 255) << (i * 8);
 
-	अगर (cid != AMBA_CID) अणु
+	if (cid != AMBA_CID) {
 		d40_err(&pdev->dev, "Unknown hardware! No PrimeCell ID\n");
-		जाओ unmap_io;
-	पूर्ण
-	अगर (AMBA_MANF_BITS(pid) != AMBA_VENDOR_ST) अणु
+		goto unmap_io;
+	}
+	if (AMBA_MANF_BITS(pid) != AMBA_VENDOR_ST) {
 		d40_err(&pdev->dev, "Unknown designer! Got %x wanted %x\n",
 			AMBA_MANF_BITS(pid),
 			AMBA_VENDOR_ST);
-		जाओ unmap_io;
-	पूर्ण
+		goto unmap_io;
+	}
 	/*
 	 * HW revision:
 	 * DB8500ed has revision 0
@@ -3170,22 +3169,22 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 	 * DB8540v1 has revision 4
 	 */
 	rev = AMBA_REV_BITS(pid);
-	अगर (rev < 2) अणु
+	if (rev < 2) {
 		d40_err(&pdev->dev, "hardware revision: %d is not supported", rev);
-		जाओ unmap_io;
-	पूर्ण
+		goto unmap_io;
+	}
 
 	/* The number of physical channels on this HW */
-	अगर (plat_data->num_of_phy_chans)
+	if (plat_data->num_of_phy_chans)
 		num_phy_chans = plat_data->num_of_phy_chans;
-	अन्यथा
-		num_phy_chans = 4 * (पढ़ोl(virtbase + D40_DREG_ICFG) & 0x7) + 4;
+	else
+		num_phy_chans = 4 * (readl(virtbase + D40_DREG_ICFG) & 0x7) + 4;
 
-	/* The number of channels used क्रम स_नकल */
-	अगर (plat_data->num_of_स_नकल_chans)
-		num_स_नकल_chans = plat_data->num_of_स_नकल_chans;
-	अन्यथा
-		num_स_नकल_chans = ARRAY_SIZE(dma40_स_नकल_channels);
+	/* The number of channels used for memcpy */
+	if (plat_data->num_of_memcpy_chans)
+		num_memcpy_chans = plat_data->num_of_memcpy_chans;
+	else
+		num_memcpy_chans = ARRAY_SIZE(dma40_memcpy_channels);
 
 	num_log_chans = num_phy_chans * D40_MAX_LOG_CHAN_PER_PHY;
 
@@ -3193,16 +3192,16 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 		 "hardware rev: %d @ %pa with %d physical and %d logical channels\n",
 		 rev, &res->start, num_phy_chans, num_log_chans);
 
-	base = kzalloc(ALIGN(माप(काष्ठा d40_base), 4) +
-		       (num_phy_chans + num_log_chans + num_स_नकल_chans) *
-		       माप(काष्ठा d40_chan), GFP_KERNEL);
+	base = kzalloc(ALIGN(sizeof(struct d40_base), 4) +
+		       (num_phy_chans + num_log_chans + num_memcpy_chans) *
+		       sizeof(struct d40_chan), GFP_KERNEL);
 
-	अगर (base == शून्य)
-		जाओ unmap_io;
+	if (base == NULL)
+		goto unmap_io;
 
 	base->rev = rev;
 	base->clk = clk;
-	base->num_स_नकल_chans = num_स_नकल_chans;
+	base->num_memcpy_chans = num_memcpy_chans;
 	base->num_phy_chans = num_phy_chans;
 	base->num_log_chans = num_log_chans;
 	base->phy_start = res->start;
@@ -3210,211 +3209,211 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 	base->virtbase = virtbase;
 	base->plat_data = plat_data;
 	base->dev = &pdev->dev;
-	base->phy_chans = ((व्योम *)base) + ALIGN(माप(काष्ठा d40_base), 4);
+	base->phy_chans = ((void *)base) + ALIGN(sizeof(struct d40_base), 4);
 	base->log_chans = &base->phy_chans[num_phy_chans];
 
-	अगर (base->plat_data->num_of_phy_chans == 14) अणु
+	if (base->plat_data->num_of_phy_chans == 14) {
 		base->gen_dmac.backup = d40_backup_regs_v4b;
 		base->gen_dmac.backup_size = BACKUP_REGS_SZ_V4B;
-		base->gen_dmac.पूर्णांकerrupt_en = D40_DREG_CPCMIS;
-		base->gen_dmac.पूर्णांकerrupt_clear = D40_DREG_CPCICR;
-		base->gen_dmac.realसमय_en = D40_DREG_CRSEG1;
-		base->gen_dmac.realसमय_clear = D40_DREG_CRCEG1;
+		base->gen_dmac.interrupt_en = D40_DREG_CPCMIS;
+		base->gen_dmac.interrupt_clear = D40_DREG_CPCICR;
+		base->gen_dmac.realtime_en = D40_DREG_CRSEG1;
+		base->gen_dmac.realtime_clear = D40_DREG_CRCEG1;
 		base->gen_dmac.high_prio_en = D40_DREG_CPSEG1;
 		base->gen_dmac.high_prio_clear = D40_DREG_CPCEG1;
 		base->gen_dmac.il = il_v4b;
 		base->gen_dmac.il_size = ARRAY_SIZE(il_v4b);
 		base->gen_dmac.init_reg = dma_init_reg_v4b;
 		base->gen_dmac.init_reg_size = ARRAY_SIZE(dma_init_reg_v4b);
-	पूर्ण अन्यथा अणु
-		अगर (base->rev >= 3) अणु
+	} else {
+		if (base->rev >= 3) {
 			base->gen_dmac.backup = d40_backup_regs_v4a;
 			base->gen_dmac.backup_size = BACKUP_REGS_SZ_V4A;
-		पूर्ण
-		base->gen_dmac.पूर्णांकerrupt_en = D40_DREG_PCMIS;
-		base->gen_dmac.पूर्णांकerrupt_clear = D40_DREG_PCICR;
-		base->gen_dmac.realसमय_en = D40_DREG_RSEG1;
-		base->gen_dmac.realसमय_clear = D40_DREG_RCEG1;
+		}
+		base->gen_dmac.interrupt_en = D40_DREG_PCMIS;
+		base->gen_dmac.interrupt_clear = D40_DREG_PCICR;
+		base->gen_dmac.realtime_en = D40_DREG_RSEG1;
+		base->gen_dmac.realtime_clear = D40_DREG_RCEG1;
 		base->gen_dmac.high_prio_en = D40_DREG_PSEG1;
 		base->gen_dmac.high_prio_clear = D40_DREG_PCEG1;
 		base->gen_dmac.il = il_v4a;
 		base->gen_dmac.il_size = ARRAY_SIZE(il_v4a);
 		base->gen_dmac.init_reg = dma_init_reg_v4a;
 		base->gen_dmac.init_reg_size = ARRAY_SIZE(dma_init_reg_v4a);
-	पूर्ण
+	}
 
-	base->phy_res = kसुस्मृति(num_phy_chans,
-				माप(*base->phy_res),
+	base->phy_res = kcalloc(num_phy_chans,
+				sizeof(*base->phy_res),
 				GFP_KERNEL);
-	अगर (!base->phy_res)
-		जाओ मुक्त_base;
+	if (!base->phy_res)
+		goto free_base;
 
-	base->lookup_phy_chans = kसुस्मृति(num_phy_chans,
-					 माप(*base->lookup_phy_chans),
+	base->lookup_phy_chans = kcalloc(num_phy_chans,
+					 sizeof(*base->lookup_phy_chans),
 					 GFP_KERNEL);
-	अगर (!base->lookup_phy_chans)
-		जाओ मुक्त_phy_res;
+	if (!base->lookup_phy_chans)
+		goto free_phy_res;
 
-	base->lookup_log_chans = kसुस्मृति(num_log_chans,
-					 माप(*base->lookup_log_chans),
+	base->lookup_log_chans = kcalloc(num_log_chans,
+					 sizeof(*base->lookup_log_chans),
 					 GFP_KERNEL);
-	अगर (!base->lookup_log_chans)
-		जाओ मुक्त_phy_chans;
+	if (!base->lookup_log_chans)
+		goto free_phy_chans;
 
-	base->reg_val_backup_chan = kदो_स्मृति_array(base->num_phy_chans,
-						  माप(d40_backup_regs_chan),
+	base->reg_val_backup_chan = kmalloc_array(base->num_phy_chans,
+						  sizeof(d40_backup_regs_chan),
 						  GFP_KERNEL);
-	अगर (!base->reg_val_backup_chan)
-		जाओ मुक्त_log_chans;
+	if (!base->reg_val_backup_chan)
+		goto free_log_chans;
 
-	base->lcla_pool.alloc_map = kसुस्मृति(num_phy_chans
+	base->lcla_pool.alloc_map = kcalloc(num_phy_chans
 					    * D40_LCLA_LINK_PER_EVENT_GRP,
-					    माप(*base->lcla_pool.alloc_map),
+					    sizeof(*base->lcla_pool.alloc_map),
 					    GFP_KERNEL);
-	अगर (!base->lcla_pool.alloc_map)
-		जाओ मुक्त_backup_chan;
+	if (!base->lcla_pool.alloc_map)
+		goto free_backup_chan;
 
-	base->regs_पूर्णांकerrupt = kदो_स्मृति_array(base->gen_dmac.il_size,
-					     माप(*base->regs_पूर्णांकerrupt),
+	base->regs_interrupt = kmalloc_array(base->gen_dmac.il_size,
+					     sizeof(*base->regs_interrupt),
 					     GFP_KERNEL);
-	अगर (!base->regs_पूर्णांकerrupt)
-		जाओ मुक्त_map;
+	if (!base->regs_interrupt)
+		goto free_map;
 
-	base->desc_slab = kmem_cache_create(D40_NAME, माप(काष्ठा d40_desc),
+	base->desc_slab = kmem_cache_create(D40_NAME, sizeof(struct d40_desc),
 					    0, SLAB_HWCACHE_ALIGN,
-					    शून्य);
-	अगर (base->desc_slab == शून्य)
-		जाओ मुक्त_regs;
+					    NULL);
+	if (base->desc_slab == NULL)
+		goto free_regs;
 
 
-	वापस base;
- मुक्त_regs:
-	kमुक्त(base->regs_पूर्णांकerrupt);
- मुक्त_map:
-	kमुक्त(base->lcla_pool.alloc_map);
- मुक्त_backup_chan:
-	kमुक्त(base->reg_val_backup_chan);
- मुक्त_log_chans:
-	kमुक्त(base->lookup_log_chans);
- मुक्त_phy_chans:
-	kमुक्त(base->lookup_phy_chans);
- मुक्त_phy_res:
-	kमुक्त(base->phy_res);
- मुक्त_base:
-	kमुक्त(base);
+	return base;
+ free_regs:
+	kfree(base->regs_interrupt);
+ free_map:
+	kfree(base->lcla_pool.alloc_map);
+ free_backup_chan:
+	kfree(base->reg_val_backup_chan);
+ free_log_chans:
+	kfree(base->lookup_log_chans);
+ free_phy_chans:
+	kfree(base->lookup_phy_chans);
+ free_phy_res:
+	kfree(base->phy_res);
+ free_base:
+	kfree(base);
  unmap_io:
 	iounmap(virtbase);
  release_region:
 	release_mem_region(res->start, resource_size(res));
  check_prepare_enabled:
-	अगर (!clk_ret)
+	if (!clk_ret)
  disable_unprepare:
 		clk_disable_unprepare(clk);
-	अगर (!IS_ERR(clk))
+	if (!IS_ERR(clk))
 		clk_put(clk);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम __init d40_hw_init(काष्ठा d40_base *base)
-अणु
+static void __init d40_hw_init(struct d40_base *base)
+{
 
-	पूर्णांक i;
-	u32 prmseo[2] = अणु0, 0पूर्ण;
-	u32 activeo[2] = अणु0xFFFFFFFF, 0xFFFFFFFFपूर्ण;
+	int i;
+	u32 prmseo[2] = {0, 0};
+	u32 activeo[2] = {0xFFFFFFFF, 0xFFFFFFFF};
 	u32 pcmis = 0;
 	u32 pcicr = 0;
-	काष्ठा d40_reg_val *dma_init_reg = base->gen_dmac.init_reg;
+	struct d40_reg_val *dma_init_reg = base->gen_dmac.init_reg;
 	u32 reg_size = base->gen_dmac.init_reg_size;
 
-	क्रम (i = 0; i < reg_size; i++)
-		ग_लिखोl(dma_init_reg[i].val,
+	for (i = 0; i < reg_size; i++)
+		writel(dma_init_reg[i].val,
 		       base->virtbase + dma_init_reg[i].reg);
 
-	/* Configure all our dma channels to शेष settings */
-	क्रम (i = 0; i < base->num_phy_chans; i++) अणु
+	/* Configure all our dma channels to default settings */
+	for (i = 0; i < base->num_phy_chans; i++) {
 
 		activeo[i % 2] = activeo[i % 2] << 2;
 
-		अगर (base->phy_res[base->num_phy_chans - i - 1].allocated_src
-		    == D40_ALLOC_PHY) अणु
+		if (base->phy_res[base->num_phy_chans - i - 1].allocated_src
+		    == D40_ALLOC_PHY) {
 			activeo[i % 2] |= 3;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Enable पूर्णांकerrupt # */
+		/* Enable interrupt # */
 		pcmis = (pcmis << 1) | 1;
 
-		/* Clear पूर्णांकerrupt # */
+		/* Clear interrupt # */
 		pcicr = (pcicr << 1) | 1;
 
 		/* Set channel to physical mode */
 		prmseo[i % 2] = prmseo[i % 2] << 2;
 		prmseo[i % 2] |= 1;
 
-	पूर्ण
+	}
 
-	ग_लिखोl(prmseo[1], base->virtbase + D40_DREG_PRMSE);
-	ग_लिखोl(prmseo[0], base->virtbase + D40_DREG_PRMSO);
-	ग_लिखोl(activeo[1], base->virtbase + D40_DREG_ACTIVE);
-	ग_लिखोl(activeo[0], base->virtbase + D40_DREG_ACTIVO);
+	writel(prmseo[1], base->virtbase + D40_DREG_PRMSE);
+	writel(prmseo[0], base->virtbase + D40_DREG_PRMSO);
+	writel(activeo[1], base->virtbase + D40_DREG_ACTIVE);
+	writel(activeo[0], base->virtbase + D40_DREG_ACTIVO);
 
-	/* Write which पूर्णांकerrupt to enable */
-	ग_लिखोl(pcmis, base->virtbase + base->gen_dmac.पूर्णांकerrupt_en);
+	/* Write which interrupt to enable */
+	writel(pcmis, base->virtbase + base->gen_dmac.interrupt_en);
 
-	/* Write which पूर्णांकerrupt to clear */
-	ग_लिखोl(pcicr, base->virtbase + base->gen_dmac.पूर्णांकerrupt_clear);
+	/* Write which interrupt to clear */
+	writel(pcicr, base->virtbase + base->gen_dmac.interrupt_clear);
 
 	/* These are __initdata and cannot be accessed after init */
-	base->gen_dmac.init_reg = शून्य;
+	base->gen_dmac.init_reg = NULL;
 	base->gen_dmac.init_reg_size = 0;
-पूर्ण
+}
 
-अटल पूर्णांक __init d40_lcla_allocate(काष्ठा d40_base *base)
-अणु
-	काष्ठा d40_lcla_pool *pool = &base->lcla_pool;
-	अचिन्हित दीर्घ *page_list;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+static int __init d40_lcla_allocate(struct d40_base *base)
+{
+	struct d40_lcla_pool *pool = &base->lcla_pool;
+	unsigned long *page_list;
+	int i, j;
+	int ret;
 
 	/*
 	 * This is somewhat ugly. We need 8192 bytes that are 18 bit aligned,
 	 * To full fill this hardware requirement without wasting 256 kb
 	 * we allocate pages until we get an aligned one.
 	 */
-	page_list = kदो_स्मृति_array(MAX_LCLA_ALLOC_ATTEMPTS,
-				  माप(*page_list),
+	page_list = kmalloc_array(MAX_LCLA_ALLOC_ATTEMPTS,
+				  sizeof(*page_list),
 				  GFP_KERNEL);
-	अगर (!page_list)
-		वापस -ENOMEM;
+	if (!page_list)
+		return -ENOMEM;
 
 	/* Calculating how many pages that are required */
 	base->lcla_pool.pages = SZ_1K * base->num_phy_chans / PAGE_SIZE;
 
-	क्रम (i = 0; i < MAX_LCLA_ALLOC_ATTEMPTS; i++) अणु
-		page_list[i] = __get_मुक्त_pages(GFP_KERNEL,
+	for (i = 0; i < MAX_LCLA_ALLOC_ATTEMPTS; i++) {
+		page_list[i] = __get_free_pages(GFP_KERNEL,
 						base->lcla_pool.pages);
-		अगर (!page_list[i]) अणु
+		if (!page_list[i]) {
 
 			d40_err(base->dev, "Failed to allocate %d pages.\n",
 				base->lcla_pool.pages);
 			ret = -ENOMEM;
 
-			क्रम (j = 0; j < i; j++)
-				मुक्त_pages(page_list[j], base->lcla_pool.pages);
-			जाओ मुक्त_page_list;
-		पूर्ण
+			for (j = 0; j < i; j++)
+				free_pages(page_list[j], base->lcla_pool.pages);
+			goto free_page_list;
+		}
 
-		अगर ((virt_to_phys((व्योम *)page_list[i]) &
+		if ((virt_to_phys((void *)page_list[i]) &
 		     (LCLA_ALIGNMENT - 1)) == 0)
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	क्रम (j = 0; j < i; j++)
-		मुक्त_pages(page_list[j], base->lcla_pool.pages);
+	for (j = 0; j < i; j++)
+		free_pages(page_list[j], base->lcla_pool.pages);
 
-	अगर (i < MAX_LCLA_ALLOC_ATTEMPTS) अणु
-		base->lcla_pool.base = (व्योम *)page_list[i];
-	पूर्ण अन्यथा अणु
+	if (i < MAX_LCLA_ALLOC_ATTEMPTS) {
+		base->lcla_pool.base = (void *)page_list[i];
+	} else {
 		/*
 		 * After many attempts and no succees with finding the correct
 		 * alignment, try with allocating a big buffer.
@@ -3422,304 +3421,304 @@ dma40_config_to_halfchannel(काष्ठा d40_chan *d40c,
 		dev_warn(base->dev,
 			 "[%s] Failed to get %d pages @ 18 bit align.\n",
 			 __func__, base->lcla_pool.pages);
-		base->lcla_pool.base_unaligned = kदो_स्मृति(SZ_1K *
+		base->lcla_pool.base_unaligned = kmalloc(SZ_1K *
 							 base->num_phy_chans +
 							 LCLA_ALIGNMENT,
 							 GFP_KERNEL);
-		अगर (!base->lcla_pool.base_unaligned) अणु
+		if (!base->lcla_pool.base_unaligned) {
 			ret = -ENOMEM;
-			जाओ मुक्त_page_list;
-		पूर्ण
+			goto free_page_list;
+		}
 
 		base->lcla_pool.base = PTR_ALIGN(base->lcla_pool.base_unaligned,
 						 LCLA_ALIGNMENT);
-	पूर्ण
+	}
 
 	pool->dma_addr = dma_map_single(base->dev, pool->base,
 					SZ_1K * base->num_phy_chans,
 					DMA_TO_DEVICE);
-	अगर (dma_mapping_error(base->dev, pool->dma_addr)) अणु
+	if (dma_mapping_error(base->dev, pool->dma_addr)) {
 		pool->dma_addr = 0;
 		ret = -ENOMEM;
-		जाओ मुक्त_page_list;
-	पूर्ण
+		goto free_page_list;
+	}
 
-	ग_लिखोl(virt_to_phys(base->lcla_pool.base),
+	writel(virt_to_phys(base->lcla_pool.base),
 	       base->virtbase + D40_DREG_LCLA);
 	ret = 0;
- मुक्त_page_list:
-	kमुक्त(page_list);
-	वापस ret;
-पूर्ण
+ free_page_list:
+	kfree(page_list);
+	return ret;
+}
 
-अटल पूर्णांक __init d40_of_probe(काष्ठा platक्रमm_device *pdev,
-			       काष्ठा device_node *np)
-अणु
-	काष्ठा stedma40_platक्रमm_data *pdata;
-	पूर्णांक num_phy = 0, num_स_नकल = 0, num_disabled = 0;
-	स्थिर __be32 *list;
+static int __init d40_of_probe(struct platform_device *pdev,
+			       struct device_node *np)
+{
+	struct stedma40_platform_data *pdata;
+	int num_phy = 0, num_memcpy = 0, num_disabled = 0;
+	const __be32 *list;
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
-	/* If असलent this value will be obtained from h/w. */
-	of_property_पढ़ो_u32(np, "dma-channels", &num_phy);
-	अगर (num_phy > 0)
+	/* If absent this value will be obtained from h/w. */
+	of_property_read_u32(np, "dma-channels", &num_phy);
+	if (num_phy > 0)
 		pdata->num_of_phy_chans = num_phy;
 
-	list = of_get_property(np, "memcpy-channels", &num_स_नकल);
-	num_स_नकल /= माप(*list);
+	list = of_get_property(np, "memcpy-channels", &num_memcpy);
+	num_memcpy /= sizeof(*list);
 
-	अगर (num_स_नकल > D40_MEMCPY_MAX_CHANS || num_स_नकल <= 0) अणु
+	if (num_memcpy > D40_MEMCPY_MAX_CHANS || num_memcpy <= 0) {
 		d40_err(&pdev->dev,
 			"Invalid number of memcpy channels specified (%d)\n",
-			num_स_नकल);
-		वापस -EINVAL;
-	पूर्ण
-	pdata->num_of_स_नकल_chans = num_स_नकल;
+			num_memcpy);
+		return -EINVAL;
+	}
+	pdata->num_of_memcpy_chans = num_memcpy;
 
-	of_property_पढ़ो_u32_array(np, "memcpy-channels",
-				   dma40_स_नकल_channels,
-				   num_स_नकल);
+	of_property_read_u32_array(np, "memcpy-channels",
+				   dma40_memcpy_channels,
+				   num_memcpy);
 
 	list = of_get_property(np, "disabled-channels", &num_disabled);
-	num_disabled /= माप(*list);
+	num_disabled /= sizeof(*list);
 
-	अगर (num_disabled >= STEDMA40_MAX_PHYS || num_disabled < 0) अणु
+	if (num_disabled >= STEDMA40_MAX_PHYS || num_disabled < 0) {
 		d40_err(&pdev->dev,
 			"Invalid number of disabled channels specified (%d)\n",
 			num_disabled);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	of_property_पढ़ो_u32_array(np, "disabled-channels",
+	of_property_read_u32_array(np, "disabled-channels",
 				   pdata->disabled_channels,
 				   num_disabled);
 	pdata->disabled_channels[num_disabled] = -1;
 
-	pdev->dev.platक्रमm_data = pdata;
+	pdev->dev.platform_data = pdata;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init d40_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा stedma40_platक्रमm_data *plat_data = dev_get_platdata(&pdev->dev);
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret = -ENOENT;
-	काष्ठा d40_base *base;
-	काष्ठा resource *res;
-	पूर्णांक num_reserved_chans;
+static int __init d40_probe(struct platform_device *pdev)
+{
+	struct stedma40_platform_data *plat_data = dev_get_platdata(&pdev->dev);
+	struct device_node *np = pdev->dev.of_node;
+	int ret = -ENOENT;
+	struct d40_base *base;
+	struct resource *res;
+	int num_reserved_chans;
 	u32 val;
 
-	अगर (!plat_data) अणु
-		अगर (np) अणु
-			अगर (d40_of_probe(pdev, np)) अणु
+	if (!plat_data) {
+		if (np) {
+			if (d40_of_probe(pdev, np)) {
 				ret = -ENOMEM;
-				जाओ report_failure;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto report_failure;
+			}
+		} else {
 			d40_err(&pdev->dev, "No pdata or Device Tree provided\n");
-			जाओ report_failure;
-		पूर्ण
-	पूर्ण
+			goto report_failure;
+		}
+	}
 
 	base = d40_hw_detect_init(pdev);
-	अगर (!base)
-		जाओ report_failure;
+	if (!base)
+		goto report_failure;
 
 	num_reserved_chans = d40_phy_res_init(base);
 
-	platक्रमm_set_drvdata(pdev, base);
+	platform_set_drvdata(pdev, base);
 
-	spin_lock_init(&base->पूर्णांकerrupt_lock);
+	spin_lock_init(&base->interrupt_lock);
 	spin_lock_init(&base->execmd_lock);
 
-	/* Get IO क्रम logical channel parameter address */
-	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "lcpa");
-	अगर (!res) अणु
+	/* Get IO for logical channel parameter address */
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "lcpa");
+	if (!res) {
 		ret = -ENOENT;
 		d40_err(&pdev->dev, "No \"lcpa\" memory resource\n");
-		जाओ destroy_cache;
-	पूर्ण
+		goto destroy_cache;
+	}
 	base->lcpa_size = resource_size(res);
 	base->phy_lcpa = res->start;
 
-	अगर (request_mem_region(res->start, resource_size(res),
-			       D40_NAME " I/O lcpa") == शून्य) अणु
+	if (request_mem_region(res->start, resource_size(res),
+			       D40_NAME " I/O lcpa") == NULL) {
 		ret = -EBUSY;
 		d40_err(&pdev->dev, "Failed to request LCPA region %pR\n", res);
-		जाओ destroy_cache;
-	पूर्ण
+		goto destroy_cache;
+	}
 
-	/* We make use of ESRAM memory क्रम this. */
-	val = पढ़ोl(base->virtbase + D40_DREG_LCPA);
-	अगर (res->start != val && val != 0) अणु
+	/* We make use of ESRAM memory for this. */
+	val = readl(base->virtbase + D40_DREG_LCPA);
+	if (res->start != val && val != 0) {
 		dev_warn(&pdev->dev,
 			 "[%s] Mismatch LCPA dma 0x%x, def %pa\n",
 			 __func__, val, &res->start);
-	पूर्ण अन्यथा
-		ग_लिखोl(res->start, base->virtbase + D40_DREG_LCPA);
+	} else
+		writel(res->start, base->virtbase + D40_DREG_LCPA);
 
 	base->lcpa_base = ioremap(res->start, resource_size(res));
-	अगर (!base->lcpa_base) अणु
+	if (!base->lcpa_base) {
 		ret = -ENOMEM;
 		d40_err(&pdev->dev, "Failed to ioremap LCPA region\n");
-		जाओ destroy_cache;
-	पूर्ण
-	/* If lcla has to be located in ESRAM we करोn't need to allocate */
-	अगर (base->plat_data->use_esram_lcla) अणु
-		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
+		goto destroy_cache;
+	}
+	/* If lcla has to be located in ESRAM we don't need to allocate */
+	if (base->plat_data->use_esram_lcla) {
+		res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 							"lcla_esram");
-		अगर (!res) अणु
+		if (!res) {
 			ret = -ENOENT;
 			d40_err(&pdev->dev,
 				"No \"lcla_esram\" memory resource\n");
-			जाओ destroy_cache;
-		पूर्ण
+			goto destroy_cache;
+		}
 		base->lcla_pool.base = ioremap(res->start,
 						resource_size(res));
-		अगर (!base->lcla_pool.base) अणु
+		if (!base->lcla_pool.base) {
 			ret = -ENOMEM;
 			d40_err(&pdev->dev, "Failed to ioremap LCLA region\n");
-			जाओ destroy_cache;
-		पूर्ण
-		ग_लिखोl(res->start, base->virtbase + D40_DREG_LCLA);
+			goto destroy_cache;
+		}
+		writel(res->start, base->virtbase + D40_DREG_LCLA);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = d40_lcla_allocate(base);
-		अगर (ret) अणु
+		if (ret) {
 			d40_err(&pdev->dev, "Failed to allocate LCLA area\n");
-			जाओ destroy_cache;
-		पूर्ण
-	पूर्ण
+			goto destroy_cache;
+		}
+	}
 
 	spin_lock_init(&base->lcla_pool.lock);
 
-	base->irq = platक्रमm_get_irq(pdev, 0);
+	base->irq = platform_get_irq(pdev, 0);
 
-	ret = request_irq(base->irq, d40_handle_पूर्णांकerrupt, 0, D40_NAME, base);
-	अगर (ret) अणु
+	ret = request_irq(base->irq, d40_handle_interrupt, 0, D40_NAME, base);
+	if (ret) {
 		d40_err(&pdev->dev, "No IRQ defined\n");
-		जाओ destroy_cache;
-	पूर्ण
+		goto destroy_cache;
+	}
 
-	अगर (base->plat_data->use_esram_lcla) अणु
+	if (base->plat_data->use_esram_lcla) {
 
 		base->lcpa_regulator = regulator_get(base->dev, "lcla_esram");
-		अगर (IS_ERR(base->lcpa_regulator)) अणु
+		if (IS_ERR(base->lcpa_regulator)) {
 			d40_err(&pdev->dev, "Failed to get lcpa_regulator\n");
 			ret = PTR_ERR(base->lcpa_regulator);
-			base->lcpa_regulator = शून्य;
-			जाओ destroy_cache;
-		पूर्ण
+			base->lcpa_regulator = NULL;
+			goto destroy_cache;
+		}
 
 		ret = regulator_enable(base->lcpa_regulator);
-		अगर (ret) अणु
+		if (ret) {
 			d40_err(&pdev->dev,
 				"Failed to enable lcpa_regulator\n");
 			regulator_put(base->lcpa_regulator);
-			base->lcpa_regulator = शून्य;
-			जाओ destroy_cache;
-		पूर्ण
-	पूर्ण
+			base->lcpa_regulator = NULL;
+			goto destroy_cache;
+		}
+	}
 
-	ग_लिखोl_relaxed(D40_DREG_GCC_ENABLE_ALL, base->virtbase + D40_DREG_GCC);
+	writel_relaxed(D40_DREG_GCC_ENABLE_ALL, base->virtbase + D40_DREG_GCC);
 
-	pm_runसमय_irq_safe(base->dev);
-	pm_runसमय_set_स्वतःsuspend_delay(base->dev, DMA40_AUTOSUSPEND_DELAY);
-	pm_runसमय_use_स्वतःsuspend(base->dev);
-	pm_runसमय_mark_last_busy(base->dev);
-	pm_runसमय_set_active(base->dev);
-	pm_runसमय_enable(base->dev);
+	pm_runtime_irq_safe(base->dev);
+	pm_runtime_set_autosuspend_delay(base->dev, DMA40_AUTOSUSPEND_DELAY);
+	pm_runtime_use_autosuspend(base->dev);
+	pm_runtime_mark_last_busy(base->dev);
+	pm_runtime_set_active(base->dev);
+	pm_runtime_enable(base->dev);
 
 	ret = d40_dmaengine_init(base, num_reserved_chans);
-	अगर (ret)
-		जाओ destroy_cache;
+	if (ret)
+		goto destroy_cache;
 
 	ret = dma_set_max_seg_size(base->dev, STEDMA40_MAX_SEG_SIZE);
-	अगर (ret) अणु
+	if (ret) {
 		d40_err(&pdev->dev, "Failed to set dma max seg size\n");
-		जाओ destroy_cache;
-	पूर्ण
+		goto destroy_cache;
+	}
 
 	d40_hw_init(base);
 
-	अगर (np) अणु
-		ret = of_dma_controller_रेजिस्टर(np, d40_xlate, शून्य);
-		अगर (ret)
+	if (np) {
+		ret = of_dma_controller_register(np, d40_xlate, NULL);
+		if (ret)
 			dev_err(&pdev->dev,
 				"could not register of_dma_controller\n");
-	पूर्ण
+	}
 
 	dev_info(base->dev, "initialized\n");
-	वापस 0;
+	return 0;
  destroy_cache:
 	kmem_cache_destroy(base->desc_slab);
-	अगर (base->virtbase)
+	if (base->virtbase)
 		iounmap(base->virtbase);
 
-	अगर (base->lcla_pool.base && base->plat_data->use_esram_lcla) अणु
+	if (base->lcla_pool.base && base->plat_data->use_esram_lcla) {
 		iounmap(base->lcla_pool.base);
-		base->lcla_pool.base = शून्य;
-	पूर्ण
+		base->lcla_pool.base = NULL;
+	}
 
-	अगर (base->lcla_pool.dma_addr)
+	if (base->lcla_pool.dma_addr)
 		dma_unmap_single(base->dev, base->lcla_pool.dma_addr,
 				 SZ_1K * base->num_phy_chans,
 				 DMA_TO_DEVICE);
 
-	अगर (!base->lcla_pool.base_unaligned && base->lcla_pool.base)
-		मुक्त_pages((अचिन्हित दीर्घ)base->lcla_pool.base,
+	if (!base->lcla_pool.base_unaligned && base->lcla_pool.base)
+		free_pages((unsigned long)base->lcla_pool.base,
 			   base->lcla_pool.pages);
 
-	kमुक्त(base->lcla_pool.base_unaligned);
+	kfree(base->lcla_pool.base_unaligned);
 
-	अगर (base->lcpa_base)
+	if (base->lcpa_base)
 		iounmap(base->lcpa_base);
 
-	अगर (base->phy_lcpa)
+	if (base->phy_lcpa)
 		release_mem_region(base->phy_lcpa,
 				   base->lcpa_size);
-	अगर (base->phy_start)
+	if (base->phy_start)
 		release_mem_region(base->phy_start,
 				   base->phy_size);
-	अगर (base->clk) अणु
+	if (base->clk) {
 		clk_disable_unprepare(base->clk);
 		clk_put(base->clk);
-	पूर्ण
+	}
 
-	अगर (base->lcpa_regulator) अणु
+	if (base->lcpa_regulator) {
 		regulator_disable(base->lcpa_regulator);
 		regulator_put(base->lcpa_regulator);
-	पूर्ण
+	}
 
-	kमुक्त(base->lcla_pool.alloc_map);
-	kमुक्त(base->lookup_log_chans);
-	kमुक्त(base->lookup_phy_chans);
-	kमुक्त(base->phy_res);
-	kमुक्त(base);
+	kfree(base->lcla_pool.alloc_map);
+	kfree(base->lookup_log_chans);
+	kfree(base->lookup_phy_chans);
+	kfree(base->phy_res);
+	kfree(base);
  report_failure:
 	d40_err(&pdev->dev, "probe failed\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id d40_match[] = अणु
-        अणु .compatible = "stericsson,dma40", पूर्ण,
-        अणुपूर्ण
-पूर्ण;
+static const struct of_device_id d40_match[] = {
+        { .compatible = "stericsson,dma40", },
+        {}
+};
 
-अटल काष्ठा platक्रमm_driver d40_driver = अणु
-	.driver = अणु
+static struct platform_driver d40_driver = {
+	.driver = {
 		.name  = D40_NAME,
 		.pm = &dma40_pm_ops,
 		.of_match_table = d40_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init stedma40_init(व्योम)
-अणु
-	वापस platक्रमm_driver_probe(&d40_driver, d40_probe);
-पूर्ण
+static int __init stedma40_init(void)
+{
+	return platform_driver_probe(&d40_driver, d40_probe);
+}
 subsys_initcall(stedma40_init);

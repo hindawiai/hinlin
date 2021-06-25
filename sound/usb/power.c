@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *   UAC3 Power Doमुख्य state management functions
+ *   UAC3 Power Domain state management functions
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/audपन.स>
-#समावेश <linux/usb/audio-v2.h>
-#समावेश <linux/usb/audio-v3.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/usb/audio.h>
+#include <linux/usb/audio-v2.h>
+#include <linux/usb/audio-v3.h>
 
-#समावेश "usbaudio.h"
-#समावेश "helper.h"
-#समावेश "power.h"
+#include "usbaudio.h"
+#include "helper.h"
+#include "power.h"
 
-काष्ठा snd_usb_घातer_करोमुख्य *
-snd_usb_find_घातer_करोमुख्य(काष्ठा usb_host_पूर्णांकerface *ctrl_अगरace,
-			  अचिन्हित अक्षर id)
-अणु
-	काष्ठा snd_usb_घातer_करोमुख्य *pd;
-	व्योम *p;
+struct snd_usb_power_domain *
+snd_usb_find_power_domain(struct usb_host_interface *ctrl_iface,
+			  unsigned char id)
+{
+	struct snd_usb_power_domain *pd;
+	void *p;
 
-	pd = kzalloc(माप(*pd), GFP_KERNEL);
-	अगर (!pd)
-		वापस शून्य;
+	pd = kzalloc(sizeof(*pd), GFP_KERNEL);
+	if (!pd)
+		return NULL;
 
-	p = शून्य;
-	जबतक ((p = snd_usb_find_csपूर्णांक_desc(ctrl_अगरace->extra,
-					    ctrl_अगरace->extralen,
-					    p, UAC3_POWER_DOMAIN)) != शून्य) अणु
-		काष्ठा uac3_घातer_करोमुख्य_descriptor *pd_desc = p;
-		पूर्णांक i;
+	p = NULL;
+	while ((p = snd_usb_find_csint_desc(ctrl_iface->extra,
+					    ctrl_iface->extralen,
+					    p, UAC3_POWER_DOMAIN)) != NULL) {
+		struct uac3_power_domain_descriptor *pd_desc = p;
+		int i;
 
-		अगर (!snd_usb_validate_audio_desc(p, UAC_VERSION_3))
-			जारी;
-		क्रम (i = 0; i < pd_desc->bNrEntities; i++) अणु
-			अगर (pd_desc->baEntityID[i] == id) अणु
-				pd->pd_id = pd_desc->bPowerDoमुख्यID;
+		if (!snd_usb_validate_audio_desc(p, UAC_VERSION_3))
+			continue;
+		for (i = 0; i < pd_desc->bNrEntities; i++) {
+			if (pd_desc->baEntityID[i] == id) {
+				pd->pd_id = pd_desc->bPowerDomainID;
 				pd->pd_d1d0_rec =
 					le16_to_cpu(pd_desc->waRecoveryTime1);
 				pd->pd_d2d0_rec =
 					le16_to_cpu(pd_desc->waRecoveryTime2);
-				वापस pd;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return pd;
+			}
+		}
+	}
 
-	kमुक्त(pd);
-	वापस शून्य;
-पूर्ण
+	kfree(pd);
+	return NULL;
+}
 
-पूर्णांक snd_usb_घातer_करोमुख्य_set(काष्ठा snd_usb_audio *chip,
-			     काष्ठा snd_usb_घातer_करोमुख्य *pd,
-			     अचिन्हित अक्षर state)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	अचिन्हित अक्षर current_state;
-	पूर्णांक err, idx;
+int snd_usb_power_domain_set(struct snd_usb_audio *chip,
+			     struct snd_usb_power_domain *pd,
+			     unsigned char state)
+{
+	struct usb_device *dev = chip->dev;
+	unsigned char current_state;
+	int err, idx;
 
-	idx = snd_usb_ctrl_पूर्णांकf(chip) | (pd->pd_id << 8);
+	idx = snd_usb_ctrl_intf(chip) | (pd->pd_id << 8);
 
 	err = snd_usb_ctl_msg(chip->dev, usb_rcvctrlpipe(chip->dev, 0),
 			      UAC2_CS_CUR,
-			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_IN,
+			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_IN,
 			      UAC3_AC_POWER_DOMAIN_CONTROL << 8, idx,
-			      &current_state, माप(current_state));
-	अगर (err < 0) अणु
+			      &current_state, sizeof(current_state));
+	if (err < 0) {
 		dev_err(&dev->dev, "Can't get UAC3 power state for id %d\n",
 			pd->pd_id);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (current_state == state) अणु
+	if (current_state == state) {
 		dev_dbg(&dev->dev, "UAC3 power domain id %d already in state %d\n",
 			pd->pd_id, state);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	err = snd_usb_ctl_msg(chip->dev, usb_sndctrlpipe(chip->dev, 0), UAC2_CS_CUR,
-			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_OUT,
+			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_OUT,
 			      UAC3_AC_POWER_DOMAIN_CONTROL << 8, idx,
-			      &state, माप(state));
-	अगर (err < 0) अणु
+			      &state, sizeof(state));
+	if (err < 0) {
 		dev_err(&dev->dev, "Can't set UAC3 power state to %d for id %d\n",
 			state, pd->pd_id);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (state == UAC3_PD_STATE_D0) अणु
-		चयन (current_state) अणु
-		हाल UAC3_PD_STATE_D2:
+	if (state == UAC3_PD_STATE_D0) {
+		switch (current_state) {
+		case UAC3_PD_STATE_D2:
 			udelay(pd->pd_d2d0_rec * 50);
-			अवरोध;
-		हाल UAC3_PD_STATE_D1:
+			break;
+		case UAC3_PD_STATE_D1:
 			udelay(pd->pd_d1d0_rec * 50);
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
 	dev_dbg(&dev->dev, "UAC3 power domain id %d change to state %d\n",
 		pd->pd_id, state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

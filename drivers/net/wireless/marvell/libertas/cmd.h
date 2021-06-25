@@ -1,143 +1,142 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) 2007, Red Hat, Inc. */
 
-#अगर_अघोषित _LBS_CMD_H_
-#घोषणा _LBS_CMD_H_
+#ifndef _LBS_CMD_H_
+#define _LBS_CMD_H_
 
-#समावेश <net/cfg80211.h>
+#include <net/cfg80211.h>
 
-#समावेश "host.h"
-#समावेश "dev.h"
+#include "host.h"
+#include "dev.h"
 
 
 /* Command & response transfer between host and card */
 
-काष्ठा cmd_ctrl_node अणु
-	काष्ठा list_head list;
-	पूर्णांक result;
+struct cmd_ctrl_node {
+	struct list_head list;
+	int result;
 	/* command response */
-	पूर्णांक (*callback)(काष्ठा lbs_निजी *,
-			अचिन्हित दीर्घ,
-			काष्ठा cmd_header *);
-	अचिन्हित दीर्घ callback_arg;
+	int (*callback)(struct lbs_private *,
+			unsigned long,
+			struct cmd_header *);
+	unsigned long callback_arg;
 	/* command data */
-	काष्ठा cmd_header *cmdbuf;
-	/* रुको queue */
-	u16 cmdरुकोqwoken;
-	रुको_queue_head_t cmdरुको_q;
-पूर्ण;
+	struct cmd_header *cmdbuf;
+	/* wait queue */
+	u16 cmdwaitqwoken;
+	wait_queue_head_t cmdwait_q;
+};
 
 
-/* lbs_cmd() infers the size of the buffer to copy data back पूर्णांकo, from
-   the size of the target of the poपूर्णांकer. Since the command to be sent
+/* lbs_cmd() infers the size of the buffer to copy data back into, from
+   the size of the target of the pointer. Since the command to be sent
    may often be smaller, that size is set in cmd->size by the caller.*/
-#घोषणा lbs_cmd(priv, cmdnr, cmd, cb, cb_arg)	(अणु		\
-	uपूर्णांक16_t __sz = le16_to_cpu((cmd)->hdr.size);		\
-	(cmd)->hdr.size = cpu_to_le16(माप(*(cmd)));		\
+#define lbs_cmd(priv, cmdnr, cmd, cb, cb_arg)	({		\
+	uint16_t __sz = le16_to_cpu((cmd)->hdr.size);		\
+	(cmd)->hdr.size = cpu_to_le16(sizeof(*(cmd)));		\
 	__lbs_cmd(priv, cmdnr, &(cmd)->hdr, __sz, cb, cb_arg);	\
-पूर्ण)
+})
 
-#घोषणा lbs_cmd_with_response(priv, cmdnr, cmd)	\
-	lbs_cmd(priv, cmdnr, cmd, lbs_cmd_copyback, (अचिन्हित दीर्घ) (cmd))
+#define lbs_cmd_with_response(priv, cmdnr, cmd)	\
+	lbs_cmd(priv, cmdnr, cmd, lbs_cmd_copyback, (unsigned long) (cmd))
 
-व्योम lbs_cmd_async(काष्ठा lbs_निजी *priv, uपूर्णांक16_t command,
-	काष्ठा cmd_header *in_cmd, पूर्णांक in_cmd_size);
+void lbs_cmd_async(struct lbs_private *priv, uint16_t command,
+	struct cmd_header *in_cmd, int in_cmd_size);
 
-पूर्णांक __lbs_cmd(काष्ठा lbs_निजी *priv, uपूर्णांक16_t command,
-	      काष्ठा cmd_header *in_cmd, पूर्णांक in_cmd_size,
-	      पूर्णांक (*callback)(काष्ठा lbs_निजी *, अचिन्हित दीर्घ, काष्ठा cmd_header *),
-	      अचिन्हित दीर्घ callback_arg);
+int __lbs_cmd(struct lbs_private *priv, uint16_t command,
+	      struct cmd_header *in_cmd, int in_cmd_size,
+	      int (*callback)(struct lbs_private *, unsigned long, struct cmd_header *),
+	      unsigned long callback_arg);
 
-काष्ठा cmd_ctrl_node *__lbs_cmd_async(काष्ठा lbs_निजी *priv,
-	uपूर्णांक16_t command, काष्ठा cmd_header *in_cmd, पूर्णांक in_cmd_size,
-	पूर्णांक (*callback)(काष्ठा lbs_निजी *, अचिन्हित दीर्घ, काष्ठा cmd_header *),
-	अचिन्हित दीर्घ callback_arg);
+struct cmd_ctrl_node *__lbs_cmd_async(struct lbs_private *priv,
+	uint16_t command, struct cmd_header *in_cmd, int in_cmd_size,
+	int (*callback)(struct lbs_private *, unsigned long, struct cmd_header *),
+	unsigned long callback_arg);
 
-पूर्णांक lbs_cmd_copyback(काष्ठा lbs_निजी *priv, अचिन्हित दीर्घ extra,
-		     काष्ठा cmd_header *resp);
+int lbs_cmd_copyback(struct lbs_private *priv, unsigned long extra,
+		     struct cmd_header *resp);
 
-पूर्णांक lbs_allocate_cmd_buffer(काष्ठा lbs_निजी *priv);
-पूर्णांक lbs_मुक्त_cmd_buffer(काष्ठा lbs_निजी *priv);
+int lbs_allocate_cmd_buffer(struct lbs_private *priv);
+int lbs_free_cmd_buffer(struct lbs_private *priv);
 
-पूर्णांक lbs_execute_next_command(काष्ठा lbs_निजी *priv);
-व्योम __lbs_complete_command(काष्ठा lbs_निजी *priv, काष्ठा cmd_ctrl_node *cmd,
-			    पूर्णांक result);
-व्योम lbs_complete_command(काष्ठा lbs_निजी *priv, काष्ठा cmd_ctrl_node *cmd,
-			  पूर्णांक result);
-पूर्णांक lbs_process_command_response(काष्ठा lbs_निजी *priv, u8 *data, u32 len);
+int lbs_execute_next_command(struct lbs_private *priv);
+void __lbs_complete_command(struct lbs_private *priv, struct cmd_ctrl_node *cmd,
+			    int result);
+void lbs_complete_command(struct lbs_private *priv, struct cmd_ctrl_node *cmd,
+			  int result);
+int lbs_process_command_response(struct lbs_private *priv, u8 *data, u32 len);
 
 
 /* From cmdresp.c */
 
-व्योम lbs_mac_event_disconnected(काष्ठा lbs_निजी *priv,
+void lbs_mac_event_disconnected(struct lbs_private *priv,
 				bool locally_generated);
 
 
 
 /* Events */
 
-व्योम lbs_process_event(काष्ठा lbs_निजी *priv, u32 event);
+void lbs_process_event(struct lbs_private *priv, u32 event);
 
 
 /* Actual commands */
 
-पूर्णांक lbs_update_hw_spec(काष्ठा lbs_निजी *priv);
+int lbs_update_hw_spec(struct lbs_private *priv);
 
-पूर्णांक lbs_set_channel(काष्ठा lbs_निजी *priv, u8 channel);
+int lbs_set_channel(struct lbs_private *priv, u8 channel);
 
-पूर्णांक lbs_update_channel(काष्ठा lbs_निजी *priv);
+int lbs_update_channel(struct lbs_private *priv);
 
-पूर्णांक lbs_host_sleep_cfg(काष्ठा lbs_निजी *priv, uपूर्णांक32_t criteria,
-		काष्ठा wol_config *p_wol_config);
+int lbs_host_sleep_cfg(struct lbs_private *priv, uint32_t criteria,
+		struct wol_config *p_wol_config);
 
-पूर्णांक lbs_cmd_802_11_sleep_params(काष्ठा lbs_निजी *priv, uपूर्णांक16_t cmd_action,
-				काष्ठा sleep_params *sp);
+int lbs_cmd_802_11_sleep_params(struct lbs_private *priv, uint16_t cmd_action,
+				struct sleep_params *sp);
 
-व्योम lbs_ps_confirm_sleep(काष्ठा lbs_निजी *priv);
+void lbs_ps_confirm_sleep(struct lbs_private *priv);
 
-पूर्णांक lbs_set_radio(काष्ठा lbs_निजी *priv, u8 preamble, u8 radio_on);
+int lbs_set_radio(struct lbs_private *priv, u8 preamble, u8 radio_on);
 
-व्योम lbs_set_mac_control(काष्ठा lbs_निजी *priv);
-पूर्णांक lbs_set_mac_control_sync(काष्ठा lbs_निजी *priv);
+void lbs_set_mac_control(struct lbs_private *priv);
+int lbs_set_mac_control_sync(struct lbs_private *priv);
 
-पूर्णांक lbs_get_tx_घातer(काष्ठा lbs_निजी *priv, s16 *curlevel, s16 *minlevel,
+int lbs_get_tx_power(struct lbs_private *priv, s16 *curlevel, s16 *minlevel,
 		     s16 *maxlevel);
 
-पूर्णांक lbs_set_snmp_mib(काष्ठा lbs_निजी *priv, u32 oid, u16 val);
+int lbs_set_snmp_mib(struct lbs_private *priv, u32 oid, u16 val);
 
-पूर्णांक lbs_get_snmp_mib(काष्ठा lbs_निजी *priv, u32 oid, u16 *out_val);
+int lbs_get_snmp_mib(struct lbs_private *priv, u32 oid, u16 *out_val);
 
 
 /* Commands only used in wext.c, assoc. and scan.c */
 
-पूर्णांक lbs_set_घातer_adapt_cfg(काष्ठा lbs_निजी *priv, पूर्णांक enable, पूर्णांक8_t p0,
-		पूर्णांक8_t p1, पूर्णांक8_t p2);
+int lbs_set_power_adapt_cfg(struct lbs_private *priv, int enable, int8_t p0,
+		int8_t p1, int8_t p2);
 
-पूर्णांक lbs_set_tpc_cfg(काष्ठा lbs_निजी *priv, पूर्णांक enable, पूर्णांक8_t p0, पूर्णांक8_t p1,
-		पूर्णांक8_t p2, पूर्णांक usesnr);
+int lbs_set_tpc_cfg(struct lbs_private *priv, int enable, int8_t p0, int8_t p1,
+		int8_t p2, int usesnr);
 
-पूर्णांक lbs_set_data_rate(काष्ठा lbs_निजी *priv, u8 rate);
+int lbs_set_data_rate(struct lbs_private *priv, u8 rate);
 
-पूर्णांक lbs_cmd_802_11_rate_adapt_rateset(काष्ठा lbs_निजी *priv,
-				      uपूर्णांक16_t cmd_action);
+int lbs_cmd_802_11_rate_adapt_rateset(struct lbs_private *priv,
+				      uint16_t cmd_action);
 
-पूर्णांक lbs_set_tx_घातer(काष्ठा lbs_निजी *priv, s16 dbm);
+int lbs_set_tx_power(struct lbs_private *priv, s16 dbm);
 
-पूर्णांक lbs_set_deep_sleep(काष्ठा lbs_निजी *priv, पूर्णांक deep_sleep);
+int lbs_set_deep_sleep(struct lbs_private *priv, int deep_sleep);
 
-पूर्णांक lbs_set_host_sleep(काष्ठा lbs_निजी *priv, पूर्णांक host_sleep);
+int lbs_set_host_sleep(struct lbs_private *priv, int host_sleep);
 
-पूर्णांक lbs_set_monitor_mode(काष्ठा lbs_निजी *priv, पूर्णांक enable);
+int lbs_set_monitor_mode(struct lbs_private *priv, int enable);
 
-पूर्णांक lbs_get_rssi(काष्ठा lbs_निजी *priv, s8 *snr, s8 *nf);
+int lbs_get_rssi(struct lbs_private *priv, s8 *snr, s8 *nf);
 
-पूर्णांक lbs_set_11d_करोमुख्य_info(काष्ठा lbs_निजी *priv);
+int lbs_set_11d_domain_info(struct lbs_private *priv);
 
-पूर्णांक lbs_get_reg(काष्ठा lbs_निजी *priv, u16 reg, u16 offset, u32 *value);
+int lbs_get_reg(struct lbs_private *priv, u16 reg, u16 offset, u32 *value);
 
-पूर्णांक lbs_set_reg(काष्ठा lbs_निजी *priv, u16 reg, u16 offset, u32 value);
+int lbs_set_reg(struct lbs_private *priv, u16 reg, u16 offset, u32 value);
 
-पूर्णांक lbs_set_ps_mode(काष्ठा lbs_निजी *priv, u16 cmd_action, bool block);
+int lbs_set_ps_mode(struct lbs_private *priv, u16 cmd_action, bool block);
 
-#पूर्ण_अगर /* _LBS_CMD_H */
+#endif /* _LBS_CMD_H */

@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-#समावेश "sun4i-ss.h"
+// SPDX-License-Identifier: GPL-2.0-or-later
+#include "sun4i-ss.h"
 
-पूर्णांक sun4i_ss_prng_seed(काष्ठा crypto_rng *tfm, स्थिर u8 *seed,
-		       अचिन्हित पूर्णांक slen)
-अणु
-	काष्ठा sun4i_ss_alg_ढाँचा *algt;
-	काष्ठा rng_alg *alg = crypto_rng_alg(tfm);
+int sun4i_ss_prng_seed(struct crypto_rng *tfm, const u8 *seed,
+		       unsigned int slen)
+{
+	struct sun4i_ss_alg_template *algt;
+	struct rng_alg *alg = crypto_rng_alg(tfm);
 
-	algt = container_of(alg, काष्ठा sun4i_ss_alg_ढाँचा, alg.rng);
-	स_नकल(algt->ss->seed, seed, slen);
+	algt = container_of(alg, struct sun4i_ss_alg_template, alg.rng);
+	memcpy(algt->ss->seed, seed, slen);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक sun4i_ss_prng_generate(काष्ठा crypto_rng *tfm, स्थिर u8 *src,
-			   अचिन्हित पूर्णांक slen, u8 *dst, अचिन्हित पूर्णांक dlen)
-अणु
-	काष्ठा sun4i_ss_alg_ढाँचा *algt;
-	काष्ठा rng_alg *alg = crypto_rng_alg(tfm);
-	पूर्णांक i, err;
+int sun4i_ss_prng_generate(struct crypto_rng *tfm, const u8 *src,
+			   unsigned int slen, u8 *dst, unsigned int dlen)
+{
+	struct sun4i_ss_alg_template *algt;
+	struct rng_alg *alg = crypto_rng_alg(tfm);
+	int i, err;
 	u32 v;
 	u32 *data = (u32 *)dst;
-	स्थिर u32 mode = SS_OP_PRNG | SS_PRNG_CONTINUE | SS_ENABLED;
-	माप_प्रकार len;
-	काष्ठा sun4i_ss_ctx *ss;
-	अचिन्हित पूर्णांक toकरो = (dlen / 4) * 4;
+	const u32 mode = SS_OP_PRNG | SS_PRNG_CONTINUE | SS_ENABLED;
+	size_t len;
+	struct sun4i_ss_ctx *ss;
+	unsigned int todo = (dlen / 4) * 4;
 
-	algt = container_of(alg, काष्ठा sun4i_ss_alg_ढाँचा, alg.rng);
+	algt = container_of(alg, struct sun4i_ss_alg_template, alg.rng);
 	ss = algt->ss;
 
-	err = pm_runसमय_resume_and_get(ss->dev);
-	अगर (err < 0)
-		वापस err;
+	err = pm_runtime_resume_and_get(ss->dev);
+	if (err < 0)
+		return err;
 
-	अगर (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) अणु
+	if (IS_ENABLED(CONFIG_CRYPTO_DEV_SUN4I_SS_DEBUG)) {
 		algt->stat_req++;
-		algt->stat_bytes += toकरो;
-	पूर्ण
+		algt->stat_bytes += todo;
+	}
 
 	spin_lock_bh(&ss->slock);
 
-	ग_लिखोl(mode, ss->base + SS_CTL);
+	writel(mode, ss->base + SS_CTL);
 
-	जबतक (toकरो > 0) अणु
-		/* ग_लिखो the seed */
-		क्रम (i = 0; i < SS_SEED_LEN / BITS_PER_LONG; i++)
-			ग_लिखोl(ss->seed[i], ss->base + SS_KEY0 + i * 4);
+	while (todo > 0) {
+		/* write the seed */
+		for (i = 0; i < SS_SEED_LEN / BITS_PER_LONG; i++)
+			writel(ss->seed[i], ss->base + SS_KEY0 + i * 4);
 
-		/* Read the अक्रमom data */
-		len = min_t(माप_प्रकार, SS_DATA_LEN / BITS_PER_BYTE, toकरो);
-		पढ़ोsl(ss->base + SS_TXFIFO, data, len / 4);
+		/* Read the random data */
+		len = min_t(size_t, SS_DATA_LEN / BITS_PER_BYTE, todo);
+		readsl(ss->base + SS_TXFIFO, data, len / 4);
 		data += len / 4;
-		toकरो -= len;
+		todo -= len;
 
 		/* Update the seed */
-		क्रम (i = 0; i < SS_SEED_LEN / BITS_PER_LONG; i++) अणु
-			v = पढ़ोl(ss->base + SS_KEY0 + i * 4);
+		for (i = 0; i < SS_SEED_LEN / BITS_PER_LONG; i++) {
+			v = readl(ss->base + SS_KEY0 + i * 4);
 			ss->seed[i] = v;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ग_लिखोl(0, ss->base + SS_CTL);
+	writel(0, ss->base + SS_CTL);
 	spin_unlock_bh(&ss->slock);
 
-	pm_runसमय_put(ss->dev);
+	pm_runtime_put(ss->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

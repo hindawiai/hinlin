@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * (C) Copyright David Brownell 2000-2002
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
+#include <asm/io.h>
+#include <asm/irq.h>
 
-#अगर_घोषित CONFIG_PPC_PMAC
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/pmac_feature.h>
-#समावेश <यंत्र/prom.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC_PMAC
+#include <asm/machdep.h>
+#include <asm/pmac_feature.h>
+#include <asm/prom.h>
+#endif
 
-#समावेश "usb.h"
+#include "usb.h"
 
 
 /* PCI-based HCs are common, but plenty of non-PCI HCs are used too */
 
 /*
- * Coordinate hanकरोffs between EHCI and companion controllers
- * during EHCI probing and प्रणाली resume.
+ * Coordinate handoffs between EHCI and companion controllers
+ * during EHCI probing and system resume.
  */
 
-अटल DECLARE_RWSEM(companions_rwsem);
+static DECLARE_RWSEM(companions_rwsem);
 
-#घोषणा CL_UHCI		PCI_CLASS_SERIAL_USB_UHCI
-#घोषणा CL_OHCI		PCI_CLASS_SERIAL_USB_OHCI
-#घोषणा CL_EHCI		PCI_CLASS_SERIAL_USB_EHCI
+#define CL_UHCI		PCI_CLASS_SERIAL_USB_UHCI
+#define CL_OHCI		PCI_CLASS_SERIAL_USB_OHCI
+#define CL_EHCI		PCI_CLASS_SERIAL_USB_EHCI
 
-अटल अंतरभूत पूर्णांक is_ohci_or_uhci(काष्ठा pci_dev *pdev)
-अणु
-	वापस pdev->class == CL_OHCI || pdev->class == CL_UHCI;
-पूर्ण
+static inline int is_ohci_or_uhci(struct pci_dev *pdev)
+{
+	return pdev->class == CL_OHCI || pdev->class == CL_UHCI;
+}
 
-प्रकार व्योम (*companion_fn)(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
-		काष्ठा pci_dev *companion, काष्ठा usb_hcd *companion_hcd);
+typedef void (*companion_fn)(struct pci_dev *pdev, struct usb_hcd *hcd,
+		struct pci_dev *companion, struct usb_hcd *companion_hcd);
 
-/* Iterate over PCI devices in the same slot as pdev and call fn क्रम each */
-अटल व्योम क्रम_each_companion(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
+/* Iterate over PCI devices in the same slot as pdev and call fn for each */
+static void for_each_companion(struct pci_dev *pdev, struct usb_hcd *hcd,
 		companion_fn fn)
-अणु
-	काष्ठा pci_dev		*companion;
-	काष्ठा usb_hcd		*companion_hcd;
-	अचिन्हित पूर्णांक		slot = PCI_SLOT(pdev->devfn);
+{
+	struct pci_dev		*companion;
+	struct usb_hcd		*companion_hcd;
+	unsigned int		slot = PCI_SLOT(pdev->devfn);
 
 	/*
 	 * Iterate through other PCI functions in the same slot.
 	 * If the function's drvdata isn't set then it isn't bound to
 	 * a USB host controller driver, so skip it.
 	 */
-	companion = शून्य;
-	क्रम_each_pci_dev(companion) अणु
-		अगर (companion->bus != pdev->bus ||
+	companion = NULL;
+	for_each_pci_dev(companion) {
+		if (companion->bus != pdev->bus ||
 				PCI_SLOT(companion->devfn) != slot)
-			जारी;
+			continue;
 
 		/*
 		 * Companion device should be either UHCI,OHCI or EHCI host
 		 * controller, otherwise skip.
 		 */
-		अगर (companion->class != CL_UHCI && companion->class != CL_OHCI &&
+		if (companion->class != CL_UHCI && companion->class != CL_OHCI &&
 				companion->class != CL_EHCI)
-			जारी;
+			continue;
 
 		companion_hcd = pci_get_drvdata(companion);
-		अगर (!companion_hcd || !companion_hcd->self.root_hub)
-			जारी;
+		if (!companion_hcd || !companion_hcd->self.root_hub)
+			continue;
 		fn(pdev, hcd, companion, companion_hcd);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * We're about to add an EHCI controller, which will unceremoniously grab
  * all the port connections away from its companions.  To prevent annoying
  * error messages, lock the companion's root hub and gracefully unconfigure
- * it beक्रमehand.  Leave it locked until the EHCI controller is all set.
+ * it beforehand.  Leave it locked until the EHCI controller is all set.
  */
-अटल व्योम ehci_pre_add(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
-		काष्ठा pci_dev *companion, काष्ठा usb_hcd *companion_hcd)
-अणु
-	काष्ठा usb_device *udev;
+static void ehci_pre_add(struct pci_dev *pdev, struct usb_hcd *hcd,
+		struct pci_dev *companion, struct usb_hcd *companion_hcd)
+{
+	struct usb_device *udev;
 
-	अगर (is_ohci_or_uhci(companion)) अणु
+	if (is_ohci_or_uhci(companion)) {
 		udev = companion_hcd->self.root_hub;
 		usb_lock_device(udev);
 		usb_set_configuration(udev, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Adding the EHCI controller has either succeeded or failed.  Set the
- * companion poपूर्णांकer accordingly, and in either हाल, reconfigure and
+ * companion pointer accordingly, and in either case, reconfigure and
  * unlock the root hub.
  */
-अटल व्योम ehci_post_add(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
-		काष्ठा pci_dev *companion, काष्ठा usb_hcd *companion_hcd)
-अणु
-	काष्ठा usb_device *udev;
+static void ehci_post_add(struct pci_dev *pdev, struct usb_hcd *hcd,
+		struct pci_dev *companion, struct usb_hcd *companion_hcd)
+{
+	struct usb_device *udev;
 
-	अगर (is_ohci_or_uhci(companion)) अणु
-		अगर (dev_get_drvdata(&pdev->dev)) अणु	/* Succeeded */
+	if (is_ohci_or_uhci(companion)) {
+		if (dev_get_drvdata(&pdev->dev)) {	/* Succeeded */
 			dev_dbg(&pdev->dev, "HS companion for %s\n",
 					dev_name(&companion->dev));
 			companion_hcd->self.hs_companion = &hcd->self;
-		पूर्ण
+		}
 		udev = companion_hcd->self.root_hub;
 		usb_set_configuration(udev, 1);
 		usb_unlock_device(udev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * We just added a non-EHCI controller.  Find the EHCI controller to
- * which it is a companion, and store a poपूर्णांकer to the bus काष्ठाure.
+ * which it is a companion, and store a pointer to the bus structure.
  */
-अटल व्योम non_ehci_add(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
-		काष्ठा pci_dev *companion, काष्ठा usb_hcd *companion_hcd)
-अणु
-	अगर (is_ohci_or_uhci(pdev) && companion->class == CL_EHCI) अणु
+static void non_ehci_add(struct pci_dev *pdev, struct usb_hcd *hcd,
+		struct pci_dev *companion, struct usb_hcd *companion_hcd)
+{
+	if (is_ohci_or_uhci(pdev) && companion->class == CL_EHCI) {
 		dev_dbg(&pdev->dev, "FS/LS companion for %s\n",
 				dev_name(&companion->dev));
 		hcd->self.hs_companion = &companion_hcd->self;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* We are removing an EHCI controller.  Clear the companions' poपूर्णांकers. */
-अटल व्योम ehci_हटाओ(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
-		काष्ठा pci_dev *companion, काष्ठा usb_hcd *companion_hcd)
-अणु
-	अगर (is_ohci_or_uhci(companion))
-		companion_hcd->self.hs_companion = शून्य;
-पूर्ण
+/* We are removing an EHCI controller.  Clear the companions' pointers. */
+static void ehci_remove(struct pci_dev *pdev, struct usb_hcd *hcd,
+		struct pci_dev *companion, struct usb_hcd *companion_hcd)
+{
+	if (is_ohci_or_uhci(companion))
+		companion_hcd->self.hs_companion = NULL;
+}
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-/* An EHCI controller must रुको क्रम its companions beक्रमe resuming. */
-अटल व्योम ehci_रुको_क्रम_companions(काष्ठा pci_dev *pdev, काष्ठा usb_hcd *hcd,
-		काष्ठा pci_dev *companion, काष्ठा usb_hcd *companion_hcd)
-अणु
-	अगर (is_ohci_or_uhci(companion))
-		device_pm_रुको_क्रम_dev(&pdev->dev, &companion->dev);
-पूर्ण
+/* An EHCI controller must wait for its companions before resuming. */
+static void ehci_wait_for_companions(struct pci_dev *pdev, struct usb_hcd *hcd,
+		struct pci_dev *companion, struct usb_hcd *companion_hcd)
+{
+	if (is_ohci_or_uhci(companion))
+		device_pm_wait_for_dev(&pdev->dev, &companion->dev);
+}
 
-#पूर्ण_अगर	/* CONFIG_PM */
+#endif	/* CONFIG_PM */
 
 /*-------------------------------------------------------------------------*/
 
@@ -164,139 +163,139 @@
  *
  * Context: task context, might sleep
  *
- * Allocates basic PCI resources क्रम this USB host controller, and
- * then invokes the start() method क्रम the HCD associated with it
+ * Allocates basic PCI resources for this USB host controller, and
+ * then invokes the start() method for the HCD associated with it
  * through the hotplug entry's driver_data.
  *
- * Store this function in the HCD's काष्ठा pci_driver as probe().
+ * Store this function in the HCD's struct pci_driver as probe().
  *
- * Return: 0 अगर successful.
+ * Return: 0 if successful.
  */
-पूर्णांक usb_hcd_pci_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id,
-		      स्थिर काष्ठा hc_driver *driver)
-अणु
-	काष्ठा usb_hcd		*hcd;
-	पूर्णांक			retval;
-	पूर्णांक			hcd_irq = 0;
+int usb_hcd_pci_probe(struct pci_dev *dev, const struct pci_device_id *id,
+		      const struct hc_driver *driver)
+{
+	struct usb_hcd		*hcd;
+	int			retval;
+	int			hcd_irq = 0;
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
-	अगर (!id)
-		वापस -EINVAL;
+	if (!id)
+		return -EINVAL;
 
-	अगर (!driver)
-		वापस -EINVAL;
+	if (!driver)
+		return -EINVAL;
 
-	अगर (pci_enable_device(dev) < 0)
-		वापस -ENODEV;
+	if (pci_enable_device(dev) < 0)
+		return -ENODEV;
 
 	/*
 	 * The xHCI driver has its own irq management
-	 * make sure irq setup is not touched क्रम xhci in generic hcd code
+	 * make sure irq setup is not touched for xhci in generic hcd code
 	 */
-	अगर ((driver->flags & HCD_MASK) < HCD_USB3) अणु
+	if ((driver->flags & HCD_MASK) < HCD_USB3) {
 		retval = pci_alloc_irq_vectors(dev, 1, 1, PCI_IRQ_LEGACY | PCI_IRQ_MSI);
-		अगर (retval < 0) अणु
+		if (retval < 0) {
 			dev_err(&dev->dev,
 			"Found HC with no IRQ. Check BIOS/PCI %s setup!\n",
 				pci_name(dev));
 			retval = -ENODEV;
-			जाओ disable_pci;
-		पूर्ण
+			goto disable_pci;
+		}
 		hcd_irq = pci_irq_vector(dev, 0);
-	पूर्ण
+	}
 
 	hcd = usb_create_hcd(driver, &dev->dev, pci_name(dev));
-	अगर (!hcd) अणु
+	if (!hcd) {
 		retval = -ENOMEM;
-		जाओ मुक्त_irq_vectors;
-	पूर्ण
+		goto free_irq_vectors;
+	}
 
 	hcd->amd_resume_bug = (usb_hcd_amd_remote_wakeup_quirk(dev) &&
 			driver->flags & (HCD_USB11 | HCD_USB3)) ? 1 : 0;
 
-	अगर (driver->flags & HCD_MEMORY) अणु
+	if (driver->flags & HCD_MEMORY) {
 		/* EHCI, OHCI */
 		hcd->rsrc_start = pci_resource_start(dev, 0);
 		hcd->rsrc_len = pci_resource_len(dev, 0);
-		अगर (!devm_request_mem_region(&dev->dev, hcd->rsrc_start,
-				hcd->rsrc_len, driver->description)) अणु
+		if (!devm_request_mem_region(&dev->dev, hcd->rsrc_start,
+				hcd->rsrc_len, driver->description)) {
 			dev_dbg(&dev->dev, "controller already in use\n");
 			retval = -EBUSY;
-			जाओ put_hcd;
-		पूर्ण
+			goto put_hcd;
+		}
 		hcd->regs = devm_ioremap(&dev->dev, hcd->rsrc_start,
 				hcd->rsrc_len);
-		अगर (hcd->regs == शून्य) अणु
+		if (hcd->regs == NULL) {
 			dev_dbg(&dev->dev, "error mapping memory\n");
 			retval = -EFAULT;
-			जाओ put_hcd;
-		पूर्ण
+			goto put_hcd;
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		/* UHCI */
-		पूर्णांक	region;
+		int	region;
 
-		क्रम (region = 0; region < PCI_STD_NUM_BARS; region++) अणु
-			अगर (!(pci_resource_flags(dev, region) &
+		for (region = 0; region < PCI_STD_NUM_BARS; region++) {
+			if (!(pci_resource_flags(dev, region) &
 					IORESOURCE_IO))
-				जारी;
+				continue;
 
 			hcd->rsrc_start = pci_resource_start(dev, region);
 			hcd->rsrc_len = pci_resource_len(dev, region);
-			अगर (devm_request_region(&dev->dev, hcd->rsrc_start,
+			if (devm_request_region(&dev->dev, hcd->rsrc_start,
 					hcd->rsrc_len, driver->description))
-				अवरोध;
-		पूर्ण
-		अगर (region == PCI_ROM_RESOURCE) अणु
+				break;
+		}
+		if (region == PCI_ROM_RESOURCE) {
 			dev_dbg(&dev->dev, "no i/o regions available\n");
 			retval = -EBUSY;
-			जाओ put_hcd;
-		पूर्ण
-	पूर्ण
+			goto put_hcd;
+		}
+	}
 
 	pci_set_master(dev);
 
-	/* Note: dev_set_drvdata must be called जबतक holding the rwsem */
-	अगर (dev->class == CL_EHCI) अणु
-		करोwn_ग_लिखो(&companions_rwsem);
+	/* Note: dev_set_drvdata must be called while holding the rwsem */
+	if (dev->class == CL_EHCI) {
+		down_write(&companions_rwsem);
 		dev_set_drvdata(&dev->dev, hcd);
-		क्रम_each_companion(dev, hcd, ehci_pre_add);
+		for_each_companion(dev, hcd, ehci_pre_add);
 		retval = usb_add_hcd(hcd, hcd_irq, IRQF_SHARED);
-		अगर (retval != 0)
-			dev_set_drvdata(&dev->dev, शून्य);
-		क्रम_each_companion(dev, hcd, ehci_post_add);
-		up_ग_लिखो(&companions_rwsem);
-	पूर्ण अन्यथा अणु
-		करोwn_पढ़ो(&companions_rwsem);
+		if (retval != 0)
+			dev_set_drvdata(&dev->dev, NULL);
+		for_each_companion(dev, hcd, ehci_post_add);
+		up_write(&companions_rwsem);
+	} else {
+		down_read(&companions_rwsem);
 		dev_set_drvdata(&dev->dev, hcd);
 		retval = usb_add_hcd(hcd, hcd_irq, IRQF_SHARED);
-		अगर (retval != 0)
-			dev_set_drvdata(&dev->dev, शून्य);
-		अन्यथा
-			क्रम_each_companion(dev, hcd, non_ehci_add);
-		up_पढ़ो(&companions_rwsem);
-	पूर्ण
+		if (retval != 0)
+			dev_set_drvdata(&dev->dev, NULL);
+		else
+			for_each_companion(dev, hcd, non_ehci_add);
+		up_read(&companions_rwsem);
+	}
 
-	अगर (retval != 0)
-		जाओ put_hcd;
+	if (retval != 0)
+		goto put_hcd;
 	device_wakeup_enable(hcd->self.controller);
 
-	अगर (pci_dev_run_wake(dev))
-		pm_runसमय_put_noidle(&dev->dev);
-	वापस retval;
+	if (pci_dev_run_wake(dev))
+		pm_runtime_put_noidle(&dev->dev);
+	return retval;
 
 put_hcd:
 	usb_put_hcd(hcd);
-मुक्त_irq_vectors:
-	अगर ((driver->flags & HCD_MASK) < HCD_USB3)
-		pci_मुक्त_irq_vectors(dev);
+free_irq_vectors:
+	if ((driver->flags & HCD_MASK) < HCD_USB3)
+		pci_free_irq_vectors(dev);
 disable_pci:
 	pci_disable_device(dev);
 	dev_err(&dev->dev, "init %s fail, %d\n", pci_name(dev), retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL_GPL(usb_hcd_pci_probe);
 
 
@@ -304,237 +303,237 @@ EXPORT_SYMBOL_GPL(usb_hcd_pci_probe);
 /* may be called with controller, bus, and devices active */
 
 /**
- * usb_hcd_pci_हटाओ - shutकरोwn processing क्रम PCI-based HCDs
- * @dev: USB Host Controller being हटाओd
+ * usb_hcd_pci_remove - shutdown processing for PCI-based HCDs
+ * @dev: USB Host Controller being removed
  *
  * Context: task context, might sleep
  *
  * Reverses the effect of usb_hcd_pci_probe(), first invoking
- * the HCD's stop() method.  It is always called from a thपढ़ो
+ * the HCD's stop() method.  It is always called from a thread
  * context, normally "rmmod", "apmd", or something similar.
  *
- * Store this function in the HCD's काष्ठा pci_driver as हटाओ().
+ * Store this function in the HCD's struct pci_driver as remove().
  */
-व्योम usb_hcd_pci_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा usb_hcd		*hcd;
-	पूर्णांक			hcd_driver_flags;
+void usb_hcd_pci_remove(struct pci_dev *dev)
+{
+	struct usb_hcd		*hcd;
+	int			hcd_driver_flags;
 
 	hcd = pci_get_drvdata(dev);
-	अगर (!hcd)
-		वापस;
+	if (!hcd)
+		return;
 
 	hcd_driver_flags = hcd->driver->flags;
 
-	अगर (pci_dev_run_wake(dev))
-		pm_runसमय_get_noresume(&dev->dev);
+	if (pci_dev_run_wake(dev))
+		pm_runtime_get_noresume(&dev->dev);
 
-	/* Fake an पूर्णांकerrupt request in order to give the driver a chance
-	 * to test whether the controller hardware has been हटाओd (e.g.,
+	/* Fake an interrupt request in order to give the driver a chance
+	 * to test whether the controller hardware has been removed (e.g.,
 	 * cardbus physical eject).
 	 */
 	local_irq_disable();
 	usb_hcd_irq(0, hcd);
 	local_irq_enable();
 
-	/* Note: dev_set_drvdata must be called जबतक holding the rwsem */
-	अगर (dev->class == CL_EHCI) अणु
-		करोwn_ग_लिखो(&companions_rwsem);
-		क्रम_each_companion(dev, hcd, ehci_हटाओ);
-		usb_हटाओ_hcd(hcd);
-		dev_set_drvdata(&dev->dev, शून्य);
-		up_ग_लिखो(&companions_rwsem);
-	पूर्ण अन्यथा अणु
-		/* Not EHCI; just clear the companion poपूर्णांकer */
-		करोwn_पढ़ो(&companions_rwsem);
-		hcd->self.hs_companion = शून्य;
-		usb_हटाओ_hcd(hcd);
-		dev_set_drvdata(&dev->dev, शून्य);
-		up_पढ़ो(&companions_rwsem);
-	पूर्ण
+	/* Note: dev_set_drvdata must be called while holding the rwsem */
+	if (dev->class == CL_EHCI) {
+		down_write(&companions_rwsem);
+		for_each_companion(dev, hcd, ehci_remove);
+		usb_remove_hcd(hcd);
+		dev_set_drvdata(&dev->dev, NULL);
+		up_write(&companions_rwsem);
+	} else {
+		/* Not EHCI; just clear the companion pointer */
+		down_read(&companions_rwsem);
+		hcd->self.hs_companion = NULL;
+		usb_remove_hcd(hcd);
+		dev_set_drvdata(&dev->dev, NULL);
+		up_read(&companions_rwsem);
+	}
 	usb_put_hcd(hcd);
-	अगर ((hcd_driver_flags & HCD_MASK) < HCD_USB3)
-		pci_मुक्त_irq_vectors(dev);
+	if ((hcd_driver_flags & HCD_MASK) < HCD_USB3)
+		pci_free_irq_vectors(dev);
 	pci_disable_device(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_hcd_pci_हटाओ);
+}
+EXPORT_SYMBOL_GPL(usb_hcd_pci_remove);
 
 /**
- * usb_hcd_pci_shutकरोwn - shutकरोwn host controller
- * @dev: USB Host Controller being shutकरोwn
+ * usb_hcd_pci_shutdown - shutdown host controller
+ * @dev: USB Host Controller being shutdown
  */
-व्योम usb_hcd_pci_shutकरोwn(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा usb_hcd		*hcd;
+void usb_hcd_pci_shutdown(struct pci_dev *dev)
+{
+	struct usb_hcd		*hcd;
 
 	hcd = pci_get_drvdata(dev);
-	अगर (!hcd)
-		वापस;
+	if (!hcd)
+		return;
 
-	अगर (test_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags) &&
-			hcd->driver->shutकरोwn) अणु
-		hcd->driver->shutकरोwn(hcd);
-		अगर (usb_hcd_is_primary_hcd(hcd) && hcd->irq > 0)
-			मुक्त_irq(hcd->irq, hcd);
+	if (test_bit(HCD_FLAG_HW_ACCESSIBLE, &hcd->flags) &&
+			hcd->driver->shutdown) {
+		hcd->driver->shutdown(hcd);
+		if (usb_hcd_is_primary_hcd(hcd) && hcd->irq > 0)
+			free_irq(hcd->irq, hcd);
 		pci_disable_device(dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(usb_hcd_pci_shutकरोwn);
+	}
+}
+EXPORT_SYMBOL_GPL(usb_hcd_pci_shutdown);
 
-#अगर_घोषित	CONFIG_PM
+#ifdef	CONFIG_PM
 
-#अगर_घोषित	CONFIG_PPC_PMAC
-अटल व्योम घातermac_set_asic(काष्ठा pci_dev *pci_dev, पूर्णांक enable)
-अणु
-	/* Enanble or disable ASIC घड़ीs क्रम USB */
-	अगर (machine_is(घातermac)) अणु
-		काष्ठा device_node	*of_node;
+#ifdef	CONFIG_PPC_PMAC
+static void powermac_set_asic(struct pci_dev *pci_dev, int enable)
+{
+	/* Enanble or disable ASIC clocks for USB */
+	if (machine_is(powermac)) {
+		struct device_node	*of_node;
 
 		of_node = pci_device_to_OF_node(pci_dev);
-		अगर (of_node)
+		if (of_node)
 			pmac_call_feature(PMAC_FTR_USB_ENABLE,
 					of_node, 0, enable);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम घातermac_set_asic(काष्ठा pci_dev *pci_dev, पूर्णांक enable)
-अणुपूर्ण
+static inline void powermac_set_asic(struct pci_dev *pci_dev, int enable)
+{}
 
-#पूर्ण_अगर	/* CONFIG_PPC_PMAC */
+#endif	/* CONFIG_PPC_PMAC */
 
-अटल पूर्णांक check_root_hub_suspended(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd		*hcd = dev_get_drvdata(dev);
+static int check_root_hub_suspended(struct device *dev)
+{
+	struct usb_hcd		*hcd = dev_get_drvdata(dev);
 
-	अगर (HCD_RH_RUNNING(hcd)) अणु
+	if (HCD_RH_RUNNING(hcd)) {
 		dev_warn(dev, "Root hub is not suspended\n");
-		वापस -EBUSY;
-	पूर्ण
-	अगर (hcd->shared_hcd) अणु
+		return -EBUSY;
+	}
+	if (hcd->shared_hcd) {
 		hcd = hcd->shared_hcd;
-		अगर (HCD_RH_RUNNING(hcd)) अणु
+		if (HCD_RH_RUNNING(hcd)) {
 			dev_warn(dev, "Secondary root hub is not suspended\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EBUSY;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक suspend_common(काष्ठा device *dev, bool करो_wakeup)
-अणु
-	काष्ठा pci_dev		*pci_dev = to_pci_dev(dev);
-	काष्ठा usb_hcd		*hcd = pci_get_drvdata(pci_dev);
-	पूर्णांक			retval;
+static int suspend_common(struct device *dev, bool do_wakeup)
+{
+	struct pci_dev		*pci_dev = to_pci_dev(dev);
+	struct usb_hcd		*hcd = pci_get_drvdata(pci_dev);
+	int			retval;
 
-	/* Root hub suspend should have stopped all करोwnstream traffic,
-	 * and all bus master traffic.  And करोne so क्रम both the पूर्णांकerface
+	/* Root hub suspend should have stopped all downstream traffic,
+	 * and all bus master traffic.  And done so for both the interface
 	 * and the stub usb_device (which we check here).  But maybe it
-	 * didn't; writing sysfs घातer/state files ignores such rules...
+	 * didn't; writing sysfs power/state files ignores such rules...
 	 */
 	retval = check_root_hub_suspended(dev);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (hcd->driver->pci_suspend && !HCD_DEAD(hcd)) अणु
-		/* Optimization: Don't suspend अगर a root-hub wakeup is
+	if (hcd->driver->pci_suspend && !HCD_DEAD(hcd)) {
+		/* Optimization: Don't suspend if a root-hub wakeup is
 		 * pending and it would cause the HCD to wake up anyway.
 		 */
-		अगर (करो_wakeup && HCD_WAKEUP_PENDING(hcd))
-			वापस -EBUSY;
-		अगर (करो_wakeup && hcd->shared_hcd &&
+		if (do_wakeup && HCD_WAKEUP_PENDING(hcd))
+			return -EBUSY;
+		if (do_wakeup && hcd->shared_hcd &&
 				HCD_WAKEUP_PENDING(hcd->shared_hcd))
-			वापस -EBUSY;
-		retval = hcd->driver->pci_suspend(hcd, करो_wakeup);
+			return -EBUSY;
+		retval = hcd->driver->pci_suspend(hcd, do_wakeup);
 		suspend_report_result(hcd->driver->pci_suspend, retval);
 
-		/* Check again in हाल wakeup raced with pci_suspend */
-		अगर ((retval == 0 && करो_wakeup && HCD_WAKEUP_PENDING(hcd)) ||
-				(retval == 0 && करो_wakeup && hcd->shared_hcd &&
-				 HCD_WAKEUP_PENDING(hcd->shared_hcd))) अणु
-			अगर (hcd->driver->pci_resume)
+		/* Check again in case wakeup raced with pci_suspend */
+		if ((retval == 0 && do_wakeup && HCD_WAKEUP_PENDING(hcd)) ||
+				(retval == 0 && do_wakeup && hcd->shared_hcd &&
+				 HCD_WAKEUP_PENDING(hcd->shared_hcd))) {
+			if (hcd->driver->pci_resume)
 				hcd->driver->pci_resume(hcd, false);
 			retval = -EBUSY;
-		पूर्ण
-		अगर (retval)
-			वापस retval;
-	पूर्ण
+		}
+		if (retval)
+			return retval;
+	}
 
 	/* If MSI-X is enabled, the driver will have synchronized all vectors
 	 * in pci_suspend(). If MSI or legacy PCI is enabled, that will be
 	 * synchronized here.
 	 */
-	अगर (!hcd->msix_enabled)
+	if (!hcd->msix_enabled)
 		synchronize_irq(pci_irq_vector(pci_dev, 0));
 
-	/* Downstream ports from this root hub should alपढ़ोy be quiesced, so
-	 * there will be no DMA activity.  Now we can shut करोwn the upstream
-	 * link (except maybe क्रम PME# resume संकेतing).  We'll enter a
-	 * low घातer state during suspend_noirq, अगर the hardware allows.
+	/* Downstream ports from this root hub should already be quiesced, so
+	 * there will be no DMA activity.  Now we can shut down the upstream
+	 * link (except maybe for PME# resume signaling).  We'll enter a
+	 * low power state during suspend_noirq, if the hardware allows.
 	 */
 	pci_disable_device(pci_dev);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक resume_common(काष्ठा device *dev, पूर्णांक event)
-अणु
-	काष्ठा pci_dev		*pci_dev = to_pci_dev(dev);
-	काष्ठा usb_hcd		*hcd = pci_get_drvdata(pci_dev);
-	पूर्णांक			retval;
+static int resume_common(struct device *dev, int event)
+{
+	struct pci_dev		*pci_dev = to_pci_dev(dev);
+	struct usb_hcd		*hcd = pci_get_drvdata(pci_dev);
+	int			retval;
 
-	अगर (HCD_RH_RUNNING(hcd) ||
+	if (HCD_RH_RUNNING(hcd) ||
 			(hcd->shared_hcd &&
-			 HCD_RH_RUNNING(hcd->shared_hcd))) अणु
+			 HCD_RH_RUNNING(hcd->shared_hcd))) {
 		dev_dbg(dev, "can't resume, not suspended!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	retval = pci_enable_device(pci_dev);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		dev_err(dev, "can't re-enable after resume, %d!\n", retval);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	pci_set_master(pci_dev);
 
-	अगर (hcd->driver->pci_resume && !HCD_DEAD(hcd)) अणु
+	if (hcd->driver->pci_resume && !HCD_DEAD(hcd)) {
 
 		/*
-		 * Only EHCI controllers have to रुको क्रम their companions.
-		 * No locking is needed because PCI controller drivers करो not
-		 * get unbound during प्रणाली resume.
+		 * Only EHCI controllers have to wait for their companions.
+		 * No locking is needed because PCI controller drivers do not
+		 * get unbound during system resume.
 		 */
-		अगर (pci_dev->class == CL_EHCI && event != PM_EVENT_AUTO_RESUME)
-			क्रम_each_companion(pci_dev, hcd,
-					ehci_रुको_क्रम_companions);
+		if (pci_dev->class == CL_EHCI && event != PM_EVENT_AUTO_RESUME)
+			for_each_companion(pci_dev, hcd,
+					ehci_wait_for_companions);
 
 		retval = hcd->driver->pci_resume(hcd,
 				event == PM_EVENT_RESTORE);
-		अगर (retval) अणु
+		if (retval) {
 			dev_err(dev, "PCI post-resume error %d!\n", retval);
 			usb_hc_died(hcd);
-		पूर्ण
-	पूर्ण
-	वापस retval;
-पूर्ण
+		}
+	}
+	return retval;
+}
 
-#अगर_घोषित	CONFIG_PM_SLEEP
+#ifdef	CONFIG_PM_SLEEP
 
-अटल पूर्णांक hcd_pci_suspend(काष्ठा device *dev)
-अणु
-	वापस suspend_common(dev, device_may_wakeup(dev));
-पूर्ण
+static int hcd_pci_suspend(struct device *dev)
+{
+	return suspend_common(dev, device_may_wakeup(dev));
+}
 
-अटल पूर्णांक hcd_pci_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा pci_dev		*pci_dev = to_pci_dev(dev);
-	काष्ठा usb_hcd		*hcd = pci_get_drvdata(pci_dev);
-	पूर्णांक			retval;
+static int hcd_pci_suspend_noirq(struct device *dev)
+{
+	struct pci_dev		*pci_dev = to_pci_dev(dev);
+	struct usb_hcd		*hcd = pci_get_drvdata(pci_dev);
+	int			retval;
 
 	retval = check_root_hub_suspended(dev);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	pci_save_state(pci_dev);
 
@@ -542,92 +541,92 @@ EXPORT_SYMBOL_GPL(usb_hcd_pci_shutकरोwn);
 	 * wakeup.  usb_hc_died() should ensure that both hosts are marked as
 	 * dying, so we only need to check the primary roothub.
 	 */
-	अगर (HCD_DEAD(hcd))
+	if (HCD_DEAD(hcd))
 		device_set_wakeup_enable(dev, 0);
 	dev_dbg(dev, "wakeup: %d\n", device_may_wakeup(dev));
 
 	/* Possibly enable remote wakeup,
-	 * choose the appropriate low-घातer state, and go to that state.
+	 * choose the appropriate low-power state, and go to that state.
 	 */
 	retval = pci_prepare_to_sleep(pci_dev);
-	अगर (retval == -EIO) अणु		/* Low-घातer not supported */
+	if (retval == -EIO) {		/* Low-power not supported */
 		dev_dbg(dev, "--> PCI D0 legacy\n");
 		retval = 0;
-	पूर्ण अन्यथा अगर (retval == 0) अणु
+	} else if (retval == 0) {
 		dev_dbg(dev, "--> PCI %s\n",
-				pci_घातer_name(pci_dev->current_state));
-	पूर्ण अन्यथा अणु
+				pci_power_name(pci_dev->current_state));
+	} else {
 		suspend_report_result(pci_prepare_to_sleep, retval);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	घातermac_set_asic(pci_dev, 0);
-	वापस retval;
-पूर्ण
+	powermac_set_asic(pci_dev, 0);
+	return retval;
+}
 
-अटल पूर्णांक hcd_pci_resume_noirq(काष्ठा device *dev)
-अणु
-	घातermac_set_asic(to_pci_dev(dev), 1);
-	वापस 0;
-पूर्ण
+static int hcd_pci_resume_noirq(struct device *dev)
+{
+	powermac_set_asic(to_pci_dev(dev), 1);
+	return 0;
+}
 
-अटल पूर्णांक hcd_pci_resume(काष्ठा device *dev)
-अणु
-	वापस resume_common(dev, PM_EVENT_RESUME);
-पूर्ण
+static int hcd_pci_resume(struct device *dev)
+{
+	return resume_common(dev, PM_EVENT_RESUME);
+}
 
-अटल पूर्णांक hcd_pci_restore(काष्ठा device *dev)
-अणु
-	वापस resume_common(dev, PM_EVENT_RESTORE);
-पूर्ण
+static int hcd_pci_restore(struct device *dev)
+{
+	return resume_common(dev, PM_EVENT_RESTORE);
+}
 
-#अन्यथा
+#else
 
-#घोषणा hcd_pci_suspend		शून्य
-#घोषणा hcd_pci_suspend_noirq	शून्य
-#घोषणा hcd_pci_resume_noirq	शून्य
-#घोषणा hcd_pci_resume		शून्य
-#घोषणा hcd_pci_restore		शून्य
+#define hcd_pci_suspend		NULL
+#define hcd_pci_suspend_noirq	NULL
+#define hcd_pci_resume_noirq	NULL
+#define hcd_pci_resume		NULL
+#define hcd_pci_restore		NULL
 
-#पूर्ण_अगर	/* CONFIG_PM_SLEEP */
+#endif	/* CONFIG_PM_SLEEP */
 
-अटल पूर्णांक hcd_pci_runसमय_suspend(काष्ठा device *dev)
-अणु
-	पूर्णांक	retval;
+static int hcd_pci_runtime_suspend(struct device *dev)
+{
+	int	retval;
 
 	retval = suspend_common(dev, true);
-	अगर (retval == 0)
-		घातermac_set_asic(to_pci_dev(dev), 0);
+	if (retval == 0)
+		powermac_set_asic(to_pci_dev(dev), 0);
 	dev_dbg(dev, "hcd_pci_runtime_suspend: %d\n", retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक hcd_pci_runसमय_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक	retval;
+static int hcd_pci_runtime_resume(struct device *dev)
+{
+	int	retval;
 
-	घातermac_set_asic(to_pci_dev(dev), 1);
+	powermac_set_asic(to_pci_dev(dev), 1);
 	retval = resume_common(dev, PM_EVENT_AUTO_RESUME);
 	dev_dbg(dev, "hcd_pci_runtime_resume: %d\n", retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-स्थिर काष्ठा dev_pm_ops usb_hcd_pci_pm_ops = अणु
+const struct dev_pm_ops usb_hcd_pci_pm_ops = {
 	.suspend	= hcd_pci_suspend,
 	.suspend_noirq	= hcd_pci_suspend_noirq,
 	.resume_noirq	= hcd_pci_resume_noirq,
 	.resume		= hcd_pci_resume,
-	.मुक्तze		= check_root_hub_suspended,
-	.मुक्तze_noirq	= check_root_hub_suspended,
-	.thaw_noirq	= शून्य,
-	.thaw		= शून्य,
-	.घातeroff	= hcd_pci_suspend,
-	.घातeroff_noirq	= hcd_pci_suspend_noirq,
+	.freeze		= check_root_hub_suspended,
+	.freeze_noirq	= check_root_hub_suspended,
+	.thaw_noirq	= NULL,
+	.thaw		= NULL,
+	.poweroff	= hcd_pci_suspend,
+	.poweroff_noirq	= hcd_pci_suspend_noirq,
 	.restore_noirq	= hcd_pci_resume_noirq,
 	.restore	= hcd_pci_restore,
-	.runसमय_suspend = hcd_pci_runसमय_suspend,
-	.runसमय_resume	= hcd_pci_runसमय_resume,
-पूर्ण;
+	.runtime_suspend = hcd_pci_runtime_suspend,
+	.runtime_resume	= hcd_pci_runtime_resume,
+};
 EXPORT_SYMBOL_GPL(usb_hcd_pci_pm_ops);
 
-#पूर्ण_अगर	/* CONFIG_PM */
+#endif	/* CONFIG_PM */

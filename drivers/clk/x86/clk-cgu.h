@@ -1,128 +1,127 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright(c) 2020 Intel Corporation.
- * Zhu YiXin <yixin.zhu@पूर्णांकel.com>
- * Rahul Tanwar <rahul.tanwar@पूर्णांकel.com>
+ * Zhu YiXin <yixin.zhu@intel.com>
+ * Rahul Tanwar <rahul.tanwar@intel.com>
  */
 
-#अगर_अघोषित __CLK_CGU_H
-#घोषणा __CLK_CGU_H
+#ifndef __CLK_CGU_H
+#define __CLK_CGU_H
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-काष्ठा lgm_clk_mux अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *membase;
-	अचिन्हित पूर्णांक reg;
-	u8 shअगरt;
+struct lgm_clk_mux {
+	struct clk_hw hw;
+	void __iomem *membase;
+	unsigned int reg;
+	u8 shift;
 	u8 width;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा lgm_clk_भागider अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *membase;
-	अचिन्हित पूर्णांक reg;
-	u8 shअगरt;
+struct lgm_clk_divider {
+	struct clk_hw hw;
+	void __iomem *membase;
+	unsigned int reg;
+	u8 shift;
 	u8 width;
-	u8 shअगरt_gate;
+	u8 shift_gate;
 	u8 width_gate;
-	अचिन्हित दीर्घ flags;
-	स्थिर काष्ठा clk_भाग_प्रकारable *table;
+	unsigned long flags;
+	const struct clk_div_table *table;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा lgm_clk_dभाग अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *membase;
-	अचिन्हित पूर्णांक reg;
-	u8 shअगरt0;
+struct lgm_clk_ddiv {
+	struct clk_hw hw;
+	void __iomem *membase;
+	unsigned int reg;
+	u8 shift0;
 	u8 width0;
-	u8 shअगरt1;
+	u8 shift1;
 	u8 width1;
-	u8 shअगरt2;
+	u8 shift2;
 	u8 width2;
-	u8 shअगरt_gate;
+	u8 shift_gate;
 	u8 width_gate;
-	अचिन्हित पूर्णांक mult;
-	अचिन्हित पूर्णांक भाग;
-	अचिन्हित दीर्घ flags;
+	unsigned int mult;
+	unsigned int div;
+	unsigned long flags;
 	spinlock_t lock;
-पूर्ण;
+};
 
-काष्ठा lgm_clk_gate अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *membase;
-	अचिन्हित पूर्णांक reg;
-	u8 shअगरt;
-	अचिन्हित दीर्घ flags;
+struct lgm_clk_gate {
+	struct clk_hw hw;
+	void __iomem *membase;
+	unsigned int reg;
+	u8 shift;
+	unsigned long flags;
 	spinlock_t lock;
-पूर्ण;
+};
 
-क्रमागत lgm_clk_type अणु
+enum lgm_clk_type {
 	CLK_TYPE_FIXED,
 	CLK_TYPE_MUX,
 	CLK_TYPE_DIVIDER,
 	CLK_TYPE_FIXED_FACTOR,
 	CLK_TYPE_GATE,
 	CLK_TYPE_NONE,
-पूर्ण;
+};
 
 /**
- * काष्ठा lgm_clk_provider
- * @membase: IO mem base address क्रम CGU.
+ * struct lgm_clk_provider
+ * @membase: IO mem base address for CGU.
  * @np: device node
  * @dev: device
- * @clk_data: array of hw घड़ीs and clk number.
+ * @clk_data: array of hw clocks and clk number.
  */
-काष्ठा lgm_clk_provider अणु
-	व्योम __iomem *membase;
-	काष्ठा device_node *np;
-	काष्ठा device *dev;
-	काष्ठा clk_hw_onecell_data clk_data;
+struct lgm_clk_provider {
+	void __iomem *membase;
+	struct device_node *np;
+	struct device *dev;
+	struct clk_hw_onecell_data clk_data;
 	spinlock_t lock;
-पूर्ण;
+};
 
-क्रमागत pll_type अणु
+enum pll_type {
 	TYPE_ROPLL,
 	TYPE_LJPLL,
 	TYPE_NONE,
-पूर्ण;
+};
 
-काष्ठा lgm_clk_pll अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *membase;
-	अचिन्हित पूर्णांक reg;
-	अचिन्हित दीर्घ flags;
-	क्रमागत pll_type type;
+struct lgm_clk_pll {
+	struct clk_hw hw;
+	void __iomem *membase;
+	unsigned int reg;
+	unsigned long flags;
+	enum pll_type type;
 	spinlock_t lock;
-पूर्ण;
+};
 
 /**
- * काष्ठा lgm_pll_clk_data
- * @id: platक्रमm specअगरic id of the घड़ी.
- * @name: name of this pll घड़ी.
- * @parent_data: parent घड़ी data.
+ * struct lgm_pll_clk_data
+ * @id: platform specific id of the clock.
+ * @name: name of this pll clock.
+ * @parent_data: parent clock data.
  * @num_parents: number of parents.
- * @flags: optional flags क्रम basic घड़ी.
- * @type: platक्रमm type of pll.
- * @reg: offset of the रेजिस्टर.
+ * @flags: optional flags for basic clock.
+ * @type: platform type of pll.
+ * @reg: offset of the register.
  */
-काष्ठा lgm_pll_clk_data अणु
-	अचिन्हित पूर्णांक id;
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा clk_parent_data *parent_data;
+struct lgm_pll_clk_data {
+	unsigned int id;
+	const char *name;
+	const struct clk_parent_data *parent_data;
 	u8 num_parents;
-	अचिन्हित दीर्घ flags;
-	क्रमागत pll_type type;
-	पूर्णांक reg;
-पूर्ण;
+	unsigned long flags;
+	enum pll_type type;
+	int reg;
+};
 
-#घोषणा LGM_PLL(_id, _name, _pdata, _flags,		\
+#define LGM_PLL(_id, _name, _pdata, _flags,		\
 		_reg, _type)				\
-	अणु						\
+	{						\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_data = _pdata,			\
@@ -130,83 +129,83 @@
 		.flags = _flags,			\
 		.reg = _reg,				\
 		.type = _type,				\
-	पूर्ण
+	}
 
-काष्ठा lgm_clk_dभाग_data अणु
-	अचिन्हित पूर्णांक id;
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा clk_parent_data *parent_data;
+struct lgm_clk_ddiv_data {
+	unsigned int id;
+	const char *name;
+	const struct clk_parent_data *parent_data;
 	u8 flags;
-	अचिन्हित दीर्घ भाग_flags;
-	अचिन्हित पूर्णांक reg;
-	u8 shअगरt0;
+	unsigned long div_flags;
+	unsigned int reg;
+	u8 shift0;
 	u8 width0;
-	u8 shअगरt1;
+	u8 shift1;
 	u8 width1;
-	u8 shअगरt_gate;
+	u8 shift_gate;
 	u8 width_gate;
-	u8 ex_shअगरt;
+	u8 ex_shift;
 	u8 ex_width;
-पूर्ण;
+};
 
-#घोषणा LGM_DDIV(_id, _name, _pname, _flags, _reg,		\
+#define LGM_DDIV(_id, _name, _pname, _flags, _reg,		\
 		 _shft0, _wdth0, _shft1, _wdth1,		\
 		 _shft_gate, _wdth_gate, _xshft, _df)		\
-	अणु							\
+	{							\
 		.id = _id,					\
 		.name = _name,					\
-		.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु	\
+		.parent_data = &(const struct clk_parent_data){	\
 			.fw_name = _pname,			\
 			.name = _pname,				\
-		पूर्ण,						\
+		},						\
 		.flags = _flags,				\
 		.reg = _reg,					\
-		.shअगरt0 = _shft0,				\
+		.shift0 = _shft0,				\
 		.width0 = _wdth0,				\
-		.shअगरt1 = _shft1,				\
+		.shift1 = _shft1,				\
 		.width1 = _wdth1,				\
-		.shअगरt_gate = _shft_gate,			\
+		.shift_gate = _shft_gate,			\
 		.width_gate = _wdth_gate,			\
-		.ex_shअगरt = _xshft,				\
+		.ex_shift = _xshft,				\
 		.ex_width = 1,					\
-		.भाग_flags = _df,				\
-	पूर्ण
+		.div_flags = _df,				\
+	}
 
-काष्ठा lgm_clk_branch अणु
-	अचिन्हित पूर्णांक id;
-	क्रमागत lgm_clk_type type;
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा clk_parent_data *parent_data;
+struct lgm_clk_branch {
+	unsigned int id;
+	enum lgm_clk_type type;
+	const char *name;
+	const struct clk_parent_data *parent_data;
 	u8 num_parents;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक mux_off;
-	u8 mux_shअगरt;
+	unsigned long flags;
+	unsigned int mux_off;
+	u8 mux_shift;
 	u8 mux_width;
-	अचिन्हित दीर्घ mux_flags;
-	अचिन्हित पूर्णांक mux_val;
-	अचिन्हित पूर्णांक भाग_off;
-	u8 भाग_shअगरt;
-	u8 भाग_width;
-	u8 भाग_shअगरt_gate;
-	u8 भाग_width_gate;
-	अचिन्हित दीर्घ भाग_flags;
-	अचिन्हित पूर्णांक भाग_val;
-	स्थिर काष्ठा clk_भाग_प्रकारable *भाग_प्रकारable;
-	अचिन्हित पूर्णांक gate_off;
-	u8 gate_shअगरt;
-	अचिन्हित दीर्घ gate_flags;
-	अचिन्हित पूर्णांक gate_val;
-	अचिन्हित पूर्णांक mult;
-	अचिन्हित पूर्णांक भाग;
-पूर्ण;
+	unsigned long mux_flags;
+	unsigned int mux_val;
+	unsigned int div_off;
+	u8 div_shift;
+	u8 div_width;
+	u8 div_shift_gate;
+	u8 div_width_gate;
+	unsigned long div_flags;
+	unsigned int div_val;
+	const struct clk_div_table *div_table;
+	unsigned int gate_off;
+	u8 gate_shift;
+	unsigned long gate_flags;
+	unsigned int gate_val;
+	unsigned int mult;
+	unsigned int div;
+};
 
-/* घड़ी flags definition */
-#घोषणा CLOCK_FLAG_VAL_INIT	BIT(16)
-#घोषणा MUX_CLK_SW		BIT(17)
+/* clock flags definition */
+#define CLOCK_FLAG_VAL_INIT	BIT(16)
+#define MUX_CLK_SW		BIT(17)
 
-#घोषणा LGM_MUX(_id, _name, _pdata, _f, _reg,		\
-		_shअगरt, _width, _cf, _v)		\
-	अणु						\
+#define LGM_MUX(_id, _name, _pdata, _f, _reg,		\
+		_shift, _width, _cf, _v)		\
+	{						\
 		.id = _id,				\
 		.type = CLK_TYPE_MUX,			\
 		.name = _name,				\
@@ -214,123 +213,123 @@
 		.num_parents = ARRAY_SIZE(_pdata),	\
 		.flags = _f,				\
 		.mux_off = _reg,			\
-		.mux_shअगरt = _shअगरt,			\
+		.mux_shift = _shift,			\
 		.mux_width = _width,			\
 		.mux_flags = _cf,			\
 		.mux_val = _v,				\
-	पूर्ण
+	}
 
-#घोषणा LGM_DIV(_id, _name, _pname, _f, _reg, _shअगरt, _width,	\
-		_shअगरt_gate, _width_gate, _cf, _v, _dtable)	\
-	अणु							\
+#define LGM_DIV(_id, _name, _pname, _f, _reg, _shift, _width,	\
+		_shift_gate, _width_gate, _cf, _v, _dtable)	\
+	{							\
 		.id = _id,					\
 		.type = CLK_TYPE_DIVIDER,			\
 		.name = _name,					\
-		.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु	\
+		.parent_data = &(const struct clk_parent_data){	\
 			.fw_name = _pname,			\
 			.name = _pname,				\
-		पूर्ण,						\
+		},						\
 		.num_parents = 1,				\
 		.flags = _f,					\
-		.भाग_off = _reg,				\
-		.भाग_shअगरt = _shअगरt,				\
-		.भाग_width = _width,				\
-		.भाग_shअगरt_gate = _shअगरt_gate,			\
-		.भाग_width_gate = _width_gate,			\
-		.भाग_flags = _cf,				\
-		.भाग_val = _v,					\
-		.भाग_प्रकारable = _dtable,				\
-	पूर्ण
+		.div_off = _reg,				\
+		.div_shift = _shift,				\
+		.div_width = _width,				\
+		.div_shift_gate = _shift_gate,			\
+		.div_width_gate = _width_gate,			\
+		.div_flags = _cf,				\
+		.div_val = _v,					\
+		.div_table = _dtable,				\
+	}
 
-#घोषणा LGM_GATE(_id, _name, _pname, _f, _reg,			\
-		 _shअगरt, _cf, _v)				\
-	अणु							\
+#define LGM_GATE(_id, _name, _pname, _f, _reg,			\
+		 _shift, _cf, _v)				\
+	{							\
 		.id = _id,					\
 		.type = CLK_TYPE_GATE,				\
 		.name = _name,					\
-		.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु	\
+		.parent_data = &(const struct clk_parent_data){	\
 			.fw_name = _pname,			\
 			.name = _pname,				\
-		पूर्ण,						\
+		},						\
 		.num_parents = !_pname ? 0 : 1,			\
 		.flags = _f,					\
 		.gate_off = _reg,				\
-		.gate_shअगरt = _shअगरt,				\
+		.gate_shift = _shift,				\
 		.gate_flags = _cf,				\
 		.gate_val = _v,					\
-	पूर्ण
+	}
 
-#घोषणा LGM_FIXED(_id, _name, _pname, _f, _reg,			\
-		  _shअगरt, _width, _cf, _freq, _v)		\
-	अणु							\
+#define LGM_FIXED(_id, _name, _pname, _f, _reg,			\
+		  _shift, _width, _cf, _freq, _v)		\
+	{							\
 		.id = _id,					\
 		.type = CLK_TYPE_FIXED,				\
 		.name = _name,					\
-		.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु	\
+		.parent_data = &(const struct clk_parent_data){	\
 			.fw_name = _pname,			\
 			.name = _pname,				\
-		पूर्ण,						\
+		},						\
 		.num_parents = !_pname ? 0 : 1,			\
 		.flags = _f,					\
-		.भाग_off = _reg,				\
-		.भाग_shअगरt = _shअगरt,				\
-		.भाग_width = _width,				\
-		.भाग_flags = _cf,				\
-		.भाग_val = _v,					\
+		.div_off = _reg,				\
+		.div_shift = _shift,				\
+		.div_width = _width,				\
+		.div_flags = _cf,				\
+		.div_val = _v,					\
 		.mux_flags = _freq,				\
-	पूर्ण
+	}
 
-#घोषणा LGM_FIXED_FACTOR(_id, _name, _pname, _f, _reg,		\
-			 _shअगरt, _width, _cf, _v, _m, _d)	\
-	अणु							\
+#define LGM_FIXED_FACTOR(_id, _name, _pname, _f, _reg,		\
+			 _shift, _width, _cf, _v, _m, _d)	\
+	{							\
 		.id = _id,					\
 		.type = CLK_TYPE_FIXED_FACTOR,			\
 		.name = _name,					\
-		.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु	\
+		.parent_data = &(const struct clk_parent_data){	\
 			.fw_name = _pname,			\
 			.name = _pname,				\
-		पूर्ण,						\
+		},						\
 		.num_parents = 1,				\
 		.flags = _f,					\
-		.भाग_off = _reg,				\
-		.भाग_shअगरt = _shअगरt,				\
-		.भाग_width = _width,				\
-		.भाग_flags = _cf,				\
-		.भाग_val = _v,					\
+		.div_off = _reg,				\
+		.div_shift = _shift,				\
+		.div_width = _width,				\
+		.div_flags = _cf,				\
+		.div_val = _v,					\
 		.mult = _m,					\
-		.भाग = _d,					\
-	पूर्ण
+		.div = _d,					\
+	}
 
-अटल अंतरभूत व्योम lgm_set_clk_val(व्योम __iomem *membase, u32 reg,
-				   u8 shअगरt, u8 width, u32 set_val)
-अणु
-	u32 mask = (GENMASK(width - 1, 0) << shअगरt);
+static inline void lgm_set_clk_val(void __iomem *membase, u32 reg,
+				   u8 shift, u8 width, u32 set_val)
+{
+	u32 mask = (GENMASK(width - 1, 0) << shift);
 	u32 regval;
 
-	regval = पढ़ोl(membase + reg);
-	regval = (regval & ~mask) | ((set_val << shअगरt) & mask);
-	ग_लिखोl(regval, membase + reg);
-पूर्ण
+	regval = readl(membase + reg);
+	regval = (regval & ~mask) | ((set_val << shift) & mask);
+	writel(regval, membase + reg);
+}
 
-अटल अंतरभूत u32 lgm_get_clk_val(व्योम __iomem *membase, u32 reg,
-				  u8 shअगरt, u8 width)
-अणु
-	u32 mask = (GENMASK(width - 1, 0) << shअगरt);
+static inline u32 lgm_get_clk_val(void __iomem *membase, u32 reg,
+				  u8 shift, u8 width)
+{
+	u32 mask = (GENMASK(width - 1, 0) << shift);
 	u32 val;
 
-	val = पढ़ोl(membase + reg);
-	val = (val & mask) >> shअगरt;
+	val = readl(membase + reg);
+	val = (val & mask) >> shift;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-पूर्णांक lgm_clk_रेजिस्टर_branches(काष्ठा lgm_clk_provider *ctx,
-			      स्थिर काष्ठा lgm_clk_branch *list,
-			      अचिन्हित पूर्णांक nr_clk);
-पूर्णांक lgm_clk_रेजिस्टर_plls(काष्ठा lgm_clk_provider *ctx,
-			  स्थिर काष्ठा lgm_pll_clk_data *list,
-			  अचिन्हित पूर्णांक nr_clk);
-पूर्णांक lgm_clk_रेजिस्टर_dभाग(काष्ठा lgm_clk_provider *ctx,
-			  स्थिर काष्ठा lgm_clk_dभाग_data *list,
-			  अचिन्हित पूर्णांक nr_clk);
-#पूर्ण_अगर	/* __CLK_CGU_H */
+int lgm_clk_register_branches(struct lgm_clk_provider *ctx,
+			      const struct lgm_clk_branch *list,
+			      unsigned int nr_clk);
+int lgm_clk_register_plls(struct lgm_clk_provider *ctx,
+			  const struct lgm_pll_clk_data *list,
+			  unsigned int nr_clk);
+int lgm_clk_register_ddiv(struct lgm_clk_provider *ctx,
+			  const struct lgm_clk_ddiv_data *list,
+			  unsigned int nr_clk);
+#endif	/* __CLK_CGU_H */

@@ -1,546 +1,545 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright: 2017 Cadence Design Systems, Inc.
  *
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_mipi_dsi.h>
-#समावेश <drm/drm_panel.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <video/mipi_display.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_mipi_dsi.h>
+#include <drm/drm_panel.h>
+#include <drm/drm_probe_helper.h>
+#include <video/mipi_display.h>
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/interrupt.h>
+#include <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_graph.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
 
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/phy/phy-mipi-dphy.h>
+#include <linux/phy/phy.h>
+#include <linux/phy/phy-mipi-dphy.h>
 
-#घोषणा IP_CONF				0x0
-#घोषणा SP_HS_FIFO_DEPTH(x)		(((x) & GENMASK(30, 26)) >> 26)
-#घोषणा SP_LP_FIFO_DEPTH(x)		(((x) & GENMASK(25, 21)) >> 21)
-#घोषणा VRS_FIFO_DEPTH(x)		(((x) & GENMASK(20, 16)) >> 16)
-#घोषणा सूचीCMD_FIFO_DEPTH(x)		(((x) & GENMASK(15, 13)) >> 13)
-#घोषणा SDI_IFACE_32			BIT(12)
-#घोषणा INTERNAL_DATAPATH_32		(0 << 10)
-#घोषणा INTERNAL_DATAPATH_16		(1 << 10)
-#घोषणा INTERNAL_DATAPATH_8		(3 << 10)
-#घोषणा INTERNAL_DATAPATH_SIZE		((x) & GENMASK(11, 10))
-#घोषणा NUM_IFACE(x)			((((x) & GENMASK(9, 8)) >> 8) + 1)
-#घोषणा MAX_LANE_NB(x)			(((x) & GENMASK(7, 6)) >> 6)
-#घोषणा RX_FIFO_DEPTH(x)		((x) & GENMASK(5, 0))
+#define IP_CONF				0x0
+#define SP_HS_FIFO_DEPTH(x)		(((x) & GENMASK(30, 26)) >> 26)
+#define SP_LP_FIFO_DEPTH(x)		(((x) & GENMASK(25, 21)) >> 21)
+#define VRS_FIFO_DEPTH(x)		(((x) & GENMASK(20, 16)) >> 16)
+#define DIRCMD_FIFO_DEPTH(x)		(((x) & GENMASK(15, 13)) >> 13)
+#define SDI_IFACE_32			BIT(12)
+#define INTERNAL_DATAPATH_32		(0 << 10)
+#define INTERNAL_DATAPATH_16		(1 << 10)
+#define INTERNAL_DATAPATH_8		(3 << 10)
+#define INTERNAL_DATAPATH_SIZE		((x) & GENMASK(11, 10))
+#define NUM_IFACE(x)			((((x) & GENMASK(9, 8)) >> 8) + 1)
+#define MAX_LANE_NB(x)			(((x) & GENMASK(7, 6)) >> 6)
+#define RX_FIFO_DEPTH(x)		((x) & GENMASK(5, 0))
 
-#घोषणा MCTL_MAIN_DATA_CTL		0x4
-#घोषणा TE_MIPI_POLLING_EN		BIT(25)
-#घोषणा TE_HW_POLLING_EN		BIT(24)
-#घोषणा DISP_EOT_GEN			BIT(18)
-#घोषणा HOST_EOT_GEN			BIT(17)
-#घोषणा DISP_GEN_CHECKSUM		BIT(16)
-#घोषणा DISP_GEN_ECC			BIT(15)
-#घोषणा BTA_EN				BIT(14)
-#घोषणा READ_EN				BIT(13)
-#घोषणा REG_TE_EN			BIT(12)
-#घोषणा IF_TE_EN(x)			BIT(8 + (x))
-#घोषणा TVG_SEL				BIT(6)
-#घोषणा VID_EN				BIT(5)
-#घोषणा IF_VID_SELECT(x)		((x) << 2)
-#घोषणा IF_VID_SELECT_MASK		GENMASK(3, 2)
-#घोषणा IF_VID_MODE			BIT(1)
-#घोषणा LINK_EN				BIT(0)
+#define MCTL_MAIN_DATA_CTL		0x4
+#define TE_MIPI_POLLING_EN		BIT(25)
+#define TE_HW_POLLING_EN		BIT(24)
+#define DISP_EOT_GEN			BIT(18)
+#define HOST_EOT_GEN			BIT(17)
+#define DISP_GEN_CHECKSUM		BIT(16)
+#define DISP_GEN_ECC			BIT(15)
+#define BTA_EN				BIT(14)
+#define READ_EN				BIT(13)
+#define REG_TE_EN			BIT(12)
+#define IF_TE_EN(x)			BIT(8 + (x))
+#define TVG_SEL				BIT(6)
+#define VID_EN				BIT(5)
+#define IF_VID_SELECT(x)		((x) << 2)
+#define IF_VID_SELECT_MASK		GENMASK(3, 2)
+#define IF_VID_MODE			BIT(1)
+#define LINK_EN				BIT(0)
 
-#घोषणा MCTL_MAIN_PHY_CTL		0x8
-#घोषणा HS_INVERT_DAT(x)		BIT(19 + ((x) * 2))
-#घोषणा SWAP_PINS_DAT(x)		BIT(18 + ((x) * 2))
-#घोषणा HS_INVERT_CLK			BIT(17)
-#घोषणा SWAP_PINS_CLK			BIT(16)
-#घोषणा HS_SKEWCAL_EN			BIT(15)
-#घोषणा WAIT_BURST_TIME(x)		((x) << 10)
-#घोषणा DATA_ULPM_EN(x)			BIT(6 + (x))
-#घोषणा CLK_ULPM_EN			BIT(5)
-#घोषणा CLK_CONTINUOUS			BIT(4)
-#घोषणा DATA_LANE_EN(x)			BIT((x) - 1)
+#define MCTL_MAIN_PHY_CTL		0x8
+#define HS_INVERT_DAT(x)		BIT(19 + ((x) * 2))
+#define SWAP_PINS_DAT(x)		BIT(18 + ((x) * 2))
+#define HS_INVERT_CLK			BIT(17)
+#define SWAP_PINS_CLK			BIT(16)
+#define HS_SKEWCAL_EN			BIT(15)
+#define WAIT_BURST_TIME(x)		((x) << 10)
+#define DATA_ULPM_EN(x)			BIT(6 + (x))
+#define CLK_ULPM_EN			BIT(5)
+#define CLK_CONTINUOUS			BIT(4)
+#define DATA_LANE_EN(x)			BIT((x) - 1)
 
-#घोषणा MCTL_MAIN_EN			0xc
-#घोषणा DATA_FORCE_STOP			BIT(17)
-#घोषणा CLK_FORCE_STOP			BIT(16)
-#घोषणा IF_EN(x)			BIT(13 + (x))
-#घोषणा DATA_LANE_ULPM_REQ(l)		BIT(9 + (l))
-#घोषणा CLK_LANE_ULPM_REQ		BIT(8)
-#घोषणा DATA_LANE_START(x)		BIT(4 + (x))
-#घोषणा CLK_LANE_EN			BIT(3)
-#घोषणा PLL_START			BIT(0)
+#define MCTL_MAIN_EN			0xc
+#define DATA_FORCE_STOP			BIT(17)
+#define CLK_FORCE_STOP			BIT(16)
+#define IF_EN(x)			BIT(13 + (x))
+#define DATA_LANE_ULPM_REQ(l)		BIT(9 + (l))
+#define CLK_LANE_ULPM_REQ		BIT(8)
+#define DATA_LANE_START(x)		BIT(4 + (x))
+#define CLK_LANE_EN			BIT(3)
+#define PLL_START			BIT(0)
 
-#घोषणा MCTL_DPHY_CFG0			0x10
-#घोषणा DPHY_C_RSTB			BIT(20)
-#घोषणा DPHY_D_RSTB(x)			GENMASK(15 + (x), 16)
-#घोषणा DPHY_PLL_PDN			BIT(10)
-#घोषणा DPHY_CMN_PDN			BIT(9)
-#घोषणा DPHY_C_PDN			BIT(8)
-#घोषणा DPHY_D_PDN(x)			GENMASK(3 + (x), 4)
-#घोषणा DPHY_ALL_D_PDN			GENMASK(7, 4)
-#घोषणा DPHY_PLL_PSO			BIT(1)
-#घोषणा DPHY_CMN_PSO			BIT(0)
+#define MCTL_DPHY_CFG0			0x10
+#define DPHY_C_RSTB			BIT(20)
+#define DPHY_D_RSTB(x)			GENMASK(15 + (x), 16)
+#define DPHY_PLL_PDN			BIT(10)
+#define DPHY_CMN_PDN			BIT(9)
+#define DPHY_C_PDN			BIT(8)
+#define DPHY_D_PDN(x)			GENMASK(3 + (x), 4)
+#define DPHY_ALL_D_PDN			GENMASK(7, 4)
+#define DPHY_PLL_PSO			BIT(1)
+#define DPHY_CMN_PSO			BIT(0)
 
-#घोषणा MCTL_DPHY_TIMEOUT1		0x14
-#घोषणा HSTX_TIMEOUT(x)			((x) << 4)
-#घोषणा HSTX_TIMEOUT_MAX		GENMASK(17, 0)
-#घोषणा CLK_DIV(x)			(x)
-#घोषणा CLK_DIV_MAX			GENMASK(3, 0)
+#define MCTL_DPHY_TIMEOUT1		0x14
+#define HSTX_TIMEOUT(x)			((x) << 4)
+#define HSTX_TIMEOUT_MAX		GENMASK(17, 0)
+#define CLK_DIV(x)			(x)
+#define CLK_DIV_MAX			GENMASK(3, 0)
 
-#घोषणा MCTL_DPHY_TIMEOUT2		0x18
-#घोषणा LPRX_TIMEOUT(x)			(x)
+#define MCTL_DPHY_TIMEOUT2		0x18
+#define LPRX_TIMEOUT(x)			(x)
 
-#घोषणा MCTL_ULPOUT_TIME		0x1c
-#घोषणा DATA_LANE_ULPOUT_TIME(x)	((x) << 9)
-#घोषणा CLK_LANE_ULPOUT_TIME(x)		(x)
+#define MCTL_ULPOUT_TIME		0x1c
+#define DATA_LANE_ULPOUT_TIME(x)	((x) << 9)
+#define CLK_LANE_ULPOUT_TIME(x)		(x)
 
-#घोषणा MCTL_3DVIDEO_CTL		0x20
-#घोषणा VID_VSYNC_3D_EN			BIT(7)
-#घोषणा VID_VSYNC_3D_LR			BIT(5)
-#घोषणा VID_VSYNC_3D_SECOND_EN		BIT(4)
-#घोषणा VID_VSYNC_3DFORMAT_LINE		(0 << 2)
-#घोषणा VID_VSYNC_3DFORMAT_FRAME	(1 << 2)
-#घोषणा VID_VSYNC_3DFORMAT_PIXEL	(2 << 2)
-#घोषणा VID_VSYNC_3DMODE_OFF		0
-#घोषणा VID_VSYNC_3DMODE_PORTRAIT	1
-#घोषणा VID_VSYNC_3DMODE_LANDSCAPE	2
+#define MCTL_3DVIDEO_CTL		0x20
+#define VID_VSYNC_3D_EN			BIT(7)
+#define VID_VSYNC_3D_LR			BIT(5)
+#define VID_VSYNC_3D_SECOND_EN		BIT(4)
+#define VID_VSYNC_3DFORMAT_LINE		(0 << 2)
+#define VID_VSYNC_3DFORMAT_FRAME	(1 << 2)
+#define VID_VSYNC_3DFORMAT_PIXEL	(2 << 2)
+#define VID_VSYNC_3DMODE_OFF		0
+#define VID_VSYNC_3DMODE_PORTRAIT	1
+#define VID_VSYNC_3DMODE_LANDSCAPE	2
 
-#घोषणा MCTL_MAIN_STS			0x24
-#घोषणा MCTL_MAIN_STS_CTL		0x130
-#घोषणा MCTL_MAIN_STS_CLR		0x150
-#घोषणा MCTL_MAIN_STS_FLAG		0x170
-#घोषणा HS_SKEWCAL_DONE			BIT(11)
-#घोषणा IF_UNTERM_PKT_ERR(x)		BIT(8 + (x))
-#घोषणा LPRX_TIMEOUT_ERR		BIT(7)
-#घोषणा HSTX_TIMEOUT_ERR		BIT(6)
-#घोषणा DATA_LANE_RDY(l)		BIT(2 + (l))
-#घोषणा CLK_LANE_RDY			BIT(1)
-#घोषणा PLL_LOCKED			BIT(0)
+#define MCTL_MAIN_STS			0x24
+#define MCTL_MAIN_STS_CTL		0x130
+#define MCTL_MAIN_STS_CLR		0x150
+#define MCTL_MAIN_STS_FLAG		0x170
+#define HS_SKEWCAL_DONE			BIT(11)
+#define IF_UNTERM_PKT_ERR(x)		BIT(8 + (x))
+#define LPRX_TIMEOUT_ERR		BIT(7)
+#define HSTX_TIMEOUT_ERR		BIT(6)
+#define DATA_LANE_RDY(l)		BIT(2 + (l))
+#define CLK_LANE_RDY			BIT(1)
+#define PLL_LOCKED			BIT(0)
 
-#घोषणा MCTL_DPHY_ERR			0x28
-#घोषणा MCTL_DPHY_ERR_CTL1		0x148
-#घोषणा MCTL_DPHY_ERR_CLR		0x168
-#घोषणा MCTL_DPHY_ERR_FLAG		0x188
-#घोषणा ERR_CONT_LP(x, l)		BIT(18 + ((x) * 4) + (l))
-#घोषणा ERR_CONTROL(l)			BIT(14 + (l))
-#घोषणा ERR_SYNESC(l)			BIT(10 + (l))
-#घोषणा ERR_ESC(l)			BIT(6 + (l))
+#define MCTL_DPHY_ERR			0x28
+#define MCTL_DPHY_ERR_CTL1		0x148
+#define MCTL_DPHY_ERR_CLR		0x168
+#define MCTL_DPHY_ERR_FLAG		0x188
+#define ERR_CONT_LP(x, l)		BIT(18 + ((x) * 4) + (l))
+#define ERR_CONTROL(l)			BIT(14 + (l))
+#define ERR_SYNESC(l)			BIT(10 + (l))
+#define ERR_ESC(l)			BIT(6 + (l))
 
-#घोषणा MCTL_DPHY_ERR_CTL2		0x14c
-#घोषणा ERR_CONT_LP_EDGE(x, l)		BIT(12 + ((x) * 4) + (l))
-#घोषणा ERR_CONTROL_EDGE(l)		BIT(8 + (l))
-#घोषणा ERR_SYN_ESC_EDGE(l)		BIT(4 + (l))
-#घोषणा ERR_ESC_EDGE(l)			BIT(0 + (l))
+#define MCTL_DPHY_ERR_CTL2		0x14c
+#define ERR_CONT_LP_EDGE(x, l)		BIT(12 + ((x) * 4) + (l))
+#define ERR_CONTROL_EDGE(l)		BIT(8 + (l))
+#define ERR_SYN_ESC_EDGE(l)		BIT(4 + (l))
+#define ERR_ESC_EDGE(l)			BIT(0 + (l))
 
-#घोषणा MCTL_LANE_STS			0x2c
-#घोषणा PPI_C_TX_READY_HS		BIT(18)
-#घोषणा DPHY_PLL_LOCK			BIT(17)
-#घोषणा PPI_D_RX_ULPS_ESC(x)		(((x) & GENMASK(15, 12)) >> 12)
-#घोषणा LANE_STATE_START		0
-#घोषणा LANE_STATE_IDLE			1
-#घोषणा LANE_STATE_WRITE		2
-#घोषणा LANE_STATE_ULPM			3
-#घोषणा LANE_STATE_READ			4
-#घोषणा DATA_LANE_STATE(l, val)		\
+#define MCTL_LANE_STS			0x2c
+#define PPI_C_TX_READY_HS		BIT(18)
+#define DPHY_PLL_LOCK			BIT(17)
+#define PPI_D_RX_ULPS_ESC(x)		(((x) & GENMASK(15, 12)) >> 12)
+#define LANE_STATE_START		0
+#define LANE_STATE_IDLE			1
+#define LANE_STATE_WRITE		2
+#define LANE_STATE_ULPM			3
+#define LANE_STATE_READ			4
+#define DATA_LANE_STATE(l, val)		\
 	(((val) >> (2 + 2 * (l) + ((l) ? 1 : 0))) & GENMASK((l) ? 1 : 2, 0))
-#घोषणा CLK_LANE_STATE_HS		2
-#घोषणा CLK_LANE_STATE(val)		((val) & GENMASK(1, 0))
+#define CLK_LANE_STATE_HS		2
+#define CLK_LANE_STATE(val)		((val) & GENMASK(1, 0))
 
-#घोषणा DSC_MODE_CTL			0x30
-#घोषणा DSC_MODE_EN			BIT(0)
+#define DSC_MODE_CTL			0x30
+#define DSC_MODE_EN			BIT(0)
 
-#घोषणा DSC_CMD_SEND			0x34
-#घोषणा DSC_SEND_PPS			BIT(0)
-#घोषणा DSC_EXECUTE_QUEUE		BIT(1)
+#define DSC_CMD_SEND			0x34
+#define DSC_SEND_PPS			BIT(0)
+#define DSC_EXECUTE_QUEUE		BIT(1)
 
-#घोषणा DSC_PPS_WRDAT			0x38
+#define DSC_PPS_WRDAT			0x38
 
-#घोषणा DSC_MODE_STS			0x3c
-#घोषणा DSC_PPS_DONE			BIT(1)
-#घोषणा DSC_EXEC_DONE			BIT(2)
+#define DSC_MODE_STS			0x3c
+#define DSC_PPS_DONE			BIT(1)
+#define DSC_EXEC_DONE			BIT(2)
 
-#घोषणा CMD_MODE_CTL			0x70
-#घोषणा IF_LP_EN(x)			BIT(9 + (x))
-#घोषणा IF_VCHAN_ID(x, c)		((c) << ((x) * 2))
+#define CMD_MODE_CTL			0x70
+#define IF_LP_EN(x)			BIT(9 + (x))
+#define IF_VCHAN_ID(x, c)		((c) << ((x) * 2))
 
-#घोषणा CMD_MODE_CTL2			0x74
-#घोषणा TE_TIMEOUT(x)			((x) << 11)
-#घोषणा FILL_VALUE(x)			((x) << 3)
-#घोषणा ARB_IF_WITH_HIGHEST_PRIORITY(x)	((x) << 1)
-#घोषणा ARB_ROUND_ROBIN_MODE		BIT(0)
+#define CMD_MODE_CTL2			0x74
+#define TE_TIMEOUT(x)			((x) << 11)
+#define FILL_VALUE(x)			((x) << 3)
+#define ARB_IF_WITH_HIGHEST_PRIORITY(x)	((x) << 1)
+#define ARB_ROUND_ROBIN_MODE		BIT(0)
 
-#घोषणा CMD_MODE_STS			0x78
-#घोषणा CMD_MODE_STS_CTL		0x134
-#घोषणा CMD_MODE_STS_CLR		0x154
-#घोषणा CMD_MODE_STS_FLAG		0x174
-#घोषणा ERR_IF_UNDERRUN(x)		BIT(4 + (x))
-#घोषणा ERR_UNWANTED_READ		BIT(3)
-#घोषणा ERR_TE_MISS			BIT(2)
-#घोषणा ERR_NO_TE			BIT(1)
-#घोषणा CSM_RUNNING			BIT(0)
+#define CMD_MODE_STS			0x78
+#define CMD_MODE_STS_CTL		0x134
+#define CMD_MODE_STS_CLR		0x154
+#define CMD_MODE_STS_FLAG		0x174
+#define ERR_IF_UNDERRUN(x)		BIT(4 + (x))
+#define ERR_UNWANTED_READ		BIT(3)
+#define ERR_TE_MISS			BIT(2)
+#define ERR_NO_TE			BIT(1)
+#define CSM_RUNNING			BIT(0)
 
-#घोषणा सूचीECT_CMD_SEND			0x80
+#define DIRECT_CMD_SEND			0x80
 
-#घोषणा सूचीECT_CMD_MAIN_SETTINGS	0x84
-#घोषणा TRIGGER_VAL(x)			((x) << 25)
-#घोषणा CMD_LP_EN			BIT(24)
-#घोषणा CMD_SIZE(x)			((x) << 16)
-#घोषणा CMD_VCHAN_ID(x)			((x) << 14)
-#घोषणा CMD_DATATYPE(x)			((x) << 8)
-#घोषणा CMD_LONG			BIT(3)
-#घोषणा WRITE_CMD			0
-#घोषणा READ_CMD			1
-#घोषणा TE_REQ				4
-#घोषणा TRIGGER_REQ			5
-#घोषणा BTA_REQ				6
+#define DIRECT_CMD_MAIN_SETTINGS	0x84
+#define TRIGGER_VAL(x)			((x) << 25)
+#define CMD_LP_EN			BIT(24)
+#define CMD_SIZE(x)			((x) << 16)
+#define CMD_VCHAN_ID(x)			((x) << 14)
+#define CMD_DATATYPE(x)			((x) << 8)
+#define CMD_LONG			BIT(3)
+#define WRITE_CMD			0
+#define READ_CMD			1
+#define TE_REQ				4
+#define TRIGGER_REQ			5
+#define BTA_REQ				6
 
-#घोषणा सूचीECT_CMD_STS			0x88
-#घोषणा सूचीECT_CMD_STS_CTL		0x138
-#घोषणा सूचीECT_CMD_STS_CLR		0x158
-#घोषणा सूचीECT_CMD_STS_FLAG		0x178
-#घोषणा RCVD_ACK_VAL(val)		((val) >> 16)
-#घोषणा RCVD_TRIGGER_VAL(val)		(((val) & GENMASK(14, 11)) >> 11)
-#घोषणा READ_COMPLETED_WITH_ERR		BIT(10)
-#घोषणा BTA_FINISHED			BIT(9)
-#घोषणा BTA_COMPLETED			BIT(8)
-#घोषणा TE_RCVD				BIT(7)
-#घोषणा TRIGGER_RCVD			BIT(6)
-#घोषणा ACK_WITH_ERR_RCVD		BIT(5)
-#घोषणा ACK_RCVD			BIT(4)
-#घोषणा READ_COMPLETED			BIT(3)
-#घोषणा TRIGGER_COMPLETED		BIT(2)
-#घोषणा WRITE_COMPLETED			BIT(1)
-#घोषणा SENDING_CMD			BIT(0)
+#define DIRECT_CMD_STS			0x88
+#define DIRECT_CMD_STS_CTL		0x138
+#define DIRECT_CMD_STS_CLR		0x158
+#define DIRECT_CMD_STS_FLAG		0x178
+#define RCVD_ACK_VAL(val)		((val) >> 16)
+#define RCVD_TRIGGER_VAL(val)		(((val) & GENMASK(14, 11)) >> 11)
+#define READ_COMPLETED_WITH_ERR		BIT(10)
+#define BTA_FINISHED			BIT(9)
+#define BTA_COMPLETED			BIT(8)
+#define TE_RCVD				BIT(7)
+#define TRIGGER_RCVD			BIT(6)
+#define ACK_WITH_ERR_RCVD		BIT(5)
+#define ACK_RCVD			BIT(4)
+#define READ_COMPLETED			BIT(3)
+#define TRIGGER_COMPLETED		BIT(2)
+#define WRITE_COMPLETED			BIT(1)
+#define SENDING_CMD			BIT(0)
 
-#घोषणा सूचीECT_CMD_STOP_READ		0x8c
+#define DIRECT_CMD_STOP_READ		0x8c
 
-#घोषणा सूचीECT_CMD_WRDATA		0x90
+#define DIRECT_CMD_WRDATA		0x90
 
-#घोषणा सूचीECT_CMD_FIFO_RST		0x94
+#define DIRECT_CMD_FIFO_RST		0x94
 
-#घोषणा सूचीECT_CMD_RDDATA		0xa0
+#define DIRECT_CMD_RDDATA		0xa0
 
-#घोषणा सूचीECT_CMD_RD_PROPS		0xa4
-#घोषणा RD_DCS				BIT(18)
-#घोषणा RD_VCHAN_ID(val)		(((val) >> 16) & GENMASK(1, 0))
-#घोषणा RD_SIZE(val)			((val) & GENMASK(15, 0))
+#define DIRECT_CMD_RD_PROPS		0xa4
+#define RD_DCS				BIT(18)
+#define RD_VCHAN_ID(val)		(((val) >> 16) & GENMASK(1, 0))
+#define RD_SIZE(val)			((val) & GENMASK(15, 0))
 
-#घोषणा सूचीECT_CMD_RD_STS		0xa8
-#घोषणा सूचीECT_CMD_RD_STS_CTL		0x13c
-#घोषणा सूचीECT_CMD_RD_STS_CLR		0x15c
-#घोषणा सूचीECT_CMD_RD_STS_FLAG		0x17c
-#घोषणा ERR_EOT_WITH_ERR		BIT(8)
-#घोषणा ERR_MISSING_EOT			BIT(7)
-#घोषणा ERR_WRONG_LENGTH		BIT(6)
-#घोषणा ERR_OVERSIZE			BIT(5)
-#घोषणा ERR_RECEIVE			BIT(4)
-#घोषणा ERR_UNDECODABLE			BIT(3)
-#घोषणा ERR_CHECKSUM			BIT(2)
-#घोषणा ERR_UNCORRECTABLE		BIT(1)
-#घोषणा ERR_FIXED			BIT(0)
+#define DIRECT_CMD_RD_STS		0xa8
+#define DIRECT_CMD_RD_STS_CTL		0x13c
+#define DIRECT_CMD_RD_STS_CLR		0x15c
+#define DIRECT_CMD_RD_STS_FLAG		0x17c
+#define ERR_EOT_WITH_ERR		BIT(8)
+#define ERR_MISSING_EOT			BIT(7)
+#define ERR_WRONG_LENGTH		BIT(6)
+#define ERR_OVERSIZE			BIT(5)
+#define ERR_RECEIVE			BIT(4)
+#define ERR_UNDECODABLE			BIT(3)
+#define ERR_CHECKSUM			BIT(2)
+#define ERR_UNCORRECTABLE		BIT(1)
+#define ERR_FIXED			BIT(0)
 
-#घोषणा VID_MAIN_CTL			0xb0
-#घोषणा VID_IGNORE_MISS_VSYNC		BIT(31)
-#घोषणा VID_FIELD_SW			BIT(28)
-#घोषणा VID_INTERLACED_EN		BIT(27)
-#घोषणा RECOVERY_MODE(x)		((x) << 25)
-#घोषणा RECOVERY_MODE_NEXT_HSYNC	0
-#घोषणा RECOVERY_MODE_NEXT_STOP_POINT	2
-#घोषणा RECOVERY_MODE_NEXT_VSYNC	3
-#घोषणा REG_BLKEOL_MODE(x)		((x) << 23)
-#घोषणा REG_BLKLINE_MODE(x)		((x) << 21)
-#घोषणा REG_BLK_MODE_शून्य_PKT		0
-#घोषणा REG_BLK_MODE_BLANKING_PKT	1
-#घोषणा REG_BLK_MODE_LP			2
-#घोषणा SYNC_PULSE_HORIZONTAL		BIT(20)
-#घोषणा SYNC_PULSE_ACTIVE		BIT(19)
-#घोषणा BURST_MODE			BIT(18)
-#घोषणा VID_PIXEL_MODE_MASK		GENMASK(17, 14)
-#घोषणा VID_PIXEL_MODE_RGB565		(0 << 14)
-#घोषणा VID_PIXEL_MODE_RGB666_PACKED	(1 << 14)
-#घोषणा VID_PIXEL_MODE_RGB666		(2 << 14)
-#घोषणा VID_PIXEL_MODE_RGB888		(3 << 14)
-#घोषणा VID_PIXEL_MODE_RGB101010	(4 << 14)
-#घोषणा VID_PIXEL_MODE_RGB121212	(5 << 14)
-#घोषणा VID_PIXEL_MODE_YUV420		(8 << 14)
-#घोषणा VID_PIXEL_MODE_YUV422_PACKED	(9 << 14)
-#घोषणा VID_PIXEL_MODE_YUV422		(10 << 14)
-#घोषणा VID_PIXEL_MODE_YUV422_24B	(11 << 14)
-#घोषणा VID_PIXEL_MODE_DSC_COMP		(12 << 14)
-#घोषणा VID_DATATYPE(x)			((x) << 8)
-#घोषणा VID_VIRTCHAN_ID(अगरace, x)	((x) << (4 + (अगरace) * 2))
-#घोषणा STOP_MODE(x)			((x) << 2)
-#घोषणा START_MODE(x)			(x)
+#define VID_MAIN_CTL			0xb0
+#define VID_IGNORE_MISS_VSYNC		BIT(31)
+#define VID_FIELD_SW			BIT(28)
+#define VID_INTERLACED_EN		BIT(27)
+#define RECOVERY_MODE(x)		((x) << 25)
+#define RECOVERY_MODE_NEXT_HSYNC	0
+#define RECOVERY_MODE_NEXT_STOP_POINT	2
+#define RECOVERY_MODE_NEXT_VSYNC	3
+#define REG_BLKEOL_MODE(x)		((x) << 23)
+#define REG_BLKLINE_MODE(x)		((x) << 21)
+#define REG_BLK_MODE_NULL_PKT		0
+#define REG_BLK_MODE_BLANKING_PKT	1
+#define REG_BLK_MODE_LP			2
+#define SYNC_PULSE_HORIZONTAL		BIT(20)
+#define SYNC_PULSE_ACTIVE		BIT(19)
+#define BURST_MODE			BIT(18)
+#define VID_PIXEL_MODE_MASK		GENMASK(17, 14)
+#define VID_PIXEL_MODE_RGB565		(0 << 14)
+#define VID_PIXEL_MODE_RGB666_PACKED	(1 << 14)
+#define VID_PIXEL_MODE_RGB666		(2 << 14)
+#define VID_PIXEL_MODE_RGB888		(3 << 14)
+#define VID_PIXEL_MODE_RGB101010	(4 << 14)
+#define VID_PIXEL_MODE_RGB121212	(5 << 14)
+#define VID_PIXEL_MODE_YUV420		(8 << 14)
+#define VID_PIXEL_MODE_YUV422_PACKED	(9 << 14)
+#define VID_PIXEL_MODE_YUV422		(10 << 14)
+#define VID_PIXEL_MODE_YUV422_24B	(11 << 14)
+#define VID_PIXEL_MODE_DSC_COMP		(12 << 14)
+#define VID_DATATYPE(x)			((x) << 8)
+#define VID_VIRTCHAN_ID(iface, x)	((x) << (4 + (iface) * 2))
+#define STOP_MODE(x)			((x) << 2)
+#define START_MODE(x)			(x)
 
-#घोषणा VID_VSIZE1			0xb4
-#घोषणा VFP_LEN(x)			((x) << 12)
-#घोषणा VBP_LEN(x)			((x) << 6)
-#घोषणा VSA_LEN(x)			(x)
+#define VID_VSIZE1			0xb4
+#define VFP_LEN(x)			((x) << 12)
+#define VBP_LEN(x)			((x) << 6)
+#define VSA_LEN(x)			(x)
 
-#घोषणा VID_VSIZE2			0xb8
-#घोषणा VACT_LEN(x)			(x)
+#define VID_VSIZE2			0xb8
+#define VACT_LEN(x)			(x)
 
-#घोषणा VID_HSIZE1			0xc0
-#घोषणा HBP_LEN(x)			((x) << 16)
-#घोषणा HSA_LEN(x)			(x)
+#define VID_HSIZE1			0xc0
+#define HBP_LEN(x)			((x) << 16)
+#define HSA_LEN(x)			(x)
 
-#घोषणा VID_HSIZE2			0xc4
-#घोषणा HFP_LEN(x)			((x) << 16)
-#घोषणा HACT_LEN(x)			(x)
+#define VID_HSIZE2			0xc4
+#define HFP_LEN(x)			((x) << 16)
+#define HACT_LEN(x)			(x)
 
-#घोषणा VID_BLKSIZE1			0xcc
-#घोषणा BLK_EOL_PKT_LEN(x)		((x) << 15)
-#घोषणा BLK_LINE_EVENT_PKT_LEN(x)	(x)
+#define VID_BLKSIZE1			0xcc
+#define BLK_EOL_PKT_LEN(x)		((x) << 15)
+#define BLK_LINE_EVENT_PKT_LEN(x)	(x)
 
-#घोषणा VID_BLKSIZE2			0xd0
-#घोषणा BLK_LINE_PULSE_PKT_LEN(x)	(x)
+#define VID_BLKSIZE2			0xd0
+#define BLK_LINE_PULSE_PKT_LEN(x)	(x)
 
-#घोषणा VID_PKT_TIME			0xd8
-#घोषणा BLK_EOL_DURATION(x)		(x)
+#define VID_PKT_TIME			0xd8
+#define BLK_EOL_DURATION(x)		(x)
 
-#घोषणा VID_DPHY_TIME			0xdc
-#घोषणा REG_WAKEUP_TIME(x)		((x) << 17)
-#घोषणा REG_LINE_DURATION(x)		(x)
+#define VID_DPHY_TIME			0xdc
+#define REG_WAKEUP_TIME(x)		((x) << 17)
+#define REG_LINE_DURATION(x)		(x)
 
-#घोषणा VID_ERR_COLOR1			0xe0
-#घोषणा COL_GREEN(x)			((x) << 12)
-#घोषणा COL_RED(x)			(x)
+#define VID_ERR_COLOR1			0xe0
+#define COL_GREEN(x)			((x) << 12)
+#define COL_RED(x)			(x)
 
-#घोषणा VID_ERR_COLOR2			0xe4
-#घोषणा PAD_VAL(x)			((x) << 12)
-#घोषणा COL_BLUE(x)			(x)
+#define VID_ERR_COLOR2			0xe4
+#define PAD_VAL(x)			((x) << 12)
+#define COL_BLUE(x)			(x)
 
-#घोषणा VID_VPOS			0xe8
-#घोषणा LINE_VAL(val)			(((val) & GENMASK(14, 2)) >> 2)
-#घोषणा LINE_POS(val)			((val) & GENMASK(1, 0))
+#define VID_VPOS			0xe8
+#define LINE_VAL(val)			(((val) & GENMASK(14, 2)) >> 2)
+#define LINE_POS(val)			((val) & GENMASK(1, 0))
 
-#घोषणा VID_HPOS			0xec
-#घोषणा HORIZ_VAL(val)			(((val) & GENMASK(17, 3)) >> 3)
-#घोषणा HORIZ_POS(val)			((val) & GENMASK(2, 0))
+#define VID_HPOS			0xec
+#define HORIZ_VAL(val)			(((val) & GENMASK(17, 3)) >> 3)
+#define HORIZ_POS(val)			((val) & GENMASK(2, 0))
 
-#घोषणा VID_MODE_STS			0xf0
-#घोषणा VID_MODE_STS_CTL		0x140
-#घोषणा VID_MODE_STS_CLR		0x160
-#घोषणा VID_MODE_STS_FLAG		0x180
-#घोषणा VSG_RECOVERY			BIT(10)
-#घोषणा ERR_VRS_WRONG_LEN		BIT(9)
-#घोषणा ERR_LONG_READ			BIT(8)
-#घोषणा ERR_LINE_WRITE			BIT(7)
-#घोषणा ERR_BURST_WRITE			BIT(6)
-#घोषणा ERR_SMALL_HEIGHT		BIT(5)
-#घोषणा ERR_SMALL_LEN			BIT(4)
-#घोषणा ERR_MISSING_VSYNC		BIT(3)
-#घोषणा ERR_MISSING_HSYNC		BIT(2)
-#घोषणा ERR_MISSING_DATA		BIT(1)
-#घोषणा VSG_RUNNING			BIT(0)
+#define VID_MODE_STS			0xf0
+#define VID_MODE_STS_CTL		0x140
+#define VID_MODE_STS_CLR		0x160
+#define VID_MODE_STS_FLAG		0x180
+#define VSG_RECOVERY			BIT(10)
+#define ERR_VRS_WRONG_LEN		BIT(9)
+#define ERR_LONG_READ			BIT(8)
+#define ERR_LINE_WRITE			BIT(7)
+#define ERR_BURST_WRITE			BIT(6)
+#define ERR_SMALL_HEIGHT		BIT(5)
+#define ERR_SMALL_LEN			BIT(4)
+#define ERR_MISSING_VSYNC		BIT(3)
+#define ERR_MISSING_HSYNC		BIT(2)
+#define ERR_MISSING_DATA		BIT(1)
+#define VSG_RUNNING			BIT(0)
 
-#घोषणा VID_VCA_SETTING1		0xf4
-#घोषणा BURST_LP			BIT(16)
-#घोषणा MAX_BURST_LIMIT(x)		(x)
+#define VID_VCA_SETTING1		0xf4
+#define BURST_LP			BIT(16)
+#define MAX_BURST_LIMIT(x)		(x)
 
-#घोषणा VID_VCA_SETTING2		0xf8
-#घोषणा MAX_LINE_LIMIT(x)		((x) << 16)
-#घोषणा EXACT_BURST_LIMIT(x)		(x)
+#define VID_VCA_SETTING2		0xf8
+#define MAX_LINE_LIMIT(x)		((x) << 16)
+#define EXACT_BURST_LIMIT(x)		(x)
 
-#घोषणा TVG_CTL				0xfc
-#घोषणा TVG_STRIPE_SIZE(x)		((x) << 5)
-#घोषणा TVG_MODE_MASK			GENMASK(4, 3)
-#घोषणा TVG_MODE_SINGLE_COLOR		(0 << 3)
-#घोषणा TVG_MODE_VSTRIPES		(2 << 3)
-#घोषणा TVG_MODE_HSTRIPES		(3 << 3)
-#घोषणा TVG_STOPMODE_MASK		GENMASK(2, 1)
-#घोषणा TVG_STOPMODE_खातापूर्ण		(0 << 1)
-#घोषणा TVG_STOPMODE_EOL		(1 << 1)
-#घोषणा TVG_STOPMODE_NOW		(2 << 1)
-#घोषणा TVG_RUN				BIT(0)
+#define TVG_CTL				0xfc
+#define TVG_STRIPE_SIZE(x)		((x) << 5)
+#define TVG_MODE_MASK			GENMASK(4, 3)
+#define TVG_MODE_SINGLE_COLOR		(0 << 3)
+#define TVG_MODE_VSTRIPES		(2 << 3)
+#define TVG_MODE_HSTRIPES		(3 << 3)
+#define TVG_STOPMODE_MASK		GENMASK(2, 1)
+#define TVG_STOPMODE_EOF		(0 << 1)
+#define TVG_STOPMODE_EOL		(1 << 1)
+#define TVG_STOPMODE_NOW		(2 << 1)
+#define TVG_RUN				BIT(0)
 
-#घोषणा TVG_IMG_SIZE			0x100
-#घोषणा TVG_NBLINES(x)			((x) << 16)
-#घोषणा TVG_LINE_SIZE(x)		(x)
+#define TVG_IMG_SIZE			0x100
+#define TVG_NBLINES(x)			((x) << 16)
+#define TVG_LINE_SIZE(x)		(x)
 
-#घोषणा TVG_COLOR1			0x104
-#घोषणा TVG_COL1_GREEN(x)		((x) << 12)
-#घोषणा TVG_COL1_RED(x)			(x)
+#define TVG_COLOR1			0x104
+#define TVG_COL1_GREEN(x)		((x) << 12)
+#define TVG_COL1_RED(x)			(x)
 
-#घोषणा TVG_COLOR1_BIS			0x108
-#घोषणा TVG_COL1_BLUE(x)		(x)
+#define TVG_COLOR1_BIS			0x108
+#define TVG_COL1_BLUE(x)		(x)
 
-#घोषणा TVG_COLOR2			0x10c
-#घोषणा TVG_COL2_GREEN(x)		((x) << 12)
-#घोषणा TVG_COL2_RED(x)			(x)
+#define TVG_COLOR2			0x10c
+#define TVG_COL2_GREEN(x)		((x) << 12)
+#define TVG_COL2_RED(x)			(x)
 
-#घोषणा TVG_COLOR2_BIS			0x110
-#घोषणा TVG_COL2_BLUE(x)		(x)
+#define TVG_COLOR2_BIS			0x110
+#define TVG_COL2_BLUE(x)		(x)
 
-#घोषणा TVG_STS				0x114
-#घोषणा TVG_STS_CTL			0x144
-#घोषणा TVG_STS_CLR			0x164
-#घोषणा TVG_STS_FLAG			0x184
-#घोषणा TVG_STS_RUNNING			BIT(0)
+#define TVG_STS				0x114
+#define TVG_STS_CTL			0x144
+#define TVG_STS_CLR			0x164
+#define TVG_STS_FLAG			0x184
+#define TVG_STS_RUNNING			BIT(0)
 
-#घोषणा STS_CTL_EDGE(e)			((e) << 16)
+#define STS_CTL_EDGE(e)			((e) << 16)
 
-#घोषणा DPHY_LANES_MAP			0x198
-#घोषणा DAT_REMAP_CFG(b, l)		((l) << ((b) * 8))
+#define DPHY_LANES_MAP			0x198
+#define DAT_REMAP_CFG(b, l)		((l) << ((b) * 8))
 
-#घोषणा DPI_IRQ_EN			0x1a0
-#घोषणा DPI_IRQ_CLR			0x1a4
-#घोषणा DPI_IRQ_STS			0x1a8
-#घोषणा PIXEL_BUF_OVERFLOW		BIT(0)
+#define DPI_IRQ_EN			0x1a0
+#define DPI_IRQ_CLR			0x1a4
+#define DPI_IRQ_STS			0x1a8
+#define PIXEL_BUF_OVERFLOW		BIT(0)
 
-#घोषणा DPI_CFG				0x1ac
-#घोषणा DPI_CFG_FIFO_DEPTH(x)		((x) >> 16)
-#घोषणा DPI_CFG_FIFO_LEVEL(x)		((x) & GENMASK(15, 0))
+#define DPI_CFG				0x1ac
+#define DPI_CFG_FIFO_DEPTH(x)		((x) >> 16)
+#define DPI_CFG_FIFO_LEVEL(x)		((x) & GENMASK(15, 0))
 
-#घोषणा TEST_GENERIC			0x1f0
-#घोषणा TEST_STATUS(x)			((x) >> 16)
-#घोषणा TEST_CTRL(x)			(x)
+#define TEST_GENERIC			0x1f0
+#define TEST_STATUS(x)			((x) >> 16)
+#define TEST_CTRL(x)			(x)
 
-#घोषणा ID_REG				0x1fc
-#घोषणा REV_VENDOR_ID(x)		(((x) & GENMASK(31, 20)) >> 20)
-#घोषणा REV_PRODUCT_ID(x)		(((x) & GENMASK(19, 12)) >> 12)
-#घोषणा REV_HW(x)			(((x) & GENMASK(11, 8)) >> 8)
-#घोषणा REV_MAJOR(x)			(((x) & GENMASK(7, 4)) >> 4)
-#घोषणा REV_MINOR(x)			((x) & GENMASK(3, 0))
+#define ID_REG				0x1fc
+#define REV_VENDOR_ID(x)		(((x) & GENMASK(31, 20)) >> 20)
+#define REV_PRODUCT_ID(x)		(((x) & GENMASK(19, 12)) >> 12)
+#define REV_HW(x)			(((x) & GENMASK(11, 8)) >> 8)
+#define REV_MAJOR(x)			(((x) & GENMASK(7, 4)) >> 4)
+#define REV_MINOR(x)			((x) & GENMASK(3, 0))
 
-#घोषणा DSI_OUTPUT_PORT			0
-#घोषणा DSI_INPUT_PORT(inputid)		(1 + (inputid))
+#define DSI_OUTPUT_PORT			0
+#define DSI_INPUT_PORT(inputid)		(1 + (inputid))
 
-#घोषणा DSI_HBP_FRAME_OVERHEAD		12
-#घोषणा DSI_HSA_FRAME_OVERHEAD		14
-#घोषणा DSI_HFP_FRAME_OVERHEAD		6
-#घोषणा DSI_HSS_VSS_VSE_FRAME_OVERHEAD	4
-#घोषणा DSI_BLANKING_FRAME_OVERHEAD	6
-#घोषणा DSI_शून्य_FRAME_OVERHEAD		6
-#घोषणा DSI_EOT_PKT_SIZE		4
+#define DSI_HBP_FRAME_OVERHEAD		12
+#define DSI_HSA_FRAME_OVERHEAD		14
+#define DSI_HFP_FRAME_OVERHEAD		6
+#define DSI_HSS_VSS_VSE_FRAME_OVERHEAD	4
+#define DSI_BLANKING_FRAME_OVERHEAD	6
+#define DSI_NULL_FRAME_OVERHEAD		6
+#define DSI_EOT_PKT_SIZE		4
 
-काष्ठा cdns_dsi_output अणु
-	काष्ठा mipi_dsi_device *dev;
-	काष्ठा drm_panel *panel;
-	काष्ठा drm_bridge *bridge;
-	जोड़ phy_configure_opts phy_opts;
-पूर्ण;
+struct cdns_dsi_output {
+	struct mipi_dsi_device *dev;
+	struct drm_panel *panel;
+	struct drm_bridge *bridge;
+	union phy_configure_opts phy_opts;
+};
 
-क्रमागत cdns_dsi_input_id अणु
+enum cdns_dsi_input_id {
 	CDNS_SDI_INPUT,
 	CDNS_DPI_INPUT,
 	CDNS_DSC_INPUT,
-पूर्ण;
+};
 
-काष्ठा cdns_dsi_cfg अणु
-	अचिन्हित पूर्णांक hfp;
-	अचिन्हित पूर्णांक hsa;
-	अचिन्हित पूर्णांक hbp;
-	अचिन्हित पूर्णांक hact;
-	अचिन्हित पूर्णांक htotal;
-पूर्ण;
+struct cdns_dsi_cfg {
+	unsigned int hfp;
+	unsigned int hsa;
+	unsigned int hbp;
+	unsigned int hact;
+	unsigned int htotal;
+};
 
-काष्ठा cdns_dsi_input अणु
-	क्रमागत cdns_dsi_input_id id;
-	काष्ठा drm_bridge bridge;
-पूर्ण;
+struct cdns_dsi_input {
+	enum cdns_dsi_input_id id;
+	struct drm_bridge bridge;
+};
 
-काष्ठा cdns_dsi अणु
-	काष्ठा mipi_dsi_host base;
-	व्योम __iomem *regs;
-	काष्ठा cdns_dsi_input input;
-	काष्ठा cdns_dsi_output output;
-	अचिन्हित पूर्णांक direct_cmd_fअगरo_depth;
-	अचिन्हित पूर्णांक rx_fअगरo_depth;
-	काष्ठा completion direct_cmd_comp;
-	काष्ठा clk *dsi_p_clk;
-	काष्ठा reset_control *dsi_p_rst;
-	काष्ठा clk *dsi_sys_clk;
+struct cdns_dsi {
+	struct mipi_dsi_host base;
+	void __iomem *regs;
+	struct cdns_dsi_input input;
+	struct cdns_dsi_output output;
+	unsigned int direct_cmd_fifo_depth;
+	unsigned int rx_fifo_depth;
+	struct completion direct_cmd_comp;
+	struct clk *dsi_p_clk;
+	struct reset_control *dsi_p_rst;
+	struct clk *dsi_sys_clk;
 	bool link_initialized;
-	काष्ठा phy *dphy;
-पूर्ण;
+	struct phy *dphy;
+};
 
-अटल अंतरभूत काष्ठा cdns_dsi *input_to_dsi(काष्ठा cdns_dsi_input *input)
-अणु
-	वापस container_of(input, काष्ठा cdns_dsi, input);
-पूर्ण
+static inline struct cdns_dsi *input_to_dsi(struct cdns_dsi_input *input)
+{
+	return container_of(input, struct cdns_dsi, input);
+}
 
-अटल अंतरभूत काष्ठा cdns_dsi *to_cdns_dsi(काष्ठा mipi_dsi_host *host)
-अणु
-	वापस container_of(host, काष्ठा cdns_dsi, base);
-पूर्ण
+static inline struct cdns_dsi *to_cdns_dsi(struct mipi_dsi_host *host)
+{
+	return container_of(host, struct cdns_dsi, base);
+}
 
-अटल अंतरभूत काष्ठा cdns_dsi_input *
-bridge_to_cdns_dsi_input(काष्ठा drm_bridge *bridge)
-अणु
-	वापस container_of(bridge, काष्ठा cdns_dsi_input, bridge);
-पूर्ण
+static inline struct cdns_dsi_input *
+bridge_to_cdns_dsi_input(struct drm_bridge *bridge)
+{
+	return container_of(bridge, struct cdns_dsi_input, bridge);
+}
 
-अटल अचिन्हित पूर्णांक mode_to_dpi_hfp(स्थिर काष्ठा drm_display_mode *mode,
+static unsigned int mode_to_dpi_hfp(const struct drm_display_mode *mode,
 				    bool mode_valid_check)
-अणु
-	अगर (mode_valid_check)
-		वापस mode->hsync_start - mode->hdisplay;
+{
+	if (mode_valid_check)
+		return mode->hsync_start - mode->hdisplay;
 
-	वापस mode->crtc_hsync_start - mode->crtc_hdisplay;
-पूर्ण
+	return mode->crtc_hsync_start - mode->crtc_hdisplay;
+}
 
-अटल अचिन्हित पूर्णांक dpi_to_dsi_timing(अचिन्हित पूर्णांक dpi_timing,
-				      अचिन्हित पूर्णांक dpi_bpp,
-				      अचिन्हित पूर्णांक dsi_pkt_overhead)
-अणु
-	अचिन्हित पूर्णांक dsi_timing = DIV_ROUND_UP(dpi_timing * dpi_bpp, 8);
+static unsigned int dpi_to_dsi_timing(unsigned int dpi_timing,
+				      unsigned int dpi_bpp,
+				      unsigned int dsi_pkt_overhead)
+{
+	unsigned int dsi_timing = DIV_ROUND_UP(dpi_timing * dpi_bpp, 8);
 
-	अगर (dsi_timing < dsi_pkt_overhead)
+	if (dsi_timing < dsi_pkt_overhead)
 		dsi_timing = 0;
-	अन्यथा
+	else
 		dsi_timing -= dsi_pkt_overhead;
 
-	वापस dsi_timing;
-पूर्ण
+	return dsi_timing;
+}
 
-अटल पूर्णांक cdns_dsi_mode2cfg(काष्ठा cdns_dsi *dsi,
-			     स्थिर काष्ठा drm_display_mode *mode,
-			     काष्ठा cdns_dsi_cfg *dsi_cfg,
+static int cdns_dsi_mode2cfg(struct cdns_dsi *dsi,
+			     const struct drm_display_mode *mode,
+			     struct cdns_dsi_cfg *dsi_cfg,
 			     bool mode_valid_check)
-अणु
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	अचिन्हित पूर्णांक पंचांगp;
+{
+	struct cdns_dsi_output *output = &dsi->output;
+	unsigned int tmp;
 	bool sync_pulse = false;
-	पूर्णांक bpp;
+	int bpp;
 
-	स_रखो(dsi_cfg, 0, माप(*dsi_cfg));
+	memset(dsi_cfg, 0, sizeof(*dsi_cfg));
 
-	अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
+	if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
 		sync_pulse = true;
 
-	bpp = mipi_dsi_pixel_क्रमmat_to_bpp(output->dev->क्रमmat);
+	bpp = mipi_dsi_pixel_format_to_bpp(output->dev->format);
 
-	अगर (mode_valid_check)
-		पंचांगp = mode->htotal -
+	if (mode_valid_check)
+		tmp = mode->htotal -
 		      (sync_pulse ? mode->hsync_end : mode->hsync_start);
-	अन्यथा
-		पंचांगp = mode->crtc_htotal -
+	else
+		tmp = mode->crtc_htotal -
 		      (sync_pulse ?
 		       mode->crtc_hsync_end : mode->crtc_hsync_start);
 
-	dsi_cfg->hbp = dpi_to_dsi_timing(पंचांगp, bpp, DSI_HBP_FRAME_OVERHEAD);
+	dsi_cfg->hbp = dpi_to_dsi_timing(tmp, bpp, DSI_HBP_FRAME_OVERHEAD);
 
-	अगर (sync_pulse) अणु
-		अगर (mode_valid_check)
-			पंचांगp = mode->hsync_end - mode->hsync_start;
-		अन्यथा
-			पंचांगp = mode->crtc_hsync_end - mode->crtc_hsync_start;
+	if (sync_pulse) {
+		if (mode_valid_check)
+			tmp = mode->hsync_end - mode->hsync_start;
+		else
+			tmp = mode->crtc_hsync_end - mode->crtc_hsync_start;
 
-		dsi_cfg->hsa = dpi_to_dsi_timing(पंचांगp, bpp,
+		dsi_cfg->hsa = dpi_to_dsi_timing(tmp, bpp,
 						 DSI_HSA_FRAME_OVERHEAD);
-	पूर्ण
+	}
 
 	dsi_cfg->hact = dpi_to_dsi_timing(mode_valid_check ?
 					  mode->hdisplay : mode->crtc_hdisplay,
@@ -548,26 +547,26 @@ bridge_to_cdns_dsi_input(काष्ठा drm_bridge *bridge)
 	dsi_cfg->hfp = dpi_to_dsi_timing(mode_to_dpi_hfp(mode, mode_valid_check),
 					 bpp, DSI_HFP_FRAME_OVERHEAD);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cdns_dsi_adjust_phy_config(काष्ठा cdns_dsi *dsi,
-			      काष्ठा cdns_dsi_cfg *dsi_cfg,
-			      काष्ठा phy_configure_opts_mipi_dphy *phy_cfg,
-			      स्थिर काष्ठा drm_display_mode *mode,
+static int cdns_dsi_adjust_phy_config(struct cdns_dsi *dsi,
+			      struct cdns_dsi_cfg *dsi_cfg,
+			      struct phy_configure_opts_mipi_dphy *phy_cfg,
+			      const struct drm_display_mode *mode,
 			      bool mode_valid_check)
-अणु
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	अचिन्हित दीर्घ दीर्घ dlane_bps;
-	अचिन्हित दीर्घ adj_dsi_htotal;
-	अचिन्हित दीर्घ dsi_htotal;
-	अचिन्हित दीर्घ dpi_htotal;
-	अचिन्हित दीर्घ dpi_hz;
-	अचिन्हित पूर्णांक dsi_hfp_ext;
-	अचिन्हित पूर्णांक lanes = output->dev->lanes;
+{
+	struct cdns_dsi_output *output = &dsi->output;
+	unsigned long long dlane_bps;
+	unsigned long adj_dsi_htotal;
+	unsigned long dsi_htotal;
+	unsigned long dpi_htotal;
+	unsigned long dpi_hz;
+	unsigned int dsi_hfp_ext;
+	unsigned int lanes = output->dev->lanes;
 
 	dsi_htotal = dsi_cfg->hbp + DSI_HBP_FRAME_OVERHEAD;
-	अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
+	if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
 		dsi_htotal += dsi_cfg->hsa + DSI_HSA_FRAME_OVERHEAD;
 
 	dsi_htotal += dsi_cfg->hact;
@@ -575,20 +574,20 @@ bridge_to_cdns_dsi_input(काष्ठा drm_bridge *bridge)
 
 	/*
 	 * Make sure DSI htotal is aligned on a lane boundary when calculating
-	 * the expected data rate. This is करोne by extending HFP in हाल of
+	 * the expected data rate. This is done by extending HFP in case of
 	 * misalignment.
 	 */
 	adj_dsi_htotal = dsi_htotal;
-	अगर (dsi_htotal % lanes)
+	if (dsi_htotal % lanes)
 		adj_dsi_htotal += lanes - (dsi_htotal % lanes);
 
-	dpi_hz = (mode_valid_check ? mode->घड़ी : mode->crtc_घड़ी) * 1000;
-	dlane_bps = (अचिन्हित दीर्घ दीर्घ)dpi_hz * adj_dsi_htotal;
+	dpi_hz = (mode_valid_check ? mode->clock : mode->crtc_clock) * 1000;
+	dlane_bps = (unsigned long long)dpi_hz * adj_dsi_htotal;
 
-	/* data rate in bytes/sec is not an पूर्णांकeger, refuse the mode. */
+	/* data rate in bytes/sec is not an integer, refuse the mode. */
 	dpi_htotal = mode_valid_check ? mode->htotal : mode->crtc_htotal;
-	अगर (करो_भाग(dlane_bps, lanes * dpi_htotal))
-		वापस -EINVAL;
+	if (do_div(dlane_bps, lanes * dpi_htotal))
+		return -EINVAL;
 
 	/* data rate was in bytes/sec, convert to bits/sec. */
 	phy_cfg->hs_clk_rate = dlane_bps * 8;
@@ -597,201 +596,201 @@ bridge_to_cdns_dsi_input(काष्ठा drm_bridge *bridge)
 	dsi_cfg->hfp += dsi_hfp_ext;
 	dsi_cfg->htotal = dsi_htotal + dsi_hfp_ext;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cdns_dsi_check_conf(काष्ठा cdns_dsi *dsi,
-			       स्थिर काष्ठा drm_display_mode *mode,
-			       काष्ठा cdns_dsi_cfg *dsi_cfg,
+static int cdns_dsi_check_conf(struct cdns_dsi *dsi,
+			       const struct drm_display_mode *mode,
+			       struct cdns_dsi_cfg *dsi_cfg,
 			       bool mode_valid_check)
-अणु
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	काष्ठा phy_configure_opts_mipi_dphy *phy_cfg = &output->phy_opts.mipi_dphy;
-	अचिन्हित दीर्घ dsi_hss_hsa_hse_hbp;
-	अचिन्हित पूर्णांक nlanes = output->dev->lanes;
-	पूर्णांक ret;
+{
+	struct cdns_dsi_output *output = &dsi->output;
+	struct phy_configure_opts_mipi_dphy *phy_cfg = &output->phy_opts.mipi_dphy;
+	unsigned long dsi_hss_hsa_hse_hbp;
+	unsigned int nlanes = output->dev->lanes;
+	int ret;
 
 	ret = cdns_dsi_mode2cfg(dsi, mode, dsi_cfg, mode_valid_check);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	phy_mipi_dphy_get_शेष_config(mode->crtc_घड़ी * 1000,
-					 mipi_dsi_pixel_क्रमmat_to_bpp(output->dev->क्रमmat),
+	phy_mipi_dphy_get_default_config(mode->crtc_clock * 1000,
+					 mipi_dsi_pixel_format_to_bpp(output->dev->format),
 					 nlanes, phy_cfg);
 
 	ret = cdns_dsi_adjust_phy_config(dsi, dsi_cfg, phy_cfg, mode, mode_valid_check);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = phy_validate(dsi->dphy, PHY_MODE_MIPI_DPHY, 0, &output->phy_opts);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dsi_hss_hsa_hse_hbp = dsi_cfg->hbp + DSI_HBP_FRAME_OVERHEAD;
-	अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
+	if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
 		dsi_hss_hsa_hse_hbp += dsi_cfg->hsa + DSI_HSA_FRAME_OVERHEAD;
 
 	/*
 	 * Make sure DPI(HFP) > DSI(HSS+HSA+HSE+HBP) to guarantee that the FIFO
-	 * is empty beक्रमe we start a receiving a new line on the DPI
-	 * पूर्णांकerface.
+	 * is empty before we start a receiving a new line on the DPI
+	 * interface.
 	 */
-	अगर ((u64)phy_cfg->hs_clk_rate *
+	if ((u64)phy_cfg->hs_clk_rate *
 	    mode_to_dpi_hfp(mode, mode_valid_check) * nlanes <
 	    (u64)dsi_hss_hsa_hse_hbp *
-	    (mode_valid_check ? mode->घड़ी : mode->crtc_घड़ी) * 1000)
-		वापस -EINVAL;
+	    (mode_valid_check ? mode->clock : mode->crtc_clock) * 1000)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cdns_dsi_bridge_attach(काष्ठा drm_bridge *bridge,
-				  क्रमागत drm_bridge_attach_flags flags)
-अणु
-	काष्ठा cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
-	काष्ठा cdns_dsi *dsi = input_to_dsi(input);
-	काष्ठा cdns_dsi_output *output = &dsi->output;
+static int cdns_dsi_bridge_attach(struct drm_bridge *bridge,
+				  enum drm_bridge_attach_flags flags)
+{
+	struct cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
+	struct cdns_dsi *dsi = input_to_dsi(input);
+	struct cdns_dsi_output *output = &dsi->output;
 
-	अगर (!drm_core_check_feature(bridge->dev, DRIVER_ATOMIC)) अणु
+	if (!drm_core_check_feature(bridge->dev, DRIVER_ATOMIC)) {
 		dev_err(dsi->base.dev,
 			"cdns-dsi driver is only compatible with DRM devices supporting atomic updates");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	वापस drm_bridge_attach(bridge->encoder, output->bridge, bridge,
+	return drm_bridge_attach(bridge->encoder, output->bridge, bridge,
 				 flags);
-पूर्ण
+}
 
-अटल क्रमागत drm_mode_status
-cdns_dsi_bridge_mode_valid(काष्ठा drm_bridge *bridge,
-			   स्थिर काष्ठा drm_display_info *info,
-			   स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
-	काष्ठा cdns_dsi *dsi = input_to_dsi(input);
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	काष्ठा cdns_dsi_cfg dsi_cfg;
-	पूर्णांक bpp, ret;
+static enum drm_mode_status
+cdns_dsi_bridge_mode_valid(struct drm_bridge *bridge,
+			   const struct drm_display_info *info,
+			   const struct drm_display_mode *mode)
+{
+	struct cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
+	struct cdns_dsi *dsi = input_to_dsi(input);
+	struct cdns_dsi_output *output = &dsi->output;
+	struct cdns_dsi_cfg dsi_cfg;
+	int bpp, ret;
 
 	/*
 	 * VFP_DSI should be less than VFP_DPI and VFP_DSI should be at
 	 * least 1.
 	 */
-	अगर (mode->vtotal - mode->vsync_end < 2)
-		वापस MODE_V_ILLEGAL;
+	if (mode->vtotal - mode->vsync_end < 2)
+		return MODE_V_ILLEGAL;
 
 	/* VSA_DSI = VSA_DPI and must be at least 2. */
-	अगर (mode->vsync_end - mode->vsync_start < 2)
-		वापस MODE_V_ILLEGAL;
+	if (mode->vsync_end - mode->vsync_start < 2)
+		return MODE_V_ILLEGAL;
 
 	/* HACT must be 32-bits aligned. */
-	bpp = mipi_dsi_pixel_क्रमmat_to_bpp(output->dev->क्रमmat);
-	अगर ((mode->hdisplay * bpp) % 32)
-		वापस MODE_H_ILLEGAL;
+	bpp = mipi_dsi_pixel_format_to_bpp(output->dev->format);
+	if ((mode->hdisplay * bpp) % 32)
+		return MODE_H_ILLEGAL;
 
 	ret = cdns_dsi_check_conf(dsi, mode, &dsi_cfg, true);
-	अगर (ret)
-		वापस MODE_BAD;
+	if (ret)
+		return MODE_BAD;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल व्योम cdns_dsi_bridge_disable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
-	काष्ठा cdns_dsi *dsi = input_to_dsi(input);
+static void cdns_dsi_bridge_disable(struct drm_bridge *bridge)
+{
+	struct cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
+	struct cdns_dsi *dsi = input_to_dsi(input);
 	u32 val;
 
-	val = पढ़ोl(dsi->regs + MCTL_MAIN_DATA_CTL);
+	val = readl(dsi->regs + MCTL_MAIN_DATA_CTL);
 	val &= ~(IF_VID_SELECT_MASK | IF_VID_MODE | VID_EN | HOST_EOT_GEN |
 		 DISP_EOT_GEN);
-	ग_लिखोl(val, dsi->regs + MCTL_MAIN_DATA_CTL);
+	writel(val, dsi->regs + MCTL_MAIN_DATA_CTL);
 
-	val = पढ़ोl(dsi->regs + MCTL_MAIN_EN) & ~IF_EN(input->id);
-	ग_लिखोl(val, dsi->regs + MCTL_MAIN_EN);
-	pm_runसमय_put(dsi->base.dev);
-पूर्ण
+	val = readl(dsi->regs + MCTL_MAIN_EN) & ~IF_EN(input->id);
+	writel(val, dsi->regs + MCTL_MAIN_EN);
+	pm_runtime_put(dsi->base.dev);
+}
 
-अटल व्योम cdns_dsi_hs_init(काष्ठा cdns_dsi *dsi)
-अणु
-	काष्ठा cdns_dsi_output *output = &dsi->output;
+static void cdns_dsi_hs_init(struct cdns_dsi *dsi)
+{
+	struct cdns_dsi_output *output = &dsi->output;
 	u32 status;
 
 	/*
-	 * Power all पूर्णांकernal DPHY blocks करोwn and मुख्यtain their reset line
-	 * निश्चितed beक्रमe changing the DPHY config.
+	 * Power all internal DPHY blocks down and maintain their reset line
+	 * asserted before changing the DPHY config.
 	 */
-	ग_लिखोl(DPHY_CMN_PSO | DPHY_PLL_PSO | DPHY_ALL_D_PDN | DPHY_C_PDN |
+	writel(DPHY_CMN_PSO | DPHY_PLL_PSO | DPHY_ALL_D_PDN | DPHY_C_PDN |
 	       DPHY_CMN_PDN | DPHY_PLL_PDN,
 	       dsi->regs + MCTL_DPHY_CFG0);
 
 	phy_init(dsi->dphy);
 	phy_set_mode(dsi->dphy, PHY_MODE_MIPI_DPHY);
 	phy_configure(dsi->dphy, &output->phy_opts);
-	phy_घातer_on(dsi->dphy);
+	phy_power_on(dsi->dphy);
 
-	/* Activate the PLL and रुको until it's locked. */
-	ग_लिखोl(PLL_LOCKED, dsi->regs + MCTL_MAIN_STS_CLR);
-	ग_लिखोl(DPHY_CMN_PSO | DPHY_ALL_D_PDN | DPHY_C_PDN | DPHY_CMN_PDN,
+	/* Activate the PLL and wait until it's locked. */
+	writel(PLL_LOCKED, dsi->regs + MCTL_MAIN_STS_CLR);
+	writel(DPHY_CMN_PSO | DPHY_ALL_D_PDN | DPHY_C_PDN | DPHY_CMN_PDN,
 	       dsi->regs + MCTL_DPHY_CFG0);
-	WARN_ON_ONCE(पढ़ोl_poll_समयout(dsi->regs + MCTL_MAIN_STS, status,
+	WARN_ON_ONCE(readl_poll_timeout(dsi->regs + MCTL_MAIN_STS, status,
 					status & PLL_LOCKED, 100, 100));
-	/* De-निश्चित data and घड़ी reset lines. */
-	ग_लिखोl(DPHY_CMN_PSO | DPHY_ALL_D_PDN | DPHY_C_PDN | DPHY_CMN_PDN |
+	/* De-assert data and clock reset lines. */
+	writel(DPHY_CMN_PSO | DPHY_ALL_D_PDN | DPHY_C_PDN | DPHY_CMN_PDN |
 	       DPHY_D_RSTB(output->dev->lanes) | DPHY_C_RSTB,
 	       dsi->regs + MCTL_DPHY_CFG0);
-पूर्ण
+}
 
-अटल व्योम cdns_dsi_init_link(काष्ठा cdns_dsi *dsi)
-अणु
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	अचिन्हित दीर्घ sysclk_period, ulpout;
+static void cdns_dsi_init_link(struct cdns_dsi *dsi)
+{
+	struct cdns_dsi_output *output = &dsi->output;
+	unsigned long sysclk_period, ulpout;
 	u32 val;
-	पूर्णांक i;
+	int i;
 
-	अगर (dsi->link_initialized)
-		वापस;
+	if (dsi->link_initialized)
+		return;
 
 	val = 0;
-	क्रम (i = 1; i < output->dev->lanes; i++)
+	for (i = 1; i < output->dev->lanes; i++)
 		val |= DATA_LANE_EN(i);
 
-	अगर (!(output->dev->mode_flags & MIPI_DSI_CLOCK_NON_CONTINUOUS))
+	if (!(output->dev->mode_flags & MIPI_DSI_CLOCK_NON_CONTINUOUS))
 		val |= CLK_CONTINUOUS;
 
-	ग_लिखोl(val, dsi->regs + MCTL_MAIN_PHY_CTL);
+	writel(val, dsi->regs + MCTL_MAIN_PHY_CTL);
 
 	/* ULPOUT should be set to 1ms and is expressed in sysclk cycles. */
 	sysclk_period = NSEC_PER_SEC / clk_get_rate(dsi->dsi_sys_clk);
 	ulpout = DIV_ROUND_UP(NSEC_PER_MSEC, sysclk_period);
-	ग_लिखोl(CLK_LANE_ULPOUT_TIME(ulpout) | DATA_LANE_ULPOUT_TIME(ulpout),
+	writel(CLK_LANE_ULPOUT_TIME(ulpout) | DATA_LANE_ULPOUT_TIME(ulpout),
 	       dsi->regs + MCTL_ULPOUT_TIME);
 
-	ग_लिखोl(LINK_EN, dsi->regs + MCTL_MAIN_DATA_CTL);
+	writel(LINK_EN, dsi->regs + MCTL_MAIN_DATA_CTL);
 
 	val = CLK_LANE_EN | PLL_START;
-	क्रम (i = 0; i < output->dev->lanes; i++)
+	for (i = 0; i < output->dev->lanes; i++)
 		val |= DATA_LANE_START(i);
 
-	ग_लिखोl(val, dsi->regs + MCTL_MAIN_EN);
+	writel(val, dsi->regs + MCTL_MAIN_EN);
 
 	dsi->link_initialized = true;
-पूर्ण
+}
 
-अटल व्योम cdns_dsi_bridge_enable(काष्ठा drm_bridge *bridge)
-अणु
-	काष्ठा cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
-	काष्ठा cdns_dsi *dsi = input_to_dsi(input);
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	काष्ठा drm_display_mode *mode;
-	काष्ठा phy_configure_opts_mipi_dphy *phy_cfg = &output->phy_opts.mipi_dphy;
-	अचिन्हित दीर्घ tx_byte_period;
-	काष्ठा cdns_dsi_cfg dsi_cfg;
-	u32 पंचांगp, reg_wakeup, भाग;
-	पूर्णांक nlanes;
+static void cdns_dsi_bridge_enable(struct drm_bridge *bridge)
+{
+	struct cdns_dsi_input *input = bridge_to_cdns_dsi_input(bridge);
+	struct cdns_dsi *dsi = input_to_dsi(input);
+	struct cdns_dsi_output *output = &dsi->output;
+	struct drm_display_mode *mode;
+	struct phy_configure_opts_mipi_dphy *phy_cfg = &output->phy_opts.mipi_dphy;
+	unsigned long tx_byte_period;
+	struct cdns_dsi_cfg dsi_cfg;
+	u32 tmp, reg_wakeup, div;
+	int nlanes;
 
-	अगर (WARN_ON(pm_runसमय_get_sync(dsi->base.dev) < 0))
-		वापस;
+	if (WARN_ON(pm_runtime_get_sync(dsi->base.dev) < 0))
+		return;
 
 	mode = &bridge->encoder->crtc->state->adjusted_mode;
 	nlanes = output->dev->lanes;
@@ -801,179 +800,179 @@ cdns_dsi_bridge_mode_valid(काष्ठा drm_bridge *bridge,
 	cdns_dsi_hs_init(dsi);
 	cdns_dsi_init_link(dsi);
 
-	ग_लिखोl(HBP_LEN(dsi_cfg.hbp) | HSA_LEN(dsi_cfg.hsa),
+	writel(HBP_LEN(dsi_cfg.hbp) | HSA_LEN(dsi_cfg.hsa),
 	       dsi->regs + VID_HSIZE1);
-	ग_लिखोl(HFP_LEN(dsi_cfg.hfp) | HACT_LEN(dsi_cfg.hact),
+	writel(HFP_LEN(dsi_cfg.hfp) | HACT_LEN(dsi_cfg.hact),
 	       dsi->regs + VID_HSIZE2);
 
-	ग_लिखोl(VBP_LEN(mode->crtc_vtotal - mode->crtc_vsync_end - 1) |
+	writel(VBP_LEN(mode->crtc_vtotal - mode->crtc_vsync_end - 1) |
 	       VFP_LEN(mode->crtc_vsync_start - mode->crtc_vdisplay) |
 	       VSA_LEN(mode->crtc_vsync_end - mode->crtc_vsync_start + 1),
 	       dsi->regs + VID_VSIZE1);
-	ग_लिखोl(mode->crtc_vdisplay, dsi->regs + VID_VSIZE2);
+	writel(mode->crtc_vdisplay, dsi->regs + VID_VSIZE2);
 
-	पंचांगp = dsi_cfg.htotal -
+	tmp = dsi_cfg.htotal -
 	      (dsi_cfg.hsa + DSI_BLANKING_FRAME_OVERHEAD +
 	       DSI_HSA_FRAME_OVERHEAD);
-	ग_लिखोl(BLK_LINE_PULSE_PKT_LEN(पंचांगp), dsi->regs + VID_BLKSIZE2);
-	अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
-		ग_लिखोl(MAX_LINE_LIMIT(पंचांगp - DSI_शून्य_FRAME_OVERHEAD),
+	writel(BLK_LINE_PULSE_PKT_LEN(tmp), dsi->regs + VID_BLKSIZE2);
+	if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
+		writel(MAX_LINE_LIMIT(tmp - DSI_NULL_FRAME_OVERHEAD),
 		       dsi->regs + VID_VCA_SETTING2);
 
-	पंचांगp = dsi_cfg.htotal -
+	tmp = dsi_cfg.htotal -
 	      (DSI_HSS_VSS_VSE_FRAME_OVERHEAD + DSI_BLANKING_FRAME_OVERHEAD);
-	ग_लिखोl(BLK_LINE_EVENT_PKT_LEN(पंचांगp), dsi->regs + VID_BLKSIZE1);
-	अगर (!(output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE))
-		ग_लिखोl(MAX_LINE_LIMIT(पंचांगp - DSI_शून्य_FRAME_OVERHEAD),
+	writel(BLK_LINE_EVENT_PKT_LEN(tmp), dsi->regs + VID_BLKSIZE1);
+	if (!(output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE))
+		writel(MAX_LINE_LIMIT(tmp - DSI_NULL_FRAME_OVERHEAD),
 		       dsi->regs + VID_VCA_SETTING2);
 
-	पंचांगp = DIV_ROUND_UP(dsi_cfg.htotal, nlanes) -
+	tmp = DIV_ROUND_UP(dsi_cfg.htotal, nlanes) -
 	      DIV_ROUND_UP(dsi_cfg.hsa, nlanes);
 
-	अगर (!(output->dev->mode_flags & MIPI_DSI_MODE_EOT_PACKET))
-		पंचांगp -= DIV_ROUND_UP(DSI_EOT_PKT_SIZE, nlanes);
+	if (!(output->dev->mode_flags & MIPI_DSI_MODE_EOT_PACKET))
+		tmp -= DIV_ROUND_UP(DSI_EOT_PKT_SIZE, nlanes);
 
 	tx_byte_period = DIV_ROUND_DOWN_ULL((u64)NSEC_PER_SEC * 8,
 					    phy_cfg->hs_clk_rate);
 	reg_wakeup = (phy_cfg->hs_prepare + phy_cfg->hs_zero) / tx_byte_period;
-	ग_लिखोl(REG_WAKEUP_TIME(reg_wakeup) | REG_LINE_DURATION(पंचांगp),
+	writel(REG_WAKEUP_TIME(reg_wakeup) | REG_LINE_DURATION(tmp),
 	       dsi->regs + VID_DPHY_TIME);
 
 	/*
-	 * HSTX and LPRX समयouts are both expressed in TX byte clk cycles and
-	 * both should be set to at least the समय it takes to transmit a
+	 * HSTX and LPRX timeouts are both expressed in TX byte clk cycles and
+	 * both should be set to at least the time it takes to transmit a
 	 * frame.
 	 */
-	पंचांगp = NSEC_PER_SEC / drm_mode_vrefresh(mode);
-	पंचांगp /= tx_byte_period;
+	tmp = NSEC_PER_SEC / drm_mode_vrefresh(mode);
+	tmp /= tx_byte_period;
 
-	क्रम (भाग = 0; भाग <= CLK_DIV_MAX; भाग++) अणु
-		अगर (पंचांगp <= HSTX_TIMEOUT_MAX)
-			अवरोध;
+	for (div = 0; div <= CLK_DIV_MAX; div++) {
+		if (tmp <= HSTX_TIMEOUT_MAX)
+			break;
 
-		पंचांगp >>= 1;
-	पूर्ण
+		tmp >>= 1;
+	}
 
-	अगर (पंचांगp > HSTX_TIMEOUT_MAX)
-		पंचांगp = HSTX_TIMEOUT_MAX;
+	if (tmp > HSTX_TIMEOUT_MAX)
+		tmp = HSTX_TIMEOUT_MAX;
 
-	ग_लिखोl(CLK_DIV(भाग) | HSTX_TIMEOUT(पंचांगp),
+	writel(CLK_DIV(div) | HSTX_TIMEOUT(tmp),
 	       dsi->regs + MCTL_DPHY_TIMEOUT1);
 
-	ग_लिखोl(LPRX_TIMEOUT(पंचांगp), dsi->regs + MCTL_DPHY_TIMEOUT2);
+	writel(LPRX_TIMEOUT(tmp), dsi->regs + MCTL_DPHY_TIMEOUT2);
 
-	अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO) अणु
-		चयन (output->dev->क्रमmat) अणु
-		हाल MIPI_DSI_FMT_RGB888:
-			पंचांगp = VID_PIXEL_MODE_RGB888 |
+	if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO) {
+		switch (output->dev->format) {
+		case MIPI_DSI_FMT_RGB888:
+			tmp = VID_PIXEL_MODE_RGB888 |
 			      VID_DATATYPE(MIPI_DSI_PACKED_PIXEL_STREAM_24);
-			अवरोध;
+			break;
 
-		हाल MIPI_DSI_FMT_RGB666:
-			पंचांगp = VID_PIXEL_MODE_RGB666 |
+		case MIPI_DSI_FMT_RGB666:
+			tmp = VID_PIXEL_MODE_RGB666 |
 			      VID_DATATYPE(MIPI_DSI_PIXEL_STREAM_3BYTE_18);
-			अवरोध;
+			break;
 
-		हाल MIPI_DSI_FMT_RGB666_PACKED:
-			पंचांगp = VID_PIXEL_MODE_RGB666_PACKED |
+		case MIPI_DSI_FMT_RGB666_PACKED:
+			tmp = VID_PIXEL_MODE_RGB666_PACKED |
 			      VID_DATATYPE(MIPI_DSI_PACKED_PIXEL_STREAM_18);
-			अवरोध;
+			break;
 
-		हाल MIPI_DSI_FMT_RGB565:
-			पंचांगp = VID_PIXEL_MODE_RGB565 |
+		case MIPI_DSI_FMT_RGB565:
+			tmp = VID_PIXEL_MODE_RGB565 |
 			      VID_DATATYPE(MIPI_DSI_PACKED_PIXEL_STREAM_16);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			dev_err(dsi->base.dev, "Unsupported DSI format\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
-			पंचांगp |= SYNC_PULSE_ACTIVE | SYNC_PULSE_HORIZONTAL;
+		if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO_SYNC_PULSE)
+			tmp |= SYNC_PULSE_ACTIVE | SYNC_PULSE_HORIZONTAL;
 
-		पंचांगp |= REG_BLKLINE_MODE(REG_BLK_MODE_BLANKING_PKT) |
+		tmp |= REG_BLKLINE_MODE(REG_BLK_MODE_BLANKING_PKT) |
 		       REG_BLKEOL_MODE(REG_BLK_MODE_BLANKING_PKT) |
 		       RECOVERY_MODE(RECOVERY_MODE_NEXT_HSYNC) |
 		       VID_IGNORE_MISS_VSYNC;
 
-		ग_लिखोl(पंचांगp, dsi->regs + VID_MAIN_CTL);
-	पूर्ण
+		writel(tmp, dsi->regs + VID_MAIN_CTL);
+	}
 
-	पंचांगp = पढ़ोl(dsi->regs + MCTL_MAIN_DATA_CTL);
-	पंचांगp &= ~(IF_VID_SELECT_MASK | HOST_EOT_GEN | IF_VID_MODE);
+	tmp = readl(dsi->regs + MCTL_MAIN_DATA_CTL);
+	tmp &= ~(IF_VID_SELECT_MASK | HOST_EOT_GEN | IF_VID_MODE);
 
-	अगर (!(output->dev->mode_flags & MIPI_DSI_MODE_EOT_PACKET))
-		पंचांगp |= HOST_EOT_GEN;
+	if (!(output->dev->mode_flags & MIPI_DSI_MODE_EOT_PACKET))
+		tmp |= HOST_EOT_GEN;
 
-	अगर (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO)
-		पंचांगp |= IF_VID_MODE | IF_VID_SELECT(input->id) | VID_EN;
+	if (output->dev->mode_flags & MIPI_DSI_MODE_VIDEO)
+		tmp |= IF_VID_MODE | IF_VID_SELECT(input->id) | VID_EN;
 
-	ग_लिखोl(पंचांगp, dsi->regs + MCTL_MAIN_DATA_CTL);
+	writel(tmp, dsi->regs + MCTL_MAIN_DATA_CTL);
 
-	पंचांगp = पढ़ोl(dsi->regs + MCTL_MAIN_EN) | IF_EN(input->id);
-	ग_लिखोl(पंचांगp, dsi->regs + MCTL_MAIN_EN);
-पूर्ण
+	tmp = readl(dsi->regs + MCTL_MAIN_EN) | IF_EN(input->id);
+	writel(tmp, dsi->regs + MCTL_MAIN_EN);
+}
 
-अटल स्थिर काष्ठा drm_bridge_funcs cdns_dsi_bridge_funcs = अणु
+static const struct drm_bridge_funcs cdns_dsi_bridge_funcs = {
 	.attach = cdns_dsi_bridge_attach,
 	.mode_valid = cdns_dsi_bridge_mode_valid,
 	.disable = cdns_dsi_bridge_disable,
 	.enable = cdns_dsi_bridge_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक cdns_dsi_attach(काष्ठा mipi_dsi_host *host,
-			   काष्ठा mipi_dsi_device *dev)
-अणु
-	काष्ठा cdns_dsi *dsi = to_cdns_dsi(host);
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	काष्ठा cdns_dsi_input *input = &dsi->input;
-	काष्ठा drm_bridge *bridge;
-	काष्ठा drm_panel *panel;
-	काष्ठा device_node *np;
-	पूर्णांक ret;
+static int cdns_dsi_attach(struct mipi_dsi_host *host,
+			   struct mipi_dsi_device *dev)
+{
+	struct cdns_dsi *dsi = to_cdns_dsi(host);
+	struct cdns_dsi_output *output = &dsi->output;
+	struct cdns_dsi_input *input = &dsi->input;
+	struct drm_bridge *bridge;
+	struct drm_panel *panel;
+	struct device_node *np;
+	int ret;
 
 	/*
-	 * We currently करो not support connecting several DSI devices to the
+	 * We currently do not support connecting several DSI devices to the
 	 * same host. In order to support that we'd need the DRM bridge
 	 * framework to allow dynamic reconfiguration of the bridge chain.
 	 */
-	अगर (output->dev)
-		वापस -EBUSY;
+	if (output->dev)
+		return -EBUSY;
 
-	/* We करो not support burst mode yet. */
-	अगर (dev->mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
-		वापस -ENOTSUPP;
+	/* We do not support burst mode yet. */
+	if (dev->mode_flags & MIPI_DSI_MODE_VIDEO_BURST)
+		return -ENOTSUPP;
 
 	/*
 	 * The host <-> device link might be described using an OF-graph
-	 * representation, in this हाल we extract the device of_node from
+	 * representation, in this case we extract the device of_node from
 	 * this representation, otherwise we use dsidev->dev.of_node which
 	 * should have been filled by the core.
 	 */
 	np = of_graph_get_remote_node(dsi->base.dev->of_node, DSI_OUTPUT_PORT,
 				      dev->channel);
-	अगर (!np)
+	if (!np)
 		np = of_node_get(dev->dev.of_node);
 
 	panel = of_drm_find_panel(np);
-	अगर (!IS_ERR(panel)) अणु
+	if (!IS_ERR(panel)) {
 		bridge = drm_panel_bridge_add_typed(panel,
 						    DRM_MODE_CONNECTOR_DSI);
-	पूर्ण अन्यथा अणु
+	} else {
 		bridge = of_drm_find_bridge(dev->dev.of_node);
-		अगर (!bridge)
+		if (!bridge)
 			bridge = ERR_PTR(-EINVAL);
-	पूर्ण
+	}
 
 	of_node_put(np);
 
-	अगर (IS_ERR(bridge)) अणु
+	if (IS_ERR(bridge)) {
 		ret = PTR_ERR(bridge);
 		dev_err(host->dev, "failed to add DSI device %s (err = %d)",
 			dev->name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	output->dev = dev;
 	output->bridge = bridge;
@@ -981,323 +980,323 @@ cdns_dsi_bridge_mode_valid(काष्ठा drm_bridge *bridge,
 
 	/*
 	 * The DSI output has been properly configured, we can now safely
-	 * रेजिस्टर the input to the bridge framework so that it can take place
+	 * register the input to the bridge framework so that it can take place
 	 * in a display pipeline.
 	 */
 	drm_bridge_add(&input->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cdns_dsi_detach(काष्ठा mipi_dsi_host *host,
-			   काष्ठा mipi_dsi_device *dev)
-अणु
-	काष्ठा cdns_dsi *dsi = to_cdns_dsi(host);
-	काष्ठा cdns_dsi_output *output = &dsi->output;
-	काष्ठा cdns_dsi_input *input = &dsi->input;
+static int cdns_dsi_detach(struct mipi_dsi_host *host,
+			   struct mipi_dsi_device *dev)
+{
+	struct cdns_dsi *dsi = to_cdns_dsi(host);
+	struct cdns_dsi_output *output = &dsi->output;
+	struct cdns_dsi_input *input = &dsi->input;
 
-	drm_bridge_हटाओ(&input->bridge);
-	अगर (output->panel)
-		drm_panel_bridge_हटाओ(output->bridge);
+	drm_bridge_remove(&input->bridge);
+	if (output->panel)
+		drm_panel_bridge_remove(output->bridge);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t cdns_dsi_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा cdns_dsi *dsi = data;
-	irqवापस_t ret = IRQ_NONE;
+static irqreturn_t cdns_dsi_interrupt(int irq, void *data)
+{
+	struct cdns_dsi *dsi = data;
+	irqreturn_t ret = IRQ_NONE;
 	u32 flag, ctl;
 
-	flag = पढ़ोl(dsi->regs + सूचीECT_CMD_STS_FLAG);
-	अगर (flag) अणु
-		ctl = पढ़ोl(dsi->regs + सूचीECT_CMD_STS_CTL);
+	flag = readl(dsi->regs + DIRECT_CMD_STS_FLAG);
+	if (flag) {
+		ctl = readl(dsi->regs + DIRECT_CMD_STS_CTL);
 		ctl &= ~flag;
-		ग_लिखोl(ctl, dsi->regs + सूचीECT_CMD_STS_CTL);
+		writel(ctl, dsi->regs + DIRECT_CMD_STS_CTL);
 		complete(&dsi->direct_cmd_comp);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार cdns_dsi_transfer(काष्ठा mipi_dsi_host *host,
-				 स्थिर काष्ठा mipi_dsi_msg *msg)
-अणु
-	काष्ठा cdns_dsi *dsi = to_cdns_dsi(host);
-	u32 cmd, sts, val, रुको = WRITE_COMPLETED, ctl = 0;
-	काष्ठा mipi_dsi_packet packet;
-	पूर्णांक ret, i, tx_len, rx_len;
+static ssize_t cdns_dsi_transfer(struct mipi_dsi_host *host,
+				 const struct mipi_dsi_msg *msg)
+{
+	struct cdns_dsi *dsi = to_cdns_dsi(host);
+	u32 cmd, sts, val, wait = WRITE_COMPLETED, ctl = 0;
+	struct mipi_dsi_packet packet;
+	int ret, i, tx_len, rx_len;
 
-	ret = pm_runसमय_get_sync(host->dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = pm_runtime_get_sync(host->dev);
+	if (ret < 0)
+		return ret;
 
 	cdns_dsi_init_link(dsi);
 
 	ret = mipi_dsi_create_packet(&packet, msg);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	tx_len = msg->tx_buf ? msg->tx_len : 0;
 	rx_len = msg->rx_buf ? msg->rx_len : 0;
 
-	/* For पढ़ो operations, the maximum TX len is 2. */
-	अगर (rx_len && tx_len > 2) अणु
+	/* For read operations, the maximum TX len is 2. */
+	if (rx_len && tx_len > 2) {
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* TX len is limited by the CMD FIFO depth. */
-	अगर (tx_len > dsi->direct_cmd_fअगरo_depth) अणु
+	if (tx_len > dsi->direct_cmd_fifo_depth) {
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* RX len is limited by the RX FIFO depth. */
-	अगर (rx_len > dsi->rx_fअगरo_depth) अणु
+	if (rx_len > dsi->rx_fifo_depth) {
 		ret = -ENOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cmd = CMD_SIZE(tx_len) | CMD_VCHAN_ID(msg->channel) |
 	      CMD_DATATYPE(msg->type);
 
-	अगर (msg->flags & MIPI_DSI_MSG_USE_LPM)
+	if (msg->flags & MIPI_DSI_MSG_USE_LPM)
 		cmd |= CMD_LP_EN;
 
-	अगर (mipi_dsi_packet_क्रमmat_is_दीर्घ(msg->type))
+	if (mipi_dsi_packet_format_is_long(msg->type))
 		cmd |= CMD_LONG;
 
-	अगर (rx_len) अणु
+	if (rx_len) {
 		cmd |= READ_CMD;
-		रुको = READ_COMPLETED_WITH_ERR | READ_COMPLETED;
+		wait = READ_COMPLETED_WITH_ERR | READ_COMPLETED;
 		ctl = READ_EN | BTA_EN;
-	पूर्ण अन्यथा अगर (msg->flags & MIPI_DSI_MSG_REQ_ACK) अणु
+	} else if (msg->flags & MIPI_DSI_MSG_REQ_ACK) {
 		cmd |= BTA_REQ;
-		रुको = ACK_WITH_ERR_RCVD | ACK_RCVD;
+		wait = ACK_WITH_ERR_RCVD | ACK_RCVD;
 		ctl = BTA_EN;
-	पूर्ण
+	}
 
-	ग_लिखोl(पढ़ोl(dsi->regs + MCTL_MAIN_DATA_CTL) | ctl,
+	writel(readl(dsi->regs + MCTL_MAIN_DATA_CTL) | ctl,
 	       dsi->regs + MCTL_MAIN_DATA_CTL);
 
-	ग_लिखोl(cmd, dsi->regs + सूचीECT_CMD_MAIN_SETTINGS);
+	writel(cmd, dsi->regs + DIRECT_CMD_MAIN_SETTINGS);
 
-	क्रम (i = 0; i < tx_len; i += 4) अणु
-		स्थिर u8 *buf = msg->tx_buf;
-		पूर्णांक j;
+	for (i = 0; i < tx_len; i += 4) {
+		const u8 *buf = msg->tx_buf;
+		int j;
 
 		val = 0;
-		क्रम (j = 0; j < 4 && j + i < tx_len; j++)
+		for (j = 0; j < 4 && j + i < tx_len; j++)
 			val |= (u32)buf[i + j] << (8 * j);
 
-		ग_लिखोl(val, dsi->regs + सूचीECT_CMD_WRDATA);
-	पूर्ण
+		writel(val, dsi->regs + DIRECT_CMD_WRDATA);
+	}
 
-	/* Clear status flags beक्रमe sending the command. */
-	ग_लिखोl(रुको, dsi->regs + सूचीECT_CMD_STS_CLR);
-	ग_लिखोl(रुको, dsi->regs + सूचीECT_CMD_STS_CTL);
+	/* Clear status flags before sending the command. */
+	writel(wait, dsi->regs + DIRECT_CMD_STS_CLR);
+	writel(wait, dsi->regs + DIRECT_CMD_STS_CTL);
 	reinit_completion(&dsi->direct_cmd_comp);
-	ग_लिखोl(0, dsi->regs + सूचीECT_CMD_SEND);
+	writel(0, dsi->regs + DIRECT_CMD_SEND);
 
-	रुको_क्रम_completion_समयout(&dsi->direct_cmd_comp,
-				    msecs_to_jअगरfies(1000));
+	wait_for_completion_timeout(&dsi->direct_cmd_comp,
+				    msecs_to_jiffies(1000));
 
-	sts = पढ़ोl(dsi->regs + सूचीECT_CMD_STS);
-	ग_लिखोl(रुको, dsi->regs + सूचीECT_CMD_STS_CLR);
-	ग_लिखोl(0, dsi->regs + सूचीECT_CMD_STS_CTL);
+	sts = readl(dsi->regs + DIRECT_CMD_STS);
+	writel(wait, dsi->regs + DIRECT_CMD_STS_CLR);
+	writel(0, dsi->regs + DIRECT_CMD_STS_CTL);
 
-	ग_लिखोl(पढ़ोl(dsi->regs + MCTL_MAIN_DATA_CTL) & ~ctl,
+	writel(readl(dsi->regs + MCTL_MAIN_DATA_CTL) & ~ctl,
 	       dsi->regs + MCTL_MAIN_DATA_CTL);
 
-	/* We did not receive the events we were रुकोing क्रम. */
-	अगर (!(sts & रुको)) अणु
+	/* We did not receive the events we were waiting for. */
+	if (!(sts & wait)) {
 		ret = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* 'READ' or 'WRITE with ACK' failed. */
-	अगर (sts & (READ_COMPLETED_WITH_ERR | ACK_WITH_ERR_RCVD)) अणु
+	if (sts & (READ_COMPLETED_WITH_ERR | ACK_WITH_ERR_RCVD)) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < rx_len; i += 4) अणु
+	for (i = 0; i < rx_len; i += 4) {
 		u8 *buf = msg->rx_buf;
-		पूर्णांक j;
+		int j;
 
-		val = पढ़ोl(dsi->regs + सूचीECT_CMD_RDDATA);
-		क्रम (j = 0; j < 4 && j + i < rx_len; j++)
+		val = readl(dsi->regs + DIRECT_CMD_RDDATA);
+		for (j = 0; j < 4 && j + i < rx_len; j++)
 			buf[i + j] = val >> (8 * j);
-	पूर्ण
+	}
 
 out:
-	pm_runसमय_put(host->dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_put(host->dev);
+	return ret;
+}
 
-अटल स्थिर काष्ठा mipi_dsi_host_ops cdns_dsi_ops = अणु
+static const struct mipi_dsi_host_ops cdns_dsi_ops = {
 	.attach = cdns_dsi_attach,
 	.detach = cdns_dsi_detach,
 	.transfer = cdns_dsi_transfer,
-पूर्ण;
+};
 
-अटल पूर्णांक __maybe_unused cdns_dsi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा cdns_dsi *dsi = dev_get_drvdata(dev);
+static int __maybe_unused cdns_dsi_resume(struct device *dev)
+{
+	struct cdns_dsi *dsi = dev_get_drvdata(dev);
 
-	reset_control_deनिश्चित(dsi->dsi_p_rst);
+	reset_control_deassert(dsi->dsi_p_rst);
 	clk_prepare_enable(dsi->dsi_p_clk);
 	clk_prepare_enable(dsi->dsi_sys_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused cdns_dsi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा cdns_dsi *dsi = dev_get_drvdata(dev);
+static int __maybe_unused cdns_dsi_suspend(struct device *dev)
+{
+	struct cdns_dsi *dsi = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(dsi->dsi_sys_clk);
 	clk_disable_unprepare(dsi->dsi_p_clk);
-	reset_control_निश्चित(dsi->dsi_p_rst);
+	reset_control_assert(dsi->dsi_p_rst);
 	dsi->link_initialized = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल UNIVERSAL_DEV_PM_OPS(cdns_dsi_pm_ops, cdns_dsi_suspend, cdns_dsi_resume,
-			    शून्य);
+static UNIVERSAL_DEV_PM_OPS(cdns_dsi_pm_ops, cdns_dsi_suspend, cdns_dsi_resume,
+			    NULL);
 
-अटल पूर्णांक cdns_dsi_drm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cdns_dsi *dsi;
-	काष्ठा cdns_dsi_input *input;
-	काष्ठा resource *res;
-	पूर्णांक ret, irq;
+static int cdns_dsi_drm_probe(struct platform_device *pdev)
+{
+	struct cdns_dsi *dsi;
+	struct cdns_dsi_input *input;
+	struct resource *res;
+	int ret, irq;
 	u32 val;
 
-	dsi = devm_kzalloc(&pdev->dev, माप(*dsi), GFP_KERNEL);
-	अगर (!dsi)
-		वापस -ENOMEM;
+	dsi = devm_kzalloc(&pdev->dev, sizeof(*dsi), GFP_KERNEL);
+	if (!dsi)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, dsi);
+	platform_set_drvdata(pdev, dsi);
 
 	input = &dsi->input;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	dsi->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(dsi->regs))
-		वापस PTR_ERR(dsi->regs);
+	if (IS_ERR(dsi->regs))
+		return PTR_ERR(dsi->regs);
 
 	dsi->dsi_p_clk = devm_clk_get(&pdev->dev, "dsi_p_clk");
-	अगर (IS_ERR(dsi->dsi_p_clk))
-		वापस PTR_ERR(dsi->dsi_p_clk);
+	if (IS_ERR(dsi->dsi_p_clk))
+		return PTR_ERR(dsi->dsi_p_clk);
 
 	dsi->dsi_p_rst = devm_reset_control_get_optional_exclusive(&pdev->dev,
 								"dsi_p_rst");
-	अगर (IS_ERR(dsi->dsi_p_rst))
-		वापस PTR_ERR(dsi->dsi_p_rst);
+	if (IS_ERR(dsi->dsi_p_rst))
+		return PTR_ERR(dsi->dsi_p_rst);
 
 	dsi->dsi_sys_clk = devm_clk_get(&pdev->dev, "dsi_sys_clk");
-	अगर (IS_ERR(dsi->dsi_sys_clk))
-		वापस PTR_ERR(dsi->dsi_sys_clk);
+	if (IS_ERR(dsi->dsi_sys_clk))
+		return PTR_ERR(dsi->dsi_sys_clk);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	dsi->dphy = devm_phy_get(&pdev->dev, "dphy");
-	अगर (IS_ERR(dsi->dphy))
-		वापस PTR_ERR(dsi->dphy);
+	if (IS_ERR(dsi->dphy))
+		return PTR_ERR(dsi->dphy);
 
 	ret = clk_prepare_enable(dsi->dsi_p_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	val = पढ़ोl(dsi->regs + ID_REG);
-	अगर (REV_VENDOR_ID(val) != 0xcad) अणु
+	val = readl(dsi->regs + ID_REG);
+	if (REV_VENDOR_ID(val) != 0xcad) {
 		dev_err(&pdev->dev, "invalid vendor id\n");
 		ret = -EINVAL;
-		जाओ err_disable_pclk;
-	पूर्ण
+		goto err_disable_pclk;
+	}
 
-	val = पढ़ोl(dsi->regs + IP_CONF);
-	dsi->direct_cmd_fअगरo_depth = 1 << (सूचीCMD_FIFO_DEPTH(val) + 2);
-	dsi->rx_fअगरo_depth = RX_FIFO_DEPTH(val);
+	val = readl(dsi->regs + IP_CONF);
+	dsi->direct_cmd_fifo_depth = 1 << (DIRCMD_FIFO_DEPTH(val) + 2);
+	dsi->rx_fifo_depth = RX_FIFO_DEPTH(val);
 	init_completion(&dsi->direct_cmd_comp);
 
-	ग_लिखोl(0, dsi->regs + MCTL_MAIN_DATA_CTL);
-	ग_लिखोl(0, dsi->regs + MCTL_MAIN_EN);
-	ग_लिखोl(0, dsi->regs + MCTL_MAIN_PHY_CTL);
+	writel(0, dsi->regs + MCTL_MAIN_DATA_CTL);
+	writel(0, dsi->regs + MCTL_MAIN_EN);
+	writel(0, dsi->regs + MCTL_MAIN_PHY_CTL);
 
 	/*
-	 * We only support the DPI input, so क्रमce input->id to
+	 * We only support the DPI input, so force input->id to
 	 * CDNS_DPI_INPUT.
 	 */
 	input->id = CDNS_DPI_INPUT;
 	input->bridge.funcs = &cdns_dsi_bridge_funcs;
 	input->bridge.of_node = pdev->dev.of_node;
 
-	/* Mask all पूर्णांकerrupts beक्रमe रेजिस्टरing the IRQ handler. */
-	ग_लिखोl(0, dsi->regs + MCTL_MAIN_STS_CTL);
-	ग_लिखोl(0, dsi->regs + MCTL_DPHY_ERR_CTL1);
-	ग_लिखोl(0, dsi->regs + CMD_MODE_STS_CTL);
-	ग_लिखोl(0, dsi->regs + सूचीECT_CMD_STS_CTL);
-	ग_लिखोl(0, dsi->regs + सूचीECT_CMD_RD_STS_CTL);
-	ग_लिखोl(0, dsi->regs + VID_MODE_STS_CTL);
-	ग_लिखोl(0, dsi->regs + TVG_STS_CTL);
-	ग_लिखोl(0, dsi->regs + DPI_IRQ_EN);
-	ret = devm_request_irq(&pdev->dev, irq, cdns_dsi_पूर्णांकerrupt, 0,
+	/* Mask all interrupts before registering the IRQ handler. */
+	writel(0, dsi->regs + MCTL_MAIN_STS_CTL);
+	writel(0, dsi->regs + MCTL_DPHY_ERR_CTL1);
+	writel(0, dsi->regs + CMD_MODE_STS_CTL);
+	writel(0, dsi->regs + DIRECT_CMD_STS_CTL);
+	writel(0, dsi->regs + DIRECT_CMD_RD_STS_CTL);
+	writel(0, dsi->regs + VID_MODE_STS_CTL);
+	writel(0, dsi->regs + TVG_STS_CTL);
+	writel(0, dsi->regs + DPI_IRQ_EN);
+	ret = devm_request_irq(&pdev->dev, irq, cdns_dsi_interrupt, 0,
 			       dev_name(&pdev->dev), dsi);
-	अगर (ret)
-		जाओ err_disable_pclk;
+	if (ret)
+		goto err_disable_pclk;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 	dsi->base.dev = &pdev->dev;
 	dsi->base.ops = &cdns_dsi_ops;
 
-	ret = mipi_dsi_host_रेजिस्टर(&dsi->base);
-	अगर (ret)
-		जाओ err_disable_runसमय_pm;
+	ret = mipi_dsi_host_register(&dsi->base);
+	if (ret)
+		goto err_disable_runtime_pm;
 
 	clk_disable_unprepare(dsi->dsi_p_clk);
 
-	वापस 0;
+	return 0;
 
-err_disable_runसमय_pm:
-	pm_runसमय_disable(&pdev->dev);
+err_disable_runtime_pm:
+	pm_runtime_disable(&pdev->dev);
 
 err_disable_pclk:
 	clk_disable_unprepare(dsi->dsi_p_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cdns_dsi_drm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cdns_dsi *dsi = platक्रमm_get_drvdata(pdev);
+static int cdns_dsi_drm_remove(struct platform_device *pdev)
+{
+	struct cdns_dsi *dsi = platform_get_drvdata(pdev);
 
-	mipi_dsi_host_unरेजिस्टर(&dsi->base);
-	pm_runसमय_disable(&pdev->dev);
+	mipi_dsi_host_unregister(&dsi->base);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cdns_dsi_of_match[] = अणु
-	अणु .compatible = "cdns,dsi" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id cdns_dsi_of_match[] = {
+	{ .compatible = "cdns,dsi" },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver cdns_dsi_platक्रमm_driver = अणु
+static struct platform_driver cdns_dsi_platform_driver = {
 	.probe  = cdns_dsi_drm_probe,
-	.हटाओ = cdns_dsi_drm_हटाओ,
-	.driver = अणु
+	.remove = cdns_dsi_drm_remove,
+	.driver = {
 		.name   = "cdns-dsi",
 		.of_match_table = cdns_dsi_of_match,
 		.pm = &cdns_dsi_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(cdns_dsi_platक्रमm_driver);
+	},
+};
+module_platform_driver(cdns_dsi_platform_driver);
 
 MODULE_AUTHOR("Boris Brezillon <boris.brezillon@bootlin.com>");
 MODULE_DESCRIPTION("Cadence DSI driver");

@@ -1,359 +1,358 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Socionext UniPhier AIO ALSA driver क्रम LD11/LD20.
+// Socionext UniPhier AIO ALSA driver for LD11/LD20.
 //
 // Copyright (c) 2016-2018 Socionext Inc.
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश "aio.h"
+#include "aio.h"
 
-अटल स्थिर काष्ठा uniphier_aio_spec uniphier_aio_ld11[] = अणु
-	/* क्रम HDMI PCM In, Pin:AI1Dx */
-	अणु
+static const struct uniphier_aio_spec uniphier_aio_ld11[] = {
+	/* for HDMI PCM In, Pin:AI1Dx */
+	{
 		.name = AUD_NAME_PCMIN1,
 		.gname = AUD_GNAME_HDMI,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_I2S,
-			.dir   = PORT_सूची_INPUT,
-			.rb    = अणु 21, 14, पूर्ण,
-			.ch    = अणु 21, 14, पूर्ण,
-			.iअगर   = अणु 5, 3, पूर्ण,
-			.iport = अणु 0, AUD_HW_PCMIN1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_INPUT,
+			.rb    = { 21, 14, },
+			.ch    = { 21, 14, },
+			.iif   = { 5, 3, },
+			.iport = { 0, AUD_HW_PCMIN1, },
+		},
+	},
 
-	/* क्रम SIF In, Pin:AI2Dx */
-	अणु
+	/* for SIF In, Pin:AI2Dx */
+	{
 		.name = AUD_NAME_PCMIN2,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_I2S,
-			.dir   = PORT_सूची_INPUT,
-			.rb    = अणु 22, 15, पूर्ण,
-			.ch    = अणु 22, 15, पूर्ण,
-			.iअगर   = अणु 6, 4, पूर्ण,
-			.iport = अणु 1, AUD_HW_PCMIN2, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_INPUT,
+			.rb    = { 22, 15, },
+			.ch    = { 22, 15, },
+			.iif   = { 6, 4, },
+			.iport = { 1, AUD_HW_PCMIN2, },
+		},
+	},
 
-	/* क्रम Line In, Pin:AI3Dx */
-	अणु
+	/* for Line In, Pin:AI3Dx */
+	{
 		.name = AUD_NAME_PCMIN3,
 		.gname = AUD_GNAME_LINE,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_EVE,
-			.dir   = PORT_सूची_INPUT,
-			.rb    = अणु 23, 16, पूर्ण,
-			.ch    = अणु 23, 16, पूर्ण,
-			.iअगर   = अणु 7, 5, पूर्ण,
-			.iport = अणु 2, AUD_HW_PCMIN3, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_INPUT,
+			.rb    = { 23, 16, },
+			.ch    = { 23, 16, },
+			.iif   = { 7, 5, },
+			.iport = { 2, AUD_HW_PCMIN3, },
+		},
+	},
 
-	/* क्रम S/PDIF In, Pin:AI1IEC */
-	अणु
+	/* for S/PDIF In, Pin:AI1IEC */
+	{
 		.name = AUD_NAME_IECIN1,
 		.gname = AUD_GNAME_IEC,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_SPDIF,
-			.dir   = PORT_सूची_INPUT,
-			.rb    = अणु 26, 17, पूर्ण,
-			.ch    = अणु 26, 17, पूर्ण,
-			.iअगर   = अणु 10, 6, पूर्ण,
-			.iport = अणु 3, AUD_HW_IECIN1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_INPUT,
+			.rb    = { 26, 17, },
+			.ch    = { 26, 17, },
+			.iif   = { 10, 6, },
+			.iport = { 3, AUD_HW_IECIN1, },
+		},
+	},
 
-	/* क्रम Speaker, Pin:AO1Dx */
-	अणु
+	/* for Speaker, Pin:AO1Dx */
+	{
 		.name = AUD_NAME_HPCMOUT1,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_I2S,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 0, 0, पूर्ण,
-			.ch    = अणु 0, 0, पूर्ण,
-			.oअगर   = अणु 0, 0, पूर्ण,
-			.oport = अणु 0, AUD_HW_HPCMOUT1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 0, 0, },
+			.ch    = { 0, 0, },
+			.oif   = { 0, 0, },
+			.oport = { 0, AUD_HW_HPCMOUT1, },
+		},
+	},
 
-	/* क्रम HDMI PCM, Pin:AO2Dx */
-	अणु
+	/* for HDMI PCM, Pin:AO2Dx */
+	{
 		.name = AUD_NAME_PCMOUT1,
 		.gname = AUD_GNAME_HDMI,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_I2S,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 0, 0, पूर्ण,
-			.ch    = अणु 0, 0, पूर्ण,
-			.oअगर   = अणु 0, 0, पूर्ण,
-			.oport = अणु 3, AUD_HW_PCMOUT1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 0, 0, },
+			.ch    = { 0, 0, },
+			.oif   = { 0, 0, },
+			.oport = { 3, AUD_HW_PCMOUT1, },
+		},
+	},
 
-	/* क्रम Line Out, Pin:LO2_x */
-	अणु
+	/* for Line Out, Pin:LO2_x */
+	{
 		.name = AUD_NAME_PCMOUT2,
 		.gname = AUD_GNAME_LINE,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_EVE,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 2, 2, पूर्ण,
-			.ch    = अणु 2, 2, पूर्ण,
-			.oअगर   = अणु 2, 2, पूर्ण,
-			.oport = अणु 1, AUD_HW_PCMOUT2, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 2, 2, },
+			.ch    = { 2, 2, },
+			.oif   = { 2, 2, },
+			.oport = { 1, AUD_HW_PCMOUT2, },
+		},
+	},
 
-	/* क्रम Headphone, Pin:HP1_x */
-	अणु
+	/* for Headphone, Pin:HP1_x */
+	{
 		.name = AUD_NAME_PCMOUT3,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_EVE,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 3, 3, पूर्ण,
-			.ch    = अणु 3, 3, पूर्ण,
-			.oअगर   = अणु 3, 3, पूर्ण,
-			.oport = अणु 2, AUD_HW_PCMOUT3, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 3, 3, },
+			.ch    = { 3, 3, },
+			.oif   = { 3, 3, },
+			.oport = { 2, AUD_HW_PCMOUT3, },
+		},
+	},
 
-	/* क्रम HW Sampling Rate Converter */
-	अणु
+	/* for HW Sampling Rate Converter */
+	{
 		.name = AUD_NAME_EPCMOUT2,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_CONV,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 7, 5, पूर्ण,
-			.ch    = अणु 7, 5, पूर्ण,
-			.oअगर   = अणु 7, 5, पूर्ण,
-			.oport = अणु 6, AUD_HW_EPCMOUT2, पूर्ण,
-			.och   = अणु 17, 12, पूर्ण,
-			.iअगर   = अणु 1, 1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 7, 5, },
+			.ch    = { 7, 5, },
+			.oif   = { 7, 5, },
+			.oport = { 6, AUD_HW_EPCMOUT2, },
+			.och   = { 17, 12, },
+			.iif   = { 1, 1, },
+		},
+	},
 
-	/* क्रम HW Sampling Rate Converter 2 */
-	अणु
+	/* for HW Sampling Rate Converter 2 */
+	{
 		.name = AUD_NAME_EPCMOUT3,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_CONV,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 8, 6, पूर्ण,
-			.ch    = अणु 8, 6, पूर्ण,
-			.oअगर   = अणु 8, 6, पूर्ण,
-			.oport = अणु 7, AUD_HW_EPCMOUT3, पूर्ण,
-			.och   = अणु 18, 13, पूर्ण,
-			.iअगर   = अणु 2, 2, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 8, 6, },
+			.ch    = { 8, 6, },
+			.oif   = { 8, 6, },
+			.oport = { 7, AUD_HW_EPCMOUT3, },
+			.och   = { 18, 13, },
+			.iif   = { 2, 2, },
+		},
+	},
 
-	/* क्रम S/PDIF Out, Pin:AO1IEC */
-	अणु
+	/* for S/PDIF Out, Pin:AO1IEC */
+	{
 		.name = AUD_NAME_HIECOUT1,
 		.gname = AUD_GNAME_IEC,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_SPDIF,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 1, 1, पूर्ण,
-			.ch    = अणु 1, 1, पूर्ण,
-			.oअगर   = अणु 1, 1, पूर्ण,
-			.oport = अणु 12, AUD_HW_HIECOUT1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 1, 1, },
+			.ch    = { 1, 1, },
+			.oif   = { 1, 1, },
+			.oport = { 12, AUD_HW_HIECOUT1, },
+		},
+	},
 
-	/* क्रम S/PDIF Out, Pin:AO1IEC, Compress */
-	अणु
+	/* for S/PDIF Out, Pin:AO1IEC, Compress */
+	{
 		.name = AUD_NAME_HIECCOMPOUT1,
 		.gname = AUD_GNAME_IEC,
-		.swm = अणु
+		.swm = {
 			.type  = PORT_TYPE_SPDIF,
-			.dir   = PORT_सूची_OUTPUT,
-			.rb    = अणु 1, 1, पूर्ण,
-			.ch    = अणु 1, 1, पूर्ण,
-			.oअगर   = अणु 1, 1, पूर्ण,
-			.oport = अणु 12, AUD_HW_HIECOUT1, पूर्ण,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+			.dir   = PORT_DIR_OUTPUT,
+			.rb    = { 1, 1, },
+			.ch    = { 1, 1, },
+			.oif   = { 1, 1, },
+			.oport = { 12, AUD_HW_HIECOUT1, },
+		},
+	},
+};
 
-अटल स्थिर काष्ठा uniphier_aio_pll uniphier_aio_pll_ld11[] = अणु
-	[AUD_PLL_A1]   = अणु .enable = true, पूर्ण,
-	[AUD_PLL_F1]   = अणु .enable = true, पूर्ण,
-	[AUD_PLL_A2]   = अणु .enable = true, पूर्ण,
-	[AUD_PLL_F2]   = अणु .enable = true, पूर्ण,
-	[AUD_PLL_APLL] = अणु .enable = true, पूर्ण,
-	[AUD_PLL_RX0]  = अणु .enable = true, पूर्ण,
-	[AUD_PLL_USB0] = अणु .enable = true, पूर्ण,
-	[AUD_PLL_HSC0] = अणु .enable = true, पूर्ण,
-पूर्ण;
+static const struct uniphier_aio_pll uniphier_aio_pll_ld11[] = {
+	[AUD_PLL_A1]   = { .enable = true, },
+	[AUD_PLL_F1]   = { .enable = true, },
+	[AUD_PLL_A2]   = { .enable = true, },
+	[AUD_PLL_F2]   = { .enable = true, },
+	[AUD_PLL_APLL] = { .enable = true, },
+	[AUD_PLL_RX0]  = { .enable = true, },
+	[AUD_PLL_USB0] = { .enable = true, },
+	[AUD_PLL_HSC0] = { .enable = true, },
+};
 
-अटल पूर्णांक uniphier_aio_ld11_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	पूर्णांक ret;
+static int uniphier_aio_ld11_probe(struct snd_soc_dai *dai)
+{
+	int ret;
 
 	ret = uniphier_aio_dai_probe(dai);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = snd_soc_dai_set_pll(dai, AUD_PLL_A1, 0, 0, 36864000);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = snd_soc_dai_set_pll(dai, AUD_PLL_F1, 0, 0, 36864000);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = snd_soc_dai_set_pll(dai, AUD_PLL_A2, 0, 0, 33868800);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	ret = snd_soc_dai_set_pll(dai, AUD_PLL_F2, 0, 0, 33868800);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_soc_dai_driver uniphier_aio_dai_ld11[] = अणु
-	अणु
+static struct snd_soc_dai_driver uniphier_aio_dai_ld11[] = {
+	{
 		.name    = AUD_GNAME_HDMI,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_PCMOUT1,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
-		.capture = अणु
+		},
+		.capture = {
 			.stream_name = AUD_NAME_PCMIN1,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000 |
 				SNDRV_PCM_RATE_44100 |
 				SNDRV_PCM_RATE_32000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_NAME_PCMIN2,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.capture = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.capture = {
 			.stream_name = AUD_NAME_PCMIN2,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_GNAME_LINE,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_PCMOUT2,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
-		.capture = अणु
+		},
+		.capture = {
 			.stream_name = AUD_NAME_PCMIN3,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_NAME_HPCMOUT1,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_HPCMOUT1,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 8,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_NAME_PCMOUT3,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_PCMOUT3,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_NAME_HIECOUT1,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_HIECOUT1,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
-		.ops = &uniphier_aio_spdअगर_ops,
-	पूर्ण,
-	अणु
+		},
+		.ops = &uniphier_aio_spdif_ops,
+	},
+	{
 		.name    = AUD_NAME_EPCMOUT2,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_EPCMOUT2,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000 |
 				SNDRV_PCM_RATE_44100 |
 				SNDRV_PCM_RATE_32000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_NAME_EPCMOUT3,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
-		.playback = अणु
+		.remove  = uniphier_aio_dai_remove,
+		.playback = {
 			.stream_name = AUD_NAME_EPCMOUT3,
-			.क्रमmats     = SNDRV_PCM_FMTBIT_S32_LE,
+			.formats     = SNDRV_PCM_FMTBIT_S32_LE,
 			.rates       = SNDRV_PCM_RATE_48000 |
 				SNDRV_PCM_RATE_44100 |
 				SNDRV_PCM_RATE_32000,
 			.channels_min = 2,
 			.channels_max = 2,
-		पूर्ण,
+		},
 		.ops = &uniphier_aio_i2s_ops,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name    = AUD_NAME_HIECCOMPOUT1,
 		.probe   = uniphier_aio_ld11_probe,
-		.हटाओ  = uniphier_aio_dai_हटाओ,
+		.remove  = uniphier_aio_dai_remove,
 		.compress_new = snd_soc_new_compress,
-		.playback = अणु
+		.playback = {
 			.stream_name = AUD_NAME_HIECCOMPOUT1,
 			.channels_min = 1,
 			.channels_max = 1,
-		पूर्ण,
-		.ops = &uniphier_aio_spdअगर_ops,
-	पूर्ण,
-पूर्ण;
+		},
+		.ops = &uniphier_aio_spdif_ops,
+	},
+};
 
-अटल स्थिर काष्ठा uniphier_aio_chip_spec uniphier_aio_ld11_spec = अणु
+static const struct uniphier_aio_chip_spec uniphier_aio_ld11_spec = {
 	.specs     = uniphier_aio_ld11,
 	.num_specs = ARRAY_SIZE(uniphier_aio_ld11),
 	.dais      = uniphier_aio_dai_ld11,
@@ -361,9 +360,9 @@
 	.plls      = uniphier_aio_pll_ld11,
 	.num_plls  = ARRAY_SIZE(uniphier_aio_pll_ld11),
 	.addr_ext  = 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा uniphier_aio_chip_spec uniphier_aio_ld20_spec = अणु
+static const struct uniphier_aio_chip_spec uniphier_aio_ld20_spec = {
 	.specs     = uniphier_aio_ld11,
 	.num_specs = ARRAY_SIZE(uniphier_aio_ld11),
 	.dais      = uniphier_aio_dai_ld11,
@@ -371,30 +370,30 @@
 	.plls      = uniphier_aio_pll_ld11,
 	.num_plls  = ARRAY_SIZE(uniphier_aio_pll_ld11),
 	.addr_ext  = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id uniphier_aio_of_match[] __maybe_unused = अणु
-	अणु
+static const struct of_device_id uniphier_aio_of_match[] __maybe_unused = {
+	{
 		.compatible = "socionext,uniphier-ld11-aio",
 		.data = &uniphier_aio_ld11_spec,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "socionext,uniphier-ld20-aio",
 		.data = &uniphier_aio_ld20_spec,
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, uniphier_aio_of_match);
 
-अटल काष्ठा platक्रमm_driver uniphier_aio_driver = अणु
-	.driver = अणु
+static struct platform_driver uniphier_aio_driver = {
+	.driver = {
 		.name = "snd-uniphier-aio-ld11",
 		.of_match_table = of_match_ptr(uniphier_aio_of_match),
-	पूर्ण,
+	},
 	.probe    = uniphier_aio_probe,
-	.हटाओ   = uniphier_aio_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(uniphier_aio_driver);
+	.remove   = uniphier_aio_remove,
+};
+module_platform_driver(uniphier_aio_driver);
 
 MODULE_AUTHOR("Katsuhiro Suzuki <suzuki.katsuhiro@socionext.com>");
 MODULE_DESCRIPTION("UniPhier LD11/LD20 AIO driver.");

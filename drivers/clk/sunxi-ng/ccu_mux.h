@@ -1,119 +1,118 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _CCU_MUX_H_
-#घोषणा _CCU_MUX_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _CCU_MUX_H_
+#define _CCU_MUX_H_
 
-#समावेश <linux/clk-provider.h>
+#include <linux/clk-provider.h>
 
-#समावेश "ccu_common.h"
+#include "ccu_common.h"
 
-काष्ठा ccu_mux_fixed_preभाग अणु
+struct ccu_mux_fixed_prediv {
 	u8	index;
-	u16	भाग;
-पूर्ण;
+	u16	div;
+};
 
-काष्ठा ccu_mux_var_preभाग अणु
+struct ccu_mux_var_prediv {
 	u8	index;
-	u8	shअगरt;
+	u8	shift;
 	u8	width;
-पूर्ण;
+};
 
-काष्ठा ccu_mux_पूर्णांकernal अणु
-	u8		shअगरt;
+struct ccu_mux_internal {
+	u8		shift;
 	u8		width;
-	स्थिर u8	*table;
+	const u8	*table;
 
-	स्थिर काष्ठा ccu_mux_fixed_preभाग	*fixed_preभागs;
-	u8		n_preभागs;
+	const struct ccu_mux_fixed_prediv	*fixed_predivs;
+	u8		n_predivs;
 
-	स्थिर काष्ठा ccu_mux_var_preभाग		*var_preभागs;
-	u8		n_var_preभागs;
-पूर्ण;
+	const struct ccu_mux_var_prediv		*var_predivs;
+	u8		n_var_predivs;
+};
 
-#घोषणा _SUNXI_CCU_MUX_TABLE(_shअगरt, _width, _table)	\
-	अणु						\
-		.shअगरt	= _shअगरt,			\
+#define _SUNXI_CCU_MUX_TABLE(_shift, _width, _table)	\
+	{						\
+		.shift	= _shift,			\
 		.width	= _width,			\
 		.table	= _table,			\
-	पूर्ण
+	}
 
-#घोषणा _SUNXI_CCU_MUX(_shअगरt, _width) \
-	_SUNXI_CCU_MUX_TABLE(_shअगरt, _width, शून्य)
+#define _SUNXI_CCU_MUX(_shift, _width) \
+	_SUNXI_CCU_MUX_TABLE(_shift, _width, NULL)
 
-काष्ठा ccu_mux अणु
+struct ccu_mux {
 	u16			reg;
 	u32			enable;
 
-	काष्ठा ccu_mux_पूर्णांकernal	mux;
-	काष्ठा ccu_common	common;
-पूर्ण;
+	struct ccu_mux_internal	mux;
+	struct ccu_common	common;
+};
 
-#घोषणा SUNXI_CCU_MUX_TABLE_WITH_GATE(_काष्ठा, _name, _parents, _table,	\
-				     _reg, _shअगरt, _width, _gate,	\
+#define SUNXI_CCU_MUX_TABLE_WITH_GATE(_struct, _name, _parents, _table,	\
+				     _reg, _shift, _width, _gate,	\
 				     _flags)				\
-	काष्ठा ccu_mux _काष्ठा = अणु					\
+	struct ccu_mux _struct = {					\
 		.enable	= _gate,					\
-		.mux	= _SUNXI_CCU_MUX_TABLE(_shअगरt, _width, _table),	\
-		.common	= अणु						\
+		.mux	= _SUNXI_CCU_MUX_TABLE(_shift, _width, _table),	\
+		.common	= {						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT_PARENTS(_name,	\
 							      _parents, \
 							      &ccu_mux_ops, \
 							      _flags),	\
-		पूर्ण							\
-	पूर्ण
+		}							\
+	}
 
-#घोषणा SUNXI_CCU_MUX_WITH_GATE(_काष्ठा, _name, _parents, _reg,		\
-				_shअगरt, _width, _gate, _flags)		\
-	SUNXI_CCU_MUX_TABLE_WITH_GATE(_काष्ठा, _name, _parents, शून्य,	\
-				      _reg, _shअगरt, _width, _gate,	\
+#define SUNXI_CCU_MUX_WITH_GATE(_struct, _name, _parents, _reg,		\
+				_shift, _width, _gate, _flags)		\
+	SUNXI_CCU_MUX_TABLE_WITH_GATE(_struct, _name, _parents, NULL,	\
+				      _reg, _shift, _width, _gate,	\
 				      _flags)
 
-#घोषणा SUNXI_CCU_MUX(_काष्ठा, _name, _parents, _reg, _shअगरt, _width,	\
+#define SUNXI_CCU_MUX(_struct, _name, _parents, _reg, _shift, _width,	\
 		      _flags)						\
-	SUNXI_CCU_MUX_TABLE_WITH_GATE(_काष्ठा, _name, _parents, शून्य,	\
-				      _reg, _shअगरt, _width, 0, _flags)
+	SUNXI_CCU_MUX_TABLE_WITH_GATE(_struct, _name, _parents, NULL,	\
+				      _reg, _shift, _width, 0, _flags)
 
-अटल अंतरभूत काष्ठा ccu_mux *hw_to_ccu_mux(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
+static inline struct ccu_mux *hw_to_ccu_mux(struct clk_hw *hw)
+{
+	struct ccu_common *common = hw_to_ccu_common(hw);
 
-	वापस container_of(common, काष्ठा ccu_mux, common);
-पूर्ण
+	return container_of(common, struct ccu_mux, common);
+}
 
-बाह्य स्थिर काष्ठा clk_ops ccu_mux_ops;
+extern const struct clk_ops ccu_mux_ops;
 
-अचिन्हित दीर्घ ccu_mux_helper_apply_preभाग(काष्ठा ccu_common *common,
-					  काष्ठा ccu_mux_पूर्णांकernal *cm,
-					  पूर्णांक parent_index,
-					  अचिन्हित दीर्घ parent_rate);
-पूर्णांक ccu_mux_helper_determine_rate(काष्ठा ccu_common *common,
-				  काष्ठा ccu_mux_पूर्णांकernal *cm,
-				  काष्ठा clk_rate_request *req,
-				  अचिन्हित दीर्घ (*round)(काष्ठा ccu_mux_पूर्णांकernal *,
-							 काष्ठा clk_hw *,
-							 अचिन्हित दीर्घ *,
-							 अचिन्हित दीर्घ,
-							 व्योम *),
-				  व्योम *data);
-u8 ccu_mux_helper_get_parent(काष्ठा ccu_common *common,
-			     काष्ठा ccu_mux_पूर्णांकernal *cm);
-पूर्णांक ccu_mux_helper_set_parent(काष्ठा ccu_common *common,
-			      काष्ठा ccu_mux_पूर्णांकernal *cm,
+unsigned long ccu_mux_helper_apply_prediv(struct ccu_common *common,
+					  struct ccu_mux_internal *cm,
+					  int parent_index,
+					  unsigned long parent_rate);
+int ccu_mux_helper_determine_rate(struct ccu_common *common,
+				  struct ccu_mux_internal *cm,
+				  struct clk_rate_request *req,
+				  unsigned long (*round)(struct ccu_mux_internal *,
+							 struct clk_hw *,
+							 unsigned long *,
+							 unsigned long,
+							 void *),
+				  void *data);
+u8 ccu_mux_helper_get_parent(struct ccu_common *common,
+			     struct ccu_mux_internal *cm);
+int ccu_mux_helper_set_parent(struct ccu_common *common,
+			      struct ccu_mux_internal *cm,
 			      u8 index);
 
-काष्ठा ccu_mux_nb अणु
-	काष्ठा notअगरier_block	clk_nb;
-	काष्ठा ccu_common	*common;
-	काष्ठा ccu_mux_पूर्णांकernal	*cm;
+struct ccu_mux_nb {
+	struct notifier_block	clk_nb;
+	struct ccu_common	*common;
+	struct ccu_mux_internal	*cm;
 
-	u32	delay_us;	/* How many us to रुको after reparenting */
+	u32	delay_us;	/* How many us to wait after reparenting */
 	u8	bypass_index;	/* Which parent to temporarily use */
-	u8	original_index;	/* This is set by the notअगरier callback */
-पूर्ण;
+	u8	original_index;	/* This is set by the notifier callback */
+};
 
-#घोषणा to_ccu_mux_nb(_nb) container_of(_nb, काष्ठा ccu_mux_nb, clk_nb)
+#define to_ccu_mux_nb(_nb) container_of(_nb, struct ccu_mux_nb, clk_nb)
 
-पूर्णांक ccu_mux_notअगरier_रेजिस्टर(काष्ठा clk *clk, काष्ठा ccu_mux_nb *mux_nb);
+int ccu_mux_notifier_register(struct clk *clk, struct ccu_mux_nb *mux_nb);
 
-#पूर्ण_अगर /* _CCU_MUX_H_ */
+#endif /* _CCU_MUX_H_ */

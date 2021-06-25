@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_HARसूचीQ_H
-#घोषणा __ASM_HARसूचीQ_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_HARDIRQ_H
+#define __ASM_HARDIRQ_H
 
-#समावेश <यंत्र/irq.h>
+#include <asm/irq.h>
 
-#घोषणा __ARCH_IRQ_EXIT_IRQS_DISABLED	1
-#घोषणा ack_bad_irq ack_bad_irq
+#define __ARCH_IRQ_EXIT_IRQS_DISABLED	1
+#define ack_bad_irq ack_bad_irq
 
-#समावेश <यंत्र-generic/hardirq.h>
+#include <asm-generic/hardirq.h>
 
-#पूर्ण_अगर /* __ASM_HARसूचीQ_H */
+#endif /* __ASM_HARDIRQ_H */

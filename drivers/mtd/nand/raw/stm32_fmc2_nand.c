@@ -1,287 +1,286 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2018
  * Author: Christophe Kerello <christophe.kerello@st.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/dmaengine.h>
+#include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/iopoll.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/of_address.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/reset.h>
 
 /* Bad block marker length */
-#घोषणा FMC2_BBM_LEN			2
+#define FMC2_BBM_LEN			2
 
 /* ECC step size */
-#घोषणा FMC2_ECC_STEP_SIZE		512
+#define FMC2_ECC_STEP_SIZE		512
 
-/* BCHDSRx रेजिस्टरs length */
-#घोषणा FMC2_BCHDSRS_LEN		20
+/* BCHDSRx registers length */
+#define FMC2_BCHDSRS_LEN		20
 
 /* HECCR length */
-#घोषणा FMC2_HECCR_LEN			4
+#define FMC2_HECCR_LEN			4
 
-/* Max requests करोne क्रम a 8k nand page size */
-#घोषणा FMC2_MAX_SG			16
+/* Max requests done for a 8k nand page size */
+#define FMC2_MAX_SG			16
 
 /* Max chip enable */
-#घोषणा FMC2_MAX_CE			2
+#define FMC2_MAX_CE			2
 
 /* Max ECC buffer length */
-#घोषणा FMC2_MAX_ECC_BUF_LEN		(FMC2_BCHDSRS_LEN * FMC2_MAX_SG)
+#define FMC2_MAX_ECC_BUF_LEN		(FMC2_BCHDSRS_LEN * FMC2_MAX_SG)
 
-#घोषणा FMC2_TIMEOUT_MS			5000
+#define FMC2_TIMEOUT_MS			5000
 
 /* Timings */
-#घोषणा FMC2_THIZ			1
-#घोषणा FMC2_TIO			8000
-#घोषणा FMC2_TSYNC			3000
-#घोषणा FMC2_PCR_TIMING_MASK		0xf
-#घोषणा FMC2_PMEM_PATT_TIMING_MASK	0xff
+#define FMC2_THIZ			1
+#define FMC2_TIO			8000
+#define FMC2_TSYNC			3000
+#define FMC2_PCR_TIMING_MASK		0xf
+#define FMC2_PMEM_PATT_TIMING_MASK	0xff
 
 /* FMC2 Controller Registers */
-#घोषणा FMC2_BCR1			0x0
-#घोषणा FMC2_PCR			0x80
-#घोषणा FMC2_SR				0x84
-#घोषणा FMC2_PMEM			0x88
-#घोषणा FMC2_PATT			0x8c
-#घोषणा FMC2_HECCR			0x94
-#घोषणा FMC2_ISR			0x184
-#घोषणा FMC2_ICR			0x188
-#घोषणा FMC2_CSQCR			0x200
-#घोषणा FMC2_CSQCFGR1			0x204
-#घोषणा FMC2_CSQCFGR2			0x208
-#घोषणा FMC2_CSQCFGR3			0x20c
-#घोषणा FMC2_CSQAR1			0x210
-#घोषणा FMC2_CSQAR2			0x214
-#घोषणा FMC2_CSQIER			0x220
-#घोषणा FMC2_CSQISR			0x224
-#घोषणा FMC2_CSQICR			0x228
-#घोषणा FMC2_CSQEMSR			0x230
-#घोषणा FMC2_BCHIER			0x250
-#घोषणा FMC2_BCHISR			0x254
-#घोषणा FMC2_BCHICR			0x258
-#घोषणा FMC2_BCHPBR1			0x260
-#घोषणा FMC2_BCHPBR2			0x264
-#घोषणा FMC2_BCHPBR3			0x268
-#घोषणा FMC2_BCHPBR4			0x26c
-#घोषणा FMC2_BCHDSR0			0x27c
-#घोषणा FMC2_BCHDSR1			0x280
-#घोषणा FMC2_BCHDSR2			0x284
-#घोषणा FMC2_BCHDSR3			0x288
-#घोषणा FMC2_BCHDSR4			0x28c
+#define FMC2_BCR1			0x0
+#define FMC2_PCR			0x80
+#define FMC2_SR				0x84
+#define FMC2_PMEM			0x88
+#define FMC2_PATT			0x8c
+#define FMC2_HECCR			0x94
+#define FMC2_ISR			0x184
+#define FMC2_ICR			0x188
+#define FMC2_CSQCR			0x200
+#define FMC2_CSQCFGR1			0x204
+#define FMC2_CSQCFGR2			0x208
+#define FMC2_CSQCFGR3			0x20c
+#define FMC2_CSQAR1			0x210
+#define FMC2_CSQAR2			0x214
+#define FMC2_CSQIER			0x220
+#define FMC2_CSQISR			0x224
+#define FMC2_CSQICR			0x228
+#define FMC2_CSQEMSR			0x230
+#define FMC2_BCHIER			0x250
+#define FMC2_BCHISR			0x254
+#define FMC2_BCHICR			0x258
+#define FMC2_BCHPBR1			0x260
+#define FMC2_BCHPBR2			0x264
+#define FMC2_BCHPBR3			0x268
+#define FMC2_BCHPBR4			0x26c
+#define FMC2_BCHDSR0			0x27c
+#define FMC2_BCHDSR1			0x280
+#define FMC2_BCHDSR2			0x284
+#define FMC2_BCHDSR3			0x288
+#define FMC2_BCHDSR4			0x28c
 
 /* Register: FMC2_BCR1 */
-#घोषणा FMC2_BCR1_FMC2EN		BIT(31)
+#define FMC2_BCR1_FMC2EN		BIT(31)
 
 /* Register: FMC2_PCR */
-#घोषणा FMC2_PCR_PWAITEN		BIT(1)
-#घोषणा FMC2_PCR_PBKEN			BIT(2)
-#घोषणा FMC2_PCR_PWID			GENMASK(5, 4)
-#घोषणा FMC2_PCR_PWID_BUSWIDTH_8	0
-#घोषणा FMC2_PCR_PWID_BUSWIDTH_16	1
-#घोषणा FMC2_PCR_ECCEN			BIT(6)
-#घोषणा FMC2_PCR_ECCALG			BIT(8)
-#घोषणा FMC2_PCR_TCLR			GENMASK(12, 9)
-#घोषणा FMC2_PCR_TCLR_DEFAULT		0xf
-#घोषणा FMC2_PCR_TAR			GENMASK(16, 13)
-#घोषणा FMC2_PCR_TAR_DEFAULT		0xf
-#घोषणा FMC2_PCR_ECCSS			GENMASK(19, 17)
-#घोषणा FMC2_PCR_ECCSS_512		1
-#घोषणा FMC2_PCR_ECCSS_2048		3
-#घोषणा FMC2_PCR_BCHECC			BIT(24)
-#घोषणा FMC2_PCR_WEN			BIT(25)
+#define FMC2_PCR_PWAITEN		BIT(1)
+#define FMC2_PCR_PBKEN			BIT(2)
+#define FMC2_PCR_PWID			GENMASK(5, 4)
+#define FMC2_PCR_PWID_BUSWIDTH_8	0
+#define FMC2_PCR_PWID_BUSWIDTH_16	1
+#define FMC2_PCR_ECCEN			BIT(6)
+#define FMC2_PCR_ECCALG			BIT(8)
+#define FMC2_PCR_TCLR			GENMASK(12, 9)
+#define FMC2_PCR_TCLR_DEFAULT		0xf
+#define FMC2_PCR_TAR			GENMASK(16, 13)
+#define FMC2_PCR_TAR_DEFAULT		0xf
+#define FMC2_PCR_ECCSS			GENMASK(19, 17)
+#define FMC2_PCR_ECCSS_512		1
+#define FMC2_PCR_ECCSS_2048		3
+#define FMC2_PCR_BCHECC			BIT(24)
+#define FMC2_PCR_WEN			BIT(25)
 
 /* Register: FMC2_SR */
-#घोषणा FMC2_SR_NWRF			BIT(6)
+#define FMC2_SR_NWRF			BIT(6)
 
 /* Register: FMC2_PMEM */
-#घोषणा FMC2_PMEM_MEMSET		GENMASK(7, 0)
-#घोषणा FMC2_PMEM_MEMWAIT		GENMASK(15, 8)
-#घोषणा FMC2_PMEM_MEMHOLD		GENMASK(23, 16)
-#घोषणा FMC2_PMEM_MEMHIZ		GENMASK(31, 24)
-#घोषणा FMC2_PMEM_DEFAULT		0x0a0a0a0a
+#define FMC2_PMEM_MEMSET		GENMASK(7, 0)
+#define FMC2_PMEM_MEMWAIT		GENMASK(15, 8)
+#define FMC2_PMEM_MEMHOLD		GENMASK(23, 16)
+#define FMC2_PMEM_MEMHIZ		GENMASK(31, 24)
+#define FMC2_PMEM_DEFAULT		0x0a0a0a0a
 
 /* Register: FMC2_PATT */
-#घोषणा FMC2_PATT_ATTSET		GENMASK(7, 0)
-#घोषणा FMC2_PATT_ATTWAIT		GENMASK(15, 8)
-#घोषणा FMC2_PATT_ATTHOLD		GENMASK(23, 16)
-#घोषणा FMC2_PATT_ATTHIZ		GENMASK(31, 24)
-#घोषणा FMC2_PATT_DEFAULT		0x0a0a0a0a
+#define FMC2_PATT_ATTSET		GENMASK(7, 0)
+#define FMC2_PATT_ATTWAIT		GENMASK(15, 8)
+#define FMC2_PATT_ATTHOLD		GENMASK(23, 16)
+#define FMC2_PATT_ATTHIZ		GENMASK(31, 24)
+#define FMC2_PATT_DEFAULT		0x0a0a0a0a
 
 /* Register: FMC2_ISR */
-#घोषणा FMC2_ISR_IHLF			BIT(1)
+#define FMC2_ISR_IHLF			BIT(1)
 
 /* Register: FMC2_ICR */
-#घोषणा FMC2_ICR_CIHLF			BIT(1)
+#define FMC2_ICR_CIHLF			BIT(1)
 
 /* Register: FMC2_CSQCR */
-#घोषणा FMC2_CSQCR_CSQSTART		BIT(0)
+#define FMC2_CSQCR_CSQSTART		BIT(0)
 
 /* Register: FMC2_CSQCFGR1 */
-#घोषणा FMC2_CSQCFGR1_CMD2EN		BIT(1)
-#घोषणा FMC2_CSQCFGR1_DMADEN		BIT(2)
-#घोषणा FMC2_CSQCFGR1_ACYNBR		GENMASK(6, 4)
-#घोषणा FMC2_CSQCFGR1_CMD1		GENMASK(15, 8)
-#घोषणा FMC2_CSQCFGR1_CMD2		GENMASK(23, 16)
-#घोषणा FMC2_CSQCFGR1_CMD1T		BIT(24)
-#घोषणा FMC2_CSQCFGR1_CMD2T		BIT(25)
+#define FMC2_CSQCFGR1_CMD2EN		BIT(1)
+#define FMC2_CSQCFGR1_DMADEN		BIT(2)
+#define FMC2_CSQCFGR1_ACYNBR		GENMASK(6, 4)
+#define FMC2_CSQCFGR1_CMD1		GENMASK(15, 8)
+#define FMC2_CSQCFGR1_CMD2		GENMASK(23, 16)
+#define FMC2_CSQCFGR1_CMD1T		BIT(24)
+#define FMC2_CSQCFGR1_CMD2T		BIT(25)
 
 /* Register: FMC2_CSQCFGR2 */
-#घोषणा FMC2_CSQCFGR2_SQSDTEN		BIT(0)
-#घोषणा FMC2_CSQCFGR2_RCMD2EN		BIT(1)
-#घोषणा FMC2_CSQCFGR2_DMASEN		BIT(2)
-#घोषणा FMC2_CSQCFGR2_RCMD1		GENMASK(15, 8)
-#घोषणा FMC2_CSQCFGR2_RCMD2		GENMASK(23, 16)
-#घोषणा FMC2_CSQCFGR2_RCMD1T		BIT(24)
-#घोषणा FMC2_CSQCFGR2_RCMD2T		BIT(25)
+#define FMC2_CSQCFGR2_SQSDTEN		BIT(0)
+#define FMC2_CSQCFGR2_RCMD2EN		BIT(1)
+#define FMC2_CSQCFGR2_DMASEN		BIT(2)
+#define FMC2_CSQCFGR2_RCMD1		GENMASK(15, 8)
+#define FMC2_CSQCFGR2_RCMD2		GENMASK(23, 16)
+#define FMC2_CSQCFGR2_RCMD1T		BIT(24)
+#define FMC2_CSQCFGR2_RCMD2T		BIT(25)
 
 /* Register: FMC2_CSQCFGR3 */
-#घोषणा FMC2_CSQCFGR3_SNBR		GENMASK(13, 8)
-#घोषणा FMC2_CSQCFGR3_AC1T		BIT(16)
-#घोषणा FMC2_CSQCFGR3_AC2T		BIT(17)
-#घोषणा FMC2_CSQCFGR3_AC3T		BIT(18)
-#घोषणा FMC2_CSQCFGR3_AC4T		BIT(19)
-#घोषणा FMC2_CSQCFGR3_AC5T		BIT(20)
-#घोषणा FMC2_CSQCFGR3_SDT		BIT(21)
-#घोषणा FMC2_CSQCFGR3_RAC1T		BIT(22)
-#घोषणा FMC2_CSQCFGR3_RAC2T		BIT(23)
+#define FMC2_CSQCFGR3_SNBR		GENMASK(13, 8)
+#define FMC2_CSQCFGR3_AC1T		BIT(16)
+#define FMC2_CSQCFGR3_AC2T		BIT(17)
+#define FMC2_CSQCFGR3_AC3T		BIT(18)
+#define FMC2_CSQCFGR3_AC4T		BIT(19)
+#define FMC2_CSQCFGR3_AC5T		BIT(20)
+#define FMC2_CSQCFGR3_SDT		BIT(21)
+#define FMC2_CSQCFGR3_RAC1T		BIT(22)
+#define FMC2_CSQCFGR3_RAC2T		BIT(23)
 
 /* Register: FMC2_CSQCAR1 */
-#घोषणा FMC2_CSQCAR1_ADDC1		GENMASK(7, 0)
-#घोषणा FMC2_CSQCAR1_ADDC2		GENMASK(15, 8)
-#घोषणा FMC2_CSQCAR1_ADDC3		GENMASK(23, 16)
-#घोषणा FMC2_CSQCAR1_ADDC4		GENMASK(31, 24)
+#define FMC2_CSQCAR1_ADDC1		GENMASK(7, 0)
+#define FMC2_CSQCAR1_ADDC2		GENMASK(15, 8)
+#define FMC2_CSQCAR1_ADDC3		GENMASK(23, 16)
+#define FMC2_CSQCAR1_ADDC4		GENMASK(31, 24)
 
 /* Register: FMC2_CSQCAR2 */
-#घोषणा FMC2_CSQCAR2_ADDC5		GENMASK(7, 0)
-#घोषणा FMC2_CSQCAR2_न_अंकDCEN		GENMASK(11, 10)
-#घोषणा FMC2_CSQCAR2_SAO		GENMASK(31, 16)
+#define FMC2_CSQCAR2_ADDC5		GENMASK(7, 0)
+#define FMC2_CSQCAR2_NANDCEN		GENMASK(11, 10)
+#define FMC2_CSQCAR2_SAO		GENMASK(31, 16)
 
 /* Register: FMC2_CSQIER */
-#घोषणा FMC2_CSQIER_TCIE		BIT(0)
+#define FMC2_CSQIER_TCIE		BIT(0)
 
 /* Register: FMC2_CSQICR */
-#घोषणा FMC2_CSQICR_CLEAR_IRQ		GENMASK(4, 0)
+#define FMC2_CSQICR_CLEAR_IRQ		GENMASK(4, 0)
 
 /* Register: FMC2_CSQEMSR */
-#घोषणा FMC2_CSQEMSR_SEM		GENMASK(15, 0)
+#define FMC2_CSQEMSR_SEM		GENMASK(15, 0)
 
 /* Register: FMC2_BCHIER */
-#घोषणा FMC2_BCHIER_DERIE		BIT(1)
-#घोषणा FMC2_BCHIER_EPBRIE		BIT(4)
+#define FMC2_BCHIER_DERIE		BIT(1)
+#define FMC2_BCHIER_EPBRIE		BIT(4)
 
 /* Register: FMC2_BCHICR */
-#घोषणा FMC2_BCHICR_CLEAR_IRQ		GENMASK(4, 0)
+#define FMC2_BCHICR_CLEAR_IRQ		GENMASK(4, 0)
 
 /* Register: FMC2_BCHDSR0 */
-#घोषणा FMC2_BCHDSR0_DUE		BIT(0)
-#घोषणा FMC2_BCHDSR0_DEF		BIT(1)
-#घोषणा FMC2_BCHDSR0_DEN		GENMASK(7, 4)
+#define FMC2_BCHDSR0_DUE		BIT(0)
+#define FMC2_BCHDSR0_DEF		BIT(1)
+#define FMC2_BCHDSR0_DEN		GENMASK(7, 4)
 
 /* Register: FMC2_BCHDSR1 */
-#घोषणा FMC2_BCHDSR1_EBP1		GENMASK(12, 0)
-#घोषणा FMC2_BCHDSR1_EBP2		GENMASK(28, 16)
+#define FMC2_BCHDSR1_EBP1		GENMASK(12, 0)
+#define FMC2_BCHDSR1_EBP2		GENMASK(28, 16)
 
 /* Register: FMC2_BCHDSR2 */
-#घोषणा FMC2_BCHDSR2_EBP3		GENMASK(12, 0)
-#घोषणा FMC2_BCHDSR2_EBP4		GENMASK(28, 16)
+#define FMC2_BCHDSR2_EBP3		GENMASK(12, 0)
+#define FMC2_BCHDSR2_EBP4		GENMASK(28, 16)
 
 /* Register: FMC2_BCHDSR3 */
-#घोषणा FMC2_BCHDSR3_EBP5		GENMASK(12, 0)
-#घोषणा FMC2_BCHDSR3_EBP6		GENMASK(28, 16)
+#define FMC2_BCHDSR3_EBP5		GENMASK(12, 0)
+#define FMC2_BCHDSR3_EBP6		GENMASK(28, 16)
 
 /* Register: FMC2_BCHDSR4 */
-#घोषणा FMC2_BCHDSR4_EBP7		GENMASK(12, 0)
-#घोषणा FMC2_BCHDSR4_EBP8		GENMASK(28, 16)
+#define FMC2_BCHDSR4_EBP7		GENMASK(12, 0)
+#define FMC2_BCHDSR4_EBP8		GENMASK(28, 16)
 
-क्रमागत sपंचांग32_fmc2_ecc अणु
+enum stm32_fmc2_ecc {
 	FMC2_ECC_HAM = 1,
 	FMC2_ECC_BCH4 = 4,
 	FMC2_ECC_BCH8 = 8
-पूर्ण;
+};
 
-क्रमागत sपंचांग32_fmc2_irq_state अणु
+enum stm32_fmc2_irq_state {
 	FMC2_IRQ_UNKNOWN = 0,
 	FMC2_IRQ_BCH,
 	FMC2_IRQ_SEQ
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_fmc2_timings अणु
+struct stm32_fmc2_timings {
 	u8 tclr;
 	u8 tar;
 	u8 thiz;
-	u8 tरुको;
+	u8 twait;
 	u8 thold_mem;
 	u8 tset_mem;
 	u8 thold_att;
 	u8 tset_att;
-पूर्ण;
+};
 
-काष्ठा sपंचांग32_fmc2_nand अणु
-	काष्ठा nand_chip chip;
-	काष्ठा sपंचांग32_fmc2_timings timings;
-	पूर्णांक ncs;
-	पूर्णांक cs_used[FMC2_MAX_CE];
-पूर्ण;
+struct stm32_fmc2_nand {
+	struct nand_chip chip;
+	struct stm32_fmc2_timings timings;
+	int ncs;
+	int cs_used[FMC2_MAX_CE];
+};
 
-अटल अंतरभूत काष्ठा sपंचांग32_fmc2_nand *to_fmc2_nand(काष्ठा nand_chip *chip)
-अणु
-	वापस container_of(chip, काष्ठा sपंचांग32_fmc2_nand, chip);
-पूर्ण
+static inline struct stm32_fmc2_nand *to_fmc2_nand(struct nand_chip *chip)
+{
+	return container_of(chip, struct stm32_fmc2_nand, chip);
+}
 
-काष्ठा sपंचांग32_fmc2_nfc अणु
-	काष्ठा nand_controller base;
-	काष्ठा sपंचांग32_fmc2_nand nand;
-	काष्ठा device *dev;
-	काष्ठा device *cdev;
-	काष्ठा regmap *regmap;
-	व्योम __iomem *data_base[FMC2_MAX_CE];
-	व्योम __iomem *cmd_base[FMC2_MAX_CE];
-	व्योम __iomem *addr_base[FMC2_MAX_CE];
+struct stm32_fmc2_nfc {
+	struct nand_controller base;
+	struct stm32_fmc2_nand nand;
+	struct device *dev;
+	struct device *cdev;
+	struct regmap *regmap;
+	void __iomem *data_base[FMC2_MAX_CE];
+	void __iomem *cmd_base[FMC2_MAX_CE];
+	void __iomem *addr_base[FMC2_MAX_CE];
 	phys_addr_t io_phys_addr;
 	phys_addr_t data_phys_addr[FMC2_MAX_CE];
-	काष्ठा clk *clk;
+	struct clk *clk;
 	u8 irq_state;
 
-	काष्ठा dma_chan *dma_tx_ch;
-	काष्ठा dma_chan *dma_rx_ch;
-	काष्ठा dma_chan *dma_ecc_ch;
-	काष्ठा sg_table dma_data_sg;
-	काष्ठा sg_table dma_ecc_sg;
+	struct dma_chan *dma_tx_ch;
+	struct dma_chan *dma_rx_ch;
+	struct dma_chan *dma_ecc_ch;
+	struct sg_table dma_data_sg;
+	struct sg_table dma_ecc_sg;
 	u8 *ecc_buf;
-	पूर्णांक dma_ecc_len;
+	int dma_ecc_len;
 
-	काष्ठा completion complete;
-	काष्ठा completion dma_data_complete;
-	काष्ठा completion dma_ecc_complete;
+	struct completion complete;
+	struct completion dma_data_complete;
+	struct completion dma_ecc_complete;
 
-	u8 cs_asचिन्हित;
-	पूर्णांक cs_sel;
-पूर्ण;
+	u8 cs_assigned;
+	int cs_sel;
+};
 
-अटल अंतरभूत काष्ठा sपंचांग32_fmc2_nfc *to_sपंचांग32_nfc(काष्ठा nand_controller *base)
-अणु
-	वापस container_of(base, काष्ठा sपंचांग32_fmc2_nfc, base);
-पूर्ण
+static inline struct stm32_fmc2_nfc *to_stm32_nfc(struct nand_controller *base)
+{
+	return container_of(base, struct stm32_fmc2_nfc, base);
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_timings_init(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	काष्ठा sपंचांग32_fmc2_nand *nand = to_fmc2_nand(chip);
-	काष्ठा sपंचांग32_fmc2_timings *timings = &nand->timings;
+static void stm32_fmc2_nfc_timings_init(struct nand_chip *chip)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	struct stm32_fmc2_nand *nand = to_fmc2_nand(chip);
+	struct stm32_fmc2_timings *timings = &nand->timings;
 	u32 pmem, patt;
 
 	/* Set tclr/tar timings */
@@ -290,39 +289,39 @@
 			   FIELD_PREP(FMC2_PCR_TCLR, timings->tclr) |
 			   FIELD_PREP(FMC2_PCR_TAR, timings->tar));
 
-	/* Set tset/tरुको/thold/thiz timings in common bank */
+	/* Set tset/twait/thold/thiz timings in common bank */
 	pmem = FIELD_PREP(FMC2_PMEM_MEMSET, timings->tset_mem);
-	pmem |= FIELD_PREP(FMC2_PMEM_MEMWAIT, timings->tरुको);
+	pmem |= FIELD_PREP(FMC2_PMEM_MEMWAIT, timings->twait);
 	pmem |= FIELD_PREP(FMC2_PMEM_MEMHOLD, timings->thold_mem);
 	pmem |= FIELD_PREP(FMC2_PMEM_MEMHIZ, timings->thiz);
-	regmap_ग_लिखो(nfc->regmap, FMC2_PMEM, pmem);
+	regmap_write(nfc->regmap, FMC2_PMEM, pmem);
 
-	/* Set tset/tरुको/thold/thiz timings in attribut bank */
+	/* Set tset/twait/thold/thiz timings in attribut bank */
 	patt = FIELD_PREP(FMC2_PATT_ATTSET, timings->tset_att);
-	patt |= FIELD_PREP(FMC2_PATT_ATTWAIT, timings->tरुको);
+	patt |= FIELD_PREP(FMC2_PATT_ATTWAIT, timings->twait);
 	patt |= FIELD_PREP(FMC2_PATT_ATTHOLD, timings->thold_att);
 	patt |= FIELD_PREP(FMC2_PATT_ATTHIZ, timings->thiz);
-	regmap_ग_लिखो(nfc->regmap, FMC2_PATT, patt);
-पूर्ण
+	regmap_write(nfc->regmap, FMC2_PATT, patt);
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_setup(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+static void stm32_fmc2_nfc_setup(struct nand_chip *chip)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 	u32 pcr = 0, pcr_mask;
 
-	/* Configure ECC algorithm (शेष configuration is Hamming) */
+	/* Configure ECC algorithm (default configuration is Hamming) */
 	pcr_mask = FMC2_PCR_ECCALG;
 	pcr_mask |= FMC2_PCR_BCHECC;
-	अगर (chip->ecc.strength == FMC2_ECC_BCH8) अणु
+	if (chip->ecc.strength == FMC2_ECC_BCH8) {
 		pcr |= FMC2_PCR_ECCALG;
 		pcr |= FMC2_PCR_BCHECC;
-	पूर्ण अन्यथा अगर (chip->ecc.strength == FMC2_ECC_BCH4) अणु
+	} else if (chip->ecc.strength == FMC2_ECC_BCH4) {
 		pcr |= FMC2_PCR_ECCALG;
-	पूर्ण
+	}
 
 	/* Set buswidth */
 	pcr_mask |= FMC2_PCR_PWID;
-	अगर (chip->options & न_अंकD_BUSWIDTH_16)
+	if (chip->options & NAND_BUSWIDTH_16)
 		pcr |= FIELD_PREP(FMC2_PCR_PWID, FMC2_PCR_PWID_BUSWIDTH_16);
 
 	/* Set ECC sector size */
@@ -330,24 +329,24 @@
 	pcr |= FIELD_PREP(FMC2_PCR_ECCSS, FMC2_PCR_ECCSS_512);
 
 	regmap_update_bits(nfc->regmap, FMC2_PCR, pcr_mask, pcr);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_select_chip(काष्ठा nand_chip *chip, पूर्णांक chipnr)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	काष्ठा sपंचांग32_fmc2_nand *nand = to_fmc2_nand(chip);
-	काष्ठा dma_slave_config dma_cfg;
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_select_chip(struct nand_chip *chip, int chipnr)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	struct stm32_fmc2_nand *nand = to_fmc2_nand(chip);
+	struct dma_slave_config dma_cfg;
+	int ret;
 
-	अगर (nand->cs_used[chipnr] == nfc->cs_sel)
-		वापस 0;
+	if (nand->cs_used[chipnr] == nfc->cs_sel)
+		return 0;
 
 	nfc->cs_sel = nand->cs_used[chipnr];
-	sपंचांग32_fmc2_nfc_setup(chip);
-	sपंचांग32_fmc2_nfc_timings_init(chip);
+	stm32_fmc2_nfc_setup(chip);
+	stm32_fmc2_nfc_timings_init(chip);
 
-	अगर (nfc->dma_tx_ch && nfc->dma_rx_ch) अणु
-		स_रखो(&dma_cfg, 0, माप(dma_cfg));
+	if (nfc->dma_tx_ch && nfc->dma_rx_ch) {
+		memset(&dma_cfg, 0, sizeof(dma_cfg));
 		dma_cfg.src_addr = nfc->data_phys_addr[nfc->cs_sel];
 		dma_cfg.dst_addr = nfc->data_phys_addr[nfc->cs_sel];
 		dma_cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -356,281 +355,281 @@
 		dma_cfg.dst_maxburst = 32;
 
 		ret = dmaengine_slave_config(nfc->dma_tx_ch, &dma_cfg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(nfc->dev, "tx DMA engine slave config failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		ret = dmaengine_slave_config(nfc->dma_rx_ch, &dma_cfg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(nfc->dev, "rx DMA engine slave config failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (nfc->dma_ecc_ch) अणु
+	if (nfc->dma_ecc_ch) {
 		/*
-		 * Hamming: we पढ़ो HECCR रेजिस्टर
-		 * BCH4/BCH8: we पढ़ो BCHDSRSx रेजिस्टरs
+		 * Hamming: we read HECCR register
+		 * BCH4/BCH8: we read BCHDSRSx registers
 		 */
-		स_रखो(&dma_cfg, 0, माप(dma_cfg));
+		memset(&dma_cfg, 0, sizeof(dma_cfg));
 		dma_cfg.src_addr = nfc->io_phys_addr;
 		dma_cfg.src_addr += chip->ecc.strength == FMC2_ECC_HAM ?
 				    FMC2_HECCR : FMC2_BCHDSR0;
 		dma_cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 
 		ret = dmaengine_slave_config(nfc->dma_ecc_ch, &dma_cfg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(nfc->dev, "ECC DMA engine slave config failed\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Calculate ECC length needed क्रम one sector */
+		/* Calculate ECC length needed for one sector */
 		nfc->dma_ecc_len = chip->ecc.strength == FMC2_ECC_HAM ?
 				   FMC2_HECCR_LEN : FMC2_BCHDSRS_LEN;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_set_buswidth_16(काष्ठा sपंचांग32_fmc2_nfc *nfc, bool set)
-अणु
+static void stm32_fmc2_nfc_set_buswidth_16(struct stm32_fmc2_nfc *nfc, bool set)
+{
 	u32 pcr;
 
 	pcr = set ? FIELD_PREP(FMC2_PCR_PWID, FMC2_PCR_PWID_BUSWIDTH_16) :
 		    FIELD_PREP(FMC2_PCR_PWID, FMC2_PCR_PWID_BUSWIDTH_8);
 
 	regmap_update_bits(nfc->regmap, FMC2_PCR, FMC2_PCR_PWID, pcr);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_set_ecc(काष्ठा sपंचांग32_fmc2_nfc *nfc, bool enable)
-अणु
+static void stm32_fmc2_nfc_set_ecc(struct stm32_fmc2_nfc *nfc, bool enable)
+{
 	regmap_update_bits(nfc->regmap, FMC2_PCR, FMC2_PCR_ECCEN,
 			   enable ? FMC2_PCR_ECCEN : 0);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_enable_seq_irq(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
+static void stm32_fmc2_nfc_enable_seq_irq(struct stm32_fmc2_nfc *nfc)
+{
 	nfc->irq_state = FMC2_IRQ_SEQ;
 
 	regmap_update_bits(nfc->regmap, FMC2_CSQIER,
 			   FMC2_CSQIER_TCIE, FMC2_CSQIER_TCIE);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_disable_seq_irq(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
+static void stm32_fmc2_nfc_disable_seq_irq(struct stm32_fmc2_nfc *nfc)
+{
 	regmap_update_bits(nfc->regmap, FMC2_CSQIER, FMC2_CSQIER_TCIE, 0);
 
 	nfc->irq_state = FMC2_IRQ_UNKNOWN;
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_clear_seq_irq(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
-	regmap_ग_लिखो(nfc->regmap, FMC2_CSQICR, FMC2_CSQICR_CLEAR_IRQ);
-पूर्ण
+static void stm32_fmc2_nfc_clear_seq_irq(struct stm32_fmc2_nfc *nfc)
+{
+	regmap_write(nfc->regmap, FMC2_CSQICR, FMC2_CSQICR_CLEAR_IRQ);
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_enable_bch_irq(काष्ठा sपंचांग32_fmc2_nfc *nfc, पूर्णांक mode)
-अणु
+static void stm32_fmc2_nfc_enable_bch_irq(struct stm32_fmc2_nfc *nfc, int mode)
+{
 	nfc->irq_state = FMC2_IRQ_BCH;
 
-	अगर (mode == न_अंकD_ECC_WRITE)
+	if (mode == NAND_ECC_WRITE)
 		regmap_update_bits(nfc->regmap, FMC2_BCHIER,
 				   FMC2_BCHIER_EPBRIE, FMC2_BCHIER_EPBRIE);
-	अन्यथा
+	else
 		regmap_update_bits(nfc->regmap, FMC2_BCHIER,
 				   FMC2_BCHIER_DERIE, FMC2_BCHIER_DERIE);
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_disable_bch_irq(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
+static void stm32_fmc2_nfc_disable_bch_irq(struct stm32_fmc2_nfc *nfc)
+{
 	regmap_update_bits(nfc->regmap, FMC2_BCHIER,
 			   FMC2_BCHIER_DERIE | FMC2_BCHIER_EPBRIE, 0);
 
 	nfc->irq_state = FMC2_IRQ_UNKNOWN;
-पूर्ण
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_clear_bch_irq(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
-	regmap_ग_लिखो(nfc->regmap, FMC2_BCHICR, FMC2_BCHICR_CLEAR_IRQ);
-पूर्ण
+static void stm32_fmc2_nfc_clear_bch_irq(struct stm32_fmc2_nfc *nfc)
+{
+	regmap_write(nfc->regmap, FMC2_BCHICR, FMC2_BCHICR_CLEAR_IRQ);
+}
 
 /*
  * Enable ECC logic and reset syndrome/parity bits previously calculated
  * Syndrome/parity bits is cleared by setting the ECCEN bit to 0
  */
-अटल व्योम sपंचांग32_fmc2_nfc_hwctl(काष्ठा nand_chip *chip, पूर्णांक mode)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+static void stm32_fmc2_nfc_hwctl(struct nand_chip *chip, int mode)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 
-	sपंचांग32_fmc2_nfc_set_ecc(nfc, false);
+	stm32_fmc2_nfc_set_ecc(nfc, false);
 
-	अगर (chip->ecc.strength != FMC2_ECC_HAM) अणु
+	if (chip->ecc.strength != FMC2_ECC_HAM) {
 		regmap_update_bits(nfc->regmap, FMC2_PCR, FMC2_PCR_WEN,
-				   mode == न_अंकD_ECC_WRITE ? FMC2_PCR_WEN : 0);
+				   mode == NAND_ECC_WRITE ? FMC2_PCR_WEN : 0);
 
 		reinit_completion(&nfc->complete);
-		sपंचांग32_fmc2_nfc_clear_bch_irq(nfc);
-		sपंचांग32_fmc2_nfc_enable_bch_irq(nfc, mode);
-	पूर्ण
+		stm32_fmc2_nfc_clear_bch_irq(nfc);
+		stm32_fmc2_nfc_enable_bch_irq(nfc, mode);
+	}
 
-	sपंचांग32_fmc2_nfc_set_ecc(nfc, true);
-पूर्ण
+	stm32_fmc2_nfc_set_ecc(nfc, true);
+}
 
 /*
  * ECC Hamming calculation
- * ECC is 3 bytes क्रम 512 bytes of data (supports error correction up to
+ * ECC is 3 bytes for 512 bytes of data (supports error correction up to
  * max of 1-bit)
  */
-अटल व्योम sपंचांग32_fmc2_nfc_ham_set_ecc(स्थिर u32 ecc_sta, u8 *ecc)
-अणु
+static void stm32_fmc2_nfc_ham_set_ecc(const u32 ecc_sta, u8 *ecc)
+{
 	ecc[0] = ecc_sta;
 	ecc[1] = ecc_sta >> 8;
 	ecc[2] = ecc_sta >> 16;
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_ham_calculate(काष्ठा nand_chip *chip, स्थिर u8 *data,
+static int stm32_fmc2_nfc_ham_calculate(struct nand_chip *chip, const u8 *data,
 					u8 *ecc)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 	u32 sr, heccr;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो_poll_समयout(nfc->regmap, FMC2_SR, sr,
+	ret = regmap_read_poll_timeout(nfc->regmap, FMC2_SR, sr,
 				       sr & FMC2_SR_NWRF, 1,
 				       1000 * FMC2_TIMEOUT_MS);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(nfc->dev, "ham timeout\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	regmap_पढ़ो(nfc->regmap, FMC2_HECCR, &heccr);
-	sपंचांग32_fmc2_nfc_ham_set_ecc(heccr, ecc);
-	sपंचांग32_fmc2_nfc_set_ecc(nfc, false);
+	regmap_read(nfc->regmap, FMC2_HECCR, &heccr);
+	stm32_fmc2_nfc_ham_set_ecc(heccr, ecc);
+	stm32_fmc2_nfc_set_ecc(nfc, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_ham_correct(काष्ठा nand_chip *chip, u8 *dat,
-				      u8 *पढ़ो_ecc, u8 *calc_ecc)
-अणु
+static int stm32_fmc2_nfc_ham_correct(struct nand_chip *chip, u8 *dat,
+				      u8 *read_ecc, u8 *calc_ecc)
+{
 	u8 bit_position = 0, b0, b1, b2;
 	u32 byte_addr = 0, b;
-	u32 i, shअगरting = 1;
+	u32 i, shifting = 1;
 
-	/* Indicate which bit and byte is faulty (अगर any) */
-	b0 = पढ़ो_ecc[0] ^ calc_ecc[0];
-	b1 = पढ़ो_ecc[1] ^ calc_ecc[1];
-	b2 = पढ़ो_ecc[2] ^ calc_ecc[2];
+	/* Indicate which bit and byte is faulty (if any) */
+	b0 = read_ecc[0] ^ calc_ecc[0];
+	b1 = read_ecc[1] ^ calc_ecc[1];
+	b2 = read_ecc[2] ^ calc_ecc[2];
 	b = b0 | (b1 << 8) | (b2 << 16);
 
 	/* No errors */
-	अगर (likely(!b))
-		वापस 0;
+	if (likely(!b))
+		return 0;
 
 	/* Calculate bit position */
-	क्रम (i = 0; i < 3; i++) अणु
-		चयन (b % 4) अणु
-		हाल 2:
-			bit_position += shअगरting;
-			अवरोध;
-		हाल 1:
-			अवरोध;
-		शेष:
-			वापस -EBADMSG;
-		पूर्ण
-		shअगरting <<= 1;
+	for (i = 0; i < 3; i++) {
+		switch (b % 4) {
+		case 2:
+			bit_position += shifting;
+			break;
+		case 1:
+			break;
+		default:
+			return -EBADMSG;
+		}
+		shifting <<= 1;
 		b >>= 2;
-	पूर्ण
+	}
 
 	/* Calculate byte position */
-	shअगरting = 1;
-	क्रम (i = 0; i < 9; i++) अणु
-		चयन (b % 4) अणु
-		हाल 2:
-			byte_addr += shअगरting;
-			अवरोध;
-		हाल 1:
-			अवरोध;
-		शेष:
-			वापस -EBADMSG;
-		पूर्ण
-		shअगरting <<= 1;
+	shifting = 1;
+	for (i = 0; i < 9; i++) {
+		switch (b % 4) {
+		case 2:
+			byte_addr += shifting;
+			break;
+		case 1:
+			break;
+		default:
+			return -EBADMSG;
+		}
+		shifting <<= 1;
 		b >>= 2;
-	पूर्ण
+	}
 
 	/* Flip the bit */
 	dat[byte_addr] ^= (1 << bit_position);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * ECC BCH calculation and correction
- * ECC is 7/13 bytes क्रम 512 bytes of data (supports error correction up to
+ * ECC is 7/13 bytes for 512 bytes of data (supports error correction up to
  * max of 4-bit/8-bit)
  */
-अटल पूर्णांक sपंचांग32_fmc2_nfc_bch_calculate(काष्ठा nand_chip *chip, स्थिर u8 *data,
+static int stm32_fmc2_nfc_bch_calculate(struct nand_chip *chip, const u8 *data,
 					u8 *ecc)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 	u32 bchpbr;
 
-	/* Wait until the BCH code is पढ़ोy */
-	अगर (!रुको_क्रम_completion_समयout(&nfc->complete,
-					 msecs_to_jअगरfies(FMC2_TIMEOUT_MS))) अणु
+	/* Wait until the BCH code is ready */
+	if (!wait_for_completion_timeout(&nfc->complete,
+					 msecs_to_jiffies(FMC2_TIMEOUT_MS))) {
 		dev_err(nfc->dev, "bch timeout\n");
-		sपंचांग32_fmc2_nfc_disable_bch_irq(nfc);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		stm32_fmc2_nfc_disable_bch_irq(nfc);
+		return -ETIMEDOUT;
+	}
 
 	/* Read parity bits */
-	regmap_पढ़ो(nfc->regmap, FMC2_BCHPBR1, &bchpbr);
+	regmap_read(nfc->regmap, FMC2_BCHPBR1, &bchpbr);
 	ecc[0] = bchpbr;
 	ecc[1] = bchpbr >> 8;
 	ecc[2] = bchpbr >> 16;
 	ecc[3] = bchpbr >> 24;
 
-	regmap_पढ़ो(nfc->regmap, FMC2_BCHPBR2, &bchpbr);
+	regmap_read(nfc->regmap, FMC2_BCHPBR2, &bchpbr);
 	ecc[4] = bchpbr;
 	ecc[5] = bchpbr >> 8;
 	ecc[6] = bchpbr >> 16;
 
-	अगर (chip->ecc.strength == FMC2_ECC_BCH8) अणु
+	if (chip->ecc.strength == FMC2_ECC_BCH8) {
 		ecc[7] = bchpbr >> 24;
 
-		regmap_पढ़ो(nfc->regmap, FMC2_BCHPBR3, &bchpbr);
+		regmap_read(nfc->regmap, FMC2_BCHPBR3, &bchpbr);
 		ecc[8] = bchpbr;
 		ecc[9] = bchpbr >> 8;
 		ecc[10] = bchpbr >> 16;
 		ecc[11] = bchpbr >> 24;
 
-		regmap_पढ़ो(nfc->regmap, FMC2_BCHPBR4, &bchpbr);
+		regmap_read(nfc->regmap, FMC2_BCHPBR4, &bchpbr);
 		ecc[12] = bchpbr;
-	पूर्ण
+	}
 
-	sपंचांग32_fmc2_nfc_set_ecc(nfc, false);
+	stm32_fmc2_nfc_set_ecc(nfc, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_bch_decode(पूर्णांक eccsize, u8 *dat, u32 *ecc_sta)
-अणु
+static int stm32_fmc2_nfc_bch_decode(int eccsize, u8 *dat, u32 *ecc_sta)
+{
 	u32 bchdsr0 = ecc_sta[0];
 	u32 bchdsr1 = ecc_sta[1];
 	u32 bchdsr2 = ecc_sta[2];
 	u32 bchdsr3 = ecc_sta[3];
 	u32 bchdsr4 = ecc_sta[4];
 	u16 pos[8];
-	पूर्णांक i, den;
-	अचिन्हित पूर्णांक nb_errs = 0;
+	int i, den;
+	unsigned int nb_errs = 0;
 
 	/* No errors found */
-	अगर (likely(!(bchdsr0 & FMC2_BCHDSR0_DEF)))
-		वापस 0;
+	if (likely(!(bchdsr0 & FMC2_BCHDSR0_DEF)))
+		return 0;
 
 	/* Too many errors detected */
-	अगर (unlikely(bchdsr0 & FMC2_BCHDSR0_DUE))
-		वापस -EBADMSG;
+	if (unlikely(bchdsr0 & FMC2_BCHDSR0_DUE))
+		return -EBADMSG;
 
 	pos[0] = FIELD_GET(FMC2_BCHDSR1_EBP1, bchdsr1);
 	pos[1] = FIELD_GET(FMC2_BCHDSR1_EBP2, bchdsr1);
@@ -642,106 +641,106 @@
 	pos[7] = FIELD_GET(FMC2_BCHDSR4_EBP8, bchdsr4);
 
 	den = FIELD_GET(FMC2_BCHDSR0_DEN, bchdsr0);
-	क्रम (i = 0; i < den; i++) अणु
-		अगर (pos[i] < eccsize * 8) अणु
-			change_bit(pos[i], (अचिन्हित दीर्घ *)dat);
+	for (i = 0; i < den; i++) {
+		if (pos[i] < eccsize * 8) {
+			change_bit(pos[i], (unsigned long *)dat);
 			nb_errs++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस nb_errs;
-पूर्ण
+	return nb_errs;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_bch_correct(काष्ठा nand_chip *chip, u8 *dat,
-				      u8 *पढ़ो_ecc, u8 *calc_ecc)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+static int stm32_fmc2_nfc_bch_correct(struct nand_chip *chip, u8 *dat,
+				      u8 *read_ecc, u8 *calc_ecc)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 	u32 ecc_sta[5];
 
-	/* Wait until the decoding error is पढ़ोy */
-	अगर (!रुको_क्रम_completion_समयout(&nfc->complete,
-					 msecs_to_jअगरfies(FMC2_TIMEOUT_MS))) अणु
+	/* Wait until the decoding error is ready */
+	if (!wait_for_completion_timeout(&nfc->complete,
+					 msecs_to_jiffies(FMC2_TIMEOUT_MS))) {
 		dev_err(nfc->dev, "bch timeout\n");
-		sपंचांग32_fmc2_nfc_disable_bch_irq(nfc);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		stm32_fmc2_nfc_disable_bch_irq(nfc);
+		return -ETIMEDOUT;
+	}
 
-	regmap_bulk_पढ़ो(nfc->regmap, FMC2_BCHDSR0, ecc_sta, 5);
+	regmap_bulk_read(nfc->regmap, FMC2_BCHDSR0, ecc_sta, 5);
 
-	sपंचांग32_fmc2_nfc_set_ecc(nfc, false);
+	stm32_fmc2_nfc_set_ecc(nfc, false);
 
-	वापस sपंचांग32_fmc2_nfc_bch_decode(chip->ecc.size, dat, ecc_sta);
-पूर्ण
+	return stm32_fmc2_nfc_bch_decode(chip->ecc.size, dat, ecc_sta);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_पढ़ो_page(काष्ठा nand_chip *chip, u8 *buf,
-				    पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	पूर्णांक ret, i, s, stat, eccsize = chip->ecc.size;
-	पूर्णांक eccbytes = chip->ecc.bytes;
-	पूर्णांक eccsteps = chip->ecc.steps;
-	पूर्णांक eccstrength = chip->ecc.strength;
+static int stm32_fmc2_nfc_read_page(struct nand_chip *chip, u8 *buf,
+				    int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	int ret, i, s, stat, eccsize = chip->ecc.size;
+	int eccbytes = chip->ecc.bytes;
+	int eccsteps = chip->ecc.steps;
+	int eccstrength = chip->ecc.strength;
 	u8 *p = buf;
 	u8 *ecc_calc = chip->ecc.calc_buf;
 	u8 *ecc_code = chip->ecc.code_buf;
-	अचिन्हित पूर्णांक max_bitflips = 0;
+	unsigned int max_bitflips = 0;
 
-	ret = nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
-	अगर (ret)
-		वापस ret;
+	ret = nand_read_page_op(chip, page, 0, NULL, 0);
+	if (ret)
+		return ret;
 
-	क्रम (i = mtd->ग_लिखोsize + FMC2_BBM_LEN, s = 0; s < eccsteps;
-	     s++, i += eccbytes, p += eccsize) अणु
-		chip->ecc.hwctl(chip, न_अंकD_ECC_READ);
+	for (i = mtd->writesize + FMC2_BBM_LEN, s = 0; s < eccsteps;
+	     s++, i += eccbytes, p += eccsize) {
+		chip->ecc.hwctl(chip, NAND_ECC_READ);
 
 		/* Read the nand page sector (512 bytes) */
-		ret = nand_change_पढ़ो_column_op(chip, s * eccsize, p,
+		ret = nand_change_read_column_op(chip, s * eccsize, p,
 						 eccsize, false);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/* Read the corresponding ECC bytes */
-		ret = nand_change_पढ़ो_column_op(chip, i, ecc_code,
+		ret = nand_change_read_column_op(chip, i, ecc_code,
 						 eccbytes, false);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/* Correct the data */
 		stat = chip->ecc.correct(chip, p, ecc_code, ecc_calc);
-		अगर (stat == -EBADMSG)
-			/* Check क्रम empty pages with bitflips */
+		if (stat == -EBADMSG)
+			/* Check for empty pages with bitflips */
 			stat = nand_check_erased_ecc_chunk(p, eccsize,
 							   ecc_code, eccbytes,
-							   शून्य, 0,
+							   NULL, 0,
 							   eccstrength);
 
-		अगर (stat < 0) अणु
+		if (stat < 0) {
 			mtd->ecc_stats.failed++;
-		पूर्ण अन्यथा अणु
+		} else {
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
-		पूर्ण
-	पूर्ण
+			max_bitflips = max_t(unsigned int, max_bitflips, stat);
+		}
+	}
 
 	/* Read oob */
-	अगर (oob_required) अणु
-		ret = nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
+	if (oob_required) {
+		ret = nand_change_read_column_op(chip, mtd->writesize,
 						 chip->oob_poi, mtd->oobsize,
 						 false);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस max_bitflips;
-पूर्ण
+	return max_bitflips;
+}
 
-/* Sequencer पढ़ो/ग_लिखो configuration */
-अटल व्योम sपंचांग32_fmc2_nfc_rw_page_init(काष्ठा nand_chip *chip, पूर्णांक page,
-					पूर्णांक raw, bool ग_लिखो_data)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	u32 ecc_offset = mtd->ग_लिखोsize + FMC2_BBM_LEN;
+/* Sequencer read/write configuration */
+static void stm32_fmc2_nfc_rw_page_init(struct nand_chip *chip, int page,
+					int raw, bool write_data)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	u32 ecc_offset = mtd->writesize + FMC2_BBM_LEN;
 	/*
 	 * cfg[0] => csqcfgr1, cfg[1] => csqcfgr2, cfg[2] => csqcfgr3
 	 * cfg[3] => csqar1, cfg[4] => csqar2
@@ -749,7 +748,7 @@
 	u32 cfg[5];
 
 	regmap_update_bits(nfc->regmap, FMC2_PCR, FMC2_PCR_WEN,
-			   ग_लिखो_data ? FMC2_PCR_WEN : 0);
+			   write_data ? FMC2_PCR_WEN : 0);
 
 	/*
 	 * - Set Program Page/Page Read command
@@ -757,45 +756,45 @@
 	 * - Set timings
 	 */
 	cfg[0] = FMC2_CSQCFGR1_DMADEN | FMC2_CSQCFGR1_CMD1T;
-	अगर (ग_लिखो_data)
-		cfg[0] |= FIELD_PREP(FMC2_CSQCFGR1_CMD1, न_अंकD_CMD_SEQIN);
-	अन्यथा
-		cfg[0] |= FIELD_PREP(FMC2_CSQCFGR1_CMD1, न_अंकD_CMD_READ0) |
+	if (write_data)
+		cfg[0] |= FIELD_PREP(FMC2_CSQCFGR1_CMD1, NAND_CMD_SEQIN);
+	else
+		cfg[0] |= FIELD_PREP(FMC2_CSQCFGR1_CMD1, NAND_CMD_READ0) |
 			  FMC2_CSQCFGR1_CMD2EN |
-			  FIELD_PREP(FMC2_CSQCFGR1_CMD2, न_अंकD_CMD_READSTART) |
+			  FIELD_PREP(FMC2_CSQCFGR1_CMD2, NAND_CMD_READSTART) |
 			  FMC2_CSQCFGR1_CMD2T;
 
 	/*
-	 * - Set Ranकरोm Data Input/Ranकरोm Data Read command
+	 * - Set Random Data Input/Random Data Read command
 	 * - Enable the sequencer to access the Spare data area
-	 * - Enable  DMA request status decoding क्रम पढ़ो
+	 * - Enable  DMA request status decoding for read
 	 * - Set timings
 	 */
-	अगर (ग_लिखो_data)
-		cfg[1] = FIELD_PREP(FMC2_CSQCFGR2_RCMD1, न_अंकD_CMD_RNDIN);
-	अन्यथा
-		cfg[1] = FIELD_PREP(FMC2_CSQCFGR2_RCMD1, न_अंकD_CMD_RNDOUT) |
+	if (write_data)
+		cfg[1] = FIELD_PREP(FMC2_CSQCFGR2_RCMD1, NAND_CMD_RNDIN);
+	else
+		cfg[1] = FIELD_PREP(FMC2_CSQCFGR2_RCMD1, NAND_CMD_RNDOUT) |
 			 FMC2_CSQCFGR2_RCMD2EN |
-			 FIELD_PREP(FMC2_CSQCFGR2_RCMD2, न_अंकD_CMD_RNDOUTSTART) |
+			 FIELD_PREP(FMC2_CSQCFGR2_RCMD2, NAND_CMD_RNDOUTSTART) |
 			 FMC2_CSQCFGR2_RCMD1T |
 			 FMC2_CSQCFGR2_RCMD2T;
-	अगर (!raw) अणु
-		cfg[1] |= ग_लिखो_data ? 0 : FMC2_CSQCFGR2_DMASEN;
+	if (!raw) {
+		cfg[1] |= write_data ? 0 : FMC2_CSQCFGR2_DMASEN;
 		cfg[1] |= FMC2_CSQCFGR2_SQSDTEN;
-	पूर्ण
+	}
 
 	/*
 	 * - Set the number of sectors to be written
 	 * - Set timings
 	 */
 	cfg[2] = FIELD_PREP(FMC2_CSQCFGR3_SNBR, chip->ecc.steps - 1);
-	अगर (ग_लिखो_data) अणु
+	if (write_data) {
 		cfg[2] |= FMC2_CSQCFGR3_RAC2T;
-		अगर (chip->options & न_अंकD_ROW_ADDR_3)
+		if (chip->options & NAND_ROW_ADDR_3)
 			cfg[2] |= FMC2_CSQCFGR3_AC5T;
-		अन्यथा
+		else
 			cfg[2] |= FMC2_CSQCFGR3_AC4T;
-	पूर्ण
+	}
 
 	/*
 	 * Set the fourth first address cycles
@@ -809,245 +808,245 @@
 	 * - Set chip enable number
 	 * - Set ECC byte offset in the spare area
 	 * - Calculate the number of address cycles to be issued
-	 * - Set byte 5 of address cycle अगर needed
+	 * - Set byte 5 of address cycle if needed
 	 */
-	cfg[4] = FIELD_PREP(FMC2_CSQCAR2_न_अंकDCEN, nfc->cs_sel);
-	अगर (chip->options & न_अंकD_BUSWIDTH_16)
+	cfg[4] = FIELD_PREP(FMC2_CSQCAR2_NANDCEN, nfc->cs_sel);
+	if (chip->options & NAND_BUSWIDTH_16)
 		cfg[4] |= FIELD_PREP(FMC2_CSQCAR2_SAO, ecc_offset >> 1);
-	अन्यथा
+	else
 		cfg[4] |= FIELD_PREP(FMC2_CSQCAR2_SAO, ecc_offset);
-	अगर (chip->options & न_अंकD_ROW_ADDR_3) अणु
+	if (chip->options & NAND_ROW_ADDR_3) {
 		cfg[0] |= FIELD_PREP(FMC2_CSQCFGR1_ACYNBR, 5);
 		cfg[4] |= FIELD_PREP(FMC2_CSQCAR2_ADDC5, page >> 16);
-	पूर्ण अन्यथा अणु
+	} else {
 		cfg[0] |= FIELD_PREP(FMC2_CSQCFGR1_ACYNBR, 4);
-	पूर्ण
+	}
 
-	regmap_bulk_ग_लिखो(nfc->regmap, FMC2_CSQCFGR1, cfg, 5);
-पूर्ण
+	regmap_bulk_write(nfc->regmap, FMC2_CSQCFGR1, cfg, 5);
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_dma_callback(व्योम *arg)
-अणु
-	complete((काष्ठा completion *)arg);
-पूर्ण
+static void stm32_fmc2_nfc_dma_callback(void *arg)
+{
+	complete((struct completion *)arg);
+}
 
-/* Read/ग_लिखो data from/to a page */
-अटल पूर्णांक sपंचांग32_fmc2_nfc_xfer(काष्ठा nand_chip *chip, स्थिर u8 *buf,
-			       पूर्णांक raw, bool ग_लिखो_data)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	काष्ठा dma_async_tx_descriptor *desc_data, *desc_ecc;
-	काष्ठा scatterlist *sg;
-	काष्ठा dma_chan *dma_ch = nfc->dma_rx_ch;
-	क्रमागत dma_data_direction dma_data_dir = DMA_FROM_DEVICE;
-	क्रमागत dma_transfer_direction dma_transfer_dir = DMA_DEV_TO_MEM;
-	पूर्णांक eccsteps = chip->ecc.steps;
-	पूर्णांक eccsize = chip->ecc.size;
-	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(FMC2_TIMEOUT_MS);
-	स्थिर u8 *p = buf;
-	पूर्णांक s, ret;
+/* Read/write data from/to a page */
+static int stm32_fmc2_nfc_xfer(struct nand_chip *chip, const u8 *buf,
+			       int raw, bool write_data)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	struct dma_async_tx_descriptor *desc_data, *desc_ecc;
+	struct scatterlist *sg;
+	struct dma_chan *dma_ch = nfc->dma_rx_ch;
+	enum dma_data_direction dma_data_dir = DMA_FROM_DEVICE;
+	enum dma_transfer_direction dma_transfer_dir = DMA_DEV_TO_MEM;
+	int eccsteps = chip->ecc.steps;
+	int eccsize = chip->ecc.size;
+	unsigned long timeout = msecs_to_jiffies(FMC2_TIMEOUT_MS);
+	const u8 *p = buf;
+	int s, ret;
 
 	/* Configure DMA data */
-	अगर (ग_लिखो_data) अणु
+	if (write_data) {
 		dma_data_dir = DMA_TO_DEVICE;
 		dma_transfer_dir = DMA_MEM_TO_DEV;
 		dma_ch = nfc->dma_tx_ch;
-	पूर्ण
+	}
 
-	क्रम_each_sg(nfc->dma_data_sg.sgl, sg, eccsteps, s) अणु
+	for_each_sg(nfc->dma_data_sg.sgl, sg, eccsteps, s) {
 		sg_set_buf(sg, p, eccsize);
 		p += eccsize;
-	पूर्ण
+	}
 
 	ret = dma_map_sg(nfc->dev, nfc->dma_data_sg.sgl,
 			 eccsteps, dma_data_dir);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	desc_data = dmaengine_prep_slave_sg(dma_ch, nfc->dma_data_sg.sgl,
 					    eccsteps, dma_transfer_dir,
 					    DMA_PREP_INTERRUPT);
-	अगर (!desc_data) अणु
+	if (!desc_data) {
 		ret = -ENOMEM;
-		जाओ err_unmap_data;
-	पूर्ण
+		goto err_unmap_data;
+	}
 
 	reinit_completion(&nfc->dma_data_complete);
 	reinit_completion(&nfc->complete);
-	desc_data->callback = sपंचांग32_fmc2_nfc_dma_callback;
+	desc_data->callback = stm32_fmc2_nfc_dma_callback;
 	desc_data->callback_param = &nfc->dma_data_complete;
 	ret = dma_submit_error(dmaengine_submit(desc_data));
-	अगर (ret)
-		जाओ err_unmap_data;
+	if (ret)
+		goto err_unmap_data;
 
 	dma_async_issue_pending(dma_ch);
 
-	अगर (!ग_लिखो_data && !raw) अणु
+	if (!write_data && !raw) {
 		/* Configure DMA ECC status */
 		p = nfc->ecc_buf;
-		क्रम_each_sg(nfc->dma_ecc_sg.sgl, sg, eccsteps, s) अणु
+		for_each_sg(nfc->dma_ecc_sg.sgl, sg, eccsteps, s) {
 			sg_set_buf(sg, p, nfc->dma_ecc_len);
 			p += nfc->dma_ecc_len;
-		पूर्ण
+		}
 
 		ret = dma_map_sg(nfc->dev, nfc->dma_ecc_sg.sgl,
 				 eccsteps, dma_data_dir);
-		अगर (ret < 0)
-			जाओ err_unmap_data;
+		if (ret < 0)
+			goto err_unmap_data;
 
 		desc_ecc = dmaengine_prep_slave_sg(nfc->dma_ecc_ch,
 						   nfc->dma_ecc_sg.sgl,
 						   eccsteps, dma_transfer_dir,
 						   DMA_PREP_INTERRUPT);
-		अगर (!desc_ecc) अणु
+		if (!desc_ecc) {
 			ret = -ENOMEM;
-			जाओ err_unmap_ecc;
-		पूर्ण
+			goto err_unmap_ecc;
+		}
 
 		reinit_completion(&nfc->dma_ecc_complete);
-		desc_ecc->callback = sपंचांग32_fmc2_nfc_dma_callback;
+		desc_ecc->callback = stm32_fmc2_nfc_dma_callback;
 		desc_ecc->callback_param = &nfc->dma_ecc_complete;
 		ret = dma_submit_error(dmaengine_submit(desc_ecc));
-		अगर (ret)
-			जाओ err_unmap_ecc;
+		if (ret)
+			goto err_unmap_ecc;
 
 		dma_async_issue_pending(nfc->dma_ecc_ch);
-	पूर्ण
+	}
 
-	sपंचांग32_fmc2_nfc_clear_seq_irq(nfc);
-	sपंचांग32_fmc2_nfc_enable_seq_irq(nfc);
+	stm32_fmc2_nfc_clear_seq_irq(nfc);
+	stm32_fmc2_nfc_enable_seq_irq(nfc);
 
 	/* Start the transfer */
 	regmap_update_bits(nfc->regmap, FMC2_CSQCR,
 			   FMC2_CSQCR_CSQSTART, FMC2_CSQCR_CSQSTART);
 
 	/* Wait end of sequencer transfer */
-	अगर (!रुको_क्रम_completion_समयout(&nfc->complete, समयout)) अणु
+	if (!wait_for_completion_timeout(&nfc->complete, timeout)) {
 		dev_err(nfc->dev, "seq timeout\n");
-		sपंचांग32_fmc2_nfc_disable_seq_irq(nfc);
+		stm32_fmc2_nfc_disable_seq_irq(nfc);
 		dmaengine_terminate_all(dma_ch);
-		अगर (!ग_लिखो_data && !raw)
+		if (!write_data && !raw)
 			dmaengine_terminate_all(nfc->dma_ecc_ch);
 		ret = -ETIMEDOUT;
-		जाओ err_unmap_ecc;
-	पूर्ण
+		goto err_unmap_ecc;
+	}
 
 	/* Wait DMA data transfer completion */
-	अगर (!रुको_क्रम_completion_समयout(&nfc->dma_data_complete, समयout)) अणु
+	if (!wait_for_completion_timeout(&nfc->dma_data_complete, timeout)) {
 		dev_err(nfc->dev, "data DMA timeout\n");
 		dmaengine_terminate_all(dma_ch);
 		ret = -ETIMEDOUT;
-	पूर्ण
+	}
 
 	/* Wait DMA ECC transfer completion */
-	अगर (!ग_लिखो_data && !raw) अणु
-		अगर (!रुको_क्रम_completion_समयout(&nfc->dma_ecc_complete,
-						 समयout)) अणु
+	if (!write_data && !raw) {
+		if (!wait_for_completion_timeout(&nfc->dma_ecc_complete,
+						 timeout)) {
 			dev_err(nfc->dev, "ECC DMA timeout\n");
 			dmaengine_terminate_all(nfc->dma_ecc_ch);
 			ret = -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 err_unmap_ecc:
-	अगर (!ग_लिखो_data && !raw)
+	if (!write_data && !raw)
 		dma_unmap_sg(nfc->dev, nfc->dma_ecc_sg.sgl,
 			     eccsteps, dma_data_dir);
 
 err_unmap_data:
 	dma_unmap_sg(nfc->dev, nfc->dma_data_sg.sgl, eccsteps, dma_data_dir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_seq_ग_लिखो(काष्ठा nand_chip *chip, स्थिर u8 *buf,
-				    पूर्णांक oob_required, पूर्णांक page, पूर्णांक raw)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_seq_write(struct nand_chip *chip, const u8 *buf,
+				    int oob_required, int page, int raw)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	int ret;
 
 	/* Configure the sequencer */
-	sपंचांग32_fmc2_nfc_rw_page_init(chip, page, raw, true);
+	stm32_fmc2_nfc_rw_page_init(chip, page, raw, true);
 
 	/* Write the page */
-	ret = sपंचांग32_fmc2_nfc_xfer(chip, buf, raw, true);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_xfer(chip, buf, raw, true);
+	if (ret)
+		return ret;
 
 	/* Write oob */
-	अगर (oob_required) अणु
-		ret = nand_change_ग_लिखो_column_op(chip, mtd->ग_लिखोsize,
+	if (oob_required) {
+		ret = nand_change_write_column_op(chip, mtd->writesize,
 						  chip->oob_poi, mtd->oobsize,
 						  false);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस nand_prog_page_end_op(chip);
-पूर्ण
+	return nand_prog_page_end_op(chip);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_seq_ग_लिखो_page(काष्ठा nand_chip *chip, स्थिर u8 *buf,
-					 पूर्णांक oob_required, पूर्णांक page)
-अणु
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_seq_write_page(struct nand_chip *chip, const u8 *buf,
+					 int oob_required, int page)
+{
+	int ret;
 
-	ret = sपंचांग32_fmc2_nfc_select_chip(chip, chip->cur_cs);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_select_chip(chip, chip->cur_cs);
+	if (ret)
+		return ret;
 
-	वापस sपंचांग32_fmc2_nfc_seq_ग_लिखो(chip, buf, oob_required, page, false);
-पूर्ण
+	return stm32_fmc2_nfc_seq_write(chip, buf, oob_required, page, false);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_seq_ग_लिखो_page_raw(काष्ठा nand_chip *chip,
-					     स्थिर u8 *buf, पूर्णांक oob_required,
-					     पूर्णांक page)
-अणु
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_seq_write_page_raw(struct nand_chip *chip,
+					     const u8 *buf, int oob_required,
+					     int page)
+{
+	int ret;
 
-	ret = sपंचांग32_fmc2_nfc_select_chip(chip, chip->cur_cs);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_select_chip(chip, chip->cur_cs);
+	if (ret)
+		return ret;
 
-	वापस sपंचांग32_fmc2_nfc_seq_ग_लिखो(chip, buf, oob_required, page, true);
-पूर्ण
+	return stm32_fmc2_nfc_seq_write(chip, buf, oob_required, page, true);
+}
 
 /* Get a status indicating which sectors have errors */
-अटल u16 sपंचांग32_fmc2_nfc_get_mapping_status(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
+static u16 stm32_fmc2_nfc_get_mapping_status(struct stm32_fmc2_nfc *nfc)
+{
 	u32 csqemsr;
 
-	regmap_पढ़ो(nfc->regmap, FMC2_CSQEMSR, &csqemsr);
+	regmap_read(nfc->regmap, FMC2_CSQEMSR, &csqemsr);
 
-	वापस FIELD_GET(FMC2_CSQEMSR_SEM, csqemsr);
-पूर्ण
+	return FIELD_GET(FMC2_CSQEMSR_SEM, csqemsr);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_seq_correct(काष्ठा nand_chip *chip, u8 *dat,
-				      u8 *पढ़ो_ecc, u8 *calc_ecc)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	पूर्णांक eccbytes = chip->ecc.bytes;
-	पूर्णांक eccsteps = chip->ecc.steps;
-	पूर्णांक eccstrength = chip->ecc.strength;
-	पूर्णांक i, s, eccsize = chip->ecc.size;
+static int stm32_fmc2_nfc_seq_correct(struct nand_chip *chip, u8 *dat,
+				      u8 *read_ecc, u8 *calc_ecc)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	int eccbytes = chip->ecc.bytes;
+	int eccsteps = chip->ecc.steps;
+	int eccstrength = chip->ecc.strength;
+	int i, s, eccsize = chip->ecc.size;
 	u32 *ecc_sta = (u32 *)nfc->ecc_buf;
-	u16 sta_map = sपंचांग32_fmc2_nfc_get_mapping_status(nfc);
-	अचिन्हित पूर्णांक max_bitflips = 0;
+	u16 sta_map = stm32_fmc2_nfc_get_mapping_status(nfc);
+	unsigned int max_bitflips = 0;
 
-	क्रम (i = 0, s = 0; s < eccsteps; s++, i += eccbytes, dat += eccsize) अणु
-		पूर्णांक stat = 0;
+	for (i = 0, s = 0; s < eccsteps; s++, i += eccbytes, dat += eccsize) {
+		int stat = 0;
 
-		अगर (eccstrength == FMC2_ECC_HAM) अणु
+		if (eccstrength == FMC2_ECC_HAM) {
 			/* Ecc_sta = FMC2_HECCR */
-			अगर (sta_map & BIT(s)) अणु
-				sपंचांग32_fmc2_nfc_ham_set_ecc(*ecc_sta,
+			if (sta_map & BIT(s)) {
+				stm32_fmc2_nfc_ham_set_ecc(*ecc_sta,
 							   &calc_ecc[i]);
-				stat = sपंचांग32_fmc2_nfc_ham_correct(chip, dat,
-								  &पढ़ो_ecc[i],
+				stat = stm32_fmc2_nfc_ham_correct(chip, dat,
+								  &read_ecc[i],
 								  &calc_ecc[i]);
-			पूर्ण
+			}
 			ecc_sta++;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Ecc_sta[0] = FMC2_BCHDSR0
 			 * Ecc_sta[1] = FMC2_BCHDSR1
@@ -1055,310 +1054,310 @@ err_unmap_data:
 			 * Ecc_sta[3] = FMC2_BCHDSR3
 			 * Ecc_sta[4] = FMC2_BCHDSR4
 			 */
-			अगर (sta_map & BIT(s))
-				stat = sपंचांग32_fmc2_nfc_bch_decode(eccsize, dat,
+			if (sta_map & BIT(s))
+				stat = stm32_fmc2_nfc_bch_decode(eccsize, dat,
 								 ecc_sta);
 			ecc_sta += 5;
-		पूर्ण
+		}
 
-		अगर (stat == -EBADMSG)
-			/* Check क्रम empty pages with bitflips */
+		if (stat == -EBADMSG)
+			/* Check for empty pages with bitflips */
 			stat = nand_check_erased_ecc_chunk(dat, eccsize,
-							   &पढ़ो_ecc[i],
+							   &read_ecc[i],
 							   eccbytes,
-							   शून्य, 0,
+							   NULL, 0,
 							   eccstrength);
 
-		अगर (stat < 0) अणु
+		if (stat < 0) {
 			mtd->ecc_stats.failed++;
-		पूर्ण अन्यथा अणु
+		} else {
 			mtd->ecc_stats.corrected += stat;
-			max_bitflips = max_t(अचिन्हित पूर्णांक, max_bitflips, stat);
-		पूर्ण
-	पूर्ण
+			max_bitflips = max_t(unsigned int, max_bitflips, stat);
+		}
+	}
 
-	वापस max_bitflips;
-पूर्ण
+	return max_bitflips;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_seq_पढ़ो_page(काष्ठा nand_chip *chip, u8 *buf,
-					पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+static int stm32_fmc2_nfc_seq_read_page(struct nand_chip *chip, u8 *buf,
+					int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 	u8 *ecc_calc = chip->ecc.calc_buf;
 	u8 *ecc_code = chip->ecc.code_buf;
 	u16 sta_map;
-	पूर्णांक ret;
+	int ret;
 
-	ret = sपंचांग32_fmc2_nfc_select_chip(chip, chip->cur_cs);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_select_chip(chip, chip->cur_cs);
+	if (ret)
+		return ret;
 
 	/* Configure the sequencer */
-	sपंचांग32_fmc2_nfc_rw_page_init(chip, page, 0, false);
+	stm32_fmc2_nfc_rw_page_init(chip, page, 0, false);
 
 	/* Read the page */
-	ret = sपंचांग32_fmc2_nfc_xfer(chip, buf, 0, false);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_xfer(chip, buf, 0, false);
+	if (ret)
+		return ret;
 
-	sta_map = sपंचांग32_fmc2_nfc_get_mapping_status(nfc);
+	sta_map = stm32_fmc2_nfc_get_mapping_status(nfc);
 
-	/* Check अगर errors happen */
-	अगर (likely(!sta_map)) अणु
-		अगर (oob_required)
-			वापस nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
+	/* Check if errors happen */
+	if (likely(!sta_map)) {
+		if (oob_required)
+			return nand_change_read_column_op(chip, mtd->writesize,
 							  chip->oob_poi,
 							  mtd->oobsize, false);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Read oob */
-	ret = nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
+	ret = nand_change_read_column_op(chip, mtd->writesize,
 					 chip->oob_poi, mtd->oobsize, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = mtd_ooblayout_get_eccbytes(mtd, ecc_code, chip->oob_poi, 0,
 					 chip->ecc.total);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Correct data */
-	वापस chip->ecc.correct(chip, buf, ecc_code, ecc_calc);
-पूर्ण
+	return chip->ecc.correct(chip, buf, ecc_code, ecc_calc);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_seq_पढ़ो_page_raw(काष्ठा nand_chip *chip, u8 *buf,
-					    पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_seq_read_page_raw(struct nand_chip *chip, u8 *buf,
+					    int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	int ret;
 
-	ret = sपंचांग32_fmc2_nfc_select_chip(chip, chip->cur_cs);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_select_chip(chip, chip->cur_cs);
+	if (ret)
+		return ret;
 
 	/* Configure the sequencer */
-	sपंचांग32_fmc2_nfc_rw_page_init(chip, page, 1, false);
+	stm32_fmc2_nfc_rw_page_init(chip, page, 1, false);
 
 	/* Read the page */
-	ret = sपंचांग32_fmc2_nfc_xfer(chip, buf, 1, false);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_xfer(chip, buf, 1, false);
+	if (ret)
+		return ret;
 
 	/* Read oob */
-	अगर (oob_required)
-		वापस nand_change_पढ़ो_column_op(chip, mtd->ग_लिखोsize,
+	if (oob_required)
+		return nand_change_read_column_op(chip, mtd->writesize,
 						  chip->oob_poi, mtd->oobsize,
 						  false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t sपंचांग32_fmc2_nfc_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = (काष्ठा sपंचांग32_fmc2_nfc *)dev_id;
+static irqreturn_t stm32_fmc2_nfc_irq(int irq, void *dev_id)
+{
+	struct stm32_fmc2_nfc *nfc = (struct stm32_fmc2_nfc *)dev_id;
 
-	अगर (nfc->irq_state == FMC2_IRQ_SEQ)
+	if (nfc->irq_state == FMC2_IRQ_SEQ)
 		/* Sequencer is used */
-		sपंचांग32_fmc2_nfc_disable_seq_irq(nfc);
-	अन्यथा अगर (nfc->irq_state == FMC2_IRQ_BCH)
+		stm32_fmc2_nfc_disable_seq_irq(nfc);
+	else if (nfc->irq_state == FMC2_IRQ_BCH)
 		/* BCH is used */
-		sपंचांग32_fmc2_nfc_disable_bch_irq(nfc);
+		stm32_fmc2_nfc_disable_bch_irq(nfc);
 
 	complete(&nfc->complete);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_पढ़ो_data(काष्ठा nand_chip *chip, व्योम *buf,
-				     अचिन्हित पूर्णांक len, bool क्रमce_8bit)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	व्योम __iomem *io_addr_r = nfc->data_base[nfc->cs_sel];
+static void stm32_fmc2_nfc_read_data(struct nand_chip *chip, void *buf,
+				     unsigned int len, bool force_8bit)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	void __iomem *io_addr_r = nfc->data_base[nfc->cs_sel];
 
-	अगर (क्रमce_8bit && chip->options & न_अंकD_BUSWIDTH_16)
+	if (force_8bit && chip->options & NAND_BUSWIDTH_16)
 		/* Reconfigure bus width to 8-bit */
-		sपंचांग32_fmc2_nfc_set_buswidth_16(nfc, false);
+		stm32_fmc2_nfc_set_buswidth_16(nfc, false);
 
-	अगर (!IS_ALIGNED((uपूर्णांकptr_t)buf, माप(u32))) अणु
-		अगर (!IS_ALIGNED((uपूर्णांकptr_t)buf, माप(u16)) && len) अणु
-			*(u8 *)buf = पढ़ोb_relaxed(io_addr_r);
-			buf += माप(u8);
-			len -= माप(u8);
-		पूर्ण
+	if (!IS_ALIGNED((uintptr_t)buf, sizeof(u32))) {
+		if (!IS_ALIGNED((uintptr_t)buf, sizeof(u16)) && len) {
+			*(u8 *)buf = readb_relaxed(io_addr_r);
+			buf += sizeof(u8);
+			len -= sizeof(u8);
+		}
 
-		अगर (!IS_ALIGNED((uपूर्णांकptr_t)buf, माप(u32)) &&
-		    len >= माप(u16)) अणु
-			*(u16 *)buf = पढ़ोw_relaxed(io_addr_r);
-			buf += माप(u16);
-			len -= माप(u16);
-		पूर्ण
-	पूर्ण
+		if (!IS_ALIGNED((uintptr_t)buf, sizeof(u32)) &&
+		    len >= sizeof(u16)) {
+			*(u16 *)buf = readw_relaxed(io_addr_r);
+			buf += sizeof(u16);
+			len -= sizeof(u16);
+		}
+	}
 
 	/* Buf is aligned */
-	जबतक (len >= माप(u32)) अणु
-		*(u32 *)buf = पढ़ोl_relaxed(io_addr_r);
-		buf += माप(u32);
-		len -= माप(u32);
-	पूर्ण
+	while (len >= sizeof(u32)) {
+		*(u32 *)buf = readl_relaxed(io_addr_r);
+		buf += sizeof(u32);
+		len -= sizeof(u32);
+	}
 
-	/* Read reमुख्यing bytes */
-	अगर (len >= माप(u16)) अणु
-		*(u16 *)buf = पढ़ोw_relaxed(io_addr_r);
-		buf += माप(u16);
-		len -= माप(u16);
-	पूर्ण
+	/* Read remaining bytes */
+	if (len >= sizeof(u16)) {
+		*(u16 *)buf = readw_relaxed(io_addr_r);
+		buf += sizeof(u16);
+		len -= sizeof(u16);
+	}
 
-	अगर (len)
-		*(u8 *)buf = पढ़ोb_relaxed(io_addr_r);
+	if (len)
+		*(u8 *)buf = readb_relaxed(io_addr_r);
 
-	अगर (क्रमce_8bit && chip->options & न_अंकD_BUSWIDTH_16)
+	if (force_8bit && chip->options & NAND_BUSWIDTH_16)
 		/* Reconfigure bus width to 16-bit */
-		sपंचांग32_fmc2_nfc_set_buswidth_16(nfc, true);
-पूर्ण
+		stm32_fmc2_nfc_set_buswidth_16(nfc, true);
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_ग_लिखो_data(काष्ठा nand_chip *chip, स्थिर व्योम *buf,
-				      अचिन्हित पूर्णांक len, bool क्रमce_8bit)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	व्योम __iomem *io_addr_w = nfc->data_base[nfc->cs_sel];
+static void stm32_fmc2_nfc_write_data(struct nand_chip *chip, const void *buf,
+				      unsigned int len, bool force_8bit)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	void __iomem *io_addr_w = nfc->data_base[nfc->cs_sel];
 
-	अगर (क्रमce_8bit && chip->options & न_अंकD_BUSWIDTH_16)
+	if (force_8bit && chip->options & NAND_BUSWIDTH_16)
 		/* Reconfigure bus width to 8-bit */
-		sपंचांग32_fmc2_nfc_set_buswidth_16(nfc, false);
+		stm32_fmc2_nfc_set_buswidth_16(nfc, false);
 
-	अगर (!IS_ALIGNED((uपूर्णांकptr_t)buf, माप(u32))) अणु
-		अगर (!IS_ALIGNED((uपूर्णांकptr_t)buf, माप(u16)) && len) अणु
-			ग_लिखोb_relaxed(*(u8 *)buf, io_addr_w);
-			buf += माप(u8);
-			len -= माप(u8);
-		पूर्ण
+	if (!IS_ALIGNED((uintptr_t)buf, sizeof(u32))) {
+		if (!IS_ALIGNED((uintptr_t)buf, sizeof(u16)) && len) {
+			writeb_relaxed(*(u8 *)buf, io_addr_w);
+			buf += sizeof(u8);
+			len -= sizeof(u8);
+		}
 
-		अगर (!IS_ALIGNED((uपूर्णांकptr_t)buf, माप(u32)) &&
-		    len >= माप(u16)) अणु
-			ग_लिखोw_relaxed(*(u16 *)buf, io_addr_w);
-			buf += माप(u16);
-			len -= माप(u16);
-		पूर्ण
-	पूर्ण
+		if (!IS_ALIGNED((uintptr_t)buf, sizeof(u32)) &&
+		    len >= sizeof(u16)) {
+			writew_relaxed(*(u16 *)buf, io_addr_w);
+			buf += sizeof(u16);
+			len -= sizeof(u16);
+		}
+	}
 
 	/* Buf is aligned */
-	जबतक (len >= माप(u32)) अणु
-		ग_लिखोl_relaxed(*(u32 *)buf, io_addr_w);
-		buf += माप(u32);
-		len -= माप(u32);
-	पूर्ण
+	while (len >= sizeof(u32)) {
+		writel_relaxed(*(u32 *)buf, io_addr_w);
+		buf += sizeof(u32);
+		len -= sizeof(u32);
+	}
 
-	/* Write reमुख्यing bytes */
-	अगर (len >= माप(u16)) अणु
-		ग_लिखोw_relaxed(*(u16 *)buf, io_addr_w);
-		buf += माप(u16);
-		len -= माप(u16);
-	पूर्ण
+	/* Write remaining bytes */
+	if (len >= sizeof(u16)) {
+		writew_relaxed(*(u16 *)buf, io_addr_w);
+		buf += sizeof(u16);
+		len -= sizeof(u16);
+	}
 
-	अगर (len)
-		ग_लिखोb_relaxed(*(u8 *)buf, io_addr_w);
+	if (len)
+		writeb_relaxed(*(u8 *)buf, io_addr_w);
 
-	अगर (क्रमce_8bit && chip->options & न_अंकD_BUSWIDTH_16)
+	if (force_8bit && chip->options & NAND_BUSWIDTH_16)
 		/* Reconfigure bus width to 16-bit */
-		sपंचांग32_fmc2_nfc_set_buswidth_16(nfc, true);
-पूर्ण
+		stm32_fmc2_nfc_set_buswidth_16(nfc, true);
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_रुकोrdy(काष्ठा nand_chip *chip,
-				  अचिन्हित दीर्घ समयout_ms)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	स्थिर काष्ठा nand_sdr_timings *timings;
+static int stm32_fmc2_nfc_waitrdy(struct nand_chip *chip,
+				  unsigned long timeout_ms)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	const struct nand_sdr_timings *timings;
 	u32 isr, sr;
 
-	/* Check अगर there is no pending requests to the न_अंकD flash */
-	अगर (regmap_पढ़ो_poll_समयout(nfc->regmap, FMC2_SR, sr,
+	/* Check if there is no pending requests to the NAND flash */
+	if (regmap_read_poll_timeout(nfc->regmap, FMC2_SR, sr,
 				     sr & FMC2_SR_NWRF, 1,
 				     1000 * FMC2_TIMEOUT_MS))
 		dev_warn(nfc->dev, "Waitrdy timeout\n");
 
-	/* Wait tWB beक्रमe R/B# संकेत is low */
-	timings = nand_get_sdr_timings(nand_get_पूर्णांकerface_config(chip));
+	/* Wait tWB before R/B# signal is low */
+	timings = nand_get_sdr_timings(nand_get_interface_config(chip));
 	ndelay(PSEC_TO_NSEC(timings->tWB_max));
 
-	/* R/B# संकेत is low, clear high level flag */
-	regmap_ग_लिखो(nfc->regmap, FMC2_ICR, FMC2_ICR_CIHLF);
+	/* R/B# signal is low, clear high level flag */
+	regmap_write(nfc->regmap, FMC2_ICR, FMC2_ICR_CIHLF);
 
-	/* Wait R/B# संकेत is high */
-	वापस regmap_पढ़ो_poll_समयout(nfc->regmap, FMC2_ISR, isr,
+	/* Wait R/B# signal is high */
+	return regmap_read_poll_timeout(nfc->regmap, FMC2_ISR, isr,
 					isr & FMC2_ISR_IHLF, 5,
 					1000 * FMC2_TIMEOUT_MS);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_exec_op(काष्ठा nand_chip *chip,
-				  स्थिर काष्ठा nand_operation *op,
+static int stm32_fmc2_nfc_exec_op(struct nand_chip *chip,
+				  const struct nand_operation *op,
 				  bool check_only)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	स्थिर काष्ठा nand_op_instr *instr = शून्य;
-	अचिन्हित पूर्णांक op_id, i, समयout;
-	पूर्णांक ret;
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	const struct nand_op_instr *instr = NULL;
+	unsigned int op_id, i, timeout;
+	int ret;
 
-	अगर (check_only)
-		वापस 0;
+	if (check_only)
+		return 0;
 
-	ret = sपंचांग32_fmc2_nfc_select_chip(chip, op->cs);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_select_chip(chip, op->cs);
+	if (ret)
+		return ret;
 
-	क्रम (op_id = 0; op_id < op->ninstrs; op_id++) अणु
+	for (op_id = 0; op_id < op->ninstrs; op_id++) {
 		instr = &op->instrs[op_id];
 
-		चयन (instr->type) अणु
-		हाल न_अंकD_OP_CMD_INSTR:
-			ग_लिखोb_relaxed(instr->ctx.cmd.opcode,
+		switch (instr->type) {
+		case NAND_OP_CMD_INSTR:
+			writeb_relaxed(instr->ctx.cmd.opcode,
 				       nfc->cmd_base[nfc->cs_sel]);
-			अवरोध;
+			break;
 
-		हाल न_अंकD_OP_ADDR_INSTR:
-			क्रम (i = 0; i < instr->ctx.addr.naddrs; i++)
-				ग_लिखोb_relaxed(instr->ctx.addr.addrs[i],
+		case NAND_OP_ADDR_INSTR:
+			for (i = 0; i < instr->ctx.addr.naddrs; i++)
+				writeb_relaxed(instr->ctx.addr.addrs[i],
 					       nfc->addr_base[nfc->cs_sel]);
-			अवरोध;
+			break;
 
-		हाल न_अंकD_OP_DATA_IN_INSTR:
-			sपंचांग32_fmc2_nfc_पढ़ो_data(chip, instr->ctx.data.buf.in,
+		case NAND_OP_DATA_IN_INSTR:
+			stm32_fmc2_nfc_read_data(chip, instr->ctx.data.buf.in,
 						 instr->ctx.data.len,
-						 instr->ctx.data.क्रमce_8bit);
-			अवरोध;
+						 instr->ctx.data.force_8bit);
+			break;
 
-		हाल न_अंकD_OP_DATA_OUT_INSTR:
-			sपंचांग32_fmc2_nfc_ग_लिखो_data(chip, instr->ctx.data.buf.out,
+		case NAND_OP_DATA_OUT_INSTR:
+			stm32_fmc2_nfc_write_data(chip, instr->ctx.data.buf.out,
 						  instr->ctx.data.len,
-						  instr->ctx.data.क्रमce_8bit);
-			अवरोध;
+						  instr->ctx.data.force_8bit);
+			break;
 
-		हाल न_अंकD_OP_WAITRDY_INSTR:
-			समयout = instr->ctx.रुकोrdy.समयout_ms;
-			ret = sपंचांग32_fmc2_nfc_रुकोrdy(chip, समयout);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		case NAND_OP_WAITRDY_INSTR:
+			timeout = instr->ctx.waitrdy.timeout_ms;
+			ret = stm32_fmc2_nfc_waitrdy(chip, timeout);
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_init(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
+static void stm32_fmc2_nfc_init(struct stm32_fmc2_nfc *nfc)
+{
 	u32 pcr;
 
-	regmap_पढ़ो(nfc->regmap, FMC2_PCR, &pcr);
+	regmap_read(nfc->regmap, FMC2_PCR, &pcr);
 
 	/* Set CS used to undefined */
 	nfc->cs_sel = -1;
 
-	/* Enable रुको feature and nand flash memory bank */
+	/* Enable wait feature and nand flash memory bank */
 	pcr |= FMC2_PCR_PWAITEN;
 	pcr |= FMC2_PCR_PBKEN;
 
-	/* Set buswidth to 8 bits mode क्रम identअगरication */
+	/* Set buswidth to 8 bits mode for identification */
 	pcr &= ~FMC2_PCR_PWID;
 
 	/* ECC logic is disabled */
@@ -1369,44 +1368,44 @@ err_unmap_data:
 	pcr &= ~FMC2_PCR_BCHECC;
 	pcr &= ~FMC2_PCR_WEN;
 
-	/* Set शेष ECC sector size */
+	/* Set default ECC sector size */
 	pcr &= ~FMC2_PCR_ECCSS;
 	pcr |= FIELD_PREP(FMC2_PCR_ECCSS, FMC2_PCR_ECCSS_2048);
 
-	/* Set शेष tclr/tar timings */
+	/* Set default tclr/tar timings */
 	pcr &= ~FMC2_PCR_TCLR;
 	pcr |= FIELD_PREP(FMC2_PCR_TCLR, FMC2_PCR_TCLR_DEFAULT);
 	pcr &= ~FMC2_PCR_TAR;
 	pcr |= FIELD_PREP(FMC2_PCR_TAR, FMC2_PCR_TAR_DEFAULT);
 
 	/* Enable FMC2 controller */
-	अगर (nfc->dev == nfc->cdev)
+	if (nfc->dev == nfc->cdev)
 		regmap_update_bits(nfc->regmap, FMC2_BCR1,
 				   FMC2_BCR1_FMC2EN, FMC2_BCR1_FMC2EN);
 
-	regmap_ग_लिखो(nfc->regmap, FMC2_PCR, pcr);
-	regmap_ग_लिखो(nfc->regmap, FMC2_PMEM, FMC2_PMEM_DEFAULT);
-	regmap_ग_लिखो(nfc->regmap, FMC2_PATT, FMC2_PATT_DEFAULT);
-पूर्ण
+	regmap_write(nfc->regmap, FMC2_PCR, pcr);
+	regmap_write(nfc->regmap, FMC2_PMEM, FMC2_PMEM_DEFAULT);
+	regmap_write(nfc->regmap, FMC2_PATT, FMC2_PATT_DEFAULT);
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_calc_timings(काष्ठा nand_chip *chip,
-					स्थिर काष्ठा nand_sdr_timings *sdrt)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	काष्ठा sपंचांग32_fmc2_nand *nand = to_fmc2_nand(chip);
-	काष्ठा sपंचांग32_fmc2_timings *tims = &nand->timings;
-	अचिन्हित दीर्घ hclk = clk_get_rate(nfc->clk);
-	अचिन्हित दीर्घ hclkp = NSEC_PER_SEC / (hclk / 1000);
-	अचिन्हित दीर्घ timing, tar, tclr, thiz, tरुको;
-	अचिन्हित दीर्घ tset_mem, tset_att, thold_mem, thold_att;
+static void stm32_fmc2_nfc_calc_timings(struct nand_chip *chip,
+					const struct nand_sdr_timings *sdrt)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	struct stm32_fmc2_nand *nand = to_fmc2_nand(chip);
+	struct stm32_fmc2_timings *tims = &nand->timings;
+	unsigned long hclk = clk_get_rate(nfc->clk);
+	unsigned long hclkp = NSEC_PER_SEC / (hclk / 1000);
+	unsigned long timing, tar, tclr, thiz, twait;
+	unsigned long tset_mem, tset_att, thold_mem, thold_att;
 
-	tar = max_t(अचिन्हित दीर्घ, hclkp, sdrt->tAR_min);
+	tar = max_t(unsigned long, hclkp, sdrt->tAR_min);
 	timing = DIV_ROUND_UP(tar, hclkp) - 1;
-	tims->tar = min_t(अचिन्हित दीर्घ, timing, FMC2_PCR_TIMING_MASK);
+	tims->tar = min_t(unsigned long, timing, FMC2_PCR_TIMING_MASK);
 
-	tclr = max_t(अचिन्हित दीर्घ, hclkp, sdrt->tCLR_min);
+	tclr = max_t(unsigned long, hclkp, sdrt->tCLR_min);
 	timing = DIV_ROUND_UP(tclr, hclkp) - 1;
-	tims->tclr = min_t(अचिन्हित दीर्घ, timing, FMC2_PCR_TIMING_MASK);
+	tims->tclr = min_t(unsigned long, timing, FMC2_PCR_TIMING_MASK);
 
 	tims->thiz = FMC2_THIZ;
 	thiz = (tims->thiz + 1) * hclkp;
@@ -1416,11 +1415,11 @@ err_unmap_data:
 	 * tWAIT > tWP
 	 * tWAIT > tREA + tIO
 	 */
-	tरुको = max_t(अचिन्हित दीर्घ, hclkp, sdrt->tRP_min);
-	tरुको = max_t(अचिन्हित दीर्घ, tरुको, sdrt->tWP_min);
-	tरुको = max_t(अचिन्हित दीर्घ, tरुको, sdrt->tREA_max + FMC2_TIO);
-	timing = DIV_ROUND_UP(tरुको, hclkp);
-	tims->tरुको = clamp_val(timing, 1, FMC2_PMEM_PATT_TIMING_MASK);
+	twait = max_t(unsigned long, hclkp, sdrt->tRP_min);
+	twait = max_t(unsigned long, twait, sdrt->tWP_min);
+	twait = max_t(unsigned long, twait, sdrt->tREA_max + FMC2_TIO);
+	timing = DIV_ROUND_UP(twait, hclkp);
+	tims->twait = clamp_val(timing, 1, FMC2_PMEM_PATT_TIMING_MASK);
 
 	/*
 	 * tSETUP_MEM > tCS - tWAIT
@@ -1428,13 +1427,13 @@ err_unmap_data:
 	 * tSETUP_MEM > tDS - (tWAIT - tHIZ)
 	 */
 	tset_mem = hclkp;
-	अगर (sdrt->tCS_min > tरुको && (tset_mem < sdrt->tCS_min - tरुको))
-		tset_mem = sdrt->tCS_min - tरुको;
-	अगर (sdrt->tALS_min > tरुको && (tset_mem < sdrt->tALS_min - tरुको))
-		tset_mem = sdrt->tALS_min - tरुको;
-	अगर (tरुको > thiz && (sdrt->tDS_min > tरुको - thiz) &&
-	    (tset_mem < sdrt->tDS_min - (tरुको - thiz)))
-		tset_mem = sdrt->tDS_min - (tरुको - thiz);
+	if (sdrt->tCS_min > twait && (tset_mem < sdrt->tCS_min - twait))
+		tset_mem = sdrt->tCS_min - twait;
+	if (sdrt->tALS_min > twait && (tset_mem < sdrt->tALS_min - twait))
+		tset_mem = sdrt->tALS_min - twait;
+	if (twait > thiz && (sdrt->tDS_min > twait - thiz) &&
+	    (tset_mem < sdrt->tDS_min - (twait - thiz)))
+		tset_mem = sdrt->tDS_min - (twait - thiz);
 	timing = DIV_ROUND_UP(tset_mem, hclkp);
 	tims->tset_mem = clamp_val(timing, 1, FMC2_PMEM_PATT_TIMING_MASK);
 
@@ -1443,16 +1442,16 @@ err_unmap_data:
 	 * tHOLD_MEM > tREH - tSETUP_MEM
 	 * tHOLD_MEM > max(tRC, tWC) - (tSETUP_MEM + tWAIT)
 	 */
-	thold_mem = max_t(अचिन्हित दीर्घ, hclkp, sdrt->tCH_min);
-	अगर (sdrt->tREH_min > tset_mem &&
+	thold_mem = max_t(unsigned long, hclkp, sdrt->tCH_min);
+	if (sdrt->tREH_min > tset_mem &&
 	    (thold_mem < sdrt->tREH_min - tset_mem))
 		thold_mem = sdrt->tREH_min - tset_mem;
-	अगर ((sdrt->tRC_min > tset_mem + tरुको) &&
-	    (thold_mem < sdrt->tRC_min - (tset_mem + tरुको)))
-		thold_mem = sdrt->tRC_min - (tset_mem + tरुको);
-	अगर ((sdrt->tWC_min > tset_mem + tरुको) &&
-	    (thold_mem < sdrt->tWC_min - (tset_mem + tरुको)))
-		thold_mem = sdrt->tWC_min - (tset_mem + tरुको);
+	if ((sdrt->tRC_min > tset_mem + twait) &&
+	    (thold_mem < sdrt->tRC_min - (tset_mem + twait)))
+		thold_mem = sdrt->tRC_min - (tset_mem + twait);
+	if ((sdrt->tWC_min > tset_mem + twait) &&
+	    (thold_mem < sdrt->tWC_min - (tset_mem + twait)))
+		thold_mem = sdrt->tWC_min - (tset_mem + twait);
 	timing = DIV_ROUND_UP(thold_mem, hclkp);
 	tims->thold_mem = clamp_val(timing, 1, FMC2_PMEM_PATT_TIMING_MASK);
 
@@ -1464,18 +1463,18 @@ err_unmap_data:
 	 * tSETUP_ATT > tDS - (tWAIT - tHIZ)
 	 */
 	tset_att = hclkp;
-	अगर (sdrt->tCS_min > tरुको && (tset_att < sdrt->tCS_min - tरुको))
-		tset_att = sdrt->tCS_min - tरुको;
-	अगर (sdrt->tCLS_min > tरुको && (tset_att < sdrt->tCLS_min - tरुको))
-		tset_att = sdrt->tCLS_min - tरुको;
-	अगर (sdrt->tALS_min > tरुको && (tset_att < sdrt->tALS_min - tरुको))
-		tset_att = sdrt->tALS_min - tरुको;
-	अगर (sdrt->tRHW_min > thold_mem &&
+	if (sdrt->tCS_min > twait && (tset_att < sdrt->tCS_min - twait))
+		tset_att = sdrt->tCS_min - twait;
+	if (sdrt->tCLS_min > twait && (tset_att < sdrt->tCLS_min - twait))
+		tset_att = sdrt->tCLS_min - twait;
+	if (sdrt->tALS_min > twait && (tset_att < sdrt->tALS_min - twait))
+		tset_att = sdrt->tALS_min - twait;
+	if (sdrt->tRHW_min > thold_mem &&
 	    (tset_att < sdrt->tRHW_min - thold_mem))
 		tset_att = sdrt->tRHW_min - thold_mem;
-	अगर (tरुको > thiz && (sdrt->tDS_min > tरुको - thiz) &&
-	    (tset_att < sdrt->tDS_min - (tरुको - thiz)))
-		tset_att = sdrt->tDS_min - (tरुको - thiz);
+	if (twait > thiz && (sdrt->tDS_min > twait - thiz) &&
+	    (tset_att < sdrt->tDS_min - (twait - thiz)))
+		tset_att = sdrt->tDS_min - (twait - thiz);
 	timing = DIV_ROUND_UP(tset_att, hclkp);
 	tims->tset_att = clamp_val(timing, 1, FMC2_PMEM_PATT_TIMING_MASK);
 
@@ -1492,465 +1491,465 @@ err_unmap_data:
 	 * tHOLD_ATT > tRC - (tSETUP_ATT + tWAIT)
 	 * tHOLD_ATT > tWC - (tSETUP_ATT + tWAIT)
 	 */
-	thold_att = max_t(अचिन्हित दीर्घ, hclkp, sdrt->tALH_min);
-	thold_att = max_t(अचिन्हित दीर्घ, thold_att, sdrt->tCH_min);
-	thold_att = max_t(अचिन्हित दीर्घ, thold_att, sdrt->tCLH_min);
-	thold_att = max_t(अचिन्हित दीर्घ, thold_att, sdrt->tCOH_min);
-	thold_att = max_t(अचिन्हित दीर्घ, thold_att, sdrt->tDH_min);
-	अगर ((sdrt->tWB_max + FMC2_TIO + FMC2_TSYNC > tset_mem) &&
+	thold_att = max_t(unsigned long, hclkp, sdrt->tALH_min);
+	thold_att = max_t(unsigned long, thold_att, sdrt->tCH_min);
+	thold_att = max_t(unsigned long, thold_att, sdrt->tCLH_min);
+	thold_att = max_t(unsigned long, thold_att, sdrt->tCOH_min);
+	thold_att = max_t(unsigned long, thold_att, sdrt->tDH_min);
+	if ((sdrt->tWB_max + FMC2_TIO + FMC2_TSYNC > tset_mem) &&
 	    (thold_att < sdrt->tWB_max + FMC2_TIO + FMC2_TSYNC - tset_mem))
 		thold_att = sdrt->tWB_max + FMC2_TIO + FMC2_TSYNC - tset_mem;
-	अगर (sdrt->tADL_min > tset_mem &&
+	if (sdrt->tADL_min > tset_mem &&
 	    (thold_att < sdrt->tADL_min - tset_mem))
 		thold_att = sdrt->tADL_min - tset_mem;
-	अगर (sdrt->tWH_min > tset_mem &&
+	if (sdrt->tWH_min > tset_mem &&
 	    (thold_att < sdrt->tWH_min - tset_mem))
 		thold_att = sdrt->tWH_min - tset_mem;
-	अगर (sdrt->tWHR_min > tset_mem &&
+	if (sdrt->tWHR_min > tset_mem &&
 	    (thold_att < sdrt->tWHR_min - tset_mem))
 		thold_att = sdrt->tWHR_min - tset_mem;
-	अगर ((sdrt->tRC_min > tset_att + tरुको) &&
-	    (thold_att < sdrt->tRC_min - (tset_att + tरुको)))
-		thold_att = sdrt->tRC_min - (tset_att + tरुको);
-	अगर ((sdrt->tWC_min > tset_att + tरुको) &&
-	    (thold_att < sdrt->tWC_min - (tset_att + tरुको)))
-		thold_att = sdrt->tWC_min - (tset_att + tरुको);
+	if ((sdrt->tRC_min > tset_att + twait) &&
+	    (thold_att < sdrt->tRC_min - (tset_att + twait)))
+		thold_att = sdrt->tRC_min - (tset_att + twait);
+	if ((sdrt->tWC_min > tset_att + twait) &&
+	    (thold_att < sdrt->tWC_min - (tset_att + twait)))
+		thold_att = sdrt->tWC_min - (tset_att + twait);
 	timing = DIV_ROUND_UP(thold_att, hclkp);
 	tims->thold_att = clamp_val(timing, 1, FMC2_PMEM_PATT_TIMING_MASK);
-पूर्ण
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_setup_पूर्णांकerface(काष्ठा nand_chip *chip, पूर्णांक chipnr,
-					  स्थिर काष्ठा nand_पूर्णांकerface_config *conf)
-अणु
-	स्थिर काष्ठा nand_sdr_timings *sdrt;
+static int stm32_fmc2_nfc_setup_interface(struct nand_chip *chip, int chipnr,
+					  const struct nand_interface_config *conf)
+{
+	const struct nand_sdr_timings *sdrt;
 
 	sdrt = nand_get_sdr_timings(conf);
-	अगर (IS_ERR(sdrt))
-		वापस PTR_ERR(sdrt);
+	if (IS_ERR(sdrt))
+		return PTR_ERR(sdrt);
 
-	अगर (chipnr == न_अंकD_DATA_IFACE_CHECK_ONLY)
-		वापस 0;
+	if (chipnr == NAND_DATA_IFACE_CHECK_ONLY)
+		return 0;
 
-	sपंचांग32_fmc2_nfc_calc_timings(chip, sdrt);
-	sपंचांग32_fmc2_nfc_timings_init(chip);
+	stm32_fmc2_nfc_calc_timings(chip, sdrt);
+	stm32_fmc2_nfc_timings_init(chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_dma_setup(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
-	पूर्णांक ret = 0;
+static int stm32_fmc2_nfc_dma_setup(struct stm32_fmc2_nfc *nfc)
+{
+	int ret = 0;
 
 	nfc->dma_tx_ch = dma_request_chan(nfc->dev, "tx");
-	अगर (IS_ERR(nfc->dma_tx_ch)) अणु
+	if (IS_ERR(nfc->dma_tx_ch)) {
 		ret = PTR_ERR(nfc->dma_tx_ch);
-		अगर (ret != -ENODEV && ret != -EPROBE_DEFER)
+		if (ret != -ENODEV && ret != -EPROBE_DEFER)
 			dev_err(nfc->dev,
 				"failed to request tx DMA channel: %d\n", ret);
-		nfc->dma_tx_ch = शून्य;
-		जाओ err_dma;
-	पूर्ण
+		nfc->dma_tx_ch = NULL;
+		goto err_dma;
+	}
 
 	nfc->dma_rx_ch = dma_request_chan(nfc->dev, "rx");
-	अगर (IS_ERR(nfc->dma_rx_ch)) अणु
+	if (IS_ERR(nfc->dma_rx_ch)) {
 		ret = PTR_ERR(nfc->dma_rx_ch);
-		अगर (ret != -ENODEV && ret != -EPROBE_DEFER)
+		if (ret != -ENODEV && ret != -EPROBE_DEFER)
 			dev_err(nfc->dev,
 				"failed to request rx DMA channel: %d\n", ret);
-		nfc->dma_rx_ch = शून्य;
-		जाओ err_dma;
-	पूर्ण
+		nfc->dma_rx_ch = NULL;
+		goto err_dma;
+	}
 
 	nfc->dma_ecc_ch = dma_request_chan(nfc->dev, "ecc");
-	अगर (IS_ERR(nfc->dma_ecc_ch)) अणु
+	if (IS_ERR(nfc->dma_ecc_ch)) {
 		ret = PTR_ERR(nfc->dma_ecc_ch);
-		अगर (ret != -ENODEV && ret != -EPROBE_DEFER)
+		if (ret != -ENODEV && ret != -EPROBE_DEFER)
 			dev_err(nfc->dev,
 				"failed to request ecc DMA channel: %d\n", ret);
-		nfc->dma_ecc_ch = शून्य;
-		जाओ err_dma;
-	पूर्ण
+		nfc->dma_ecc_ch = NULL;
+		goto err_dma;
+	}
 
 	ret = sg_alloc_table(&nfc->dma_ecc_sg, FMC2_MAX_SG, GFP_KERNEL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Allocate a buffer to store ECC status रेजिस्टरs */
+	/* Allocate a buffer to store ECC status registers */
 	nfc->ecc_buf = devm_kzalloc(nfc->dev, FMC2_MAX_ECC_BUF_LEN, GFP_KERNEL);
-	अगर (!nfc->ecc_buf)
-		वापस -ENOMEM;
+	if (!nfc->ecc_buf)
+		return -ENOMEM;
 
 	ret = sg_alloc_table(&nfc->dma_data_sg, FMC2_MAX_SG, GFP_KERNEL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	init_completion(&nfc->dma_data_complete);
 	init_completion(&nfc->dma_ecc_complete);
 
-	वापस 0;
+	return 0;
 
 err_dma:
-	अगर (ret == -ENODEV) अणु
+	if (ret == -ENODEV) {
 		dev_warn(nfc->dev,
 			 "DMAs not defined in the DT, polling mode is used\n");
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sपंचांग32_fmc2_nfc_nand_callbacks_setup(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
+static void stm32_fmc2_nfc_nand_callbacks_setup(struct nand_chip *chip)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
 
 	/*
-	 * Specअगरic callbacks to पढ़ो/ग_लिखो a page depending on
+	 * Specific callbacks to read/write a page depending on
 	 * the mode (polling/sequencer) and the algo used (Hamming, BCH).
 	 */
-	अगर (nfc->dma_tx_ch && nfc->dma_rx_ch && nfc->dma_ecc_ch) अणु
+	if (nfc->dma_tx_ch && nfc->dma_rx_ch && nfc->dma_ecc_ch) {
 		/* DMA => use sequencer mode callbacks */
-		chip->ecc.correct = sपंचांग32_fmc2_nfc_seq_correct;
-		chip->ecc.ग_लिखो_page = sपंचांग32_fmc2_nfc_seq_ग_लिखो_page;
-		chip->ecc.पढ़ो_page = sपंचांग32_fmc2_nfc_seq_पढ़ो_page;
-		chip->ecc.ग_लिखो_page_raw = sपंचांग32_fmc2_nfc_seq_ग_लिखो_page_raw;
-		chip->ecc.पढ़ो_page_raw = sपंचांग32_fmc2_nfc_seq_पढ़ो_page_raw;
-	पूर्ण अन्यथा अणु
+		chip->ecc.correct = stm32_fmc2_nfc_seq_correct;
+		chip->ecc.write_page = stm32_fmc2_nfc_seq_write_page;
+		chip->ecc.read_page = stm32_fmc2_nfc_seq_read_page;
+		chip->ecc.write_page_raw = stm32_fmc2_nfc_seq_write_page_raw;
+		chip->ecc.read_page_raw = stm32_fmc2_nfc_seq_read_page_raw;
+	} else {
 		/* No DMA => use polling mode callbacks */
-		chip->ecc.hwctl = sपंचांग32_fmc2_nfc_hwctl;
-		अगर (chip->ecc.strength == FMC2_ECC_HAM) अणु
+		chip->ecc.hwctl = stm32_fmc2_nfc_hwctl;
+		if (chip->ecc.strength == FMC2_ECC_HAM) {
 			/* Hamming is used */
-			chip->ecc.calculate = sपंचांग32_fmc2_nfc_ham_calculate;
-			chip->ecc.correct = sपंचांग32_fmc2_nfc_ham_correct;
-			chip->ecc.options |= न_अंकD_ECC_GENERIC_ERASED_CHECK;
-		पूर्ण अन्यथा अणु
+			chip->ecc.calculate = stm32_fmc2_nfc_ham_calculate;
+			chip->ecc.correct = stm32_fmc2_nfc_ham_correct;
+			chip->ecc.options |= NAND_ECC_GENERIC_ERASED_CHECK;
+		} else {
 			/* BCH is used */
-			chip->ecc.calculate = sपंचांग32_fmc2_nfc_bch_calculate;
-			chip->ecc.correct = sपंचांग32_fmc2_nfc_bch_correct;
-			chip->ecc.पढ़ो_page = sपंचांग32_fmc2_nfc_पढ़ो_page;
-		पूर्ण
-	पूर्ण
+			chip->ecc.calculate = stm32_fmc2_nfc_bch_calculate;
+			chip->ecc.correct = stm32_fmc2_nfc_bch_correct;
+			chip->ecc.read_page = stm32_fmc2_nfc_read_page;
+		}
+	}
 
-	/* Specअगरic configurations depending on the algo used */
-	अगर (chip->ecc.strength == FMC2_ECC_HAM)
-		chip->ecc.bytes = chip->options & न_अंकD_BUSWIDTH_16 ? 4 : 3;
-	अन्यथा अगर (chip->ecc.strength == FMC2_ECC_BCH8)
-		chip->ecc.bytes = chip->options & न_अंकD_BUSWIDTH_16 ? 14 : 13;
-	अन्यथा
-		chip->ecc.bytes = chip->options & न_अंकD_BUSWIDTH_16 ? 8 : 7;
-पूर्ण
+	/* Specific configurations depending on the algo used */
+	if (chip->ecc.strength == FMC2_ECC_HAM)
+		chip->ecc.bytes = chip->options & NAND_BUSWIDTH_16 ? 4 : 3;
+	else if (chip->ecc.strength == FMC2_ECC_BCH8)
+		chip->ecc.bytes = chip->options & NAND_BUSWIDTH_16 ? 14 : 13;
+	else
+		chip->ecc.bytes = chip->options & NAND_BUSWIDTH_16 ? 8 : 7;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-					काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा nand_ecc_ctrl *ecc = &chip->ecc;
+static int stm32_fmc2_nfc_ooblayout_ecc(struct mtd_info *mtd, int section,
+					struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct nand_ecc_ctrl *ecc = &chip->ecc;
 
-	अगर (section)
-		वापस -दुस्फल;
+	if (section)
+		return -ERANGE;
 
 	oobregion->length = ecc->total;
 	oobregion->offset = FMC2_BBM_LEN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-					 काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
-	काष्ठा nand_ecc_ctrl *ecc = &chip->ecc;
+static int stm32_fmc2_nfc_ooblayout_free(struct mtd_info *mtd, int section,
+					 struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *chip = mtd_to_nand(mtd);
+	struct nand_ecc_ctrl *ecc = &chip->ecc;
 
-	अगर (section)
-		वापस -दुस्फल;
+	if (section)
+		return -ERANGE;
 
 	oobregion->length = mtd->oobsize - ecc->total - FMC2_BBM_LEN;
 	oobregion->offset = ecc->total + FMC2_BBM_LEN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops sपंचांग32_fmc2_nfc_ooblayout_ops = अणु
-	.ecc = sपंचांग32_fmc2_nfc_ooblayout_ecc,
-	.मुक्त = sपंचांग32_fmc2_nfc_ooblayout_मुक्त,
-पूर्ण;
+static const struct mtd_ooblayout_ops stm32_fmc2_nfc_ooblayout_ops = {
+	.ecc = stm32_fmc2_nfc_ooblayout_ecc,
+	.free = stm32_fmc2_nfc_ooblayout_free,
+};
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_calc_ecc_bytes(पूर्णांक step_size, पूर्णांक strength)
-अणु
+static int stm32_fmc2_nfc_calc_ecc_bytes(int step_size, int strength)
+{
 	/* Hamming */
-	अगर (strength == FMC2_ECC_HAM)
-		वापस 4;
+	if (strength == FMC2_ECC_HAM)
+		return 4;
 
 	/* BCH8 */
-	अगर (strength == FMC2_ECC_BCH8)
-		वापस 14;
+	if (strength == FMC2_ECC_BCH8)
+		return 14;
 
 	/* BCH4 */
-	वापस 8;
-पूर्ण
+	return 8;
+}
 
-न_अंकD_ECC_CAPS_SINGLE(sपंचांग32_fmc2_nfc_ecc_caps, sपंचांग32_fmc2_nfc_calc_ecc_bytes,
+NAND_ECC_CAPS_SINGLE(stm32_fmc2_nfc_ecc_caps, stm32_fmc2_nfc_calc_ecc_bytes,
 		     FMC2_ECC_STEP_SIZE,
 		     FMC2_ECC_HAM, FMC2_ECC_BCH4, FMC2_ECC_BCH8);
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_attach_chip(काष्ठा nand_chip *chip)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = to_sपंचांग32_nfc(chip->controller);
-	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_attach_chip(struct nand_chip *chip)
+{
+	struct stm32_fmc2_nfc *nfc = to_stm32_nfc(chip->controller);
+	struct mtd_info *mtd = nand_to_mtd(chip);
+	int ret;
 
 	/*
-	 * Only न_अंकD_ECC_ENGINE_TYPE_ON_HOST mode is actually supported
+	 * Only NAND_ECC_ENGINE_TYPE_ON_HOST mode is actually supported
 	 * Hamming => ecc.strength = 1
 	 * BCH4 => ecc.strength = 4
 	 * BCH8 => ecc.strength = 8
 	 * ECC sector size = 512
 	 */
-	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST) अणु
+	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST) {
 		dev_err(nfc->dev,
 			"nand_ecc_engine_type is not well defined in the DT\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Default ECC settings in हाल they are not set in the device tree */
-	अगर (!chip->ecc.size)
+	/* Default ECC settings in case they are not set in the device tree */
+	if (!chip->ecc.size)
 		chip->ecc.size = FMC2_ECC_STEP_SIZE;
 
-	अगर (!chip->ecc.strength)
+	if (!chip->ecc.strength)
 		chip->ecc.strength = FMC2_ECC_BCH8;
 
-	ret = nand_ecc_choose_conf(chip, &sपंचांग32_fmc2_nfc_ecc_caps,
+	ret = nand_ecc_choose_conf(chip, &stm32_fmc2_nfc_ecc_caps,
 				   mtd->oobsize - FMC2_BBM_LEN);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(nfc->dev, "no valid ECC settings set\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (mtd->ग_लिखोsize / chip->ecc.size > FMC2_MAX_SG) अणु
+	if (mtd->writesize / chip->ecc.size > FMC2_MAX_SG) {
 		dev_err(nfc->dev, "nand page size is not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (chip->bbt_options & न_अंकD_BBT_USE_FLASH)
-		chip->bbt_options |= न_अंकD_BBT_NO_OOB;
+	if (chip->bbt_options & NAND_BBT_USE_FLASH)
+		chip->bbt_options |= NAND_BBT_NO_OOB;
 
-	sपंचांग32_fmc2_nfc_nand_callbacks_setup(chip);
+	stm32_fmc2_nfc_nand_callbacks_setup(chip);
 
-	mtd_set_ooblayout(mtd, &sपंचांग32_fmc2_nfc_ooblayout_ops);
+	mtd_set_ooblayout(mtd, &stm32_fmc2_nfc_ooblayout_ops);
 
-	sपंचांग32_fmc2_nfc_setup(chip);
+	stm32_fmc2_nfc_setup(chip);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा nand_controller_ops sपंचांग32_fmc2_nfc_controller_ops = अणु
-	.attach_chip = sपंचांग32_fmc2_nfc_attach_chip,
-	.exec_op = sपंचांग32_fmc2_nfc_exec_op,
-	.setup_पूर्णांकerface = sपंचांग32_fmc2_nfc_setup_पूर्णांकerface,
-पूर्ण;
+static const struct nand_controller_ops stm32_fmc2_nfc_controller_ops = {
+	.attach_chip = stm32_fmc2_nfc_attach_chip,
+	.exec_op = stm32_fmc2_nfc_exec_op,
+	.setup_interface = stm32_fmc2_nfc_setup_interface,
+};
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_parse_child(काष्ठा sपंचांग32_fmc2_nfc *nfc,
-				      काष्ठा device_node *dn)
-अणु
-	काष्ठा sपंचांग32_fmc2_nand *nand = &nfc->nand;
+static int stm32_fmc2_nfc_parse_child(struct stm32_fmc2_nfc *nfc,
+				      struct device_node *dn)
+{
+	struct stm32_fmc2_nand *nand = &nfc->nand;
 	u32 cs;
-	पूर्णांक ret, i;
+	int ret, i;
 
-	अगर (!of_get_property(dn, "reg", &nand->ncs))
-		वापस -EINVAL;
+	if (!of_get_property(dn, "reg", &nand->ncs))
+		return -EINVAL;
 
-	nand->ncs /= माप(u32);
-	अगर (!nand->ncs) अणु
+	nand->ncs /= sizeof(u32);
+	if (!nand->ncs) {
 		dev_err(nfc->dev, "invalid reg property size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < nand->ncs; i++) अणु
-		ret = of_property_पढ़ो_u32_index(dn, "reg", i, &cs);
-		अगर (ret) अणु
+	for (i = 0; i < nand->ncs; i++) {
+		ret = of_property_read_u32_index(dn, "reg", i, &cs);
+		if (ret) {
 			dev_err(nfc->dev, "could not retrieve reg property: %d\n",
 				ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (cs >= FMC2_MAX_CE) अणु
+		if (cs >= FMC2_MAX_CE) {
 			dev_err(nfc->dev, "invalid reg value: %d\n", cs);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (nfc->cs_asचिन्हित & BIT(cs)) अणु
+		if (nfc->cs_assigned & BIT(cs)) {
 			dev_err(nfc->dev, "cs already assigned: %d\n", cs);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		nfc->cs_asचिन्हित |= BIT(cs);
+		nfc->cs_assigned |= BIT(cs);
 		nand->cs_used[i] = cs;
-	पूर्ण
+	}
 
 	nand_set_flash_node(&nand->chip, dn);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_parse_dt(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
-	काष्ठा device_node *dn = nfc->dev->of_node;
-	काष्ठा device_node *child;
-	पूर्णांक nchips = of_get_child_count(dn);
-	पूर्णांक ret = 0;
+static int stm32_fmc2_nfc_parse_dt(struct stm32_fmc2_nfc *nfc)
+{
+	struct device_node *dn = nfc->dev->of_node;
+	struct device_node *child;
+	int nchips = of_get_child_count(dn);
+	int ret = 0;
 
-	अगर (!nchips) अणु
+	if (!nchips) {
 		dev_err(nfc->dev, "NAND chip not defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (nchips > 1) अणु
+	if (nchips > 1) {
 		dev_err(nfc->dev, "too many NAND chips defined\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम_each_child_of_node(dn, child) अणु
-		ret = sपंचांग32_fmc2_nfc_parse_child(nfc, child);
-		अगर (ret < 0) अणु
+	for_each_child_of_node(dn, child) {
+		ret = stm32_fmc2_nfc_parse_child(nfc, child);
+		if (ret < 0) {
 			of_node_put(child);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_set_cdev(काष्ठा sपंचांग32_fmc2_nfc *nfc)
-अणु
-	काष्ठा device *dev = nfc->dev;
+static int stm32_fmc2_nfc_set_cdev(struct stm32_fmc2_nfc *nfc)
+{
+	struct device *dev = nfc->dev;
 	bool ebi_found = false;
 
-	अगर (dev->parent && of_device_is_compatible(dev->parent->of_node,
+	if (dev->parent && of_device_is_compatible(dev->parent->of_node,
 						   "st,stm32mp1-fmc2-ebi"))
 		ebi_found = true;
 
-	अगर (of_device_is_compatible(dev->of_node, "st,stm32mp1-fmc2-nfc")) अणु
-		अगर (ebi_found) अणु
+	if (of_device_is_compatible(dev->of_node, "st,stm32mp1-fmc2-nfc")) {
+		if (ebi_found) {
 			nfc->cdev = dev->parent;
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ebi_found)
-		वापस -EINVAL;
+	if (ebi_found)
+		return -EINVAL;
 
 	nfc->cdev = dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा reset_control *rstc;
-	काष्ठा sपंचांग32_fmc2_nfc *nfc;
-	काष्ठा sपंचांग32_fmc2_nand *nand;
-	काष्ठा resource *res;
-	काष्ठा mtd_info *mtd;
-	काष्ठा nand_chip *chip;
-	काष्ठा resource cres;
-	पूर्णांक chip_cs, mem_region, ret, irq;
-	पूर्णांक start_region = 0;
+static int stm32_fmc2_nfc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct reset_control *rstc;
+	struct stm32_fmc2_nfc *nfc;
+	struct stm32_fmc2_nand *nand;
+	struct resource *res;
+	struct mtd_info *mtd;
+	struct nand_chip *chip;
+	struct resource cres;
+	int chip_cs, mem_region, ret, irq;
+	int start_region = 0;
 
-	nfc = devm_kzalloc(dev, माप(*nfc), GFP_KERNEL);
-	अगर (!nfc)
-		वापस -ENOMEM;
+	nfc = devm_kzalloc(dev, sizeof(*nfc), GFP_KERNEL);
+	if (!nfc)
+		return -ENOMEM;
 
 	nfc->dev = dev;
 	nand_controller_init(&nfc->base);
-	nfc->base.ops = &sपंचांग32_fmc2_nfc_controller_ops;
+	nfc->base.ops = &stm32_fmc2_nfc_controller_ops;
 
-	ret = sपंचांग32_fmc2_nfc_set_cdev(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_set_cdev(nfc);
+	if (ret)
+		return ret;
 
-	ret = sपंचांग32_fmc2_nfc_parse_dt(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = stm32_fmc2_nfc_parse_dt(nfc);
+	if (ret)
+		return ret;
 
 	ret = of_address_to_resource(nfc->cdev->of_node, 0, &cres);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nfc->io_phys_addr = cres.start;
 
 	nfc->regmap = device_node_to_regmap(nfc->cdev->of_node);
-	अगर (IS_ERR(nfc->regmap))
-		वापस PTR_ERR(nfc->regmap);
+	if (IS_ERR(nfc->regmap))
+		return PTR_ERR(nfc->regmap);
 
-	अगर (nfc->dev == nfc->cdev)
+	if (nfc->dev == nfc->cdev)
 		start_region = 1;
 
-	क्रम (chip_cs = 0, mem_region = start_region; chip_cs < FMC2_MAX_CE;
-	     chip_cs++, mem_region += 3) अणु
-		अगर (!(nfc->cs_asचिन्हित & BIT(chip_cs)))
-			जारी;
+	for (chip_cs = 0, mem_region = start_region; chip_cs < FMC2_MAX_CE;
+	     chip_cs++, mem_region += 3) {
+		if (!(nfc->cs_assigned & BIT(chip_cs)))
+			continue;
 
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, mem_region);
+		res = platform_get_resource(pdev, IORESOURCE_MEM, mem_region);
 		nfc->data_base[chip_cs] = devm_ioremap_resource(dev, res);
-		अगर (IS_ERR(nfc->data_base[chip_cs]))
-			वापस PTR_ERR(nfc->data_base[chip_cs]);
+		if (IS_ERR(nfc->data_base[chip_cs]))
+			return PTR_ERR(nfc->data_base[chip_cs]);
 
 		nfc->data_phys_addr[chip_cs] = res->start;
 
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM,
+		res = platform_get_resource(pdev, IORESOURCE_MEM,
 					    mem_region + 1);
 		nfc->cmd_base[chip_cs] = devm_ioremap_resource(dev, res);
-		अगर (IS_ERR(nfc->cmd_base[chip_cs]))
-			वापस PTR_ERR(nfc->cmd_base[chip_cs]);
+		if (IS_ERR(nfc->cmd_base[chip_cs]))
+			return PTR_ERR(nfc->cmd_base[chip_cs]);
 
-		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM,
+		res = platform_get_resource(pdev, IORESOURCE_MEM,
 					    mem_region + 2);
 		nfc->addr_base[chip_cs] = devm_ioremap_resource(dev, res);
-		अगर (IS_ERR(nfc->addr_base[chip_cs]))
-			वापस PTR_ERR(nfc->addr_base[chip_cs]);
-	पूर्ण
+		if (IS_ERR(nfc->addr_base[chip_cs]))
+			return PTR_ERR(nfc->addr_base[chip_cs]);
+	}
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	ret = devm_request_irq(dev, irq, sपंचांग32_fmc2_nfc_irq, 0,
+	ret = devm_request_irq(dev, irq, stm32_fmc2_nfc_irq, 0,
 			       dev_name(dev), nfc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to request irq\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	init_completion(&nfc->complete);
 
-	nfc->clk = devm_clk_get(nfc->cdev, शून्य);
-	अगर (IS_ERR(nfc->clk))
-		वापस PTR_ERR(nfc->clk);
+	nfc->clk = devm_clk_get(nfc->cdev, NULL);
+	if (IS_ERR(nfc->clk))
+		return PTR_ERR(nfc->clk);
 
 	ret = clk_prepare_enable(nfc->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "can not enable the clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	rstc = devm_reset_control_get(dev, शून्य);
-	अगर (IS_ERR(rstc)) अणु
+	rstc = devm_reset_control_get(dev, NULL);
+	if (IS_ERR(rstc)) {
 		ret = PTR_ERR(rstc);
-		अगर (ret == -EPROBE_DEFER)
-			जाओ err_clk_disable;
-	पूर्ण अन्यथा अणु
-		reset_control_निश्चित(rstc);
-		reset_control_deनिश्चित(rstc);
-	पूर्ण
+		if (ret == -EPROBE_DEFER)
+			goto err_clk_disable;
+	} else {
+		reset_control_assert(rstc);
+		reset_control_deassert(rstc);
+	}
 
-	ret = sपंचांग32_fmc2_nfc_dma_setup(nfc);
-	अगर (ret)
-		जाओ err_release_dma;
+	ret = stm32_fmc2_nfc_dma_setup(nfc);
+	if (ret)
+		goto err_release_dma;
 
-	sपंचांग32_fmc2_nfc_init(nfc);
+	stm32_fmc2_nfc_init(nfc);
 
 	nand = &nfc->nand;
 	chip = &nand->chip;
@@ -1958,125 +1957,125 @@ err_dma:
 	mtd->dev.parent = dev;
 
 	chip->controller = &nfc->base;
-	chip->options |= न_अंकD_BUSWIDTH_AUTO | न_अंकD_NO_SUBPAGE_WRITE |
-			 न_अंकD_USES_DMA;
+	chip->options |= NAND_BUSWIDTH_AUTO | NAND_NO_SUBPAGE_WRITE |
+			 NAND_USES_DMA;
 
 	/* Scan to find existence of the device */
 	ret = nand_scan(chip, nand->ncs);
-	अगर (ret)
-		जाओ err_release_dma;
+	if (ret)
+		goto err_release_dma;
 
-	ret = mtd_device_रेजिस्टर(mtd, शून्य, 0);
-	अगर (ret)
-		जाओ err_nand_cleanup;
+	ret = mtd_device_register(mtd, NULL, 0);
+	if (ret)
+		goto err_nand_cleanup;
 
-	platक्रमm_set_drvdata(pdev, nfc);
+	platform_set_drvdata(pdev, nfc);
 
-	वापस 0;
+	return 0;
 
 err_nand_cleanup:
 	nand_cleanup(chip);
 
 err_release_dma:
-	अगर (nfc->dma_ecc_ch)
+	if (nfc->dma_ecc_ch)
 		dma_release_channel(nfc->dma_ecc_ch);
-	अगर (nfc->dma_tx_ch)
+	if (nfc->dma_tx_ch)
 		dma_release_channel(nfc->dma_tx_ch);
-	अगर (nfc->dma_rx_ch)
+	if (nfc->dma_rx_ch)
 		dma_release_channel(nfc->dma_rx_ch);
 
-	sg_मुक्त_table(&nfc->dma_data_sg);
-	sg_मुक्त_table(&nfc->dma_ecc_sg);
+	sg_free_table(&nfc->dma_data_sg);
+	sg_free_table(&nfc->dma_ecc_sg);
 
 err_clk_disable:
 	clk_disable_unprepare(nfc->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sपंचांग32_fmc2_nfc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = platक्रमm_get_drvdata(pdev);
-	काष्ठा sपंचांग32_fmc2_nand *nand = &nfc->nand;
-	काष्ठा nand_chip *chip = &nand->chip;
-	पूर्णांक ret;
+static int stm32_fmc2_nfc_remove(struct platform_device *pdev)
+{
+	struct stm32_fmc2_nfc *nfc = platform_get_drvdata(pdev);
+	struct stm32_fmc2_nand *nand = &nfc->nand;
+	struct nand_chip *chip = &nand->chip;
+	int ret;
 
-	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
+	ret = mtd_device_unregister(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 
-	अगर (nfc->dma_ecc_ch)
+	if (nfc->dma_ecc_ch)
 		dma_release_channel(nfc->dma_ecc_ch);
-	अगर (nfc->dma_tx_ch)
+	if (nfc->dma_tx_ch)
 		dma_release_channel(nfc->dma_tx_ch);
-	अगर (nfc->dma_rx_ch)
+	if (nfc->dma_rx_ch)
 		dma_release_channel(nfc->dma_rx_ch);
 
-	sg_मुक्त_table(&nfc->dma_data_sg);
-	sg_मुक्त_table(&nfc->dma_ecc_sg);
+	sg_free_table(&nfc->dma_data_sg);
+	sg_free_table(&nfc->dma_ecc_sg);
 
 	clk_disable_unprepare(nfc->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_fmc2_nfc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = dev_get_drvdata(dev);
+static int __maybe_unused stm32_fmc2_nfc_suspend(struct device *dev)
+{
+	struct stm32_fmc2_nfc *nfc = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(nfc->clk);
 
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused sपंचांग32_fmc2_nfc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sपंचांग32_fmc2_nfc *nfc = dev_get_drvdata(dev);
-	काष्ठा sपंचांग32_fmc2_nand *nand = &nfc->nand;
-	पूर्णांक chip_cs, ret;
+static int __maybe_unused stm32_fmc2_nfc_resume(struct device *dev)
+{
+	struct stm32_fmc2_nfc *nfc = dev_get_drvdata(dev);
+	struct stm32_fmc2_nand *nand = &nfc->nand;
+	int chip_cs, ret;
 
-	pinctrl_pm_select_शेष_state(dev);
+	pinctrl_pm_select_default_state(dev);
 
 	ret = clk_prepare_enable(nfc->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "can not enable the clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	sपंचांग32_fmc2_nfc_init(nfc);
+	stm32_fmc2_nfc_init(nfc);
 
-	क्रम (chip_cs = 0; chip_cs < FMC2_MAX_CE; chip_cs++) अणु
-		अगर (!(nfc->cs_asचिन्हित & BIT(chip_cs)))
-			जारी;
+	for (chip_cs = 0; chip_cs < FMC2_MAX_CE; chip_cs++) {
+		if (!(nfc->cs_assigned & BIT(chip_cs)))
+			continue;
 
 		nand_reset(&nand->chip, chip_cs);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(sपंचांग32_fmc2_nfc_pm_ops, sपंचांग32_fmc2_nfc_suspend,
-			 sपंचांग32_fmc2_nfc_resume);
+static SIMPLE_DEV_PM_OPS(stm32_fmc2_nfc_pm_ops, stm32_fmc2_nfc_suspend,
+			 stm32_fmc2_nfc_resume);
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_fmc2_nfc_match[] = अणु
-	अणु.compatible = "st,stm32mp15-fmc2"पूर्ण,
-	अणु.compatible = "st,stm32mp1-fmc2-nfc"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, sपंचांग32_fmc2_nfc_match);
+static const struct of_device_id stm32_fmc2_nfc_match[] = {
+	{.compatible = "st,stm32mp15-fmc2"},
+	{.compatible = "st,stm32mp1-fmc2-nfc"},
+	{}
+};
+MODULE_DEVICE_TABLE(of, stm32_fmc2_nfc_match);
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_fmc2_nfc_driver = अणु
-	.probe	= sपंचांग32_fmc2_nfc_probe,
-	.हटाओ	= sपंचांग32_fmc2_nfc_हटाओ,
-	.driver	= अणु
+static struct platform_driver stm32_fmc2_nfc_driver = {
+	.probe	= stm32_fmc2_nfc_probe,
+	.remove	= stm32_fmc2_nfc_remove,
+	.driver	= {
 		.name = "stm32_fmc2_nfc",
-		.of_match_table = sपंचांग32_fmc2_nfc_match,
-		.pm = &sपंचांग32_fmc2_nfc_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sपंचांग32_fmc2_nfc_driver);
+		.of_match_table = stm32_fmc2_nfc_match,
+		.pm = &stm32_fmc2_nfc_pm_ops,
+	},
+};
+module_platform_driver(stm32_fmc2_nfc_driver);
 
 MODULE_ALIAS("platform:stm32_fmc2_nfc");
 MODULE_AUTHOR("Christophe Kerello <christophe.kerello@st.com>");

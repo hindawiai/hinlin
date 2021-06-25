@@ -1,85 +1,84 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
 /*
- * LCD Backlight driver क्रम RAVE SP
+ * LCD Backlight driver for RAVE SP
  *
  * Copyright (C) 2018 Zodiac Inflight Innovations
  *
  */
 
-#समावेश <linux/backlight.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/rave-sp.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/backlight.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mfd/rave-sp.h>
+#include <linux/platform_device.h>
 
-#घोषणा	RAVE_SP_BACKLIGHT_LCD_EN	BIT(7)
+#define	RAVE_SP_BACKLIGHT_LCD_EN	BIT(7)
 
-अटल पूर्णांक rave_sp_backlight_update_status(काष्ठा backlight_device *bd)
-अणु
-	स्थिर काष्ठा backlight_properties *p = &bd->props;
-	स्थिर u8 पूर्णांकensity =
-		(p->घातer == FB_BLANK_UNBLANK) ? p->brightness : 0;
-	काष्ठा rave_sp *sp = dev_get_drvdata(&bd->dev);
-	u8 cmd[] = अणु
+static int rave_sp_backlight_update_status(struct backlight_device *bd)
+{
+	const struct backlight_properties *p = &bd->props;
+	const u8 intensity =
+		(p->power == FB_BLANK_UNBLANK) ? p->brightness : 0;
+	struct rave_sp *sp = dev_get_drvdata(&bd->dev);
+	u8 cmd[] = {
 		[0] = RAVE_SP_CMD_SET_BACKLIGHT,
 		[1] = 0,
-		[2] = पूर्णांकensity ? RAVE_SP_BACKLIGHT_LCD_EN | पूर्णांकensity : 0,
+		[2] = intensity ? RAVE_SP_BACKLIGHT_LCD_EN | intensity : 0,
 		[3] = 0,
 		[4] = 0,
-	पूर्ण;
+	};
 
-	वापस rave_sp_exec(sp, cmd, माप(cmd), शून्य, 0);
-पूर्ण
+	return rave_sp_exec(sp, cmd, sizeof(cmd), NULL, 0);
+}
 
-अटल स्थिर काष्ठा backlight_ops rave_sp_backlight_ops = अणु
+static const struct backlight_ops rave_sp_backlight_ops = {
 	.options	= BL_CORE_SUSPENDRESUME,
 	.update_status	= rave_sp_backlight_update_status,
-पूर्ण;
+};
 
-अटल काष्ठा backlight_properties rave_sp_backlight_props = अणु
+static struct backlight_properties rave_sp_backlight_props = {
 	.type		= BACKLIGHT_PLATFORM,
 	.max_brightness = 100,
 	.brightness	= 50,
-पूर्ण;
+};
 
-अटल पूर्णांक rave_sp_backlight_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा backlight_device *bd;
+static int rave_sp_backlight_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct backlight_device *bd;
 
-	bd = devm_backlight_device_रेजिस्टर(dev, pdev->name, dev,
+	bd = devm_backlight_device_register(dev, pdev->name, dev,
 					    dev_get_drvdata(dev->parent),
 					    &rave_sp_backlight_ops,
 					    &rave_sp_backlight_props);
-	अगर (IS_ERR(bd))
-		वापस PTR_ERR(bd);
+	if (IS_ERR(bd))
+		return PTR_ERR(bd);
 
 	/*
-	 * If there is a phandle poपूर्णांकing to the device node we can
+	 * If there is a phandle pointing to the device node we can
 	 * assume that another device will manage the status changes.
 	 * If not we make sure the backlight is in a consistent state.
 	 */
-	अगर (!dev->of_node->phandle)
+	if (!dev->of_node->phandle)
 		backlight_update_status(bd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id rave_sp_backlight_of_match[] = अणु
-	अणु .compatible = "zii,rave-sp-backlight" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id rave_sp_backlight_of_match[] = {
+	{ .compatible = "zii,rave-sp-backlight" },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver rave_sp_backlight_driver = अणु
+static struct platform_driver rave_sp_backlight_driver = {
 	.probe = rave_sp_backlight_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = KBUILD_MODNAME,
 		.of_match_table = rave_sp_backlight_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(rave_sp_backlight_driver);
+	},
+};
+module_platform_driver(rave_sp_backlight_driver);
 
 MODULE_DEVICE_TABLE(of, rave_sp_backlight_of_match);
 MODULE_LICENSE("GPL");

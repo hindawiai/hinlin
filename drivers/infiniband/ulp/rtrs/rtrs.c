@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * RDMA Transport Layer
  *
@@ -7,156 +6,156 @@
  * Copyright (c) 2018 - 2019 1&1 IONOS Cloud GmbH. All rights reserved.
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME " L" __stringअगरy(__LINE__) ": " fmt
+#undef pr_fmt
+#define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/inet.h>
+#include <linux/module.h>
+#include <linux/inet.h>
 
-#समावेश "rtrs-pri.h"
-#समावेश "rtrs-log.h"
+#include "rtrs-pri.h"
+#include "rtrs-log.h"
 
 MODULE_DESCRIPTION("RDMA Transport Core");
 MODULE_LICENSE("GPL");
 
-काष्ठा rtrs_iu *rtrs_iu_alloc(u32 queue_size, माप_प्रकार size, gfp_t gfp_mask,
-			      काष्ठा ib_device *dma_dev,
-			      क्रमागत dma_data_direction dir,
-			      व्योम (*करोne)(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc))
-अणु
-	काष्ठा rtrs_iu *ius, *iu;
-	पूर्णांक i;
+struct rtrs_iu *rtrs_iu_alloc(u32 queue_size, size_t size, gfp_t gfp_mask,
+			      struct ib_device *dma_dev,
+			      enum dma_data_direction dir,
+			      void (*done)(struct ib_cq *cq, struct ib_wc *wc))
+{
+	struct rtrs_iu *ius, *iu;
+	int i;
 
-	ius = kसुस्मृति(queue_size, माप(*ius), gfp_mask);
-	अगर (!ius)
-		वापस शून्य;
-	क्रम (i = 0; i < queue_size; i++) अणु
+	ius = kcalloc(queue_size, sizeof(*ius), gfp_mask);
+	if (!ius)
+		return NULL;
+	for (i = 0; i < queue_size; i++) {
 		iu = &ius[i];
 		iu->direction = dir;
 		iu->buf = kzalloc(size, gfp_mask);
-		अगर (!iu->buf)
-			जाओ err;
+		if (!iu->buf)
+			goto err;
 
 		iu->dma_addr = ib_dma_map_single(dma_dev, iu->buf, size, dir);
-		अगर (ib_dma_mapping_error(dma_dev, iu->dma_addr))
-			जाओ err;
+		if (ib_dma_mapping_error(dma_dev, iu->dma_addr))
+			goto err;
 
-		iu->cqe.करोne  = करोne;
+		iu->cqe.done  = done;
 		iu->size      = size;
-	पूर्ण
-	वापस ius;
+	}
+	return ius;
 err:
-	rtrs_iu_मुक्त(ius, dma_dev, i);
-	वापस शून्य;
-पूर्ण
+	rtrs_iu_free(ius, dma_dev, i);
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(rtrs_iu_alloc);
 
-व्योम rtrs_iu_मुक्त(काष्ठा rtrs_iu *ius, काष्ठा ib_device *ibdev, u32 queue_size)
-अणु
-	काष्ठा rtrs_iu *iu;
-	पूर्णांक i;
+void rtrs_iu_free(struct rtrs_iu *ius, struct ib_device *ibdev, u32 queue_size)
+{
+	struct rtrs_iu *iu;
+	int i;
 
-	अगर (!ius)
-		वापस;
+	if (!ius)
+		return;
 
-	क्रम (i = 0; i < queue_size; i++) अणु
+	for (i = 0; i < queue_size; i++) {
 		iu = &ius[i];
 		ib_dma_unmap_single(ibdev, iu->dma_addr, iu->size, iu->direction);
-		kमुक्त(iu->buf);
-	पूर्ण
-	kमुक्त(ius);
-पूर्ण
-EXPORT_SYMBOL_GPL(rtrs_iu_मुक्त);
+		kfree(iu->buf);
+	}
+	kfree(ius);
+}
+EXPORT_SYMBOL_GPL(rtrs_iu_free);
 
-पूर्णांक rtrs_iu_post_recv(काष्ठा rtrs_con *con, काष्ठा rtrs_iu *iu)
-अणु
-	काष्ठा rtrs_sess *sess = con->sess;
-	काष्ठा ib_recv_wr wr;
-	काष्ठा ib_sge list;
+int rtrs_iu_post_recv(struct rtrs_con *con, struct rtrs_iu *iu)
+{
+	struct rtrs_sess *sess = con->sess;
+	struct ib_recv_wr wr;
+	struct ib_sge list;
 
 	list.addr   = iu->dma_addr;
 	list.length = iu->size;
 	list.lkey   = sess->dev->ib_pd->local_dma_lkey;
 
-	अगर (list.length == 0) अणु
+	if (list.length == 0) {
 		rtrs_wrn(con->sess,
 			  "Posting receive work request failed, sg list is empty\n");
-		वापस -EINVAL;
-	पूर्ण
-	wr = (काष्ठा ib_recv_wr) अणु
+		return -EINVAL;
+	}
+	wr = (struct ib_recv_wr) {
 		.wr_cqe  = &iu->cqe,
 		.sg_list = &list,
 		.num_sge = 1,
-	पूर्ण;
+	};
 
-	वापस ib_post_recv(con->qp, &wr, शून्य);
-पूर्ण
+	return ib_post_recv(con->qp, &wr, NULL);
+}
 EXPORT_SYMBOL_GPL(rtrs_iu_post_recv);
 
-पूर्णांक rtrs_post_recv_empty(काष्ठा rtrs_con *con, काष्ठा ib_cqe *cqe)
-अणु
-	काष्ठा ib_recv_wr wr;
+int rtrs_post_recv_empty(struct rtrs_con *con, struct ib_cqe *cqe)
+{
+	struct ib_recv_wr wr;
 
-	wr = (काष्ठा ib_recv_wr) अणु
+	wr = (struct ib_recv_wr) {
 		.wr_cqe  = cqe,
-	पूर्ण;
+	};
 
-	वापस ib_post_recv(con->qp, &wr, शून्य);
-पूर्ण
+	return ib_post_recv(con->qp, &wr, NULL);
+}
 EXPORT_SYMBOL_GPL(rtrs_post_recv_empty);
 
-अटल पूर्णांक rtrs_post_send(काष्ठा ib_qp *qp, काष्ठा ib_send_wr *head,
-			     काष्ठा ib_send_wr *wr)
-अणु
-	अगर (head) अणु
-		काष्ठा ib_send_wr *tail = head;
+static int rtrs_post_send(struct ib_qp *qp, struct ib_send_wr *head,
+			     struct ib_send_wr *wr)
+{
+	if (head) {
+		struct ib_send_wr *tail = head;
 
-		जबतक (tail->next)
+		while (tail->next)
 			tail = tail->next;
 		tail->next = wr;
-	पूर्ण अन्यथा अणु
+	} else {
 		head = wr;
-	पूर्ण
+	}
 
-	वापस ib_post_send(qp, head, शून्य);
-पूर्ण
+	return ib_post_send(qp, head, NULL);
+}
 
-पूर्णांक rtrs_iu_post_send(काष्ठा rtrs_con *con, काष्ठा rtrs_iu *iu, माप_प्रकार size,
-		       काष्ठा ib_send_wr *head)
-अणु
-	काष्ठा rtrs_sess *sess = con->sess;
-	काष्ठा ib_send_wr wr;
-	काष्ठा ib_sge list;
+int rtrs_iu_post_send(struct rtrs_con *con, struct rtrs_iu *iu, size_t size,
+		       struct ib_send_wr *head)
+{
+	struct rtrs_sess *sess = con->sess;
+	struct ib_send_wr wr;
+	struct ib_sge list;
 
-	अगर (WARN_ON(size == 0))
-		वापस -EINVAL;
+	if (WARN_ON(size == 0))
+		return -EINVAL;
 
 	list.addr   = iu->dma_addr;
 	list.length = size;
 	list.lkey   = sess->dev->ib_pd->local_dma_lkey;
 
-	wr = (काष्ठा ib_send_wr) अणु
+	wr = (struct ib_send_wr) {
 		.wr_cqe     = &iu->cqe,
 		.sg_list    = &list,
 		.num_sge    = 1,
 		.opcode     = IB_WR_SEND,
 		.send_flags = IB_SEND_SIGNALED,
-	पूर्ण;
+	};
 
-	वापस rtrs_post_send(con->qp, head, &wr);
-पूर्ण
+	return rtrs_post_send(con->qp, head, &wr);
+}
 EXPORT_SYMBOL_GPL(rtrs_iu_post_send);
 
-पूर्णांक rtrs_iu_post_rdma_ग_लिखो_imm(काष्ठा rtrs_con *con, काष्ठा rtrs_iu *iu,
-				 काष्ठा ib_sge *sge, अचिन्हित पूर्णांक num_sge,
+int rtrs_iu_post_rdma_write_imm(struct rtrs_con *con, struct rtrs_iu *iu,
+				 struct ib_sge *sge, unsigned int num_sge,
 				 u32 rkey, u64 rdma_addr, u32 imm_data,
-				 क्रमागत ib_send_flags flags,
-				 काष्ठा ib_send_wr *head)
-अणु
-	काष्ठा ib_rdma_wr wr;
-	पूर्णांक i;
+				 enum ib_send_flags flags,
+				 struct ib_send_wr *head)
+{
+	struct ib_rdma_wr wr;
+	int i;
 
-	wr = (काष्ठा ib_rdma_wr) अणु
+	wr = (struct ib_rdma_wr) {
 		.wr.wr_cqe	  = &iu->cqe,
 		.wr.sg_list	  = sge,
 		.wr.num_sge	  = num_sge,
@@ -165,78 +164,78 @@ EXPORT_SYMBOL_GPL(rtrs_iu_post_send);
 		.wr.opcode	  = IB_WR_RDMA_WRITE_WITH_IMM,
 		.wr.ex.imm_data = cpu_to_be32(imm_data),
 		.wr.send_flags  = flags,
-	पूर्ण;
+	};
 
 	/*
 	 * If one of the sges has 0 size, the operation will fail with a
 	 * length error
 	 */
-	क्रम (i = 0; i < num_sge; i++)
-		अगर (WARN_ON(sge[i].length == 0))
-			वापस -EINVAL;
+	for (i = 0; i < num_sge; i++)
+		if (WARN_ON(sge[i].length == 0))
+			return -EINVAL;
 
-	वापस rtrs_post_send(con->qp, head, &wr.wr);
-पूर्ण
-EXPORT_SYMBOL_GPL(rtrs_iu_post_rdma_ग_लिखो_imm);
+	return rtrs_post_send(con->qp, head, &wr.wr);
+}
+EXPORT_SYMBOL_GPL(rtrs_iu_post_rdma_write_imm);
 
-पूर्णांक rtrs_post_rdma_ग_लिखो_imm_empty(काष्ठा rtrs_con *con, काष्ठा ib_cqe *cqe,
-				    u32 imm_data, क्रमागत ib_send_flags flags,
-				    काष्ठा ib_send_wr *head)
-अणु
-	काष्ठा ib_rdma_wr wr;
+int rtrs_post_rdma_write_imm_empty(struct rtrs_con *con, struct ib_cqe *cqe,
+				    u32 imm_data, enum ib_send_flags flags,
+				    struct ib_send_wr *head)
+{
+	struct ib_rdma_wr wr;
 
-	wr = (काष्ठा ib_rdma_wr) अणु
+	wr = (struct ib_rdma_wr) {
 		.wr.wr_cqe	= cqe,
 		.wr.send_flags	= flags,
 		.wr.opcode	= IB_WR_RDMA_WRITE_WITH_IMM,
 		.wr.ex.imm_data	= cpu_to_be32(imm_data),
-	पूर्ण;
+	};
 
-	वापस rtrs_post_send(con->qp, head, &wr.wr);
-पूर्ण
-EXPORT_SYMBOL_GPL(rtrs_post_rdma_ग_लिखो_imm_empty);
+	return rtrs_post_send(con->qp, head, &wr.wr);
+}
+EXPORT_SYMBOL_GPL(rtrs_post_rdma_write_imm_empty);
 
-अटल व्योम qp_event_handler(काष्ठा ib_event *ev, व्योम *ctx)
-अणु
-	काष्ठा rtrs_con *con = ctx;
+static void qp_event_handler(struct ib_event *ev, void *ctx)
+{
+	struct rtrs_con *con = ctx;
 
-	चयन (ev->event) अणु
-	हाल IB_EVENT_COMM_EST:
+	switch (ev->event) {
+	case IB_EVENT_COMM_EST:
 		rtrs_info(con->sess, "QP event %s (%d) received\n",
 			   ib_event_msg(ev->event), ev->event);
-		rdma_notअगरy(con->cm_id, IB_EVENT_COMM_EST);
-		अवरोध;
-	शेष:
+		rdma_notify(con->cm_id, IB_EVENT_COMM_EST);
+		break;
+	default:
 		rtrs_info(con->sess, "Unhandled QP event %s (%d) received\n",
 			   ib_event_msg(ev->event), ev->event);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक create_cq(काष्ठा rtrs_con *con, पूर्णांक cq_vector, u16 cq_size,
-		     क्रमागत ib_poll_context poll_ctx)
-अणु
-	काष्ठा rdma_cm_id *cm_id = con->cm_id;
-	काष्ठा ib_cq *cq;
+static int create_cq(struct rtrs_con *con, int cq_vector, u16 cq_size,
+		     enum ib_poll_context poll_ctx)
+{
+	struct rdma_cm_id *cm_id = con->cm_id;
+	struct ib_cq *cq;
 
 	cq = ib_cq_pool_get(cm_id->device, cq_size, cq_vector, poll_ctx);
-	अगर (IS_ERR(cq)) अणु
+	if (IS_ERR(cq)) {
 		rtrs_err(con->sess, "Creating completion queue failed, errno: %ld\n",
 			  PTR_ERR(cq));
-		वापस PTR_ERR(cq);
-	पूर्ण
+		return PTR_ERR(cq);
+	}
 	con->cq = cq;
 	con->cq_size = cq_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक create_qp(काष्ठा rtrs_con *con, काष्ठा ib_pd *pd,
+static int create_qp(struct rtrs_con *con, struct ib_pd *pd,
 		     u32 max_send_wr, u32 max_recv_wr, u32 max_sge)
-अणु
-	काष्ठा ib_qp_init_attr init_attr = अणुशून्यपूर्ण;
-	काष्ठा rdma_cm_id *cm_id = con->cm_id;
-	पूर्णांक ret;
+{
+	struct ib_qp_init_attr init_attr = {NULL};
+	struct rdma_cm_id *cm_id = con->cm_id;
+	int ret;
 
 	init_attr.cap.max_send_wr = max_send_wr;
 	init_attr.cap.max_recv_wr = max_recv_wr;
@@ -251,149 +250,149 @@ EXPORT_SYMBOL_GPL(rtrs_post_rdma_ग_लिखो_imm_empty);
 	init_attr.sq_sig_type = IB_SIGNAL_REQ_WR;
 
 	ret = rdma_create_qp(cm_id, pd, &init_attr);
-	अगर (ret) अणु
+	if (ret) {
 		rtrs_err(con->sess, "Creating QP failed, err: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	con->qp = cm_id->qp;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक rtrs_cq_qp_create(काष्ठा rtrs_sess *sess, काष्ठा rtrs_con *con,
-		       u32 max_send_sge, पूर्णांक cq_vector, पूर्णांक cq_size,
+int rtrs_cq_qp_create(struct rtrs_sess *sess, struct rtrs_con *con,
+		       u32 max_send_sge, int cq_vector, int cq_size,
 		       u32 max_send_wr, u32 max_recv_wr,
-		       क्रमागत ib_poll_context poll_ctx)
-अणु
-	पूर्णांक err;
+		       enum ib_poll_context poll_ctx)
+{
+	int err;
 
 	err = create_cq(con, cq_vector, cq_size, poll_ctx);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = create_qp(con, sess->dev->ib_pd, max_send_wr, max_recv_wr,
 			max_send_sge);
-	अगर (err) अणु
+	if (err) {
 		ib_cq_pool_put(con->cq, con->cq_size);
-		con->cq = शून्य;
-		वापस err;
-	पूर्ण
+		con->cq = NULL;
+		return err;
+	}
 	con->sess = sess;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(rtrs_cq_qp_create);
 
-व्योम rtrs_cq_qp_destroy(काष्ठा rtrs_con *con)
-अणु
-	अगर (con->qp) अणु
+void rtrs_cq_qp_destroy(struct rtrs_con *con)
+{
+	if (con->qp) {
 		rdma_destroy_qp(con->cm_id);
-		con->qp = शून्य;
-	पूर्ण
-	अगर (con->cq) अणु
+		con->qp = NULL;
+	}
+	if (con->cq) {
 		ib_cq_pool_put(con->cq, con->cq_size);
-		con->cq = शून्य;
-	पूर्ण
-पूर्ण
+		con->cq = NULL;
+	}
+}
 EXPORT_SYMBOL_GPL(rtrs_cq_qp_destroy);
 
-अटल व्योम schedule_hb(काष्ठा rtrs_sess *sess)
-अणु
+static void schedule_hb(struct rtrs_sess *sess)
+{
 	queue_delayed_work(sess->hb_wq, &sess->hb_dwork,
-			   msecs_to_jअगरfies(sess->hb_पूर्णांकerval_ms));
-पूर्ण
+			   msecs_to_jiffies(sess->hb_interval_ms));
+}
 
-व्योम rtrs_send_hb_ack(काष्ठा rtrs_sess *sess)
-अणु
-	काष्ठा rtrs_con *usr_con = sess->con[0];
+void rtrs_send_hb_ack(struct rtrs_sess *sess)
+{
+	struct rtrs_con *usr_con = sess->con[0];
 	u32 imm;
-	पूर्णांक err;
+	int err;
 
 	imm = rtrs_to_imm(RTRS_HB_ACK_IMM, 0);
-	err = rtrs_post_rdma_ग_लिखो_imm_empty(usr_con, sess->hb_cqe, imm,
-					     0, शून्य);
-	अगर (err) अणु
+	err = rtrs_post_rdma_write_imm_empty(usr_con, sess->hb_cqe, imm,
+					     0, NULL);
+	if (err) {
 		sess->hb_err_handler(usr_con);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 EXPORT_SYMBOL_GPL(rtrs_send_hb_ack);
 
-अटल व्योम hb_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा rtrs_con *usr_con;
-	काष्ठा rtrs_sess *sess;
+static void hb_work(struct work_struct *work)
+{
+	struct rtrs_con *usr_con;
+	struct rtrs_sess *sess;
 	u32 imm;
-	पूर्णांक err;
+	int err;
 
 	sess = container_of(to_delayed_work(work), typeof(*sess), hb_dwork);
 	usr_con = sess->con[0];
 
-	अगर (sess->hb_missed_cnt > sess->hb_missed_max) अणु
+	if (sess->hb_missed_cnt > sess->hb_missed_max) {
 		sess->hb_err_handler(usr_con);
-		वापस;
-	पूर्ण
-	अगर (sess->hb_missed_cnt++) अणु
+		return;
+	}
+	if (sess->hb_missed_cnt++) {
 		/* Reschedule work without sending hb */
 		schedule_hb(sess);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	sess->hb_last_sent = kसमय_get();
+	sess->hb_last_sent = ktime_get();
 
 	imm = rtrs_to_imm(RTRS_HB_MSG_IMM, 0);
-	err = rtrs_post_rdma_ग_लिखो_imm_empty(usr_con, sess->hb_cqe, imm,
-					     0, शून्य);
-	अगर (err) अणु
+	err = rtrs_post_rdma_write_imm_empty(usr_con, sess->hb_cqe, imm,
+					     0, NULL);
+	if (err) {
 		sess->hb_err_handler(usr_con);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	schedule_hb(sess);
-पूर्ण
+}
 
-व्योम rtrs_init_hb(काष्ठा rtrs_sess *sess, काष्ठा ib_cqe *cqe,
-		  अचिन्हित पूर्णांक पूर्णांकerval_ms, अचिन्हित पूर्णांक missed_max,
-		  व्योम (*err_handler)(काष्ठा rtrs_con *con),
-		  काष्ठा workqueue_काष्ठा *wq)
-अणु
+void rtrs_init_hb(struct rtrs_sess *sess, struct ib_cqe *cqe,
+		  unsigned int interval_ms, unsigned int missed_max,
+		  void (*err_handler)(struct rtrs_con *con),
+		  struct workqueue_struct *wq)
+{
 	sess->hb_cqe = cqe;
-	sess->hb_पूर्णांकerval_ms = पूर्णांकerval_ms;
+	sess->hb_interval_ms = interval_ms;
 	sess->hb_err_handler = err_handler;
 	sess->hb_wq = wq;
 	sess->hb_missed_max = missed_max;
 	sess->hb_missed_cnt = 0;
 	INIT_DELAYED_WORK(&sess->hb_dwork, hb_work);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rtrs_init_hb);
 
-व्योम rtrs_start_hb(काष्ठा rtrs_sess *sess)
-अणु
+void rtrs_start_hb(struct rtrs_sess *sess)
+{
 	schedule_hb(sess);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rtrs_start_hb);
 
-व्योम rtrs_stop_hb(काष्ठा rtrs_sess *sess)
-अणु
+void rtrs_stop_hb(struct rtrs_sess *sess)
+{
 	cancel_delayed_work_sync(&sess->hb_dwork);
 	sess->hb_missed_cnt = 0;
 	sess->hb_missed_max = 0;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(rtrs_stop_hb);
 
-अटल पूर्णांक rtrs_str_gid_to_sockaddr(स्थिर अक्षर *addr, माप_प्रकार len,
-				     लघु port, काष्ठा sockaddr_storage *dst)
-अणु
-	काष्ठा sockaddr_ib *dst_ib = (काष्ठा sockaddr_ib *)dst;
-	पूर्णांक ret;
+static int rtrs_str_gid_to_sockaddr(const char *addr, size_t len,
+				     short port, struct sockaddr_storage *dst)
+{
+	struct sockaddr_ib *dst_ib = (struct sockaddr_ib *)dst;
+	int ret;
 
 	/*
 	 * We can use some of the IPv6 functions since GID is a valid
-	 * IPv6 address क्रमmat
+	 * IPv6 address format
 	 */
-	ret = in6_pton(addr, len, dst_ib->sib_addr.sib_raw, '\0', शून्य);
-	अगर (ret == 0)
-		वापस -EINVAL;
+	ret = in6_pton(addr, len, dst_ib->sib_addr.sib_raw, '\0', NULL);
+	if (ret == 0)
+		return -EINVAL;
 
 	dst_ib->sib_family = AF_IB;
 	/*
@@ -404,8 +403,8 @@ EXPORT_SYMBOL_GPL(rtrs_stop_hb);
 	dst_ib->sib_sid_mask = cpu_to_be64(0xffffffffffffffffULL);
 	dst_ib->sib_pkey = cpu_to_be16(0xffff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * rtrs_str_to_sockaddr() - Convert rtrs address string to sockaddr
@@ -415,80 +414,80 @@ EXPORT_SYMBOL_GPL(rtrs_stop_hb);
  *              - "gid:fe80::200:5aee:feaa:20a2"
  * @len:        String address length
  * @port:	Destination port
- * @dst:	Destination sockaddr काष्ठाure
+ * @dst:	Destination sockaddr structure
  *
- * Returns 0 अगर conversion successful. Non-zero on error.
+ * Returns 0 if conversion successful. Non-zero on error.
  */
-अटल पूर्णांक rtrs_str_to_sockaddr(स्थिर अक्षर *addr, माप_प्रकार len,
-				u16 port, काष्ठा sockaddr_storage *dst)
-अणु
-	अगर (म_भेदन(addr, "gid:", 4) == 0) अणु
-		वापस rtrs_str_gid_to_sockaddr(addr + 4, len - 4, port, dst);
-	पूर्ण अन्यथा अगर (म_भेदन(addr, "ip:", 3) == 0) अणु
-		अक्षर port_str[8];
-		अक्षर *cpy;
-		पूर्णांक err;
+static int rtrs_str_to_sockaddr(const char *addr, size_t len,
+				u16 port, struct sockaddr_storage *dst)
+{
+	if (strncmp(addr, "gid:", 4) == 0) {
+		return rtrs_str_gid_to_sockaddr(addr + 4, len - 4, port, dst);
+	} else if (strncmp(addr, "ip:", 3) == 0) {
+		char port_str[8];
+		char *cpy;
+		int err;
 
-		snम_लिखो(port_str, माप(port_str), "%u", port);
+		snprintf(port_str, sizeof(port_str), "%u", port);
 		cpy = kstrndup(addr + 3, len - 3, GFP_KERNEL);
 		err = cpy ? inet_pton_with_scope(&init_net, AF_UNSPEC,
 						 cpy, port_str, dst) : -ENOMEM;
-		kमुक्त(cpy);
+		kfree(cpy);
 
-		वापस err;
-	पूर्ण
-	वापस -EPROTONOSUPPORT;
-पूर्ण
+		return err;
+	}
+	return -EPROTONOSUPPORT;
+}
 
 /**
  * sockaddr_to_str() - convert sockaddr to a string.
- * @addr:	the sockadddr काष्ठाure to be converted.
+ * @addr:	the sockadddr structure to be converted.
  * @buf:	string containing socket addr.
  * @len:	string length.
  *
- * The वापस value is the number of अक्षरacters written पूर्णांकo buf not
- * including the trailing '\0'. If len is == 0 the function वापसs 0..
+ * The return value is the number of characters written into buf not
+ * including the trailing '\0'. If len is == 0 the function returns 0..
  */
-पूर्णांक sockaddr_to_str(स्थिर काष्ठा sockaddr *addr, अक्षर *buf, माप_प्रकार len)
-अणु
+int sockaddr_to_str(const struct sockaddr *addr, char *buf, size_t len)
+{
 
-	चयन (addr->sa_family) अणु
-	हाल AF_IB:
-		वापस scnम_लिखो(buf, len, "gid:%pI6",
-			&((काष्ठा sockaddr_ib *)addr)->sib_addr.sib_raw);
-	हाल AF_INET:
-		वापस scnम_लिखो(buf, len, "ip:%pI4",
-			&((काष्ठा sockaddr_in *)addr)->sin_addr);
-	हाल AF_INET6:
-		वापस scnम_लिखो(buf, len, "ip:%pI6c",
-			  &((काष्ठा sockaddr_in6 *)addr)->sin6_addr);
-	पूर्ण
-	वापस scnम_लिखो(buf, len, "<invalid address family>");
-पूर्ण
+	switch (addr->sa_family) {
+	case AF_IB:
+		return scnprintf(buf, len, "gid:%pI6",
+			&((struct sockaddr_ib *)addr)->sib_addr.sib_raw);
+	case AF_INET:
+		return scnprintf(buf, len, "ip:%pI4",
+			&((struct sockaddr_in *)addr)->sin_addr);
+	case AF_INET6:
+		return scnprintf(buf, len, "ip:%pI6c",
+			  &((struct sockaddr_in6 *)addr)->sin6_addr);
+	}
+	return scnprintf(buf, len, "<invalid address family>");
+}
 EXPORT_SYMBOL(sockaddr_to_str);
 
 /**
  * rtrs_addr_to_str() - convert rtrs_addr to a string "src@dst"
- * @addr:	the rtrs_addr काष्ठाure to be converted
+ * @addr:	the rtrs_addr structure to be converted
  * @buf:	string containing source and destination addr of a path
  *		separated by '@' I.e. "ip:1.1.1.1@ip:1.1.1.2"
  *		"ip:1.1.1.1@ip:1.1.1.2".
  * @len:	string length
  *
- * The वापस value is the number of अक्षरacters written पूर्णांकo buf not
+ * The return value is the number of characters written into buf not
  * including the trailing '\0'.
  */
-पूर्णांक rtrs_addr_to_str(स्थिर काष्ठा rtrs_addr *addr, अक्षर *buf, माप_प्रकार len)
-अणु
-	पूर्णांक cnt;
+int rtrs_addr_to_str(const struct rtrs_addr *addr, char *buf, size_t len)
+{
+	int cnt;
 
-	cnt = sockaddr_to_str((काष्ठा sockaddr *)addr->src,
+	cnt = sockaddr_to_str((struct sockaddr *)addr->src,
 			      buf, len);
-	cnt += scnम_लिखो(buf + cnt, len - cnt, "@");
-	sockaddr_to_str((काष्ठा sockaddr *)addr->dst,
+	cnt += scnprintf(buf + cnt, len - cnt, "@");
+	sockaddr_to_str((struct sockaddr *)addr->dst,
 			buf + cnt, len - cnt);
-	वापस cnt;
-पूर्ण
+	return cnt;
+}
 EXPORT_SYMBOL(rtrs_addr_to_str);
 
 /**
@@ -500,54 +499,54 @@ EXPORT_SYMBOL(rtrs_addr_to_str);
  *		considered to be destination.
  * @len:	string length
  * @port:	Destination port number.
- * @addr:	will be set to the source/destination address or to शून्य
- *		अगर str करोesn't contain any source address.
+ * @addr:	will be set to the source/destination address or to NULL
+ *		if str doesn't contain any source address.
  *
- * Returns zero अगर conversion successful. Non-zero otherwise.
+ * Returns zero if conversion successful. Non-zero otherwise.
  */
-पूर्णांक rtrs_addr_to_sockaddr(स्थिर अक्षर *str, माप_प्रकार len, u16 port,
-			  काष्ठा rtrs_addr *addr)
-अणु
-	स्थिर अक्षर *d;
+int rtrs_addr_to_sockaddr(const char *str, size_t len, u16 port,
+			  struct rtrs_addr *addr)
+{
+	const char *d;
 
-	d = म_अक्षर(str, ',');
-	अगर (!d)
-		d = म_अक्षर(str, '@');
-	अगर (d) अणु
-		अगर (rtrs_str_to_sockaddr(str, d - str, 0, addr->src))
-			वापस -EINVAL;
+	d = strchr(str, ',');
+	if (!d)
+		d = strchr(str, '@');
+	if (d) {
+		if (rtrs_str_to_sockaddr(str, d - str, 0, addr->src))
+			return -EINVAL;
 		d += 1;
 		len -= d - str;
 		str  = d;
 
-	पूर्ण अन्यथा अणु
-		addr->src = शून्य;
-	पूर्ण
-	वापस rtrs_str_to_sockaddr(str, len, port, addr->dst);
-पूर्ण
+	} else {
+		addr->src = NULL;
+	}
+	return rtrs_str_to_sockaddr(str, len, port, addr->dst);
+}
 EXPORT_SYMBOL(rtrs_addr_to_sockaddr);
 
-व्योम rtrs_rdma_dev_pd_init(क्रमागत ib_pd_flags pd_flags,
-			    काष्ठा rtrs_rdma_dev_pd *pool)
-अणु
-	WARN_ON(pool->ops && (!pool->ops->alloc ^ !pool->ops->मुक्त));
+void rtrs_rdma_dev_pd_init(enum ib_pd_flags pd_flags,
+			    struct rtrs_rdma_dev_pd *pool)
+{
+	WARN_ON(pool->ops && (!pool->ops->alloc ^ !pool->ops->free));
 	INIT_LIST_HEAD(&pool->list);
 	mutex_init(&pool->mutex);
 	pool->pd_flags = pd_flags;
-पूर्ण
+}
 EXPORT_SYMBOL(rtrs_rdma_dev_pd_init);
 
-व्योम rtrs_rdma_dev_pd_deinit(काष्ठा rtrs_rdma_dev_pd *pool)
-अणु
+void rtrs_rdma_dev_pd_deinit(struct rtrs_rdma_dev_pd *pool)
+{
 	mutex_destroy(&pool->mutex);
 	WARN_ON(!list_empty(&pool->list));
-पूर्ण
+}
 EXPORT_SYMBOL(rtrs_rdma_dev_pd_deinit);
 
-अटल व्योम dev_मुक्त(काष्ठा kref *ref)
-अणु
-	काष्ठा rtrs_rdma_dev_pd *pool;
-	काष्ठा rtrs_ib_dev *dev;
+static void dev_free(struct kref *ref)
+{
+	struct rtrs_rdma_dev_pd *pool;
+	struct rtrs_ib_dev *dev;
 
 	dev = container_of(ref, typeof(*dev), ref);
 	pool = dev->pool;
@@ -556,72 +555,72 @@ EXPORT_SYMBOL(rtrs_rdma_dev_pd_deinit);
 	list_del(&dev->entry);
 	mutex_unlock(&pool->mutex);
 
-	अगर (pool->ops && pool->ops->deinit)
+	if (pool->ops && pool->ops->deinit)
 		pool->ops->deinit(dev);
 
 	ib_dealloc_pd(dev->ib_pd);
 
-	अगर (pool->ops && pool->ops->मुक्त)
-		pool->ops->मुक्त(dev);
-	अन्यथा
-		kमुक्त(dev);
-पूर्ण
+	if (pool->ops && pool->ops->free)
+		pool->ops->free(dev);
+	else
+		kfree(dev);
+}
 
-पूर्णांक rtrs_ib_dev_put(काष्ठा rtrs_ib_dev *dev)
-अणु
-	वापस kref_put(&dev->ref, dev_मुक्त);
-पूर्ण
+int rtrs_ib_dev_put(struct rtrs_ib_dev *dev)
+{
+	return kref_put(&dev->ref, dev_free);
+}
 EXPORT_SYMBOL(rtrs_ib_dev_put);
 
-अटल पूर्णांक rtrs_ib_dev_get(काष्ठा rtrs_ib_dev *dev)
-अणु
-	वापस kref_get_unless_zero(&dev->ref);
-पूर्ण
+static int rtrs_ib_dev_get(struct rtrs_ib_dev *dev)
+{
+	return kref_get_unless_zero(&dev->ref);
+}
 
-काष्ठा rtrs_ib_dev *
-rtrs_ib_dev_find_or_add(काष्ठा ib_device *ib_dev,
-			 काष्ठा rtrs_rdma_dev_pd *pool)
-अणु
-	काष्ठा rtrs_ib_dev *dev;
+struct rtrs_ib_dev *
+rtrs_ib_dev_find_or_add(struct ib_device *ib_dev,
+			 struct rtrs_rdma_dev_pd *pool)
+{
+	struct rtrs_ib_dev *dev;
 
 	mutex_lock(&pool->mutex);
-	list_क्रम_each_entry(dev, &pool->list, entry) अणु
-		अगर (dev->ib_dev->node_guid == ib_dev->node_guid &&
+	list_for_each_entry(dev, &pool->list, entry) {
+		if (dev->ib_dev->node_guid == ib_dev->node_guid &&
 		    rtrs_ib_dev_get(dev))
-			जाओ out_unlock;
-	पूर्ण
+			goto out_unlock;
+	}
 	mutex_unlock(&pool->mutex);
-	अगर (pool->ops && pool->ops->alloc)
+	if (pool->ops && pool->ops->alloc)
 		dev = pool->ops->alloc();
-	अन्यथा
-		dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (IS_ERR_OR_शून्य(dev))
-		जाओ out_err;
+	else
+		dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (IS_ERR_OR_NULL(dev))
+		goto out_err;
 
 	kref_init(&dev->ref);
 	dev->pool = pool;
 	dev->ib_dev = ib_dev;
 	dev->ib_pd = ib_alloc_pd(ib_dev, pool->pd_flags);
-	अगर (IS_ERR(dev->ib_pd))
-		जाओ out_मुक्त_dev;
+	if (IS_ERR(dev->ib_pd))
+		goto out_free_dev;
 
-	अगर (pool->ops && pool->ops->init && pool->ops->init(dev))
-		जाओ out_मुक्त_pd;
+	if (pool->ops && pool->ops->init && pool->ops->init(dev))
+		goto out_free_pd;
 
 	mutex_lock(&pool->mutex);
 	list_add(&dev->entry, &pool->list);
 out_unlock:
 	mutex_unlock(&pool->mutex);
-	वापस dev;
+	return dev;
 
-out_मुक्त_pd:
+out_free_pd:
 	ib_dealloc_pd(dev->ib_pd);
-out_मुक्त_dev:
-	अगर (pool->ops && pool->ops->मुक्त)
-		pool->ops->मुक्त(dev);
-	अन्यथा
-		kमुक्त(dev);
+out_free_dev:
+	if (pool->ops && pool->ops->free)
+		pool->ops->free(dev);
+	else
+		kfree(dev);
 out_err:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(rtrs_ib_dev_find_or_add);

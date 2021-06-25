@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Maxime Ripard
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/spinlock.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/spinlock.h>
 
-#समावेश "ccu_phase.h"
+#include "ccu_phase.h"
 
-अटल पूर्णांक ccu_phase_get_phase(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा ccu_phase *phase = hw_to_ccu_phase(hw);
-	काष्ठा clk_hw *parent, *gअक्रमparent;
-	अचिन्हित पूर्णांक parent_rate, gअक्रमparent_rate;
-	u16 step, parent_भाग;
+static int ccu_phase_get_phase(struct clk_hw *hw)
+{
+	struct ccu_phase *phase = hw_to_ccu_phase(hw);
+	struct clk_hw *parent, *grandparent;
+	unsigned int parent_rate, grandparent_rate;
+	u16 step, parent_div;
 	u32 reg;
 	u8 delay;
 
-	reg = पढ़ोl(phase->common.base + phase->common.reg);
-	delay = (reg >> phase->shअगरt);
+	reg = readl(phase->common.base + phase->common.reg);
+	delay = (reg >> phase->shift);
 	delay &= (1 << phase->width) - 1;
 
-	अगर (!delay)
-		वापस 180;
+	if (!delay)
+		return 180;
 
-	/* Get our parent घड़ी, it's the one that can adjust its rate */
+	/* Get our parent clock, it's the one that can adjust its rate */
 	parent = clk_hw_get_parent(hw);
-	अगर (!parent)
-		वापस -EINVAL;
+	if (!parent)
+		return -EINVAL;
 
 	/* And its rate */
 	parent_rate = clk_hw_get_rate(parent);
-	अगर (!parent_rate)
-		वापस -EINVAL;
+	if (!parent_rate)
+		return -EINVAL;
 
 	/* Now, get our parent's parent (most likely some PLL) */
-	gअक्रमparent = clk_hw_get_parent(parent);
-	अगर (!gअक्रमparent)
-		वापस -EINVAL;
+	grandparent = clk_hw_get_parent(parent);
+	if (!grandparent)
+		return -EINVAL;
 
 	/* And its rate */
-	gअक्रमparent_rate = clk_hw_get_rate(gअक्रमparent);
-	अगर (!gअक्रमparent_rate)
-		वापस -EINVAL;
+	grandparent_rate = clk_hw_get_rate(grandparent);
+	if (!grandparent_rate)
+		return -EINVAL;
 
-	/* Get our parent घड़ी भागider */
-	parent_भाग = gअक्रमparent_rate / parent_rate;
+	/* Get our parent clock divider */
+	parent_div = grandparent_rate / parent_rate;
 
-	step = DIV_ROUND_CLOSEST(360, parent_भाग);
-	वापस delay * step;
-पूर्ण
+	step = DIV_ROUND_CLOSEST(360, parent_div);
+	return delay * step;
+}
 
-अटल पूर्णांक ccu_phase_set_phase(काष्ठा clk_hw *hw, पूर्णांक degrees)
-अणु
-	काष्ठा ccu_phase *phase = hw_to_ccu_phase(hw);
-	काष्ठा clk_hw *parent, *gअक्रमparent;
-	अचिन्हित पूर्णांक parent_rate, gअक्रमparent_rate;
-	अचिन्हित दीर्घ flags;
+static int ccu_phase_set_phase(struct clk_hw *hw, int degrees)
+{
+	struct ccu_phase *phase = hw_to_ccu_phase(hw);
+	struct clk_hw *parent, *grandparent;
+	unsigned int parent_rate, grandparent_rate;
+	unsigned long flags;
 	u32 reg;
 	u8 delay;
 
-	/* Get our parent घड़ी, it's the one that can adjust its rate */
+	/* Get our parent clock, it's the one that can adjust its rate */
 	parent = clk_hw_get_parent(hw);
-	अगर (!parent)
-		वापस -EINVAL;
+	if (!parent)
+		return -EINVAL;
 
 	/* And its rate */
 	parent_rate = clk_hw_get_rate(parent);
-	अगर (!parent_rate)
-		वापस -EINVAL;
+	if (!parent_rate)
+		return -EINVAL;
 
 	/* Now, get our parent's parent (most likely some PLL) */
-	gअक्रमparent = clk_hw_get_parent(parent);
-	अगर (!gअक्रमparent)
-		वापस -EINVAL;
+	grandparent = clk_hw_get_parent(parent);
+	if (!grandparent)
+		return -EINVAL;
 
 	/* And its rate */
-	gअक्रमparent_rate = clk_hw_get_rate(gअक्रमparent);
-	अगर (!gअक्रमparent_rate)
-		वापस -EINVAL;
+	grandparent_rate = clk_hw_get_rate(grandparent);
+	if (!grandparent_rate)
+		return -EINVAL;
 
-	अगर (degrees != 180) अणु
-		u16 step, parent_भाग;
+	if (degrees != 180) {
+		u16 step, parent_div;
 
-		/* Get our parent भागider */
-		parent_भाग = gअक्रमparent_rate / parent_rate;
+		/* Get our parent divider */
+		parent_div = grandparent_rate / parent_rate;
 
 		/*
-		 * We can only outphase the घड़ीs by multiple of the
+		 * We can only outphase the clocks by multiple of the
 		 * PLL's period.
 		 *
-		 * Since our parent घड़ी is only a भागider, and the
-		 * क्रमmula to get the outphasing in degrees is deg =
+		 * Since our parent clock is only a divider, and the
+		 * formula to get the outphasing in degrees is deg =
 		 * 360 * delta / period
 		 *
-		 * If we simplअगरy this क्रमmula, we can see that the
+		 * If we simplify this formula, we can see that the
 		 * only thing that we're concerned about is the number
-		 * of period we want to outphase our घड़ी from, and
-		 * the भागider set by our parent घड़ी.
+		 * of period we want to outphase our clock from, and
+		 * the divider set by our parent clock.
 		 */
-		step = DIV_ROUND_CLOSEST(360, parent_भाग);
+		step = DIV_ROUND_CLOSEST(360, parent_div);
 		delay = DIV_ROUND_CLOSEST(degrees, step);
-	पूर्ण अन्यथा अणु
+	} else {
 		delay = 0;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(phase->common.lock, flags);
-	reg = पढ़ोl(phase->common.base + phase->common.reg);
-	reg &= ~GENMASK(phase->width + phase->shअगरt - 1, phase->shअगरt);
-	ग_लिखोl(reg | (delay << phase->shअगरt),
+	reg = readl(phase->common.base + phase->common.reg);
+	reg &= ~GENMASK(phase->width + phase->shift - 1, phase->shift);
+	writel(reg | (delay << phase->shift),
 	       phase->common.base + phase->common.reg);
 	spin_unlock_irqrestore(phase->common.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops ccu_phase_ops = अणु
+const struct clk_ops ccu_phase_ops = {
 	.get_phase	= ccu_phase_get_phase,
 	.set_phase	= ccu_phase_set_phase,
-पूर्ण;
+};

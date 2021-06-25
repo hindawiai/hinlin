@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/err.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
-अटल अचिन्हित दीर्घ clk_sync_source_recalc_rate(काष्ठा clk_hw *hw,
-						 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tegra_clk_sync_source *sync = to_clk_sync_source(hw);
+static unsigned long clk_sync_source_recalc_rate(struct clk_hw *hw,
+						 unsigned long parent_rate)
+{
+	struct tegra_clk_sync_source *sync = to_clk_sync_source(hw);
 
-	वापस sync->rate;
-पूर्ण
+	return sync->rate;
+}
 
-अटल दीर्घ clk_sync_source_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				       अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा tegra_clk_sync_source *sync = to_clk_sync_source(hw);
+static long clk_sync_source_round_rate(struct clk_hw *hw, unsigned long rate,
+				       unsigned long *prate)
+{
+	struct tegra_clk_sync_source *sync = to_clk_sync_source(hw);
 
-	अगर (rate > sync->max_rate)
-		वापस -EINVAL;
-	अन्यथा
-		वापस rate;
-पूर्ण
+	if (rate > sync->max_rate)
+		return -EINVAL;
+	else
+		return rate;
+}
 
-अटल पूर्णांक clk_sync_source_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा tegra_clk_sync_source *sync = to_clk_sync_source(hw);
+static int clk_sync_source_set_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long parent_rate)
+{
+	struct tegra_clk_sync_source *sync = to_clk_sync_source(hw);
 
 	sync->rate = rate;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops tegra_clk_sync_source_ops = अणु
+const struct clk_ops tegra_clk_sync_source_ops = {
 	.round_rate = clk_sync_source_round_rate,
 	.set_rate = clk_sync_source_set_rate,
 	.recalc_rate = clk_sync_source_recalc_rate,
-पूर्ण;
+};
 
-काष्ठा clk *tegra_clk_रेजिस्टर_sync_source(स्थिर अक्षर *name,
-					   अचिन्हित दीर्घ max_rate)
-अणु
-	काष्ठा tegra_clk_sync_source *sync;
-	काष्ठा clk_init_data init;
-	काष्ठा clk *clk;
+struct clk *tegra_clk_register_sync_source(const char *name,
+					   unsigned long max_rate)
+{
+	struct tegra_clk_sync_source *sync;
+	struct clk_init_data init;
+	struct clk *clk;
 
-	sync = kzalloc(माप(*sync), GFP_KERNEL);
-	अगर (!sync) अणु
+	sync = kzalloc(sizeof(*sync), GFP_KERNEL);
+	if (!sync) {
 		pr_err("%s: could not allocate sync source clk\n", __func__);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	sync->max_rate = max_rate;
 
 	init.ops = &tegra_clk_sync_source_ops;
 	init.name = name;
 	init.flags = 0;
-	init.parent_names = शून्य;
+	init.parent_names = NULL;
 	init.num_parents = 0;
 
-	/* Data in .init is copied by clk_रेजिस्टर(), so stack variable OK */
+	/* Data in .init is copied by clk_register(), so stack variable OK */
 	sync->hw.init = &init;
 
-	clk = clk_रेजिस्टर(शून्य, &sync->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(sync);
+	clk = clk_register(NULL, &sync->hw);
+	if (IS_ERR(clk))
+		kfree(sync);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

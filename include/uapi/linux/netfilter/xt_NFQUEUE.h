@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-/* iptables module क्रम using NFQUEUE mechanism
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+/* iptables module for using NFQUEUE mechanism
  *
- * (C) 2005 Harald Welte <laक्रमge@netfilter.org>
+ * (C) 2005 Harald Welte <laforge@netfilter.org>
  *
  * This software is distributed under GNU GPL v2, 1991
  * 
 */
-#अगर_अघोषित _XT_NFQ_TARGET_H
-#घोषणा _XT_NFQ_TARGET_H
+#ifndef _XT_NFQ_TARGET_H
+#define _XT_NFQ_TARGET_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /* target info */
-काष्ठा xt_NFQ_info अणु
-	__u16 queuक्रमागत;
-पूर्ण;
+struct xt_NFQ_info {
+	__u16 queuenum;
+};
 
-काष्ठा xt_NFQ_info_v1 अणु
-	__u16 queuक्रमागत;
+struct xt_NFQ_info_v1 {
+	__u16 queuenum;
 	__u16 queues_total;
-पूर्ण;
+};
 
-काष्ठा xt_NFQ_info_v2 अणु
-	__u16 queuक्रमागत;
+struct xt_NFQ_info_v2 {
+	__u16 queuenum;
 	__u16 queues_total;
 	__u16 bypass;
-पूर्ण;
+};
 
-काष्ठा xt_NFQ_info_v3 अणु
-	__u16 queuक्रमागत;
+struct xt_NFQ_info_v3 {
+	__u16 queuenum;
 	__u16 queues_total;
 	__u16 flags;
-#घोषणा NFQ_FLAG_BYPASS		0x01 /* क्रम compatibility with v2 */
-#घोषणा NFQ_FLAG_CPU_FANOUT	0x02 /* use current CPU (no hashing) */
-#घोषणा NFQ_FLAG_MASK		0x03
-पूर्ण;
+#define NFQ_FLAG_BYPASS		0x01 /* for compatibility with v2 */
+#define NFQ_FLAG_CPU_FANOUT	0x02 /* use current CPU (no hashing) */
+#define NFQ_FLAG_MASK		0x03
+};
 
-#पूर्ण_अगर /* _XT_NFQ_TARGET_H */
+#endif /* _XT_NFQ_TARGET_H */

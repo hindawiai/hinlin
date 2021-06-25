@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
- * Core definitions and data काष्ठाures shareable across OS platक्रमms.
+ * Core definitions and data structures shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
  * Copyright (c) 2000-2001 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -43,141 +42,141 @@
  * $FreeBSD$
  */
 
-#अगर_अघोषित _AIC7XXX_H_
-#घोषणा _AIC7XXX_H_
+#ifndef _AIC7XXX_H_
+#define _AIC7XXX_H_
 
 /* Register Definitions */
-#समावेश "aic7xxx_reg.h"
+#include "aic7xxx_reg.h"
 
 /************************* Forward Declarations *******************************/
-काष्ठा ahc_platक्रमm_data;
-काष्ठा scb_platक्रमm_data;
-काष्ठा seeprom_descriptor;
+struct ahc_platform_data;
+struct scb_platform_data;
+struct seeprom_descriptor;
 
 /****************************** Useful Macros *********************************/
-#अगर_अघोषित TRUE
-#घोषणा TRUE 1
-#पूर्ण_अगर
-#अगर_अघोषित FALSE
-#घोषणा FALSE 0
-#पूर्ण_अगर
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
 
-#घोषणा ALL_CHANNELS '\0'
-#घोषणा ALL_TARGETS_MASK 0xFFFF
-#घोषणा INITIATOR_WILDCARD	(~0)
+#define ALL_CHANNELS '\0'
+#define ALL_TARGETS_MASK 0xFFFF
+#define INITIATOR_WILDCARD	(~0)
 
-#घोषणा SCSIID_TARGET(ahc, scsiid) \
+#define SCSIID_TARGET(ahc, scsiid) \
 	(((scsiid) & ((((ahc)->features & AHC_TWIN) != 0) ? TWIN_TID : TID)) \
 	>> TID_SHIFT)
-#घोषणा SCSIID_OUR_ID(scsiid) \
+#define SCSIID_OUR_ID(scsiid) \
 	((scsiid) & OID)
-#घोषणा SCSIID_CHANNEL(ahc, scsiid) \
+#define SCSIID_CHANNEL(ahc, scsiid) \
 	((((ahc)->features & AHC_TWIN) != 0) \
         ? ((((scsiid) & TWIN_CHNLB) != 0) ? 'B' : 'A') \
        : 'A')
-#घोषणा	SCB_IS_SCSIBUS_B(ahc, scb) \
+#define	SCB_IS_SCSIBUS_B(ahc, scb) \
 	(SCSIID_CHANNEL(ahc, (scb)->hscb->scsiid) == 'B')
-#घोषणा	SCB_GET_OUR_ID(scb) \
+#define	SCB_GET_OUR_ID(scb) \
 	SCSIID_OUR_ID((scb)->hscb->scsiid)
-#घोषणा	SCB_GET_TARGET(ahc, scb) \
+#define	SCB_GET_TARGET(ahc, scb) \
 	SCSIID_TARGET((ahc), (scb)->hscb->scsiid)
-#घोषणा	SCB_GET_CHANNEL(ahc, scb) \
+#define	SCB_GET_CHANNEL(ahc, scb) \
 	SCSIID_CHANNEL(ahc, (scb)->hscb->scsiid)
-#घोषणा	SCB_GET_LUN(scb) \
+#define	SCB_GET_LUN(scb) \
 	((scb)->hscb->lun & LID)
-#घोषणा SCB_GET_TARGET_OFFSET(ahc, scb)	\
+#define SCB_GET_TARGET_OFFSET(ahc, scb)	\
 	(SCB_GET_TARGET(ahc, scb) + (SCB_IS_SCSIBUS_B(ahc, scb) ? 8 : 0))
-#घोषणा SCB_GET_TARGET_MASK(ahc, scb) \
+#define SCB_GET_TARGET_MASK(ahc, scb) \
 	(0x01 << (SCB_GET_TARGET_OFFSET(ahc, scb)))
-#अगर_घोषित AHC_DEBUG
-#घोषणा SCB_IS_SILENT(scb)					\
+#ifdef AHC_DEBUG
+#define SCB_IS_SILENT(scb)					\
 	((ahc_debug & AHC_SHOW_MASKED_ERRORS) == 0		\
       && (((scb)->flags & SCB_SILENT) != 0))
-#अन्यथा
-#घोषणा SCB_IS_SILENT(scb)					\
+#else
+#define SCB_IS_SILENT(scb)					\
 	(((scb)->flags & SCB_SILENT) != 0)
-#पूर्ण_अगर
-#घोषणा TCL_TARGET_OFFSET(tcl) \
+#endif
+#define TCL_TARGET_OFFSET(tcl) \
 	((((tcl) >> 4) & TID) >> 4)
-#घोषणा TCL_LUN(tcl) \
+#define TCL_LUN(tcl) \
 	(tcl & (AHC_NUM_LUNS - 1))
-#घोषणा BUILD_TCL(scsiid, lun) \
+#define BUILD_TCL(scsiid, lun) \
 	((lun) | (((scsiid) & TID) << 4))
 
-#अगर_अघोषित	AHC_TARGET_MODE
-#अघोषित	AHC_TMODE_ENABLE
-#घोषणा	AHC_TMODE_ENABLE 0
-#पूर्ण_अगर
+#ifndef	AHC_TARGET_MODE
+#undef	AHC_TMODE_ENABLE
+#define	AHC_TMODE_ENABLE 0
+#endif
 
 /**************************** Driver Constants ********************************/
 /*
- * The maximum number of supported tarमाला_लो.
+ * The maximum number of supported targets.
  */
-#घोषणा AHC_NUM_TARGETS 16
+#define AHC_NUM_TARGETS 16
 
 /*
  * The maximum number of supported luns.
- * The identअगरy message only supports 64 luns in SPI3.
- * You can have 2^64 luns when inक्रमmation unit transfers are enabled,
- * but it is करोubtful this driver will ever support IUTs.
+ * The identify message only supports 64 luns in SPI3.
+ * You can have 2^64 luns when information unit transfers are enabled,
+ * but it is doubtful this driver will ever support IUTs.
  */
-#घोषणा AHC_NUM_LUNS 64
+#define AHC_NUM_LUNS 64
 
 /*
  * The maximum transfer per S/G segment.
  */
-#घोषणा AHC_MAXTRANSFER_SIZE	 0x00ffffff	/* limited by 24bit counter */
+#define AHC_MAXTRANSFER_SIZE	 0x00ffffff	/* limited by 24bit counter */
 
 /*
  * The maximum amount of SCB storage in hardware on a controller.
  * This value represents an upper bound.  Controllers vary in the number
  * they actually support.
  */
-#घोषणा AHC_SCB_MAX	255
+#define AHC_SCB_MAX	255
 
 /*
  * The maximum number of concurrent transactions supported per driver instance.
- * Sequencer Control Blocks (SCBs) store per-transaction inक्रमmation.  Although
- * the space क्रम SCBs on the host adapter varies by model, the driver will
+ * Sequencer Control Blocks (SCBs) store per-transaction information.  Although
+ * the space for SCBs on the host adapter varies by model, the driver will
  * page the SCBs between host and controller memory as needed.  We are limited
  * to 253 because:
  * 	1) The 8bit nature of the RISC engine holds us to an 8bit value.
  * 	2) We reserve one value, 255, to represent the invalid element.
  *	3) Our input queue scheme requires one SCB to always be reserved
- *	   in advance of queuing any SCBs.  This takes us करोwn to 254.
+ *	   in advance of queuing any SCBs.  This takes us down to 254.
  *	4) To handle our output queue correctly on machines that only
  * 	   support 32bit stores, we must clear the array 4 bytes at a
- *	   समय.  To aव्योम colliding with a DMA ग_लिखो from the sequencer,
- *	   we must be sure that 4 slots are empty when we ग_लिखो to clear
+ *	   time.  To avoid colliding with a DMA write from the sequencer,
+ *	   we must be sure that 4 slots are empty when we write to clear
  *	   the queue.  This reduces us to 253 SCBs: 1 that just completed
  *	   and the known three additional empty slots in the queue that
  *	   precede it.
  */
-#घोषणा AHC_MAX_QUEUE	253
+#define AHC_MAX_QUEUE	253
 
 /*
  * The maximum amount of SCB storage we allocate in host memory.  This
  * number should reflect the 1 additional SCB we require to handle our
- * qinfअगरo mechanism.
+ * qinfifo mechanism.
  */
-#घोषणा AHC_SCB_MAX_ALLOC (AHC_MAX_QUEUE+1)
+#define AHC_SCB_MAX_ALLOC (AHC_MAX_QUEUE+1)
 
 /*
  * Ring Buffer of incoming target commands.
- * We allocate 256 to simplअगरy the logic in the sequencer
- * by using the natural wrap poपूर्णांक of an 8bit counter.
+ * We allocate 256 to simplify the logic in the sequencer
+ * by using the natural wrap point of an 8bit counter.
  */
-#घोषणा AHC_TMODE_CMDS	256
+#define AHC_TMODE_CMDS	256
 
-/* Reset line निश्चितion समय in us */
-#घोषणा AHC_BUSRESET_DELAY	25
+/* Reset line assertion time in us */
+#define AHC_BUSRESET_DELAY	25
 
 /******************* Chip Characteristics/Operating Settings  *****************/
 /*
  * Chip Type
  * The chip order is from least sophisticated to most sophisticated.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	AHC_NONE	= 0x0000,
 	AHC_CHIPID_MASK	= 0x00FF,
 	AHC_AIC7770	= 0x0001,
@@ -197,12 +196,12 @@
 	AHC_EISA	= 0x0200,	/* Bus type EISA */
 	AHC_PCI		= 0x0400,	/* Bus type PCI */
 	AHC_BUS_MASK	= 0x0F00
-पूर्ण ahc_chip;
+} ahc_chip;
 
 /*
  * Features available in each chip type.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	AHC_FENONE	= 0x00000,
 	AHC_ULTRA	= 0x00001,	/* Supports 20MHz Transfers */
 	AHC_ULTRA2	= 0x00002,	/* Supports 40MHz Transfers */
@@ -210,40 +209,40 @@
 	AHC_TWIN	= 0x00008,	/* Twin Channel */
 	AHC_MORE_SRAM	= 0x00010,	/* 80 bytes instead of 64 */
 	AHC_CMD_CHAN	= 0x00020,	/* Has a Command DMA Channel */
-	AHC_QUEUE_REGS	= 0x00040,	/* Has Queue management रेजिस्टरs */
-	AHC_SG_PRELOAD	= 0x00080,	/* Can perक्रमm स्वतः-SG preload */
+	AHC_QUEUE_REGS	= 0x00040,	/* Has Queue management registers */
+	AHC_SG_PRELOAD	= 0x00080,	/* Can perform auto-SG preload */
 	AHC_SPIOCAP	= 0x00100,	/* Has a Serial Port I/O Cap Register */
-	AHC_MULTI_TID	= 0x00200,	/* Has biपंचांगask of TIDs क्रम select-in */
-	AHC_HS_MAILBOX	= 0x00400,	/* Has HS_MAILBOX रेजिस्टर */
+	AHC_MULTI_TID	= 0x00200,	/* Has bitmask of TIDs for select-in */
+	AHC_HS_MAILBOX	= 0x00400,	/* Has HS_MAILBOX register */
 	AHC_DT		= 0x00800,	/* Double Transition transfers */
 	AHC_NEW_TERMCTL	= 0x01000,	/* Newer termination scheme */
 	AHC_MULTI_FUNC	= 0x02000,	/* Multi-Function Twin Channel Device */
 	AHC_LARGE_SCBS	= 0x04000,	/* 64byte SCBs */
 	AHC_AUTORATE	= 0x08000,	/* Automatic update of SCSIRATE/OFFSET*/
-	AHC_AUTOPAUSE	= 0x10000,	/* Automatic छोड़ो on रेजिस्टर access */
+	AHC_AUTOPAUSE	= 0x10000,	/* Automatic pause on register access */
 	AHC_TARGETMODE	= 0x20000,	/* Has tested target mode support */
-	AHC_MULTIROLE	= 0x40000,	/* Space क्रम two roles at a समय */
+	AHC_MULTIROLE	= 0x40000,	/* Space for two roles at a time */
 	AHC_REMOVABLE	= 0x80000,	/* Hot-Swap supported */
 	AHC_HVD		= 0x100000,	/* HVD rather than SE */
 	AHC_AIC7770_FE	= AHC_FENONE,
 	/*
-	 * The real 7850 करोes not support Ultra modes, but there are
+	 * The real 7850 does not support Ultra modes, but there are
 	 * several cards that use the generic 7850 PCI ID even though
 	 * they are using an Ultra capable chip (7859/7860).  We start
 	 * out with the AHC_ULTRA feature set and then check the DEVSTATUS
-	 * रेजिस्टर to determine अगर the capability is really present.
+	 * register to determine if the capability is really present.
 	 */
 	AHC_AIC7850_FE	= AHC_SPIOCAP|AHC_AUTOPAUSE|AHC_TARGETMODE|AHC_ULTRA,
 	AHC_AIC7860_FE	= AHC_AIC7850_FE,
 	AHC_AIC7870_FE	= AHC_TARGETMODE|AHC_AUTOPAUSE,
 	AHC_AIC7880_FE	= AHC_AIC7870_FE|AHC_ULTRA,
 	/*
-	 * Although we have space क्रम both the initiator and
+	 * Although we have space for both the initiator and
 	 * target roles on ULTRA2 chips, we currently disable
 	 * the initiator role to allow multi-scsi-id target mode
 	 * configurations.  We can only respond on the same SCSI
-	 * ID as our initiator role अगर we allow initiator operation.
-	 * At some poपूर्णांक, we should add a configuration knob to
+	 * ID as our initiator role if we allow initiator operation.
+	 * At some point, we should add a configuration knob to
 	 * allow both roles to be loaded.
 	 */
 	AHC_AIC7890_FE	= AHC_MORE_SRAM|AHC_CMD_CHAN|AHC_ULTRA2
@@ -256,27 +255,27 @@
 	AHC_AIC7895C_FE	= AHC_AIC7895_FE|AHC_MULTI_TID,
 	AHC_AIC7896_FE	= AHC_AIC7890_FE|AHC_MULTI_FUNC,
 	AHC_AIC7899_FE	= AHC_AIC7892_FE|AHC_MULTI_FUNC
-पूर्ण ahc_feature;
+} ahc_feature;
 
 /*
  * Bugs in the silicon that we work around in software.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	AHC_BUGNONE		= 0x00,
 	/*
 	 * On all chips prior to the U2 product line,
-	 * the WIDEODD S/G segment feature करोes not
+	 * the WIDEODD S/G segment feature does not
 	 * work during scsi->HostBus transfers.
 	 */
 	AHC_TMODE_WIDEODD_BUG	= 0x01,
 	/*
-	 * On the aic7890/91 Rev 0 chips, the स्वतःflush
-	 * feature करोes not work.  A manual flush of
+	 * On the aic7890/91 Rev 0 chips, the autoflush
+	 * feature does not work.  A manual flush of
 	 * the DMA FIFO is required.
 	 */
 	AHC_AUTOFLUSH_BUG	= 0x02,
 	/*
-	 * On many chips, cacheline streaming करोes not work.
+	 * On many chips, cacheline streaming does not work.
 	 */
 	AHC_CACHETHEN_BUG	= 0x04,
 	/*
@@ -285,30 +284,30 @@
 	 */
 	AHC_CACHETHEN_DIS_BUG	= 0x08,
 	/*
-	 * PCI 2.1 Retry failure on non-empty data fअगरo.
+	 * PCI 2.1 Retry failure on non-empty data fifo.
 	 */
 	AHC_PCI_2_1_RETRY_BUG	= 0x10,
 	/*
-	 * Controller करोes not handle cacheline residuals
-	 * properly on S/G segments अगर PCI MWI inकाष्ठाions
+	 * Controller does not handle cacheline residuals
+	 * properly on S/G segments if PCI MWI instructions
 	 * are allowed.
 	 */
 	AHC_PCI_MWI_BUG		= 0x20,
 	/*
 	 * An SCB upload using the SCB channel's
-	 * स्वतः array entry copy feature may 
+	 * auto array entry copy feature may 
 	 * corrupt data.  This appears to only
-	 * occur on 66MHz प्रणालीs.
+	 * occur on 66MHz systems.
 	 */
 	AHC_SCBCHAN_UPLOAD_BUG	= 0x40
-पूर्ण ahc_bug;
+} ahc_bug;
 
 /*
- * Configuration specअगरic settings.
+ * Configuration specific settings.
  * The driver determines these settings by probing the
  * chip/controller's configuration.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	AHC_FNONE	      = 0x000,
 	AHC_PRIMARY_CHANNEL   = 0x003,  /*
 					 * The channel that should
@@ -317,7 +316,7 @@
 	AHC_USEDEFAULTS	      = 0x004,  /*
 					 * For cards without an seeprom
 					 * or a BIOS to initialize the chip's
-					 * SRAM, we use the शेष target
+					 * SRAM, we use the default target
 					 * settings.
 					 */
 	AHC_SEQUENCER_DEBUG   = 0x008,
@@ -338,146 +337,146 @@
 					  * controller.
 					  */
 	AHC_NEWEEPROM_FMT     = 0x4000,
-	AHC_TQINFIFO_BLOCKED  = 0x10000,  /* Blocked रुकोing क्रम ATIOs */
+	AHC_TQINFIFO_BLOCKED  = 0x10000,  /* Blocked waiting for ATIOs */
 	AHC_INT50_SPEEDFLEX   = 0x20000,  /*
 					   * Internal 50pin connector
 					   * sits behind an aic3860
 					   */
 	AHC_SCB_BTT	      = 0x40000,  /*
-					   * The busy tarमाला_लो table is
+					   * The busy targets table is
 					   * stored in SCB space rather
 					   * than SRAM.
 					   */
 	AHC_BIOS_ENABLED      = 0x80000,
 	AHC_ALL_INTERRUPTS    = 0x100000,
 	AHC_PAGESCBS	      = 0x400000,  /* Enable SCB paging */
-	AHC_EDGE_INTERRUPT    = 0x800000,  /* Device uses edge triggered पूर्णांकs */
+	AHC_EDGE_INTERRUPT    = 0x800000,  /* Device uses edge triggered ints */
 	AHC_39BIT_ADDRESSING  = 0x1000000, /* Use 39 bit addressing scheme. */
 	AHC_LSCBS_ENABLED     = 0x2000000, /* 64Byte SCBs enabled */
 	AHC_SCB_CONFIG_USED   = 0x4000000, /* No SEEPROM but SCB2 had info. */
 	AHC_NO_BIOS_INIT      = 0x8000000, /* No BIOS left over settings. */
 	AHC_DISABLE_PCI_PERR  = 0x10000000,
 	AHC_HAS_TERM_LOGIC    = 0x20000000
-पूर्ण ahc_flag;
+} ahc_flag;
 
 /************************* Hardware  SCB Definition ***************************/
 
 /*
- * The driver keeps up to MAX_SCB scb काष्ठाures per card in memory.  The SCB
+ * The driver keeps up to MAX_SCB scb structures per card in memory.  The SCB
  * consists of a "hardware SCB" mirroring the fields available on the card
- * and additional inक्रमmation the kernel stores क्रम each transaction.
+ * and additional information the kernel stores for each transaction.
  *
  * To minimize space utilization, a portion of the hardware scb stores
- * dअगरferent data during dअगरferent portions of a SCSI transaction.
- * As initialized by the host driver क्रम the initiator role, this area
- * contains the SCSI cdb (or a poपूर्णांकer to the  cdb) to be executed.  After
+ * different data during different portions of a SCSI transaction.
+ * As initialized by the host driver for the initiator role, this area
+ * contains the SCSI cdb (or a pointer to the  cdb) to be executed.  After
  * the cdb has been presented to the target, this area serves to store
- * residual transfer inक्रमmation and the SCSI status byte.
- * For the target role, the contents of this area करो not change, but
- * still serve a dअगरferent purpose than क्रम the initiator role.  See
- * काष्ठा target_data क्रम details.
+ * residual transfer information and the SCSI status byte.
+ * For the target role, the contents of this area do not change, but
+ * still serve a different purpose than for the initiator role.  See
+ * struct target_data for details.
  */
 
 /*
- * Status inक्रमmation embedded in the shared poriton of
+ * Status information embedded in the shared poriton of
  * an SCB after passing the cdb to the target.  The kernel
- * driver will only पढ़ो this data क्रम transactions that
+ * driver will only read this data for transactions that
  * complete abnormally (non-zero status byte).
  */
-काष्ठा status_pkt अणु
-	uपूर्णांक32_t residual_datacnt;	/* Residual in the current S/G seg */
-	uपूर्णांक32_t residual_sg_ptr;	/* The next S/G क्रम this transfer */
-	uपूर्णांक8_t	 scsi_status;		/* Standard SCSI status byte */
-पूर्ण;
+struct status_pkt {
+	uint32_t residual_datacnt;	/* Residual in the current S/G seg */
+	uint32_t residual_sg_ptr;	/* The next S/G for this transfer */
+	uint8_t	 scsi_status;		/* Standard SCSI status byte */
+};
 
 /*
  * Target mode version of the shared data SCB segment.
  */
-काष्ठा target_data अणु
-	uपूर्णांक32_t residual_datacnt;	/* Residual in the current S/G seg */
-	uपूर्णांक32_t residual_sg_ptr;	/* The next S/G क्रम this transfer */
-	uपूर्णांक8_t  scsi_status;		/* SCSI status to give to initiator */
-	uपूर्णांक8_t  target_phases;		/* Biपंचांगap of phases to execute */
-	uपूर्णांक8_t  data_phase;		/* Data-In or Data-Out */
-	uपूर्णांक8_t  initiator_tag;		/* Initiator's transaction tag */
-पूर्ण;
+struct target_data {
+	uint32_t residual_datacnt;	/* Residual in the current S/G seg */
+	uint32_t residual_sg_ptr;	/* The next S/G for this transfer */
+	uint8_t  scsi_status;		/* SCSI status to give to initiator */
+	uint8_t  target_phases;		/* Bitmap of phases to execute */
+	uint8_t  data_phase;		/* Data-In or Data-Out */
+	uint8_t  initiator_tag;		/* Initiator's transaction tag */
+};
 
-काष्ठा hardware_scb अणु
-/*0*/	जोड़ अणु
+struct hardware_scb {
+/*0*/	union {
 		/*
 		 * If the cdb is 12 bytes or less, we embed it directly
-		 * in the SCB.  For दीर्घer cdbs, we embed the address
+		 * in the SCB.  For longer cdbs, we embed the address
 		 * of the cdb payload as seen by the chip and a DMA
 		 * is used to pull it in.
 		 */
-		uपूर्णांक8_t	 cdb[12];
-		uपूर्णांक32_t cdb_ptr;
-		काष्ठा	 status_pkt status;
-		काष्ठा	 target_data tdata;
-	पूर्ण shared_data;
+		uint8_t	 cdb[12];
+		uint32_t cdb_ptr;
+		struct	 status_pkt status;
+		struct	 target_data tdata;
+	} shared_data;
 /*
  * A word about residuals.
  * The scb is presented to the sequencer with the dataptr and datacnt
  * fields initialized to the contents of the first S/G element to
- * transfer.  The sgptr field is initialized to the bus address क्रम
+ * transfer.  The sgptr field is initialized to the bus address for
  * the S/G element that follows the first in the in core S/G array
- * or'ed with the SG_FULL_RESID flag.  Sgptr may poपूर्णांक to an invalid
- * S/G entry क्रम this transfer (single S/G element transfer with the
+ * or'ed with the SG_FULL_RESID flag.  Sgptr may point to an invalid
+ * S/G entry for this transfer (single S/G element transfer with the
  * first elements address and length preloaded in the dataptr/datacnt
- * fields).  If no transfer is to occur, sgptr is set to SG_LIST_शून्य.
+ * fields).  If no transfer is to occur, sgptr is set to SG_LIST_NULL.
  * The SG_FULL_RESID flag ensures that the residual will be correctly
- * noted even अगर no data transfers occur.  Once the data phase is entered,
+ * noted even if no data transfers occur.  Once the data phase is entered,
  * the residual sgptr and datacnt are loaded from the sgptr and the
  * datacnt fields.  After each S/G element's dataptr and length are
- * loaded पूर्णांकo the hardware, the residual sgptr is advanced.  After
+ * loaded into the hardware, the residual sgptr is advanced.  After
  * each S/G element is expired, its datacnt field is checked to see
- * अगर the LAST_SEG flag is set.  If so, SG_LIST_शून्य is set in the
+ * if the LAST_SEG flag is set.  If so, SG_LIST_NULL is set in the
  * residual sg ptr and the transfer is considered complete.  If the
  * sequencer determines that there is a residual in the tranfer, it
- * will set the SG_RESID_VALID flag in sgptr and dma the scb back पूर्णांकo
+ * will set the SG_RESID_VALID flag in sgptr and dma the scb back into
  * host memory.  To sumarize:
  *
  * Sequencer:
- *	o A residual has occurred अगर SG_FULL_RESID is set in sgptr,
- *	  or residual_sgptr करोes not have SG_LIST_शून्य set.
+ *	o A residual has occurred if SG_FULL_RESID is set in sgptr,
+ *	  or residual_sgptr does not have SG_LIST_NULL set.
  *
- *	o We are transferring the last segment अगर residual_datacnt has
+ *	o We are transferring the last segment if residual_datacnt has
  *	  the SG_LAST_SEG flag set.
  *
  * Host:
- *	o A residual has occurred अगर a completed scb has the
+ *	o A residual has occurred if a completed scb has the
  *	  SG_RESID_VALID flag set.
  *
  *	o residual_sgptr and sgptr refer to the "next" sg entry
- *	  and so may poपूर्णांक beyond the last valid sg entry क्रम the
+ *	  and so may point beyond the last valid sg entry for the
  *	  transfer.
  */ 
-/*12*/	uपूर्णांक32_t dataptr;
-/*16*/	uपूर्णांक32_t datacnt;		/*
+/*12*/	uint32_t dataptr;
+/*16*/	uint32_t datacnt;		/*
 					 * Byte 3 (numbered from 0) of
 					 * the datacnt is really the
 					 * 4th byte in that data address.
 					 */
-/*20*/	uपूर्णांक32_t sgptr;
-#घोषणा SG_PTR_MASK	0xFFFFFFF8
-/*24*/	uपूर्णांक8_t  control;	/* See SCB_CONTROL in aic7xxx.reg क्रम details */
-/*25*/	uपूर्णांक8_t  scsiid;	/* what to load in the SCSIID रेजिस्टर */
-/*26*/	uपूर्णांक8_t  lun;
-/*27*/	uपूर्णांक8_t  tag;			/*
-					 * Index पूर्णांकo our kernel SCB array.
-					 * Also used as the tag क्रम tagged I/O
+/*20*/	uint32_t sgptr;
+#define SG_PTR_MASK	0xFFFFFFF8
+/*24*/	uint8_t  control;	/* See SCB_CONTROL in aic7xxx.reg for details */
+/*25*/	uint8_t  scsiid;	/* what to load in the SCSIID register */
+/*26*/	uint8_t  lun;
+/*27*/	uint8_t  tag;			/*
+					 * Index into our kernel SCB array.
+					 * Also used as the tag for tagged I/O
 					 */
-/*28*/	uपूर्णांक8_t  cdb_len;
-/*29*/	uपूर्णांक8_t  scsirate;		/* Value क्रम SCSIRATE रेजिस्टर */
-/*30*/	uपूर्णांक8_t  scsioffset;		/* Value क्रम SCSIOFFSET रेजिस्टर */
-/*31*/	uपूर्णांक8_t  next;			/*
-					 * Used क्रम thपढ़ोing SCBs in the
+/*28*/	uint8_t  cdb_len;
+/*29*/	uint8_t  scsirate;		/* Value for SCSIRATE register */
+/*30*/	uint8_t  scsioffset;		/* Value for SCSIOFFSET register */
+/*31*/	uint8_t  next;			/*
+					 * Used for threading SCBs in the
 					 * "Waiting for Selection" and
-					 * "Disconnected SCB" lists करोwn
+					 * "Disconnected SCB" lists down
 					 * in the sequencer.
 					 */
-/*32*/	uपूर्णांक8_t  cdb32[32];		/*
-					 * CDB storage क्रम cdbs of size
+/*32*/	uint8_t  cdb32[32];		/*
+					 * CDB storage for cdbs of size
 					 * 13->32.  We store them here
 					 * because hardware scbs are
 					 * allocated from DMA safe
@@ -485,12 +484,12 @@
 					 * the controller can access
 					 * this data.
 					 */
-पूर्ण;
+};
 
 /************************ Kernel SCB Definitions ******************************/
 /*
  * Some fields of the SCB are OS dependent.  Here we collect the
- * definitions क्रम elements that all OS platक्रमms need to include
+ * definitions for elements that all OS platforms need to include
  * in there SCB definition.
  */
 
@@ -502,32 +501,32 @@
  * addressable range of 512GB on machines with 64bit PCI or with chips
  * that can support dual address cycles on 32bit PCI busses.
  */
-काष्ठा ahc_dma_seg अणु
-	uपूर्णांक32_t	addr;
-	uपूर्णांक32_t	len;
-#घोषणा	AHC_DMA_LAST_SEG	0x80000000
-#घोषणा	AHC_SG_HIGH_ADDR_MASK	0x7F000000
-#घोषणा	AHC_SG_LEN_MASK		0x00FFFFFF
-पूर्ण;
+struct ahc_dma_seg {
+	uint32_t	addr;
+	uint32_t	len;
+#define	AHC_DMA_LAST_SEG	0x80000000
+#define	AHC_SG_HIGH_ADDR_MASK	0x7F000000
+#define	AHC_SG_LEN_MASK		0x00FFFFFF
+};
 
-काष्ठा sg_map_node अणु
+struct sg_map_node {
 	bus_dmamap_t		 sg_dmamap;
 	dma_addr_t		 sg_physaddr;
-	काष्ठा ahc_dma_seg*	 sg_vaddr;
+	struct ahc_dma_seg*	 sg_vaddr;
 	SLIST_ENTRY(sg_map_node) links;
-पूर्ण;
+};
 
 /*
  * The current state of this SCB.
  */
-प्रकार क्रमागत अणु
+typedef enum {
 	SCB_FREE		= 0x0000,
 	SCB_OTHERTCL_TIMEOUT	= 0x0002,/*
 					  * Another device was active
-					  * during the first समयout क्रम
+					  * during the first timeout for
 					  * this SCB so we gave ourselves
-					  * an additional समयout period
-					  * in हाल it was hogging the
+					  * an additional timeout period
+					  * in case it was hogging the
 					  * bus.
 				          */
 	SCB_DEVICE_RESET	= 0x0004,
@@ -535,7 +534,7 @@
 	SCB_CDB32_PTR		= 0x0010,
 	SCB_RECOVERY_SCB	= 0x0020,
 	SCB_AUTO_NEGOTIATE	= 0x0040,/* Negotiate to achieve goal. */
-	SCB_NEGOTIATE		= 0x0080,/* Negotiation क्रमced क्रम command. */
+	SCB_NEGOTIATE		= 0x0080,/* Negotiation forced for command. */
 	SCB_ABORT		= 0x0100,
 	SCB_UNTAGGEDQ		= 0x0200,
 	SCB_ACTIVE		= 0x0400,
@@ -545,8 +544,8 @@
 					  * error that has effected the
 					  * payload of the command.  This
 					  * flag is checked when normal
-					  * status is वापसed to catch
-					  * the हाल of a target not
+					  * status is returned to catch
+					  * the case of a target not
 					  * responding to our attempt
 					  * to report the error.
 					  */
@@ -554,357 +553,357 @@
 	SCB_SILENT		= 0x4000 /*
 					  * Be quiet about transmission type
 					  * errors.  They are expected and we
-					  * करोn't want to upset the user.  This
+					  * don't want to upset the user.  This
 					  * flag is typically used during DV.
 					  */
-पूर्ण scb_flag;
+} scb_flag;
 
-काष्ठा scb अणु
-	काष्ठा	hardware_scb	 *hscb;
-	जोड़ अणु
+struct scb {
+	struct	hardware_scb	 *hscb;
+	union {
 		SLIST_ENTRY(scb)  sle;
 		TAILQ_ENTRY(scb)  tqe;
-	पूर्ण links;
+	} links;
 	LIST_ENTRY(scb)		  pending_links;
 	ahc_io_ctx_t		  io_ctx;
-	काष्ठा ahc_softc	 *ahc_softc;
+	struct ahc_softc	 *ahc_softc;
 	scb_flag		  flags;
-	काष्ठा scb_platक्रमm_data *platक्रमm_data;
-	काष्ठा sg_map_node	 *sg_map;
-	काष्ठा ahc_dma_seg 	 *sg_list;
+	struct scb_platform_data *platform_data;
+	struct sg_map_node	 *sg_map;
+	struct ahc_dma_seg 	 *sg_list;
 	dma_addr_t		  sg_list_phys;
-	u_पूर्णांक			  sg_count;/* How full ahc_dma_seg is */
-पूर्ण;
+	u_int			  sg_count;/* How full ahc_dma_seg is */
+};
 
-काष्ठा scb_data अणु
-	SLIST_HEAD(, scb) मुक्त_scbs;	/*
-					 * Pool of SCBs पढ़ोy to be asचिन्हित
+struct scb_data {
+	SLIST_HEAD(, scb) free_scbs;	/*
+					 * Pool of SCBs ready to be assigned
 					 * commands to execute.
 					 */
-	काष्ठा	scb *scbindex[256];	/*
+	struct	scb *scbindex[256];	/*
 					 * Mapping from tag to SCB.
-					 * As tag identअगरiers are an
+					 * As tag identifiers are an
 					 * 8bit value, we provide space
-					 * क्रम all possible tag values.
+					 * for all possible tag values.
 					 * Any lookups to entries at or
 					 * above AHC_SCB_MAX_ALLOC will
 					 * always fail.
 					 */
-	काष्ठा	hardware_scb	*hscbs;	/* Array of hardware SCBs */
-	काष्ठा	scb *scbarray;		/* Array of kernel SCBs */
-	काष्ठा	scsi_sense_data *sense; /* Per SCB sense data */
+	struct	hardware_scb	*hscbs;	/* Array of hardware SCBs */
+	struct	scb *scbarray;		/* Array of kernel SCBs */
+	struct	scsi_sense_data *sense; /* Per SCB sense data */
 
 	/*
-	 * "Bus" addresses of our data काष्ठाures.
+	 * "Bus" addresses of our data structures.
 	 */
-	bus_dma_tag_t	 hscb_dmat;	/* dmat क्रम our hardware SCB array */
+	bus_dma_tag_t	 hscb_dmat;	/* dmat for our hardware SCB array */
 	bus_dmamap_t	 hscb_dmamap;
 	dma_addr_t	 hscb_busaddr;
 	bus_dma_tag_t	 sense_dmat;
 	bus_dmamap_t	 sense_dmamap;
 	dma_addr_t	 sense_busaddr;
-	bus_dma_tag_t	 sg_dmat;	/* dmat क्रम our sg segments */
+	bus_dma_tag_t	 sg_dmat;	/* dmat for our sg segments */
 	SLIST_HEAD(, sg_map_node) sg_maps;
-	uपूर्णांक8_t	numscbs;
-	uपूर्णांक8_t	maxhscbs;		/* Number of SCBs on the card */
-	uपूर्णांक8_t	init_level;		/*
+	uint8_t	numscbs;
+	uint8_t	maxhscbs;		/* Number of SCBs on the card */
+	uint8_t	init_level;		/*
 					 * How far we've initialized
-					 * this काष्ठाure.
+					 * this structure.
 					 */
-पूर्ण;
+};
 
 /************************ Target Mode Definitions *****************************/
 
 /*
- * Connection descriptor क्रम select-in requests in target mode.
+ * Connection descriptor for select-in requests in target mode.
  */
-काष्ठा target_cmd अणु
-	uपूर्णांक8_t scsiid;		/* Our ID and the initiator's ID */
-	uपूर्णांक8_t identअगरy;	/* Identअगरy message */
-	uपूर्णांक8_t bytes[22];	/* 
+struct target_cmd {
+	uint8_t scsiid;		/* Our ID and the initiator's ID */
+	uint8_t identify;	/* Identify message */
+	uint8_t bytes[22];	/* 
 				 * Bytes contains any additional message
-				 * bytes terminated by 0xFF.  The reमुख्यder
+				 * bytes terminated by 0xFF.  The remainder
 				 * is the cdb to execute.
 				 */
-	uपूर्णांक8_t cmd_valid;	/*
+	uint8_t cmd_valid;	/*
 				 * When a command is complete, the firmware
 				 * will set cmd_valid to all bits set.
 				 * After the host has seen the command,
 				 * the bits are cleared.  This allows us
 				 * to just peek at host memory to determine
-				 * अगर more work is complete. cmd_valid is on
-				 * an 8 byte boundary to simplअगरy setting
+				 * if more work is complete. cmd_valid is on
+				 * an 8 byte boundary to simplify setting
 				 * it on aic7880 hardware which only has
 				 * limited direct access to the DMA FIFO.
 				 */
-	uपूर्णांक8_t pad[7];
-पूर्ण;
+	uint8_t pad[7];
+};
 
 /*
- * Number of events we can buffer up अगर we run out
- * of immediate notअगरy ccbs.
+ * Number of events we can buffer up if we run out
+ * of immediate notify ccbs.
  */
-#घोषणा AHC_TMODE_EVENT_BUFFER_SIZE 8
-काष्ठा ahc_पंचांगode_event अणु
-	uपूर्णांक8_t initiator_id;
-	uपूर्णांक8_t event_type;	/* MSG type or EVENT_TYPE_BUS_RESET */
-#घोषणा	EVENT_TYPE_BUS_RESET 0xFF
-	uपूर्णांक8_t event_arg;
-पूर्ण;
+#define AHC_TMODE_EVENT_BUFFER_SIZE 8
+struct ahc_tmode_event {
+	uint8_t initiator_id;
+	uint8_t event_type;	/* MSG type or EVENT_TYPE_BUS_RESET */
+#define	EVENT_TYPE_BUS_RESET 0xFF
+	uint8_t event_arg;
+};
 
 /*
  * Per enabled lun target mode state.
  * As this state is directly influenced by the host OS'es target mode
  * environment, we let the OS module define it.  Forward declare the
- * काष्ठाure here so we can store arrays of them, etc. in OS neutral
- * data काष्ठाures.
+ * structure here so we can store arrays of them, etc. in OS neutral
+ * data structures.
  */
-#अगर_घोषित AHC_TARGET_MODE 
-काष्ठा ahc_पंचांगode_lstate अणु
-	काष्ठा cam_path *path;
-	काष्ठा ccb_hdr_slist accept_tios;
-	काष्ठा ccb_hdr_slist immed_notअगरies;
-	काष्ठा ahc_पंचांगode_event event_buffer[AHC_TMODE_EVENT_BUFFER_SIZE];
-	uपूर्णांक8_t event_r_idx;
-	uपूर्णांक8_t event_w_idx;
-पूर्ण;
-#अन्यथा
-काष्ठा ahc_पंचांगode_lstate;
-#पूर्ण_अगर
+#ifdef AHC_TARGET_MODE 
+struct ahc_tmode_lstate {
+	struct cam_path *path;
+	struct ccb_hdr_slist accept_tios;
+	struct ccb_hdr_slist immed_notifies;
+	struct ahc_tmode_event event_buffer[AHC_TMODE_EVENT_BUFFER_SIZE];
+	uint8_t event_r_idx;
+	uint8_t event_w_idx;
+};
+#else
+struct ahc_tmode_lstate;
+#endif
 
-/******************** Transfer Negotiation Dataकाष्ठाures *********************/
-#घोषणा AHC_TRANS_CUR		0x01	/* Modअगरy current neogtiation status */
-#घोषणा AHC_TRANS_ACTIVE	0x03	/* Assume this target is on the bus */
-#घोषणा AHC_TRANS_GOAL		0x04	/* Modअगरy negotiation goal */
-#घोषणा AHC_TRANS_USER		0x08	/* Modअगरy user negotiation settings */
+/******************** Transfer Negotiation Datastructures *********************/
+#define AHC_TRANS_CUR		0x01	/* Modify current neogtiation status */
+#define AHC_TRANS_ACTIVE	0x03	/* Assume this target is on the bus */
+#define AHC_TRANS_GOAL		0x04	/* Modify negotiation goal */
+#define AHC_TRANS_USER		0x08	/* Modify user negotiation settings */
 
-#घोषणा AHC_WIDTH_UNKNOWN	0xFF
-#घोषणा AHC_PERIOD_UNKNOWN	0xFF
-#घोषणा AHC_OFFSET_UNKNOWN	0xFF
-#घोषणा AHC_PPR_OPTS_UNKNOWN	0xFF
+#define AHC_WIDTH_UNKNOWN	0xFF
+#define AHC_PERIOD_UNKNOWN	0xFF
+#define AHC_OFFSET_UNKNOWN	0xFF
+#define AHC_PPR_OPTS_UNKNOWN	0xFF
 
 /*
- * Transfer Negotiation Inक्रमmation.
+ * Transfer Negotiation Information.
  */
-काष्ठा ahc_transinfo अणु
-	uपूर्णांक8_t protocol_version;	/* SCSI Revision level */
-	uपूर्णांक8_t transport_version;	/* SPI Revision level */
-	uपूर्णांक8_t width;			/* Bus width */
-	uपूर्णांक8_t period;			/* Sync rate factor */
-	uपूर्णांक8_t offset;			/* Sync offset */
-	uपूर्णांक8_t ppr_options;		/* Parallel Protocol Request options */
-पूर्ण;
+struct ahc_transinfo {
+	uint8_t protocol_version;	/* SCSI Revision level */
+	uint8_t transport_version;	/* SPI Revision level */
+	uint8_t width;			/* Bus width */
+	uint8_t period;			/* Sync rate factor */
+	uint8_t offset;			/* Sync offset */
+	uint8_t ppr_options;		/* Parallel Protocol Request options */
+};
 
 /*
- * Per-initiator current, goal and user transfer negotiation inक्रमmation. */
-काष्ठा ahc_initiator_tinfo अणु
-	uपूर्णांक8_t scsirate;		/* Computed value क्रम SCSIRATE reg */
-	काष्ठा ahc_transinfo curr;
-	काष्ठा ahc_transinfo goal;
-	काष्ठा ahc_transinfo user;
-पूर्ण;
+ * Per-initiator current, goal and user transfer negotiation information. */
+struct ahc_initiator_tinfo {
+	uint8_t scsirate;		/* Computed value for SCSIRATE reg */
+	struct ahc_transinfo curr;
+	struct ahc_transinfo goal;
+	struct ahc_transinfo user;
+};
 
 /*
  * Per enabled target ID state.
- * Poपूर्णांकers to lun target state as well as sync/wide negotiation inक्रमmation
- * क्रम each initiator<->target mapping.  For the initiator role we pretend
- * that we are the target and the tarमाला_लो are the initiators since the
+ * Pointers to lun target state as well as sync/wide negotiation information
+ * for each initiator<->target mapping.  For the initiator role we pretend
+ * that we are the target and the targets are the initiators since the
  * negotiation is the same regardless of role.
  */
-काष्ठा ahc_पंचांगode_tstate अणु
-	काष्ठा ahc_पंचांगode_lstate*	enabled_luns[AHC_NUM_LUNS];
-	काष्ठा ahc_initiator_tinfo	transinfo[AHC_NUM_TARGETS];
+struct ahc_tmode_tstate {
+	struct ahc_tmode_lstate*	enabled_luns[AHC_NUM_LUNS];
+	struct ahc_initiator_tinfo	transinfo[AHC_NUM_TARGETS];
 
 	/*
-	 * Per initiator state biपंचांगasks.
+	 * Per initiator state bitmasks.
 	 */
-	uपूर्णांक16_t	 स्वतः_negotiate;/* Auto Negotiation Required */
-	uपूर्णांक16_t	 ultraenb;	/* Using ultra sync rate  */
-	uपूर्णांक16_t	 discenable;	/* Disconnection allowed  */
-	uपूर्णांक16_t	 tagenable;	/* Tagged Queuing allowed */
-पूर्ण;
+	uint16_t	 auto_negotiate;/* Auto Negotiation Required */
+	uint16_t	 ultraenb;	/* Using ultra sync rate  */
+	uint16_t	 discenable;	/* Disconnection allowed  */
+	uint16_t	 tagenable;	/* Tagged Queuing allowed */
+};
 
 /*
- * Data काष्ठाure क्रम our table of allowed synchronous transfer rates.
+ * Data structure for our table of allowed synchronous transfer rates.
  */
-काष्ठा ahc_syncrate अणु
-	u_पूर्णांक sxfr_u2;	/* Value of the SXFR parameter क्रम Ultra2+ Chips */
-	u_पूर्णांक sxfr;	/* Value of the SXFR parameter क्रम <= Ultra Chips */
-#घोषणा		ULTRA_SXFR 0x100	/* Rate Requires Ultra Mode set */
-#घोषणा		ST_SXFR	   0x010	/* Rate Single Transition Only */
-#घोषणा		DT_SXFR	   0x040	/* Rate Double Transition Only */
-	uपूर्णांक8_t period; /* Period to send to SCSI target */
-	स्थिर अक्षर *rate;
-पूर्ण;
+struct ahc_syncrate {
+	u_int sxfr_u2;	/* Value of the SXFR parameter for Ultra2+ Chips */
+	u_int sxfr;	/* Value of the SXFR parameter for <= Ultra Chips */
+#define		ULTRA_SXFR 0x100	/* Rate Requires Ultra Mode set */
+#define		ST_SXFR	   0x010	/* Rate Single Transition Only */
+#define		DT_SXFR	   0x040	/* Rate Double Transition Only */
+	uint8_t period; /* Period to send to SCSI target */
+	const char *rate;
+};
 
-/* Safe and valid period क्रम async negotiations. */
-#घोषणा	AHC_ASYNC_XFER_PERIOD 0x45
-#घोषणा	AHC_ULTRA2_XFER_PERIOD 0x0a
+/* Safe and valid period for async negotiations. */
+#define	AHC_ASYNC_XFER_PERIOD 0x45
+#define	AHC_ULTRA2_XFER_PERIOD 0x0a
 
 /*
- * Indexes पूर्णांकo our table of syncronous transfer rates.
+ * Indexes into our table of syncronous transfer rates.
  */
-#घोषणा AHC_SYNCRATE_DT		0
-#घोषणा AHC_SYNCRATE_ULTRA2	1
-#घोषणा AHC_SYNCRATE_ULTRA	3
-#घोषणा AHC_SYNCRATE_FAST	6
-#घोषणा AHC_SYNCRATE_MAX	AHC_SYNCRATE_DT
-#घोषणा	AHC_SYNCRATE_MIN	13
+#define AHC_SYNCRATE_DT		0
+#define AHC_SYNCRATE_ULTRA2	1
+#define AHC_SYNCRATE_ULTRA	3
+#define AHC_SYNCRATE_FAST	6
+#define AHC_SYNCRATE_MAX	AHC_SYNCRATE_DT
+#define	AHC_SYNCRATE_MIN	13
 
 /***************************** Lookup Tables **********************************/
 /*
  * Phase -> name and message out response
  * to parity errors in each phase table. 
  */
-काष्ठा ahc_phase_table_entry अणु
-        uपूर्णांक8_t phase;
-        uपूर्णांक8_t mesg_out; /* Message response to parity errors */
-	अक्षर *phasemsg;
-पूर्ण;
+struct ahc_phase_table_entry {
+        uint8_t phase;
+        uint8_t mesg_out; /* Message response to parity errors */
+	char *phasemsg;
+};
 
 /************************** Serial EEPROM Format ******************************/
 
-काष्ठा seeprom_config अणु
+struct seeprom_config {
 /*
  * Per SCSI ID Configuration Flags
  */
-	uपूर्णांक16_t device_flags[16];	/* words 0-15 */
-#घोषणा		CFXFER		0x0007	/* synchronous transfer rate */
-#घोषणा		CFSYNCH		0x0008	/* enable synchronous transfer */
-#घोषणा		CFDISC		0x0010	/* enable disconnection */
-#घोषणा		CFWIDEB		0x0020	/* wide bus device */
-#घोषणा		CFSYNCHISULTRA	0x0040	/* CFSYNCH is an ultra offset (2940AU)*/
-#घोषणा		CFSYNCSINGLE	0x0080	/* Single-Transition संकेतling */
-#घोषणा		CFSTART		0x0100	/* send start unit SCSI command */
-#घोषणा		CFINCBIOS	0x0200	/* include in BIOS scan */
-#घोषणा		CFRNFOUND	0x0400	/* report even अगर not found */
-#घोषणा		CFMULTILUNDEV	0x0800	/* Probe multiple luns in BIOS scan */
-#घोषणा		CFWBCACHEENB	0x4000	/* Enable W-Behind Cache on disks */
-#घोषणा		CFWBCACHENOP	0xc000	/* Don't touch W-Behind Cache */
+	uint16_t device_flags[16];	/* words 0-15 */
+#define		CFXFER		0x0007	/* synchronous transfer rate */
+#define		CFSYNCH		0x0008	/* enable synchronous transfer */
+#define		CFDISC		0x0010	/* enable disconnection */
+#define		CFWIDEB		0x0020	/* wide bus device */
+#define		CFSYNCHISULTRA	0x0040	/* CFSYNCH is an ultra offset (2940AU)*/
+#define		CFSYNCSINGLE	0x0080	/* Single-Transition signalling */
+#define		CFSTART		0x0100	/* send start unit SCSI command */
+#define		CFINCBIOS	0x0200	/* include in BIOS scan */
+#define		CFRNFOUND	0x0400	/* report even if not found */
+#define		CFMULTILUNDEV	0x0800	/* Probe multiple luns in BIOS scan */
+#define		CFWBCACHEENB	0x4000	/* Enable W-Behind Cache on disks */
+#define		CFWBCACHENOP	0xc000	/* Don't touch W-Behind Cache */
 
 /*
  * BIOS Control Bits
  */
-	uपूर्णांक16_t bios_control;		/* word 16 */
-#घोषणा		CFSUPREM	0x0001	/* support all हटाओable drives */
-#घोषणा		CFSUPREMB	0x0002	/* support हटाओable boot drives */
-#घोषणा		CFBIOSEN	0x0004	/* BIOS enabled */
-#घोषणा		CFBIOS_BUSSCAN	0x0008	/* Have the BIOS Scan the Bus */
-#घोषणा		CFSM2DRV	0x0010	/* support more than two drives */
-#घोषणा		CFSTPWLEVEL	0x0010	/* Termination level control */
-#घोषणा		CF284XEXTEND	0x0020	/* extended translation (284x cards) */	
-#घोषणा		CFCTRL_A	0x0020	/* BIOS displays Ctrl-A message */	
-#घोषणा		CFTERM_MENU	0x0040	/* BIOS displays termination menu */	
-#घोषणा		CFEXTEND	0x0080	/* extended translation enabled */
-#घोषणा		CFSCAMEN	0x0100	/* SCAM enable */
-#घोषणा		CFMSG_LEVEL	0x0600	/* BIOS Message Level */
-#घोषणा			CFMSG_VERBOSE	0x0000
-#घोषणा			CFMSG_SILENT	0x0200
-#घोषणा			CFMSG_DIAG	0x0400
-#घोषणा		CFBOOTCD	0x0800  /* Support Bootable CD-ROM */
+	uint16_t bios_control;		/* word 16 */
+#define		CFSUPREM	0x0001	/* support all removeable drives */
+#define		CFSUPREMB	0x0002	/* support removeable boot drives */
+#define		CFBIOSEN	0x0004	/* BIOS enabled */
+#define		CFBIOS_BUSSCAN	0x0008	/* Have the BIOS Scan the Bus */
+#define		CFSM2DRV	0x0010	/* support more than two drives */
+#define		CFSTPWLEVEL	0x0010	/* Termination level control */
+#define		CF284XEXTEND	0x0020	/* extended translation (284x cards) */	
+#define		CFCTRL_A	0x0020	/* BIOS displays Ctrl-A message */	
+#define		CFTERM_MENU	0x0040	/* BIOS displays termination menu */	
+#define		CFEXTEND	0x0080	/* extended translation enabled */
+#define		CFSCAMEN	0x0100	/* SCAM enable */
+#define		CFMSG_LEVEL	0x0600	/* BIOS Message Level */
+#define			CFMSG_VERBOSE	0x0000
+#define			CFMSG_SILENT	0x0200
+#define			CFMSG_DIAG	0x0400
+#define		CFBOOTCD	0x0800  /* Support Bootable CD-ROM */
 /*		UNUSED		0xff00	*/
 
 /*
  * Host Adapter Control Bits
  */
-	uपूर्णांक16_t adapter_control;	/* word 17 */	
-#घोषणा		CFAUTOTERM	0x0001	/* Perक्रमm Auto termination */
-#घोषणा		CFULTRAEN	0x0002	/* Ultra SCSI speed enable */
-#घोषणा		CF284XSELTO     0x0003	/* Selection समयout (284x cards) */
-#घोषणा		CF284XFIFO      0x000C	/* FIFO Threshold (284x cards) */
-#घोषणा		CFSTERM		0x0004	/* SCSI low byte termination */
-#घोषणा		CFWSTERM	0x0008	/* SCSI high byte termination */
-#घोषणा		CFSPARITY	0x0010	/* SCSI parity */
-#घोषणा		CF284XSTERM     0x0020	/* SCSI low byte term (284x cards) */	
-#घोषणा		CFMULTILUN	0x0020
-#घोषणा		CFRESETB	0x0040	/* reset SCSI bus at boot */
-#घोषणा		CFCLUSTERENB	0x0080	/* Cluster Enable */
-#घोषणा		CFBOOTCHAN	0x0300	/* probe this channel first */
-#घोषणा		CFBOOTCHANSHIFT 8
-#घोषणा		CFSEAUTOTERM	0x0400	/* Ultra2 Perक्रमm secondary Auto Term*/
-#घोषणा		CFSELOWTERM	0x0800	/* Ultra2 secondary low term */
-#घोषणा		CFSEHIGHTERM	0x1000	/* Ultra2 secondary high term */
-#घोषणा		CFENABLEDV	0x4000	/* Perक्रमm Doमुख्य Validation*/
+	uint16_t adapter_control;	/* word 17 */	
+#define		CFAUTOTERM	0x0001	/* Perform Auto termination */
+#define		CFULTRAEN	0x0002	/* Ultra SCSI speed enable */
+#define		CF284XSELTO     0x0003	/* Selection timeout (284x cards) */
+#define		CF284XFIFO      0x000C	/* FIFO Threshold (284x cards) */
+#define		CFSTERM		0x0004	/* SCSI low byte termination */
+#define		CFWSTERM	0x0008	/* SCSI high byte termination */
+#define		CFSPARITY	0x0010	/* SCSI parity */
+#define		CF284XSTERM     0x0020	/* SCSI low byte term (284x cards) */	
+#define		CFMULTILUN	0x0020
+#define		CFRESETB	0x0040	/* reset SCSI bus at boot */
+#define		CFCLUSTERENB	0x0080	/* Cluster Enable */
+#define		CFBOOTCHAN	0x0300	/* probe this channel first */
+#define		CFBOOTCHANSHIFT 8
+#define		CFSEAUTOTERM	0x0400	/* Ultra2 Perform secondary Auto Term*/
+#define		CFSELOWTERM	0x0800	/* Ultra2 secondary low term */
+#define		CFSEHIGHTERM	0x1000	/* Ultra2 secondary high term */
+#define		CFENABLEDV	0x4000	/* Perform Domain Validation*/
 
 /*
  * Bus Release Time, Host Adapter ID
  */
-	uपूर्णांक16_t brसमय_id;		/* word 18 */
-#घोषणा		CFSCSIID	0x000f	/* host adapter SCSI ID */
+	uint16_t brtime_id;		/* word 18 */
+#define		CFSCSIID	0x000f	/* host adapter SCSI ID */
 /*		UNUSED		0x00f0	*/
-#घोषणा		CFBRTIME	0xff00	/* bus release समय */
+#define		CFBRTIME	0xff00	/* bus release time */
 
 /*
- * Maximum tarमाला_लो
+ * Maximum targets
  */
-	uपूर्णांक16_t max_tarमाला_लो;		/* word 19 */	
-#घोषणा		CFMAXTARG	0x00ff	/* maximum tarमाला_लो */
-#घोषणा		CFBOOTLUN	0x0f00	/* Lun to boot from */
-#घोषणा		CFBOOTID	0xf000	/* Target to boot from */
-	uपूर्णांक16_t res_1[10];		/* words 20-29 */
-	uपूर्णांक16_t signature;		/* Signature == 0x250 */
-#घोषणा		CFSIGNATURE	0x250
-#घोषणा		CFSIGNATURE2	0x300
-	uपूर्णांक16_t checksum;		/* word 31 */
-पूर्ण;
+	uint16_t max_targets;		/* word 19 */	
+#define		CFMAXTARG	0x00ff	/* maximum targets */
+#define		CFBOOTLUN	0x0f00	/* Lun to boot from */
+#define		CFBOOTID	0xf000	/* Target to boot from */
+	uint16_t res_1[10];		/* words 20-29 */
+	uint16_t signature;		/* Signature == 0x250 */
+#define		CFSIGNATURE	0x250
+#define		CFSIGNATURE2	0x300
+	uint16_t checksum;		/* word 31 */
+};
 
 /****************************  Message Buffer *********************************/
-प्रकार क्रमागत अणु
+typedef enum {
 	MSG_TYPE_NONE			= 0x00,
 	MSG_TYPE_INITIATOR_MSGOUT	= 0x01,
 	MSG_TYPE_INITIATOR_MSGIN	= 0x02,
 	MSG_TYPE_TARGET_MSGOUT		= 0x03,
 	MSG_TYPE_TARGET_MSGIN		= 0x04
-पूर्ण ahc_msg_type;
+} ahc_msg_type;
 
-प्रकार क्रमागत अणु
+typedef enum {
 	MSGLOOP_IN_PROG,
 	MSGLOOP_MSGCOMPLETE,
 	MSGLOOP_TERMINATED
-पूर्ण msg_loop_stat;
+} msg_loop_stat;
 
 /*********************** Software Configuration Structure *********************/
 TAILQ_HEAD(scb_tailq, scb);
 
-काष्ठा ahc_aic7770_softc अणु
+struct ahc_aic7770_softc {
 	/*
-	 * Saved रेजिस्टर state used क्रम chip_init().
+	 * Saved register state used for chip_init().
 	 */
-	uपूर्णांक8_t busspd;
-	uपूर्णांक8_t busसमय;
-पूर्ण;
+	uint8_t busspd;
+	uint8_t bustime;
+};
 
-काष्ठा ahc_pci_softc अणु
+struct ahc_pci_softc {
 	/*
-	 * Saved रेजिस्टर state used क्रम chip_init().
+	 * Saved register state used for chip_init().
 	 */
-	uपूर्णांक32_t  devconfig;
-	uपूर्णांक16_t  targcrccnt;
-	uपूर्णांक8_t   command;
-	uपूर्णांक8_t   csize_latसमय;
-	uपूर्णांक8_t   optionmode;
-	uपूर्णांक8_t   crccontrol1;
-	uपूर्णांक8_t   dscommand0;
-	uपूर्णांक8_t   dspcistatus;
-	uपूर्णांक8_t   scbbaddr;
-	uपूर्णांक8_t   dff_thrsh;
-पूर्ण;
+	uint32_t  devconfig;
+	uint16_t  targcrccnt;
+	uint8_t   command;
+	uint8_t   csize_lattime;
+	uint8_t   optionmode;
+	uint8_t   crccontrol1;
+	uint8_t   dscommand0;
+	uint8_t   dspcistatus;
+	uint8_t   scbbaddr;
+	uint8_t   dff_thrsh;
+};
 
-जोड़ ahc_bus_softc अणु
-	काष्ठा ahc_aic7770_softc aic7770_softc;
-	काष्ठा ahc_pci_softc pci_softc;
-पूर्ण;
+union ahc_bus_softc {
+	struct ahc_aic7770_softc aic7770_softc;
+	struct ahc_pci_softc pci_softc;
+};
 
-प्रकार व्योम (*ahc_bus_पूर्णांकr_t)(काष्ठा ahc_softc *);
-प्रकार पूर्णांक (*ahc_bus_chip_init_t)(काष्ठा ahc_softc *);
-प्रकार व्योम ahc_callback_t (व्योम *);
+typedef void (*ahc_bus_intr_t)(struct ahc_softc *);
+typedef int (*ahc_bus_chip_init_t)(struct ahc_softc *);
+typedef void ahc_callback_t (void *);
 
-काष्ठा ahc_softc अणु
+struct ahc_softc {
 	bus_space_tag_t           tag;
 	bus_space_handle_t        bsh;
-	काष्ठा scb_data		 *scb_data;
+	struct scb_data		 *scb_data;
 
-	काष्ठा scb		 *next_queued_scb;
+	struct scb		 *next_queued_scb;
 
 	/*
 	 * SCBs that have been sent to the controller
@@ -912,129 +911,129 @@ TAILQ_HEAD(scb_tailq, scb);
 	BSD_LIST_HEAD(, scb)	  pending_scbs;
 
 	/*
-	 * Counting lock क्रम deferring the release of additional
+	 * Counting lock for deferring the release of additional
 	 * untagged transactions from the untagged_queues.  When
 	 * the lock is decremented to 0, all queues in the
 	 * untagged_queues array are run.
 	 */
-	u_पूर्णांक			  untagged_queue_lock;
+	u_int			  untagged_queue_lock;
 
 	/*
 	 * Per-target queue of untagged-transactions.  The
 	 * transaction at the head of the queue is the
-	 * currently pending untagged transaction क्रम the
+	 * currently pending untagged transaction for the
 	 * target.  The driver only allows a single untagged
 	 * transaction per target.
 	 */
-	काष्ठा scb_tailq	  untagged_queues[AHC_NUM_TARGETS];
+	struct scb_tailq	  untagged_queues[AHC_NUM_TARGETS];
 
 	/*
-	 * Bus attachment specअगरic data.
+	 * Bus attachment specific data.
 	 */
-	जोड़ ahc_bus_softc	  bus_softc;
+	union ahc_bus_softc	  bus_softc;
 
 	/*
-	 * Platक्रमm specअगरic data.
+	 * Platform specific data.
 	 */
-	काष्ठा ahc_platक्रमm_data *platक्रमm_data;
+	struct ahc_platform_data *platform_data;
 
 	/*
-	 * Platक्रमm specअगरic device inक्रमmation.
+	 * Platform specific device information.
 	 */
 	ahc_dev_softc_t		  dev_softc;
-	काष्ठा device		  *dev;
+	struct device		  *dev;
 
 	/*
-	 * Bus specअगरic device inक्रमmation.
+	 * Bus specific device information.
 	 */
-	ahc_bus_पूर्णांकr_t		  bus_पूर्णांकr;
+	ahc_bus_intr_t		  bus_intr;
 
 	/*
-	 * Bus specअगरic initialization required
+	 * Bus specific initialization required
 	 * after a chip reset.
 	 */
 	ahc_bus_chip_init_t	  bus_chip_init;
 
 	/*
 	 * Target mode related state kept on a per enabled lun basis.
-	 * Tarमाला_लो that are not enabled will have null entries.
-	 * As an initiator, we keep one target entry क्रम our initiator
+	 * Targets that are not enabled will have null entries.
+	 * As an initiator, we keep one target entry for our initiator
 	 * ID to store our sync/wide transfer settings.
 	 */
-	काष्ठा ahc_पंचांगode_tstate  *enabled_tarमाला_लो[AHC_NUM_TARGETS];
+	struct ahc_tmode_tstate  *enabled_targets[AHC_NUM_TARGETS];
 
 	/*
-	 * The black hole device responsible क्रम handling requests क्रम
-	 * disabled luns on enabled tarमाला_लो.
+	 * The black hole device responsible for handling requests for
+	 * disabled luns on enabled targets.
 	 */
-	काष्ठा ahc_पंचांगode_lstate  *black_hole;
+	struct ahc_tmode_lstate  *black_hole;
 
 	/*
-	 * Device instance currently on the bus aरुकोing a जारी TIO
-	 * क्रम a command that was not given the disconnect priveledge.
+	 * Device instance currently on the bus awaiting a continue TIO
+	 * for a command that was not given the disconnect priveledge.
 	 */
-	काष्ठा ahc_पंचांगode_lstate  *pending_device;
+	struct ahc_tmode_lstate  *pending_device;
 
 	/*
-	 * Card अक्षरacteristics
+	 * Card characteristics
 	 */
 	ahc_chip		  chip;
 	ahc_feature		  features;
 	ahc_bug			  bugs;
 	ahc_flag		  flags;
-	काष्ठा seeprom_config	 *seep_config;
+	struct seeprom_config	 *seep_config;
 
-	/* Values to store in the SEQCTL रेजिस्टर क्रम छोड़ो and unछोड़ो */
-	uपूर्णांक8_t			  unछोड़ो;
-	uपूर्णांक8_t			  छोड़ो;
+	/* Values to store in the SEQCTL register for pause and unpause */
+	uint8_t			  unpause;
+	uint8_t			  pause;
 
 	/* Command Queues */
-	uपूर्णांक8_t			  qoutfअगरonext;
-	uपूर्णांक8_t			  qinfअगरonext;
-	uपूर्णांक8_t			 *qoutfअगरo;
-	uपूर्णांक8_t			 *qinfअगरo;
+	uint8_t			  qoutfifonext;
+	uint8_t			  qinfifonext;
+	uint8_t			 *qoutfifo;
+	uint8_t			 *qinfifo;
 
 	/* Critical Section Data */
-	काष्ठा cs		 *critical_sections;
-	u_पूर्णांक			  num_critical_sections;
+	struct cs		 *critical_sections;
+	u_int			  num_critical_sections;
 
 	/* Channel Names ('A', 'B', etc.) */
-	अक्षर			  channel;
-	अक्षर			  channel_b;
+	char			  channel;
+	char			  channel_b;
 
 	/* Initiator Bus ID */
-	uपूर्णांक8_t			  our_id;
-	uपूर्णांक8_t			  our_id_b;
+	uint8_t			  our_id;
+	uint8_t			  our_id_b;
 
 	/*
 	 * PCI error detection.
 	 */
-	पूर्णांक			  unsolicited_पूर्णांकs;
+	int			  unsolicited_ints;
 
 	/*
 	 * Target incoming command FIFO.
 	 */
-	काष्ठा target_cmd	 *tarअ_लोmds;
-	uपूर्णांक8_t			  tqinfअगरonext;
+	struct target_cmd	 *targetcmds;
+	uint8_t			  tqinfifonext;
 
 	/*
-	 * Cached copy of the sequencer control रेजिस्टर.
+	 * Cached copy of the sequencer control register.
 	 */
-	uपूर्णांक8_t			  seqctl;
+	uint8_t			  seqctl;
 
 	/*
 	 * Incoming and outgoing message handling.
 	 */
-	uपूर्णांक8_t			  send_msg_लिखो_त्रुटि;
+	uint8_t			  send_msg_perror;
 	ahc_msg_type		  msg_type;
-	uपूर्णांक8_t			  msgout_buf[12];/* Message we are sending */
-	uपूर्णांक8_t			  msgin_buf[12];/* Message we are receiving */
-	u_पूर्णांक			  msgout_len;	/* Length of message to send */
-	u_पूर्णांक			  msgout_index;	/* Current index in msgout */
-	u_पूर्णांक			  msgin_index;	/* Current index in msgin */
+	uint8_t			  msgout_buf[12];/* Message we are sending */
+	uint8_t			  msgin_buf[12];/* Message we are receiving */
+	u_int			  msgout_len;	/* Length of message to send */
+	u_int			  msgout_index;	/* Current index in msgout */
+	u_int			  msgin_index;	/* Current index in msgin */
 
 	/*
-	 * Mapping inक्रमmation क्रम data काष्ठाures shared
+	 * Mapping information for data structures shared
 	 * between the sequencer and kernel.
 	 */
 	bus_dma_tag_t		  parent_dmat;
@@ -1044,231 +1043,231 @@ TAILQ_HEAD(scb_tailq, scb);
 
 	/*
 	 * Bus address of the one byte buffer used to
-	 * work-around a DMA bug क्रम chips <= aic7880
+	 * work-around a DMA bug for chips <= aic7880
 	 * in target mode.
 	 */
 	dma_addr_t		  dma_bug_buf;
 
 	/* Number of enabled target mode device on this card */
-	u_पूर्णांक			  enabled_luns;
+	u_int			  enabled_luns;
 
-	/* Initialization level of this data काष्ठाure */
-	u_पूर्णांक			  init_level;
+	/* Initialization level of this data structure */
+	u_int			  init_level;
 
 	/* PCI cacheline size. */
-	u_पूर्णांक			  pci_cachesize;
+	u_int			  pci_cachesize;
 
 	/*
 	 * Count of parity errors we have seen as a target.
-	 * We स्वतः-disable parity error checking after seeing
+	 * We auto-disable parity error checking after seeing
 	 * AHC_PCI_TARGET_PERR_THRESH number of errors.
 	 */
-	u_पूर्णांक			  pci_target_perr_count;
-#घोषणा		AHC_PCI_TARGET_PERR_THRESH	10
+	u_int			  pci_target_perr_count;
+#define		AHC_PCI_TARGET_PERR_THRESH	10
 
-	/* Maximum number of sequencer inकाष्ठाions supported. */
-	u_पूर्णांक			  inकाष्ठाion_ram_size;
+	/* Maximum number of sequencer instructions supported. */
+	u_int			  instruction_ram_size;
 
-	/* Per-Unit descriptive inक्रमmation */
-	स्थिर अक्षर		 *description;
-	अक्षर			 *name;
-	पूर्णांक			  unit;
+	/* Per-Unit descriptive information */
+	const char		 *description;
+	char			 *name;
+	int			  unit;
 
 	/* Selection Timer settings */
-	पूर्णांक			  selसमय;
-	पूर्णांक			  selसमय_b;
+	int			  seltime;
+	int			  seltime_b;
 
-	uपूर्णांक16_t	 	  user_discenable;/* Disconnection allowed  */
-	uपूर्णांक16_t		  user_tagenable;/* Tagged Queuing allowed */
-पूर्ण;
+	uint16_t	 	  user_discenable;/* Disconnection allowed  */
+	uint16_t		  user_tagenable;/* Tagged Queuing allowed */
+};
 
-/************************ Active Device Inक्रमmation ***************************/
-प्रकार क्रमागत अणु
+/************************ Active Device Information ***************************/
+typedef enum {
 	ROLE_UNKNOWN,
 	ROLE_INITIATOR,
 	ROLE_TARGET
-पूर्ण role_t;
+} role_t;
 
-काष्ठा ahc_devinfo अणु
-	पूर्णांक	 our_scsiid;
-	पूर्णांक	 target_offset;
-	uपूर्णांक16_t target_mask;
-	u_पूर्णांक	 target;
-	u_पूर्णांक	 lun;
-	अक्षर	 channel;
+struct ahc_devinfo {
+	int	 our_scsiid;
+	int	 target_offset;
+	uint16_t target_mask;
+	u_int	 target;
+	u_int	 lun;
+	char	 channel;
 	role_t	 role;		/*
-				 * Only guaranteed to be correct अगर not
-				 * in the busमुक्त state.
+				 * Only guaranteed to be correct if not
+				 * in the busfree state.
 				 */
-पूर्ण;
+};
 
 /****************************** PCI Structures ********************************/
-प्रकार पूर्णांक (ahc_device_setup_t)(काष्ठा ahc_softc *);
+typedef int (ahc_device_setup_t)(struct ahc_softc *);
 
-काष्ठा ahc_pci_identity अणु
-	uपूर्णांक64_t		 full_id;
-	uपूर्णांक64_t		 id_mask;
-	स्थिर अक्षर		*name;
+struct ahc_pci_identity {
+	uint64_t		 full_id;
+	uint64_t		 id_mask;
+	const char		*name;
 	ahc_device_setup_t	*setup;
-पूर्ण;
+};
 
 /***************************** VL/EISA Declarations ***************************/
-काष्ठा aic7770_identity अणु
-	uपूर्णांक32_t		 full_id;
-	uपूर्णांक32_t		 id_mask;
-	स्थिर अक्षर		*name;
+struct aic7770_identity {
+	uint32_t		 full_id;
+	uint32_t		 id_mask;
+	const char		*name;
 	ahc_device_setup_t	*setup;
-पूर्ण;
-बाह्य काष्ठा aic7770_identity aic7770_ident_table[];
-बाह्य स्थिर पूर्णांक ahc_num_aic7770_devs;
+};
+extern struct aic7770_identity aic7770_ident_table[];
+extern const int ahc_num_aic7770_devs;
 
-#घोषणा AHC_EISA_SLOT_OFFSET	0xc00
-#घोषणा AHC_EISA_IOSIZE		0x100
+#define AHC_EISA_SLOT_OFFSET	0xc00
+#define AHC_EISA_IOSIZE		0x100
 
 /*************************** Function Declarations ****************************/
 /******************************************************************************/
 
 /***************************** PCI Front End *********************************/
-स्थिर काष्ठा ahc_pci_identity	*ahc_find_pci_device(ahc_dev_softc_t);
-पूर्णांक			 ahc_pci_config(काष्ठा ahc_softc *,
-					स्थिर काष्ठा ahc_pci_identity *);
-पूर्णांक			 ahc_pci_test_रेजिस्टर_access(काष्ठा ahc_softc *);
-व्योम __maybe_unused	 ahc_pci_resume(काष्ठा ahc_softc *ahc);
+const struct ahc_pci_identity	*ahc_find_pci_device(ahc_dev_softc_t);
+int			 ahc_pci_config(struct ahc_softc *,
+					const struct ahc_pci_identity *);
+int			 ahc_pci_test_register_access(struct ahc_softc *);
+void __maybe_unused	 ahc_pci_resume(struct ahc_softc *ahc);
 
 /*************************** EISA/VL Front End ********************************/
-काष्ठा aic7770_identity *aic7770_find_device(uपूर्णांक32_t);
-पूर्णांक			 aic7770_config(काष्ठा ahc_softc *ahc,
-					काष्ठा aic7770_identity *,
-					u_पूर्णांक port);
+struct aic7770_identity *aic7770_find_device(uint32_t);
+int			 aic7770_config(struct ahc_softc *ahc,
+					struct aic7770_identity *,
+					u_int port);
 
 /************************** SCB and SCB queue management **********************/
-पूर्णांक		ahc_probe_scbs(काष्ठा ahc_softc *);
-व्योम		ahc_qinfअगरo_requeue_tail(काष्ठा ahc_softc *ahc,
-					 काष्ठा scb *scb);
-पूर्णांक		ahc_match_scb(काष्ठा ahc_softc *ahc, काष्ठा scb *scb,
-			      पूर्णांक target, अक्षर channel, पूर्णांक lun,
-			      u_पूर्णांक tag, role_t role);
+int		ahc_probe_scbs(struct ahc_softc *);
+void		ahc_qinfifo_requeue_tail(struct ahc_softc *ahc,
+					 struct scb *scb);
+int		ahc_match_scb(struct ahc_softc *ahc, struct scb *scb,
+			      int target, char channel, int lun,
+			      u_int tag, role_t role);
 
 /****************************** Initialization ********************************/
-काष्ठा ahc_softc	*ahc_alloc(व्योम *platक्रमm_arg, अक्षर *name);
-पूर्णांक			 ahc_softc_init(काष्ठा ahc_softc *);
-व्योम			 ahc_controller_info(काष्ठा ahc_softc *ahc, अक्षर *buf);
-पूर्णांक			 ahc_chip_init(काष्ठा ahc_softc *ahc);
-पूर्णांक			 ahc_init(काष्ठा ahc_softc *ahc);
-व्योम			 ahc_पूर्णांकr_enable(काष्ठा ahc_softc *ahc, पूर्णांक enable);
-व्योम			 ahc_छोड़ो_and_flushwork(काष्ठा ahc_softc *ahc);
-पूर्णांक __maybe_unused	 ahc_suspend(काष्ठा ahc_softc *ahc);
-पूर्णांक __maybe_unused	 ahc_resume(काष्ठा ahc_softc *ahc);
-व्योम			 ahc_set_unit(काष्ठा ahc_softc *, पूर्णांक);
-व्योम			 ahc_set_name(काष्ठा ahc_softc *, अक्षर *);
-व्योम			 ahc_मुक्त(काष्ठा ahc_softc *ahc);
-पूर्णांक			 ahc_reset(काष्ठा ahc_softc *ahc, पूर्णांक reinit);
+struct ahc_softc	*ahc_alloc(void *platform_arg, char *name);
+int			 ahc_softc_init(struct ahc_softc *);
+void			 ahc_controller_info(struct ahc_softc *ahc, char *buf);
+int			 ahc_chip_init(struct ahc_softc *ahc);
+int			 ahc_init(struct ahc_softc *ahc);
+void			 ahc_intr_enable(struct ahc_softc *ahc, int enable);
+void			 ahc_pause_and_flushwork(struct ahc_softc *ahc);
+int __maybe_unused	 ahc_suspend(struct ahc_softc *ahc);
+int __maybe_unused	 ahc_resume(struct ahc_softc *ahc);
+void			 ahc_set_unit(struct ahc_softc *, int);
+void			 ahc_set_name(struct ahc_softc *, char *);
+void			 ahc_free(struct ahc_softc *ahc);
+int			 ahc_reset(struct ahc_softc *ahc, int reinit);
 
 /***************************** Error Recovery *********************************/
-प्रकार क्रमागत अणु
+typedef enum {
 	SEARCH_COMPLETE,
 	SEARCH_COUNT,
 	SEARCH_REMOVE
-पूर्ण ahc_search_action;
-पूर्णांक			ahc_search_qinfअगरo(काष्ठा ahc_softc *ahc, पूर्णांक target,
-					   अक्षर channel, पूर्णांक lun, u_पूर्णांक tag,
-					   role_t role, uपूर्णांक32_t status,
+} ahc_search_action;
+int			ahc_search_qinfifo(struct ahc_softc *ahc, int target,
+					   char channel, int lun, u_int tag,
+					   role_t role, uint32_t status,
 					   ahc_search_action action);
-पूर्णांक			ahc_search_untagged_queues(काष्ठा ahc_softc *ahc,
+int			ahc_search_untagged_queues(struct ahc_softc *ahc,
 						   ahc_io_ctx_t ctx,
-						   पूर्णांक target, अक्षर channel,
-						   पूर्णांक lun, uपूर्णांक32_t status,
+						   int target, char channel,
+						   int lun, uint32_t status,
 						   ahc_search_action action);
-पूर्णांक			ahc_search_disc_list(काष्ठा ahc_softc *ahc, पूर्णांक target,
-					     अक्षर channel, पूर्णांक lun, u_पूर्णांक tag,
-					     पूर्णांक stop_on_first, पूर्णांक हटाओ,
-					     पूर्णांक save_state);
-पूर्णांक			ahc_reset_channel(काष्ठा ahc_softc *ahc, अक्षर channel,
-					  पूर्णांक initiate_reset);
+int			ahc_search_disc_list(struct ahc_softc *ahc, int target,
+					     char channel, int lun, u_int tag,
+					     int stop_on_first, int remove,
+					     int save_state);
+int			ahc_reset_channel(struct ahc_softc *ahc, char channel,
+					  int initiate_reset);
 
 /*************************** Utility Functions ********************************/
-व्योम			ahc_compile_devinfo(काष्ठा ahc_devinfo *devinfo,
-					    u_पूर्णांक our_id, u_पूर्णांक target,
-					    u_पूर्णांक lun, अक्षर channel,
+void			ahc_compile_devinfo(struct ahc_devinfo *devinfo,
+					    u_int our_id, u_int target,
+					    u_int lun, char channel,
 					    role_t role);
 /************************** Transfer Negotiation ******************************/
-स्थिर काष्ठा ahc_syncrate*	ahc_find_syncrate(काष्ठा ahc_softc *ahc, u_पूर्णांक *period,
-					  u_पूर्णांक *ppr_options, u_पूर्णांक maxsync);
-u_पूर्णांक			ahc_find_period(काष्ठा ahc_softc *ahc,
-					u_पूर्णांक scsirate, u_पूर्णांक maxsync);
+const struct ahc_syncrate*	ahc_find_syncrate(struct ahc_softc *ahc, u_int *period,
+					  u_int *ppr_options, u_int maxsync);
+u_int			ahc_find_period(struct ahc_softc *ahc,
+					u_int scsirate, u_int maxsync);
 /*
- * Negotiation types.  These are used to qualअगरy अगर we should renegotiate
- * even अगर our goal and current transport parameters are identical.
+ * Negotiation types.  These are used to qualify if we should renegotiate
+ * even if our goal and current transport parameters are identical.
  */
-प्रकार क्रमागत अणु
-	AHC_NEG_TO_GOAL,	/* Renegotiate only अगर goal and curr dअगरfer. */
-	AHC_NEG_IF_NON_ASYNC,	/* Renegotiate so दीर्घ as goal is non-async. */
-	AHC_NEG_ALWAYS		/* Renegotiat even अगर goal is async. */
-पूर्ण ahc_neg_type;
-पूर्णांक			ahc_update_neg_request(काष्ठा ahc_softc*,
-					       काष्ठा ahc_devinfo*,
-					       काष्ठा ahc_पंचांगode_tstate*,
-					       काष्ठा ahc_initiator_tinfo*,
+typedef enum {
+	AHC_NEG_TO_GOAL,	/* Renegotiate only if goal and curr differ. */
+	AHC_NEG_IF_NON_ASYNC,	/* Renegotiate so long as goal is non-async. */
+	AHC_NEG_ALWAYS		/* Renegotiat even if goal is async. */
+} ahc_neg_type;
+int			ahc_update_neg_request(struct ahc_softc*,
+					       struct ahc_devinfo*,
+					       struct ahc_tmode_tstate*,
+					       struct ahc_initiator_tinfo*,
 					       ahc_neg_type);
-व्योम			ahc_set_width(काष्ठा ahc_softc *ahc,
-				      काष्ठा ahc_devinfo *devinfo,
-				      u_पूर्णांक width, u_पूर्णांक type, पूर्णांक छोड़ोd);
-व्योम			ahc_set_syncrate(काष्ठा ahc_softc *ahc,
-					 काष्ठा ahc_devinfo *devinfo,
-					 स्थिर काष्ठा ahc_syncrate *syncrate,
-					 u_पूर्णांक period, u_पूर्णांक offset,
-					 u_पूर्णांक ppr_options,
-					 u_पूर्णांक type, पूर्णांक छोड़ोd);
-प्रकार क्रमागत अणु
+void			ahc_set_width(struct ahc_softc *ahc,
+				      struct ahc_devinfo *devinfo,
+				      u_int width, u_int type, int paused);
+void			ahc_set_syncrate(struct ahc_softc *ahc,
+					 struct ahc_devinfo *devinfo,
+					 const struct ahc_syncrate *syncrate,
+					 u_int period, u_int offset,
+					 u_int ppr_options,
+					 u_int type, int paused);
+typedef enum {
 	AHC_QUEUE_NONE,
 	AHC_QUEUE_BASIC,
 	AHC_QUEUE_TAGGED
-पूर्ण ahc_queue_alg;
+} ahc_queue_alg;
 
 /**************************** Target Mode *************************************/
-#अगर_घोषित AHC_TARGET_MODE
-व्योम		ahc_send_lstate_events(काष्ठा ahc_softc *,
-				       काष्ठा ahc_पंचांगode_lstate *);
-व्योम		ahc_handle_en_lun(काष्ठा ahc_softc *ahc,
-				  काष्ठा cam_sim *sim, जोड़ ccb *ccb);
-cam_status	ahc_find_पंचांगode_devs(काष्ठा ahc_softc *ahc,
-				    काष्ठा cam_sim *sim, जोड़ ccb *ccb,
-				    काष्ठा ahc_पंचांगode_tstate **tstate,
-				    काष्ठा ahc_पंचांगode_lstate **lstate,
-				    पूर्णांक notfound_failure);
-#अगर_अघोषित AHC_TMODE_ENABLE
-#घोषणा AHC_TMODE_ENABLE 0
-#पूर्ण_अगर
-#पूर्ण_अगर
+#ifdef AHC_TARGET_MODE
+void		ahc_send_lstate_events(struct ahc_softc *,
+				       struct ahc_tmode_lstate *);
+void		ahc_handle_en_lun(struct ahc_softc *ahc,
+				  struct cam_sim *sim, union ccb *ccb);
+cam_status	ahc_find_tmode_devs(struct ahc_softc *ahc,
+				    struct cam_sim *sim, union ccb *ccb,
+				    struct ahc_tmode_tstate **tstate,
+				    struct ahc_tmode_lstate **lstate,
+				    int notfound_failure);
+#ifndef AHC_TMODE_ENABLE
+#define AHC_TMODE_ENABLE 0
+#endif
+#endif
 /******************************* Debug ***************************************/
-#अगर_घोषित AHC_DEBUG
-बाह्य uपूर्णांक32_t ahc_debug;
-#घोषणा	AHC_SHOW_MISC		0x0001
-#घोषणा	AHC_SHOW_SENSE		0x0002
-#घोषणा AHC_DUMP_SEEPROM	0x0004
-#घोषणा AHC_SHOW_TERMCTL	0x0008
-#घोषणा AHC_SHOW_MEMORY		0x0010
-#घोषणा AHC_SHOW_MESSAGES	0x0020
-#घोषणा	AHC_SHOW_DV		0x0040
-#घोषणा AHC_SHOW_SELTO		0x0080
-#घोषणा AHC_SHOW_QFULL		0x0200
-#घोषणा AHC_SHOW_QUEUE		0x0400
-#घोषणा AHC_SHOW_TQIN		0x0800
-#घोषणा AHC_SHOW_MASKED_ERRORS	0x1000
-#घोषणा AHC_DEBUG_SEQUENCER	0x2000
-#पूर्ण_अगर
-व्योम			ahc_prपूर्णांक_devinfo(काष्ठा ahc_softc *ahc,
-					  काष्ठा ahc_devinfo *dev);
-व्योम			ahc_dump_card_state(काष्ठा ahc_softc *ahc);
-पूर्णांक			ahc_prपूर्णांक_रेजिस्टर(स्थिर ahc_reg_parse_entry_t *table,
-					   u_पूर्णांक num_entries,
-					   स्थिर अक्षर *name,
-					   u_पूर्णांक address,
-					   u_पूर्णांक value,
-					   u_पूर्णांक *cur_column,
-					   u_पूर्णांक wrap_poपूर्णांक);
+#ifdef AHC_DEBUG
+extern uint32_t ahc_debug;
+#define	AHC_SHOW_MISC		0x0001
+#define	AHC_SHOW_SENSE		0x0002
+#define AHC_DUMP_SEEPROM	0x0004
+#define AHC_SHOW_TERMCTL	0x0008
+#define AHC_SHOW_MEMORY		0x0010
+#define AHC_SHOW_MESSAGES	0x0020
+#define	AHC_SHOW_DV		0x0040
+#define AHC_SHOW_SELTO		0x0080
+#define AHC_SHOW_QFULL		0x0200
+#define AHC_SHOW_QUEUE		0x0400
+#define AHC_SHOW_TQIN		0x0800
+#define AHC_SHOW_MASKED_ERRORS	0x1000
+#define AHC_DEBUG_SEQUENCER	0x2000
+#endif
+void			ahc_print_devinfo(struct ahc_softc *ahc,
+					  struct ahc_devinfo *dev);
+void			ahc_dump_card_state(struct ahc_softc *ahc);
+int			ahc_print_register(const ahc_reg_parse_entry_t *table,
+					   u_int num_entries,
+					   const char *name,
+					   u_int address,
+					   u_int value,
+					   u_int *cur_column,
+					   u_int wrap_point);
 /******************************* SEEPROM *************************************/
-पूर्णांक		ahc_acquire_seeprom(काष्ठा ahc_softc *ahc,
-				    काष्ठा seeprom_descriptor *sd);
-व्योम		ahc_release_seeprom(काष्ठा seeprom_descriptor *sd);
-#पूर्ण_अगर /* _AIC7XXX_H_ */
+int		ahc_acquire_seeprom(struct ahc_softc *ahc,
+				    struct seeprom_descriptor *sd);
+void		ahc_release_seeprom(struct seeprom_descriptor *sd);
+#endif /* _AIC7XXX_H_ */

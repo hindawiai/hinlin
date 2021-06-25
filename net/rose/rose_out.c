@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/gfp.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <net/rose.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/gfp.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <linux/fcntl.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <net/rose.h>
 
 /*
- *	This procedure is passed a buffer descriptor क्रम an अगरrame. It builds
- *	the rest of the control part of the frame and then ग_लिखोs it out.
+ *	This procedure is passed a buffer descriptor for an iframe. It builds
+ *	the rest of the control part of the frame and then writes it out.
  */
-अटल व्योम rose_send_अगरrame(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा rose_sock *rose = rose_sk(sk);
+static void rose_send_iframe(struct sock *sk, struct sk_buff *skb)
+{
+	struct rose_sock *rose = rose_sk(sk);
 
-	अगर (skb == शून्य)
-		वापस;
+	if (skb == NULL)
+		return;
 
 	skb->data[2] |= (rose->vr << 5) & 0xE0;
 	skb->data[2] |= (rose->vs << 1) & 0x0E;
 
-	rose_start_idleसमयr(sk);
+	rose_start_idletimer(sk);
 
 	rose_transmit_link(skb, rose->neighbour);
-पूर्ण
+}
 
-व्योम rose_kick(काष्ठा sock *sk)
-अणु
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	काष्ठा sk_buff *skb, *skbn;
-	अचिन्हित लघु start, end;
+void rose_kick(struct sock *sk)
+{
+	struct rose_sock *rose = rose_sk(sk);
+	struct sk_buff *skb, *skbn;
+	unsigned short start, end;
 
-	अगर (rose->state != ROSE_STATE_3)
-		वापस;
+	if (rose->state != ROSE_STATE_3)
+		return;
 
-	अगर (rose->condition & ROSE_COND_PEER_RX_BUSY)
-		वापस;
+	if (rose->condition & ROSE_COND_PEER_RX_BUSY)
+		return;
 
-	अगर (!skb_peek(&sk->sk_ग_लिखो_queue))
-		वापस;
+	if (!skb_peek(&sk->sk_write_queue))
+		return;
 
-	start = (skb_peek(&rose->ack_queue) == शून्य) ? rose->va : rose->vs;
-	end   = (rose->va + sysctl_rose_winकरोw_size) % ROSE_MODULUS;
+	start = (skb_peek(&rose->ack_queue) == NULL) ? rose->va : rose->vs;
+	end   = (rose->va + sysctl_rose_window_size) % ROSE_MODULUS;
 
-	अगर (start == end)
-		वापस;
+	if (start == end)
+		return;
 
 	rose->vs = start;
 
 	/*
 	 * Transmit data until either we're out of data to send or
-	 * the winकरोw is full.
+	 * the window is full.
 	 */
 
-	skb  = skb_dequeue(&sk->sk_ग_लिखो_queue);
+	skb  = skb_dequeue(&sk->sk_write_queue);
 
-	करो अणु
-		अगर ((skbn = skb_clone(skb, GFP_ATOMIC)) == शून्य) अणु
-			skb_queue_head(&sk->sk_ग_लिखो_queue, skb);
-			अवरोध;
-		पूर्ण
+	do {
+		if ((skbn = skb_clone(skb, GFP_ATOMIC)) == NULL) {
+			skb_queue_head(&sk->sk_write_queue, skb);
+			break;
+		}
 
 		skb_set_owner_w(skbn, sk);
 
 		/*
 		 * Transmit the frame copy.
 		 */
-		rose_send_अगरrame(sk, skbn);
+		rose_send_iframe(sk, skbn);
 
 		rose->vs = (rose->vs + 1) % ROSE_MODULUS;
 
@@ -93,31 +92,31 @@
 		 */
 		skb_queue_tail(&rose->ack_queue, skb);
 
-	पूर्ण जबतक (rose->vs != end &&
-		 (skb = skb_dequeue(&sk->sk_ग_लिखो_queue)) != शून्य);
+	} while (rose->vs != end &&
+		 (skb = skb_dequeue(&sk->sk_write_queue)) != NULL);
 
 	rose->vl         = rose->vr;
 	rose->condition &= ~ROSE_COND_ACK_PENDING;
 
-	rose_stop_समयr(sk);
-पूर्ण
+	rose_stop_timer(sk);
+}
 
 /*
  * The following routines are taken from page 170 of the 7th ARRL Computer
  * Networking Conference paper, as is the whole state machine.
  */
 
-व्योम rose_enquiry_response(काष्ठा sock *sk)
-अणु
-	काष्ठा rose_sock *rose = rose_sk(sk);
+void rose_enquiry_response(struct sock *sk)
+{
+	struct rose_sock *rose = rose_sk(sk);
 
-	अगर (rose->condition & ROSE_COND_OWN_RX_BUSY)
-		rose_ग_लिखो_पूर्णांकernal(sk, ROSE_RNR);
-	अन्यथा
-		rose_ग_लिखो_पूर्णांकernal(sk, ROSE_RR);
+	if (rose->condition & ROSE_COND_OWN_RX_BUSY)
+		rose_write_internal(sk, ROSE_RNR);
+	else
+		rose_write_internal(sk, ROSE_RR);
 
 	rose->vl         = rose->vr;
 	rose->condition &= ~ROSE_COND_ACK_PENDING;
 
-	rose_stop_समयr(sk);
-पूर्ण
+	rose_stop_timer(sk);
+}

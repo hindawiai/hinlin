@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Author: Dan Scally <djrscally@gmail.com> */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/device.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/property.h>
-#समावेश <media/v4l2-fwnode.h>
+#include <linux/acpi.h>
+#include <linux/device.h>
+#include <linux/pci.h>
+#include <linux/property.h>
+#include <media/v4l2-fwnode.h>
 
-#समावेश "cio2-bridge.h"
+#include "cio2-bridge.h"
 
 /*
  * Extend this array with ACPI Hardware IDs of devices known to be working
- * plus the number of link-frequencies expected by their drivers, aदीर्घ with
+ * plus the number of link-frequencies expected by their drivers, along with
  * the frequency values in hertz. This is somewhat opportunistic way of adding
- * support क्रम this क्रम now in the hopes of a better source क्रम the inक्रमmation
+ * support for this for now in the hopes of a better source for the information
  * (possibly some encoded value in the SSDB buffer that we're unaware of)
  * becoming apparent in the future.
  *
- * Do not add an entry क्रम a sensor that is not actually supported.
+ * Do not add an entry for a sensor that is not actually supported.
  */
-अटल स्थिर काष्ठा cio2_sensor_config cio2_supported_sensors[] = अणु
+static const struct cio2_sensor_config cio2_supported_sensors[] = {
 	/* Omnivision OV5693 */
 	CIO2_SENSOR_CONFIG("INT33BE", 0),
 	/* Omnivision OV2680 */
 	CIO2_SENSOR_CONFIG("OVTI2680", 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cio2_property_names prop_names = अणु
-	.घड़ी_frequency = "clock-frequency",
+static const struct cio2_property_names prop_names = {
+	.clock_frequency = "clock-frequency",
 	.rotation = "rotation",
 	.bus_type = "bus-type",
 	.data_lanes = "data-lanes",
-	.remote_endpoपूर्णांक = "remote-endpoint",
+	.remote_endpoint = "remote-endpoint",
 	.link_frequencies = "link-frequencies",
-पूर्ण;
+};
 
-अटल पूर्णांक cio2_bridge_पढ़ो_acpi_buffer(काष्ठा acpi_device *adev, अक्षर *id,
-					व्योम *data, u32 size)
-अणु
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+static int cio2_bridge_read_acpi_buffer(struct acpi_device *adev, char *id,
+					void *data, u32 size)
+{
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 	acpi_status status;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	status = acpi_evaluate_object(adev->handle, id, शून्य, &buffer);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_evaluate_object(adev->handle, id, NULL, &buffer);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	obj = buffer.poपूर्णांकer;
-	अगर (!obj) अणु
+	obj = buffer.pointer;
+	if (!obj) {
 		dev_err(&adev->dev, "Couldn't locate ACPI buffer\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (obj->type != ACPI_TYPE_BUFFER) अणु
+	if (obj->type != ACPI_TYPE_BUFFER) {
 		dev_err(&adev->dev, "Not an ACPI buffer\n");
 		ret = -ENODEV;
-		जाओ out_मुक्त_buff;
-	पूर्ण
+		goto out_free_buff;
+	}
 
-	अगर (obj->buffer.length > size) अणु
+	if (obj->buffer.length > size) {
 		dev_err(&adev->dev, "Given buffer is too small\n");
 		ret = -EINVAL;
-		जाओ out_मुक्त_buff;
-	पूर्ण
+		goto out_free_buff;
+	}
 
-	स_नकल(data, obj->buffer.poपूर्णांकer, obj->buffer.length);
+	memcpy(data, obj->buffer.pointer, obj->buffer.length);
 
-out_मुक्त_buff:
-	kमुक्त(buffer.poपूर्णांकer);
-	वापस ret;
-पूर्ण
+out_free_buff:
+	kfree(buffer.pointer);
+	return ret;
+}
 
-अटल व्योम cio2_bridge_create_fwnode_properties(
-	काष्ठा cio2_sensor *sensor,
-	काष्ठा cio2_bridge *bridge,
-	स्थिर काष्ठा cio2_sensor_config *cfg)
-अणु
+static void cio2_bridge_create_fwnode_properties(
+	struct cio2_sensor *sensor,
+	struct cio2_bridge *bridge,
+	const struct cio2_sensor_config *cfg)
+{
 	sensor->prop_names = prop_names;
 
 	sensor->local_ref[0] = SOFTWARE_NODE_REFERENCE(&sensor->swnodes[SWNODE_CIO2_ENDPOINT]);
 	sensor->remote_ref[0] = SOFTWARE_NODE_REFERENCE(&sensor->swnodes[SWNODE_SENSOR_ENDPOINT]);
 
 	sensor->dev_properties[0] = PROPERTY_ENTRY_U32(
-					sensor->prop_names.घड़ी_frequency,
+					sensor->prop_names.clock_frequency,
 					sensor->ssdb.mclkspeed);
 	sensor->dev_properties[1] = PROPERTY_ENTRY_U8(
 					sensor->prop_names.rotation,
@@ -98,10 +97,10 @@ out_मुक्त_buff:
 					bridge->data_lanes,
 					sensor->ssdb.lanes);
 	sensor->ep_properties[2] = PROPERTY_ENTRY_REF_ARRAY(
-					sensor->prop_names.remote_endpoपूर्णांक,
+					sensor->prop_names.remote_endpoint,
 					sensor->local_ref);
 
-	अगर (cfg->nr_link_freqs > 0)
+	if (cfg->nr_link_freqs > 0)
 		sensor->ep_properties[3] = PROPERTY_ENTRY_U64_ARRAY_LEN(
 			sensor->prop_names.link_frequencies,
 			cfg->link_freqs,
@@ -112,27 +111,27 @@ out_मुक्त_buff:
 					bridge->data_lanes,
 					sensor->ssdb.lanes);
 	sensor->cio2_properties[1] = PROPERTY_ENTRY_REF_ARRAY(
-					sensor->prop_names.remote_endpoपूर्णांक,
+					sensor->prop_names.remote_endpoint,
 					sensor->remote_ref);
-पूर्ण
+}
 
-अटल व्योम cio2_bridge_init_swnode_names(काष्ठा cio2_sensor *sensor)
-अणु
-	snम_लिखो(sensor->node_names.remote_port,
-		 माप(sensor->node_names.remote_port),
+static void cio2_bridge_init_swnode_names(struct cio2_sensor *sensor)
+{
+	snprintf(sensor->node_names.remote_port,
+		 sizeof(sensor->node_names.remote_port),
 		 SWNODE_GRAPH_PORT_NAME_FMT, sensor->ssdb.link);
-	snम_लिखो(sensor->node_names.port,
-		 माप(sensor->node_names.port),
+	snprintf(sensor->node_names.port,
+		 sizeof(sensor->node_names.port),
 		 SWNODE_GRAPH_PORT_NAME_FMT, 0); /* Always port 0 */
-	snम_लिखो(sensor->node_names.endpoपूर्णांक,
-		 माप(sensor->node_names.endpoपूर्णांक),
-		 SWNODE_GRAPH_ENDPOINT_NAME_FMT, 0); /* And endpoपूर्णांक 0 */
-पूर्ण
+	snprintf(sensor->node_names.endpoint,
+		 sizeof(sensor->node_names.endpoint),
+		 SWNODE_GRAPH_ENDPOINT_NAME_FMT, 0); /* And endpoint 0 */
+}
 
-अटल व्योम cio2_bridge_create_connection_swnodes(काष्ठा cio2_bridge *bridge,
-						  काष्ठा cio2_sensor *sensor)
-अणु
-	काष्ठा software_node *nodes = sensor->swnodes;
+static void cio2_bridge_create_connection_swnodes(struct cio2_bridge *bridge,
+						  struct cio2_sensor *sensor)
+{
+	struct software_node *nodes = sensor->swnodes;
 
 	cio2_bridge_init_swnode_names(sensor);
 
@@ -141,79 +140,79 @@ out_मुक्त_buff:
 	nodes[SWNODE_SENSOR_PORT] = NODE_PORT(sensor->node_names.port,
 					      &nodes[SWNODE_SENSOR_HID]);
 	nodes[SWNODE_SENSOR_ENDPOINT] = NODE_ENDPOINT(
-						sensor->node_names.endpoपूर्णांक,
+						sensor->node_names.endpoint,
 						&nodes[SWNODE_SENSOR_PORT],
 						sensor->ep_properties);
 	nodes[SWNODE_CIO2_PORT] = NODE_PORT(sensor->node_names.remote_port,
 					    &bridge->cio2_hid_node);
 	nodes[SWNODE_CIO2_ENDPOINT] = NODE_ENDPOINT(
-						sensor->node_names.endpoपूर्णांक,
+						sensor->node_names.endpoint,
 						&nodes[SWNODE_CIO2_PORT],
 						sensor->cio2_properties);
-पूर्ण
+}
 
-अटल व्योम cio2_bridge_unरेजिस्टर_sensors(काष्ठा cio2_bridge *bridge)
-अणु
-	काष्ठा cio2_sensor *sensor;
-	अचिन्हित पूर्णांक i;
+static void cio2_bridge_unregister_sensors(struct cio2_bridge *bridge)
+{
+	struct cio2_sensor *sensor;
+	unsigned int i;
 
-	क्रम (i = 0; i < bridge->n_sensors; i++) अणु
+	for (i = 0; i < bridge->n_sensors; i++) {
 		sensor = &bridge->sensors[i];
-		software_node_unरेजिस्टर_nodes(sensor->swnodes);
+		software_node_unregister_nodes(sensor->swnodes);
 		acpi_dev_put(sensor->adev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक cio2_bridge_connect_sensor(स्थिर काष्ठा cio2_sensor_config *cfg,
-				      काष्ठा cio2_bridge *bridge,
-				      काष्ठा pci_dev *cio2)
-अणु
-	काष्ठा fwnode_handle *fwnode;
-	काष्ठा cio2_sensor *sensor;
-	काष्ठा acpi_device *adev;
-	पूर्णांक ret;
+static int cio2_bridge_connect_sensor(const struct cio2_sensor_config *cfg,
+				      struct cio2_bridge *bridge,
+				      struct pci_dev *cio2)
+{
+	struct fwnode_handle *fwnode;
+	struct cio2_sensor *sensor;
+	struct acpi_device *adev;
+	int ret;
 
-	क्रम_each_acpi_dev_match(adev, cfg->hid, शून्य, -1) अणु
-		अगर (!adev->status.enabled)
-			जारी;
+	for_each_acpi_dev_match(adev, cfg->hid, NULL, -1) {
+		if (!adev->status.enabled)
+			continue;
 
-		अगर (bridge->n_sensors >= CIO2_NUM_PORTS) अणु
+		if (bridge->n_sensors >= CIO2_NUM_PORTS) {
 			dev_err(&cio2->dev, "Exceeded available CIO2 ports\n");
-			cio2_bridge_unरेजिस्टर_sensors(bridge);
+			cio2_bridge_unregister_sensors(bridge);
 			ret = -EINVAL;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 
 		sensor = &bridge->sensors[bridge->n_sensors];
 		sensor->adev = adev;
-		strscpy(sensor->name, cfg->hid, माप(sensor->name));
+		strscpy(sensor->name, cfg->hid, sizeof(sensor->name));
 
-		ret = cio2_bridge_पढ़ो_acpi_buffer(adev, "SSDB",
+		ret = cio2_bridge_read_acpi_buffer(adev, "SSDB",
 						   &sensor->ssdb,
-						   माप(sensor->ssdb));
-		अगर (ret)
-			जाओ err_put_adev;
+						   sizeof(sensor->ssdb));
+		if (ret)
+			goto err_put_adev;
 
-		अगर (sensor->ssdb.lanes > CIO2_MAX_LANES) अणु
+		if (sensor->ssdb.lanes > CIO2_MAX_LANES) {
 			dev_err(&adev->dev,
 				"Number of lanes in SSDB is invalid\n");
 			ret = -EINVAL;
-			जाओ err_put_adev;
-		पूर्ण
+			goto err_put_adev;
+		}
 
 		cio2_bridge_create_fwnode_properties(sensor, bridge, cfg);
 		cio2_bridge_create_connection_swnodes(bridge, sensor);
 
-		ret = software_node_रेजिस्टर_nodes(sensor->swnodes);
-		अगर (ret)
-			जाओ err_put_adev;
+		ret = software_node_register_nodes(sensor->swnodes);
+		if (ret)
+			goto err_put_adev;
 
 		fwnode = software_node_fwnode(&sensor->swnodes[
 						      SWNODE_SENSOR_HID]);
-		अगर (!fwnode) अणु
+		if (!fwnode) {
 			ret = -ENODEV;
-			जाओ err_मुक्त_swnodes;
-		पूर्ण
+			goto err_free_swnodes;
+		}
 
 		adev->fwnode.secondary = fwnode;
 
@@ -221,95 +220,95 @@ out_मुक्त_buff:
 			 acpi_dev_name(adev));
 
 		bridge->n_sensors++;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_swnodes:
-	software_node_unरेजिस्टर_nodes(sensor->swnodes);
+err_free_swnodes:
+	software_node_unregister_nodes(sensor->swnodes);
 err_put_adev:
 	acpi_dev_put(sensor->adev);
 err_out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cio2_bridge_connect_sensors(काष्ठा cio2_bridge *bridge,
-				       काष्ठा pci_dev *cio2)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int cio2_bridge_connect_sensors(struct cio2_bridge *bridge,
+				       struct pci_dev *cio2)
+{
+	unsigned int i;
+	int ret;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cio2_supported_sensors); i++) अणु
-		स्थिर काष्ठा cio2_sensor_config *cfg =
+	for (i = 0; i < ARRAY_SIZE(cio2_supported_sensors); i++) {
+		const struct cio2_sensor_config *cfg =
 			&cio2_supported_sensors[i];
 
 		ret = cio2_bridge_connect_sensor(cfg, bridge, cio2);
-		अगर (ret)
-			जाओ err_unरेजिस्टर_sensors;
-	पूर्ण
+		if (ret)
+			goto err_unregister_sensors;
+	}
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_sensors:
-	cio2_bridge_unरेजिस्टर_sensors(bridge);
-	वापस ret;
-पूर्ण
+err_unregister_sensors:
+	cio2_bridge_unregister_sensors(bridge);
+	return ret;
+}
 
-पूर्णांक cio2_bridge_init(काष्ठा pci_dev *cio2)
-अणु
-	काष्ठा device *dev = &cio2->dev;
-	काष्ठा fwnode_handle *fwnode;
-	काष्ठा cio2_bridge *bridge;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+int cio2_bridge_init(struct pci_dev *cio2)
+{
+	struct device *dev = &cio2->dev;
+	struct fwnode_handle *fwnode;
+	struct cio2_bridge *bridge;
+	unsigned int i;
+	int ret;
 
-	bridge = kzalloc(माप(*bridge), GFP_KERNEL);
-	अगर (!bridge)
-		वापस -ENOMEM;
+	bridge = kzalloc(sizeof(*bridge), GFP_KERNEL);
+	if (!bridge)
+		return -ENOMEM;
 
 	strscpy(bridge->cio2_node_name, CIO2_HID,
-		माप(bridge->cio2_node_name));
+		sizeof(bridge->cio2_node_name));
 	bridge->cio2_hid_node.name = bridge->cio2_node_name;
 
-	ret = software_node_रेजिस्टर(&bridge->cio2_hid_node);
-	अगर (ret < 0) अणु
+	ret = software_node_register(&bridge->cio2_hid_node);
+	if (ret < 0) {
 		dev_err(dev, "Failed to register the CIO2 HID node\n");
-		जाओ err_मुक्त_bridge;
-	पूर्ण
+		goto err_free_bridge;
+	}
 
 	/*
-	 * Map the lane arrangement, which is fixed क्रम the IPU3 (meaning we
+	 * Map the lane arrangement, which is fixed for the IPU3 (meaning we
 	 * only need one, rather than one per sensor). We include it as a
-	 * member of the काष्ठा cio2_bridge rather than a global variable so
-	 * that it survives अगर the module is unloaded aदीर्घ with the rest of
-	 * the काष्ठा.
+	 * member of the struct cio2_bridge rather than a global variable so
+	 * that it survives if the module is unloaded along with the rest of
+	 * the struct.
 	 */
-	क्रम (i = 0; i < CIO2_MAX_LANES; i++)
+	for (i = 0; i < CIO2_MAX_LANES; i++)
 		bridge->data_lanes[i] = i + 1;
 
 	ret = cio2_bridge_connect_sensors(bridge, cio2);
-	अगर (ret || bridge->n_sensors == 0)
-		जाओ err_unरेजिस्टर_cio2;
+	if (ret || bridge->n_sensors == 0)
+		goto err_unregister_cio2;
 
 	dev_info(dev, "Connected %d cameras\n", bridge->n_sensors);
 
 	fwnode = software_node_fwnode(&bridge->cio2_hid_node);
-	अगर (!fwnode) अणु
+	if (!fwnode) {
 		dev_err(dev, "Error getting fwnode from cio2 software_node\n");
 		ret = -ENODEV;
-		जाओ err_unरेजिस्टर_sensors;
-	पूर्ण
+		goto err_unregister_sensors;
+	}
 
 	set_secondary_fwnode(dev, fwnode);
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर_sensors:
-	cio2_bridge_unरेजिस्टर_sensors(bridge);
-err_unरेजिस्टर_cio2:
-	software_node_unरेजिस्टर(&bridge->cio2_hid_node);
-err_मुक्त_bridge:
-	kमुक्त(bridge);
+err_unregister_sensors:
+	cio2_bridge_unregister_sensors(bridge);
+err_unregister_cio2:
+	software_node_unregister(&bridge->cio2_hid_node);
+err_free_bridge:
+	kfree(bridge);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

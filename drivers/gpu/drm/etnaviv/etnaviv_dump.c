@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015-2018 Etnaviv Project
  */
 
-#समावेश <linux/devcoredump.h>
-#समावेश <linux/moduleparam.h>
+#include <linux/devcoredump.h>
+#include <linux/moduleparam.h>
 
-#समावेश "etnaviv_cmdbuf.h"
-#समावेश "etnaviv_dump.h"
-#समावेश "etnaviv_gem.h"
-#समावेश "etnaviv_gpu.h"
-#समावेश "etnaviv_mmu.h"
-#समावेश "etnaviv_sched.h"
-#समावेश "state.xml.h"
-#समावेश "state_hi.xml.h"
+#include "etnaviv_cmdbuf.h"
+#include "etnaviv_dump.h"
+#include "etnaviv_gem.h"
+#include "etnaviv_gpu.h"
+#include "etnaviv_mmu.h"
+#include "etnaviv_sched.h"
+#include "state.xml.h"
+#include "state_hi.xml.h"
 
-अटल bool etnaviv_dump_core = true;
+static bool etnaviv_dump_core = true;
 module_param_named(dump_core, etnaviv_dump_core, bool, 0600);
 
-काष्ठा core_dump_iterator अणु
-	व्योम *start;
-	काष्ठा etnaviv_dump_object_header *hdr;
-	व्योम *data;
-पूर्ण;
+struct core_dump_iterator {
+	void *start;
+	struct etnaviv_dump_object_header *hdr;
+	void *data;
+};
 
-अटल स्थिर अचिन्हित लघु etnaviv_dump_रेजिस्टरs[] = अणु
+static const unsigned short etnaviv_dump_registers[] = {
 	VIVS_HI_AXI_STATUS,
 	VIVS_HI_CLOCK_CONTROL,
 	VIVS_HI_IDLE_STATE,
@@ -63,12 +62,12 @@ module_param_named(dump_core, etnaviv_dump_core, bool, 0600);
 	VIVS_FE_DMA_LOW,
 	VIVS_FE_DMA_HIGH,
 	VIVS_FE_AUTO_FLUSH,
-पूर्ण;
+};
 
-अटल व्योम etnaviv_core_dump_header(काष्ठा core_dump_iterator *iter,
-	u32 type, व्योम *data_end)
-अणु
-	काष्ठा etnaviv_dump_object_header *hdr = iter->hdr;
+static void etnaviv_core_dump_header(struct core_dump_iterator *iter,
+	u32 type, void *data_end)
+{
+	struct etnaviv_dump_object_header *hdr = iter->hdr;
 
 	hdr->magic = cpu_to_le32(ETDUMP_MAGIC);
 	hdr->type = cpu_to_le32(type);
@@ -77,99 +76,99 @@ module_param_named(dump_core, etnaviv_dump_core, bool, 0600);
 
 	iter->hdr++;
 	iter->data += hdr->file_size;
-पूर्ण
+}
 
-अटल व्योम etnaviv_core_dump_रेजिस्टरs(काष्ठा core_dump_iterator *iter,
-	काष्ठा etnaviv_gpu *gpu)
-अणु
-	काष्ठा etnaviv_dump_रेजिस्टरs *reg = iter->data;
-	अचिन्हित पूर्णांक i;
+static void etnaviv_core_dump_registers(struct core_dump_iterator *iter,
+	struct etnaviv_gpu *gpu)
+{
+	struct etnaviv_dump_registers *reg = iter->data;
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(etnaviv_dump_रेजिस्टरs); i++, reg++) अणु
-		reg->reg = etnaviv_dump_रेजिस्टरs[i];
-		reg->value = gpu_पढ़ो(gpu, etnaviv_dump_रेजिस्टरs[i]);
-	पूर्ण
+	for (i = 0; i < ARRAY_SIZE(etnaviv_dump_registers); i++, reg++) {
+		reg->reg = etnaviv_dump_registers[i];
+		reg->value = gpu_read(gpu, etnaviv_dump_registers[i]);
+	}
 
 	etnaviv_core_dump_header(iter, ETDUMP_BUF_REG, reg);
-पूर्ण
+}
 
-अटल व्योम etnaviv_core_dump_mmu(काष्ठा core_dump_iterator *iter,
-	काष्ठा etnaviv_iommu_context *mmu, माप_प्रकार mmu_size)
-अणु
+static void etnaviv_core_dump_mmu(struct core_dump_iterator *iter,
+	struct etnaviv_iommu_context *mmu, size_t mmu_size)
+{
 	etnaviv_iommu_dump(mmu, iter->data);
 
 	etnaviv_core_dump_header(iter, ETDUMP_BUF_MMU, iter->data + mmu_size);
-पूर्ण
+}
 
-अटल व्योम etnaviv_core_dump_mem(काष्ठा core_dump_iterator *iter, u32 type,
-	व्योम *ptr, माप_प्रकार size, u64 iova)
-अणु
-	स_नकल(iter->data, ptr, size);
+static void etnaviv_core_dump_mem(struct core_dump_iterator *iter, u32 type,
+	void *ptr, size_t size, u64 iova)
+{
+	memcpy(iter->data, ptr, size);
 
 	iter->hdr->iova = cpu_to_le64(iova);
 
 	etnaviv_core_dump_header(iter, type, iter->data + size);
-पूर्ण
+}
 
-व्योम etnaviv_core_dump(काष्ठा etnaviv_gem_submit *submit)
-अणु
-	काष्ठा etnaviv_gpu *gpu = submit->gpu;
-	काष्ठा core_dump_iterator iter;
-	काष्ठा etnaviv_gem_object *obj;
-	अचिन्हित पूर्णांक n_obj, n_bomap_pages;
-	माप_प्रकार file_size, mmu_size;
+void etnaviv_core_dump(struct etnaviv_gem_submit *submit)
+{
+	struct etnaviv_gpu *gpu = submit->gpu;
+	struct core_dump_iterator iter;
+	struct etnaviv_gem_object *obj;
+	unsigned int n_obj, n_bomap_pages;
+	size_t file_size, mmu_size;
 	__le64 *bomap, *bomap_start;
-	पूर्णांक i;
+	int i;
 
 	/* Only catch the first event, or when manually re-armed */
-	अगर (!etnaviv_dump_core)
-		वापस;
+	if (!etnaviv_dump_core)
+		return;
 	etnaviv_dump_core = false;
 
 	mutex_lock(&gpu->mmu_context->lock);
 
 	mmu_size = etnaviv_iommu_dump_size(gpu->mmu_context);
 
-	/* We always dump रेजिस्टरs, mmu, ring, hanging cmdbuf and end marker */
+	/* We always dump registers, mmu, ring, hanging cmdbuf and end marker */
 	n_obj = 5;
 	n_bomap_pages = 0;
-	file_size = ARRAY_SIZE(etnaviv_dump_रेजिस्टरs) *
-			माप(काष्ठा etnaviv_dump_रेजिस्टरs) +
+	file_size = ARRAY_SIZE(etnaviv_dump_registers) *
+			sizeof(struct etnaviv_dump_registers) +
 		    mmu_size + gpu->buffer.size + submit->cmdbuf.size;
 
 	/* Add in the active buffer objects */
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
+	for (i = 0; i < submit->nr_bos; i++) {
 		obj = submit->bos[i].obj;
 		file_size += obj->base.size;
 		n_bomap_pages += obj->base.size >> PAGE_SHIFT;
 		n_obj++;
-	पूर्ण
+	}
 
 	/* If we have any buffer objects, add a bomap object */
-	अगर (n_bomap_pages) अणु
-		file_size += n_bomap_pages * माप(__le64);
+	if (n_bomap_pages) {
+		file_size += n_bomap_pages * sizeof(__le64);
 		n_obj++;
-	पूर्ण
+	}
 
 	/* Add the size of the headers */
-	file_size += माप(*iter.hdr) * n_obj;
+	file_size += sizeof(*iter.hdr) * n_obj;
 
-	/* Allocate the file in vदो_स्मृति memory, it's likely to be big */
-	iter.start = __vदो_स्मृति(file_size, GFP_KERNEL | __GFP_NOWARN |
+	/* Allocate the file in vmalloc memory, it's likely to be big */
+	iter.start = __vmalloc(file_size, GFP_KERNEL | __GFP_NOWARN |
 			__GFP_NORETRY);
-	अगर (!iter.start) अणु
+	if (!iter.start) {
 		mutex_unlock(&gpu->mmu_context->lock);
 		dev_warn(gpu->dev, "failed to allocate devcoredump file\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Poपूर्णांक the data member after the headers */
+	/* Point the data member after the headers */
 	iter.hdr = iter.start;
 	iter.data = &iter.hdr[n_obj];
 
-	स_रखो(iter.hdr, 0, iter.data - iter.start);
+	memset(iter.hdr, 0, iter.data - iter.start);
 
-	etnaviv_core_dump_रेजिस्टरs(&iter, gpu);
+	etnaviv_core_dump_registers(&iter, gpu);
 	etnaviv_core_dump_mmu(&iter, gpu->mmu_context, mmu_size);
 	etnaviv_core_dump_mem(&iter, ETDUMP_BUF_RING, gpu->buffer.vaddr,
 			      gpu->buffer.size,
@@ -183,21 +182,21 @@ module_param_named(dump_core, etnaviv_dump_core, bool, 0600);
 
 	mutex_unlock(&gpu->mmu_context->lock);
 
-	/* Reserve space क्रम the bomap */
-	अगर (n_bomap_pages) अणु
+	/* Reserve space for the bomap */
+	if (n_bomap_pages) {
 		bomap_start = bomap = iter.data;
-		स_रखो(bomap, 0, माप(*bomap) * n_bomap_pages);
+		memset(bomap, 0, sizeof(*bomap) * n_bomap_pages);
 		etnaviv_core_dump_header(&iter, ETDUMP_BUF_BOMAP,
 					 bomap + n_bomap_pages);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Silence warning */
-		bomap_start = bomap = शून्य;
-	पूर्ण
+		bomap_start = bomap = NULL;
+	}
 
-	क्रम (i = 0; i < submit->nr_bos; i++) अणु
-		काष्ठा etnaviv_vram_mapping *vram;
-		काष्ठा page **pages;
-		व्योम *vaddr;
+	for (i = 0; i < submit->nr_bos; i++) {
+		struct etnaviv_vram_mapping *vram;
+		struct page **pages;
+		void *vaddr;
 
 		obj = submit->bos[i].obj;
 		vram = submit->bos[i].mapping;
@@ -205,26 +204,26 @@ module_param_named(dump_core, etnaviv_dump_core, bool, 0600);
 		mutex_lock(&obj->lock);
 		pages = etnaviv_gem_get_pages(obj);
 		mutex_unlock(&obj->lock);
-		अगर (!IS_ERR(pages)) अणु
-			पूर्णांक j;
+		if (!IS_ERR(pages)) {
+			int j;
 
 			iter.hdr->data[0] = bomap - bomap_start;
 
-			क्रम (j = 0; j < obj->base.size >> PAGE_SHIFT; j++)
+			for (j = 0; j < obj->base.size >> PAGE_SHIFT; j++)
 				*bomap++ = cpu_to_le64(page_to_phys(*pages++));
-		पूर्ण
+		}
 
 		iter.hdr->iova = cpu_to_le64(vram->iova);
 
 		vaddr = etnaviv_gem_vmap(&obj->base);
-		अगर (vaddr)
-			स_नकल(iter.data, vaddr, obj->base.size);
+		if (vaddr)
+			memcpy(iter.data, vaddr, obj->base.size);
 
 		etnaviv_core_dump_header(&iter, ETDUMP_BUF_BO, iter.data +
 					 obj->base.size);
-	पूर्ण
+	}
 
 	etnaviv_core_dump_header(&iter, ETDUMP_BUF_END, iter.data);
 
 	dev_coredumpv(gpu->dev, iter.start, iter.data - iter.start, GFP_KERNEL);
-पूर्ण
+}

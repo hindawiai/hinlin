@@ -1,98 +1,97 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_BARRIER_H
-#घोषणा __ASM_BARRIER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_BARRIER_H
+#define __ASM_BARRIER_H
 
-#समावेश <यंत्र/alternative.h>
+#include <asm/alternative.h>
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-/* The synchronize caches inकाष्ठाion executes as a nop on प्रणालीs in
-   which all memory references are perक्रमmed in order. */
-#घोषणा synchronize_caches() यंत्र अस्थिर("sync" \
+/* The synchronize caches instruction executes as a nop on systems in
+   which all memory references are performed in order. */
+#define synchronize_caches() asm volatile("sync" \
 	ALTERNATIVE(ALT_COND_NO_SMP, INSN_NOP) \
 	: : : "memory")
 
-#अगर defined(CONFIG_SMP)
-#घोषणा mb()		करो अणु synchronize_caches(); पूर्ण जबतक (0)
-#घोषणा rmb()		mb()
-#घोषणा wmb()		mb()
-#घोषणा dma_rmb()	mb()
-#घोषणा dma_wmb()	mb()
-#अन्यथा
-#घोषणा mb()		barrier()
-#घोषणा rmb()		barrier()
-#घोषणा wmb()		barrier()
-#घोषणा dma_rmb()	barrier()
-#घोषणा dma_wmb()	barrier()
-#पूर्ण_अगर
+#if defined(CONFIG_SMP)
+#define mb()		do { synchronize_caches(); } while (0)
+#define rmb()		mb()
+#define wmb()		mb()
+#define dma_rmb()	mb()
+#define dma_wmb()	mb()
+#else
+#define mb()		barrier()
+#define rmb()		barrier()
+#define wmb()		barrier()
+#define dma_rmb()	barrier()
+#define dma_wmb()	barrier()
+#endif
 
-#घोषणा __smp_mb()	mb()
-#घोषणा __smp_rmb()	mb()
-#घोषणा __smp_wmb()	mb()
+#define __smp_mb()	mb()
+#define __smp_rmb()	mb()
+#define __smp_wmb()	mb()
 
-#घोषणा __smp_store_release(p, v)					\
-करो अणु									\
+#define __smp_store_release(p, v)					\
+do {									\
 	typeof(p) __p = (p);						\
-        जोड़ अणु typeof(*p) __val; अक्षर __c[1]; पूर्ण __u =			\
-                अणु .__val = (__क्रमce typeof(*p)) (v) पूर्ण;			\
-	compileसमय_निश्चित_atomic_type(*p);				\
-	चयन (माप(*p)) अणु						\
-	हाल 1:								\
-		यंत्र अस्थिर("stb,ma %0,0(%1)"				\
+        union { typeof(*p) __val; char __c[1]; } __u =			\
+                { .__val = (__force typeof(*p)) (v) };			\
+	compiletime_assert_atomic_type(*p);				\
+	switch (sizeof(*p)) {						\
+	case 1:								\
+		asm volatile("stb,ma %0,0(%1)"				\
 				: : "r"(*(__u8 *)__u.__c), "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	हाल 2:								\
-		यंत्र अस्थिर("sth,ma %0,0(%1)"				\
+		break;							\
+	case 2:								\
+		asm volatile("sth,ma %0,0(%1)"				\
 				: : "r"(*(__u16 *)__u.__c), "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	हाल 4:								\
-		यंत्र अस्थिर("stw,ma %0,0(%1)"				\
+		break;							\
+	case 4:								\
+		asm volatile("stw,ma %0,0(%1)"				\
 				: : "r"(*(__u32 *)__u.__c), "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	हाल 8:								\
-		अगर (IS_ENABLED(CONFIG_64BIT))				\
-			यंत्र अस्थिर("std,ma %0,0(%1)"			\
+		break;							\
+	case 8:								\
+		if (IS_ENABLED(CONFIG_64BIT))				\
+			asm volatile("std,ma %0,0(%1)"			\
 				: : "r"(*(__u64 *)__u.__c), "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	पूर्ण								\
-पूर्ण जबतक (0)
+		break;							\
+	}								\
+} while (0)
 
-#घोषणा __smp_load_acquire(p)						\
-(अणु									\
-	जोड़ अणु typeof(*p) __val; अक्षर __c[1]; पूर्ण __u;			\
+#define __smp_load_acquire(p)						\
+({									\
+	union { typeof(*p) __val; char __c[1]; } __u;			\
 	typeof(p) __p = (p);						\
-	compileसमय_निश्चित_atomic_type(*p);				\
-	चयन (माप(*p)) अणु						\
-	हाल 1:								\
-		यंत्र अस्थिर("ldb,ma 0(%1),%0"				\
+	compiletime_assert_atomic_type(*p);				\
+	switch (sizeof(*p)) {						\
+	case 1:								\
+		asm volatile("ldb,ma 0(%1),%0"				\
 				: "=r"(*(__u8 *)__u.__c) : "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	हाल 2:								\
-		यंत्र अस्थिर("ldh,ma 0(%1),%0"				\
+		break;							\
+	case 2:								\
+		asm volatile("ldh,ma 0(%1),%0"				\
 				: "=r"(*(__u16 *)__u.__c) : "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	हाल 4:								\
-		यंत्र अस्थिर("ldw,ma 0(%1),%0"				\
+		break;							\
+	case 4:								\
+		asm volatile("ldw,ma 0(%1),%0"				\
 				: "=r"(*(__u32 *)__u.__c) : "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	हाल 8:								\
-		अगर (IS_ENABLED(CONFIG_64BIT))				\
-			यंत्र अस्थिर("ldd,ma 0(%1),%0"			\
+		break;							\
+	case 8:								\
+		if (IS_ENABLED(CONFIG_64BIT))				\
+			asm volatile("ldd,ma 0(%1),%0"			\
 				: "=r"(*(__u64 *)__u.__c) : "r"(__p)	\
 				: "memory");				\
-		अवरोध;							\
-	पूर्ण								\
+		break;							\
+	}								\
 	__u.__val;							\
-पूर्ण)
-#समावेश <यंत्र-generic/barrier.h>
+})
+#include <asm-generic/barrier.h>
 
-#पूर्ण_अगर /* !__ASSEMBLY__ */
-#पूर्ण_अगर /* __ASM_BARRIER_H */
+#endif /* !__ASSEMBLY__ */
+#endif /* __ASM_BARRIER_H */

@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2001,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित __XFS_FSOPS_H__
-#घोषणा	__XFS_FSOPS_H__
+#ifndef __XFS_FSOPS_H__
+#define	__XFS_FSOPS_H__
 
-बाह्य पूर्णांक xfs_growfs_data(काष्ठा xfs_mount *mp, काष्ठा xfs_growfs_data *in);
-बाह्य पूर्णांक xfs_growfs_log(काष्ठा xfs_mount *mp, काष्ठा xfs_growfs_log *in);
-बाह्य व्योम xfs_fs_counts(xfs_mount_t *mp, xfs_fsop_counts_t *cnt);
-बाह्य पूर्णांक xfs_reserve_blocks(xfs_mount_t *mp, uपूर्णांक64_t *inval,
+extern int xfs_growfs_data(struct xfs_mount *mp, struct xfs_growfs_data *in);
+extern int xfs_growfs_log(struct xfs_mount *mp, struct xfs_growfs_log *in);
+extern void xfs_fs_counts(xfs_mount_t *mp, xfs_fsop_counts_t *cnt);
+extern int xfs_reserve_blocks(xfs_mount_t *mp, uint64_t *inval,
 				xfs_fsop_resblks_t *outval);
-बाह्य पूर्णांक xfs_fs_goingकरोwn(xfs_mount_t *mp, uपूर्णांक32_t inflags);
+extern int xfs_fs_goingdown(xfs_mount_t *mp, uint32_t inflags);
 
-बाह्य पूर्णांक xfs_fs_reserve_ag_blocks(काष्ठा xfs_mount *mp);
-बाह्य पूर्णांक xfs_fs_unreserve_ag_blocks(काष्ठा xfs_mount *mp);
+extern int xfs_fs_reserve_ag_blocks(struct xfs_mount *mp);
+extern int xfs_fs_unreserve_ag_blocks(struct xfs_mount *mp);
 
-#पूर्ण_अगर	/* __XFS_FSOPS_H__ */
+#endif	/* __XFS_FSOPS_H__ */

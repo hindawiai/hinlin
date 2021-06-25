@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * IBM Real-Time Linux driver
  *
@@ -9,24 +8,24 @@
  *         Vernon Mauery <vernux@us.ibm.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/dmi.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/mutex.h>
-#समावेश <यंत्र/bios_ebda.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/dmi.h>
+#include <linux/efi.h>
+#include <linux/mutex.h>
+#include <asm/bios_ebda.h>
 
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
 
-अटल bool क्रमce;
-module_param(क्रमce, bool, 0);
-MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
+static bool force;
+module_param(force, bool, 0);
+MODULE_PARM_DESC(force, "Force driver load, ignore DMI data");
 
-अटल bool debug;
+static bool debug;
 module_param(debug, bool, 0644);
 MODULE_PARM_DESC(debug, "Show debug output");
 
@@ -34,15 +33,15 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Keith Mannthey <kmmanth@us.ibm.com>");
 MODULE_AUTHOR("Vernon Mauery <vernux@us.ibm.com>");
 
-#घोषणा RTL_ADDR_TYPE_IO    1
-#घोषणा RTL_ADDR_TYPE_MMIO  2
+#define RTL_ADDR_TYPE_IO    1
+#define RTL_ADDR_TYPE_MMIO  2
 
-#घोषणा RTL_CMD_ENTER_PRTM  1
-#घोषणा RTL_CMD_EXIT_PRTM   2
+#define RTL_CMD_ENTER_PRTM  1
+#define RTL_CMD_EXIT_PRTM   2
 
 /* The RTL table as presented by the EBDA: */
-काष्ठा ibm_rtl_table अणु
-	अक्षर signature[5]; /* signature should be "_RTL_" */
+struct ibm_rtl_table {
+	char signature[5]; /* signature should be "_RTL_" */
 	u8 version;
 	u8 rt_status;
 	u8 command;
@@ -51,45 +50,45 @@ MODULE_AUTHOR("Vernon Mauery <vernux@us.ibm.com>");
 	u8 cmd_granularity;
 	u8 cmd_offset;
 	u16 reserve1;
-	u32 cmd_port_address; /* platक्रमm dependent address */
-	u32 cmd_port_value;   /* platक्रमm dependent value */
-पूर्ण __attribute__((packed));
+	u32 cmd_port_address; /* platform dependent address */
+	u32 cmd_port_value;   /* platform dependent value */
+} __attribute__((packed));
 
-/* to locate "_RTL_" signature करो a masked 5-byte पूर्णांकeger compare */
-#घोषणा RTL_SIGNATURE 0x0000005f4c54525fULL
-#घोषणा RTL_MASK      0x000000ffffffffffULL
+/* to locate "_RTL_" signature do a masked 5-byte integer compare */
+#define RTL_SIGNATURE 0x0000005f4c54525fULL
+#define RTL_MASK      0x000000ffffffffffULL
 
-#घोषणा RTL_DEBUG(fmt, ...)				\
-करो अणु							\
-	अगर (debug)					\
+#define RTL_DEBUG(fmt, ...)				\
+do {							\
+	if (debug)					\
 		pr_info(fmt, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल DEFINE_MUTEX(rtl_lock);
-अटल काष्ठा ibm_rtl_table __iomem *rtl_table;
-अटल व्योम __iomem *ebda_map;
-अटल व्योम __iomem *rtl_cmd_addr;
-अटल u8 rtl_cmd_type;
-अटल u8 rtl_cmd_width;
+static DEFINE_MUTEX(rtl_lock);
+static struct ibm_rtl_table __iomem *rtl_table;
+static void __iomem *ebda_map;
+static void __iomem *rtl_cmd_addr;
+static u8 rtl_cmd_type;
+static u8 rtl_cmd_width;
 
-अटल व्योम __iomem *rtl_port_map(phys_addr_t addr, अचिन्हित दीर्घ len)
-अणु
-	अगर (rtl_cmd_type == RTL_ADDR_TYPE_MMIO)
-		वापस ioremap(addr, len);
-	वापस ioport_map(addr, len);
-पूर्ण
+static void __iomem *rtl_port_map(phys_addr_t addr, unsigned long len)
+{
+	if (rtl_cmd_type == RTL_ADDR_TYPE_MMIO)
+		return ioremap(addr, len);
+	return ioport_map(addr, len);
+}
 
-अटल व्योम rtl_port_unmap(व्योम __iomem *addr)
-अणु
-	अगर (addr && rtl_cmd_type == RTL_ADDR_TYPE_MMIO)
+static void rtl_port_unmap(void __iomem *addr)
+{
+	if (addr && rtl_cmd_type == RTL_ADDR_TYPE_MMIO)
 		iounmap(addr);
-	अन्यथा
+	else
 		ioport_unmap(addr);
-पूर्ण
+}
 
-अटल पूर्णांक ibm_rtl_ग_लिखो(u8 value)
-अणु
-	पूर्णांक ret = 0, count = 0;
+static int ibm_rtl_write(u8 value)
+{
+	int ret = 0, count = 0;
 	u32 cmd_port_val;
 
 	RTL_DEBUG("%s(%d)\n", __func__, value);
@@ -98,218 +97,218 @@ MODULE_AUTHOR("Vernon Mauery <vernux@us.ibm.com>");
 
 	mutex_lock(&rtl_lock);
 
-	अगर (ioपढ़ो8(&rtl_table->rt_status) != value) अणु
-		ioग_लिखो8(value, &rtl_table->command);
+	if (ioread8(&rtl_table->rt_status) != value) {
+		iowrite8(value, &rtl_table->command);
 
-		चयन (rtl_cmd_width) अणु
-		हाल 8:
-			cmd_port_val = ioपढ़ो8(&rtl_table->cmd_port_value);
+		switch (rtl_cmd_width) {
+		case 8:
+			cmd_port_val = ioread8(&rtl_table->cmd_port_value);
 			RTL_DEBUG("cmd_port_val = %u\n", cmd_port_val);
-			ioग_लिखो8((u8)cmd_port_val, rtl_cmd_addr);
-			अवरोध;
-		हाल 16:
-			cmd_port_val = ioपढ़ो16(&rtl_table->cmd_port_value);
+			iowrite8((u8)cmd_port_val, rtl_cmd_addr);
+			break;
+		case 16:
+			cmd_port_val = ioread16(&rtl_table->cmd_port_value);
 			RTL_DEBUG("cmd_port_val = %u\n", cmd_port_val);
-			ioग_लिखो16((u16)cmd_port_val, rtl_cmd_addr);
-			अवरोध;
-		हाल 32:
-			cmd_port_val = ioपढ़ो32(&rtl_table->cmd_port_value);
+			iowrite16((u16)cmd_port_val, rtl_cmd_addr);
+			break;
+		case 32:
+			cmd_port_val = ioread32(&rtl_table->cmd_port_value);
 			RTL_DEBUG("cmd_port_val = %u\n", cmd_port_val);
-			ioग_लिखो32(cmd_port_val, rtl_cmd_addr);
-			अवरोध;
-		पूर्ण
+			iowrite32(cmd_port_val, rtl_cmd_addr);
+			break;
+		}
 
-		जबतक (ioपढ़ो8(&rtl_table->command)) अणु
+		while (ioread8(&rtl_table->command)) {
 			msleep(10);
-			अगर (count++ > 500) अणु
+			if (count++ > 500) {
 				pr_err("Hardware not responding to "
 				       "mode switch request\n");
 				ret = -EIO;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-		पूर्ण
+		}
 
-		अगर (ioपढ़ो8(&rtl_table->command_status)) अणु
+		if (ioread8(&rtl_table->command_status)) {
 			RTL_DEBUG("command_status reports failed command\n");
 			ret = -EIO;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&rtl_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार rtl_show_version(काष्ठा device *dev,
-                                काष्ठा device_attribute *attr,
-                                अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)ioपढ़ो8(&rtl_table->version));
-पूर्ण
+static ssize_t rtl_show_version(struct device *dev,
+                                struct device_attribute *attr,
+                                char *buf)
+{
+	return sprintf(buf, "%d\n", (int)ioread8(&rtl_table->version));
+}
 
-अटल sमाप_प्रकार rtl_show_state(काष्ठा device *dev,
-                              काष्ठा device_attribute *attr,
-                              अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", ioपढ़ो8(&rtl_table->rt_status));
-पूर्ण
+static ssize_t rtl_show_state(struct device *dev,
+                              struct device_attribute *attr,
+                              char *buf)
+{
+	return sprintf(buf, "%d\n", ioread8(&rtl_table->rt_status));
+}
 
-अटल sमाप_प्रकार rtl_set_state(काष्ठा device *dev,
-                             काष्ठा device_attribute *attr,
-                             स्थिर अक्षर *buf,
-                             माप_प्रकार count)
-अणु
-	sमाप_प्रकार ret;
+static ssize_t rtl_set_state(struct device *dev,
+                             struct device_attribute *attr,
+                             const char *buf,
+                             size_t count)
+{
+	ssize_t ret;
 
-	अगर (count < 1 || count > 2)
-		वापस -EINVAL;
+	if (count < 1 || count > 2)
+		return -EINVAL;
 
-	चयन (buf[0]) अणु
-	हाल '0':
-		ret = ibm_rtl_ग_लिखो(0);
-		अवरोध;
-	हाल '1':
-		ret = ibm_rtl_ग_लिखो(1);
-		अवरोध;
-	शेष:
+	switch (buf[0]) {
+	case '0':
+		ret = ibm_rtl_write(0);
+		break;
+	case '1':
+		ret = ibm_rtl_write(1);
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	अगर (ret >= 0)
+	}
+	if (ret >= 0)
 		ret = count;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा bus_type rtl_subsys = अणु
+static struct bus_type rtl_subsys = {
 	.name = "ibm_rtl",
 	.dev_name = "ibm_rtl",
-पूर्ण;
+};
 
-अटल DEVICE_ATTR(version, S_IRUGO, rtl_show_version, शून्य);
-अटल DEVICE_ATTR(state, 0600, rtl_show_state, rtl_set_state);
+static DEVICE_ATTR(version, S_IRUGO, rtl_show_version, NULL);
+static DEVICE_ATTR(state, 0600, rtl_show_state, rtl_set_state);
 
-अटल काष्ठा device_attribute *rtl_attributes[] = अणु
+static struct device_attribute *rtl_attributes[] = {
 	&dev_attr_version,
 	&dev_attr_state,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 
-अटल पूर्णांक rtl_setup_sysfs(व्योम) अणु
-	पूर्णांक ret, i;
+static int rtl_setup_sysfs(void) {
+	int ret, i;
 
-	ret = subsys_प्रणाली_रेजिस्टर(&rtl_subsys, शून्य);
-	अगर (!ret) अणु
-		क्रम (i = 0; rtl_attributes[i]; i ++)
+	ret = subsys_system_register(&rtl_subsys, NULL);
+	if (!ret) {
+		for (i = 0; rtl_attributes[i]; i ++)
 			device_create_file(rtl_subsys.dev_root, rtl_attributes[i]);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम rtl_tearकरोwn_sysfs(व्योम) अणु
-	पूर्णांक i;
-	क्रम (i = 0; rtl_attributes[i]; i ++)
-		device_हटाओ_file(rtl_subsys.dev_root, rtl_attributes[i]);
-	bus_unरेजिस्टर(&rtl_subsys);
-पूर्ण
+static void rtl_teardown_sysfs(void) {
+	int i;
+	for (i = 0; rtl_attributes[i]; i ++)
+		device_remove_file(rtl_subsys.dev_root, rtl_attributes[i]);
+	bus_unregister(&rtl_subsys);
+}
 
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id ibm_rtl_dmi_table[] __initस्थिर = अणु
-	अणु                                                  \
-		.matches = अणु                               \
+static const struct dmi_system_id ibm_rtl_dmi_table[] __initconst = {
+	{                                                  \
+		.matches = {                               \
 			DMI_MATCH(DMI_SYS_VENDOR, "IBM"),  \
-		पूर्ण,                                         \
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},                                         \
+	},
+	{ }
+};
 
-अटल पूर्णांक __init ibm_rtl_init(व्योम) अणु
-	अचिन्हित दीर्घ ebda_addr, ebda_size;
-	अचिन्हित पूर्णांक ebda_kb;
-	पूर्णांक ret = -ENODEV, i;
+static int __init ibm_rtl_init(void) {
+	unsigned long ebda_addr, ebda_size;
+	unsigned int ebda_kb;
+	int ret = -ENODEV, i;
 
-	अगर (क्रमce)
+	if (force)
 		pr_warn("module loaded by force\n");
 	/* first ensure that we are running on IBM HW */
-	अन्यथा अगर (efi_enabled(EFI_BOOT) || !dmi_check_प्रणाली(ibm_rtl_dmi_table))
-		वापस -ENODEV;
+	else if (efi_enabled(EFI_BOOT) || !dmi_check_system(ibm_rtl_dmi_table))
+		return -ENODEV;
 
-	/* Get the address क्रम the Extended BIOS Data Area */
+	/* Get the address for the Extended BIOS Data Area */
 	ebda_addr = get_bios_ebda();
-	अगर (!ebda_addr) अणु
+	if (!ebda_addr) {
 		RTL_DEBUG("no BIOS EBDA found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ebda_map = ioremap(ebda_addr, 4);
-	अगर (!ebda_map)
-		वापस -ENOMEM;
+	if (!ebda_map)
+		return -ENOMEM;
 
 	/* First word in the EDBA is the Size in KB */
-	ebda_kb = ioपढ़ो16(ebda_map);
+	ebda_kb = ioread16(ebda_map);
 	RTL_DEBUG("EBDA is %d kB\n", ebda_kb);
 
-	अगर (ebda_kb == 0)
-		जाओ out;
+	if (ebda_kb == 0)
+		goto out;
 
 	iounmap(ebda_map);
 	ebda_size = ebda_kb*1024;
 
 	/* Remap the whole table */
 	ebda_map = ioremap(ebda_addr, ebda_size);
-	अगर (!ebda_map)
-		वापस -ENOMEM;
+	if (!ebda_map)
+		return -ENOMEM;
 
-	/* search क्रम the _RTL_ signature at the start of the table */
-	क्रम (i = 0 ; i < ebda_size/माप(अचिन्हित पूर्णांक); i++) अणु
-		काष्ठा ibm_rtl_table __iomem * पंचांगp;
-		पंचांगp = (काष्ठा ibm_rtl_table __iomem *) (ebda_map+i);
-		अगर ((पढ़ोq(&पंचांगp->signature) & RTL_MASK) == RTL_SIGNATURE) अणु
+	/* search for the _RTL_ signature at the start of the table */
+	for (i = 0 ; i < ebda_size/sizeof(unsigned int); i++) {
+		struct ibm_rtl_table __iomem * tmp;
+		tmp = (struct ibm_rtl_table __iomem *) (ebda_map+i);
+		if ((readq(&tmp->signature) & RTL_MASK) == RTL_SIGNATURE) {
 			phys_addr_t addr;
-			अचिन्हित पूर्णांक plen;
-			RTL_DEBUG("found RTL_SIGNATURE at %p\n", पंचांगp);
-			rtl_table = पंचांगp;
-			/* The address, value, width and offset are platक्रमm
+			unsigned int plen;
+			RTL_DEBUG("found RTL_SIGNATURE at %p\n", tmp);
+			rtl_table = tmp;
+			/* The address, value, width and offset are platform
 			 * dependent and found in the ibm_rtl_table */
-			rtl_cmd_width = ioपढ़ो8(&rtl_table->cmd_granularity);
-			rtl_cmd_type = ioपढ़ो8(&rtl_table->cmd_address_type);
+			rtl_cmd_width = ioread8(&rtl_table->cmd_granularity);
+			rtl_cmd_type = ioread8(&rtl_table->cmd_address_type);
 			RTL_DEBUG("rtl_cmd_width = %u, rtl_cmd_type = %u\n",
 				  rtl_cmd_width, rtl_cmd_type);
-			addr = ioपढ़ो32(&rtl_table->cmd_port_address);
-			RTL_DEBUG("addr = %#llx\n", (अचिन्हित दीर्घ दीर्घ)addr);
-			plen = rtl_cmd_width/माप(अक्षर);
+			addr = ioread32(&rtl_table->cmd_port_address);
+			RTL_DEBUG("addr = %#llx\n", (unsigned long long)addr);
+			plen = rtl_cmd_width/sizeof(char);
 			rtl_cmd_addr = rtl_port_map(addr, plen);
 			RTL_DEBUG("rtl_cmd_addr = %p\n", rtl_cmd_addr);
-			अगर (!rtl_cmd_addr) अणु
+			if (!rtl_cmd_addr) {
 				ret = -ENOMEM;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			ret = rtl_setup_sysfs();
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 out:
-	अगर (ret) अणु
+	if (ret) {
 		iounmap(ebda_map);
 		rtl_port_unmap(rtl_cmd_addr);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास ibm_rtl_निकास(व्योम)
-अणु
-	अगर (rtl_table) अणु
+static void __exit ibm_rtl_exit(void)
+{
+	if (rtl_table) {
 		RTL_DEBUG("cleaning up");
-		/* करो not leave the machine in SMI-मुक्त mode */
-		ibm_rtl_ग_लिखो(0);
-		/* unmap, unlink and हटाओ all traces */
-		rtl_tearकरोwn_sysfs();
+		/* do not leave the machine in SMI-free mode */
+		ibm_rtl_write(0);
+		/* unmap, unlink and remove all traces */
+		rtl_teardown_sysfs();
 		iounmap(ebda_map);
 		rtl_port_unmap(rtl_cmd_addr);
-	पूर्ण
-पूर्ण
+	}
+}
 
 module_init(ibm_rtl_init);
-module_निकास(ibm_rtl_निकास);
+module_exit(ibm_rtl_exit);

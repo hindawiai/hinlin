@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Wind River Systems Inc
  *   Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/sched.h>
 
-#समावेश <यंत्र/cpuinfo.h>
+#include <asm/cpuinfo.h>
 
 /* pteaddr:
  *   ptbase | vpn* | zero
  *   31-22  | 21-2 | 1-0
  *
- *   *vpn is preserved on द्विगुन fault
+ *   *vpn is preserved on double fault
  *
  * tlbacc:
  *   IG   |*flags| pfn
@@ -32,43 +31,43 @@
  */
 
 /*
- * Initialize a new pgd / pmd table with invalid poपूर्णांकers.
+ * Initialize a new pgd / pmd table with invalid pointers.
  */
-अटल व्योम pgd_init(pgd_t *pgd)
-अणु
-	अचिन्हित दीर्घ *p = (अचिन्हित दीर्घ *) pgd;
-	पूर्णांक i;
+static void pgd_init(pgd_t *pgd)
+{
+	unsigned long *p = (unsigned long *) pgd;
+	int i;
 
-	क्रम (i = 0; i < USER_PTRS_PER_PGD; i += 8) अणु
-		p[i + 0] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 1] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 2] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 3] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 4] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 5] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 6] = (अचिन्हित दीर्घ) invalid_pte_table;
-		p[i + 7] = (अचिन्हित दीर्घ) invalid_pte_table;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < USER_PTRS_PER_PGD; i += 8) {
+		p[i + 0] = (unsigned long) invalid_pte_table;
+		p[i + 1] = (unsigned long) invalid_pte_table;
+		p[i + 2] = (unsigned long) invalid_pte_table;
+		p[i + 3] = (unsigned long) invalid_pte_table;
+		p[i + 4] = (unsigned long) invalid_pte_table;
+		p[i + 5] = (unsigned long) invalid_pte_table;
+		p[i + 6] = (unsigned long) invalid_pte_table;
+		p[i + 7] = (unsigned long) invalid_pte_table;
+	}
+}
 
-pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
-अणु
+pgd_t *pgd_alloc(struct mm_struct *mm)
+{
 	pgd_t *ret, *init;
 
-	ret = (pgd_t *) __get_मुक्त_pages(GFP_KERNEL, PGD_ORDER);
-	अगर (ret) अणु
+	ret = (pgd_t *) __get_free_pages(GFP_KERNEL, PGD_ORDER);
+	if (ret) {
 		init = pgd_offset(&init_mm, 0UL);
 		pgd_init(ret);
-		स_नकल(ret + USER_PTRS_PER_PGD, init + USER_PTRS_PER_PGD,
-		       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * माप(pgd_t));
-	पूर्ण
+		memcpy(ret + USER_PTRS_PER_PGD, init + USER_PTRS_PER_PGD,
+		       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम __init pagetable_init(व्योम)
-अणु
+void __init pagetable_init(void)
+{
 	/* Initialize the entire pgd.  */
 	pgd_init(swapper_pg_dir);
 	pgd_init(swapper_pg_dir + USER_PTRS_PER_PGD);
-पूर्ण
+}

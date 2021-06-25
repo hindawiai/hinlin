@@ -1,135 +1,134 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * MPC86xx HPCN board specअगरic routines
+ * MPC86xx HPCN board specific routines
  *
- * Recode: ZHANG WEI <wei.zhang@मुक्तscale.com>
- * Initial author: Xianghua Xiao <x.xiao@मुक्तscale.com>
+ * Recode: ZHANG WEI <wei.zhang@freescale.com>
+ * Initial author: Xianghua Xiao <x.xiao@freescale.com>
  *
  * Copyright 2006 Freescale Semiconductor Inc.
  */
 
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/stddef.h>
+#include <linux/kernel.h>
+#include <linux/pci.h>
+#include <linux/kdev_t.h>
+#include <linux/delay.h>
+#include <linux/seq_file.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/pci-bridge.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <mm/mmu_decl.h>
-#समावेश <यंत्र/udbg.h>
-#समावेश <यंत्र/swiotlb.h>
+#include <asm/time.h>
+#include <asm/machdep.h>
+#include <asm/pci-bridge.h>
+#include <asm/prom.h>
+#include <mm/mmu_decl.h>
+#include <asm/udbg.h>
+#include <asm/swiotlb.h>
 
-#समावेश <यंत्र/mpic.h>
+#include <asm/mpic.h>
 
-#समावेश <sysdev/fsl_pci.h>
-#समावेश <sysdev/fsl_soc.h>
+#include <sysdev/fsl_pci.h>
+#include <sysdev/fsl_soc.h>
 
-#समावेश "mpc86xx.h"
+#include "mpc86xx.h"
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#अगर_घोषित DEBUG
-#घोषणा DBG(fmt...) करो अणु prपूर्णांकk(KERN_ERR fmt); पूर्ण जबतक(0)
-#अन्यथा
-#घोषणा DBG(fmt...) करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define DBG(fmt...) do { printk(KERN_ERR fmt); } while(0)
+#else
+#define DBG(fmt...) do { } while(0)
+#endif
 
-#अगर_घोषित CONFIG_PCI
-बाह्य पूर्णांक uli_exclude_device(काष्ठा pci_controller *hose,
-				u_अक्षर bus, u_अक्षर devfn);
+#ifdef CONFIG_PCI
+extern int uli_exclude_device(struct pci_controller *hose,
+				u_char bus, u_char devfn);
 
-अटल पूर्णांक mpc86xx_exclude_device(काष्ठा pci_controller *hose,
-				   u_अक्षर bus, u_अक्षर devfn)
-अणु
-	अगर (hose->dn == fsl_pci_primary)
-		वापस uli_exclude_device(hose, bus, devfn);
+static int mpc86xx_exclude_device(struct pci_controller *hose,
+				   u_char bus, u_char devfn)
+{
+	if (hose->dn == fsl_pci_primary)
+		return uli_exclude_device(hose, bus, devfn);
 
-	वापस PCIBIOS_SUCCESSFUL;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PCI */
+	return PCIBIOS_SUCCESSFUL;
+}
+#endif /* CONFIG_PCI */
 
 
-अटल व्योम __init
-mpc86xx_hpcn_setup_arch(व्योम)
-अणु
-	अगर (ppc_md.progress)
+static void __init
+mpc86xx_hpcn_setup_arch(void)
+{
+	if (ppc_md.progress)
 		ppc_md.progress("mpc86xx_hpcn_setup_arch()", 0);
 
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	ppc_md.pci_exclude_device = mpc86xx_exclude_device;
-#पूर्ण_अगर
+#endif
 
-	prपूर्णांकk("MPC86xx HPCN board from Freescale Semiconductor\n");
+	printk("MPC86xx HPCN board from Freescale Semiconductor\n");
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	mpc86xx_smp_init();
-#पूर्ण_अगर
+#endif
 
 	fsl_pci_assign_primary();
 
 	swiotlb_detect_4g();
-पूर्ण
+}
 
 
-अटल व्योम
-mpc86xx_hpcn_show_cpuinfo(काष्ठा seq_file *m)
-अणु
-	uपूर्णांक svid = mfspr(SPRN_SVR);
+static void
+mpc86xx_hpcn_show_cpuinfo(struct seq_file *m)
+{
+	uint svid = mfspr(SPRN_SVR);
 
-	seq_म_लिखो(m, "Vendor\t\t: Freescale Semiconductor\n");
+	seq_printf(m, "Vendor\t\t: Freescale Semiconductor\n");
 
-	seq_म_लिखो(m, "SVR\t\t: 0x%x\n", svid);
-पूर्ण
+	seq_printf(m, "SVR\t\t: 0x%x\n", svid);
+}
 
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-अटल पूर्णांक __init mpc86xx_hpcn_probe(व्योम)
-अणु
-	अगर (of_machine_is_compatible("fsl,mpc8641hpcn"))
-		वापस 1;	/* Looks good */
+static int __init mpc86xx_hpcn_probe(void)
+{
+	if (of_machine_is_compatible("fsl,mpc8641hpcn"))
+		return 1;	/* Looks good */
 
-	/* Be nice and करोn't give silent boot death.  Delete this in 2.6.27 */
-	अगर (of_machine_is_compatible("mpc86xx")) अणु
+	/* Be nice and don't give silent boot death.  Delete this in 2.6.27 */
+	if (of_machine_is_compatible("mpc86xx")) {
 		pr_warn("WARNING: your dts/dtb is old. You must update before the next kernel release.\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id of_bus_ids[] __initस्थिर = अणु
-	अणु .compatible = "fsl,srio", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id of_bus_ids[] __initconst = {
+	{ .compatible = "fsl,srio", },
+	{},
+};
 
-अटल पूर्णांक __init declare_of_platक्रमm_devices(व्योम)
-अणु
+static int __init declare_of_platform_devices(void)
+{
 	mpc86xx_common_publish_devices();
-	of_platक्रमm_bus_probe(शून्य, of_bus_ids, शून्य);
+	of_platform_bus_probe(NULL, of_bus_ids, NULL);
 
-	वापस 0;
-पूर्ण
-machine_arch_initcall(mpc86xx_hpcn, declare_of_platक्रमm_devices);
+	return 0;
+}
+machine_arch_initcall(mpc86xx_hpcn, declare_of_platform_devices);
 
-define_machine(mpc86xx_hpcn) अणु
+define_machine(mpc86xx_hpcn) {
 	.name			= "MPC86xx HPCN",
 	.probe			= mpc86xx_hpcn_probe,
 	.setup_arch		= mpc86xx_hpcn_setup_arch,
 	.init_IRQ		= mpc86xx_init_irq,
 	.show_cpuinfo		= mpc86xx_hpcn_show_cpuinfo,
 	.get_irq		= mpic_get_irq,
-	.समय_init		= mpc86xx_समय_init,
+	.time_init		= mpc86xx_time_init,
 	.calibrate_decr		= generic_calibrate_decr,
 	.progress		= udbg_progress,
-#अगर_घोषित CONFIG_PCI
+#ifdef CONFIG_PCI
 	.pcibios_fixup_bus	= fsl_pcibios_fixup_bus,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};

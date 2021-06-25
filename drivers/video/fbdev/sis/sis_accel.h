@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * SiS 300/540/630[S]/730[S],
  * SiS 315[E|PRO]/550/[M]650/651/[M]661[F|M]X/740/[M]741[GX]/330/[M]760[GX],
  * XGI V3XT/V5/V8, Z7
- * frame buffer driver क्रम Linux kernels >= 2.4.14 and >=2.6.3
+ * frame buffer driver for Linux kernels >= 2.4.14 and >=2.6.3
  *
  * 2D acceleration part
  *
@@ -15,117 +14,117 @@
  *
  * Author:   Thomas Winischhofer <thomas@winischhofer.net>:
  *			(see http://www.winischhofer.net/
- *			क्रम more inक्रमmation and updates)
+ *			for more information and updates)
  */
 
-#अगर_अघोषित _SISFB_ACCEL_H
-#घोषणा _SISFB_ACCEL_H
+#ifndef _SISFB_ACCEL_H
+#define _SISFB_ACCEL_H
 
 /* Guard accelerator accesses with spin_lock_irqsave? Works well without. */
-#अघोषित SISFB_USE_SPINLOCKS
+#undef SISFB_USE_SPINLOCKS
 
-#अगर_घोषित SISFB_USE_SPINLOCKS
-#समावेश <linux/spinlock.h>
-#घोषणा CRITBEGIN  spin_lock_irqsave(&ivideo->lockaccel, critflags);
-#घोषणा CRITEND	   spin_unlock_irqrestore(&ivideo->lockaccel, critflags);
-#घोषणा CRITFLAGS  अचिन्हित दीर्घ critflags;
-#अन्यथा
-#घोषणा CRITBEGIN
-#घोषणा CRITEND
-#घोषणा CRITFLAGS
-#पूर्ण_अगर
+#ifdef SISFB_USE_SPINLOCKS
+#include <linux/spinlock.h>
+#define CRITBEGIN  spin_lock_irqsave(&ivideo->lockaccel, critflags);
+#define CRITEND	   spin_unlock_irqrestore(&ivideo->lockaccel, critflags);
+#define CRITFLAGS  unsigned long critflags;
+#else
+#define CRITBEGIN
+#define CRITEND
+#define CRITFLAGS
+#endif
 
-/* Definitions क्रम the SIS engine communication. */
+/* Definitions for the SIS engine communication. */
 
-#घोषणा PATREGSIZE      384  /* Pattern रेजिस्टर size. 384 bytes @ 0x8300 */
-#घोषणा BR(x)   (0x8200 | (x) << 2)
-#घोषणा PBR(x)  (0x8300 | (x) << 2)
+#define PATREGSIZE      384  /* Pattern register size. 384 bytes @ 0x8300 */
+#define BR(x)   (0x8200 | (x) << 2)
+#define PBR(x)  (0x8300 | (x) << 2)
 
 /* SiS300 engine commands */
-#घोषणा BITBLT                  0x00000000  /* Blit */
-#घोषणा COLOREXP                0x00000001  /* Color expand */
-#घोषणा ENCOLOREXP              0x00000002  /* Enhanced color expand */
-#घोषणा MULTIPLE_SCANLINE       0x00000003  /* ? */
-#घोषणा LINE                    0x00000004  /* Draw line */
-#घोषणा TRAPAZOID_FILL          0x00000005  /* Fill trapezoid */
-#घोषणा TRANSPARENT_BITBLT      0x00000006  /* Transparent Blit */
+#define BITBLT                  0x00000000  /* Blit */
+#define COLOREXP                0x00000001  /* Color expand */
+#define ENCOLOREXP              0x00000002  /* Enhanced color expand */
+#define MULTIPLE_SCANLINE       0x00000003  /* ? */
+#define LINE                    0x00000004  /* Draw line */
+#define TRAPAZOID_FILL          0x00000005  /* Fill trapezoid */
+#define TRANSPARENT_BITBLT      0x00000006  /* Transparent Blit */
 
-/* Additional engine commands क्रम 315 */
-#घोषणा ALPHA_BLEND		0x00000007  /* Alpha blend ? */
-#घोषणा A3D_FUNCTION		0x00000008  /* 3D command ? */
-#घोषणा	CLEAR_Z_BUFFER		0x00000009  /* ? */
-#घोषणा GRADIENT_FILL		0x0000000A  /* Gradient fill */
+/* Additional engine commands for 315 */
+#define ALPHA_BLEND		0x00000007  /* Alpha blend ? */
+#define A3D_FUNCTION		0x00000008  /* 3D command ? */
+#define	CLEAR_Z_BUFFER		0x00000009  /* ? */
+#define GRADIENT_FILL		0x0000000A  /* Gradient fill */
 
 /* source select */
-#घोषणा SRCVIDEO                0x00000000  /* source is video RAM */
-#घोषणा SRCSYSTEM               0x00000010  /* source is प्रणाली memory */
-#घोषणा SRCCPUBLITBUF           SRCSYSTEM   /* source is CPU-driven BitBuffer (क्रम color expand) */
-#घोषणा SRCAGP                  0x00000020  /* source is AGP memory (?) */
+#define SRCVIDEO                0x00000000  /* source is video RAM */
+#define SRCSYSTEM               0x00000010  /* source is system memory */
+#define SRCCPUBLITBUF           SRCSYSTEM   /* source is CPU-driven BitBuffer (for color expand) */
+#define SRCAGP                  0x00000020  /* source is AGP memory (?) */
 
 /* Pattern flags */
-#घोषणा PATFG                   0x00000000  /* क्रमeground color */
-#घोषणा PATPATREG               0x00000040  /* pattern in pattern buffer (0x8300) */
-#घोषणा PATMONO                 0x00000080  /* mono pattern */
+#define PATFG                   0x00000000  /* foreground color */
+#define PATPATREG               0x00000040  /* pattern in pattern buffer (0x8300) */
+#define PATMONO                 0x00000080  /* mono pattern */
 
 /* blitting direction (300 series only) */
-#घोषणा X_INC                   0x00010000
-#घोषणा X_DEC                   0x00000000
-#घोषणा Y_INC                   0x00020000
-#घोषणा Y_DEC                   0x00000000
+#define X_INC                   0x00010000
+#define X_DEC                   0x00000000
+#define Y_INC                   0x00020000
+#define Y_DEC                   0x00000000
 
 /* Clipping flags */
-#घोषणा NOCLIP                  0x00000000
-#घोषणा NOMERGECLIP             0x04000000
-#घोषणा CLIPENABLE              0x00040000
-#घोषणा CLIPWITHOUTMERGE        0x04040000
+#define NOCLIP                  0x00000000
+#define NOMERGECLIP             0x04000000
+#define CLIPENABLE              0x00040000
+#define CLIPWITHOUTMERGE        0x04040000
 
 /* Transparency */
-#घोषणा OPAQUE                  0x00000000
-#घोषणा TRANSPARENT             0x00100000
+#define OPAQUE                  0x00000000
+#define TRANSPARENT             0x00100000
 
 /* ? */
-#घोषणा DSTAGP                  0x02000000
-#घोषणा DSTVIDEO                0x02000000
+#define DSTAGP                  0x02000000
+#define DSTVIDEO                0x02000000
 
-/* Subfunctions क्रम Color/Enhanced Color Expansion (315 only) */
-#घोषणा COLOR_TO_MONO		0x00100000
-#घोषणा AA_TEXT			0x00200000
+/* Subfunctions for Color/Enhanced Color Expansion (315 only) */
+#define COLOR_TO_MONO		0x00100000
+#define AA_TEXT			0x00200000
 
-/* Some general रेजिस्टरs क्रम 315 series */
-#घोषणा SRC_ADDR		0x8200
-#घोषणा SRC_PITCH		0x8204
-#घोषणा AGP_BASE		0x8206 /* color-depth dependent value */
-#घोषणा SRC_Y			0x8208
-#घोषणा SRC_X			0x820A
-#घोषणा DST_Y			0x820C
-#घोषणा DST_X			0x820E
-#घोषणा DST_ADDR		0x8210
-#घोषणा DST_PITCH		0x8214
-#घोषणा DST_HEIGHT		0x8216
-#घोषणा RECT_WIDTH		0x8218
-#घोषणा RECT_HEIGHT		0x821A
-#घोषणा PAT_FGCOLOR		0x821C
-#घोषणा PAT_BGCOLOR		0x8220
-#घोषणा SRC_FGCOLOR		0x8224
-#घोषणा SRC_BGCOLOR		0x8228
-#घोषणा MONO_MASK		0x822C
-#घोषणा LEFT_CLIP		0x8234
-#घोषणा TOP_CLIP		0x8236
-#घोषणा RIGHT_CLIP		0x8238
-#घोषणा BOTTOM_CLIP		0x823A
-#घोषणा COMMAND_READY		0x823C
-#घोषणा FIRE_TRIGGER      	0x8240
+/* Some general registers for 315 series */
+#define SRC_ADDR		0x8200
+#define SRC_PITCH		0x8204
+#define AGP_BASE		0x8206 /* color-depth dependent value */
+#define SRC_Y			0x8208
+#define SRC_X			0x820A
+#define DST_Y			0x820C
+#define DST_X			0x820E
+#define DST_ADDR		0x8210
+#define DST_PITCH		0x8214
+#define DST_HEIGHT		0x8216
+#define RECT_WIDTH		0x8218
+#define RECT_HEIGHT		0x821A
+#define PAT_FGCOLOR		0x821C
+#define PAT_BGCOLOR		0x8220
+#define SRC_FGCOLOR		0x8224
+#define SRC_BGCOLOR		0x8228
+#define MONO_MASK		0x822C
+#define LEFT_CLIP		0x8234
+#define TOP_CLIP		0x8236
+#define RIGHT_CLIP		0x8238
+#define BOTTOM_CLIP		0x823A
+#define COMMAND_READY		0x823C
+#define FIRE_TRIGGER      	0x8240
 
-#घोषणा PATTERN_REG		0x8300  /* 384 bytes pattern buffer */
+#define PATTERN_REG		0x8300  /* 384 bytes pattern buffer */
 
-/* Transparent bitblit रेजिस्टरs */
-#घोषणा TRANS_DST_KEY_HIGH	PAT_FGCOLOR
-#घोषणा TRANS_DST_KEY_LOW	PAT_BGCOLOR
-#घोषणा TRANS_SRC_KEY_HIGH	SRC_FGCOLOR
-#घोषणा TRANS_SRC_KEY_LOW	SRC_BGCOLOR
+/* Transparent bitblit registers */
+#define TRANS_DST_KEY_HIGH	PAT_FGCOLOR
+#define TRANS_DST_KEY_LOW	PAT_BGCOLOR
+#define TRANS_SRC_KEY_HIGH	SRC_FGCOLOR
+#define TRANS_SRC_KEY_LOW	SRC_BGCOLOR
 
 /* Store queue length in par */
-#घोषणा CmdQueLen ivideo->cmdqueuelength
+#define CmdQueLen ivideo->cmdqueuelength
 
 /* ------------- SiS 300 series -------------- */
 
@@ -139,72 +138,72 @@
 
 */
 
-#घोषणा SiS300Idle \
-  अणु \
-	जबतक((MMIO_IN16(ivideo->mmio_vbase, BR(16)+2) & 0xE000) != 0xE000)अणुपूर्ण \
-	जबतक((MMIO_IN16(ivideo->mmio_vbase, BR(16)+2) & 0xE000) != 0xE000)अणुपूर्ण \
-	जबतक((MMIO_IN16(ivideo->mmio_vbase, BR(16)+2) & 0xE000) != 0xE000)अणुपूर्ण \
+#define SiS300Idle \
+  { \
+	while((MMIO_IN16(ivideo->mmio_vbase, BR(16)+2) & 0xE000) != 0xE000){} \
+	while((MMIO_IN16(ivideo->mmio_vbase, BR(16)+2) & 0xE000) != 0xE000){} \
+	while((MMIO_IN16(ivideo->mmio_vbase, BR(16)+2) & 0xE000) != 0xE000){} \
   	CmdQueLen = MMIO_IN16(ivideo->mmio_vbase, 0x8240); \
-  पूर्ण
-/* (करो three बार, because 2D engine seems quite unsure about whether or not it's idle) */
+  }
+/* (do three times, because 2D engine seems quite unsure about whether or not it's idle) */
 
-#घोषणा SiS300SetupSRCBase(base) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupSRCBase(base) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(0), base);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupSRCPitch(pitch) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupSRCPitch(pitch) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT16(ivideo->mmio_vbase, BR(1), pitch);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupSRCXY(x,y) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupSRCXY(x,y) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(2), (x)<<16 | (y) );\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupDSTBase(base) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupDSTBase(base) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(4), base);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupDSTXY(x,y) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupDSTXY(x,y) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(3), (x)<<16 | (y) );\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupDSTRect(x,y) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupDSTRect(x,y) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(5), (y)<<16 | (x) );\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupDSTColorDepth(bpp) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupDSTColorDepth(bpp) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT16(ivideo->mmio_vbase, BR(1)+2, bpp);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupRect(w,h) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupRect(w,h) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(6), (h)<<16 | (w) );\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupPATFG(color) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupPATFG(color) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(7), color);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupPATBG(color) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupPATBG(color) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(8), color);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupSRCFG(color) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupSRCFG(color) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(9), color);\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupSRCBG(color) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupSRCBG(color) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(10), color);\
 	CmdQueLen--;
 
@@ -212,43 +211,43 @@
 /* 0x8228 src colorkey low */
 /* 0x821c dest colorkey high */
 /* 0x8220 dest colorkey low */
-#घोषणा SiS300SetupSRCTrans(color) \
-	अगर(CmdQueLen <= 1) SiS300Idle;\
+#define SiS300SetupSRCTrans(color) \
+	if(CmdQueLen <= 1) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, 0x8224, color);\
 	MMIO_OUT32(ivideo->mmio_vbase, 0x8228, color);\
 	CmdQueLen -= 2;
 
-#घोषणा SiS300SetupDSTTrans(color) \
-	अगर(CmdQueLen <= 1) SiS300Idle;\
+#define SiS300SetupDSTTrans(color) \
+	if(CmdQueLen <= 1) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, 0x821C, color); \
 	MMIO_OUT32(ivideo->mmio_vbase, 0x8220, color); \
 	CmdQueLen -= 2;
 
-#घोषणा SiS300SetupMONOPAT(p0,p1) \
-	अगर(CmdQueLen <= 1) SiS300Idle;\
+#define SiS300SetupMONOPAT(p0,p1) \
+	if(CmdQueLen <= 1) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(11), p0);\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(12), p1);\
 	CmdQueLen -= 2;
 
-#घोषणा SiS300SetupClipLT(left,top) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupClipLT(left,top) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(13), ((left) & 0xFFFF) | (top)<<16 );\
 	CmdQueLen--;
 
-#घोषणा SiS300SetupClipRB(right,bottom) \
-	अगर(CmdQueLen <= 0) SiS300Idle;\
+#define SiS300SetupClipRB(right,bottom) \
+	if(CmdQueLen <= 0) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(14), ((right) & 0xFFFF) | (bottom)<<16 );\
 	CmdQueLen--;
 
 /* General */
-#घोषणा SiS300SetupROP(rop) \
+#define SiS300SetupROP(rop) \
 	ivideo->CommandReg = (rop) << 8;
 
-#घोषणा SiS300SetupCMDFlag(flags) \
+#define SiS300SetupCMDFlag(flags) \
 	ivideo->CommandReg |= (flags);
 
-#घोषणा SiS300DoCMD \
-	अगर(CmdQueLen <= 1) SiS300Idle;\
+#define SiS300DoCMD \
+	if(CmdQueLen <= 1) SiS300Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, BR(15), ivideo->CommandReg); \
 	MMIO_OUT32(ivideo->mmio_vbase, BR(16), 0);\
 	CmdQueLen -= 2;
@@ -269,120 +268,120 @@
    bits 7:0:   2D counter 1
 */
 
-#घोषणा SiS310Idle \
-  अणु \
-	जबतक( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000)अणुपूर्ण \
-	जबतक( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000)अणुपूर्ण \
-	जबतक( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000)अणुपूर्ण \
-	जबतक( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000)अणुपूर्ण \
+#define SiS310Idle \
+  { \
+	while( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000){} \
+	while( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000){} \
+	while( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000){} \
+	while( (MMIO_IN16(ivideo->mmio_vbase, Q_STATUS+2) & 0x8000) != 0x8000){} \
   	CmdQueLen = 0; \
-  पूर्ण
+  }
 
-#घोषणा SiS310SetupSRCBase(base) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupSRCBase(base) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, SRC_ADDR, base);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupSRCPitch(pitch) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupSRCPitch(pitch) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT16(ivideo->mmio_vbase, SRC_PITCH, pitch);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupSRCXY(x,y) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupSRCXY(x,y) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, SRC_Y, (x)<<16 | (y) );\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupDSTBase(base) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupDSTBase(base) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, DST_ADDR, base);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupDSTXY(x,y) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupDSTXY(x,y) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, DST_Y, (x)<<16 | (y) );\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupDSTRect(x,y) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupDSTRect(x,y) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, DST_PITCH, (y)<<16 | (x) );\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupDSTColorDepth(bpp) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupDSTColorDepth(bpp) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT16(ivideo->mmio_vbase, AGP_BASE, bpp);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupRect(w,h) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupRect(w,h) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, RECT_WIDTH, (h)<<16 | (w) );\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupPATFG(color) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupPATFG(color) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, PAT_FGCOLOR, color);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupPATBG(color) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupPATBG(color) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, PAT_BGCOLOR, color);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupSRCFG(color) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupSRCFG(color) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, SRC_FGCOLOR, color);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupSRCBG(color) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupSRCBG(color) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, SRC_BGCOLOR, color);\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupSRCTrans(color) \
-	अगर(CmdQueLen <= 1) SiS310Idle;\
+#define SiS310SetupSRCTrans(color) \
+	if(CmdQueLen <= 1) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, TRANS_SRC_KEY_HIGH, color);\
 	MMIO_OUT32(ivideo->mmio_vbase, TRANS_SRC_KEY_LOW, color);\
 	CmdQueLen -= 2;
 
-#घोषणा SiS310SetupDSTTrans(color) \
-	अगर(CmdQueLen <= 1) SiS310Idle;\
+#define SiS310SetupDSTTrans(color) \
+	if(CmdQueLen <= 1) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, TRANS_DST_KEY_HIGH, color); \
 	MMIO_OUT32(ivideo->mmio_vbase, TRANS_DST_KEY_LOW, color); \
 	CmdQueLen -= 2;
 
-#घोषणा SiS310SetupMONOPAT(p0,p1) \
-	अगर(CmdQueLen <= 1) SiS310Idle;\
+#define SiS310SetupMONOPAT(p0,p1) \
+	if(CmdQueLen <= 1) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, MONO_MASK, p0);\
 	MMIO_OUT32(ivideo->mmio_vbase, MONO_MASK+4, p1);\
 	CmdQueLen -= 2;
 
-#घोषणा SiS310SetupClipLT(left,top) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupClipLT(left,top) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, LEFT_CLIP, ((left) & 0xFFFF) | (top)<<16 );\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupClipRB(right,bottom) \
-	अगर(CmdQueLen <= 0) SiS310Idle;\
+#define SiS310SetupClipRB(right,bottom) \
+	if(CmdQueLen <= 0) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, RIGHT_CLIP, ((right) & 0xFFFF) | (bottom)<<16 );\
 	CmdQueLen--;
 
-#घोषणा SiS310SetupROP(rop) \
+#define SiS310SetupROP(rop) \
 	ivideo->CommandReg = (rop) << 8;
 
-#घोषणा SiS310SetupCMDFlag(flags) \
+#define SiS310SetupCMDFlag(flags) \
 	ivideo->CommandReg |= (flags);
 
-#घोषणा SiS310DoCMD \
-	अगर(CmdQueLen <= 1) SiS310Idle;\
+#define SiS310DoCMD \
+	if(CmdQueLen <= 1) SiS310Idle;\
 	MMIO_OUT32(ivideo->mmio_vbase, COMMAND_READY, ivideo->CommandReg); \
 	MMIO_OUT32(ivideo->mmio_vbase, FIRE_TRIGGER, 0); \
 	CmdQueLen -= 2;
 
-पूर्णांक  sisfb_initaccel(काष्ठा sis_video_info *ivideo);
-व्योम sisfb_syncaccel(काष्ठा sis_video_info *ivideo);
+int  sisfb_initaccel(struct sis_video_info *ivideo);
+void sisfb_syncaccel(struct sis_video_info *ivideo);
 
-पूर्णांक  fbcon_sis_sync(काष्ठा fb_info *info);
-व्योम fbcon_sis_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect);
-व्योम fbcon_sis_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area);
+int  fbcon_sis_sync(struct fb_info *info);
+void fbcon_sis_fillrect(struct fb_info *info, const struct fb_fillrect *rect);
+void fbcon_sis_copyarea(struct fb_info *info, const struct fb_copyarea *area);
 
-#पूर्ण_अगर
+#endif

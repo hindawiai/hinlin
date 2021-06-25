@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश <generated/यंत्र-offsets.h>
+#include <generated/asm-offsets.h>

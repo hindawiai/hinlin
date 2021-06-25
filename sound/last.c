@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Advanced Linux Sound Architecture
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/init.h>
-#समावेश <sound/core.h>
+#include <linux/init.h>
+#include <sound/core.h>
 
-अटल पूर्णांक __init alsa_sound_last_init(व्योम)
-अणु
-	काष्ठा snd_card *card;
-	पूर्णांक idx, ok = 0;
+static int __init alsa_sound_last_init(void)
+{
+	struct snd_card *card;
+	int idx, ok = 0;
 	
-	prपूर्णांकk(KERN_INFO "ALSA device list:\n");
-	क्रम (idx = 0; idx < SNDRV_CARDS; idx++) अणु
+	printk(KERN_INFO "ALSA device list:\n");
+	for (idx = 0; idx < SNDRV_CARDS; idx++) {
 		card = snd_card_ref(idx);
-		अगर (card) अणु
-			prपूर्णांकk(KERN_INFO "  #%i: %s\n", idx, card->दीर्घname);
+		if (card) {
+			printk(KERN_INFO "  #%i: %s\n", idx, card->longname);
 			snd_card_unref(card);
 			ok++;
-		पूर्ण
-	पूर्ण
-	अगर (ok == 0)
-		prपूर्णांकk(KERN_INFO "  No soundcards found.\n");
-	वापस 0;
-पूर्ण
+		}
+	}
+	if (ok == 0)
+		printk(KERN_INFO "  No soundcards found.\n");
+	return 0;
+}
 
 late_initcall_sync(alsa_sound_last_init);

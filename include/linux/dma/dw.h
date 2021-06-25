@@ -1,55 +1,54 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Driver क्रम the Synopsys DesignWare DMA Controller
+ * Driver for the Synopsys DesignWare DMA Controller
  *
- * Copyright (C) 2007 Aपंचांगel Corporation
+ * Copyright (C) 2007 Atmel Corporation
  * Copyright (C) 2010-2011 ST Microelectronics
  * Copyright (C) 2014 Intel Corporation
  */
-#अगर_अघोषित _DMA_DW_H
-#घोषणा _DMA_DW_H
+#ifndef _DMA_DW_H
+#define _DMA_DW_H
 
-#समावेश <linux/clk.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dmaengine.h>
+#include <linux/clk.h>
+#include <linux/device.h>
+#include <linux/dmaengine.h>
 
-#समावेश <linux/platक्रमm_data/dma-dw.h>
+#include <linux/platform_data/dma-dw.h>
 
-काष्ठा dw_dma;
+struct dw_dma;
 
 /**
- * काष्ठा dw_dma_chip - representation of DesignWare DMA controller hardware
- * @dev:		काष्ठा device of the DMA controller
+ * struct dw_dma_chip - representation of DesignWare DMA controller hardware
+ * @dev:		struct device of the DMA controller
  * @id:			instance ID
  * @irq:		irq line
  * @regs:		memory mapped I/O space
- * @clk:		hclk घड़ी
- * @dw:			काष्ठा dw_dma that is filed by dw_dma_probe()
- * @pdata:		poपूर्णांकer to platक्रमm data
+ * @clk:		hclk clock
+ * @dw:			struct dw_dma that is filed by dw_dma_probe()
+ * @pdata:		pointer to platform data
  */
-काष्ठा dw_dma_chip अणु
-	काष्ठा device	*dev;
-	पूर्णांक		id;
-	पूर्णांक		irq;
-	व्योम __iomem	*regs;
-	काष्ठा clk	*clk;
-	काष्ठा dw_dma	*dw;
+struct dw_dma_chip {
+	struct device	*dev;
+	int		id;
+	int		irq;
+	void __iomem	*regs;
+	struct clk	*clk;
+	struct dw_dma	*dw;
 
-	स्थिर काष्ठा dw_dma_platक्रमm_data	*pdata;
-पूर्ण;
+	const struct dw_dma_platform_data	*pdata;
+};
 
-/* Export to the platक्रमm drivers */
-#अगर IS_ENABLED(CONFIG_DW_DMAC_CORE)
-पूर्णांक dw_dma_probe(काष्ठा dw_dma_chip *chip);
-पूर्णांक dw_dma_हटाओ(काष्ठा dw_dma_chip *chip);
-पूर्णांक idma32_dma_probe(काष्ठा dw_dma_chip *chip);
-पूर्णांक idma32_dma_हटाओ(काष्ठा dw_dma_chip *chip);
-#अन्यथा
-अटल अंतरभूत पूर्णांक dw_dma_probe(काष्ठा dw_dma_chip *chip) अणु वापस -ENODEV; पूर्ण
-अटल अंतरभूत पूर्णांक dw_dma_हटाओ(काष्ठा dw_dma_chip *chip) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक idma32_dma_probe(काष्ठा dw_dma_chip *chip) अणु वापस -ENODEV; पूर्ण
-अटल अंतरभूत पूर्णांक idma32_dma_हटाओ(काष्ठा dw_dma_chip *chip) अणु वापस 0; पूर्ण
-#पूर्ण_अगर /* CONFIG_DW_DMAC_CORE */
+/* Export to the platform drivers */
+#if IS_ENABLED(CONFIG_DW_DMAC_CORE)
+int dw_dma_probe(struct dw_dma_chip *chip);
+int dw_dma_remove(struct dw_dma_chip *chip);
+int idma32_dma_probe(struct dw_dma_chip *chip);
+int idma32_dma_remove(struct dw_dma_chip *chip);
+#else
+static inline int dw_dma_probe(struct dw_dma_chip *chip) { return -ENODEV; }
+static inline int dw_dma_remove(struct dw_dma_chip *chip) { return 0; }
+static inline int idma32_dma_probe(struct dw_dma_chip *chip) { return -ENODEV; }
+static inline int idma32_dma_remove(struct dw_dma_chip *chip) { return 0; }
+#endif /* CONFIG_DW_DMAC_CORE */
 
-#पूर्ण_अगर /* _DMA_DW_H */
+#endif /* _DMA_DW_H */

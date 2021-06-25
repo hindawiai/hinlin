@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Marek Lindner
  */
 
-#समावेश "log.h"
-#समावेश "main.h"
+#include "log.h"
+#include "main.h"
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-#समावेश "trace.h"
+#include "trace.h"
 
 /**
  * batadv_debug_log() - Add debug log entry
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @fmt: क्रमmat string
+ * @bat_priv: the bat priv with all the soft interface information
+ * @fmt: format string
  *
- * Return: 0 on success or negative error number in हाल of failure
+ * Return: 0 on success or negative error number in case of failure
  */
-पूर्णांक batadv_debug_log(काष्ठा batadv_priv *bat_priv, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+int batadv_debug_log(struct batadv_priv *bat_priv, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	trace_batadv_dbg(bat_priv, &vaf);
 
-	बहु_पूर्ण(args);
+	va_end(args);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

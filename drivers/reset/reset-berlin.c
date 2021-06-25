@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2014 Marvell Technology Group Ltd.
  *
  * Marvell Berlin reset driver
  *
- * Antoine Tenart <antoine.tenart@मुक्त-electrons.com>
+ * Antoine Tenart <antoine.tenart@free-electrons.com>
  * Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>
  *
  * This file is licensed under the terms of the GNU General Public
@@ -12,74 +11,74 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/mfd/syscon.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/reset-controller.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#घोषणा BERLIN_MAX_RESETS	32
+#define BERLIN_MAX_RESETS	32
 
-#घोषणा to_berlin_reset_priv(p)		\
-	container_of((p), काष्ठा berlin_reset_priv, rcdev)
+#define to_berlin_reset_priv(p)		\
+	container_of((p), struct berlin_reset_priv, rcdev)
 
-काष्ठा berlin_reset_priv अणु
-	काष्ठा regmap			*regmap;
-	काष्ठा reset_controller_dev	rcdev;
-पूर्ण;
+struct berlin_reset_priv {
+	struct regmap			*regmap;
+	struct reset_controller_dev	rcdev;
+};
 
-अटल पूर्णांक berlin_reset_reset(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा berlin_reset_priv *priv = to_berlin_reset_priv(rcdev);
-	पूर्णांक offset = id >> 8;
-	पूर्णांक mask = BIT(id & 0x1f);
+static int berlin_reset_reset(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct berlin_reset_priv *priv = to_berlin_reset_priv(rcdev);
+	int offset = id >> 8;
+	int mask = BIT(id & 0x1f);
 
-	regmap_ग_लिखो(priv->regmap, offset, mask);
+	regmap_write(priv->regmap, offset, mask);
 
 	/* let the reset be effective */
 	udelay(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा reset_control_ops berlin_reset_ops = अणु
+static const struct reset_control_ops berlin_reset_ops = {
 	.reset	= berlin_reset_reset,
-पूर्ण;
+};
 
-अटल पूर्णांक berlin_reset_xlate(काष्ठा reset_controller_dev *rcdev,
-			      स्थिर काष्ठा of_phandle_args *reset_spec)
-अणु
-	अचिन्हित offset, bit;
+static int berlin_reset_xlate(struct reset_controller_dev *rcdev,
+			      const struct of_phandle_args *reset_spec)
+{
+	unsigned offset, bit;
 
 	offset = reset_spec->args[0];
 	bit = reset_spec->args[1];
 
-	अगर (bit >= BERLIN_MAX_RESETS)
-		वापस -EINVAL;
+	if (bit >= BERLIN_MAX_RESETS)
+		return -EINVAL;
 
-	वापस (offset << 8) | bit;
-पूर्ण
+	return (offset << 8) | bit;
+}
 
-अटल पूर्णांक berlin2_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *parent_np = of_get_parent(pdev->dev.of_node);
-	काष्ठा berlin_reset_priv *priv;
+static int berlin2_reset_probe(struct platform_device *pdev)
+{
+	struct device_node *parent_np = of_get_parent(pdev->dev.of_node);
+	struct berlin_reset_priv *priv;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->regmap = syscon_node_to_regmap(parent_np);
 	of_node_put(parent_np);
-	अगर (IS_ERR(priv->regmap))
-		वापस PTR_ERR(priv->regmap);
+	if (IS_ERR(priv->regmap))
+		return PTR_ERR(priv->regmap);
 
 	priv->rcdev.owner = THIS_MODULE;
 	priv->rcdev.ops = &berlin_reset_ops;
@@ -87,19 +86,19 @@
 	priv->rcdev.of_reset_n_cells = 2;
 	priv->rcdev.of_xlate = berlin_reset_xlate;
 
-	वापस reset_controller_रेजिस्टर(&priv->rcdev);
-पूर्ण
+	return reset_controller_register(&priv->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id berlin_reset_dt_match[] = अणु
-	अणु .compatible = "marvell,berlin2-reset" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id berlin_reset_dt_match[] = {
+	{ .compatible = "marvell,berlin2-reset" },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver berlin_reset_driver = अणु
+static struct platform_driver berlin_reset_driver = {
 	.probe	= berlin2_reset_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "berlin2-reset",
 		.of_match_table = berlin_reset_dt_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(berlin_reset_driver);
+	},
+};
+builtin_platform_driver(berlin_reset_driver);

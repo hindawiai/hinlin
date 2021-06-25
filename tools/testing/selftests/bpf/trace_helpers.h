@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __TRACE_HELPER_H
-#घोषणा __TRACE_HELPER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __TRACE_HELPER_H
+#define __TRACE_HELPER_H
 
-#समावेश <bpf/libbpf.h>
+#include <bpf/libbpf.h>
 
-काष्ठा ksym अणु
-	दीर्घ addr;
-	अक्षर *name;
-पूर्ण;
+struct ksym {
+	long addr;
+	char *name;
+};
 
-पूर्णांक load_kallsyms(व्योम);
-काष्ठा ksym *ksym_search(दीर्घ key);
-दीर्घ ksym_get_addr(स्थिर अक्षर *name);
+int load_kallsyms(void);
+struct ksym *ksym_search(long key);
+long ksym_get_addr(const char *name);
 
-/* खोलो kallsyms and find addresses on the fly, faster than load + search. */
-पूर्णांक kallsyms_find(स्थिर अक्षर *sym, अचिन्हित दीर्घ दीर्घ *addr);
+/* open kallsyms and find addresses on the fly, faster than load + search. */
+int kallsyms_find(const char *sym, unsigned long long *addr);
 
-व्योम पढ़ो_trace_pipe(व्योम);
+void read_trace_pipe(void);
 
-#पूर्ण_अगर
+#endif

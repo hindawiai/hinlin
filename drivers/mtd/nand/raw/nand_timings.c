@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 2014 Free Electrons
  *
- *  Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
+ *  Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/err.h>
+#include <linux/export.h>
 
-#समावेश "internals.h"
+#include "internals.h"
 
-#घोषणा ONFI_DYN_TIMING_MAX U16_MAX
+#define ONFI_DYN_TIMING_MAX U16_MAX
 
 /*
- * For non-ONFI chips we use the highest possible value क्रम tPROG and tBERS.
- * tR and tCCS will take the शेष values precised in the ONFI specअगरication
- * क्रम timing mode 0, respectively 200us and 500ns.
+ * For non-ONFI chips we use the highest possible value for tPROG and tBERS.
+ * tR and tCCS will take the default values precised in the ONFI specification
+ * for timing mode 0, respectively 200us and 500ns.
  *
- * These four values are tweaked to be more accurate in the हाल of ONFI chips.
+ * These four values are tweaked to be more accurate in the case of ONFI chips.
  */
-अटल स्थिर काष्ठा nand_पूर्णांकerface_config onfi_sdr_timings[] = अणु
+static const struct nand_interface_config onfi_sdr_timings[] = {
 	/* Mode 0 */
-	अणु
-		.type = न_अंकD_SDR_IFACE,
+	{
+		.type = NAND_SDR_IFACE,
 		.timings.mode = 0,
-		.timings.sdr = अणु
+		.timings.sdr = {
 			.tCCS_min = 500000,
 			.tR_max = 200000000,
 			.tPROG_max = 1000000ULL * ONFI_DYN_TIMING_MAX,
@@ -64,13 +63,13 @@
 			.tWHR_min = 120000,
 			.tWP_min = 50000,
 			.tWW_min = 100000,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	/* Mode 1 */
-	अणु
-		.type = न_अंकD_SDR_IFACE,
+	{
+		.type = NAND_SDR_IFACE,
 		.timings.mode = 1,
-		.timings.sdr = अणु
+		.timings.sdr = {
 			.tCCS_min = 500000,
 			.tR_max = 200000000,
 			.tPROG_max = 1000000ULL * ONFI_DYN_TIMING_MAX,
@@ -109,13 +108,13 @@
 			.tWHR_min = 80000,
 			.tWP_min = 25000,
 			.tWW_min = 100000,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	/* Mode 2 */
-	अणु
-		.type = न_अंकD_SDR_IFACE,
+	{
+		.type = NAND_SDR_IFACE,
 		.timings.mode = 2,
-		.timings.sdr = अणु
+		.timings.sdr = {
 			.tCCS_min = 500000,
 			.tR_max = 200000000,
 			.tPROG_max = 1000000ULL * ONFI_DYN_TIMING_MAX,
@@ -154,13 +153,13 @@
 			.tWHR_min = 80000,
 			.tWP_min = 17000,
 			.tWW_min = 100000,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	/* Mode 3 */
-	अणु
-		.type = न_अंकD_SDR_IFACE,
+	{
+		.type = NAND_SDR_IFACE,
 		.timings.mode = 3,
-		.timings.sdr = अणु
+		.timings.sdr = {
 			.tCCS_min = 500000,
 			.tR_max = 200000000,
 			.tPROG_max = 1000000ULL * ONFI_DYN_TIMING_MAX,
@@ -199,13 +198,13 @@
 			.tWHR_min = 80000,
 			.tWP_min = 15000,
 			.tWW_min = 100000,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	/* Mode 4 */
-	अणु
-		.type = न_अंकD_SDR_IFACE,
+	{
+		.type = NAND_SDR_IFACE,
 		.timings.mode = 4,
-		.timings.sdr = अणु
+		.timings.sdr = {
 			.tCCS_min = 500000,
 			.tR_max = 200000000,
 			.tPROG_max = 1000000ULL * ONFI_DYN_TIMING_MAX,
@@ -244,13 +243,13 @@
 			.tWHR_min = 80000,
 			.tWP_min = 12000,
 			.tWW_min = 100000,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	/* Mode 5 */
-	अणु
-		.type = न_अंकD_SDR_IFACE,
+	{
+		.type = NAND_SDR_IFACE,
 		.timings.mode = 5,
-		.timings.sdr = अणु
+		.timings.sdr = {
 			.tCCS_min = 500000,
 			.tR_max = 200000000,
 			.tPROG_max = 1000000ULL * ONFI_DYN_TIMING_MAX,
@@ -289,31 +288,31 @@
 			.tWHR_min = 80000,
 			.tWP_min = 10000,
 			.tWW_min = 100000,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-/* All न_अंकD chips share the same reset data पूर्णांकerface: SDR mode 0 */
-स्थिर काष्ठा nand_पूर्णांकerface_config *nand_get_reset_पूर्णांकerface_config(व्योम)
-अणु
-	वापस &onfi_sdr_timings[0];
-पूर्ण
+/* All NAND chips share the same reset data interface: SDR mode 0 */
+const struct nand_interface_config *nand_get_reset_interface_config(void)
+{
+	return &onfi_sdr_timings[0];
+}
 
 /**
- * onfi_find_बंदst_sdr_mode - Derive the बंदst ONFI SDR timing mode given a
+ * onfi_find_closest_sdr_mode - Derive the closest ONFI SDR timing mode given a
  *                              set of timings
  * @spec_timings: the timings to challenge
  */
-अचिन्हित पूर्णांक
-onfi_find_बंदst_sdr_mode(स्थिर काष्ठा nand_sdr_timings *spec_timings)
-अणु
-	स्थिर काष्ठा nand_sdr_timings *onfi_timings;
-	पूर्णांक mode;
+unsigned int
+onfi_find_closest_sdr_mode(const struct nand_sdr_timings *spec_timings)
+{
+	const struct nand_sdr_timings *onfi_timings;
+	int mode;
 
-	क्रम (mode = ARRAY_SIZE(onfi_sdr_timings) - 1; mode > 0; mode--) अणु
+	for (mode = ARRAY_SIZE(onfi_sdr_timings) - 1; mode > 0; mode--) {
 		onfi_timings = &onfi_sdr_timings[mode].timings.sdr;
 
-		अगर (spec_timings->tCCS_min <= onfi_timings->tCCS_min &&
+		if (spec_timings->tCCS_min <= onfi_timings->tCCS_min &&
 		    spec_timings->tADL_min <= onfi_timings->tADL_min &&
 		    spec_timings->tALH_min <= onfi_timings->tALH_min &&
 		    spec_timings->tALS_min <= onfi_timings->tALS_min &&
@@ -340,42 +339,42 @@ onfi_find_बंदst_sdr_mode(स्थिर काष्ठा nand_sdr_timin
 		    spec_timings->tWHR_min <= onfi_timings->tWHR_min &&
 		    spec_timings->tWP_min <= onfi_timings->tWP_min &&
 		    spec_timings->tWW_min <= onfi_timings->tWW_min)
-			वापस mode;
-	पूर्ण
+			return mode;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * onfi_fill_पूर्णांकerface_config - Initialize an पूर्णांकerface config from a given
+ * onfi_fill_interface_config - Initialize an interface config from a given
  *                              ONFI mode
- * @chip: The न_अंकD chip
- * @अगरace: The पूर्णांकerface configuration to fill
- * @type: The पूर्णांकerface type
+ * @chip: The NAND chip
+ * @iface: The interface configuration to fill
+ * @type: The interface type
  * @timing_mode: The ONFI timing mode
  */
-व्योम onfi_fill_पूर्णांकerface_config(काष्ठा nand_chip *chip,
-				काष्ठा nand_पूर्णांकerface_config *अगरace,
-				क्रमागत nand_पूर्णांकerface_type type,
-				अचिन्हित पूर्णांक timing_mode)
-अणु
-	काष्ठा onfi_params *onfi = chip->parameters.onfi;
+void onfi_fill_interface_config(struct nand_chip *chip,
+				struct nand_interface_config *iface,
+				enum nand_interface_type type,
+				unsigned int timing_mode)
+{
+	struct onfi_params *onfi = chip->parameters.onfi;
 
-	अगर (WARN_ON(type != न_अंकD_SDR_IFACE))
-		वापस;
+	if (WARN_ON(type != NAND_SDR_IFACE))
+		return;
 
-	अगर (WARN_ON(timing_mode >= ARRAY_SIZE(onfi_sdr_timings)))
-		वापस;
+	if (WARN_ON(timing_mode >= ARRAY_SIZE(onfi_sdr_timings)))
+		return;
 
-	*अगरace = onfi_sdr_timings[timing_mode];
+	*iface = onfi_sdr_timings[timing_mode];
 
 	/*
 	 * Initialize timings that cannot be deduced from timing mode:
 	 * tPROG, tBERS, tR and tCCS.
-	 * These inक्रमmation are part of the ONFI parameter page.
+	 * These information are part of the ONFI parameter page.
 	 */
-	अगर (onfi) अणु
-		काष्ठा nand_sdr_timings *timings = &अगरace->timings.sdr;
+	if (onfi) {
+		struct nand_sdr_timings *timings = &iface->timings.sdr;
 
 		/* microseconds -> picoseconds */
 		timings->tPROG_max = 1000000ULL * onfi->tPROG;
@@ -384,5 +383,5 @@ onfi_find_बंदst_sdr_mode(स्थिर काष्ठा nand_sdr_timin
 
 		/* nanoseconds -> picoseconds */
 		timings->tCCS_min = 1000UL * onfi->tCCS;
-	पूर्ण
-पूर्ण
+	}
+}

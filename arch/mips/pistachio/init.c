@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Pistachio platक्रमm setup
+ * Pistachio platform setup
  *
  * Copyright (C) 2014 Google, Inc.
  * Copyright (C) 2016 Imagination Technologies
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_fdt.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of_address.h>
+#include <linux/of_fdt.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/fw/fw.h>
-#समावेश <यंत्र/mips-boards/generic.h>
-#समावेश <यंत्र/mips-cps.h>
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/smp-ops.h>
-#समावेश <यंत्र/traps.h>
+#include <asm/cacheflush.h>
+#include <asm/fw/fw.h>
+#include <asm/mips-boards/generic.h>
+#include <asm/mips-cps.h>
+#include <asm/prom.h>
+#include <asm/smp-ops.h>
+#include <asm/traps.h>
 
 /*
- * Core revision रेजिस्टर decoding
+ * Core revision register decoding
  * Bits 23 to 20: Major rev
  * Bits 15 to 8: Minor rev
- * Bits 7 to 0: Maपूर्णांकenance rev
+ * Bits 7 to 0: Maintenance rev
  */
-#घोषणा PISTACHIO_CORE_REV_REG	0xB81483D0
-#घोषणा PISTACHIO_CORE_REV_A1	0x00100006
-#घोषणा PISTACHIO_CORE_REV_B0	0x00100106
+#define PISTACHIO_CORE_REV_REG	0xB81483D0
+#define PISTACHIO_CORE_REV_A1	0x00100006
+#define PISTACHIO_CORE_REV_B0	0x00100106
 
-स्थिर अक्षर *get_प्रणाली_type(व्योम)
-अणु
+const char *get_system_type(void)
+{
 	u32 core_rev;
-	स्थिर अक्षर *sys_type;
+	const char *sys_type;
 
-	core_rev = __raw_पढ़ोl((स्थिर व्योम *)PISTACHIO_CORE_REV_REG);
+	core_rev = __raw_readl((const void *)PISTACHIO_CORE_REV_REG);
 
-	चयन (core_rev) अणु
-	हाल PISTACHIO_CORE_REV_B0:
+	switch (core_rev) {
+	case PISTACHIO_CORE_REV_B0:
 		sys_type = "IMG Pistachio SoC (B0)";
-		अवरोध;
+		break;
 
-	हाल PISTACHIO_CORE_REV_A1:
+	case PISTACHIO_CORE_REV_A1:
 		sys_type = "IMG Pistachio SoC (A1)";
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		sys_type = "IMG Pistachio SoC";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस sys_type;
-पूर्ण
+	return sys_type;
+}
 
-व्योम __init *plat_get_fdt(व्योम)
-अणु
-	अगर (fw_arg0 != -2)
+void __init *plat_get_fdt(void)
+{
+	if (fw_arg0 != -2)
 		panic("Device-tree not present");
-	वापस (व्योम *)fw_arg1;
-पूर्ण
+	return (void *)fw_arg1;
+}
 
-व्योम __init plat_mem_setup(व्योम)
-अणु
+void __init plat_mem_setup(void)
+{
 	__dt_setup_arch(plat_get_fdt());
-पूर्ण
+}
 
-#घोषणा DEFAULT_CPC_BASE_ADDR	0x1bde0000
-#घोषणा DEFAULT_CDMM_BASE_ADDR	0x1bdd0000
+#define DEFAULT_CPC_BASE_ADDR	0x1bde0000
+#define DEFAULT_CDMM_BASE_ADDR	0x1bdd0000
 
-phys_addr_t mips_cpc_शेष_phys_base(व्योम)
-अणु
-	वापस DEFAULT_CPC_BASE_ADDR;
-पूर्ण
+phys_addr_t mips_cpc_default_phys_base(void)
+{
+	return DEFAULT_CPC_BASE_ADDR;
+}
 
-phys_addr_t mips_cdmm_phys_base(व्योम)
-अणु
-	वापस DEFAULT_CDMM_BASE_ADDR;
-पूर्ण
+phys_addr_t mips_cdmm_phys_base(void)
+{
+	return DEFAULT_CDMM_BASE_ADDR;
+}
 
-अटल व्योम __init mips_nmi_setup(व्योम)
-अणु
-	व्योम *base;
-
-	base = cpu_has_veic ?
-		(व्योम *)(CAC_BASE + 0xa80) :
-		(व्योम *)(CAC_BASE + 0x380);
-	स_नकल(base, except_vec_nmi, 0x80);
-	flush_icache_range((अचिन्हित दीर्घ)base,
-			   (अचिन्हित दीर्घ)base + 0x80);
-पूर्ण
-
-अटल व्योम __init mips_ejtag_setup(व्योम)
-अणु
-	व्योम *base;
-	बाह्य अक्षर except_vec_ejtag_debug[];
+static void __init mips_nmi_setup(void)
+{
+	void *base;
 
 	base = cpu_has_veic ?
-		(व्योम *)(CAC_BASE + 0xa00) :
-		(व्योम *)(CAC_BASE + 0x300);
-	स_नकल(base, except_vec_ejtag_debug, 0x80);
-	flush_icache_range((अचिन्हित दीर्घ)base,
-			   (अचिन्हित दीर्घ)base + 0x80);
-पूर्ण
+		(void *)(CAC_BASE + 0xa80) :
+		(void *)(CAC_BASE + 0x380);
+	memcpy(base, except_vec_nmi, 0x80);
+	flush_icache_range((unsigned long)base,
+			   (unsigned long)base + 0x80);
+}
 
-व्योम __init prom_init(व्योम)
-अणु
+static void __init mips_ejtag_setup(void)
+{
+	void *base;
+	extern char except_vec_ejtag_debug[];
+
+	base = cpu_has_veic ?
+		(void *)(CAC_BASE + 0xa00) :
+		(void *)(CAC_BASE + 0x300);
+	memcpy(base, except_vec_ejtag_debug, 0x80);
+	flush_icache_range((unsigned long)base,
+			   (unsigned long)base + 0x80);
+}
+
+void __init prom_init(void)
+{
 	board_nmi_handler_setup = mips_nmi_setup;
 	board_ejtag_handler_setup = mips_ejtag_setup;
 
 	mips_cm_probe();
 	mips_cpc_probe();
-	रेजिस्टर_cps_smp_ops();
+	register_cps_smp_ops();
 
-	pr_info("SoC Type: %s\n", get_प्रणाली_type());
-पूर्ण
+	pr_info("SoC Type: %s\n", get_system_type());
+}
 
-व्योम __init device_tree_init(व्योम)
-अणु
-	अगर (!initial_boot_params)
-		वापस;
+void __init device_tree_init(void)
+{
+	if (!initial_boot_params)
+		return;
 
 	unflatten_and_copy_device_tree();
-पूर्ण
+}

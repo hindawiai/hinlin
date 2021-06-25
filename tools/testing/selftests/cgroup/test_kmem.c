@@ -1,351 +1,350 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
 
-#समावेश <linux/सीमा.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
-#समावेश <sys/रुको.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <sys/sysinfo.h>
-#समावेश <pthपढ़ो.h>
+#include <linux/limits.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <sys/sysinfo.h>
+#include <pthread.h>
 
-#समावेश "../kselftest.h"
-#समावेश "cgroup_util.h"
+#include "../kselftest.h"
+#include "cgroup_util.h"
 
 
 /*
- * Memory cgroup अक्षरging is perक्रमmed using percpu batches 32 pages
+ * Memory cgroup charging is performed using percpu batches 32 pages
  * big (look at MEMCG_CHARGE_BATCH), whereas memory.stat is exact. So
- * the maximum discrepancy between अक्षरge and vmstat entries is number
+ * the maximum discrepancy between charge and vmstat entries is number
  * of cpus multiplied by 32 pages.
  */
-#घोषणा MAX_VMSTAT_ERROR (4096 * 32 * get_nprocs())
+#define MAX_VMSTAT_ERROR (4096 * 32 * get_nprocs())
 
 
-अटल पूर्णांक alloc_dcache(स्थिर अक्षर *cgroup, व्योम *arg)
-अणु
-	अचिन्हित दीर्घ i;
-	काष्ठा stat st;
-	अक्षर buf[128];
+static int alloc_dcache(const char *cgroup, void *arg)
+{
+	unsigned long i;
+	struct stat st;
+	char buf[128];
 
-	क्रम (i = 0; i < (अचिन्हित दीर्घ)arg; i++) अणु
-		snम_लिखो(buf, माप(buf),
+	for (i = 0; i < (unsigned long)arg; i++) {
+		snprintf(buf, sizeof(buf),
 			"/something-non-existent-with-a-long-name-%64lu-%d",
 			 i, getpid());
 		stat(buf, &st);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This test allocates 100000 of negative dentries with दीर्घ names.
+ * This test allocates 100000 of negative dentries with long names.
  * Then it checks that "slab" in memory.stat is larger than 1M.
  * Then it sets memory.high to 1M and checks that at least 1/2
  * of slab memory has been reclaimed.
  */
-अटल पूर्णांक test_kmem_basic(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cg = शून्य;
-	दीर्घ slab0, slab1, current;
+static int test_kmem_basic(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cg = NULL;
+	long slab0, slab1, current;
 
 	cg = cg_name(root, "kmem_basic_test");
-	अगर (!cg)
-		जाओ cleanup;
+	if (!cg)
+		goto cleanup;
 
-	अगर (cg_create(cg))
-		जाओ cleanup;
+	if (cg_create(cg))
+		goto cleanup;
 
-	अगर (cg_run(cg, alloc_dcache, (व्योम *)100000))
-		जाओ cleanup;
+	if (cg_run(cg, alloc_dcache, (void *)100000))
+		goto cleanup;
 
-	slab0 = cg_पढ़ो_key_दीर्घ(cg, "memory.stat", "slab ");
-	अगर (slab0 < (1 << 20))
-		जाओ cleanup;
+	slab0 = cg_read_key_long(cg, "memory.stat", "slab ");
+	if (slab0 < (1 << 20))
+		goto cleanup;
 
-	cg_ग_लिखो(cg, "memory.high", "1M");
-	slab1 = cg_पढ़ो_key_दीर्घ(cg, "memory.stat", "slab ");
-	अगर (slab1 <= 0)
-		जाओ cleanup;
+	cg_write(cg, "memory.high", "1M");
+	slab1 = cg_read_key_long(cg, "memory.stat", "slab ");
+	if (slab1 <= 0)
+		goto cleanup;
 
-	current = cg_पढ़ो_दीर्घ(cg, "memory.current");
-	अगर (current <= 0)
-		जाओ cleanup;
+	current = cg_read_long(cg, "memory.current");
+	if (current <= 0)
+		goto cleanup;
 
-	अगर (slab1 < slab0 / 2 && current < slab0 / 2)
+	if (slab1 < slab0 / 2 && current < slab0 / 2)
 		ret = KSFT_PASS;
 cleanup:
 	cg_destroy(cg);
-	मुक्त(cg);
+	free(cg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम *alloc_kmem_fn(व्योम *arg)
-अणु
-	alloc_dcache(शून्य, (व्योम *)100);
-	वापस शून्य;
-पूर्ण
+static void *alloc_kmem_fn(void *arg)
+{
+	alloc_dcache(NULL, (void *)100);
+	return NULL;
+}
 
-अटल पूर्णांक alloc_kmem_smp(स्थिर अक्षर *cgroup, व्योम *arg)
-अणु
-	पूर्णांक nr_thपढ़ोs = 2 * get_nprocs();
-	pthपढ़ो_t *tinfo;
-	अचिन्हित दीर्घ i;
-	पूर्णांक ret = -1;
+static int alloc_kmem_smp(const char *cgroup, void *arg)
+{
+	int nr_threads = 2 * get_nprocs();
+	pthread_t *tinfo;
+	unsigned long i;
+	int ret = -1;
 
-	tinfo = सुस्मृति(nr_thपढ़ोs, माप(pthपढ़ो_t));
-	अगर (tinfo == शून्य)
-		वापस -1;
+	tinfo = calloc(nr_threads, sizeof(pthread_t));
+	if (tinfo == NULL)
+		return -1;
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		अगर (pthपढ़ो_create(&tinfo[i], शून्य, &alloc_kmem_fn,
-				   (व्योम *)i)) अणु
-			मुक्त(tinfo);
-			वापस -1;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < nr_threads; i++) {
+		if (pthread_create(&tinfo[i], NULL, &alloc_kmem_fn,
+				   (void *)i)) {
+			free(tinfo);
+			return -1;
+		}
+	}
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		ret = pthपढ़ो_join(tinfo[i], शून्य);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < nr_threads; i++) {
+		ret = pthread_join(tinfo[i], NULL);
+		if (ret)
+			break;
+	}
 
-	मुक्त(tinfo);
-	वापस ret;
-पूर्ण
+	free(tinfo);
+	return ret;
+}
 
-अटल पूर्णांक cg_run_in_subcgroups(स्थिर अक्षर *parent,
-				पूर्णांक (*fn)(स्थिर अक्षर *cgroup, व्योम *arg),
-				व्योम *arg, पूर्णांक बार)
-अणु
-	अक्षर *child;
-	पूर्णांक i;
+static int cg_run_in_subcgroups(const char *parent,
+				int (*fn)(const char *cgroup, void *arg),
+				void *arg, int times)
+{
+	char *child;
+	int i;
 
-	क्रम (i = 0; i < बार; i++) अणु
+	for (i = 0; i < times; i++) {
 		child = cg_name_indexed(parent, "child", i);
-		अगर (!child)
-			वापस -1;
+		if (!child)
+			return -1;
 
-		अगर (cg_create(child)) अणु
+		if (cg_create(child)) {
 			cg_destroy(child);
-			मुक्त(child);
-			वापस -1;
-		पूर्ण
+			free(child);
+			return -1;
+		}
 
-		अगर (cg_run(child, fn, शून्य)) अणु
+		if (cg_run(child, fn, NULL)) {
 			cg_destroy(child);
-			मुक्त(child);
-			वापस -1;
-		पूर्ण
+			free(child);
+			return -1;
+		}
 
 		cg_destroy(child);
-		मुक्त(child);
-	पूर्ण
+		free(child);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The test creates and destroys a large number of cgroups. In each cgroup it
  * allocates some slab memory (mostly negative dentries) using 2 * NR_CPUS
- * thपढ़ोs. Then it checks the sanity of numbers on the parent level:
+ * threads. Then it checks the sanity of numbers on the parent level:
  * the total size of the cgroups should be roughly equal to
  * anon + file + slab + kernel_stack.
  */
-अटल पूर्णांक test_kmem_memcg_deletion(स्थिर अक्षर *root)
-अणु
-	दीर्घ current, slab, anon, file, kernel_stack, pagetables, percpu, sock, sum;
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *parent;
+static int test_kmem_memcg_deletion(const char *root)
+{
+	long current, slab, anon, file, kernel_stack, pagetables, percpu, sock, sum;
+	int ret = KSFT_FAIL;
+	char *parent;
 
 	parent = cg_name(root, "kmem_memcg_deletion_test");
-	अगर (!parent)
-		जाओ cleanup;
+	if (!parent)
+		goto cleanup;
 
-	अगर (cg_create(parent))
-		जाओ cleanup;
+	if (cg_create(parent))
+		goto cleanup;
 
-	अगर (cg_ग_लिखो(parent, "cgroup.subtree_control", "+memory"))
-		जाओ cleanup;
+	if (cg_write(parent, "cgroup.subtree_control", "+memory"))
+		goto cleanup;
 
-	अगर (cg_run_in_subcgroups(parent, alloc_kmem_smp, शून्य, 100))
-		जाओ cleanup;
+	if (cg_run_in_subcgroups(parent, alloc_kmem_smp, NULL, 100))
+		goto cleanup;
 
-	current = cg_पढ़ो_दीर्घ(parent, "memory.current");
-	slab = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "slab ");
-	anon = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "anon ");
-	file = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "file ");
-	kernel_stack = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "kernel_stack ");
-	pagetables = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "pagetables ");
-	percpu = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "percpu ");
-	sock = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "sock ");
-	अगर (current < 0 || slab < 0 || anon < 0 || file < 0 ||
+	current = cg_read_long(parent, "memory.current");
+	slab = cg_read_key_long(parent, "memory.stat", "slab ");
+	anon = cg_read_key_long(parent, "memory.stat", "anon ");
+	file = cg_read_key_long(parent, "memory.stat", "file ");
+	kernel_stack = cg_read_key_long(parent, "memory.stat", "kernel_stack ");
+	pagetables = cg_read_key_long(parent, "memory.stat", "pagetables ");
+	percpu = cg_read_key_long(parent, "memory.stat", "percpu ");
+	sock = cg_read_key_long(parent, "memory.stat", "sock ");
+	if (current < 0 || slab < 0 || anon < 0 || file < 0 ||
 	    kernel_stack < 0 || pagetables < 0 || percpu < 0 || sock < 0)
-		जाओ cleanup;
+		goto cleanup;
 
 	sum = slab + anon + file + kernel_stack + pagetables + percpu + sock;
-	अगर (असल(sum - current) < MAX_VMSTAT_ERROR) अणु
+	if (abs(sum - current) < MAX_VMSTAT_ERROR) {
 		ret = KSFT_PASS;
-	पूर्ण अन्यथा अणु
-		म_लिखो("memory.current = %ld\n", current);
-		म_लिखो("slab + anon + file + kernel_stack = %ld\n", sum);
-		म_लिखो("slab = %ld\n", slab);
-		म_लिखो("anon = %ld\n", anon);
-		म_लिखो("file = %ld\n", file);
-		म_लिखो("kernel_stack = %ld\n", kernel_stack);
-		म_लिखो("pagetables = %ld\n", pagetables);
-		म_लिखो("percpu = %ld\n", percpu);
-		म_लिखो("sock = %ld\n", sock);
-	पूर्ण
+	} else {
+		printf("memory.current = %ld\n", current);
+		printf("slab + anon + file + kernel_stack = %ld\n", sum);
+		printf("slab = %ld\n", slab);
+		printf("anon = %ld\n", anon);
+		printf("file = %ld\n", file);
+		printf("kernel_stack = %ld\n", kernel_stack);
+		printf("pagetables = %ld\n", pagetables);
+		printf("percpu = %ld\n", percpu);
+		printf("sock = %ld\n", sock);
+	}
 
 cleanup:
 	cg_destroy(parent);
-	मुक्त(parent);
+	free(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * The test पढ़ोs the entire /proc/kpagecgroup. If the operation went
+ * The test reads the entire /proc/kpagecgroup. If the operation went
  * successfully (and the kernel didn't panic), the test is treated as passed.
  */
-अटल पूर्णांक test_kmem_proc_kpagecgroup(स्थिर अक्षर *root)
-अणु
-	अचिन्हित दीर्घ buf[128];
-	पूर्णांक ret = KSFT_FAIL;
-	sमाप_प्रकार len;
-	पूर्णांक fd;
+static int test_kmem_proc_kpagecgroup(const char *root)
+{
+	unsigned long buf[128];
+	int ret = KSFT_FAIL;
+	ssize_t len;
+	int fd;
 
-	fd = खोलो("/proc/kpagecgroup", O_RDONLY);
-	अगर (fd < 0)
-		वापस ret;
+	fd = open("/proc/kpagecgroup", O_RDONLY);
+	if (fd < 0)
+		return ret;
 
-	करो अणु
-		len = पढ़ो(fd, buf, माप(buf));
-	पूर्ण जबतक (len > 0);
+	do {
+		len = read(fd, buf, sizeof(buf));
+	} while (len > 0);
 
-	अगर (len == 0)
+	if (len == 0)
 		ret = KSFT_PASS;
 
-	बंद(fd);
-	वापस ret;
-पूर्ण
+	close(fd);
+	return ret;
+}
 
-अटल व्योम *pthपढ़ो_रुको_fn(व्योम *arg)
-अणु
+static void *pthread_wait_fn(void *arg)
+{
 	sleep(100);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक spawn_1000_thपढ़ोs(स्थिर अक्षर *cgroup, व्योम *arg)
-अणु
-	पूर्णांक nr_thपढ़ोs = 1000;
-	pthपढ़ो_t *tinfo;
-	अचिन्हित दीर्घ i;
-	दीर्घ stack;
-	पूर्णांक ret = -1;
+static int spawn_1000_threads(const char *cgroup, void *arg)
+{
+	int nr_threads = 1000;
+	pthread_t *tinfo;
+	unsigned long i;
+	long stack;
+	int ret = -1;
 
-	tinfo = सुस्मृति(nr_thपढ़ोs, माप(pthपढ़ो_t));
-	अगर (tinfo == शून्य)
-		वापस -1;
+	tinfo = calloc(nr_threads, sizeof(pthread_t));
+	if (tinfo == NULL)
+		return -1;
 
-	क्रम (i = 0; i < nr_thपढ़ोs; i++) अणु
-		अगर (pthपढ़ो_create(&tinfo[i], शून्य, &pthपढ़ो_रुको_fn,
-				   (व्योम *)i)) अणु
-			मुक्त(tinfo);
-			वापस(-1);
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < nr_threads; i++) {
+		if (pthread_create(&tinfo[i], NULL, &pthread_wait_fn,
+				   (void *)i)) {
+			free(tinfo);
+			return(-1);
+		}
+	}
 
-	stack = cg_पढ़ो_key_दीर्घ(cgroup, "memory.stat", "kernel_stack ");
-	अगर (stack >= 4096 * 1000)
+	stack = cg_read_key_long(cgroup, "memory.stat", "kernel_stack ");
+	if (stack >= 4096 * 1000)
 		ret = 0;
 
-	मुक्त(tinfo);
-	वापस ret;
-पूर्ण
+	free(tinfo);
+	return ret;
+}
 
 /*
- * The test spawns a process, which spawns 1000 thपढ़ोs. Then it checks
+ * The test spawns a process, which spawns 1000 threads. Then it checks
  * that memory.stat's kernel_stack is at least 1000 pages large.
  */
-अटल पूर्णांक test_kmem_kernel_stacks(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *cg = शून्य;
+static int test_kmem_kernel_stacks(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *cg = NULL;
 
 	cg = cg_name(root, "kmem_kernel_stacks_test");
-	अगर (!cg)
-		जाओ cleanup;
+	if (!cg)
+		goto cleanup;
 
-	अगर (cg_create(cg))
-		जाओ cleanup;
+	if (cg_create(cg))
+		goto cleanup;
 
-	अगर (cg_run(cg, spawn_1000_thपढ़ोs, शून्य))
-		जाओ cleanup;
+	if (cg_run(cg, spawn_1000_threads, NULL))
+		goto cleanup;
 
 	ret = KSFT_PASS;
 cleanup:
 	cg_destroy(cg);
-	मुक्त(cg);
+	free(cg);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * This test sequentionally creates 30 child cgroups, allocates some
  * kernel memory in each of them, and deletes them. Then it checks
  * that the number of dying cgroups on the parent level is 0.
  */
-अटल पूर्णांक test_kmem_dead_cgroups(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *parent;
-	दीर्घ dead;
-	पूर्णांक i;
+static int test_kmem_dead_cgroups(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *parent;
+	long dead;
+	int i;
 
 	parent = cg_name(root, "kmem_dead_cgroups_test");
-	अगर (!parent)
-		जाओ cleanup;
+	if (!parent)
+		goto cleanup;
 
-	अगर (cg_create(parent))
-		जाओ cleanup;
+	if (cg_create(parent))
+		goto cleanup;
 
-	अगर (cg_ग_लिखो(parent, "cgroup.subtree_control", "+memory"))
-		जाओ cleanup;
+	if (cg_write(parent, "cgroup.subtree_control", "+memory"))
+		goto cleanup;
 
-	अगर (cg_run_in_subcgroups(parent, alloc_dcache, (व्योम *)100, 30))
-		जाओ cleanup;
+	if (cg_run_in_subcgroups(parent, alloc_dcache, (void *)100, 30))
+		goto cleanup;
 
-	क्रम (i = 0; i < 5; i++) अणु
-		dead = cg_पढ़ो_key_दीर्घ(parent, "cgroup.stat",
+	for (i = 0; i < 5; i++) {
+		dead = cg_read_key_long(parent, "cgroup.stat",
 					"nr_dying_descendants ");
-		अगर (dead == 0) अणु
+		if (dead == 0) {
 			ret = KSFT_PASS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
-		 * Reclaiming cgroups might take some समय,
-		 * let's रुको a bit and repeat.
+		 * Reclaiming cgroups might take some time,
+		 * let's wait a bit and repeat.
 		 */
 		sleep(1);
-	पूर्ण
+	}
 
 cleanup:
 	cg_destroy(parent);
-	मुक्त(parent);
+	free(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * This test creates a sub-tree with 1000 memory cgroups.
@@ -353,105 +352,105 @@ cleanup:
  * is greater than 0 and approximates matches the percpu value
  * from memory.stat.
  */
-अटल पूर्णांक test_percpu_basic(स्थिर अक्षर *root)
-अणु
-	पूर्णांक ret = KSFT_FAIL;
-	अक्षर *parent, *child;
-	दीर्घ current, percpu;
-	पूर्णांक i;
+static int test_percpu_basic(const char *root)
+{
+	int ret = KSFT_FAIL;
+	char *parent, *child;
+	long current, percpu;
+	int i;
 
 	parent = cg_name(root, "percpu_basic_test");
-	अगर (!parent)
-		जाओ cleanup;
+	if (!parent)
+		goto cleanup;
 
-	अगर (cg_create(parent))
-		जाओ cleanup;
+	if (cg_create(parent))
+		goto cleanup;
 
-	अगर (cg_ग_लिखो(parent, "cgroup.subtree_control", "+memory"))
-		जाओ cleanup;
+	if (cg_write(parent, "cgroup.subtree_control", "+memory"))
+		goto cleanup;
 
-	क्रम (i = 0; i < 1000; i++) अणु
+	for (i = 0; i < 1000; i++) {
 		child = cg_name_indexed(parent, "child", i);
-		अगर (!child)
-			वापस -1;
+		if (!child)
+			return -1;
 
-		अगर (cg_create(child))
-			जाओ cleanup_children;
+		if (cg_create(child))
+			goto cleanup_children;
 
-		मुक्त(child);
-	पूर्ण
+		free(child);
+	}
 
-	current = cg_पढ़ो_दीर्घ(parent, "memory.current");
-	percpu = cg_पढ़ो_key_दीर्घ(parent, "memory.stat", "percpu ");
+	current = cg_read_long(parent, "memory.current");
+	percpu = cg_read_key_long(parent, "memory.stat", "percpu ");
 
-	अगर (current > 0 && percpu > 0 && असल(current - percpu) <
+	if (current > 0 && percpu > 0 && abs(current - percpu) <
 	    MAX_VMSTAT_ERROR)
 		ret = KSFT_PASS;
-	अन्यथा
-		म_लिखो("memory.current %ld\npercpu %ld\n",
+	else
+		printf("memory.current %ld\npercpu %ld\n",
 		       current, percpu);
 
 cleanup_children:
-	क्रम (i = 0; i < 1000; i++) अणु
+	for (i = 0; i < 1000; i++) {
 		child = cg_name_indexed(parent, "child", i);
 		cg_destroy(child);
-		मुक्त(child);
-	पूर्ण
+		free(child);
+	}
 
 cleanup:
 	cg_destroy(parent);
-	मुक्त(parent);
+	free(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा T(x) अणु x, #x पूर्ण
-काष्ठा kmem_test अणु
-	पूर्णांक (*fn)(स्थिर अक्षर *root);
-	स्थिर अक्षर *name;
-पूर्ण tests[] = अणु
+#define T(x) { x, #x }
+struct kmem_test {
+	int (*fn)(const char *root);
+	const char *name;
+} tests[] = {
 	T(test_kmem_basic),
 	T(test_kmem_memcg_deletion),
 	T(test_kmem_proc_kpagecgroup),
 	T(test_kmem_kernel_stacks),
 	T(test_kmem_dead_cgroups),
 	T(test_percpu_basic),
-पूर्ण;
-#अघोषित T
+};
+#undef T
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अक्षर root[PATH_MAX];
-	पूर्णांक i, ret = निकास_सफल;
+int main(int argc, char **argv)
+{
+	char root[PATH_MAX];
+	int i, ret = EXIT_SUCCESS;
 
-	अगर (cg_find_unअगरied_root(root, माप(root)))
-		ksft_निकास_skip("cgroup v2 isn't mounted\n");
+	if (cg_find_unified_root(root, sizeof(root)))
+		ksft_exit_skip("cgroup v2 isn't mounted\n");
 
 	/*
 	 * Check that memory controller is available:
 	 * memory is listed in cgroup.controllers
 	 */
-	अगर (cg_पढ़ो_म_माला(root, "cgroup.controllers", "memory"))
-		ksft_निकास_skip("memory controller isn't available\n");
+	if (cg_read_strstr(root, "cgroup.controllers", "memory"))
+		ksft_exit_skip("memory controller isn't available\n");
 
-	अगर (cg_पढ़ो_म_माला(root, "cgroup.subtree_control", "memory"))
-		अगर (cg_ग_लिखो(root, "cgroup.subtree_control", "+memory"))
-			ksft_निकास_skip("Failed to set memory controller\n");
+	if (cg_read_strstr(root, "cgroup.subtree_control", "memory"))
+		if (cg_write(root, "cgroup.subtree_control", "+memory"))
+			ksft_exit_skip("Failed to set memory controller\n");
 
-	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
-		चयन (tests[i].fn(root)) अणु
-		हाल KSFT_PASS:
+	for (i = 0; i < ARRAY_SIZE(tests); i++) {
+		switch (tests[i].fn(root)) {
+		case KSFT_PASS:
 			ksft_test_result_pass("%s\n", tests[i].name);
-			अवरोध;
-		हाल KSFT_SKIP:
+			break;
+		case KSFT_SKIP:
 			ksft_test_result_skip("%s\n", tests[i].name);
-			अवरोध;
-		शेष:
-			ret = निकास_त्रुटि;
+			break;
+		default:
+			ret = EXIT_FAILURE;
 			ksft_test_result_fail("%s\n", tests[i].name);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

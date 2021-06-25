@@ -1,361 +1,360 @@
-<शैली गुरु>
 /*
  * tps62360.c -- TI tps62360
  *
- * Driver क्रम processor core supply tps62360, tps62361B, tps62362 and tps62363.
+ * Driver for processor core supply tps62360, tps62361B, tps62362 and tps62363.
  *
  * Copyright (c) 2012, NVIDIA Corporation.
  *
  * Author: Laxman Dewangan <ldewangan@nvidia.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any kind,
  * whether express or implied; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307, USA
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/tps62360.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/regmap.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/tps62360.h>
+#include <linux/gpio.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/regmap.h>
 
 /* Register definitions */
-#घोषणा REG_VSET0		0
-#घोषणा REG_VSET1		1
-#घोषणा REG_VSET2		2
-#घोषणा REG_VSET3		3
-#घोषणा REG_CONTROL		4
-#घोषणा REG_TEMP		5
-#घोषणा REG_RAMPCTRL		6
-#घोषणा REG_CHIPID		8
+#define REG_VSET0		0
+#define REG_VSET1		1
+#define REG_VSET2		2
+#define REG_VSET3		3
+#define REG_CONTROL		4
+#define REG_TEMP		5
+#define REG_RAMPCTRL		6
+#define REG_CHIPID		8
 
-#घोषणा FORCE_PWM_ENABLE	BIT(7)
+#define FORCE_PWM_ENABLE	BIT(7)
 
-क्रमागत chips अणुTPS62360, TPS62361, TPS62362, TPS62363पूर्ण;
+enum chips {TPS62360, TPS62361, TPS62362, TPS62363};
 
-#घोषणा TPS62360_BASE_VOLTAGE	770000
-#घोषणा TPS62360_N_VOLTAGES	64
+#define TPS62360_BASE_VOLTAGE	770000
+#define TPS62360_N_VOLTAGES	64
 
-#घोषणा TPS62361_BASE_VOLTAGE	500000
-#घोषणा TPS62361_N_VOLTAGES	128
+#define TPS62361_BASE_VOLTAGE	500000
+#define TPS62361_N_VOLTAGES	128
 
-/* tps 62360 chip inक्रमmation */
-काष्ठा tps62360_chip अणु
-	काष्ठा device *dev;
-	काष्ठा regulator_desc desc;
-	काष्ठा regulator_dev *rdev;
-	काष्ठा regmap *regmap;
-	पूर्णांक vsel0_gpio;
-	पूर्णांक vsel1_gpio;
+/* tps 62360 chip information */
+struct tps62360_chip {
+	struct device *dev;
+	struct regulator_desc desc;
+	struct regulator_dev *rdev;
+	struct regmap *regmap;
+	int vsel0_gpio;
+	int vsel1_gpio;
 	u8 voltage_reg_mask;
-	bool en_पूर्णांकernal_pulldn;
-	bool en_disअक्षरge;
+	bool en_internal_pulldn;
+	bool en_discharge;
 	bool valid_gpios;
-	पूर्णांक lru_index[4];
-	पूर्णांक curr_vset_vsel[4];
-	पूर्णांक curr_vset_id;
-पूर्ण;
+	int lru_index[4];
+	int curr_vset_vsel[4];
+	int curr_vset_id;
+};
 
 /*
- * find_voltage_set_रेजिस्टर: Find new voltage configuration रेजिस्टर
+ * find_voltage_set_register: Find new voltage configuration register
  * (VSET) id.
- * The finding of the new VSET रेजिस्टर will be based on the LRU mechanism.
- * Each VSET रेजिस्टर will have dअगरferent voltage configured . This
- * Function will look अगर any of the VSET रेजिस्टर have requested voltage set
+ * The finding of the new VSET register will be based on the LRU mechanism.
+ * Each VSET register will have different voltage configured . This
+ * Function will look if any of the VSET register have requested voltage set
  * or not.
- *     - If it is alपढ़ोy there then it will make that रेजिस्टर as most
- *       recently used and वापस as found so that caller need not to set
- *       the VSET रेजिस्टर but need to set the proper gpios to select this
- *       VSET रेजिस्टर.
+ *     - If it is already there then it will make that register as most
+ *       recently used and return as found so that caller need not to set
+ *       the VSET register but need to set the proper gpios to select this
+ *       VSET register.
  *     - If requested voltage is not found then it will use the least
- *       recently mechanism to get new VSET रेजिस्टर क्रम new configuration
- *       and will वापस not_found so that caller need to set new VSET
- *       रेजिस्टर and then gpios (both).
+ *       recently mechanism to get new VSET register for new configuration
+ *       and will return not_found so that caller need to set new VSET
+ *       register and then gpios (both).
  */
-अटल bool find_voltage_set_रेजिस्टर(काष्ठा tps62360_chip *tps,
-		पूर्णांक req_vsel, पूर्णांक *vset_reg_id)
-अणु
-	पूर्णांक i;
+static bool find_voltage_set_register(struct tps62360_chip *tps,
+		int req_vsel, int *vset_reg_id)
+{
+	int i;
 	bool found = false;
-	पूर्णांक new_vset_reg = tps->lru_index[3];
-	पूर्णांक found_index = 3;
+	int new_vset_reg = tps->lru_index[3];
+	int found_index = 3;
 
-	क्रम (i = 0; i < 4; ++i) अणु
-		अगर (tps->curr_vset_vsel[tps->lru_index[i]] == req_vsel) अणु
+	for (i = 0; i < 4; ++i) {
+		if (tps->curr_vset_vsel[tps->lru_index[i]] == req_vsel) {
 			new_vset_reg = tps->lru_index[i];
 			found_index = i;
 			found = true;
-			जाओ update_lru_index;
-		पूर्ण
-	पूर्ण
+			goto update_lru_index;
+		}
+	}
 
 update_lru_index:
-	क्रम (i = found_index; i > 0; i--)
+	for (i = found_index; i > 0; i--)
 		tps->lru_index[i] = tps->lru_index[i - 1];
 
 	tps->lru_index[0] = new_vset_reg;
 	*vset_reg_id = new_vset_reg;
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल पूर्णांक tps62360_dcdc_get_voltage_sel(काष्ठा regulator_dev *dev)
-अणु
-	काष्ठा tps62360_chip *tps = rdev_get_drvdata(dev);
-	पूर्णांक vsel;
-	अचिन्हित पूर्णांक data;
-	पूर्णांक ret;
+static int tps62360_dcdc_get_voltage_sel(struct regulator_dev *dev)
+{
+	struct tps62360_chip *tps = rdev_get_drvdata(dev);
+	int vsel;
+	unsigned int data;
+	int ret;
 
-	ret = regmap_पढ़ो(tps->regmap, REG_VSET0 + tps->curr_vset_id, &data);
-	अगर (ret < 0) अणु
+	ret = regmap_read(tps->regmap, REG_VSET0 + tps->curr_vset_id, &data);
+	if (ret < 0) {
 		dev_err(tps->dev, "%s(): register %d read failed with err %d\n",
 			__func__, REG_VSET0 + tps->curr_vset_id, ret);
-		वापस ret;
-	पूर्ण
-	vsel = (पूर्णांक)data & tps->voltage_reg_mask;
-	वापस vsel;
-पूर्ण
+		return ret;
+	}
+	vsel = (int)data & tps->voltage_reg_mask;
+	return vsel;
+}
 
-अटल पूर्णांक tps62360_dcdc_set_voltage_sel(काष्ठा regulator_dev *dev,
-					 अचिन्हित selector)
-अणु
-	काष्ठा tps62360_chip *tps = rdev_get_drvdata(dev);
-	पूर्णांक ret;
+static int tps62360_dcdc_set_voltage_sel(struct regulator_dev *dev,
+					 unsigned selector)
+{
+	struct tps62360_chip *tps = rdev_get_drvdata(dev);
+	int ret;
 	bool found = false;
-	पूर्णांक new_vset_id = tps->curr_vset_id;
+	int new_vset_id = tps->curr_vset_id;
 
 	/*
-	 * If gpios are available to select the VSET रेजिस्टर then least
-	 * recently used रेजिस्टर क्रम new configuration.
+	 * If gpios are available to select the VSET register then least
+	 * recently used register for new configuration.
 	 */
-	अगर (tps->valid_gpios)
-		found = find_voltage_set_रेजिस्टर(tps, selector, &new_vset_id);
+	if (tps->valid_gpios)
+		found = find_voltage_set_register(tps, selector, &new_vset_id);
 
-	अगर (!found) अणु
+	if (!found) {
 		ret = regmap_update_bits(tps->regmap, REG_VSET0 + new_vset_id,
 				tps->voltage_reg_mask, selector);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(tps->dev,
 				"%s(): register %d update failed with err %d\n",
 				 __func__, REG_VSET0 + new_vset_id, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		tps->curr_vset_id = new_vset_id;
 		tps->curr_vset_vsel[new_vset_id] = selector;
-	पूर्ण
+	}
 
-	/* Select proper VSET रेजिस्टर vio gpios */
-	अगर (tps->valid_gpios) अणु
+	/* Select proper VSET register vio gpios */
+	if (tps->valid_gpios) {
 		gpio_set_value_cansleep(tps->vsel0_gpio, new_vset_id & 0x1);
 		gpio_set_value_cansleep(tps->vsel1_gpio,
 					(new_vset_id >> 1) & 0x1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक tps62360_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा tps62360_chip *tps = rdev_get_drvdata(rdev);
-	पूर्णांक i;
-	पूर्णांक val;
-	पूर्णांक ret;
+static int tps62360_set_mode(struct regulator_dev *rdev, unsigned int mode)
+{
+	struct tps62360_chip *tps = rdev_get_drvdata(rdev);
+	int i;
+	int val;
+	int ret;
 
-	/* Enable क्रमce PWM mode in FAST mode only. */
-	चयन (mode) अणु
-	हाल REGULATOR_MODE_FAST:
+	/* Enable force PWM mode in FAST mode only. */
+	switch (mode) {
+	case REGULATOR_MODE_FAST:
 		val = FORCE_PWM_ENABLE;
-		अवरोध;
+		break;
 
-	हाल REGULATOR_MODE_NORMAL:
+	case REGULATOR_MODE_NORMAL:
 		val = 0;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	अगर (!tps->valid_gpios) अणु
+	if (!tps->valid_gpios) {
 		ret = regmap_update_bits(tps->regmap,
 			REG_VSET0 + tps->curr_vset_id, FORCE_PWM_ENABLE, val);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(tps->dev,
 				"%s(): register %d update failed with err %d\n",
 				__func__, REG_VSET0 + tps->curr_vset_id, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* If gpios are valid then all रेजिस्टर set need to be control */
-	क्रम (i = 0; i < 4; ++i) अणु
+	/* If gpios are valid then all register set need to be control */
+	for (i = 0; i < 4; ++i) {
 		ret = regmap_update_bits(tps->regmap,
 					REG_VSET0 + i, FORCE_PWM_ENABLE, val);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(tps->dev,
 				"%s(): register %d update failed with err %d\n",
 				__func__, REG_VSET0 + i, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			return ret;
+		}
+	}
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक tps62360_get_mode(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा tps62360_chip *tps = rdev_get_drvdata(rdev);
-	अचिन्हित पूर्णांक data;
-	पूर्णांक ret;
+static unsigned int tps62360_get_mode(struct regulator_dev *rdev)
+{
+	struct tps62360_chip *tps = rdev_get_drvdata(rdev);
+	unsigned int data;
+	int ret;
 
-	ret = regmap_पढ़ो(tps->regmap, REG_VSET0 + tps->curr_vset_id, &data);
-	अगर (ret < 0) अणु
+	ret = regmap_read(tps->regmap, REG_VSET0 + tps->curr_vset_id, &data);
+	if (ret < 0) {
 		dev_err(tps->dev, "%s(): register %d read failed with err %d\n",
 			__func__, REG_VSET0 + tps->curr_vset_id, ret);
-		वापस ret;
-	पूर्ण
-	वापस (data & FORCE_PWM_ENABLE) ?
+		return ret;
+	}
+	return (data & FORCE_PWM_ENABLE) ?
 				REGULATOR_MODE_FAST : REGULATOR_MODE_NORMAL;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा regulator_ops tps62360_dcdc_ops = अणु
+static const struct regulator_ops tps62360_dcdc_ops = {
 	.get_voltage_sel	= tps62360_dcdc_get_voltage_sel,
 	.set_voltage_sel	= tps62360_dcdc_set_voltage_sel,
 	.list_voltage		= regulator_list_voltage_linear,
 	.map_voltage		= regulator_map_voltage_linear,
-	.set_voltage_समय_sel	= regulator_set_voltage_समय_sel,
+	.set_voltage_time_sel	= regulator_set_voltage_time_sel,
 	.set_mode		= tps62360_set_mode,
 	.get_mode		= tps62360_get_mode,
-पूर्ण;
+};
 
-अटल पूर्णांक tps62360_init_dcdc(काष्ठा tps62360_chip *tps,
-		काष्ठा tps62360_regulator_platक्रमm_data *pdata)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक ramp_ctrl;
+static int tps62360_init_dcdc(struct tps62360_chip *tps,
+		struct tps62360_regulator_platform_data *pdata)
+{
+	int ret;
+	unsigned int ramp_ctrl;
 
-	/* Initialize पूर्णांकernal pull up/करोwn control */
-	अगर (tps->en_पूर्णांकernal_pulldn)
-		ret = regmap_ग_लिखो(tps->regmap, REG_CONTROL, 0xE0);
-	अन्यथा
-		ret = regmap_ग_लिखो(tps->regmap, REG_CONTROL, 0x0);
-	अगर (ret < 0) अणु
+	/* Initialize internal pull up/down control */
+	if (tps->en_internal_pulldn)
+		ret = regmap_write(tps->regmap, REG_CONTROL, 0xE0);
+	else
+		ret = regmap_write(tps->regmap, REG_CONTROL, 0x0);
+	if (ret < 0) {
 		dev_err(tps->dev,
 			"%s(): register %d write failed with err %d\n",
 			__func__, REG_CONTROL, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Reset output disअक्षरge path to reduce घातer consumption */
+	/* Reset output discharge path to reduce power consumption */
 	ret = regmap_update_bits(tps->regmap, REG_RAMPCTRL, BIT(2), 0);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(tps->dev,
 			"%s(): register %d update failed with err %d\n",
 			__func__, REG_RAMPCTRL, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Get ramp value from ramp control रेजिस्टर */
-	ret = regmap_पढ़ो(tps->regmap, REG_RAMPCTRL, &ramp_ctrl);
-	अगर (ret < 0) अणु
+	/* Get ramp value from ramp control register */
+	ret = regmap_read(tps->regmap, REG_RAMPCTRL, &ramp_ctrl);
+	if (ret < 0) {
 		dev_err(tps->dev,
 			"%s(): register %d read failed with err %d\n",
 			__func__, REG_RAMPCTRL, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ramp_ctrl = (ramp_ctrl >> 5) & 0x7;
 
 	/* ramp mV/us = 32/(2^ramp_ctrl) */
 	tps->desc.ramp_delay = DIV_ROUND_UP(32000, BIT(ramp_ctrl));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा regmap_config tps62360_regmap_config = अणु
+static const struct regmap_config tps62360_regmap_config = {
 	.reg_bits		= 8,
 	.val_bits		= 8,
-	.max_रेजिस्टर		= REG_CHIPID,
+	.max_register		= REG_CHIPID,
 	.cache_type		= REGCACHE_RBTREE,
-पूर्ण;
+};
 
-अटल काष्ठा tps62360_regulator_platक्रमm_data *
-	of_get_tps62360_platक्रमm_data(काष्ठा device *dev,
-				      स्थिर काष्ठा regulator_desc *desc)
-अणु
-	काष्ठा tps62360_regulator_platक्रमm_data *pdata;
-	काष्ठा device_node *np = dev->of_node;
+static struct tps62360_regulator_platform_data *
+	of_get_tps62360_platform_data(struct device *dev,
+				      const struct regulator_desc *desc)
+{
+	struct tps62360_regulator_platform_data *pdata;
+	struct device_node *np = dev->of_node;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस शून्य;
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return NULL;
 
 	pdata->reg_init_data = of_get_regulator_init_data(dev, dev->of_node,
 							  desc);
-	अगर (!pdata->reg_init_data) अणु
+	if (!pdata->reg_init_data) {
 		dev_err(dev, "Not able to get OF regulator init data\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	pdata->vsel0_gpio = of_get_named_gpio(np, "vsel0-gpio", 0);
 	pdata->vsel1_gpio = of_get_named_gpio(np, "vsel1-gpio", 0);
 
-	अगर (of_find_property(np, "ti,vsel0-state-high", शून्य))
+	if (of_find_property(np, "ti,vsel0-state-high", NULL))
 		pdata->vsel0_def_state = 1;
 
-	अगर (of_find_property(np, "ti,vsel1-state-high", शून्य))
+	if (of_find_property(np, "ti,vsel1-state-high", NULL))
 		pdata->vsel1_def_state = 1;
 
-	अगर (of_find_property(np, "ti,enable-pull-down", शून्य))
-		pdata->en_पूर्णांकernal_pulldn = true;
+	if (of_find_property(np, "ti,enable-pull-down", NULL))
+		pdata->en_internal_pulldn = true;
 
-	अगर (of_find_property(np, "ti,enable-vout-discharge", शून्य))
-		pdata->en_disअक्षरge = true;
+	if (of_find_property(np, "ti,enable-vout-discharge", NULL))
+		pdata->en_discharge = true;
 
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id tps62360_of_match[] = अणु
-	 अणु .compatible = "ti,tps62360", .data = (व्योम *)TPS62360पूर्ण,
-	 अणु .compatible = "ti,tps62361", .data = (व्योम *)TPS62361पूर्ण,
-	 अणु .compatible = "ti,tps62362", .data = (व्योम *)TPS62362पूर्ण,
-	 अणु .compatible = "ti,tps62363", .data = (व्योम *)TPS62363पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#if defined(CONFIG_OF)
+static const struct of_device_id tps62360_of_match[] = {
+	 { .compatible = "ti,tps62360", .data = (void *)TPS62360},
+	 { .compatible = "ti,tps62361", .data = (void *)TPS62361},
+	 { .compatible = "ti,tps62362", .data = (void *)TPS62362},
+	 { .compatible = "ti,tps62363", .data = (void *)TPS62363},
+	{},
+};
 MODULE_DEVICE_TABLE(of, tps62360_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक tps62360_probe(काष्ठा i2c_client *client,
-				     स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा tps62360_regulator_platक्रमm_data *pdata;
-	काष्ठा regulator_dev *rdev;
-	काष्ठा tps62360_chip *tps;
-	पूर्णांक ret;
-	पूर्णांक i;
-	पूर्णांक chip_id;
+static int tps62360_probe(struct i2c_client *client,
+				     const struct i2c_device_id *id)
+{
+	struct regulator_config config = { };
+	struct tps62360_regulator_platform_data *pdata;
+	struct regulator_dev *rdev;
+	struct tps62360_chip *tps;
+	int ret;
+	int i;
+	int chip_id;
 
 	pdata = dev_get_platdata(&client->dev);
 
-	tps = devm_kzalloc(&client->dev, माप(*tps), GFP_KERNEL);
-	अगर (!tps)
-		वापस -ENOMEM;
+	tps = devm_kzalloc(&client->dev, sizeof(*tps), GFP_KERNEL);
+	if (!tps)
+		return -ENOMEM;
 
 	tps->desc.name = client->name;
 	tps->desc.id = 0;
@@ -364,62 +363,62 @@ MODULE_DEVICE_TABLE(of, tps62360_of_match);
 	tps->desc.owner = THIS_MODULE;
 	tps->desc.uV_step = 10000;
 
-	अगर (client->dev.of_node) अणु
-		स्थिर काष्ठा of_device_id *match;
+	if (client->dev.of_node) {
+		const struct of_device_id *match;
 		match = of_match_device(of_match_ptr(tps62360_of_match),
 				&client->dev);
-		अगर (!match) अणु
+		if (!match) {
 			dev_err(&client->dev, "Error: No device match found\n");
-			वापस -ENODEV;
-		पूर्ण
-		chip_id = (पूर्णांक)(दीर्घ)match->data;
-		अगर (!pdata)
-			pdata = of_get_tps62360_platक्रमm_data(&client->dev,
+			return -ENODEV;
+		}
+		chip_id = (int)(long)match->data;
+		if (!pdata)
+			pdata = of_get_tps62360_platform_data(&client->dev,
 							      &tps->desc);
-	पूर्ण अन्यथा अगर (id) अणु
+	} else if (id) {
 		chip_id = id->driver_data;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&client->dev, "No device tree match or id table match found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&client->dev, "%s(): Platform data not found\n",
 						__func__);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	tps->en_disअक्षरge = pdata->en_disअक्षरge;
-	tps->en_पूर्णांकernal_pulldn = pdata->en_पूर्णांकernal_pulldn;
+	tps->en_discharge = pdata->en_discharge;
+	tps->en_internal_pulldn = pdata->en_internal_pulldn;
 	tps->vsel0_gpio = pdata->vsel0_gpio;
 	tps->vsel1_gpio = pdata->vsel1_gpio;
 	tps->dev = &client->dev;
 
-	चयन (chip_id) अणु
-	हाल TPS62360:
-	हाल TPS62362:
+	switch (chip_id) {
+	case TPS62360:
+	case TPS62362:
 		tps->desc.min_uV = TPS62360_BASE_VOLTAGE;
 		tps->voltage_reg_mask = 0x3F;
 		tps->desc.n_voltages = TPS62360_N_VOLTAGES;
-		अवरोध;
-	हाल TPS62361:
-	हाल TPS62363:
+		break;
+	case TPS62361:
+	case TPS62363:
 		tps->desc.min_uV = TPS62361_BASE_VOLTAGE;
 		tps->voltage_reg_mask = 0x7F;
 		tps->desc.n_voltages = TPS62361_N_VOLTAGES;
-		अवरोध;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
+		break;
+	default:
+		return -ENODEV;
+	}
 
 	tps->regmap = devm_regmap_init_i2c(client, &tps62360_regmap_config);
-	अगर (IS_ERR(tps->regmap)) अणु
+	if (IS_ERR(tps->regmap)) {
 		ret = PTR_ERR(tps->regmap);
 		dev_err(&client->dev,
 			"%s(): regmap allocation failed with err %d\n",
 			__func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	i2c_set_clientdata(client, tps);
 
 	tps->curr_vset_id = (pdata->vsel1_def_state & 1) * 2 +
@@ -427,47 +426,47 @@ MODULE_DEVICE_TABLE(of, tps62360_of_match);
 	tps->lru_index[0] = tps->curr_vset_id;
 	tps->valid_gpios = false;
 
-	अगर (gpio_is_valid(tps->vsel0_gpio) && gpio_is_valid(tps->vsel1_gpio)) अणु
-		पूर्णांक gpio_flags;
+	if (gpio_is_valid(tps->vsel0_gpio) && gpio_is_valid(tps->vsel1_gpio)) {
+		int gpio_flags;
 		gpio_flags = (pdata->vsel0_def_state) ?
 				GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW;
 		ret = devm_gpio_request_one(&client->dev, tps->vsel0_gpio,
 				gpio_flags, "tps62360-vsel0");
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"%s(): Could not obtain vsel0 GPIO %d: %d\n",
 				__func__, tps->vsel0_gpio, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		gpio_flags = (pdata->vsel1_def_state) ?
 				GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW;
 		ret = devm_gpio_request_one(&client->dev, tps->vsel1_gpio,
 				gpio_flags, "tps62360-vsel1");
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev,
 				"%s(): Could not obtain vsel1 GPIO %d: %d\n",
 				__func__, tps->vsel1_gpio, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		tps->valid_gpios = true;
 
 		/*
 		 * Initialize the lru index with vset_reg id
 		 * The index 0 will be most recently used and
 		 * set with the tps->curr_vset_id */
-		क्रम (i = 0; i < 4; ++i)
+		for (i = 0; i < 4; ++i)
 			tps->lru_index[i] = i;
 		tps->lru_index[0] = tps->curr_vset_id;
 		tps->lru_index[tps->curr_vset_id] = 0;
-	पूर्ण
+	}
 
 	ret = tps62360_init_dcdc(tps, pdata);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(tps->dev, "%s(): Init failed with err = %d\n",
 				__func__, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	config.dev = &client->dev;
 	config.init_data = pdata->reg_init_data;
@@ -475,65 +474,65 @@ MODULE_DEVICE_TABLE(of, tps62360_of_match);
 	config.of_node = client->dev.of_node;
 
 	/* Register the regulators */
-	rdev = devm_regulator_रेजिस्टर(&client->dev, &tps->desc, &config);
-	अगर (IS_ERR(rdev)) अणु
+	rdev = devm_regulator_register(&client->dev, &tps->desc, &config);
+	if (IS_ERR(rdev)) {
 		dev_err(tps->dev,
 			"%s(): regulator register failed with err %s\n",
 			__func__, id->name);
-		वापस PTR_ERR(rdev);
-	पूर्ण
+		return PTR_ERR(rdev);
+	}
 
 	tps->rdev = rdev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tps62360_shutकरोwn(काष्ठा i2c_client *client)
-अणु
-	काष्ठा tps62360_chip *tps = i2c_get_clientdata(client);
-	पूर्णांक st;
+static void tps62360_shutdown(struct i2c_client *client)
+{
+	struct tps62360_chip *tps = i2c_get_clientdata(client);
+	int st;
 
-	अगर (!tps->en_disअक्षरge)
-		वापस;
+	if (!tps->en_discharge)
+		return;
 
-	/* Configure the output disअक्षरge path */
+	/* Configure the output discharge path */
 	st = regmap_update_bits(tps->regmap, REG_RAMPCTRL, BIT(2), BIT(2));
-	अगर (st < 0)
+	if (st < 0)
 		dev_err(tps->dev,
 			"%s(): register %d update failed with err %d\n",
 			__func__, REG_RAMPCTRL, st);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_device_id tps62360_id[] = अणु
-	अणु.name = "tps62360", .driver_data = TPS62360पूर्ण,
-	अणु.name = "tps62361", .driver_data = TPS62361पूर्ण,
-	अणु.name = "tps62362", .driver_data = TPS62362पूर्ण,
-	अणु.name = "tps62363", .driver_data = TPS62363पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct i2c_device_id tps62360_id[] = {
+	{.name = "tps62360", .driver_data = TPS62360},
+	{.name = "tps62361", .driver_data = TPS62361},
+	{.name = "tps62362", .driver_data = TPS62362},
+	{.name = "tps62363", .driver_data = TPS62363},
+	{},
+};
 
 MODULE_DEVICE_TABLE(i2c, tps62360_id);
 
-अटल काष्ठा i2c_driver tps62360_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver tps62360_i2c_driver = {
+	.driver = {
 		.name = "tps62360",
 		.of_match_table = of_match_ptr(tps62360_of_match),
-	पूर्ण,
+	},
 	.probe = tps62360_probe,
-	.shutकरोwn = tps62360_shutकरोwn,
+	.shutdown = tps62360_shutdown,
 	.id_table = tps62360_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init tps62360_init(व्योम)
-अणु
-	वापस i2c_add_driver(&tps62360_i2c_driver);
-पूर्ण
+static int __init tps62360_init(void)
+{
+	return i2c_add_driver(&tps62360_i2c_driver);
+}
 subsys_initcall(tps62360_init);
 
-अटल व्योम __निकास tps62360_cleanup(व्योम)
-अणु
+static void __exit tps62360_cleanup(void)
+{
 	i2c_del_driver(&tps62360_i2c_driver);
-पूर्ण
-module_निकास(tps62360_cleanup);
+}
+module_exit(tps62360_cleanup);
 
 MODULE_AUTHOR("Laxman Dewangan <ldewangan@nvidia.com>");
 MODULE_DESCRIPTION("TPS6236x voltage regulator driver");

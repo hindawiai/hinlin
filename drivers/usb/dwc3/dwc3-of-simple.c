@@ -1,199 +1,198 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * dwc3-of-simple.c - OF glue layer क्रम simple पूर्णांकegrations
+ * dwc3-of-simple.c - OF glue layer for simple integrations
  *
  * Copyright (c) 2015 Texas Instruments Incorporated - https://www.ti.com
  *
  * Author: Felipe Balbi <balbi@ti.com>
  *
  * This is a combination of the old dwc3-qcom.c by Ivan T. Ivanov
- * <iivanov@mm-sol.com> and the original patch adding support क्रम Xilinx' SoC
+ * <iivanov@mm-sol.com> and the original patch adding support for Xilinx' SoC
  * by Subbaraya Sundeep Bhatta <subbaraya.sundeep.bhatta@xilinx.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/platform_device.h>
+#include <linux/dma-mapping.h>
+#include <linux/clk.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
 
-काष्ठा dwc3_of_simple अणु
-	काष्ठा device		*dev;
-	काष्ठा clk_bulk_data	*clks;
-	पूर्णांक			num_घड़ीs;
-	काष्ठा reset_control	*resets;
+struct dwc3_of_simple {
+	struct device		*dev;
+	struct clk_bulk_data	*clks;
+	int			num_clocks;
+	struct reset_control	*resets;
 	bool			need_reset;
-पूर्ण;
+};
 
-अटल पूर्णांक dwc3_of_simple_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_of_simple	*simple;
-	काष्ठा device		*dev = &pdev->dev;
-	काष्ठा device_node	*np = dev->of_node;
+static int dwc3_of_simple_probe(struct platform_device *pdev)
+{
+	struct dwc3_of_simple	*simple;
+	struct device		*dev = &pdev->dev;
+	struct device_node	*np = dev->of_node;
 
-	पूर्णांक			ret;
+	int			ret;
 
-	simple = devm_kzalloc(dev, माप(*simple), GFP_KERNEL);
-	अगर (!simple)
-		वापस -ENOMEM;
+	simple = devm_kzalloc(dev, sizeof(*simple), GFP_KERNEL);
+	if (!simple)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, simple);
+	platform_set_drvdata(pdev, simple);
 	simple->dev = dev;
 
 	/*
-	 * Some controllers need to toggle the usb3-otg reset beक्रमe trying to
-	 * initialize the PHY, otherwise the PHY बार out.
+	 * Some controllers need to toggle the usb3-otg reset before trying to
+	 * initialize the PHY, otherwise the PHY times out.
 	 */
-	अगर (of_device_is_compatible(np, "rockchip,rk3399-dwc3"))
+	if (of_device_is_compatible(np, "rockchip,rk3399-dwc3"))
 		simple->need_reset = true;
 
 	simple->resets = of_reset_control_array_get(np, false, true,
 						    true);
-	अगर (IS_ERR(simple->resets)) अणु
+	if (IS_ERR(simple->resets)) {
 		ret = PTR_ERR(simple->resets);
 		dev_err(dev, "failed to get device resets, err=%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = reset_control_deनिश्चित(simple->resets);
-	अगर (ret)
-		जाओ err_resetc_put;
+	ret = reset_control_deassert(simple->resets);
+	if (ret)
+		goto err_resetc_put;
 
 	ret = clk_bulk_get_all(simple->dev, &simple->clks);
-	अगर (ret < 0)
-		जाओ err_resetc_निश्चित;
+	if (ret < 0)
+		goto err_resetc_assert;
 
-	simple->num_घड़ीs = ret;
-	ret = clk_bulk_prepare_enable(simple->num_घड़ीs, simple->clks);
-	अगर (ret)
-		जाओ err_resetc_निश्चित;
+	simple->num_clocks = ret;
+	ret = clk_bulk_prepare_enable(simple->num_clocks, simple->clks);
+	if (ret)
+		goto err_resetc_assert;
 
-	ret = of_platक्रमm_populate(np, शून्य, शून्य, dev);
-	अगर (ret)
-		जाओ err_clk_put;
+	ret = of_platform_populate(np, NULL, NULL, dev);
+	if (ret)
+		goto err_clk_put;
 
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
-	pm_runसमय_get_sync(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_get_sync(dev);
 
-	वापस 0;
+	return 0;
 
 err_clk_put:
-	clk_bulk_disable_unprepare(simple->num_घड़ीs, simple->clks);
-	clk_bulk_put_all(simple->num_घड़ीs, simple->clks);
+	clk_bulk_disable_unprepare(simple->num_clocks, simple->clks);
+	clk_bulk_put_all(simple->num_clocks, simple->clks);
 
-err_resetc_निश्चित:
-	reset_control_निश्चित(simple->resets);
+err_resetc_assert:
+	reset_control_assert(simple->resets);
 
 err_resetc_put:
 	reset_control_put(simple->resets);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __dwc3_of_simple_tearकरोwn(काष्ठा dwc3_of_simple *simple)
-अणु
-	of_platक्रमm_depopulate(simple->dev);
+static void __dwc3_of_simple_teardown(struct dwc3_of_simple *simple)
+{
+	of_platform_depopulate(simple->dev);
 
-	clk_bulk_disable_unprepare(simple->num_घड़ीs, simple->clks);
-	clk_bulk_put_all(simple->num_घड़ीs, simple->clks);
-	simple->num_घड़ीs = 0;
+	clk_bulk_disable_unprepare(simple->num_clocks, simple->clks);
+	clk_bulk_put_all(simple->num_clocks, simple->clks);
+	simple->num_clocks = 0;
 
-	reset_control_निश्चित(simple->resets);
+	reset_control_assert(simple->resets);
 
 	reset_control_put(simple->resets);
 
-	pm_runसमय_disable(simple->dev);
-	pm_runसमय_put_noidle(simple->dev);
-	pm_runसमय_set_suspended(simple->dev);
-पूर्ण
+	pm_runtime_disable(simple->dev);
+	pm_runtime_put_noidle(simple->dev);
+	pm_runtime_set_suspended(simple->dev);
+}
 
-अटल पूर्णांक dwc3_of_simple_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_of_simple	*simple = platक्रमm_get_drvdata(pdev);
+static int dwc3_of_simple_remove(struct platform_device *pdev)
+{
+	struct dwc3_of_simple	*simple = platform_get_drvdata(pdev);
 
-	__dwc3_of_simple_tearकरोwn(simple);
+	__dwc3_of_simple_teardown(simple);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dwc3_of_simple_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_of_simple	*simple = platक्रमm_get_drvdata(pdev);
+static void dwc3_of_simple_shutdown(struct platform_device *pdev)
+{
+	struct dwc3_of_simple	*simple = platform_get_drvdata(pdev);
 
-	__dwc3_of_simple_tearकरोwn(simple);
-पूर्ण
+	__dwc3_of_simple_teardown(simple);
+}
 
-अटल पूर्णांक __maybe_unused dwc3_of_simple_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_of_simple	*simple = dev_get_drvdata(dev);
+static int __maybe_unused dwc3_of_simple_runtime_suspend(struct device *dev)
+{
+	struct dwc3_of_simple	*simple = dev_get_drvdata(dev);
 
-	clk_bulk_disable(simple->num_घड़ीs, simple->clks);
+	clk_bulk_disable(simple->num_clocks, simple->clks);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused dwc3_of_simple_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_of_simple	*simple = dev_get_drvdata(dev);
+static int __maybe_unused dwc3_of_simple_runtime_resume(struct device *dev)
+{
+	struct dwc3_of_simple	*simple = dev_get_drvdata(dev);
 
-	वापस clk_bulk_enable(simple->num_घड़ीs, simple->clks);
-पूर्ण
+	return clk_bulk_enable(simple->num_clocks, simple->clks);
+}
 
-अटल पूर्णांक __maybe_unused dwc3_of_simple_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_of_simple *simple = dev_get_drvdata(dev);
+static int __maybe_unused dwc3_of_simple_suspend(struct device *dev)
+{
+	struct dwc3_of_simple *simple = dev_get_drvdata(dev);
 
-	अगर (simple->need_reset)
-		reset_control_निश्चित(simple->resets);
+	if (simple->need_reset)
+		reset_control_assert(simple->resets);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused dwc3_of_simple_resume(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_of_simple *simple = dev_get_drvdata(dev);
+static int __maybe_unused dwc3_of_simple_resume(struct device *dev)
+{
+	struct dwc3_of_simple *simple = dev_get_drvdata(dev);
 
-	अगर (simple->need_reset)
-		reset_control_deनिश्चित(simple->resets);
+	if (simple->need_reset)
+		reset_control_deassert(simple->resets);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dwc3_of_simple_dev_pm_ops = अणु
+static const struct dev_pm_ops dwc3_of_simple_dev_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(dwc3_of_simple_suspend, dwc3_of_simple_resume)
-	SET_RUNTIME_PM_OPS(dwc3_of_simple_runसमय_suspend,
-			dwc3_of_simple_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(dwc3_of_simple_runtime_suspend,
+			dwc3_of_simple_runtime_resume, NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id of_dwc3_simple_match[] = अणु
-	अणु .compatible = "rockchip,rk3399-dwc3" पूर्ण,
-	अणु .compatible = "cavium,octeon-7130-usb-uctl" पूर्ण,
-	अणु .compatible = "sprd,sc9860-dwc3" पूर्ण,
-	अणु .compatible = "allwinner,sun50i-h6-dwc3" पूर्ण,
-	अणु .compatible = "hisilicon,hi3670-dwc3" पूर्ण,
-	अणु .compatible = "intel,keembay-dwc3" पूर्ण,
-	अणु /* Sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id of_dwc3_simple_match[] = {
+	{ .compatible = "rockchip,rk3399-dwc3" },
+	{ .compatible = "cavium,octeon-7130-usb-uctl" },
+	{ .compatible = "sprd,sc9860-dwc3" },
+	{ .compatible = "allwinner,sun50i-h6-dwc3" },
+	{ .compatible = "hisilicon,hi3670-dwc3" },
+	{ .compatible = "intel,keembay-dwc3" },
+	{ /* Sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, of_dwc3_simple_match);
 
-अटल काष्ठा platक्रमm_driver dwc3_of_simple_driver = अणु
+static struct platform_driver dwc3_of_simple_driver = {
 	.probe		= dwc3_of_simple_probe,
-	.हटाओ		= dwc3_of_simple_हटाओ,
-	.shutकरोwn	= dwc3_of_simple_shutकरोwn,
-	.driver		= अणु
+	.remove		= dwc3_of_simple_remove,
+	.shutdown	= dwc3_of_simple_shutdown,
+	.driver		= {
 		.name	= "dwc3-of-simple",
 		.of_match_table = of_dwc3_simple_match,
 		.pm	= &dwc3_of_simple_dev_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(dwc3_of_simple_driver);
+module_platform_driver(dwc3_of_simple_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("DesignWare USB3 OF Simple Glue Layer");
 MODULE_AUTHOR("Felipe Balbi <balbi@ti.com>");

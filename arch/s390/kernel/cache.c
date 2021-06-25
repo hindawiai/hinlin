@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Extract CPU cache inक्रमmation and expose them via sysfs.
+ * Extract CPU cache information and expose them via sysfs.
  *
  *    Copyright IBM Corp. 2012
  *    Author(s): Heiko Carstens <heiko.carstens@de.ibm.com>
  */
 
-#समावेश <linux/seq_file.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cacheinfo.h>
-#समावेश <यंत्र/facility.h>
+#include <linux/seq_file.h>
+#include <linux/cpu.h>
+#include <linux/cacheinfo.h>
+#include <asm/facility.h>
 
-क्रमागत अणु
+enum {
 	CACHE_SCOPE_NOTEXISTS,
 	CACHE_SCOPE_PRIVATE,
 	CACHE_SCOPE_SHARED,
 	CACHE_SCOPE_RESERVED,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CTYPE_SEPARATE,
 	CTYPE_DATA,
 	CTYPE_INSTRUCTION,
 	CTYPE_UNIFIED,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	EXTRACT_TOPOLOGY,
 	EXTRACT_LINE_SIZE,
 	EXTRACT_SIZE,
 	EXTRACT_ASSOCIATIVITY,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CACHE_TI_UNIFIED = 0,
 	CACHE_TI_DATA = 0,
 	CACHE_TI_INSTRUCTION,
-पूर्ण;
+};
 
-काष्ठा cache_info अणु
-	अचिन्हित अक्षर	    : 4;
-	अचिन्हित अक्षर scope : 2;
-	अचिन्हित अक्षर type  : 2;
-पूर्ण;
+struct cache_info {
+	unsigned char	    : 4;
+	unsigned char scope : 2;
+	unsigned char type  : 2;
+};
 
-#घोषणा CACHE_MAX_LEVEL 8
-जोड़ cache_topology अणु
-	काष्ठा cache_info ci[CACHE_MAX_LEVEL];
-	अचिन्हित दीर्घ दीर्घ raw;
-पूर्ण;
+#define CACHE_MAX_LEVEL 8
+union cache_topology {
+	struct cache_info ci[CACHE_MAX_LEVEL];
+	unsigned long long raw;
+};
 
-अटल स्थिर अक्षर * स्थिर cache_type_string[] = अणु
+static const char * const cache_type_string[] = {
 	"",
 	"Instruction",
 	"Data",
 	"",
 	"Unified",
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत cache_type cache_type_map[] = अणु
+static const enum cache_type cache_type_map[] = {
 	[CTYPE_SEPARATE] = CACHE_TYPE_SEPARATE,
 	[CTYPE_DATA] = CACHE_TYPE_DATA,
 	[CTYPE_INSTRUCTION] = CACHE_TYPE_INST,
 	[CTYPE_UNIFIED] = CACHE_TYPE_UNIFIED,
-पूर्ण;
+};
 
-व्योम show_cacheinfo(काष्ठा seq_file *m)
-अणु
-	काष्ठा cpu_cacheinfo *this_cpu_ci;
-	काष्ठा cacheinfo *cache;
-	पूर्णांक idx;
+void show_cacheinfo(struct seq_file *m)
+{
+	struct cpu_cacheinfo *this_cpu_ci;
+	struct cacheinfo *cache;
+	int idx;
 
-	अगर (!test_facility(34))
-		वापस;
+	if (!test_facility(34))
+		return;
 	this_cpu_ci = get_cpu_cacheinfo(cpumask_any(cpu_online_mask));
-	क्रम (idx = 0; idx < this_cpu_ci->num_leaves; idx++) अणु
+	for (idx = 0; idx < this_cpu_ci->num_leaves; idx++) {
 		cache = this_cpu_ci->info_list + idx;
-		seq_म_लिखो(m, "cache%-11d: ", idx);
-		seq_म_लिखो(m, "level=%d ", cache->level);
-		seq_म_लिखो(m, "type=%s ", cache_type_string[cache->type]);
-		seq_म_लिखो(m, "scope=%s ",
+		seq_printf(m, "cache%-11d: ", idx);
+		seq_printf(m, "level=%d ", cache->level);
+		seq_printf(m, "type=%s ", cache_type_string[cache->type]);
+		seq_printf(m, "scope=%s ",
 			   cache->disable_sysfs ? "Shared" : "Private");
-		seq_म_लिखो(m, "size=%dK ", cache->size >> 10);
-		seq_म_लिखो(m, "line_size=%u ", cache->coherency_line_size);
-		seq_म_लिखो(m, "associativity=%d", cache->ways_of_associativity);
-		seq_माला_दो(m, "\n");
-	पूर्ण
-पूर्ण
+		seq_printf(m, "size=%dK ", cache->size >> 10);
+		seq_printf(m, "line_size=%u ", cache->coherency_line_size);
+		seq_printf(m, "associativity=%d", cache->ways_of_associativity);
+		seq_puts(m, "\n");
+	}
+}
 
-अटल अंतरभूत क्रमागत cache_type get_cache_type(काष्ठा cache_info *ci, पूर्णांक level)
-अणु
-	अगर (level >= CACHE_MAX_LEVEL)
-		वापस CACHE_TYPE_NOCACHE;
+static inline enum cache_type get_cache_type(struct cache_info *ci, int level)
+{
+	if (level >= CACHE_MAX_LEVEL)
+		return CACHE_TYPE_NOCACHE;
 	ci += level;
-	अगर (ci->scope != CACHE_SCOPE_SHARED && ci->scope != CACHE_SCOPE_PRIVATE)
-		वापस CACHE_TYPE_NOCACHE;
-	वापस cache_type_map[ci->type];
-पूर्ण
+	if (ci->scope != CACHE_SCOPE_SHARED && ci->scope != CACHE_SCOPE_PRIVATE)
+		return CACHE_TYPE_NOCACHE;
+	return cache_type_map[ci->type];
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ ecag(पूर्णांक ai, पूर्णांक li, पूर्णांक ti)
-अणु
-	वापस __ecag(ECAG_CACHE_ATTRIBUTE, ai << 4 | li << 1 | ti);
-पूर्ण
+static inline unsigned long ecag(int ai, int li, int ti)
+{
+	return __ecag(ECAG_CACHE_ATTRIBUTE, ai << 4 | li << 1 | ti);
+}
 
-अटल व्योम ci_leaf_init(काष्ठा cacheinfo *this_leaf, पूर्णांक निजी,
-			 क्रमागत cache_type type, अचिन्हित पूर्णांक level, पूर्णांक cpu)
-अणु
-	पूर्णांक ti, num_sets;
+static void ci_leaf_init(struct cacheinfo *this_leaf, int private,
+			 enum cache_type type, unsigned int level, int cpu)
+{
+	int ti, num_sets;
 
-	अगर (type == CACHE_TYPE_INST)
+	if (type == CACHE_TYPE_INST)
 		ti = CACHE_TI_INSTRUCTION;
-	अन्यथा
+	else
 		ti = CACHE_TI_UNIFIED;
 	this_leaf->level = level + 1;
 	this_leaf->type = type;
@@ -122,57 +121,57 @@
 	num_sets /= this_leaf->ways_of_associativity;
 	this_leaf->number_of_sets = num_sets;
 	cpumask_set_cpu(cpu, &this_leaf->shared_cpu_map);
-	अगर (!निजी)
+	if (!private)
 		this_leaf->disable_sysfs = true;
-पूर्ण
+}
 
-पूर्णांक init_cache_level(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
-	अचिन्हित पूर्णांक level = 0, leaves = 0;
-	जोड़ cache_topology ct;
-	क्रमागत cache_type ctype;
+int init_cache_level(unsigned int cpu)
+{
+	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+	unsigned int level = 0, leaves = 0;
+	union cache_topology ct;
+	enum cache_type ctype;
 
-	अगर (!test_facility(34))
-		वापस -EOPNOTSUPP;
-	अगर (!this_cpu_ci)
-		वापस -EINVAL;
+	if (!test_facility(34))
+		return -EOPNOTSUPP;
+	if (!this_cpu_ci)
+		return -EINVAL;
 	ct.raw = ecag(EXTRACT_TOPOLOGY, 0, 0);
-	करो अणु
+	do {
 		ctype = get_cache_type(&ct.ci[0], level);
-		अगर (ctype == CACHE_TYPE_NOCACHE)
-			अवरोध;
-		/* Separate inकाष्ठाion and data caches */
+		if (ctype == CACHE_TYPE_NOCACHE)
+			break;
+		/* Separate instruction and data caches */
 		leaves += (ctype == CACHE_TYPE_SEPARATE) ? 2 : 1;
-	पूर्ण जबतक (++level < CACHE_MAX_LEVEL);
+	} while (++level < CACHE_MAX_LEVEL);
 	this_cpu_ci->num_levels = level;
 	this_cpu_ci->num_leaves = leaves;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक populate_cache_leaves(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
-	काष्ठा cacheinfo *this_leaf = this_cpu_ci->info_list;
-	अचिन्हित पूर्णांक level, idx, pvt;
-	जोड़ cache_topology ct;
-	क्रमागत cache_type ctype;
+int populate_cache_leaves(unsigned int cpu)
+{
+	struct cpu_cacheinfo *this_cpu_ci = get_cpu_cacheinfo(cpu);
+	struct cacheinfo *this_leaf = this_cpu_ci->info_list;
+	unsigned int level, idx, pvt;
+	union cache_topology ct;
+	enum cache_type ctype;
 
-	अगर (!test_facility(34))
-		वापस -EOPNOTSUPP;
+	if (!test_facility(34))
+		return -EOPNOTSUPP;
 	ct.raw = ecag(EXTRACT_TOPOLOGY, 0, 0);
-	क्रम (idx = 0, level = 0; level < this_cpu_ci->num_levels &&
-	     idx < this_cpu_ci->num_leaves; idx++, level++) अणु
-		अगर (!this_leaf)
-			वापस -EINVAL;
+	for (idx = 0, level = 0; level < this_cpu_ci->num_levels &&
+	     idx < this_cpu_ci->num_leaves; idx++, level++) {
+		if (!this_leaf)
+			return -EINVAL;
 		pvt = (ct.ci[level].scope == CACHE_SCOPE_PRIVATE) ? 1 : 0;
 		ctype = get_cache_type(&ct.ci[0], level);
-		अगर (ctype == CACHE_TYPE_SEPARATE) अणु
+		if (ctype == CACHE_TYPE_SEPARATE) {
 			ci_leaf_init(this_leaf++, pvt, CACHE_TYPE_DATA, level, cpu);
 			ci_leaf_init(this_leaf++, pvt, CACHE_TYPE_INST, level, cpu);
-		पूर्ण अन्यथा अणु
+		} else {
 			ci_leaf_init(this_leaf++, pvt, ctype, level, cpu);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}

@@ -1,155 +1,154 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* The industrial I/O callback buffer
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/buffer_impl.h>
-#समावेश <linux/iio/consumer.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/buffer_impl.h>
+#include <linux/iio/consumer.h>
 
-काष्ठा iio_cb_buffer अणु
-	काष्ठा iio_buffer buffer;
-	पूर्णांक (*cb)(स्थिर व्योम *data, व्योम *निजी);
-	व्योम *निजी;
-	काष्ठा iio_channel *channels;
-	काष्ठा iio_dev *indio_dev;
-पूर्ण;
+struct iio_cb_buffer {
+	struct iio_buffer buffer;
+	int (*cb)(const void *data, void *private);
+	void *private;
+	struct iio_channel *channels;
+	struct iio_dev *indio_dev;
+};
 
-अटल काष्ठा iio_cb_buffer *buffer_to_cb_buffer(काष्ठा iio_buffer *buffer)
-अणु
-	वापस container_of(buffer, काष्ठा iio_cb_buffer, buffer);
-पूर्ण
+static struct iio_cb_buffer *buffer_to_cb_buffer(struct iio_buffer *buffer)
+{
+	return container_of(buffer, struct iio_cb_buffer, buffer);
+}
 
-अटल पूर्णांक iio_buffer_cb_store_to(काष्ठा iio_buffer *buffer, स्थिर व्योम *data)
-अणु
-	काष्ठा iio_cb_buffer *cb_buff = buffer_to_cb_buffer(buffer);
-	वापस cb_buff->cb(data, cb_buff->निजी);
-पूर्ण
+static int iio_buffer_cb_store_to(struct iio_buffer *buffer, const void *data)
+{
+	struct iio_cb_buffer *cb_buff = buffer_to_cb_buffer(buffer);
+	return cb_buff->cb(data, cb_buff->private);
+}
 
-अटल व्योम iio_buffer_cb_release(काष्ठा iio_buffer *buffer)
-अणु
-	काष्ठा iio_cb_buffer *cb_buff = buffer_to_cb_buffer(buffer);
+static void iio_buffer_cb_release(struct iio_buffer *buffer)
+{
+	struct iio_cb_buffer *cb_buff = buffer_to_cb_buffer(buffer);
 
-	biपंचांगap_मुक्त(cb_buff->buffer.scan_mask);
-	kमुक्त(cb_buff);
-पूर्ण
+	bitmap_free(cb_buff->buffer.scan_mask);
+	kfree(cb_buff);
+}
 
-अटल स्थिर काष्ठा iio_buffer_access_funcs iio_cb_access = अणु
+static const struct iio_buffer_access_funcs iio_cb_access = {
 	.store_to = &iio_buffer_cb_store_to,
 	.release = &iio_buffer_cb_release,
 
 	.modes = INDIO_BUFFER_SOFTWARE | INDIO_BUFFER_TRIGGERED,
-पूर्ण;
+};
 
-काष्ठा iio_cb_buffer *iio_channel_get_all_cb(काष्ठा device *dev,
-					     पूर्णांक (*cb)(स्थिर व्योम *data,
-						       व्योम *निजी),
-					     व्योम *निजी)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_cb_buffer *cb_buff;
-	काष्ठा iio_channel *chan;
+struct iio_cb_buffer *iio_channel_get_all_cb(struct device *dev,
+					     int (*cb)(const void *data,
+						       void *private),
+					     void *private)
+{
+	int ret;
+	struct iio_cb_buffer *cb_buff;
+	struct iio_channel *chan;
 
-	अगर (!cb) अणु
+	if (!cb) {
 		dev_err(dev, "Invalid arguments: A callback must be provided!\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	cb_buff = kzalloc(माप(*cb_buff), GFP_KERNEL);
-	अगर (cb_buff == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	cb_buff = kzalloc(sizeof(*cb_buff), GFP_KERNEL);
+	if (cb_buff == NULL)
+		return ERR_PTR(-ENOMEM);
 
 	iio_buffer_init(&cb_buff->buffer);
 
-	cb_buff->निजी = निजी;
+	cb_buff->private = private;
 	cb_buff->cb = cb;
 	cb_buff->buffer.access = &iio_cb_access;
 	INIT_LIST_HEAD(&cb_buff->buffer.demux_list);
 
 	cb_buff->channels = iio_channel_get_all(dev);
-	अगर (IS_ERR(cb_buff->channels)) अणु
+	if (IS_ERR(cb_buff->channels)) {
 		ret = PTR_ERR(cb_buff->channels);
-		जाओ error_मुक्त_cb_buff;
-	पूर्ण
+		goto error_free_cb_buff;
+	}
 
 	cb_buff->indio_dev = cb_buff->channels[0].indio_dev;
-	cb_buff->buffer.scan_mask = biपंचांगap_zalloc(cb_buff->indio_dev->masklength,
+	cb_buff->buffer.scan_mask = bitmap_zalloc(cb_buff->indio_dev->masklength,
 						  GFP_KERNEL);
-	अगर (cb_buff->buffer.scan_mask == शून्य) अणु
+	if (cb_buff->buffer.scan_mask == NULL) {
 		ret = -ENOMEM;
-		जाओ error_release_channels;
-	पूर्ण
+		goto error_release_channels;
+	}
 	chan = &cb_buff->channels[0];
-	जबतक (chan->indio_dev) अणु
-		अगर (chan->indio_dev != cb_buff->indio_dev) अणु
+	while (chan->indio_dev) {
+		if (chan->indio_dev != cb_buff->indio_dev) {
 			ret = -EINVAL;
-			जाओ error_मुक्त_scan_mask;
-		पूर्ण
+			goto error_free_scan_mask;
+		}
 		set_bit(chan->channel->scan_index,
 			cb_buff->buffer.scan_mask);
 		chan++;
-	पूर्ण
+	}
 
-	वापस cb_buff;
+	return cb_buff;
 
-error_मुक्त_scan_mask:
-	biपंचांगap_मुक्त(cb_buff->buffer.scan_mask);
+error_free_scan_mask:
+	bitmap_free(cb_buff->buffer.scan_mask);
 error_release_channels:
 	iio_channel_release_all(cb_buff->channels);
-error_मुक्त_cb_buff:
-	kमुक्त(cb_buff);
-	वापस ERR_PTR(ret);
-पूर्ण
+error_free_cb_buff:
+	kfree(cb_buff);
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(iio_channel_get_all_cb);
 
-पूर्णांक iio_channel_cb_set_buffer_watermark(काष्ठा iio_cb_buffer *cb_buff,
-					माप_प्रकार watermark)
-अणु
-	अगर (!watermark)
-		वापस -EINVAL;
+int iio_channel_cb_set_buffer_watermark(struct iio_cb_buffer *cb_buff,
+					size_t watermark)
+{
+	if (!watermark)
+		return -EINVAL;
 	cb_buff->buffer.watermark = watermark;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(iio_channel_cb_set_buffer_watermark);
 
-पूर्णांक iio_channel_start_all_cb(काष्ठा iio_cb_buffer *cb_buff)
-अणु
-	वापस iio_update_buffers(cb_buff->indio_dev, &cb_buff->buffer,
-				  शून्य);
-पूर्ण
+int iio_channel_start_all_cb(struct iio_cb_buffer *cb_buff)
+{
+	return iio_update_buffers(cb_buff->indio_dev, &cb_buff->buffer,
+				  NULL);
+}
 EXPORT_SYMBOL_GPL(iio_channel_start_all_cb);
 
-व्योम iio_channel_stop_all_cb(काष्ठा iio_cb_buffer *cb_buff)
-अणु
-	iio_update_buffers(cb_buff->indio_dev, शून्य, &cb_buff->buffer);
-पूर्ण
+void iio_channel_stop_all_cb(struct iio_cb_buffer *cb_buff)
+{
+	iio_update_buffers(cb_buff->indio_dev, NULL, &cb_buff->buffer);
+}
 EXPORT_SYMBOL_GPL(iio_channel_stop_all_cb);
 
-व्योम iio_channel_release_all_cb(काष्ठा iio_cb_buffer *cb_buff)
-अणु
+void iio_channel_release_all_cb(struct iio_cb_buffer *cb_buff)
+{
 	iio_channel_release_all(cb_buff->channels);
 	iio_buffer_put(&cb_buff->buffer);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(iio_channel_release_all_cb);
 
-काष्ठा iio_channel
-*iio_channel_cb_get_channels(स्थिर काष्ठा iio_cb_buffer *cb_buffer)
-अणु
-	वापस cb_buffer->channels;
-पूर्ण
+struct iio_channel
+*iio_channel_cb_get_channels(const struct iio_cb_buffer *cb_buffer)
+{
+	return cb_buffer->channels;
+}
 EXPORT_SYMBOL_GPL(iio_channel_cb_get_channels);
 
-काष्ठा iio_dev
-*iio_channel_cb_get_iio_dev(स्थिर काष्ठा iio_cb_buffer *cb_buffer)
-अणु
-	वापस cb_buffer->indio_dev;
-पूर्ण
+struct iio_dev
+*iio_channel_cb_get_iio_dev(const struct iio_cb_buffer *cb_buffer)
+{
+	return cb_buffer->indio_dev;
+}
 EXPORT_SYMBOL_GPL(iio_channel_cb_get_iio_dev);
 
 MODULE_AUTHOR("Jonathan Cameron <jic23@kernel.org>");

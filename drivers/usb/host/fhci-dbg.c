@@ -1,46 +1,45 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Freescale QUICC Engine USB Host Controller Driver
  *
  * Copyright (c) Freescale Semicondutor, Inc. 2006.
- *               Shlomi Gridish <gridish@मुक्तscale.com>
- *               Jerry Huang <Chang-Ming.Huang@मुक्तscale.com>
+ *               Shlomi Gridish <gridish@freescale.com>
+ *               Jerry Huang <Chang-Ming.Huang@freescale.com>
  * Copyright (c) Logic Product Development, Inc. 2007
  *               Peter Barada <peterb@logicpd.com>
  * Copyright (c) MontaVista Software, Inc. 2008.
  *               Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
-#समावेश "fhci.h"
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
+#include "fhci.h"
 
-व्योम fhci_dbg_isr(काष्ठा fhci_hcd *fhci, पूर्णांक usb_er)
-अणु
-	पूर्णांक i;
+void fhci_dbg_isr(struct fhci_hcd *fhci, int usb_er)
+{
+	int i;
 
-	अगर (usb_er == -1) अणु
+	if (usb_er == -1) {
 		fhci->usb_irq_stat[12]++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < 12; ++i) अणु
-		अगर (usb_er & (1 << i))
+	for (i = 0; i < 12; ++i) {
+		if (usb_er & (1 << i))
 			fhci->usb_irq_stat[i]++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक fhci_dfs_regs_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा fhci_hcd *fhci = s->निजी;
-	काष्ठा qe_usb_ctlr __iomem *regs = fhci->regs;
+static int fhci_dfs_regs_show(struct seq_file *s, void *v)
+{
+	struct fhci_hcd *fhci = s->private;
+	struct qe_usb_ctlr __iomem *regs = fhci->regs;
 
-	seq_म_लिखो(s,
+	seq_printf(s,
 		"mode: 0x%x\n" "addr: 0x%x\n"
 		"command: 0x%x\n" "ep0: 0x%x\n"
 		"event: 0x%x\n" "mask: 0x%x\n"
@@ -54,16 +53,16 @@
 		in_be16(&regs->usb_usfrn),
 		fhci_ioports_check_bus_state(fhci));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(fhci_dfs_regs);
 
-अटल पूर्णांक fhci_dfs_irq_stat_show(काष्ठा seq_file *s, व्योम *v)
-अणु
-	काष्ठा fhci_hcd *fhci = s->निजी;
-	पूर्णांक *usb_irq_stat = fhci->usb_irq_stat;
+static int fhci_dfs_irq_stat_show(struct seq_file *s, void *v)
+{
+	struct fhci_hcd *fhci = s->private;
+	int *usb_irq_stat = fhci->usb_irq_stat;
 
-	seq_म_लिखो(s,
+	seq_printf(s,
 		"RXB: %d\n" "TXB: %d\n" "BSY: %d\n"
 		"SOF: %d\n" "TXE0: %d\n" "TXE1: %d\n"
 		"TXE2: %d\n" "TXE3: %d\n" "IDLE: %d\n"
@@ -75,13 +74,13 @@ DEFINE_SHOW_ATTRIBUTE(fhci_dfs_regs);
 		usb_irq_stat[9], usb_irq_stat[10], usb_irq_stat[11],
 		usb_irq_stat[12]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(fhci_dfs_irq_stat);
 
-व्योम fhci_dfs_create(काष्ठा fhci_hcd *fhci)
-अणु
-	काष्ठा device *dev = fhci_to_hcd(fhci)->self.controller;
+void fhci_dfs_create(struct fhci_hcd *fhci)
+{
+	struct device *dev = fhci_to_hcd(fhci)->self.controller;
 
 	fhci->dfs_root = debugfs_create_dir(dev_name(dev), usb_debug_root);
 
@@ -89,9 +88,9 @@ DEFINE_SHOW_ATTRIBUTE(fhci_dfs_irq_stat);
 			    &fhci_dfs_regs_fops);
 	debugfs_create_file("irq_stat", S_IFREG | S_IRUGO, fhci->dfs_root, fhci,
 			    &fhci_dfs_irq_stat_fops);
-पूर्ण
+}
 
-व्योम fhci_dfs_destroy(काष्ठा fhci_hcd *fhci)
-अणु
-	debugfs_हटाओ_recursive(fhci->dfs_root);
-पूर्ण
+void fhci_dfs_destroy(struct fhci_hcd *fhci)
+{
+	debugfs_remove_recursive(fhci->dfs_root);
+}

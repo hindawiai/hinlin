@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Rhys Kidd
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,36 +21,36 @@
  *
  * Authors: Rhys Kidd
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-अटल पूर्णांक
-gp100_temp_get(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
+static int
+gp100_temp_get(struct nvkm_therm *therm)
+{
+	struct nvkm_device *device = therm->subdev.device;
+	struct nvkm_subdev *subdev = &therm->subdev;
 	u32 tsensor = nvkm_rd32(device, 0x020460);
-	u32 पूर्णांकtemp = (tsensor & 0x0001fff8);
+	u32 inttemp = (tsensor & 0x0001fff8);
 
 	/* device SHADOWed */
-	अगर (tsensor & 0x40000000)
+	if (tsensor & 0x40000000)
 		nvkm_trace(subdev, "reading temperature from SHADOWed sensor\n");
 
 	/* device valid */
-	अगर (tsensor & 0x20000000)
-		वापस (पूर्णांकtemp >> 8);
-	अन्यथा
-		वापस -ENODEV;
-पूर्ण
+	if (tsensor & 0x20000000)
+		return (inttemp >> 8);
+	else
+		return -ENODEV;
+}
 
-अटल स्थिर काष्ठा nvkm_therm_func
-gp100_therm = अणु
+static const struct nvkm_therm_func
+gp100_therm = {
 	.temp_get = gp100_temp_get,
 	.program_alarms = nvkm_therm_program_alarms_polling,
-पूर्ण;
+};
 
-पूर्णांक
-gp100_therm_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-		काष्ठा nvkm_therm **ptherm)
-अणु
-	वापस nvkm_therm_new_(&gp100_therm, device, type, inst, ptherm);
-पूर्ण
+int
+gp100_therm_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+		struct nvkm_therm **ptherm)
+{
+	return nvkm_therm_new_(&gp100_therm, device, type, inst, ptherm);
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ti-dac5571.c - Texas Instruments 8/10/12-bit 1/4-channel DAC driver
  *
@@ -16,208 +15,208 @@
  * https://www.ti.com/lit/ds/symlink/dac7573.pdf
  */
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/regulator/consumer.h>
 
-क्रमागत chip_id अणु
+enum chip_id {
 	single_8bit, single_10bit, single_12bit,
 	quad_8bit, quad_10bit, quad_12bit
-पूर्ण;
+};
 
-काष्ठा dac5571_spec अणु
+struct dac5571_spec {
 	u8 num_channels;
 	u8 resolution;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dac5571_spec dac5571_spec[] = अणु
-	[single_8bit]  = अणु.num_channels = 1, .resolution =  8पूर्ण,
-	[single_10bit] = अणु.num_channels = 1, .resolution = 10पूर्ण,
-	[single_12bit] = अणु.num_channels = 1, .resolution = 12पूर्ण,
-	[quad_8bit]    = अणु.num_channels = 4, .resolution =  8पूर्ण,
-	[quad_10bit]   = अणु.num_channels = 4, .resolution = 10पूर्ण,
-	[quad_12bit]   = अणु.num_channels = 4, .resolution = 12पूर्ण,
-पूर्ण;
+static const struct dac5571_spec dac5571_spec[] = {
+	[single_8bit]  = {.num_channels = 1, .resolution =  8},
+	[single_10bit] = {.num_channels = 1, .resolution = 10},
+	[single_12bit] = {.num_channels = 1, .resolution = 12},
+	[quad_8bit]    = {.num_channels = 4, .resolution =  8},
+	[quad_10bit]   = {.num_channels = 4, .resolution = 10},
+	[quad_12bit]   = {.num_channels = 4, .resolution = 12},
+};
 
-काष्ठा dac5571_data अणु
-	काष्ठा i2c_client *client;
-	पूर्णांक id;
-	काष्ठा mutex lock;
-	काष्ठा regulator *vref;
+struct dac5571_data {
+	struct i2c_client *client;
+	int id;
+	struct mutex lock;
+	struct regulator *vref;
 	u16 val[4];
-	bool घातerकरोwn[4];
-	u8 घातerकरोwn_mode[4];
-	काष्ठा dac5571_spec स्थिर *spec;
-	पूर्णांक (*dac5571_cmd)(काष्ठा dac5571_data *data, पूर्णांक channel, u16 val);
-	पूर्णांक (*dac5571_pwrdwn)(काष्ठा dac5571_data *data, पूर्णांक channel, u8 pwrdwn);
+	bool powerdown[4];
+	u8 powerdown_mode[4];
+	struct dac5571_spec const *spec;
+	int (*dac5571_cmd)(struct dac5571_data *data, int channel, u16 val);
+	int (*dac5571_pwrdwn)(struct dac5571_data *data, int channel, u8 pwrdwn);
 	u8 buf[3] ____cacheline_aligned;
-पूर्ण;
+};
 
-#घोषणा DAC5571_POWERDOWN(mode)		((mode) + 1)
-#घोषणा DAC5571_POWERDOWN_FLAG		BIT(0)
-#घोषणा DAC5571_CHANNEL_SELECT		1
-#घोषणा DAC5571_LOADMODE_सूचीECT		BIT(4)
-#घोषणा DAC5571_SINGLE_PWRDWN_BITS	4
-#घोषणा DAC5571_QUAD_PWRDWN_BITS	6
+#define DAC5571_POWERDOWN(mode)		((mode) + 1)
+#define DAC5571_POWERDOWN_FLAG		BIT(0)
+#define DAC5571_CHANNEL_SELECT		1
+#define DAC5571_LOADMODE_DIRECT		BIT(4)
+#define DAC5571_SINGLE_PWRDWN_BITS	4
+#define DAC5571_QUAD_PWRDWN_BITS	6
 
-अटल पूर्णांक dac5571_cmd_single(काष्ठा dac5571_data *data, पूर्णांक channel, u16 val)
-अणु
-	अचिन्हित पूर्णांक shअगरt;
+static int dac5571_cmd_single(struct dac5571_data *data, int channel, u16 val)
+{
+	unsigned int shift;
 
-	shअगरt = 12 - data->spec->resolution;
-	data->buf[1] = val << shअगरt;
-	data->buf[0] = val >> (8 - shअगरt);
+	shift = 12 - data->spec->resolution;
+	data->buf[1] = val << shift;
+	data->buf[0] = val >> (8 - shift);
 
-	अगर (i2c_master_send(data->client, data->buf, 2) != 2)
-		वापस -EIO;
+	if (i2c_master_send(data->client, data->buf, 2) != 2)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dac5571_cmd_quad(काष्ठा dac5571_data *data, पूर्णांक channel, u16 val)
-अणु
-	अचिन्हित पूर्णांक shअगरt;
+static int dac5571_cmd_quad(struct dac5571_data *data, int channel, u16 val)
+{
+	unsigned int shift;
 
-	shअगरt = 16 - data->spec->resolution;
-	data->buf[2] = val << shअगरt;
-	data->buf[1] = (val >> (8 - shअगरt));
+	shift = 16 - data->spec->resolution;
+	data->buf[2] = val << shift;
+	data->buf[1] = (val >> (8 - shift));
 	data->buf[0] = (channel << DAC5571_CHANNEL_SELECT) |
-		       DAC5571_LOADMODE_सूचीECT;
+		       DAC5571_LOADMODE_DIRECT;
 
-	अगर (i2c_master_send(data->client, data->buf, 3) != 3)
-		वापस -EIO;
+	if (i2c_master_send(data->client, data->buf, 3) != 3)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dac5571_pwrdwn_single(काष्ठा dac5571_data *data, पूर्णांक channel, u8 pwrdwn)
-अणु
+static int dac5571_pwrdwn_single(struct dac5571_data *data, int channel, u8 pwrdwn)
+{
 	data->buf[1] = 0;
 	data->buf[0] = pwrdwn << DAC5571_SINGLE_PWRDWN_BITS;
 
-	अगर (i2c_master_send(data->client, data->buf, 2) != 2)
-		वापस -EIO;
+	if (i2c_master_send(data->client, data->buf, 2) != 2)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dac5571_pwrdwn_quad(काष्ठा dac5571_data *data, पूर्णांक channel, u8 pwrdwn)
-अणु
+static int dac5571_pwrdwn_quad(struct dac5571_data *data, int channel, u8 pwrdwn)
+{
 	data->buf[2] = 0;
 	data->buf[1] = pwrdwn << DAC5571_QUAD_PWRDWN_BITS;
 	data->buf[0] = (channel << DAC5571_CHANNEL_SELECT) |
-		       DAC5571_LOADMODE_सूचीECT | DAC5571_POWERDOWN_FLAG;
+		       DAC5571_LOADMODE_DIRECT | DAC5571_POWERDOWN_FLAG;
 
-	अगर (i2c_master_send(data->client, data->buf, 3) != 3)
-		वापस -EIO;
+	if (i2c_master_send(data->client, data->buf, 3) != 3)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर *स्थिर dac5571_घातerकरोwn_modes[] = अणु
+static const char *const dac5571_powerdown_modes[] = {
 	"1kohm_to_gnd", "100kohm_to_gnd", "three_state",
-पूर्ण;
+};
 
-अटल पूर्णांक dac5571_get_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
-				      स्थिर काष्ठा iio_chan_spec *chan)
-अणु
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
+static int dac5571_get_powerdown_mode(struct iio_dev *indio_dev,
+				      const struct iio_chan_spec *chan)
+{
+	struct dac5571_data *data = iio_priv(indio_dev);
 
-	वापस data->घातerकरोwn_mode[chan->channel];
-पूर्ण
+	return data->powerdown_mode[chan->channel];
+}
 
-अटल पूर्णांक dac5571_set_घातerकरोwn_mode(काष्ठा iio_dev *indio_dev,
-				      स्थिर काष्ठा iio_chan_spec *chan,
-				      अचिन्हित पूर्णांक mode)
-अणु
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
-	पूर्णांक ret = 0;
+static int dac5571_set_powerdown_mode(struct iio_dev *indio_dev,
+				      const struct iio_chan_spec *chan,
+				      unsigned int mode)
+{
+	struct dac5571_data *data = iio_priv(indio_dev);
+	int ret = 0;
 
-	अगर (data->घातerकरोwn_mode[chan->channel] == mode)
-		वापस 0;
+	if (data->powerdown_mode[chan->channel] == mode)
+		return 0;
 
 	mutex_lock(&data->lock);
-	अगर (data->घातerकरोwn[chan->channel]) अणु
+	if (data->powerdown[chan->channel]) {
 		ret = data->dac5571_pwrdwn(data, chan->channel,
 					   DAC5571_POWERDOWN(mode));
-		अगर (ret)
-			जाओ out;
-	पूर्ण
-	data->घातerकरोwn_mode[chan->channel] = mode;
+		if (ret)
+			goto out;
+	}
+	data->powerdown_mode[chan->channel] = mode;
 
  out:
 	mutex_unlock(&data->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा iio_क्रमागत dac5571_घातerकरोwn_mode = अणु
-	.items = dac5571_घातerकरोwn_modes,
-	.num_items = ARRAY_SIZE(dac5571_घातerकरोwn_modes),
-	.get = dac5571_get_घातerकरोwn_mode,
-	.set = dac5571_set_घातerकरोwn_mode,
-पूर्ण;
+static const struct iio_enum dac5571_powerdown_mode = {
+	.items = dac5571_powerdown_modes,
+	.num_items = ARRAY_SIZE(dac5571_powerdown_modes),
+	.get = dac5571_get_powerdown_mode,
+	.set = dac5571_set_powerdown_mode,
+};
 
-अटल sमाप_प्रकार dac5571_पढ़ो_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-				      uपूर्णांकptr_t निजी,
-				      स्थिर काष्ठा iio_chan_spec *chan,
-				      अक्षर *buf)
-अणु
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
+static ssize_t dac5571_read_powerdown(struct iio_dev *indio_dev,
+				      uintptr_t private,
+				      const struct iio_chan_spec *chan,
+				      char *buf)
+{
+	struct dac5571_data *data = iio_priv(indio_dev);
 
-	वापस sysfs_emit(buf, "%d\n", data->घातerकरोwn[chan->channel]);
-पूर्ण
+	return sysfs_emit(buf, "%d\n", data->powerdown[chan->channel]);
+}
 
-अटल sमाप_प्रकार dac5571_ग_लिखो_घातerकरोwn(काष्ठा iio_dev *indio_dev,
-				       uपूर्णांकptr_t निजी,
-				       स्थिर काष्ठा iio_chan_spec *chan,
-				       स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
-	bool घातerकरोwn;
-	पूर्णांक ret;
+static ssize_t dac5571_write_powerdown(struct iio_dev *indio_dev,
+				       uintptr_t private,
+				       const struct iio_chan_spec *chan,
+				       const char *buf, size_t len)
+{
+	struct dac5571_data *data = iio_priv(indio_dev);
+	bool powerdown;
+	int ret;
 
-	ret = strtobool(buf, &घातerकरोwn);
-	अगर (ret)
-		वापस ret;
+	ret = strtobool(buf, &powerdown);
+	if (ret)
+		return ret;
 
-	अगर (data->घातerकरोwn[chan->channel] == घातerकरोwn)
-		वापस len;
+	if (data->powerdown[chan->channel] == powerdown)
+		return len;
 
 	mutex_lock(&data->lock);
-	अगर (घातerकरोwn)
+	if (powerdown)
 		ret = data->dac5571_pwrdwn(data, chan->channel,
-			    DAC5571_POWERDOWN(data->घातerकरोwn_mode[chan->channel]));
-	अन्यथा
+			    DAC5571_POWERDOWN(data->powerdown_mode[chan->channel]));
+	else
 		ret = data->dac5571_cmd(data, chan->channel,
 				data->val[chan->channel]);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	data->घातerकरोwn[chan->channel] = घातerकरोwn;
+	data->powerdown[chan->channel] = powerdown;
 
  out:
 	mutex_unlock(&data->lock);
 
-	वापस ret ? ret : len;
-पूर्ण
+	return ret ? ret : len;
+}
 
 
-अटल स्थिर काष्ठा iio_chan_spec_ext_info dac5571_ext_info[] = अणु
-	अणु
+static const struct iio_chan_spec_ext_info dac5571_ext_info[] = {
+	{
 		.name	   = "powerdown",
-		.पढ़ो	   = dac5571_पढ़ो_घातerकरोwn,
-		.ग_लिखो	   = dac5571_ग_लिखो_घातerकरोwn,
+		.read	   = dac5571_read_powerdown,
+		.write	   = dac5571_write_powerdown,
 		.shared	   = IIO_SEPARATE,
-	पूर्ण,
-	IIO_ENUM("powerdown_mode", IIO_SEPARATE, &dac5571_घातerकरोwn_mode),
-	IIO_ENUM_AVAILABLE("powerdown_mode", &dac5571_घातerकरोwn_mode),
-	अणुपूर्ण,
-पूर्ण;
+	},
+	IIO_ENUM("powerdown_mode", IIO_SEPARATE, &dac5571_powerdown_mode),
+	IIO_ENUM_AVAILABLE("powerdown_mode", &dac5571_powerdown_mode),
+	{},
+};
 
-#घोषणा dac5571_CHANNEL(chan, name) अणु				\
+#define dac5571_CHANNEL(chan, name) {				\
 	.type = IIO_VOLTAGE,					\
 	.channel = (chan),					\
 	.address = (chan),					\
@@ -227,96 +226,96 @@
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 	.ext_info = dac5571_ext_info,				\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec dac5571_channels[] = अणु
+static const struct iio_chan_spec dac5571_channels[] = {
 	dac5571_CHANNEL(0, "A"),
 	dac5571_CHANNEL(1, "B"),
 	dac5571_CHANNEL(2, "C"),
 	dac5571_CHANNEL(3, "D"),
-पूर्ण;
+};
 
-अटल पूर्णांक dac5571_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan,
-			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int dac5571_read_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan,
+			    int *val, int *val2, long mask)
+{
+	struct dac5571_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		*val = data->val[chan->channel];
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_SCALE:
+	case IIO_CHAN_INFO_SCALE:
 		ret = regulator_get_voltage(data->vref);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		*val = ret / 1000;
 		*val2 = data->spec->resolution;
-		वापस IIO_VAL_FRACTIONAL_LOG2;
+		return IIO_VAL_FRACTIONAL_LOG2;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक dac5571_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			     काष्ठा iio_chan_spec स्थिर *chan,
-			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int dac5571_write_raw(struct iio_dev *indio_dev,
+			     struct iio_chan_spec const *chan,
+			     int val, int val2, long mask)
+{
+	struct dac5571_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		अगर (data->val[chan->channel] == val)
-			वापस 0;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		if (data->val[chan->channel] == val)
+			return 0;
 
-		अगर (val >= (1 << data->spec->resolution) || val < 0)
-			वापस -EINVAL;
+		if (val >= (1 << data->spec->resolution) || val < 0)
+			return -EINVAL;
 
-		अगर (data->घातerकरोwn[chan->channel])
-			वापस -EBUSY;
+		if (data->powerdown[chan->channel])
+			return -EBUSY;
 
 		mutex_lock(&data->lock);
 		ret = data->dac5571_cmd(data, chan->channel, val);
-		अगर (ret == 0)
+		if (ret == 0)
 			data->val[chan->channel] = val;
 		mutex_unlock(&data->lock);
-		वापस ret;
+		return ret;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक dac5571_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
-				     काष्ठा iio_chan_spec स्थिर *chan,
-				     दीर्घ mask)
-अणु
-	वापस IIO_VAL_INT;
-पूर्ण
+static int dac5571_write_raw_get_fmt(struct iio_dev *indio_dev,
+				     struct iio_chan_spec const *chan,
+				     long mask)
+{
+	return IIO_VAL_INT;
+}
 
-अटल स्थिर काष्ठा iio_info dac5571_info = अणु
-	.पढ़ो_raw = dac5571_पढ़ो_raw,
-	.ग_लिखो_raw = dac5571_ग_लिखो_raw,
-	.ग_लिखो_raw_get_fmt = dac5571_ग_लिखो_raw_get_fmt,
-पूर्ण;
+static const struct iio_info dac5571_info = {
+	.read_raw = dac5571_read_raw,
+	.write_raw = dac5571_write_raw,
+	.write_raw_get_fmt = dac5571_write_raw_get_fmt,
+};
 
-अटल पूर्णांक dac5571_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	स्थिर काष्ठा dac5571_spec *spec;
-	काष्ठा dac5571_data *data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret, i;
+static int dac5571_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	const struct dac5571_spec *spec;
+	struct dac5571_data *data;
+	struct iio_dev *indio_dev;
+	int ret, i;
 
-	indio_dev = devm_iio_device_alloc(dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -324,7 +323,7 @@
 
 	indio_dev->info = &dac5571_info;
 	indio_dev->name = id->name;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = dac5571_channels;
 
 	spec = &dac5571_spec[id->driver_data];
@@ -332,95 +331,95 @@
 	data->spec = spec;
 
 	data->vref = devm_regulator_get(dev, "vref");
-	अगर (IS_ERR(data->vref))
-		वापस PTR_ERR(data->vref);
+	if (IS_ERR(data->vref))
+		return PTR_ERR(data->vref);
 
 	ret = regulator_enable(data->vref);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_init(&data->lock);
 
-	चयन (spec->num_channels) अणु
-	हाल 1:
+	switch (spec->num_channels) {
+	case 1:
 		data->dac5571_cmd = dac5571_cmd_single;
 		data->dac5571_pwrdwn = dac5571_pwrdwn_single;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		data->dac5571_cmd = dac5571_cmd_quad;
 		data->dac5571_pwrdwn = dac5571_pwrdwn_quad;
-		अवरोध;
-	शेष:
-		जाओ err;
-	पूर्ण
+		break;
+	default:
+		goto err;
+	}
 
-	क्रम (i = 0; i < spec->num_channels; i++) अणु
+	for (i = 0; i < spec->num_channels; i++) {
 		ret = data->dac5571_cmd(data, i, 0);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to initialize channel %d to 0\n", i);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ err;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 
  err:
 	regulator_disable(data->vref);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dac5571_हटाओ(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(i2c);
-	काष्ठा dac5571_data *data = iio_priv(indio_dev);
+static int dac5571_remove(struct i2c_client *i2c)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(i2c);
+	struct dac5571_data *data = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	regulator_disable(data->vref);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dac5571_of_id[] = अणु
-	अणु.compatible = "ti,dac5571"पूर्ण,
-	अणु.compatible = "ti,dac6571"पूर्ण,
-	अणु.compatible = "ti,dac7571"पूर्ण,
-	अणु.compatible = "ti,dac5574"पूर्ण,
-	अणु.compatible = "ti,dac6574"पूर्ण,
-	अणु.compatible = "ti,dac7574"पूर्ण,
-	अणु.compatible = "ti,dac5573"पूर्ण,
-	अणु.compatible = "ti,dac6573"पूर्ण,
-	अणु.compatible = "ti,dac7573"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id dac5571_of_id[] = {
+	{.compatible = "ti,dac5571"},
+	{.compatible = "ti,dac6571"},
+	{.compatible = "ti,dac7571"},
+	{.compatible = "ti,dac5574"},
+	{.compatible = "ti,dac6574"},
+	{.compatible = "ti,dac7574"},
+	{.compatible = "ti,dac5573"},
+	{.compatible = "ti,dac6573"},
+	{.compatible = "ti,dac7573"},
+	{}
+};
 MODULE_DEVICE_TABLE(of, dac5571_of_id);
 
-अटल स्थिर काष्ठा i2c_device_id dac5571_id[] = अणु
-	अणु"dac5571", single_8bitपूर्ण,
-	अणु"dac6571", single_10bitपूर्ण,
-	अणु"dac7571", single_12bitपूर्ण,
-	अणु"dac5574", quad_8bitपूर्ण,
-	अणु"dac6574", quad_10bitपूर्ण,
-	अणु"dac7574", quad_12bitपूर्ण,
-	अणु"dac5573", quad_8bitपूर्ण,
-	अणु"dac6573", quad_10bitपूर्ण,
-	अणु"dac7573", quad_12bitपूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id dac5571_id[] = {
+	{"dac5571", single_8bit},
+	{"dac6571", single_10bit},
+	{"dac7571", single_12bit},
+	{"dac5574", quad_8bit},
+	{"dac6574", quad_10bit},
+	{"dac7574", quad_12bit},
+	{"dac5573", quad_8bit},
+	{"dac6573", quad_10bit},
+	{"dac7573", quad_12bit},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, dac5571_id);
 
-अटल काष्ठा i2c_driver dac5571_driver = अणु
-	.driver = अणु
+static struct i2c_driver dac5571_driver = {
+	.driver = {
 		   .name = "ti-dac5571",
 		   .of_match_table = dac5571_of_id,
-	पूर्ण,
+	},
 	.probe	  = dac5571_probe,
-	.हटाओ   = dac5571_हटाओ,
+	.remove   = dac5571_remove,
 	.id_table = dac5571_id,
-पूर्ण;
+};
 module_i2c_driver(dac5571_driver);
 
 MODULE_AUTHOR("Sean Nyekjaer <sean@geanix.dk>");

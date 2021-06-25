@@ -1,245 +1,244 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/host1x.h>
-#समावेश <linux/lcm.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
+#include <linux/bitmap.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/host1x.h>
+#include <linux/lcm.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_graph.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
 
-#समावेश <media/v4l2-dv-timings.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/videobuf2-dma-contig.h>
+#include <media/v4l2-dv-timings.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-ioctl.h>
+#include <media/videobuf2-dma-contig.h>
 
-#समावेश <soc/tegra/pmc.h>
+#include <soc/tegra/pmc.h>
 
-#समावेश "vi.h"
-#समावेश "video.h"
+#include "vi.h"
+#include "video.h"
 
-#घोषणा MAX_CID_CONTROLS		1
+#define MAX_CID_CONTROLS		1
 
-अटल स्थिर काष्ठा tegra_video_क्रमmat tegra_शेष_क्रमmat = अणु
+static const struct tegra_video_format tegra_default_format = {
 	.img_dt = TEGRA_IMAGE_DT_RAW10,
 	.bit_width = 10,
 	.code = MEDIA_BUS_FMT_SRGGB10_1X10,
 	.bpp = 2,
 	.img_fmt = TEGRA_IMAGE_FORMAT_DEF,
 	.fourcc = V4L2_PIX_FMT_SRGGB10,
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा tegra_vi *
-host1x_client_to_vi(काष्ठा host1x_client *client)
-अणु
-	वापस container_of(client, काष्ठा tegra_vi, client);
-पूर्ण
+static inline struct tegra_vi *
+host1x_client_to_vi(struct host1x_client *client)
+{
+	return container_of(client, struct tegra_vi, client);
+}
 
-अटल अंतरभूत काष्ठा tegra_channel_buffer *
-to_tegra_channel_buffer(काष्ठा vb2_v4l2_buffer *vb)
-अणु
-	वापस container_of(vb, काष्ठा tegra_channel_buffer, buf);
-पूर्ण
+static inline struct tegra_channel_buffer *
+to_tegra_channel_buffer(struct vb2_v4l2_buffer *vb)
+{
+	return container_of(vb, struct tegra_channel_buffer, buf);
+}
 
-अटल अंतरभूत काष्ठा tegra_vi_graph_entity *
-to_tegra_vi_graph_entity(काष्ठा v4l2_async_subdev *asd)
-अणु
-	वापस container_of(asd, काष्ठा tegra_vi_graph_entity, asd);
-पूर्ण
+static inline struct tegra_vi_graph_entity *
+to_tegra_vi_graph_entity(struct v4l2_async_subdev *asd)
+{
+	return container_of(asd, struct tegra_vi_graph_entity, asd);
+}
 
-अटल पूर्णांक tegra_get_क्रमmat_idx_by_code(काष्ठा tegra_vi *vi,
-					अचिन्हित पूर्णांक code,
-					अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित पूर्णांक i;
+static int tegra_get_format_idx_by_code(struct tegra_vi *vi,
+					unsigned int code,
+					unsigned int offset)
+{
+	unsigned int i;
 
-	क्रम (i = offset; i < vi->soc->nक्रमmats; ++i) अणु
-		अगर (vi->soc->video_क्रमmats[i].code == code)
-			वापस i;
-	पूर्ण
+	for (i = offset; i < vi->soc->nformats; ++i) {
+		if (vi->soc->video_formats[i].code == code)
+			return i;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल u32 tegra_get_क्रमmat_fourcc_by_idx(काष्ठा tegra_vi *vi,
-					  अचिन्हित पूर्णांक index)
-अणु
-	अगर (index >= vi->soc->nक्रमmats)
-		वापस -EINVAL;
+static u32 tegra_get_format_fourcc_by_idx(struct tegra_vi *vi,
+					  unsigned int index)
+{
+	if (index >= vi->soc->nformats)
+		return -EINVAL;
 
-	वापस vi->soc->video_क्रमmats[index].fourcc;
-पूर्ण
+	return vi->soc->video_formats[index].fourcc;
+}
 
-अटल स्थिर काष्ठा tegra_video_क्रमmat *
-tegra_get_क्रमmat_by_fourcc(काष्ठा tegra_vi *vi, u32 fourcc)
-अणु
-	अचिन्हित पूर्णांक i;
+static const struct tegra_video_format *
+tegra_get_format_by_fourcc(struct tegra_vi *vi, u32 fourcc)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < vi->soc->nक्रमmats; ++i) अणु
-		अगर (vi->soc->video_क्रमmats[i].fourcc == fourcc)
-			वापस &vi->soc->video_क्रमmats[i];
-	पूर्ण
+	for (i = 0; i < vi->soc->nformats; ++i) {
+		if (vi->soc->video_formats[i].fourcc == fourcc)
+			return &vi->soc->video_formats[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * videobuf2 queue operations
  */
-अटल पूर्णांक tegra_channel_queue_setup(काष्ठा vb2_queue *vq,
-				     अचिन्हित पूर्णांक *nbuffers,
-				     अचिन्हित पूर्णांक *nplanes,
-				     अचिन्हित पूर्णांक sizes[],
-				     काष्ठा device *alloc_devs[])
-अणु
-	काष्ठा tegra_vi_channel *chan = vb2_get_drv_priv(vq);
+static int tegra_channel_queue_setup(struct vb2_queue *vq,
+				     unsigned int *nbuffers,
+				     unsigned int *nplanes,
+				     unsigned int sizes[],
+				     struct device *alloc_devs[])
+{
+	struct tegra_vi_channel *chan = vb2_get_drv_priv(vq);
 
-	अगर (*nplanes)
-		वापस sizes[0] < chan->क्रमmat.sizeimage ? -EINVAL : 0;
+	if (*nplanes)
+		return sizes[0] < chan->format.sizeimage ? -EINVAL : 0;
 
 	*nplanes = 1;
-	sizes[0] = chan->क्रमmat.sizeimage;
+	sizes[0] = chan->format.sizeimage;
 	alloc_devs[0] = chan->vi->dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_buffer_prepare(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा tegra_vi_channel *chan = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा tegra_channel_buffer *buf = to_tegra_channel_buffer(vbuf);
-	अचिन्हित दीर्घ size = chan->क्रमmat.sizeimage;
+static int tegra_channel_buffer_prepare(struct vb2_buffer *vb)
+{
+	struct tegra_vi_channel *chan = vb2_get_drv_priv(vb->vb2_queue);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct tegra_channel_buffer *buf = to_tegra_channel_buffer(vbuf);
+	unsigned long size = chan->format.sizeimage;
 
-	अगर (vb2_plane_size(vb, 0) < size) अणु
+	if (vb2_plane_size(vb, 0) < size) {
 		v4l2_err(chan->video.v4l2_dev,
 			 "buffer too small (%lu < %lu)\n",
 			 vb2_plane_size(vb, 0), size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	vb2_set_plane_payload(vb, 0, size);
 	buf->chan = chan;
 	buf->addr = vb2_dma_contig_plane_dma_addr(vb, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_channel_buffer_queue(काष्ठा vb2_buffer *vb)
-अणु
-	काष्ठा tegra_vi_channel *chan = vb2_get_drv_priv(vb->vb2_queue);
-	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	काष्ठा tegra_channel_buffer *buf = to_tegra_channel_buffer(vbuf);
+static void tegra_channel_buffer_queue(struct vb2_buffer *vb)
+{
+	struct tegra_vi_channel *chan = vb2_get_drv_priv(vb->vb2_queue);
+	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	struct tegra_channel_buffer *buf = to_tegra_channel_buffer(vbuf);
 
-	/* put buffer पूर्णांकo the capture queue */
+	/* put buffer into the capture queue */
 	spin_lock(&chan->start_lock);
 	list_add_tail(&buf->queue, &chan->capture);
 	spin_unlock(&chan->start_lock);
 
-	/* रुको up kthपढ़ो क्रम capture */
-	wake_up_पूर्णांकerruptible(&chan->start_रुको);
-पूर्ण
+	/* wait up kthread for capture */
+	wake_up_interruptible(&chan->start_wait);
+}
 
-काष्ठा v4l2_subdev *
-tegra_channel_get_remote_csi_subdev(काष्ठा tegra_vi_channel *chan)
-अणु
-	काष्ठा media_pad *pad;
+struct v4l2_subdev *
+tegra_channel_get_remote_csi_subdev(struct tegra_vi_channel *chan)
+{
+	struct media_pad *pad;
 
 	pad = media_entity_remote_pad(&chan->pad);
-	अगर (!pad)
-		वापस शून्य;
+	if (!pad)
+		return NULL;
 
-	वापस media_entity_to_v4l2_subdev(pad->entity);
-पूर्ण
+	return media_entity_to_v4l2_subdev(pad->entity);
+}
 
-काष्ठा v4l2_subdev *
-tegra_channel_get_remote_source_subdev(काष्ठा tegra_vi_channel *chan)
-अणु
-	काष्ठा media_pad *pad;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा media_entity *entity;
+struct v4l2_subdev *
+tegra_channel_get_remote_source_subdev(struct tegra_vi_channel *chan)
+{
+	struct media_pad *pad;
+	struct v4l2_subdev *subdev;
+	struct media_entity *entity;
 
 	subdev = tegra_channel_get_remote_csi_subdev(chan);
-	अगर (!subdev)
-		वापस शून्य;
+	if (!subdev)
+		return NULL;
 
 	pad = &subdev->entity.pads[0];
-	जबतक (!(pad->flags & MEDIA_PAD_FL_SOURCE)) अणु
+	while (!(pad->flags & MEDIA_PAD_FL_SOURCE)) {
 		pad = media_entity_remote_pad(pad);
-		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			अवरोध;
+		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			break;
 		entity = pad->entity;
 		pad = &entity->pads[0];
 		subdev = media_entity_to_v4l2_subdev(entity);
-	पूर्ण
+	}
 
-	वापस subdev;
-पूर्ण
+	return subdev;
+}
 
-अटल पूर्णांक tegra_channel_enable_stream(काष्ठा tegra_vi_channel *chan)
-अणु
-	काष्ठा v4l2_subdev *csi_subdev, *src_subdev;
-	काष्ठा tegra_csi_channel *csi_chan;
-	पूर्णांक ret, err;
+static int tegra_channel_enable_stream(struct tegra_vi_channel *chan)
+{
+	struct v4l2_subdev *csi_subdev, *src_subdev;
+	struct tegra_csi_channel *csi_chan;
+	int ret, err;
 
 	/*
 	 * Tegra CSI receiver can detect the first LP to HS transition.
 	 * So, start the CSI stream-on prior to sensor stream-on and
-	 * vice-versa क्रम stream-off.
+	 * vice-versa for stream-off.
 	 */
 	csi_subdev = tegra_channel_get_remote_csi_subdev(chan);
 	ret = v4l2_subdev_call(csi_subdev, video, s_stream, true);
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		return ret;
 
-	अगर (IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
-		वापस 0;
+	if (IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
+		return 0;
 
 	csi_chan = v4l2_get_subdevdata(csi_subdev);
 	/*
-	 * TRM has incorrectly करोcumented to रुको क्रम करोne status from
-	 * calibration logic after CSI पूर्णांकerface घातer on.
+	 * TRM has incorrectly documented to wait for done status from
+	 * calibration logic after CSI interface power on.
 	 * As per the design, calibration results are latched and applied
 	 * to the pads only when the link is in LP11 state which will happen
 	 * during the sensor stream-on.
 	 * CSI subdev stream-on triggers start of MIPI pads calibration.
-	 * Wait क्रम calibration to finish here after sensor subdev stream-on.
+	 * Wait for calibration to finish here after sensor subdev stream-on.
 	 */
 	src_subdev = tegra_channel_get_remote_source_subdev(chan);
 	ret = v4l2_subdev_call(src_subdev, video, s_stream, true);
 	err = tegra_mipi_finish_calibration(csi_chan->mipi);
 
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		जाओ err_disable_csi_stream;
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		goto err_disable_csi_stream;
 
-	अगर (err < 0)
+	if (err < 0)
 		dev_warn(csi_chan->csi->dev,
 			 "MIPI calibration failed: %d\n", err);
 
-	वापस 0;
+	return 0;
 
 err_disable_csi_stream:
 	v4l2_subdev_call(csi_subdev, video, s_stream, false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_channel_disable_stream(काष्ठा tegra_vi_channel *chan)
-अणु
-	काष्ठा v4l2_subdev *subdev;
-	पूर्णांक ret;
+static int tegra_channel_disable_stream(struct tegra_vi_channel *chan)
+{
+	struct v4l2_subdev *subdev;
+	int ret;
 
 	/*
 	 * Stream-off subdevices in reverse order to stream-on.
@@ -247,225 +246,225 @@ err_disable_csi_stream:
 	 */
 	subdev = tegra_channel_get_remote_source_subdev(chan);
 	ret = v4l2_subdev_call(subdev, video, s_stream, false);
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		return ret;
 
-	अगर (IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
-		वापस 0;
+	if (IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
+		return 0;
 
 	subdev = tegra_channel_get_remote_csi_subdev(chan);
 	ret = v4l2_subdev_call(subdev, video, s_stream, false);
-	अगर (ret < 0 && ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret < 0 && ret != -ENOIOCTLCMD)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_channel_set_stream(काष्ठा tegra_vi_channel *chan, bool on)
-अणु
-	पूर्णांक ret;
+int tegra_channel_set_stream(struct tegra_vi_channel *chan, bool on)
+{
+	int ret;
 
-	अगर (on)
+	if (on)
 		ret = tegra_channel_enable_stream(chan);
-	अन्यथा
+	else
 		ret = tegra_channel_disable_stream(chan);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम tegra_channel_release_buffers(काष्ठा tegra_vi_channel *chan,
-				   क्रमागत vb2_buffer_state state)
-अणु
-	काष्ठा tegra_channel_buffer *buf, *nbuf;
+void tegra_channel_release_buffers(struct tegra_vi_channel *chan,
+				   enum vb2_buffer_state state)
+{
+	struct tegra_channel_buffer *buf, *nbuf;
 
 	spin_lock(&chan->start_lock);
-	list_क्रम_each_entry_safe(buf, nbuf, &chan->capture, queue) अणु
-		vb2_buffer_करोne(&buf->buf.vb2_buf, state);
+	list_for_each_entry_safe(buf, nbuf, &chan->capture, queue) {
+		vb2_buffer_done(&buf->buf.vb2_buf, state);
 		list_del(&buf->queue);
-	पूर्ण
+	}
 	spin_unlock(&chan->start_lock);
 
-	spin_lock(&chan->करोne_lock);
-	list_क्रम_each_entry_safe(buf, nbuf, &chan->करोne, queue) अणु
-		vb2_buffer_करोne(&buf->buf.vb2_buf, state);
+	spin_lock(&chan->done_lock);
+	list_for_each_entry_safe(buf, nbuf, &chan->done, queue) {
+		vb2_buffer_done(&buf->buf.vb2_buf, state);
 		list_del(&buf->queue);
-	पूर्ण
-	spin_unlock(&chan->करोne_lock);
-पूर्ण
+	}
+	spin_unlock(&chan->done_lock);
+}
 
-अटल पूर्णांक tegra_channel_start_streaming(काष्ठा vb2_queue *vq, u32 count)
-अणु
-	काष्ठा tegra_vi_channel *chan = vb2_get_drv_priv(vq);
-	पूर्णांक ret;
+static int tegra_channel_start_streaming(struct vb2_queue *vq, u32 count)
+{
+	struct tegra_vi_channel *chan = vb2_get_drv_priv(vq);
+	int ret;
 
-	ret = pm_runसमय_get_sync(chan->vi->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(chan->vi->dev);
+	if (ret < 0) {
 		dev_err(chan->vi->dev, "failed to get runtime PM: %d\n", ret);
-		pm_runसमय_put_noidle(chan->vi->dev);
-		वापस ret;
-	पूर्ण
+		pm_runtime_put_noidle(chan->vi->dev);
+		return ret;
+	}
 
 	ret = chan->vi->ops->vi_start_streaming(vq, count);
-	अगर (ret < 0)
-		pm_runसमय_put(chan->vi->dev);
+	if (ret < 0)
+		pm_runtime_put(chan->vi->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tegra_channel_stop_streaming(काष्ठा vb2_queue *vq)
-अणु
-	काष्ठा tegra_vi_channel *chan = vb2_get_drv_priv(vq);
+static void tegra_channel_stop_streaming(struct vb2_queue *vq)
+{
+	struct tegra_vi_channel *chan = vb2_get_drv_priv(vq);
 
 	chan->vi->ops->vi_stop_streaming(vq);
-	pm_runसमय_put(chan->vi->dev);
-पूर्ण
+	pm_runtime_put(chan->vi->dev);
+}
 
-अटल स्थिर काष्ठा vb2_ops tegra_channel_queue_qops = अणु
+static const struct vb2_ops tegra_channel_queue_qops = {
 	.queue_setup = tegra_channel_queue_setup,
 	.buf_prepare = tegra_channel_buffer_prepare,
 	.buf_queue = tegra_channel_buffer_queue,
-	.रुको_prepare = vb2_ops_रुको_prepare,
-	.रुको_finish = vb2_ops_रुको_finish,
+	.wait_prepare = vb2_ops_wait_prepare,
+	.wait_finish = vb2_ops_wait_finish,
 	.start_streaming = tegra_channel_start_streaming,
 	.stop_streaming = tegra_channel_stop_streaming,
-पूर्ण;
+};
 
 /*
  * V4L2 ioctl operations
  */
-अटल पूर्णांक tegra_channel_querycap(काष्ठा file *file, व्योम *fh,
-				  काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
+static int tegra_channel_querycap(struct file *file, void *fh,
+				  struct v4l2_capability *cap)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
 
-	strscpy(cap->driver, "tegra-video", माप(cap->driver));
-	strscpy(cap->card, chan->video.name, माप(cap->card));
-	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
+	strscpy(cap->driver, "tegra-video", sizeof(cap->driver));
+	strscpy(cap->card, chan->video.name, sizeof(cap->card));
+	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
 		 dev_name(chan->vi->dev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_g_parm(काष्ठा file *file, व्योम *fh,
-				काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-
-	subdev = tegra_channel_get_remote_source_subdev(chan);
-	वापस v4l2_g_parm_cap(&chan->video, subdev, a);
-पूर्ण
-
-अटल पूर्णांक tegra_channel_s_parm(काष्ठा file *file, व्योम *fh,
-				काष्ठा v4l2_streamparm *a)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
+static int tegra_channel_g_parm(struct file *file, void *fh,
+				struct v4l2_streamparm *a)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	वापस v4l2_s_parm_cap(&chan->video, subdev, a);
-पूर्ण
+	return v4l2_g_parm_cap(&chan->video, subdev, a);
+}
 
-अटल पूर्णांक tegra_channel_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
-					 काष्ठा v4l2_frmsizeक्रमागत *sizes)
-अणु
-	पूर्णांक ret;
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-	स्थिर काष्ठा tegra_video_क्रमmat *fmtinfo;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
+static int tegra_channel_s_parm(struct file *file, void *fh,
+				struct v4l2_streamparm *a)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+
+	subdev = tegra_channel_get_remote_source_subdev(chan);
+	return v4l2_s_parm_cap(&chan->video, subdev, a);
+}
+
+static int tegra_channel_enum_framesizes(struct file *file, void *fh,
+					 struct v4l2_frmsizeenum *sizes)
+{
+	int ret;
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+	const struct tegra_video_format *fmtinfo;
+	struct v4l2_subdev_frame_size_enum fse = {
 		.index = sizes->index,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
+	};
 
-	fmtinfo = tegra_get_क्रमmat_by_fourcc(chan->vi, sizes->pixel_क्रमmat);
-	अगर (!fmtinfo)
-		वापस -EINVAL;
+	fmtinfo = tegra_get_format_by_fourcc(chan->vi, sizes->pixel_format);
+	if (!fmtinfo)
+		return -EINVAL;
 
 	fse.code = fmtinfo->code;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	ret = v4l2_subdev_call(subdev, pad, क्रमागत_frame_size, शून्य, &fse);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(subdev, pad, enum_frame_size, NULL, &fse);
+	if (ret)
+		return ret;
 
 	sizes->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	sizes->discrete.width = fse.max_width;
 	sizes->discrete.height = fse.max_height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *fh,
-					     काष्ठा v4l2_frmivalक्रमागत *ivals)
-अणु
-	पूर्णांक ret;
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-	स्थिर काष्ठा tegra_video_क्रमmat *fmtinfo;
-	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत fie = अणु
+static int tegra_channel_enum_frameintervals(struct file *file, void *fh,
+					     struct v4l2_frmivalenum *ivals)
+{
+	int ret;
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+	const struct tegra_video_format *fmtinfo;
+	struct v4l2_subdev_frame_interval_enum fie = {
 		.index = ivals->index,
 		.width = ivals->width,
 		.height = ivals->height,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
+	};
 
-	fmtinfo = tegra_get_क्रमmat_by_fourcc(chan->vi, ivals->pixel_क्रमmat);
-	अगर (!fmtinfo)
-		वापस -EINVAL;
+	fmtinfo = tegra_get_format_by_fourcc(chan->vi, ivals->pixel_format);
+	if (!fmtinfo)
+		return -EINVAL;
 
 	fie.code = fmtinfo->code;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	ret = v4l2_subdev_call(subdev, pad, क्रमागत_frame_पूर्णांकerval, शून्य, &fie);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(subdev, pad, enum_frame_interval, NULL, &fie);
+	if (ret)
+		return ret;
 
 	ivals->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	ivals->discrete.numerator = fie.पूर्णांकerval.numerator;
-	ivals->discrete.denominator = fie.पूर्णांकerval.denominator;
+	ivals->discrete.numerator = fie.interval.numerator;
+	ivals->discrete.denominator = fie.interval.denominator;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_क्रमागत_क्रमmat(काष्ठा file *file, व्योम *fh,
-				     काष्ठा v4l2_fmtdesc *f)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	अचिन्हित पूर्णांक index = 0, i;
-	अचिन्हित दीर्घ *fmts_biपंचांगap = chan->tpg_fmts_biपंचांगap;
+static int tegra_channel_enum_format(struct file *file, void *fh,
+				     struct v4l2_fmtdesc *f)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	unsigned int index = 0, i;
+	unsigned long *fmts_bitmap = chan->tpg_fmts_bitmap;
 
-	अगर (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
-		fmts_biपंचांगap = chan->fmts_biपंचांगap;
+	if (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
+		fmts_bitmap = chan->fmts_bitmap;
 
-	अगर (f->index >= biपंचांगap_weight(fmts_biपंचांगap, MAX_FORMAT_NUM))
-		वापस -EINVAL;
+	if (f->index >= bitmap_weight(fmts_bitmap, MAX_FORMAT_NUM))
+		return -EINVAL;
 
-	क्रम (i = 0; i < f->index + 1; i++, index++)
-		index = find_next_bit(fmts_biपंचांगap, MAX_FORMAT_NUM, index);
+	for (i = 0; i < f->index + 1; i++, index++)
+		index = find_next_bit(fmts_bitmap, MAX_FORMAT_NUM, index);
 
-	f->pixelक्रमmat = tegra_get_क्रमmat_fourcc_by_idx(chan->vi, index - 1);
+	f->pixelformat = tegra_get_format_fourcc_by_idx(chan->vi, index - 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_get_क्रमmat(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
+static int tegra_channel_get_format(struct file *file, void *fh,
+				    struct v4l2_format *format)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
 
-	क्रमmat->fmt.pix = chan->क्रमmat;
+	format->fmt.pix = chan->format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_channel_fmt_align(काष्ठा tegra_vi_channel *chan,
-				    काष्ठा v4l2_pix_क्रमmat *pix,
-				    अचिन्हित पूर्णांक bpp)
-अणु
-	अचिन्हित पूर्णांक min_bpl;
-	अचिन्हित पूर्णांक max_bpl;
-	अचिन्हित पूर्णांक bpl;
+static void tegra_channel_fmt_align(struct tegra_vi_channel *chan,
+				    struct v4l2_pix_format *pix,
+				    unsigned int bpp)
+{
+	unsigned int min_bpl;
+	unsigned int max_bpl;
+	unsigned int bpl;
 
 	/*
 	 * The transfer alignment requirements are expressed in bytes.
@@ -475,447 +474,447 @@ err_disable_csi_stream:
 	pix->height = clamp(pix->height, TEGRA_MIN_HEIGHT, TEGRA_MAX_HEIGHT);
 
 	/* Clamp the requested bytes per line value. If the maximum bytes per
-	 * line value is zero, the module करोesn't support user configurable
+	 * line value is zero, the module doesn't support user configurable
 	 * line sizes. Override the requested value with the minimum in that
-	 * हाल.
+	 * case.
 	 */
 	min_bpl = pix->width * bpp;
-	max_bpl = roundकरोwn(TEGRA_MAX_WIDTH, SURFACE_ALIGN_BYTES);
+	max_bpl = rounddown(TEGRA_MAX_WIDTH, SURFACE_ALIGN_BYTES);
 	bpl = roundup(pix->bytesperline, SURFACE_ALIGN_BYTES);
 
 	pix->bytesperline = clamp(bpl, min_bpl, max_bpl);
 	pix->sizeimage = pix->bytesperline * pix->height;
-	अगर (pix->pixelक्रमmat == V4L2_PIX_FMT_NV16)
+	if (pix->pixelformat == V4L2_PIX_FMT_NV16)
 		pix->sizeimage *= 2;
-पूर्ण
+}
 
-अटल पूर्णांक __tegra_channel_try_क्रमmat(काष्ठा tegra_vi_channel *chan,
-				      काष्ठा v4l2_pix_क्रमmat *pix)
-अणु
-	स्थिर काष्ठा tegra_video_क्रमmat *fmtinfo;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_subdev_क्रमmat fmt;
-	काष्ठा v4l2_subdev_pad_config *pad_cfg;
-	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
+static int __tegra_channel_try_format(struct tegra_vi_channel *chan,
+				      struct v4l2_pix_format *pix)
+{
+	const struct tegra_video_format *fmtinfo;
+	struct v4l2_subdev *subdev;
+	struct v4l2_subdev_format fmt;
+	struct v4l2_subdev_pad_config *pad_cfg;
+	struct v4l2_subdev_frame_size_enum fse = {
 		.which = V4L2_SUBDEV_FORMAT_TRY,
-	पूर्ण;
-	काष्ठा v4l2_subdev_selection sdsel = अणु
+	};
+	struct v4l2_subdev_selection sdsel = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = V4L2_SEL_TGT_CROP_BOUNDS,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!subdev)
-		वापस -ENODEV;
+	if (!subdev)
+		return -ENODEV;
 
 	pad_cfg = v4l2_subdev_alloc_pad_config(subdev);
-	अगर (!pad_cfg)
-		वापस -ENOMEM;
+	if (!pad_cfg)
+		return -ENOMEM;
 	/*
-	 * Retrieve the क्रमmat inक्रमmation and अगर requested क्रमmat isn't
-	 * supported, keep the current क्रमmat.
+	 * Retrieve the format information and if requested format isn't
+	 * supported, keep the current format.
 	 */
-	fmtinfo = tegra_get_क्रमmat_by_fourcc(chan->vi, pix->pixelक्रमmat);
-	अगर (!fmtinfo) अणु
-		pix->pixelक्रमmat = chan->क्रमmat.pixelक्रमmat;
-		pix->colorspace = chan->क्रमmat.colorspace;
-		fmtinfo = tegra_get_क्रमmat_by_fourcc(chan->vi,
-						     pix->pixelक्रमmat);
-	पूर्ण
+	fmtinfo = tegra_get_format_by_fourcc(chan->vi, pix->pixelformat);
+	if (!fmtinfo) {
+		pix->pixelformat = chan->format.pixelformat;
+		pix->colorspace = chan->format.colorspace;
+		fmtinfo = tegra_get_format_by_fourcc(chan->vi,
+						     pix->pixelformat);
+	}
 
 	pix->field = V4L2_FIELD_NONE;
 	fmt.which = V4L2_SUBDEV_FORMAT_TRY;
 	fmt.pad = 0;
-	v4l2_fill_mbus_क्रमmat(&fmt.क्रमmat, pix, fmtinfo->code);
+	v4l2_fill_mbus_format(&fmt.format, pix, fmtinfo->code);
 
 	/*
-	 * Attempt to obtain the क्रमmat size from subdev.
+	 * Attempt to obtain the format size from subdev.
 	 * If not available, try to get crop boundary from subdev.
 	 */
 	fse.code = fmtinfo->code;
-	ret = v4l2_subdev_call(subdev, pad, क्रमागत_frame_size, pad_cfg, &fse);
-	अगर (ret) अणु
-		अगर (!v4l2_subdev_has_op(subdev, pad, get_selection)) अणु
+	ret = v4l2_subdev_call(subdev, pad, enum_frame_size, pad_cfg, &fse);
+	if (ret) {
+		if (!v4l2_subdev_has_op(subdev, pad, get_selection)) {
 			pad_cfg->try_crop.width = 0;
 			pad_cfg->try_crop.height = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = v4l2_subdev_call(subdev, pad, get_selection,
-					       शून्य, &sdsel);
-			अगर (ret)
-				वापस -EINVAL;
+					       NULL, &sdsel);
+			if (ret)
+				return -EINVAL;
 
 			pad_cfg->try_crop.width = sdsel.r.width;
 			pad_cfg->try_crop.height = sdsel.r.height;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pad_cfg->try_crop.width = fse.max_width;
 		pad_cfg->try_crop.height = fse.max_height;
-	पूर्ण
+	}
 
 	ret = v4l2_subdev_call(subdev, pad, set_fmt, pad_cfg, &fmt);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	v4l2_fill_pix_क्रमmat(pix, &fmt.क्रमmat);
+	v4l2_fill_pix_format(pix, &fmt.format);
 	tegra_channel_fmt_align(chan, pix, fmtinfo->bpp);
 
-	v4l2_subdev_मुक्त_pad_config(pad_cfg);
+	v4l2_subdev_free_pad_config(pad_cfg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_try_क्रमmat(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
+static int tegra_channel_try_format(struct file *file, void *fh,
+				    struct v4l2_format *format)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
 
-	वापस __tegra_channel_try_क्रमmat(chan, &क्रमmat->fmt.pix);
-पूर्ण
+	return __tegra_channel_try_format(chan, &format->fmt.pix);
+}
 
-अटल व्योम tegra_channel_update_gangports(काष्ठा tegra_vi_channel *chan)
-अणु
-	अगर (chan->क्रमmat.width <= 1920)
+static void tegra_channel_update_gangports(struct tegra_vi_channel *chan)
+{
+	if (chan->format.width <= 1920)
 		chan->numgangports = 1;
-	अन्यथा
+	else
 		chan->numgangports = chan->totalports;
-पूर्ण
+}
 
-अटल पूर्णांक tegra_channel_set_क्रमmat(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_क्रमmat *क्रमmat)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	स्थिर काष्ठा tegra_video_क्रमmat *fmtinfo;
-	काष्ठा v4l2_subdev_क्रमmat fmt;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_pix_क्रमmat *pix = &क्रमmat->fmt.pix;
-	पूर्णांक ret;
+static int tegra_channel_set_format(struct file *file, void *fh,
+				    struct v4l2_format *format)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	const struct tegra_video_format *fmtinfo;
+	struct v4l2_subdev_format fmt;
+	struct v4l2_subdev *subdev;
+	struct v4l2_pix_format *pix = &format->fmt.pix;
+	int ret;
 
-	अगर (vb2_is_busy(&chan->queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&chan->queue))
+		return -EBUSY;
 
-	/* get supported क्रमmat by try_fmt */
-	ret = __tegra_channel_try_क्रमmat(chan, pix);
-	अगर (ret)
-		वापस ret;
+	/* get supported format by try_fmt */
+	ret = __tegra_channel_try_format(chan, pix);
+	if (ret)
+		return ret;
 
-	fmtinfo = tegra_get_क्रमmat_by_fourcc(chan->vi, pix->pixelक्रमmat);
+	fmtinfo = tegra_get_format_by_fourcc(chan->vi, pix->pixelformat);
 
 	fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	fmt.pad = 0;
-	v4l2_fill_mbus_क्रमmat(&fmt.क्रमmat, pix, fmtinfo->code);
+	v4l2_fill_mbus_format(&fmt.format, pix, fmtinfo->code);
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	ret = v4l2_subdev_call(subdev, pad, set_fmt, शून्य, &fmt);
-	अगर (ret < 0)
-		वापस ret;
+	ret = v4l2_subdev_call(subdev, pad, set_fmt, NULL, &fmt);
+	if (ret < 0)
+		return ret;
 
-	v4l2_fill_pix_क्रमmat(pix, &fmt.क्रमmat);
+	v4l2_fill_pix_format(pix, &fmt.format);
 	tegra_channel_fmt_align(chan, pix, fmtinfo->bpp);
 
-	chan->क्रमmat = *pix;
+	chan->format = *pix;
 	chan->fmtinfo = fmtinfo;
 	tegra_channel_update_gangports(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_set_subdev_active_fmt(काष्ठा tegra_vi_channel *chan)
-अणु
-	पूर्णांक ret, index;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_subdev_क्रमmat fmt = अणु
+static int tegra_channel_set_subdev_active_fmt(struct tegra_vi_channel *chan)
+{
+	int ret, index;
+	struct v4l2_subdev *subdev;
+	struct v4l2_subdev_format fmt = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
+	};
 
 	/*
-	 * Initialize channel क्रमmat to the sub-device active क्रमmat अगर there
-	 * is corresponding match in the Tegra supported video क्रमmats.
+	 * Initialize channel format to the sub-device active format if there
+	 * is corresponding match in the Tegra supported video formats.
 	 */
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	ret = v4l2_subdev_call(subdev, pad, get_fmt, शून्य, &fmt);
-	अगर (ret)
-		वापस ret;
+	ret = v4l2_subdev_call(subdev, pad, get_fmt, NULL, &fmt);
+	if (ret)
+		return ret;
 
-	index = tegra_get_क्रमmat_idx_by_code(chan->vi, fmt.क्रमmat.code, 0);
-	अगर (index < 0)
-		वापस -EINVAL;
+	index = tegra_get_format_idx_by_code(chan->vi, fmt.format.code, 0);
+	if (index < 0)
+		return -EINVAL;
 
-	chan->fmtinfo = &chan->vi->soc->video_क्रमmats[index];
-	v4l2_fill_pix_क्रमmat(&chan->क्रमmat, &fmt.क्रमmat);
-	chan->क्रमmat.pixelक्रमmat = chan->fmtinfo->fourcc;
-	chan->क्रमmat.bytesperline = chan->क्रमmat.width * chan->fmtinfo->bpp;
-	chan->क्रमmat.sizeimage = chan->क्रमmat.bytesperline *
-				 chan->क्रमmat.height;
-	tegra_channel_fmt_align(chan, &chan->क्रमmat, chan->fmtinfo->bpp);
+	chan->fmtinfo = &chan->vi->soc->video_formats[index];
+	v4l2_fill_pix_format(&chan->format, &fmt.format);
+	chan->format.pixelformat = chan->fmtinfo->fourcc;
+	chan->format.bytesperline = chan->format.width * chan->fmtinfo->bpp;
+	chan->format.sizeimage = chan->format.bytesperline *
+				 chan->format.height;
+	tegra_channel_fmt_align(chan, &chan->format, chan->fmtinfo->bpp);
 	tegra_channel_update_gangports(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-tegra_channel_subscribe_event(काष्ठा v4l2_fh *fh,
-			      स्थिर काष्ठा v4l2_event_subscription *sub)
-अणु
-	चयन (sub->type) अणु
-	हाल V4L2_EVENT_SOURCE_CHANGE:
-		वापस v4l2_event_subscribe(fh, sub, 4, शून्य);
-	पूर्ण
+static int
+tegra_channel_subscribe_event(struct v4l2_fh *fh,
+			      const struct v4l2_event_subscription *sub)
+{
+	switch (sub->type) {
+	case V4L2_EVENT_SOURCE_CHANGE:
+		return v4l2_event_subscribe(fh, sub, 4, NULL);
+	}
 
-	वापस v4l2_ctrl_subscribe_event(fh, sub);
-पूर्ण
+	return v4l2_ctrl_subscribe_event(fh, sub);
+}
 
-अटल पूर्णांक tegra_channel_g_selection(काष्ठा file *file, व्योम *priv,
-				     काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_subdev_क्रमmat fmt = अणु
+static int tegra_channel_g_selection(struct file *file, void *priv,
+				     struct v4l2_selection *sel)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+	struct v4l2_subdev_format fmt = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
-	काष्ठा v4l2_subdev_selection sdsel = अणु
+	};
+	struct v4l2_subdev_selection sdsel = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = sel->target,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, pad, get_selection))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, pad, get_selection))
+		return -ENOTTY;
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 	/*
-	 * Try the get selection operation and fallback to get क्रमmat अगर not
+	 * Try the get selection operation and fallback to get format if not
 	 * implemented.
 	 */
-	ret = v4l2_subdev_call(subdev, pad, get_selection, शून्य, &sdsel);
-	अगर (!ret)
+	ret = v4l2_subdev_call(subdev, pad, get_selection, NULL, &sdsel);
+	if (!ret)
 		sel->r = sdsel.r;
-	अगर (ret != -ENOIOCTLCMD)
-		वापस ret;
+	if (ret != -ENOIOCTLCMD)
+		return ret;
 
-	ret = v4l2_subdev_call(subdev, pad, get_fmt, शून्य, &fmt);
-	अगर (ret < 0)
-		वापस ret;
+	ret = v4l2_subdev_call(subdev, pad, get_fmt, NULL, &fmt);
+	if (ret < 0)
+		return ret;
 
 	sel->r.left = 0;
 	sel->r.top = 0;
-	sel->r.width = fmt.क्रमmat.width;
-	sel->r.height = fmt.क्रमmat.height;
+	sel->r.width = fmt.format.width;
+	sel->r.height = fmt.format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_s_selection(काष्ठा file *file, व्योम *fh,
-				     काष्ठा v4l2_selection *sel)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-	पूर्णांक ret;
-	काष्ठा v4l2_subdev_selection sdsel = अणु
+static int tegra_channel_s_selection(struct file *file, void *fh,
+				     struct v4l2_selection *sel)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+	int ret;
+	struct v4l2_subdev_selection sdsel = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = sel->target,
 		.flags = sel->flags,
 		.r = sel->r,
-	पूर्ण;
+	};
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, pad, set_selection))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, pad, set_selection))
+		return -ENOTTY;
 
-	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	अगर (vb2_is_busy(&chan->queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&chan->queue))
+		return -EBUSY;
 
-	ret = v4l2_subdev_call(subdev, pad, set_selection, शून्य, &sdsel);
-	अगर (!ret) अणु
+	ret = v4l2_subdev_call(subdev, pad, set_selection, NULL, &sdsel);
+	if (!ret) {
 		sel->r = sdsel.r;
 		/*
-		 * Subdev active क्रमmat resolution may have changed during
-		 * set selection operation. So, update channel क्रमmat to
-		 * the sub-device active क्रमmat.
+		 * Subdev active format resolution may have changed during
+		 * set selection operation. So, update channel format to
+		 * the sub-device active format.
 		 */
-		वापस tegra_channel_set_subdev_active_fmt(chan);
-	पूर्ण
+		return tegra_channel_set_subdev_active_fmt(chan);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_channel_g_edid(काष्ठा file *file, व्योम *fh,
-				काष्ठा v4l2_edid *edid)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-
-	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, pad, get_edid))
-		वापस -ENOTTY;
-
-	वापस v4l2_subdev_call(subdev, pad, get_edid, edid);
-पूर्ण
-
-अटल पूर्णांक tegra_channel_s_edid(काष्ठा file *file, व्योम *fh,
-				काष्ठा v4l2_edid *edid)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
+static int tegra_channel_g_edid(struct file *file, void *fh,
+				struct v4l2_edid *edid)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, pad, set_edid))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, pad, get_edid))
+		return -ENOTTY;
 
-	वापस v4l2_subdev_call(subdev, pad, set_edid, edid);
-पूर्ण
+	return v4l2_subdev_call(subdev, pad, get_edid, edid);
+}
 
-अटल पूर्णांक tegra_channel_g_dv_timings(काष्ठा file *file, व्योम *fh,
-				      काष्ठा v4l2_dv_timings *timings)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
+static int tegra_channel_s_edid(struct file *file, void *fh,
+				struct v4l2_edid *edid)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, video, g_dv_timings))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, pad, set_edid))
+		return -ENOTTY;
 
-	वापस v4l2_device_call_until_err(chan->video.v4l2_dev, 0,
+	return v4l2_subdev_call(subdev, pad, set_edid, edid);
+}
+
+static int tegra_channel_g_dv_timings(struct file *file, void *fh,
+				      struct v4l2_dv_timings *timings)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+
+	subdev = tegra_channel_get_remote_source_subdev(chan);
+	if (!v4l2_subdev_has_op(subdev, video, g_dv_timings))
+		return -ENOTTY;
+
+	return v4l2_device_call_until_err(chan->video.v4l2_dev, 0,
 					  video, g_dv_timings, timings);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_channel_s_dv_timings(काष्ठा file *file, व्योम *fh,
-				      काष्ठा v4l2_dv_timings *timings)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_bt_timings *bt = &timings->bt;
-	काष्ठा v4l2_dv_timings curr_timings;
-	पूर्णांक ret;
+static int tegra_channel_s_dv_timings(struct file *file, void *fh,
+				      struct v4l2_dv_timings *timings)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+	struct v4l2_bt_timings *bt = &timings->bt;
+	struct v4l2_dv_timings curr_timings;
+	int ret;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, video, s_dv_timings))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, video, s_dv_timings))
+		return -ENOTTY;
 
 	ret = tegra_channel_g_dv_timings(file, fh, &curr_timings);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (v4l2_match_dv_timings(timings, &curr_timings, 0, false))
-		वापस 0;
+	if (v4l2_match_dv_timings(timings, &curr_timings, 0, false))
+		return 0;
 
-	अगर (vb2_is_busy(&chan->queue))
-		वापस -EBUSY;
+	if (vb2_is_busy(&chan->queue))
+		return -EBUSY;
 
 	ret = v4l2_device_call_until_err(chan->video.v4l2_dev, 0,
 					 video, s_dv_timings, timings);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	chan->क्रमmat.width = bt->width;
-	chan->क्रमmat.height = bt->height;
-	chan->क्रमmat.bytesperline = bt->width * chan->fmtinfo->bpp;
-	chan->क्रमmat.sizeimage = chan->क्रमmat.bytesperline * bt->height;
-	tegra_channel_fmt_align(chan, &chan->क्रमmat, chan->fmtinfo->bpp);
+	chan->format.width = bt->width;
+	chan->format.height = bt->height;
+	chan->format.bytesperline = bt->width * chan->fmtinfo->bpp;
+	chan->format.sizeimage = chan->format.bytesperline * bt->height;
+	tegra_channel_fmt_align(chan, &chan->format, chan->fmtinfo->bpp);
 	tegra_channel_update_gangports(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_query_dv_timings(काष्ठा file *file, व्योम *fh,
-					  काष्ठा v4l2_dv_timings *timings)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
+static int tegra_channel_query_dv_timings(struct file *file, void *fh,
+					  struct v4l2_dv_timings *timings)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, video, query_dv_timings))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, video, query_dv_timings))
+		return -ENOTTY;
 
-	वापस v4l2_device_call_until_err(chan->video.v4l2_dev, 0,
+	return v4l2_device_call_until_err(chan->video.v4l2_dev, 0,
 					  video, query_dv_timings, timings);
-पूर्ण
+}
 
-अटल पूर्णांक tegra_channel_क्रमागत_dv_timings(काष्ठा file *file, व्योम *fh,
-					 काष्ठा v4l2_क्रमागत_dv_timings *timings)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
-
-	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, pad, क्रमागत_dv_timings))
-		वापस -ENOTTY;
-
-	वापस v4l2_subdev_call(subdev, pad, क्रमागत_dv_timings, timings);
-पूर्ण
-
-अटल पूर्णांक tegra_channel_dv_timings_cap(काष्ठा file *file, व्योम *fh,
-					काष्ठा v4l2_dv_timings_cap *cap)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
+static int tegra_channel_enum_dv_timings(struct file *file, void *fh,
+					 struct v4l2_enum_dv_timings *timings)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!v4l2_subdev_has_op(subdev, pad, dv_timings_cap))
-		वापस -ENOTTY;
+	if (!v4l2_subdev_has_op(subdev, pad, enum_dv_timings))
+		return -ENOTTY;
 
-	वापस v4l2_subdev_call(subdev, pad, dv_timings_cap, cap);
-पूर्ण
+	return v4l2_subdev_call(subdev, pad, enum_dv_timings, timings);
+}
 
-अटल पूर्णांक tegra_channel_log_status(काष्ठा file *file, व्योम *fh)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
+static int tegra_channel_dv_timings_cap(struct file *file, void *fh,
+					struct v4l2_dv_timings_cap *cap)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
+
+	subdev = tegra_channel_get_remote_source_subdev(chan);
+	if (!v4l2_subdev_has_op(subdev, pad, dv_timings_cap))
+		return -ENOTTY;
+
+	return v4l2_subdev_call(subdev, pad, dv_timings_cap, cap);
+}
+
+static int tegra_channel_log_status(struct file *file, void *fh)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
 
 	v4l2_device_call_all(chan->video.v4l2_dev, 0, core, log_status);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_क्रमागत_input(काष्ठा file *file, व्योम *fh,
-				    काष्ठा v4l2_input *inp)
-अणु
-	काष्ठा tegra_vi_channel *chan = video_drvdata(file);
-	काष्ठा v4l2_subdev *subdev;
+static int tegra_channel_enum_input(struct file *file, void *fh,
+				    struct v4l2_input *inp)
+{
+	struct tegra_vi_channel *chan = video_drvdata(file);
+	struct v4l2_subdev *subdev;
 
-	अगर (inp->index)
-		वापस -EINVAL;
+	if (inp->index)
+		return -EINVAL;
 
 	inp->type = V4L2_INPUT_TYPE_CAMERA;
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	strscpy(inp->name, subdev->name, माप(inp->name));
-	अगर (v4l2_subdev_has_op(subdev, pad, dv_timings_cap))
+	strscpy(inp->name, subdev->name, sizeof(inp->name));
+	if (v4l2_subdev_has_op(subdev, pad, dv_timings_cap))
 		inp->capabilities = V4L2_IN_CAP_DV_TIMINGS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_g_input(काष्ठा file *file, व्योम *priv,
-				 अचिन्हित पूर्णांक *i)
-अणु
+static int tegra_channel_g_input(struct file *file, void *priv,
+				 unsigned int *i)
+{
 	*i = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_channel_s_input(काष्ठा file *file, व्योम *priv,
-				 अचिन्हित पूर्णांक input)
-अणु
-	अगर (input > 0)
-		वापस -EINVAL;
+static int tegra_channel_s_input(struct file *file, void *priv,
+				 unsigned int input)
+{
+	if (input > 0)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops tegra_channel_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops tegra_channel_ioctl_ops = {
 	.vidioc_querycap		= tegra_channel_querycap,
 	.vidioc_g_parm			= tegra_channel_g_parm,
 	.vidioc_s_parm			= tegra_channel_s_parm,
-	.vidioc_क्रमागत_framesizes		= tegra_channel_क्रमागत_framesizes,
-	.vidioc_क्रमागत_frameपूर्णांकervals	= tegra_channel_क्रमागत_frameपूर्णांकervals,
-	.vidioc_क्रमागत_fmt_vid_cap	= tegra_channel_क्रमागत_क्रमmat,
-	.vidioc_g_fmt_vid_cap		= tegra_channel_get_क्रमmat,
-	.vidioc_s_fmt_vid_cap		= tegra_channel_set_क्रमmat,
-	.vidioc_try_fmt_vid_cap		= tegra_channel_try_क्रमmat,
-	.vidioc_क्रमागत_input		= tegra_channel_क्रमागत_input,
+	.vidioc_enum_framesizes		= tegra_channel_enum_framesizes,
+	.vidioc_enum_frameintervals	= tegra_channel_enum_frameintervals,
+	.vidioc_enum_fmt_vid_cap	= tegra_channel_enum_format,
+	.vidioc_g_fmt_vid_cap		= tegra_channel_get_format,
+	.vidioc_s_fmt_vid_cap		= tegra_channel_set_format,
+	.vidioc_try_fmt_vid_cap		= tegra_channel_try_format,
+	.vidioc_enum_input		= tegra_channel_enum_input,
 	.vidioc_g_input			= tegra_channel_g_input,
 	.vidioc_s_input			= tegra_channel_s_input,
 	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
@@ -936,59 +935,59 @@ tegra_channel_subscribe_event(काष्ठा v4l2_fh *fh,
 	.vidioc_g_dv_timings		= tegra_channel_g_dv_timings,
 	.vidioc_s_dv_timings		= tegra_channel_s_dv_timings,
 	.vidioc_query_dv_timings	= tegra_channel_query_dv_timings,
-	.vidioc_क्रमागत_dv_timings		= tegra_channel_क्रमागत_dv_timings,
+	.vidioc_enum_dv_timings		= tegra_channel_enum_dv_timings,
 	.vidioc_dv_timings_cap		= tegra_channel_dv_timings_cap,
 	.vidioc_log_status		= tegra_channel_log_status,
-पूर्ण;
+};
 
 /*
  * V4L2 file operations
  */
-अटल स्थिर काष्ठा v4l2_file_operations tegra_channel_fops = अणु
+static const struct v4l2_file_operations tegra_channel_fops = {
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= video_ioctl2,
-	.खोलो		= v4l2_fh_खोलो,
+	.open		= v4l2_fh_open,
 	.release	= vb2_fop_release,
-	.पढ़ो		= vb2_fop_पढ़ो,
+	.read		= vb2_fop_read,
 	.poll		= vb2_fop_poll,
 	.mmap		= vb2_fop_mmap,
-पूर्ण;
+};
 
 /*
  * V4L2 control operations
  */
-अटल पूर्णांक vi_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा tegra_vi_channel *chan = container_of(ctrl->handler,
-						     काष्ठा tegra_vi_channel,
+static int vi_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct tegra_vi_channel *chan = container_of(ctrl->handler,
+						     struct tegra_vi_channel,
 						     ctrl_handler);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_TEST_PATTERN:
+	switch (ctrl->id) {
+	case V4L2_CID_TEST_PATTERN:
 		/* pattern change takes effect on next stream */
 		chan->pg_mode = ctrl->val + 1;
-		अवरोध;
-	हाल V4L2_CID_TEGRA_SYNCPT_TIMEOUT_RETRY:
-		chan->syncpt_समयout_retry = ctrl->val;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case V4L2_CID_TEGRA_SYNCPT_TIMEOUT_RETRY:
+		chan->syncpt_timeout_retry = ctrl->val;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops vi_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops vi_ctrl_ops = {
 	.s_ctrl	= vi_s_ctrl,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG)
-अटल स्थिर अक्षर *स्थिर vi_pattern_strings[] = अणु
+#if IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG)
+static const char *const vi_pattern_strings[] = {
 	"Black/White Direct Mode",
 	"Color Patch Mode",
-पूर्ण;
-#अन्यथा
-अटल स्थिर काष्ठा v4l2_ctrl_config syncpt_समयout_ctrl = अणु
+};
+#else
+static const struct v4l2_ctrl_config syncpt_timeout_ctrl = {
 	.ops = &vi_ctrl_ops,
 	.id = V4L2_CID_TEGRA_SYNCPT_TIMEOUT_RETRY,
 	.name = "Syncpt timeout retry",
@@ -997,258 +996,258 @@ tegra_channel_subscribe_event(काष्ठा v4l2_fh *fh,
 	.max = 10000,
 	.step = 1,
 	.def = 5,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक tegra_channel_setup_ctrl_handler(काष्ठा tegra_vi_channel *chan)
-अणु
-	पूर्णांक ret;
+static int tegra_channel_setup_ctrl_handler(struct tegra_vi_channel *chan)
+{
+	int ret;
 
-#अगर IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG)
+#if IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG)
 	/* add test pattern control handler to v4l2 device */
 	v4l2_ctrl_new_std_menu_items(&chan->ctrl_handler, &vi_ctrl_ops,
 				     V4L2_CID_TEST_PATTERN,
 				     ARRAY_SIZE(vi_pattern_strings) - 1,
 				     0, 0, vi_pattern_strings);
-	अगर (chan->ctrl_handler.error) अणु
+	if (chan->ctrl_handler.error) {
 		dev_err(chan->vi->dev, "failed to add TPG ctrl handler: %d\n",
 			chan->ctrl_handler.error);
-		v4l2_ctrl_handler_मुक्त(&chan->ctrl_handler);
-		वापस chan->ctrl_handler.error;
-	पूर्ण
-#अन्यथा
-	काष्ठा v4l2_subdev *subdev;
+		v4l2_ctrl_handler_free(&chan->ctrl_handler);
+		return chan->ctrl_handler.error;
+	}
+#else
+	struct v4l2_subdev *subdev;
 
 	/* custom control */
-	v4l2_ctrl_new_custom(&chan->ctrl_handler, &syncpt_समयout_ctrl, शून्य);
-	अगर (chan->ctrl_handler.error) अणु
+	v4l2_ctrl_new_custom(&chan->ctrl_handler, &syncpt_timeout_ctrl, NULL);
+	if (chan->ctrl_handler.error) {
 		dev_err(chan->vi->dev, "failed to add %s ctrl handler: %d\n",
-			syncpt_समयout_ctrl.name,
+			syncpt_timeout_ctrl.name,
 			chan->ctrl_handler.error);
-		v4l2_ctrl_handler_मुक्त(&chan->ctrl_handler);
-		वापस chan->ctrl_handler.error;
-	पूर्ण
+		v4l2_ctrl_handler_free(&chan->ctrl_handler);
+		return chan->ctrl_handler.error;
+	}
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	अगर (!subdev)
-		वापस -ENODEV;
+	if (!subdev)
+		return -ENODEV;
 
 	ret = v4l2_ctrl_add_handler(&chan->ctrl_handler, subdev->ctrl_handler,
-				    शून्य, true);
-	अगर (ret < 0) अणु
+				    NULL, true);
+	if (ret < 0) {
 		dev_err(chan->vi->dev,
 			"failed to add subdev %s ctrl handler: %d\n",
 			subdev->name, ret);
-		v4l2_ctrl_handler_मुक्त(&chan->ctrl_handler);
-		वापस ret;
-	पूर्ण
-#पूर्ण_अगर
+		v4l2_ctrl_handler_free(&chan->ctrl_handler);
+		return ret;
+	}
+#endif
 
 	/* setup the controls */
 	ret = v4l2_ctrl_handler_setup(&chan->ctrl_handler);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(chan->vi->dev,
 			"failed to setup v4l2 ctrl handler: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* VI only support 2 क्रमmats in TPG mode */
-अटल व्योम vi_tpg_fmts_biपंचांगap_init(काष्ठा tegra_vi_channel *chan)
-अणु
-	पूर्णांक index;
+/* VI only support 2 formats in TPG mode */
+static void vi_tpg_fmts_bitmap_init(struct tegra_vi_channel *chan)
+{
+	int index;
 
-	biपंचांगap_zero(chan->tpg_fmts_biपंचांगap, MAX_FORMAT_NUM);
+	bitmap_zero(chan->tpg_fmts_bitmap, MAX_FORMAT_NUM);
 
-	index = tegra_get_क्रमmat_idx_by_code(chan->vi,
+	index = tegra_get_format_idx_by_code(chan->vi,
 					     MEDIA_BUS_FMT_SRGGB10_1X10, 0);
-	biपंचांगap_set(chan->tpg_fmts_biपंचांगap, index, 1);
+	bitmap_set(chan->tpg_fmts_bitmap, index, 1);
 
-	index = tegra_get_क्रमmat_idx_by_code(chan->vi,
+	index = tegra_get_format_idx_by_code(chan->vi,
 					     MEDIA_BUS_FMT_RGB888_1X32_PADHI,
 					     0);
-	biपंचांगap_set(chan->tpg_fmts_biपंचांगap, index, 1);
-पूर्ण
+	bitmap_set(chan->tpg_fmts_bitmap, index, 1);
+}
 
-अटल पूर्णांक vi_fmts_biपंचांगap_init(काष्ठा tegra_vi_channel *chan)
-अणु
-	पूर्णांक index, ret, match_code = 0;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा v4l2_subdev_mbus_code_क्रमागत code = अणु
+static int vi_fmts_bitmap_init(struct tegra_vi_channel *chan)
+{
+	int index, ret, match_code = 0;
+	struct v4l2_subdev *subdev;
+	struct v4l2_subdev_mbus_code_enum code = {
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	पूर्ण;
+	};
 
-	biपंचांगap_zero(chan->fmts_biपंचांगap, MAX_FORMAT_NUM);
+	bitmap_zero(chan->fmts_bitmap, MAX_FORMAT_NUM);
 
 	/*
-	 * Set the biपंचांगap bits based on all the matched क्रमmats between the
-	 * available media bus क्रमmats of sub-device and the pre-defined Tegra
-	 * supported video क्रमmats.
+	 * Set the bitmap bits based on all the matched formats between the
+	 * available media bus formats of sub-device and the pre-defined Tegra
+	 * supported video formats.
 	 */
 	subdev = tegra_channel_get_remote_source_subdev(chan);
-	जबतक (1) अणु
-		ret = v4l2_subdev_call(subdev, pad, क्रमागत_mbus_code,
-				       शून्य, &code);
-		अगर (ret < 0)
-			अवरोध;
+	while (1) {
+		ret = v4l2_subdev_call(subdev, pad, enum_mbus_code,
+				       NULL, &code);
+		if (ret < 0)
+			break;
 
-		index = tegra_get_क्रमmat_idx_by_code(chan->vi, code.code, 0);
-		जबतक (index >= 0) अणु
-			biपंचांगap_set(chan->fmts_biपंचांगap, index, 1);
-			अगर (!match_code)
+		index = tegra_get_format_idx_by_code(chan->vi, code.code, 0);
+		while (index >= 0) {
+			bitmap_set(chan->fmts_bitmap, index, 1);
+			if (!match_code)
 				match_code = code.code;
-			/* look क्रम other क्रमmats with same mbus code */
-			index = tegra_get_क्रमmat_idx_by_code(chan->vi,
+			/* look for other formats with same mbus code */
+			index = tegra_get_format_idx_by_code(chan->vi,
 							     code.code,
 							     index + 1);
-		पूर्ण
+		}
 
 		code.index++;
-	पूर्ण
+	}
 
 	/*
-	 * Set the biपंचांगap bit corresponding to शेष tegra video क्रमmat अगर
-	 * there are no matched क्रमmats.
+	 * Set the bitmap bit corresponding to default tegra video format if
+	 * there are no matched formats.
 	 */
-	अगर (!match_code) अणु
-		match_code = tegra_शेष_क्रमmat.code;
-		index = tegra_get_क्रमmat_idx_by_code(chan->vi, match_code, 0);
-		अगर (WARN_ON(index < 0))
-			वापस -EINVAL;
+	if (!match_code) {
+		match_code = tegra_default_format.code;
+		index = tegra_get_format_idx_by_code(chan->vi, match_code, 0);
+		if (WARN_ON(index < 0))
+			return -EINVAL;
 
-		biपंचांगap_set(chan->fmts_biपंचांगap, index, 1);
-	पूर्ण
+		bitmap_set(chan->fmts_bitmap, index, 1);
+	}
 
-	/* initialize channel क्रमmat to the sub-device active क्रमmat */
+	/* initialize channel format to the sub-device active format */
 	tegra_channel_set_subdev_active_fmt(chan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_channel_host1x_syncpts_मुक्त(काष्ठा tegra_vi_channel *chan)
-अणु
-	पूर्णांक i;
+static void tegra_channel_host1x_syncpts_free(struct tegra_vi_channel *chan)
+{
+	int i;
 
-	क्रम (i = 0; i < chan->numgangports; i++) अणु
+	for (i = 0; i < chan->numgangports; i++) {
 		host1x_syncpt_put(chan->mw_ack_sp[i]);
 		host1x_syncpt_put(chan->frame_start_sp[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tegra_channel_cleanup(काष्ठा tegra_vi_channel *chan)
-अणु
-	v4l2_ctrl_handler_मुक्त(&chan->ctrl_handler);
+static void tegra_channel_cleanup(struct tegra_vi_channel *chan)
+{
+	v4l2_ctrl_handler_free(&chan->ctrl_handler);
 	media_entity_cleanup(&chan->video.entity);
-	tegra_channel_host1x_syncpts_मुक्त(chan);
+	tegra_channel_host1x_syncpts_free(chan);
 	mutex_destroy(&chan->video_lock);
-पूर्ण
+}
 
-व्योम tegra_channels_cleanup(काष्ठा tegra_vi *vi)
-अणु
-	काष्ठा tegra_vi_channel *chan, *पंचांगp;
+void tegra_channels_cleanup(struct tegra_vi *vi)
+{
+	struct tegra_vi_channel *chan, *tmp;
 
-	अगर (!vi)
-		वापस;
+	if (!vi)
+		return;
 
-	list_क्रम_each_entry_safe(chan, पंचांगp, &vi->vi_chans, list) अणु
+	list_for_each_entry_safe(chan, tmp, &vi->vi_chans, list) {
 		tegra_channel_cleanup(chan);
 		list_del(&chan->list);
-		kमुक्त(chan);
-	पूर्ण
-पूर्ण
+		kfree(chan);
+	}
+}
 
-अटल पूर्णांक tegra_channel_host1x_syncpt_init(काष्ठा tegra_vi_channel *chan)
-अणु
-	काष्ठा tegra_vi *vi = chan->vi;
-	अचिन्हित दीर्घ flags = HOST1X_SYNCPT_CLIENT_MANAGED;
-	काष्ठा host1x_syncpt *fs_sp;
-	काष्ठा host1x_syncpt *mw_sp;
-	पूर्णांक ret, i;
+static int tegra_channel_host1x_syncpt_init(struct tegra_vi_channel *chan)
+{
+	struct tegra_vi *vi = chan->vi;
+	unsigned long flags = HOST1X_SYNCPT_CLIENT_MANAGED;
+	struct host1x_syncpt *fs_sp;
+	struct host1x_syncpt *mw_sp;
+	int ret, i;
 
-	क्रम (i = 0; i < chan->numgangports; i++) अणु
+	for (i = 0; i < chan->numgangports; i++) {
 		fs_sp = host1x_syncpt_request(&vi->client, flags);
-		अगर (!fs_sp) अणु
+		if (!fs_sp) {
 			dev_err(vi->dev, "failed to request frame start syncpoint\n");
 			ret = -ENOMEM;
-			जाओ मुक्त_syncpts;
-		पूर्ण
+			goto free_syncpts;
+		}
 
 		mw_sp = host1x_syncpt_request(&vi->client, flags);
-		अगर (!mw_sp) अणु
+		if (!mw_sp) {
 			dev_err(vi->dev, "failed to request memory ack syncpoint\n");
 			host1x_syncpt_put(fs_sp);
 			ret = -ENOMEM;
-			जाओ मुक्त_syncpts;
-		पूर्ण
+			goto free_syncpts;
+		}
 
 		chan->frame_start_sp[i] = fs_sp;
 		chan->mw_ack_sp[i] = mw_sp;
 		spin_lock_init(&chan->sp_incr_lock[i]);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_syncpts:
-	tegra_channel_host1x_syncpts_मुक्त(chan);
-	वापस ret;
-पूर्ण
+free_syncpts:
+	tegra_channel_host1x_syncpts_free(chan);
+	return ret;
+}
 
-अटल पूर्णांक tegra_channel_init(काष्ठा tegra_vi_channel *chan)
-अणु
-	काष्ठा tegra_vi *vi = chan->vi;
-	काष्ठा tegra_video_device *vid = dev_get_drvdata(vi->client.host);
-	पूर्णांक ret;
+static int tegra_channel_init(struct tegra_vi_channel *chan)
+{
+	struct tegra_vi *vi = chan->vi;
+	struct tegra_video_device *vid = dev_get_drvdata(vi->client.host);
+	int ret;
 
 	mutex_init(&chan->video_lock);
 	INIT_LIST_HEAD(&chan->capture);
-	INIT_LIST_HEAD(&chan->करोne);
+	INIT_LIST_HEAD(&chan->done);
 	spin_lock_init(&chan->start_lock);
-	spin_lock_init(&chan->करोne_lock);
-	init_रुकोqueue_head(&chan->start_रुको);
-	init_रुकोqueue_head(&chan->करोne_रुको);
+	spin_lock_init(&chan->done_lock);
+	init_waitqueue_head(&chan->start_wait);
+	init_waitqueue_head(&chan->done_wait);
 
-	/* initialize the video क्रमmat */
-	chan->fmtinfo = &tegra_शेष_क्रमmat;
-	chan->क्रमmat.pixelक्रमmat = chan->fmtinfo->fourcc;
-	chan->क्रमmat.colorspace = V4L2_COLORSPACE_SRGB;
-	chan->क्रमmat.field = V4L2_FIELD_NONE;
-	chan->क्रमmat.width = TEGRA_DEF_WIDTH;
-	chan->क्रमmat.height = TEGRA_DEF_HEIGHT;
-	chan->क्रमmat.bytesperline = TEGRA_DEF_WIDTH * chan->fmtinfo->bpp;
-	chan->क्रमmat.sizeimage = chan->क्रमmat.bytesperline * TEGRA_DEF_HEIGHT;
-	tegra_channel_fmt_align(chan, &chan->क्रमmat, chan->fmtinfo->bpp);
+	/* initialize the video format */
+	chan->fmtinfo = &tegra_default_format;
+	chan->format.pixelformat = chan->fmtinfo->fourcc;
+	chan->format.colorspace = V4L2_COLORSPACE_SRGB;
+	chan->format.field = V4L2_FIELD_NONE;
+	chan->format.width = TEGRA_DEF_WIDTH;
+	chan->format.height = TEGRA_DEF_HEIGHT;
+	chan->format.bytesperline = TEGRA_DEF_WIDTH * chan->fmtinfo->bpp;
+	chan->format.sizeimage = chan->format.bytesperline * TEGRA_DEF_HEIGHT;
+	tegra_channel_fmt_align(chan, &chan->format, chan->fmtinfo->bpp);
 
 	ret = tegra_channel_host1x_syncpt_init(chan);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* initialize the media entity */
 	chan->pad.flags = MEDIA_PAD_FL_SINK;
 	ret = media_entity_pads_init(&chan->video.entity, 1, &chan->pad);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vi->dev,
 			"failed to initialize media entity: %d\n", ret);
-		जाओ मुक्त_syncpts;
-	पूर्ण
+		goto free_syncpts;
+	}
 
 	ret = v4l2_ctrl_handler_init(&chan->ctrl_handler, MAX_CID_CONTROLS);
-	अगर (chan->ctrl_handler.error) अणु
+	if (chan->ctrl_handler.error) {
 		dev_err(vi->dev,
 			"failed to initialize v4l2 ctrl handler: %d\n", ret);
-		जाओ cleanup_media;
-	पूर्ण
+		goto cleanup_media;
+	}
 
 	/* initialize the video_device */
 	chan->video.fops = &tegra_channel_fops;
 	chan->video.v4l2_dev = &vid->v4l2_dev;
 	chan->video.release = video_device_release_empty;
 	chan->video.queue = &chan->queue;
-	snम_लिखो(chan->video.name, माप(chan->video.name), "%s-%s-%u",
+	snprintf(chan->video.name, sizeof(chan->video.name), "%s-%s-%u",
 		 dev_name(vi->dev), "output", chan->portnos[0]);
 	chan->video.vfl_type = VFL_TYPE_VIDEO;
-	chan->video.vfl_dir = VFL_सूची_RX;
+	chan->video.vfl_dir = VFL_DIR_RX;
 	chan->video.ioctl_ops = &tegra_channel_ioctl_ops;
 	chan->video.ctrl_handler = &chan->ctrl_handler;
 	chan->video.lock = &chan->video_lock;
@@ -1261,221 +1260,221 @@ tegra_channel_subscribe_event(काष्ठा v4l2_fh *fh,
 	chan->queue.io_modes = VB2_MMAP | VB2_DMABUF | VB2_READ;
 	chan->queue.lock = &chan->video_lock;
 	chan->queue.drv_priv = chan;
-	chan->queue.buf_काष्ठा_size = माप(काष्ठा tegra_channel_buffer);
+	chan->queue.buf_struct_size = sizeof(struct tegra_channel_buffer);
 	chan->queue.ops = &tegra_channel_queue_qops;
 	chan->queue.mem_ops = &vb2_dma_contig_memops;
-	chan->queue.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	chan->queue.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	chan->queue.min_buffers_needed = 2;
 	chan->queue.dev = vi->dev;
 	ret = vb2_queue_init(&chan->queue);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vi->dev, "failed to initialize vb2 queue: %d\n", ret);
-		जाओ मुक्त_v4l2_ctrl_hdl;
-	पूर्ण
+		goto free_v4l2_ctrl_hdl;
+	}
 
-	अगर (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
-		v4l2_async_notअगरier_init(&chan->notअगरier);
+	if (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
+		v4l2_async_notifier_init(&chan->notifier);
 
-	वापस 0;
+	return 0;
 
-मुक्त_v4l2_ctrl_hdl:
-	v4l2_ctrl_handler_मुक्त(&chan->ctrl_handler);
+free_v4l2_ctrl_hdl:
+	v4l2_ctrl_handler_free(&chan->ctrl_handler);
 cleanup_media:
 	media_entity_cleanup(&chan->video.entity);
-मुक्त_syncpts:
-	tegra_channel_host1x_syncpts_मुक्त(chan);
-	वापस ret;
-पूर्ण
+free_syncpts:
+	tegra_channel_host1x_syncpts_free(chan);
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_channel_alloc(काष्ठा tegra_vi *vi, अचिन्हित पूर्णांक port_num,
-				  काष्ठा device_node *node, अचिन्हित पूर्णांक lanes)
-अणु
-	काष्ठा tegra_vi_channel *chan;
-	अचिन्हित पूर्णांक i;
+static int tegra_vi_channel_alloc(struct tegra_vi *vi, unsigned int port_num,
+				  struct device_node *node, unsigned int lanes)
+{
+	struct tegra_vi_channel *chan;
+	unsigned int i;
 
 	/*
-	 * Do not use devm_kzalloc as memory is मुक्तd immediately
+	 * Do not use devm_kzalloc as memory is freed immediately
 	 * when device instance is unbound but application might still
-	 * be holding the device node खोलो. Channel memory allocated
-	 * with kzalloc is मुक्तd during video device release callback.
+	 * be holding the device node open. Channel memory allocated
+	 * with kzalloc is freed during video device release callback.
 	 */
-	chan = kzalloc(माप(*chan), GFP_KERNEL);
-	अगर (!chan)
-		वापस -ENOMEM;
+	chan = kzalloc(sizeof(*chan), GFP_KERNEL);
+	if (!chan)
+		return -ENOMEM;
 
 	chan->vi = vi;
 	chan->portnos[0] = port_num;
 	/*
 	 * For data lanes more than maximum csi lanes per brick, multiple of
-	 * x4 ports are used simultaneously क्रम capture.
+	 * x4 ports are used simultaneously for capture.
 	 */
-	अगर (lanes <= CSI_LANES_PER_BRICK)
+	if (lanes <= CSI_LANES_PER_BRICK)
 		chan->totalports = 1;
-	अन्यथा
+	else
 		chan->totalports = lanes / CSI_LANES_PER_BRICK;
 	chan->numgangports = chan->totalports;
 
-	क्रम (i = 1; i < chan->totalports; i++)
+	for (i = 1; i < chan->totalports; i++)
 		chan->portnos[i] = chan->portnos[0] + i * CSI_PORTS_PER_BRICK;
 
 	chan->of_node = node;
 	list_add_tail(&chan->list, &vi->vi_chans);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_vi_tpg_channels_alloc(काष्ठा tegra_vi *vi)
-अणु
-	अचिन्हित पूर्णांक port_num;
-	अचिन्हित पूर्णांक nchannels = vi->soc->vi_max_channels;
-	पूर्णांक ret;
+static int tegra_vi_tpg_channels_alloc(struct tegra_vi *vi)
+{
+	unsigned int port_num;
+	unsigned int nchannels = vi->soc->vi_max_channels;
+	int ret;
 
-	क्रम (port_num = 0; port_num < nchannels; port_num++) अणु
+	for (port_num = 0; port_num < nchannels; port_num++) {
 		ret = tegra_vi_channel_alloc(vi, port_num,
 					     vi->dev->of_node, 2);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_vi_channels_alloc(काष्ठा tegra_vi *vi)
-अणु
-	काष्ठा device_node *node = vi->dev->of_node;
-	काष्ठा device_node *ep = शून्य;
-	काष्ठा device_node *ports;
-	काष्ठा device_node *port;
-	अचिन्हित पूर्णांक port_num;
-	काष्ठा device_node *parent;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक v4l2_ep = अणु .bus_type = 0 पूर्ण;
-	अचिन्हित पूर्णांक lanes;
-	पूर्णांक ret = 0;
+static int tegra_vi_channels_alloc(struct tegra_vi *vi)
+{
+	struct device_node *node = vi->dev->of_node;
+	struct device_node *ep = NULL;
+	struct device_node *ports;
+	struct device_node *port;
+	unsigned int port_num;
+	struct device_node *parent;
+	struct v4l2_fwnode_endpoint v4l2_ep = { .bus_type = 0 };
+	unsigned int lanes;
+	int ret = 0;
 
 	ports = of_get_child_by_name(node, "ports");
-	अगर (!ports)
-		वापस -ENODEV;
+	if (!ports)
+		return -ENODEV;
 
-	क्रम_each_child_of_node(ports, port) अणु
-		अगर (!of_node_name_eq(port, "port"))
-			जारी;
+	for_each_child_of_node(ports, port) {
+		if (!of_node_name_eq(port, "port"))
+			continue;
 
-		ret = of_property_पढ़ो_u32(port, "reg", &port_num);
-		अगर (ret < 0)
-			जारी;
+		ret = of_property_read_u32(port, "reg", &port_num);
+		if (ret < 0)
+			continue;
 
-		अगर (port_num > vi->soc->vi_max_channels) अणु
+		if (port_num > vi->soc->vi_max_channels) {
 			dev_err(vi->dev, "invalid port num %d for %pOF\n",
 				port_num, port);
 			ret = -EINVAL;
 			of_node_put(port);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ep = of_get_child_by_name(port, "endpoint");
-		अगर (!ep)
-			जारी;
+		if (!ep)
+			continue;
 
 		parent = of_graph_get_remote_port_parent(ep);
 		of_node_put(ep);
-		अगर (!parent)
-			जारी;
+		if (!parent)
+			continue;
 
-		ep = of_graph_get_endpoपूर्णांक_by_regs(parent, 0, 0);
+		ep = of_graph_get_endpoint_by_regs(parent, 0, 0);
 		of_node_put(parent);
-		ret = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(ep),
+		ret = v4l2_fwnode_endpoint_parse(of_fwnode_handle(ep),
 						 &v4l2_ep);
 		of_node_put(ep);
-		अगर (ret)
-			जारी;
+		if (ret)
+			continue;
 
 		lanes = v4l2_ep.bus.mipi_csi2.num_data_lanes;
 		ret = tegra_vi_channel_alloc(vi, port_num, port, lanes);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			of_node_put(port);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 
 cleanup:
 	of_node_put(ports);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_channels_init(काष्ठा tegra_vi *vi)
-अणु
-	काष्ठा tegra_vi_channel *chan;
-	पूर्णांक ret;
+static int tegra_vi_channels_init(struct tegra_vi *vi)
+{
+	struct tegra_vi_channel *chan;
+	int ret;
 
-	list_क्रम_each_entry(chan, &vi->vi_chans, list) अणु
+	list_for_each_entry(chan, &vi->vi_chans, list) {
 		ret = tegra_channel_init(chan);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(vi->dev,
 				"failed to initialize channel-%d: %d\n",
 				chan->portnos[0], ret);
-			जाओ cleanup;
-		पूर्ण
-	पूर्ण
+			goto cleanup;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
-	list_क्रम_each_entry_जारी_reverse(chan, &vi->vi_chans, list)
+	list_for_each_entry_continue_reverse(chan, &vi->vi_chans, list)
 		tegra_channel_cleanup(chan);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम tegra_v4l2_nodes_cleanup_tpg(काष्ठा tegra_video_device *vid)
-अणु
-	काष्ठा tegra_vi *vi = vid->vi;
-	काष्ठा tegra_csi *csi = vid->csi;
-	काष्ठा tegra_csi_channel *csi_chan;
-	काष्ठा tegra_vi_channel *chan;
+void tegra_v4l2_nodes_cleanup_tpg(struct tegra_video_device *vid)
+{
+	struct tegra_vi *vi = vid->vi;
+	struct tegra_csi *csi = vid->csi;
+	struct tegra_csi_channel *csi_chan;
+	struct tegra_vi_channel *chan;
 
-	list_क्रम_each_entry(chan, &vi->vi_chans, list)
-		vb2_video_unरेजिस्टर_device(&chan->video);
+	list_for_each_entry(chan, &vi->vi_chans, list)
+		vb2_video_unregister_device(&chan->video);
 
-	list_क्रम_each_entry(csi_chan, &csi->csi_chans, list)
-		v4l2_device_unरेजिस्टर_subdev(&csi_chan->subdev);
-पूर्ण
+	list_for_each_entry(csi_chan, &csi->csi_chans, list)
+		v4l2_device_unregister_subdev(&csi_chan->subdev);
+}
 
-पूर्णांक tegra_v4l2_nodes_setup_tpg(काष्ठा tegra_video_device *vid)
-अणु
-	काष्ठा tegra_vi *vi = vid->vi;
-	काष्ठा tegra_csi *csi = vid->csi;
-	काष्ठा tegra_vi_channel *vi_chan;
-	काष्ठा tegra_csi_channel *csi_chan;
+int tegra_v4l2_nodes_setup_tpg(struct tegra_video_device *vid)
+{
+	struct tegra_vi *vi = vid->vi;
+	struct tegra_csi *csi = vid->csi;
+	struct tegra_vi_channel *vi_chan;
+	struct tegra_csi_channel *csi_chan;
 	u32 link_flags = MEDIA_LNK_FL_ENABLED;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!vi || !csi)
-		वापस -ENODEV;
+	if (!vi || !csi)
+		return -ENODEV;
 
 	csi_chan = list_first_entry(&csi->csi_chans,
-				    काष्ठा tegra_csi_channel, list);
+				    struct tegra_csi_channel, list);
 
-	list_क्रम_each_entry(vi_chan, &vi->vi_chans, list) अणु
-		काष्ठा media_entity *source = &csi_chan->subdev.entity;
-		काष्ठा media_entity *sink = &vi_chan->video.entity;
-		काष्ठा media_pad *source_pad = csi_chan->pads;
-		काष्ठा media_pad *sink_pad = &vi_chan->pad;
+	list_for_each_entry(vi_chan, &vi->vi_chans, list) {
+		struct media_entity *source = &csi_chan->subdev.entity;
+		struct media_entity *sink = &vi_chan->video.entity;
+		struct media_pad *source_pad = csi_chan->pads;
+		struct media_pad *sink_pad = &vi_chan->pad;
 
-		ret = v4l2_device_रेजिस्टर_subdev(&vid->v4l2_dev,
+		ret = v4l2_device_register_subdev(&vid->v4l2_dev,
 						  &csi_chan->subdev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(vi->dev,
 				"failed to register subdev: %d\n", ret);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		ret = video_रेजिस्टर_device(&vi_chan->video,
+		ret = video_register_device(&vi_chan->video,
 					    VFL_TYPE_VIDEO, -1);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(vi->dev,
 				"failed to register video device: %d\n", ret);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		dev_dbg(vi->dev, "creating %s:%u -> %s:%u link\n",
 			source->name, source_pad->index,
@@ -1484,167 +1483,167 @@ cleanup:
 		ret = media_create_pad_link(source, source_pad->index,
 					    sink, sink_pad->index,
 					    link_flags);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(vi->dev,
 				"failed to create %s:%u -> %s:%u link: %d\n",
 				source->name, source_pad->index,
 				sink->name, sink_pad->index, ret);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ret = tegra_channel_setup_ctrl_handler(vi_chan);
-		अगर (ret < 0)
-			जाओ cleanup;
+		if (ret < 0)
+			goto cleanup;
 
 		v4l2_set_subdev_hostdata(&csi_chan->subdev, vi_chan);
-		vi_tpg_fmts_biपंचांगap_init(vi_chan);
+		vi_tpg_fmts_bitmap_init(vi_chan);
 		csi_chan = list_next_entry(csi_chan, list);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	tegra_v4l2_nodes_cleanup_tpg(vid);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused vi_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_vi *vi = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused vi_runtime_resume(struct device *dev)
+{
+	struct tegra_vi *vi = dev_get_drvdata(dev);
+	int ret;
 
 	ret = regulator_enable(vi->vdd);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable VDD supply: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_set_rate(vi->clk, vi->soc->vi_max_clk_hz);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to set vi clock rate: %d\n", ret);
-		जाओ disable_vdd;
-	पूर्ण
+		goto disable_vdd;
+	}
 
 	ret = clk_prepare_enable(vi->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to enable vi clock: %d\n", ret);
-		जाओ disable_vdd;
-	पूर्ण
+		goto disable_vdd;
+	}
 
-	वापस 0;
+	return 0;
 
 disable_vdd:
 	regulator_disable(vi->vdd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused vi_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा tegra_vi *vi = dev_get_drvdata(dev);
+static int __maybe_unused vi_runtime_suspend(struct device *dev)
+{
+	struct tegra_vi *vi = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(vi->clk);
 
 	regulator_disable(vi->vdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Graph Management
  */
-अटल काष्ठा tegra_vi_graph_entity *
-tegra_vi_graph_find_entity(काष्ठा tegra_vi_channel *chan,
-			   स्थिर काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा tegra_vi_graph_entity *entity;
-	काष्ठा v4l2_async_subdev *asd;
+static struct tegra_vi_graph_entity *
+tegra_vi_graph_find_entity(struct tegra_vi_channel *chan,
+			   const struct fwnode_handle *fwnode)
+{
+	struct tegra_vi_graph_entity *entity;
+	struct v4l2_async_subdev *asd;
 
-	list_क्रम_each_entry(asd, &chan->notअगरier.asd_list, asd_list) अणु
+	list_for_each_entry(asd, &chan->notifier.asd_list, asd_list) {
 		entity = to_tegra_vi_graph_entity(asd);
-		अगर (entity->asd.match.fwnode == fwnode)
-			वापस entity;
-	पूर्ण
+		if (entity->asd.match.fwnode == fwnode)
+			return entity;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक tegra_vi_graph_build(काष्ठा tegra_vi_channel *chan,
-				काष्ठा tegra_vi_graph_entity *entity)
-अणु
-	काष्ठा tegra_vi *vi = chan->vi;
-	काष्ठा tegra_vi_graph_entity *ent;
-	काष्ठा fwnode_handle *ep = शून्य;
-	काष्ठा v4l2_fwnode_link link;
-	काष्ठा media_entity *local = entity->entity;
-	काष्ठा media_entity *remote;
-	काष्ठा media_pad *local_pad;
-	काष्ठा media_pad *remote_pad;
+static int tegra_vi_graph_build(struct tegra_vi_channel *chan,
+				struct tegra_vi_graph_entity *entity)
+{
+	struct tegra_vi *vi = chan->vi;
+	struct tegra_vi_graph_entity *ent;
+	struct fwnode_handle *ep = NULL;
+	struct v4l2_fwnode_link link;
+	struct media_entity *local = entity->entity;
+	struct media_entity *remote;
+	struct media_pad *local_pad;
+	struct media_pad *remote_pad;
 	u32 link_flags = MEDIA_LNK_FL_ENABLED;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	dev_dbg(vi->dev, "creating links for entity %s\n", local->name);
 
-	जबतक (1) अणु
-		ep = fwnode_graph_get_next_endpoपूर्णांक(entity->asd.match.fwnode,
+	while (1) {
+		ep = fwnode_graph_get_next_endpoint(entity->asd.match.fwnode,
 						    ep);
-		अगर (!ep)
-			अवरोध;
+		if (!ep)
+			break;
 
 		ret = v4l2_fwnode_parse_link(ep, &link);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(vi->dev, "failed to parse link for %pOF: %d\n",
 				to_of_node(ep), ret);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (link.local_port >= local->num_pads) अणु
+		if (link.local_port >= local->num_pads) {
 			dev_err(vi->dev, "invalid port number %u on %pOF\n",
 				link.local_port, to_of_node(link.local_node));
 			v4l2_fwnode_put_link(&link);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		local_pad = &local->pads[link.local_port];
 		/* Remote node is vi node. So use channel video entity and pad
 		 * as remote/sink.
 		 */
-		अगर (link.remote_node == of_fwnode_handle(vi->dev->of_node)) अणु
+		if (link.remote_node == of_fwnode_handle(vi->dev->of_node)) {
 			remote = &chan->video.entity;
 			remote_pad = &chan->pad;
-			जाओ create_link;
-		पूर्ण
+			goto create_link;
+		}
 
 		/*
 		 * Skip sink ports, they will be processed from the other end
 		 * of the link.
 		 */
-		अगर (local_pad->flags & MEDIA_PAD_FL_SINK) अणु
+		if (local_pad->flags & MEDIA_PAD_FL_SINK) {
 			dev_dbg(vi->dev, "skipping sink port %pOF:%u\n",
 				to_of_node(link.local_node), link.local_port);
 			v4l2_fwnode_put_link(&link);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* find the remote entity from notअगरier list */
+		/* find the remote entity from notifier list */
 		ent = tegra_vi_graph_find_entity(chan, link.remote_node);
-		अगर (!ent) अणु
+		if (!ent) {
 			dev_err(vi->dev, "no entity found for %pOF\n",
 				to_of_node(link.remote_node));
 			v4l2_fwnode_put_link(&link);
 			ret = -ENODEV;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		remote = ent->entity;
-		अगर (link.remote_port >= remote->num_pads) अणु
+		if (link.remote_port >= remote->num_pads) {
 			dev_err(vi->dev, "invalid port number %u on %pOF\n",
 				link.remote_port,
 				to_of_node(link.remote_node));
 			v4l2_fwnode_put_link(&link);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		remote_pad = &remote->pads[link.remote_port];
 
@@ -1657,29 +1656,29 @@ create_link:
 					    remote, remote_pad->index,
 					    link_flags);
 		v4l2_fwnode_put_link(&link);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(vi->dev,
 				"failed to create %s:%u -> %s:%u link: %d\n",
 				local->name, local_pad->index,
 				remote->name, remote_pad->index, ret);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	fwnode_handle_put(ep);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_graph_notअगरy_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
-अणु
-	काष्ठा tegra_vi_graph_entity *entity;
-	काष्ठा v4l2_async_subdev *asd;
-	काष्ठा v4l2_subdev *subdev;
-	काष्ठा tegra_vi_channel *chan;
-	काष्ठा tegra_vi *vi;
-	पूर्णांक ret;
+static int tegra_vi_graph_notify_complete(struct v4l2_async_notifier *notifier)
+{
+	struct tegra_vi_graph_entity *entity;
+	struct v4l2_async_subdev *asd;
+	struct v4l2_subdev *subdev;
+	struct tegra_vi_channel *chan;
+	struct tegra_vi *vi;
+	int ret;
 
-	chan = container_of(notअगरier, काष्ठा tegra_vi_channel, notअगरier);
+	chan = container_of(notifier, struct tegra_vi_channel, notifier);
 	vi = chan->vi;
 
 	dev_dbg(vi->dev, "notify complete, all subdevs registered\n");
@@ -1687,385 +1686,385 @@ create_link:
 	/*
 	 * Video device node should be created at the end of all the device
 	 * related initialization/setup.
-	 * Current video_रेजिस्टर_device() करोes both initialize and रेजिस्टर
+	 * Current video_register_device() does both initialize and register
 	 * video device in same API.
 	 *
-	 * TODO: Update v4l2-dev driver to split initialize and रेजिस्टर पूर्णांकo
-	 * separate APIs and then update Tegra video driver to करो video device
+	 * TODO: Update v4l2-dev driver to split initialize and register into
+	 * separate APIs and then update Tegra video driver to do video device
 	 * initialize followed by all video device related setup and then
-	 * रेजिस्टर the video device.
+	 * register the video device.
 	 */
-	ret = video_रेजिस्टर_device(&chan->video, VFL_TYPE_VIDEO, -1);
-	अगर (ret < 0) अणु
+	ret = video_register_device(&chan->video, VFL_TYPE_VIDEO, -1);
+	if (ret < 0) {
 		dev_err(vi->dev,
 			"failed to register video device: %d\n", ret);
-		जाओ unरेजिस्टर_video;
-	पूर्ण
+		goto unregister_video;
+	}
 
 	/* create links between the entities */
-	list_क्रम_each_entry(asd, &chan->notअगरier.asd_list, asd_list) अणु
+	list_for_each_entry(asd, &chan->notifier.asd_list, asd_list) {
 		entity = to_tegra_vi_graph_entity(asd);
 		ret = tegra_vi_graph_build(chan, entity);
-		अगर (ret < 0)
-			जाओ unरेजिस्टर_video;
-	पूर्ण
+		if (ret < 0)
+			goto unregister_video;
+	}
 
 	ret = tegra_channel_setup_ctrl_handler(chan);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vi->dev,
 			"failed to setup channel controls: %d\n", ret);
-		जाओ unरेजिस्टर_video;
-	पूर्ण
+		goto unregister_video;
+	}
 
-	ret = vi_fmts_biपंचांगap_init(chan);
-	अगर (ret < 0) अणु
+	ret = vi_fmts_bitmap_init(chan);
+	if (ret < 0) {
 		dev_err(vi->dev,
 			"failed to initialize formats bitmap: %d\n", ret);
-		जाओ unरेजिस्टर_video;
-	पूर्ण
+		goto unregister_video;
+	}
 
 	subdev = tegra_channel_get_remote_csi_subdev(chan);
-	अगर (!subdev) अणु
+	if (!subdev) {
 		ret = -ENODEV;
 		dev_err(vi->dev,
 			"failed to get remote csi subdev: %d\n", ret);
-		जाओ unरेजिस्टर_video;
-	पूर्ण
+		goto unregister_video;
+	}
 
 	v4l2_set_subdev_hostdata(subdev, chan);
 
 	subdev = tegra_channel_get_remote_source_subdev(chan);
 	v4l2_set_subdev_hostdata(subdev, chan);
 
-	वापस 0;
+	return 0;
 
-unरेजिस्टर_video:
-	vb2_video_unरेजिस्टर_device(&chan->video);
-	वापस ret;
-पूर्ण
+unregister_video:
+	vb2_video_unregister_device(&chan->video);
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_graph_notअगरy_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
-				       काष्ठा v4l2_subdev *subdev,
-				       काष्ठा v4l2_async_subdev *asd)
-अणु
-	काष्ठा tegra_vi_graph_entity *entity;
-	काष्ठा tegra_vi *vi;
-	काष्ठा tegra_vi_channel *chan;
+static int tegra_vi_graph_notify_bound(struct v4l2_async_notifier *notifier,
+				       struct v4l2_subdev *subdev,
+				       struct v4l2_async_subdev *asd)
+{
+	struct tegra_vi_graph_entity *entity;
+	struct tegra_vi *vi;
+	struct tegra_vi_channel *chan;
 
-	chan = container_of(notअगरier, काष्ठा tegra_vi_channel, notअगरier);
+	chan = container_of(notifier, struct tegra_vi_channel, notifier);
 	vi = chan->vi;
 
 	/*
 	 * Locate the entity corresponding to the bound subdev and store the
-	 * subdev poपूर्णांकer.
+	 * subdev pointer.
 	 */
 	entity = tegra_vi_graph_find_entity(chan, subdev->fwnode);
-	अगर (!entity) अणु
+	if (!entity) {
 		dev_err(vi->dev, "no entity for subdev %s\n", subdev->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (entity->subdev) अणु
+	if (entity->subdev) {
 		dev_err(vi->dev, "duplicate subdev for node %pOF\n",
 			to_of_node(entity->asd.match.fwnode));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(vi->dev, "subdev %s bound\n", subdev->name);
 	entity->entity = &subdev->entity;
 	entity->subdev = subdev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_async_notअगरier_operations tegra_vi_async_ops = अणु
-	.bound = tegra_vi_graph_notअगरy_bound,
-	.complete = tegra_vi_graph_notअगरy_complete,
-पूर्ण;
+static const struct v4l2_async_notifier_operations tegra_vi_async_ops = {
+	.bound = tegra_vi_graph_notify_bound,
+	.complete = tegra_vi_graph_notify_complete,
+};
 
-अटल पूर्णांक tegra_vi_graph_parse_one(काष्ठा tegra_vi_channel *chan,
-				    काष्ठा fwnode_handle *fwnode)
-अणु
-	काष्ठा tegra_vi *vi = chan->vi;
-	काष्ठा fwnode_handle *ep = शून्य;
-	काष्ठा fwnode_handle *remote = शून्य;
-	काष्ठा tegra_vi_graph_entity *tvge;
-	काष्ठा device_node *node = शून्य;
-	पूर्णांक ret;
+static int tegra_vi_graph_parse_one(struct tegra_vi_channel *chan,
+				    struct fwnode_handle *fwnode)
+{
+	struct tegra_vi *vi = chan->vi;
+	struct fwnode_handle *ep = NULL;
+	struct fwnode_handle *remote = NULL;
+	struct tegra_vi_graph_entity *tvge;
+	struct device_node *node = NULL;
+	int ret;
 
 	dev_dbg(vi->dev, "parsing node %pOF\n", to_of_node(fwnode));
 
-	/* parse all the remote entities and put them पूर्णांकo the list */
-	क्रम_each_endpoपूर्णांक_of_node(to_of_node(fwnode), node) अणु
+	/* parse all the remote entities and put them into the list */
+	for_each_endpoint_of_node(to_of_node(fwnode), node) {
 		ep = of_fwnode_handle(node);
 		remote = fwnode_graph_get_remote_port_parent(ep);
-		अगर (!remote) अणु
+		if (!remote) {
 			dev_err(vi->dev,
 				"remote device at %pOF not found\n", node);
 			ret = -EINVAL;
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
-		/* skip entities that are alपढ़ोy processed */
-		अगर (remote == dev_fwnode(vi->dev) ||
-		    tegra_vi_graph_find_entity(chan, remote)) अणु
+		/* skip entities that are already processed */
+		if (remote == dev_fwnode(vi->dev) ||
+		    tegra_vi_graph_find_entity(chan, remote)) {
 			fwnode_handle_put(remote);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		tvge = v4l2_async_notअगरier_add_fwnode_subdev(&chan->notअगरier,
-				remote, काष्ठा tegra_vi_graph_entity);
-		अगर (IS_ERR(tvge)) अणु
+		tvge = v4l2_async_notifier_add_fwnode_subdev(&chan->notifier,
+				remote, struct tegra_vi_graph_entity);
+		if (IS_ERR(tvge)) {
 			ret = PTR_ERR(tvge);
 			dev_err(vi->dev,
 				"failed to add subdev to notifier: %d\n", ret);
 			fwnode_handle_put(remote);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		ret = tegra_vi_graph_parse_one(chan, remote);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			fwnode_handle_put(remote);
-			जाओ cleanup;
-		पूर्ण
+			goto cleanup;
+		}
 
 		fwnode_handle_put(remote);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup:
 	dev_err(vi->dev, "failed parsing the graph: %d\n", ret);
-	v4l2_async_notअगरier_cleanup(&chan->notअगरier);
+	v4l2_async_notifier_cleanup(&chan->notifier);
 	of_node_put(node);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_graph_init(काष्ठा tegra_vi *vi)
-अणु
-	काष्ठा tegra_video_device *vid = dev_get_drvdata(vi->client.host);
-	काष्ठा tegra_vi_channel *chan;
-	काष्ठा fwnode_handle *fwnode = dev_fwnode(vi->dev);
-	पूर्णांक ret;
-	काष्ठा fwnode_handle *remote = शून्य;
+static int tegra_vi_graph_init(struct tegra_vi *vi)
+{
+	struct tegra_video_device *vid = dev_get_drvdata(vi->client.host);
+	struct tegra_vi_channel *chan;
+	struct fwnode_handle *fwnode = dev_fwnode(vi->dev);
+	int ret;
+	struct fwnode_handle *remote = NULL;
 
 	/*
 	 * Walk the links to parse the full graph. Each channel will have
-	 * one endpoपूर्णांक of the composite node. Start by parsing the
+	 * one endpoint of the composite node. Start by parsing the
 	 * composite node and parse the remote entities in turn.
-	 * Each channel will रेजिस्टर v4l2 async notअगरier to make the graph
+	 * Each channel will register v4l2 async notifier to make the graph
 	 * independent between the channels so we can the current channel
-	 * in हाल of something wrong during graph parsing and जारी with
+	 * in case of something wrong during graph parsing and continue with
 	 * next channels.
 	 */
-	list_क्रम_each_entry(chan, &vi->vi_chans, list) अणु
+	list_for_each_entry(chan, &vi->vi_chans, list) {
 		remote = fwnode_graph_get_remote_node(fwnode, chan->portnos[0],
 						      0);
-		अगर (!remote)
-			जारी;
+		if (!remote)
+			continue;
 
 		ret = tegra_vi_graph_parse_one(chan, remote);
 		fwnode_handle_put(remote);
-		अगर (ret < 0 || list_empty(&chan->notअगरier.asd_list))
-			जारी;
+		if (ret < 0 || list_empty(&chan->notifier.asd_list))
+			continue;
 
-		chan->notअगरier.ops = &tegra_vi_async_ops;
-		ret = v4l2_async_notअगरier_रेजिस्टर(&vid->v4l2_dev,
-						   &chan->notअगरier);
-		अगर (ret < 0) अणु
+		chan->notifier.ops = &tegra_vi_async_ops;
+		ret = v4l2_async_notifier_register(&vid->v4l2_dev,
+						   &chan->notifier);
+		if (ret < 0) {
 			dev_err(vi->dev,
 				"failed to register channel %d notifier: %d\n",
 				chan->portnos[0], ret);
-			v4l2_async_notअगरier_cleanup(&chan->notअगरier);
-		पूर्ण
-	पूर्ण
+			v4l2_async_notifier_cleanup(&chan->notifier);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tegra_vi_graph_cleanup(काष्ठा tegra_vi *vi)
-अणु
-	काष्ठा tegra_vi_channel *chan;
+static void tegra_vi_graph_cleanup(struct tegra_vi *vi)
+{
+	struct tegra_vi_channel *chan;
 
-	list_क्रम_each_entry(chan, &vi->vi_chans, list) अणु
-		vb2_video_unरेजिस्टर_device(&chan->video);
-		v4l2_async_notअगरier_unरेजिस्टर(&chan->notअगरier);
-		v4l2_async_notअगरier_cleanup(&chan->notअगरier);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(chan, &vi->vi_chans, list) {
+		vb2_video_unregister_device(&chan->video);
+		v4l2_async_notifier_unregister(&chan->notifier);
+		v4l2_async_notifier_cleanup(&chan->notifier);
+	}
+}
 
-अटल पूर्णांक tegra_vi_init(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_video_device *vid = dev_get_drvdata(client->host);
-	काष्ठा tegra_vi *vi = host1x_client_to_vi(client);
-	काष्ठा tegra_vi_channel *chan, *पंचांगp;
-	पूर्णांक ret;
+static int tegra_vi_init(struct host1x_client *client)
+{
+	struct tegra_video_device *vid = dev_get_drvdata(client->host);
+	struct tegra_vi *vi = host1x_client_to_vi(client);
+	struct tegra_vi_channel *chan, *tmp;
+	int ret;
 
 	vid->media_dev.hw_revision = vi->soc->hw_revision;
-	snम_लिखो(vid->media_dev.bus_info, माप(vid->media_dev.bus_info),
+	snprintf(vid->media_dev.bus_info, sizeof(vid->media_dev.bus_info),
 		 "platform:%s", dev_name(vi->dev));
 
 	INIT_LIST_HEAD(&vi->vi_chans);
 
-	अगर (IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
+	if (IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
 		ret = tegra_vi_tpg_channels_alloc(vi);
-	अन्यथा
+	else
 		ret = tegra_vi_channels_alloc(vi);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vi->dev,
 			"failed to allocate vi channels: %d\n", ret);
-		जाओ मुक्त_chans;
-	पूर्ण
+		goto free_chans;
+	}
 
 	ret = tegra_vi_channels_init(vi);
-	अगर (ret < 0)
-		जाओ मुक्त_chans;
+	if (ret < 0)
+		goto free_chans;
 
 	vid->vi = vi;
 
-	अगर (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG)) अणु
+	if (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG)) {
 		ret = tegra_vi_graph_init(vi);
-		अगर (ret < 0)
-			जाओ cleanup_chans;
-	पूर्ण
+		if (ret < 0)
+			goto cleanup_chans;
+	}
 
-	वापस 0;
+	return 0;
 
 cleanup_chans:
-	list_क्रम_each_entry(chan, &vi->vi_chans, list)
+	list_for_each_entry(chan, &vi->vi_chans, list)
 		tegra_channel_cleanup(chan);
-मुक्त_chans:
-	list_क्रम_each_entry_safe(chan, पंचांगp, &vi->vi_chans, list) अणु
+free_chans:
+	list_for_each_entry_safe(chan, tmp, &vi->vi_chans, list) {
 		list_del(&chan->list);
-		kमुक्त(chan);
-	पूर्ण
+		kfree(chan);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_निकास(काष्ठा host1x_client *client)
-अणु
-	काष्ठा tegra_vi *vi = host1x_client_to_vi(client);
+static int tegra_vi_exit(struct host1x_client *client)
+{
+	struct tegra_vi *vi = host1x_client_to_vi(client);
 
 	/*
 	 * Do not cleanup the channels here as application might still be
 	 * holding video device nodes. Channels cleanup will happen during
-	 * v4l2_device release callback which माला_लो called after all video
+	 * v4l2_device release callback which gets called after all video
 	 * device nodes are released.
 	 */
 
-	अगर (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
+	if (!IS_ENABLED(CONFIG_VIDEO_TEGRA_TPG))
 		tegra_vi_graph_cleanup(vi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा host1x_client_ops vi_client_ops = अणु
+static const struct host1x_client_ops vi_client_ops = {
 	.init = tegra_vi_init,
-	.निकास = tegra_vi_निकास,
-पूर्ण;
+	.exit = tegra_vi_exit,
+};
 
-अटल पूर्णांक tegra_vi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_vi *vi;
-	पूर्णांक ret;
+static int tegra_vi_probe(struct platform_device *pdev)
+{
+	struct tegra_vi *vi;
+	int ret;
 
-	vi = devm_kzalloc(&pdev->dev, माप(*vi), GFP_KERNEL);
-	अगर (!vi)
-		वापस -ENOMEM;
+	vi = devm_kzalloc(&pdev->dev, sizeof(*vi), GFP_KERNEL);
+	if (!vi)
+		return -ENOMEM;
 
-	vi->iomem = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(vi->iomem))
-		वापस PTR_ERR(vi->iomem);
+	vi->iomem = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(vi->iomem))
+		return PTR_ERR(vi->iomem);
 
 	vi->soc = of_device_get_match_data(&pdev->dev);
 
-	vi->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(vi->clk)) अणु
+	vi->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(vi->clk)) {
 		ret = PTR_ERR(vi->clk);
 		dev_err(&pdev->dev, "failed to get vi clock: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vi->vdd = devm_regulator_get(&pdev->dev, "avdd-dsi-csi");
-	अगर (IS_ERR(vi->vdd)) अणु
+	if (IS_ERR(vi->vdd)) {
 		ret = PTR_ERR(vi->vdd);
 		dev_err(&pdev->dev, "failed to get VDD supply: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!pdev->dev.pm_करोमुख्य) अणु
+	if (!pdev->dev.pm_domain) {
 		ret = -ENOENT;
 		dev_warn(&pdev->dev, "PM domain is not attached: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_of_platक्रमm_populate(&pdev->dev);
-	अगर (ret < 0) अणु
+	ret = devm_of_platform_populate(&pdev->dev);
+	if (ret < 0) {
 		dev_err(&pdev->dev,
 			"failed to populate vi child device: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	vi->dev = &pdev->dev;
 	vi->ops = vi->soc->ops;
-	platक्रमm_set_drvdata(pdev, vi);
-	pm_runसमय_enable(&pdev->dev);
+	platform_set_drvdata(pdev, vi);
+	pm_runtime_enable(&pdev->dev);
 
-	/* initialize host1x पूर्णांकerface */
+	/* initialize host1x interface */
 	INIT_LIST_HEAD(&vi->client.list);
 	vi->client.ops = &vi_client_ops;
 	vi->client.dev = &pdev->dev;
 
-	ret = host1x_client_रेजिस्टर(&vi->client);
-	अगर (ret < 0) अणु
+	ret = host1x_client_register(&vi->client);
+	if (ret < 0) {
 		dev_err(&pdev->dev,
 			"failed to register host1x client: %d\n", ret);
-		जाओ rpm_disable;
-	पूर्ण
+		goto rpm_disable;
+	}
 
-	वापस 0;
+	return 0;
 
 rpm_disable:
-	pm_runसमय_disable(&pdev->dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_disable(&pdev->dev);
+	return ret;
+}
 
-अटल पूर्णांक tegra_vi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_vi *vi = platक्रमm_get_drvdata(pdev);
-	पूर्णांक err;
+static int tegra_vi_remove(struct platform_device *pdev)
+{
+	struct tegra_vi *vi = platform_get_drvdata(pdev);
+	int err;
 
-	err = host1x_client_unरेजिस्टर(&vi->client);
-	अगर (err < 0) अणु
+	err = host1x_client_unregister(&vi->client);
+	if (err < 0) {
 		dev_err(&pdev->dev,
 			"failed to unregister host1x client: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id tegra_vi_of_id_table[] = अणु
-#अगर defined(CONFIG_ARCH_TEGRA_210_SOC)
-	अणु .compatible = "nvidia,tegra210-vi", .data = &tegra210_vi_soc पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tegra_vi_of_id_table[] = {
+#if defined(CONFIG_ARCH_TEGRA_210_SOC)
+	{ .compatible = "nvidia,tegra210-vi", .data = &tegra210_vi_soc },
+#endif
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tegra_vi_of_id_table);
 
-अटल स्थिर काष्ठा dev_pm_ops tegra_vi_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(vi_runसमय_suspend, vi_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops tegra_vi_pm_ops = {
+	SET_RUNTIME_PM_OPS(vi_runtime_suspend, vi_runtime_resume, NULL)
+};
 
-काष्ठा platक्रमm_driver tegra_vi_driver = अणु
-	.driver = अणु
+struct platform_driver tegra_vi_driver = {
+	.driver = {
 		.name = "tegra-vi",
 		.of_match_table = tegra_vi_of_id_table,
 		.pm = &tegra_vi_pm_ops,
-	पूर्ण,
+	},
 	.probe = tegra_vi_probe,
-	.हटाओ = tegra_vi_हटाओ,
-पूर्ण;
+	.remove = tegra_vi_remove,
+};

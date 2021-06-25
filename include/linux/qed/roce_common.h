@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित __ROCE_COMMON__
-#घोषणा __ROCE_COMMON__
+#ifndef __ROCE_COMMON__
+#define __ROCE_COMMON__
 
 /************************/
 /* ROCE FW CONSTANTS */
 /************************/
 
-#घोषणा ROCE_REQ_MAX_INLINE_DATA_SIZE	(256)
-#घोषणा ROCE_REQ_MAX_SINGLE_SQ_WQE_SIZE	(288)
+#define ROCE_REQ_MAX_INLINE_DATA_SIZE	(256)
+#define ROCE_REQ_MAX_SINGLE_SQ_WQE_SIZE	(288)
 
-#घोषणा ROCE_MAX_QPS			(32 * 1024)
-#घोषणा ROCE_DCQCN_NP_MAX_QPS		(64)
-#घोषणा ROCE_DCQCN_RP_MAX_QPS		(64)
-#घोषणा ROCE_LKEY_MW_DIF_EN_BIT		(28)
+#define ROCE_MAX_QPS			(32 * 1024)
+#define ROCE_DCQCN_NP_MAX_QPS		(64)
+#define ROCE_DCQCN_RP_MAX_QPS		(64)
+#define ROCE_LKEY_MW_DIF_EN_BIT		(28)
 
-/* Affiliated asynchronous events / errors क्रमागतeration */
-क्रमागत roce_async_events_type अणु
+/* Affiliated asynchronous events / errors enumeration */
+enum roce_async_events_type {
 	ROCE_ASYNC_EVENT_NONE = 0,
 	ROCE_ASYNC_EVENT_COMM_EST = 1,
 	ROCE_ASYNC_EVENT_SQ_DRAINED,
@@ -39,6 +38,6 @@
 	ROCE_ASYNC_EVENT_INVALID_XRCETH_ERR,
 	ROCE_ASYNC_EVENT_XRC_SRQ_CATASTROPHIC_ERR,
 	MAX_ROCE_ASYNC_EVENTS_TYPE
-पूर्ण;
+};
 
-#पूर्ण_अगर /* __ROCE_COMMON__ */
+#endif /* __ROCE_COMMON__ */

@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _ASM_MIPS_PERF_REGS_H
-#घोषणा _ASM_MIPS_PERF_REGS_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASM_MIPS_PERF_REGS_H
+#define _ASM_MIPS_PERF_REGS_H
 
-क्रमागत perf_event_mips_regs अणु
+enum perf_event_mips_regs {
 	PERF_REG_MIPS_PC,
 	PERF_REG_MIPS_R1,
 	PERF_REG_MIPS_R2,
@@ -37,5 +36,5 @@
 	PERF_REG_MIPS_R30,
 	PERF_REG_MIPS_R31,
 	PERF_REG_MIPS_MAX = PERF_REG_MIPS_R31 + 1,
-पूर्ण;
-#पूर्ण_अगर /* _ASM_MIPS_PERF_REGS_H */
+};
+#endif /* _ASM_MIPS_PERF_REGS_H */

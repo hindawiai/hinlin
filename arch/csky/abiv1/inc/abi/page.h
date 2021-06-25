@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#समावेश <यंत्र/shmparam.h>
+#include <asm/shmparam.h>
 
-बाह्य व्योम flush_dcache_page(काष्ठा page *page);
+extern void flush_dcache_page(struct page *page);
 
-अटल अंतरभूत अचिन्हित दीर्घ pages_करो_alias(अचिन्हित दीर्घ addr1,
-					   अचिन्हित दीर्घ addr2)
-अणु
-	वापस (addr1 ^ addr2) & (SHMLBA-1);
-पूर्ण
+static inline unsigned long pages_do_alias(unsigned long addr1,
+					   unsigned long addr2)
+{
+	return (addr1 ^ addr2) & (SHMLBA-1);
+}
 
-अटल अंतरभूत व्योम clear_user_page(व्योम *addr, अचिन्हित दीर्घ vaddr,
-				   काष्ठा page *page)
-अणु
+static inline void clear_user_page(void *addr, unsigned long vaddr,
+				   struct page *page)
+{
 	clear_page(addr);
-	अगर (pages_करो_alias((अचिन्हित दीर्घ) addr, vaddr & PAGE_MASK))
+	if (pages_do_alias((unsigned long) addr, vaddr & PAGE_MASK))
 		flush_dcache_page(page);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम copy_user_page(व्योम *to, व्योम *from, अचिन्हित दीर्घ vaddr,
-				  काष्ठा page *page)
-अणु
+static inline void copy_user_page(void *to, void *from, unsigned long vaddr,
+				  struct page *page)
+{
 	copy_page(to, from);
-	अगर (pages_करो_alias((अचिन्हित दीर्घ) to, vaddr & PAGE_MASK))
+	if (pages_do_alias((unsigned long) to, vaddr & PAGE_MASK))
 		flush_dcache_page(page);
-पूर्ण
+}

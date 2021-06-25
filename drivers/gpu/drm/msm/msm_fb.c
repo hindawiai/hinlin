@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_damage_helper.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_probe_helper.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_damage_helper.h>
+#include <drm/drm_file.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_probe_helper.h>
 
-#समावेश "msm_drv.h"
-#समावेश "msm_kms.h"
-#समावेश "msm_gem.h"
+#include "msm_drv.h"
+#include "msm_kms.h"
+#include "msm_gem.h"
 
-काष्ठा msm_framebuffer अणु
-	काष्ठा drm_framebuffer base;
-	स्थिर काष्ठा msm_क्रमmat *क्रमmat;
-पूर्ण;
-#घोषणा to_msm_framebuffer(x) container_of(x, काष्ठा msm_framebuffer, base)
+struct msm_framebuffer {
+	struct drm_framebuffer base;
+	const struct msm_format *format;
+};
+#define to_msm_framebuffer(x) container_of(x, struct msm_framebuffer, base)
 
-अटल काष्ठा drm_framebuffer *msm_framebuffer_init(काष्ठा drm_device *dev,
-		स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd, काष्ठा drm_gem_object **bos);
+static struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
+		const struct drm_mode_fb_cmd2 *mode_cmd, struct drm_gem_object **bos);
 
-अटल स्थिर काष्ठा drm_framebuffer_funcs msm_framebuffer_funcs = अणु
+static const struct drm_framebuffer_funcs msm_framebuffer_funcs = {
 	.create_handle = drm_gem_fb_create_handle,
 	.destroy = drm_gem_fb_destroy,
 	.dirty = drm_atomic_helper_dirtyfb,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_DEBUG_FS
-व्योम msm_framebuffer_describe(काष्ठा drm_framebuffer *fb, काष्ठा seq_file *m)
-अणु
-	काष्ठा msm_gem_stats stats = अणुपूर्ण;
-	पूर्णांक i, n = fb->क्रमmat->num_planes;
+#ifdef CONFIG_DEBUG_FS
+void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m)
+{
+	struct msm_gem_stats stats = {};
+	int i, n = fb->format->num_planes;
 
-	seq_म_लिखो(m, "fb: %dx%d@%4.4s (%2d, ID:%d)\n",
-			fb->width, fb->height, (अक्षर *)&fb->क्रमmat->क्रमmat,
-			drm_framebuffer_पढ़ो_refcount(fb), fb->base.id);
+	seq_printf(m, "fb: %dx%d@%4.4s (%2d, ID:%d)\n",
+			fb->width, fb->height, (char *)&fb->format->format,
+			drm_framebuffer_read_refcount(fb), fb->base.id);
 
-	क्रम (i = 0; i < n; i++) अणु
-		seq_म_लिखो(m, "   %d: offset=%d pitch=%d, obj: ",
+	for (i = 0; i < n; i++) {
+		seq_printf(m, "   %d: offset=%d pitch=%d, obj: ",
 				i, fb->offsets[i], fb->pitches[i]);
 		msm_gem_describe(fb->obj[i], m, &stats);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-/* prepare/pin all the fb's bo's क्रम scanout.  Note that it is not valid
- * to prepare an fb more multiple dअगरferent initiator 'id's.  But that
+/* prepare/pin all the fb's bo's for scanout.  Note that it is not valid
+ * to prepare an fb more multiple different initiator 'id's.  But that
  * should be fine, since only the scanout (mdpN) side of things needs
- * this, the gpu करोesn't care about fb's.
+ * this, the gpu doesn't care about fb's.
  */
-पूर्णांक msm_framebuffer_prepare(काष्ठा drm_framebuffer *fb,
-		काष्ठा msm_gem_address_space *aspace)
-अणु
-	पूर्णांक ret, i, n = fb->क्रमmat->num_planes;
-	uपूर्णांक64_t iova;
+int msm_framebuffer_prepare(struct drm_framebuffer *fb,
+		struct msm_gem_address_space *aspace)
+{
+	int ret, i, n = fb->format->num_planes;
+	uint64_t iova;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		ret = msm_gem_get_and_pin_iova(fb->obj[i], aspace, &iova);
 		DBG("FB[%u]: iova[%d]: %08llx (%d)", fb->base.id, i, iova, ret);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम msm_framebuffer_cleanup(काष्ठा drm_framebuffer *fb,
-		काष्ठा msm_gem_address_space *aspace)
-अणु
-	पूर्णांक i, n = fb->क्रमmat->num_planes;
+void msm_framebuffer_cleanup(struct drm_framebuffer *fb,
+		struct msm_gem_address_space *aspace)
+{
+	int i, n = fb->format->num_planes;
 
-	क्रम (i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		msm_gem_unpin_iova(fb->obj[i], aspace);
-पूर्ण
+}
 
-uपूर्णांक32_t msm_framebuffer_iova(काष्ठा drm_framebuffer *fb,
-		काष्ठा msm_gem_address_space *aspace, पूर्णांक plane)
-अणु
-	अगर (!fb->obj[plane])
-		वापस 0;
-	वापस msm_gem_iova(fb->obj[plane], aspace) + fb->offsets[plane];
-पूर्ण
+uint32_t msm_framebuffer_iova(struct drm_framebuffer *fb,
+		struct msm_gem_address_space *aspace, int plane)
+{
+	if (!fb->obj[plane])
+		return 0;
+	return msm_gem_iova(fb->obj[plane], aspace) + fb->offsets[plane];
+}
 
-काष्ठा drm_gem_object *msm_framebuffer_bo(काष्ठा drm_framebuffer *fb, पूर्णांक plane)
-अणु
-	वापस drm_gem_fb_get_obj(fb, plane);
-पूर्ण
+struct drm_gem_object *msm_framebuffer_bo(struct drm_framebuffer *fb, int plane)
+{
+	return drm_gem_fb_get_obj(fb, plane);
+}
 
-स्थिर काष्ठा msm_क्रमmat *msm_framebuffer_क्रमmat(काष्ठा drm_framebuffer *fb)
-अणु
-	काष्ठा msm_framebuffer *msm_fb = to_msm_framebuffer(fb);
-	वापस msm_fb->क्रमmat;
-पूर्ण
+const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb)
+{
+	struct msm_framebuffer *msm_fb = to_msm_framebuffer(fb);
+	return msm_fb->format;
+}
 
-काष्ठा drm_framebuffer *msm_framebuffer_create(काष्ठा drm_device *dev,
-		काष्ठा drm_file *file, स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd)
-अणु
-	स्थिर काष्ठा drm_क्रमmat_info *info = drm_get_क्रमmat_info(dev,
+struct drm_framebuffer *msm_framebuffer_create(struct drm_device *dev,
+		struct drm_file *file, const struct drm_mode_fb_cmd2 *mode_cmd)
+{
+	const struct drm_format_info *info = drm_get_format_info(dev,
 								 mode_cmd);
-	काष्ठा drm_gem_object *bos[4] = अणु0पूर्ण;
-	काष्ठा drm_framebuffer *fb;
-	पूर्णांक ret, i, n = info->num_planes;
+	struct drm_gem_object *bos[4] = {0};
+	struct drm_framebuffer *fb;
+	int ret, i, n = info->num_planes;
 
-	क्रम (i = 0; i < n; i++) अणु
+	for (i = 0; i < n; i++) {
 		bos[i] = drm_gem_object_lookup(file, mode_cmd->handles[i]);
-		अगर (!bos[i]) अणु
+		if (!bos[i]) {
 			ret = -ENXIO;
-			जाओ out_unref;
-		पूर्ण
-	पूर्ण
+			goto out_unref;
+		}
+	}
 
 	fb = msm_framebuffer_init(dev, mode_cmd, bos);
-	अगर (IS_ERR(fb)) अणु
+	if (IS_ERR(fb)) {
 		ret = PTR_ERR(fb);
-		जाओ out_unref;
-	पूर्ण
+		goto out_unref;
+	}
 
-	वापस fb;
+	return fb;
 
 out_unref:
-	क्रम (i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		drm_gem_object_put(bos[i]);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-अटल काष्ठा drm_framebuffer *msm_framebuffer_init(काष्ठा drm_device *dev,
-		स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd, काष्ठा drm_gem_object **bos)
-अणु
-	स्थिर काष्ठा drm_क्रमmat_info *info = drm_get_क्रमmat_info(dev,
+static struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
+		const struct drm_mode_fb_cmd2 *mode_cmd, struct drm_gem_object **bos)
+{
+	const struct drm_format_info *info = drm_get_format_info(dev,
 								 mode_cmd);
-	काष्ठा msm_drm_निजी *priv = dev->dev_निजी;
-	काष्ठा msm_kms *kms = priv->kms;
-	काष्ठा msm_framebuffer *msm_fb = शून्य;
-	काष्ठा drm_framebuffer *fb;
-	स्थिर काष्ठा msm_क्रमmat *क्रमmat;
-	पूर्णांक ret, i, n;
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_kms *kms = priv->kms;
+	struct msm_framebuffer *msm_fb = NULL;
+	struct drm_framebuffer *fb;
+	const struct msm_format *format;
+	int ret, i, n;
 
 	DBG("create framebuffer: dev=%p, mode_cmd=%p (%dx%d@%4.4s)",
 			dev, mode_cmd, mode_cmd->width, mode_cmd->height,
-			(अक्षर *)&mode_cmd->pixel_क्रमmat);
+			(char *)&mode_cmd->pixel_format);
 
 	n = info->num_planes;
-	क्रमmat = kms->funcs->get_क्रमmat(kms, mode_cmd->pixel_क्रमmat,
-			mode_cmd->modअगरier[0]);
-	अगर (!क्रमmat) अणु
+	format = kms->funcs->get_format(kms, mode_cmd->pixel_format,
+			mode_cmd->modifier[0]);
+	if (!format) {
 		DRM_DEV_ERROR(dev->dev, "unsupported pixel format: %4.4s\n",
-				(अक्षर *)&mode_cmd->pixel_क्रमmat);
+				(char *)&mode_cmd->pixel_format);
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	msm_fb = kzalloc(माप(*msm_fb), GFP_KERNEL);
-	अगर (!msm_fb) अणु
+	msm_fb = kzalloc(sizeof(*msm_fb), GFP_KERNEL);
+	if (!msm_fb) {
 		ret = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	fb = &msm_fb->base;
 
-	msm_fb->क्रमmat = क्रमmat;
+	msm_fb->format = format;
 
-	अगर (n > ARRAY_SIZE(fb->obj)) अणु
+	if (n > ARRAY_SIZE(fb->obj)) {
 		ret = -EINVAL;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	क्रम (i = 0; i < n; i++) अणु
-		अचिन्हित पूर्णांक width = mode_cmd->width / (i ? info->hsub : 1);
-		अचिन्हित पूर्णांक height = mode_cmd->height / (i ? info->vsub : 1);
-		अचिन्हित पूर्णांक min_size;
+	for (i = 0; i < n; i++) {
+		unsigned int width = mode_cmd->width / (i ? info->hsub : 1);
+		unsigned int height = mode_cmd->height / (i ? info->vsub : 1);
+		unsigned int min_size;
 
 		min_size = (height - 1) * mode_cmd->pitches[i]
 			 + width * info->cpp[i]
 			 + mode_cmd->offsets[i];
 
-		अगर (bos[i]->size < min_size) अणु
+		if (bos[i]->size < min_size) {
 			ret = -EINVAL;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		msm_fb->base.obj[i] = bos[i];
-	पूर्ण
+	}
 
-	drm_helper_mode_fill_fb_काष्ठा(dev, fb, mode_cmd);
+	drm_helper_mode_fill_fb_struct(dev, fb, mode_cmd);
 
 	ret = drm_framebuffer_init(dev, fb, &msm_framebuffer_funcs);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev->dev, "framebuffer init failed: %d\n", ret);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	DBG("create: FB ID: %d (%p)", fb->base.id, fb);
 
-	वापस fb;
+	return fb;
 
 fail:
-	kमुक्त(msm_fb);
+	kfree(msm_fb);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-काष्ठा drm_framebuffer *
-msm_alloc_stolen_fb(काष्ठा drm_device *dev, पूर्णांक w, पूर्णांक h, पूर्णांक p, uपूर्णांक32_t क्रमmat)
-अणु
-	काष्ठा drm_mode_fb_cmd2 mode_cmd = अणु
-		.pixel_क्रमmat = क्रमmat,
+struct drm_framebuffer *
+msm_alloc_stolen_fb(struct drm_device *dev, int w, int h, int p, uint32_t format)
+{
+	struct drm_mode_fb_cmd2 mode_cmd = {
+		.pixel_format = format,
 		.width = w,
 		.height = h,
-		.pitches = अणु p पूर्ण,
-	पूर्ण;
-	काष्ठा drm_gem_object *bo;
-	काष्ठा drm_framebuffer *fb;
-	पूर्णांक size;
+		.pitches = { p },
+	};
+	struct drm_gem_object *bo;
+	struct drm_framebuffer *fb;
+	int size;
 
 	/* allocate backing bo */
 	size = mode_cmd.pitches[0] * mode_cmd.height;
 	DBG("allocating %d bytes for fb %d", size, dev->primary->index);
 	bo = msm_gem_new(dev, size, MSM_BO_SCANOUT | MSM_BO_WC | MSM_BO_STOLEN);
-	अगर (IS_ERR(bo)) अणु
+	if (IS_ERR(bo)) {
 		dev_warn(dev->dev, "could not allocate stolen bo\n");
 		/* try regular bo: */
 		bo = msm_gem_new(dev, size, MSM_BO_SCANOUT | MSM_BO_WC);
-	पूर्ण
-	अगर (IS_ERR(bo)) अणु
+	}
+	if (IS_ERR(bo)) {
 		DRM_DEV_ERROR(dev->dev, "failed to allocate buffer object\n");
-		वापस ERR_CAST(bo);
-	पूर्ण
+		return ERR_CAST(bo);
+	}
 
 	msm_gem_object_set_name(bo, "stolenfb");
 
 	fb = msm_framebuffer_init(dev, &mode_cmd, &bo);
-	अगर (IS_ERR(fb)) अणु
+	if (IS_ERR(fb)) {
 		DRM_DEV_ERROR(dev->dev, "failed to allocate fb\n");
-		/* note: अगर fb creation failed, we can't rely on fb destroy
+		/* note: if fb creation failed, we can't rely on fb destroy
 		 * to unref the bo:
 		 */
 		drm_gem_object_put(bo);
-		वापस ERR_CAST(fb);
-	पूर्ण
+		return ERR_CAST(fb);
+	}
 
-	वापस fb;
-पूर्ण
+	return fb;
+}

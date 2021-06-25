@@ -1,121 +1,120 @@
-<शैली गुरु>
 /*
- * Copyright (C) 2011 Philippe Rथऊtornaz
+ * Copyright (C) 2011 Philippe Rétornaz
  *
  * Based on twl4030-pwrbutton driver by:
  *     Peter De Schrijver <peter.de-schrijver@nokia.com>
  *     Felipe Balbi <felipe.balbi@nokia.com>
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file "COPYING" in the main directory of this
+ * archive for more details.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA 02110-1335  USA
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/mfd/mc13783.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/mfd/mc13783.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 
-काष्ठा mc13783_pwrb अणु
-	काष्ठा input_dev *pwr;
-	काष्ठा mc13xxx *mc13783;
-#घोषणा MC13783_PWRB_B1_POL_INVERT	(1 << 0)
-#घोषणा MC13783_PWRB_B2_POL_INVERT	(1 << 1)
-#घोषणा MC13783_PWRB_B3_POL_INVERT	(1 << 2)
-	पूर्णांक flags;
-	अचिन्हित लघु keymap[3];
-पूर्ण;
+struct mc13783_pwrb {
+	struct input_dev *pwr;
+	struct mc13xxx *mc13783;
+#define MC13783_PWRB_B1_POL_INVERT	(1 << 0)
+#define MC13783_PWRB_B2_POL_INVERT	(1 << 1)
+#define MC13783_PWRB_B3_POL_INVERT	(1 << 2)
+	int flags;
+	unsigned short keymap[3];
+};
 
-#घोषणा MC13783_REG_INTERRUPT_SENSE_1		5
-#घोषणा MC13783_IRQSENSE1_ONOFD1S		(1 << 3)
-#घोषणा MC13783_IRQSENSE1_ONOFD2S		(1 << 4)
-#घोषणा MC13783_IRQSENSE1_ONOFD3S		(1 << 5)
+#define MC13783_REG_INTERRUPT_SENSE_1		5
+#define MC13783_IRQSENSE1_ONOFD1S		(1 << 3)
+#define MC13783_IRQSENSE1_ONOFD2S		(1 << 4)
+#define MC13783_IRQSENSE1_ONOFD3S		(1 << 5)
 
-#घोषणा MC13783_REG_POWER_CONTROL_2		15
-#घोषणा MC13783_POWER_CONTROL_2_ON1BDBNC	4
-#घोषणा MC13783_POWER_CONTROL_2_ON2BDBNC	6
-#घोषणा MC13783_POWER_CONTROL_2_ON3BDBNC	8
-#घोषणा MC13783_POWER_CONTROL_2_ON1BRSTEN	(1 << 1)
-#घोषणा MC13783_POWER_CONTROL_2_ON2BRSTEN	(1 << 2)
-#घोषणा MC13783_POWER_CONTROL_2_ON3BRSTEN	(1 << 3)
+#define MC13783_REG_POWER_CONTROL_2		15
+#define MC13783_POWER_CONTROL_2_ON1BDBNC	4
+#define MC13783_POWER_CONTROL_2_ON2BDBNC	6
+#define MC13783_POWER_CONTROL_2_ON3BDBNC	8
+#define MC13783_POWER_CONTROL_2_ON1BRSTEN	(1 << 1)
+#define MC13783_POWER_CONTROL_2_ON2BRSTEN	(1 << 2)
+#define MC13783_POWER_CONTROL_2_ON3BRSTEN	(1 << 3)
 
-अटल irqवापस_t button_irq(पूर्णांक irq, व्योम *_priv)
-अणु
-	काष्ठा mc13783_pwrb *priv = _priv;
-	पूर्णांक val;
+static irqreturn_t button_irq(int irq, void *_priv)
+{
+	struct mc13783_pwrb *priv = _priv;
+	int val;
 
 	mc13xxx_irq_ack(priv->mc13783, irq);
-	mc13xxx_reg_पढ़ो(priv->mc13783, MC13783_REG_INTERRUPT_SENSE_1, &val);
+	mc13xxx_reg_read(priv->mc13783, MC13783_REG_INTERRUPT_SENSE_1, &val);
 
-	चयन (irq) अणु
-	हाल MC13783_IRQ_ONOFD1:
+	switch (irq) {
+	case MC13783_IRQ_ONOFD1:
 		val = val & MC13783_IRQSENSE1_ONOFD1S ? 1 : 0;
-		अगर (priv->flags & MC13783_PWRB_B1_POL_INVERT)
+		if (priv->flags & MC13783_PWRB_B1_POL_INVERT)
 			val ^= 1;
 		input_report_key(priv->pwr, priv->keymap[0], val);
-		अवरोध;
+		break;
 
-	हाल MC13783_IRQ_ONOFD2:
+	case MC13783_IRQ_ONOFD2:
 		val = val & MC13783_IRQSENSE1_ONOFD2S ? 1 : 0;
-		अगर (priv->flags & MC13783_PWRB_B2_POL_INVERT)
+		if (priv->flags & MC13783_PWRB_B2_POL_INVERT)
 			val ^= 1;
 		input_report_key(priv->pwr, priv->keymap[1], val);
-		अवरोध;
+		break;
 
-	हाल MC13783_IRQ_ONOFD3:
+	case MC13783_IRQ_ONOFD3:
 		val = val & MC13783_IRQSENSE1_ONOFD3S ? 1 : 0;
-		अगर (priv->flags & MC13783_PWRB_B3_POL_INVERT)
+		if (priv->flags & MC13783_PWRB_B3_POL_INVERT)
 			val ^= 1;
 		input_report_key(priv->pwr, priv->keymap[2], val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	input_sync(priv->pwr);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक mc13783_pwrbutton_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा mc13xxx_buttons_platक्रमm_data *pdata;
-	काष्ठा mc13xxx *mc13783 = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा input_dev *pwr;
-	काष्ठा mc13783_pwrb *priv;
-	पूर्णांक err = 0;
-	पूर्णांक reg = 0;
+static int mc13783_pwrbutton_probe(struct platform_device *pdev)
+{
+	const struct mc13xxx_buttons_platform_data *pdata;
+	struct mc13xxx *mc13783 = dev_get_drvdata(pdev->dev.parent);
+	struct input_dev *pwr;
+	struct mc13783_pwrb *priv;
+	int err = 0;
+	int reg = 0;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&pdev->dev, "missing platform data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pwr = input_allocate_device();
-	अगर (!pwr) अणु
+	if (!pwr) {
 		dev_dbg(&pdev->dev, "Can't allocate power button\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (!priv) अणु
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
 		err = -ENOMEM;
 		dev_dbg(&pdev->dev, "Can't allocate power button\n");
-		जाओ मुक्त_input_dev;
-	पूर्ण
+		goto free_input_dev;
+	}
 
 	reg |= (pdata->b1on_flags & 0x3) << MC13783_POWER_CONTROL_2_ON1BDBNC;
 	reg |= (pdata->b2on_flags & 0x3) << MC13783_POWER_CONTROL_2_ON2BDBNC;
@@ -126,62 +125,62 @@
 
 	mc13xxx_lock(mc13783);
 
-	अगर (pdata->b1on_flags & MC13783_BUTTON_ENABLE) अणु
+	if (pdata->b1on_flags & MC13783_BUTTON_ENABLE) {
 		priv->keymap[0] = pdata->b1on_key;
-		अगर (pdata->b1on_key != KEY_RESERVED)
+		if (pdata->b1on_key != KEY_RESERVED)
 			__set_bit(pdata->b1on_key, pwr->keybit);
 
-		अगर (pdata->b1on_flags & MC13783_BUTTON_POL_INVERT)
+		if (pdata->b1on_flags & MC13783_BUTTON_POL_INVERT)
 			priv->flags |= MC13783_PWRB_B1_POL_INVERT;
 
-		अगर (pdata->b1on_flags & MC13783_BUTTON_RESET_EN)
+		if (pdata->b1on_flags & MC13783_BUTTON_RESET_EN)
 			reg |= MC13783_POWER_CONTROL_2_ON1BRSTEN;
 
 		err = mc13xxx_irq_request(mc13783, MC13783_IRQ_ONOFD1,
 					  button_irq, "b1on", priv);
-		अगर (err) अणु
+		if (err) {
 			dev_dbg(&pdev->dev, "Can't request irq\n");
-			जाओ मुक्त_priv;
-		पूर्ण
-	पूर्ण
+			goto free_priv;
+		}
+	}
 
-	अगर (pdata->b2on_flags & MC13783_BUTTON_ENABLE) अणु
+	if (pdata->b2on_flags & MC13783_BUTTON_ENABLE) {
 		priv->keymap[1] = pdata->b2on_key;
-		अगर (pdata->b2on_key != KEY_RESERVED)
+		if (pdata->b2on_key != KEY_RESERVED)
 			__set_bit(pdata->b2on_key, pwr->keybit);
 
-		अगर (pdata->b2on_flags & MC13783_BUTTON_POL_INVERT)
+		if (pdata->b2on_flags & MC13783_BUTTON_POL_INVERT)
 			priv->flags |= MC13783_PWRB_B2_POL_INVERT;
 
-		अगर (pdata->b2on_flags & MC13783_BUTTON_RESET_EN)
+		if (pdata->b2on_flags & MC13783_BUTTON_RESET_EN)
 			reg |= MC13783_POWER_CONTROL_2_ON2BRSTEN;
 
 		err = mc13xxx_irq_request(mc13783, MC13783_IRQ_ONOFD2,
 					  button_irq, "b2on", priv);
-		अगर (err) अणु
+		if (err) {
 			dev_dbg(&pdev->dev, "Can't request irq\n");
-			जाओ मुक्त_irq_b1;
-		पूर्ण
-	पूर्ण
+			goto free_irq_b1;
+		}
+	}
 
-	अगर (pdata->b3on_flags & MC13783_BUTTON_ENABLE) अणु
+	if (pdata->b3on_flags & MC13783_BUTTON_ENABLE) {
 		priv->keymap[2] = pdata->b3on_key;
-		अगर (pdata->b3on_key != KEY_RESERVED)
+		if (pdata->b3on_key != KEY_RESERVED)
 			__set_bit(pdata->b3on_key, pwr->keybit);
 
-		अगर (pdata->b3on_flags & MC13783_BUTTON_POL_INVERT)
+		if (pdata->b3on_flags & MC13783_BUTTON_POL_INVERT)
 			priv->flags |= MC13783_PWRB_B3_POL_INVERT;
 
-		अगर (pdata->b3on_flags & MC13783_BUTTON_RESET_EN)
+		if (pdata->b3on_flags & MC13783_BUTTON_RESET_EN)
 			reg |= MC13783_POWER_CONTROL_2_ON3BRSTEN;
 
 		err = mc13xxx_irq_request(mc13783, MC13783_IRQ_ONOFD3,
 					  button_irq, "b3on", priv);
-		अगर (err) अणु
+		if (err) {
 			dev_dbg(&pdev->dev, "Can't request irq: %d\n", err);
-			जाओ मुक्त_irq_b2;
-		पूर्ण
-	पूर्ण
+			goto free_irq_b2;
+		}
+	}
 
 	mc13xxx_reg_rmw(mc13783, MC13783_REG_POWER_CONTROL_2, 0x3FE, reg);
 
@@ -193,76 +192,76 @@
 
 	pwr->keycode = priv->keymap;
 	pwr->keycodemax = ARRAY_SIZE(priv->keymap);
-	pwr->keycodesize = माप(priv->keymap[0]);
+	pwr->keycodesize = sizeof(priv->keymap[0]);
 	__set_bit(EV_KEY, pwr->evbit);
 
-	err = input_रेजिस्टर_device(pwr);
-	अगर (err) अणु
+	err = input_register_device(pwr);
+	if (err) {
 		dev_dbg(&pdev->dev, "Can't register power button: %d\n", err);
-		जाओ मुक्त_irq;
-	पूर्ण
+		goto free_irq;
+	}
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस 0;
+	return 0;
 
-मुक्त_irq:
+free_irq:
 	mc13xxx_lock(mc13783);
 
-	अगर (pdata->b3on_flags & MC13783_BUTTON_ENABLE)
-		mc13xxx_irq_मुक्त(mc13783, MC13783_IRQ_ONOFD3, priv);
+	if (pdata->b3on_flags & MC13783_BUTTON_ENABLE)
+		mc13xxx_irq_free(mc13783, MC13783_IRQ_ONOFD3, priv);
 
-मुक्त_irq_b2:
-	अगर (pdata->b2on_flags & MC13783_BUTTON_ENABLE)
-		mc13xxx_irq_मुक्त(mc13783, MC13783_IRQ_ONOFD2, priv);
+free_irq_b2:
+	if (pdata->b2on_flags & MC13783_BUTTON_ENABLE)
+		mc13xxx_irq_free(mc13783, MC13783_IRQ_ONOFD2, priv);
 
-मुक्त_irq_b1:
-	अगर (pdata->b1on_flags & MC13783_BUTTON_ENABLE)
-		mc13xxx_irq_मुक्त(mc13783, MC13783_IRQ_ONOFD1, priv);
+free_irq_b1:
+	if (pdata->b1on_flags & MC13783_BUTTON_ENABLE)
+		mc13xxx_irq_free(mc13783, MC13783_IRQ_ONOFD1, priv);
 
-मुक्त_priv:
+free_priv:
 	mc13xxx_unlock(mc13783);
-	kमुक्त(priv);
+	kfree(priv);
 
-मुक्त_input_dev:
-	input_मुक्त_device(pwr);
+free_input_dev:
+	input_free_device(pwr);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mc13783_pwrbutton_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mc13783_pwrb *priv = platक्रमm_get_drvdata(pdev);
-	स्थिर काष्ठा mc13xxx_buttons_platक्रमm_data *pdata;
+static int mc13783_pwrbutton_remove(struct platform_device *pdev)
+{
+	struct mc13783_pwrb *priv = platform_get_drvdata(pdev);
+	const struct mc13xxx_buttons_platform_data *pdata;
 
 	pdata = dev_get_platdata(&pdev->dev);
 
 	mc13xxx_lock(priv->mc13783);
 
-	अगर (pdata->b3on_flags & MC13783_BUTTON_ENABLE)
-		mc13xxx_irq_मुक्त(priv->mc13783, MC13783_IRQ_ONOFD3, priv);
-	अगर (pdata->b2on_flags & MC13783_BUTTON_ENABLE)
-		mc13xxx_irq_मुक्त(priv->mc13783, MC13783_IRQ_ONOFD2, priv);
-	अगर (pdata->b1on_flags & MC13783_BUTTON_ENABLE)
-		mc13xxx_irq_मुक्त(priv->mc13783, MC13783_IRQ_ONOFD1, priv);
+	if (pdata->b3on_flags & MC13783_BUTTON_ENABLE)
+		mc13xxx_irq_free(priv->mc13783, MC13783_IRQ_ONOFD3, priv);
+	if (pdata->b2on_flags & MC13783_BUTTON_ENABLE)
+		mc13xxx_irq_free(priv->mc13783, MC13783_IRQ_ONOFD2, priv);
+	if (pdata->b1on_flags & MC13783_BUTTON_ENABLE)
+		mc13xxx_irq_free(priv->mc13783, MC13783_IRQ_ONOFD1, priv);
 
 	mc13xxx_unlock(priv->mc13783);
 
-	input_unरेजिस्टर_device(priv->pwr);
-	kमुक्त(priv);
+	input_unregister_device(priv->pwr);
+	kfree(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mc13783_pwrbutton_driver = अणु
+static struct platform_driver mc13783_pwrbutton_driver = {
 	.probe		= mc13783_pwrbutton_probe,
-	.हटाओ		= mc13783_pwrbutton_हटाओ,
-	.driver		= अणु
+	.remove		= mc13783_pwrbutton_remove,
+	.driver		= {
 		.name	= "mc13783-pwrbutton",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(mc13783_pwrbutton_driver);
+module_platform_driver(mc13783_pwrbutton_driver);
 
 MODULE_ALIAS("platform:mc13783-pwrbutton");
 MODULE_DESCRIPTION("MC13783 Power Button");

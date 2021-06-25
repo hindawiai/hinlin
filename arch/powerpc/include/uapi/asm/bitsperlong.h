@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित __ASM_POWERPC_BITSPERLONG_H
-#घोषणा __ASM_POWERPC_BITSPERLONG_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef __ASM_POWERPC_BITSPERLONG_H
+#define __ASM_POWERPC_BITSPERLONG_H
 
-#अगर defined(__घातerpc64__)
+#if defined(__powerpc64__)
 # define __BITS_PER_LONG 64
-#अन्यथा
+#else
 # define __BITS_PER_LONG 32
-#पूर्ण_अगर
+#endif
 
-#समावेश <यंत्र-generic/bitsperदीर्घ.h>
+#include <asm-generic/bitsperlong.h>
 
-#पूर्ण_अगर /* __ASM_POWERPC_BITSPERLONG_H */
+#endif /* __ASM_POWERPC_BITSPERLONG_H */

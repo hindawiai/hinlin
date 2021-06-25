@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Inject packets with all sorts of encapsulation पूर्णांकo the kernel.
+ * Inject packets with all sorts of encapsulation into the kernel.
  *
  * IPv4/IPv6	outer layer 3
  * GRE/GUE/BARE outer layer 4, where bare is IPIP/SIT/IPv4-in-IPv6/..
  * IPv4/IPv6    inner layer 3
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानकघोष.स>
-#समावेश <arpa/inet.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <error.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/अगर_packet.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/ipv6.h>
-#समावेश <netinet/ip.h>
-#समावेश <netinet/in.h>
-#समावेश <netinet/udp.h>
-#समावेश <poll.h>
-#समावेश <stdbool.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/socket.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/types.h>
-#समावेश <unistd.h>
+#include <stddef.h>
+#include <arpa/inet.h>
+#include <asm/byteorder.h>
+#include <error.h>
+#include <errno.h>
+#include <linux/if_packet.h>
+#include <linux/if_ether.h>
+#include <linux/ipv6.h>
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#include <netinet/udp.h>
+#include <poll.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#घोषणा CFG_PORT_INNER	8000
+#define CFG_PORT_INNER	8000
 
-/* Add some protocol definitions that करो not exist in userspace */
+/* Add some protocol definitions that do not exist in userspace */
 
-काष्ठा grehdr अणु
-	uपूर्णांक16_t unused;
-	uपूर्णांक16_t protocol;
-पूर्ण __attribute__((packed));
+struct grehdr {
+	uint16_t unused;
+	uint16_t protocol;
+} __attribute__((packed));
 
-काष्ठा guehdr अणु
-	जोड़ अणु
-		काष्ठा अणु
-#अगर defined(__LITTLE_ENDIAN_BITFIELD)
+struct guehdr {
+	union {
+		struct {
+#if defined(__LITTLE_ENDIAN_BITFIELD)
 			__u8	hlen:5,
 				control:1,
 				version:2;
-#या_अगर defined (__BIG_ENDIAN_BITFIELD)
+#elif defined (__BIG_ENDIAN_BITFIELD)
 			__u8	version:2,
 				control:1,
 				hlen:5;
-#अन्यथा
-#त्रुटि  "Please fix <asm/byteorder.h>"
-#पूर्ण_अगर
+#else
+#error  "Please fix <asm/byteorder.h>"
+#endif
 			__u8	proto_ctype;
 			__be16	flags;
-		पूर्ण;
+		};
 		__be32	word;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-अटल uपूर्णांक8_t	cfg_dsfield_inner;
-अटल uपूर्णांक8_t	cfg_dsfield_outer;
-अटल uपूर्णांक8_t	cfg_encap_proto;
-अटल bool	cfg_expect_failure = false;
-अटल पूर्णांक	cfg_l3_extra = AF_UNSPEC;	/* optional SIT prefix */
-अटल पूर्णांक	cfg_l3_inner = AF_UNSPEC;
-अटल पूर्णांक	cfg_l3_outer = AF_UNSPEC;
-अटल पूर्णांक	cfg_num_pkt = 10;
-अटल पूर्णांक	cfg_num_secs = 0;
-अटल अक्षर	cfg_payload_अक्षर = 'a';
-अटल पूर्णांक	cfg_payload_len = 100;
-अटल पूर्णांक	cfg_port_gue = 6080;
-अटल bool	cfg_only_rx;
-अटल bool	cfg_only_tx;
-अटल पूर्णांक	cfg_src_port = 9;
+static uint8_t	cfg_dsfield_inner;
+static uint8_t	cfg_dsfield_outer;
+static uint8_t	cfg_encap_proto;
+static bool	cfg_expect_failure = false;
+static int	cfg_l3_extra = AF_UNSPEC;	/* optional SIT prefix */
+static int	cfg_l3_inner = AF_UNSPEC;
+static int	cfg_l3_outer = AF_UNSPEC;
+static int	cfg_num_pkt = 10;
+static int	cfg_num_secs = 0;
+static char	cfg_payload_char = 'a';
+static int	cfg_payload_len = 100;
+static int	cfg_port_gue = 6080;
+static bool	cfg_only_rx;
+static bool	cfg_only_tx;
+static int	cfg_src_port = 9;
 
-अटल अक्षर	buf[ETH_DATA_LEN];
+static char	buf[ETH_DATA_LEN];
 
-#घोषणा INIT_ADDR4(name, addr4, port)				\
-	अटल काष्ठा sockaddr_in name = अणु			\
+#define INIT_ADDR4(name, addr4, port)				\
+	static struct sockaddr_in name = {			\
 		.sin_family = AF_INET,				\
-		.sin_port = __स्थिरant_htons(port),		\
-		.sin_addr.s_addr = __स्थिरant_htonl(addr4),	\
-	पूर्ण;
+		.sin_port = __constant_htons(port),		\
+		.sin_addr.s_addr = __constant_htonl(addr4),	\
+	};
 
-#घोषणा INIT_ADDR6(name, addr6, port)				\
-	अटल काष्ठा sockaddr_in6 name = अणु			\
+#define INIT_ADDR6(name, addr6, port)				\
+	static struct sockaddr_in6 name = {			\
 		.sin6_family = AF_INET6,			\
-		.sin6_port = __स्थिरant_htons(port),		\
+		.sin6_port = __constant_htons(port),		\
 		.sin6_addr = addr6,				\
-	पूर्ण;
+	};
 
 INIT_ADDR4(in_daddr4, INADDR_LOOPBACK, CFG_PORT_INNER)
 INIT_ADDR4(in_saddr4, INADDR_LOOPBACK + 2, 0)
@@ -109,94 +108,94 @@ INIT_ADDR6(out_saddr6, IN6ADDR_LOOPBACK_INIT, 0)
 INIT_ADDR6(extra_daddr6, IN6ADDR_LOOPBACK_INIT, 0)
 INIT_ADDR6(extra_saddr6, IN6ADDR_LOOPBACK_INIT, 0)
 
-अटल अचिन्हित दीर्घ util_समय_लो(व्योम)
-अणु
-	काष्ठा समयval tv;
+static unsigned long util_gettime(void)
+{
+	struct timeval tv;
 
-	समय_लोofday(&tv, शून्य);
-	वापस (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-पूर्ण
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+}
 
-अटल व्योम util_prपूर्णांकaddr(स्थिर अक्षर *msg, काष्ठा sockaddr *addr)
-अणु
-	अचिन्हित दीर्घ off = 0;
-	अक्षर nbuf[INET6_ADDRSTRLEN];
+static void util_printaddr(const char *msg, struct sockaddr *addr)
+{
+	unsigned long off = 0;
+	char nbuf[INET6_ADDRSTRLEN];
 
-	चयन (addr->sa_family) अणु
-	हाल PF_INET:
-		off = __builtin_दुरत्व(काष्ठा sockaddr_in, sin_addr);
-		अवरोध;
-	हाल PF_INET6:
-		off = __builtin_दुरत्व(काष्ठा sockaddr_in6, sin6_addr);
-		अवरोध;
-	शेष:
+	switch (addr->sa_family) {
+	case PF_INET:
+		off = __builtin_offsetof(struct sockaddr_in, sin_addr);
+		break;
+	case PF_INET6:
+		off = __builtin_offsetof(struct sockaddr_in6, sin6_addr);
+		break;
+	default:
 		error(1, 0, "printaddr: unsupported family %u\n",
 		      addr->sa_family);
-	पूर्ण
+	}
 
-	अगर (!inet_ntop(addr->sa_family, ((व्योम *) addr) + off, nbuf,
-		       माप(nbuf)))
-		error(1, त्रुटि_सं, "inet_ntop");
+	if (!inet_ntop(addr->sa_family, ((void *) addr) + off, nbuf,
+		       sizeof(nbuf)))
+		error(1, errno, "inet_ntop");
 
-	ख_लिखो(मानक_त्रुटि, "%s: %s\n", msg, nbuf);
-पूर्ण
+	fprintf(stderr, "%s: %s\n", msg, nbuf);
+}
 
-अटल अचिन्हित दीर्घ add_csum_hword(स्थिर uपूर्णांक16_t *start, पूर्णांक num_u16)
-अणु
-	अचिन्हित दीर्घ sum = 0;
-	पूर्णांक i;
+static unsigned long add_csum_hword(const uint16_t *start, int num_u16)
+{
+	unsigned long sum = 0;
+	int i;
 
-	क्रम (i = 0; i < num_u16; i++)
+	for (i = 0; i < num_u16; i++)
 		sum += start[i];
 
-	वापस sum;
-पूर्ण
+	return sum;
+}
 
-अटल uपूर्णांक16_t build_ip_csum(स्थिर uपूर्णांक16_t *start, पूर्णांक num_u16,
-			      अचिन्हित दीर्घ sum)
-अणु
+static uint16_t build_ip_csum(const uint16_t *start, int num_u16,
+			      unsigned long sum)
+{
 	sum += add_csum_hword(start, num_u16);
 
-	जबतक (sum >> 16)
+	while (sum >> 16)
 		sum = (sum & 0xffff) + (sum >> 16);
 
-	वापस ~sum;
-पूर्ण
+	return ~sum;
+}
 
-अटल व्योम build_ipv4_header(व्योम *header, uपूर्णांक8_t proto,
-			      uपूर्णांक32_t src, uपूर्णांक32_t dst,
-			      पूर्णांक payload_len, uपूर्णांक8_t tos)
-अणु
-	काष्ठा iphdr *iph = header;
+static void build_ipv4_header(void *header, uint8_t proto,
+			      uint32_t src, uint32_t dst,
+			      int payload_len, uint8_t tos)
+{
+	struct iphdr *iph = header;
 
 	iph->ihl = 5;
 	iph->version = 4;
 	iph->tos = tos;
 	iph->ttl = 8;
-	iph->tot_len = htons(माप(*iph) + payload_len);
+	iph->tot_len = htons(sizeof(*iph) + payload_len);
 	iph->id = htons(1337);
 	iph->protocol = proto;
 	iph->saddr = src;
 	iph->daddr = dst;
-	iph->check = build_ip_csum((व्योम *) iph, iph->ihl << 1, 0);
-पूर्ण
+	iph->check = build_ip_csum((void *) iph, iph->ihl << 1, 0);
+}
 
-अटल व्योम ipv6_set_dsfield(काष्ठा ipv6hdr *ip6h, uपूर्णांक8_t dsfield)
-अणु
-	uपूर्णांक16_t val, *ptr = (uपूर्णांक16_t *)ip6h;
+static void ipv6_set_dsfield(struct ipv6hdr *ip6h, uint8_t dsfield)
+{
+	uint16_t val, *ptr = (uint16_t *)ip6h;
 
 	val = ntohs(*ptr);
 	val &= 0xF00F;
-	val |= ((uपूर्णांक16_t) dsfield) << 4;
+	val |= ((uint16_t) dsfield) << 4;
 	*ptr = htons(val);
-पूर्ण
+}
 
-अटल व्योम build_ipv6_header(व्योम *header, uपूर्णांक8_t proto,
-			      काष्ठा sockaddr_in6 *src,
-			      काष्ठा sockaddr_in6 *dst,
-			      पूर्णांक payload_len, uपूर्णांक8_t dsfield)
-अणु
-	काष्ठा ipv6hdr *ip6h = header;
+static void build_ipv6_header(void *header, uint8_t proto,
+			      struct sockaddr_in6 *src,
+			      struct sockaddr_in6 *dst,
+			      int payload_len, uint8_t dsfield)
+{
+	struct ipv6hdr *ip6h = header;
 
 	ip6h->version = 6;
 	ip6h->payload_len = htons(payload_len);
@@ -204,171 +203,171 @@ INIT_ADDR6(extra_saddr6, IN6ADDR_LOOPBACK_INIT, 0)
 	ip6h->hop_limit = 8;
 	ipv6_set_dsfield(ip6h, dsfield);
 
-	स_नकल(&ip6h->saddr, &src->sin6_addr, माप(ip6h->saddr));
-	स_नकल(&ip6h->daddr, &dst->sin6_addr, माप(ip6h->daddr));
-पूर्ण
+	memcpy(&ip6h->saddr, &src->sin6_addr, sizeof(ip6h->saddr));
+	memcpy(&ip6h->daddr, &dst->sin6_addr, sizeof(ip6h->daddr));
+}
 
-अटल uपूर्णांक16_t build_udp_v4_csum(स्थिर काष्ठा iphdr *iph,
-				  स्थिर काष्ठा udphdr *udph,
-				  पूर्णांक num_words)
-अणु
-	अचिन्हित दीर्घ pseuकरो_sum;
-	पूर्णांक num_u16 = माप(iph->saddr);	/* halfwords: twice byte len */
+static uint16_t build_udp_v4_csum(const struct iphdr *iph,
+				  const struct udphdr *udph,
+				  int num_words)
+{
+	unsigned long pseudo_sum;
+	int num_u16 = sizeof(iph->saddr);	/* halfwords: twice byte len */
 
-	pseuकरो_sum = add_csum_hword((व्योम *) &iph->saddr, num_u16);
-	pseuकरो_sum += htons(IPPROTO_UDP);
-	pseuकरो_sum += udph->len;
-	वापस build_ip_csum((व्योम *) udph, num_words, pseuकरो_sum);
-पूर्ण
+	pseudo_sum = add_csum_hword((void *) &iph->saddr, num_u16);
+	pseudo_sum += htons(IPPROTO_UDP);
+	pseudo_sum += udph->len;
+	return build_ip_csum((void *) udph, num_words, pseudo_sum);
+}
 
-अटल uपूर्णांक16_t build_udp_v6_csum(स्थिर काष्ठा ipv6hdr *ip6h,
-				  स्थिर काष्ठा udphdr *udph,
-				  पूर्णांक num_words)
-अणु
-	अचिन्हित दीर्घ pseuकरो_sum;
-	पूर्णांक num_u16 = माप(ip6h->saddr);	/* halfwords: twice byte len */
+static uint16_t build_udp_v6_csum(const struct ipv6hdr *ip6h,
+				  const struct udphdr *udph,
+				  int num_words)
+{
+	unsigned long pseudo_sum;
+	int num_u16 = sizeof(ip6h->saddr);	/* halfwords: twice byte len */
 
-	pseuकरो_sum = add_csum_hword((व्योम *) &ip6h->saddr, num_u16);
-	pseuकरो_sum += htons(ip6h->nexthdr);
-	pseuकरो_sum += ip6h->payload_len;
-	वापस build_ip_csum((व्योम *) udph, num_words, pseuकरो_sum);
-पूर्ण
+	pseudo_sum = add_csum_hword((void *) &ip6h->saddr, num_u16);
+	pseudo_sum += htons(ip6h->nexthdr);
+	pseudo_sum += ip6h->payload_len;
+	return build_ip_csum((void *) udph, num_words, pseudo_sum);
+}
 
-अटल व्योम build_udp_header(व्योम *header, पूर्णांक payload_len,
-			     uपूर्णांक16_t dport, पूर्णांक family)
-अणु
-	काष्ठा udphdr *udph = header;
-	पूर्णांक len = माप(*udph) + payload_len;
+static void build_udp_header(void *header, int payload_len,
+			     uint16_t dport, int family)
+{
+	struct udphdr *udph = header;
+	int len = sizeof(*udph) + payload_len;
 
 	udph->source = htons(cfg_src_port);
 	udph->dest = htons(dport);
 	udph->len = htons(len);
 	udph->check = 0;
-	अगर (family == AF_INET)
-		udph->check = build_udp_v4_csum(header - माप(काष्ठा iphdr),
+	if (family == AF_INET)
+		udph->check = build_udp_v4_csum(header - sizeof(struct iphdr),
 						udph, len >> 1);
-	अन्यथा
-		udph->check = build_udp_v6_csum(header - माप(काष्ठा ipv6hdr),
+	else
+		udph->check = build_udp_v6_csum(header - sizeof(struct ipv6hdr),
 						udph, len >> 1);
-पूर्ण
+}
 
-अटल व्योम build_gue_header(व्योम *header, uपूर्णांक8_t proto)
-अणु
-	काष्ठा guehdr *gueh = header;
+static void build_gue_header(void *header, uint8_t proto)
+{
+	struct guehdr *gueh = header;
 
 	gueh->proto_ctype = proto;
-पूर्ण
+}
 
-अटल व्योम build_gre_header(व्योम *header, uपूर्णांक16_t proto)
-अणु
-	काष्ठा grehdr *greh = header;
+static void build_gre_header(void *header, uint16_t proto)
+{
+	struct grehdr *greh = header;
 
 	greh->protocol = htons(proto);
-पूर्ण
+}
 
-अटल पूर्णांक l3_length(पूर्णांक family)
-अणु
-	अगर (family == AF_INET)
-		वापस माप(काष्ठा iphdr);
-	अन्यथा
-		वापस माप(काष्ठा ipv6hdr);
-पूर्ण
+static int l3_length(int family)
+{
+	if (family == AF_INET)
+		return sizeof(struct iphdr);
+	else
+		return sizeof(struct ipv6hdr);
+}
 
-अटल पूर्णांक build_packet(व्योम)
-अणु
-	पूर्णांक ol3_len = 0, ol4_len = 0, il3_len = 0, il4_len = 0;
-	पूर्णांक el3_len = 0;
+static int build_packet(void)
+{
+	int ol3_len = 0, ol4_len = 0, il3_len = 0, il4_len = 0;
+	int el3_len = 0;
 
-	अगर (cfg_l3_extra)
+	if (cfg_l3_extra)
 		el3_len = l3_length(cfg_l3_extra);
 
 	/* calculate header offsets */
-	अगर (cfg_encap_proto) अणु
+	if (cfg_encap_proto) {
 		ol3_len = l3_length(cfg_l3_outer);
 
-		अगर (cfg_encap_proto == IPPROTO_GRE)
-			ol4_len = माप(काष्ठा grehdr);
-		अन्यथा अगर (cfg_encap_proto == IPPROTO_UDP)
-			ol4_len = माप(काष्ठा udphdr) + माप(काष्ठा guehdr);
-	पूर्ण
+		if (cfg_encap_proto == IPPROTO_GRE)
+			ol4_len = sizeof(struct grehdr);
+		else if (cfg_encap_proto == IPPROTO_UDP)
+			ol4_len = sizeof(struct udphdr) + sizeof(struct guehdr);
+	}
 
 	il3_len = l3_length(cfg_l3_inner);
-	il4_len = माप(काष्ठा udphdr);
+	il4_len = sizeof(struct udphdr);
 
-	अगर (el3_len + ol3_len + ol4_len + il3_len + il4_len + cfg_payload_len >=
-	    माप(buf))
+	if (el3_len + ol3_len + ol4_len + il3_len + il4_len + cfg_payload_len >=
+	    sizeof(buf))
 		error(1, 0, "packet too large\n");
 
 	/*
 	 * Fill packet from inside out, to calculate correct checksums.
-	 * But create ip beक्रमe udp headers, as udp uses ip क्रम pseuकरो-sum.
+	 * But create ip before udp headers, as udp uses ip for pseudo-sum.
 	 */
-	स_रखो(buf + el3_len + ol3_len + ol4_len + il3_len + il4_len,
-	       cfg_payload_अक्षर, cfg_payload_len);
+	memset(buf + el3_len + ol3_len + ol4_len + il3_len + il4_len,
+	       cfg_payload_char, cfg_payload_len);
 
-	/* add zero byte क्रम udp csum padding */
+	/* add zero byte for udp csum padding */
 	buf[el3_len + ol3_len + ol4_len + il3_len + il4_len + cfg_payload_len] = 0;
 
-	चयन (cfg_l3_inner) अणु
-	हाल PF_INET:
+	switch (cfg_l3_inner) {
+	case PF_INET:
 		build_ipv4_header(buf + el3_len + ol3_len + ol4_len,
 				  IPPROTO_UDP,
 				  in_saddr4.sin_addr.s_addr,
 				  in_daddr4.sin_addr.s_addr,
 				  il4_len + cfg_payload_len,
 				  cfg_dsfield_inner);
-		अवरोध;
-	हाल PF_INET6:
+		break;
+	case PF_INET6:
 		build_ipv6_header(buf + el3_len + ol3_len + ol4_len,
 				  IPPROTO_UDP,
 				  &in_saddr6, &in_daddr6,
 				  il4_len + cfg_payload_len,
 				  cfg_dsfield_inner);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	build_udp_header(buf + el3_len + ol3_len + ol4_len + il3_len,
 			 cfg_payload_len, CFG_PORT_INNER, cfg_l3_inner);
 
-	अगर (!cfg_encap_proto)
-		वापस il3_len + il4_len + cfg_payload_len;
+	if (!cfg_encap_proto)
+		return il3_len + il4_len + cfg_payload_len;
 
-	चयन (cfg_l3_outer) अणु
-	हाल PF_INET:
+	switch (cfg_l3_outer) {
+	case PF_INET:
 		build_ipv4_header(buf + el3_len, cfg_encap_proto,
 				  out_saddr4.sin_addr.s_addr,
 				  out_daddr4.sin_addr.s_addr,
 				  ol4_len + il3_len + il4_len + cfg_payload_len,
 				  cfg_dsfield_outer);
-		अवरोध;
-	हाल PF_INET6:
+		break;
+	case PF_INET6:
 		build_ipv6_header(buf + el3_len, cfg_encap_proto,
 				  &out_saddr6, &out_daddr6,
 				  ol4_len + il3_len + il4_len + cfg_payload_len,
 				  cfg_dsfield_outer);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (cfg_encap_proto) अणु
-	हाल IPPROTO_UDP:
+	switch (cfg_encap_proto) {
+	case IPPROTO_UDP:
 		build_gue_header(buf + el3_len + ol3_len + ol4_len -
-				 माप(काष्ठा guehdr),
+				 sizeof(struct guehdr),
 				 cfg_l3_inner == PF_INET ? IPPROTO_IPIP
 							 : IPPROTO_IPV6);
 		build_udp_header(buf + el3_len + ol3_len,
-				 माप(काष्ठा guehdr) + il3_len + il4_len +
+				 sizeof(struct guehdr) + il3_len + il4_len +
 				 cfg_payload_len,
 				 cfg_port_gue, cfg_l3_outer);
-		अवरोध;
-	हाल IPPROTO_GRE:
+		break;
+	case IPPROTO_GRE:
 		build_gre_header(buf + el3_len + ol3_len,
 				 cfg_l3_inner == PF_INET ? ETH_P_IP
 							 : ETH_P_IPV6);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (cfg_l3_extra) अणु
-	हाल PF_INET:
+	switch (cfg_l3_extra) {
+	case PF_INET:
 		build_ipv4_header(buf,
 				  cfg_l3_outer == PF_INET ? IPPROTO_IPIP
 							  : IPPROTO_IPV6,
@@ -376,406 +375,406 @@ INIT_ADDR6(extra_saddr6, IN6ADDR_LOOPBACK_INIT, 0)
 				  extra_daddr4.sin_addr.s_addr,
 				  ol3_len + ol4_len + il3_len + il4_len +
 				  cfg_payload_len, 0);
-		अवरोध;
-	हाल PF_INET6:
+		break;
+	case PF_INET6:
 		build_ipv6_header(buf,
 				  cfg_l3_outer == PF_INET ? IPPROTO_IPIP
 							  : IPPROTO_IPV6,
 				  &extra_saddr6, &extra_daddr6,
 				  ol3_len + ol4_len + il3_len + il4_len +
 				  cfg_payload_len, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस el3_len + ol3_len + ol4_len + il3_len + il4_len +
+	return el3_len + ol3_len + ol4_len + il3_len + il4_len +
 	       cfg_payload_len;
-पूर्ण
+}
 
 /* sender transmits encapsulated over RAW or unencap'd over UDP */
-अटल पूर्णांक setup_tx(व्योम)
-अणु
-	पूर्णांक family, fd, ret;
+static int setup_tx(void)
+{
+	int family, fd, ret;
 
-	अगर (cfg_l3_extra)
+	if (cfg_l3_extra)
 		family = cfg_l3_extra;
-	अन्यथा अगर (cfg_l3_outer)
+	else if (cfg_l3_outer)
 		family = cfg_l3_outer;
-	अन्यथा
+	else
 		family = cfg_l3_inner;
 
 	fd = socket(family, SOCK_RAW, IPPROTO_RAW);
-	अगर (fd == -1)
-		error(1, त्रुटि_सं, "socket tx");
+	if (fd == -1)
+		error(1, errno, "socket tx");
 
-	अगर (cfg_l3_extra) अणु
-		अगर (cfg_l3_extra == PF_INET)
-			ret = connect(fd, (व्योम *) &extra_daddr4,
-				      माप(extra_daddr4));
-		अन्यथा
-			ret = connect(fd, (व्योम *) &extra_daddr6,
-				      माप(extra_daddr6));
-		अगर (ret)
-			error(1, त्रुटि_सं, "connect tx");
-	पूर्ण अन्यथा अगर (cfg_l3_outer) अणु
-		/* connect to destination अगर not encapsulated */
-		अगर (cfg_l3_outer == PF_INET)
-			ret = connect(fd, (व्योम *) &out_daddr4,
-				      माप(out_daddr4));
-		अन्यथा
-			ret = connect(fd, (व्योम *) &out_daddr6,
-				      माप(out_daddr6));
-		अगर (ret)
-			error(1, त्रुटि_सं, "connect tx");
-	पूर्ण अन्यथा अणु
+	if (cfg_l3_extra) {
+		if (cfg_l3_extra == PF_INET)
+			ret = connect(fd, (void *) &extra_daddr4,
+				      sizeof(extra_daddr4));
+		else
+			ret = connect(fd, (void *) &extra_daddr6,
+				      sizeof(extra_daddr6));
+		if (ret)
+			error(1, errno, "connect tx");
+	} else if (cfg_l3_outer) {
+		/* connect to destination if not encapsulated */
+		if (cfg_l3_outer == PF_INET)
+			ret = connect(fd, (void *) &out_daddr4,
+				      sizeof(out_daddr4));
+		else
+			ret = connect(fd, (void *) &out_daddr6,
+				      sizeof(out_daddr6));
+		if (ret)
+			error(1, errno, "connect tx");
+	} else {
 		/* otherwise using loopback */
-		अगर (cfg_l3_inner == PF_INET)
-			ret = connect(fd, (व्योम *) &in_daddr4,
-				      माप(in_daddr4));
-		अन्यथा
-			ret = connect(fd, (व्योम *) &in_daddr6,
-				      माप(in_daddr6));
-		अगर (ret)
-			error(1, त्रुटि_सं, "connect tx");
-	पूर्ण
+		if (cfg_l3_inner == PF_INET)
+			ret = connect(fd, (void *) &in_daddr4,
+				      sizeof(in_daddr4));
+		else
+			ret = connect(fd, (void *) &in_daddr6,
+				      sizeof(in_daddr6));
+		if (ret)
+			error(1, errno, "connect tx");
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-/* receiver पढ़ोs unencapsulated UDP */
-अटल पूर्णांक setup_rx(व्योम)
-अणु
-	पूर्णांक fd, ret;
+/* receiver reads unencapsulated UDP */
+static int setup_rx(void)
+{
+	int fd, ret;
 
 	fd = socket(cfg_l3_inner, SOCK_DGRAM, 0);
-	अगर (fd == -1)
-		error(1, त्रुटि_सं, "socket rx");
+	if (fd == -1)
+		error(1, errno, "socket rx");
 
-	अगर (cfg_l3_inner == PF_INET)
-		ret = bind(fd, (व्योम *) &in_daddr4, माप(in_daddr4));
-	अन्यथा
-		ret = bind(fd, (व्योम *) &in_daddr6, माप(in_daddr6));
-	अगर (ret)
-		error(1, त्रुटि_सं, "bind rx");
+	if (cfg_l3_inner == PF_INET)
+		ret = bind(fd, (void *) &in_daddr4, sizeof(in_daddr4));
+	else
+		ret = bind(fd, (void *) &in_daddr6, sizeof(in_daddr6));
+	if (ret)
+		error(1, errno, "bind rx");
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल पूर्णांक करो_tx(पूर्णांक fd, स्थिर अक्षर *pkt, पूर्णांक len)
-अणु
-	पूर्णांक ret;
+static int do_tx(int fd, const char *pkt, int len)
+{
+	int ret;
 
-	ret = ग_लिखो(fd, pkt, len);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "send");
-	अगर (ret != len)
-		error(1, त्रुटि_सं, "send: len (%d < %d)\n", ret, len);
+	ret = write(fd, pkt, len);
+	if (ret == -1)
+		error(1, errno, "send");
+	if (ret != len)
+		error(1, errno, "send: len (%d < %d)\n", ret, len);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक करो_poll(पूर्णांक fd, लघु events, पूर्णांक समयout)
-अणु
-	काष्ठा pollfd pfd;
-	पूर्णांक ret;
+static int do_poll(int fd, short events, int timeout)
+{
+	struct pollfd pfd;
+	int ret;
 
 	pfd.fd = fd;
 	pfd.events = events;
 
-	ret = poll(&pfd, 1, समयout);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "poll");
-	अगर (ret && !(pfd.revents & POLLIN))
-		error(1, त्रुटि_सं, "poll: unexpected event 0x%x\n", pfd.revents);
+	ret = poll(&pfd, 1, timeout);
+	if (ret == -1)
+		error(1, errno, "poll");
+	if (ret && !(pfd.revents & POLLIN))
+		error(1, errno, "poll: unexpected event 0x%x\n", pfd.revents);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_rx(पूर्णांक fd)
-अणु
-	अक्षर rbuf;
-	पूर्णांक ret, num = 0;
+static int do_rx(int fd)
+{
+	char rbuf;
+	int ret, num = 0;
 
-	जबतक (1) अणु
+	while (1) {
 		ret = recv(fd, &rbuf, 1, MSG_DONTWAIT);
-		अगर (ret == -1 && त्रुटि_सं == EAGAIN)
-			अवरोध;
-		अगर (ret == -1)
-			error(1, त्रुटि_सं, "recv");
-		अगर (rbuf != cfg_payload_अक्षर)
+		if (ret == -1 && errno == EAGAIN)
+			break;
+		if (ret == -1)
+			error(1, errno, "recv");
+		if (rbuf != cfg_payload_char)
 			error(1, 0, "recv: payload mismatch");
 		num++;
-	पूर्ण
+	}
 
-	वापस num;
-पूर्ण
+	return num;
+}
 
-अटल पूर्णांक करो_मुख्य(व्योम)
-अणु
-	अचिन्हित दीर्घ tstop, treport, tcur;
-	पूर्णांक fdt = -1, fdr = -1, len, tx = 0, rx = 0;
+static int do_main(void)
+{
+	unsigned long tstop, treport, tcur;
+	int fdt = -1, fdr = -1, len, tx = 0, rx = 0;
 
-	अगर (!cfg_only_tx)
+	if (!cfg_only_tx)
 		fdr = setup_rx();
-	अगर (!cfg_only_rx)
+	if (!cfg_only_rx)
 		fdt = setup_tx();
 
 	len = build_packet();
 
-	tcur = util_समय_लो();
+	tcur = util_gettime();
 	treport = tcur + 1000;
 	tstop = tcur + (cfg_num_secs * 1000);
 
-	जबतक (1) अणु
-		अगर (!cfg_only_rx)
-			tx += करो_tx(fdt, buf, len);
+	while (1) {
+		if (!cfg_only_rx)
+			tx += do_tx(fdt, buf, len);
 
-		अगर (!cfg_only_tx)
-			rx += करो_rx(fdr);
+		if (!cfg_only_tx)
+			rx += do_rx(fdr);
 
-		अगर (cfg_num_secs) अणु
-			tcur = util_समय_लो();
-			अगर (tcur >= tstop)
-				अवरोध;
-			अगर (tcur >= treport) अणु
-				ख_लिखो(मानक_त्रुटि, "pkts: tx=%u rx=%u\n", tx, rx);
+		if (cfg_num_secs) {
+			tcur = util_gettime();
+			if (tcur >= tstop)
+				break;
+			if (tcur >= treport) {
+				fprintf(stderr, "pkts: tx=%u rx=%u\n", tx, rx);
 				tx = 0;
 				rx = 0;
 				treport = tcur + 1000;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (tx == cfg_num_pkt)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+		} else {
+			if (tx == cfg_num_pkt)
+				break;
+		}
+	}
 
-	/* पढ़ो straggler packets, अगर any */
-	अगर (rx < tx) अणु
-		tstop = util_समय_लो() + 100;
-		जबतक (rx < tx) अणु
-			tcur = util_समय_लो();
-			अगर (tcur >= tstop)
-				अवरोध;
+	/* read straggler packets, if any */
+	if (rx < tx) {
+		tstop = util_gettime() + 100;
+		while (rx < tx) {
+			tcur = util_gettime();
+			if (tcur >= tstop)
+				break;
 
-			करो_poll(fdr, POLLIN, tstop - tcur);
-			rx += करो_rx(fdr);
-		पूर्ण
-	पूर्ण
+			do_poll(fdr, POLLIN, tstop - tcur);
+			rx += do_rx(fdr);
+		}
+	}
 
-	ख_लिखो(मानक_त्रुटि, "pkts: tx=%u rx=%u\n", tx, rx);
+	fprintf(stderr, "pkts: tx=%u rx=%u\n", tx, rx);
 
-	अगर (fdr != -1 && बंद(fdr))
-		error(1, त्रुटि_सं, "close rx");
-	अगर (fdt != -1 && बंद(fdt))
-		error(1, त्रुटि_सं, "close tx");
+	if (fdr != -1 && close(fdr))
+		error(1, errno, "close rx");
+	if (fdt != -1 && close(fdt))
+		error(1, errno, "close tx");
 
 	/*
-	 * success (== 0) only अगर received all packets
-	 * unless failure is expected, in which हाल none must arrive.
+	 * success (== 0) only if received all packets
+	 * unless failure is expected, in which case none must arrive.
 	 */
-	अगर (cfg_expect_failure)
-		वापस rx != 0;
-	अन्यथा
-		वापस rx != tx;
-पूर्ण
+	if (cfg_expect_failure)
+		return rx != 0;
+	else
+		return rx != tx;
+}
 
 
-अटल व्योम __attribute__((noवापस)) usage(स्थिर अक्षर *filepath)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: %s [-e gre|gue|bare|none] [-i 4|6] [-l len] "
+static void __attribute__((noreturn)) usage(const char *filepath)
+{
+	fprintf(stderr, "Usage: %s [-e gre|gue|bare|none] [-i 4|6] [-l len] "
 			"[-O 4|6] [-o 4|6] [-n num] [-t secs] [-R] [-T] "
 			"[-s <osrc> [-d <odst>] [-S <isrc>] [-D <idst>] "
 			"[-x <otos>] [-X <itos>] [-f <isport>] [-F]\n",
 		filepath);
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-अटल व्योम parse_addr(पूर्णांक family, व्योम *addr, स्थिर अक्षर *optarg)
-अणु
-	पूर्णांक ret;
+static void parse_addr(int family, void *addr, const char *optarg)
+{
+	int ret;
 
 	ret = inet_pton(family, optarg, addr);
-	अगर (ret == -1)
-		error(1, त्रुटि_सं, "inet_pton");
-	अगर (ret == 0)
+	if (ret == -1)
+		error(1, errno, "inet_pton");
+	if (ret == 0)
 		error(1, 0, "inet_pton: bad string");
-पूर्ण
+}
 
-अटल व्योम parse_addr4(काष्ठा sockaddr_in *addr, स्थिर अक्षर *optarg)
-अणु
+static void parse_addr4(struct sockaddr_in *addr, const char *optarg)
+{
 	parse_addr(AF_INET, &addr->sin_addr, optarg);
-पूर्ण
+}
 
-अटल व्योम parse_addr6(काष्ठा sockaddr_in6 *addr, स्थिर अक्षर *optarg)
-अणु
+static void parse_addr6(struct sockaddr_in6 *addr, const char *optarg)
+{
 	parse_addr(AF_INET6, &addr->sin6_addr, optarg);
-पूर्ण
+}
 
-अटल पूर्णांक parse_protocol_family(स्थिर अक्षर *filepath, स्थिर अक्षर *optarg)
-अणु
-	अगर (!म_भेद(optarg, "4"))
-		वापस PF_INET;
-	अगर (!म_भेद(optarg, "6"))
-		वापस PF_INET6;
+static int parse_protocol_family(const char *filepath, const char *optarg)
+{
+	if (!strcmp(optarg, "4"))
+		return PF_INET;
+	if (!strcmp(optarg, "6"))
+		return PF_INET6;
 
 	usage(filepath);
-पूर्ण
+}
 
-अटल व्योम parse_opts(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक c;
+static void parse_opts(int argc, char **argv)
+{
+	int c;
 
-	जबतक ((c = getopt(argc, argv, "d:D:e:f:Fhi:l:n:o:O:Rs:S:t:Tx:X:")) != -1) अणु
-		चयन (c) अणु
-		हाल 'd':
-			अगर (cfg_l3_outer == AF_UNSPEC)
+	while ((c = getopt(argc, argv, "d:D:e:f:Fhi:l:n:o:O:Rs:S:t:Tx:X:")) != -1) {
+		switch (c) {
+		case 'd':
+			if (cfg_l3_outer == AF_UNSPEC)
 				error(1, 0, "-d must be preceded by -o");
-			अगर (cfg_l3_outer == AF_INET)
+			if (cfg_l3_outer == AF_INET)
 				parse_addr4(&out_daddr4, optarg);
-			अन्यथा
+			else
 				parse_addr6(&out_daddr6, optarg);
-			अवरोध;
-		हाल 'D':
-			अगर (cfg_l3_inner == AF_UNSPEC)
+			break;
+		case 'D':
+			if (cfg_l3_inner == AF_UNSPEC)
 				error(1, 0, "-D must be preceded by -i");
-			अगर (cfg_l3_inner == AF_INET)
+			if (cfg_l3_inner == AF_INET)
 				parse_addr4(&in_daddr4, optarg);
-			अन्यथा
+			else
 				parse_addr6(&in_daddr6, optarg);
-			अवरोध;
-		हाल 'e':
-			अगर (!म_भेद(optarg, "gre"))
+			break;
+		case 'e':
+			if (!strcmp(optarg, "gre"))
 				cfg_encap_proto = IPPROTO_GRE;
-			अन्यथा अगर (!म_भेद(optarg, "gue"))
+			else if (!strcmp(optarg, "gue"))
 				cfg_encap_proto = IPPROTO_UDP;
-			अन्यथा अगर (!म_भेद(optarg, "bare"))
+			else if (!strcmp(optarg, "bare"))
 				cfg_encap_proto = IPPROTO_IPIP;
-			अन्यथा अगर (!म_भेद(optarg, "none"))
+			else if (!strcmp(optarg, "none"))
 				cfg_encap_proto = IPPROTO_IP;	/* == 0 */
-			अन्यथा
+			else
 				usage(argv[0]);
-			अवरोध;
-		हाल 'f':
-			cfg_src_port = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'F':
+			break;
+		case 'f':
+			cfg_src_port = strtol(optarg, NULL, 0);
+			break;
+		case 'F':
 			cfg_expect_failure = true;
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			usage(argv[0]);
-			अवरोध;
-		हाल 'i':
-			अगर (!म_भेद(optarg, "4"))
+			break;
+		case 'i':
+			if (!strcmp(optarg, "4"))
 				cfg_l3_inner = PF_INET;
-			अन्यथा अगर (!म_भेद(optarg, "6"))
+			else if (!strcmp(optarg, "6"))
 				cfg_l3_inner = PF_INET6;
-			अन्यथा
+			else
 				usage(argv[0]);
-			अवरोध;
-		हाल 'l':
-			cfg_payload_len = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'n':
-			cfg_num_pkt = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'o':
+			break;
+		case 'l':
+			cfg_payload_len = strtol(optarg, NULL, 0);
+			break;
+		case 'n':
+			cfg_num_pkt = strtol(optarg, NULL, 0);
+			break;
+		case 'o':
 			cfg_l3_outer = parse_protocol_family(argv[0], optarg);
-			अवरोध;
-		हाल 'O':
+			break;
+		case 'O':
 			cfg_l3_extra = parse_protocol_family(argv[0], optarg);
-			अवरोध;
-		हाल 'R':
+			break;
+		case 'R':
 			cfg_only_rx = true;
-			अवरोध;
-		हाल 's':
-			अगर (cfg_l3_outer == AF_INET)
+			break;
+		case 's':
+			if (cfg_l3_outer == AF_INET)
 				parse_addr4(&out_saddr4, optarg);
-			अन्यथा
+			else
 				parse_addr6(&out_saddr6, optarg);
-			अवरोध;
-		हाल 'S':
-			अगर (cfg_l3_inner == AF_INET)
+			break;
+		case 'S':
+			if (cfg_l3_inner == AF_INET)
 				parse_addr4(&in_saddr4, optarg);
-			अन्यथा
+			else
 				parse_addr6(&in_saddr6, optarg);
-			अवरोध;
-		हाल 't':
-			cfg_num_secs = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'T':
+			break;
+		case 't':
+			cfg_num_secs = strtol(optarg, NULL, 0);
+			break;
+		case 'T':
 			cfg_only_tx = true;
-			अवरोध;
-		हाल 'x':
-			cfg_dsfield_outer = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'X':
-			cfg_dsfield_inner = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		case 'x':
+			cfg_dsfield_outer = strtol(optarg, NULL, 0);
+			break;
+		case 'X':
+			cfg_dsfield_inner = strtol(optarg, NULL, 0);
+			break;
+		}
+	}
 
-	अगर (cfg_only_rx && cfg_only_tx)
+	if (cfg_only_rx && cfg_only_tx)
 		error(1, 0, "options: cannot combine rx-only and tx-only");
 
-	अगर (cfg_encap_proto && cfg_l3_outer == AF_UNSPEC)
+	if (cfg_encap_proto && cfg_l3_outer == AF_UNSPEC)
 		error(1, 0, "options: must specify outer with encap");
-	अन्यथा अगर ((!cfg_encap_proto) && cfg_l3_outer != AF_UNSPEC)
+	else if ((!cfg_encap_proto) && cfg_l3_outer != AF_UNSPEC)
 		error(1, 0, "options: cannot combine no-encap and outer");
-	अन्यथा अगर ((!cfg_encap_proto) && cfg_l3_extra != AF_UNSPEC)
+	else if ((!cfg_encap_proto) && cfg_l3_extra != AF_UNSPEC)
 		error(1, 0, "options: cannot combine no-encap and extra");
 
-	अगर (cfg_l3_inner == AF_UNSPEC)
+	if (cfg_l3_inner == AF_UNSPEC)
 		cfg_l3_inner = AF_INET6;
-	अगर (cfg_l3_inner == AF_INET6 && cfg_encap_proto == IPPROTO_IPIP)
+	if (cfg_l3_inner == AF_INET6 && cfg_encap_proto == IPPROTO_IPIP)
 		cfg_encap_proto = IPPROTO_IPV6;
 
 	/* RFC 6040 4.2:
-	 *   on decap, अगर outer encountered congestion (CE == 0x3),
+	 *   on decap, if outer encountered congestion (CE == 0x3),
 	 *   but inner cannot encode ECN (NoECT == 0x0), then drop packet.
 	 */
-	अगर (((cfg_dsfield_outer & 0x3) == 0x3) &&
+	if (((cfg_dsfield_outer & 0x3) == 0x3) &&
 	    ((cfg_dsfield_inner & 0x3) == 0x0))
 		cfg_expect_failure = true;
-पूर्ण
+}
 
-अटल व्योम prपूर्णांक_opts(व्योम)
-अणु
-	अगर (cfg_l3_inner == PF_INET6) अणु
-		util_prपूर्णांकaddr("inner.dest6", (व्योम *) &in_daddr6);
-		util_prपूर्णांकaddr("inner.source6", (व्योम *) &in_saddr6);
-	पूर्ण अन्यथा अणु
-		util_prपूर्णांकaddr("inner.dest4", (व्योम *) &in_daddr4);
-		util_prपूर्णांकaddr("inner.source4", (व्योम *) &in_saddr4);
-	पूर्ण
+static void print_opts(void)
+{
+	if (cfg_l3_inner == PF_INET6) {
+		util_printaddr("inner.dest6", (void *) &in_daddr6);
+		util_printaddr("inner.source6", (void *) &in_saddr6);
+	} else {
+		util_printaddr("inner.dest4", (void *) &in_daddr4);
+		util_printaddr("inner.source4", (void *) &in_saddr4);
+	}
 
-	अगर (!cfg_l3_outer)
-		वापस;
+	if (!cfg_l3_outer)
+		return;
 
-	ख_लिखो(मानक_त्रुटि, "encap proto:   %u\n", cfg_encap_proto);
+	fprintf(stderr, "encap proto:   %u\n", cfg_encap_proto);
 
-	अगर (cfg_l3_outer == PF_INET6) अणु
-		util_prपूर्णांकaddr("outer.dest6", (व्योम *) &out_daddr6);
-		util_prपूर्णांकaddr("outer.source6", (व्योम *) &out_saddr6);
-	पूर्ण अन्यथा अणु
-		util_prपूर्णांकaddr("outer.dest4", (व्योम *) &out_daddr4);
-		util_prपूर्णांकaddr("outer.source4", (व्योम *) &out_saddr4);
-	पूर्ण
+	if (cfg_l3_outer == PF_INET6) {
+		util_printaddr("outer.dest6", (void *) &out_daddr6);
+		util_printaddr("outer.source6", (void *) &out_saddr6);
+	} else {
+		util_printaddr("outer.dest4", (void *) &out_daddr4);
+		util_printaddr("outer.source4", (void *) &out_saddr4);
+	}
 
-	अगर (!cfg_l3_extra)
-		वापस;
+	if (!cfg_l3_extra)
+		return;
 
-	अगर (cfg_l3_outer == PF_INET6) अणु
-		util_prपूर्णांकaddr("extra.dest6", (व्योम *) &extra_daddr6);
-		util_prपूर्णांकaddr("extra.source6", (व्योम *) &extra_saddr6);
-	पूर्ण अन्यथा अणु
-		util_prपूर्णांकaddr("extra.dest4", (व्योम *) &extra_daddr4);
-		util_prपूर्णांकaddr("extra.source4", (व्योम *) &extra_saddr4);
-	पूर्ण
+	if (cfg_l3_outer == PF_INET6) {
+		util_printaddr("extra.dest6", (void *) &extra_daddr6);
+		util_printaddr("extra.source6", (void *) &extra_saddr6);
+	} else {
+		util_printaddr("extra.dest4", (void *) &extra_daddr4);
+		util_printaddr("extra.source4", (void *) &extra_saddr4);
+	}
 
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
+int main(int argc, char **argv)
+{
 	parse_opts(argc, argv);
-	prपूर्णांक_opts();
-	वापस करो_मुख्य();
-पूर्ण
+	print_opts();
+	return do_main();
+}

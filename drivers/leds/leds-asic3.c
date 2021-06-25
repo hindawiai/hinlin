@@ -1,176 +1,175 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 2011 Paul Parsons <lost.distance@yahoo.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/leds.h>
+#include <linux/slab.h>
 
-#समावेश <linux/mfd/asic3.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/module.h>
+#include <linux/mfd/asic3.h>
+#include <linux/mfd/core.h>
+#include <linux/module.h>
 
 /*
- *	The HTC ASIC3 LED GPIOs are inमाला_दो, not outमाला_दो.
- *	Hence we turn the LEDs on/off via the TimeBase रेजिस्टर.
+ *	The HTC ASIC3 LED GPIOs are inputs, not outputs.
+ *	Hence we turn the LEDs on/off via the TimeBase register.
  */
 
 /*
- *	When TimeBase is 4 the घड़ी resolution is about 32Hz.
+ *	When TimeBase is 4 the clock resolution is about 32Hz.
  *	This driver supports hardware blinking with an on+off
- *	period from 62ms (2 घड़ीs) to 125s (4000 घड़ीs).
+ *	period from 62ms (2 clocks) to 125s (4000 clocks).
  */
-#घोषणा MS_TO_CLK(ms)	DIV_ROUND_CLOSEST(((ms)*1024), 32000)
-#घोषणा CLK_TO_MS(clk)	(((clk)*32000)/1024)
-#घोषणा MAX_CLK		4000            /* Fits पूर्णांकo 12-bit Time रेजिस्टरs */
-#घोषणा MAX_MS		CLK_TO_MS(MAX_CLK)
+#define MS_TO_CLK(ms)	DIV_ROUND_CLOSEST(((ms)*1024), 32000)
+#define CLK_TO_MS(clk)	(((clk)*32000)/1024)
+#define MAX_CLK		4000            /* Fits into 12-bit Time registers */
+#define MAX_MS		CLK_TO_MS(MAX_CLK)
 
-अटल स्थिर अचिन्हित पूर्णांक led_n_base[ASIC3_NUM_LEDS] = अणु
+static const unsigned int led_n_base[ASIC3_NUM_LEDS] = {
 	[0] = ASIC3_LED_0_Base,
 	[1] = ASIC3_LED_1_Base,
 	[2] = ASIC3_LED_2_Base,
-पूर्ण;
+};
 
-अटल व्योम brightness_set(काष्ठा led_classdev *cdev,
-	क्रमागत led_brightness value)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(cdev->dev->parent);
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(pdev);
-	काष्ठा asic3 *asic = dev_get_drvdata(pdev->dev.parent);
-	u32 समयbase;
-	अचिन्हित पूर्णांक base;
+static void brightness_set(struct led_classdev *cdev,
+	enum led_brightness value)
+{
+	struct platform_device *pdev = to_platform_device(cdev->dev->parent);
+	const struct mfd_cell *cell = mfd_get_cell(pdev);
+	struct asic3 *asic = dev_get_drvdata(pdev->dev.parent);
+	u32 timebase;
+	unsigned int base;
 
-	समयbase = (value == LED_OFF) ? 0 : (LED_EN|0x4);
+	timebase = (value == LED_OFF) ? 0 : (LED_EN|0x4);
 
 	base = led_n_base[cell->id];
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_PeriodTime), 32);
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_DutyTime), 32);
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_AutoStopCount), 0);
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_TimeBase), समयbase);
-पूर्ण
+	asic3_write_register(asic, (base + ASIC3_LED_PeriodTime), 32);
+	asic3_write_register(asic, (base + ASIC3_LED_DutyTime), 32);
+	asic3_write_register(asic, (base + ASIC3_LED_AutoStopCount), 0);
+	asic3_write_register(asic, (base + ASIC3_LED_TimeBase), timebase);
+}
 
-अटल पूर्णांक blink_set(काष्ठा led_classdev *cdev,
-	अचिन्हित दीर्घ *delay_on,
-	अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(cdev->dev->parent);
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(pdev);
-	काष्ठा asic3 *asic = dev_get_drvdata(pdev->dev.parent);
+static int blink_set(struct led_classdev *cdev,
+	unsigned long *delay_on,
+	unsigned long *delay_off)
+{
+	struct platform_device *pdev = to_platform_device(cdev->dev->parent);
+	const struct mfd_cell *cell = mfd_get_cell(pdev);
+	struct asic3 *asic = dev_get_drvdata(pdev->dev.parent);
 	u32 on;
 	u32 off;
-	अचिन्हित पूर्णांक base;
+	unsigned int base;
 
-	अगर (*delay_on > MAX_MS || *delay_off > MAX_MS)
-		वापस -EINVAL;
+	if (*delay_on > MAX_MS || *delay_off > MAX_MS)
+		return -EINVAL;
 
-	अगर (*delay_on == 0 && *delay_off == 0) अणु
-		/* If both are zero then a sensible शेष should be chosen */
+	if (*delay_on == 0 && *delay_off == 0) {
+		/* If both are zero then a sensible default should be chosen */
 		on = MS_TO_CLK(500);
 		off = MS_TO_CLK(500);
-	पूर्ण अन्यथा अणु
+	} else {
 		on = MS_TO_CLK(*delay_on);
 		off = MS_TO_CLK(*delay_off);
-		अगर ((on + off) > MAX_CLK)
-			वापस -EINVAL;
-	पूर्ण
+		if ((on + off) > MAX_CLK)
+			return -EINVAL;
+	}
 
 	base = led_n_base[cell->id];
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_PeriodTime), (on + off));
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_DutyTime), on);
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_AutoStopCount), 0);
-	asic3_ग_लिखो_रेजिस्टर(asic, (base + ASIC3_LED_TimeBase), (LED_EN|0x4));
+	asic3_write_register(asic, (base + ASIC3_LED_PeriodTime), (on + off));
+	asic3_write_register(asic, (base + ASIC3_LED_DutyTime), on);
+	asic3_write_register(asic, (base + ASIC3_LED_AutoStopCount), 0);
+	asic3_write_register(asic, (base + ASIC3_LED_TimeBase), (LED_EN|0x4));
 
 	*delay_on = CLK_TO_MS(on);
 	*delay_off = CLK_TO_MS(off);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक asic3_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा asic3_led *led = dev_get_platdata(&pdev->dev);
-	पूर्णांक ret;
+static int asic3_led_probe(struct platform_device *pdev)
+{
+	struct asic3_led *led = dev_get_platdata(&pdev->dev);
+	int ret;
 
 	ret = mfd_cell_enable(pdev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	led->cdev = devm_kzalloc(&pdev->dev, माप(काष्ठा led_classdev),
+	led->cdev = devm_kzalloc(&pdev->dev, sizeof(struct led_classdev),
 				GFP_KERNEL);
-	अगर (!led->cdev) अणु
+	if (!led->cdev) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	led->cdev->name = led->name;
 	led->cdev->flags = LED_CORE_SUSPENDRESUME;
 	led->cdev->brightness_set = brightness_set;
 	led->cdev->blink_set = blink_set;
-	led->cdev->शेष_trigger = led->शेष_trigger;
+	led->cdev->default_trigger = led->default_trigger;
 
-	ret = led_classdev_रेजिस्टर(&pdev->dev, led->cdev);
-	अगर (ret < 0)
-		जाओ out;
+	ret = led_classdev_register(&pdev->dev, led->cdev);
+	if (ret < 0)
+		goto out;
 
-	वापस 0;
+	return 0;
 
 out:
-	(व्योम) mfd_cell_disable(pdev);
-	वापस ret;
-पूर्ण
+	(void) mfd_cell_disable(pdev);
+	return ret;
+}
 
-अटल पूर्णांक asic3_led_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा asic3_led *led = dev_get_platdata(&pdev->dev);
+static int asic3_led_remove(struct platform_device *pdev)
+{
+	struct asic3_led *led = dev_get_platdata(&pdev->dev);
 
-	led_classdev_unरेजिस्टर(led->cdev);
+	led_classdev_unregister(led->cdev);
 
-	वापस mfd_cell_disable(pdev);
-पूर्ण
+	return mfd_cell_disable(pdev);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक asic3_led_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(pdev);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int asic3_led_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	const struct mfd_cell *cell = mfd_get_cell(pdev);
+	int ret;
 
 	ret = 0;
-	अगर (cell->suspend)
+	if (cell->suspend)
 		ret = (*cell->suspend)(pdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक asic3_led_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	स्थिर काष्ठा mfd_cell *cell = mfd_get_cell(pdev);
-	पूर्णांक ret;
+static int asic3_led_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	const struct mfd_cell *cell = mfd_get_cell(pdev);
+	int ret;
 
 	ret = 0;
-	अगर (cell->resume)
+	if (cell->resume)
 		ret = (*cell->resume)(pdev);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(asic3_led_pm_ops, asic3_led_suspend, asic3_led_resume);
+static SIMPLE_DEV_PM_OPS(asic3_led_pm_ops, asic3_led_suspend, asic3_led_resume);
 
-अटल काष्ठा platक्रमm_driver asic3_led_driver = अणु
+static struct platform_driver asic3_led_driver = {
 	.probe		= asic3_led_probe,
-	.हटाओ		= asic3_led_हटाओ,
-	.driver		= अणु
+	.remove		= asic3_led_remove,
+	.driver		= {
 		.name	= "leds-asic3",
 		.pm	= &asic3_led_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(asic3_led_driver);
+module_platform_driver(asic3_led_driver);
 
 MODULE_AUTHOR("Paul Parsons <lost.distance@yahoo.com>");
 MODULE_DESCRIPTION("HTC ASIC3 LED driver");

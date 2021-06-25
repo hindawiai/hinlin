@@ -1,293 +1,292 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_PARAVIRT_TYPES_H
-#घोषणा _ASM_X86_PARAVIRT_TYPES_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_PARAVIRT_TYPES_H
+#define _ASM_X86_PARAVIRT_TYPES_H
 
-/* Biपंचांगask of what can be clobbered: usually at least eax. */
-#घोषणा CLBR_EAX  (1 << 0)
-#घोषणा CLBR_ECX  (1 << 1)
-#घोषणा CLBR_EDX  (1 << 2)
-#घोषणा CLBR_EDI  (1 << 3)
+/* Bitmask of what can be clobbered: usually at least eax. */
+#define CLBR_EAX  (1 << 0)
+#define CLBR_ECX  (1 << 1)
+#define CLBR_EDX  (1 << 2)
+#define CLBR_EDI  (1 << 3)
 
-#अगर_घोषित CONFIG_X86_32
-/* CLBR_ANY should match all regs platक्रमm has. For i386, that's just it */
-#घोषणा CLBR_ANY  ((1 << 4) - 1)
+#ifdef CONFIG_X86_32
+/* CLBR_ANY should match all regs platform has. For i386, that's just it */
+#define CLBR_ANY  ((1 << 4) - 1)
 
-#घोषणा CLBR_ARG_REGS	(CLBR_EAX | CLBR_EDX | CLBR_ECX)
-#घोषणा CLBR_RET_REG	(CLBR_EAX | CLBR_EDX)
-#अन्यथा
-#घोषणा CLBR_RAX  CLBR_EAX
-#घोषणा CLBR_RCX  CLBR_ECX
-#घोषणा CLBR_RDX  CLBR_EDX
-#घोषणा CLBR_RDI  CLBR_EDI
-#घोषणा CLBR_RSI  (1 << 4)
-#घोषणा CLBR_R8   (1 << 5)
-#घोषणा CLBR_R9   (1 << 6)
-#घोषणा CLBR_R10  (1 << 7)
-#घोषणा CLBR_R11  (1 << 8)
+#define CLBR_ARG_REGS	(CLBR_EAX | CLBR_EDX | CLBR_ECX)
+#define CLBR_RET_REG	(CLBR_EAX | CLBR_EDX)
+#else
+#define CLBR_RAX  CLBR_EAX
+#define CLBR_RCX  CLBR_ECX
+#define CLBR_RDX  CLBR_EDX
+#define CLBR_RDI  CLBR_EDI
+#define CLBR_RSI  (1 << 4)
+#define CLBR_R8   (1 << 5)
+#define CLBR_R9   (1 << 6)
+#define CLBR_R10  (1 << 7)
+#define CLBR_R11  (1 << 8)
 
-#घोषणा CLBR_ANY  ((1 << 9) - 1)
+#define CLBR_ANY  ((1 << 9) - 1)
 
-#घोषणा CLBR_ARG_REGS	(CLBR_RDI | CLBR_RSI | CLBR_RDX | \
+#define CLBR_ARG_REGS	(CLBR_RDI | CLBR_RSI | CLBR_RDX | \
 			 CLBR_RCX | CLBR_R8 | CLBR_R9)
-#घोषणा CLBR_RET_REG	(CLBR_RAX)
+#define CLBR_RET_REG	(CLBR_RAX)
 
-#पूर्ण_अगर /* X86_64 */
+#endif /* X86_64 */
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <यंत्र/desc_defs.h>
-#समावेश <यंत्र/pgtable_types.h>
-#समावेश <यंत्र/nospec-branch.h>
+#include <asm/desc_defs.h>
+#include <asm/pgtable_types.h>
+#include <asm/nospec-branch.h>
 
-काष्ठा page;
-काष्ठा thपढ़ो_काष्ठा;
-काष्ठा desc_ptr;
-काष्ठा tss_काष्ठा;
-काष्ठा mm_काष्ठा;
-काष्ठा desc_काष्ठा;
-काष्ठा task_काष्ठा;
-काष्ठा cpumask;
-काष्ठा flush_tlb_info;
-काष्ठा mmu_gather;
-काष्ठा vm_area_काष्ठा;
+struct page;
+struct thread_struct;
+struct desc_ptr;
+struct tss_struct;
+struct mm_struct;
+struct desc_struct;
+struct task_struct;
+struct cpumask;
+struct flush_tlb_info;
+struct mmu_gather;
+struct vm_area_struct;
 
 /*
- * Wrapper type क्रम poपूर्णांकers to code which uses the non-standard
+ * Wrapper type for pointers to code which uses the non-standard
  * calling convention.  See PV_CALL_SAVE_REGS_THUNK below.
  */
-काष्ठा paravirt_callee_save अणु
-	व्योम *func;
-पूर्ण;
+struct paravirt_callee_save {
+	void *func;
+};
 
 /* general info */
-काष्ठा pv_info अणु
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-	u16 extra_user_64bit_cs;  /* __USER_CS अगर none */
-#पूर्ण_अगर
+struct pv_info {
+#ifdef CONFIG_PARAVIRT_XXL
+	u16 extra_user_64bit_cs;  /* __USER_CS if none */
+#endif
 
-	स्थिर अक्षर *name;
-पूर्ण;
+	const char *name;
+};
 
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-काष्ठा pv_lazy_ops अणु
-	/* Set deferred update mode, used क्रम batching operations. */
-	व्योम (*enter)(व्योम);
-	व्योम (*leave)(व्योम);
-	व्योम (*flush)(व्योम);
-पूर्ण __no_अक्रमomize_layout;
-#पूर्ण_अगर
+#ifdef CONFIG_PARAVIRT_XXL
+struct pv_lazy_ops {
+	/* Set deferred update mode, used for batching operations. */
+	void (*enter)(void);
+	void (*leave)(void);
+	void (*flush)(void);
+} __no_randomize_layout;
+#endif
 
-काष्ठा pv_cpu_ops अणु
-	/* hooks क्रम various privileged inकाष्ठाions */
-	व्योम (*io_delay)(व्योम);
+struct pv_cpu_ops {
+	/* hooks for various privileged instructions */
+	void (*io_delay)(void);
 
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-	अचिन्हित दीर्घ (*get_debugreg)(पूर्णांक regno);
-	व्योम (*set_debugreg)(पूर्णांक regno, अचिन्हित दीर्घ value);
+#ifdef CONFIG_PARAVIRT_XXL
+	unsigned long (*get_debugreg)(int regno);
+	void (*set_debugreg)(int regno, unsigned long value);
 
-	अचिन्हित दीर्घ (*पढ़ो_cr0)(व्योम);
-	व्योम (*ग_लिखो_cr0)(अचिन्हित दीर्घ);
+	unsigned long (*read_cr0)(void);
+	void (*write_cr0)(unsigned long);
 
-	व्योम (*ग_लिखो_cr4)(अचिन्हित दीर्घ);
+	void (*write_cr4)(unsigned long);
 
 	/* Segment descriptor handling */
-	व्योम (*load_tr_desc)(व्योम);
-	व्योम (*load_gdt)(स्थिर काष्ठा desc_ptr *);
-	व्योम (*load_idt)(स्थिर काष्ठा desc_ptr *);
-	व्योम (*set_ldt)(स्थिर व्योम *desc, अचिन्हित entries);
-	अचिन्हित दीर्घ (*store_tr)(व्योम);
-	व्योम (*load_tls)(काष्ठा thपढ़ो_काष्ठा *t, अचिन्हित पूर्णांक cpu);
-	व्योम (*load_gs_index)(अचिन्हित पूर्णांक idx);
-	व्योम (*ग_लिखो_ldt_entry)(काष्ठा desc_काष्ठा *ldt, पूर्णांक entrynum,
-				स्थिर व्योम *desc);
-	व्योम (*ग_लिखो_gdt_entry)(काष्ठा desc_काष्ठा *,
-				पूर्णांक entrynum, स्थिर व्योम *desc, पूर्णांक size);
-	व्योम (*ग_लिखो_idt_entry)(gate_desc *,
-				पूर्णांक entrynum, स्थिर gate_desc *gate);
-	व्योम (*alloc_ldt)(काष्ठा desc_काष्ठा *ldt, अचिन्हित entries);
-	व्योम (*मुक्त_ldt)(काष्ठा desc_काष्ठा *ldt, अचिन्हित entries);
+	void (*load_tr_desc)(void);
+	void (*load_gdt)(const struct desc_ptr *);
+	void (*load_idt)(const struct desc_ptr *);
+	void (*set_ldt)(const void *desc, unsigned entries);
+	unsigned long (*store_tr)(void);
+	void (*load_tls)(struct thread_struct *t, unsigned int cpu);
+	void (*load_gs_index)(unsigned int idx);
+	void (*write_ldt_entry)(struct desc_struct *ldt, int entrynum,
+				const void *desc);
+	void (*write_gdt_entry)(struct desc_struct *,
+				int entrynum, const void *desc, int size);
+	void (*write_idt_entry)(gate_desc *,
+				int entrynum, const gate_desc *gate);
+	void (*alloc_ldt)(struct desc_struct *ldt, unsigned entries);
+	void (*free_ldt)(struct desc_struct *ldt, unsigned entries);
 
-	व्योम (*load_sp0)(अचिन्हित दीर्घ sp0);
+	void (*load_sp0)(unsigned long sp0);
 
-#अगर_घोषित CONFIG_X86_IOPL_IOPERM
-	व्योम (*invalidate_io_biपंचांगap)(व्योम);
-	व्योम (*update_io_biपंचांगap)(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_X86_IOPL_IOPERM
+	void (*invalidate_io_bitmap)(void);
+	void (*update_io_bitmap)(void);
+#endif
 
-	व्योम (*wbinvd)(व्योम);
+	void (*wbinvd)(void);
 
 	/* cpuid emulation, mostly so that caps bits can be disabled */
-	व्योम (*cpuid)(अचिन्हित पूर्णांक *eax, अचिन्हित पूर्णांक *ebx,
-		      अचिन्हित पूर्णांक *ecx, अचिन्हित पूर्णांक *edx);
+	void (*cpuid)(unsigned int *eax, unsigned int *ebx,
+		      unsigned int *ecx, unsigned int *edx);
 
 	/* Unsafe MSR operations.  These will warn or panic on failure. */
-	u64 (*पढ़ो_msr)(अचिन्हित पूर्णांक msr);
-	व्योम (*ग_लिखो_msr)(अचिन्हित पूर्णांक msr, अचिन्हित low, अचिन्हित high);
+	u64 (*read_msr)(unsigned int msr);
+	void (*write_msr)(unsigned int msr, unsigned low, unsigned high);
 
 	/*
 	 * Safe MSR operations.
-	 * पढ़ो sets err to 0 or -EIO.  ग_लिखो वापसs 0 or -EIO.
+	 * read sets err to 0 or -EIO.  write returns 0 or -EIO.
 	 */
-	u64 (*पढ़ो_msr_safe)(अचिन्हित पूर्णांक msr, पूर्णांक *err);
-	पूर्णांक (*ग_लिखो_msr_safe)(अचिन्हित पूर्णांक msr, अचिन्हित low, अचिन्हित high);
+	u64 (*read_msr_safe)(unsigned int msr, int *err);
+	int (*write_msr_safe)(unsigned int msr, unsigned low, unsigned high);
 
-	u64 (*पढ़ो_pmc)(पूर्णांक counter);
+	u64 (*read_pmc)(int counter);
 
-	व्योम (*start_context_चयन)(काष्ठा task_काष्ठा *prev);
-	व्योम (*end_context_चयन)(काष्ठा task_काष्ठा *next);
-#पूर्ण_अगर
-पूर्ण __no_अक्रमomize_layout;
+	void (*start_context_switch)(struct task_struct *prev);
+	void (*end_context_switch)(struct task_struct *next);
+#endif
+} __no_randomize_layout;
 
-काष्ठा pv_irq_ops अणु
-#अगर_घोषित CONFIG_PARAVIRT_XXL
+struct pv_irq_ops {
+#ifdef CONFIG_PARAVIRT_XXL
 	/*
-	 * Get/set पूर्णांकerrupt state.  save_fl is expected to use X86_EFLAGS_IF;
-	 * all other bits वापसed from save_fl are undefined.
+	 * Get/set interrupt state.  save_fl is expected to use X86_EFLAGS_IF;
+	 * all other bits returned from save_fl are undefined.
 	 *
 	 * NOTE: These functions callers expect the callee to preserve
-	 * more रेजिस्टरs than the standard C calling convention.
+	 * more registers than the standard C calling convention.
 	 */
-	काष्ठा paravirt_callee_save save_fl;
-	काष्ठा paravirt_callee_save irq_disable;
-	काष्ठा paravirt_callee_save irq_enable;
+	struct paravirt_callee_save save_fl;
+	struct paravirt_callee_save irq_disable;
+	struct paravirt_callee_save irq_enable;
 
-	व्योम (*safe_halt)(व्योम);
-	व्योम (*halt)(व्योम);
-#पूर्ण_अगर
-पूर्ण __no_अक्रमomize_layout;
+	void (*safe_halt)(void);
+	void (*halt)(void);
+#endif
+} __no_randomize_layout;
 
-काष्ठा pv_mmu_ops अणु
+struct pv_mmu_ops {
 	/* TLB operations */
-	व्योम (*flush_tlb_user)(व्योम);
-	व्योम (*flush_tlb_kernel)(व्योम);
-	व्योम (*flush_tlb_one_user)(अचिन्हित दीर्घ addr);
-	व्योम (*flush_tlb_multi)(स्थिर काष्ठा cpumask *cpus,
-				स्थिर काष्ठा flush_tlb_info *info);
+	void (*flush_tlb_user)(void);
+	void (*flush_tlb_kernel)(void);
+	void (*flush_tlb_one_user)(unsigned long addr);
+	void (*flush_tlb_multi)(const struct cpumask *cpus,
+				const struct flush_tlb_info *info);
 
-	व्योम (*tlb_हटाओ_table)(काष्ठा mmu_gather *tlb, व्योम *table);
+	void (*tlb_remove_table)(struct mmu_gather *tlb, void *table);
 
-	/* Hook क्रम पूर्णांकercepting the deकाष्ठाion of an mm_काष्ठा. */
-	व्योम (*निकास_mmap)(काष्ठा mm_काष्ठा *mm);
+	/* Hook for intercepting the destruction of an mm_struct. */
+	void (*exit_mmap)(struct mm_struct *mm);
 
-#अगर_घोषित CONFIG_PARAVIRT_XXL
-	काष्ठा paravirt_callee_save पढ़ो_cr2;
-	व्योम (*ग_लिखो_cr2)(अचिन्हित दीर्घ);
+#ifdef CONFIG_PARAVIRT_XXL
+	struct paravirt_callee_save read_cr2;
+	void (*write_cr2)(unsigned long);
 
-	अचिन्हित दीर्घ (*पढ़ो_cr3)(व्योम);
-	व्योम (*ग_लिखो_cr3)(अचिन्हित दीर्घ);
+	unsigned long (*read_cr3)(void);
+	void (*write_cr3)(unsigned long);
 
-	/* Hooks क्रम पूर्णांकercepting the creation/use of an mm_काष्ठा. */
-	व्योम (*activate_mm)(काष्ठा mm_काष्ठा *prev,
-			    काष्ठा mm_काष्ठा *next);
-	व्योम (*dup_mmap)(काष्ठा mm_काष्ठा *oldmm,
-			 काष्ठा mm_काष्ठा *mm);
+	/* Hooks for intercepting the creation/use of an mm_struct. */
+	void (*activate_mm)(struct mm_struct *prev,
+			    struct mm_struct *next);
+	void (*dup_mmap)(struct mm_struct *oldmm,
+			 struct mm_struct *mm);
 
-	/* Hooks क्रम allocating and मुक्तing a pagetable top-level */
-	पूर्णांक  (*pgd_alloc)(काष्ठा mm_काष्ठा *mm);
-	व्योम (*pgd_मुक्त)(काष्ठा mm_काष्ठा *mm, pgd_t *pgd);
+	/* Hooks for allocating and freeing a pagetable top-level */
+	int  (*pgd_alloc)(struct mm_struct *mm);
+	void (*pgd_free)(struct mm_struct *mm, pgd_t *pgd);
 
 	/*
-	 * Hooks क्रम allocating/releasing pagetable pages when they're
+	 * Hooks for allocating/releasing pagetable pages when they're
 	 * attached to a pagetable
 	 */
-	व्योम (*alloc_pte)(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pfn);
-	व्योम (*alloc_pmd)(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pfn);
-	व्योम (*alloc_pud)(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pfn);
-	व्योम (*alloc_p4d)(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ pfn);
-	व्योम (*release_pte)(अचिन्हित दीर्घ pfn);
-	व्योम (*release_pmd)(अचिन्हित दीर्घ pfn);
-	व्योम (*release_pud)(अचिन्हित दीर्घ pfn);
-	व्योम (*release_p4d)(अचिन्हित दीर्घ pfn);
+	void (*alloc_pte)(struct mm_struct *mm, unsigned long pfn);
+	void (*alloc_pmd)(struct mm_struct *mm, unsigned long pfn);
+	void (*alloc_pud)(struct mm_struct *mm, unsigned long pfn);
+	void (*alloc_p4d)(struct mm_struct *mm, unsigned long pfn);
+	void (*release_pte)(unsigned long pfn);
+	void (*release_pmd)(unsigned long pfn);
+	void (*release_pud)(unsigned long pfn);
+	void (*release_p4d)(unsigned long pfn);
 
 	/* Pagetable manipulation functions */
-	व्योम (*set_pte)(pte_t *ptep, pte_t pteval);
-	व्योम (*set_pmd)(pmd_t *pmdp, pmd_t pmdval);
+	void (*set_pte)(pte_t *ptep, pte_t pteval);
+	void (*set_pmd)(pmd_t *pmdp, pmd_t pmdval);
 
-	pte_t (*ptep_modअगरy_prot_start)(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+	pte_t (*ptep_modify_prot_start)(struct vm_area_struct *vma, unsigned long addr,
 					pte_t *ptep);
-	व्योम (*ptep_modअगरy_prot_commit)(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
+	void (*ptep_modify_prot_commit)(struct vm_area_struct *vma, unsigned long addr,
 					pte_t *ptep, pte_t pte);
 
-	काष्ठा paravirt_callee_save pte_val;
-	काष्ठा paravirt_callee_save make_pte;
+	struct paravirt_callee_save pte_val;
+	struct paravirt_callee_save make_pte;
 
-	काष्ठा paravirt_callee_save pgd_val;
-	काष्ठा paravirt_callee_save make_pgd;
+	struct paravirt_callee_save pgd_val;
+	struct paravirt_callee_save make_pgd;
 
-	व्योम (*set_pud)(pud_t *pudp, pud_t pudval);
+	void (*set_pud)(pud_t *pudp, pud_t pudval);
 
-	काष्ठा paravirt_callee_save pmd_val;
-	काष्ठा paravirt_callee_save make_pmd;
+	struct paravirt_callee_save pmd_val;
+	struct paravirt_callee_save make_pmd;
 
-	काष्ठा paravirt_callee_save pud_val;
-	काष्ठा paravirt_callee_save make_pud;
+	struct paravirt_callee_save pud_val;
+	struct paravirt_callee_save make_pud;
 
-	व्योम (*set_p4d)(p4d_t *p4dp, p4d_t p4dval);
+	void (*set_p4d)(p4d_t *p4dp, p4d_t p4dval);
 
-#अगर CONFIG_PGTABLE_LEVELS >= 5
-	काष्ठा paravirt_callee_save p4d_val;
-	काष्ठा paravirt_callee_save make_p4d;
+#if CONFIG_PGTABLE_LEVELS >= 5
+	struct paravirt_callee_save p4d_val;
+	struct paravirt_callee_save make_p4d;
 
-	व्योम (*set_pgd)(pgd_t *pgdp, pgd_t pgdval);
-#पूर्ण_अगर	/* CONFIG_PGTABLE_LEVELS >= 5 */
+	void (*set_pgd)(pgd_t *pgdp, pgd_t pgdval);
+#endif	/* CONFIG_PGTABLE_LEVELS >= 5 */
 
-	काष्ठा pv_lazy_ops lazy_mode;
+	struct pv_lazy_ops lazy_mode;
 
-	/* करोm0 ops */
+	/* dom0 ops */
 
-	/* Someबार the physical address is a pfn, and someबार its
+	/* Sometimes the physical address is a pfn, and sometimes its
 	   an mfn.  We can tell which is which from the index. */
-	व्योम (*set_fixmap)(अचिन्हित /* क्रमागत fixed_addresses */ idx,
+	void (*set_fixmap)(unsigned /* enum fixed_addresses */ idx,
 			   phys_addr_t phys, pgprot_t flags);
-#पूर्ण_अगर
-पूर्ण __no_अक्रमomize_layout;
+#endif
+} __no_randomize_layout;
 
-काष्ठा arch_spinlock;
-#अगर_घोषित CONFIG_SMP
-#समावेश <यंत्र/spinlock_types.h>
-#पूर्ण_अगर
+struct arch_spinlock;
+#ifdef CONFIG_SMP
+#include <asm/spinlock_types.h>
+#endif
 
-काष्ठा qspinlock;
+struct qspinlock;
 
-काष्ठा pv_lock_ops अणु
-	व्योम (*queued_spin_lock_slowpath)(काष्ठा qspinlock *lock, u32 val);
-	काष्ठा paravirt_callee_save queued_spin_unlock;
+struct pv_lock_ops {
+	void (*queued_spin_lock_slowpath)(struct qspinlock *lock, u32 val);
+	struct paravirt_callee_save queued_spin_unlock;
 
-	व्योम (*रुको)(u8 *ptr, u8 val);
-	व्योम (*kick)(पूर्णांक cpu);
+	void (*wait)(u8 *ptr, u8 val);
+	void (*kick)(int cpu);
 
-	काष्ठा paravirt_callee_save vcpu_is_preempted;
-पूर्ण __no_अक्रमomize_layout;
+	struct paravirt_callee_save vcpu_is_preempted;
+} __no_randomize_layout;
 
-/* This contains all the paravirt काष्ठाures: we get a convenient
- * number क्रम each function using the offset which we use to indicate
+/* This contains all the paravirt structures: we get a convenient
+ * number for each function using the offset which we use to indicate
  * what to patch. */
-काष्ठा paravirt_patch_ढाँचा अणु
-	काष्ठा pv_cpu_ops	cpu;
-	काष्ठा pv_irq_ops	irq;
-	काष्ठा pv_mmu_ops	mmu;
-	काष्ठा pv_lock_ops	lock;
-पूर्ण __no_अक्रमomize_layout;
+struct paravirt_patch_template {
+	struct pv_cpu_ops	cpu;
+	struct pv_irq_ops	irq;
+	struct pv_mmu_ops	mmu;
+	struct pv_lock_ops	lock;
+} __no_randomize_layout;
 
-बाह्य काष्ठा pv_info pv_info;
-बाह्य काष्ठा paravirt_patch_ढाँचा pv_ops;
-बाह्य व्योम (*paravirt_iret)(व्योम);
+extern struct pv_info pv_info;
+extern struct paravirt_patch_template pv_ops;
+extern void (*paravirt_iret)(void);
 
-#घोषणा PARAVIRT_PATCH(x)					\
-	(दुरत्व(काष्ठा paravirt_patch_ढाँचा, x) / माप(व्योम *))
+#define PARAVIRT_PATCH(x)					\
+	(offsetof(struct paravirt_patch_template, x) / sizeof(void *))
 
-#घोषणा paravirt_type(op)				\
-	[paravirt_typक्रमागत] "i" (PARAVIRT_PATCH(op)),	\
+#define paravirt_type(op)				\
+	[paravirt_typenum] "i" (PARAVIRT_PATCH(op)),	\
 	[paravirt_opptr] "i" (&(pv_ops.op))
-#घोषणा paravirt_clobber(clobber)		\
+#define paravirt_clobber(clobber)		\
 	[paravirt_clobber] "i" (clobber)
 
 /*
  * Generate some code, and mark it as patchable by the
- * apply_paravirt() alternate inकाष्ठाion patcher.
+ * apply_paravirt() alternate instruction patcher.
  */
-#घोषणा _paravirt_alt(insn_string, type, clobber)	\
+#define _paravirt_alt(insn_string, type, clobber)	\
 	"771:\n\t" insn_string "\n" "772:\n"		\
 	".pushsection .parainstructions,\"a\"\n"	\
 	_ASM_ALIGN "\n"					\
@@ -297,170 +296,170 @@
 	"  .short " clobber "\n"			\
 	".popsection\n"
 
-/* Generate patchable code, with the शेष यंत्र parameters. */
-#घोषणा paravirt_alt(insn_string)					\
+/* Generate patchable code, with the default asm parameters. */
+#define paravirt_alt(insn_string)					\
 	_paravirt_alt(insn_string, "%c[paravirt_typenum]", "%c[paravirt_clobber]")
 
-/* Simple inकाष्ठाion patching code. */
-#घोषणा NATIVE_LABEL(a,x,b) "\n\t.globl " a #x "_" #b "\n" a #x "_" #b ":\n\t"
+/* Simple instruction patching code. */
+#define NATIVE_LABEL(a,x,b) "\n\t.globl " a #x "_" #b "\n" a #x "_" #b ":\n\t"
 
-अचिन्हित पूर्णांक paravirt_patch(u8 type, व्योम *insn_buff, अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक len);
+unsigned int paravirt_patch(u8 type, void *insn_buff, unsigned long addr, unsigned int len);
 
-पूर्णांक paravirt_disable_iospace(व्योम);
+int paravirt_disable_iospace(void);
 
 /*
  * This generates an indirect call based on the operation type number.
  * The type number, computed in PARAVIRT_PATCH, is derived from the
- * offset पूर्णांकo the paravirt_patch_ढाँचा काष्ठाure, and can thereक्रमe be
- * मुक्तly converted back पूर्णांकo a काष्ठाure offset.
+ * offset into the paravirt_patch_template structure, and can therefore be
+ * freely converted back into a structure offset.
  */
-#घोषणा PARAVIRT_CALL					\
+#define PARAVIRT_CALL					\
 	ANNOTATE_RETPOLINE_SAFE				\
 	"call *%c[paravirt_opptr];"
 
 /*
- * These macros are पूर्णांकended to wrap calls through one of the paravirt
- * ops काष्ठाs, so that they can be later identअगरied and patched at
- * runसमय.
+ * These macros are intended to wrap calls through one of the paravirt
+ * ops structs, so that they can be later identified and patched at
+ * runtime.
  *
  * Normally, a call to a pv_op function is a simple indirect call:
- * (pv_op_काष्ठा.operations)(args...).
+ * (pv_op_struct.operations)(args...).
  *
- * Unक्रमtunately, this is a relatively slow operation क्रम modern CPUs,
+ * Unfortunately, this is a relatively slow operation for modern CPUs,
  * because it cannot necessarily determine what the destination
- * address is.  In this हाल, the address is a runसमय स्थिरant, so at
+ * address is.  In this case, the address is a runtime constant, so at
  * the very least we can patch the call to e a simple direct call, or
- * ideally, patch an अंतरभूत implementation पूर्णांकo the callsite.  (Direct
- * calls are essentially मुक्त, because the call and वापस addresses
+ * ideally, patch an inline implementation into the callsite.  (Direct
+ * calls are essentially free, because the call and return addresses
  * are completely predictable.)
  *
  * For i386, these macros rely on the standard gcc "regparm(3)" calling
  * convention, in which the first three arguments are placed in %eax,
- * %edx, %ecx (in that order), and the reमुख्यing arguments are placed
- * on the stack.  All caller-save रेजिस्टरs (eax,edx,ecx) are expected
- * to be modअगरied (either clobbered or used क्रम वापस values).
- * X86_64, on the other hand, alपढ़ोy specअगरies a रेजिस्टर-based calling
- * conventions, वापसing at %rax, with parameters going on %rdi, %rsi,
- * %rdx, and %rcx. Note that क्रम this reason, x86_64 करोes not need any
- * special handling क्रम dealing with 4 arguments, unlike i386.
- * However, x86_64 also have to clobber all caller saved रेजिस्टरs, which
- * unक्रमtunately, are quite a bit (r8 - r11)
+ * %edx, %ecx (in that order), and the remaining arguments are placed
+ * on the stack.  All caller-save registers (eax,edx,ecx) are expected
+ * to be modified (either clobbered or used for return values).
+ * X86_64, on the other hand, already specifies a register-based calling
+ * conventions, returning at %rax, with parameters going on %rdi, %rsi,
+ * %rdx, and %rcx. Note that for this reason, x86_64 does not need any
+ * special handling for dealing with 4 arguments, unlike i386.
+ * However, x86_64 also have to clobber all caller saved registers, which
+ * unfortunately, are quite a bit (r8 - r11)
  *
- * The call inकाष्ठाion itself is marked by placing its start address
- * and size पूर्णांकo the .parainकाष्ठाions section, so that
- * apply_paravirt() in arch/i386/kernel/alternative.c can करो the
+ * The call instruction itself is marked by placing its start address
+ * and size into the .parainstructions section, so that
+ * apply_paravirt() in arch/i386/kernel/alternative.c can do the
  * appropriate patching under the control of the backend pv_init_ops
  * implementation.
  *
- * Unक्रमtunately there's no way to get gcc to generate the args setup
- * क्रम the call, and then allow the call itself to be generated by an
- * अंतरभूत यंत्र.  Because of this, we must करो the complete arg setup and
- * वापस value handling from within these macros.  This is fairly
+ * Unfortunately there's no way to get gcc to generate the args setup
+ * for the call, and then allow the call itself to be generated by an
+ * inline asm.  Because of this, we must do the complete arg setup and
+ * return value handling from within these macros.  This is fairly
  * cumbersome.
  *
- * There are 5 sets of PVOP_* macros क्रम dealing with 0-4 arguments.
+ * There are 5 sets of PVOP_* macros for dealing with 0-4 arguments.
  * It could be extended to more arguments, but there would be little
  * to be gained from that.  For each number of arguments, there are
- * the two VCALL and CALL variants क्रम व्योम and non-व्योम functions.
+ * the two VCALL and CALL variants for void and non-void functions.
  *
- * When there is a वापस value, the invoker of the macro must specअगरy
- * the वापस type.  The macro then uses माप() on that type to
- * determine whether its a 32 or 64 bit value, and places the वापस
- * in the right रेजिस्टर(s) (just %eax क्रम 32-bit, and %edx:%eax क्रम
- * 64-bit). For x86_64 machines, it just वापसs at %rax regardless of
- * the वापस value size.
+ * When there is a return value, the invoker of the macro must specify
+ * the return type.  The macro then uses sizeof() on that type to
+ * determine whether its a 32 or 64 bit value, and places the return
+ * in the right register(s) (just %eax for 32-bit, and %edx:%eax for
+ * 64-bit). For x86_64 machines, it just returns at %rax regardless of
+ * the return value size.
  *
  * 64-bit arguments are passed as a pair of adjacent 32-bit arguments
  * i386 also passes 64-bit arguments as a pair of adjacent 32-bit arguments
  * in low,high order
  *
- * Small काष्ठाures are passed and वापसed in रेजिस्टरs.  The macro
+ * Small structures are passed and returned in registers.  The macro
  * calling convention can't directly deal with this, so the wrapper
- * functions must करो this.
+ * functions must do this.
  *
  * These PVOP_* macros are only defined within this header.  This
- * means that all uses must be wrapped in अंतरभूत functions.  This also
+ * means that all uses must be wrapped in inline functions.  This also
  * makes sure the incoming and outgoing types are always correct.
  */
-#अगर_घोषित CONFIG_X86_32
-#घोषणा PVOP_CALL_ARGS							\
-	अचिन्हित दीर्घ __eax = __eax, __edx = __edx, __ecx = __ecx;
+#ifdef CONFIG_X86_32
+#define PVOP_CALL_ARGS							\
+	unsigned long __eax = __eax, __edx = __edx, __ecx = __ecx;
 
-#घोषणा PVOP_CALL_ARG1(x)		"a" ((अचिन्हित दीर्घ)(x))
-#घोषणा PVOP_CALL_ARG2(x)		"d" ((अचिन्हित दीर्घ)(x))
-#घोषणा PVOP_CALL_ARG3(x)		"c" ((अचिन्हित दीर्घ)(x))
+#define PVOP_CALL_ARG1(x)		"a" ((unsigned long)(x))
+#define PVOP_CALL_ARG2(x)		"d" ((unsigned long)(x))
+#define PVOP_CALL_ARG3(x)		"c" ((unsigned long)(x))
 
-#घोषणा PVOP_VCALL_CLOBBERS		"=a" (__eax), "=d" (__edx),	\
+#define PVOP_VCALL_CLOBBERS		"=a" (__eax), "=d" (__edx),	\
 					"=c" (__ecx)
-#घोषणा PVOP_CALL_CLOBBERS		PVOP_VCALL_CLOBBERS
+#define PVOP_CALL_CLOBBERS		PVOP_VCALL_CLOBBERS
 
-#घोषणा PVOP_VCALLEE_CLOBBERS		"=a" (__eax), "=d" (__edx)
-#घोषणा PVOP_CALLEE_CLOBBERS		PVOP_VCALLEE_CLOBBERS
+#define PVOP_VCALLEE_CLOBBERS		"=a" (__eax), "=d" (__edx)
+#define PVOP_CALLEE_CLOBBERS		PVOP_VCALLEE_CLOBBERS
 
-#घोषणा EXTRA_CLOBBERS
-#घोषणा VEXTRA_CLOBBERS
-#अन्यथा  /* CONFIG_X86_64 */
-/* [re]ax isn't an arg, but the वापस val */
-#घोषणा PVOP_CALL_ARGS						\
-	अचिन्हित दीर्घ __edi = __edi, __esi = __esi,		\
+#define EXTRA_CLOBBERS
+#define VEXTRA_CLOBBERS
+#else  /* CONFIG_X86_64 */
+/* [re]ax isn't an arg, but the return val */
+#define PVOP_CALL_ARGS						\
+	unsigned long __edi = __edi, __esi = __esi,		\
 		__edx = __edx, __ecx = __ecx, __eax = __eax;
 
-#घोषणा PVOP_CALL_ARG1(x)		"D" ((अचिन्हित दीर्घ)(x))
-#घोषणा PVOP_CALL_ARG2(x)		"S" ((अचिन्हित दीर्घ)(x))
-#घोषणा PVOP_CALL_ARG3(x)		"d" ((अचिन्हित दीर्घ)(x))
-#घोषणा PVOP_CALL_ARG4(x)		"c" ((अचिन्हित दीर्घ)(x))
+#define PVOP_CALL_ARG1(x)		"D" ((unsigned long)(x))
+#define PVOP_CALL_ARG2(x)		"S" ((unsigned long)(x))
+#define PVOP_CALL_ARG3(x)		"d" ((unsigned long)(x))
+#define PVOP_CALL_ARG4(x)		"c" ((unsigned long)(x))
 
-#घोषणा PVOP_VCALL_CLOBBERS	"=D" (__edi),				\
+#define PVOP_VCALL_CLOBBERS	"=D" (__edi),				\
 				"=S" (__esi), "=d" (__edx),		\
 				"=c" (__ecx)
-#घोषणा PVOP_CALL_CLOBBERS	PVOP_VCALL_CLOBBERS, "=a" (__eax)
+#define PVOP_CALL_CLOBBERS	PVOP_VCALL_CLOBBERS, "=a" (__eax)
 
-/* व्योम functions are still allowed [re]ax क्रम scratch */
-#घोषणा PVOP_VCALLEE_CLOBBERS	"=a" (__eax)
-#घोषणा PVOP_CALLEE_CLOBBERS	PVOP_VCALLEE_CLOBBERS
+/* void functions are still allowed [re]ax for scratch */
+#define PVOP_VCALLEE_CLOBBERS	"=a" (__eax)
+#define PVOP_CALLEE_CLOBBERS	PVOP_VCALLEE_CLOBBERS
 
-#घोषणा EXTRA_CLOBBERS	 , "r8", "r9", "r10", "r11"
-#घोषणा VEXTRA_CLOBBERS	 , "rax", "r8", "r9", "r10", "r11"
-#पूर्ण_अगर	/* CONFIG_X86_32 */
+#define EXTRA_CLOBBERS	 , "r8", "r9", "r10", "r11"
+#define VEXTRA_CLOBBERS	 , "rax", "r8", "r9", "r10", "r11"
+#endif	/* CONFIG_X86_32 */
 
-#अगर_घोषित CONFIG_PARAVIRT_DEBUG
-#घोषणा PVOP_TEST_शून्य(op)	BUG_ON(pv_ops.op == शून्य)
-#अन्यथा
-#घोषणा PVOP_TEST_शून्य(op)	((व्योम)pv_ops.op)
-#पूर्ण_अगर
+#ifdef CONFIG_PARAVIRT_DEBUG
+#define PVOP_TEST_NULL(op)	BUG_ON(pv_ops.op == NULL)
+#else
+#define PVOP_TEST_NULL(op)	((void)pv_ops.op)
+#endif
 
-#घोषणा PVOP_RETVAL(rettype)						\
-	(अणु	अचिन्हित दीर्घ __mask = ~0UL;				\
-		BUILD_BUG_ON(माप(rettype) > माप(अचिन्हित दीर्घ));	\
-		चयन (माप(rettype)) अणु				\
-		हाल 1: __mask =       0xffUL; अवरोध;			\
-		हाल 2: __mask =     0xffffUL; अवरोध;			\
-		हाल 4: __mask = 0xffffffffUL; अवरोध;			\
-		शेष: अवरोध;						\
-		पूर्ण							\
+#define PVOP_RETVAL(rettype)						\
+	({	unsigned long __mask = ~0UL;				\
+		BUILD_BUG_ON(sizeof(rettype) > sizeof(unsigned long));	\
+		switch (sizeof(rettype)) {				\
+		case 1: __mask =       0xffUL; break;			\
+		case 2: __mask =     0xffffUL; break;			\
+		case 4: __mask = 0xffffffffUL; break;			\
+		default: break;						\
+		}							\
 		__mask & __eax;						\
-	पूर्ण)
+	})
 
 
-#घोषणा ____PVOP_CALL(ret, op, clbr, call_clbr, extra_clbr, ...)	\
-	(अणु								\
+#define ____PVOP_CALL(ret, op, clbr, call_clbr, extra_clbr, ...)	\
+	({								\
 		PVOP_CALL_ARGS;						\
-		PVOP_TEST_शून्य(op);					\
-		यंत्र अस्थिर(paravirt_alt(PARAVIRT_CALL)		\
+		PVOP_TEST_NULL(op);					\
+		asm volatile(paravirt_alt(PARAVIRT_CALL)		\
 			     : call_clbr, ASM_CALL_CONSTRAINT		\
 			     : paravirt_type(op),			\
 			       paravirt_clobber(clbr),			\
 			       ##__VA_ARGS__				\
 			     : "memory", "cc" extra_clbr);		\
 		ret;							\
-	पूर्ण)
+	})
 
-#घोषणा ____PVOP_ALT_CALL(ret, op, alt, cond, clbr, call_clbr,		\
+#define ____PVOP_ALT_CALL(ret, op, alt, cond, clbr, call_clbr,		\
 			  extra_clbr, ...)				\
-	(अणु								\
+	({								\
 		PVOP_CALL_ARGS;						\
-		PVOP_TEST_शून्य(op);					\
-		यंत्र अस्थिर(ALTERNATIVE(paravirt_alt(PARAVIRT_CALL),	\
+		PVOP_TEST_NULL(op);					\
+		asm volatile(ALTERNATIVE(paravirt_alt(PARAVIRT_CALL),	\
 					 alt, cond)			\
 			     : call_clbr, ASM_CALL_CONSTRAINT		\
 			     : paravirt_type(op),			\
@@ -468,130 +467,130 @@
 			       ##__VA_ARGS__				\
 			     : "memory", "cc" extra_clbr);		\
 		ret;							\
-	पूर्ण)
+	})
 
-#घोषणा __PVOP_CALL(rettype, op, ...)					\
+#define __PVOP_CALL(rettype, op, ...)					\
 	____PVOP_CALL(PVOP_RETVAL(rettype), op, CLBR_ANY,		\
 		      PVOP_CALL_CLOBBERS, EXTRA_CLOBBERS, ##__VA_ARGS__)
 
-#घोषणा __PVOP_ALT_CALL(rettype, op, alt, cond, ...)			\
+#define __PVOP_ALT_CALL(rettype, op, alt, cond, ...)			\
 	____PVOP_ALT_CALL(PVOP_RETVAL(rettype), op, alt, cond, CLBR_ANY,\
 			  PVOP_CALL_CLOBBERS, EXTRA_CLOBBERS,		\
 			  ##__VA_ARGS__)
 
-#घोषणा __PVOP_CALLEESAVE(rettype, op, ...)				\
+#define __PVOP_CALLEESAVE(rettype, op, ...)				\
 	____PVOP_CALL(PVOP_RETVAL(rettype), op.func, CLBR_RET_REG,	\
 		      PVOP_CALLEE_CLOBBERS, , ##__VA_ARGS__)
 
-#घोषणा __PVOP_ALT_CALLEESAVE(rettype, op, alt, cond, ...)		\
+#define __PVOP_ALT_CALLEESAVE(rettype, op, alt, cond, ...)		\
 	____PVOP_ALT_CALL(PVOP_RETVAL(rettype), op.func, alt, cond,	\
 			  CLBR_RET_REG, PVOP_CALLEE_CLOBBERS, , ##__VA_ARGS__)
 
 
-#घोषणा __PVOP_VCALL(op, ...)						\
-	(व्योम)____PVOP_CALL(, op, CLBR_ANY, PVOP_VCALL_CLOBBERS,	\
+#define __PVOP_VCALL(op, ...)						\
+	(void)____PVOP_CALL(, op, CLBR_ANY, PVOP_VCALL_CLOBBERS,	\
 		       VEXTRA_CLOBBERS, ##__VA_ARGS__)
 
-#घोषणा __PVOP_ALT_VCALL(op, alt, cond, ...)				\
-	(व्योम)____PVOP_ALT_CALL(, op, alt, cond, CLBR_ANY,		\
+#define __PVOP_ALT_VCALL(op, alt, cond, ...)				\
+	(void)____PVOP_ALT_CALL(, op, alt, cond, CLBR_ANY,		\
 				PVOP_VCALL_CLOBBERS, VEXTRA_CLOBBERS,	\
 				##__VA_ARGS__)
 
-#घोषणा __PVOP_VCALLEESAVE(op, ...)					\
-	(व्योम)____PVOP_CALL(, op.func, CLBR_RET_REG,			\
+#define __PVOP_VCALLEESAVE(op, ...)					\
+	(void)____PVOP_CALL(, op.func, CLBR_RET_REG,			\
 			    PVOP_VCALLEE_CLOBBERS, , ##__VA_ARGS__)
 
-#घोषणा __PVOP_ALT_VCALLEESAVE(op, alt, cond, ...)			\
-	(व्योम)____PVOP_ALT_CALL(, op.func, alt, cond, CLBR_RET_REG,	\
+#define __PVOP_ALT_VCALLEESAVE(op, alt, cond, ...)			\
+	(void)____PVOP_ALT_CALL(, op.func, alt, cond, CLBR_RET_REG,	\
 				PVOP_VCALLEE_CLOBBERS, , ##__VA_ARGS__)
 
 
-#घोषणा PVOP_CALL0(rettype, op)						\
+#define PVOP_CALL0(rettype, op)						\
 	__PVOP_CALL(rettype, op)
-#घोषणा PVOP_VCALL0(op)							\
+#define PVOP_VCALL0(op)							\
 	__PVOP_VCALL(op)
-#घोषणा PVOP_ALT_CALL0(rettype, op, alt, cond)				\
+#define PVOP_ALT_CALL0(rettype, op, alt, cond)				\
 	__PVOP_ALT_CALL(rettype, op, alt, cond)
-#घोषणा PVOP_ALT_VCALL0(op, alt, cond)					\
+#define PVOP_ALT_VCALL0(op, alt, cond)					\
 	__PVOP_ALT_VCALL(op, alt, cond)
 
-#घोषणा PVOP_CALLEE0(rettype, op)					\
+#define PVOP_CALLEE0(rettype, op)					\
 	__PVOP_CALLEESAVE(rettype, op)
-#घोषणा PVOP_VCALLEE0(op)						\
+#define PVOP_VCALLEE0(op)						\
 	__PVOP_VCALLEESAVE(op)
-#घोषणा PVOP_ALT_CALLEE0(rettype, op, alt, cond)			\
+#define PVOP_ALT_CALLEE0(rettype, op, alt, cond)			\
 	__PVOP_ALT_CALLEESAVE(rettype, op, alt, cond)
-#घोषणा PVOP_ALT_VCALLEE0(op, alt, cond)				\
+#define PVOP_ALT_VCALLEE0(op, alt, cond)				\
 	__PVOP_ALT_VCALLEESAVE(op, alt, cond)
 
 
-#घोषणा PVOP_CALL1(rettype, op, arg1)					\
+#define PVOP_CALL1(rettype, op, arg1)					\
 	__PVOP_CALL(rettype, op, PVOP_CALL_ARG1(arg1))
-#घोषणा PVOP_VCALL1(op, arg1)						\
+#define PVOP_VCALL1(op, arg1)						\
 	__PVOP_VCALL(op, PVOP_CALL_ARG1(arg1))
-#घोषणा PVOP_ALT_VCALL1(op, arg1, alt, cond)				\
+#define PVOP_ALT_VCALL1(op, arg1, alt, cond)				\
 	__PVOP_ALT_VCALL(op, alt, cond, PVOP_CALL_ARG1(arg1))
 
-#घोषणा PVOP_CALLEE1(rettype, op, arg1)					\
+#define PVOP_CALLEE1(rettype, op, arg1)					\
 	__PVOP_CALLEESAVE(rettype, op, PVOP_CALL_ARG1(arg1))
-#घोषणा PVOP_VCALLEE1(op, arg1)						\
+#define PVOP_VCALLEE1(op, arg1)						\
 	__PVOP_VCALLEESAVE(op, PVOP_CALL_ARG1(arg1))
-#घोषणा PVOP_ALT_CALLEE1(rettype, op, arg1, alt, cond)			\
+#define PVOP_ALT_CALLEE1(rettype, op, arg1, alt, cond)			\
 	__PVOP_ALT_CALLEESAVE(rettype, op, alt, cond, PVOP_CALL_ARG1(arg1))
-#घोषणा PVOP_ALT_VCALLEE1(op, arg1, alt, cond)				\
+#define PVOP_ALT_VCALLEE1(op, arg1, alt, cond)				\
 	__PVOP_ALT_VCALLEESAVE(op, alt, cond, PVOP_CALL_ARG1(arg1))
 
 
-#घोषणा PVOP_CALL2(rettype, op, arg1, arg2)				\
+#define PVOP_CALL2(rettype, op, arg1, arg2)				\
 	__PVOP_CALL(rettype, op, PVOP_CALL_ARG1(arg1), PVOP_CALL_ARG2(arg2))
-#घोषणा PVOP_VCALL2(op, arg1, arg2)					\
+#define PVOP_VCALL2(op, arg1, arg2)					\
 	__PVOP_VCALL(op, PVOP_CALL_ARG1(arg1), PVOP_CALL_ARG2(arg2))
 
-#घोषणा PVOP_CALL3(rettype, op, arg1, arg2, arg3)			\
+#define PVOP_CALL3(rettype, op, arg1, arg2, arg3)			\
 	__PVOP_CALL(rettype, op, PVOP_CALL_ARG1(arg1),			\
 		    PVOP_CALL_ARG2(arg2), PVOP_CALL_ARG3(arg3))
-#घोषणा PVOP_VCALL3(op, arg1, arg2, arg3)				\
+#define PVOP_VCALL3(op, arg1, arg2, arg3)				\
 	__PVOP_VCALL(op, PVOP_CALL_ARG1(arg1),				\
 		     PVOP_CALL_ARG2(arg2), PVOP_CALL_ARG3(arg3))
 
-#घोषणा PVOP_CALL4(rettype, op, arg1, arg2, arg3, arg4)			\
+#define PVOP_CALL4(rettype, op, arg1, arg2, arg3, arg4)			\
 	__PVOP_CALL(rettype, op,					\
 		    PVOP_CALL_ARG1(arg1), PVOP_CALL_ARG2(arg2),		\
 		    PVOP_CALL_ARG3(arg3), PVOP_CALL_ARG4(arg4))
-#घोषणा PVOP_VCALL4(op, arg1, arg2, arg3, arg4)				\
+#define PVOP_VCALL4(op, arg1, arg2, arg3, arg4)				\
 	__PVOP_VCALL(op, PVOP_CALL_ARG1(arg1), PVOP_CALL_ARG2(arg2),	\
 		     PVOP_CALL_ARG3(arg3), PVOP_CALL_ARG4(arg4))
 
-/* Lazy mode क्रम batching updates / context चयन */
-क्रमागत paravirt_lazy_mode अणु
+/* Lazy mode for batching updates / context switch */
+enum paravirt_lazy_mode {
 	PARAVIRT_LAZY_NONE,
 	PARAVIRT_LAZY_MMU,
 	PARAVIRT_LAZY_CPU,
-पूर्ण;
+};
 
-क्रमागत paravirt_lazy_mode paravirt_get_lazy_mode(व्योम);
-व्योम paravirt_start_context_चयन(काष्ठा task_काष्ठा *prev);
-व्योम paravirt_end_context_चयन(काष्ठा task_काष्ठा *next);
+enum paravirt_lazy_mode paravirt_get_lazy_mode(void);
+void paravirt_start_context_switch(struct task_struct *prev);
+void paravirt_end_context_switch(struct task_struct *next);
 
-व्योम paravirt_enter_lazy_mmu(व्योम);
-व्योम paravirt_leave_lazy_mmu(व्योम);
-व्योम paravirt_flush_lazy_mmu(व्योम);
+void paravirt_enter_lazy_mmu(void);
+void paravirt_leave_lazy_mmu(void);
+void paravirt_flush_lazy_mmu(void);
 
-व्योम _paravirt_nop(व्योम);
+void _paravirt_nop(void);
 u64 _paravirt_ident_64(u64);
 
-#घोषणा paravirt_nop	((व्योम *)_paravirt_nop)
+#define paravirt_nop	((void *)_paravirt_nop)
 
-/* These all sit in the .parainकाष्ठाions section to tell us what to patch. */
-काष्ठा paravirt_patch_site अणु
-	u8 *instr;		/* original inकाष्ठाions */
-	u8 type;		/* type of this inकाष्ठाion */
-	u8 len;			/* length of original inकाष्ठाion */
-पूर्ण;
+/* These all sit in the .parainstructions section to tell us what to patch. */
+struct paravirt_patch_site {
+	u8 *instr;		/* original instructions */
+	u8 type;		/* type of this instruction */
+	u8 len;			/* length of original instruction */
+};
 
-बाह्य काष्ठा paravirt_patch_site __parainकाष्ठाions[],
-	__parainकाष्ठाions_end[];
+extern struct paravirt_patch_site __parainstructions[],
+	__parainstructions_end[];
 
-#पूर्ण_अगर	/* __ASSEMBLY__ */
+#endif	/* __ASSEMBLY__ */
 
-#पूर्ण_अगर	/* _ASM_X86_PARAVIRT_TYPES_H */
+#endif	/* _ASM_X86_PARAVIRT_TYPES_H */

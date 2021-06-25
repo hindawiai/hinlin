@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Device driver क्रम s390 storage class memory.
+ * Device driver for s390 storage class memory.
  *
  * Copyright IBM Corp. 2012
  * Author(s): Sebastian Ott <sebott@linux.vnet.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "scm_block"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "scm_block"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/eadm.h>
-#समावेश "scm_blk.h"
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <asm/eadm.h>
+#include "scm_blk.h"
 
-अटल व्योम scm_notअगरy(काष्ठा scm_device *scmdev, क्रमागत scm_event event)
-अणु
-	काष्ठा scm_blk_dev *bdev = dev_get_drvdata(&scmdev->dev);
+static void scm_notify(struct scm_device *scmdev, enum scm_event event)
+{
+	struct scm_blk_dev *bdev = dev_get_drvdata(&scmdev->dev);
 
-	चयन (event) अणु
-	हाल SCM_CHANGE:
+	switch (event) {
+	case SCM_CHANGE:
 		pr_info("%lx: The capabilities of the SCM increment changed\n",
-			(अचिन्हित दीर्घ) scmdev->address);
+			(unsigned long) scmdev->address);
 		SCM_LOG(2, "State changed");
 		SCM_LOG_STATE(2, scmdev);
-		अवरोध;
-	हाल SCM_AVAIL:
+		break;
+	case SCM_AVAIL:
 		SCM_LOG(2, "Increment available");
 		SCM_LOG_STATE(2, scmdev);
 		scm_blk_set_available(bdev);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक scm_probe(काष्ठा scm_device *scmdev)
-अणु
-	काष्ठा scm_blk_dev *bdev;
-	पूर्णांक ret;
+static int scm_probe(struct scm_device *scmdev)
+{
+	struct scm_blk_dev *bdev;
+	int ret;
 
 	SCM_LOG(2, "probe");
 	SCM_LOG_STATE(2, scmdev);
 
-	अगर (scmdev->attrs.oper_state != OP_STATE_GOOD)
-		वापस -EINVAL;
+	if (scmdev->attrs.oper_state != OP_STATE_GOOD)
+		return -EINVAL;
 
-	bdev = kzalloc(माप(*bdev), GFP_KERNEL);
-	अगर (!bdev)
-		वापस -ENOMEM;
+	bdev = kzalloc(sizeof(*bdev), GFP_KERNEL);
+	if (!bdev)
+		return -ENOMEM;
 
 	dev_set_drvdata(&scmdev->dev, bdev);
 	ret = scm_blk_dev_setup(bdev, scmdev);
-	अगर (ret) अणु
-		dev_set_drvdata(&scmdev->dev, शून्य);
-		kमुक्त(bdev);
-		जाओ out;
-	पूर्ण
+	if (ret) {
+		dev_set_drvdata(&scmdev->dev, NULL);
+		kfree(bdev);
+		goto out;
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक scm_हटाओ(काष्ठा scm_device *scmdev)
-अणु
-	काष्ठा scm_blk_dev *bdev = dev_get_drvdata(&scmdev->dev);
+static int scm_remove(struct scm_device *scmdev)
+{
+	struct scm_blk_dev *bdev = dev_get_drvdata(&scmdev->dev);
 
 	scm_blk_dev_cleanup(bdev);
-	dev_set_drvdata(&scmdev->dev, शून्य);
-	kमुक्त(bdev);
+	dev_set_drvdata(&scmdev->dev, NULL);
+	kfree(bdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा scm_driver scm_drv = अणु
-	.drv = अणु
+static struct scm_driver scm_drv = {
+	.drv = {
 		.name = "scm_block",
 		.owner = THIS_MODULE,
-	पूर्ण,
-	.notअगरy = scm_notअगरy,
+	},
+	.notify = scm_notify,
 	.probe = scm_probe,
-	.हटाओ = scm_हटाओ,
+	.remove = scm_remove,
 	.handler = scm_blk_irq,
-पूर्ण;
+};
 
-पूर्णांक __init scm_drv_init(व्योम)
-अणु
-	वापस scm_driver_रेजिस्टर(&scm_drv);
-पूर्ण
+int __init scm_drv_init(void)
+{
+	return scm_driver_register(&scm_drv);
+}
 
-व्योम scm_drv_cleanup(व्योम)
-अणु
-	scm_driver_unरेजिस्टर(&scm_drv);
-पूर्ण
+void scm_drv_cleanup(void)
+{
+	scm_driver_unregister(&scm_drv);
+}

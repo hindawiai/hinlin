@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * tracing घड़ीs
+ * tracing clocks
  *
  *  Copyright (C) 2009 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  *
- * Implements 3 trace घड़ी variants, with dअगरfering scalability/precision
+ * Implements 3 trace clock variants, with differing scalability/precision
  * tradeoffs:
  *
- *  -   local: CPU-local trace घड़ी
- *  -  medium: scalable global घड़ी with some jitter
- *  -  global: globally monotonic, serialized घड़ी
+ *  -   local: CPU-local trace clock
+ *  -  medium: scalable global clock with some jitter
+ *  -  global: globally monotonic, serialized clock
  *
- * Tracer plugins will chose a शेष from these घड़ीs.
+ * Tracer plugins will chose a default from these clocks.
  */
-#समावेश <linux/spinlock.h>
-#समावेश <linux/irqflags.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/trace_घड़ी.h>
+#include <linux/spinlock.h>
+#include <linux/irqflags.h>
+#include <linux/hardirq.h>
+#include <linux/module.h>
+#include <linux/percpu.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/ktime.h>
+#include <linux/trace_clock.h>
 
 /*
- * trace_घड़ी_local(): the simplest and least coherent tracing घड़ी.
+ * trace_clock_local(): the simplest and least coherent tracing clock.
  *
- * Useful क्रम tracing that करोes not cross to other CPUs nor
- * करोes it go through idle events.
+ * Useful for tracing that does not cross to other CPUs nor
+ * does it go through idle events.
  */
-u64 notrace trace_घड़ी_local(व्योम)
-अणु
-	u64 घड़ी;
+u64 notrace trace_clock_local(void)
+{
+	u64 clock;
 
 	/*
-	 * sched_घड़ी() is an architecture implemented, fast, scalable,
-	 * lockless घड़ी. It is not guaranteed to be coherent across
+	 * sched_clock() is an architecture implemented, fast, scalable,
+	 * lockless clock. It is not guaranteed to be coherent across
 	 * CPUs, nor across CPU idle events.
 	 */
 	preempt_disable_notrace();
-	घड़ी = sched_घड़ी();
+	clock = sched_clock();
 	preempt_enable_notrace();
 
-	वापस घड़ी;
-पूर्ण
-EXPORT_SYMBOL_GPL(trace_घड़ी_local);
+	return clock;
+}
+EXPORT_SYMBOL_GPL(trace_clock_local);
 
 /*
- * trace_घड़ी(): 'between' trace घड़ी. Not completely serialized,
+ * trace_clock(): 'between' trace clock. Not completely serialized,
  * but not completely incorrect when crossing CPUs either.
  *
- * This is based on cpu_घड़ी(), which will allow at most ~1 jअगरfy of
- * jitter between CPUs. So it's a pretty scalable घड़ी, but there
+ * This is based on cpu_clock(), which will allow at most ~1 jiffy of
+ * jitter between CPUs. So it's a pretty scalable clock, but there
  * can be offsets in the trace data.
  */
-u64 notrace trace_घड़ी(व्योम)
-अणु
-	वापस local_घड़ी();
-पूर्ण
-EXPORT_SYMBOL_GPL(trace_घड़ी);
+u64 notrace trace_clock(void)
+{
+	return local_clock();
+}
+EXPORT_SYMBOL_GPL(trace_clock);
 
 /*
- * trace_jअगरfy_घड़ी(): Simply use jअगरfies as a घड़ी counter.
- * Note that this use of jअगरfies_64 is not completely safe on
- * 32-bit प्रणालीs. But the winकरोw is tiny, and the effect अगर
+ * trace_jiffy_clock(): Simply use jiffies as a clock counter.
+ * Note that this use of jiffies_64 is not completely safe on
+ * 32-bit systems. But the window is tiny, and the effect if
  * we are affected is that we will have an obviously bogus
- * बारtamp on a trace event - i.e. not lअगरe threatening.
+ * timestamp on a trace event - i.e. not life threatening.
  */
-u64 notrace trace_घड़ी_jअगरfies(व्योम)
-अणु
-	वापस jअगरfies_64_to_घड़ी_प्रकार(jअगरfies_64 - INITIAL_JIFFIES);
-पूर्ण
-EXPORT_SYMBOL_GPL(trace_घड़ी_jअगरfies);
+u64 notrace trace_clock_jiffies(void)
+{
+	return jiffies_64_to_clock_t(jiffies_64 - INITIAL_JIFFIES);
+}
+EXPORT_SYMBOL_GPL(trace_clock_jiffies);
 
 /*
- * trace_घड़ी_global(): special globally coherent trace घड़ी
+ * trace_clock_global(): special globally coherent trace clock
  *
- * It has higher overhead than the other trace घड़ीs but is still
- * an order of magnitude faster than GTOD derived hardware घड़ीs.
+ * It has higher overhead than the other trace clocks but is still
+ * an order of magnitude faster than GTOD derived hardware clocks.
  *
- * Used by plugins that need globally coherent बारtamps.
+ * Used by plugins that need globally coherent timestamps.
  */
 
-/* keep prev_समय and lock in the same cacheline. */
-अटल काष्ठा अणु
-	u64 prev_समय;
+/* keep prev_time and lock in the same cacheline. */
+static struct {
+	u64 prev_time;
 	arch_spinlock_t lock;
-पूर्ण trace_घड़ी_काष्ठा ____cacheline_aligned_in_smp =
-	अणु
+} trace_clock_struct ____cacheline_aligned_in_smp =
+	{
 		.lock = (arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED,
-	पूर्ण;
+	};
 
-u64 notrace trace_घड़ी_global(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक this_cpu;
-	u64 now, prev_समय;
+u64 notrace trace_clock_global(void)
+{
+	unsigned long flags;
+	int this_cpu;
+	u64 now, prev_time;
 
 	raw_local_irq_save(flags);
 
 	this_cpu = raw_smp_processor_id();
 
 	/*
-	 * The global घड़ी "guarantees" that the events are ordered
-	 * between CPUs. But अगर two events on two dअगरferent CPUS call
-	 * trace_घड़ी_global at roughly the same समय, it really करोes
-	 * not matter which one माला_लो the earlier समय. Just make sure
-	 * that the same CPU will always show a monotonic घड़ी.
+	 * The global clock "guarantees" that the events are ordered
+	 * between CPUs. But if two events on two different CPUS call
+	 * trace_clock_global at roughly the same time, it really does
+	 * not matter which one gets the earlier time. Just make sure
+	 * that the same CPU will always show a monotonic clock.
 	 *
-	 * Use a पढ़ो memory barrier to get the latest written
-	 * समय that was recorded.
+	 * Use a read memory barrier to get the latest written
+	 * time that was recorded.
 	 */
 	smp_rmb();
-	prev_समय = READ_ONCE(trace_घड़ी_काष्ठा.prev_समय);
-	now = sched_घड़ी_cpu(this_cpu);
+	prev_time = READ_ONCE(trace_clock_struct.prev_time);
+	now = sched_clock_cpu(this_cpu);
 
-	/* Make sure that now is always greater than or equal to prev_समय */
-	अगर ((s64)(now - prev_समय) < 0)
-		now = prev_समय;
+	/* Make sure that now is always greater than or equal to prev_time */
+	if ((s64)(now - prev_time) < 0)
+		now = prev_time;
 
 	/*
-	 * If in an NMI context then करोnt risk lockups and simply वापस
-	 * the current समय.
+	 * If in an NMI context then dont risk lockups and simply return
+	 * the current time.
 	 */
-	अगर (unlikely(in_nmi()))
-		जाओ out;
+	if (unlikely(in_nmi()))
+		goto out;
 
 	/* Tracing can cause strange recursion, always use a try lock */
-	अगर (arch_spin_trylock(&trace_घड़ी_काष्ठा.lock)) अणु
-		/* Reपढ़ो prev_समय in हाल it was alपढ़ोy updated */
-		prev_समय = READ_ONCE(trace_घड़ी_काष्ठा.prev_समय);
-		अगर ((s64)(now - prev_समय) < 0)
-			now = prev_समय;
+	if (arch_spin_trylock(&trace_clock_struct.lock)) {
+		/* Reread prev_time in case it was already updated */
+		prev_time = READ_ONCE(trace_clock_struct.prev_time);
+		if ((s64)(now - prev_time) < 0)
+			now = prev_time;
 
-		trace_घड़ी_काष्ठा.prev_समय = now;
+		trace_clock_struct.prev_time = now;
 
-		/* The unlock acts as the wmb क्रम the above rmb */
-		arch_spin_unlock(&trace_घड़ी_काष्ठा.lock);
-	पूर्ण
+		/* The unlock acts as the wmb for the above rmb */
+		arch_spin_unlock(&trace_clock_struct.lock);
+	}
  out:
 	raw_local_irq_restore(flags);
 
-	वापस now;
-पूर्ण
-EXPORT_SYMBOL_GPL(trace_घड़ी_global);
+	return now;
+}
+EXPORT_SYMBOL_GPL(trace_clock_global);
 
-अटल atomic64_t trace_counter;
+static atomic64_t trace_counter;
 
 /*
- * trace_घड़ी_counter(): simply an atomic counter.
- * Use the trace_counter "counter" क्रम हालs where you करो not care
- * about timings, but are पूर्णांकerested in strict ordering.
+ * trace_clock_counter(): simply an atomic counter.
+ * Use the trace_counter "counter" for cases where you do not care
+ * about timings, but are interested in strict ordering.
  */
-u64 notrace trace_घड़ी_counter(व्योम)
-अणु
-	वापस atomic64_add_वापस(1, &trace_counter);
-पूर्ण
+u64 notrace trace_clock_counter(void)
+{
+	return atomic64_add_return(1, &trace_counter);
+}

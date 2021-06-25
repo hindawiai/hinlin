@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* AFS fileserver list management.
  *
  * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश "internal.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include "internal.h"
 
-व्योम afs_put_serverlist(काष्ठा afs_net *net, काष्ठा afs_server_list *slist)
-अणु
-	पूर्णांक i;
+void afs_put_serverlist(struct afs_net *net, struct afs_server_list *slist)
+{
+	int i;
 
-	अगर (slist && refcount_dec_and_test(&slist->usage)) अणु
-		क्रम (i = 0; i < slist->nr_servers; i++)
+	if (slist && refcount_dec_and_test(&slist->usage)) {
+		for (i = 0; i < slist->nr_servers; i++)
 			afs_unuse_server(net, slist->servers[i].server,
 					 afs_server_trace_put_slist);
-		kमुक्त(slist);
-	पूर्ण
-पूर्ण
+		kfree(slist);
+	}
+}
 
 /*
  * Build a server list from a VLDB record.
  */
-काष्ठा afs_server_list *afs_alloc_server_list(काष्ठा afs_cell *cell,
-					      काष्ठा key *key,
-					      काष्ठा afs_vldb_entry *vldb,
+struct afs_server_list *afs_alloc_server_list(struct afs_cell *cell,
+					      struct key *key,
+					      struct afs_vldb_entry *vldb,
 					      u8 type_mask)
-अणु
-	काष्ठा afs_server_list *slist;
-	काष्ठा afs_server *server;
-	पूर्णांक ret = -ENOMEM, nr_servers = 0, i, j;
+{
+	struct afs_server_list *slist;
+	struct afs_server *server;
+	int ret = -ENOMEM, nr_servers = 0, i, j;
 
-	क्रम (i = 0; i < vldb->nr_servers; i++)
-		अगर (vldb->fs_mask[i] & type_mask)
+	for (i = 0; i < vldb->nr_servers; i++)
+		if (vldb->fs_mask[i] & type_mask)
 			nr_servers++;
 
-	slist = kzalloc(काष्ठा_size(slist, servers, nr_servers), GFP_KERNEL);
-	अगर (!slist)
-		जाओ error;
+	slist = kzalloc(struct_size(slist, servers, nr_servers), GFP_KERNEL);
+	if (!slist)
+		goto error;
 
 	refcount_set(&slist->usage, 1);
 	rwlock_init(&slist->lock);
 
-	क्रम (i = 0; i < AFS_MAXTYPES; i++)
+	for (i = 0; i < AFS_MAXTYPES; i++)
 		slist->vids[i] = vldb->vid[i];
 
-	/* Make sure a records exists क्रम each server in the list. */
-	क्रम (i = 0; i < vldb->nr_servers; i++) अणु
-		अगर (!(vldb->fs_mask[i] & type_mask))
-			जारी;
+	/* Make sure a records exists for each server in the list. */
+	for (i = 0; i < vldb->nr_servers; i++) {
+		if (!(vldb->fs_mask[i] & type_mask))
+			continue;
 
 		server = afs_lookup_server(cell, key, &vldb->fs_server[i],
 					   vldb->addr_version[i]);
-		अगर (IS_ERR(server)) अणु
+		if (IS_ERR(server)) {
 			ret = PTR_ERR(server);
-			अगर (ret == -ENOENT ||
+			if (ret == -ENOENT ||
 			    ret == -ENOMEDIUM)
-				जारी;
-			जाओ error_2;
-		पूर्ण
+				continue;
+			goto error_2;
+		}
 
 		/* Insertion-sort by UUID */
-		क्रम (j = 0; j < slist->nr_servers; j++)
-			अगर (स_भेद(&slist->servers[j].server->uuid,
+		for (j = 0; j < slist->nr_servers; j++)
+			if (memcmp(&slist->servers[j].server->uuid,
 				   &server->uuid,
-				   माप(server->uuid)) >= 0)
-				अवरोध;
-		अगर (j < slist->nr_servers) अणु
-			अगर (slist->servers[j].server == server) अणु
+				   sizeof(server->uuid)) >= 0)
+				break;
+		if (j < slist->nr_servers) {
+			if (slist->servers[j].server == server) {
 				afs_put_server(cell->net, server,
 					       afs_server_trace_put_slist_isort);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			स_हटाओ(slist->servers + j + 1,
+			memmove(slist->servers + j + 1,
 				slist->servers + j,
-				(slist->nr_servers - j) * माप(काष्ठा afs_server_entry));
-		पूर्ण
+				(slist->nr_servers - j) * sizeof(struct afs_server_entry));
+		}
 
 		slist->servers[j].server = server;
 		slist->nr_servers++;
-	पूर्ण
+	}
 
-	अगर (slist->nr_servers == 0) अणु
+	if (slist->nr_servers == 0) {
 		ret = -EDESTADDRREQ;
-		जाओ error_2;
-	पूर्ण
+		goto error_2;
+	}
 
-	वापस slist;
+	return slist;
 
 error_2:
 	afs_put_serverlist(cell->net, slist);
 error:
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
 /*
  * Copy the annotations from an old server list to its potential replacement.
  */
-bool afs_annotate_server_list(काष्ठा afs_server_list *new,
-			      काष्ठा afs_server_list *old)
-अणु
-	काष्ठा afs_server *cur;
-	पूर्णांक i, j;
+bool afs_annotate_server_list(struct afs_server_list *new,
+			      struct afs_server_list *old)
+{
+	struct afs_server *cur;
+	int i, j;
 
-	अगर (old->nr_servers != new->nr_servers)
-		जाओ changed;
+	if (old->nr_servers != new->nr_servers)
+		goto changed;
 
-	क्रम (i = 0; i < old->nr_servers; i++)
-		अगर (old->servers[i].server != new->servers[i].server)
-			जाओ changed;
+	for (i = 0; i < old->nr_servers; i++)
+		if (old->servers[i].server != new->servers[i].server)
+			goto changed;
 
-	वापस false;
+	return false;
 
 changed:
-	/* Maपूर्णांकain the same preferred server as beक्रमe अगर possible. */
+	/* Maintain the same preferred server as before if possible. */
 	cur = old->servers[old->preferred].server;
-	क्रम (j = 0; j < new->nr_servers; j++) अणु
-		अगर (new->servers[j].server == cur) अणु
+	for (j = 0; j < new->nr_servers; j++) {
+		if (new->servers[j].server == cur) {
 			new->preferred = j;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}

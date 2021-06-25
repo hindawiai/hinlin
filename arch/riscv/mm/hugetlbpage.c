@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/err.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/hugetlb.h>
+#include <linux/err.h>
 
-पूर्णांक pud_huge(pud_t pud)
-अणु
-	वापस pud_leaf(pud);
-पूर्ण
+int pud_huge(pud_t pud)
+{
+	return pud_leaf(pud);
+}
 
-पूर्णांक pmd_huge(pmd_t pmd)
-अणु
-	वापस pmd_leaf(pmd);
-पूर्ण
+int pmd_huge(pmd_t pmd)
+{
+	return pmd_leaf(pmd);
+}
 
-bool __init arch_hugetlb_valid_size(अचिन्हित दीर्घ size)
-अणु
-	अगर (size == HPAGE_SIZE)
-		वापस true;
-	अन्यथा अगर (IS_ENABLED(CONFIG_64BIT) && size == PUD_SIZE)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+bool __init arch_hugetlb_valid_size(unsigned long size)
+{
+	if (size == HPAGE_SIZE)
+		return true;
+	else if (IS_ENABLED(CONFIG_64BIT) && size == PUD_SIZE)
+		return true;
+	else
+		return false;
+}
 
-#अगर_घोषित CONFIG_CONTIG_ALLOC
-अटल __init पूर्णांक gigantic_pages_init(व्योम)
-अणु
-	/* With CONTIG_ALLOC, we can allocate gigantic pages at runसमय */
-	अगर (IS_ENABLED(CONFIG_64BIT))
+#ifdef CONFIG_CONTIG_ALLOC
+static __init int gigantic_pages_init(void)
+{
+	/* With CONTIG_ALLOC, we can allocate gigantic pages at runtime */
+	if (IS_ENABLED(CONFIG_64BIT))
 		hugetlb_add_hstate(PUD_SHIFT - PAGE_SHIFT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(gigantic_pages_init);
-#पूर्ण_अगर
+#endif

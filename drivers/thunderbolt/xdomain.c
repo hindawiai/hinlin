@@ -1,163 +1,162 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Thunderbolt XDoमुख्य discovery protocol support
+ * Thunderbolt XDomain discovery protocol support
  *
  * Copyright (C) 2017, Intel Corporation
- * Authors: Michael Jamet <michael.jamet@पूर्णांकel.com>
- *          Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Authors: Michael Jamet <michael.jamet@intel.com>
+ *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pअक्रमom.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/workqueue.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/kmod.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/prandom.h>
+#include <linux/utsname.h>
+#include <linux/uuid.h>
+#include <linux/workqueue.h>
 
-#समावेश "tb.h"
+#include "tb.h"
 
-#घोषणा XDOMAIN_DEFAULT_TIMEOUT			1000 /* ms */
-#घोषणा XDOMAIN_UUID_RETRIES			10
-#घोषणा XDOMAIN_PROPERTIES_RETRIES		10
-#घोषणा XDOMAIN_PROPERTIES_CHANGED_RETRIES	10
-#घोषणा XDOMAIN_BONDING_WAIT			100  /* ms */
-#घोषणा XDOMAIN_DEFAULT_MAX_HOPID		15
+#define XDOMAIN_DEFAULT_TIMEOUT			1000 /* ms */
+#define XDOMAIN_UUID_RETRIES			10
+#define XDOMAIN_PROPERTIES_RETRIES		10
+#define XDOMAIN_PROPERTIES_CHANGED_RETRIES	10
+#define XDOMAIN_BONDING_WAIT			100  /* ms */
+#define XDOMAIN_DEFAULT_MAX_HOPID		15
 
-काष्ठा xकरोमुख्य_request_work अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा tb_xdp_header *pkg;
-	काष्ठा tb *tb;
-पूर्ण;
+struct xdomain_request_work {
+	struct work_struct work;
+	struct tb_xdp_header *pkg;
+	struct tb *tb;
+};
 
-अटल bool tb_xकरोमुख्य_enabled = true;
-module_param_named(xकरोमुख्य, tb_xकरोमुख्य_enabled, bool, 0444);
-MODULE_PARM_DESC(xकरोमुख्य, "allow XDomain protocol (default: true)");
+static bool tb_xdomain_enabled = true;
+module_param_named(xdomain, tb_xdomain_enabled, bool, 0444);
+MODULE_PARM_DESC(xdomain, "allow XDomain protocol (default: true)");
 
 /*
  * Serializes access to the properties and protocol handlers below. If
- * you need to take both this lock and the काष्ठा tb_xकरोमुख्य lock, take
+ * you need to take both this lock and the struct tb_xdomain lock, take
  * this one first.
  */
-अटल DEFINE_MUTEX(xकरोमुख्य_lock);
+static DEFINE_MUTEX(xdomain_lock);
 
-/* Properties exposed to the remote करोमुख्यs */
-अटल काष्ठा tb_property_dir *xकरोमुख्य_property_dir;
-अटल u32 xकरोमुख्य_property_block_gen;
+/* Properties exposed to the remote domains */
+static struct tb_property_dir *xdomain_property_dir;
+static u32 xdomain_property_block_gen;
 
 /* Additional protocol handlers */
-अटल LIST_HEAD(protocol_handlers);
+static LIST_HEAD(protocol_handlers);
 
-/* UUID क्रम XDoमुख्य discovery protocol: b638d70e-42ff-40bb-97c2-90e2c0b2ff07 */
-अटल स्थिर uuid_t tb_xdp_uuid =
+/* UUID for XDomain discovery protocol: b638d70e-42ff-40bb-97c2-90e2c0b2ff07 */
+static const uuid_t tb_xdp_uuid =
 	UUID_INIT(0xb638d70e, 0x42ff, 0x40bb,
 		  0x97, 0xc2, 0x90, 0xe2, 0xc0, 0xb2, 0xff, 0x07);
 
-bool tb_is_xकरोमुख्य_enabled(व्योम)
-अणु
-	वापस tb_xकरोमुख्य_enabled && tb_acpi_is_xकरोमुख्य_allowed();
-पूर्ण
+bool tb_is_xdomain_enabled(void)
+{
+	return tb_xdomain_enabled && tb_acpi_is_xdomain_allowed();
+}
 
-अटल bool tb_xकरोमुख्य_match(स्थिर काष्ठा tb_cfg_request *req,
-			     स्थिर काष्ठा ctl_pkg *pkg)
-अणु
-	चयन (pkg->frame.eof) अणु
-	हाल TB_CFG_PKG_ERROR:
-		वापस true;
+static bool tb_xdomain_match(const struct tb_cfg_request *req,
+			     const struct ctl_pkg *pkg)
+{
+	switch (pkg->frame.eof) {
+	case TB_CFG_PKG_ERROR:
+		return true;
 
-	हाल TB_CFG_PKG_XDOMAIN_RESP: अणु
-		स्थिर काष्ठा tb_xdp_header *res_hdr = pkg->buffer;
-		स्थिर काष्ठा tb_xdp_header *req_hdr = req->request;
+	case TB_CFG_PKG_XDOMAIN_RESP: {
+		const struct tb_xdp_header *res_hdr = pkg->buffer;
+		const struct tb_xdp_header *req_hdr = req->request;
 
-		अगर (pkg->frame.size < req->response_size / 4)
-			वापस false;
+		if (pkg->frame.size < req->response_size / 4)
+			return false;
 
 		/* Make sure route matches */
-		अगर ((res_hdr->xd_hdr.route_hi & ~BIT(31)) !=
+		if ((res_hdr->xd_hdr.route_hi & ~BIT(31)) !=
 		     req_hdr->xd_hdr.route_hi)
-			वापस false;
-		अगर ((res_hdr->xd_hdr.route_lo) != req_hdr->xd_hdr.route_lo)
-			वापस false;
+			return false;
+		if ((res_hdr->xd_hdr.route_lo) != req_hdr->xd_hdr.route_lo)
+			return false;
 
-		/* Check that the XDoमुख्य protocol matches */
-		अगर (!uuid_equal(&res_hdr->uuid, &req_hdr->uuid))
-			वापस false;
+		/* Check that the XDomain protocol matches */
+		if (!uuid_equal(&res_hdr->uuid, &req_hdr->uuid))
+			return false;
 
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल bool tb_xकरोमुख्य_copy(काष्ठा tb_cfg_request *req,
-			    स्थिर काष्ठा ctl_pkg *pkg)
-अणु
-	स_नकल(req->response, pkg->buffer, req->response_size);
+static bool tb_xdomain_copy(struct tb_cfg_request *req,
+			    const struct ctl_pkg *pkg)
+{
+	memcpy(req->response, pkg->buffer, req->response_size);
 	req->result.err = 0;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम response_पढ़ोy(व्योम *data)
-अणु
+static void response_ready(void *data)
+{
 	tb_cfg_request_put(data);
-पूर्ण
+}
 
-अटल पूर्णांक __tb_xकरोमुख्य_response(काष्ठा tb_ctl *ctl, स्थिर व्योम *response,
-				 माप_प्रकार size, क्रमागत tb_cfg_pkg_type type)
-अणु
-	काष्ठा tb_cfg_request *req;
+static int __tb_xdomain_response(struct tb_ctl *ctl, const void *response,
+				 size_t size, enum tb_cfg_pkg_type type)
+{
+	struct tb_cfg_request *req;
 
 	req = tb_cfg_request_alloc();
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	req->match = tb_xकरोमुख्य_match;
-	req->copy = tb_xकरोमुख्य_copy;
+	req->match = tb_xdomain_match;
+	req->copy = tb_xdomain_copy;
 	req->request = response;
 	req->request_size = size;
 	req->request_type = type;
 
-	वापस tb_cfg_request(ctl, req, response_पढ़ोy, req);
-पूर्ण
+	return tb_cfg_request(ctl, req, response_ready, req);
+}
 
 /**
- * tb_xकरोमुख्य_response() - Send a XDoमुख्य response message
- * @xd: XDoमुख्य to send the message
+ * tb_xdomain_response() - Send a XDomain response message
+ * @xd: XDomain to send the message
  * @response: Response to send
  * @size: Size of the response
  * @type: PDF type of the response
  *
- * This can be used to send a XDoमुख्य response message to the other
- * करोमुख्य. No response क्रम the message is expected.
+ * This can be used to send a XDomain response message to the other
+ * domain. No response for the message is expected.
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं in हाल of failure
+ * Return: %0 in case of success and negative errno in case of failure
  */
-पूर्णांक tb_xकरोमुख्य_response(काष्ठा tb_xकरोमुख्य *xd, स्थिर व्योम *response,
-			माप_प्रकार size, क्रमागत tb_cfg_pkg_type type)
-अणु
-	वापस __tb_xकरोमुख्य_response(xd->tb->ctl, response, size, type);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_response);
+int tb_xdomain_response(struct tb_xdomain *xd, const void *response,
+			size_t size, enum tb_cfg_pkg_type type)
+{
+	return __tb_xdomain_response(xd->tb->ctl, response, size, type);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_response);
 
-अटल पूर्णांक __tb_xकरोमुख्य_request(काष्ठा tb_ctl *ctl, स्थिर व्योम *request,
-	माप_प्रकार request_size, क्रमागत tb_cfg_pkg_type request_type, व्योम *response,
-	माप_प्रकार response_size, क्रमागत tb_cfg_pkg_type response_type,
-	अचिन्हित पूर्णांक समयout_msec)
-अणु
-	काष्ठा tb_cfg_request *req;
-	काष्ठा tb_cfg_result res;
+static int __tb_xdomain_request(struct tb_ctl *ctl, const void *request,
+	size_t request_size, enum tb_cfg_pkg_type request_type, void *response,
+	size_t response_size, enum tb_cfg_pkg_type response_type,
+	unsigned int timeout_msec)
+{
+	struct tb_cfg_request *req;
+	struct tb_cfg_result res;
 
 	req = tb_cfg_request_alloc();
-	अगर (!req)
-		वापस -ENOMEM;
+	if (!req)
+		return -ENOMEM;
 
-	req->match = tb_xकरोमुख्य_match;
-	req->copy = tb_xकरोमुख्य_copy;
+	req->match = tb_xdomain_match;
+	req->copy = tb_xdomain_copy;
 	req->request = request;
 	req->request_size = request_size;
 	req->request_type = request_type;
@@ -165,265 +164,265 @@ EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_response);
 	req->response_size = response_size;
 	req->response_type = response_type;
 
-	res = tb_cfg_request_sync(ctl, req, समयout_msec);
+	res = tb_cfg_request_sync(ctl, req, timeout_msec);
 
 	tb_cfg_request_put(req);
 
-	वापस res.err == 1 ? -EIO : res.err;
-पूर्ण
+	return res.err == 1 ? -EIO : res.err;
+}
 
 /**
- * tb_xकरोमुख्य_request() - Send a XDoमुख्य request
- * @xd: XDoमुख्य to send the request
+ * tb_xdomain_request() - Send a XDomain request
+ * @xd: XDomain to send the request
  * @request: Request to send
  * @request_size: Size of the request in bytes
  * @request_type: PDF type of the request
  * @response: Response is copied here
  * @response_size: Expected size of the response in bytes
  * @response_type: Expected PDF type of the response
- * @समयout_msec: Timeout in milliseconds to रुको क्रम the response
+ * @timeout_msec: Timeout in milliseconds to wait for the response
  *
- * This function can be used to send XDoमुख्य control channel messages to
- * the other करोमुख्य. The function रुकोs until the response is received
- * or when समयout triggers. Whichever comes first.
+ * This function can be used to send XDomain control channel messages to
+ * the other domain. The function waits until the response is received
+ * or when timeout triggers. Whichever comes first.
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं in हाल of failure
+ * Return: %0 in case of success and negative errno in case of failure
  */
-पूर्णांक tb_xकरोमुख्य_request(काष्ठा tb_xकरोमुख्य *xd, स्थिर व्योम *request,
-	माप_प्रकार request_size, क्रमागत tb_cfg_pkg_type request_type,
-	व्योम *response, माप_प्रकार response_size,
-	क्रमागत tb_cfg_pkg_type response_type, अचिन्हित पूर्णांक समयout_msec)
-अणु
-	वापस __tb_xकरोमुख्य_request(xd->tb->ctl, request, request_size,
+int tb_xdomain_request(struct tb_xdomain *xd, const void *request,
+	size_t request_size, enum tb_cfg_pkg_type request_type,
+	void *response, size_t response_size,
+	enum tb_cfg_pkg_type response_type, unsigned int timeout_msec)
+{
+	return __tb_xdomain_request(xd->tb->ctl, request, request_size,
 				    request_type, response, response_size,
-				    response_type, समयout_msec);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_request);
+				    response_type, timeout_msec);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_request);
 
-अटल अंतरभूत व्योम tb_xdp_fill_header(काष्ठा tb_xdp_header *hdr, u64 route,
-	u8 sequence, क्रमागत tb_xdp_type type, माप_प्रकार size)
-अणु
+static inline void tb_xdp_fill_header(struct tb_xdp_header *hdr, u64 route,
+	u8 sequence, enum tb_xdp_type type, size_t size)
+{
 	u32 length_sn;
 
-	length_sn = (size - माप(hdr->xd_hdr)) / 4;
+	length_sn = (size - sizeof(hdr->xd_hdr)) / 4;
 	length_sn |= (sequence << TB_XDOMAIN_SN_SHIFT) & TB_XDOMAIN_SN_MASK;
 
 	hdr->xd_hdr.route_hi = upper_32_bits(route);
 	hdr->xd_hdr.route_lo = lower_32_bits(route);
 	hdr->xd_hdr.length_sn = length_sn;
 	hdr->type = type;
-	स_नकल(&hdr->uuid, &tb_xdp_uuid, माप(tb_xdp_uuid));
-पूर्ण
+	memcpy(&hdr->uuid, &tb_xdp_uuid, sizeof(tb_xdp_uuid));
+}
 
-अटल पूर्णांक tb_xdp_handle_error(स्थिर काष्ठा tb_xdp_header *hdr)
-अणु
-	स्थिर काष्ठा tb_xdp_error_response *error;
+static int tb_xdp_handle_error(const struct tb_xdp_header *hdr)
+{
+	const struct tb_xdp_error_response *error;
 
-	अगर (hdr->type != ERROR_RESPONSE)
-		वापस 0;
+	if (hdr->type != ERROR_RESPONSE)
+		return 0;
 
-	error = (स्थिर काष्ठा tb_xdp_error_response *)hdr;
+	error = (const struct tb_xdp_error_response *)hdr;
 
-	चयन (error->error) अणु
-	हाल ERROR_UNKNOWN_PACKET:
-	हाल ERROR_UNKNOWN_DOMAIN:
-		वापस -EIO;
-	हाल ERROR_NOT_SUPPORTED:
-		वापस -ENOTSUPP;
-	हाल ERROR_NOT_READY:
-		वापस -EAGAIN;
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (error->error) {
+	case ERROR_UNKNOWN_PACKET:
+	case ERROR_UNKNOWN_DOMAIN:
+		return -EIO;
+	case ERROR_NOT_SUPPORTED:
+		return -ENOTSUPP;
+	case ERROR_NOT_READY:
+		return -EAGAIN;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_xdp_uuid_request(काष्ठा tb_ctl *ctl, u64 route, पूर्णांक retry,
+static int tb_xdp_uuid_request(struct tb_ctl *ctl, u64 route, int retry,
 			       uuid_t *uuid)
-अणु
-	काष्ठा tb_xdp_uuid_response res;
-	काष्ठा tb_xdp_uuid req;
-	पूर्णांक ret;
+{
+	struct tb_xdp_uuid_response res;
+	struct tb_xdp_uuid req;
+	int ret;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 	tb_xdp_fill_header(&req.hdr, route, retry % 4, UUID_REQUEST,
-			   माप(req));
+			   sizeof(req));
 
-	स_रखो(&res, 0, माप(res));
-	ret = __tb_xकरोमुख्य_request(ctl, &req, माप(req),
-				   TB_CFG_PKG_XDOMAIN_REQ, &res, माप(res),
+	memset(&res, 0, sizeof(res));
+	ret = __tb_xdomain_request(ctl, &req, sizeof(req),
+				   TB_CFG_PKG_XDOMAIN_REQ, &res, sizeof(res),
 				   TB_CFG_PKG_XDOMAIN_RESP,
 				   XDOMAIN_DEFAULT_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = tb_xdp_handle_error(&res.hdr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	uuid_copy(uuid, &res.src_uuid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_xdp_uuid_response(काष्ठा tb_ctl *ctl, u64 route, u8 sequence,
-				स्थिर uuid_t *uuid)
-अणु
-	काष्ठा tb_xdp_uuid_response res;
+static int tb_xdp_uuid_response(struct tb_ctl *ctl, u64 route, u8 sequence,
+				const uuid_t *uuid)
+{
+	struct tb_xdp_uuid_response res;
 
-	स_रखो(&res, 0, माप(res));
+	memset(&res, 0, sizeof(res));
 	tb_xdp_fill_header(&res.hdr, route, sequence, UUID_RESPONSE,
-			   माप(res));
+			   sizeof(res));
 
 	uuid_copy(&res.src_uuid, uuid);
 	res.src_route_hi = upper_32_bits(route);
 	res.src_route_lo = lower_32_bits(route);
 
-	वापस __tb_xकरोमुख्य_response(ctl, &res, माप(res),
+	return __tb_xdomain_response(ctl, &res, sizeof(res),
 				     TB_CFG_PKG_XDOMAIN_RESP);
-पूर्ण
+}
 
-अटल पूर्णांक tb_xdp_error_response(काष्ठा tb_ctl *ctl, u64 route, u8 sequence,
-				 क्रमागत tb_xdp_error error)
-अणु
-	काष्ठा tb_xdp_error_response res;
+static int tb_xdp_error_response(struct tb_ctl *ctl, u64 route, u8 sequence,
+				 enum tb_xdp_error error)
+{
+	struct tb_xdp_error_response res;
 
-	स_रखो(&res, 0, माप(res));
+	memset(&res, 0, sizeof(res));
 	tb_xdp_fill_header(&res.hdr, route, sequence, ERROR_RESPONSE,
-			   माप(res));
+			   sizeof(res));
 	res.error = error;
 
-	वापस __tb_xकरोमुख्य_response(ctl, &res, माप(res),
+	return __tb_xdomain_response(ctl, &res, sizeof(res),
 				     TB_CFG_PKG_XDOMAIN_RESP);
-पूर्ण
+}
 
-अटल पूर्णांक tb_xdp_properties_request(काष्ठा tb_ctl *ctl, u64 route,
-	स्थिर uuid_t *src_uuid, स्थिर uuid_t *dst_uuid, पूर्णांक retry,
+static int tb_xdp_properties_request(struct tb_ctl *ctl, u64 route,
+	const uuid_t *src_uuid, const uuid_t *dst_uuid, int retry,
 	u32 **block, u32 *generation)
-अणु
-	काष्ठा tb_xdp_properties_response *res;
-	काष्ठा tb_xdp_properties req;
+{
+	struct tb_xdp_properties_response *res;
+	struct tb_xdp_properties req;
 	u16 data_len, len;
-	माप_प्रकार total_size;
-	u32 *data = शून्य;
-	पूर्णांक ret;
+	size_t total_size;
+	u32 *data = NULL;
+	int ret;
 
-	total_size = माप(*res) + TB_XDP_PROPERTIES_MAX_DATA_LENGTH * 4;
+	total_size = sizeof(*res) + TB_XDP_PROPERTIES_MAX_DATA_LENGTH * 4;
 	res = kzalloc(total_size, GFP_KERNEL);
-	अगर (!res)
-		वापस -ENOMEM;
+	if (!res)
+		return -ENOMEM;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 	tb_xdp_fill_header(&req.hdr, route, retry % 4, PROPERTIES_REQUEST,
-			   माप(req));
-	स_नकल(&req.src_uuid, src_uuid, माप(*src_uuid));
-	स_नकल(&req.dst_uuid, dst_uuid, माप(*dst_uuid));
+			   sizeof(req));
+	memcpy(&req.src_uuid, src_uuid, sizeof(*src_uuid));
+	memcpy(&req.dst_uuid, dst_uuid, sizeof(*dst_uuid));
 
 	len = 0;
 	data_len = 0;
 
-	करो अणु
-		ret = __tb_xकरोमुख्य_request(ctl, &req, माप(req),
+	do {
+		ret = __tb_xdomain_request(ctl, &req, sizeof(req),
 					   TB_CFG_PKG_XDOMAIN_REQ, res,
 					   total_size, TB_CFG_PKG_XDOMAIN_RESP,
 					   XDOMAIN_DEFAULT_TIMEOUT);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
 		ret = tb_xdp_handle_error(&res->hdr);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
 		/*
 		 * Package length includes the whole payload without the
-		 * XDoमुख्य header. Validate first that the package is at
-		 * least size of the response काष्ठाure.
+		 * XDomain header. Validate first that the package is at
+		 * least size of the response structure.
 		 */
 		len = res->hdr.xd_hdr.length_sn & TB_XDOMAIN_LENGTH_MASK;
-		अगर (len < माप(*res) / 4) अणु
+		if (len < sizeof(*res) / 4) {
 			ret = -EINVAL;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		len += माप(res->hdr.xd_hdr) / 4;
-		len -= माप(*res) / 4;
+		len += sizeof(res->hdr.xd_hdr) / 4;
+		len -= sizeof(*res) / 4;
 
-		अगर (res->offset != req.offset) अणु
+		if (res->offset != req.offset) {
 			ret = -EINVAL;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		/*
-		 * First समय allocate block that has enough space क्रम
+		 * First time allocate block that has enough space for
 		 * the whole properties block.
 		 */
-		अगर (!data) अणु
+		if (!data) {
 			data_len = res->data_length;
-			अगर (data_len > TB_XDP_PROPERTIES_MAX_LENGTH) अणु
+			if (data_len > TB_XDP_PROPERTIES_MAX_LENGTH) {
 				ret = -E2BIG;
-				जाओ err;
-			पूर्ण
+				goto err;
+			}
 
-			data = kसुस्मृति(data_len, माप(u32), GFP_KERNEL);
-			अगर (!data) अणु
+			data = kcalloc(data_len, sizeof(u32), GFP_KERNEL);
+			if (!data) {
 				ret = -ENOMEM;
-				जाओ err;
-			पूर्ण
-		पूर्ण
+				goto err;
+			}
+		}
 
-		स_नकल(data + req.offset, res->data, len * 4);
+		memcpy(data + req.offset, res->data, len * 4);
 		req.offset += len;
-	पूर्ण जबतक (!data_len || req.offset < data_len);
+	} while (!data_len || req.offset < data_len);
 
 	*block = data;
 	*generation = res->generation;
 
-	kमुक्त(res);
+	kfree(res);
 
-	वापस data_len;
+	return data_len;
 
 err:
-	kमुक्त(data);
-	kमुक्त(res);
+	kfree(data);
+	kfree(res);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tb_xdp_properties_response(काष्ठा tb *tb, काष्ठा tb_ctl *ctl,
-	काष्ठा tb_xकरोमुख्य *xd, u8 sequence, स्थिर काष्ठा tb_xdp_properties *req)
-अणु
-	काष्ठा tb_xdp_properties_response *res;
-	माप_प्रकार total_size;
+static int tb_xdp_properties_response(struct tb *tb, struct tb_ctl *ctl,
+	struct tb_xdomain *xd, u8 sequence, const struct tb_xdp_properties *req)
+{
+	struct tb_xdp_properties_response *res;
+	size_t total_size;
 	u16 len;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * Currently we expect all requests to be directed to us. The
-	 * protocol supports क्रमwarding, though which we might add
+	 * protocol supports forwarding, though which we might add
 	 * support later on.
 	 */
-	अगर (!uuid_equal(xd->local_uuid, &req->dst_uuid)) अणु
+	if (!uuid_equal(xd->local_uuid, &req->dst_uuid)) {
 		tb_xdp_error_response(ctl, xd->route, sequence,
 				      ERROR_UNKNOWN_DOMAIN);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	mutex_lock(&xd->lock);
 
-	अगर (req->offset >= xd->local_property_block_len) अणु
+	if (req->offset >= xd->local_property_block_len) {
 		mutex_unlock(&xd->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	len = xd->local_property_block_len - req->offset;
 	len = min_t(u16, len, TB_XDP_PROPERTIES_MAX_DATA_LENGTH);
-	total_size = माप(*res) + len * 4;
+	total_size = sizeof(*res) + len * 4;
 
 	res = kzalloc(total_size, GFP_KERNEL);
-	अगर (!res) अणु
+	if (!res) {
 		mutex_unlock(&xd->lock);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	tb_xdp_fill_header(&res->hdr, xd->route, sequence, PROPERTIES_RESPONSE,
 			   total_size);
@@ -432,160 +431,160 @@ err:
 	res->offset = req->offset;
 	uuid_copy(&res->src_uuid, xd->local_uuid);
 	uuid_copy(&res->dst_uuid, &req->src_uuid);
-	स_नकल(res->data, &xd->local_property_block[req->offset], len * 4);
+	memcpy(res->data, &xd->local_property_block[req->offset], len * 4);
 
 	mutex_unlock(&xd->lock);
 
-	ret = __tb_xकरोमुख्य_response(ctl, res, total_size,
+	ret = __tb_xdomain_response(ctl, res, total_size,
 				    TB_CFG_PKG_XDOMAIN_RESP);
 
-	kमुक्त(res);
-	वापस ret;
-पूर्ण
+	kfree(res);
+	return ret;
+}
 
-अटल पूर्णांक tb_xdp_properties_changed_request(काष्ठा tb_ctl *ctl, u64 route,
-					     पूर्णांक retry, स्थिर uuid_t *uuid)
-अणु
-	काष्ठा tb_xdp_properties_changed_response res;
-	काष्ठा tb_xdp_properties_changed req;
-	पूर्णांक ret;
+static int tb_xdp_properties_changed_request(struct tb_ctl *ctl, u64 route,
+					     int retry, const uuid_t *uuid)
+{
+	struct tb_xdp_properties_changed_response res;
+	struct tb_xdp_properties_changed req;
+	int ret;
 
-	स_रखो(&req, 0, माप(req));
+	memset(&req, 0, sizeof(req));
 	tb_xdp_fill_header(&req.hdr, route, retry % 4,
-			   PROPERTIES_CHANGED_REQUEST, माप(req));
+			   PROPERTIES_CHANGED_REQUEST, sizeof(req));
 	uuid_copy(&req.src_uuid, uuid);
 
-	स_रखो(&res, 0, माप(res));
-	ret = __tb_xकरोमुख्य_request(ctl, &req, माप(req),
-				   TB_CFG_PKG_XDOMAIN_REQ, &res, माप(res),
+	memset(&res, 0, sizeof(res));
+	ret = __tb_xdomain_request(ctl, &req, sizeof(req),
+				   TB_CFG_PKG_XDOMAIN_REQ, &res, sizeof(res),
 				   TB_CFG_PKG_XDOMAIN_RESP,
 				   XDOMAIN_DEFAULT_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस tb_xdp_handle_error(&res.hdr);
-पूर्ण
+	return tb_xdp_handle_error(&res.hdr);
+}
 
-अटल पूर्णांक
-tb_xdp_properties_changed_response(काष्ठा tb_ctl *ctl, u64 route, u8 sequence)
-अणु
-	काष्ठा tb_xdp_properties_changed_response res;
+static int
+tb_xdp_properties_changed_response(struct tb_ctl *ctl, u64 route, u8 sequence)
+{
+	struct tb_xdp_properties_changed_response res;
 
-	स_रखो(&res, 0, माप(res));
+	memset(&res, 0, sizeof(res));
 	tb_xdp_fill_header(&res.hdr, route, sequence,
-			   PROPERTIES_CHANGED_RESPONSE, माप(res));
-	वापस __tb_xकरोमुख्य_response(ctl, &res, माप(res),
+			   PROPERTIES_CHANGED_RESPONSE, sizeof(res));
+	return __tb_xdomain_response(ctl, &res, sizeof(res),
 				     TB_CFG_PKG_XDOMAIN_RESP);
-पूर्ण
+}
 
 /**
- * tb_रेजिस्टर_protocol_handler() - Register protocol handler
- * @handler: Handler to रेजिस्टर
+ * tb_register_protocol_handler() - Register protocol handler
+ * @handler: Handler to register
  *
- * This allows XDoमुख्य service drivers to hook पूर्णांकo incoming XDoमुख्य
+ * This allows XDomain service drivers to hook into incoming XDomain
  * messages. After this function is called the service driver needs to
  * be able to handle calls to callback whenever a package with the
- * रेजिस्टरed protocol is received.
+ * registered protocol is received.
  */
-पूर्णांक tb_रेजिस्टर_protocol_handler(काष्ठा tb_protocol_handler *handler)
-अणु
-	अगर (!handler->uuid || !handler->callback)
-		वापस -EINVAL;
-	अगर (uuid_equal(handler->uuid, &tb_xdp_uuid))
-		वापस -EINVAL;
+int tb_register_protocol_handler(struct tb_protocol_handler *handler)
+{
+	if (!handler->uuid || !handler->callback)
+		return -EINVAL;
+	if (uuid_equal(handler->uuid, &tb_xdp_uuid))
+		return -EINVAL;
 
-	mutex_lock(&xकरोमुख्य_lock);
+	mutex_lock(&xdomain_lock);
 	list_add_tail(&handler->list, &protocol_handlers);
-	mutex_unlock(&xकरोमुख्य_lock);
+	mutex_unlock(&xdomain_lock);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_रेजिस्टर_protocol_handler);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(tb_register_protocol_handler);
 
 /**
- * tb_unरेजिस्टर_protocol_handler() - Unरेजिस्टर protocol handler
- * @handler: Handler to unरेजिस्टर
+ * tb_unregister_protocol_handler() - Unregister protocol handler
+ * @handler: Handler to unregister
  *
- * Removes the previously रेजिस्टरed protocol handler.
+ * Removes the previously registered protocol handler.
  */
-व्योम tb_unरेजिस्टर_protocol_handler(काष्ठा tb_protocol_handler *handler)
-अणु
-	mutex_lock(&xकरोमुख्य_lock);
+void tb_unregister_protocol_handler(struct tb_protocol_handler *handler)
+{
+	mutex_lock(&xdomain_lock);
 	list_del_init(&handler->list);
-	mutex_unlock(&xकरोमुख्य_lock);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_unरेजिस्टर_protocol_handler);
+	mutex_unlock(&xdomain_lock);
+}
+EXPORT_SYMBOL_GPL(tb_unregister_protocol_handler);
 
-अटल व्योम update_property_block(काष्ठा tb_xकरोमुख्य *xd)
-अणु
-	mutex_lock(&xकरोमुख्य_lock);
+static void update_property_block(struct tb_xdomain *xd)
+{
+	mutex_lock(&xdomain_lock);
 	mutex_lock(&xd->lock);
 	/*
 	 * If the local property block is not up-to-date, rebuild it now
-	 * based on the global property ढाँचा.
+	 * based on the global property template.
 	 */
-	अगर (!xd->local_property_block ||
-	    xd->local_property_block_gen < xकरोमुख्य_property_block_gen) अणु
-		काष्ठा tb_property_dir *dir;
-		पूर्णांक ret, block_len;
+	if (!xd->local_property_block ||
+	    xd->local_property_block_gen < xdomain_property_block_gen) {
+		struct tb_property_dir *dir;
+		int ret, block_len;
 		u32 *block;
 
-		dir = tb_property_copy_dir(xकरोमुख्य_property_dir);
-		अगर (!dir) अणु
+		dir = tb_property_copy_dir(xdomain_property_dir);
+		if (!dir) {
 			dev_warn(&xd->dev, "failed to copy properties\n");
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		/* Fill in non-अटल properties now */
+		/* Fill in non-static properties now */
 		tb_property_add_text(dir, "deviceid", utsname()->nodename);
 		tb_property_add_immediate(dir, "maxhopid", xd->local_max_hopid);
 
-		ret = tb_property_क्रमmat_dir(dir, शून्य, 0);
-		अगर (ret < 0) अणु
+		ret = tb_property_format_dir(dir, NULL, 0);
+		if (ret < 0) {
 			dev_warn(&xd->dev, "local property block creation failed\n");
-			tb_property_मुक्त_dir(dir);
-			जाओ out_unlock;
-		पूर्ण
+			tb_property_free_dir(dir);
+			goto out_unlock;
+		}
 
 		block_len = ret;
-		block = kसुस्मृति(block_len, माप(*block), GFP_KERNEL);
-		अगर (!block) अणु
-			tb_property_मुक्त_dir(dir);
-			जाओ out_unlock;
-		पूर्ण
+		block = kcalloc(block_len, sizeof(*block), GFP_KERNEL);
+		if (!block) {
+			tb_property_free_dir(dir);
+			goto out_unlock;
+		}
 
-		ret = tb_property_क्रमmat_dir(dir, block, block_len);
-		अगर (ret) अणु
+		ret = tb_property_format_dir(dir, block, block_len);
+		if (ret) {
 			dev_warn(&xd->dev, "property block generation failed\n");
-			tb_property_मुक्त_dir(dir);
-			kमुक्त(block);
-			जाओ out_unlock;
-		पूर्ण
+			tb_property_free_dir(dir);
+			kfree(block);
+			goto out_unlock;
+		}
 
-		tb_property_मुक्त_dir(dir);
+		tb_property_free_dir(dir);
 		/* Release the previous block */
-		kमुक्त(xd->local_property_block);
+		kfree(xd->local_property_block);
 		/* Assign new one */
 		xd->local_property_block = block;
 		xd->local_property_block_len = block_len;
-		xd->local_property_block_gen = xकरोमुख्य_property_block_gen;
-	पूर्ण
+		xd->local_property_block_gen = xdomain_property_block_gen;
+	}
 
 out_unlock:
 	mutex_unlock(&xd->lock);
-	mutex_unlock(&xकरोमुख्य_lock);
-पूर्ण
+	mutex_unlock(&xdomain_lock);
+}
 
-अटल व्योम tb_xdp_handle_request(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xकरोमुख्य_request_work *xw = container_of(work, typeof(*xw), work);
-	स्थिर काष्ठा tb_xdp_header *pkg = xw->pkg;
-	स्थिर काष्ठा tb_xकरोमुख्य_header *xhdr = &pkg->xd_hdr;
-	काष्ठा tb *tb = xw->tb;
-	काष्ठा tb_ctl *ctl = tb->ctl;
-	काष्ठा tb_xकरोमुख्य *xd;
-	स्थिर uuid_t *uuid;
-	पूर्णांक ret = 0;
+static void tb_xdp_handle_request(struct work_struct *work)
+{
+	struct xdomain_request_work *xw = container_of(work, typeof(*xw), work);
+	const struct tb_xdp_header *pkg = xw->pkg;
+	const struct tb_xdomain_header *xhdr = &pkg->xd_hdr;
+	struct tb *tb = xw->tb;
+	struct tb_ctl *ctl = tb->ctl;
+	struct tb_xdomain *xd;
+	const uuid_t *uuid;
+	int ret = 0;
 	u32 sequence;
 	u64 route;
 
@@ -594,325 +593,325 @@ out_unlock:
 	sequence >>= TB_XDOMAIN_SN_SHIFT;
 
 	mutex_lock(&tb->lock);
-	अगर (tb->root_चयन)
-		uuid = tb->root_चयन->uuid;
-	अन्यथा
-		uuid = शून्य;
+	if (tb->root_switch)
+		uuid = tb->root_switch->uuid;
+	else
+		uuid = NULL;
 	mutex_unlock(&tb->lock);
 
-	अगर (!uuid) अणु
+	if (!uuid) {
 		tb_xdp_error_response(ctl, route, sequence, ERROR_NOT_READY);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	tb_dbg(tb, "%llx: received XDomain request %#x\n", route, pkg->type);
 
-	xd = tb_xकरोमुख्य_find_by_route_locked(tb, route);
-	अगर (xd)
+	xd = tb_xdomain_find_by_route_locked(tb, route);
+	if (xd)
 		update_property_block(xd);
 
-	चयन (pkg->type) अणु
-	हाल PROPERTIES_REQUEST:
-		अगर (xd) अणु
+	switch (pkg->type) {
+	case PROPERTIES_REQUEST:
+		if (xd) {
 			ret = tb_xdp_properties_response(tb, ctl, xd, sequence,
-				(स्थिर काष्ठा tb_xdp_properties *)pkg);
-		पूर्ण
-		अवरोध;
+				(const struct tb_xdp_properties *)pkg);
+		}
+		break;
 
-	हाल PROPERTIES_CHANGED_REQUEST:
+	case PROPERTIES_CHANGED_REQUEST:
 		ret = tb_xdp_properties_changed_response(ctl, route, sequence);
 
 		/*
 		 * Since the properties have been changed, let's update
-		 * the xकरोमुख्य related to this connection as well in
-		 * हाल there is a change in services it offers.
+		 * the xdomain related to this connection as well in
+		 * case there is a change in services it offers.
 		 */
-		अगर (xd && device_is_रेजिस्टरed(&xd->dev)) अणु
+		if (xd && device_is_registered(&xd->dev)) {
 			queue_delayed_work(tb->wq, &xd->get_properties_work,
-					   msecs_to_jअगरfies(50));
-		पूर्ण
-		अवरोध;
+					   msecs_to_jiffies(50));
+		}
+		break;
 
-	हाल UUID_REQUEST_OLD:
-	हाल UUID_REQUEST:
+	case UUID_REQUEST_OLD:
+	case UUID_REQUEST:
 		ret = tb_xdp_uuid_response(ctl, route, sequence, uuid);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		tb_xdp_error_response(ctl, route, sequence,
 				      ERROR_NOT_SUPPORTED);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	tb_xकरोमुख्य_put(xd);
+	tb_xdomain_put(xd);
 
-	अगर (ret) अणु
+	if (ret) {
 		tb_warn(tb, "failed to send XDomain response for %#x\n",
 			pkg->type);
-	पूर्ण
+	}
 
 out:
-	kमुक्त(xw->pkg);
-	kमुक्त(xw);
+	kfree(xw->pkg);
+	kfree(xw);
 
-	tb_करोमुख्य_put(tb);
-पूर्ण
+	tb_domain_put(tb);
+}
 
-अटल bool
-tb_xdp_schedule_request(काष्ठा tb *tb, स्थिर काष्ठा tb_xdp_header *hdr,
-			माप_प्रकार size)
-अणु
-	काष्ठा xकरोमुख्य_request_work *xw;
+static bool
+tb_xdp_schedule_request(struct tb *tb, const struct tb_xdp_header *hdr,
+			size_t size)
+{
+	struct xdomain_request_work *xw;
 
-	xw = kदो_स्मृति(माप(*xw), GFP_KERNEL);
-	अगर (!xw)
-		वापस false;
+	xw = kmalloc(sizeof(*xw), GFP_KERNEL);
+	if (!xw)
+		return false;
 
 	INIT_WORK(&xw->work, tb_xdp_handle_request);
 	xw->pkg = kmemdup(hdr, size, GFP_KERNEL);
-	अगर (!xw->pkg) अणु
-		kमुक्त(xw);
-		वापस false;
-	पूर्ण
-	xw->tb = tb_करोमुख्य_get(tb);
+	if (!xw->pkg) {
+		kfree(xw);
+		return false;
+	}
+	xw->tb = tb_domain_get(tb);
 
 	schedule_work(&xw->work);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * tb_रेजिस्टर_service_driver() - Register XDoमुख्य service driver
- * @drv: Driver to रेजिस्टर
+ * tb_register_service_driver() - Register XDomain service driver
+ * @drv: Driver to register
  *
  * Registers new service driver from @drv to the bus.
  */
-पूर्णांक tb_रेजिस्टर_service_driver(काष्ठा tb_service_driver *drv)
-अणु
+int tb_register_service_driver(struct tb_service_driver *drv)
+{
 	drv->driver.bus = &tb_bus_type;
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_रेजिस्टर_service_driver);
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(tb_register_service_driver);
 
 /**
- * tb_unरेजिस्टर_service_driver() - Unरेजिस्टर XDoमुख्य service driver
- * @drv: Driver to unरेजिस्टर
+ * tb_unregister_service_driver() - Unregister XDomain service driver
+ * @drv: Driver to unregister
  *
- * Unरेजिस्टरs XDoमुख्य service driver from the bus.
+ * Unregisters XDomain service driver from the bus.
  */
-व्योम tb_unरेजिस्टर_service_driver(काष्ठा tb_service_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_unरेजिस्टर_service_driver);
+void tb_unregister_service_driver(struct tb_service_driver *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(tb_unregister_service_driver);
 
-अटल sमाप_प्रकार key_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
+static ssize_t key_show(struct device *dev, struct device_attribute *attr,
+			char *buf)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
 
 	/*
-	 * It should be null terminated but anything अन्यथा is pretty much
+	 * It should be null terminated but anything else is pretty much
 	 * allowed.
 	 */
-	वापस प्र_लिखो(buf, "%*pE\n", (पूर्णांक)म_माप(svc->key), svc->key);
-पूर्ण
-अटल DEVICE_ATTR_RO(key);
+	return sprintf(buf, "%*pE\n", (int)strlen(svc->key), svc->key);
+}
+static DEVICE_ATTR_RO(key);
 
-अटल पूर्णांक get_modalias(काष्ठा tb_service *svc, अक्षर *buf, माप_प्रकार size)
-अणु
-	वापस snम_लिखो(buf, size, "tbsvc:k%sp%08Xv%08Xr%08X", svc->key,
+static int get_modalias(struct tb_service *svc, char *buf, size_t size)
+{
+	return snprintf(buf, size, "tbsvc:k%sp%08Xv%08Xr%08X", svc->key,
 			svc->prtcid, svc->prtcvers, svc->prtcrevs);
-पूर्ण
+}
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
 
 	/* Full buffer size except new line and null termination */
 	get_modalias(svc, buf, PAGE_SIZE - 2);
-	वापस प्र_लिखो(buf, "%s\n", buf);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return sprintf(buf, "%s\n", buf);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल sमाप_प्रकार prtcid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
+static ssize_t prtcid_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
 
-	वापस प्र_लिखो(buf, "%u\n", svc->prtcid);
-पूर्ण
-अटल DEVICE_ATTR_RO(prtcid);
+	return sprintf(buf, "%u\n", svc->prtcid);
+}
+static DEVICE_ATTR_RO(prtcid);
 
-अटल sमाप_प्रकार prtcvers_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
+static ssize_t prtcvers_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
 
-	वापस प्र_लिखो(buf, "%u\n", svc->prtcvers);
-पूर्ण
-अटल DEVICE_ATTR_RO(prtcvers);
+	return sprintf(buf, "%u\n", svc->prtcvers);
+}
+static DEVICE_ATTR_RO(prtcvers);
 
-अटल sमाप_प्रकार prtcrevs_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
+static ssize_t prtcrevs_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
 
-	वापस प्र_लिखो(buf, "%u\n", svc->prtcrevs);
-पूर्ण
-अटल DEVICE_ATTR_RO(prtcrevs);
+	return sprintf(buf, "%u\n", svc->prtcrevs);
+}
+static DEVICE_ATTR_RO(prtcrevs);
 
-अटल sमाप_प्रकार prtcstns_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
+static ssize_t prtcstns_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
 
-	वापस प्र_लिखो(buf, "0x%08x\n", svc->prtcstns);
-पूर्ण
-अटल DEVICE_ATTR_RO(prtcstns);
+	return sprintf(buf, "0x%08x\n", svc->prtcstns);
+}
+static DEVICE_ATTR_RO(prtcstns);
 
-अटल काष्ठा attribute *tb_service_attrs[] = अणु
+static struct attribute *tb_service_attrs[] = {
 	&dev_attr_key.attr,
 	&dev_attr_modalias.attr,
 	&dev_attr_prtcid.attr,
 	&dev_attr_prtcvers.attr,
 	&dev_attr_prtcrevs.attr,
 	&dev_attr_prtcstns.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group tb_service_attr_group = अणु
+static const struct attribute_group tb_service_attr_group = {
 	.attrs = tb_service_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *tb_service_attr_groups[] = अणु
+static const struct attribute_group *tb_service_attr_groups[] = {
 	&tb_service_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक tb_service_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
-	अक्षर modalias[64];
+static int tb_service_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
+	char modalias[64];
 
-	get_modalias(svc, modalias, माप(modalias));
-	वापस add_uevent_var(env, "MODALIAS=%s", modalias);
-पूर्ण
+	get_modalias(svc, modalias, sizeof(modalias));
+	return add_uevent_var(env, "MODALIAS=%s", modalias);
+}
 
-अटल व्योम tb_service_release(काष्ठा device *dev)
-अणु
-	काष्ठा tb_service *svc = container_of(dev, काष्ठा tb_service, dev);
-	काष्ठा tb_xकरोमुख्य *xd = tb_service_parent(svc);
+static void tb_service_release(struct device *dev)
+{
+	struct tb_service *svc = container_of(dev, struct tb_service, dev);
+	struct tb_xdomain *xd = tb_service_parent(svc);
 
-	tb_service_debugfs_हटाओ(svc);
-	ida_simple_हटाओ(&xd->service_ids, svc->id);
-	kमुक्त(svc->key);
-	kमुक्त(svc);
-पूर्ण
+	tb_service_debugfs_remove(svc);
+	ida_simple_remove(&xd->service_ids, svc->id);
+	kfree(svc->key);
+	kfree(svc);
+}
 
-काष्ठा device_type tb_service_type = अणु
+struct device_type tb_service_type = {
 	.name = "thunderbolt_service",
 	.groups = tb_service_attr_groups,
 	.uevent = tb_service_uevent,
 	.release = tb_service_release,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(tb_service_type);
 
-अटल पूर्णांक हटाओ_missing_service(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = data;
-	काष्ठा tb_service *svc;
+static int remove_missing_service(struct device *dev, void *data)
+{
+	struct tb_xdomain *xd = data;
+	struct tb_service *svc;
 
 	svc = tb_to_service(dev);
-	अगर (!svc)
-		वापस 0;
+	if (!svc)
+		return 0;
 
-	अगर (!tb_property_find(xd->remote_properties, svc->key,
-			      TB_PROPERTY_TYPE_सूचीECTORY))
-		device_unरेजिस्टर(dev);
+	if (!tb_property_find(xd->remote_properties, svc->key,
+			      TB_PROPERTY_TYPE_DIRECTORY))
+		device_unregister(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक find_service(काष्ठा device *dev, व्योम *data)
-अणु
-	स्थिर काष्ठा tb_property *p = data;
-	काष्ठा tb_service *svc;
+static int find_service(struct device *dev, void *data)
+{
+	const struct tb_property *p = data;
+	struct tb_service *svc;
 
 	svc = tb_to_service(dev);
-	अगर (!svc)
-		वापस 0;
+	if (!svc)
+		return 0;
 
-	वापस !म_भेद(svc->key, p->key);
-पूर्ण
+	return !strcmp(svc->key, p->key);
+}
 
-अटल पूर्णांक populate_service(काष्ठा tb_service *svc,
-			    काष्ठा tb_property *property)
-अणु
-	काष्ठा tb_property_dir *dir = property->value.dir;
-	काष्ठा tb_property *p;
+static int populate_service(struct tb_service *svc,
+			    struct tb_property *property)
+{
+	struct tb_property_dir *dir = property->value.dir;
+	struct tb_property *p;
 
 	/* Fill in standard properties */
 	p = tb_property_find(dir, "prtcid", TB_PROPERTY_TYPE_VALUE);
-	अगर (p)
+	if (p)
 		svc->prtcid = p->value.immediate;
 	p = tb_property_find(dir, "prtcvers", TB_PROPERTY_TYPE_VALUE);
-	अगर (p)
+	if (p)
 		svc->prtcvers = p->value.immediate;
 	p = tb_property_find(dir, "prtcrevs", TB_PROPERTY_TYPE_VALUE);
-	अगर (p)
+	if (p)
 		svc->prtcrevs = p->value.immediate;
 	p = tb_property_find(dir, "prtcstns", TB_PROPERTY_TYPE_VALUE);
-	अगर (p)
+	if (p)
 		svc->prtcstns = p->value.immediate;
 
 	svc->key = kstrdup(property->key, GFP_KERNEL);
-	अगर (!svc->key)
-		वापस -ENOMEM;
+	if (!svc->key)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम क्रमागतerate_services(काष्ठा tb_xकरोमुख्य *xd)
-अणु
-	काष्ठा tb_service *svc;
-	काष्ठा tb_property *p;
-	काष्ठा device *dev;
-	पूर्णांक id;
+static void enumerate_services(struct tb_xdomain *xd)
+{
+	struct tb_service *svc;
+	struct tb_property *p;
+	struct device *dev;
+	int id;
 
 	/*
-	 * First हटाओ all services that are not available anymore in
+	 * First remove all services that are not available anymore in
 	 * the updated property block.
 	 */
-	device_क्रम_each_child_reverse(&xd->dev, xd, हटाओ_missing_service);
+	device_for_each_child_reverse(&xd->dev, xd, remove_missing_service);
 
-	/* Then re-क्रमागतerate properties creating new services as we go */
-	tb_property_क्रम_each(xd->remote_properties, p) अणु
-		अगर (p->type != TB_PROPERTY_TYPE_सूचीECTORY)
-			जारी;
+	/* Then re-enumerate properties creating new services as we go */
+	tb_property_for_each(xd->remote_properties, p) {
+		if (p->type != TB_PROPERTY_TYPE_DIRECTORY)
+			continue;
 
-		/* If the service exists alपढ़ोy we are fine */
+		/* If the service exists already we are fine */
 		dev = device_find_child(&xd->dev, p, find_service);
-		अगर (dev) अणु
+		if (dev) {
 			put_device(dev);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		svc = kzalloc(माप(*svc), GFP_KERNEL);
-		अगर (!svc)
-			अवरोध;
+		svc = kzalloc(sizeof(*svc), GFP_KERNEL);
+		if (!svc)
+			break;
 
-		अगर (populate_service(svc, p)) अणु
-			kमुक्त(svc);
-			अवरोध;
-		पूर्ण
+		if (populate_service(svc, p)) {
+			kfree(svc);
+			break;
+		}
 
 		id = ida_simple_get(&xd->service_ids, 0, 0, GFP_KERNEL);
-		अगर (id < 0) अणु
-			kमुक्त(svc->key);
-			kमुक्त(svc);
-			अवरोध;
-		पूर्ण
+		if (id < 0) {
+			kfree(svc->key);
+			kfree(svc);
+			break;
+		}
 		svc->id = id;
 		svc->dev.bus = &tb_bus_type;
 		svc->dev.type = &tb_service_type;
@@ -921,351 +920,351 @@ EXPORT_SYMBOL_GPL(tb_service_type);
 
 		tb_service_debugfs_init(svc);
 
-		अगर (device_रेजिस्टर(&svc->dev)) अणु
+		if (device_register(&svc->dev)) {
 			put_device(&svc->dev);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक populate_properties(काष्ठा tb_xकरोमुख्य *xd,
-			       काष्ठा tb_property_dir *dir)
-अणु
-	स्थिर काष्ठा tb_property *p;
+static int populate_properties(struct tb_xdomain *xd,
+			       struct tb_property_dir *dir)
+{
+	const struct tb_property *p;
 
 	/* Required properties */
 	p = tb_property_find(dir, "deviceid", TB_PROPERTY_TYPE_VALUE);
-	अगर (!p)
-		वापस -EINVAL;
+	if (!p)
+		return -EINVAL;
 	xd->device = p->value.immediate;
 
 	p = tb_property_find(dir, "vendorid", TB_PROPERTY_TYPE_VALUE);
-	अगर (!p)
-		वापस -EINVAL;
-	xd->venकरोr = p->value.immediate;
+	if (!p)
+		return -EINVAL;
+	xd->vendor = p->value.immediate;
 
 	p = tb_property_find(dir, "maxhopid", TB_PROPERTY_TYPE_VALUE);
 	/*
-	 * USB4 पूर्णांकer-करोमुख्य spec suggests using 15 as HopID अगर the
-	 * other end करोes not announce it in a property. This is क्रम
+	 * USB4 inter-domain spec suggests using 15 as HopID if the
+	 * other end does not announce it in a property. This is for
 	 * TBT3 compatibility.
 	 */
 	xd->remote_max_hopid = p ? p->value.immediate : XDOMAIN_DEFAULT_MAX_HOPID;
 
-	kमुक्त(xd->device_name);
-	xd->device_name = शून्य;
-	kमुक्त(xd->venकरोr_name);
-	xd->venकरोr_name = शून्य;
+	kfree(xd->device_name);
+	xd->device_name = NULL;
+	kfree(xd->vendor_name);
+	xd->vendor_name = NULL;
 
 	/* Optional properties */
 	p = tb_property_find(dir, "deviceid", TB_PROPERTY_TYPE_TEXT);
-	अगर (p)
+	if (p)
 		xd->device_name = kstrdup(p->value.text, GFP_KERNEL);
 	p = tb_property_find(dir, "vendorid", TB_PROPERTY_TYPE_TEXT);
-	अगर (p)
-		xd->venकरोr_name = kstrdup(p->value.text, GFP_KERNEL);
+	if (p)
+		xd->vendor_name = kstrdup(p->value.text, GFP_KERNEL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा tb_चयन *tb_xकरोमुख्य_parent(काष्ठा tb_xकरोमुख्य *xd)
-अणु
-	वापस tb_to_चयन(xd->dev.parent);
-पूर्ण
+static inline struct tb_switch *tb_xdomain_parent(struct tb_xdomain *xd)
+{
+	return tb_to_switch(xd->dev.parent);
+}
 
-अटल पूर्णांक tb_xकरोमुख्य_update_link_attributes(काष्ठा tb_xकरोमुख्य *xd)
-अणु
+static int tb_xdomain_update_link_attributes(struct tb_xdomain *xd)
+{
 	bool change = false;
-	काष्ठा tb_port *port;
-	पूर्णांक ret;
+	struct tb_port *port;
+	int ret;
 
-	port = tb_port_at(xd->route, tb_xकरोमुख्य_parent(xd));
+	port = tb_port_at(xd->route, tb_xdomain_parent(xd));
 
 	ret = tb_port_get_link_speed(port);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (xd->link_speed != ret)
+	if (xd->link_speed != ret)
 		change = true;
 
 	xd->link_speed = ret;
 
 	ret = tb_port_get_link_width(port);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (xd->link_width != ret)
+	if (xd->link_width != ret)
 		change = true;
 
 	xd->link_width = ret;
 
-	अगर (change)
+	if (change)
 		kobject_uevent(&xd->dev.kobj, KOBJ_CHANGE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb_xकरोमुख्य_get_uuid(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(work, typeof(*xd),
+static void tb_xdomain_get_uuid(struct work_struct *work)
+{
+	struct tb_xdomain *xd = container_of(work, typeof(*xd),
 					     get_uuid_work.work);
-	काष्ठा tb *tb = xd->tb;
+	struct tb *tb = xd->tb;
 	uuid_t uuid;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(&xd->dev, "requesting remote UUID\n");
 
 	ret = tb_xdp_uuid_request(tb->ctl, xd->route, xd->uuid_retries, &uuid);
-	अगर (ret < 0) अणु
-		अगर (xd->uuid_retries-- > 0) अणु
+	if (ret < 0) {
+		if (xd->uuid_retries-- > 0) {
 			dev_dbg(&xd->dev, "failed to request UUID, retrying\n");
 			queue_delayed_work(xd->tb->wq, &xd->get_uuid_work,
-					   msecs_to_jअगरfies(100));
-		पूर्ण अन्यथा अणु
+					   msecs_to_jiffies(100));
+		} else {
 			dev_dbg(&xd->dev, "failed to read remote UUID\n");
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	dev_dbg(&xd->dev, "got remote UUID %pUb\n", &uuid);
 
-	अगर (uuid_equal(&uuid, xd->local_uuid))
+	if (uuid_equal(&uuid, xd->local_uuid))
 		dev_dbg(&xd->dev, "intra-domain loop detected\n");
 
 	/*
-	 * If the UUID is dअगरferent, there is another करोमुख्य connected
-	 * so mark this one unplugged and रुको क्रम the connection
+	 * If the UUID is different, there is another domain connected
+	 * so mark this one unplugged and wait for the connection
 	 * manager to replace it.
 	 */
-	अगर (xd->remote_uuid && !uuid_equal(&uuid, xd->remote_uuid)) अणु
+	if (xd->remote_uuid && !uuid_equal(&uuid, xd->remote_uuid)) {
 		dev_dbg(&xd->dev, "remote UUID is different, unplugging\n");
 		xd->is_unplugged = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* First समय fill in the missing UUID */
-	अगर (!xd->remote_uuid) अणु
-		xd->remote_uuid = kmemdup(&uuid, माप(uuid_t), GFP_KERNEL);
-		अगर (!xd->remote_uuid)
-			वापस;
-	पूर्ण
+	/* First time fill in the missing UUID */
+	if (!xd->remote_uuid) {
+		xd->remote_uuid = kmemdup(&uuid, sizeof(uuid_t), GFP_KERNEL);
+		if (!xd->remote_uuid)
+			return;
+	}
 
 	/* Now we can start the normal properties exchange */
 	queue_delayed_work(xd->tb->wq, &xd->properties_changed_work,
-			   msecs_to_jअगरfies(100));
+			   msecs_to_jiffies(100));
 	queue_delayed_work(xd->tb->wq, &xd->get_properties_work,
-			   msecs_to_jअगरfies(1000));
-पूर्ण
+			   msecs_to_jiffies(1000));
+}
 
-अटल व्योम tb_xकरोमुख्य_get_properties(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(work, typeof(*xd),
+static void tb_xdomain_get_properties(struct work_struct *work)
+{
+	struct tb_xdomain *xd = container_of(work, typeof(*xd),
 					     get_properties_work.work);
-	काष्ठा tb_property_dir *dir;
-	काष्ठा tb *tb = xd->tb;
+	struct tb_property_dir *dir;
+	struct tb *tb = xd->tb;
 	bool update = false;
-	u32 *block = शून्य;
+	u32 *block = NULL;
 	u32 gen = 0;
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(&xd->dev, "requesting remote properties\n");
 
 	ret = tb_xdp_properties_request(tb->ctl, xd->route, xd->local_uuid,
 					xd->remote_uuid, xd->properties_retries,
 					&block, &gen);
-	अगर (ret < 0) अणु
-		अगर (xd->properties_retries-- > 0) अणु
+	if (ret < 0) {
+		if (xd->properties_retries-- > 0) {
 			dev_dbg(&xd->dev,
 				"failed to request remote properties, retrying\n");
 			queue_delayed_work(xd->tb->wq, &xd->get_properties_work,
-					   msecs_to_jअगरfies(1000));
-		पूर्ण अन्यथा अणु
+					   msecs_to_jiffies(1000));
+		} else {
 			/* Give up now */
 			dev_err(&xd->dev,
 				"failed read XDomain properties from %pUb\n",
 				xd->remote_uuid);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	xd->properties_retries = XDOMAIN_PROPERTIES_RETRIES;
 
 	mutex_lock(&xd->lock);
 
 	/* Only accept newer generation properties */
-	अगर (xd->remote_properties && gen <= xd->remote_property_block_gen)
-		जाओ err_मुक्त_block;
+	if (xd->remote_properties && gen <= xd->remote_property_block_gen)
+		goto err_free_block;
 
 	dir = tb_property_parse_dir(block, ret);
-	अगर (!dir) अणु
+	if (!dir) {
 		dev_err(&xd->dev, "failed to parse XDomain properties\n");
-		जाओ err_मुक्त_block;
-	पूर्ण
+		goto err_free_block;
+	}
 
 	ret = populate_properties(xd, dir);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&xd->dev, "missing XDomain properties in response\n");
-		जाओ err_मुक्त_dir;
-	पूर्ण
+		goto err_free_dir;
+	}
 
 	/* Release the existing one */
-	अगर (xd->remote_properties) अणु
-		tb_property_मुक्त_dir(xd->remote_properties);
+	if (xd->remote_properties) {
+		tb_property_free_dir(xd->remote_properties);
 		update = true;
-	पूर्ण
+	}
 
 	xd->remote_properties = dir;
 	xd->remote_property_block_gen = gen;
 
-	tb_xकरोमुख्य_update_link_attributes(xd);
+	tb_xdomain_update_link_attributes(xd);
 
 	mutex_unlock(&xd->lock);
 
-	kमुक्त(block);
+	kfree(block);
 
 	/*
-	 * Now the device should be पढ़ोy enough so we can add it to the
-	 * bus and let userspace know about it. If the device is alपढ़ोy
-	 * रेजिस्टरed, we notअगरy the userspace that it has changed.
+	 * Now the device should be ready enough so we can add it to the
+	 * bus and let userspace know about it. If the device is already
+	 * registered, we notify the userspace that it has changed.
 	 */
-	अगर (!update) अणु
-		अगर (device_add(&xd->dev)) अणु
+	if (!update) {
+		if (device_add(&xd->dev)) {
 			dev_err(&xd->dev, "failed to add XDomain device\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		dev_info(&xd->dev, "new host found, vendor=%#x device=%#x\n",
-			 xd->venकरोr, xd->device);
-		अगर (xd->venकरोr_name && xd->device_name)
-			dev_info(&xd->dev, "%s %s\n", xd->venकरोr_name,
+			 xd->vendor, xd->device);
+		if (xd->vendor_name && xd->device_name)
+			dev_info(&xd->dev, "%s %s\n", xd->vendor_name,
 				 xd->device_name);
-	पूर्ण अन्यथा अणु
+	} else {
 		kobject_uevent(&xd->dev.kobj, KOBJ_CHANGE);
-	पूर्ण
+	}
 
-	क्रमागतerate_services(xd);
-	वापस;
+	enumerate_services(xd);
+	return;
 
-err_मुक्त_dir:
-	tb_property_मुक्त_dir(dir);
-err_मुक्त_block:
-	kमुक्त(block);
+err_free_dir:
+	tb_property_free_dir(dir);
+err_free_block:
+	kfree(block);
 	mutex_unlock(&xd->lock);
-पूर्ण
+}
 
-अटल व्योम tb_xकरोमुख्य_properties_changed(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(work, typeof(*xd),
+static void tb_xdomain_properties_changed(struct work_struct *work)
+{
+	struct tb_xdomain *xd = container_of(work, typeof(*xd),
 					     properties_changed_work.work);
-	पूर्णांक ret;
+	int ret;
 
 	dev_dbg(&xd->dev, "sending properties changed notification\n");
 
 	ret = tb_xdp_properties_changed_request(xd->tb->ctl, xd->route,
 				xd->properties_changed_retries, xd->local_uuid);
-	अगर (ret) अणु
-		अगर (xd->properties_changed_retries-- > 0) अणु
+	if (ret) {
+		if (xd->properties_changed_retries-- > 0) {
 			dev_dbg(&xd->dev,
 				"failed to send properties changed notification, retrying\n");
 			queue_delayed_work(xd->tb->wq,
 					   &xd->properties_changed_work,
-					   msecs_to_jअगरfies(1000));
-		पूर्ण
+					   msecs_to_jiffies(1000));
+		}
 		dev_err(&xd->dev, "failed to send properties changed notification\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	xd->properties_changed_retries = XDOMAIN_PROPERTIES_CHANGED_RETRIES;
-पूर्ण
+}
 
-अटल sमाप_प्रकार device_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static ssize_t device_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
-	वापस प्र_लिखो(buf, "%#x\n", xd->device);
-पूर्ण
-अटल DEVICE_ATTR_RO(device);
+	return sprintf(buf, "%#x\n", xd->device);
+}
+static DEVICE_ATTR_RO(device);
 
-अटल sमाप_प्रकार
-device_name_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
-	पूर्णांक ret;
+static ssize_t
+device_name_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&xd->lock))
-		वापस -ERESTARTSYS;
-	ret = प्र_लिखो(buf, "%s\n", xd->device_name ? xd->device_name : "");
+	if (mutex_lock_interruptible(&xd->lock))
+		return -ERESTARTSYS;
+	ret = sprintf(buf, "%s\n", xd->device_name ? xd->device_name : "");
 	mutex_unlock(&xd->lock);
 
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RO(device_name);
+	return ret;
+}
+static DEVICE_ATTR_RO(device_name);
 
-अटल sमाप_प्रकार maxhopid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static ssize_t maxhopid_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
-	वापस प्र_लिखो(buf, "%d\n", xd->remote_max_hopid);
-पूर्ण
-अटल DEVICE_ATTR_RO(maxhopid);
+	return sprintf(buf, "%d\n", xd->remote_max_hopid);
+}
+static DEVICE_ATTR_RO(maxhopid);
 
-अटल sमाप_प्रकार venकरोr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static ssize_t vendor_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
-	वापस प्र_लिखो(buf, "%#x\n", xd->venकरोr);
-पूर्ण
-अटल DEVICE_ATTR_RO(venकरोr);
+	return sprintf(buf, "%#x\n", xd->vendor);
+}
+static DEVICE_ATTR_RO(vendor);
 
-अटल sमाप_प्रकार
-venकरोr_name_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
-	पूर्णांक ret;
+static ssize_t
+vendor_name_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&xd->lock))
-		वापस -ERESTARTSYS;
-	ret = प्र_लिखो(buf, "%s\n", xd->venकरोr_name ? xd->venकरोr_name : "");
+	if (mutex_lock_interruptible(&xd->lock))
+		return -ERESTARTSYS;
+	ret = sprintf(buf, "%s\n", xd->vendor_name ? xd->vendor_name : "");
 	mutex_unlock(&xd->lock);
 
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RO(venकरोr_name);
+	return ret;
+}
+static DEVICE_ATTR_RO(vendor_name);
 
-अटल sमाप_प्रकार unique_id_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static ssize_t unique_id_show(struct device *dev, struct device_attribute *attr,
+			      char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
-	वापस प्र_लिखो(buf, "%pUb\n", xd->remote_uuid);
-पूर्ण
-अटल DEVICE_ATTR_RO(unique_id);
+	return sprintf(buf, "%pUb\n", xd->remote_uuid);
+}
+static DEVICE_ATTR_RO(unique_id);
 
-अटल sमाप_प्रकार speed_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static ssize_t speed_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
-	वापस प्र_लिखो(buf, "%u.0 Gb/s\n", xd->link_speed);
-पूर्ण
+	return sprintf(buf, "%u.0 Gb/s\n", xd->link_speed);
+}
 
-अटल DEVICE_ATTR(rx_speed, 0444, speed_show, शून्य);
-अटल DEVICE_ATTR(tx_speed, 0444, speed_show, शून्य);
+static DEVICE_ATTR(rx_speed, 0444, speed_show, NULL);
+static DEVICE_ATTR(tx_speed, 0444, speed_show, NULL);
 
-अटल sमाप_प्रकार lanes_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static ssize_t lanes_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
-	वापस प्र_लिखो(buf, "%u\n", xd->link_width);
-पूर्ण
+	return sprintf(buf, "%u\n", xd->link_width);
+}
 
-अटल DEVICE_ATTR(rx_lanes, 0444, lanes_show, शून्य);
-अटल DEVICE_ATTR(tx_lanes, 0444, lanes_show, शून्य);
+static DEVICE_ATTR(rx_lanes, 0444, lanes_show, NULL);
+static DEVICE_ATTR(tx_lanes, 0444, lanes_show, NULL);
 
-अटल काष्ठा attribute *xकरोमुख्य_attrs[] = अणु
+static struct attribute *xdomain_attrs[] = {
 	&dev_attr_device.attr,
 	&dev_attr_device_name.attr,
 	&dev_attr_maxhopid.attr,
@@ -1274,59 +1273,59 @@ venकरोr_name_show(काष्ठा device *dev, काष्ठा devic
 	&dev_attr_tx_lanes.attr,
 	&dev_attr_tx_speed.attr,
 	&dev_attr_unique_id.attr,
-	&dev_attr_venकरोr.attr,
-	&dev_attr_venकरोr_name.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_vendor.attr,
+	&dev_attr_vendor_name.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group xकरोमुख्य_attr_group = अणु
-	.attrs = xकरोमुख्य_attrs,
-पूर्ण;
+static const struct attribute_group xdomain_attr_group = {
+	.attrs = xdomain_attrs,
+};
 
-अटल स्थिर काष्ठा attribute_group *xकरोमुख्य_attr_groups[] = अणु
-	&xकरोमुख्य_attr_group,
-	शून्य,
-पूर्ण;
+static const struct attribute_group *xdomain_attr_groups[] = {
+	&xdomain_attr_group,
+	NULL,
+};
 
-अटल व्योम tb_xकरोमुख्य_release(काष्ठा device *dev)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd = container_of(dev, काष्ठा tb_xकरोमुख्य, dev);
+static void tb_xdomain_release(struct device *dev)
+{
+	struct tb_xdomain *xd = container_of(dev, struct tb_xdomain, dev);
 
 	put_device(xd->dev.parent);
 
-	kमुक्त(xd->local_property_block);
-	tb_property_मुक्त_dir(xd->remote_properties);
+	kfree(xd->local_property_block);
+	tb_property_free_dir(xd->remote_properties);
 	ida_destroy(&xd->out_hopids);
 	ida_destroy(&xd->in_hopids);
 	ida_destroy(&xd->service_ids);
 
-	kमुक्त(xd->local_uuid);
-	kमुक्त(xd->remote_uuid);
-	kमुक्त(xd->device_name);
-	kमुक्त(xd->venकरोr_name);
-	kमुक्त(xd);
-पूर्ण
+	kfree(xd->local_uuid);
+	kfree(xd->remote_uuid);
+	kfree(xd->device_name);
+	kfree(xd->vendor_name);
+	kfree(xd);
+}
 
-अटल व्योम start_handshake(काष्ठा tb_xकरोमुख्य *xd)
-अणु
+static void start_handshake(struct tb_xdomain *xd)
+{
 	xd->uuid_retries = XDOMAIN_UUID_RETRIES;
 	xd->properties_retries = XDOMAIN_PROPERTIES_RETRIES;
 	xd->properties_changed_retries = XDOMAIN_PROPERTIES_CHANGED_RETRIES;
 
-	अगर (xd->needs_uuid) अणु
+	if (xd->needs_uuid) {
 		queue_delayed_work(xd->tb->wq, &xd->get_uuid_work,
-				   msecs_to_jअगरfies(100));
-	पूर्ण अन्यथा अणु
+				   msecs_to_jiffies(100));
+	} else {
 		/* Start exchanging properties with the other host */
 		queue_delayed_work(xd->tb->wq, &xd->properties_changed_work,
-				   msecs_to_jअगरfies(100));
+				   msecs_to_jiffies(100));
 		queue_delayed_work(xd->tb->wq, &xd->get_properties_work,
-				   msecs_to_jअगरfies(1000));
-	पूर्ण
-पूर्ण
+				   msecs_to_jiffies(1000));
+	}
+}
 
-अटल व्योम stop_handshake(काष्ठा tb_xकरोमुख्य *xd)
-अणु
+static void stop_handshake(struct tb_xdomain *xd)
+{
 	xd->uuid_retries = 0;
 	xd->properties_retries = 0;
 	xd->properties_changed_retries = 0;
@@ -1334,617 +1333,617 @@ venकरोr_name_show(काष्ठा device *dev, काष्ठा devic
 	cancel_delayed_work_sync(&xd->get_uuid_work);
 	cancel_delayed_work_sync(&xd->get_properties_work);
 	cancel_delayed_work_sync(&xd->properties_changed_work);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused tb_xकरोमुख्य_suspend(काष्ठा device *dev)
-अणु
-	stop_handshake(tb_to_xकरोमुख्य(dev));
-	वापस 0;
-पूर्ण
+static int __maybe_unused tb_xdomain_suspend(struct device *dev)
+{
+	stop_handshake(tb_to_xdomain(dev));
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused tb_xकरोमुख्य_resume(काष्ठा device *dev)
-अणु
-	start_handshake(tb_to_xकरोमुख्य(dev));
-	वापस 0;
-पूर्ण
+static int __maybe_unused tb_xdomain_resume(struct device *dev)
+{
+	start_handshake(tb_to_xdomain(dev));
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops tb_xकरोमुख्य_pm_ops = अणु
-	SET_SYSTEM_SLEEP_PM_OPS(tb_xकरोमुख्य_suspend, tb_xकरोमुख्य_resume)
-पूर्ण;
+static const struct dev_pm_ops tb_xdomain_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(tb_xdomain_suspend, tb_xdomain_resume)
+};
 
-काष्ठा device_type tb_xकरोमुख्य_type = अणु
+struct device_type tb_xdomain_type = {
 	.name = "thunderbolt_xdomain",
-	.release = tb_xकरोमुख्य_release,
-	.pm = &tb_xकरोमुख्य_pm_ops,
-पूर्ण;
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_type);
+	.release = tb_xdomain_release,
+	.pm = &tb_xdomain_pm_ops,
+};
+EXPORT_SYMBOL_GPL(tb_xdomain_type);
 
 /**
- * tb_xकरोमुख्य_alloc() - Allocate new XDoमुख्य object
- * @tb: Doमुख्य where the XDoमुख्य beदीर्घs
- * @parent: Parent device (the चयन through the connection to the
- *	    other करोमुख्य is reached).
- * @route: Route string used to reach the other करोमुख्य
- * @local_uuid: Our local करोमुख्य UUID
- * @remote_uuid: UUID of the other करोमुख्य (optional)
+ * tb_xdomain_alloc() - Allocate new XDomain object
+ * @tb: Domain where the XDomain belongs
+ * @parent: Parent device (the switch through the connection to the
+ *	    other domain is reached).
+ * @route: Route string used to reach the other domain
+ * @local_uuid: Our local domain UUID
+ * @remote_uuid: UUID of the other domain (optional)
  *
- * Allocates new XDoमुख्य काष्ठाure and वापसs poपूर्णांकer to that. The
- * object must be released by calling tb_xकरोमुख्य_put().
+ * Allocates new XDomain structure and returns pointer to that. The
+ * object must be released by calling tb_xdomain_put().
  */
-काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_alloc(काष्ठा tb *tb, काष्ठा device *parent,
-				    u64 route, स्थिर uuid_t *local_uuid,
-				    स्थिर uuid_t *remote_uuid)
-अणु
-	काष्ठा tb_चयन *parent_sw = tb_to_चयन(parent);
-	काष्ठा tb_xकरोमुख्य *xd;
-	काष्ठा tb_port *करोwn;
+struct tb_xdomain *tb_xdomain_alloc(struct tb *tb, struct device *parent,
+				    u64 route, const uuid_t *local_uuid,
+				    const uuid_t *remote_uuid)
+{
+	struct tb_switch *parent_sw = tb_to_switch(parent);
+	struct tb_xdomain *xd;
+	struct tb_port *down;
 
-	/* Make sure the करोwnstream करोमुख्य is accessible */
-	करोwn = tb_port_at(route, parent_sw);
-	tb_port_unlock(करोwn);
+	/* Make sure the downstream domain is accessible */
+	down = tb_port_at(route, parent_sw);
+	tb_port_unlock(down);
 
-	xd = kzalloc(माप(*xd), GFP_KERNEL);
-	अगर (!xd)
-		वापस शून्य;
+	xd = kzalloc(sizeof(*xd), GFP_KERNEL);
+	if (!xd)
+		return NULL;
 
 	xd->tb = tb;
 	xd->route = route;
-	xd->local_max_hopid = करोwn->config.max_in_hop_id;
+	xd->local_max_hopid = down->config.max_in_hop_id;
 	ida_init(&xd->service_ids);
 	ida_init(&xd->in_hopids);
 	ida_init(&xd->out_hopids);
 	mutex_init(&xd->lock);
-	INIT_DELAYED_WORK(&xd->get_uuid_work, tb_xकरोमुख्य_get_uuid);
-	INIT_DELAYED_WORK(&xd->get_properties_work, tb_xकरोमुख्य_get_properties);
+	INIT_DELAYED_WORK(&xd->get_uuid_work, tb_xdomain_get_uuid);
+	INIT_DELAYED_WORK(&xd->get_properties_work, tb_xdomain_get_properties);
 	INIT_DELAYED_WORK(&xd->properties_changed_work,
-			  tb_xकरोमुख्य_properties_changed);
+			  tb_xdomain_properties_changed);
 
-	xd->local_uuid = kmemdup(local_uuid, माप(uuid_t), GFP_KERNEL);
-	अगर (!xd->local_uuid)
-		जाओ err_मुक्त;
+	xd->local_uuid = kmemdup(local_uuid, sizeof(uuid_t), GFP_KERNEL);
+	if (!xd->local_uuid)
+		goto err_free;
 
-	अगर (remote_uuid) अणु
-		xd->remote_uuid = kmemdup(remote_uuid, माप(uuid_t),
+	if (remote_uuid) {
+		xd->remote_uuid = kmemdup(remote_uuid, sizeof(uuid_t),
 					  GFP_KERNEL);
-		अगर (!xd->remote_uuid)
-			जाओ err_मुक्त_local_uuid;
-	पूर्ण अन्यथा अणु
+		if (!xd->remote_uuid)
+			goto err_free_local_uuid;
+	} else {
 		xd->needs_uuid = true;
-	पूर्ण
+	}
 
 	device_initialize(&xd->dev);
 	xd->dev.parent = get_device(parent);
 	xd->dev.bus = &tb_bus_type;
-	xd->dev.type = &tb_xकरोमुख्य_type;
-	xd->dev.groups = xकरोमुख्य_attr_groups;
+	xd->dev.type = &tb_xdomain_type;
+	xd->dev.groups = xdomain_attr_groups;
 	dev_set_name(&xd->dev, "%u-%llx", tb->index, route);
 
 	dev_dbg(&xd->dev, "local UUID %pUb\n", local_uuid);
-	अगर (remote_uuid)
+	if (remote_uuid)
 		dev_dbg(&xd->dev, "remote UUID %pUb\n", remote_uuid);
 
 	/*
-	 * This keeps the DMA घातered on as दीर्घ as we have active
+	 * This keeps the DMA powered on as long as we have active
 	 * connection to another host.
 	 */
-	pm_runसमय_set_active(&xd->dev);
-	pm_runसमय_get_noresume(&xd->dev);
-	pm_runसमय_enable(&xd->dev);
+	pm_runtime_set_active(&xd->dev);
+	pm_runtime_get_noresume(&xd->dev);
+	pm_runtime_enable(&xd->dev);
 
-	वापस xd;
+	return xd;
 
-err_मुक्त_local_uuid:
-	kमुक्त(xd->local_uuid);
-err_मुक्त:
-	kमुक्त(xd);
+err_free_local_uuid:
+	kfree(xd->local_uuid);
+err_free:
+	kfree(xd);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * tb_xकरोमुख्य_add() - Add XDoमुख्य to the bus
- * @xd: XDoमुख्य to add
+ * tb_xdomain_add() - Add XDomain to the bus
+ * @xd: XDomain to add
  *
- * This function starts XDoमुख्य discovery protocol handshake and
- * eventually adds the XDoमुख्य to the bus. After calling this function
- * the caller needs to call tb_xकरोमुख्य_हटाओ() in order to हटाओ and
+ * This function starts XDomain discovery protocol handshake and
+ * eventually adds the XDomain to the bus. After calling this function
+ * the caller needs to call tb_xdomain_remove() in order to remove and
  * release the object regardless whether the handshake succeeded or not.
  */
-व्योम tb_xकरोमुख्य_add(काष्ठा tb_xकरोमुख्य *xd)
-अणु
+void tb_xdomain_add(struct tb_xdomain *xd)
+{
 	/* Start exchanging properties with the other host */
 	start_handshake(xd);
-पूर्ण
+}
 
-अटल पूर्णांक unरेजिस्टर_service(काष्ठा device *dev, व्योम *data)
-अणु
-	device_unरेजिस्टर(dev);
-	वापस 0;
-पूर्ण
+static int unregister_service(struct device *dev, void *data)
+{
+	device_unregister(dev);
+	return 0;
+}
 
 /**
- * tb_xकरोमुख्य_हटाओ() - Remove XDoमुख्य from the bus
- * @xd: XDoमुख्य to हटाओ
+ * tb_xdomain_remove() - Remove XDomain from the bus
+ * @xd: XDomain to remove
  *
- * This will stop all ongoing configuration work and हटाओ the XDoमुख्य
- * aदीर्घ with any services from the bus. When the last reference to @xd
+ * This will stop all ongoing configuration work and remove the XDomain
+ * along with any services from the bus. When the last reference to @xd
  * is released the object will be released as well.
  */
-व्योम tb_xकरोमुख्य_हटाओ(काष्ठा tb_xकरोमुख्य *xd)
-अणु
+void tb_xdomain_remove(struct tb_xdomain *xd)
+{
 	stop_handshake(xd);
 
-	device_क्रम_each_child_reverse(&xd->dev, xd, unरेजिस्टर_service);
+	device_for_each_child_reverse(&xd->dev, xd, unregister_service);
 
 	/*
-	 * Unकरो runसमय PM here explicitly because it is possible that
-	 * the XDoमुख्य was never added to the bus and thus device_del()
-	 * is not called क्रम it (device_del() would handle this otherwise).
+	 * Undo runtime PM here explicitly because it is possible that
+	 * the XDomain was never added to the bus and thus device_del()
+	 * is not called for it (device_del() would handle this otherwise).
 	 */
-	pm_runसमय_disable(&xd->dev);
-	pm_runसमय_put_noidle(&xd->dev);
-	pm_runसमय_set_suspended(&xd->dev);
+	pm_runtime_disable(&xd->dev);
+	pm_runtime_put_noidle(&xd->dev);
+	pm_runtime_set_suspended(&xd->dev);
 
-	अगर (!device_is_रेजिस्टरed(&xd->dev)) अणु
+	if (!device_is_registered(&xd->dev)) {
 		put_device(&xd->dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(&xd->dev, "host disconnected\n");
-		device_unरेजिस्टर(&xd->dev);
-	पूर्ण
-पूर्ण
+		device_unregister(&xd->dev);
+	}
+}
 
 /**
- * tb_xकरोमुख्य_lane_bonding_enable() - Enable lane bonding on XDoमुख्य
- * @xd: XDoमुख्य connection
+ * tb_xdomain_lane_bonding_enable() - Enable lane bonding on XDomain
+ * @xd: XDomain connection
  *
- * Lane bonding is disabled by शेष क्रम XDoमुख्यs. This function tries
- * to enable bonding by first enabling the port and रुकोing क्रम the CL0
+ * Lane bonding is disabled by default for XDomains. This function tries
+ * to enable bonding by first enabling the port and waiting for the CL0
  * state.
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं in हाल of error.
+ * Return: %0 in case of success and negative errno in case of error.
  */
-पूर्णांक tb_xकरोमुख्य_lane_bonding_enable(काष्ठा tb_xकरोमुख्य *xd)
-अणु
-	काष्ठा tb_port *port;
-	पूर्णांक ret;
+int tb_xdomain_lane_bonding_enable(struct tb_xdomain *xd)
+{
+	struct tb_port *port;
+	int ret;
 
-	port = tb_port_at(xd->route, tb_xकरोमुख्य_parent(xd));
-	अगर (!port->dual_link_port)
-		वापस -ENODEV;
+	port = tb_port_at(xd->route, tb_xdomain_parent(xd));
+	if (!port->dual_link_port)
+		return -ENODEV;
 
 	ret = tb_port_enable(port->dual_link_port);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = tb_रुको_क्रम_port(port->dual_link_port, true);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (!ret)
-		वापस -ENOTCONN;
+	ret = tb_wait_for_port(port->dual_link_port, true);
+	if (ret < 0)
+		return ret;
+	if (!ret)
+		return -ENOTCONN;
 
 	ret = tb_port_lane_bonding_enable(port);
-	अगर (ret) अणु
+	if (ret) {
 		tb_port_warn(port, "failed to enable lane bonding\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	tb_xकरोमुख्य_update_link_attributes(xd);
+	tb_xdomain_update_link_attributes(xd);
 
 	dev_dbg(&xd->dev, "lane bonding enabled\n");
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_lane_bonding_enable);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_lane_bonding_enable);
 
 /**
- * tb_xकरोमुख्य_lane_bonding_disable() - Disable lane bonding
- * @xd: XDoमुख्य connection
+ * tb_xdomain_lane_bonding_disable() - Disable lane bonding
+ * @xd: XDomain connection
  *
- * Lane bonding is disabled by शेष क्रम XDoमुख्यs. If bonding has been
+ * Lane bonding is disabled by default for XDomains. If bonding has been
  * enabled, this function can be used to disable it.
  */
-व्योम tb_xकरोमुख्य_lane_bonding_disable(काष्ठा tb_xकरोमुख्य *xd)
-अणु
-	काष्ठा tb_port *port;
+void tb_xdomain_lane_bonding_disable(struct tb_xdomain *xd)
+{
+	struct tb_port *port;
 
-	port = tb_port_at(xd->route, tb_xकरोमुख्य_parent(xd));
-	अगर (port->dual_link_port) अणु
+	port = tb_port_at(xd->route, tb_xdomain_parent(xd));
+	if (port->dual_link_port) {
 		tb_port_lane_bonding_disable(port);
 		tb_port_disable(port->dual_link_port);
-		tb_xकरोमुख्य_update_link_attributes(xd);
+		tb_xdomain_update_link_attributes(xd);
 
 		dev_dbg(&xd->dev, "lane bonding disabled\n");
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_lane_bonding_disable);
+	}
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_lane_bonding_disable);
 
 /**
- * tb_xकरोमुख्य_alloc_in_hopid() - Allocate input HopID क्रम tunneling
- * @xd: XDoमुख्य connection
- * @hopid: Preferred HopID or %-1 क्रम next available
+ * tb_xdomain_alloc_in_hopid() - Allocate input HopID for tunneling
+ * @xd: XDomain connection
+ * @hopid: Preferred HopID or %-1 for next available
  *
- * Returns allocated HopID or negative त्रुटि_सं. Specअगरically वापसs
- * %-ENOSPC अगर there are no more available HopIDs. Returned HopID is
+ * Returns allocated HopID or negative errno. Specifically returns
+ * %-ENOSPC if there are no more available HopIDs. Returned HopID is
  * guaranteed to be within range supported by the input lane adapter.
- * Call tb_xकरोमुख्य_release_in_hopid() to release the allocated HopID.
+ * Call tb_xdomain_release_in_hopid() to release the allocated HopID.
  */
-पूर्णांक tb_xकरोमुख्य_alloc_in_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid)
-अणु
-	अगर (hopid < 0)
+int tb_xdomain_alloc_in_hopid(struct tb_xdomain *xd, int hopid)
+{
+	if (hopid < 0)
 		hopid = TB_PATH_MIN_HOPID;
-	अगर (hopid < TB_PATH_MIN_HOPID || hopid > xd->local_max_hopid)
-		वापस -EINVAL;
+	if (hopid < TB_PATH_MIN_HOPID || hopid > xd->local_max_hopid)
+		return -EINVAL;
 
-	वापस ida_alloc_range(&xd->in_hopids, hopid, xd->local_max_hopid,
+	return ida_alloc_range(&xd->in_hopids, hopid, xd->local_max_hopid,
 			       GFP_KERNEL);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_alloc_in_hopid);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_alloc_in_hopid);
 
 /**
- * tb_xकरोमुख्य_alloc_out_hopid() - Allocate output HopID क्रम tunneling
- * @xd: XDoमुख्य connection
- * @hopid: Preferred HopID or %-1 क्रम next available
+ * tb_xdomain_alloc_out_hopid() - Allocate output HopID for tunneling
+ * @xd: XDomain connection
+ * @hopid: Preferred HopID or %-1 for next available
  *
- * Returns allocated HopID or negative त्रुटि_सं. Specअगरically वापसs
- * %-ENOSPC अगर there are no more available HopIDs. Returned HopID is
+ * Returns allocated HopID or negative errno. Specifically returns
+ * %-ENOSPC if there are no more available HopIDs. Returned HopID is
  * guaranteed to be within range supported by the output lane adapter.
- * Call tb_xकरोमुख्य_release_in_hopid() to release the allocated HopID.
+ * Call tb_xdomain_release_in_hopid() to release the allocated HopID.
  */
-पूर्णांक tb_xकरोमुख्य_alloc_out_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid)
-अणु
-	अगर (hopid < 0)
+int tb_xdomain_alloc_out_hopid(struct tb_xdomain *xd, int hopid)
+{
+	if (hopid < 0)
 		hopid = TB_PATH_MIN_HOPID;
-	अगर (hopid < TB_PATH_MIN_HOPID || hopid > xd->remote_max_hopid)
-		वापस -EINVAL;
+	if (hopid < TB_PATH_MIN_HOPID || hopid > xd->remote_max_hopid)
+		return -EINVAL;
 
-	वापस ida_alloc_range(&xd->out_hopids, hopid, xd->remote_max_hopid,
+	return ida_alloc_range(&xd->out_hopids, hopid, xd->remote_max_hopid,
 			       GFP_KERNEL);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_alloc_out_hopid);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_alloc_out_hopid);
 
 /**
- * tb_xकरोमुख्य_release_in_hopid() - Release input HopID
- * @xd: XDoमुख्य connection
+ * tb_xdomain_release_in_hopid() - Release input HopID
+ * @xd: XDomain connection
  * @hopid: HopID to release
  */
-व्योम tb_xकरोमुख्य_release_in_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid)
-अणु
-	ida_मुक्त(&xd->in_hopids, hopid);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_release_in_hopid);
+void tb_xdomain_release_in_hopid(struct tb_xdomain *xd, int hopid)
+{
+	ida_free(&xd->in_hopids, hopid);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_release_in_hopid);
 
 /**
- * tb_xकरोमुख्य_release_out_hopid() - Release output HopID
- * @xd: XDoमुख्य connection
+ * tb_xdomain_release_out_hopid() - Release output HopID
+ * @xd: XDomain connection
  * @hopid: HopID to release
  */
-व्योम tb_xकरोमुख्य_release_out_hopid(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक hopid)
-अणु
-	ida_मुक्त(&xd->out_hopids, hopid);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_release_out_hopid);
+void tb_xdomain_release_out_hopid(struct tb_xdomain *xd, int hopid)
+{
+	ida_free(&xd->out_hopids, hopid);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_release_out_hopid);
 
 /**
- * tb_xकरोमुख्य_enable_paths() - Enable DMA paths क्रम XDoमुख्य connection
- * @xd: XDoमुख्य connection
+ * tb_xdomain_enable_paths() - Enable DMA paths for XDomain connection
+ * @xd: XDomain connection
  * @transmit_path: HopID we are using to send out packets
  * @transmit_ring: DMA ring used to send out packets
  * @receive_path: HopID the other end is using to send packets to us
  * @receive_ring: DMA ring used to receive packets from @receive_path
  *
  * The function enables DMA paths accordingly so that after successful
- * वापस the caller can send and receive packets using high-speed DMA
- * path. If a transmit or receive path is not needed, pass %-1 क्रम those
+ * return the caller can send and receive packets using high-speed DMA
+ * path. If a transmit or receive path is not needed, pass %-1 for those
  * parameters.
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं in हाल of error
+ * Return: %0 in case of success and negative errno in case of error
  */
-पूर्णांक tb_xकरोमुख्य_enable_paths(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक transmit_path,
-			    पूर्णांक transmit_ring, पूर्णांक receive_path,
-			    पूर्णांक receive_ring)
-अणु
-	वापस tb_करोमुख्य_approve_xकरोमुख्य_paths(xd->tb, xd, transmit_path,
+int tb_xdomain_enable_paths(struct tb_xdomain *xd, int transmit_path,
+			    int transmit_ring, int receive_path,
+			    int receive_ring)
+{
+	return tb_domain_approve_xdomain_paths(xd->tb, xd, transmit_path,
 					       transmit_ring, receive_path,
 					       receive_ring);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_enable_paths);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_enable_paths);
 
 /**
- * tb_xकरोमुख्य_disable_paths() - Disable DMA paths क्रम XDoमुख्य connection
- * @xd: XDoमुख्य connection
+ * tb_xdomain_disable_paths() - Disable DMA paths for XDomain connection
+ * @xd: XDomain connection
  * @transmit_path: HopID we are using to send out packets
  * @transmit_ring: DMA ring used to send out packets
  * @receive_path: HopID the other end is using to send packets to us
  * @receive_ring: DMA ring used to receive packets from @receive_path
  *
- * This करोes the opposite of tb_xकरोमुख्य_enable_paths(). After call to
+ * This does the opposite of tb_xdomain_enable_paths(). After call to
  * this the caller is not expected to use the rings anymore. Passing %-1
- * as path/ring parameter means करोn't care. Normally the callers should
- * pass the same values here as they करो when paths are enabled.
+ * as path/ring parameter means don't care. Normally the callers should
+ * pass the same values here as they do when paths are enabled.
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं in हाल of error
+ * Return: %0 in case of success and negative errno in case of error
  */
-पूर्णांक tb_xकरोमुख्य_disable_paths(काष्ठा tb_xकरोमुख्य *xd, पूर्णांक transmit_path,
-			     पूर्णांक transmit_ring, पूर्णांक receive_path,
-			     पूर्णांक receive_ring)
-अणु
-	वापस tb_करोमुख्य_disconnect_xकरोमुख्य_paths(xd->tb, xd, transmit_path,
+int tb_xdomain_disable_paths(struct tb_xdomain *xd, int transmit_path,
+			     int transmit_ring, int receive_path,
+			     int receive_ring)
+{
+	return tb_domain_disconnect_xdomain_paths(xd->tb, xd, transmit_path,
 						  transmit_ring, receive_path,
 						  receive_ring);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_disable_paths);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_disable_paths);
 
-काष्ठा tb_xकरोमुख्य_lookup अणु
-	स्थिर uuid_t *uuid;
+struct tb_xdomain_lookup {
+	const uuid_t *uuid;
 	u8 link;
 	u8 depth;
 	u64 route;
-पूर्ण;
+};
 
-अटल काष्ठा tb_xकरोमुख्य *चयन_find_xकरोमुख्य(काष्ठा tb_चयन *sw,
-	स्थिर काष्ठा tb_xकरोमुख्य_lookup *lookup)
-अणु
-	काष्ठा tb_port *port;
+static struct tb_xdomain *switch_find_xdomain(struct tb_switch *sw,
+	const struct tb_xdomain_lookup *lookup)
+{
+	struct tb_port *port;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		काष्ठा tb_xकरोमुख्य *xd;
+	tb_switch_for_each_port(sw, port) {
+		struct tb_xdomain *xd;
 
-		अगर (port->xकरोमुख्य) अणु
-			xd = port->xकरोमुख्य;
+		if (port->xdomain) {
+			xd = port->xdomain;
 
-			अगर (lookup->uuid) अणु
-				अगर (xd->remote_uuid &&
+			if (lookup->uuid) {
+				if (xd->remote_uuid &&
 				    uuid_equal(xd->remote_uuid, lookup->uuid))
-					वापस xd;
-			पूर्ण अन्यथा अगर (lookup->link &&
+					return xd;
+			} else if (lookup->link &&
 				   lookup->link == xd->link &&
-				   lookup->depth == xd->depth) अणु
-				वापस xd;
-			पूर्ण अन्यथा अगर (lookup->route &&
-				   lookup->route == xd->route) अणु
-				वापस xd;
-			पूर्ण
-		पूर्ण अन्यथा अगर (tb_port_has_remote(port)) अणु
-			xd = चयन_find_xकरोमुख्य(port->remote->sw, lookup);
-			अगर (xd)
-				वापस xd;
-		पूर्ण
-	पूर्ण
+				   lookup->depth == xd->depth) {
+				return xd;
+			} else if (lookup->route &&
+				   lookup->route == xd->route) {
+				return xd;
+			}
+		} else if (tb_port_has_remote(port)) {
+			xd = switch_find_xdomain(port->remote->sw, lookup);
+			if (xd)
+				return xd;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * tb_xकरोमुख्य_find_by_uuid() - Find an XDoमुख्य by UUID
- * @tb: Doमुख्य where the XDoमुख्य beदीर्घs to
- * @uuid: UUID to look क्रम
+ * tb_xdomain_find_by_uuid() - Find an XDomain by UUID
+ * @tb: Domain where the XDomain belongs to
+ * @uuid: UUID to look for
  *
- * Finds XDoमुख्य by walking through the Thunderbolt topology below @tb.
- * The वापसed XDoमुख्य will have its reference count increased so the
- * caller needs to call tb_xकरोमुख्य_put() when it is करोne with the
+ * Finds XDomain by walking through the Thunderbolt topology below @tb.
+ * The returned XDomain will have its reference count increased so the
+ * caller needs to call tb_xdomain_put() when it is done with the
  * object.
  *
- * This will find all XDoमुख्यs including the ones that are not yet added
+ * This will find all XDomains including the ones that are not yet added
  * to the bus (handshake is still in progress).
  *
  * The caller needs to hold @tb->lock.
  */
-काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_find_by_uuid(काष्ठा tb *tb, स्थिर uuid_t *uuid)
-अणु
-	काष्ठा tb_xकरोमुख्य_lookup lookup;
-	काष्ठा tb_xकरोमुख्य *xd;
+struct tb_xdomain *tb_xdomain_find_by_uuid(struct tb *tb, const uuid_t *uuid)
+{
+	struct tb_xdomain_lookup lookup;
+	struct tb_xdomain *xd;
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.uuid = uuid;
 
-	xd = चयन_find_xकरोमुख्य(tb->root_चयन, &lookup);
-	वापस tb_xकरोमुख्य_get(xd);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_find_by_uuid);
+	xd = switch_find_xdomain(tb->root_switch, &lookup);
+	return tb_xdomain_get(xd);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_find_by_uuid);
 
 /**
- * tb_xकरोमुख्य_find_by_link_depth() - Find an XDoमुख्य by link and depth
- * @tb: Doमुख्य where the XDoमुख्य beदीर्घs to
- * @link: Root चयन link number
+ * tb_xdomain_find_by_link_depth() - Find an XDomain by link and depth
+ * @tb: Domain where the XDomain belongs to
+ * @link: Root switch link number
  * @depth: Depth in the link
  *
- * Finds XDoमुख्य by walking through the Thunderbolt topology below @tb.
- * The वापसed XDoमुख्य will have its reference count increased so the
- * caller needs to call tb_xकरोमुख्य_put() when it is करोne with the
+ * Finds XDomain by walking through the Thunderbolt topology below @tb.
+ * The returned XDomain will have its reference count increased so the
+ * caller needs to call tb_xdomain_put() when it is done with the
  * object.
  *
- * This will find all XDoमुख्यs including the ones that are not yet added
+ * This will find all XDomains including the ones that are not yet added
  * to the bus (handshake is still in progress).
  *
  * The caller needs to hold @tb->lock.
  */
-काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_find_by_link_depth(काष्ठा tb *tb, u8 link,
+struct tb_xdomain *tb_xdomain_find_by_link_depth(struct tb *tb, u8 link,
 						 u8 depth)
-अणु
-	काष्ठा tb_xकरोमुख्य_lookup lookup;
-	काष्ठा tb_xकरोमुख्य *xd;
+{
+	struct tb_xdomain_lookup lookup;
+	struct tb_xdomain *xd;
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.link = link;
 	lookup.depth = depth;
 
-	xd = चयन_find_xकरोमुख्य(tb->root_चयन, &lookup);
-	वापस tb_xकरोमुख्य_get(xd);
-पूर्ण
+	xd = switch_find_xdomain(tb->root_switch, &lookup);
+	return tb_xdomain_get(xd);
+}
 
 /**
- * tb_xकरोमुख्य_find_by_route() - Find an XDoमुख्य by route string
- * @tb: Doमुख्य where the XDoमुख्य beदीर्घs to
- * @route: XDoमुख्य route string
+ * tb_xdomain_find_by_route() - Find an XDomain by route string
+ * @tb: Domain where the XDomain belongs to
+ * @route: XDomain route string
  *
- * Finds XDoमुख्य by walking through the Thunderbolt topology below @tb.
- * The वापसed XDoमुख्य will have its reference count increased so the
- * caller needs to call tb_xकरोमुख्य_put() when it is करोne with the
+ * Finds XDomain by walking through the Thunderbolt topology below @tb.
+ * The returned XDomain will have its reference count increased so the
+ * caller needs to call tb_xdomain_put() when it is done with the
  * object.
  *
- * This will find all XDoमुख्यs including the ones that are not yet added
+ * This will find all XDomains including the ones that are not yet added
  * to the bus (handshake is still in progress).
  *
  * The caller needs to hold @tb->lock.
  */
-काष्ठा tb_xकरोमुख्य *tb_xकरोमुख्य_find_by_route(काष्ठा tb *tb, u64 route)
-अणु
-	काष्ठा tb_xकरोमुख्य_lookup lookup;
-	काष्ठा tb_xकरोमुख्य *xd;
+struct tb_xdomain *tb_xdomain_find_by_route(struct tb *tb, u64 route)
+{
+	struct tb_xdomain_lookup lookup;
+	struct tb_xdomain *xd;
 
-	स_रखो(&lookup, 0, माप(lookup));
+	memset(&lookup, 0, sizeof(lookup));
 	lookup.route = route;
 
-	xd = चयन_find_xकरोमुख्य(tb->root_चयन, &lookup);
-	वापस tb_xकरोमुख्य_get(xd);
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_xकरोमुख्य_find_by_route);
+	xd = switch_find_xdomain(tb->root_switch, &lookup);
+	return tb_xdomain_get(xd);
+}
+EXPORT_SYMBOL_GPL(tb_xdomain_find_by_route);
 
-bool tb_xकरोमुख्य_handle_request(काष्ठा tb *tb, क्रमागत tb_cfg_pkg_type type,
-			       स्थिर व्योम *buf, माप_प्रकार size)
-अणु
-	स्थिर काष्ठा tb_protocol_handler *handler, *पंचांगp;
-	स्थिर काष्ठा tb_xdp_header *hdr = buf;
-	अचिन्हित पूर्णांक length;
-	पूर्णांक ret = 0;
+bool tb_xdomain_handle_request(struct tb *tb, enum tb_cfg_pkg_type type,
+			       const void *buf, size_t size)
+{
+	const struct tb_protocol_handler *handler, *tmp;
+	const struct tb_xdp_header *hdr = buf;
+	unsigned int length;
+	int ret = 0;
 
 	/* We expect the packet is at least size of the header */
 	length = hdr->xd_hdr.length_sn & TB_XDOMAIN_LENGTH_MASK;
-	अगर (length != size / 4 - माप(hdr->xd_hdr) / 4)
-		वापस true;
-	अगर (length < माप(*hdr) / 4 - माप(hdr->xd_hdr) / 4)
-		वापस true;
+	if (length != size / 4 - sizeof(hdr->xd_hdr) / 4)
+		return true;
+	if (length < sizeof(*hdr) / 4 - sizeof(hdr->xd_hdr) / 4)
+		return true;
 
 	/*
-	 * Handle XDoमुख्य discovery protocol packets directly here. For
-	 * other protocols (based on their UUID) we call रेजिस्टरed
+	 * Handle XDomain discovery protocol packets directly here. For
+	 * other protocols (based on their UUID) we call registered
 	 * handlers in turn.
 	 */
-	अगर (uuid_equal(&hdr->uuid, &tb_xdp_uuid)) अणु
-		अगर (type == TB_CFG_PKG_XDOMAIN_REQ)
-			वापस tb_xdp_schedule_request(tb, hdr, size);
-		वापस false;
-	पूर्ण
+	if (uuid_equal(&hdr->uuid, &tb_xdp_uuid)) {
+		if (type == TB_CFG_PKG_XDOMAIN_REQ)
+			return tb_xdp_schedule_request(tb, hdr, size);
+		return false;
+	}
 
-	mutex_lock(&xकरोमुख्य_lock);
-	list_क्रम_each_entry_safe(handler, पंचांगp, &protocol_handlers, list) अणु
-		अगर (!uuid_equal(&hdr->uuid, handler->uuid))
-			जारी;
+	mutex_lock(&xdomain_lock);
+	list_for_each_entry_safe(handler, tmp, &protocol_handlers, list) {
+		if (!uuid_equal(&hdr->uuid, handler->uuid))
+			continue;
 
-		mutex_unlock(&xकरोमुख्य_lock);
+		mutex_unlock(&xdomain_lock);
 		ret = handler->callback(buf, size, handler->data);
-		mutex_lock(&xकरोमुख्य_lock);
+		mutex_lock(&xdomain_lock);
 
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	mutex_unlock(&xकरोमुख्य_lock);
+		if (ret)
+			break;
+	}
+	mutex_unlock(&xdomain_lock);
 
-	वापस ret > 0;
-पूर्ण
+	return ret > 0;
+}
 
-अटल पूर्णांक update_xकरोमुख्य(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd;
+static int update_xdomain(struct device *dev, void *data)
+{
+	struct tb_xdomain *xd;
 
-	xd = tb_to_xकरोमुख्य(dev);
-	अगर (xd) अणु
+	xd = tb_to_xdomain(dev);
+	if (xd) {
 		queue_delayed_work(xd->tb->wq, &xd->properties_changed_work,
-				   msecs_to_jअगरfies(50));
-	पूर्ण
+				   msecs_to_jiffies(50));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम update_all_xकरोमुख्यs(व्योम)
-अणु
-	bus_क्रम_each_dev(&tb_bus_type, शून्य, शून्य, update_xकरोमुख्य);
-पूर्ण
+static void update_all_xdomains(void)
+{
+	bus_for_each_dev(&tb_bus_type, NULL, NULL, update_xdomain);
+}
 
-अटल bool हटाओ_directory(स्थिर अक्षर *key, स्थिर काष्ठा tb_property_dir *dir)
-अणु
-	काष्ठा tb_property *p;
+static bool remove_directory(const char *key, const struct tb_property_dir *dir)
+{
+	struct tb_property *p;
 
-	p = tb_property_find(xकरोमुख्य_property_dir, key,
-			     TB_PROPERTY_TYPE_सूचीECTORY);
-	अगर (p && p->value.dir == dir) अणु
-		tb_property_हटाओ(p);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	p = tb_property_find(xdomain_property_dir, key,
+			     TB_PROPERTY_TYPE_DIRECTORY);
+	if (p && p->value.dir == dir) {
+		tb_property_remove(p);
+		return true;
+	}
+	return false;
+}
 
 /**
- * tb_रेजिस्टर_property_dir() - Register property directory to the host
+ * tb_register_property_dir() - Register property directory to the host
  * @key: Key (name) of the directory to add
  * @dir: Directory to add
  *
  * Service drivers can use this function to add new property directory
  * to the host available properties. The other connected hosts are
- * notअगरied so they can re-पढ़ो properties of this host अगर they are
- * पूर्णांकerested.
+ * notified so they can re-read properties of this host if they are
+ * interested.
  *
- * Return: %0 on success and negative त्रुटि_सं on failure
+ * Return: %0 on success and negative errno on failure
  */
-पूर्णांक tb_रेजिस्टर_property_dir(स्थिर अक्षर *key, काष्ठा tb_property_dir *dir)
-अणु
-	पूर्णांक ret;
+int tb_register_property_dir(const char *key, struct tb_property_dir *dir)
+{
+	int ret;
 
-	अगर (WARN_ON(!xकरोमुख्य_property_dir))
-		वापस -EAGAIN;
+	if (WARN_ON(!xdomain_property_dir))
+		return -EAGAIN;
 
-	अगर (!key || म_माप(key) > 8)
-		वापस -EINVAL;
+	if (!key || strlen(key) > 8)
+		return -EINVAL;
 
-	mutex_lock(&xकरोमुख्य_lock);
-	अगर (tb_property_find(xकरोमुख्य_property_dir, key,
-			     TB_PROPERTY_TYPE_सूचीECTORY)) अणु
+	mutex_lock(&xdomain_lock);
+	if (tb_property_find(xdomain_property_dir, key,
+			     TB_PROPERTY_TYPE_DIRECTORY)) {
 		ret = -EEXIST;
-		जाओ err_unlock;
-	पूर्ण
+		goto err_unlock;
+	}
 
-	ret = tb_property_add_dir(xकरोमुख्य_property_dir, key, dir);
-	अगर (ret)
-		जाओ err_unlock;
+	ret = tb_property_add_dir(xdomain_property_dir, key, dir);
+	if (ret)
+		goto err_unlock;
 
-	xकरोमुख्य_property_block_gen++;
+	xdomain_property_block_gen++;
 
-	mutex_unlock(&xकरोमुख्य_lock);
-	update_all_xकरोमुख्यs();
-	वापस 0;
+	mutex_unlock(&xdomain_lock);
+	update_all_xdomains();
+	return 0;
 
 err_unlock:
-	mutex_unlock(&xकरोमुख्य_lock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_रेजिस्टर_property_dir);
+	mutex_unlock(&xdomain_lock);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(tb_register_property_dir);
 
 /**
- * tb_unरेजिस्टर_property_dir() - Removes property directory from host
+ * tb_unregister_property_dir() - Removes property directory from host
  * @key: Key (name) of the directory
- * @dir: Directory to हटाओ
+ * @dir: Directory to remove
  *
- * This will हटाओ the existing directory from this host and notअगरy the
+ * This will remove the existing directory from this host and notify the
  * connected hosts about the change.
  */
-व्योम tb_unरेजिस्टर_property_dir(स्थिर अक्षर *key, काष्ठा tb_property_dir *dir)
-अणु
-	पूर्णांक ret = 0;
+void tb_unregister_property_dir(const char *key, struct tb_property_dir *dir)
+{
+	int ret = 0;
 
-	mutex_lock(&xकरोमुख्य_lock);
-	अगर (हटाओ_directory(key, dir))
-		xकरोमुख्य_property_block_gen++;
-	mutex_unlock(&xकरोमुख्य_lock);
+	mutex_lock(&xdomain_lock);
+	if (remove_directory(key, dir))
+		xdomain_property_block_gen++;
+	mutex_unlock(&xdomain_lock);
 
-	अगर (!ret)
-		update_all_xकरोमुख्यs();
-पूर्ण
-EXPORT_SYMBOL_GPL(tb_unरेजिस्टर_property_dir);
+	if (!ret)
+		update_all_xdomains();
+}
+EXPORT_SYMBOL_GPL(tb_unregister_property_dir);
 
-पूर्णांक tb_xकरोमुख्य_init(व्योम)
-अणु
-	xकरोमुख्य_property_dir = tb_property_create_dir(शून्य);
-	अगर (!xकरोमुख्य_property_dir)
-		वापस -ENOMEM;
+int tb_xdomain_init(void)
+{
+	xdomain_property_dir = tb_property_create_dir(NULL);
+	if (!xdomain_property_dir)
+		return -ENOMEM;
 
 	/*
 	 * Initialize standard set of properties without any service
@@ -1954,17 +1953,17 @@ EXPORT_SYMBOL_GPL(tb_unरेजिस्टर_property_dir);
 	 * Rest of the properties are filled dynamically based on these
 	 * when the P2P connection is made.
 	 */
-	tb_property_add_immediate(xकरोमुख्य_property_dir, "vendorid",
+	tb_property_add_immediate(xdomain_property_dir, "vendorid",
 				  PCI_VENDOR_ID_INTEL);
-	tb_property_add_text(xकरोमुख्य_property_dir, "vendorid", "Intel Corp.");
-	tb_property_add_immediate(xकरोमुख्य_property_dir, "deviceid", 0x1);
-	tb_property_add_immediate(xकरोमुख्य_property_dir, "devicerv", 0x80000100);
+	tb_property_add_text(xdomain_property_dir, "vendorid", "Intel Corp.");
+	tb_property_add_immediate(xdomain_property_dir, "deviceid", 0x1);
+	tb_property_add_immediate(xdomain_property_dir, "devicerv", 0x80000100);
 
-	xकरोमुख्य_property_block_gen = pअक्रमom_u32();
-	वापस 0;
-पूर्ण
+	xdomain_property_block_gen = prandom_u32();
+	return 0;
+}
 
-व्योम tb_xकरोमुख्य_निकास(व्योम)
-अणु
-	tb_property_मुक्त_dir(xकरोमुख्य_property_dir);
-पूर्ण
+void tb_xdomain_exit(void)
+{
+	tb_property_free_dir(xdomain_property_dir);
+}

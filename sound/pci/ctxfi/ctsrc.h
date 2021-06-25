@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
@@ -13,137 +12,137 @@
  * @Date 	May 13 2008
  */
 
-#अगर_अघोषित CTSRC_H
-#घोषणा CTSRC_H
+#ifndef CTSRC_H
+#define CTSRC_H
 
-#समावेश "ctresource.h"
-#समावेश "ctimap.h"
-#समावेश <linux/spinlock.h>
-#समावेश <linux/list.h>
-#समावेश <sound/core.h>
+#include "ctresource.h"
+#include "ctimap.h"
+#include <linux/spinlock.h>
+#include <linux/list.h>
+#include <sound/core.h>
 
-#घोषणा SRC_STATE_OFF	0x0
-#घोषणा SRC_STATE_INIT	0x4
-#घोषणा SRC_STATE_RUN	0x5
+#define SRC_STATE_OFF	0x0
+#define SRC_STATE_INIT	0x4
+#define SRC_STATE_RUN	0x5
 
-#घोषणा SRC_SF_U8	0x0
-#घोषणा SRC_SF_S16	0x1
-#घोषणा SRC_SF_S24	0x2
-#घोषणा SRC_SF_S32	0x3
-#घोषणा SRC_SF_F32	0x4
+#define SRC_SF_U8	0x0
+#define SRC_SF_S16	0x1
+#define SRC_SF_S24	0x2
+#define SRC_SF_S32	0x3
+#define SRC_SF_F32	0x4
 
 /* Define the descriptor of a src resource */
-क्रमागत SRCMODE अणु
+enum SRCMODE {
 	MEMRD,		/* Read data from host memory */
 	MEMWR,		/* Write data to host memory */
-	ARCRW,		/* Read from and ग_लिखो to audio ring channel */
+	ARCRW,		/* Read from and write to audio ring channel */
 	NUM_SRCMODES
-पूर्ण;
+};
 
-काष्ठा src_rsc_ops;
+struct src_rsc_ops;
 
-काष्ठा src अणु
-	काष्ठा rsc rsc; /* Basic resource info */
-	काष्ठा src *पूर्णांकlv; /* Poपूर्णांकer to next पूर्णांकerleaved SRC in a series */
-	स्थिर काष्ठा src_rsc_ops *ops; /* SRC specअगरic operations */
-	/* Number of contiguous srcs क्रम पूर्णांकerleaved usage */
-	अचिन्हित अक्षर multi;
-	अचिन्हित अक्षर mode; /* Working mode of this SRC resource */
-पूर्ण;
+struct src {
+	struct rsc rsc; /* Basic resource info */
+	struct src *intlv; /* Pointer to next interleaved SRC in a series */
+	const struct src_rsc_ops *ops; /* SRC specific operations */
+	/* Number of contiguous srcs for interleaved usage */
+	unsigned char multi;
+	unsigned char mode; /* Working mode of this SRC resource */
+};
 
-काष्ठा src_rsc_ops अणु
-	पूर्णांक (*set_state)(काष्ठा src *src, अचिन्हित पूर्णांक state);
-	पूर्णांक (*set_bm)(काष्ठा src *src, अचिन्हित पूर्णांक bm);
-	पूर्णांक (*set_sf)(काष्ठा src *src, अचिन्हित पूर्णांक sf);
-	पूर्णांक (*set_pm)(काष्ठा src *src, अचिन्हित पूर्णांक pm);
-	पूर्णांक (*set_rom)(काष्ठा src *src, अचिन्हित पूर्णांक rom);
-	पूर्णांक (*set_vo)(काष्ठा src *src, अचिन्हित पूर्णांक vo);
-	पूर्णांक (*set_st)(काष्ठा src *src, अचिन्हित पूर्णांक st);
-	पूर्णांक (*set_bp)(काष्ठा src *src, अचिन्हित पूर्णांक bp);
-	पूर्णांक (*set_cisz)(काष्ठा src *src, अचिन्हित पूर्णांक cisz);
-	पूर्णांक (*set_ca)(काष्ठा src *src, अचिन्हित पूर्णांक ca);
-	पूर्णांक (*set_sa)(काष्ठा src *src, अचिन्हित पूर्णांक sa);
-	पूर्णांक (*set_la)(काष्ठा src *src, अचिन्हित पूर्णांक la);
-	पूर्णांक (*set_pitch)(काष्ठा src *src, अचिन्हित पूर्णांक pitch);
-	पूर्णांक (*set_clr_zbufs)(काष्ठा src *src);
-	पूर्णांक (*commit_ग_लिखो)(काष्ठा src *src);
-	पूर्णांक (*get_ca)(काष्ठा src *src);
-	पूर्णांक (*init)(काष्ठा src *src);
-	काष्ठा src* (*next_पूर्णांकerleave)(काष्ठा src *src);
-पूर्ण;
+struct src_rsc_ops {
+	int (*set_state)(struct src *src, unsigned int state);
+	int (*set_bm)(struct src *src, unsigned int bm);
+	int (*set_sf)(struct src *src, unsigned int sf);
+	int (*set_pm)(struct src *src, unsigned int pm);
+	int (*set_rom)(struct src *src, unsigned int rom);
+	int (*set_vo)(struct src *src, unsigned int vo);
+	int (*set_st)(struct src *src, unsigned int st);
+	int (*set_bp)(struct src *src, unsigned int bp);
+	int (*set_cisz)(struct src *src, unsigned int cisz);
+	int (*set_ca)(struct src *src, unsigned int ca);
+	int (*set_sa)(struct src *src, unsigned int sa);
+	int (*set_la)(struct src *src, unsigned int la);
+	int (*set_pitch)(struct src *src, unsigned int pitch);
+	int (*set_clr_zbufs)(struct src *src);
+	int (*commit_write)(struct src *src);
+	int (*get_ca)(struct src *src);
+	int (*init)(struct src *src);
+	struct src* (*next_interleave)(struct src *src);
+};
 
 /* Define src resource request description info */
-काष्ठा src_desc अणु
-	/* Number of contiguous master srcs क्रम पूर्णांकerleaved usage */
-	अचिन्हित अक्षर multi;
-	अचिन्हित अक्षर msr;
-	अचिन्हित अक्षर mode; /* Working mode of the requested srcs */
-पूर्ण;
+struct src_desc {
+	/* Number of contiguous master srcs for interleaved usage */
+	unsigned char multi;
+	unsigned char msr;
+	unsigned char mode; /* Working mode of the requested srcs */
+};
 
 /* Define src manager object */
-काष्ठा src_mgr अणु
-	काष्ठा rsc_mgr mgr;	/* Basic resource manager info */
-	काष्ठा snd_card *card;	/* poपूर्णांकer to this card */
+struct src_mgr {
+	struct rsc_mgr mgr;	/* Basic resource manager info */
+	struct snd_card *card;	/* pointer to this card */
 	spinlock_t mgr_lock;
 
 	 /* request src resource */
-	पूर्णांक (*get_src)(काष्ठा src_mgr *mgr,
-		       स्थिर काष्ठा src_desc *desc, काष्ठा src **rsrc);
-	/* वापस src resource */
-	पूर्णांक (*put_src)(काष्ठा src_mgr *mgr, काष्ठा src *src);
-	पूर्णांक (*src_enable_s)(काष्ठा src_mgr *mgr, काष्ठा src *src);
-	पूर्णांक (*src_enable)(काष्ठा src_mgr *mgr, काष्ठा src *src);
-	पूर्णांक (*src_disable)(काष्ठा src_mgr *mgr, काष्ठा src *src);
-	पूर्णांक (*commit_ग_लिखो)(काष्ठा src_mgr *mgr);
-पूर्ण;
+	int (*get_src)(struct src_mgr *mgr,
+		       const struct src_desc *desc, struct src **rsrc);
+	/* return src resource */
+	int (*put_src)(struct src_mgr *mgr, struct src *src);
+	int (*src_enable_s)(struct src_mgr *mgr, struct src *src);
+	int (*src_enable)(struct src_mgr *mgr, struct src *src);
+	int (*src_disable)(struct src_mgr *mgr, struct src *src);
+	int (*commit_write)(struct src_mgr *mgr);
+};
 
 /* Define the descriptor of a SRC Input Mapper resource */
-काष्ठा srcimp_mgr;
-काष्ठा srcimp_rsc_ops;
+struct srcimp_mgr;
+struct srcimp_rsc_ops;
 
-काष्ठा srcimp अणु
-	काष्ठा rsc rsc;
-	अचिन्हित अक्षर idx[8];
-	काष्ठा imapper *imappers;
-	अचिन्हित पूर्णांक mapped; /* A bit-map indicating which conj rsc is mapped */
-	काष्ठा srcimp_mgr *mgr;
-	स्थिर काष्ठा srcimp_rsc_ops *ops;
-पूर्ण;
+struct srcimp {
+	struct rsc rsc;
+	unsigned char idx[8];
+	struct imapper *imappers;
+	unsigned int mapped; /* A bit-map indicating which conj rsc is mapped */
+	struct srcimp_mgr *mgr;
+	const struct srcimp_rsc_ops *ops;
+};
 
-काष्ठा srcimp_rsc_ops अणु
-	पूर्णांक (*map)(काष्ठा srcimp *srcimp, काष्ठा src *user, काष्ठा rsc *input);
-	पूर्णांक (*unmap)(काष्ठा srcimp *srcimp);
-पूर्ण;
+struct srcimp_rsc_ops {
+	int (*map)(struct srcimp *srcimp, struct src *user, struct rsc *input);
+	int (*unmap)(struct srcimp *srcimp);
+};
 
 /* Define SRCIMP resource request description info */
-काष्ठा srcimp_desc अणु
-	अचिन्हित पूर्णांक msr;
-पूर्ण;
+struct srcimp_desc {
+	unsigned int msr;
+};
 
-काष्ठा srcimp_mgr अणु
-	काष्ठा rsc_mgr mgr;	/* Basic resource manager info */
-	काष्ठा snd_card *card;	/* poपूर्णांकer to this card */
+struct srcimp_mgr {
+	struct rsc_mgr mgr;	/* Basic resource manager info */
+	struct snd_card *card;	/* pointer to this card */
 	spinlock_t mgr_lock;
 	spinlock_t imap_lock;
-	काष्ठा list_head imappers;
-	काष्ठा imapper *init_imap;
-	अचिन्हित पूर्णांक init_imap_added;
+	struct list_head imappers;
+	struct imapper *init_imap;
+	unsigned int init_imap_added;
 
 	 /* request srcimp resource */
-	पूर्णांक (*get_srcimp)(काष्ठा srcimp_mgr *mgr,
-			  स्थिर काष्ठा srcimp_desc *desc,
-			  काष्ठा srcimp **rsrcimp);
-	/* वापस srcimp resource */
-	पूर्णांक (*put_srcimp)(काष्ठा srcimp_mgr *mgr, काष्ठा srcimp *srcimp);
-	पूर्णांक (*imap_add)(काष्ठा srcimp_mgr *mgr, काष्ठा imapper *entry);
-	पूर्णांक (*imap_delete)(काष्ठा srcimp_mgr *mgr, काष्ठा imapper *entry);
-पूर्ण;
+	int (*get_srcimp)(struct srcimp_mgr *mgr,
+			  const struct srcimp_desc *desc,
+			  struct srcimp **rsrcimp);
+	/* return srcimp resource */
+	int (*put_srcimp)(struct srcimp_mgr *mgr, struct srcimp *srcimp);
+	int (*imap_add)(struct srcimp_mgr *mgr, struct imapper *entry);
+	int (*imap_delete)(struct srcimp_mgr *mgr, struct imapper *entry);
+};
 
-/* Conकाष्ठाor and deकाष्ठाor of SRC resource manager */
-पूर्णांक src_mgr_create(काष्ठा hw *hw, काष्ठा src_mgr **rsrc_mgr);
-पूर्णांक src_mgr_destroy(काष्ठा src_mgr *src_mgr);
-/* Conकाष्ठाor and deकाष्ठाor of SRCIMP resource manager */
-पूर्णांक srcimp_mgr_create(काष्ठा hw *hw, काष्ठा srcimp_mgr **rsrc_mgr);
-पूर्णांक srcimp_mgr_destroy(काष्ठा srcimp_mgr *srcimp_mgr);
+/* Constructor and destructor of SRC resource manager */
+int src_mgr_create(struct hw *hw, struct src_mgr **rsrc_mgr);
+int src_mgr_destroy(struct src_mgr *src_mgr);
+/* Constructor and destructor of SRCIMP resource manager */
+int srcimp_mgr_create(struct hw *hw, struct srcimp_mgr **rsrc_mgr);
+int srcimp_mgr_destroy(struct srcimp_mgr *srcimp_mgr);
 
-#पूर्ण_अगर /* CTSRC_H */
+#endif /* CTSRC_H */

@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2014 Facebook.  All rights reserved.
  */
 
-#अगर_अघोषित BTRFS_REF_VERIFY_H
-#घोषणा BTRFS_REF_VERIFY_H
+#ifndef BTRFS_REF_VERIFY_H
+#define BTRFS_REF_VERIFY_H
 
-#अगर_घोषित CONFIG_BTRFS_FS_REF_VERIFY
-पूर्णांक btrfs_build_ref_tree(काष्ठा btrfs_fs_info *fs_info);
-व्योम btrfs_मुक्त_ref_cache(काष्ठा btrfs_fs_info *fs_info);
-पूर्णांक btrfs_ref_tree_mod(काष्ठा btrfs_fs_info *fs_info,
-		       काष्ठा btrfs_ref *generic_ref);
-व्योम btrfs_मुक्त_ref_tree_range(काष्ठा btrfs_fs_info *fs_info, u64 start,
+#ifdef CONFIG_BTRFS_FS_REF_VERIFY
+int btrfs_build_ref_tree(struct btrfs_fs_info *fs_info);
+void btrfs_free_ref_cache(struct btrfs_fs_info *fs_info);
+int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
+		       struct btrfs_ref *generic_ref);
+void btrfs_free_ref_tree_range(struct btrfs_fs_info *fs_info, u64 start,
 			       u64 len);
 
-अटल अंतरभूत व्योम btrfs_init_ref_verअगरy(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	spin_lock_init(&fs_info->ref_verअगरy_lock);
+static inline void btrfs_init_ref_verify(struct btrfs_fs_info *fs_info)
+{
+	spin_lock_init(&fs_info->ref_verify_lock);
 	fs_info->block_tree = RB_ROOT;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक btrfs_build_ref_tree(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	वापस 0;
-पूर्ण
+}
+#else
+static inline int btrfs_build_ref_tree(struct btrfs_fs_info *fs_info)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम btrfs_मुक्त_ref_cache(काष्ठा btrfs_fs_info *fs_info)
-अणु
-पूर्ण
+static inline void btrfs_free_ref_cache(struct btrfs_fs_info *fs_info)
+{
+}
 
-अटल अंतरभूत पूर्णांक btrfs_ref_tree_mod(काष्ठा btrfs_fs_info *fs_info,
-		       काष्ठा btrfs_ref *generic_ref)
-अणु
-	वापस 0;
-पूर्ण
+static inline int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
+		       struct btrfs_ref *generic_ref)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम btrfs_मुक्त_ref_tree_range(काष्ठा btrfs_fs_info *fs_info,
+static inline void btrfs_free_ref_tree_range(struct btrfs_fs_info *fs_info,
 					     u64 start, u64 len)
-अणु
-पूर्ण
+{
+}
 
-अटल अंतरभूत व्योम btrfs_init_ref_verअगरy(काष्ठा btrfs_fs_info *fs_info)
-अणु
-पूर्ण
+static inline void btrfs_init_ref_verify(struct btrfs_fs_info *fs_info)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_BTRFS_FS_REF_VERIFY */
+#endif /* CONFIG_BTRFS_FS_REF_VERIFY */
 
-#पूर्ण_अगर
+#endif

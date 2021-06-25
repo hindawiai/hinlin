@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Procfs support क्रम lockd
+ * Procfs support for lockd
  *
  * Copyright (c) 2014 Jeff Layton <jlayton@primarydata.com>
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <net/net_namespace.h>
+#include <linux/fs.h>
+#include <linux/proc_fs.h>
+#include <linux/module.h>
+#include <linux/nsproxy.h>
+#include <net/net_namespace.h>
 
-#समावेश "netns.h"
-#समावेश "procfs.h"
+#include "netns.h"
+#include "procfs.h"
 
 /*
  * We only allow strings that start with 'Y', 'y', or '1'.
  */
-अटल sमाप_प्रकार
-nlm_end_grace_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार size,
+static ssize_t
+nlm_end_grace_write(struct file *file, const char __user *buf, size_t size,
 		    loff_t *pos)
-अणु
-	अक्षर *data;
-	काष्ठा lockd_net *ln = net_generic(current->nsproxy->net_ns,
+{
+	char *data;
+	struct lockd_net *ln = net_generic(current->nsproxy->net_ns,
 					   lockd_net_id);
 
-	अगर (size < 1)
-		वापस -EINVAL;
+	if (size < 1)
+		return -EINVAL;
 
 	data = simple_transaction_get(file, buf, size);
-	अगर (IS_ERR(data))
-		वापस PTR_ERR(data);
+	if (IS_ERR(data))
+		return PTR_ERR(data);
 
-	चयन(data[0]) अणु
-	हाल 'Y':
-	हाल 'y':
-	हाल '1':
+	switch(data[0]) {
+	case 'Y':
+	case 'y':
+	case '1':
 		locks_end_grace(&ln->lockd_manager);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल sमाप_प्रकार
-nlm_end_grace_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
+static ssize_t
+nlm_end_grace_read(struct file *file, char __user *buf, size_t size,
 		   loff_t *pos)
-अणु
-	काष्ठा lockd_net *ln = net_generic(current->nsproxy->net_ns,
+{
+	struct lockd_net *ln = net_generic(current->nsproxy->net_ns,
 					   lockd_net_id);
-	अक्षर resp[3];
+	char resp[3];
 
 	resp[0] = list_empty(&ln->lockd_manager.list) ? 'Y' : 'N';
 	resp[1] = '\n';
 	resp[2] = '\0';
 
-	वापस simple_पढ़ो_from_buffer(buf, size, pos, resp, माप(resp));
-पूर्ण
+	return simple_read_from_buffer(buf, size, pos, resp, sizeof(resp));
+}
 
-अटल स्थिर काष्ठा proc_ops lockd_end_grace_proc_ops = अणु
-	.proc_ग_लिखो	= nlm_end_grace_ग_लिखो,
-	.proc_पढ़ो	= nlm_end_grace_पढ़ो,
-	.proc_lseek	= शेष_llseek,
+static const struct proc_ops lockd_end_grace_proc_ops = {
+	.proc_write	= nlm_end_grace_write,
+	.proc_read	= nlm_end_grace_read,
+	.proc_lseek	= default_llseek,
 	.proc_release	= simple_transaction_release,
-पूर्ण;
+};
 
-पूर्णांक __init
-lockd_create_procfs(व्योम)
-अणु
-	काष्ठा proc_dir_entry *entry;
+int __init
+lockd_create_procfs(void)
+{
+	struct proc_dir_entry *entry;
 
-	entry = proc_सूची_गढ़ो("fs/lockd", शून्य);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = proc_mkdir("fs/lockd", NULL);
+	if (!entry)
+		return -ENOMEM;
 	entry = proc_create("nlm_end_grace", S_IRUGO|S_IWUSR, entry,
 			    &lockd_end_grace_proc_ops);
-	अगर (!entry) अणु
-		हटाओ_proc_entry("fs/lockd", शून्य);
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (!entry) {
+		remove_proc_entry("fs/lockd", NULL);
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-व्योम __निकास
-lockd_हटाओ_procfs(व्योम)
-अणु
-	हटाओ_proc_entry("fs/lockd/nlm_end_grace", शून्य);
-	हटाओ_proc_entry("fs/lockd", शून्य);
-पूर्ण
+void __exit
+lockd_remove_procfs(void)
+{
+	remove_proc_entry("fs/lockd/nlm_end_grace", NULL);
+	remove_proc_entry("fs/lockd", NULL);
+}

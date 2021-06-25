@@ -1,62 +1,61 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित _IA_CSS_DEVICE_ACCESS_H
-#घोषणा _IA_CSS_DEVICE_ACCESS_H
+#ifndef _IA_CSS_DEVICE_ACCESS_H
+#define _IA_CSS_DEVICE_ACCESS_H
 
 /* @file
- * File containing पूर्णांकernal functions क्रम the CSS-API to access the CSS device.
+ * File containing internal functions for the CSS-API to access the CSS device.
  */
 
-#समावेश <type_support.h> /* क्रम uपूर्णांक*, माप_प्रकार */
-#समावेश <प्रणाली_local.h> /* क्रम hrt_address */
-#समावेश <ia_css_env.h>   /* क्रम ia_css_hw_access_env */
+#include <type_support.h> /* for uint*, size_t */
+#include <system_local.h> /* for hrt_address */
+#include <ia_css_env.h>   /* for ia_css_hw_access_env */
 
-व्योम
-ia_css_device_access_init(स्थिर काष्ठा ia_css_hw_access_env *env);
+void
+ia_css_device_access_init(const struct ia_css_hw_access_env *env);
 
-uपूर्णांक8_t
-ia_css_device_load_uपूर्णांक8(स्थिर hrt_address addr);
+uint8_t
+ia_css_device_load_uint8(const hrt_address addr);
 
-uपूर्णांक16_t
-ia_css_device_load_uपूर्णांक16(स्थिर hrt_address addr);
+uint16_t
+ia_css_device_load_uint16(const hrt_address addr);
 
-uपूर्णांक32_t
-ia_css_device_load_uपूर्णांक32(स्थिर hrt_address addr);
+uint32_t
+ia_css_device_load_uint32(const hrt_address addr);
 
-uपूर्णांक64_t
-ia_css_device_load_uपूर्णांक64(स्थिर hrt_address addr);
+uint64_t
+ia_css_device_load_uint64(const hrt_address addr);
 
-व्योम
-ia_css_device_store_uपूर्णांक8(स्थिर hrt_address addr, स्थिर uपूर्णांक8_t data);
+void
+ia_css_device_store_uint8(const hrt_address addr, const uint8_t data);
 
-व्योम
-ia_css_device_store_uपूर्णांक16(स्थिर hrt_address addr, स्थिर uपूर्णांक16_t data);
+void
+ia_css_device_store_uint16(const hrt_address addr, const uint16_t data);
 
-व्योम
-ia_css_device_store_uपूर्णांक32(स्थिर hrt_address addr, स्थिर uपूर्णांक32_t data);
+void
+ia_css_device_store_uint32(const hrt_address addr, const uint32_t data);
 
-व्योम
-ia_css_device_store_uपूर्णांक64(स्थिर hrt_address addr, स्थिर uपूर्णांक64_t data);
+void
+ia_css_device_store_uint64(const hrt_address addr, const uint64_t data);
 
-व्योम
-ia_css_device_load(स्थिर hrt_address addr, व्योम *data, स्थिर माप_प्रकार size);
+void
+ia_css_device_load(const hrt_address addr, void *data, const size_t size);
 
-व्योम
-ia_css_device_store(स्थिर hrt_address addr, स्थिर व्योम *data,
-		    स्थिर माप_प्रकार size);
+void
+ia_css_device_store(const hrt_address addr, const void *data,
+		    const size_t size);
 
-#पूर्ण_अगर /* _IA_CSS_DEVICE_ACCESS_H */
+#endif /* _IA_CSS_DEVICE_ACCESS_H */

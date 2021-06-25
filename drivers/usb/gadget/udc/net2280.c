@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * Driver क्रम the PLX NET2280 USB device controller.
+ * Driver for the PLX NET2280 USB device controller.
  * Specs and errata are available from <http://www.plxtech.com>.
  *
- * PLX Technology Inc. (क्रमmerly NetChip Technology) supported the
+ * PLX Technology Inc. (formerly NetChip Technology) supported the
  * development of this driver.
  *
  *
@@ -14,225 +13,225 @@
  * the Mass Storage, Serial, and Ethernet/RNDIS gadget drivers
  * as well as Gadget Zero and Gadgetfs.
  *
- * DMA is enabled by शेष.
+ * DMA is enabled by default.
  *
- * MSI is enabled by शेष.  The legacy IRQ is used अगर MSI couldn't
+ * MSI is enabled by default.  The legacy IRQ is used if MSI couldn't
  * be enabled.
  *
- * Note that almost all the errata workarounds here are only needed क्रम
+ * Note that almost all the errata workarounds here are only needed for
  * rev1 chips.  Rev1a silicon (0110) fixes almost all of them.
  */
 
 /*
  * Copyright (C) 2003 David Brownell
  * Copyright (C) 2003-2005 PLX Technology, Inc.
- * Copyright (C) 2014 Ricarकरो Ribalda - Qtechnology/AS
+ * Copyright (C) 2014 Ricardo Ribalda - Qtechnology/AS
  *
- * Modअगरied Seth Levy 2005 PLX Technology, Inc. to provide compatibility
+ * Modified Seth Levy 2005 PLX Technology, Inc. to provide compatibility
  *	with 2282 chip
  *
- * Modअगरied Ricarकरो Ribalda Qtechnology AS  to provide compatibility
+ * Modified Ricardo Ribalda Qtechnology AS  to provide compatibility
  *	with usb 338x chip. Based on PLX driver
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/device.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/timer.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/moduleparam.h>
+#include <linux/device.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/prefetch.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/unaligned.h>
+#include <asm/byteorder.h>
+#include <asm/irq.h>
+#include <asm/unaligned.h>
 
-#घोषणा	DRIVER_DESC		"PLX NET228x/USB338x USB Peripheral Controller"
-#घोषणा	DRIVER_VERSION		"2005 Sept 27/v3.0"
+#define	DRIVER_DESC		"PLX NET228x/USB338x USB Peripheral Controller"
+#define	DRIVER_VERSION		"2005 Sept 27/v3.0"
 
-#घोषणा	EP_DONTUSE		13	/* nonzero */
+#define	EP_DONTUSE		13	/* nonzero */
 
-#घोषणा USE_RDK_LEDS		/* GPIO pins control three LEDs */
+#define USE_RDK_LEDS		/* GPIO pins control three LEDs */
 
 
-अटल स्थिर अक्षर driver_name[] = "net2280";
-अटल स्थिर अक्षर driver_desc[] = DRIVER_DESC;
+static const char driver_name[] = "net2280";
+static const char driver_desc[] = DRIVER_DESC;
 
-अटल स्थिर u32 ep_bit[9] = अणु 0, 17, 2, 19, 4, 1, 18, 3, 20 पूर्ण;
-अटल स्थिर अक्षर ep0name[] = "ep0";
+static const u32 ep_bit[9] = { 0, 17, 2, 19, 4, 1, 18, 3, 20 };
+static const char ep0name[] = "ep0";
 
-#घोषणा EP_INFO(_name, _caps) \
-	अणु \
+#define EP_INFO(_name, _caps) \
+	{ \
 		.name = _name, \
 		.caps = _caps, \
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर *name;
-	स्थिर काष्ठा usb_ep_caps caps;
-पूर्ण ep_info_dft[] = अणु /* Default endpoपूर्णांक configuration */
+static const struct {
+	const char *name;
+	const struct usb_ep_caps caps;
+} ep_info_dft[] = { /* Default endpoint configuration */
 	EP_INFO(ep0name,
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-a",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-b",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-c",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-d",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-e",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-f",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-g",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep-h",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_ALL)),
-पूर्ण, ep_info_adv[] = अणु /* Endpoपूर्णांकs क्रम usb3380 advance mode */
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_ALL)),
+}, ep_info_adv[] = { /* Endpoints for usb3380 advance mode */
 	EP_INFO(ep0name,
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_सूची_ALL)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL, USB_EP_CAPS_DIR_ALL)),
 	EP_INFO("ep1in",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep2out",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep3in",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep4out",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep1out",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep2in",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_IN)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_IN)),
 	EP_INFO("ep3out",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_OUT)),
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_OUT)),
 	EP_INFO("ep4in",
-		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_सूची_IN)),
-पूर्ण;
+		USB_EP_CAPS(USB_EP_CAPS_TYPE_ALL, USB_EP_CAPS_DIR_IN)),
+};
 
-#अघोषित EP_INFO
+#undef EP_INFO
 
-/* mode 0 == ep-अणुa,b,c,dपूर्ण 1K fअगरo each
- * mode 1 == ep-अणुa,bपूर्ण 2K fअगरo each, ep-अणुc,dपूर्ण unavailable
- * mode 2 == ep-a 2K fअगरo, ep-अणुb,cपूर्ण 1K each, ep-d unavailable
+/* mode 0 == ep-{a,b,c,d} 1K fifo each
+ * mode 1 == ep-{a,b} 2K fifo each, ep-{c,d} unavailable
+ * mode 2 == ep-a 2K fifo, ep-{b,c} 1K each, ep-d unavailable
  */
-अटल uलघु fअगरo_mode;
+static ushort fifo_mode;
 
 /* "modprobe net2280 fifo_mode=1" etc */
-module_param(fअगरo_mode, uलघु, 0644);
+module_param(fifo_mode, ushort, 0644);
 
 /* enable_suspend -- When enabled, the driver will respond to
- * USB suspend requests by घातering करोwn the NET2280.  Otherwise,
- * USB suspend requests will be ignored.  This is acceptable क्रम
- * self-घातered devices
+ * USB suspend requests by powering down the NET2280.  Otherwise,
+ * USB suspend requests will be ignored.  This is acceptable for
+ * self-powered devices
  */
-अटल bool enable_suspend;
+static bool enable_suspend;
 
 /* "modprobe net2280 enable_suspend=1" etc */
 module_param(enable_suspend, bool, 0444);
 
-#घोषणा	सूची_STRING(bAddress) (((bAddress) & USB_सूची_IN) ? "in" : "out")
+#define	DIR_STRING(bAddress) (((bAddress) & USB_DIR_IN) ? "in" : "out")
 
-अटल अक्षर *type_string(u8 bmAttributes)
-अणु
-	चयन ((bmAttributes) & USB_ENDPOINT_XFERTYPE_MASK) अणु
-	हाल USB_ENDPOINT_XFER_BULK:	वापस "bulk";
-	हाल USB_ENDPOINT_XFER_ISOC:	वापस "iso";
-	हाल USB_ENDPOINT_XFER_INT:	वापस "intr";
-	पूर्ण
-	वापस "control";
-पूर्ण
+static char *type_string(u8 bmAttributes)
+{
+	switch ((bmAttributes) & USB_ENDPOINT_XFERTYPE_MASK) {
+	case USB_ENDPOINT_XFER_BULK:	return "bulk";
+	case USB_ENDPOINT_XFER_ISOC:	return "iso";
+	case USB_ENDPOINT_XFER_INT:	return "intr";
+	}
+	return "control";
+}
 
-#समावेश "net2280.h"
+#include "net2280.h"
 
-#घोषणा valid_bit	cpu_to_le32(BIT(VALID_BIT))
-#घोषणा dma_करोne_ie	cpu_to_le32(BIT(DMA_DONE_INTERRUPT_ENABLE))
+#define valid_bit	cpu_to_le32(BIT(VALID_BIT))
+#define dma_done_ie	cpu_to_le32(BIT(DMA_DONE_INTERRUPT_ENABLE))
 
-अटल व्योम ep_clear_seqnum(काष्ठा net2280_ep *ep);
-अटल व्योम stop_activity(काष्ठा net2280 *dev,
-					काष्ठा usb_gadget_driver *driver);
-अटल व्योम ep0_start(काष्ठा net2280 *dev);
+static void ep_clear_seqnum(struct net2280_ep *ep);
+static void stop_activity(struct net2280 *dev,
+					struct usb_gadget_driver *driver);
+static void ep0_start(struct net2280 *dev);
 
 /*-------------------------------------------------------------------------*/
-अटल अंतरभूत व्योम enable_pciirqenb(काष्ठा net2280_ep *ep)
-अणु
-	u32 पंचांगp = पढ़ोl(&ep->dev->regs->pciirqenb0);
+static inline void enable_pciirqenb(struct net2280_ep *ep)
+{
+	u32 tmp = readl(&ep->dev->regs->pciirqenb0);
 
-	अगर (ep->dev->quirks & PLX_LEGACY)
-		पंचांगp |= BIT(ep->num);
-	अन्यथा
-		पंचांगp |= BIT(ep_bit[ep->num]);
-	ग_लिखोl(पंचांगp, &ep->dev->regs->pciirqenb0);
+	if (ep->dev->quirks & PLX_LEGACY)
+		tmp |= BIT(ep->num);
+	else
+		tmp |= BIT(ep_bit[ep->num]);
+	writel(tmp, &ep->dev->regs->pciirqenb0);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक
-net2280_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा net2280		*dev;
-	काष्ठा net2280_ep	*ep;
+static int
+net2280_enable(struct usb_ep *_ep, const struct usb_endpoint_descriptor *desc)
+{
+	struct net2280		*dev;
+	struct net2280_ep	*ep;
 	u32			max;
-	u32 पंचांगp = 0;
+	u32 tmp = 0;
 	u32 type;
-	अचिन्हित दीर्घ		flags;
-	अटल स्थिर u32 ep_key[9] = अणु 1, 0, 1, 0, 1, 1, 0, 1, 0 पूर्ण;
-	पूर्णांक ret = 0;
+	unsigned long		flags;
+	static const u32 ep_key[9] = { 1, 0, 1, 0, 1, 1, 0, 1, 0 };
+	int ret = 0;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || !desc || ep->desc || _ep->name == ep0name ||
-			desc->bDescriptorType != USB_DT_ENDPOINT) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || !desc || ep->desc || _ep->name == ep0name ||
+			desc->bDescriptorType != USB_DT_ENDPOINT) {
 		pr_err("%s: failed at line=%d\n", __func__, __LINE__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dev = ep->dev;
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN) {
 		ret = -ESHUTDOWN;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+		goto print_err;
+	}
 
-	/* erratum 0119 workaround ties up an endpoपूर्णांक number */
-	अगर ((desc->bEndpoपूर्णांकAddress & 0x0f) == EP_DONTUSE) अणु
-		ret = -गलत_तर्क;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+	/* erratum 0119 workaround ties up an endpoint number */
+	if ((desc->bEndpointAddress & 0x0f) == EP_DONTUSE) {
+		ret = -EDOM;
+		goto print_err;
+	}
 
-	अगर (dev->quirks & PLX_PCIE) अणु
-		अगर ((desc->bEndpoपूर्णांकAddress & 0x0f) >= 0x0c) अणु
-			ret = -गलत_तर्क;
-			जाओ prपूर्णांक_err;
-		पूर्ण
-		ep->is_in = !!usb_endpoपूर्णांक_dir_in(desc);
-		अगर (dev->enhanced_mode && ep->is_in && ep_key[ep->num]) अणु
+	if (dev->quirks & PLX_PCIE) {
+		if ((desc->bEndpointAddress & 0x0f) >= 0x0c) {
+			ret = -EDOM;
+			goto print_err;
+		}
+		ep->is_in = !!usb_endpoint_dir_in(desc);
+		if (dev->enhanced_mode && ep->is_in && ep_key[ep->num]) {
 			ret = -EINVAL;
-			जाओ prपूर्णांक_err;
-		पूर्ण
-	पूर्ण
+			goto print_err;
+		}
+	}
 
-	/* sanity check ep-e/ep-f since their fअगरos are small */
-	max = usb_endpoपूर्णांक_maxp(desc);
-	अगर (ep->num > 4 && max > 64 && (dev->quirks & PLX_LEGACY)) अणु
-		ret = -दुस्फल;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+	/* sanity check ep-e/ep-f since their fifos are small */
+	max = usb_endpoint_maxp(desc);
+	if (ep->num > 4 && max > 64 && (dev->quirks & PLX_LEGACY)) {
+		ret = -ERANGE;
+		goto print_err;
+	}
 
 	spin_lock_irqsave(&dev->lock, flags);
 	_ep->maxpacket = max;
 	ep->desc = desc;
 
-	/* ep_reset() has alपढ़ोy been called */
+	/* ep_reset() has already been called */
 	ep->stopped = 0;
 	ep->wedged = 0;
 	ep->out_overflow = 0;
@@ -240,201 +239,201 @@ net2280_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठ�
 	/* set speed-dependent max packet; may kick in high bandwidth */
 	set_max_speed(ep, max);
 
-	/* set type, direction, address; reset fअगरo counters */
-	ग_लिखोl(BIT(FIFO_FLUSH), &ep->regs->ep_stat);
+	/* set type, direction, address; reset fifo counters */
+	writel(BIT(FIFO_FLUSH), &ep->regs->ep_stat);
 
-	अगर ((dev->quirks & PLX_PCIE) && dev->enhanced_mode) अणु
-		पंचांगp = पढ़ोl(&ep->cfg->ep_cfg);
-		/* If USB ep number करोesn't match hardware ep number */
-		अगर ((पंचांगp & 0xf) != usb_endpoपूर्णांक_num(desc)) अणु
+	if ((dev->quirks & PLX_PCIE) && dev->enhanced_mode) {
+		tmp = readl(&ep->cfg->ep_cfg);
+		/* If USB ep number doesn't match hardware ep number */
+		if ((tmp & 0xf) != usb_endpoint_num(desc)) {
 			ret = -EINVAL;
 			spin_unlock_irqrestore(&dev->lock, flags);
-			जाओ prपूर्णांक_err;
-		पूर्ण
-		अगर (ep->is_in)
-			पंचांगp &= ~USB3380_EP_CFG_MASK_IN;
-		अन्यथा
-			पंचांगp &= ~USB3380_EP_CFG_MASK_OUT;
-	पूर्ण
+			goto print_err;
+		}
+		if (ep->is_in)
+			tmp &= ~USB3380_EP_CFG_MASK_IN;
+		else
+			tmp &= ~USB3380_EP_CFG_MASK_OUT;
+	}
 	type = (desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK);
-	अगर (type == USB_ENDPOINT_XFER_INT) अणु
+	if (type == USB_ENDPOINT_XFER_INT) {
 		/* erratum 0105 workaround prevents hs NYET */
-		अगर (dev->chiprev == 0100 &&
+		if (dev->chiprev == 0100 &&
 				dev->gadget.speed == USB_SPEED_HIGH &&
-				!(desc->bEndpoपूर्णांकAddress & USB_सूची_IN))
-			ग_लिखोl(BIT(CLEAR_NAK_OUT_PACKETS_MODE),
+				!(desc->bEndpointAddress & USB_DIR_IN))
+			writel(BIT(CLEAR_NAK_OUT_PACKETS_MODE),
 				&ep->regs->ep_rsp);
-	पूर्ण अन्यथा अगर (type == USB_ENDPOINT_XFER_BULK) अणु
+	} else if (type == USB_ENDPOINT_XFER_BULK) {
 		/* catch some particularly blatant driver bugs */
-		अगर ((dev->gadget.speed == USB_SPEED_SUPER && max != 1024) ||
+		if ((dev->gadget.speed == USB_SPEED_SUPER && max != 1024) ||
 		    (dev->gadget.speed == USB_SPEED_HIGH && max != 512) ||
-		    (dev->gadget.speed == USB_SPEED_FULL && max > 64)) अणु
+		    (dev->gadget.speed == USB_SPEED_FULL && max > 64)) {
 			spin_unlock_irqrestore(&dev->lock, flags);
-			ret = -दुस्फल;
-			जाओ prपूर्णांक_err;
-		पूर्ण
-	पूर्ण
+			ret = -ERANGE;
+			goto print_err;
+		}
+	}
 	ep->is_iso = (type == USB_ENDPOINT_XFER_ISOC);
-	/* Enable this endpoपूर्णांक */
-	अगर (dev->quirks & PLX_LEGACY) अणु
-		पंचांगp |= type << ENDPOINT_TYPE;
-		पंचांगp |= desc->bEndpoपूर्णांकAddress;
-		/* शेष full fअगरo lines */
-		पंचांगp |= (4 << ENDPOINT_BYTE_COUNT);
-		पंचांगp |= BIT(ENDPOINT_ENABLE);
-		ep->is_in = (पंचांगp & USB_सूची_IN) != 0;
-	पूर्ण अन्यथा अणु
-		/* In Legacy mode, only OUT endpoपूर्णांकs are used */
-		अगर (dev->enhanced_mode && ep->is_in) अणु
-			पंचांगp |= type << IN_ENDPOINT_TYPE;
-			पंचांगp |= BIT(IN_ENDPOINT_ENABLE);
-		पूर्ण अन्यथा अणु
-			पंचांगp |= type << OUT_ENDPOINT_TYPE;
-			पंचांगp |= BIT(OUT_ENDPOINT_ENABLE);
-			पंचांगp |= (ep->is_in << ENDPOINT_सूचीECTION);
-		पूर्ण
+	/* Enable this endpoint */
+	if (dev->quirks & PLX_LEGACY) {
+		tmp |= type << ENDPOINT_TYPE;
+		tmp |= desc->bEndpointAddress;
+		/* default full fifo lines */
+		tmp |= (4 << ENDPOINT_BYTE_COUNT);
+		tmp |= BIT(ENDPOINT_ENABLE);
+		ep->is_in = (tmp & USB_DIR_IN) != 0;
+	} else {
+		/* In Legacy mode, only OUT endpoints are used */
+		if (dev->enhanced_mode && ep->is_in) {
+			tmp |= type << IN_ENDPOINT_TYPE;
+			tmp |= BIT(IN_ENDPOINT_ENABLE);
+		} else {
+			tmp |= type << OUT_ENDPOINT_TYPE;
+			tmp |= BIT(OUT_ENDPOINT_ENABLE);
+			tmp |= (ep->is_in << ENDPOINT_DIRECTION);
+		}
 
-		पंचांगp |= (4 << ENDPOINT_BYTE_COUNT);
-		अगर (!dev->enhanced_mode)
-			पंचांगp |= usb_endpoपूर्णांक_num(desc);
-		पंचांगp |= (ep->ep.maxburst << MAX_BURST_SIZE);
-	पूर्ण
+		tmp |= (4 << ENDPOINT_BYTE_COUNT);
+		if (!dev->enhanced_mode)
+			tmp |= usb_endpoint_num(desc);
+		tmp |= (ep->ep.maxburst << MAX_BURST_SIZE);
+	}
 
-	/* Make sure all the रेजिस्टरs are written beक्रमe ep_rsp*/
+	/* Make sure all the registers are written before ep_rsp*/
 	wmb();
 
-	/* क्रम OUT transfers, block the rx fअगरo until a पढ़ो is posted */
-	अगर (!ep->is_in)
-		ग_लिखोl(BIT(SET_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
-	अन्यथा अगर (!(dev->quirks & PLX_2280)) अणु
-		/* Added क्रम 2282, Don't use nak packets on an in endpoपूर्णांक,
+	/* for OUT transfers, block the rx fifo until a read is posted */
+	if (!ep->is_in)
+		writel(BIT(SET_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
+	else if (!(dev->quirks & PLX_2280)) {
+		/* Added for 2282, Don't use nak packets on an in endpoint,
 		 * this was ignored on 2280
 		 */
-		ग_लिखोl(BIT(CLEAR_NAK_OUT_PACKETS) |
+		writel(BIT(CLEAR_NAK_OUT_PACKETS) |
 			BIT(CLEAR_NAK_OUT_PACKETS_MODE), &ep->regs->ep_rsp);
-	पूर्ण
+	}
 
-	अगर (dev->quirks & PLX_PCIE)
+	if (dev->quirks & PLX_PCIE)
 		ep_clear_seqnum(ep);
-	ग_लिखोl(पंचांगp, &ep->cfg->ep_cfg);
+	writel(tmp, &ep->cfg->ep_cfg);
 
 	/* enable irqs */
-	अगर (!ep->dma) अणु				/* pio, per-packet */
+	if (!ep->dma) {				/* pio, per-packet */
 		enable_pciirqenb(ep);
 
-		पंचांगp = BIT(DATA_PACKET_RECEIVED_INTERRUPT_ENABLE) |
+		tmp = BIT(DATA_PACKET_RECEIVED_INTERRUPT_ENABLE) |
 			BIT(DATA_PACKET_TRANSMITTED_INTERRUPT_ENABLE);
-		अगर (dev->quirks & PLX_2280)
-			पंचांगp |= पढ़ोl(&ep->regs->ep_irqenb);
-		ग_लिखोl(पंचांगp, &ep->regs->ep_irqenb);
-	पूर्ण अन्यथा अणु				/* dma, per-request */
-		पंचांगp = BIT((8 + ep->num));	/* completion */
-		पंचांगp |= पढ़ोl(&dev->regs->pciirqenb1);
-		ग_लिखोl(पंचांगp, &dev->regs->pciirqenb1);
+		if (dev->quirks & PLX_2280)
+			tmp |= readl(&ep->regs->ep_irqenb);
+		writel(tmp, &ep->regs->ep_irqenb);
+	} else {				/* dma, per-request */
+		tmp = BIT((8 + ep->num));	/* completion */
+		tmp |= readl(&dev->regs->pciirqenb1);
+		writel(tmp, &dev->regs->pciirqenb1);
 
-		/* क्रम लघु OUT transfers, dma completions can't
-		 * advance the queue; करो it pio-style, by hand.
+		/* for short OUT transfers, dma completions can't
+		 * advance the queue; do it pio-style, by hand.
 		 * NOTE erratum 0112 workaround #2
 		 */
-		अगर ((desc->bEndpoपूर्णांकAddress & USB_सूची_IN) == 0) अणु
-			पंचांगp = BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT_ENABLE);
-			ग_लिखोl(पंचांगp, &ep->regs->ep_irqenb);
+		if ((desc->bEndpointAddress & USB_DIR_IN) == 0) {
+			tmp = BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT_ENABLE);
+			writel(tmp, &ep->regs->ep_irqenb);
 
 			enable_pciirqenb(ep);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	पंचांगp = desc->bEndpoपूर्णांकAddress;
+	tmp = desc->bEndpointAddress;
 	ep_dbg(dev, "enabled %s (ep%d%s-%s) %s max %04x\n",
-		_ep->name, पंचांगp & 0x0f, सूची_STRING(पंचांगp),
+		_ep->name, tmp & 0x0f, DIR_STRING(tmp),
 		type_string(desc->bmAttributes),
 		ep->dma ? "dma" : "pio", max);
 
-	/* pci ग_लिखोs may still be posted */
+	/* pci writes may still be posted */
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस ret;
+	return ret;
 
-prपूर्णांक_err:
+print_err:
 	dev_err(&ep->dev->pdev->dev, "%s: error=%d\n", __func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक handshake(u32 __iomem *ptr, u32 mask, u32 करोne, पूर्णांक usec)
-अणु
+static int handshake(u32 __iomem *ptr, u32 mask, u32 done, int usec)
+{
 	u32	result;
-	पूर्णांक	ret;
+	int	ret;
 
-	ret = पढ़ोl_poll_समयout_atomic(ptr, result,
-					((result & mask) == करोne ||
+	ret = readl_poll_timeout_atomic(ptr, result,
+					((result & mask) == done ||
 					 result == U32_MAX),
 					1, usec);
-	अगर (result == U32_MAX)		/* device unplugged */
-		वापस -ENODEV;
+	if (result == U32_MAX)		/* device unplugged */
+		return -ENODEV;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा usb_ep_ops net2280_ep_ops;
+static const struct usb_ep_ops net2280_ep_ops;
 
-अटल व्योम ep_reset_228x(काष्ठा net2280_regs __iomem *regs,
-			  काष्ठा net2280_ep *ep)
-अणु
-	u32		पंचांगp;
+static void ep_reset_228x(struct net2280_regs __iomem *regs,
+			  struct net2280_ep *ep)
+{
+	u32		tmp;
 
-	ep->desc = शून्य;
+	ep->desc = NULL;
 	INIT_LIST_HEAD(&ep->queue);
 
 	usb_ep_set_maxpacket_limit(&ep->ep, ~0);
 	ep->ep.ops = &net2280_ep_ops;
 
-	/* disable the dma, irqs, endpoपूर्णांक... */
-	अगर (ep->dma) अणु
-		ग_लिखोl(0, &ep->dma->dmactl);
-		ग_लिखोl(BIT(DMA_SCATTER_GATHER_DONE_INTERRUPT) |
+	/* disable the dma, irqs, endpoint... */
+	if (ep->dma) {
+		writel(0, &ep->dma->dmactl);
+		writel(BIT(DMA_SCATTER_GATHER_DONE_INTERRUPT) |
 			BIT(DMA_TRANSACTION_DONE_INTERRUPT) |
 			BIT(DMA_ABORT),
 			&ep->dma->dmastat);
 
-		पंचांगp = पढ़ोl(&regs->pciirqenb0);
-		पंचांगp &= ~BIT(ep->num);
-		ग_लिखोl(पंचांगp, &regs->pciirqenb0);
-	पूर्ण अन्यथा अणु
-		पंचांगp = पढ़ोl(&regs->pciirqenb1);
-		पंचांगp &= ~BIT((8 + ep->num));	/* completion */
-		ग_लिखोl(पंचांगp, &regs->pciirqenb1);
-	पूर्ण
-	ग_लिखोl(0, &ep->regs->ep_irqenb);
+		tmp = readl(&regs->pciirqenb0);
+		tmp &= ~BIT(ep->num);
+		writel(tmp, &regs->pciirqenb0);
+	} else {
+		tmp = readl(&regs->pciirqenb1);
+		tmp &= ~BIT((8 + ep->num));	/* completion */
+		writel(tmp, &regs->pciirqenb1);
+	}
+	writel(0, &ep->regs->ep_irqenb);
 
-	/* init to our chosen शेषs, notably so that we NAK OUT
-	 * packets until the driver queues a पढ़ो (+note erratum 0112)
+	/* init to our chosen defaults, notably so that we NAK OUT
+	 * packets until the driver queues a read (+note erratum 0112)
 	 */
-	अगर (!ep->is_in || (ep->dev->quirks & PLX_2280)) अणु
-		पंचांगp = BIT(SET_NAK_OUT_PACKETS_MODE) |
+	if (!ep->is_in || (ep->dev->quirks & PLX_2280)) {
+		tmp = BIT(SET_NAK_OUT_PACKETS_MODE) |
 		BIT(SET_NAK_OUT_PACKETS) |
 		BIT(CLEAR_EP_HIDE_STATUS_PHASE) |
 		BIT(CLEAR_INTERRUPT_MODE);
-	पूर्ण अन्यथा अणु
-		/* added क्रम 2282 */
-		पंचांगp = BIT(CLEAR_NAK_OUT_PACKETS_MODE) |
+	} else {
+		/* added for 2282 */
+		tmp = BIT(CLEAR_NAK_OUT_PACKETS_MODE) |
 		BIT(CLEAR_NAK_OUT_PACKETS) |
 		BIT(CLEAR_EP_HIDE_STATUS_PHASE) |
 		BIT(CLEAR_INTERRUPT_MODE);
-	पूर्ण
+	}
 
-	अगर (ep->num != 0) अणु
-		पंचांगp |= BIT(CLEAR_ENDPOINT_TOGGLE) |
+	if (ep->num != 0) {
+		tmp |= BIT(CLEAR_ENDPOINT_TOGGLE) |
 			BIT(CLEAR_ENDPOINT_HALT);
-	पूर्ण
-	ग_लिखोl(पंचांगp, &ep->regs->ep_rsp);
+	}
+	writel(tmp, &ep->regs->ep_rsp);
 
-	/* scrub most status bits, and flush any fअगरo state */
-	अगर (ep->dev->quirks & PLX_2280)
-		पंचांगp = BIT(FIFO_OVERFLOW) |
+	/* scrub most status bits, and flush any fifo state */
+	if (ep->dev->quirks & PLX_2280)
+		tmp = BIT(FIFO_OVERFLOW) |
 			BIT(FIFO_UNDERFLOW);
-	अन्यथा
-		पंचांगp = 0;
+	else
+		tmp = 0;
 
-	ग_लिखोl(पंचांगp | BIT(TIMEOUT) |
+	writel(tmp | BIT(TIMEOUT) |
 		BIT(USB_STALL_SENT) |
 		BIT(USB_IN_NAK_SENT) |
 		BIT(USB_IN_ACK_RCVD) |
@@ -449,50 +448,50 @@ prपूर्णांक_err:
 		BIT(DATA_IN_TOKEN_INTERRUPT),
 		&ep->regs->ep_stat);
 
-	/* fअगरo size is handled separately */
-पूर्ण
+	/* fifo size is handled separately */
+}
 
-अटल व्योम ep_reset_338x(काष्ठा net2280_regs __iomem *regs,
-					काष्ठा net2280_ep *ep)
-अणु
-	u32 पंचांगp, dmastat;
+static void ep_reset_338x(struct net2280_regs __iomem *regs,
+					struct net2280_ep *ep)
+{
+	u32 tmp, dmastat;
 
-	ep->desc = शून्य;
+	ep->desc = NULL;
 	INIT_LIST_HEAD(&ep->queue);
 
 	usb_ep_set_maxpacket_limit(&ep->ep, ~0);
 	ep->ep.ops = &net2280_ep_ops;
 
-	/* disable the dma, irqs, endpoपूर्णांक... */
-	अगर (ep->dma) अणु
-		ग_लिखोl(0, &ep->dma->dmactl);
-		ग_लिखोl(BIT(DMA_ABORT_DONE_INTERRUPT) |
+	/* disable the dma, irqs, endpoint... */
+	if (ep->dma) {
+		writel(0, &ep->dma->dmactl);
+		writel(BIT(DMA_ABORT_DONE_INTERRUPT) |
 		       BIT(DMA_PAUSE_DONE_INTERRUPT) |
 		       BIT(DMA_SCATTER_GATHER_DONE_INTERRUPT) |
 		       BIT(DMA_TRANSACTION_DONE_INTERRUPT),
 		       /* | BIT(DMA_ABORT), */
 		       &ep->dma->dmastat);
 
-		dmastat = पढ़ोl(&ep->dma->dmastat);
-		अगर (dmastat == 0x5002) अणु
+		dmastat = readl(&ep->dma->dmastat);
+		if (dmastat == 0x5002) {
 			ep_warn(ep->dev, "The dmastat return = %x!!\n",
 			       dmastat);
-			ग_लिखोl(0x5a, &ep->dma->dmastat);
-		पूर्ण
+			writel(0x5a, &ep->dma->dmastat);
+		}
 
-		पंचांगp = पढ़ोl(&regs->pciirqenb0);
-		पंचांगp &= ~BIT(ep_bit[ep->num]);
-		ग_लिखोl(पंचांगp, &regs->pciirqenb0);
-	पूर्ण अन्यथा अणु
-		अगर (ep->num < 5) अणु
-			पंचांगp = पढ़ोl(&regs->pciirqenb1);
-			पंचांगp &= ~BIT((8 + ep->num));	/* completion */
-			ग_लिखोl(पंचांगp, &regs->pciirqenb1);
-		पूर्ण
-	पूर्ण
-	ग_लिखोl(0, &ep->regs->ep_irqenb);
+		tmp = readl(&regs->pciirqenb0);
+		tmp &= ~BIT(ep_bit[ep->num]);
+		writel(tmp, &regs->pciirqenb0);
+	} else {
+		if (ep->num < 5) {
+			tmp = readl(&regs->pciirqenb1);
+			tmp &= ~BIT((8 + ep->num));	/* completion */
+			writel(tmp, &regs->pciirqenb1);
+		}
+	}
+	writel(0, &ep->regs->ep_irqenb);
 
-	ग_लिखोl(BIT(SHORT_PACKET_OUT_DONE_INTERRUPT) |
+	writel(BIT(SHORT_PACKET_OUT_DONE_INTERRUPT) |
 	       BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT) |
 	       BIT(FIFO_OVERFLOW) |
 	       BIT(DATA_PACKET_RECEIVED_INTERRUPT) |
@@ -500,318 +499,318 @@ prपूर्णांक_err:
 	       BIT(DATA_OUT_PING_TOKEN_INTERRUPT) |
 	       BIT(DATA_IN_TOKEN_INTERRUPT), &ep->regs->ep_stat);
 
-	पंचांगp = पढ़ोl(&ep->cfg->ep_cfg);
-	अगर (ep->is_in)
-		पंचांगp &= ~USB3380_EP_CFG_MASK_IN;
-	अन्यथा
-		पंचांगp &= ~USB3380_EP_CFG_MASK_OUT;
-	ग_लिखोl(पंचांगp, &ep->cfg->ep_cfg);
-पूर्ण
+	tmp = readl(&ep->cfg->ep_cfg);
+	if (ep->is_in)
+		tmp &= ~USB3380_EP_CFG_MASK_IN;
+	else
+		tmp &= ~USB3380_EP_CFG_MASK_OUT;
+	writel(tmp, &ep->cfg->ep_cfg);
+}
 
-अटल व्योम nuke(काष्ठा net2280_ep *);
+static void nuke(struct net2280_ep *);
 
-अटल पूर्णांक net2280_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा net2280_ep	*ep;
-	अचिन्हित दीर्घ		flags;
+static int net2280_disable(struct usb_ep *_ep)
+{
+	struct net2280_ep	*ep;
+	unsigned long		flags;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || _ep->name == ep0name) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || _ep->name == ep0name) {
 		pr_err("%s: Invalid ep=%p\n", __func__, _ep);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_lock_irqsave(&ep->dev->lock, flags);
 	nuke(ep);
 
-	अगर (ep->dev->quirks & PLX_PCIE)
+	if (ep->dev->quirks & PLX_PCIE)
 		ep_reset_338x(ep->dev->regs, ep);
-	अन्यथा
+	else
 		ep_reset_228x(ep->dev->regs, ep);
 
 	ep_vdbg(ep->dev, "disabled %s %s\n",
 			ep->dma ? "dma" : "pio", _ep->name);
 
 	/* synch memory views with the device */
-	(व्योम)पढ़ोl(&ep->cfg->ep_cfg);
+	(void)readl(&ep->cfg->ep_cfg);
 
-	अगर (!ep->dma && ep->num >= 1 && ep->num <= 4)
+	if (!ep->dma && ep->num >= 1 && ep->num <= 4)
 		ep->dma = &ep->dev->dma[ep->num - 1];
 
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल काष्ठा usb_request
-*net2280_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
-अणु
-	काष्ठा net2280_ep	*ep;
-	काष्ठा net2280_request	*req;
+static struct usb_request
+*net2280_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
+{
+	struct net2280_ep	*ep;
+	struct net2280_request	*req;
 
-	अगर (!_ep) अणु
+	if (!_ep) {
 		pr_err("%s: Invalid ep\n", __func__);
-		वापस शून्य;
-	पूर्ण
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
+		return NULL;
+	}
+	ep = container_of(_ep, struct net2280_ep, ep);
 
-	req = kzalloc(माप(*req), gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(*req), gfp_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->queue);
 
 	/* this dma descriptor may be swapped with the previous dummy */
-	अगर (ep->dma) अणु
-		काष्ठा net2280_dma	*td;
+	if (ep->dma) {
+		struct net2280_dma	*td;
 
 		td = dma_pool_alloc(ep->dev->requests, gfp_flags,
 				&req->td_dma);
-		अगर (!td) अणु
-			kमुक्त(req);
-			वापस शून्य;
-		पूर्ण
+		if (!td) {
+			kfree(req);
+			return NULL;
+		}
 		td->dmacount = 0;	/* not VALID */
 		td->dmadesc = td->dmaaddr;
 		req->td = td;
-	पूर्ण
-	वापस &req->req;
-पूर्ण
+	}
+	return &req->req;
+}
 
-अटल व्योम net2280_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा net2280_ep	*ep;
-	काष्ठा net2280_request	*req;
+static void net2280_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct net2280_ep	*ep;
+	struct net2280_request	*req;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || !_req) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || !_req) {
 		dev_err(&ep->dev->pdev->dev, "%s: Invalid ep=%p or req=%p\n",
 							__func__, _ep, _req);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	req = container_of(_req, काष्ठा net2280_request, req);
+	req = container_of(_req, struct net2280_request, req);
 	WARN_ON(!list_empty(&req->queue));
-	अगर (req->td)
-		dma_pool_मुक्त(ep->dev->requests, req->td, req->td_dma);
-	kमुक्त(req);
-पूर्ण
+	if (req->td)
+		dma_pool_free(ep->dev->requests, req->td, req->td_dma);
+	kfree(req);
+}
 
 /*-------------------------------------------------------------------------*/
 
-/* load a packet पूर्णांकo the fअगरo we use क्रम usb IN transfers.
- * works क्रम all endpoपूर्णांकs.
+/* load a packet into the fifo we use for usb IN transfers.
+ * works for all endpoints.
  *
- * NOTE: pio with ep-a..ep-d could stuff multiple packets पूर्णांकo the fअगरo
- * at a समय, but this code is simpler because it knows it only ग_लिखोs
+ * NOTE: pio with ep-a..ep-d could stuff multiple packets into the fifo
+ * at a time, but this code is simpler because it knows it only writes
  * one packet.  ep-a..ep-d should use dma instead.
  */
-अटल व्योम ग_लिखो_fअगरo(काष्ठा net2280_ep *ep, काष्ठा usb_request *req)
-अणु
-	काष्ठा net2280_ep_regs	__iomem *regs = ep->regs;
+static void write_fifo(struct net2280_ep *ep, struct usb_request *req)
+{
+	struct net2280_ep_regs	__iomem *regs = ep->regs;
 	u8			*buf;
-	u32			पंचांगp;
-	अचिन्हित		count, total;
+	u32			tmp;
+	unsigned		count, total;
 
-	/* INVARIANT:  fअगरo is currently empty. (testable) */
+	/* INVARIANT:  fifo is currently empty. (testable) */
 
-	अगर (req) अणु
+	if (req) {
 		buf = req->buf + req->actual;
 		prefetch(buf);
 		total = req->length - req->actual;
-	पूर्ण अन्यथा अणु
+	} else {
 		total = 0;
-		buf = शून्य;
-	पूर्ण
+		buf = NULL;
+	}
 
-	/* ग_लिखो just one packet at a समय */
+	/* write just one packet at a time */
 	count = ep->ep.maxpacket;
-	अगर (count > total)	/* min() cannot be used on a bitfield */
+	if (count > total)	/* min() cannot be used on a bitfield */
 		count = total;
 
 	ep_vdbg(ep->dev, "write %s fifo (IN) %d bytes%s req %p\n",
 			ep->ep.name, count,
 			(count != ep->ep.maxpacket) ? " (short)" : "",
 			req);
-	जबतक (count >= 4) अणु
-		/* NOTE be careful अगर you try to align these. fअगरo lines
+	while (count >= 4) {
+		/* NOTE be careful if you try to align these. fifo lines
 		 * should normally be full (4 bytes) and successive partial
-		 * lines are ok only in certain हालs.
+		 * lines are ok only in certain cases.
 		 */
-		पंचांगp = get_unaligned((u32 *)buf);
-		cpu_to_le32s(&पंचांगp);
-		ग_लिखोl(पंचांगp, &regs->ep_data);
+		tmp = get_unaligned((u32 *)buf);
+		cpu_to_le32s(&tmp);
+		writel(tmp, &regs->ep_data);
 		buf += 4;
 		count -= 4;
-	पूर्ण
+	}
 
-	/* last fअगरo entry is "short" unless we wrote a full packet.
+	/* last fifo entry is "short" unless we wrote a full packet.
 	 * also explicitly validate last word in (periodic) transfers
 	 * when maxpacket is not a multiple of 4 bytes.
 	 */
-	अगर (count || total < ep->ep.maxpacket) अणु
-		पंचांगp = count ? get_unaligned((u32 *)buf) : count;
-		cpu_to_le32s(&पंचांगp);
-		set_fअगरo_bytecount(ep, count & 0x03);
-		ग_लिखोl(पंचांगp, &regs->ep_data);
-	पूर्ण
+	if (count || total < ep->ep.maxpacket) {
+		tmp = count ? get_unaligned((u32 *)buf) : count;
+		cpu_to_le32s(&tmp);
+		set_fifo_bytecount(ep, count & 0x03);
+		writel(tmp, &regs->ep_data);
+	}
 
-	/* pci ग_लिखोs may still be posted */
-पूर्ण
+	/* pci writes may still be posted */
+}
 
-/* work around erratum 0106: PCI and USB race over the OUT fअगरo.
- * caller guarantees chiprev 0100, out endpoपूर्णांक is NAKing, and
- * there's no real data in the fअगरo.
+/* work around erratum 0106: PCI and USB race over the OUT fifo.
+ * caller guarantees chiprev 0100, out endpoint is NAKing, and
+ * there's no real data in the fifo.
  *
- * NOTE:  also used in हालs where that erratum करोesn't apply:
+ * NOTE:  also used in cases where that erratum doesn't apply:
  * where the host wrote "too much" data to us.
  */
-अटल व्योम out_flush(काष्ठा net2280_ep *ep)
-अणु
+static void out_flush(struct net2280_ep *ep)
+{
 	u32	__iomem *statp;
-	u32	पंचांगp;
+	u32	tmp;
 
 	statp = &ep->regs->ep_stat;
 
-	पंचांगp = पढ़ोl(statp);
-	अगर (पंचांगp & BIT(NAK_OUT_PACKETS)) अणु
+	tmp = readl(statp);
+	if (tmp & BIT(NAK_OUT_PACKETS)) {
 		ep_dbg(ep->dev, "%s %s %08x !NAK\n",
-			ep->ep.name, __func__, पंचांगp);
-		ग_लिखोl(BIT(SET_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
-	पूर्ण
+			ep->ep.name, __func__, tmp);
+		writel(BIT(SET_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
+	}
 
-	ग_लिखोl(BIT(DATA_OUT_PING_TOKEN_INTERRUPT) |
+	writel(BIT(DATA_OUT_PING_TOKEN_INTERRUPT) |
 		BIT(DATA_PACKET_RECEIVED_INTERRUPT),
 		statp);
-	ग_लिखोl(BIT(FIFO_FLUSH), statp);
+	writel(BIT(FIFO_FLUSH), statp);
 	/* Make sure that stap is written */
 	mb();
-	पंचांगp = पढ़ोl(statp);
-	अगर (पंचांगp & BIT(DATA_OUT_PING_TOKEN_INTERRUPT) &&
-			/* high speed did bulk NYET; fअगरo isn't filling */
-			ep->dev->gadget.speed == USB_SPEED_FULL) अणु
-		अचिन्हित	usec;
+	tmp = readl(statp);
+	if (tmp & BIT(DATA_OUT_PING_TOKEN_INTERRUPT) &&
+			/* high speed did bulk NYET; fifo isn't filling */
+			ep->dev->gadget.speed == USB_SPEED_FULL) {
+		unsigned	usec;
 
-		usec = 50;		/* 64 byte bulk/पूर्णांकerrupt */
+		usec = 50;		/* 64 byte bulk/interrupt */
 		handshake(statp, BIT(USB_OUT_PING_NAK_SENT),
 				BIT(USB_OUT_PING_NAK_SENT), usec);
-		/* NAK करोne; now CLEAR_NAK_OUT_PACKETS is safe */
-	पूर्ण
-पूर्ण
+		/* NAK done; now CLEAR_NAK_OUT_PACKETS is safe */
+	}
+}
 
-/* unload packet(s) from the fअगरo we use क्रम usb OUT transfers.
- * वापसs true अगरf the request completed, because of लघु packet
+/* unload packet(s) from the fifo we use for usb OUT transfers.
+ * returns true iff the request completed, because of short packet
  * or the request buffer having filled with full packets.
  *
- * क्रम ep-a..ep-d this will पढ़ो multiple packets out when they
+ * for ep-a..ep-d this will read multiple packets out when they
  * have been accepted.
  */
-अटल पूर्णांक पढ़ो_fअगरo(काष्ठा net2280_ep *ep, काष्ठा net2280_request *req)
-अणु
-	काष्ठा net2280_ep_regs	__iomem *regs = ep->regs;
+static int read_fifo(struct net2280_ep *ep, struct net2280_request *req)
+{
+	struct net2280_ep_regs	__iomem *regs = ep->regs;
 	u8			*buf = req->req.buf + req->req.actual;
-	अचिन्हित		count, पंचांगp, is_लघु;
-	अचिन्हित		cleanup = 0, prevent = 0;
+	unsigned		count, tmp, is_short;
+	unsigned		cleanup = 0, prevent = 0;
 
-	/* erratum 0106 ... packets coming in during fअगरo पढ़ोs might
-	 * be incompletely rejected.  not all हालs have workarounds.
+	/* erratum 0106 ... packets coming in during fifo reads might
+	 * be incompletely rejected.  not all cases have workarounds.
 	 */
-	अगर (ep->dev->chiprev == 0x0100 &&
-			ep->dev->gadget.speed == USB_SPEED_FULL) अणु
+	if (ep->dev->chiprev == 0x0100 &&
+			ep->dev->gadget.speed == USB_SPEED_FULL) {
 		udelay(1);
-		पंचांगp = पढ़ोl(&ep->regs->ep_stat);
-		अगर ((पंचांगp & BIT(NAK_OUT_PACKETS)))
+		tmp = readl(&ep->regs->ep_stat);
+		if ((tmp & BIT(NAK_OUT_PACKETS)))
 			cleanup = 1;
-		अन्यथा अगर ((पंचांगp & BIT(FIFO_FULL))) अणु
+		else if ((tmp & BIT(FIFO_FULL))) {
 			start_out_naking(ep);
 			prevent = 1;
-		पूर्ण
-		/* अन्यथा: hope we करोn't see the problem */
-	पूर्ण
+		}
+		/* else: hope we don't see the problem */
+	}
 
-	/* never overflow the rx buffer. the fअगरo पढ़ोs packets until
-	 * it sees a लघु one; we might not be पढ़ोy क्रम them all.
+	/* never overflow the rx buffer. the fifo reads packets until
+	 * it sees a short one; we might not be ready for them all.
 	 */
 	prefetchw(buf);
-	count = पढ़ोl(&regs->ep_avail);
-	अगर (unlikely(count == 0)) अणु
+	count = readl(&regs->ep_avail);
+	if (unlikely(count == 0)) {
 		udelay(1);
-		पंचांगp = पढ़ोl(&ep->regs->ep_stat);
-		count = पढ़ोl(&regs->ep_avail);
-		/* handled that data alपढ़ोy? */
-		अगर (count == 0 && (पंचांगp & BIT(NAK_OUT_PACKETS)) == 0)
-			वापस 0;
-	पूर्ण
+		tmp = readl(&ep->regs->ep_stat);
+		count = readl(&regs->ep_avail);
+		/* handled that data already? */
+		if (count == 0 && (tmp & BIT(NAK_OUT_PACKETS)) == 0)
+			return 0;
+	}
 
-	पंचांगp = req->req.length - req->req.actual;
-	अगर (count > पंचांगp) अणु
-		/* as with DMA, data overflow माला_लो flushed */
-		अगर ((पंचांगp % ep->ep.maxpacket) != 0) अणु
+	tmp = req->req.length - req->req.actual;
+	if (count > tmp) {
+		/* as with DMA, data overflow gets flushed */
+		if ((tmp % ep->ep.maxpacket) != 0) {
 			ep_err(ep->dev,
 				"%s out fifo %d bytes, expected %d\n",
-				ep->ep.name, count, पंचांगp);
+				ep->ep.name, count, tmp);
 			req->req.status = -EOVERFLOW;
 			cleanup = 1;
 			/* NAK_OUT_PACKETS will be set, so flushing is safe;
-			 * the next पढ़ो will start with the next packet
+			 * the next read will start with the next packet
 			 */
-		पूर्ण /* अन्यथा it's a ZLP, no worries */
-		count = पंचांगp;
-	पूर्ण
+		} /* else it's a ZLP, no worries */
+		count = tmp;
+	}
 	req->req.actual += count;
 
-	is_लघु = (count == 0) || ((count % ep->ep.maxpacket) != 0);
+	is_short = (count == 0) || ((count % ep->ep.maxpacket) != 0);
 
 	ep_vdbg(ep->dev, "read %s fifo (OUT) %d bytes%s%s%s req %p %d/%d\n",
-			ep->ep.name, count, is_लघु ? " (short)" : "",
+			ep->ep.name, count, is_short ? " (short)" : "",
 			cleanup ? " flush" : "", prevent ? " nak" : "",
 			req, req->req.actual, req->req.length);
 
-	जबतक (count >= 4) अणु
-		पंचांगp = पढ़ोl(&regs->ep_data);
-		cpu_to_le32s(&पंचांगp);
-		put_unaligned(पंचांगp, (u32 *)buf);
+	while (count >= 4) {
+		tmp = readl(&regs->ep_data);
+		cpu_to_le32s(&tmp);
+		put_unaligned(tmp, (u32 *)buf);
 		buf += 4;
 		count -= 4;
-	पूर्ण
-	अगर (count) अणु
-		पंचांगp = पढ़ोl(&regs->ep_data);
+	}
+	if (count) {
+		tmp = readl(&regs->ep_data);
 		/* LE conversion is implicit here: */
-		करो अणु
-			*buf++ = (u8) पंचांगp;
-			पंचांगp >>= 8;
-		पूर्ण जबतक (--count);
-	पूर्ण
-	अगर (cleanup)
+		do {
+			*buf++ = (u8) tmp;
+			tmp >>= 8;
+		} while (--count);
+	}
+	if (cleanup)
 		out_flush(ep);
-	अगर (prevent) अणु
-		ग_लिखोl(BIT(CLEAR_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
-		(व्योम) पढ़ोl(&ep->regs->ep_rsp);
-	पूर्ण
+	if (prevent) {
+		writel(BIT(CLEAR_NAK_OUT_PACKETS), &ep->regs->ep_rsp);
+		(void) readl(&ep->regs->ep_rsp);
+	}
 
-	वापस is_लघु || req->req.actual == req->req.length;
-पूर्ण
+	return is_short || req->req.actual == req->req.length;
+}
 
 /* fill out dma descriptor to match a given request */
-अटल व्योम fill_dma_desc(काष्ठा net2280_ep *ep,
-					काष्ठा net2280_request *req, पूर्णांक valid)
-अणु
-	काष्ठा net2280_dma	*td = req->td;
+static void fill_dma_desc(struct net2280_ep *ep,
+					struct net2280_request *req, int valid)
+{
+	struct net2280_dma	*td = req->td;
 	u32			dmacount = req->req.length;
 
-	/* करोn't let DMA जारी after a लघु OUT packet,
+	/* don't let DMA continue after a short OUT packet,
 	 * so overruns can't affect the next transfer.
-	 * in हाल of overruns on max-size packets, we can't
-	 * stop the fअगरo from filling but we can flush it.
+	 * in case of overruns on max-size packets, we can't
+	 * stop the fifo from filling but we can flush it.
 	 */
-	अगर (ep->is_in)
-		dmacount |= BIT(DMA_सूचीECTION);
-	अगर ((!ep->is_in && (dmacount % ep->ep.maxpacket) != 0) ||
+	if (ep->is_in)
+		dmacount |= BIT(DMA_DIRECTION);
+	if ((!ep->is_in && (dmacount % ep->ep.maxpacket) != 0) ||
 					!(ep->dev->quirks & PLX_2280))
 		dmacount |= BIT(END_OF_CHAIN);
 
 	req->valid = valid;
-	अगर (valid)
+	if (valid)
 		dmacount |= BIT(VALID_BIT);
 	dmacount |= BIT(DMA_DONE_INTERRUPT_ENABLE);
 
@@ -821,9 +820,9 @@ prपूर्णांक_err:
 	/* 2280 may be polling VALID_BIT through ep->dma->dmadesc */
 	wmb();
 	td->dmacount = cpu_to_le32(dmacount);
-पूर्ण
+}
 
-अटल स्थिर u32 dmactl_शेष =
+static const u32 dmactl_default =
 		BIT(DMA_SCATTER_GATHER_DONE_INTERRUPT) |
 		BIT(DMA_CLEAR_COUNT_ENABLE) |
 		/* erratum 0116 workaround part 1 (use POLLING) */
@@ -834,200 +833,200 @@ prपूर्णांक_err:
 		/* erratum 0116 workaround part 2 (no AUTOSTART) */
 		BIT(DMA_ENABLE);
 
-अटल अंतरभूत व्योम spin_stop_dma(काष्ठा net2280_dma_regs __iomem *dma)
-अणु
+static inline void spin_stop_dma(struct net2280_dma_regs __iomem *dma)
+{
 	handshake(&dma->dmactl, BIT(DMA_ENABLE), 0, 50);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम stop_dma(काष्ठा net2280_dma_regs __iomem *dma)
-अणु
-	ग_लिखोl(पढ़ोl(&dma->dmactl) & ~BIT(DMA_ENABLE), &dma->dmactl);
+static inline void stop_dma(struct net2280_dma_regs __iomem *dma)
+{
+	writel(readl(&dma->dmactl) & ~BIT(DMA_ENABLE), &dma->dmactl);
 	spin_stop_dma(dma);
-पूर्ण
+}
 
-अटल व्योम start_queue(काष्ठा net2280_ep *ep, u32 dmactl, u32 td_dma)
-अणु
-	काष्ठा net2280_dma_regs	__iomem *dma = ep->dma;
-	अचिन्हित पूर्णांक पंचांगp = BIT(VALID_BIT) | (ep->is_in << DMA_सूचीECTION);
+static void start_queue(struct net2280_ep *ep, u32 dmactl, u32 td_dma)
+{
+	struct net2280_dma_regs	__iomem *dma = ep->dma;
+	unsigned int tmp = BIT(VALID_BIT) | (ep->is_in << DMA_DIRECTION);
 
-	अगर (!(ep->dev->quirks & PLX_2280))
-		पंचांगp |= BIT(END_OF_CHAIN);
+	if (!(ep->dev->quirks & PLX_2280))
+		tmp |= BIT(END_OF_CHAIN);
 
-	ग_लिखोl(पंचांगp, &dma->dmacount);
-	ग_लिखोl(पढ़ोl(&dma->dmastat), &dma->dmastat);
+	writel(tmp, &dma->dmacount);
+	writel(readl(&dma->dmastat), &dma->dmastat);
 
-	ग_लिखोl(td_dma, &dma->dmadesc);
-	अगर (ep->dev->quirks & PLX_PCIE)
+	writel(td_dma, &dma->dmadesc);
+	if (ep->dev->quirks & PLX_PCIE)
 		dmactl |= BIT(DMA_REQUEST_OUTSTANDING);
-	ग_लिखोl(dmactl, &dma->dmactl);
+	writel(dmactl, &dma->dmactl);
 
 	/* erratum 0116 workaround part 3:  pci arbiter away from net2280 */
-	(व्योम) पढ़ोl(&ep->dev->pci->pcimstctl);
+	(void) readl(&ep->dev->pci->pcimstctl);
 
-	ग_लिखोl(BIT(DMA_START), &dma->dmastat);
-पूर्ण
+	writel(BIT(DMA_START), &dma->dmastat);
+}
 
-अटल व्योम start_dma(काष्ठा net2280_ep *ep, काष्ठा net2280_request *req)
-अणु
-	u32			पंचांगp;
-	काष्ठा net2280_dma_regs	__iomem *dma = ep->dma;
+static void start_dma(struct net2280_ep *ep, struct net2280_request *req)
+{
+	u32			tmp;
+	struct net2280_dma_regs	__iomem *dma = ep->dma;
 
-	/* FIXME can't use DMA क्रम ZLPs */
+	/* FIXME can't use DMA for ZLPs */
 
 	/* on this path we "know" there's no dma active (yet) */
-	WARN_ON(पढ़ोl(&dma->dmactl) & BIT(DMA_ENABLE));
-	ग_लिखोl(0, &ep->dma->dmactl);
+	WARN_ON(readl(&dma->dmactl) & BIT(DMA_ENABLE));
+	writel(0, &ep->dma->dmactl);
 
-	/* previous OUT packet might have been लघु */
-	अगर (!ep->is_in && (पढ़ोl(&ep->regs->ep_stat) &
-				BIT(NAK_OUT_PACKETS))) अणु
-		ग_लिखोl(BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT),
+	/* previous OUT packet might have been short */
+	if (!ep->is_in && (readl(&ep->regs->ep_stat) &
+				BIT(NAK_OUT_PACKETS))) {
+		writel(BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT),
 			&ep->regs->ep_stat);
 
-		पंचांगp = पढ़ोl(&ep->regs->ep_avail);
-		अगर (पंचांगp) अणु
-			ग_लिखोl(पढ़ोl(&dma->dmastat), &dma->dmastat);
+		tmp = readl(&ep->regs->ep_avail);
+		if (tmp) {
+			writel(readl(&dma->dmastat), &dma->dmastat);
 
-			/* transfer all/some fअगरo data */
-			ग_लिखोl(req->req.dma, &dma->dmaaddr);
-			पंचांगp = min(पंचांगp, req->req.length);
+			/* transfer all/some fifo data */
+			writel(req->req.dma, &dma->dmaaddr);
+			tmp = min(tmp, req->req.length);
 
 			/* dma irq, faking scatterlist status */
-			req->td->dmacount = cpu_to_le32(req->req.length - पंचांगp);
-			ग_लिखोl(BIT(DMA_DONE_INTERRUPT_ENABLE) | पंचांगp,
+			req->td->dmacount = cpu_to_le32(req->req.length - tmp);
+			writel(BIT(DMA_DONE_INTERRUPT_ENABLE) | tmp,
 					&dma->dmacount);
 			req->td->dmadesc = 0;
 			req->valid = 1;
 
-			ग_लिखोl(BIT(DMA_ENABLE), &dma->dmactl);
-			ग_लिखोl(BIT(DMA_START), &dma->dmastat);
-			वापस;
-		पूर्ण
+			writel(BIT(DMA_ENABLE), &dma->dmactl);
+			writel(BIT(DMA_START), &dma->dmastat);
+			return;
+		}
 		stop_out_naking(ep);
-	पूर्ण
+	}
 
-	पंचांगp = dmactl_शेष;
+	tmp = dmactl_default;
 
-	/* क्रमce packet boundaries between dma requests, but prevent the
-	 * controller from स्वतःmagically writing a last "short" packet
-	 * (zero length) unless the driver explicitly said to करो that.
+	/* force packet boundaries between dma requests, but prevent the
+	 * controller from automagically writing a last "short" packet
+	 * (zero length) unless the driver explicitly said to do that.
 	 */
-	अगर (ep->is_in) अणु
-		अगर (likely((req->req.length % ep->ep.maxpacket) ||
-							req->req.zero))अणु
-			पंचांगp |= BIT(DMA_FIFO_VALIDATE);
-			ep->in_fअगरo_validate = 1;
-		पूर्ण अन्यथा
-			ep->in_fअगरo_validate = 0;
-	पूर्ण
+	if (ep->is_in) {
+		if (likely((req->req.length % ep->ep.maxpacket) ||
+							req->req.zero)){
+			tmp |= BIT(DMA_FIFO_VALIDATE);
+			ep->in_fifo_validate = 1;
+		} else
+			ep->in_fifo_validate = 0;
+	}
 
-	/* init req->td, poपूर्णांकing to the current dummy */
+	/* init req->td, pointing to the current dummy */
 	req->td->dmadesc = cpu_to_le32 (ep->td_dma);
 	fill_dma_desc(ep, req, 1);
 
 	req->td->dmacount |= cpu_to_le32(BIT(END_OF_CHAIN));
 
-	start_queue(ep, पंचांगp, req->td_dma);
-पूर्ण
+	start_queue(ep, tmp, req->td_dma);
+}
 
-अटल अंतरभूत व्योम
-queue_dma(काष्ठा net2280_ep *ep, काष्ठा net2280_request *req, पूर्णांक valid)
-अणु
-	काष्ठा net2280_dma	*end;
-	dma_addr_t		पंचांगp;
+static inline void
+queue_dma(struct net2280_ep *ep, struct net2280_request *req, int valid)
+{
+	struct net2280_dma	*end;
+	dma_addr_t		tmp;
 
-	/* swap new dummy क्रम old, link; fill and maybe activate */
+	/* swap new dummy for old, link; fill and maybe activate */
 	end = ep->dummy;
 	ep->dummy = req->td;
 	req->td = end;
 
-	पंचांगp = ep->td_dma;
+	tmp = ep->td_dma;
 	ep->td_dma = req->td_dma;
-	req->td_dma = पंचांगp;
+	req->td_dma = tmp;
 
 	end->dmadesc = cpu_to_le32 (ep->td_dma);
 
 	fill_dma_desc(ep, req, valid);
-पूर्ण
+}
 
-अटल व्योम
-करोne(काष्ठा net2280_ep *ep, काष्ठा net2280_request *req, पूर्णांक status)
-अणु
-	काष्ठा net2280		*dev;
-	अचिन्हित		stopped = ep->stopped;
+static void
+done(struct net2280_ep *ep, struct net2280_request *req, int status)
+{
+	struct net2280		*dev;
+	unsigned		stopped = ep->stopped;
 
 	list_del_init(&req->queue);
 
-	अगर (req->req.status == -EINPROGRESS)
+	if (req->req.status == -EINPROGRESS)
 		req->req.status = status;
-	अन्यथा
+	else
 		status = req->req.status;
 
 	dev = ep->dev;
-	अगर (ep->dma)
+	if (ep->dma)
 		usb_gadget_unmap_request(&dev->gadget, &req->req, ep->is_in);
 
-	अगर (status && status != -ESHUTDOWN)
+	if (status && status != -ESHUTDOWN)
 		ep_vdbg(dev, "complete %s req %p stat %d len %u/%u\n",
 			ep->ep.name, &req->req, status,
 			req->req.actual, req->req.length);
 
-	/* करोn't modअगरy queue heads during completion callback */
+	/* don't modify queue heads during completion callback */
 	ep->stopped = 1;
 	spin_unlock(&dev->lock);
 	usb_gadget_giveback_request(&ep->ep, &req->req);
 	spin_lock(&dev->lock);
 	ep->stopped = stopped;
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक
-net2280_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req, gfp_t gfp_flags)
-अणु
-	काष्ठा net2280_request	*req;
-	काष्ठा net2280_ep	*ep;
-	काष्ठा net2280		*dev;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक ret = 0;
+static int
+net2280_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flags)
+{
+	struct net2280_request	*req;
+	struct net2280_ep	*ep;
+	struct net2280		*dev;
+	unsigned long		flags;
+	int ret = 0;
 
 	/* we always require a cpu-view buffer, so that we can
 	 * always use pio (as fallback or whatever).
 	 */
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || (!ep->desc && ep->num != 0)) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || (!ep->desc && ep->num != 0)) {
 		pr_err("%s: Invalid ep=%p or ep->desc\n", __func__, _ep);
-		वापस -EINVAL;
-	पूर्ण
-	req = container_of(_req, काष्ठा net2280_request, req);
-	अगर (!_req || !_req->complete || !_req->buf ||
-				!list_empty(&req->queue)) अणु
+		return -EINVAL;
+	}
+	req = container_of(_req, struct net2280_request, req);
+	if (!_req || !_req->complete || !_req->buf ||
+				!list_empty(&req->queue)) {
 		ret = -EINVAL;
-		जाओ prपूर्णांक_err;
-	पूर्ण
-	अगर (_req->length > (~0 & DMA_BYTE_COUNT_MASK)) अणु
-		ret = -गलत_तर्क;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+		goto print_err;
+	}
+	if (_req->length > (~0 & DMA_BYTE_COUNT_MASK)) {
+		ret = -EDOM;
+		goto print_err;
+	}
 	dev = ep->dev;
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN) अणु
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN) {
 		ret = -ESHUTDOWN;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+		goto print_err;
+	}
 
-	/* FIXME implement PIO fallback क्रम ZLPs with DMA */
-	अगर (ep->dma && _req->length == 0) अणु
+	/* FIXME implement PIO fallback for ZLPs with DMA */
+	if (ep->dma && _req->length == 0) {
 		ret = -EOPNOTSUPP;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+		goto print_err;
+	}
 
-	/* set up dma mapping in हाल the caller didn't */
-	अगर (ep->dma) अणु
+	/* set up dma mapping in case the caller didn't */
+	if (ep->dma) {
 		ret = usb_gadget_map_request(&dev->gadget, _req,
 				ep->is_in);
-		अगर (ret)
-			जाओ prपूर्णांक_err;
-	पूर्ण
+		if (ret)
+			goto print_err;
+	}
 
 	ep_vdbg(dev, "%s queue req %p, len %d buf %p\n",
 			_ep->name, _req, _req->length, _req->buf);
@@ -1038,675 +1037,675 @@ net2280_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_r
 	_req->actual = 0;
 
 	/* kickstart this i/o queue? */
-	अगर  (list_empty(&ep->queue) && !ep->stopped &&
+	if  (list_empty(&ep->queue) && !ep->stopped &&
 		!((dev->quirks & PLX_PCIE) && ep->dma &&
-		  (पढ़ोl(&ep->regs->ep_rsp) & BIT(CLEAR_ENDPOINT_HALT)))) अणु
+		  (readl(&ep->regs->ep_rsp) & BIT(CLEAR_ENDPOINT_HALT)))) {
 
-		/* use DMA अगर the endpoपूर्णांक supports it, अन्यथा pio */
-		अगर (ep->dma)
+		/* use DMA if the endpoint supports it, else pio */
+		if (ep->dma)
 			start_dma(ep, req);
-		अन्यथा अणु
+		else {
 			/* maybe there's no control data, just status ack */
-			अगर (ep->num == 0 && _req->length == 0) अणु
+			if (ep->num == 0 && _req->length == 0) {
 				allow_status(ep);
-				करोne(ep, req, 0);
+				done(ep, req, 0);
 				ep_vdbg(dev, "%s status ack\n", ep->ep.name);
-				जाओ करोne;
-			पूर्ण
+				goto done;
+			}
 
-			/* PIO ... stuff the fअगरo, or unblock it.  */
-			अगर (ep->is_in)
-				ग_लिखो_fअगरo(ep, _req);
-			अन्यथा अणु
+			/* PIO ... stuff the fifo, or unblock it.  */
+			if (ep->is_in)
+				write_fifo(ep, _req);
+			else {
 				u32	s;
 
 				/* OUT FIFO might have packet(s) buffered */
-				s = पढ़ोl(&ep->regs->ep_stat);
-				अगर ((s & BIT(FIFO_EMPTY)) == 0) अणु
-					/* note:  _req->लघु_not_ok is
+				s = readl(&ep->regs->ep_stat);
+				if ((s & BIT(FIFO_EMPTY)) == 0) {
+					/* note:  _req->short_not_ok is
 					 * ignored here since PIO _always_
 					 * stops queue advance here, and
-					 * _req->status करोesn't change क्रम
-					 * लघु पढ़ोs (only _req->actual)
+					 * _req->status doesn't change for
+					 * short reads (only _req->actual)
 					 */
-					अगर (पढ़ो_fअगरo(ep, req) &&
-							ep->num == 0) अणु
-						करोne(ep, req, 0);
+					if (read_fifo(ep, req) &&
+							ep->num == 0) {
+						done(ep, req, 0);
 						allow_status(ep);
-						/* करोn't queue it */
-						req = शून्य;
-					पूर्ण अन्यथा अगर (पढ़ो_fअगरo(ep, req) &&
-							ep->num != 0) अणु
-						करोne(ep, req, 0);
-						req = शून्य;
-					पूर्ण अन्यथा
-						s = पढ़ोl(&ep->regs->ep_stat);
-				पूर्ण
+						/* don't queue it */
+						req = NULL;
+					} else if (read_fifo(ep, req) &&
+							ep->num != 0) {
+						done(ep, req, 0);
+						req = NULL;
+					} else
+						s = readl(&ep->regs->ep_stat);
+				}
 
-				/* करोn't NAK, let the fअगरo fill */
-				अगर (req && (s & BIT(NAK_OUT_PACKETS)))
-					ग_लिखोl(BIT(CLEAR_NAK_OUT_PACKETS),
+				/* don't NAK, let the fifo fill */
+				if (req && (s & BIT(NAK_OUT_PACKETS)))
+					writel(BIT(CLEAR_NAK_OUT_PACKETS),
 							&ep->regs->ep_rsp);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-	पूर्ण अन्यथा अगर (ep->dma) अणु
-		पूर्णांक	valid = 1;
+	} else if (ep->dma) {
+		int	valid = 1;
 
-		अगर (ep->is_in) अणु
-			पूर्णांक	expect;
+		if (ep->is_in) {
+			int	expect;
 
 			/* preventing magic zlps is per-engine state, not
 			 * per-transfer; irq logic must recover hiccups.
 			 */
 			expect = likely(req->req.zero ||
 				(req->req.length % ep->ep.maxpacket));
-			अगर (expect != ep->in_fअगरo_validate)
+			if (expect != ep->in_fifo_validate)
 				valid = 0;
-		पूर्ण
+		}
 		queue_dma(ep, req, valid);
 
-	पूर्ण /* अन्यथा the irq handler advances the queue. */
+	} /* else the irq handler advances the queue. */
 
 	ep->responded = 1;
-	अगर (req)
+	if (req)
 		list_add_tail(&req->queue, &ep->queue);
-करोne:
+done:
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	/* pci ग_लिखोs may still be posted */
-	वापस ret;
+	/* pci writes may still be posted */
+	return ret;
 
-prपूर्णांक_err:
+print_err:
 	dev_err(&ep->dev->pdev->dev, "%s: error=%d\n", __func__, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम
-dma_करोne(काष्ठा net2280_ep *ep,	काष्ठा net2280_request *req, u32 dmacount,
-		पूर्णांक status)
-अणु
+static inline void
+dma_done(struct net2280_ep *ep,	struct net2280_request *req, u32 dmacount,
+		int status)
+{
 	req->req.actual = req->req.length - (DMA_BYTE_COUNT_MASK & dmacount);
-	करोne(ep, req, status);
-पूर्ण
+	done(ep, req, status);
+}
 
-अटल पूर्णांक scan_dma_completions(काष्ठा net2280_ep *ep)
-अणु
-	पूर्णांक num_completed = 0;
+static int scan_dma_completions(struct net2280_ep *ep)
+{
+	int num_completed = 0;
 
 	/* only look at descriptors that were "naturally" retired,
-	 * so fअगरo and list head state won't matter
+	 * so fifo and list head state won't matter
 	 */
-	जबतक (!list_empty(&ep->queue)) अणु
-		काष्ठा net2280_request	*req;
+	while (!list_empty(&ep->queue)) {
+		struct net2280_request	*req;
 		u32 req_dma_count;
 
 		req = list_entry(ep->queue.next,
-				काष्ठा net2280_request, queue);
-		अगर (!req->valid)
-			अवरोध;
+				struct net2280_request, queue);
+		if (!req->valid)
+			break;
 		rmb();
 		req_dma_count = le32_to_cpup(&req->td->dmacount);
-		अगर ((req_dma_count & BIT(VALID_BIT)) != 0)
-			अवरोध;
+		if ((req_dma_count & BIT(VALID_BIT)) != 0)
+			break;
 
 		/* SHORT_PACKET_TRANSFERRED_INTERRUPT handles "usb-short"
-		 * हालs where DMA must be पातed; this code handles
-		 * all non-पात DMA completions.
+		 * cases where DMA must be aborted; this code handles
+		 * all non-abort DMA completions.
 		 */
-		अगर (unlikely(req->td->dmadesc == 0)) अणु
+		if (unlikely(req->td->dmadesc == 0)) {
 			/* paranoia */
-			u32 स्थिर ep_dmacount = पढ़ोl(&ep->dma->dmacount);
+			u32 const ep_dmacount = readl(&ep->dma->dmacount);
 
-			अगर (ep_dmacount & DMA_BYTE_COUNT_MASK)
-				अवरोध;
+			if (ep_dmacount & DMA_BYTE_COUNT_MASK)
+				break;
 			/* single transfer mode */
-			dma_करोne(ep, req, req_dma_count, 0);
+			dma_done(ep, req, req_dma_count, 0);
 			num_completed++;
-			अवरोध;
-		पूर्ण अन्यथा अगर (!ep->is_in &&
+			break;
+		} else if (!ep->is_in &&
 			   (req->req.length % ep->ep.maxpacket) &&
-			   !(ep->dev->quirks & PLX_PCIE)) अणु
+			   !(ep->dev->quirks & PLX_PCIE)) {
 
-			u32 स्थिर ep_stat = पढ़ोl(&ep->regs->ep_stat);
-			/* AVOID TROUBLE HERE by not issuing लघु पढ़ोs from
-			 * your gadget driver.  That helps aव्योमs errata 0121,
-			 * 0122, and 0124; not all हालs trigger the warning.
+			u32 const ep_stat = readl(&ep->regs->ep_stat);
+			/* AVOID TROUBLE HERE by not issuing short reads from
+			 * your gadget driver.  That helps avoids errata 0121,
+			 * 0122, and 0124; not all cases trigger the warning.
 			 */
-			अगर ((ep_stat & BIT(NAK_OUT_PACKETS)) == 0) अणु
+			if ((ep_stat & BIT(NAK_OUT_PACKETS)) == 0) {
 				ep_warn(ep->dev, "%s lost packet sync!\n",
 						ep->ep.name);
 				req->req.status = -EOVERFLOW;
-			पूर्ण अन्यथा अणु
-				u32 स्थिर ep_avail = पढ़ोl(&ep->regs->ep_avail);
-				अगर (ep_avail) अणु
-					/* fअगरo माला_लो flushed later */
+			} else {
+				u32 const ep_avail = readl(&ep->regs->ep_avail);
+				if (ep_avail) {
+					/* fifo gets flushed later */
 					ep->out_overflow = 1;
 					ep_dbg(ep->dev,
 						"%s dma, discard %d len %d\n",
 						ep->ep.name, ep_avail,
 						req->req.length);
 					req->req.status = -EOVERFLOW;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		dma_करोne(ep, req, req_dma_count, 0);
+				}
+			}
+		}
+		dma_done(ep, req, req_dma_count, 0);
 		num_completed++;
-	पूर्ण
+	}
 
-	वापस num_completed;
-पूर्ण
+	return num_completed;
+}
 
-अटल व्योम restart_dma(काष्ठा net2280_ep *ep)
-अणु
-	काष्ठा net2280_request	*req;
+static void restart_dma(struct net2280_ep *ep)
+{
+	struct net2280_request	*req;
 
-	अगर (ep->stopped)
-		वापस;
-	req = list_entry(ep->queue.next, काष्ठा net2280_request, queue);
+	if (ep->stopped)
+		return;
+	req = list_entry(ep->queue.next, struct net2280_request, queue);
 
 	start_dma(ep, req);
-पूर्ण
+}
 
-अटल व्योम पात_dma(काष्ठा net2280_ep *ep)
-अणु
-	/* पात the current transfer */
-	अगर (likely(!list_empty(&ep->queue))) अणु
+static void abort_dma(struct net2280_ep *ep)
+{
+	/* abort the current transfer */
+	if (likely(!list_empty(&ep->queue))) {
 		/* FIXME work around errata 0121, 0122, 0124 */
-		ग_लिखोl(BIT(DMA_ABORT), &ep->dma->dmastat);
+		writel(BIT(DMA_ABORT), &ep->dma->dmastat);
 		spin_stop_dma(ep->dma);
-	पूर्ण अन्यथा
+	} else
 		stop_dma(ep->dma);
 	scan_dma_completions(ep);
-पूर्ण
+}
 
 /* dequeue ALL requests */
-अटल व्योम nuke(काष्ठा net2280_ep *ep)
-अणु
-	काष्ठा net2280_request	*req;
+static void nuke(struct net2280_ep *ep)
+{
+	struct net2280_request	*req;
 
 	/* called with spinlock held */
 	ep->stopped = 1;
-	अगर (ep->dma)
-		पात_dma(ep);
-	जबतक (!list_empty(&ep->queue)) अणु
+	if (ep->dma)
+		abort_dma(ep);
+	while (!list_empty(&ep->queue)) {
 		req = list_entry(ep->queue.next,
-				काष्ठा net2280_request,
+				struct net2280_request,
 				queue);
-		करोne(ep, req, -ESHUTDOWN);
-	पूर्ण
-पूर्ण
+		done(ep, req, -ESHUTDOWN);
+	}
+}
 
 /* dequeue JUST ONE request */
-अटल पूर्णांक net2280_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा net2280_ep	*ep;
-	काष्ठा net2280_request	*req;
-	अचिन्हित दीर्घ		flags;
+static int net2280_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct net2280_ep	*ep;
+	struct net2280_request	*req;
+	unsigned long		flags;
 	u32			dmactl;
-	पूर्णांक			stopped;
+	int			stopped;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || (!ep->desc && ep->num != 0) || !_req) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || (!ep->desc && ep->num != 0) || !_req) {
 		pr_err("%s: Invalid ep=%p or ep->desc or req=%p\n",
 						__func__, _ep, _req);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&ep->dev->lock, flags);
 	stopped = ep->stopped;
 
-	/* quiesce dma जबतक we patch the queue */
+	/* quiesce dma while we patch the queue */
 	dmactl = 0;
 	ep->stopped = 1;
-	अगर (ep->dma) अणु
-		dmactl = पढ़ोl(&ep->dma->dmactl);
+	if (ep->dma) {
+		dmactl = readl(&ep->dma->dmactl);
 		/* WARNING erratum 0127 may kick in ... */
 		stop_dma(ep->dma);
 		scan_dma_completions(ep);
-	पूर्ण
+	}
 
-	/* make sure it's still queued on this endpoपूर्णांक */
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		अगर (&req->req == _req)
-			अवरोध;
-	पूर्ण
-	अगर (&req->req != _req) अणु
+	/* make sure it's still queued on this endpoint */
+	list_for_each_entry(req, &ep->queue, queue) {
+		if (&req->req == _req)
+			break;
+	}
+	if (&req->req != _req) {
 		ep->stopped = stopped;
 		spin_unlock_irqrestore(&ep->dev->lock, flags);
 		ep_dbg(ep->dev, "%s: Request mismatch\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* queue head may be partially complete. */
-	अगर (ep->queue.next == &req->queue) अणु
-		अगर (ep->dma) अणु
+	if (ep->queue.next == &req->queue) {
+		if (ep->dma) {
 			ep_dbg(ep->dev, "unlink (%s) dma\n", _ep->name);
 			_req->status = -ECONNRESET;
-			पात_dma(ep);
-			अगर (likely(ep->queue.next == &req->queue)) अणु
+			abort_dma(ep);
+			if (likely(ep->queue.next == &req->queue)) {
 				/* NOTE: misreports single-transfer mode*/
 				req->td->dmacount = 0;	/* invalidate */
-				dma_करोne(ep, req,
-					पढ़ोl(&ep->dma->dmacount),
+				dma_done(ep, req,
+					readl(&ep->dma->dmacount),
 					-ECONNRESET);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			ep_dbg(ep->dev, "unlink (%s) pio\n", _ep->name);
-			करोne(ep, req, -ECONNRESET);
-		पूर्ण
-		req = शून्य;
-	पूर्ण
+			done(ep, req, -ECONNRESET);
+		}
+		req = NULL;
+	}
 
-	अगर (req)
-		करोne(ep, req, -ECONNRESET);
+	if (req)
+		done(ep, req, -ECONNRESET);
 	ep->stopped = stopped;
 
-	अगर (ep->dma) अणु
+	if (ep->dma) {
 		/* turn off dma on inactive queues */
-		अगर (list_empty(&ep->queue))
+		if (list_empty(&ep->queue))
 			stop_dma(ep->dma);
-		अन्यथा अगर (!ep->stopped) अणु
+		else if (!ep->stopped) {
 			/* resume current request, or start new one */
-			अगर (req)
-				ग_लिखोl(dmactl, &ep->dma->dmactl);
-			अन्यथा
+			if (req)
+				writel(dmactl, &ep->dma->dmactl);
+			else
 				start_dma(ep, list_entry(ep->queue.next,
-					काष्ठा net2280_request, queue));
-		पूर्ण
-	पूर्ण
+					struct net2280_request, queue));
+		}
+	}
 
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक net2280_fअगरo_status(काष्ठा usb_ep *_ep);
+static int net2280_fifo_status(struct usb_ep *_ep);
 
-अटल पूर्णांक
-net2280_set_halt_and_wedge(काष्ठा usb_ep *_ep, पूर्णांक value, पूर्णांक wedged)
-अणु
-	काष्ठा net2280_ep	*ep;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			retval = 0;
+static int
+net2280_set_halt_and_wedge(struct usb_ep *_ep, int value, int wedged)
+{
+	struct net2280_ep	*ep;
+	unsigned long		flags;
+	int			retval = 0;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || (!ep->desc && ep->num != 0)) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || (!ep->desc && ep->num != 0)) {
 		pr_err("%s: Invalid ep=%p or ep->desc\n", __func__, _ep);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN) अणु
+		return -EINVAL;
+	}
+	if (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN) {
 		retval = -ESHUTDOWN;
-		जाओ prपूर्णांक_err;
-	पूर्ण
-	अगर (ep->desc /* not ep0 */ && (ep->desc->bmAttributes & 0x03)
-						== USB_ENDPOINT_XFER_ISOC) अणु
+		goto print_err;
+	}
+	if (ep->desc /* not ep0 */ && (ep->desc->bmAttributes & 0x03)
+						== USB_ENDPOINT_XFER_ISOC) {
 		retval = -EINVAL;
-		जाओ prपूर्णांक_err;
-	पूर्ण
+		goto print_err;
+	}
 
 	spin_lock_irqsave(&ep->dev->lock, flags);
-	अगर (!list_empty(&ep->queue)) अणु
+	if (!list_empty(&ep->queue)) {
 		retval = -EAGAIN;
-		जाओ prपूर्णांक_unlock;
-	पूर्ण अन्यथा अगर (ep->is_in && value && net2280_fअगरo_status(_ep) != 0) अणु
+		goto print_unlock;
+	} else if (ep->is_in && value && net2280_fifo_status(_ep) != 0) {
 		retval = -EAGAIN;
-		जाओ prपूर्णांक_unlock;
-	पूर्ण अन्यथा अणु
+		goto print_unlock;
+	} else {
 		ep_vdbg(ep->dev, "%s %s %s\n", _ep->name,
 				value ? "set" : "clear",
 				wedged ? "wedge" : "halt");
 		/* set/clear, then synch memory views with the device */
-		अगर (value) अणु
-			अगर (ep->num == 0)
+		if (value) {
+			if (ep->num == 0)
 				ep->dev->protocol_stall = 1;
-			अन्यथा
+			else
 				set_halt(ep);
-			अगर (wedged)
+			if (wedged)
 				ep->wedged = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			clear_halt(ep);
-			अगर (ep->dev->quirks & PLX_PCIE &&
+			if (ep->dev->quirks & PLX_PCIE &&
 				!list_empty(&ep->queue) && ep->td_dma)
 					restart_dma(ep);
 			ep->wedged = 0;
-		पूर्ण
-		(व्योम) पढ़ोl(&ep->regs->ep_rsp);
-	पूर्ण
+		}
+		(void) readl(&ep->regs->ep_rsp);
+	}
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
 
-	वापस retval;
+	return retval;
 
-prपूर्णांक_unlock:
+print_unlock:
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
-prपूर्णांक_err:
+print_err:
 	dev_err(&ep->dev->pdev->dev, "%s: error=%d\n", __func__, retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक net2280_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	वापस net2280_set_halt_and_wedge(_ep, value, 0);
-पूर्ण
+static int net2280_set_halt(struct usb_ep *_ep, int value)
+{
+	return net2280_set_halt_and_wedge(_ep, value, 0);
+}
 
-अटल पूर्णांक net2280_set_wedge(काष्ठा usb_ep *_ep)
-अणु
-	अगर (!_ep || _ep->name == ep0name) अणु
+static int net2280_set_wedge(struct usb_ep *_ep)
+{
+	if (!_ep || _ep->name == ep0name) {
 		pr_err("%s: Invalid ep=%p or ep0\n", __func__, _ep);
-		वापस -EINVAL;
-	पूर्ण
-	वापस net2280_set_halt_and_wedge(_ep, 1, 1);
-पूर्ण
+		return -EINVAL;
+	}
+	return net2280_set_halt_and_wedge(_ep, 1, 1);
+}
 
-अटल पूर्णांक net2280_fअगरo_status(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा net2280_ep	*ep;
+static int net2280_fifo_status(struct usb_ep *_ep)
+{
+	struct net2280_ep	*ep;
 	u32			avail;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || (!ep->desc && ep->num != 0)) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || (!ep->desc && ep->num != 0)) {
 		pr_err("%s: Invalid ep=%p or ep->desc\n", __func__, _ep);
-		वापस -ENODEV;
-	पूर्ण
-	अगर (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN) अणु
+		return -ENODEV;
+	}
+	if (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN) {
 		dev_err(&ep->dev->pdev->dev,
 			"%s: Invalid driver=%p or speed=%d\n",
 			__func__, ep->dev->driver, ep->dev->gadget.speed);
-		वापस -ESHUTDOWN;
-	पूर्ण
+		return -ESHUTDOWN;
+	}
 
-	avail = पढ़ोl(&ep->regs->ep_avail) & (BIT(12) - 1);
-	अगर (avail > ep->fअगरo_size) अणु
+	avail = readl(&ep->regs->ep_avail) & (BIT(12) - 1);
+	if (avail > ep->fifo_size) {
 		dev_err(&ep->dev->pdev->dev, "%s: Fifo overflow\n", __func__);
-		वापस -EOVERFLOW;
-	पूर्ण
-	अगर (ep->is_in)
-		avail = ep->fअगरo_size - avail;
-	वापस avail;
-पूर्ण
+		return -EOVERFLOW;
+	}
+	if (ep->is_in)
+		avail = ep->fifo_size - avail;
+	return avail;
+}
 
-अटल व्योम net2280_fअगरo_flush(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा net2280_ep	*ep;
+static void net2280_fifo_flush(struct usb_ep *_ep)
+{
+	struct net2280_ep	*ep;
 
-	ep = container_of(_ep, काष्ठा net2280_ep, ep);
-	अगर (!_ep || (!ep->desc && ep->num != 0)) अणु
+	ep = container_of(_ep, struct net2280_ep, ep);
+	if (!_ep || (!ep->desc && ep->num != 0)) {
 		pr_err("%s: Invalid ep=%p or ep->desc\n", __func__, _ep);
-		वापस;
-	पूर्ण
-	अगर (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN) अणु
+		return;
+	}
+	if (!ep->dev->driver || ep->dev->gadget.speed == USB_SPEED_UNKNOWN) {
 		dev_err(&ep->dev->pdev->dev,
 			"%s: Invalid driver=%p or speed=%d\n",
 			__func__, ep->dev->driver, ep->dev->gadget.speed);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ग_लिखोl(BIT(FIFO_FLUSH), &ep->regs->ep_stat);
-	(व्योम) पढ़ोl(&ep->regs->ep_rsp);
-पूर्ण
+	writel(BIT(FIFO_FLUSH), &ep->regs->ep_stat);
+	(void) readl(&ep->regs->ep_rsp);
+}
 
-अटल स्थिर काष्ठा usb_ep_ops net2280_ep_ops = अणु
+static const struct usb_ep_ops net2280_ep_ops = {
 	.enable		= net2280_enable,
 	.disable	= net2280_disable,
 
 	.alloc_request	= net2280_alloc_request,
-	.मुक्त_request	= net2280_मुक्त_request,
+	.free_request	= net2280_free_request,
 
 	.queue		= net2280_queue,
 	.dequeue	= net2280_dequeue,
 
 	.set_halt	= net2280_set_halt,
 	.set_wedge	= net2280_set_wedge,
-	.fअगरo_status	= net2280_fअगरo_status,
-	.fअगरo_flush	= net2280_fअगरo_flush,
-पूर्ण;
+	.fifo_status	= net2280_fifo_status,
+	.fifo_flush	= net2280_fifo_flush,
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक net2280_get_frame(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा net2280		*dev;
-	अचिन्हित दीर्घ		flags;
+static int net2280_get_frame(struct usb_gadget *_gadget)
+{
+	struct net2280		*dev;
+	unsigned long		flags;
 	u16			retval;
 
-	अगर (!_gadget)
-		वापस -ENODEV;
-	dev = container_of(_gadget, काष्ठा net2280, gadget);
+	if (!_gadget)
+		return -ENODEV;
+	dev = container_of(_gadget, struct net2280, gadget);
 	spin_lock_irqsave(&dev->lock, flags);
 	retval = get_idx_reg(dev->regs, REG_FRAME) & 0x03ff;
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक net2280_wakeup(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा net2280		*dev;
-	u32			पंचांगp;
-	अचिन्हित दीर्घ		flags;
+static int net2280_wakeup(struct usb_gadget *_gadget)
+{
+	struct net2280		*dev;
+	u32			tmp;
+	unsigned long		flags;
 
-	अगर (!_gadget)
-		वापस 0;
-	dev = container_of(_gadget, काष्ठा net2280, gadget);
+	if (!_gadget)
+		return 0;
+	dev = container_of(_gadget, struct net2280, gadget);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	पंचांगp = पढ़ोl(&dev->usb->usbctl);
-	अगर (पंचांगp & BIT(DEVICE_REMOTE_WAKEUP_ENABLE))
-		ग_लिखोl(BIT(GENERATE_RESUME), &dev->usb->usbstat);
+	tmp = readl(&dev->usb->usbctl);
+	if (tmp & BIT(DEVICE_REMOTE_WAKEUP_ENABLE))
+		writel(BIT(GENERATE_RESUME), &dev->usb->usbstat);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	/* pci ग_लिखोs may still be posted */
-	वापस 0;
-पूर्ण
+	/* pci writes may still be posted */
+	return 0;
+}
 
-अटल पूर्णांक net2280_set_selfघातered(काष्ठा usb_gadget *_gadget, पूर्णांक value)
-अणु
-	काष्ठा net2280		*dev;
-	u32			पंचांगp;
-	अचिन्हित दीर्घ		flags;
+static int net2280_set_selfpowered(struct usb_gadget *_gadget, int value)
+{
+	struct net2280		*dev;
+	u32			tmp;
+	unsigned long		flags;
 
-	अगर (!_gadget)
-		वापस 0;
-	dev = container_of(_gadget, काष्ठा net2280, gadget);
+	if (!_gadget)
+		return 0;
+	dev = container_of(_gadget, struct net2280, gadget);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	पंचांगp = पढ़ोl(&dev->usb->usbctl);
-	अगर (value) अणु
-		पंचांगp |= BIT(SELF_POWERED_STATUS);
-		_gadget->is_selfघातered = 1;
-	पूर्ण अन्यथा अणु
-		पंचांगp &= ~BIT(SELF_POWERED_STATUS);
-		_gadget->is_selfघातered = 0;
-	पूर्ण
-	ग_लिखोl(पंचांगp, &dev->usb->usbctl);
+	tmp = readl(&dev->usb->usbctl);
+	if (value) {
+		tmp |= BIT(SELF_POWERED_STATUS);
+		_gadget->is_selfpowered = 1;
+	} else {
+		tmp &= ~BIT(SELF_POWERED_STATUS);
+		_gadget->is_selfpowered = 0;
+	}
+	writel(tmp, &dev->usb->usbctl);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक net2280_pullup(काष्ठा usb_gadget *_gadget, पूर्णांक is_on)
-अणु
-	काष्ठा net2280  *dev;
-	u32             पंचांगp;
-	अचिन्हित दीर्घ   flags;
+static int net2280_pullup(struct usb_gadget *_gadget, int is_on)
+{
+	struct net2280  *dev;
+	u32             tmp;
+	unsigned long   flags;
 
-	अगर (!_gadget)
-		वापस -ENODEV;
-	dev = container_of(_gadget, काष्ठा net2280, gadget);
+	if (!_gadget)
+		return -ENODEV;
+	dev = container_of(_gadget, struct net2280, gadget);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	पंचांगp = पढ़ोl(&dev->usb->usbctl);
+	tmp = readl(&dev->usb->usbctl);
 	dev->softconnect = (is_on != 0);
-	अगर (is_on) अणु
+	if (is_on) {
 		ep0_start(dev);
-		ग_लिखोl(पंचांगp | BIT(USB_DETECT_ENABLE), &dev->usb->usbctl);
-	पूर्ण अन्यथा अणु
-		ग_लिखोl(पंचांगp & ~BIT(USB_DETECT_ENABLE), &dev->usb->usbctl);
-		stop_activity(dev, शून्य);
-	पूर्ण
+		writel(tmp | BIT(USB_DETECT_ENABLE), &dev->usb->usbctl);
+	} else {
+		writel(tmp & ~BIT(USB_DETECT_ENABLE), &dev->usb->usbctl);
+		stop_activity(dev, NULL);
+	}
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_ep *net2280_match_ep(काष्ठा usb_gadget *_gadget,
-		काष्ठा usb_endpoपूर्णांक_descriptor *desc,
-		काष्ठा usb_ss_ep_comp_descriptor *ep_comp)
-अणु
-	अक्षर name[8];
-	काष्ठा usb_ep *ep;
+static struct usb_ep *net2280_match_ep(struct usb_gadget *_gadget,
+		struct usb_endpoint_descriptor *desc,
+		struct usb_ss_ep_comp_descriptor *ep_comp)
+{
+	char name[8];
+	struct usb_ep *ep;
 
-	अगर (usb_endpoपूर्णांक_type(desc) == USB_ENDPOINT_XFER_INT) अणु
-		/* ep-e, ep-f are PIO with only 64 byte fअगरos */
+	if (usb_endpoint_type(desc) == USB_ENDPOINT_XFER_INT) {
+		/* ep-e, ep-f are PIO with only 64 byte fifos */
 		ep = gadget_find_ep_by_name(_gadget, "ep-e");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
 		ep = gadget_find_ep_by_name(_gadget, "ep-f");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
-	पूर्ण
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
+	}
 
-	/* USB3380: Only first four endpoपूर्णांकs have DMA channels. Allocate
-	 * slower पूर्णांकerrupt endpoपूर्णांकs from PIO hw endpoपूर्णांकs, to allow bulk/isoc
-	 * endpoपूर्णांकs use DMA hw endpoपूर्णांकs.
+	/* USB3380: Only first four endpoints have DMA channels. Allocate
+	 * slower interrupt endpoints from PIO hw endpoints, to allow bulk/isoc
+	 * endpoints use DMA hw endpoints.
 	 */
-	अगर (usb_endpoपूर्णांक_type(desc) == USB_ENDPOINT_XFER_INT &&
-	    usb_endpoपूर्णांक_dir_in(desc)) अणु
+	if (usb_endpoint_type(desc) == USB_ENDPOINT_XFER_INT &&
+	    usb_endpoint_dir_in(desc)) {
 		ep = gadget_find_ep_by_name(_gadget, "ep2in");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
 		ep = gadget_find_ep_by_name(_gadget, "ep4in");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_type(desc) == USB_ENDPOINT_XFER_INT &&
-		   !usb_endpoपूर्णांक_dir_in(desc)) अणु
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
+	} else if (usb_endpoint_type(desc) == USB_ENDPOINT_XFER_INT &&
+		   !usb_endpoint_dir_in(desc)) {
 		ep = gadget_find_ep_by_name(_gadget, "ep1out");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
 		ep = gadget_find_ep_by_name(_gadget, "ep3out");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_type(desc) != USB_ENDPOINT_XFER_BULK &&
-		   usb_endpoपूर्णांक_dir_in(desc)) अणु
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
+	} else if (usb_endpoint_type(desc) != USB_ENDPOINT_XFER_BULK &&
+		   usb_endpoint_dir_in(desc)) {
 		ep = gadget_find_ep_by_name(_gadget, "ep1in");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
 		ep = gadget_find_ep_by_name(_gadget, "ep3in");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
-	पूर्ण अन्यथा अगर (usb_endpoपूर्णांक_type(desc) != USB_ENDPOINT_XFER_BULK &&
-		   !usb_endpoपूर्णांक_dir_in(desc)) अणु
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
+	} else if (usb_endpoint_type(desc) != USB_ENDPOINT_XFER_BULK &&
+		   !usb_endpoint_dir_in(desc)) {
 		ep = gadget_find_ep_by_name(_gadget, "ep2out");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
 		ep = gadget_find_ep_by_name(_gadget, "ep4out");
-		अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-			वापस ep;
-	पूर्ण
+		if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+			return ep;
+	}
 
-	/* USB3380: use same address क्रम usb and hardware endpoपूर्णांकs */
-	snम_लिखो(name, माप(name), "ep%d%s", usb_endpoपूर्णांक_num(desc),
-			usb_endpoपूर्णांक_dir_in(desc) ? "in" : "out");
+	/* USB3380: use same address for usb and hardware endpoints */
+	snprintf(name, sizeof(name), "ep%d%s", usb_endpoint_num(desc),
+			usb_endpoint_dir_in(desc) ? "in" : "out");
 	ep = gadget_find_ep_by_name(_gadget, name);
-	अगर (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
-		वापस ep;
+	if (ep && usb_gadget_ep_match_desc(_gadget, ep, desc, ep_comp))
+		return ep;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक net2280_start(काष्ठा usb_gadget *_gadget,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक net2280_stop(काष्ठा usb_gadget *_gadget);
+static int net2280_start(struct usb_gadget *_gadget,
+		struct usb_gadget_driver *driver);
+static int net2280_stop(struct usb_gadget *_gadget);
 
-अटल स्थिर काष्ठा usb_gadget_ops net2280_ops = अणु
+static const struct usb_gadget_ops net2280_ops = {
 	.get_frame	= net2280_get_frame,
 	.wakeup		= net2280_wakeup,
-	.set_selfघातered = net2280_set_selfघातered,
+	.set_selfpowered = net2280_set_selfpowered,
 	.pullup		= net2280_pullup,
 	.udc_start	= net2280_start,
 	.udc_stop	= net2280_stop,
 	.match_ep	= net2280_match_ep,
-पूर्ण;
+};
 
 /*-------------------------------------------------------------------------*/
 
-#अगर_घोषित	CONFIG_USB_GADGET_DEBUG_खाताS
+#ifdef	CONFIG_USB_GADGET_DEBUG_FILES
 
-/* FIXME move these पूर्णांकo procfs, and use seq_file.
- * Sysfs _still_ करोesn't behave क्रम arbitrarily sized files,
- * and also करोesn't help products using this with 2.4 kernels.
+/* FIXME move these into procfs, and use seq_file.
+ * Sysfs _still_ doesn't behave for arbitrarily sized files,
+ * and also doesn't help products using this with 2.4 kernels.
  */
 
 /* "function" sysfs attribute */
-अटल sमाप_प्रकार function_show(काष्ठा device *_dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा net2280	*dev = dev_get_drvdata(_dev);
+static ssize_t function_show(struct device *_dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct net2280	*dev = dev_get_drvdata(_dev);
 
-	अगर (!dev->driver || !dev->driver->function ||
-			म_माप(dev->driver->function) > PAGE_SIZE)
-		वापस 0;
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", dev->driver->function);
-पूर्ण
-अटल DEVICE_ATTR_RO(function);
+	if (!dev->driver || !dev->driver->function ||
+			strlen(dev->driver->function) > PAGE_SIZE)
+		return 0;
+	return scnprintf(buf, PAGE_SIZE, "%s\n", dev->driver->function);
+}
+static DEVICE_ATTR_RO(function);
 
-अटल sमाप_प्रकार रेजिस्टरs_show(काष्ठा device *_dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा net2280		*dev;
-	अक्षर			*next;
-	अचिन्हित		size, t;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			i;
+static ssize_t registers_show(struct device *_dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct net2280		*dev;
+	char			*next;
+	unsigned		size, t;
+	unsigned long		flags;
+	int			i;
 	u32			t1, t2;
-	स्थिर अक्षर		*s;
+	const char		*s;
 
 	dev = dev_get_drvdata(_dev);
 	next = buf;
 	size = PAGE_SIZE;
 	spin_lock_irqsave(&dev->lock, flags);
 
-	अगर (dev->driver)
+	if (dev->driver)
 		s = dev->driver->driver.name;
-	अन्यथा
+	else
 		s = "(none)";
 
 	/* Main Control Registers */
-	t = scnम_लिखो(next, size, "%s version " DRIVER_VERSION
+	t = scnprintf(next, size, "%s version " DRIVER_VERSION
 			", chiprev %04x\n\n"
 			"devinit %03x fifoctl %08x gadget '%s'\n"
 			"pci irqenb0 %02x irqenb1 %08x "
 			"irqstat0 %04x irqstat1 %08x\n",
 			driver_name, dev->chiprev,
-			पढ़ोl(&dev->regs->devinit),
-			पढ़ोl(&dev->regs->fअगरoctl),
+			readl(&dev->regs->devinit),
+			readl(&dev->regs->fifoctl),
 			s,
-			पढ़ोl(&dev->regs->pciirqenb0),
-			पढ़ोl(&dev->regs->pciirqenb1),
-			पढ़ोl(&dev->regs->irqstat0),
-			पढ़ोl(&dev->regs->irqstat1));
+			readl(&dev->regs->pciirqenb0),
+			readl(&dev->regs->pciirqenb1),
+			readl(&dev->regs->irqstat0),
+			readl(&dev->regs->irqstat1));
 	size -= t;
 	next += t;
 
 	/* USB Control Registers */
-	t1 = पढ़ोl(&dev->usb->usbctl);
-	t2 = पढ़ोl(&dev->usb->usbstat);
-	अगर (t1 & BIT(VBUS_PIN)) अणु
-		अगर (t2 & BIT(HIGH_SPEED))
+	t1 = readl(&dev->usb->usbctl);
+	t2 = readl(&dev->usb->usbstat);
+	if (t1 & BIT(VBUS_PIN)) {
+		if (t2 & BIT(HIGH_SPEED))
 			s = "high speed";
-		अन्यथा अगर (dev->gadget.speed == USB_SPEED_UNKNOWN)
+		else if (dev->gadget.speed == USB_SPEED_UNKNOWN)
 			s = "powered";
-		अन्यथा
+		else
 			s = "full speed";
 		/* full speed bit (6) not working?? */
-	पूर्ण अन्यथा
+	} else
 			s = "not attached";
-	t = scnम_लिखो(next, size,
+	t = scnprintf(next, size,
 			"stdrsp %08x usbctl %08x usbstat %08x "
 				"addr 0x%02x (%s)\n",
-			पढ़ोl(&dev->usb->stdrsp), t1, t2,
-			पढ़ोl(&dev->usb->ouraddr), s);
+			readl(&dev->usb->stdrsp), t1, t2,
+			readl(&dev->usb->ouraddr), s);
 	size -= t;
 	next += t;
 
@@ -1715,16 +1714,16 @@ prपूर्णांक_err:
 	/* DMA Control Registers */
 
 	/* Configurable EP Control Registers */
-	क्रम (i = 0; i < dev->n_ep; i++) अणु
-		काष्ठा net2280_ep	*ep;
+	for (i = 0; i < dev->n_ep; i++) {
+		struct net2280_ep	*ep;
 
 		ep = &dev->ep[i];
-		अगर (i && !ep->desc)
-			जारी;
+		if (i && !ep->desc)
+			continue;
 
-		t1 = पढ़ोl(&ep->cfg->ep_cfg);
-		t2 = पढ़ोl(&ep->regs->ep_rsp) & 0xff;
-		t = scnम_लिखो(next, size,
+		t1 = readl(&ep->cfg->ep_cfg);
+		t2 = readl(&ep->regs->ep_rsp) & 0xff;
+		t = scnprintf(next, size,
 				"\n%s\tcfg %05x rsp (%02x) %s%s%s%s%s%s%s%s"
 					"irqenb %02x\n",
 				ep->ep.name, t1, t2,
@@ -1744,245 +1743,245 @@ prपूर्णांक_err:
 					? "DATA1 " : "DATA0 ",
 				(t2 & BIT(CLEAR_ENDPOINT_HALT))
 					? "HALT " : "",
-				पढ़ोl(&ep->regs->ep_irqenb));
+				readl(&ep->regs->ep_irqenb));
 		size -= t;
 		next += t;
 
-		t = scnम_लिखो(next, size,
+		t = scnprintf(next, size,
 				"\tstat %08x avail %04x "
 				"(ep%d%s-%s)%s\n",
-				पढ़ोl(&ep->regs->ep_stat),
-				पढ़ोl(&ep->regs->ep_avail),
-				t1 & 0x0f, सूची_STRING(t1),
+				readl(&ep->regs->ep_stat),
+				readl(&ep->regs->ep_avail),
+				t1 & 0x0f, DIR_STRING(t1),
 				type_string(t1 >> 8),
 				ep->stopped ? "*" : "");
 		size -= t;
 		next += t;
 
-		अगर (!ep->dma)
-			जारी;
+		if (!ep->dma)
+			continue;
 
-		t = scnम_लिखो(next, size,
+		t = scnprintf(next, size,
 				"  dma\tctl %08x stat %08x count %08x\n"
 				"\taddr %08x desc %08x\n",
-				पढ़ोl(&ep->dma->dmactl),
-				पढ़ोl(&ep->dma->dmastat),
-				पढ़ोl(&ep->dma->dmacount),
-				पढ़ोl(&ep->dma->dmaaddr),
-				पढ़ोl(&ep->dma->dmadesc));
+				readl(&ep->dma->dmactl),
+				readl(&ep->dma->dmastat),
+				readl(&ep->dma->dmacount),
+				readl(&ep->dma->dmaaddr),
+				readl(&ep->dma->dmadesc));
 		size -= t;
 		next += t;
 
-	पूर्ण
+	}
 
 	/* Indexed Registers (none yet) */
 
 	/* Statistics */
-	t = scnम_लिखो(next, size, "\nirqs:  ");
+	t = scnprintf(next, size, "\nirqs:  ");
 	size -= t;
 	next += t;
-	क्रम (i = 0; i < dev->n_ep; i++) अणु
-		काष्ठा net2280_ep	*ep;
+	for (i = 0; i < dev->n_ep; i++) {
+		struct net2280_ep	*ep;
 
 		ep = &dev->ep[i];
-		अगर (i && !ep->irqs)
-			जारी;
-		t = scnम_लिखो(next, size, " %s/%lu", ep->ep.name, ep->irqs);
+		if (i && !ep->irqs)
+			continue;
+		t = scnprintf(next, size, " %s/%lu", ep->ep.name, ep->irqs);
 		size -= t;
 		next += t;
 
-	पूर्ण
-	t = scnम_लिखो(next, size, "\n");
+	}
+	t = scnprintf(next, size, "\n");
 	size -= t;
 	next += t;
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस PAGE_SIZE - size;
-पूर्ण
-अटल DEVICE_ATTR_RO(रेजिस्टरs);
+	return PAGE_SIZE - size;
+}
+static DEVICE_ATTR_RO(registers);
 
-अटल sमाप_प्रकार queues_show(काष्ठा device *_dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा net2280		*dev;
-	अक्षर			*next;
-	अचिन्हित		size;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			i;
+static ssize_t queues_show(struct device *_dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct net2280		*dev;
+	char			*next;
+	unsigned		size;
+	unsigned long		flags;
+	int			i;
 
 	dev = dev_get_drvdata(_dev);
 	next = buf;
 	size = PAGE_SIZE;
 	spin_lock_irqsave(&dev->lock, flags);
 
-	क्रम (i = 0; i < dev->n_ep; i++) अणु
-		काष्ठा net2280_ep		*ep = &dev->ep[i];
-		काष्ठा net2280_request		*req;
-		पूर्णांक				t;
+	for (i = 0; i < dev->n_ep; i++) {
+		struct net2280_ep		*ep = &dev->ep[i];
+		struct net2280_request		*req;
+		int				t;
 
-		अगर (i != 0) अणु
-			स्थिर काष्ठा usb_endpoपूर्णांक_descriptor	*d;
+		if (i != 0) {
+			const struct usb_endpoint_descriptor	*d;
 
 			d = ep->desc;
-			अगर (!d)
-				जारी;
-			t = d->bEndpoपूर्णांकAddress;
-			t = scnम_लिखो(next, size,
+			if (!d)
+				continue;
+			t = d->bEndpointAddress;
+			t = scnprintf(next, size,
 				"\n%s (ep%d%s-%s) max %04x %s fifo %d\n",
 				ep->ep.name, t & USB_ENDPOINT_NUMBER_MASK,
-				(t & USB_सूची_IN) ? "in" : "out",
+				(t & USB_DIR_IN) ? "in" : "out",
 				type_string(d->bmAttributes),
-				usb_endpoपूर्णांक_maxp(d),
-				ep->dma ? "dma" : "pio", ep->fअगरo_size
+				usb_endpoint_maxp(d),
+				ep->dma ? "dma" : "pio", ep->fifo_size
 				);
-		पूर्ण अन्यथा /* ep0 should only have one transfer queued */
-			t = scnम_लिखो(next, size, "ep0 max 64 pio %s\n",
+		} else /* ep0 should only have one transfer queued */
+			t = scnprintf(next, size, "ep0 max 64 pio %s\n",
 					ep->is_in ? "in" : "out");
-		अगर (t <= 0 || t > size)
-			जाओ करोne;
+		if (t <= 0 || t > size)
+			goto done;
 		size -= t;
 		next += t;
 
-		अगर (list_empty(&ep->queue)) अणु
-			t = scnम_लिखो(next, size, "\t(nothing queued)\n");
-			अगर (t <= 0 || t > size)
-				जाओ करोne;
+		if (list_empty(&ep->queue)) {
+			t = scnprintf(next, size, "\t(nothing queued)\n");
+			if (t <= 0 || t > size)
+				goto done;
 			size -= t;
 			next += t;
-			जारी;
-		पूर्ण
-		list_क्रम_each_entry(req, &ep->queue, queue) अणु
-			अगर (ep->dma && req->td_dma == पढ़ोl(&ep->dma->dmadesc))
-				t = scnम_लिखो(next, size,
+			continue;
+		}
+		list_for_each_entry(req, &ep->queue, queue) {
+			if (ep->dma && req->td_dma == readl(&ep->dma->dmadesc))
+				t = scnprintf(next, size,
 					"\treq %p len %d/%d "
 					"buf %p (dmacount %08x)\n",
 					&req->req, req->req.actual,
 					req->req.length, req->req.buf,
-					पढ़ोl(&ep->dma->dmacount));
-			अन्यथा
-				t = scnम_लिखो(next, size,
+					readl(&ep->dma->dmacount));
+			else
+				t = scnprintf(next, size,
 					"\treq %p len %d/%d buf %p\n",
 					&req->req, req->req.actual,
 					req->req.length, req->req.buf);
-			अगर (t <= 0 || t > size)
-				जाओ करोne;
+			if (t <= 0 || t > size)
+				goto done;
 			size -= t;
 			next += t;
 
-			अगर (ep->dma) अणु
-				काष्ठा net2280_dma	*td;
+			if (ep->dma) {
+				struct net2280_dma	*td;
 
 				td = req->td;
-				t = scnम_लिखो(next, size, "\t    td %08x "
+				t = scnprintf(next, size, "\t    td %08x "
 					" count %08x buf %08x desc %08x\n",
 					(u32) req->td_dma,
 					le32_to_cpu(td->dmacount),
 					le32_to_cpu(td->dmaaddr),
 					le32_to_cpu(td->dmadesc));
-				अगर (t <= 0 || t > size)
-					जाओ करोne;
+				if (t <= 0 || t > size)
+					goto done;
 				size -= t;
 				next += t;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-करोne:
+done:
 	spin_unlock_irqrestore(&dev->lock, flags);
-	वापस PAGE_SIZE - size;
-पूर्ण
-अटल DEVICE_ATTR_RO(queues);
+	return PAGE_SIZE - size;
+}
+static DEVICE_ATTR_RO(queues);
 
 
-#अन्यथा
+#else
 
-#घोषणा device_create_file(a, b)	(0)
-#घोषणा device_हटाओ_file(a, b)	करो अणु पूर्ण जबतक (0)
+#define device_create_file(a, b)	(0)
+#define device_remove_file(a, b)	do { } while (0)
 
-#पूर्ण_अगर
+#endif
 
 /*-------------------------------------------------------------------------*/
 
-/* another driver-specअगरic mode might be a request type करोing dma
- * to/from another device fअगरo instead of to/from memory.
+/* another driver-specific mode might be a request type doing dma
+ * to/from another device fifo instead of to/from memory.
  */
 
-अटल व्योम set_fअगरo_mode(काष्ठा net2280 *dev, पूर्णांक mode)
-अणु
+static void set_fifo_mode(struct net2280 *dev, int mode)
+{
 	/* keeping high bits preserves BAR2 */
-	ग_लिखोl((0xffff << PCI_BASE2_RANGE) | mode, &dev->regs->fअगरoctl);
+	writel((0xffff << PCI_BASE2_RANGE) | mode, &dev->regs->fifoctl);
 
-	/* always ep-अणुa,b,e,fपूर्ण ... maybe not ep-c or ep-d */
+	/* always ep-{a,b,e,f} ... maybe not ep-c or ep-d */
 	INIT_LIST_HEAD(&dev->gadget.ep_list);
 	list_add_tail(&dev->ep[1].ep.ep_list, &dev->gadget.ep_list);
 	list_add_tail(&dev->ep[2].ep.ep_list, &dev->gadget.ep_list);
-	चयन (mode) अणु
-	हाल 0:
+	switch (mode) {
+	case 0:
 		list_add_tail(&dev->ep[3].ep.ep_list, &dev->gadget.ep_list);
 		list_add_tail(&dev->ep[4].ep.ep_list, &dev->gadget.ep_list);
-		dev->ep[1].fअगरo_size = dev->ep[2].fअगरo_size = 1024;
-		अवरोध;
-	हाल 1:
-		dev->ep[1].fअगरo_size = dev->ep[2].fअगरo_size = 2048;
-		अवरोध;
-	हाल 2:
+		dev->ep[1].fifo_size = dev->ep[2].fifo_size = 1024;
+		break;
+	case 1:
+		dev->ep[1].fifo_size = dev->ep[2].fifo_size = 2048;
+		break;
+	case 2:
 		list_add_tail(&dev->ep[3].ep.ep_list, &dev->gadget.ep_list);
-		dev->ep[1].fअगरo_size = 2048;
-		dev->ep[2].fअगरo_size = 1024;
-		अवरोध;
-	पूर्ण
-	/* fअगरo sizes क्रम ep0, ep-c, ep-d, ep-e, and ep-f never change */
+		dev->ep[1].fifo_size = 2048;
+		dev->ep[2].fifo_size = 1024;
+		break;
+	}
+	/* fifo sizes for ep0, ep-c, ep-d, ep-e, and ep-f never change */
 	list_add_tail(&dev->ep[5].ep.ep_list, &dev->gadget.ep_list);
 	list_add_tail(&dev->ep[6].ep.ep_list, &dev->gadget.ep_list);
-पूर्ण
+}
 
-अटल व्योम defect7374_disable_data_eps(काष्ठा net2280 *dev)
-अणु
+static void defect7374_disable_data_eps(struct net2280 *dev)
+{
 	/*
 	 * For Defect 7374, disable data EPs (and more):
-	 *  - This phase unकरोes the earlier phase of the Defect 7374 workaround,
+	 *  - This phase undoes the earlier phase of the Defect 7374 workaround,
 	 *    returing ep regs back to normal.
 	 */
-	काष्ठा net2280_ep *ep;
-	पूर्णांक i;
-	अचिन्हित अक्षर ep_sel;
-	u32 पंचांगp_reg;
+	struct net2280_ep *ep;
+	int i;
+	unsigned char ep_sel;
+	u32 tmp_reg;
 
-	क्रम (i = 1; i < 5; i++) अणु
+	for (i = 1; i < 5; i++) {
 		ep = &dev->ep[i];
-		ग_लिखोl(i, &ep->cfg->ep_cfg);
-	पूर्ण
+		writel(i, &ep->cfg->ep_cfg);
+	}
 
 	/* CSROUT, CSRIN, PCIOUT, PCIIN, STATIN, RCIN */
-	क्रम (i = 0; i < 6; i++)
-		ग_लिखोl(0, &dev->dep[i].dep_cfg);
+	for (i = 0; i < 6; i++)
+		writel(0, &dev->dep[i].dep_cfg);
 
-	क्रम (ep_sel = 0; ep_sel <= 21; ep_sel++) अणु
-		/* Select an endpoपूर्णांक क्रम subsequent operations: */
-		पंचांगp_reg = पढ़ोl(&dev->plregs->pl_ep_ctrl);
-		ग_लिखोl(((पंचांगp_reg & ~0x1f) | ep_sel), &dev->plregs->pl_ep_ctrl);
+	for (ep_sel = 0; ep_sel <= 21; ep_sel++) {
+		/* Select an endpoint for subsequent operations: */
+		tmp_reg = readl(&dev->plregs->pl_ep_ctrl);
+		writel(((tmp_reg & ~0x1f) | ep_sel), &dev->plregs->pl_ep_ctrl);
 
-		अगर (ep_sel < 2 || (ep_sel > 9 && ep_sel < 14) ||
+		if (ep_sel < 2 || (ep_sel > 9 && ep_sel < 14) ||
 					ep_sel == 18 || ep_sel == 20)
-			जारी;
+			continue;
 
-		/* Change settings on some selected endpoपूर्णांकs */
-		पंचांगp_reg = पढ़ोl(&dev->plregs->pl_ep_cfg_4);
-		पंचांगp_reg &= ~BIT(NON_CTRL_IN_TOLERATE_BAD_सूची);
-		ग_लिखोl(पंचांगp_reg, &dev->plregs->pl_ep_cfg_4);
-		पंचांगp_reg = पढ़ोl(&dev->plregs->pl_ep_ctrl);
-		पंचांगp_reg |= BIT(EP_INITIALIZED);
-		ग_लिखोl(पंचांगp_reg, &dev->plregs->pl_ep_ctrl);
-	पूर्ण
-पूर्ण
+		/* Change settings on some selected endpoints */
+		tmp_reg = readl(&dev->plregs->pl_ep_cfg_4);
+		tmp_reg &= ~BIT(NON_CTRL_IN_TOLERATE_BAD_DIR);
+		writel(tmp_reg, &dev->plregs->pl_ep_cfg_4);
+		tmp_reg = readl(&dev->plregs->pl_ep_ctrl);
+		tmp_reg |= BIT(EP_INITIALIZED);
+		writel(tmp_reg, &dev->plregs->pl_ep_ctrl);
+	}
+}
 
-अटल व्योम defect7374_enable_data_eps_zero(काष्ठा net2280 *dev)
-अणु
-	u32 पंचांगp = 0, पंचांगp_reg;
+static void defect7374_enable_data_eps_zero(struct net2280 *dev)
+{
+	u32 tmp = 0, tmp_reg;
 	u32 scratch;
-	पूर्णांक i;
-	अचिन्हित अक्षर ep_sel;
+	int i;
+	unsigned char ep_sel;
 
 	scratch = get_idx_reg(dev->regs, SCRATCH);
 
@@ -1995,51 +1994,51 @@ prपूर्णांक_err:
 	ep_warn(dev, "It will operate on cold-reboot and SS connect");
 
 	/*GPEPs:*/
-	पंचांगp = ((0 << ENDPOINT_NUMBER) | BIT(ENDPOINT_सूचीECTION) |
+	tmp = ((0 << ENDPOINT_NUMBER) | BIT(ENDPOINT_DIRECTION) |
 			(2 << OUT_ENDPOINT_TYPE) | (2 << IN_ENDPOINT_TYPE) |
 			((dev->enhanced_mode) ?
 			 BIT(OUT_ENDPOINT_ENABLE) | BIT(IN_ENDPOINT_ENABLE) :
 			 BIT(ENDPOINT_ENABLE)));
 
-	क्रम (i = 1; i < 5; i++)
-		ग_लिखोl(पंचांगp, &dev->ep[i].cfg->ep_cfg);
+	for (i = 1; i < 5; i++)
+		writel(tmp, &dev->ep[i].cfg->ep_cfg);
 
 	/* CSRIN, PCIIN, STATIN, RCIN*/
-	पंचांगp = ((0 << ENDPOINT_NUMBER) | BIT(ENDPOINT_ENABLE));
-	ग_लिखोl(पंचांगp, &dev->dep[1].dep_cfg);
-	ग_लिखोl(पंचांगp, &dev->dep[3].dep_cfg);
-	ग_लिखोl(पंचांगp, &dev->dep[4].dep_cfg);
-	ग_लिखोl(पंचांगp, &dev->dep[5].dep_cfg);
+	tmp = ((0 << ENDPOINT_NUMBER) | BIT(ENDPOINT_ENABLE));
+	writel(tmp, &dev->dep[1].dep_cfg);
+	writel(tmp, &dev->dep[3].dep_cfg);
+	writel(tmp, &dev->dep[4].dep_cfg);
+	writel(tmp, &dev->dep[5].dep_cfg);
 
-	/*Implemented क्रम development and debug.
+	/*Implemented for development and debug.
 	 * Can be refined/tuned later.*/
-	क्रम (ep_sel = 0; ep_sel <= 21; ep_sel++) अणु
-		/* Select an endpoपूर्णांक क्रम subsequent operations: */
-		पंचांगp_reg = पढ़ोl(&dev->plregs->pl_ep_ctrl);
-		ग_लिखोl(((पंचांगp_reg & ~0x1f) | ep_sel),
+	for (ep_sel = 0; ep_sel <= 21; ep_sel++) {
+		/* Select an endpoint for subsequent operations: */
+		tmp_reg = readl(&dev->plregs->pl_ep_ctrl);
+		writel(((tmp_reg & ~0x1f) | ep_sel),
 				&dev->plregs->pl_ep_ctrl);
 
-		अगर (ep_sel == 1) अणु
-			पंचांगp =
-				(पढ़ोl(&dev->plregs->pl_ep_ctrl) |
+		if (ep_sel == 1) {
+			tmp =
+				(readl(&dev->plregs->pl_ep_ctrl) |
 				 BIT(CLEAR_ACK_ERROR_CODE) | 0);
-			ग_लिखोl(पंचांगp, &dev->plregs->pl_ep_ctrl);
-			जारी;
-		पूर्ण
+			writel(tmp, &dev->plregs->pl_ep_ctrl);
+			continue;
+		}
 
-		अगर (ep_sel == 0 || (ep_sel > 9 && ep_sel < 14) ||
+		if (ep_sel == 0 || (ep_sel > 9 && ep_sel < 14) ||
 				ep_sel == 18  || ep_sel == 20)
-			जारी;
+			continue;
 
-		पंचांगp = (पढ़ोl(&dev->plregs->pl_ep_cfg_4) |
-				BIT(NON_CTRL_IN_TOLERATE_BAD_सूची) | 0);
-		ग_लिखोl(पंचांगp, &dev->plregs->pl_ep_cfg_4);
+		tmp = (readl(&dev->plregs->pl_ep_cfg_4) |
+				BIT(NON_CTRL_IN_TOLERATE_BAD_DIR) | 0);
+		writel(tmp, &dev->plregs->pl_ep_cfg_4);
 
-		पंचांगp = पढ़ोl(&dev->plregs->pl_ep_ctrl) &
+		tmp = readl(&dev->plregs->pl_ep_ctrl) &
 			~BIT(EP_INITIALIZED);
-		ग_लिखोl(पंचांगp, &dev->plregs->pl_ep_ctrl);
+		writel(tmp, &dev->plregs->pl_ep_ctrl);
 
-	पूर्ण
+	}
 
 	/* Set FSM to focus on the first Control Read:
 	 * - Tip: Connection speed is known upon the first
@@ -2047,7 +2046,7 @@ prपूर्णांक_err:
 	scratch |= DEFECT7374_FSM_WAITING_FOR_CONTROL_READ;
 	set_idx_reg(dev->regs, SCRATCH, scratch);
 
-पूर्ण
+}
 
 /* keeping it simple:
  * - one bus driver, initted first;
@@ -2055,125 +2054,125 @@ prपूर्णांक_err:
  *
  * most of the work to support multiple net2280 controllers would
  * be to associate this gadget driver (yes?) with all of them, or
- * perhaps to bind specअगरic drivers to specअगरic devices.
+ * perhaps to bind specific drivers to specific devices.
  */
 
-अटल व्योम usb_reset_228x(काष्ठा net2280 *dev)
-अणु
-	u32	पंचांगp;
+static void usb_reset_228x(struct net2280 *dev)
+{
+	u32	tmp;
 
 	dev->gadget.speed = USB_SPEED_UNKNOWN;
-	(व्योम) पढ़ोl(&dev->usb->usbctl);
+	(void) readl(&dev->usb->usbctl);
 
 	net2280_led_init(dev);
 
-	/* disable स्वतःmatic responses, and irqs */
-	ग_लिखोl(0, &dev->usb->stdrsp);
-	ग_लिखोl(0, &dev->regs->pciirqenb0);
-	ग_लिखोl(0, &dev->regs->pciirqenb1);
+	/* disable automatic responses, and irqs */
+	writel(0, &dev->usb->stdrsp);
+	writel(0, &dev->regs->pciirqenb0);
+	writel(0, &dev->regs->pciirqenb1);
 
 	/* clear old dma and irq state */
-	क्रम (पंचांगp = 0; पंचांगp < 4; पंचांगp++) अणु
-		काष्ठा net2280_ep       *ep = &dev->ep[पंचांगp + 1];
-		अगर (ep->dma)
-			पात_dma(ep);
-	पूर्ण
+	for (tmp = 0; tmp < 4; tmp++) {
+		struct net2280_ep       *ep = &dev->ep[tmp + 1];
+		if (ep->dma)
+			abort_dma(ep);
+	}
 
-	ग_लिखोl(~0, &dev->regs->irqstat0),
-	ग_लिखोl(~(u32)BIT(SUSPEND_REQUEST_INTERRUPT), &dev->regs->irqstat1),
+	writel(~0, &dev->regs->irqstat0),
+	writel(~(u32)BIT(SUSPEND_REQUEST_INTERRUPT), &dev->regs->irqstat1),
 
 	/* reset, and enable pci */
-	पंचांगp = पढ़ोl(&dev->regs->devinit) |
+	tmp = readl(&dev->regs->devinit) |
 		BIT(PCI_ENABLE) |
 		BIT(FIFO_SOFT_RESET) |
 		BIT(USB_SOFT_RESET) |
 		BIT(M8051_RESET);
-	ग_लिखोl(पंचांगp, &dev->regs->devinit);
+	writel(tmp, &dev->regs->devinit);
 
-	/* standard fअगरo and endpoपूर्णांक allocations */
-	set_fअगरo_mode(dev, (fअगरo_mode <= 2) ? fअगरo_mode : 0);
-पूर्ण
+	/* standard fifo and endpoint allocations */
+	set_fifo_mode(dev, (fifo_mode <= 2) ? fifo_mode : 0);
+}
 
-अटल व्योम usb_reset_338x(काष्ठा net2280 *dev)
-अणु
-	u32 पंचांगp;
+static void usb_reset_338x(struct net2280 *dev)
+{
+	u32 tmp;
 
 	dev->gadget.speed = USB_SPEED_UNKNOWN;
-	(व्योम)पढ़ोl(&dev->usb->usbctl);
+	(void)readl(&dev->usb->usbctl);
 
 	net2280_led_init(dev);
 
-	अगर (dev->bug7734_patched) अणु
-		/* disable स्वतःmatic responses, and irqs */
-		ग_लिखोl(0, &dev->usb->stdrsp);
-		ग_लिखोl(0, &dev->regs->pciirqenb0);
-		ग_लिखोl(0, &dev->regs->pciirqenb1);
-	पूर्ण
+	if (dev->bug7734_patched) {
+		/* disable automatic responses, and irqs */
+		writel(0, &dev->usb->stdrsp);
+		writel(0, &dev->regs->pciirqenb0);
+		writel(0, &dev->regs->pciirqenb1);
+	}
 
 	/* clear old dma and irq state */
-	क्रम (पंचांगp = 0; पंचांगp < 4; पंचांगp++) अणु
-		काष्ठा net2280_ep *ep = &dev->ep[पंचांगp + 1];
-		काष्ठा net2280_dma_regs __iomem *dma;
+	for (tmp = 0; tmp < 4; tmp++) {
+		struct net2280_ep *ep = &dev->ep[tmp + 1];
+		struct net2280_dma_regs __iomem *dma;
 
-		अगर (ep->dma) अणु
-			पात_dma(ep);
-		पूर्ण अन्यथा अणु
-			dma = &dev->dma[पंचांगp];
-			ग_लिखोl(BIT(DMA_ABORT), &dma->dmastat);
-			ग_लिखोl(0, &dma->dmactl);
-		पूर्ण
-	पूर्ण
+		if (ep->dma) {
+			abort_dma(ep);
+		} else {
+			dma = &dev->dma[tmp];
+			writel(BIT(DMA_ABORT), &dma->dmastat);
+			writel(0, &dma->dmactl);
+		}
+	}
 
-	ग_लिखोl(~0, &dev->regs->irqstat0), ग_लिखोl(~0, &dev->regs->irqstat1);
+	writel(~0, &dev->regs->irqstat0), writel(~0, &dev->regs->irqstat1);
 
-	अगर (dev->bug7734_patched) अणु
+	if (dev->bug7734_patched) {
 		/* reset, and enable pci */
-		पंचांगp = पढ़ोl(&dev->regs->devinit) |
+		tmp = readl(&dev->regs->devinit) |
 		    BIT(PCI_ENABLE) |
 		    BIT(FIFO_SOFT_RESET) |
 		    BIT(USB_SOFT_RESET) |
 		    BIT(M8051_RESET);
 
-		ग_लिखोl(पंचांगp, &dev->regs->devinit);
-	पूर्ण
+		writel(tmp, &dev->regs->devinit);
+	}
 
-	/* always ep-अणु1,2,3,4पूर्ण ... maybe not ep-3 or ep-4 */
+	/* always ep-{1,2,3,4} ... maybe not ep-3 or ep-4 */
 	INIT_LIST_HEAD(&dev->gadget.ep_list);
 
-	क्रम (पंचांगp = 1; पंचांगp < dev->n_ep; पंचांगp++)
-		list_add_tail(&dev->ep[पंचांगp].ep.ep_list, &dev->gadget.ep_list);
+	for (tmp = 1; tmp < dev->n_ep; tmp++)
+		list_add_tail(&dev->ep[tmp].ep.ep_list, &dev->gadget.ep_list);
 
-पूर्ण
+}
 
-अटल व्योम usb_reset(काष्ठा net2280 *dev)
-अणु
-	अगर (dev->quirks & PLX_LEGACY)
-		वापस usb_reset_228x(dev);
-	वापस usb_reset_338x(dev);
-पूर्ण
+static void usb_reset(struct net2280 *dev)
+{
+	if (dev->quirks & PLX_LEGACY)
+		return usb_reset_228x(dev);
+	return usb_reset_338x(dev);
+}
 
-अटल व्योम usb_reinit_228x(काष्ठा net2280 *dev)
-अणु
-	u32	पंचांगp;
+static void usb_reinit_228x(struct net2280 *dev)
+{
+	u32	tmp;
 
-	/* basic endpoपूर्णांक init */
-	क्रम (पंचांगp = 0; पंचांगp < 7; पंचांगp++) अणु
-		काष्ठा net2280_ep	*ep = &dev->ep[पंचांगp];
+	/* basic endpoint init */
+	for (tmp = 0; tmp < 7; tmp++) {
+		struct net2280_ep	*ep = &dev->ep[tmp];
 
-		ep->ep.name = ep_info_dft[पंचांगp].name;
-		ep->ep.caps = ep_info_dft[पंचांगp].caps;
+		ep->ep.name = ep_info_dft[tmp].name;
+		ep->ep.caps = ep_info_dft[tmp].caps;
 		ep->dev = dev;
-		ep->num = पंचांगp;
+		ep->num = tmp;
 
-		अगर (पंचांगp > 0 && पंचांगp <= 4) अणु
-			ep->fअगरo_size = 1024;
-			ep->dma = &dev->dma[पंचांगp - 1];
-		पूर्ण अन्यथा
-			ep->fअगरo_size = 64;
-		ep->regs = &dev->epregs[पंचांगp];
-		ep->cfg = &dev->epregs[पंचांगp];
+		if (tmp > 0 && tmp <= 4) {
+			ep->fifo_size = 1024;
+			ep->dma = &dev->dma[tmp - 1];
+		} else
+			ep->fifo_size = 64;
+		ep->regs = &dev->epregs[tmp];
+		ep->cfg = &dev->epregs[tmp];
 		ep_reset_228x(dev->regs, ep);
-	पूर्ण
+	}
 	usb_ep_set_maxpacket_limit(&dev->ep[0].ep, 64);
 	usb_ep_set_maxpacket_limit(&dev->ep[5].ep, 64);
 	usb_ep_set_maxpacket_limit(&dev->ep[6].ep, 64);
@@ -2185,21 +2184,21 @@ prपूर्णांक_err:
 	/* we want to prevent lowlevel/insecure access from the USB host,
 	 * but erratum 0119 means this enable bit is ignored
 	 */
-	क्रम (पंचांगp = 0; पंचांगp < 5; पंचांगp++)
-		ग_लिखोl(EP_DONTUSE, &dev->dep[पंचांगp].dep_cfg);
-पूर्ण
+	for (tmp = 0; tmp < 5; tmp++)
+		writel(EP_DONTUSE, &dev->dep[tmp].dep_cfg);
+}
 
-अटल व्योम usb_reinit_338x(काष्ठा net2280 *dev)
-अणु
-	पूर्णांक i;
-	u32 पंचांगp, val;
-	अटल स्थिर u32 ne[9] = अणु 0, 1, 2, 3, 4, 1, 2, 3, 4 पूर्ण;
-	अटल स्थिर u32 ep_reg_addr[9] = अणु 0x00, 0xC0, 0x00, 0xC0, 0x00,
-						0x00, 0xC0, 0x00, 0xC0 पूर्ण;
+static void usb_reinit_338x(struct net2280 *dev)
+{
+	int i;
+	u32 tmp, val;
+	static const u32 ne[9] = { 0, 1, 2, 3, 4, 1, 2, 3, 4 };
+	static const u32 ep_reg_addr[9] = { 0x00, 0xC0, 0x00, 0xC0, 0x00,
+						0x00, 0xC0, 0x00, 0xC0 };
 
-	/* basic endpoपूर्णांक init */
-	क्रम (i = 0; i < dev->n_ep; i++) अणु
-		काष्ठा net2280_ep *ep = &dev->ep[i];
+	/* basic endpoint init */
+	for (i = 0; i < dev->n_ep; i++) {
+		struct net2280_ep *ep = &dev->ep[i];
 
 		ep->ep.name = dev->enhanced_mode ? ep_info_adv[i].name :
 						   ep_info_dft[i].name;
@@ -2208,127 +2207,127 @@ prपूर्णांक_err:
 		ep->dev = dev;
 		ep->num = i;
 
-		अगर (i > 0 && i <= 4)
+		if (i > 0 && i <= 4)
 			ep->dma = &dev->dma[i - 1];
 
-		अगर (dev->enhanced_mode) अणु
+		if (dev->enhanced_mode) {
 			ep->cfg = &dev->epregs[ne[i]];
 			/*
-			 * Set USB endpoपूर्णांक number, hardware allows same number
+			 * Set USB endpoint number, hardware allows same number
 			 * in both directions.
 			 */
-			 अगर (i > 0 && i < 5)
-				ग_लिखोl(ne[i], &ep->cfg->ep_cfg);
-			ep->regs = (काष्ठा net2280_ep_regs __iomem *)
-				(((व्योम __iomem *)&dev->epregs[ne[i]]) +
+			 if (i > 0 && i < 5)
+				writel(ne[i], &ep->cfg->ep_cfg);
+			ep->regs = (struct net2280_ep_regs __iomem *)
+				(((void __iomem *)&dev->epregs[ne[i]]) +
 				ep_reg_addr[i]);
-		पूर्ण अन्यथा अणु
+		} else {
 			ep->cfg = &dev->epregs[i];
 			ep->regs = &dev->epregs[i];
-		पूर्ण
+		}
 
-		ep->fअगरo_size = (i != 0) ? 2048 : 512;
+		ep->fifo_size = (i != 0) ? 2048 : 512;
 
 		ep_reset_338x(dev->regs, ep);
-	पूर्ण
+	}
 	usb_ep_set_maxpacket_limit(&dev->ep[0].ep, 512);
 
 	dev->gadget.ep0 = &dev->ep[0].ep;
 	dev->ep[0].stopped = 0;
 
 	/* Link layer set up */
-	अगर (dev->bug7734_patched) अणु
-		पंचांगp = पढ़ोl(&dev->usb_ext->usbctl2) &
+	if (dev->bug7734_patched) {
+		tmp = readl(&dev->usb_ext->usbctl2) &
 		    ~(BIT(U1_ENABLE) | BIT(U2_ENABLE) | BIT(LTM_ENABLE));
-		ग_लिखोl(पंचांगp, &dev->usb_ext->usbctl2);
-	पूर्ण
+		writel(tmp, &dev->usb_ext->usbctl2);
+	}
 
 	/* Hardware Defect and Workaround */
-	val = पढ़ोl(&dev->llregs->ll_lfps_5);
+	val = readl(&dev->llregs->ll_lfps_5);
 	val &= ~(0xf << TIMER_LFPS_6US);
 	val |= 0x5 << TIMER_LFPS_6US;
-	ग_लिखोl(val, &dev->llregs->ll_lfps_5);
+	writel(val, &dev->llregs->ll_lfps_5);
 
-	val = पढ़ोl(&dev->llregs->ll_lfps_6);
+	val = readl(&dev->llregs->ll_lfps_6);
 	val &= ~(0xffff << TIMER_LFPS_80US);
 	val |= 0x0100 << TIMER_LFPS_80US;
-	ग_लिखोl(val, &dev->llregs->ll_lfps_6);
+	writel(val, &dev->llregs->ll_lfps_6);
 
 	/*
-	 * AA_AB Errata. Issue 4. Workaround क्रम SuperSpeed USB
-	 * Hot Reset Exit Handshake may Fail in Specअगरic Case using
-	 * Default Register Settings. Workaround क्रम Enumeration test.
+	 * AA_AB Errata. Issue 4. Workaround for SuperSpeed USB
+	 * Hot Reset Exit Handshake may Fail in Specific Case using
+	 * Default Register Settings. Workaround for Enumeration test.
 	 */
-	val = पढ़ोl(&dev->llregs->ll_tsn_counters_2);
+	val = readl(&dev->llregs->ll_tsn_counters_2);
 	val &= ~(0x1f << HOT_TX_NORESET_TS2);
 	val |= 0x10 << HOT_TX_NORESET_TS2;
-	ग_लिखोl(val, &dev->llregs->ll_tsn_counters_2);
+	writel(val, &dev->llregs->ll_tsn_counters_2);
 
-	val = पढ़ोl(&dev->llregs->ll_tsn_counters_3);
+	val = readl(&dev->llregs->ll_tsn_counters_3);
 	val &= ~(0x1f << HOT_RX_RESET_TS2);
 	val |= 0x3 << HOT_RX_RESET_TS2;
-	ग_लिखोl(val, &dev->llregs->ll_tsn_counters_3);
+	writel(val, &dev->llregs->ll_tsn_counters_3);
 
 	/*
-	 * AB errata. Errata 11. Workaround क्रम Default Duration of LFPS
-	 * Handshake Signaling क्रम Device-Initiated U1 Exit is too लघु.
-	 * Without this, various क्रमागतeration failures observed with
+	 * AB errata. Errata 11. Workaround for Default Duration of LFPS
+	 * Handshake Signaling for Device-Initiated U1 Exit is too short.
+	 * Without this, various enumeration failures observed with
 	 * modern superspeed hosts.
 	 */
-	val = पढ़ोl(&dev->llregs->ll_lfps_समयrs_2);
-	ग_लिखोl((val & 0xffff0000) | LFPS_TIMERS_2_WORKAROUND_VALUE,
-	       &dev->llregs->ll_lfps_समयrs_2);
+	val = readl(&dev->llregs->ll_lfps_timers_2);
+	writel((val & 0xffff0000) | LFPS_TIMERS_2_WORKAROUND_VALUE,
+	       &dev->llregs->ll_lfps_timers_2);
 
 	/*
 	 * Set Recovery Idle to Recover bit:
 	 * - On SS connections, setting Recovery Idle to Recover Fmw improves
 	 *   link robustness with various hosts and hubs.
-	 * - It is safe to set क्रम all connection speeds; all chip revisions.
+	 * - It is safe to set for all connection speeds; all chip revisions.
 	 * - R-M-W to leave other bits undisturbed.
 	 * - Reference PLX TT-7372
 	*/
-	val = पढ़ोl(&dev->llregs->ll_tsn_chicken_bit);
+	val = readl(&dev->llregs->ll_tsn_chicken_bit);
 	val |= BIT(RECOVERY_IDLE_TO_RECOVER_FMW);
-	ग_लिखोl(val, &dev->llregs->ll_tsn_chicken_bit);
+	writel(val, &dev->llregs->ll_tsn_chicken_bit);
 
 	INIT_LIST_HEAD(&dev->gadget.ep0->ep_list);
 
-	/* disable dedicated endpoपूर्णांकs */
-	ग_लिखोl(0x0D, &dev->dep[0].dep_cfg);
-	ग_लिखोl(0x0D, &dev->dep[1].dep_cfg);
-	ग_लिखोl(0x0E, &dev->dep[2].dep_cfg);
-	ग_लिखोl(0x0E, &dev->dep[3].dep_cfg);
-	ग_लिखोl(0x0F, &dev->dep[4].dep_cfg);
-	ग_लिखोl(0x0C, &dev->dep[5].dep_cfg);
-पूर्ण
+	/* disable dedicated endpoints */
+	writel(0x0D, &dev->dep[0].dep_cfg);
+	writel(0x0D, &dev->dep[1].dep_cfg);
+	writel(0x0E, &dev->dep[2].dep_cfg);
+	writel(0x0E, &dev->dep[3].dep_cfg);
+	writel(0x0F, &dev->dep[4].dep_cfg);
+	writel(0x0C, &dev->dep[5].dep_cfg);
+}
 
-अटल व्योम usb_reinit(काष्ठा net2280 *dev)
-अणु
-	अगर (dev->quirks & PLX_LEGACY)
-		वापस usb_reinit_228x(dev);
-	वापस usb_reinit_338x(dev);
-पूर्ण
+static void usb_reinit(struct net2280 *dev)
+{
+	if (dev->quirks & PLX_LEGACY)
+		return usb_reinit_228x(dev);
+	return usb_reinit_338x(dev);
+}
 
-अटल व्योम ep0_start_228x(काष्ठा net2280 *dev)
-अणु
-	ग_लिखोl(BIT(CLEAR_EP_HIDE_STATUS_PHASE) |
+static void ep0_start_228x(struct net2280 *dev)
+{
+	writel(BIT(CLEAR_EP_HIDE_STATUS_PHASE) |
 		BIT(CLEAR_NAK_OUT_PACKETS) |
 		BIT(CLEAR_CONTROL_STATUS_PHASE_HANDSHAKE),
 		&dev->epregs[0].ep_rsp);
 
 	/*
 	 * hardware optionally handles a bunch of standard requests
-	 * that the API hides from drivers anyway.  have it करो so.
-	 * endpoपूर्णांक status/features are handled in software, to
-	 * help pass tests क्रम some dubious behavior.
+	 * that the API hides from drivers anyway.  have it do so.
+	 * endpoint status/features are handled in software, to
+	 * help pass tests for some dubious behavior.
 	 */
-	ग_लिखोl(BIT(SET_TEST_MODE) |
+	writel(BIT(SET_TEST_MODE) |
 		BIT(SET_ADDRESS) |
 		BIT(DEVICE_SET_CLEAR_DEVICE_REMOTE_WAKEUP) |
 		BIT(GET_DEVICE_STATUS) |
 		BIT(GET_INTERFACE_STATUS),
 		&dev->usb->stdrsp);
-	ग_लिखोl(BIT(USB_ROOT_PORT_WAKEUP_ENABLE) |
+	writel(BIT(USB_ROOT_PORT_WAKEUP_ENABLE) |
 		BIT(SELF_POWERED_USB_DEVICE) |
 		BIT(REMOTE_WAKEUP_SUPPORT) |
 		(dev->softconnect << USB_DETECT_ENABLE) |
@@ -2336,10 +2335,10 @@ prपूर्णांक_err:
 		&dev->usb->usbctl);
 
 	/* enable irqs so we can see ep0 and general operation  */
-	ग_लिखोl(BIT(SETUP_PACKET_INTERRUPT_ENABLE) |
+	writel(BIT(SETUP_PACKET_INTERRUPT_ENABLE) |
 		BIT(ENDPOINT_0_INTERRUPT_ENABLE),
 		&dev->regs->pciirqenb0);
-	ग_लिखोl(BIT(PCI_INTERRUPT_ENABLE) |
+	writel(BIT(PCI_INTERRUPT_ENABLE) |
 		BIT(PCI_MASTER_ABORT_RECEIVED_INTERRUPT_ENABLE) |
 		BIT(PCI_TARGET_ABORT_RECEIVED_INTERRUPT_ENABLE) |
 		BIT(PCI_RETRY_ABORT_INTERRUPT_ENABLE) |
@@ -2348,25 +2347,25 @@ prपूर्णांक_err:
 		BIT(SUSPEND_REQUEST_CHANGE_INTERRUPT_ENABLE),
 		&dev->regs->pciirqenb1);
 
-	/* करोn't leave any ग_लिखोs posted */
-	(व्योम) पढ़ोl(&dev->usb->usbctl);
-पूर्ण
+	/* don't leave any writes posted */
+	(void) readl(&dev->usb->usbctl);
+}
 
-अटल व्योम ep0_start_338x(काष्ठा net2280 *dev)
-अणु
+static void ep0_start_338x(struct net2280 *dev)
+{
 
-	अगर (dev->bug7734_patched)
-		ग_लिखोl(BIT(CLEAR_NAK_OUT_PACKETS_MODE) |
+	if (dev->bug7734_patched)
+		writel(BIT(CLEAR_NAK_OUT_PACKETS_MODE) |
 		       BIT(SET_EP_HIDE_STATUS_PHASE),
 		       &dev->epregs[0].ep_rsp);
 
 	/*
 	 * hardware optionally handles a bunch of standard requests
-	 * that the API hides from drivers anyway.  have it करो so.
-	 * endpoपूर्णांक status/features are handled in software, to
-	 * help pass tests क्रम some dubious behavior.
+	 * that the API hides from drivers anyway.  have it do so.
+	 * endpoint status/features are handled in software, to
+	 * help pass tests for some dubious behavior.
 	 */
-	ग_लिखोl(BIT(SET_ISOCHRONOUS_DELAY) |
+	writel(BIT(SET_ISOCHRONOUS_DELAY) |
 	       BIT(SET_SEL) |
 	       BIT(SET_TEST_MODE) |
 	       BIT(SET_ADDRESS) |
@@ -2374,417 +2373,417 @@ prपूर्णांक_err:
 	       BIT(GET_DEVICE_STATUS),
 		&dev->usb->stdrsp);
 	dev->wakeup_enable = 1;
-	ग_लिखोl(BIT(USB_ROOT_PORT_WAKEUP_ENABLE) |
+	writel(BIT(USB_ROOT_PORT_WAKEUP_ENABLE) |
 	       (dev->softconnect << USB_DETECT_ENABLE) |
 	       BIT(DEVICE_REMOTE_WAKEUP_ENABLE),
 	       &dev->usb->usbctl);
 
 	/* enable irqs so we can see ep0 and general operation  */
-	ग_लिखोl(BIT(SETUP_PACKET_INTERRUPT_ENABLE) |
+	writel(BIT(SETUP_PACKET_INTERRUPT_ENABLE) |
 	       BIT(ENDPOINT_0_INTERRUPT_ENABLE),
 	       &dev->regs->pciirqenb0);
-	ग_लिखोl(BIT(PCI_INTERRUPT_ENABLE) |
+	writel(BIT(PCI_INTERRUPT_ENABLE) |
 	       BIT(ROOT_PORT_RESET_INTERRUPT_ENABLE) |
 	       BIT(SUSPEND_REQUEST_CHANGE_INTERRUPT_ENABLE) |
 	       BIT(VBUS_INTERRUPT_ENABLE),
 	       &dev->regs->pciirqenb1);
 
-	/* करोn't leave any ग_लिखोs posted */
-	(व्योम)पढ़ोl(&dev->usb->usbctl);
-पूर्ण
+	/* don't leave any writes posted */
+	(void)readl(&dev->usb->usbctl);
+}
 
-अटल व्योम ep0_start(काष्ठा net2280 *dev)
-अणु
-	अगर (dev->quirks & PLX_LEGACY)
-		वापस ep0_start_228x(dev);
-	वापस ep0_start_338x(dev);
-पूर्ण
+static void ep0_start(struct net2280 *dev)
+{
+	if (dev->quirks & PLX_LEGACY)
+		return ep0_start_228x(dev);
+	return ep0_start_338x(dev);
+}
 
-/* when a driver is successfully रेजिस्टरed, it will receive
+/* when a driver is successfully registered, it will receive
  * control requests including set_configuration(), which enables
  * non-control requests.  then usb traffic follows until a
  * disconnect is reported.  then a host may connect again, or
  * the driver might get unbound.
  */
-अटल पूर्णांक net2280_start(काष्ठा usb_gadget *_gadget,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा net2280		*dev;
-	पूर्णांक			retval;
-	अचिन्हित		i;
+static int net2280_start(struct usb_gadget *_gadget,
+		struct usb_gadget_driver *driver)
+{
+	struct net2280		*dev;
+	int			retval;
+	unsigned		i;
 
 	/* insist on high speed support from the driver, since
 	 * (dev->usb->xcvrdiag & FORCE_FULL_SPEED_MODE)
 	 * "must not be used in normal operation"
 	 */
-	अगर (!driver || driver->max_speed < USB_SPEED_HIGH ||
+	if (!driver || driver->max_speed < USB_SPEED_HIGH ||
 			!driver->setup)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	dev = container_of(_gadget, काष्ठा net2280, gadget);
+	dev = container_of(_gadget, struct net2280, gadget);
 
-	क्रम (i = 0; i < dev->n_ep; i++)
+	for (i = 0; i < dev->n_ep; i++)
 		dev->ep[i].irqs = 0;
 
 	/* hook up the driver ... */
-	driver->driver.bus = शून्य;
+	driver->driver.bus = NULL;
 	dev->driver = driver;
 
 	retval = device_create_file(&dev->pdev->dev, &dev_attr_function);
-	अगर (retval)
-		जाओ err_unbind;
+	if (retval)
+		goto err_unbind;
 	retval = device_create_file(&dev->pdev->dev, &dev_attr_queues);
-	अगर (retval)
-		जाओ err_func;
+	if (retval)
+		goto err_func;
 
-	/* enable host detection and ep0; and we're पढ़ोy
-	 * क्रम set_configuration as well as eventual disconnect.
+	/* enable host detection and ep0; and we're ready
+	 * for set_configuration as well as eventual disconnect.
 	 */
 	net2280_led_active(dev, 1);
 
-	अगर ((dev->quirks & PLX_PCIE) && !dev->bug7734_patched)
+	if ((dev->quirks & PLX_PCIE) && !dev->bug7734_patched)
 		defect7374_enable_data_eps_zero(dev);
 
 	ep0_start(dev);
 
-	/* pci ग_लिखोs may still be posted */
-	वापस 0;
+	/* pci writes may still be posted */
+	return 0;
 
 err_func:
-	device_हटाओ_file(&dev->pdev->dev, &dev_attr_function);
+	device_remove_file(&dev->pdev->dev, &dev_attr_function);
 err_unbind:
-	dev->driver = शून्य;
-	वापस retval;
-पूर्ण
+	dev->driver = NULL;
+	return retval;
+}
 
-अटल व्योम stop_activity(काष्ठा net2280 *dev, काष्ठा usb_gadget_driver *driver)
-अणु
-	पूर्णांक			i;
+static void stop_activity(struct net2280 *dev, struct usb_gadget_driver *driver)
+{
+	int			i;
 
-	/* करोn't disconnect if it's not connected */
-	अगर (dev->gadget.speed == USB_SPEED_UNKNOWN)
-		driver = शून्य;
+	/* don't disconnect if it's not connected */
+	if (dev->gadget.speed == USB_SPEED_UNKNOWN)
+		driver = NULL;
 
 	/* stop hardware; prevent new request submissions;
-	 * and समाप्त any outstanding requests.
+	 * and kill any outstanding requests.
 	 */
 	usb_reset(dev);
-	क्रम (i = 0; i < dev->n_ep; i++)
+	for (i = 0; i < dev->n_ep; i++)
 		nuke(&dev->ep[i]);
 
-	/* report disconnect; the driver is alपढ़ोy quiesced */
-	अगर (driver) अणु
+	/* report disconnect; the driver is already quiesced */
+	if (driver) {
 		spin_unlock(&dev->lock);
 		driver->disconnect(&dev->gadget);
 		spin_lock(&dev->lock);
-	पूर्ण
+	}
 
 	usb_reinit(dev);
-पूर्ण
+}
 
-अटल पूर्णांक net2280_stop(काष्ठा usb_gadget *_gadget)
-अणु
-	काष्ठा net2280	*dev;
-	अचिन्हित दीर्घ	flags;
+static int net2280_stop(struct usb_gadget *_gadget)
+{
+	struct net2280	*dev;
+	unsigned long	flags;
 
-	dev = container_of(_gadget, काष्ठा net2280, gadget);
+	dev = container_of(_gadget, struct net2280, gadget);
 
 	spin_lock_irqsave(&dev->lock, flags);
-	stop_activity(dev, शून्य);
+	stop_activity(dev, NULL);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
 	net2280_led_active(dev, 0);
 
-	device_हटाओ_file(&dev->pdev->dev, &dev_attr_function);
-	device_हटाओ_file(&dev->pdev->dev, &dev_attr_queues);
+	device_remove_file(&dev->pdev->dev, &dev_attr_function);
+	device_remove_file(&dev->pdev->dev, &dev_attr_queues);
 
-	dev->driver = शून्य;
+	dev->driver = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
 /* handle ep0, ep-e, ep-f with 64 byte packets: packet per irq.
- * also works क्रम dma-capable endpoपूर्णांकs, in pio mode or just
- * to manually advance the queue after लघु OUT transfers.
+ * also works for dma-capable endpoints, in pio mode or just
+ * to manually advance the queue after short OUT transfers.
  */
-अटल व्योम handle_ep_small(काष्ठा net2280_ep *ep)
-अणु
-	काष्ठा net2280_request	*req;
+static void handle_ep_small(struct net2280_ep *ep)
+{
+	struct net2280_request	*req;
 	u32			t;
-	/* 0 error, 1 mid-data, 2 करोne */
-	पूर्णांक			mode = 1;
+	/* 0 error, 1 mid-data, 2 done */
+	int			mode = 1;
 
-	अगर (!list_empty(&ep->queue))
+	if (!list_empty(&ep->queue))
 		req = list_entry(ep->queue.next,
-			काष्ठा net2280_request, queue);
-	अन्यथा
-		req = शून्य;
+			struct net2280_request, queue);
+	else
+		req = NULL;
 
 	/* ack all, and handle what we care about */
-	t = पढ़ोl(&ep->regs->ep_stat);
+	t = readl(&ep->regs->ep_stat);
 	ep->irqs++;
 
 	ep_vdbg(ep->dev, "%s ack ep_stat %08x, req %p\n",
-			ep->ep.name, t, req ? &req->req : शून्य);
+			ep->ep.name, t, req ? &req->req : NULL);
 
-	अगर (!ep->is_in || (ep->dev->quirks & PLX_2280))
-		ग_लिखोl(t & ~BIT(NAK_OUT_PACKETS), &ep->regs->ep_stat);
-	अन्यथा
-		/* Added क्रम 2282 */
-		ग_लिखोl(t, &ep->regs->ep_stat);
+	if (!ep->is_in || (ep->dev->quirks & PLX_2280))
+		writel(t & ~BIT(NAK_OUT_PACKETS), &ep->regs->ep_stat);
+	else
+		/* Added for 2282 */
+		writel(t, &ep->regs->ep_stat);
 
-	/* क्रम ep0, monitor token irqs to catch data stage length errors
+	/* for ep0, monitor token irqs to catch data stage length errors
 	 * and to synchronize on status.
 	 *
 	 * also, to defer reporting of protocol stalls ... here's where
 	 * data or status first appears, handling stalls here should never
 	 * cause trouble on the host side..
 	 *
-	 * control requests could be slightly faster without token synch क्रम
+	 * control requests could be slightly faster without token synch for
 	 * status, but status can jam up that way.
 	 */
-	अगर (unlikely(ep->num == 0)) अणु
-		अगर (ep->is_in) अणु
+	if (unlikely(ep->num == 0)) {
+		if (ep->is_in) {
 			/* status; stop NAKing */
-			अगर (t & BIT(DATA_OUT_PING_TOKEN_INTERRUPT)) अणु
-				अगर (ep->dev->protocol_stall) अणु
+			if (t & BIT(DATA_OUT_PING_TOKEN_INTERRUPT)) {
+				if (ep->dev->protocol_stall) {
 					ep->stopped = 1;
 					set_halt(ep);
-				पूर्ण
-				अगर (!req)
+				}
+				if (!req)
 					allow_status(ep);
 				mode = 2;
 			/* reply to extra IN data tokens with a zlp */
-			पूर्ण अन्यथा अगर (t & BIT(DATA_IN_TOKEN_INTERRUPT)) अणु
-				अगर (ep->dev->protocol_stall) अणु
+			} else if (t & BIT(DATA_IN_TOKEN_INTERRUPT)) {
+				if (ep->dev->protocol_stall) {
 					ep->stopped = 1;
 					set_halt(ep);
 					mode = 2;
-				पूर्ण अन्यथा अगर (ep->responded &&
+				} else if (ep->responded &&
 						!req && !ep->stopped)
-					ग_लिखो_fअगरo(ep, शून्य);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+					write_fifo(ep, NULL);
+			}
+		} else {
 			/* status; stop NAKing */
-			अगर (t & BIT(DATA_IN_TOKEN_INTERRUPT)) अणु
-				अगर (ep->dev->protocol_stall) अणु
+			if (t & BIT(DATA_IN_TOKEN_INTERRUPT)) {
+				if (ep->dev->protocol_stall) {
 					ep->stopped = 1;
 					set_halt(ep);
-				पूर्ण
+				}
 				mode = 2;
 			/* an extra OUT token is an error */
-			पूर्ण अन्यथा अगर (((t & BIT(DATA_OUT_PING_TOKEN_INTERRUPT)) &&
+			} else if (((t & BIT(DATA_OUT_PING_TOKEN_INTERRUPT)) &&
 					req &&
 					req->req.actual == req->req.length) ||
-					(ep->responded && !req)) अणु
+					(ep->responded && !req)) {
 				ep->dev->protocol_stall = 1;
 				set_halt(ep);
 				ep->stopped = 1;
-				अगर (req)
-					करोne(ep, req, -EOVERFLOW);
-				req = शून्य;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (req)
+					done(ep, req, -EOVERFLOW);
+				req = NULL;
+			}
+		}
+	}
 
-	अगर (unlikely(!req))
-		वापस;
+	if (unlikely(!req))
+		return;
 
-	/* manual DMA queue advance after लघु OUT */
-	अगर (likely(ep->dma)) अणु
-		अगर (t & BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT)) अणु
-			काष्ठा net2280_request *stuck_req = शून्य;
-			पूर्णांक	stopped = ep->stopped;
-			पूर्णांक	num_completed;
-			पूर्णांक	stuck = 0;
+	/* manual DMA queue advance after short OUT */
+	if (likely(ep->dma)) {
+		if (t & BIT(SHORT_PACKET_TRANSFERRED_INTERRUPT)) {
+			struct net2280_request *stuck_req = NULL;
+			int	stopped = ep->stopped;
+			int	num_completed;
+			int	stuck = 0;
 			u32	count;
 
 			/* TRANSFERRED works around OUT_DONE erratum 0112.
 			 * we expect (N <= maxpacket) bytes; host wrote M.
-			 * अगरf (M < N) we won't ever see a DMA पूर्णांकerrupt.
+			 * iff (M < N) we won't ever see a DMA interrupt.
 			 */
 			ep->stopped = 1;
-			क्रम (count = 0; ; t = पढ़ोl(&ep->regs->ep_stat)) अणु
+			for (count = 0; ; t = readl(&ep->regs->ep_stat)) {
 
 				/* any preceding dma transfers must finish.
 				 * dma handles (M >= N), may empty the queue
 				 */
 				num_completed = scan_dma_completions(ep);
-				अगर (unlikely(list_empty(&ep->queue) ||
-						ep->out_overflow)) अणु
-					req = शून्य;
-					अवरोध;
-				पूर्ण
+				if (unlikely(list_empty(&ep->queue) ||
+						ep->out_overflow)) {
+					req = NULL;
+					break;
+				}
 				req = list_entry(ep->queue.next,
-					काष्ठा net2280_request, queue);
+					struct net2280_request, queue);
 
-				/* here either (M < N), a "real" लघु rx;
+				/* here either (M < N), a "real" short rx;
 				 * or (M == N) and the queue didn't empty
 				 */
-				अगर (likely(t & BIT(FIFO_EMPTY))) अणु
-					count = पढ़ोl(&ep->dma->dmacount);
+				if (likely(t & BIT(FIFO_EMPTY))) {
+					count = readl(&ep->dma->dmacount);
 					count &= DMA_BYTE_COUNT_MASK;
-					अगर (पढ़ोl(&ep->dma->dmadesc)
+					if (readl(&ep->dma->dmadesc)
 							!= req->td_dma)
-						req = शून्य;
-					अवरोध;
-				पूर्ण
+						req = NULL;
+					break;
+				}
 
-				/* Escape loop अगर no dma transfers completed
+				/* Escape loop if no dma transfers completed
 				 * after few retries.
 				 */
-				अगर (num_completed == 0) अणु
-					अगर (stuck_req == req &&
-					    पढ़ोl(&ep->dma->dmadesc) !=
-						  req->td_dma && stuck++ > 5) अणु
-						count = पढ़ोl(
+				if (num_completed == 0) {
+					if (stuck_req == req &&
+					    readl(&ep->dma->dmadesc) !=
+						  req->td_dma && stuck++ > 5) {
+						count = readl(
 							&ep->dma->dmacount);
 						count &= DMA_BYTE_COUNT_MASK;
-						req = शून्य;
+						req = NULL;
 						ep_dbg(ep->dev, "%s escape stuck %d, count %u\n",
 							ep->ep.name, stuck,
 							count);
-						अवरोध;
-					पूर्ण अन्यथा अगर (stuck_req != req) अणु
+						break;
+					} else if (stuck_req != req) {
 						stuck_req = req;
 						stuck = 0;
-					पूर्ण
-				पूर्ण अन्यथा अणु
-					stuck_req = शून्य;
+					}
+				} else {
+					stuck_req = NULL;
 					stuck = 0;
-				पूर्ण
+				}
 
 				udelay(1);
-			पूर्ण
+			}
 
 			/* stop DMA, leave ep NAKing */
-			ग_लिखोl(BIT(DMA_ABORT), &ep->dma->dmastat);
+			writel(BIT(DMA_ABORT), &ep->dma->dmastat);
 			spin_stop_dma(ep->dma);
 
-			अगर (likely(req)) अणु
+			if (likely(req)) {
 				req->td->dmacount = 0;
-				t = पढ़ोl(&ep->regs->ep_avail);
-				dma_करोne(ep, req, count,
+				t = readl(&ep->regs->ep_avail);
+				dma_done(ep, req, count,
 					(ep->out_overflow || t)
 						? -EOVERFLOW : 0);
-			पूर्ण
+			}
 
 			/* also flush to prevent erratum 0106 trouble */
-			अगर (unlikely(ep->out_overflow ||
+			if (unlikely(ep->out_overflow ||
 					(ep->dev->chiprev == 0x0100 &&
 					ep->dev->gadget.speed
-					== USB_SPEED_FULL))) अणु
+					== USB_SPEED_FULL))) {
 				out_flush(ep);
 				ep->out_overflow = 0;
-			पूर्ण
+			}
 
-			/* (re)start dma अगर needed, stop NAKing */
+			/* (re)start dma if needed, stop NAKing */
 			ep->stopped = stopped;
-			अगर (!list_empty(&ep->queue))
+			if (!list_empty(&ep->queue))
 				restart_dma(ep);
-		पूर्ण अन्यथा
+		} else
 			ep_dbg(ep->dev, "%s dma ep_stat %08x ??\n",
 					ep->ep.name, t);
-		वापस;
+		return;
 
-	/* data packet(s) received (in the fअगरo, OUT) */
-	पूर्ण अन्यथा अगर (t & BIT(DATA_PACKET_RECEIVED_INTERRUPT)) अणु
-		अगर (पढ़ो_fअगरo(ep, req) && ep->num != 0)
+	/* data packet(s) received (in the fifo, OUT) */
+	} else if (t & BIT(DATA_PACKET_RECEIVED_INTERRUPT)) {
+		if (read_fifo(ep, req) && ep->num != 0)
 			mode = 2;
 
 	/* data packet(s) transmitted (IN) */
-	पूर्ण अन्यथा अगर (t & BIT(DATA_PACKET_TRANSMITTED_INTERRUPT)) अणु
-		अचिन्हित	len;
+	} else if (t & BIT(DATA_PACKET_TRANSMITTED_INTERRUPT)) {
+		unsigned	len;
 
 		len = req->req.length - req->req.actual;
-		अगर (len > ep->ep.maxpacket)
+		if (len > ep->ep.maxpacket)
 			len = ep->ep.maxpacket;
 		req->req.actual += len;
 
-		/* अगर we wrote it all, we're usually करोne */
+		/* if we wrote it all, we're usually done */
 		/* send zlps until the status stage */
-		अगर ((req->req.actual == req->req.length) &&
+		if ((req->req.actual == req->req.length) &&
 			(!req->req.zero || len != ep->ep.maxpacket) && ep->num)
 				mode = 2;
 
-	/* there was nothing to करो ...  */
-	पूर्ण अन्यथा अगर (mode == 1)
-		वापस;
+	/* there was nothing to do ...  */
+	} else if (mode == 1)
+		return;
 
-	/* करोne */
-	अगर (mode == 2) अणु
-		/* stream endpoपूर्णांकs often resubmit/unlink in completion */
-		करोne(ep, req, 0);
+	/* done */
+	if (mode == 2) {
+		/* stream endpoints often resubmit/unlink in completion */
+		done(ep, req, 0);
 
 		/* maybe advance queue to next request */
-		अगर (ep->num == 0) अणु
+		if (ep->num == 0) {
 			/* NOTE:  net2280 could let gadget driver start the
 			 * status stage later. since not all controllers let
-			 * them control that, the api करोesn't (yet) allow it.
+			 * them control that, the api doesn't (yet) allow it.
 			 */
-			अगर (!ep->stopped)
+			if (!ep->stopped)
 				allow_status(ep);
-			req = शून्य;
-		पूर्ण अन्यथा अणु
-			अगर (!list_empty(&ep->queue) && !ep->stopped)
+			req = NULL;
+		} else {
+			if (!list_empty(&ep->queue) && !ep->stopped)
 				req = list_entry(ep->queue.next,
-					काष्ठा net2280_request, queue);
-			अन्यथा
-				req = शून्य;
-			अगर (req && !ep->is_in)
+					struct net2280_request, queue);
+			else
+				req = NULL;
+			if (req && !ep->is_in)
 				stop_out_naking(ep);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* is there a buffer क्रम the next packet?
-	 * क्रम best streaming perक्रमmance, make sure there is one.
+	/* is there a buffer for the next packet?
+	 * for best streaming performance, make sure there is one.
 	 */
-	अगर (req && !ep->stopped) अणु
+	if (req && !ep->stopped) {
 
-		/* load IN fअगरo with next packet (may be zlp) */
-		अगर (t & BIT(DATA_PACKET_TRANSMITTED_INTERRUPT))
-			ग_लिखो_fअगरo(ep, &req->req);
-	पूर्ण
-पूर्ण
+		/* load IN fifo with next packet (may be zlp) */
+		if (t & BIT(DATA_PACKET_TRANSMITTED_INTERRUPT))
+			write_fifo(ep, &req->req);
+	}
+}
 
-अटल काष्ठा net2280_ep *get_ep_by_addr(काष्ठा net2280 *dev, u16 wIndex)
-अणु
-	काष्ठा net2280_ep	*ep;
+static struct net2280_ep *get_ep_by_addr(struct net2280 *dev, u16 wIndex)
+{
+	struct net2280_ep	*ep;
 
-	अगर ((wIndex & USB_ENDPOINT_NUMBER_MASK) == 0)
-		वापस &dev->ep[0];
-	list_क्रम_each_entry(ep, &dev->gadget.ep_list, ep.ep_list) अणु
-		u8	bEndpoपूर्णांकAddress;
+	if ((wIndex & USB_ENDPOINT_NUMBER_MASK) == 0)
+		return &dev->ep[0];
+	list_for_each_entry(ep, &dev->gadget.ep_list, ep.ep_list) {
+		u8	bEndpointAddress;
 
-		अगर (!ep->desc)
-			जारी;
-		bEndpoपूर्णांकAddress = ep->desc->bEndpoपूर्णांकAddress;
-		अगर ((wIndex ^ bEndpoपूर्णांकAddress) & USB_सूची_IN)
-			जारी;
-		अगर ((wIndex & 0x0f) == (bEndpoपूर्णांकAddress & 0x0f))
-			वापस ep;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		if (!ep->desc)
+			continue;
+		bEndpointAddress = ep->desc->bEndpointAddress;
+		if ((wIndex ^ bEndpointAddress) & USB_DIR_IN)
+			continue;
+		if ((wIndex & 0x0f) == (bEndpointAddress & 0x0f))
+			return ep;
+	}
+	return NULL;
+}
 
-अटल व्योम defect7374_workaround(काष्ठा net2280 *dev, काष्ठा usb_ctrlrequest r)
-अणु
+static void defect7374_workaround(struct net2280 *dev, struct usb_ctrlrequest r)
+{
 	u32 scratch, fsmvalue;
-	u32 ack_रुको_समयout, state;
+	u32 ack_wait_timeout, state;
 
-	/* Workaround क्रम Defect 7374 (U1/U2 erroneously rejected): */
+	/* Workaround for Defect 7374 (U1/U2 erroneously rejected): */
 	scratch = get_idx_reg(dev->regs, SCRATCH);
 	fsmvalue = scratch & (0xf << DEFECT7374_FSM_FIELD);
 	scratch &= ~(0xf << DEFECT7374_FSM_FIELD);
 
-	अगर (!((fsmvalue == DEFECT7374_FSM_WAITING_FOR_CONTROL_READ) &&
-				(r.bRequestType & USB_सूची_IN)))
-		वापस;
+	if (!((fsmvalue == DEFECT7374_FSM_WAITING_FOR_CONTROL_READ) &&
+				(r.bRequestType & USB_DIR_IN)))
+		return;
 
-	/* This is the first Control Read क्रम this connection: */
-	अगर (!(पढ़ोl(&dev->usb->usbstat) & BIT(SUPER_SPEED_MODE))) अणु
+	/* This is the first Control Read for this connection: */
+	if (!(readl(&dev->usb->usbstat) & BIT(SUPER_SPEED_MODE))) {
 		/*
 		 * Connection is NOT SS:
 		 * - Connection must be FS or HS.
@@ -2793,22 +2792,22 @@ err_unbind:
 		 */
 		scratch |= DEFECT7374_FSM_NON_SS_CONTROL_READ;
 		dev->bug7734_patched = 1;
-		जाओ restore_data_eps;
-	पूर्ण
+		goto restore_data_eps;
+	}
 
 	/* Connection is SS: */
-	क्रम (ack_रुको_समयout = 0;
-			ack_रुको_समयout < DEFECT_7374_NUMBEROF_MAX_WAIT_LOOPS;
-			ack_रुको_समयout++) अणु
+	for (ack_wait_timeout = 0;
+			ack_wait_timeout < DEFECT_7374_NUMBEROF_MAX_WAIT_LOOPS;
+			ack_wait_timeout++) {
 
-		state =	पढ़ोl(&dev->plregs->pl_ep_status_1)
+		state =	readl(&dev->plregs->pl_ep_status_1)
 			& (0xff << STATE);
-		अगर ((state >= (ACK_GOOD_NORMAL << STATE)) &&
-			(state <= (ACK_GOOD_MORE_ACKS_TO_COME << STATE))) अणु
+		if ((state >= (ACK_GOOD_NORMAL << STATE)) &&
+			(state <= (ACK_GOOD_MORE_ACKS_TO_COME << STATE))) {
 			scratch |= DEFECT7374_FSM_SS_CONTROL_READ;
 			dev->bug7734_patched = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * We have not yet received host's Data Phase ACK
@@ -2816,20 +2815,20 @@ err_unbind:
 		 */
 		udelay(DEFECT_7374_PROCESSOR_WAIT_TIME);
 
-		जारी;
-	पूर्ण
+		continue;
+	}
 
 
-	अगर (ack_रुको_समयout >= DEFECT_7374_NUMBEROF_MAX_WAIT_LOOPS) अणु
+	if (ack_wait_timeout >= DEFECT_7374_NUMBEROF_MAX_WAIT_LOOPS) {
 		ep_err(dev, "FAIL: Defect 7374 workaround waited but failed "
 		"to detect SS host's data phase ACK.");
 		ep_err(dev, "PL_EP_STATUS_1(23:16):.Expected from 0x11 to 0x16"
 		"got 0x%2.2x.\n", state >> STATE);
-	पूर्ण अन्यथा अणु
+	} else {
 		ep_warn(dev, "INFO: Defect 7374 workaround waited about\n"
 		"%duSec for Control Read Data Phase ACK\n",
-			DEFECT_7374_PROCESSOR_WAIT_TIME * ack_रुको_समयout);
-	पूर्ण
+			DEFECT_7374_PROCESSOR_WAIT_TIME * ack_wait_timeout);
+	}
 
 restore_data_eps:
 	/*
@@ -2840,312 +2839,312 @@ restore_data_eps:
 
 	set_idx_reg(dev->regs, SCRATCH, scratch);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम ep_clear_seqnum(काष्ठा net2280_ep *ep)
-अणु
-	काष्ठा net2280 *dev = ep->dev;
+static void ep_clear_seqnum(struct net2280_ep *ep)
+{
+	struct net2280 *dev = ep->dev;
 	u32 val;
-	अटल स्थिर u32 ep_pl[9] = अणु 0, 3, 4, 7, 8, 2, 5, 6, 9 पूर्ण;
+	static const u32 ep_pl[9] = { 0, 3, 4, 7, 8, 2, 5, 6, 9 };
 
-	val = पढ़ोl(&dev->plregs->pl_ep_ctrl) & ~0x1f;
+	val = readl(&dev->plregs->pl_ep_ctrl) & ~0x1f;
 	val |= ep_pl[ep->num];
-	ग_लिखोl(val, &dev->plregs->pl_ep_ctrl);
+	writel(val, &dev->plregs->pl_ep_ctrl);
 	val |= BIT(SEQUENCE_NUMBER_RESET);
-	ग_लिखोl(val, &dev->plregs->pl_ep_ctrl);
+	writel(val, &dev->plregs->pl_ep_ctrl);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम handle_stat0_irqs_superspeed(काष्ठा net2280 *dev,
-		काष्ठा net2280_ep *ep, काष्ठा usb_ctrlrequest r)
-अणु
-	काष्ठा net2280_ep *e;
+static void handle_stat0_irqs_superspeed(struct net2280 *dev,
+		struct net2280_ep *ep, struct usb_ctrlrequest r)
+{
+	struct net2280_ep *e;
 	u16 status;
-	पूर्णांक पंचांगp = 0;
+	int tmp = 0;
 
-#घोषणा	w_value		le16_to_cpu(r.wValue)
-#घोषणा	w_index		le16_to_cpu(r.wIndex)
-#घोषणा	w_length	le16_to_cpu(r.wLength)
+#define	w_value		le16_to_cpu(r.wValue)
+#define	w_index		le16_to_cpu(r.wIndex)
+#define	w_length	le16_to_cpu(r.wLength)
 
-	चयन (r.bRequest) अणु
-	हाल USB_REQ_SET_CONFIGURATION:
+	switch (r.bRequest) {
+	case USB_REQ_SET_CONFIGURATION:
 		dev->addressed_state = !w_value;
-		जाओ usb3_delegate;
+		goto usb3_delegate;
 
-	हाल USB_REQ_GET_STATUS:
-		चयन (r.bRequestType) अणु
-		हाल (USB_सूची_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE):
+	case USB_REQ_GET_STATUS:
+		switch (r.bRequestType) {
+		case (USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_DEVICE):
 			status = dev->wakeup_enable ? 0x02 : 0x00;
-			अगर (dev->gadget.is_selfघातered)
+			if (dev->gadget.is_selfpowered)
 				status |= BIT(0);
 			status |= (dev->u1_enable << 2 | dev->u2_enable << 3 |
-							dev->lपंचांग_enable << 4);
-			ग_लिखोl(0, &dev->epregs[0].ep_irqenb);
-			set_fअगरo_bytecount(ep, माप(status));
-			ग_लिखोl((__क्रमce u32) status, &dev->epregs[0].ep_data);
+							dev->ltm_enable << 4);
+			writel(0, &dev->epregs[0].ep_irqenb);
+			set_fifo_bytecount(ep, sizeof(status));
+			writel((__force u32) status, &dev->epregs[0].ep_data);
 			allow_status_338x(ep);
-			अवरोध;
+			break;
 
-		हाल (USB_सूची_IN | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT):
+		case (USB_DIR_IN | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT):
 			e = get_ep_by_addr(dev, w_index);
-			अगर (!e)
-				जाओ करो_stall3;
-			status = पढ़ोl(&e->regs->ep_rsp) &
+			if (!e)
+				goto do_stall3;
+			status = readl(&e->regs->ep_rsp) &
 						BIT(CLEAR_ENDPOINT_HALT);
-			ग_लिखोl(0, &dev->epregs[0].ep_irqenb);
-			set_fअगरo_bytecount(ep, माप(status));
-			ग_लिखोl((__क्रमce u32) status, &dev->epregs[0].ep_data);
+			writel(0, &dev->epregs[0].ep_irqenb);
+			set_fifo_bytecount(ep, sizeof(status));
+			writel((__force u32) status, &dev->epregs[0].ep_data);
 			allow_status_338x(ep);
-			अवरोध;
+			break;
 
-		शेष:
-			जाओ usb3_delegate;
-		पूर्ण
-		अवरोध;
+		default:
+			goto usb3_delegate;
+		}
+		break;
 
-	हाल USB_REQ_CLEAR_FEATURE:
-		चयन (r.bRequestType) अणु
-		हाल (USB_सूची_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE):
-			अगर (!dev->addressed_state) अणु
-				चयन (w_value) अणु
-				हाल USB_DEVICE_U1_ENABLE:
+	case USB_REQ_CLEAR_FEATURE:
+		switch (r.bRequestType) {
+		case (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE):
+			if (!dev->addressed_state) {
+				switch (w_value) {
+				case USB_DEVICE_U1_ENABLE:
 					dev->u1_enable = 0;
-					ग_लिखोl(पढ़ोl(&dev->usb_ext->usbctl2) &
+					writel(readl(&dev->usb_ext->usbctl2) &
 						~BIT(U1_ENABLE),
 						&dev->usb_ext->usbctl2);
 					allow_status_338x(ep);
-					जाओ next_endpoपूर्णांकs3;
+					goto next_endpoints3;
 
-				हाल USB_DEVICE_U2_ENABLE:
+				case USB_DEVICE_U2_ENABLE:
 					dev->u2_enable = 0;
-					ग_लिखोl(पढ़ोl(&dev->usb_ext->usbctl2) &
+					writel(readl(&dev->usb_ext->usbctl2) &
 						~BIT(U2_ENABLE),
 						&dev->usb_ext->usbctl2);
 					allow_status_338x(ep);
-					जाओ next_endpoपूर्णांकs3;
+					goto next_endpoints3;
 
-				हाल USB_DEVICE_LTM_ENABLE:
-					dev->lपंचांग_enable = 0;
-					ग_लिखोl(पढ़ोl(&dev->usb_ext->usbctl2) &
+				case USB_DEVICE_LTM_ENABLE:
+					dev->ltm_enable = 0;
+					writel(readl(&dev->usb_ext->usbctl2) &
 						~BIT(LTM_ENABLE),
 						&dev->usb_ext->usbctl2);
 					allow_status_338x(ep);
-					जाओ next_endpoपूर्णांकs3;
+					goto next_endpoints3;
 
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (w_value == USB_DEVICE_REMOTE_WAKEUP) अणु
+				default:
+					break;
+				}
+			}
+			if (w_value == USB_DEVICE_REMOTE_WAKEUP) {
 				dev->wakeup_enable = 0;
-				ग_लिखोl(पढ़ोl(&dev->usb->usbctl) &
+				writel(readl(&dev->usb->usbctl) &
 					~BIT(DEVICE_REMOTE_WAKEUP_ENABLE),
 					&dev->usb->usbctl);
 				allow_status_338x(ep);
-				अवरोध;
-			पूर्ण
-			जाओ usb3_delegate;
+				break;
+			}
+			goto usb3_delegate;
 
-		हाल (USB_सूची_OUT | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT):
+		case (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT):
 			e = get_ep_by_addr(dev,	w_index);
-			अगर (!e)
-				जाओ करो_stall3;
-			अगर (w_value != USB_ENDPOINT_HALT)
-				जाओ करो_stall3;
+			if (!e)
+				goto do_stall3;
+			if (w_value != USB_ENDPOINT_HALT)
+				goto do_stall3;
 			ep_vdbg(dev, "%s clear halt\n", e->ep.name);
 			/*
-			 * Workaround क्रम SS SeqNum not cleared via
-			 * Endpoपूर्णांक Halt (Clear) bit. select endpoपूर्णांक
+			 * Workaround for SS SeqNum not cleared via
+			 * Endpoint Halt (Clear) bit. select endpoint
 			 */
 			ep_clear_seqnum(e);
 			clear_halt(e);
-			अगर (!list_empty(&e->queue) && e->td_dma)
+			if (!list_empty(&e->queue) && e->td_dma)
 				restart_dma(e);
 			allow_status(ep);
 			ep->stopped = 1;
-			अवरोध;
+			break;
 
-		शेष:
-			जाओ usb3_delegate;
-		पूर्ण
-		अवरोध;
-	हाल USB_REQ_SET_FEATURE:
-		चयन (r.bRequestType) अणु
-		हाल (USB_सूची_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE):
-			अगर (!dev->addressed_state) अणु
-				चयन (w_value) अणु
-				हाल USB_DEVICE_U1_ENABLE:
+		default:
+			goto usb3_delegate;
+		}
+		break;
+	case USB_REQ_SET_FEATURE:
+		switch (r.bRequestType) {
+		case (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_DEVICE):
+			if (!dev->addressed_state) {
+				switch (w_value) {
+				case USB_DEVICE_U1_ENABLE:
 					dev->u1_enable = 1;
-					ग_लिखोl(पढ़ोl(&dev->usb_ext->usbctl2) |
+					writel(readl(&dev->usb_ext->usbctl2) |
 						BIT(U1_ENABLE),
 						&dev->usb_ext->usbctl2);
 					allow_status_338x(ep);
-					जाओ next_endpoपूर्णांकs3;
+					goto next_endpoints3;
 
-				हाल USB_DEVICE_U2_ENABLE:
+				case USB_DEVICE_U2_ENABLE:
 					dev->u2_enable = 1;
-					ग_लिखोl(पढ़ोl(&dev->usb_ext->usbctl2) |
+					writel(readl(&dev->usb_ext->usbctl2) |
 						BIT(U2_ENABLE),
 						&dev->usb_ext->usbctl2);
 					allow_status_338x(ep);
-					जाओ next_endpoपूर्णांकs3;
+					goto next_endpoints3;
 
-				हाल USB_DEVICE_LTM_ENABLE:
-					dev->lपंचांग_enable = 1;
-					ग_लिखोl(पढ़ोl(&dev->usb_ext->usbctl2) |
+				case USB_DEVICE_LTM_ENABLE:
+					dev->ltm_enable = 1;
+					writel(readl(&dev->usb_ext->usbctl2) |
 						BIT(LTM_ENABLE),
 						&dev->usb_ext->usbctl2);
 					allow_status_338x(ep);
-					जाओ next_endpoपूर्णांकs3;
-				शेष:
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					goto next_endpoints3;
+				default:
+					break;
+				}
+			}
 
-			अगर (w_value == USB_DEVICE_REMOTE_WAKEUP) अणु
+			if (w_value == USB_DEVICE_REMOTE_WAKEUP) {
 				dev->wakeup_enable = 1;
-				ग_लिखोl(पढ़ोl(&dev->usb->usbctl) |
+				writel(readl(&dev->usb->usbctl) |
 					BIT(DEVICE_REMOTE_WAKEUP_ENABLE),
 					&dev->usb->usbctl);
 				allow_status_338x(ep);
-				अवरोध;
-			पूर्ण
-			जाओ usb3_delegate;
+				break;
+			}
+			goto usb3_delegate;
 
-		हाल (USB_सूची_OUT | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT):
+		case (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_ENDPOINT):
 			e = get_ep_by_addr(dev,	w_index);
-			अगर (!e || (w_value != USB_ENDPOINT_HALT))
-				जाओ करो_stall3;
+			if (!e || (w_value != USB_ENDPOINT_HALT))
+				goto do_stall3;
 			ep->stopped = 1;
-			अगर (ep->num == 0)
+			if (ep->num == 0)
 				ep->dev->protocol_stall = 1;
-			अन्यथा अणु
-				अगर (ep->dma)
-					पात_dma(ep);
+			else {
+				if (ep->dma)
+					abort_dma(ep);
 				set_halt(ep);
-			पूर्ण
+			}
 			allow_status_338x(ep);
-			अवरोध;
+			break;
 
-		शेष:
-			जाओ usb3_delegate;
-		पूर्ण
+		default:
+			goto usb3_delegate;
+		}
 
-		अवरोध;
-	शेष:
+		break;
+	default:
 
 usb3_delegate:
 		ep_vdbg(dev, "setup %02x.%02x v%04x i%04x l%04x ep_cfg %08x\n",
 				r.bRequestType, r.bRequest,
 				w_value, w_index, w_length,
-				पढ़ोl(&ep->cfg->ep_cfg));
+				readl(&ep->cfg->ep_cfg));
 
 		ep->responded = 0;
 		spin_unlock(&dev->lock);
-		पंचांगp = dev->driver->setup(&dev->gadget, &r);
+		tmp = dev->driver->setup(&dev->gadget, &r);
 		spin_lock(&dev->lock);
-	पूर्ण
-करो_stall3:
-	अगर (पंचांगp < 0) अणु
+	}
+do_stall3:
+	if (tmp < 0) {
 		ep_vdbg(dev, "req %02x.%02x protocol STALL; stat %d\n",
-				r.bRequestType, r.bRequest, पंचांगp);
+				r.bRequestType, r.bRequest, tmp);
 		dev->protocol_stall = 1;
-		/* TD 9.9 Halt Endpoपूर्णांक test. TD 9.22 Set feature test */
+		/* TD 9.9 Halt Endpoint test. TD 9.22 Set feature test */
 		set_halt(ep);
-	पूर्ण
+	}
 
-next_endpoपूर्णांकs3:
+next_endpoints3:
 
-#अघोषित	w_value
-#अघोषित	w_index
-#अघोषित	w_length
+#undef	w_value
+#undef	w_index
+#undef	w_length
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम usb338x_handle_ep_पूर्णांकr(काष्ठा net2280 *dev, u32 stat0)
-अणु
+static void usb338x_handle_ep_intr(struct net2280 *dev, u32 stat0)
+{
 	u32 index;
 	u32 bit;
 
-	क्रम (index = 0; index < ARRAY_SIZE(ep_bit); index++) अणु
+	for (index = 0; index < ARRAY_SIZE(ep_bit); index++) {
 		bit = BIT(ep_bit[index]);
 
-		अगर (!stat0)
-			अवरोध;
+		if (!stat0)
+			break;
 
-		अगर (!(stat0 & bit))
-			जारी;
+		if (!(stat0 & bit))
+			continue;
 
 		stat0 &= ~bit;
 
 		handle_ep_small(&dev->ep[index]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_stat0_irqs(काष्ठा net2280 *dev, u32 stat)
-अणु
-	काष्ठा net2280_ep	*ep;
+static void handle_stat0_irqs(struct net2280 *dev, u32 stat)
+{
+	struct net2280_ep	*ep;
 	u32			num, scratch;
 
-	/* most of these करोn't need inभागidual acks */
+	/* most of these don't need individual acks */
 	stat &= ~BIT(INTA_ASSERTED);
-	अगर (!stat)
-		वापस;
+	if (!stat)
+		return;
 	/* ep_dbg(dev, "irqstat0 %04x\n", stat); */
 
 	/* starting a control request? */
-	अगर (unlikely(stat & BIT(SETUP_PACKET_INTERRUPT))) अणु
-		जोड़ अणु
+	if (unlikely(stat & BIT(SETUP_PACKET_INTERRUPT))) {
+		union {
 			u32			raw[2];
-			काष्ठा usb_ctrlrequest	r;
-		पूर्ण u;
-		पूर्णांक				पंचांगp;
-		काष्ठा net2280_request		*req;
+			struct usb_ctrlrequest	r;
+		} u;
+		int				tmp;
+		struct net2280_request		*req;
 
-		अगर (dev->gadget.speed == USB_SPEED_UNKNOWN) अणु
-			u32 val = पढ़ोl(&dev->usb->usbstat);
-			अगर (val & BIT(SUPER_SPEED)) अणु
+		if (dev->gadget.speed == USB_SPEED_UNKNOWN) {
+			u32 val = readl(&dev->usb->usbstat);
+			if (val & BIT(SUPER_SPEED)) {
 				dev->gadget.speed = USB_SPEED_SUPER;
 				usb_ep_set_maxpacket_limit(&dev->ep[0].ep,
 						EP0_SS_MAX_PACKET_SIZE);
-			पूर्ण अन्यथा अगर (val & BIT(HIGH_SPEED)) अणु
+			} else if (val & BIT(HIGH_SPEED)) {
 				dev->gadget.speed = USB_SPEED_HIGH;
 				usb_ep_set_maxpacket_limit(&dev->ep[0].ep,
 						EP0_HS_MAX_PACKET_SIZE);
-			पूर्ण अन्यथा अणु
+			} else {
 				dev->gadget.speed = USB_SPEED_FULL;
 				usb_ep_set_maxpacket_limit(&dev->ep[0].ep,
 						EP0_HS_MAX_PACKET_SIZE);
-			पूर्ण
+			}
 			net2280_led_speed(dev, dev->gadget.speed);
 			ep_dbg(dev, "%s\n",
 					usb_speed_string(dev->gadget.speed));
-		पूर्ण
+		}
 
 		ep = &dev->ep[0];
 		ep->irqs++;
 
 		/* make sure any leftover request state is cleared */
 		stat &= ~BIT(ENDPOINT_0_INTERRUPT);
-		जबतक (!list_empty(&ep->queue)) अणु
+		while (!list_empty(&ep->queue)) {
 			req = list_entry(ep->queue.next,
-					काष्ठा net2280_request, queue);
-			करोne(ep, req, (req->req.actual == req->req.length)
+					struct net2280_request, queue);
+			done(ep, req, (req->req.actual == req->req.length)
 						? 0 : -EPROTO);
-		पूर्ण
+		}
 		ep->stopped = 0;
 		dev->protocol_stall = 0;
-		अगर (!(dev->quirks & PLX_PCIE)) अणु
-			अगर (ep->dev->quirks & PLX_2280)
-				पंचांगp = BIT(FIFO_OVERFLOW) |
+		if (!(dev->quirks & PLX_PCIE)) {
+			if (ep->dev->quirks & PLX_2280)
+				tmp = BIT(FIFO_OVERFLOW) |
 				    BIT(FIFO_UNDERFLOW);
-			अन्यथा
-				पंचांगp = 0;
+			else
+				tmp = 0;
 
-			ग_लिखोl(पंचांगp | BIT(TIMEOUT) |
+			writel(tmp | BIT(TIMEOUT) |
 				   BIT(USB_STALL_SENT) |
 				   BIT(USB_IN_NAK_SENT) |
 				   BIT(USB_IN_ACK_RCVD) |
@@ -3158,206 +3157,206 @@ next_endpoपूर्णांकs3:
 				   BIT(DATA_OUT_PING_TOKEN_INTERRUPT) |
 				   BIT(DATA_IN_TOKEN_INTERRUPT),
 				   &ep->regs->ep_stat);
-		पूर्ण
-		u.raw[0] = पढ़ोl(&dev->usb->setup0123);
-		u.raw[1] = पढ़ोl(&dev->usb->setup4567);
+		}
+		u.raw[0] = readl(&dev->usb->setup0123);
+		u.raw[1] = readl(&dev->usb->setup4567);
 
 		cpu_to_le32s(&u.raw[0]);
 		cpu_to_le32s(&u.raw[1]);
 
-		अगर ((dev->quirks & PLX_PCIE) && !dev->bug7734_patched)
+		if ((dev->quirks & PLX_PCIE) && !dev->bug7734_patched)
 			defect7374_workaround(dev, u.r);
 
-		पंचांगp = 0;
+		tmp = 0;
 
-#घोषणा	w_value		le16_to_cpu(u.r.wValue)
-#घोषणा	w_index		le16_to_cpu(u.r.wIndex)
-#घोषणा	w_length	le16_to_cpu(u.r.wLength)
+#define	w_value		le16_to_cpu(u.r.wValue)
+#define	w_index		le16_to_cpu(u.r.wIndex)
+#define	w_length	le16_to_cpu(u.r.wLength)
 
 		/* ack the irq */
-		ग_लिखोl(BIT(SETUP_PACKET_INTERRUPT), &dev->regs->irqstat0);
+		writel(BIT(SETUP_PACKET_INTERRUPT), &dev->regs->irqstat0);
 		stat ^= BIT(SETUP_PACKET_INTERRUPT);
 
-		/* watch control traffic at the token level, and क्रमce
-		 * synchronization beक्रमe letting the status stage happen.
+		/* watch control traffic at the token level, and force
+		 * synchronization before letting the status stage happen.
 		 * FIXME ignore tokens we'll NAK, until driver responds.
-		 * that'll mean a lot less irqs क्रम some drivers.
+		 * that'll mean a lot less irqs for some drivers.
 		 */
-		ep->is_in = (u.r.bRequestType & USB_सूची_IN) != 0;
-		अगर (ep->is_in) अणु
+		ep->is_in = (u.r.bRequestType & USB_DIR_IN) != 0;
+		if (ep->is_in) {
 			scratch = BIT(DATA_PACKET_TRANSMITTED_INTERRUPT) |
 				BIT(DATA_OUT_PING_TOKEN_INTERRUPT) |
 				BIT(DATA_IN_TOKEN_INTERRUPT);
 			stop_out_naking(ep);
-		पूर्ण अन्यथा
+		} else
 			scratch = BIT(DATA_PACKET_RECEIVED_INTERRUPT) |
 				BIT(DATA_OUT_PING_TOKEN_INTERRUPT) |
 				BIT(DATA_IN_TOKEN_INTERRUPT);
-		ग_लिखोl(scratch, &dev->epregs[0].ep_irqenb);
+		writel(scratch, &dev->epregs[0].ep_irqenb);
 
 		/* we made the hardware handle most lowlevel requests;
-		 * everything अन्यथा goes uplevel to the gadget code.
+		 * everything else goes uplevel to the gadget code.
 		 */
 		ep->responded = 1;
 
-		अगर (dev->gadget.speed == USB_SPEED_SUPER) अणु
+		if (dev->gadget.speed == USB_SPEED_SUPER) {
 			handle_stat0_irqs_superspeed(dev, ep, u.r);
-			जाओ next_endpoपूर्णांकs;
-		पूर्ण
+			goto next_endpoints;
+		}
 
-		चयन (u.r.bRequest) अणु
-		हाल USB_REQ_GET_STATUS: अणु
-			काष्ठा net2280_ep	*e;
+		switch (u.r.bRequest) {
+		case USB_REQ_GET_STATUS: {
+			struct net2280_ep	*e;
 			__le32			status;
 
-			/* hw handles device and पूर्णांकerface status */
-			अगर (u.r.bRequestType != (USB_सूची_IN|USB_RECIP_ENDPOINT))
-				जाओ delegate;
+			/* hw handles device and interface status */
+			if (u.r.bRequestType != (USB_DIR_IN|USB_RECIP_ENDPOINT))
+				goto delegate;
 			e = get_ep_by_addr(dev, w_index);
-			अगर (!e || w_length > 2)
-				जाओ करो_stall;
+			if (!e || w_length > 2)
+				goto do_stall;
 
-			अगर (पढ़ोl(&e->regs->ep_rsp) & BIT(SET_ENDPOINT_HALT))
+			if (readl(&e->regs->ep_rsp) & BIT(SET_ENDPOINT_HALT))
 				status = cpu_to_le32(1);
-			अन्यथा
+			else
 				status = cpu_to_le32(0);
 
-			/* करोn't bother with a request object! */
-			ग_लिखोl(0, &dev->epregs[0].ep_irqenb);
-			set_fअगरo_bytecount(ep, w_length);
-			ग_लिखोl((__क्रमce u32)status, &dev->epregs[0].ep_data);
+			/* don't bother with a request object! */
+			writel(0, &dev->epregs[0].ep_irqenb);
+			set_fifo_bytecount(ep, w_length);
+			writel((__force u32)status, &dev->epregs[0].ep_data);
 			allow_status(ep);
 			ep_vdbg(dev, "%s stat %02x\n", ep->ep.name, status);
-			जाओ next_endpoपूर्णांकs;
-			पूर्ण
-			अवरोध;
-		हाल USB_REQ_CLEAR_FEATURE: अणु
-			काष्ठा net2280_ep	*e;
+			goto next_endpoints;
+			}
+			break;
+		case USB_REQ_CLEAR_FEATURE: {
+			struct net2280_ep	*e;
 
 			/* hw handles device features */
-			अगर (u.r.bRequestType != USB_RECIP_ENDPOINT)
-				जाओ delegate;
-			अगर (w_value != USB_ENDPOINT_HALT || w_length != 0)
-				जाओ करो_stall;
+			if (u.r.bRequestType != USB_RECIP_ENDPOINT)
+				goto delegate;
+			if (w_value != USB_ENDPOINT_HALT || w_length != 0)
+				goto do_stall;
 			e = get_ep_by_addr(dev, w_index);
-			अगर (!e)
-				जाओ करो_stall;
-			अगर (e->wedged) अणु
+			if (!e)
+				goto do_stall;
+			if (e->wedged) {
 				ep_vdbg(dev, "%s wedged, halt not cleared\n",
 						ep->ep.name);
-			पूर्ण अन्यथा अणु
+			} else {
 				ep_vdbg(dev, "%s clear halt\n", e->ep.name);
 				clear_halt(e);
-				अगर ((ep->dev->quirks & PLX_PCIE) &&
+				if ((ep->dev->quirks & PLX_PCIE) &&
 					!list_empty(&e->queue) && e->td_dma)
 						restart_dma(e);
-			पूर्ण
+			}
 			allow_status(ep);
-			जाओ next_endpoपूर्णांकs;
-			पूर्ण
-			अवरोध;
-		हाल USB_REQ_SET_FEATURE: अणु
-			काष्ठा net2280_ep	*e;
+			goto next_endpoints;
+			}
+			break;
+		case USB_REQ_SET_FEATURE: {
+			struct net2280_ep	*e;
 
 			/* hw handles device features */
-			अगर (u.r.bRequestType != USB_RECIP_ENDPOINT)
-				जाओ delegate;
-			अगर (w_value != USB_ENDPOINT_HALT || w_length != 0)
-				जाओ करो_stall;
+			if (u.r.bRequestType != USB_RECIP_ENDPOINT)
+				goto delegate;
+			if (w_value != USB_ENDPOINT_HALT || w_length != 0)
+				goto do_stall;
 			e = get_ep_by_addr(dev, w_index);
-			अगर (!e)
-				जाओ करो_stall;
-			अगर (e->ep.name == ep0name)
-				जाओ करो_stall;
+			if (!e)
+				goto do_stall;
+			if (e->ep.name == ep0name)
+				goto do_stall;
 			set_halt(e);
-			अगर ((dev->quirks & PLX_PCIE) && e->dma)
-				पात_dma(e);
+			if ((dev->quirks & PLX_PCIE) && e->dma)
+				abort_dma(e);
 			allow_status(ep);
 			ep_vdbg(dev, "%s set halt\n", ep->ep.name);
-			जाओ next_endpoपूर्णांकs;
-			पूर्ण
-			अवरोध;
-		शेष:
+			goto next_endpoints;
+			}
+			break;
+		default:
 delegate:
 			ep_vdbg(dev, "setup %02x.%02x v%04x i%04x l%04x "
 				"ep_cfg %08x\n",
 				u.r.bRequestType, u.r.bRequest,
 				w_value, w_index, w_length,
-				पढ़ोl(&ep->cfg->ep_cfg));
+				readl(&ep->cfg->ep_cfg));
 			ep->responded = 0;
 			spin_unlock(&dev->lock);
-			पंचांगp = dev->driver->setup(&dev->gadget, &u.r);
+			tmp = dev->driver->setup(&dev->gadget, &u.r);
 			spin_lock(&dev->lock);
-		पूर्ण
+		}
 
 		/* stall ep0 on error */
-		अगर (पंचांगp < 0) अणु
-करो_stall:
+		if (tmp < 0) {
+do_stall:
 			ep_vdbg(dev, "req %02x.%02x protocol STALL; stat %d\n",
-					u.r.bRequestType, u.r.bRequest, पंचांगp);
+					u.r.bRequestType, u.r.bRequest, tmp);
 			dev->protocol_stall = 1;
-		पूर्ण
+		}
 
 		/* some in/out token irq should follow; maybe stall then.
 		 * driver must queue a request (even zlp) or halt ep0
-		 * beक्रमe the host बार out.
+		 * before the host times out.
 		 */
-	पूर्ण
+	}
 
-#अघोषित	w_value
-#अघोषित	w_index
-#अघोषित	w_length
+#undef	w_value
+#undef	w_index
+#undef	w_length
 
-next_endpoपूर्णांकs:
-	अगर ((dev->quirks & PLX_PCIE) && dev->enhanced_mode) अणु
+next_endpoints:
+	if ((dev->quirks & PLX_PCIE) && dev->enhanced_mode) {
 		u32 mask = (BIT(ENDPOINT_0_INTERRUPT) |
 			USB3380_IRQSTAT0_EP_INTR_MASK_IN |
 			USB3380_IRQSTAT0_EP_INTR_MASK_OUT);
 
-		अगर (stat & mask) अणु
-			usb338x_handle_ep_पूर्णांकr(dev, stat & mask);
+		if (stat & mask) {
+			usb338x_handle_ep_intr(dev, stat & mask);
 			stat &= ~mask;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* endpoपूर्णांक data irq ? */
+		}
+	} else {
+		/* endpoint data irq ? */
 		scratch = stat & 0x7f;
 		stat &= ~0x7f;
-		क्रम (num = 0; scratch; num++) अणु
+		for (num = 0; scratch; num++) {
 			u32		t;
 
-			/* करो this endpoपूर्णांक's FIFO and queue need tending? */
+			/* do this endpoint's FIFO and queue need tending? */
 			t = BIT(num);
-			अगर ((scratch & t) == 0)
-				जारी;
+			if ((scratch & t) == 0)
+				continue;
 			scratch ^= t;
 
 			ep = &dev->ep[num];
 			handle_ep_small(ep);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (stat)
+	if (stat)
 		ep_dbg(dev, "unhandled irqstat0 %08x\n", stat);
-पूर्ण
+}
 
-#घोषणा DMA_INTERRUPTS (BIT(DMA_D_INTERRUPT) | \
+#define DMA_INTERRUPTS (BIT(DMA_D_INTERRUPT) | \
 		BIT(DMA_C_INTERRUPT) | \
 		BIT(DMA_B_INTERRUPT) | \
 		BIT(DMA_A_INTERRUPT))
-#घोषणा	PCI_ERROR_INTERRUPTS ( \
+#define	PCI_ERROR_INTERRUPTS ( \
 		BIT(PCI_MASTER_ABORT_RECEIVED_INTERRUPT) | \
 		BIT(PCI_TARGET_ABORT_RECEIVED_INTERRUPT) | \
 		BIT(PCI_RETRY_ABORT_INTERRUPT))
 
-अटल व्योम handle_stat1_irqs(काष्ठा net2280 *dev, u32 stat)
+static void handle_stat1_irqs(struct net2280 *dev, u32 stat)
 __releases(dev->lock)
 __acquires(dev->lock)
-अणु
-	काष्ठा net2280_ep	*ep;
-	u32			पंचांगp, num, mask, scratch;
+{
+	struct net2280_ep	*ep;
+	u32			tmp, num, mask, scratch;
 
-	/* after disconnect there's nothing अन्यथा to करो! */
-	पंचांगp = BIT(VBUS_INTERRUPT) | BIT(ROOT_PORT_RESET_INTERRUPT);
+	/* after disconnect there's nothing else to do! */
+	tmp = BIT(VBUS_INTERRUPT) | BIT(ROOT_PORT_RESET_INTERRUPT);
 	mask = BIT(SUPER_SPEED) | BIT(HIGH_SPEED) | BIT(FULL_SPEED);
 
 	/* VBUS disconnect is indicated by VBUS_PIN and VBUS_INTERRUPT set.
@@ -3365,155 +3364,155 @@ __acquires(dev->lock)
 	 * both HIGH_SPEED and FULL_SPEED clear (as ROOT_PORT_RESET_INTERRUPT
 	 * only indicates a change in the reset state).
 	 */
-	अगर (stat & पंचांगp) अणु
+	if (stat & tmp) {
 		bool	reset = false;
 		bool	disconnect = false;
 
 		/*
-		 * Ignore disconnects and resets अगर the speed hasn't been set.
+		 * Ignore disconnects and resets if the speed hasn't been set.
 		 * VBUS can bounce and there's always an initial reset.
 		 */
-		ग_लिखोl(पंचांगp, &dev->regs->irqstat1);
-		अगर (dev->gadget.speed != USB_SPEED_UNKNOWN) अणु
-			अगर ((stat & BIT(VBUS_INTERRUPT)) &&
-					(पढ़ोl(&dev->usb->usbctl) &
-						BIT(VBUS_PIN)) == 0) अणु
+		writel(tmp, &dev->regs->irqstat1);
+		if (dev->gadget.speed != USB_SPEED_UNKNOWN) {
+			if ((stat & BIT(VBUS_INTERRUPT)) &&
+					(readl(&dev->usb->usbctl) &
+						BIT(VBUS_PIN)) == 0) {
 				disconnect = true;
 				ep_dbg(dev, "disconnect %s\n",
 						dev->driver->driver.name);
-			पूर्ण अन्यथा अगर ((stat & BIT(ROOT_PORT_RESET_INTERRUPT)) &&
-					(पढ़ोl(&dev->usb->usbstat) & mask)
-						== 0) अणु
+			} else if ((stat & BIT(ROOT_PORT_RESET_INTERRUPT)) &&
+					(readl(&dev->usb->usbstat) & mask)
+						== 0) {
 				reset = true;
 				ep_dbg(dev, "reset %s\n",
 						dev->driver->driver.name);
-			पूर्ण
+			}
 
-			अगर (disconnect || reset) अणु
+			if (disconnect || reset) {
 				stop_activity(dev, dev->driver);
 				ep0_start(dev);
 				spin_unlock(&dev->lock);
-				अगर (reset)
+				if (reset)
 					usb_gadget_udc_reset
 						(&dev->gadget, dev->driver);
-				अन्यथा
+				else
 					(dev->driver->disconnect)
 						(&dev->gadget);
 				spin_lock(&dev->lock);
-				वापस;
-			पूर्ण
-		पूर्ण
-		stat &= ~पंचांगp;
+				return;
+			}
+		}
+		stat &= ~tmp;
 
 		/* vBUS can bounce ... one of many reasons to ignore the
 		 * notion of hotplug events on bus connect/disconnect!
 		 */
-		अगर (!stat)
-			वापस;
-	पूर्ण
+		if (!stat)
+			return;
+	}
 
-	/* NOTE: chip stays in PCI D0 state क्रम now, but it could
-	 * enter D1 to save more घातer
+	/* NOTE: chip stays in PCI D0 state for now, but it could
+	 * enter D1 to save more power
 	 */
-	पंचांगp = BIT(SUSPEND_REQUEST_CHANGE_INTERRUPT);
-	अगर (stat & पंचांगp) अणु
-		ग_लिखोl(पंचांगp, &dev->regs->irqstat1);
+	tmp = BIT(SUSPEND_REQUEST_CHANGE_INTERRUPT);
+	if (stat & tmp) {
+		writel(tmp, &dev->regs->irqstat1);
 		spin_unlock(&dev->lock);
-		अगर (stat & BIT(SUSPEND_REQUEST_INTERRUPT)) अणु
-			अगर (dev->driver->suspend)
+		if (stat & BIT(SUSPEND_REQUEST_INTERRUPT)) {
+			if (dev->driver->suspend)
 				dev->driver->suspend(&dev->gadget);
-			अगर (!enable_suspend)
+			if (!enable_suspend)
 				stat &= ~BIT(SUSPEND_REQUEST_INTERRUPT);
-		पूर्ण अन्यथा अणु
-			अगर (dev->driver->resume)
+		} else {
+			if (dev->driver->resume)
 				dev->driver->resume(&dev->gadget);
 			/* at high speed, note erratum 0133 */
-		पूर्ण
+		}
 		spin_lock(&dev->lock);
-		stat &= ~पंचांगp;
-	पूर्ण
+		stat &= ~tmp;
+	}
 
 	/* clear any other status/irqs */
-	अगर (stat)
-		ग_लिखोl(stat, &dev->regs->irqstat1);
+	if (stat)
+		writel(stat, &dev->regs->irqstat1);
 
 	/* some status we can just ignore */
-	अगर (dev->quirks & PLX_2280)
+	if (dev->quirks & PLX_2280)
 		stat &= ~(BIT(CONTROL_STATUS_INTERRUPT) |
 			  BIT(SUSPEND_REQUEST_INTERRUPT) |
 			  BIT(RESUME_INTERRUPT) |
 			  BIT(SOF_INTERRUPT));
-	अन्यथा
+	else
 		stat &= ~(BIT(CONTROL_STATUS_INTERRUPT) |
 			  BIT(RESUME_INTERRUPT) |
 			  BIT(SOF_DOWN_INTERRUPT) |
 			  BIT(SOF_INTERRUPT));
 
-	अगर (!stat)
-		वापस;
+	if (!stat)
+		return;
 	/* ep_dbg(dev, "irqstat1 %08x\n", stat);*/
 
-	/* DMA status, क्रम ep-अणुa,b,c,dपूर्ण */
+	/* DMA status, for ep-{a,b,c,d} */
 	scratch = stat & DMA_INTERRUPTS;
 	stat &= ~DMA_INTERRUPTS;
 	scratch >>= 9;
-	क्रम (num = 0; scratch; num++) अणु
-		काष्ठा net2280_dma_regs	__iomem *dma;
+	for (num = 0; scratch; num++) {
+		struct net2280_dma_regs	__iomem *dma;
 
-		पंचांगp = BIT(num);
-		अगर ((पंचांगp & scratch) == 0)
-			जारी;
-		scratch ^= पंचांगp;
+		tmp = BIT(num);
+		if ((tmp & scratch) == 0)
+			continue;
+		scratch ^= tmp;
 
 		ep = &dev->ep[num + 1];
 		dma = ep->dma;
 
-		अगर (!dma)
-			जारी;
+		if (!dma)
+			continue;
 
 		/* clear ep's dma status */
-		पंचांगp = पढ़ोl(&dma->dmastat);
-		ग_लिखोl(पंचांगp, &dma->dmastat);
+		tmp = readl(&dma->dmastat);
+		writel(tmp, &dma->dmastat);
 
 		/* dma sync*/
-		अगर (dev->quirks & PLX_PCIE) अणु
-			u32 r_dmacount = पढ़ोl(&dma->dmacount);
-			अगर (!ep->is_in &&  (r_dmacount & 0x00FFFFFF) &&
-			    (पंचांगp & BIT(DMA_TRANSACTION_DONE_INTERRUPT)))
-				जारी;
-		पूर्ण
+		if (dev->quirks & PLX_PCIE) {
+			u32 r_dmacount = readl(&dma->dmacount);
+			if (!ep->is_in &&  (r_dmacount & 0x00FFFFFF) &&
+			    (tmp & BIT(DMA_TRANSACTION_DONE_INTERRUPT)))
+				continue;
+		}
 
-		अगर (!(पंचांगp & BIT(DMA_TRANSACTION_DONE_INTERRUPT))) अणु
+		if (!(tmp & BIT(DMA_TRANSACTION_DONE_INTERRUPT))) {
 			ep_dbg(ep->dev, "%s no xact done? %08x\n",
-				ep->ep.name, पंचांगp);
-			जारी;
-		पूर्ण
+				ep->ep.name, tmp);
+			continue;
+		}
 		stop_dma(ep->dma);
 
 		/* OUT transfers terminate when the data from the
-		 * host is in our memory.  Process whatever's करोne.
+		 * host is in our memory.  Process whatever's done.
 		 * On this path, we know transfer's last packet wasn't
 		 * less than req->length. NAK_OUT_PACKETS may be set,
-		 * or the FIFO may alपढ़ोy be holding new packets.
+		 * or the FIFO may already be holding new packets.
 		 *
-		 * IN transfers can linger in the FIFO क्रम a very
-		 * दीर्घ समय ... we ignore that क्रम now, accounting
-		 * precisely (like PIO करोes) needs per-packet irqs
+		 * IN transfers can linger in the FIFO for a very
+		 * long time ... we ignore that for now, accounting
+		 * precisely (like PIO does) needs per-packet irqs
 		 */
 		scan_dma_completions(ep);
 
-		/* disable dma on inactive queues; अन्यथा maybe restart */
-		अगर (!list_empty(&ep->queue)) अणु
-			पंचांगp = पढ़ोl(&dma->dmactl);
+		/* disable dma on inactive queues; else maybe restart */
+		if (!list_empty(&ep->queue)) {
+			tmp = readl(&dma->dmactl);
 			restart_dma(ep);
-		पूर्ण
+		}
 		ep->irqs++;
-	पूर्ण
+	}
 
 	/* NOTE:  there are other PCI errors we might usefully notice.
-	 * अगर they appear very often, here's where to try recovering.
+	 * if they appear very often, here's where to try recovering.
 	 */
-	अगर (stat & PCI_ERROR_INTERRUPTS) अणु
+	if (stat & PCI_ERROR_INTERRUPTS) {
 		ep_err(dev, "pci dma error; stat %08x\n", stat);
 		stat &= ~PCI_ERROR_INTERRUPTS;
 		/* these are fatal errors, but "maybe" they won't
@@ -3522,108 +3521,108 @@ __acquires(dev->lock)
 		stop_activity(dev, dev->driver);
 		ep0_start(dev);
 		stat = 0;
-	पूर्ण
+	}
 
-	अगर (stat)
+	if (stat)
 		ep_dbg(dev, "unhandled irqstat1 %08x\n", stat);
-पूर्ण
+}
 
-अटल irqवापस_t net2280_irq(पूर्णांक irq, व्योम *_dev)
-अणु
-	काष्ठा net2280		*dev = _dev;
+static irqreturn_t net2280_irq(int irq, void *_dev)
+{
+	struct net2280		*dev = _dev;
 
-	/* shared पूर्णांकerrupt, not ours */
-	अगर ((dev->quirks & PLX_LEGACY) &&
-		(!(पढ़ोl(&dev->regs->irqstat0) & BIT(INTA_ASSERTED))))
-		वापस IRQ_NONE;
+	/* shared interrupt, not ours */
+	if ((dev->quirks & PLX_LEGACY) &&
+		(!(readl(&dev->regs->irqstat0) & BIT(INTA_ASSERTED))))
+		return IRQ_NONE;
 
 	spin_lock(&dev->lock);
 
 	/* handle disconnect, dma, and more */
-	handle_stat1_irqs(dev, पढ़ोl(&dev->regs->irqstat1));
+	handle_stat1_irqs(dev, readl(&dev->regs->irqstat1));
 
 	/* control requests and PIO */
-	handle_stat0_irqs(dev, पढ़ोl(&dev->regs->irqstat0));
+	handle_stat0_irqs(dev, readl(&dev->regs->irqstat0));
 
-	अगर (dev->quirks & PLX_PCIE) अणु
-		/* re-enable पूर्णांकerrupt to trigger any possible new पूर्णांकerrupt */
-		u32 pciirqenb1 = पढ़ोl(&dev->regs->pciirqenb1);
-		ग_लिखोl(pciirqenb1 & 0x7FFFFFFF, &dev->regs->pciirqenb1);
-		ग_लिखोl(pciirqenb1, &dev->regs->pciirqenb1);
-	पूर्ण
+	if (dev->quirks & PLX_PCIE) {
+		/* re-enable interrupt to trigger any possible new interrupt */
+		u32 pciirqenb1 = readl(&dev->regs->pciirqenb1);
+		writel(pciirqenb1 & 0x7FFFFFFF, &dev->regs->pciirqenb1);
+		writel(pciirqenb1, &dev->regs->pciirqenb1);
+	}
 
 	spin_unlock(&dev->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम gadget_release(काष्ठा device *_dev)
-अणु
-	काष्ठा net2280	*dev = container_of(_dev, काष्ठा net2280, gadget.dev);
+static void gadget_release(struct device *_dev)
+{
+	struct net2280	*dev = container_of(_dev, struct net2280, gadget.dev);
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-/* tear करोwn the binding between this driver and the pci device */
+/* tear down the binding between this driver and the pci device */
 
-अटल व्योम net2280_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net2280		*dev = pci_get_drvdata(pdev);
+static void net2280_remove(struct pci_dev *pdev)
+{
+	struct net2280		*dev = pci_get_drvdata(pdev);
 
-	अगर (dev->added)
+	if (dev->added)
 		usb_del_gadget(&dev->gadget);
 
 	BUG_ON(dev->driver);
 
 	/* then clean up the resources we allocated during probe() */
-	अगर (dev->requests) अणु
-		पूर्णांक		i;
-		क्रम (i = 1; i < 5; i++) अणु
-			अगर (!dev->ep[i].dummy)
-				जारी;
-			dma_pool_मुक्त(dev->requests, dev->ep[i].dummy,
+	if (dev->requests) {
+		int		i;
+		for (i = 1; i < 5; i++) {
+			if (!dev->ep[i].dummy)
+				continue;
+			dma_pool_free(dev->requests, dev->ep[i].dummy,
 					dev->ep[i].td_dma);
-		पूर्ण
+		}
 		dma_pool_destroy(dev->requests);
-	पूर्ण
-	अगर (dev->got_irq)
-		मुक्त_irq(pdev->irq, dev);
-	अगर (dev->quirks & PLX_PCIE)
+	}
+	if (dev->got_irq)
+		free_irq(pdev->irq, dev);
+	if (dev->quirks & PLX_PCIE)
 		pci_disable_msi(pdev);
-	अगर (dev->regs) अणु
-		net2280_led_shutकरोwn(dev);
+	if (dev->regs) {
+		net2280_led_shutdown(dev);
 		iounmap(dev->regs);
-	पूर्ण
-	अगर (dev->region)
+	}
+	if (dev->region)
 		release_mem_region(pci_resource_start(pdev, 0),
 				pci_resource_len(pdev, 0));
-	अगर (dev->enabled)
+	if (dev->enabled)
 		pci_disable_device(pdev);
-	device_हटाओ_file(&pdev->dev, &dev_attr_रेजिस्टरs);
+	device_remove_file(&pdev->dev, &dev_attr_registers);
 
 	ep_info(dev, "unbind\n");
 	usb_put_gadget(&dev->gadget);
-पूर्ण
+}
 
-/* wrap this driver around the specअगरied device, but
- * करोn't respond over USB until a gadget driver binds to us.
+/* wrap this driver around the specified device, but
+ * don't respond over USB until a gadget driver binds to us.
  */
 
-अटल पूर्णांक net2280_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा net2280		*dev;
-	अचिन्हित दीर्घ		resource, len;
-	व्योम			__iomem *base = शून्य;
-	पूर्णांक			retval, i;
+static int net2280_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	struct net2280		*dev;
+	unsigned long		resource, len;
+	void			__iomem *base = NULL;
+	int			retval, i;
 
 	/* alloc, and start init */
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (dev == शून्य) अणु
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (dev == NULL) {
 		retval = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	pci_set_drvdata(pdev, dev);
 	usb_initialize_gadget(&pdev->dev, &dev->gadget, gadget_release);
@@ -3634,127 +3633,127 @@ __acquires(dev->lock)
 	dev->gadget.max_speed = (dev->quirks & PLX_SUPERSPEED) ?
 				USB_SPEED_SUPER : USB_SPEED_HIGH;
 
-	/* the "gadget" असलtracts/भवizes the controller */
+	/* the "gadget" abstracts/virtualizes the controller */
 	dev->gadget.name = driver_name;
 
 	/* now all the pci goodies ... */
-	अगर (pci_enable_device(pdev) < 0) अणु
+	if (pci_enable_device(pdev) < 0) {
 		retval = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	dev->enabled = 1;
 
-	/* BAR 0 holds all the रेजिस्टरs
+	/* BAR 0 holds all the registers
 	 * BAR 1 is 8051 memory; unused here (note erratum 0103)
-	 * BAR 2 is fअगरo memory; unused here
+	 * BAR 2 is fifo memory; unused here
 	 */
 	resource = pci_resource_start(pdev, 0);
 	len = pci_resource_len(pdev, 0);
-	अगर (!request_mem_region(resource, len, driver_name)) अणु
+	if (!request_mem_region(resource, len, driver_name)) {
 		ep_dbg(dev, "controller already in use\n");
 		retval = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	dev->region = 1;
 
-	/* FIXME provide firmware करोwnload पूर्णांकerface to put
-	 * 8051 code पूर्णांकo the chip, e.g. to turn on PCI PM.
+	/* FIXME provide firmware download interface to put
+	 * 8051 code into the chip, e.g. to turn on PCI PM.
 	 */
 
 	base = ioremap(resource, len);
-	अगर (base == शून्य) अणु
+	if (base == NULL) {
 		ep_dbg(dev, "can't map memory\n");
 		retval = -EFAULT;
-		जाओ करोne;
-	पूर्ण
-	dev->regs = (काष्ठा net2280_regs __iomem *) base;
-	dev->usb = (काष्ठा net2280_usb_regs __iomem *) (base + 0x0080);
-	dev->pci = (काष्ठा net2280_pci_regs __iomem *) (base + 0x0100);
-	dev->dma = (काष्ठा net2280_dma_regs __iomem *) (base + 0x0180);
-	dev->dep = (काष्ठा net2280_dep_regs __iomem *) (base + 0x0200);
-	dev->epregs = (काष्ठा net2280_ep_regs __iomem *) (base + 0x0300);
+		goto done;
+	}
+	dev->regs = (struct net2280_regs __iomem *) base;
+	dev->usb = (struct net2280_usb_regs __iomem *) (base + 0x0080);
+	dev->pci = (struct net2280_pci_regs __iomem *) (base + 0x0100);
+	dev->dma = (struct net2280_dma_regs __iomem *) (base + 0x0180);
+	dev->dep = (struct net2280_dep_regs __iomem *) (base + 0x0200);
+	dev->epregs = (struct net2280_ep_regs __iomem *) (base + 0x0300);
 
-	अगर (dev->quirks & PLX_PCIE) अणु
+	if (dev->quirks & PLX_PCIE) {
 		u32 fsmvalue;
 		u32 usbstat;
-		dev->usb_ext = (काष्ठा usb338x_usb_ext_regs __iomem *)
+		dev->usb_ext = (struct usb338x_usb_ext_regs __iomem *)
 							(base + 0x00b4);
-		dev->llregs = (काष्ठा usb338x_ll_regs __iomem *)
+		dev->llregs = (struct usb338x_ll_regs __iomem *)
 							(base + 0x0700);
-		dev->plregs = (काष्ठा usb338x_pl_regs __iomem *)
+		dev->plregs = (struct usb338x_pl_regs __iomem *)
 							(base + 0x0800);
-		usbstat = पढ़ोl(&dev->usb->usbstat);
+		usbstat = readl(&dev->usb->usbstat);
 		dev->enhanced_mode = !!(usbstat & BIT(11));
 		dev->n_ep = (dev->enhanced_mode) ? 9 : 5;
-		/* put पूर्णांकo initial config, link up all endpoपूर्णांकs */
+		/* put into initial config, link up all endpoints */
 		fsmvalue = get_idx_reg(dev->regs, SCRATCH) &
 					(0xf << DEFECT7374_FSM_FIELD);
-		/* See अगर firmware needs to set up क्रम workaround: */
-		अगर (fsmvalue == DEFECT7374_FSM_SS_CONTROL_READ) अणु
+		/* See if firmware needs to set up for workaround: */
+		if (fsmvalue == DEFECT7374_FSM_SS_CONTROL_READ) {
 			dev->bug7734_patched = 1;
-			ग_लिखोl(0, &dev->usb->usbctl);
-		पूर्ण अन्यथा
+			writel(0, &dev->usb->usbctl);
+		} else
 			dev->bug7734_patched = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->enhanced_mode = 0;
 		dev->n_ep = 7;
-		/* put पूर्णांकo initial config, link up all endpoपूर्णांकs */
-		ग_लिखोl(0, &dev->usb->usbctl);
-	पूर्ण
+		/* put into initial config, link up all endpoints */
+		writel(0, &dev->usb->usbctl);
+	}
 
 	usb_reset(dev);
 	usb_reinit(dev);
 
 	/* irq setup after old hardware is cleaned up */
-	अगर (!pdev->irq) अणु
+	if (!pdev->irq) {
 		ep_err(dev, "No IRQ.  Check PCI setup!\n");
 		retval = -ENODEV;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (dev->quirks & PLX_PCIE)
-		अगर (pci_enable_msi(pdev))
+	if (dev->quirks & PLX_PCIE)
+		if (pci_enable_msi(pdev))
 			ep_err(dev, "Failed to enable MSI mode\n");
 
-	अगर (request_irq(pdev->irq, net2280_irq, IRQF_SHARED,
-							driver_name, dev)) अणु
+	if (request_irq(pdev->irq, net2280_irq, IRQF_SHARED,
+							driver_name, dev)) {
 		ep_err(dev, "request interrupt %d failed\n", pdev->irq);
 		retval = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	dev->got_irq = 1;
 
 	/* DMA setup */
 	/* NOTE:  we know only the 32 LSBs of dma addresses may be nonzero */
 	dev->requests = dma_pool_create("requests", &pdev->dev,
-		माप(काष्ठा net2280_dma),
+		sizeof(struct net2280_dma),
 		0 /* no alignment requirements */,
 		0 /* or page-crossing issues */);
-	अगर (!dev->requests) अणु
+	if (!dev->requests) {
 		ep_dbg(dev, "can't get request pool\n");
 		retval = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
-	क्रम (i = 1; i < 5; i++) अणु
-		काष्ठा net2280_dma	*td;
+		goto done;
+	}
+	for (i = 1; i < 5; i++) {
+		struct net2280_dma	*td;
 
 		td = dma_pool_alloc(dev->requests, GFP_KERNEL,
 				&dev->ep[i].td_dma);
-		अगर (!td) अणु
+		if (!td) {
 			ep_dbg(dev, "can't get dummy %d\n", i);
 			retval = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		td->dmacount = 0;	/* not VALID */
 		td->dmadesc = td->dmaaddr;
 		dev->ep[i].dummy = td;
-	पूर्ण
+	}
 
 	/* enable lower-overhead pci memory bursts during DMA */
-	अगर (dev->quirks & PLX_LEGACY)
-		ग_लिखोl(BIT(DMA_MEMORY_WRITE_AND_INVALIDATE_ENABLE) |
+	if (dev->quirks & PLX_LEGACY)
+		writel(BIT(DMA_MEMORY_WRITE_AND_INVALIDATE_ENABLE) |
 			/*
-			 * 256 ग_लिखो retries may not be enough...
+			 * 256 write retries may not be enough...
 			   BIT(PCI_RETRY_ABORT_ENABLE) |
 			*/
 			BIT(DMA_READ_MULTIPLE_ENABLE) |
@@ -3764,112 +3763,112 @@ __acquires(dev->lock)
 	pci_set_master(pdev);
 	pci_try_set_mwi(pdev);
 
-	/* ... also flushes any posted pci ग_लिखोs */
+	/* ... also flushes any posted pci writes */
 	dev->chiprev = get_idx_reg(dev->regs, REG_CHIPREV) & 0xffff;
 
-	/* करोne */
+	/* done */
 	ep_info(dev, "%s\n", driver_desc);
 	ep_info(dev, "irq %d, pci mem %p, chip rev %04x\n",
 			pdev->irq, base, dev->chiprev);
 	ep_info(dev, "version: " DRIVER_VERSION "; %s\n",
 		dev->enhanced_mode ? "enhanced mode" : "legacy mode");
-	retval = device_create_file(&pdev->dev, &dev_attr_रेजिस्टरs);
-	अगर (retval)
-		जाओ करोne;
+	retval = device_create_file(&pdev->dev, &dev_attr_registers);
+	if (retval)
+		goto done;
 
 	retval = usb_add_gadget(&dev->gadget);
-	अगर (retval)
-		जाओ करोne;
+	if (retval)
+		goto done;
 	dev->added = 1;
-	वापस 0;
+	return 0;
 
-करोne:
-	अगर (dev) अणु
-		net2280_हटाओ(pdev);
-		kमुक्त(dev);
-	पूर्ण
-	वापस retval;
-पूर्ण
+done:
+	if (dev) {
+		net2280_remove(pdev);
+		kfree(dev);
+	}
+	return retval;
+}
 
-/* make sure the board is quiescent; otherwise it will जारी
+/* make sure the board is quiescent; otherwise it will continue
  * generating IRQs across the upcoming reboot.
  */
 
-अटल व्योम net2280_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net2280		*dev = pci_get_drvdata(pdev);
+static void net2280_shutdown(struct pci_dev *pdev)
+{
+	struct net2280		*dev = pci_get_drvdata(pdev);
 
 	/* disable IRQs */
-	ग_लिखोl(0, &dev->regs->pciirqenb0);
-	ग_लिखोl(0, &dev->regs->pciirqenb1);
+	writel(0, &dev->regs->pciirqenb0);
+	writel(0, &dev->regs->pciirqenb1);
 
 	/* disable the pullup so the host will think we're gone */
-	ग_लिखोl(0, &dev->usb->usbctl);
+	writel(0, &dev->usb->usbctl);
 
-पूर्ण
+}
 
 
 /*-------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा pci_device_id pci_ids[] = अणु अणु
+static const struct pci_device_id pci_ids[] = { {
 	.class =	PCI_CLASS_SERIAL_USB_DEVICE,
 	.class_mask =	~0,
-	.venकरोr =	PCI_VENDOR_ID_PLX_LEGACY,
+	.vendor =	PCI_VENDOR_ID_PLX_LEGACY,
 	.device =	0x2280,
-	.subvenकरोr =	PCI_ANY_ID,
+	.subvendor =	PCI_ANY_ID,
 	.subdevice =	PCI_ANY_ID,
 	.driver_data =	PLX_LEGACY | PLX_2280,
-	पूर्ण, अणु
+	}, {
 	.class =	PCI_CLASS_SERIAL_USB_DEVICE,
 	.class_mask =	~0,
-	.venकरोr =	PCI_VENDOR_ID_PLX_LEGACY,
+	.vendor =	PCI_VENDOR_ID_PLX_LEGACY,
 	.device =	0x2282,
-	.subvenकरोr =	PCI_ANY_ID,
+	.subvendor =	PCI_ANY_ID,
 	.subdevice =	PCI_ANY_ID,
 	.driver_data =	PLX_LEGACY,
-	पूर्ण,
-	अणु
+	},
+	{
 	.class =	PCI_CLASS_SERIAL_USB_DEVICE,
 	.class_mask =	~0,
-	.venकरोr =	PCI_VENDOR_ID_PLX,
+	.vendor =	PCI_VENDOR_ID_PLX,
 	.device =	0x2380,
-	.subvenकरोr =	PCI_ANY_ID,
+	.subvendor =	PCI_ANY_ID,
 	.subdevice =	PCI_ANY_ID,
 	.driver_data =	PLX_PCIE,
-	 पूर्ण,
-	अणु
+	 },
+	{
 	.class =	((PCI_CLASS_SERIAL_USB << 8) | 0xfe),
 	.class_mask =	~0,
-	.venकरोr =	PCI_VENDOR_ID_PLX,
+	.vendor =	PCI_VENDOR_ID_PLX,
 	.device =	0x3380,
-	.subvenकरोr =	PCI_ANY_ID,
+	.subvendor =	PCI_ANY_ID,
 	.subdevice =	PCI_ANY_ID,
 	.driver_data =	PLX_PCIE | PLX_SUPERSPEED,
-	 पूर्ण,
-	अणु
+	 },
+	{
 	.class =	PCI_CLASS_SERIAL_USB_DEVICE,
 	.class_mask =	~0,
-	.venकरोr =	PCI_VENDOR_ID_PLX,
+	.vendor =	PCI_VENDOR_ID_PLX,
 	.device =	0x3382,
-	.subvenकरोr =	PCI_ANY_ID,
+	.subvendor =	PCI_ANY_ID,
 	.subdevice =	PCI_ANY_ID,
 	.driver_data =	PLX_PCIE | PLX_SUPERSPEED,
-	 पूर्ण,
-अणु /* end: all zeroes */ पूर्ण
-पूर्ण;
+	 },
+{ /* end: all zeroes */ }
+};
 MODULE_DEVICE_TABLE(pci, pci_ids);
 
 /* pci driver glue; this is a "new style" PCI driver module */
-अटल काष्ठा pci_driver net2280_pci_driver = अणु
+static struct pci_driver net2280_pci_driver = {
 	.name =		driver_name,
 	.id_table =	pci_ids,
 
 	.probe =	net2280_probe,
-	.हटाओ =	net2280_हटाओ,
-	.shutकरोwn =	net2280_shutकरोwn,
+	.remove =	net2280_remove,
+	.shutdown =	net2280_shutdown,
 
-	/* FIXME add घातer management support */
-पूर्ण;
+	/* FIXME add power management support */
+};
 
 module_pci_driver(net2280_pci_driver);
 

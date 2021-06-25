@@ -1,88 +1,87 @@
-<शैली गुरु>
 /*
  * Marvell 37xx SoC pinctrl driver
  *
  * Copyright (C) 2017 Marvell
  *
- * Gregory CLEMENT <gregory.clement@मुक्त-electrons.com>
+ * Gregory CLEMENT <gregory.clement@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2 or later. This program is licensed "as is"
  * without any warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/gpio/driver.h>
+#include <linux/mfd/syscon.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#समावेश "../pinctrl-utils.h"
+#include "../pinctrl-utils.h"
 
-#घोषणा OUTPUT_EN	0x0
-#घोषणा INPUT_VAL	0x10
-#घोषणा OUTPUT_VAL	0x18
-#घोषणा OUTPUT_CTL	0x20
-#घोषणा SELECTION	0x30
+#define OUTPUT_EN	0x0
+#define INPUT_VAL	0x10
+#define OUTPUT_VAL	0x18
+#define OUTPUT_CTL	0x20
+#define SELECTION	0x30
 
-#घोषणा IRQ_EN		0x0
-#घोषणा IRQ_POL		0x08
-#घोषणा IRQ_STATUS	0x10
-#घोषणा IRQ_WKUP	0x18
+#define IRQ_EN		0x0
+#define IRQ_POL		0x08
+#define IRQ_STATUS	0x10
+#define IRQ_WKUP	0x18
 
-#घोषणा NB_FUNCS 3
-#घोषणा GPIO_PER_REG	32
+#define NB_FUNCS 3
+#define GPIO_PER_REG	32
 
 /**
- * काष्ठा armada_37xx_pin_group: represents group of pins of a pinmux function.
+ * struct armada_37xx_pin_group: represents group of pins of a pinmux function.
  * The pins of a pinmux groups are composed of one or two groups of contiguous
  * pins.
  * @name:	Name of the pin group, used to lookup the group.
- * @start_pin:	Index of the first pin of the मुख्य range of pins beदीर्घing to
+ * @start_pin:	Index of the first pin of the main range of pins belonging to
  *		the group
  * @npins:	Number of pins included in the first range
- * @reg_mask:	Bit mask matching the group in the selection रेजिस्टर
- * @val:	Value to ग_लिखो to the रेजिस्टरs क्रम a given function
+ * @reg_mask:	Bit mask matching the group in the selection register
+ * @val:	Value to write to the registers for a given function
  * @extra_pin:	Index of the first pin of the optional second range of pins
- *		beदीर्घing to the group
+ *		belonging to the group
  * @extra_npins:Number of pins included in the second optional range
- * @funcs:	A list of pinmux functions that can be selected क्रम this group.
+ * @funcs:	A list of pinmux functions that can be selected for this group.
  * @pins:	List of the pins included in the group
  */
-काष्ठा armada_37xx_pin_group अणु
-	स्थिर अक्षर	*name;
-	अचिन्हित पूर्णांक	start_pin;
-	अचिन्हित पूर्णांक	npins;
+struct armada_37xx_pin_group {
+	const char	*name;
+	unsigned int	start_pin;
+	unsigned int	npins;
 	u32		reg_mask;
 	u32		val[NB_FUNCS];
-	अचिन्हित पूर्णांक	extra_pin;
-	अचिन्हित पूर्णांक	extra_npins;
-	स्थिर अक्षर	*funcs[NB_FUNCS];
-	अचिन्हित पूर्णांक	*pins;
-पूर्ण;
+	unsigned int	extra_pin;
+	unsigned int	extra_npins;
+	const char	*funcs[NB_FUNCS];
+	unsigned int	*pins;
+};
 
-काष्ठा armada_37xx_pin_data अणु
+struct armada_37xx_pin_data {
 	u8				nr_pins;
-	अक्षर				*name;
-	काष्ठा armada_37xx_pin_group	*groups;
-	पूर्णांक				ngroups;
-पूर्ण;
+	char				*name;
+	struct armada_37xx_pin_group	*groups;
+	int				ngroups;
+};
 
-काष्ठा armada_37xx_pmx_func अणु
-	स्थिर अक्षर		*name;
-	स्थिर अक्षर		**groups;
-	अचिन्हित पूर्णांक		ngroups;
-पूर्ण;
+struct armada_37xx_pmx_func {
+	const char		*name;
+	const char		**groups;
+	unsigned int		ngroups;
+};
 
-काष्ठा armada_37xx_pm_state अणु
+struct armada_37xx_pm_state {
 	u32 out_en_l;
 	u32 out_en_h;
 	u32 out_val_l;
@@ -92,79 +91,79 @@
 	u32 irq_pol_l;
 	u32 irq_pol_h;
 	u32 selection;
-पूर्ण;
+};
 
-काष्ठा armada_37xx_pinctrl अणु
-	काष्ठा regmap			*regmap;
-	व्योम __iomem			*base;
-	स्थिर काष्ठा armada_37xx_pin_data	*data;
-	काष्ठा device			*dev;
-	काष्ठा gpio_chip		gpio_chip;
-	काष्ठा irq_chip			irq_chip;
+struct armada_37xx_pinctrl {
+	struct regmap			*regmap;
+	void __iomem			*base;
+	const struct armada_37xx_pin_data	*data;
+	struct device			*dev;
+	struct gpio_chip		gpio_chip;
+	struct irq_chip			irq_chip;
 	spinlock_t			irq_lock;
-	काष्ठा pinctrl_desc		pctl;
-	काष्ठा pinctrl_dev		*pctl_dev;
-	काष्ठा armada_37xx_pin_group	*groups;
-	अचिन्हित पूर्णांक			ngroups;
-	काष्ठा armada_37xx_pmx_func	*funcs;
-	अचिन्हित पूर्णांक			nfuncs;
-	काष्ठा armada_37xx_pm_state	pm;
-पूर्ण;
+	struct pinctrl_desc		pctl;
+	struct pinctrl_dev		*pctl_dev;
+	struct armada_37xx_pin_group	*groups;
+	unsigned int			ngroups;
+	struct armada_37xx_pmx_func	*funcs;
+	unsigned int			nfuncs;
+	struct armada_37xx_pm_state	pm;
+};
 
-#घोषणा PIN_GRP(_name, _start, _nr, _mask, _func1, _func2)	\
-	अणु					\
+#define PIN_GRP(_name, _start, _nr, _mask, _func1, _func2)	\
+	{					\
 		.name = _name,			\
 		.start_pin = _start,		\
 		.npins = _nr,			\
 		.reg_mask = _mask,		\
-		.val = अणु0, _maskपूर्ण,		\
-		.funcs = अणु_func1, _func2पूर्ण	\
-	पूर्ण
+		.val = {0, _mask},		\
+		.funcs = {_func1, _func2}	\
+	}
 
-#घोषणा PIN_GRP_GPIO(_name, _start, _nr, _mask, _func1)	\
-	अणु					\
+#define PIN_GRP_GPIO(_name, _start, _nr, _mask, _func1)	\
+	{					\
 		.name = _name,			\
 		.start_pin = _start,		\
 		.npins = _nr,			\
 		.reg_mask = _mask,		\
-		.val = अणु0, _maskपूर्ण,		\
-		.funcs = अणु_func1, "gpio"पूर्ण	\
-	पूर्ण
+		.val = {0, _mask},		\
+		.funcs = {_func1, "gpio"}	\
+	}
 
-#घोषणा PIN_GRP_GPIO_2(_name, _start, _nr, _mask, _val1, _val2, _func1)   \
-	अणु					\
+#define PIN_GRP_GPIO_2(_name, _start, _nr, _mask, _val1, _val2, _func1)   \
+	{					\
 		.name = _name,			\
 		.start_pin = _start,		\
 		.npins = _nr,			\
 		.reg_mask = _mask,		\
-		.val = अणु_val1, _val2पूर्ण,		\
-		.funcs = अणु_func1, "gpio"पूर्ण	\
-	पूर्ण
+		.val = {_val1, _val2},		\
+		.funcs = {_func1, "gpio"}	\
+	}
 
-#घोषणा PIN_GRP_GPIO_3(_name, _start, _nr, _mask, _v1, _v2, _v3, _f1, _f2) \
-	अणु					\
+#define PIN_GRP_GPIO_3(_name, _start, _nr, _mask, _v1, _v2, _v3, _f1, _f2) \
+	{					\
 		.name = _name,			\
 		.start_pin = _start,		\
 		.npins = _nr,			\
 		.reg_mask = _mask,		\
-		.val = अणु_v1, _v2, _v3पूर्ण,	\
-		.funcs = अणु_f1, _f2, "gpio"पूर्ण	\
-	पूर्ण
+		.val = {_v1, _v2, _v3},	\
+		.funcs = {_f1, _f2, "gpio"}	\
+	}
 
-#घोषणा PIN_GRP_EXTRA(_name, _start, _nr, _mask, _v1, _v2, _start2, _nr2, \
+#define PIN_GRP_EXTRA(_name, _start, _nr, _mask, _v1, _v2, _start2, _nr2, \
 		      _f1, _f2)				\
-	अणु						\
+	{						\
 		.name = _name,				\
 		.start_pin = _start,			\
 		.npins = _nr,				\
 		.reg_mask = _mask,			\
-		.val = अणु_v1, _v2पूर्ण,			\
+		.val = {_v1, _v2},			\
 		.extra_pin = _start2,			\
 		.extra_npins = _nr2,			\
-		.funcs = अणु_f1, _f2पूर्ण			\
-	पूर्ण
+		.funcs = {_f1, _f2}			\
+	}
 
-अटल काष्ठा armada_37xx_pin_group armada_37xx_nb_groups[] = अणु
+static struct armada_37xx_pin_group armada_37xx_nb_groups[] = {
 	PIN_GRP_GPIO("jtag", 20, 5, BIT(0), "jtag"),
 	PIN_GRP_GPIO("sdio0", 8, 3, BIT(1), "sdio"),
 	PIN_GRP_GPIO("emmc_nb", 27, 9, BIT(2), "emmc"),
@@ -189,9 +188,9 @@
 	PIN_GRP_GPIO_2("led1_od", 12, 1, BIT(21), BIT(21), 0, "led"),
 	PIN_GRP_GPIO_2("led2_od", 13, 1, BIT(22), BIT(22), 0, "led"),
 	PIN_GRP_GPIO_2("led3_od", 14, 1, BIT(23), BIT(23), 0, "led"),
-पूर्ण;
+};
 
-अटल काष्ठा armada_37xx_pin_group armada_37xx_sb_groups[] = अणु
+static struct armada_37xx_pin_group armada_37xx_sb_groups[] = {
 	PIN_GRP_GPIO("usb32_drvvbus0", 0, 1, BIT(0), "drvbus"),
 	PIN_GRP_GPIO("usb2_drvvbus1", 1, 1, BIT(1), "drvbus"),
 	PIN_GRP_GPIO("sdio_sb", 24, 6, BIT(2), "sdio"),
@@ -205,560 +204,560 @@
 	PIN_GRP("ptp_trig", 22, 1, BIT(7), "ptp", "mii"),
 	PIN_GRP_GPIO_3("mii_col", 23, 1, BIT(8) | BIT(14), 0, BIT(8), BIT(14),
 		       "mii", "mii_err"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा armada_37xx_pin_data armada_37xx_pin_nb = अणु
+static const struct armada_37xx_pin_data armada_37xx_pin_nb = {
 	.nr_pins = 36,
 	.name = "GPIO1",
 	.groups = armada_37xx_nb_groups,
 	.ngroups = ARRAY_SIZE(armada_37xx_nb_groups),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा armada_37xx_pin_data armada_37xx_pin_sb = अणु
+static const struct armada_37xx_pin_data armada_37xx_pin_sb = {
 	.nr_pins = 30,
 	.name = "GPIO2",
 	.groups = armada_37xx_sb_groups,
 	.ngroups = ARRAY_SIZE(armada_37xx_sb_groups),
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम armada_37xx_update_reg(अचिन्हित पूर्णांक *reg,
-					  अचिन्हित पूर्णांक *offset)
-अणु
-	/* We never have more than 2 रेजिस्टरs */
-	अगर (*offset >= GPIO_PER_REG) अणु
+static inline void armada_37xx_update_reg(unsigned int *reg,
+					  unsigned int *offset)
+{
+	/* We never have more than 2 registers */
+	if (*offset >= GPIO_PER_REG) {
 		*offset -= GPIO_PER_REG;
-		*reg += माप(u32);
-	पूर्ण
-पूर्ण
+		*reg += sizeof(u32);
+	}
+}
 
-अटल काष्ठा armada_37xx_pin_group *armada_37xx_find_next_grp_by_pin(
-	काष्ठा armada_37xx_pinctrl *info, पूर्णांक pin, पूर्णांक *grp)
-अणु
-	जबतक (*grp < info->ngroups) अणु
-		काष्ठा armada_37xx_pin_group *group = &info->groups[*grp];
-		पूर्णांक j;
+static struct armada_37xx_pin_group *armada_37xx_find_next_grp_by_pin(
+	struct armada_37xx_pinctrl *info, int pin, int *grp)
+{
+	while (*grp < info->ngroups) {
+		struct armada_37xx_pin_group *group = &info->groups[*grp];
+		int j;
 
 		*grp = *grp + 1;
-		क्रम (j = 0; j < (group->npins + group->extra_npins); j++)
-			अगर (group->pins[j] == pin)
-				वापस group;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		for (j = 0; j < (group->npins + group->extra_npins); j++)
+			if (group->pins[j] == pin)
+				return group;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक armada_37xx_pin_config_group_get(काष्ठा pinctrl_dev *pctldev,
-			    अचिन्हित पूर्णांक selector, अचिन्हित दीर्घ *config)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int armada_37xx_pin_config_group_get(struct pinctrl_dev *pctldev,
+			    unsigned int selector, unsigned long *config)
+{
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक armada_37xx_pin_config_group_set(काष्ठा pinctrl_dev *pctldev,
-			    अचिन्हित पूर्णांक selector, अचिन्हित दीर्घ *configs,
-			    अचिन्हित पूर्णांक num_configs)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int armada_37xx_pin_config_group_set(struct pinctrl_dev *pctldev,
+			    unsigned int selector, unsigned long *configs,
+			    unsigned int num_configs)
+{
+	return -ENOTSUPP;
+}
 
-अटल स्थिर काष्ठा pinconf_ops armada_37xx_pinconf_ops = अणु
+static const struct pinconf_ops armada_37xx_pinconf_ops = {
 	.is_generic = true,
 	.pin_config_group_get = armada_37xx_pin_config_group_get,
 	.pin_config_group_set = armada_37xx_pin_config_group_set,
-पूर्ण;
+};
 
-अटल पूर्णांक armada_37xx_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int armada_37xx_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->ngroups;
-पूर्ण
+	return info->ngroups;
+}
 
-अटल स्थिर अक्षर *armada_37xx_get_group_name(काष्ठा pinctrl_dev *pctldev,
-					      अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static const char *armada_37xx_get_group_name(struct pinctrl_dev *pctldev,
+					      unsigned int group)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->groups[group].name;
-पूर्ण
+	return info->groups[group].name;
+}
 
-अटल पूर्णांक armada_37xx_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित पूर्णांक selector,
-				      स्थिर अचिन्हित पूर्णांक **pins,
-				      अचिन्हित पूर्णांक *npins)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int armada_37xx_get_group_pins(struct pinctrl_dev *pctldev,
+				      unsigned int selector,
+				      const unsigned int **pins,
+				      unsigned int *npins)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	अगर (selector >= info->ngroups)
-		वापस -EINVAL;
+	if (selector >= info->ngroups)
+		return -EINVAL;
 
 	*pins = info->groups[selector].pins;
 	*npins = info->groups[selector].npins +
 		info->groups[selector].extra_npins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops armada_37xx_pctrl_ops = अणु
+static const struct pinctrl_ops armada_37xx_pctrl_ops = {
 	.get_groups_count	= armada_37xx_get_groups_count,
 	.get_group_name		= armada_37xx_get_group_name,
 	.get_group_pins		= armada_37xx_get_group_pins,
 	.dt_node_to_map		= pinconf_generic_dt_node_to_map_group,
-	.dt_मुक्त_map		= pinctrl_utils_मुक्त_map,
-पूर्ण;
+	.dt_free_map		= pinctrl_utils_free_map,
+};
 
 /*
  * Pinmux_ops handling
  */
 
-अटल पूर्णांक armada_37xx_pmx_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int armada_37xx_pmx_get_funcs_count(struct pinctrl_dev *pctldev)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->nfuncs;
-पूर्ण
+	return info->nfuncs;
+}
 
-अटल स्थिर अक्षर *armada_37xx_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
-						 अचिन्हित पूर्णांक selector)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static const char *armada_37xx_pmx_get_func_name(struct pinctrl_dev *pctldev,
+						 unsigned int selector)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस info->funcs[selector].name;
-पूर्ण
+	return info->funcs[selector].name;
+}
 
-अटल पूर्णांक armada_37xx_pmx_get_groups(काष्ठा pinctrl_dev *pctldev,
-				      अचिन्हित पूर्णांक selector,
-				      स्थिर अक्षर * स्थिर **groups,
-				      अचिन्हित पूर्णांक * स्थिर num_groups)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+static int armada_37xx_pmx_get_groups(struct pinctrl_dev *pctldev,
+				      unsigned int selector,
+				      const char * const **groups,
+				      unsigned int * const num_groups)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = info->funcs[selector].groups;
 	*num_groups = info->funcs[selector].ngroups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_pmx_set_by_name(काष्ठा pinctrl_dev *pctldev,
-				       स्थिर अक्षर *name,
-				       काष्ठा armada_37xx_pin_group *grp)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	अचिन्हित पूर्णांक reg = SELECTION;
-	अचिन्हित पूर्णांक mask = grp->reg_mask;
-	पूर्णांक func, val;
+static int armada_37xx_pmx_set_by_name(struct pinctrl_dev *pctldev,
+				       const char *name,
+				       struct armada_37xx_pin_group *grp)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	unsigned int reg = SELECTION;
+	unsigned int mask = grp->reg_mask;
+	int func, val;
 
 	dev_dbg(info->dev, "enable function %s group %s\n",
 		name, grp->name);
 
 	func = match_string(grp->funcs, NB_FUNCS, name);
-	अगर (func < 0)
-		वापस -ENOTSUPP;
+	if (func < 0)
+		return -ENOTSUPP;
 
 	val = grp->val[func];
 
 	regmap_update_bits(info->regmap, reg, mask, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_pmx_set(काष्ठा pinctrl_dev *pctldev,
-			       अचिन्हित पूर्णांक selector,
-			       अचिन्हित पूर्णांक group)
-अणु
+static int armada_37xx_pmx_set(struct pinctrl_dev *pctldev,
+			       unsigned int selector,
+			       unsigned int group)
+{
 
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा armada_37xx_pin_group *grp = &info->groups[group];
-	स्थिर अक्षर *name = info->funcs[selector].name;
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	struct armada_37xx_pin_group *grp = &info->groups[group];
+	const char *name = info->funcs[selector].name;
 
-	वापस armada_37xx_pmx_set_by_name(pctldev, name, grp);
-पूर्ण
+	return armada_37xx_pmx_set_by_name(pctldev, name, grp);
+}
 
-अटल अंतरभूत व्योम armada_37xx_irq_update_reg(अचिन्हित पूर्णांक *reg,
-					  काष्ठा irq_data *d)
-अणु
-	पूर्णांक offset = irqd_to_hwirq(d);
+static inline void armada_37xx_irq_update_reg(unsigned int *reg,
+					  struct irq_data *d)
+{
+	int offset = irqd_to_hwirq(d);
 
 	armada_37xx_update_reg(reg, &offset);
-पूर्ण
+}
 
-अटल पूर्णांक armada_37xx_gpio_direction_input(काष्ठा gpio_chip *chip,
-					    अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक reg = OUTPUT_EN;
-	अचिन्हित पूर्णांक mask;
-
-	armada_37xx_update_reg(&reg, &offset);
-	mask = BIT(offset);
-
-	वापस regmap_update_bits(info->regmap, reg, mask, 0);
-पूर्ण
-
-अटल पूर्णांक armada_37xx_gpio_get_direction(काष्ठा gpio_chip *chip,
-					  अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक reg = OUTPUT_EN;
-	अचिन्हित पूर्णांक val, mask;
+static int armada_37xx_gpio_direction_input(struct gpio_chip *chip,
+					    unsigned int offset)
+{
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+	unsigned int reg = OUTPUT_EN;
+	unsigned int mask;
 
 	armada_37xx_update_reg(&reg, &offset);
 	mask = BIT(offset);
-	regmap_पढ़ो(info->regmap, reg, &val);
 
-	अगर (val & mask)
-		वापस GPIO_LINE_सूचीECTION_OUT;
+	return regmap_update_bits(info->regmap, reg, mask, 0);
+}
 
-	वापस GPIO_LINE_सूचीECTION_IN;
-पूर्ण
+static int armada_37xx_gpio_get_direction(struct gpio_chip *chip,
+					  unsigned int offset)
+{
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+	unsigned int reg = OUTPUT_EN;
+	unsigned int val, mask;
 
-अटल पूर्णांक armada_37xx_gpio_direction_output(काष्ठा gpio_chip *chip,
-					     अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक reg = OUTPUT_EN;
-	अचिन्हित पूर्णांक mask, val, ret;
+	armada_37xx_update_reg(&reg, &offset);
+	mask = BIT(offset);
+	regmap_read(info->regmap, reg, &val);
+
+	if (val & mask)
+		return GPIO_LINE_DIRECTION_OUT;
+
+	return GPIO_LINE_DIRECTION_IN;
+}
+
+static int armada_37xx_gpio_direction_output(struct gpio_chip *chip,
+					     unsigned int offset, int value)
+{
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+	unsigned int reg = OUTPUT_EN;
+	unsigned int mask, val, ret;
 
 	armada_37xx_update_reg(&reg, &offset);
 	mask = BIT(offset);
 
 	ret = regmap_update_bits(info->regmap, reg, mask, mask);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	reg = OUTPUT_VAL;
 	val = value ? mask : 0;
 	regmap_update_bits(info->regmap, reg, mask, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक reg = INPUT_VAL;
-	अचिन्हित पूर्णांक val, mask;
+static int armada_37xx_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+	unsigned int reg = INPUT_VAL;
+	unsigned int val, mask;
 
 	armada_37xx_update_reg(&reg, &offset);
 	mask = BIT(offset);
 
-	regmap_पढ़ो(info->regmap, reg, &val);
+	regmap_read(info->regmap, reg, &val);
 
-	वापस (val & mask) != 0;
-पूर्ण
+	return (val & mask) != 0;
+}
 
-अटल व्योम armada_37xx_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-				 पूर्णांक value)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक reg = OUTPUT_VAL;
-	अचिन्हित पूर्णांक mask, val;
+static void armada_37xx_gpio_set(struct gpio_chip *chip, unsigned int offset,
+				 int value)
+{
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+	unsigned int reg = OUTPUT_VAL;
+	unsigned int mask, val;
 
 	armada_37xx_update_reg(&reg, &offset);
 	mask = BIT(offset);
 	val = value ? mask : 0;
 
 	regmap_update_bits(info->regmap, reg, mask, val);
-पूर्ण
+}
 
-अटल पूर्णांक armada_37xx_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
-					      काष्ठा pinctrl_gpio_range *range,
-					      अचिन्हित पूर्णांक offset, bool input)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा gpio_chip *chip = range->gc;
+static int armada_37xx_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
+					      struct pinctrl_gpio_range *range,
+					      unsigned int offset, bool input)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	struct gpio_chip *chip = range->gc;
 
 	dev_dbg(info->dev, "gpio_direction for pin %u as %s-%d to %s\n",
 		offset, range->name, offset, input ? "input" : "output");
 
-	अगर (input)
+	if (input)
 		armada_37xx_gpio_direction_input(chip, offset);
-	अन्यथा
+	else
 		armada_37xx_gpio_direction_output(chip, offset, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
-					   काष्ठा pinctrl_gpio_range *range,
-					   अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा armada_37xx_pin_group *group;
-	पूर्णांक grp = 0;
+static int armada_37xx_gpio_request_enable(struct pinctrl_dev *pctldev,
+					   struct pinctrl_gpio_range *range,
+					   unsigned int offset)
+{
+	struct armada_37xx_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	struct armada_37xx_pin_group *group;
+	int grp = 0;
 
 	dev_dbg(info->dev, "requesting gpio %d\n", offset);
 
-	जबतक ((group = armada_37xx_find_next_grp_by_pin(info, offset, &grp)))
+	while ((group = armada_37xx_find_next_grp_by_pin(info, offset, &grp)))
 		armada_37xx_pmx_set_by_name(pctldev, "gpio", group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops armada_37xx_pmx_ops = अणु
+static const struct pinmux_ops armada_37xx_pmx_ops = {
 	.get_functions_count	= armada_37xx_pmx_get_funcs_count,
 	.get_function_name	= armada_37xx_pmx_get_func_name,
 	.get_function_groups	= armada_37xx_pmx_get_groups,
 	.set_mux		= armada_37xx_pmx_set,
 	.gpio_request_enable	= armada_37xx_gpio_request_enable,
 	.gpio_set_direction	= armada_37xx_pmx_gpio_set_direction,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा gpio_chip armada_37xx_gpiolib_chip = अणु
+static const struct gpio_chip armada_37xx_gpiolib_chip = {
 	.request = gpiochip_generic_request,
-	.मुक्त = gpiochip_generic_मुक्त,
+	.free = gpiochip_generic_free,
 	.set = armada_37xx_gpio_set,
 	.get = armada_37xx_gpio_get,
 	.get_direction	= armada_37xx_gpio_get_direction,
 	.direction_input = armada_37xx_gpio_direction_input,
 	.direction_output = armada_37xx_gpio_direction_output,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम armada_37xx_irq_ack(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+static void armada_37xx_irq_ack(struct irq_data *d)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
 	u32 reg = IRQ_STATUS;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	armada_37xx_irq_update_reg(&reg, d);
 	spin_lock_irqsave(&info->irq_lock, flags);
-	ग_लिखोl(d->mask, info->base + reg);
+	writel(d->mask, info->base + reg);
 	spin_unlock_irqrestore(&info->irq_lock, flags);
-पूर्ण
+}
 
-अटल व्योम armada_37xx_irq_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+static void armada_37xx_irq_mask(struct irq_data *d)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
 	u32 val, reg = IRQ_EN;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	armada_37xx_irq_update_reg(&reg, d);
 	spin_lock_irqsave(&info->irq_lock, flags);
-	val = पढ़ोl(info->base + reg);
-	ग_लिखोl(val & ~d->mask, info->base + reg);
+	val = readl(info->base + reg);
+	writel(val & ~d->mask, info->base + reg);
 	spin_unlock_irqrestore(&info->irq_lock, flags);
-पूर्ण
+}
 
-अटल व्योम armada_37xx_irq_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+static void armada_37xx_irq_unmask(struct irq_data *d)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
 	u32 val, reg = IRQ_EN;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	armada_37xx_irq_update_reg(&reg, d);
 	spin_lock_irqsave(&info->irq_lock, flags);
-	val = पढ़ोl(info->base + reg);
-	ग_लिखोl(val | d->mask, info->base + reg);
+	val = readl(info->base + reg);
+	writel(val | d->mask, info->base + reg);
 	spin_unlock_irqrestore(&info->irq_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक armada_37xx_irq_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+static int armada_37xx_irq_set_wake(struct irq_data *d, unsigned int on)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
 	u32 val, reg = IRQ_WKUP;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	armada_37xx_irq_update_reg(&reg, d);
 	spin_lock_irqsave(&info->irq_lock, flags);
-	val = पढ़ोl(info->base + reg);
-	अगर (on)
+	val = readl(info->base + reg);
+	if (on)
 		val |= (BIT(d->hwirq % GPIO_PER_REG));
-	अन्यथा
+	else
 		val &= ~(BIT(d->hwirq % GPIO_PER_REG));
-	ग_लिखोl(val, info->base + reg);
+	writel(val, info->base + reg);
 	spin_unlock_irqrestore(&info->irq_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(d);
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(chip);
+static int armada_37xx_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	struct gpio_chip *chip = irq_data_get_irq_chip_data(d);
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(chip);
 	u32 val, reg = IRQ_POL;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&info->irq_lock, flags);
 	armada_37xx_irq_update_reg(&reg, d);
-	val = पढ़ोl(info->base + reg);
-	चयन (type) अणु
-	हाल IRQ_TYPE_EDGE_RISING:
+	val = readl(info->base + reg);
+	switch (type) {
+	case IRQ_TYPE_EDGE_RISING:
 		val &= ~(BIT(d->hwirq % GPIO_PER_REG));
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_FALLING:
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
 		val |= (BIT(d->hwirq % GPIO_PER_REG));
-		अवरोध;
-	हाल IRQ_TYPE_EDGE_BOTH: अणु
+		break;
+	case IRQ_TYPE_EDGE_BOTH: {
 		u32 in_val, in_reg = INPUT_VAL;
 
 		armada_37xx_irq_update_reg(&in_reg, d);
-		regmap_पढ़ो(info->regmap, in_reg, &in_val);
+		regmap_read(info->regmap, in_reg, &in_val);
 
 		/* Set initial polarity based on current input level. */
-		अगर (in_val & BIT(d->hwirq % GPIO_PER_REG))
+		if (in_val & BIT(d->hwirq % GPIO_PER_REG))
 			val |= BIT(d->hwirq % GPIO_PER_REG);	/* falling */
-		अन्यथा
+		else
 			val &= ~(BIT(d->hwirq % GPIO_PER_REG));	/* rising */
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		spin_unlock_irqrestore(&info->irq_lock, flags);
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखोl(val, info->base + reg);
+		return -EINVAL;
+	}
+	writel(val, info->base + reg);
 	spin_unlock_irqrestore(&info->irq_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_edge_both_irq_swap_pol(काष्ठा armada_37xx_pinctrl *info,
+static int armada_37xx_edge_both_irq_swap_pol(struct armada_37xx_pinctrl *info,
 					     u32 pin_idx)
-अणु
+{
 	u32 reg_idx = pin_idx / GPIO_PER_REG;
 	u32 bit_num = pin_idx % GPIO_PER_REG;
 	u32 p, l, ret;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	regmap_पढ़ो(info->regmap, INPUT_VAL + 4*reg_idx, &l);
+	regmap_read(info->regmap, INPUT_VAL + 4*reg_idx, &l);
 
 	spin_lock_irqsave(&info->irq_lock, flags);
-	p = पढ़ोl(info->base + IRQ_POL + 4 * reg_idx);
-	अगर ((p ^ l) & (1 << bit_num)) अणु
+	p = readl(info->base + IRQ_POL + 4 * reg_idx);
+	if ((p ^ l) & (1 << bit_num)) {
 		/*
-		 * For the gpios which are used क्रम both-edge irqs, when their
-		 * पूर्णांकerrupts happen, their input levels are changed,
-		 * yet their पूर्णांकerrupt polarities are kept in old values, we
-		 * should synchronize their पूर्णांकerrupt polarities; क्रम example,
-		 * at first a gpio's input level is low and its पूर्णांकerrupt
+		 * For the gpios which are used for both-edge irqs, when their
+		 * interrupts happen, their input levels are changed,
+		 * yet their interrupt polarities are kept in old values, we
+		 * should synchronize their interrupt polarities; for example,
+		 * at first a gpio's input level is low and its interrupt
 		 * polarity control is "Detect rising edge", then the gpio has
-		 * a पूर्णांकerrupt , its level turns to high, we should change its
+		 * a interrupt , its level turns to high, we should change its
 		 * polarity control to "Detect falling edge" correspondingly.
 		 */
 		p ^= 1 << bit_num;
-		ग_लिखोl(p, info->base + IRQ_POL + 4 * reg_idx);
+		writel(p, info->base + IRQ_POL + 4 * reg_idx);
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Spurious irq */
 		ret = -1;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&info->irq_lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम armada_37xx_irq_handler(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा armada_37xx_pinctrl *info = gpiochip_get_data(gc);
-	काष्ठा irq_करोमुख्य *d = gc->irq.करोमुख्य;
-	पूर्णांक i;
+static void armada_37xx_irq_handler(struct irq_desc *desc)
+{
+	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct armada_37xx_pinctrl *info = gpiochip_get_data(gc);
+	struct irq_domain *d = gc->irq.domain;
+	int i;
 
 	chained_irq_enter(chip, desc);
-	क्रम (i = 0; i <= d->revmap_size / GPIO_PER_REG; i++) अणु
+	for (i = 0; i <= d->revmap_size / GPIO_PER_REG; i++) {
 		u32 status;
-		अचिन्हित दीर्घ flags;
+		unsigned long flags;
 
 		spin_lock_irqsave(&info->irq_lock, flags);
-		status = पढ़ोl_relaxed(info->base + IRQ_STATUS + 4 * i);
-		/* Manage only the पूर्णांकerrupt that was enabled */
-		status &= पढ़ोl_relaxed(info->base + IRQ_EN + 4 * i);
+		status = readl_relaxed(info->base + IRQ_STATUS + 4 * i);
+		/* Manage only the interrupt that was enabled */
+		status &= readl_relaxed(info->base + IRQ_EN + 4 * i);
 		spin_unlock_irqrestore(&info->irq_lock, flags);
-		जबतक (status) अणु
+		while (status) {
 			u32 hwirq = ffs(status) - 1;
 			u32 virq = irq_find_mapping(d, hwirq +
 						     i * GPIO_PER_REG);
 			u32 t = irq_get_trigger_type(virq);
 
-			अगर ((t & IRQ_TYPE_SENSE_MASK) == IRQ_TYPE_EDGE_BOTH) अणु
+			if ((t & IRQ_TYPE_SENSE_MASK) == IRQ_TYPE_EDGE_BOTH) {
 				/* Swap polarity (race with GPIO line) */
-				अगर (armada_37xx_edge_both_irq_swap_pol(info,
-					hwirq + i * GPIO_PER_REG)) अणु
+				if (armada_37xx_edge_both_irq_swap_pol(info,
+					hwirq + i * GPIO_PER_REG)) {
 					/*
 					 * For spurious irq, which gpio level
 					 * is not as expected after incoming
 					 * edge, just ack the gpio irq.
 					 */
-					ग_लिखोl(1 << hwirq,
+					writel(1 << hwirq,
 					       info->base +
 					       IRQ_STATUS + 4 * i);
-					जाओ update_status;
-				पूर्ण
-			पूर्ण
+					goto update_status;
+				}
+			}
 
 			generic_handle_irq(virq);
 
 update_status:
-			/* Update status in हाल a new IRQ appears */
+			/* Update status in case a new IRQ appears */
 			spin_lock_irqsave(&info->irq_lock, flags);
-			status = पढ़ोl_relaxed(info->base +
+			status = readl_relaxed(info->base +
 					       IRQ_STATUS + 4 * i);
-			/* Manage only the पूर्णांकerrupt that was enabled */
-			status &= पढ़ोl_relaxed(info->base + IRQ_EN + 4 * i);
+			/* Manage only the interrupt that was enabled */
+			status &= readl_relaxed(info->base + IRQ_EN + 4 * i);
 			spin_unlock_irqrestore(&info->irq_lock, flags);
-		पूर्ण
-	पूर्ण
-	chained_irq_निकास(chip, desc);
-पूर्ण
+		}
+	}
+	chained_irq_exit(chip, desc);
+}
 
-अटल अचिन्हित पूर्णांक armada_37xx_irq_startup(काष्ठा irq_data *d)
-अणु
+static unsigned int armada_37xx_irq_startup(struct irq_data *d)
+{
 	/*
-	 * The mask field is a "precomputed biपंचांगask क्रम accessing the
-	 * chip रेजिस्टरs" which was पूर्णांकroduced क्रम the generic
-	 * irqchip framework. As we करोn't use this framework, we can
-	 * reuse this field क्रम our own usage.
+	 * The mask field is a "precomputed bitmask for accessing the
+	 * chip registers" which was introduced for the generic
+	 * irqchip framework. As we don't use this framework, we can
+	 * reuse this field for our own usage.
 	 */
 	d->mask = BIT(d->hwirq % GPIO_PER_REG);
 
 	armada_37xx_irq_unmask(d);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_irqchip_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-					काष्ठा armada_37xx_pinctrl *info)
-अणु
-	काष्ठा device_node *np = info->dev->of_node;
-	काष्ठा gpio_chip *gc = &info->gpio_chip;
-	काष्ठा irq_chip *irqchip = &info->irq_chip;
-	काष्ठा gpio_irq_chip *girq = &gc->irq;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource res;
-	पूर्णांक ret = -ENODEV, i, nr_irq_parent;
+static int armada_37xx_irqchip_register(struct platform_device *pdev,
+					struct armada_37xx_pinctrl *info)
+{
+	struct device_node *np = info->dev->of_node;
+	struct gpio_chip *gc = &info->gpio_chip;
+	struct irq_chip *irqchip = &info->irq_chip;
+	struct gpio_irq_chip *girq = &gc->irq;
+	struct device *dev = &pdev->dev;
+	struct resource res;
+	int ret = -ENODEV, i, nr_irq_parent;
 
-	/* Check अगर we have at least one gpio-controller child node */
-	क्रम_each_child_of_node(info->dev->of_node, np) अणु
-		अगर (of_property_पढ़ो_bool(np, "gpio-controller")) अणु
+	/* Check if we have at least one gpio-controller child node */
+	for_each_child_of_node(info->dev->of_node, np) {
+		if (of_property_read_bool(np, "gpio-controller")) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ret) अणु
+			break;
+		}
+	}
+	if (ret) {
 		dev_err(dev, "no gpio-controller child node\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	nr_irq_parent = of_irq_count(np);
 	spin_lock_init(&info->irq_lock);
 
-	अगर (!nr_irq_parent) अणु
+	if (!nr_irq_parent) {
 		dev_err(dev, "invalid or no IRQ\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (of_address_to_resource(info->dev->of_node, 1, &res)) अणु
+	if (of_address_to_resource(info->dev->of_node, 1, &res)) {
 		dev_err(dev, "cannot find IO resource\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	info->base = devm_ioremap_resource(info->dev, &res);
-	अगर (IS_ERR(info->base))
-		वापस PTR_ERR(info->base);
+	if (IS_ERR(info->base))
+		return PTR_ERR(info->base);
 
 	irqchip->irq_ack = armada_37xx_irq_ack;
 	irqchip->irq_mask = armada_37xx_irq_mask;
@@ -770,43 +769,43 @@ update_status:
 	girq->chip = irqchip;
 	girq->parent_handler = armada_37xx_irq_handler;
 	/*
-	 * Many पूर्णांकerrupts are connected to the parent पूर्णांकerrupt
-	 * controller. But we करो not take advantage of this and use
+	 * Many interrupts are connected to the parent interrupt
+	 * controller. But we do not take advantage of this and use
 	 * the chained irq with all of them.
 	 */
 	girq->num_parents = nr_irq_parent;
-	girq->parents = devm_kसुस्मृति(&pdev->dev, nr_irq_parent,
-				     माप(*girq->parents), GFP_KERNEL);
-	अगर (!girq->parents)
-		वापस -ENOMEM;
-	क्रम (i = 0; i < nr_irq_parent; i++) अणु
-		पूर्णांक irq = irq_of_parse_and_map(np, i);
+	girq->parents = devm_kcalloc(&pdev->dev, nr_irq_parent,
+				     sizeof(*girq->parents), GFP_KERNEL);
+	if (!girq->parents)
+		return -ENOMEM;
+	for (i = 0; i < nr_irq_parent; i++) {
+		int irq = irq_of_parse_and_map(np, i);
 
-		अगर (irq < 0)
-			जारी;
+		if (irq < 0)
+			continue;
 		girq->parents[i] = irq;
-	पूर्ण
-	girq->शेष_type = IRQ_TYPE_NONE;
+	}
+	girq->default_type = IRQ_TYPE_NONE;
 	girq->handler = handle_edge_irq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_gpiochip_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-					काष्ठा armada_37xx_pinctrl *info)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा gpio_chip *gc;
-	पूर्णांक ret = -ENODEV;
+static int armada_37xx_gpiochip_register(struct platform_device *pdev,
+					struct armada_37xx_pinctrl *info)
+{
+	struct device_node *np;
+	struct gpio_chip *gc;
+	int ret = -ENODEV;
 
-	क्रम_each_child_of_node(info->dev->of_node, np) अणु
-		अगर (of_find_property(np, "gpio-controller", शून्य)) अणु
+	for_each_child_of_node(info->dev->of_node, np) {
+		if (of_find_property(np, "gpio-controller", NULL)) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (ret)
-		वापस ret;
+			break;
+		}
+	}
+	if (ret)
+		return ret;
 
 	info->gpio_chip = armada_37xx_gpiolib_chip;
 
@@ -817,153 +816,153 @@ update_status:
 	gc->of_node = np;
 	gc->label = info->data->name;
 
-	ret = armada_37xx_irqchip_रेजिस्टर(pdev, info);
-	अगर (ret)
-		वापस ret;
+	ret = armada_37xx_irqchip_register(pdev, info);
+	if (ret)
+		return ret;
 	ret = devm_gpiochip_add_data(&pdev->dev, gc, info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * armada_37xx_add_function() - Add a new function to the list
  * @funcs: array of function to add the new one
- * @funcsize: size of the reमुख्यing space क्रम the function
+ * @funcsize: size of the remaining space for the function
  * @name: name of the function to add
  *
- * If it is a new function then create it by adding its name अन्यथा
+ * If it is a new function then create it by adding its name else
  * increment the number of group associated to this function.
  */
-अटल पूर्णांक armada_37xx_add_function(काष्ठा armada_37xx_pmx_func *funcs,
-				    पूर्णांक *funcsize, स्थिर अक्षर *name)
-अणु
-	पूर्णांक i = 0;
+static int armada_37xx_add_function(struct armada_37xx_pmx_func *funcs,
+				    int *funcsize, const char *name)
+{
+	int i = 0;
 
-	अगर (*funcsize <= 0)
-		वापस -EOVERFLOW;
+	if (*funcsize <= 0)
+		return -EOVERFLOW;
 
-	जबतक (funcs->ngroups) अणु
-		/* function alपढ़ोy there */
-		अगर (म_भेद(funcs->name, name) == 0) अणु
+	while (funcs->ngroups) {
+		/* function already there */
+		if (strcmp(funcs->name, name) == 0) {
 			funcs->ngroups++;
 
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 		funcs++;
 		i++;
-	पूर्ण
+	}
 
 	/* append new unique function */
 	funcs->name = name;
 	funcs->ngroups = 1;
 	(*funcsize)--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * armada_37xx_fill_group() - complete the group array
  * @info: info driver instance
  *
  * Based on the data available from the armada_37xx_pin_group array
- * completes the last member of the काष्ठा क्रम each function: the list
+ * completes the last member of the struct for each function: the list
  * of the groups associated to this function.
  *
  */
-अटल पूर्णांक armada_37xx_fill_group(काष्ठा armada_37xx_pinctrl *info)
-अणु
-	पूर्णांक n, num = 0, funcsize = info->data->nr_pins;
+static int armada_37xx_fill_group(struct armada_37xx_pinctrl *info)
+{
+	int n, num = 0, funcsize = info->data->nr_pins;
 
-	क्रम (n = 0; n < info->ngroups; n++) अणु
-		काष्ठा armada_37xx_pin_group *grp = &info->groups[n];
-		पूर्णांक i, j, f;
+	for (n = 0; n < info->ngroups; n++) {
+		struct armada_37xx_pin_group *grp = &info->groups[n];
+		int i, j, f;
 
-		grp->pins = devm_kसुस्मृति(info->dev,
+		grp->pins = devm_kcalloc(info->dev,
 					 grp->npins + grp->extra_npins,
-					 माप(*grp->pins),
+					 sizeof(*grp->pins),
 					 GFP_KERNEL);
-		अगर (!grp->pins)
-			वापस -ENOMEM;
+		if (!grp->pins)
+			return -ENOMEM;
 
-		क्रम (i = 0; i < grp->npins; i++)
+		for (i = 0; i < grp->npins; i++)
 			grp->pins[i] = grp->start_pin + i;
 
-		क्रम (j = 0; j < grp->extra_npins; j++)
+		for (j = 0; j < grp->extra_npins; j++)
 			grp->pins[i+j] = grp->extra_pin + j;
 
-		क्रम (f = 0; (f < NB_FUNCS) && grp->funcs[f]; f++) अणु
-			पूर्णांक ret;
-			/* check क्रम unique functions and count groups */
+		for (f = 0; (f < NB_FUNCS) && grp->funcs[f]; f++) {
+			int ret;
+			/* check for unique functions and count groups */
 			ret = armada_37xx_add_function(info->funcs, &funcsize,
 					    grp->funcs[f]);
-			अगर (ret == -EOVERFLOW)
+			if (ret == -EOVERFLOW)
 				dev_err(info->dev,
 					"More functions than pins(%d)\n",
 					info->data->nr_pins);
-			अगर (ret < 0)
-				जारी;
+			if (ret < 0)
+				continue;
 			num++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	info->nfuncs = num;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * armada_37xx_fill_funcs() - complete the funcs array
  * @info: info driver instance
  *
  * Based on the data available from the armada_37xx_pin_group array
- * completes the last two member of the काष्ठा क्रम each group:
+ * completes the last two member of the struct for each group:
  * - the list of the pins included in the group
- * - the list of pinmux functions that can be selected क्रम this group
+ * - the list of pinmux functions that can be selected for this group
  *
  */
-अटल पूर्णांक armada_37xx_fill_func(काष्ठा armada_37xx_pinctrl *info)
-अणु
-	काष्ठा armada_37xx_pmx_func *funcs = info->funcs;
-	पूर्णांक n;
+static int armada_37xx_fill_func(struct armada_37xx_pinctrl *info)
+{
+	struct armada_37xx_pmx_func *funcs = info->funcs;
+	int n;
 
-	क्रम (n = 0; n < info->nfuncs; n++) अणु
-		स्थिर अक्षर *name = funcs[n].name;
-		स्थिर अक्षर **groups;
-		पूर्णांक g;
+	for (n = 0; n < info->nfuncs; n++) {
+		const char *name = funcs[n].name;
+		const char **groups;
+		int g;
 
-		funcs[n].groups = devm_kसुस्मृति(info->dev,
+		funcs[n].groups = devm_kcalloc(info->dev,
 					       funcs[n].ngroups,
-					       माप(*(funcs[n].groups)),
+					       sizeof(*(funcs[n].groups)),
 					       GFP_KERNEL);
-		अगर (!funcs[n].groups)
-			वापस -ENOMEM;
+		if (!funcs[n].groups)
+			return -ENOMEM;
 
 		groups = funcs[n].groups;
 
-		क्रम (g = 0; g < info->ngroups; g++) अणु
-			काष्ठा armada_37xx_pin_group *gp = &info->groups[g];
-			पूर्णांक f;
+		for (g = 0; g < info->ngroups; g++) {
+			struct armada_37xx_pin_group *gp = &info->groups[g];
+			int f;
 
 			f = match_string(gp->funcs, NB_FUNCS, name);
-			अगर (f < 0)
-				जारी;
+			if (f < 0)
+				continue;
 
 			*groups = gp->name;
 			groups++;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक armada_37xx_pinctrl_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-					काष्ठा armada_37xx_pinctrl *info)
-अणु
-	स्थिर काष्ठा armada_37xx_pin_data *pin_data = info->data;
-	काष्ठा pinctrl_desc *ctrldesc = &info->pctl;
-	काष्ठा pinctrl_pin_desc *pindesc, *pdesc;
-	पूर्णांक pin, ret;
+static int armada_37xx_pinctrl_register(struct platform_device *pdev,
+					struct armada_37xx_pinctrl *info)
+{
+	const struct armada_37xx_pin_data *pin_data = info->data;
+	struct pinctrl_desc *ctrldesc = &info->pctl;
+	struct pinctrl_pin_desc *pindesc, *pdesc;
+	int pin, ret;
 
 	info->groups = pin_data->groups;
 	info->ngroups = pin_data->ngroups;
@@ -974,212 +973,212 @@ update_status:
 	ctrldesc->pmxops = &armada_37xx_pmx_ops;
 	ctrldesc->confops = &armada_37xx_pinconf_ops;
 
-	pindesc = devm_kसुस्मृति(&pdev->dev,
-			       pin_data->nr_pins, माप(*pindesc),
+	pindesc = devm_kcalloc(&pdev->dev,
+			       pin_data->nr_pins, sizeof(*pindesc),
 			       GFP_KERNEL);
-	अगर (!pindesc)
-		वापस -ENOMEM;
+	if (!pindesc)
+		return -ENOMEM;
 
 	ctrldesc->pins = pindesc;
 	ctrldesc->npins = pin_data->nr_pins;
 
 	pdesc = pindesc;
-	क्रम (pin = 0; pin < pin_data->nr_pins; pin++) अणु
+	for (pin = 0; pin < pin_data->nr_pins; pin++) {
 		pdesc->number = pin;
-		pdesc->name = kaप्र_लिखो(GFP_KERNEL, "%s-%d",
+		pdesc->name = kasprintf(GFP_KERNEL, "%s-%d",
 					pin_data->name, pin);
 		pdesc++;
-	पूर्ण
+	}
 
 	/*
-	 * we allocate functions क्रम number of pins and hope there are
+	 * we allocate functions for number of pins and hope there are
 	 * fewer unique functions than pins available
 	 */
-	info->funcs = devm_kसुस्मृति(&pdev->dev,
+	info->funcs = devm_kcalloc(&pdev->dev,
 				   pin_data->nr_pins,
-				   माप(काष्ठा armada_37xx_pmx_func),
+				   sizeof(struct armada_37xx_pmx_func),
 				   GFP_KERNEL);
-	अगर (!info->funcs)
-		वापस -ENOMEM;
+	if (!info->funcs)
+		return -ENOMEM;
 
 
 	ret = armada_37xx_fill_group(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = armada_37xx_fill_func(info);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	info->pctl_dev = devm_pinctrl_रेजिस्टर(&pdev->dev, ctrldesc, info);
-	अगर (IS_ERR(info->pctl_dev)) अणु
+	info->pctl_dev = devm_pinctrl_register(&pdev->dev, ctrldesc, info);
+	if (IS_ERR(info->pctl_dev)) {
 		dev_err(&pdev->dev, "could not register pinctrl driver\n");
-		वापस PTR_ERR(info->pctl_dev);
-	पूर्ण
+		return PTR_ERR(info->pctl_dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(CONFIG_PM)
-अटल पूर्णांक armada_3700_pinctrl_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = dev_get_drvdata(dev);
+#if defined(CONFIG_PM)
+static int armada_3700_pinctrl_suspend(struct device *dev)
+{
+	struct armada_37xx_pinctrl *info = dev_get_drvdata(dev);
 
 	/* Save GPIO state */
-	regmap_पढ़ो(info->regmap, OUTPUT_EN, &info->pm.out_en_l);
-	regmap_पढ़ो(info->regmap, OUTPUT_EN + माप(u32), &info->pm.out_en_h);
-	regmap_पढ़ो(info->regmap, OUTPUT_VAL, &info->pm.out_val_l);
-	regmap_पढ़ो(info->regmap, OUTPUT_VAL + माप(u32),
+	regmap_read(info->regmap, OUTPUT_EN, &info->pm.out_en_l);
+	regmap_read(info->regmap, OUTPUT_EN + sizeof(u32), &info->pm.out_en_h);
+	regmap_read(info->regmap, OUTPUT_VAL, &info->pm.out_val_l);
+	regmap_read(info->regmap, OUTPUT_VAL + sizeof(u32),
 		    &info->pm.out_val_h);
 
-	info->pm.irq_en_l = पढ़ोl(info->base + IRQ_EN);
-	info->pm.irq_en_h = पढ़ोl(info->base + IRQ_EN + माप(u32));
-	info->pm.irq_pol_l = पढ़ोl(info->base + IRQ_POL);
-	info->pm.irq_pol_h = पढ़ोl(info->base + IRQ_POL + माप(u32));
+	info->pm.irq_en_l = readl(info->base + IRQ_EN);
+	info->pm.irq_en_h = readl(info->base + IRQ_EN + sizeof(u32));
+	info->pm.irq_pol_l = readl(info->base + IRQ_POL);
+	info->pm.irq_pol_h = readl(info->base + IRQ_POL + sizeof(u32));
 
 	/* Save pinctrl state */
-	regmap_पढ़ो(info->regmap, SELECTION, &info->pm.selection);
+	regmap_read(info->regmap, SELECTION, &info->pm.selection);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक armada_3700_pinctrl_resume(काष्ठा device *dev)
-अणु
-	काष्ठा armada_37xx_pinctrl *info = dev_get_drvdata(dev);
-	काष्ठा gpio_chip *gc;
-	काष्ठा irq_करोमुख्य *d;
-	पूर्णांक i;
+static int armada_3700_pinctrl_resume(struct device *dev)
+{
+	struct armada_37xx_pinctrl *info = dev_get_drvdata(dev);
+	struct gpio_chip *gc;
+	struct irq_domain *d;
+	int i;
 
 	/* Restore GPIO state */
-	regmap_ग_लिखो(info->regmap, OUTPUT_EN, info->pm.out_en_l);
-	regmap_ग_लिखो(info->regmap, OUTPUT_EN + माप(u32),
+	regmap_write(info->regmap, OUTPUT_EN, info->pm.out_en_l);
+	regmap_write(info->regmap, OUTPUT_EN + sizeof(u32),
 		     info->pm.out_en_h);
-	regmap_ग_लिखो(info->regmap, OUTPUT_VAL, info->pm.out_val_l);
-	regmap_ग_लिखो(info->regmap, OUTPUT_VAL + माप(u32),
+	regmap_write(info->regmap, OUTPUT_VAL, info->pm.out_val_l);
+	regmap_write(info->regmap, OUTPUT_VAL + sizeof(u32),
 		     info->pm.out_val_h);
 
 	/*
 	 * Input levels may change during suspend, which is not monitored at
-	 * that समय. GPIOs used क्रम both-edge IRQs may not be synchronized
+	 * that time. GPIOs used for both-edge IRQs may not be synchronized
 	 * anymore with their polarities (rising/falling edge) and must be
 	 * re-configured manually.
 	 */
 	gc = &info->gpio_chip;
-	d = gc->irq.करोमुख्य;
-	क्रम (i = 0; i < gc->ngpio; i++) अणु
+	d = gc->irq.domain;
+	for (i = 0; i < gc->ngpio; i++) {
 		u32 irq_bit = BIT(i % GPIO_PER_REG);
 		u32 mask, *irq_pol, input_reg, virq, type, level;
 
-		अगर (i < GPIO_PER_REG) अणु
+		if (i < GPIO_PER_REG) {
 			mask = info->pm.irq_en_l;
 			irq_pol = &info->pm.irq_pol_l;
 			input_reg = INPUT_VAL;
-		पूर्ण अन्यथा अणु
+		} else {
 			mask = info->pm.irq_en_h;
 			irq_pol = &info->pm.irq_pol_h;
-			input_reg = INPUT_VAL + माप(u32);
-		पूर्ण
+			input_reg = INPUT_VAL + sizeof(u32);
+		}
 
-		अगर (!(mask & irq_bit))
-			जारी;
+		if (!(mask & irq_bit))
+			continue;
 
 		virq = irq_find_mapping(d, i);
 		type = irq_get_trigger_type(virq);
 
 		/*
-		 * Synchronize level and polarity क्रम both-edge irqs:
+		 * Synchronize level and polarity for both-edge irqs:
 		 *     - a high input level expects a falling edge,
 		 *     - a low input level exepects a rising edge.
 		 */
-		अगर ((type & IRQ_TYPE_SENSE_MASK) ==
-		    IRQ_TYPE_EDGE_BOTH) अणु
-			regmap_पढ़ो(info->regmap, input_reg, &level);
-			अगर ((*irq_pol ^ level) & irq_bit)
+		if ((type & IRQ_TYPE_SENSE_MASK) ==
+		    IRQ_TYPE_EDGE_BOTH) {
+			regmap_read(info->regmap, input_reg, &level);
+			if ((*irq_pol ^ level) & irq_bit)
 				*irq_pol ^= irq_bit;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ग_लिखोl(info->pm.irq_en_l, info->base + IRQ_EN);
-	ग_लिखोl(info->pm.irq_en_h, info->base + IRQ_EN + माप(u32));
-	ग_लिखोl(info->pm.irq_pol_l, info->base + IRQ_POL);
-	ग_लिखोl(info->pm.irq_pol_h, info->base + IRQ_POL + माप(u32));
+	writel(info->pm.irq_en_l, info->base + IRQ_EN);
+	writel(info->pm.irq_en_h, info->base + IRQ_EN + sizeof(u32));
+	writel(info->pm.irq_pol_l, info->base + IRQ_POL);
+	writel(info->pm.irq_pol_h, info->base + IRQ_POL + sizeof(u32));
 
 	/* Restore pinctrl state */
-	regmap_ग_लिखो(info->regmap, SELECTION, info->pm.selection);
+	regmap_write(info->regmap, SELECTION, info->pm.selection);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Since pinctrl is an infraकाष्ठाure module, its resume should be issued prior
+ * Since pinctrl is an infrastructure module, its resume should be issued prior
  * to other IO drivers.
  */
-अटल स्थिर काष्ठा dev_pm_ops armada_3700_pinctrl_pm_ops = अणु
+static const struct dev_pm_ops armada_3700_pinctrl_pm_ops = {
 	.suspend_noirq = armada_3700_pinctrl_suspend,
 	.resume_noirq = armada_3700_pinctrl_resume,
-पूर्ण;
+};
 
-#घोषणा PINCTRL_ARMADA_37XX_DEV_PM_OPS (&armada_3700_pinctrl_pm_ops)
-#अन्यथा
-#घोषणा PINCTRL_ARMADA_37XX_DEV_PM_OPS शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+#define PINCTRL_ARMADA_37XX_DEV_PM_OPS (&armada_3700_pinctrl_pm_ops)
+#else
+#define PINCTRL_ARMADA_37XX_DEV_PM_OPS NULL
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा of_device_id armada_37xx_pinctrl_of_match[] = अणु
-	अणु
+static const struct of_device_id armada_37xx_pinctrl_of_match[] = {
+	{
 		.compatible = "marvell,armada3710-sb-pinctrl",
 		.data = &armada_37xx_pin_sb,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "marvell,armada3710-nb-pinctrl",
 		.data = &armada_37xx_pin_nb,
-	पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+	},
+	{ },
+};
 
-अटल पूर्णांक __init armada_37xx_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा armada_37xx_pinctrl *info;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा regmap *regmap;
-	पूर्णांक ret;
+static int __init armada_37xx_pinctrl_probe(struct platform_device *pdev)
+{
+	struct armada_37xx_pinctrl *info;
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct regmap *regmap;
+	int ret;
 
-	info = devm_kzalloc(dev, माप(काष्ठा armada_37xx_pinctrl),
+	info = devm_kzalloc(dev, sizeof(struct armada_37xx_pinctrl),
 			    GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	if (!info)
+		return -ENOMEM;
 
 	info->dev = dev;
 
 	regmap = syscon_node_to_regmap(np);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&pdev->dev, "cannot get regmap\n");
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 	info->regmap = regmap;
 
 	info->data = of_device_get_match_data(dev);
 
-	ret = armada_37xx_pinctrl_रेजिस्टर(pdev, info);
-	अगर (ret)
-		वापस ret;
+	ret = armada_37xx_pinctrl_register(pdev, info);
+	if (ret)
+		return ret;
 
-	ret = armada_37xx_gpiochip_रेजिस्टर(pdev, info);
-	अगर (ret)
-		वापस ret;
+	ret = armada_37xx_gpiochip_register(pdev, info);
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver armada_37xx_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver armada_37xx_pinctrl_driver = {
+	.driver = {
 		.name = "armada-37xx-pinctrl",
 		.of_match_table = armada_37xx_pinctrl_of_match,
 		.pm = PINCTRL_ARMADA_37XX_DEV_PM_OPS,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver_probe(armada_37xx_pinctrl_driver,
+builtin_platform_driver_probe(armada_37xx_pinctrl_driver,
 			      armada_37xx_pinctrl_probe);

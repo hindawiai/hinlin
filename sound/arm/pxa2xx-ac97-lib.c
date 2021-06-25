@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Based on sound/arm/pxa2xx-ac97.c and sound/soc/pxa/pxa2xx-ac97.c
  * which contain:
@@ -9,135 +8,135 @@
  * Copyright:	MontaVista Software Inc.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of_gpपन.स>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
-#समावेश <sound/pxa2xx-lib.h>
+#include <sound/pxa2xx-lib.h>
 
-#समावेश <mach/irqs.h>
-#समावेश <mach/regs-ac97.h>
-#समावेश <mach/audपन.स>
+#include <mach/irqs.h>
+#include <mach/regs-ac97.h>
+#include <mach/audio.h>
 
-अटल DEFINE_MUTEX(car_mutex);
-अटल DECLARE_WAIT_QUEUE_HEAD(gsr_wq);
-अटल अस्थिर दीर्घ gsr_bits;
-अटल काष्ठा clk *ac97_clk;
-अटल काष्ठा clk *ac97conf_clk;
-अटल पूर्णांक reset_gpio;
+static DEFINE_MUTEX(car_mutex);
+static DECLARE_WAIT_QUEUE_HEAD(gsr_wq);
+static volatile long gsr_bits;
+static struct clk *ac97_clk;
+static struct clk *ac97conf_clk;
+static int reset_gpio;
 
-बाह्य व्योम pxa27x_configure_ac97reset(पूर्णांक reset_gpio, bool to_gpio);
+extern void pxa27x_configure_ac97reset(int reset_gpio, bool to_gpio);
 
 /*
  * Beware PXA27x bugs:
  *
- *   o Slot 12 पढ़ो from modem space will hang controller.
- *   o CDONE, SDONE पूर्णांकerrupt fails after any slot 12 IO.
+ *   o Slot 12 read from modem space will hang controller.
+ *   o CDONE, SDONE interrupt fails after any slot 12 IO.
  *
- * We thereक्रमe have an hybrid approach क्रम रुकोing on SDONE (पूर्णांकerrupt or
- * 1 jअगरfy समयout अगर पूर्णांकerrupt never comes).
+ * We therefore have an hybrid approach for waiting on SDONE (interrupt or
+ * 1 jiffy timeout if interrupt never comes).
  */
 
-पूर्णांक pxa2xx_ac97_पढ़ो(पूर्णांक slot, अचिन्हित लघु reg)
-अणु
-	पूर्णांक val = -ENODEV;
-	अस्थिर u32 *reg_addr;
+int pxa2xx_ac97_read(int slot, unsigned short reg)
+{
+	int val = -ENODEV;
+	volatile u32 *reg_addr;
 
-	अगर (slot > 0)
-		वापस -ENODEV;
+	if (slot > 0)
+		return -ENODEV;
 
 	mutex_lock(&car_mutex);
 
 	/* set up primary or secondary codec space */
-	अगर (cpu_is_pxa25x() && reg == AC97_GPIO_STATUS)
+	if (cpu_is_pxa25x() && reg == AC97_GPIO_STATUS)
 		reg_addr = slot ? &SMC_REG_BASE : &PMC_REG_BASE;
-	अन्यथा
+	else
 		reg_addr = slot ? &SAC_REG_BASE : &PAC_REG_BASE;
 	reg_addr += (reg >> 1);
 
-	/* start पढ़ो access across the ac97 link */
+	/* start read access across the ac97 link */
 	GSR = GSR_CDONE | GSR_SDONE;
 	gsr_bits = 0;
 	val = (*reg_addr & 0xffff);
-	अगर (reg == AC97_GPIO_STATUS)
-		जाओ out;
-	अगर (रुको_event_समयout(gsr_wq, (GSR | gsr_bits) & GSR_SDONE, 1) <= 0 &&
-	    !((GSR | gsr_bits) & GSR_SDONE)) अणु
-		prपूर्णांकk(KERN_ERR "%s: read error (ac97_reg=%d GSR=%#lx)\n",
+	if (reg == AC97_GPIO_STATUS)
+		goto out;
+	if (wait_event_timeout(gsr_wq, (GSR | gsr_bits) & GSR_SDONE, 1) <= 0 &&
+	    !((GSR | gsr_bits) & GSR_SDONE)) {
+		printk(KERN_ERR "%s: read error (ac97_reg=%d GSR=%#lx)\n",
 				__func__, reg, GSR | gsr_bits);
 		val = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* valid data now */
 	GSR = GSR_CDONE | GSR_SDONE;
 	gsr_bits = 0;
 	val = (*reg_addr & 0xffff);
 	/* but we've just started another cycle... */
-	रुको_event_समयout(gsr_wq, (GSR | gsr_bits) & GSR_SDONE, 1);
+	wait_event_timeout(gsr_wq, (GSR | gsr_bits) & GSR_SDONE, 1);
 
 out:	mutex_unlock(&car_mutex);
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(pxa2xx_ac97_पढ़ो);
+	return val;
+}
+EXPORT_SYMBOL_GPL(pxa2xx_ac97_read);
 
-पूर्णांक pxa2xx_ac97_ग_लिखो(पूर्णांक slot, अचिन्हित लघु reg, अचिन्हित लघु val)
-अणु
-	अस्थिर u32 *reg_addr;
-	पूर्णांक ret = 0;
+int pxa2xx_ac97_write(int slot, unsigned short reg, unsigned short val)
+{
+	volatile u32 *reg_addr;
+	int ret = 0;
 
 	mutex_lock(&car_mutex);
 
 	/* set up primary or secondary codec space */
-	अगर (cpu_is_pxa25x() && reg == AC97_GPIO_STATUS)
+	if (cpu_is_pxa25x() && reg == AC97_GPIO_STATUS)
 		reg_addr = slot ? &SMC_REG_BASE : &PMC_REG_BASE;
-	अन्यथा
+	else
 		reg_addr = slot ? &SAC_REG_BASE : &PAC_REG_BASE;
 	reg_addr += (reg >> 1);
 
 	GSR = GSR_CDONE | GSR_SDONE;
 	gsr_bits = 0;
 	*reg_addr = val;
-	अगर (रुको_event_समयout(gsr_wq, (GSR | gsr_bits) & GSR_CDONE, 1) <= 0 &&
-	    !((GSR | gsr_bits) & GSR_CDONE)) अणु
-		prपूर्णांकk(KERN_ERR "%s: write error (ac97_reg=%d GSR=%#lx)\n",
+	if (wait_event_timeout(gsr_wq, (GSR | gsr_bits) & GSR_CDONE, 1) <= 0 &&
+	    !((GSR | gsr_bits) & GSR_CDONE)) {
+		printk(KERN_ERR "%s: write error (ac97_reg=%d GSR=%#lx)\n",
 				__func__, reg, GSR | gsr_bits);
 		ret = -EIO;
-	पूर्ण
+	}
 
 	mutex_unlock(&car_mutex);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(pxa2xx_ac97_ग_लिखो);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pxa2xx_ac97_write);
 
-#अगर_घोषित CONFIG_PXA25x
-अटल अंतरभूत व्योम pxa_ac97_warm_pxa25x(व्योम)
-अणु
+#ifdef CONFIG_PXA25x
+static inline void pxa_ac97_warm_pxa25x(void)
+{
 	gsr_bits = 0;
 
 	GCR |= GCR_WARM_RST;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pxa_ac97_cold_pxa25x(व्योम)
-अणु
+static inline void pxa_ac97_cold_pxa25x(void)
+{
 	GCR &=  GCR_COLD_RST;  /* clear everything but nCRST */
-	GCR &= ~GCR_COLD_RST;  /* then निश्चित nCRST */
+	GCR &= ~GCR_COLD_RST;  /* then assert nCRST */
 
 	gsr_bits = 0;
 
 	GCR = GCR_COLD_RST;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_PXA27x
-अटल अंतरभूत व्योम pxa_ac97_warm_pxa27x(व्योम)
-अणु
+#ifdef CONFIG_PXA27x
+static inline void pxa_ac97_warm_pxa27x(void)
+{
 	gsr_bits = 0;
 
 	/* warm reset broken on Bulverde, so manually keep AC97 reset high */
@@ -146,12 +145,12 @@ EXPORT_SYMBOL_GPL(pxa2xx_ac97_ग_लिखो);
 	GCR |= GCR_WARM_RST;
 	pxa27x_configure_ac97reset(reset_gpio, false);
 	udelay(500);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pxa_ac97_cold_pxa27x(व्योम)
-अणु
+static inline void pxa_ac97_cold_pxa27x(void)
+{
 	GCR &=  GCR_COLD_RST;  /* clear everything but nCRST */
-	GCR &= ~GCR_COLD_RST;  /* then निश्चित nCRST */
+	GCR &= ~GCR_COLD_RST;  /* then assert nCRST */
 
 	gsr_bits = 0;
 
@@ -160,269 +159,269 @@ EXPORT_SYMBOL_GPL(pxa2xx_ac97_ग_लिखो);
 	udelay(5);
 	clk_disable_unprepare(ac97conf_clk);
 	GCR = GCR_COLD_RST | GCR_WARM_RST;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CONFIG_PXA3xx
-अटल अंतरभूत व्योम pxa_ac97_warm_pxa3xx(व्योम)
-अणु
+#ifdef CONFIG_PXA3xx
+static inline void pxa_ac97_warm_pxa3xx(void)
+{
 	gsr_bits = 0;
 
-	/* Can't use पूर्णांकerrupts */
+	/* Can't use interrupts */
 	GCR |= GCR_WARM_RST;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pxa_ac97_cold_pxa3xx(व्योम)
-अणु
-	/* Hold CLKBPB क्रम 100us */
+static inline void pxa_ac97_cold_pxa3xx(void)
+{
+	/* Hold CLKBPB for 100us */
 	GCR = 0;
 	GCR = GCR_CLKBPB;
 	udelay(100);
 	GCR = 0;
 
 	GCR &=  GCR_COLD_RST;  /* clear everything but nCRST */
-	GCR &= ~GCR_COLD_RST;  /* then निश्चित nCRST */
+	GCR &= ~GCR_COLD_RST;  /* then assert nCRST */
 
 	gsr_bits = 0;
 
-	/* Can't use पूर्णांकerrupts on PXA3xx */
+	/* Can't use interrupts on PXA3xx */
 	GCR &= ~(GCR_PRIRDY_IEN|GCR_SECRDY_IEN);
 
 	GCR = GCR_WARM_RST | GCR_COLD_RST;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-bool pxa2xx_ac97_try_warm_reset(व्योम)
-अणु
-	अचिन्हित दीर्घ gsr;
-	अचिन्हित पूर्णांक समयout = 100;
+bool pxa2xx_ac97_try_warm_reset(void)
+{
+	unsigned long gsr;
+	unsigned int timeout = 100;
 
-#अगर_घोषित CONFIG_PXA25x
-	अगर (cpu_is_pxa25x())
+#ifdef CONFIG_PXA25x
+	if (cpu_is_pxa25x())
 		pxa_ac97_warm_pxa25x();
-	अन्यथा
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PXA27x
-	अगर (cpu_is_pxa27x())
+	else
+#endif
+#ifdef CONFIG_PXA27x
+	if (cpu_is_pxa27x())
 		pxa_ac97_warm_pxa27x();
-	अन्यथा
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PXA3xx
-	अगर (cpu_is_pxa3xx())
+	else
+#endif
+#ifdef CONFIG_PXA3xx
+	if (cpu_is_pxa3xx())
 		pxa_ac97_warm_pxa3xx();
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		snd_BUG();
 
-	जबतक (!((GSR | gsr_bits) & (GSR_PCR | GSR_SCR)) && समयout--)
+	while (!((GSR | gsr_bits) & (GSR_PCR | GSR_SCR)) && timeout--)
 		mdelay(1);
 
 	gsr = GSR | gsr_bits;
-	अगर (!(gsr & (GSR_PCR | GSR_SCR))) अणु
-		prपूर्णांकk(KERN_INFO "%s: warm reset timeout (GSR=%#lx)\n",
+	if (!(gsr & (GSR_PCR | GSR_SCR))) {
+		printk(KERN_INFO "%s: warm reset timeout (GSR=%#lx)\n",
 				 __func__, gsr);
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(pxa2xx_ac97_try_warm_reset);
 
-bool pxa2xx_ac97_try_cold_reset(व्योम)
-अणु
-	अचिन्हित दीर्घ gsr;
-	अचिन्हित पूर्णांक समयout = 1000;
+bool pxa2xx_ac97_try_cold_reset(void)
+{
+	unsigned long gsr;
+	unsigned int timeout = 1000;
 
-#अगर_घोषित CONFIG_PXA25x
-	अगर (cpu_is_pxa25x())
+#ifdef CONFIG_PXA25x
+	if (cpu_is_pxa25x())
 		pxa_ac97_cold_pxa25x();
-	अन्यथा
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PXA27x
-	अगर (cpu_is_pxa27x())
+	else
+#endif
+#ifdef CONFIG_PXA27x
+	if (cpu_is_pxa27x())
 		pxa_ac97_cold_pxa27x();
-	अन्यथा
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PXA3xx
-	अगर (cpu_is_pxa3xx())
+	else
+#endif
+#ifdef CONFIG_PXA3xx
+	if (cpu_is_pxa3xx())
 		pxa_ac97_cold_pxa3xx();
-	अन्यथा
-#पूर्ण_अगर
+	else
+#endif
 		snd_BUG();
 
-	जबतक (!((GSR | gsr_bits) & (GSR_PCR | GSR_SCR)) && समयout--)
+	while (!((GSR | gsr_bits) & (GSR_PCR | GSR_SCR)) && timeout--)
 		mdelay(1);
 
 	gsr = GSR | gsr_bits;
-	अगर (!(gsr & (GSR_PCR | GSR_SCR))) अणु
-		prपूर्णांकk(KERN_INFO "%s: cold reset timeout (GSR=%#lx)\n",
+	if (!(gsr & (GSR_PCR | GSR_SCR))) {
+		printk(KERN_INFO "%s: cold reset timeout (GSR=%#lx)\n",
 				 __func__, gsr);
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL_GPL(pxa2xx_ac97_try_cold_reset);
 
 
-व्योम pxa2xx_ac97_finish_reset(व्योम)
-अणु
+void pxa2xx_ac97_finish_reset(void)
+{
 	GCR &= ~(GCR_PRIRDY_IEN|GCR_SECRDY_IEN);
 	GCR |= GCR_SDONE_IE|GCR_CDONE_IE;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pxa2xx_ac97_finish_reset);
 
-अटल irqवापस_t pxa2xx_ac97_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	दीर्घ status;
+static irqreturn_t pxa2xx_ac97_irq(int irq, void *dev_id)
+{
+	long status;
 
 	status = GSR;
-	अगर (status) अणु
+	if (status) {
 		GSR = status;
 		gsr_bits |= status;
 		wake_up(&gsr_wq);
 
-		/* Although we करोn't use those we still need to clear them
+		/* Although we don't use those we still need to clear them
 		   since they tend to spuriously trigger when MMC is used
 		   (hardware bug? go figure)... */
-		अगर (cpu_is_pxa27x()) अणु
+		if (cpu_is_pxa27x()) {
 			MISR = MISR_EOC;
 			PISR = PISR_EOC;
 			MCSR = MCSR_EOC;
-		पूर्ण
+		}
 
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
-#अगर_घोषित CONFIG_PM
-पूर्णांक pxa2xx_ac97_hw_suspend(व्योम)
-अणु
+#ifdef CONFIG_PM
+int pxa2xx_ac97_hw_suspend(void)
+{
 	GCR |= GCR_ACLINK_OFF;
 	clk_disable_unprepare(ac97_clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pxa2xx_ac97_hw_suspend);
 
-पूर्णांक pxa2xx_ac97_hw_resume(व्योम)
-अणु
+int pxa2xx_ac97_hw_resume(void)
+{
 	clk_prepare_enable(ac97_clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pxa2xx_ac97_hw_resume);
-#पूर्ण_अगर
+#endif
 
-पूर्णांक pxa2xx_ac97_hw_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	पूर्णांक ret;
-	pxa2xx_audio_ops_t *pdata = dev->dev.platक्रमm_data;
+int pxa2xx_ac97_hw_probe(struct platform_device *dev)
+{
+	int ret;
+	pxa2xx_audio_ops_t *pdata = dev->dev.platform_data;
 
-	अगर (pdata) अणु
-		चयन (pdata->reset_gpio) अणु
-		हाल 95:
-		हाल 113:
+	if (pdata) {
+		switch (pdata->reset_gpio) {
+		case 95:
+		case 113:
 			reset_gpio = pdata->reset_gpio;
-			अवरोध;
-		हाल 0:
+			break;
+		case 0:
 			reset_gpio = 113;
-			अवरोध;
-		हाल -1:
-			अवरोध;
-		शेष:
+			break;
+		case -1:
+			break;
+		default:
 			dev_err(&dev->dev, "Invalid reset GPIO %d\n",
 				pdata->reset_gpio);
-		पूर्ण
-	पूर्ण अन्यथा अगर (!pdata && dev->dev.of_node) अणु
-		pdata = devm_kzalloc(&dev->dev, माप(*pdata), GFP_KERNEL);
-		अगर (!pdata)
-			वापस -ENOMEM;
+		}
+	} else if (!pdata && dev->dev.of_node) {
+		pdata = devm_kzalloc(&dev->dev, sizeof(*pdata), GFP_KERNEL);
+		if (!pdata)
+			return -ENOMEM;
 		pdata->reset_gpio = of_get_named_gpio(dev->dev.of_node,
 						      "reset-gpios", 0);
-		अगर (pdata->reset_gpio == -ENOENT)
+		if (pdata->reset_gpio == -ENOENT)
 			pdata->reset_gpio = -1;
-		अन्यथा अगर (pdata->reset_gpio < 0)
-			वापस pdata->reset_gpio;
+		else if (pdata->reset_gpio < 0)
+			return pdata->reset_gpio;
 		reset_gpio = pdata->reset_gpio;
-	पूर्ण अन्यथा अणु
-		अगर (cpu_is_pxa27x())
+	} else {
+		if (cpu_is_pxa27x())
 			reset_gpio = 113;
-	पूर्ण
+	}
 
-	अगर (cpu_is_pxa27x()) अणु
+	if (cpu_is_pxa27x()) {
 		/*
-		 * This gpio is needed क्रम a work-around to a bug in the ac97
+		 * This gpio is needed for a work-around to a bug in the ac97
 		 * controller during warm reset.  The direction and level is set
-		 * here so that it is an output driven high when चयनing from
+		 * here so that it is an output driven high when switching from
 		 * AC97_nRESET alt function to generic gpio.
 		 */
 		ret = gpio_request_one(reset_gpio, GPIOF_OUT_INIT_HIGH,
 				       "pxa27x ac97 reset");
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("%s: gpio_request_one() failed: %d\n",
 			       __func__, ret);
-			जाओ err_conf;
-		पूर्ण
+			goto err_conf;
+		}
 		pxa27x_configure_ac97reset(reset_gpio, false);
 
 		ac97conf_clk = clk_get(&dev->dev, "AC97CONFCLK");
-		अगर (IS_ERR(ac97conf_clk)) अणु
+		if (IS_ERR(ac97conf_clk)) {
 			ret = PTR_ERR(ac97conf_clk);
-			ac97conf_clk = शून्य;
-			जाओ err_conf;
-		पूर्ण
-	पूर्ण
+			ac97conf_clk = NULL;
+			goto err_conf;
+		}
+	}
 
 	ac97_clk = clk_get(&dev->dev, "AC97CLK");
-	अगर (IS_ERR(ac97_clk)) अणु
+	if (IS_ERR(ac97_clk)) {
 		ret = PTR_ERR(ac97_clk);
-		ac97_clk = शून्य;
-		जाओ err_clk;
-	पूर्ण
+		ac97_clk = NULL;
+		goto err_clk;
+	}
 
 	ret = clk_prepare_enable(ac97_clk);
-	अगर (ret)
-		जाओ err_clk2;
+	if (ret)
+		goto err_clk2;
 
-	ret = request_irq(IRQ_AC97, pxa2xx_ac97_irq, 0, "AC97", शून्य);
-	अगर (ret < 0)
-		जाओ err_irq;
+	ret = request_irq(IRQ_AC97, pxa2xx_ac97_irq, 0, "AC97", NULL);
+	if (ret < 0)
+		goto err_irq;
 
-	वापस 0;
+	return 0;
 
 err_irq:
 	GCR |= GCR_ACLINK_OFF;
 err_clk2:
 	clk_put(ac97_clk);
-	ac97_clk = शून्य;
+	ac97_clk = NULL;
 err_clk:
-	अगर (ac97conf_clk) अणु
+	if (ac97conf_clk) {
 		clk_put(ac97conf_clk);
-		ac97conf_clk = शून्य;
-	पूर्ण
+		ac97conf_clk = NULL;
+	}
 err_conf:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(pxa2xx_ac97_hw_probe);
 
-व्योम pxa2xx_ac97_hw_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	अगर (cpu_is_pxa27x())
-		gpio_मुक्त(reset_gpio);
+void pxa2xx_ac97_hw_remove(struct platform_device *dev)
+{
+	if (cpu_is_pxa27x())
+		gpio_free(reset_gpio);
 	GCR |= GCR_ACLINK_OFF;
-	मुक्त_irq(IRQ_AC97, शून्य);
-	अगर (ac97conf_clk) अणु
+	free_irq(IRQ_AC97, NULL);
+	if (ac97conf_clk) {
 		clk_put(ac97conf_clk);
-		ac97conf_clk = शून्य;
-	पूर्ण
+		ac97conf_clk = NULL;
+	}
 	clk_disable_unprepare(ac97_clk);
 	clk_put(ac97_clk);
-	ac97_clk = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(pxa2xx_ac97_hw_हटाओ);
+	ac97_clk = NULL;
+}
+EXPORT_SYMBOL_GPL(pxa2xx_ac97_hw_remove);
 
 MODULE_AUTHOR("Nicolas Pitre");
 MODULE_DESCRIPTION("Intel/Marvell PXA sound library");

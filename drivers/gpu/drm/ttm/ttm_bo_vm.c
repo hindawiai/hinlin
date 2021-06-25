@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,567 +26,567 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
-#घोषणा pr_fmt(fmt) "[TTM] " fmt
+#define pr_fmt(fmt) "[TTM] " fmt
 
-#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
-#समावेश <drm/drm_vma_manager.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/pfn_t.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/mem_encrypt.h>
+#include <drm/ttm/ttm_bo_driver.h>
+#include <drm/ttm/ttm_placement.h>
+#include <drm/drm_vma_manager.h>
+#include <linux/mm.h>
+#include <linux/pfn_t.h>
+#include <linux/rbtree.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/mem_encrypt.h>
 
-अटल vm_fault_t tपंचांग_bo_vm_fault_idle(काष्ठा tपंचांग_buffer_object *bo,
-				काष्ठा vm_fault *vmf)
-अणु
+static vm_fault_t ttm_bo_vm_fault_idle(struct ttm_buffer_object *bo,
+				struct vm_fault *vmf)
+{
 	vm_fault_t ret = 0;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	अगर (likely(!bo->moving))
-		जाओ out_unlock;
+	if (likely(!bo->moving))
+		goto out_unlock;
 
 	/*
-	 * Quick non-stalling check क्रम idle.
+	 * Quick non-stalling check for idle.
 	 */
-	अगर (dma_fence_is_संकेतed(bo->moving))
-		जाओ out_clear;
+	if (dma_fence_is_signaled(bo->moving))
+		goto out_clear;
 
 	/*
-	 * If possible, aव्योम रुकोing क्रम GPU with mmap_lock
-	 * held.  We only करो this अगर the fault allows retry and this
+	 * If possible, avoid waiting for GPU with mmap_lock
+	 * held.  We only do this if the fault allows retry and this
 	 * is the first attempt.
 	 */
-	अगर (fault_flag_allow_retry_first(vmf->flags)) अणु
+	if (fault_flag_allow_retry_first(vmf->flags)) {
 		ret = VM_FAULT_RETRY;
-		अगर (vmf->flags & FAULT_FLAG_RETRY_NOWAIT)
-			जाओ out_unlock;
+		if (vmf->flags & FAULT_FLAG_RETRY_NOWAIT)
+			goto out_unlock;
 
-		tपंचांग_bo_get(bo);
-		mmap_पढ़ो_unlock(vmf->vma->vm_mm);
-		(व्योम) dma_fence_रुको(bo->moving, true);
+		ttm_bo_get(bo);
+		mmap_read_unlock(vmf->vma->vm_mm);
+		(void) dma_fence_wait(bo->moving, true);
 		dma_resv_unlock(bo->base.resv);
-		tपंचांग_bo_put(bo);
-		जाओ out_unlock;
-	पूर्ण
+		ttm_bo_put(bo);
+		goto out_unlock;
+	}
 
 	/*
-	 * Ordinary रुको.
+	 * Ordinary wait.
 	 */
-	err = dma_fence_रुको(bo->moving, true);
-	अगर (unlikely(err != 0)) अणु
+	err = dma_fence_wait(bo->moving, true);
+	if (unlikely(err != 0)) {
 		ret = (err != -ERESTARTSYS) ? VM_FAULT_SIGBUS :
 			VM_FAULT_NOPAGE;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 out_clear:
 	dma_fence_put(bo->moving);
-	bo->moving = शून्य;
+	bo->moving = NULL;
 
 out_unlock:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित दीर्घ tपंचांग_bo_io_mem_pfn(काष्ठा tपंचांग_buffer_object *bo,
-				       अचिन्हित दीर्घ page_offset)
-अणु
-	काष्ठा tपंचांग_device *bdev = bo->bdev;
+static unsigned long ttm_bo_io_mem_pfn(struct ttm_buffer_object *bo,
+				       unsigned long page_offset)
+{
+	struct ttm_device *bdev = bo->bdev;
 
-	अगर (bdev->funcs->io_mem_pfn)
-		वापस bdev->funcs->io_mem_pfn(bo, page_offset);
+	if (bdev->funcs->io_mem_pfn)
+		return bdev->funcs->io_mem_pfn(bo, page_offset);
 
-	वापस (bo->mem.bus.offset >> PAGE_SHIFT) + page_offset;
-पूर्ण
+	return (bo->mem.bus.offset >> PAGE_SHIFT) + page_offset;
+}
 
 /**
- * tपंचांग_bo_vm_reserve - Reserve a buffer object in a retryable vm callback
+ * ttm_bo_vm_reserve - Reserve a buffer object in a retryable vm callback
  * @bo: The buffer object
- * @vmf: The fault काष्ठाure handed to the callback
+ * @vmf: The fault structure handed to the callback
  *
- * vm callbacks like fault() and *_mkग_लिखो() allow क्रम the mm_sem to be dropped
- * during दीर्घ रुकोs, and after the रुको the callback will be restarted. This
- * is to allow other thपढ़ोs using the same भव memory space concurrent
+ * vm callbacks like fault() and *_mkwrite() allow for the mm_sem to be dropped
+ * during long waits, and after the wait the callback will be restarted. This
+ * is to allow other threads using the same virtual memory space concurrent
  * access to map(), unmap() completely unrelated buffer objects. TTM buffer
- * object reservations someबार रुको क्रम GPU and should thereक्रमe be
- * considered दीर्घ रुकोs. This function reserves the buffer object पूर्णांकerruptibly
- * taking this पूर्णांकo account. Starvation is aव्योमed by the vm प्रणाली not
+ * object reservations sometimes wait for GPU and should therefore be
+ * considered long waits. This function reserves the buffer object interruptibly
+ * taking this into account. Starvation is avoided by the vm system not
  * allowing too many repeated restarts.
- * This function is पूर्णांकended to be used in customized fault() and _mkग_लिखो()
+ * This function is intended to be used in customized fault() and _mkwrite()
  * handlers.
  *
  * Return:
  *    0 on success and the bo was reserved.
- *    VM_FAULT_RETRY अगर blocking रुको.
- *    VM_FAULT_NOPAGE अगर blocking रुको and retrying was not allowed.
+ *    VM_FAULT_RETRY if blocking wait.
+ *    VM_FAULT_NOPAGE if blocking wait and retrying was not allowed.
  */
-vm_fault_t tपंचांग_bo_vm_reserve(काष्ठा tपंचांग_buffer_object *bo,
-			     काष्ठा vm_fault *vmf)
-अणु
+vm_fault_t ttm_bo_vm_reserve(struct ttm_buffer_object *bo,
+			     struct vm_fault *vmf)
+{
 	/*
 	 * Work around locking order reversal in fault / nopfn
-	 * between mmap_lock and bo_reserve: Perक्रमm a trylock operation
-	 * क्रम reserve, and अगर it fails, retry the fault after रुकोing
-	 * क्रम the buffer to become unreserved.
+	 * between mmap_lock and bo_reserve: Perform a trylock operation
+	 * for reserve, and if it fails, retry the fault after waiting
+	 * for the buffer to become unreserved.
 	 */
-	अगर (unlikely(!dma_resv_trylock(bo->base.resv))) अणु
+	if (unlikely(!dma_resv_trylock(bo->base.resv))) {
 		/*
 		 * If the fault allows retry and this is the first
 		 * fault attempt, we try to release the mmap_lock
-		 * beक्रमe रुकोing
+		 * before waiting
 		 */
-		अगर (fault_flag_allow_retry_first(vmf->flags)) अणु
-			अगर (!(vmf->flags & FAULT_FLAG_RETRY_NOWAIT)) अणु
-				tपंचांग_bo_get(bo);
-				mmap_पढ़ो_unlock(vmf->vma->vm_mm);
-				अगर (!dma_resv_lock_पूर्णांकerruptible(bo->base.resv,
-								 शून्य))
+		if (fault_flag_allow_retry_first(vmf->flags)) {
+			if (!(vmf->flags & FAULT_FLAG_RETRY_NOWAIT)) {
+				ttm_bo_get(bo);
+				mmap_read_unlock(vmf->vma->vm_mm);
+				if (!dma_resv_lock_interruptible(bo->base.resv,
+								 NULL))
 					dma_resv_unlock(bo->base.resv);
-				tपंचांग_bo_put(bo);
-			पूर्ण
+				ttm_bo_put(bo);
+			}
 
-			वापस VM_FAULT_RETRY;
-		पूर्ण
+			return VM_FAULT_RETRY;
+		}
 
-		अगर (dma_resv_lock_पूर्णांकerruptible(bo->base.resv, शून्य))
-			वापस VM_FAULT_NOPAGE;
-	पूर्ण
+		if (dma_resv_lock_interruptible(bo->base.resv, NULL))
+			return VM_FAULT_NOPAGE;
+	}
 
 	/*
 	 * Refuse to fault imported pages. This should be handled
-	 * (अगर at all) by redirecting mmap to the exporter.
+	 * (if at all) by redirecting mmap to the exporter.
 	 */
-	अगर (bo->tपंचांग && (bo->tपंचांग->page_flags & TTM_PAGE_FLAG_SG)) अणु
+	if (bo->ttm && (bo->ttm->page_flags & TTM_PAGE_FLAG_SG)) {
 		dma_resv_unlock(bo->base.resv);
-		वापस VM_FAULT_SIGBUS;
-	पूर्ण
+		return VM_FAULT_SIGBUS;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_vm_reserve);
+	return 0;
+}
+EXPORT_SYMBOL(ttm_bo_vm_reserve);
 
-#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
 /**
- * tपंचांग_bo_vm_insert_huge - Insert a pfn क्रम PUD or PMD faults
+ * ttm_bo_vm_insert_huge - Insert a pfn for PUD or PMD faults
  * @vmf: Fault data
  * @bo: The buffer object
  * @page_offset: Page offset from bo start
  * @fault_page_size: The size of the fault in pages.
  * @pgprot: The page protections.
  * Does additional checking whether it's possible to insert a PUD or PMD
- * pfn and perक्रमms the insertion.
+ * pfn and performs the insertion.
  *
- * Return: VM_FAULT_NOPAGE on successful insertion, VM_FAULT_FALLBACK अगर
+ * Return: VM_FAULT_NOPAGE on successful insertion, VM_FAULT_FALLBACK if
  * a huge fault was not possible, or on insertion error.
  */
-अटल vm_fault_t tपंचांग_bo_vm_insert_huge(काष्ठा vm_fault *vmf,
-					काष्ठा tपंचांग_buffer_object *bo,
+static vm_fault_t ttm_bo_vm_insert_huge(struct vm_fault *vmf,
+					struct ttm_buffer_object *bo,
 					pgoff_t page_offset,
 					pgoff_t fault_page_size,
 					pgprot_t pgprot)
-अणु
+{
 	pgoff_t i;
 	vm_fault_t ret;
-	अचिन्हित दीर्घ pfn;
+	unsigned long pfn;
 	pfn_t pfnt;
-	काष्ठा tपंचांग_tt *tपंचांग = bo->tपंचांग;
-	bool ग_लिखो = vmf->flags & FAULT_FLAG_WRITE;
+	struct ttm_tt *ttm = bo->ttm;
+	bool write = vmf->flags & FAULT_FLAG_WRITE;
 
 	/* Fault should not cross bo boundary. */
 	page_offset &= ~(fault_page_size - 1);
-	अगर (page_offset + fault_page_size > bo->mem.num_pages)
-		जाओ out_fallback;
+	if (page_offset + fault_page_size > bo->mem.num_pages)
+		goto out_fallback;
 
-	अगर (bo->mem.bus.is_iomem)
-		pfn = tपंचांग_bo_io_mem_pfn(bo, page_offset);
-	अन्यथा
-		pfn = page_to_pfn(tपंचांग->pages[page_offset]);
+	if (bo->mem.bus.is_iomem)
+		pfn = ttm_bo_io_mem_pfn(bo, page_offset);
+	else
+		pfn = page_to_pfn(ttm->pages[page_offset]);
 
 	/* pfn must be fault_page_size aligned. */
-	अगर ((pfn & (fault_page_size - 1)) != 0)
-		जाओ out_fallback;
+	if ((pfn & (fault_page_size - 1)) != 0)
+		goto out_fallback;
 
 	/* Check that memory is contiguous. */
-	अगर (!bo->mem.bus.is_iomem) अणु
-		क्रम (i = 1; i < fault_page_size; ++i) अणु
-			अगर (page_to_pfn(tपंचांग->pages[page_offset + i]) != pfn + i)
-				जाओ out_fallback;
-		पूर्ण
-	पूर्ण अन्यथा अगर (bo->bdev->funcs->io_mem_pfn) अणु
-		क्रम (i = 1; i < fault_page_size; ++i) अणु
-			अगर (tपंचांग_bo_io_mem_pfn(bo, page_offset + i) != pfn + i)
-				जाओ out_fallback;
-		पूर्ण
-	पूर्ण
+	if (!bo->mem.bus.is_iomem) {
+		for (i = 1; i < fault_page_size; ++i) {
+			if (page_to_pfn(ttm->pages[page_offset + i]) != pfn + i)
+				goto out_fallback;
+		}
+	} else if (bo->bdev->funcs->io_mem_pfn) {
+		for (i = 1; i < fault_page_size; ++i) {
+			if (ttm_bo_io_mem_pfn(bo, page_offset + i) != pfn + i)
+				goto out_fallback;
+		}
+	}
 
 	pfnt = __pfn_to_pfn_t(pfn, PFN_DEV);
-	अगर (fault_page_size == (HPAGE_PMD_SIZE >> PAGE_SHIFT))
-		ret = vmf_insert_pfn_pmd_prot(vmf, pfnt, pgprot, ग_लिखो);
-#अगर_घोषित CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
-	अन्यथा अगर (fault_page_size == (HPAGE_PUD_SIZE >> PAGE_SHIFT))
-		ret = vmf_insert_pfn_pud_prot(vmf, pfnt, pgprot, ग_लिखो);
-#पूर्ण_अगर
-	अन्यथा
+	if (fault_page_size == (HPAGE_PMD_SIZE >> PAGE_SHIFT))
+		ret = vmf_insert_pfn_pmd_prot(vmf, pfnt, pgprot, write);
+#ifdef CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
+	else if (fault_page_size == (HPAGE_PUD_SIZE >> PAGE_SHIFT))
+		ret = vmf_insert_pfn_pud_prot(vmf, pfnt, pgprot, write);
+#endif
+	else
 		WARN_ON_ONCE(ret = VM_FAULT_FALLBACK);
 
-	अगर (ret != VM_FAULT_NOPAGE)
-		जाओ out_fallback;
+	if (ret != VM_FAULT_NOPAGE)
+		goto out_fallback;
 
-	वापस VM_FAULT_NOPAGE;
+	return VM_FAULT_NOPAGE;
 out_fallback:
 	count_vm_event(THP_FAULT_FALLBACK);
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
-#अन्यथा
-अटल vm_fault_t tपंचांग_bo_vm_insert_huge(काष्ठा vm_fault *vmf,
-					काष्ठा tपंचांग_buffer_object *bo,
+	return VM_FAULT_FALLBACK;
+}
+#else
+static vm_fault_t ttm_bo_vm_insert_huge(struct vm_fault *vmf,
+					struct ttm_buffer_object *bo,
 					pgoff_t page_offset,
 					pgoff_t fault_page_size,
 					pgprot_t pgprot)
-अणु
-	वापस VM_FAULT_FALLBACK;
-पूर्ण
-#पूर्ण_अगर
+{
+	return VM_FAULT_FALLBACK;
+}
+#endif
 
 /**
- * tपंचांग_bo_vm_fault_reserved - TTM fault helper
- * @vmf: The काष्ठा vm_fault given as argument to the fault callback
- * @prot: The page protection to be used क्रम this memory area.
+ * ttm_bo_vm_fault_reserved - TTM fault helper
+ * @vmf: The struct vm_fault given as argument to the fault callback
+ * @prot: The page protection to be used for this memory area.
  * @num_prefault: Maximum number of prefault pages. The caller may want to
- * specअगरy this based on madvice settings and the size of the GPU object
+ * specify this based on madvice settings and the size of the GPU object
  * backed by the memory.
  * @fault_page_size: The size of the fault in pages.
  *
- * This function inserts one or more page table entries poपूर्णांकing to the
- * memory backing the buffer object, and then वापसs a वापस code
- * inकाष्ठाing the caller to retry the page access.
+ * This function inserts one or more page table entries pointing to the
+ * memory backing the buffer object, and then returns a return code
+ * instructing the caller to retry the page access.
  *
  * Return:
- *   VM_FAULT_NOPAGE on success or pending संकेत
- *   VM_FAULT_SIGBUS on unspecअगरied error
+ *   VM_FAULT_NOPAGE on success or pending signal
+ *   VM_FAULT_SIGBUS on unspecified error
  *   VM_FAULT_OOM on out-of-memory
- *   VM_FAULT_RETRY अगर retryable रुको
+ *   VM_FAULT_RETRY if retryable wait
  */
-vm_fault_t tपंचांग_bo_vm_fault_reserved(काष्ठा vm_fault *vmf,
+vm_fault_t ttm_bo_vm_fault_reserved(struct vm_fault *vmf,
 				    pgprot_t prot,
 				    pgoff_t num_prefault,
 				    pgoff_t fault_page_size)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा tपंचांग_buffer_object *bo = vma->vm_निजी_data;
-	काष्ठा tपंचांग_device *bdev = bo->bdev;
-	अचिन्हित दीर्घ page_offset;
-	अचिन्हित दीर्घ page_last;
-	अचिन्हित दीर्घ pfn;
-	काष्ठा tपंचांग_tt *tपंचांग = शून्य;
-	काष्ठा page *page;
-	पूर्णांक err;
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct ttm_buffer_object *bo = vma->vm_private_data;
+	struct ttm_device *bdev = bo->bdev;
+	unsigned long page_offset;
+	unsigned long page_last;
+	unsigned long pfn;
+	struct ttm_tt *ttm = NULL;
+	struct page *page;
+	int err;
 	pgoff_t i;
 	vm_fault_t ret = VM_FAULT_NOPAGE;
-	अचिन्हित दीर्घ address = vmf->address;
+	unsigned long address = vmf->address;
 
 	/*
-	 * Wait क्रम buffer data in transit, due to a pipelined
+	 * Wait for buffer data in transit, due to a pipelined
 	 * move.
 	 */
-	ret = tपंचांग_bo_vm_fault_idle(bo, vmf);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_bo_vm_fault_idle(bo, vmf);
+	if (unlikely(ret != 0))
+		return ret;
 
-	err = tपंचांग_mem_io_reserve(bdev, &bo->mem);
-	अगर (unlikely(err != 0))
-		वापस VM_FAULT_SIGBUS;
+	err = ttm_mem_io_reserve(bdev, &bo->mem);
+	if (unlikely(err != 0))
+		return VM_FAULT_SIGBUS;
 
 	page_offset = ((address - vma->vm_start) >> PAGE_SHIFT) +
 		vma->vm_pgoff - drm_vma_node_start(&bo->base.vma_node);
 	page_last = vma_pages(vma) + vma->vm_pgoff -
 		drm_vma_node_start(&bo->base.vma_node);
 
-	अगर (unlikely(page_offset >= bo->mem.num_pages))
-		वापस VM_FAULT_SIGBUS;
+	if (unlikely(page_offset >= bo->mem.num_pages))
+		return VM_FAULT_SIGBUS;
 
-	prot = tपंचांग_io_prot(bo, &bo->mem, prot);
-	अगर (!bo->mem.bus.is_iomem) अणु
-		काष्ठा tपंचांग_operation_ctx ctx = अणु
-			.पूर्णांकerruptible = false,
-			.no_रुको_gpu = false,
-			.क्रमce_alloc = true
-		पूर्ण;
+	prot = ttm_io_prot(bo, &bo->mem, prot);
+	if (!bo->mem.bus.is_iomem) {
+		struct ttm_operation_ctx ctx = {
+			.interruptible = false,
+			.no_wait_gpu = false,
+			.force_alloc = true
+		};
 
-		tपंचांग = bo->tपंचांग;
-		अगर (tपंचांग_tt_populate(bdev, bo->tपंचांग, &ctx))
-			वापस VM_FAULT_OOM;
-	पूर्ण अन्यथा अणु
+		ttm = bo->ttm;
+		if (ttm_tt_populate(bdev, bo->ttm, &ctx))
+			return VM_FAULT_OOM;
+	} else {
 		/* Iomem should not be marked encrypted */
 		prot = pgprot_decrypted(prot);
-	पूर्ण
+	}
 
-	/* We करोn't prefault on huge faults. Yet. */
-	अगर (IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE) && fault_page_size != 1)
-		वापस tपंचांग_bo_vm_insert_huge(vmf, bo, page_offset,
+	/* We don't prefault on huge faults. Yet. */
+	if (IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE) && fault_page_size != 1)
+		return ttm_bo_vm_insert_huge(vmf, bo, page_offset,
 					     fault_page_size, prot);
 
 	/*
 	 * Speculatively prefault a number of pages. Only error on
 	 * first page.
 	 */
-	क्रम (i = 0; i < num_prefault; ++i) अणु
-		अगर (bo->mem.bus.is_iomem) अणु
-			pfn = tपंचांग_bo_io_mem_pfn(bo, page_offset);
-		पूर्ण अन्यथा अणु
-			page = tपंचांग->pages[page_offset];
-			अगर (unlikely(!page && i == 0)) अणु
-				वापस VM_FAULT_OOM;
-			पूर्ण अन्यथा अगर (unlikely(!page)) अणु
-				अवरोध;
-			पूर्ण
+	for (i = 0; i < num_prefault; ++i) {
+		if (bo->mem.bus.is_iomem) {
+			pfn = ttm_bo_io_mem_pfn(bo, page_offset);
+		} else {
+			page = ttm->pages[page_offset];
+			if (unlikely(!page && i == 0)) {
+				return VM_FAULT_OOM;
+			} else if (unlikely(!page)) {
+				break;
+			}
 			page->index = drm_vma_node_start(&bo->base.vma_node) +
 				page_offset;
 			pfn = page_to_pfn(page);
-		पूर्ण
+		}
 
 		/*
-		 * Note that the value of @prot at this poपूर्णांक may dअगरfer from
+		 * Note that the value of @prot at this point may differ from
 		 * the value of @vma->vm_page_prot in the caching- and
 		 * encryption bits. This is because the exact location of the
-		 * data may not be known at mmap() समय and may also change
-		 * at arbitrary बार जबतक the data is mmap'ed.
-		 * See vmf_insert_mixed_prot() क्रम a discussion.
+		 * data may not be known at mmap() time and may also change
+		 * at arbitrary times while the data is mmap'ed.
+		 * See vmf_insert_mixed_prot() for a discussion.
 		 */
-		अगर (vma->vm_flags & VM_MIXEDMAP)
+		if (vma->vm_flags & VM_MIXEDMAP)
 			ret = vmf_insert_mixed_prot(vma, address,
 						    __pfn_to_pfn_t(pfn, PFN_DEV),
 						    prot);
-		अन्यथा
+		else
 			ret = vmf_insert_pfn_prot(vma, address, pfn, prot);
 
 		/* Never error on prefaulted PTEs */
-		अगर (unlikely((ret & VM_FAULT_ERROR))) अणु
-			अगर (i == 0)
-				वापस VM_FAULT_NOPAGE;
-			अन्यथा
-				अवरोध;
-		पूर्ण
+		if (unlikely((ret & VM_FAULT_ERROR))) {
+			if (i == 0)
+				return VM_FAULT_NOPAGE;
+			else
+				break;
+		}
 
 		address += PAGE_SIZE;
-		अगर (unlikely(++page_offset >= page_last))
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_vm_fault_reserved);
+		if (unlikely(++page_offset >= page_last))
+			break;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_vm_fault_reserved);
 
-vm_fault_t tपंचांग_bo_vm_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+vm_fault_t ttm_bo_vm_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
 	pgprot_t prot;
-	काष्ठा tपंचांग_buffer_object *bo = vma->vm_निजी_data;
+	struct ttm_buffer_object *bo = vma->vm_private_data;
 	vm_fault_t ret;
 
-	ret = tपंचांग_bo_vm_reserve(bo, vmf);
-	अगर (ret)
-		वापस ret;
+	ret = ttm_bo_vm_reserve(bo, vmf);
+	if (ret)
+		return ret;
 
 	prot = vma->vm_page_prot;
-	ret = tपंचांग_bo_vm_fault_reserved(vmf, prot, TTM_BO_VM_NUM_PREFAULT, 1);
-	अगर (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
-		वापस ret;
+	ret = ttm_bo_vm_fault_reserved(vmf, prot, TTM_BO_VM_NUM_PREFAULT, 1);
+	if (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
+		return ret;
 
 	dma_resv_unlock(bo->base.resv);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_vm_fault);
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_vm_fault);
 
-व्योम tपंचांग_bo_vm_खोलो(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo = vma->vm_निजी_data;
+void ttm_bo_vm_open(struct vm_area_struct *vma)
+{
+	struct ttm_buffer_object *bo = vma->vm_private_data;
 
 	WARN_ON(bo->bdev->dev_mapping != vma->vm_file->f_mapping);
 
-	tपंचांग_bo_get(bo);
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_vm_खोलो);
+	ttm_bo_get(bo);
+}
+EXPORT_SYMBOL(ttm_bo_vm_open);
 
-व्योम tपंचांग_bo_vm_बंद(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo = vma->vm_निजी_data;
+void ttm_bo_vm_close(struct vm_area_struct *vma)
+{
+	struct ttm_buffer_object *bo = vma->vm_private_data;
 
-	tपंचांग_bo_put(bo);
-	vma->vm_निजी_data = शून्य;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_vm_बंद);
+	ttm_bo_put(bo);
+	vma->vm_private_data = NULL;
+}
+EXPORT_SYMBOL(ttm_bo_vm_close);
 
-अटल पूर्णांक tपंचांग_bo_vm_access_kmap(काष्ठा tपंचांग_buffer_object *bo,
-				 अचिन्हित दीर्घ offset,
-				 uपूर्णांक8_t *buf, पूर्णांक len, पूर्णांक ग_लिखो)
-अणु
-	अचिन्हित दीर्घ page = offset >> PAGE_SHIFT;
-	अचिन्हित दीर्घ bytes_left = len;
-	पूर्णांक ret;
+static int ttm_bo_vm_access_kmap(struct ttm_buffer_object *bo,
+				 unsigned long offset,
+				 uint8_t *buf, int len, int write)
+{
+	unsigned long page = offset >> PAGE_SHIFT;
+	unsigned long bytes_left = len;
+	int ret;
 
-	/* Copy a page at a समय, that way no extra भव address
+	/* Copy a page at a time, that way no extra virtual address
 	 * mapping is needed
 	 */
 	offset -= page << PAGE_SHIFT;
-	करो अणु
-		अचिन्हित दीर्घ bytes = min(bytes_left, PAGE_SIZE - offset);
-		काष्ठा tपंचांग_bo_kmap_obj map;
-		व्योम *ptr;
+	do {
+		unsigned long bytes = min(bytes_left, PAGE_SIZE - offset);
+		struct ttm_bo_kmap_obj map;
+		void *ptr;
 		bool is_iomem;
 
-		ret = tपंचांग_bo_kmap(bo, page, 1, &map);
-		अगर (ret)
-			वापस ret;
+		ret = ttm_bo_kmap(bo, page, 1, &map);
+		if (ret)
+			return ret;
 
-		ptr = (uपूर्णांक8_t *)tपंचांग_kmap_obj_भव(&map, &is_iomem) + offset;
+		ptr = (uint8_t *)ttm_kmap_obj_virtual(&map, &is_iomem) + offset;
 		WARN_ON_ONCE(is_iomem);
-		अगर (ग_लिखो)
-			स_नकल(ptr, buf, bytes);
-		अन्यथा
-			स_नकल(buf, ptr, bytes);
-		tपंचांग_bo_kunmap(&map);
+		if (write)
+			memcpy(ptr, buf, bytes);
+		else
+			memcpy(buf, ptr, bytes);
+		ttm_bo_kunmap(&map);
 
 		page++;
 		buf += bytes;
 		bytes_left -= bytes;
 		offset = 0;
-	पूर्ण जबतक (bytes_left);
+	} while (bytes_left);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक tपंचांग_bo_vm_access(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-		     व्योम *buf, पूर्णांक len, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo = vma->vm_निजी_data;
-	अचिन्हित दीर्घ offset = (addr) - vma->vm_start +
+int ttm_bo_vm_access(struct vm_area_struct *vma, unsigned long addr,
+		     void *buf, int len, int write)
+{
+	struct ttm_buffer_object *bo = vma->vm_private_data;
+	unsigned long offset = (addr) - vma->vm_start +
 		((vma->vm_pgoff - drm_vma_node_start(&bo->base.vma_node))
 		 << PAGE_SHIFT);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (len < 1 || (offset + len) >> PAGE_SHIFT > bo->mem.num_pages)
-		वापस -EIO;
+	if (len < 1 || (offset + len) >> PAGE_SHIFT > bo->mem.num_pages)
+		return -EIO;
 
-	ret = tपंचांग_bo_reserve(bo, true, false, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = ttm_bo_reserve(bo, true, false, NULL);
+	if (ret)
+		return ret;
 
-	चयन (bo->mem.mem_type) अणु
-	हाल TTM_PL_SYSTEM:
-		अगर (unlikely(bo->tपंचांग->page_flags & TTM_PAGE_FLAG_SWAPPED)) अणु
-			ret = tपंचांग_tt_swapin(bo->tपंचांग);
-			अगर (unlikely(ret != 0))
-				वापस ret;
-		पूर्ण
+	switch (bo->mem.mem_type) {
+	case TTM_PL_SYSTEM:
+		if (unlikely(bo->ttm->page_flags & TTM_PAGE_FLAG_SWAPPED)) {
+			ret = ttm_tt_swapin(bo->ttm);
+			if (unlikely(ret != 0))
+				return ret;
+		}
 		fallthrough;
-	हाल TTM_PL_TT:
-		ret = tपंचांग_bo_vm_access_kmap(bo, offset, buf, len, ग_लिखो);
-		अवरोध;
-	शेष:
-		अगर (bo->bdev->funcs->access_memory)
+	case TTM_PL_TT:
+		ret = ttm_bo_vm_access_kmap(bo, offset, buf, len, write);
+		break;
+	default:
+		if (bo->bdev->funcs->access_memory)
 			ret = bo->bdev->funcs->access_memory(
-				bo, offset, buf, len, ग_लिखो);
-		अन्यथा
+				bo, offset, buf, len, write);
+		else
 			ret = -EIO;
-	पूर्ण
+	}
 
-	tपंचांग_bo_unreserve(bo);
+	ttm_bo_unreserve(bo);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_vm_access);
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_vm_access);
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा tपंचांग_bo_vm_ops = अणु
-	.fault = tपंचांग_bo_vm_fault,
-	.खोलो = tपंचांग_bo_vm_खोलो,
-	.बंद = tपंचांग_bo_vm_बंद,
-	.access = tपंचांग_bo_vm_access,
-पूर्ण;
+static const struct vm_operations_struct ttm_bo_vm_ops = {
+	.fault = ttm_bo_vm_fault,
+	.open = ttm_bo_vm_open,
+	.close = ttm_bo_vm_close,
+	.access = ttm_bo_vm_access,
+};
 
-अटल काष्ठा tपंचांग_buffer_object *tपंचांग_bo_vm_lookup(काष्ठा tपंचांग_device *bdev,
-						  अचिन्हित दीर्घ offset,
-						  अचिन्हित दीर्घ pages)
-अणु
-	काष्ठा drm_vma_offset_node *node;
-	काष्ठा tपंचांग_buffer_object *bo = शून्य;
+static struct ttm_buffer_object *ttm_bo_vm_lookup(struct ttm_device *bdev,
+						  unsigned long offset,
+						  unsigned long pages)
+{
+	struct drm_vma_offset_node *node;
+	struct ttm_buffer_object *bo = NULL;
 
 	drm_vma_offset_lock_lookup(bdev->vma_manager);
 
 	node = drm_vma_offset_lookup_locked(bdev->vma_manager, offset, pages);
-	अगर (likely(node)) अणु
-		bo = container_of(node, काष्ठा tपंचांग_buffer_object,
+	if (likely(node)) {
+		bo = container_of(node, struct ttm_buffer_object,
 				  base.vma_node);
-		bo = tपंचांग_bo_get_unless_zero(bo);
-	पूर्ण
+		bo = ttm_bo_get_unless_zero(bo);
+	}
 
 	drm_vma_offset_unlock_lookup(bdev->vma_manager);
 
-	अगर (!bo)
+	if (!bo)
 		pr_err("Could not find buffer object to map\n");
 
-	वापस bo;
-पूर्ण
+	return bo;
+}
 
-अटल व्योम tपंचांग_bo_mmap_vma_setup(काष्ठा tपंचांग_buffer_object *bo, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	vma->vm_ops = &tपंचांग_bo_vm_ops;
+static void ttm_bo_mmap_vma_setup(struct ttm_buffer_object *bo, struct vm_area_struct *vma)
+{
+	vma->vm_ops = &ttm_bo_vm_ops;
 
 	/*
 	 * Note: We're transferring the bo reference to
-	 * vma->vm_निजी_data here.
+	 * vma->vm_private_data here.
 	 */
 
-	vma->vm_निजी_data = bo;
+	vma->vm_private_data = bo;
 
 	/*
 	 * We'd like to use VM_PFNMAP on shared mappings, where
-	 * (vma->vm_flags & VM_SHARED) != 0, क्रम perक्रमmance reasons,
-	 * but क्रम some reason VM_PFNMAP + x86 PAT + ग_लिखो-combine is very
-	 * bad क्रम perक्रमmance. Until that has been sorted out, use
-	 * VM_MIXEDMAP on all mappings. See मुक्तdesktop.org bug #75719
+	 * (vma->vm_flags & VM_SHARED) != 0, for performance reasons,
+	 * but for some reason VM_PFNMAP + x86 PAT + write-combine is very
+	 * bad for performance. Until that has been sorted out, use
+	 * VM_MIXEDMAP on all mappings. See freedesktop.org bug #75719
 	 */
 	vma->vm_flags |= VM_MIXEDMAP;
 	vma->vm_flags |= VM_IO | VM_DONTEXPAND | VM_DONTDUMP;
-पूर्ण
+}
 
-पूर्णांक tपंचांग_bo_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma,
-		काष्ठा tपंचांग_device *bdev)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo;
-	पूर्णांक ret;
+int ttm_bo_mmap(struct file *filp, struct vm_area_struct *vma,
+		struct ttm_device *bdev)
+{
+	struct ttm_buffer_object *bo;
+	int ret;
 
-	अगर (unlikely(vma->vm_pgoff < DRM_खाता_PAGE_OFFSET_START))
-		वापस -EINVAL;
+	if (unlikely(vma->vm_pgoff < DRM_FILE_PAGE_OFFSET_START))
+		return -EINVAL;
 
-	bo = tपंचांग_bo_vm_lookup(bdev, vma->vm_pgoff, vma_pages(vma));
-	अगर (unlikely(!bo))
-		वापस -EINVAL;
+	bo = ttm_bo_vm_lookup(bdev, vma->vm_pgoff, vma_pages(vma));
+	if (unlikely(!bo))
+		return -EINVAL;
 
-	अगर (unlikely(!bo->bdev->funcs->verअगरy_access)) अणु
+	if (unlikely(!bo->bdev->funcs->verify_access)) {
 		ret = -EPERM;
-		जाओ out_unref;
-	पूर्ण
-	ret = bo->bdev->funcs->verअगरy_access(bo, filp);
-	अगर (unlikely(ret != 0))
-		जाओ out_unref;
+		goto out_unref;
+	}
+	ret = bo->bdev->funcs->verify_access(bo, filp);
+	if (unlikely(ret != 0))
+		goto out_unref;
 
-	tपंचांग_bo_mmap_vma_setup(bo, vma);
-	वापस 0;
+	ttm_bo_mmap_vma_setup(bo, vma);
+	return 0;
 out_unref:
-	tपंचांग_bo_put(bo);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_mmap);
+	ttm_bo_put(bo);
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_mmap);
 
-पूर्णांक tपंचांग_bo_mmap_obj(काष्ठा vm_area_काष्ठा *vma, काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	tपंचांग_bo_get(bo);
-	tपंचांग_bo_mmap_vma_setup(bo, vma);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_bo_mmap_obj);
+int ttm_bo_mmap_obj(struct vm_area_struct *vma, struct ttm_buffer_object *bo)
+{
+	ttm_bo_get(bo);
+	ttm_bo_mmap_vma_setup(bo, vma);
+	return 0;
+}
+EXPORT_SYMBOL(ttm_bo_mmap_obj);

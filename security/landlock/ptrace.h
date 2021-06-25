@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Landlock LSM - Ptrace hooks
  *
- * Copyright तऊ 2017-2019 Mickaथ+l Salaथञn <mic@digikod.net>
- * Copyright तऊ 2019 ANSSI
+ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
+ * Copyright © 2019 ANSSI
  */
 
-#अगर_अघोषित _SECURITY_LANDLOCK_PTRACE_H
-#घोषणा _SECURITY_LANDLOCK_PTRACE_H
+#ifndef _SECURITY_LANDLOCK_PTRACE_H
+#define _SECURITY_LANDLOCK_PTRACE_H
 
-__init व्योम landlock_add_ptrace_hooks(व्योम);
+__init void landlock_add_ptrace_hooks(void);
 
-#पूर्ण_अगर /* _SECURITY_LANDLOCK_PTRACE_H */
+#endif /* _SECURITY_LANDLOCK_PTRACE_H */

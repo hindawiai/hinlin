@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVBIOS_POWER_BUDGET_H__
-#घोषणा __NVBIOS_POWER_BUDGET_H__
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVBIOS_POWER_BUDGET_H__
+#define __NVBIOS_POWER_BUDGET_H__
 
-#समावेश <nvkm/subdev/मूलप्रण.स>
+#include <nvkm/subdev/bios.h>
 
-काष्ठा nvbios_घातer_budget_entry अणु
+struct nvbios_power_budget_entry {
 	u32 min_w;
 	u32 avg_w;
 	u32 max_w;
-पूर्ण;
+};
 
-काष्ठा nvbios_घातer_budget अणु
+struct nvbios_power_budget {
 	u32 offset;
 	u8  ver;
 	u8  hlen;
 	u8  elen;
 	u8  ecount;
 	u8  cap_entry;
-पूर्ण;
+};
 
-पूर्णांक nvbios_घातer_budget_header(काष्ठा nvkm_bios *,
-                               काष्ठा nvbios_घातer_budget *);
-पूर्णांक nvbios_घातer_budget_entry(काष्ठा nvkm_bios *, काष्ठा nvbios_घातer_budget *,
-                              u8 idx, काष्ठा nvbios_घातer_budget_entry *);
+int nvbios_power_budget_header(struct nvkm_bios *,
+                               struct nvbios_power_budget *);
+int nvbios_power_budget_entry(struct nvkm_bios *, struct nvbios_power_budget *,
+                              u8 idx, struct nvbios_power_budget_entry *);
 
-#पूर्ण_अगर
+#endif

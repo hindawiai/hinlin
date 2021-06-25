@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_BREADCRUMBS_TYPES__
-#घोषणा __INTEL_BREADCRUMBS_TYPES__
+#ifndef __INTEL_BREADCRUMBS_TYPES__
+#define __INTEL_BREADCRUMBS_TYPES__
 
-#समावेश <linux/irq_work.h>
-#समावेश <linux/list.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
+#include <linux/irq_work.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
 
 /*
- * Rather than have every client रुको upon all user पूर्णांकerrupts,
- * with the herd waking after every पूर्णांकerrupt and each करोing the
+ * Rather than have every client wait upon all user interrupts,
+ * with the herd waking after every interrupt and each doing the
  * heavyweight seqno dance, we delegate the task (of being the
- * bottom-half of the user पूर्णांकerrupt) to the first client. After
- * every पूर्णांकerrupt, we wake up one client, who करोes the heavyweight
- * coherent seqno पढ़ो and either goes back to sleep (अगर incomplete),
- * or wakes up all the completed clients in parallel, beक्रमe then
+ * bottom-half of the user interrupt) to the first client. After
+ * every interrupt, we wake up one client, who does the heavyweight
+ * coherent seqno read and either goes back to sleep (if incomplete),
+ * or wakes up all the completed clients in parallel, before then
  * transferring the bottom-half status to the next client in the queue.
  *
- * Compared to walking the entire list of रुकोers in a single dedicated
- * bottom-half, we reduce the latency of the first रुकोer by aव्योमing
- * a context चयन, but incur additional coherent seqno पढ़ोs when
- * following the chain of request bपढ़ोcrumbs. Since it is most likely
- * that we have a single client रुकोing on each seqno, then reducing
+ * Compared to walking the entire list of waiters in a single dedicated
+ * bottom-half, we reduce the latency of the first waiter by avoiding
+ * a context switch, but incur additional coherent seqno reads when
+ * following the chain of request breadcrumbs. Since it is most likely
+ * that we have a single client waiting on each seqno, then reducing
  * the overhead of waking that client is much preferred.
  */
-काष्ठा पूर्णांकel_bपढ़ोcrumbs अणु
+struct intel_breadcrumbs {
 	atomic_t active;
 
-	spinlock_t संकेतers_lock; /* protects the list of संकेतers */
-	काष्ठा list_head संकेतers;
-	काष्ठा llist_head संकेतed_requests;
-	atomic_t संकेतer_active;
+	spinlock_t signalers_lock; /* protects the list of signalers */
+	struct list_head signalers;
+	struct llist_head signaled_requests;
+	atomic_t signaler_active;
 
-	spinlock_t irq_lock; /* protects the पूर्णांकerrupt from hardirq context */
-	काष्ठा irq_work irq_work; /* क्रम use from inside irq_lock */
-	अचिन्हित पूर्णांक irq_enabled;
+	spinlock_t irq_lock; /* protects the interrupt from hardirq context */
+	struct irq_work irq_work; /* for use from inside irq_lock */
+	unsigned int irq_enabled;
 	bool irq_armed;
 
-	/* Not all bपढ़ोcrumbs are attached to physical HW */
-	काष्ठा पूर्णांकel_engine_cs *irq_engine;
-पूर्ण;
+	/* Not all breadcrumbs are attached to physical HW */
+	struct intel_engine_cs *irq_engine;
+};
 
-#पूर्ण_अगर /* __INTEL_BREADCRUMBS_TYPES__ */
+#endif /* __INTEL_BREADCRUMBS_TYPES__ */

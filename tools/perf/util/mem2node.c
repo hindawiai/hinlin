@@ -1,140 +1,139 @@
-<शैली गुरु>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <यंत्र/bug.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
-#समावेश "debug.h"
-#समावेश "env.h"
-#समावेश "mem2node.h"
+#include <errno.h>
+#include <inttypes.h>
+#include <asm/bug.h>
+#include <linux/bitmap.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
+#include "debug.h"
+#include "env.h"
+#include "mem2node.h"
 
-काष्ठा phys_entry अणु
-	काष्ठा rb_node	rb_node;
+struct phys_entry {
+	struct rb_node	rb_node;
 	u64	start;
 	u64	end;
 	u64	node;
-पूर्ण;
+};
 
-अटल व्योम phys_entry__insert(काष्ठा phys_entry *entry, काष्ठा rb_root *root)
-अणु
-	काष्ठा rb_node **p = &root->rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	काष्ठा phys_entry *e;
+static void phys_entry__insert(struct phys_entry *entry, struct rb_root *root)
+{
+	struct rb_node **p = &root->rb_node;
+	struct rb_node *parent = NULL;
+	struct phys_entry *e;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		e = rb_entry(parent, काष्ठा phys_entry, rb_node);
+		e = rb_entry(parent, struct phys_entry, rb_node);
 
-		अगर (entry->start < e->start)
+		if (entry->start < e->start)
 			p = &(*p)->rb_left;
-		अन्यथा
+		else
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 
 	rb_link_node(&entry->rb_node, parent, p);
 	rb_insert_color(&entry->rb_node, root);
-पूर्ण
+}
 
-अटल व्योम
-phys_entry__init(काष्ठा phys_entry *entry, u64 start, u64 bsize, u64 node)
-अणु
+static void
+phys_entry__init(struct phys_entry *entry, u64 start, u64 bsize, u64 node)
+{
 	entry->start = start;
 	entry->end   = start + bsize;
 	entry->node  = node;
 	RB_CLEAR_NODE(&entry->rb_node);
-पूर्ण
+}
 
-पूर्णांक mem2node__init(काष्ठा mem2node *map, काष्ठा perf_env *env)
-अणु
-	काष्ठा memory_node *n, *nodes = &env->memory_nodes[0];
-	काष्ठा phys_entry *entries, *पंचांगp_entries;
+int mem2node__init(struct mem2node *map, struct perf_env *env)
+{
+	struct memory_node *n, *nodes = &env->memory_nodes[0];
+	struct phys_entry *entries, *tmp_entries;
 	u64 bsize = env->memory_bsize;
-	पूर्णांक i, j = 0, max = 0;
+	int i, j = 0, max = 0;
 
-	स_रखो(map, 0x0, माप(*map));
+	memset(map, 0x0, sizeof(*map));
 	map->root = RB_ROOT;
 
-	क्रम (i = 0; i < env->nr_memory_nodes; i++) अणु
+	for (i = 0; i < env->nr_memory_nodes; i++) {
 		n = &nodes[i];
-		max += biपंचांगap_weight(n->set, n->size);
-	पूर्ण
+		max += bitmap_weight(n->set, n->size);
+	}
 
-	entries = zalloc(माप(*entries) * max);
-	अगर (!entries)
-		वापस -ENOMEM;
+	entries = zalloc(sizeof(*entries) * max);
+	if (!entries)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < env->nr_memory_nodes; i++) अणु
+	for (i = 0; i < env->nr_memory_nodes; i++) {
 		u64 bit;
 
 		n = &nodes[i];
 
-		क्रम (bit = 0; bit < n->size; bit++) अणु
+		for (bit = 0; bit < n->size; bit++) {
 			u64 start;
 
-			अगर (!test_bit(bit, n->set))
-				जारी;
+			if (!test_bit(bit, n->set))
+				continue;
 
 			start = bit * bsize;
 
 			/*
 			 * Merge nearby areas, we walk in order
-			 * through the biपंचांगap, so no need to sort.
+			 * through the bitmap, so no need to sort.
 			 */
-			अगर (j > 0) अणु
-				काष्ठा phys_entry *prev = &entries[j - 1];
+			if (j > 0) {
+				struct phys_entry *prev = &entries[j - 1];
 
-				अगर ((prev->end == start) &&
-				    (prev->node == n->node)) अणु
+				if ((prev->end == start) &&
+				    (prev->node == n->node)) {
 					prev->end += bsize;
-					जारी;
-				पूर्ण
-			पूर्ण
+					continue;
+				}
+			}
 
 			phys_entry__init(&entries[j++], start, bsize, n->node);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Cut unused entries, due to merging. */
-	पंचांगp_entries = पुनः_स्मृति(entries, माप(*entries) * j);
-	अगर (पंचांगp_entries ||
+	tmp_entries = realloc(entries, sizeof(*entries) * j);
+	if (tmp_entries ||
 	    WARN_ONCE(j == 0, "No memory nodes, is CONFIG_MEMORY_HOTPLUG enabled?\n"))
-		entries = पंचांगp_entries;
+		entries = tmp_entries;
 
-	क्रम (i = 0; i < j; i++) अणु
+	for (i = 0; i < j; i++) {
 		pr_debug("mem2node %03" PRIu64 " [0x%016" PRIx64 "-0x%016" PRIx64 "]\n",
 			 entries[i].node, entries[i].start, entries[i].end);
 
 		phys_entry__insert(&entries[i], &map->root);
-	पूर्ण
+	}
 
 	map->entries = entries;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mem2node__निकास(काष्ठा mem2node *map)
-अणु
-	zमुक्त(&map->entries);
-पूर्ण
+void mem2node__exit(struct mem2node *map)
+{
+	zfree(&map->entries);
+}
 
-पूर्णांक mem2node__node(काष्ठा mem2node *map, u64 addr)
-अणु
-	काष्ठा rb_node **p, *parent = शून्य;
-	काष्ठा phys_entry *entry;
+int mem2node__node(struct mem2node *map, u64 addr)
+{
+	struct rb_node **p, *parent = NULL;
+	struct phys_entry *entry;
 
 	p = &map->root.rb_node;
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		entry = rb_entry(parent, काष्ठा phys_entry, rb_node);
-		अगर (addr < entry->start)
+		entry = rb_entry(parent, struct phys_entry, rb_node);
+		if (addr < entry->start)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (addr >= entry->end)
+		else if (addr >= entry->end)
 			p = &(*p)->rb_right;
-		अन्यथा
-			जाओ out;
-	पूर्ण
+		else
+			goto out;
+	}
 
-	entry = शून्य;
+	entry = NULL;
 out:
-	वापस entry ? (पूर्णांक) entry->node : -1;
-पूर्ण
+	return entry ? (int) entry->node : -1;
+}

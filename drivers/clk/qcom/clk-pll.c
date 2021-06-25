@@ -1,337 +1,336 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
+#include <linux/kernel.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/bug.h>
+#include <linux/delay.h>
+#include <linux/export.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
 
-#समावेश <यंत्र/भाग64.h>
+#include <asm/div64.h>
 
-#समावेश "clk-pll.h"
-#समावेश "common.h"
+#include "clk-pll.h"
+#include "common.h"
 
-#घोषणा PLL_OUTCTRL		BIT(0)
-#घोषणा PLL_BYPASSNL		BIT(1)
-#घोषणा PLL_RESET_N		BIT(2)
+#define PLL_OUTCTRL		BIT(0)
+#define PLL_BYPASSNL		BIT(1)
+#define PLL_RESET_N		BIT(2)
 
-अटल पूर्णांक clk_pll_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	पूर्णांक ret;
+static int clk_pll_enable(struct clk_hw *hw)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	int ret;
 	u32 mask, val;
 
 	mask = PLL_OUTCTRL | PLL_RESET_N | PLL_BYPASSNL;
-	ret = regmap_पढ़ो(pll->clkr.regmap, pll->mode_reg, &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, pll->mode_reg, &val);
+	if (ret)
+		return ret;
 
-	/* Skip अगर alपढ़ोy enabled or in FSM mode */
-	अगर ((val & mask) == mask || val & PLL_VOTE_FSM_ENA)
-		वापस 0;
+	/* Skip if already enabled or in FSM mode */
+	if ((val & mask) == mask || val & PLL_VOTE_FSM_ENA)
+		return 0;
 
 	/* Disable PLL bypass mode. */
 	ret = regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_BYPASSNL,
 				 PLL_BYPASSNL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * H/W requires a 5us delay between disabling the bypass and
-	 * de-निश्चितing the reset. Delay 10us just to be safe.
+	 * de-asserting the reset. Delay 10us just to be safe.
 	 */
 	udelay(10);
 
-	/* De-निश्चित active-low PLL reset. */
+	/* De-assert active-low PLL reset. */
 	ret = regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_RESET_N,
 				 PLL_RESET_N);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Wait until PLL is locked. */
 	udelay(50);
 
 	/* Enable PLL output. */
-	वापस regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_OUTCTRL,
+	return regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_OUTCTRL,
 				 PLL_OUTCTRL);
-पूर्ण
+}
 
-अटल व्योम clk_pll_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
+static void clk_pll_disable(struct clk_hw *hw)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
 	u32 mask;
 	u32 val;
 
-	regmap_पढ़ो(pll->clkr.regmap, pll->mode_reg, &val);
-	/* Skip अगर in FSM mode */
-	अगर (val & PLL_VOTE_FSM_ENA)
-		वापस;
+	regmap_read(pll->clkr.regmap, pll->mode_reg, &val);
+	/* Skip if in FSM mode */
+	if (val & PLL_VOTE_FSM_ENA)
+		return;
 	mask = PLL_OUTCTRL | PLL_RESET_N | PLL_BYPASSNL;
 	regmap_update_bits(pll->clkr.regmap, pll->mode_reg, mask, 0);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
-clk_pll_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
+static unsigned long
+clk_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
 	u32 l, m, n, config;
-	अचिन्हित दीर्घ rate;
-	u64 पंचांगp;
+	unsigned long rate;
+	u64 tmp;
 
-	regmap_पढ़ो(pll->clkr.regmap, pll->l_reg, &l);
-	regmap_पढ़ो(pll->clkr.regmap, pll->m_reg, &m);
-	regmap_पढ़ो(pll->clkr.regmap, pll->n_reg, &n);
+	regmap_read(pll->clkr.regmap, pll->l_reg, &l);
+	regmap_read(pll->clkr.regmap, pll->m_reg, &m);
+	regmap_read(pll->clkr.regmap, pll->n_reg, &n);
 
 	l &= 0x3ff;
 	m &= 0x7ffff;
 	n &= 0x7ffff;
 
 	rate = parent_rate * l;
-	अगर (n) अणु
-		पंचांगp = parent_rate;
-		पंचांगp *= m;
-		करो_भाग(पंचांगp, n);
-		rate += पंचांगp;
-	पूर्ण
-	अगर (pll->post_भाग_width) अणु
-		regmap_पढ़ो(pll->clkr.regmap, pll->config_reg, &config);
-		config >>= pll->post_भाग_shअगरt;
-		config &= BIT(pll->post_भाग_width) - 1;
+	if (n) {
+		tmp = parent_rate;
+		tmp *= m;
+		do_div(tmp, n);
+		rate += tmp;
+	}
+	if (pll->post_div_width) {
+		regmap_read(pll->clkr.regmap, pll->config_reg, &config);
+		config >>= pll->post_div_shift;
+		config &= BIT(pll->post_div_width) - 1;
 		rate /= config + 1;
-	पूर्ण
+	}
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल स्थिर
-काष्ठा pll_freq_tbl *find_freq(स्थिर काष्ठा pll_freq_tbl *f, अचिन्हित दीर्घ rate)
-अणु
-	अगर (!f)
-		वापस शून्य;
+static const
+struct pll_freq_tbl *find_freq(const struct pll_freq_tbl *f, unsigned long rate)
+{
+	if (!f)
+		return NULL;
 
-	क्रम (; f->freq; f++)
-		अगर (rate <= f->freq)
-			वापस f;
+	for (; f->freq; f++)
+		if (rate <= f->freq)
+			return f;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक
-clk_pll_determine_rate(काष्ठा clk_hw *hw, काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	स्थिर काष्ठा pll_freq_tbl *f;
+static int
+clk_pll_determine_rate(struct clk_hw *hw, struct clk_rate_request *req)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	const struct pll_freq_tbl *f;
 
 	f = find_freq(pll->freq_tbl, req->rate);
-	अगर (!f)
+	if (!f)
 		req->rate = clk_pll_recalc_rate(hw, req->best_parent_rate);
-	अन्यथा
+	else
 		req->rate = f->freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-clk_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate, अचिन्हित दीर्घ p_rate)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	स्थिर काष्ठा pll_freq_tbl *f;
+static int
+clk_pll_set_rate(struct clk_hw *hw, unsigned long rate, unsigned long p_rate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	const struct pll_freq_tbl *f;
 	bool enabled;
 	u32 mode;
 	u32 enable_mask = PLL_OUTCTRL | PLL_BYPASSNL | PLL_RESET_N;
 
 	f = find_freq(pll->freq_tbl, rate);
-	अगर (!f)
-		वापस -EINVAL;
+	if (!f)
+		return -EINVAL;
 
-	regmap_पढ़ो(pll->clkr.regmap, pll->mode_reg, &mode);
+	regmap_read(pll->clkr.regmap, pll->mode_reg, &mode);
 	enabled = (mode & enable_mask) == enable_mask;
 
-	अगर (enabled)
+	if (enabled)
 		clk_pll_disable(hw);
 
 	regmap_update_bits(pll->clkr.regmap, pll->l_reg, 0x3ff, f->l);
 	regmap_update_bits(pll->clkr.regmap, pll->m_reg, 0x7ffff, f->m);
 	regmap_update_bits(pll->clkr.regmap, pll->n_reg, 0x7ffff, f->n);
-	regmap_ग_लिखो(pll->clkr.regmap, pll->config_reg, f->ibits);
+	regmap_write(pll->clkr.regmap, pll->config_reg, f->ibits);
 
-	अगर (enabled)
+	if (enabled)
 		clk_pll_enable(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops clk_pll_ops = अणु
+const struct clk_ops clk_pll_ops = {
 	.enable = clk_pll_enable,
 	.disable = clk_pll_disable,
 	.recalc_rate = clk_pll_recalc_rate,
 	.determine_rate = clk_pll_determine_rate,
 	.set_rate = clk_pll_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_pll_ops);
 
-अटल पूर्णांक रुको_क्रम_pll(काष्ठा clk_pll *pll)
-अणु
+static int wait_for_pll(struct clk_pll *pll)
+{
 	u32 val;
-	पूर्णांक count;
-	पूर्णांक ret;
-	स्थिर अक्षर *name = clk_hw_get_name(&pll->clkr.hw);
+	int count;
+	int ret;
+	const char *name = clk_hw_get_name(&pll->clkr.hw);
 
-	/* Wait क्रम pll to enable. */
-	क्रम (count = 200; count > 0; count--) अणु
-		ret = regmap_पढ़ो(pll->clkr.regmap, pll->status_reg, &val);
-		अगर (ret)
-			वापस ret;
-		अगर (val & BIT(pll->status_bit))
-			वापस 0;
+	/* Wait for pll to enable. */
+	for (count = 200; count > 0; count--) {
+		ret = regmap_read(pll->clkr.regmap, pll->status_reg, &val);
+		if (ret)
+			return ret;
+		if (val & BIT(pll->status_bit))
+			return 0;
 		udelay(1);
-	पूर्ण
+	}
 
 	WARN(1, "%s didn't enable after voting for it!\n", name);
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक clk_pll_vote_enable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_pll *p = to_clk_pll(clk_hw_get_parent(hw));
+static int clk_pll_vote_enable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_pll *p = to_clk_pll(clk_hw_get_parent(hw));
 
 	ret = clk_enable_regmap(hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस रुको_क्रम_pll(p);
-पूर्ण
+	return wait_for_pll(p);
+}
 
-स्थिर काष्ठा clk_ops clk_pll_vote_ops = अणु
+const struct clk_ops clk_pll_vote_ops = {
 	.enable = clk_pll_vote_enable,
 	.disable = clk_disable_regmap,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_pll_vote_ops);
 
-अटल व्योम clk_pll_configure(काष्ठा clk_pll *pll, काष्ठा regmap *regmap,
-	स्थिर काष्ठा pll_config *config)
-अणु
+static void clk_pll_configure(struct clk_pll *pll, struct regmap *regmap,
+	const struct pll_config *config)
+{
 	u32 val;
 	u32 mask;
 
-	regmap_ग_लिखो(regmap, pll->l_reg, config->l);
-	regmap_ग_लिखो(regmap, pll->m_reg, config->m);
-	regmap_ग_लिखो(regmap, pll->n_reg, config->n);
+	regmap_write(regmap, pll->l_reg, config->l);
+	regmap_write(regmap, pll->m_reg, config->m);
+	regmap_write(regmap, pll->n_reg, config->n);
 
 	val = config->vco_val;
-	val |= config->pre_भाग_val;
-	val |= config->post_भाग_val;
+	val |= config->pre_div_val;
+	val |= config->post_div_val;
 	val |= config->mn_ena_mask;
-	val |= config->मुख्य_output_mask;
+	val |= config->main_output_mask;
 	val |= config->aux_output_mask;
 
 	mask = config->vco_mask;
-	mask |= config->pre_भाग_mask;
-	mask |= config->post_भाग_mask;
+	mask |= config->pre_div_mask;
+	mask |= config->post_div_mask;
 	mask |= config->mn_ena_mask;
-	mask |= config->मुख्य_output_mask;
+	mask |= config->main_output_mask;
 	mask |= config->aux_output_mask;
 
 	regmap_update_bits(regmap, pll->config_reg, mask, val);
-पूर्ण
+}
 
-व्योम clk_pll_configure_sr(काष्ठा clk_pll *pll, काष्ठा regmap *regmap,
-		स्थिर काष्ठा pll_config *config, bool fsm_mode)
-अणु
+void clk_pll_configure_sr(struct clk_pll *pll, struct regmap *regmap,
+		const struct pll_config *config, bool fsm_mode)
+{
 	clk_pll_configure(pll, regmap, config);
-	अगर (fsm_mode)
+	if (fsm_mode)
 		qcom_pll_set_fsm_mode(regmap, pll->mode_reg, 1, 8);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(clk_pll_configure_sr);
 
-व्योम clk_pll_configure_sr_hpm_lp(काष्ठा clk_pll *pll, काष्ठा regmap *regmap,
-		स्थिर काष्ठा pll_config *config, bool fsm_mode)
-अणु
+void clk_pll_configure_sr_hpm_lp(struct clk_pll *pll, struct regmap *regmap,
+		const struct pll_config *config, bool fsm_mode)
+{
 	clk_pll_configure(pll, regmap, config);
-	अगर (fsm_mode)
+	if (fsm_mode)
 		qcom_pll_set_fsm_mode(regmap, pll->mode_reg, 1, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(clk_pll_configure_sr_hpm_lp);
 
-अटल पूर्णांक clk_pll_sr2_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	पूर्णांक ret;
+static int clk_pll_sr2_enable(struct clk_hw *hw)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	int ret;
 	u32 mode;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, pll->mode_reg, &mode);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, pll->mode_reg, &mode);
+	if (ret)
+		return ret;
 
 	/* Disable PLL bypass mode. */
 	ret = regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_BYPASSNL,
 				 PLL_BYPASSNL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * H/W requires a 5us delay between disabling the bypass and
-	 * de-निश्चितing the reset. Delay 10us just to be safe.
+	 * de-asserting the reset. Delay 10us just to be safe.
 	 */
 	udelay(10);
 
-	/* De-निश्चित active-low PLL reset. */
+	/* De-assert active-low PLL reset. */
 	ret = regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_RESET_N,
 				 PLL_RESET_N);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_क्रम_pll(pll);
-	अगर (ret)
-		वापस ret;
+	ret = wait_for_pll(pll);
+	if (ret)
+		return ret;
 
 	/* Enable PLL output. */
-	वापस regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_OUTCTRL,
+	return regmap_update_bits(pll->clkr.regmap, pll->mode_reg, PLL_OUTCTRL,
 				 PLL_OUTCTRL);
-पूर्ण
+}
 
-अटल पूर्णांक
-clk_pll_sr2_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate, अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	स्थिर काष्ठा pll_freq_tbl *f;
+static int
+clk_pll_sr2_set_rate(struct clk_hw *hw, unsigned long rate, unsigned long prate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	const struct pll_freq_tbl *f;
 	bool enabled;
 	u32 mode;
 	u32 enable_mask = PLL_OUTCTRL | PLL_BYPASSNL | PLL_RESET_N;
 
 	f = find_freq(pll->freq_tbl, rate);
-	अगर (!f)
-		वापस -EINVAL;
+	if (!f)
+		return -EINVAL;
 
-	regmap_पढ़ो(pll->clkr.regmap, pll->mode_reg, &mode);
+	regmap_read(pll->clkr.regmap, pll->mode_reg, &mode);
 	enabled = (mode & enable_mask) == enable_mask;
 
-	अगर (enabled)
+	if (enabled)
 		clk_pll_disable(hw);
 
 	regmap_update_bits(pll->clkr.regmap, pll->l_reg, 0x3ff, f->l);
 	regmap_update_bits(pll->clkr.regmap, pll->m_reg, 0x7ffff, f->m);
 	regmap_update_bits(pll->clkr.regmap, pll->n_reg, 0x7ffff, f->n);
 
-	अगर (enabled)
+	if (enabled)
 		clk_pll_sr2_enable(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops clk_pll_sr2_ops = अणु
+const struct clk_ops clk_pll_sr2_ops = {
 	.enable = clk_pll_sr2_enable,
 	.disable = clk_pll_disable,
 	.set_rate = clk_pll_sr2_set_rate,
 	.recalc_rate = clk_pll_recalc_rate,
 	.determine_rate = clk_pll_determine_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_pll_sr2_ops);

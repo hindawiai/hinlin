@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#अगर_अघोषित BTRFS_ORDERED_DATA_H
-#घोषणा BTRFS_ORDERED_DATA_H
+#ifndef BTRFS_ORDERED_DATA_H
+#define BTRFS_ORDERED_DATA_H
 
 /* one of these per inode */
-काष्ठा btrfs_ordered_inode_tree अणु
+struct btrfs_ordered_inode_tree {
 	spinlock_t lock;
-	काष्ठा rb_root tree;
-	काष्ठा rb_node *last;
-पूर्ण;
+	struct rb_root tree;
+	struct rb_node *last;
+};
 
-काष्ठा btrfs_ordered_sum अणु
+struct btrfs_ordered_sum {
 	/* bytenr is the start of this extent on disk */
 	u64 bytenr;
 
 	/*
 	 * this is the length in bytes covered by the sums array below.
 	 */
-	पूर्णांक len;
-	काष्ठा list_head list;
+	int len;
+	struct list_head list;
 	/* last field is a variable length array of csums */
 	u8 sums[];
-पूर्ण;
+};
 
 /*
- * Bits क्रम btrfs_ordered_extent::flags.
+ * Bits for btrfs_ordered_extent::flags.
  *
  * BTRFS_ORDERED_IO_DONE is set when all of the blocks are written.
- * It is used to make sure metadata is inserted पूर्णांकo the tree only once
+ * It is used to make sure metadata is inserted into the tree only once
  * per extent.
  *
- * BTRFS_ORDERED_COMPLETE is set when the extent is हटाओd from the
- * rbtree, just beक्रमe waking any रुकोers.  It is used to indicate the
- * IO is करोne and any metadata is inserted पूर्णांकo the tree.
+ * BTRFS_ORDERED_COMPLETE is set when the extent is removed from the
+ * rbtree, just before waking any waiters.  It is used to indicate the
+ * IO is done and any metadata is inserted into the tree.
  */
-क्रमागत अणु
+enum {
 	/*
-	 * Dअगरferent types क्रम ordered extents, one and only one of the 4 types
+	 * Different types for ordered extents, one and only one of the 4 types
 	 * need to be set when creating ordered extent.
 	 *
-	 * REGULAR:	For regular non-compressed COW ग_लिखो
-	 * NOCOW:	For NOCOW ग_लिखो पूर्णांकo existing non-hole extent
-	 * PREALLOC:	For NOCOW ग_लिखो पूर्णांकo pपुनः_स्मृतिated extent
-	 * COMPRESSED:	For compressed COW ग_लिखो
+	 * REGULAR:	For regular non-compressed COW write
+	 * NOCOW:	For NOCOW write into existing non-hole extent
+	 * PREALLOC:	For NOCOW write into preallocated extent
+	 * COMPRESSED:	For compressed COW write
 	 */
 	BTRFS_ORDERED_REGULAR,
 	BTRFS_ORDERED_NOCOW,
@@ -54,30 +53,30 @@
 	BTRFS_ORDERED_COMPRESSED,
 
 	/*
-	 * Extra bit क्रम direct io, can only be set क्रम
-	 * REGULAR/NOCOW/PREALLOC. No direct io क्रम compressed extent.
+	 * Extra bit for direct io, can only be set for
+	 * REGULAR/NOCOW/PREALLOC. No direct io for compressed extent.
 	 */
-	BTRFS_ORDERED_सूचीECT,
+	BTRFS_ORDERED_DIRECT,
 
-	/* Extra status bits क्रम ordered extents */
+	/* Extra status bits for ordered extents */
 
 	/* set when all the pages are written */
 	BTRFS_ORDERED_IO_DONE,
-	/* set when हटाओd from the tree */
+	/* set when removed from the tree */
 	BTRFS_ORDERED_COMPLETE,
 	/* We had an io error when writing this out */
 	BTRFS_ORDERED_IOERR,
 	/* Set when we have to truncate an extent */
 	BTRFS_ORDERED_TRUNCATED,
-	/* Used during fsync to track alपढ़ोy logged extents */
+	/* Used during fsync to track already logged extents */
 	BTRFS_ORDERED_LOGGED,
-	/* We have alपढ़ोy logged all the csums of the ordered extent */
+	/* We have already logged all the csums of the ordered extent */
 	BTRFS_ORDERED_LOGGED_CSUM,
-	/* We रुको क्रम this extent to complete in the current transaction */
+	/* We wait for this extent to complete in the current transaction */
 	BTRFS_ORDERED_PENDING,
-पूर्ण;
+};
 
-काष्ठा btrfs_ordered_extent अणु
+struct btrfs_ordered_extent {
 	/* logical offset in the file */
 	u64 file_offset;
 
@@ -100,119 +99,119 @@
 	u64 outstanding_isize;
 
 	/*
-	 * If we get truncated we need to adjust the file extent we enter क्रम
-	 * this ordered extent so that we करो not expose stale data.
+	 * If we get truncated we need to adjust the file extent we enter for
+	 * this ordered extent so that we do not expose stale data.
 	 */
 	u64 truncated_len;
 
 	/* flags (described above) */
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* compression algorithm */
-	पूर्णांक compress_type;
+	int compress_type;
 
 	/* Qgroup reserved space */
-	पूर्णांक qgroup_rsv;
+	int qgroup_rsv;
 
 	/* reference count */
 	refcount_t refs;
 
-	/* the inode we beदीर्घ to */
-	काष्ठा inode *inode;
+	/* the inode we belong to */
+	struct inode *inode;
 
-	/* list of checksums क्रम insertion when the extent io is करोne */
-	काष्ठा list_head list;
+	/* list of checksums for insertion when the extent io is done */
+	struct list_head list;
 
-	/* used क्रम fast fsyncs */
-	काष्ठा list_head log_list;
+	/* used for fast fsyncs */
+	struct list_head log_list;
 
-	/* used to रुको क्रम the BTRFS_ORDERED_COMPLETE bit */
-	रुको_queue_head_t रुको;
+	/* used to wait for the BTRFS_ORDERED_COMPLETE bit */
+	wait_queue_head_t wait;
 
-	/* our मित्रly rbtree entry */
-	काष्ठा rb_node rb_node;
+	/* our friendly rbtree entry */
+	struct rb_node rb_node;
 
 	/* a per root list of all the pending ordered extents */
-	काष्ठा list_head root_extent_list;
+	struct list_head root_extent_list;
 
-	काष्ठा btrfs_work work;
+	struct btrfs_work work;
 
-	काष्ठा completion completion;
-	काष्ठा btrfs_work flush_work;
-	काष्ठा list_head work_list;
+	struct completion completion;
+	struct btrfs_work flush_work;
+	struct list_head work_list;
 
 	/*
-	 * Used to reverse-map physical address वापसed from ZONE_APPEND ग_लिखो
+	 * Used to reverse-map physical address returned from ZONE_APPEND write
 	 * command in a workqueue context
 	 */
 	u64 physical;
-	काष्ठा gendisk *disk;
+	struct gendisk *disk;
 	u8 partno;
-पूर्ण;
+};
 
 /*
- * calculates the total size you need to allocate क्रम an ordered sum
- * काष्ठाure spanning 'bytes' in the file
+ * calculates the total size you need to allocate for an ordered sum
+ * structure spanning 'bytes' in the file
  */
-अटल अंतरभूत पूर्णांक btrfs_ordered_sum_size(काष्ठा btrfs_fs_info *fs_info,
-					 अचिन्हित दीर्घ bytes)
-अणु
-	पूर्णांक num_sectors = (पूर्णांक)DIV_ROUND_UP(bytes, fs_info->sectorsize);
+static inline int btrfs_ordered_sum_size(struct btrfs_fs_info *fs_info,
+					 unsigned long bytes)
+{
+	int num_sectors = (int)DIV_ROUND_UP(bytes, fs_info->sectorsize);
 
-	वापस माप(काष्ठा btrfs_ordered_sum) + num_sectors * fs_info->csum_size;
-पूर्ण
+	return sizeof(struct btrfs_ordered_sum) + num_sectors * fs_info->csum_size;
+}
 
-अटल अंतरभूत व्योम
-btrfs_ordered_inode_tree_init(काष्ठा btrfs_ordered_inode_tree *t)
-अणु
+static inline void
+btrfs_ordered_inode_tree_init(struct btrfs_ordered_inode_tree *t)
+{
 	spin_lock_init(&t->lock);
 	t->tree = RB_ROOT;
-	t->last = शून्य;
-पूर्ण
+	t->last = NULL;
+}
 
-व्योम btrfs_put_ordered_extent(काष्ठा btrfs_ordered_extent *entry);
-व्योम btrfs_हटाओ_ordered_extent(काष्ठा btrfs_inode *btrfs_inode,
-				काष्ठा btrfs_ordered_extent *entry);
-bool btrfs_dec_test_ordered_pending(काष्ठा btrfs_inode *inode,
-				    काष्ठा btrfs_ordered_extent **cached,
-				    u64 file_offset, u64 io_size, पूर्णांक uptodate);
-bool btrfs_dec_test_first_ordered_pending(काष्ठा btrfs_inode *inode,
-				   काष्ठा btrfs_ordered_extent **finished_ret,
+void btrfs_put_ordered_extent(struct btrfs_ordered_extent *entry);
+void btrfs_remove_ordered_extent(struct btrfs_inode *btrfs_inode,
+				struct btrfs_ordered_extent *entry);
+bool btrfs_dec_test_ordered_pending(struct btrfs_inode *inode,
+				    struct btrfs_ordered_extent **cached,
+				    u64 file_offset, u64 io_size, int uptodate);
+bool btrfs_dec_test_first_ordered_pending(struct btrfs_inode *inode,
+				   struct btrfs_ordered_extent **finished_ret,
 				   u64 *file_offset, u64 io_size,
-				   पूर्णांक uptodate);
-पूर्णांक btrfs_add_ordered_extent(काष्ठा btrfs_inode *inode, u64 file_offset,
+				   int uptodate);
+int btrfs_add_ordered_extent(struct btrfs_inode *inode, u64 file_offset,
 			     u64 disk_bytenr, u64 num_bytes, u64 disk_num_bytes,
-			     पूर्णांक type);
-पूर्णांक btrfs_add_ordered_extent_dio(काष्ठा btrfs_inode *inode, u64 file_offset,
+			     int type);
+int btrfs_add_ordered_extent_dio(struct btrfs_inode *inode, u64 file_offset,
 				 u64 disk_bytenr, u64 num_bytes,
-				 u64 disk_num_bytes, पूर्णांक type);
-पूर्णांक btrfs_add_ordered_extent_compress(काष्ठा btrfs_inode *inode, u64 file_offset,
+				 u64 disk_num_bytes, int type);
+int btrfs_add_ordered_extent_compress(struct btrfs_inode *inode, u64 file_offset,
 				      u64 disk_bytenr, u64 num_bytes,
-				      u64 disk_num_bytes, पूर्णांक compress_type);
-व्योम btrfs_add_ordered_sum(काष्ठा btrfs_ordered_extent *entry,
-			   काष्ठा btrfs_ordered_sum *sum);
-काष्ठा btrfs_ordered_extent *btrfs_lookup_ordered_extent(काष्ठा btrfs_inode *inode,
+				      u64 disk_num_bytes, int compress_type);
+void btrfs_add_ordered_sum(struct btrfs_ordered_extent *entry,
+			   struct btrfs_ordered_sum *sum);
+struct btrfs_ordered_extent *btrfs_lookup_ordered_extent(struct btrfs_inode *inode,
 							 u64 file_offset);
-व्योम btrfs_start_ordered_extent(काष्ठा btrfs_ordered_extent *entry, पूर्णांक रुको);
-पूर्णांक btrfs_रुको_ordered_range(काष्ठा inode *inode, u64 start, u64 len);
-काष्ठा btrfs_ordered_extent *
-btrfs_lookup_first_ordered_extent(काष्ठा btrfs_inode *inode, u64 file_offset);
-काष्ठा btrfs_ordered_extent *btrfs_lookup_ordered_range(
-		काष्ठा btrfs_inode *inode,
+void btrfs_start_ordered_extent(struct btrfs_ordered_extent *entry, int wait);
+int btrfs_wait_ordered_range(struct inode *inode, u64 start, u64 len);
+struct btrfs_ordered_extent *
+btrfs_lookup_first_ordered_extent(struct btrfs_inode *inode, u64 file_offset);
+struct btrfs_ordered_extent *btrfs_lookup_ordered_range(
+		struct btrfs_inode *inode,
 		u64 file_offset,
 		u64 len);
-व्योम btrfs_get_ordered_extents_क्रम_logging(काष्ठा btrfs_inode *inode,
-					   काष्ठा list_head *list);
-u64 btrfs_रुको_ordered_extents(काष्ठा btrfs_root *root, u64 nr,
-			       स्थिर u64 range_start, स्थिर u64 range_len);
-व्योम btrfs_रुको_ordered_roots(काष्ठा btrfs_fs_info *fs_info, u64 nr,
-			      स्थिर u64 range_start, स्थिर u64 range_len);
-व्योम btrfs_lock_and_flush_ordered_range(काष्ठा btrfs_inode *inode, u64 start,
+void btrfs_get_ordered_extents_for_logging(struct btrfs_inode *inode,
+					   struct list_head *list);
+u64 btrfs_wait_ordered_extents(struct btrfs_root *root, u64 nr,
+			       const u64 range_start, const u64 range_len);
+void btrfs_wait_ordered_roots(struct btrfs_fs_info *fs_info, u64 nr,
+			      const u64 range_start, const u64 range_len);
+void btrfs_lock_and_flush_ordered_range(struct btrfs_inode *inode, u64 start,
 					u64 end,
-					काष्ठा extent_state **cached_state);
-पूर्णांक btrfs_split_ordered_extent(काष्ठा btrfs_ordered_extent *ordered, u64 pre,
+					struct extent_state **cached_state);
+int btrfs_split_ordered_extent(struct btrfs_ordered_extent *ordered, u64 pre,
 			       u64 post);
-पूर्णांक __init ordered_data_init(व्योम);
-व्योम __cold ordered_data_निकास(व्योम);
+int __init ordered_data_init(void);
+void __cold ordered_data_exit(void);
 
-#पूर्ण_अगर
+#endif

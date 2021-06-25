@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-17 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,13 +22,13 @@
  * Authors: AMD
  *
  */
-#समावेश "os_types.h"
-#समावेश <drm/drm_dsc.h>
-#समावेश "dscc_types.h"
-#समावेश "rc_calc.h"
+#include "os_types.h"
+#include <drm/drm_dsc.h>
+#include "dscc_types.h"
+#include "rc_calc.h"
 
-अटल व्योम copy_pps_fields(काष्ठा drm_dsc_config *to, स्थिर काष्ठा drm_dsc_config *from)
-अणु
+static void copy_pps_fields(struct drm_dsc_config *to, const struct drm_dsc_config *from)
+{
 	to->line_buf_depth           = from->line_buf_depth;
 	to->bits_per_component       = from->bits_per_component;
 	to->convert_rgb              = from->convert_rgb;
@@ -52,14 +51,14 @@
 	to->first_line_bpg_offset    = from->first_line_bpg_offset;
 	to->second_line_bpg_offset   = from->second_line_bpg_offset;
 	to->initial_offset           = from->initial_offset;
-	स_नकल(&to->rc_buf_thresh, &from->rc_buf_thresh, माप(from->rc_buf_thresh));
-	स_नकल(&to->rc_range_params, &from->rc_range_params, माप(from->rc_range_params));
+	memcpy(&to->rc_buf_thresh, &from->rc_buf_thresh, sizeof(from->rc_buf_thresh));
+	memcpy(&to->rc_range_params, &from->rc_range_params, sizeof(from->rc_range_params));
 	to->rc_model_size            = from->rc_model_size;
 	to->flatness_min_qp          = from->flatness_min_qp;
 	to->flatness_max_qp          = from->flatness_max_qp;
 	to->initial_scale_value      = from->initial_scale_value;
-	to->scale_decrement_पूर्णांकerval = from->scale_decrement_पूर्णांकerval;
-	to->scale_increment_पूर्णांकerval = from->scale_increment_पूर्णांकerval;
+	to->scale_decrement_interval = from->scale_decrement_interval;
+	to->scale_increment_interval = from->scale_increment_interval;
 	to->nfl_bpg_offset           = from->nfl_bpg_offset;
 	to->nsl_bpg_offset           = from->nsl_bpg_offset;
 	to->slice_bpg_offset         = from->slice_bpg_offset;
@@ -68,11 +67,11 @@
 	to->slice_chunk_size         = from->slice_chunk_size;
 	to->second_line_offset_adj   = from->second_line_offset_adj;
 	to->dsc_version_minor        = from->dsc_version_minor;
-पूर्ण
+}
 
-अटल व्योम copy_rc_to_cfg(काष्ठा drm_dsc_config *dsc_cfg, स्थिर काष्ठा rc_params *rc)
-अणु
-	पूर्णांक i;
+static void copy_rc_to_cfg(struct drm_dsc_config *dsc_cfg, const struct rc_params *rc)
+{
+	int i;
 
 	dsc_cfg->rc_quant_incr_limit0   = rc->rc_quant_incr_limit0;
 	dsc_cfg->rc_quant_incr_limit1   = rc->rc_quant_incr_limit1;
@@ -82,26 +81,26 @@
 	dsc_cfg->second_line_bpg_offset = rc->second_line_bpg_offset;
 	dsc_cfg->flatness_min_qp        = rc->flatness_min_qp;
 	dsc_cfg->flatness_max_qp        = rc->flatness_max_qp;
-	क्रम (i = 0; i < QP_SET_SIZE; ++i) अणु
+	for (i = 0; i < QP_SET_SIZE; ++i) {
 		dsc_cfg->rc_range_params[i].range_min_qp     = rc->qp_min[i];
 		dsc_cfg->rc_range_params[i].range_max_qp     = rc->qp_max[i];
-		/* Truncate 8-bit चिन्हित value to 6-bit चिन्हित value */
+		/* Truncate 8-bit signed value to 6-bit signed value */
 		dsc_cfg->rc_range_params[i].range_bpg_offset = 0x3f & rc->ofs[i];
-	पूर्ण
+	}
 	dsc_cfg->rc_model_size    = rc->rc_model_size;
 	dsc_cfg->rc_edge_factor   = rc->rc_edge_factor;
 	dsc_cfg->rc_tgt_offset_high = rc->rc_tgt_offset_hi;
 	dsc_cfg->rc_tgt_offset_low = rc->rc_tgt_offset_lo;
 
-	क्रम (i = 0; i < QP_SET_SIZE - 1; ++i)
+	for (i = 0; i < QP_SET_SIZE - 1; ++i)
 		dsc_cfg->rc_buf_thresh[i] = rc->rc_buf_thresh[i];
-पूर्ण
+}
 
-पूर्णांक dscc_compute_dsc_parameters(स्थिर काष्ठा drm_dsc_config *pps, काष्ठा dsc_parameters *dsc_params)
-अणु
-	पूर्णांक              ret;
-	काष्ठा rc_params rc;
-	काष्ठा drm_dsc_config   dsc_cfg;
+int dscc_compute_dsc_parameters(const struct drm_dsc_config *pps, struct dsc_parameters *dsc_params)
+{
+	int              ret;
+	struct rc_params rc;
+	struct drm_dsc_config   dsc_cfg;
 
 	dsc_params->bytes_per_pixel = calc_dsc_bytes_per_pixel(pps);
 
@@ -118,6 +117,6 @@
 
 	copy_pps_fields(&dsc_params->pps, &dsc_cfg);
 	dsc_params->rc_buffer_model_size = dsc_cfg.rc_bits;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 

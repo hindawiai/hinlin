@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * LP8755 High Perक्रमmance Power Management Unit Driver:System Interface Driver
+ * LP8755 High Performance Power Management Unit Driver:System Interface Driver
  *
  *			Copyright (C) 2012 Texas Instruments
  *
@@ -9,28 +8,28 @@
  *             G.Shark Jeong <gshark.jeong@gmail.com>
  */
 
-#अगर_अघोषित _LP8755_H
-#घोषणा _LP8755_H
+#ifndef _LP8755_H
+#define _LP8755_H
 
-#समावेश <linux/regulator/consumer.h>
+#include <linux/regulator/consumer.h>
 
-#घोषणा LP8755_NAME "lp8755-regulator"
+#define LP8755_NAME "lp8755-regulator"
 /*
- *PWR FAULT : घातer fault detected
+ *PWR FAULT : power fault detected
  *OCP : over current protect activated
  *OVP : over voltage protect activated
  *TEMP_WARN : thermal warning
- *TEMP_SHDN : thermal shutकरोnw detected
+ *TEMP_SHDN : thermal shutdonw detected
  *I_LOAD : current measured
  */
-#घोषणा LP8755_EVENT_PWR_FAULT REGULATOR_EVENT_FAIL
-#घोषणा LP8755_EVENT_OCP REGULATOR_EVENT_OVER_CURRENT
-#घोषणा LP8755_EVENT_OVP 0x10000
-#घोषणा LP8755_EVENT_TEMP_WARN 0x2000
-#घोषणा LP8755_EVENT_TEMP_SHDN REGULATOR_EVENT_OVER_TEMP
-#घोषणा LP8755_EVENT_I_LOAD	0x40000
+#define LP8755_EVENT_PWR_FAULT REGULATOR_EVENT_FAIL
+#define LP8755_EVENT_OCP REGULATOR_EVENT_OVER_CURRENT
+#define LP8755_EVENT_OVP 0x10000
+#define LP8755_EVENT_TEMP_WARN 0x2000
+#define LP8755_EVENT_TEMP_SHDN REGULATOR_EVENT_OVER_TEMP
+#define LP8755_EVENT_I_LOAD	0x40000
 
-क्रमागत lp8755_bucks अणु
+enum lp8755_bucks {
 	LP8755_BUCK0 = 0,
 	LP8755_BUCK1,
 	LP8755_BUCK2,
@@ -38,12 +37,12 @@
 	LP8755_BUCK4,
 	LP8755_BUCK5,
 	LP8755_BUCK_MAX,
-पूर्ण;
+};
 
 /**
  * multiphase configuration options
  */
-क्रमागत lp8755_mphase_config अणु
+enum lp8755_mphase_config {
 	MPHASE_CONF0,
 	MPHASE_CONF1,
 	MPHASE_CONF2,
@@ -54,15 +53,15 @@
 	MPHASE_CONF7,
 	MPHASE_CONF8,
 	MPHASE_CONF_MAX
-पूर्ण;
+};
 
 /**
- * काष्ठा lp8755_platक्रमm_data
+ * struct lp8755_platform_data
  * @mphase_type : Multiphase Switcher Configurations.
  * @buck_data   : buck0~6 init voltage in uV
  */
-काष्ठा lp8755_platक्रमm_data अणु
-	पूर्णांक mphase;
-	काष्ठा regulator_init_data *buck_data[LP8755_BUCK_MAX];
-पूर्ण;
-#पूर्ण_अगर
+struct lp8755_platform_data {
+	int mphase;
+	struct regulator_init_data *buck_data[LP8755_BUCK_MAX];
+};
+#endif

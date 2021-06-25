@@ -1,479 +1,478 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ACRN Hypervisor Service Module (HSM)
  *
  * Copyright (C) 2020 Intel Corporation. All rights reserved.
  *
  * Authors:
- *	Fengwei Yin <fengwei.yin@पूर्णांकel.com>
- *	Yakui Zhao <yakui.zhao@पूर्णांकel.com>
+ *	Fengwei Yin <fengwei.yin@intel.com>
+ *	Yakui Zhao <yakui.zhao@intel.com>
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/cpu.h>
+#include <linux/io.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/acrn.h>
-#समावेश <यंत्र/hypervisor.h>
+#include <asm/acrn.h>
+#include <asm/hypervisor.h>
 
-#समावेश "acrn_drv.h"
+#include "acrn_drv.h"
 
 /*
- * When /dev/acrn_hsm is खोलोed, a 'struct acrn_vm' object is created to
- * represent a VM instance and जारीs to be associated with the खोलोed file
+ * When /dev/acrn_hsm is opened, a 'struct acrn_vm' object is created to
+ * represent a VM instance and continues to be associated with the opened file
  * descriptor. All ioctl operations on this file descriptor will be targeted to
  * the VM instance. Release of this file descriptor will destroy the object.
  */
-अटल पूर्णांक acrn_dev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा acrn_vm *vm;
+static int acrn_dev_open(struct inode *inode, struct file *filp)
+{
+	struct acrn_vm *vm;
 
-	vm = kzalloc(माप(*vm), GFP_KERNEL);
-	अगर (!vm)
-		वापस -ENOMEM;
+	vm = kzalloc(sizeof(*vm), GFP_KERNEL);
+	if (!vm)
+		return -ENOMEM;
 
 	vm->vmid = ACRN_INVALID_VMID;
-	filp->निजी_data = vm;
-	वापस 0;
-पूर्ण
+	filp->private_data = vm;
+	return 0;
+}
 
-अटल पूर्णांक pmcmd_ioctl(u64 cmd, व्योम __user *uptr)
-अणु
-	काष्ठा acrn_pstate_data *px_data;
-	काष्ठा acrn_cstate_data *cx_data;
+static int pmcmd_ioctl(u64 cmd, void __user *uptr)
+{
+	struct acrn_pstate_data *px_data;
+	struct acrn_cstate_data *cx_data;
 	u64 *pm_info;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	चयन (cmd & PMCMD_TYPE_MASK) अणु
-	हाल ACRN_PMCMD_GET_PX_CNT:
-	हाल ACRN_PMCMD_GET_CX_CNT:
-		pm_info = kदो_स्मृति(माप(u64), GFP_KERNEL);
-		अगर (!pm_info)
-			वापस -ENOMEM;
+	switch (cmd & PMCMD_TYPE_MASK) {
+	case ACRN_PMCMD_GET_PX_CNT:
+	case ACRN_PMCMD_GET_CX_CNT:
+		pm_info = kmalloc(sizeof(u64), GFP_KERNEL);
+		if (!pm_info)
+			return -ENOMEM;
 
 		ret = hcall_get_cpu_state(cmd, virt_to_phys(pm_info));
-		अगर (ret < 0) अणु
-			kमुक्त(pm_info);
-			अवरोध;
-		पूर्ण
+		if (ret < 0) {
+			kfree(pm_info);
+			break;
+		}
 
-		अगर (copy_to_user(uptr, pm_info, माप(u64)))
+		if (copy_to_user(uptr, pm_info, sizeof(u64)))
 			ret = -EFAULT;
-		kमुक्त(pm_info);
-		अवरोध;
-	हाल ACRN_PMCMD_GET_PX_DATA:
-		px_data = kदो_स्मृति(माप(*px_data), GFP_KERNEL);
-		अगर (!px_data)
-			वापस -ENOMEM;
+		kfree(pm_info);
+		break;
+	case ACRN_PMCMD_GET_PX_DATA:
+		px_data = kmalloc(sizeof(*px_data), GFP_KERNEL);
+		if (!px_data)
+			return -ENOMEM;
 
 		ret = hcall_get_cpu_state(cmd, virt_to_phys(px_data));
-		अगर (ret < 0) अणु
-			kमुक्त(px_data);
-			अवरोध;
-		पूर्ण
+		if (ret < 0) {
+			kfree(px_data);
+			break;
+		}
 
-		अगर (copy_to_user(uptr, px_data, माप(*px_data)))
+		if (copy_to_user(uptr, px_data, sizeof(*px_data)))
 			ret = -EFAULT;
-		kमुक्त(px_data);
-		अवरोध;
-	हाल ACRN_PMCMD_GET_CX_DATA:
-		cx_data = kदो_स्मृति(माप(*cx_data), GFP_KERNEL);
-		अगर (!cx_data)
-			वापस -ENOMEM;
+		kfree(px_data);
+		break;
+	case ACRN_PMCMD_GET_CX_DATA:
+		cx_data = kmalloc(sizeof(*cx_data), GFP_KERNEL);
+		if (!cx_data)
+			return -ENOMEM;
 
 		ret = hcall_get_cpu_state(cmd, virt_to_phys(cx_data));
-		अगर (ret < 0) अणु
-			kमुक्त(cx_data);
-			अवरोध;
-		पूर्ण
+		if (ret < 0) {
+			kfree(cx_data);
+			break;
+		}
 
-		अगर (copy_to_user(uptr, cx_data, माप(*cx_data)))
+		if (copy_to_user(uptr, cx_data, sizeof(*cx_data)))
 			ret = -EFAULT;
-		kमुक्त(cx_data);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		kfree(cx_data);
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * HSM relies on hypercall layer of the ACRN hypervisor to करो the
+ * HSM relies on hypercall layer of the ACRN hypervisor to do the
  * sanity check against the input parameters.
  */
-अटल दीर्घ acrn_dev_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
-			   अचिन्हित दीर्घ ioctl_param)
-अणु
-	काष्ठा acrn_vm *vm = filp->निजी_data;
-	काष्ठा acrn_vm_creation *vm_param;
-	काष्ठा acrn_vcpu_regs *cpu_regs;
-	काष्ठा acrn_ioreq_notअगरy notअगरy;
-	काष्ठा acrn_ptdev_irq *irq_info;
-	काष्ठा acrn_ioeventfd ioeventfd;
-	काष्ठा acrn_vm_memmap memmap;
-	काष्ठा acrn_msi_entry *msi;
-	काष्ठा acrn_pcidev *pcidev;
-	काष्ठा acrn_irqfd irqfd;
-	काष्ठा page *page;
+static long acrn_dev_ioctl(struct file *filp, unsigned int cmd,
+			   unsigned long ioctl_param)
+{
+	struct acrn_vm *vm = filp->private_data;
+	struct acrn_vm_creation *vm_param;
+	struct acrn_vcpu_regs *cpu_regs;
+	struct acrn_ioreq_notify notify;
+	struct acrn_ptdev_irq *irq_info;
+	struct acrn_ioeventfd ioeventfd;
+	struct acrn_vm_memmap memmap;
+	struct acrn_msi_entry *msi;
+	struct acrn_pcidev *pcidev;
+	struct acrn_irqfd irqfd;
+	struct page *page;
 	u64 cstate_cmd;
-	पूर्णांक i, ret = 0;
+	int i, ret = 0;
 
-	अगर (vm->vmid == ACRN_INVALID_VMID && cmd != ACRN_IOCTL_CREATE_VM) अणु
+	if (vm->vmid == ACRN_INVALID_VMID && cmd != ACRN_IOCTL_CREATE_VM) {
 		dev_dbg(acrn_dev.this_device,
 			"ioctl 0x%x: Invalid VM state!\n", cmd);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (cmd) अणु
-	हाल ACRN_IOCTL_CREATE_VM:
-		vm_param = memdup_user((व्योम __user *)ioctl_param,
-				       माप(काष्ठा acrn_vm_creation));
-		अगर (IS_ERR(vm_param))
-			वापस PTR_ERR(vm_param);
+	switch (cmd) {
+	case ACRN_IOCTL_CREATE_VM:
+		vm_param = memdup_user((void __user *)ioctl_param,
+				       sizeof(struct acrn_vm_creation));
+		if (IS_ERR(vm_param))
+			return PTR_ERR(vm_param);
 
-		अगर ((vm_param->reserved0 | vm_param->reserved1) != 0)
-			वापस -EINVAL;
+		if ((vm_param->reserved0 | vm_param->reserved1) != 0)
+			return -EINVAL;
 
 		vm = acrn_vm_create(vm, vm_param);
-		अगर (!vm) अणु
+		if (!vm) {
 			ret = -EINVAL;
-			kमुक्त(vm_param);
-			अवरोध;
-		पूर्ण
+			kfree(vm_param);
+			break;
+		}
 
-		अगर (copy_to_user((व्योम __user *)ioctl_param, vm_param,
-				 माप(काष्ठा acrn_vm_creation))) अणु
+		if (copy_to_user((void __user *)ioctl_param, vm_param,
+				 sizeof(struct acrn_vm_creation))) {
 			acrn_vm_destroy(vm);
 			ret = -EFAULT;
-		पूर्ण
+		}
 
-		kमुक्त(vm_param);
-		अवरोध;
-	हाल ACRN_IOCTL_START_VM:
+		kfree(vm_param);
+		break;
+	case ACRN_IOCTL_START_VM:
 		ret = hcall_start_vm(vm->vmid);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to start VM %u!\n", vm->vmid);
-		अवरोध;
-	हाल ACRN_IOCTL_PAUSE_VM:
-		ret = hcall_छोड़ो_vm(vm->vmid);
-		अगर (ret < 0)
+		break;
+	case ACRN_IOCTL_PAUSE_VM:
+		ret = hcall_pause_vm(vm->vmid);
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to pause VM %u!\n", vm->vmid);
-		अवरोध;
-	हाल ACRN_IOCTL_RESET_VM:
+		break;
+	case ACRN_IOCTL_RESET_VM:
 		ret = hcall_reset_vm(vm->vmid);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to restart VM %u!\n", vm->vmid);
-		अवरोध;
-	हाल ACRN_IOCTL_DESTROY_VM:
+		break;
+	case ACRN_IOCTL_DESTROY_VM:
 		ret = acrn_vm_destroy(vm);
-		अवरोध;
-	हाल ACRN_IOCTL_SET_VCPU_REGS:
-		cpu_regs = memdup_user((व्योम __user *)ioctl_param,
-				       माप(काष्ठा acrn_vcpu_regs));
-		अगर (IS_ERR(cpu_regs))
-			वापस PTR_ERR(cpu_regs);
+		break;
+	case ACRN_IOCTL_SET_VCPU_REGS:
+		cpu_regs = memdup_user((void __user *)ioctl_param,
+				       sizeof(struct acrn_vcpu_regs));
+		if (IS_ERR(cpu_regs))
+			return PTR_ERR(cpu_regs);
 
-		क्रम (i = 0; i < ARRAY_SIZE(cpu_regs->reserved); i++)
-			अगर (cpu_regs->reserved[i])
-				वापस -EINVAL;
+		for (i = 0; i < ARRAY_SIZE(cpu_regs->reserved); i++)
+			if (cpu_regs->reserved[i])
+				return -EINVAL;
 
-		क्रम (i = 0; i < ARRAY_SIZE(cpu_regs->vcpu_regs.reserved_32); i++)
-			अगर (cpu_regs->vcpu_regs.reserved_32[i])
-				वापस -EINVAL;
+		for (i = 0; i < ARRAY_SIZE(cpu_regs->vcpu_regs.reserved_32); i++)
+			if (cpu_regs->vcpu_regs.reserved_32[i])
+				return -EINVAL;
 
-		क्रम (i = 0; i < ARRAY_SIZE(cpu_regs->vcpu_regs.reserved_64); i++)
-			अगर (cpu_regs->vcpu_regs.reserved_64[i])
-				वापस -EINVAL;
+		for (i = 0; i < ARRAY_SIZE(cpu_regs->vcpu_regs.reserved_64); i++)
+			if (cpu_regs->vcpu_regs.reserved_64[i])
+				return -EINVAL;
 
-		क्रम (i = 0; i < ARRAY_SIZE(cpu_regs->vcpu_regs.gdt.reserved); i++)
-			अगर (cpu_regs->vcpu_regs.gdt.reserved[i] |
+		for (i = 0; i < ARRAY_SIZE(cpu_regs->vcpu_regs.gdt.reserved); i++)
+			if (cpu_regs->vcpu_regs.gdt.reserved[i] |
 			    cpu_regs->vcpu_regs.idt.reserved[i])
-				वापस -EINVAL;
+				return -EINVAL;
 
 		ret = hcall_set_vcpu_regs(vm->vmid, virt_to_phys(cpu_regs));
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to set regs state of VM%u!\n",
 				vm->vmid);
-		kमुक्त(cpu_regs);
-		अवरोध;
-	हाल ACRN_IOCTL_SET_MEMSEG:
-		अगर (copy_from_user(&memmap, (व्योम __user *)ioctl_param,
-				   माप(memmap)))
-			वापस -EFAULT;
+		kfree(cpu_regs);
+		break;
+	case ACRN_IOCTL_SET_MEMSEG:
+		if (copy_from_user(&memmap, (void __user *)ioctl_param,
+				   sizeof(memmap)))
+			return -EFAULT;
 
 		ret = acrn_vm_memseg_map(vm, &memmap);
-		अवरोध;
-	हाल ACRN_IOCTL_UNSET_MEMSEG:
-		अगर (copy_from_user(&memmap, (व्योम __user *)ioctl_param,
-				   माप(memmap)))
-			वापस -EFAULT;
+		break;
+	case ACRN_IOCTL_UNSET_MEMSEG:
+		if (copy_from_user(&memmap, (void __user *)ioctl_param,
+				   sizeof(memmap)))
+			return -EFAULT;
 
 		ret = acrn_vm_memseg_unmap(vm, &memmap);
-		अवरोध;
-	हाल ACRN_IOCTL_ASSIGN_PCIDEV:
-		pcidev = memdup_user((व्योम __user *)ioctl_param,
-				     माप(काष्ठा acrn_pcidev));
-		अगर (IS_ERR(pcidev))
-			वापस PTR_ERR(pcidev);
+		break;
+	case ACRN_IOCTL_ASSIGN_PCIDEV:
+		pcidev = memdup_user((void __user *)ioctl_param,
+				     sizeof(struct acrn_pcidev));
+		if (IS_ERR(pcidev))
+			return PTR_ERR(pcidev);
 
 		ret = hcall_assign_pcidev(vm->vmid, virt_to_phys(pcidev));
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to assign pci device!\n");
-		kमुक्त(pcidev);
-		अवरोध;
-	हाल ACRN_IOCTL_DEASSIGN_PCIDEV:
-		pcidev = memdup_user((व्योम __user *)ioctl_param,
-				     माप(काष्ठा acrn_pcidev));
-		अगर (IS_ERR(pcidev))
-			वापस PTR_ERR(pcidev);
+		kfree(pcidev);
+		break;
+	case ACRN_IOCTL_DEASSIGN_PCIDEV:
+		pcidev = memdup_user((void __user *)ioctl_param,
+				     sizeof(struct acrn_pcidev));
+		if (IS_ERR(pcidev))
+			return PTR_ERR(pcidev);
 
 		ret = hcall_deassign_pcidev(vm->vmid, virt_to_phys(pcidev));
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to deassign pci device!\n");
-		kमुक्त(pcidev);
-		अवरोध;
-	हाल ACRN_IOCTL_SET_PTDEV_INTR:
-		irq_info = memdup_user((व्योम __user *)ioctl_param,
-				       माप(काष्ठा acrn_ptdev_irq));
-		अगर (IS_ERR(irq_info))
-			वापस PTR_ERR(irq_info);
+		kfree(pcidev);
+		break;
+	case ACRN_IOCTL_SET_PTDEV_INTR:
+		irq_info = memdup_user((void __user *)ioctl_param,
+				       sizeof(struct acrn_ptdev_irq));
+		if (IS_ERR(irq_info))
+			return PTR_ERR(irq_info);
 
-		ret = hcall_set_ptdev_पूर्णांकr(vm->vmid, virt_to_phys(irq_info));
-		अगर (ret < 0)
+		ret = hcall_set_ptdev_intr(vm->vmid, virt_to_phys(irq_info));
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to configure intr for ptdev!\n");
-		kमुक्त(irq_info);
-		अवरोध;
-	हाल ACRN_IOCTL_RESET_PTDEV_INTR:
-		irq_info = memdup_user((व्योम __user *)ioctl_param,
-				       माप(काष्ठा acrn_ptdev_irq));
-		अगर (IS_ERR(irq_info))
-			वापस PTR_ERR(irq_info);
+		kfree(irq_info);
+		break;
+	case ACRN_IOCTL_RESET_PTDEV_INTR:
+		irq_info = memdup_user((void __user *)ioctl_param,
+				       sizeof(struct acrn_ptdev_irq));
+		if (IS_ERR(irq_info))
+			return PTR_ERR(irq_info);
 
-		ret = hcall_reset_ptdev_पूर्णांकr(vm->vmid, virt_to_phys(irq_info));
-		अगर (ret < 0)
+		ret = hcall_reset_ptdev_intr(vm->vmid, virt_to_phys(irq_info));
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to reset intr for ptdev!\n");
-		kमुक्त(irq_info);
-		अवरोध;
-	हाल ACRN_IOCTL_SET_IRQLINE:
+		kfree(irq_info);
+		break;
+	case ACRN_IOCTL_SET_IRQLINE:
 		ret = hcall_set_irqline(vm->vmid, ioctl_param);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to set interrupt line!\n");
-		अवरोध;
-	हाल ACRN_IOCTL_INJECT_MSI:
-		msi = memdup_user((व्योम __user *)ioctl_param,
-				  माप(काष्ठा acrn_msi_entry));
-		अगर (IS_ERR(msi))
-			वापस PTR_ERR(msi);
+		break;
+	case ACRN_IOCTL_INJECT_MSI:
+		msi = memdup_user((void __user *)ioctl_param,
+				  sizeof(struct acrn_msi_entry));
+		if (IS_ERR(msi))
+			return PTR_ERR(msi);
 
 		ret = hcall_inject_msi(vm->vmid, virt_to_phys(msi));
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_dbg(acrn_dev.this_device,
 				"Failed to inject MSI!\n");
-		kमुक्त(msi);
-		अवरोध;
-	हाल ACRN_IOCTL_VM_INTR_MONITOR:
+		kfree(msi);
+		break;
+	case ACRN_IOCTL_VM_INTR_MONITOR:
 		ret = pin_user_pages_fast(ioctl_param, 1,
 					  FOLL_WRITE | FOLL_LONGTERM, &page);
-		अगर (unlikely(ret != 1)) अणु
+		if (unlikely(ret != 1)) {
 			dev_dbg(acrn_dev.this_device,
 				"Failed to pin intr hdr buffer!\n");
-			वापस -EFAULT;
-		पूर्ण
+			return -EFAULT;
+		}
 
-		ret = hcall_vm_पूर्णांकr_monitor(vm->vmid, page_to_phys(page));
-		अगर (ret < 0) अणु
+		ret = hcall_vm_intr_monitor(vm->vmid, page_to_phys(page));
+		if (ret < 0) {
 			unpin_user_page(page);
 			dev_dbg(acrn_dev.this_device,
 				"Failed to monitor intr data!\n");
-			वापस ret;
-		पूर्ण
-		अगर (vm->monitor_page)
+			return ret;
+		}
+		if (vm->monitor_page)
 			unpin_user_page(vm->monitor_page);
 		vm->monitor_page = page;
-		अवरोध;
-	हाल ACRN_IOCTL_CREATE_IOREQ_CLIENT:
-		अगर (vm->शेष_client)
-			वापस -EEXIST;
-		अगर (!acrn_ioreq_client_create(vm, शून्य, शून्य, true, "acrndm"))
+		break;
+	case ACRN_IOCTL_CREATE_IOREQ_CLIENT:
+		if (vm->default_client)
+			return -EEXIST;
+		if (!acrn_ioreq_client_create(vm, NULL, NULL, true, "acrndm"))
 			ret = -EINVAL;
-		अवरोध;
-	हाल ACRN_IOCTL_DESTROY_IOREQ_CLIENT:
-		अगर (vm->शेष_client)
-			acrn_ioreq_client_destroy(vm->शेष_client);
-		अवरोध;
-	हाल ACRN_IOCTL_ATTACH_IOREQ_CLIENT:
-		अगर (vm->शेष_client)
-			ret = acrn_ioreq_client_रुको(vm->शेष_client);
-		अन्यथा
+		break;
+	case ACRN_IOCTL_DESTROY_IOREQ_CLIENT:
+		if (vm->default_client)
+			acrn_ioreq_client_destroy(vm->default_client);
+		break;
+	case ACRN_IOCTL_ATTACH_IOREQ_CLIENT:
+		if (vm->default_client)
+			ret = acrn_ioreq_client_wait(vm->default_client);
+		else
 			ret = -ENODEV;
-		अवरोध;
-	हाल ACRN_IOCTL_NOTIFY_REQUEST_FINISH:
-		अगर (copy_from_user(&notअगरy, (व्योम __user *)ioctl_param,
-				   माप(काष्ठा acrn_ioreq_notअगरy)))
-			वापस -EFAULT;
+		break;
+	case ACRN_IOCTL_NOTIFY_REQUEST_FINISH:
+		if (copy_from_user(&notify, (void __user *)ioctl_param,
+				   sizeof(struct acrn_ioreq_notify)))
+			return -EFAULT;
 
-		अगर (notअगरy.reserved != 0)
-			वापस -EINVAL;
+		if (notify.reserved != 0)
+			return -EINVAL;
 
-		ret = acrn_ioreq_request_शेष_complete(vm, notअगरy.vcpu);
-		अवरोध;
-	हाल ACRN_IOCTL_CLEAR_VM_IOREQ:
+		ret = acrn_ioreq_request_default_complete(vm, notify.vcpu);
+		break;
+	case ACRN_IOCTL_CLEAR_VM_IOREQ:
 		acrn_ioreq_request_clear(vm);
-		अवरोध;
-	हाल ACRN_IOCTL_PM_GET_CPU_STATE:
-		अगर (copy_from_user(&cstate_cmd, (व्योम __user *)ioctl_param,
-				   माप(cstate_cmd)))
-			वापस -EFAULT;
+		break;
+	case ACRN_IOCTL_PM_GET_CPU_STATE:
+		if (copy_from_user(&cstate_cmd, (void __user *)ioctl_param,
+				   sizeof(cstate_cmd)))
+			return -EFAULT;
 
-		ret = pmcmd_ioctl(cstate_cmd, (व्योम __user *)ioctl_param);
-		अवरोध;
-	हाल ACRN_IOCTL_IOEVENTFD:
-		अगर (copy_from_user(&ioeventfd, (व्योम __user *)ioctl_param,
-				   माप(ioeventfd)))
-			वापस -EFAULT;
+		ret = pmcmd_ioctl(cstate_cmd, (void __user *)ioctl_param);
+		break;
+	case ACRN_IOCTL_IOEVENTFD:
+		if (copy_from_user(&ioeventfd, (void __user *)ioctl_param,
+				   sizeof(ioeventfd)))
+			return -EFAULT;
 
-		अगर (ioeventfd.reserved != 0)
-			वापस -EINVAL;
+		if (ioeventfd.reserved != 0)
+			return -EINVAL;
 
 		ret = acrn_ioeventfd_config(vm, &ioeventfd);
-		अवरोध;
-	हाल ACRN_IOCTL_IRQFD:
-		अगर (copy_from_user(&irqfd, (व्योम __user *)ioctl_param,
-				   माप(irqfd)))
-			वापस -EFAULT;
+		break;
+	case ACRN_IOCTL_IRQFD:
+		if (copy_from_user(&irqfd, (void __user *)ioctl_param,
+				   sizeof(irqfd)))
+			return -EFAULT;
 		ret = acrn_irqfd_config(vm, &irqfd);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_dbg(acrn_dev.this_device, "Unknown IOCTL 0x%x!\n", cmd);
 		ret = -ENOTTY;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक acrn_dev_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा acrn_vm *vm = filp->निजी_data;
+static int acrn_dev_release(struct inode *inode, struct file *filp)
+{
+	struct acrn_vm *vm = filp->private_data;
 
 	acrn_vm_destroy(vm);
-	kमुक्त(vm);
-	वापस 0;
-पूर्ण
+	kfree(vm);
+	return 0;
+}
 
-अटल sमाप_प्रकार हटाओ_cpu_store(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
+static ssize_t remove_cpu_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t count)
+{
 	u64 cpu, lapicid;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (kम_से_अदीर्घl(buf, 0, &cpu) < 0)
-		वापस -EINVAL;
+	if (kstrtoull(buf, 0, &cpu) < 0)
+		return -EINVAL;
 
-	अगर (cpu >= num_possible_cpus() || cpu == 0 || !cpu_is_hotpluggable(cpu))
-		वापस -EINVAL;
+	if (cpu >= num_possible_cpus() || cpu == 0 || !cpu_is_hotpluggable(cpu))
+		return -EINVAL;
 
-	अगर (cpu_online(cpu))
-		हटाओ_cpu(cpu);
+	if (cpu_online(cpu))
+		remove_cpu(cpu);
 
 	lapicid = cpu_data(cpu).apicid;
 	dev_dbg(dev, "Try to remove cpu %lld with lapicid %lld\n", cpu, lapicid);
-	ret = hcall_sos_हटाओ_cpu(lapicid);
-	अगर (ret < 0) अणु
+	ret = hcall_sos_remove_cpu(lapicid);
+	if (ret < 0) {
 		dev_err(dev, "Failed to remove cpu %lld!\n", cpu);
-		जाओ fail_हटाओ;
-	पूर्ण
+		goto fail_remove;
+	}
 
-	वापस count;
+	return count;
 
-fail_हटाओ:
+fail_remove:
 	add_cpu(cpu);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_WO(हटाओ_cpu);
+	return ret;
+}
+static DEVICE_ATTR_WO(remove_cpu);
 
-अटल umode_t acrn_attr_visible(काष्ठा kobject *kobj, काष्ठा attribute *a, पूर्णांक n)
-अणु
-       अगर (a == &dev_attr_हटाओ_cpu.attr)
-               वापस IS_ENABLED(CONFIG_HOTPLUG_CPU) ? a->mode : 0;
+static umode_t acrn_attr_visible(struct kobject *kobj, struct attribute *a, int n)
+{
+       if (a == &dev_attr_remove_cpu.attr)
+               return IS_ENABLED(CONFIG_HOTPLUG_CPU) ? a->mode : 0;
 
-       वापस a->mode;
-पूर्ण
+       return a->mode;
+}
 
-अटल काष्ठा attribute *acrn_attrs[] = अणु
-	&dev_attr_हटाओ_cpu.attr,
-	शून्य
-पूर्ण;
+static struct attribute *acrn_attrs[] = {
+	&dev_attr_remove_cpu.attr,
+	NULL
+};
 
-अटल काष्ठा attribute_group acrn_attr_group = अणु
+static struct attribute_group acrn_attr_group = {
 	.attrs = acrn_attrs,
 	.is_visible = acrn_attr_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *acrn_attr_groups[] = अणु
+static const struct attribute_group *acrn_attr_groups[] = {
 	&acrn_attr_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा file_operations acrn_fops = अणु
+static const struct file_operations acrn_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= acrn_dev_खोलो,
+	.open		= acrn_dev_open,
 	.release	= acrn_dev_release,
 	.unlocked_ioctl = acrn_dev_ioctl,
-पूर्ण;
+};
 
-काष्ठा miscdevice acrn_dev = अणु
+struct miscdevice acrn_dev = {
 	.minor	= MISC_DYNAMIC_MINOR,
 	.name	= "acrn_hsm",
 	.fops	= &acrn_fops,
 	.groups	= acrn_attr_groups,
-पूर्ण;
+};
 
-अटल पूर्णांक __init hsm_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init hsm_init(void)
+{
+	int ret;
 
-	अगर (x86_hyper_type != X86_HYPER_ACRN)
-		वापस -ENODEV;
+	if (x86_hyper_type != X86_HYPER_ACRN)
+		return -ENODEV;
 
-	अगर (!(cpuid_eax(ACRN_CPUID_FEATURES) & ACRN_FEATURE_PRIVILEGED_VM))
-		वापस -EPERM;
+	if (!(cpuid_eax(ACRN_CPUID_FEATURES) & ACRN_FEATURE_PRIVILEGED_VM))
+		return -EPERM;
 
-	ret = misc_रेजिस्टर(&acrn_dev);
-	अगर (ret) अणु
+	ret = misc_register(&acrn_dev);
+	if (ret) {
 		pr_err("Create misc dev failed!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = acrn_ioreq_पूर्णांकr_setup();
-	अगर (ret) अणु
+	ret = acrn_ioreq_intr_setup();
+	if (ret) {
 		pr_err("Setup I/O request handler failed!\n");
-		misc_deरेजिस्टर(&acrn_dev);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		misc_deregister(&acrn_dev);
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम __निकास hsm_निकास(व्योम)
-अणु
-	acrn_ioreq_पूर्णांकr_हटाओ();
-	misc_deरेजिस्टर(&acrn_dev);
-पूर्ण
+static void __exit hsm_exit(void)
+{
+	acrn_ioreq_intr_remove();
+	misc_deregister(&acrn_dev);
+}
 module_init(hsm_init);
-module_निकास(hsm_निकास);
+module_exit(hsm_exit);
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_LICENSE("GPL");

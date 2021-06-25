@@ -1,17 +1,16 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <माला.स>
-#समावेश "tests/tests.h"
-#समावेश "arch-tests.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <string.h>
+#include "tests/tests.h"
+#include "arch-tests.h"
 
-काष्ठा test arch_tests[] = अणु
-#अगर_घोषित HAVE_DWARF_UNWIND_SUPPORT
-	अणु
+struct test arch_tests[] = {
+#ifdef HAVE_DWARF_UNWIND_SUPPORT
+	{
 		.desc = "Test dwarf unwind",
 		.func = test__dwarf_unwind,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु
-		.func = शून्य,
-	पूर्ण,
-पूर्ण;
+	},
+#endif
+	{
+		.func = NULL,
+	},
+};

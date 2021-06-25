@@ -1,121 +1,120 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Driver क्रम Digigram VX soundcards
+ * Driver for Digigram VX soundcards
  *
  * Hardware core part
  *
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
-#अगर_अघोषित __SOUND_VX_COMMON_H
-#घोषणा __SOUND_VX_COMMON_H
+#ifndef __SOUND_VX_COMMON_H
+#define __SOUND_VX_COMMON_H
 
-#समावेश <sound/pcm.h>
-#समावेश <sound/hwdep.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <sound/pcm.h>
+#include <sound/hwdep.h>
+#include <linux/interrupt.h>
 
-काष्ठा firmware;
-काष्ठा device;
+struct firmware;
+struct device;
 
-#घोषणा VX_DRIVER_VERSION	0x010000	/* 1.0.0 */
+#define VX_DRIVER_VERSION	0x010000	/* 1.0.0 */
 
 /*
  */
-#घोषणा SIZE_MAX_CMD    0x10
-#घोषणा SIZE_MAX_STATUS 0x10
+#define SIZE_MAX_CMD    0x10
+#define SIZE_MAX_STATUS 0x10
 
-काष्ठा vx_rmh अणु
+struct vx_rmh {
 	u16	LgCmd;		/* length of the command to send (WORDs) */
 	u16	LgStat;		/* length of the status received (WORDs) */
 	u32	Cmd[SIZE_MAX_CMD];
 	u32	Stat[SIZE_MAX_STATUS];
 	u16	DspStat;	/* status type, RMP_SSIZE_XXX */
-पूर्ण;
+};
 	
-प्रकार u64 pcx_समय_प्रकार;
+typedef u64 pcx_time_t;
 
-#घोषणा VX_MAX_PIPES	16
-#घोषणा VX_MAX_PERIODS	32
-#घोषणा VX_MAX_CODECS	2
+#define VX_MAX_PIPES	16
+#define VX_MAX_PERIODS	32
+#define VX_MAX_CODECS	2
 
-काष्ठा vx_ibl_info अणु
-	पूर्णांक size;	/* the current IBL size (0 = query) in bytes */
-	पूर्णांक max_size;	/* max. IBL size in bytes */
-	पूर्णांक min_size;	/* min. IBL size in bytes */
-	पूर्णांक granularity;	/* granularity */
-पूर्ण;
+struct vx_ibl_info {
+	int size;	/* the current IBL size (0 = query) in bytes */
+	int max_size;	/* max. IBL size in bytes */
+	int min_size;	/* min. IBL size in bytes */
+	int granularity;	/* granularity */
+};
 
-काष्ठा vx_pipe अणु
-	पूर्णांक number;
-	अचिन्हित पूर्णांक is_capture: 1;
-	अचिन्हित पूर्णांक data_mode: 1;
-	अचिन्हित पूर्णांक running: 1;
-	अचिन्हित पूर्णांक prepared: 1;
-	पूर्णांक channels;
-	अचिन्हित पूर्णांक dअगरfered_type;
-	pcx_समय_प्रकार pcx_समय;
-	काष्ठा snd_pcm_substream *substream;
+struct vx_pipe {
+	int number;
+	unsigned int is_capture: 1;
+	unsigned int data_mode: 1;
+	unsigned int running: 1;
+	unsigned int prepared: 1;
+	int channels;
+	unsigned int differed_type;
+	pcx_time_t pcx_time;
+	struct snd_pcm_substream *substream;
 
-	पूर्णांक hbuf_size;		/* H-buffer size in bytes */
-	पूर्णांक buffer_bytes;	/* the ALSA pcm buffer size in bytes */
-	पूर्णांक period_bytes;	/* the ALSA pcm period size in bytes */
-	पूर्णांक hw_ptr;		/* the current hardware poपूर्णांकer in bytes */
-	पूर्णांक position;		/* the current position in frames (playback only) */
-	पूर्णांक transferred;	/* the transferred size (per period) in frames */
-	पूर्णांक align;		/* size of alignment */
-	u64 cur_count;		/* current sample position (क्रम playback) */
+	int hbuf_size;		/* H-buffer size in bytes */
+	int buffer_bytes;	/* the ALSA pcm buffer size in bytes */
+	int period_bytes;	/* the ALSA pcm period size in bytes */
+	int hw_ptr;		/* the current hardware pointer in bytes */
+	int position;		/* the current position in frames (playback only) */
+	int transferred;	/* the transferred size (per period) in frames */
+	int align;		/* size of alignment */
+	u64 cur_count;		/* current sample position (for playback) */
 
-	अचिन्हित पूर्णांक references;     /* an output pipe may be used क्रम monitoring and/or playback */
-	काष्ठा vx_pipe *monitoring_pipe;  /* poपूर्णांकer to the monitoring pipe (capture pipe only)*/
-पूर्ण;
+	unsigned int references;     /* an output pipe may be used for monitoring and/or playback */
+	struct vx_pipe *monitoring_pipe;  /* pointer to the monitoring pipe (capture pipe only)*/
+};
 
-काष्ठा vx_core;
+struct vx_core;
 
-काष्ठा snd_vx_ops अणु
+struct snd_vx_ops {
 	/* low-level i/o */
-	अचिन्हित अक्षर (*in8)(काष्ठा vx_core *chip, पूर्णांक reg);
-	अचिन्हित पूर्णांक (*in32)(काष्ठा vx_core *chip, पूर्णांक reg);
-	व्योम (*out8)(काष्ठा vx_core *chip, पूर्णांक reg, अचिन्हित अक्षर val);
-	व्योम (*out32)(काष्ठा vx_core *chip, पूर्णांक reg, अचिन्हित पूर्णांक val);
+	unsigned char (*in8)(struct vx_core *chip, int reg);
+	unsigned int (*in32)(struct vx_core *chip, int reg);
+	void (*out8)(struct vx_core *chip, int reg, unsigned char val);
+	void (*out32)(struct vx_core *chip, int reg, unsigned int val);
 	/* irq */
-	पूर्णांक (*test_and_ack)(काष्ठा vx_core *chip);
-	व्योम (*validate_irq)(काष्ठा vx_core *chip, पूर्णांक enable);
+	int (*test_and_ack)(struct vx_core *chip);
+	void (*validate_irq)(struct vx_core *chip, int enable);
 	/* codec */
-	व्योम (*ग_लिखो_codec)(काष्ठा vx_core *chip, पूर्णांक codec, अचिन्हित पूर्णांक data);
-	व्योम (*akm_ग_लिखो)(काष्ठा vx_core *chip, पूर्णांक reg, अचिन्हित पूर्णांक data);
-	व्योम (*reset_codec)(काष्ठा vx_core *chip);
-	व्योम (*change_audio_source)(काष्ठा vx_core *chip, पूर्णांक src);
-	व्योम (*set_घड़ी_source)(काष्ठा vx_core *chp, पूर्णांक src);
+	void (*write_codec)(struct vx_core *chip, int codec, unsigned int data);
+	void (*akm_write)(struct vx_core *chip, int reg, unsigned int data);
+	void (*reset_codec)(struct vx_core *chip);
+	void (*change_audio_source)(struct vx_core *chip, int src);
+	void (*set_clock_source)(struct vx_core *chp, int src);
 	/* chip init */
-	पूर्णांक (*load_dsp)(काष्ठा vx_core *chip, पूर्णांक idx, स्थिर काष्ठा firmware *fw);
-	व्योम (*reset_dsp)(काष्ठा vx_core *chip);
-	व्योम (*reset_board)(काष्ठा vx_core *chip, पूर्णांक cold_reset);
-	पूर्णांक (*add_controls)(काष्ठा vx_core *chip);
+	int (*load_dsp)(struct vx_core *chip, int idx, const struct firmware *fw);
+	void (*reset_dsp)(struct vx_core *chip);
+	void (*reset_board)(struct vx_core *chip, int cold_reset);
+	int (*add_controls)(struct vx_core *chip);
 	/* pcm */
-	व्योम (*dma_ग_लिखो)(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-			  काष्ठा vx_pipe *pipe, पूर्णांक count);
-	व्योम (*dma_पढ़ो)(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-			  काष्ठा vx_pipe *pipe, पूर्णांक count);
-पूर्ण;
+	void (*dma_write)(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+			  struct vx_pipe *pipe, int count);
+	void (*dma_read)(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+			  struct vx_pipe *pipe, int count);
+};
 
-काष्ठा snd_vx_hardware अणु
-	स्थिर अक्षर *name;
-	पूर्णांक type;	/* VX_TYPE_XXX */
+struct snd_vx_hardware {
+	const char *name;
+	int type;	/* VX_TYPE_XXX */
 
 	/* hardware specs */
-	अचिन्हित पूर्णांक num_codecs;
-	अचिन्हित पूर्णांक num_ins;
-	अचिन्हित पूर्णांक num_outs;
-	अचिन्हित पूर्णांक output_level_max;
-	स्थिर अचिन्हित पूर्णांक *output_level_db_scale;
-पूर्ण;
+	unsigned int num_codecs;
+	unsigned int num_ins;
+	unsigned int num_outs;
+	unsigned int output_level_max;
+	const unsigned int *output_level_db_scale;
+};
 
 /* hwdep id string */
-#घोषणा SND_VX_HWDEP_ID		"VX Loader"
+#define SND_VX_HWDEP_ID		"VX Loader"
 
 /* hardware type */
-क्रमागत अणु
+enum {
 	/* VX222 PCI */
 	VX_TYPE_BOARD,		/* old VX222 PCI */
 	VX_TYPE_V2,		/* VX222 V2 PCI */
@@ -124,242 +123,242 @@
 	VX_TYPE_VXPOCKET,	/* VXpocket V2 */
 	VX_TYPE_VXP440,		/* VXpocket 440 */
 	VX_TYPE_NUMS
-पूर्ण;
+};
 
 /* chip status */
-क्रमागत अणु
-	VX_STAT_XILINX_LOADED	= (1 << 0),	/* devices are रेजिस्टरed */
-	VX_STAT_DEVICE_INIT	= (1 << 1),	/* devices are रेजिस्टरed */
+enum {
+	VX_STAT_XILINX_LOADED	= (1 << 0),	/* devices are registered */
+	VX_STAT_DEVICE_INIT	= (1 << 1),	/* devices are registered */
 	VX_STAT_CHIP_INIT	= (1 << 2),	/* all operational */
 	VX_STAT_IN_SUSPEND	= (1 << 10),	/* in suspend phase */
 	VX_STAT_IS_STALE	= (1 << 15)	/* device is stale */
-पूर्ण;
+};
 
-/* min/max values क्रम analog output क्रम old codecs */
-#घोषणा VX_ANALOG_OUT_LEVEL_MAX		0xe3
+/* min/max values for analog output for old codecs */
+#define VX_ANALOG_OUT_LEVEL_MAX		0xe3
 
-काष्ठा vx_core अणु
+struct vx_core {
 	/* ALSA stuff */
-	काष्ठा snd_card *card;
-	काष्ठा snd_pcm *pcm[VX_MAX_CODECS];
-	पूर्णांक type;	/* VX_TYPE_XXX */
+	struct snd_card *card;
+	struct snd_pcm *pcm[VX_MAX_CODECS];
+	int type;	/* VX_TYPE_XXX */
 
-	पूर्णांक irq;
-	/* ports are defined बाह्यally */
+	int irq;
+	/* ports are defined externally */
 
 	/* low-level functions */
-	स्थिर काष्ठा snd_vx_hardware *hw;
-	स्थिर काष्ठा snd_vx_ops *ops;
+	const struct snd_vx_hardware *hw;
+	const struct snd_vx_ops *ops;
 
-	काष्ठा mutex lock;
+	struct mutex lock;
 
-	अचिन्हित पूर्णांक chip_status;
-	अचिन्हित पूर्णांक pcm_running;
+	unsigned int chip_status;
+	unsigned int pcm_running;
 
-	काष्ठा device *dev;
-	काष्ठा snd_hwdep *hwdep;
+	struct device *dev;
+	struct snd_hwdep *hwdep;
 
-	काष्ठा vx_rmh irq_rmh;	/* RMH used in पूर्णांकerrupts */
+	struct vx_rmh irq_rmh;	/* RMH used in interrupts */
 
-	अचिन्हित पूर्णांक audio_info; /* see VX_AUDIO_INFO */
-	अचिन्हित पूर्णांक audio_ins;
-	अचिन्हित पूर्णांक audio_outs;
-	काष्ठा vx_pipe **playback_pipes;
-	काष्ठा vx_pipe **capture_pipes;
+	unsigned int audio_info; /* see VX_AUDIO_INFO */
+	unsigned int audio_ins;
+	unsigned int audio_outs;
+	struct vx_pipe **playback_pipes;
+	struct vx_pipe **capture_pipes;
 
-	/* घड़ी and audio sources */
-	अचिन्हित पूर्णांक audio_source;	/* current audio input source */
-	अचिन्हित पूर्णांक audio_source_target;
-	अचिन्हित पूर्णांक घड़ी_mode;	/* घड़ी mode (VX_CLOCK_MODE_XXX) */
-	अचिन्हित पूर्णांक घड़ी_source;	/* current घड़ी source (INTERNAL_QUARTZ or UER_SYNC) */
-	अचिन्हित पूर्णांक freq;		/* current frequency */
-	अचिन्हित पूर्णांक freq_detected;	/* detected frequency from digital in */
-	अचिन्हित पूर्णांक uer_detected;	/* VX_UER_MODE_XXX */
-	अचिन्हित पूर्णांक uer_bits;	/* IEC958 status bits */
-	काष्ठा vx_ibl_info ibl;	/* IBL inक्रमmation */
+	/* clock and audio sources */
+	unsigned int audio_source;	/* current audio input source */
+	unsigned int audio_source_target;
+	unsigned int clock_mode;	/* clock mode (VX_CLOCK_MODE_XXX) */
+	unsigned int clock_source;	/* current clock source (INTERNAL_QUARTZ or UER_SYNC) */
+	unsigned int freq;		/* current frequency */
+	unsigned int freq_detected;	/* detected frequency from digital in */
+	unsigned int uer_detected;	/* VX_UER_MODE_XXX */
+	unsigned int uer_bits;	/* IEC958 status bits */
+	struct vx_ibl_info ibl;	/* IBL information */
 
 	/* mixer setting */
-	पूर्णांक output_level[VX_MAX_CODECS][2];	/* analog output level */
-	पूर्णांक audio_gain[2][4];			/* digital audio level (playback/capture) */
-	अचिन्हित अक्षर audio_active[4];		/* mute/unmute on digital playback */
-	पूर्णांक audio_monitor[4];			/* playback hw-monitor level */
-	अचिन्हित अक्षर audio_monitor_active[4];	/* playback hw-monitor mute/unmute */
+	int output_level[VX_MAX_CODECS][2];	/* analog output level */
+	int audio_gain[2][4];			/* digital audio level (playback/capture) */
+	unsigned char audio_active[4];		/* mute/unmute on digital playback */
+	int audio_monitor[4];			/* playback hw-monitor level */
+	unsigned char audio_monitor_active[4];	/* playback hw-monitor mute/unmute */
 
-	काष्ठा mutex mixer_mutex;
+	struct mutex mixer_mutex;
 
-	स्थिर काष्ठा firmware *firmware[4]; /* loaded firmware data */
-पूर्ण;
+	const struct firmware *firmware[4]; /* loaded firmware data */
+};
 
-
-/*
- * स्थिरructor
- */
-काष्ठा vx_core *snd_vx_create(काष्ठा snd_card *card,
-			      स्थिर काष्ठा snd_vx_hardware *hw,
-			      स्थिर काष्ठा snd_vx_ops *ops, पूर्णांक extra_size);
-पूर्णांक snd_vx_setup_firmware(काष्ठा vx_core *chip);
-पूर्णांक snd_vx_load_boot_image(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *dsp);
-पूर्णांक snd_vx_dsp_boot(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *dsp);
-पूर्णांक snd_vx_dsp_load(काष्ठा vx_core *chip, स्थिर काष्ठा firmware *dsp);
-
-व्योम snd_vx_मुक्त_firmware(काष्ठा vx_core *chip);
 
 /*
- * पूर्णांकerrupt handler; exported क्रम pcmcia
+ * constructor
  */
-irqवापस_t snd_vx_irq_handler(पूर्णांक irq, व्योम *dev);
-irqवापस_t snd_vx_thपढ़ोed_irq_handler(पूर्णांक irq, व्योम *dev);
+struct vx_core *snd_vx_create(struct snd_card *card,
+			      const struct snd_vx_hardware *hw,
+			      const struct snd_vx_ops *ops, int extra_size);
+int snd_vx_setup_firmware(struct vx_core *chip);
+int snd_vx_load_boot_image(struct vx_core *chip, const struct firmware *dsp);
+int snd_vx_dsp_boot(struct vx_core *chip, const struct firmware *dsp);
+int snd_vx_dsp_load(struct vx_core *chip, const struct firmware *dsp);
+
+void snd_vx_free_firmware(struct vx_core *chip);
+
+/*
+ * interrupt handler; exported for pcmcia
+ */
+irqreturn_t snd_vx_irq_handler(int irq, void *dev);
+irqreturn_t snd_vx_threaded_irq_handler(int irq, void *dev);
 
 /*
  * lowlevel functions
  */
-अटल अंतरभूत पूर्णांक vx_test_and_ack(काष्ठा vx_core *chip)
-अणु
-	वापस chip->ops->test_and_ack(chip);
-पूर्ण
+static inline int vx_test_and_ack(struct vx_core *chip)
+{
+	return chip->ops->test_and_ack(chip);
+}
 
-अटल अंतरभूत व्योम vx_validate_irq(काष्ठा vx_core *chip, पूर्णांक enable)
-अणु
+static inline void vx_validate_irq(struct vx_core *chip, int enable)
+{
 	chip->ops->validate_irq(chip, enable);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर snd_vx_inb(काष्ठा vx_core *chip, पूर्णांक reg)
-अणु
-	वापस chip->ops->in8(chip, reg);
-पूर्ण
+static inline unsigned char snd_vx_inb(struct vx_core *chip, int reg)
+{
+	return chip->ops->in8(chip, reg);
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक snd_vx_inl(काष्ठा vx_core *chip, पूर्णांक reg)
-अणु
-	वापस chip->ops->in32(chip, reg);
-पूर्ण
+static inline unsigned int snd_vx_inl(struct vx_core *chip, int reg)
+{
+	return chip->ops->in32(chip, reg);
+}
 
-अटल अंतरभूत व्योम snd_vx_outb(काष्ठा vx_core *chip, पूर्णांक reg, अचिन्हित अक्षर val)
-अणु
+static inline void snd_vx_outb(struct vx_core *chip, int reg, unsigned char val)
+{
 	chip->ops->out8(chip, reg, val);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम snd_vx_outl(काष्ठा vx_core *chip, पूर्णांक reg, अचिन्हित पूर्णांक val)
-अणु
+static inline void snd_vx_outl(struct vx_core *chip, int reg, unsigned int val)
+{
 	chip->ops->out32(chip, reg, val);
-पूर्ण
+}
 
-#घोषणा vx_inb(chip,reg)	snd_vx_inb(chip, VX_##reg)
-#घोषणा vx_outb(chip,reg,val)	snd_vx_outb(chip, VX_##reg,val)
-#घोषणा vx_inl(chip,reg)	snd_vx_inl(chip, VX_##reg)
-#घोषणा vx_outl(chip,reg,val)	snd_vx_outl(chip, VX_##reg,val)
+#define vx_inb(chip,reg)	snd_vx_inb(chip, VX_##reg)
+#define vx_outb(chip,reg,val)	snd_vx_outb(chip, VX_##reg,val)
+#define vx_inl(chip,reg)	snd_vx_inl(chip, VX_##reg)
+#define vx_outl(chip,reg,val)	snd_vx_outl(chip, VX_##reg,val)
 
-अटल अंतरभूत व्योम vx_reset_dsp(काष्ठा vx_core *chip)
-अणु
+static inline void vx_reset_dsp(struct vx_core *chip)
+{
 	chip->ops->reset_dsp(chip);
-पूर्ण
+}
 
-पूर्णांक vx_send_msg(काष्ठा vx_core *chip, काष्ठा vx_rmh *rmh);
-पूर्णांक vx_send_msg_nolock(काष्ठा vx_core *chip, काष्ठा vx_rmh *rmh);
-पूर्णांक vx_send_rih(काष्ठा vx_core *chip, पूर्णांक cmd);
-पूर्णांक vx_send_rih_nolock(काष्ठा vx_core *chip, पूर्णांक cmd);
+int vx_send_msg(struct vx_core *chip, struct vx_rmh *rmh);
+int vx_send_msg_nolock(struct vx_core *chip, struct vx_rmh *rmh);
+int vx_send_rih(struct vx_core *chip, int cmd);
+int vx_send_rih_nolock(struct vx_core *chip, int cmd);
 
-व्योम vx_reset_codec(काष्ठा vx_core *chip, पूर्णांक cold_reset);
-
-/*
- * check the bit on the specअगरied रेजिस्टर
- * वापसs zero अगर a bit matches, or a negative error code.
- * exported क्रम vxpocket driver
- */
-पूर्णांक snd_vx_check_reg_bit(काष्ठा vx_core *chip, पूर्णांक reg, पूर्णांक mask, पूर्णांक bit, पूर्णांक समय);
-#घोषणा vx_check_isr(chip,mask,bit,समय) snd_vx_check_reg_bit(chip, VX_ISR, mask, bit, समय)
-#घोषणा vx_रुको_isr_bit(chip,bit) vx_check_isr(chip, bit, bit, 200)
-#घोषणा vx_रुको_क्रम_rx_full(chip) vx_रुको_isr_bit(chip, ISR_RX_FULL)
-
+void vx_reset_codec(struct vx_core *chip, int cold_reset);
 
 /*
- * pseuकरो-DMA transfer
+ * check the bit on the specified register
+ * returns zero if a bit matches, or a negative error code.
+ * exported for vxpocket driver
  */
-अटल अंतरभूत व्योम vx_pseuकरो_dma_ग_लिखो(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-				       काष्ठा vx_pipe *pipe, पूर्णांक count)
-अणु
-	chip->ops->dma_ग_लिखो(chip, runसमय, pipe, count);
-पूर्ण
+int snd_vx_check_reg_bit(struct vx_core *chip, int reg, int mask, int bit, int time);
+#define vx_check_isr(chip,mask,bit,time) snd_vx_check_reg_bit(chip, VX_ISR, mask, bit, time)
+#define vx_wait_isr_bit(chip,bit) vx_check_isr(chip, bit, bit, 200)
+#define vx_wait_for_rx_full(chip) vx_wait_isr_bit(chip, ISR_RX_FULL)
 
-अटल अंतरभूत व्योम vx_pseuकरो_dma_पढ़ो(काष्ठा vx_core *chip, काष्ठा snd_pcm_runसमय *runसमय,
-				      काष्ठा vx_pipe *pipe, पूर्णांक count)
-अणु
-	chip->ops->dma_पढ़ो(chip, runसमय, pipe, count);
-पूर्ण
+
+/*
+ * pseudo-DMA transfer
+ */
+static inline void vx_pseudo_dma_write(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+				       struct vx_pipe *pipe, int count)
+{
+	chip->ops->dma_write(chip, runtime, pipe, count);
+}
+
+static inline void vx_pseudo_dma_read(struct vx_core *chip, struct snd_pcm_runtime *runtime,
+				      struct vx_pipe *pipe, int count)
+{
+	chip->ops->dma_read(chip, runtime, pipe, count);
+}
 
 
 
 /* error with hardware code,
- * the वापस value is -(VX_ERR_MASK | actual-hw-error-code)
+ * the return value is -(VX_ERR_MASK | actual-hw-error-code)
  */
-#घोषणा VX_ERR_MASK	0x1000000
-#घोषणा vx_get_error(err)	(-(err) & ~VX_ERR_MASK)
+#define VX_ERR_MASK	0x1000000
+#define vx_get_error(err)	(-(err) & ~VX_ERR_MASK)
 
 
 /*
  * pcm stuff
  */
-पूर्णांक snd_vx_pcm_new(काष्ठा vx_core *chip);
-व्योम vx_pcm_update_पूर्णांकr(काष्ठा vx_core *chip, अचिन्हित पूर्णांक events);
+int snd_vx_pcm_new(struct vx_core *chip);
+void vx_pcm_update_intr(struct vx_core *chip, unsigned int events);
 
 /*
  * mixer stuff
  */
-पूर्णांक snd_vx_mixer_new(काष्ठा vx_core *chip);
-व्योम vx_toggle_dac_mute(काष्ठा vx_core *chip, पूर्णांक mute);
-पूर्णांक vx_sync_audio_source(काष्ठा vx_core *chip);
-पूर्णांक vx_set_monitor_level(काष्ठा vx_core *chip, पूर्णांक audio, पूर्णांक level, पूर्णांक active);
+int snd_vx_mixer_new(struct vx_core *chip);
+void vx_toggle_dac_mute(struct vx_core *chip, int mute);
+int vx_sync_audio_source(struct vx_core *chip);
+int vx_set_monitor_level(struct vx_core *chip, int audio, int level, int active);
 
 /*
- * IEC958 & घड़ी stuff
+ * IEC958 & clock stuff
  */
-व्योम vx_set_iec958_status(काष्ठा vx_core *chip, अचिन्हित पूर्णांक bits);
-पूर्णांक vx_set_घड़ी(काष्ठा vx_core *chip, अचिन्हित पूर्णांक freq);
-व्योम vx_set_पूर्णांकernal_घड़ी(काष्ठा vx_core *chip, अचिन्हित पूर्णांक freq);
-पूर्णांक vx_change_frequency(काष्ठा vx_core *chip);
+void vx_set_iec958_status(struct vx_core *chip, unsigned int bits);
+int vx_set_clock(struct vx_core *chip, unsigned int freq);
+void vx_set_internal_clock(struct vx_core *chip, unsigned int freq);
+int vx_change_frequency(struct vx_core *chip);
 
 
 /*
  * PM
  */
-पूर्णांक snd_vx_suspend(काष्ठा vx_core *card);
-पूर्णांक snd_vx_resume(काष्ठा vx_core *card);
+int snd_vx_suspend(struct vx_core *card);
+int snd_vx_resume(struct vx_core *card);
 
 /*
- * hardware स्थिरants
+ * hardware constants
  */
 
-#घोषणा vx_has_new_dsp(chip)	((chip)->type != VX_TYPE_BOARD)
-#घोषणा vx_is_pcmcia(chip)	((chip)->type >= VX_TYPE_VXPOCKET)
+#define vx_has_new_dsp(chip)	((chip)->type != VX_TYPE_BOARD)
+#define vx_is_pcmcia(chip)	((chip)->type >= VX_TYPE_VXPOCKET)
 
 /* audio input source */
-क्रमागत अणु
+enum {
 	VX_AUDIO_SRC_DIGITAL,
 	VX_AUDIO_SRC_LINE,
 	VX_AUDIO_SRC_MIC
-पूर्ण;
+};
 
-/* घड़ी source */
-क्रमागत अणु
+/* clock source */
+enum {
 	INTERNAL_QUARTZ,
 	UER_SYNC
-पूर्ण;
+};
 
-/* घड़ी mode */
-क्रमागत अणु
+/* clock mode */
+enum {
 	VX_CLOCK_MODE_AUTO,	/* depending on the current audio source */
-	VX_CLOCK_MODE_INTERNAL,	/* fixed to पूर्णांकernal quartz */
+	VX_CLOCK_MODE_INTERNAL,	/* fixed to internal quartz */
 	VX_CLOCK_MODE_EXTERNAL	/* fixed to UER sync */
-पूर्ण;
+};
 
 /* SPDIF/UER type */
-क्रमागत अणु
+enum {
 	VX_UER_MODE_CONSUMER,
 	VX_UER_MODE_PROFESSIONAL,
 	VX_UER_MODE_NOT_PRESENT,
-पूर्ण;
+};
 
-/* रेजिस्टर indices */
-क्रमागत अणु
+/* register indices */
+enum {
 	VX_ICR,
 	VX_CVR,
 	VX_ISR,
@@ -395,7 +394,7 @@ irqवापस_t snd_vx_thपढ़ोed_irq_handler(पूर्णांक i
 
 	VX_REG_MAX,
 
-	/* aliases क्रम VX board */
+	/* aliases for VX board */
 	VX_RESET_DMA = VX_ISR,
 	VX_CFG = VX_RFREQ,
 	VX_STATUS = VX_MEMIRQ,
@@ -407,131 +406,131 @@ irqवापस_t snd_vx_thपढ़ोed_irq_handler(पूर्णांक i
 	VX_CNTRL = VX_PLX1,
 	VX_GPIOC = VX_PLX2,
 
-	/* aliases क्रम VXPOCKET board */
+	/* aliases for VXPOCKET board */
 	VX_MICRO = VX_MEMIRQ,
 	VX_CODEC2 = VX_MEMIRQ,
 	VX_DIALOG = VX_ACQ,
 
-पूर्ण;
+};
 
 /* RMH status type */
-क्रमागत अणु
+enum {
 	RMH_SSIZE_FIXED = 0,	/* status size given by the driver (in LgStat) */
 	RMH_SSIZE_ARG = 1,	/* status size given in the LSB byte */
-	RMH_SSIZE_MASK = 2,	/* status size given in biपंचांगask */
-पूर्ण;
+	RMH_SSIZE_MASK = 2,	/* status size given in bitmask */
+};
 
 
-/* bits क्रम ICR रेजिस्टर */
-#घोषणा ICR_HF1		0x10
-#घोषणा ICR_HF0		0x08
-#घोषणा ICR_TREQ	0x02	/* Interrupt mode + HREQ set on क्रम transfer (->DSP) request */
-#घोषणा ICR_RREQ	0x01	/* Interrupt mode + RREQ set on क्रम transfer (->PC) request */
+/* bits for ICR register */
+#define ICR_HF1		0x10
+#define ICR_HF0		0x08
+#define ICR_TREQ	0x02	/* Interrupt mode + HREQ set on for transfer (->DSP) request */
+#define ICR_RREQ	0x01	/* Interrupt mode + RREQ set on for transfer (->PC) request */
 
-/* bits क्रम CVR रेजिस्टर */
-#घोषणा CVR_HC		0x80
+/* bits for CVR register */
+#define CVR_HC		0x80
 
-/* bits क्रम ISR रेजिस्टर */
-#घोषणा ISR_HF3		0x10
-#घोषणा ISR_HF2		0x08
-#घोषणा ISR_CHK		0x10
-#घोषणा ISR_ERR		0x08
-#घोषणा ISR_TX_READY	0x04
-#घोषणा ISR_TX_EMPTY	0x02
-#घोषणा ISR_RX_FULL	0x01
+/* bits for ISR register */
+#define ISR_HF3		0x10
+#define ISR_HF2		0x08
+#define ISR_CHK		0x10
+#define ISR_ERR		0x08
+#define ISR_TX_READY	0x04
+#define ISR_TX_EMPTY	0x02
+#define ISR_RX_FULL	0x01
 
-/* Constants used to access the DATA रेजिस्टर */
-#घोषणा VX_DATA_CODEC_MASK	0x80
-#घोषणा VX_DATA_XICOR_MASK	0x80
+/* Constants used to access the DATA register */
+#define VX_DATA_CODEC_MASK	0x80
+#define VX_DATA_XICOR_MASK	0x80
 
-/* Constants used to access the CSUER रेजिस्टर (both क्रम VX2 and VXP) */
-#घोषणा VX_SUER_FREQ_MASK		0x0c
-#घोषणा VX_SUER_FREQ_32KHz_MASK		0x0c
-#घोषणा VX_SUER_FREQ_44KHz_MASK		0x00
-#घोषणा VX_SUER_FREQ_48KHz_MASK		0x04
-#घोषणा VX_SUER_DATA_PRESENT_MASK	0x02
-#घोषणा VX_SUER_CLOCK_PRESENT_MASK	0x01
+/* Constants used to access the CSUER register (both for VX2 and VXP) */
+#define VX_SUER_FREQ_MASK		0x0c
+#define VX_SUER_FREQ_32KHz_MASK		0x0c
+#define VX_SUER_FREQ_44KHz_MASK		0x00
+#define VX_SUER_FREQ_48KHz_MASK		0x04
+#define VX_SUER_DATA_PRESENT_MASK	0x02
+#define VX_SUER_CLOCK_PRESENT_MASK	0x01
 
-#घोषणा VX_CUER_HH_BITC_SEL_MASK	0x08
-#घोषणा VX_CUER_MH_BITC_SEL_MASK	0x04
-#घोषणा VX_CUER_ML_BITC_SEL_MASK	0x02
-#घोषणा VX_CUER_LL_BITC_SEL_MASK	0x01
+#define VX_CUER_HH_BITC_SEL_MASK	0x08
+#define VX_CUER_MH_BITC_SEL_MASK	0x04
+#define VX_CUER_ML_BITC_SEL_MASK	0x02
+#define VX_CUER_LL_BITC_SEL_MASK	0x01
 
-#घोषणा XX_UER_CBITS_OFFSET_MASK	0x1f
+#define XX_UER_CBITS_OFFSET_MASK	0x1f
 
 
-/* bits क्रम audio_info */
-#घोषणा VX_AUDIO_INFO_REAL_TIME	(1<<0)	/* real-समय processing available */
-#घोषणा VX_AUDIO_INFO_OFFLINE	(1<<1)	/* offline processing available */
-#घोषणा VX_AUDIO_INFO_MPEG1	(1<<5)
-#घोषणा VX_AUDIO_INFO_MPEG2	(1<<6)
-#घोषणा VX_AUDIO_INFO_LINEAR_8	(1<<7)
-#घोषणा VX_AUDIO_INFO_LINEAR_16	(1<<8)
-#घोषणा VX_AUDIO_INFO_LINEAR_24	(1<<9)
+/* bits for audio_info */
+#define VX_AUDIO_INFO_REAL_TIME	(1<<0)	/* real-time processing available */
+#define VX_AUDIO_INFO_OFFLINE	(1<<1)	/* offline processing available */
+#define VX_AUDIO_INFO_MPEG1	(1<<5)
+#define VX_AUDIO_INFO_MPEG2	(1<<6)
+#define VX_AUDIO_INFO_LINEAR_8	(1<<7)
+#define VX_AUDIO_INFO_LINEAR_16	(1<<8)
+#define VX_AUDIO_INFO_LINEAR_24	(1<<9)
 
 /* DSP Interrupt Request values */
-#घोषणा VXP_IRQ_OFFSET		0x40 /* add 0x40 offset क्रम vxpocket and vx222/v2 */
+#define VXP_IRQ_OFFSET		0x40 /* add 0x40 offset for vxpocket and vx222/v2 */
 /* call with vx_send_irq_dsp() */
-#घोषणा IRQ_MESS_WRITE_END          0x30
-#घोषणा IRQ_MESS_WRITE_NEXT         0x32
-#घोषणा IRQ_MESS_READ_NEXT          0x34
-#घोषणा IRQ_MESS_READ_END           0x36
-#घोषणा IRQ_MESSAGE                 0x38
-#घोषणा IRQ_RESET_CHK               0x3A
-#घोषणा IRQ_CONNECT_STREAM_NEXT     0x26
-#घोषणा IRQ_CONNECT_STREAM_END      0x28
-#घोषणा IRQ_PAUSE_START_CONNECT     0x2A
-#घोषणा IRQ_END_CONNECTION          0x2C
+#define IRQ_MESS_WRITE_END          0x30
+#define IRQ_MESS_WRITE_NEXT         0x32
+#define IRQ_MESS_READ_NEXT          0x34
+#define IRQ_MESS_READ_END           0x36
+#define IRQ_MESSAGE                 0x38
+#define IRQ_RESET_CHK               0x3A
+#define IRQ_CONNECT_STREAM_NEXT     0x26
+#define IRQ_CONNECT_STREAM_END      0x28
+#define IRQ_PAUSE_START_CONNECT     0x2A
+#define IRQ_END_CONNECTION          0x2C
 
 /* Is there async. events pending ( IT Source Test ) */
-#घोषणा ASYNC_EVENTS_PENDING            0x008000
-#घोषणा HBUFFER_EVENTS_PENDING          0x004000   // Not always accurate
-#घोषणा NOTIF_EVENTS_PENDING            0x002000
-#घोषणा TIME_CODE_EVENT_PENDING         0x001000
-#घोषणा FREQUENCY_CHANGE_EVENT_PENDING  0x000800
-#घोषणा END_OF_BUFFER_EVENTS_PENDING    0x000400
-#घोषणा FATAL_DSP_ERROR                 0xff0000
+#define ASYNC_EVENTS_PENDING            0x008000
+#define HBUFFER_EVENTS_PENDING          0x004000   // Not always accurate
+#define NOTIF_EVENTS_PENDING            0x002000
+#define TIME_CODE_EVENT_PENDING         0x001000
+#define FREQUENCY_CHANGE_EVENT_PENDING  0x000800
+#define END_OF_BUFFER_EVENTS_PENDING    0x000400
+#define FATAL_DSP_ERROR                 0xff0000
 
 /* Stream Format Header Defines */ 
-#घोषणा HEADER_FMT_BASE			0xFED00000
-#घोषणा HEADER_FMT_MONO			0x000000C0
-#घोषणा HEADER_FMT_INTEL		0x00008000
-#घोषणा HEADER_FMT_16BITS		0x00002000
-#घोषणा HEADER_FMT_24BITS		0x00004000
-#घोषणा HEADER_FMT_UPTO11		0x00000200	/* frequency is less or equ. to 11k.*/
-#घोषणा HEADER_FMT_UPTO32		0x00000100	/* frequency is over 11k and less then 32k.*/
+#define HEADER_FMT_BASE			0xFED00000
+#define HEADER_FMT_MONO			0x000000C0
+#define HEADER_FMT_INTEL		0x00008000
+#define HEADER_FMT_16BITS		0x00002000
+#define HEADER_FMT_24BITS		0x00004000
+#define HEADER_FMT_UPTO11		0x00000200	/* frequency is less or equ. to 11k.*/
+#define HEADER_FMT_UPTO32		0x00000100	/* frequency is over 11k and less then 32k.*/
 
 /* Constants used to access the Codec */
-#घोषणा XX_CODEC_SELECTOR               0x20
+#define XX_CODEC_SELECTOR               0x20
 /* codec commands */
-#घोषणा XX_CODEC_ADC_CONTROL_REGISTER   0x01
-#घोषणा XX_CODEC_DAC_CONTROL_REGISTER   0x02
-#घोषणा XX_CODEC_LEVEL_LEFT_REGISTER    0x03
-#घोषणा XX_CODEC_LEVEL_RIGHT_REGISTER   0x04
-#घोषणा XX_CODEC_PORT_MODE_REGISTER     0x05
-#घोषणा XX_CODEC_STATUS_REPORT_REGISTER 0x06
-#घोषणा XX_CODEC_CLOCK_CONTROL_REGISTER 0x07
+#define XX_CODEC_ADC_CONTROL_REGISTER   0x01
+#define XX_CODEC_DAC_CONTROL_REGISTER   0x02
+#define XX_CODEC_LEVEL_LEFT_REGISTER    0x03
+#define XX_CODEC_LEVEL_RIGHT_REGISTER   0x04
+#define XX_CODEC_PORT_MODE_REGISTER     0x05
+#define XX_CODEC_STATUS_REPORT_REGISTER 0x06
+#define XX_CODEC_CLOCK_CONTROL_REGISTER 0x07
 
 /*
  * Audio-level control values
  */
-#घोषणा CVAL_M110DB		0x000	/* -110dB */
-#घोषणा CVAL_M99DB		0x02C
-#घोषणा CVAL_M21DB		0x163
-#घोषणा CVAL_M18DB		0x16F
-#घोषणा CVAL_M10DB		0x18F
-#घोषणा CVAL_0DB		0x1B7
-#घोषणा CVAL_18DB		0x1FF	/* +18dB */
-#घोषणा CVAL_MAX		0x1FF
+#define CVAL_M110DB		0x000	/* -110dB */
+#define CVAL_M99DB		0x02C
+#define CVAL_M21DB		0x163
+#define CVAL_M18DB		0x16F
+#define CVAL_M10DB		0x18F
+#define CVAL_0DB		0x1B7
+#define CVAL_18DB		0x1FF	/* +18dB */
+#define CVAL_MAX		0x1FF
 
-#घोषणा AUDIO_IO_HAS_MUTE_LEVEL			0x400000
-#घोषणा AUDIO_IO_HAS_MUTE_MONITORING_1		0x200000
-#घोषणा AUDIO_IO_HAS_MUTE_MONITORING_2		0x100000
-#घोषणा VALID_AUDIO_IO_DIGITAL_LEVEL		0x01
-#घोषणा VALID_AUDIO_IO_MONITORING_LEVEL		0x02
-#घोषणा VALID_AUDIO_IO_MUTE_LEVEL		0x04
-#घोषणा VALID_AUDIO_IO_MUTE_MONITORING_1	0x08
-#घोषणा VALID_AUDIO_IO_MUTE_MONITORING_2	0x10
+#define AUDIO_IO_HAS_MUTE_LEVEL			0x400000
+#define AUDIO_IO_HAS_MUTE_MONITORING_1		0x200000
+#define AUDIO_IO_HAS_MUTE_MONITORING_2		0x100000
+#define VALID_AUDIO_IO_DIGITAL_LEVEL		0x01
+#define VALID_AUDIO_IO_MONITORING_LEVEL		0x02
+#define VALID_AUDIO_IO_MUTE_LEVEL		0x04
+#define VALID_AUDIO_IO_MUTE_MONITORING_1	0x08
+#define VALID_AUDIO_IO_MUTE_MONITORING_2	0x10
 
 
-#पूर्ण_अगर /* __SOUND_VX_COMMON_H */
+#endif /* __SOUND_VX_COMMON_H */

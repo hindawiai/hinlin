@@ -1,252 +1,251 @@
-<शैली गुरु>
 /* orinoco.h
  *
  * Common definitions to all pieces of the various orinoco
  * drivers
  */
 
-#अगर_अघोषित _ORINOCO_H
-#घोषणा _ORINOCO_H
+#ifndef _ORINOCO_H
+#define _ORINOCO_H
 
-#घोषणा DRIVER_VERSION "0.15"
+#define DRIVER_VERSION "0.15"
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/wireless.h>
-#समावेश <net/iw_handler.h>
-#समावेश <net/cfg80211.h>
+#include <linux/interrupt.h>
+#include <linux/suspend.h>
+#include <linux/netdevice.h>
+#include <linux/wireless.h>
+#include <net/iw_handler.h>
+#include <net/cfg80211.h>
 
-#समावेश "hermes.h"
+#include "hermes.h"
 
 /* To enable debug messages */
-/*#घोषणा ORINOCO_DEBUG		3*/
+/*#define ORINOCO_DEBUG		3*/
 
-#घोषणा WIRELESS_SPY		/* enable iwspy support */
+#define WIRELESS_SPY		/* enable iwspy support */
 
-#घोषणा MAX_SCAN_LEN		4096
+#define MAX_SCAN_LEN		4096
 
-#घोषणा ORINOCO_SEQ_LEN		8
-#घोषणा ORINOCO_MAX_KEY_SIZE	14
-#घोषणा ORINOCO_MAX_KEYS	4
+#define ORINOCO_SEQ_LEN		8
+#define ORINOCO_MAX_KEY_SIZE	14
+#define ORINOCO_MAX_KEYS	4
 
-काष्ठा orinoco_key अणु
+struct orinoco_key {
 	__le16 len;	/* always stored as little-endian */
-	अक्षर data[ORINOCO_MAX_KEY_SIZE];
-पूर्ण __packed;
+	char data[ORINOCO_MAX_KEY_SIZE];
+} __packed;
 
-#घोषणा TKIP_KEYLEN	16
-#घोषणा MIC_KEYLEN	8
+#define TKIP_KEYLEN	16
+#define MIC_KEYLEN	8
 
-काष्ठा orinoco_tkip_key अणु
+struct orinoco_tkip_key {
 	u8 tkip[TKIP_KEYLEN];
 	u8 tx_mic[MIC_KEYLEN];
 	u8 rx_mic[MIC_KEYLEN];
-पूर्ण;
+};
 
-क्रमागत orinoco_alg अणु
+enum orinoco_alg {
 	ORINOCO_ALG_NONE,
 	ORINOCO_ALG_WEP,
 	ORINOCO_ALG_TKIP
-पूर्ण;
+};
 
-क्रमागत fwtype अणु
+enum fwtype {
 	FIRMWARE_TYPE_AGERE,
 	FIRMWARE_TYPE_INTERSIL,
 	FIRMWARE_TYPE_SYMBOL
-पूर्ण;
+};
 
-काष्ठा firmware;
+struct firmware;
 
-काष्ठा orinoco_निजी अणु
-	व्योम *card;	/* Poपूर्णांकer to card dependent काष्ठाure */
-	काष्ठा device *dev;
-	पूर्णांक (*hard_reset)(काष्ठा orinoco_निजी *);
-	पूर्णांक (*stop_fw)(काष्ठा orinoco_निजी *, पूर्णांक);
+struct orinoco_private {
+	void *card;	/* Pointer to card dependent structure */
+	struct device *dev;
+	int (*hard_reset)(struct orinoco_private *);
+	int (*stop_fw)(struct orinoco_private *, int);
 
-	काष्ठा ieee80211_supported_band band;
-	काष्ठा ieee80211_channel channels[14];
+	struct ieee80211_supported_band band;
+	struct ieee80211_channel channels[14];
 	u32 cipher_suites[3];
 
 	/* Synchronisation stuff */
 	spinlock_t lock;
-	पूर्णांक hw_unavailable;
-	काष्ठा work_काष्ठा reset_work;
+	int hw_unavailable;
+	struct work_struct reset_work;
 
 	/* Interrupt tasklets */
-	काष्ठा tasklet_काष्ठा rx_tasklet;
-	काष्ठा list_head rx_list;
+	struct tasklet_struct rx_tasklet;
+	struct list_head rx_list;
 
 	/* driver state */
-	पूर्णांक खोलो;
+	int open;
 	u16 last_linkstatus;
-	काष्ठा work_काष्ठा join_work;
-	काष्ठा work_काष्ठा wevent_work;
+	struct work_struct join_work;
+	struct work_struct wevent_work;
 
 	/* Net device stuff */
-	काष्ठा net_device *ndev;
-	काष्ठा iw_statistics wstats;
+	struct net_device *ndev;
+	struct iw_statistics wstats;
 
 	/* Hardware control variables */
-	काष्ठा hermes hw;
+	struct hermes hw;
 	u16 txfid;
 
 	/* Capabilities of the hardware/firmware */
-	क्रमागत fwtype firmware_type;
-	पूर्णांक ibss_port;
-	पूर्णांक nicbuf_size;
+	enum fwtype firmware_type;
+	int ibss_port;
+	int nicbuf_size;
 	u16 channel_mask;
 
 	/* Boolean capabilities */
-	अचिन्हित पूर्णांक has_ibss:1;
-	अचिन्हित पूर्णांक has_port3:1;
-	अचिन्हित पूर्णांक has_wep:1;
-	अचिन्हित पूर्णांक has_big_wep:1;
-	अचिन्हित पूर्णांक has_mwo:1;
-	अचिन्हित पूर्णांक has_pm:1;
-	अचिन्हित पूर्णांक has_preamble:1;
-	अचिन्हित पूर्णांक has_sensitivity:1;
-	अचिन्हित पूर्णांक has_hostscan:1;
-	अचिन्हित पूर्णांक has_alt_txcntl:1;
-	अचिन्हित पूर्णांक has_ext_scan:1;
-	अचिन्हित पूर्णांक has_wpa:1;
-	अचिन्हित पूर्णांक करो_fw_करोwnload:1;
-	अचिन्हित पूर्णांक broken_disableport:1;
-	अचिन्हित पूर्णांक broken_monitor:1;
-	अचिन्हित पूर्णांक prefer_port3:1;
+	unsigned int has_ibss:1;
+	unsigned int has_port3:1;
+	unsigned int has_wep:1;
+	unsigned int has_big_wep:1;
+	unsigned int has_mwo:1;
+	unsigned int has_pm:1;
+	unsigned int has_preamble:1;
+	unsigned int has_sensitivity:1;
+	unsigned int has_hostscan:1;
+	unsigned int has_alt_txcntl:1;
+	unsigned int has_ext_scan:1;
+	unsigned int has_wpa:1;
+	unsigned int do_fw_download:1;
+	unsigned int broken_disableport:1;
+	unsigned int broken_monitor:1;
+	unsigned int prefer_port3:1;
 
 	/* Configuration paramaters */
-	क्रमागत nl80211_अगरtype iw_mode;
-	क्रमागत orinoco_alg encode_alg;
+	enum nl80211_iftype iw_mode;
+	enum orinoco_alg encode_alg;
 	u16 wep_restrict, tx_key;
-	काष्ठा key_params keys[ORINOCO_MAX_KEYS];
+	struct key_params keys[ORINOCO_MAX_KEYS];
 
-	पूर्णांक bitratemode;
-	अक्षर nick[IW_ESSID_MAX_SIZE + 1];
-	अक्षर desired_essid[IW_ESSID_MAX_SIZE + 1];
-	अक्षर desired_bssid[ETH_ALEN];
-	पूर्णांक bssid_fixed;
+	int bitratemode;
+	char nick[IW_ESSID_MAX_SIZE + 1];
+	char desired_essid[IW_ESSID_MAX_SIZE + 1];
+	char desired_bssid[ETH_ALEN];
+	int bssid_fixed;
 	u16 frag_thresh, mwo_robust;
 	u16 channel;
 	u16 ap_density, rts_thresh;
-	u16 pm_on, pm_mcast, pm_period, pm_समयout;
+	u16 pm_on, pm_mcast, pm_period, pm_timeout;
 	u16 preamble;
-	u16 लघु_retry_limit, दीर्घ_retry_limit;
-	u16 retry_lअगरeसमय;
-#अगर_घोषित WIRELESS_SPY
-	काष्ठा iw_spy_data spy_data; /* iwspy support */
-	काष्ठा iw_खुला_data	wireless_data;
-#पूर्ण_अगर
+	u16 short_retry_limit, long_retry_limit;
+	u16 retry_lifetime;
+#ifdef WIRELESS_SPY
+	struct iw_spy_data spy_data; /* iwspy support */
+	struct iw_public_data	wireless_data;
+#endif
 
 	/* Configuration dependent variables */
-	पूर्णांक port_type, createibss;
-	पूर्णांक promiscuous, mc_count;
+	int port_type, createibss;
+	int promiscuous, mc_count;
 
 	/* Scanning support */
-	काष्ठा cfg80211_scan_request *scan_request;
-	काष्ठा work_काष्ठा process_scan;
-	काष्ठा list_head scan_list;
+	struct cfg80211_scan_request *scan_request;
+	struct work_struct process_scan;
+	struct list_head scan_list;
 	spinlock_t scan_lock; /* protects the scan list */
 
 	/* WPA support */
 	u8 *wpa_ie;
-	पूर्णांक wpa_ie_len;
+	int wpa_ie_len;
 
-	काष्ठा crypto_shash *rx_tfm_mic;
-	काष्ठा crypto_shash *tx_tfm_mic;
+	struct crypto_shash *rx_tfm_mic;
+	struct crypto_shash *tx_tfm_mic;
 
-	अचिन्हित पूर्णांक wpa_enabled:1;
-	अचिन्हित पूर्णांक tkip_cm_active:1;
-	अचिन्हित पूर्णांक key_mgmt:3;
+	unsigned int wpa_enabled:1;
+	unsigned int tkip_cm_active:1;
+	unsigned int key_mgmt:3;
 
-#अगर defined(CONFIG_HERMES_CACHE_FW_ON_INIT) || defined(CONFIG_PM_SLEEP)
+#if defined(CONFIG_HERMES_CACHE_FW_ON_INIT) || defined(CONFIG_PM_SLEEP)
 	/* Cached in memory firmware to use during ->resume. */
-	स्थिर काष्ठा firmware *cached_pri_fw;
-	स्थिर काष्ठा firmware *cached_fw;
-#पूर्ण_अगर
+	const struct firmware *cached_pri_fw;
+	const struct firmware *cached_fw;
+#endif
 
-	काष्ठा notअगरier_block pm_notअगरier;
-पूर्ण;
+	struct notifier_block pm_notifier;
+};
 
-#अगर_घोषित ORINOCO_DEBUG
-बाह्य पूर्णांक orinoco_debug;
-#घोषणा DEBUG(n, args...) करो अणु \
-	अगर (orinoco_debug > (n)) \
-		prपूर्णांकk(KERN_DEBUG args); \
-पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा DEBUG(n, args...) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर	/* ORINOCO_DEBUG */
+#ifdef ORINOCO_DEBUG
+extern int orinoco_debug;
+#define DEBUG(n, args...) do { \
+	if (orinoco_debug > (n)) \
+		printk(KERN_DEBUG args); \
+} while (0)
+#else
+#define DEBUG(n, args...) do { } while (0)
+#endif	/* ORINOCO_DEBUG */
 
 /********************************************************************/
 /* Exported prototypes                                              */
 /********************************************************************/
 
-काष्ठा orinoco_निजी *alloc_orinocodev(पूर्णांक माप_card, काष्ठा device *device,
-					 पूर्णांक (*hard_reset)(काष्ठा orinoco_निजी *),
-					 पूर्णांक (*stop_fw)(काष्ठा orinoco_निजी *, पूर्णांक));
-व्योम मुक्त_orinocodev(काष्ठा orinoco_निजी *priv);
-पूर्णांक orinoco_init(काष्ठा orinoco_निजी *priv);
-पूर्णांक orinoco_अगर_add(काष्ठा orinoco_निजी *priv, अचिन्हित दीर्घ base_addr,
-		   अचिन्हित पूर्णांक irq, स्थिर काष्ठा net_device_ops *ops);
-व्योम orinoco_अगर_del(काष्ठा orinoco_निजी *priv);
-पूर्णांक orinoco_up(काष्ठा orinoco_निजी *priv);
-व्योम orinoco_करोwn(काष्ठा orinoco_निजी *priv);
-irqवापस_t orinoco_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+struct orinoco_private *alloc_orinocodev(int sizeof_card, struct device *device,
+					 int (*hard_reset)(struct orinoco_private *),
+					 int (*stop_fw)(struct orinoco_private *, int));
+void free_orinocodev(struct orinoco_private *priv);
+int orinoco_init(struct orinoco_private *priv);
+int orinoco_if_add(struct orinoco_private *priv, unsigned long base_addr,
+		   unsigned int irq, const struct net_device_ops *ops);
+void orinoco_if_del(struct orinoco_private *priv);
+int orinoco_up(struct orinoco_private *priv);
+void orinoco_down(struct orinoco_private *priv);
+irqreturn_t orinoco_interrupt(int irq, void *dev_id);
 
-व्योम __orinoco_ev_info(काष्ठा net_device *dev, काष्ठा hermes *hw);
-व्योम __orinoco_ev_rx(काष्ठा net_device *dev, काष्ठा hermes *hw);
+void __orinoco_ev_info(struct net_device *dev, struct hermes *hw);
+void __orinoco_ev_rx(struct net_device *dev, struct hermes *hw);
 
-पूर्णांक orinoco_process_xmit_skb(काष्ठा sk_buff *skb,
-			     काष्ठा net_device *dev,
-			     काष्ठा orinoco_निजी *priv,
-			     पूर्णांक *tx_control,
+int orinoco_process_xmit_skb(struct sk_buff *skb,
+			     struct net_device *dev,
+			     struct orinoco_private *priv,
+			     int *tx_control,
 			     u8 *mic);
 
-/* Common nकरो functions exported क्रम reuse by orinoco_usb */
-पूर्णांक orinoco_खोलो(काष्ठा net_device *dev);
-पूर्णांक orinoco_stop(काष्ठा net_device *dev);
-व्योम orinoco_set_multicast_list(काष्ठा net_device *dev);
-पूर्णांक orinoco_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu);
-व्योम orinoco_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
+/* Common ndo functions exported for reuse by orinoco_usb */
+int orinoco_open(struct net_device *dev);
+int orinoco_stop(struct net_device *dev);
+void orinoco_set_multicast_list(struct net_device *dev);
+int orinoco_change_mtu(struct net_device *dev, int new_mtu);
+void orinoco_tx_timeout(struct net_device *dev, unsigned int txqueue);
 
 /********************************************************************/
 /* Locking and synchronization functions                            */
 /********************************************************************/
 
-अटल अंतरभूत पूर्णांक orinoco_lock(काष्ठा orinoco_निजी *priv,
-			       अचिन्हित दीर्घ *flags)
-अणु
+static inline int orinoco_lock(struct orinoco_private *priv,
+			       unsigned long *flags)
+{
 	priv->hw.ops->lock_irqsave(&priv->lock, flags);
-	अगर (priv->hw_unavailable) अणु
+	if (priv->hw_unavailable) {
 		DEBUG(1, "orinoco_lock() called with hw_unavailable (dev=%p)\n",
 		       priv->ndev);
 		priv->hw.ops->unlock_irqrestore(&priv->lock, flags);
-		वापस -EBUSY;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EBUSY;
+	}
+	return 0;
+}
 
-अटल अंतरभूत व्योम orinoco_unlock(काष्ठा orinoco_निजी *priv,
-				  अचिन्हित दीर्घ *flags)
-अणु
+static inline void orinoco_unlock(struct orinoco_private *priv,
+				  unsigned long *flags)
+{
 	priv->hw.ops->unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम orinoco_lock_irq(काष्ठा orinoco_निजी *priv)
-अणु
+static inline void orinoco_lock_irq(struct orinoco_private *priv)
+{
 	priv->hw.ops->lock_irq(&priv->lock);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम orinoco_unlock_irq(काष्ठा orinoco_निजी *priv)
-अणु
+static inline void orinoco_unlock_irq(struct orinoco_private *priv)
+{
 	priv->hw.ops->unlock_irq(&priv->lock);
-पूर्ण
+}
 
-/*** Navigate from net_device to orinoco_निजी ***/
-अटल अंतरभूत काष्ठा orinoco_निजी *ndev_priv(काष्ठा net_device *dev)
-अणु
-	काष्ठा wireless_dev *wdev = netdev_priv(dev);
-	वापस wdev_priv(wdev);
-पूर्ण
-#पूर्ण_अगर /* _ORINOCO_H */
+/*** Navigate from net_device to orinoco_private ***/
+static inline struct orinoco_private *ndev_priv(struct net_device *dev)
+{
+	struct wireless_dev *wdev = netdev_priv(dev);
+	return wdev_priv(wdev);
+}
+#endif /* _ORINOCO_H */

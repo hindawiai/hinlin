@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * WL3501 Wireless LAN PCMCIA Card Driver क्रम Linux
- * Written originally क्रम Linux 2.0.30 by Fox Chen, mhchen@golf.ccl.itri.org.tw
- * Ported to 2.2, 2.4 & 2.5 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
+ * WL3501 Wireless LAN PCMCIA Card Driver for Linux
+ * Written originally for Linux 2.0.30 by Fox Chen, mhchen@golf.ccl.itri.org.tw
+ * Ported to 2.2, 2.4 & 2.5 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  * Wireless extensions in 2.4 by Gustavo Niemeyer <niemeyer@conectiva.com>
  *
- * References used by Fox Chen जबतक writing the original driver क्रम 2.0.30:
+ * References used by Fox Chen while writing the original driver for 2.0.30:
  *
- *   1. WL24xx packet drivers (tooयंत्र.यंत्र)
- *   2. Access Poपूर्णांक Firmware Interface Specअगरication क्रम IEEE 802.11 SUTRO
+ *   1. WL24xx packet drivers (tooasm.asm)
+ *   2. Access Point Firmware Interface Specification for IEEE 802.11 SUTRO
  *   3. IEEE 802.11
  *   4. Linux network driver (/usr/src/linux/drivers/net)
  *   5. ISA card driver - wl24.c
@@ -17,196 +16,196 @@
  *   7. Linux PCMCIA 3c589 network driver - 3c589_cs.c
  *
  * Tested with WL2400 firmware 1.2, Linux 2.0.30, and pcmcia-cs-2.9.12
- *   1. Perक्रमmance: about 165 Kbytes/sec in TCP/IP with Ad-Hoc mode.
+ *   1. Performance: about 165 Kbytes/sec in TCP/IP with Ad-Hoc mode.
  *      rsh 192.168.1.3 "dd if=/dev/zero bs=1k count=1000" > /dev/null
- *      (Specअगरication 2M bits/sec. is about 250 Kbytes/sec., but we must deduct
+ *      (Specification 2M bits/sec. is about 250 Kbytes/sec., but we must deduct
  *       ETHER/IP/UDP/TCP header, and acknowledgement overhead)
  *
- * Tested with Planet AP in 2.4.17, 184 Kbytes/s in UDP in Infraकाष्ठाure mode,
+ * Tested with Planet AP in 2.4.17, 184 Kbytes/s in UDP in Infrastructure mode,
  * 173 Kbytes/s in TCP.
  *
- * Tested with Planet AP in 2.5.73-bk, 216 Kbytes/s in Infraकाष्ठाure mode
+ * Tested with Planet AP in 2.5.73-bk, 216 Kbytes/s in Infrastructure mode
  * with a SMP machine (dual pentium 100), using pktgen, 432 pps (pkt_size = 60)
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/wireless.h>
-#समावेश <net/cfg80211.h>
+#include <linux/delay.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fcntl.h>
+#include <linux/if_arp.h>
+#include <linux/ioport.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/wireless.h>
+#include <net/cfg80211.h>
 
-#समावेश <net/iw_handler.h>
+#include <net/iw_handler.h>
 
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/ds.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/uaccess.h>
+#include <asm/io.h>
+#include <linux/uaccess.h>
 
-#समावेश "wl3501.h"
+#include "wl3501.h"
 
-#अगर_अघोषित __i386__
-#घोषणा slow_करोwn_io()
-#पूर्ण_अगर
+#ifndef __i386__
+#define slow_down_io()
+#endif
 
-/* For rough स्थिरant delay */
-#घोषणा WL3501_NOPLOOP(n) अणु पूर्णांक x = 0; जबतक (x++ < n) slow_करोwn_io(); पूर्ण
+/* For rough constant delay */
+#define WL3501_NOPLOOP(n) { int x = 0; while (x++ < n) slow_down_io(); }
 
 
 
-#घोषणा wl3501_outb(a, b) अणु outb(a, b); slow_करोwn_io(); पूर्ण
-#घोषणा wl3501_outb_p(a, b) अणु outb_p(a, b); slow_करोwn_io(); पूर्ण
-#घोषणा wl3501_outsb(a, b, c) अणु outsb(a, b, c); slow_करोwn_io(); पूर्ण
+#define wl3501_outb(a, b) { outb(a, b); slow_down_io(); }
+#define wl3501_outb_p(a, b) { outb_p(a, b); slow_down_io(); }
+#define wl3501_outsb(a, b, c) { outsb(a, b, c); slow_down_io(); }
 
-#घोषणा WL3501_RELEASE_TIMEOUT (25 * HZ)
-#घोषणा WL3501_MAX_ADHOC_TRIES 16
+#define WL3501_RELEASE_TIMEOUT (25 * HZ)
+#define WL3501_MAX_ADHOC_TRIES 16
 
-#घोषणा WL3501_RESUME	0
-#घोषणा WL3501_SUSPEND	1
+#define WL3501_RESUME	0
+#define WL3501_SUSPEND	1
 
-अटल पूर्णांक wl3501_config(काष्ठा pcmcia_device *link);
-अटल व्योम wl3501_release(काष्ठा pcmcia_device *link);
+static int wl3501_config(struct pcmcia_device *link);
+static void wl3501_release(struct pcmcia_device *link);
 
-अटल स्थिर काष्ठा अणु
-	पूर्णांक reg_करोमुख्य;
-	पूर्णांक min, max, deflt;
-पूर्ण iw_channel_table[] = अणु
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_FCC,
+static const struct {
+	int reg_domain;
+	int min, max, deflt;
+} iw_channel_table[] = {
+	{
+		.reg_domain = IW_REG_DOMAIN_FCC,
 		.min	    = 1,
 		.max	    = 11,
 		.deflt	    = 1,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_DOC,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_DOC,
 		.min	    = 1,
 		.max	    = 11,
 		.deflt	    = 1,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_ETSI,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_ETSI,
 		.min	    = 1,
 		.max	    = 13,
 		.deflt	    = 1,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_SPAIN,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_SPAIN,
 		.min	    = 10,
 		.max	    = 11,
 		.deflt	    = 10,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_FRANCE,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_FRANCE,
 		.min	    = 10,
 		.max	    = 13,
 		.deflt	    = 10,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_MKK,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_MKK,
 		.min	    = 14,
 		.max	    = 14,
 		.deflt	    = 14,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_MKK1,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_MKK1,
 		.min	    = 1,
 		.max	    = 14,
 		.deflt	    = 1,
-	पूर्ण,
-	अणु
-		.reg_करोमुख्य = IW_REG_DOMAIN_ISRAEL,
+	},
+	{
+		.reg_domain = IW_REG_DOMAIN_ISRAEL,
 		.min	    = 3,
 		.max	    = 9,
 		.deflt	    = 9,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
- * iw_valid_channel - validate channel in regulatory करोमुख्य
- * @reg_करोमुख्य: regulatory करोमुख्य
+ * iw_valid_channel - validate channel in regulatory domain
+ * @reg_domain: regulatory domain
  * @channel: channel to validate
  *
- * Returns 0 अगर invalid in the specअगरied regulatory करोमुख्य, non-zero अगर valid.
+ * Returns 0 if invalid in the specified regulatory domain, non-zero if valid.
  */
-अटल पूर्णांक iw_valid_channel(पूर्णांक reg_करोमुख्य, पूर्णांक channel)
-अणु
-	पूर्णांक i, rc = 0;
+static int iw_valid_channel(int reg_domain, int channel)
+{
+	int i, rc = 0;
 
-	क्रम (i = 0; i < ARRAY_SIZE(iw_channel_table); i++)
-		अगर (reg_करोमुख्य == iw_channel_table[i].reg_करोमुख्य) अणु
+	for (i = 0; i < ARRAY_SIZE(iw_channel_table); i++)
+		if (reg_domain == iw_channel_table[i].reg_domain) {
 			rc = channel >= iw_channel_table[i].min &&
 			     channel <= iw_channel_table[i].max;
-			अवरोध;
-		पूर्ण
-	वापस rc;
-पूर्ण
+			break;
+		}
+	return rc;
+}
 
 /**
- * iw_शेष_channel - get शेष channel क्रम a regulatory करोमुख्य
- * @reg_करोमुख्य: regulatory करोमुख्य
+ * iw_default_channel - get default channel for a regulatory domain
+ * @reg_domain: regulatory domain
  *
- * Returns the शेष channel क्रम a regulatory करोमुख्य
+ * Returns the default channel for a regulatory domain
  */
-अटल पूर्णांक iw_शेष_channel(पूर्णांक reg_करोमुख्य)
-अणु
-	पूर्णांक i, rc = 1;
+static int iw_default_channel(int reg_domain)
+{
+	int i, rc = 1;
 
-	क्रम (i = 0; i < ARRAY_SIZE(iw_channel_table); i++)
-		अगर (reg_करोमुख्य == iw_channel_table[i].reg_करोमुख्य) अणु
+	for (i = 0; i < ARRAY_SIZE(iw_channel_table); i++)
+		if (reg_domain == iw_channel_table[i].reg_domain) {
 			rc = iw_channel_table[i].deflt;
-			अवरोध;
-		पूर्ण
-	वापस rc;
-पूर्ण
+			break;
+		}
+	return rc;
+}
 
-अटल व्योम iw_set_mgmt_info_element(क्रमागत iw_mgmt_info_element_ids id,
-				     काष्ठा iw_mgmt_info_element *el,
-				     व्योम *value, पूर्णांक len)
-अणु
+static void iw_set_mgmt_info_element(enum iw_mgmt_info_element_ids id,
+				     struct iw_mgmt_info_element *el,
+				     void *value, int len)
+{
 	el->id  = id;
 	el->len = len;
-	स_नकल(el->data, value, len);
-पूर्ण
+	memcpy(el->data, value, len);
+}
 
-अटल व्योम iw_copy_mgmt_info_element(काष्ठा iw_mgmt_info_element *to,
-				      काष्ठा iw_mgmt_info_element *from)
-अणु
+static void iw_copy_mgmt_info_element(struct iw_mgmt_info_element *to,
+				      struct iw_mgmt_info_element *from)
+{
 	iw_set_mgmt_info_element(from->id, to, from->data, from->len);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wl3501_चयन_page(काष्ठा wl3501_card *this, u8 page)
-अणु
+static inline void wl3501_switch_page(struct wl3501_card *this, u8 page)
+{
 	wl3501_outb(page, this->base_addr + WL3501_NIC_BSS);
-पूर्ण
+}
 
 /*
  * Get Ethernet MAC address.
  *
- * WARNING: We चयन to FPAGE0 and switc back again.
+ * WARNING: We switch to FPAGE0 and switc back again.
  *          Making sure there is no other WL function beening called by ISR.
  */
-अटल पूर्णांक wl3501_get_flash_mac_addr(काष्ठा wl3501_card *this)
-अणु
-	पूर्णांक base_addr = this->base_addr;
+static int wl3501_get_flash_mac_addr(struct wl3501_card *this)
+{
+	int base_addr = this->base_addr;
 
 	/* get MAC addr */
 	wl3501_outb(WL3501_BSS_FPAGE3, base_addr + WL3501_NIC_BSS); /* BSS */
 	wl3501_outb(0x00, base_addr + WL3501_NIC_LMAL);	/* LMAL */
 	wl3501_outb(0x40, base_addr + WL3501_NIC_LMAH);	/* LMAH */
 
-	/* रुको क्रम पढ़ोing EEPROM */
+	/* wait for reading EEPROM */
 	WL3501_NOPLOOP(100);
 	this->mac_addr[0] = inb(base_addr + WL3501_NIC_IODPA);
 	WL3501_NOPLOOP(100);
@@ -220,7 +219,7 @@
 	WL3501_NOPLOOP(100);
 	this->mac_addr[5] = inb(base_addr + WL3501_NIC_IODPA);
 	WL3501_NOPLOOP(100);
-	this->reg_करोमुख्य = inb(base_addr + WL3501_NIC_IODPA);
+	this->reg_domain = inb(base_addr + WL3501_NIC_IODPA);
 	WL3501_NOPLOOP(100);
 	wl3501_outb(WL3501_BSS_FPAGE0, base_addr + WL3501_NIC_BSS);
 	wl3501_outb(0x04, base_addr + WL3501_NIC_LMAL);
@@ -229,12 +228,12 @@
 	this->version[0] = inb(base_addr + WL3501_NIC_IODPA);
 	WL3501_NOPLOOP(100);
 	this->version[1] = inb(base_addr + WL3501_NIC_IODPA);
-	/* चयन to SRAM Page 0 (क्रम safety) */
-	wl3501_चयन_page(this, WL3501_BSS_SPAGE0);
+	/* switch to SRAM Page 0 (for safety) */
+	wl3501_switch_page(this, WL3501_BSS_SPAGE0);
 
 	/* The MAC addr should be 00:60:... */
-	वापस this->mac_addr[0] == 0x00 && this->mac_addr[1] == 0x60;
-पूर्ण
+	return this->mac_addr[0] == 0x00 && this->mac_addr[1] == 0x60;
+}
 
 /**
  * wl3501_set_to_wla - Move 'size' bytes from PC to card
@@ -243,13 +242,13 @@
  * @src: PC addressing space
  * @size: Bytes to move
  *
- * Move 'size' bytes from PC to card. (Shouldn't be पूर्णांकerrupted)
+ * Move 'size' bytes from PC to card. (Shouldn't be interrupted)
  */
-अटल व्योम wl3501_set_to_wla(काष्ठा wl3501_card *this, u16 dest, व्योम *src,
-			      पूर्णांक size)
-अणु
-	/* चयन to SRAM Page 0 */
-	wl3501_चयन_page(this, (dest & 0x8000) ? WL3501_BSS_SPAGE1 :
+static void wl3501_set_to_wla(struct wl3501_card *this, u16 dest, void *src,
+			      int size)
+{
+	/* switch to SRAM Page 0 */
+	wl3501_switch_page(this, (dest & 0x8000) ? WL3501_BSS_SPAGE1 :
 						   WL3501_BSS_SPAGE0);
 	/* set LMAL and LMAH */
 	wl3501_outb(dest & 0xff, this->base_addr + WL3501_NIC_LMAL);
@@ -257,7 +256,7 @@
 
 	/* rep out to Port A */
 	wl3501_outsb(this->base_addr + WL3501_NIC_IODPA, src, size);
-पूर्ण
+}
 
 /**
  * wl3501_get_from_wla - Move 'size' bytes from card to PC
@@ -266,13 +265,13 @@
  * @dest: PC addressing space
  * @size: Bytes to move
  *
- * Move 'size' bytes from card to PC. (Shouldn't be पूर्णांकerrupted)
+ * Move 'size' bytes from card to PC. (Shouldn't be interrupted)
  */
-अटल व्योम wl3501_get_from_wla(काष्ठा wl3501_card *this, u16 src, व्योम *dest,
-				पूर्णांक size)
-अणु
-	/* चयन to SRAM Page 0 */
-	wl3501_चयन_page(this, (src & 0x8000) ? WL3501_BSS_SPAGE1 :
+static void wl3501_get_from_wla(struct wl3501_card *this, u16 src, void *dest,
+				int size)
+{
+	/* switch to SRAM Page 0 */
+	wl3501_switch_page(this, (src & 0x8000) ? WL3501_BSS_SPAGE1 :
 						  WL3501_BSS_SPAGE0);
 	/* set LMAL and LMAH */
 	wl3501_outb(src & 0xff, this->base_addr + WL3501_NIC_LMAL);
@@ -280,181 +279,181 @@
 
 	/* rep get from Port A */
 	insb(this->base_addr + WL3501_NIC_IODPA, dest, size);
-पूर्ण
+}
 
 /*
- * Get/Allocate a मुक्त Tx Data Buffer
+ * Get/Allocate a free Tx Data Buffer
  *
  *  *--------------*-----------------*----------------------------------*
  *  |    PLCP      |    MAC Header   |  DST  SRC         Data ...       |
  *  |  (24 bytes)  |    (30 bytes)   |  (6)  (6)  (Ethernet Row Data)   |
  *  *--------------*-----------------*----------------------------------*
  *  \               \- IEEE 802.11 -/ \-------------- len --------------/
- *   \-काष्ठा wl3501_80211_tx_hdr--/   \-------- Ethernet Frame -------/
+ *   \-struct wl3501_80211_tx_hdr--/   \-------- Ethernet Frame -------/
  *
  * Return = Position in Card
  */
-अटल u16 wl3501_get_tx_buffer(काष्ठा wl3501_card *this, u16 len)
-अणु
+static u16 wl3501_get_tx_buffer(struct wl3501_card *this, u16 len)
+{
 	u16 next, blk_cnt = 0, zero = 0;
-	u16 full_len = माप(काष्ठा wl3501_80211_tx_hdr) + len;
+	u16 full_len = sizeof(struct wl3501_80211_tx_hdr) + len;
 	u16 ret = 0;
 
-	अगर (full_len > this->tx_buffer_cnt * 254)
-		जाओ out;
+	if (full_len > this->tx_buffer_cnt * 254)
+		goto out;
 	ret = this->tx_buffer_head;
-	जबतक (full_len) अणु
-		अगर (full_len < 254)
+	while (full_len) {
+		if (full_len < 254)
 			full_len = 0;
-		अन्यथा
+		else
 			full_len -= 254;
 		wl3501_get_from_wla(this, this->tx_buffer_head, &next,
-				    माप(next));
-		अगर (!full_len)
+				    sizeof(next));
+		if (!full_len)
 			wl3501_set_to_wla(this, this->tx_buffer_head, &zero,
-					  माप(zero));
+					  sizeof(zero));
 		this->tx_buffer_head = next;
 		blk_cnt++;
-		/* अगर buffer is not enough */
-		अगर (!next && full_len) अणु
+		/* if buffer is not enough */
+		if (!next && full_len) {
 			this->tx_buffer_head = ret;
 			ret = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	this->tx_buffer_cnt -= blk_cnt;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Free an allocated Tx Buffer. ptr must be correct position.
  */
-अटल व्योम wl3501_मुक्त_tx_buffer(काष्ठा wl3501_card *this, u16 ptr)
-अणु
-	/* check अगर all space is not मुक्त */
-	अगर (!this->tx_buffer_head)
+static void wl3501_free_tx_buffer(struct wl3501_card *this, u16 ptr)
+{
+	/* check if all space is not free */
+	if (!this->tx_buffer_head)
 		this->tx_buffer_head = ptr;
-	अन्यथा
+	else
 		wl3501_set_to_wla(this, this->tx_buffer_tail,
-				  &ptr, माप(ptr));
-	जबतक (ptr) अणु
+				  &ptr, sizeof(ptr));
+	while (ptr) {
 		u16 next;
 
 		this->tx_buffer_cnt++;
-		wl3501_get_from_wla(this, ptr, &next, माप(next));
+		wl3501_get_from_wla(this, ptr, &next, sizeof(next));
 		this->tx_buffer_tail = ptr;
 		ptr = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक wl3501_esbq_req_test(काष्ठा wl3501_card *this)
-अणु
-	u8 पंचांगp = 0;
+static int wl3501_esbq_req_test(struct wl3501_card *this)
+{
+	u8 tmp = 0;
 
-	wl3501_get_from_wla(this, this->esbq_req_head + 3, &पंचांगp, माप(पंचांगp));
-	वापस पंचांगp & 0x80;
-पूर्ण
+	wl3501_get_from_wla(this, this->esbq_req_head + 3, &tmp, sizeof(tmp));
+	return tmp & 0x80;
+}
 
-अटल व्योम wl3501_esbq_req(काष्ठा wl3501_card *this, u16 *ptr)
-अणु
-	u16 पंचांगp = 0;
+static void wl3501_esbq_req(struct wl3501_card *this, u16 *ptr)
+{
+	u16 tmp = 0;
 
 	wl3501_set_to_wla(this, this->esbq_req_head, ptr, 2);
-	wl3501_set_to_wla(this, this->esbq_req_head + 2, &पंचांगp, माप(पंचांगp));
+	wl3501_set_to_wla(this, this->esbq_req_head + 2, &tmp, sizeof(tmp));
 	this->esbq_req_head += 4;
-	अगर (this->esbq_req_head >= this->esbq_req_end)
+	if (this->esbq_req_head >= this->esbq_req_end)
 		this->esbq_req_head = this->esbq_req_start;
-पूर्ण
+}
 
-अटल पूर्णांक wl3501_esbq_exec(काष्ठा wl3501_card *this, व्योम *sig, पूर्णांक sig_size)
-अणु
-	पूर्णांक rc = -EIO;
+static int wl3501_esbq_exec(struct wl3501_card *this, void *sig, int sig_size)
+{
+	int rc = -EIO;
 
-	अगर (wl3501_esbq_req_test(this)) अणु
+	if (wl3501_esbq_req_test(this)) {
 		u16 ptr = wl3501_get_tx_buffer(this, sig_size);
-		अगर (ptr) अणु
+		if (ptr) {
 			wl3501_set_to_wla(this, ptr, sig, sig_size);
 			wl3501_esbq_req(this, &ptr);
 			rc = 0;
-		पूर्ण
-	पूर्ण
-	वापस rc;
-पूर्ण
+		}
+	}
+	return rc;
+}
 
-अटल पूर्णांक wl3501_request_mib(काष्ठा wl3501_card *this, u8 index, व्योम *bf)
-अणु
-	काष्ठा wl3501_get_req sig = अणु
+static int wl3501_request_mib(struct wl3501_card *this, u8 index, void *bf)
+{
+	struct wl3501_get_req sig = {
 		.sig_id	    = WL3501_SIG_GET_REQ,
 		.mib_attrib = index,
-	पूर्ण;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = -EIO;
+	};
+	unsigned long flags;
+	int rc = -EIO;
 
 	spin_lock_irqsave(&this->lock, flags);
-	अगर (wl3501_esbq_req_test(this)) अणु
-		u16 ptr = wl3501_get_tx_buffer(this, माप(sig));
-		अगर (ptr) अणु
-			wl3501_set_to_wla(this, ptr, &sig, माप(sig));
+	if (wl3501_esbq_req_test(this)) {
+		u16 ptr = wl3501_get_tx_buffer(this, sizeof(sig));
+		if (ptr) {
+			wl3501_set_to_wla(this, ptr, &sig, sizeof(sig));
 			wl3501_esbq_req(this, &ptr);
 			this->sig_get_confirm.mib_status = 255;
 			rc = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&this->lock, flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_mib_value(काष्ठा wl3501_card *this, u8 index,
-				व्योम *bf, पूर्णांक size)
-अणु
-	पूर्णांक rc;
+static int wl3501_get_mib_value(struct wl3501_card *this, u8 index,
+				void *bf, int size)
+{
+	int rc;
 
 	rc = wl3501_request_mib(this, index, bf);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	rc = रुको_event_पूर्णांकerruptible(this->रुको,
+	rc = wait_event_interruptible(this->wait,
 		this->sig_get_confirm.mib_status != 255);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	स_नकल(bf, this->sig_get_confirm.mib_value, size);
-	वापस 0;
-पूर्ण
+	memcpy(bf, this->sig_get_confirm.mib_value, size);
+	return 0;
+}
 
-अटल पूर्णांक wl3501_pwr_mgmt(काष्ठा wl3501_card *this, पूर्णांक suspend)
-अणु
-	काष्ठा wl3501_pwr_mgmt_req sig = अणु
+static int wl3501_pwr_mgmt(struct wl3501_card *this, int suspend)
+{
+	struct wl3501_pwr_mgmt_req sig = {
 		.sig_id		= WL3501_SIG_PWR_MGMT_REQ,
 		.pwr_save	= suspend,
 		.wake_up	= !suspend,
 		.receive_dtims	= 10,
-	पूर्ण;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc = -EIO;
+	};
+	unsigned long flags;
+	int rc = -EIO;
 
 	spin_lock_irqsave(&this->lock, flags);
-	अगर (wl3501_esbq_req_test(this)) अणु
-		u16 ptr = wl3501_get_tx_buffer(this, माप(sig));
-		अगर (ptr) अणु
-			wl3501_set_to_wla(this, ptr, &sig, माप(sig));
+	if (wl3501_esbq_req_test(this)) {
+		u16 ptr = wl3501_get_tx_buffer(this, sizeof(sig));
+		if (ptr) {
+			wl3501_set_to_wla(this, ptr, &sig, sizeof(sig));
 			wl3501_esbq_req(this, &ptr);
 			this->sig_pwr_mgmt_confirm.status = 255;
 			spin_unlock_irqrestore(&this->lock, flags);
-			rc = रुको_event_पूर्णांकerruptible(this->रुको,
+			rc = wait_event_interruptible(this->wait,
 				this->sig_pwr_mgmt_confirm.status != 255);
-			prपूर्णांकk(KERN_INFO "%s: %s status=%d\n", __func__,
+			printk(KERN_INFO "%s: %s status=%d\n", __func__,
 			       suspend ? "suspend" : "resume",
 			       this->sig_pwr_mgmt_confirm.status);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	spin_unlock_irqrestore(&this->lock, flags);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * wl3501_send_pkt - Send a packet.
@@ -464,297 +463,297 @@ out:
  * @len: Packet length
  * Ref: IEEE 802.11
  */
-अटल पूर्णांक wl3501_send_pkt(काष्ठा wl3501_card *this, u8 *data, u16 len)
-अणु
-	u16 bf, sig_bf, next, पंचांगplen, pktlen;
-	काष्ठा wl3501_md_req sig = अणु
+static int wl3501_send_pkt(struct wl3501_card *this, u8 *data, u16 len)
+{
+	u16 bf, sig_bf, next, tmplen, pktlen;
+	struct wl3501_md_req sig = {
 		.sig_id = WL3501_SIG_MD_REQ,
-	पूर्ण;
-	माप_प्रकार sig_addr_len = माप(sig.addr);
-	u8 *pdata = (अक्षर *)data;
-	पूर्णांक rc = -EIO;
+	};
+	size_t sig_addr_len = sizeof(sig.addr);
+	u8 *pdata = (char *)data;
+	int rc = -EIO;
 
-	अगर (wl3501_esbq_req_test(this)) अणु
-		sig_bf = wl3501_get_tx_buffer(this, माप(sig));
+	if (wl3501_esbq_req_test(this)) {
+		sig_bf = wl3501_get_tx_buffer(this, sizeof(sig));
 		rc = -ENOMEM;
-		अगर (!sig_bf)	/* No मुक्त buffer available */
-			जाओ out;
+		if (!sig_bf)	/* No free buffer available */
+			goto out;
 		bf = wl3501_get_tx_buffer(this, len + 26 + 24);
-		अगर (!bf) अणु
-			/* No मुक्त buffer available */
-			wl3501_मुक्त_tx_buffer(this, sig_bf);
-			जाओ out;
-		पूर्ण
+		if (!bf) {
+			/* No free buffer available */
+			wl3501_free_tx_buffer(this, sig_bf);
+			goto out;
+		}
 		rc = 0;
-		स_नकल(&sig.addr, pdata, sig_addr_len);
+		memcpy(&sig.addr, pdata, sig_addr_len);
 		pktlen = len - sig_addr_len;
 		pdata += sig_addr_len;
 		sig.data = bf;
-		अगर (((*pdata) * 256 + (*(pdata + 1))) > 1500) अणु
-			u8 addr4[ETH_ALEN] = अणु
+		if (((*pdata) * 256 + (*(pdata + 1))) > 1500) {
+			u8 addr4[ETH_ALEN] = {
 				[0] = 0xAA, [1] = 0xAA, [2] = 0x03, [4] = 0x00,
-			पूर्ण;
+			};
 
 			wl3501_set_to_wla(this, bf + 2 +
-					  दुरत्व(काष्ठा wl3501_tx_hdr, addr4),
-					  addr4, माप(addr4));
+					  offsetof(struct wl3501_tx_hdr, addr4),
+					  addr4, sizeof(addr4));
 			sig.size = pktlen + 24 + 4 + 6;
-			अगर (pktlen > (254 - माप(काष्ठा wl3501_tx_hdr))) अणु
-				पंचांगplen = 254 - माप(काष्ठा wl3501_tx_hdr);
-				pktlen -= पंचांगplen;
-			पूर्ण अन्यथा अणु
-				पंचांगplen = pktlen;
+			if (pktlen > (254 - sizeof(struct wl3501_tx_hdr))) {
+				tmplen = 254 - sizeof(struct wl3501_tx_hdr);
+				pktlen -= tmplen;
+			} else {
+				tmplen = pktlen;
 				pktlen = 0;
-			पूर्ण
+			}
 			wl3501_set_to_wla(this,
-					  bf + 2 + माप(काष्ठा wl3501_tx_hdr),
-					  pdata, पंचांगplen);
-			pdata += पंचांगplen;
-			wl3501_get_from_wla(this, bf, &next, माप(next));
+					  bf + 2 + sizeof(struct wl3501_tx_hdr),
+					  pdata, tmplen);
+			pdata += tmplen;
+			wl3501_get_from_wla(this, bf, &next, sizeof(next));
 			bf = next;
-		पूर्ण अन्यथा अणु
+		} else {
 			sig.size = pktlen + 24 + 4 - 2;
 			pdata += 2;
 			pktlen -= 2;
-			अगर (pktlen > (254 - माप(काष्ठा wl3501_tx_hdr) + 6)) अणु
-				पंचांगplen = 254 - माप(काष्ठा wl3501_tx_hdr) + 6;
-				pktlen -= पंचांगplen;
-			पूर्ण अन्यथा अणु
-				पंचांगplen = pktlen;
+			if (pktlen > (254 - sizeof(struct wl3501_tx_hdr) + 6)) {
+				tmplen = 254 - sizeof(struct wl3501_tx_hdr) + 6;
+				pktlen -= tmplen;
+			} else {
+				tmplen = pktlen;
 				pktlen = 0;
-			पूर्ण
+			}
 			wl3501_set_to_wla(this, bf + 2 +
-					  दुरत्व(काष्ठा wl3501_tx_hdr, addr4),
-					  pdata, पंचांगplen);
-			pdata += पंचांगplen;
-			wl3501_get_from_wla(this, bf, &next, माप(next));
+					  offsetof(struct wl3501_tx_hdr, addr4),
+					  pdata, tmplen);
+			pdata += tmplen;
+			wl3501_get_from_wla(this, bf, &next, sizeof(next));
 			bf = next;
-		पूर्ण
-		जबतक (pktlen > 0) अणु
-			अगर (pktlen > 254) अणु
-				पंचांगplen = 254;
+		}
+		while (pktlen > 0) {
+			if (pktlen > 254) {
+				tmplen = 254;
 				pktlen -= 254;
-			पूर्ण अन्यथा अणु
-				पंचांगplen = pktlen;
+			} else {
+				tmplen = pktlen;
 				pktlen = 0;
-			पूर्ण
-			wl3501_set_to_wla(this, bf + 2, pdata, पंचांगplen);
-			pdata += पंचांगplen;
-			wl3501_get_from_wla(this, bf, &next, माप(next));
+			}
+			wl3501_set_to_wla(this, bf + 2, pdata, tmplen);
+			pdata += tmplen;
+			wl3501_get_from_wla(this, bf, &next, sizeof(next));
 			bf = next;
-		पूर्ण
-		wl3501_set_to_wla(this, sig_bf, &sig, माप(sig));
+		}
+		wl3501_set_to_wla(this, sig_bf, &sig, sizeof(sig));
 		wl3501_esbq_req(this, &sig_bf);
-	पूर्ण
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wl3501_mgmt_resync(काष्ठा wl3501_card *this)
-अणु
-	काष्ठा wl3501_resync_req sig = अणु
+static int wl3501_mgmt_resync(struct wl3501_card *this)
+{
+	struct wl3501_resync_req sig = {
 		.sig_id = WL3501_SIG_RESYNC_REQ,
-	पूर्ण;
+	};
 
-	वापस wl3501_esbq_exec(this, &sig, माप(sig));
-पूर्ण
+	return wl3501_esbq_exec(this, &sig, sizeof(sig));
+}
 
-अटल अंतरभूत पूर्णांक wl3501_fw_bss_type(काष्ठा wl3501_card *this)
-अणु
-	वापस this->net_type == IW_MODE_INFRA ? WL3501_NET_TYPE_INFRA :
+static inline int wl3501_fw_bss_type(struct wl3501_card *this)
+{
+	return this->net_type == IW_MODE_INFRA ? WL3501_NET_TYPE_INFRA :
 						 WL3501_NET_TYPE_ADHOC;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक wl3501_fw_cap_info(काष्ठा wl3501_card *this)
-अणु
-	वापस this->net_type == IW_MODE_INFRA ? WL3501_MGMT_CAPABILITY_ESS :
+static inline int wl3501_fw_cap_info(struct wl3501_card *this)
+{
+	return this->net_type == IW_MODE_INFRA ? WL3501_MGMT_CAPABILITY_ESS :
 						 WL3501_MGMT_CAPABILITY_IBSS;
-पूर्ण
+}
 
-अटल पूर्णांक wl3501_mgmt_scan(काष्ठा wl3501_card *this, u16 chan_समय)
-अणु
-	काष्ठा wl3501_scan_req sig = अणु
+static int wl3501_mgmt_scan(struct wl3501_card *this, u16 chan_time)
+{
+	struct wl3501_scan_req sig = {
 		.sig_id		= WL3501_SIG_SCAN_REQ,
 		.scan_type	= WL3501_SCAN_TYPE_ACTIVE,
 		.probe_delay	= 0x10,
-		.min_chan_समय	= chan_समय,
-		.max_chan_समय	= chan_समय,
+		.min_chan_time	= chan_time,
+		.max_chan_time	= chan_time,
 		.bss_type	= wl3501_fw_bss_type(this),
-	पूर्ण;
+	};
 
 	this->bss_cnt = this->join_sta_bss = 0;
-	वापस wl3501_esbq_exec(this, &sig, माप(sig));
-पूर्ण
+	return wl3501_esbq_exec(this, &sig, sizeof(sig));
+}
 
-अटल पूर्णांक wl3501_mgmt_join(काष्ठा wl3501_card *this, u16 stas)
-अणु
-	काष्ठा wl3501_join_req sig = अणु
+static int wl3501_mgmt_join(struct wl3501_card *this, u16 stas)
+{
+	struct wl3501_join_req sig = {
 		.sig_id		  = WL3501_SIG_JOIN_REQ,
-		.समयout	  = 10,
-		.req.ds_pset = अणु
-			.el = अणु
+		.timeout	  = 10,
+		.req.ds_pset = {
+			.el = {
 				.id  = IW_MGMT_INFO_ELEMENT_DS_PARAMETER_SET,
 				.len = 1,
-			पूर्ण,
+			},
 			.chan	= this->chan,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	स_नकल(&sig.req, &this->bss_set[stas].req, माप(sig.req));
-	वापस wl3501_esbq_exec(this, &sig, माप(sig));
-पूर्ण
+	memcpy(&sig.req, &this->bss_set[stas].req, sizeof(sig.req));
+	return wl3501_esbq_exec(this, &sig, sizeof(sig));
+}
 
-अटल पूर्णांक wl3501_mgmt_start(काष्ठा wl3501_card *this)
-अणु
-	काष्ठा wl3501_start_req sig = अणु
+static int wl3501_mgmt_start(struct wl3501_card *this)
+{
+	struct wl3501_start_req sig = {
 		.sig_id			= WL3501_SIG_START_REQ,
 		.beacon_period		= 400,
 		.dtim_period		= 1,
-		.ds_pset = अणु
-			.el = अणु
+		.ds_pset = {
+			.el = {
 				.id  = IW_MGMT_INFO_ELEMENT_DS_PARAMETER_SET,
 				.len = 1,
-			पूर्ण,
+			},
 			.chan	= this->chan,
-		पूर्ण,
-		.bss_basic_rset	= अणु
-			.el = अणु
+		},
+		.bss_basic_rset	= {
+			.el = {
 				.id	= IW_MGMT_INFO_ELEMENT_SUPPORTED_RATES,
 				.len = 2,
-			पूर्ण,
-			.data_rate_labels = अणु
+			},
+			.data_rate_labels = {
 				[0] = IW_MGMT_RATE_LABEL_MANDATORY |
 				      IW_MGMT_RATE_LABEL_1MBIT,
 				[1] = IW_MGMT_RATE_LABEL_MANDATORY |
 				      IW_MGMT_RATE_LABEL_2MBIT,
-			पूर्ण,
-		पूर्ण,
-		.operational_rset	= अणु
-			.el = अणु
+			},
+		},
+		.operational_rset	= {
+			.el = {
 				.id	= IW_MGMT_INFO_ELEMENT_SUPPORTED_RATES,
 				.len = 2,
-			पूर्ण,
-			.data_rate_labels = अणु
+			},
+			.data_rate_labels = {
 				[0] = IW_MGMT_RATE_LABEL_MANDATORY |
 				      IW_MGMT_RATE_LABEL_1MBIT,
 				[1] = IW_MGMT_RATE_LABEL_MANDATORY |
 				      IW_MGMT_RATE_LABEL_2MBIT,
-			पूर्ण,
-		पूर्ण,
-		.ibss_pset		= अणु
-			.el = अणु
+			},
+		},
+		.ibss_pset		= {
+			.el = {
 				.id	 = IW_MGMT_INFO_ELEMENT_IBSS_PARAMETER_SET,
 				.len     = 2,
-			पूर्ण,
-			.atim_winकरोw = 10,
-		पूर्ण,
+			},
+			.atim_window = 10,
+		},
 		.bss_type		= wl3501_fw_bss_type(this),
 		.cap_info		= wl3501_fw_cap_info(this),
-	पूर्ण;
+	};
 
 	iw_copy_mgmt_info_element(&sig.ssid.el, &this->essid.el);
 	iw_copy_mgmt_info_element(&this->keep_essid.el, &this->essid.el);
-	वापस wl3501_esbq_exec(this, &sig, माप(sig));
-पूर्ण
+	return wl3501_esbq_exec(this, &sig, sizeof(sig));
+}
 
-अटल व्योम wl3501_mgmt_scan_confirm(काष्ठा wl3501_card *this, u16 addr)
-अणु
+static void wl3501_mgmt_scan_confirm(struct wl3501_card *this, u16 addr)
+{
 	u16 i = 0;
-	पूर्णांक matchflag = 0;
-	काष्ठा wl3501_scan_confirm sig;
+	int matchflag = 0;
+	struct wl3501_scan_confirm sig;
 
 	pr_debug("entry");
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
-	अगर (sig.status == WL3501_STATUS_SUCCESS) अणु
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
+	if (sig.status == WL3501_STATUS_SUCCESS) {
 		pr_debug("success");
-		अगर ((this->net_type == IW_MODE_INFRA &&
+		if ((this->net_type == IW_MODE_INFRA &&
 		     (sig.req.cap_info & WL3501_MGMT_CAPABILITY_ESS)) ||
 		    (this->net_type == IW_MODE_ADHOC &&
 		     (sig.req.cap_info & WL3501_MGMT_CAPABILITY_IBSS)) ||
-		    this->net_type == IW_MODE_AUTO) अणु
-			अगर (!this->essid.el.len)
+		    this->net_type == IW_MODE_AUTO) {
+			if (!this->essid.el.len)
 				matchflag = 1;
-			अन्यथा अगर (this->essid.el.len == 3 &&
-				 !स_भेद(this->essid.essid, "ANY", 3))
+			else if (this->essid.el.len == 3 &&
+				 !memcmp(this->essid.essid, "ANY", 3))
 				matchflag = 1;
-			अन्यथा अगर (this->essid.el.len != sig.req.ssid.el.len)
+			else if (this->essid.el.len != sig.req.ssid.el.len)
 				matchflag = 0;
-			अन्यथा अगर (स_भेद(this->essid.essid, sig.req.ssid.essid,
+			else if (memcmp(this->essid.essid, sig.req.ssid.essid,
 					this->essid.el.len))
 				matchflag = 0;
-			अन्यथा
+			else
 				matchflag = 1;
-			अगर (matchflag) अणु
-				क्रम (i = 0; i < this->bss_cnt; i++) अणु
-					अगर (ether_addr_equal_unaligned(this->bss_set[i].req.bssid,
-								       sig.req.bssid)) अणु
+			if (matchflag) {
+				for (i = 0; i < this->bss_cnt; i++) {
+					if (ether_addr_equal_unaligned(this->bss_set[i].req.bssid,
+								       sig.req.bssid)) {
 						matchflag = 0;
-						अवरोध;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-			अगर (matchflag && (i < 20)) अणु
-				स_नकल(&this->bss_set[i].req,
-				       &sig.req, माप(sig.req));
+						break;
+					}
+				}
+			}
+			if (matchflag && (i < 20)) {
+				memcpy(&this->bss_set[i].req,
+				       &sig.req, sizeof(sig.req));
 				this->bss_cnt++;
 				this->rssi = sig.rssi;
 				this->bss_set[i].rssi = sig.rssi;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (sig.status == WL3501_STATUS_TIMEOUT) अणु
+			}
+		}
+	} else if (sig.status == WL3501_STATUS_TIMEOUT) {
 		pr_debug("timeout");
 		this->join_sta_bss = 0;
-		क्रम (i = this->join_sta_bss; i < this->bss_cnt; i++)
-			अगर (!wl3501_mgmt_join(this, i))
-				अवरोध;
+		for (i = this->join_sta_bss; i < this->bss_cnt; i++)
+			if (!wl3501_mgmt_join(this, i))
+				break;
 		this->join_sta_bss = i;
-		अगर (this->join_sta_bss == this->bss_cnt) अणु
-			अगर (this->net_type == IW_MODE_INFRA)
+		if (this->join_sta_bss == this->bss_cnt) {
+			if (this->net_type == IW_MODE_INFRA)
 				wl3501_mgmt_scan(this, 100);
-			अन्यथा अणु
-				this->adhoc_बार++;
-				अगर (this->adhoc_बार > WL3501_MAX_ADHOC_TRIES)
+			else {
+				this->adhoc_times++;
+				if (this->adhoc_times > WL3501_MAX_ADHOC_TRIES)
 					wl3501_mgmt_start(this);
-				अन्यथा
+				else
 					wl3501_mgmt_scan(this, 100);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
 /**
- * wl3501_block_पूर्णांकerrupt - Mask पूर्णांकerrupt from SUTRO
+ * wl3501_block_interrupt - Mask interrupt from SUTRO
  * @this: Card
  *
- * Mask पूर्णांकerrupt from SUTRO. (i.e. SUTRO cannot पूर्णांकerrupt the HOST)
- * Return: 1 अगर पूर्णांकerrupt is originally enabled
+ * Mask interrupt from SUTRO. (i.e. SUTRO cannot interrupt the HOST)
+ * Return: 1 if interrupt is originally enabled
  */
-अटल पूर्णांक wl3501_block_पूर्णांकerrupt(काष्ठा wl3501_card *this)
-अणु
+static int wl3501_block_interrupt(struct wl3501_card *this)
+{
 	u8 old = inb(this->base_addr + WL3501_NIC_GCR);
 	u8 new = old & (~(WL3501_GCR_ECINT | WL3501_GCR_INT2EC |
 			WL3501_GCR_ENECINT));
 
 	wl3501_outb(new, this->base_addr + WL3501_NIC_GCR);
-	वापस old & WL3501_GCR_ENECINT;
-पूर्ण
+	return old & WL3501_GCR_ENECINT;
+}
 
 /**
- * wl3501_unblock_पूर्णांकerrupt - Enable पूर्णांकerrupt from SUTRO
+ * wl3501_unblock_interrupt - Enable interrupt from SUTRO
  * @this: Card
  *
- * Enable पूर्णांकerrupt from SUTRO. (i.e. SUTRO can पूर्णांकerrupt the HOST)
- * Return: 1 अगर पूर्णांकerrupt is originally enabled
+ * Enable interrupt from SUTRO. (i.e. SUTRO can interrupt the HOST)
+ * Return: 1 if interrupt is originally enabled
  */
-अटल पूर्णांक wl3501_unblock_पूर्णांकerrupt(काष्ठा wl3501_card *this)
-अणु
+static int wl3501_unblock_interrupt(struct wl3501_card *this)
+{
 	u8 old = inb(this->base_addr + WL3501_NIC_GCR);
 	u8 new = (old & ~(WL3501_GCR_ECINT | WL3501_GCR_INT2EC)) |
 		  WL3501_GCR_ENECINT;
 
 	wl3501_outb(new, this->base_addr + WL3501_NIC_GCR);
-	वापस old & WL3501_GCR_ENECINT;
-पूर्ण
+	return old & WL3501_GCR_ENECINT;
+}
 
 /**
  * wl3501_receive - Receive data from Receive Queue.
@@ -765,386 +764,386 @@ out:
  * @bf: address of host
  * @size: size of buffer.
  */
-अटल u16 wl3501_receive(काष्ठा wl3501_card *this, u8 *bf, u16 size)
-अणु
+static u16 wl3501_receive(struct wl3501_card *this, u8 *bf, u16 size)
+{
 	u16 next_addr, next_addr1;
 	u8 *data = bf + 12;
 
 	size -= 12;
 	wl3501_get_from_wla(this, this->start_seg + 2,
-			    &next_addr, माप(next_addr));
-	अगर (size > WL3501_BLKSZ - माप(काष्ठा wl3501_rx_hdr)) अणु
+			    &next_addr, sizeof(next_addr));
+	if (size > WL3501_BLKSZ - sizeof(struct wl3501_rx_hdr)) {
 		wl3501_get_from_wla(this,
 				    this->start_seg +
-					माप(काष्ठा wl3501_rx_hdr), data,
+					sizeof(struct wl3501_rx_hdr), data,
 				    WL3501_BLKSZ -
-					माप(काष्ठा wl3501_rx_hdr));
-		size -= WL3501_BLKSZ - माप(काष्ठा wl3501_rx_hdr);
-		data += WL3501_BLKSZ - माप(काष्ठा wl3501_rx_hdr);
-	पूर्ण अन्यथा अणु
+					sizeof(struct wl3501_rx_hdr));
+		size -= WL3501_BLKSZ - sizeof(struct wl3501_rx_hdr);
+		data += WL3501_BLKSZ - sizeof(struct wl3501_rx_hdr);
+	} else {
 		wl3501_get_from_wla(this,
 				    this->start_seg +
-					माप(काष्ठा wl3501_rx_hdr),
+					sizeof(struct wl3501_rx_hdr),
 				    data, size);
 		size = 0;
-	पूर्ण
-	जबतक (size > 0) अणु
-		अगर (size > WL3501_BLKSZ - 5) अणु
+	}
+	while (size > 0) {
+		if (size > WL3501_BLKSZ - 5) {
 			wl3501_get_from_wla(this, next_addr + 5, data,
 					    WL3501_BLKSZ - 5);
 			size -= WL3501_BLKSZ - 5;
 			data += WL3501_BLKSZ - 5;
 			wl3501_get_from_wla(this, next_addr + 2, &next_addr1,
-					    माप(next_addr1));
+					    sizeof(next_addr1));
 			next_addr = next_addr1;
-		पूर्ण अन्यथा अणु
+		} else {
 			wl3501_get_from_wla(this, next_addr + 5, data, size);
 			size = 0;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल व्योम wl3501_esbq_req_मुक्त(काष्ठा wl3501_card *this)
-अणु
-	u8 पंचांगp;
+static void wl3501_esbq_req_free(struct wl3501_card *this)
+{
+	u8 tmp;
 	u16 addr;
 
-	अगर (this->esbq_req_head == this->esbq_req_tail)
-		जाओ out;
-	wl3501_get_from_wla(this, this->esbq_req_tail + 3, &पंचांगp, माप(पंचांगp));
-	अगर (!(पंचांगp & 0x80))
-		जाओ out;
-	wl3501_get_from_wla(this, this->esbq_req_tail, &addr, माप(addr));
-	wl3501_मुक्त_tx_buffer(this, addr);
+	if (this->esbq_req_head == this->esbq_req_tail)
+		goto out;
+	wl3501_get_from_wla(this, this->esbq_req_tail + 3, &tmp, sizeof(tmp));
+	if (!(tmp & 0x80))
+		goto out;
+	wl3501_get_from_wla(this, this->esbq_req_tail, &addr, sizeof(addr));
+	wl3501_free_tx_buffer(this, addr);
 	this->esbq_req_tail += 4;
-	अगर (this->esbq_req_tail >= this->esbq_req_end)
+	if (this->esbq_req_tail >= this->esbq_req_end)
 		this->esbq_req_tail = this->esbq_req_start;
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक wl3501_esbq_confirm(काष्ठा wl3501_card *this)
-अणु
-	u8 पंचांगp;
+static int wl3501_esbq_confirm(struct wl3501_card *this)
+{
+	u8 tmp;
 
-	wl3501_get_from_wla(this, this->esbq_confirm + 3, &पंचांगp, माप(पंचांगp));
-	वापस पंचांगp & 0x80;
-पूर्ण
+	wl3501_get_from_wla(this, this->esbq_confirm + 3, &tmp, sizeof(tmp));
+	return tmp & 0x80;
+}
 
-अटल व्योम wl3501_online(काष्ठा net_device *dev)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static void wl3501_online(struct net_device *dev)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
-	prपूर्णांकk(KERN_INFO "%s: Wireless LAN online. BSSID: %pM\n",
+	printk(KERN_INFO "%s: Wireless LAN online. BSSID: %pM\n",
 	       dev->name, this->bssid);
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
-अटल व्योम wl3501_esbq_confirm_करोne(काष्ठा wl3501_card *this)
-अणु
-	u8 पंचांगp = 0;
+static void wl3501_esbq_confirm_done(struct wl3501_card *this)
+{
+	u8 tmp = 0;
 
-	wl3501_set_to_wla(this, this->esbq_confirm + 3, &पंचांगp, माप(पंचांगp));
+	wl3501_set_to_wla(this, this->esbq_confirm + 3, &tmp, sizeof(tmp));
 	this->esbq_confirm += 4;
-	अगर (this->esbq_confirm >= this->esbq_confirm_end)
+	if (this->esbq_confirm >= this->esbq_confirm_end)
 		this->esbq_confirm = this->esbq_confirm_start;
-पूर्ण
+}
 
-अटल पूर्णांक wl3501_mgmt_auth(काष्ठा wl3501_card *this)
-अणु
-	काष्ठा wl3501_auth_req sig = अणु
+static int wl3501_mgmt_auth(struct wl3501_card *this)
+{
+	struct wl3501_auth_req sig = {
 		.sig_id	 = WL3501_SIG_AUTH_REQ,
 		.type	 = WL3501_SYS_TYPE_OPEN,
-		.समयout = 1000,
-	पूर्ण;
+		.timeout = 1000,
+	};
 
 	pr_debug("entry");
-	स_नकल(sig.mac_addr, this->bssid, ETH_ALEN);
-	वापस wl3501_esbq_exec(this, &sig, माप(sig));
-पूर्ण
+	memcpy(sig.mac_addr, this->bssid, ETH_ALEN);
+	return wl3501_esbq_exec(this, &sig, sizeof(sig));
+}
 
-अटल पूर्णांक wl3501_mgmt_association(काष्ठा wl3501_card *this)
-अणु
-	काष्ठा wl3501_assoc_req sig = अणु
+static int wl3501_mgmt_association(struct wl3501_card *this)
+{
+	struct wl3501_assoc_req sig = {
 		.sig_id		 = WL3501_SIG_ASSOC_REQ,
-		.समयout	 = 1000,
-		.listen_पूर्णांकerval = 5,
+		.timeout	 = 1000,
+		.listen_interval = 5,
 		.cap_info	 = this->cap_info,
-	पूर्ण;
+	};
 
 	pr_debug("entry");
-	स_नकल(sig.mac_addr, this->bssid, ETH_ALEN);
-	वापस wl3501_esbq_exec(this, &sig, माप(sig));
-पूर्ण
+	memcpy(sig.mac_addr, this->bssid, ETH_ALEN);
+	return wl3501_esbq_exec(this, &sig, sizeof(sig));
+}
 
-अटल व्योम wl3501_mgmt_join_confirm(काष्ठा net_device *dev, u16 addr)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	काष्ठा wl3501_join_confirm sig;
+static void wl3501_mgmt_join_confirm(struct net_device *dev, u16 addr)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	struct wl3501_join_confirm sig;
 
 	pr_debug("entry");
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
-	अगर (sig.status == WL3501_STATUS_SUCCESS) अणु
-		अगर (this->net_type == IW_MODE_INFRA) अणु
-			अगर (this->join_sta_bss < this->bss_cnt) अणु
-				स्थिर पूर्णांक i = this->join_sta_bss;
-				स_नकल(this->bssid,
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
+	if (sig.status == WL3501_STATUS_SUCCESS) {
+		if (this->net_type == IW_MODE_INFRA) {
+			if (this->join_sta_bss < this->bss_cnt) {
+				const int i = this->join_sta_bss;
+				memcpy(this->bssid,
 				       this->bss_set[i].req.bssid, ETH_ALEN);
 				this->chan = this->bss_set[i].req.ds_pset.chan;
 				iw_copy_mgmt_info_element(&this->keep_essid.el,
 						     &this->bss_set[i].req.ssid.el);
 				wl3501_mgmt_auth(this);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			स्थिर पूर्णांक i = this->join_sta_bss;
+			}
+		} else {
+			const int i = this->join_sta_bss;
 
-			स_नकल(&this->bssid, &this->bss_set[i].req.bssid, ETH_ALEN);
+			memcpy(&this->bssid, &this->bss_set[i].req.bssid, ETH_ALEN);
 			this->chan = this->bss_set[i].req.ds_pset.chan;
 			iw_copy_mgmt_info_element(&this->keep_essid.el,
 						  &this->bss_set[i].req.ssid.el);
 			wl3501_online(dev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+		}
+	} else {
+		int i;
 		this->join_sta_bss++;
-		क्रम (i = this->join_sta_bss; i < this->bss_cnt; i++)
-			अगर (!wl3501_mgmt_join(this, i))
-				अवरोध;
+		for (i = this->join_sta_bss; i < this->bss_cnt; i++)
+			if (!wl3501_mgmt_join(this, i))
+				break;
 		this->join_sta_bss = i;
-		अगर (this->join_sta_bss == this->bss_cnt) अणु
-			अगर (this->net_type == IW_MODE_INFRA)
+		if (this->join_sta_bss == this->bss_cnt) {
+			if (this->net_type == IW_MODE_INFRA)
 				wl3501_mgmt_scan(this, 100);
-			अन्यथा अणु
-				this->adhoc_बार++;
-				अगर (this->adhoc_बार > WL3501_MAX_ADHOC_TRIES)
+			else {
+				this->adhoc_times++;
+				if (this->adhoc_times > WL3501_MAX_ADHOC_TRIES)
 					wl3501_mgmt_start(this);
-				अन्यथा
+				else
 					wl3501_mgmt_scan(this, 100);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल अंतरभूत व्योम wl3501_alarm_पूर्णांकerrupt(काष्ठा net_device *dev,
-					  काष्ठा wl3501_card *this)
-अणु
-	अगर (this->net_type == IW_MODE_INFRA) अणु
-		prपूर्णांकk(KERN_INFO "Wireless LAN offline\n");
-		netअगर_stop_queue(dev);
+static inline void wl3501_alarm_interrupt(struct net_device *dev,
+					  struct wl3501_card *this)
+{
+	if (this->net_type == IW_MODE_INFRA) {
+		printk(KERN_INFO "Wireless LAN offline\n");
+		netif_stop_queue(dev);
 		wl3501_mgmt_resync(this);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम wl3501_md_confirm_पूर्णांकerrupt(काष्ठा net_device *dev,
-					       काष्ठा wl3501_card *this,
+static inline void wl3501_md_confirm_interrupt(struct net_device *dev,
+					       struct wl3501_card *this,
 					       u16 addr)
-अणु
-	काष्ठा wl3501_md_confirm sig;
+{
+	struct wl3501_md_confirm sig;
 
 	pr_debug("entry");
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
-	wl3501_मुक्त_tx_buffer(this, sig.data);
-	अगर (netअगर_queue_stopped(dev))
-		netअगर_wake_queue(dev);
-पूर्ण
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
+	wl3501_free_tx_buffer(this, sig.data);
+	if (netif_queue_stopped(dev))
+		netif_wake_queue(dev);
+}
 
-अटल अंतरभूत व्योम wl3501_md_ind_पूर्णांकerrupt(काष्ठा net_device *dev,
-					   काष्ठा wl3501_card *this, u16 addr)
-अणु
-	काष्ठा wl3501_md_ind sig;
-	काष्ठा sk_buff *skb;
+static inline void wl3501_md_ind_interrupt(struct net_device *dev,
+					   struct wl3501_card *this, u16 addr)
+{
+	struct wl3501_md_ind sig;
+	struct sk_buff *skb;
 	u8 rssi, addr4[ETH_ALEN];
 	u16 pkt_len;
 
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
 	this->start_seg = sig.data;
 	wl3501_get_from_wla(this,
-			    sig.data + दुरत्व(काष्ठा wl3501_rx_hdr, rssi),
-			    &rssi, माप(rssi));
+			    sig.data + offsetof(struct wl3501_rx_hdr, rssi),
+			    &rssi, sizeof(rssi));
 	this->rssi = rssi <= 63 ? (rssi * 100) / 64 : 255;
 
 	wl3501_get_from_wla(this,
 			    sig.data +
-				दुरत्व(काष्ठा wl3501_rx_hdr, addr4),
-			    &addr4, माप(addr4));
-	अगर (!(addr4[0] == 0xAA && addr4[1] == 0xAA &&
-	      addr4[2] == 0x03 && addr4[4] == 0x00)) अणु
-		prपूर्णांकk(KERN_INFO "Unsupported packet type!\n");
-		वापस;
-	पूर्ण
+				offsetof(struct wl3501_rx_hdr, addr4),
+			    &addr4, sizeof(addr4));
+	if (!(addr4[0] == 0xAA && addr4[1] == 0xAA &&
+	      addr4[2] == 0x03 && addr4[4] == 0x00)) {
+		printk(KERN_INFO "Unsupported packet type!\n");
+		return;
+	}
 	pkt_len = sig.size + 12 - 24 - 4 - 6;
 
 	skb = dev_alloc_skb(pkt_len + 5);
 
-	अगर (!skb) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Can't alloc a sk_buff of size %d.\n",
+	if (!skb) {
+		printk(KERN_WARNING "%s: Can't alloc a sk_buff of size %d.\n",
 		       dev->name, pkt_len);
 		dev->stats.rx_dropped++;
-	पूर्ण अन्यथा अणु
+	} else {
 		skb->dev = dev;
 		skb_reserve(skb, 2); /* IP headers on 16 bytes boundaries */
-		skb_copy_to_linear_data(skb, (अचिन्हित अक्षर *)&sig.addr,
-					माप(sig.addr));
+		skb_copy_to_linear_data(skb, (unsigned char *)&sig.addr,
+					sizeof(sig.addr));
 		wl3501_receive(this, skb->data, pkt_len);
 		skb_put(skb, pkt_len);
 		skb->protocol	= eth_type_trans(skb, dev);
 		dev->stats.rx_packets++;
 		dev->stats.rx_bytes += skb->len;
-		netअगर_rx(skb);
-	पूर्ण
-पूर्ण
+		netif_rx(skb);
+	}
+}
 
-अटल अंतरभूत व्योम wl3501_get_confirm_पूर्णांकerrupt(काष्ठा wl3501_card *this,
-						u16 addr, व्योम *sig, पूर्णांक size)
-अणु
+static inline void wl3501_get_confirm_interrupt(struct wl3501_card *this,
+						u16 addr, void *sig, int size)
+{
 	pr_debug("entry");
 	wl3501_get_from_wla(this, addr, &this->sig_get_confirm,
-			    माप(this->sig_get_confirm));
-	wake_up(&this->रुको);
-पूर्ण
+			    sizeof(this->sig_get_confirm));
+	wake_up(&this->wait);
+}
 
-अटल अंतरभूत व्योम wl3501_start_confirm_पूर्णांकerrupt(काष्ठा net_device *dev,
-						  काष्ठा wl3501_card *this,
+static inline void wl3501_start_confirm_interrupt(struct net_device *dev,
+						  struct wl3501_card *this,
 						  u16 addr)
-अणु
-	काष्ठा wl3501_start_confirm sig;
+{
+	struct wl3501_start_confirm sig;
 
 	pr_debug("entry");
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
-	अगर (sig.status == WL3501_STATUS_SUCCESS)
-		netअगर_wake_queue(dev);
-पूर्ण
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
+	if (sig.status == WL3501_STATUS_SUCCESS)
+		netif_wake_queue(dev);
+}
 
-अटल अंतरभूत व्योम wl3501_assoc_confirm_पूर्णांकerrupt(काष्ठा net_device *dev,
+static inline void wl3501_assoc_confirm_interrupt(struct net_device *dev,
 						  u16 addr)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	काष्ठा wl3501_assoc_confirm sig;
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	struct wl3501_assoc_confirm sig;
 
 	pr_debug("entry");
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
 
-	अगर (sig.status == WL3501_STATUS_SUCCESS)
+	if (sig.status == WL3501_STATUS_SUCCESS)
 		wl3501_online(dev);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wl3501_auth_confirm_पूर्णांकerrupt(काष्ठा wl3501_card *this,
+static inline void wl3501_auth_confirm_interrupt(struct wl3501_card *this,
 						 u16 addr)
-अणु
-	काष्ठा wl3501_auth_confirm sig;
+{
+	struct wl3501_auth_confirm sig;
 
 	pr_debug("entry");
-	wl3501_get_from_wla(this, addr, &sig, माप(sig));
+	wl3501_get_from_wla(this, addr, &sig, sizeof(sig));
 
-	अगर (sig.status == WL3501_STATUS_SUCCESS)
+	if (sig.status == WL3501_STATUS_SUCCESS)
 		wl3501_mgmt_association(this);
-	अन्यथा
+	else
 		wl3501_mgmt_resync(this);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wl3501_rx_पूर्णांकerrupt(काष्ठा net_device *dev)
-अणु
-	पूर्णांक morepkts;
+static inline void wl3501_rx_interrupt(struct net_device *dev)
+{
+	int morepkts;
 	u16 addr;
 	u8 sig_id;
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+	struct wl3501_card *this = netdev_priv(dev);
 
 	pr_debug("entry");
 loop:
 	morepkts = 0;
-	अगर (!wl3501_esbq_confirm(this))
-		जाओ मुक्त;
-	wl3501_get_from_wla(this, this->esbq_confirm, &addr, माप(addr));
-	wl3501_get_from_wla(this, addr + 2, &sig_id, माप(sig_id));
+	if (!wl3501_esbq_confirm(this))
+		goto free;
+	wl3501_get_from_wla(this, this->esbq_confirm, &addr, sizeof(addr));
+	wl3501_get_from_wla(this, addr + 2, &sig_id, sizeof(sig_id));
 
-	चयन (sig_id) अणु
-	हाल WL3501_SIG_DEAUTH_IND:
-	हाल WL3501_SIG_DISASSOC_IND:
-	हाल WL3501_SIG_ALARM:
-		wl3501_alarm_पूर्णांकerrupt(dev, this);
-		अवरोध;
-	हाल WL3501_SIG_MD_CONFIRM:
-		wl3501_md_confirm_पूर्णांकerrupt(dev, this, addr);
-		अवरोध;
-	हाल WL3501_SIG_MD_IND:
-		wl3501_md_ind_पूर्णांकerrupt(dev, this, addr);
-		अवरोध;
-	हाल WL3501_SIG_GET_CONFIRM:
-		wl3501_get_confirm_पूर्णांकerrupt(this, addr,
+	switch (sig_id) {
+	case WL3501_SIG_DEAUTH_IND:
+	case WL3501_SIG_DISASSOC_IND:
+	case WL3501_SIG_ALARM:
+		wl3501_alarm_interrupt(dev, this);
+		break;
+	case WL3501_SIG_MD_CONFIRM:
+		wl3501_md_confirm_interrupt(dev, this, addr);
+		break;
+	case WL3501_SIG_MD_IND:
+		wl3501_md_ind_interrupt(dev, this, addr);
+		break;
+	case WL3501_SIG_GET_CONFIRM:
+		wl3501_get_confirm_interrupt(this, addr,
 					     &this->sig_get_confirm,
-					     माप(this->sig_get_confirm));
-		अवरोध;
-	हाल WL3501_SIG_PWR_MGMT_CONFIRM:
-		wl3501_get_confirm_पूर्णांकerrupt(this, addr,
+					     sizeof(this->sig_get_confirm));
+		break;
+	case WL3501_SIG_PWR_MGMT_CONFIRM:
+		wl3501_get_confirm_interrupt(this, addr,
 					     &this->sig_pwr_mgmt_confirm,
-					    माप(this->sig_pwr_mgmt_confirm));
-		अवरोध;
-	हाल WL3501_SIG_START_CONFIRM:
-		wl3501_start_confirm_पूर्णांकerrupt(dev, this, addr);
-		अवरोध;
-	हाल WL3501_SIG_SCAN_CONFIRM:
+					    sizeof(this->sig_pwr_mgmt_confirm));
+		break;
+	case WL3501_SIG_START_CONFIRM:
+		wl3501_start_confirm_interrupt(dev, this, addr);
+		break;
+	case WL3501_SIG_SCAN_CONFIRM:
 		wl3501_mgmt_scan_confirm(this, addr);
-		अवरोध;
-	हाल WL3501_SIG_JOIN_CONFIRM:
+		break;
+	case WL3501_SIG_JOIN_CONFIRM:
 		wl3501_mgmt_join_confirm(dev, addr);
-		अवरोध;
-	हाल WL3501_SIG_ASSOC_CONFIRM:
-		wl3501_assoc_confirm_पूर्णांकerrupt(dev, addr);
-		अवरोध;
-	हाल WL3501_SIG_AUTH_CONFIRM:
-		wl3501_auth_confirm_पूर्णांकerrupt(this, addr);
-		अवरोध;
-	हाल WL3501_SIG_RESYNC_CONFIRM:
+		break;
+	case WL3501_SIG_ASSOC_CONFIRM:
+		wl3501_assoc_confirm_interrupt(dev, addr);
+		break;
+	case WL3501_SIG_AUTH_CONFIRM:
+		wl3501_auth_confirm_interrupt(this, addr);
+		break;
+	case WL3501_SIG_RESYNC_CONFIRM:
 		wl3501_mgmt_resync(this); /* FIXME: should be resync_confirm */
-		अवरोध;
-	पूर्ण
-	wl3501_esbq_confirm_करोne(this);
+		break;
+	}
+	wl3501_esbq_confirm_done(this);
 	morepkts = 1;
-	/* मुक्त request अगर necessary */
-मुक्त:
-	wl3501_esbq_req_मुक्त(this);
-	अगर (morepkts)
-		जाओ loop;
-पूर्ण
+	/* free request if necessary */
+free:
+	wl3501_esbq_req_free(this);
+	if (morepkts)
+		goto loop;
+}
 
-अटल अंतरभूत व्योम wl3501_ack_पूर्णांकerrupt(काष्ठा wl3501_card *this)
-अणु
+static inline void wl3501_ack_interrupt(struct wl3501_card *this)
+{
 	wl3501_outb(WL3501_GCR_ECINT, this->base_addr + WL3501_NIC_GCR);
-पूर्ण
+}
 
 /**
- * wl3501_पूर्णांकerrupt - Hardware पूर्णांकerrupt from card.
+ * wl3501_interrupt - Hardware interrupt from card.
  * @irq: Interrupt number
  * @dev_id: net_device
  *
- * We must acknowledge the पूर्णांकerrupt as soon as possible, and block the
- * पूर्णांकerrupt from the same card immediately to prevent re-entry.
+ * We must acknowledge the interrupt as soon as possible, and block the
+ * interrupt from the same card immediately to prevent re-entry.
  *
- * Beक्रमe accessing the Control_Status_Block, we must lock SUTRO first.
+ * Before accessing the Control_Status_Block, we must lock SUTRO first.
  * On the other hand, to prevent SUTRO from malfunctioning, we must
  * unlock the SUTRO as soon as possible.
  */
-अटल irqवापस_t wl3501_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा net_device *dev = dev_id;
-	काष्ठा wl3501_card *this;
+static irqreturn_t wl3501_interrupt(int irq, void *dev_id)
+{
+	struct net_device *dev = dev_id;
+	struct wl3501_card *this;
 
 	this = netdev_priv(dev);
 	spin_lock(&this->lock);
-	wl3501_ack_पूर्णांकerrupt(this);
-	wl3501_block_पूर्णांकerrupt(this);
-	wl3501_rx_पूर्णांकerrupt(dev);
-	wl3501_unblock_पूर्णांकerrupt(this);
+	wl3501_ack_interrupt(this);
+	wl3501_block_interrupt(this);
+	wl3501_rx_interrupt(dev);
+	wl3501_unblock_interrupt(this);
 	spin_unlock(&this->lock);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक wl3501_reset_board(काष्ठा wl3501_card *this)
-अणु
-	u8 पंचांगp = 0;
-	पूर्णांक i, rc = 0;
+static int wl3501_reset_board(struct wl3501_card *this)
+{
+	u8 tmp = 0;
+	int i, rc = 0;
 
 	/* Coreset */
 	wl3501_outb_p(WL3501_GCR_CORESET, this->base_addr + WL3501_NIC_GCR);
@@ -1152,50 +1151,50 @@ loop:
 	wl3501_outb_p(WL3501_GCR_CORESET, this->base_addr + WL3501_NIC_GCR);
 
 	/* Reset SRAM 0x480 to zero */
-	wl3501_set_to_wla(this, 0x480, &पंचांगp, माप(पंचांगp));
+	wl3501_set_to_wla(this, 0x480, &tmp, sizeof(tmp));
 
 	/* Start up */
 	wl3501_outb_p(0, this->base_addr + WL3501_NIC_GCR);
 
 	WL3501_NOPLOOP(1024 * 50);
 
-	wl3501_unblock_पूर्णांकerrupt(this);	/* acme: was commented */
+	wl3501_unblock_interrupt(this);	/* acme: was commented */
 
 	/* Polling Self_Test_Status */
-	क्रम (i = 0; i < 10000; i++) अणु
-		wl3501_get_from_wla(this, 0x480, &पंचांगp, माप(पंचांगp));
+	for (i = 0; i < 10000; i++) {
+		wl3501_get_from_wla(this, 0x480, &tmp, sizeof(tmp));
 
-		अगर (पंचांगp == 'W') अणु
+		if (tmp == 'W') {
 			/* firmware complete all test successfully */
-			पंचांगp = 'A';
-			wl3501_set_to_wla(this, 0x480, &पंचांगp, माप(पंचांगp));
-			जाओ out;
-		पूर्ण
+			tmp = 'A';
+			wl3501_set_to_wla(this, 0x480, &tmp, sizeof(tmp));
+			goto out;
+		}
 		WL3501_NOPLOOP(10);
-	पूर्ण
-	prपूर्णांकk(KERN_WARNING "%s: failed to reset the board!\n", __func__);
+	}
+	printk(KERN_WARNING "%s: failed to reset the board!\n", __func__);
 	rc = -ENODEV;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wl3501_init_firmware(काष्ठा wl3501_card *this)
-अणु
+static int wl3501_init_firmware(struct wl3501_card *this)
+{
 	u16 ptr, next;
-	पूर्णांक rc = wl3501_reset_board(this);
+	int rc = wl3501_reset_board(this);
 
-	अगर (rc)
-		जाओ fail;
+	if (rc)
+		goto fail;
 	this->card_name[0] = '\0';
 	wl3501_get_from_wla(this, 0x1a00,
-			    this->card_name, माप(this->card_name));
-	this->card_name[माप(this->card_name) - 1] = '\0';
+			    this->card_name, sizeof(this->card_name));
+	this->card_name[sizeof(this->card_name) - 1] = '\0';
 	this->firmware_date[0] = '\0';
 	wl3501_get_from_wla(this, 0x1a40,
-			    this->firmware_date, माप(this->firmware_date));
-	this->firmware_date[माप(this->firmware_date) - 1] = '\0';
+			    this->firmware_date, sizeof(this->firmware_date));
+	this->firmware_date[sizeof(this->firmware_date) - 1] = '\0';
 	/* Switch to SRAM Page 0 */
-	wl3501_चयन_page(this, WL3501_BSS_SPAGE0);
+	wl3501_switch_page(this, WL3501_BSS_SPAGE0);
 	/* Read parameter from card */
 	wl3501_get_from_wla(this, 0x482, &this->esbq_req_start, 2);
 	wl3501_get_from_wla(this, 0x486, &this->esbq_req_end, 2);
@@ -1211,379 +1210,379 @@ out:
 	this->tx_buffer_cnt = 1;
 	ptr = this->tx_buffer_head;
 	next = ptr + WL3501_BLKSZ;
-	जबतक ((next - this->tx_buffer_head) < this->tx_buffer_size) अणु
+	while ((next - this->tx_buffer_head) < this->tx_buffer_size) {
 		this->tx_buffer_cnt++;
-		wl3501_set_to_wla(this, ptr, &next, माप(next));
+		wl3501_set_to_wla(this, ptr, &next, sizeof(next));
 		ptr = next;
 		next = ptr + WL3501_BLKSZ;
-	पूर्ण
+	}
 	rc = 0;
 	next = 0;
-	wl3501_set_to_wla(this, ptr, &next, माप(next));
+	wl3501_set_to_wla(this, ptr, &next, sizeof(next));
 	this->tx_buffer_tail = ptr;
 out:
-	वापस rc;
+	return rc;
 fail:
-	prपूर्णांकk(KERN_WARNING "%s: failed!\n", __func__);
-	जाओ out;
-पूर्ण
+	printk(KERN_WARNING "%s: failed!\n", __func__);
+	goto out;
+}
 
-अटल पूर्णांक wl3501_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	काष्ठा pcmcia_device *link;
+static int wl3501_close(struct net_device *dev)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	unsigned long flags;
+	struct pcmcia_device *link;
 	link = this->p_dev;
 
 	spin_lock_irqsave(&this->lock, flags);
-	link->खोलो--;
+	link->open--;
 
 	/* Stop wl3501_hard_start_xmit() from now on */
-	netअगर_stop_queue(dev);
-	wl3501_ack_पूर्णांकerrupt(this);
+	netif_stop_queue(dev);
+	wl3501_ack_interrupt(this);
 
-	/* Mask पूर्णांकerrupts from the SUTRO */
-	wl3501_block_पूर्णांकerrupt(this);
+	/* Mask interrupts from the SUTRO */
+	wl3501_block_interrupt(this);
 
-	prपूर्णांकk(KERN_INFO "%s: WL3501 closed\n", dev->name);
+	printk(KERN_INFO "%s: WL3501 closed\n", dev->name);
 	spin_unlock_irqrestore(&this->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * wl3501_reset - Reset the SUTRO.
  * @dev: network device
  *
- * It is almost the same as wl3501_खोलो(). In fact, we may just wl3501_बंद()
- * and wl3501_खोलो() again, but I wouldn't like to मुक्त_irq() when the driver
+ * It is almost the same as wl3501_open(). In fact, we may just wl3501_close()
+ * and wl3501_open() again, but I wouldn't like to free_irq() when the driver
  * is running. It seems to be dangerous.
  */
-अटल पूर्णांक wl3501_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = -ENODEV;
-	अचिन्हित दीर्घ flags;
+static int wl3501_reset(struct net_device *dev)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = -ENODEV;
+	unsigned long flags;
 
 	spin_lock_irqsave(&this->lock, flags);
-	wl3501_block_पूर्णांकerrupt(this);
+	wl3501_block_interrupt(this);
 
-	अगर (wl3501_init_firmware(this)) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Can't initialize Firmware!\n",
+	if (wl3501_init_firmware(this)) {
+		printk(KERN_WARNING "%s: Can't initialize Firmware!\n",
 		       dev->name);
 		/* Free IRQ, and mark IRQ as unused */
-		मुक्त_irq(dev->irq, dev);
-		जाओ out;
-	पूर्ण
+		free_irq(dev->irq, dev);
+		goto out;
+	}
 
 	/*
 	 * Queue has to be started only when the Card is Started
 	 */
-	netअगर_stop_queue(dev);
-	this->adhoc_बार = 0;
-	wl3501_ack_पूर्णांकerrupt(this);
-	wl3501_unblock_पूर्णांकerrupt(this);
+	netif_stop_queue(dev);
+	this->adhoc_times = 0;
+	wl3501_ack_interrupt(this);
+	wl3501_unblock_interrupt(this);
 	wl3501_mgmt_scan(this, 100);
 	pr_debug("%s: device reset", dev->name);
 	rc = 0;
 out:
 	spin_unlock_irqrestore(&this->lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम wl3501_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा net_device_stats *stats = &dev->stats;
-	पूर्णांक rc;
+static void wl3501_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct net_device_stats *stats = &dev->stats;
+	int rc;
 
 	stats->tx_errors++;
 	rc = wl3501_reset(dev);
-	अगर (rc)
-		prपूर्णांकk(KERN_ERR "%s: Error %d resetting card on Tx timeout!\n",
+	if (rc)
+		printk(KERN_ERR "%s: Error %d resetting card on Tx timeout!\n",
 		       dev->name, rc);
-	अन्यथा अणु
-		netअगर_trans_update(dev); /* prevent tx समयout */
-		netअगर_wake_queue(dev);
-	पूर्ण
-पूर्ण
+	else {
+		netif_trans_update(dev); /* prevent tx timeout */
+		netif_wake_queue(dev);
+	}
+}
 
 /*
  * Return : 0 - OK
  *	    1 - Could not transmit (dev_queue_xmit will queue it)
  *		and try to sent it later
  */
-अटल netdev_tx_t wl3501_hard_start_xmit(काष्ठा sk_buff *skb,
-						काष्ठा net_device *dev)
-अणु
-	पूर्णांक enabled, rc;
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static netdev_tx_t wl3501_hard_start_xmit(struct sk_buff *skb,
+						struct net_device *dev)
+{
+	int enabled, rc;
+	struct wl3501_card *this = netdev_priv(dev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&this->lock, flags);
-	enabled = wl3501_block_पूर्णांकerrupt(this);
+	enabled = wl3501_block_interrupt(this);
 	rc = wl3501_send_pkt(this, skb->data, skb->len);
-	अगर (enabled)
-		wl3501_unblock_पूर्णांकerrupt(this);
-	अगर (rc) अणु
+	if (enabled)
+		wl3501_unblock_interrupt(this);
+	if (rc) {
 		++dev->stats.tx_dropped;
-		netअगर_stop_queue(dev);
-	पूर्ण अन्यथा अणु
+		netif_stop_queue(dev);
+	} else {
 		++dev->stats.tx_packets;
 		dev->stats.tx_bytes += skb->len;
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 
-		अगर (this->tx_buffer_cnt < 2)
-			netअगर_stop_queue(dev);
-	पूर्ण
+		if (this->tx_buffer_cnt < 2)
+			netif_stop_queue(dev);
+	}
 	spin_unlock_irqrestore(&this->lock, flags);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल पूर्णांक wl3501_खोलो(काष्ठा net_device *dev)
-अणु
-	पूर्णांक rc = -ENODEV;
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
-	काष्ठा pcmcia_device *link;
+static int wl3501_open(struct net_device *dev)
+{
+	int rc = -ENODEV;
+	struct wl3501_card *this = netdev_priv(dev);
+	unsigned long flags;
+	struct pcmcia_device *link;
 	link = this->p_dev;
 
 	spin_lock_irqsave(&this->lock, flags);
-	अगर (!pcmcia_dev_present(link))
-		जाओ out;
-	netअगर_device_attach(dev);
-	link->खोलो++;
+	if (!pcmcia_dev_present(link))
+		goto out;
+	netif_device_attach(dev);
+	link->open++;
 
 	/* Initial WL3501 firmware */
 	pr_debug("%s: Initialize WL3501 firmware...", dev->name);
-	अगर (wl3501_init_firmware(this))
-		जाओ fail;
+	if (wl3501_init_firmware(this))
+		goto fail;
 	/* Initial device variables */
-	this->adhoc_बार = 0;
-	/* Acknowledge Interrupt, क्रम cleaning last state */
-	wl3501_ack_पूर्णांकerrupt(this);
+	this->adhoc_times = 0;
+	/* Acknowledge Interrupt, for cleaning last state */
+	wl3501_ack_interrupt(this);
 
-	/* Enable पूर्णांकerrupt from card after all */
-	wl3501_unblock_पूर्णांकerrupt(this);
+	/* Enable interrupt from card after all */
+	wl3501_unblock_interrupt(this);
 	wl3501_mgmt_scan(this, 100);
 	rc = 0;
 	pr_debug("%s: WL3501 opened", dev->name);
-	prपूर्णांकk(KERN_INFO "%s: Card Name: %s\n"
+	printk(KERN_INFO "%s: Card Name: %s\n"
 			 "%s: Firmware Date: %s\n",
 			 dev->name, this->card_name,
 			 dev->name, this->firmware_date);
 out:
 	spin_unlock_irqrestore(&this->lock, flags);
-	वापस rc;
+	return rc;
 fail:
-	prपूर्णांकk(KERN_WARNING "%s: Can't initialize firmware!\n", dev->name);
-	जाओ out;
-पूर्ण
+	printk(KERN_WARNING "%s: Can't initialize firmware!\n", dev->name);
+	goto out;
+}
 
-अटल काष्ठा iw_statistics *wl3501_get_wireless_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	काष्ठा iw_statistics *wstats = &this->wstats;
+static struct iw_statistics *wl3501_get_wireless_stats(struct net_device *dev)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	struct iw_statistics *wstats = &this->wstats;
 	u32 value; /* size checked: it is u32 */
 
-	स_रखो(wstats, 0, माप(*wstats));
-	wstats->status = netअगर_running(dev);
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_ICV_ERROR_COUNT,
-				  &value, माप(value)))
+	memset(wstats, 0, sizeof(*wstats));
+	wstats->status = netif_running(dev);
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_ICV_ERROR_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.code += value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_UNDECRYPTABLE_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_UNDECRYPTABLE_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.code += value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_EXCLUDED_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_EXCLUDED_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.code += value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_RETRY_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_RETRY_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.retries	= value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_FAILED_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_FAILED_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.misc += value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_RTS_FAILURE_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_RTS_FAILURE_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.misc += value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_ACK_FAILURE_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_ACK_FAILURE_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.misc += value;
-	अगर (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_FRAME_DUPLICATE_COUNT,
-				  &value, माप(value)))
+	if (!wl3501_get_mib_value(this, WL3501_MIB_ATTR_FRAME_DUPLICATE_COUNT,
+				  &value, sizeof(value)))
 		wstats->discard.misc += value;
-	वापस wstats;
-पूर्ण
+	return wstats;
+}
 
 /**
  * wl3501_detach - deletes a driver "instance"
  * @link: FILL_IN
  *
- * This deletes a driver "instance". The device is de-रेजिस्टरed with Card
- * Services. If it has been released, all local data काष्ठाures are मुक्तd.
- * Otherwise, the काष्ठाures will be मुक्तd when the device is released.
+ * This deletes a driver "instance". The device is de-registered with Card
+ * Services. If it has been released, all local data structures are freed.
+ * Otherwise, the structures will be freed when the device is released.
  */
-अटल व्योम wl3501_detach(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static void wl3501_detach(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
 	/* If the device is currently configured and active, we won't actually
 	 * delete it yet.  Instead, it is marked so that when the release()
 	 * function is called, that will trigger a proper detach(). */
 
-	जबतक (link->खोलो > 0)
-		wl3501_बंद(dev);
+	while (link->open > 0)
+		wl3501_close(dev);
 
-	netअगर_device_detach(dev);
+	netif_device_detach(dev);
 	wl3501_release(link);
 
-	unरेजिस्टर_netdev(dev);
-	मुक्त_netdev(dev);
-पूर्ण
+	unregister_netdev(dev);
+	free_netdev(dev);
+}
 
-अटल पूर्णांक wl3501_get_name(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	strlcpy(wrqu->name, "IEEE 802.11-DS", माप(wrqu->name));
-	वापस 0;
-पूर्ण
+static int wl3501_get_name(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	strlcpy(wrqu->name, "IEEE 802.11-DS", sizeof(wrqu->name));
+	return 0;
+}
 
-अटल पूर्णांक wl3501_set_freq(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक channel = wrqu->freq.m;
-	पूर्णांक rc = -EINVAL;
+static int wl3501_set_freq(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	int channel = wrqu->freq.m;
+	int rc = -EINVAL;
 
-	अगर (iw_valid_channel(this->reg_करोमुख्य, channel)) अणु
+	if (iw_valid_channel(this->reg_domain, channel)) {
 		this->chan = channel;
 		rc = wl3501_reset(dev);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_freq(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_get_freq(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
 	wrqu->freq.m = 100000 *
 		ieee80211_channel_to_frequency(this->chan, NL80211_BAND_2GHZ);
 	wrqu->freq.e = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_set_mode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	पूर्णांक rc = -EINVAL;
+static int wl3501_set_mode(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	int rc = -EINVAL;
 
-	अगर (wrqu->mode == IW_MODE_INFRA ||
+	if (wrqu->mode == IW_MODE_INFRA ||
 	    wrqu->mode == IW_MODE_ADHOC ||
-	    wrqu->mode == IW_MODE_AUTO) अणु
-		काष्ठा wl3501_card *this = netdev_priv(dev);
+	    wrqu->mode == IW_MODE_AUTO) {
+		struct wl3501_card *this = netdev_priv(dev);
 
 		this->net_type = wrqu->mode;
 		rc = wl3501_reset(dev);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_mode(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_get_mode(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
 	wrqu->mode = this->net_type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_get_sens(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_get_sens(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
 	wrqu->sens.value = this->rssi;
 	wrqu->sens.disabled = !wrqu->sens.value;
 	wrqu->sens.fixed = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_get_range(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा iw_range *range = (काष्ठा iw_range *)extra;
+static int wl3501_get_range(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
+	struct iw_range *range = (struct iw_range *)extra;
 
-	/* Set the length (very important क्रम backward compatibility) */
-	wrqu->data.length = माप(*range);
+	/* Set the length (very important for backward compatibility) */
+	wrqu->data.length = sizeof(*range);
 
-	/* Set all the info we करोn't care or don't know about to zero */
-	स_रखो(range, 0, माप(*range));
+	/* Set all the info we don't care or don't know about to zero */
+	memset(range, 0, sizeof(*range));
 
 	/* Set the Wireless Extension versions */
 	range->we_version_compiled	= WIRELESS_EXT;
 	range->we_version_source	= 1;
 	range->throughput		= 2 * 1000 * 1000;     /* ~2 Mb/s */
 	/* FIXME: study the code to fill in more fields... */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_set_wap(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			  जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = -EINVAL;
+static int wl3501_set_wap(struct net_device *dev, struct iw_request_info *info,
+			  union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = -EINVAL;
 
 	/* FIXME: we support other ARPHRDs...*/
-	अगर (wrqu->ap_addr.sa_family != ARPHRD_ETHER)
-		जाओ out;
-	अगर (is_broadcast_ether_addr(wrqu->ap_addr.sa_data)) अणु
+	if (wrqu->ap_addr.sa_family != ARPHRD_ETHER)
+		goto out;
+	if (is_broadcast_ether_addr(wrqu->ap_addr.sa_data)) {
 		/* FIXME: rescan? */
-	पूर्ण अन्यथा
-		स_नकल(this->bssid, wrqu->ap_addr.sa_data, ETH_ALEN);
+	} else
+		memcpy(this->bssid, wrqu->ap_addr.sa_data, ETH_ALEN);
 		/* FIXME: rescan? deassoc & scan? */
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_wap(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			  जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_get_wap(struct net_device *dev, struct iw_request_info *info,
+			  union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
 	wrqu->ap_addr.sa_family = ARPHRD_ETHER;
-	स_नकल(wrqu->ap_addr.sa_data, this->bssid, ETH_ALEN);
-	वापस 0;
-पूर्ण
+	memcpy(wrqu->ap_addr.sa_data, this->bssid, ETH_ALEN);
+	return 0;
+}
 
-अटल पूर्णांक wl3501_set_scan(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_set_scan(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
 	/*
 	 * FIXME: trigger scanning with a reset, yes, I'm lazy
 	 */
-	वापस wl3501_reset(dev);
-पूर्ण
+	return wl3501_reset(dev);
+}
 
-अटल पूर्णांक wl3501_get_scan(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक i;
-	अक्षर *current_ev = extra;
-	काष्ठा iw_event iwe;
+static int wl3501_get_scan(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	int i;
+	char *current_ev = extra;
+	struct iw_event iwe;
 
-	क्रम (i = 0; i < this->bss_cnt; ++i) अणु
+	for (i = 0; i < this->bss_cnt; ++i) {
 		iwe.cmd			= SIOCGIWAP;
 		iwe.u.ap_addr.sa_family = ARPHRD_ETHER;
-		स_नकल(iwe.u.ap_addr.sa_data, this->bss_set[i].req.bssid, ETH_ALEN);
+		memcpy(iwe.u.ap_addr.sa_data, this->bss_set[i].req.bssid, ETH_ALEN);
 		current_ev = iwe_stream_add_event(info, current_ev,
 						  extra + IW_SCAN_MAX_DATA,
 						  &iwe, IW_EV_ADDR_LEN);
 		iwe.cmd		  = SIOCGIWESSID;
 		iwe.u.data.flags  = 1;
 		iwe.u.data.length = this->bss_set[i].req.ssid.el.len;
-		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev,
+		current_ev = iwe_stream_add_point(info, current_ev,
 						  extra + IW_SCAN_MAX_DATA,
 						  &iwe,
 						  this->bss_set[i].req.ssid.essid);
@@ -1599,223 +1598,223 @@ out:
 						  extra + IW_SCAN_MAX_DATA,
 						  &iwe, IW_EV_FREQ_LEN);
 		iwe.cmd = SIOCGIWENCODE;
-		अगर (this->bss_set[i].req.cap_info & WL3501_MGMT_CAPABILITY_PRIVACY)
+		if (this->bss_set[i].req.cap_info & WL3501_MGMT_CAPABILITY_PRIVACY)
 			iwe.u.data.flags = IW_ENCODE_ENABLED | IW_ENCODE_NOKEY;
-		अन्यथा
+		else
 			iwe.u.data.flags = IW_ENCODE_DISABLED;
 		iwe.u.data.length = 0;
-		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev,
+		current_ev = iwe_stream_add_point(info, current_ev,
 						  extra + IW_SCAN_MAX_DATA,
-						  &iwe, शून्य);
-	पूर्ण
+						  &iwe, NULL);
+	}
 	/* Length of data */
 	wrqu->data.length = (current_ev - extra);
 	wrqu->data.flags = 0; /* FIXME: set properly these flags */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_set_essid(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_set_essid(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
-	अगर (wrqu->data.flags) अणु
+	if (wrqu->data.flags) {
 		iw_set_mgmt_info_element(IW_MGMT_INFO_ELEMENT_SSID,
 					 &this->essid.el,
 					 extra, wrqu->data.length);
-	पूर्ण अन्यथा अणु /* We accept any ESSID */
+	} else { /* We accept any ESSID */
 		iw_set_mgmt_info_element(IW_MGMT_INFO_ELEMENT_SSID,
 					 &this->essid.el, "ANY", 3);
-	पूर्ण
-	वापस wl3501_reset(dev);
-पूर्ण
+	}
+	return wl3501_reset(dev);
+}
 
-अटल पूर्णांक wl3501_get_essid(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	अचिन्हित दीर्घ flags;
+static int wl3501_get_essid(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&this->lock, flags);
 	wrqu->essid.flags  = 1;
 	wrqu->essid.length = this->essid.el.len;
-	स_नकल(extra, this->essid.essid, this->essid.el.len);
+	memcpy(extra, this->essid.essid, this->essid.el.len);
 	spin_unlock_irqrestore(&this->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_set_nick(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_set_nick(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
-	अगर (wrqu->data.length > माप(this->nick))
-		वापस -E2BIG;
+	if (wrqu->data.length > sizeof(this->nick))
+		return -E2BIG;
 	strlcpy(this->nick, extra, wrqu->data.length);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_get_nick(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	काष्ठा wl3501_card *this = netdev_priv(dev);
+static int wl3501_get_nick(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
+	struct wl3501_card *this = netdev_priv(dev);
 
 	strlcpy(extra, this->nick, 32);
-	wrqu->data.length = म_माप(extra);
-	वापस 0;
-पूर्ण
+	wrqu->data.length = strlen(extra);
+	return 0;
+}
 
-अटल पूर्णांक wl3501_get_rate(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
-			   जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_get_rate(struct net_device *dev, struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra)
+{
 	/*
 	 * FIXME: have to see from where to get this info, perhaps this card
-	 * works at 1 Mbit/s too... क्रम now leave at 2 Mbit/s that is the most
-	 * common with the Planet Access Poपूर्णांकs. -acme
+	 * works at 1 Mbit/s too... for now leave at 2 Mbit/s that is the most
+	 * common with the Planet Access Points. -acme
 	 */
 	wrqu->bitrate.value = 2000000;
 	wrqu->bitrate.fixed = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_get_rts_threshold(काष्ठा net_device *dev,
-				    काष्ठा iw_request_info *info,
-				    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_get_rts_threshold(struct net_device *dev,
+				    struct iw_request_info *info,
+				    union iwreq_data *wrqu, char *extra)
+{
 	u16 threshold; /* size checked: it is u16 */
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_RTS_THRESHOLD,
-				      &threshold, माप(threshold));
-	अगर (!rc) अणु
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_RTS_THRESHOLD,
+				      &threshold, sizeof(threshold));
+	if (!rc) {
 		wrqu->rts.value = threshold;
 		wrqu->rts.disabled = threshold >= 2347;
 		wrqu->rts.fixed = 1;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_frag_threshold(काष्ठा net_device *dev,
-				     काष्ठा iw_request_info *info,
-				     जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_get_frag_threshold(struct net_device *dev,
+				     struct iw_request_info *info,
+				     union iwreq_data *wrqu, char *extra)
+{
 	u16 threshold; /* size checked: it is u16 */
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_FRAG_THRESHOLD,
-				      &threshold, माप(threshold));
-	अगर (!rc) अणु
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_FRAG_THRESHOLD,
+				      &threshold, sizeof(threshold));
+	if (!rc) {
 		wrqu->frag.value = threshold;
 		wrqu->frag.disabled = threshold >= 2346;
 		wrqu->frag.fixed = 1;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_txघात(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
-	u16 txघात;
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = wl3501_get_mib_value(this,
+static int wl3501_get_txpow(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
+	u16 txpow;
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = wl3501_get_mib_value(this,
 				      WL3501_MIB_ATTR_CURRENT_TX_PWR_LEVEL,
-				      &txघात, माप(txघात));
-	अगर (!rc) अणु
-		wrqu->txघातer.value = txघात;
-		wrqu->txघातer.disabled = 0;
+				      &txpow, sizeof(txpow));
+	if (!rc) {
+		wrqu->txpower.value = txpow;
+		wrqu->txpower.disabled = 0;
 		/*
 		 * From the MIB values I think this can be configurable,
-		 * as it lists several tx घातer levels -acme
+		 * as it lists several tx power levels -acme
 		 */
-		wrqu->txघातer.fixed = 0;
-		wrqu->txघातer.flags = IW_TXPOW_MWATT;
-	पूर्ण
-	वापस rc;
-पूर्ण
+		wrqu->txpower.fixed = 0;
+		wrqu->txpower.flags = IW_TXPOW_MWATT;
+	}
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_retry(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_get_retry(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
 	u8 retry; /* size checked: it is u8 */
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = wl3501_get_mib_value(this,
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = wl3501_get_mib_value(this,
 				      WL3501_MIB_ATTR_LONG_RETRY_LIMIT,
-				      &retry, माप(retry));
-	अगर (rc)
-		जाओ out;
-	अगर (wrqu->retry.flags & IW_RETRY_LONG) अणु
+				      &retry, sizeof(retry));
+	if (rc)
+		goto out;
+	if (wrqu->retry.flags & IW_RETRY_LONG) {
 		wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_LONG;
-		जाओ set_value;
-	पूर्ण
+		goto set_value;
+	}
 	rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_SHORT_RETRY_LIMIT,
-				  &retry, माप(retry));
-	अगर (rc)
-		जाओ out;
+				  &retry, sizeof(retry));
+	if (rc)
+		goto out;
 	wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_SHORT;
 set_value:
 	wrqu->retry.value = retry;
 	wrqu->retry.disabled = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_encode(काष्ठा net_device *dev,
-			     काष्ठा iw_request_info *info,
-			     जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_get_encode(struct net_device *dev,
+			     struct iw_request_info *info,
+			     union iwreq_data *wrqu, char *extra)
+{
 	u8 implemented, restricted, keys[100], len_keys, tocopy;
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = wl3501_get_mib_value(this,
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = wl3501_get_mib_value(this,
 				      WL3501_MIB_ATTR_PRIV_OPT_IMPLEMENTED,
-				      &implemented, माप(implemented));
-	अगर (rc)
-		जाओ out;
-	अगर (!implemented) अणु
+				      &implemented, sizeof(implemented));
+	if (rc)
+		goto out;
+	if (!implemented) {
 		wrqu->encoding.flags = IW_ENCODE_DISABLED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_EXCLUDE_UNENCRYPTED,
-				  &restricted, माप(restricted));
-	अगर (rc)
-		जाओ out;
+				  &restricted, sizeof(restricted));
+	if (rc)
+		goto out;
 	wrqu->encoding.flags = restricted ? IW_ENCODE_RESTRICTED :
 					    IW_ENCODE_OPEN;
 	rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_KEY_MAPPINGS_LEN,
-				  &len_keys, माप(len_keys));
-	अगर (rc)
-		जाओ out;
+				  &len_keys, sizeof(len_keys));
+	if (rc)
+		goto out;
 	rc = wl3501_get_mib_value(this, WL3501_MIB_ATTR_WEP_KEY_MAPPINGS,
 				  keys, len_keys);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 	tocopy = min_t(u16, len_keys, wrqu->encoding.length);
 	tocopy = min_t(u8, tocopy, 100);
 	wrqu->encoding.length = tocopy;
-	स_नकल(extra, keys, tocopy);
+	memcpy(extra, keys, tocopy);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक wl3501_get_घातer(काष्ठा net_device *dev,
-			    काष्ठा iw_request_info *info,
-			    जोड़ iwreq_data *wrqu, अक्षर *extra)
-अणु
+static int wl3501_get_power(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
 	u8 pwr_state;
-	काष्ठा wl3501_card *this = netdev_priv(dev);
-	पूर्णांक rc = wl3501_get_mib_value(this,
+	struct wl3501_card *this = netdev_priv(dev);
+	int rc = wl3501_get_mib_value(this,
 				      WL3501_MIB_ATTR_CURRENT_PWR_STATE,
-				      &pwr_state, माप(pwr_state));
-	अगर (rc)
-		जाओ out;
-	wrqu->घातer.disabled = !pwr_state;
-	wrqu->घातer.flags = IW_POWER_ON;
+				      &pwr_state, sizeof(pwr_state));
+	if (rc)
+		goto out;
+	wrqu->power.disabled = !pwr_state;
+	wrqu->power.flags = IW_POWER_ON;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर iw_handler	wl3501_handler[] = अणु
+static const iw_handler	wl3501_handler[] = {
 	IW_HANDLER(SIOCGIWNAME, wl3501_get_name),
 	IW_HANDLER(SIOCSIWFREQ, wl3501_set_freq),
 	IW_HANDLER(SIOCGIWFREQ, wl3501_get_freq),
@@ -1838,33 +1837,33 @@ out:
 	IW_HANDLER(SIOCGIWRATE, wl3501_get_rate),
 	IW_HANDLER(SIOCGIWRTS, wl3501_get_rts_threshold),
 	IW_HANDLER(SIOCGIWFRAG, wl3501_get_frag_threshold),
-	IW_HANDLER(SIOCGIWTXPOW, wl3501_get_txघात),
+	IW_HANDLER(SIOCGIWTXPOW, wl3501_get_txpow),
 	IW_HANDLER(SIOCGIWRETRY, wl3501_get_retry),
 	IW_HANDLER(SIOCGIWENCODE, wl3501_get_encode),
-	IW_HANDLER(SIOCGIWPOWER, wl3501_get_घातer),
-पूर्ण;
+	IW_HANDLER(SIOCGIWPOWER, wl3501_get_power),
+};
 
-अटल स्थिर काष्ठा iw_handler_def wl3501_handler_def = अणु
+static const struct iw_handler_def wl3501_handler_def = {
 	.num_standard	= ARRAY_SIZE(wl3501_handler),
 	.standard	= (iw_handler *)wl3501_handler,
 	.get_wireless_stats = wl3501_get_wireless_stats,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा net_device_ops wl3501_netdev_ops = अणु
-	.nकरो_खोलो		= wl3501_खोलो,
-	.nकरो_stop		= wl3501_बंद,
-	.nकरो_start_xmit		= wl3501_hard_start_xmit,
-	.nकरो_tx_समयout		= wl3501_tx_समयout,
-	.nकरो_set_mac_address 	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-पूर्ण;
+static const struct net_device_ops wl3501_netdev_ops = {
+	.ndo_open		= wl3501_open,
+	.ndo_stop		= wl3501_close,
+	.ndo_start_xmit		= wl3501_hard_start_xmit,
+	.ndo_tx_timeout		= wl3501_tx_timeout,
+	.ndo_set_mac_address 	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+};
 
-अटल पूर्णांक wl3501_probe(काष्ठा pcmcia_device *p_dev)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा wl3501_card *this;
+static int wl3501_probe(struct pcmcia_device *p_dev)
+{
+	struct net_device *dev;
+	struct wl3501_card *this;
 
-	/* The io काष्ठाure describes IO port mapping */
+	/* The io structure describes IO port mapping */
 	p_dev->resource[0]->end	= 16;
 	p_dev->resource[0]->flags	= IO_DATA_PATH_WIDTH_8;
 
@@ -1872,87 +1871,87 @@ out:
 	p_dev->config_flags	= CONF_ENABLE_IRQ;
 	p_dev->config_index	= 1;
 
-	dev = alloc_etherdev(माप(काष्ठा wl3501_card));
-	अगर (!dev)
-		जाओ out_link;
+	dev = alloc_etherdev(sizeof(struct wl3501_card));
+	if (!dev)
+		goto out_link;
 
 
 	dev->netdev_ops		= &wl3501_netdev_ops;
-	dev->watchकरोg_समयo	= 5 * HZ;
+	dev->watchdog_timeo	= 5 * HZ;
 
 	this = netdev_priv(dev);
 	this->wireless_data.spy_data = &this->spy_data;
 	this->p_dev = p_dev;
 	dev->wireless_data	= &this->wireless_data;
 	dev->wireless_handlers	= &wl3501_handler_def;
-	netअगर_stop_queue(dev);
+	netif_stop_queue(dev);
 	p_dev->priv = dev;
 
-	वापस wl3501_config(p_dev);
+	return wl3501_config(p_dev);
 out_link:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक wl3501_config(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
-	पूर्णांक i = 0, j, ret;
-	काष्ठा wl3501_card *this;
+static int wl3501_config(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
+	int i = 0, j, ret;
+	struct wl3501_card *this;
 
 	/* Try allocating IO ports.  This tries a few fixed addresses.  If you
-	 * want, you can also पढ़ो the card's config table to pick addresses --
-	 * see the serial driver क्रम an example. */
+	 * want, you can also read the card's config table to pick addresses --
+	 * see the serial driver for an example. */
 	link->io_lines = 5;
 
-	क्रम (j = 0x280; j < 0x400; j += 0x20) अणु
+	for (j = 0x280; j < 0x400; j += 0x20) {
 		/* The '^0x300' is so that we probe 0x300-0x3ff first, then
 		 * 0x200-0x2ff, and so on, because this seems safer */
 		link->resource[0]->start = j;
 		link->resource[1]->start = link->resource[0]->start + 0x10;
 		i = pcmcia_request_io(link);
-		अगर (i == 0)
-			अवरोध;
-	पूर्ण
-	अगर (i != 0)
-		जाओ failed;
+		if (i == 0)
+			break;
+	}
+	if (i != 0)
+		goto failed;
 
-	/* Now allocate an पूर्णांकerrupt line. Note that this करोes not actually
-	 * assign a handler to the पूर्णांकerrupt. */
+	/* Now allocate an interrupt line. Note that this does not actually
+	 * assign a handler to the interrupt. */
 
-	ret = pcmcia_request_irq(link, wl3501_पूर्णांकerrupt);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_request_irq(link, wl3501_interrupt);
+	if (ret)
+		goto failed;
 
 	ret = pcmcia_enable_device(link);
-	अगर (ret)
-		जाओ failed;
+	if (ret)
+		goto failed;
 
 	dev->irq = link->irq;
 	dev->base_addr = link->resource[0]->start;
 	SET_NETDEV_DEV(dev, &link->dev);
-	अगर (रेजिस्टर_netdev(dev)) अणु
-		prपूर्णांकk(KERN_NOTICE "wl3501_cs: register_netdev() failed\n");
-		जाओ failed;
-	पूर्ण
+	if (register_netdev(dev)) {
+		printk(KERN_NOTICE "wl3501_cs: register_netdev() failed\n");
+		goto failed;
+	}
 
 	this = netdev_priv(dev);
 
 	this->base_addr = dev->base_addr;
 
-	अगर (!wl3501_get_flash_mac_addr(this)) अणु
-		prपूर्णांकk(KERN_WARNING "%s: Can't read MAC addr in flash ROM?\n",
+	if (!wl3501_get_flash_mac_addr(this)) {
+		printk(KERN_WARNING "%s: Can't read MAC addr in flash ROM?\n",
 		       dev->name);
-		unरेजिस्टर_netdev(dev);
-		जाओ failed;
-	पूर्ण
+		unregister_netdev(dev);
+		goto failed;
+	}
 
-	क्रम (i = 0; i < 6; i++)
-		dev->dev_addr[i] = ((अक्षर *)&this->mac_addr)[i];
+	for (i = 0; i < 6; i++)
+		dev->dev_addr[i] = ((char *)&this->mac_addr)[i];
 
-	/* prपूर्णांक probe inक्रमmation */
-	prपूर्णांकk(KERN_INFO "%s: wl3501 @ 0x%3.3x, IRQ %d, "
+	/* print probe information */
+	printk(KERN_INFO "%s: wl3501 @ 0x%3.3x, IRQ %d, "
 	       "MAC addr in flash ROM:%pM\n",
-	       dev->name, this->base_addr, (पूर्णांक)dev->irq,
+	       dev->name, this->base_addr, (int)dev->irq,
 	       dev->dev_addr);
 	/*
 	 * Initialize card parameters - added by jss
@@ -1960,69 +1959,69 @@ out_link:
 	this->net_type		= IW_MODE_INFRA;
 	this->bss_cnt		= 0;
 	this->join_sta_bss	= 0;
-	this->adhoc_बार	= 0;
+	this->adhoc_times	= 0;
 	iw_set_mgmt_info_element(IW_MGMT_INFO_ELEMENT_SSID, &this->essid.el,
 				 "ANY", 3);
 	this->card_name[0]	= '\0';
 	this->firmware_date[0]	= '\0';
 	this->rssi		= 255;
-	this->chan		= iw_शेष_channel(this->reg_करोमुख्य);
-	strlcpy(this->nick, "Planet WL3501", माप(this->nick));
+	this->chan		= iw_default_channel(this->reg_domain);
+	strlcpy(this->nick, "Planet WL3501", sizeof(this->nick));
 	spin_lock_init(&this->lock);
-	init_रुकोqueue_head(&this->रुको);
-	netअगर_start_queue(dev);
-	वापस 0;
+	init_waitqueue_head(&this->wait);
+	netif_start_queue(dev);
+	return 0;
 
 failed:
 	wl3501_release(link);
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम wl3501_release(काष्ठा pcmcia_device *link)
-अणु
+static void wl3501_release(struct pcmcia_device *link)
+{
 	pcmcia_disable_device(link);
-पूर्ण
+}
 
-अटल पूर्णांक wl3501_suspend(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static int wl3501_suspend(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
 	wl3501_pwr_mgmt(netdev_priv(dev), WL3501_SUSPEND);
-	अगर (link->खोलो)
-		netअगर_device_detach(dev);
+	if (link->open)
+		netif_device_detach(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl3501_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा net_device *dev = link->priv;
+static int wl3501_resume(struct pcmcia_device *link)
+{
+	struct net_device *dev = link->priv;
 
 	wl3501_pwr_mgmt(netdev_priv(dev), WL3501_RESUME);
-	अगर (link->खोलो) अणु
+	if (link->open) {
 		wl3501_reset(dev);
-		netअगर_device_attach(dev);
-	पूर्ण
+		netif_device_attach(dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा pcmcia_device_id wl3501_ids[] = अणु
+static const struct pcmcia_device_id wl3501_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0xd601, 0x0001),
-	PCMCIA_DEVICE_शून्य
-पूर्ण;
+	PCMCIA_DEVICE_NULL
+};
 MODULE_DEVICE_TABLE(pcmcia, wl3501_ids);
 
-अटल काष्ठा pcmcia_driver wl3501_driver = अणु
+static struct pcmcia_driver wl3501_driver = {
 	.owner		= THIS_MODULE,
 	.name		= "wl3501_cs",
 	.probe		= wl3501_probe,
-	.हटाओ		= wl3501_detach,
+	.remove		= wl3501_detach,
 	.id_table	= wl3501_ids,
 	.suspend	= wl3501_suspend,
 	.resume		= wl3501_resume,
-पूर्ण;
+};
 module_pcmcia_driver(wl3501_driver);
 
 MODULE_AUTHOR("Fox Chen <mhchen@golf.ccl.itri.org.tw>, "

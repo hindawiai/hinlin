@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Aic7xxx SCSI host adapter firmware assembler symbol table definitions
  *
@@ -6,20 +5,20 @@
  * Copyright (c) 2002 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,14 +37,14 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: //depot/aic7xxx/aic7xxx/aicयंत्र/aicयंत्र_symbol.h#17 $
+ * $Id: //depot/aic7xxx/aic7xxx/aicasm/aicasm_symbol.h#17 $
  *
  * $FreeBSD$
  */
 
-#समावेश "../queue.h"
+#include "../queue.h"
 
-प्रकार क्रमागत अणु
+typedef enum {
 	UNINITIALIZED,
 	REGISTER,
 	ALIAS,
@@ -60,147 +59,147 @@
 	LABEL,
 	CONDITIONAL,
 	MACRO
-पूर्ण symtype;
+} symtype;
 
-प्रकार क्रमागत अणु
+typedef enum {
 	RO = 0x01,
 	WO = 0x02,
 	RW = 0x03
-पूर्णamode_t;
+}amode_t;
 
-प्रकार SLIST_HEAD(symlist, symbol_node) symlist_t;
+typedef SLIST_HEAD(symlist, symbol_node) symlist_t;
 
-काष्ठा reg_info अणु
-	u_पूर्णांक	  address;
-	पूर्णांक	  size;
+struct reg_info {
+	u_int	  address;
+	int	  size;
 	amode_t	  mode;
 	symlist_t fields;
-	uपूर्णांक8_t	  valid_biपंचांगask;
-	uपूर्णांक8_t	  modes;
-	पूर्णांक	  typecheck_masks;
-पूर्ण;
+	uint8_t	  valid_bitmask;
+	uint8_t	  modes;
+	int	  typecheck_masks;
+};
 
-काष्ठा field_info अणु
+struct field_info {
 	symlist_t symrefs;
-	uपूर्णांक8_t	  value;
-	uपूर्णांक8_t	  mask;
-पूर्ण;
+	uint8_t	  value;
+	uint8_t	  mask;
+};
 
-काष्ठा स्थिर_info अणु
-	u_पूर्णांक	value;
-	पूर्णांक	define;
-पूर्ण;
+struct const_info {
+	u_int	value;
+	int	define;
+};
 
-काष्ठा alias_info अणु
-	काष्ठा symbol *parent;
-पूर्ण;
+struct alias_info {
+	struct symbol *parent;
+};
 
-काष्ठा label_info अणु
-	पूर्णांक	address;
-	पूर्णांक	exported;
-पूर्ण;
+struct label_info {
+	int	address;
+	int	exported;
+};
 
-काष्ठा cond_info अणु
-	पूर्णांक	func_num;
-पूर्ण;
+struct cond_info {
+	int	func_num;
+};
 
-काष्ठा macro_arg अणु
+struct macro_arg {
 	STAILQ_ENTRY(macro_arg)	links;
 	regex_t	arg_regex;
-	अक्षर   *replacement_text;
-पूर्ण;
+	char   *replacement_text;
+};
 STAILQ_HEAD(macro_arg_list, macro_arg);
 
-काष्ठा macro_info अणु
-	काष्ठा macro_arg_list args;
-	पूर्णांक   narg;
-	स्थिर अक्षर* body;
-पूर्ण;
+struct macro_info {
+	struct macro_arg_list args;
+	int   narg;
+	const char* body;
+};
 
-प्रकार काष्ठा expression_info अणु
+typedef struct expression_info {
         symlist_t       referenced_syms;
-        पूर्णांक             value;
-पूर्ण expression_t;
+        int             value;
+} expression_t;
 
-प्रकार काष्ठा symbol अणु
-	अक्षर	*name;
+typedef struct symbol {
+	char	*name;
 	symtype	type;
-	पूर्णांक	count;
-	जोड़	अणु
-		काष्ठा reg_info	  *rinfo;
-		काष्ठा field_info *finfo;
-		काष्ठा स्थिर_info *cinfo;
-		काष्ठा alias_info *ainfo;
-		काष्ठा label_info *linfo;
-		काष्ठा cond_info  *condinfo;
-		काष्ठा macro_info *macroinfo;
-	पूर्ण info;
-	पूर्णांक	करोnt_generate_debug_code;
-पूर्ण symbol_t;
+	int	count;
+	union	{
+		struct reg_info	  *rinfo;
+		struct field_info *finfo;
+		struct const_info *cinfo;
+		struct alias_info *ainfo;
+		struct label_info *linfo;
+		struct cond_info  *condinfo;
+		struct macro_info *macroinfo;
+	} info;
+	int	dont_generate_debug_code;
+} symbol_t;
 
-प्रकार काष्ठा symbol_ref अणु
+typedef struct symbol_ref {
 	symbol_t *symbol;
-	पूर्णांक	 offset;
-पूर्ण symbol_ref_t;
+	int	 offset;
+} symbol_ref_t;
 
-प्रकार काष्ठा symbol_node अणु
+typedef struct symbol_node {
 	SLIST_ENTRY(symbol_node) links;
 	symbol_t *symbol;
-पूर्ण symbol_node_t;
+} symbol_node_t;
 
-प्रकार काष्ठा critical_section अणु
+typedef struct critical_section {
 	TAILQ_ENTRY(critical_section) links;
-	पूर्णांक begin_addr;
-	पूर्णांक end_addr;
-पूर्ण critical_section_t;
+	int begin_addr;
+	int end_addr;
+} critical_section_t;
 
-प्रकार क्रमागत अणु
+typedef enum {
 	SCOPE_ROOT,
 	SCOPE_IF,
 	SCOPE_ELSE_IF,
 	SCOPE_ELSE
-पूर्ण scope_type;
+} scope_type;
 
-प्रकार काष्ठा patch_info अणु
-	पूर्णांक skip_patch;
-	पूर्णांक skip_instr;
-पूर्ण patch_info_t;
+typedef struct patch_info {
+	int skip_patch;
+	int skip_instr;
+} patch_info_t;
 
-प्रकार काष्ठा scope अणु
+typedef struct scope {
 	SLIST_ENTRY(scope) scope_stack_links;
 	TAILQ_ENTRY(scope) scope_links;
 	TAILQ_HEAD(, scope) inner_scope;
 	scope_type type;
-	पूर्णांक inner_scope_patches;
-	पूर्णांक begin_addr;
-        पूर्णांक end_addr;
+	int inner_scope_patches;
+	int begin_addr;
+        int end_addr;
 	patch_info_t patches[2];
-	पूर्णांक func_num;
-पूर्ण scope_t;
+	int func_num;
+} scope_t;
 
 TAILQ_HEAD(cs_tailq, critical_section);
 SLIST_HEAD(scope_list, scope);
 TAILQ_HEAD(scope_tailq, scope);
 
-व्योम	symbol_delete(symbol_t *symbol);
+void	symbol_delete(symbol_t *symbol);
 
-व्योम	symtable_खोलो(व्योम);
+void	symtable_open(void);
 
-व्योम	symtable_बंद(व्योम);
+void	symtable_close(void);
 
 symbol_t *
-	symtable_get(अक्षर *name);
+	symtable_get(char *name);
 
 symbol_node_t *
-	symlist_search(symlist_t *symlist, अक्षर *symname);
+	symlist_search(symlist_t *symlist, char *symname);
 
-व्योम
-	symlist_add(symlist_t *symlist, symbol_t *symbol, पूर्णांक how);
-#घोषणा SYMLIST_INSERT_HEAD	0x00
-#घोषणा SYMLIST_SORT		0x01
+void
+	symlist_add(symlist_t *symlist, symbol_t *symbol, int how);
+#define SYMLIST_INSERT_HEAD	0x00
+#define SYMLIST_SORT		0x01
 
-व्योम	symlist_मुक्त(symlist_t *symlist);
+void	symlist_free(symlist_t *symlist);
 
-व्योम	symlist_merge(symlist_t *symlist_dest, symlist_t *symlist_src1,
+void	symlist_merge(symlist_t *symlist_dest, symlist_t *symlist_src1,
 		      symlist_t *symlist_src2);
-व्योम	symtable_dump(खाता *ofile, खाता *dfile);
+void	symtable_dump(FILE *ofile, FILE *dfile);

@@ -1,374 +1,373 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright (C) 2017 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
-#समावेश <linux/bits.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <dt-bindings/gpio/uniphier-gpपन.स>
+#include <linux/bits.h>
+#include <linux/gpio/driver.h>
+#include <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
+#include <dt-bindings/gpio/uniphier-gpio.h>
 
-#घोषणा UNIPHIER_GPIO_IRQ_MAX_NUM	24
+#define UNIPHIER_GPIO_IRQ_MAX_NUM	24
 
-#घोषणा UNIPHIER_GPIO_PORT_DATA		0x0	/* data */
-#घोषणा UNIPHIER_GPIO_PORT_सूची		0x4	/* direction (1:in, 0:out) */
-#घोषणा UNIPHIER_GPIO_IRQ_EN		0x90	/* irq enable */
-#घोषणा UNIPHIER_GPIO_IRQ_MODE		0x94	/* irq mode (1: both edge) */
-#घोषणा UNIPHIER_GPIO_IRQ_FLT_EN	0x98	/* noise filter enable */
-#घोषणा UNIPHIER_GPIO_IRQ_FLT_CYC	0x9c	/* noise filter घड़ी cycle */
+#define UNIPHIER_GPIO_PORT_DATA		0x0	/* data */
+#define UNIPHIER_GPIO_PORT_DIR		0x4	/* direction (1:in, 0:out) */
+#define UNIPHIER_GPIO_IRQ_EN		0x90	/* irq enable */
+#define UNIPHIER_GPIO_IRQ_MODE		0x94	/* irq mode (1: both edge) */
+#define UNIPHIER_GPIO_IRQ_FLT_EN	0x98	/* noise filter enable */
+#define UNIPHIER_GPIO_IRQ_FLT_CYC	0x9c	/* noise filter clock cycle */
 
-काष्ठा uniphier_gpio_priv अणु
-	काष्ठा gpio_chip chip;
-	काष्ठा irq_chip irq_chip;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	व्योम __iomem *regs;
+struct uniphier_gpio_priv {
+	struct gpio_chip chip;
+	struct irq_chip irq_chip;
+	struct irq_domain *domain;
+	void __iomem *regs;
 	spinlock_t lock;
 	u32 saved_vals[];
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक uniphier_gpio_bank_to_reg(अचिन्हित पूर्णांक bank)
-अणु
-	अचिन्हित पूर्णांक reg;
+static unsigned int uniphier_gpio_bank_to_reg(unsigned int bank)
+{
+	unsigned int reg;
 
 	reg = (bank + 1) * 8;
 
 	/*
-	 * Unक्रमtunately, the GPIO port रेजिस्टरs are not contiguous because
-	 * offset 0x90-0x9f is used क्रम IRQ.  Add 0x10 when crossing the region.
+	 * Unfortunately, the GPIO port registers are not contiguous because
+	 * offset 0x90-0x9f is used for IRQ.  Add 0x10 when crossing the region.
 	 */
-	अगर (reg >= UNIPHIER_GPIO_IRQ_EN)
+	if (reg >= UNIPHIER_GPIO_IRQ_EN)
 		reg += 0x10;
 
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
-अटल व्योम uniphier_gpio_get_bank_and_mask(अचिन्हित पूर्णांक offset,
-					    अचिन्हित पूर्णांक *bank, u32 *mask)
-अणु
+static void uniphier_gpio_get_bank_and_mask(unsigned int offset,
+					    unsigned int *bank, u32 *mask)
+{
 	*bank = offset / UNIPHIER_GPIO_LINES_PER_BANK;
 	*mask = BIT(offset % UNIPHIER_GPIO_LINES_PER_BANK);
-पूर्ण
+}
 
-अटल व्योम uniphier_gpio_reg_update(काष्ठा uniphier_gpio_priv *priv,
-				     अचिन्हित पूर्णांक reg, u32 mask, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
-	u32 पंचांगp;
+static void uniphier_gpio_reg_update(struct uniphier_gpio_priv *priv,
+				     unsigned int reg, u32 mask, u32 val)
+{
+	unsigned long flags;
+	u32 tmp;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	पंचांगp = पढ़ोl(priv->regs + reg);
-	पंचांगp &= ~mask;
-	पंचांगp |= mask & val;
-	ग_लिखोl(पंचांगp, priv->regs + reg);
+	tmp = readl(priv->regs + reg);
+	tmp &= ~mask;
+	tmp |= mask & val;
+	writel(tmp, priv->regs + reg);
 	spin_unlock_irqrestore(&priv->lock, flags);
-पूर्ण
+}
 
-अटल व्योम uniphier_gpio_bank_ग_लिखो(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक bank,
-				     अचिन्हित पूर्णांक reg, u32 mask, u32 val)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = gpiochip_get_data(chip);
+static void uniphier_gpio_bank_write(struct gpio_chip *chip, unsigned int bank,
+				     unsigned int reg, u32 mask, u32 val)
+{
+	struct uniphier_gpio_priv *priv = gpiochip_get_data(chip);
 
-	अगर (!mask)
-		वापस;
+	if (!mask)
+		return;
 
 	uniphier_gpio_reg_update(priv, uniphier_gpio_bank_to_reg(bank) + reg,
 				 mask, val);
-पूर्ण
+}
 
-अटल व्योम uniphier_gpio_offset_ग_लिखो(काष्ठा gpio_chip *chip,
-				       अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक reg,
-				       पूर्णांक val)
-अणु
-	अचिन्हित पूर्णांक bank;
+static void uniphier_gpio_offset_write(struct gpio_chip *chip,
+				       unsigned int offset, unsigned int reg,
+				       int val)
+{
+	unsigned int bank;
 	u32 mask;
 
 	uniphier_gpio_get_bank_and_mask(offset, &bank, &mask);
 
-	uniphier_gpio_bank_ग_लिखो(chip, bank, reg, mask, val ? mask : 0);
-पूर्ण
+	uniphier_gpio_bank_write(chip, bank, reg, mask, val ? mask : 0);
+}
 
-अटल पूर्णांक uniphier_gpio_offset_पढ़ो(काष्ठा gpio_chip *chip,
-				     अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = gpiochip_get_data(chip);
-	अचिन्हित पूर्णांक bank, reg_offset;
+static int uniphier_gpio_offset_read(struct gpio_chip *chip,
+				     unsigned int offset, unsigned int reg)
+{
+	struct uniphier_gpio_priv *priv = gpiochip_get_data(chip);
+	unsigned int bank, reg_offset;
 	u32 mask;
 
 	uniphier_gpio_get_bank_and_mask(offset, &bank, &mask);
 	reg_offset = uniphier_gpio_bank_to_reg(bank) + reg;
 
-	वापस !!(पढ़ोl(priv->regs + reg_offset) & mask);
-पूर्ण
+	return !!(readl(priv->regs + reg_offset) & mask);
+}
 
-अटल पूर्णांक uniphier_gpio_get_direction(काष्ठा gpio_chip *chip,
-				       अचिन्हित पूर्णांक offset)
-अणु
-	अगर (uniphier_gpio_offset_पढ़ो(chip, offset, UNIPHIER_GPIO_PORT_सूची))
-		वापस GPIO_LINE_सूचीECTION_IN;
+static int uniphier_gpio_get_direction(struct gpio_chip *chip,
+				       unsigned int offset)
+{
+	if (uniphier_gpio_offset_read(chip, offset, UNIPHIER_GPIO_PORT_DIR))
+		return GPIO_LINE_DIRECTION_IN;
 
-	वापस GPIO_LINE_सूचीECTION_OUT;
-पूर्ण
+	return GPIO_LINE_DIRECTION_OUT;
+}
 
-अटल पूर्णांक uniphier_gpio_direction_input(काष्ठा gpio_chip *chip,
-					 अचिन्हित पूर्णांक offset)
-अणु
-	uniphier_gpio_offset_ग_लिखो(chip, offset, UNIPHIER_GPIO_PORT_सूची, 1);
+static int uniphier_gpio_direction_input(struct gpio_chip *chip,
+					 unsigned int offset)
+{
+	uniphier_gpio_offset_write(chip, offset, UNIPHIER_GPIO_PORT_DIR, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uniphier_gpio_direction_output(काष्ठा gpio_chip *chip,
-					  अचिन्हित पूर्णांक offset, पूर्णांक val)
-अणु
-	uniphier_gpio_offset_ग_लिखो(chip, offset, UNIPHIER_GPIO_PORT_DATA, val);
-	uniphier_gpio_offset_ग_लिखो(chip, offset, UNIPHIER_GPIO_PORT_सूची, 0);
+static int uniphier_gpio_direction_output(struct gpio_chip *chip,
+					  unsigned int offset, int val)
+{
+	uniphier_gpio_offset_write(chip, offset, UNIPHIER_GPIO_PORT_DATA, val);
+	uniphier_gpio_offset_write(chip, offset, UNIPHIER_GPIO_PORT_DIR, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uniphier_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	वापस uniphier_gpio_offset_पढ़ो(chip, offset, UNIPHIER_GPIO_PORT_DATA);
-पूर्ण
+static int uniphier_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	return uniphier_gpio_offset_read(chip, offset, UNIPHIER_GPIO_PORT_DATA);
+}
 
-अटल व्योम uniphier_gpio_set(काष्ठा gpio_chip *chip,
-			      अचिन्हित पूर्णांक offset, पूर्णांक val)
-अणु
-	uniphier_gpio_offset_ग_लिखो(chip, offset, UNIPHIER_GPIO_PORT_DATA, val);
-पूर्ण
+static void uniphier_gpio_set(struct gpio_chip *chip,
+			      unsigned int offset, int val)
+{
+	uniphier_gpio_offset_write(chip, offset, UNIPHIER_GPIO_PORT_DATA, val);
+}
 
-अटल व्योम uniphier_gpio_set_multiple(काष्ठा gpio_chip *chip,
-				       अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
-अणु
-	अचिन्हित दीर्घ i, bank, bank_mask, bank_bits;
+static void uniphier_gpio_set_multiple(struct gpio_chip *chip,
+				       unsigned long *mask, unsigned long *bits)
+{
+	unsigned long i, bank, bank_mask, bank_bits;
 
-	क्रम_each_set_clump8(i, bank_mask, mask, chip->ngpio) अणु
+	for_each_set_clump8(i, bank_mask, mask, chip->ngpio) {
 		bank = i / UNIPHIER_GPIO_LINES_PER_BANK;
-		bank_bits = biपंचांगap_get_value8(bits, i);
+		bank_bits = bitmap_get_value8(bits, i);
 
-		uniphier_gpio_bank_ग_लिखो(chip, bank, UNIPHIER_GPIO_PORT_DATA,
+		uniphier_gpio_bank_write(chip, bank, UNIPHIER_GPIO_PORT_DATA,
 					 bank_mask, bank_bits);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक uniphier_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा irq_fwspec fwspec;
+static int uniphier_gpio_to_irq(struct gpio_chip *chip, unsigned int offset)
+{
+	struct irq_fwspec fwspec;
 
-	अगर (offset < UNIPHIER_GPIO_IRQ_OFFSET)
-		वापस -ENXIO;
+	if (offset < UNIPHIER_GPIO_IRQ_OFFSET)
+		return -ENXIO;
 
 	fwspec.fwnode = of_node_to_fwnode(chip->parent->of_node);
 	fwspec.param_count = 2;
 	fwspec.param[0] = offset - UNIPHIER_GPIO_IRQ_OFFSET;
 	/*
-	 * IRQ_TYPE_NONE is rejected by the parent irq करोमुख्य. Set LEVEL_HIGH
+	 * IRQ_TYPE_NONE is rejected by the parent irq domain. Set LEVEL_HIGH
 	 * temporarily. Anyway, ->irq_set_type() will override it later.
 	 */
 	fwspec.param[1] = IRQ_TYPE_LEVEL_HIGH;
 
-	वापस irq_create_fwspec_mapping(&fwspec);
-पूर्ण
+	return irq_create_fwspec_mapping(&fwspec);
+}
 
-अटल व्योम uniphier_gpio_irq_mask(काष्ठा irq_data *data)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = data->chip_data;
+static void uniphier_gpio_irq_mask(struct irq_data *data)
+{
+	struct uniphier_gpio_priv *priv = data->chip_data;
 	u32 mask = BIT(data->hwirq);
 
 	uniphier_gpio_reg_update(priv, UNIPHIER_GPIO_IRQ_EN, mask, 0);
 
-	वापस irq_chip_mask_parent(data);
-पूर्ण
+	return irq_chip_mask_parent(data);
+}
 
-अटल व्योम uniphier_gpio_irq_unmask(काष्ठा irq_data *data)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = data->chip_data;
+static void uniphier_gpio_irq_unmask(struct irq_data *data)
+{
+	struct uniphier_gpio_priv *priv = data->chip_data;
 	u32 mask = BIT(data->hwirq);
 
 	uniphier_gpio_reg_update(priv, UNIPHIER_GPIO_IRQ_EN, mask, mask);
 
-	वापस irq_chip_unmask_parent(data);
-पूर्ण
+	return irq_chip_unmask_parent(data);
+}
 
-अटल पूर्णांक uniphier_gpio_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = data->chip_data;
+static int uniphier_gpio_irq_set_type(struct irq_data *data, unsigned int type)
+{
+	struct uniphier_gpio_priv *priv = data->chip_data;
 	u32 mask = BIT(data->hwirq);
 	u32 val = 0;
 
-	अगर (type == IRQ_TYPE_EDGE_BOTH) अणु
+	if (type == IRQ_TYPE_EDGE_BOTH) {
 		val = mask;
 		type = IRQ_TYPE_EDGE_FALLING;
-	पूर्ण
+	}
 
 	uniphier_gpio_reg_update(priv, UNIPHIER_GPIO_IRQ_MODE, mask, val);
 	/* To enable both edge detection, the noise filter must be enabled. */
 	uniphier_gpio_reg_update(priv, UNIPHIER_GPIO_IRQ_FLT_EN, mask, val);
 
-	वापस irq_chip_set_type_parent(data, type);
-पूर्ण
+	return irq_chip_set_type_parent(data, type);
+}
 
-अटल पूर्णांक uniphier_gpio_irq_get_parent_hwirq(काष्ठा uniphier_gpio_priv *priv,
-					      अचिन्हित पूर्णांक hwirq)
-अणु
-	काष्ठा device_node *np = priv->chip.parent->of_node;
-	स्थिर __be32 *range;
+static int uniphier_gpio_irq_get_parent_hwirq(struct uniphier_gpio_priv *priv,
+					      unsigned int hwirq)
+{
+	struct device_node *np = priv->chip.parent->of_node;
+	const __be32 *range;
 	u32 base, parent_base, size;
-	पूर्णांक len;
+	int len;
 
 	range = of_get_property(np, "socionext,interrupt-ranges", &len);
-	अगर (!range)
-		वापस -EINVAL;
+	if (!range)
+		return -EINVAL;
 
-	len /= माप(*range);
+	len /= sizeof(*range);
 
-	क्रम (; len >= 3; len -= 3) अणु
+	for (; len >= 3; len -= 3) {
 		base = be32_to_cpu(*range++);
 		parent_base = be32_to_cpu(*range++);
 		size = be32_to_cpu(*range++);
 
-		अगर (base <= hwirq && hwirq < base + size)
-			वापस hwirq - base + parent_base;
-	पूर्ण
+		if (base <= hwirq && hwirq < base + size)
+			return hwirq - base + parent_base;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक uniphier_gpio_irq_करोमुख्य_translate(काष्ठा irq_करोमुख्य *करोमुख्य,
-					      काष्ठा irq_fwspec *fwspec,
-					      अचिन्हित दीर्घ *out_hwirq,
-					      अचिन्हित पूर्णांक *out_type)
-अणु
-	अगर (WARN_ON(fwspec->param_count < 2))
-		वापस -EINVAL;
+static int uniphier_gpio_irq_domain_translate(struct irq_domain *domain,
+					      struct irq_fwspec *fwspec,
+					      unsigned long *out_hwirq,
+					      unsigned int *out_type)
+{
+	if (WARN_ON(fwspec->param_count < 2))
+		return -EINVAL;
 
 	*out_hwirq = fwspec->param[0];
 	*out_type = fwspec->param[1] & IRQ_TYPE_SENSE_MASK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uniphier_gpio_irq_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य,
-					  अचिन्हित पूर्णांक virq,
-					  अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = करोमुख्य->host_data;
-	काष्ठा irq_fwspec parent_fwspec;
+static int uniphier_gpio_irq_domain_alloc(struct irq_domain *domain,
+					  unsigned int virq,
+					  unsigned int nr_irqs, void *arg)
+{
+	struct uniphier_gpio_priv *priv = domain->host_data;
+	struct irq_fwspec parent_fwspec;
 	irq_hw_number_t hwirq;
-	अचिन्हित पूर्णांक type;
-	पूर्णांक ret;
+	unsigned int type;
+	int ret;
 
-	अगर (WARN_ON(nr_irqs != 1))
-		वापस -EINVAL;
+	if (WARN_ON(nr_irqs != 1))
+		return -EINVAL;
 
-	ret = uniphier_gpio_irq_करोमुख्य_translate(करोमुख्य, arg, &hwirq, &type);
-	अगर (ret)
-		वापस ret;
+	ret = uniphier_gpio_irq_domain_translate(domain, arg, &hwirq, &type);
+	if (ret)
+		return ret;
 
 	ret = uniphier_gpio_irq_get_parent_hwirq(priv, hwirq);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* parent is UniPhier AIDET */
-	parent_fwspec.fwnode = करोमुख्य->parent->fwnode;
+	parent_fwspec.fwnode = domain->parent->fwnode;
 	parent_fwspec.param_count = 2;
 	parent_fwspec.param[0] = ret;
 	parent_fwspec.param[1] = (type == IRQ_TYPE_EDGE_BOTH) ?
 						IRQ_TYPE_EDGE_FALLING : type;
 
-	ret = irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq,
+	ret = irq_domain_set_hwirq_and_chip(domain, virq, hwirq,
 					    &priv->irq_chip, priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, 1, &parent_fwspec);
-पूर्ण
+	return irq_domain_alloc_irqs_parent(domain, virq, 1, &parent_fwspec);
+}
 
-अटल पूर्णांक uniphier_gpio_irq_करोमुख्य_activate(काष्ठा irq_करोमुख्य *करोमुख्य,
-					     काष्ठा irq_data *data, bool early)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = करोमुख्य->host_data;
-	काष्ठा gpio_chip *chip = &priv->chip;
+static int uniphier_gpio_irq_domain_activate(struct irq_domain *domain,
+					     struct irq_data *data, bool early)
+{
+	struct uniphier_gpio_priv *priv = domain->host_data;
+	struct gpio_chip *chip = &priv->chip;
 
-	वापस gpiochip_lock_as_irq(chip, data->hwirq + UNIPHIER_GPIO_IRQ_OFFSET);
-पूर्ण
+	return gpiochip_lock_as_irq(chip, data->hwirq + UNIPHIER_GPIO_IRQ_OFFSET);
+}
 
-अटल व्योम uniphier_gpio_irq_करोमुख्य_deactivate(काष्ठा irq_करोमुख्य *करोमुख्य,
-						काष्ठा irq_data *data)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = करोमुख्य->host_data;
-	काष्ठा gpio_chip *chip = &priv->chip;
+static void uniphier_gpio_irq_domain_deactivate(struct irq_domain *domain,
+						struct irq_data *data)
+{
+	struct uniphier_gpio_priv *priv = domain->host_data;
+	struct gpio_chip *chip = &priv->chip;
 
 	gpiochip_unlock_as_irq(chip, data->hwirq + UNIPHIER_GPIO_IRQ_OFFSET);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops uniphier_gpio_irq_करोमुख्य_ops = अणु
-	.alloc = uniphier_gpio_irq_करोमुख्य_alloc,
-	.मुक्त = irq_करोमुख्य_मुक्त_irqs_common,
-	.activate = uniphier_gpio_irq_करोमुख्य_activate,
-	.deactivate = uniphier_gpio_irq_करोमुख्य_deactivate,
-	.translate = uniphier_gpio_irq_करोमुख्य_translate,
-पूर्ण;
+static const struct irq_domain_ops uniphier_gpio_irq_domain_ops = {
+	.alloc = uniphier_gpio_irq_domain_alloc,
+	.free = irq_domain_free_irqs_common,
+	.activate = uniphier_gpio_irq_domain_activate,
+	.deactivate = uniphier_gpio_irq_domain_deactivate,
+	.translate = uniphier_gpio_irq_domain_translate,
+};
 
-अटल व्योम uniphier_gpio_hw_init(काष्ठा uniphier_gpio_priv *priv)
-अणु
+static void uniphier_gpio_hw_init(struct uniphier_gpio_priv *priv)
+{
 	/*
 	 * Due to the hardware design, the noise filter must be enabled to
-	 * detect both edge पूर्णांकerrupts.  This filter is पूर्णांकended to हटाओ the
-	 * noise from the irq lines.  It करोes not work क्रम GPIO input, so GPIO
-	 * debounce is not supported.  Unक्रमtunately, the filter period is
+	 * detect both edge interrupts.  This filter is intended to remove the
+	 * noise from the irq lines.  It does not work for GPIO input, so GPIO
+	 * debounce is not supported.  Unfortunately, the filter period is
 	 * shared among all irq lines.  Just choose a sensible period here.
 	 */
-	ग_लिखोl(0xff, priv->regs + UNIPHIER_GPIO_IRQ_FLT_CYC);
-पूर्ण
+	writel(0xff, priv->regs + UNIPHIER_GPIO_IRQ_FLT_CYC);
+}
 
-अटल अचिन्हित पूर्णांक uniphier_gpio_get_nbanks(अचिन्हित पूर्णांक ngpio)
-अणु
-	वापस DIV_ROUND_UP(ngpio, UNIPHIER_GPIO_LINES_PER_BANK);
-पूर्ण
+static unsigned int uniphier_gpio_get_nbanks(unsigned int ngpio)
+{
+	return DIV_ROUND_UP(ngpio, UNIPHIER_GPIO_LINES_PER_BANK);
+}
 
-अटल पूर्णांक uniphier_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *parent_np;
-	काष्ठा irq_करोमुख्य *parent_करोमुख्य;
-	काष्ठा uniphier_gpio_priv *priv;
-	काष्ठा gpio_chip *chip;
-	काष्ठा irq_chip *irq_chip;
-	अचिन्हित पूर्णांक nregs;
+static int uniphier_gpio_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *parent_np;
+	struct irq_domain *parent_domain;
+	struct uniphier_gpio_priv *priv;
+	struct gpio_chip *chip;
+	struct irq_chip *irq_chip;
+	unsigned int nregs;
 	u32 ngpios;
-	पूर्णांक ret;
+	int ret;
 
 	parent_np = of_irq_find_parent(dev->of_node);
-	अगर (!parent_np)
-		वापस -ENXIO;
+	if (!parent_np)
+		return -ENXIO;
 
-	parent_करोमुख्य = irq_find_host(parent_np);
+	parent_domain = irq_find_host(parent_np);
 	of_node_put(parent_np);
-	अगर (!parent_करोमुख्य)
-		वापस -EPROBE_DEFER;
+	if (!parent_domain)
+		return -EPROBE_DEFER;
 
-	ret = of_property_पढ़ो_u32(dev->of_node, "ngpios", &ngpios);
-	अगर (ret)
-		वापस ret;
+	ret = of_property_read_u32(dev->of_node, "ngpios", &ngpios);
+	if (ret)
+		return ret;
 
 	nregs = uniphier_gpio_get_nbanks(ngpios) * 2 + 3;
-	priv = devm_kzalloc(dev, काष्ठा_size(priv, saved_vals, nregs),
+	priv = devm_kzalloc(dev, struct_size(priv, saved_vals, nregs),
 			    GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	if (!priv)
+		return -ENOMEM;
 
-	priv->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->regs))
-		वापस PTR_ERR(priv->regs);
+	priv->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->regs))
+		return PTR_ERR(priv->regs);
 
 	spin_lock_init(&priv->lock);
 
@@ -376,7 +375,7 @@
 	chip->label = dev_name(dev);
 	chip->parent = dev;
 	chip->request = gpiochip_generic_request;
-	chip->मुक्त = gpiochip_generic_मुक्त;
+	chip->free = gpiochip_generic_free;
 	chip->get_direction = uniphier_gpio_get_direction;
 	chip->direction_input = uniphier_gpio_direction_input;
 	chip->direction_output = uniphier_gpio_direction_output;
@@ -398,98 +397,98 @@
 	uniphier_gpio_hw_init(priv);
 
 	ret = devm_gpiochip_add_data(dev, chip, priv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	priv->करोमुख्य = irq_करोमुख्य_create_hierarchy(
-					parent_करोमुख्य, 0,
+	priv->domain = irq_domain_create_hierarchy(
+					parent_domain, 0,
 					UNIPHIER_GPIO_IRQ_MAX_NUM,
 					of_node_to_fwnode(dev->of_node),
-					&uniphier_gpio_irq_करोमुख्य_ops, priv);
-	अगर (!priv->करोमुख्य)
-		वापस -ENOMEM;
+					&uniphier_gpio_irq_domain_ops, priv);
+	if (!priv->domain)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uniphier_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = platक्रमm_get_drvdata(pdev);
+static int uniphier_gpio_remove(struct platform_device *pdev)
+{
+	struct uniphier_gpio_priv *priv = platform_get_drvdata(pdev);
 
-	irq_करोमुख्य_हटाओ(priv->करोमुख्य);
+	irq_domain_remove(priv->domain);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused uniphier_gpio_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक nbanks = uniphier_gpio_get_nbanks(priv->chip.ngpio);
+static int __maybe_unused uniphier_gpio_suspend(struct device *dev)
+{
+	struct uniphier_gpio_priv *priv = dev_get_drvdata(dev);
+	unsigned int nbanks = uniphier_gpio_get_nbanks(priv->chip.ngpio);
 	u32 *val = priv->saved_vals;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक i;
+	unsigned int reg;
+	int i;
 
-	क्रम (i = 0; i < nbanks; i++) अणु
+	for (i = 0; i < nbanks; i++) {
 		reg = uniphier_gpio_bank_to_reg(i);
 
-		*val++ = पढ़ोl(priv->regs + reg + UNIPHIER_GPIO_PORT_DATA);
-		*val++ = पढ़ोl(priv->regs + reg + UNIPHIER_GPIO_PORT_सूची);
-	पूर्ण
+		*val++ = readl(priv->regs + reg + UNIPHIER_GPIO_PORT_DATA);
+		*val++ = readl(priv->regs + reg + UNIPHIER_GPIO_PORT_DIR);
+	}
 
-	*val++ = पढ़ोl(priv->regs + UNIPHIER_GPIO_IRQ_EN);
-	*val++ = पढ़ोl(priv->regs + UNIPHIER_GPIO_IRQ_MODE);
-	*val++ = पढ़ोl(priv->regs + UNIPHIER_GPIO_IRQ_FLT_EN);
+	*val++ = readl(priv->regs + UNIPHIER_GPIO_IRQ_EN);
+	*val++ = readl(priv->regs + UNIPHIER_GPIO_IRQ_MODE);
+	*val++ = readl(priv->regs + UNIPHIER_GPIO_IRQ_FLT_EN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused uniphier_gpio_resume(काष्ठा device *dev)
-अणु
-	काष्ठा uniphier_gpio_priv *priv = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक nbanks = uniphier_gpio_get_nbanks(priv->chip.ngpio);
-	स्थिर u32 *val = priv->saved_vals;
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक i;
+static int __maybe_unused uniphier_gpio_resume(struct device *dev)
+{
+	struct uniphier_gpio_priv *priv = dev_get_drvdata(dev);
+	unsigned int nbanks = uniphier_gpio_get_nbanks(priv->chip.ngpio);
+	const u32 *val = priv->saved_vals;
+	unsigned int reg;
+	int i;
 
-	क्रम (i = 0; i < nbanks; i++) अणु
+	for (i = 0; i < nbanks; i++) {
 		reg = uniphier_gpio_bank_to_reg(i);
 
-		ग_लिखोl(*val++, priv->regs + reg + UNIPHIER_GPIO_PORT_DATA);
-		ग_लिखोl(*val++, priv->regs + reg + UNIPHIER_GPIO_PORT_सूची);
-	पूर्ण
+		writel(*val++, priv->regs + reg + UNIPHIER_GPIO_PORT_DATA);
+		writel(*val++, priv->regs + reg + UNIPHIER_GPIO_PORT_DIR);
+	}
 
-	ग_लिखोl(*val++, priv->regs + UNIPHIER_GPIO_IRQ_EN);
-	ग_लिखोl(*val++, priv->regs + UNIPHIER_GPIO_IRQ_MODE);
-	ग_लिखोl(*val++, priv->regs + UNIPHIER_GPIO_IRQ_FLT_EN);
+	writel(*val++, priv->regs + UNIPHIER_GPIO_IRQ_EN);
+	writel(*val++, priv->regs + UNIPHIER_GPIO_IRQ_MODE);
+	writel(*val++, priv->regs + UNIPHIER_GPIO_IRQ_FLT_EN);
 
 	uniphier_gpio_hw_init(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops uniphier_gpio_pm_ops = अणु
+static const struct dev_pm_ops uniphier_gpio_pm_ops = {
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(uniphier_gpio_suspend,
 				     uniphier_gpio_resume)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id uniphier_gpio_match[] = अणु
-	अणु .compatible = "socionext,uniphier-gpio" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id uniphier_gpio_match[] = {
+	{ .compatible = "socionext,uniphier-gpio" },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, uniphier_gpio_match);
 
-अटल काष्ठा platक्रमm_driver uniphier_gpio_driver = अणु
+static struct platform_driver uniphier_gpio_driver = {
 	.probe = uniphier_gpio_probe,
-	.हटाओ = uniphier_gpio_हटाओ,
-	.driver = अणु
+	.remove = uniphier_gpio_remove,
+	.driver = {
 		.name = "uniphier-gpio",
 		.of_match_table = uniphier_gpio_match,
 		.pm = &uniphier_gpio_pm_ops,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(uniphier_gpio_driver);
+	},
+};
+module_platform_driver(uniphier_gpio_driver);
 
 MODULE_AUTHOR("Masahiro Yamada <yamada.masahiro@socionext.com>");
 MODULE_DESCRIPTION("UniPhier GPIO driver");

@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश "netlink.h"
-#समावेश "common.h"
-#समावेश "bitset.h"
+#include "netlink.h"
+#include "common.h"
+#include "bitset.h"
 
-काष्ठा stats_req_info अणु
-	काष्ठा ethnl_req_info		base;
+struct stats_req_info {
+	struct ethnl_req_info		base;
 	DECLARE_BITMAP(stat_mask, __ETHTOOL_STATS_CNT);
-पूर्ण;
+};
 
-#घोषणा STATS_REQINFO(__req_base) \
-	container_of(__req_base, काष्ठा stats_req_info, base)
+#define STATS_REQINFO(__req_base) \
+	container_of(__req_base, struct stats_req_info, base)
 
-काष्ठा stats_reply_data अणु
-	काष्ठा ethnl_reply_data		base;
-	काष्ठा ethtool_eth_phy_stats	phy_stats;
-	काष्ठा ethtool_eth_mac_stats	mac_stats;
-	काष्ठा ethtool_eth_ctrl_stats	ctrl_stats;
-	काष्ठा ethtool_rmon_stats	rmon_stats;
-	स्थिर काष्ठा ethtool_rmon_hist_range	*rmon_ranges;
-पूर्ण;
+struct stats_reply_data {
+	struct ethnl_reply_data		base;
+	struct ethtool_eth_phy_stats	phy_stats;
+	struct ethtool_eth_mac_stats	mac_stats;
+	struct ethtool_eth_ctrl_stats	ctrl_stats;
+	struct ethtool_rmon_stats	rmon_stats;
+	const struct ethtool_rmon_hist_range	*rmon_ranges;
+};
 
-#घोषणा STATS_REPDATA(__reply_base) \
-	container_of(__reply_base, काष्ठा stats_reply_data, base)
+#define STATS_REPDATA(__reply_base) \
+	container_of(__reply_base, struct stats_reply_data, base)
 
-स्थिर अक्षर stats_std_names[__ETHTOOL_STATS_CNT][ETH_GSTRING_LEN] = अणु
+const char stats_std_names[__ETHTOOL_STATS_CNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_STATS_ETH_PHY]			= "eth-phy",
 	[ETHTOOL_STATS_ETH_MAC]			= "eth-mac",
 	[ETHTOOL_STATS_ETH_CTRL]		= "eth-ctrl",
 	[ETHTOOL_STATS_RMON]			= "rmon",
-पूर्ण;
+};
 
-स्थिर अक्षर stats_eth_phy_names[__ETHTOOL_A_STATS_ETH_PHY_CNT][ETH_GSTRING_LEN] = अणु
+const char stats_eth_phy_names[__ETHTOOL_A_STATS_ETH_PHY_CNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_A_STATS_ETH_PHY_5_SYM_ERR]	= "SymbolErrorDuringCarrier",
-पूर्ण;
+};
 
-स्थिर अक्षर stats_eth_mac_names[__ETHTOOL_A_STATS_ETH_MAC_CNT][ETH_GSTRING_LEN] = अणु
+const char stats_eth_mac_names[__ETHTOOL_A_STATS_ETH_MAC_CNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_A_STATS_ETH_MAC_2_TX_PKT]	= "FramesTransmittedOK",
 	[ETHTOOL_A_STATS_ETH_MAC_3_SINGLE_COL]	= "SingleCollisionFrames",
 	[ETHTOOL_A_STATS_ETH_MAC_4_MULTI_COL]	= "MultipleCollisionFrames",
@@ -59,174 +58,174 @@
 	[ETHTOOL_A_STATS_ETH_MAC_23_IR_LEN_ERR]	= "InRangeLengthErrors",
 	[ETHTOOL_A_STATS_ETH_MAC_24_OOR_LEN]	= "OutOfRangeLengthField",
 	[ETHTOOL_A_STATS_ETH_MAC_25_TOO_LONG_ERR]	= "FrameTooLongErrors",
-पूर्ण;
+};
 
-स्थिर अक्षर stats_eth_ctrl_names[__ETHTOOL_A_STATS_ETH_CTRL_CNT][ETH_GSTRING_LEN] = अणु
+const char stats_eth_ctrl_names[__ETHTOOL_A_STATS_ETH_CTRL_CNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_A_STATS_ETH_CTRL_3_TX]		= "MACControlFramesTransmitted",
 	[ETHTOOL_A_STATS_ETH_CTRL_4_RX]		= "MACControlFramesReceived",
 	[ETHTOOL_A_STATS_ETH_CTRL_5_RX_UNSUP]	= "UnsupportedOpcodesReceived",
-पूर्ण;
+};
 
-स्थिर अक्षर stats_rmon_names[__ETHTOOL_A_STATS_RMON_CNT][ETH_GSTRING_LEN] = अणु
+const char stats_rmon_names[__ETHTOOL_A_STATS_RMON_CNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_A_STATS_RMON_UNDERSIZE]	= "etherStatsUndersizePkts",
 	[ETHTOOL_A_STATS_RMON_OVERSIZE]		= "etherStatsOversizePkts",
 	[ETHTOOL_A_STATS_RMON_FRAG]		= "etherStatsFragments",
 	[ETHTOOL_A_STATS_RMON_JABBER]		= "etherStatsJabbers",
-पूर्ण;
+};
 
-स्थिर काष्ठा nla_policy ethnl_stats_get_policy[ETHTOOL_A_STATS_GROUPS + 1] = अणु
+const struct nla_policy ethnl_stats_get_policy[ETHTOOL_A_STATS_GROUPS + 1] = {
 	[ETHTOOL_A_STATS_HEADER]	=
 		NLA_POLICY_NESTED(ethnl_header_policy),
-	[ETHTOOL_A_STATS_GROUPS]	= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+	[ETHTOOL_A_STATS_GROUPS]	= { .type = NLA_NESTED },
+};
 
-अटल पूर्णांक stats_parse_request(काष्ठा ethnl_req_info *req_base,
-			       काष्ठा nlattr **tb,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा stats_req_info *req_info = STATS_REQINFO(req_base);
+static int stats_parse_request(struct ethnl_req_info *req_base,
+			       struct nlattr **tb,
+			       struct netlink_ext_ack *extack)
+{
+	struct stats_req_info *req_info = STATS_REQINFO(req_base);
 	bool mod = false;
-	पूर्णांक err;
+	int err;
 
 	err = ethnl_update_bitset(req_info->stat_mask, __ETHTOOL_STATS_CNT,
 				  tb[ETHTOOL_A_STATS_GROUPS], stats_std_names,
 				  extack, &mod);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!mod) अणु
+	if (!mod) {
 		NL_SET_ERR_MSG(extack, "no stats requested");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stats_prepare_data(स्थिर काष्ठा ethnl_req_info *req_base,
-			      काष्ठा ethnl_reply_data *reply_base,
-			      काष्ठा genl_info *info)
-अणु
-	स्थिर काष्ठा stats_req_info *req_info = STATS_REQINFO(req_base);
-	काष्ठा stats_reply_data *data = STATS_REPDATA(reply_base);
-	काष्ठा net_device *dev = reply_base->dev;
-	पूर्णांक ret;
+static int stats_prepare_data(const struct ethnl_req_info *req_base,
+			      struct ethnl_reply_data *reply_base,
+			      struct genl_info *info)
+{
+	const struct stats_req_info *req_info = STATS_REQINFO(req_base);
+	struct stats_reply_data *data = STATS_REPDATA(reply_base);
+	struct net_device *dev = reply_base->dev;
+	int ret;
 
 	ret = ethnl_ops_begin(dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Mark all stats as unset (see ETHTOOL_STAT_NOT_SET) to prevent them
-	 * from being reported to user space in हाल driver did not set them.
+	 * from being reported to user space in case driver did not set them.
 	 */
-	स_रखो(&data->phy_stats, 0xff, माप(data->phy_stats));
-	स_रखो(&data->mac_stats, 0xff, माप(data->mac_stats));
-	स_रखो(&data->ctrl_stats, 0xff, माप(data->ctrl_stats));
-	स_रखो(&data->rmon_stats, 0xff, माप(data->rmon_stats));
+	memset(&data->phy_stats, 0xff, sizeof(data->phy_stats));
+	memset(&data->mac_stats, 0xff, sizeof(data->mac_stats));
+	memset(&data->ctrl_stats, 0xff, sizeof(data->ctrl_stats));
+	memset(&data->rmon_stats, 0xff, sizeof(data->rmon_stats));
 
-	अगर (test_bit(ETHTOOL_STATS_ETH_PHY, req_info->stat_mask) &&
+	if (test_bit(ETHTOOL_STATS_ETH_PHY, req_info->stat_mask) &&
 	    dev->ethtool_ops->get_eth_phy_stats)
 		dev->ethtool_ops->get_eth_phy_stats(dev, &data->phy_stats);
-	अगर (test_bit(ETHTOOL_STATS_ETH_MAC, req_info->stat_mask) &&
+	if (test_bit(ETHTOOL_STATS_ETH_MAC, req_info->stat_mask) &&
 	    dev->ethtool_ops->get_eth_mac_stats)
 		dev->ethtool_ops->get_eth_mac_stats(dev, &data->mac_stats);
-	अगर (test_bit(ETHTOOL_STATS_ETH_CTRL, req_info->stat_mask) &&
+	if (test_bit(ETHTOOL_STATS_ETH_CTRL, req_info->stat_mask) &&
 	    dev->ethtool_ops->get_eth_ctrl_stats)
 		dev->ethtool_ops->get_eth_ctrl_stats(dev, &data->ctrl_stats);
-	अगर (test_bit(ETHTOOL_STATS_RMON, req_info->stat_mask) &&
+	if (test_bit(ETHTOOL_STATS_RMON, req_info->stat_mask) &&
 	    dev->ethtool_ops->get_rmon_stats)
 		dev->ethtool_ops->get_rmon_stats(dev, &data->rmon_stats,
 						 &data->rmon_ranges);
 
 	ethnl_ops_complete(dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stats_reply_size(स्थिर काष्ठा ethnl_req_info *req_base,
-			    स्थिर काष्ठा ethnl_reply_data *reply_base)
-अणु
-	स्थिर काष्ठा stats_req_info *req_info = STATS_REQINFO(req_base);
-	अचिन्हित पूर्णांक n_grps = 0, n_stats = 0;
-	पूर्णांक len = 0;
+static int stats_reply_size(const struct ethnl_req_info *req_base,
+			    const struct ethnl_reply_data *reply_base)
+{
+	const struct stats_req_info *req_info = STATS_REQINFO(req_base);
+	unsigned int n_grps = 0, n_stats = 0;
+	int len = 0;
 
-	अगर (test_bit(ETHTOOL_STATS_ETH_PHY, req_info->stat_mask)) अणु
-		n_stats += माप(काष्ठा ethtool_eth_phy_stats) / माप(u64);
+	if (test_bit(ETHTOOL_STATS_ETH_PHY, req_info->stat_mask)) {
+		n_stats += sizeof(struct ethtool_eth_phy_stats) / sizeof(u64);
 		n_grps++;
-	पूर्ण
-	अगर (test_bit(ETHTOOL_STATS_ETH_MAC, req_info->stat_mask)) अणु
-		n_stats += माप(काष्ठा ethtool_eth_mac_stats) / माप(u64);
+	}
+	if (test_bit(ETHTOOL_STATS_ETH_MAC, req_info->stat_mask)) {
+		n_stats += sizeof(struct ethtool_eth_mac_stats) / sizeof(u64);
 		n_grps++;
-	पूर्ण
-	अगर (test_bit(ETHTOOL_STATS_ETH_CTRL, req_info->stat_mask)) अणु
-		n_stats += माप(काष्ठा ethtool_eth_ctrl_stats) / माप(u64);
+	}
+	if (test_bit(ETHTOOL_STATS_ETH_CTRL, req_info->stat_mask)) {
+		n_stats += sizeof(struct ethtool_eth_ctrl_stats) / sizeof(u64);
 		n_grps++;
-	पूर्ण
-	अगर (test_bit(ETHTOOL_STATS_RMON, req_info->stat_mask)) अणु
-		n_stats += माप(काष्ठा ethtool_rmon_stats) / माप(u64);
+	}
+	if (test_bit(ETHTOOL_STATS_RMON, req_info->stat_mask)) {
+		n_stats += sizeof(struct ethtool_rmon_stats) / sizeof(u64);
 		n_grps++;
-		/* Above includes the space क्रम _A_STATS_GRP_HIST_VALs */
+		/* Above includes the space for _A_STATS_GRP_HIST_VALs */
 
 		len += (nla_total_size(0) +	/* _A_STATS_GRP_HIST */
 			nla_total_size(4) +	/* _A_STATS_GRP_HIST_BKT_LOW */
 			nla_total_size(4)) *	/* _A_STATS_GRP_HIST_BKT_HI */
 			ETHTOOL_RMON_HIST_MAX * 2;
-	पूर्ण
+	}
 
 	len += n_grps * (nla_total_size(0) + /* _A_STATS_GRP */
 			 nla_total_size(4) + /* _A_STATS_GRP_ID */
 			 nla_total_size(4)); /* _A_STATS_GRP_SS_ID */
 	len += n_stats * (nla_total_size(0) + /* _A_STATS_GRP_STAT */
-			  nla_total_size_64bit(माप(u64)));
+			  nla_total_size_64bit(sizeof(u64)));
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक stat_put(काष्ठा sk_buff *skb, u16 attrtype, u64 val)
-अणु
-	काष्ठा nlattr *nest;
-	पूर्णांक ret;
+static int stat_put(struct sk_buff *skb, u16 attrtype, u64 val)
+{
+	struct nlattr *nest;
+	int ret;
 
-	अगर (val == ETHTOOL_STAT_NOT_SET)
-		वापस 0;
+	if (val == ETHTOOL_STAT_NOT_SET)
+		return 0;
 
-	/* We want to start stats attr types from 0, so we करोn't have a type
-	 * क्रम pad inside ETHTOOL_A_STATS_GRP_STAT. Pad things on the outside
+	/* We want to start stats attr types from 0, so we don't have a type
+	 * for pad inside ETHTOOL_A_STATS_GRP_STAT. Pad things on the outside
 	 * of ETHTOOL_A_STATS_GRP_STAT. Since we're one nest away from the
-	 * actual attr we're 4B off - nla_need_padding_क्रम_64bit() & co.
+	 * actual attr we're 4B off - nla_need_padding_for_64bit() & co.
 	 * can't be used.
 	 */
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)skb_tail_poपूर्णांकer(skb), 8))
-		अगर (!nla_reserve(skb, ETHTOOL_A_STATS_GRP_PAD, 0))
-			वापस -EMSGSIZE;
-#पूर्ण_अगर
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	if (!IS_ALIGNED((unsigned long)skb_tail_pointer(skb), 8))
+		if (!nla_reserve(skb, ETHTOOL_A_STATS_GRP_PAD, 0))
+			return -EMSGSIZE;
+#endif
 
 	nest = nla_nest_start(skb, ETHTOOL_A_STATS_GRP_STAT);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
 	ret = nla_put_u64_64bit(skb, attrtype, val, -1 /* not used */);
-	अगर (ret) अणु
+	if (ret) {
 		nla_nest_cancel(skb, nest);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	nla_nest_end(skb, nest);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stats_put_phy_stats(काष्ठा sk_buff *skb,
-			       स्थिर काष्ठा stats_reply_data *data)
-अणु
-	अगर (stat_put(skb, ETHTOOL_A_STATS_ETH_PHY_5_SYM_ERR,
+static int stats_put_phy_stats(struct sk_buff *skb,
+			       const struct stats_reply_data *data)
+{
+	if (stat_put(skb, ETHTOOL_A_STATS_ETH_PHY_5_SYM_ERR,
 		     data->phy_stats.SymbolErrorDuringCarrier))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक stats_put_mac_stats(काष्ठा sk_buff *skb,
-			       स्थिर काष्ठा stats_reply_data *data)
-अणु
-	अगर (stat_put(skb, ETHTOOL_A_STATS_ETH_MAC_2_TX_PKT,
+static int stats_put_mac_stats(struct sk_buff *skb,
+			       const struct stats_reply_data *data)
+{
+	if (stat_put(skb, ETHTOOL_A_STATS_ETH_MAC_2_TX_PKT,
 		     data->mac_stats.FramesTransmittedOK) ||
 	    stat_put(skb, ETHTOOL_A_STATS_ETH_MAC_3_SINGLE_COL,
 		     data->mac_stats.SingleCollisionFrames) ||
@@ -270,70 +269,70 @@
 		     data->mac_stats.OutOfRangeLengthField) ||
 	    stat_put(skb, ETHTOOL_A_STATS_ETH_MAC_25_TOO_LONG_ERR,
 		     data->mac_stats.FrameTooLongErrors))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक stats_put_ctrl_stats(काष्ठा sk_buff *skb,
-				स्थिर काष्ठा stats_reply_data *data)
-अणु
-	अगर (stat_put(skb, ETHTOOL_A_STATS_ETH_CTRL_3_TX,
+static int stats_put_ctrl_stats(struct sk_buff *skb,
+				const struct stats_reply_data *data)
+{
+	if (stat_put(skb, ETHTOOL_A_STATS_ETH_CTRL_3_TX,
 		     data->ctrl_stats.MACControlFramesTransmitted) ||
 	    stat_put(skb, ETHTOOL_A_STATS_ETH_CTRL_4_RX,
 		     data->ctrl_stats.MACControlFramesReceived) ||
 	    stat_put(skb, ETHTOOL_A_STATS_ETH_CTRL_5_RX_UNSUP,
 		     data->ctrl_stats.UnsupportedOpcodesReceived))
-		वापस -EMSGSIZE;
-	वापस 0;
-पूर्ण
+		return -EMSGSIZE;
+	return 0;
+}
 
-अटल पूर्णांक stats_put_rmon_hist(काष्ठा sk_buff *skb, u32 attr, स्थिर u64 *hist,
-			       स्थिर काष्ठा ethtool_rmon_hist_range *ranges)
-अणु
-	काष्ठा nlattr *nest;
-	पूर्णांक i;
+static int stats_put_rmon_hist(struct sk_buff *skb, u32 attr, const u64 *hist,
+			       const struct ethtool_rmon_hist_range *ranges)
+{
+	struct nlattr *nest;
+	int i;
 
-	अगर (!ranges)
-		वापस 0;
+	if (!ranges)
+		return 0;
 
-	क्रम (i = 0; i <	ETHTOOL_RMON_HIST_MAX; i++) अणु
-		अगर (!ranges[i].low && !ranges[i].high)
-			अवरोध;
-		अगर (hist[i] == ETHTOOL_STAT_NOT_SET)
-			जारी;
+	for (i = 0; i <	ETHTOOL_RMON_HIST_MAX; i++) {
+		if (!ranges[i].low && !ranges[i].high)
+			break;
+		if (hist[i] == ETHTOOL_STAT_NOT_SET)
+			continue;
 
 		nest = nla_nest_start(skb, attr);
-		अगर (!nest)
-			वापस -EMSGSIZE;
+		if (!nest)
+			return -EMSGSIZE;
 
-		अगर (nla_put_u32(skb, ETHTOOL_A_STATS_GRP_HIST_BKT_LOW,
+		if (nla_put_u32(skb, ETHTOOL_A_STATS_GRP_HIST_BKT_LOW,
 				ranges[i].low) ||
 		    nla_put_u32(skb, ETHTOOL_A_STATS_GRP_HIST_BKT_HI,
 				ranges[i].high) ||
 		    nla_put_u64_64bit(skb, ETHTOOL_A_STATS_GRP_HIST_VAL,
 				      hist[i], ETHTOOL_A_STATS_GRP_PAD))
-			जाओ err_cancel_hist;
+			goto err_cancel_hist;
 
 		nla_nest_end(skb, nest);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_cancel_hist:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक stats_put_rmon_stats(काष्ठा sk_buff *skb,
-				स्थिर काष्ठा stats_reply_data *data)
-अणु
-	अगर (stats_put_rmon_hist(skb, ETHTOOL_A_STATS_GRP_HIST_RX,
+static int stats_put_rmon_stats(struct sk_buff *skb,
+				const struct stats_reply_data *data)
+{
+	if (stats_put_rmon_hist(skb, ETHTOOL_A_STATS_GRP_HIST_RX,
 				data->rmon_stats.hist, data->rmon_ranges) ||
 	    stats_put_rmon_hist(skb, ETHTOOL_A_STATS_GRP_HIST_TX,
 				data->rmon_stats.hist_tx, data->rmon_ranges))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	अगर (stat_put(skb, ETHTOOL_A_STATS_RMON_UNDERSIZE,
+	if (stat_put(skb, ETHTOOL_A_STATS_RMON_UNDERSIZE,
 		     data->rmon_stats.undersize_pkts) ||
 	    stat_put(skb, ETHTOOL_A_STATS_RMON_OVERSIZE,
 		     data->rmon_stats.oversize_pkts) ||
@@ -341,74 +340,74 @@ err_cancel_hist:
 		     data->rmon_stats.fragments) ||
 	    stat_put(skb, ETHTOOL_A_STATS_RMON_JABBER,
 		     data->rmon_stats.jabbers))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक stats_put_stats(काष्ठा sk_buff *skb,
-			   स्थिर काष्ठा stats_reply_data *data,
+static int stats_put_stats(struct sk_buff *skb,
+			   const struct stats_reply_data *data,
 			   u32 id, u32 ss_id,
-			   पूर्णांक (*cb)(काष्ठा sk_buff *skb,
-				     स्थिर काष्ठा stats_reply_data *data))
-अणु
-	काष्ठा nlattr *nest;
+			   int (*cb)(struct sk_buff *skb,
+				     const struct stats_reply_data *data))
+{
+	struct nlattr *nest;
 
 	nest = nla_nest_start(skb, ETHTOOL_A_STATS_GRP);
-	अगर (!nest)
-		वापस -EMSGSIZE;
+	if (!nest)
+		return -EMSGSIZE;
 
-	अगर (nla_put_u32(skb, ETHTOOL_A_STATS_GRP_ID, id) ||
+	if (nla_put_u32(skb, ETHTOOL_A_STATS_GRP_ID, id) ||
 	    nla_put_u32(skb, ETHTOOL_A_STATS_GRP_SS_ID, ss_id))
-		जाओ err_cancel;
+		goto err_cancel;
 
-	अगर (cb(skb, data))
-		जाओ err_cancel;
+	if (cb(skb, data))
+		goto err_cancel;
 
 	nla_nest_end(skb, nest);
-	वापस 0;
+	return 0;
 
 err_cancel:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक stats_fill_reply(काष्ठा sk_buff *skb,
-			    स्थिर काष्ठा ethnl_req_info *req_base,
-			    स्थिर काष्ठा ethnl_reply_data *reply_base)
-अणु
-	स्थिर काष्ठा stats_req_info *req_info = STATS_REQINFO(req_base);
-	स्थिर काष्ठा stats_reply_data *data = STATS_REPDATA(reply_base);
-	पूर्णांक ret = 0;
+static int stats_fill_reply(struct sk_buff *skb,
+			    const struct ethnl_req_info *req_base,
+			    const struct ethnl_reply_data *reply_base)
+{
+	const struct stats_req_info *req_info = STATS_REQINFO(req_base);
+	const struct stats_reply_data *data = STATS_REPDATA(reply_base);
+	int ret = 0;
 
-	अगर (!ret && test_bit(ETHTOOL_STATS_ETH_PHY, req_info->stat_mask))
+	if (!ret && test_bit(ETHTOOL_STATS_ETH_PHY, req_info->stat_mask))
 		ret = stats_put_stats(skb, data, ETHTOOL_STATS_ETH_PHY,
 				      ETH_SS_STATS_ETH_PHY,
 				      stats_put_phy_stats);
-	अगर (!ret && test_bit(ETHTOOL_STATS_ETH_MAC, req_info->stat_mask))
+	if (!ret && test_bit(ETHTOOL_STATS_ETH_MAC, req_info->stat_mask))
 		ret = stats_put_stats(skb, data, ETHTOOL_STATS_ETH_MAC,
 				      ETH_SS_STATS_ETH_MAC,
 				      stats_put_mac_stats);
-	अगर (!ret && test_bit(ETHTOOL_STATS_ETH_CTRL, req_info->stat_mask))
+	if (!ret && test_bit(ETHTOOL_STATS_ETH_CTRL, req_info->stat_mask))
 		ret = stats_put_stats(skb, data, ETHTOOL_STATS_ETH_CTRL,
 				      ETH_SS_STATS_ETH_CTRL,
 				      stats_put_ctrl_stats);
-	अगर (!ret && test_bit(ETHTOOL_STATS_RMON, req_info->stat_mask))
+	if (!ret && test_bit(ETHTOOL_STATS_RMON, req_info->stat_mask))
 		ret = stats_put_stats(skb, data, ETHTOOL_STATS_RMON,
 				      ETH_SS_STATS_RMON, stats_put_rmon_stats);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा ethnl_request_ops ethnl_stats_request_ops = अणु
+const struct ethnl_request_ops ethnl_stats_request_ops = {
 	.request_cmd		= ETHTOOL_MSG_STATS_GET,
 	.reply_cmd		= ETHTOOL_MSG_STATS_GET_REPLY,
 	.hdr_attr		= ETHTOOL_A_STATS_HEADER,
-	.req_info_size		= माप(काष्ठा stats_req_info),
-	.reply_data_size	= माप(काष्ठा stats_reply_data),
+	.req_info_size		= sizeof(struct stats_req_info),
+	.reply_data_size	= sizeof(struct stats_reply_data),
 
 	.parse_request		= stats_parse_request,
 	.prepare_data		= stats_prepare_data,
 	.reply_size		= stats_reply_size,
 	.fill_reply		= stats_fill_reply,
-पूर्ण;
+};

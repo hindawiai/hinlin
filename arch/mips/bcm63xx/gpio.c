@@ -1,149 +1,148 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
- * Copyright (C) 2008-2011 Florian Fainelli <florian@खोलोwrt.org>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
+ * Copyright (C) 2008-2011 Florian Fainelli <florian@openwrt.org>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/gpio/driver.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/driver.h>
 
-#समावेश <bcm63xx_cpu.h>
-#समावेश <bcm63xx_gpपन.स>
-#समावेश <bcm63xx_पन.स>
-#समावेश <bcm63xx_regs.h>
+#include <bcm63xx_cpu.h>
+#include <bcm63xx_gpio.h>
+#include <bcm63xx_io.h>
+#include <bcm63xx_regs.h>
 
-अटल u32 gpio_out_low_reg;
+static u32 gpio_out_low_reg;
 
-अटल व्योम bcm63xx_gpio_out_low_reg_init(व्योम)
-अणु
-	चयन (bcm63xx_get_cpu_id()) अणु
-	हाल BCM6345_CPU_ID:
+static void bcm63xx_gpio_out_low_reg_init(void)
+{
+	switch (bcm63xx_get_cpu_id()) {
+	case BCM6345_CPU_ID:
 		gpio_out_low_reg = GPIO_DATA_LO_REG_6345;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		gpio_out_low_reg = GPIO_DATA_LO_REG;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल DEFINE_SPINLOCK(bcm63xx_gpio_lock);
-अटल u32 gpio_out_low, gpio_out_high;
+static DEFINE_SPINLOCK(bcm63xx_gpio_lock);
+static u32 gpio_out_low, gpio_out_high;
 
-अटल व्योम bcm63xx_gpio_set(काष्ठा gpio_chip *chip,
-			     अचिन्हित gpio, पूर्णांक val)
-अणु
+static void bcm63xx_gpio_set(struct gpio_chip *chip,
+			     unsigned gpio, int val)
+{
 	u32 reg;
 	u32 mask;
 	u32 *v;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	BUG_ON(gpio >= chip->ngpio);
 
-	अगर (gpio < 32) अणु
+	if (gpio < 32) {
 		reg = gpio_out_low_reg;
 		mask = 1 << gpio;
 		v = &gpio_out_low;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = GPIO_DATA_HI_REG;
 		mask = 1 << (gpio - 32);
 		v = &gpio_out_high;
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&bcm63xx_gpio_lock, flags);
-	अगर (val)
+	if (val)
 		*v |= mask;
-	अन्यथा
+	else
 		*v &= ~mask;
-	bcm_gpio_ग_लिखोl(*v, reg);
+	bcm_gpio_writel(*v, reg);
 	spin_unlock_irqrestore(&bcm63xx_gpio_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक bcm63xx_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित gpio)
-अणु
+static int bcm63xx_gpio_get(struct gpio_chip *chip, unsigned gpio)
+{
 	u32 reg;
 	u32 mask;
 
 	BUG_ON(gpio >= chip->ngpio);
 
-	अगर (gpio < 32) अणु
+	if (gpio < 32) {
 		reg = gpio_out_low_reg;
 		mask = 1 << gpio;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = GPIO_DATA_HI_REG;
 		mask = 1 << (gpio - 32);
-	पूर्ण
+	}
 
-	वापस !!(bcm_gpio_पढ़ोl(reg) & mask);
-पूर्ण
+	return !!(bcm_gpio_readl(reg) & mask);
+}
 
-अटल पूर्णांक bcm63xx_gpio_set_direction(काष्ठा gpio_chip *chip,
-				      अचिन्हित gpio, पूर्णांक dir)
-अणु
+static int bcm63xx_gpio_set_direction(struct gpio_chip *chip,
+				      unsigned gpio, int dir)
+{
 	u32 reg;
 	u32 mask;
-	u32 पंचांगp;
-	अचिन्हित दीर्घ flags;
+	u32 tmp;
+	unsigned long flags;
 
 	BUG_ON(gpio >= chip->ngpio);
 
-	अगर (gpio < 32) अणु
+	if (gpio < 32) {
 		reg = GPIO_CTL_LO_REG;
 		mask = 1 << gpio;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = GPIO_CTL_HI_REG;
 		mask = 1 << (gpio - 32);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&bcm63xx_gpio_lock, flags);
-	पंचांगp = bcm_gpio_पढ़ोl(reg);
-	अगर (dir == BCM63XX_GPIO_सूची_IN)
-		पंचांगp &= ~mask;
-	अन्यथा
-		पंचांगp |= mask;
-	bcm_gpio_ग_लिखोl(पंचांगp, reg);
+	tmp = bcm_gpio_readl(reg);
+	if (dir == BCM63XX_GPIO_DIR_IN)
+		tmp &= ~mask;
+	else
+		tmp |= mask;
+	bcm_gpio_writel(tmp, reg);
 	spin_unlock_irqrestore(&bcm63xx_gpio_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm63xx_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित gpio)
-अणु
-	वापस bcm63xx_gpio_set_direction(chip, gpio, BCM63XX_GPIO_सूची_IN);
-पूर्ण
+static int bcm63xx_gpio_direction_input(struct gpio_chip *chip, unsigned gpio)
+{
+	return bcm63xx_gpio_set_direction(chip, gpio, BCM63XX_GPIO_DIR_IN);
+}
 
-अटल पूर्णांक bcm63xx_gpio_direction_output(काष्ठा gpio_chip *chip,
-					 अचिन्हित gpio, पूर्णांक value)
-अणु
+static int bcm63xx_gpio_direction_output(struct gpio_chip *chip,
+					 unsigned gpio, int value)
+{
 	bcm63xx_gpio_set(chip, gpio, value);
-	वापस bcm63xx_gpio_set_direction(chip, gpio, BCM63XX_GPIO_सूची_OUT);
-पूर्ण
+	return bcm63xx_gpio_set_direction(chip, gpio, BCM63XX_GPIO_DIR_OUT);
+}
 
 
-अटल काष्ठा gpio_chip bcm63xx_gpio_chip = अणु
+static struct gpio_chip bcm63xx_gpio_chip = {
 	.label			= "bcm63xx-gpio",
 	.direction_input	= bcm63xx_gpio_direction_input,
 	.direction_output	= bcm63xx_gpio_direction_output,
 	.get			= bcm63xx_gpio_get,
 	.set			= bcm63xx_gpio_set,
 	.base			= 0,
-पूर्ण;
+};
 
-पूर्णांक __init bcm63xx_gpio_init(व्योम)
-अणु
+int __init bcm63xx_gpio_init(void)
+{
 	bcm63xx_gpio_out_low_reg_init();
 
-	gpio_out_low = bcm_gpio_पढ़ोl(gpio_out_low_reg);
-	अगर (!BCMCPU_IS_6345())
-		gpio_out_high = bcm_gpio_पढ़ोl(GPIO_DATA_HI_REG);
+	gpio_out_low = bcm_gpio_readl(gpio_out_low_reg);
+	if (!BCMCPU_IS_6345())
+		gpio_out_high = bcm_gpio_readl(GPIO_DATA_HI_REG);
 	bcm63xx_gpio_chip.ngpio = bcm63xx_gpio_count();
 	pr_info("registering %d GPIOs\n", bcm63xx_gpio_chip.ngpio);
 
-	वापस gpiochip_add_data(&bcm63xx_gpio_chip, शून्य);
-पूर्ण
+	return gpiochip_add_data(&bcm63xx_gpio_chip, NULL);
+}

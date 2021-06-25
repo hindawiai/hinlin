@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * r8a7791 Clock Pulse Generator / Module Standby and Software Reset
  *
@@ -10,19 +9,19 @@
  * Copyright (C) 2013 Ideas On Board SPRL
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/soc/renesas/rcar-rst.h>
+#include <linux/device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/soc/renesas/rcar-rst.h>
 
-#समावेश <dt-bindings/घड़ी/r8a7791-cpg-mssr.h>
+#include <dt-bindings/clock/r8a7791-cpg-mssr.h>
 
-#समावेश "renesas-cpg-mssr.h"
-#समावेश "rcar-gen2-cpg.h"
+#include "renesas-cpg-mssr.h"
+#include "rcar-gen2-cpg.h"
 
-क्रमागत clk_ids अणु
-	/* Core Clock Outमाला_दो exported to DT */
+enum clk_ids {
+	/* Core Clock Outputs exported to DT */
 	LAST_DT_CORE_CLK = R8A7791_CLK_OSC,
 
 	/* External Input Clocks */
@@ -38,10 +37,10 @@
 
 	/* Module Clocks */
 	MOD_CLK_BASE
-पूर्ण;
+};
 
-अटल काष्ठा cpg_core_clk r8a7791_core_clks[] __initdata = अणु
-	/* External Clock Inमाला_दो */
+static struct cpg_core_clk r8a7791_core_clks[] __initdata = {
+	/* External Clock Inputs */
 	DEF_INPUT("extal",     CLK_EXTAL),
 	DEF_INPUT("usb_extal", CLK_USB_EXTAL),
 
@@ -53,7 +52,7 @@
 
 	DEF_FIXED(".pll1_div2", CLK_PLL1_DIV2, CLK_PLL1, 2, 1),
 
-	/* Core Clock Outमाला_दो */
+	/* Core Clock Outputs */
 	DEF_BASE("z",    R8A7791_CLK_Z,    CLK_TYPE_GEN2_Z,    CLK_PLL0),
 	DEF_BASE("adsp", R8A7791_CLK_ADSP, CLK_TYPE_GEN2_ADSP, CLK_PLL1),
 	DEF_BASE("sdh",  R8A7791_CLK_SDH,  CLK_TYPE_GEN2_SDH,  CLK_PLL1),
@@ -84,9 +83,9 @@
 	DEF_DIV6P1("mmc0",  R8A7791_CLK_MMC0,  CLK_PLL1_DIV2, 0x240),
 	DEF_DIV6P1("ssp",   R8A7791_CLK_SSP,   CLK_PLL1_DIV2, 0x248),
 	DEF_DIV6P1("ssprs", R8A7791_CLK_SSPRS, CLK_PLL1_DIV2, 0x24c),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mssr_mod_clk r8a7791_mod_clks[] __initस्थिर = अणु
+static const struct mssr_mod_clk r8a7791_mod_clks[] __initconst = {
 	DEF_MOD("msiof0",		   0,	R8A7791_CLK_MP),
 	DEF_MOD("vcp0",			 101,	R8A7791_CLK_ZS),
 	DEF_MOD("vpc0",			 103,	R8A7791_CLK_ZS),
@@ -205,12 +204,12 @@
 	DEF_MOD("scifa3",		1106,	R8A7791_CLK_MP),
 	DEF_MOD("scifa4",		1107,	R8A7791_CLK_MP),
 	DEF_MOD("scifa5",		1108,	R8A7791_CLK_MP),
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक r8a7791_crit_mod_clks[] __initस्थिर = अणु
+static const unsigned int r8a7791_crit_mod_clks[] __initconst = {
 	MOD_CLK_ID(402),	/* RWDT */
 	MOD_CLK_ID(408),	/* INTC-SYS (GIC) */
-पूर्ण;
+};
 
 /*
  * CPG Clock Data
@@ -231,40 +230,40 @@
  *
  * *1 :	Table 7.5a indicates VCO output (PLLx = VCO/2)
  */
-#घोषणा CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 12) | \
+#define CPG_PLL_CONFIG_INDEX(md)	((((md) & BIT(14)) >> 12) | \
 					 (((md) & BIT(13)) >> 12) | \
 					 (((md) & BIT(19)) >> 19))
-अटल स्थिर काष्ठा rcar_gen2_cpg_pll_config cpg_pll_configs[8] __initस्थिर = अणु
-	अणु 1, 208, 106 पूर्ण, अणु 1, 208,  88 पूर्ण, अणु 1, 156,  80 पूर्ण, अणु 1, 156,  66 पूर्ण,
-	अणु 2, 240, 122 पूर्ण, अणु 2, 240, 102 पूर्ण, अणु 2, 208, 106 पूर्ण, अणु 2, 208,  88 पूर्ण,
-पूर्ण;
+static const struct rcar_gen2_cpg_pll_config cpg_pll_configs[8] __initconst = {
+	{ 1, 208, 106 }, { 1, 208,  88 }, { 1, 156,  80 }, { 1, 156,  66 },
+	{ 2, 240, 122 }, { 2, 240, 102 }, { 2, 208, 106 }, { 2, 208,  88 },
+};
 
-अटल पूर्णांक __init r8a7791_cpg_mssr_init(काष्ठा device *dev)
-अणु
-	स्थिर काष्ठा rcar_gen2_cpg_pll_config *cpg_pll_config;
-	काष्ठा device_node *np = dev->of_node;
-	अचिन्हित पूर्णांक i;
+static int __init r8a7791_cpg_mssr_init(struct device *dev)
+{
+	const struct rcar_gen2_cpg_pll_config *cpg_pll_config;
+	struct device_node *np = dev->of_node;
+	unsigned int i;
 	u32 cpg_mode;
-	पूर्णांक error;
+	int error;
 
-	error = rcar_rst_पढ़ो_mode_pins(&cpg_mode);
-	अगर (error)
-		वापस error;
+	error = rcar_rst_read_mode_pins(&cpg_mode);
+	if (error)
+		return error;
 
 	cpg_pll_config = &cpg_pll_configs[CPG_PLL_CONFIG_INDEX(cpg_mode)];
 
-	अगर (of_device_is_compatible(np, "renesas,r8a7793-cpg-mssr")) अणु
-		/* R-Car M2-N uses a 1/5 भागider क्रम ZG */
-		क्रम (i = 0; i < ARRAY_SIZE(r8a7791_core_clks); i++)
-			अगर (r8a7791_core_clks[i].id == R8A7791_CLK_ZG) अणु
-				r8a7791_core_clks[i].भाग = 5;
-				अवरोध;
-			पूर्ण
-	पूर्ण
-	वापस rcar_gen2_cpg_init(cpg_pll_config, 2, cpg_mode);
-पूर्ण
+	if (of_device_is_compatible(np, "renesas,r8a7793-cpg-mssr")) {
+		/* R-Car M2-N uses a 1/5 divider for ZG */
+		for (i = 0; i < ARRAY_SIZE(r8a7791_core_clks); i++)
+			if (r8a7791_core_clks[i].id == R8A7791_CLK_ZG) {
+				r8a7791_core_clks[i].div = 5;
+				break;
+			}
+	}
+	return rcar_gen2_cpg_init(cpg_pll_config, 2, cpg_mode);
+}
 
-स्थिर काष्ठा cpg_mssr_info r8a7791_cpg_mssr_info __initस्थिर = अणु
+const struct cpg_mssr_info r8a7791_cpg_mssr_info __initconst = {
 	/* Core Clocks */
 	.core_clks = r8a7791_core_clks,
 	.num_core_clks = ARRAY_SIZE(r8a7791_core_clks),
@@ -282,5 +281,5 @@
 
 	/* Callbacks */
 	.init = r8a7791_cpg_mssr_init,
-	.cpg_clk_रेजिस्टर = rcar_gen2_cpg_clk_रेजिस्टर,
-पूर्ण;
+	.cpg_clk_register = rcar_gen2_cpg_clk_register,
+};

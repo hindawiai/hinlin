@@ -1,18 +1,17 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018 Facebook */
-#समावेश <uapi/linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <uapi/linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
 SEC("raw_tracepoint/task_rename")
-पूर्णांक prog(काष्ठा bpf_raw_tracepoपूर्णांक_args *ctx)
-अणु
-	वापस 0;
-पूर्ण
+int prog(struct bpf_raw_tracepoint_args *ctx)
+{
+	return 0;
+}
 
 SEC("raw_tracepoint/urandom_read")
-पूर्णांक prog2(काष्ठा bpf_raw_tracepoपूर्णांक_args *ctx)
-अणु
-	वापस 0;
-पूर्ण
-अक्षर _license[] SEC("license") = "GPL";
+int prog2(struct bpf_raw_tracepoint_args *ctx)
+{
+	return 0;
+}
+char _license[] SEC("license") = "GPL";

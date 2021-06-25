@@ -1,304 +1,303 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015 - 2016 Red Hat, Inc
  * Copyright (c) 2011, 2012 Synaptics Incorporated
  * Copyright (c) 2011 Unixphere
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kconfig.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/rmi.h>
-#समावेश <linux/slab.h>
-#समावेश "rmi_driver.h"
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/kconfig.h>
+#include <linux/lockdep.h>
+#include <linux/module.h>
+#include <linux/pm.h>
+#include <linux/rmi.h>
+#include <linux/slab.h>
+#include "rmi_driver.h"
 
-#घोषणा SMB_PROTOCOL_VERSION_ADDRESS	0xfd
-#घोषणा SMB_MAX_COUNT			32
-#घोषणा RMI_SMB2_MAP_SIZE		8 /* 8 entry of 4 bytes each */
-#घोषणा RMI_SMB2_MAP_FLAGS_WE		0x01
+#define SMB_PROTOCOL_VERSION_ADDRESS	0xfd
+#define SMB_MAX_COUNT			32
+#define RMI_SMB2_MAP_SIZE		8 /* 8 entry of 4 bytes each */
+#define RMI_SMB2_MAP_FLAGS_WE		0x01
 
-काष्ठा mapping_table_entry अणु
+struct mapping_table_entry {
 	__le16 rmiaddr;
-	u8 पढ़ोcount;
+	u8 readcount;
 	u8 flags;
-पूर्ण;
+};
 
-काष्ठा rmi_smb_xport अणु
-	काष्ठा rmi_transport_dev xport;
-	काष्ठा i2c_client *client;
+struct rmi_smb_xport {
+	struct rmi_transport_dev xport;
+	struct i2c_client *client;
 
-	काष्ठा mutex page_mutex;
-	पूर्णांक page;
+	struct mutex page_mutex;
+	int page;
 	u8 table_index;
-	काष्ठा mutex mappingtable_mutex;
-	काष्ठा mapping_table_entry mapping_table[RMI_SMB2_MAP_SIZE];
-पूर्ण;
+	struct mutex mappingtable_mutex;
+	struct mapping_table_entry mapping_table[RMI_SMB2_MAP_SIZE];
+};
 
-अटल पूर्णांक rmi_smb_get_version(काष्ठा rmi_smb_xport *rmi_smb)
-अणु
-	काष्ठा i2c_client *client = rmi_smb->client;
-	पूर्णांक retval;
+static int rmi_smb_get_version(struct rmi_smb_xport *rmi_smb)
+{
+	struct i2c_client *client = rmi_smb->client;
+	int retval;
 
-	/* Check अगर क्रम SMBus new version device by पढ़ोing version byte. */
-	retval = i2c_smbus_पढ़ो_byte_data(client, SMB_PROTOCOL_VERSION_ADDRESS);
-	अगर (retval < 0) अणु
+	/* Check if for SMBus new version device by reading version byte. */
+	retval = i2c_smbus_read_byte_data(client, SMB_PROTOCOL_VERSION_ADDRESS);
+	if (retval < 0) {
 		dev_err(&client->dev, "failed to get SMBus version number!\n");
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
-	वापस retval + 1;
-पूर्ण
+	return retval + 1;
+}
 
-/* SMB block ग_लिखो - wrapper over ic2_smb_ग_लिखो_block */
-अटल पूर्णांक smb_block_ग_लिखो(काष्ठा rmi_transport_dev *xport,
-			      u8 commandcode, स्थिर व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा rmi_smb_xport *rmi_smb =
-		container_of(xport, काष्ठा rmi_smb_xport, xport);
-	काष्ठा i2c_client *client = rmi_smb->client;
-	पूर्णांक retval;
+/* SMB block write - wrapper over ic2_smb_write_block */
+static int smb_block_write(struct rmi_transport_dev *xport,
+			      u8 commandcode, const void *buf, size_t len)
+{
+	struct rmi_smb_xport *rmi_smb =
+		container_of(xport, struct rmi_smb_xport, xport);
+	struct i2c_client *client = rmi_smb->client;
+	int retval;
 
-	retval = i2c_smbus_ग_लिखो_block_data(client, commandcode, len, buf);
+	retval = i2c_smbus_write_block_data(client, commandcode, len, buf);
 
 	rmi_dbg(RMI_DEBUG_XPORT, &client->dev,
 		"wrote %zd bytes at %#04x: %d (%*ph)\n",
-		len, commandcode, retval, (पूर्णांक)len, buf);
+		len, commandcode, retval, (int)len, buf);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- * The function to get command code क्रम smbus operations and keeps
+ * The function to get command code for smbus operations and keeps
  * records to the driver mapping table
  */
-अटल पूर्णांक rmi_smb_get_command_code(काष्ठा rmi_transport_dev *xport,
-		u16 rmiaddr, पूर्णांक bytecount, bool isपढ़ो, u8 *commandcode)
-अणु
-	काष्ठा rmi_smb_xport *rmi_smb =
-		container_of(xport, काष्ठा rmi_smb_xport, xport);
-	काष्ठा mapping_table_entry new_map;
-	पूर्णांक i;
-	पूर्णांक retval = 0;
+static int rmi_smb_get_command_code(struct rmi_transport_dev *xport,
+		u16 rmiaddr, int bytecount, bool isread, u8 *commandcode)
+{
+	struct rmi_smb_xport *rmi_smb =
+		container_of(xport, struct rmi_smb_xport, xport);
+	struct mapping_table_entry new_map;
+	int i;
+	int retval = 0;
 
 	mutex_lock(&rmi_smb->mappingtable_mutex);
 
-	क्रम (i = 0; i < RMI_SMB2_MAP_SIZE; i++) अणु
-		काष्ठा mapping_table_entry *entry = &rmi_smb->mapping_table[i];
+	for (i = 0; i < RMI_SMB2_MAP_SIZE; i++) {
+		struct mapping_table_entry *entry = &rmi_smb->mapping_table[i];
 
-		अगर (le16_to_cpu(entry->rmiaddr) == rmiaddr) अणु
-			अगर (isपढ़ो) अणु
-				अगर (entry->पढ़ोcount == bytecount)
-					जाओ निकास;
-			पूर्ण अन्यथा अणु
-				अगर (entry->flags & RMI_SMB2_MAP_FLAGS_WE) अणु
-					जाओ निकास;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+		if (le16_to_cpu(entry->rmiaddr) == rmiaddr) {
+			if (isread) {
+				if (entry->readcount == bytecount)
+					goto exit;
+			} else {
+				if (entry->flags & RMI_SMB2_MAP_FLAGS_WE) {
+					goto exit;
+				}
+			}
+		}
+	}
 
 	i = rmi_smb->table_index;
 	rmi_smb->table_index = (i + 1) % RMI_SMB2_MAP_SIZE;
 
-	/* स्थिरructs mapping table data entry. 4 bytes each entry */
-	स_रखो(&new_map, 0, माप(new_map));
+	/* constructs mapping table data entry. 4 bytes each entry */
+	memset(&new_map, 0, sizeof(new_map));
 	new_map.rmiaddr = cpu_to_le16(rmiaddr);
-	new_map.पढ़ोcount = bytecount;
-	new_map.flags = !isपढ़ो ? RMI_SMB2_MAP_FLAGS_WE : 0;
+	new_map.readcount = bytecount;
+	new_map.flags = !isread ? RMI_SMB2_MAP_FLAGS_WE : 0;
 
-	retval = smb_block_ग_लिखो(xport, i + 0x80, &new_map, माप(new_map));
-	अगर (retval < 0) अणु
+	retval = smb_block_write(xport, i + 0x80, &new_map, sizeof(new_map));
+	if (retval < 0) {
 		/*
-		 * अगर not written to device mapping table
+		 * if not written to device mapping table
 		 * clear the driver mapping table records
 		 */
-		स_रखो(&new_map, 0, माप(new_map));
-	पूर्ण
+		memset(&new_map, 0, sizeof(new_map));
+	}
 
 	/* save to the driver level mapping table */
 	rmi_smb->mapping_table[i] = new_map;
 
-निकास:
+exit:
 	mutex_unlock(&rmi_smb->mappingtable_mutex);
 
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
 	*commandcode = i;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rmi_smb_ग_लिखो_block(काष्ठा rmi_transport_dev *xport, u16 rmiaddr,
-				स्थिर व्योम *databuff, माप_प्रकार len)
-अणु
-	पूर्णांक retval = 0;
+static int rmi_smb_write_block(struct rmi_transport_dev *xport, u16 rmiaddr,
+				const void *databuff, size_t len)
+{
+	int retval = 0;
 	u8 commandcode;
-	काष्ठा rmi_smb_xport *rmi_smb =
-		container_of(xport, काष्ठा rmi_smb_xport, xport);
-	पूर्णांक cur_len = (पूर्णांक)len;
+	struct rmi_smb_xport *rmi_smb =
+		container_of(xport, struct rmi_smb_xport, xport);
+	int cur_len = (int)len;
 
 	mutex_lock(&rmi_smb->page_mutex);
 
-	जबतक (cur_len > 0) अणु
+	while (cur_len > 0) {
 		/*
-		 * अवरोध पूर्णांकo 32 bytes chunks to ग_लिखो get command code
+		 * break into 32 bytes chunks to write get command code
 		 */
-		पूर्णांक block_len = min_t(पूर्णांक, len, SMB_MAX_COUNT);
+		int block_len = min_t(int, len, SMB_MAX_COUNT);
 
 		retval = rmi_smb_get_command_code(xport, rmiaddr, block_len,
 						  false, &commandcode);
-		अगर (retval < 0)
-			जाओ निकास;
+		if (retval < 0)
+			goto exit;
 
-		retval = smb_block_ग_लिखो(xport, commandcode,
+		retval = smb_block_write(xport, commandcode,
 					 databuff, block_len);
-		अगर (retval < 0)
-			जाओ निकास;
+		if (retval < 0)
+			goto exit;
 
-		/* prepare to ग_लिखो next block of bytes */
+		/* prepare to write next block of bytes */
 		cur_len -= SMB_MAX_COUNT;
 		databuff += SMB_MAX_COUNT;
 		rmiaddr += SMB_MAX_COUNT;
-	पूर्ण
-निकास:
+	}
+exit:
 	mutex_unlock(&rmi_smb->page_mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-/* SMB block पढ़ो - wrapper over ic2_smb_पढ़ो_block */
-अटल पूर्णांक smb_block_पढ़ो(काष्ठा rmi_transport_dev *xport,
-			     u8 commandcode, व्योम *buf, माप_प्रकार len)
-अणु
-	काष्ठा rmi_smb_xport *rmi_smb =
-		container_of(xport, काष्ठा rmi_smb_xport, xport);
-	काष्ठा i2c_client *client = rmi_smb->client;
-	पूर्णांक retval;
+/* SMB block read - wrapper over ic2_smb_read_block */
+static int smb_block_read(struct rmi_transport_dev *xport,
+			     u8 commandcode, void *buf, size_t len)
+{
+	struct rmi_smb_xport *rmi_smb =
+		container_of(xport, struct rmi_smb_xport, xport);
+	struct i2c_client *client = rmi_smb->client;
+	int retval;
 
-	retval = i2c_smbus_पढ़ो_block_data(client, commandcode, buf);
-	अगर (retval < 0)
-		वापस retval;
+	retval = i2c_smbus_read_block_data(client, commandcode, buf);
+	if (retval < 0)
+		return retval;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक rmi_smb_पढ़ो_block(काष्ठा rmi_transport_dev *xport, u16 rmiaddr,
-			      व्योम *databuff, माप_प्रकार len)
-अणु
-	काष्ठा rmi_smb_xport *rmi_smb =
-		container_of(xport, काष्ठा rmi_smb_xport, xport);
-	पूर्णांक retval;
+static int rmi_smb_read_block(struct rmi_transport_dev *xport, u16 rmiaddr,
+			      void *databuff, size_t len)
+{
+	struct rmi_smb_xport *rmi_smb =
+		container_of(xport, struct rmi_smb_xport, xport);
+	int retval;
 	u8 commandcode;
-	पूर्णांक cur_len = (पूर्णांक)len;
+	int cur_len = (int)len;
 
 	mutex_lock(&rmi_smb->page_mutex);
-	स_रखो(databuff, 0, len);
+	memset(databuff, 0, len);
 
-	जबतक (cur_len > 0) अणु
-		/* अवरोध पूर्णांकo 32 bytes chunks to ग_लिखो get command code */
-		पूर्णांक block_len =  min_t(पूर्णांक, cur_len, SMB_MAX_COUNT);
+	while (cur_len > 0) {
+		/* break into 32 bytes chunks to write get command code */
+		int block_len =  min_t(int, cur_len, SMB_MAX_COUNT);
 
 		retval = rmi_smb_get_command_code(xport, rmiaddr, block_len,
 						  true, &commandcode);
-		अगर (retval < 0)
-			जाओ निकास;
+		if (retval < 0)
+			goto exit;
 
-		retval = smb_block_पढ़ो(xport, commandcode,
+		retval = smb_block_read(xport, commandcode,
 					databuff, block_len);
-		अगर (retval < 0)
-			जाओ निकास;
+		if (retval < 0)
+			goto exit;
 
-		/* prepare to पढ़ो next block of bytes */
+		/* prepare to read next block of bytes */
 		cur_len -= SMB_MAX_COUNT;
 		databuff += SMB_MAX_COUNT;
 		rmiaddr += SMB_MAX_COUNT;
-	पूर्ण
+	}
 
 	retval = 0;
 
-निकास:
+exit:
 	mutex_unlock(&rmi_smb->page_mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम rmi_smb_clear_state(काष्ठा rmi_smb_xport *rmi_smb)
-अणु
+static void rmi_smb_clear_state(struct rmi_smb_xport *rmi_smb)
+{
 	/* the mapping table has been flushed, discard the current one */
 	mutex_lock(&rmi_smb->mappingtable_mutex);
-	स_रखो(rmi_smb->mapping_table, 0, माप(rmi_smb->mapping_table));
+	memset(rmi_smb->mapping_table, 0, sizeof(rmi_smb->mapping_table));
 	mutex_unlock(&rmi_smb->mappingtable_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक rmi_smb_enable_smbus_mode(काष्ठा rmi_smb_xport *rmi_smb)
-अणु
-	पूर्णांक retval;
+static int rmi_smb_enable_smbus_mode(struct rmi_smb_xport *rmi_smb)
+{
+	int retval;
 
 	/* we need to get the smbus version to activate the touchpad */
 	retval = rmi_smb_get_version(rmi_smb);
-	अगर (retval < 0)
-		वापस retval;
+	if (retval < 0)
+		return retval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rmi_smb_reset(काष्ठा rmi_transport_dev *xport, u16 reset_addr)
-अणु
-	काष्ठा rmi_smb_xport *rmi_smb =
-		container_of(xport, काष्ठा rmi_smb_xport, xport);
+static int rmi_smb_reset(struct rmi_transport_dev *xport, u16 reset_addr)
+{
+	struct rmi_smb_xport *rmi_smb =
+		container_of(xport, struct rmi_smb_xport, xport);
 
 	rmi_smb_clear_state(rmi_smb);
 
 	/*
-	 * we करो not call the actual reset command, it has to be handled in
+	 * we do not call the actual reset command, it has to be handled in
 	 * PS/2 or there will be races between PS/2 and SMBus.
-	 * PS/2 should ensure that a psmouse_reset is called beक्रमe
-	 * पूर्णांकializing the device and after it has been हटाओd to be in a known
+	 * PS/2 should ensure that a psmouse_reset is called before
+	 * intializing the device and after it has been removed to be in a known
 	 * state.
 	 */
-	वापस rmi_smb_enable_smbus_mode(rmi_smb);
-पूर्ण
+	return rmi_smb_enable_smbus_mode(rmi_smb);
+}
 
-अटल स्थिर काष्ठा rmi_transport_ops rmi_smb_ops = अणु
-	.ग_लिखो_block	= rmi_smb_ग_लिखो_block,
-	.पढ़ो_block	= rmi_smb_पढ़ो_block,
+static const struct rmi_transport_ops rmi_smb_ops = {
+	.write_block	= rmi_smb_write_block,
+	.read_block	= rmi_smb_read_block,
 	.reset		= rmi_smb_reset,
-पूर्ण;
+};
 
-अटल पूर्णांक rmi_smb_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा rmi_device_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	काष्ठा rmi_smb_xport *rmi_smb;
-	पूर्णांक smbus_version;
-	पूर्णांक error;
+static int rmi_smb_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct rmi_device_platform_data *pdata = dev_get_platdata(&client->dev);
+	struct rmi_smb_xport *rmi_smb;
+	int smbus_version;
+	int error;
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&client->dev, "no platform data, aborting\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (!i2c_check_functionality(client->adapter,
+	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BLOCK_DATA |
-				     I2C_FUNC_SMBUS_HOST_NOTIFY)) अणु
+				     I2C_FUNC_SMBUS_HOST_NOTIFY)) {
 		dev_err(&client->dev,
 			"adapter does not support required functionality\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (client->irq <= 0) अणु
+	if (client->irq <= 0) {
 		dev_err(&client->dev, "no IRQ provided, giving up\n");
-		वापस client->irq ? client->irq : -ENODEV;
-	पूर्ण
+		return client->irq ? client->irq : -ENODEV;
+	}
 
-	rmi_smb = devm_kzalloc(&client->dev, माप(काष्ठा rmi_smb_xport),
+	rmi_smb = devm_kzalloc(&client->dev, sizeof(struct rmi_smb_xport),
 				GFP_KERNEL);
-	अगर (!rmi_smb)
-		वापस -ENOMEM;
+	if (!rmi_smb)
+		return -ENOMEM;
 
 	rmi_dbg(RMI_DEBUG_XPORT, &client->dev, "Probing %s\n",
 		dev_name(&client->dev));
@@ -314,118 +313,118 @@
 	rmi_smb->xport.ops = &rmi_smb_ops;
 
 	smbus_version = rmi_smb_get_version(rmi_smb);
-	अगर (smbus_version < 0)
-		वापस smbus_version;
+	if (smbus_version < 0)
+		return smbus_version;
 
 	rmi_dbg(RMI_DEBUG_XPORT, &client->dev, "Smbus version is %d",
 		smbus_version);
 
-	अगर (smbus_version != 2 && smbus_version != 3) अणु
+	if (smbus_version != 2 && smbus_version != 3) {
 		dev_err(&client->dev, "Unrecognized SMB version %d\n",
 				smbus_version);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	i2c_set_clientdata(client, rmi_smb);
 
 	dev_info(&client->dev, "registering SMbus-connected sensor\n");
 
-	error = rmi_रेजिस्टर_transport_device(&rmi_smb->xport);
-	अगर (error) अणु
+	error = rmi_register_transport_device(&rmi_smb->xport);
+	if (error) {
 		dev_err(&client->dev, "failed to register sensor: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rmi_smb_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
+static int rmi_smb_remove(struct i2c_client *client)
+{
+	struct rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
 
-	rmi_unरेजिस्टर_transport_device(&rmi_smb->xport);
+	rmi_unregister_transport_device(&rmi_smb->xport);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused rmi_smb_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int __maybe_unused rmi_smb_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
+	int ret;
 
 	ret = rmi_driver_suspend(rmi_smb->xport.rmi_dev, true);
-	अगर (ret)
+	if (ret)
 		dev_warn(dev, "Failed to suspend device: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused rmi_smb_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int __maybe_unused rmi_smb_runtime_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
+	int ret;
 
 	ret = rmi_driver_suspend(rmi_smb->xport.rmi_dev, false);
-	अगर (ret)
+	if (ret)
 		dev_warn(dev, "Failed to suspend device: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused rmi_smb_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = container_of(dev, काष्ठा i2c_client, dev);
-	काष्ठा rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
-	काष्ठा rmi_device *rmi_dev = rmi_smb->xport.rmi_dev;
-	पूर्णांक ret;
+static int __maybe_unused rmi_smb_resume(struct device *dev)
+{
+	struct i2c_client *client = container_of(dev, struct i2c_client, dev);
+	struct rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
+	struct rmi_device *rmi_dev = rmi_smb->xport.rmi_dev;
+	int ret;
 
 	rmi_smb_reset(&rmi_smb->xport, 0);
 
 	rmi_reset(rmi_dev);
 
 	ret = rmi_driver_resume(rmi_smb->xport.rmi_dev, true);
-	अगर (ret)
+	if (ret)
 		dev_warn(dev, "Failed to resume device: %d\n", ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused rmi_smb_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int __maybe_unused rmi_smb_runtime_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct rmi_smb_xport *rmi_smb = i2c_get_clientdata(client);
+	int ret;
 
 	ret = rmi_driver_resume(rmi_smb->xport.rmi_dev, false);
-	अगर (ret)
+	if (ret)
 		dev_warn(dev, "Failed to resume device: %d\n", ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops rmi_smb_pm = अणु
+static const struct dev_pm_ops rmi_smb_pm = {
 	SET_SYSTEM_SLEEP_PM_OPS(rmi_smb_suspend, rmi_smb_resume)
-	SET_RUNTIME_PM_OPS(rmi_smb_runसमय_suspend, rmi_smb_runसमय_resume,
-			   शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(rmi_smb_runtime_suspend, rmi_smb_runtime_resume,
+			   NULL)
+};
 
-अटल स्थिर काष्ठा i2c_device_id rmi_id[] = अणु
-	अणु "rmi4_smbus", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id rmi_id[] = {
+	{ "rmi4_smbus", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, rmi_id);
 
-अटल काष्ठा i2c_driver rmi_smb_driver = अणु
-	.driver = अणु
+static struct i2c_driver rmi_smb_driver = {
+	.driver = {
 		.name	= "rmi4_smbus",
 		.pm	= &rmi_smb_pm,
-	पूर्ण,
+	},
 	.id_table	= rmi_id,
 	.probe		= rmi_smb_probe,
-	.हटाओ		= rmi_smb_हटाओ,
-पूर्ण;
+	.remove		= rmi_smb_remove,
+};
 
 module_i2c_driver(rmi_smb_driver);
 

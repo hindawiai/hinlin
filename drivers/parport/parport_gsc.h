@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *	Low-level parallel-support क्रम PC-style hardware पूर्णांकegrated in the
- *	LASI-Controller (on GSC-Bus) क्रम HP-PARISC Workstations
+ *	Low-level parallel-support for PC-style hardware integrated in the
+ *	LASI-Controller (on GSC-Bus) for HP-PARISC Workstations
  *
  *	(C) 1999-2001 by Helge Deller <deller@gmx.de>
  *
@@ -15,194 +14,194 @@
  *          Andrea Arcangeli
  */
 
-#अगर_अघोषित	__DRIVERS_PARPORT_PARPORT_GSC_H
-#घोषणा	__DRIVERS_PARPORT_PARPORT_GSC_H
+#ifndef	__DRIVERS_PARPORT_PARPORT_GSC_H
+#define	__DRIVERS_PARPORT_PARPORT_GSC_H
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/delay.h>
+#include <asm/io.h>
+#include <linux/delay.h>
 
-#अघोषित	DEBUG_PARPORT	/* undefine क्रम production */
-#घोषणा DELAY_TIME 	0
+#undef	DEBUG_PARPORT	/* undefine for production */
+#define DELAY_TIME 	0
 
-#अगर DELAY_TIME == 0
-#घोषणा parport_पढ़ोb	gsc_पढ़ोb
-#घोषणा parport_ग_लिखोb	gsc_ग_लिखोb
-#अन्यथा
-अटल __अंतरभूत__ अचिन्हित अक्षर parport_पढ़ोb( अचिन्हित दीर्घ port )
-अणु
+#if DELAY_TIME == 0
+#define parport_readb	gsc_readb
+#define parport_writeb	gsc_writeb
+#else
+static __inline__ unsigned char parport_readb( unsigned long port )
+{
     udelay(DELAY_TIME);
-    वापस gsc_पढ़ोb(port);
-पूर्ण
+    return gsc_readb(port);
+}
 
-अटल __अंतरभूत__ व्योम parport_ग_लिखोb( अचिन्हित अक्षर value, अचिन्हित दीर्घ port )
-अणु
-    gsc_ग_लिखोb(value,port);
+static __inline__ void parport_writeb( unsigned char value, unsigned long port )
+{
+    gsc_writeb(value,port);
     udelay(DELAY_TIME);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-/* --- रेजिस्टर definitions ------------------------------- */
+/* --- register definitions ------------------------------- */
 
-#घोषणा EPPDATA(p)  ((p)->base    + 0x4)
-#घोषणा EPPADDR(p)  ((p)->base    + 0x3)
-#घोषणा CONTROL(p)  ((p)->base    + 0x2)
-#घोषणा STATUS(p)   ((p)->base    + 0x1)
-#घोषणा DATA(p)     ((p)->base    + 0x0)
+#define EPPDATA(p)  ((p)->base    + 0x4)
+#define EPPADDR(p)  ((p)->base    + 0x3)
+#define CONTROL(p)  ((p)->base    + 0x2)
+#define STATUS(p)   ((p)->base    + 0x1)
+#define DATA(p)     ((p)->base    + 0x0)
 
-काष्ठा parport_gsc_निजी अणु
+struct parport_gsc_private {
 	/* Contents of CTR. */
-	अचिन्हित अक्षर ctr;
+	unsigned char ctr;
 
-	/* Biपंचांगask of writable CTR bits. */
-	अचिन्हित अक्षर ctr_writable;
+	/* Bitmask of writable CTR bits. */
+	unsigned char ctr_writable;
 
 	/* Number of bytes per portword. */
-	पूर्णांक pword;
+	int pword;
 
 	/* Not used yet. */
-	पूर्णांक पढ़ोIntrThreshold;
-	पूर्णांक ग_लिखोIntrThreshold;
+	int readIntrThreshold;
+	int writeIntrThreshold;
 
-	/* buffer suitable क्रम DMA, अगर DMA enabled */
-	अक्षर *dma_buf;
+	/* buffer suitable for DMA, if DMA enabled */
+	char *dma_buf;
 	dma_addr_t dma_handle;
-	काष्ठा pci_dev *dev;
-पूर्ण;
+	struct pci_dev *dev;
+};
 
-अटल अंतरभूत व्योम parport_gsc_ग_लिखो_data(काष्ठा parport *p, अचिन्हित अक्षर d)
-अणु
-#अगर_घोषित DEBUG_PARPORT
-	prपूर्णांकk(KERN_DEBUG "%s(%p,0x%02x)\n", __func__, p, d);
-#पूर्ण_अगर
-	parport_ग_लिखोb(d, DATA(p));
-पूर्ण
+static inline void parport_gsc_write_data(struct parport *p, unsigned char d)
+{
+#ifdef DEBUG_PARPORT
+	printk(KERN_DEBUG "%s(%p,0x%02x)\n", __func__, p, d);
+#endif
+	parport_writeb(d, DATA(p));
+}
 
-अटल अंतरभूत अचिन्हित अक्षर parport_gsc_पढ़ो_data(काष्ठा parport *p)
-अणु
-	अचिन्हित अक्षर val = parport_पढ़ोb (DATA (p));
-#अगर_घोषित DEBUG_PARPORT
-	prपूर्णांकk(KERN_DEBUG "%s(%p) = 0x%02x\n", __func__, p, val);
-#पूर्ण_अगर
-	वापस val;
-पूर्ण
+static inline unsigned char parport_gsc_read_data(struct parport *p)
+{
+	unsigned char val = parport_readb (DATA (p));
+#ifdef DEBUG_PARPORT
+	printk(KERN_DEBUG "%s(%p) = 0x%02x\n", __func__, p, val);
+#endif
+	return val;
+}
 
-/* __parport_gsc_frob_control dअगरfers from parport_gsc_frob_control in that
- * it करोesn't करो any extra masking. */
-अटल अंतरभूत अचिन्हित अक्षर __parport_gsc_frob_control(काष्ठा parport *p,
-							अचिन्हित अक्षर mask,
-							अचिन्हित अक्षर val)
-अणु
-	काष्ठा parport_gsc_निजी *priv = p->physport->निजी_data;
-	अचिन्हित अक्षर ctr = priv->ctr;
-#अगर_घोषित DEBUG_PARPORT
-	prपूर्णांकk(KERN_DEBUG "%s(%02x,%02x): %02x -> %02x\n",
+/* __parport_gsc_frob_control differs from parport_gsc_frob_control in that
+ * it doesn't do any extra masking. */
+static inline unsigned char __parport_gsc_frob_control(struct parport *p,
+							unsigned char mask,
+							unsigned char val)
+{
+	struct parport_gsc_private *priv = p->physport->private_data;
+	unsigned char ctr = priv->ctr;
+#ifdef DEBUG_PARPORT
+	printk(KERN_DEBUG "%s(%02x,%02x): %02x -> %02x\n",
 	       __func__, mask, val,
 	       ctr, ((ctr & ~mask) ^ val) & priv->ctr_writable);
-#पूर्ण_अगर
+#endif
 	ctr = (ctr & ~mask) ^ val;
-	ctr &= priv->ctr_writable; /* only ग_लिखो writable bits. */
-	parport_ग_लिखोb (ctr, CONTROL (p));
+	ctr &= priv->ctr_writable; /* only write writable bits. */
+	parport_writeb (ctr, CONTROL (p));
 	priv->ctr = ctr;	/* Update soft copy */
-	वापस ctr;
-पूर्ण
+	return ctr;
+}
 
-अटल अंतरभूत व्योम parport_gsc_data_reverse(काष्ठा parport *p)
-अणु
+static inline void parport_gsc_data_reverse(struct parport *p)
+{
 	__parport_gsc_frob_control (p, 0x20, 0x20);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम parport_gsc_data_क्रमward(काष्ठा parport *p)
-अणु
+static inline void parport_gsc_data_forward(struct parport *p)
+{
 	__parport_gsc_frob_control (p, 0x20, 0x00);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम parport_gsc_ग_लिखो_control(काष्ठा parport *p,
-						 अचिन्हित अक्षर d)
-अणु
-	स्थिर अचिन्हित अक्षर wm = (PARPORT_CONTROL_STROBE |
+static inline void parport_gsc_write_control(struct parport *p,
+						 unsigned char d)
+{
+	const unsigned char wm = (PARPORT_CONTROL_STROBE |
 				  PARPORT_CONTROL_AUTOFD |
 				  PARPORT_CONTROL_INIT |
 				  PARPORT_CONTROL_SELECT);
 
-	/* Take this out when drivers have adapted to newer पूर्णांकerface. */
-	अगर (d & 0x20) अणु
-		prपूर्णांकk(KERN_DEBUG "%s (%s): use data_reverse for this!\n",
+	/* Take this out when drivers have adapted to newer interface. */
+	if (d & 0x20) {
+		printk(KERN_DEBUG "%s (%s): use data_reverse for this!\n",
 		       p->name, p->cad->name);
 		parport_gsc_data_reverse (p);
-	पूर्ण
+	}
 
 	__parport_gsc_frob_control (p, wm, d & wm);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित अक्षर parport_gsc_पढ़ो_control(काष्ठा parport *p)
-अणु
-	स्थिर अचिन्हित अक्षर rm = (PARPORT_CONTROL_STROBE |
+static inline unsigned char parport_gsc_read_control(struct parport *p)
+{
+	const unsigned char rm = (PARPORT_CONTROL_STROBE |
 				  PARPORT_CONTROL_AUTOFD |
 				  PARPORT_CONTROL_INIT |
 				  PARPORT_CONTROL_SELECT);
-	स्थिर काष्ठा parport_gsc_निजी *priv = p->physport->निजी_data;
-	वापस priv->ctr & rm; /* Use soft copy */
-पूर्ण
+	const struct parport_gsc_private *priv = p->physport->private_data;
+	return priv->ctr & rm; /* Use soft copy */
+}
 
-अटल अंतरभूत अचिन्हित अक्षर parport_gsc_frob_control(काष्ठा parport *p,
-							अचिन्हित अक्षर mask,
-							अचिन्हित अक्षर val)
-अणु
-	स्थिर अचिन्हित अक्षर wm = (PARPORT_CONTROL_STROBE |
+static inline unsigned char parport_gsc_frob_control(struct parport *p,
+							unsigned char mask,
+							unsigned char val)
+{
+	const unsigned char wm = (PARPORT_CONTROL_STROBE |
 				  PARPORT_CONTROL_AUTOFD |
 				  PARPORT_CONTROL_INIT |
 				  PARPORT_CONTROL_SELECT);
 
-	/* Take this out when drivers have adapted to newer पूर्णांकerface. */
-	अगर (mask & 0x20) अणु
-		prपूर्णांकk(KERN_DEBUG "%s (%s): use data_%s for this!\n",
+	/* Take this out when drivers have adapted to newer interface. */
+	if (mask & 0x20) {
+		printk(KERN_DEBUG "%s (%s): use data_%s for this!\n",
 		       p->name, p->cad->name,
 		       (val & 0x20) ? "reverse" : "forward");
-		अगर (val & 0x20)
+		if (val & 0x20)
 			parport_gsc_data_reverse (p);
-		अन्यथा
-			parport_gsc_data_क्रमward (p);
-	पूर्ण
+		else
+			parport_gsc_data_forward (p);
+	}
 
 	/* Restrict mask and val to control lines. */
 	mask &= wm;
 	val &= wm;
 
-	वापस __parport_gsc_frob_control (p, mask, val);
-पूर्ण
+	return __parport_gsc_frob_control (p, mask, val);
+}
 
-अटल अंतरभूत अचिन्हित अक्षर parport_gsc_पढ़ो_status(काष्ठा parport *p)
-अणु
-	वापस parport_पढ़ोb (STATUS(p));
-पूर्ण
+static inline unsigned char parport_gsc_read_status(struct parport *p)
+{
+	return parport_readb (STATUS(p));
+}
 
-अटल अंतरभूत व्योम parport_gsc_disable_irq(काष्ठा parport *p)
-अणु
+static inline void parport_gsc_disable_irq(struct parport *p)
+{
 	__parport_gsc_frob_control (p, 0x10, 0x00);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम parport_gsc_enable_irq(काष्ठा parport *p)
-अणु
+static inline void parport_gsc_enable_irq(struct parport *p)
+{
 	__parport_gsc_frob_control (p, 0x10, 0x10);
-पूर्ण
+}
 
-बाह्य व्योम parport_gsc_release_resources(काष्ठा parport *p);
+extern void parport_gsc_release_resources(struct parport *p);
 
-बाह्य पूर्णांक parport_gsc_claim_resources(काष्ठा parport *p);
+extern int parport_gsc_claim_resources(struct parport *p);
 
-बाह्य व्योम parport_gsc_init_state(काष्ठा pardevice *, काष्ठा parport_state *s);
+extern void parport_gsc_init_state(struct pardevice *, struct parport_state *s);
 
-बाह्य व्योम parport_gsc_save_state(काष्ठा parport *p, काष्ठा parport_state *s);
+extern void parport_gsc_save_state(struct parport *p, struct parport_state *s);
 
-बाह्य व्योम parport_gsc_restore_state(काष्ठा parport *p, काष्ठा parport_state *s);
+extern void parport_gsc_restore_state(struct parport *p, struct parport_state *s);
 
-बाह्य व्योम parport_gsc_inc_use_count(व्योम);
+extern void parport_gsc_inc_use_count(void);
 
-बाह्य व्योम parport_gsc_dec_use_count(व्योम);
+extern void parport_gsc_dec_use_count(void);
 
-बाह्य काष्ठा parport *parport_gsc_probe_port(अचिन्हित दीर्घ base,
-						अचिन्हित दीर्घ base_hi,
-						पूर्णांक irq, पूर्णांक dma,
-						काष्ठा parisc_device *padev);
+extern struct parport *parport_gsc_probe_port(unsigned long base,
+						unsigned long base_hi,
+						int irq, int dma,
+						struct parisc_device *padev);
 
-#पूर्ण_अगर	/* __DRIVERS_PARPORT_PARPORT_GSC_H */
+#endif	/* __DRIVERS_PARPORT_PARPORT_GSC_H */

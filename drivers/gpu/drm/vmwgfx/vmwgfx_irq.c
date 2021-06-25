@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,357 +25,357 @@
  *
  **************************************************************************/
 
-#समावेश <linux/sched/संकेत.स>
+#include <linux/sched/signal.h>
 
-#समावेश "vmwgfx_drv.h"
+#include "vmwgfx_drv.h"
 
-#घोषणा VMW_FENCE_WRAP (1 << 24)
+#define VMW_FENCE_WRAP (1 << 24)
 
 /**
- * vmw_thपढ़ो_fn - Deferred (process context) irq handler
+ * vmw_thread_fn - Deferred (process context) irq handler
  *
  * @irq: irq number
- * @arg: Closure argument. Poपूर्णांकer to a काष्ठा drm_device cast to व्योम *
+ * @arg: Closure argument. Pointer to a struct drm_device cast to void *
  *
  * This function implements the deferred part of irq processing.
  * The function is guaranteed to run at least once after the
- * vmw_irq_handler has वापसed with IRQ_WAKE_THREAD.
+ * vmw_irq_handler has returned with IRQ_WAKE_THREAD.
  *
  */
-अटल irqवापस_t vmw_thपढ़ो_fn(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा drm_device *dev = (काष्ठा drm_device *)arg;
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	irqवापस_t ret = IRQ_NONE;
+static irqreturn_t vmw_thread_fn(int irq, void *arg)
+{
+	struct drm_device *dev = (struct drm_device *)arg;
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	irqreturn_t ret = IRQ_NONE;
 
-	अगर (test_and_clear_bit(VMW_IRQTHREAD_FENCE,
-			       dev_priv->irqthपढ़ो_pending)) अणु
+	if (test_and_clear_bit(VMW_IRQTHREAD_FENCE,
+			       dev_priv->irqthread_pending)) {
 		vmw_fences_update(dev_priv->fman);
 		wake_up_all(&dev_priv->fence_queue);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (test_and_clear_bit(VMW_IRQTHREAD_CMDBUF,
-			       dev_priv->irqthपढ़ो_pending)) अणु
-		vmw_cmdbuf_irqthपढ़ो(dev_priv->cman);
+	if (test_and_clear_bit(VMW_IRQTHREAD_CMDBUF,
+			       dev_priv->irqthread_pending)) {
+		vmw_cmdbuf_irqthread(dev_priv->cman);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_irq_handler irq handler
  *
  * @irq: irq number
- * @arg: Closure argument. Poपूर्णांकer to a काष्ठा drm_device cast to व्योम *
+ * @arg: Closure argument. Pointer to a struct drm_device cast to void *
  *
  * This function implements the quick part of irq processing.
- * The function perक्रमms fast actions like clearing the device पूर्णांकerrupt
- * flags and also reasonably quick actions like waking processes रुकोing क्रम
- * FIFO space. Other IRQ actions are deferred to the IRQ thपढ़ो.
+ * The function performs fast actions like clearing the device interrupt
+ * flags and also reasonably quick actions like waking processes waiting for
+ * FIFO space. Other IRQ actions are deferred to the IRQ thread.
  */
-अटल irqवापस_t vmw_irq_handler(पूर्णांक irq, व्योम *arg)
-अणु
-	काष्ठा drm_device *dev = (काष्ठा drm_device *)arg;
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	uपूर्णांक32_t status, masked_status;
-	irqवापस_t ret = IRQ_HANDLED;
+static irqreturn_t vmw_irq_handler(int irq, void *arg)
+{
+	struct drm_device *dev = (struct drm_device *)arg;
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	uint32_t status, masked_status;
+	irqreturn_t ret = IRQ_HANDLED;
 
 	status = inl(dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 	masked_status = status & READ_ONCE(dev_priv->irq_mask);
 
-	अगर (likely(status))
+	if (likely(status))
 		outl(status, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 
-	अगर (!status)
-		वापस IRQ_NONE;
+	if (!status)
+		return IRQ_NONE;
 
-	अगर (masked_status & SVGA_IRQFLAG_FIFO_PROGRESS)
-		wake_up_all(&dev_priv->fअगरo_queue);
+	if (masked_status & SVGA_IRQFLAG_FIFO_PROGRESS)
+		wake_up_all(&dev_priv->fifo_queue);
 
-	अगर ((masked_status & (SVGA_IRQFLAG_ANY_FENCE |
+	if ((masked_status & (SVGA_IRQFLAG_ANY_FENCE |
 			      SVGA_IRQFLAG_FENCE_GOAL)) &&
-	    !test_and_set_bit(VMW_IRQTHREAD_FENCE, dev_priv->irqthपढ़ो_pending))
+	    !test_and_set_bit(VMW_IRQTHREAD_FENCE, dev_priv->irqthread_pending))
 		ret = IRQ_WAKE_THREAD;
 
-	अगर ((masked_status & (SVGA_IRQFLAG_COMMAND_BUFFER |
+	if ((masked_status & (SVGA_IRQFLAG_COMMAND_BUFFER |
 			      SVGA_IRQFLAG_ERROR)) &&
 	    !test_and_set_bit(VMW_IRQTHREAD_CMDBUF,
-			      dev_priv->irqthपढ़ो_pending))
+			      dev_priv->irqthread_pending))
 		ret = IRQ_WAKE_THREAD;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool vmw_fअगरo_idle(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t seqno)
-अणु
+static bool vmw_fifo_idle(struct vmw_private *dev_priv, uint32_t seqno)
+{
 
-	वापस (vmw_पढ़ो(dev_priv, SVGA_REG_BUSY) == 0);
-पूर्ण
+	return (vmw_read(dev_priv, SVGA_REG_BUSY) == 0);
+}
 
-व्योम vmw_update_seqno(काष्ठा vmw_निजी *dev_priv,
-			 काष्ठा vmw_fअगरo_state *fअगरo_state)
-अणु
-	uपूर्णांक32_t seqno = vmw_fअगरo_mem_पढ़ो(dev_priv, SVGA_FIFO_FENCE);
+void vmw_update_seqno(struct vmw_private *dev_priv,
+			 struct vmw_fifo_state *fifo_state)
+{
+	uint32_t seqno = vmw_fifo_mem_read(dev_priv, SVGA_FIFO_FENCE);
 
-	अगर (dev_priv->last_पढ़ो_seqno != seqno) अणु
-		dev_priv->last_पढ़ो_seqno = seqno;
+	if (dev_priv->last_read_seqno != seqno) {
+		dev_priv->last_read_seqno = seqno;
 		vmw_fences_update(dev_priv->fman);
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool vmw_seqno_passed(काष्ठा vmw_निजी *dev_priv,
-			 uपूर्णांक32_t seqno)
-अणु
-	काष्ठा vmw_fअगरo_state *fअगरo_state;
+bool vmw_seqno_passed(struct vmw_private *dev_priv,
+			 uint32_t seqno)
+{
+	struct vmw_fifo_state *fifo_state;
 	bool ret;
 
-	अगर (likely(dev_priv->last_पढ़ो_seqno - seqno < VMW_FENCE_WRAP))
-		वापस true;
+	if (likely(dev_priv->last_read_seqno - seqno < VMW_FENCE_WRAP))
+		return true;
 
-	fअगरo_state = &dev_priv->fअगरo;
-	vmw_update_seqno(dev_priv, fअगरo_state);
-	अगर (likely(dev_priv->last_पढ़ो_seqno - seqno < VMW_FENCE_WRAP))
-		वापस true;
+	fifo_state = &dev_priv->fifo;
+	vmw_update_seqno(dev_priv, fifo_state);
+	if (likely(dev_priv->last_read_seqno - seqno < VMW_FENCE_WRAP))
+		return true;
 
-	अगर (!(fअगरo_state->capabilities & SVGA_FIFO_CAP_FENCE) &&
-	    vmw_fअगरo_idle(dev_priv, seqno))
-		वापस true;
+	if (!(fifo_state->capabilities & SVGA_FIFO_CAP_FENCE) &&
+	    vmw_fifo_idle(dev_priv, seqno))
+		return true;
 
 	/**
-	 * Then check अगर the seqno is higher than what we've actually
-	 * emitted. Then the fence is stale and संकेतed.
+	 * Then check if the seqno is higher than what we've actually
+	 * emitted. Then the fence is stale and signaled.
 	 */
 
-	ret = ((atomic_पढ़ो(&dev_priv->marker_seq) - seqno)
+	ret = ((atomic_read(&dev_priv->marker_seq) - seqno)
 	       > VMW_FENCE_WRAP);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक vmw_fallback_रुको(काष्ठा vmw_निजी *dev_priv,
+int vmw_fallback_wait(struct vmw_private *dev_priv,
 		      bool lazy,
-		      bool fअगरo_idle,
-		      uपूर्णांक32_t seqno,
-		      bool पूर्णांकerruptible,
-		      अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा vmw_fअगरo_state *fअगरo_state = &dev_priv->fअगरo;
+		      bool fifo_idle,
+		      uint32_t seqno,
+		      bool interruptible,
+		      unsigned long timeout)
+{
+	struct vmw_fifo_state *fifo_state = &dev_priv->fifo;
 
-	uपूर्णांक32_t count = 0;
-	uपूर्णांक32_t संकेत_seq;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ end_jअगरfies = jअगरfies + समयout;
-	bool (*रुको_condition)(काष्ठा vmw_निजी *, uपूर्णांक32_t);
-	DEFINE_WAIT(__रुको);
+	uint32_t count = 0;
+	uint32_t signal_seq;
+	int ret;
+	unsigned long end_jiffies = jiffies + timeout;
+	bool (*wait_condition)(struct vmw_private *, uint32_t);
+	DEFINE_WAIT(__wait);
 
-	रुको_condition = (fअगरo_idle) ? &vmw_fअगरo_idle :
+	wait_condition = (fifo_idle) ? &vmw_fifo_idle :
 		&vmw_seqno_passed;
 
 	/**
-	 * Block command submission जबतक रुकोing क्रम idle.
+	 * Block command submission while waiting for idle.
 	 */
 
-	अगर (fअगरo_idle) अणु
-		करोwn_पढ़ो(&fअगरo_state->rwsem);
-		अगर (dev_priv->cman) अणु
-			ret = vmw_cmdbuf_idle(dev_priv->cman, पूर्णांकerruptible,
+	if (fifo_idle) {
+		down_read(&fifo_state->rwsem);
+		if (dev_priv->cman) {
+			ret = vmw_cmdbuf_idle(dev_priv->cman, interruptible,
 					      10*HZ);
-			अगर (ret)
-				जाओ out_err;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto out_err;
+		}
+	}
 
-	संकेत_seq = atomic_पढ़ो(&dev_priv->marker_seq);
+	signal_seq = atomic_read(&dev_priv->marker_seq);
 	ret = 0;
 
-	क्रम (;;) अणु
-		prepare_to_रुको(&dev_priv->fence_queue, &__रुको,
-				(पूर्णांकerruptible) ?
+	for (;;) {
+		prepare_to_wait(&dev_priv->fence_queue, &__wait,
+				(interruptible) ?
 				TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
-		अगर (रुको_condition(dev_priv, seqno))
-			अवरोध;
-		अगर (समय_after_eq(jअगरfies, end_jअगरfies)) अणु
+		if (wait_condition(dev_priv, seqno))
+			break;
+		if (time_after_eq(jiffies, end_jiffies)) {
 			DRM_ERROR("SVGA device lockup.\n");
-			अवरोध;
-		पूर्ण
-		अगर (lazy)
-			schedule_समयout(1);
-		अन्यथा अगर ((++count & 0x0F) == 0) अणु
+			break;
+		}
+		if (lazy)
+			schedule_timeout(1);
+		else if ((++count & 0x0F) == 0) {
 			/**
-			 * FIXME: Use schedule_hr_समयout here क्रम
+			 * FIXME: Use schedule_hr_timeout here for
 			 * newer kernels and lower CPU utilization.
 			 */
 
 			__set_current_state(TASK_RUNNING);
 			schedule();
-			__set_current_state((पूर्णांकerruptible) ?
+			__set_current_state((interruptible) ?
 					    TASK_INTERRUPTIBLE :
 					    TASK_UNINTERRUPTIBLE);
-		पूर्ण
-		अगर (पूर्णांकerruptible && संकेत_pending(current)) अणु
+		}
+		if (interruptible && signal_pending(current)) {
 			ret = -ERESTARTSYS;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	finish_रुको(&dev_priv->fence_queue, &__रुको);
-	अगर (ret == 0 && fअगरo_idle)
-		vmw_fअगरo_mem_ग_लिखो(dev_priv, SVGA_FIFO_FENCE, संकेत_seq);
+			break;
+		}
+	}
+	finish_wait(&dev_priv->fence_queue, &__wait);
+	if (ret == 0 && fifo_idle)
+		vmw_fifo_mem_write(dev_priv, SVGA_FIFO_FENCE, signal_seq);
 
 	wake_up_all(&dev_priv->fence_queue);
 out_err:
-	अगर (fअगरo_idle)
-		up_पढ़ो(&fअगरo_state->rwsem);
+	if (fifo_idle)
+		up_read(&fifo_state->rwsem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम vmw_generic_रुकोer_add(काष्ठा vmw_निजी *dev_priv,
-			    u32 flag, पूर्णांक *रुकोer_count)
-अणु
-	spin_lock_bh(&dev_priv->रुकोer_lock);
-	अगर ((*रुकोer_count)++ == 0) अणु
+void vmw_generic_waiter_add(struct vmw_private *dev_priv,
+			    u32 flag, int *waiter_count)
+{
+	spin_lock_bh(&dev_priv->waiter_lock);
+	if ((*waiter_count)++ == 0) {
 		outl(flag, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 		dev_priv->irq_mask |= flag;
-		vmw_ग_लिखो(dev_priv, SVGA_REG_IRQMASK, dev_priv->irq_mask);
-	पूर्ण
-	spin_unlock_bh(&dev_priv->रुकोer_lock);
-पूर्ण
+		vmw_write(dev_priv, SVGA_REG_IRQMASK, dev_priv->irq_mask);
+	}
+	spin_unlock_bh(&dev_priv->waiter_lock);
+}
 
-व्योम vmw_generic_रुकोer_हटाओ(काष्ठा vmw_निजी *dev_priv,
-			       u32 flag, पूर्णांक *रुकोer_count)
-अणु
-	spin_lock_bh(&dev_priv->रुकोer_lock);
-	अगर (--(*रुकोer_count) == 0) अणु
+void vmw_generic_waiter_remove(struct vmw_private *dev_priv,
+			       u32 flag, int *waiter_count)
+{
+	spin_lock_bh(&dev_priv->waiter_lock);
+	if (--(*waiter_count) == 0) {
 		dev_priv->irq_mask &= ~flag;
-		vmw_ग_लिखो(dev_priv, SVGA_REG_IRQMASK, dev_priv->irq_mask);
-	पूर्ण
-	spin_unlock_bh(&dev_priv->रुकोer_lock);
-पूर्ण
+		vmw_write(dev_priv, SVGA_REG_IRQMASK, dev_priv->irq_mask);
+	}
+	spin_unlock_bh(&dev_priv->waiter_lock);
+}
 
-व्योम vmw_seqno_रुकोer_add(काष्ठा vmw_निजी *dev_priv)
-अणु
-	vmw_generic_रुकोer_add(dev_priv, SVGA_IRQFLAG_ANY_FENCE,
-			       &dev_priv->fence_queue_रुकोers);
-पूर्ण
+void vmw_seqno_waiter_add(struct vmw_private *dev_priv)
+{
+	vmw_generic_waiter_add(dev_priv, SVGA_IRQFLAG_ANY_FENCE,
+			       &dev_priv->fence_queue_waiters);
+}
 
-व्योम vmw_seqno_रुकोer_हटाओ(काष्ठा vmw_निजी *dev_priv)
-अणु
-	vmw_generic_रुकोer_हटाओ(dev_priv, SVGA_IRQFLAG_ANY_FENCE,
-				  &dev_priv->fence_queue_रुकोers);
-पूर्ण
+void vmw_seqno_waiter_remove(struct vmw_private *dev_priv)
+{
+	vmw_generic_waiter_remove(dev_priv, SVGA_IRQFLAG_ANY_FENCE,
+				  &dev_priv->fence_queue_waiters);
+}
 
-व्योम vmw_goal_रुकोer_add(काष्ठा vmw_निजी *dev_priv)
-अणु
-	vmw_generic_रुकोer_add(dev_priv, SVGA_IRQFLAG_FENCE_GOAL,
-			       &dev_priv->goal_queue_रुकोers);
-पूर्ण
+void vmw_goal_waiter_add(struct vmw_private *dev_priv)
+{
+	vmw_generic_waiter_add(dev_priv, SVGA_IRQFLAG_FENCE_GOAL,
+			       &dev_priv->goal_queue_waiters);
+}
 
-व्योम vmw_goal_रुकोer_हटाओ(काष्ठा vmw_निजी *dev_priv)
-अणु
-	vmw_generic_रुकोer_हटाओ(dev_priv, SVGA_IRQFLAG_FENCE_GOAL,
-				  &dev_priv->goal_queue_रुकोers);
-पूर्ण
+void vmw_goal_waiter_remove(struct vmw_private *dev_priv)
+{
+	vmw_generic_waiter_remove(dev_priv, SVGA_IRQFLAG_FENCE_GOAL,
+				  &dev_priv->goal_queue_waiters);
+}
 
-पूर्णांक vmw_रुको_seqno(काष्ठा vmw_निजी *dev_priv,
-		      bool lazy, uपूर्णांक32_t seqno,
-		      bool पूर्णांकerruptible, अचिन्हित दीर्घ समयout)
-अणु
-	दीर्घ ret;
-	काष्ठा vmw_fअगरo_state *fअगरo = &dev_priv->fअगरo;
+int vmw_wait_seqno(struct vmw_private *dev_priv,
+		      bool lazy, uint32_t seqno,
+		      bool interruptible, unsigned long timeout)
+{
+	long ret;
+	struct vmw_fifo_state *fifo = &dev_priv->fifo;
 
-	अगर (likely(dev_priv->last_पढ़ो_seqno - seqno < VMW_FENCE_WRAP))
-		वापस 0;
+	if (likely(dev_priv->last_read_seqno - seqno < VMW_FENCE_WRAP))
+		return 0;
 
-	अगर (likely(vmw_seqno_passed(dev_priv, seqno)))
-		वापस 0;
+	if (likely(vmw_seqno_passed(dev_priv, seqno)))
+		return 0;
 
-	vmw_fअगरo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
+	vmw_fifo_ping_host(dev_priv, SVGA_SYNC_GENERIC);
 
-	अगर (!(fअगरo->capabilities & SVGA_FIFO_CAP_FENCE))
-		वापस vmw_fallback_रुको(dev_priv, lazy, true, seqno,
-					 पूर्णांकerruptible, समयout);
+	if (!(fifo->capabilities & SVGA_FIFO_CAP_FENCE))
+		return vmw_fallback_wait(dev_priv, lazy, true, seqno,
+					 interruptible, timeout);
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
-		वापस vmw_fallback_रुको(dev_priv, lazy, false, seqno,
-					 पूर्णांकerruptible, समयout);
+	if (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
+		return vmw_fallback_wait(dev_priv, lazy, false, seqno,
+					 interruptible, timeout);
 
-	vmw_seqno_रुकोer_add(dev_priv);
+	vmw_seqno_waiter_add(dev_priv);
 
-	अगर (पूर्णांकerruptible)
-		ret = रुको_event_पूर्णांकerruptible_समयout
+	if (interruptible)
+		ret = wait_event_interruptible_timeout
 		    (dev_priv->fence_queue,
 		     vmw_seqno_passed(dev_priv, seqno),
-		     समयout);
-	अन्यथा
-		ret = रुको_event_समयout
+		     timeout);
+	else
+		ret = wait_event_timeout
 		    (dev_priv->fence_queue,
 		     vmw_seqno_passed(dev_priv, seqno),
-		     समयout);
+		     timeout);
 
-	vmw_seqno_रुकोer_हटाओ(dev_priv);
+	vmw_seqno_waiter_remove(dev_priv);
 
-	अगर (unlikely(ret == 0))
+	if (unlikely(ret == 0))
 		ret = -EBUSY;
-	अन्यथा अगर (likely(ret > 0))
+	else if (likely(ret > 0))
 		ret = 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vmw_irq_preinstall(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	uपूर्णांक32_t status;
+static void vmw_irq_preinstall(struct drm_device *dev)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	uint32_t status;
 
 	status = inl(dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 	outl(status, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
-पूर्ण
+}
 
-व्योम vmw_irq_uninstall(काष्ठा drm_device *dev)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	uपूर्णांक32_t status;
+void vmw_irq_uninstall(struct drm_device *dev)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	uint32_t status;
 
-	अगर (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
-		वापस;
+	if (!(dev_priv->capabilities & SVGA_CAP_IRQMASK))
+		return;
 
-	अगर (!dev->irq_enabled)
-		वापस;
+	if (!dev->irq_enabled)
+		return;
 
-	vmw_ग_लिखो(dev_priv, SVGA_REG_IRQMASK, 0);
+	vmw_write(dev_priv, SVGA_REG_IRQMASK, 0);
 
 	status = inl(dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 	outl(status, dev_priv->io_start + VMWGFX_IRQSTATUS_PORT);
 
 	dev->irq_enabled = false;
-	मुक्त_irq(dev->irq, dev);
-पूर्ण
+	free_irq(dev->irq, dev);
+}
 
 /**
  * vmw_irq_install - Install the irq handlers
  *
- * @dev:  Poपूर्णांकer to the drm device.
+ * @dev:  Pointer to the drm device.
  * @irq:  The irq number.
- * Return:  Zero अगर successful. Negative number otherwise.
+ * Return:  Zero if successful. Negative number otherwise.
  */
-पूर्णांक vmw_irq_install(काष्ठा drm_device *dev, पूर्णांक irq)
-अणु
-	पूर्णांक ret;
+int vmw_irq_install(struct drm_device *dev, int irq)
+{
+	int ret;
 
-	अगर (dev->irq_enabled)
-		वापस -EBUSY;
+	if (dev->irq_enabled)
+		return -EBUSY;
 
 	vmw_irq_preinstall(dev);
 
-	ret = request_thपढ़ोed_irq(irq, vmw_irq_handler, vmw_thपढ़ो_fn,
+	ret = request_threaded_irq(irq, vmw_irq_handler, vmw_thread_fn,
 				   IRQF_SHARED, VMWGFX_DRIVER_NAME, dev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	dev->irq_enabled = true;
 	dev->irq = irq;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

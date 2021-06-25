@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* Copyright 2018 Marty E. Plummer <hanetzer@starपंचांगail.com> */
+/* SPDX-License-Identifier: GPL-2.0 */
+/* Copyright 2018 Marty E. Plummer <hanetzer@startmail.com> */
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 
-#अगर_अघोषित __PANFROST_DEVICE_H__
-#घोषणा __PANFROST_DEVICE_H__
+#ifndef __PANFROST_DEVICE_H__
+#define __PANFROST_DEVICE_H__
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/io-pgtable.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/spinlock.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_mm.h>
-#समावेश <drm/gpu_scheduler.h>
+#include <linux/atomic.h>
+#include <linux/io-pgtable.h>
+#include <linux/regulator/consumer.h>
+#include <linux/spinlock.h>
+#include <drm/drm_device.h>
+#include <drm/drm_mm.h>
+#include <drm/gpu_scheduler.h>
 
-#समावेश "panfrost_devfreq.h"
+#include "panfrost_devfreq.h"
 
-काष्ठा panfrost_device;
-काष्ठा panfrost_mmu;
-काष्ठा panfrost_job_slot;
-काष्ठा panfrost_job;
-काष्ठा panfrost_perfcnt;
+struct panfrost_device;
+struct panfrost_mmu;
+struct panfrost_job_slot;
+struct panfrost_job;
+struct panfrost_perfcnt;
 
-#घोषणा NUM_JOB_SLOTS 3
-#घोषणा MAX_PM_DOMAINS 3
+#define NUM_JOB_SLOTS 3
+#define MAX_PM_DOMAINS 3
 
-काष्ठा panfrost_features अणु
+struct panfrost_features {
 	u16 id;
 	u16 revision;
 
@@ -41,136 +40,136 @@
 	u32 tiler_features;
 	u32 mem_features;
 	u32 mmu_features;
-	u32 thपढ़ो_features;
-	u32 max_thपढ़ोs;
-	u32 thपढ़ो_max_workgroup_sz;
-	u32 thपढ़ो_max_barrier_sz;
+	u32 thread_features;
+	u32 max_threads;
+	u32 thread_max_workgroup_sz;
+	u32 thread_max_barrier_sz;
 	u32 coherency_features;
 	u32 texture_features[4];
 	u32 js_features[16];
 
 	u32 nr_core_groups;
-	u32 thपढ़ो_tls_alloc;
+	u32 thread_tls_alloc;
 
-	अचिन्हित दीर्घ hw_features[64 / BITS_PER_LONG];
-	अचिन्हित दीर्घ hw_issues[64 / BITS_PER_LONG];
-पूर्ण;
+	unsigned long hw_features[64 / BITS_PER_LONG];
+	unsigned long hw_issues[64 / BITS_PER_LONG];
+};
 
 /*
- * Features that cannot be स्वतःmatically detected and need matching using the
- * compatible string, typically SoC-specअगरic.
+ * Features that cannot be automatically detected and need matching using the
+ * compatible string, typically SoC-specific.
  */
-काष्ठा panfrost_compatible अणु
+struct panfrost_compatible {
 	/* Supplies count and names. */
-	पूर्णांक num_supplies;
-	स्थिर अक्षर * स्थिर *supply_names;
+	int num_supplies;
+	const char * const *supply_names;
 	/*
-	 * Number of घातer करोमुख्यs required, note that values 0 and 1 are
+	 * Number of power domains required, note that values 0 and 1 are
 	 * handled identically, as only values > 1 need special handling.
 	 */
-	पूर्णांक num_pm_करोमुख्यs;
-	/* Only required अगर num_pm_करोमुख्यs > 1. */
-	स्थिर अक्षर * स्थिर *pm_करोमुख्य_names;
+	int num_pm_domains;
+	/* Only required if num_pm_domains > 1. */
+	const char * const *pm_domain_names;
 
-	/* Venकरोr implementation quirks callback */
-	व्योम (*venकरोr_quirk)(काष्ठा panfrost_device *pfdev);
-पूर्ण;
+	/* Vendor implementation quirks callback */
+	void (*vendor_quirk)(struct panfrost_device *pfdev);
+};
 
-काष्ठा panfrost_device अणु
-	काष्ठा device *dev;
-	काष्ठा drm_device *ddev;
-	काष्ठा platक्रमm_device *pdev;
+struct panfrost_device {
+	struct device *dev;
+	struct drm_device *ddev;
+	struct platform_device *pdev;
 
-	व्योम __iomem *iomem;
-	काष्ठा clk *घड़ी;
-	काष्ठा clk *bus_घड़ी;
-	काष्ठा regulator_bulk_data *regulators;
-	काष्ठा reset_control *rstc;
-	/* pm_करोमुख्यs क्रम devices with more than one. */
-	काष्ठा device *pm_करोमुख्य_devs[MAX_PM_DOMAINS];
-	काष्ठा device_link *pm_करोमुख्य_links[MAX_PM_DOMAINS];
+	void __iomem *iomem;
+	struct clk *clock;
+	struct clk *bus_clock;
+	struct regulator_bulk_data *regulators;
+	struct reset_control *rstc;
+	/* pm_domains for devices with more than one. */
+	struct device *pm_domain_devs[MAX_PM_DOMAINS];
+	struct device_link *pm_domain_links[MAX_PM_DOMAINS];
 	bool coherent;
 
-	काष्ठा panfrost_features features;
-	स्थिर काष्ठा panfrost_compatible *comp;
+	struct panfrost_features features;
+	const struct panfrost_compatible *comp;
 
 	spinlock_t as_lock;
-	अचिन्हित दीर्घ as_in_use_mask;
-	अचिन्हित दीर्घ as_alloc_mask;
-	काष्ठा list_head as_lru_list;
+	unsigned long as_in_use_mask;
+	unsigned long as_alloc_mask;
+	struct list_head as_lru_list;
 
-	काष्ठा panfrost_job_slot *js;
+	struct panfrost_job_slot *js;
 
-	काष्ठा panfrost_job *jobs[NUM_JOB_SLOTS];
-	काष्ठा list_head scheduled_jobs;
+	struct panfrost_job *jobs[NUM_JOB_SLOTS];
+	struct list_head scheduled_jobs;
 
-	काष्ठा panfrost_perfcnt *perfcnt;
+	struct panfrost_perfcnt *perfcnt;
 
-	काष्ठा mutex sched_lock;
+	struct mutex sched_lock;
 
-	काष्ठा अणु
-		काष्ठा work_काष्ठा work;
+	struct {
+		struct work_struct work;
 		atomic_t pending;
-	पूर्ण reset;
+	} reset;
 
-	काष्ठा mutex shrinker_lock;
-	काष्ठा list_head shrinker_list;
-	काष्ठा shrinker shrinker;
+	struct mutex shrinker_lock;
+	struct list_head shrinker_list;
+	struct shrinker shrinker;
 
-	काष्ठा panfrost_devfreq pfdevfreq;
-पूर्ण;
+	struct panfrost_devfreq pfdevfreq;
+};
 
-काष्ठा panfrost_mmu अणु
-	काष्ठा io_pgtable_cfg pgtbl_cfg;
-	काष्ठा io_pgtable_ops *pgtbl_ops;
-	पूर्णांक as;
+struct panfrost_mmu {
+	struct io_pgtable_cfg pgtbl_cfg;
+	struct io_pgtable_ops *pgtbl_ops;
+	int as;
 	atomic_t as_count;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-काष्ठा panfrost_file_priv अणु
-	काष्ठा panfrost_device *pfdev;
+struct panfrost_file_priv {
+	struct panfrost_device *pfdev;
 
-	काष्ठा drm_sched_entity sched_entity[NUM_JOB_SLOTS];
+	struct drm_sched_entity sched_entity[NUM_JOB_SLOTS];
 
-	काष्ठा panfrost_mmu mmu;
-	काष्ठा drm_mm mm;
+	struct panfrost_mmu mmu;
+	struct drm_mm mm;
 	spinlock_t mm_lock;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा panfrost_device *to_panfrost_device(काष्ठा drm_device *ddev)
-अणु
-	वापस ddev->dev_निजी;
-पूर्ण
+static inline struct panfrost_device *to_panfrost_device(struct drm_device *ddev)
+{
+	return ddev->dev_private;
+}
 
-अटल अंतरभूत पूर्णांक panfrost_model_cmp(काष्ठा panfrost_device *pfdev, s32 id)
-अणु
+static inline int panfrost_model_cmp(struct panfrost_device *pfdev, s32 id)
+{
 	s32 match_id = pfdev->features.id;
 
-	अगर (match_id & 0xf000)
+	if (match_id & 0xf000)
 		match_id &= 0xf00f;
-	वापस match_id - id;
-पूर्ण
+	return match_id - id;
+}
 
-अटल अंतरभूत bool panfrost_model_is_bअगरrost(काष्ठा panfrost_device *pfdev)
-अणु
-	वापस panfrost_model_cmp(pfdev, 0x1000) >= 0;
-पूर्ण
+static inline bool panfrost_model_is_bifrost(struct panfrost_device *pfdev)
+{
+	return panfrost_model_cmp(pfdev, 0x1000) >= 0;
+}
 
-अटल अंतरभूत bool panfrost_model_eq(काष्ठा panfrost_device *pfdev, s32 id)
-अणु
-	वापस !panfrost_model_cmp(pfdev, id);
-पूर्ण
+static inline bool panfrost_model_eq(struct panfrost_device *pfdev, s32 id)
+{
+	return !panfrost_model_cmp(pfdev, id);
+}
 
-पूर्णांक panfrost_unstable_ioctl_check(व्योम);
+int panfrost_unstable_ioctl_check(void);
 
-पूर्णांक panfrost_device_init(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_device_fini(काष्ठा panfrost_device *pfdev);
-व्योम panfrost_device_reset(काष्ठा panfrost_device *pfdev);
+int panfrost_device_init(struct panfrost_device *pfdev);
+void panfrost_device_fini(struct panfrost_device *pfdev);
+void panfrost_device_reset(struct panfrost_device *pfdev);
 
-पूर्णांक panfrost_device_resume(काष्ठा device *dev);
-पूर्णांक panfrost_device_suspend(काष्ठा device *dev);
+int panfrost_device_resume(struct device *dev);
+int panfrost_device_suspend(struct device *dev);
 
-स्थिर अक्षर *panfrost_exception_name(काष्ठा panfrost_device *pfdev, u32 exception_code);
+const char *panfrost_exception_name(struct panfrost_device *pfdev, u32 exception_code);
 
-#पूर्ण_अगर
+#endif

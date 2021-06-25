@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// ALSA SoC driver क्रम Migo-R
+// ALSA SoC driver for Migo-R
 //
 // Copyright (C) 2009-2010 Guennadi Liakhovetski <g.liakhovetski@gmx.de>
 
-#समावेश <linux/clkdev.h>
-#समावेश <linux/device.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/module.h>
+#include <linux/clkdev.h>
+#include <linux/device.h>
+#include <linux/firmware.h>
+#include <linux/module.h>
 
-#समावेश <यंत्र/घड़ी.h>
+#include <asm/clock.h>
 
-#समावेश <cpu/sh7722.h>
+#include <cpu/sh7722.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/soc.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/soc.h>
 
-#समावेश "../codecs/wm8978.h"
-#समावेश "siu.h"
+#include "../codecs/wm8978.h"
+#include "siu.h"
 
 /* Default 8000Hz sampling frequency */
-अटल अचिन्हित दीर्घ codec_freq = 8000 * 512;
+static unsigned long codec_freq = 8000 * 512;
 
-अटल अचिन्हित पूर्णांक use_count;
+static unsigned int use_count;
 
-/* External घड़ी, sourced from the codec at the SIUMCKB pin */
-अटल अचिन्हित दीर्घ siumckb_recalc(काष्ठा clk *clk)
-अणु
-	वापस codec_freq;
-पूर्ण
+/* External clock, sourced from the codec at the SIUMCKB pin */
+static unsigned long siumckb_recalc(struct clk *clk)
+{
+	return codec_freq;
+}
 
-अटल काष्ठा sh_clk_ops siumckb_clk_ops = अणु
+static struct sh_clk_ops siumckb_clk_ops = {
 	.recalc = siumckb_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा clk siumckb_clk = अणु
+static struct clk siumckb_clk = {
 	.ops		= &siumckb_clk_ops,
-	.rate		= 0, /* initialised at run-समय */
-पूर्ण;
+	.rate		= 0, /* initialised at run-time */
+};
 
-अटल काष्ठा clk_lookup *siumckb_lookup;
+static struct clk_lookup *siumckb_lookup;
 
-अटल पूर्णांक migor_hw_params(काष्ठा snd_pcm_substream *substream,
-			   काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक rate = params_rate(params);
+static int migor_hw_params(struct snd_pcm_substream *substream,
+			   struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	int ret;
+	unsigned int rate = params_rate(params);
 
 	ret = snd_soc_dai_set_sysclk(codec_dai, WM8978_PLL, 13000000,
 				     SND_SOC_CLOCK_IN);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = snd_soc_dai_set_clkभाग(codec_dai, WM8978_OPCLKRATE, rate * 512);
-	अगर (ret < 0)
-		वापस ret;
+	ret = snd_soc_dai_set_clkdiv(codec_dai, WM8978_OPCLKRATE, rate * 512);
+	if (ret < 0)
+		return ret;
 
 	codec_freq = rate * 512;
 	/*
@@ -71,135 +70,135 @@
 	ret = snd_soc_dai_set_sysclk(asoc_rtd_to_cpu(rtd, 0), SIU_CLKB_EXT,
 				     codec_freq / 2, SND_SOC_CLOCK_IN);
 
-	अगर (!ret)
+	if (!ret)
 		use_count++;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक migor_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+static int migor_hw_free(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
 
-	अगर (use_count) अणु
+	if (use_count) {
 		use_count--;
 
-		अगर (!use_count)
+		if (!use_count)
 			snd_soc_dai_set_sysclk(codec_dai, WM8978_PLL, 0,
 					       SND_SOC_CLOCK_IN);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(codec_dai->dev, "Unbalanced hw_free!\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_ops migor_dai_ops = अणु
+static const struct snd_soc_ops migor_dai_ops = {
 	.hw_params = migor_hw_params,
-	.hw_मुक्त = migor_hw_मुक्त,
-पूर्ण;
+	.hw_free = migor_hw_free,
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget migor_dapm_widमाला_लो[] = अणु
-	SND_SOC_DAPM_HP("Headphone", शून्य),
-	SND_SOC_DAPM_MIC("Onboard Microphone", शून्य),
-	SND_SOC_DAPM_MIC("External Microphone", शून्य),
-पूर्ण;
+static const struct snd_soc_dapm_widget migor_dapm_widgets[] = {
+	SND_SOC_DAPM_HP("Headphone", NULL),
+	SND_SOC_DAPM_MIC("Onboard Microphone", NULL),
+	SND_SOC_DAPM_MIC("External Microphone", NULL),
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
-	/* Headphone output connected to LHP/RHP, enable OUT4 क्रम VMID */
-	अणु "Headphone", शून्य,  "OUT4 VMID" पूर्ण,
-	अणु "OUT4 VMID", शून्य,  "LHP" पूर्ण,
-	अणु "OUT4 VMID", शून्य,  "RHP" पूर्ण,
+static const struct snd_soc_dapm_route audio_map[] = {
+	/* Headphone output connected to LHP/RHP, enable OUT4 for VMID */
+	{ "Headphone", NULL,  "OUT4 VMID" },
+	{ "OUT4 VMID", NULL,  "LHP" },
+	{ "OUT4 VMID", NULL,  "RHP" },
 
 	/* On-board microphone */
-	अणु "RMICN", शून्य, "Mic Bias" पूर्ण,
-	अणु "RMICP", शून्य, "Mic Bias" पूर्ण,
-	अणु "Mic Bias", शून्य, "Onboard Microphone" पूर्ण,
+	{ "RMICN", NULL, "Mic Bias" },
+	{ "RMICP", NULL, "Mic Bias" },
+	{ "Mic Bias", NULL, "Onboard Microphone" },
 
 	/* External microphone */
-	अणु "LMICN", शून्य, "Mic Bias" पूर्ण,
-	अणु "LMICP", शून्य, "Mic Bias" पूर्ण,
-	अणु "Mic Bias", शून्य, "External Microphone" पूर्ण,
-पूर्ण;
+	{ "LMICN", NULL, "Mic Bias" },
+	{ "LMICP", NULL, "Mic Bias" },
+	{ "Mic Bias", NULL, "External Microphone" },
+};
 
-/* migor digital audio पूर्णांकerface glue - connects codec <--> CPU */
+/* migor digital audio interface glue - connects codec <--> CPU */
 SND_SOC_DAILINK_DEFS(wm8978,
 	DAILINK_COMP_ARRAY(COMP_CPU("siu-pcm-audio")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("wm8978.0-001a", "wm8978-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("siu-pcm-audio")));
 
-अटल काष्ठा snd_soc_dai_link migor_dai = अणु
+static struct snd_soc_dai_link migor_dai = {
 	.name = "wm8978",
 	.stream_name = "WM8978",
 	.dai_fmt = SND_SOC_DAIFMT_NB_IF | SND_SOC_DAIFMT_I2S |
 		   SND_SOC_DAIFMT_CBS_CFS,
 	.ops = &migor_dai_ops,
 	SND_SOC_DAILINK_REG(wm8978),
-पूर्ण;
+};
 
 /* migor audio machine driver */
-अटल काष्ठा snd_soc_card snd_soc_migor = अणु
+static struct snd_soc_card snd_soc_migor = {
 	.name = "Migo-R",
 	.owner = THIS_MODULE,
 	.dai_link = &migor_dai,
 	.num_links = 1,
 
-	.dapm_widमाला_लो = migor_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(migor_dapm_widमाला_लो),
+	.dapm_widgets = migor_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(migor_dapm_widgets),
 	.dapm_routes = audio_map,
 	.num_dapm_routes = ARRAY_SIZE(audio_map),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device *migor_snd_device;
+static struct platform_device *migor_snd_device;
 
-अटल पूर्णांक __init migor_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init migor_init(void)
+{
+	int ret;
 
-	ret = clk_रेजिस्टर(&siumckb_clk);
-	अगर (ret < 0)
-		वापस ret;
+	ret = clk_register(&siumckb_clk);
+	if (ret < 0)
+		return ret;
 
-	siumckb_lookup = clkdev_create(&siumckb_clk, "siumckb_clk", शून्य);
-	अगर (!siumckb_lookup) अणु
+	siumckb_lookup = clkdev_create(&siumckb_clk, "siumckb_clk", NULL);
+	if (!siumckb_lookup) {
 		ret = -ENOMEM;
-		जाओ eclkdevalloc;
-	पूर्ण
+		goto eclkdevalloc;
+	}
 
 	/* Port number used on this machine: port B */
-	migor_snd_device = platक्रमm_device_alloc("soc-audio", 1);
-	अगर (!migor_snd_device) अणु
+	migor_snd_device = platform_device_alloc("soc-audio", 1);
+	if (!migor_snd_device) {
 		ret = -ENOMEM;
-		जाओ epdevalloc;
-	पूर्ण
+		goto epdevalloc;
+	}
 
-	platक्रमm_set_drvdata(migor_snd_device, &snd_soc_migor);
+	platform_set_drvdata(migor_snd_device, &snd_soc_migor);
 
-	ret = platक्रमm_device_add(migor_snd_device);
-	अगर (ret)
-		जाओ epdevadd;
+	ret = platform_device_add(migor_snd_device);
+	if (ret)
+		goto epdevadd;
 
-	वापस 0;
+	return 0;
 
 epdevadd:
-	platक्रमm_device_put(migor_snd_device);
+	platform_device_put(migor_snd_device);
 epdevalloc:
 	clkdev_drop(siumckb_lookup);
 eclkdevalloc:
-	clk_unरेजिस्टर(&siumckb_clk);
-	वापस ret;
-पूर्ण
+	clk_unregister(&siumckb_clk);
+	return ret;
+}
 
-अटल व्योम __निकास migor_निकास(व्योम)
-अणु
+static void __exit migor_exit(void)
+{
 	clkdev_drop(siumckb_lookup);
-	clk_unरेजिस्टर(&siumckb_clk);
-	platक्रमm_device_unरेजिस्टर(migor_snd_device);
-पूर्ण
+	clk_unregister(&siumckb_clk);
+	platform_device_unregister(migor_snd_device);
+}
 
 module_init(migor_init);
-module_निकास(migor_निकास);
+module_exit(migor_exit);
 
 MODULE_AUTHOR("Guennadi Liakhovetski <g.liakhovetski@gmx.de>");
 MODULE_DESCRIPTION("ALSA SoC Migor");

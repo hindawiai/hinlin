@@ -1,6 +1,5 @@
-<शैली गुरु>
-#अगर_अघोषित __NET_SCHED_CODEL_IMPL_H
-#घोषणा __NET_SCHED_CODEL_IMPL_H
+#ifndef __NET_SCHED_CODEL_IMPL_H
+#define __NET_SCHED_CODEL_IMPL_H
 
 /*
  * Codel - The Controlled-Delay Active Queue Management algorithm
@@ -10,28 +9,28 @@
  *  Copyright (C) 2012 Michael D. Taht <dave.taht@bufferbloat.net>
  *  Copyright (C) 2012,2015 Eric Dumazet <edumazet@google.com>
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce the above copyright
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    करोcumentation and/or other materials provided with the distribution.
- * 3. The names of the authors may not be used to enकरोrse or promote products
- *    derived from this software without specअगरic prior written permission.
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The names of the authors may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * Alternatively, provided that this notice is retained in full, this
  * software may be distributed under the terms of the GNU General
- * Public License ("GPL") version 2, in which हाल the provisions of the
+ * Public License ("GPL") version 2, in which case the provisions of the
  * GPL apply INSTEAD OF those given above.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -50,170 +49,170 @@
  * Implemented on linux by Dave Taht and Eric Dumazet
  */
 
-अटल व्योम codel_params_init(काष्ठा codel_params *params)
-अणु
-	params->पूर्णांकerval = MS2TIME(100);
+static void codel_params_init(struct codel_params *params)
+{
+	params->interval = MS2TIME(100);
 	params->target = MS2TIME(5);
 	params->ce_threshold = CODEL_DISABLED_THRESHOLD;
 	params->ecn = false;
-पूर्ण
+}
 
-अटल व्योम codel_vars_init(काष्ठा codel_vars *vars)
-अणु
-	स_रखो(vars, 0, माप(*vars));
-पूर्ण
+static void codel_vars_init(struct codel_vars *vars)
+{
+	memset(vars, 0, sizeof(*vars));
+}
 
-अटल व्योम codel_stats_init(काष्ठा codel_stats *stats)
-अणु
+static void codel_stats_init(struct codel_stats *stats)
+{
 	stats->maxpacket = 0;
-पूर्ण
+}
 
 /*
- * http://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Iterative_methods_क्रम_reciprocal_square_roots
- * new_invवर्ग_मूल = (invवर्ग_मूल / 2) * (3 - count * invवर्ग_मूल^2)
+ * http://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Iterative_methods_for_reciprocal_square_roots
+ * new_invsqrt = (invsqrt / 2) * (3 - count * invsqrt^2)
  *
- * Here, invवर्ग_मूल is a fixed poपूर्णांक number (< 1.0), 32bit mantissa, aka Q0.32
+ * Here, invsqrt is a fixed point number (< 1.0), 32bit mantissa, aka Q0.32
  */
-अटल व्योम codel_Newton_step(काष्ठा codel_vars *vars)
-अणु
-	u32 invवर्ग_मूल = ((u32)vars->rec_inv_वर्ग_मूल) << REC_INV_SQRT_SHIFT;
-	u32 invवर्ग_मूल2 = ((u64)invवर्ग_मूल * invवर्ग_मूल) >> 32;
-	u64 val = (3LL << 32) - ((u64)vars->count * invवर्ग_मूल2);
+static void codel_Newton_step(struct codel_vars *vars)
+{
+	u32 invsqrt = ((u32)vars->rec_inv_sqrt) << REC_INV_SQRT_SHIFT;
+	u32 invsqrt2 = ((u64)invsqrt * invsqrt) >> 32;
+	u64 val = (3LL << 32) - ((u64)vars->count * invsqrt2);
 
-	val >>= 2; /* aव्योम overflow in following multiply */
-	val = (val * invवर्ग_मूल) >> (32 - 2 + 1);
+	val >>= 2; /* avoid overflow in following multiply */
+	val = (val * invsqrt) >> (32 - 2 + 1);
 
-	vars->rec_inv_वर्ग_मूल = val >> REC_INV_SQRT_SHIFT;
-पूर्ण
+	vars->rec_inv_sqrt = val >> REC_INV_SQRT_SHIFT;
+}
 
 /*
- * CoDel control_law is t + पूर्णांकerval/वर्ग_मूल(count)
- * We मुख्यtain in rec_inv_वर्ग_मूल the reciprocal value of वर्ग_मूल(count) to aव्योम
- * both वर्ग_मूल() and भागide operation.
+ * CoDel control_law is t + interval/sqrt(count)
+ * We maintain in rec_inv_sqrt the reciprocal value of sqrt(count) to avoid
+ * both sqrt() and divide operation.
  */
-अटल codel_समय_प्रकार codel_control_law(codel_समय_प्रकार t,
-				      codel_समय_प्रकार पूर्णांकerval,
-				      u32 rec_inv_वर्ग_मूल)
-अणु
-	वापस t + reciprocal_scale(पूर्णांकerval, rec_inv_वर्ग_मूल << REC_INV_SQRT_SHIFT);
-पूर्ण
+static codel_time_t codel_control_law(codel_time_t t,
+				      codel_time_t interval,
+				      u32 rec_inv_sqrt)
+{
+	return t + reciprocal_scale(interval, rec_inv_sqrt << REC_INV_SQRT_SHIFT);
+}
 
-अटल bool codel_should_drop(स्थिर काष्ठा sk_buff *skb,
-			      व्योम *ctx,
-			      काष्ठा codel_vars *vars,
-			      काष्ठा codel_params *params,
-			      काष्ठा codel_stats *stats,
+static bool codel_should_drop(const struct sk_buff *skb,
+			      void *ctx,
+			      struct codel_vars *vars,
+			      struct codel_params *params,
+			      struct codel_stats *stats,
 			      codel_skb_len_t skb_len_func,
-			      codel_skb_समय_प्रकार skb_समय_func,
+			      codel_skb_time_t skb_time_func,
 			      u32 *backlog,
-			      codel_समय_प्रकार now)
-अणु
+			      codel_time_t now)
+{
 	bool ok_to_drop;
 	u32 skb_len;
 
-	अगर (!skb) अणु
-		vars->first_above_समय = 0;
-		वापस false;
-	पूर्ण
+	if (!skb) {
+		vars->first_above_time = 0;
+		return false;
+	}
 
 	skb_len = skb_len_func(skb);
-	vars->ldelay = now - skb_समय_func(skb);
+	vars->ldelay = now - skb_time_func(skb);
 
-	अगर (unlikely(skb_len > stats->maxpacket))
+	if (unlikely(skb_len > stats->maxpacket))
 		stats->maxpacket = skb_len;
 
-	अगर (codel_समय_beक्रमe(vars->ldelay, params->target) ||
-	    *backlog <= params->mtu) अणु
-		/* went below - stay below क्रम at least पूर्णांकerval */
-		vars->first_above_समय = 0;
-		वापस false;
-	पूर्ण
+	if (codel_time_before(vars->ldelay, params->target) ||
+	    *backlog <= params->mtu) {
+		/* went below - stay below for at least interval */
+		vars->first_above_time = 0;
+		return false;
+	}
 	ok_to_drop = false;
-	अगर (vars->first_above_समय == 0) अणु
+	if (vars->first_above_time == 0) {
 		/* just went above from below. If we stay above
-		 * क्रम at least पूर्णांकerval we'll say it's ok to drop
+		 * for at least interval we'll say it's ok to drop
 		 */
-		vars->first_above_समय = now + params->पूर्णांकerval;
-	पूर्ण अन्यथा अगर (codel_समय_after(now, vars->first_above_समय)) अणु
+		vars->first_above_time = now + params->interval;
+	} else if (codel_time_after(now, vars->first_above_time)) {
 		ok_to_drop = true;
-	पूर्ण
-	वापस ok_to_drop;
-पूर्ण
+	}
+	return ok_to_drop;
+}
 
-अटल काष्ठा sk_buff *codel_dequeue(व्योम *ctx,
+static struct sk_buff *codel_dequeue(void *ctx,
 				     u32 *backlog,
-				     काष्ठा codel_params *params,
-				     काष्ठा codel_vars *vars,
-				     काष्ठा codel_stats *stats,
+				     struct codel_params *params,
+				     struct codel_vars *vars,
+				     struct codel_stats *stats,
 				     codel_skb_len_t skb_len_func,
-				     codel_skb_समय_प्रकार skb_समय_func,
+				     codel_skb_time_t skb_time_func,
 				     codel_skb_drop_t drop_func,
 				     codel_skb_dequeue_t dequeue_func)
-अणु
-	काष्ठा sk_buff *skb = dequeue_func(vars, ctx);
-	codel_समय_प्रकार now;
+{
+	struct sk_buff *skb = dequeue_func(vars, ctx);
+	codel_time_t now;
 	bool drop;
 
-	अगर (!skb) अणु
+	if (!skb) {
 		vars->dropping = false;
-		वापस skb;
-	पूर्ण
-	now = codel_get_समय();
+		return skb;
+	}
+	now = codel_get_time();
 	drop = codel_should_drop(skb, ctx, vars, params, stats,
-				 skb_len_func, skb_समय_func, backlog, now);
-	अगर (vars->dropping) अणु
-		अगर (!drop) अणु
-			/* sojourn समय below target - leave dropping state */
+				 skb_len_func, skb_time_func, backlog, now);
+	if (vars->dropping) {
+		if (!drop) {
+			/* sojourn time below target - leave dropping state */
 			vars->dropping = false;
-		पूर्ण अन्यथा अगर (codel_समय_after_eq(now, vars->drop_next)) अणु
-			/* It's समय क्रम the next drop. Drop the current
+		} else if (codel_time_after_eq(now, vars->drop_next)) {
+			/* It's time for the next drop. Drop the current
 			 * packet and dequeue the next. The dequeue might
 			 * take us out of dropping state.
 			 * If not, schedule the next drop.
 			 * A large backlog might result in drop rates so high
 			 * that the next drop should happen now,
-			 * hence the जबतक loop.
+			 * hence the while loop.
 			 */
-			जबतक (vars->dropping &&
-			       codel_समय_after_eq(now, vars->drop_next)) अणु
-				vars->count++; /* करोnt care of possible wrap
-						* since there is no more भागide
+			while (vars->dropping &&
+			       codel_time_after_eq(now, vars->drop_next)) {
+				vars->count++; /* dont care of possible wrap
+						* since there is no more divide
 						*/
 				codel_Newton_step(vars);
-				अगर (params->ecn && INET_ECN_set_ce(skb)) अणु
+				if (params->ecn && INET_ECN_set_ce(skb)) {
 					stats->ecn_mark++;
 					vars->drop_next =
 						codel_control_law(vars->drop_next,
-								  params->पूर्णांकerval,
-								  vars->rec_inv_वर्ग_मूल);
-					जाओ end;
-				पूर्ण
+								  params->interval,
+								  vars->rec_inv_sqrt);
+					goto end;
+				}
 				stats->drop_len += skb_len_func(skb);
 				drop_func(skb, ctx);
 				stats->drop_count++;
 				skb = dequeue_func(vars, ctx);
-				अगर (!codel_should_drop(skb, ctx,
+				if (!codel_should_drop(skb, ctx,
 						       vars, params, stats,
 						       skb_len_func,
-						       skb_समय_func,
-						       backlog, now)) अणु
+						       skb_time_func,
+						       backlog, now)) {
 					/* leave dropping state */
 					vars->dropping = false;
-				पूर्ण अन्यथा अणु
+				} else {
 					/* and schedule the next drop */
 					vars->drop_next =
 						codel_control_law(vars->drop_next,
-								  params->पूर्णांकerval,
-								  vars->rec_inv_वर्ग_मूल);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (drop) अणु
+								  params->interval,
+								  vars->rec_inv_sqrt);
+				}
+			}
+		}
+	} else if (drop) {
 		u32 delta;
 
-		अगर (params->ecn && INET_ECN_set_ce(skb)) अणु
+		if (params->ecn && INET_ECN_set_ce(skb)) {
 			stats->ecn_mark++;
-		पूर्ण अन्यथा अणु
+		} else {
 			stats->drop_len += skb_len_func(skb);
 			drop_func(skb, ctx);
 			stats->drop_count++;
@@ -221,36 +220,36 @@
 			skb = dequeue_func(vars, ctx);
 			drop = codel_should_drop(skb, ctx, vars, params,
 						 stats, skb_len_func,
-						 skb_समय_func, backlog, now);
-		पूर्ण
+						 skb_time_func, backlog, now);
+		}
 		vars->dropping = true;
-		/* अगर min went above target बंद to when we last went below it
+		/* if min went above target close to when we last went below it
 		 * assume that the drop rate that controlled the queue on the
-		 * last cycle is a good starting poपूर्णांक to control it now.
+		 * last cycle is a good starting point to control it now.
 		 */
 		delta = vars->count - vars->lastcount;
-		अगर (delta > 1 &&
-		    codel_समय_beक्रमe(now - vars->drop_next,
-				      16 * params->पूर्णांकerval)) अणु
+		if (delta > 1 &&
+		    codel_time_before(now - vars->drop_next,
+				      16 * params->interval)) {
 			vars->count = delta;
-			/* we करोnt care अगर rec_inv_वर्ग_मूल approximation
+			/* we dont care if rec_inv_sqrt approximation
 			 * is not very precise :
 			 * Next Newton steps will correct it quadratically.
 			 */
 			codel_Newton_step(vars);
-		पूर्ण अन्यथा अणु
+		} else {
 			vars->count = 1;
-			vars->rec_inv_वर्ग_मूल = ~0U >> REC_INV_SQRT_SHIFT;
-		पूर्ण
+			vars->rec_inv_sqrt = ~0U >> REC_INV_SQRT_SHIFT;
+		}
 		vars->lastcount = vars->count;
-		vars->drop_next = codel_control_law(now, params->पूर्णांकerval,
-						    vars->rec_inv_वर्ग_मूल);
-	पूर्ण
+		vars->drop_next = codel_control_law(now, params->interval,
+						    vars->rec_inv_sqrt);
+	}
 end:
-	अगर (skb && codel_समय_after(vars->ldelay, params->ce_threshold) &&
+	if (skb && codel_time_after(vars->ldelay, params->ce_threshold) &&
 	    INET_ECN_set_ce(skb))
 		stats->ce_mark++;
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-#पूर्ण_अगर
+#endif

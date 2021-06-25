@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: BSD-3-Clause */
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Copyright (c) 2020, MIPI Alliance, Inc.
  *
@@ -8,138 +7,138 @@
  * Common HCI stuff
  */
 
-#अगर_अघोषित HCI_H
-#घोषणा HCI_H
+#ifndef HCI_H
+#define HCI_H
 
 
 /* Handy logging macro to save on line length */
-#घोषणा DBG(x, ...) pr_devel("%s: " x "\n", __func__, ##__VA_ARGS__)
+#define DBG(x, ...) pr_devel("%s: " x "\n", __func__, ##__VA_ARGS__)
 
 /* 32-bit word aware bit and mask macros */
-#घोषणा W0_MASK(h, l)  GENMASK((h) - 0,  (l) - 0)
-#घोषणा W1_MASK(h, l)  GENMASK((h) - 32, (l) - 32)
-#घोषणा W2_MASK(h, l)  GENMASK((h) - 64, (l) - 64)
-#घोषणा W3_MASK(h, l)  GENMASK((h) - 96, (l) - 96)
+#define W0_MASK(h, l)  GENMASK((h) - 0,  (l) - 0)
+#define W1_MASK(h, l)  GENMASK((h) - 32, (l) - 32)
+#define W2_MASK(h, l)  GENMASK((h) - 64, (l) - 64)
+#define W3_MASK(h, l)  GENMASK((h) - 96, (l) - 96)
 
-/* Same क्रम single bit macros (trailing _ to align with W*_MASK width) */
-#घोषणा W0_BIT_(x)  BIT((x) - 0)
-#घोषणा W1_BIT_(x)  BIT((x) - 32)
-#घोषणा W2_BIT_(x)  BIT((x) - 64)
-#घोषणा W3_BIT_(x)  BIT((x) - 96)
+/* Same for single bit macros (trailing _ to align with W*_MASK width) */
+#define W0_BIT_(x)  BIT((x) - 0)
+#define W1_BIT_(x)  BIT((x) - 32)
+#define W2_BIT_(x)  BIT((x) - 64)
+#define W3_BIT_(x)  BIT((x) - 96)
 
 
-काष्ठा hci_cmd_ops;
+struct hci_cmd_ops;
 
-/* Our मुख्य काष्ठाure */
-काष्ठा i3c_hci अणु
-	काष्ठा i3c_master_controller master;
-	व्योम __iomem *base_regs;
-	व्योम __iomem *DAT_regs;
-	व्योम __iomem *DCT_regs;
-	व्योम __iomem *RHS_regs;
-	व्योम __iomem *PIO_regs;
-	व्योम __iomem *EXTCAPS_regs;
-	व्योम __iomem *AUTOCMD_regs;
-	व्योम __iomem *DEBUG_regs;
-	स्थिर काष्ठा hci_io_ops *io;
-	व्योम *io_data;
-	स्थिर काष्ठा hci_cmd_ops *cmd;
+/* Our main structure */
+struct i3c_hci {
+	struct i3c_master_controller master;
+	void __iomem *base_regs;
+	void __iomem *DAT_regs;
+	void __iomem *DCT_regs;
+	void __iomem *RHS_regs;
+	void __iomem *PIO_regs;
+	void __iomem *EXTCAPS_regs;
+	void __iomem *AUTOCMD_regs;
+	void __iomem *DEBUG_regs;
+	const struct hci_io_ops *io;
+	void *io_data;
+	const struct hci_cmd_ops *cmd;
 	atomic_t next_cmd_tid;
 	u32 caps;
-	अचिन्हित पूर्णांक quirks;
-	अचिन्हित पूर्णांक DAT_entries;
-	अचिन्हित पूर्णांक DAT_entry_size;
-	व्योम *DAT_data;
-	अचिन्हित पूर्णांक DCT_entries;
-	अचिन्हित पूर्णांक DCT_entry_size;
+	unsigned int quirks;
+	unsigned int DAT_entries;
+	unsigned int DAT_entry_size;
+	void *DAT_data;
+	unsigned int DCT_entries;
+	unsigned int DCT_entry_size;
 	u8 version_major;
 	u8 version_minor;
 	u8 revision;
-	u32 venकरोr_mipi_id;
-	u32 venकरोr_version_id;
-	u32 venकरोr_product_id;
-	व्योम *venकरोr_data;
-पूर्ण;
+	u32 vendor_mipi_id;
+	u32 vendor_version_id;
+	u32 vendor_product_id;
+	void *vendor_data;
+};
 
 
 /*
  * Structure to represent a master initiated transfer.
- * The rnw, data and data_len fields must be initialized beक्रमe calling any
+ * The rnw, data and data_len fields must be initialized before calling any
  * hci->cmd->*() method. The cmd method will initialize cmd_desc[] and
- * possibly modअगरy (clear) the data field. Then xfer->cmd_desc[0] can
+ * possibly modify (clear) the data field. Then xfer->cmd_desc[0] can
  * be augmented with CMD_0_ROC and/or CMD_0_TOC.
- * The completion field needs to be initialized beक्रमe queueing with
+ * The completion field needs to be initialized before queueing with
  * hci->io->queue_xfer(), and requires CMD_0_ROC to be set.
  */
-काष्ठा hci_xfer अणु
+struct hci_xfer {
 	u32 cmd_desc[4];
 	u32 response;
 	bool rnw;
-	व्योम *data;
-	अचिन्हित पूर्णांक data_len;
-	अचिन्हित पूर्णांक cmd_tid;
-	काष्ठा completion *completion;
-	जोड़ अणु
-		काष्ठा अणु
-			/* PIO specअगरic */
-			काष्ठा hci_xfer *next_xfer;
-			काष्ठा hci_xfer *next_data;
-			काष्ठा hci_xfer *next_resp;
-			अचिन्हित पूर्णांक data_left;
-			u32 data_word_beक्रमe_partial;
-		पूर्ण;
-		काष्ठा अणु
-			/* DMA specअगरic */
+	void *data;
+	unsigned int data_len;
+	unsigned int cmd_tid;
+	struct completion *completion;
+	union {
+		struct {
+			/* PIO specific */
+			struct hci_xfer *next_xfer;
+			struct hci_xfer *next_data;
+			struct hci_xfer *next_resp;
+			unsigned int data_left;
+			u32 data_word_before_partial;
+		};
+		struct {
+			/* DMA specific */
 			dma_addr_t data_dma;
-			पूर्णांक ring_number;
-			पूर्णांक ring_entry;
-		पूर्ण;
-	पूर्ण;
-पूर्ण;
+			int ring_number;
+			int ring_entry;
+		};
+	};
+};
 
-अटल अंतरभूत काष्ठा hci_xfer *hci_alloc_xfer(अचिन्हित पूर्णांक n)
-अणु
-	वापस kzalloc(माप(काष्ठा hci_xfer) * n, GFP_KERNEL);
-पूर्ण
+static inline struct hci_xfer *hci_alloc_xfer(unsigned int n)
+{
+	return kzalloc(sizeof(struct hci_xfer) * n, GFP_KERNEL);
+}
 
-अटल अंतरभूत व्योम hci_मुक्त_xfer(काष्ठा hci_xfer *xfer, अचिन्हित पूर्णांक n)
-अणु
-	kमुक्त(xfer);
-पूर्ण
-
-
-/* This असलtracts PIO vs DMA operations */
-काष्ठा hci_io_ops अणु
-	bool (*irq_handler)(काष्ठा i3c_hci *hci, अचिन्हित पूर्णांक mask);
-	पूर्णांक (*queue_xfer)(काष्ठा i3c_hci *hci, काष्ठा hci_xfer *xfer, पूर्णांक n);
-	bool (*dequeue_xfer)(काष्ठा i3c_hci *hci, काष्ठा hci_xfer *xfer, पूर्णांक n);
-	पूर्णांक (*request_ibi)(काष्ठा i3c_hci *hci, काष्ठा i3c_dev_desc *dev,
-			   स्थिर काष्ठा i3c_ibi_setup *req);
-	व्योम (*मुक्त_ibi)(काष्ठा i3c_hci *hci, काष्ठा i3c_dev_desc *dev);
-	व्योम (*recycle_ibi_slot)(काष्ठा i3c_hci *hci, काष्ठा i3c_dev_desc *dev,
-				काष्ठा i3c_ibi_slot *slot);
-	पूर्णांक (*init)(काष्ठा i3c_hci *hci);
-	व्योम (*cleanup)(काष्ठा i3c_hci *hci);
-पूर्ण;
-
-बाह्य स्थिर काष्ठा hci_io_ops mipi_i3c_hci_pio;
-बाह्य स्थिर काष्ठा hci_io_ops mipi_i3c_hci_dma;
+static inline void hci_free_xfer(struct hci_xfer *xfer, unsigned int n)
+{
+	kfree(xfer);
+}
 
 
-/* Our per device master निजी data */
-काष्ठा i3c_hci_dev_data अणु
-	पूर्णांक dat_idx;
-	व्योम *ibi_data;
-पूर्ण;
+/* This abstracts PIO vs DMA operations */
+struct hci_io_ops {
+	bool (*irq_handler)(struct i3c_hci *hci, unsigned int mask);
+	int (*queue_xfer)(struct i3c_hci *hci, struct hci_xfer *xfer, int n);
+	bool (*dequeue_xfer)(struct i3c_hci *hci, struct hci_xfer *xfer, int n);
+	int (*request_ibi)(struct i3c_hci *hci, struct i3c_dev_desc *dev,
+			   const struct i3c_ibi_setup *req);
+	void (*free_ibi)(struct i3c_hci *hci, struct i3c_dev_desc *dev);
+	void (*recycle_ibi_slot)(struct i3c_hci *hci, struct i3c_dev_desc *dev,
+				struct i3c_ibi_slot *slot);
+	int (*init)(struct i3c_hci *hci);
+	void (*cleanup)(struct i3c_hci *hci);
+};
+
+extern const struct hci_io_ops mipi_i3c_hci_pio;
+extern const struct hci_io_ops mipi_i3c_hci_dma;
+
+
+/* Our per device master private data */
+struct i3c_hci_dev_data {
+	int dat_idx;
+	void *ibi_data;
+};
 
 
 /* list of quirks */
-#घोषणा HCI_QUIRK_RAW_CCC	BIT(1)	/* CCC framing must be explicit */
+#define HCI_QUIRK_RAW_CCC	BIT(1)	/* CCC framing must be explicit */
 
 
 /* global functions */
-व्योम mipi_i3c_hci_resume(काष्ठा i3c_hci *hci);
-व्योम mipi_i3c_hci_pio_reset(काष्ठा i3c_hci *hci);
-व्योम mipi_i3c_hci_dct_index_reset(काष्ठा i3c_hci *hci);
+void mipi_i3c_hci_resume(struct i3c_hci *hci);
+void mipi_i3c_hci_pio_reset(struct i3c_hci *hci);
+void mipi_i3c_hci_dct_index_reset(struct i3c_hci *hci);
 
-#पूर्ण_अगर
+#endif

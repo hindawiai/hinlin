@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_GENERIC_BITOPS_ATOMIC_H_
-#घोषणा _ASM_GENERIC_BITOPS_ATOMIC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_GENERIC_BITOPS_ATOMIC_H_
+#define _ASM_GENERIC_BITOPS_ATOMIC_H_
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/compiler.h>
-#समावेश <यंत्र/barrier.h>
+#include <linux/atomic.h>
+#include <linux/compiler.h>
+#include <asm/barrier.h>
 
 /*
  * Implementation of atomic bitops using atomic-fetch ops.
- * See Documentation/atomic_bitops.txt क्रम details.
+ * See Documentation/atomic_bitops.txt for details.
  */
 
-अटल __always_अंतरभूत व्योम set_bit(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
-अणु
+static __always_inline void set_bit(unsigned int nr, volatile unsigned long *p)
+{
 	p += BIT_WORD(nr);
-	atomic_दीर्घ_or(BIT_MASK(nr), (atomic_दीर्घ_t *)p);
-पूर्ण
+	atomic_long_or(BIT_MASK(nr), (atomic_long_t *)p);
+}
 
-अटल __always_अंतरभूत व्योम clear_bit(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
-अणु
+static __always_inline void clear_bit(unsigned int nr, volatile unsigned long *p)
+{
 	p += BIT_WORD(nr);
-	atomic_दीर्घ_andnot(BIT_MASK(nr), (atomic_दीर्घ_t *)p);
-पूर्ण
+	atomic_long_andnot(BIT_MASK(nr), (atomic_long_t *)p);
+}
 
-अटल __always_अंतरभूत व्योम change_bit(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
-अणु
+static __always_inline void change_bit(unsigned int nr, volatile unsigned long *p)
+{
 	p += BIT_WORD(nr);
-	atomic_दीर्घ_xor(BIT_MASK(nr), (atomic_दीर्घ_t *)p);
-पूर्ण
+	atomic_long_xor(BIT_MASK(nr), (atomic_long_t *)p);
+}
 
-अटल अंतरभूत पूर्णांक test_and_set_bit(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	दीर्घ old;
-	अचिन्हित दीर्घ mask = BIT_MASK(nr);
-
-	p += BIT_WORD(nr);
-	अगर (READ_ONCE(*p) & mask)
-		वापस 1;
-
-	old = atomic_दीर्घ_fetch_or(mask, (atomic_दीर्घ_t *)p);
-	वापस !!(old & mask);
-पूर्ण
-
-अटल अंतरभूत पूर्णांक test_and_clear_bit(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	दीर्घ old;
-	अचिन्हित दीर्घ mask = BIT_MASK(nr);
+static inline int test_and_set_bit(unsigned int nr, volatile unsigned long *p)
+{
+	long old;
+	unsigned long mask = BIT_MASK(nr);
 
 	p += BIT_WORD(nr);
-	अगर (!(READ_ONCE(*p) & mask))
-		वापस 0;
+	if (READ_ONCE(*p) & mask)
+		return 1;
 
-	old = atomic_दीर्घ_fetch_andnot(mask, (atomic_दीर्घ_t *)p);
-	वापस !!(old & mask);
-पूर्ण
+	old = atomic_long_fetch_or(mask, (atomic_long_t *)p);
+	return !!(old & mask);
+}
 
-अटल अंतरभूत पूर्णांक test_and_change_bit(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
-अणु
-	दीर्घ old;
-	अचिन्हित दीर्घ mask = BIT_MASK(nr);
+static inline int test_and_clear_bit(unsigned int nr, volatile unsigned long *p)
+{
+	long old;
+	unsigned long mask = BIT_MASK(nr);
 
 	p += BIT_WORD(nr);
-	old = atomic_दीर्घ_fetch_xor(mask, (atomic_दीर्घ_t *)p);
-	वापस !!(old & mask);
-पूर्ण
+	if (!(READ_ONCE(*p) & mask))
+		return 0;
 
-#पूर्ण_अगर /* _ASM_GENERIC_BITOPS_ATOMIC_H */
+	old = atomic_long_fetch_andnot(mask, (atomic_long_t *)p);
+	return !!(old & mask);
+}
+
+static inline int test_and_change_bit(unsigned int nr, volatile unsigned long *p)
+{
+	long old;
+	unsigned long mask = BIT_MASK(nr);
+
+	p += BIT_WORD(nr);
+	old = atomic_long_fetch_xor(mask, (atomic_long_t *)p);
+	return !!(old & mask);
+}
+
+#endif /* _ASM_GENERIC_BITOPS_ATOMIC_H */

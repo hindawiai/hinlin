@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2016 NXP Semiconductors
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/suspend.h>
+#include <linux/io.h>
 
-अटल पूर्णांक imx25_suspend_enter(suspend_state_t state)
-अणु
-	अगर (!IS_ENABLED(CONFIG_PM))
-		वापस 0;
+static int imx25_suspend_enter(suspend_state_t state)
+{
+	if (!IS_ENABLED(CONFIG_PM))
+		return 0;
 
-	चयन (state) अणु
-	हाल PM_SUSPEND_MEM:
-		cpu_करो_idle();
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (state) {
+	case PM_SUSPEND_MEM:
+		cpu_do_idle();
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_suspend_ops imx25_suspend_ops = अणु
+static const struct platform_suspend_ops imx25_suspend_ops = {
 	.enter = imx25_suspend_enter,
 	.valid = suspend_valid_only_mem,
-पूर्ण;
+};
 
-व्योम __init imx25_pm_init(व्योम)
-अणु
+void __init imx25_pm_init(void)
+{
 	suspend_set_ops(&imx25_suspend_ops);
-पूर्ण
+}

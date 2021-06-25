@@ -1,188 +1,187 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_DEBUG_C_
+#define _RTW_DEBUG_C_
 
-#समावेश <rtw_debug.h>
-#समावेश <usb_ops_linux.h>
+#include <rtw_debug.h>
+#include <usb_ops_linux.h>
 
-पूर्णांक proc_get_drv_version(अक्षर *page, अक्षर **start,
-			 off_t offset, पूर्णांक count,
-			 पूर्णांक *eof, व्योम *data)
-अणु
-	पूर्णांक len = 0;
+int proc_get_drv_version(char *page, char **start,
+			 off_t offset, int count,
+			 int *eof, void *data)
+{
+	int len = 0;
 
-	len += scnम_लिखो(page + len, count - len, "%s\n", DRIVERVERSION);
+	len += scnprintf(page + len, count - len, "%s\n", DRIVERVERSION);
 
 	*eof = 1;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक proc_get_ग_लिखो_reg(अक्षर *page, अक्षर **start,
-		       off_t offset, पूर्णांक count,
-		       पूर्णांक *eof, व्योम *data)
-अणु
+int proc_get_write_reg(char *page, char **start,
+		       off_t offset, int count,
+		       int *eof, void *data)
+{
 	*eof = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक proc_set_ग_लिखो_reg(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-		       अचिन्हित दीर्घ count, व्योम *data)
-अणु
-	काष्ठा net_device *dev = data;
-	काष्ठा adapter *padapter = netdev_priv(dev);
-	अक्षर पंचांगp[32];
+int proc_set_write_reg(struct file *file, const char __user *buffer,
+		       unsigned long count, void *data)
+{
+	struct net_device *dev = data;
+	struct adapter *padapter = netdev_priv(dev);
+	char tmp[32];
 	u32 addr, val, len;
 
-	अगर (count < 3) अणु
+	if (count < 3) {
 		DBG_88E("argument size is less than 3\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (buffer && !copy_from_user(पंचांगp, buffer, माप(पंचांगp))) अणु
-		पूर्णांक num = माला_पूछो(पंचांगp, "%x %x %x", &addr, &val, &len);
+	if (buffer && !copy_from_user(tmp, buffer, sizeof(tmp))) {
+		int num = sscanf(tmp, "%x %x %x", &addr, &val, &len);
 
-		अगर (num !=  3) अणु
+		if (num !=  3) {
 			DBG_88E("invalid write_reg parameter!\n");
-			वापस count;
-		पूर्ण
-		चयन (len) अणु
-		हाल 1:
-			usb_ग_लिखो8(padapter, addr, (u8)val);
-			अवरोध;
-		हाल 2:
-			usb_ग_लिखो16(padapter, addr, (u16)val);
-			अवरोध;
-		हाल 4:
-			usb_ग_लिखो32(padapter, addr, val);
-			अवरोध;
-		शेष:
+			return count;
+		}
+		switch (len) {
+		case 1:
+			usb_write8(padapter, addr, (u8)val);
+			break;
+		case 2:
+			usb_write16(padapter, addr, (u16)val);
+			break;
+		case 4:
+			usb_write32(padapter, addr, val);
+			break;
+		default:
 			DBG_88E("error write length =%d", len);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस count;
-पूर्ण
+			break;
+		}
+	}
+	return count;
+}
 
-अटल u32 proc_get_पढ़ो_addr = 0xeeeeeeee;
-अटल u32 proc_get_पढ़ो_len = 0x4;
+static u32 proc_get_read_addr = 0xeeeeeeee;
+static u32 proc_get_read_len = 0x4;
 
-पूर्णांक proc_get_पढ़ो_reg(अक्षर *page, अक्षर **start,
-		      off_t offset, पूर्णांक count,
-		      पूर्णांक *eof, व्योम *data)
-अणु
-	काष्ठा net_device *dev = data;
-	काष्ठा adapter *padapter = netdev_priv(dev);
+int proc_get_read_reg(char *page, char **start,
+		      off_t offset, int count,
+		      int *eof, void *data)
+{
+	struct net_device *dev = data;
+	struct adapter *padapter = netdev_priv(dev);
 
-	पूर्णांक len = 0;
+	int len = 0;
 
-	अगर (proc_get_पढ़ो_addr == 0xeeeeeeee) अणु
+	if (proc_get_read_addr == 0xeeeeeeee) {
 		*eof = 1;
-		वापस len;
-	पूर्ण
+		return len;
+	}
 
-	चयन (proc_get_पढ़ो_len) अणु
-	हाल 1:
-		len += scnम_लिखो(page + len, count - len, "usb_read8(0x%x)=0x%x\n",
-				 proc_get_पढ़ो_addr, usb_पढ़ो8(padapter, proc_get_पढ़ो_addr));
-		अवरोध;
-	हाल 2:
-		len += scnम_लिखो(page + len, count - len, "usb_read16(0x%x)=0x%x\n",
-				 proc_get_पढ़ो_addr, usb_पढ़ो16(padapter, proc_get_पढ़ो_addr));
-		अवरोध;
-	हाल 4:
-		len += scnम_लिखो(page + len, count - len, "usb_read32(0x%x)=0x%x\n",
-				 proc_get_पढ़ो_addr, usb_पढ़ो32(padapter, proc_get_पढ़ो_addr));
-		अवरोध;
-	शेष:
-		len += scnम_लिखो(page + len, count - len, "error read length=%d\n",
-				 proc_get_पढ़ो_len);
-		अवरोध;
-	पूर्ण
+	switch (proc_get_read_len) {
+	case 1:
+		len += scnprintf(page + len, count - len, "usb_read8(0x%x)=0x%x\n",
+				 proc_get_read_addr, usb_read8(padapter, proc_get_read_addr));
+		break;
+	case 2:
+		len += scnprintf(page + len, count - len, "usb_read16(0x%x)=0x%x\n",
+				 proc_get_read_addr, usb_read16(padapter, proc_get_read_addr));
+		break;
+	case 4:
+		len += scnprintf(page + len, count - len, "usb_read32(0x%x)=0x%x\n",
+				 proc_get_read_addr, usb_read32(padapter, proc_get_read_addr));
+		break;
+	default:
+		len += scnprintf(page + len, count - len, "error read length=%d\n",
+				 proc_get_read_len);
+		break;
+	}
 
 	*eof = 1;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक proc_set_पढ़ो_reg(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-		      अचिन्हित दीर्घ count, व्योम *data)
-अणु
-	अक्षर पंचांगp[16];
+int proc_set_read_reg(struct file *file, const char __user *buffer,
+		      unsigned long count, void *data)
+{
+	char tmp[16];
 	u32 addr, len;
 
-	अगर (count < 2) अणु
+	if (count < 2) {
 		DBG_88E("argument size is less than 2\n");
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
-	अगर (buffer && !copy_from_user(पंचांगp, buffer, माप(पंचांगp))) अणु
-		पूर्णांक num = माला_पूछो(पंचांगp, "%x %x", &addr, &len);
+	if (buffer && !copy_from_user(tmp, buffer, sizeof(tmp))) {
+		int num = sscanf(tmp, "%x %x", &addr, &len);
 
-		अगर (num !=  2) अणु
+		if (num !=  2) {
 			DBG_88E("invalid read_reg parameter!\n");
-			वापस count;
-		पूर्ण
+			return count;
+		}
 
-		proc_get_पढ़ो_addr = addr;
+		proc_get_read_addr = addr;
 
-		proc_get_पढ़ो_len = len;
-	पूर्ण
+		proc_get_read_len = len;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-पूर्णांक proc_get_adapter_state(अक्षर *page, अक्षर **start,
-			   off_t offset, पूर्णांक count,
-			   पूर्णांक *eof, व्योम *data)
-अणु
-	काष्ठा net_device *dev = data;
-	काष्ठा adapter *padapter = netdev_priv(dev);
-	पूर्णांक len = 0;
+int proc_get_adapter_state(char *page, char **start,
+			   off_t offset, int count,
+			   int *eof, void *data)
+{
+	struct net_device *dev = data;
+	struct adapter *padapter = netdev_priv(dev);
+	int len = 0;
 
-	len += scnम_लिखो(page + len, count - len, "bSurpriseRemoved=%d, bDriverStopped=%d\n",
+	len += scnprintf(page + len, count - len, "bSurpriseRemoved=%d, bDriverStopped=%d\n",
 			 padapter->bSurpriseRemoved,
 			 padapter->bDriverStopped);
 
 	*eof = 1;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-पूर्णांक proc_get_best_channel(अक्षर *page, अक्षर **start,
-			  off_t offset, पूर्णांक count,
-			  पूर्णांक *eof, व्योम *data)
-अणु
-	काष्ठा net_device *dev = data;
-	काष्ठा adapter *padapter = netdev_priv(dev);
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	पूर्णांक len = 0;
+int proc_get_best_channel(char *page, char **start,
+			  off_t offset, int count,
+			  int *eof, void *data)
+{
+	struct net_device *dev = data;
+	struct adapter *padapter = netdev_priv(dev);
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	int len = 0;
 	u32 i, best_channel_24G = 1, index_24G = 0;
 
-	क्रम (i = 0; pmlmeext->channel_set[i].ChannelNum != 0; i++) अणु
-		अगर (pmlmeext->channel_set[i].ChannelNum == 1)
+	for (i = 0; pmlmeext->channel_set[i].ChannelNum != 0; i++) {
+		if (pmlmeext->channel_set[i].ChannelNum == 1)
 			index_24G = i;
-	पूर्ण
+	}
 
-	क्रम (i = 0; pmlmeext->channel_set[i].ChannelNum != 0; i++) अणु
+	for (i = 0; pmlmeext->channel_set[i].ChannelNum != 0; i++) {
 		/*  2.4G */
-		अगर (pmlmeext->channel_set[i].ChannelNum == 6) अणु
-			अगर (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_24G].rx_count) अणु
+		if (pmlmeext->channel_set[i].ChannelNum == 6) {
+			if (pmlmeext->channel_set[i].rx_count < pmlmeext->channel_set[index_24G].rx_count) {
 				index_24G = i;
 				best_channel_24G = pmlmeext->channel_set[i].ChannelNum;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*  debug */
-		len += scnम_लिखो(page + len, count - len, "The rx cnt of channel %3d = %d\n",
+		len += scnprintf(page + len, count - len, "The rx cnt of channel %3d = %d\n",
 				 pmlmeext->channel_set[i].ChannelNum,
 				 pmlmeext->channel_set[i].rx_count);
-	पूर्ण
+	}
 
-	len += scnम_लिखो(page + len, count - len, "best_channel_24G = %d\n", best_channel_24G);
+	len += scnprintf(page + len, count - len, "best_channel_24G = %d\n", best_channel_24G);
 
 	*eof = 1;
-	वापस len;
-पूर्ण
+	return len;
+}

@@ -1,262 +1,261 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2008 Nokia Corporation
  *
  *  Based on lirc_serial.c
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/of.h>
-#समावेश <linux/hrसमयr.h>
+#include <linux/clk.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/wait.h>
+#include <linux/pwm.h>
+#include <linux/of.h>
+#include <linux/hrtimer.h>
 
-#समावेश <media/rc-core.h>
+#include <media/rc-core.h>
 
-#घोषणा WBUF_LEN 256
+#define WBUF_LEN 256
 
-काष्ठा ir_rx51 अणु
-	काष्ठा rc_dev *rcdev;
-	काष्ठा pwm_device *pwm;
-	काष्ठा hrसमयr समयr;
-	काष्ठा device	     *dev;
-	रुको_queue_head_t     wqueue;
+struct ir_rx51 {
+	struct rc_dev *rcdev;
+	struct pwm_device *pwm;
+	struct hrtimer timer;
+	struct device	     *dev;
+	wait_queue_head_t     wqueue;
 
-	अचिन्हित पूर्णांक	freq;		/* carrier frequency */
-	अचिन्हित पूर्णांक	duty_cycle;	/* carrier duty cycle */
-	पूर्णांक		wbuf[WBUF_LEN];
-	पूर्णांक		wbuf_index;
-	अचिन्हित दीर्घ	device_is_खोलो;
-पूर्ण;
+	unsigned int	freq;		/* carrier frequency */
+	unsigned int	duty_cycle;	/* carrier duty cycle */
+	int		wbuf[WBUF_LEN];
+	int		wbuf_index;
+	unsigned long	device_is_open;
+};
 
-अटल अंतरभूत व्योम ir_rx51_on(काष्ठा ir_rx51 *ir_rx51)
-अणु
+static inline void ir_rx51_on(struct ir_rx51 *ir_rx51)
+{
 	pwm_enable(ir_rx51->pwm);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ir_rx51_off(काष्ठा ir_rx51 *ir_rx51)
-अणु
+static inline void ir_rx51_off(struct ir_rx51 *ir_rx51)
+{
 	pwm_disable(ir_rx51->pwm);
-पूर्ण
+}
 
-अटल पूर्णांक init_timing_params(काष्ठा ir_rx51 *ir_rx51)
-अणु
-	काष्ठा pwm_device *pwm = ir_rx51->pwm;
-	पूर्णांक duty, period = DIV_ROUND_CLOSEST(NSEC_PER_SEC, ir_rx51->freq);
+static int init_timing_params(struct ir_rx51 *ir_rx51)
+{
+	struct pwm_device *pwm = ir_rx51->pwm;
+	int duty, period = DIV_ROUND_CLOSEST(NSEC_PER_SEC, ir_rx51->freq);
 
 	duty = DIV_ROUND_CLOSEST(ir_rx51->duty_cycle * period, 100);
 
 	pwm_config(pwm, duty, period);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत hrसमयr_restart ir_rx51_समयr_cb(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा ir_rx51 *ir_rx51 = container_of(समयr, काष्ठा ir_rx51, समयr);
-	kसमय_प्रकार now;
+static enum hrtimer_restart ir_rx51_timer_cb(struct hrtimer *timer)
+{
+	struct ir_rx51 *ir_rx51 = container_of(timer, struct ir_rx51, timer);
+	ktime_t now;
 
-	अगर (ir_rx51->wbuf_index < 0) अणु
+	if (ir_rx51->wbuf_index < 0) {
 		dev_err_ratelimited(ir_rx51->dev,
 				    "BUG wbuf_index has value of %i\n",
 				    ir_rx51->wbuf_index);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	/*
 	 * If we happen to hit an odd latency spike, loop through the
 	 * pulses until we catch up.
 	 */
-	करो अणु
+	do {
 		u64 ns;
 
-		अगर (ir_rx51->wbuf_index >= WBUF_LEN)
-			जाओ end;
-		अगर (ir_rx51->wbuf[ir_rx51->wbuf_index] == -1)
-			जाओ end;
+		if (ir_rx51->wbuf_index >= WBUF_LEN)
+			goto end;
+		if (ir_rx51->wbuf[ir_rx51->wbuf_index] == -1)
+			goto end;
 
-		अगर (ir_rx51->wbuf_index % 2)
+		if (ir_rx51->wbuf_index % 2)
 			ir_rx51_off(ir_rx51);
-		अन्यथा
+		else
 			ir_rx51_on(ir_rx51);
 
 		ns = US_TO_NS(ir_rx51->wbuf[ir_rx51->wbuf_index]);
-		hrसमयr_add_expires_ns(समयr, ns);
+		hrtimer_add_expires_ns(timer, ns);
 
 		ir_rx51->wbuf_index++;
 
-		now = समयr->base->get_समय();
+		now = timer->base->get_time();
 
-	पूर्ण जबतक (hrसमयr_get_expires_tv64(समयr) < now);
+	} while (hrtimer_get_expires_tv64(timer) < now);
 
-	वापस HRTIMER_RESTART;
+	return HRTIMER_RESTART;
 end:
 	/* Stop TX here */
 	ir_rx51_off(ir_rx51);
 	ir_rx51->wbuf_index = -1;
 
-	wake_up_पूर्णांकerruptible(&ir_rx51->wqueue);
+	wake_up_interruptible(&ir_rx51->wqueue);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल पूर्णांक ir_rx51_tx(काष्ठा rc_dev *dev, अचिन्हित पूर्णांक *buffer,
-		      अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा ir_rx51 *ir_rx51 = dev->priv;
+static int ir_rx51_tx(struct rc_dev *dev, unsigned int *buffer,
+		      unsigned int count)
+{
+	struct ir_rx51 *ir_rx51 = dev->priv;
 
-	अगर (count > WBUF_LEN)
-		वापस -EINVAL;
+	if (count > WBUF_LEN)
+		return -EINVAL;
 
-	स_नकल(ir_rx51->wbuf, buffer, count * माप(अचिन्हित पूर्णांक));
+	memcpy(ir_rx51->wbuf, buffer, count * sizeof(unsigned int));
 
 	/* Wait any pending transfers to finish */
-	रुको_event_पूर्णांकerruptible(ir_rx51->wqueue, ir_rx51->wbuf_index < 0);
+	wait_event_interruptible(ir_rx51->wqueue, ir_rx51->wbuf_index < 0);
 
 	init_timing_params(ir_rx51);
-	अगर (count < WBUF_LEN)
+	if (count < WBUF_LEN)
 		ir_rx51->wbuf[count] = -1; /* Insert termination mark */
 
 	/*
-	 * REVISIT: Adjust latency requirements so the device करोesn't go in too
+	 * REVISIT: Adjust latency requirements so the device doesn't go in too
 	 * deep sleep states with pm_qos_add_request().
 	 */
 
 	ir_rx51_on(ir_rx51);
 	ir_rx51->wbuf_index = 1;
-	hrसमयr_start(&ir_rx51->समयr,
-		      ns_to_kसमय(US_TO_NS(ir_rx51->wbuf[0])),
+	hrtimer_start(&ir_rx51->timer,
+		      ns_to_ktime(US_TO_NS(ir_rx51->wbuf[0])),
 		      HRTIMER_MODE_REL);
 	/*
-	 * Don't वापस back to the userspace until the transfer has
+	 * Don't return back to the userspace until the transfer has
 	 * finished
 	 */
-	रुको_event_पूर्णांकerruptible(ir_rx51->wqueue, ir_rx51->wbuf_index < 0);
+	wait_event_interruptible(ir_rx51->wqueue, ir_rx51->wbuf_index < 0);
 
-	/* REVISIT: Remove pm_qos स्थिरraपूर्णांक, we can sleep again */
+	/* REVISIT: Remove pm_qos constraint, we can sleep again */
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक ir_rx51_खोलो(काष्ठा rc_dev *dev)
-अणु
-	काष्ठा ir_rx51 *ir_rx51 = dev->priv;
+static int ir_rx51_open(struct rc_dev *dev)
+{
+	struct ir_rx51 *ir_rx51 = dev->priv;
 
-	अगर (test_and_set_bit(1, &ir_rx51->device_is_खोलो))
-		वापस -EBUSY;
+	if (test_and_set_bit(1, &ir_rx51->device_is_open))
+		return -EBUSY;
 
-	ir_rx51->pwm = pwm_get(ir_rx51->dev, शून्य);
-	अगर (IS_ERR(ir_rx51->pwm)) अणु
-		पूर्णांक res = PTR_ERR(ir_rx51->pwm);
+	ir_rx51->pwm = pwm_get(ir_rx51->dev, NULL);
+	if (IS_ERR(ir_rx51->pwm)) {
+		int res = PTR_ERR(ir_rx51->pwm);
 
 		dev_err(ir_rx51->dev, "pwm_get failed: %d\n", res);
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ir_rx51_release(काष्ठा rc_dev *dev)
-अणु
-	काष्ठा ir_rx51 *ir_rx51 = dev->priv;
+static void ir_rx51_release(struct rc_dev *dev)
+{
+	struct ir_rx51 *ir_rx51 = dev->priv;
 
-	hrसमयr_cancel(&ir_rx51->समयr);
+	hrtimer_cancel(&ir_rx51->timer);
 	ir_rx51_off(ir_rx51);
 	pwm_put(ir_rx51->pwm);
 
-	clear_bit(1, &ir_rx51->device_is_खोलो);
-पूर्ण
+	clear_bit(1, &ir_rx51->device_is_open);
+}
 
-अटल काष्ठा ir_rx51 ir_rx51 = अणु
+static struct ir_rx51 ir_rx51 = {
 	.duty_cycle	= 50,
 	.wbuf_index	= -1,
-पूर्ण;
+};
 
-अटल पूर्णांक ir_rx51_set_duty_cycle(काष्ठा rc_dev *dev, u32 duty)
-अणु
-	काष्ठा ir_rx51 *ir_rx51 = dev->priv;
+static int ir_rx51_set_duty_cycle(struct rc_dev *dev, u32 duty)
+{
+	struct ir_rx51 *ir_rx51 = dev->priv;
 
 	ir_rx51->duty_cycle = duty;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ir_rx51_set_tx_carrier(काष्ठा rc_dev *dev, u32 carrier)
-अणु
-	काष्ठा ir_rx51 *ir_rx51 = dev->priv;
+static int ir_rx51_set_tx_carrier(struct rc_dev *dev, u32 carrier)
+{
+	struct ir_rx51 *ir_rx51 = dev->priv;
 
-	अगर (carrier > 500000 || carrier < 20000)
-		वापस -EINVAL;
+	if (carrier > 500000 || carrier < 20000)
+		return -EINVAL;
 
 	ir_rx51->freq = carrier;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 
-अटल पूर्णांक ir_rx51_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
-अणु
+static int ir_rx51_suspend(struct platform_device *dev, pm_message_t state)
+{
 	/*
-	 * In हाल the device is still खोलो, करो not suspend. Normally
+	 * In case the device is still open, do not suspend. Normally
 	 * this should not be a problem as lircd only keeps the device
-	 * खोलो only क्रम लघु periods of समय. We also करोn't want to
-	 * get involved with race conditions that might happen अगर we
+	 * open only for short periods of time. We also don't want to
+	 * get involved with race conditions that might happen if we
 	 * were in a middle of a transmit. Thus, we defer any suspend
 	 * actions until transmit has completed.
 	 */
-	अगर (test_and_set_bit(1, &ir_rx51.device_is_खोलो))
-		वापस -EAGAIN;
+	if (test_and_set_bit(1, &ir_rx51.device_is_open))
+		return -EAGAIN;
 
-	clear_bit(1, &ir_rx51.device_is_खोलो);
+	clear_bit(1, &ir_rx51.device_is_open);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ir_rx51_resume(काष्ठा platक्रमm_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int ir_rx51_resume(struct platform_device *dev)
+{
+	return 0;
+}
 
-#अन्यथा
+#else
 
-#घोषणा ir_rx51_suspend	शून्य
-#घोषणा ir_rx51_resume	शून्य
+#define ir_rx51_suspend	NULL
+#define ir_rx51_resume	NULL
 
-#पूर्ण_अगर /* CONFIG_PM */
+#endif /* CONFIG_PM */
 
-अटल पूर्णांक ir_rx51_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा pwm_device *pwm;
-	काष्ठा rc_dev *rcdev;
+static int ir_rx51_probe(struct platform_device *dev)
+{
+	struct pwm_device *pwm;
+	struct rc_dev *rcdev;
 
-	pwm = pwm_get(&dev->dev, शून्य);
-	अगर (IS_ERR(pwm)) अणु
-		पूर्णांक err = PTR_ERR(pwm);
+	pwm = pwm_get(&dev->dev, NULL);
+	if (IS_ERR(pwm)) {
+		int err = PTR_ERR(pwm);
 
-		अगर (err != -EPROBE_DEFER)
+		if (err != -EPROBE_DEFER)
 			dev_err(&dev->dev, "pwm_get failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Use शेष, in हाल userspace करोes not set the carrier */
+	/* Use default, in case userspace does not set the carrier */
 	ir_rx51.freq = DIV_ROUND_CLOSEST_ULL(pwm_get_period(pwm), NSEC_PER_SEC);
 	pwm_put(pwm);
 
-	hrसमयr_init(&ir_rx51.समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	ir_rx51.समयr.function = ir_rx51_समयr_cb;
+	hrtimer_init(&ir_rx51.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	ir_rx51.timer.function = ir_rx51_timer_cb;
 
 	ir_rx51.dev = &dev->dev;
 
 	rcdev = devm_rc_allocate_device(&dev->dev, RC_DRIVER_IR_RAW_TX);
-	अगर (!rcdev)
-		वापस -ENOMEM;
+	if (!rcdev)
+		return -ENOMEM;
 
 	rcdev->priv = &ir_rx51;
-	rcdev->खोलो = ir_rx51_खोलो;
-	rcdev->बंद = ir_rx51_release;
+	rcdev->open = ir_rx51_open;
+	rcdev->close = ir_rx51_release;
 	rcdev->tx_ir = ir_rx51_tx;
 	rcdev->s_tx_duty_cycle = ir_rx51_set_duty_cycle;
 	rcdev->s_tx_carrier = ir_rx51_set_tx_carrier;
@@ -264,33 +263,33 @@ end:
 
 	ir_rx51.rcdev = rcdev;
 
-	वापस devm_rc_रेजिस्टर_device(&dev->dev, ir_rx51.rcdev);
-पूर्ण
+	return devm_rc_register_device(&dev->dev, ir_rx51.rcdev);
+}
 
-अटल पूर्णांक ir_rx51_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	वापस 0;
-पूर्ण
+static int ir_rx51_remove(struct platform_device *dev)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id ir_rx51_match[] = अणु
-	अणु
+static const struct of_device_id ir_rx51_match[] = {
+	{
 		.compatible = "nokia,n900-ir",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, ir_rx51_match);
 
-अटल काष्ठा platक्रमm_driver ir_rx51_platक्रमm_driver = अणु
+static struct platform_driver ir_rx51_platform_driver = {
 	.probe		= ir_rx51_probe,
-	.हटाओ		= ir_rx51_हटाओ,
+	.remove		= ir_rx51_remove,
 	.suspend	= ir_rx51_suspend,
 	.resume		= ir_rx51_resume,
-	.driver		= अणु
+	.driver		= {
 		.name	= KBUILD_MODNAME,
 		.of_match_table = of_match_ptr(ir_rx51_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ir_rx51_platक्रमm_driver);
+	},
+};
+module_platform_driver(ir_rx51_platform_driver);
 
 MODULE_DESCRIPTION("IR TX driver for Nokia RX51");
 MODULE_AUTHOR("Nokia Corporation");

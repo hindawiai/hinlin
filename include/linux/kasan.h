@@ -1,469 +1,468 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_KASAN_H
-#घोषणा _LINUX_KASAN_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_KASAN_H
+#define _LINUX_KASAN_H
 
-#समावेश <linux/अटल_key.h>
-#समावेश <linux/types.h>
+#include <linux/static_key.h>
+#include <linux/types.h>
 
-काष्ठा kmem_cache;
-काष्ठा page;
-काष्ठा vm_काष्ठा;
-काष्ठा task_काष्ठा;
+struct kmem_cache;
+struct page;
+struct vm_struct;
+struct task_struct;
 
-#अगर_घोषित CONFIG_KASAN
+#ifdef CONFIG_KASAN
 
-#समावेश <linux/linkage.h>
-#समावेश <यंत्र/kasan.h>
+#include <linux/linkage.h>
+#include <asm/kasan.h>
 
-/* kasan_data काष्ठा is used in KUnit tests क्रम KASAN expected failures */
-काष्ठा kunit_kasan_expectation अणु
+/* kasan_data struct is used in KUnit tests for KASAN expected failures */
+struct kunit_kasan_expectation {
 	bool report_expected;
 	bool report_found;
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif
 
-#अगर defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
+#if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
 
-#समावेश <linux/pgtable.h>
+#include <linux/pgtable.h>
 
-/* Software KASAN implementations use shaकरोw memory. */
+/* Software KASAN implementations use shadow memory. */
 
-#अगर_घोषित CONFIG_KASAN_SW_TAGS
+#ifdef CONFIG_KASAN_SW_TAGS
 /* This matches KASAN_TAG_INVALID. */
-#घोषणा KASAN_SHADOW_INIT 0xFE
-#अन्यथा
-#घोषणा KASAN_SHADOW_INIT 0
-#पूर्ण_अगर
+#define KASAN_SHADOW_INIT 0xFE
+#else
+#define KASAN_SHADOW_INIT 0
+#endif
 
-#अगर_अघोषित PTE_HWTABLE_PTRS
-#घोषणा PTE_HWTABLE_PTRS 0
-#पूर्ण_अगर
+#ifndef PTE_HWTABLE_PTRS
+#define PTE_HWTABLE_PTRS 0
+#endif
 
-बाह्य अचिन्हित अक्षर kasan_early_shaकरोw_page[PAGE_SIZE];
-बाह्य pte_t kasan_early_shaकरोw_pte[PTRS_PER_PTE + PTE_HWTABLE_PTRS];
-बाह्य pmd_t kasan_early_shaकरोw_pmd[PTRS_PER_PMD];
-बाह्य pud_t kasan_early_shaकरोw_pud[PTRS_PER_PUD];
-बाह्य p4d_t kasan_early_shaकरोw_p4d[MAX_PTRS_PER_P4D];
+extern unsigned char kasan_early_shadow_page[PAGE_SIZE];
+extern pte_t kasan_early_shadow_pte[PTRS_PER_PTE + PTE_HWTABLE_PTRS];
+extern pmd_t kasan_early_shadow_pmd[PTRS_PER_PMD];
+extern pud_t kasan_early_shadow_pud[PTRS_PER_PUD];
+extern p4d_t kasan_early_shadow_p4d[MAX_PTRS_PER_P4D];
 
-पूर्णांक kasan_populate_early_shaकरोw(स्थिर व्योम *shaकरोw_start,
-				स्थिर व्योम *shaकरोw_end);
+int kasan_populate_early_shadow(const void *shadow_start,
+				const void *shadow_end);
 
-अटल अंतरभूत व्योम *kasan_mem_to_shaकरोw(स्थिर व्योम *addr)
-अणु
-	वापस (व्योम *)((अचिन्हित दीर्घ)addr >> KASAN_SHADOW_SCALE_SHIFT)
+static inline void *kasan_mem_to_shadow(const void *addr)
+{
+	return (void *)((unsigned long)addr >> KASAN_SHADOW_SCALE_SHIFT)
 		+ KASAN_SHADOW_OFFSET;
-पूर्ण
+}
 
-पूर्णांक kasan_add_zero_shaकरोw(व्योम *start, अचिन्हित दीर्घ size);
-व्योम kasan_हटाओ_zero_shaकरोw(व्योम *start, अचिन्हित दीर्घ size);
+int kasan_add_zero_shadow(void *start, unsigned long size);
+void kasan_remove_zero_shadow(void *start, unsigned long size);
 
 /* Enable reporting bugs after kasan_disable_current() */
-बाह्य व्योम kasan_enable_current(व्योम);
+extern void kasan_enable_current(void);
 
-/* Disable reporting bugs क्रम current task */
-बाह्य व्योम kasan_disable_current(व्योम);
+/* Disable reporting bugs for current task */
+extern void kasan_disable_current(void);
 
-#अन्यथा /* CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS */
+#else /* CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS */
 
-अटल अंतरभूत पूर्णांक kasan_add_zero_shaकरोw(व्योम *start, अचिन्हित दीर्घ size)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम kasan_हटाओ_zero_shaकरोw(व्योम *start,
-					अचिन्हित दीर्घ size)
-अणुपूर्ण
+static inline int kasan_add_zero_shadow(void *start, unsigned long size)
+{
+	return 0;
+}
+static inline void kasan_remove_zero_shadow(void *start,
+					unsigned long size)
+{}
 
-अटल अंतरभूत व्योम kasan_enable_current(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_disable_current(व्योम) अणुपूर्ण
+static inline void kasan_enable_current(void) {}
+static inline void kasan_disable_current(void) {}
 
-#पूर्ण_अगर /* CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS */
+#endif /* CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS */
 
-#अगर_घोषित CONFIG_KASAN
+#ifdef CONFIG_KASAN
 
-काष्ठा kasan_cache अणु
-	पूर्णांक alloc_meta_offset;
-	पूर्णांक मुक्त_meta_offset;
-	bool is_kदो_स्मृति;
-पूर्ण;
+struct kasan_cache {
+	int alloc_meta_offset;
+	int free_meta_offset;
+	bool is_kmalloc;
+};
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
+#ifdef CONFIG_KASAN_HW_TAGS
 
 DECLARE_STATIC_KEY_FALSE(kasan_flag_enabled);
 
-अटल __always_अंतरभूत bool kasan_enabled(व्योम)
-अणु
-	वापस अटल_branch_likely(&kasan_flag_enabled);
-पूर्ण
+static __always_inline bool kasan_enabled(void)
+{
+	return static_branch_likely(&kasan_flag_enabled);
+}
 
-अटल अंतरभूत bool kasan_has_पूर्णांकegrated_init(व्योम)
-अणु
-	वापस kasan_enabled();
-पूर्ण
+static inline bool kasan_has_integrated_init(void)
+{
+	return kasan_enabled();
+}
 
-#अन्यथा /* CONFIG_KASAN_HW_TAGS */
+#else /* CONFIG_KASAN_HW_TAGS */
 
-अटल अंतरभूत bool kasan_enabled(व्योम)
-अणु
-	वापस true;
-पूर्ण
+static inline bool kasan_enabled(void)
+{
+	return true;
+}
 
-अटल अंतरभूत bool kasan_has_पूर्णांकegrated_init(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool kasan_has_integrated_init(void)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* CONFIG_KASAN_HW_TAGS */
+#endif /* CONFIG_KASAN_HW_TAGS */
 
-slab_flags_t __kasan_never_merge(व्योम);
-अटल __always_अंतरभूत slab_flags_t kasan_never_merge(व्योम)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_never_merge();
-	वापस 0;
-पूर्ण
+slab_flags_t __kasan_never_merge(void);
+static __always_inline slab_flags_t kasan_never_merge(void)
+{
+	if (kasan_enabled())
+		return __kasan_never_merge();
+	return 0;
+}
 
-व्योम __kasan_unpoison_range(स्थिर व्योम *addr, माप_प्रकार size);
-अटल __always_अंतरभूत व्योम kasan_unpoison_range(स्थिर व्योम *addr, माप_प्रकार size)
-अणु
-	अगर (kasan_enabled())
+void __kasan_unpoison_range(const void *addr, size_t size);
+static __always_inline void kasan_unpoison_range(const void *addr, size_t size)
+{
+	if (kasan_enabled())
 		__kasan_unpoison_range(addr, size);
-पूर्ण
+}
 
-व्योम __kasan_alloc_pages(काष्ठा page *page, अचिन्हित पूर्णांक order, bool init);
-अटल __always_अंतरभूत व्योम kasan_alloc_pages(काष्ठा page *page,
-						अचिन्हित पूर्णांक order, bool init)
-अणु
-	अगर (kasan_enabled())
+void __kasan_alloc_pages(struct page *page, unsigned int order, bool init);
+static __always_inline void kasan_alloc_pages(struct page *page,
+						unsigned int order, bool init)
+{
+	if (kasan_enabled())
 		__kasan_alloc_pages(page, order, init);
-पूर्ण
+}
 
-व्योम __kasan_मुक्त_pages(काष्ठा page *page, अचिन्हित पूर्णांक order, bool init);
-अटल __always_अंतरभूत व्योम kasan_मुक्त_pages(काष्ठा page *page,
-						अचिन्हित पूर्णांक order, bool init)
-अणु
-	अगर (kasan_enabled())
-		__kasan_मुक्त_pages(page, order, init);
-पूर्ण
+void __kasan_free_pages(struct page *page, unsigned int order, bool init);
+static __always_inline void kasan_free_pages(struct page *page,
+						unsigned int order, bool init)
+{
+	if (kasan_enabled())
+		__kasan_free_pages(page, order, init);
+}
 
-व्योम __kasan_cache_create(काष्ठा kmem_cache *cache, अचिन्हित पूर्णांक *size,
+void __kasan_cache_create(struct kmem_cache *cache, unsigned int *size,
 				slab_flags_t *flags);
-अटल __always_अंतरभूत व्योम kasan_cache_create(काष्ठा kmem_cache *cache,
-				अचिन्हित पूर्णांक *size, slab_flags_t *flags)
-अणु
-	अगर (kasan_enabled())
+static __always_inline void kasan_cache_create(struct kmem_cache *cache,
+				unsigned int *size, slab_flags_t *flags)
+{
+	if (kasan_enabled())
 		__kasan_cache_create(cache, size, flags);
-पूर्ण
+}
 
-व्योम __kasan_cache_create_kदो_स्मृति(काष्ठा kmem_cache *cache);
-अटल __always_अंतरभूत व्योम kasan_cache_create_kदो_स्मृति(काष्ठा kmem_cache *cache)
-अणु
-	अगर (kasan_enabled())
-		__kasan_cache_create_kदो_स्मृति(cache);
-पूर्ण
+void __kasan_cache_create_kmalloc(struct kmem_cache *cache);
+static __always_inline void kasan_cache_create_kmalloc(struct kmem_cache *cache)
+{
+	if (kasan_enabled())
+		__kasan_cache_create_kmalloc(cache);
+}
 
-माप_प्रकार __kasan_metadata_size(काष्ठा kmem_cache *cache);
-अटल __always_अंतरभूत माप_प्रकार kasan_metadata_size(काष्ठा kmem_cache *cache)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_metadata_size(cache);
-	वापस 0;
-पूर्ण
+size_t __kasan_metadata_size(struct kmem_cache *cache);
+static __always_inline size_t kasan_metadata_size(struct kmem_cache *cache)
+{
+	if (kasan_enabled())
+		return __kasan_metadata_size(cache);
+	return 0;
+}
 
-व्योम __kasan_poison_slab(काष्ठा page *page);
-अटल __always_अंतरभूत व्योम kasan_poison_slab(काष्ठा page *page)
-अणु
-	अगर (kasan_enabled())
+void __kasan_poison_slab(struct page *page);
+static __always_inline void kasan_poison_slab(struct page *page)
+{
+	if (kasan_enabled())
 		__kasan_poison_slab(page);
-पूर्ण
+}
 
-व्योम __kasan_unpoison_object_data(काष्ठा kmem_cache *cache, व्योम *object);
-अटल __always_अंतरभूत व्योम kasan_unpoison_object_data(काष्ठा kmem_cache *cache,
-							व्योम *object)
-अणु
-	अगर (kasan_enabled())
+void __kasan_unpoison_object_data(struct kmem_cache *cache, void *object);
+static __always_inline void kasan_unpoison_object_data(struct kmem_cache *cache,
+							void *object)
+{
+	if (kasan_enabled())
 		__kasan_unpoison_object_data(cache, object);
-पूर्ण
+}
 
-व्योम __kasan_poison_object_data(काष्ठा kmem_cache *cache, व्योम *object);
-अटल __always_अंतरभूत व्योम kasan_poison_object_data(काष्ठा kmem_cache *cache,
-							व्योम *object)
-अणु
-	अगर (kasan_enabled())
+void __kasan_poison_object_data(struct kmem_cache *cache, void *object);
+static __always_inline void kasan_poison_object_data(struct kmem_cache *cache,
+							void *object)
+{
+	if (kasan_enabled())
 		__kasan_poison_object_data(cache, object);
-पूर्ण
+}
 
-व्योम * __must_check __kasan_init_slab_obj(काष्ठा kmem_cache *cache,
-					  स्थिर व्योम *object);
-अटल __always_अंतरभूत व्योम * __must_check kasan_init_slab_obj(
-				काष्ठा kmem_cache *cache, स्थिर व्योम *object)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_init_slab_obj(cache, object);
-	वापस (व्योम *)object;
-पूर्ण
+void * __must_check __kasan_init_slab_obj(struct kmem_cache *cache,
+					  const void *object);
+static __always_inline void * __must_check kasan_init_slab_obj(
+				struct kmem_cache *cache, const void *object)
+{
+	if (kasan_enabled())
+		return __kasan_init_slab_obj(cache, object);
+	return (void *)object;
+}
 
-bool __kasan_slab_मुक्त(काष्ठा kmem_cache *s, व्योम *object,
-			अचिन्हित दीर्घ ip, bool init);
-अटल __always_अंतरभूत bool kasan_slab_मुक्त(काष्ठा kmem_cache *s,
-						व्योम *object, bool init)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_slab_मुक्त(s, object, _RET_IP_, init);
-	वापस false;
-पूर्ण
+bool __kasan_slab_free(struct kmem_cache *s, void *object,
+			unsigned long ip, bool init);
+static __always_inline bool kasan_slab_free(struct kmem_cache *s,
+						void *object, bool init)
+{
+	if (kasan_enabled())
+		return __kasan_slab_free(s, object, _RET_IP_, init);
+	return false;
+}
 
-व्योम __kasan_kमुक्त_large(व्योम *ptr, अचिन्हित दीर्घ ip);
-अटल __always_अंतरभूत व्योम kasan_kमुक्त_large(व्योम *ptr)
-अणु
-	अगर (kasan_enabled())
-		__kasan_kमुक्त_large(ptr, _RET_IP_);
-पूर्ण
+void __kasan_kfree_large(void *ptr, unsigned long ip);
+static __always_inline void kasan_kfree_large(void *ptr)
+{
+	if (kasan_enabled())
+		__kasan_kfree_large(ptr, _RET_IP_);
+}
 
-व्योम __kasan_slab_मुक्त_mempool(व्योम *ptr, अचिन्हित दीर्घ ip);
-अटल __always_अंतरभूत व्योम kasan_slab_मुक्त_mempool(व्योम *ptr)
-अणु
-	अगर (kasan_enabled())
-		__kasan_slab_मुक्त_mempool(ptr, _RET_IP_);
-पूर्ण
+void __kasan_slab_free_mempool(void *ptr, unsigned long ip);
+static __always_inline void kasan_slab_free_mempool(void *ptr)
+{
+	if (kasan_enabled())
+		__kasan_slab_free_mempool(ptr, _RET_IP_);
+}
 
-व्योम * __must_check __kasan_slab_alloc(काष्ठा kmem_cache *s,
-				       व्योम *object, gfp_t flags, bool init);
-अटल __always_अंतरभूत व्योम * __must_check kasan_slab_alloc(
-		काष्ठा kmem_cache *s, व्योम *object, gfp_t flags, bool init)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_slab_alloc(s, object, flags, init);
-	वापस object;
-पूर्ण
+void * __must_check __kasan_slab_alloc(struct kmem_cache *s,
+				       void *object, gfp_t flags, bool init);
+static __always_inline void * __must_check kasan_slab_alloc(
+		struct kmem_cache *s, void *object, gfp_t flags, bool init)
+{
+	if (kasan_enabled())
+		return __kasan_slab_alloc(s, object, flags, init);
+	return object;
+}
 
-व्योम * __must_check __kasan_kदो_स्मृति(काष्ठा kmem_cache *s, स्थिर व्योम *object,
-				    माप_प्रकार size, gfp_t flags);
-अटल __always_अंतरभूत व्योम * __must_check kasan_kदो_स्मृति(काष्ठा kmem_cache *s,
-				स्थिर व्योम *object, माप_प्रकार size, gfp_t flags)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_kदो_स्मृति(s, object, size, flags);
-	वापस (व्योम *)object;
-पूर्ण
+void * __must_check __kasan_kmalloc(struct kmem_cache *s, const void *object,
+				    size_t size, gfp_t flags);
+static __always_inline void * __must_check kasan_kmalloc(struct kmem_cache *s,
+				const void *object, size_t size, gfp_t flags)
+{
+	if (kasan_enabled())
+		return __kasan_kmalloc(s, object, size, flags);
+	return (void *)object;
+}
 
-व्योम * __must_check __kasan_kदो_स्मृति_large(स्थिर व्योम *ptr,
-					  माप_प्रकार size, gfp_t flags);
-अटल __always_अंतरभूत व्योम * __must_check kasan_kदो_स्मृति_large(स्थिर व्योम *ptr,
-						      माप_प्रकार size, gfp_t flags)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_kदो_स्मृति_large(ptr, size, flags);
-	वापस (व्योम *)ptr;
-पूर्ण
+void * __must_check __kasan_kmalloc_large(const void *ptr,
+					  size_t size, gfp_t flags);
+static __always_inline void * __must_check kasan_kmalloc_large(const void *ptr,
+						      size_t size, gfp_t flags)
+{
+	if (kasan_enabled())
+		return __kasan_kmalloc_large(ptr, size, flags);
+	return (void *)ptr;
+}
 
-व्योम * __must_check __kasan_kपुनः_स्मृति(स्थिर व्योम *object,
-				     माप_प्रकार new_size, gfp_t flags);
-अटल __always_अंतरभूत व्योम * __must_check kasan_kपुनः_स्मृति(स्थिर व्योम *object,
-						 माप_प्रकार new_size, gfp_t flags)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_kपुनः_स्मृति(object, new_size, flags);
-	वापस (व्योम *)object;
-पूर्ण
+void * __must_check __kasan_krealloc(const void *object,
+				     size_t new_size, gfp_t flags);
+static __always_inline void * __must_check kasan_krealloc(const void *object,
+						 size_t new_size, gfp_t flags)
+{
+	if (kasan_enabled())
+		return __kasan_krealloc(object, new_size, flags);
+	return (void *)object;
+}
 
 /*
- * Unlike kasan_check_पढ़ो/ग_लिखो(), kasan_check_byte() is perक्रमmed even क्रम
- * the hardware tag-based mode that करोesn't rely on compiler instrumentation.
+ * Unlike kasan_check_read/write(), kasan_check_byte() is performed even for
+ * the hardware tag-based mode that doesn't rely on compiler instrumentation.
  */
-bool __kasan_check_byte(स्थिर व्योम *addr, अचिन्हित दीर्घ ip);
-अटल __always_अंतरभूत bool kasan_check_byte(स्थिर व्योम *addr)
-अणु
-	अगर (kasan_enabled())
-		वापस __kasan_check_byte(addr, _RET_IP_);
-	वापस true;
-पूर्ण
+bool __kasan_check_byte(const void *addr, unsigned long ip);
+static __always_inline bool kasan_check_byte(const void *addr)
+{
+	if (kasan_enabled())
+		return __kasan_check_byte(addr, _RET_IP_);
+	return true;
+}
 
 
-bool kasan_save_enable_multi_shot(व्योम);
-व्योम kasan_restore_multi_shot(bool enabled);
+bool kasan_save_enable_multi_shot(void);
+void kasan_restore_multi_shot(bool enabled);
 
-#अन्यथा /* CONFIG_KASAN */
+#else /* CONFIG_KASAN */
 
-अटल अंतरभूत bool kasan_enabled(व्योम)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत bool kasan_has_पूर्णांकegrated_init(व्योम)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत slab_flags_t kasan_never_merge(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम kasan_unpoison_range(स्थिर व्योम *address, माप_प्रकार size) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_alloc_pages(काष्ठा page *page, अचिन्हित पूर्णांक order, bool init) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_मुक्त_pages(काष्ठा page *page, अचिन्हित पूर्णांक order, bool init) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_cache_create(काष्ठा kmem_cache *cache,
-				      अचिन्हित पूर्णांक *size,
-				      slab_flags_t *flags) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_cache_create_kदो_स्मृति(काष्ठा kmem_cache *cache) अणुपूर्ण
-अटल अंतरभूत माप_प्रकार kasan_metadata_size(काष्ठा kmem_cache *cache) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम kasan_poison_slab(काष्ठा page *page) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_unpoison_object_data(काष्ठा kmem_cache *cache,
-					व्योम *object) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_poison_object_data(काष्ठा kmem_cache *cache,
-					व्योम *object) अणुपूर्ण
-अटल अंतरभूत व्योम *kasan_init_slab_obj(काष्ठा kmem_cache *cache,
-				स्थिर व्योम *object)
-अणु
-	वापस (व्योम *)object;
-पूर्ण
-अटल अंतरभूत bool kasan_slab_मुक्त(काष्ठा kmem_cache *s, व्योम *object, bool init)
-अणु
-	वापस false;
-पूर्ण
-अटल अंतरभूत व्योम kasan_kमुक्त_large(व्योम *ptr) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_slab_मुक्त_mempool(व्योम *ptr) अणुपूर्ण
-अटल अंतरभूत व्योम *kasan_slab_alloc(काष्ठा kmem_cache *s, व्योम *object,
+static inline bool kasan_enabled(void)
+{
+	return false;
+}
+static inline bool kasan_has_integrated_init(void)
+{
+	return false;
+}
+static inline slab_flags_t kasan_never_merge(void)
+{
+	return 0;
+}
+static inline void kasan_unpoison_range(const void *address, size_t size) {}
+static inline void kasan_alloc_pages(struct page *page, unsigned int order, bool init) {}
+static inline void kasan_free_pages(struct page *page, unsigned int order, bool init) {}
+static inline void kasan_cache_create(struct kmem_cache *cache,
+				      unsigned int *size,
+				      slab_flags_t *flags) {}
+static inline void kasan_cache_create_kmalloc(struct kmem_cache *cache) {}
+static inline size_t kasan_metadata_size(struct kmem_cache *cache) { return 0; }
+static inline void kasan_poison_slab(struct page *page) {}
+static inline void kasan_unpoison_object_data(struct kmem_cache *cache,
+					void *object) {}
+static inline void kasan_poison_object_data(struct kmem_cache *cache,
+					void *object) {}
+static inline void *kasan_init_slab_obj(struct kmem_cache *cache,
+				const void *object)
+{
+	return (void *)object;
+}
+static inline bool kasan_slab_free(struct kmem_cache *s, void *object, bool init)
+{
+	return false;
+}
+static inline void kasan_kfree_large(void *ptr) {}
+static inline void kasan_slab_free_mempool(void *ptr) {}
+static inline void *kasan_slab_alloc(struct kmem_cache *s, void *object,
 				   gfp_t flags, bool init)
-अणु
-	वापस object;
-पूर्ण
-अटल अंतरभूत व्योम *kasan_kदो_स्मृति(काष्ठा kmem_cache *s, स्थिर व्योम *object,
-				माप_प्रकार size, gfp_t flags)
-अणु
-	वापस (व्योम *)object;
-पूर्ण
-अटल अंतरभूत व्योम *kasan_kदो_स्मृति_large(स्थिर व्योम *ptr, माप_प्रकार size, gfp_t flags)
-अणु
-	वापस (व्योम *)ptr;
-पूर्ण
-अटल अंतरभूत व्योम *kasan_kपुनः_स्मृति(स्थिर व्योम *object, माप_प्रकार new_size,
+{
+	return object;
+}
+static inline void *kasan_kmalloc(struct kmem_cache *s, const void *object,
+				size_t size, gfp_t flags)
+{
+	return (void *)object;
+}
+static inline void *kasan_kmalloc_large(const void *ptr, size_t size, gfp_t flags)
+{
+	return (void *)ptr;
+}
+static inline void *kasan_krealloc(const void *object, size_t new_size,
 				 gfp_t flags)
-अणु
-	वापस (व्योम *)object;
-पूर्ण
-अटल अंतरभूत bool kasan_check_byte(स्थिर व्योम *address)
-अणु
-	वापस true;
-पूर्ण
+{
+	return (void *)object;
+}
+static inline bool kasan_check_byte(const void *address)
+{
+	return true;
+}
 
-#पूर्ण_अगर /* CONFIG_KASAN */
+#endif /* CONFIG_KASAN */
 
-#अगर defined(CONFIG_KASAN) && defined(CONFIG_KASAN_STACK)
-व्योम kasan_unpoison_task_stack(काष्ठा task_काष्ठा *task);
-#अन्यथा
-अटल अंतरभूत व्योम kasan_unpoison_task_stack(काष्ठा task_काष्ठा *task) अणुपूर्ण
-#पूर्ण_अगर
+#if defined(CONFIG_KASAN) && defined(CONFIG_KASAN_STACK)
+void kasan_unpoison_task_stack(struct task_struct *task);
+#else
+static inline void kasan_unpoison_task_stack(struct task_struct *task) {}
+#endif
 
-#अगर_घोषित CONFIG_KASAN_GENERIC
+#ifdef CONFIG_KASAN_GENERIC
 
-व्योम kasan_cache_shrink(काष्ठा kmem_cache *cache);
-व्योम kasan_cache_shutकरोwn(काष्ठा kmem_cache *cache);
-व्योम kasan_record_aux_stack(व्योम *ptr);
+void kasan_cache_shrink(struct kmem_cache *cache);
+void kasan_cache_shutdown(struct kmem_cache *cache);
+void kasan_record_aux_stack(void *ptr);
 
-#अन्यथा /* CONFIG_KASAN_GENERIC */
+#else /* CONFIG_KASAN_GENERIC */
 
-अटल अंतरभूत व्योम kasan_cache_shrink(काष्ठा kmem_cache *cache) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_cache_shutकरोwn(काष्ठा kmem_cache *cache) अणुपूर्ण
-अटल अंतरभूत व्योम kasan_record_aux_stack(व्योम *ptr) अणुपूर्ण
+static inline void kasan_cache_shrink(struct kmem_cache *cache) {}
+static inline void kasan_cache_shutdown(struct kmem_cache *cache) {}
+static inline void kasan_record_aux_stack(void *ptr) {}
 
-#पूर्ण_अगर /* CONFIG_KASAN_GENERIC */
+#endif /* CONFIG_KASAN_GENERIC */
 
-#अगर defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
+#if defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
 
-अटल अंतरभूत व्योम *kasan_reset_tag(स्थिर व्योम *addr)
-अणु
-	वापस (व्योम *)arch_kasan_reset_tag(addr);
-पूर्ण
+static inline void *kasan_reset_tag(const void *addr)
+{
+	return (void *)arch_kasan_reset_tag(addr);
+}
 
 /**
- * kasan_report - prपूर्णांक a report about a bad memory access detected by KASAN
+ * kasan_report - print a report about a bad memory access detected by KASAN
  * @addr: address of the bad access
  * @size: size of the bad access
- * @is_ग_लिखो: whether the bad access is a ग_लिखो or a पढ़ो
- * @ip: inकाष्ठाion poपूर्णांकer क्रम the accessibility check or the bad access itself
+ * @is_write: whether the bad access is a write or a read
+ * @ip: instruction pointer for the accessibility check or the bad access itself
  */
-bool kasan_report(अचिन्हित दीर्घ addr, माप_प्रकार size,
-		bool is_ग_लिखो, अचिन्हित दीर्घ ip);
+bool kasan_report(unsigned long addr, size_t size,
+		bool is_write, unsigned long ip);
 
-#अन्यथा /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
+#else /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
 
-अटल अंतरभूत व्योम *kasan_reset_tag(स्थिर व्योम *addr)
-अणु
-	वापस (व्योम *)addr;
-पूर्ण
+static inline void *kasan_reset_tag(const void *addr)
+{
+	return (void *)addr;
+}
 
-#पूर्ण_अगर /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS*/
+#endif /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS*/
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
+#ifdef CONFIG_KASAN_HW_TAGS
 
-व्योम kasan_report_async(व्योम);
+void kasan_report_async(void);
 
-#पूर्ण_अगर /* CONFIG_KASAN_HW_TAGS */
+#endif /* CONFIG_KASAN_HW_TAGS */
 
-#अगर_घोषित CONFIG_KASAN_SW_TAGS
-व्योम __init kasan_init_sw_tags(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम kasan_init_sw_tags(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN_SW_TAGS
+void __init kasan_init_sw_tags(void);
+#else
+static inline void kasan_init_sw_tags(void) { }
+#endif
 
-#अगर_घोषित CONFIG_KASAN_HW_TAGS
-व्योम kasan_init_hw_tags_cpu(व्योम);
-व्योम __init kasan_init_hw_tags(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम kasan_init_hw_tags_cpu(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम kasan_init_hw_tags(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN_HW_TAGS
+void kasan_init_hw_tags_cpu(void);
+void __init kasan_init_hw_tags(void);
+#else
+static inline void kasan_init_hw_tags_cpu(void) { }
+static inline void kasan_init_hw_tags(void) { }
+#endif
 
-#अगर_घोषित CONFIG_KASAN_VMALLOC
+#ifdef CONFIG_KASAN_VMALLOC
 
-पूर्णांक kasan_populate_vदो_स्मृति(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size);
-व्योम kasan_poison_vदो_स्मृति(स्थिर व्योम *start, अचिन्हित दीर्घ size);
-व्योम kasan_unpoison_vदो_स्मृति(स्थिर व्योम *start, अचिन्हित दीर्घ size);
-व्योम kasan_release_vदो_स्मृति(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-			   अचिन्हित दीर्घ मुक्त_region_start,
-			   अचिन्हित दीर्घ मुक्त_region_end);
+int kasan_populate_vmalloc(unsigned long addr, unsigned long size);
+void kasan_poison_vmalloc(const void *start, unsigned long size);
+void kasan_unpoison_vmalloc(const void *start, unsigned long size);
+void kasan_release_vmalloc(unsigned long start, unsigned long end,
+			   unsigned long free_region_start,
+			   unsigned long free_region_end);
 
-#अन्यथा /* CONFIG_KASAN_VMALLOC */
+#else /* CONFIG_KASAN_VMALLOC */
 
-अटल अंतरभूत पूर्णांक kasan_populate_vदो_स्मृति(अचिन्हित दीर्घ start,
-					अचिन्हित दीर्घ size)
-अणु
-	वापस 0;
-पूर्ण
+static inline int kasan_populate_vmalloc(unsigned long start,
+					unsigned long size)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम kasan_poison_vदो_स्मृति(स्थिर व्योम *start, अचिन्हित दीर्घ size)
-अणु पूर्ण
-अटल अंतरभूत व्योम kasan_unpoison_vदो_स्मृति(स्थिर व्योम *start, अचिन्हित दीर्घ size)
-अणु पूर्ण
-अटल अंतरभूत व्योम kasan_release_vदो_स्मृति(अचिन्हित दीर्घ start,
-					 अचिन्हित दीर्घ end,
-					 अचिन्हित दीर्घ मुक्त_region_start,
-					 अचिन्हित दीर्घ मुक्त_region_end) अणुपूर्ण
+static inline void kasan_poison_vmalloc(const void *start, unsigned long size)
+{ }
+static inline void kasan_unpoison_vmalloc(const void *start, unsigned long size)
+{ }
+static inline void kasan_release_vmalloc(unsigned long start,
+					 unsigned long end,
+					 unsigned long free_region_start,
+					 unsigned long free_region_end) {}
 
-#पूर्ण_अगर /* CONFIG_KASAN_VMALLOC */
+#endif /* CONFIG_KASAN_VMALLOC */
 
-#अगर (defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)) && \
+#if (defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)) && \
 		!defined(CONFIG_KASAN_VMALLOC)
 
 /*
- * These functions provide a special हाल to support backing module
- * allocations with real shaकरोw memory. With KASAN vदो_स्मृति, the special
- * हाल is unnecessary, as the work is handled in the generic हाल.
+ * These functions provide a special case to support backing module
+ * allocations with real shadow memory. With KASAN vmalloc, the special
+ * case is unnecessary, as the work is handled in the generic case.
  */
-पूर्णांक kasan_module_alloc(व्योम *addr, माप_प्रकार size);
-व्योम kasan_मुक्त_shaकरोw(स्थिर काष्ठा vm_काष्ठा *vm);
+int kasan_module_alloc(void *addr, size_t size);
+void kasan_free_shadow(const struct vm_struct *vm);
 
-#अन्यथा /* (CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS) && !CONFIG_KASAN_VMALLOC */
+#else /* (CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS) && !CONFIG_KASAN_VMALLOC */
 
-अटल अंतरभूत पूर्णांक kasan_module_alloc(व्योम *addr, माप_प्रकार size) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम kasan_मुक्त_shaकरोw(स्थिर काष्ठा vm_काष्ठा *vm) अणुपूर्ण
+static inline int kasan_module_alloc(void *addr, size_t size) { return 0; }
+static inline void kasan_free_shadow(const struct vm_struct *vm) {}
 
-#पूर्ण_अगर /* (CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS) && !CONFIG_KASAN_VMALLOC */
+#endif /* (CONFIG_KASAN_GENERIC || CONFIG_KASAN_SW_TAGS) && !CONFIG_KASAN_VMALLOC */
 
-#अगर_घोषित CONFIG_KASAN_INLINE
-व्योम kasan_non_canonical_hook(अचिन्हित दीर्घ addr);
-#अन्यथा /* CONFIG_KASAN_INLINE */
-अटल अंतरभूत व्योम kasan_non_canonical_hook(अचिन्हित दीर्घ addr) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_KASAN_INLINE */
+#ifdef CONFIG_KASAN_INLINE
+void kasan_non_canonical_hook(unsigned long addr);
+#else /* CONFIG_KASAN_INLINE */
+static inline void kasan_non_canonical_hook(unsigned long addr) { }
+#endif /* CONFIG_KASAN_INLINE */
 
-#पूर्ण_अगर /* LINUX_KASAN_H */
+#endif /* LINUX_KASAN_H */

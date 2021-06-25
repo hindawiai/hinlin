@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  * arch/xtensa/mm/cache.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001-2006 Tensilica Inc.
  *
@@ -14,37 +13,37 @@
  *
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pgtable.h>
+#include <linux/init.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/ptrace.h>
+#include <linux/memblock.h>
+#include <linux/swap.h>
+#include <linux/pagemap.h>
+#include <linux/pgtable.h>
 
-#समावेश <यंत्र/bootparam.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/page.h>
+#include <asm/bootparam.h>
+#include <asm/mmu_context.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
+#include <asm/page.h>
 
 /* 
  * Note:
  * The kernel provides one architecture bit PG_arch_1 in the page flags that 
- * can be used क्रम cache coherency.
+ * can be used for cache coherency.
  *
  * I$-D$ coherency.
  *
- * The Xtensa architecture करोesn't keep the inकाष्ठाion cache coherent with
- * the data cache. We use the architecture bit to indicate अगर the caches
+ * The Xtensa architecture doesn't keep the instruction cache coherent with
+ * the data cache. We use the architecture bit to indicate if the caches
  * are coherent. The kernel clears this bit whenever a page is added to the
- * page cache. At that समय, the caches might not be in sync. We, thereक्रमe,
- * define this flag as 'clean' अगर set.
+ * page cache. At that time, the caches might not be in sync. We, therefore,
+ * define this flag as 'clean' if set.
  *
  * D-cache aliasing.
  *
@@ -56,18 +55,18 @@
  *
  */
 
-#अगर (DCACHE_WAY_SIZE > PAGE_SIZE)
-अटल अंतरभूत व्योम kmap_invalidate_coherent(काष्ठा page *page,
-					    अचिन्हित दीर्घ vaddr)
-अणु
-	अगर (!DCACHE_ALIAS_EQ(page_to_phys(page), vaddr)) अणु
-		अचिन्हित दीर्घ kvaddr;
+#if (DCACHE_WAY_SIZE > PAGE_SIZE)
+static inline void kmap_invalidate_coherent(struct page *page,
+					    unsigned long vaddr)
+{
+	if (!DCACHE_ALIAS_EQ(page_to_phys(page), vaddr)) {
+		unsigned long kvaddr;
 
-		अगर (!PageHighMem(page)) अणु
-			kvaddr = (अचिन्हित दीर्घ)page_to_virt(page);
+		if (!PageHighMem(page)) {
+			kvaddr = (unsigned long)page_to_virt(page);
 
 			__invalidate_dcache_page(kvaddr);
-		पूर्ण अन्यथा अणु
+		} else {
 			kvaddr = TLBTEMP_BASE_1 +
 				(page_to_phys(page) & DCACHE_ALIAS_MASK);
 
@@ -75,37 +74,37 @@
 			__invalidate_dcache_page_alias(kvaddr,
 						       page_to_phys(page));
 			preempt_enable();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल अंतरभूत व्योम *coherent_kvaddr(काष्ठा page *page, अचिन्हित दीर्घ base,
-				    अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ *paddr)
-अणु
+static inline void *coherent_kvaddr(struct page *page, unsigned long base,
+				    unsigned long vaddr, unsigned long *paddr)
+{
 	*paddr = page_to_phys(page);
-	वापस (व्योम *)(base + (vaddr & DCACHE_ALIAS_MASK));
-पूर्ण
+	return (void *)(base + (vaddr & DCACHE_ALIAS_MASK));
+}
 
-व्योम clear_user_highpage(काष्ठा page *page, अचिन्हित दीर्घ vaddr)
-अणु
-	अचिन्हित दीर्घ paddr;
-	व्योम *kvaddr = coherent_kvaddr(page, TLBTEMP_BASE_1, vaddr, &paddr);
+void clear_user_highpage(struct page *page, unsigned long vaddr)
+{
+	unsigned long paddr;
+	void *kvaddr = coherent_kvaddr(page, TLBTEMP_BASE_1, vaddr, &paddr);
 
 	preempt_disable();
 	kmap_invalidate_coherent(page, vaddr);
 	set_bit(PG_arch_1, &page->flags);
 	clear_page_alias(kvaddr, paddr);
 	preempt_enable();
-पूर्ण
+}
 EXPORT_SYMBOL(clear_user_highpage);
 
-व्योम copy_user_highpage(काष्ठा page *dst, काष्ठा page *src,
-			अचिन्हित दीर्घ vaddr, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अचिन्हित दीर्घ dst_paddr, src_paddr;
-	व्योम *dst_vaddr = coherent_kvaddr(dst, TLBTEMP_BASE_1, vaddr,
+void copy_user_highpage(struct page *dst, struct page *src,
+			unsigned long vaddr, struct vm_area_struct *vma)
+{
+	unsigned long dst_paddr, src_paddr;
+	void *dst_vaddr = coherent_kvaddr(dst, TLBTEMP_BASE_1, vaddr,
 					  &dst_paddr);
-	व्योम *src_vaddr = coherent_kvaddr(src, TLBTEMP_BASE_2, vaddr,
+	void *src_vaddr = coherent_kvaddr(src, TLBTEMP_BASE_2, vaddr,
 					  &src_paddr);
 
 	preempt_disable();
@@ -113,18 +112,18 @@ EXPORT_SYMBOL(clear_user_highpage);
 	set_bit(PG_arch_1, &dst->flags);
 	copy_page_alias(dst_vaddr, src_vaddr, dst_paddr, src_paddr);
 	preempt_enable();
-पूर्ण
+}
 EXPORT_SYMBOL(copy_user_highpage);
 
 /*
- * Any समय the kernel ग_लिखोs to a user page cache page, or it is about to
- * पढ़ो from a page cache page this routine is called.
+ * Any time the kernel writes to a user page cache page, or it is about to
+ * read from a page cache page this routine is called.
  *
  */
 
-व्योम flush_dcache_page(काष्ठा page *page)
-अणु
-	काष्ठा address_space *mapping = page_mapping_file(page);
+void flush_dcache_page(struct page *page)
+{
+	struct address_space *mapping = page_mapping_file(page);
 
 	/*
 	 * If we have a mapping but the page is not mapped to user-space
@@ -132,27 +131,27 @@ EXPORT_SYMBOL(copy_user_highpage);
 	 * caches until update_mmu().
 	 */
 
-	अगर (mapping && !mapping_mapped(mapping)) अणु
-		अगर (!test_bit(PG_arch_1, &page->flags))
+	if (mapping && !mapping_mapped(mapping)) {
+		if (!test_bit(PG_arch_1, &page->flags))
 			set_bit(PG_arch_1, &page->flags);
-		वापस;
+		return;
 
-	पूर्ण अन्यथा अणु
+	} else {
 
-		अचिन्हित दीर्घ phys = page_to_phys(page);
-		अचिन्हित दीर्घ temp = page->index << PAGE_SHIFT;
-		अचिन्हित दीर्घ alias = !(DCACHE_ALIAS_EQ(temp, phys));
-		अचिन्हित दीर्घ virt;
+		unsigned long phys = page_to_phys(page);
+		unsigned long temp = page->index << PAGE_SHIFT;
+		unsigned long alias = !(DCACHE_ALIAS_EQ(temp, phys));
+		unsigned long virt;
 
 		/* 
 		 * Flush the page in kernel space and user space.
-		 * Note that we can omit that step अगर aliasing is not
-		 * an issue, but we करो have to synchronize I$ and D$
-		 * अगर we have a mapping.
+		 * Note that we can omit that step if aliasing is not
+		 * an issue, but we do have to synchronize I$ and D$
+		 * if we have a mapping.
 		 */
 
-		अगर (!alias && !mapping)
-			वापस;
+		if (!alias && !mapping)
+			return;
 
 		preempt_disable();
 		virt = TLBTEMP_BASE_1 + (phys & DCACHE_ALIAS_MASK);
@@ -160,62 +159,62 @@ EXPORT_SYMBOL(copy_user_highpage);
 
 		virt = TLBTEMP_BASE_1 + (temp & DCACHE_ALIAS_MASK);
 
-		अगर (alias)
+		if (alias)
 			__flush_invalidate_dcache_page_alias(virt, phys);
 
-		अगर (mapping)
+		if (mapping)
 			__invalidate_icache_page_alias(virt, phys);
 		preempt_enable();
-	पूर्ण
+	}
 
-	/* There shouldn't be an entry in the cache क्रम this page anymore. */
-पूर्ण
+	/* There shouldn't be an entry in the cache for this page anymore. */
+}
 EXPORT_SYMBOL(flush_dcache_page);
 
 /*
  * For now, flush the whole cache. FIXME??
  */
 
-व्योम local_flush_cache_range(काष्ठा vm_area_काष्ठा *vma,
-		       अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+void local_flush_cache_range(struct vm_area_struct *vma,
+		       unsigned long start, unsigned long end)
+{
 	__flush_invalidate_dcache_all();
 	__invalidate_icache_all();
-पूर्ण
+}
 EXPORT_SYMBOL(local_flush_cache_range);
 
 /* 
- * Remove any entry in the cache क्रम this page. 
+ * Remove any entry in the cache for this page. 
  *
- * Note that this function is only called क्रम user pages, so use the
+ * Note that this function is only called for user pages, so use the
  * alias versions of the cache flush functions.
  */
 
-व्योम local_flush_cache_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-		      अचिन्हित दीर्घ pfn)
-अणु
-	/* Note that we have to use the 'alias' address to aव्योम multi-hit */
+void local_flush_cache_page(struct vm_area_struct *vma, unsigned long address,
+		      unsigned long pfn)
+{
+	/* Note that we have to use the 'alias' address to avoid multi-hit */
 
-	अचिन्हित दीर्घ phys = page_to_phys(pfn_to_page(pfn));
-	अचिन्हित दीर्घ virt = TLBTEMP_BASE_1 + (address & DCACHE_ALIAS_MASK);
+	unsigned long phys = page_to_phys(pfn_to_page(pfn));
+	unsigned long virt = TLBTEMP_BASE_1 + (address & DCACHE_ALIAS_MASK);
 
 	preempt_disable();
 	__flush_invalidate_dcache_page_alias(virt, phys);
 	__invalidate_icache_page_alias(virt, phys);
 	preempt_enable();
-पूर्ण
+}
 EXPORT_SYMBOL(local_flush_cache_page);
 
-#पूर्ण_अगर /* DCACHE_WAY_SIZE > PAGE_SIZE */
+#endif /* DCACHE_WAY_SIZE > PAGE_SIZE */
 
-व्योम
-update_mmu_cache(काष्ठा vm_area_काष्ठा * vma, अचिन्हित दीर्घ addr, pte_t *ptep)
-अणु
-	अचिन्हित दीर्घ pfn = pte_pfn(*ptep);
-	काष्ठा page *page;
+void
+update_mmu_cache(struct vm_area_struct * vma, unsigned long addr, pte_t *ptep)
+{
+	unsigned long pfn = pte_pfn(*ptep);
+	struct page *page;
 
-	अगर (!pfn_valid(pfn))
-		वापस;
+	if (!pfn_valid(pfn))
+		return;
 
 	page = pfn_to_page(pfn);
 
@@ -223,101 +222,101 @@ update_mmu_cache(काष्ठा vm_area_काष्ठा * vma, अचि�
 
 	flush_tlb_page(vma, addr);
 
-#अगर (DCACHE_WAY_SIZE > PAGE_SIZE)
+#if (DCACHE_WAY_SIZE > PAGE_SIZE)
 
-	अगर (!PageReserved(page) && test_bit(PG_arch_1, &page->flags)) अणु
-		अचिन्हित दीर्घ phys = page_to_phys(page);
-		अचिन्हित दीर्घ पंचांगp;
+	if (!PageReserved(page) && test_bit(PG_arch_1, &page->flags)) {
+		unsigned long phys = page_to_phys(page);
+		unsigned long tmp;
 
 		preempt_disable();
-		पंचांगp = TLBTEMP_BASE_1 + (phys & DCACHE_ALIAS_MASK);
-		__flush_invalidate_dcache_page_alias(पंचांगp, phys);
-		पंचांगp = TLBTEMP_BASE_1 + (addr & DCACHE_ALIAS_MASK);
-		__flush_invalidate_dcache_page_alias(पंचांगp, phys);
-		__invalidate_icache_page_alias(पंचांगp, phys);
+		tmp = TLBTEMP_BASE_1 + (phys & DCACHE_ALIAS_MASK);
+		__flush_invalidate_dcache_page_alias(tmp, phys);
+		tmp = TLBTEMP_BASE_1 + (addr & DCACHE_ALIAS_MASK);
+		__flush_invalidate_dcache_page_alias(tmp, phys);
+		__invalidate_icache_page_alias(tmp, phys);
 		preempt_enable();
 
 		clear_bit(PG_arch_1, &page->flags);
-	पूर्ण
-#अन्यथा
-	अगर (!PageReserved(page) && !test_bit(PG_arch_1, &page->flags)
-	    && (vma->vm_flags & VM_EXEC) != 0) अणु
-		अचिन्हित दीर्घ paddr = (अचिन्हित दीर्घ)kmap_atomic(page);
+	}
+#else
+	if (!PageReserved(page) && !test_bit(PG_arch_1, &page->flags)
+	    && (vma->vm_flags & VM_EXEC) != 0) {
+		unsigned long paddr = (unsigned long)kmap_atomic(page);
 		__flush_dcache_page(paddr);
 		__invalidate_icache_page(paddr);
 		set_bit(PG_arch_1, &page->flags);
-		kunmap_atomic((व्योम *)paddr);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		kunmap_atomic((void *)paddr);
+	}
+#endif
+}
 
 /*
- * access_process_vm() has called get_user_pages(), which has करोne a
+ * access_process_vm() has called get_user_pages(), which has done a
  * flush_dcache_page() on the page.
  */
 
-#अगर (DCACHE_WAY_SIZE > PAGE_SIZE)
+#if (DCACHE_WAY_SIZE > PAGE_SIZE)
 
-व्योम copy_to_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
-		अचिन्हित दीर्घ vaddr, व्योम *dst, स्थिर व्योम *src,
-		अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ phys = page_to_phys(page);
-	अचिन्हित दीर्घ alias = !(DCACHE_ALIAS_EQ(vaddr, phys));
+void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
+		unsigned long vaddr, void *dst, const void *src,
+		unsigned long len)
+{
+	unsigned long phys = page_to_phys(page);
+	unsigned long alias = !(DCACHE_ALIAS_EQ(vaddr, phys));
 
-	/* Flush and invalidate user page अगर aliased. */
+	/* Flush and invalidate user page if aliased. */
 
-	अगर (alias) अणु
-		अचिन्हित दीर्घ t = TLBTEMP_BASE_1 + (vaddr & DCACHE_ALIAS_MASK);
+	if (alias) {
+		unsigned long t = TLBTEMP_BASE_1 + (vaddr & DCACHE_ALIAS_MASK);
 		preempt_disable();
 		__flush_invalidate_dcache_page_alias(t, phys);
 		preempt_enable();
-	पूर्ण
+	}
 
 	/* Copy data */
 	
-	स_नकल(dst, src, len);
+	memcpy(dst, src, len);
 
 	/*
-	 * Flush and invalidate kernel page अगर aliased and synchronize 
-	 * data and inकाष्ठाion caches क्रम executable pages. 
+	 * Flush and invalidate kernel page if aliased and synchronize 
+	 * data and instruction caches for executable pages. 
 	 */
 
-	अगर (alias) अणु
-		अचिन्हित दीर्घ t = TLBTEMP_BASE_1 + (vaddr & DCACHE_ALIAS_MASK);
+	if (alias) {
+		unsigned long t = TLBTEMP_BASE_1 + (vaddr & DCACHE_ALIAS_MASK);
 
 		preempt_disable();
-		__flush_invalidate_dcache_range((अचिन्हित दीर्घ) dst, len);
-		अगर ((vma->vm_flags & VM_EXEC) != 0)
+		__flush_invalidate_dcache_range((unsigned long) dst, len);
+		if ((vma->vm_flags & VM_EXEC) != 0)
 			__invalidate_icache_page_alias(t, phys);
 		preempt_enable();
 
-	पूर्ण अन्यथा अगर ((vma->vm_flags & VM_EXEC) != 0) अणु
-		__flush_dcache_range((अचिन्हित दीर्घ)dst,len);
-		__invalidate_icache_range((अचिन्हित दीर्घ) dst, len);
-	पूर्ण
-पूर्ण
+	} else if ((vma->vm_flags & VM_EXEC) != 0) {
+		__flush_dcache_range((unsigned long)dst,len);
+		__invalidate_icache_range((unsigned long) dst, len);
+	}
+}
 
-बाह्य व्योम copy_from_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
-		अचिन्हित दीर्घ vaddr, व्योम *dst, स्थिर व्योम *src,
-		अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ phys = page_to_phys(page);
-	अचिन्हित दीर्घ alias = !(DCACHE_ALIAS_EQ(vaddr, phys));
+extern void copy_from_user_page(struct vm_area_struct *vma, struct page *page,
+		unsigned long vaddr, void *dst, const void *src,
+		unsigned long len)
+{
+	unsigned long phys = page_to_phys(page);
+	unsigned long alias = !(DCACHE_ALIAS_EQ(vaddr, phys));
 
 	/*
-	 * Flush user page अगर aliased. 
+	 * Flush user page if aliased. 
 	 * (Note: a simply flush would be sufficient) 
 	 */
 
-	अगर (alias) अणु
-		अचिन्हित दीर्घ t = TLBTEMP_BASE_1 + (vaddr & DCACHE_ALIAS_MASK);
+	if (alias) {
+		unsigned long t = TLBTEMP_BASE_1 + (vaddr & DCACHE_ALIAS_MASK);
 		preempt_disable();
 		__flush_invalidate_dcache_page_alias(t, phys);
 		preempt_enable();
-	पूर्ण
+	}
 
-	स_नकल(dst, src, len);
-पूर्ण
+	memcpy(dst, src, len);
+}
 
-#पूर्ण_अगर
+#endif

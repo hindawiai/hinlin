@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * pata_cypress.c 	- Cypress PATA क्रम new ATA layer
+ * pata_cypress.c 	- Cypress PATA for new ATA layer
  *			  (C) 2006 Red Hat Inc
  *			  Alan Cox
  *
@@ -10,20 +9,20 @@
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <scsi/scsi_host.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME "pata_cypress"
-#घोषणा DRV_VERSION "0.1.5"
+#define DRV_NAME "pata_cypress"
+#define DRV_VERSION "0.1.5"
 
-/* here are the offset definitions क्रम the रेजिस्टरs */
+/* here are the offset definitions for the registers */
 
-क्रमागत अणु
+enum {
 	CY82_IDE_CMDREG		= 0x04,
 	CY82_IDE_ADDRSETUP	= 0x48,
 	CY82_IDE_MASTER_IOR	= 0x4C,
@@ -40,124 +39,124 @@
 	CY82_INDEX_CHANNEL0	= 0x30,
 	CY82_INDEX_CHANNEL1	= 0x31,
 	CY82_INDEX_TIMEOUT	= 0x32
-पूर्ण;
+};
 
 /**
  *	cy82c693_set_piomode	-	set initial PIO mode data
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: ATA device
  *
- *	Called to करो the PIO mode setup.
+ *	Called to do the PIO mode setup.
  */
 
-अटल व्योम cy82c693_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	काष्ठा ata_timing t;
-	स्थिर अचिन्हित दीर्घ T = 1000000 / 33;
-	लघु समय_16, समय_8;
+static void cy82c693_set_piomode(struct ata_port *ap, struct ata_device *adev)
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	struct ata_timing t;
+	const unsigned long T = 1000000 / 33;
+	short time_16, time_8;
 	u32 addr;
 
-	अगर (ata_timing_compute(adev, adev->pio_mode, &t, T, 1) < 0) अणु
-		prपूर्णांकk(KERN_ERR DRV_NAME ": mome computation failed.\n");
-		वापस;
-	पूर्ण
+	if (ata_timing_compute(adev, adev->pio_mode, &t, T, 1) < 0) {
+		printk(KERN_ERR DRV_NAME ": mome computation failed.\n");
+		return;
+	}
 
-	समय_16 = clamp_val(t.recover - 1, 0, 15) |
+	time_16 = clamp_val(t.recover - 1, 0, 15) |
 		  (clamp_val(t.active - 1, 0, 15) << 4);
-	समय_8 = clamp_val(t.act8b - 1, 0, 15) |
+	time_8 = clamp_val(t.act8b - 1, 0, 15) |
 		 (clamp_val(t.rec8b - 1, 0, 15) << 4);
 
-	अगर (adev->devno == 0) अणु
-		pci_पढ़ो_config_dword(pdev, CY82_IDE_ADDRSETUP, &addr);
+	if (adev->devno == 0) {
+		pci_read_config_dword(pdev, CY82_IDE_ADDRSETUP, &addr);
 
 		addr &= ~0x0F;	/* Mask bits */
 		addr |= clamp_val(t.setup - 1, 0, 15);
 
-		pci_ग_लिखो_config_dword(pdev, CY82_IDE_ADDRSETUP, addr);
-		pci_ग_लिखो_config_byte(pdev, CY82_IDE_MASTER_IOR, समय_16);
-		pci_ग_लिखो_config_byte(pdev, CY82_IDE_MASTER_IOW, समय_16);
-		pci_ग_लिखो_config_byte(pdev, CY82_IDE_MASTER_8BIT, समय_8);
-	पूर्ण अन्यथा अणु
-		pci_पढ़ो_config_dword(pdev, CY82_IDE_ADDRSETUP, &addr);
+		pci_write_config_dword(pdev, CY82_IDE_ADDRSETUP, addr);
+		pci_write_config_byte(pdev, CY82_IDE_MASTER_IOR, time_16);
+		pci_write_config_byte(pdev, CY82_IDE_MASTER_IOW, time_16);
+		pci_write_config_byte(pdev, CY82_IDE_MASTER_8BIT, time_8);
+	} else {
+		pci_read_config_dword(pdev, CY82_IDE_ADDRSETUP, &addr);
 
 		addr &= ~0xF0;	/* Mask bits */
 		addr |= (clamp_val(t.setup - 1, 0, 15) << 4);
 
-		pci_ग_लिखो_config_dword(pdev, CY82_IDE_ADDRSETUP, addr);
-		pci_ग_लिखो_config_byte(pdev, CY82_IDE_SLAVE_IOR, समय_16);
-		pci_ग_लिखो_config_byte(pdev, CY82_IDE_SLAVE_IOW, समय_16);
-		pci_ग_लिखो_config_byte(pdev, CY82_IDE_SLAVE_8BIT, समय_8);
-	पूर्ण
-पूर्ण
+		pci_write_config_dword(pdev, CY82_IDE_ADDRSETUP, addr);
+		pci_write_config_byte(pdev, CY82_IDE_SLAVE_IOR, time_16);
+		pci_write_config_byte(pdev, CY82_IDE_SLAVE_IOW, time_16);
+		pci_write_config_byte(pdev, CY82_IDE_SLAVE_8BIT, time_8);
+	}
+}
 
 /**
  *	cy82c693_set_dmamode	-	set initial DMA mode data
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: ATA device
  *
- *	Called to करो the DMA mode setup.
+ *	Called to do the DMA mode setup.
  */
 
-अटल व्योम cy82c693_set_dmamode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
-	पूर्णांक reg = CY82_INDEX_CHANNEL0 + ap->port_no;
+static void cy82c693_set_dmamode(struct ata_port *ap, struct ata_device *adev)
+{
+	int reg = CY82_INDEX_CHANNEL0 + ap->port_no;
 
-	/* Be afraid, be very afraid. Magic रेजिस्टरs  in low I/O space */
+	/* Be afraid, be very afraid. Magic registers  in low I/O space */
 	outb(reg, 0x22);
 	outb(adev->dma_mode - XFER_MW_DMA_0, 0x23);
 
 	/* 0x50 gives the best behaviour on the Alpha's using this chip */
 	outb(CY82_INDEX_TIMEOUT, 0x22);
 	outb(0x50, 0x23);
-पूर्ण
+}
 
-अटल काष्ठा scsi_host_ढाँचा cy82c693_sht = अणु
+static struct scsi_host_template cy82c693_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations cy82c693_port_ops = अणु
+static struct ata_port_operations cy82c693_port_ops = {
 	.inherits	= &ata_bmdma_port_ops,
 	.cable_detect	= ata_cable_40wire,
 	.set_piomode	= cy82c693_set_piomode,
 	.set_dmamode	= cy82c693_set_dmamode,
-पूर्ण;
+};
 
-अटल पूर्णांक cy82c693_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	अटल स्थिर काष्ठा ata_port_info info = अणु
+static int cy82c693_init_one(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	static const struct ata_port_info info = {
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.mwdma_mask = ATA_MWDMA2,
 		.port_ops = &cy82c693_port_ops
-	पूर्ण;
-	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info, &ata_dummy_port_info पूर्ण;
+	};
+	const struct ata_port_info *ppi[] = { &info, &ata_dummy_port_info };
 
 	/* Devfn 1 is the ATA primary. The secondary is magic and on devfn2.
-	   For the moment we करोn't handle the secondary. FIXME */
+	   For the moment we don't handle the secondary. FIXME */
 
-	अगर (PCI_FUNC(pdev->devfn) != 1)
-		वापस -ENODEV;
+	if (PCI_FUNC(pdev->devfn) != 1)
+		return -ENODEV;
 
-	वापस ata_pci_bmdma_init_one(pdev, ppi, &cy82c693_sht, शून्य, 0);
-पूर्ण
+	return ata_pci_bmdma_init_one(pdev, ppi, &cy82c693_sht, NULL, 0);
+}
 
-अटल स्थिर काष्ठा pci_device_id cy82c693[] = अणु
-	अणु PCI_VDEVICE(CONTAQ, PCI_DEVICE_ID_CONTAQ_82C693), पूर्ण,
+static const struct pci_device_id cy82c693[] = {
+	{ PCI_VDEVICE(CONTAQ, PCI_DEVICE_ID_CONTAQ_82C693), },
 
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल काष्ठा pci_driver cy82c693_pci_driver = अणु
+static struct pci_driver cy82c693_pci_driver = {
 	.name 		= DRV_NAME,
 	.id_table	= cy82c693,
 	.probe 		= cy82c693_init_one,
-	.हटाओ		= ata_pci_हटाओ_one,
-#अगर_घोषित CONFIG_PM_SLEEP
+	.remove		= ata_pci_remove_one,
+#ifdef CONFIG_PM_SLEEP
 	.suspend	= ata_pci_device_suspend,
 	.resume		= ata_pci_device_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_pci_driver(cy82c693_pci_driver);
 

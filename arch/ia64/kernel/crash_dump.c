@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	kernel/crash_dump.c - Memory preserving reboot related code.
  *
@@ -8,22 +7,22 @@
  *	Original code comment copied from the i386 version of this file
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/crash_dump.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/crash_dump.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <linux/uaccess.h>
+#include <asm/page.h>
+#include <linux/uaccess.h>
 
 /**
  * copy_oldmem_page - copy one page from "oldmem"
  * @pfn: page frame number to be copied
- * @buf: target memory address क्रम the copy; this can be in kernel address
+ * @buf: target memory address for the copy; this can be in kernel address
  *	space or user address space (see @userbuf)
  * @csize: number of bytes to copy
- * @offset: offset in bytes पूर्णांकo the page (based on pfn) to begin the copy
- * @userbuf: अगर set, @buf is in user address space, use copy_to_user(),
- *	otherwise @buf is in kernel address space, use स_नकल().
+ * @offset: offset in bytes into the page (based on pfn) to begin the copy
+ * @userbuf: if set, @buf is in user address space, use copy_to_user(),
+ *	otherwise @buf is in kernel address space, use memcpy().
  *
  * Copy a page from "oldmem". For this page, there is no pte mapped
  * in the current kernel. We stitch up a pte, similar to kmap_atomic.
@@ -32,21 +31,21 @@
  * copying the data to a pre-allocated kernel page and then copying to user
  * space in non-atomic context.
  */
-sमाप_प्रकार
-copy_oldmem_page(अचिन्हित दीर्घ pfn, अक्षर *buf,
-		माप_प्रकार csize, अचिन्हित दीर्घ offset, पूर्णांक userbuf)
-अणु
-	व्योम  *vaddr;
+ssize_t
+copy_oldmem_page(unsigned long pfn, char *buf,
+		size_t csize, unsigned long offset, int userbuf)
+{
+	void  *vaddr;
 
-	अगर (!csize)
-		वापस 0;
+	if (!csize)
+		return 0;
 	vaddr = __va(pfn<<PAGE_SHIFT);
-	अगर (userbuf) अणु
-		अगर (copy_to_user(buf, (vaddr + offset), csize)) अणु
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण अन्यथा
-		स_नकल(buf, (vaddr + offset), csize);
-	वापस csize;
-पूर्ण
+	if (userbuf) {
+		if (copy_to_user(buf, (vaddr + offset), csize)) {
+			return -EFAULT;
+		}
+	} else
+		memcpy(buf, (vaddr + offset), csize);
+	return csize;
+}
 

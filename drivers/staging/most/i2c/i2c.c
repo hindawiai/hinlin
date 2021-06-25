@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * i2c.c - Hardware Dependent Module क्रम I2C Interface
+ * i2c.c - Hardware Dependent Module for I2C Interface
  *
  * Copyright (C) 2013-2015, Microchip Technology Germany II GmbH & Co. KG
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/err.h>
-#समावेश <linux/most.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/err.h>
+#include <linux/most.h>
 
-क्रमागत अणु CH_RX, CH_TX, NUM_CHANNELS पूर्ण;
+enum { CH_RX, CH_TX, NUM_CHANNELS };
 
-#घोषणा MAX_BUFFERS_CONTROL 32
-#घोषणा MAX_BUF_SIZE_CONTROL 256
+#define MAX_BUFFERS_CONTROL 32
+#define MAX_BUF_SIZE_CONTROL 256
 
 /**
  * list_first_mbo - get the first mbo from a list
  * @ptr:	the list head to take the mbo from.
  */
-#घोषणा list_first_mbo(ptr) \
-	list_first_entry(ptr, काष्ठा mbo, list)
+#define list_first_mbo(ptr) \
+	list_first_entry(ptr, struct mbo, list)
 
-अटल अचिन्हित पूर्णांक polling_rate;
-module_param(polling_rate, uपूर्णांक, 0644);
+static unsigned int polling_rate;
+module_param(polling_rate, uint, 0644);
 MODULE_PARM_DESC(polling_rate, "Polling rate [Hz]. Default = 0 (use IRQ)");
 
-काष्ठा hdm_i2c अणु
-	काष्ठा most_पूर्णांकerface most_अगरace;
-	काष्ठा most_channel_capability capabilities[NUM_CHANNELS];
-	काष्ठा i2c_client *client;
-	काष्ठा rx अणु
-		काष्ठा delayed_work dwork;
-		काष्ठा list_head list;
-		bool पूर्णांक_disabled;
-		अचिन्हित पूर्णांक delay;
-	पूर्ण rx;
-	अक्षर name[64];
-पूर्ण;
+struct hdm_i2c {
+	struct most_interface most_iface;
+	struct most_channel_capability capabilities[NUM_CHANNELS];
+	struct i2c_client *client;
+	struct rx {
+		struct delayed_work dwork;
+		struct list_head list;
+		bool int_disabled;
+		unsigned int delay;
+	} rx;
+	char name[64];
+};
 
-#घोषणा to_hdm(अगरace) container_of(अगरace, काष्ठा hdm_i2c, most_अगरace)
+#define to_hdm(iface) container_of(iface, struct hdm_i2c, most_iface)
 
-अटल irqवापस_t most_irq_handler(पूर्णांक, व्योम *);
-अटल व्योम pending_rx_work(काष्ठा work_काष्ठा *);
+static irqreturn_t most_irq_handler(int, void *);
+static void pending_rx_work(struct work_struct *);
 
 /**
  * configure_channel - called from MOST core to configure a channel
- * @अगरace: पूर्णांकerface the channel beदीर्घs to
+ * @iface: interface the channel belongs to
  * @channel: channel to be configured
- * @channel_config: काष्ठाure that holds the configuration inक्रमmation
+ * @channel_config: structure that holds the configuration information
  *
  * Return 0 on success, negative on failure.
  *
- * Receives configuration inक्रमmation from MOST core and initialize the
+ * Receives configuration information from MOST core and initialize the
  * corresponding channel.
  */
-अटल पूर्णांक configure_channel(काष्ठा most_पूर्णांकerface *most_अगरace,
-			     पूर्णांक ch_idx,
-			     काष्ठा most_channel_config *channel_config)
-अणु
-	पूर्णांक ret;
-	काष्ठा hdm_i2c *dev = to_hdm(most_अगरace);
-	अचिन्हित पूर्णांक delay, pr;
+static int configure_channel(struct most_interface *most_iface,
+			     int ch_idx,
+			     struct most_channel_config *channel_config)
+{
+	int ret;
+	struct hdm_i2c *dev = to_hdm(most_iface);
+	unsigned int delay, pr;
 
 	BUG_ON(ch_idx < 0 || ch_idx >= NUM_CHANNELS);
 
-	अगर (channel_config->data_type != MOST_CH_CONTROL) अणु
+	if (channel_config->data_type != MOST_CH_CONTROL) {
 		pr_err("bad data type for channel %d\n", ch_idx);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	अगर (channel_config->direction != dev->capabilities[ch_idx].direction) अणु
+	if (channel_config->direction != dev->capabilities[ch_idx].direction) {
 		pr_err("bad direction for channel %d\n", ch_idx);
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	अगर (channel_config->direction == MOST_CH_RX) अणु
-		अगर (!polling_rate) अणु
-			अगर (dev->client->irq <= 0) अणु
+	if (channel_config->direction == MOST_CH_RX) {
+		if (!polling_rate) {
+			if (dev->client->irq <= 0) {
 				pr_err("bad irq: %d\n", dev->client->irq);
-				वापस -ENOENT;
-			पूर्ण
-			dev->rx.पूर्णांक_disabled = false;
+				return -ENOENT;
+			}
+			dev->rx.int_disabled = false;
 			ret = request_irq(dev->client->irq, most_irq_handler, 0,
 					  dev->client->name, dev);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("request_irq(%d) failed: %d\n",
 				       dev->client->irq, ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			delay = msecs_to_jअगरfies(MSEC_PER_SEC / polling_rate);
+				return ret;
+			}
+		} else {
+			delay = msecs_to_jiffies(MSEC_PER_SEC / polling_rate);
 			dev->rx.delay = delay ? delay : 1;
-			pr = MSEC_PER_SEC / jअगरfies_to_msecs(dev->rx.delay);
+			pr = MSEC_PER_SEC / jiffies_to_msecs(dev->rx.delay);
 			pr_info("polling rate is %u Hz\n", pr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * enqueue - called from MOST core to enqueue a buffer क्रम data transfer
- * @अगरace: पूर्णांकended पूर्णांकerface
- * @channel: ID of the channel the buffer is पूर्णांकended क्रम
- * @mbo: poपूर्णांकer to the buffer object
+ * enqueue - called from MOST core to enqueue a buffer for data transfer
+ * @iface: intended interface
+ * @channel: ID of the channel the buffer is intended for
+ * @mbo: pointer to the buffer object
  *
  * Return 0 on success, negative on failure.
  *
- * Transmit the data over I2C अगर it is a "write" request or push the buffer पूर्णांकo
- * list अगर it is an "read" request
+ * Transmit the data over I2C if it is a "write" request or push the buffer into
+ * list if it is an "read" request
  */
-अटल पूर्णांक enqueue(काष्ठा most_पूर्णांकerface *most_अगरace,
-		   पूर्णांक ch_idx, काष्ठा mbo *mbo)
-अणु
-	काष्ठा hdm_i2c *dev = to_hdm(most_अगरace);
-	पूर्णांक ret;
+static int enqueue(struct most_interface *most_iface,
+		   int ch_idx, struct mbo *mbo)
+{
+	struct hdm_i2c *dev = to_hdm(most_iface);
+	int ret;
 
 	BUG_ON(ch_idx < 0 || ch_idx >= NUM_CHANNELS);
 
-	अगर (ch_idx == CH_RX) अणु
+	if (ch_idx == CH_RX) {
 		/* RX */
-		अगर (!polling_rate)
+		if (!polling_rate)
 			disable_irq(dev->client->irq);
 		cancel_delayed_work_sync(&dev->rx.dwork);
 		list_add_tail(&mbo->list, &dev->rx.list);
-		अगर (dev->rx.पूर्णांक_disabled || polling_rate)
+		if (dev->rx.int_disabled || polling_rate)
 			pending_rx_work(&dev->rx.dwork.work);
-		अगर (!polling_rate)
+		if (!polling_rate)
 			enable_irq(dev->client->irq);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* TX */
 		ret = i2c_master_send(dev->client, mbo->virt_address,
 				      mbo->buffer_length);
-		अगर (ret <= 0) अणु
+		if (ret <= 0) {
 			mbo->processed_length = 0;
 			mbo->status = MBO_E_INVAL;
-		पूर्ण अन्यथा अणु
+		} else {
 			mbo->processed_length = mbo->buffer_length;
 			mbo->status = MBO_SUCCESS;
-		पूर्ण
+		}
 		mbo->complete(mbo);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * poison_channel - called from MOST core to poison buffers of a channel
- * @अगरace: poपूर्णांकer to the पूर्णांकerface the channel to be poisoned beदीर्घs to
+ * @iface: pointer to the interface the channel to be poisoned belongs to
  * @channel_id: corresponding channel ID
  *
  * Return 0 on success, negative on failure.
@@ -162,67 +161,67 @@ MODULE_PARM_DESC(polling_rate, "Polling rate [Hz]. Default = 0 (use IRQ)");
  * If channel direction is RX, complete the buffers in list with
  * status MBO_E_CLOSE
  */
-अटल पूर्णांक poison_channel(काष्ठा most_पूर्णांकerface *most_अगरace,
-			  पूर्णांक ch_idx)
-अणु
-	काष्ठा hdm_i2c *dev = to_hdm(most_अगरace);
-	काष्ठा mbo *mbo;
+static int poison_channel(struct most_interface *most_iface,
+			  int ch_idx)
+{
+	struct hdm_i2c *dev = to_hdm(most_iface);
+	struct mbo *mbo;
 
 	BUG_ON(ch_idx < 0 || ch_idx >= NUM_CHANNELS);
 
-	अगर (ch_idx == CH_RX) अणु
-		अगर (!polling_rate)
-			मुक्त_irq(dev->client->irq, dev);
+	if (ch_idx == CH_RX) {
+		if (!polling_rate)
+			free_irq(dev->client->irq, dev);
 		cancel_delayed_work_sync(&dev->rx.dwork);
 
-		जबतक (!list_empty(&dev->rx.list)) अणु
+		while (!list_empty(&dev->rx.list)) {
 			mbo = list_first_mbo(&dev->rx.list);
 			list_del(&mbo->list);
 
 			mbo->processed_length = 0;
 			mbo->status = MBO_E_CLOSE;
 			mbo->complete(mbo);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम करो_rx_work(काष्ठा hdm_i2c *dev)
-अणु
-	काष्ठा mbo *mbo;
-	अचिन्हित अक्षर msg[MAX_BUF_SIZE_CONTROL];
-	पूर्णांक ret;
+static void do_rx_work(struct hdm_i2c *dev)
+{
+	struct mbo *mbo;
+	unsigned char msg[MAX_BUF_SIZE_CONTROL];
+	int ret;
 	u16 pml, data_size;
 
 	/* Read PML (2 bytes) */
 	ret = i2c_master_recv(dev->client, msg, 2);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		pr_err("Failed to receive PML\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pml = (msg[0] << 8) | msg[1];
-	अगर (!pml)
-		वापस;
+	if (!pml)
+		return;
 
 	data_size = pml + 2;
 
 	/* Read the whole message, including PML */
 	ret = i2c_master_recv(dev->client, msg, data_size);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		pr_err("Failed to receive a Port Message\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mbo = list_first_mbo(&dev->rx.list);
 	list_del(&mbo->list);
 
 	mbo->processed_length = min(data_size, mbo->buffer_length);
-	स_नकल(mbo->virt_address, msg, mbo->processed_length);
+	memcpy(mbo->virt_address, msg, mbo->processed_length);
 	mbo->status = MBO_SUCCESS;
 	mbo->complete(mbo);
-पूर्ण
+}
 
 /**
  * pending_rx_work - Read pending messages through I2C
@@ -230,91 +229,91 @@ MODULE_PARM_DESC(polling_rate, "Polling rate [Hz]. Default = 0 (use IRQ)");
  *
  * Invoked by the Interrupt Service Routine, most_irq_handler()
  */
-अटल व्योम pending_rx_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hdm_i2c *dev = container_of(work, काष्ठा hdm_i2c, rx.dwork.work);
+static void pending_rx_work(struct work_struct *work)
+{
+	struct hdm_i2c *dev = container_of(work, struct hdm_i2c, rx.dwork.work);
 
-	अगर (list_empty(&dev->rx.list))
-		वापस;
+	if (list_empty(&dev->rx.list))
+		return;
 
-	करो_rx_work(dev);
+	do_rx_work(dev);
 
-	अगर (polling_rate) अणु
+	if (polling_rate) {
 		schedule_delayed_work(&dev->rx.dwork, dev->rx.delay);
-	पूर्ण अन्यथा अणु
-		dev->rx.पूर्णांक_disabled = false;
+	} else {
+		dev->rx.int_disabled = false;
 		enable_irq(dev->client->irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * most_irq_handler - Interrupt Service Routine
  * @irq: irq number
- * @_dev: निजी data
+ * @_dev: private data
  *
  * Schedules a delayed work
  *
- * By शेष the पूर्णांकerrupt line behavior is Active Low. Once an पूर्णांकerrupt is
- * generated by the device, until driver clears the पूर्णांकerrupt (by पढ़ोing
- * the PMP message), device keeps the पूर्णांकerrupt line in low state. Since i2c
- * पढ़ो is करोne in work queue, the पूर्णांकerrupt line must be disabled temporarily
- * to aव्योम ISR being called repeatedly. Re-enable the पूर्णांकerrupt in workqueue,
- * after पढ़ोing the message.
+ * By default the interrupt line behavior is Active Low. Once an interrupt is
+ * generated by the device, until driver clears the interrupt (by reading
+ * the PMP message), device keeps the interrupt line in low state. Since i2c
+ * read is done in work queue, the interrupt line must be disabled temporarily
+ * to avoid ISR being called repeatedly. Re-enable the interrupt in workqueue,
+ * after reading the message.
  *
- * Note: If we use the पूर्णांकerrupt line in Falling edge mode, there is a
- * possibility to miss पूर्णांकerrupts when ISR is getting executed.
+ * Note: If we use the interrupt line in Falling edge mode, there is a
+ * possibility to miss interrupts when ISR is getting executed.
  *
  */
-अटल irqवापस_t most_irq_handler(पूर्णांक irq, व्योम *_dev)
-अणु
-	काष्ठा hdm_i2c *dev = _dev;
+static irqreturn_t most_irq_handler(int irq, void *_dev)
+{
+	struct hdm_i2c *dev = _dev;
 
 	disable_irq_nosync(irq);
-	dev->rx.पूर्णांक_disabled = true;
+	dev->rx.int_disabled = true;
 	schedule_delayed_work(&dev->rx.dwork, 0);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * i2c_probe - i2c probe handler
- * @client: i2c client device काष्ठाure
+ * @client: i2c client device structure
  * @id: i2c client device id
  *
  * Return 0 on success, negative on failure.
  *
- * Register the i2c client device as a MOST पूर्णांकerface
+ * Register the i2c client device as a MOST interface
  */
-अटल पूर्णांक i2c_probe(काष्ठा i2c_client *client, स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा hdm_i2c *dev;
-	पूर्णांक ret, i;
+static int i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
+	struct hdm_i2c *dev;
+	int ret, i;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 
-	/* ID क्रमmat: i2c-<bus>-<address> */
-	snम_लिखो(dev->name, माप(dev->name), "i2c-%d-%04x",
+	/* ID format: i2c-<bus>-<address> */
+	snprintf(dev->name, sizeof(dev->name), "i2c-%d-%04x",
 		 client->adapter->nr, client->addr);
 
-	क्रम (i = 0; i < NUM_CHANNELS; i++) अणु
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		dev->capabilities[i].data_type = MOST_CH_CONTROL;
 		dev->capabilities[i].num_buffers_packet = MAX_BUFFERS_CONTROL;
 		dev->capabilities[i].buffer_size_packet = MAX_BUF_SIZE_CONTROL;
-	पूर्ण
+	}
 	dev->capabilities[CH_RX].direction = MOST_CH_RX;
 	dev->capabilities[CH_RX].name_suffix = "rx";
 	dev->capabilities[CH_TX].direction = MOST_CH_TX;
 	dev->capabilities[CH_TX].name_suffix = "tx";
 
-	dev->most_अगरace.पूर्णांकerface = ITYPE_I2C;
-	dev->most_अगरace.description = dev->name;
-	dev->most_अगरace.num_channels = NUM_CHANNELS;
-	dev->most_अगरace.channel_vector = dev->capabilities;
-	dev->most_अगरace.configure = configure_channel;
-	dev->most_अगरace.enqueue = enqueue;
-	dev->most_अगरace.poison_channel = poison_channel;
+	dev->most_iface.interface = ITYPE_I2C;
+	dev->most_iface.description = dev->name;
+	dev->most_iface.num_channels = NUM_CHANNELS;
+	dev->most_iface.channel_vector = dev->capabilities;
+	dev->most_iface.configure = configure_channel;
+	dev->most_iface.enqueue = enqueue;
+	dev->most_iface.poison_channel = poison_channel;
 
 	INIT_LIST_HEAD(&dev->rx.list);
 
@@ -323,49 +322,49 @@ MODULE_PARM_DESC(polling_rate, "Polling rate [Hz]. Default = 0 (use IRQ)");
 	dev->client = client;
 	i2c_set_clientdata(client, dev);
 
-	ret = most_रेजिस्टर_पूर्णांकerface(&dev->most_अगरace);
-	अगर (ret) अणु
+	ret = most_register_interface(&dev->most_iface);
+	if (ret) {
 		pr_err("Failed to register i2c as a MOST interface\n");
-		kमुक्त(dev);
-		वापस ret;
-	पूर्ण
+		kfree(dev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * i2c_हटाओ - i2c हटाओ handler
- * @client: i2c client device काष्ठाure
+ * i2c_remove - i2c remove handler
+ * @client: i2c client device structure
  *
  * Return 0 on success.
  *
- * Unरेजिस्टर the i2c client device as a MOST पूर्णांकerface
+ * Unregister the i2c client device as a MOST interface
  */
-अटल पूर्णांक i2c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा hdm_i2c *dev = i2c_get_clientdata(client);
+static int i2c_remove(struct i2c_client *client)
+{
+	struct hdm_i2c *dev = i2c_get_clientdata(client);
 
-	most_deरेजिस्टर_पूर्णांकerface(&dev->most_अगरace);
-	kमुक्त(dev);
+	most_deregister_interface(&dev->most_iface);
+	kfree(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id i2c_id[] = अणु
-	अणु "most_i2c", 0 पूर्ण,
-	अणु पूर्ण, /* Terminating entry */
-पूर्ण;
+static const struct i2c_device_id i2c_id[] = {
+	{ "most_i2c", 0 },
+	{ }, /* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(i2c, i2c_id);
 
-अटल काष्ठा i2c_driver i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver i2c_driver = {
+	.driver = {
 		.name = "hdm_i2c",
-	पूर्ण,
+	},
 	.probe = i2c_probe,
-	.हटाओ = i2c_हटाओ,
+	.remove = i2c_remove,
 	.id_table = i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(i2c_driver);
 

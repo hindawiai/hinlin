@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#समावेश <test_progs.h>
-#समावेश <समय.स>
-#समावेश "test_vmlinux.skel.h"
+#include <test_progs.h>
+#include <time.h>
+#include "test_vmlinux.skel.h"
 
-#घोषणा MY_TV_NSEC 1337
+#define MY_TV_NSEC 1337
 
-अटल व्योम nsleep()
-अणु
-	काष्ठा बारpec ts = अणु .tv_nsec = MY_TV_NSEC पूर्ण;
+static void nsleep()
+{
+	struct timespec ts = { .tv_nsec = MY_TV_NSEC };
 
-	(व्योम)syscall(__NR_nanosleep, &ts, शून्य);
-पूर्ण
+	(void)syscall(__NR_nanosleep, &ts, NULL);
+}
 
-व्योम test_vmlinux(व्योम)
-अणु
-	पूर्णांक duration = 0, err;
-	काष्ठा test_vmlinux* skel;
-	काष्ठा test_vmlinux__bss *bss;
+void test_vmlinux(void)
+{
+	int duration = 0, err;
+	struct test_vmlinux* skel;
+	struct test_vmlinux__bss *bss;
 
-	skel = test_vmlinux__खोलो_and_load();
-	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		वापस;
+	skel = test_vmlinux__open_and_load();
+	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		return;
 	bss = skel->bss;
 
 	err = test_vmlinux__attach(skel);
-	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		goto cleanup;
 
 	/* trigger everything */
 	nsleep();
@@ -41,4 +40,4 @@
 
 cleanup:
 	test_vmlinux__destroy(skel);
-पूर्ण
+}

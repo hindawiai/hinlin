@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Nano River Technologies viperboard GPIO lib driver
  *
@@ -8,39 +7,39 @@
  *  All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/gpio/driver.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/platform_device.h>
+#include <linux/usb.h>
+#include <linux/gpio/driver.h>
 
-#समावेश <linux/mfd/viperboard.h>
+#include <linux/mfd/viperboard.h>
 
-#घोषणा VPRBRD_GPIOA_CLK_1MHZ		0
-#घोषणा VPRBRD_GPIOA_CLK_100KHZ		1
-#घोषणा VPRBRD_GPIOA_CLK_10KHZ		2
-#घोषणा VPRBRD_GPIOA_CLK_1KHZ		3
-#घोषणा VPRBRD_GPIOA_CLK_100HZ		4
-#घोषणा VPRBRD_GPIOA_CLK_10HZ		5
+#define VPRBRD_GPIOA_CLK_1MHZ		0
+#define VPRBRD_GPIOA_CLK_100KHZ		1
+#define VPRBRD_GPIOA_CLK_10KHZ		2
+#define VPRBRD_GPIOA_CLK_1KHZ		3
+#define VPRBRD_GPIOA_CLK_100HZ		4
+#define VPRBRD_GPIOA_CLK_10HZ		5
 
-#घोषणा VPRBRD_GPIOA_FREQ_DEFAULT	1000
+#define VPRBRD_GPIOA_FREQ_DEFAULT	1000
 
-#घोषणा VPRBRD_GPIOA_CMD_CONT		0x00
-#घोषणा VPRBRD_GPIOA_CMD_PULSE		0x01
-#घोषणा VPRBRD_GPIOA_CMD_PWM		0x02
-#घोषणा VPRBRD_GPIOA_CMD_SETOUT		0x03
-#घोषणा VPRBRD_GPIOA_CMD_SETIN		0x04
-#घोषणा VPRBRD_GPIOA_CMD_SETINT		0x05
-#घोषणा VPRBRD_GPIOA_CMD_GETIN		0x06
+#define VPRBRD_GPIOA_CMD_CONT		0x00
+#define VPRBRD_GPIOA_CMD_PULSE		0x01
+#define VPRBRD_GPIOA_CMD_PWM		0x02
+#define VPRBRD_GPIOA_CMD_SETOUT		0x03
+#define VPRBRD_GPIOA_CMD_SETIN		0x04
+#define VPRBRD_GPIOA_CMD_SETINT		0x05
+#define VPRBRD_GPIOA_CMD_GETIN		0x06
 
-#घोषणा VPRBRD_GPIOB_CMD_SETसूची		0x00
-#घोषणा VPRBRD_GPIOB_CMD_SETVAL		0x01
+#define VPRBRD_GPIOB_CMD_SETDIR		0x00
+#define VPRBRD_GPIOB_CMD_SETVAL		0x01
 
-काष्ठा vprbrd_gpioa_msg अणु
+struct vprbrd_gpioa_msg {
 	u8 cmd;
 	u8 clk;
 	u8 offset;
@@ -52,44 +51,44 @@
 	u8 risefall;
 	u8 answer;
 	u8 __fill;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा vprbrd_gpiob_msg अणु
+struct vprbrd_gpiob_msg {
 	u8 cmd;
 	u16 val;
 	u16 mask;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा vprbrd_gpio अणु
-	काष्ठा gpio_chip gpioa; /* gpio a related things */
+struct vprbrd_gpio {
+	struct gpio_chip gpioa; /* gpio a related things */
 	u32 gpioa_out;
 	u32 gpioa_val;
-	काष्ठा gpio_chip gpiob; /* gpio b related things */
+	struct gpio_chip gpiob; /* gpio b related things */
 	u32 gpiob_out;
 	u32 gpiob_val;
-	काष्ठा vprbrd *vb;
-पूर्ण;
+	struct vprbrd *vb;
+};
 
-/* gpioa sampling घड़ी module parameter */
-अटल अचिन्हित अक्षर gpioa_clk;
-अटल अचिन्हित पूर्णांक gpioa_freq = VPRBRD_GPIOA_FREQ_DEFAULT;
-module_param(gpioa_freq, uपूर्णांक, 0);
+/* gpioa sampling clock module parameter */
+static unsigned char gpioa_clk;
+static unsigned int gpioa_freq = VPRBRD_GPIOA_FREQ_DEFAULT;
+module_param(gpioa_freq, uint, 0);
 MODULE_PARM_DESC(gpioa_freq,
 	"gpio-a sampling freq in Hz (default is 1000Hz) valid values: 10, 100, 1000, 10000, 100000, 1000000");
 
 /* ----- begin of gipo a chip -------------------------------------------- */
 
-अटल पूर्णांक vprbrd_gpioa_get(काष्ठा gpio_chip *chip,
-		अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret, answer, error = 0;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
-	काष्ठा vprbrd_gpioa_msg *gamsg = (काष्ठा vprbrd_gpioa_msg *)vb->buf;
+static int vprbrd_gpioa_get(struct gpio_chip *chip,
+		unsigned int offset)
+{
+	int ret, answer, error = 0;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
+	struct vprbrd_gpioa_msg *gamsg = (struct vprbrd_gpioa_msg *)vb->buf;
 
-	/* अगर io is set to output, just वापस the saved value */
-	अगर (gpio->gpioa_out & (1 << offset))
-		वापस !!(gpio->gpioa_val & (1 << offset));
+	/* if io is set to output, just return the saved value */
+	if (gpio->gpioa_out & (1 << offset))
+		return !!(gpio->gpioa_val & (1 << offset));
 
 	mutex_lock(&vb->lock);
 
@@ -107,40 +106,40 @@ MODULE_PARM_DESC(gpioa_freq,
 
 	ret = usb_control_msg(vb->usb_dev, usb_sndctrlpipe(vb->usb_dev, 0),
 		VPRBRD_USB_REQUEST_GPIOA, VPRBRD_USB_TYPE_OUT, 0x0000,
-		0x0000, gamsg, माप(काष्ठा vprbrd_gpioa_msg),
+		0x0000, gamsg, sizeof(struct vprbrd_gpioa_msg),
 		VPRBRD_USB_TIMEOUT_MS);
-	अगर (ret != माप(काष्ठा vprbrd_gpioa_msg))
+	if (ret != sizeof(struct vprbrd_gpioa_msg))
 		error = -EREMOTEIO;
 
 	ret = usb_control_msg(vb->usb_dev, usb_rcvctrlpipe(vb->usb_dev, 0),
 		VPRBRD_USB_REQUEST_GPIOA, VPRBRD_USB_TYPE_IN, 0x0000,
-		0x0000, gamsg, माप(काष्ठा vprbrd_gpioa_msg),
+		0x0000, gamsg, sizeof(struct vprbrd_gpioa_msg),
 		VPRBRD_USB_TIMEOUT_MS);
 	answer = gamsg->answer & 0x01;
 
 	mutex_unlock(&vb->lock);
 
-	अगर (ret != माप(काष्ठा vprbrd_gpioa_msg))
+	if (ret != sizeof(struct vprbrd_gpioa_msg))
 		error = -EREMOTEIO;
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस answer;
-पूर्ण
+	return answer;
+}
 
-अटल व्योम vprbrd_gpioa_set(काष्ठा gpio_chip *chip,
-		अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	पूर्णांक ret;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
-	काष्ठा vprbrd_gpioa_msg *gamsg = (काष्ठा vprbrd_gpioa_msg *)vb->buf;
+static void vprbrd_gpioa_set(struct gpio_chip *chip,
+		unsigned int offset, int value)
+{
+	int ret;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
+	struct vprbrd_gpioa_msg *gamsg = (struct vprbrd_gpioa_msg *)vb->buf;
 
-	अगर (gpio->gpioa_out & (1 << offset)) अणु
-		अगर (value)
+	if (gpio->gpioa_out & (1 << offset)) {
+		if (value)
 			gpio->gpioa_val |= (1 << offset);
-		अन्यथा
+		else
 			gpio->gpioa_val &= ~(1 << offset);
 
 		mutex_lock(&vb->lock);
@@ -161,22 +160,22 @@ MODULE_PARM_DESC(gpioa_freq,
 			usb_sndctrlpipe(vb->usb_dev, 0),
 			VPRBRD_USB_REQUEST_GPIOA, VPRBRD_USB_TYPE_OUT,
 			0x0000,	0x0000, gamsg,
-			माप(काष्ठा vprbrd_gpioa_msg), VPRBRD_USB_TIMEOUT_MS);
+			sizeof(struct vprbrd_gpioa_msg), VPRBRD_USB_TIMEOUT_MS);
 
 		mutex_unlock(&vb->lock);
 
-		अगर (ret != माप(काष्ठा vprbrd_gpioa_msg))
+		if (ret != sizeof(struct vprbrd_gpioa_msg))
 			dev_err(chip->parent, "usb error setting pin value\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक vprbrd_gpioa_direction_input(काष्ठा gpio_chip *chip,
-			अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
-	काष्ठा vprbrd_gpioa_msg *gamsg = (काष्ठा vprbrd_gpioa_msg *)vb->buf;
+static int vprbrd_gpioa_direction_input(struct gpio_chip *chip,
+			unsigned int offset)
+{
+	int ret;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
+	struct vprbrd_gpioa_msg *gamsg = (struct vprbrd_gpioa_msg *)vb->buf;
 
 	gpio->gpioa_out &= ~(1 << offset);
 
@@ -196,29 +195,29 @@ MODULE_PARM_DESC(gpioa_freq,
 
 	ret = usb_control_msg(vb->usb_dev, usb_sndctrlpipe(vb->usb_dev, 0),
 		VPRBRD_USB_REQUEST_GPIOA, VPRBRD_USB_TYPE_OUT, 0x0000,
-		0x0000, gamsg, माप(काष्ठा vprbrd_gpioa_msg),
+		0x0000, gamsg, sizeof(struct vprbrd_gpioa_msg),
 		VPRBRD_USB_TIMEOUT_MS);
 
 	mutex_unlock(&vb->lock);
 
-	अगर (ret != माप(काष्ठा vprbrd_gpioa_msg))
-		वापस -EREMOTEIO;
+	if (ret != sizeof(struct vprbrd_gpioa_msg))
+		return -EREMOTEIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vprbrd_gpioa_direction_output(काष्ठा gpio_chip *chip,
-			अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	पूर्णांक ret;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
-	काष्ठा vprbrd_gpioa_msg *gamsg = (काष्ठा vprbrd_gpioa_msg *)vb->buf;
+static int vprbrd_gpioa_direction_output(struct gpio_chip *chip,
+			unsigned int offset, int value)
+{
+	int ret;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
+	struct vprbrd_gpioa_msg *gamsg = (struct vprbrd_gpioa_msg *)vb->buf;
 
 	gpio->gpioa_out |= (1 << offset);
-	अगर (value)
+	if (value)
 		gpio->gpioa_val |= (1 << offset);
-	अन्यथा
+	else
 		gpio->gpioa_val &= ~(1 << offset);
 
 	mutex_lock(&vb->lock);
@@ -237,86 +236,86 @@ MODULE_PARM_DESC(gpioa_freq,
 
 	ret = usb_control_msg(vb->usb_dev, usb_sndctrlpipe(vb->usb_dev, 0),
 		VPRBRD_USB_REQUEST_GPIOA, VPRBRD_USB_TYPE_OUT, 0x0000,
-		0x0000, gamsg, माप(काष्ठा vprbrd_gpioa_msg),
+		0x0000, gamsg, sizeof(struct vprbrd_gpioa_msg),
 		VPRBRD_USB_TIMEOUT_MS);
 
 	mutex_unlock(&vb->lock);
 
-	अगर (ret != माप(काष्ठा vprbrd_gpioa_msg))
-		वापस -EREMOTEIO;
+	if (ret != sizeof(struct vprbrd_gpioa_msg))
+		return -EREMOTEIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----- end of gpio a chip ---------------------------------------------- */
 
 /* ----- begin of gipo b chip -------------------------------------------- */
 
-अटल पूर्णांक vprbrd_gpiob_setdir(काष्ठा vprbrd *vb, अचिन्हित पूर्णांक offset,
-	अचिन्हित पूर्णांक dir)
-अणु
-	काष्ठा vprbrd_gpiob_msg *gbmsg = (काष्ठा vprbrd_gpiob_msg *)vb->buf;
-	पूर्णांक ret;
+static int vprbrd_gpiob_setdir(struct vprbrd *vb, unsigned int offset,
+	unsigned int dir)
+{
+	struct vprbrd_gpiob_msg *gbmsg = (struct vprbrd_gpiob_msg *)vb->buf;
+	int ret;
 
-	gbmsg->cmd = VPRBRD_GPIOB_CMD_SETसूची;
+	gbmsg->cmd = VPRBRD_GPIOB_CMD_SETDIR;
 	gbmsg->val = cpu_to_be16(dir << offset);
 	gbmsg->mask = cpu_to_be16(0x0001 << offset);
 
 	ret = usb_control_msg(vb->usb_dev, usb_sndctrlpipe(vb->usb_dev, 0),
 		VPRBRD_USB_REQUEST_GPIOB, VPRBRD_USB_TYPE_OUT, 0x0000,
-		0x0000, gbmsg, माप(काष्ठा vprbrd_gpiob_msg),
+		0x0000, gbmsg, sizeof(struct vprbrd_gpiob_msg),
 		VPRBRD_USB_TIMEOUT_MS);
 
-	अगर (ret != माप(काष्ठा vprbrd_gpiob_msg))
-		वापस -EREMOTEIO;
+	if (ret != sizeof(struct vprbrd_gpiob_msg))
+		return -EREMOTEIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vprbrd_gpiob_get(काष्ठा gpio_chip *chip,
-		अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
+static int vprbrd_gpiob_get(struct gpio_chip *chip,
+		unsigned int offset)
+{
+	int ret;
 	u16 val;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
-	काष्ठा vprbrd_gpiob_msg *gbmsg = (काष्ठा vprbrd_gpiob_msg *)vb->buf;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
+	struct vprbrd_gpiob_msg *gbmsg = (struct vprbrd_gpiob_msg *)vb->buf;
 
-	/* अगर io is set to output, just वापस the saved value */
-	अगर (gpio->gpiob_out & (1 << offset))
-		वापस gpio->gpiob_val & (1 << offset);
+	/* if io is set to output, just return the saved value */
+	if (gpio->gpiob_out & (1 << offset))
+		return gpio->gpiob_val & (1 << offset);
 
 	mutex_lock(&vb->lock);
 
 	ret = usb_control_msg(vb->usb_dev, usb_rcvctrlpipe(vb->usb_dev, 0),
 		VPRBRD_USB_REQUEST_GPIOB, VPRBRD_USB_TYPE_IN, 0x0000,
-		0x0000, gbmsg,	माप(काष्ठा vprbrd_gpiob_msg),
+		0x0000, gbmsg,	sizeof(struct vprbrd_gpiob_msg),
 		VPRBRD_USB_TIMEOUT_MS);
 	val = gbmsg->val;
 
 	mutex_unlock(&vb->lock);
 
-	अगर (ret != माप(काष्ठा vprbrd_gpiob_msg))
-		वापस ret;
+	if (ret != sizeof(struct vprbrd_gpiob_msg))
+		return ret;
 
-	/* cache the पढ़ो values */
+	/* cache the read values */
 	gpio->gpiob_val = be16_to_cpu(val);
 
-	वापस (gpio->gpiob_val >> offset) & 0x1;
-पूर्ण
+	return (gpio->gpiob_val >> offset) & 0x1;
+}
 
-अटल व्योम vprbrd_gpiob_set(काष्ठा gpio_chip *chip,
-		अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	पूर्णांक ret;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
-	काष्ठा vprbrd_gpiob_msg *gbmsg = (काष्ठा vprbrd_gpiob_msg *)vb->buf;
+static void vprbrd_gpiob_set(struct gpio_chip *chip,
+		unsigned int offset, int value)
+{
+	int ret;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
+	struct vprbrd_gpiob_msg *gbmsg = (struct vprbrd_gpiob_msg *)vb->buf;
 
-	अगर (gpio->gpiob_out & (1 << offset)) अणु
-		अगर (value)
+	if (gpio->gpiob_out & (1 << offset)) {
+		if (value)
 			gpio->gpiob_val |= (1 << offset);
-		अन्यथा
+		else
 			gpio->gpiob_val &= ~(1 << offset);
 
 		mutex_lock(&vb->lock);
@@ -329,21 +328,21 @@ MODULE_PARM_DESC(gpioa_freq,
 			usb_sndctrlpipe(vb->usb_dev, 0),
 			VPRBRD_USB_REQUEST_GPIOB, VPRBRD_USB_TYPE_OUT,
 			0x0000,	0x0000, gbmsg,
-			माप(काष्ठा vprbrd_gpiob_msg), VPRBRD_USB_TIMEOUT_MS);
+			sizeof(struct vprbrd_gpiob_msg), VPRBRD_USB_TIMEOUT_MS);
 
 		mutex_unlock(&vb->lock);
 
-		अगर (ret != माप(काष्ठा vprbrd_gpiob_msg))
+		if (ret != sizeof(struct vprbrd_gpiob_msg))
 			dev_err(chip->parent, "usb error setting pin value\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक vprbrd_gpiob_direction_input(काष्ठा gpio_chip *chip,
-			अचिन्हित पूर्णांक offset)
-अणु
-	पूर्णांक ret;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
+static int vprbrd_gpiob_direction_input(struct gpio_chip *chip,
+			unsigned int offset)
+{
+	int ret;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
 
 	gpio->gpiob_out &= ~(1 << offset);
 
@@ -353,48 +352,48 @@ MODULE_PARM_DESC(gpioa_freq,
 
 	mutex_unlock(&vb->lock);
 
-	अगर (ret)
+	if (ret)
 		dev_err(chip->parent, "usb error setting pin to input\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vprbrd_gpiob_direction_output(काष्ठा gpio_chip *chip,
-			अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	पूर्णांक ret;
-	काष्ठा vprbrd_gpio *gpio = gpiochip_get_data(chip);
-	काष्ठा vprbrd *vb = gpio->vb;
+static int vprbrd_gpiob_direction_output(struct gpio_chip *chip,
+			unsigned int offset, int value)
+{
+	int ret;
+	struct vprbrd_gpio *gpio = gpiochip_get_data(chip);
+	struct vprbrd *vb = gpio->vb;
 
 	gpio->gpiob_out |= (1 << offset);
 
 	mutex_lock(&vb->lock);
 
 	ret = vprbrd_gpiob_setdir(vb, offset, 1);
-	अगर (ret)
+	if (ret)
 		dev_err(chip->parent, "usb error setting pin to output\n");
 
 	mutex_unlock(&vb->lock);
 
 	vprbrd_gpiob_set(chip, offset, value);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ----- end of gpio b chip ---------------------------------------------- */
 
-अटल पूर्णांक vprbrd_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा vprbrd *vb = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा vprbrd_gpio *vb_gpio;
-	पूर्णांक ret;
+static int vprbrd_gpio_probe(struct platform_device *pdev)
+{
+	struct vprbrd *vb = dev_get_drvdata(pdev->dev.parent);
+	struct vprbrd_gpio *vb_gpio;
+	int ret;
 
-	vb_gpio = devm_kzalloc(&pdev->dev, माप(*vb_gpio), GFP_KERNEL);
-	अगर (vb_gpio == शून्य)
-		वापस -ENOMEM;
+	vb_gpio = devm_kzalloc(&pdev->dev, sizeof(*vb_gpio), GFP_KERNEL);
+	if (vb_gpio == NULL)
+		return -ENOMEM;
 
 	vb_gpio->vb = vb;
-	/* रेजिस्टरing gpio a */
+	/* registering gpio a */
 	vb_gpio->gpioa.label = "viperboard gpio a";
 	vb_gpio->gpioa.parent = &pdev->dev;
 	vb_gpio->gpioa.owner = THIS_MODULE;
@@ -406,12 +405,12 @@ MODULE_PARM_DESC(gpioa_freq,
 	vb_gpio->gpioa.direction_input = vprbrd_gpioa_direction_input;
 	vb_gpio->gpioa.direction_output = vprbrd_gpioa_direction_output;
 	ret = devm_gpiochip_add_data(&pdev->dev, &vb_gpio->gpioa, vb_gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vb_gpio->gpioa.parent, "could not add gpio a");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* रेजिस्टरing gpio b */
+	/* registering gpio b */
 	vb_gpio->gpiob.label = "viperboard gpio b";
 	vb_gpio->gpiob.parent = &pdev->dev;
 	vb_gpio->gpiob.owner = THIS_MODULE;
@@ -423,56 +422,56 @@ MODULE_PARM_DESC(gpioa_freq,
 	vb_gpio->gpiob.direction_input = vprbrd_gpiob_direction_input;
 	vb_gpio->gpiob.direction_output = vprbrd_gpiob_direction_output;
 	ret = devm_gpiochip_add_data(&pdev->dev, &vb_gpio->gpiob, vb_gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(vb_gpio->gpiob.parent, "could not add gpio b");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, vb_gpio);
+	platform_set_drvdata(pdev, vb_gpio);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver vprbrd_gpio_driver = अणु
+static struct platform_driver vprbrd_gpio_driver = {
 	.driver.name	= "viperboard-gpio",
 	.probe		= vprbrd_gpio_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init vprbrd_gpio_init(व्योम)
-अणु
-	चयन (gpioa_freq) अणु
-	हाल 1000000:
+static int __init vprbrd_gpio_init(void)
+{
+	switch (gpioa_freq) {
+	case 1000000:
 		gpioa_clk = VPRBRD_GPIOA_CLK_1MHZ;
-		अवरोध;
-	हाल 100000:
+		break;
+	case 100000:
 		gpioa_clk = VPRBRD_GPIOA_CLK_100KHZ;
-		अवरोध;
-	हाल 10000:
+		break;
+	case 10000:
 		gpioa_clk = VPRBRD_GPIOA_CLK_10KHZ;
-		अवरोध;
-	हाल 1000:
+		break;
+	case 1000:
 		gpioa_clk = VPRBRD_GPIOA_CLK_1KHZ;
-		अवरोध;
-	हाल 100:
+		break;
+	case 100:
 		gpioa_clk = VPRBRD_GPIOA_CLK_100HZ;
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		gpioa_clk = VPRBRD_GPIOA_CLK_10HZ;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_warn("invalid gpioa_freq (%d)\n", gpioa_freq);
 		gpioa_clk = VPRBRD_GPIOA_CLK_1KHZ;
-	पूर्ण
+	}
 
-	वापस platक्रमm_driver_रेजिस्टर(&vprbrd_gpio_driver);
-पूर्ण
+	return platform_driver_register(&vprbrd_gpio_driver);
+}
 subsys_initcall(vprbrd_gpio_init);
 
-अटल व्योम __निकास vprbrd_gpio_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&vprbrd_gpio_driver);
-पूर्ण
-module_निकास(vprbrd_gpio_निकास);
+static void __exit vprbrd_gpio_exit(void)
+{
+	platform_driver_unregister(&vprbrd_gpio_driver);
+}
+module_exit(vprbrd_gpio_exit);
 
 MODULE_AUTHOR("Lars Poeschel <poeschel@lemonage.de>");
 MODULE_DESCRIPTION("GPIO driver for Nano River Techs Viperboard");

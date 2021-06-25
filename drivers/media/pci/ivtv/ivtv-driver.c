@@ -1,11 +1,10 @@
-<शैली गुरु>
 /*
     ivtv driver initialization and card probing
     Copyright (C) 2003-2004  Kevin Thayer <nufan_wfk at yahoo.com>
     Copyright (C) 2004  Chris Kennedy <c@groovy.org>
     Copyright (C) 2005-2007  Hans Verkuil <hverkuil@xs4all.nl>
 
-    This program is मुक्त software; you can redistribute it and/or modअगरy
+    This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
@@ -13,15 +12,15 @@
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License क्रम more details.
+    GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+    along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* Main Driver file क्रम the ivtv project:
- * Driver क्रम the Conexant CX23415/CX23416 chip.
+/* Main Driver file for the ivtv project:
+ * Driver for the Conexant CX23415/CX23416 chip.
  * Author: Kevin Thayer (nufan_wfk at yahoo.com)
  * License: GPL
  *
@@ -30,144 +29,144 @@
  *                      and Takeru KOMORIYA<komoriya@paken.org>
  *
  * AVerMedia M179 GPIO info by Chris Pinkham <cpinkham@bc2va.org>
- *                using inक्रमmation provided by Jiun-Kuei Jung @ AVerMedia.
+ *                using information provided by Jiun-Kuei Jung @ AVerMedia.
  *
  * Kurouto Sikou CX23416GYC-STVLP tested by K.Ohta <alpha292@bremen.or.jp>
- *                using inक्रमmation from T.Adachi,Takeru KOMORIYA and others :-)
+ *                using information from T.Adachi,Takeru KOMORIYA and others :-)
  *
- * Nagase TRANSGEAR 5000TV, Aखोलो VA2000MAX-STN6 and I/O data GV-MVP/RX
+ * Nagase TRANSGEAR 5000TV, Aopen VA2000MAX-STN6 and I/O data GV-MVP/RX
  *                version by T.Adachi. Special thanks  Mr.Suzuki
  */
 
-#समावेश "ivtv-driver.h"
-#समावेश "ivtv-version.h"
-#समावेश "ivtv-fileops.h"
-#समावेश "ivtv-i2c.h"
-#समावेश "ivtv-firmware.h"
-#समावेश "ivtv-queue.h"
-#समावेश "ivtv-udma.h"
-#समावेश "ivtv-irq.h"
-#समावेश "ivtv-mailbox.h"
-#समावेश "ivtv-streams.h"
-#समावेश "ivtv-ioctl.h"
-#समावेश "ivtv-cards.h"
-#समावेश "ivtv-vbi.h"
-#समावेश "ivtv-routing.h"
-#समावेश "ivtv-controls.h"
-#समावेश "ivtv-gpio.h"
-#समावेश <linux/dma-mapping.h>
-#समावेश <media/tveeprom.h>
-#समावेश <media/i2c/saa7115.h>
-#समावेश "tuner-xc2028.h"
-#समावेश <uapi/linux/sched/types.h>
+#include "ivtv-driver.h"
+#include "ivtv-version.h"
+#include "ivtv-fileops.h"
+#include "ivtv-i2c.h"
+#include "ivtv-firmware.h"
+#include "ivtv-queue.h"
+#include "ivtv-udma.h"
+#include "ivtv-irq.h"
+#include "ivtv-mailbox.h"
+#include "ivtv-streams.h"
+#include "ivtv-ioctl.h"
+#include "ivtv-cards.h"
+#include "ivtv-vbi.h"
+#include "ivtv-routing.h"
+#include "ivtv-controls.h"
+#include "ivtv-gpio.h"
+#include <linux/dma-mapping.h>
+#include <media/tveeprom.h>
+#include <media/i2c/saa7115.h>
+#include "tuner-xc2028.h"
+#include <uapi/linux/sched/types.h>
 
-/* If you have alपढ़ोy X v4l cards, then set this to X. This way
+/* If you have already X v4l cards, then set this to X. This way
    the device numbers stay matched. Example: you have a WinTV card
    without radio and a PVR-350 with. Normally this would give a
-   video1 device together with a radio0 device क्रम the PVR. By
+   video1 device together with a radio0 device for the PVR. By
    setting this to 1 you ensure that radio0 is now also radio1. */
-पूर्णांक ivtv_first_minor;
+int ivtv_first_minor;
 
-/* Callback क्रम रेजिस्टरing extensions */
-पूर्णांक (*ivtv_ext_init)(काष्ठा ivtv *);
+/* Callback for registering extensions */
+int (*ivtv_ext_init)(struct ivtv *);
 EXPORT_SYMBOL(ivtv_ext_init);
 
 /* add your revision and whatnot here */
-अटल स्थिर काष्ठा pci_device_id ivtv_pci_tbl[] = अणु
-	अणुPCI_VENDOR_ID_ICOMP, PCI_DEVICE_ID_IVTV15,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणुPCI_VENDOR_ID_ICOMP, PCI_DEVICE_ID_IVTV16,
-	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+static const struct pci_device_id ivtv_pci_tbl[] = {
+	{PCI_VENDOR_ID_ICOMP, PCI_DEVICE_ID_IVTV15,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{PCI_VENDOR_ID_ICOMP, PCI_DEVICE_ID_IVTV16,
+	 PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+	{0,}
+};
 
 MODULE_DEVICE_TABLE(pci,ivtv_pci_tbl);
 
 /* ivtv instance counter */
-अटल atomic_t ivtv_instance = ATOMIC_INIT(0);
+static atomic_t ivtv_instance = ATOMIC_INIT(0);
 
 /* Parameter declarations */
-अटल पूर्णांक cardtype[IVTV_MAX_CARDS];
-अटल पूर्णांक tuner[IVTV_MAX_CARDS] = अणु -1, -1, -1, -1, -1, -1, -1, -1,
+static int cardtype[IVTV_MAX_CARDS];
+static int tuner[IVTV_MAX_CARDS] = { -1, -1, -1, -1, -1, -1, -1, -1,
 				     -1, -1, -1, -1, -1, -1, -1, -1,
 				     -1, -1, -1, -1, -1, -1, -1, -1,
-				     -1, -1, -1, -1, -1, -1, -1, -1 पूर्ण;
-अटल पूर्णांक radio[IVTV_MAX_CARDS] = अणु -1, -1, -1, -1, -1, -1, -1, -1,
+				     -1, -1, -1, -1, -1, -1, -1, -1 };
+static int radio[IVTV_MAX_CARDS] = { -1, -1, -1, -1, -1, -1, -1, -1,
 				     -1, -1, -1, -1, -1, -1, -1, -1,
 				     -1, -1, -1, -1, -1, -1, -1, -1,
-				     -1, -1, -1, -1, -1, -1, -1, -1 पूर्ण;
-अटल पूर्णांक i2c_घड़ी_period[IVTV_MAX_CARDS] = अणु -1, -1, -1, -1, -1, -1, -1, -1,
+				     -1, -1, -1, -1, -1, -1, -1, -1 };
+static int i2c_clock_period[IVTV_MAX_CARDS] = { -1, -1, -1, -1, -1, -1, -1, -1,
 					       -1, -1, -1, -1, -1, -1, -1, -1,
 					       -1, -1, -1, -1, -1, -1, -1, -1,
-					       -1, -1, -1, -1, -1, -1, -1, -1 पूर्ण;
+					       -1, -1, -1, -1, -1, -1, -1, -1 };
 
-अटल अचिन्हित पूर्णांक cardtype_c = 1;
-अटल अचिन्हित पूर्णांक tuner_c = 1;
-अटल पूर्णांक radio_c = 1;
-अटल अचिन्हित पूर्णांक i2c_घड़ी_period_c = 1;
-अटल अक्षर pal[] = "---";
-अटल अक्षर secam[] = "--";
-अटल अक्षर ntsc[] = "-";
+static unsigned int cardtype_c = 1;
+static unsigned int tuner_c = 1;
+static int radio_c = 1;
+static unsigned int i2c_clock_period_c = 1;
+static char pal[] = "---";
+static char secam[] = "--";
+static char ntsc[] = "-";
 
 /* Buffers */
 
 /* DMA Buffers, Default size in MB allocated */
-#घोषणा IVTV_DEFAULT_ENC_MPG_BUFFERS 4
-#घोषणा IVTV_DEFAULT_ENC_YUV_BUFFERS 2
-#घोषणा IVTV_DEFAULT_ENC_VBI_BUFFERS 1
-/* Exception: size in kB क्रम this stream (MB is overसमाप्त) */
-#घोषणा IVTV_DEFAULT_ENC_PCM_BUFFERS 320
-#घोषणा IVTV_DEFAULT_DEC_MPG_BUFFERS 1
-#घोषणा IVTV_DEFAULT_DEC_YUV_BUFFERS 1
-/* Exception: size in kB क्रम this stream (MB is way overसमाप्त) */
-#घोषणा IVTV_DEFAULT_DEC_VBI_BUFFERS 64
+#define IVTV_DEFAULT_ENC_MPG_BUFFERS 4
+#define IVTV_DEFAULT_ENC_YUV_BUFFERS 2
+#define IVTV_DEFAULT_ENC_VBI_BUFFERS 1
+/* Exception: size in kB for this stream (MB is overkill) */
+#define IVTV_DEFAULT_ENC_PCM_BUFFERS 320
+#define IVTV_DEFAULT_DEC_MPG_BUFFERS 1
+#define IVTV_DEFAULT_DEC_YUV_BUFFERS 1
+/* Exception: size in kB for this stream (MB is way overkill) */
+#define IVTV_DEFAULT_DEC_VBI_BUFFERS 64
 
-अटल पूर्णांक enc_mpg_buffers = IVTV_DEFAULT_ENC_MPG_BUFFERS;
-अटल पूर्णांक enc_yuv_buffers = IVTV_DEFAULT_ENC_YUV_BUFFERS;
-अटल पूर्णांक enc_vbi_buffers = IVTV_DEFAULT_ENC_VBI_BUFFERS;
-अटल पूर्णांक enc_pcm_buffers = IVTV_DEFAULT_ENC_PCM_BUFFERS;
-अटल पूर्णांक dec_mpg_buffers = IVTV_DEFAULT_DEC_MPG_BUFFERS;
-अटल पूर्णांक dec_yuv_buffers = IVTV_DEFAULT_DEC_YUV_BUFFERS;
-अटल पूर्णांक dec_vbi_buffers = IVTV_DEFAULT_DEC_VBI_BUFFERS;
+static int enc_mpg_buffers = IVTV_DEFAULT_ENC_MPG_BUFFERS;
+static int enc_yuv_buffers = IVTV_DEFAULT_ENC_YUV_BUFFERS;
+static int enc_vbi_buffers = IVTV_DEFAULT_ENC_VBI_BUFFERS;
+static int enc_pcm_buffers = IVTV_DEFAULT_ENC_PCM_BUFFERS;
+static int dec_mpg_buffers = IVTV_DEFAULT_DEC_MPG_BUFFERS;
+static int dec_yuv_buffers = IVTV_DEFAULT_DEC_YUV_BUFFERS;
+static int dec_vbi_buffers = IVTV_DEFAULT_DEC_VBI_BUFFERS;
 
-अटल पूर्णांक ivtv_yuv_mode;
-अटल पूर्णांक ivtv_yuv_threshold = -1;
-अटल पूर्णांक ivtv_pci_latency = 1;
+static int ivtv_yuv_mode;
+static int ivtv_yuv_threshold = -1;
+static int ivtv_pci_latency = 1;
 
-पूर्णांक ivtv_debug;
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-पूर्णांक ivtv_fw_debug;
-#पूर्ण_अगर
+int ivtv_debug;
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+int ivtv_fw_debug;
+#endif
 
-अटल पूर्णांक tunertype = -1;
-अटल पूर्णांक newi2c = -1;
+static int tunertype = -1;
+static int newi2c = -1;
 
-module_param_array(tuner, पूर्णांक, &tuner_c, 0644);
-module_param_array(radio, पूर्णांक, &radio_c, 0644);
-module_param_array(cardtype, पूर्णांक, &cardtype_c, 0644);
-module_param_string(pal, pal, माप(pal), 0644);
-module_param_string(secam, secam, माप(secam), 0644);
-module_param_string(ntsc, ntsc, माप(ntsc), 0644);
-module_param_named(debug,ivtv_debug, पूर्णांक, 0644);
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
-module_param_named(fw_debug, ivtv_fw_debug, पूर्णांक, 0644);
-#पूर्ण_अगर
-module_param(ivtv_pci_latency, पूर्णांक, 0644);
-module_param(ivtv_yuv_mode, पूर्णांक, 0644);
-module_param(ivtv_yuv_threshold, पूर्णांक, 0644);
-module_param(ivtv_first_minor, पूर्णांक, 0644);
+module_param_array(tuner, int, &tuner_c, 0644);
+module_param_array(radio, int, &radio_c, 0644);
+module_param_array(cardtype, int, &cardtype_c, 0644);
+module_param_string(pal, pal, sizeof(pal), 0644);
+module_param_string(secam, secam, sizeof(secam), 0644);
+module_param_string(ntsc, ntsc, sizeof(ntsc), 0644);
+module_param_named(debug,ivtv_debug, int, 0644);
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+module_param_named(fw_debug, ivtv_fw_debug, int, 0644);
+#endif
+module_param(ivtv_pci_latency, int, 0644);
+module_param(ivtv_yuv_mode, int, 0644);
+module_param(ivtv_yuv_threshold, int, 0644);
+module_param(ivtv_first_minor, int, 0644);
 
-module_param(enc_mpg_buffers, पूर्णांक, 0644);
-module_param(enc_yuv_buffers, पूर्णांक, 0644);
-module_param(enc_vbi_buffers, पूर्णांक, 0644);
-module_param(enc_pcm_buffers, पूर्णांक, 0644);
-module_param(dec_mpg_buffers, पूर्णांक, 0644);
-module_param(dec_yuv_buffers, पूर्णांक, 0644);
-module_param(dec_vbi_buffers, पूर्णांक, 0644);
+module_param(enc_mpg_buffers, int, 0644);
+module_param(enc_yuv_buffers, int, 0644);
+module_param(enc_vbi_buffers, int, 0644);
+module_param(enc_pcm_buffers, int, 0644);
+module_param(dec_mpg_buffers, int, 0644);
+module_param(dec_yuv_buffers, int, 0644);
+module_param(dec_vbi_buffers, int, 0644);
 
-module_param(tunertype, पूर्णांक, 0644);
-module_param(newi2c, पूर्णांक, 0644);
-module_param_array(i2c_घड़ी_period, पूर्णांक, &i2c_घड़ी_period_c, 0644);
+module_param(tunertype, int, 0644);
+module_param(newi2c, int, 0644);
+module_param_array(i2c_clock_period, int, &i2c_clock_period_c, 0644);
 
 MODULE_PARM_DESC(tuner, "Tuner type selection,\n"
 			"\t\t\tsee tuner.h for values");
@@ -228,10 +227,10 @@ MODULE_PARM_DESC(debug,
 		 "\t\t\t 256/0x0100: yuv\n"
 		 "\t\t\t 512/0x0200: i2c\n"
 		 "\t\t\t1024/0x0400: high volume\n");
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+#ifdef CONFIG_VIDEO_ADV_DEBUG
 MODULE_PARM_DESC(fw_debug,
 		 "Enable code for debugging firmware problems.  Default: 0\n");
-#पूर्ण_अगर
+#endif
 MODULE_PARM_DESC(ivtv_pci_latency,
 		 "Change the PCI latency to 64 if lower: 0 = No, 1 = Yes,\n"
 		 "\t\t\tDefault: Yes");
@@ -244,33 +243,33 @@ MODULE_PARM_DESC(ivtv_yuv_threshold,
 		 "\t\t\tDefault: 480");
 MODULE_PARM_DESC(enc_mpg_buffers,
 		 "Encoder MPG Buffers (in MB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_ENC_MPG_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_ENC_MPG_BUFFERS));
 MODULE_PARM_DESC(enc_yuv_buffers,
 		 "Encoder YUV Buffers (in MB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_ENC_YUV_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_ENC_YUV_BUFFERS));
 MODULE_PARM_DESC(enc_vbi_buffers,
 		 "Encoder VBI Buffers (in MB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_ENC_VBI_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_ENC_VBI_BUFFERS));
 MODULE_PARM_DESC(enc_pcm_buffers,
 		 "Encoder PCM buffers (in kB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_ENC_PCM_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_ENC_PCM_BUFFERS));
 MODULE_PARM_DESC(dec_mpg_buffers,
 		 "Decoder MPG buffers (in MB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_DEC_MPG_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_DEC_MPG_BUFFERS));
 MODULE_PARM_DESC(dec_yuv_buffers,
 		 "Decoder YUV buffers (in MB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_DEC_YUV_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_DEC_YUV_BUFFERS));
 MODULE_PARM_DESC(dec_vbi_buffers,
 		 "Decoder VBI buffers (in kB)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_DEC_VBI_BUFFERS));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_DEC_VBI_BUFFERS));
 MODULE_PARM_DESC(newi2c,
 		 "Use new I2C implementation\n"
 		 "\t\t\t-1 is autodetect, 0 is off, 1 is on\n"
 		 "\t\t\tDefault is autodetect");
-MODULE_PARM_DESC(i2c_घड़ी_period,
+MODULE_PARM_DESC(i2c_clock_period,
 		 "Period of SCL for the I2C bus controlled by the CX23415/6\n"
 		 "\t\t\tMin: 10 usec (100 kHz), Max: 4500 usec (222 Hz)\n"
-		 "\t\t\tDefault: " __stringअगरy(IVTV_DEFAULT_I2C_CLOCK_PERIOD));
+		 "\t\t\tDefault: " __stringify(IVTV_DEFAULT_I2C_CLOCK_PERIOD));
 
 MODULE_PARM_DESC(ivtv_first_minor, "Set device node number assigned to first card");
 
@@ -280,366 +279,366 @@ MODULE_LICENSE("GPL");
 
 MODULE_VERSION(IVTV_VERSION);
 
-#अगर defined(CONFIG_MODULES) && defined(MODULE)
-अटल व्योम request_module_async(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ivtv *dev = container_of(work, काष्ठा ivtv, request_module_wk);
+#if defined(CONFIG_MODULES) && defined(MODULE)
+static void request_module_async(struct work_struct *work)
+{
+	struct ivtv *dev = container_of(work, struct ivtv, request_module_wk);
 
 	/* Make sure ivtv-alsa module is loaded */
 	request_module("ivtv-alsa");
 
-	/* Initialize ivtv-alsa क्रम this instance of the cx18 device */
-	अगर (ivtv_ext_init != शून्य)
+	/* Initialize ivtv-alsa for this instance of the cx18 device */
+	if (ivtv_ext_init != NULL)
 		ivtv_ext_init(dev);
-पूर्ण
+}
 
-अटल व्योम request_modules(काष्ठा ivtv *dev)
-अणु
+static void request_modules(struct ivtv *dev)
+{
 	INIT_WORK(&dev->request_module_wk, request_module_async);
 	schedule_work(&dev->request_module_wk);
-पूर्ण
+}
 
-अटल व्योम flush_request_modules(काष्ठा ivtv *dev)
-अणु
+static void flush_request_modules(struct ivtv *dev)
+{
 	flush_work(&dev->request_module_wk);
-पूर्ण
-#अन्यथा
-#घोषणा request_modules(dev)
-#घोषणा flush_request_modules(dev)
-#पूर्ण_अगर /* CONFIG_MODULES */
+}
+#else
+#define request_modules(dev)
+#define flush_request_modules(dev)
+#endif /* CONFIG_MODULES */
 
-व्योम ivtv_clear_irq_mask(काष्ठा ivtv *itv, u32 mask)
-अणु
+void ivtv_clear_irq_mask(struct ivtv *itv, u32 mask)
+{
 	itv->irqmask &= ~mask;
-	ग_लिखो_reg_sync(itv->irqmask, IVTV_REG_IRQMASK);
-पूर्ण
+	write_reg_sync(itv->irqmask, IVTV_REG_IRQMASK);
+}
 
-व्योम ivtv_set_irq_mask(काष्ठा ivtv *itv, u32 mask)
-अणु
+void ivtv_set_irq_mask(struct ivtv *itv, u32 mask)
+{
 	itv->irqmask |= mask;
-	ग_लिखो_reg_sync(itv->irqmask, IVTV_REG_IRQMASK);
-पूर्ण
+	write_reg_sync(itv->irqmask, IVTV_REG_IRQMASK);
+}
 
-पूर्णांक ivtv_set_output_mode(काष्ठा ivtv *itv, पूर्णांक mode)
-अणु
-    पूर्णांक old_mode;
+int ivtv_set_output_mode(struct ivtv *itv, int mode)
+{
+    int old_mode;
 
     spin_lock(&itv->lock);
     old_mode = itv->output_mode;
-    अगर (old_mode == 0)
+    if (old_mode == 0)
 	itv->output_mode = old_mode = mode;
     spin_unlock(&itv->lock);
-    वापस old_mode;
-पूर्ण
+    return old_mode;
+}
 
-काष्ठा ivtv_stream *ivtv_get_output_stream(काष्ठा ivtv *itv)
-अणु
-	चयन (itv->output_mode) अणु
-	हाल OUT_MPG:
-		वापस &itv->streams[IVTV_DEC_STREAM_TYPE_MPG];
-	हाल OUT_YUV:
-		वापस &itv->streams[IVTV_DEC_STREAM_TYPE_YUV];
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+struct ivtv_stream *ivtv_get_output_stream(struct ivtv *itv)
+{
+	switch (itv->output_mode) {
+	case OUT_MPG:
+		return &itv->streams[IVTV_DEC_STREAM_TYPE_MPG];
+	case OUT_YUV:
+		return &itv->streams[IVTV_DEC_STREAM_TYPE_YUV];
+	default:
+		return NULL;
+	}
+}
 
-पूर्णांक ivtv_रुकोq(रुको_queue_head_t *रुकोq)
-अणु
-	DEFINE_WAIT(रुको);
+int ivtv_waitq(wait_queue_head_t *waitq)
+{
+	DEFINE_WAIT(wait);
 
-	prepare_to_रुको(रुकोq, &रुको, TASK_INTERRUPTIBLE);
+	prepare_to_wait(waitq, &wait, TASK_INTERRUPTIBLE);
 	schedule();
-	finish_रुको(रुकोq, &रुको);
-	वापस संकेत_pending(current) ? -EINTR : 0;
-पूर्ण
+	finish_wait(waitq, &wait);
+	return signal_pending(current) ? -EINTR : 0;
+}
 
 /* Generic utility functions */
-पूर्णांक ivtv_msleep_समयout(अचिन्हित पूर्णांक msecs, पूर्णांक पूर्णांकr)
-अणु
-	पूर्णांक समयout = msecs_to_jअगरfies(msecs);
+int ivtv_msleep_timeout(unsigned int msecs, int intr)
+{
+	int timeout = msecs_to_jiffies(msecs);
 
-	करो अणु
-		set_current_state(पूर्णांकr ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
-		समयout = schedule_समयout(समयout);
-		अगर (पूर्णांकr) अणु
-			पूर्णांक ret = संकेत_pending(current);
+	do {
+		set_current_state(intr ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
+		timeout = schedule_timeout(timeout);
+		if (intr) {
+			int ret = signal_pending(current);
 
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण जबतक (समयout);
-	वापस 0;
-पूर्ण
+			if (ret)
+				return ret;
+		}
+	} while (timeout);
+	return 0;
+}
 
 /* Release ioremapped memory */
-अटल व्योम ivtv_iounmap(काष्ठा ivtv *itv)
-अणु
-	अगर (itv == शून्य)
-		वापस;
+static void ivtv_iounmap(struct ivtv *itv)
+{
+	if (itv == NULL)
+		return;
 
-	/* Release रेजिस्टरs memory */
-	अगर (itv->reg_mem != शून्य) अणु
+	/* Release registers memory */
+	if (itv->reg_mem != NULL) {
 		IVTV_DEBUG_INFO("releasing reg_mem\n");
 		iounmap(itv->reg_mem);
-		itv->reg_mem = शून्य;
-	पूर्ण
+		itv->reg_mem = NULL;
+	}
 	/* Release io memory */
-	अगर (itv->has_cx23415 && itv->dec_mem != शून्य) अणु
+	if (itv->has_cx23415 && itv->dec_mem != NULL) {
 		IVTV_DEBUG_INFO("releasing dec_mem\n");
 		iounmap(itv->dec_mem);
-	पूर्ण
-	itv->dec_mem = शून्य;
+	}
+	itv->dec_mem = NULL;
 
 	/* Release io memory */
-	अगर (itv->enc_mem != शून्य) अणु
+	if (itv->enc_mem != NULL) {
 		IVTV_DEBUG_INFO("releasing enc_mem\n");
 		iounmap(itv->enc_mem);
-		itv->enc_mem = शून्य;
-	पूर्ण
-पूर्ण
+		itv->enc_mem = NULL;
+	}
+}
 
 /* Hauppauge card? get values from tveeprom */
-व्योम ivtv_पढ़ो_eeprom(काष्ठा ivtv *itv, काष्ठा tveeprom *tv)
-अणु
+void ivtv_read_eeprom(struct ivtv *itv, struct tveeprom *tv)
+{
 	u8 eedata[256];
 
 	itv->i2c_client.addr = 0xA0 >> 1;
-	tveeprom_पढ़ो(&itv->i2c_client, eedata, माप(eedata));
+	tveeprom_read(&itv->i2c_client, eedata, sizeof(eedata));
 	tveeprom_hauppauge_analog(tv, eedata);
-पूर्ण
+}
 
-अटल व्योम ivtv_process_eeprom(काष्ठा ivtv *itv)
-अणु
-	काष्ठा tveeprom tv;
-	पूर्णांक pci_slot = PCI_SLOT(itv->pdev->devfn);
+static void ivtv_process_eeprom(struct ivtv *itv)
+{
+	struct tveeprom tv;
+	int pci_slot = PCI_SLOT(itv->pdev->devfn);
 
-	ivtv_पढ़ो_eeprom(itv, &tv);
+	ivtv_read_eeprom(itv, &tv);
 
-	/* Many thanks to Steven Toth from Hauppauge क्रम providing the
+	/* Many thanks to Steven Toth from Hauppauge for providing the
 	   model numbers */
-	चयन (tv.model) अणु
-		/* In a few हालs the PCI subप्रणाली IDs करो not correctly
-		   identअगरy the card. A better method is to check the
+	switch (tv.model) {
+		/* In a few cases the PCI subsystem IDs do not correctly
+		   identify the card. A better method is to check the
 		   model number from the eeprom instead. */
-		हाल 30012 ... 30039:  /* Low profile PVR250 */
-		हाल 32000 ... 32999:
-		हाल 48000 ... 48099:  /* 48??? range are PVR250s with a cx23415 */
-		हाल 48400 ... 48599:
+		case 30012 ... 30039:  /* Low profile PVR250 */
+		case 32000 ... 32999:
+		case 48000 ... 48099:  /* 48??? range are PVR250s with a cx23415 */
+		case 48400 ... 48599:
 			itv->card = ivtv_get_card(IVTV_CARD_PVR_250);
-			अवरोध;
-		हाल 48100 ... 48399:
-		हाल 48600 ... 48999:
+			break;
+		case 48100 ... 48399:
+		case 48600 ... 48999:
 			itv->card = ivtv_get_card(IVTV_CARD_PVR_350);
-			अवरोध;
-		हाल 23000 ... 23999:  /* PVR500 */
-		हाल 25000 ... 25999:  /* Low profile PVR150 */
-		हाल 26000 ... 26999:  /* Regular PVR150 */
+			break;
+		case 23000 ... 23999:  /* PVR500 */
+		case 25000 ... 25999:  /* Low profile PVR150 */
+		case 26000 ... 26999:  /* Regular PVR150 */
 			itv->card = ivtv_get_card(IVTV_CARD_PVR_150);
-			अवरोध;
-		हाल 0:
+			break;
+		case 0:
 			IVTV_ERR("Invalid EEPROM\n");
-			वापस;
-		शेष:
+			return;
+		default:
 			IVTV_ERR("Unknown model %d, defaulting to PVR-150\n", tv.model);
 			itv->card = ivtv_get_card(IVTV_CARD_PVR_150);
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	चयन (tv.model) अणु
-		/* Old style PVR350 (with an saa7114) uses this input क्रम
+	switch (tv.model) {
+		/* Old style PVR350 (with an saa7114) uses this input for
 		   the tuner. */
-		हाल 48254:
+		case 48254:
 			itv->card = ivtv_get_card(IVTV_CARD_PVR_350_V1);
-			अवरोध;
-		शेष:
-			अवरोध;
-	पूर्ण
+			break;
+		default:
+			break;
+	}
 
 	itv->v4l2_cap = itv->card->v4l2_capabilities;
 	itv->card_name = itv->card->name;
 	itv->card_i2c = itv->card->i2c;
 
 	/* If this is a PVR500 then it should be possible to detect whether it is the
-	   first or second unit by looking at the subप्रणाली device ID: is bit 4 is
+	   first or second unit by looking at the subsystem device ID: is bit 4 is
 	   set, then it is the second unit (according to info from Hauppauge).
 
-	   However, जबतक this works क्रम most cards, I have seen a few PVR500 cards
-	   where both units have the same subप्रणाली ID.
+	   However, while this works for most cards, I have seen a few PVR500 cards
+	   where both units have the same subsystem ID.
 
 	   So instead I look at the reported 'PCI slot' (which is the slot on the PVR500
-	   PCI bridge) and अगर it is 8, then it is assumed to be the first unit, otherwise
-	   it is the second unit. It is possible that it is a dअगरferent slot when ivtv is
-	   used in Xen, in that हाल I ignore this card here. The worst that can happen
+	   PCI bridge) and if it is 8, then it is assumed to be the first unit, otherwise
+	   it is the second unit. It is possible that it is a different slot when ivtv is
+	   used in Xen, in that case I ignore this card here. The worst that can happen
 	   is that the card presents itself with a non-working radio device.
 
 	   This detection is needed since the eeprom reports incorrectly that a radio is
 	   present on the second unit. */
-	अगर (tv.model / 1000 == 23) अणु
-		अटल स्थिर काष्ठा ivtv_card_tuner_i2c ivtv_i2c_radio = अणु
-			.radio = अणु 0x60, I2C_CLIENT_END पूर्ण,
-			.demod = अणु 0x43, I2C_CLIENT_END पूर्ण,
-			.tv = अणु 0x61, I2C_CLIENT_END पूर्ण,
-		पूर्ण;
+	if (tv.model / 1000 == 23) {
+		static const struct ivtv_card_tuner_i2c ivtv_i2c_radio = {
+			.radio = { 0x60, I2C_CLIENT_END },
+			.demod = { 0x43, I2C_CLIENT_END },
+			.tv = { 0x61, I2C_CLIENT_END },
+		};
 
 		itv->card_name = "WinTV PVR 500";
 		itv->card_i2c = &ivtv_i2c_radio;
-		अगर (pci_slot == 8 || pci_slot == 9) अणु
-			पूर्णांक is_first = (pci_slot & 1) == 0;
+		if (pci_slot == 8 || pci_slot == 9) {
+			int is_first = (pci_slot & 1) == 0;
 
 			itv->card_name = is_first ? "WinTV PVR 500 (unit #1)" :
 						    "WinTV PVR 500 (unit #2)";
-			अगर (!is_first) अणु
+			if (!is_first) {
 				IVTV_INFO("Correcting tveeprom data: no radio present on second unit\n");
 				tv.has_radio = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	IVTV_INFO("Autodetected %s\n", itv->card_name);
 
-	चयन (tv.tuner_hauppauge_model) अणु
-		हाल 85:
-		हाल 99:
-		हाल 112:
+	switch (tv.tuner_hauppauge_model) {
+		case 85:
+		case 99:
+		case 112:
 			itv->pvr150_workaround = 1;
-			अवरोध;
-		शेष:
-			अवरोध;
-	पूर्ण
-	अगर (tv.tuner_type == TUNER_ABSENT)
+			break;
+		default:
+			break;
+	}
+	if (tv.tuner_type == TUNER_ABSENT)
 		IVTV_ERR("tveeprom cannot autodetect tuner!\n");
 
-	अगर (itv->options.tuner == -1)
+	if (itv->options.tuner == -1)
 		itv->options.tuner = tv.tuner_type;
-	अगर (itv->options.radio == -1)
+	if (itv->options.radio == -1)
 		itv->options.radio = (tv.has_radio != 0);
-	/* only enable newi2c अगर an IR blaster is present */
-	अगर (itv->options.newi2c == -1 && tv.has_ir) अणु
+	/* only enable newi2c if an IR blaster is present */
+	if (itv->options.newi2c == -1 && tv.has_ir) {
 		itv->options.newi2c = (tv.has_ir & 4) ? 1 : 0;
-		अगर (itv->options.newi2c) अणु
+		if (itv->options.newi2c) {
 		    IVTV_INFO("Reopen i2c bus for IR-blaster support\n");
-		    निकास_ivtv_i2c(itv);
+		    exit_ivtv_i2c(itv);
 		    init_ivtv_i2c(itv);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (itv->std != 0)
-		/* user specअगरied tuner standard */
-		वापस;
+	if (itv->std != 0)
+		/* user specified tuner standard */
+		return;
 
-	/* स्वतःdetect tuner standard */
-	अगर (tv.tuner_क्रमmats & V4L2_STD_PAL) अणु
+	/* autodetect tuner standard */
+	if (tv.tuner_formats & V4L2_STD_PAL) {
 		IVTV_DEBUG_INFO("PAL tuner detected\n");
 		itv->std |= V4L2_STD_PAL_BG | V4L2_STD_PAL_H;
-	पूर्ण अन्यथा अगर (tv.tuner_क्रमmats & V4L2_STD_NTSC) अणु
+	} else if (tv.tuner_formats & V4L2_STD_NTSC) {
 		IVTV_DEBUG_INFO("NTSC tuner detected\n");
 		itv->std |= V4L2_STD_NTSC_M;
-	पूर्ण अन्यथा अगर (tv.tuner_क्रमmats & V4L2_STD_SECAM) अणु
+	} else if (tv.tuner_formats & V4L2_STD_SECAM) {
 		IVTV_DEBUG_INFO("SECAM tuner detected\n");
 		itv->std |= V4L2_STD_SECAM_L;
-	पूर्ण अन्यथा अणु
+	} else {
 		IVTV_INFO("No tuner detected, default to NTSC-M\n");
 		itv->std |= V4L2_STD_NTSC_M;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल v4l2_std_id ivtv_parse_std(काष्ठा ivtv *itv)
-अणु
-	चयन (pal[0]) अणु
-		हाल '6':
+static v4l2_std_id ivtv_parse_std(struct ivtv *itv)
+{
+	switch (pal[0]) {
+		case '6':
 			tunertype = 0;
-			वापस V4L2_STD_PAL_60;
-		हाल 'b':
-		हाल 'B':
-		हाल 'g':
-		हाल 'G':
-		हाल 'h':
-		हाल 'H':
+			return V4L2_STD_PAL_60;
+		case 'b':
+		case 'B':
+		case 'g':
+		case 'G':
+		case 'h':
+		case 'H':
 			tunertype = 0;
-			वापस V4L2_STD_PAL_BG | V4L2_STD_PAL_H;
-		हाल 'n':
-		हाल 'N':
+			return V4L2_STD_PAL_BG | V4L2_STD_PAL_H;
+		case 'n':
+		case 'N':
 			tunertype = 1;
-			अगर (pal[1] == 'c' || pal[1] == 'C')
-				वापस V4L2_STD_PAL_Nc;
-			वापस V4L2_STD_PAL_N;
-		हाल 'i':
-		हाल 'I':
+			if (pal[1] == 'c' || pal[1] == 'C')
+				return V4L2_STD_PAL_Nc;
+			return V4L2_STD_PAL_N;
+		case 'i':
+		case 'I':
 			tunertype = 0;
-			वापस V4L2_STD_PAL_I;
-		हाल 'd':
-		हाल 'D':
-		हाल 'k':
-		हाल 'K':
+			return V4L2_STD_PAL_I;
+		case 'd':
+		case 'D':
+		case 'k':
+		case 'K':
 			tunertype = 0;
-			वापस V4L2_STD_PAL_DK;
-		हाल 'M':
-		हाल 'm':
+			return V4L2_STD_PAL_DK;
+		case 'M':
+		case 'm':
 			tunertype = 1;
-			वापस V4L2_STD_PAL_M;
-		हाल '-':
-			अवरोध;
-		शेष:
+			return V4L2_STD_PAL_M;
+		case '-':
+			break;
+		default:
 			IVTV_WARN("pal= argument not recognised\n");
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	चयन (secam[0]) अणु
-		हाल 'b':
-		हाल 'B':
-		हाल 'g':
-		हाल 'G':
-		हाल 'h':
-		हाल 'H':
+	switch (secam[0]) {
+		case 'b':
+		case 'B':
+		case 'g':
+		case 'G':
+		case 'h':
+		case 'H':
 			tunertype = 0;
-			वापस V4L2_STD_SECAM_B | V4L2_STD_SECAM_G | V4L2_STD_SECAM_H;
-		हाल 'd':
-		हाल 'D':
-		हाल 'k':
-		हाल 'K':
+			return V4L2_STD_SECAM_B | V4L2_STD_SECAM_G | V4L2_STD_SECAM_H;
+		case 'd':
+		case 'D':
+		case 'k':
+		case 'K':
 			tunertype = 0;
-			वापस V4L2_STD_SECAM_DK;
-		हाल 'l':
-		हाल 'L':
+			return V4L2_STD_SECAM_DK;
+		case 'l':
+		case 'L':
 			tunertype = 0;
-			अगर (secam[1] == 'C' || secam[1] == 'c')
-				वापस V4L2_STD_SECAM_LC;
-			वापस V4L2_STD_SECAM_L;
-		हाल '-':
-			अवरोध;
-		शेष:
+			if (secam[1] == 'C' || secam[1] == 'c')
+				return V4L2_STD_SECAM_LC;
+			return V4L2_STD_SECAM_L;
+		case '-':
+			break;
+		default:
 			IVTV_WARN("secam= argument not recognised\n");
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	चयन (ntsc[0]) अणु
-		हाल 'm':
-		हाल 'M':
+	switch (ntsc[0]) {
+		case 'm':
+		case 'M':
 			tunertype = 1;
-			वापस V4L2_STD_NTSC_M;
-		हाल 'j':
-		हाल 'J':
+			return V4L2_STD_NTSC_M;
+		case 'j':
+		case 'J':
 			tunertype = 1;
-			वापस V4L2_STD_NTSC_M_JP;
-		हाल 'k':
-		हाल 'K':
+			return V4L2_STD_NTSC_M_JP;
+		case 'k':
+		case 'K':
 			tunertype = 1;
-			वापस V4L2_STD_NTSC_M_KR;
-		हाल '-':
-			अवरोध;
-		शेष:
+			return V4L2_STD_NTSC_M_KR;
+		case '-':
+			break;
+		default:
 			IVTV_WARN("ntsc= argument not recognised\n");
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
 	/* no match found */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ivtv_process_options(काष्ठा ivtv *itv)
-अणु
-	स्थिर अक्षर *chipname;
-	पूर्णांक i, j;
+static void ivtv_process_options(struct ivtv *itv)
+{
+	const char *chipname;
+	int i, j;
 
 	itv->options.kilobytes[IVTV_ENC_STREAM_TYPE_MPG] = enc_mpg_buffers * 1024;
 	itv->options.kilobytes[IVTV_ENC_STREAM_TYPE_YUV] = enc_yuv_buffers * 1024;
@@ -652,89 +651,89 @@ MODULE_VERSION(IVTV_VERSION);
 	itv->options.tuner = tuner[itv->instance];
 	itv->options.radio = radio[itv->instance];
 
-	itv->options.i2c_घड़ी_period = i2c_घड़ी_period[itv->instance];
-	अगर (itv->options.i2c_घड़ी_period == -1)
-		itv->options.i2c_घड़ी_period = IVTV_DEFAULT_I2C_CLOCK_PERIOD;
-	अन्यथा अगर (itv->options.i2c_घड़ी_period < 10)
-		itv->options.i2c_घड़ी_period = 10;
-	अन्यथा अगर (itv->options.i2c_घड़ी_period > 4500)
-		itv->options.i2c_घड़ी_period = 4500;
+	itv->options.i2c_clock_period = i2c_clock_period[itv->instance];
+	if (itv->options.i2c_clock_period == -1)
+		itv->options.i2c_clock_period = IVTV_DEFAULT_I2C_CLOCK_PERIOD;
+	else if (itv->options.i2c_clock_period < 10)
+		itv->options.i2c_clock_period = 10;
+	else if (itv->options.i2c_clock_period > 4500)
+		itv->options.i2c_clock_period = 4500;
 
 	itv->options.newi2c = newi2c;
-	अगर (tunertype < -1 || tunertype > 1) अणु
+	if (tunertype < -1 || tunertype > 1) {
 		IVTV_WARN("Invalid tunertype argument, will autodetect instead\n");
 		tunertype = -1;
-	पूर्ण
+	}
 	itv->std = ivtv_parse_std(itv);
-	अगर (itv->std == 0 && tunertype >= 0)
+	if (itv->std == 0 && tunertype >= 0)
 		itv->std = tunertype ? V4L2_STD_MN : (V4L2_STD_ALL & ~V4L2_STD_MN);
 	itv->has_cx23415 = (itv->pdev->device == PCI_DEVICE_ID_IVTV15);
 	chipname = itv->has_cx23415 ? "cx23415" : "cx23416";
-	अगर (itv->options.cardtype == -1) अणु
+	if (itv->options.cardtype == -1) {
 		IVTV_INFO("Ignore card (detected %s based chip)\n", chipname);
-		वापस;
-	पूर्ण
-	अगर ((itv->card = ivtv_get_card(itv->options.cardtype - 1))) अणु
+		return;
+	}
+	if ((itv->card = ivtv_get_card(itv->options.cardtype - 1))) {
 		IVTV_INFO("User specified %s card (detected %s based chip)\n",
 				itv->card->name, chipname);
-	पूर्ण अन्यथा अगर (itv->options.cardtype != 0) अणु
+	} else if (itv->options.cardtype != 0) {
 		IVTV_ERR("Unknown user specified type, trying to autodetect card\n");
-	पूर्ण
-	अगर (itv->card == शून्य) अणु
-		अगर (itv->pdev->subप्रणाली_venकरोr == IVTV_PCI_ID_HAUPPAUGE ||
-		    itv->pdev->subप्रणाली_venकरोr == IVTV_PCI_ID_HAUPPAUGE_ALT1 ||
-		    itv->pdev->subप्रणाली_venकरोr == IVTV_PCI_ID_HAUPPAUGE_ALT2) अणु
+	}
+	if (itv->card == NULL) {
+		if (itv->pdev->subsystem_vendor == IVTV_PCI_ID_HAUPPAUGE ||
+		    itv->pdev->subsystem_vendor == IVTV_PCI_ID_HAUPPAUGE_ALT1 ||
+		    itv->pdev->subsystem_vendor == IVTV_PCI_ID_HAUPPAUGE_ALT2) {
 			itv->card = ivtv_get_card(itv->has_cx23415 ? IVTV_CARD_PVR_350 : IVTV_CARD_PVR_150);
 			IVTV_INFO("Autodetected Hauppauge card (%s based)\n",
 					chipname);
-		पूर्ण
-	पूर्ण
-	अगर (itv->card == शून्य) अणु
-		क्रम (i = 0; (itv->card = ivtv_get_card(i)); i++) अणु
-			अगर (itv->card->pci_list == शून्य)
-				जारी;
-			क्रम (j = 0; itv->card->pci_list[j].device; j++) अणु
-				अगर (itv->pdev->device !=
+		}
+	}
+	if (itv->card == NULL) {
+		for (i = 0; (itv->card = ivtv_get_card(i)); i++) {
+			if (itv->card->pci_list == NULL)
+				continue;
+			for (j = 0; itv->card->pci_list[j].device; j++) {
+				if (itv->pdev->device !=
 				    itv->card->pci_list[j].device)
-					जारी;
-				अगर (itv->pdev->subप्रणाली_venकरोr !=
-				    itv->card->pci_list[j].subप्रणाली_venकरोr)
-					जारी;
-				अगर (itv->pdev->subप्रणाली_device !=
-				    itv->card->pci_list[j].subप्रणाली_device)
-					जारी;
+					continue;
+				if (itv->pdev->subsystem_vendor !=
+				    itv->card->pci_list[j].subsystem_vendor)
+					continue;
+				if (itv->pdev->subsystem_device !=
+				    itv->card->pci_list[j].subsystem_device)
+					continue;
 				IVTV_INFO("Autodetected %s card (%s based)\n",
 						itv->card->name, chipname);
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-करोne:
+				goto done;
+			}
+		}
+	}
+done:
 
-	अगर (itv->card == शून्य) अणु
+	if (itv->card == NULL) {
 		itv->card = ivtv_get_card(IVTV_CARD_PVR_150);
 		IVTV_ERR("Unknown card: vendor/device: [%04x:%04x]\n",
-		     itv->pdev->venकरोr, itv->pdev->device);
+		     itv->pdev->vendor, itv->pdev->device);
 		IVTV_ERR("              subsystem vendor/device: [%04x:%04x]\n",
-		     itv->pdev->subप्रणाली_venकरोr, itv->pdev->subप्रणाली_device);
+		     itv->pdev->subsystem_vendor, itv->pdev->subsystem_device);
 		IVTV_ERR("              %s based\n", chipname);
 		IVTV_ERR("Defaulting to %s card\n", itv->card->name);
 		IVTV_ERR("Please mail the vendor/device and subsystem vendor/device IDs and what kind of\n");
 		IVTV_ERR("card you have to the linux-media mailinglist (www.linuxtv.org)\n");
 		IVTV_ERR("Prefix your subject line with [UNKNOWN IVTV CARD].\n");
-	पूर्ण
+	}
 	itv->v4l2_cap = itv->card->v4l2_capabilities;
 	itv->card_name = itv->card->name;
 	itv->card_i2c = itv->card->i2c;
-पूर्ण
+}
 
-/* Precondition: the ivtv काष्ठाure has been स_रखो to 0. Only
+/* Precondition: the ivtv structure has been memset to 0. Only
    the dev and num fields have been filled in.
-   No assumptions on the card type may be made here (see ivtv_init_काष्ठा2
-   क्रम that).
+   No assumptions on the card type may be made here (see ivtv_init_struct2
+   for that).
  */
-अटल पूर्णांक ivtv_init_काष्ठा1(काष्ठा ivtv *itv)
-अणु
+static int ivtv_init_struct1(struct ivtv *itv)
+{
 	itv->base_addr = pci_resource_start(itv->pdev, 0);
 	itv->enc_mbox.max_mbox = 2; /* the encoder has 3 mailboxes (0-2) */
 	itv->dec_mbox.max_mbox = 1; /* the decoder has 2 mailboxes (0-1) */
@@ -746,26 +745,26 @@ MODULE_VERSION(IVTV_VERSION);
 	spin_lock_init(&itv->lock);
 	spin_lock_init(&itv->dma_reg_lock);
 
-	kthपढ़ो_init_worker(&itv->irq_worker);
-	itv->irq_worker_task = kthपढ़ो_run(kthपढ़ो_worker_fn, &itv->irq_worker,
+	kthread_init_worker(&itv->irq_worker);
+	itv->irq_worker_task = kthread_run(kthread_worker_fn, &itv->irq_worker,
 					   "%s", itv->v4l2_dev.name);
-	अगर (IS_ERR(itv->irq_worker_task)) अणु
+	if (IS_ERR(itv->irq_worker_task)) {
 		IVTV_ERR("Could not create ivtv task\n");
-		वापस -1;
-	पूर्ण
-	/* must use the FIFO scheduler as it is realसमय sensitive */
-	sched_set_fअगरo(itv->irq_worker_task);
+		return -1;
+	}
+	/* must use the FIFO scheduler as it is realtime sensitive */
+	sched_set_fifo(itv->irq_worker_task);
 
-	kthपढ़ो_init_work(&itv->irq_work, ivtv_irq_work_handler);
+	kthread_init_work(&itv->irq_work, ivtv_irq_work_handler);
 
 	/* Initial settings */
 	itv->cxhdl.port = CX2341X_PORT_MEMORY;
 	itv->cxhdl.capabilities = CX2341X_CAP_HAS_SLICED_VBI;
-	init_रुकोqueue_head(&itv->eos_रुकोq);
-	init_रुकोqueue_head(&itv->event_रुकोq);
-	init_रुकोqueue_head(&itv->vsync_रुकोq);
-	init_रुकोqueue_head(&itv->dma_रुकोq);
-	समयr_setup(&itv->dma_समयr, ivtv_unfinished_dma, 0);
+	init_waitqueue_head(&itv->eos_waitq);
+	init_waitqueue_head(&itv->event_waitq);
+	init_waitqueue_head(&itv->vsync_waitq);
+	init_waitqueue_head(&itv->dma_waitq);
+	timer_setup(&itv->dma_timer, ivtv_unfinished_dma, 0);
 
 	itv->cur_dma_stream = -1;
 	itv->cur_pio_stream = -1;
@@ -777,7 +776,7 @@ MODULE_VERSION(IVTV_VERSION);
 	itv->vbi.in.type = V4L2_BUF_TYPE_VBI_CAPTURE;
 	itv->vbi.sliced_in = &itv->vbi.in.fmt.sliced;
 
-	/* Init the sg table क्रम osd/yuv output */
+	/* Init the sg table for osd/yuv output */
 	sg_init_table(itv->udma.SGlist, IVTV_DMA_SG_OSD_ENT);
 
 	/* OSD */
@@ -790,241 +789,241 @@ MODULE_VERSION(IVTV_VERSION);
 	itv->yuv_info.lace_threshold = ivtv_yuv_threshold;
 	itv->yuv_info.max_frames_buffered = 3;
 	itv->yuv_info.track_osd = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Second initialization part. Here the card type has been
-   स्वतःdetected. */
-अटल व्योम ivtv_init_काष्ठा2(काष्ठा ivtv *itv)
-अणु
-	पूर्णांक i;
+   autodetected. */
+static void ivtv_init_struct2(struct ivtv *itv)
+{
+	int i;
 
-	क्रम (i = 0; i < IVTV_CARD_MAX_VIDEO_INPUTS; i++)
-		अगर (itv->card->video_inमाला_दो[i].video_type == 0)
-			अवरोध;
-	itv->nof_inमाला_दो = i;
-	क्रम (i = 0; i < IVTV_CARD_MAX_AUDIO_INPUTS; i++)
-		अगर (itv->card->audio_inमाला_दो[i].audio_type == 0)
-			अवरोध;
-	itv->nof_audio_inमाला_दो = i;
+	for (i = 0; i < IVTV_CARD_MAX_VIDEO_INPUTS; i++)
+		if (itv->card->video_inputs[i].video_type == 0)
+			break;
+	itv->nof_inputs = i;
+	for (i = 0; i < IVTV_CARD_MAX_AUDIO_INPUTS; i++)
+		if (itv->card->audio_inputs[i].audio_type == 0)
+			break;
+	itv->nof_audio_inputs = i;
 
-	अगर (itv->card->hw_all & IVTV_HW_CX25840) अणु
+	if (itv->card->hw_all & IVTV_HW_CX25840) {
 		itv->vbi.sliced_size = 288;  /* multiple of 16, real size = 284 */
-	पूर्ण अन्यथा अणु
+	} else {
 		itv->vbi.sliced_size = 64;   /* multiple of 16, real size = 52 */
-	पूर्ण
+	}
 
 	/* Find tuner input */
-	क्रम (i = 0; i < itv->nof_inमाला_दो; i++) अणु
-		अगर (itv->card->video_inमाला_दो[i].video_type ==
+	for (i = 0; i < itv->nof_inputs; i++) {
+		if (itv->card->video_inputs[i].video_type ==
 				IVTV_CARD_INPUT_VID_TUNER)
-			अवरोध;
-	पूर्ण
-	अगर (i >= itv->nof_inमाला_दो)
+			break;
+	}
+	if (i >= itv->nof_inputs)
 		i = 0;
 	itv->active_input = i;
-	itv->audio_input = itv->card->video_inमाला_दो[i].audio_index;
-पूर्ण
+	itv->audio_input = itv->card->video_inputs[i].audio_index;
+}
 
-अटल पूर्णांक ivtv_setup_pci(काष्ठा ivtv *itv, काष्ठा pci_dev *pdev,
-			  स्थिर काष्ठा pci_device_id *pci_id)
-अणु
+static int ivtv_setup_pci(struct ivtv *itv, struct pci_dev *pdev,
+			  const struct pci_device_id *pci_id)
+{
 	u16 cmd;
-	अचिन्हित अक्षर pci_latency;
+	unsigned char pci_latency;
 
 	IVTV_DEBUG_INFO("Enabling pci device\n");
 
-	अगर (pci_enable_device(pdev)) अणु
+	if (pci_enable_device(pdev)) {
 		IVTV_ERR("Can't enable device!\n");
-		वापस -EIO;
-	पूर्ण
-	अगर (pci_set_dma_mask(pdev, DMA_BIT_MASK(32))) अणु
+		return -EIO;
+	}
+	if (pci_set_dma_mask(pdev, DMA_BIT_MASK(32))) {
 		IVTV_ERR("No suitable DMA available.\n");
-		वापस -EIO;
-	पूर्ण
-	अगर (!request_mem_region(itv->base_addr, IVTV_ENCODER_SIZE, "ivtv encoder")) अणु
+		return -EIO;
+	}
+	if (!request_mem_region(itv->base_addr, IVTV_ENCODER_SIZE, "ivtv encoder")) {
 		IVTV_ERR("Cannot request encoder memory region.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (!request_mem_region(itv->base_addr + IVTV_REG_OFFSET,
-				IVTV_REG_SIZE, "ivtv registers")) अणु
+	if (!request_mem_region(itv->base_addr + IVTV_REG_OFFSET,
+				IVTV_REG_SIZE, "ivtv registers")) {
 		IVTV_ERR("Cannot request register memory region.\n");
 		release_mem_region(itv->base_addr, IVTV_ENCODER_SIZE);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (itv->has_cx23415 &&
+	if (itv->has_cx23415 &&
 	    !request_mem_region(itv->base_addr + IVTV_DECODER_OFFSET,
-				IVTV_DECODER_SIZE, "ivtv decoder")) अणु
+				IVTV_DECODER_SIZE, "ivtv decoder")) {
 		IVTV_ERR("Cannot request decoder memory region.\n");
 		release_mem_region(itv->base_addr, IVTV_ENCODER_SIZE);
 		release_mem_region(itv->base_addr + IVTV_REG_OFFSET, IVTV_REG_SIZE);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Check क्रम bus mastering */
-	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &cmd);
-	अगर (!(cmd & PCI_COMMAND_MASTER)) अणु
+	/* Check for bus mastering */
+	pci_read_config_word(pdev, PCI_COMMAND, &cmd);
+	if (!(cmd & PCI_COMMAND_MASTER)) {
 		IVTV_DEBUG_INFO("Attempting to enable Bus Mastering\n");
 		pci_set_master(pdev);
-		pci_पढ़ो_config_word(pdev, PCI_COMMAND, &cmd);
-		अगर (!(cmd & PCI_COMMAND_MASTER)) अणु
+		pci_read_config_word(pdev, PCI_COMMAND, &cmd);
+		if (!(cmd & PCI_COMMAND_MASTER)) {
 			IVTV_ERR("Bus Mastering is not enabled\n");
-			अगर (itv->has_cx23415)
+			if (itv->has_cx23415)
 				release_mem_region(itv->base_addr + IVTV_DECODER_OFFSET,
 						   IVTV_DECODER_SIZE);
 			release_mem_region(itv->base_addr, IVTV_ENCODER_SIZE);
 			release_mem_region(itv->base_addr + IVTV_REG_OFFSET, IVTV_REG_SIZE);
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण
+			return -ENXIO;
+		}
+	}
 	IVTV_DEBUG_INFO("Bus Mastering Enabled.\n");
 
-	pci_पढ़ो_config_byte(pdev, PCI_LATENCY_TIMER, &pci_latency);
+	pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &pci_latency);
 
-	अगर (pci_latency < 64 && ivtv_pci_latency) अणु
+	if (pci_latency < 64 && ivtv_pci_latency) {
 		IVTV_INFO("Unreasonably low latency timer, setting to 64 (was %d)\n",
 			  pci_latency);
-		pci_ग_लिखो_config_byte(pdev, PCI_LATENCY_TIMER, 64);
-		pci_पढ़ो_config_byte(pdev, PCI_LATENCY_TIMER, &pci_latency);
-	पूर्ण
+		pci_write_config_byte(pdev, PCI_LATENCY_TIMER, 64);
+		pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &pci_latency);
+	}
 	/* This config space value relates to DMA latencies. The
-	   शेष value 0x8080 is too low however and will lead
+	   default value 0x8080 is too low however and will lead
 	   to DMA errors. 0xffff is the max value which solves
 	   these problems. */
-	pci_ग_लिखो_config_dword(pdev, 0x40, 0xffff);
+	pci_write_config_dword(pdev, 0x40, 0xffff);
 
 	IVTV_DEBUG_INFO("%d (rev %d) at %02x:%02x.%x, irq: %d, latency: %d, memory: 0x%llx\n",
 		   pdev->device, pdev->revision, pdev->bus->number,
 		   PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn),
 		   pdev->irq, pci_latency, (u64)itv->base_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ivtv_load_and_init_modules(काष्ठा ivtv *itv)
-अणु
+static void ivtv_load_and_init_modules(struct ivtv *itv)
+{
 	u32 hw = itv->card->hw_all;
-	अचिन्हित i;
+	unsigned i;
 
 	/* check which i2c devices are actually found */
-	क्रम (i = 0; i < 32; i++) अणु
+	for (i = 0; i < 32; i++) {
 		u32 device = BIT(i);
 
-		अगर (!(device & hw))
-			जारी;
-		अगर (device == IVTV_HW_GPIO || device == IVTV_HW_TVEEPROM) अणु
-			/* GPIO and TVEEPROM करो not use i2c probing */
+		if (!(device & hw))
+			continue;
+		if (device == IVTV_HW_GPIO || device == IVTV_HW_TVEEPROM) {
+			/* GPIO and TVEEPROM do not use i2c probing */
 			itv->hw_flags |= device;
-			जारी;
-		पूर्ण
-		अगर (ivtv_i2c_रेजिस्टर(itv, i) == 0)
+			continue;
+		}
+		if (ivtv_i2c_register(itv, i) == 0)
 			itv->hw_flags |= device;
-	पूर्ण
+	}
 
-	/* probe क्रम legacy IR controllers that aren't in card definitions */
-	अगर ((itv->hw_flags & IVTV_HW_IR_ANY) == 0)
+	/* probe for legacy IR controllers that aren't in card definitions */
+	if ((itv->hw_flags & IVTV_HW_IR_ANY) == 0)
 		ivtv_i2c_new_ir_legacy(itv);
 
-	अगर (itv->card->hw_all & IVTV_HW_CX25840)
+	if (itv->card->hw_all & IVTV_HW_CX25840)
 		itv->sd_video = ivtv_find_hw(itv, IVTV_HW_CX25840);
-	अन्यथा अगर (itv->card->hw_all & IVTV_HW_SAA717X)
+	else if (itv->card->hw_all & IVTV_HW_SAA717X)
 		itv->sd_video = ivtv_find_hw(itv, IVTV_HW_SAA717X);
-	अन्यथा अगर (itv->card->hw_all & IVTV_HW_SAA7114)
+	else if (itv->card->hw_all & IVTV_HW_SAA7114)
 		itv->sd_video = ivtv_find_hw(itv, IVTV_HW_SAA7114);
-	अन्यथा
+	else
 		itv->sd_video = ivtv_find_hw(itv, IVTV_HW_SAA7115);
 	itv->sd_audio = ivtv_find_hw(itv, itv->card->hw_audio_ctrl);
 	itv->sd_muxer = ivtv_find_hw(itv, itv->card->hw_muxer);
 
 	hw = itv->hw_flags;
 
-	अगर (itv->card->type == IVTV_CARD_CX23416GYC) अणु
+	if (itv->card->type == IVTV_CARD_CX23416GYC) {
 		/* Several variations of this card exist, detect which card
 		   type should be used. */
-		अगर ((hw & (IVTV_HW_UPD64031A | IVTV_HW_UPD6408X)) == 0)
+		if ((hw & (IVTV_HW_UPD64031A | IVTV_HW_UPD6408X)) == 0)
 			itv->card = ivtv_get_card(IVTV_CARD_CX23416GYC_NOGRYCS);
-		अन्यथा अगर ((hw & IVTV_HW_UPD64031A) == 0)
+		else if ((hw & IVTV_HW_UPD64031A) == 0)
 			itv->card = ivtv_get_card(IVTV_CARD_CX23416GYC_NOGR);
-	पूर्ण
-	अन्यथा अगर (itv->card->type == IVTV_CARD_GV_MVPRX ||
-		 itv->card->type == IVTV_CARD_GV_MVPRX2E) अणु
+	}
+	else if (itv->card->type == IVTV_CARD_GV_MVPRX ||
+		 itv->card->type == IVTV_CARD_GV_MVPRX2E) {
 		/* The crystal frequency of GVMVPRX is 24.576MHz */
 		v4l2_subdev_call(itv->sd_video, video, s_crystal_freq,
 			SAA7115_FREQ_24_576_MHZ, SAA7115_FREQ_FL_UCGC);
-	पूर्ण
+	}
 
-	अगर (hw & IVTV_HW_CX25840) अणु
+	if (hw & IVTV_HW_CX25840) {
 		itv->vbi.raw_decoder_line_size = 1444;
 		itv->vbi.raw_decoder_sav_odd_field = 0x20;
 		itv->vbi.raw_decoder_sav_even_field = 0x60;
 		itv->vbi.sliced_decoder_line_size = 272;
 		itv->vbi.sliced_decoder_sav_odd_field = 0xB0;
 		itv->vbi.sliced_decoder_sav_even_field = 0xF0;
-	पूर्ण
+	}
 
-	अगर (hw & IVTV_HW_SAA711X) अणु
+	if (hw & IVTV_HW_SAA711X) {
 		/* determine the exact saa711x model */
 		itv->hw_flags &= ~IVTV_HW_SAA711X;
 
-		अगर (म_माला(itv->sd_video->name, "saa7114")) अणु
+		if (strstr(itv->sd_video->name, "saa7114")) {
 			itv->hw_flags |= IVTV_HW_SAA7114;
 			/* VBI is not yet supported by the saa7114 driver. */
 			itv->v4l2_cap &= ~(V4L2_CAP_SLICED_VBI_CAPTURE|V4L2_CAP_VBI_CAPTURE);
-		पूर्ण अन्यथा अणु
+		} else {
 			itv->hw_flags |= IVTV_HW_SAA7115;
-		पूर्ण
+		}
 		itv->vbi.raw_decoder_line_size = 1443;
 		itv->vbi.raw_decoder_sav_odd_field = 0x25;
 		itv->vbi.raw_decoder_sav_even_field = 0x62;
 		itv->vbi.sliced_decoder_line_size = 51;
 		itv->vbi.sliced_decoder_sav_odd_field = 0xAB;
 		itv->vbi.sliced_decoder_sav_even_field = 0xEC;
-	पूर्ण
+	}
 
-	अगर (hw & IVTV_HW_SAA717X) अणु
+	if (hw & IVTV_HW_SAA717X) {
 		itv->vbi.raw_decoder_line_size = 1443;
 		itv->vbi.raw_decoder_sav_odd_field = 0x25;
 		itv->vbi.raw_decoder_sav_even_field = 0x62;
 		itv->vbi.sliced_decoder_line_size = 51;
 		itv->vbi.sliced_decoder_sav_odd_field = 0xAB;
 		itv->vbi.sliced_decoder_sav_even_field = 0xEC;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ivtv_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	पूर्णांक retval = 0;
-	पूर्णांक vbi_buf_size;
-	काष्ठा ivtv *itv;
+static int ivtv_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
+{
+	int retval = 0;
+	int vbi_buf_size;
+	struct ivtv *itv;
 
-	itv = kzalloc(माप(काष्ठा ivtv), GFP_KERNEL);
-	अगर (itv == शून्य)
-		वापस -ENOMEM;
+	itv = kzalloc(sizeof(struct ivtv), GFP_KERNEL);
+	if (itv == NULL)
+		return -ENOMEM;
 	itv->pdev = pdev;
 	itv->instance = v4l2_device_set_name(&itv->v4l2_dev, "ivtv",
 						&ivtv_instance);
 
-	retval = v4l2_device_रेजिस्टर(&pdev->dev, &itv->v4l2_dev);
-	अगर (retval) अणु
-		kमुक्त(itv);
-		वापस retval;
-	पूर्ण
+	retval = v4l2_device_register(&pdev->dev, &itv->v4l2_dev);
+	if (retval) {
+		kfree(itv);
+		return retval;
+	}
 	IVTV_INFO("Initializing card %d\n", itv->instance);
 
 	ivtv_process_options(itv);
-	अगर (itv->options.cardtype == -1) अणु
+	if (itv->options.cardtype == -1) {
 		retval = -ENODEV;
-		जाओ err;
-	पूर्ण
-	अगर (ivtv_init_काष्ठा1(itv)) अणु
+		goto err;
+	}
+	if (ivtv_init_struct1(itv)) {
 		retval = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	retval = cx2341x_handler_init(&itv->cxhdl, 50);
-	अगर (retval)
-		जाओ err;
+	if (retval)
+		goto err;
 	itv->v4l2_dev.ctrl_handler = &itv->cxhdl.hdl;
 	itv->cxhdl.ops = &ivtv_cxhdl_ops;
 	itv->cxhdl.priv = itv;
@@ -1034,122 +1033,122 @@ MODULE_VERSION(IVTV_VERSION);
 
 	/* PCI Device Setup */
 	retval = ivtv_setup_pci(itv, pdev, pci_id);
-	अगर (retval == -EIO)
-		जाओ मुक्त_worker;
-	अगर (retval == -ENXIO)
-		जाओ मुक्त_mem;
+	if (retval == -EIO)
+		goto free_worker;
+	if (retval == -ENXIO)
+		goto free_mem;
 
 	/* map io memory */
 	IVTV_DEBUG_INFO("attempting ioremap at 0x%llx len 0x%08x\n",
 		   (u64)itv->base_addr + IVTV_ENCODER_OFFSET, IVTV_ENCODER_SIZE);
 	itv->enc_mem = ioremap(itv->base_addr + IVTV_ENCODER_OFFSET,
 				       IVTV_ENCODER_SIZE);
-	अगर (!itv->enc_mem) अणु
+	if (!itv->enc_mem) {
 		IVTV_ERR("ioremap failed. Can't get a window into CX23415/6 encoder memory\n");
 		IVTV_ERR("Each capture card with a CX23415/6 needs 8 MB of vmalloc address space for this window\n");
 		IVTV_ERR("Check the output of 'grep Vmalloc /proc/meminfo'\n");
 		IVTV_ERR("Use the vmalloc= kernel command line option to set VmallocTotal to a larger value\n");
 		retval = -ENOMEM;
-		जाओ मुक्त_mem;
-	पूर्ण
+		goto free_mem;
+	}
 
-	अगर (itv->has_cx23415) अणु
+	if (itv->has_cx23415) {
 		IVTV_DEBUG_INFO("attempting ioremap at 0x%llx len 0x%08x\n",
 				(u64)itv->base_addr + IVTV_DECODER_OFFSET, IVTV_DECODER_SIZE);
 		itv->dec_mem = ioremap(itv->base_addr + IVTV_DECODER_OFFSET,
 				IVTV_DECODER_SIZE);
-		अगर (!itv->dec_mem) अणु
+		if (!itv->dec_mem) {
 			IVTV_ERR("ioremap failed. Can't get a window into CX23415 decoder memory\n");
 			IVTV_ERR("Each capture card with a CX23415 needs 8 MB of vmalloc address space for this window\n");
 			IVTV_ERR("Check the output of 'grep Vmalloc /proc/meminfo'\n");
 			IVTV_ERR("Use the vmalloc= kernel command line option to set VmallocTotal to a larger value\n");
 			retval = -ENOMEM;
-			जाओ मुक्त_mem;
-		पूर्ण
-	पूर्ण
-	अन्यथा अणु
+			goto free_mem;
+		}
+	}
+	else {
 		itv->dec_mem = itv->enc_mem;
-	पूर्ण
+	}
 
-	/* map रेजिस्टरs memory */
+	/* map registers memory */
 	IVTV_DEBUG_INFO("attempting ioremap at 0x%llx len 0x%08x\n",
 		   (u64)itv->base_addr + IVTV_REG_OFFSET, IVTV_REG_SIZE);
 	itv->reg_mem =
 	    ioremap(itv->base_addr + IVTV_REG_OFFSET, IVTV_REG_SIZE);
-	अगर (!itv->reg_mem) अणु
+	if (!itv->reg_mem) {
 		IVTV_ERR("ioremap failed. Can't get a window into CX23415/6 register space\n");
 		IVTV_ERR("Each capture card with a CX23415/6 needs 64 kB of vmalloc address space for this window\n");
 		IVTV_ERR("Check the output of 'grep Vmalloc /proc/meminfo'\n");
 		IVTV_ERR("Use the vmalloc= kernel command line option to set VmallocTotal to a larger value\n");
 		retval = -ENOMEM;
-		जाओ मुक्त_io;
-	पूर्ण
+		goto free_io;
+	}
 
 	retval = ivtv_gpio_init(itv);
-	अगर (retval)
-		जाओ मुक्त_io;
+	if (retval)
+		goto free_io;
 
 	/* active i2c  */
 	IVTV_DEBUG_INFO("activating i2c...\n");
-	अगर (init_ivtv_i2c(itv)) अणु
+	if (init_ivtv_i2c(itv)) {
 		IVTV_ERR("Could not initialize i2c\n");
-		जाओ मुक्त_io;
-	पूर्ण
+		goto free_io;
+	}
 
-	अगर (itv->card->hw_all & IVTV_HW_TVEEPROM) अणु
+	if (itv->card->hw_all & IVTV_HW_TVEEPROM) {
 		/* Based on the model number the cardtype may be changed.
 		   The PCI IDs are not always reliable. */
 		ivtv_process_eeprom(itv);
-	पूर्ण
-	अगर (itv->card->comment)
+	}
+	if (itv->card->comment)
 		IVTV_INFO("%s", itv->card->comment);
-	अगर (itv->card->v4l2_capabilities == 0) अणु
+	if (itv->card->v4l2_capabilities == 0) {
 		/* card was detected but is not supported */
 		retval = -ENODEV;
-		जाओ मुक्त_i2c;
-	पूर्ण
+		goto free_i2c;
+	}
 
-	अगर (itv->std == 0) अणु
+	if (itv->std == 0) {
 		itv->std = V4L2_STD_NTSC_M;
-	पूर्ण
+	}
 
-	अगर (itv->options.tuner == -1) अणु
-		पूर्णांक i;
+	if (itv->options.tuner == -1) {
+		int i;
 
-		क्रम (i = 0; i < IVTV_CARD_MAX_TUNERS; i++) अणु
-			अगर ((itv->std & itv->card->tuners[i].std) == 0)
-				जारी;
+		for (i = 0; i < IVTV_CARD_MAX_TUNERS; i++) {
+			if ((itv->std & itv->card->tuners[i].std) == 0)
+				continue;
 			itv->options.tuner = itv->card->tuners[i].tuner;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	/* अगर no tuner was found, then pick the first tuner in the card list */
-	अगर (itv->options.tuner == -1 && itv->card->tuners[0].std) अणु
+			break;
+		}
+	}
+	/* if no tuner was found, then pick the first tuner in the card list */
+	if (itv->options.tuner == -1 && itv->card->tuners[0].std) {
 		itv->std = itv->card->tuners[0].std;
-		अगर (itv->std & V4L2_STD_PAL)
+		if (itv->std & V4L2_STD_PAL)
 			itv->std = V4L2_STD_PAL_BG | V4L2_STD_PAL_H;
-		अन्यथा अगर (itv->std & V4L2_STD_NTSC)
+		else if (itv->std & V4L2_STD_NTSC)
 			itv->std = V4L2_STD_NTSC_M;
-		अन्यथा अगर (itv->std & V4L2_STD_SECAM)
+		else if (itv->std & V4L2_STD_SECAM)
 			itv->std = V4L2_STD_SECAM_L;
 		itv->options.tuner = itv->card->tuners[0].tuner;
-	पूर्ण
-	अगर (itv->options.radio == -1)
+	}
+	if (itv->options.radio == -1)
 		itv->options.radio = (itv->card->radio_input.audio_type != 0);
 
-	/* The card is now fully identअगरied, जारी with card-specअगरic
+	/* The card is now fully identified, continue with card-specific
 	   initialization. */
-	ivtv_init_काष्ठा2(itv);
+	ivtv_init_struct2(itv);
 
 	ivtv_load_and_init_modules(itv);
 
-	अगर (itv->std & V4L2_STD_525_60) अणु
+	if (itv->std & V4L2_STD_525_60) {
 		itv->is_60hz = 1;
 		itv->is_out_60hz = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		itv->is_50hz = 1;
 		itv->is_out_50hz = 1;
-	पूर्ण
+	}
 
 	itv->yuv_info.osd_full_w = 720;
 	itv->yuv_info.osd_full_h = itv->is_out_50hz ? 576 : 480;
@@ -1165,53 +1164,53 @@ MODULE_VERSION(IVTV_VERSION);
 	itv->stream_buf_size[IVTV_ENC_STREAM_TYPE_YUV] = 0x08000;
 
 	/* Setup VBI Raw Size. Should be big enough to hold PAL.
-	   It is possible to चयन between PAL and NTSC, so we need to
+	   It is possible to switch between PAL and NTSC, so we need to
 	   take the largest size here. */
 	/* 1456 is multiple of 16, real size = 1444 */
 	itv->vbi.raw_size = 1456;
-	/* We use a buffer size of 1/2 of the total size needed क्रम a
+	/* We use a buffer size of 1/2 of the total size needed for a
 	   frame. This is actually very useful, since we now receive
-	   a field at a समय and that makes 'compressing' the raw data
-	   करोwn to size by stripping off the SAV codes a lot easier.
-	   Note: having two dअगरferent buffer sizes prevents standard
-	   चयनing on the fly. We need to find a better solution... */
+	   a field at a time and that makes 'compressing' the raw data
+	   down to size by stripping off the SAV codes a lot easier.
+	   Note: having two different buffer sizes prevents standard
+	   switching on the fly. We need to find a better solution... */
 	vbi_buf_size = itv->vbi.raw_size * (itv->is_60hz ? 24 : 36) / 2;
 	itv->stream_buf_size[IVTV_ENC_STREAM_TYPE_VBI] = vbi_buf_size;
-	itv->stream_buf_size[IVTV_DEC_STREAM_TYPE_VBI] = माप(काष्ठा v4l2_sliced_vbi_data) * 36;
+	itv->stream_buf_size[IVTV_DEC_STREAM_TYPE_VBI] = sizeof(struct v4l2_sliced_vbi_data) * 36;
 
-	अगर (itv->options.radio > 0)
+	if (itv->options.radio > 0)
 		itv->v4l2_cap |= V4L2_CAP_RADIO;
 
-	अगर (itv->options.tuner > -1) अणु
-		काष्ठा tuner_setup setup;
+	if (itv->options.tuner > -1) {
+		struct tuner_setup setup;
 
 		setup.addr = ADDR_UNSET;
 		setup.type = itv->options.tuner;
 		setup.mode_mask = T_ANALOG_TV;  /* matches TV tuners */
-		अगर (itv->options.radio > 0)
+		if (itv->options.radio > 0)
 			setup.mode_mask |= T_RADIO;
 		setup.tuner_callback = (setup.type == TUNER_XC2028) ?
-			ivtv_reset_tuner_gpio : शून्य;
+			ivtv_reset_tuner_gpio : NULL;
 		ivtv_call_all(itv, tuner, s_type_addr, &setup);
-		अगर (setup.type == TUNER_XC2028) अणु
-			अटल काष्ठा xc2028_ctrl ctrl = अणु
+		if (setup.type == TUNER_XC2028) {
+			static struct xc2028_ctrl ctrl = {
 				.fname = XC2028_DEFAULT_FIRMWARE,
 				.max_len = 64,
-			पूर्ण;
-			काष्ठा v4l2_priv_tun_config cfg = अणु
+			};
+			struct v4l2_priv_tun_config cfg = {
 				.tuner = itv->options.tuner,
 				.priv = &ctrl,
-			पूर्ण;
+			};
 			ivtv_call_all(itv, tuner, s_config, &cfg);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* The tuner is fixed to the standard. The other inमाला_दो (e.g. S-Video)
+	/* The tuner is fixed to the standard. The other inputs (e.g. S-Video)
 	   are not. */
 	itv->tuner_std = itv->std;
 
-	अगर (itv->v4l2_cap & V4L2_CAP_VIDEO_OUTPUT) अणु
-		काष्ठा v4l2_ctrl_handler *hdl = itv->v4l2_dev.ctrl_handler;
+	if (itv->v4l2_cap & V4L2_CAP_VIDEO_OUTPUT) {
+		struct v4l2_ctrl_handler *hdl = itv->v4l2_dev.ctrl_handler;
 
 		itv->ctrl_pts = v4l2_ctrl_new_std(hdl, &ivtv_hdl_out_ops,
 				V4L2_CID_MPEG_VIDEO_DEC_PTS, 0, 0, 0, 0);
@@ -1231,107 +1230,107 @@ MODULE_VERSION(IVTV_VERSION);
 				V4L2_MPEG_AUDIO_DEC_PLAYBACK_SWAPPED_STEREO,
 				1 << V4L2_MPEG_AUDIO_DEC_PLAYBACK_AUTO,
 				V4L2_MPEG_AUDIO_DEC_PLAYBACK_LEFT);
-		अगर (hdl->error) अणु
+		if (hdl->error) {
 			retval = hdl->error;
-			जाओ मुक्त_i2c;
-		पूर्ण
+			goto free_i2c;
+		}
 		v4l2_ctrl_cluster(2, &itv->ctrl_pts);
 		v4l2_ctrl_cluster(2, &itv->ctrl_audio_playback);
 		ivtv_call_all(itv, video, s_std_output, itv->std);
-		/* Turn off the output संकेत. The mpeg decoder is not yet
+		/* Turn off the output signal. The mpeg decoder is not yet
 		   active so without this you would get a green image until the
 		   mpeg decoder becomes active. */
 		ivtv_call_hw(itv, IVTV_HW_SAA7127, video, s_stream, 0);
-	पूर्ण
+	}
 
-	/* clear पूर्णांकerrupt mask, effectively disabling पूर्णांकerrupts */
+	/* clear interrupt mask, effectively disabling interrupts */
 	ivtv_set_irq_mask(itv, 0xffffffff);
 
 	/* Register IRQ */
 	retval = request_irq(itv->pdev->irq, ivtv_irq_handler,
-	     IRQF_SHARED, itv->v4l2_dev.name, (व्योम *)itv);
-	अगर (retval) अणु
+	     IRQF_SHARED, itv->v4l2_dev.name, (void *)itv);
+	if (retval) {
 		IVTV_ERR("Failed to register irq %d\n", retval);
-		जाओ मुक्त_i2c;
-	पूर्ण
+		goto free_i2c;
+	}
 
 	retval = ivtv_streams_setup(itv);
-	अगर (retval) अणु
+	if (retval) {
 		IVTV_ERR("Error %d setting up streams\n", retval);
-		जाओ मुक्त_irq;
-	पूर्ण
-	retval = ivtv_streams_रेजिस्टर(itv);
-	अगर (retval) अणु
+		goto free_irq;
+	}
+	retval = ivtv_streams_register(itv);
+	if (retval) {
 		IVTV_ERR("Error %d registering devices\n", retval);
-		जाओ मुक्त_streams;
-	पूर्ण
+		goto free_streams;
+	}
 	IVTV_INFO("Initialized card: %s\n", itv->card_name);
 
 	/* Load ivtv submodules (ivtv-alsa) */
 	request_modules(itv);
-	वापस 0;
+	return 0;
 
-मुक्त_streams:
+free_streams:
 	ivtv_streams_cleanup(itv);
-मुक्त_irq:
-	मुक्त_irq(itv->pdev->irq, (व्योम *)itv);
-मुक्त_i2c:
-	v4l2_ctrl_handler_मुक्त(&itv->cxhdl.hdl);
-	निकास_ivtv_i2c(itv);
-मुक्त_io:
+free_irq:
+	free_irq(itv->pdev->irq, (void *)itv);
+free_i2c:
+	v4l2_ctrl_handler_free(&itv->cxhdl.hdl);
+	exit_ivtv_i2c(itv);
+free_io:
 	ivtv_iounmap(itv);
-मुक्त_mem:
+free_mem:
 	release_mem_region(itv->base_addr, IVTV_ENCODER_SIZE);
 	release_mem_region(itv->base_addr + IVTV_REG_OFFSET, IVTV_REG_SIZE);
-	अगर (itv->has_cx23415)
+	if (itv->has_cx23415)
 		release_mem_region(itv->base_addr + IVTV_DECODER_OFFSET, IVTV_DECODER_SIZE);
-मुक्त_worker:
-	kthपढ़ो_stop(itv->irq_worker_task);
+free_worker:
+	kthread_stop(itv->irq_worker_task);
 err:
-	अगर (retval == 0)
+	if (retval == 0)
 		retval = -ENODEV;
 	IVTV_ERR("Error %d on initialization\n", retval);
 
-	v4l2_device_unरेजिस्टर(&itv->v4l2_dev);
-	kमुक्त(itv);
-	वापस retval;
-पूर्ण
+	v4l2_device_unregister(&itv->v4l2_dev);
+	kfree(itv);
+	return retval;
+}
 
-पूर्णांक ivtv_init_on_first_खोलो(काष्ठा ivtv *itv)
-अणु
-	काष्ठा v4l2_frequency vf;
+int ivtv_init_on_first_open(struct ivtv *itv)
+{
+	struct v4l2_frequency vf;
 	/* Needed to call ioctls later */
-	काष्ठा ivtv_खोलो_id fh;
-	पूर्णांक fw_retry_count = 3;
-	पूर्णांक video_input;
+	struct ivtv_open_id fh;
+	int fw_retry_count = 3;
+	int video_input;
 
 	fh.itv = itv;
 	fh.type = IVTV_ENC_STREAM_TYPE_MPG;
 
-	अगर (test_bit(IVTV_F_I_FAILED, &itv->i_flags))
-		वापस -ENXIO;
+	if (test_bit(IVTV_F_I_FAILED, &itv->i_flags))
+		return -ENXIO;
 
-	अगर (test_and_set_bit(IVTV_F_I_INITED, &itv->i_flags))
-		वापस 0;
+	if (test_and_set_bit(IVTV_F_I_INITED, &itv->i_flags))
+		return 0;
 
-	जबतक (--fw_retry_count > 0) अणु
+	while (--fw_retry_count > 0) {
 		/* load firmware */
-		अगर (ivtv_firmware_init(itv) == 0)
-			अवरोध;
-		अगर (fw_retry_count > 1)
+		if (ivtv_firmware_init(itv) == 0)
+			break;
+		if (fw_retry_count > 1)
 			IVTV_WARN("Retry loading firmware\n");
-	पूर्ण
+	}
 
-	अगर (fw_retry_count == 0) अणु
+	if (fw_retry_count == 0) {
 		set_bit(IVTV_F_I_FAILED, &itv->i_flags);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	/* Try and get firmware versions */
 	IVTV_DEBUG_INFO("Getting firmware version..\n");
 	ivtv_firmware_versions(itv);
 
-	अगर (itv->card->hw_all & IVTV_HW_CX25840)
+	if (itv->card->hw_all & IVTV_HW_CX25840)
 		v4l2_subdev_call(itv->sd_video, core, load_fw);
 
 	vf.tuner = 0;
@@ -1340,178 +1339,178 @@ err:
 
 	/* Set initial frequency. For PAL/SECAM broadcasts no
 	   'default' channel exists AFAIK. */
-	अगर (itv->std == V4L2_STD_NTSC_M_JP) अणु
+	if (itv->std == V4L2_STD_NTSC_M_JP) {
 		vf.frequency = 1460;	/* ch. 1 91250*16/1000 */
-	पूर्ण
-	अन्यथा अगर (itv->std & V4L2_STD_NTSC_M) अणु
+	}
+	else if (itv->std & V4L2_STD_NTSC_M) {
 		vf.frequency = 1076;	/* ch. 4 67250*16/1000 */
-	पूर्ण
+	}
 
 	video_input = itv->active_input;
 	itv->active_input++;	/* Force update of input */
-	ivtv_s_input(शून्य, &fh, video_input);
+	ivtv_s_input(NULL, &fh, video_input);
 
-	/* Let the VIDIOC_S_STD ioctl करो all the work, keeps the code
+	/* Let the VIDIOC_S_STD ioctl do all the work, keeps the code
 	   in one place. */
 	itv->std++;		/* Force full standard initialization */
 	itv->std_out = itv->std;
-	ivtv_s_frequency(शून्य, &fh, &vf);
+	ivtv_s_frequency(NULL, &fh, &vf);
 
-	अगर (itv->card->v4l2_capabilities & V4L2_CAP_VIDEO_OUTPUT) अणु
+	if (itv->card->v4l2_capabilities & V4L2_CAP_VIDEO_OUTPUT) {
 		/* Turn on the TV-out: ivtv_init_mpeg_decoder() initializes
 		   the mpeg decoder so now the saa7127 receives a proper
-		   संकेत. */
+		   signal. */
 		ivtv_call_hw(itv, IVTV_HW_SAA7127, video, s_stream, 1);
 		ivtv_init_mpeg_decoder(itv);
-	पूर्ण
+	}
 
 	/* On a cx23416 this seems to be able to enable DMA to the chip? */
-	अगर (!itv->has_cx23415)
-		ग_लिखो_reg_sync(0x03, IVTV_REG_DMACONTROL);
+	if (!itv->has_cx23415)
+		write_reg_sync(0x03, IVTV_REG_DMACONTROL);
 
 	ivtv_s_std_enc(itv, itv->tuner_std);
 
-	/* Default पूर्णांकerrupts enabled. For the PVR350 this includes the
-	   decoder VSYNC पूर्णांकerrupt, which is always on. It is not only used
+	/* Default interrupts enabled. For the PVR350 this includes the
+	   decoder VSYNC interrupt, which is always on. It is not only used
 	   during decoding but also by the OSD.
-	   Some old PVR250 cards had a cx23415, so testing क्रम that is too
-	   general. Instead test अगर the card has video output capability. */
-	अगर (itv->v4l2_cap & V4L2_CAP_VIDEO_OUTPUT) अणु
+	   Some old PVR250 cards had a cx23415, so testing for that is too
+	   general. Instead test if the card has video output capability. */
+	if (itv->v4l2_cap & V4L2_CAP_VIDEO_OUTPUT) {
 		ivtv_clear_irq_mask(itv, IVTV_IRQ_MASK_INIT | IVTV_IRQ_DEC_VSYNC);
 		ivtv_set_osd_alpha(itv);
 		ivtv_s_std_dec(itv, itv->tuner_std);
-	पूर्ण अन्यथा अणु
+	} else {
 		ivtv_clear_irq_mask(itv, IVTV_IRQ_MASK_INIT);
-	पूर्ण
+	}
 
 	/* Setup initial controls */
 	cx2341x_handler_setup(&itv->cxhdl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ivtv_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा v4l2_device *v4l2_dev = pci_get_drvdata(pdev);
-	काष्ठा ivtv *itv = to_ivtv(v4l2_dev);
-	पूर्णांक i;
+static void ivtv_remove(struct pci_dev *pdev)
+{
+	struct v4l2_device *v4l2_dev = pci_get_drvdata(pdev);
+	struct ivtv *itv = to_ivtv(v4l2_dev);
+	int i;
 
 	IVTV_DEBUG_INFO("Removing card\n");
 
 	flush_request_modules(itv);
 
-	अगर (test_bit(IVTV_F_I_INITED, &itv->i_flags)) अणु
+	if (test_bit(IVTV_F_I_INITED, &itv->i_flags)) {
 		/* Stop all captures */
 		IVTV_DEBUG_INFO("Stopping all streams\n");
-		अगर (atomic_पढ़ो(&itv->capturing) > 0)
+		if (atomic_read(&itv->capturing) > 0)
 			ivtv_stop_all_captures(itv);
 
 		/* Stop all decoding */
 		IVTV_DEBUG_INFO("Stopping decoding\n");
 
 		/* Turn off the TV-out */
-		अगर (itv->v4l2_cap & V4L2_CAP_VIDEO_OUTPUT)
+		if (itv->v4l2_cap & V4L2_CAP_VIDEO_OUTPUT)
 			ivtv_call_hw(itv, IVTV_HW_SAA7127, video, s_stream, 0);
-		अगर (atomic_पढ़ो(&itv->decoding) > 0) अणु
-			पूर्णांक type;
+		if (atomic_read(&itv->decoding) > 0) {
+			int type;
 
-			अगर (test_bit(IVTV_F_I_DEC_YUV, &itv->i_flags))
+			if (test_bit(IVTV_F_I_DEC_YUV, &itv->i_flags))
 				type = IVTV_DEC_STREAM_TYPE_YUV;
-			अन्यथा
+			else
 				type = IVTV_DEC_STREAM_TYPE_MPG;
 			ivtv_stop_v4l2_decode_stream(&itv->streams[type],
 				V4L2_DEC_CMD_STOP_TO_BLACK | V4L2_DEC_CMD_STOP_IMMEDIATELY, 0);
-		पूर्ण
+		}
 		ivtv_halt_firmware(itv);
-	पूर्ण
+	}
 
 	/* Interrupts */
 	ivtv_set_irq_mask(itv, 0xffffffff);
-	del_समयr_sync(&itv->dma_समयr);
+	del_timer_sync(&itv->dma_timer);
 
 	/* Kill irq worker */
-	kthपढ़ो_flush_worker(&itv->irq_worker);
-	kthपढ़ो_stop(itv->irq_worker_task);
+	kthread_flush_worker(&itv->irq_worker);
+	kthread_stop(itv->irq_worker_task);
 
 	ivtv_streams_cleanup(itv);
-	ivtv_udma_मुक्त(itv);
+	ivtv_udma_free(itv);
 
-	v4l2_ctrl_handler_मुक्त(&itv->cxhdl.hdl);
+	v4l2_ctrl_handler_free(&itv->cxhdl.hdl);
 
-	निकास_ivtv_i2c(itv);
+	exit_ivtv_i2c(itv);
 
-	मुक्त_irq(itv->pdev->irq, (व्योम *)itv);
+	free_irq(itv->pdev->irq, (void *)itv);
 	ivtv_iounmap(itv);
 
 	release_mem_region(itv->base_addr, IVTV_ENCODER_SIZE);
 	release_mem_region(itv->base_addr + IVTV_REG_OFFSET, IVTV_REG_SIZE);
-	अगर (itv->has_cx23415)
+	if (itv->has_cx23415)
 		release_mem_region(itv->base_addr + IVTV_DECODER_OFFSET, IVTV_DECODER_SIZE);
 
 	pci_disable_device(itv->pdev);
-	क्रम (i = 0; i < IVTV_VBI_FRAMES; i++)
-		kमुक्त(itv->vbi.sliced_mpeg_data[i]);
+	for (i = 0; i < IVTV_VBI_FRAMES; i++)
+		kfree(itv->vbi.sliced_mpeg_data[i]);
 
 	pr_info("Removed %s\n", itv->card_name);
 
-	v4l2_device_unरेजिस्टर(&itv->v4l2_dev);
-	kमुक्त(itv);
-पूर्ण
+	v4l2_device_unregister(&itv->v4l2_dev);
+	kfree(itv);
+}
 
-/* define a pci_driver क्रम card detection */
-अटल काष्ठा pci_driver ivtv_pci_driver = अणु
+/* define a pci_driver for card detection */
+static struct pci_driver ivtv_pci_driver = {
       .name =     "ivtv",
       .id_table = ivtv_pci_tbl,
       .probe =    ivtv_probe,
-      .हटाओ =   ivtv_हटाओ,
-पूर्ण;
+      .remove =   ivtv_remove,
+};
 
-अटल पूर्णांक __init module_start(व्योम)
-अणु
+static int __init module_start(void)
+{
 	pr_info("Start initialization, version %s\n", IVTV_VERSION);
 
 	/* Validate parameters */
-	अगर (ivtv_first_minor < 0 || ivtv_first_minor >= IVTV_MAX_CARDS) अणु
+	if (ivtv_first_minor < 0 || ivtv_first_minor >= IVTV_MAX_CARDS) {
 		pr_err("Exiting, ivtv_first_minor must be between 0 and %d\n",
 		     IVTV_MAX_CARDS - 1);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (ivtv_debug < 0 || ivtv_debug > 2047) अणु
+	if (ivtv_debug < 0 || ivtv_debug > 2047) {
 		ivtv_debug = 0;
 		pr_info("Debug value must be >= 0 and <= 2047\n");
-	पूर्ण
+	}
 
-	अगर (pci_रेजिस्टर_driver(&ivtv_pci_driver)) अणु
+	if (pci_register_driver(&ivtv_pci_driver)) {
 		pr_err("Error detecting PCI card\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	pr_info("End initialization\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास module_cleanup(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&ivtv_pci_driver);
-पूर्ण
+static void __exit module_cleanup(void)
+{
+	pci_unregister_driver(&ivtv_pci_driver);
+}
 
 /* Note: These symbols are exported because they are used by the ivtvfb
-   framebuffer module and an infrared module क्रम the IR-blaster. */
+   framebuffer module and an infrared module for the IR-blaster. */
 EXPORT_SYMBOL(ivtv_set_irq_mask);
 EXPORT_SYMBOL(ivtv_api);
 EXPORT_SYMBOL(ivtv_vapi);
 EXPORT_SYMBOL(ivtv_vapi_result);
 EXPORT_SYMBOL(ivtv_clear_irq_mask);
 EXPORT_SYMBOL(ivtv_debug);
-#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+#ifdef CONFIG_VIDEO_ADV_DEBUG
 EXPORT_SYMBOL(ivtv_fw_debug);
-#पूर्ण_अगर
+#endif
 EXPORT_SYMBOL(ivtv_reset_ir_gpio);
 EXPORT_SYMBOL(ivtv_udma_setup);
 EXPORT_SYMBOL(ivtv_udma_unmap);
 EXPORT_SYMBOL(ivtv_udma_alloc);
 EXPORT_SYMBOL(ivtv_udma_prepare);
-EXPORT_SYMBOL(ivtv_init_on_first_खोलो);
+EXPORT_SYMBOL(ivtv_init_on_first_open);
 EXPORT_SYMBOL(ivtv_firmware_check);
 
 module_init(module_start);
-module_निकास(module_cleanup);
+module_exit(module_cleanup);

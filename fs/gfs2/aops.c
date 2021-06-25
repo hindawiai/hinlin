@@ -1,736 +1,735 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/pagevec.h>
-#समावेश <linux/mpage.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ग_लिखोback.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/gfs2_ondisk.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/uपन.स>
-#समावेश <trace/events/ग_लिखोback.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/completion.h>
+#include <linux/buffer_head.h>
+#include <linux/pagemap.h>
+#include <linux/pagevec.h>
+#include <linux/mpage.h>
+#include <linux/fs.h>
+#include <linux/writeback.h>
+#include <linux/swap.h>
+#include <linux/gfs2_ondisk.h>
+#include <linux/backing-dev.h>
+#include <linux/uio.h>
+#include <trace/events/writeback.h>
+#include <linux/sched/signal.h>
 
-#समावेश "gfs2.h"
-#समावेश "incore.h"
-#समावेश "bmap.h"
-#समावेश "glock.h"
-#समावेश "inode.h"
-#समावेश "log.h"
-#समावेश "meta_io.h"
-#समावेश "quota.h"
-#समावेश "trans.h"
-#समावेश "rgrp.h"
-#समावेश "super.h"
-#समावेश "util.h"
-#समावेश "glops.h"
-#समावेश "aops.h"
+#include "gfs2.h"
+#include "incore.h"
+#include "bmap.h"
+#include "glock.h"
+#include "inode.h"
+#include "log.h"
+#include "meta_io.h"
+#include "quota.h"
+#include "trans.h"
+#include "rgrp.h"
+#include "super.h"
+#include "util.h"
+#include "glops.h"
+#include "aops.h"
 
 
-व्योम gfs2_page_add_databufs(काष्ठा gfs2_inode *ip, काष्ठा page *page,
-			    अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा buffer_head *head = page_buffers(page);
-	अचिन्हित पूर्णांक bsize = head->b_size;
-	काष्ठा buffer_head *bh;
-	अचिन्हित पूर्णांक to = from + len;
-	अचिन्हित पूर्णांक start, end;
+void gfs2_page_add_databufs(struct gfs2_inode *ip, struct page *page,
+			    unsigned int from, unsigned int len)
+{
+	struct buffer_head *head = page_buffers(page);
+	unsigned int bsize = head->b_size;
+	struct buffer_head *bh;
+	unsigned int to = from + len;
+	unsigned int start, end;
 
-	क्रम (bh = head, start = 0; bh != head || !start;
-	     bh = bh->b_this_page, start = end) अणु
+	for (bh = head, start = 0; bh != head || !start;
+	     bh = bh->b_this_page, start = end) {
 		end = start + bsize;
-		अगर (end <= from)
-			जारी;
-		अगर (start >= to)
-			अवरोध;
+		if (end <= from)
+			continue;
+		if (start >= to)
+			break;
 		set_buffer_uptodate(bh);
 		gfs2_trans_add_data(ip->i_gl, bh);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * gfs2_get_block_noalloc - Fills in a buffer head with details about a block
  * @inode: The inode
  * @lblock: The block number to look up
- * @bh_result: The buffer head to वापस the result in
- * @create: Non-zero अगर we may add block to the file
+ * @bh_result: The buffer head to return the result in
+ * @create: Non-zero if we may add block to the file
  *
- * Returns: त्रुटि_सं
+ * Returns: errno
  */
 
-अटल पूर्णांक gfs2_get_block_noalloc(काष्ठा inode *inode, sector_t lblock,
-				  काष्ठा buffer_head *bh_result, पूर्णांक create)
-अणु
-	पूर्णांक error;
+static int gfs2_get_block_noalloc(struct inode *inode, sector_t lblock,
+				  struct buffer_head *bh_result, int create)
+{
+	int error;
 
 	error = gfs2_block_map(inode, lblock, bh_result, 0);
-	अगर (error)
-		वापस error;
-	अगर (!buffer_mapped(bh_result))
-		वापस -ENODATA;
-	वापस 0;
-पूर्ण
+	if (error)
+		return error;
+	if (!buffer_mapped(bh_result))
+		return -ENODATA;
+	return 0;
+}
 
 /**
- * gfs2_ग_लिखोpage - Write page क्रम ग_लिखोback mappings
+ * gfs2_writepage - Write page for writeback mappings
  * @page: The page
- * @wbc: The ग_लिखोback control
+ * @wbc: The writeback control
  */
-अटल पूर्णांक gfs2_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा gfs2_inode *ip = GFS2_I(inode);
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
-	काष्ठा iomap_ग_लिखोpage_ctx wpc = अणु पूर्ण;
+static int gfs2_writepage(struct page *page, struct writeback_control *wbc)
+{
+	struct inode *inode = page->mapping->host;
+	struct gfs2_inode *ip = GFS2_I(inode);
+	struct gfs2_sbd *sdp = GFS2_SB(inode);
+	struct iomap_writepage_ctx wpc = { };
 
-	अगर (gfs2_निश्चित_withdraw(sdp, gfs2_glock_is_held_excl(ip->i_gl)))
-		जाओ out;
-	अगर (current->journal_info)
-		जाओ redirty;
-	वापस iomap_ग_लिखोpage(page, wbc, &wpc, &gfs2_ग_लिखोback_ops);
+	if (gfs2_assert_withdraw(sdp, gfs2_glock_is_held_excl(ip->i_gl)))
+		goto out;
+	if (current->journal_info)
+		goto redirty;
+	return iomap_writepage(page, wbc, &wpc, &gfs2_writeback_ops);
 
 redirty:
-	redirty_page_क्रम_ग_लिखोpage(wbc, page);
+	redirty_page_for_writepage(wbc, page);
 out:
 	unlock_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * gfs2_ग_लिखो_jdata_page - gfs2 jdata-specअगरic version of block_ग_लिखो_full_page
- * @page: The page to ग_लिखो
- * @wbc: The ग_लिखोback control
+ * gfs2_write_jdata_page - gfs2 jdata-specific version of block_write_full_page
+ * @page: The page to write
+ * @wbc: The writeback control
  *
- * This is the same as calling block_ग_लिखो_full_page, but it also
- * ग_लिखोs pages outside of i_size
+ * This is the same as calling block_write_full_page, but it also
+ * writes pages outside of i_size
  */
-अटल पूर्णांक gfs2_ग_लिखो_jdata_page(काष्ठा page *page,
-				 काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode * स्थिर inode = page->mapping->host;
-	loff_t i_size = i_size_पढ़ो(inode);
-	स्थिर pgoff_t end_index = i_size >> PAGE_SHIFT;
-	अचिन्हित offset;
+static int gfs2_write_jdata_page(struct page *page,
+				 struct writeback_control *wbc)
+{
+	struct inode * const inode = page->mapping->host;
+	loff_t i_size = i_size_read(inode);
+	const pgoff_t end_index = i_size >> PAGE_SHIFT;
+	unsigned offset;
 
 	/*
 	 * The page straddles i_size.  It must be zeroed out on each and every
-	 * ग_लिखोpage invocation because it may be mmapped.  "A file is mapped
+	 * writepage invocation because it may be mmapped.  "A file is mapped
 	 * in multiples of the page size.  For a file that is not a multiple of
-	 * the  page size, the reमुख्यing memory is zeroed when mapped, and
-	 * ग_लिखोs to that region are not written out to the file."
+	 * the  page size, the remaining memory is zeroed when mapped, and
+	 * writes to that region are not written out to the file."
 	 */
 	offset = i_size & (PAGE_SIZE - 1);
-	अगर (page->index == end_index && offset)
+	if (page->index == end_index && offset)
 		zero_user_segment(page, offset, PAGE_SIZE);
 
-	वापस __block_ग_लिखो_full_page(inode, page, gfs2_get_block_noalloc, wbc,
-				       end_buffer_async_ग_लिखो);
-पूर्ण
+	return __block_write_full_page(inode, page, gfs2_get_block_noalloc, wbc,
+				       end_buffer_async_write);
+}
 
 /**
- * __gfs2_jdata_ग_लिखोpage - The core of jdata ग_लिखोpage
- * @page: The page to ग_लिखो
- * @wbc: The ग_लिखोback control
+ * __gfs2_jdata_writepage - The core of jdata writepage
+ * @page: The page to write
+ * @wbc: The writeback control
  *
- * This is shared between ग_लिखोpage and ग_लिखोpages and implements the
- * core of the ग_लिखोpage operation. If a transaction is required then
+ * This is shared between writepage and writepages and implements the
+ * core of the writepage operation. If a transaction is required then
  * PageChecked will have been set and the transaction will have
- * alपढ़ोy been started beक्रमe this is called.
+ * already been started before this is called.
  */
 
-अटल पूर्णांक __gfs2_jdata_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा gfs2_inode *ip = GFS2_I(inode);
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
+static int __gfs2_jdata_writepage(struct page *page, struct writeback_control *wbc)
+{
+	struct inode *inode = page->mapping->host;
+	struct gfs2_inode *ip = GFS2_I(inode);
+	struct gfs2_sbd *sdp = GFS2_SB(inode);
 
-	अगर (PageChecked(page)) अणु
+	if (PageChecked(page)) {
 		ClearPageChecked(page);
-		अगर (!page_has_buffers(page)) अणु
+		if (!page_has_buffers(page)) {
 			create_empty_buffers(page, inode->i_sb->s_blocksize,
 					     BIT(BH_Dirty)|BIT(BH_Uptodate));
-		पूर्ण
+		}
 		gfs2_page_add_databufs(ip, page, 0, sdp->sd_vfs->s_blocksize);
-	पूर्ण
-	वापस gfs2_ग_लिखो_jdata_page(page, wbc);
-पूर्ण
+	}
+	return gfs2_write_jdata_page(page, wbc);
+}
 
 /**
- * gfs2_jdata_ग_लिखोpage - Write complete page
- * @page: Page to ग_लिखो
- * @wbc: The ग_लिखोback control
+ * gfs2_jdata_writepage - Write complete page
+ * @page: Page to write
+ * @wbc: The writeback control
  *
- * Returns: त्रुटि_सं
+ * Returns: errno
  *
  */
 
-अटल पूर्णांक gfs2_jdata_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा gfs2_inode *ip = GFS2_I(inode);
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
+static int gfs2_jdata_writepage(struct page *page, struct writeback_control *wbc)
+{
+	struct inode *inode = page->mapping->host;
+	struct gfs2_inode *ip = GFS2_I(inode);
+	struct gfs2_sbd *sdp = GFS2_SB(inode);
 
-	अगर (gfs2_निश्चित_withdraw(sdp, gfs2_glock_is_held_excl(ip->i_gl)))
-		जाओ out;
-	अगर (PageChecked(page) || current->journal_info)
-		जाओ out_ignore;
-	वापस __gfs2_jdata_ग_लिखोpage(page, wbc);
+	if (gfs2_assert_withdraw(sdp, gfs2_glock_is_held_excl(ip->i_gl)))
+		goto out;
+	if (PageChecked(page) || current->journal_info)
+		goto out_ignore;
+	return __gfs2_jdata_writepage(page, wbc);
 
 out_ignore:
-	redirty_page_क्रम_ग_लिखोpage(wbc, page);
+	redirty_page_for_writepage(wbc, page);
 out:
 	unlock_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * gfs2_ग_लिखोpages - Write a bunch of dirty pages back to disk
- * @mapping: The mapping to ग_लिखो
+ * gfs2_writepages - Write a bunch of dirty pages back to disk
+ * @mapping: The mapping to write
  * @wbc: Write-back control
  *
- * Used क्रम both ordered and ग_लिखोback modes.
+ * Used for both ordered and writeback modes.
  */
-अटल पूर्णांक gfs2_ग_लिखोpages(काष्ठा address_space *mapping,
-			   काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा gfs2_sbd *sdp = gfs2_mapping2sbd(mapping);
-	काष्ठा iomap_ग_लिखोpage_ctx wpc = अणु पूर्ण;
-	पूर्णांक ret;
+static int gfs2_writepages(struct address_space *mapping,
+			   struct writeback_control *wbc)
+{
+	struct gfs2_sbd *sdp = gfs2_mapping2sbd(mapping);
+	struct iomap_writepage_ctx wpc = { };
+	int ret;
 
 	/*
-	 * Even अगर we didn't ग_लिखो any pages here, we might still be holding
-	 * dirty pages in the ail. We क्रमcibly flush the ail because we करोn't
-	 * want balance_dirty_pages() to loop indefinitely trying to ग_लिखो out
+	 * Even if we didn't write any pages here, we might still be holding
+	 * dirty pages in the ail. We forcibly flush the ail because we don't
+	 * want balance_dirty_pages() to loop indefinitely trying to write out
 	 * pages held in the ail that it can't find.
 	 */
-	ret = iomap_ग_लिखोpages(mapping, wbc, &wpc, &gfs2_ग_लिखोback_ops);
-	अगर (ret == 0)
+	ret = iomap_writepages(mapping, wbc, &wpc, &gfs2_writeback_ops);
+	if (ret == 0)
 		set_bit(SDF_FORCE_AIL_FLUSH, &sdp->sd_flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * gfs2_ग_लिखो_jdata_pagevec - Write back a pagevec's worth of pages
+ * gfs2_write_jdata_pagevec - Write back a pagevec's worth of pages
  * @mapping: The mapping
- * @wbc: The ग_लिखोback control
+ * @wbc: The writeback control
  * @pvec: The vector of pages
- * @nr_pages: The number of pages to ग_लिखो
- * @करोne_index: Page index
+ * @nr_pages: The number of pages to write
+ * @done_index: Page index
  *
- * Returns: non-zero अगर loop should terminate, zero otherwise
+ * Returns: non-zero if loop should terminate, zero otherwise
  */
 
-अटल पूर्णांक gfs2_ग_लिखो_jdata_pagevec(काष्ठा address_space *mapping,
-				    काष्ठा ग_लिखोback_control *wbc,
-				    काष्ठा pagevec *pvec,
-				    पूर्णांक nr_pages,
-				    pgoff_t *करोne_index)
-अणु
-	काष्ठा inode *inode = mapping->host;
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
-	अचिन्हित nrblocks = nr_pages * (PAGE_SIZE >> inode->i_blkbits);
-	पूर्णांक i;
-	पूर्णांक ret;
+static int gfs2_write_jdata_pagevec(struct address_space *mapping,
+				    struct writeback_control *wbc,
+				    struct pagevec *pvec,
+				    int nr_pages,
+				    pgoff_t *done_index)
+{
+	struct inode *inode = mapping->host;
+	struct gfs2_sbd *sdp = GFS2_SB(inode);
+	unsigned nrblocks = nr_pages * (PAGE_SIZE >> inode->i_blkbits);
+	int i;
+	int ret;
 
 	ret = gfs2_trans_begin(sdp, nrblocks, nrblocks);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	क्रम(i = 0; i < nr_pages; i++) अणु
-		काष्ठा page *page = pvec->pages[i];
+	for(i = 0; i < nr_pages; i++) {
+		struct page *page = pvec->pages[i];
 
-		*करोne_index = page->index;
+		*done_index = page->index;
 
 		lock_page(page);
 
-		अगर (unlikely(page->mapping != mapping)) अणु
-जारी_unlock:
+		if (unlikely(page->mapping != mapping)) {
+continue_unlock:
 			unlock_page(page);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!PageDirty(page)) अणु
-			/* someone wrote it क्रम us */
-			जाओ जारी_unlock;
-		पूर्ण
+		if (!PageDirty(page)) {
+			/* someone wrote it for us */
+			goto continue_unlock;
+		}
 
-		अगर (PageWriteback(page)) अणु
-			अगर (wbc->sync_mode != WB_SYNC_NONE)
-				रुको_on_page_ग_लिखोback(page);
-			अन्यथा
-				जाओ जारी_unlock;
-		पूर्ण
+		if (PageWriteback(page)) {
+			if (wbc->sync_mode != WB_SYNC_NONE)
+				wait_on_page_writeback(page);
+			else
+				goto continue_unlock;
+		}
 
 		BUG_ON(PageWriteback(page));
-		अगर (!clear_page_dirty_क्रम_io(page))
-			जाओ जारी_unlock;
+		if (!clear_page_dirty_for_io(page))
+			goto continue_unlock;
 
-		trace_wbc_ग_लिखोpage(wbc, inode_to_bdi(inode));
+		trace_wbc_writepage(wbc, inode_to_bdi(inode));
 
-		ret = __gfs2_jdata_ग_लिखोpage(page, wbc);
-		अगर (unlikely(ret)) अणु
-			अगर (ret == AOP_WRITEPAGE_ACTIVATE) अणु
+		ret = __gfs2_jdata_writepage(page, wbc);
+		if (unlikely(ret)) {
+			if (ret == AOP_WRITEPAGE_ACTIVATE) {
 				unlock_page(page);
 				ret = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 
 				/*
-				 * करोne_index is set past this page,
+				 * done_index is set past this page,
 				 * so media errors will not choke
-				 * background ग_लिखोout क्रम the entire
-				 * file. This has consequences क्रम
+				 * background writeout for the entire
+				 * file. This has consequences for
 				 * range_cyclic semantics (ie. it may
-				 * not be suitable क्रम data पूर्णांकegrity
-				 * ग_लिखोout).
+				 * not be suitable for data integrity
+				 * writeout).
 				 */
-				*करोne_index = page->index + 1;
+				*done_index = page->index + 1;
 				ret = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		/*
-		 * We stop writing back only अगर we are not करोing
-		 * पूर्णांकegrity sync. In हाल of पूर्णांकegrity sync we have to
+		 * We stop writing back only if we are not doing
+		 * integrity sync. In case of integrity sync we have to
 		 * keep going until we have written all the pages
-		 * we tagged क्रम ग_लिखोback prior to entering this loop.
+		 * we tagged for writeback prior to entering this loop.
 		 */
-		अगर (--wbc->nr_to_ग_लिखो <= 0 && wbc->sync_mode == WB_SYNC_NONE) अणु
+		if (--wbc->nr_to_write <= 0 && wbc->sync_mode == WB_SYNC_NONE) {
 			ret = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	पूर्ण
+	}
 	gfs2_trans_end(sdp);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * gfs2_ग_लिखो_cache_jdata - Like ग_लिखो_cache_pages but dअगरferent
- * @mapping: The mapping to ग_लिखो
- * @wbc: The ग_लिखोback control
+ * gfs2_write_cache_jdata - Like write_cache_pages but different
+ * @mapping: The mapping to write
+ * @wbc: The writeback control
  *
  * The reason that we use our own function here is that we need to
- * start transactions beक्रमe we grab page locks. This allows us
+ * start transactions before we grab page locks. This allows us
  * to get the ordering right.
  */
 
-अटल पूर्णांक gfs2_ग_लिखो_cache_jdata(काष्ठा address_space *mapping,
-				  काष्ठा ग_लिखोback_control *wbc)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक करोne = 0;
-	काष्ठा pagevec pvec;
-	पूर्णांक nr_pages;
-	pgoff_t ग_लिखोback_index;
+static int gfs2_write_cache_jdata(struct address_space *mapping,
+				  struct writeback_control *wbc)
+{
+	int ret = 0;
+	int done = 0;
+	struct pagevec pvec;
+	int nr_pages;
+	pgoff_t writeback_index;
 	pgoff_t index;
 	pgoff_t end;
-	pgoff_t करोne_index;
-	पूर्णांक cycled;
-	पूर्णांक range_whole = 0;
+	pgoff_t done_index;
+	int cycled;
+	int range_whole = 0;
 	xa_mark_t tag;
 
 	pagevec_init(&pvec);
-	अगर (wbc->range_cyclic) अणु
-		ग_लिखोback_index = mapping->ग_लिखोback_index; /* prev offset */
-		index = ग_लिखोback_index;
-		अगर (index == 0)
+	if (wbc->range_cyclic) {
+		writeback_index = mapping->writeback_index; /* prev offset */
+		index = writeback_index;
+		if (index == 0)
 			cycled = 1;
-		अन्यथा
+		else
 			cycled = 0;
 		end = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		index = wbc->range_start >> PAGE_SHIFT;
 		end = wbc->range_end >> PAGE_SHIFT;
-		अगर (wbc->range_start == 0 && wbc->range_end == Lदीर्घ_उच्च)
+		if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
 			range_whole = 1;
 		cycled = 1; /* ignore range_cyclic tests */
-	पूर्ण
-	अगर (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_ग_लिखोpages)
+	}
+	if (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages)
 		tag = PAGECACHE_TAG_TOWRITE;
-	अन्यथा
-		tag = PAGECACHE_TAG_सूचीTY;
+	else
+		tag = PAGECACHE_TAG_DIRTY;
 
 retry:
-	अगर (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_ग_लिखोpages)
-		tag_pages_क्रम_ग_लिखोback(mapping, index, end);
-	करोne_index = index;
-	जबतक (!करोne && (index <= end)) अणु
+	if (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages)
+		tag_pages_for_writeback(mapping, index, end);
+	done_index = index;
+	while (!done && (index <= end)) {
 		nr_pages = pagevec_lookup_range_tag(&pvec, mapping, &index, end,
 				tag);
-		अगर (nr_pages == 0)
-			अवरोध;
+		if (nr_pages == 0)
+			break;
 
-		ret = gfs2_ग_लिखो_jdata_pagevec(mapping, wbc, &pvec, nr_pages, &करोne_index);
-		अगर (ret)
-			करोne = 1;
-		अगर (ret > 0)
+		ret = gfs2_write_jdata_pagevec(mapping, wbc, &pvec, nr_pages, &done_index);
+		if (ret)
+			done = 1;
+		if (ret > 0)
 			ret = 0;
 		pagevec_release(&pvec);
 		cond_resched();
-	पूर्ण
+	}
 
-	अगर (!cycled && !करोne) अणु
+	if (!cycled && !done) {
 		/*
 		 * range_cyclic:
-		 * We hit the last page and there is more work to be करोne: wrap
+		 * We hit the last page and there is more work to be done: wrap
 		 * back to the start of the file
 		 */
 		cycled = 1;
 		index = 0;
-		end = ग_लिखोback_index - 1;
-		जाओ retry;
-	पूर्ण
+		end = writeback_index - 1;
+		goto retry;
+	}
 
-	अगर (wbc->range_cyclic || (range_whole && wbc->nr_to_ग_लिखो > 0))
-		mapping->ग_लिखोback_index = करोne_index;
+	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
+		mapping->writeback_index = done_index;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * gfs2_jdata_ग_लिखोpages - Write a bunch of dirty pages back to disk
- * @mapping: The mapping to ग_लिखो
- * @wbc: The ग_लिखोback control
+ * gfs2_jdata_writepages - Write a bunch of dirty pages back to disk
+ * @mapping: The mapping to write
+ * @wbc: The writeback control
  * 
  */
 
-अटल पूर्णांक gfs2_jdata_ग_लिखोpages(काष्ठा address_space *mapping,
-				 काष्ठा ग_लिखोback_control *wbc)
-अणु
-	काष्ठा gfs2_inode *ip = GFS2_I(mapping->host);
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(mapping->host);
-	पूर्णांक ret;
+static int gfs2_jdata_writepages(struct address_space *mapping,
+				 struct writeback_control *wbc)
+{
+	struct gfs2_inode *ip = GFS2_I(mapping->host);
+	struct gfs2_sbd *sdp = GFS2_SB(mapping->host);
+	int ret;
 
-	ret = gfs2_ग_लिखो_cache_jdata(mapping, wbc);
-	अगर (ret == 0 && wbc->sync_mode == WB_SYNC_ALL) अणु
+	ret = gfs2_write_cache_jdata(mapping, wbc);
+	if (ret == 0 && wbc->sync_mode == WB_SYNC_ALL) {
 		gfs2_log_flush(sdp, ip->i_gl, GFS2_LOG_HEAD_FLUSH_NORMAL |
 			       GFS2_LFC_JDATA_WPAGES);
-		ret = gfs2_ग_लिखो_cache_jdata(mapping, wbc);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		ret = gfs2_write_cache_jdata(mapping, wbc);
+	}
+	return ret;
+}
 
 /**
- * stuffed_पढ़ोpage - Fill in a Linux page with stuffed file data
+ * stuffed_readpage - Fill in a Linux page with stuffed file data
  * @ip: the inode
  * @page: the page
  *
- * Returns: त्रुटि_सं
+ * Returns: errno
  */
-अटल पूर्णांक stuffed_पढ़ोpage(काष्ठा gfs2_inode *ip, काष्ठा page *page)
-अणु
-	काष्ठा buffer_head *dibh;
-	u64 dsize = i_size_पढ़ो(&ip->i_inode);
-	व्योम *kaddr;
-	पूर्णांक error;
+static int stuffed_readpage(struct gfs2_inode *ip, struct page *page)
+{
+	struct buffer_head *dibh;
+	u64 dsize = i_size_read(&ip->i_inode);
+	void *kaddr;
+	int error;
 
 	/*
 	 * Due to the order of unstuffing files and ->fault(), we can be
-	 * asked क्रम a zero page in the हाल of a stuffed file being extended,
-	 * so we need to supply one here. It करोesn't happen often.
+	 * asked for a zero page in the case of a stuffed file being extended,
+	 * so we need to supply one here. It doesn't happen often.
 	 */
-	अगर (unlikely(page->index)) अणु
+	if (unlikely(page->index)) {
 		zero_user(page, 0, PAGE_SIZE);
 		SetPageUptodate(page);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	error = gfs2_meta_inode_buffer(ip, &dibh);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	kaddr = kmap_atomic(page);
-	अगर (dsize > gfs2_max_stuffed_size(ip))
+	if (dsize > gfs2_max_stuffed_size(ip))
 		dsize = gfs2_max_stuffed_size(ip);
-	स_नकल(kaddr, dibh->b_data + माप(काष्ठा gfs2_dinode), dsize);
-	स_रखो(kaddr + dsize, 0, PAGE_SIZE - dsize);
+	memcpy(kaddr, dibh->b_data + sizeof(struct gfs2_dinode), dsize);
+	memset(kaddr + dsize, 0, PAGE_SIZE - dsize);
 	kunmap_atomic(kaddr);
 	flush_dcache_page(page);
-	brअन्यथा(dibh);
+	brelse(dibh);
 	SetPageUptodate(page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक __gfs2_पढ़ोpage(व्योम *file, काष्ठा page *page)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	काष्ठा gfs2_inode *ip = GFS2_I(inode);
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
-	पूर्णांक error;
+static int __gfs2_readpage(void *file, struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	struct gfs2_inode *ip = GFS2_I(inode);
+	struct gfs2_sbd *sdp = GFS2_SB(inode);
+	int error;
 
-	अगर (!gfs2_is_jdata(ip) ||
-	    (i_blocksize(inode) == PAGE_SIZE && !page_has_buffers(page))) अणु
-		error = iomap_पढ़ोpage(page, &gfs2_iomap_ops);
-	पूर्ण अन्यथा अगर (gfs2_is_stuffed(ip)) अणु
-		error = stuffed_पढ़ोpage(ip, page);
+	if (!gfs2_is_jdata(ip) ||
+	    (i_blocksize(inode) == PAGE_SIZE && !page_has_buffers(page))) {
+		error = iomap_readpage(page, &gfs2_iomap_ops);
+	} else if (gfs2_is_stuffed(ip)) {
+		error = stuffed_readpage(ip, page);
 		unlock_page(page);
-	पूर्ण अन्यथा अणु
-		error = mpage_पढ़ोpage(page, gfs2_block_map);
-	पूर्ण
+	} else {
+		error = mpage_readpage(page, gfs2_block_map);
+	}
 
-	अगर (unlikely(gfs2_withdrawn(sdp)))
-		वापस -EIO;
+	if (unlikely(gfs2_withdrawn(sdp)))
+		return -EIO;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * gfs2_पढ़ोpage - पढ़ो a page of a file
- * @file: The file to पढ़ो
+ * gfs2_readpage - read a page of a file
+ * @file: The file to read
  * @page: The page of the file
  */
 
-अटल पूर्णांक gfs2_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	वापस __gfs2_पढ़ोpage(file, page);
-पूर्ण
+static int gfs2_readpage(struct file *file, struct page *page)
+{
+	return __gfs2_readpage(file, page);
+}
 
 /**
- * gfs2_पूर्णांकernal_पढ़ो - पढ़ो an पूर्णांकernal file
+ * gfs2_internal_read - read an internal file
  * @ip: The gfs2 inode
  * @buf: The buffer to fill
  * @pos: The file position
- * @size: The amount to पढ़ो
+ * @size: The amount to read
  *
  */
 
-पूर्णांक gfs2_पूर्णांकernal_पढ़ो(काष्ठा gfs2_inode *ip, अक्षर *buf, loff_t *pos,
-                       अचिन्हित size)
-अणु
-	काष्ठा address_space *mapping = ip->i_inode.i_mapping;
-	अचिन्हित दीर्घ index = *pos >> PAGE_SHIFT;
-	अचिन्हित offset = *pos & (PAGE_SIZE - 1);
-	अचिन्हित copied = 0;
-	अचिन्हित amt;
-	काष्ठा page *page;
-	व्योम *p;
+int gfs2_internal_read(struct gfs2_inode *ip, char *buf, loff_t *pos,
+                       unsigned size)
+{
+	struct address_space *mapping = ip->i_inode.i_mapping;
+	unsigned long index = *pos >> PAGE_SHIFT;
+	unsigned offset = *pos & (PAGE_SIZE - 1);
+	unsigned copied = 0;
+	unsigned amt;
+	struct page *page;
+	void *p;
 
-	करो अणु
+	do {
 		amt = size - copied;
-		अगर (offset + size > PAGE_SIZE)
+		if (offset + size > PAGE_SIZE)
 			amt = PAGE_SIZE - offset;
-		page = पढ़ो_cache_page(mapping, index, __gfs2_पढ़ोpage, शून्य);
-		अगर (IS_ERR(page))
-			वापस PTR_ERR(page);
+		page = read_cache_page(mapping, index, __gfs2_readpage, NULL);
+		if (IS_ERR(page))
+			return PTR_ERR(page);
 		p = kmap_atomic(page);
-		स_नकल(buf + copied, p + offset, amt);
+		memcpy(buf + copied, p + offset, amt);
 		kunmap_atomic(p);
 		put_page(page);
 		copied += amt;
 		index++;
 		offset = 0;
-	पूर्ण जबतक(copied < size);
+	} while(copied < size);
 	(*pos) += size;
-	वापस size;
-पूर्ण
+	return size;
+}
 
 /**
- * gfs2_पढ़ोahead - Read a bunch of pages at once
- * @rac: Read-ahead control काष्ठाure
+ * gfs2_readahead - Read a bunch of pages at once
+ * @rac: Read-ahead control structure
  *
  * Some notes:
- * 1. This is only क्रम पढ़ोahead, so we can simply ignore any things
+ * 1. This is only for readahead, so we can simply ignore any things
  *    which are slightly inconvenient (such as locking conflicts between
- *    the page lock and the glock) and वापस having करोne no I/O. Its
- *    obviously not something we'd want to करो on too regular a basis.
- *    Any I/O we ignore at this समय will be करोne via पढ़ोpage later.
- * 2. We करोn't handle stuffed files here we let पढ़ोpage करो the honours.
- * 3. mpage_पढ़ोahead() करोes most of the heavy lअगरting in the common हाल.
+ *    the page lock and the glock) and return having done no I/O. Its
+ *    obviously not something we'd want to do on too regular a basis.
+ *    Any I/O we ignore at this time will be done via readpage later.
+ * 2. We don't handle stuffed files here we let readpage do the honours.
+ * 3. mpage_readahead() does most of the heavy lifting in the common case.
  * 4. gfs2_block_map() is relied upon to set BH_Boundary in the right places.
  */
 
-अटल व्योम gfs2_पढ़ोahead(काष्ठा पढ़ोahead_control *rac)
-अणु
-	काष्ठा inode *inode = rac->mapping->host;
-	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+static void gfs2_readahead(struct readahead_control *rac)
+{
+	struct inode *inode = rac->mapping->host;
+	struct gfs2_inode *ip = GFS2_I(inode);
 
-	अगर (gfs2_is_stuffed(ip))
+	if (gfs2_is_stuffed(ip))
 		;
-	अन्यथा अगर (gfs2_is_jdata(ip))
-		mpage_पढ़ोahead(rac, gfs2_block_map);
-	अन्यथा
-		iomap_पढ़ोahead(rac, &gfs2_iomap_ops);
-पूर्ण
+	else if (gfs2_is_jdata(ip))
+		mpage_readahead(rac, gfs2_block_map);
+	else
+		iomap_readahead(rac, &gfs2_iomap_ops);
+}
 
 /**
- * adjust_fs_space - Adjusts the मुक्त space available due to gfs2_grow
+ * adjust_fs_space - Adjusts the free space available due to gfs2_grow
  * @inode: the rindex inode
  */
-व्योम adjust_fs_space(काष्ठा inode *inode)
-अणु
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(inode);
-	काष्ठा gfs2_inode *m_ip = GFS2_I(sdp->sd_statfs_inode);
-	काष्ठा gfs2_inode *l_ip = GFS2_I(sdp->sd_sc_inode);
-	काष्ठा gfs2_statfs_change_host *m_sc = &sdp->sd_statfs_master;
-	काष्ठा gfs2_statfs_change_host *l_sc = &sdp->sd_statfs_local;
-	काष्ठा buffer_head *m_bh, *l_bh;
-	u64 fs_total, new_मुक्त;
+void adjust_fs_space(struct inode *inode)
+{
+	struct gfs2_sbd *sdp = GFS2_SB(inode);
+	struct gfs2_inode *m_ip = GFS2_I(sdp->sd_statfs_inode);
+	struct gfs2_inode *l_ip = GFS2_I(sdp->sd_sc_inode);
+	struct gfs2_statfs_change_host *m_sc = &sdp->sd_statfs_master;
+	struct gfs2_statfs_change_host *l_sc = &sdp->sd_statfs_local;
+	struct buffer_head *m_bh, *l_bh;
+	u64 fs_total, new_free;
 
-	अगर (gfs2_trans_begin(sdp, 2 * RES_STATFS, 0) != 0)
-		वापस;
+	if (gfs2_trans_begin(sdp, 2 * RES_STATFS, 0) != 0)
+		return;
 
-	/* Total up the file प्रणाली space, according to the latest rindex. */
+	/* Total up the file system space, according to the latest rindex. */
 	fs_total = gfs2_ri_total(sdp);
-	अगर (gfs2_meta_inode_buffer(m_ip, &m_bh) != 0)
-		जाओ out;
+	if (gfs2_meta_inode_buffer(m_ip, &m_bh) != 0)
+		goto out;
 
 	spin_lock(&sdp->sd_statfs_spin);
 	gfs2_statfs_change_in(m_sc, m_bh->b_data +
-			      माप(काष्ठा gfs2_dinode));
-	अगर (fs_total > (m_sc->sc_total + l_sc->sc_total))
-		new_मुक्त = fs_total - (m_sc->sc_total + l_sc->sc_total);
-	अन्यथा
-		new_मुक्त = 0;
+			      sizeof(struct gfs2_dinode));
+	if (fs_total > (m_sc->sc_total + l_sc->sc_total))
+		new_free = fs_total - (m_sc->sc_total + l_sc->sc_total);
+	else
+		new_free = 0;
 	spin_unlock(&sdp->sd_statfs_spin);
 	fs_warn(sdp, "File system extended by %llu blocks.\n",
-		(अचिन्हित दीर्घ दीर्घ)new_मुक्त);
-	gfs2_statfs_change(sdp, new_मुक्त, new_मुक्त, 0);
+		(unsigned long long)new_free);
+	gfs2_statfs_change(sdp, new_free, new_free, 0);
 
-	अगर (gfs2_meta_inode_buffer(l_ip, &l_bh) != 0)
-		जाओ out2;
+	if (gfs2_meta_inode_buffer(l_ip, &l_bh) != 0)
+		goto out2;
 	update_statfs(sdp, m_bh, l_bh);
-	brअन्यथा(l_bh);
+	brelse(l_bh);
 out2:
-	brअन्यथा(m_bh);
+	brelse(m_bh);
 out:
 	sdp->sd_rindex_uptodate = 0;
 	gfs2_trans_end(sdp);
-पूर्ण
+}
 
 /**
  * jdata_set_page_dirty - Page dirtying function
  * @page: The page to dirty
  *
- * Returns: 1 अगर it dirtyed the page, or 0 otherwise
+ * Returns: 1 if it dirtyed the page, or 0 otherwise
  */
  
-अटल पूर्णांक jdata_set_page_dirty(काष्ठा page *page)
-अणु
-	अगर (current->journal_info)
+static int jdata_set_page_dirty(struct page *page)
+{
+	if (current->journal_info)
 		SetPageChecked(page);
-	वापस __set_page_dirty_buffers(page);
-पूर्ण
+	return __set_page_dirty_buffers(page);
+}
 
 /**
  * gfs2_bmap - Block map function
  * @mapping: Address space info
  * @lblock: The block to map
  *
- * Returns: The disk address क्रम the block or 0 on hole or error
+ * Returns: The disk address for the block or 0 on hole or error
  */
 
-अटल sector_t gfs2_bmap(काष्ठा address_space *mapping, sector_t lblock)
-अणु
-	काष्ठा gfs2_inode *ip = GFS2_I(mapping->host);
-	काष्ठा gfs2_holder i_gh;
+static sector_t gfs2_bmap(struct address_space *mapping, sector_t lblock)
+{
+	struct gfs2_inode *ip = GFS2_I(mapping->host);
+	struct gfs2_holder i_gh;
 	sector_t dblock = 0;
-	पूर्णांक error;
+	int error;
 
 	error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &i_gh);
-	अगर (error)
-		वापस 0;
+	if (error)
+		return 0;
 
-	अगर (!gfs2_is_stuffed(ip))
+	if (!gfs2_is_stuffed(ip))
 		dblock = iomap_bmap(mapping, lblock, &gfs2_iomap_ops);
 
 	gfs2_glock_dq_uninit(&i_gh);
 
-	वापस dblock;
-पूर्ण
+	return dblock;
+}
 
-अटल व्योम gfs2_discard(काष्ठा gfs2_sbd *sdp, काष्ठा buffer_head *bh)
-अणु
-	काष्ठा gfs2_bufdata *bd;
+static void gfs2_discard(struct gfs2_sbd *sdp, struct buffer_head *bh)
+{
+	struct gfs2_bufdata *bd;
 
 	lock_buffer(bh);
 	gfs2_log_lock(sdp);
 	clear_buffer_dirty(bh);
-	bd = bh->b_निजी;
-	अगर (bd) अणु
-		अगर (!list_empty(&bd->bd_list) && !buffer_pinned(bh))
+	bd = bh->b_private;
+	if (bd) {
+		if (!list_empty(&bd->bd_list) && !buffer_pinned(bh))
 			list_del_init(&bd->bd_list);
-		अन्यथा अणु
+		else {
 			spin_lock(&sdp->sd_ail_lock);
-			gfs2_हटाओ_from_journal(bh, REMOVE_JDATA);
+			gfs2_remove_from_journal(bh, REMOVE_JDATA);
 			spin_unlock(&sdp->sd_ail_lock);
-		पूर्ण
-	पूर्ण
-	bh->b_bdev = शून्य;
+		}
+	}
+	bh->b_bdev = NULL;
 	clear_buffer_mapped(bh);
 	clear_buffer_req(bh);
 	clear_buffer_new(bh);
 	gfs2_log_unlock(sdp);
 	unlock_buffer(bh);
-पूर्ण
+}
 
-अटल व्योम gfs2_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
-				अचिन्हित पूर्णांक length)
-अणु
-	काष्ठा gfs2_sbd *sdp = GFS2_SB(page->mapping->host);
-	अचिन्हित पूर्णांक stop = offset + length;
-	पूर्णांक partial_page = (offset || length < PAGE_SIZE);
-	काष्ठा buffer_head *bh, *head;
-	अचिन्हित दीर्घ pos = 0;
+static void gfs2_invalidatepage(struct page *page, unsigned int offset,
+				unsigned int length)
+{
+	struct gfs2_sbd *sdp = GFS2_SB(page->mapping->host);
+	unsigned int stop = offset + length;
+	int partial_page = (offset || length < PAGE_SIZE);
+	struct buffer_head *bh, *head;
+	unsigned long pos = 0;
 
 	BUG_ON(!PageLocked(page));
-	अगर (!partial_page)
+	if (!partial_page)
 		ClearPageChecked(page);
-	अगर (!page_has_buffers(page))
-		जाओ out;
+	if (!page_has_buffers(page))
+		goto out;
 
 	bh = head = page_buffers(page);
-	करो अणु
-		अगर (pos + bh->b_size > stop)
-			वापस;
+	do {
+		if (pos + bh->b_size > stop)
+			return;
 
-		अगर (offset <= pos)
+		if (offset <= pos)
 			gfs2_discard(sdp, bh);
 		pos += bh->b_size;
 		bh = bh->b_this_page;
-	पूर्ण जबतक (bh != head);
+	} while (bh != head);
 out:
-	अगर (!partial_page)
+	if (!partial_page)
 		try_to_release_page(page, 0);
-पूर्ण
+}
 
 /**
- * gfs2_releasepage - मुक्त the metadata associated with a page
+ * gfs2_releasepage - free the metadata associated with a page
  * @page: the page that's being released
  * @gfp_mask: passed from Linux VFS, ignored by us
  *
- * Calls try_to_मुक्त_buffers() to मुक्त the buffers and put the page अगर the
+ * Calls try_to_free_buffers() to free the buffers and put the page if the
  * buffers can be released.
  *
- * Returns: 1 अगर the page was put or अन्यथा 0
+ * Returns: 1 if the page was put or else 0
  */
 
-पूर्णांक gfs2_releasepage(काष्ठा page *page, gfp_t gfp_mask)
-अणु
-	काष्ठा address_space *mapping = page->mapping;
-	काष्ठा gfs2_sbd *sdp = gfs2_mapping2sbd(mapping);
-	काष्ठा buffer_head *bh, *head;
-	काष्ठा gfs2_bufdata *bd;
+int gfs2_releasepage(struct page *page, gfp_t gfp_mask)
+{
+	struct address_space *mapping = page->mapping;
+	struct gfs2_sbd *sdp = gfs2_mapping2sbd(mapping);
+	struct buffer_head *bh, *head;
+	struct gfs2_bufdata *bd;
 
-	अगर (!page_has_buffers(page))
-		वापस 0;
+	if (!page_has_buffers(page))
+		return 0;
 
 	/*
-	 * From xfs_vm_releasepage: mm accommodates an old ext3 हाल where
+	 * From xfs_vm_releasepage: mm accommodates an old ext3 case where
 	 * clean pages might not have had the dirty bit cleared.  Thus, it can
 	 * send actual dirty pages to ->releasepage() via shrink_active_list().
 	 *
@@ -741,50 +740,50 @@ out:
 
 	gfs2_log_lock(sdp);
 	head = bh = page_buffers(page);
-	करो अणु
-		अगर (atomic_पढ़ो(&bh->b_count))
-			जाओ cannot_release;
-		bd = bh->b_निजी;
-		अगर (bd && bd->bd_tr)
-			जाओ cannot_release;
-		अगर (buffer_dirty(bh) || WARN_ON(buffer_pinned(bh)))
-			जाओ cannot_release;
+	do {
+		if (atomic_read(&bh->b_count))
+			goto cannot_release;
+		bd = bh->b_private;
+		if (bd && bd->bd_tr)
+			goto cannot_release;
+		if (buffer_dirty(bh) || WARN_ON(buffer_pinned(bh)))
+			goto cannot_release;
 		bh = bh->b_this_page;
-	पूर्ण जबतक(bh != head);
+	} while(bh != head);
 
 	head = bh = page_buffers(page);
-	करो अणु
-		bd = bh->b_निजी;
-		अगर (bd) अणु
-			gfs2_निश्चित_warn(sdp, bd->bd_bh == bh);
-			bd->bd_bh = शून्य;
-			bh->b_निजी = शून्य;
+	do {
+		bd = bh->b_private;
+		if (bd) {
+			gfs2_assert_warn(sdp, bd->bd_bh == bh);
+			bd->bd_bh = NULL;
+			bh->b_private = NULL;
 			/*
 			 * The bd may still be queued as a revoke, in which
-			 * हाल we must not dequeue nor मुक्त it.
+			 * case we must not dequeue nor free it.
 			 */
-			अगर (!bd->bd_blkno && !list_empty(&bd->bd_list))
+			if (!bd->bd_blkno && !list_empty(&bd->bd_list))
 				list_del_init(&bd->bd_list);
-			अगर (list_empty(&bd->bd_list))
-				kmem_cache_मुक्त(gfs2_bufdata_cachep, bd);
-		पूर्ण
+			if (list_empty(&bd->bd_list))
+				kmem_cache_free(gfs2_bufdata_cachep, bd);
+		}
 
 		bh = bh->b_this_page;
-	पूर्ण जबतक (bh != head);
+	} while (bh != head);
 	gfs2_log_unlock(sdp);
 
-	वापस try_to_मुक्त_buffers(page);
+	return try_to_free_buffers(page);
 
 cannot_release:
 	gfs2_log_unlock(sdp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा address_space_operations gfs2_aops = अणु
-	.ग_लिखोpage = gfs2_ग_लिखोpage,
-	.ग_लिखोpages = gfs2_ग_लिखोpages,
-	.पढ़ोpage = gfs2_पढ़ोpage,
-	.पढ़ोahead = gfs2_पढ़ोahead,
+static const struct address_space_operations gfs2_aops = {
+	.writepage = gfs2_writepage,
+	.writepages = gfs2_writepages,
+	.readpage = gfs2_readpage,
+	.readahead = gfs2_readahead,
 	.set_page_dirty = iomap_set_page_dirty,
 	.releasepage = iomap_releasepage,
 	.invalidatepage = iomap_invalidatepage,
@@ -792,26 +791,26 @@ cannot_release:
 	.direct_IO = noop_direct_IO,
 	.migratepage = iomap_migrate_page,
 	.is_partially_uptodate = iomap_is_partially_uptodate,
-	.error_हटाओ_page = generic_error_हटाओ_page,
-पूर्ण;
+	.error_remove_page = generic_error_remove_page,
+};
 
-अटल स्थिर काष्ठा address_space_operations gfs2_jdata_aops = अणु
-	.ग_लिखोpage = gfs2_jdata_ग_लिखोpage,
-	.ग_लिखोpages = gfs2_jdata_ग_लिखोpages,
-	.पढ़ोpage = gfs2_पढ़ोpage,
-	.पढ़ोahead = gfs2_पढ़ोahead,
+static const struct address_space_operations gfs2_jdata_aops = {
+	.writepage = gfs2_jdata_writepage,
+	.writepages = gfs2_jdata_writepages,
+	.readpage = gfs2_readpage,
+	.readahead = gfs2_readahead,
 	.set_page_dirty = jdata_set_page_dirty,
 	.bmap = gfs2_bmap,
 	.invalidatepage = gfs2_invalidatepage,
 	.releasepage = gfs2_releasepage,
 	.is_partially_uptodate = block_is_partially_uptodate,
-	.error_हटाओ_page = generic_error_हटाओ_page,
-पूर्ण;
+	.error_remove_page = generic_error_remove_page,
+};
 
-व्योम gfs2_set_aops(काष्ठा inode *inode)
-अणु
-	अगर (gfs2_is_jdata(GFS2_I(inode)))
+void gfs2_set_aops(struct inode *inode)
+{
+	if (gfs2_is_jdata(GFS2_I(inode)))
 		inode->i_mapping->a_ops = &gfs2_jdata_aops;
-	अन्यथा
+	else
 		inode->i_mapping->a_ops = &gfs2_aops;
-पूर्ण
+}

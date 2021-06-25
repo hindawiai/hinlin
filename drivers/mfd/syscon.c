@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * System Control Driver
  *
  * Copyright (C) 2012 Freescale Semiconductor, Inc.
  * Copyright (C) 2012 Linaro Ltd.
  *
- * Author: Dong Aisheng <करोng.aisheng@linaro.org>
+ * Author: Dong Aisheng <dong.aisheng@linaro.org>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/hwspinlock.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/list.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_data/syscon.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/hwspinlock.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/list.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/platform_data/syscon.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/slab.h>
 
-अटल काष्ठा platक्रमm_driver syscon_driver;
+static struct platform_driver syscon_driver;
 
-अटल DEFINE_SPINLOCK(syscon_list_slock);
-अटल LIST_HEAD(syscon_list);
+static DEFINE_SPINLOCK(syscon_list_slock);
+static LIST_HEAD(syscon_list);
 
-काष्ठा syscon अणु
-	काष्ठा device_node *np;
-	काष्ठा regmap *regmap;
-	काष्ठा list_head list;
-पूर्ण;
+struct syscon {
+	struct device_node *np;
+	struct regmap *regmap;
+	struct list_head list;
+};
 
-अटल स्थिर काष्ठा regmap_config syscon_regmap_config = अणु
+static const struct regmap_config syscon_regmap_config = {
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-पूर्ण;
+};
 
-अटल काष्ठा syscon *of_syscon_रेजिस्टर(काष्ठा device_node *np, bool check_clk)
-अणु
-	काष्ठा clk *clk;
-	काष्ठा syscon *syscon;
-	काष्ठा regmap *regmap;
-	व्योम __iomem *base;
+static struct syscon *of_syscon_register(struct device_node *np, bool check_clk)
+{
+	struct clk *clk;
+	struct syscon *syscon;
+	struct regmap *regmap;
+	void __iomem *base;
 	u32 reg_io_width;
-	पूर्णांक ret;
-	काष्ठा regmap_config syscon_config = syscon_regmap_config;
-	काष्ठा resource res;
+	int ret;
+	struct regmap_config syscon_config = syscon_regmap_config;
+	struct resource res;
 
-	syscon = kzalloc(माप(*syscon), GFP_KERNEL);
-	अगर (!syscon)
-		वापस ERR_PTR(-ENOMEM);
+	syscon = kzalloc(sizeof(*syscon), GFP_KERNEL);
+	if (!syscon)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (of_address_to_resource(np, 0, &res)) अणु
+	if (of_address_to_resource(np, 0, &res)) {
 		ret = -ENOMEM;
-		जाओ err_map;
-	पूर्ण
+		goto err_map;
+	}
 
 	base = ioremap(res.start, resource_size(&res));
-	अगर (!base) अणु
+	if (!base) {
 		ret = -ENOMEM;
-		जाओ err_map;
-	पूर्ण
+		goto err_map;
+	}
 
-	/* Parse the device's DT node क्रम an endianness specअगरication */
-	अगर (of_property_पढ़ो_bool(np, "big-endian"))
-		syscon_config.val_क्रमmat_endian = REGMAP_ENDIAN_BIG;
-	अन्यथा अगर (of_property_पढ़ो_bool(np, "little-endian"))
-		syscon_config.val_क्रमmat_endian = REGMAP_ENDIAN_LITTLE;
-	अन्यथा अगर (of_property_पढ़ो_bool(np, "native-endian"))
-		syscon_config.val_क्रमmat_endian = REGMAP_ENDIAN_NATIVE;
+	/* Parse the device's DT node for an endianness specification */
+	if (of_property_read_bool(np, "big-endian"))
+		syscon_config.val_format_endian = REGMAP_ENDIAN_BIG;
+	else if (of_property_read_bool(np, "little-endian"))
+		syscon_config.val_format_endian = REGMAP_ENDIAN_LITTLE;
+	else if (of_property_read_bool(np, "native-endian"))
+		syscon_config.val_format_endian = REGMAP_ENDIAN_NATIVE;
 
 	/*
-	 * search क्रम reg-io-width property in DT. If it is not provided,
-	 * शेष to 4 bytes. regmap_init_mmio will वापस an error अगर values
+	 * search for reg-io-width property in DT. If it is not provided,
+	 * default to 4 bytes. regmap_init_mmio will return an error if values
 	 * are invalid so there is no need to check them here.
 	 */
-	ret = of_property_पढ़ो_u32(np, "reg-io-width", &reg_io_width);
-	अगर (ret)
+	ret = of_property_read_u32(np, "reg-io-width", &reg_io_width);
+	if (ret)
 		reg_io_width = 4;
 
 	ret = of_hwspin_lock_get_id(np, 0);
-	अगर (ret > 0 || (IS_ENABLED(CONFIG_HWSPINLOCK) && ret == 0)) अणु
+	if (ret > 0 || (IS_ENABLED(CONFIG_HWSPINLOCK) && ret == 0)) {
 		syscon_config.use_hwlock = true;
 		syscon_config.hwlock_id = ret;
 		syscon_config.hwlock_mode = HWLOCK_IRQSTATE;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
-		चयन (ret) अणु
-		हाल -ENOENT:
+	} else if (ret < 0) {
+		switch (ret) {
+		case -ENOENT:
 			/* Ignore missing hwlock, it's optional. */
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pr_err("Failed to retrieve valid hwlock: %d\n", ret);
 			fallthrough;
-		हाल -EPROBE_DEFER:
-			जाओ err_regmap;
-		पूर्ण
-	पूर्ण
+		case -EPROBE_DEFER:
+			goto err_regmap;
+		}
+	}
 
-	syscon_config.name = kaप्र_लिखो(GFP_KERNEL, "%pOFn@%llx", np,
+	syscon_config.name = kasprintf(GFP_KERNEL, "%pOFn@%llx", np,
 				       (u64)res.start);
 	syscon_config.reg_stride = reg_io_width;
 	syscon_config.val_bits = reg_io_width * 8;
-	syscon_config.max_रेजिस्टर = resource_size(&res) - reg_io_width;
+	syscon_config.max_register = resource_size(&res) - reg_io_width;
 
-	regmap = regmap_init_mmio(शून्य, base, &syscon_config);
-	अगर (IS_ERR(regmap)) अणु
+	regmap = regmap_init_mmio(NULL, base, &syscon_config);
+	if (IS_ERR(regmap)) {
 		pr_err("regmap init failed\n");
 		ret = PTR_ERR(regmap);
-		जाओ err_regmap;
-	पूर्ण
+		goto err_regmap;
+	}
 
-	अगर (check_clk) अणु
+	if (check_clk) {
 		clk = of_clk_get(np, 0);
-		अगर (IS_ERR(clk)) अणु
+		if (IS_ERR(clk)) {
 			ret = PTR_ERR(clk);
-			/* घड़ी is optional */
-			अगर (ret != -ENOENT)
-				जाओ err_clk;
-		पूर्ण अन्यथा अणु
+			/* clock is optional */
+			if (ret != -ENOENT)
+				goto err_clk;
+		} else {
 			ret = regmap_mmio_attach_clk(regmap, clk);
-			अगर (ret)
-				जाओ err_attach;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto err_attach;
+		}
+	}
 
 	syscon->regmap = regmap;
 	syscon->np = np;
@@ -136,196 +135,196 @@
 	list_add_tail(&syscon->list, &syscon_list);
 	spin_unlock(&syscon_list_slock);
 
-	वापस syscon;
+	return syscon;
 
 err_attach:
-	अगर (!IS_ERR(clk))
+	if (!IS_ERR(clk))
 		clk_put(clk);
 err_clk:
-	regmap_निकास(regmap);
+	regmap_exit(regmap);
 err_regmap:
 	iounmap(base);
-	kमुक्त(syscon_config.name);
+	kfree(syscon_config.name);
 err_map:
-	kमुक्त(syscon);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(syscon);
+	return ERR_PTR(ret);
+}
 
-अटल काष्ठा regmap *device_node_get_regmap(काष्ठा device_node *np,
+static struct regmap *device_node_get_regmap(struct device_node *np,
 					     bool check_clk)
-अणु
-	काष्ठा syscon *entry, *syscon = शून्य;
+{
+	struct syscon *entry, *syscon = NULL;
 
 	spin_lock(&syscon_list_slock);
 
-	list_क्रम_each_entry(entry, &syscon_list, list)
-		अगर (entry->np == np) अणु
+	list_for_each_entry(entry, &syscon_list, list)
+		if (entry->np == np) {
 			syscon = entry;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 	spin_unlock(&syscon_list_slock);
 
-	अगर (!syscon)
-		syscon = of_syscon_रेजिस्टर(np, check_clk);
+	if (!syscon)
+		syscon = of_syscon_register(np, check_clk);
 
-	अगर (IS_ERR(syscon))
-		वापस ERR_CAST(syscon);
+	if (IS_ERR(syscon))
+		return ERR_CAST(syscon);
 
-	वापस syscon->regmap;
-पूर्ण
+	return syscon->regmap;
+}
 
-काष्ठा regmap *device_node_to_regmap(काष्ठा device_node *np)
-अणु
-	वापस device_node_get_regmap(np, false);
-पूर्ण
+struct regmap *device_node_to_regmap(struct device_node *np)
+{
+	return device_node_get_regmap(np, false);
+}
 EXPORT_SYMBOL_GPL(device_node_to_regmap);
 
-काष्ठा regmap *syscon_node_to_regmap(काष्ठा device_node *np)
-अणु
-	अगर (!of_device_is_compatible(np, "syscon"))
-		वापस ERR_PTR(-EINVAL);
+struct regmap *syscon_node_to_regmap(struct device_node *np)
+{
+	if (!of_device_is_compatible(np, "syscon"))
+		return ERR_PTR(-EINVAL);
 
-	वापस device_node_get_regmap(np, true);
-पूर्ण
+	return device_node_get_regmap(np, true);
+}
 EXPORT_SYMBOL_GPL(syscon_node_to_regmap);
 
-काष्ठा regmap *syscon_regmap_lookup_by_compatible(स्थिर अक्षर *s)
-अणु
-	काष्ठा device_node *syscon_np;
-	काष्ठा regmap *regmap;
+struct regmap *syscon_regmap_lookup_by_compatible(const char *s)
+{
+	struct device_node *syscon_np;
+	struct regmap *regmap;
 
-	syscon_np = of_find_compatible_node(शून्य, शून्य, s);
-	अगर (!syscon_np)
-		वापस ERR_PTR(-ENODEV);
+	syscon_np = of_find_compatible_node(NULL, NULL, s);
+	if (!syscon_np)
+		return ERR_PTR(-ENODEV);
 
 	regmap = syscon_node_to_regmap(syscon_np);
 	of_node_put(syscon_np);
 
-	वापस regmap;
-पूर्ण
+	return regmap;
+}
 EXPORT_SYMBOL_GPL(syscon_regmap_lookup_by_compatible);
 
-काष्ठा regmap *syscon_regmap_lookup_by_phandle(काष्ठा device_node *np,
-					स्थिर अक्षर *property)
-अणु
-	काष्ठा device_node *syscon_np;
-	काष्ठा regmap *regmap;
+struct regmap *syscon_regmap_lookup_by_phandle(struct device_node *np,
+					const char *property)
+{
+	struct device_node *syscon_np;
+	struct regmap *regmap;
 
-	अगर (property)
+	if (property)
 		syscon_np = of_parse_phandle(np, property, 0);
-	अन्यथा
+	else
 		syscon_np = np;
 
-	अगर (!syscon_np)
-		वापस ERR_PTR(-ENODEV);
+	if (!syscon_np)
+		return ERR_PTR(-ENODEV);
 
 	regmap = syscon_node_to_regmap(syscon_np);
 	of_node_put(syscon_np);
 
-	वापस regmap;
-पूर्ण
+	return regmap;
+}
 EXPORT_SYMBOL_GPL(syscon_regmap_lookup_by_phandle);
 
-काष्ठा regmap *syscon_regmap_lookup_by_phandle_args(काष्ठा device_node *np,
-					स्थिर अक्षर *property,
-					पूर्णांक arg_count,
-					अचिन्हित पूर्णांक *out_args)
-अणु
-	काष्ठा device_node *syscon_np;
-	काष्ठा of_phandle_args args;
-	काष्ठा regmap *regmap;
-	अचिन्हित पूर्णांक index;
-	पूर्णांक rc;
+struct regmap *syscon_regmap_lookup_by_phandle_args(struct device_node *np,
+					const char *property,
+					int arg_count,
+					unsigned int *out_args)
+{
+	struct device_node *syscon_np;
+	struct of_phandle_args args;
+	struct regmap *regmap;
+	unsigned int index;
+	int rc;
 
 	rc = of_parse_phandle_with_fixed_args(np, property, arg_count,
 			0, &args);
-	अगर (rc)
-		वापस ERR_PTR(rc);
+	if (rc)
+		return ERR_PTR(rc);
 
 	syscon_np = args.np;
-	अगर (!syscon_np)
-		वापस ERR_PTR(-ENODEV);
+	if (!syscon_np)
+		return ERR_PTR(-ENODEV);
 
 	regmap = syscon_node_to_regmap(syscon_np);
-	क्रम (index = 0; index < arg_count; index++)
+	for (index = 0; index < arg_count; index++)
 		out_args[index] = args.args[index];
 	of_node_put(syscon_np);
 
-	वापस regmap;
-पूर्ण
+	return regmap;
+}
 EXPORT_SYMBOL_GPL(syscon_regmap_lookup_by_phandle_args);
 
 /*
  * It behaves the same as syscon_regmap_lookup_by_phandle() except where
- * there is no regmap phandle. In this हाल, instead of वापसing -ENODEV,
- * the function वापसs शून्य.
+ * there is no regmap phandle. In this case, instead of returning -ENODEV,
+ * the function returns NULL.
  */
-काष्ठा regmap *syscon_regmap_lookup_by_phandle_optional(काष्ठा device_node *np,
-					स्थिर अक्षर *property)
-अणु
-	काष्ठा regmap *regmap;
+struct regmap *syscon_regmap_lookup_by_phandle_optional(struct device_node *np,
+					const char *property)
+{
+	struct regmap *regmap;
 
 	regmap = syscon_regmap_lookup_by_phandle(np, property);
-	अगर (IS_ERR(regmap) && PTR_ERR(regmap) == -ENODEV)
-		वापस शून्य;
+	if (IS_ERR(regmap) && PTR_ERR(regmap) == -ENODEV)
+		return NULL;
 
-	वापस regmap;
-पूर्ण
+	return regmap;
+}
 EXPORT_SYMBOL_GPL(syscon_regmap_lookup_by_phandle_optional);
 
-अटल पूर्णांक syscon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा syscon_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा syscon *syscon;
-	काष्ठा regmap_config syscon_config = syscon_regmap_config;
-	काष्ठा resource *res;
-	व्योम __iomem *base;
+static int syscon_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct syscon_platform_data *pdata = dev_get_platdata(dev);
+	struct syscon *syscon;
+	struct regmap_config syscon_config = syscon_regmap_config;
+	struct resource *res;
+	void __iomem *base;
 
-	syscon = devm_kzalloc(dev, माप(*syscon), GFP_KERNEL);
-	अगर (!syscon)
-		वापस -ENOMEM;
+	syscon = devm_kzalloc(dev, sizeof(*syscon), GFP_KERNEL);
+	if (!syscon)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENOENT;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENOENT;
 
 	base = devm_ioremap(dev, res->start, resource_size(res));
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
-	syscon_config.max_रेजिस्टर = resource_size(res) - 4;
-	अगर (pdata)
+	syscon_config.max_register = resource_size(res) - 4;
+	if (pdata)
 		syscon_config.name = pdata->label;
 	syscon->regmap = devm_regmap_init_mmio(dev, base, &syscon_config);
-	अगर (IS_ERR(syscon->regmap)) अणु
+	if (IS_ERR(syscon->regmap)) {
 		dev_err(dev, "regmap init failed\n");
-		वापस PTR_ERR(syscon->regmap);
-	पूर्ण
+		return PTR_ERR(syscon->regmap);
+	}
 
-	platक्रमm_set_drvdata(pdev, syscon);
+	platform_set_drvdata(pdev, syscon);
 
 	dev_dbg(dev, "regmap %pR registered\n", res);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा platक्रमm_device_id syscon_ids[] = अणु
-	अणु "syscon", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct platform_device_id syscon_ids[] = {
+	{ "syscon", },
+	{ }
+};
 
-अटल काष्ठा platक्रमm_driver syscon_driver = अणु
-	.driver = अणु
+static struct platform_driver syscon_driver = {
+	.driver = {
 		.name = "syscon",
-	पूर्ण,
+	},
 	.probe		= syscon_probe,
 	.id_table	= syscon_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init syscon_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&syscon_driver);
-पूर्ण
+static int __init syscon_init(void)
+{
+	return platform_driver_register(&syscon_driver);
+}
 postcore_initcall(syscon_init);

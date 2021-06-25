@@ -1,102 +1,101 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * DFS referral cache routines
  *
  * Copyright (c) 2018-2019 Paulo Alcantara <palcantara@suse.de>
  */
 
-#अगर_अघोषित _CIFS_DFS_CACHE_H
-#घोषणा _CIFS_DFS_CACHE_H
+#ifndef _CIFS_DFS_CACHE_H
+#define _CIFS_DFS_CACHE_H
 
-#समावेश <linux/nls.h>
-#समावेश <linux/list.h>
-#समावेश "cifsglob.h"
+#include <linux/nls.h>
+#include <linux/list.h>
+#include "cifsglob.h"
 
-काष्ठा dfs_cache_tgt_list अणु
-	पूर्णांक tl_numtgts;
-	काष्ठा list_head tl_list;
-पूर्ण;
+struct dfs_cache_tgt_list {
+	int tl_numtgts;
+	struct list_head tl_list;
+};
 
-काष्ठा dfs_cache_tgt_iterator अणु
-	अक्षर *it_name;
-	पूर्णांक it_path_consumed;
-	काष्ठा list_head it_list;
-पूर्ण;
+struct dfs_cache_tgt_iterator {
+	char *it_name;
+	int it_path_consumed;
+	struct list_head it_list;
+};
 
-बाह्य पूर्णांक dfs_cache_init(व्योम);
-बाह्य व्योम dfs_cache_destroy(व्योम);
-बाह्य स्थिर काष्ठा proc_ops dfscache_proc_ops;
+extern int dfs_cache_init(void);
+extern void dfs_cache_destroy(void);
+extern const struct proc_ops dfscache_proc_ops;
 
-बाह्य पूर्णांक dfs_cache_find(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses,
-			  स्थिर काष्ठा nls_table *nls_codepage, पूर्णांक remap,
-			  स्थिर अक्षर *path, काष्ठा dfs_info3_param *ref,
-			  काष्ठा dfs_cache_tgt_list *tgt_list);
-बाह्य पूर्णांक dfs_cache_noreq_find(स्थिर अक्षर *path, काष्ठा dfs_info3_param *ref,
-				काष्ठा dfs_cache_tgt_list *tgt_list);
-बाह्य पूर्णांक dfs_cache_update_tgthपूर्णांक(स्थिर अचिन्हित पूर्णांक xid,
-				    काष्ठा cअगरs_ses *ses,
-				    स्थिर काष्ठा nls_table *nls_codepage,
-				    पूर्णांक remap, स्थिर अक्षर *path,
-				    स्थिर काष्ठा dfs_cache_tgt_iterator *it);
-बाह्य पूर्णांक
-dfs_cache_noreq_update_tgthपूर्णांक(स्थिर अक्षर *path,
-			       स्थिर काष्ठा dfs_cache_tgt_iterator *it);
-बाह्य पूर्णांक dfs_cache_get_tgt_referral(स्थिर अक्षर *path,
-				      स्थिर काष्ठा dfs_cache_tgt_iterator *it,
-				      काष्ठा dfs_info3_param *ref);
-बाह्य पूर्णांक dfs_cache_add_vol(अक्षर *mntdata, काष्ठा smb3_fs_context *ctx,
-			स्थिर अक्षर *fullpath);
-बाह्य पूर्णांक dfs_cache_update_vol(स्थिर अक्षर *fullpath,
-				काष्ठा TCP_Server_Info *server);
-बाह्य व्योम dfs_cache_del_vol(स्थिर अक्षर *fullpath);
-बाह्य पूर्णांक dfs_cache_get_tgt_share(अक्षर *path, स्थिर काष्ठा dfs_cache_tgt_iterator *it,
-				   अक्षर **share, अक्षर **prefix);
+extern int dfs_cache_find(const unsigned int xid, struct cifs_ses *ses,
+			  const struct nls_table *nls_codepage, int remap,
+			  const char *path, struct dfs_info3_param *ref,
+			  struct dfs_cache_tgt_list *tgt_list);
+extern int dfs_cache_noreq_find(const char *path, struct dfs_info3_param *ref,
+				struct dfs_cache_tgt_list *tgt_list);
+extern int dfs_cache_update_tgthint(const unsigned int xid,
+				    struct cifs_ses *ses,
+				    const struct nls_table *nls_codepage,
+				    int remap, const char *path,
+				    const struct dfs_cache_tgt_iterator *it);
+extern int
+dfs_cache_noreq_update_tgthint(const char *path,
+			       const struct dfs_cache_tgt_iterator *it);
+extern int dfs_cache_get_tgt_referral(const char *path,
+				      const struct dfs_cache_tgt_iterator *it,
+				      struct dfs_info3_param *ref);
+extern int dfs_cache_add_vol(char *mntdata, struct smb3_fs_context *ctx,
+			const char *fullpath);
+extern int dfs_cache_update_vol(const char *fullpath,
+				struct TCP_Server_Info *server);
+extern void dfs_cache_del_vol(const char *fullpath);
+extern int dfs_cache_get_tgt_share(char *path, const struct dfs_cache_tgt_iterator *it,
+				   char **share, char **prefix);
 
-अटल अंतरभूत काष्ठा dfs_cache_tgt_iterator *
-dfs_cache_get_next_tgt(काष्ठा dfs_cache_tgt_list *tl,
-		       काष्ठा dfs_cache_tgt_iterator *it)
-अणु
-	अगर (!tl || list_empty(&tl->tl_list) || !it ||
+static inline struct dfs_cache_tgt_iterator *
+dfs_cache_get_next_tgt(struct dfs_cache_tgt_list *tl,
+		       struct dfs_cache_tgt_iterator *it)
+{
+	if (!tl || list_empty(&tl->tl_list) || !it ||
 	    list_is_last(&it->it_list, &tl->tl_list))
-		वापस शून्य;
-	वापस list_next_entry(it, it_list);
-पूर्ण
+		return NULL;
+	return list_next_entry(it, it_list);
+}
 
-अटल अंतरभूत काष्ठा dfs_cache_tgt_iterator *
-dfs_cache_get_tgt_iterator(काष्ठा dfs_cache_tgt_list *tl)
-अणु
-	अगर (!tl)
-		वापस शून्य;
-	वापस list_first_entry_or_null(&tl->tl_list,
-					काष्ठा dfs_cache_tgt_iterator,
+static inline struct dfs_cache_tgt_iterator *
+dfs_cache_get_tgt_iterator(struct dfs_cache_tgt_list *tl)
+{
+	if (!tl)
+		return NULL;
+	return list_first_entry_or_null(&tl->tl_list,
+					struct dfs_cache_tgt_iterator,
 					it_list);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dfs_cache_मुक्त_tgts(काष्ठा dfs_cache_tgt_list *tl)
-अणु
-	काष्ठा dfs_cache_tgt_iterator *it, *nit;
+static inline void dfs_cache_free_tgts(struct dfs_cache_tgt_list *tl)
+{
+	struct dfs_cache_tgt_iterator *it, *nit;
 
-	अगर (!tl || list_empty(&tl->tl_list))
-		वापस;
-	list_क्रम_each_entry_safe(it, nit, &tl->tl_list, it_list) अणु
+	if (!tl || list_empty(&tl->tl_list))
+		return;
+	list_for_each_entry_safe(it, nit, &tl->tl_list, it_list) {
 		list_del(&it->it_list);
-		kमुक्त(it->it_name);
-		kमुक्त(it);
-	पूर्ण
+		kfree(it->it_name);
+		kfree(it);
+	}
 	tl->tl_numtgts = 0;
-पूर्ण
+}
 
-अटल अंतरभूत स्थिर अक्षर *
-dfs_cache_get_tgt_name(स्थिर काष्ठा dfs_cache_tgt_iterator *it)
-अणु
-	वापस it ? it->it_name : शून्य;
-पूर्ण
+static inline const char *
+dfs_cache_get_tgt_name(const struct dfs_cache_tgt_iterator *it)
+{
+	return it ? it->it_name : NULL;
+}
 
-अटल अंतरभूत पूर्णांक
-dfs_cache_get_nr_tgts(स्थिर काष्ठा dfs_cache_tgt_list *tl)
-अणु
-	वापस tl ? tl->tl_numtgts : 0;
-पूर्ण
+static inline int
+dfs_cache_get_nr_tgts(const struct dfs_cache_tgt_list *tl)
+{
+	return tl ? tl->tl_numtgts : 0;
+}
 
-#पूर्ण_अगर /* _CIFS_DFS_CACHE_H */
+#endif /* _CIFS_DFS_CACHE_H */

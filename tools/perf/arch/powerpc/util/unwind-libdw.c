@@ -1,30 +1,29 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <elfutils/libdwfl.h>
-#समावेश <linux/kernel.h>
-#समावेश "../../../util/unwind-libdw.h"
-#समावेश "../../../util/perf_regs.h"
-#समावेश "../../../util/event.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <elfutils/libdwfl.h>
+#include <linux/kernel.h>
+#include "../../../util/unwind-libdw.h"
+#include "../../../util/perf_regs.h"
+#include "../../../util/event.h"
 
 /* See backends/ppc_initreg.c and backends/ppc_regs.c in elfutils.  */
-अटल स्थिर पूर्णांक special_regs[3][2] = अणु
-	अणु 65, PERF_REG_POWERPC_LINK पूर्ण,
-	अणु 101, PERF_REG_POWERPC_XER पूर्ण,
-	अणु 109, PERF_REG_POWERPC_CTR पूर्ण,
-पूर्ण;
+static const int special_regs[3][2] = {
+	{ 65, PERF_REG_POWERPC_LINK },
+	{ 101, PERF_REG_POWERPC_XER },
+	{ 109, PERF_REG_POWERPC_CTR },
+};
 
-bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *thपढ़ो, व्योम *arg)
-अणु
-	काष्ठा unwind_info *ui = arg;
-	काष्ठा regs_dump *user_regs = &ui->sample->user_regs;
+bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
+{
+	struct unwind_info *ui = arg;
+	struct regs_dump *user_regs = &ui->sample->user_regs;
 	Dwarf_Word dwarf_regs[32], dwarf_nip;
-	माप_प्रकार i;
+	size_t i;
 
-#घोषणा REG(r) (अणु						\
+#define REG(r) ({						\
 	Dwarf_Word val = 0;					\
 	perf_reg_value(&val, user_regs, PERF_REG_POWERPC_##r);	\
 	val;							\
-पूर्ण)
+})
 
 	dwarf_regs[0]  = REG(R0);
 	dwarf_regs[1]  = REG(R1);
@@ -58,19 +57,19 @@ bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *th�
 	dwarf_regs[29] = REG(R29);
 	dwarf_regs[30] = REG(R30);
 	dwarf_regs[31] = REG(R31);
-	अगर (!dwfl_thपढ़ो_state_रेजिस्टरs(thपढ़ो, 0, 32, dwarf_regs))
-		वापस false;
+	if (!dwfl_thread_state_registers(thread, 0, 32, dwarf_regs))
+		return false;
 
 	dwarf_nip = REG(NIP);
-	dwfl_thपढ़ो_state_रेजिस्टर_pc(thपढ़ो, dwarf_nip);
-	क्रम (i = 0; i < ARRAY_SIZE(special_regs); i++) अणु
+	dwfl_thread_state_register_pc(thread, dwarf_nip);
+	for (i = 0; i < ARRAY_SIZE(special_regs); i++) {
 		Dwarf_Word val = 0;
 		perf_reg_value(&val, user_regs, special_regs[i][1]);
-		अगर (!dwfl_thपढ़ो_state_रेजिस्टरs(thपढ़ो,
+		if (!dwfl_thread_state_registers(thread,
 						 special_regs[i][0], 1,
 						 &val))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wlcore
  *
@@ -7,981 +6,981 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_wakeirq.h>
+#include <linux/module.h>
+#include <linux/firmware.h>
+#include <linux/etherdevice.h>
+#include <linux/vmalloc.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_wakeirq.h>
 
-#समावेश "wlcore.h"
-#समावेश "debug.h"
-#समावेश "wl12xx_80211.h"
-#समावेश "io.h"
-#समावेश "tx.h"
-#समावेश "ps.h"
-#समावेश "init.h"
-#समावेश "debugfs.h"
-#समावेश "testmode.h"
-#समावेश "vendor_cmd.h"
-#समावेश "scan.h"
-#समावेश "hw_ops.h"
-#समावेश "sysfs.h"
+#include "wlcore.h"
+#include "debug.h"
+#include "wl12xx_80211.h"
+#include "io.h"
+#include "tx.h"
+#include "ps.h"
+#include "init.h"
+#include "debugfs.h"
+#include "testmode.h"
+#include "vendor_cmd.h"
+#include "scan.h"
+#include "hw_ops.h"
+#include "sysfs.h"
 
-#घोषणा WL1271_BOOT_RETRIES 3
-#घोषणा WL1271_WAKEUP_TIMEOUT 500
+#define WL1271_BOOT_RETRIES 3
+#define WL1271_WAKEUP_TIMEOUT 500
 
-अटल अक्षर *fwlog_param;
-अटल पूर्णांक fwlog_mem_blocks = -1;
-अटल पूर्णांक bug_on_recovery = -1;
-अटल पूर्णांक no_recovery     = -1;
+static char *fwlog_param;
+static int fwlog_mem_blocks = -1;
+static int bug_on_recovery = -1;
+static int no_recovery     = -1;
 
-अटल व्योम __wl1271_op_हटाओ_पूर्णांकerface(काष्ठा wl1271 *wl,
-					 काष्ठा ieee80211_vअगर *vअगर,
+static void __wl1271_op_remove_interface(struct wl1271 *wl,
+					 struct ieee80211_vif *vif,
 					 bool reset_tx_queues);
-अटल व्योम wlcore_op_stop_locked(काष्ठा wl1271 *wl);
-अटल व्योम wl1271_मुक्त_ap_keys(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर);
+static void wlcore_op_stop_locked(struct wl1271 *wl);
+static void wl1271_free_ap_keys(struct wl1271 *wl, struct wl12xx_vif *wlvif);
 
-अटल पूर्णांक wl12xx_set_authorized(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret;
+static int wl12xx_set_authorized(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret;
 
-	अगर (WARN_ON(wlvअगर->bss_type != BSS_TYPE_STA_BSS))
-		वापस -EINVAL;
+	if (WARN_ON(wlvif->bss_type != BSS_TYPE_STA_BSS))
+		return -EINVAL;
 
-	अगर (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
-		वापस 0;
+	if (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+		return 0;
 
-	अगर (test_and_set_bit(WLVIF_FLAG_STA_STATE_SENT, &wlvअगर->flags))
-		वापस 0;
+	if (test_and_set_bit(WLVIF_FLAG_STA_STATE_SENT, &wlvif->flags))
+		return 0;
 
-	ret = wl12xx_cmd_set_peer_state(wl, wlvअगर, wlvअगर->sta.hlid);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl12xx_cmd_set_peer_state(wl, wlvif, wlvif->sta.hlid);
+	if (ret < 0)
+		return ret;
 
 	wl1271_info("Association completed.");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wl1271_reg_notअगरy(काष्ठा wiphy *wiphy,
-			      काष्ठा regulatory_request *request)
-अणु
-	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	काष्ठा wl1271 *wl = hw->priv;
+static void wl1271_reg_notify(struct wiphy *wiphy,
+			      struct regulatory_request *request)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct wl1271 *wl = hw->priv;
 
 	/* copy the current dfs region */
-	अगर (request)
+	if (request)
 		wl->dfs_region = request->dfs_region;
 
-	wlcore_regकरोमुख्य_config(wl);
-पूर्ण
+	wlcore_regdomain_config(wl);
+}
 
-अटल पूर्णांक wl1271_set_rx_streaming(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+static int wl1271_set_rx_streaming(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				   bool enable)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 
 	/* we should hold wl->mutex */
-	ret = wl1271_acx_ps_rx_streaming(wl, wlvअगर, enable);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl1271_acx_ps_rx_streaming(wl, wlvif, enable);
+	if (ret < 0)
+		goto out;
 
-	अगर (enable)
-		set_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvअगर->flags);
-	अन्यथा
-		clear_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvअगर->flags);
+	if (enable)
+		set_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvif->flags);
+	else
+		clear_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvif->flags);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * this function is being called when the rx_streaming पूर्णांकerval
+ * this function is being called when the rx_streaming interval
  * has beed changed or rx_streaming should be disabled
  */
-पूर्णांक wl1271_recalc_rx_streaming(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक period = wl->conf.rx_streaming.पूर्णांकerval;
+int wl1271_recalc_rx_streaming(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret = 0;
+	int period = wl->conf.rx_streaming.interval;
 
-	/* करोn't reconfigure अगर rx_streaming is disabled */
-	अगर (!test_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvअगर->flags))
-		जाओ out;
+	/* don't reconfigure if rx_streaming is disabled */
+	if (!test_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvif->flags))
+		goto out;
 
 	/* reconfigure/disable according to new streaming_period */
-	अगर (period &&
-	    test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags) &&
+	if (period &&
+	    test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags) &&
 	    (wl->conf.rx_streaming.always ||
 	     test_bit(WL1271_FLAG_SOFT_GEMINI, &wl->flags)))
-		ret = wl1271_set_rx_streaming(wl, wlvअगर, true);
-	अन्यथा अणु
-		ret = wl1271_set_rx_streaming(wl, wlvअगर, false);
-		/* करोn't cancel_work_sync since we might deadlock */
-		del_समयr_sync(&wlvअगर->rx_streaming_समयr);
-	पूर्ण
+		ret = wl1271_set_rx_streaming(wl, wlvif, true);
+	else {
+		ret = wl1271_set_rx_streaming(wl, wlvif, false);
+		/* don't cancel_work_sync since we might deadlock */
+		del_timer_sync(&wlvif->rx_streaming_timer);
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl1271_rx_streaming_enable_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा wl12xx_vअगर *wlvअगर = container_of(work, काष्ठा wl12xx_vअगर,
+static void wl1271_rx_streaming_enable_work(struct work_struct *work)
+{
+	int ret;
+	struct wl12xx_vif *wlvif = container_of(work, struct wl12xx_vif,
 						rx_streaming_enable_work);
-	काष्ठा wl1271 *wl = wlvअगर->wl;
+	struct wl1271 *wl = wlvif->wl;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (test_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvअगर->flags) ||
-	    !test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags) ||
+	if (test_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvif->flags) ||
+	    !test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags) ||
 	    (!wl->conf.rx_streaming.always &&
 	     !test_bit(WL1271_FLAG_SOFT_GEMINI, &wl->flags)))
-		जाओ out;
+		goto out;
 
-	अगर (!wl->conf.rx_streaming.पूर्णांकerval)
-		जाओ out;
+	if (!wl->conf.rx_streaming.interval)
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl1271_set_rx_streaming(wl, wlvअगर, true);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	ret = wl1271_set_rx_streaming(wl, wlvif, true);
+	if (ret < 0)
+		goto out_sleep;
 
-	/* stop it after some समय of inactivity */
-	mod_समयr(&wlvअगर->rx_streaming_समयr,
-		  jअगरfies + msecs_to_jअगरfies(wl->conf.rx_streaming.duration));
+	/* stop it after some time of inactivity */
+	mod_timer(&wlvif->rx_streaming_timer,
+		  jiffies + msecs_to_jiffies(wl->conf.rx_streaming.duration));
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wl1271_rx_streaming_disable_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा wl12xx_vअगर *wlvअगर = container_of(work, काष्ठा wl12xx_vअगर,
+static void wl1271_rx_streaming_disable_work(struct work_struct *work)
+{
+	int ret;
+	struct wl12xx_vif *wlvif = container_of(work, struct wl12xx_vif,
 						rx_streaming_disable_work);
-	काष्ठा wl1271 *wl = wlvअगर->wl;
+	struct wl1271 *wl = wlvif->wl;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (!test_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvअगर->flags))
-		जाओ out;
+	if (!test_bit(WLVIF_FLAG_RX_STREAMING_STARTED, &wlvif->flags))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl1271_set_rx_streaming(wl, wlvअगर, false);
-	अगर (ret)
-		जाओ out_sleep;
+	ret = wl1271_set_rx_streaming(wl, wlvif, false);
+	if (ret)
+		goto out_sleep;
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wl1271_rx_streaming_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = from_समयr(wlvअगर, t, rx_streaming_समयr);
-	काष्ठा wl1271 *wl = wlvअगर->wl;
-	ieee80211_queue_work(wl->hw, &wlvअगर->rx_streaming_disable_work);
-पूर्ण
+static void wl1271_rx_streaming_timer(struct timer_list *t)
+{
+	struct wl12xx_vif *wlvif = from_timer(wlvif, t, rx_streaming_timer);
+	struct wl1271 *wl = wlvif->wl;
+	ieee80211_queue_work(wl->hw, &wlvif->rx_streaming_disable_work);
+}
 
 /* wl->mutex must be taken */
-व्योम wl12xx_rearm_tx_watchकरोg_locked(काष्ठा wl1271 *wl)
-अणु
-	/* अगर the watchकरोg is not armed, करोn't करो anything */
-	अगर (wl->tx_allocated_blocks == 0)
-		वापस;
+void wl12xx_rearm_tx_watchdog_locked(struct wl1271 *wl)
+{
+	/* if the watchdog is not armed, don't do anything */
+	if (wl->tx_allocated_blocks == 0)
+		return;
 
-	cancel_delayed_work(&wl->tx_watchकरोg_work);
-	ieee80211_queue_delayed_work(wl->hw, &wl->tx_watchकरोg_work,
-		msecs_to_jअगरfies(wl->conf.tx.tx_watchकरोg_समयout));
-पूर्ण
+	cancel_delayed_work(&wl->tx_watchdog_work);
+	ieee80211_queue_delayed_work(wl->hw, &wl->tx_watchdog_work,
+		msecs_to_jiffies(wl->conf.tx.tx_watchdog_timeout));
+}
 
-अटल व्योम wlcore_rc_update_work(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा wl12xx_vअगर *wlvअगर = container_of(work, काष्ठा wl12xx_vअगर,
+static void wlcore_rc_update_work(struct work_struct *work)
+{
+	int ret;
+	struct wl12xx_vif *wlvif = container_of(work, struct wl12xx_vif,
 						rc_update_work);
-	काष्ठा wl1271 *wl = wlvअगर->wl;
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+	struct wl1271 *wl = wlvif->wl;
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	अगर (ieee80211_vअगर_is_mesh(vअगर)) अणु
-		ret = wl1271_acx_set_ht_capabilities(wl, &wlvअगर->rc_ht_cap,
-						     true, wlvअगर->sta.hlid);
-		अगर (ret < 0)
-			जाओ out_sleep;
-	पूर्ण अन्यथा अणु
-		wlcore_hw_sta_rc_update(wl, wlvअगर);
-	पूर्ण
+	if (ieee80211_vif_is_mesh(vif)) {
+		ret = wl1271_acx_set_ht_capabilities(wl, &wlvif->rc_ht_cap,
+						     true, wlvif->sta.hlid);
+		if (ret < 0)
+			goto out_sleep;
+	} else {
+		wlcore_hw_sta_rc_update(wl, wlvif);
+	}
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wl12xx_tx_watchकरोg_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा wl1271 *wl;
+static void wl12xx_tx_watchdog_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct wl1271 *wl;
 
 	dwork = to_delayed_work(work);
-	wl = container_of(dwork, काष्ठा wl1271, tx_watchकरोg_work);
+	wl = container_of(dwork, struct wl1271, tx_watchdog_work);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	/* Tx went out in the meanसमय - everything is ok */
-	अगर (unlikely(wl->tx_allocated_blocks == 0))
-		जाओ out;
+	/* Tx went out in the meantime - everything is ok */
+	if (unlikely(wl->tx_allocated_blocks == 0))
+		goto out;
 
 	/*
-	 * अगर a ROC is in progress, we might not have any Tx क्रम a दीर्घ
-	 * समय (e.g. pending Tx on the non-ROC channels)
+	 * if a ROC is in progress, we might not have any Tx for a long
+	 * time (e.g. pending Tx on the non-ROC channels)
 	 */
-	अगर (find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES) अणु
+	if (find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES) {
 		wl1271_debug(DEBUG_TX, "No Tx (in FW) for %d ms due to ROC",
-			     wl->conf.tx.tx_watchकरोg_समयout);
-		wl12xx_rearm_tx_watchकरोg_locked(wl);
-		जाओ out;
-	पूर्ण
+			     wl->conf.tx.tx_watchdog_timeout);
+		wl12xx_rearm_tx_watchdog_locked(wl);
+		goto out;
+	}
 
 	/*
-	 * अगर a scan is in progress, we might not have any Tx क्रम a दीर्घ
-	 * समय
+	 * if a scan is in progress, we might not have any Tx for a long
+	 * time
 	 */
-	अगर (wl->scan.state != WL1271_SCAN_STATE_IDLE) अणु
+	if (wl->scan.state != WL1271_SCAN_STATE_IDLE) {
 		wl1271_debug(DEBUG_TX, "No Tx (in FW) for %d ms due to scan",
-			     wl->conf.tx.tx_watchकरोg_समयout);
-		wl12xx_rearm_tx_watchकरोg_locked(wl);
-		जाओ out;
-	पूर्ण
+			     wl->conf.tx.tx_watchdog_timeout);
+		wl12xx_rearm_tx_watchdog_locked(wl);
+		goto out;
+	}
 
 	/*
-	* AP might cache a frame क्रम a दीर्घ समय क्रम a sleeping station,
-	* so rearm the समयr अगर there's an AP पूर्णांकerface with stations. If
+	* AP might cache a frame for a long time for a sleeping station,
+	* so rearm the timer if there's an AP interface with stations. If
 	* Tx is genuinely stuck we will most hopefully discover it when all
-	* stations are हटाओd due to inactivity.
+	* stations are removed due to inactivity.
 	*/
-	अगर (wl->active_sta_count) अणु
+	if (wl->active_sta_count) {
 		wl1271_debug(DEBUG_TX, "No Tx (in FW) for %d ms. AP has "
 			     " %d stations",
-			      wl->conf.tx.tx_watchकरोg_समयout,
+			      wl->conf.tx.tx_watchdog_timeout,
 			      wl->active_sta_count);
-		wl12xx_rearm_tx_watchकरोg_locked(wl);
-		जाओ out;
-	पूर्ण
+		wl12xx_rearm_tx_watchdog_locked(wl);
+		goto out;
+	}
 
 	wl1271_error("Tx stuck (in FW) for %d ms. Starting recovery",
-		     wl->conf.tx.tx_watchकरोg_समयout);
+		     wl->conf.tx.tx_watchdog_timeout);
 	wl12xx_queue_recovery_work(wl);
 
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wlcore_adjust_conf(काष्ठा wl1271 *wl)
-अणु
+static void wlcore_adjust_conf(struct wl1271 *wl)
+{
 
-	अगर (fwlog_param) अणु
-		अगर (!म_भेद(fwlog_param, "continuous")) अणु
+	if (fwlog_param) {
+		if (!strcmp(fwlog_param, "continuous")) {
 			wl->conf.fwlog.mode = WL12XX_FWLOG_CONTINUOUS;
 			wl->conf.fwlog.output = WL12XX_FWLOG_OUTPUT_HOST;
-		पूर्ण अन्यथा अगर (!म_भेद(fwlog_param, "dbgpins")) अणु
+		} else if (!strcmp(fwlog_param, "dbgpins")) {
 			wl->conf.fwlog.mode = WL12XX_FWLOG_CONTINUOUS;
 			wl->conf.fwlog.output = WL12XX_FWLOG_OUTPUT_DBG_PINS;
-		पूर्ण अन्यथा अगर (!म_भेद(fwlog_param, "disable")) अणु
+		} else if (!strcmp(fwlog_param, "disable")) {
 			wl->conf.fwlog.mem_blocks = 0;
 			wl->conf.fwlog.output = WL12XX_FWLOG_OUTPUT_NONE;
-		पूर्ण अन्यथा अणु
+		} else {
 			wl1271_error("Unknown fwlog parameter %s", fwlog_param);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (bug_on_recovery != -1)
+	if (bug_on_recovery != -1)
 		wl->conf.recovery.bug_on_recovery = (u8) bug_on_recovery;
 
-	अगर (no_recovery != -1)
+	if (no_recovery != -1)
 		wl->conf.recovery.no_recovery = (u8) no_recovery;
-पूर्ण
+}
 
-अटल व्योम wl12xx_irq_ps_regulate_link(काष्ठा wl1271 *wl,
-					काष्ठा wl12xx_vअगर *wlvअगर,
+static void wl12xx_irq_ps_regulate_link(struct wl1271 *wl,
+					struct wl12xx_vif *wlvif,
 					u8 hlid, u8 tx_pkts)
-अणु
+{
 	bool fw_ps;
 
 	fw_ps = test_bit(hlid, &wl->ap_fw_ps_map);
 
 	/*
-	 * Wake up from high level PS अगर the STA is asleep with too little
-	 * packets in FW or अगर the STA is awake.
+	 * Wake up from high level PS if the STA is asleep with too little
+	 * packets in FW or if the STA is awake.
 	 */
-	अगर (!fw_ps || tx_pkts < WL1271_PS_STA_MAX_PACKETS)
-		wl12xx_ps_link_end(wl, wlvअगर, hlid);
+	if (!fw_ps || tx_pkts < WL1271_PS_STA_MAX_PACKETS)
+		wl12xx_ps_link_end(wl, wlvif, hlid);
 
 	/*
-	 * Start high-level PS अगर the STA is asleep with enough blocks in FW.
-	 * Make an exception अगर this is the only connected link. In this
-	 * हाल FW-memory congestion is less of a problem.
+	 * Start high-level PS if the STA is asleep with enough blocks in FW.
+	 * Make an exception if this is the only connected link. In this
+	 * case FW-memory congestion is less of a problem.
 	 * Note that a single connected STA means 2*ap_count + 1 active links,
-	 * since we must account क्रम the global and broadcast AP links
-	 * क्रम each AP. The "fw_ps" check assures us the other link is a STA
+	 * since we must account for the global and broadcast AP links
+	 * for each AP. The "fw_ps" check assures us the other link is a STA
 	 * connected to the AP. Otherwise the FW would not set the PSM bit.
 	 */
-	अन्यथा अगर (wl->active_link_count > (wl->ap_count*2 + 1) && fw_ps &&
+	else if (wl->active_link_count > (wl->ap_count*2 + 1) && fw_ps &&
 		 tx_pkts >= WL1271_PS_STA_MAX_PACKETS)
-		wl12xx_ps_link_start(wl, wlvअगर, hlid, true);
-पूर्ण
+		wl12xx_ps_link_start(wl, wlvif, hlid, true);
+}
 
-अटल व्योम wl12xx_irq_update_links_status(काष्ठा wl1271 *wl,
-					   काष्ठा wl12xx_vअगर *wlvअगर,
-					   काष्ठा wl_fw_status *status)
-अणु
-	अचिन्हित दीर्घ cur_fw_ps_map;
+static void wl12xx_irq_update_links_status(struct wl1271 *wl,
+					   struct wl12xx_vif *wlvif,
+					   struct wl_fw_status *status)
+{
+	unsigned long cur_fw_ps_map;
 	u8 hlid;
 
-	cur_fw_ps_map = status->link_ps_biपंचांगap;
-	अगर (wl->ap_fw_ps_map != cur_fw_ps_map) अणु
+	cur_fw_ps_map = status->link_ps_bitmap;
+	if (wl->ap_fw_ps_map != cur_fw_ps_map) {
 		wl1271_debug(DEBUG_PSM,
 			     "link ps prev 0x%lx cur 0x%lx changed 0x%lx",
 			     wl->ap_fw_ps_map, cur_fw_ps_map,
 			     wl->ap_fw_ps_map ^ cur_fw_ps_map);
 
 		wl->ap_fw_ps_map = cur_fw_ps_map;
-	पूर्ण
+	}
 
-	क्रम_each_set_bit(hlid, wlvअगर->ap.sta_hlid_map, wl->num_links)
-		wl12xx_irq_ps_regulate_link(wl, wlvअगर, hlid,
+	for_each_set_bit(hlid, wlvif->ap.sta_hlid_map, wl->num_links)
+		wl12xx_irq_ps_regulate_link(wl, wlvif, hlid,
 					    wl->links[hlid].allocated_pkts);
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_fw_status(काष्ठा wl1271 *wl, काष्ठा wl_fw_status *status)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर;
+static int wlcore_fw_status(struct wl1271 *wl, struct wl_fw_status *status)
+{
+	struct wl12xx_vif *wlvif;
 	u32 old_tx_blk_count = wl->tx_blocks_available;
-	पूर्णांक avail, मुक्तd_blocks;
-	पूर्णांक i;
-	पूर्णांक ret;
-	काष्ठा wl1271_link *lnk;
+	int avail, freed_blocks;
+	int i;
+	int ret;
+	struct wl1271_link *lnk;
 
-	ret = wlcore_raw_पढ़ो_data(wl, REG_RAW_FW_STATUS_ADDR,
+	ret = wlcore_raw_read_data(wl, REG_RAW_FW_STATUS_ADDR,
 				   wl->raw_fw_status,
 				   wl->fw_status_len, false);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	wlcore_hw_convert_fw_status(wl, wl->raw_fw_status, wl->fw_status);
 
 	wl1271_debug(DEBUG_IRQ, "intr: 0x%x (fw_rx_counter = %d, "
 		     "drv_rx_counter = %d, tx_results_counter = %d)",
-		     status->पूर्णांकr,
+		     status->intr,
 		     status->fw_rx_counter,
 		     status->drv_rx_counter,
 		     status->tx_results_counter);
 
-	क्रम (i = 0; i < NUM_TX_QUEUES; i++) अणु
-		/* prevent wrap-around in मुक्तd-packets counter */
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
+		/* prevent wrap-around in freed-packets counter */
 		wl->tx_allocated_pkts[i] -=
 				(status->counters.tx_released_pkts[i] -
-				wl->tx_pkts_मुक्तd[i]) & 0xff;
+				wl->tx_pkts_freed[i]) & 0xff;
 
-		wl->tx_pkts_मुक्तd[i] = status->counters.tx_released_pkts[i];
-	पूर्ण
+		wl->tx_pkts_freed[i] = status->counters.tx_released_pkts[i];
+	}
 
 
-	क्रम_each_set_bit(i, wl->links_map, wl->num_links) अणु
-		u8 dअगरf;
+	for_each_set_bit(i, wl->links_map, wl->num_links) {
+		u8 diff;
 		lnk = &wl->links[i];
 
-		/* prevent wrap-around in मुक्तd-packets counter */
-		dअगरf = (status->counters.tx_lnk_मुक्त_pkts[i] -
-		       lnk->prev_मुक्तd_pkts) & 0xff;
+		/* prevent wrap-around in freed-packets counter */
+		diff = (status->counters.tx_lnk_free_pkts[i] -
+		       lnk->prev_freed_pkts) & 0xff;
 
-		अगर (dअगरf == 0)
-			जारी;
+		if (diff == 0)
+			continue;
 
-		lnk->allocated_pkts -= dअगरf;
-		lnk->prev_मुक्तd_pkts = status->counters.tx_lnk_मुक्त_pkts[i];
+		lnk->allocated_pkts -= diff;
+		lnk->prev_freed_pkts = status->counters.tx_lnk_free_pkts[i];
 
-		/* accumulate the prev_मुक्तd_pkts counter */
-		lnk->total_मुक्तd_pkts += dअगरf;
-	पूर्ण
+		/* accumulate the prev_freed_pkts counter */
+		lnk->total_freed_pkts += diff;
+	}
 
 	/* prevent wrap-around in total blocks counter */
-	अगर (likely(wl->tx_blocks_मुक्तd <= status->total_released_blks))
-		मुक्तd_blocks = status->total_released_blks -
-			       wl->tx_blocks_मुक्तd;
-	अन्यथा
-		मुक्तd_blocks = 0x100000000LL - wl->tx_blocks_मुक्तd +
+	if (likely(wl->tx_blocks_freed <= status->total_released_blks))
+		freed_blocks = status->total_released_blks -
+			       wl->tx_blocks_freed;
+	else
+		freed_blocks = 0x100000000LL - wl->tx_blocks_freed +
 			       status->total_released_blks;
 
-	wl->tx_blocks_मुक्तd = status->total_released_blks;
+	wl->tx_blocks_freed = status->total_released_blks;
 
-	wl->tx_allocated_blocks -= मुक्तd_blocks;
+	wl->tx_allocated_blocks -= freed_blocks;
 
 	/*
-	 * If the FW मुक्तd some blocks:
-	 * If we still have allocated blocks - re-arm the समयr, Tx is
-	 * not stuck. Otherwise, cancel the समयr (no Tx currently).
+	 * If the FW freed some blocks:
+	 * If we still have allocated blocks - re-arm the timer, Tx is
+	 * not stuck. Otherwise, cancel the timer (no Tx currently).
 	 */
-	अगर (मुक्तd_blocks) अणु
-		अगर (wl->tx_allocated_blocks)
-			wl12xx_rearm_tx_watchकरोg_locked(wl);
-		अन्यथा
-			cancel_delayed_work(&wl->tx_watchकरोg_work);
-	पूर्ण
+	if (freed_blocks) {
+		if (wl->tx_allocated_blocks)
+			wl12xx_rearm_tx_watchdog_locked(wl);
+		else
+			cancel_delayed_work(&wl->tx_watchdog_work);
+	}
 
 	avail = status->tx_total - wl->tx_allocated_blocks;
 
 	/*
-	 * The FW might change the total number of TX memblocks beक्रमe
-	 * we get a notअगरication about blocks being released. Thus, the
+	 * The FW might change the total number of TX memblocks before
+	 * we get a notification about blocks being released. Thus, the
 	 * available blocks calculation might yield a temporary result
 	 * which is lower than the actual available blocks. Keeping in
 	 * mind that only blocks that were allocated can be moved from
 	 * TX to RX, tx_blocks_available should never decrease here.
 	 */
-	wl->tx_blocks_available = max((पूर्णांक)wl->tx_blocks_available,
+	wl->tx_blocks_available = max((int)wl->tx_blocks_available,
 				      avail);
 
-	/* अगर more blocks are available now, tx work can be scheduled */
-	अगर (wl->tx_blocks_available > old_tx_blk_count)
+	/* if more blocks are available now, tx work can be scheduled */
+	if (wl->tx_blocks_available > old_tx_blk_count)
 		clear_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags);
 
-	/* क्रम AP update num of allocated TX blocks per link and ps status */
-	wl12xx_क्रम_each_wlvअगर_ap(wl, wlvअगर) अणु
-		wl12xx_irq_update_links_status(wl, wlvअगर, status);
-	पूर्ण
+	/* for AP update num of allocated TX blocks per link and ps status */
+	wl12xx_for_each_wlvif_ap(wl, wlvif) {
+		wl12xx_irq_update_links_status(wl, wlvif, status);
+	}
 
-	/* update the host-chipset समय offset */
-	wl->समय_offset = (kसमय_get_bootसमय_ns() >> 10) -
-		(s64)(status->fw_स_स्थानीय);
+	/* update the host-chipset time offset */
+	wl->time_offset = (ktime_get_boottime_ns() >> 10) -
+		(s64)(status->fw_localtime);
 
-	wl->fw_fast_lnk_map = status->link_fast_biपंचांगap;
+	wl->fw_fast_lnk_map = status->link_fast_bitmap;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wl1271_flush_deferred_work(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा sk_buff *skb;
+static void wl1271_flush_deferred_work(struct wl1271 *wl)
+{
+	struct sk_buff *skb;
 
 	/* Pass all received frames to the network stack */
-	जबतक ((skb = skb_dequeue(&wl->deferred_rx_queue)))
+	while ((skb = skb_dequeue(&wl->deferred_rx_queue)))
 		ieee80211_rx_ni(wl->hw, skb);
 
 	/* Return sent skbs to the network stack */
-	जबतक ((skb = skb_dequeue(&wl->deferred_tx_queue)))
+	while ((skb = skb_dequeue(&wl->deferred_tx_queue)))
 		ieee80211_tx_status_ni(wl->hw, skb);
-पूर्ण
+}
 
-अटल व्योम wl1271_netstack_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wl1271 *wl =
-		container_of(work, काष्ठा wl1271, netstack_work);
+static void wl1271_netstack_work(struct work_struct *work)
+{
+	struct wl1271 *wl =
+		container_of(work, struct wl1271, netstack_work);
 
-	करो अणु
+	do {
 		wl1271_flush_deferred_work(wl);
-	पूर्ण जबतक (skb_queue_len(&wl->deferred_rx_queue));
-पूर्ण
+	} while (skb_queue_len(&wl->deferred_rx_queue));
+}
 
-#घोषणा WL1271_IRQ_MAX_LOOPS 256
+#define WL1271_IRQ_MAX_LOOPS 256
 
-अटल पूर्णांक wlcore_irq_locked(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret = 0;
-	u32 पूर्णांकr;
-	पूर्णांक loopcount = WL1271_IRQ_MAX_LOOPS;
+static int wlcore_irq_locked(struct wl1271 *wl)
+{
+	int ret = 0;
+	u32 intr;
+	int loopcount = WL1271_IRQ_MAX_LOOPS;
 	bool run_tx_queue = true;
-	bool करोne = false;
-	अचिन्हित पूर्णांक defer_count;
-	अचिन्हित दीर्घ flags;
+	bool done = false;
+	unsigned int defer_count;
+	unsigned long flags;
 
 	/*
-	 * In हाल edge triggered पूर्णांकerrupt must be used, we cannot iterate
-	 * more than once without पूर्णांकroducing race conditions with the hardirq.
+	 * In case edge triggered interrupt must be used, we cannot iterate
+	 * more than once without introducing race conditions with the hardirq.
 	 */
-	अगर (wl->irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))
+	if (wl->irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))
 		loopcount = 1;
 
 	wl1271_debug(DEBUG_IRQ, "IRQ work");
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	जबतक (!करोne && loopcount--) अणु
+	while (!done && loopcount--) {
 		smp_mb__after_atomic();
 
 		ret = wlcore_fw_status(wl, wl->fw_status);
-		अगर (ret < 0)
-			जाओ err_ret;
+		if (ret < 0)
+			goto err_ret;
 
 		wlcore_hw_tx_immediate_compl(wl);
 
-		पूर्णांकr = wl->fw_status->पूर्णांकr;
-		पूर्णांकr &= WLCORE_ALL_INTR_MASK;
-		अगर (!पूर्णांकr) अणु
-			करोne = true;
-			जारी;
-		पूर्ण
+		intr = wl->fw_status->intr;
+		intr &= WLCORE_ALL_INTR_MASK;
+		if (!intr) {
+			done = true;
+			continue;
+		}
 
-		अगर (unlikely(पूर्णांकr & WL1271_ACX_INTR_WATCHDOG)) अणु
+		if (unlikely(intr & WL1271_ACX_INTR_WATCHDOG)) {
 			wl1271_error("HW watchdog interrupt received! starting recovery.");
-			wl->watchकरोg_recovery = true;
+			wl->watchdog_recovery = true;
 			ret = -EIO;
 
-			/* restarting the chip. ignore any other पूर्णांकerrupt. */
-			जाओ err_ret;
-		पूर्ण
+			/* restarting the chip. ignore any other interrupt. */
+			goto err_ret;
+		}
 
-		अगर (unlikely(पूर्णांकr & WL1271_ACX_SW_INTR_WATCHDOG)) अणु
+		if (unlikely(intr & WL1271_ACX_SW_INTR_WATCHDOG)) {
 			wl1271_error("SW watchdog interrupt received! "
 				     "starting recovery.");
-			wl->watchकरोg_recovery = true;
+			wl->watchdog_recovery = true;
 			ret = -EIO;
 
-			/* restarting the chip. ignore any other पूर्णांकerrupt. */
-			जाओ err_ret;
-		पूर्ण
+			/* restarting the chip. ignore any other interrupt. */
+			goto err_ret;
+		}
 
-		अगर (likely(पूर्णांकr & WL1271_ACX_INTR_DATA)) अणु
+		if (likely(intr & WL1271_ACX_INTR_DATA)) {
 			wl1271_debug(DEBUG_IRQ, "WL1271_ACX_INTR_DATA");
 
 			ret = wlcore_rx(wl, wl->fw_status);
-			अगर (ret < 0)
-				जाओ err_ret;
+			if (ret < 0)
+				goto err_ret;
 
-			/* Check अगर any tx blocks were मुक्तd */
-			अगर (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags)) अणु
-				अगर (spin_trylock_irqsave(&wl->wl_lock, flags)) अणु
-					अगर (!wl1271_tx_total_queue_count(wl))
+			/* Check if any tx blocks were freed */
+			if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags)) {
+				if (spin_trylock_irqsave(&wl->wl_lock, flags)) {
+					if (!wl1271_tx_total_queue_count(wl))
 						run_tx_queue = false;
 					spin_unlock_irqrestore(&wl->wl_lock, flags);
-				पूर्ण
+				}
 
 				/*
-				 * In order to aव्योम starvation of the TX path,
+				 * In order to avoid starvation of the TX path,
 				 * call the work function directly.
 				 */
-				अगर (run_tx_queue) अणु
+				if (run_tx_queue) {
 					ret = wlcore_tx_work_locked(wl);
-					अगर (ret < 0)
-						जाओ err_ret;
-				पूर्ण
-			पूर्ण
+					if (ret < 0)
+						goto err_ret;
+				}
+			}
 
-			/* check क्रम tx results */
+			/* check for tx results */
 			ret = wlcore_hw_tx_delayed_compl(wl);
-			अगर (ret < 0)
-				जाओ err_ret;
+			if (ret < 0)
+				goto err_ret;
 
-			/* Make sure the deferred queues करोn't get too दीर्घ */
+			/* Make sure the deferred queues don't get too long */
 			defer_count = skb_queue_len(&wl->deferred_tx_queue) +
 				      skb_queue_len(&wl->deferred_rx_queue);
-			अगर (defer_count > WL1271_DEFERRED_QUEUE_LIMIT)
+			if (defer_count > WL1271_DEFERRED_QUEUE_LIMIT)
 				wl1271_flush_deferred_work(wl);
-		पूर्ण
+		}
 
-		अगर (पूर्णांकr & WL1271_ACX_INTR_EVENT_A) अणु
+		if (intr & WL1271_ACX_INTR_EVENT_A) {
 			wl1271_debug(DEBUG_IRQ, "WL1271_ACX_INTR_EVENT_A");
 			ret = wl1271_event_handle(wl, 0);
-			अगर (ret < 0)
-				जाओ err_ret;
-		पूर्ण
+			if (ret < 0)
+				goto err_ret;
+		}
 
-		अगर (पूर्णांकr & WL1271_ACX_INTR_EVENT_B) अणु
+		if (intr & WL1271_ACX_INTR_EVENT_B) {
 			wl1271_debug(DEBUG_IRQ, "WL1271_ACX_INTR_EVENT_B");
 			ret = wl1271_event_handle(wl, 1);
-			अगर (ret < 0)
-				जाओ err_ret;
-		पूर्ण
+			if (ret < 0)
+				goto err_ret;
+		}
 
-		अगर (पूर्णांकr & WL1271_ACX_INTR_INIT_COMPLETE)
+		if (intr & WL1271_ACX_INTR_INIT_COMPLETE)
 			wl1271_debug(DEBUG_IRQ,
 				     "WL1271_ACX_INTR_INIT_COMPLETE");
 
-		अगर (पूर्णांकr & WL1271_ACX_INTR_HW_AVAILABLE)
+		if (intr & WL1271_ACX_INTR_HW_AVAILABLE)
 			wl1271_debug(DEBUG_IRQ, "WL1271_ACX_INTR_HW_AVAILABLE");
-	पूर्ण
+	}
 
 err_ret:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t wlcore_irq(पूर्णांक irq, व्योम *cookie)
-अणु
-	पूर्णांक ret;
-	अचिन्हित दीर्घ flags;
-	काष्ठा wl1271 *wl = cookie;
+static irqreturn_t wlcore_irq(int irq, void *cookie)
+{
+	int ret;
+	unsigned long flags;
+	struct wl1271 *wl = cookie;
 	bool queue_tx_work = true;
 
 	set_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags);
 
 	/* complete the ELP completion */
-	अगर (test_bit(WL1271_FLAG_IN_ELP, &wl->flags)) अणु
+	if (test_bit(WL1271_FLAG_IN_ELP, &wl->flags)) {
 		spin_lock_irqsave(&wl->wl_lock, flags);
-		अगर (wl->elp_compl)
+		if (wl->elp_compl)
 			complete(wl->elp_compl);
 		spin_unlock_irqrestore(&wl->wl_lock, flags);
-	पूर्ण
+	}
 
-	अगर (test_bit(WL1271_FLAG_SUSPENDED, &wl->flags)) अणु
-		/* करोn't enqueue a work right now. mark it as pending */
+	if (test_bit(WL1271_FLAG_SUSPENDED, &wl->flags)) {
+		/* don't enqueue a work right now. mark it as pending */
 		set_bit(WL1271_FLAG_PENDING_WORK, &wl->flags);
 		wl1271_debug(DEBUG_IRQ, "should not enqueue work");
 		spin_lock_irqsave(&wl->wl_lock, flags);
 		disable_irq_nosync(wl->irq);
 		pm_wakeup_event(wl->dev, 0);
 		spin_unlock_irqrestore(&wl->wl_lock, flags);
-		जाओ out_handled;
-	पूर्ण
+		goto out_handled;
+	}
 
-	/* TX might be handled here, aव्योम redundant work */
+	/* TX might be handled here, avoid redundant work */
 	set_bit(WL1271_FLAG_TX_PENDING, &wl->flags);
 	cancel_work_sync(&wl->tx_work);
 
 	mutex_lock(&wl->mutex);
 
 	ret = wlcore_irq_locked(wl);
-	अगर (ret)
+	if (ret)
 		wl12xx_queue_recovery_work(wl);
 
-	/* In हाल TX was not handled in wlcore_irq_locked(), queue TX work */
+	/* In case TX was not handled in wlcore_irq_locked(), queue TX work */
 	clear_bit(WL1271_FLAG_TX_PENDING, &wl->flags);
-	अगर (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags)) अणु
-		अगर (spin_trylock_irqsave(&wl->wl_lock, flags)) अणु
-			अगर (!wl1271_tx_total_queue_count(wl))
+	if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags)) {
+		if (spin_trylock_irqsave(&wl->wl_lock, flags)) {
+			if (!wl1271_tx_total_queue_count(wl))
 				queue_tx_work = false;
 			spin_unlock_irqrestore(&wl->wl_lock, flags);
-		पूर्ण
-		अगर (queue_tx_work)
+		}
+		if (queue_tx_work)
 			ieee80211_queue_work(wl->hw, &wl->tx_work);
-	पूर्ण
+	}
 
 	mutex_unlock(&wl->mutex);
 
 out_handled:
 	clear_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-काष्ठा vअगर_counter_data अणु
+struct vif_counter_data {
 	u8 counter;
 
-	काष्ठा ieee80211_vअगर *cur_vअगर;
-	bool cur_vअगर_running;
-पूर्ण;
+	struct ieee80211_vif *cur_vif;
+	bool cur_vif_running;
+};
 
-अटल व्योम wl12xx_vअगर_count_iter(व्योम *data, u8 *mac,
-				  काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा vअगर_counter_data *counter = data;
+static void wl12xx_vif_count_iter(void *data, u8 *mac,
+				  struct ieee80211_vif *vif)
+{
+	struct vif_counter_data *counter = data;
 
 	counter->counter++;
-	अगर (counter->cur_vअगर == vअगर)
-		counter->cur_vअगर_running = true;
-पूर्ण
+	if (counter->cur_vif == vif)
+		counter->cur_vif_running = true;
+}
 
 /* caller must not hold wl->mutex, as it might deadlock */
-अटल व्योम wl12xx_get_vअगर_count(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *cur_vअगर,
-			       काष्ठा vअगर_counter_data *data)
-अणु
-	स_रखो(data, 0, माप(*data));
-	data->cur_vअगर = cur_vअगर;
+static void wl12xx_get_vif_count(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *cur_vif,
+			       struct vif_counter_data *data)
+{
+	memset(data, 0, sizeof(*data));
+	data->cur_vif = cur_vif;
 
-	ieee80211_iterate_active_पूर्णांकerfaces(hw, IEEE80211_IFACE_ITER_RESUME_ALL,
-					    wl12xx_vअगर_count_iter, data);
-पूर्ण
+	ieee80211_iterate_active_interfaces(hw, IEEE80211_IFACE_ITER_RESUME_ALL,
+					    wl12xx_vif_count_iter, data);
+}
 
-अटल पूर्णांक wl12xx_fetch_firmware(काष्ठा wl1271 *wl, bool plt)
-अणु
-	स्थिर काष्ठा firmware *fw;
-	स्थिर अक्षर *fw_name;
-	क्रमागत wl12xx_fw_type fw_type;
-	पूर्णांक ret;
+static int wl12xx_fetch_firmware(struct wl1271 *wl, bool plt)
+{
+	const struct firmware *fw;
+	const char *fw_name;
+	enum wl12xx_fw_type fw_type;
+	int ret;
 
-	अगर (plt) अणु
+	if (plt) {
 		fw_type = WL12XX_FW_TYPE_PLT;
 		fw_name = wl->plt_fw_name;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * we can't call wl12xx_get_vअगर_count() here because
-		 * wl->mutex is taken, so use the cached last_vअगर_count value
+		 * we can't call wl12xx_get_vif_count() here because
+		 * wl->mutex is taken, so use the cached last_vif_count value
 		 */
-		अगर (wl->last_vअगर_count > 1 && wl->mr_fw_name) अणु
+		if (wl->last_vif_count > 1 && wl->mr_fw_name) {
 			fw_type = WL12XX_FW_TYPE_MULTI;
 			fw_name = wl->mr_fw_name;
-		पूर्ण अन्यथा अणु
+		} else {
 			fw_type = WL12XX_FW_TYPE_NORMAL;
 			fw_name = wl->sr_fw_name;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (wl->fw_type == fw_type)
-		वापस 0;
+	if (wl->fw_type == fw_type)
+		return 0;
 
 	wl1271_debug(DEBUG_BOOT, "booting firmware %s", fw_name);
 
 	ret = request_firmware(&fw, fw_name, wl->dev);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		wl1271_error("could not get firmware %s: %d", fw_name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (fw->size % 4) अणु
+	if (fw->size % 4) {
 		wl1271_error("firmware size is not multiple of 32 bits: %zu",
 			     fw->size);
 		ret = -EILSEQ;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	vमुक्त(wl->fw);
+	vfree(wl->fw);
 	wl->fw_type = WL12XX_FW_TYPE_NONE;
 	wl->fw_len = fw->size;
-	wl->fw = vदो_स्मृति(wl->fw_len);
+	wl->fw = vmalloc(wl->fw_len);
 
-	अगर (!wl->fw) अणु
+	if (!wl->fw) {
 		wl1271_error("could not allocate memory for the firmware");
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(wl->fw, fw->data, wl->fw_len);
+	memcpy(wl->fw, fw->data, wl->fw_len);
 	ret = 0;
 	wl->fw_type = fw_type;
 out:
 	release_firmware(fw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम wl12xx_queue_recovery_work(काष्ठा wl1271 *wl)
-अणु
-	/* Aव्योम a recursive recovery */
-	अगर (wl->state == WLCORE_STATE_ON) अणु
+void wl12xx_queue_recovery_work(struct wl1271 *wl)
+{
+	/* Avoid a recursive recovery */
+	if (wl->state == WLCORE_STATE_ON) {
 		WARN_ON(!test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY,
 				  &wl->flags));
 
 		wl->state = WLCORE_STATE_RESTARTING;
 		set_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags);
 		ieee80211_queue_work(wl->hw, &wl->recovery_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-माप_प्रकार wl12xx_copy_fwlog(काष्ठा wl1271 *wl, u8 *memblock, माप_प्रकार maxlen)
-अणु
-	माप_प्रकार len;
+size_t wl12xx_copy_fwlog(struct wl1271 *wl, u8 *memblock, size_t maxlen)
+{
+	size_t len;
 
 	/* Make sure we have enough room */
-	len = min_t(माप_प्रकार, maxlen, PAGE_SIZE - wl->fwlog_size);
+	len = min_t(size_t, maxlen, PAGE_SIZE - wl->fwlog_size);
 
 	/* Fill the FW log file, consumed by the sysfs fwlog entry */
-	स_नकल(wl->fwlog + wl->fwlog_size, memblock, len);
+	memcpy(wl->fwlog + wl->fwlog_size, memblock, len);
 	wl->fwlog_size += len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल व्योम wl12xx_पढ़ो_fwlog_panic(काष्ठा wl1271 *wl)
-अणु
+static void wl12xx_read_fwlog_panic(struct wl1271 *wl)
+{
 	u32 end_of_log = 0;
-	पूर्णांक error;
+	int error;
 
-	अगर (wl->quirks & WLCORE_QUIRK_FWLOG_NOT_IMPLEMENTED)
-		वापस;
+	if (wl->quirks & WLCORE_QUIRK_FWLOG_NOT_IMPLEMENTED)
+		return;
 
 	wl1271_info("Reading FW panic log");
 
 	/*
 	 * Make sure the chip is awake and the logger isn't active.
-	 * Do not send a stop fwlog command अगर the fw is hanged or अगर
+	 * Do not send a stop fwlog command if the fw is hanged or if
 	 * dbgpins are used (due to some fw bug).
 	 */
-	error = pm_runसमय_get_sync(wl->dev);
-	अगर (error < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		वापस;
-	पूर्ण
-	अगर (!wl->watchकरोg_recovery &&
+	error = pm_runtime_get_sync(wl->dev);
+	if (error < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		return;
+	}
+	if (!wl->watchdog_recovery &&
 	    wl->conf.fwlog.output != WL12XX_FWLOG_OUTPUT_DBG_PINS)
 		wl12xx_cmd_stop_fwlog(wl);
 
 	/* Traverse the memory blocks linked list */
-	करो अणु
+	do {
 		end_of_log = wlcore_event_fw_logger(wl);
-		अगर (end_of_log == 0) अणु
+		if (end_of_log == 0) {
 			msleep(100);
 			end_of_log = wlcore_event_fw_logger(wl);
-		पूर्ण
-	पूर्ण जबतक (end_of_log != 0);
-पूर्ण
+		}
+	} while (end_of_log != 0);
+}
 
-अटल व्योम wlcore_save_मुक्तd_pkts(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-				   u8 hlid, काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा wl1271_station *wl_sta;
+static void wlcore_save_freed_pkts(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+				   u8 hlid, struct ieee80211_sta *sta)
+{
+	struct wl1271_station *wl_sta;
 	u32 sqn_recovery_padding = WL1271_TX_SQN_POST_RECOVERY_PADDING;
 
-	wl_sta = (व्योम *)sta->drv_priv;
-	wl_sta->total_मुक्तd_pkts = wl->links[hlid].total_मुक्तd_pkts;
+	wl_sta = (void *)sta->drv_priv;
+	wl_sta->total_freed_pkts = wl->links[hlid].total_freed_pkts;
 
 	/*
-	 * increment the initial seq number on recovery to account क्रम
+	 * increment the initial seq number on recovery to account for
 	 * transmitted packets that we haven't yet got in the FW status
 	 */
-	अगर (wlvअगर->encryption_type == KEY_GEM)
+	if (wlvif->encryption_type == KEY_GEM)
 		sqn_recovery_padding = WL1271_TX_SQN_POST_RECOVERY_PADDING_GEM;
 
-	अगर (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
-		wl_sta->total_मुक्तd_pkts += sqn_recovery_padding;
-पूर्ण
+	if (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
+		wl_sta->total_freed_pkts += sqn_recovery_padding;
+}
 
-अटल व्योम wlcore_save_मुक्तd_pkts_addr(काष्ठा wl1271 *wl,
-					काष्ठा wl12xx_vअगर *wlvअगर,
-					u8 hlid, स्थिर u8 *addr)
-अणु
-	काष्ठा ieee80211_sta *sta;
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+static void wlcore_save_freed_pkts_addr(struct wl1271 *wl,
+					struct wl12xx_vif *wlvif,
+					u8 hlid, const u8 *addr)
+{
+	struct ieee80211_sta *sta;
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
-	अगर (WARN_ON(hlid == WL12XX_INVALID_LINK_ID ||
+	if (WARN_ON(hlid == WL12XX_INVALID_LINK_ID ||
 		    is_zero_ether_addr(addr)))
-		वापस;
+		return;
 
-	rcu_पढ़ो_lock();
-	sta = ieee80211_find_sta(vअगर, addr);
-	अगर (sta)
-		wlcore_save_मुक्तd_pkts(wl, wlvअगर, hlid, sta);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_lock();
+	sta = ieee80211_find_sta(vif, addr);
+	if (sta)
+		wlcore_save_freed_pkts(wl, wlvif, hlid, sta);
+	rcu_read_unlock();
+}
 
-अटल व्योम wlcore_prपूर्णांक_recovery(काष्ठा wl1271 *wl)
-अणु
+static void wlcore_print_recovery(struct wl1271 *wl)
+{
 	u32 pc = 0;
-	u32 hपूर्णांक_sts = 0;
-	पूर्णांक ret;
+	u32 hint_sts = 0;
+	int ret;
 
 	wl1271_info("Hardware recovery in progress. FW ver: %s",
 		    wl->chip.fw_ver_str);
 
-	/* change partitions momentarily so we can पढ़ो the FW pc */
+	/* change partitions momentarily so we can read the FW pc */
 	ret = wlcore_set_partition(wl, &wl->ptable[PART_BOOT]);
-	अगर (ret < 0)
-		वापस;
+	if (ret < 0)
+		return;
 
-	ret = wlcore_पढ़ो_reg(wl, REG_PC_ON_RECOVERY, &pc);
-	अगर (ret < 0)
-		वापस;
+	ret = wlcore_read_reg(wl, REG_PC_ON_RECOVERY, &pc);
+	if (ret < 0)
+		return;
 
-	ret = wlcore_पढ़ो_reg(wl, REG_INTERRUPT_NO_CLEAR, &hपूर्णांक_sts);
-	अगर (ret < 0)
-		वापस;
+	ret = wlcore_read_reg(wl, REG_INTERRUPT_NO_CLEAR, &hint_sts);
+	if (ret < 0)
+		return;
 
 	wl1271_info("pc: 0x%x, hint_sts: 0x%08x count: %d",
-				pc, hपूर्णांक_sts, ++wl->recovery_count);
+				pc, hint_sts, ++wl->recovery_count);
 
 	wlcore_set_partition(wl, &wl->ptable[PART_WORK]);
-पूर्ण
+}
 
 
-अटल व्योम wl1271_recovery_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा wl1271 *wl =
-		container_of(work, काष्ठा wl1271, recovery_work);
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	काष्ठा ieee80211_vअगर *vअगर;
-	पूर्णांक error;
+static void wl1271_recovery_work(struct work_struct *work)
+{
+	struct wl1271 *wl =
+		container_of(work, struct wl1271, recovery_work);
+	struct wl12xx_vif *wlvif;
+	struct ieee80211_vif *vif;
+	int error;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (wl->state == WLCORE_STATE_OFF || wl->plt)
-		जाओ out_unlock;
+	if (wl->state == WLCORE_STATE_OFF || wl->plt)
+		goto out_unlock;
 
-	error = pm_runसमय_get_sync(wl->dev);
-	अगर (error < 0) अणु
+	error = pm_runtime_get_sync(wl->dev);
+	if (error < 0) {
 		wl1271_warning("Enable for recovery failed");
-		pm_runसमय_put_noidle(wl->dev);
-	पूर्ण
-	wlcore_disable_पूर्णांकerrupts_nosync(wl);
+		pm_runtime_put_noidle(wl->dev);
+	}
+	wlcore_disable_interrupts_nosync(wl);
 
-	अगर (!test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags)) अणु
-		अगर (wl->conf.fwlog.output == WL12XX_FWLOG_OUTPUT_HOST)
-			wl12xx_पढ़ो_fwlog_panic(wl);
-		wlcore_prपूर्णांक_recovery(wl);
-	पूर्ण
+	if (!test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags)) {
+		if (wl->conf.fwlog.output == WL12XX_FWLOG_OUTPUT_HOST)
+			wl12xx_read_fwlog_panic(wl);
+		wlcore_print_recovery(wl);
+	}
 
 	BUG_ON(wl->conf.recovery.bug_on_recovery &&
 	       !test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags));
 
 	clear_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags);
 
-	अगर (wl->conf.recovery.no_recovery) अणु
+	if (wl->conf.recovery.no_recovery) {
 		wl1271_info("No recovery (chosen on module load). Fw will remain stuck.");
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* Prevent spurious TX during FW restart */
 	wlcore_stop_queues(wl, WLCORE_QUEUE_STOP_REASON_FW_RESTART);
 
 	/* reboot the chipset */
-	जबतक (!list_empty(&wl->wlvअगर_list)) अणु
-		wlvअगर = list_first_entry(&wl->wlvअगर_list,
-				       काष्ठा wl12xx_vअगर, list);
-		vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+	while (!list_empty(&wl->wlvif_list)) {
+		wlvif = list_first_entry(&wl->wlvif_list,
+				       struct wl12xx_vif, list);
+		vif = wl12xx_wlvif_to_vif(wlvif);
 
-		अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS &&
-		    test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags)) अणु
-			wlcore_save_मुक्तd_pkts_addr(wl, wlvअगर, wlvअगर->sta.hlid,
-						    vअगर->bss_conf.bssid);
-		पूर्ण
+		if (wlvif->bss_type == BSS_TYPE_STA_BSS &&
+		    test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags)) {
+			wlcore_save_freed_pkts_addr(wl, wlvif, wlvif->sta.hlid,
+						    vif->bss_conf.bssid);
+		}
 
-		__wl1271_op_हटाओ_पूर्णांकerface(wl, vअगर, false);
-	पूर्ण
+		__wl1271_op_remove_interface(wl, vif, false);
+	}
 
 	wlcore_op_stop_locked(wl);
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 	ieee80211_restart_hw(wl->hw);
 
@@ -992,161 +991,161 @@ out:
 	wlcore_wake_queues(wl, WLCORE_QUEUE_STOP_REASON_FW_RESTART);
 
 out_unlock:
-	wl->watchकरोg_recovery = false;
+	wl->watchdog_recovery = false;
 	clear_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags);
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_fw_wakeup(काष्ठा wl1271 *wl)
-अणु
-	वापस wlcore_raw_ग_लिखो32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_WAKE_UP);
-पूर्ण
+static int wlcore_fw_wakeup(struct wl1271 *wl)
+{
+	return wlcore_raw_write32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_WAKE_UP);
+}
 
-अटल पूर्णांक wl1271_setup(काष्ठा wl1271 *wl)
-अणु
+static int wl1271_setup(struct wl1271 *wl)
+{
 	wl->raw_fw_status = kzalloc(wl->fw_status_len, GFP_KERNEL);
-	अगर (!wl->raw_fw_status)
-		जाओ err;
+	if (!wl->raw_fw_status)
+		goto err;
 
-	wl->fw_status = kzalloc(माप(*wl->fw_status), GFP_KERNEL);
-	अगर (!wl->fw_status)
-		जाओ err;
+	wl->fw_status = kzalloc(sizeof(*wl->fw_status), GFP_KERNEL);
+	if (!wl->fw_status)
+		goto err;
 
-	wl->tx_res_अगर = kzalloc(माप(*wl->tx_res_अगर), GFP_KERNEL);
-	अगर (!wl->tx_res_अगर)
-		जाओ err;
+	wl->tx_res_if = kzalloc(sizeof(*wl->tx_res_if), GFP_KERNEL);
+	if (!wl->tx_res_if)
+		goto err;
 
-	वापस 0;
+	return 0;
 err:
-	kमुक्त(wl->fw_status);
-	kमुक्त(wl->raw_fw_status);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(wl->fw_status);
+	kfree(wl->raw_fw_status);
+	return -ENOMEM;
+}
 
-अटल पूर्णांक wl12xx_set_घातer_on(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
+static int wl12xx_set_power_on(struct wl1271 *wl)
+{
+	int ret;
 
 	msleep(WL1271_PRE_POWER_ON_SLEEP);
-	ret = wl1271_घातer_on(wl);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl1271_power_on(wl);
+	if (ret < 0)
+		goto out;
 	msleep(WL1271_POWER_ON_SLEEP);
 	wl1271_io_reset(wl);
 	wl1271_io_init(wl);
 
 	ret = wlcore_set_partition(wl, &wl->ptable[PART_BOOT]);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 	/* ELP module wake up */
 	ret = wlcore_fw_wakeup(wl);
-	अगर (ret < 0)
-		जाओ fail;
+	if (ret < 0)
+		goto fail;
 
 out:
-	वापस ret;
+	return ret;
 
 fail:
-	wl1271_घातer_off(wl);
-	वापस ret;
-पूर्ण
+	wl1271_power_off(wl);
+	return ret;
+}
 
-अटल पूर्णांक wl12xx_chip_wakeup(काष्ठा wl1271 *wl, bool plt)
-अणु
-	पूर्णांक ret = 0;
+static int wl12xx_chip_wakeup(struct wl1271 *wl, bool plt)
+{
+	int ret = 0;
 
-	ret = wl12xx_set_घातer_on(wl);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl12xx_set_power_on(wl);
+	if (ret < 0)
+		goto out;
 
 	/*
-	 * For wl127x based devices we could use the शेष block
+	 * For wl127x based devices we could use the default block
 	 * size (512 bytes), but due to a bug in the sdio driver, we
-	 * need to set it explicitly after the chip is घातered on.  To
-	 * simplअगरy the code and since the perक्रमmance impact is
-	 * negligible, we use the same block size क्रम all dअगरferent
+	 * need to set it explicitly after the chip is powered on.  To
+	 * simplify the code and since the performance impact is
+	 * negligible, we use the same block size for all different
 	 * chip types.
 	 *
-	 * Check अगर the bus supports blocksize alignment and, अगर it
-	 * करोesn't, make sure we don't have the quirk.
+	 * Check if the bus supports blocksize alignment and, if it
+	 * doesn't, make sure we don't have the quirk.
 	 */
-	अगर (!wl1271_set_block_size(wl))
+	if (!wl1271_set_block_size(wl))
 		wl->quirks &= ~WLCORE_QUIRK_TX_BLOCKSIZE_ALIGN;
 
 	/* TODO: make sure the lower driver has set things up correctly */
 
 	ret = wl1271_setup(wl);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret = wl12xx_fetch_firmware(wl, plt);
-	अगर (ret < 0) अणु
-		kमुक्त(wl->fw_status);
-		kमुक्त(wl->raw_fw_status);
-		kमुक्त(wl->tx_res_अगर);
-	पूर्ण
+	if (ret < 0) {
+		kfree(wl->fw_status);
+		kfree(wl->raw_fw_status);
+		kfree(wl->tx_res_if);
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl1271_plt_start(काष्ठा wl1271 *wl, स्थिर क्रमागत plt_mode plt_mode)
-अणु
-	पूर्णांक retries = WL1271_BOOT_RETRIES;
-	काष्ठा wiphy *wiphy = wl->hw->wiphy;
+int wl1271_plt_start(struct wl1271 *wl, const enum plt_mode plt_mode)
+{
+	int retries = WL1271_BOOT_RETRIES;
+	struct wiphy *wiphy = wl->hw->wiphy;
 
-	अटल स्थिर अक्षर* स्थिर PLT_MODE[] = अणु
+	static const char* const PLT_MODE[] = {
 		"PLT_OFF",
 		"PLT_ON",
 		"PLT_FEM_DETECT",
 		"PLT_CHIP_AWAKE"
-	पूर्ण;
+	};
 
-	पूर्णांक ret;
+	int ret;
 
 	mutex_lock(&wl->mutex);
 
 	wl1271_notice("power up");
 
-	अगर (wl->state != WLCORE_STATE_OFF) अणु
+	if (wl->state != WLCORE_STATE_OFF) {
 		wl1271_error("cannot go into PLT state because not "
 			     "in off state: %d", wl->state);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Indicate to lower levels that we are now in PLT mode */
 	wl->plt = true;
 	wl->plt_mode = plt_mode;
 
-	जबतक (retries) अणु
+	while (retries) {
 		retries--;
 		ret = wl12xx_chip_wakeup(wl, true);
-		अगर (ret < 0)
-			जाओ घातer_off;
+		if (ret < 0)
+			goto power_off;
 
-		अगर (plt_mode != PLT_CHIP_AWAKE) अणु
+		if (plt_mode != PLT_CHIP_AWAKE) {
 			ret = wl->ops->plt_init(wl);
-			अगर (ret < 0)
-				जाओ घातer_off;
-		पूर्ण
+			if (ret < 0)
+				goto power_off;
+		}
 
 		wl->state = WLCORE_STATE_ON;
 		wl1271_notice("firmware booted in PLT mode %s (%s)",
 			      PLT_MODE[plt_mode],
 			      wl->chip.fw_ver_str);
 
-		/* update hw/fw version info in wiphy काष्ठा */
+		/* update hw/fw version info in wiphy struct */
 		wiphy->hw_version = wl->chip.id;
-		म_नकलन(wiphy->fw_version, wl->chip.fw_ver_str,
-			माप(wiphy->fw_version));
+		strncpy(wiphy->fw_version, wl->chip.fw_ver_str,
+			sizeof(wiphy->fw_version));
 
-		जाओ out;
+		goto out;
 
-घातer_off:
-		wl1271_घातer_off(wl);
-	पूर्ण
+power_off:
+		wl1271_power_off(wl);
+	}
 
 	wl->plt = false;
 	wl->plt_mode = PLT_OFF;
@@ -1156,47 +1155,47 @@ out:
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wl1271_plt_stop(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret = 0;
+int wl1271_plt_stop(struct wl1271 *wl)
+{
+	int ret = 0;
 
 	wl1271_notice("power down");
 
 	/*
-	 * Interrupts must be disabled beक्रमe setting the state to OFF.
-	 * Otherwise, the पूर्णांकerrupt handler might be called and निकास without
-	 * पढ़ोing the पूर्णांकerrupt status.
+	 * Interrupts must be disabled before setting the state to OFF.
+	 * Otherwise, the interrupt handler might be called and exit without
+	 * reading the interrupt status.
 	 */
-	wlcore_disable_पूर्णांकerrupts(wl);
+	wlcore_disable_interrupts(wl);
 	mutex_lock(&wl->mutex);
-	अगर (!wl->plt) अणु
+	if (!wl->plt) {
 		mutex_unlock(&wl->mutex);
 
 		/*
-		 * This will not necessarily enable पूर्णांकerrupts as पूर्णांकerrupts
+		 * This will not necessarily enable interrupts as interrupts
 		 * may have been disabled when op_stop was called. It will,
-		 * however, balance the above call to disable_पूर्णांकerrupts().
+		 * however, balance the above call to disable_interrupts().
 		 */
-		wlcore_enable_पूर्णांकerrupts(wl);
+		wlcore_enable_interrupts(wl);
 
 		wl1271_error("cannot power down because not in PLT "
 			     "state: %d", wl->state);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mutex_unlock(&wl->mutex);
 
 	wl1271_flush_deferred_work(wl);
 	cancel_work_sync(&wl->netstack_work);
 	cancel_work_sync(&wl->recovery_work);
-	cancel_delayed_work_sync(&wl->tx_watchकरोg_work);
+	cancel_delayed_work_sync(&wl->tx_watchdog_work);
 
 	mutex_lock(&wl->mutex);
-	wl1271_घातer_off(wl);
+	wl1271_power_off(wl);
 	wl->flags = 0;
 	wl->sleep_auth = WL1271_PSM_ILLEGAL;
 	wl->state = WLCORE_STATE_OFF;
@@ -1206,90 +1205,90 @@ out:
 	mutex_unlock(&wl->mutex);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl1271_op_tx(काष्ठा ieee80211_hw *hw,
-			 काष्ठा ieee80211_tx_control *control,
-			 काष्ठा sk_buff *skb)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
-	काष्ठा wl12xx_vअगर *wlvअगर = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक q, mapping;
+static void wl1271_op_tx(struct ieee80211_hw *hw,
+			 struct ieee80211_tx_control *control,
+			 struct sk_buff *skb)
+{
+	struct wl1271 *wl = hw->priv;
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_vif *vif = info->control.vif;
+	struct wl12xx_vif *wlvif = NULL;
+	unsigned long flags;
+	int q, mapping;
 	u8 hlid;
 
-	अगर (!vअगर) अणु
+	if (!vif) {
 		wl1271_debug(DEBUG_TX, "DROP skb with no vif");
-		ieee80211_मुक्त_txskb(hw, skb);
-		वापस;
-	पूर्ण
+		ieee80211_free_txskb(hw, skb);
+		return;
+	}
 
-	wlvअगर = wl12xx_vअगर_to_data(vअगर);
+	wlvif = wl12xx_vif_to_data(vif);
 	mapping = skb_get_queue_mapping(skb);
 	q = wl1271_tx_get_queue(mapping);
 
-	hlid = wl12xx_tx_get_hlid(wl, wlvअगर, skb, control->sta);
+	hlid = wl12xx_tx_get_hlid(wl, wlvif, skb, control->sta);
 
 	spin_lock_irqsave(&wl->wl_lock, flags);
 
 	/*
-	 * drop the packet अगर the link is invalid or the queue is stopped
-	 * क्रम any reason but watermark. Watermark is a "soft"-stop so we
+	 * drop the packet if the link is invalid or the queue is stopped
+	 * for any reason but watermark. Watermark is a "soft"-stop so we
 	 * allow these packets through.
 	 */
-	अगर (hlid == WL12XX_INVALID_LINK_ID ||
-	    (!test_bit(hlid, wlvअगर->links_map)) ||
-	     (wlcore_is_queue_stopped_locked(wl, wlvअगर, q) &&
-	      !wlcore_is_queue_stopped_by_reason_locked(wl, wlvअगर, q,
-			WLCORE_QUEUE_STOP_REASON_WATERMARK))) अणु
+	if (hlid == WL12XX_INVALID_LINK_ID ||
+	    (!test_bit(hlid, wlvif->links_map)) ||
+	     (wlcore_is_queue_stopped_locked(wl, wlvif, q) &&
+	      !wlcore_is_queue_stopped_by_reason_locked(wl, wlvif, q,
+			WLCORE_QUEUE_STOP_REASON_WATERMARK))) {
 		wl1271_debug(DEBUG_TX, "DROP skb hlid %d q %d", hlid, q);
-		ieee80211_मुक्त_txskb(hw, skb);
-		जाओ out;
-	पूर्ण
+		ieee80211_free_txskb(hw, skb);
+		goto out;
+	}
 
 	wl1271_debug(DEBUG_TX, "queue skb hlid %d q %d len %d",
 		     hlid, q, skb->len);
 	skb_queue_tail(&wl->links[hlid].tx_queue[q], skb);
 
 	wl->tx_queue_count[q]++;
-	wlvअगर->tx_queue_count[q]++;
+	wlvif->tx_queue_count[q]++;
 
 	/*
 	 * The workqueue is slow to process the tx_queue and we need stop
-	 * the queue here, otherwise the queue will get too दीर्घ.
+	 * the queue here, otherwise the queue will get too long.
 	 */
-	अगर (wlvअगर->tx_queue_count[q] >= WL1271_TX_QUEUE_HIGH_WATERMARK &&
-	    !wlcore_is_queue_stopped_by_reason_locked(wl, wlvअगर, q,
-					WLCORE_QUEUE_STOP_REASON_WATERMARK)) अणु
+	if (wlvif->tx_queue_count[q] >= WL1271_TX_QUEUE_HIGH_WATERMARK &&
+	    !wlcore_is_queue_stopped_by_reason_locked(wl, wlvif, q,
+					WLCORE_QUEUE_STOP_REASON_WATERMARK)) {
 		wl1271_debug(DEBUG_TX, "op_tx: stopping queues for q %d", q);
-		wlcore_stop_queue_locked(wl, wlvअगर, q,
+		wlcore_stop_queue_locked(wl, wlvif, q,
 					 WLCORE_QUEUE_STOP_REASON_WATERMARK);
-	पूर्ण
+	}
 
 	/*
-	 * The chip specअगरic setup must run beक्रमe the first TX packet -
-	 * beक्रमe that, the tx_work will not be initialized!
+	 * The chip specific setup must run before the first TX packet -
+	 * before that, the tx_work will not be initialized!
 	 */
 
-	अगर (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags) &&
+	if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags) &&
 	    !test_bit(WL1271_FLAG_TX_PENDING, &wl->flags))
 		ieee80211_queue_work(wl->hw, &wl->tx_work);
 
 out:
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
-पूर्ण
+}
 
-पूर्णांक wl1271_tx_dummy_packet(काष्ठा wl1271 *wl)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक q;
+int wl1271_tx_dummy_packet(struct wl1271 *wl)
+{
+	unsigned long flags;
+	int q;
 
-	/* no need to queue a new dummy packet अगर one is alपढ़ोy pending */
-	अगर (test_bit(WL1271_FLAG_DUMMY_PACKET_PENDING, &wl->flags))
-		वापस 0;
+	/* no need to queue a new dummy packet if one is already pending */
+	if (test_bit(WL1271_FLAG_DUMMY_PACKET_PENDING, &wl->flags))
+		return 0;
 
 	q = wl1271_tx_get_queue(skb_get_queue_mapping(wl->dummy_packet));
 
@@ -1299,43 +1298,43 @@ out:
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
 	/* The FW is low on RX memory blocks, so send the dummy packet asap */
-	अगर (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags))
-		वापस wlcore_tx_work_locked(wl);
+	if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags))
+		return wlcore_tx_work_locked(wl);
 
 	/*
-	 * If the FW TX is busy, TX work will be scheduled by the thपढ़ोed
-	 * पूर्णांकerrupt handler function
+	 * If the FW TX is busy, TX work will be scheduled by the threaded
+	 * interrupt handler function
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The size of the dummy packet should be at least 1400 bytes. However, in
  * order to minimize the number of bus transactions, aligning it to 512 bytes
- * boundaries could be beneficial, perक्रमmance wise
+ * boundaries could be beneficial, performance wise
  */
-#घोषणा TOTAL_TX_DUMMY_PACKET_SIZE (ALIGN(1400, 512))
+#define TOTAL_TX_DUMMY_PACKET_SIZE (ALIGN(1400, 512))
 
-अटल काष्ठा sk_buff *wl12xx_alloc_dummy_packet(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा ieee80211_hdr_3addr *hdr;
-	अचिन्हित पूर्णांक dummy_packet_size;
+static struct sk_buff *wl12xx_alloc_dummy_packet(struct wl1271 *wl)
+{
+	struct sk_buff *skb;
+	struct ieee80211_hdr_3addr *hdr;
+	unsigned int dummy_packet_size;
 
 	dummy_packet_size = TOTAL_TX_DUMMY_PACKET_SIZE -
-			    माप(काष्ठा wl1271_tx_hw_descr) - माप(*hdr);
+			    sizeof(struct wl1271_tx_hw_descr) - sizeof(*hdr);
 
 	skb = dev_alloc_skb(TOTAL_TX_DUMMY_PACKET_SIZE);
-	अगर (!skb) अणु
+	if (!skb) {
 		wl1271_warning("Failed to allocate a dummy packet skb");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	skb_reserve(skb, माप(काष्ठा wl1271_tx_hw_descr));
+	skb_reserve(skb, sizeof(struct wl1271_tx_hw_descr));
 
-	hdr = skb_put_zero(skb, माप(*hdr));
+	hdr = skb_put_zero(skb, sizeof(*hdr));
 	hdr->frame_control = cpu_to_le16(IEEE80211_FTYPE_DATA |
-					 IEEE80211_STYPE_शून्यFUNC |
+					 IEEE80211_STYPE_NULLFUNC |
 					 IEEE80211_FCTL_TODS);
 
 	skb_put_zero(skb, dummy_packet_size);
@@ -1345,110 +1344,110 @@ out:
 
 	/* Initialize all fields that might be used */
 	skb_set_queue_mapping(skb, 0);
-	स_रखो(IEEE80211_SKB_CB(skb), 0, माप(काष्ठा ieee80211_tx_info));
+	memset(IEEE80211_SKB_CB(skb), 0, sizeof(struct ieee80211_tx_info));
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 
-अटल पूर्णांक
-wl1271_validate_wowlan_pattern(काष्ठा cfg80211_pkt_pattern *p)
-अणु
-	पूर्णांक num_fields = 0, in_field = 0, fields_size = 0;
-	पूर्णांक i, pattern_len = 0;
+static int
+wl1271_validate_wowlan_pattern(struct cfg80211_pkt_pattern *p)
+{
+	int num_fields = 0, in_field = 0, fields_size = 0;
+	int i, pattern_len = 0;
 
-	अगर (!p->mask) अणु
+	if (!p->mask) {
 		wl1271_warning("No mask in WoWLAN pattern");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * The pattern is broken up पूर्णांकo segments of bytes at dअगरferent offsets
+	 * The pattern is broken up into segments of bytes at different offsets
 	 * that need to be checked by the FW filter. Each segment is called
-	 * a field in the FW API. We verअगरy that the total number of fields
-	 * required क्रम this pattern won't exceed FW limits (8)
+	 * a field in the FW API. We verify that the total number of fields
+	 * required for this pattern won't exceed FW limits (8)
 	 * as well as the total fields buffer won't exceed the FW limit.
-	 * Note that अगर there's a pattern which crosses Ethernet/IP header
+	 * Note that if there's a pattern which crosses Ethernet/IP header
 	 * boundary a new field is required.
 	 */
-	क्रम (i = 0; i < p->pattern_len; i++) अणु
-		अगर (test_bit(i, (अचिन्हित दीर्घ *)p->mask)) अणु
-			अगर (!in_field) अणु
+	for (i = 0; i < p->pattern_len; i++) {
+		if (test_bit(i, (unsigned long *)p->mask)) {
+			if (!in_field) {
 				in_field = 1;
 				pattern_len = 1;
-			पूर्ण अन्यथा अणु
-				अगर (i == WL1271_RX_FILTER_ETH_HEADER_SIZE) अणु
+			} else {
+				if (i == WL1271_RX_FILTER_ETH_HEADER_SIZE) {
 					num_fields++;
 					fields_size += pattern_len +
 						RX_FILTER_FIELD_OVERHEAD;
 					pattern_len = 1;
-				पूर्ण अन्यथा
+				} else
 					pattern_len++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (in_field) अणु
+			}
+		} else {
+			if (in_field) {
 				in_field = 0;
 				fields_size += pattern_len +
 					RX_FILTER_FIELD_OVERHEAD;
 				num_fields++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (in_field) अणु
+	if (in_field) {
 		fields_size += pattern_len + RX_FILTER_FIELD_OVERHEAD;
 		num_fields++;
-	पूर्ण
+	}
 
-	अगर (num_fields > WL1271_RX_FILTER_MAX_FIELDS) अणु
+	if (num_fields > WL1271_RX_FILTER_MAX_FIELDS) {
 		wl1271_warning("RX Filter too complex. Too many segments");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fields_size > WL1271_RX_FILTER_MAX_FIELDS_SIZE) अणु
+	if (fields_size > WL1271_RX_FILTER_MAX_FIELDS_SIZE) {
 		wl1271_warning("RX filter pattern is too big");
-		वापस -E2BIG;
-	पूर्ण
+		return -E2BIG;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा wl12xx_rx_filter *wl1271_rx_filter_alloc(व्योम)
-अणु
-	वापस kzalloc(माप(काष्ठा wl12xx_rx_filter), GFP_KERNEL);
-पूर्ण
+struct wl12xx_rx_filter *wl1271_rx_filter_alloc(void)
+{
+	return kzalloc(sizeof(struct wl12xx_rx_filter), GFP_KERNEL);
+}
 
-व्योम wl1271_rx_filter_मुक्त(काष्ठा wl12xx_rx_filter *filter)
-अणु
-	पूर्णांक i;
+void wl1271_rx_filter_free(struct wl12xx_rx_filter *filter)
+{
+	int i;
 
-	अगर (filter == शून्य)
-		वापस;
+	if (filter == NULL)
+		return;
 
-	क्रम (i = 0; i < filter->num_fields; i++)
-		kमुक्त(filter->fields[i].pattern);
+	for (i = 0; i < filter->num_fields; i++)
+		kfree(filter->fields[i].pattern);
 
-	kमुक्त(filter);
-पूर्ण
+	kfree(filter);
+}
 
-पूर्णांक wl1271_rx_filter_alloc_field(काष्ठा wl12xx_rx_filter *filter,
+int wl1271_rx_filter_alloc_field(struct wl12xx_rx_filter *filter,
 				 u16 offset, u8 flags,
-				 स्थिर u8 *pattern, u8 len)
-अणु
-	काष्ठा wl12xx_rx_filter_field *field;
+				 const u8 *pattern, u8 len)
+{
+	struct wl12xx_rx_filter_field *field;
 
-	अगर (filter->num_fields == WL1271_RX_FILTER_MAX_FIELDS) अणु
+	if (filter->num_fields == WL1271_RX_FILTER_MAX_FIELDS) {
 		wl1271_warning("Max fields per RX filter. can't alloc another");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	field = &filter->fields[filter->num_fields];
 
 	field->pattern = kmemdup(pattern, len, GFP_KERNEL);
-	अगर (!field->pattern) अणु
+	if (!field->pattern) {
 		wl1271_warning("Failed to allocate RX filter pattern");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	filter->num_fields++;
 
@@ -1456,83 +1455,83 @@ wl1271_validate_wowlan_pattern(काष्ठा cfg80211_pkt_pattern *p)
 	field->flags = flags;
 	field->len = len;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक wl1271_rx_filter_get_fields_size(काष्ठा wl12xx_rx_filter *filter)
-अणु
-	पूर्णांक i, fields_size = 0;
+int wl1271_rx_filter_get_fields_size(struct wl12xx_rx_filter *filter)
+{
+	int i, fields_size = 0;
 
-	क्रम (i = 0; i < filter->num_fields; i++)
+	for (i = 0; i < filter->num_fields; i++)
 		fields_size += filter->fields[i].len +
-			माप(काष्ठा wl12xx_rx_filter_field) -
-			माप(u8 *);
+			sizeof(struct wl12xx_rx_filter_field) -
+			sizeof(u8 *);
 
-	वापस fields_size;
-पूर्ण
+	return fields_size;
+}
 
-व्योम wl1271_rx_filter_flatten_fields(काष्ठा wl12xx_rx_filter *filter,
+void wl1271_rx_filter_flatten_fields(struct wl12xx_rx_filter *filter,
 				    u8 *buf)
-अणु
-	पूर्णांक i;
-	काष्ठा wl12xx_rx_filter_field *field;
+{
+	int i;
+	struct wl12xx_rx_filter_field *field;
 
-	क्रम (i = 0; i < filter->num_fields; i++) अणु
-		field = (काष्ठा wl12xx_rx_filter_field *)buf;
+	for (i = 0; i < filter->num_fields; i++) {
+		field = (struct wl12xx_rx_filter_field *)buf;
 
 		field->offset = filter->fields[i].offset;
 		field->flags = filter->fields[i].flags;
 		field->len = filter->fields[i].len;
 
-		स_नकल(&field->pattern, filter->fields[i].pattern, field->len);
-		buf += माप(काष्ठा wl12xx_rx_filter_field) -
-			माप(u8 *) + field->len;
-	पूर्ण
-पूर्ण
+		memcpy(&field->pattern, filter->fields[i].pattern, field->len);
+		buf += sizeof(struct wl12xx_rx_filter_field) -
+			sizeof(u8 *) + field->len;
+	}
+}
 
 /*
- * Allocates an RX filter वापसed through f
- * which needs to be मुक्तd using rx_filter_मुक्त()
+ * Allocates an RX filter returned through f
+ * which needs to be freed using rx_filter_free()
  */
-अटल पूर्णांक
-wl1271_convert_wowlan_pattern_to_rx_filter(काष्ठा cfg80211_pkt_pattern *p,
-					   काष्ठा wl12xx_rx_filter **f)
-अणु
-	पूर्णांक i, j, ret = 0;
-	काष्ठा wl12xx_rx_filter *filter;
+static int
+wl1271_convert_wowlan_pattern_to_rx_filter(struct cfg80211_pkt_pattern *p,
+					   struct wl12xx_rx_filter **f)
+{
+	int i, j, ret = 0;
+	struct wl12xx_rx_filter *filter;
 	u16 offset;
 	u8 flags, len;
 
 	filter = wl1271_rx_filter_alloc();
-	अगर (!filter) अणु
+	if (!filter) {
 		wl1271_warning("Failed to alloc rx filter");
 		ret = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	i = 0;
-	जबतक (i < p->pattern_len) अणु
-		अगर (!test_bit(i, (अचिन्हित दीर्घ *)p->mask)) अणु
+	while (i < p->pattern_len) {
+		if (!test_bit(i, (unsigned long *)p->mask)) {
 			i++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		क्रम (j = i; j < p->pattern_len; j++) अणु
-			अगर (!test_bit(j, (अचिन्हित दीर्घ *)p->mask))
-				अवरोध;
+		for (j = i; j < p->pattern_len; j++) {
+			if (!test_bit(j, (unsigned long *)p->mask))
+				break;
 
-			अगर (i < WL1271_RX_FILTER_ETH_HEADER_SIZE &&
+			if (i < WL1271_RX_FILTER_ETH_HEADER_SIZE &&
 			    j >= WL1271_RX_FILTER_ETH_HEADER_SIZE)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		अगर (i < WL1271_RX_FILTER_ETH_HEADER_SIZE) अणु
+		if (i < WL1271_RX_FILTER_ETH_HEADER_SIZE) {
 			offset = i;
 			flags = WL1271_RX_FILTER_FLAG_ETHERNET_HEADER;
-		पूर्ण अन्यथा अणु
+		} else {
 			offset = i - WL1271_RX_FILTER_ETH_HEADER_SIZE;
 			flags = WL1271_RX_FILTER_FLAG_IP_HEADER;
-		पूर्ण
+		}
 
 		len = j - i;
 
@@ -1540,491 +1539,491 @@ wl1271_convert_wowlan_pattern_to_rx_filter(काष्ठा cfg80211_pkt_patte
 						   offset,
 						   flags,
 						   &p->pattern[i], len);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 
 		i = j;
-	पूर्ण
+	}
 
 	filter->action = FILTER_SIGNAL;
 
 	*f = filter;
-	वापस 0;
+	return 0;
 
 err:
-	wl1271_rx_filter_मुक्त(filter);
-	*f = शून्य;
+	wl1271_rx_filter_free(filter);
+	*f = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_configure_wowlan(काष्ठा wl1271 *wl,
-				   काष्ठा cfg80211_wowlan *wow)
-अणु
-	पूर्णांक i, ret;
+static int wl1271_configure_wowlan(struct wl1271 *wl,
+				   struct cfg80211_wowlan *wow)
+{
+	int i, ret;
 
-	अगर (!wow || wow->any || !wow->n_patterns) अणु
-		ret = wl1271_acx_शेष_rx_filter_enable(wl, 0,
+	if (!wow || wow->any || !wow->n_patterns) {
+		ret = wl1271_acx_default_rx_filter_enable(wl, 0,
 							  FILTER_SIGNAL);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		ret = wl1271_rx_filter_clear_all(wl);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (WARN_ON(wow->n_patterns > WL1271_MAX_RX_FILTERS))
-		वापस -EINVAL;
+	if (WARN_ON(wow->n_patterns > WL1271_MAX_RX_FILTERS))
+		return -EINVAL;
 
-	/* Validate all incoming patterns beक्रमe clearing current FW state */
-	क्रम (i = 0; i < wow->n_patterns; i++) अणु
+	/* Validate all incoming patterns before clearing current FW state */
+	for (i = 0; i < wow->n_patterns; i++) {
 		ret = wl1271_validate_wowlan_pattern(&wow->patterns[i]);
-		अगर (ret) अणु
+		if (ret) {
 			wl1271_warning("Bad wowlan pattern %d", i);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	ret = wl1271_acx_शेष_rx_filter_enable(wl, 0, FILTER_SIGNAL);
-	अगर (ret)
-		जाओ out;
+	ret = wl1271_acx_default_rx_filter_enable(wl, 0, FILTER_SIGNAL);
+	if (ret)
+		goto out;
 
 	ret = wl1271_rx_filter_clear_all(wl);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	/* Translate WoWLAN patterns पूर्णांकo filters */
-	क्रम (i = 0; i < wow->n_patterns; i++) अणु
-		काष्ठा cfg80211_pkt_pattern *p;
-		काष्ठा wl12xx_rx_filter *filter = शून्य;
+	/* Translate WoWLAN patterns into filters */
+	for (i = 0; i < wow->n_patterns; i++) {
+		struct cfg80211_pkt_pattern *p;
+		struct wl12xx_rx_filter *filter = NULL;
 
 		p = &wow->patterns[i];
 
 		ret = wl1271_convert_wowlan_pattern_to_rx_filter(p, &filter);
-		अगर (ret) अणु
+		if (ret) {
 			wl1271_warning("Failed to create an RX filter from "
 				       "wowlan pattern %d", i);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		ret = wl1271_rx_filter_enable(wl, i, 1, filter);
 
-		wl1271_rx_filter_मुक्त(filter);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		wl1271_rx_filter_free(filter);
+		if (ret)
+			goto out;
+	}
 
-	ret = wl1271_acx_शेष_rx_filter_enable(wl, 1, FILTER_DROP);
+	ret = wl1271_acx_default_rx_filter_enable(wl, 1, FILTER_DROP);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_configure_suspend_sta(काष्ठा wl1271 *wl,
-					काष्ठा wl12xx_vअगर *wlvअगर,
-					काष्ठा cfg80211_wowlan *wow)
-अणु
-	पूर्णांक ret = 0;
+static int wl1271_configure_suspend_sta(struct wl1271 *wl,
+					struct wl12xx_vif *wlvif,
+					struct cfg80211_wowlan *wow)
+{
+	int ret = 0;
 
-	अगर (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
-		जाओ out;
+	if (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+		goto out;
 
 	ret = wl1271_configure_wowlan(wl, wow);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर ((wl->conf.conn.suspend_wake_up_event ==
+	if ((wl->conf.conn.suspend_wake_up_event ==
 	     wl->conf.conn.wake_up_event) &&
-	    (wl->conf.conn.suspend_listen_पूर्णांकerval ==
-	     wl->conf.conn.listen_पूर्णांकerval))
-		जाओ out;
+	    (wl->conf.conn.suspend_listen_interval ==
+	     wl->conf.conn.listen_interval))
+		goto out;
 
-	ret = wl1271_acx_wake_up_conditions(wl, wlvअगर,
+	ret = wl1271_acx_wake_up_conditions(wl, wlvif,
 				    wl->conf.conn.suspend_wake_up_event,
-				    wl->conf.conn.suspend_listen_पूर्णांकerval);
+				    wl->conf.conn.suspend_listen_interval);
 
-	अगर (ret < 0)
+	if (ret < 0)
 		wl1271_error("suspend: set wake up conditions failed: %d", ret);
 out:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_configure_suspend_ap(काष्ठा wl1271 *wl,
-					काष्ठा wl12xx_vअगर *wlvअगर,
-					काष्ठा cfg80211_wowlan *wow)
-अणु
-	पूर्णांक ret = 0;
+static int wl1271_configure_suspend_ap(struct wl1271 *wl,
+					struct wl12xx_vif *wlvif,
+					struct cfg80211_wowlan *wow)
+{
+	int ret = 0;
 
-	अगर (!test_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags))
-		जाओ out;
+	if (!test_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags))
+		goto out;
 
-	ret = wl1271_acx_beacon_filter_opt(wl, wlvअगर, true);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl1271_acx_beacon_filter_opt(wl, wlvif, true);
+	if (ret < 0)
+		goto out;
 
 	ret = wl1271_configure_wowlan(wl, wow);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 out:
-	वापस ret;
+	return ret;
 
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_configure_suspend(काष्ठा wl1271 *wl,
-				    काष्ठा wl12xx_vअगर *wlvअगर,
-				    काष्ठा cfg80211_wowlan *wow)
-अणु
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS)
-		वापस wl1271_configure_suspend_sta(wl, wlvअगर, wow);
-	अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS)
-		वापस wl1271_configure_suspend_ap(wl, wlvअगर, wow);
-	वापस 0;
-पूर्ण
+static int wl1271_configure_suspend(struct wl1271 *wl,
+				    struct wl12xx_vif *wlvif,
+				    struct cfg80211_wowlan *wow)
+{
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS)
+		return wl1271_configure_suspend_sta(wl, wlvif, wow);
+	if (wlvif->bss_type == BSS_TYPE_AP_BSS)
+		return wl1271_configure_suspend_ap(wl, wlvif, wow);
+	return 0;
+}
 
-अटल व्योम wl1271_configure_resume(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret = 0;
-	bool is_ap = wlvअगर->bss_type == BSS_TYPE_AP_BSS;
-	bool is_sta = wlvअगर->bss_type == BSS_TYPE_STA_BSS;
+static void wl1271_configure_resume(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret = 0;
+	bool is_ap = wlvif->bss_type == BSS_TYPE_AP_BSS;
+	bool is_sta = wlvif->bss_type == BSS_TYPE_STA_BSS;
 
-	अगर ((!is_ap) && (!is_sta))
-		वापस;
+	if ((!is_ap) && (!is_sta))
+		return;
 
-	अगर ((is_sta && !test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags)) ||
-	    (is_ap && !test_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags)))
-		वापस;
+	if ((is_sta && !test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags)) ||
+	    (is_ap && !test_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags)))
+		return;
 
-	wl1271_configure_wowlan(wl, शून्य);
+	wl1271_configure_wowlan(wl, NULL);
 
-	अगर (is_sta) अणु
-		अगर ((wl->conf.conn.suspend_wake_up_event ==
+	if (is_sta) {
+		if ((wl->conf.conn.suspend_wake_up_event ==
 		     wl->conf.conn.wake_up_event) &&
-		    (wl->conf.conn.suspend_listen_पूर्णांकerval ==
-		     wl->conf.conn.listen_पूर्णांकerval))
-			वापस;
+		    (wl->conf.conn.suspend_listen_interval ==
+		     wl->conf.conn.listen_interval))
+			return;
 
-		ret = wl1271_acx_wake_up_conditions(wl, wlvअगर,
+		ret = wl1271_acx_wake_up_conditions(wl, wlvif,
 				    wl->conf.conn.wake_up_event,
-				    wl->conf.conn.listen_पूर्णांकerval);
+				    wl->conf.conn.listen_interval);
 
-		अगर (ret < 0)
+		if (ret < 0)
 			wl1271_error("resume: wake up conditions failed: %d",
 				     ret);
 
-	पूर्ण अन्यथा अगर (is_ap) अणु
-		ret = wl1271_acx_beacon_filter_opt(wl, wlvअगर, false);
-	पूर्ण
-पूर्ण
+	} else if (is_ap) {
+		ret = wl1271_acx_beacon_filter_opt(wl, wlvif, false);
+	}
+}
 
-अटल पूर्णांक __maybe_unused wl1271_op_suspend(काष्ठा ieee80211_hw *hw,
-					    काष्ठा cfg80211_wowlan *wow)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int __maybe_unused wl1271_op_suspend(struct ieee80211_hw *hw,
+					    struct cfg80211_wowlan *wow)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif;
+	unsigned long flags;
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 suspend wow=%d", !!wow);
 	WARN_ON(!wow);
 
-	/* we want to perक्रमm the recovery beक्रमe suspending */
-	अगर (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags)) अणु
+	/* we want to perform the recovery before suspending */
+	if (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags)) {
 		wl1271_warning("postponing suspend to perform recovery");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	wl1271_tx_flush(wl);
 
 	mutex_lock(&wl->mutex);
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
 		mutex_unlock(&wl->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	wl->wow_enabled = true;
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		अगर (wlcore_is_p2p_mgmt(wlvअगर))
-			जारी;
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		if (wlcore_is_p2p_mgmt(wlvif))
+			continue;
 
-		ret = wl1271_configure_suspend(wl, wlvअगर, wow);
-		अगर (ret < 0) अणु
-			जाओ out_sleep;
-		पूर्ण
-	पूर्ण
+		ret = wl1271_configure_suspend(wl, wlvif, wow);
+		if (ret < 0) {
+			goto out_sleep;
+		}
+	}
 
-	/* disable fast link flow control notअगरications from FW */
-	ret = wlcore_hw_पूर्णांकerrupt_notअगरy(wl, false);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	/* disable fast link flow control notifications from FW */
+	ret = wlcore_hw_interrupt_notify(wl, false);
+	if (ret < 0)
+		goto out_sleep;
 
-	/* अगर filtering is enabled, configure the FW to drop all RX BA frames */
+	/* if filtering is enabled, configure the FW to drop all RX BA frames */
 	ret = wlcore_hw_rx_ba_filter(wl,
 				     !!wl->conf.conn.suspend_rx_ba_activity);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	if (ret < 0)
+		goto out_sleep;
 
 out_sleep:
-	pm_runसमय_put_noidle(wl->dev);
+	pm_runtime_put_noidle(wl->dev);
 	mutex_unlock(&wl->mutex);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		wl1271_warning("couldn't prepare device to suspend");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* flush any reमुख्यing work */
+	/* flush any remaining work */
 	wl1271_debug(DEBUG_MAC80211, "flushing remaining works");
 
 	flush_work(&wl->tx_work);
 
 	/*
-	 * Cancel the watchकरोg even अगर above tx_flush failed. We will detect
+	 * Cancel the watchdog even if above tx_flush failed. We will detect
 	 * it on resume anyway.
 	 */
-	cancel_delayed_work(&wl->tx_watchकरोg_work);
+	cancel_delayed_work(&wl->tx_watchdog_work);
 
 	/*
-	 * set suspended flag to aव्योम triggering a new thपढ़ोed_irq
+	 * set suspended flag to avoid triggering a new threaded_irq
 	 * work.
 	 */
 	spin_lock_irqsave(&wl->wl_lock, flags);
 	set_bit(WL1271_FLAG_SUSPENDED, &wl->flags);
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
-	वापस pm_runसमय_क्रमce_suspend(wl->dev);
-पूर्ण
+	return pm_runtime_force_suspend(wl->dev);
+}
 
-अटल पूर्णांक __maybe_unused wl1271_op_resume(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ flags;
+static int __maybe_unused wl1271_op_resume(struct ieee80211_hw *hw)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif;
+	unsigned long flags;
 	bool run_irq_work = false, pending_recovery;
-	पूर्णांक ret;
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 resume wow=%d",
 		     wl->wow_enabled);
 	WARN_ON(!wl->wow_enabled);
 
-	ret = pm_runसमय_क्रमce_resume(wl->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_force_resume(wl->dev);
+	if (ret < 0) {
 		wl1271_error("ELP wakeup failure!");
-		जाओ out_sleep;
-	पूर्ण
+		goto out_sleep;
+	}
 
 	/*
-	 * re-enable irq_work enqueuing, and call irq_work directly अगर
+	 * re-enable irq_work enqueuing, and call irq_work directly if
 	 * there is a pending work.
 	 */
 	spin_lock_irqsave(&wl->wl_lock, flags);
 	clear_bit(WL1271_FLAG_SUSPENDED, &wl->flags);
-	अगर (test_and_clear_bit(WL1271_FLAG_PENDING_WORK, &wl->flags))
+	if (test_and_clear_bit(WL1271_FLAG_PENDING_WORK, &wl->flags))
 		run_irq_work = true;
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
 	mutex_lock(&wl->mutex);
 
-	/* test the recovery flag beक्रमe calling any SDIO functions */
+	/* test the recovery flag before calling any SDIO functions */
 	pending_recovery = test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS,
 				    &wl->flags);
 
-	अगर (run_irq_work) अणु
+	if (run_irq_work) {
 		wl1271_debug(DEBUG_MAC80211,
 			     "run postponed irq_work directly");
 
-		/* करोn't talk to the HW अगर recovery is pending */
-		अगर (!pending_recovery) अणु
+		/* don't talk to the HW if recovery is pending */
+		if (!pending_recovery) {
 			ret = wlcore_irq_locked(wl);
-			अगर (ret)
+			if (ret)
 				wl12xx_queue_recovery_work(wl);
-		पूर्ण
+		}
 
-		wlcore_enable_पूर्णांकerrupts(wl);
-	पूर्ण
+		wlcore_enable_interrupts(wl);
+	}
 
-	अगर (pending_recovery) अणु
+	if (pending_recovery) {
 		wl1271_warning("queuing forgotten recovery on resume");
 		ieee80211_queue_work(wl->hw, &wl->recovery_work);
-		जाओ out_sleep;
-	पूर्ण
+		goto out_sleep;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		अगर (wlcore_is_p2p_mgmt(wlvअगर))
-			जारी;
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		if (wlcore_is_p2p_mgmt(wlvif))
+			continue;
 
-		wl1271_configure_resume(wl, wlvअगर);
-	पूर्ण
+		wl1271_configure_resume(wl, wlvif);
+	}
 
-	ret = wlcore_hw_पूर्णांकerrupt_notअगरy(wl, true);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	ret = wlcore_hw_interrupt_notify(wl, true);
+	if (ret < 0)
+		goto out_sleep;
 
-	/* अगर filtering is enabled, configure the FW to drop all RX BA frames */
+	/* if filtering is enabled, configure the FW to drop all RX BA frames */
 	ret = wlcore_hw_rx_ba_filter(wl, false);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	if (ret < 0)
+		goto out_sleep;
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	wl->wow_enabled = false;
 
 	/*
-	 * Set a flag to re-init the watchकरोg on the first Tx after resume.
-	 * That way we aव्योम possible conditions where Tx-complete पूर्णांकerrupts
-	 * fail to arrive and we perक्रमm a spurious recovery.
+	 * Set a flag to re-init the watchdog on the first Tx after resume.
+	 * That way we avoid possible conditions where Tx-complete interrupts
+	 * fail to arrive and we perform a spurious recovery.
 	 */
 	set_bit(WL1271_FLAG_REINIT_TX_WDOG, &wl->flags);
 	mutex_unlock(&wl->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl1271_op_start(काष्ठा ieee80211_hw *hw)
-अणु
+static int wl1271_op_start(struct ieee80211_hw *hw)
+{
 	wl1271_debug(DEBUG_MAC80211, "mac80211 start");
 
 	/*
 	 * We have to delay the booting of the hardware because
-	 * we need to know the local MAC address beक्रमe करोwnloading and
+	 * we need to know the local MAC address before downloading and
 	 * initializing the firmware. The MAC address cannot be changed
 	 * after boot, and without the proper MAC address, the firmware
 	 * will not function properly.
 	 *
-	 * The MAC address is first known when the corresponding पूर्णांकerface
+	 * The MAC address is first known when the corresponding interface
 	 * is added. That is where we will initialize the hardware.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wlcore_op_stop_locked(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक i;
+static void wlcore_op_stop_locked(struct wl1271 *wl)
+{
+	int i;
 
-	अगर (wl->state == WLCORE_STATE_OFF) अणु
-		अगर (test_and_clear_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS,
+	if (wl->state == WLCORE_STATE_OFF) {
+		if (test_and_clear_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS,
 					&wl->flags))
-			wlcore_enable_पूर्णांकerrupts(wl);
+			wlcore_enable_interrupts(wl);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * this must be beक्रमe the cancel_work calls below, so that the work
-	 * functions करोn't perक्रमm further work.
+	 * this must be before the cancel_work calls below, so that the work
+	 * functions don't perform further work.
 	 */
 	wl->state = WLCORE_STATE_OFF;
 
 	/*
-	 * Use the nosync variant to disable पूर्णांकerrupts, so the mutex could be
-	 * held जबतक करोing so without deadlocking.
+	 * Use the nosync variant to disable interrupts, so the mutex could be
+	 * held while doing so without deadlocking.
 	 */
-	wlcore_disable_पूर्णांकerrupts_nosync(wl);
+	wlcore_disable_interrupts_nosync(wl);
 
 	mutex_unlock(&wl->mutex);
 
-	wlcore_synchronize_पूर्णांकerrupts(wl);
-	अगर (!test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
+	wlcore_synchronize_interrupts(wl);
+	if (!test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
 		cancel_work_sync(&wl->recovery_work);
 	wl1271_flush_deferred_work(wl);
 	cancel_delayed_work_sync(&wl->scan_complete_work);
 	cancel_work_sync(&wl->netstack_work);
 	cancel_work_sync(&wl->tx_work);
-	cancel_delayed_work_sync(&wl->tx_watchकरोg_work);
+	cancel_delayed_work_sync(&wl->tx_watchdog_work);
 
-	/* let's notअगरy MAC80211 about the reमुख्यing pending TX frames */
+	/* let's notify MAC80211 about the remaining pending TX frames */
 	mutex_lock(&wl->mutex);
 	wl12xx_tx_reset(wl);
 
-	wl1271_घातer_off(wl);
+	wl1271_power_off(wl);
 	/*
-	 * In हाल a recovery was scheduled, पूर्णांकerrupts were disabled to aव्योम
-	 * an पूर्णांकerrupt storm. Now that the घातer is करोwn, it is safe to
-	 * re-enable पूर्णांकerrupts to balance the disable depth
+	 * In case a recovery was scheduled, interrupts were disabled to avoid
+	 * an interrupt storm. Now that the power is down, it is safe to
+	 * re-enable interrupts to balance the disable depth
 	 */
-	अगर (test_and_clear_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
-		wlcore_enable_पूर्णांकerrupts(wl);
+	if (test_and_clear_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags))
+		wlcore_enable_interrupts(wl);
 
 	wl->band = NL80211_BAND_2GHZ;
 
 	wl->rx_counter = 0;
-	wl->घातer_level = WL1271_DEFAULT_POWER_LEVEL;
+	wl->power_level = WL1271_DEFAULT_POWER_LEVEL;
 	wl->channel_type = NL80211_CHAN_NO_HT;
 	wl->tx_blocks_available = 0;
 	wl->tx_allocated_blocks = 0;
 	wl->tx_results_count = 0;
 	wl->tx_packets_count = 0;
-	wl->समय_offset = 0;
+	wl->time_offset = 0;
 	wl->ap_fw_ps_map = 0;
 	wl->ap_ps_map = 0;
 	wl->sleep_auth = WL1271_PSM_ILLEGAL;
-	स_रखो(wl->roles_map, 0, माप(wl->roles_map));
-	स_रखो(wl->links_map, 0, माप(wl->links_map));
-	स_रखो(wl->roc_map, 0, माप(wl->roc_map));
-	स_रखो(wl->session_ids, 0, माप(wl->session_ids));
-	स_रखो(wl->rx_filter_enabled, 0, माप(wl->rx_filter_enabled));
+	memset(wl->roles_map, 0, sizeof(wl->roles_map));
+	memset(wl->links_map, 0, sizeof(wl->links_map));
+	memset(wl->roc_map, 0, sizeof(wl->roc_map));
+	memset(wl->session_ids, 0, sizeof(wl->session_ids));
+	memset(wl->rx_filter_enabled, 0, sizeof(wl->rx_filter_enabled));
 	wl->active_sta_count = 0;
 	wl->active_link_count = 0;
 
-	/* The प्रणाली link is always allocated */
+	/* The system link is always allocated */
 	wl->links[WL12XX_SYSTEM_HLID].allocated_pkts = 0;
-	wl->links[WL12XX_SYSTEM_HLID].prev_मुक्तd_pkts = 0;
+	wl->links[WL12XX_SYSTEM_HLID].prev_freed_pkts = 0;
 	__set_bit(WL12XX_SYSTEM_HLID, wl->links_map);
 
 	/*
-	 * this is perक्रमmed after the cancel_work calls and the associated
-	 * mutex_lock, so that wl1271_op_add_पूर्णांकerface करोes not accidentally
-	 * get executed beक्रमe all these vars have been reset.
+	 * this is performed after the cancel_work calls and the associated
+	 * mutex_lock, so that wl1271_op_add_interface does not accidentally
+	 * get executed before all these vars have been reset.
 	 */
 	wl->flags = 0;
 
-	wl->tx_blocks_मुक्तd = 0;
+	wl->tx_blocks_freed = 0;
 
-	क्रम (i = 0; i < NUM_TX_QUEUES; i++) अणु
-		wl->tx_pkts_मुक्तd[i] = 0;
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
+		wl->tx_pkts_freed[i] = 0;
 		wl->tx_allocated_pkts[i] = 0;
-	पूर्ण
+	}
 
 	wl1271_debugfs_reset(wl);
 
-	kमुक्त(wl->raw_fw_status);
-	wl->raw_fw_status = शून्य;
-	kमुक्त(wl->fw_status);
-	wl->fw_status = शून्य;
-	kमुक्त(wl->tx_res_अगर);
-	wl->tx_res_अगर = शून्य;
-	kमुक्त(wl->target_mem_map);
-	wl->target_mem_map = शून्य;
+	kfree(wl->raw_fw_status);
+	wl->raw_fw_status = NULL;
+	kfree(wl->fw_status);
+	wl->fw_status = NULL;
+	kfree(wl->tx_res_if);
+	wl->tx_res_if = NULL;
+	kfree(wl->target_mem_map);
+	wl->target_mem_map = NULL;
 
 	/*
 	 * FW channels must be re-calibrated after recovery,
-	 * save current Reg-Doमुख्य channel configuration and clear it.
+	 * save current Reg-Domain channel configuration and clear it.
 	 */
-	स_नकल(wl->reg_ch_conf_pending, wl->reg_ch_conf_last,
-	       माप(wl->reg_ch_conf_pending));
-	स_रखो(wl->reg_ch_conf_last, 0, माप(wl->reg_ch_conf_last));
-पूर्ण
+	memcpy(wl->reg_ch_conf_pending, wl->reg_ch_conf_last,
+	       sizeof(wl->reg_ch_conf_pending));
+	memset(wl->reg_ch_conf_last, 0, sizeof(wl->reg_ch_conf_last));
+}
 
-अटल व्योम wlcore_op_stop(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
+static void wlcore_op_stop(struct ieee80211_hw *hw)
+{
+	struct wl1271 *wl = hw->priv;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 stop");
 
@@ -2033,345 +2032,345 @@ out:
 	wlcore_op_stop_locked(wl);
 
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wlcore_channel_चयन_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा wl1271 *wl;
-	काष्ठा ieee80211_vअगर *vअगर;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	पूर्णांक ret;
+static void wlcore_channel_switch_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct wl1271 *wl;
+	struct ieee80211_vif *vif;
+	struct wl12xx_vif *wlvif;
+	int ret;
 
 	dwork = to_delayed_work(work);
-	wlvअगर = container_of(dwork, काष्ठा wl12xx_vअगर, channel_चयन_work);
-	wl = wlvअगर->wl;
+	wlvif = container_of(dwork, struct wl12xx_vif, channel_switch_work);
+	wl = wlvif->wl;
 
-	wl1271_info("channel switch failed (role_id: %d).", wlvअगर->role_id);
+	wl1271_info("channel switch failed (role_id: %d).", wlvif->role_id);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	/* check the channel चयन is still ongoing */
-	अगर (!test_and_clear_bit(WLVIF_FLAG_CS_PROGRESS, &wlvअगर->flags))
-		जाओ out;
+	/* check the channel switch is still ongoing */
+	if (!test_and_clear_bit(WLVIF_FLAG_CS_PROGRESS, &wlvif->flags))
+		goto out;
 
-	vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	ieee80211_chचयन_करोne(vअगर, false);
+	vif = wl12xx_wlvif_to_vif(wlvif);
+	ieee80211_chswitch_done(vif, false);
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_cmd_stop_channel_चयन(wl, wlvअगर);
+	wl12xx_cmd_stop_channel_switch(wl, wlvif);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wlcore_connection_loss_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा wl1271 *wl;
-	काष्ठा ieee80211_vअगर *vअगर;
-	काष्ठा wl12xx_vअगर *wlvअगर;
+static void wlcore_connection_loss_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct wl1271 *wl;
+	struct ieee80211_vif *vif;
+	struct wl12xx_vif *wlvif;
 
 	dwork = to_delayed_work(work);
-	wlvअगर = container_of(dwork, काष्ठा wl12xx_vअगर, connection_loss_work);
-	wl = wlvअगर->wl;
+	wlvif = container_of(dwork, struct wl12xx_vif, connection_loss_work);
+	wl = wlvif->wl;
 
-	wl1271_info("Connection loss work (role_id: %d).", wlvअगर->role_id);
+	wl1271_info("Connection loss work (role_id: %d).", wlvif->role_id);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
 	/* Call mac80211 connection loss */
-	अगर (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
-		जाओ out;
+	if (!test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+		goto out;
 
-	vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	ieee80211_connection_loss(vअगर);
+	vif = wl12xx_wlvif_to_vif(wlvif);
+	ieee80211_connection_loss(vif);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wlcore_pending_auth_complete_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा wl1271 *wl;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	अचिन्हित दीर्घ समय_spare;
-	पूर्णांक ret;
+static void wlcore_pending_auth_complete_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct wl1271 *wl;
+	struct wl12xx_vif *wlvif;
+	unsigned long time_spare;
+	int ret;
 
 	dwork = to_delayed_work(work);
-	wlvअगर = container_of(dwork, काष्ठा wl12xx_vअगर,
+	wlvif = container_of(dwork, struct wl12xx_vif,
 			     pending_auth_complete_work);
-	wl = wlvअगर->wl;
+	wl = wlvif->wl;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
 	/*
 	 * Make sure a second really passed since the last auth reply. Maybe
-	 * a second auth reply arrived जबतक we were stuck on the mutex.
-	 * Check क्रम a little less than the समयout to protect from scheduler
+	 * a second auth reply arrived while we were stuck on the mutex.
+	 * Check for a little less than the timeout to protect from scheduler
 	 * irregularities.
 	 */
-	समय_spare = jअगरfies +
-			msecs_to_jअगरfies(WLCORE_PEND_AUTH_ROC_TIMEOUT - 50);
-	अगर (!समय_after(समय_spare, wlvअगर->pending_auth_reply_समय))
-		जाओ out;
+	time_spare = jiffies +
+			msecs_to_jiffies(WLCORE_PEND_AUTH_ROC_TIMEOUT - 50);
+	if (!time_after(time_spare, wlvif->pending_auth_reply_time))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	/* cancel the ROC अगर active */
-	wlcore_update_inconn_sta(wl, wlvअगर, शून्य, false);
+	/* cancel the ROC if active */
+	wlcore_update_inconn_sta(wl, wlvif, NULL, false);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक wl12xx_allocate_rate_policy(काष्ठा wl1271 *wl, u8 *idx)
-अणु
+static int wl12xx_allocate_rate_policy(struct wl1271 *wl, u8 *idx)
+{
 	u8 policy = find_first_zero_bit(wl->rate_policies_map,
 					WL12XX_MAX_RATE_POLICIES);
-	अगर (policy >= WL12XX_MAX_RATE_POLICIES)
-		वापस -EBUSY;
+	if (policy >= WL12XX_MAX_RATE_POLICIES)
+		return -EBUSY;
 
 	__set_bit(policy, wl->rate_policies_map);
 	*idx = policy;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wl12xx_मुक्त_rate_policy(काष्ठा wl1271 *wl, u8 *idx)
-अणु
-	अगर (WARN_ON(*idx >= WL12XX_MAX_RATE_POLICIES))
-		वापस;
+static void wl12xx_free_rate_policy(struct wl1271 *wl, u8 *idx)
+{
+	if (WARN_ON(*idx >= WL12XX_MAX_RATE_POLICIES))
+		return;
 
 	__clear_bit(*idx, wl->rate_policies_map);
 	*idx = WL12XX_MAX_RATE_POLICIES;
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_allocate_klv_ढाँचा(काष्ठा wl1271 *wl, u8 *idx)
-अणु
-	u8 policy = find_first_zero_bit(wl->klv_ढाँचाs_map,
+static int wlcore_allocate_klv_template(struct wl1271 *wl, u8 *idx)
+{
+	u8 policy = find_first_zero_bit(wl->klv_templates_map,
 					WLCORE_MAX_KLV_TEMPLATES);
-	अगर (policy >= WLCORE_MAX_KLV_TEMPLATES)
-		वापस -EBUSY;
+	if (policy >= WLCORE_MAX_KLV_TEMPLATES)
+		return -EBUSY;
 
-	__set_bit(policy, wl->klv_ढाँचाs_map);
+	__set_bit(policy, wl->klv_templates_map);
 	*idx = policy;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wlcore_मुक्त_klv_ढाँचा(काष्ठा wl1271 *wl, u8 *idx)
-अणु
-	अगर (WARN_ON(*idx >= WLCORE_MAX_KLV_TEMPLATES))
-		वापस;
+static void wlcore_free_klv_template(struct wl1271 *wl, u8 *idx)
+{
+	if (WARN_ON(*idx >= WLCORE_MAX_KLV_TEMPLATES))
+		return;
 
-	__clear_bit(*idx, wl->klv_ढाँचाs_map);
+	__clear_bit(*idx, wl->klv_templates_map);
 	*idx = WLCORE_MAX_KLV_TEMPLATES;
-पूर्ण
+}
 
-अटल u8 wl12xx_get_role_type(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+static u8 wl12xx_get_role_type(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
-	चयन (wlvअगर->bss_type) अणु
-	हाल BSS_TYPE_AP_BSS:
-		अगर (wlvअगर->p2p)
-			वापस WL1271_ROLE_P2P_GO;
-		अन्यथा अगर (ieee80211_vअगर_is_mesh(vअगर))
-			वापस WL1271_ROLE_MESH_POINT;
-		अन्यथा
-			वापस WL1271_ROLE_AP;
+	switch (wlvif->bss_type) {
+	case BSS_TYPE_AP_BSS:
+		if (wlvif->p2p)
+			return WL1271_ROLE_P2P_GO;
+		else if (ieee80211_vif_is_mesh(vif))
+			return WL1271_ROLE_MESH_POINT;
+		else
+			return WL1271_ROLE_AP;
 
-	हाल BSS_TYPE_STA_BSS:
-		अगर (wlvअगर->p2p)
-			वापस WL1271_ROLE_P2P_CL;
-		अन्यथा
-			वापस WL1271_ROLE_STA;
+	case BSS_TYPE_STA_BSS:
+		if (wlvif->p2p)
+			return WL1271_ROLE_P2P_CL;
+		else
+			return WL1271_ROLE_STA;
 
-	हाल BSS_TYPE_IBSS:
-		वापस WL1271_ROLE_IBSS;
+	case BSS_TYPE_IBSS:
+		return WL1271_ROLE_IBSS;
 
-	शेष:
-		wl1271_error("invalid bss_type: %d", wlvअगर->bss_type);
-	पूर्ण
-	वापस WL12XX_INVALID_ROLE_TYPE;
-पूर्ण
+	default:
+		wl1271_error("invalid bss_type: %d", wlvif->bss_type);
+	}
+	return WL12XX_INVALID_ROLE_TYPE;
+}
 
-अटल पूर्णांक wl12xx_init_vअगर_data(काष्ठा wl1271 *wl, काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक i;
+static int wl12xx_init_vif_data(struct wl1271 *wl, struct ieee80211_vif *vif)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int i;
 
 	/* clear everything but the persistent data */
-	स_रखो(wlvअगर, 0, दुरत्व(काष्ठा wl12xx_vअगर, persistent));
+	memset(wlvif, 0, offsetof(struct wl12xx_vif, persistent));
 
-	चयन (ieee80211_vअगर_type_p2p(vअगर)) अणु
-	हाल NL80211_IFTYPE_P2P_CLIENT:
-		wlvअगर->p2p = 1;
+	switch (ieee80211_vif_type_p2p(vif)) {
+	case NL80211_IFTYPE_P2P_CLIENT:
+		wlvif->p2p = 1;
 		fallthrough;
-	हाल NL80211_IFTYPE_STATION:
-	हाल NL80211_IFTYPE_P2P_DEVICE:
-		wlvअगर->bss_type = BSS_TYPE_STA_BSS;
-		अवरोध;
-	हाल NL80211_IFTYPE_ADHOC:
-		wlvअगर->bss_type = BSS_TYPE_IBSS;
-		अवरोध;
-	हाल NL80211_IFTYPE_P2P_GO:
-		wlvअगर->p2p = 1;
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_P2P_DEVICE:
+		wlvif->bss_type = BSS_TYPE_STA_BSS;
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		wlvif->bss_type = BSS_TYPE_IBSS;
+		break;
+	case NL80211_IFTYPE_P2P_GO:
+		wlvif->p2p = 1;
 		fallthrough;
-	हाल NL80211_IFTYPE_AP:
-	हाल NL80211_IFTYPE_MESH_POINT:
-		wlvअगर->bss_type = BSS_TYPE_AP_BSS;
-		अवरोध;
-	शेष:
-		wlvअगर->bss_type = MAX_BSS_TYPE;
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	case NL80211_IFTYPE_AP:
+	case NL80211_IFTYPE_MESH_POINT:
+		wlvif->bss_type = BSS_TYPE_AP_BSS;
+		break;
+	default:
+		wlvif->bss_type = MAX_BSS_TYPE;
+		return -EOPNOTSUPP;
+	}
 
-	wlvअगर->role_id = WL12XX_INVALID_ROLE_ID;
-	wlvअगर->dev_role_id = WL12XX_INVALID_ROLE_ID;
-	wlvअगर->dev_hlid = WL12XX_INVALID_LINK_ID;
+	wlvif->role_id = WL12XX_INVALID_ROLE_ID;
+	wlvif->dev_role_id = WL12XX_INVALID_ROLE_ID;
+	wlvif->dev_hlid = WL12XX_INVALID_LINK_ID;
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS ||
-	    wlvअगर->bss_type == BSS_TYPE_IBSS) अणु
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS ||
+	    wlvif->bss_type == BSS_TYPE_IBSS) {
 		/* init sta/ibss data */
-		wlvअगर->sta.hlid = WL12XX_INVALID_LINK_ID;
-		wl12xx_allocate_rate_policy(wl, &wlvअगर->sta.basic_rate_idx);
-		wl12xx_allocate_rate_policy(wl, &wlvअगर->sta.ap_rate_idx);
-		wl12xx_allocate_rate_policy(wl, &wlvअगर->sta.p2p_rate_idx);
-		wlcore_allocate_klv_ढाँचा(wl, &wlvअगर->sta.klv_ढाँचा_id);
-		wlvअगर->basic_rate_set = CONF_TX_RATE_MASK_BASIC;
-		wlvअगर->basic_rate = CONF_TX_RATE_MASK_BASIC;
-		wlvअगर->rate_set = CONF_TX_RATE_MASK_BASIC;
-	पूर्ण अन्यथा अणु
+		wlvif->sta.hlid = WL12XX_INVALID_LINK_ID;
+		wl12xx_allocate_rate_policy(wl, &wlvif->sta.basic_rate_idx);
+		wl12xx_allocate_rate_policy(wl, &wlvif->sta.ap_rate_idx);
+		wl12xx_allocate_rate_policy(wl, &wlvif->sta.p2p_rate_idx);
+		wlcore_allocate_klv_template(wl, &wlvif->sta.klv_template_id);
+		wlvif->basic_rate_set = CONF_TX_RATE_MASK_BASIC;
+		wlvif->basic_rate = CONF_TX_RATE_MASK_BASIC;
+		wlvif->rate_set = CONF_TX_RATE_MASK_BASIC;
+	} else {
 		/* init ap data */
-		wlvअगर->ap.bcast_hlid = WL12XX_INVALID_LINK_ID;
-		wlvअगर->ap.global_hlid = WL12XX_INVALID_LINK_ID;
-		wl12xx_allocate_rate_policy(wl, &wlvअगर->ap.mgmt_rate_idx);
-		wl12xx_allocate_rate_policy(wl, &wlvअगर->ap.bcast_rate_idx);
-		क्रम (i = 0; i < CONF_TX_MAX_AC_COUNT; i++)
+		wlvif->ap.bcast_hlid = WL12XX_INVALID_LINK_ID;
+		wlvif->ap.global_hlid = WL12XX_INVALID_LINK_ID;
+		wl12xx_allocate_rate_policy(wl, &wlvif->ap.mgmt_rate_idx);
+		wl12xx_allocate_rate_policy(wl, &wlvif->ap.bcast_rate_idx);
+		for (i = 0; i < CONF_TX_MAX_AC_COUNT; i++)
 			wl12xx_allocate_rate_policy(wl,
-						&wlvअगर->ap.ucast_rate_idx[i]);
-		wlvअगर->basic_rate_set = CONF_TX_ENABLED_RATES;
+						&wlvif->ap.ucast_rate_idx[i]);
+		wlvif->basic_rate_set = CONF_TX_ENABLED_RATES;
 		/*
-		 * TODO: check अगर basic_rate shouldn't be
-		 * wl1271_tx_min_rate_get(wl, wlvअगर->basic_rate_set);
-		 * instead (the same thing क्रम STA above).
+		 * TODO: check if basic_rate shouldn't be
+		 * wl1271_tx_min_rate_get(wl, wlvif->basic_rate_set);
+		 * instead (the same thing for STA above).
 		*/
-		wlvअगर->basic_rate = CONF_TX_ENABLED_RATES;
-		/* TODO: this seems to be used only क्रम STA, check it */
-		wlvअगर->rate_set = CONF_TX_ENABLED_RATES;
-	पूर्ण
+		wlvif->basic_rate = CONF_TX_ENABLED_RATES;
+		/* TODO: this seems to be used only for STA, check it */
+		wlvif->rate_set = CONF_TX_ENABLED_RATES;
+	}
 
-	wlvअगर->bitrate_masks[NL80211_BAND_2GHZ] = wl->conf.tx.basic_rate;
-	wlvअगर->bitrate_masks[NL80211_BAND_5GHZ] = wl->conf.tx.basic_rate_5;
-	wlvअगर->beacon_पूर्णांक = WL1271_DEFAULT_BEACON_INT;
+	wlvif->bitrate_masks[NL80211_BAND_2GHZ] = wl->conf.tx.basic_rate;
+	wlvif->bitrate_masks[NL80211_BAND_5GHZ] = wl->conf.tx.basic_rate_5;
+	wlvif->beacon_int = WL1271_DEFAULT_BEACON_INT;
 
 	/*
-	 * mac80211 configures some values globally, जबतक we treat them
-	 * per-पूर्णांकerface. thus, on init, we have to copy them from wl
+	 * mac80211 configures some values globally, while we treat them
+	 * per-interface. thus, on init, we have to copy them from wl
 	 */
-	wlvअगर->band = wl->band;
-	wlvअगर->channel = wl->channel;
-	wlvअगर->घातer_level = wl->घातer_level;
-	wlvअगर->channel_type = wl->channel_type;
+	wlvif->band = wl->band;
+	wlvif->channel = wl->channel;
+	wlvif->power_level = wl->power_level;
+	wlvif->channel_type = wl->channel_type;
 
-	INIT_WORK(&wlvअगर->rx_streaming_enable_work,
+	INIT_WORK(&wlvif->rx_streaming_enable_work,
 		  wl1271_rx_streaming_enable_work);
-	INIT_WORK(&wlvअगर->rx_streaming_disable_work,
+	INIT_WORK(&wlvif->rx_streaming_disable_work,
 		  wl1271_rx_streaming_disable_work);
-	INIT_WORK(&wlvअगर->rc_update_work, wlcore_rc_update_work);
-	INIT_DELAYED_WORK(&wlvअगर->channel_चयन_work,
-			  wlcore_channel_चयन_work);
-	INIT_DELAYED_WORK(&wlvअगर->connection_loss_work,
+	INIT_WORK(&wlvif->rc_update_work, wlcore_rc_update_work);
+	INIT_DELAYED_WORK(&wlvif->channel_switch_work,
+			  wlcore_channel_switch_work);
+	INIT_DELAYED_WORK(&wlvif->connection_loss_work,
 			  wlcore_connection_loss_work);
-	INIT_DELAYED_WORK(&wlvअगर->pending_auth_complete_work,
+	INIT_DELAYED_WORK(&wlvif->pending_auth_complete_work,
 			  wlcore_pending_auth_complete_work);
-	INIT_LIST_HEAD(&wlvअगर->list);
+	INIT_LIST_HEAD(&wlvif->list);
 
-	समयr_setup(&wlvअगर->rx_streaming_समयr, wl1271_rx_streaming_समयr, 0);
-	वापस 0;
-पूर्ण
+	timer_setup(&wlvif->rx_streaming_timer, wl1271_rx_streaming_timer, 0);
+	return 0;
+}
 
-अटल पूर्णांक wl12xx_init_fw(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक retries = WL1271_BOOT_RETRIES;
+static int wl12xx_init_fw(struct wl1271 *wl)
+{
+	int retries = WL1271_BOOT_RETRIES;
 	bool booted = false;
-	काष्ठा wiphy *wiphy = wl->hw->wiphy;
-	पूर्णांक ret;
+	struct wiphy *wiphy = wl->hw->wiphy;
+	int ret;
 
-	जबतक (retries) अणु
+	while (retries) {
 		retries--;
 		ret = wl12xx_chip_wakeup(wl, false);
-		अगर (ret < 0)
-			जाओ घातer_off;
+		if (ret < 0)
+			goto power_off;
 
 		ret = wl->ops->boot(wl);
-		अगर (ret < 0)
-			जाओ घातer_off;
+		if (ret < 0)
+			goto power_off;
 
 		ret = wl1271_hw_init(wl);
-		अगर (ret < 0)
-			जाओ irq_disable;
+		if (ret < 0)
+			goto irq_disable;
 
 		booted = true;
-		अवरोध;
+		break;
 
 irq_disable:
 		mutex_unlock(&wl->mutex);
 		/* Unlocking the mutex in the middle of handling is
-		   inherently unsafe. In this हाल we deem it safe to करो,
+		   inherently unsafe. In this case we deem it safe to do,
 		   because we need to let any possibly pending IRQ out of
-		   the प्रणाली (and जबतक we are WLCORE_STATE_OFF the IRQ
-		   work function will not करो anything.) Also, any other
+		   the system (and while we are WLCORE_STATE_OFF the IRQ
+		   work function will not do anything.) Also, any other
 		   possible concurrent operations will fail due to the
-		   current state, hence the wl1271 काष्ठा should be safe. */
-		wlcore_disable_पूर्णांकerrupts(wl);
+		   current state, hence the wl1271 struct should be safe. */
+		wlcore_disable_interrupts(wl);
 		wl1271_flush_deferred_work(wl);
 		cancel_work_sync(&wl->netstack_work);
 		mutex_lock(&wl->mutex);
-घातer_off:
-		wl1271_घातer_off(wl);
-	पूर्ण
+power_off:
+		wl1271_power_off(wl);
+	}
 
-	अगर (!booted) अणु
+	if (!booted) {
 		wl1271_error("firmware boot failed despite %d retries",
 			     WL1271_BOOT_RETRIES);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wl1271_info("firmware booted (%s)", wl->chip.fw_ver_str);
 
-	/* update hw/fw version info in wiphy काष्ठा */
+	/* update hw/fw version info in wiphy struct */
 	wiphy->hw_version = wl->chip.id;
-	म_नकलन(wiphy->fw_version, wl->chip.fw_ver_str,
-		माप(wiphy->fw_version));
+	strncpy(wiphy->fw_version, wl->chip.fw_ver_str,
+		sizeof(wiphy->fw_version));
 
 	/*
-	 * Now we know अगर 11a is supported (info from the NVS), so disable
-	 * 11a channels अगर not supported
+	 * Now we know if 11a is supported (info from the NVS), so disable
+	 * 11a channels if not supported
 	 */
-	अगर (!wl->enable_11a)
+	if (!wl->enable_11a)
 		wiphy->bands[NL80211_BAND_5GHZ]->n_channels = 0;
 
 	wl1271_debug(DEBUG_MAC80211, "11a is %ssupported",
@@ -2379,829 +2378,829 @@ irq_disable:
 
 	wl->state = WLCORE_STATE_ON;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool wl12xx_dev_role_started(काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	वापस wlvअगर->dev_hlid != WL12XX_INVALID_LINK_ID;
-पूर्ण
+static bool wl12xx_dev_role_started(struct wl12xx_vif *wlvif)
+{
+	return wlvif->dev_hlid != WL12XX_INVALID_LINK_ID;
+}
 
 /*
- * Check whether a fw चयन (i.e. moving from one loaded
+ * Check whether a fw switch (i.e. moving from one loaded
  * fw to another) is needed. This function is also responsible
- * क्रम updating wl->last_vअगर_count, so it must be called beक्रमe
+ * for updating wl->last_vif_count, so it must be called before
  * loading a non-plt fw (so the correct fw (single-role/multi-role)
  * will be used).
  */
-अटल bool wl12xx_need_fw_change(काष्ठा wl1271 *wl,
-				  काष्ठा vअगर_counter_data vअगर_counter_data,
+static bool wl12xx_need_fw_change(struct wl1271 *wl,
+				  struct vif_counter_data vif_counter_data,
 				  bool add)
-अणु
-	क्रमागत wl12xx_fw_type current_fw = wl->fw_type;
-	u8 vअगर_count = vअगर_counter_data.counter;
+{
+	enum wl12xx_fw_type current_fw = wl->fw_type;
+	u8 vif_count = vif_counter_data.counter;
 
-	अगर (test_bit(WL1271_FLAG_VIF_CHANGE_IN_PROGRESS, &wl->flags))
-		वापस false;
+	if (test_bit(WL1271_FLAG_VIF_CHANGE_IN_PROGRESS, &wl->flags))
+		return false;
 
-	/* increase the vअगर count अगर this is a new vअगर */
-	अगर (add && !vअगर_counter_data.cur_vअगर_running)
-		vअगर_count++;
+	/* increase the vif count if this is a new vif */
+	if (add && !vif_counter_data.cur_vif_running)
+		vif_count++;
 
-	wl->last_vअगर_count = vअगर_count;
+	wl->last_vif_count = vif_count;
 
-	/* no need क्रम fw change अगर the device is OFF */
-	अगर (wl->state == WLCORE_STATE_OFF)
-		वापस false;
+	/* no need for fw change if the device is OFF */
+	if (wl->state == WLCORE_STATE_OFF)
+		return false;
 
-	/* no need क्रम fw change अगर a single fw is used */
-	अगर (!wl->mr_fw_name)
-		वापस false;
+	/* no need for fw change if a single fw is used */
+	if (!wl->mr_fw_name)
+		return false;
 
-	अगर (vअगर_count > 1 && current_fw == WL12XX_FW_TYPE_NORMAL)
-		वापस true;
-	अगर (vअगर_count <= 1 && current_fw == WL12XX_FW_TYPE_MULTI)
-		वापस true;
+	if (vif_count > 1 && current_fw == WL12XX_FW_TYPE_NORMAL)
+		return true;
+	if (vif_count <= 1 && current_fw == WL12XX_FW_TYPE_MULTI)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * Enter "forced psm". Make sure the sta is in psm against the ap,
- * to make the fw चयन a bit more disconnection-persistent.
+ * to make the fw switch a bit more disconnection-persistent.
  */
-अटल व्योम wl12xx_क्रमce_active_psm(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर;
+static void wl12xx_force_active_psm(struct wl1271 *wl)
+{
+	struct wl12xx_vif *wlvif;
 
-	wl12xx_क्रम_each_wlvअगर_sta(wl, wlvअगर) अणु
-		wl1271_ps_set_mode(wl, wlvअगर, STATION_POWER_SAVE_MODE);
-	पूर्ण
-पूर्ण
+	wl12xx_for_each_wlvif_sta(wl, wlvif) {
+		wl1271_ps_set_mode(wl, wlvif, STATION_POWER_SAVE_MODE);
+	}
+}
 
-काष्ठा wlcore_hw_queue_iter_data अणु
-	अचिन्हित दीर्घ hw_queue_map[BITS_TO_LONGS(WLCORE_NUM_MAC_ADDRESSES)];
-	/* current vअगर */
-	काष्ठा ieee80211_vअगर *vअगर;
-	/* is the current vअगर among those iterated */
+struct wlcore_hw_queue_iter_data {
+	unsigned long hw_queue_map[BITS_TO_LONGS(WLCORE_NUM_MAC_ADDRESSES)];
+	/* current vif */
+	struct ieee80211_vif *vif;
+	/* is the current vif among those iterated */
 	bool cur_running;
-पूर्ण;
+};
 
-अटल व्योम wlcore_hw_queue_iter(व्योम *data, u8 *mac,
-				 काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wlcore_hw_queue_iter_data *iter_data = data;
+static void wlcore_hw_queue_iter(void *data, u8 *mac,
+				 struct ieee80211_vif *vif)
+{
+	struct wlcore_hw_queue_iter_data *iter_data = data;
 
-	अगर (vअगर->type == NL80211_IFTYPE_P2P_DEVICE ||
-	    WARN_ON_ONCE(vअगर->hw_queue[0] == IEEE80211_INVAL_HW_QUEUE))
-		वापस;
+	if (vif->type == NL80211_IFTYPE_P2P_DEVICE ||
+	    WARN_ON_ONCE(vif->hw_queue[0] == IEEE80211_INVAL_HW_QUEUE))
+		return;
 
-	अगर (iter_data->cur_running || vअगर == iter_data->vअगर) अणु
+	if (iter_data->cur_running || vif == iter_data->vif) {
 		iter_data->cur_running = true;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	__set_bit(vअगर->hw_queue[0] / NUM_TX_QUEUES, iter_data->hw_queue_map);
-पूर्ण
+	__set_bit(vif->hw_queue[0] / NUM_TX_QUEUES, iter_data->hw_queue_map);
+}
 
-अटल पूर्णांक wlcore_allocate_hw_queue_base(काष्ठा wl1271 *wl,
-					 काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा wlcore_hw_queue_iter_data iter_data = अणुपूर्ण;
-	पूर्णांक i, q_base;
+static int wlcore_allocate_hw_queue_base(struct wl1271 *wl,
+					 struct wl12xx_vif *wlvif)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct wlcore_hw_queue_iter_data iter_data = {};
+	int i, q_base;
 
-	अगर (vअगर->type == NL80211_IFTYPE_P2P_DEVICE) अणु
-		vअगर->cab_queue = IEEE80211_INVAL_HW_QUEUE;
-		वापस 0;
-	पूर्ण
+	if (vif->type == NL80211_IFTYPE_P2P_DEVICE) {
+		vif->cab_queue = IEEE80211_INVAL_HW_QUEUE;
+		return 0;
+	}
 
-	iter_data.vअगर = vअगर;
+	iter_data.vif = vif;
 
-	/* mark all bits taken by active पूर्णांकerfaces */
-	ieee80211_iterate_active_पूर्णांकerfaces_atomic(wl->hw,
+	/* mark all bits taken by active interfaces */
+	ieee80211_iterate_active_interfaces_atomic(wl->hw,
 					IEEE80211_IFACE_ITER_RESUME_ALL,
 					wlcore_hw_queue_iter, &iter_data);
 
-	/* the current vअगर is alपढ़ोy running in mac80211 (resume/recovery) */
-	अगर (iter_data.cur_running) अणु
-		wlvअगर->hw_queue_base = vअगर->hw_queue[0];
+	/* the current vif is already running in mac80211 (resume/recovery) */
+	if (iter_data.cur_running) {
+		wlvif->hw_queue_base = vif->hw_queue[0];
 		wl1271_debug(DEBUG_MAC80211,
 			     "using pre-allocated hw queue base %d",
-			     wlvअगर->hw_queue_base);
+			     wlvif->hw_queue_base);
 
-		/* पूर्णांकerface type might have changed type */
-		जाओ adjust_cab_queue;
-	पूर्ण
+		/* interface type might have changed type */
+		goto adjust_cab_queue;
+	}
 
 	q_base = find_first_zero_bit(iter_data.hw_queue_map,
 				     WLCORE_NUM_MAC_ADDRESSES);
-	अगर (q_base >= WLCORE_NUM_MAC_ADDRESSES)
-		वापस -EBUSY;
+	if (q_base >= WLCORE_NUM_MAC_ADDRESSES)
+		return -EBUSY;
 
-	wlvअगर->hw_queue_base = q_base * NUM_TX_QUEUES;
+	wlvif->hw_queue_base = q_base * NUM_TX_QUEUES;
 	wl1271_debug(DEBUG_MAC80211, "allocating hw queue base: %d",
-		     wlvअगर->hw_queue_base);
+		     wlvif->hw_queue_base);
 
-	क्रम (i = 0; i < NUM_TX_QUEUES; i++) अणु
-		wl->queue_stop_reasons[wlvअगर->hw_queue_base + i] = 0;
-		/* रेजिस्टर hw queues in mac80211 */
-		vअगर->hw_queue[i] = wlvअगर->hw_queue_base + i;
-	पूर्ण
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
+		wl->queue_stop_reasons[wlvif->hw_queue_base + i] = 0;
+		/* register hw queues in mac80211 */
+		vif->hw_queue[i] = wlvif->hw_queue_base + i;
+	}
 
 adjust_cab_queue:
-	/* the last places are reserved क्रम cab queues per पूर्णांकerface */
-	अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS)
-		vअगर->cab_queue = NUM_TX_QUEUES * WLCORE_NUM_MAC_ADDRESSES +
-				 wlvअगर->hw_queue_base / NUM_TX_QUEUES;
-	अन्यथा
-		vअगर->cab_queue = IEEE80211_INVAL_HW_QUEUE;
+	/* the last places are reserved for cab queues per interface */
+	if (wlvif->bss_type == BSS_TYPE_AP_BSS)
+		vif->cab_queue = NUM_TX_QUEUES * WLCORE_NUM_MAC_ADDRESSES +
+				 wlvif->hw_queue_base / NUM_TX_QUEUES;
+	else
+		vif->cab_queue = IEEE80211_INVAL_HW_QUEUE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl1271_op_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा vअगर_counter_data vअगर_count;
-	पूर्णांक ret = 0;
+static int wl1271_op_add_interface(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct vif_counter_data vif_count;
+	int ret = 0;
 	u8 role_type;
 
-	अगर (wl->plt) अणु
+	if (wl->plt) {
 		wl1271_error("Adding Interface not allowed while in PLT mode");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	vअगर->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
+	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
 			     IEEE80211_VIF_SUPPORTS_UAPSD |
 			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 add interface type %d mac %pM",
-		     ieee80211_vअगर_type_p2p(vअगर), vअगर->addr);
+		     ieee80211_vif_type_p2p(vif), vif->addr);
 
-	wl12xx_get_vअगर_count(hw, vअगर, &vअगर_count);
+	wl12xx_get_vif_count(hw, vif, &vif_count);
 
 	mutex_lock(&wl->mutex);
 
 	/*
-	 * in some very corner हाल HW recovery scenarios its possible to
-	 * get here beक्रमe __wl1271_op_हटाओ_पूर्णांकerface is complete, so
-	 * opt out अगर that is the हाल.
+	 * in some very corner case HW recovery scenarios its possible to
+	 * get here before __wl1271_op_remove_interface is complete, so
+	 * opt out if that is the case.
 	 */
-	अगर (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags) ||
-	    test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags)) अणु
+	if (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags) ||
+	    test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
-	ret = wl12xx_init_vअगर_data(wl, vअगर);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl12xx_init_vif_data(wl, vif);
+	if (ret < 0)
+		goto out;
 
-	wlvअगर->wl = wl;
-	role_type = wl12xx_get_role_type(wl, wlvअगर);
-	अगर (role_type == WL12XX_INVALID_ROLE_TYPE) अणु
+	wlvif->wl = wl;
+	role_type = wl12xx_get_role_type(wl, wlvif);
+	if (role_type == WL12XX_INVALID_ROLE_TYPE) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = wlcore_allocate_hw_queue_base(wl, wlvअगर);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_allocate_hw_queue_base(wl, wlvif);
+	if (ret < 0)
+		goto out;
 
 	/*
 	 * TODO: after the nvs issue will be solved, move this block
 	 * to start(), and make sure here the driver is ON.
 	 */
-	अगर (wl->state == WLCORE_STATE_OFF) अणु
+	if (wl->state == WLCORE_STATE_OFF) {
 		/*
 		 * we still need this in order to configure the fw
-		 * जबतक uploading the nvs
+		 * while uploading the nvs
 		 */
-		स_नकल(wl->addresses[0].addr, vअगर->addr, ETH_ALEN);
+		memcpy(wl->addresses[0].addr, vif->addr, ETH_ALEN);
 
 		ret = wl12xx_init_fw(wl);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 
 	/*
-	 * Call runसमय PM only after possible wl12xx_init_fw() above
-	 * is करोne. Otherwise we करो not have पूर्णांकerrupts enabled.
+	 * Call runtime PM only after possible wl12xx_init_fw() above
+	 * is done. Otherwise we do not have interrupts enabled.
 	 */
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out_unlock;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out_unlock;
+	}
 
-	अगर (wl12xx_need_fw_change(wl, vअगर_count, true)) अणु
-		wl12xx_क्रमce_active_psm(wl);
+	if (wl12xx_need_fw_change(wl, vif_count, true)) {
+		wl12xx_force_active_psm(wl);
 		set_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags);
 		mutex_unlock(&wl->mutex);
 		wl1271_recovery_work(&wl->recovery_work);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!wlcore_is_p2p_mgmt(wlvअगर)) अणु
-		ret = wl12xx_cmd_role_enable(wl, vअगर->addr,
-					     role_type, &wlvअगर->role_id);
-		अगर (ret < 0)
-			जाओ out;
+	if (!wlcore_is_p2p_mgmt(wlvif)) {
+		ret = wl12xx_cmd_role_enable(wl, vif->addr,
+					     role_type, &wlvif->role_id);
+		if (ret < 0)
+			goto out;
 
-		ret = wl1271_init_vअगर_specअगरic(wl, vअगर);
-		अगर (ret < 0)
-			जाओ out;
+		ret = wl1271_init_vif_specific(wl, vif);
+		if (ret < 0)
+			goto out;
 
-	पूर्ण अन्यथा अणु
-		ret = wl12xx_cmd_role_enable(wl, vअगर->addr, WL1271_ROLE_DEVICE,
-					     &wlvअगर->dev_role_id);
-		अगर (ret < 0)
-			जाओ out;
+	} else {
+		ret = wl12xx_cmd_role_enable(wl, vif->addr, WL1271_ROLE_DEVICE,
+					     &wlvif->dev_role_id);
+		if (ret < 0)
+			goto out;
 
-		/* needed मुख्यly क्रम configuring rate policies */
-		ret = wl1271_sta_hw_init(wl, wlvअगर);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		/* needed mainly for configuring rate policies */
+		ret = wl1271_sta_hw_init(wl, wlvif);
+		if (ret < 0)
+			goto out;
+	}
 
-	list_add(&wlvअगर->list, &wl->wlvअगर_list);
-	set_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags);
+	list_add(&wlvif->list, &wl->wlvif_list);
+	set_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags);
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS)
+	if (wlvif->bss_type == BSS_TYPE_AP_BSS)
 		wl->ap_count++;
-	अन्यथा
+	else
 		wl->sta_count++;
 out:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out_unlock:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __wl1271_op_हटाओ_पूर्णांकerface(काष्ठा wl1271 *wl,
-					 काष्ठा ieee80211_vअगर *vअगर,
+static void __wl1271_op_remove_interface(struct wl1271 *wl,
+					 struct ieee80211_vif *vif,
 					 bool reset_tx_queues)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक i, ret;
-	bool is_ap = (wlvअगर->bss_type == BSS_TYPE_AP_BSS);
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int i, ret;
+	bool is_ap = (wlvif->bss_type == BSS_TYPE_AP_BSS);
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 remove interface");
 
-	अगर (!test_and_clear_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags))
-		वापस;
+	if (!test_and_clear_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags))
+		return;
 
 	/* because of hardware recovery, we may get here twice */
-	अगर (wl->state == WLCORE_STATE_OFF)
-		वापस;
+	if (wl->state == WLCORE_STATE_OFF)
+		return;
 
 	wl1271_info("down");
 
-	अगर (wl->scan.state != WL1271_SCAN_STATE_IDLE &&
-	    wl->scan_wlvअगर == wlvअगर) अणु
-		काष्ठा cfg80211_scan_info info = अणु
-			.पातed = true,
-		पूर्ण;
+	if (wl->scan.state != WL1271_SCAN_STATE_IDLE &&
+	    wl->scan_wlvif == wlvif) {
+		struct cfg80211_scan_info info = {
+			.aborted = true,
+		};
 
 		/*
-		 * Rearm the tx watchकरोg just beक्रमe idling scan. This
-		 * prevents just-finished scans from triggering the watchकरोg
+		 * Rearm the tx watchdog just before idling scan. This
+		 * prevents just-finished scans from triggering the watchdog
 		 */
-		wl12xx_rearm_tx_watchकरोg_locked(wl);
+		wl12xx_rearm_tx_watchdog_locked(wl);
 
 		wl->scan.state = WL1271_SCAN_STATE_IDLE;
-		स_रखो(wl->scan.scanned_ch, 0, माप(wl->scan.scanned_ch));
-		wl->scan_wlvअगर = शून्य;
-		wl->scan.req = शून्य;
+		memset(wl->scan.scanned_ch, 0, sizeof(wl->scan.scanned_ch));
+		wl->scan_wlvif = NULL;
+		wl->scan.req = NULL;
 		ieee80211_scan_completed(wl->hw, &info);
-	पूर्ण
+	}
 
-	अगर (wl->sched_vअगर == wlvअगर)
-		wl->sched_vअगर = शून्य;
+	if (wl->sched_vif == wlvif)
+		wl->sched_vif = NULL;
 
-	अगर (wl->roc_vअगर == vअगर) अणु
-		wl->roc_vअगर = शून्य;
-		ieee80211_reमुख्य_on_channel_expired(wl->hw);
-	पूर्ण
+	if (wl->roc_vif == vif) {
+		wl->roc_vif = NULL;
+		ieee80211_remain_on_channel_expired(wl->hw);
+	}
 
-	अगर (!test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags)) अणु
+	if (!test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags)) {
 		/* disable active roles */
-		ret = pm_runसमय_get_sync(wl->dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_noidle(wl->dev);
-			जाओ deinit;
-		पूर्ण
+		ret = pm_runtime_get_sync(wl->dev);
+		if (ret < 0) {
+			pm_runtime_put_noidle(wl->dev);
+			goto deinit;
+		}
 
-		अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS ||
-		    wlvअगर->bss_type == BSS_TYPE_IBSS) अणु
-			अगर (wl12xx_dev_role_started(wlvअगर))
-				wl12xx_stop_dev(wl, wlvअगर);
-		पूर्ण
+		if (wlvif->bss_type == BSS_TYPE_STA_BSS ||
+		    wlvif->bss_type == BSS_TYPE_IBSS) {
+			if (wl12xx_dev_role_started(wlvif))
+				wl12xx_stop_dev(wl, wlvif);
+		}
 
-		अगर (!wlcore_is_p2p_mgmt(wlvअगर)) अणु
-			ret = wl12xx_cmd_role_disable(wl, &wlvअगर->role_id);
-			अगर (ret < 0) अणु
-				pm_runसमय_put_noidle(wl->dev);
-				जाओ deinit;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			ret = wl12xx_cmd_role_disable(wl, &wlvअगर->dev_role_id);
-			अगर (ret < 0) अणु
-				pm_runसमय_put_noidle(wl->dev);
-				जाओ deinit;
-			पूर्ण
-		पूर्ण
+		if (!wlcore_is_p2p_mgmt(wlvif)) {
+			ret = wl12xx_cmd_role_disable(wl, &wlvif->role_id);
+			if (ret < 0) {
+				pm_runtime_put_noidle(wl->dev);
+				goto deinit;
+			}
+		} else {
+			ret = wl12xx_cmd_role_disable(wl, &wlvif->dev_role_id);
+			if (ret < 0) {
+				pm_runtime_put_noidle(wl->dev);
+				goto deinit;
+			}
+		}
 
-		pm_runसमय_mark_last_busy(wl->dev);
-		pm_runसमय_put_स्वतःsuspend(wl->dev);
-	पूर्ण
+		pm_runtime_mark_last_busy(wl->dev);
+		pm_runtime_put_autosuspend(wl->dev);
+	}
 deinit:
-	wl12xx_tx_reset_wlvअगर(wl, wlvअगर);
+	wl12xx_tx_reset_wlvif(wl, wlvif);
 
-	/* clear all hlids (except प्रणाली_hlid) */
-	wlvअगर->dev_hlid = WL12XX_INVALID_LINK_ID;
+	/* clear all hlids (except system_hlid) */
+	wlvif->dev_hlid = WL12XX_INVALID_LINK_ID;
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS ||
-	    wlvअगर->bss_type == BSS_TYPE_IBSS) अणु
-		wlvअगर->sta.hlid = WL12XX_INVALID_LINK_ID;
-		wl12xx_मुक्त_rate_policy(wl, &wlvअगर->sta.basic_rate_idx);
-		wl12xx_मुक्त_rate_policy(wl, &wlvअगर->sta.ap_rate_idx);
-		wl12xx_मुक्त_rate_policy(wl, &wlvअगर->sta.p2p_rate_idx);
-		wlcore_मुक्त_klv_ढाँचा(wl, &wlvअगर->sta.klv_ढाँचा_id);
-	पूर्ण अन्यथा अणु
-		wlvअगर->ap.bcast_hlid = WL12XX_INVALID_LINK_ID;
-		wlvअगर->ap.global_hlid = WL12XX_INVALID_LINK_ID;
-		wl12xx_मुक्त_rate_policy(wl, &wlvअगर->ap.mgmt_rate_idx);
-		wl12xx_मुक्त_rate_policy(wl, &wlvअगर->ap.bcast_rate_idx);
-		क्रम (i = 0; i < CONF_TX_MAX_AC_COUNT; i++)
-			wl12xx_मुक्त_rate_policy(wl,
-						&wlvअगर->ap.ucast_rate_idx[i]);
-		wl1271_मुक्त_ap_keys(wl, wlvअगर);
-	पूर्ण
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS ||
+	    wlvif->bss_type == BSS_TYPE_IBSS) {
+		wlvif->sta.hlid = WL12XX_INVALID_LINK_ID;
+		wl12xx_free_rate_policy(wl, &wlvif->sta.basic_rate_idx);
+		wl12xx_free_rate_policy(wl, &wlvif->sta.ap_rate_idx);
+		wl12xx_free_rate_policy(wl, &wlvif->sta.p2p_rate_idx);
+		wlcore_free_klv_template(wl, &wlvif->sta.klv_template_id);
+	} else {
+		wlvif->ap.bcast_hlid = WL12XX_INVALID_LINK_ID;
+		wlvif->ap.global_hlid = WL12XX_INVALID_LINK_ID;
+		wl12xx_free_rate_policy(wl, &wlvif->ap.mgmt_rate_idx);
+		wl12xx_free_rate_policy(wl, &wlvif->ap.bcast_rate_idx);
+		for (i = 0; i < CONF_TX_MAX_AC_COUNT; i++)
+			wl12xx_free_rate_policy(wl,
+						&wlvif->ap.ucast_rate_idx[i]);
+		wl1271_free_ap_keys(wl, wlvif);
+	}
 
-	dev_kमुक्त_skb(wlvअगर->probereq);
-	wlvअगर->probereq = शून्य;
-	अगर (wl->last_wlvअगर == wlvअगर)
-		wl->last_wlvअगर = शून्य;
-	list_del(&wlvअगर->list);
-	स_रखो(wlvअगर->ap.sta_hlid_map, 0, माप(wlvअगर->ap.sta_hlid_map));
-	wlvअगर->role_id = WL12XX_INVALID_ROLE_ID;
-	wlvअगर->dev_role_id = WL12XX_INVALID_ROLE_ID;
+	dev_kfree_skb(wlvif->probereq);
+	wlvif->probereq = NULL;
+	if (wl->last_wlvif == wlvif)
+		wl->last_wlvif = NULL;
+	list_del(&wlvif->list);
+	memset(wlvif->ap.sta_hlid_map, 0, sizeof(wlvif->ap.sta_hlid_map));
+	wlvif->role_id = WL12XX_INVALID_ROLE_ID;
+	wlvif->dev_role_id = WL12XX_INVALID_ROLE_ID;
 
-	अगर (is_ap)
+	if (is_ap)
 		wl->ap_count--;
-	अन्यथा
+	else
 		wl->sta_count--;
 
 	/*
 	 * Last AP, have more stations. Configure sleep auth according to STA.
-	 * Don't करो thin on unपूर्णांकended recovery.
+	 * Don't do thin on unintended recovery.
 	 */
-	अगर (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags) &&
+	if (test_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags) &&
 	    !test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags))
-		जाओ unlock;
+		goto unlock;
 
-	अगर (wl->ap_count == 0 && is_ap) अणु
+	if (wl->ap_count == 0 && is_ap) {
 		/* mask ap events */
 		wl->event_mask &= ~wl->ap_event_mask;
 		wl1271_event_unmask(wl);
-	पूर्ण
+	}
 
-	अगर (wl->ap_count == 0 && is_ap && wl->sta_count) अणु
+	if (wl->ap_count == 0 && is_ap && wl->sta_count) {
 		u8 sta_auth = wl->conf.conn.sta_sleep_auth;
-		/* Configure क्रम घातer according to debugfs */
-		अगर (sta_auth != WL1271_PSM_ILLEGAL)
+		/* Configure for power according to debugfs */
+		if (sta_auth != WL1271_PSM_ILLEGAL)
 			wl1271_acx_sleep_auth(wl, sta_auth);
-		/* Configure क्रम ELP घातer saving */
-		अन्यथा
+		/* Configure for ELP power saving */
+		else
 			wl1271_acx_sleep_auth(wl, WL1271_PSM_ELP);
-	पूर्ण
+	}
 
 unlock:
 	mutex_unlock(&wl->mutex);
 
-	del_समयr_sync(&wlvअगर->rx_streaming_समयr);
-	cancel_work_sync(&wlvअगर->rx_streaming_enable_work);
-	cancel_work_sync(&wlvअगर->rx_streaming_disable_work);
-	cancel_work_sync(&wlvअगर->rc_update_work);
-	cancel_delayed_work_sync(&wlvअगर->connection_loss_work);
-	cancel_delayed_work_sync(&wlvअगर->channel_चयन_work);
-	cancel_delayed_work_sync(&wlvअगर->pending_auth_complete_work);
+	del_timer_sync(&wlvif->rx_streaming_timer);
+	cancel_work_sync(&wlvif->rx_streaming_enable_work);
+	cancel_work_sync(&wlvif->rx_streaming_disable_work);
+	cancel_work_sync(&wlvif->rc_update_work);
+	cancel_delayed_work_sync(&wlvif->connection_loss_work);
+	cancel_delayed_work_sync(&wlvif->channel_switch_work);
+	cancel_delayed_work_sync(&wlvif->pending_auth_complete_work);
 
 	mutex_lock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wl1271_op_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-				       काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा wl12xx_vअगर *iter;
-	काष्ठा vअगर_counter_data vअगर_count;
+static void wl1271_op_remove_interface(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct wl12xx_vif *iter;
+	struct vif_counter_data vif_count;
 
-	wl12xx_get_vअगर_count(hw, vअगर, &vअगर_count);
+	wl12xx_get_vif_count(hw, vif, &vif_count);
 	mutex_lock(&wl->mutex);
 
-	अगर (wl->state == WLCORE_STATE_OFF ||
-	    !test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags))
-		जाओ out;
+	if (wl->state == WLCORE_STATE_OFF ||
+	    !test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags))
+		goto out;
 
 	/*
-	 * wl->vअगर can be null here अगर someone shuts करोwn the पूर्णांकerface
+	 * wl->vif can be null here if someone shuts down the interface
 	 * just when hardware recovery has been started.
 	 */
-	wl12xx_क्रम_each_wlvअगर(wl, iter) अणु
-		अगर (iter != wlvअगर)
-			जारी;
+	wl12xx_for_each_wlvif(wl, iter) {
+		if (iter != wlvif)
+			continue;
 
-		__wl1271_op_हटाओ_पूर्णांकerface(wl, vअगर, true);
-		अवरोध;
-	पूर्ण
-	WARN_ON(iter != wlvअगर);
-	अगर (wl12xx_need_fw_change(wl, vअगर_count, false)) अणु
-		wl12xx_क्रमce_active_psm(wl);
+		__wl1271_op_remove_interface(wl, vif, true);
+		break;
+	}
+	WARN_ON(iter != wlvif);
+	if (wl12xx_need_fw_change(wl, vif_count, false)) {
+		wl12xx_force_active_psm(wl);
 		set_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags);
 		wl12xx_queue_recovery_work(wl);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक wl12xx_op_change_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      क्रमागत nl80211_अगरtype new_type, bool p2p)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक ret;
+static int wl12xx_op_change_interface(struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif,
+				      enum nl80211_iftype new_type, bool p2p)
+{
+	struct wl1271 *wl = hw->priv;
+	int ret;
 
 	set_bit(WL1271_FLAG_VIF_CHANGE_IN_PROGRESS, &wl->flags);
-	wl1271_op_हटाओ_पूर्णांकerface(hw, vअगर);
+	wl1271_op_remove_interface(hw, vif);
 
-	vअगर->type = new_type;
-	vअगर->p2p = p2p;
-	ret = wl1271_op_add_पूर्णांकerface(hw, vअगर);
+	vif->type = new_type;
+	vif->p2p = p2p;
+	ret = wl1271_op_add_interface(hw, vif);
 
 	clear_bit(WL1271_FLAG_VIF_CHANGE_IN_PROGRESS, &wl->flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wlcore_join(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret;
-	bool is_ibss = (wlvअगर->bss_type == BSS_TYPE_IBSS);
+static int wlcore_join(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret;
+	bool is_ibss = (wlvif->bss_type == BSS_TYPE_IBSS);
 
 	/*
 	 * One of the side effects of the JOIN command is that is clears
-	 * WPA/WPA2 keys from the chipset. Perक्रमming a JOIN जबतक associated
-	 * to a WPA/WPA2 access poपूर्णांक will thereक्रमe समाप्त the data-path.
-	 * Currently the only valid scenario क्रम JOIN during association
-	 * is on roaming, in which हाल we will also be given new keys.
-	 * Keep the below message क्रम now, unless it starts bothering
+	 * WPA/WPA2 keys from the chipset. Performing a JOIN while associated
+	 * to a WPA/WPA2 access point will therefore kill the data-path.
+	 * Currently the only valid scenario for JOIN during association
+	 * is on roaming, in which case we will also be given new keys.
+	 * Keep the below message for now, unless it starts bothering
 	 * users who really like to roam a lot :)
 	 */
-	अगर (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
+	if (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
 		wl1271_info("JOIN while associated.");
 
 	/* clear encryption type */
-	wlvअगर->encryption_type = KEY_NONE;
+	wlvif->encryption_type = KEY_NONE;
 
-	अगर (is_ibss)
-		ret = wl12xx_cmd_role_start_ibss(wl, wlvअगर);
-	अन्यथा
-		ret = wl12xx_cmd_role_start_sta(wl, wlvअगर);
+	if (is_ibss)
+		ret = wl12xx_cmd_role_start_ibss(wl, wlvif);
+	else
+		ret = wl12xx_cmd_role_start_sta(wl, wlvif);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_ssid_set(काष्ठा wl12xx_vअगर *wlvअगर, काष्ठा sk_buff *skb,
-			    पूर्णांक offset)
-अणु
+static int wl1271_ssid_set(struct wl12xx_vif *wlvif, struct sk_buff *skb,
+			    int offset)
+{
 	u8 ssid_len;
-	स्थिर u8 *ptr = cfg80211_find_ie(WLAN_EID_SSID, skb->data + offset,
+	const u8 *ptr = cfg80211_find_ie(WLAN_EID_SSID, skb->data + offset,
 					 skb->len - offset);
 
-	अगर (!ptr) अणु
+	if (!ptr) {
 		wl1271_error("No SSID in IEs!");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	ssid_len = ptr[1];
-	अगर (ssid_len > IEEE80211_MAX_SSID_LEN) अणु
+	if (ssid_len > IEEE80211_MAX_SSID_LEN) {
 		wl1271_error("SSID is too long!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	wlvअगर->ssid_len = ssid_len;
-	स_नकल(wlvअगर->ssid, ptr+2, ssid_len);
-	वापस 0;
-पूर्ण
+	wlvif->ssid_len = ssid_len;
+	memcpy(wlvif->ssid, ptr+2, ssid_len);
+	return 0;
+}
 
-अटल पूर्णांक wlcore_set_ssid(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
-	काष्ठा sk_buff *skb;
-	पूर्णांक ieoffset;
+static int wlcore_set_ssid(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+	struct sk_buff *skb;
+	int ieoffset;
 
 	/* we currently only support setting the ssid from the ap probe req */
-	अगर (wlvअगर->bss_type != BSS_TYPE_STA_BSS)
-		वापस -EINVAL;
+	if (wlvif->bss_type != BSS_TYPE_STA_BSS)
+		return -EINVAL;
 
-	skb = ieee80211_ap_probereq_get(wl->hw, vअगर);
-	अगर (!skb)
-		वापस -EINVAL;
+	skb = ieee80211_ap_probereq_get(wl->hw, vif);
+	if (!skb)
+		return -EINVAL;
 
-	ieoffset = दुरत्व(काष्ठा ieee80211_mgmt,
+	ieoffset = offsetof(struct ieee80211_mgmt,
 			    u.probe_req.variable);
-	wl1271_ssid_set(wlvअगर, skb, ieoffset);
-	dev_kमुक्त_skb(skb);
+	wl1271_ssid_set(wlvif, skb, ieoffset);
+	dev_kfree_skb(skb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wlcore_set_assoc(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			    काष्ठा ieee80211_bss_conf *bss_conf,
+static int wlcore_set_assoc(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			    struct ieee80211_bss_conf *bss_conf,
 			    u32 sta_rate_set)
-अणु
-	पूर्णांक ieoffset;
-	पूर्णांक ret;
+{
+	int ieoffset;
+	int ret;
 
-	wlvअगर->aid = bss_conf->aid;
-	wlvअगर->channel_type = cfg80211_get_chandef_type(&bss_conf->chandef);
-	wlvअगर->beacon_पूर्णांक = bss_conf->beacon_पूर्णांक;
-	wlvअगर->wmm_enabled = bss_conf->qos;
+	wlvif->aid = bss_conf->aid;
+	wlvif->channel_type = cfg80211_get_chandef_type(&bss_conf->chandef);
+	wlvif->beacon_int = bss_conf->beacon_int;
+	wlvif->wmm_enabled = bss_conf->qos;
 
-	set_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags);
+	set_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags);
 
 	/*
-	 * with wl1271, we करोn't need to update the
-	 * beacon_पूर्णांक and dtim_period, because the firmware
+	 * with wl1271, we don't need to update the
+	 * beacon_int and dtim_period, because the firmware
 	 * updates it by itself when the first beacon is
 	 * received after a join.
 	 */
-	ret = wl1271_cmd_build_ps_poll(wl, wlvअगर, wlvअगर->aid);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_cmd_build_ps_poll(wl, wlvif, wlvif->aid);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * Get a ढाँचा क्रम hardware connection मुख्यtenance
+	 * Get a template for hardware connection maintenance
 	 */
-	dev_kमुक्त_skb(wlvअगर->probereq);
-	wlvअगर->probereq = wl1271_cmd_build_ap_probe_req(wl,
-							wlvअगर,
-							शून्य);
-	ieoffset = दुरत्व(काष्ठा ieee80211_mgmt,
+	dev_kfree_skb(wlvif->probereq);
+	wlvif->probereq = wl1271_cmd_build_ap_probe_req(wl,
+							wlvif,
+							NULL);
+	ieoffset = offsetof(struct ieee80211_mgmt,
 			    u.probe_req.variable);
-	wl1271_ssid_set(wlvअगर, wlvअगर->probereq, ieoffset);
+	wl1271_ssid_set(wlvif, wlvif->probereq, ieoffset);
 
 	/* enable the connection monitoring feature */
-	ret = wl1271_acx_conn_monit_params(wl, wlvअगर, true);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_acx_conn_monit_params(wl, wlvif, true);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * The join command disable the keep-alive mode, shut करोwn its process,
-	 * and also clear the ढाँचा config, so we need to reset it all after
+	 * The join command disable the keep-alive mode, shut down its process,
+	 * and also clear the template config, so we need to reset it all after
 	 * the join. The acx_aid starts the keep-alive process, and the order
 	 * of the commands below is relevant.
 	 */
-	ret = wl1271_acx_keep_alive_mode(wl, wlvअगर, true);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_acx_keep_alive_mode(wl, wlvif, true);
+	if (ret < 0)
+		return ret;
 
-	ret = wl1271_acx_aid(wl, wlvअगर, wlvअगर->aid);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_acx_aid(wl, wlvif, wlvif->aid);
+	if (ret < 0)
+		return ret;
 
-	ret = wl12xx_cmd_build_klv_null_data(wl, wlvअगर);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl12xx_cmd_build_klv_null_data(wl, wlvif);
+	if (ret < 0)
+		return ret;
 
-	ret = wl1271_acx_keep_alive_config(wl, wlvअगर,
-					   wlvअगर->sta.klv_ढाँचा_id,
+	ret = wl1271_acx_keep_alive_config(wl, wlvif,
+					   wlvif->sta.klv_template_id,
 					   ACX_KEEP_ALIVE_TPL_VALID);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * The शेष fw psm configuration is AUTO, जबतक mac80211 शेष
+	 * The default fw psm configuration is AUTO, while mac80211 default
 	 * setting is off (ACTIVE), so sync the fw with the correct value.
 	 */
-	ret = wl1271_ps_set_mode(wl, wlvअगर, STATION_ACTIVE_MODE);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_ps_set_mode(wl, wlvif, STATION_ACTIVE_MODE);
+	if (ret < 0)
+		return ret;
 
-	अगर (sta_rate_set) अणु
-		wlvअगर->rate_set =
+	if (sta_rate_set) {
+		wlvif->rate_set =
 			wl1271_tx_enabled_rates_get(wl,
 						    sta_rate_set,
-						    wlvअगर->band);
-		ret = wl1271_acx_sta_rate_policies(wl, wlvअगर);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+						    wlvif->band);
+		ret = wl1271_acx_sta_rate_policies(wl, wlvif);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wlcore_unset_assoc(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret;
-	bool sta = wlvअगर->bss_type == BSS_TYPE_STA_BSS;
+static int wlcore_unset_assoc(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret;
+	bool sta = wlvif->bss_type == BSS_TYPE_STA_BSS;
 
 	/* make sure we are connected (sta) joined */
-	अगर (sta &&
-	    !test_and_clear_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
-		वापस false;
+	if (sta &&
+	    !test_and_clear_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+		return false;
 
 	/* make sure we are joined (ibss) */
-	अगर (!sta &&
-	    test_and_clear_bit(WLVIF_FLAG_IBSS_JOINED, &wlvअगर->flags))
-		वापस false;
+	if (!sta &&
+	    test_and_clear_bit(WLVIF_FLAG_IBSS_JOINED, &wlvif->flags))
+		return false;
 
-	अगर (sta) अणु
-		/* use शेषs when not associated */
-		wlvअगर->aid = 0;
+	if (sta) {
+		/* use defaults when not associated */
+		wlvif->aid = 0;
 
-		/* मुक्त probe-request ढाँचा */
-		dev_kमुक्त_skb(wlvअगर->probereq);
-		wlvअगर->probereq = शून्य;
+		/* free probe-request template */
+		dev_kfree_skb(wlvif->probereq);
+		wlvif->probereq = NULL;
 
 		/* disable connection monitor features */
-		ret = wl1271_acx_conn_monit_params(wl, wlvअगर, false);
-		अगर (ret < 0)
-			वापस ret;
+		ret = wl1271_acx_conn_monit_params(wl, wlvif, false);
+		if (ret < 0)
+			return ret;
 
 		/* Disable the keep-alive feature */
-		ret = wl1271_acx_keep_alive_mode(wl, wlvअगर, false);
-		अगर (ret < 0)
-			वापस ret;
+		ret = wl1271_acx_keep_alive_mode(wl, wlvif, false);
+		if (ret < 0)
+			return ret;
 
 		/* disable beacon filtering */
-		ret = wl1271_acx_beacon_filter_opt(wl, wlvअगर, false);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		ret = wl1271_acx_beacon_filter_opt(wl, wlvif, false);
+		if (ret < 0)
+			return ret;
+	}
 
-	अगर (test_and_clear_bit(WLVIF_FLAG_CS_PROGRESS, &wlvअगर->flags)) अणु
-		काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+	if (test_and_clear_bit(WLVIF_FLAG_CS_PROGRESS, &wlvif->flags)) {
+		struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
-		wl12xx_cmd_stop_channel_चयन(wl, wlvअगर);
-		ieee80211_chचयन_करोne(vअगर, false);
-		cancel_delayed_work(&wlvअगर->channel_चयन_work);
-	पूर्ण
+		wl12xx_cmd_stop_channel_switch(wl, wlvif);
+		ieee80211_chswitch_done(vif, false);
+		cancel_delayed_work(&wlvif->channel_switch_work);
+	}
 
-	/* invalidate keep-alive ढाँचा */
-	wl1271_acx_keep_alive_config(wl, wlvअगर,
-				     wlvअगर->sta.klv_ढाँचा_id,
+	/* invalidate keep-alive template */
+	wl1271_acx_keep_alive_config(wl, wlvif,
+				     wlvif->sta.klv_template_id,
 				     ACX_KEEP_ALIVE_TPL_INVALID);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wl1271_set_band_rate(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	wlvअगर->basic_rate_set = wlvअगर->bitrate_masks[wlvअगर->band];
-	wlvअगर->rate_set = wlvअगर->basic_rate_set;
-पूर्ण
+static void wl1271_set_band_rate(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	wlvif->basic_rate_set = wlvif->bitrate_masks[wlvif->band];
+	wlvif->rate_set = wlvif->basic_rate_set;
+}
 
-अटल व्योम wl1271_sta_handle_idle(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+static void wl1271_sta_handle_idle(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				   bool idle)
-अणु
-	bool cur_idle = !test_bit(WLVIF_FLAG_ACTIVE, &wlvअगर->flags);
+{
+	bool cur_idle = !test_bit(WLVIF_FLAG_ACTIVE, &wlvif->flags);
 
-	अगर (idle == cur_idle)
-		वापस;
+	if (idle == cur_idle)
+		return;
 
-	अगर (idle) अणु
-		clear_bit(WLVIF_FLAG_ACTIVE, &wlvअगर->flags);
-	पूर्ण अन्यथा अणु
+	if (idle) {
+		clear_bit(WLVIF_FLAG_ACTIVE, &wlvif->flags);
+	} else {
 		/* The current firmware only supports sched_scan in idle */
-		अगर (wl->sched_vअगर == wlvअगर)
-			wl->ops->sched_scan_stop(wl, wlvअगर);
+		if (wl->sched_vif == wlvif)
+			wl->ops->sched_scan_stop(wl, wlvif);
 
-		set_bit(WLVIF_FLAG_ACTIVE, &wlvअगर->flags);
-	पूर्ण
-पूर्ण
+		set_bit(WLVIF_FLAG_ACTIVE, &wlvif->flags);
+	}
+}
 
-अटल पूर्णांक wl12xx_config_vअगर(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			     काष्ठा ieee80211_conf *conf, u32 changed)
-अणु
-	पूर्णांक ret;
+static int wl12xx_config_vif(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			     struct ieee80211_conf *conf, u32 changed)
+{
+	int ret;
 
-	अगर (wlcore_is_p2p_mgmt(wlvअगर))
-		वापस 0;
+	if (wlcore_is_p2p_mgmt(wlvif))
+		return 0;
 
-	अगर (conf->घातer_level != wlvअगर->घातer_level) अणु
-		ret = wl1271_acx_tx_घातer(wl, wlvअगर, conf->घातer_level);
-		अगर (ret < 0)
-			वापस ret;
+	if (conf->power_level != wlvif->power_level) {
+		ret = wl1271_acx_tx_power(wl, wlvif, conf->power_level);
+		if (ret < 0)
+			return ret;
 
-		wlvअगर->घातer_level = conf->घातer_level;
-	पूर्ण
+		wlvif->power_level = conf->power_level;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl1271_op_config(काष्ठा ieee80211_hw *hw, u32 changed)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	काष्ठा ieee80211_conf *conf = &hw->conf;
-	पूर्णांक ret = 0;
+static int wl1271_op_config(struct ieee80211_hw *hw, u32 changed)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif;
+	struct ieee80211_conf *conf = &hw->conf;
+	int ret = 0;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 config psm %s power %d %s"
 		     " changed 0x%x",
 		     conf->flags & IEEE80211_CONF_PS ? "on" : "off",
-		     conf->घातer_level,
+		     conf->power_level,
 		     conf->flags & IEEE80211_CONF_IDLE ? "idle" : "in use",
 			 changed);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (changed & IEEE80211_CONF_CHANGE_POWER)
-		wl->घातer_level = conf->घातer_level;
+	if (changed & IEEE80211_CONF_CHANGE_POWER)
+		wl->power_level = conf->power_level;
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	/* configure each पूर्णांकerface */
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		ret = wl12xx_config_vअगर(wl, wlvअगर, conf, changed);
-		अगर (ret < 0)
-			जाओ out_sleep;
-	पूर्ण
+	/* configure each interface */
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		ret = wl12xx_config_vif(wl, wlvif, conf, changed);
+		if (ret < 0)
+			goto out_sleep;
+	}
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा wl1271_filter_params अणु
+struct wl1271_filter_params {
 	bool enabled;
-	पूर्णांक mc_list_length;
+	int mc_list_length;
 	u8 mc_list[ACX_MC_ADDRESS_GROUP_MAX][ETH_ALEN];
-पूर्ण;
+};
 
-अटल u64 wl1271_op_prepare_multicast(काष्ठा ieee80211_hw *hw,
-				       काष्ठा netdev_hw_addr_list *mc_list)
-अणु
-	काष्ठा wl1271_filter_params *fp;
-	काष्ठा netdev_hw_addr *ha;
+static u64 wl1271_op_prepare_multicast(struct ieee80211_hw *hw,
+				       struct netdev_hw_addr_list *mc_list)
+{
+	struct wl1271_filter_params *fp;
+	struct netdev_hw_addr *ha;
 
-	fp = kzalloc(माप(*fp), GFP_ATOMIC);
-	अगर (!fp) अणु
+	fp = kzalloc(sizeof(*fp), GFP_ATOMIC);
+	if (!fp) {
 		wl1271_error("Out of memory setting filters.");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* update multicast filtering parameters */
 	fp->mc_list_length = 0;
-	अगर (netdev_hw_addr_list_count(mc_list) > ACX_MC_ADDRESS_GROUP_MAX) अणु
+	if (netdev_hw_addr_list_count(mc_list) > ACX_MC_ADDRESS_GROUP_MAX) {
 		fp->enabled = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		fp->enabled = true;
-		netdev_hw_addr_list_क्रम_each(ha, mc_list) अणु
-			स_नकल(fp->mc_list[fp->mc_list_length],
+		netdev_hw_addr_list_for_each(ha, mc_list) {
+			memcpy(fp->mc_list[fp->mc_list_length],
 					ha->addr, ETH_ALEN);
 			fp->mc_list_length++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस (u64)(अचिन्हित दीर्घ)fp;
-पूर्ण
+	return (u64)(unsigned long)fp;
+}
 
-#घोषणा WL1271_SUPPORTED_FILTERS (FIF_ALLMULTI | \
+#define WL1271_SUPPORTED_FILTERS (FIF_ALLMULTI | \
 				  FIF_FCSFAIL | \
 				  FIF_BCN_PRBRESP_PROMISC | \
 				  FIF_CONTROL | \
 				  FIF_OTHER_BSS)
 
-अटल व्योम wl1271_op_configure_filter(काष्ठा ieee80211_hw *hw,
-				       अचिन्हित पूर्णांक changed,
-				       अचिन्हित पूर्णांक *total, u64 multicast)
-अणु
-	काष्ठा wl1271_filter_params *fp = (व्योम *)(अचिन्हित दीर्घ)multicast;
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर;
+static void wl1271_op_configure_filter(struct ieee80211_hw *hw,
+				       unsigned int changed,
+				       unsigned int *total, u64 multicast)
+{
+	struct wl1271_filter_params *fp = (void *)(unsigned long)multicast;
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif;
 
-	पूर्णांक ret;
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 configure filter changed %x"
 		     " total %x", changed, *total);
@@ -3211,293 +3210,293 @@ out:
 	*total &= WL1271_SUPPORTED_FILTERS;
 	changed &= WL1271_SUPPORTED_FILTERS;
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		अगर (wlcore_is_p2p_mgmt(wlvअगर))
-			जारी;
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		if (wlcore_is_p2p_mgmt(wlvif))
+			continue;
 
-		अगर (wlvअगर->bss_type != BSS_TYPE_AP_BSS) अणु
-			अगर (*total & FIF_ALLMULTI)
-				ret = wl1271_acx_group_address_tbl(wl, wlvअगर,
+		if (wlvif->bss_type != BSS_TYPE_AP_BSS) {
+			if (*total & FIF_ALLMULTI)
+				ret = wl1271_acx_group_address_tbl(wl, wlvif,
 								   false,
-								   शून्य, 0);
-			अन्यथा अगर (fp)
-				ret = wl1271_acx_group_address_tbl(wl, wlvअगर,
+								   NULL, 0);
+			else if (fp)
+				ret = wl1271_acx_group_address_tbl(wl, wlvif,
 							fp->enabled,
 							fp->mc_list,
 							fp->mc_list_length);
-			अगर (ret < 0)
-				जाओ out_sleep;
-		पूर्ण
+			if (ret < 0)
+				goto out_sleep;
+		}
 
 		/*
-		 * If पूर्णांकerface in AP mode and created with allmulticast then disable
+		 * If interface in AP mode and created with allmulticast then disable
 		 * the firmware filters so that all multicast packets are passed
-		 * This is mandatory क्रम MDNS based discovery protocols 
+		 * This is mandatory for MDNS based discovery protocols 
 		 */
- 		अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS) अणु
- 			अगर (*total & FIF_ALLMULTI) अणु
-				ret = wl1271_acx_group_address_tbl(wl, wlvअगर,
+ 		if (wlvif->bss_type == BSS_TYPE_AP_BSS) {
+ 			if (*total & FIF_ALLMULTI) {
+				ret = wl1271_acx_group_address_tbl(wl, wlvif,
 							false,
-							शून्य, 0);
-				अगर (ret < 0)
-					जाओ out_sleep;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+							NULL, 0);
+				if (ret < 0)
+					goto out_sleep;
+			}
+		}
+	}
 
 	/*
-	 * the fw करोesn't provide an api to configure the filters. instead,
+	 * the fw doesn't provide an api to configure the filters. instead,
 	 * the filters configuration is based on the active roles / ROC
 	 * state.
 	 */
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-	kमुक्त(fp);
-पूर्ण
+	kfree(fp);
+}
 
-अटल पूर्णांक wl1271_record_ap_key(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+static int wl1271_record_ap_key(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				u8 id, u8 key_type, u8 key_size,
-				स्थिर u8 *key, u8 hlid, u32 tx_seq_32,
+				const u8 *key, u8 hlid, u32 tx_seq_32,
 				u16 tx_seq_16, bool is_pairwise)
-अणु
-	काष्ठा wl1271_ap_key *ap_key;
-	पूर्णांक i;
+{
+	struct wl1271_ap_key *ap_key;
+	int i;
 
-	wl1271_debug(DEBUG_CRYPT, "record ap key id %d", (पूर्णांक)id);
+	wl1271_debug(DEBUG_CRYPT, "record ap key id %d", (int)id);
 
-	अगर (key_size > MAX_KEY_SIZE)
-		वापस -EINVAL;
+	if (key_size > MAX_KEY_SIZE)
+		return -EINVAL;
 
 	/*
-	 * Find next मुक्त entry in ap_keys. Also check we are not replacing
+	 * Find next free entry in ap_keys. Also check we are not replacing
 	 * an existing key.
 	 */
-	क्रम (i = 0; i < MAX_NUM_KEYS; i++) अणु
-		अगर (wlvअगर->ap.recorded_keys[i] == शून्य)
-			अवरोध;
+	for (i = 0; i < MAX_NUM_KEYS; i++) {
+		if (wlvif->ap.recorded_keys[i] == NULL)
+			break;
 
-		अगर (wlvअगर->ap.recorded_keys[i]->id == id) अणु
+		if (wlvif->ap.recorded_keys[i]->id == id) {
 			wl1271_warning("trying to record key replacement");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (i == MAX_NUM_KEYS)
-		वापस -EBUSY;
+	if (i == MAX_NUM_KEYS)
+		return -EBUSY;
 
-	ap_key = kzalloc(माप(*ap_key), GFP_KERNEL);
-	अगर (!ap_key)
-		वापस -ENOMEM;
+	ap_key = kzalloc(sizeof(*ap_key), GFP_KERNEL);
+	if (!ap_key)
+		return -ENOMEM;
 
 	ap_key->id = id;
 	ap_key->key_type = key_type;
 	ap_key->key_size = key_size;
-	स_नकल(ap_key->key, key, key_size);
+	memcpy(ap_key->key, key, key_size);
 	ap_key->hlid = hlid;
 	ap_key->tx_seq_32 = tx_seq_32;
 	ap_key->tx_seq_16 = tx_seq_16;
 	ap_key->is_pairwise = is_pairwise;
 
-	wlvअगर->ap.recorded_keys[i] = ap_key;
-	वापस 0;
-पूर्ण
+	wlvif->ap.recorded_keys[i] = ap_key;
+	return 0;
+}
 
-अटल व्योम wl1271_मुक्त_ap_keys(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक i;
+static void wl1271_free_ap_keys(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int i;
 
-	क्रम (i = 0; i < MAX_NUM_KEYS; i++) अणु
-		kमुक्त(wlvअगर->ap.recorded_keys[i]);
-		wlvअगर->ap.recorded_keys[i] = शून्य;
-	पूर्ण
-पूर्ण
+	for (i = 0; i < MAX_NUM_KEYS; i++) {
+		kfree(wlvif->ap.recorded_keys[i]);
+		wlvif->ap.recorded_keys[i] = NULL;
+	}
+}
 
-अटल पूर्णांक wl1271_ap_init_hwenc(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक i, ret = 0;
-	काष्ठा wl1271_ap_key *key;
+static int wl1271_ap_init_hwenc(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int i, ret = 0;
+	struct wl1271_ap_key *key;
 	bool wep_key_added = false;
 
-	क्रम (i = 0; i < MAX_NUM_KEYS; i++) अणु
+	for (i = 0; i < MAX_NUM_KEYS; i++) {
 		u8 hlid;
-		अगर (wlvअगर->ap.recorded_keys[i] == शून्य)
-			अवरोध;
+		if (wlvif->ap.recorded_keys[i] == NULL)
+			break;
 
-		key = wlvअगर->ap.recorded_keys[i];
+		key = wlvif->ap.recorded_keys[i];
 		hlid = key->hlid;
-		अगर (hlid == WL12XX_INVALID_LINK_ID)
-			hlid = wlvअगर->ap.bcast_hlid;
+		if (hlid == WL12XX_INVALID_LINK_ID)
+			hlid = wlvif->ap.bcast_hlid;
 
-		ret = wl1271_cmd_set_ap_key(wl, wlvअगर, KEY_ADD_OR_REPLACE,
+		ret = wl1271_cmd_set_ap_key(wl, wlvif, KEY_ADD_OR_REPLACE,
 					    key->id, key->key_type,
 					    key->key_size, key->key,
 					    hlid, key->tx_seq_32,
 					    key->tx_seq_16, key->is_pairwise);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 
-		अगर (key->key_type == KEY_WEP)
+		if (key->key_type == KEY_WEP)
 			wep_key_added = true;
-	पूर्ण
+	}
 
-	अगर (wep_key_added) अणु
-		ret = wl12xx_cmd_set_शेष_wep_key(wl, wlvअगर->शेष_key,
-						     wlvअगर->ap.bcast_hlid);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+	if (wep_key_added) {
+		ret = wl12xx_cmd_set_default_wep_key(wl, wlvif->default_key,
+						     wlvif->ap.bcast_hlid);
+		if (ret < 0)
+			goto out;
+	}
 
 out:
-	wl1271_मुक्त_ap_keys(wl, wlvअगर);
-	वापस ret;
-पूर्ण
+	wl1271_free_ap_keys(wl, wlvif);
+	return ret;
+}
 
-अटल पूर्णांक wl1271_set_key(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+static int wl1271_set_key(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 		       u16 action, u8 id, u8 key_type,
-		       u8 key_size, स्थिर u8 *key, u32 tx_seq_32,
-		       u16 tx_seq_16, काष्ठा ieee80211_sta *sta,
+		       u8 key_size, const u8 *key, u32 tx_seq_32,
+		       u16 tx_seq_16, struct ieee80211_sta *sta,
 		       bool is_pairwise)
-अणु
-	पूर्णांक ret;
-	bool is_ap = (wlvअगर->bss_type == BSS_TYPE_AP_BSS);
+{
+	int ret;
+	bool is_ap = (wlvif->bss_type == BSS_TYPE_AP_BSS);
 
-	अगर (is_ap) अणु
-		काष्ठा wl1271_station *wl_sta;
+	if (is_ap) {
+		struct wl1271_station *wl_sta;
 		u8 hlid;
 
-		अगर (sta) अणु
-			wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
+		if (sta) {
+			wl_sta = (struct wl1271_station *)sta->drv_priv;
 			hlid = wl_sta->hlid;
-		पूर्ण अन्यथा अणु
-			hlid = wlvअगर->ap.bcast_hlid;
-		पूर्ण
+		} else {
+			hlid = wlvif->ap.bcast_hlid;
+		}
 
-		अगर (!test_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags)) अणु
+		if (!test_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags)) {
 			/*
-			 * We करो not support removing keys after AP shutकरोwn.
-			 * Pretend we करो to make mac80211 happy.
+			 * We do not support removing keys after AP shutdown.
+			 * Pretend we do to make mac80211 happy.
 			 */
-			अगर (action != KEY_ADD_OR_REPLACE)
-				वापस 0;
+			if (action != KEY_ADD_OR_REPLACE)
+				return 0;
 
-			ret = wl1271_record_ap_key(wl, wlvअगर, id,
+			ret = wl1271_record_ap_key(wl, wlvif, id,
 					     key_type, key_size,
 					     key, hlid, tx_seq_32,
 					     tx_seq_16, is_pairwise);
-		पूर्ण अन्यथा अणु
-			ret = wl1271_cmd_set_ap_key(wl, wlvअगर, action,
+		} else {
+			ret = wl1271_cmd_set_ap_key(wl, wlvif, action,
 					     id, key_type, key_size,
 					     key, hlid, tx_seq_32,
 					     tx_seq_16, is_pairwise);
-		पूर्ण
+		}
 
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण अन्यथा अणु
-		स्थिर u8 *addr;
-		अटल स्थिर u8 bcast_addr[ETH_ALEN] = अणु
+		if (ret < 0)
+			return ret;
+	} else {
+		const u8 *addr;
+		static const u8 bcast_addr[ETH_ALEN] = {
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-		पूर्ण;
+		};
 
 		addr = sta ? sta->addr : bcast_addr;
 
-		अगर (is_zero_ether_addr(addr)) अणु
-			/* We करोnt support TX only encryption */
-			वापस -EOPNOTSUPP;
-		पूर्ण
+		if (is_zero_ether_addr(addr)) {
+			/* We dont support TX only encryption */
+			return -EOPNOTSUPP;
+		}
 
-		/* The wl1271 करोes not allow to हटाओ unicast keys - they
-		   will be cleared स्वतःmatically on next CMD_JOIN. Ignore the
-		   request silently, as we करोnt want the mac80211 to emit
+		/* The wl1271 does not allow to remove unicast keys - they
+		   will be cleared automatically on next CMD_JOIN. Ignore the
+		   request silently, as we dont want the mac80211 to emit
 		   an error message. */
-		अगर (action == KEY_REMOVE && !is_broadcast_ether_addr(addr))
-			वापस 0;
+		if (action == KEY_REMOVE && !is_broadcast_ether_addr(addr))
+			return 0;
 
-		/* करोn't हटाओ key अगर hlid was alपढ़ोy deleted */
-		अगर (action == KEY_REMOVE &&
-		    wlvअगर->sta.hlid == WL12XX_INVALID_LINK_ID)
-			वापस 0;
+		/* don't remove key if hlid was already deleted */
+		if (action == KEY_REMOVE &&
+		    wlvif->sta.hlid == WL12XX_INVALID_LINK_ID)
+			return 0;
 
-		ret = wl1271_cmd_set_sta_key(wl, wlvअगर, action,
+		ret = wl1271_cmd_set_sta_key(wl, wlvif, action,
 					     id, key_type, key_size,
 					     key, addr, tx_seq_32,
 					     tx_seq_16);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wlcore_op_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
-			     काष्ठा ieee80211_vअगर *vअगर,
-			     काष्ठा ieee80211_sta *sta,
-			     काष्ठा ieee80211_key_conf *key_conf)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक ret;
+static int wlcore_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
+			     struct ieee80211_vif *vif,
+			     struct ieee80211_sta *sta,
+			     struct ieee80211_key_conf *key_conf)
+{
+	struct wl1271 *wl = hw->priv;
+	int ret;
 	bool might_change_spare =
 		key_conf->cipher == WL1271_CIPHER_SUITE_GEM ||
 		key_conf->cipher == WLAN_CIPHER_SUITE_TKIP;
 
-	अगर (might_change_spare) अणु
+	if (might_change_spare) {
 		/*
 		 * stop the queues and flush to ensure the next packets are
 		 * in sync with FW spare block accounting
 		 */
 		wlcore_stop_queues(wl, WLCORE_QUEUE_STOP_REASON_SPARE_BLK);
 		wl1271_tx_flush(wl);
-	पूर्ण
+	}
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
-		जाओ out_wake_queues;
-	पूर्ण
+		goto out_wake_queues;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out_wake_queues;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out_wake_queues;
+	}
 
-	ret = wlcore_hw_set_key(wl, cmd, vअगर, sta, key_conf);
+	ret = wlcore_hw_set_key(wl, cmd, vif, sta, key_conf);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out_wake_queues:
-	अगर (might_change_spare)
+	if (might_change_spare)
 		wlcore_wake_queues(wl, WLCORE_QUEUE_STOP_REASON_SPARE_BLK);
 
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wlcore_set_key(काष्ठा wl1271 *wl, क्रमागत set_key_cmd cmd,
-		   काष्ठा ieee80211_vअगर *vअगर,
-		   काष्ठा ieee80211_sta *sta,
-		   काष्ठा ieee80211_key_conf *key_conf)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+int wlcore_set_key(struct wl1271 *wl, enum set_key_cmd cmd,
+		   struct ieee80211_vif *vif,
+		   struct ieee80211_sta *sta,
+		   struct ieee80211_key_conf *key_conf)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 	u32 tx_seq_32 = 0;
 	u16 tx_seq_16 = 0;
 	u8 key_type;
@@ -3512,1201 +3511,1201 @@ out_wake_queues:
 		     key_conf->keylen, key_conf->flags);
 	wl1271_dump(DEBUG_CRYPT, "KEY: ", key_conf->key, key_conf->keylen);
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS)
-		अगर (sta) अणु
-			काष्ठा wl1271_station *wl_sta = (व्योम *)sta->drv_priv;
+	if (wlvif->bss_type == BSS_TYPE_AP_BSS)
+		if (sta) {
+			struct wl1271_station *wl_sta = (void *)sta->drv_priv;
 			hlid = wl_sta->hlid;
-		पूर्ण अन्यथा अणु
-			hlid = wlvअगर->ap.bcast_hlid;
-		पूर्ण
-	अन्यथा
-		hlid = wlvअगर->sta.hlid;
+		} else {
+			hlid = wlvif->ap.bcast_hlid;
+		}
+	else
+		hlid = wlvif->sta.hlid;
 
-	अगर (hlid != WL12XX_INVALID_LINK_ID) अणु
-		u64 tx_seq = wl->links[hlid].total_मुक्तd_pkts;
+	if (hlid != WL12XX_INVALID_LINK_ID) {
+		u64 tx_seq = wl->links[hlid].total_freed_pkts;
 		tx_seq_32 = WL1271_TX_SECURITY_HI32(tx_seq);
 		tx_seq_16 = WL1271_TX_SECURITY_LO16(tx_seq);
-	पूर्ण
+	}
 
-	चयन (key_conf->cipher) अणु
-	हाल WLAN_CIPHER_SUITE_WEP40:
-	हाल WLAN_CIPHER_SUITE_WEP104:
+	switch (key_conf->cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
+	case WLAN_CIPHER_SUITE_WEP104:
 		key_type = KEY_WEP;
 
 		key_conf->hw_key_idx = key_conf->keyidx;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_TKIP:
+		break;
+	case WLAN_CIPHER_SUITE_TKIP:
 		key_type = KEY_TKIP;
 		key_conf->hw_key_idx = key_conf->keyidx;
-		अवरोध;
-	हाल WLAN_CIPHER_SUITE_CCMP:
+		break;
+	case WLAN_CIPHER_SUITE_CCMP:
 		key_type = KEY_AES;
 		key_conf->flags |= IEEE80211_KEY_FLAG_PUT_IV_SPACE;
-		अवरोध;
-	हाल WL1271_CIPHER_SUITE_GEM:
+		break;
+	case WL1271_CIPHER_SUITE_GEM:
 		key_type = KEY_GEM;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		wl1271_error("Unknown key algo 0x%x", key_conf->cipher);
 
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	is_pairwise = key_conf->flags & IEEE80211_KEY_FLAG_PAIRWISE;
 
-	चयन (cmd) अणु
-	हाल SET_KEY:
-		ret = wl1271_set_key(wl, wlvअगर, KEY_ADD_OR_REPLACE,
+	switch (cmd) {
+	case SET_KEY:
+		ret = wl1271_set_key(wl, wlvif, KEY_ADD_OR_REPLACE,
 				 key_conf->keyidx, key_type,
 				 key_conf->keylen, key_conf->key,
 				 tx_seq_32, tx_seq_16, sta, is_pairwise);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			wl1271_error("Could not add or replace key");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/*
-		 * reconfiguring arp response अगर the unicast (or common)
+		 * reconfiguring arp response if the unicast (or common)
 		 * encryption key type was changed
 		 */
-		अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS &&
+		if (wlvif->bss_type == BSS_TYPE_STA_BSS &&
 		    (sta || key_type == KEY_WEP) &&
-		    wlvअगर->encryption_type != key_type) अणु
-			wlvअगर->encryption_type = key_type;
-			ret = wl1271_cmd_build_arp_rsp(wl, wlvअगर);
-			अगर (ret < 0) अणु
+		    wlvif->encryption_type != key_type) {
+			wlvif->encryption_type = key_type;
+			ret = wl1271_cmd_build_arp_rsp(wl, wlvif);
+			if (ret < 0) {
 				wl1271_warning("build arp rsp failed: %d", ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+				return ret;
+			}
+		}
+		break;
 
-	हाल DISABLE_KEY:
-		ret = wl1271_set_key(wl, wlvअगर, KEY_REMOVE,
+	case DISABLE_KEY:
+		ret = wl1271_set_key(wl, wlvif, KEY_REMOVE,
 				     key_conf->keyidx, key_type,
 				     key_conf->keylen, key_conf->key,
 				     0, 0, sta, is_pairwise);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			wl1271_error("Could not remove key");
-			वापस ret;
-		पूर्ण
-		अवरोध;
+			return ret;
+		}
+		break;
 
-	शेष:
+	default:
 		wl1271_error("Unsupported key cmd 0x%x", cmd);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wlcore_set_key);
 
-अटल व्योम wl1271_op_set_शेष_key_idx(काष्ठा ieee80211_hw *hw,
-					  काष्ठा ieee80211_vअगर *vअगर,
-					  पूर्णांक key_idx)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+static void wl1271_op_set_default_key_idx(struct ieee80211_hw *hw,
+					  struct ieee80211_vif *vif,
+					  int key_idx)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 set default key idx %d",
 		     key_idx);
 
-	/* we करोn't handle unsetting of शेष key */
-	अगर (key_idx == -1)
-		वापस;
+	/* we don't handle unsetting of default key */
+	if (key_idx == -1)
+		return;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out_unlock;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out_unlock;
+	}
 
-	wlvअगर->शेष_key = key_idx;
+	wlvif->default_key = key_idx;
 
-	/* the शेष WEP key needs to be configured at least once */
-	अगर (wlvअगर->encryption_type == KEY_WEP) अणु
-		ret = wl12xx_cmd_set_शेष_wep_key(wl,
+	/* the default WEP key needs to be configured at least once */
+	if (wlvif->encryption_type == KEY_WEP) {
+		ret = wl12xx_cmd_set_default_wep_key(wl,
 				key_idx,
-				wlvअगर->sta.hlid);
-		अगर (ret < 0)
-			जाओ out_sleep;
-	पूर्ण
+				wlvif->sta.hlid);
+		if (ret < 0)
+			goto out_sleep;
+	}
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out_unlock:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-व्योम wlcore_regकरोमुख्य_config(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
+void wlcore_regdomain_config(struct wl1271 *wl)
+{
+	int ret;
 
-	अगर (!(wl->quirks & WLCORE_QUIRK_REGDOMAIN_CONF))
-		वापस;
+	if (!(wl->quirks & WLCORE_QUIRK_REGDOMAIN_CONF))
+		return;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_स्वतःsuspend(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_autosuspend(wl->dev);
+		goto out;
+	}
 
-	ret = wlcore_cmd_regकरोमुख्य_config_locked(wl);
-	अगर (ret < 0) अणु
+	ret = wlcore_cmd_regdomain_config_locked(wl);
+	if (ret < 0) {
 		wl12xx_queue_recovery_work(wl);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_op_hw_scan(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_vअगर *vअगर,
-			     काष्ठा ieee80211_scan_request *hw_req)
-अणु
-	काष्ठा cfg80211_scan_request *req = &hw_req->req;
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक ret;
-	u8 *ssid = शून्य;
-	माप_प्रकार len = 0;
+static int wl1271_op_hw_scan(struct ieee80211_hw *hw,
+			     struct ieee80211_vif *vif,
+			     struct ieee80211_scan_request *hw_req)
+{
+	struct cfg80211_scan_request *req = &hw_req->req;
+	struct wl1271 *wl = hw->priv;
+	int ret;
+	u8 *ssid = NULL;
+	size_t len = 0;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 hw scan");
 
-	अगर (req->n_ssids) अणु
+	if (req->n_ssids) {
 		ssid = req->ssids[0].ssid;
 		len = req->ssids[0].ssid_len;
-	पूर्ण
+	}
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		/*
-		 * We cannot वापस -EBUSY here because cfg80211 will expect
-		 * a call to ieee80211_scan_completed अगर we करो - in this हाल
+		 * We cannot return -EBUSY here because cfg80211 will expect
+		 * a call to ieee80211_scan_completed if we do - in this case
 		 * there won't be any call.
 		 */
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	/* fail अगर there is any role in ROC */
-	अगर (find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES) अणु
-		/* करोn't allow scanning right now */
+	/* fail if there is any role in ROC */
+	if (find_first_bit(wl->roc_map, WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES) {
+		/* don't allow scanning right now */
 		ret = -EBUSY;
-		जाओ out_sleep;
-	पूर्ण
+		goto out_sleep;
+	}
 
-	ret = wlcore_scan(hw->priv, vअगर, ssid, len, req);
+	ret = wlcore_scan(hw->priv, vif, ssid, len, req);
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl1271_op_cancel_hw_scan(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा cfg80211_scan_info info = अणु
-		.पातed = true,
-	पूर्ण;
-	पूर्णांक ret;
+static void wl1271_op_cancel_hw_scan(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct cfg80211_scan_info info = {
+		.aborted = true,
+	};
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 cancel hw scan");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	अगर (wl->scan.state == WL1271_SCAN_STATE_IDLE)
-		जाओ out;
+	if (wl->scan.state == WL1271_SCAN_STATE_IDLE)
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	अगर (wl->scan.state != WL1271_SCAN_STATE_DONE) अणु
-		ret = wl->ops->scan_stop(wl, wlvअगर);
-		अगर (ret < 0)
-			जाओ out_sleep;
-	पूर्ण
+	if (wl->scan.state != WL1271_SCAN_STATE_DONE) {
+		ret = wl->ops->scan_stop(wl, wlvif);
+		if (ret < 0)
+			goto out_sleep;
+	}
 
 	/*
-	 * Rearm the tx watchकरोg just beक्रमe idling scan. This
-	 * prevents just-finished scans from triggering the watchकरोg
+	 * Rearm the tx watchdog just before idling scan. This
+	 * prevents just-finished scans from triggering the watchdog
 	 */
-	wl12xx_rearm_tx_watchकरोg_locked(wl);
+	wl12xx_rearm_tx_watchdog_locked(wl);
 
 	wl->scan.state = WL1271_SCAN_STATE_IDLE;
-	स_रखो(wl->scan.scanned_ch, 0, माप(wl->scan.scanned_ch));
-	wl->scan_wlvअगर = शून्य;
-	wl->scan.req = शून्य;
+	memset(wl->scan.scanned_ch, 0, sizeof(wl->scan.scanned_ch));
+	wl->scan_wlvif = NULL;
+	wl->scan.req = NULL;
 	ieee80211_scan_completed(wl->hw, &info);
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
 	cancel_delayed_work_sync(&wl->scan_complete_work);
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_op_sched_scan_start(काष्ठा ieee80211_hw *hw,
-				      काष्ठा ieee80211_vअगर *vअगर,
-				      काष्ठा cfg80211_sched_scan_request *req,
-				      काष्ठा ieee80211_scan_ies *ies)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+static int wl1271_op_sched_scan_start(struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif,
+				      struct cfg80211_sched_scan_request *req,
+				      struct ieee80211_scan_ies *ies)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "wl1271_op_sched_scan_start");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl->ops->sched_scan_start(wl, wlvअगर, req, ies);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	ret = wl->ops->sched_scan_start(wl, wlvif, req, ies);
+	if (ret < 0)
+		goto out_sleep;
 
-	wl->sched_vअगर = wlvअगर;
+	wl->sched_vif = wlvif;
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_op_sched_scan_stop(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+static int wl1271_op_sched_scan_stop(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "wl1271_op_sched_scan_stop");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl->ops->sched_scan_stop(wl, wlvअगर);
+	wl->ops->sched_scan_stop(wl, wlvif);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl1271_op_set_frag_threshold(काष्ठा ieee80211_hw *hw, u32 value)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक ret = 0;
+static int wl1271_op_set_frag_threshold(struct ieee80211_hw *hw, u32 value)
+{
+	struct wl1271 *wl = hw->priv;
+	int ret = 0;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
 	ret = wl1271_acx_frag_threshold(wl, value);
-	अगर (ret < 0)
+	if (ret < 0)
 		wl1271_warning("wl1271_op_set_frag_threshold failed: %d", ret);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_op_set_rts_threshold(काष्ठा ieee80211_hw *hw, u32 value)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	पूर्णांक ret = 0;
+static int wl1271_op_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif;
+	int ret = 0;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		ret = wl1271_acx_rts_threshold(wl, wlvअगर, value);
-		अगर (ret < 0)
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		ret = wl1271_acx_rts_threshold(wl, wlvif, value);
+		if (ret < 0)
 			wl1271_warning("set rts threshold failed: %d", ret);
-	पूर्ण
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	}
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl12xx_हटाओ_ie(काष्ठा sk_buff *skb, u8 eid, पूर्णांक ieoffset)
-अणु
-	पूर्णांक len;
-	स्थिर u8 *next, *end = skb->data + skb->len;
+static void wl12xx_remove_ie(struct sk_buff *skb, u8 eid, int ieoffset)
+{
+	int len;
+	const u8 *next, *end = skb->data + skb->len;
 	u8 *ie = (u8 *)cfg80211_find_ie(eid, skb->data + ieoffset,
 					skb->len - ieoffset);
-	अगर (!ie)
-		वापस;
+	if (!ie)
+		return;
 	len = ie[1] + 2;
 	next = ie + len;
-	स_हटाओ(ie, next, end - next);
+	memmove(ie, next, end - next);
 	skb_trim(skb, skb->len - len);
-पूर्ण
+}
 
-अटल व्योम wl12xx_हटाओ_venकरोr_ie(काष्ठा sk_buff *skb,
-					    अचिन्हित पूर्णांक oui, u8 oui_type,
-					    पूर्णांक ieoffset)
-अणु
-	पूर्णांक len;
-	स्थिर u8 *next, *end = skb->data + skb->len;
-	u8 *ie = (u8 *)cfg80211_find_venकरोr_ie(oui, oui_type,
+static void wl12xx_remove_vendor_ie(struct sk_buff *skb,
+					    unsigned int oui, u8 oui_type,
+					    int ieoffset)
+{
+	int len;
+	const u8 *next, *end = skb->data + skb->len;
+	u8 *ie = (u8 *)cfg80211_find_vendor_ie(oui, oui_type,
 					       skb->data + ieoffset,
 					       skb->len - ieoffset);
-	अगर (!ie)
-		वापस;
+	if (!ie)
+		return;
 	len = ie[1] + 2;
 	next = ie + len;
-	स_हटाओ(ie, next, end - next);
+	memmove(ie, next, end - next);
 	skb_trim(skb, skb->len - len);
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_ap_set_probe_resp_पंचांगpl(काष्ठा wl1271 *wl, u32 rates,
-					 काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा sk_buff *skb;
-	पूर्णांक ret;
+static int wl1271_ap_set_probe_resp_tmpl(struct wl1271 *wl, u32 rates,
+					 struct ieee80211_vif *vif)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct sk_buff *skb;
+	int ret;
 
-	skb = ieee80211_proberesp_get(wl->hw, vअगर);
-	अगर (!skb)
-		वापस -EOPNOTSUPP;
+	skb = ieee80211_proberesp_get(wl->hw, vif);
+	if (!skb)
+		return -EOPNOTSUPP;
 
-	ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	ret = wl1271_cmd_template_set(wl, wlvif->role_id,
 				      CMD_TEMPL_AP_PROBE_RESPONSE,
 				      skb->data,
 				      skb->len, 0,
 				      rates);
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	wl1271_debug(DEBUG_AP, "probe response updated");
-	set_bit(WLVIF_FLAG_AP_PROBE_RESP_SET, &wlvअगर->flags);
+	set_bit(WLVIF_FLAG_AP_PROBE_RESP_SET, &wlvif->flags);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_ap_set_probe_resp_पंचांगpl_legacy(काष्ठा wl1271 *wl,
-					     काष्ठा ieee80211_vअगर *vअगर,
+static int wl1271_ap_set_probe_resp_tmpl_legacy(struct wl1271 *wl,
+					     struct ieee80211_vif *vif,
 					     u8 *probe_rsp_data,
-					     माप_प्रकार probe_rsp_len,
+					     size_t probe_rsp_len,
 					     u32 rates)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा ieee80211_bss_conf *bss_conf = &vअगर->bss_conf;
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct ieee80211_bss_conf *bss_conf = &vif->bss_conf;
 	u8 probe_rsp_templ[WL1271_CMD_TEMPL_MAX_SIZE];
-	पूर्णांक ssid_ie_offset, ie_offset, templ_len;
-	स्थिर u8 *ptr;
+	int ssid_ie_offset, ie_offset, templ_len;
+	const u8 *ptr;
 
-	/* no need to change probe response अगर the SSID is set correctly */
-	अगर (wlvअगर->ssid_len > 0)
-		वापस wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	/* no need to change probe response if the SSID is set correctly */
+	if (wlvif->ssid_len > 0)
+		return wl1271_cmd_template_set(wl, wlvif->role_id,
 					       CMD_TEMPL_AP_PROBE_RESPONSE,
 					       probe_rsp_data,
 					       probe_rsp_len, 0,
 					       rates);
 
-	अगर (probe_rsp_len + bss_conf->ssid_len > WL1271_CMD_TEMPL_MAX_SIZE) अणु
+	if (probe_rsp_len + bss_conf->ssid_len > WL1271_CMD_TEMPL_MAX_SIZE) {
 		wl1271_error("probe_rsp template too big");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* start searching from IE offset */
-	ie_offset = दुरत्व(काष्ठा ieee80211_mgmt, u.probe_resp.variable);
+	ie_offset = offsetof(struct ieee80211_mgmt, u.probe_resp.variable);
 
 	ptr = cfg80211_find_ie(WLAN_EID_SSID, probe_rsp_data + ie_offset,
 			       probe_rsp_len - ie_offset);
-	अगर (!ptr) अणु
+	if (!ptr) {
 		wl1271_error("No SSID in beacon!");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ssid_ie_offset = ptr - probe_rsp_data;
 	ptr += (ptr[1] + 2);
 
-	स_नकल(probe_rsp_templ, probe_rsp_data, ssid_ie_offset);
+	memcpy(probe_rsp_templ, probe_rsp_data, ssid_ie_offset);
 
 	/* insert SSID from bss_conf */
 	probe_rsp_templ[ssid_ie_offset] = WLAN_EID_SSID;
 	probe_rsp_templ[ssid_ie_offset + 1] = bss_conf->ssid_len;
-	स_नकल(probe_rsp_templ + ssid_ie_offset + 2,
+	memcpy(probe_rsp_templ + ssid_ie_offset + 2,
 	       bss_conf->ssid, bss_conf->ssid_len);
 	templ_len = ssid_ie_offset + 2 + bss_conf->ssid_len;
 
-	स_नकल(probe_rsp_templ + ssid_ie_offset + 2 + bss_conf->ssid_len,
+	memcpy(probe_rsp_templ + ssid_ie_offset + 2 + bss_conf->ssid_len,
 	       ptr, probe_rsp_len - (ptr - probe_rsp_data));
 	templ_len += probe_rsp_len - (ptr - probe_rsp_data);
 
-	वापस wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	return wl1271_cmd_template_set(wl, wlvif->role_id,
 				       CMD_TEMPL_AP_PROBE_RESPONSE,
 				       probe_rsp_templ,
 				       templ_len, 0,
 				       rates);
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_bss_erp_info_changed(काष्ठा wl1271 *wl,
-				       काष्ठा ieee80211_vअगर *vअगर,
-				       काष्ठा ieee80211_bss_conf *bss_conf,
+static int wl1271_bss_erp_info_changed(struct wl1271 *wl,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_bss_conf *bss_conf,
 				       u32 changed)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret = 0;
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret = 0;
 
-	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
-		अगर (bss_conf->use_लघु_slot)
-			ret = wl1271_acx_slot(wl, wlvअगर, SLOT_TIME_SHORT);
-		अन्यथा
-			ret = wl1271_acx_slot(wl, wlvअगर, SLOT_TIME_LONG);
-		अगर (ret < 0) अणु
+	if (changed & BSS_CHANGED_ERP_SLOT) {
+		if (bss_conf->use_short_slot)
+			ret = wl1271_acx_slot(wl, wlvif, SLOT_TIME_SHORT);
+		else
+			ret = wl1271_acx_slot(wl, wlvif, SLOT_TIME_LONG);
+		if (ret < 0) {
 			wl1271_warning("Set slot time failed %d", ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_PREAMBLE) अणु
-		अगर (bss_conf->use_लघु_preamble)
-			wl1271_acx_set_preamble(wl, wlvअगर, ACX_PREAMBLE_SHORT);
-		अन्यथा
-			wl1271_acx_set_preamble(wl, wlvअगर, ACX_PREAMBLE_LONG);
-	पूर्ण
+	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
+		if (bss_conf->use_short_preamble)
+			wl1271_acx_set_preamble(wl, wlvif, ACX_PREAMBLE_SHORT);
+		else
+			wl1271_acx_set_preamble(wl, wlvif, ACX_PREAMBLE_LONG);
+	}
 
-	अगर (changed & BSS_CHANGED_ERP_CTS_PROT) अणु
-		अगर (bss_conf->use_cts_prot)
-			ret = wl1271_acx_cts_protect(wl, wlvअगर,
+	if (changed & BSS_CHANGED_ERP_CTS_PROT) {
+		if (bss_conf->use_cts_prot)
+			ret = wl1271_acx_cts_protect(wl, wlvif,
 						     CTSPROTECT_ENABLE);
-		अन्यथा
-			ret = wl1271_acx_cts_protect(wl, wlvअगर,
+		else
+			ret = wl1271_acx_cts_protect(wl, wlvif,
 						     CTSPROTECT_DISABLE);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			wl1271_warning("Set ctsprotect failed %d", ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wlcore_set_beacon_ढाँचा(काष्ठा wl1271 *wl,
-				      काष्ठा ieee80211_vअगर *vअगर,
+static int wlcore_set_beacon_template(struct wl1271 *wl,
+				      struct ieee80211_vif *vif,
 				      bool is_ap)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा ieee80211_hdr *hdr;
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct ieee80211_hdr *hdr;
 	u32 min_rate;
-	पूर्णांक ret;
-	पूर्णांक ieoffset = दुरत्व(काष्ठा ieee80211_mgmt, u.beacon.variable);
-	काष्ठा sk_buff *beacon = ieee80211_beacon_get(wl->hw, vअगर);
-	u16 पंचांगpl_id;
+	int ret;
+	int ieoffset = offsetof(struct ieee80211_mgmt, u.beacon.variable);
+	struct sk_buff *beacon = ieee80211_beacon_get(wl->hw, vif);
+	u16 tmpl_id;
 
-	अगर (!beacon) अणु
+	if (!beacon) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	wl1271_debug(DEBUG_MASTER, "beacon updated");
 
-	ret = wl1271_ssid_set(wlvअगर, beacon, ieoffset);
-	अगर (ret < 0) अणु
-		dev_kमुक्त_skb(beacon);
-		जाओ out;
-	पूर्ण
-	min_rate = wl1271_tx_min_rate_get(wl, wlvअगर->basic_rate_set);
-	पंचांगpl_id = is_ap ? CMD_TEMPL_AP_BEACON :
+	ret = wl1271_ssid_set(wlvif, beacon, ieoffset);
+	if (ret < 0) {
+		dev_kfree_skb(beacon);
+		goto out;
+	}
+	min_rate = wl1271_tx_min_rate_get(wl, wlvif->basic_rate_set);
+	tmpl_id = is_ap ? CMD_TEMPL_AP_BEACON :
 		CMD_TEMPL_BEACON;
-	ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id, पंचांगpl_id,
+	ret = wl1271_cmd_template_set(wl, wlvif->role_id, tmpl_id,
 				      beacon->data,
 				      beacon->len, 0,
 				      min_rate);
-	अगर (ret < 0) अणु
-		dev_kमुक्त_skb(beacon);
-		जाओ out;
-	पूर्ण
+	if (ret < 0) {
+		dev_kfree_skb(beacon);
+		goto out;
+	}
 
-	wlvअगर->wmm_enabled =
-		cfg80211_find_venकरोr_ie(WLAN_OUI_MICROSOFT,
+	wlvif->wmm_enabled =
+		cfg80211_find_vendor_ie(WLAN_OUI_MICROSOFT,
 					WLAN_OUI_TYPE_MICROSOFT_WMM,
 					beacon->data + ieoffset,
 					beacon->len - ieoffset);
 
 	/*
-	 * In हाल we alपढ़ोy have a probe-resp beacon set explicitly
-	 * by usermode, करोn't use the beacon data.
+	 * In case we already have a probe-resp beacon set explicitly
+	 * by usermode, don't use the beacon data.
 	 */
-	अगर (test_bit(WLVIF_FLAG_AP_PROBE_RESP_SET, &wlvअगर->flags))
-		जाओ end_bcn;
+	if (test_bit(WLVIF_FLAG_AP_PROBE_RESP_SET, &wlvif->flags))
+		goto end_bcn;
 
-	/* हटाओ TIM ie from probe response */
-	wl12xx_हटाओ_ie(beacon, WLAN_EID_TIM, ieoffset);
+	/* remove TIM ie from probe response */
+	wl12xx_remove_ie(beacon, WLAN_EID_TIM, ieoffset);
 
 	/*
-	 * हटाओ p2p ie from probe response.
-	 * the fw reponds to probe requests that करोn't include
+	 * remove p2p ie from probe response.
+	 * the fw reponds to probe requests that don't include
 	 * the p2p ie. probe requests with p2p ie will be passed,
 	 * and will be responded by the supplicant (the spec
-	 * क्रमbids including the p2p ie when responding to probe
+	 * forbids including the p2p ie when responding to probe
 	 * requests that didn't include it).
 	 */
-	wl12xx_हटाओ_venकरोr_ie(beacon, WLAN_OUI_WFA,
+	wl12xx_remove_vendor_ie(beacon, WLAN_OUI_WFA,
 				WLAN_OUI_TYPE_WFA_P2P, ieoffset);
 
-	hdr = (काष्ठा ieee80211_hdr *) beacon->data;
+	hdr = (struct ieee80211_hdr *) beacon->data;
 	hdr->frame_control = cpu_to_le16(IEEE80211_FTYPE_MGMT |
 					 IEEE80211_STYPE_PROBE_RESP);
-	अगर (is_ap)
-		ret = wl1271_ap_set_probe_resp_पंचांगpl_legacy(wl, vअगर,
+	if (is_ap)
+		ret = wl1271_ap_set_probe_resp_tmpl_legacy(wl, vif,
 							   beacon->data,
 							   beacon->len,
 							   min_rate);
-	अन्यथा
-		ret = wl1271_cmd_ढाँचा_set(wl, wlvअगर->role_id,
+	else
+		ret = wl1271_cmd_template_set(wl, wlvif->role_id,
 					      CMD_TEMPL_PROBE_RESPONSE,
 					      beacon->data,
 					      beacon->len, 0,
 					      min_rate);
 end_bcn:
-	dev_kमुक्त_skb(beacon);
-	अगर (ret < 0)
-		जाओ out;
+	dev_kfree_skb(beacon);
+	if (ret < 0)
+		goto out;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_bss_beacon_info_changed(काष्ठा wl1271 *wl,
-					  काष्ठा ieee80211_vअगर *vअगर,
-					  काष्ठा ieee80211_bss_conf *bss_conf,
+static int wl1271_bss_beacon_info_changed(struct wl1271 *wl,
+					  struct ieee80211_vif *vif,
+					  struct ieee80211_bss_conf *bss_conf,
 					  u32 changed)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	bool is_ap = (wlvअगर->bss_type == BSS_TYPE_AP_BSS);
-	पूर्णांक ret = 0;
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	bool is_ap = (wlvif->bss_type == BSS_TYPE_AP_BSS);
+	int ret = 0;
 
-	अगर (changed & BSS_CHANGED_BEACON_INT) अणु
+	if (changed & BSS_CHANGED_BEACON_INT) {
 		wl1271_debug(DEBUG_MASTER, "beacon interval updated: %d",
-			bss_conf->beacon_पूर्णांक);
+			bss_conf->beacon_int);
 
-		wlvअगर->beacon_पूर्णांक = bss_conf->beacon_पूर्णांक;
-	पूर्ण
+		wlvif->beacon_int = bss_conf->beacon_int;
+	}
 
-	अगर ((changed & BSS_CHANGED_AP_PROBE_RESP) && is_ap) अणु
-		u32 rate = wl1271_tx_min_rate_get(wl, wlvअगर->basic_rate_set);
+	if ((changed & BSS_CHANGED_AP_PROBE_RESP) && is_ap) {
+		u32 rate = wl1271_tx_min_rate_get(wl, wlvif->basic_rate_set);
 
-		wl1271_ap_set_probe_resp_पंचांगpl(wl, rate, vअगर);
-	पूर्ण
+		wl1271_ap_set_probe_resp_tmpl(wl, rate, vif);
+	}
 
-	अगर (changed & BSS_CHANGED_BEACON) अणु
-		ret = wlcore_set_beacon_ढाँचा(wl, vअगर, is_ap);
-		अगर (ret < 0)
-			जाओ out;
+	if (changed & BSS_CHANGED_BEACON) {
+		ret = wlcore_set_beacon_template(wl, vif, is_ap);
+		if (ret < 0)
+			goto out;
 
-		अगर (test_and_clear_bit(WLVIF_FLAG_BEACON_DISABLED,
-				       &wlvअगर->flags)) अणु
-			ret = wlcore_hw_dfs_master_restart(wl, wlvअगर);
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+		if (test_and_clear_bit(WLVIF_FLAG_BEACON_DISABLED,
+				       &wlvif->flags)) {
+			ret = wlcore_hw_dfs_master_restart(wl, wlvif);
+			if (ret < 0)
+				goto out;
+		}
+	}
 out:
-	अगर (ret != 0)
+	if (ret != 0)
 		wl1271_error("beacon info change failed: %d", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* AP mode changes */
-अटल व्योम wl1271_bss_info_changed_ap(काष्ठा wl1271 *wl,
-				       काष्ठा ieee80211_vअगर *vअगर,
-				       काष्ठा ieee80211_bss_conf *bss_conf,
+static void wl1271_bss_info_changed_ap(struct wl1271 *wl,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_bss_conf *bss_conf,
 				       u32 changed)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret = 0;
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret = 0;
 
-	अगर (changed & BSS_CHANGED_BASIC_RATES) अणु
+	if (changed & BSS_CHANGED_BASIC_RATES) {
 		u32 rates = bss_conf->basic_rates;
 
-		wlvअगर->basic_rate_set = wl1271_tx_enabled_rates_get(wl, rates,
-								 wlvअगर->band);
-		wlvअगर->basic_rate = wl1271_tx_min_rate_get(wl,
-							wlvअगर->basic_rate_set);
+		wlvif->basic_rate_set = wl1271_tx_enabled_rates_get(wl, rates,
+								 wlvif->band);
+		wlvif->basic_rate = wl1271_tx_min_rate_get(wl,
+							wlvif->basic_rate_set);
 
-		ret = wl1271_init_ap_rates(wl, wlvअगर);
-		अगर (ret < 0) अणु
+		ret = wl1271_init_ap_rates(wl, wlvif);
+		if (ret < 0) {
 			wl1271_error("AP rate policy change failed %d", ret);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = wl1271_ap_init_ढाँचाs(wl, vअगर);
-		अगर (ret < 0)
-			जाओ out;
+		ret = wl1271_ap_init_templates(wl, vif);
+		if (ret < 0)
+			goto out;
 
-		/* No need to set probe resp ढाँचा क्रम mesh */
-		अगर (!ieee80211_vअगर_is_mesh(vअगर)) अणु
-			ret = wl1271_ap_set_probe_resp_पंचांगpl(wl,
-							    wlvअगर->basic_rate,
-							    vअगर);
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण
+		/* No need to set probe resp template for mesh */
+		if (!ieee80211_vif_is_mesh(vif)) {
+			ret = wl1271_ap_set_probe_resp_tmpl(wl,
+							    wlvif->basic_rate,
+							    vif);
+			if (ret < 0)
+				goto out;
+		}
 
-		ret = wlcore_set_beacon_ढाँचा(wl, vअगर, true);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		ret = wlcore_set_beacon_template(wl, vif, true);
+		if (ret < 0)
+			goto out;
+	}
 
-	ret = wl1271_bss_beacon_info_changed(wl, vअगर, bss_conf, changed);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl1271_bss_beacon_info_changed(wl, vif, bss_conf, changed);
+	if (ret < 0)
+		goto out;
 
-	अगर (changed & BSS_CHANGED_BEACON_ENABLED) अणु
-		अगर (bss_conf->enable_beacon) अणु
-			अगर (!test_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags)) अणु
-				ret = wl12xx_cmd_role_start_ap(wl, wlvअगर);
-				अगर (ret < 0)
-					जाओ out;
+	if (changed & BSS_CHANGED_BEACON_ENABLED) {
+		if (bss_conf->enable_beacon) {
+			if (!test_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags)) {
+				ret = wl12xx_cmd_role_start_ap(wl, wlvif);
+				if (ret < 0)
+					goto out;
 
-				ret = wl1271_ap_init_hwenc(wl, wlvअगर);
-				अगर (ret < 0)
-					जाओ out;
+				ret = wl1271_ap_init_hwenc(wl, wlvif);
+				if (ret < 0)
+					goto out;
 
-				set_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags);
+				set_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags);
 				wl1271_debug(DEBUG_AP, "started AP");
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (test_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags)) अणु
+			}
+		} else {
+			if (test_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags)) {
 				/*
-				 * AP might be in ROC in हाल we have just
+				 * AP might be in ROC in case we have just
 				 * sent auth reply. handle it.
 				 */
-				अगर (test_bit(wlvअगर->role_id, wl->roc_map))
-					wl12xx_croc(wl, wlvअगर->role_id);
+				if (test_bit(wlvif->role_id, wl->roc_map))
+					wl12xx_croc(wl, wlvif->role_id);
 
-				ret = wl12xx_cmd_role_stop_ap(wl, wlvअगर);
-				अगर (ret < 0)
-					जाओ out;
+				ret = wl12xx_cmd_role_stop_ap(wl, wlvif);
+				if (ret < 0)
+					goto out;
 
-				clear_bit(WLVIF_FLAG_AP_STARTED, &wlvअगर->flags);
+				clear_bit(WLVIF_FLAG_AP_STARTED, &wlvif->flags);
 				clear_bit(WLVIF_FLAG_AP_PROBE_RESP_SET,
-					  &wlvअगर->flags);
+					  &wlvif->flags);
 				wl1271_debug(DEBUG_AP, "stopped AP");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	ret = wl1271_bss_erp_info_changed(wl, vअगर, bss_conf, changed);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl1271_bss_erp_info_changed(wl, vif, bss_conf, changed);
+	if (ret < 0)
+		goto out;
 
-	/* Handle HT inक्रमmation change */
-	अगर ((changed & BSS_CHANGED_HT) &&
-	    (bss_conf->chandef.width != NL80211_CHAN_WIDTH_20_NOHT)) अणु
-		ret = wl1271_acx_set_ht_inक्रमmation(wl, wlvअगर,
+	/* Handle HT information change */
+	if ((changed & BSS_CHANGED_HT) &&
+	    (bss_conf->chandef.width != NL80211_CHAN_WIDTH_20_NOHT)) {
+		ret = wl1271_acx_set_ht_information(wl, wlvif,
 					bss_conf->ht_operation_mode);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			wl1271_warning("Set ht information failed %d", ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक wlcore_set_bssid(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			    काष्ठा ieee80211_bss_conf *bss_conf,
+static int wlcore_set_bssid(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			    struct ieee80211_bss_conf *bss_conf,
 			    u32 sta_rate_set)
-अणु
+{
 	u32 rates;
-	पूर्णांक ret;
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211,
 	     "changed_bssid: %pM, aid: %d, bcn_int: %d, brates: 0x%x sta_rate_set: 0x%x",
 	     bss_conf->bssid, bss_conf->aid,
-	     bss_conf->beacon_पूर्णांक,
+	     bss_conf->beacon_int,
 	     bss_conf->basic_rates, sta_rate_set);
 
-	wlvअगर->beacon_पूर्णांक = bss_conf->beacon_पूर्णांक;
+	wlvif->beacon_int = bss_conf->beacon_int;
 	rates = bss_conf->basic_rates;
-	wlvअगर->basic_rate_set =
+	wlvif->basic_rate_set =
 		wl1271_tx_enabled_rates_get(wl, rates,
-					    wlvअगर->band);
-	wlvअगर->basic_rate =
+					    wlvif->band);
+	wlvif->basic_rate =
 		wl1271_tx_min_rate_get(wl,
-				       wlvअगर->basic_rate_set);
+				       wlvif->basic_rate_set);
 
-	अगर (sta_rate_set)
-		wlvअगर->rate_set =
+	if (sta_rate_set)
+		wlvif->rate_set =
 			wl1271_tx_enabled_rates_get(wl,
 						sta_rate_set,
-						wlvअगर->band);
+						wlvif->band);
 
-	/* we only support sched_scan जबतक not connected */
-	अगर (wl->sched_vअगर == wlvअगर)
-		wl->ops->sched_scan_stop(wl, wlvअगर);
+	/* we only support sched_scan while not connected */
+	if (wl->sched_vif == wlvif)
+		wl->ops->sched_scan_stop(wl, wlvif);
 
-	ret = wl1271_acx_sta_rate_policies(wl, wlvअगर);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_acx_sta_rate_policies(wl, wlvif);
+	if (ret < 0)
+		return ret;
 
-	ret = wl12xx_cmd_build_null_data(wl, wlvअगर);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl12xx_cmd_build_null_data(wl, wlvif);
+	if (ret < 0)
+		return ret;
 
-	ret = wl1271_build_qos_null_data(wl, wl12xx_wlvअगर_to_vअगर(wlvअगर));
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_build_qos_null_data(wl, wl12xx_wlvif_to_vif(wlvif));
+	if (ret < 0)
+		return ret;
 
-	wlcore_set_ssid(wl, wlvअगर);
+	wlcore_set_ssid(wl, wlvif);
 
-	set_bit(WLVIF_FLAG_IN_USE, &wlvअगर->flags);
+	set_bit(WLVIF_FLAG_IN_USE, &wlvif->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wlcore_clear_bssid(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	पूर्णांक ret;
+static int wlcore_clear_bssid(struct wl1271 *wl, struct wl12xx_vif *wlvif)
+{
+	int ret;
 
-	/* revert back to minimum rates क्रम the current band */
-	wl1271_set_band_rate(wl, wlvअगर);
-	wlvअगर->basic_rate = wl1271_tx_min_rate_get(wl, wlvअगर->basic_rate_set);
+	/* revert back to minimum rates for the current band */
+	wl1271_set_band_rate(wl, wlvif);
+	wlvif->basic_rate = wl1271_tx_min_rate_get(wl, wlvif->basic_rate_set);
 
-	ret = wl1271_acx_sta_rate_policies(wl, wlvअगर);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_acx_sta_rate_policies(wl, wlvif);
+	if (ret < 0)
+		return ret;
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS &&
-	    test_bit(WLVIF_FLAG_IN_USE, &wlvअगर->flags)) अणु
-		ret = wl12xx_cmd_role_stop_sta(wl, wlvअगर);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS &&
+	    test_bit(WLVIF_FLAG_IN_USE, &wlvif->flags)) {
+		ret = wl12xx_cmd_role_stop_sta(wl, wlvif);
+		if (ret < 0)
+			return ret;
+	}
 
-	clear_bit(WLVIF_FLAG_IN_USE, &wlvअगर->flags);
-	वापस 0;
-पूर्ण
+	clear_bit(WLVIF_FLAG_IN_USE, &wlvif->flags);
+	return 0;
+}
 /* STA/IBSS mode changes */
-अटल व्योम wl1271_bss_info_changed_sta(काष्ठा wl1271 *wl,
-					काष्ठा ieee80211_vअगर *vअगर,
-					काष्ठा ieee80211_bss_conf *bss_conf,
+static void wl1271_bss_info_changed_sta(struct wl1271 *wl,
+					struct ieee80211_vif *vif,
+					struct ieee80211_bss_conf *bss_conf,
 					u32 changed)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	bool करो_join = false;
-	bool is_ibss = (wlvअगर->bss_type == BSS_TYPE_IBSS);
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	bool do_join = false;
+	bool is_ibss = (wlvif->bss_type == BSS_TYPE_IBSS);
 	bool ibss_joined = false;
 	u32 sta_rate_set = 0;
-	पूर्णांक ret;
-	काष्ठा ieee80211_sta *sta;
+	int ret;
+	struct ieee80211_sta *sta;
 	bool sta_exists = false;
-	काष्ठा ieee80211_sta_ht_cap sta_ht_cap;
+	struct ieee80211_sta_ht_cap sta_ht_cap;
 
-	अगर (is_ibss) अणु
-		ret = wl1271_bss_beacon_info_changed(wl, vअगर, bss_conf,
+	if (is_ibss) {
+		ret = wl1271_bss_beacon_info_changed(wl, vif, bss_conf,
 						     changed);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 
-	अगर (changed & BSS_CHANGED_IBSS) अणु
-		अगर (bss_conf->ibss_joined) अणु
-			set_bit(WLVIF_FLAG_IBSS_JOINED, &wlvअगर->flags);
+	if (changed & BSS_CHANGED_IBSS) {
+		if (bss_conf->ibss_joined) {
+			set_bit(WLVIF_FLAG_IBSS_JOINED, &wlvif->flags);
 			ibss_joined = true;
-		पूर्ण अन्यथा अणु
-			wlcore_unset_assoc(wl, wlvअगर);
-			wl12xx_cmd_role_stop_sta(wl, wlvअगर);
-		पूर्ण
-	पूर्ण
+		} else {
+			wlcore_unset_assoc(wl, wlvif);
+			wl12xx_cmd_role_stop_sta(wl, wlvif);
+		}
+	}
 
-	अगर ((changed & BSS_CHANGED_BEACON_INT) && ibss_joined)
-		करो_join = true;
+	if ((changed & BSS_CHANGED_BEACON_INT) && ibss_joined)
+		do_join = true;
 
-	/* Need to update the SSID (क्रम filtering etc) */
-	अगर ((changed & BSS_CHANGED_BEACON) && ibss_joined)
-		करो_join = true;
+	/* Need to update the SSID (for filtering etc) */
+	if ((changed & BSS_CHANGED_BEACON) && ibss_joined)
+		do_join = true;
 
-	अगर ((changed & BSS_CHANGED_BEACON_ENABLED) && ibss_joined) अणु
+	if ((changed & BSS_CHANGED_BEACON_ENABLED) && ibss_joined) {
 		wl1271_debug(DEBUG_ADHOC, "ad-hoc beaconing: %s",
 			     bss_conf->enable_beacon ? "enabled" : "disabled");
 
-		करो_join = true;
-	पूर्ण
+		do_join = true;
+	}
 
-	अगर (changed & BSS_CHANGED_IDLE && !is_ibss)
-		wl1271_sta_handle_idle(wl, wlvअगर, bss_conf->idle);
+	if (changed & BSS_CHANGED_IDLE && !is_ibss)
+		wl1271_sta_handle_idle(wl, wlvif, bss_conf->idle);
 
-	अगर (changed & BSS_CHANGED_CQM) अणु
+	if (changed & BSS_CHANGED_CQM) {
 		bool enable = false;
-		अगर (bss_conf->cqm_rssi_thold)
+		if (bss_conf->cqm_rssi_thold)
 			enable = true;
-		ret = wl1271_acx_rssi_snr_trigger(wl, wlvअगर, enable,
+		ret = wl1271_acx_rssi_snr_trigger(wl, wlvif, enable,
 						  bss_conf->cqm_rssi_thold,
 						  bss_conf->cqm_rssi_hyst);
-		अगर (ret < 0)
-			जाओ out;
-		wlvअगर->rssi_thold = bss_conf->cqm_rssi_thold;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+		wlvif->rssi_thold = bss_conf->cqm_rssi_thold;
+	}
 
-	अगर (changed & (BSS_CHANGED_BSSID | BSS_CHANGED_HT |
-		       BSS_CHANGED_ASSOC)) अणु
-		rcu_पढ़ो_lock();
-		sta = ieee80211_find_sta(vअगर, bss_conf->bssid);
-		अगर (sta) अणु
+	if (changed & (BSS_CHANGED_BSSID | BSS_CHANGED_HT |
+		       BSS_CHANGED_ASSOC)) {
+		rcu_read_lock();
+		sta = ieee80211_find_sta(vif, bss_conf->bssid);
+		if (sta) {
 			u8 *rx_mask = sta->ht_cap.mcs.rx_mask;
 
 			/* save the supp_rates of the ap */
-			sta_rate_set = sta->supp_rates[wlvअगर->band];
-			अगर (sta->ht_cap.ht_supported)
+			sta_rate_set = sta->supp_rates[wlvif->band];
+			if (sta->ht_cap.ht_supported)
 				sta_rate_set |=
 					(rx_mask[0] << HW_HT_RATES_OFFSET) |
 					(rx_mask[1] << HW_MIMO_RATES_OFFSET);
 			sta_ht_cap = sta->ht_cap;
 			sta_exists = true;
-		पूर्ण
+		}
 
-		rcu_पढ़ो_unlock();
-	पूर्ण
+		rcu_read_unlock();
+	}
 
-	अगर (changed & BSS_CHANGED_BSSID) अणु
-		अगर (!is_zero_ether_addr(bss_conf->bssid)) अणु
-			ret = wlcore_set_bssid(wl, wlvअगर, bss_conf,
+	if (changed & BSS_CHANGED_BSSID) {
+		if (!is_zero_ether_addr(bss_conf->bssid)) {
+			ret = wlcore_set_bssid(wl, wlvif, bss_conf,
 					       sta_rate_set);
-			अगर (ret < 0)
-				जाओ out;
+			if (ret < 0)
+				goto out;
 
-			/* Need to update the BSSID (क्रम filtering etc) */
-			करो_join = true;
-		पूर्ण अन्यथा अणु
-			ret = wlcore_clear_bssid(wl, wlvअगर);
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			/* Need to update the BSSID (for filtering etc) */
+			do_join = true;
+		} else {
+			ret = wlcore_clear_bssid(wl, wlvif);
+			if (ret < 0)
+				goto out;
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_IBSS) अणु
+	if (changed & BSS_CHANGED_IBSS) {
 		wl1271_debug(DEBUG_ADHOC, "ibss_joined: %d",
 			     bss_conf->ibss_joined);
 
-		अगर (bss_conf->ibss_joined) अणु
+		if (bss_conf->ibss_joined) {
 			u32 rates = bss_conf->basic_rates;
-			wlvअगर->basic_rate_set =
+			wlvif->basic_rate_set =
 				wl1271_tx_enabled_rates_get(wl, rates,
-							    wlvअगर->band);
-			wlvअगर->basic_rate =
+							    wlvif->band);
+			wlvif->basic_rate =
 				wl1271_tx_min_rate_get(wl,
-						       wlvअगर->basic_rate_set);
+						       wlvif->basic_rate_set);
 
-			/* by शेष, use 11b + OFDM rates */
-			wlvअगर->rate_set = CONF_TX_IBSS_DEFAULT_RATES;
-			ret = wl1271_acx_sta_rate_policies(wl, wlvअगर);
-			अगर (ret < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			/* by default, use 11b + OFDM rates */
+			wlvif->rate_set = CONF_TX_IBSS_DEFAULT_RATES;
+			ret = wl1271_acx_sta_rate_policies(wl, wlvif);
+			if (ret < 0)
+				goto out;
+		}
+	}
 
-	अगर ((changed & BSS_CHANGED_BEACON_INFO) && bss_conf->dtim_period) अणु
+	if ((changed & BSS_CHANGED_BEACON_INFO) && bss_conf->dtim_period) {
 		/* enable beacon filtering */
-		ret = wl1271_acx_beacon_filter_opt(wl, wlvअगर, true);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		ret = wl1271_acx_beacon_filter_opt(wl, wlvif, true);
+		if (ret < 0)
+			goto out;
+	}
 
-	ret = wl1271_bss_erp_info_changed(wl, vअगर, bss_conf, changed);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wl1271_bss_erp_info_changed(wl, vif, bss_conf, changed);
+	if (ret < 0)
+		goto out;
 
-	अगर (करो_join) अणु
-		ret = wlcore_join(wl, wlvअगर);
-		अगर (ret < 0) अणु
+	if (do_join) {
+		ret = wlcore_join(wl, wlvif);
+		if (ret < 0) {
 			wl1271_warning("cmd join failed %d", ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_ASSOC) अणु
-		अगर (bss_conf->assoc) अणु
-			ret = wlcore_set_assoc(wl, wlvअगर, bss_conf,
+	if (changed & BSS_CHANGED_ASSOC) {
+		if (bss_conf->assoc) {
+			ret = wlcore_set_assoc(wl, wlvif, bss_conf,
 					       sta_rate_set);
-			अगर (ret < 0)
-				जाओ out;
+			if (ret < 0)
+				goto out;
 
-			अगर (test_bit(WLVIF_FLAG_STA_AUTHORIZED, &wlvअगर->flags))
-				wl12xx_set_authorized(wl, wlvअगर);
-		पूर्ण अन्यथा अणु
-			wlcore_unset_assoc(wl, wlvअगर);
-		पूर्ण
-	पूर्ण
+			if (test_bit(WLVIF_FLAG_STA_AUTHORIZED, &wlvif->flags))
+				wl12xx_set_authorized(wl, wlvif);
+		} else {
+			wlcore_unset_assoc(wl, wlvif);
+		}
+	}
 
-	अगर (changed & BSS_CHANGED_PS) अणु
-		अगर ((bss_conf->ps) &&
-		    test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags) &&
-		    !test_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags)) अणु
-			पूर्णांक ps_mode;
-			अक्षर *ps_mode_str;
+	if (changed & BSS_CHANGED_PS) {
+		if ((bss_conf->ps) &&
+		    test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags) &&
+		    !test_bit(WLVIF_FLAG_IN_PS, &wlvif->flags)) {
+			int ps_mode;
+			char *ps_mode_str;
 
-			अगर (wl->conf.conn.क्रमced_ps) अणु
+			if (wl->conf.conn.forced_ps) {
 				ps_mode = STATION_POWER_SAVE_MODE;
 				ps_mode_str = "forced";
-			पूर्ण अन्यथा अणु
+			} else {
 				ps_mode = STATION_AUTO_PS_MODE;
 				ps_mode_str = "auto";
-			पूर्ण
+			}
 
 			wl1271_debug(DEBUG_PSM, "%s ps enabled", ps_mode_str);
 
-			ret = wl1271_ps_set_mode(wl, wlvअगर, ps_mode);
-			अगर (ret < 0)
+			ret = wl1271_ps_set_mode(wl, wlvif, ps_mode);
+			if (ret < 0)
 				wl1271_warning("enter %s ps failed %d",
 					       ps_mode_str, ret);
-		पूर्ण अन्यथा अगर (!bss_conf->ps &&
-			   test_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags)) अणु
+		} else if (!bss_conf->ps &&
+			   test_bit(WLVIF_FLAG_IN_PS, &wlvif->flags)) {
 			wl1271_debug(DEBUG_PSM, "auto ps disabled");
 
-			ret = wl1271_ps_set_mode(wl, wlvअगर,
+			ret = wl1271_ps_set_mode(wl, wlvif,
 						 STATION_ACTIVE_MODE);
-			अगर (ret < 0)
+			if (ret < 0)
 				wl1271_warning("exit auto ps failed %d", ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Handle new association with HT. Do this after join. */
-	अगर (sta_exists) अणु
+	if (sta_exists) {
 		bool enabled =
 			bss_conf->chandef.width != NL80211_CHAN_WIDTH_20_NOHT;
 
 		ret = wlcore_hw_set_peer_cap(wl,
 					     &sta_ht_cap,
 					     enabled,
-					     wlvअगर->rate_set,
-					     wlvअगर->sta.hlid);
-		अगर (ret < 0) अणु
+					     wlvif->rate_set,
+					     wlvif->sta.hlid);
+		if (ret < 0) {
 			wl1271_warning("Set ht cap failed %d", ret);
-			जाओ out;
+			goto out;
 
-		पूर्ण
+		}
 
-		अगर (enabled) अणु
-			ret = wl1271_acx_set_ht_inक्रमmation(wl, wlvअगर,
+		if (enabled) {
+			ret = wl1271_acx_set_ht_information(wl, wlvif,
 						bss_conf->ht_operation_mode);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				wl1271_warning("Set ht information failed %d",
 					       ret);
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 	/* Handle arp filtering. Done after join. */
-	अगर ((changed & BSS_CHANGED_ARP_FILTER) ||
-	    (!is_ibss && (changed & BSS_CHANGED_QOS))) अणु
+	if ((changed & BSS_CHANGED_ARP_FILTER) ||
+	    (!is_ibss && (changed & BSS_CHANGED_QOS))) {
 		__be32 addr = bss_conf->arp_addr_list[0];
-		wlvअगर->sta.qos = bss_conf->qos;
-		WARN_ON(wlvअगर->bss_type != BSS_TYPE_STA_BSS);
+		wlvif->sta.qos = bss_conf->qos;
+		WARN_ON(wlvif->bss_type != BSS_TYPE_STA_BSS);
 
-		अगर (bss_conf->arp_addr_cnt == 1 && bss_conf->assoc) अणु
-			wlvअगर->ip_addr = addr;
+		if (bss_conf->arp_addr_cnt == 1 && bss_conf->assoc) {
+			wlvif->ip_addr = addr;
 			/*
-			 * The ढाँचा should have been configured only upon
+			 * The template should have been configured only upon
 			 * association. however, it seems that the correct ip
 			 * isn't being set (when sending), so we have to
-			 * reconfigure the ढाँचा upon every ip change.
+			 * reconfigure the template upon every ip change.
 			 */
-			ret = wl1271_cmd_build_arp_rsp(wl, wlvअगर);
-			अगर (ret < 0) अणु
+			ret = wl1271_cmd_build_arp_rsp(wl, wlvif);
+			if (ret < 0) {
 				wl1271_warning("build arp rsp failed: %d", ret);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			ret = wl1271_acx_arp_ip_filter(wl, wlvअगर,
+			ret = wl1271_acx_arp_ip_filter(wl, wlvif,
 				(ACX_ARP_FILTER_ARP_FILTERING |
 				 ACX_ARP_FILTER_AUTO_ARP),
 				addr);
-		पूर्ण अन्यथा अणु
-			wlvअगर->ip_addr = 0;
-			ret = wl1271_acx_arp_ip_filter(wl, wlvअगर, 0, addr);
-		पूर्ण
+		} else {
+			wlvif->ip_addr = 0;
+			ret = wl1271_acx_arp_ip_filter(wl, wlvif, 0, addr);
+		}
 
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम wl1271_op_bss_info_changed(काष्ठा ieee80211_hw *hw,
-				       काष्ठा ieee80211_vअगर *vअगर,
-				       काष्ठा ieee80211_bss_conf *bss_conf,
+static void wl1271_op_bss_info_changed(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_bss_conf *bss_conf,
 				       u32 changed)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	bool is_ap = (wlvअगर->bss_type == BSS_TYPE_AP_BSS);
-	पूर्णांक ret;
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	bool is_ap = (wlvif->bss_type == BSS_TYPE_AP_BSS);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 bss info role %d changed 0x%x",
-		     wlvअगर->role_id, (पूर्णांक)changed);
+		     wlvif->role_id, (int)changed);
 
 	/*
-	 * make sure to cancel pending disconnections अगर our association
+	 * make sure to cancel pending disconnections if our association
 	 * state changed
 	 */
-	अगर (!is_ap && (changed & BSS_CHANGED_ASSOC))
-		cancel_delayed_work_sync(&wlvअगर->connection_loss_work);
+	if (!is_ap && (changed & BSS_CHANGED_ASSOC))
+		cancel_delayed_work_sync(&wlvif->connection_loss_work);
 
-	अगर (is_ap && (changed & BSS_CHANGED_BEACON_ENABLED) &&
+	if (is_ap && (changed & BSS_CHANGED_BEACON_ENABLED) &&
 	    !bss_conf->enable_beacon)
 		wl1271_tx_flush(wl);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	अगर (unlikely(!test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags)))
-		जाओ out;
+	if (unlikely(!test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags)))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	अगर ((changed & BSS_CHANGED_TXPOWER) &&
-	    bss_conf->txघातer != wlvअगर->घातer_level) अणु
+	if ((changed & BSS_CHANGED_TXPOWER) &&
+	    bss_conf->txpower != wlvif->power_level) {
 
-		ret = wl1271_acx_tx_घातer(wl, wlvअगर, bss_conf->txघातer);
-		अगर (ret < 0)
-			जाओ out;
+		ret = wl1271_acx_tx_power(wl, wlvif, bss_conf->txpower);
+		if (ret < 0)
+			goto out;
 
-		wlvअगर->घातer_level = bss_conf->txघातer;
-	पूर्ण
+		wlvif->power_level = bss_conf->txpower;
+	}
 
-	अगर (is_ap)
-		wl1271_bss_info_changed_ap(wl, vअगर, bss_conf, changed);
-	अन्यथा
-		wl1271_bss_info_changed_sta(wl, vअगर, bss_conf, changed);
+	if (is_ap)
+		wl1271_bss_info_changed_ap(wl, vif, bss_conf, changed);
+	else
+		wl1271_bss_info_changed_sta(wl, vif, bss_conf, changed);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_op_add_chanctx(काष्ठा ieee80211_hw *hw,
-				 काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
+static int wlcore_op_add_chanctx(struct ieee80211_hw *hw,
+				 struct ieee80211_chanctx_conf *ctx)
+{
 	wl1271_debug(DEBUG_MAC80211, "mac80211 add chanctx %d (type %d)",
 		     ieee80211_frequency_to_channel(ctx->def.chan->center_freq),
 		     cfg80211_get_chandef_type(&ctx->def));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wlcore_op_हटाओ_chanctx(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
+static void wlcore_op_remove_chanctx(struct ieee80211_hw *hw,
+				     struct ieee80211_chanctx_conf *ctx)
+{
 	wl1271_debug(DEBUG_MAC80211, "mac80211 remove chanctx %d (type %d)",
 		     ieee80211_frequency_to_channel(ctx->def.chan->center_freq),
 		     cfg80211_get_chandef_type(&ctx->def));
-पूर्ण
+}
 
-अटल व्योम wlcore_op_change_chanctx(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_chanctx_conf *ctx,
+static void wlcore_op_change_chanctx(struct ieee80211_hw *hw,
+				     struct ieee80211_chanctx_conf *ctx,
 				     u32 changed)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	पूर्णांक ret;
-	पूर्णांक channel = ieee80211_frequency_to_channel(
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif;
+	int ret;
+	int channel = ieee80211_frequency_to_channel(
 		ctx->def.chan->center_freq);
 
 	wl1271_debug(DEBUG_MAC80211,
@@ -4715,102 +4714,102 @@ out:
 
 	mutex_lock(&wl->mutex);
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		काष्ठा ieee80211_vअगर *vअगर = wl12xx_wlvअगर_to_vअगर(wlvअगर);
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
 
-		rcu_पढ़ो_lock();
-		अगर (rcu_access_poपूर्णांकer(vअगर->chanctx_conf) != ctx) अणु
-			rcu_पढ़ो_unlock();
-			जारी;
-		पूर्ण
-		rcu_पढ़ो_unlock();
+		rcu_read_lock();
+		if (rcu_access_pointer(vif->chanctx_conf) != ctx) {
+			rcu_read_unlock();
+			continue;
+		}
+		rcu_read_unlock();
 
-		/* start radar अगर needed */
-		अगर (changed & IEEE80211_CHANCTX_CHANGE_RADAR &&
-		    wlvअगर->bss_type == BSS_TYPE_AP_BSS &&
-		    ctx->radar_enabled && !wlvअगर->radar_enabled &&
-		    ctx->def.chan->dfs_state == NL80211_DFS_USABLE) अणु
+		/* start radar if needed */
+		if (changed & IEEE80211_CHANCTX_CHANGE_RADAR &&
+		    wlvif->bss_type == BSS_TYPE_AP_BSS &&
+		    ctx->radar_enabled && !wlvif->radar_enabled &&
+		    ctx->def.chan->dfs_state == NL80211_DFS_USABLE) {
 			wl1271_debug(DEBUG_MAC80211, "Start radar detection");
-			wlcore_hw_set_cac(wl, wlvअगर, true);
-			wlvअगर->radar_enabled = true;
-		पूर्ण
-	पूर्ण
+			wlcore_hw_set_cac(wl, wlvif, true);
+			wlvif->radar_enabled = true;
+		}
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_op_assign_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
-					काष्ठा ieee80211_vअगर *vअगर,
-					काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक channel = ieee80211_frequency_to_channel(
+static int wlcore_op_assign_vif_chanctx(struct ieee80211_hw *hw,
+					struct ieee80211_vif *vif,
+					struct ieee80211_chanctx_conf *ctx)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int channel = ieee80211_frequency_to_channel(
 		ctx->def.chan->center_freq);
-	पूर्णांक ret = -EINVAL;
+	int ret = -EINVAL;
 
 	wl1271_debug(DEBUG_MAC80211,
 		     "mac80211 assign chanctx (role %d) %d (type %d) (radar %d dfs_state %d)",
-		     wlvअगर->role_id, channel,
+		     wlvif->role_id, channel,
 		     cfg80211_get_chandef_type(&ctx->def),
 		     ctx->radar_enabled, ctx->def.chan->dfs_state);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	अगर (unlikely(!test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags)))
-		जाओ out;
+	if (unlikely(!test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags)))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	wlvअगर->band = ctx->def.chan->band;
-	wlvअगर->channel = channel;
-	wlvअगर->channel_type = cfg80211_get_chandef_type(&ctx->def);
+	wlvif->band = ctx->def.chan->band;
+	wlvif->channel = channel;
+	wlvif->channel_type = cfg80211_get_chandef_type(&ctx->def);
 
-	/* update शेष rates according to the band */
-	wl1271_set_band_rate(wl, wlvअगर);
+	/* update default rates according to the band */
+	wl1271_set_band_rate(wl, wlvif);
 
-	अगर (ctx->radar_enabled &&
-	    ctx->def.chan->dfs_state == NL80211_DFS_USABLE) अणु
+	if (ctx->radar_enabled &&
+	    ctx->def.chan->dfs_state == NL80211_DFS_USABLE) {
 		wl1271_debug(DEBUG_MAC80211, "Start radar detection");
-		wlcore_hw_set_cac(wl, wlvअगर, true);
-		wlvअगर->radar_enabled = true;
-	पूर्ण
+		wlcore_hw_set_cac(wl, wlvif, true);
+		wlvif->radar_enabled = true;
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wlcore_op_unassign_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
-					   काष्ठा ieee80211_vअगर *vअगर,
-					   काष्ठा ieee80211_chanctx_conf *ctx)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+static void wlcore_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
+					   struct ieee80211_vif *vif,
+					   struct ieee80211_chanctx_conf *ctx)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211,
 		     "mac80211 unassign chanctx (role %d) %d (type %d)",
-		     wlvअगर->role_id,
+		     wlvif->role_id,
 		     ieee80211_frequency_to_channel(ctx->def.chan->center_freq),
 		     cfg80211_get_chandef_type(&ctx->def));
 
@@ -4818,521 +4817,521 @@ out:
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	अगर (unlikely(!test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags)))
-		जाओ out;
+	if (unlikely(!test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags)))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	अगर (wlvअगर->radar_enabled) अणु
+	if (wlvif->radar_enabled) {
 		wl1271_debug(DEBUG_MAC80211, "Stop radar detection");
-		wlcore_hw_set_cac(wl, wlvअगर, false);
-		wlvअगर->radar_enabled = false;
-	पूर्ण
+		wlcore_hw_set_cac(wl, wlvif, false);
+		wlvif->radar_enabled = false;
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल पूर्णांक __wlcore_चयन_vअगर_chan(काष्ठा wl1271 *wl,
-				    काष्ठा wl12xx_vअगर *wlvअगर,
-				    काष्ठा ieee80211_chanctx_conf *new_ctx)
-अणु
-	पूर्णांक channel = ieee80211_frequency_to_channel(
+static int __wlcore_switch_vif_chan(struct wl1271 *wl,
+				    struct wl12xx_vif *wlvif,
+				    struct ieee80211_chanctx_conf *new_ctx)
+{
+	int channel = ieee80211_frequency_to_channel(
 		new_ctx->def.chan->center_freq);
 
 	wl1271_debug(DEBUG_MAC80211,
 		     "switch vif (role %d) %d -> %d chan_type: %d",
-		     wlvअगर->role_id, wlvअगर->channel, channel,
+		     wlvif->role_id, wlvif->channel, channel,
 		     cfg80211_get_chandef_type(&new_ctx->def));
 
-	अगर (WARN_ON_ONCE(wlvअगर->bss_type != BSS_TYPE_AP_BSS))
-		वापस 0;
+	if (WARN_ON_ONCE(wlvif->bss_type != BSS_TYPE_AP_BSS))
+		return 0;
 
-	WARN_ON(!test_bit(WLVIF_FLAG_BEACON_DISABLED, &wlvअगर->flags));
+	WARN_ON(!test_bit(WLVIF_FLAG_BEACON_DISABLED, &wlvif->flags));
 
-	अगर (wlvअगर->radar_enabled) अणु
+	if (wlvif->radar_enabled) {
 		wl1271_debug(DEBUG_MAC80211, "Stop radar detection");
-		wlcore_hw_set_cac(wl, wlvअगर, false);
-		wlvअगर->radar_enabled = false;
-	पूर्ण
+		wlcore_hw_set_cac(wl, wlvif, false);
+		wlvif->radar_enabled = false;
+	}
 
-	wlvअगर->band = new_ctx->def.chan->band;
-	wlvअगर->channel = channel;
-	wlvअगर->channel_type = cfg80211_get_chandef_type(&new_ctx->def);
+	wlvif->band = new_ctx->def.chan->band;
+	wlvif->channel = channel;
+	wlvif->channel_type = cfg80211_get_chandef_type(&new_ctx->def);
 
-	/* start radar अगर needed */
-	अगर (new_ctx->radar_enabled) अणु
+	/* start radar if needed */
+	if (new_ctx->radar_enabled) {
 		wl1271_debug(DEBUG_MAC80211, "Start radar detection");
-		wlcore_hw_set_cac(wl, wlvअगर, true);
-		wlvअगर->radar_enabled = true;
-	पूर्ण
+		wlcore_hw_set_cac(wl, wlvif, true);
+		wlvif->radar_enabled = true;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-wlcore_op_चयन_vअगर_chanctx(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_vअगर_chanctx_चयन *vअगरs,
-			     पूर्णांक n_vअगरs,
-			     क्रमागत ieee80211_chanctx_चयन_mode mode)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक i, ret;
+static int
+wlcore_op_switch_vif_chanctx(struct ieee80211_hw *hw,
+			     struct ieee80211_vif_chanctx_switch *vifs,
+			     int n_vifs,
+			     enum ieee80211_chanctx_switch_mode mode)
+{
+	struct wl1271 *wl = hw->priv;
+	int i, ret;
 
 	wl1271_debug(DEBUG_MAC80211,
 		     "mac80211 switch chanctx n_vifs %d mode %d",
-		     n_vअगरs, mode);
+		     n_vifs, mode);
 
 	mutex_lock(&wl->mutex);
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	क्रम (i = 0; i < n_vअगरs; i++) अणु
-		काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगरs[i].vअगर);
+	for (i = 0; i < n_vifs; i++) {
+		struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vifs[i].vif);
 
-		ret = __wlcore_चयन_vअगर_chan(wl, wlvअगर, vअगरs[i].new_ctx);
-		अगर (ret)
-			जाओ out_sleep;
-	पूर्ण
+		ret = __wlcore_switch_vif_chan(wl, wlvif, vifs[i].new_ctx);
+		if (ret)
+			goto out_sleep;
+	}
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl1271_op_conf_tx(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_vअगर *vअगर, u16 queue,
-			     स्थिर काष्ठा ieee80211_tx_queue_params *params)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
+static int wl1271_op_conf_tx(struct ieee80211_hw *hw,
+			     struct ieee80211_vif *vif, u16 queue,
+			     const struct ieee80211_tx_queue_params *params)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
 	u8 ps_scheme;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (wlcore_is_p2p_mgmt(wlvअगर))
-		वापस 0;
+	if (wlcore_is_p2p_mgmt(wlvif))
+		return 0;
 
 	mutex_lock(&wl->mutex);
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 conf tx %d", queue);
 
-	अगर (params->uapsd)
+	if (params->uapsd)
 		ps_scheme = CONF_PS_SCHEME_UPSD_TRIGGER;
-	अन्यथा
+	else
 		ps_scheme = CONF_PS_SCHEME_LEGACY;
 
-	अगर (!test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags))
-		जाओ out;
+	if (!test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
 	/*
 	 * the txop is confed in units of 32us by the mac80211,
 	 * we need us
 	 */
-	ret = wl1271_acx_ac_cfg(wl, wlvअगर, wl1271_tx_get_queue(queue),
+	ret = wl1271_acx_ac_cfg(wl, wlvif, wl1271_tx_get_queue(queue),
 				params->cw_min, params->cw_max,
-				params->aअगरs, params->txop << 5);
-	अगर (ret < 0)
-		जाओ out_sleep;
+				params->aifs, params->txop << 5);
+	if (ret < 0)
+		goto out_sleep;
 
-	ret = wl1271_acx_tid_cfg(wl, wlvअगर, wl1271_tx_get_queue(queue),
+	ret = wl1271_acx_tid_cfg(wl, wlvif, wl1271_tx_get_queue(queue),
 				 CONF_CHANNEL_TYPE_EDCF,
 				 wl1271_tx_get_queue(queue),
 				 ps_scheme, CONF_ACK_POLICY_LEGACY,
 				 0, 0);
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 wl1271_op_get_tsf(काष्ठा ieee80211_hw *hw,
-			     काष्ठा ieee80211_vअगर *vअगर)
-अणु
+static u64 wl1271_op_get_tsf(struct ieee80211_hw *hw,
+			     struct ieee80211_vif *vif)
+{
 
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	u64 maस_समय = ULदीर्घ_उच्च;
-	पूर्णांक ret;
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	u64 mactime = ULLONG_MAX;
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 get tsf");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl12xx_acx_tsf_info(wl, wlvअगर, &maस_समय);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	ret = wl12xx_acx_tsf_info(wl, wlvif, &mactime);
+	if (ret < 0)
+		goto out_sleep;
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-	वापस maस_समय;
-पूर्ण
+	return mactime;
+}
 
-अटल पूर्णांक wl1271_op_get_survey(काष्ठा ieee80211_hw *hw, पूर्णांक idx,
-				काष्ठा survey_info *survey)
-अणु
-	काष्ठा ieee80211_conf *conf = &hw->conf;
+static int wl1271_op_get_survey(struct ieee80211_hw *hw, int idx,
+				struct survey_info *survey)
+{
+	struct ieee80211_conf *conf = &hw->conf;
 
-	अगर (idx != 0)
-		वापस -ENOENT;
+	if (idx != 0)
+		return -ENOENT;
 
 	survey->channel = conf->chandef.chan;
 	survey->filled = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wl1271_allocate_sta(काष्ठा wl1271 *wl,
-			     काष्ठा wl12xx_vअगर *wlvअगर,
-			     काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा wl1271_station *wl_sta;
-	पूर्णांक ret;
+static int wl1271_allocate_sta(struct wl1271 *wl,
+			     struct wl12xx_vif *wlvif,
+			     struct ieee80211_sta *sta)
+{
+	struct wl1271_station *wl_sta;
+	int ret;
 
 
-	अगर (wl->active_sta_count >= wl->max_ap_stations) अणु
+	if (wl->active_sta_count >= wl->max_ap_stations) {
 		wl1271_warning("could not allocate HLID - too much stations");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
-	ret = wl12xx_allocate_link(wl, wlvअगर, &wl_sta->hlid);
-	अगर (ret < 0) अणु
+	wl_sta = (struct wl1271_station *)sta->drv_priv;
+	ret = wl12xx_allocate_link(wl, wlvif, &wl_sta->hlid);
+	if (ret < 0) {
 		wl1271_warning("could not allocate HLID - too many links");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* use the previous security seq, अगर this is a recovery/resume */
-	wl->links[wl_sta->hlid].total_मुक्तd_pkts = wl_sta->total_मुक्तd_pkts;
+	/* use the previous security seq, if this is a recovery/resume */
+	wl->links[wl_sta->hlid].total_freed_pkts = wl_sta->total_freed_pkts;
 
-	set_bit(wl_sta->hlid, wlvअगर->ap.sta_hlid_map);
-	स_नकल(wl->links[wl_sta->hlid].addr, sta->addr, ETH_ALEN);
+	set_bit(wl_sta->hlid, wlvif->ap.sta_hlid_map);
+	memcpy(wl->links[wl_sta->hlid].addr, sta->addr, ETH_ALEN);
 	wl->active_sta_count++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम wl1271_मुक्त_sta(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर, u8 hlid)
-अणु
-	अगर (!test_bit(hlid, wlvअगर->ap.sta_hlid_map))
-		वापस;
+void wl1271_free_sta(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 hlid)
+{
+	if (!test_bit(hlid, wlvif->ap.sta_hlid_map))
+		return;
 
-	clear_bit(hlid, wlvअगर->ap.sta_hlid_map);
+	clear_bit(hlid, wlvif->ap.sta_hlid_map);
 	__clear_bit(hlid, &wl->ap_ps_map);
 	__clear_bit(hlid, &wl->ap_fw_ps_map);
 
 	/*
-	 * save the last used PN in the निजी part of iee80211_sta,
-	 * in हाल of recovery/suspend
+	 * save the last used PN in the private part of iee80211_sta,
+	 * in case of recovery/suspend
 	 */
-	wlcore_save_मुक्तd_pkts_addr(wl, wlvअगर, hlid, wl->links[hlid].addr);
+	wlcore_save_freed_pkts_addr(wl, wlvif, hlid, wl->links[hlid].addr);
 
-	wl12xx_मुक्त_link(wl, wlvअगर, &hlid);
+	wl12xx_free_link(wl, wlvif, &hlid);
 	wl->active_sta_count--;
 
 	/*
-	 * rearm the tx watchकरोg when the last STA is मुक्तd - give the FW a
-	 * chance to वापस STA-buffered packets beक्रमe complaining.
+	 * rearm the tx watchdog when the last STA is freed - give the FW a
+	 * chance to return STA-buffered packets before complaining.
 	 */
-	अगर (wl->active_sta_count == 0)
-		wl12xx_rearm_tx_watchकरोg_locked(wl);
-पूर्ण
+	if (wl->active_sta_count == 0)
+		wl12xx_rearm_tx_watchdog_locked(wl);
+}
 
-अटल पूर्णांक wl12xx_sta_add(काष्ठा wl1271 *wl,
-			  काष्ठा wl12xx_vअगर *wlvअगर,
-			  काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा wl1271_station *wl_sta;
-	पूर्णांक ret = 0;
+static int wl12xx_sta_add(struct wl1271 *wl,
+			  struct wl12xx_vif *wlvif,
+			  struct ieee80211_sta *sta)
+{
+	struct wl1271_station *wl_sta;
+	int ret = 0;
 	u8 hlid;
 
-	wl1271_debug(DEBUG_MAC80211, "mac80211 add sta %d", (पूर्णांक)sta->aid);
+	wl1271_debug(DEBUG_MAC80211, "mac80211 add sta %d", (int)sta->aid);
 
-	ret = wl1271_allocate_sta(wl, wlvअगर, sta);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl1271_allocate_sta(wl, wlvif, sta);
+	if (ret < 0)
+		return ret;
 
-	wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
+	wl_sta = (struct wl1271_station *)sta->drv_priv;
 	hlid = wl_sta->hlid;
 
-	ret = wl12xx_cmd_add_peer(wl, wlvअगर, sta, hlid);
-	अगर (ret < 0)
-		wl1271_मुक्त_sta(wl, wlvअगर, hlid);
+	ret = wl12xx_cmd_add_peer(wl, wlvif, sta, hlid);
+	if (ret < 0)
+		wl1271_free_sta(wl, wlvif, hlid);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl12xx_sta_हटाओ(काष्ठा wl1271 *wl,
-			     काष्ठा wl12xx_vअगर *wlvअगर,
-			     काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा wl1271_station *wl_sta;
-	पूर्णांक ret = 0, id;
+static int wl12xx_sta_remove(struct wl1271 *wl,
+			     struct wl12xx_vif *wlvif,
+			     struct ieee80211_sta *sta)
+{
+	struct wl1271_station *wl_sta;
+	int ret = 0, id;
 
-	wl1271_debug(DEBUG_MAC80211, "mac80211 remove sta %d", (पूर्णांक)sta->aid);
+	wl1271_debug(DEBUG_MAC80211, "mac80211 remove sta %d", (int)sta->aid);
 
-	wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
+	wl_sta = (struct wl1271_station *)sta->drv_priv;
 	id = wl_sta->hlid;
-	अगर (WARN_ON(!test_bit(id, wlvअगर->ap.sta_hlid_map)))
-		वापस -EINVAL;
+	if (WARN_ON(!test_bit(id, wlvif->ap.sta_hlid_map)))
+		return -EINVAL;
 
-	ret = wl12xx_cmd_हटाओ_peer(wl, wlvअगर, wl_sta->hlid);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl12xx_cmd_remove_peer(wl, wlvif, wl_sta->hlid);
+	if (ret < 0)
+		return ret;
 
-	wl1271_मुक्त_sta(wl, wlvअगर, wl_sta->hlid);
-	वापस ret;
-पूर्ण
+	wl1271_free_sta(wl, wlvif, wl_sta->hlid);
+	return ret;
+}
 
-अटल व्योम wlcore_roc_अगर_possible(काष्ठा wl1271 *wl,
-				   काष्ठा wl12xx_vअगर *wlvअगर)
-अणु
-	अगर (find_first_bit(wl->roc_map,
+static void wlcore_roc_if_possible(struct wl1271 *wl,
+				   struct wl12xx_vif *wlvif)
+{
+	if (find_first_bit(wl->roc_map,
 			   WL12XX_MAX_ROLES) < WL12XX_MAX_ROLES)
-		वापस;
+		return;
 
-	अगर (WARN_ON(wlvअगर->role_id == WL12XX_INVALID_ROLE_ID))
-		वापस;
+	if (WARN_ON(wlvif->role_id == WL12XX_INVALID_ROLE_ID))
+		return;
 
-	wl12xx_roc(wl, wlvअगर, wlvअगर->role_id, wlvअगर->band, wlvअगर->channel);
-पूर्ण
+	wl12xx_roc(wl, wlvif, wlvif->role_id, wlvif->band, wlvif->channel);
+}
 
 /*
- * when wl_sta is शून्य, we treat this call as अगर coming from a
+ * when wl_sta is NULL, we treat this call as if coming from a
  * pending auth reply.
  * wl->mutex must be taken and the FW must be awake when the call
  * takes place.
  */
-व्योम wlcore_update_inconn_sta(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
-			      काष्ठा wl1271_station *wl_sta, bool in_conn)
-अणु
-	अगर (in_conn) अणु
-		अगर (WARN_ON(wl_sta && wl_sta->in_connection))
-			वापस;
+void wlcore_update_inconn_sta(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+			      struct wl1271_station *wl_sta, bool in_conn)
+{
+	if (in_conn) {
+		if (WARN_ON(wl_sta && wl_sta->in_connection))
+			return;
 
-		अगर (!wlvअगर->ap_pending_auth_reply &&
-		    !wlvअगर->inconn_count)
-			wlcore_roc_अगर_possible(wl, wlvअगर);
+		if (!wlvif->ap_pending_auth_reply &&
+		    !wlvif->inconn_count)
+			wlcore_roc_if_possible(wl, wlvif);
 
-		अगर (wl_sta) अणु
+		if (wl_sta) {
 			wl_sta->in_connection = true;
-			wlvअगर->inconn_count++;
-		पूर्ण अन्यथा अणु
-			wlvअगर->ap_pending_auth_reply = true;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (wl_sta && !wl_sta->in_connection)
-			वापस;
+			wlvif->inconn_count++;
+		} else {
+			wlvif->ap_pending_auth_reply = true;
+		}
+	} else {
+		if (wl_sta && !wl_sta->in_connection)
+			return;
 
-		अगर (WARN_ON(!wl_sta && !wlvअगर->ap_pending_auth_reply))
-			वापस;
+		if (WARN_ON(!wl_sta && !wlvif->ap_pending_auth_reply))
+			return;
 
-		अगर (WARN_ON(wl_sta && !wlvअगर->inconn_count))
-			वापस;
+		if (WARN_ON(wl_sta && !wlvif->inconn_count))
+			return;
 
-		अगर (wl_sta) अणु
+		if (wl_sta) {
 			wl_sta->in_connection = false;
-			wlvअगर->inconn_count--;
-		पूर्ण अन्यथा अणु
-			wlvअगर->ap_pending_auth_reply = false;
-		पूर्ण
+			wlvif->inconn_count--;
+		} else {
+			wlvif->ap_pending_auth_reply = false;
+		}
 
-		अगर (!wlvअगर->inconn_count && !wlvअगर->ap_pending_auth_reply &&
-		    test_bit(wlvअगर->role_id, wl->roc_map))
-			wl12xx_croc(wl, wlvअगर->role_id);
-	पूर्ण
-पूर्ण
+		if (!wlvif->inconn_count && !wlvif->ap_pending_auth_reply &&
+		    test_bit(wlvif->role_id, wl->roc_map))
+			wl12xx_croc(wl, wlvif->role_id);
+	}
+}
 
-अटल पूर्णांक wl12xx_update_sta_state(काष्ठा wl1271 *wl,
-				   काष्ठा wl12xx_vअगर *wlvअगर,
-				   काष्ठा ieee80211_sta *sta,
-				   क्रमागत ieee80211_sta_state old_state,
-				   क्रमागत ieee80211_sta_state new_state)
-अणु
-	काष्ठा wl1271_station *wl_sta;
-	bool is_ap = wlvअगर->bss_type == BSS_TYPE_AP_BSS;
-	bool is_sta = wlvअगर->bss_type == BSS_TYPE_STA_BSS;
-	पूर्णांक ret;
+static int wl12xx_update_sta_state(struct wl1271 *wl,
+				   struct wl12xx_vif *wlvif,
+				   struct ieee80211_sta *sta,
+				   enum ieee80211_sta_state old_state,
+				   enum ieee80211_sta_state new_state)
+{
+	struct wl1271_station *wl_sta;
+	bool is_ap = wlvif->bss_type == BSS_TYPE_AP_BSS;
+	bool is_sta = wlvif->bss_type == BSS_TYPE_STA_BSS;
+	int ret;
 
-	wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
+	wl_sta = (struct wl1271_station *)sta->drv_priv;
 
 	/* Add station (AP mode) */
-	अगर (is_ap &&
+	if (is_ap &&
 	    old_state == IEEE80211_STA_NOTEXIST &&
-	    new_state == IEEE80211_STA_NONE) अणु
-		ret = wl12xx_sta_add(wl, wlvअगर, sta);
-		अगर (ret)
-			वापस ret;
+	    new_state == IEEE80211_STA_NONE) {
+		ret = wl12xx_sta_add(wl, wlvif, sta);
+		if (ret)
+			return ret;
 
-		wlcore_update_inconn_sta(wl, wlvअगर, wl_sta, true);
-	पूर्ण
+		wlcore_update_inconn_sta(wl, wlvif, wl_sta, true);
+	}
 
 	/* Remove station (AP mode) */
-	अगर (is_ap &&
+	if (is_ap &&
 	    old_state == IEEE80211_STA_NONE &&
-	    new_state == IEEE80211_STA_NOTEXIST) अणु
+	    new_state == IEEE80211_STA_NOTEXIST) {
 		/* must not fail */
-		wl12xx_sta_हटाओ(wl, wlvअगर, sta);
+		wl12xx_sta_remove(wl, wlvif, sta);
 
-		wlcore_update_inconn_sta(wl, wlvअगर, wl_sta, false);
-	पूर्ण
+		wlcore_update_inconn_sta(wl, wlvif, wl_sta, false);
+	}
 
 	/* Authorize station (AP mode) */
-	अगर (is_ap &&
-	    new_state == IEEE80211_STA_AUTHORIZED) अणु
-		ret = wl12xx_cmd_set_peer_state(wl, wlvअगर, wl_sta->hlid);
-		अगर (ret < 0)
-			वापस ret;
+	if (is_ap &&
+	    new_state == IEEE80211_STA_AUTHORIZED) {
+		ret = wl12xx_cmd_set_peer_state(wl, wlvif, wl_sta->hlid);
+		if (ret < 0)
+			return ret;
 
 		/* reconfigure rates */
-		ret = wl12xx_cmd_add_peer(wl, wlvअगर, sta, wl_sta->hlid);
-		अगर (ret < 0)
-			वापस ret;
+		ret = wl12xx_cmd_add_peer(wl, wlvif, sta, wl_sta->hlid);
+		if (ret < 0)
+			return ret;
 
 		ret = wl1271_acx_set_ht_capabilities(wl, &sta->ht_cap, true,
 						     wl_sta->hlid);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		wlcore_update_inconn_sta(wl, wlvअगर, wl_sta, false);
-	पूर्ण
+		wlcore_update_inconn_sta(wl, wlvif, wl_sta, false);
+	}
 
 	/* Authorize station */
-	अगर (is_sta &&
-	    new_state == IEEE80211_STA_AUTHORIZED) अणु
-		set_bit(WLVIF_FLAG_STA_AUTHORIZED, &wlvअगर->flags);
-		ret = wl12xx_set_authorized(wl, wlvअगर);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (is_sta &&
+	    new_state == IEEE80211_STA_AUTHORIZED) {
+		set_bit(WLVIF_FLAG_STA_AUTHORIZED, &wlvif->flags);
+		ret = wl12xx_set_authorized(wl, wlvif);
+		if (ret)
+			return ret;
+	}
 
-	अगर (is_sta &&
+	if (is_sta &&
 	    old_state == IEEE80211_STA_AUTHORIZED &&
-	    new_state == IEEE80211_STA_ASSOC) अणु
-		clear_bit(WLVIF_FLAG_STA_AUTHORIZED, &wlvअगर->flags);
-		clear_bit(WLVIF_FLAG_STA_STATE_SENT, &wlvअगर->flags);
-	पूर्ण
+	    new_state == IEEE80211_STA_ASSOC) {
+		clear_bit(WLVIF_FLAG_STA_AUTHORIZED, &wlvif->flags);
+		clear_bit(WLVIF_FLAG_STA_STATE_SENT, &wlvif->flags);
+	}
 
 	/* save seq number on disassoc (suspend) */
-	अगर (is_sta &&
+	if (is_sta &&
 	    old_state == IEEE80211_STA_ASSOC &&
-	    new_state == IEEE80211_STA_AUTH) अणु
-		wlcore_save_मुक्तd_pkts(wl, wlvअगर, wlvअगर->sta.hlid, sta);
-		wlvअगर->total_मुक्तd_pkts = 0;
-	पूर्ण
+	    new_state == IEEE80211_STA_AUTH) {
+		wlcore_save_freed_pkts(wl, wlvif, wlvif->sta.hlid, sta);
+		wlvif->total_freed_pkts = 0;
+	}
 
 	/* restore seq number on assoc (resume) */
-	अगर (is_sta &&
+	if (is_sta &&
 	    old_state == IEEE80211_STA_AUTH &&
-	    new_state == IEEE80211_STA_ASSOC) अणु
-		wlvअगर->total_मुक्तd_pkts = wl_sta->total_मुक्तd_pkts;
-	पूर्ण
+	    new_state == IEEE80211_STA_ASSOC) {
+		wlvif->total_freed_pkts = wl_sta->total_freed_pkts;
+	}
 
 	/* clear ROCs on failure or authorization */
-	अगर (is_sta &&
+	if (is_sta &&
 	    (new_state == IEEE80211_STA_AUTHORIZED ||
-	     new_state == IEEE80211_STA_NOTEXIST)) अणु
-		अगर (test_bit(wlvअगर->role_id, wl->roc_map))
-			wl12xx_croc(wl, wlvअगर->role_id);
-	पूर्ण
+	     new_state == IEEE80211_STA_NOTEXIST)) {
+		if (test_bit(wlvif->role_id, wl->roc_map))
+			wl12xx_croc(wl, wlvif->role_id);
+	}
 
-	अगर (is_sta &&
+	if (is_sta &&
 	    old_state == IEEE80211_STA_NOTEXIST &&
-	    new_state == IEEE80211_STA_NONE) अणु
-		अगर (find_first_bit(wl->roc_map,
-				   WL12XX_MAX_ROLES) >= WL12XX_MAX_ROLES) अणु
-			WARN_ON(wlvअगर->role_id == WL12XX_INVALID_ROLE_ID);
-			wl12xx_roc(wl, wlvअगर, wlvअगर->role_id,
-				   wlvअगर->band, wlvअगर->channel);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+	    new_state == IEEE80211_STA_NONE) {
+		if (find_first_bit(wl->roc_map,
+				   WL12XX_MAX_ROLES) >= WL12XX_MAX_ROLES) {
+			WARN_ON(wlvif->role_id == WL12XX_INVALID_ROLE_ID);
+			wl12xx_roc(wl, wlvif, wlvif->role_id,
+				   wlvif->band, wlvif->channel);
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक wl12xx_op_sta_state(काष्ठा ieee80211_hw *hw,
-			       काष्ठा ieee80211_vअगर *vअगर,
-			       काष्ठा ieee80211_sta *sta,
-			       क्रमागत ieee80211_sta_state old_state,
-			       क्रमागत ieee80211_sta_state new_state)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+static int wl12xx_op_sta_state(struct ieee80211_hw *hw,
+			       struct ieee80211_vif *vif,
+			       struct ieee80211_sta *sta,
+			       enum ieee80211_sta_state old_state,
+			       enum ieee80211_sta_state new_state)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 sta %d state=%d->%d",
 		     sta->aid, old_state, new_state);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl12xx_update_sta_state(wl, wlvअगर, sta, old_state, new_state);
+	ret = wl12xx_update_sta_state(wl, wlvif, sta, old_state, new_state);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	अगर (new_state < old_state)
-		वापस 0;
-	वापस ret;
-पूर्ण
+	if (new_state < old_state)
+		return 0;
+	return ret;
+}
 
-अटल पूर्णांक wl1271_op_ampdu_action(काष्ठा ieee80211_hw *hw,
-				  काष्ठा ieee80211_vअगर *vअगर,
-				  काष्ठा ieee80211_ampdu_params *params)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
-	u8 hlid, *ba_biपंचांगap;
-	काष्ठा ieee80211_sta *sta = params->sta;
-	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
+static int wl1271_op_ampdu_action(struct ieee80211_hw *hw,
+				  struct ieee80211_vif *vif,
+				  struct ieee80211_ampdu_params *params)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
+	u8 hlid, *ba_bitmap;
+	struct ieee80211_sta *sta = params->sta;
+	enum ieee80211_ampdu_mlme_action action = params->action;
 	u16 tid = params->tid;
 	u16 *ssn = &params->ssn;
 
@@ -5340,123 +5339,123 @@ out:
 		     tid);
 
 	/* sanity check - the fields in FW are only 8bits wide */
-	अगर (WARN_ON(tid > 0xFF))
-		वापस -ENOTSUPP;
+	if (WARN_ON(tid > 0xFF))
+		return -ENOTSUPP;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS) अणु
-		hlid = wlvअगर->sta.hlid;
-	पूर्ण अन्यथा अगर (wlvअगर->bss_type == BSS_TYPE_AP_BSS) अणु
-		काष्ठा wl1271_station *wl_sta;
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS) {
+		hlid = wlvif->sta.hlid;
+	} else if (wlvif->bss_type == BSS_TYPE_AP_BSS) {
+		struct wl1271_station *wl_sta;
 
-		wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
+		wl_sta = (struct wl1271_station *)sta->drv_priv;
 		hlid = wl_sta->hlid;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ba_biपंचांगap = &wl->links[hlid].ba_biपंचांगap;
+	ba_bitmap = &wl->links[hlid].ba_bitmap;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 ampdu: Rx tid %d action %d",
 		     tid, action);
 
-	चयन (action) अणु
-	हाल IEEE80211_AMPDU_RX_START:
-		अगर (!wlvअगर->ba_support || !wlvअगर->ba_allowed) अणु
+	switch (action) {
+	case IEEE80211_AMPDU_RX_START:
+		if (!wlvif->ba_support || !wlvif->ba_allowed) {
 			ret = -ENOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (wl->ba_rx_session_count >= wl->ba_rx_session_count_max) अणु
+		if (wl->ba_rx_session_count >= wl->ba_rx_session_count_max) {
 			ret = -EBUSY;
 			wl1271_debug(DEBUG_RX, "exceeded max RX BA sessions");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (*ba_biपंचांगap & BIT(tid)) अणु
+		if (*ba_bitmap & BIT(tid)) {
 			ret = -EINVAL;
 			wl1271_error("cannot enable RX BA session on active "
 				     "tid: %d", tid);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = wl12xx_acx_set_ba_receiver_session(wl, tid, *ssn, true,
 				hlid,
 				params->buf_size);
 
-		अगर (!ret) अणु
-			*ba_biपंचांगap |= BIT(tid);
+		if (!ret) {
+			*ba_bitmap |= BIT(tid);
 			wl->ba_rx_session_count++;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल IEEE80211_AMPDU_RX_STOP:
-		अगर (!(*ba_biपंचांगap & BIT(tid))) अणु
+	case IEEE80211_AMPDU_RX_STOP:
+		if (!(*ba_bitmap & BIT(tid))) {
 			/*
 			 * this happens on reconfig - so only output a debug
-			 * message क्रम now, and करोn't fail the function.
+			 * message for now, and don't fail the function.
 			 */
 			wl1271_debug(DEBUG_MAC80211,
 				     "no active RX BA session on tid: %d",
 				     tid);
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = wl12xx_acx_set_ba_receiver_session(wl, tid, 0, false,
 							 hlid, 0);
-		अगर (!ret) अणु
-			*ba_biपंचांगap &= ~BIT(tid);
+		if (!ret) {
+			*ba_bitmap &= ~BIT(tid);
 			wl->ba_rx_session_count--;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
 	/*
 	 * The BA initiator session management in FW independently.
-	 * Falling अवरोध here on purpose क्रम all TX APDU commands.
+	 * Falling break here on purpose for all TX APDU commands.
 	 */
-	हाल IEEE80211_AMPDU_TX_START:
-	हाल IEEE80211_AMPDU_TX_STOP_CONT:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
-	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
-	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
+	case IEEE80211_AMPDU_TX_START:
+	case IEEE80211_AMPDU_TX_STOP_CONT:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH:
+	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+	case IEEE80211_AMPDU_TX_OPERATIONAL:
 		ret = -EINVAL;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		wl1271_error("Incorrect ampdu action id=%x\n", action);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl12xx_set_bitrate_mask(काष्ठा ieee80211_hw *hw,
-				   काष्ठा ieee80211_vअगर *vअगर,
-				   स्थिर काष्ठा cfg80211_bitrate_mask *mask)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक i, ret = 0;
+static int wl12xx_set_bitrate_mask(struct ieee80211_hw *hw,
+				   struct ieee80211_vif *vif,
+				   const struct cfg80211_bitrate_mask *mask)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct wl1271 *wl = hw->priv;
+	int i, ret = 0;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 set_bitrate_mask 0x%x 0x%x",
 		mask->control[NL80211_BAND_2GHZ].legacy,
@@ -5464,45 +5463,45 @@ out:
 
 	mutex_lock(&wl->mutex);
 
-	क्रम (i = 0; i < WLCORE_NUM_BANDS; i++)
-		wlvअगर->bitrate_masks[i] =
+	for (i = 0; i < WLCORE_NUM_BANDS; i++)
+		wlvif->bitrate_masks[i] =
 			wl1271_tx_enabled_rates_get(wl,
 						    mask->control[i].legacy,
 						    i);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	अगर (wlvअगर->bss_type == BSS_TYPE_STA_BSS &&
-	    !test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags)) अणु
+	if (wlvif->bss_type == BSS_TYPE_STA_BSS &&
+	    !test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags)) {
 
-		ret = pm_runसमय_get_sync(wl->dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_noidle(wl->dev);
-			जाओ out;
-		पूर्ण
+		ret = pm_runtime_get_sync(wl->dev);
+		if (ret < 0) {
+			pm_runtime_put_noidle(wl->dev);
+			goto out;
+		}
 
-		wl1271_set_band_rate(wl, wlvअगर);
-		wlvअगर->basic_rate =
-			wl1271_tx_min_rate_get(wl, wlvअगर->basic_rate_set);
-		ret = wl1271_acx_sta_rate_policies(wl, wlvअगर);
+		wl1271_set_band_rate(wl, wlvif);
+		wlvif->basic_rate =
+			wl1271_tx_min_rate_get(wl, wlvif->basic_rate_set);
+		ret = wl1271_acx_sta_rate_policies(wl, wlvif);
 
-		pm_runसमय_mark_last_busy(wl->dev);
-		pm_runसमय_put_स्वतःsuspend(wl->dev);
-	पूर्ण
+		pm_runtime_mark_last_busy(wl->dev);
+		pm_runtime_put_autosuspend(wl->dev);
+	}
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl12xx_op_channel_चयन(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर,
-				     काष्ठा ieee80211_channel_चयन *ch_चयन)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	पूर्णांक ret;
+static void wl12xx_op_channel_switch(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif,
+				     struct ieee80211_channel_switch *ch_switch)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 channel switch");
 
@@ -5510,258 +5509,258 @@ out:
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state == WLCORE_STATE_OFF)) अणु
-		अगर (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags))
-			ieee80211_chचयन_करोne(vअगर, false);
-		जाओ out;
-	पूर्ण अन्यथा अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
-		जाओ out;
-	पूर्ण
+	if (unlikely(wl->state == WLCORE_STATE_OFF)) {
+		if (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags))
+			ieee80211_chswitch_done(vif, false);
+		goto out;
+	} else if (unlikely(wl->state != WLCORE_STATE_ON)) {
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	/* TODO: change mac80211 to pass vअगर as param */
+	/* TODO: change mac80211 to pass vif as param */
 
-	अगर (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvअगर->flags)) अणु
-		अचिन्हित दीर्घ delay_usec;
+	if (test_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags)) {
+		unsigned long delay_usec;
 
-		ret = wl->ops->channel_चयन(wl, wlvअगर, ch_चयन);
-		अगर (ret)
-			जाओ out_sleep;
+		ret = wl->ops->channel_switch(wl, wlvif, ch_switch);
+		if (ret)
+			goto out_sleep;
 
-		set_bit(WLVIF_FLAG_CS_PROGRESS, &wlvअगर->flags);
+		set_bit(WLVIF_FLAG_CS_PROGRESS, &wlvif->flags);
 
-		/* indicate failure 5 seconds after channel चयन समय */
-		delay_usec = ieee80211_tu_to_usec(wlvअगर->beacon_पूर्णांक) *
-			ch_चयन->count;
-		ieee80211_queue_delayed_work(hw, &wlvअगर->channel_चयन_work,
-					     usecs_to_jअगरfies(delay_usec) +
-					     msecs_to_jअगरfies(5000));
-	पूर्ण
+		/* indicate failure 5 seconds after channel switch time */
+		delay_usec = ieee80211_tu_to_usec(wlvif->beacon_int) *
+			ch_switch->count;
+		ieee80211_queue_delayed_work(hw, &wlvif->channel_switch_work,
+					     usecs_to_jiffies(delay_usec) +
+					     msecs_to_jiffies(5000));
+	}
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल स्थिर व्योम *wlcore_get_beacon_ie(काष्ठा wl1271 *wl,
-					काष्ठा wl12xx_vअगर *wlvअगर,
+static const void *wlcore_get_beacon_ie(struct wl1271 *wl,
+					struct wl12xx_vif *wlvif,
 					u8 eid)
-अणु
-	पूर्णांक ieoffset = दुरत्व(काष्ठा ieee80211_mgmt, u.beacon.variable);
-	काष्ठा sk_buff *beacon =
-		ieee80211_beacon_get(wl->hw, wl12xx_wlvअगर_to_vअगर(wlvअगर));
+{
+	int ieoffset = offsetof(struct ieee80211_mgmt, u.beacon.variable);
+	struct sk_buff *beacon =
+		ieee80211_beacon_get(wl->hw, wl12xx_wlvif_to_vif(wlvif));
 
-	अगर (!beacon)
-		वापस शून्य;
+	if (!beacon)
+		return NULL;
 
-	वापस cfg80211_find_ie(eid,
+	return cfg80211_find_ie(eid,
 				beacon->data + ieoffset,
 				beacon->len - ieoffset);
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_get_csa_count(काष्ठा wl1271 *wl, काष्ठा wl12xx_vअगर *wlvअगर,
+static int wlcore_get_csa_count(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 				u8 *csa_count)
-अणु
-	स्थिर u8 *ie;
-	स्थिर काष्ठा ieee80211_channel_sw_ie *ie_csa;
+{
+	const u8 *ie;
+	const struct ieee80211_channel_sw_ie *ie_csa;
 
-	ie = wlcore_get_beacon_ie(wl, wlvअगर, WLAN_EID_CHANNEL_SWITCH);
-	अगर (!ie)
-		वापस -EINVAL;
+	ie = wlcore_get_beacon_ie(wl, wlvif, WLAN_EID_CHANNEL_SWITCH);
+	if (!ie)
+		return -EINVAL;
 
-	ie_csa = (काष्ठा ieee80211_channel_sw_ie *)&ie[2];
+	ie_csa = (struct ieee80211_channel_sw_ie *)&ie[2];
 	*csa_count = ie_csa->count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wlcore_op_channel_चयन_beacon(काष्ठा ieee80211_hw *hw,
-					    काष्ठा ieee80211_vअगर *vअगर,
-					    काष्ठा cfg80211_chan_def *chandef)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा ieee80211_channel_चयन ch_चयन = अणु
+static void wlcore_op_channel_switch_beacon(struct ieee80211_hw *hw,
+					    struct ieee80211_vif *vif,
+					    struct cfg80211_chan_def *chandef)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct ieee80211_channel_switch ch_switch = {
 		.block_tx = true,
 		.chandef = *chandef,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211,
 		     "mac80211 channel switch beacon (role %d)",
-		     wlvअगर->role_id);
+		     wlvif->role_id);
 
-	ret = wlcore_get_csa_count(wl, wlvअगर, &ch_चयन.count);
-	अगर (ret < 0) अणु
+	ret = wlcore_get_csa_count(wl, wlvif, &ch_switch.count);
+	if (ret < 0) {
 		wl1271_error("error getting beacon (for CSA counter)");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl->ops->channel_चयन(wl, wlvअगर, &ch_चयन);
-	अगर (ret)
-		जाओ out_sleep;
+	ret = wl->ops->channel_switch(wl, wlvif, &ch_switch);
+	if (ret)
+		goto out_sleep;
 
-	set_bit(WLVIF_FLAG_CS_PROGRESS, &wlvअगर->flags);
+	set_bit(WLVIF_FLAG_CS_PROGRESS, &wlvif->flags);
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल व्योम wlcore_op_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+static void wlcore_op_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			    u32 queues, bool drop)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
+{
+	struct wl1271 *wl = hw->priv;
 
 	wl1271_tx_flush(wl);
-पूर्ण
+}
 
-अटल पूर्णांक wlcore_op_reमुख्य_on_channel(काष्ठा ieee80211_hw *hw,
-				       काष्ठा ieee80211_vअगर *vअगर,
-				       काष्ठा ieee80211_channel *chan,
-				       पूर्णांक duration,
-				       क्रमागत ieee80211_roc_type type)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
-	काष्ठा wl1271 *wl = hw->priv;
-	पूर्णांक channel, active_roc, ret = 0;
+static int wlcore_op_remain_on_channel(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_channel *chan,
+				       int duration,
+				       enum ieee80211_roc_type type)
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
+	struct wl1271 *wl = hw->priv;
+	int channel, active_roc, ret = 0;
 
 	channel = ieee80211_frequency_to_channel(chan->center_freq);
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 roc %d (%d)",
-		     channel, wlvअगर->role_id);
+		     channel, wlvif->role_id);
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	/* वापस EBUSY अगर we can't ROC right now */
+	/* return EBUSY if we can't ROC right now */
 	active_roc = find_first_bit(wl->roc_map, WL12XX_MAX_ROLES);
-	अगर (wl->roc_vअगर || active_roc < WL12XX_MAX_ROLES) अणु
+	if (wl->roc_vif || active_roc < WL12XX_MAX_ROLES) {
 		wl1271_warning("active roc on role %d", active_roc);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
-	ret = wl12xx_start_dev(wl, wlvअगर, chan->band, channel);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	ret = wl12xx_start_dev(wl, wlvif, chan->band, channel);
+	if (ret < 0)
+		goto out_sleep;
 
-	wl->roc_vअगर = vअगर;
+	wl->roc_vif = vif;
 	ieee80211_queue_delayed_work(hw, &wl->roc_complete_work,
-				     msecs_to_jअगरfies(duration));
+				     msecs_to_jiffies(duration));
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __wlcore_roc_completed(काष्ठा wl1271 *wl)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	पूर्णांक ret;
+static int __wlcore_roc_completed(struct wl1271 *wl)
+{
+	struct wl12xx_vif *wlvif;
+	int ret;
 
-	/* alपढ़ोy completed */
-	अगर (unlikely(!wl->roc_vअगर))
-		वापस 0;
+	/* already completed */
+	if (unlikely(!wl->roc_vif))
+		return 0;
 
-	wlvअगर = wl12xx_vअगर_to_data(wl->roc_vअगर);
+	wlvif = wl12xx_vif_to_data(wl->roc_vif);
 
-	अगर (!test_bit(WLVIF_FLAG_INITIALIZED, &wlvअगर->flags))
-		वापस -EBUSY;
+	if (!test_bit(WLVIF_FLAG_INITIALIZED, &wlvif->flags))
+		return -EBUSY;
 
-	ret = wl12xx_stop_dev(wl, wlvअगर);
-	अगर (ret < 0)
-		वापस ret;
+	ret = wl12xx_stop_dev(wl, wlvif);
+	if (ret < 0)
+		return ret;
 
-	wl->roc_vअगर = शून्य;
+	wl->roc_vif = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wlcore_roc_completed(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
+static int wlcore_roc_completed(struct wl1271 *wl)
+{
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "roc complete");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
+	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out;
+	}
 
 	ret = __wlcore_roc_completed(wl);
 
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wlcore_roc_complete_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *dwork;
-	काष्ठा wl1271 *wl;
-	पूर्णांक ret;
+static void wlcore_roc_complete_work(struct work_struct *work)
+{
+	struct delayed_work *dwork;
+	struct wl1271 *wl;
+	int ret;
 
 	dwork = to_delayed_work(work);
-	wl = container_of(dwork, काष्ठा wl1271, roc_complete_work);
+	wl = container_of(dwork, struct wl1271, roc_complete_work);
 
 	ret = wlcore_roc_completed(wl);
-	अगर (!ret)
-		ieee80211_reमुख्य_on_channel_expired(wl->hw);
-पूर्ण
+	if (!ret)
+		ieee80211_remain_on_channel_expired(wl->hw);
+}
 
-अटल पूर्णांक wlcore_op_cancel_reमुख्य_on_channel(काष्ठा ieee80211_hw *hw,
-					      काष्ठा ieee80211_vअगर *vअगर)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
+static int wlcore_op_cancel_remain_on_channel(struct ieee80211_hw *hw,
+					      struct ieee80211_vif *vif)
+{
+	struct wl1271 *wl = hw->priv;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 croc");
 
-	/* TODO: per-vअगर */
+	/* TODO: per-vif */
 	wl1271_tx_flush(wl);
 
 	/*
@@ -5771,243 +5770,243 @@ out:
 	cancel_delayed_work_sync(&wl->roc_complete_work);
 	wlcore_roc_completed(wl);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wlcore_op_sta_rc_update(काष्ठा ieee80211_hw *hw,
-				    काष्ठा ieee80211_vअगर *vअगर,
-				    काष्ठा ieee80211_sta *sta,
+static void wlcore_op_sta_rc_update(struct ieee80211_hw *hw,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_sta *sta,
 				    u32 changed)
-अणु
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
+{
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 sta_rc_update");
 
-	अगर (!(changed & IEEE80211_RC_BW_CHANGED))
-		वापस;
+	if (!(changed & IEEE80211_RC_BW_CHANGED))
+		return;
 
 	/* this callback is atomic, so schedule a new work */
-	wlvअगर->rc_update_bw = sta->bandwidth;
-	स_नकल(&wlvअगर->rc_ht_cap, &sta->ht_cap, माप(sta->ht_cap));
-	ieee80211_queue_work(hw, &wlvअगर->rc_update_work);
-पूर्ण
+	wlvif->rc_update_bw = sta->bandwidth;
+	memcpy(&wlvif->rc_ht_cap, &sta->ht_cap, sizeof(sta->ht_cap));
+	ieee80211_queue_work(hw, &wlvif->rc_update_work);
+}
 
-अटल व्योम wlcore_op_sta_statistics(काष्ठा ieee80211_hw *hw,
-				     काष्ठा ieee80211_vअगर *vअगर,
-				     काष्ठा ieee80211_sta *sta,
-				     काष्ठा station_info *sinfo)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
-	काष्ठा wl12xx_vअगर *wlvअगर = wl12xx_vअगर_to_data(vअगर);
+static void wlcore_op_sta_statistics(struct ieee80211_hw *hw,
+				     struct ieee80211_vif *vif,
+				     struct ieee80211_sta *sta,
+				     struct station_info *sinfo)
+{
+	struct wl1271 *wl = hw->priv;
+	struct wl12xx_vif *wlvif = wl12xx_vif_to_data(vif);
 	s8 rssi_dbm;
-	पूर्णांक ret;
+	int ret;
 
 	wl1271_debug(DEBUG_MAC80211, "mac80211 get_rssi");
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	ret = pm_runसमय_get_sync(wl->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(wl->dev);
-		जाओ out_sleep;
-	पूर्ण
+	ret = pm_runtime_get_sync(wl->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(wl->dev);
+		goto out_sleep;
+	}
 
-	ret = wlcore_acx_average_rssi(wl, wlvअगर, &rssi_dbm);
-	अगर (ret < 0)
-		जाओ out_sleep;
+	ret = wlcore_acx_average_rssi(wl, wlvif, &rssi_dbm);
+	if (ret < 0)
+		goto out_sleep;
 
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL);
-	sinfo->संकेत = rssi_dbm;
+	sinfo->signal = rssi_dbm;
 
 out_sleep:
-	pm_runसमय_mark_last_busy(wl->dev);
-	pm_runसमय_put_स्वतःsuspend(wl->dev);
+	pm_runtime_mark_last_busy(wl->dev);
+	pm_runtime_put_autosuspend(wl->dev);
 
 out:
 	mutex_unlock(&wl->mutex);
-पूर्ण
+}
 
-अटल u32 wlcore_op_get_expected_throughput(काष्ठा ieee80211_hw *hw,
-					     काष्ठा ieee80211_sta *sta)
-अणु
-	काष्ठा wl1271_station *wl_sta = (काष्ठा wl1271_station *)sta->drv_priv;
-	काष्ठा wl1271 *wl = hw->priv;
+static u32 wlcore_op_get_expected_throughput(struct ieee80211_hw *hw,
+					     struct ieee80211_sta *sta)
+{
+	struct wl1271_station *wl_sta = (struct wl1271_station *)sta->drv_priv;
+	struct wl1271 *wl = hw->priv;
 	u8 hlid = wl_sta->hlid;
 
-	/* वापस in units of Kbps */
-	वापस (wl->links[hlid].fw_rate_mbps * 1000);
-पूर्ण
+	/* return in units of Kbps */
+	return (wl->links[hlid].fw_rate_mbps * 1000);
+}
 
-अटल bool wl1271_tx_frames_pending(काष्ठा ieee80211_hw *hw)
-अणु
-	काष्ठा wl1271 *wl = hw->priv;
+static bool wl1271_tx_frames_pending(struct ieee80211_hw *hw)
+{
+	struct wl1271 *wl = hw->priv;
 	bool ret = false;
 
 	mutex_lock(&wl->mutex);
 
-	अगर (unlikely(wl->state != WLCORE_STATE_ON))
-		जाओ out;
+	if (unlikely(wl->state != WLCORE_STATE_ON))
+		goto out;
 
-	/* packets are considered pending अगर in the TX queue or the FW */
+	/* packets are considered pending if in the TX queue or the FW */
 	ret = (wl1271_tx_total_queue_count(wl) > 0) || (wl->tx_frames_cnt > 0);
 out:
 	mutex_unlock(&wl->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* can't be स्थिर, mac80211 ग_लिखोs to this */
-अटल काष्ठा ieee80211_rate wl1271_rates[] = अणु
-	अणु .bitrate = 10,
+/* can't be const, mac80211 writes to this */
+static struct ieee80211_rate wl1271_rates[] = {
+	{ .bitrate = 10,
 	  .hw_value = CONF_HW_BIT_RATE_1MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_1MBPS, पूर्ण,
-	अणु .bitrate = 20,
+	  .hw_value_short = CONF_HW_BIT_RATE_1MBPS, },
+	{ .bitrate = 20,
 	  .hw_value = CONF_HW_BIT_RATE_2MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_2MBPS,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
-	अणु .bitrate = 55,
+	  .hw_value_short = CONF_HW_BIT_RATE_2MBPS,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
+	{ .bitrate = 55,
 	  .hw_value = CONF_HW_BIT_RATE_5_5MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_5_5MBPS,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
-	अणु .bitrate = 110,
+	  .hw_value_short = CONF_HW_BIT_RATE_5_5MBPS,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
+	{ .bitrate = 110,
 	  .hw_value = CONF_HW_BIT_RATE_11MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_11MBPS,
-	  .flags = IEEE80211_RATE_SHORT_PREAMBLE पूर्ण,
-	अणु .bitrate = 60,
+	  .hw_value_short = CONF_HW_BIT_RATE_11MBPS,
+	  .flags = IEEE80211_RATE_SHORT_PREAMBLE },
+	{ .bitrate = 60,
 	  .hw_value = CONF_HW_BIT_RATE_6MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_6MBPS, पूर्ण,
-	अणु .bitrate = 90,
+	  .hw_value_short = CONF_HW_BIT_RATE_6MBPS, },
+	{ .bitrate = 90,
 	  .hw_value = CONF_HW_BIT_RATE_9MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_9MBPS, पूर्ण,
-	अणु .bitrate = 120,
+	  .hw_value_short = CONF_HW_BIT_RATE_9MBPS, },
+	{ .bitrate = 120,
 	  .hw_value = CONF_HW_BIT_RATE_12MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_12MBPS, पूर्ण,
-	अणु .bitrate = 180,
+	  .hw_value_short = CONF_HW_BIT_RATE_12MBPS, },
+	{ .bitrate = 180,
 	  .hw_value = CONF_HW_BIT_RATE_18MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_18MBPS, पूर्ण,
-	अणु .bitrate = 240,
+	  .hw_value_short = CONF_HW_BIT_RATE_18MBPS, },
+	{ .bitrate = 240,
 	  .hw_value = CONF_HW_BIT_RATE_24MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_24MBPS, पूर्ण,
-	अणु .bitrate = 360,
+	  .hw_value_short = CONF_HW_BIT_RATE_24MBPS, },
+	{ .bitrate = 360,
 	 .hw_value = CONF_HW_BIT_RATE_36MBPS,
-	 .hw_value_लघु = CONF_HW_BIT_RATE_36MBPS, पूर्ण,
-	अणु .bitrate = 480,
+	 .hw_value_short = CONF_HW_BIT_RATE_36MBPS, },
+	{ .bitrate = 480,
 	  .hw_value = CONF_HW_BIT_RATE_48MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_48MBPS, पूर्ण,
-	अणु .bitrate = 540,
+	  .hw_value_short = CONF_HW_BIT_RATE_48MBPS, },
+	{ .bitrate = 540,
 	  .hw_value = CONF_HW_BIT_RATE_54MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_54MBPS, पूर्ण,
-पूर्ण;
+	  .hw_value_short = CONF_HW_BIT_RATE_54MBPS, },
+};
 
-/* can't be स्थिर, mac80211 ग_लिखोs to this */
-अटल काष्ठा ieee80211_channel wl1271_channels[] = अणु
-	अणु .hw_value = 1, .center_freq = 2412, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 2, .center_freq = 2417, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 3, .center_freq = 2422, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 4, .center_freq = 2427, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 5, .center_freq = 2432, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 6, .center_freq = 2437, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 7, .center_freq = 2442, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 8, .center_freq = 2447, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 9, .center_freq = 2452, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 10, .center_freq = 2457, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 11, .center_freq = 2462, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 12, .center_freq = 2467, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 13, .center_freq = 2472, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 14, .center_freq = 2484, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-पूर्ण;
+/* can't be const, mac80211 writes to this */
+static struct ieee80211_channel wl1271_channels[] = {
+	{ .hw_value = 1, .center_freq = 2412, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 2, .center_freq = 2417, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 3, .center_freq = 2422, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 4, .center_freq = 2427, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 5, .center_freq = 2432, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 6, .center_freq = 2437, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 7, .center_freq = 2442, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 8, .center_freq = 2447, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 9, .center_freq = 2452, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 10, .center_freq = 2457, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 11, .center_freq = 2462, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 12, .center_freq = 2467, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 13, .center_freq = 2472, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 14, .center_freq = 2484, .max_power = WLCORE_MAX_TXPWR },
+};
 
-/* can't be स्थिर, mac80211 ग_लिखोs to this */
-अटल काष्ठा ieee80211_supported_band wl1271_band_2ghz = अणु
+/* can't be const, mac80211 writes to this */
+static struct ieee80211_supported_band wl1271_band_2ghz = {
 	.channels = wl1271_channels,
 	.n_channels = ARRAY_SIZE(wl1271_channels),
 	.bitrates = wl1271_rates,
 	.n_bitrates = ARRAY_SIZE(wl1271_rates),
-पूर्ण;
+};
 
-/* 5 GHz data rates क्रम WL1273 */
-अटल काष्ठा ieee80211_rate wl1271_rates_5ghz[] = अणु
-	अणु .bitrate = 60,
+/* 5 GHz data rates for WL1273 */
+static struct ieee80211_rate wl1271_rates_5ghz[] = {
+	{ .bitrate = 60,
 	  .hw_value = CONF_HW_BIT_RATE_6MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_6MBPS, पूर्ण,
-	अणु .bitrate = 90,
+	  .hw_value_short = CONF_HW_BIT_RATE_6MBPS, },
+	{ .bitrate = 90,
 	  .hw_value = CONF_HW_BIT_RATE_9MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_9MBPS, पूर्ण,
-	अणु .bitrate = 120,
+	  .hw_value_short = CONF_HW_BIT_RATE_9MBPS, },
+	{ .bitrate = 120,
 	  .hw_value = CONF_HW_BIT_RATE_12MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_12MBPS, पूर्ण,
-	अणु .bitrate = 180,
+	  .hw_value_short = CONF_HW_BIT_RATE_12MBPS, },
+	{ .bitrate = 180,
 	  .hw_value = CONF_HW_BIT_RATE_18MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_18MBPS, पूर्ण,
-	अणु .bitrate = 240,
+	  .hw_value_short = CONF_HW_BIT_RATE_18MBPS, },
+	{ .bitrate = 240,
 	  .hw_value = CONF_HW_BIT_RATE_24MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_24MBPS, पूर्ण,
-	अणु .bitrate = 360,
+	  .hw_value_short = CONF_HW_BIT_RATE_24MBPS, },
+	{ .bitrate = 360,
 	 .hw_value = CONF_HW_BIT_RATE_36MBPS,
-	 .hw_value_लघु = CONF_HW_BIT_RATE_36MBPS, पूर्ण,
-	अणु .bitrate = 480,
+	 .hw_value_short = CONF_HW_BIT_RATE_36MBPS, },
+	{ .bitrate = 480,
 	  .hw_value = CONF_HW_BIT_RATE_48MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_48MBPS, पूर्ण,
-	अणु .bitrate = 540,
+	  .hw_value_short = CONF_HW_BIT_RATE_48MBPS, },
+	{ .bitrate = 540,
 	  .hw_value = CONF_HW_BIT_RATE_54MBPS,
-	  .hw_value_लघु = CONF_HW_BIT_RATE_54MBPS, पूर्ण,
-पूर्ण;
+	  .hw_value_short = CONF_HW_BIT_RATE_54MBPS, },
+};
 
-/* 5 GHz band channels क्रम WL1273 */
-अटल काष्ठा ieee80211_channel wl1271_channels_5ghz[] = अणु
-	अणु .hw_value = 8, .center_freq = 5040, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 12, .center_freq = 5060, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 16, .center_freq = 5080, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 34, .center_freq = 5170, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 36, .center_freq = 5180, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 38, .center_freq = 5190, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 40, .center_freq = 5200, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 42, .center_freq = 5210, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 44, .center_freq = 5220, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 46, .center_freq = 5230, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 48, .center_freq = 5240, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 52, .center_freq = 5260, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 56, .center_freq = 5280, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 60, .center_freq = 5300, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 64, .center_freq = 5320, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 100, .center_freq = 5500, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 104, .center_freq = 5520, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 108, .center_freq = 5540, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 112, .center_freq = 5560, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 116, .center_freq = 5580, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 120, .center_freq = 5600, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 124, .center_freq = 5620, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 128, .center_freq = 5640, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 132, .center_freq = 5660, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 136, .center_freq = 5680, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 140, .center_freq = 5700, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 149, .center_freq = 5745, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 153, .center_freq = 5765, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 157, .center_freq = 5785, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 161, .center_freq = 5805, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-	अणु .hw_value = 165, .center_freq = 5825, .max_घातer = WLCORE_MAX_TXPWR पूर्ण,
-पूर्ण;
+/* 5 GHz band channels for WL1273 */
+static struct ieee80211_channel wl1271_channels_5ghz[] = {
+	{ .hw_value = 8, .center_freq = 5040, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 12, .center_freq = 5060, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 16, .center_freq = 5080, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 34, .center_freq = 5170, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 36, .center_freq = 5180, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 38, .center_freq = 5190, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 40, .center_freq = 5200, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 42, .center_freq = 5210, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 44, .center_freq = 5220, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 46, .center_freq = 5230, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 48, .center_freq = 5240, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 52, .center_freq = 5260, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 56, .center_freq = 5280, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 60, .center_freq = 5300, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 64, .center_freq = 5320, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 100, .center_freq = 5500, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 104, .center_freq = 5520, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 108, .center_freq = 5540, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 112, .center_freq = 5560, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 116, .center_freq = 5580, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 120, .center_freq = 5600, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 124, .center_freq = 5620, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 128, .center_freq = 5640, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 132, .center_freq = 5660, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 136, .center_freq = 5680, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 140, .center_freq = 5700, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 149, .center_freq = 5745, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 153, .center_freq = 5765, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 157, .center_freq = 5785, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 161, .center_freq = 5805, .max_power = WLCORE_MAX_TXPWR },
+	{ .hw_value = 165, .center_freq = 5825, .max_power = WLCORE_MAX_TXPWR },
+};
 
-अटल काष्ठा ieee80211_supported_band wl1271_band_5ghz = अणु
+static struct ieee80211_supported_band wl1271_band_5ghz = {
 	.channels = wl1271_channels_5ghz,
 	.n_channels = ARRAY_SIZE(wl1271_channels_5ghz),
 	.bitrates = wl1271_rates_5ghz,
 	.n_bitrates = ARRAY_SIZE(wl1271_rates_5ghz),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ieee80211_ops wl1271_ops = अणु
+static const struct ieee80211_ops wl1271_ops = {
 	.start = wl1271_op_start,
 	.stop = wlcore_op_stop,
-	.add_पूर्णांकerface = wl1271_op_add_पूर्णांकerface,
-	.हटाओ_पूर्णांकerface = wl1271_op_हटाओ_पूर्णांकerface,
-	.change_पूर्णांकerface = wl12xx_op_change_पूर्णांकerface,
-#अगर_घोषित CONFIG_PM
+	.add_interface = wl1271_op_add_interface,
+	.remove_interface = wl1271_op_remove_interface,
+	.change_interface = wl12xx_op_change_interface,
+#ifdef CONFIG_PM
 	.suspend = wl1271_op_suspend,
 	.resume = wl1271_op_resume,
-#पूर्ण_अगर
+#endif
 	.config = wl1271_op_config,
 	.prepare_multicast = wl1271_op_prepare_multicast,
 	.configure_filter = wl1271_op_configure_filter,
@@ -6027,56 +6026,56 @@ out:
 	.ampdu_action = wl1271_op_ampdu_action,
 	.tx_frames_pending = wl1271_tx_frames_pending,
 	.set_bitrate_mask = wl12xx_set_bitrate_mask,
-	.set_शेष_unicast_key = wl1271_op_set_शेष_key_idx,
-	.channel_चयन = wl12xx_op_channel_चयन,
-	.channel_चयन_beacon = wlcore_op_channel_चयन_beacon,
+	.set_default_unicast_key = wl1271_op_set_default_key_idx,
+	.channel_switch = wl12xx_op_channel_switch,
+	.channel_switch_beacon = wlcore_op_channel_switch_beacon,
 	.flush = wlcore_op_flush,
-	.reमुख्य_on_channel = wlcore_op_reमुख्य_on_channel,
-	.cancel_reमुख्य_on_channel = wlcore_op_cancel_reमुख्य_on_channel,
+	.remain_on_channel = wlcore_op_remain_on_channel,
+	.cancel_remain_on_channel = wlcore_op_cancel_remain_on_channel,
 	.add_chanctx = wlcore_op_add_chanctx,
-	.हटाओ_chanctx = wlcore_op_हटाओ_chanctx,
+	.remove_chanctx = wlcore_op_remove_chanctx,
 	.change_chanctx = wlcore_op_change_chanctx,
-	.assign_vअगर_chanctx = wlcore_op_assign_vअगर_chanctx,
-	.unassign_vअगर_chanctx = wlcore_op_unassign_vअगर_chanctx,
-	.चयन_vअगर_chanctx = wlcore_op_चयन_vअगर_chanctx,
+	.assign_vif_chanctx = wlcore_op_assign_vif_chanctx,
+	.unassign_vif_chanctx = wlcore_op_unassign_vif_chanctx,
+	.switch_vif_chanctx = wlcore_op_switch_vif_chanctx,
 	.sta_rc_update = wlcore_op_sta_rc_update,
 	.sta_statistics = wlcore_op_sta_statistics,
 	.get_expected_throughput = wlcore_op_get_expected_throughput,
-	CFG80211_TESTMODE_CMD(wl1271_पंचांग_cmd)
-पूर्ण;
+	CFG80211_TESTMODE_CMD(wl1271_tm_cmd)
+};
 
 
-u8 wlcore_rate_to_idx(काष्ठा wl1271 *wl, u8 rate, क्रमागत nl80211_band band)
-अणु
+u8 wlcore_rate_to_idx(struct wl1271 *wl, u8 rate, enum nl80211_band band)
+{
 	u8 idx;
 
 	BUG_ON(band >= 2);
 
-	अगर (unlikely(rate >= wl->hw_tx_rate_tbl_size)) अणु
+	if (unlikely(rate >= wl->hw_tx_rate_tbl_size)) {
 		wl1271_error("Illegal RX rate from HW: %d", rate);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	idx = wl->band_rate_to_idx[band][rate];
-	अगर (unlikely(idx == CONF_HW_RXTX_RATE_UNSUPPORTED)) अणु
+	if (unlikely(idx == CONF_HW_RXTX_RATE_UNSUPPORTED)) {
 		wl1271_error("Unsupported RX rate from HW: %d", rate);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस idx;
-पूर्ण
+	return idx;
+}
 
-अटल व्योम wl12xx_derive_mac_addresses(काष्ठा wl1271 *wl, u32 oui, u32 nic)
-अणु
-	पूर्णांक i;
+static void wl12xx_derive_mac_addresses(struct wl1271 *wl, u32 oui, u32 nic)
+{
+	int i;
 
 	wl1271_debug(DEBUG_PROBE, "base address: oui %06x nic %06x",
 		     oui, nic);
 
-	अगर (nic + WLCORE_NUM_MAC_ADDRESSES - wl->num_mac_addr > 0xffffff)
+	if (nic + WLCORE_NUM_MAC_ADDRESSES - wl->num_mac_addr > 0xffffff)
 		wl1271_warning("NIC part of the MAC address wraps around!");
 
-	क्रम (i = 0; i < wl->num_mac_addr; i++) अणु
+	for (i = 0; i < wl->num_mac_addr; i++) {
 		wl->addresses[i].addr[0] = (u8)(oui >> 16);
 		wl->addresses[i].addr[1] = (u8)(oui >> 8);
 		wl->addresses[i].addr[2] = (u8) oui;
@@ -6084,63 +6083,63 @@ u8 wlcore_rate_to_idx(काष्ठा wl1271 *wl, u8 rate, क्रमाग
 		wl->addresses[i].addr[4] = (u8)(nic >> 8);
 		wl->addresses[i].addr[5] = (u8) nic;
 		nic++;
-	पूर्ण
+	}
 
-	/* we may be one address लघु at the most */
+	/* we may be one address short at the most */
 	WARN_ON(wl->num_mac_addr + 1 < WLCORE_NUM_MAC_ADDRESSES);
 
 	/*
 	 * turn on the LAA bit in the first address and use it as
 	 * the last address.
 	 */
-	अगर (wl->num_mac_addr < WLCORE_NUM_MAC_ADDRESSES) अणु
-		पूर्णांक idx = WLCORE_NUM_MAC_ADDRESSES - 1;
-		स_नकल(&wl->addresses[idx], &wl->addresses[0],
-		       माप(wl->addresses[0]));
+	if (wl->num_mac_addr < WLCORE_NUM_MAC_ADDRESSES) {
+		int idx = WLCORE_NUM_MAC_ADDRESSES - 1;
+		memcpy(&wl->addresses[idx], &wl->addresses[0],
+		       sizeof(wl->addresses[0]));
 		/* LAA bit */
 		wl->addresses[idx].addr[0] |= BIT(1);
-	पूर्ण
+	}
 
 	wl->hw->wiphy->n_addresses = WLCORE_NUM_MAC_ADDRESSES;
 	wl->hw->wiphy->addresses = wl->addresses;
-पूर्ण
+}
 
-अटल पूर्णांक wl12xx_get_hw_info(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
+static int wl12xx_get_hw_info(struct wl1271 *wl)
+{
+	int ret;
 
-	ret = wlcore_पढ़ो_reg(wl, REG_CHIP_ID_B, &wl->chip.id);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_read_reg(wl, REG_CHIP_ID_B, &wl->chip.id);
+	if (ret < 0)
+		goto out;
 
 	wl->fuse_oui_addr = 0;
 	wl->fuse_nic_addr = 0;
 
 	ret = wl->ops->get_pg_ver(wl, &wl->hw_pg_ver);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (wl->ops->get_mac)
+	if (wl->ops->get_mac)
 		ret = wl->ops->get_mac(wl);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wl1271_रेजिस्टर_hw(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक ret;
+static int wl1271_register_hw(struct wl1271 *wl)
+{
+	int ret;
 	u32 oui_addr = 0, nic_addr = 0;
-	काष्ठा platक्रमm_device *pdev = wl->pdev;
-	काष्ठा wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
+	struct platform_device *pdev = wl->pdev;
+	struct wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
 
-	अगर (wl->mac80211_रेजिस्टरed)
-		वापस 0;
+	if (wl->mac80211_registered)
+		return 0;
 
-	अगर (wl->nvs_len >= 12) अणु
+	if (wl->nvs_len >= 12) {
 		/* NOTE: The wl->nvs->nvs element must be first, in
-		 * order to simplअगरy the casting, we assume it is at
-		 * the beginning of the wl->nvs काष्ठाure.
+		 * order to simplify the casting, we assume it is at
+		 * the beginning of the wl->nvs structure.
 		 */
 		u8 *nvs_ptr = (u8 *)wl->nvs;
 
@@ -6148,84 +6147,84 @@ out:
 			(nvs_ptr[11] << 16) + (nvs_ptr[10] << 8) + nvs_ptr[6];
 		nic_addr =
 			(nvs_ptr[5] << 16) + (nvs_ptr[4] << 8) + nvs_ptr[3];
-	पूर्ण
+	}
 
-	/* अगर the MAC address is zeroed in the NVS derive from fuse */
-	अगर (oui_addr == 0 && nic_addr == 0) अणु
+	/* if the MAC address is zeroed in the NVS derive from fuse */
+	if (oui_addr == 0 && nic_addr == 0) {
 		oui_addr = wl->fuse_oui_addr;
 		/* fuse has the BD_ADDR, the WLAN addresses are the next two */
 		nic_addr = wl->fuse_nic_addr + 1;
-	पूर्ण
+	}
 
-	अगर (oui_addr == 0xdeadbe && nic_addr == 0xef0000) अणु
+	if (oui_addr == 0xdeadbe && nic_addr == 0xef0000) {
 		wl1271_warning("Detected unconfigured mac address in nvs, derive from fuse instead.");
-		अगर (!म_भेद(pdev_data->family->name, "wl18xx")) अणु
+		if (!strcmp(pdev_data->family->name, "wl18xx")) {
 			wl1271_warning("This default nvs file can be removed from the file system");
-		पूर्ण अन्यथा अणु
+		} else {
 			wl1271_warning("Your device performance is not optimized.");
 			wl1271_warning("Please use the calibrator tool to configure your device.");
-		पूर्ण
+		}
 
-		अगर (wl->fuse_oui_addr == 0 && wl->fuse_nic_addr == 0) अणु
+		if (wl->fuse_oui_addr == 0 && wl->fuse_nic_addr == 0) {
 			wl1271_warning("Fuse mac address is zero. using random mac");
-			/* Use TI oui and a अक्रमom nic */
+			/* Use TI oui and a random nic */
 			oui_addr = WLCORE_TI_OUI_ADDRESS;
-			nic_addr = get_अक्रमom_पूर्णांक();
-		पूर्ण अन्यथा अणु
+			nic_addr = get_random_int();
+		} else {
 			oui_addr = wl->fuse_oui_addr;
 			/* fuse has the BD_ADDR, the WLAN addresses are the next two */
 			nic_addr = wl->fuse_nic_addr + 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	wl12xx_derive_mac_addresses(wl, oui_addr, nic_addr);
 
-	ret = ieee80211_रेजिस्टर_hw(wl->hw);
-	अगर (ret < 0) अणु
+	ret = ieee80211_register_hw(wl->hw);
+	if (ret < 0) {
 		wl1271_error("unable to register mac80211 hw: %d", ret);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	wl->mac80211_रेजिस्टरed = true;
+	wl->mac80211_registered = true;
 
 	wl1271_debugfs_init(wl);
 
 	wl1271_notice("loaded");
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम wl1271_unरेजिस्टर_hw(काष्ठा wl1271 *wl)
-अणु
-	अगर (wl->plt)
+static void wl1271_unregister_hw(struct wl1271 *wl)
+{
+	if (wl->plt)
 		wl1271_plt_stop(wl);
 
-	ieee80211_unरेजिस्टर_hw(wl->hw);
-	wl->mac80211_रेजिस्टरed = false;
+	ieee80211_unregister_hw(wl->hw);
+	wl->mac80211_registered = false;
 
-पूर्ण
+}
 
-अटल पूर्णांक wl1271_init_ieee80211(काष्ठा wl1271 *wl)
-अणु
-	पूर्णांक i;
-	अटल स्थिर u32 cipher_suites[] = अणु
+static int wl1271_init_ieee80211(struct wl1271 *wl)
+{
+	int i;
+	static const u32 cipher_suites[] = {
 		WLAN_CIPHER_SUITE_WEP40,
 		WLAN_CIPHER_SUITE_WEP104,
 		WLAN_CIPHER_SUITE_TKIP,
 		WLAN_CIPHER_SUITE_CCMP,
 		WL1271_CIPHER_SUITE_GEM,
-	पूर्ण;
+	};
 
 	/* The tx descriptor buffer */
-	wl->hw->extra_tx_headroom = माप(काष्ठा wl1271_tx_hw_descr);
+	wl->hw->extra_tx_headroom = sizeof(struct wl1271_tx_hw_descr);
 
-	अगर (wl->quirks & WLCORE_QUIRK_TKIP_HEADER_SPACE)
+	if (wl->quirks & WLCORE_QUIRK_TKIP_HEADER_SPACE)
 		wl->hw->extra_tx_headroom += WL1271_EXTRA_SPACE_TKIP;
 
 	/* unit us */
 	/* FIXME: find a proper value */
-	wl->hw->max_listen_पूर्णांकerval = wl->conf.conn.max_listen_पूर्णांकerval;
+	wl->hw->max_listen_interval = wl->conf.conn.max_listen_interval;
 
 	ieee80211_hw_set(wl->hw, SUPPORT_FAST_XMIT);
 	ieee80211_hw_set(wl->hw, CHANCTX_STA_CSA);
@@ -6246,31 +6245,31 @@ out:
 	wl->hw->wiphy->cipher_suites = cipher_suites;
 	wl->hw->wiphy->n_cipher_suites = ARRAY_SIZE(cipher_suites);
 
-	wl->hw->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
+	wl->hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 					 BIT(NL80211_IFTYPE_AP) |
 					 BIT(NL80211_IFTYPE_P2P_DEVICE) |
 					 BIT(NL80211_IFTYPE_P2P_CLIENT) |
-#अगर_घोषित CONFIG_MAC80211_MESH
+#ifdef CONFIG_MAC80211_MESH
 					 BIT(NL80211_IFTYPE_MESH_POINT) |
-#पूर्ण_अगर
+#endif
 					 BIT(NL80211_IFTYPE_P2P_GO);
 
 	wl->hw->wiphy->max_scan_ssids = 1;
 	wl->hw->wiphy->max_sched_scan_ssids = 16;
 	wl->hw->wiphy->max_match_sets = 16;
 	/*
-	 * Maximum length of elements in scanning probe request ढाँचाs
-	 * should be the maximum length possible क्रम a ढाँचा, without
-	 * the IEEE80211 header of the ढाँचा
+	 * Maximum length of elements in scanning probe request templates
+	 * should be the maximum length possible for a template, without
+	 * the IEEE80211 header of the template
 	 */
 	wl->hw->wiphy->max_scan_ie_len = WL1271_CMD_TEMPL_MAX_SIZE -
-			माप(काष्ठा ieee80211_header);
+			sizeof(struct ieee80211_header);
 
 	wl->hw->wiphy->max_sched_scan_reqs = 1;
 	wl->hw->wiphy->max_sched_scan_ie_len = WL1271_CMD_TEMPL_MAX_SIZE -
-		माप(काष्ठा ieee80211_header);
+		sizeof(struct ieee80211_header);
 
-	wl->hw->wiphy->max_reमुख्य_on_channel_duration = 30000;
+	wl->hw->wiphy->max_remain_on_channel_duration = 30000;
 
 	wl->hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD |
 				WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL |
@@ -6279,40 +6278,40 @@ out:
 
 	wl->hw->wiphy->features |= NL80211_FEATURE_AP_SCAN;
 
-	/* make sure all our channels fit in the scanned_ch biपंचांगask */
+	/* make sure all our channels fit in the scanned_ch bitmask */
 	BUILD_BUG_ON(ARRAY_SIZE(wl1271_channels) +
 		     ARRAY_SIZE(wl1271_channels_5ghz) >
 		     WL1271_MAX_CHANNELS);
 	/*
 	* clear channel flags from the previous usage
-	* and restore max_घातer & max_antenna_gain values.
+	* and restore max_power & max_antenna_gain values.
 	*/
-	क्रम (i = 0; i < ARRAY_SIZE(wl1271_channels); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wl1271_channels); i++) {
 		wl1271_band_2ghz.channels[i].flags = 0;
-		wl1271_band_2ghz.channels[i].max_घातer = WLCORE_MAX_TXPWR;
+		wl1271_band_2ghz.channels[i].max_power = WLCORE_MAX_TXPWR;
 		wl1271_band_2ghz.channels[i].max_antenna_gain = 0;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(wl1271_channels_5ghz); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(wl1271_channels_5ghz); i++) {
 		wl1271_band_5ghz.channels[i].flags = 0;
-		wl1271_band_5ghz.channels[i].max_घातer = WLCORE_MAX_TXPWR;
+		wl1271_band_5ghz.channels[i].max_power = WLCORE_MAX_TXPWR;
 		wl1271_band_5ghz.channels[i].max_antenna_gain = 0;
-	पूर्ण
+	}
 
 	/*
-	 * We keep local copies of the band काष्ठाs because we need to
-	 * modअगरy them on a per-device basis.
+	 * We keep local copies of the band structs because we need to
+	 * modify them on a per-device basis.
 	 */
-	स_नकल(&wl->bands[NL80211_BAND_2GHZ], &wl1271_band_2ghz,
-	       माप(wl1271_band_2ghz));
-	स_नकल(&wl->bands[NL80211_BAND_2GHZ].ht_cap,
+	memcpy(&wl->bands[NL80211_BAND_2GHZ], &wl1271_band_2ghz,
+	       sizeof(wl1271_band_2ghz));
+	memcpy(&wl->bands[NL80211_BAND_2GHZ].ht_cap,
 	       &wl->ht_cap[NL80211_BAND_2GHZ],
-	       माप(*wl->ht_cap));
-	स_नकल(&wl->bands[NL80211_BAND_5GHZ], &wl1271_band_5ghz,
-	       माप(wl1271_band_5ghz));
-	स_नकल(&wl->bands[NL80211_BAND_5GHZ].ht_cap,
+	       sizeof(*wl->ht_cap));
+	memcpy(&wl->bands[NL80211_BAND_5GHZ], &wl1271_band_5ghz,
+	       sizeof(wl1271_band_5ghz));
+	memcpy(&wl->bands[NL80211_BAND_5GHZ].ht_cap,
 	       &wl->ht_cap[NL80211_BAND_5GHZ],
-	       माप(*wl->ht_cap));
+	       sizeof(*wl->ht_cap));
 
 	wl->hw->wiphy->bands[NL80211_BAND_2GHZ] =
 		&wl->bands[NL80211_BAND_2GHZ];
@@ -6329,7 +6328,7 @@ out:
 	wl->hw->offchannel_tx_hw_queue = wl->hw->queues - 1;
 	wl->hw->max_rates = 1;
 
-	wl->hw->wiphy->reg_notअगरier = wl1271_reg_notअगरy;
+	wl->hw->wiphy->reg_notifier = wl1271_reg_notify;
 
 	/* the FW answers probe-requests in AP-mode */
 	wl->hw->wiphy->flags |= WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD;
@@ -6338,58 +6337,58 @@ out:
 		NL80211_PROBE_RESP_OFFLOAD_SUPPORT_WPS2 |
 		NL80211_PROBE_RESP_OFFLOAD_SUPPORT_P2P;
 
-	/* allowed पूर्णांकerface combinations */
-	wl->hw->wiphy->अगरace_combinations = wl->अगरace_combinations;
-	wl->hw->wiphy->n_अगरace_combinations = wl->n_अगरace_combinations;
+	/* allowed interface combinations */
+	wl->hw->wiphy->iface_combinations = wl->iface_combinations;
+	wl->hw->wiphy->n_iface_combinations = wl->n_iface_combinations;
 
-	/* रेजिस्टर venकरोr commands */
-	wlcore_set_venकरोr_commands(wl->hw->wiphy);
+	/* register vendor commands */
+	wlcore_set_vendor_commands(wl->hw->wiphy);
 
 	SET_IEEE80211_DEV(wl->hw, wl->dev);
 
-	wl->hw->sta_data_size = माप(काष्ठा wl1271_station);
-	wl->hw->vअगर_data_size = माप(काष्ठा wl12xx_vअगर);
+	wl->hw->sta_data_size = sizeof(struct wl1271_station);
+	wl->hw->vif_data_size = sizeof(struct wl12xx_vif);
 
 	wl->hw->max_rx_aggregation_subframes = wl->conf.ht.rx_ba_win_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा ieee80211_hw *wlcore_alloc_hw(माप_प्रकार priv_size, u32 aggr_buf_size,
+struct ieee80211_hw *wlcore_alloc_hw(size_t priv_size, u32 aggr_buf_size,
 				     u32 mbox_size)
-अणु
-	काष्ठा ieee80211_hw *hw;
-	काष्ठा wl1271 *wl;
-	पूर्णांक i, j, ret;
-	अचिन्हित पूर्णांक order;
+{
+	struct ieee80211_hw *hw;
+	struct wl1271 *wl;
+	int i, j, ret;
+	unsigned int order;
 
-	hw = ieee80211_alloc_hw(माप(*wl), &wl1271_ops);
-	अगर (!hw) अणु
+	hw = ieee80211_alloc_hw(sizeof(*wl), &wl1271_ops);
+	if (!hw) {
 		wl1271_error("could not alloc ieee80211_hw");
 		ret = -ENOMEM;
-		जाओ err_hw_alloc;
-	पूर्ण
+		goto err_hw_alloc;
+	}
 
 	wl = hw->priv;
-	स_रखो(wl, 0, माप(*wl));
+	memset(wl, 0, sizeof(*wl));
 
 	wl->priv = kzalloc(priv_size, GFP_KERNEL);
-	अगर (!wl->priv) अणु
+	if (!wl->priv) {
 		wl1271_error("could not alloc wl priv");
 		ret = -ENOMEM;
-		जाओ err_priv_alloc;
-	पूर्ण
+		goto err_priv_alloc;
+	}
 
-	INIT_LIST_HEAD(&wl->wlvअगर_list);
+	INIT_LIST_HEAD(&wl->wlvif_list);
 
 	wl->hw = hw;
 
 	/*
 	 * wl->num_links is not configured yet, so just use WLCORE_MAX_LINKS.
-	 * we करोn't allocate any additional resource here, so that's fine.
+	 * we don't allocate any additional resource here, so that's fine.
 	 */
-	क्रम (i = 0; i < NUM_TX_QUEUES; i++)
-		क्रम (j = 0; j < WLCORE_MAX_LINKS; j++)
+	for (i = 0; i < NUM_TX_QUEUES; i++)
+		for (j = 0; j < WLCORE_MAX_LINKS; j++)
 			skb_queue_head_init(&wl->links[j].tx_queue[i]);
 
 	skb_queue_head_init(&wl->deferred_rx_queue);
@@ -6400,17 +6399,17 @@ out:
 	INIT_WORK(&wl->recovery_work, wl1271_recovery_work);
 	INIT_DELAYED_WORK(&wl->scan_complete_work, wl1271_scan_complete_work);
 	INIT_DELAYED_WORK(&wl->roc_complete_work, wlcore_roc_complete_work);
-	INIT_DELAYED_WORK(&wl->tx_watchकरोg_work, wl12xx_tx_watchकरोg_work);
+	INIT_DELAYED_WORK(&wl->tx_watchdog_work, wl12xx_tx_watchdog_work);
 
-	wl->मुक्तzable_wq = create_मुक्तzable_workqueue("wl12xx_wq");
-	अगर (!wl->मुक्तzable_wq) अणु
+	wl->freezable_wq = create_freezable_workqueue("wl12xx_wq");
+	if (!wl->freezable_wq) {
 		ret = -ENOMEM;
-		जाओ err_hw;
-	पूर्ण
+		goto err_hw;
+	}
 
 	wl->channel = 0;
 	wl->rx_counter = 0;
-	wl->घातer_level = WL1271_DEFAULT_POWER_LEVEL;
+	wl->power_level = WL1271_DEFAULT_POWER_LEVEL;
 	wl->band = NL80211_BAND_2GHZ;
 	wl->channel_type = NL80211_CHAN_NO_HT;
 	wl->flags = 0;
@@ -6421,17 +6420,17 @@ out:
 	wl->ap_ps_map = 0;
 	wl->ap_fw_ps_map = 0;
 	wl->quirks = 0;
-	wl->प्रणाली_hlid = WL12XX_SYSTEM_HLID;
+	wl->system_hlid = WL12XX_SYSTEM_HLID;
 	wl->active_sta_count = 0;
 	wl->active_link_count = 0;
 	wl->fwlog_size = 0;
 
-	/* The प्रणाली link is always allocated */
+	/* The system link is always allocated */
 	__set_bit(WL12XX_SYSTEM_HLID, wl->links_map);
 
-	स_रखो(wl->tx_frames_map, 0, माप(wl->tx_frames_map));
-	क्रम (i = 0; i < wl->num_tx_desc; i++)
-		wl->tx_frames[i] = शून्य;
+	memset(wl->tx_frames_map, 0, sizeof(wl->tx_frames_map));
+	for (i = 0; i < wl->num_tx_desc; i++)
+		wl->tx_frames[i] = NULL;
 
 	spin_lock_init(&wl->wl_lock);
 
@@ -6442,293 +6441,293 @@ out:
 	init_completion(&wl->nvs_loading_complete);
 
 	order = get_order(aggr_buf_size);
-	wl->aggr_buf = (u8 *)__get_मुक्त_pages(GFP_KERNEL, order);
-	अगर (!wl->aggr_buf) अणु
+	wl->aggr_buf = (u8 *)__get_free_pages(GFP_KERNEL, order);
+	if (!wl->aggr_buf) {
 		ret = -ENOMEM;
-		जाओ err_wq;
-	पूर्ण
+		goto err_wq;
+	}
 	wl->aggr_buf_size = aggr_buf_size;
 
 	wl->dummy_packet = wl12xx_alloc_dummy_packet(wl);
-	अगर (!wl->dummy_packet) अणु
+	if (!wl->dummy_packet) {
 		ret = -ENOMEM;
-		जाओ err_aggr;
-	पूर्ण
+		goto err_aggr;
+	}
 
-	/* Allocate one page क्रम the FW log */
+	/* Allocate one page for the FW log */
 	wl->fwlog = (u8 *)get_zeroed_page(GFP_KERNEL);
-	अगर (!wl->fwlog) अणु
+	if (!wl->fwlog) {
 		ret = -ENOMEM;
-		जाओ err_dummy_packet;
-	पूर्ण
+		goto err_dummy_packet;
+	}
 
 	wl->mbox_size = mbox_size;
-	wl->mbox = kदो_स्मृति(wl->mbox_size, GFP_KERNEL | GFP_DMA);
-	अगर (!wl->mbox) अणु
+	wl->mbox = kmalloc(wl->mbox_size, GFP_KERNEL | GFP_DMA);
+	if (!wl->mbox) {
 		ret = -ENOMEM;
-		जाओ err_fwlog;
-	पूर्ण
+		goto err_fwlog;
+	}
 
-	wl->buffer_32 = kदो_स्मृति(माप(*wl->buffer_32), GFP_KERNEL);
-	अगर (!wl->buffer_32) अणु
+	wl->buffer_32 = kmalloc(sizeof(*wl->buffer_32), GFP_KERNEL);
+	if (!wl->buffer_32) {
 		ret = -ENOMEM;
-		जाओ err_mbox;
-	पूर्ण
+		goto err_mbox;
+	}
 
-	वापस hw;
+	return hw;
 
 err_mbox:
-	kमुक्त(wl->mbox);
+	kfree(wl->mbox);
 
 err_fwlog:
-	मुक्त_page((अचिन्हित दीर्घ)wl->fwlog);
+	free_page((unsigned long)wl->fwlog);
 
 err_dummy_packet:
-	dev_kमुक्त_skb(wl->dummy_packet);
+	dev_kfree_skb(wl->dummy_packet);
 
 err_aggr:
-	मुक्त_pages((अचिन्हित दीर्घ)wl->aggr_buf, order);
+	free_pages((unsigned long)wl->aggr_buf, order);
 
 err_wq:
-	destroy_workqueue(wl->मुक्तzable_wq);
+	destroy_workqueue(wl->freezable_wq);
 
 err_hw:
-	wl1271_debugfs_निकास(wl);
-	kमुक्त(wl->priv);
+	wl1271_debugfs_exit(wl);
+	kfree(wl->priv);
 
 err_priv_alloc:
-	ieee80211_मुक्त_hw(hw);
+	ieee80211_free_hw(hw);
 
 err_hw_alloc:
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(wlcore_alloc_hw);
 
-पूर्णांक wlcore_मुक्त_hw(काष्ठा wl1271 *wl)
-अणु
-	/* Unblock any fwlog पढ़ोers */
+int wlcore_free_hw(struct wl1271 *wl)
+{
+	/* Unblock any fwlog readers */
 	mutex_lock(&wl->mutex);
 	wl->fwlog_size = -1;
 	mutex_unlock(&wl->mutex);
 
-	wlcore_sysfs_मुक्त(wl);
+	wlcore_sysfs_free(wl);
 
-	kमुक्त(wl->buffer_32);
-	kमुक्त(wl->mbox);
-	मुक्त_page((अचिन्हित दीर्घ)wl->fwlog);
-	dev_kमुक्त_skb(wl->dummy_packet);
-	मुक्त_pages((अचिन्हित दीर्घ)wl->aggr_buf, get_order(wl->aggr_buf_size));
+	kfree(wl->buffer_32);
+	kfree(wl->mbox);
+	free_page((unsigned long)wl->fwlog);
+	dev_kfree_skb(wl->dummy_packet);
+	free_pages((unsigned long)wl->aggr_buf, get_order(wl->aggr_buf_size));
 
-	wl1271_debugfs_निकास(wl);
+	wl1271_debugfs_exit(wl);
 
-	vमुक्त(wl->fw);
-	wl->fw = शून्य;
+	vfree(wl->fw);
+	wl->fw = NULL;
 	wl->fw_type = WL12XX_FW_TYPE_NONE;
-	kमुक्त(wl->nvs);
-	wl->nvs = शून्य;
+	kfree(wl->nvs);
+	wl->nvs = NULL;
 
-	kमुक्त(wl->raw_fw_status);
-	kमुक्त(wl->fw_status);
-	kमुक्त(wl->tx_res_अगर);
-	destroy_workqueue(wl->मुक्तzable_wq);
+	kfree(wl->raw_fw_status);
+	kfree(wl->fw_status);
+	kfree(wl->tx_res_if);
+	destroy_workqueue(wl->freezable_wq);
 
-	kमुक्त(wl->priv);
-	ieee80211_मुक्त_hw(wl->hw);
+	kfree(wl->priv);
+	ieee80211_free_hw(wl->hw);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_मुक्त_hw);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(wlcore_free_hw);
 
-#अगर_घोषित CONFIG_PM
-अटल स्थिर काष्ठा wiphy_wowlan_support wlcore_wowlan_support = अणु
+#ifdef CONFIG_PM
+static const struct wiphy_wowlan_support wlcore_wowlan_support = {
 	.flags = WIPHY_WOWLAN_ANY,
 	.n_patterns = WL1271_MAX_RX_FILTERS,
 	.pattern_min_len = 1,
 	.pattern_max_len = WL1271_RX_FILTER_MAX_PATTERN_SIZE,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल irqवापस_t wlcore_hardirq(पूर्णांक irq, व्योम *cookie)
-अणु
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+static irqreturn_t wlcore_hardirq(int irq, void *cookie)
+{
+	return IRQ_WAKE_THREAD;
+}
 
-अटल व्योम wlcore_nvs_cb(स्थिर काष्ठा firmware *fw, व्योम *context)
-अणु
-	काष्ठा wl1271 *wl = context;
-	काष्ठा platक्रमm_device *pdev = wl->pdev;
-	काष्ठा wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
-	काष्ठा resource *res;
+static void wlcore_nvs_cb(const struct firmware *fw, void *context)
+{
+	struct wl1271 *wl = context;
+	struct platform_device *pdev = wl->pdev;
+	struct wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
+	struct resource *res;
 
-	पूर्णांक ret;
-	irq_handler_t hardirq_fn = शून्य;
+	int ret;
+	irq_handler_t hardirq_fn = NULL;
 
-	अगर (fw) अणु
+	if (fw) {
 		wl->nvs = kmemdup(fw->data, fw->size, GFP_KERNEL);
-		अगर (!wl->nvs) अणु
+		if (!wl->nvs) {
 			wl1271_error("Could not allocate nvs data");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		wl->nvs_len = fw->size;
-	पूर्ण अन्यथा अगर (pdev_data->family->nvs_name) अणु
+	} else if (pdev_data->family->nvs_name) {
 		wl1271_debug(DEBUG_BOOT, "Could not get nvs file %s",
 			     pdev_data->family->nvs_name);
-		wl->nvs = शून्य;
+		wl->nvs = NULL;
 		wl->nvs_len = 0;
-	पूर्ण अन्यथा अणु
-		wl->nvs = शून्य;
+	} else {
+		wl->nvs = NULL;
 		wl->nvs_len = 0;
-	पूर्ण
+	}
 
 	ret = wl->ops->setup(wl);
-	अगर (ret < 0)
-		जाओ out_मुक्त_nvs;
+	if (ret < 0)
+		goto out_free_nvs;
 
 	BUG_ON(wl->num_tx_desc > WLCORE_MAX_TX_DESCRIPTORS);
 
-	/* adjust some runसमय configuration parameters */
+	/* adjust some runtime configuration parameters */
 	wlcore_adjust_conf(wl);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (!res) {
 		wl1271_error("Could not get IRQ resource");
-		जाओ out_मुक्त_nvs;
-	पूर्ण
+		goto out_free_nvs;
+	}
 
 	wl->irq = res->start;
 	wl->irq_flags = res->flags & IRQF_TRIGGER_MASK;
-	wl->अगर_ops = pdev_data->अगर_ops;
+	wl->if_ops = pdev_data->if_ops;
 
-	अगर (wl->irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))
+	if (wl->irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING))
 		hardirq_fn = wlcore_hardirq;
-	अन्यथा
+	else
 		wl->irq_flags |= IRQF_ONESHOT;
 
-	ret = wl12xx_set_घातer_on(wl);
-	अगर (ret < 0)
-		जाओ out_मुक्त_nvs;
+	ret = wl12xx_set_power_on(wl);
+	if (ret < 0)
+		goto out_free_nvs;
 
 	ret = wl12xx_get_hw_info(wl);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		wl1271_error("couldn't get hw info");
-		wl1271_घातer_off(wl);
-		जाओ out_मुक्त_nvs;
-	पूर्ण
+		wl1271_power_off(wl);
+		goto out_free_nvs;
+	}
 
-	ret = request_thपढ़ोed_irq(wl->irq, hardirq_fn, wlcore_irq,
+	ret = request_threaded_irq(wl->irq, hardirq_fn, wlcore_irq,
 				   wl->irq_flags, pdev->name, wl);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		wl1271_error("interrupt configuration failed");
-		wl1271_घातer_off(wl);
-		जाओ out_मुक्त_nvs;
-	पूर्ण
+		wl1271_power_off(wl);
+		goto out_free_nvs;
+	}
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	device_init_wakeup(wl->dev, true);
 
 	ret = enable_irq_wake(wl->irq);
-	अगर (!ret) अणु
+	if (!ret) {
 		wl->irq_wake_enabled = true;
-		अगर (pdev_data->pwr_in_suspend)
+		if (pdev_data->pwr_in_suspend)
 			wl->hw->wiphy->wowlan = &wlcore_wowlan_support;
-	पूर्ण
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 1);
-	अगर (res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_IRQ, 1);
+	if (res) {
 		wl->wakeirq = res->start;
 		wl->wakeirq_flags = res->flags & IRQF_TRIGGER_MASK;
 		ret = dev_pm_set_dedicated_wake_irq(wl->dev, wl->wakeirq);
-		अगर (ret)
+		if (ret)
 			wl->wakeirq = -ENODEV;
-	पूर्ण अन्यथा अणु
+	} else {
 		wl->wakeirq = -ENODEV;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	disable_irq(wl->irq);
-	wl1271_घातer_off(wl);
+	wl1271_power_off(wl);
 
-	ret = wl->ops->identअगरy_chip(wl);
-	अगर (ret < 0)
-		जाओ out_irq;
+	ret = wl->ops->identify_chip(wl);
+	if (ret < 0)
+		goto out_irq;
 
 	ret = wl1271_init_ieee80211(wl);
-	अगर (ret)
-		जाओ out_irq;
+	if (ret)
+		goto out_irq;
 
-	ret = wl1271_रेजिस्टर_hw(wl);
-	अगर (ret)
-		जाओ out_irq;
+	ret = wl1271_register_hw(wl);
+	if (ret)
+		goto out_irq;
 
 	ret = wlcore_sysfs_init(wl);
-	अगर (ret)
-		जाओ out_unreg;
+	if (ret)
+		goto out_unreg;
 
 	wl->initialized = true;
-	जाओ out;
+	goto out;
 
 out_unreg:
-	wl1271_unरेजिस्टर_hw(wl);
+	wl1271_unregister_hw(wl);
 
 out_irq:
-	अगर (wl->wakeirq >= 0)
+	if (wl->wakeirq >= 0)
 		dev_pm_clear_wake_irq(wl->dev);
 	device_init_wakeup(wl->dev, false);
-	मुक्त_irq(wl->irq, wl);
+	free_irq(wl->irq, wl);
 
-out_मुक्त_nvs:
-	kमुक्त(wl->nvs);
+out_free_nvs:
+	kfree(wl->nvs);
 
 out:
 	release_firmware(fw);
 	complete_all(&wl->nvs_loading_complete);
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused wlcore_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा wl1271 *wl = dev_get_drvdata(dev);
-	काष्ठा wl12xx_vअगर *wlvअगर;
-	पूर्णांक error;
+static int __maybe_unused wlcore_runtime_suspend(struct device *dev)
+{
+	struct wl1271 *wl = dev_get_drvdata(dev);
+	struct wl12xx_vif *wlvif;
+	int error;
 
-	/* We करो not enter elp sleep in PLT mode */
-	अगर (wl->plt)
-		वापस 0;
+	/* We do not enter elp sleep in PLT mode */
+	if (wl->plt)
+		return 0;
 
-	/* Nothing to करो अगर no ELP mode requested */
-	अगर (wl->sleep_auth != WL1271_PSM_ELP)
-		वापस 0;
+	/* Nothing to do if no ELP mode requested */
+	if (wl->sleep_auth != WL1271_PSM_ELP)
+		return 0;
 
-	wl12xx_क्रम_each_wlvअगर(wl, wlvअगर) अणु
-		अगर (!test_bit(WLVIF_FLAG_IN_PS, &wlvअगर->flags) &&
-		    test_bit(WLVIF_FLAG_IN_USE, &wlvअगर->flags))
-			वापस -EBUSY;
-	पूर्ण
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		if (!test_bit(WLVIF_FLAG_IN_PS, &wlvif->flags) &&
+		    test_bit(WLVIF_FLAG_IN_USE, &wlvif->flags))
+			return -EBUSY;
+	}
 
 	wl1271_debug(DEBUG_PSM, "chip to elp");
-	error = wlcore_raw_ग_लिखो32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_SLEEP);
-	अगर (error < 0) अणु
+	error = wlcore_raw_write32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_SLEEP);
+	if (error < 0) {
 		wl12xx_queue_recovery_work(wl);
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	set_bit(WL1271_FLAG_IN_ELP, &wl->flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused wlcore_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा wl1271 *wl = dev_get_drvdata(dev);
+static int __maybe_unused wlcore_runtime_resume(struct device *dev)
+{
+	struct wl1271 *wl = dev_get_drvdata(dev);
 	DECLARE_COMPLETION_ONSTACK(compl);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ start_समय = jअगरfies;
+	unsigned long flags;
+	int ret;
+	unsigned long start_time = jiffies;
 	bool recovery = false;
 
-	/* Nothing to करो अगर no ELP mode requested */
-	अगर (!test_bit(WL1271_FLAG_IN_ELP, &wl->flags))
-		वापस 0;
+	/* Nothing to do if no ELP mode requested */
+	if (!test_bit(WL1271_FLAG_IN_ELP, &wl->flags))
+		return 0;
 
 	wl1271_debug(DEBUG_PSM, "waking up chip from elp");
 
@@ -6736,132 +6735,132 @@ out:
 	wl->elp_compl = &compl;
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_WAKE_UP);
-	अगर (ret < 0) अणु
+	ret = wlcore_raw_write32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_WAKE_UP);
+	if (ret < 0) {
 		recovery = true;
-	पूर्ण अन्यथा अगर (!test_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags)) अणु
-		ret = रुको_क्रम_completion_समयout(&compl,
-			msecs_to_jअगरfies(WL1271_WAKEUP_TIMEOUT));
-		अगर (ret == 0) अणु
+	} else if (!test_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags)) {
+		ret = wait_for_completion_timeout(&compl,
+			msecs_to_jiffies(WL1271_WAKEUP_TIMEOUT));
+		if (ret == 0) {
 			wl1271_warning("ELP wakeup timeout!");
 			recovery = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_irqsave(&wl->wl_lock, flags);
-	wl->elp_compl = शून्य;
+	wl->elp_compl = NULL;
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
 	clear_bit(WL1271_FLAG_IN_ELP, &wl->flags);
 
-	अगर (recovery) अणु
+	if (recovery) {
 		set_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags);
 		wl12xx_queue_recovery_work(wl);
-	पूर्ण अन्यथा अणु
+	} else {
 		wl1271_debug(DEBUG_PSM, "wakeup time: %u ms",
-			     jअगरfies_to_msecs(jअगरfies - start_समय));
-	पूर्ण
+			     jiffies_to_msecs(jiffies - start_time));
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops wlcore_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(wlcore_runसमय_suspend,
-			   wlcore_runसमय_resume,
-			   शून्य)
-पूर्ण;
+static const struct dev_pm_ops wlcore_pm_ops = {
+	SET_RUNTIME_PM_OPS(wlcore_runtime_suspend,
+			   wlcore_runtime_resume,
+			   NULL)
+};
 
-पूर्णांक wlcore_probe(काष्ठा wl1271 *wl, काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
-	स्थिर अक्षर *nvs_name;
-	पूर्णांक ret = 0;
+int wlcore_probe(struct wl1271 *wl, struct platform_device *pdev)
+{
+	struct wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
+	const char *nvs_name;
+	int ret = 0;
 
-	अगर (!wl->ops || !wl->ptable || !pdev_data)
-		वापस -EINVAL;
+	if (!wl->ops || !wl->ptable || !pdev_data)
+		return -EINVAL;
 
 	wl->dev = &pdev->dev;
 	wl->pdev = pdev;
-	platक्रमm_set_drvdata(pdev, wl);
+	platform_set_drvdata(pdev, wl);
 
-	अगर (pdev_data->family && pdev_data->family->nvs_name) अणु
+	if (pdev_data->family && pdev_data->family->nvs_name) {
 		nvs_name = pdev_data->family->nvs_name;
-		ret = request_firmware_noरुको(THIS_MODULE, FW_ACTION_HOTPLUG,
+		ret = request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
 					      nvs_name, &pdev->dev, GFP_KERNEL,
 					      wl, wlcore_nvs_cb);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			wl1271_error("request_firmware_nowait failed for %s: %d",
 				     nvs_name, ret);
 			complete_all(&wl->nvs_loading_complete);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		wlcore_nvs_cb(शून्य, wl);
-	पूर्ण
+		}
+	} else {
+		wlcore_nvs_cb(NULL, wl);
+	}
 
 	wl->dev->driver->pm = &wlcore_pm_ops;
-	pm_runसमय_set_स्वतःsuspend_delay(wl->dev, 50);
-	pm_runसमय_use_स्वतःsuspend(wl->dev);
-	pm_runसमय_enable(wl->dev);
+	pm_runtime_set_autosuspend_delay(wl->dev, 50);
+	pm_runtime_use_autosuspend(wl->dev);
+	pm_runtime_enable(wl->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wlcore_probe);
 
-पूर्णांक wlcore_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
-	काष्ठा wl1271 *wl = platक्रमm_get_drvdata(pdev);
-	पूर्णांक error;
+int wlcore_remove(struct platform_device *pdev)
+{
+	struct wlcore_platdev_data *pdev_data = dev_get_platdata(&pdev->dev);
+	struct wl1271 *wl = platform_get_drvdata(pdev);
+	int error;
 
-	error = pm_runसमय_get_sync(wl->dev);
-	अगर (error < 0)
+	error = pm_runtime_get_sync(wl->dev);
+	if (error < 0)
 		dev_warn(wl->dev, "PM runtime failed: %i\n", error);
 
-	wl->dev->driver->pm = शून्य;
+	wl->dev->driver->pm = NULL;
 
-	अगर (pdev_data->family && pdev_data->family->nvs_name)
-		रुको_क्रम_completion(&wl->nvs_loading_complete);
-	अगर (!wl->initialized)
-		वापस 0;
+	if (pdev_data->family && pdev_data->family->nvs_name)
+		wait_for_completion(&wl->nvs_loading_complete);
+	if (!wl->initialized)
+		return 0;
 
-	अगर (wl->wakeirq >= 0) अणु
+	if (wl->wakeirq >= 0) {
 		dev_pm_clear_wake_irq(wl->dev);
 		wl->wakeirq = -ENODEV;
-	पूर्ण
+	}
 
 	device_init_wakeup(wl->dev, false);
 
-	अगर (wl->irq_wake_enabled)
+	if (wl->irq_wake_enabled)
 		disable_irq_wake(wl->irq);
 
-	wl1271_unरेजिस्टर_hw(wl);
+	wl1271_unregister_hw(wl);
 
-	pm_runसमय_put_sync(wl->dev);
-	pm_runसमय_करोnt_use_स्वतःsuspend(wl->dev);
-	pm_runसमय_disable(wl->dev);
+	pm_runtime_put_sync(wl->dev);
+	pm_runtime_dont_use_autosuspend(wl->dev);
+	pm_runtime_disable(wl->dev);
 
-	मुक्त_irq(wl->irq, wl);
-	wlcore_मुक्त_hw(wl);
+	free_irq(wl->irq, wl);
+	wlcore_free_hw(wl);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(wlcore_remove);
 
 u32 wl12xx_debug_level = DEBUG_NONE;
 EXPORT_SYMBOL_GPL(wl12xx_debug_level);
-module_param_named(debug_level, wl12xx_debug_level, uपूर्णांक, 0600);
+module_param_named(debug_level, wl12xx_debug_level, uint, 0600);
 MODULE_PARM_DESC(debug_level, "wl12xx debugging level");
 
-module_param_named(fwlog, fwlog_param, अक्षरp, 0);
+module_param_named(fwlog, fwlog_param, charp, 0);
 MODULE_PARM_DESC(fwlog,
 		 "FW logger options: continuous, dbgpins or disable");
 
-module_param(fwlog_mem_blocks, पूर्णांक, 0600);
+module_param(fwlog_mem_blocks, int, 0600);
 MODULE_PARM_DESC(fwlog_mem_blocks, "fwlog mem_blocks");
 
-module_param(bug_on_recovery, पूर्णांक, 0600);
+module_param(bug_on_recovery, int, 0600);
 MODULE_PARM_DESC(bug_on_recovery, "BUG() on fw recovery");
 
-module_param(no_recovery, पूर्णांक, 0600);
+module_param(no_recovery, int, 0600);
 MODULE_PARM_DESC(no_recovery, "Prevent HW recovery. FW will remain stuck.");
 
 MODULE_LICENSE("GPL");

@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
- * @File    ctvस्मृति.स
+ * @File    ctvmem.h
  *
  * @Brief
- * This file contains the definition of भव memory management object
- * क्रम card device.
+ * This file contains the definition of virtual memory management object
+ * for card device.
  *
  * @Author Liu Chun
  * @Date Mar 28 2008
  */
 
-#अगर_अघोषित CTVMEM_H
-#घोषणा CTVMEM_H
+#ifndef CTVMEM_H
+#define CTVMEM_H
 
-#घोषणा CT_PTP_NUM	4	/* num of device page table pages */
+#define CT_PTP_NUM	4	/* num of device page table pages */
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/list.h>
-#समावेश <linux/pci.h>
-#समावेश <sound/meदो_स्मृति.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/pci.h>
+#include <sound/memalloc.h>
 
 /* The chip can handle the page table of 4k pages
- * (emu20k1 can handle even 8k pages, but we करोn't use it right now)
+ * (emu20k1 can handle even 8k pages, but we don't use it right now)
  */
-#घोषणा CT_PAGE_SIZE	4096
-#घोषणा CT_PAGE_SHIFT	12
-#घोषणा CT_PAGE_MASK	(~(PAGE_SIZE - 1))
-#घोषणा CT_PAGE_ALIGN(addr)	ALIGN(addr, CT_PAGE_SIZE)
+#define CT_PAGE_SIZE	4096
+#define CT_PAGE_SHIFT	12
+#define CT_PAGE_MASK	(~(PAGE_SIZE - 1))
+#define CT_PAGE_ALIGN(addr)	ALIGN(addr, CT_PAGE_SIZE)
 
-काष्ठा ct_vm_block अणु
-	अचिन्हित पूर्णांक addr;	/* starting logical addr of this block */
-	अचिन्हित पूर्णांक size;	/* size of this device भव mem block */
-	काष्ठा list_head list;
-पूर्ण;
+struct ct_vm_block {
+	unsigned int addr;	/* starting logical addr of this block */
+	unsigned int size;	/* size of this device virtual mem block */
+	struct list_head list;
+};
 
-काष्ठा snd_pcm_substream;
+struct snd_pcm_substream;
 
-/* Virtual memory management object क्रम card device */
-काष्ठा ct_vm अणु
-	काष्ठा snd_dma_buffer ptp[CT_PTP_NUM];	/* Device page table pages */
-	अचिन्हित पूर्णांक size;		/* Available addr space in bytes */
-	काष्ठा list_head unused;	/* List of unused blocks */
-	काष्ठा list_head used;		/* List of used blocks */
-	काष्ठा mutex lock;
+/* Virtual memory management object for card device */
+struct ct_vm {
+	struct snd_dma_buffer ptp[CT_PTP_NUM];	/* Device page table pages */
+	unsigned int size;		/* Available addr space in bytes */
+	struct list_head unused;	/* List of unused blocks */
+	struct list_head used;		/* List of used blocks */
+	struct mutex lock;
 
-	/* Map host addr (kदो_स्मृतिed/vदो_स्मृतिed) to device logical addr. */
-	काष्ठा ct_vm_block *(*map)(काष्ठा ct_vm *, काष्ठा snd_pcm_substream *,
-				   पूर्णांक size);
+	/* Map host addr (kmalloced/vmalloced) to device logical addr. */
+	struct ct_vm_block *(*map)(struct ct_vm *, struct snd_pcm_substream *,
+				   int size);
 	/* Unmap device logical addr area. */
-	व्योम (*unmap)(काष्ठा ct_vm *, काष्ठा ct_vm_block *block);
-	dma_addr_t (*get_ptp_phys)(काष्ठा ct_vm *vm, पूर्णांक index);
-पूर्ण;
+	void (*unmap)(struct ct_vm *, struct ct_vm_block *block);
+	dma_addr_t (*get_ptp_phys)(struct ct_vm *vm, int index);
+};
 
-पूर्णांक ct_vm_create(काष्ठा ct_vm **rvm, काष्ठा pci_dev *pci);
-व्योम ct_vm_destroy(काष्ठा ct_vm *vm);
+int ct_vm_create(struct ct_vm **rvm, struct pci_dev *pci);
+void ct_vm_destroy(struct ct_vm *vm);
 
-#पूर्ण_अगर /* CTVMEM_H */
+#endif /* CTVMEM_H */

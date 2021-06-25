@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश "../../../include/linux/vringh.h"
+#include "../../../include/linux/vringh.h"

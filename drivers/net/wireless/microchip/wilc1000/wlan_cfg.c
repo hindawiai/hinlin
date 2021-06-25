@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
  * All rights reserved.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश "wlan_if.h"
-#समावेश "wlan.h"
-#समावेश "wlan_cfg.h"
-#समावेश "netdev.h"
+#include <linux/bitfield.h>
+#include "wlan_if.h"
+#include "wlan.h"
+#include "wlan_cfg.h"
+#include "netdev.h"
 
-क्रमागत cfg_cmd_type अणु
+enum cfg_cmd_type {
 	CFG_BYTE_CMD	= 0,
 	CFG_HWORD_CMD	= 1,
 	CFG_WORD_CMD	= 2,
 	CFG_STR_CMD	= 3,
 	CFG_BIN_CMD	= 4
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा wilc_cfg_byte g_cfg_byte[] = अणु
-	अणुWID_STATUS, 0पूर्ण,
-	अणुWID_RSSI, 0पूर्ण,
-	अणुWID_LINKSPEED, 0पूर्ण,
-	अणुWID_NIL, 0पूर्ण
-पूर्ण;
+static const struct wilc_cfg_byte g_cfg_byte[] = {
+	{WID_STATUS, 0},
+	{WID_RSSI, 0},
+	{WID_LINKSPEED, 0},
+	{WID_NIL, 0}
+};
 
-अटल स्थिर काष्ठा wilc_cfg_hword g_cfg_hword[] = अणु
-	अणुWID_NIL, 0पूर्ण
-पूर्ण;
+static const struct wilc_cfg_hword g_cfg_hword[] = {
+	{WID_NIL, 0}
+};
 
-अटल स्थिर काष्ठा wilc_cfg_word g_cfg_word[] = अणु
-	अणुWID_FAILED_COUNT, 0पूर्ण,
-	अणुWID_RECEIVED_FRAGMENT_COUNT, 0पूर्ण,
-	अणुWID_SUCCESS_FRAME_COUNT, 0पूर्ण,
-	अणुWID_GET_INACTIVE_TIME, 0पूर्ण,
-	अणुWID_NIL, 0पूर्ण
+static const struct wilc_cfg_word g_cfg_word[] = {
+	{WID_FAILED_COUNT, 0},
+	{WID_RECEIVED_FRAGMENT_COUNT, 0},
+	{WID_SUCCESS_FRAME_COUNT, 0},
+	{WID_GET_INACTIVE_TIME, 0},
+	{WID_NIL, 0}
 
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा wilc_cfg_str g_cfg_str[] = अणु
-	अणुWID_FIRMWARE_VERSION, शून्यपूर्ण,
-	अणुWID_MAC_ADDR, शून्यपूर्ण,
-	अणुWID_ASSOC_RES_INFO, शून्यपूर्ण,
-	अणुWID_NIL, शून्यपूर्ण
-पूर्ण;
+static const struct wilc_cfg_str g_cfg_str[] = {
+	{WID_FIRMWARE_VERSION, NULL},
+	{WID_MAC_ADDR, NULL},
+	{WID_ASSOC_RES_INFO, NULL},
+	{WID_NIL, NULL}
+};
 
-#घोषणा WILC_RESP_MSG_TYPE_CONFIG_REPLY		'R'
-#घोषणा WILC_RESP_MSG_TYPE_STATUS_INFO		'I'
-#घोषणा WILC_RESP_MSG_TYPE_NETWORK_INFO		'N'
-#घोषणा WILC_RESP_MSG_TYPE_SCAN_COMPLETE	'S'
+#define WILC_RESP_MSG_TYPE_CONFIG_REPLY		'R'
+#define WILC_RESP_MSG_TYPE_STATUS_INFO		'I'
+#define WILC_RESP_MSG_TYPE_NETWORK_INFO		'N'
+#define WILC_RESP_MSG_TYPE_SCAN_COMPLETE	'S'
 
 /********************************************
  *
@@ -57,76 +56,76 @@
  *
  ********************************************/
 
-अटल पूर्णांक wilc_wlan_cfg_set_byte(u8 *frame, u32 offset, u16 id, u8 val8)
-अणु
-	अगर ((offset + 4) >= WILC_MAX_CFG_FRAME_SIZE)
-		वापस 0;
+static int wilc_wlan_cfg_set_byte(u8 *frame, u32 offset, u16 id, u8 val8)
+{
+	if ((offset + 4) >= WILC_MAX_CFG_FRAME_SIZE)
+		return 0;
 
 	put_unaligned_le16(id, &frame[offset]);
 	put_unaligned_le16(1, &frame[offset + 2]);
 	frame[offset + 4] = val8;
-	वापस 5;
-पूर्ण
+	return 5;
+}
 
-अटल पूर्णांक wilc_wlan_cfg_set_hword(u8 *frame, u32 offset, u16 id, u16 val16)
-अणु
-	अगर ((offset + 5) >= WILC_MAX_CFG_FRAME_SIZE)
-		वापस 0;
+static int wilc_wlan_cfg_set_hword(u8 *frame, u32 offset, u16 id, u16 val16)
+{
+	if ((offset + 5) >= WILC_MAX_CFG_FRAME_SIZE)
+		return 0;
 
 	put_unaligned_le16(id, &frame[offset]);
 	put_unaligned_le16(2, &frame[offset + 2]);
 	put_unaligned_le16(val16, &frame[offset + 4]);
 
-	वापस 6;
-पूर्ण
+	return 6;
+}
 
-अटल पूर्णांक wilc_wlan_cfg_set_word(u8 *frame, u32 offset, u16 id, u32 val32)
-अणु
-	अगर ((offset + 7) >= WILC_MAX_CFG_FRAME_SIZE)
-		वापस 0;
+static int wilc_wlan_cfg_set_word(u8 *frame, u32 offset, u16 id, u32 val32)
+{
+	if ((offset + 7) >= WILC_MAX_CFG_FRAME_SIZE)
+		return 0;
 
 	put_unaligned_le16(id, &frame[offset]);
 	put_unaligned_le16(4, &frame[offset + 2]);
 	put_unaligned_le32(val32, &frame[offset + 4]);
 
-	वापस 8;
-पूर्ण
+	return 8;
+}
 
-अटल पूर्णांक wilc_wlan_cfg_set_str(u8 *frame, u32 offset, u16 id, u8 *str,
+static int wilc_wlan_cfg_set_str(u8 *frame, u32 offset, u16 id, u8 *str,
 				 u32 size)
-अणु
-	अगर ((offset + size + 4) >= WILC_MAX_CFG_FRAME_SIZE)
-		वापस 0;
+{
+	if ((offset + size + 4) >= WILC_MAX_CFG_FRAME_SIZE)
+		return 0;
 
 	put_unaligned_le16(id, &frame[offset]);
 	put_unaligned_le16(size, &frame[offset + 2]);
-	अगर (str && size != 0)
-		स_नकल(&frame[offset + 4], str, size);
+	if (str && size != 0)
+		memcpy(&frame[offset + 4], str, size);
 
-	वापस (size + 4);
-पूर्ण
+	return (size + 4);
+}
 
-अटल पूर्णांक wilc_wlan_cfg_set_bin(u8 *frame, u32 offset, u16 id, u8 *b, u32 size)
-अणु
+static int wilc_wlan_cfg_set_bin(u8 *frame, u32 offset, u16 id, u8 *b, u32 size)
+{
 	u32 i;
 	u8 checksum = 0;
 
-	अगर ((offset + size + 5) >= WILC_MAX_CFG_FRAME_SIZE)
-		वापस 0;
+	if ((offset + size + 5) >= WILC_MAX_CFG_FRAME_SIZE)
+		return 0;
 
 	put_unaligned_le16(id, &frame[offset]);
 	put_unaligned_le16(size, &frame[offset + 2]);
 
-	अगर ((b) && size != 0) अणु
-		स_नकल(&frame[offset + 4], b, size);
-		क्रम (i = 0; i < size; i++)
+	if ((b) && size != 0) {
+		memcpy(&frame[offset + 4], b, size);
+		for (i = 0; i < size; i++)
 			checksum += frame[offset + i + 4];
-	पूर्ण
+	}
 
 	frame[offset + size + 4] = checksum;
 
-	वापस (size + 5);
-पूर्ण
+	return (size + 5);
+}
 
 /********************************************
  *
@@ -134,84 +133,84 @@
  *
  ********************************************/
 
-अटल व्योम wilc_wlan_parse_response_frame(काष्ठा wilc *wl, u8 *info, पूर्णांक size)
-अणु
+static void wilc_wlan_parse_response_frame(struct wilc *wl, u8 *info, int size)
+{
 	u16 wid;
 	u32 len = 0, i = 0;
-	काष्ठा wilc_cfg *cfg = &wl->cfg;
+	struct wilc_cfg *cfg = &wl->cfg;
 
-	जबतक (size > 0) अणु
+	while (size > 0) {
 		i = 0;
 		wid = get_unaligned_le16(info);
 
-		चयन (FIELD_GET(WILC_WID_TYPE, wid)) अणु
-		हाल WID_CHAR:
-			जबतक (cfg->b[i].id != WID_NIL && cfg->b[i].id != wid)
+		switch (FIELD_GET(WILC_WID_TYPE, wid)) {
+		case WID_CHAR:
+			while (cfg->b[i].id != WID_NIL && cfg->b[i].id != wid)
 				i++;
 
-			अगर (cfg->b[i].id == wid)
+			if (cfg->b[i].id == wid)
 				cfg->b[i].val = info[4];
 
 			len = 3;
-			अवरोध;
+			break;
 
-		हाल WID_SHORT:
-			जबतक (cfg->hw[i].id != WID_NIL && cfg->hw[i].id != wid)
+		case WID_SHORT:
+			while (cfg->hw[i].id != WID_NIL && cfg->hw[i].id != wid)
 				i++;
 
-			अगर (cfg->hw[i].id == wid)
+			if (cfg->hw[i].id == wid)
 				cfg->hw[i].val = get_unaligned_le16(&info[4]);
 
 			len = 4;
-			अवरोध;
+			break;
 
-		हाल WID_INT:
-			जबतक (cfg->w[i].id != WID_NIL && cfg->w[i].id != wid)
+		case WID_INT:
+			while (cfg->w[i].id != WID_NIL && cfg->w[i].id != wid)
 				i++;
 
-			अगर (cfg->w[i].id == wid)
+			if (cfg->w[i].id == wid)
 				cfg->w[i].val = get_unaligned_le32(&info[4]);
 
 			len = 6;
-			अवरोध;
+			break;
 
-		हाल WID_STR:
-			जबतक (cfg->s[i].id != WID_NIL && cfg->s[i].id != wid)
+		case WID_STR:
+			while (cfg->s[i].id != WID_NIL && cfg->s[i].id != wid)
 				i++;
 
-			अगर (cfg->s[i].id == wid)
-				स_नकल(cfg->s[i].str, &info[2], info[2] + 2);
+			if (cfg->s[i].id == wid)
+				memcpy(cfg->s[i].str, &info[2], info[2] + 2);
 
 			len = 2 + info[2];
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 		size -= (2 + len);
 		info += (2 + len);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम wilc_wlan_parse_info_frame(काष्ठा wilc *wl, u8 *info)
-अणु
+static void wilc_wlan_parse_info_frame(struct wilc *wl, u8 *info)
+{
 	u32 wid, len;
 
 	wid = get_unaligned_le16(info);
 
 	len = info[2];
 
-	अगर (len == 1 && wid == WID_STATUS) अणु
-		पूर्णांक i = 0;
+	if (len == 1 && wid == WID_STATUS) {
+		int i = 0;
 
-		जबतक (wl->cfg.b[i].id != WID_NIL &&
+		while (wl->cfg.b[i].id != WID_NIL &&
 		       wl->cfg.b[i].id != wid)
 			i++;
 
-		अगर (wl->cfg.b[i].id == wid)
+		if (wl->cfg.b[i].id == wid)
 			wl->cfg.b[i].val = info[3];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /********************************************
  *
@@ -219,102 +218,102 @@
  *
  ********************************************/
 
-पूर्णांक wilc_wlan_cfg_set_wid(u8 *frame, u32 offset, u16 id, u8 *buf, पूर्णांक size)
-अणु
+int wilc_wlan_cfg_set_wid(u8 *frame, u32 offset, u16 id, u8 *buf, int size)
+{
 	u8 type = FIELD_GET(WILC_WID_TYPE, id);
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	चयन (type) अणु
-	हाल CFG_BYTE_CMD:
-		अगर (size >= 1)
+	switch (type) {
+	case CFG_BYTE_CMD:
+		if (size >= 1)
 			ret = wilc_wlan_cfg_set_byte(frame, offset, id, *buf);
-		अवरोध;
+		break;
 
-	हाल CFG_HWORD_CMD:
-		अगर (size >= 2)
+	case CFG_HWORD_CMD:
+		if (size >= 2)
 			ret = wilc_wlan_cfg_set_hword(frame, offset, id,
 						      *((u16 *)buf));
-		अवरोध;
+		break;
 
-	हाल CFG_WORD_CMD:
-		अगर (size >= 4)
+	case CFG_WORD_CMD:
+		if (size >= 4)
 			ret = wilc_wlan_cfg_set_word(frame, offset, id,
 						     *((u32 *)buf));
-		अवरोध;
+		break;
 
-	हाल CFG_STR_CMD:
+	case CFG_STR_CMD:
 		ret = wilc_wlan_cfg_set_str(frame, offset, id, buf, size);
-		अवरोध;
+		break;
 
-	हाल CFG_BIN_CMD:
+	case CFG_BIN_CMD:
 		ret = wilc_wlan_cfg_set_bin(frame, offset, id, buf, size);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक wilc_wlan_cfg_get_wid(u8 *frame, u32 offset, u16 id)
-अणु
-	अगर ((offset + 2) >= WILC_MAX_CFG_FRAME_SIZE)
-		वापस 0;
+int wilc_wlan_cfg_get_wid(u8 *frame, u32 offset, u16 id)
+{
+	if ((offset + 2) >= WILC_MAX_CFG_FRAME_SIZE)
+		return 0;
 
 	put_unaligned_le16(id, &frame[offset]);
 
-	वापस 2;
-पूर्ण
+	return 2;
+}
 
-पूर्णांक wilc_wlan_cfg_get_val(काष्ठा wilc *wl, u16 wid, u8 *buffer,
+int wilc_wlan_cfg_get_val(struct wilc *wl, u16 wid, u8 *buffer,
 			  u32 buffer_size)
-अणु
+{
 	u8 type = FIELD_GET(WILC_WID_TYPE, wid);
-	पूर्णांक i, ret = 0;
-	काष्ठा wilc_cfg *cfg = &wl->cfg;
+	int i, ret = 0;
+	struct wilc_cfg *cfg = &wl->cfg;
 
 	i = 0;
-	अगर (type == CFG_BYTE_CMD) अणु
-		जबतक (cfg->b[i].id != WID_NIL && cfg->b[i].id != wid)
+	if (type == CFG_BYTE_CMD) {
+		while (cfg->b[i].id != WID_NIL && cfg->b[i].id != wid)
 			i++;
 
-		अगर (cfg->b[i].id == wid) अणु
-			स_नकल(buffer, &cfg->b[i].val, 1);
+		if (cfg->b[i].id == wid) {
+			memcpy(buffer, &cfg->b[i].val, 1);
 			ret = 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (type == CFG_HWORD_CMD) अणु
-		जबतक (cfg->hw[i].id != WID_NIL && cfg->hw[i].id != wid)
+		}
+	} else if (type == CFG_HWORD_CMD) {
+		while (cfg->hw[i].id != WID_NIL && cfg->hw[i].id != wid)
 			i++;
 
-		अगर (cfg->hw[i].id == wid) अणु
-			स_नकल(buffer, &cfg->hw[i].val, 2);
+		if (cfg->hw[i].id == wid) {
+			memcpy(buffer, &cfg->hw[i].val, 2);
 			ret = 2;
-		पूर्ण
-	पूर्ण अन्यथा अगर (type == CFG_WORD_CMD) अणु
-		जबतक (cfg->w[i].id != WID_NIL && cfg->w[i].id != wid)
+		}
+	} else if (type == CFG_WORD_CMD) {
+		while (cfg->w[i].id != WID_NIL && cfg->w[i].id != wid)
 			i++;
 
-		अगर (cfg->w[i].id == wid) अणु
-			स_नकल(buffer, &cfg->w[i].val, 4);
+		if (cfg->w[i].id == wid) {
+			memcpy(buffer, &cfg->w[i].val, 4);
 			ret = 4;
-		पूर्ण
-	पूर्ण अन्यथा अगर (type == CFG_STR_CMD) अणु
-		जबतक (cfg->s[i].id != WID_NIL && cfg->s[i].id != wid)
+		}
+	} else if (type == CFG_STR_CMD) {
+		while (cfg->s[i].id != WID_NIL && cfg->s[i].id != wid)
 			i++;
 
-		अगर (cfg->s[i].id == wid) अणु
+		if (cfg->s[i].id == wid) {
 			u16 size = get_unaligned_le16(cfg->s[i].str);
 
-			अगर (buffer_size >= size) अणु
-				स_नकल(buffer, &cfg->s[i].str[2], size);
+			if (buffer_size >= size) {
+				memcpy(buffer, &cfg->s[i].str[2], size);
 				ret = size;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			}
+		}
+	}
+	return ret;
+}
 
-व्योम wilc_wlan_cfg_indicate_rx(काष्ठा wilc *wilc, u8 *frame, पूर्णांक size,
-			       काष्ठा wilc_cfg_rsp *rsp)
-अणु
+void wilc_wlan_cfg_indicate_rx(struct wilc *wilc, u8 *frame, int size,
+			       struct wilc_cfg_rsp *rsp)
+{
 	u8 msg_type;
 	u8 msg_id;
 
@@ -324,59 +323,59 @@
 	size -= 4;
 	rsp->type = 0;
 
-	चयन (msg_type) अणु
-	हाल WILC_RESP_MSG_TYPE_CONFIG_REPLY:
+	switch (msg_type) {
+	case WILC_RESP_MSG_TYPE_CONFIG_REPLY:
 		wilc_wlan_parse_response_frame(wilc, frame, size);
 		rsp->type = WILC_CFG_RSP;
 		rsp->seq_no = msg_id;
-		अवरोध;
+		break;
 
-	हाल WILC_RESP_MSG_TYPE_STATUS_INFO:
+	case WILC_RESP_MSG_TYPE_STATUS_INFO:
 		wilc_wlan_parse_info_frame(wilc, frame);
 		rsp->type = WILC_CFG_RSP_STATUS;
 		rsp->seq_no = msg_id;
-		/* call host पूर्णांकerface info parse as well */
+		/* call host interface info parse as well */
 		wilc_gnrl_async_info_received(wilc, frame - 4, size + 4);
-		अवरोध;
+		break;
 
-	हाल WILC_RESP_MSG_TYPE_NETWORK_INFO:
+	case WILC_RESP_MSG_TYPE_NETWORK_INFO:
 		wilc_network_info_received(wilc, frame - 4, size + 4);
-		अवरोध;
+		break;
 
-	हाल WILC_RESP_MSG_TYPE_SCAN_COMPLETE:
+	case WILC_RESP_MSG_TYPE_SCAN_COMPLETE:
 		wilc_scan_complete_received(wilc, frame - 4, size + 4);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		rsp->seq_no = msg_id;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-पूर्णांक wilc_wlan_cfg_init(काष्ठा wilc *wl)
-अणु
-	काष्ठा wilc_cfg_str_vals *str_vals;
-	पूर्णांक i = 0;
+int wilc_wlan_cfg_init(struct wilc *wl)
+{
+	struct wilc_cfg_str_vals *str_vals;
+	int i = 0;
 
-	wl->cfg.b = kmemdup(g_cfg_byte, माप(g_cfg_byte), GFP_KERNEL);
-	अगर (!wl->cfg.b)
-		वापस -ENOMEM;
+	wl->cfg.b = kmemdup(g_cfg_byte, sizeof(g_cfg_byte), GFP_KERNEL);
+	if (!wl->cfg.b)
+		return -ENOMEM;
 
-	wl->cfg.hw = kmemdup(g_cfg_hword, माप(g_cfg_hword), GFP_KERNEL);
-	अगर (!wl->cfg.hw)
-		जाओ out_b;
+	wl->cfg.hw = kmemdup(g_cfg_hword, sizeof(g_cfg_hword), GFP_KERNEL);
+	if (!wl->cfg.hw)
+		goto out_b;
 
-	wl->cfg.w = kmemdup(g_cfg_word, माप(g_cfg_word), GFP_KERNEL);
-	अगर (!wl->cfg.w)
-		जाओ out_hw;
+	wl->cfg.w = kmemdup(g_cfg_word, sizeof(g_cfg_word), GFP_KERNEL);
+	if (!wl->cfg.w)
+		goto out_hw;
 
-	wl->cfg.s = kmemdup(g_cfg_str, माप(g_cfg_str), GFP_KERNEL);
-	अगर (!wl->cfg.s)
-		जाओ out_w;
+	wl->cfg.s = kmemdup(g_cfg_str, sizeof(g_cfg_str), GFP_KERNEL);
+	if (!wl->cfg.s)
+		goto out_w;
 
-	str_vals = kzalloc(माप(*str_vals), GFP_KERNEL);
-	अगर (!str_vals)
-		जाओ out_s;
+	str_vals = kzalloc(sizeof(*str_vals), GFP_KERNEL);
+	if (!str_vals)
+		goto out_s;
 
 	wl->cfg.str_vals = str_vals;
 	/* store the string cfg parameters */
@@ -390,25 +389,25 @@
 	wl->cfg.s[i].str = str_vals->assoc_rsp;
 	i++;
 	wl->cfg.s[i].id = WID_NIL;
-	wl->cfg.s[i].str = शून्य;
-	वापस 0;
+	wl->cfg.s[i].str = NULL;
+	return 0;
 
 out_s:
-	kमुक्त(wl->cfg.s);
+	kfree(wl->cfg.s);
 out_w:
-	kमुक्त(wl->cfg.w);
+	kfree(wl->cfg.w);
 out_hw:
-	kमुक्त(wl->cfg.hw);
+	kfree(wl->cfg.hw);
 out_b:
-	kमुक्त(wl->cfg.b);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(wl->cfg.b);
+	return -ENOMEM;
+}
 
-व्योम wilc_wlan_cfg_deinit(काष्ठा wilc *wl)
-अणु
-	kमुक्त(wl->cfg.b);
-	kमुक्त(wl->cfg.hw);
-	kमुक्त(wl->cfg.w);
-	kमुक्त(wl->cfg.s);
-	kमुक्त(wl->cfg.str_vals);
-पूर्ण
+void wilc_wlan_cfg_deinit(struct wilc *wl)
+{
+	kfree(wl->cfg.b);
+	kfree(wl->cfg.hw);
+	kfree(wl->cfg.w);
+	kfree(wl->cfg.s);
+	kfree(wl->cfg.str_vals);
+}

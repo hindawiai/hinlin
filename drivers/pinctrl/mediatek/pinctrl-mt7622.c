@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017-2018 MediaTek Inc.
  *
@@ -7,12 +6,12 @@
  *
  */
 
-#समावेश "pinctrl-moore.h"
+#include "pinctrl-moore.h"
 
-#घोषणा MT7622_PIN(_number, _name)					\
+#define MT7622_PIN(_number, _name)					\
 	MTK_PIN(_number, _name, 1, _number, DRV_GRP0)
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_mode_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_mode_range[] = {
 	PIN_FIELD(0, 0, 0x320, 0x10, 16, 4),
 	PIN_FIELD(1, 4, 0x3a0, 0x10, 16, 4),
 	PIN_FIELD(5, 5, 0x320, 0x10, 0, 4),
@@ -39,21 +38,21 @@
 	PIN_FIELD(95, 97, 0x380, 0x10, 20, 4),
 	PIN_FIELD(98, 101, 0x390, 0x10, 0, 4),
 	PIN_FIELD(102, 102, 0x360, 0x10, 0, 4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_dir_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_dir_range[] = {
 	PIN_FIELD(0, 102, 0x0, 0x10, 0, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_di_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_di_range[] = {
 	PIN_FIELD(0, 102, 0x200, 0x10, 0, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_करो_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_do_range[] = {
 	PIN_FIELD(0, 102, 0x100, 0x10, 0, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_sr_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_sr_range[] = {
 	PIN_FIELD(0, 31, 0x910, 0x10, 0, 1),
 	PIN_FIELD(32, 50, 0xa10, 0x10, 0, 1),
 	PIN_FIELD(51, 70, 0x810, 0x10, 0, 1),
@@ -61,9 +60,9 @@
 	PIN_FIELD(73, 86, 0xb10, 0x10, 4, 1),
 	PIN_FIELD(87, 90, 0xc10, 0x10, 0, 1),
 	PIN_FIELD(91, 102, 0xb10, 0x10, 18, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_smt_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_smt_range[] = {
 	PIN_FIELD(0, 31, 0x920, 0x10, 0, 1),
 	PIN_FIELD(32, 50, 0xa20, 0x10, 0, 1),
 	PIN_FIELD(51, 70, 0x820, 0x10, 0, 1),
@@ -71,9 +70,9 @@
 	PIN_FIELD(73, 86, 0xb20, 0x10, 4, 1),
 	PIN_FIELD(87, 90, 0xc20, 0x10, 0, 1),
 	PIN_FIELD(91, 102, 0xb20, 0x10, 18, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_pu_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_pu_range[] = {
 	PIN_FIELD(0, 31, 0x930, 0x10, 0, 1),
 	PIN_FIELD(32, 50, 0xa30, 0x10, 0, 1),
 	PIN_FIELD(51, 70, 0x830, 0x10, 0, 1),
@@ -81,9 +80,9 @@
 	PIN_FIELD(73, 86, 0xb30, 0x10, 4, 1),
 	PIN_FIELD(87, 90, 0xc30, 0x10, 0, 1),
 	PIN_FIELD(91, 102, 0xb30, 0x10, 18, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_pd_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_pd_range[] = {
 	PIN_FIELD(0, 31, 0x940, 0x10, 0, 1),
 	PIN_FIELD(32, 50, 0xa40, 0x10, 0, 1),
 	PIN_FIELD(51, 70, 0x840, 0x10, 0, 1),
@@ -91,9 +90,9 @@
 	PIN_FIELD(73, 86, 0xb40, 0x10, 4, 1),
 	PIN_FIELD(87, 90, 0xc40, 0x10, 0, 1),
 	PIN_FIELD(91, 102, 0xb40, 0x10, 18, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_e4_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_e4_range[] = {
 	PIN_FIELD(0, 31, 0x960, 0x10, 0, 1),
 	PIN_FIELD(32, 50, 0xa60, 0x10, 0, 1),
 	PIN_FIELD(51, 70, 0x860, 0x10, 0, 1),
@@ -101,9 +100,9 @@
 	PIN_FIELD(73, 86, 0xb60, 0x10, 4, 1),
 	PIN_FIELD(87, 90, 0xc60, 0x10, 0, 1),
 	PIN_FIELD(91, 102, 0xb60, 0x10, 18, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_e8_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_e8_range[] = {
 	PIN_FIELD(0, 31, 0x970, 0x10, 0, 1),
 	PIN_FIELD(32, 50, 0xa70, 0x10, 0, 1),
 	PIN_FIELD(51, 70, 0x870, 0x10, 0, 1),
@@ -111,9 +110,9 @@
 	PIN_FIELD(73, 86, 0xb70, 0x10, 4, 1),
 	PIN_FIELD(87, 90, 0xc70, 0x10, 0, 1),
 	PIN_FIELD(91, 102, 0xb70, 0x10, 18, 1),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_tdsel_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_tdsel_range[] = {
 	PIN_FIELD(0, 31, 0x980, 0x4, 0, 4),
 	PIN_FIELD(32, 50, 0xa80, 0x4, 0, 4),
 	PIN_FIELD(51, 70, 0x880, 0x4, 0, 4),
@@ -121,9 +120,9 @@
 	PIN_FIELD(73, 86, 0xb80, 0x4, 16, 4),
 	PIN_FIELD(87, 90, 0xc80, 0x4, 0, 4),
 	PIN_FIELD(91, 102, 0xb88, 0x4, 8, 4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_field_calc mt7622_pin_rdsel_range[] = अणु
+static const struct mtk_pin_field_calc mt7622_pin_rdsel_range[] = {
 	PIN_FIELD(0, 31, 0x990, 0x4, 0, 6),
 	PIN_FIELD(32, 50, 0xa90, 0x4, 0, 6),
 	PIN_FIELD(51, 58, 0x890, 0x4, 0, 6),
@@ -136,13 +135,13 @@
 	PIN_FIELD(73, 86, 0xb90, 0x4, 24, 6),
 	PIN_FIELD(87, 90, 0xc90, 0x4, 0, 6),
 	PIN_FIELD(91, 102, 0xb9c, 0x4, 12, 6),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_reg_calc mt7622_reg_cals[PINCTRL_PIN_REG_MAX] = अणु
+static const struct mtk_pin_reg_calc mt7622_reg_cals[PINCTRL_PIN_REG_MAX] = {
 	[PINCTRL_PIN_REG_MODE] = MTK_RANGE(mt7622_pin_mode_range),
-	[PINCTRL_PIN_REG_सूची] = MTK_RANGE(mt7622_pin_dir_range),
+	[PINCTRL_PIN_REG_DIR] = MTK_RANGE(mt7622_pin_dir_range),
 	[PINCTRL_PIN_REG_DI] = MTK_RANGE(mt7622_pin_di_range),
-	[PINCTRL_PIN_REG_DO] = MTK_RANGE(mt7622_pin_करो_range),
+	[PINCTRL_PIN_REG_DO] = MTK_RANGE(mt7622_pin_do_range),
 	[PINCTRL_PIN_REG_SR] = MTK_RANGE(mt7622_pin_sr_range),
 	[PINCTRL_PIN_REG_SMT] = MTK_RANGE(mt7622_pin_smt_range),
 	[PINCTRL_PIN_REG_PU] = MTK_RANGE(mt7622_pin_pu_range),
@@ -151,9 +150,9 @@
 	[PINCTRL_PIN_REG_E8] = MTK_RANGE(mt7622_pin_e8_range),
 	[PINCTRL_PIN_REG_TDSEL] = MTK_RANGE(mt7622_pin_tdsel_range),
 	[PINCTRL_PIN_REG_RDSEL] = MTK_RANGE(mt7622_pin_rdsel_range),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_desc mt7622_pins[] = अणु
+static const struct mtk_pin_desc mt7622_pins[] = {
 	MT7622_PIN(0, "GPIO_A"),
 	MT7622_PIN(1, "I2S1_IN"),
 	MT7622_PIN(2, "I2S1_OUT"),
@@ -257,349 +256,349 @@
 	MT7622_PIN(100, "PWM6"),
 	MT7622_PIN(101, "PWM7"),
 	MT7622_PIN(102, "GPIO_E"),
-पूर्ण;
+};
 
 /* List all groups consisting of these pins dedicated to the enablement of
- * certain hardware block and the corresponding mode क्रम all of the pins. The
+ * certain hardware block and the corresponding mode for all of the pins. The
  * hardware probably has multiple combinations of these pinouts.
  */
 
 /* ANTSEL */
-अटल पूर्णांक mt7622_antsel0_pins[] = अणु 91, पूर्ण;
-अटल पूर्णांक mt7622_antsel0_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel1_pins[] = अणु 92, पूर्ण;
-अटल पूर्णांक mt7622_antsel1_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel2_pins[] = अणु 93, पूर्ण;
-अटल पूर्णांक mt7622_antsel2_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel3_pins[] = अणु 94, पूर्ण;
-अटल पूर्णांक mt7622_antsel3_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel4_pins[] = अणु 95, पूर्ण;
-अटल पूर्णांक mt7622_antsel4_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel5_pins[] = अणु 96, पूर्ण;
-अटल पूर्णांक mt7622_antsel5_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel6_pins[] = अणु 97, पूर्ण;
-अटल पूर्णांक mt7622_antsel6_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel7_pins[] = अणु 98, पूर्ण;
-अटल पूर्णांक mt7622_antsel7_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel8_pins[] = अणु 99, पूर्ण;
-अटल पूर्णांक mt7622_antsel8_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel9_pins[] = अणु 100, पूर्ण;
-अटल पूर्णांक mt7622_antsel9_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel10_pins[] = अणु 101, पूर्ण;
-अटल पूर्णांक mt7622_antsel10_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel11_pins[] = अणु 102, पूर्ण;
-अटल पूर्णांक mt7622_antsel11_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel12_pins[] = अणु 73, पूर्ण;
-अटल पूर्णांक mt7622_antsel12_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel13_pins[] = अणु 74, पूर्ण;
-अटल पूर्णांक mt7622_antsel13_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel14_pins[] = अणु 75, पूर्ण;
-अटल पूर्णांक mt7622_antsel14_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel15_pins[] = अणु 76, पूर्ण;
-अटल पूर्णांक mt7622_antsel15_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel16_pins[] = अणु 77, पूर्ण;
-अटल पूर्णांक mt7622_antsel16_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel17_pins[] = अणु 22, पूर्ण;
-अटल पूर्णांक mt7622_antsel17_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel18_pins[] = अणु 79, पूर्ण;
-अटल पूर्णांक mt7622_antsel18_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel19_pins[] = अणु 80, पूर्ण;
-अटल पूर्णांक mt7622_antsel19_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel20_pins[] = अणु 81, पूर्ण;
-अटल पूर्णांक mt7622_antsel20_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel21_pins[] = अणु 82, पूर्ण;
-अटल पूर्णांक mt7622_antsel21_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel22_pins[] = अणु 14, पूर्ण;
-अटल पूर्णांक mt7622_antsel22_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel23_pins[] = अणु 15, पूर्ण;
-अटल पूर्णांक mt7622_antsel23_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel24_pins[] = अणु 16, पूर्ण;
-अटल पूर्णांक mt7622_antsel24_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel25_pins[] = अणु 17, पूर्ण;
-अटल पूर्णांक mt7622_antsel25_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel26_pins[] = अणु 18, पूर्ण;
-अटल पूर्णांक mt7622_antsel26_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel27_pins[] = अणु 19, पूर्ण;
-अटल पूर्णांक mt7622_antsel27_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel28_pins[] = अणु 20, पूर्ण;
-अटल पूर्णांक mt7622_antsel28_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_antsel29_pins[] = अणु 21, पूर्ण;
-अटल पूर्णांक mt7622_antsel29_funcs[] = अणु 5, पूर्ण;
+static int mt7622_antsel0_pins[] = { 91, };
+static int mt7622_antsel0_funcs[] = { 5, };
+static int mt7622_antsel1_pins[] = { 92, };
+static int mt7622_antsel1_funcs[] = { 5, };
+static int mt7622_antsel2_pins[] = { 93, };
+static int mt7622_antsel2_funcs[] = { 5, };
+static int mt7622_antsel3_pins[] = { 94, };
+static int mt7622_antsel3_funcs[] = { 5, };
+static int mt7622_antsel4_pins[] = { 95, };
+static int mt7622_antsel4_funcs[] = { 5, };
+static int mt7622_antsel5_pins[] = { 96, };
+static int mt7622_antsel5_funcs[] = { 5, };
+static int mt7622_antsel6_pins[] = { 97, };
+static int mt7622_antsel6_funcs[] = { 5, };
+static int mt7622_antsel7_pins[] = { 98, };
+static int mt7622_antsel7_funcs[] = { 5, };
+static int mt7622_antsel8_pins[] = { 99, };
+static int mt7622_antsel8_funcs[] = { 5, };
+static int mt7622_antsel9_pins[] = { 100, };
+static int mt7622_antsel9_funcs[] = { 5, };
+static int mt7622_antsel10_pins[] = { 101, };
+static int mt7622_antsel10_funcs[] = { 5, };
+static int mt7622_antsel11_pins[] = { 102, };
+static int mt7622_antsel11_funcs[] = { 5, };
+static int mt7622_antsel12_pins[] = { 73, };
+static int mt7622_antsel12_funcs[] = { 5, };
+static int mt7622_antsel13_pins[] = { 74, };
+static int mt7622_antsel13_funcs[] = { 5, };
+static int mt7622_antsel14_pins[] = { 75, };
+static int mt7622_antsel14_funcs[] = { 5, };
+static int mt7622_antsel15_pins[] = { 76, };
+static int mt7622_antsel15_funcs[] = { 5, };
+static int mt7622_antsel16_pins[] = { 77, };
+static int mt7622_antsel16_funcs[] = { 5, };
+static int mt7622_antsel17_pins[] = { 22, };
+static int mt7622_antsel17_funcs[] = { 5, };
+static int mt7622_antsel18_pins[] = { 79, };
+static int mt7622_antsel18_funcs[] = { 5, };
+static int mt7622_antsel19_pins[] = { 80, };
+static int mt7622_antsel19_funcs[] = { 5, };
+static int mt7622_antsel20_pins[] = { 81, };
+static int mt7622_antsel20_funcs[] = { 5, };
+static int mt7622_antsel21_pins[] = { 82, };
+static int mt7622_antsel21_funcs[] = { 5, };
+static int mt7622_antsel22_pins[] = { 14, };
+static int mt7622_antsel22_funcs[] = { 5, };
+static int mt7622_antsel23_pins[] = { 15, };
+static int mt7622_antsel23_funcs[] = { 5, };
+static int mt7622_antsel24_pins[] = { 16, };
+static int mt7622_antsel24_funcs[] = { 5, };
+static int mt7622_antsel25_pins[] = { 17, };
+static int mt7622_antsel25_funcs[] = { 5, };
+static int mt7622_antsel26_pins[] = { 18, };
+static int mt7622_antsel26_funcs[] = { 5, };
+static int mt7622_antsel27_pins[] = { 19, };
+static int mt7622_antsel27_funcs[] = { 5, };
+static int mt7622_antsel28_pins[] = { 20, };
+static int mt7622_antsel28_funcs[] = { 5, };
+static int mt7622_antsel29_pins[] = { 21, };
+static int mt7622_antsel29_funcs[] = { 5, };
 
 /* EMMC */
-अटल पूर्णांक mt7622_emmc_pins[] = अणु 40, 41, 42, 43, 44, 45, 47, 48, 49, 50, पूर्ण;
-अटल पूर्णांक mt7622_emmc_funcs[] = अणु 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, पूर्ण;
+static int mt7622_emmc_pins[] = { 40, 41, 42, 43, 44, 45, 47, 48, 49, 50, };
+static int mt7622_emmc_funcs[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, };
 
-अटल पूर्णांक mt7622_emmc_rst_pins[] = अणु 37, पूर्ण;
-अटल पूर्णांक mt7622_emmc_rst_funcs[] = अणु 1, पूर्ण;
+static int mt7622_emmc_rst_pins[] = { 37, };
+static int mt7622_emmc_rst_funcs[] = { 1, };
 
-/* LED क्रम EPHY */
-अटल पूर्णांक mt7622_ephy_leds_pins[] = अणु 86, 91, 92, 93, 94, पूर्ण;
-अटल पूर्णांक mt7622_ephy_leds_funcs[] = अणु 0, 0, 0, 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_ephy0_led_pins[] = अणु 86, पूर्ण;
-अटल पूर्णांक mt7622_ephy0_led_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_ephy1_led_pins[] = अणु 91, पूर्ण;
-अटल पूर्णांक mt7622_ephy1_led_funcs[] = अणु 2, पूर्ण;
-अटल पूर्णांक mt7622_ephy2_led_pins[] = अणु 92, पूर्ण;
-अटल पूर्णांक mt7622_ephy2_led_funcs[] = अणु 2, पूर्ण;
-अटल पूर्णांक mt7622_ephy3_led_pins[] = अणु 93, पूर्ण;
-अटल पूर्णांक mt7622_ephy3_led_funcs[] = अणु 2, पूर्ण;
-अटल पूर्णांक mt7622_ephy4_led_pins[] = अणु 94, पूर्ण;
-अटल पूर्णांक mt7622_ephy4_led_funcs[] = अणु 2, पूर्ण;
+/* LED for EPHY */
+static int mt7622_ephy_leds_pins[] = { 86, 91, 92, 93, 94, };
+static int mt7622_ephy_leds_funcs[] = { 0, 0, 0, 0, 0, };
+static int mt7622_ephy0_led_pins[] = { 86, };
+static int mt7622_ephy0_led_funcs[] = { 0, };
+static int mt7622_ephy1_led_pins[] = { 91, };
+static int mt7622_ephy1_led_funcs[] = { 2, };
+static int mt7622_ephy2_led_pins[] = { 92, };
+static int mt7622_ephy2_led_funcs[] = { 2, };
+static int mt7622_ephy3_led_pins[] = { 93, };
+static int mt7622_ephy3_led_funcs[] = { 2, };
+static int mt7622_ephy4_led_pins[] = { 94, };
+static int mt7622_ephy4_led_funcs[] = { 2, };
 
 /* Embedded Switch */
-अटल पूर्णांक mt7622_esw_pins[] = अणु 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-				 62, 63, 64, 65, 66, 67, 68, 69, 70, पूर्ण;
-अटल पूर्णांक mt7622_esw_funcs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				  0, 0, 0, 0, 0, 0, 0, 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_esw_p0_p1_pins[] = अणु 51, 52, 53, 54, 55, 56, 57, 58, पूर्ण;
-अटल पूर्णांक mt7622_esw_p0_p1_funcs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_esw_p2_p3_p4_pins[] = अणु 59, 60, 61, 62, 63, 64, 65, 66, 67,
-					  68, 69, 70, पूर्ण;
-अटल पूर्णांक mt7622_esw_p2_p3_p4_funcs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					   0, 0, 0, पूर्ण;
+static int mt7622_esw_pins[] = { 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+				 62, 63, 64, 65, 66, 67, 68, 69, 70, };
+static int mt7622_esw_funcs[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				  0, 0, 0, 0, 0, 0, 0, 0, 0, };
+static int mt7622_esw_p0_p1_pins[] = { 51, 52, 53, 54, 55, 56, 57, 58, };
+static int mt7622_esw_p0_p1_funcs[] = { 0, 0, 0, 0, 0, 0, 0, 0, };
+static int mt7622_esw_p2_p3_p4_pins[] = { 59, 60, 61, 62, 63, 64, 65, 66, 67,
+					  68, 69, 70, };
+static int mt7622_esw_p2_p3_p4_funcs[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					   0, 0, 0, };
 /* RGMII via ESW */
-अटल पूर्णांक mt7622_rgmii_via_esw_pins[] = अणु 59, 60, 61, 62, 63, 64, 65, 66,
-					   67, 68, 69, 70, पूर्ण;
-अटल पूर्णांक mt7622_rgmii_via_esw_funcs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					    0, पूर्ण;
+static int mt7622_rgmii_via_esw_pins[] = { 59, 60, 61, 62, 63, 64, 65, 66,
+					   67, 68, 69, 70, };
+static int mt7622_rgmii_via_esw_funcs[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					    0, };
 
 /* RGMII via GMAC1 */
-अटल पूर्णांक mt7622_rgmii_via_gmac1_pins[] = अणु 59, 60, 61, 62, 63, 64, 65, 66,
-					     67, 68, 69, 70, पूर्ण;
-अटल पूर्णांक mt7622_rgmii_via_gmac1_funcs[] = अणु 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-					      2, पूर्ण;
+static int mt7622_rgmii_via_gmac1_pins[] = { 59, 60, 61, 62, 63, 64, 65, 66,
+					     67, 68, 69, 70, };
+static int mt7622_rgmii_via_gmac1_funcs[] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+					      2, };
 
 /* RGMII via GMAC2 */
-अटल पूर्णांक mt7622_rgmii_via_gmac2_pins[] = अणु 25, 26, 27, 28, 29, 30, 31, 32,
-					     33, 34, 35, 36, पूर्ण;
-अटल पूर्णांक mt7622_rgmii_via_gmac2_funcs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					      0, पूर्ण;
+static int mt7622_rgmii_via_gmac2_pins[] = { 25, 26, 27, 28, 29, 30, 31, 32,
+					     33, 34, 35, 36, };
+static int mt7622_rgmii_via_gmac2_funcs[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					      0, };
 
 /* I2C */
-अटल पूर्णांक mt7622_i2c0_pins[] = अणु 14, 15, पूर्ण;
-अटल पूर्णांक mt7622_i2c0_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_i2c1_0_pins[] = अणु 55, 56, पूर्ण;
-अटल पूर्णांक mt7622_i2c1_0_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_i2c1_1_pins[] = अणु 73, 74, पूर्ण;
-अटल पूर्णांक mt7622_i2c1_1_funcs[] = अणु 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_i2c1_2_pins[] = अणु 87, 88, पूर्ण;
-अटल पूर्णांक mt7622_i2c1_2_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_i2c2_0_pins[] = अणु 57, 58, पूर्ण;
-अटल पूर्णांक mt7622_i2c2_0_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_i2c2_1_pins[] = अणु 75, 76, पूर्ण;
-अटल पूर्णांक mt7622_i2c2_1_funcs[] = अणु 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_i2c2_2_pins[] = अणु 89, 90, पूर्ण;
-अटल पूर्णांक mt7622_i2c2_2_funcs[] = अणु 0, 0, पूर्ण;
+static int mt7622_i2c0_pins[] = { 14, 15, };
+static int mt7622_i2c0_funcs[] = { 0, 0, };
+static int mt7622_i2c1_0_pins[] = { 55, 56, };
+static int mt7622_i2c1_0_funcs[] = { 0, 0, };
+static int mt7622_i2c1_1_pins[] = { 73, 74, };
+static int mt7622_i2c1_1_funcs[] = { 3, 3, };
+static int mt7622_i2c1_2_pins[] = { 87, 88, };
+static int mt7622_i2c1_2_funcs[] = { 0, 0, };
+static int mt7622_i2c2_0_pins[] = { 57, 58, };
+static int mt7622_i2c2_0_funcs[] = { 0, 0, };
+static int mt7622_i2c2_1_pins[] = { 75, 76, };
+static int mt7622_i2c2_1_funcs[] = { 3, 3, };
+static int mt7622_i2c2_2_pins[] = { 89, 90, };
+static int mt7622_i2c2_2_funcs[] = { 0, 0, };
 
 /* I2S */
-अटल पूर्णांक mt7622_i2s_in_mclk_bclk_ws_pins[] = अणु 3, 4, 5, पूर्ण;
-अटल पूर्णांक mt7622_i2s_in_mclk_bclk_ws_funcs[] = अणु 3, 3, 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s1_in_data_pins[] = अणु 1, पूर्ण;
-अटल पूर्णांक mt7622_i2s1_in_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s2_in_data_pins[] = अणु 16, पूर्ण;
-अटल पूर्णांक mt7622_i2s2_in_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s3_in_data_pins[] = अणु 17, पूर्ण;
-अटल पूर्णांक mt7622_i2s3_in_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s4_in_data_pins[] = अणु 18, पूर्ण;
-अटल पूर्णांक mt7622_i2s4_in_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s_out_mclk_bclk_ws_pins[] = अणु 3, 4, 5, पूर्ण;
-अटल पूर्णांक mt7622_i2s_out_mclk_bclk_ws_funcs[] = अणु 0, 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s1_out_data_pins[] = अणु 2, पूर्ण;
-अटल पूर्णांक mt7622_i2s1_out_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s2_out_data_pins[] = अणु 19, पूर्ण;
-अटल पूर्णांक mt7622_i2s2_out_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s3_out_data_pins[] = अणु 20, पूर्ण;
-अटल पूर्णांक mt7622_i2s3_out_data_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_i2s4_out_data_pins[] = अणु 21, पूर्ण;
-अटल पूर्णांक mt7622_i2s4_out_data_funcs[] = अणु 0, पूर्ण;
+static int mt7622_i2s_in_mclk_bclk_ws_pins[] = { 3, 4, 5, };
+static int mt7622_i2s_in_mclk_bclk_ws_funcs[] = { 3, 3, 0, };
+static int mt7622_i2s1_in_data_pins[] = { 1, };
+static int mt7622_i2s1_in_data_funcs[] = { 0, };
+static int mt7622_i2s2_in_data_pins[] = { 16, };
+static int mt7622_i2s2_in_data_funcs[] = { 0, };
+static int mt7622_i2s3_in_data_pins[] = { 17, };
+static int mt7622_i2s3_in_data_funcs[] = { 0, };
+static int mt7622_i2s4_in_data_pins[] = { 18, };
+static int mt7622_i2s4_in_data_funcs[] = { 0, };
+static int mt7622_i2s_out_mclk_bclk_ws_pins[] = { 3, 4, 5, };
+static int mt7622_i2s_out_mclk_bclk_ws_funcs[] = { 0, 0, 0, };
+static int mt7622_i2s1_out_data_pins[] = { 2, };
+static int mt7622_i2s1_out_data_funcs[] = { 0, };
+static int mt7622_i2s2_out_data_pins[] = { 19, };
+static int mt7622_i2s2_out_data_funcs[] = { 0, };
+static int mt7622_i2s3_out_data_pins[] = { 20, };
+static int mt7622_i2s3_out_data_funcs[] = { 0, };
+static int mt7622_i2s4_out_data_pins[] = { 21, };
+static int mt7622_i2s4_out_data_funcs[] = { 0, };
 
 /* IR */
-अटल पूर्णांक mt7622_ir_0_tx_pins[] = अणु 16, पूर्ण;
-अटल पूर्णांक mt7622_ir_0_tx_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_ir_1_tx_pins[] = अणु 59, पूर्ण;
-अटल पूर्णांक mt7622_ir_1_tx_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_ir_2_tx_pins[] = अणु 99, पूर्ण;
-अटल पूर्णांक mt7622_ir_2_tx_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_ir_0_rx_pins[] = अणु 17, पूर्ण;
-अटल पूर्णांक mt7622_ir_0_rx_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_ir_1_rx_pins[] = अणु 60, पूर्ण;
-अटल पूर्णांक mt7622_ir_1_rx_funcs[] = अणु 5, पूर्ण;
-अटल पूर्णांक mt7622_ir_2_rx_pins[] = अणु 100, पूर्ण;
-अटल पूर्णांक mt7622_ir_2_rx_funcs[] = अणु 3, पूर्ण;
+static int mt7622_ir_0_tx_pins[] = { 16, };
+static int mt7622_ir_0_tx_funcs[] = { 4, };
+static int mt7622_ir_1_tx_pins[] = { 59, };
+static int mt7622_ir_1_tx_funcs[] = { 5, };
+static int mt7622_ir_2_tx_pins[] = { 99, };
+static int mt7622_ir_2_tx_funcs[] = { 3, };
+static int mt7622_ir_0_rx_pins[] = { 17, };
+static int mt7622_ir_0_rx_funcs[] = { 4, };
+static int mt7622_ir_1_rx_pins[] = { 60, };
+static int mt7622_ir_1_rx_funcs[] = { 5, };
+static int mt7622_ir_2_rx_pins[] = { 100, };
+static int mt7622_ir_2_rx_funcs[] = { 3, };
 
 /* MDIO */
-अटल पूर्णांक mt7622_mdc_mdio_pins[] = अणु 23, 24, पूर्ण;
-अटल पूर्णांक mt7622_mdc_mdio_funcs[] = अणु 0, 0, पूर्ण;
+static int mt7622_mdc_mdio_pins[] = { 23, 24, };
+static int mt7622_mdc_mdio_funcs[] = { 0, 0, };
 
 /* PCIE */
-अटल पूर्णांक mt7622_pcie0_0_waken_pins[] = अणु 14, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_0_waken_funcs[] = अणु 2, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_0_clkreq_pins[] = अणु 15, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_0_clkreq_funcs[] = अणु 2, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_1_waken_pins[] = अणु 79, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_1_waken_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_1_clkreq_pins[] = अणु 80, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_1_clkreq_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pcie1_0_waken_pins[] = अणु 14, पूर्ण;
-अटल पूर्णांक mt7622_pcie1_0_waken_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pcie1_0_clkreq_pins[] = अणु 15, पूर्ण;
-अटल पूर्णांक mt7622_pcie1_0_clkreq_funcs[] = अणु 3, पूर्ण;
+static int mt7622_pcie0_0_waken_pins[] = { 14, };
+static int mt7622_pcie0_0_waken_funcs[] = { 2, };
+static int mt7622_pcie0_0_clkreq_pins[] = { 15, };
+static int mt7622_pcie0_0_clkreq_funcs[] = { 2, };
+static int mt7622_pcie0_1_waken_pins[] = { 79, };
+static int mt7622_pcie0_1_waken_funcs[] = { 4, };
+static int mt7622_pcie0_1_clkreq_pins[] = { 80, };
+static int mt7622_pcie0_1_clkreq_funcs[] = { 4, };
+static int mt7622_pcie1_0_waken_pins[] = { 14, };
+static int mt7622_pcie1_0_waken_funcs[] = { 3, };
+static int mt7622_pcie1_0_clkreq_pins[] = { 15, };
+static int mt7622_pcie1_0_clkreq_funcs[] = { 3, };
 
-अटल पूर्णांक mt7622_pcie0_pad_perst_pins[] = अणु 83, पूर्ण;
-अटल पूर्णांक mt7622_pcie0_pad_perst_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_pcie1_pad_perst_pins[] = अणु 84, पूर्ण;
-अटल पूर्णांक mt7622_pcie1_pad_perst_funcs[] = अणु 0, पूर्ण;
+static int mt7622_pcie0_pad_perst_pins[] = { 83, };
+static int mt7622_pcie0_pad_perst_funcs[] = { 0, };
+static int mt7622_pcie1_pad_perst_pins[] = { 84, };
+static int mt7622_pcie1_pad_perst_funcs[] = { 0, };
 
 /* PMIC bus */
-अटल पूर्णांक mt7622_pmic_bus_pins[] = अणु 71, 72, पूर्ण;
-अटल पूर्णांक mt7622_pmic_bus_funcs[] = अणु 0, 0, पूर्ण;
+static int mt7622_pmic_bus_pins[] = { 71, 72, };
+static int mt7622_pmic_bus_funcs[] = { 0, 0, };
 
-/* Parallel न_अंकD */
-अटल पूर्णांक mt7622_pnand_pins[] = अणु 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-				   48, 49, 50, पूर्ण;
-अटल पूर्णांक mt7622_pnand_funcs[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				    0, पूर्ण;
+/* Parallel NAND */
+static int mt7622_pnand_pins[] = { 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+				   48, 49, 50, };
+static int mt7622_pnand_funcs[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				    0, };
 
 /* PWM */
-अटल पूर्णांक mt7622_pwm_ch1_0_pins[] = अणु 51, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch1_0_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch1_1_pins[] = अणु 73, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch1_1_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch1_2_pins[] = अणु 95, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch1_2_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch2_0_pins[] = अणु 52, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch2_0_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch2_1_pins[] = अणु 74, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch2_1_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch2_2_pins[] = अणु 96, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch2_2_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch3_0_pins[] = अणु 53, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch3_0_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch3_1_pins[] = अणु 75, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch3_1_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch3_2_pins[] = अणु 97, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch3_2_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_0_pins[] = अणु 54, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_0_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_1_pins[] = अणु 67, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_1_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_2_pins[] = अणु 76, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_2_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_3_pins[] = अणु 98, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch4_3_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch5_0_pins[] = अणु 68, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch5_0_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch5_1_pins[] = अणु 77, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch5_1_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch5_2_pins[] = अणु 99, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch5_2_funcs[] = अणु 0, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_0_pins[] = अणु 69, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_0_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_1_pins[] = अणु 78, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_1_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_2_pins[] = अणु 81, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_2_funcs[] = अणु 4, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_3_pins[] = अणु 100, पूर्ण;
-अटल पूर्णांक mt7622_pwm_ch6_3_funcs[] = अणु 0, पूर्ण;
+static int mt7622_pwm_ch1_0_pins[] = { 51, };
+static int mt7622_pwm_ch1_0_funcs[] = { 3, };
+static int mt7622_pwm_ch1_1_pins[] = { 73, };
+static int mt7622_pwm_ch1_1_funcs[] = { 4, };
+static int mt7622_pwm_ch1_2_pins[] = { 95, };
+static int mt7622_pwm_ch1_2_funcs[] = { 0, };
+static int mt7622_pwm_ch2_0_pins[] = { 52, };
+static int mt7622_pwm_ch2_0_funcs[] = { 3, };
+static int mt7622_pwm_ch2_1_pins[] = { 74, };
+static int mt7622_pwm_ch2_1_funcs[] = { 4, };
+static int mt7622_pwm_ch2_2_pins[] = { 96, };
+static int mt7622_pwm_ch2_2_funcs[] = { 0, };
+static int mt7622_pwm_ch3_0_pins[] = { 53, };
+static int mt7622_pwm_ch3_0_funcs[] = { 3, };
+static int mt7622_pwm_ch3_1_pins[] = { 75, };
+static int mt7622_pwm_ch3_1_funcs[] = { 4, };
+static int mt7622_pwm_ch3_2_pins[] = { 97, };
+static int mt7622_pwm_ch3_2_funcs[] = { 0, };
+static int mt7622_pwm_ch4_0_pins[] = { 54, };
+static int mt7622_pwm_ch4_0_funcs[] = { 3, };
+static int mt7622_pwm_ch4_1_pins[] = { 67, };
+static int mt7622_pwm_ch4_1_funcs[] = { 3, };
+static int mt7622_pwm_ch4_2_pins[] = { 76, };
+static int mt7622_pwm_ch4_2_funcs[] = { 4, };
+static int mt7622_pwm_ch4_3_pins[] = { 98, };
+static int mt7622_pwm_ch4_3_funcs[] = { 0, };
+static int mt7622_pwm_ch5_0_pins[] = { 68, };
+static int mt7622_pwm_ch5_0_funcs[] = { 3, };
+static int mt7622_pwm_ch5_1_pins[] = { 77, };
+static int mt7622_pwm_ch5_1_funcs[] = { 4, };
+static int mt7622_pwm_ch5_2_pins[] = { 99, };
+static int mt7622_pwm_ch5_2_funcs[] = { 0, };
+static int mt7622_pwm_ch6_0_pins[] = { 69, };
+static int mt7622_pwm_ch6_0_funcs[] = { 3, };
+static int mt7622_pwm_ch6_1_pins[] = { 78, };
+static int mt7622_pwm_ch6_1_funcs[] = { 4, };
+static int mt7622_pwm_ch6_2_pins[] = { 81, };
+static int mt7622_pwm_ch6_2_funcs[] = { 4, };
+static int mt7622_pwm_ch6_3_pins[] = { 100, };
+static int mt7622_pwm_ch6_3_funcs[] = { 0, };
 
 /* SD */
-अटल पूर्णांक mt7622_sd_0_pins[] = अणु 16, 17, 18, 19, 20, 21, पूर्ण;
-अटल पूर्णांक mt7622_sd_0_funcs[] = अणु 2, 2, 2, 2, 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_sd_1_pins[] = अणु 25, 26, 27, 28, 29, 30, पूर्ण;
-अटल पूर्णांक mt7622_sd_1_funcs[] = अणु 2, 2, 2, 2, 2, 2, पूर्ण;
+static int mt7622_sd_0_pins[] = { 16, 17, 18, 19, 20, 21, };
+static int mt7622_sd_0_funcs[] = { 2, 2, 2, 2, 2, 2, };
+static int mt7622_sd_1_pins[] = { 25, 26, 27, 28, 29, 30, };
+static int mt7622_sd_1_funcs[] = { 2, 2, 2, 2, 2, 2, };
 
-/* Serial न_अंकD */
-अटल पूर्णांक mt7622_snfi_pins[] = अणु 8, 9, 10, 11, 12, 13, पूर्ण;
-अटल पूर्णांक mt7622_snfi_funcs[] = अणु 2, 2, 2, 2, 2, 2, पूर्ण;
+/* Serial NAND */
+static int mt7622_snfi_pins[] = { 8, 9, 10, 11, 12, 13, };
+static int mt7622_snfi_funcs[] = { 2, 2, 2, 2, 2, 2, };
 
 /* SPI NOR */
-अटल पूर्णांक mt7622_spi_pins[] = अणु 8, 9, 10, 11, 12, 13 पूर्ण;
-अटल पूर्णांक mt7622_spi_funcs[] = अणु 0, 0, 0, 0, 0, 0, पूर्ण;
+static int mt7622_spi_pins[] = { 8, 9, 10, 11, 12, 13 };
+static int mt7622_spi_funcs[] = { 0, 0, 0, 0, 0, 0, };
 
 /* SPIC */
-अटल पूर्णांक mt7622_spic0_0_pins[] = अणु 63, 64, 65, 66, पूर्ण;
-अटल पूर्णांक mt7622_spic0_0_funcs[] = अणु 4, 4, 4, 4, पूर्ण;
-अटल पूर्णांक mt7622_spic0_1_pins[] = अणु 79, 80, 81, 82, पूर्ण;
-अटल पूर्णांक mt7622_spic0_1_funcs[] = अणु 3, 3, 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_spic1_0_pins[] = अणु 67, 68, 69, 70, पूर्ण;
-अटल पूर्णांक mt7622_spic1_0_funcs[] = अणु 4, 4, 4, 4, पूर्ण;
-अटल पूर्णांक mt7622_spic1_1_pins[] = अणु 73, 74, 75, 76, पूर्ण;
-अटल पूर्णांक mt7622_spic1_1_funcs[] = अणु 0, 0, 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_spic2_0_pins[] = अणु 10, 11, 12, 13, पूर्ण;
-अटल पूर्णांक mt7622_spic2_0_funcs[] = अणु 0, 0, 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_spic2_0_wp_hold_pins[] = अणु 8, 9, पूर्ण;
-अटल पूर्णांक mt7622_spic2_0_wp_hold_funcs[] = अणु 0, 0, पूर्ण;
+static int mt7622_spic0_0_pins[] = { 63, 64, 65, 66, };
+static int mt7622_spic0_0_funcs[] = { 4, 4, 4, 4, };
+static int mt7622_spic0_1_pins[] = { 79, 80, 81, 82, };
+static int mt7622_spic0_1_funcs[] = { 3, 3, 3, 3, };
+static int mt7622_spic1_0_pins[] = { 67, 68, 69, 70, };
+static int mt7622_spic1_0_funcs[] = { 4, 4, 4, 4, };
+static int mt7622_spic1_1_pins[] = { 73, 74, 75, 76, };
+static int mt7622_spic1_1_funcs[] = { 0, 0, 0, 0, };
+static int mt7622_spic2_0_pins[] = { 10, 11, 12, 13, };
+static int mt7622_spic2_0_funcs[] = { 0, 0, 0, 0, };
+static int mt7622_spic2_0_wp_hold_pins[] = { 8, 9, };
+static int mt7622_spic2_0_wp_hold_funcs[] = { 0, 0, };
 
 /* TDM */
-अटल पूर्णांक mt7622_tdm_0_out_mclk_bclk_ws_pins[] = अणु 8, 9, 10, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_out_mclk_bclk_ws_funcs[] = अणु 3, 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_in_mclk_bclk_ws_pins[] = अणु 11, 12, 13, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_in_mclk_bclk_ws_funcs[] = अणु 3, 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_out_data_pins[] = अणु 20, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_out_data_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_in_data_pins[] = अणु 21, पूर्ण;
-अटल पूर्णांक mt7622_tdm_0_in_data_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_out_mclk_bclk_ws_pins[] = अणु 57, 58, 59, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_out_mclk_bclk_ws_funcs[] = अणु 3, 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_in_mclk_bclk_ws_pins[] = अणु 60, 61, 62, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_in_mclk_bclk_ws_funcs[] = अणु 3, 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_out_data_pins[] = अणु 55, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_out_data_funcs[] = अणु 3, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_in_data_pins[] = अणु 56, पूर्ण;
-अटल पूर्णांक mt7622_tdm_1_in_data_funcs[] = अणु 3, पूर्ण;
+static int mt7622_tdm_0_out_mclk_bclk_ws_pins[] = { 8, 9, 10, };
+static int mt7622_tdm_0_out_mclk_bclk_ws_funcs[] = { 3, 3, 3, };
+static int mt7622_tdm_0_in_mclk_bclk_ws_pins[] = { 11, 12, 13, };
+static int mt7622_tdm_0_in_mclk_bclk_ws_funcs[] = { 3, 3, 3, };
+static int mt7622_tdm_0_out_data_pins[] = { 20, };
+static int mt7622_tdm_0_out_data_funcs[] = { 3, };
+static int mt7622_tdm_0_in_data_pins[] = { 21, };
+static int mt7622_tdm_0_in_data_funcs[] = { 3, };
+static int mt7622_tdm_1_out_mclk_bclk_ws_pins[] = { 57, 58, 59, };
+static int mt7622_tdm_1_out_mclk_bclk_ws_funcs[] = { 3, 3, 3, };
+static int mt7622_tdm_1_in_mclk_bclk_ws_pins[] = { 60, 61, 62, };
+static int mt7622_tdm_1_in_mclk_bclk_ws_funcs[] = { 3, 3, 3, };
+static int mt7622_tdm_1_out_data_pins[] = { 55, };
+static int mt7622_tdm_1_out_data_funcs[] = { 3, };
+static int mt7622_tdm_1_in_data_pins[] = { 56, };
+static int mt7622_tdm_1_in_data_funcs[] = { 3, };
 
 /* UART */
-अटल पूर्णांक mt7622_uart0_0_tx_rx_pins[] = अणु 6, 7, पूर्ण;
-अटल पूर्णांक mt7622_uart0_0_tx_rx_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart1_0_tx_rx_pins[] = अणु 55, 56, पूर्ण;
-अटल पूर्णांक mt7622_uart1_0_tx_rx_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart1_0_rts_cts_pins[] = अणु 57, 58, पूर्ण;
-अटल पूर्णांक mt7622_uart1_0_rts_cts_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart1_1_tx_rx_pins[] = अणु 73, 74, पूर्ण;
-अटल पूर्णांक mt7622_uart1_1_tx_rx_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart1_1_rts_cts_pins[] = अणु 75, 76, पूर्ण;
-अटल पूर्णांक mt7622_uart1_1_rts_cts_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart2_0_tx_rx_pins[] = अणु 3, 4, पूर्ण;
-अटल पूर्णांक mt7622_uart2_0_tx_rx_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart2_0_rts_cts_pins[] = अणु 1, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart2_0_rts_cts_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart2_1_tx_rx_pins[] = अणु 51, 52, पूर्ण;
-अटल पूर्णांक mt7622_uart2_1_tx_rx_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart2_1_rts_cts_pins[] = अणु 53, 54, पूर्ण;
-अटल पूर्णांक mt7622_uart2_1_rts_cts_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart2_2_tx_rx_pins[] = अणु 59, 60, पूर्ण;
-अटल पूर्णांक mt7622_uart2_2_tx_rx_funcs[] = अणु 4, 4, पूर्ण;
-अटल पूर्णांक mt7622_uart2_2_rts_cts_pins[] = अणु 61, 62, पूर्ण;
-अटल पूर्णांक mt7622_uart2_2_rts_cts_funcs[] = अणु 4, 4, पूर्ण;
-अटल पूर्णांक mt7622_uart2_3_tx_rx_pins[] = अणु 95, 96, पूर्ण;
-अटल पूर्णांक mt7622_uart2_3_tx_rx_funcs[] = अणु 3, 3, पूर्ण;
-अटल पूर्णांक mt7622_uart3_0_tx_rx_pins[] = अणु 57, 58, पूर्ण;
-अटल पूर्णांक mt7622_uart3_0_tx_rx_funcs[] = अणु 5, 5, पूर्ण;
-अटल पूर्णांक mt7622_uart3_1_tx_rx_pins[] = अणु 81, 82, पूर्ण;
-अटल पूर्णांक mt7622_uart3_1_tx_rx_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart3_1_rts_cts_pins[] = अणु 79, 80, पूर्ण;
-अटल पूर्णांक mt7622_uart3_1_rts_cts_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart4_0_tx_rx_pins[] = अणु 61, 62, पूर्ण;
-अटल पूर्णांक mt7622_uart4_0_tx_rx_funcs[] = अणु 5, 5, पूर्ण;
-अटल पूर्णांक mt7622_uart4_1_tx_rx_pins[] = अणु 91, 92, पूर्ण;
-अटल पूर्णांक mt7622_uart4_1_tx_rx_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart4_1_rts_cts_pins[] = अणु 93, 94 पूर्ण;
-अटल पूर्णांक mt7622_uart4_1_rts_cts_funcs[] = अणु 0, 0, पूर्ण;
-अटल पूर्णांक mt7622_uart4_2_tx_rx_pins[] = अणु 97, 98, पूर्ण;
-अटल पूर्णांक mt7622_uart4_2_tx_rx_funcs[] = अणु 2, 2, पूर्ण;
-अटल पूर्णांक mt7622_uart4_2_rts_cts_pins[] = अणु 95, 96 पूर्ण;
-अटल पूर्णांक mt7622_uart4_2_rts_cts_funcs[] = अणु 2, 2, पूर्ण;
+static int mt7622_uart0_0_tx_rx_pins[] = { 6, 7, };
+static int mt7622_uart0_0_tx_rx_funcs[] = { 0, 0, };
+static int mt7622_uart1_0_tx_rx_pins[] = { 55, 56, };
+static int mt7622_uart1_0_tx_rx_funcs[] = { 2, 2, };
+static int mt7622_uart1_0_rts_cts_pins[] = { 57, 58, };
+static int mt7622_uart1_0_rts_cts_funcs[] = { 2, 2, };
+static int mt7622_uart1_1_tx_rx_pins[] = { 73, 74, };
+static int mt7622_uart1_1_tx_rx_funcs[] = { 2, 2, };
+static int mt7622_uart1_1_rts_cts_pins[] = { 75, 76, };
+static int mt7622_uart1_1_rts_cts_funcs[] = { 2, 2, };
+static int mt7622_uart2_0_tx_rx_pins[] = { 3, 4, };
+static int mt7622_uart2_0_tx_rx_funcs[] = { 2, 2, };
+static int mt7622_uart2_0_rts_cts_pins[] = { 1, 2, };
+static int mt7622_uart2_0_rts_cts_funcs[] = { 2, 2, };
+static int mt7622_uart2_1_tx_rx_pins[] = { 51, 52, };
+static int mt7622_uart2_1_tx_rx_funcs[] = { 0, 0, };
+static int mt7622_uart2_1_rts_cts_pins[] = { 53, 54, };
+static int mt7622_uart2_1_rts_cts_funcs[] = { 0, 0, };
+static int mt7622_uart2_2_tx_rx_pins[] = { 59, 60, };
+static int mt7622_uart2_2_tx_rx_funcs[] = { 4, 4, };
+static int mt7622_uart2_2_rts_cts_pins[] = { 61, 62, };
+static int mt7622_uart2_2_rts_cts_funcs[] = { 4, 4, };
+static int mt7622_uart2_3_tx_rx_pins[] = { 95, 96, };
+static int mt7622_uart2_3_tx_rx_funcs[] = { 3, 3, };
+static int mt7622_uart3_0_tx_rx_pins[] = { 57, 58, };
+static int mt7622_uart3_0_tx_rx_funcs[] = { 5, 5, };
+static int mt7622_uart3_1_tx_rx_pins[] = { 81, 82, };
+static int mt7622_uart3_1_tx_rx_funcs[] = { 0, 0, };
+static int mt7622_uart3_1_rts_cts_pins[] = { 79, 80, };
+static int mt7622_uart3_1_rts_cts_funcs[] = { 0, 0, };
+static int mt7622_uart4_0_tx_rx_pins[] = { 61, 62, };
+static int mt7622_uart4_0_tx_rx_funcs[] = { 5, 5, };
+static int mt7622_uart4_1_tx_rx_pins[] = { 91, 92, };
+static int mt7622_uart4_1_tx_rx_funcs[] = { 0, 0, };
+static int mt7622_uart4_1_rts_cts_pins[] = { 93, 94 };
+static int mt7622_uart4_1_rts_cts_funcs[] = { 0, 0, };
+static int mt7622_uart4_2_tx_rx_pins[] = { 97, 98, };
+static int mt7622_uart4_2_tx_rx_funcs[] = { 2, 2, };
+static int mt7622_uart4_2_rts_cts_pins[] = { 95, 96 };
+static int mt7622_uart4_2_rts_cts_funcs[] = { 2, 2, };
 
-/* Watchकरोg */
-अटल पूर्णांक mt7622_watchकरोg_pins[] = अणु 78, पूर्ण;
-अटल पूर्णांक mt7622_watchकरोg_funcs[] = अणु 0, पूर्ण;
+/* Watchdog */
+static int mt7622_watchdog_pins[] = { 78, };
+static int mt7622_watchdog_funcs[] = { 0, };
 
 /* WLAN LED */
-अटल पूर्णांक mt7622_wled_pins[] = अणु 85, पूर्ण;
-अटल पूर्णांक mt7622_wled_funcs[] = अणु 0, पूर्ण;
+static int mt7622_wled_pins[] = { 85, };
+static int mt7622_wled_funcs[] = { 0, };
 
-अटल स्थिर काष्ठा group_desc mt7622_groups[] = अणु
+static const struct group_desc mt7622_groups[] = {
 	PINCTRL_PIN_GROUP("antsel0", mt7622_antsel0),
 	PINCTRL_PIN_GROUP("antsel1", mt7622_antsel1),
 	PINCTRL_PIN_GROUP("antsel2", mt7622_antsel2),
@@ -740,14 +739,14 @@
 	PINCTRL_PIN_GROUP("uart4_1_rts_cts", mt7622_uart4_1_rts_cts),
 	PINCTRL_PIN_GROUP("uart4_2_tx_rx", mt7622_uart4_2_tx_rx),
 	PINCTRL_PIN_GROUP("uart4_2_rts_cts", mt7622_uart4_2_rts_cts),
-	PINCTRL_PIN_GROUP("watchdog", mt7622_watchकरोg),
+	PINCTRL_PIN_GROUP("watchdog", mt7622_watchdog),
 	PINCTRL_PIN_GROUP("wled", mt7622_wled),
-पूर्ण;
+};
 
-/* Joपूर्णांक those groups owning the same capability in user poपूर्णांक of view which
+/* Joint those groups owning the same capability in user point of view which
  * allows that people tend to use through the device tree.
  */
-अटल स्थिर अक्षर *mt7622_antsel_groups[] = अणु "antsel0", "antsel1", "antsel2",
+static const char *mt7622_antsel_groups[] = { "antsel0", "antsel1", "antsel2",
 					      "antsel3", "antsel4", "antsel5",
 					      "antsel6", "antsel7", "antsel8",
 					      "antsel9", "antsel10", "antsel11",
@@ -756,36 +755,36 @@
 					      "antsel18", "antsel19", "antsel20",
 					      "antsel21", "antsel22", "antsel23",
 					      "antsel24", "antsel25", "antsel26",
-					      "antsel27", "antsel28", "antsel29",पूर्ण;
-अटल स्थिर अक्षर *mt7622_emmc_groups[] = अणु "emmc", "emmc_rst", पूर्ण;
-अटल स्थिर अक्षर *mt7622_ethernet_groups[] = अणु "esw", "esw_p0_p1",
+					      "antsel27", "antsel28", "antsel29",};
+static const char *mt7622_emmc_groups[] = { "emmc", "emmc_rst", };
+static const char *mt7622_ethernet_groups[] = { "esw", "esw_p0_p1",
 						"esw_p2_p3_p4", "mdc_mdio",
 						"rgmii_via_gmac1",
 						"rgmii_via_gmac2",
-						"rgmii_via_esw", पूर्ण;
-अटल स्थिर अक्षर *mt7622_i2c_groups[] = अणु "i2c0", "i2c1_0", "i2c1_1",
+						"rgmii_via_esw", };
+static const char *mt7622_i2c_groups[] = { "i2c0", "i2c1_0", "i2c1_1",
 					   "i2c1_2", "i2c2_0", "i2c2_1",
-					   "i2c2_2", पूर्ण;
-अटल स्थिर अक्षर *mt7622_i2s_groups[] = अणु "i2s_out_mclk_bclk_ws",
+					   "i2c2_2", };
+static const char *mt7622_i2s_groups[] = { "i2s_out_mclk_bclk_ws",
 					   "i2s_in_mclk_bclk_ws",
 					   "i2s1_in_data", "i2s2_in_data",
 					   "i2s3_in_data", "i2s4_in_data",
 					   "i2s1_out_data", "i2s2_out_data",
-					   "i2s3_out_data", "i2s4_out_data", पूर्ण;
-अटल स्थिर अक्षर *mt7622_ir_groups[] = अणु "ir_0_tx", "ir_1_tx", "ir_2_tx",
-					  "ir_0_rx", "ir_1_rx", "ir_2_rx"पूर्ण;
-अटल स्थिर अक्षर *mt7622_led_groups[] = अणु "ephy_leds", "ephy0_led",
+					   "i2s3_out_data", "i2s4_out_data", };
+static const char *mt7622_ir_groups[] = { "ir_0_tx", "ir_1_tx", "ir_2_tx",
+					  "ir_0_rx", "ir_1_rx", "ir_2_rx"};
+static const char *mt7622_led_groups[] = { "ephy_leds", "ephy0_led",
 					   "ephy1_led", "ephy2_led",
 					   "ephy3_led", "ephy4_led",
-					   "wled", पूर्ण;
-अटल स्थिर अक्षर *mt7622_flash_groups[] = अणु "par_nand", "snfi", "spi_nor"पूर्ण;
-अटल स्थिर अक्षर *mt7622_pcie_groups[] = अणु "pcie0_0_waken", "pcie0_0_clkreq",
+					   "wled", };
+static const char *mt7622_flash_groups[] = { "par_nand", "snfi", "spi_nor"};
+static const char *mt7622_pcie_groups[] = { "pcie0_0_waken", "pcie0_0_clkreq",
 					    "pcie0_1_waken", "pcie0_1_clkreq",
 					    "pcie1_0_waken", "pcie1_0_clkreq",
 					    "pcie0_pad_perst",
-					    "pcie1_pad_perst", पूर्ण;
-अटल स्थिर अक्षर *mt7622_pmic_bus_groups[] = अणु "pmic_bus", पूर्ण;
-अटल स्थिर अक्षर *mt7622_pwm_groups[] = अणु "pwm_ch1_0", "pwm_ch1_1",
+					    "pcie1_pad_perst", };
+static const char *mt7622_pmic_bus_groups[] = { "pmic_bus", };
+static const char *mt7622_pwm_groups[] = { "pwm_ch1_0", "pwm_ch1_1",
 					   "pwm_ch1_2", "pwm_ch2_0",
 					   "pwm_ch2_1", "pwm_ch2_2",
 					   "pwm_ch3_0", "pwm_ch3_1",
@@ -794,21 +793,21 @@
 					   "pwm_ch4_3", "pwm_ch5_0",
 					   "pwm_ch5_1", "pwm_ch5_2",
 					   "pwm_ch6_0", "pwm_ch6_1",
-					   "pwm_ch6_2", "pwm_ch6_3", पूर्ण;
-अटल स्थिर अक्षर *mt7622_sd_groups[] = अणु "sd_0", "sd_1", पूर्ण;
-अटल स्थिर अक्षर *mt7622_spic_groups[] = अणु "spic0_0", "spic0_1", "spic1_0",
+					   "pwm_ch6_2", "pwm_ch6_3", };
+static const char *mt7622_sd_groups[] = { "sd_0", "sd_1", };
+static const char *mt7622_spic_groups[] = { "spic0_0", "spic0_1", "spic1_0",
 					    "spic1_1", "spic2_0",
-					    "spic2_0_wp_hold", पूर्ण;
-अटल स्थिर अक्षर *mt7622_tdm_groups[] = अणु "tdm_0_out_mclk_bclk_ws",
+					    "spic2_0_wp_hold", };
+static const char *mt7622_tdm_groups[] = { "tdm_0_out_mclk_bclk_ws",
 					   "tdm_0_in_mclk_bclk_ws",
 					   "tdm_0_out_data",
 					   "tdm_0_in_data",
 					   "tdm_1_out_mclk_bclk_ws",
 					   "tdm_1_in_mclk_bclk_ws",
 					   "tdm_1_out_data",
-					   "tdm_1_in_data", पूर्ण;
+					   "tdm_1_in_data", };
 
-अटल स्थिर अक्षर *mt7622_uart_groups[] = अणु "uart0_0_tx_rx",
+static const char *mt7622_uart_groups[] = { "uart0_0_tx_rx",
 					    "uart1_0_tx_rx", "uart1_0_rts_cts",
 					    "uart1_1_tx_rx", "uart1_1_rts_cts",
 					    "uart2_0_tx_rx", "uart2_0_rts_cts",
@@ -820,36 +819,36 @@
 					    "uart4_0_tx_rx",
 					    "uart4_1_tx_rx", "uart4_1_rts_cts",
 					    "uart4_2_tx_rx",
-					    "uart4_2_rts_cts",पूर्ण;
-अटल स्थिर अक्षर *mt7622_wdt_groups[] = अणु "watchdog", पूर्ण;
+					    "uart4_2_rts_cts",};
+static const char *mt7622_wdt_groups[] = { "watchdog", };
 
-अटल स्थिर काष्ठा function_desc mt7622_functions[] = अणु
-	अणु"antsel", mt7622_antsel_groups, ARRAY_SIZE(mt7622_antsel_groups)पूर्ण,
-	अणु"emmc", mt7622_emmc_groups, ARRAY_SIZE(mt7622_emmc_groups)पूर्ण,
-	अणु"eth",	mt7622_ethernet_groups, ARRAY_SIZE(mt7622_ethernet_groups)पूर्ण,
-	अणु"i2c", mt7622_i2c_groups, ARRAY_SIZE(mt7622_i2c_groups)पूर्ण,
-	अणु"i2s",	mt7622_i2s_groups, ARRAY_SIZE(mt7622_i2s_groups)पूर्ण,
-	अणु"ir", mt7622_ir_groups, ARRAY_SIZE(mt7622_ir_groups)पूर्ण,
-	अणु"led",	mt7622_led_groups, ARRAY_SIZE(mt7622_led_groups)पूर्ण,
-	अणु"flash", mt7622_flash_groups, ARRAY_SIZE(mt7622_flash_groups)पूर्ण,
-	अणु"pcie", mt7622_pcie_groups, ARRAY_SIZE(mt7622_pcie_groups)पूर्ण,
-	अणु"pmic", mt7622_pmic_bus_groups, ARRAY_SIZE(mt7622_pmic_bus_groups)पूर्ण,
-	अणु"pwm",	mt7622_pwm_groups, ARRAY_SIZE(mt7622_pwm_groups)पूर्ण,
-	अणु"sd", mt7622_sd_groups, ARRAY_SIZE(mt7622_sd_groups)पूर्ण,
-	अणु"spi",	mt7622_spic_groups, ARRAY_SIZE(mt7622_spic_groups)पूर्ण,
-	अणु"tdm",	mt7622_tdm_groups, ARRAY_SIZE(mt7622_tdm_groups)पूर्ण,
-	अणु"uart", mt7622_uart_groups, ARRAY_SIZE(mt7622_uart_groups)पूर्ण,
-	अणु"watchdog", mt7622_wdt_groups, ARRAY_SIZE(mt7622_wdt_groups)पूर्ण,
-पूर्ण;
+static const struct function_desc mt7622_functions[] = {
+	{"antsel", mt7622_antsel_groups, ARRAY_SIZE(mt7622_antsel_groups)},
+	{"emmc", mt7622_emmc_groups, ARRAY_SIZE(mt7622_emmc_groups)},
+	{"eth",	mt7622_ethernet_groups, ARRAY_SIZE(mt7622_ethernet_groups)},
+	{"i2c", mt7622_i2c_groups, ARRAY_SIZE(mt7622_i2c_groups)},
+	{"i2s",	mt7622_i2s_groups, ARRAY_SIZE(mt7622_i2s_groups)},
+	{"ir", mt7622_ir_groups, ARRAY_SIZE(mt7622_ir_groups)},
+	{"led",	mt7622_led_groups, ARRAY_SIZE(mt7622_led_groups)},
+	{"flash", mt7622_flash_groups, ARRAY_SIZE(mt7622_flash_groups)},
+	{"pcie", mt7622_pcie_groups, ARRAY_SIZE(mt7622_pcie_groups)},
+	{"pmic", mt7622_pmic_bus_groups, ARRAY_SIZE(mt7622_pmic_bus_groups)},
+	{"pwm",	mt7622_pwm_groups, ARRAY_SIZE(mt7622_pwm_groups)},
+	{"sd", mt7622_sd_groups, ARRAY_SIZE(mt7622_sd_groups)},
+	{"spi",	mt7622_spic_groups, ARRAY_SIZE(mt7622_spic_groups)},
+	{"tdm",	mt7622_tdm_groups, ARRAY_SIZE(mt7622_tdm_groups)},
+	{"uart", mt7622_uart_groups, ARRAY_SIZE(mt7622_uart_groups)},
+	{"watchdog", mt7622_wdt_groups, ARRAY_SIZE(mt7622_wdt_groups)},
+};
 
-अटल स्थिर काष्ठा mtk_eपूर्णांक_hw mt7622_eपूर्णांक_hw = अणु
+static const struct mtk_eint_hw mt7622_eint_hw = {
 	.port_mask = 7,
 	.ports     = 7,
 	.ap_num    = ARRAY_SIZE(mt7622_pins),
 	.db_cnt    = 20,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_pin_soc mt7622_data = अणु
+static const struct mtk_pin_soc mt7622_data = {
 	.reg_cal = mt7622_reg_cals,
 	.pins = mt7622_pins,
 	.npins = ARRAY_SIZE(mt7622_pins),
@@ -857,39 +856,39 @@
 	.ngrps = ARRAY_SIZE(mt7622_groups),
 	.funcs = mt7622_functions,
 	.nfuncs = ARRAY_SIZE(mt7622_functions),
-	.eपूर्णांक_hw = &mt7622_eपूर्णांक_hw,
+	.eint_hw = &mt7622_eint_hw,
 	.gpio_m	= 1,
 	.ies_present = false,
-	.base_names = mtk_शेष_रेजिस्टर_base_names,
-	.nbase_names = ARRAY_SIZE(mtk_शेष_रेजिस्टर_base_names),
+	.base_names = mtk_default_register_base_names,
+	.nbase_names = ARRAY_SIZE(mtk_default_register_base_names),
 	.bias_disable_set = mtk_pinconf_bias_disable_set,
 	.bias_disable_get = mtk_pinconf_bias_disable_get,
 	.bias_set = mtk_pinconf_bias_set,
 	.bias_get = mtk_pinconf_bias_get,
 	.drive_set = mtk_pinconf_drive_set,
 	.drive_get = mtk_pinconf_drive_get,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mt7622_pinctrl_of_match[] = अणु
-	अणु .compatible = "mediatek,mt7622-pinctrl", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id mt7622_pinctrl_of_match[] = {
+	{ .compatible = "mediatek,mt7622-pinctrl", },
+	{ }
+};
 
-अटल पूर्णांक mt7622_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस mtk_moore_pinctrl_probe(pdev, &mt7622_data);
-पूर्ण
+static int mt7622_pinctrl_probe(struct platform_device *pdev)
+{
+	return mtk_moore_pinctrl_probe(pdev, &mt7622_data);
+}
 
-अटल काष्ठा platक्रमm_driver mt7622_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver mt7622_pinctrl_driver = {
+	.driver = {
 		.name = "mt7622-pinctrl",
 		.of_match_table = mt7622_pinctrl_of_match,
-	पूर्ण,
+	},
 	.probe = mt7622_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init mt7622_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&mt7622_pinctrl_driver);
-पूर्ण
+static int __init mt7622_pinctrl_init(void)
+{
+	return platform_driver_register(&mt7622_pinctrl_driver);
+}
 arch_initcall(mt7622_pinctrl_init);

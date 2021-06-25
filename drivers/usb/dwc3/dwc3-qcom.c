@@ -1,397 +1,396 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2018, The Linux Foundation. All rights reserved.
  *
  * Inspired by dwc3-of-simple.c
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/of_clk.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/extcon.h>
-#समावेश <linux/पूर्णांकerconnect.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/usb/of.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/iopoll.h>
+#include <linux/acpi.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/clk.h>
+#include <linux/irq.h>
+#include <linux/of_clk.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/extcon.h>
+#include <linux/interconnect.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/phy/phy.h>
+#include <linux/usb/of.h>
+#include <linux/reset.h>
+#include <linux/iopoll.h>
 
-#समावेश "core.h"
+#include "core.h"
 
-/* USB QSCRATCH Hardware रेजिस्टरs */
-#घोषणा QSCRATCH_HS_PHY_CTRL			0x10
-#घोषणा UTMI_OTG_VBUS_VALID			BIT(20)
-#घोषणा SW_SESSVLD_SEL				BIT(28)
+/* USB QSCRATCH Hardware registers */
+#define QSCRATCH_HS_PHY_CTRL			0x10
+#define UTMI_OTG_VBUS_VALID			BIT(20)
+#define SW_SESSVLD_SEL				BIT(28)
 
-#घोषणा QSCRATCH_SS_PHY_CTRL			0x30
-#घोषणा LANE0_PWR_PRESENT			BIT(24)
+#define QSCRATCH_SS_PHY_CTRL			0x30
+#define LANE0_PWR_PRESENT			BIT(24)
 
-#घोषणा QSCRATCH_GENERAL_CFG			0x08
-#घोषणा PIPE_UTMI_CLK_SEL			BIT(0)
-#घोषणा PIPE3_PHYSTATUS_SW			BIT(3)
-#घोषणा PIPE_UTMI_CLK_DIS			BIT(8)
+#define QSCRATCH_GENERAL_CFG			0x08
+#define PIPE_UTMI_CLK_SEL			BIT(0)
+#define PIPE3_PHYSTATUS_SW			BIT(3)
+#define PIPE_UTMI_CLK_DIS			BIT(8)
 
-#घोषणा PWR_EVNT_IRQ_STAT_REG			0x58
-#घोषणा PWR_EVNT_LPM_IN_L2_MASK			BIT(4)
-#घोषणा PWR_EVNT_LPM_OUT_L2_MASK		BIT(5)
+#define PWR_EVNT_IRQ_STAT_REG			0x58
+#define PWR_EVNT_LPM_IN_L2_MASK			BIT(4)
+#define PWR_EVNT_LPM_OUT_L2_MASK		BIT(5)
 
-#घोषणा SDM845_QSCRATCH_BASE_OFFSET		0xf8800
-#घोषणा SDM845_QSCRATCH_SIZE			0x400
-#घोषणा SDM845_DWC3_CORE_SIZE			0xcd00
+#define SDM845_QSCRATCH_BASE_OFFSET		0xf8800
+#define SDM845_QSCRATCH_SIZE			0x400
+#define SDM845_DWC3_CORE_SIZE			0xcd00
 
 /* Interconnect path bandwidths in MBps */
-#घोषणा USB_MEMORY_AVG_HS_BW MBps_to_icc(240)
-#घोषणा USB_MEMORY_PEAK_HS_BW MBps_to_icc(700)
-#घोषणा USB_MEMORY_AVG_SS_BW  MBps_to_icc(1000)
-#घोषणा USB_MEMORY_PEAK_SS_BW MBps_to_icc(2500)
-#घोषणा APPS_USB_AVG_BW 0
-#घोषणा APPS_USB_PEAK_BW MBps_to_icc(40)
+#define USB_MEMORY_AVG_HS_BW MBps_to_icc(240)
+#define USB_MEMORY_PEAK_HS_BW MBps_to_icc(700)
+#define USB_MEMORY_AVG_SS_BW  MBps_to_icc(1000)
+#define USB_MEMORY_PEAK_SS_BW MBps_to_icc(2500)
+#define APPS_USB_AVG_BW 0
+#define APPS_USB_PEAK_BW MBps_to_icc(40)
 
-काष्ठा dwc3_acpi_pdata अणु
+struct dwc3_acpi_pdata {
 	u32			qscratch_base_offset;
 	u32			qscratch_base_size;
 	u32			dwc3_core_base_size;
-	पूर्णांक			hs_phy_irq_index;
-	पूर्णांक			dp_hs_phy_irq_index;
-	पूर्णांक			dm_hs_phy_irq_index;
-	पूर्णांक			ss_phy_irq_index;
+	int			hs_phy_irq_index;
+	int			dp_hs_phy_irq_index;
+	int			dm_hs_phy_irq_index;
+	int			ss_phy_irq_index;
 	bool			is_urs;
-पूर्ण;
+};
 
-काष्ठा dwc3_qcom अणु
-	काष्ठा device		*dev;
-	व्योम __iomem		*qscratch_base;
-	काष्ठा platक्रमm_device	*dwc3;
-	काष्ठा platक्रमm_device	*urs_usb;
-	काष्ठा clk		**clks;
-	पूर्णांक			num_घड़ीs;
-	काष्ठा reset_control	*resets;
+struct dwc3_qcom {
+	struct device		*dev;
+	void __iomem		*qscratch_base;
+	struct platform_device	*dwc3;
+	struct platform_device	*urs_usb;
+	struct clk		**clks;
+	int			num_clocks;
+	struct reset_control	*resets;
 
-	पूर्णांक			hs_phy_irq;
-	पूर्णांक			dp_hs_phy_irq;
-	पूर्णांक			dm_hs_phy_irq;
-	पूर्णांक			ss_phy_irq;
+	int			hs_phy_irq;
+	int			dp_hs_phy_irq;
+	int			dm_hs_phy_irq;
+	int			ss_phy_irq;
 
-	काष्ठा extcon_dev	*edev;
-	काष्ठा extcon_dev	*host_edev;
-	काष्ठा notअगरier_block	vbus_nb;
-	काष्ठा notअगरier_block	host_nb;
+	struct extcon_dev	*edev;
+	struct extcon_dev	*host_edev;
+	struct notifier_block	vbus_nb;
+	struct notifier_block	host_nb;
 
-	स्थिर काष्ठा dwc3_acpi_pdata *acpi_pdata;
+	const struct dwc3_acpi_pdata *acpi_pdata;
 
-	क्रमागत usb_dr_mode	mode;
+	enum usb_dr_mode	mode;
 	bool			is_suspended;
 	bool			pm_suspended;
-	काष्ठा icc_path		*icc_path_ddr;
-	काष्ठा icc_path		*icc_path_apps;
-पूर्ण;
+	struct icc_path		*icc_path_ddr;
+	struct icc_path		*icc_path_apps;
+};
 
-अटल अंतरभूत व्योम dwc3_qcom_setbits(व्योम __iomem *base, u32 offset, u32 val)
-अणु
+static inline void dwc3_qcom_setbits(void __iomem *base, u32 offset, u32 val)
+{
 	u32 reg;
 
-	reg = पढ़ोl(base + offset);
+	reg = readl(base + offset);
 	reg |= val;
-	ग_लिखोl(reg, base + offset);
+	writel(reg, base + offset);
 
-	/* ensure that above ग_लिखो is through */
-	पढ़ोl(base + offset);
-पूर्ण
+	/* ensure that above write is through */
+	readl(base + offset);
+}
 
-अटल अंतरभूत व्योम dwc3_qcom_clrbits(व्योम __iomem *base, u32 offset, u32 val)
-अणु
+static inline void dwc3_qcom_clrbits(void __iomem *base, u32 offset, u32 val)
+{
 	u32 reg;
 
-	reg = पढ़ोl(base + offset);
+	reg = readl(base + offset);
 	reg &= ~val;
-	ग_लिखोl(reg, base + offset);
+	writel(reg, base + offset);
 
-	/* ensure that above ग_लिखो is through */
-	पढ़ोl(base + offset);
-पूर्ण
+	/* ensure that above write is through */
+	readl(base + offset);
+}
 
-अटल व्योम dwc3_qcom_vbus_overrride_enable(काष्ठा dwc3_qcom *qcom, bool enable)
-अणु
-	अगर (enable) अणु
+static void dwc3_qcom_vbus_overrride_enable(struct dwc3_qcom *qcom, bool enable)
+{
+	if (enable) {
 		dwc3_qcom_setbits(qcom->qscratch_base, QSCRATCH_SS_PHY_CTRL,
 				  LANE0_PWR_PRESENT);
 		dwc3_qcom_setbits(qcom->qscratch_base, QSCRATCH_HS_PHY_CTRL,
 				  UTMI_OTG_VBUS_VALID | SW_SESSVLD_SEL);
-	पूर्ण अन्यथा अणु
+	} else {
 		dwc3_qcom_clrbits(qcom->qscratch_base, QSCRATCH_SS_PHY_CTRL,
 				  LANE0_PWR_PRESENT);
 		dwc3_qcom_clrbits(qcom->qscratch_base, QSCRATCH_HS_PHY_CTRL,
 				  UTMI_OTG_VBUS_VALID | SW_SESSVLD_SEL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dwc3_qcom_vbus_notअगरier(काष्ठा notअगरier_block *nb,
-				   अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा dwc3_qcom *qcom = container_of(nb, काष्ठा dwc3_qcom, vbus_nb);
+static int dwc3_qcom_vbus_notifier(struct notifier_block *nb,
+				   unsigned long event, void *ptr)
+{
+	struct dwc3_qcom *qcom = container_of(nb, struct dwc3_qcom, vbus_nb);
 
-	/* enable vbus override क्रम device mode */
+	/* enable vbus override for device mode */
 	dwc3_qcom_vbus_overrride_enable(qcom, event);
 	qcom->mode = event ? USB_DR_MODE_PERIPHERAL : USB_DR_MODE_HOST;
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक dwc3_qcom_host_notअगरier(काष्ठा notअगरier_block *nb,
-				   अचिन्हित दीर्घ event, व्योम *ptr)
-अणु
-	काष्ठा dwc3_qcom *qcom = container_of(nb, काष्ठा dwc3_qcom, host_nb);
+static int dwc3_qcom_host_notifier(struct notifier_block *nb,
+				   unsigned long event, void *ptr)
+{
+	struct dwc3_qcom *qcom = container_of(nb, struct dwc3_qcom, host_nb);
 
 	/* disable vbus override in host mode */
 	dwc3_qcom_vbus_overrride_enable(qcom, !event);
 	qcom->mode = event ? USB_DR_MODE_HOST : USB_DR_MODE_PERIPHERAL;
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल पूर्णांक dwc3_qcom_रेजिस्टर_extcon(काष्ठा dwc3_qcom *qcom)
-अणु
-	काष्ठा device		*dev = qcom->dev;
-	काष्ठा extcon_dev	*host_edev;
-	पूर्णांक			ret;
+static int dwc3_qcom_register_extcon(struct dwc3_qcom *qcom)
+{
+	struct device		*dev = qcom->dev;
+	struct extcon_dev	*host_edev;
+	int			ret;
 
-	अगर (!of_property_पढ़ो_bool(dev->of_node, "extcon"))
-		वापस 0;
+	if (!of_property_read_bool(dev->of_node, "extcon"))
+		return 0;
 
 	qcom->edev = extcon_get_edev_by_phandle(dev, 0);
-	अगर (IS_ERR(qcom->edev))
-		वापस PTR_ERR(qcom->edev);
+	if (IS_ERR(qcom->edev))
+		return PTR_ERR(qcom->edev);
 
-	qcom->vbus_nb.notअगरier_call = dwc3_qcom_vbus_notअगरier;
+	qcom->vbus_nb.notifier_call = dwc3_qcom_vbus_notifier;
 
 	qcom->host_edev = extcon_get_edev_by_phandle(dev, 1);
-	अगर (IS_ERR(qcom->host_edev))
-		qcom->host_edev = शून्य;
+	if (IS_ERR(qcom->host_edev))
+		qcom->host_edev = NULL;
 
-	ret = devm_extcon_रेजिस्टर_notअगरier(dev, qcom->edev, EXTCON_USB,
+	ret = devm_extcon_register_notifier(dev, qcom->edev, EXTCON_USB,
 					    &qcom->vbus_nb);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "VBUS notifier register failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (qcom->host_edev)
+	if (qcom->host_edev)
 		host_edev = qcom->host_edev;
-	अन्यथा
+	else
 		host_edev = qcom->edev;
 
-	qcom->host_nb.notअगरier_call = dwc3_qcom_host_notअगरier;
-	ret = devm_extcon_रेजिस्टर_notअगरier(dev, host_edev, EXTCON_USB_HOST,
+	qcom->host_nb.notifier_call = dwc3_qcom_host_notifier;
+	ret = devm_extcon_register_notifier(dev, host_edev, EXTCON_USB_HOST,
 					    &qcom->host_nb);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Host notifier register failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Update initial VBUS override based on extcon state */
-	अगर (extcon_get_state(qcom->edev, EXTCON_USB) ||
+	if (extcon_get_state(qcom->edev, EXTCON_USB) ||
 	    !extcon_get_state(host_edev, EXTCON_USB_HOST))
-		dwc3_qcom_vbus_notअगरier(&qcom->vbus_nb, true, qcom->edev);
-	अन्यथा
-		dwc3_qcom_vbus_notअगरier(&qcom->vbus_nb, false, qcom->edev);
+		dwc3_qcom_vbus_notifier(&qcom->vbus_nb, true, qcom->edev);
+	else
+		dwc3_qcom_vbus_notifier(&qcom->vbus_nb, false, qcom->edev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dwc3_qcom_पूर्णांकerconnect_enable(काष्ठा dwc3_qcom *qcom)
-अणु
-	पूर्णांक ret;
+static int dwc3_qcom_interconnect_enable(struct dwc3_qcom *qcom)
+{
+	int ret;
 
 	ret = icc_enable(qcom->icc_path_ddr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = icc_enable(qcom->icc_path_apps);
-	अगर (ret)
+	if (ret)
 		icc_disable(qcom->icc_path_ddr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dwc3_qcom_पूर्णांकerconnect_disable(काष्ठा dwc3_qcom *qcom)
-अणु
-	पूर्णांक ret;
+static int dwc3_qcom_interconnect_disable(struct dwc3_qcom *qcom)
+{
+	int ret;
 
 	ret = icc_disable(qcom->icc_path_ddr);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = icc_disable(qcom->icc_path_apps);
-	अगर (ret)
+	if (ret)
 		icc_enable(qcom->icc_path_ddr);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * dwc3_qcom_पूर्णांकerconnect_init() - Get पूर्णांकerconnect path handles
+ * dwc3_qcom_interconnect_init() - Get interconnect path handles
  * and set bandwidth.
- * @qcom:			Poपूर्णांकer to the concerned usb core.
+ * @qcom:			Pointer to the concerned usb core.
  *
  */
-अटल पूर्णांक dwc3_qcom_पूर्णांकerconnect_init(काष्ठा dwc3_qcom *qcom)
-अणु
-	काष्ठा device *dev = qcom->dev;
-	पूर्णांक ret;
+static int dwc3_qcom_interconnect_init(struct dwc3_qcom *qcom)
+{
+	struct device *dev = qcom->dev;
+	int ret;
 
-	अगर (has_acpi_companion(dev))
-		वापस 0;
+	if (has_acpi_companion(dev))
+		return 0;
 
 	qcom->icc_path_ddr = of_icc_get(dev, "usb-ddr");
-	अगर (IS_ERR(qcom->icc_path_ddr)) अणु
+	if (IS_ERR(qcom->icc_path_ddr)) {
 		dev_err(dev, "failed to get usb-ddr path: %ld\n",
 			PTR_ERR(qcom->icc_path_ddr));
-		वापस PTR_ERR(qcom->icc_path_ddr);
-	पूर्ण
+		return PTR_ERR(qcom->icc_path_ddr);
+	}
 
 	qcom->icc_path_apps = of_icc_get(dev, "apps-usb");
-	अगर (IS_ERR(qcom->icc_path_apps)) अणु
+	if (IS_ERR(qcom->icc_path_apps)) {
 		dev_err(dev, "failed to get apps-usb path: %ld\n",
 				PTR_ERR(qcom->icc_path_apps));
-		वापस PTR_ERR(qcom->icc_path_apps);
-	पूर्ण
+		return PTR_ERR(qcom->icc_path_apps);
+	}
 
-	अगर (usb_get_maximum_speed(&qcom->dwc3->dev) >= USB_SPEED_SUPER ||
+	if (usb_get_maximum_speed(&qcom->dwc3->dev) >= USB_SPEED_SUPER ||
 			usb_get_maximum_speed(&qcom->dwc3->dev) == USB_SPEED_UNKNOWN)
 		ret = icc_set_bw(qcom->icc_path_ddr,
 			USB_MEMORY_AVG_SS_BW, USB_MEMORY_PEAK_SS_BW);
-	अन्यथा
+	else
 		ret = icc_set_bw(qcom->icc_path_ddr,
 			USB_MEMORY_AVG_HS_BW, USB_MEMORY_PEAK_HS_BW);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to set bandwidth for usb-ddr path: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = icc_set_bw(qcom->icc_path_apps,
 		APPS_USB_AVG_BW, APPS_USB_PEAK_BW);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to set bandwidth for apps-usb path: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * dwc3_qcom_पूर्णांकerconnect_निकास() - Release पूर्णांकerconnect path handles
- * @qcom:			Poपूर्णांकer to the concerned usb core.
+ * dwc3_qcom_interconnect_exit() - Release interconnect path handles
+ * @qcom:			Pointer to the concerned usb core.
  *
- * This function is used to release पूर्णांकerconnect path handle.
+ * This function is used to release interconnect path handle.
  */
-अटल व्योम dwc3_qcom_पूर्णांकerconnect_निकास(काष्ठा dwc3_qcom *qcom)
-अणु
+static void dwc3_qcom_interconnect_exit(struct dwc3_qcom *qcom)
+{
 	icc_put(qcom->icc_path_ddr);
 	icc_put(qcom->icc_path_apps);
-पूर्ण
+}
 
-अटल व्योम dwc3_qcom_disable_पूर्णांकerrupts(काष्ठा dwc3_qcom *qcom)
-अणु
-	अगर (qcom->hs_phy_irq) अणु
+static void dwc3_qcom_disable_interrupts(struct dwc3_qcom *qcom)
+{
+	if (qcom->hs_phy_irq) {
 		disable_irq_wake(qcom->hs_phy_irq);
 		disable_irq_nosync(qcom->hs_phy_irq);
-	पूर्ण
+	}
 
-	अगर (qcom->dp_hs_phy_irq) अणु
+	if (qcom->dp_hs_phy_irq) {
 		disable_irq_wake(qcom->dp_hs_phy_irq);
 		disable_irq_nosync(qcom->dp_hs_phy_irq);
-	पूर्ण
+	}
 
-	अगर (qcom->dm_hs_phy_irq) अणु
+	if (qcom->dm_hs_phy_irq) {
 		disable_irq_wake(qcom->dm_hs_phy_irq);
 		disable_irq_nosync(qcom->dm_hs_phy_irq);
-	पूर्ण
+	}
 
-	अगर (qcom->ss_phy_irq) अणु
+	if (qcom->ss_phy_irq) {
 		disable_irq_wake(qcom->ss_phy_irq);
 		disable_irq_nosync(qcom->ss_phy_irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dwc3_qcom_enable_पूर्णांकerrupts(काष्ठा dwc3_qcom *qcom)
-अणु
-	अगर (qcom->hs_phy_irq) अणु
+static void dwc3_qcom_enable_interrupts(struct dwc3_qcom *qcom)
+{
+	if (qcom->hs_phy_irq) {
 		enable_irq(qcom->hs_phy_irq);
 		enable_irq_wake(qcom->hs_phy_irq);
-	पूर्ण
+	}
 
-	अगर (qcom->dp_hs_phy_irq) अणु
+	if (qcom->dp_hs_phy_irq) {
 		enable_irq(qcom->dp_hs_phy_irq);
 		enable_irq_wake(qcom->dp_hs_phy_irq);
-	पूर्ण
+	}
 
-	अगर (qcom->dm_hs_phy_irq) अणु
+	if (qcom->dm_hs_phy_irq) {
 		enable_irq(qcom->dm_hs_phy_irq);
 		enable_irq_wake(qcom->dm_hs_phy_irq);
-	पूर्ण
+	}
 
-	अगर (qcom->ss_phy_irq) अणु
+	if (qcom->ss_phy_irq) {
 		enable_irq(qcom->ss_phy_irq);
 		enable_irq_wake(qcom->ss_phy_irq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक dwc3_qcom_suspend(काष्ठा dwc3_qcom *qcom)
-अणु
+static int dwc3_qcom_suspend(struct dwc3_qcom *qcom)
+{
 	u32 val;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	अगर (qcom->is_suspended)
-		वापस 0;
+	if (qcom->is_suspended)
+		return 0;
 
-	val = पढ़ोl(qcom->qscratch_base + PWR_EVNT_IRQ_STAT_REG);
-	अगर (!(val & PWR_EVNT_LPM_IN_L2_MASK))
+	val = readl(qcom->qscratch_base + PWR_EVNT_IRQ_STAT_REG);
+	if (!(val & PWR_EVNT_LPM_IN_L2_MASK))
 		dev_err(qcom->dev, "HS-PHY not in L2\n");
 
-	क्रम (i = qcom->num_घड़ीs - 1; i >= 0; i--)
+	for (i = qcom->num_clocks - 1; i >= 0; i--)
 		clk_disable_unprepare(qcom->clks[i]);
 
-	ret = dwc3_qcom_पूर्णांकerconnect_disable(qcom);
-	अगर (ret)
+	ret = dwc3_qcom_interconnect_disable(qcom);
+	if (ret)
 		dev_warn(qcom->dev, "failed to disable interconnect: %d\n", ret);
 
-	अगर (device_may_wakeup(qcom->dev))
-		dwc3_qcom_enable_पूर्णांकerrupts(qcom);
+	if (device_may_wakeup(qcom->dev))
+		dwc3_qcom_enable_interrupts(qcom);
 
 	qcom->is_suspended = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dwc3_qcom_resume(काष्ठा dwc3_qcom *qcom)
-अणु
-	पूर्णांक ret;
-	पूर्णांक i;
+static int dwc3_qcom_resume(struct dwc3_qcom *qcom)
+{
+	int ret;
+	int i;
 
-	अगर (!qcom->is_suspended)
-		वापस 0;
+	if (!qcom->is_suspended)
+		return 0;
 
-	अगर (device_may_wakeup(qcom->dev))
-		dwc3_qcom_disable_पूर्णांकerrupts(qcom);
+	if (device_may_wakeup(qcom->dev))
+		dwc3_qcom_disable_interrupts(qcom);
 
-	क्रम (i = 0; i < qcom->num_घड़ीs; i++) अणु
+	for (i = 0; i < qcom->num_clocks; i++) {
 		ret = clk_prepare_enable(qcom->clks[i]);
-		अगर (ret < 0) अणु
-			जबतक (--i >= 0)
+		if (ret < 0) {
+			while (--i >= 0)
 				clk_disable_unprepare(qcom->clks[i]);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	ret = dwc3_qcom_पूर्णांकerconnect_enable(qcom);
-	अगर (ret)
+	ret = dwc3_qcom_interconnect_enable(qcom);
+	if (ret)
 		dev_warn(qcom->dev, "failed to enable interconnect: %d\n", ret);
 
 	/* Clear existing events from PHY related to L2 in/out */
@@ -400,27 +399,27 @@
 
 	qcom->is_suspended = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t qcom_dwc3_resume_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा dwc3_qcom *qcom = data;
-	काष्ठा dwc3	*dwc = platक्रमm_get_drvdata(qcom->dwc3);
+static irqreturn_t qcom_dwc3_resume_irq(int irq, void *data)
+{
+	struct dwc3_qcom *qcom = data;
+	struct dwc3	*dwc = platform_get_drvdata(qcom->dwc3);
 
 	/* If pm_suspended then let pm_resume take care of resuming h/w */
-	अगर (qcom->pm_suspended)
-		वापस IRQ_HANDLED;
+	if (qcom->pm_suspended)
+		return IRQ_HANDLED;
 
-	अगर (dwc->xhci)
-		pm_runसमय_resume(&dwc->xhci->dev);
+	if (dwc->xhci)
+		pm_runtime_resume(&dwc->xhci->dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम dwc3_qcom_select_uपंचांगi_clk(काष्ठा dwc3_qcom *qcom)
-अणु
-	/* Configure dwc3 to use UTMI घड़ी as PIPE घड़ी not present */
+static void dwc3_qcom_select_utmi_clk(struct dwc3_qcom *qcom)
+{
+	/* Configure dwc3 to use UTMI clock as PIPE clock not present */
 	dwc3_qcom_setbits(qcom->qscratch_base, QSCRATCH_GENERAL_CFG,
 			  PIPE_UTMI_CLK_DIS);
 
@@ -433,164 +432,164 @@
 
 	dwc3_qcom_clrbits(qcom->qscratch_base, QSCRATCH_GENERAL_CFG,
 			  PIPE_UTMI_CLK_DIS);
-पूर्ण
+}
 
-अटल पूर्णांक dwc3_qcom_get_irq(काष्ठा platक्रमm_device *pdev,
-			     स्थिर अक्षर *name, पूर्णांक num)
-अणु
-	काष्ठा dwc3_qcom *qcom = platक्रमm_get_drvdata(pdev);
-	काष्ठा platक्रमm_device *pdev_irq = qcom->urs_usb ? qcom->urs_usb : pdev;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	पूर्णांक ret;
+static int dwc3_qcom_get_irq(struct platform_device *pdev,
+			     const char *name, int num)
+{
+	struct dwc3_qcom *qcom = platform_get_drvdata(pdev);
+	struct platform_device *pdev_irq = qcom->urs_usb ? qcom->urs_usb : pdev;
+	struct device_node *np = pdev->dev.of_node;
+	int ret;
 
-	अगर (np)
-		ret = platक्रमm_get_irq_byname(pdev_irq, name);
-	अन्यथा
-		ret = platक्रमm_get_irq(pdev_irq, num);
+	if (np)
+		ret = platform_get_irq_byname(pdev_irq, name);
+	else
+		ret = platform_get_irq(pdev_irq, num);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dwc3_qcom_setup_irq(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_qcom *qcom = platक्रमm_get_drvdata(pdev);
-	स्थिर काष्ठा dwc3_acpi_pdata *pdata = qcom->acpi_pdata;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int dwc3_qcom_setup_irq(struct platform_device *pdev)
+{
+	struct dwc3_qcom *qcom = platform_get_drvdata(pdev);
+	const struct dwc3_acpi_pdata *pdata = qcom->acpi_pdata;
+	int irq;
+	int ret;
 
 	irq = dwc3_qcom_get_irq(pdev, "hs_phy_irq",
 				pdata ? pdata->hs_phy_irq_index : -1);
-	अगर (irq > 0) अणु
-		/* Keep wakeup पूर्णांकerrupts disabled until suspend */
+	if (irq > 0) {
+		/* Keep wakeup interrupts disabled until suspend */
 		irq_set_status_flags(irq, IRQ_NOAUTOEN);
-		ret = devm_request_thपढ़ोed_irq(qcom->dev, irq, शून्य,
+		ret = devm_request_threaded_irq(qcom->dev, irq, NULL,
 					qcom_dwc3_resume_irq,
 					IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 					"qcom_dwc3 HS", qcom);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(qcom->dev, "hs_phy_irq failed: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		qcom->hs_phy_irq = irq;
-	पूर्ण
+	}
 
 	irq = dwc3_qcom_get_irq(pdev, "dp_hs_phy_irq",
 				pdata ? pdata->dp_hs_phy_irq_index : -1);
-	अगर (irq > 0) अणु
+	if (irq > 0) {
 		irq_set_status_flags(irq, IRQ_NOAUTOEN);
-		ret = devm_request_thपढ़ोed_irq(qcom->dev, irq, शून्य,
+		ret = devm_request_threaded_irq(qcom->dev, irq, NULL,
 					qcom_dwc3_resume_irq,
 					IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 					"qcom_dwc3 DP_HS", qcom);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(qcom->dev, "dp_hs_phy_irq failed: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		qcom->dp_hs_phy_irq = irq;
-	पूर्ण
+	}
 
 	irq = dwc3_qcom_get_irq(pdev, "dm_hs_phy_irq",
 				pdata ? pdata->dm_hs_phy_irq_index : -1);
-	अगर (irq > 0) अणु
+	if (irq > 0) {
 		irq_set_status_flags(irq, IRQ_NOAUTOEN);
-		ret = devm_request_thपढ़ोed_irq(qcom->dev, irq, शून्य,
+		ret = devm_request_threaded_irq(qcom->dev, irq, NULL,
 					qcom_dwc3_resume_irq,
 					IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 					"qcom_dwc3 DM_HS", qcom);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(qcom->dev, "dm_hs_phy_irq failed: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		qcom->dm_hs_phy_irq = irq;
-	पूर्ण
+	}
 
 	irq = dwc3_qcom_get_irq(pdev, "ss_phy_irq",
 				pdata ? pdata->ss_phy_irq_index : -1);
-	अगर (irq > 0) अणु
+	if (irq > 0) {
 		irq_set_status_flags(irq, IRQ_NOAUTOEN);
-		ret = devm_request_thपढ़ोed_irq(qcom->dev, irq, शून्य,
+		ret = devm_request_threaded_irq(qcom->dev, irq, NULL,
 					qcom_dwc3_resume_irq,
 					IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 					"qcom_dwc3 SS", qcom);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(qcom->dev, "ss_phy_irq failed: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		qcom->ss_phy_irq = irq;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dwc3_qcom_clk_init(काष्ठा dwc3_qcom *qcom, पूर्णांक count)
-अणु
-	काष्ठा device		*dev = qcom->dev;
-	काष्ठा device_node	*np = dev->of_node;
-	पूर्णांक			i;
+static int dwc3_qcom_clk_init(struct dwc3_qcom *qcom, int count)
+{
+	struct device		*dev = qcom->dev;
+	struct device_node	*np = dev->of_node;
+	int			i;
 
-	अगर (!np || !count)
-		वापस 0;
+	if (!np || !count)
+		return 0;
 
-	अगर (count < 0)
-		वापस count;
+	if (count < 0)
+		return count;
 
-	qcom->num_घड़ीs = count;
+	qcom->num_clocks = count;
 
-	qcom->clks = devm_kसुस्मृति(dev, qcom->num_घड़ीs,
-				  माप(काष्ठा clk *), GFP_KERNEL);
-	अगर (!qcom->clks)
-		वापस -ENOMEM;
+	qcom->clks = devm_kcalloc(dev, qcom->num_clocks,
+				  sizeof(struct clk *), GFP_KERNEL);
+	if (!qcom->clks)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < qcom->num_घड़ीs; i++) अणु
-		काष्ठा clk	*clk;
-		पूर्णांक		ret;
+	for (i = 0; i < qcom->num_clocks; i++) {
+		struct clk	*clk;
+		int		ret;
 
 		clk = of_clk_get(np, i);
-		अगर (IS_ERR(clk)) अणु
-			जबतक (--i >= 0)
+		if (IS_ERR(clk)) {
+			while (--i >= 0)
 				clk_put(qcom->clks[i]);
-			वापस PTR_ERR(clk);
-		पूर्ण
+			return PTR_ERR(clk);
+		}
 
 		ret = clk_prepare_enable(clk);
-		अगर (ret < 0) अणु
-			जबतक (--i >= 0) अणु
+		if (ret < 0) {
+			while (--i >= 0) {
 				clk_disable_unprepare(qcom->clks[i]);
 				clk_put(qcom->clks[i]);
-			पूर्ण
+			}
 			clk_put(clk);
 
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		qcom->clks[i] = clk;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा property_entry dwc3_qcom_acpi_properties[] = अणु
+static const struct property_entry dwc3_qcom_acpi_properties[] = {
 	PROPERTY_ENTRY_STRING("dr_mode", "host"),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा software_node dwc3_qcom_swnode = अणु
+static const struct software_node dwc3_qcom_swnode = {
 	.properties = dwc3_qcom_acpi_properties,
-पूर्ण;
+};
 
-अटल पूर्णांक dwc3_qcom_acpi_रेजिस्टर_core(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_qcom	*qcom = platक्रमm_get_drvdata(pdev);
-	काष्ठा device		*dev = &pdev->dev;
-	काष्ठा resource		*res, *child_res = शून्य;
-	काष्ठा platक्रमm_device	*pdev_irq = qcom->urs_usb ? qcom->urs_usb :
+static int dwc3_qcom_acpi_register_core(struct platform_device *pdev)
+{
+	struct dwc3_qcom	*qcom = platform_get_drvdata(pdev);
+	struct device		*dev = &pdev->dev;
+	struct resource		*res, *child_res = NULL;
+	struct platform_device	*pdev_irq = qcom->urs_usb ? qcom->urs_usb :
 							    pdev;
-	पूर्णांक			irq;
-	पूर्णांक			ret;
+	int			irq;
+	int			ret;
 
-	qcom->dwc3 = platक्रमm_device_alloc("dwc3", PLATFORM_DEVID_AUTO);
-	अगर (!qcom->dwc3)
-		वापस -ENOMEM;
+	qcom->dwc3 = platform_device_alloc("dwc3", PLATFORM_DEVID_AUTO);
+	if (!qcom->dwc3)
+		return -ENOMEM;
 
 	qcom->dwc3->dev.parent = dev;
 	qcom->dwc3->dev.type = dev->type;
@@ -598,332 +597,332 @@
 	qcom->dwc3->dev.dma_parms = dev->dma_parms;
 	qcom->dwc3->dev.coherent_dma_mask = dev->coherent_dma_mask;
 
-	child_res = kसुस्मृति(2, माप(*child_res), GFP_KERNEL);
-	अगर (!child_res)
-		वापस -ENOMEM;
+	child_res = kcalloc(2, sizeof(*child_res), GFP_KERNEL);
+	if (!child_res)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "failed to get memory resource\n");
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	child_res[0].flags = res->flags;
 	child_res[0].start = res->start;
 	child_res[0].end = child_res[0].start +
 		qcom->acpi_pdata->dwc3_core_base_size;
 
-	irq = platक्रमm_get_irq(pdev_irq, 0);
+	irq = platform_get_irq(pdev_irq, 0);
 	child_res[1].flags = IORESOURCE_IRQ;
 	child_res[1].start = child_res[1].end = irq;
 
-	ret = platक्रमm_device_add_resources(qcom->dwc3, child_res, 2);
-	अगर (ret) अणु
+	ret = platform_device_add_resources(qcom->dwc3, child_res, 2);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to add resources\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = device_add_software_node(&qcom->dwc3->dev, &dwc3_qcom_swnode);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to add properties\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = platक्रमm_device_add(qcom->dwc3);
-	अगर (ret) अणु
+	ret = platform_device_add(qcom->dwc3);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to add device\n");
-		device_हटाओ_software_node(&qcom->dwc3->dev);
-	पूर्ण
+		device_remove_software_node(&qcom->dwc3->dev);
+	}
 
 out:
-	kमुक्त(child_res);
-	वापस ret;
-पूर्ण
+	kfree(child_res);
+	return ret;
+}
 
-अटल पूर्णांक dwc3_qcom_of_रेजिस्टर_core(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_qcom	*qcom = platक्रमm_get_drvdata(pdev);
-	काष्ठा device_node	*np = pdev->dev.of_node, *dwc3_np;
-	काष्ठा device		*dev = &pdev->dev;
-	पूर्णांक			ret;
+static int dwc3_qcom_of_register_core(struct platform_device *pdev)
+{
+	struct dwc3_qcom	*qcom = platform_get_drvdata(pdev);
+	struct device_node	*np = pdev->dev.of_node, *dwc3_np;
+	struct device		*dev = &pdev->dev;
+	int			ret;
 
 	dwc3_np = of_get_compatible_child(np, "snps,dwc3");
-	अगर (!dwc3_np) अणु
+	if (!dwc3_np) {
 		dev_err(dev, "failed to find dwc3 core child\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = of_platक्रमm_populate(np, शून्य, शून्य, dev);
-	अगर (ret) अणु
+	ret = of_platform_populate(np, NULL, NULL, dev);
+	if (ret) {
 		dev_err(dev, "failed to register dwc3 core - %d\n", ret);
-		जाओ node_put;
-	पूर्ण
+		goto node_put;
+	}
 
 	qcom->dwc3 = of_find_device_by_node(dwc3_np);
-	अगर (!qcom->dwc3) अणु
+	if (!qcom->dwc3) {
 		ret = -ENODEV;
 		dev_err(dev, "failed to get dwc3 platform device\n");
-	पूर्ण
+	}
 
 node_put:
 	of_node_put(dwc3_np);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_device *
-dwc3_qcom_create_urs_usb_platdev(काष्ठा device *dev)
-अणु
-	काष्ठा fwnode_handle *fwh;
-	काष्ठा acpi_device *adev;
-	अक्षर name[8];
-	पूर्णांक ret;
-	पूर्णांक id;
+static struct platform_device *
+dwc3_qcom_create_urs_usb_platdev(struct device *dev)
+{
+	struct fwnode_handle *fwh;
+	struct acpi_device *adev;
+	char name[8];
+	int ret;
+	int id;
 
 	/* Figure out device id */
-	ret = माला_पूछो(fwnode_get_name(dev->fwnode), "URS%d", &id);
-	अगर (!ret)
-		वापस शून्य;
+	ret = sscanf(fwnode_get_name(dev->fwnode), "URS%d", &id);
+	if (!ret)
+		return NULL;
 
 	/* Find the child using name */
-	snम_लिखो(name, माप(name), "USB%d", id);
+	snprintf(name, sizeof(name), "USB%d", id);
 	fwh = fwnode_get_named_child_node(dev->fwnode, name);
-	अगर (!fwh)
-		वापस शून्य;
+	if (!fwh)
+		return NULL;
 
 	adev = to_acpi_device_node(fwh);
-	अगर (!adev)
-		वापस शून्य;
+	if (!adev)
+		return NULL;
 
-	वापस acpi_create_platक्रमm_device(adev, शून्य);
-पूर्ण
+	return acpi_create_platform_device(adev, NULL);
+}
 
-अटल पूर्णांक dwc3_qcom_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node	*np = pdev->dev.of_node;
-	काष्ठा device		*dev = &pdev->dev;
-	काष्ठा dwc3_qcom	*qcom;
-	काष्ठा resource		*res, *parent_res = शून्य;
-	पूर्णांक			ret, i;
+static int dwc3_qcom_probe(struct platform_device *pdev)
+{
+	struct device_node	*np = pdev->dev.of_node;
+	struct device		*dev = &pdev->dev;
+	struct dwc3_qcom	*qcom;
+	struct resource		*res, *parent_res = NULL;
+	int			ret, i;
 	bool			ignore_pipe_clk;
 
-	qcom = devm_kzalloc(&pdev->dev, माप(*qcom), GFP_KERNEL);
-	अगर (!qcom)
-		वापस -ENOMEM;
+	qcom = devm_kzalloc(&pdev->dev, sizeof(*qcom), GFP_KERNEL);
+	if (!qcom)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, qcom);
+	platform_set_drvdata(pdev, qcom);
 	qcom->dev = &pdev->dev;
 
-	अगर (has_acpi_companion(dev)) अणु
+	if (has_acpi_companion(dev)) {
 		qcom->acpi_pdata = acpi_device_get_match_data(dev);
-		अगर (!qcom->acpi_pdata) अणु
+		if (!qcom->acpi_pdata) {
 			dev_err(&pdev->dev, "no supporting ACPI device data\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	qcom->resets = devm_reset_control_array_get_optional_exclusive(dev);
-	अगर (IS_ERR(qcom->resets)) अणु
+	if (IS_ERR(qcom->resets)) {
 		ret = PTR_ERR(qcom->resets);
 		dev_err(&pdev->dev, "failed to get resets, err=%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = reset_control_निश्चित(qcom->resets);
-	अगर (ret) अणु
+	ret = reset_control_assert(qcom->resets);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to assert resets, err=%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	usleep_range(10, 1000);
 
-	ret = reset_control_deनिश्चित(qcom->resets);
-	अगर (ret) अणु
+	ret = reset_control_deassert(qcom->resets);
+	if (ret) {
 		dev_err(&pdev->dev, "failed to deassert resets, err=%d\n", ret);
-		जाओ reset_निश्चित;
-	पूर्ण
+		goto reset_assert;
+	}
 
 	ret = dwc3_qcom_clk_init(qcom, of_clk_get_parent_count(np));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to get clocks\n");
-		जाओ reset_निश्चित;
-	पूर्ण
+		goto reset_assert;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	अगर (np) अणु
+	if (np) {
 		parent_res = res;
-	पूर्ण अन्यथा अणु
-		parent_res = kmemdup(res, माप(काष्ठा resource), GFP_KERNEL);
-		अगर (!parent_res)
-			वापस -ENOMEM;
+	} else {
+		parent_res = kmemdup(res, sizeof(struct resource), GFP_KERNEL);
+		if (!parent_res)
+			return -ENOMEM;
 
 		parent_res->start = res->start +
 			qcom->acpi_pdata->qscratch_base_offset;
 		parent_res->end = parent_res->start +
 			qcom->acpi_pdata->qscratch_base_size;
 
-		अगर (qcom->acpi_pdata->is_urs) अणु
+		if (qcom->acpi_pdata->is_urs) {
 			qcom->urs_usb = dwc3_qcom_create_urs_usb_platdev(dev);
-			अगर (!qcom->urs_usb) अणु
+			if (!qcom->urs_usb) {
 				dev_err(dev, "failed to create URS USB platdev\n");
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -ENODEV;
+			}
+		}
+	}
 
 	qcom->qscratch_base = devm_ioremap_resource(dev, parent_res);
-	अगर (IS_ERR(qcom->qscratch_base)) अणु
+	if (IS_ERR(qcom->qscratch_base)) {
 		ret = PTR_ERR(qcom->qscratch_base);
-		जाओ clk_disable;
-	पूर्ण
+		goto clk_disable;
+	}
 
 	ret = dwc3_qcom_setup_irq(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to setup IRQs, err=%d\n", ret);
-		जाओ clk_disable;
-	पूर्ण
+		goto clk_disable;
+	}
 
 	/*
-	 * Disable pipe_clk requirement अगर specअगरied. Used when dwc3
+	 * Disable pipe_clk requirement if specified. Used when dwc3
 	 * operates without SSPHY and only HS/FS/LS modes are supported.
 	 */
-	ignore_pipe_clk = device_property_पढ़ो_bool(dev,
+	ignore_pipe_clk = device_property_read_bool(dev,
 				"qcom,select-utmi-as-pipe-clk");
-	अगर (ignore_pipe_clk)
-		dwc3_qcom_select_uपंचांगi_clk(qcom);
+	if (ignore_pipe_clk)
+		dwc3_qcom_select_utmi_clk(qcom);
 
-	अगर (np)
-		ret = dwc3_qcom_of_रेजिस्टर_core(pdev);
-	अन्यथा
-		ret = dwc3_qcom_acpi_रेजिस्टर_core(pdev);
+	if (np)
+		ret = dwc3_qcom_of_register_core(pdev);
+	else
+		ret = dwc3_qcom_acpi_register_core(pdev);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to register DWC3 Core, err=%d\n", ret);
-		जाओ depopulate;
-	पूर्ण
+		goto depopulate;
+	}
 
-	ret = dwc3_qcom_पूर्णांकerconnect_init(qcom);
-	अगर (ret)
-		जाओ depopulate;
+	ret = dwc3_qcom_interconnect_init(qcom);
+	if (ret)
+		goto depopulate;
 
 	qcom->mode = usb_get_dr_mode(&qcom->dwc3->dev);
 
-	/* enable vbus override क्रम device mode */
-	अगर (qcom->mode == USB_DR_MODE_PERIPHERAL)
+	/* enable vbus override for device mode */
+	if (qcom->mode == USB_DR_MODE_PERIPHERAL)
 		dwc3_qcom_vbus_overrride_enable(qcom, true);
 
-	/* रेजिस्टर extcon to override sw_vbus on Vbus change later */
-	ret = dwc3_qcom_रेजिस्टर_extcon(qcom);
-	अगर (ret)
-		जाओ पूर्णांकerconnect_निकास;
+	/* register extcon to override sw_vbus on Vbus change later */
+	ret = dwc3_qcom_register_extcon(qcom);
+	if (ret)
+		goto interconnect_exit;
 
 	device_init_wakeup(&pdev->dev, 1);
 	qcom->is_suspended = false;
-	pm_runसमय_set_active(dev);
-	pm_runसमय_enable(dev);
-	pm_runसमय_क्रमbid(dev);
+	pm_runtime_set_active(dev);
+	pm_runtime_enable(dev);
+	pm_runtime_forbid(dev);
 
-	वापस 0;
+	return 0;
 
-पूर्णांकerconnect_निकास:
-	dwc3_qcom_पूर्णांकerconnect_निकास(qcom);
+interconnect_exit:
+	dwc3_qcom_interconnect_exit(qcom);
 depopulate:
-	अगर (np)
-		of_platक्रमm_depopulate(&pdev->dev);
-	अन्यथा
-		platक्रमm_device_put(pdev);
+	if (np)
+		of_platform_depopulate(&pdev->dev);
+	else
+		platform_device_put(pdev);
 clk_disable:
-	क्रम (i = qcom->num_घड़ीs - 1; i >= 0; i--) अणु
+	for (i = qcom->num_clocks - 1; i >= 0; i--) {
 		clk_disable_unprepare(qcom->clks[i]);
 		clk_put(qcom->clks[i]);
-	पूर्ण
-reset_निश्चित:
-	reset_control_निश्चित(qcom->resets);
+	}
+reset_assert:
+	reset_control_assert(qcom->resets);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dwc3_qcom_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा dwc3_qcom *qcom = platक्रमm_get_drvdata(pdev);
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i;
+static int dwc3_qcom_remove(struct platform_device *pdev)
+{
+	struct dwc3_qcom *qcom = platform_get_drvdata(pdev);
+	struct device *dev = &pdev->dev;
+	int i;
 
-	device_हटाओ_software_node(&qcom->dwc3->dev);
-	of_platक्रमm_depopulate(dev);
+	device_remove_software_node(&qcom->dwc3->dev);
+	of_platform_depopulate(dev);
 
-	क्रम (i = qcom->num_घड़ीs - 1; i >= 0; i--) अणु
+	for (i = qcom->num_clocks - 1; i >= 0; i--) {
 		clk_disable_unprepare(qcom->clks[i]);
 		clk_put(qcom->clks[i]);
-	पूर्ण
-	qcom->num_घड़ीs = 0;
+	}
+	qcom->num_clocks = 0;
 
-	dwc3_qcom_पूर्णांकerconnect_निकास(qcom);
-	reset_control_निश्चित(qcom->resets);
+	dwc3_qcom_interconnect_exit(qcom);
+	reset_control_assert(qcom->resets);
 
-	pm_runसमय_allow(dev);
-	pm_runसमय_disable(dev);
+	pm_runtime_allow(dev);
+	pm_runtime_disable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused dwc3_qcom_pm_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_qcom *qcom = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int __maybe_unused dwc3_qcom_pm_suspend(struct device *dev)
+{
+	struct dwc3_qcom *qcom = dev_get_drvdata(dev);
+	int ret = 0;
 
 	ret = dwc3_qcom_suspend(qcom);
-	अगर (!ret)
+	if (!ret)
 		qcom->pm_suspended = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused dwc3_qcom_pm_resume(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_qcom *qcom = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused dwc3_qcom_pm_resume(struct device *dev)
+{
+	struct dwc3_qcom *qcom = dev_get_drvdata(dev);
+	int ret;
 
 	ret = dwc3_qcom_resume(qcom);
-	अगर (!ret)
+	if (!ret)
 		qcom->pm_suspended = false;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused dwc3_qcom_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_qcom *qcom = dev_get_drvdata(dev);
+static int __maybe_unused dwc3_qcom_runtime_suspend(struct device *dev)
+{
+	struct dwc3_qcom *qcom = dev_get_drvdata(dev);
 
-	वापस dwc3_qcom_suspend(qcom);
-पूर्ण
+	return dwc3_qcom_suspend(qcom);
+}
 
-अटल पूर्णांक __maybe_unused dwc3_qcom_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा dwc3_qcom *qcom = dev_get_drvdata(dev);
+static int __maybe_unused dwc3_qcom_runtime_resume(struct device *dev)
+{
+	struct dwc3_qcom *qcom = dev_get_drvdata(dev);
 
-	वापस dwc3_qcom_resume(qcom);
-पूर्ण
+	return dwc3_qcom_resume(qcom);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops dwc3_qcom_dev_pm_ops = अणु
+static const struct dev_pm_ops dwc3_qcom_dev_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(dwc3_qcom_pm_suspend, dwc3_qcom_pm_resume)
-	SET_RUNTIME_PM_OPS(dwc3_qcom_runसमय_suspend, dwc3_qcom_runसमय_resume,
-			   शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(dwc3_qcom_runtime_suspend, dwc3_qcom_runtime_resume,
+			   NULL)
+};
 
-अटल स्थिर काष्ठा of_device_id dwc3_qcom_of_match[] = अणु
-	अणु .compatible = "qcom,dwc3" पूर्ण,
-	अणु .compatible = "qcom,msm8996-dwc3" पूर्ण,
-	अणु .compatible = "qcom,msm8998-dwc3" पूर्ण,
-	अणु .compatible = "qcom,sdm845-dwc3" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id dwc3_qcom_of_match[] = {
+	{ .compatible = "qcom,dwc3" },
+	{ .compatible = "qcom,msm8996-dwc3" },
+	{ .compatible = "qcom,msm8998-dwc3" },
+	{ .compatible = "qcom,sdm845-dwc3" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, dwc3_qcom_of_match);
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा dwc3_acpi_pdata sdm845_acpi_pdata = अणु
+#ifdef CONFIG_ACPI
+static const struct dwc3_acpi_pdata sdm845_acpi_pdata = {
 	.qscratch_base_offset = SDM845_QSCRATCH_BASE_OFFSET,
 	.qscratch_base_size = SDM845_QSCRATCH_SIZE,
 	.dwc3_core_base_size = SDM845_DWC3_CORE_SIZE,
@@ -931,9 +930,9 @@ MODULE_DEVICE_TABLE(of, dwc3_qcom_of_match);
 	.dp_hs_phy_irq_index = 4,
 	.dm_hs_phy_irq_index = 3,
 	.ss_phy_irq_index = 2
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dwc3_acpi_pdata sdm845_acpi_urs_pdata = अणु
+static const struct dwc3_acpi_pdata sdm845_acpi_urs_pdata = {
 	.qscratch_base_offset = SDM845_QSCRATCH_BASE_OFFSET,
 	.qscratch_base_size = SDM845_QSCRATCH_SIZE,
 	.dwc3_core_base_size = SDM845_DWC3_CORE_SIZE,
@@ -942,30 +941,30 @@ MODULE_DEVICE_TABLE(of, dwc3_qcom_of_match);
 	.dm_hs_phy_irq_index = 3,
 	.ss_phy_irq_index = 2,
 	.is_urs = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा acpi_device_id dwc3_qcom_acpi_match[] = अणु
-	अणु "QCOM2430", (अचिन्हित दीर्घ)&sdm845_acpi_pdata पूर्ण,
-	अणु "QCOM0304", (अचिन्हित दीर्घ)&sdm845_acpi_urs_pdata पूर्ण,
-	अणु "QCOM0497", (अचिन्हित दीर्घ)&sdm845_acpi_urs_pdata पूर्ण,
-	अणु "QCOM04A6", (अचिन्हित दीर्घ)&sdm845_acpi_pdata पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct acpi_device_id dwc3_qcom_acpi_match[] = {
+	{ "QCOM2430", (unsigned long)&sdm845_acpi_pdata },
+	{ "QCOM0304", (unsigned long)&sdm845_acpi_urs_pdata },
+	{ "QCOM0497", (unsigned long)&sdm845_acpi_urs_pdata },
+	{ "QCOM04A6", (unsigned long)&sdm845_acpi_pdata },
+	{ },
+};
 MODULE_DEVICE_TABLE(acpi, dwc3_qcom_acpi_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver dwc3_qcom_driver = अणु
+static struct platform_driver dwc3_qcom_driver = {
 	.probe		= dwc3_qcom_probe,
-	.हटाओ		= dwc3_qcom_हटाओ,
-	.driver		= अणु
+	.remove		= dwc3_qcom_remove,
+	.driver		= {
 		.name	= "dwc3-qcom",
 		.pm	= &dwc3_qcom_dev_pm_ops,
 		.of_match_table	= dwc3_qcom_of_match,
 		.acpi_match_table = ACPI_PTR(dwc3_qcom_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(dwc3_qcom_driver);
+module_platform_driver(dwc3_qcom_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("DesignWare DWC3 QCOM Glue Driver");

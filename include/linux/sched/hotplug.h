@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SCHED_HOTPLUG_H
-#घोषणा _LINUX_SCHED_HOTPLUG_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SCHED_HOTPLUG_H
+#define _LINUX_SCHED_HOTPLUG_H
 
 /*
- * Scheduler पूर्णांकerfaces क्रम hotplug CPU support:
+ * Scheduler interfaces for hotplug CPU support:
  */
 
-बाह्य पूर्णांक sched_cpu_starting(अचिन्हित पूर्णांक cpu);
-बाह्य पूर्णांक sched_cpu_activate(अचिन्हित पूर्णांक cpu);
-बाह्य पूर्णांक sched_cpu_deactivate(अचिन्हित पूर्णांक cpu);
+extern int sched_cpu_starting(unsigned int cpu);
+extern int sched_cpu_activate(unsigned int cpu);
+extern int sched_cpu_deactivate(unsigned int cpu);
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-बाह्य पूर्णांक sched_cpu_रुको_empty(अचिन्हित पूर्णांक cpu);
-बाह्य पूर्णांक sched_cpu_dying(अचिन्हित पूर्णांक cpu);
-#अन्यथा
-# define sched_cpu_रुको_empty	शून्य
-# define sched_cpu_dying	शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_HOTPLUG_CPU
+extern int sched_cpu_wait_empty(unsigned int cpu);
+extern int sched_cpu_dying(unsigned int cpu);
+#else
+# define sched_cpu_wait_empty	NULL
+# define sched_cpu_dying	NULL
+#endif
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-बाह्य व्योम idle_task_निकास(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम idle_task_निकास(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_HOTPLUG_CPU
+extern void idle_task_exit(void);
+#else
+static inline void idle_task_exit(void) {}
+#endif
 
-#पूर्ण_अगर /* _LINUX_SCHED_HOTPLUG_H */
+#endif /* _LINUX_SCHED_HOTPLUG_H */

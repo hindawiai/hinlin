@@ -1,418 +1,417 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * AXP20x PMIC USB घातer supply status driver
+ * AXP20x PMIC USB power supply status driver
  *
  * Copyright (C) 2015 Hans de Goede <hdegoede@redhat.com>
- * Copyright (C) 2014 Bruno Prथऊmont <bonbons@linux-vserver.org>
+ * Copyright (C) 2014 Bruno Prémont <bonbons@linux-vserver.org>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/device.h>
-#समावेश <linux/devm-helpers.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/axp20x.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/workqueue.h>
+#include <linux/bitops.h>
+#include <linux/device.h>
+#include <linux/devm-helpers.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/mfd/axp20x.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/power_supply.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/iio/consumer.h>
+#include <linux/workqueue.h>
 
-#घोषणा DRVNAME "axp20x-usb-power-supply"
+#define DRVNAME "axp20x-usb-power-supply"
 
-#घोषणा AXP20X_PWR_STATUS_VBUS_PRESENT	BIT(5)
-#घोषणा AXP20X_PWR_STATUS_VBUS_USED	BIT(4)
+#define AXP20X_PWR_STATUS_VBUS_PRESENT	BIT(5)
+#define AXP20X_PWR_STATUS_VBUS_USED	BIT(4)
 
-#घोषणा AXP20X_USB_STATUS_VBUS_VALID	BIT(2)
+#define AXP20X_USB_STATUS_VBUS_VALID	BIT(2)
 
-#घोषणा AXP20X_VBUS_PATH_SEL		BIT(7)
-#घोषणा AXP20X_VBUS_PATH_SEL_OFFSET	7
+#define AXP20X_VBUS_PATH_SEL		BIT(7)
+#define AXP20X_VBUS_PATH_SEL_OFFSET	7
 
-#घोषणा AXP20X_VBUS_VHOLD_uV(b)		(4000000 + (((b) >> 3) & 7) * 100000)
-#घोषणा AXP20X_VBUS_VHOLD_MASK		GENMASK(5, 3)
-#घोषणा AXP20X_VBUS_VHOLD_OFFSET	3
-#घोषणा AXP20X_VBUS_CLIMIT_MASK		3
-#घोषणा AXP20X_VBUS_CLIMIT_900mA	0
-#घोषणा AXP20X_VBUS_CLIMIT_500mA	1
-#घोषणा AXP20X_VBUS_CLIMIT_100mA	2
-#घोषणा AXP20X_VBUS_CLIMIT_NONE		3
+#define AXP20X_VBUS_VHOLD_uV(b)		(4000000 + (((b) >> 3) & 7) * 100000)
+#define AXP20X_VBUS_VHOLD_MASK		GENMASK(5, 3)
+#define AXP20X_VBUS_VHOLD_OFFSET	3
+#define AXP20X_VBUS_CLIMIT_MASK		3
+#define AXP20X_VBUS_CLIMIT_900mA	0
+#define AXP20X_VBUS_CLIMIT_500mA	1
+#define AXP20X_VBUS_CLIMIT_100mA	2
+#define AXP20X_VBUS_CLIMIT_NONE		3
 
-#घोषणा AXP813_VBUS_CLIMIT_900mA	0
-#घोषणा AXP813_VBUS_CLIMIT_1500mA	1
-#घोषणा AXP813_VBUS_CLIMIT_2000mA	2
-#घोषणा AXP813_VBUS_CLIMIT_2500mA	3
+#define AXP813_VBUS_CLIMIT_900mA	0
+#define AXP813_VBUS_CLIMIT_1500mA	1
+#define AXP813_VBUS_CLIMIT_2000mA	2
+#define AXP813_VBUS_CLIMIT_2500mA	3
 
-#घोषणा AXP20X_ADC_EN1_VBUS_CURR	BIT(2)
-#घोषणा AXP20X_ADC_EN1_VBUS_VOLT	BIT(3)
+#define AXP20X_ADC_EN1_VBUS_CURR	BIT(2)
+#define AXP20X_ADC_EN1_VBUS_VOLT	BIT(3)
 
-#घोषणा AXP20X_VBUS_MON_VBUS_VALID	BIT(3)
+#define AXP20X_VBUS_MON_VBUS_VALID	BIT(3)
 
-#घोषणा AXP813_BC_EN		BIT(0)
+#define AXP813_BC_EN		BIT(0)
 
 /*
- * Note करो not उठाओ the debounce समय, we must report Vusb high within
+ * Note do not raise the debounce time, we must report Vusb high within
  * 100ms otherwise we get Vbus errors in musb.
  */
-#घोषणा DEBOUNCE_TIME			msecs_to_jअगरfies(50)
+#define DEBOUNCE_TIME			msecs_to_jiffies(50)
 
-काष्ठा axp20x_usb_घातer अणु
-	काष्ठा regmap *regmap;
-	काष्ठा घातer_supply *supply;
-	क्रमागत axp20x_variants axp20x_id;
-	काष्ठा iio_channel *vbus_v;
-	काष्ठा iio_channel *vbus_i;
-	काष्ठा delayed_work vbus_detect;
-	अचिन्हित पूर्णांक old_status;
-	अचिन्हित पूर्णांक online;
-	अचिन्हित पूर्णांक num_irqs;
-	अचिन्हित पूर्णांक irqs[];
-पूर्ण;
+struct axp20x_usb_power {
+	struct regmap *regmap;
+	struct power_supply *supply;
+	enum axp20x_variants axp20x_id;
+	struct iio_channel *vbus_v;
+	struct iio_channel *vbus_i;
+	struct delayed_work vbus_detect;
+	unsigned int old_status;
+	unsigned int online;
+	unsigned int num_irqs;
+	unsigned int irqs[];
+};
 
-अटल bool axp20x_usb_vbus_needs_polling(काष्ठा axp20x_usb_घातer *घातer)
-अणु
+static bool axp20x_usb_vbus_needs_polling(struct axp20x_usb_power *power)
+{
 	/*
-	 * Polling is only necessary जबतक VBUS is offline. While online, a
-	 * present->असलent transition implies an online->offline transition
+	 * Polling is only necessary while VBUS is offline. While online, a
+	 * present->absent transition implies an online->offline transition
 	 * and will trigger the VBUS_REMOVAL IRQ.
 	 */
-	अगर (घातer->axp20x_id >= AXP221_ID && !घातer->online)
-		वापस true;
+	if (power->axp20x_id >= AXP221_ID && !power->online)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल irqवापस_t axp20x_usb_घातer_irq(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer = devid;
+static irqreturn_t axp20x_usb_power_irq(int irq, void *devid)
+{
+	struct axp20x_usb_power *power = devid;
 
-	घातer_supply_changed(घातer->supply);
+	power_supply_changed(power->supply);
 
-	mod_delayed_work(प्रणाली_घातer_efficient_wq, &घातer->vbus_detect, DEBOUNCE_TIME);
+	mod_delayed_work(system_power_efficient_wq, &power->vbus_detect, DEBOUNCE_TIME);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम axp20x_usb_घातer_poll_vbus(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer =
-		container_of(work, काष्ठा axp20x_usb_घातer, vbus_detect.work);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static void axp20x_usb_power_poll_vbus(struct work_struct *work)
+{
+	struct axp20x_usb_power *power =
+		container_of(work, struct axp20x_usb_power, vbus_detect.work);
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(घातer->regmap, AXP20X_PWR_INPUT_STATUS, &val);
-	अगर (ret)
-		जाओ out;
+	ret = regmap_read(power->regmap, AXP20X_PWR_INPUT_STATUS, &val);
+	if (ret)
+		goto out;
 
 	val &= (AXP20X_PWR_STATUS_VBUS_PRESENT | AXP20X_PWR_STATUS_VBUS_USED);
-	अगर (val != घातer->old_status)
-		घातer_supply_changed(घातer->supply);
+	if (val != power->old_status)
+		power_supply_changed(power->supply);
 
-	घातer->old_status = val;
-	घातer->online = val & AXP20X_PWR_STATUS_VBUS_USED;
+	power->old_status = val;
+	power->online = val & AXP20X_PWR_STATUS_VBUS_USED;
 
 out:
-	अगर (axp20x_usb_vbus_needs_polling(घातer))
-		mod_delayed_work(प्रणाली_घातer_efficient_wq, &घातer->vbus_detect, DEBOUNCE_TIME);
-पूर्ण
+	if (axp20x_usb_vbus_needs_polling(power))
+		mod_delayed_work(system_power_efficient_wq, &power->vbus_detect, DEBOUNCE_TIME);
+}
 
-अटल पूर्णांक axp20x_get_current_max(काष्ठा axp20x_usb_घातer *घातer, पूर्णांक *val)
-अणु
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret = regmap_पढ़ो(घातer->regmap, AXP20X_VBUS_IPSOUT_MGMT, &v);
+static int axp20x_get_current_max(struct axp20x_usb_power *power, int *val)
+{
+	unsigned int v;
+	int ret = regmap_read(power->regmap, AXP20X_VBUS_IPSOUT_MGMT, &v);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (v & AXP20X_VBUS_CLIMIT_MASK) अणु
-	हाल AXP20X_VBUS_CLIMIT_100mA:
-		अगर (घातer->axp20x_id == AXP221_ID)
+	switch (v & AXP20X_VBUS_CLIMIT_MASK) {
+	case AXP20X_VBUS_CLIMIT_100mA:
+		if (power->axp20x_id == AXP221_ID)
 			*val = -1; /* No 100mA limit */
-		अन्यथा
+		else
 			*val = 100000;
-		अवरोध;
-	हाल AXP20X_VBUS_CLIMIT_500mA:
+		break;
+	case AXP20X_VBUS_CLIMIT_500mA:
 		*val = 500000;
-		अवरोध;
-	हाल AXP20X_VBUS_CLIMIT_900mA:
+		break;
+	case AXP20X_VBUS_CLIMIT_900mA:
 		*val = 900000;
-		अवरोध;
-	हाल AXP20X_VBUS_CLIMIT_NONE:
+		break;
+	case AXP20X_VBUS_CLIMIT_NONE:
 		*val = -1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axp813_get_current_max(काष्ठा axp20x_usb_घातer *घातer, पूर्णांक *val)
-अणु
-	अचिन्हित पूर्णांक v;
-	पूर्णांक ret = regmap_पढ़ो(घातer->regmap, AXP20X_VBUS_IPSOUT_MGMT, &v);
+static int axp813_get_current_max(struct axp20x_usb_power *power, int *val)
+{
+	unsigned int v;
+	int ret = regmap_read(power->regmap, AXP20X_VBUS_IPSOUT_MGMT, &v);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	चयन (v & AXP20X_VBUS_CLIMIT_MASK) अणु
-	हाल AXP813_VBUS_CLIMIT_900mA:
+	switch (v & AXP20X_VBUS_CLIMIT_MASK) {
+	case AXP813_VBUS_CLIMIT_900mA:
 		*val = 900000;
-		अवरोध;
-	हाल AXP813_VBUS_CLIMIT_1500mA:
+		break;
+	case AXP813_VBUS_CLIMIT_1500mA:
 		*val = 1500000;
-		अवरोध;
-	हाल AXP813_VBUS_CLIMIT_2000mA:
+		break;
+	case AXP813_VBUS_CLIMIT_2000mA:
 		*val = 2000000;
-		अवरोध;
-	हाल AXP813_VBUS_CLIMIT_2500mA:
+		break;
+	case AXP813_VBUS_CLIMIT_2500mA:
 		*val = 2500000;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक axp20x_usb_घातer_get_property(काष्ठा घातer_supply *psy,
-	क्रमागत घातer_supply_property psp, जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer = घातer_supply_get_drvdata(psy);
-	अचिन्हित पूर्णांक input, v;
-	पूर्णांक ret;
+static int axp20x_usb_power_get_property(struct power_supply *psy,
+	enum power_supply_property psp, union power_supply_propval *val)
+{
+	struct axp20x_usb_power *power = power_supply_get_drvdata(psy);
+	unsigned int input, v;
+	int ret;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		ret = regmap_पढ़ो(घातer->regmap, AXP20X_VBUS_IPSOUT_MGMT, &v);
-		अगर (ret)
-			वापस ret;
+	switch (psp) {
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		ret = regmap_read(power->regmap, AXP20X_VBUS_IPSOUT_MGMT, &v);
+		if (ret)
+			return ret;
 
-		val->पूर्णांकval = AXP20X_VBUS_VHOLD_uV(v);
-		वापस 0;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		अगर (IS_ENABLED(CONFIG_AXP20X_ADC)) अणु
-			ret = iio_पढ़ो_channel_processed(घातer->vbus_v,
-							 &val->पूर्णांकval);
-			अगर (ret)
-				वापस ret;
+		val->intval = AXP20X_VBUS_VHOLD_uV(v);
+		return 0;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		if (IS_ENABLED(CONFIG_AXP20X_ADC)) {
+			ret = iio_read_channel_processed(power->vbus_v,
+							 &val->intval);
+			if (ret)
+				return ret;
 
 			/*
 			 * IIO framework gives mV but Power Supply framework
 			 * gives uV.
 			 */
-			val->पूर्णांकval *= 1000;
-			वापस 0;
-		पूर्ण
+			val->intval *= 1000;
+			return 0;
+		}
 
-		ret = axp20x_पढ़ो_variable_width(घातer->regmap,
+		ret = axp20x_read_variable_width(power->regmap,
 						 AXP20X_VBUS_V_ADC_H, 12);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		val->पूर्णांकval = ret * 1700; /* 1 step = 1.7 mV */
-		वापस 0;
-	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
-		अगर (घातer->axp20x_id == AXP813_ID)
-			वापस axp813_get_current_max(घातer, &val->पूर्णांकval);
-		वापस axp20x_get_current_max(घातer, &val->पूर्णांकval);
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		अगर (IS_ENABLED(CONFIG_AXP20X_ADC)) अणु
-			ret = iio_पढ़ो_channel_processed(घातer->vbus_i,
-							 &val->पूर्णांकval);
-			अगर (ret)
-				वापस ret;
+		val->intval = ret * 1700; /* 1 step = 1.7 mV */
+		return 0;
+	case POWER_SUPPLY_PROP_CURRENT_MAX:
+		if (power->axp20x_id == AXP813_ID)
+			return axp813_get_current_max(power, &val->intval);
+		return axp20x_get_current_max(power, &val->intval);
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		if (IS_ENABLED(CONFIG_AXP20X_ADC)) {
+			ret = iio_read_channel_processed(power->vbus_i,
+							 &val->intval);
+			if (ret)
+				return ret;
 
 			/*
 			 * IIO framework gives mA but Power Supply framework
 			 * gives uA.
 			 */
-			val->पूर्णांकval *= 1000;
-			वापस 0;
-		पूर्ण
+			val->intval *= 1000;
+			return 0;
+		}
 
-		ret = axp20x_पढ़ो_variable_width(घातer->regmap,
+		ret = axp20x_read_variable_width(power->regmap,
 						 AXP20X_VBUS_I_ADC_H, 12);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		val->पूर्णांकval = ret * 375; /* 1 step = 0.375 mA */
-		वापस 0;
-	शेष:
-		अवरोध;
-	पूर्ण
+		val->intval = ret * 375; /* 1 step = 0.375 mA */
+		return 0;
+	default:
+		break;
+	}
 
 	/* All the properties below need the input-status reg value */
-	ret = regmap_पढ़ो(घातer->regmap, AXP20X_PWR_INPUT_STATUS, &input);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(power->regmap, AXP20X_PWR_INPUT_STATUS, &input);
+	if (ret)
+		return ret;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_HEALTH:
-		अगर (!(input & AXP20X_PWR_STATUS_VBUS_PRESENT)) अणु
-			val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNKNOWN;
-			अवरोध;
-		पूर्ण
+	switch (psp) {
+	case POWER_SUPPLY_PROP_HEALTH:
+		if (!(input & AXP20X_PWR_STATUS_VBUS_PRESENT)) {
+			val->intval = POWER_SUPPLY_HEALTH_UNKNOWN;
+			break;
+		}
 
-		val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
+		val->intval = POWER_SUPPLY_HEALTH_GOOD;
 
-		अगर (घातer->axp20x_id == AXP202_ID) अणु
-			ret = regmap_पढ़ो(घातer->regmap,
+		if (power->axp20x_id == AXP202_ID) {
+			ret = regmap_read(power->regmap,
 					  AXP20X_USB_OTG_STATUS, &v);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			अगर (!(v & AXP20X_USB_STATUS_VBUS_VALID))
-				val->पूर्णांकval =
+			if (!(v & AXP20X_USB_STATUS_VBUS_VALID))
+				val->intval =
 					POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-		पूर्ण
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = !!(input & AXP20X_PWR_STATUS_VBUS_PRESENT);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		val->पूर्णांकval = !!(input & AXP20X_PWR_STATUS_VBUS_USED);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		}
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = !!(input & AXP20X_PWR_STATUS_VBUS_PRESENT);
+		break;
+	case POWER_SUPPLY_PROP_ONLINE:
+		val->intval = !!(input & AXP20X_PWR_STATUS_VBUS_USED);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axp813_usb_घातer_set_online(काष्ठा axp20x_usb_घातer *घातer,
-				       पूर्णांक पूर्णांकval)
-अणु
-	पूर्णांक val = !पूर्णांकval << AXP20X_VBUS_PATH_SEL_OFFSET;
+static int axp813_usb_power_set_online(struct axp20x_usb_power *power,
+				       int intval)
+{
+	int val = !intval << AXP20X_VBUS_PATH_SEL_OFFSET;
 
-	वापस regmap_update_bits(घातer->regmap,
+	return regmap_update_bits(power->regmap,
 				  AXP20X_VBUS_IPSOUT_MGMT,
 				  AXP20X_VBUS_PATH_SEL, val);
-पूर्ण
+}
 
-अटल पूर्णांक axp20x_usb_घातer_set_voltage_min(काष्ठा axp20x_usb_घातer *घातer,
-					    पूर्णांक पूर्णांकval)
-अणु
-	पूर्णांक val;
+static int axp20x_usb_power_set_voltage_min(struct axp20x_usb_power *power,
+					    int intval)
+{
+	int val;
 
-	चयन (पूर्णांकval) अणु
-	हाल 4000000:
-	हाल 4100000:
-	हाल 4200000:
-	हाल 4300000:
-	हाल 4400000:
-	हाल 4500000:
-	हाल 4600000:
-	हाल 4700000:
-		val = (पूर्णांकval - 4000000) / 100000;
-		वापस regmap_update_bits(घातer->regmap,
+	switch (intval) {
+	case 4000000:
+	case 4100000:
+	case 4200000:
+	case 4300000:
+	case 4400000:
+	case 4500000:
+	case 4600000:
+	case 4700000:
+		val = (intval - 4000000) / 100000;
+		return regmap_update_bits(power->regmap,
 					  AXP20X_VBUS_IPSOUT_MGMT,
 					  AXP20X_VBUS_VHOLD_MASK,
 					  val << AXP20X_VBUS_VHOLD_OFFSET);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक axp813_usb_घातer_set_current_max(काष्ठा axp20x_usb_घातer *घातer,
-					    पूर्णांक पूर्णांकval)
-अणु
-	पूर्णांक val;
+static int axp813_usb_power_set_current_max(struct axp20x_usb_power *power,
+					    int intval)
+{
+	int val;
 
-	चयन (पूर्णांकval) अणु
-	हाल 900000:
-		वापस regmap_update_bits(घातer->regmap,
+	switch (intval) {
+	case 900000:
+		return regmap_update_bits(power->regmap,
 					  AXP20X_VBUS_IPSOUT_MGMT,
 					  AXP20X_VBUS_CLIMIT_MASK,
 					  AXP813_VBUS_CLIMIT_900mA);
-	हाल 1500000:
-	हाल 2000000:
-	हाल 2500000:
-		val = (पूर्णांकval - 1000000) / 500000;
-		वापस regmap_update_bits(घातer->regmap,
+	case 1500000:
+	case 2000000:
+	case 2500000:
+		val = (intval - 1000000) / 500000;
+		return regmap_update_bits(power->regmap,
 					  AXP20X_VBUS_IPSOUT_MGMT,
 					  AXP20X_VBUS_CLIMIT_MASK, val);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक axp20x_usb_घातer_set_current_max(काष्ठा axp20x_usb_घातer *घातer,
-					    पूर्णांक पूर्णांकval)
-अणु
-	पूर्णांक val;
+static int axp20x_usb_power_set_current_max(struct axp20x_usb_power *power,
+					    int intval)
+{
+	int val;
 
-	चयन (पूर्णांकval) अणु
-	हाल 100000:
-		अगर (घातer->axp20x_id == AXP221_ID)
-			वापस -EINVAL;
+	switch (intval) {
+	case 100000:
+		if (power->axp20x_id == AXP221_ID)
+			return -EINVAL;
 		fallthrough;
-	हाल 500000:
-	हाल 900000:
-		val = (900000 - पूर्णांकval) / 400000;
-		वापस regmap_update_bits(घातer->regmap,
+	case 500000:
+	case 900000:
+		val = (900000 - intval) / 400000;
+		return regmap_update_bits(power->regmap,
 					  AXP20X_VBUS_IPSOUT_MGMT,
 					  AXP20X_VBUS_CLIMIT_MASK, val);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक axp20x_usb_घातer_set_property(काष्ठा घातer_supply *psy,
-					 क्रमागत घातer_supply_property psp,
-					 स्थिर जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer = घातer_supply_get_drvdata(psy);
+static int axp20x_usb_power_set_property(struct power_supply *psy,
+					 enum power_supply_property psp,
+					 const union power_supply_propval *val)
+{
+	struct axp20x_usb_power *power = power_supply_get_drvdata(psy);
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		अगर (घातer->axp20x_id != AXP813_ID)
-			वापस -EINVAL;
-		वापस axp813_usb_घातer_set_online(घातer, val->पूर्णांकval);
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		if (power->axp20x_id != AXP813_ID)
+			return -EINVAL;
+		return axp813_usb_power_set_online(power, val->intval);
 
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		वापस axp20x_usb_घातer_set_voltage_min(घातer, val->पूर्णांकval);
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		return axp20x_usb_power_set_voltage_min(power, val->intval);
 
-	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
-		अगर (घातer->axp20x_id == AXP813_ID)
-			वापस axp813_usb_घातer_set_current_max(घातer,
-								val->पूर्णांकval);
-		वापस axp20x_usb_घातer_set_current_max(घातer, val->पूर्णांकval);
+	case POWER_SUPPLY_PROP_CURRENT_MAX:
+		if (power->axp20x_id == AXP813_ID)
+			return axp813_usb_power_set_current_max(power,
+								val->intval);
+		return axp20x_usb_power_set_current_max(power, val->intval);
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक axp20x_usb_घातer_prop_ग_लिखोable(काष्ठा घातer_supply *psy,
-					   क्रमागत घातer_supply_property psp)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer = घातer_supply_get_drvdata(psy);
+static int axp20x_usb_power_prop_writeable(struct power_supply *psy,
+					   enum power_supply_property psp)
+{
+	struct axp20x_usb_power *power = power_supply_get_drvdata(psy);
 
 	/*
-	 * The VBUS path select flag works dअगरferently on AXP288 and newer:
+	 * The VBUS path select flag works differently on AXP288 and newer:
 	 *  - On AXP20x and AXP22x, the flag enables VBUS (ignoring N_VBUSEN).
 	 *  - On AXP288 and AXP8xx, the flag disables VBUS (ignoring N_VBUSEN).
-	 * We only expose the control on variants where it can be used to क्रमce
+	 * We only expose the control on variants where it can be used to force
 	 * the VBUS input offline.
 	 */
-	अगर (psp == POWER_SUPPLY_PROP_ONLINE)
-		वापस घातer->axp20x_id == AXP813_ID;
+	if (psp == POWER_SUPPLY_PROP_ONLINE)
+		return power->axp20x_id == AXP813_ID;
 
-	वापस psp == POWER_SUPPLY_PROP_VOLTAGE_MIN ||
+	return psp == POWER_SUPPLY_PROP_VOLTAGE_MIN ||
 	       psp == POWER_SUPPLY_PROP_CURRENT_MAX;
-पूर्ण
+}
 
-अटल क्रमागत घातer_supply_property axp20x_usb_घातer_properties[] = अणु
+static enum power_supply_property axp20x_usb_power_properties[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
@@ -420,273 +419,273 @@ out:
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
-पूर्ण;
+};
 
-अटल क्रमागत घातer_supply_property axp22x_usb_घातer_properties[] = अणु
+static enum power_supply_property axp22x_usb_power_properties[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_VOLTAGE_MIN,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc axp20x_usb_घातer_desc = अणु
+static const struct power_supply_desc axp20x_usb_power_desc = {
 	.name = "axp20x-usb",
 	.type = POWER_SUPPLY_TYPE_USB,
-	.properties = axp20x_usb_घातer_properties,
-	.num_properties = ARRAY_SIZE(axp20x_usb_घातer_properties),
-	.property_is_ग_लिखोable = axp20x_usb_घातer_prop_ग_लिखोable,
-	.get_property = axp20x_usb_घातer_get_property,
-	.set_property = axp20x_usb_घातer_set_property,
-पूर्ण;
+	.properties = axp20x_usb_power_properties,
+	.num_properties = ARRAY_SIZE(axp20x_usb_power_properties),
+	.property_is_writeable = axp20x_usb_power_prop_writeable,
+	.get_property = axp20x_usb_power_get_property,
+	.set_property = axp20x_usb_power_set_property,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc axp22x_usb_घातer_desc = अणु
+static const struct power_supply_desc axp22x_usb_power_desc = {
 	.name = "axp20x-usb",
 	.type = POWER_SUPPLY_TYPE_USB,
-	.properties = axp22x_usb_घातer_properties,
-	.num_properties = ARRAY_SIZE(axp22x_usb_घातer_properties),
-	.property_is_ग_लिखोable = axp20x_usb_घातer_prop_ग_लिखोable,
-	.get_property = axp20x_usb_घातer_get_property,
-	.set_property = axp20x_usb_घातer_set_property,
-पूर्ण;
+	.properties = axp22x_usb_power_properties,
+	.num_properties = ARRAY_SIZE(axp22x_usb_power_properties),
+	.property_is_writeable = axp20x_usb_power_prop_writeable,
+	.get_property = axp20x_usb_power_get_property,
+	.set_property = axp20x_usb_power_set_property,
+};
 
-अटल स्थिर अक्षर * स्थिर axp20x_irq_names[] = अणु
+static const char * const axp20x_irq_names[] = {
 	"VBUS_PLUGIN",
 	"VBUS_REMOVAL",
 	"VBUS_VALID",
 	"VBUS_NOT_VALID",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर axp22x_irq_names[] = अणु
+static const char * const axp22x_irq_names[] = {
 	"VBUS_PLUGIN",
 	"VBUS_REMOVAL",
-पूर्ण;
+};
 
-काष्ठा axp_data अणु
-	स्थिर काष्ठा घातer_supply_desc	*घातer_desc;
-	स्थिर अक्षर * स्थिर		*irq_names;
-	अचिन्हित पूर्णांक			num_irq_names;
-	क्रमागत axp20x_variants		axp20x_id;
-पूर्ण;
+struct axp_data {
+	const struct power_supply_desc	*power_desc;
+	const char * const		*irq_names;
+	unsigned int			num_irq_names;
+	enum axp20x_variants		axp20x_id;
+};
 
-अटल स्थिर काष्ठा axp_data axp202_data = अणु
-	.घातer_desc	= &axp20x_usb_घातer_desc,
+static const struct axp_data axp202_data = {
+	.power_desc	= &axp20x_usb_power_desc,
 	.irq_names	= axp20x_irq_names,
 	.num_irq_names	= ARRAY_SIZE(axp20x_irq_names),
 	.axp20x_id	= AXP202_ID,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा axp_data axp221_data = अणु
-	.घातer_desc	= &axp22x_usb_घातer_desc,
+static const struct axp_data axp221_data = {
+	.power_desc	= &axp22x_usb_power_desc,
 	.irq_names	= axp22x_irq_names,
 	.num_irq_names	= ARRAY_SIZE(axp22x_irq_names),
 	.axp20x_id	= AXP221_ID,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा axp_data axp223_data = अणु
-	.घातer_desc	= &axp22x_usb_घातer_desc,
+static const struct axp_data axp223_data = {
+	.power_desc	= &axp22x_usb_power_desc,
 	.irq_names	= axp22x_irq_names,
 	.num_irq_names	= ARRAY_SIZE(axp22x_irq_names),
 	.axp20x_id	= AXP223_ID,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा axp_data axp813_data = अणु
-	.घातer_desc	= &axp22x_usb_घातer_desc,
+static const struct axp_data axp813_data = {
+	.power_desc	= &axp22x_usb_power_desc,
 	.irq_names	= axp22x_irq_names,
 	.num_irq_names	= ARRAY_SIZE(axp22x_irq_names),
 	.axp20x_id	= AXP813_ID,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक axp20x_usb_घातer_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer = dev_get_drvdata(dev);
-	पूर्णांक i = 0;
+#ifdef CONFIG_PM_SLEEP
+static int axp20x_usb_power_suspend(struct device *dev)
+{
+	struct axp20x_usb_power *power = dev_get_drvdata(dev);
+	int i = 0;
 
 	/*
 	 * Allow wake via VBUS_PLUGIN only.
 	 *
-	 * As nested thपढ़ोed IRQs are not स्वतःmatically disabled during
-	 * suspend, we must explicitly disable the reमुख्यder of the IRQs.
+	 * As nested threaded IRQs are not automatically disabled during
+	 * suspend, we must explicitly disable the remainder of the IRQs.
 	 */
-	अगर (device_may_wakeup(&घातer->supply->dev))
-		enable_irq_wake(घातer->irqs[i++]);
-	जबतक (i < घातer->num_irqs)
-		disable_irq(घातer->irqs[i++]);
+	if (device_may_wakeup(&power->supply->dev))
+		enable_irq_wake(power->irqs[i++]);
+	while (i < power->num_irqs)
+		disable_irq(power->irqs[i++]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक axp20x_usb_घातer_resume(काष्ठा device *dev)
-अणु
-	काष्ठा axp20x_usb_घातer *घातer = dev_get_drvdata(dev);
-	पूर्णांक i = 0;
+static int axp20x_usb_power_resume(struct device *dev)
+{
+	struct axp20x_usb_power *power = dev_get_drvdata(dev);
+	int i = 0;
 
-	अगर (device_may_wakeup(&घातer->supply->dev))
-		disable_irq_wake(घातer->irqs[i++]);
-	जबतक (i < घातer->num_irqs)
-		enable_irq(घातer->irqs[i++]);
+	if (device_may_wakeup(&power->supply->dev))
+		disable_irq_wake(power->irqs[i++]);
+	while (i < power->num_irqs)
+		enable_irq(power->irqs[i++]);
 
-	mod_delayed_work(प्रणाली_घातer_efficient_wq, &घातer->vbus_detect, DEBOUNCE_TIME);
+	mod_delayed_work(system_power_efficient_wq, &power->vbus_detect, DEBOUNCE_TIME);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(axp20x_usb_घातer_pm_ops, axp20x_usb_घातer_suspend,
-						  axp20x_usb_घातer_resume);
+static SIMPLE_DEV_PM_OPS(axp20x_usb_power_pm_ops, axp20x_usb_power_suspend,
+						  axp20x_usb_power_resume);
 
-अटल पूर्णांक configure_iio_channels(काष्ठा platक्रमm_device *pdev,
-				  काष्ठा axp20x_usb_घातer *घातer)
-अणु
-	घातer->vbus_v = devm_iio_channel_get(&pdev->dev, "vbus_v");
-	अगर (IS_ERR(घातer->vbus_v)) अणु
-		अगर (PTR_ERR(घातer->vbus_v) == -ENODEV)
-			वापस -EPROBE_DEFER;
-		वापस PTR_ERR(घातer->vbus_v);
-	पूर्ण
+static int configure_iio_channels(struct platform_device *pdev,
+				  struct axp20x_usb_power *power)
+{
+	power->vbus_v = devm_iio_channel_get(&pdev->dev, "vbus_v");
+	if (IS_ERR(power->vbus_v)) {
+		if (PTR_ERR(power->vbus_v) == -ENODEV)
+			return -EPROBE_DEFER;
+		return PTR_ERR(power->vbus_v);
+	}
 
-	घातer->vbus_i = devm_iio_channel_get(&pdev->dev, "vbus_i");
-	अगर (IS_ERR(घातer->vbus_i)) अणु
-		अगर (PTR_ERR(घातer->vbus_i) == -ENODEV)
-			वापस -EPROBE_DEFER;
-		वापस PTR_ERR(घातer->vbus_i);
-	पूर्ण
+	power->vbus_i = devm_iio_channel_get(&pdev->dev, "vbus_i");
+	if (IS_ERR(power->vbus_i)) {
+		if (PTR_ERR(power->vbus_i) == -ENODEV)
+			return -EPROBE_DEFER;
+		return PTR_ERR(power->vbus_i);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक configure_adc_रेजिस्टरs(काष्ठा axp20x_usb_घातer *घातer)
-अणु
+static int configure_adc_registers(struct axp20x_usb_power *power)
+{
 	/* Enable vbus voltage and current measurement */
-	वापस regmap_update_bits(घातer->regmap, AXP20X_ADC_EN1,
+	return regmap_update_bits(power->regmap, AXP20X_ADC_EN1,
 				  AXP20X_ADC_EN1_VBUS_CURR |
 				  AXP20X_ADC_EN1_VBUS_VOLT,
 				  AXP20X_ADC_EN1_VBUS_CURR |
 				  AXP20X_ADC_EN1_VBUS_VOLT);
-पूर्ण
+}
 
-अटल पूर्णांक axp20x_usb_घातer_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	काष्ठा axp20x_usb_घातer *घातer;
-	स्थिर काष्ठा axp_data *axp_data;
-	पूर्णांक i, irq, ret;
+static int axp20x_usb_power_probe(struct platform_device *pdev)
+{
+	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
+	struct power_supply_config psy_cfg = {};
+	struct axp20x_usb_power *power;
+	const struct axp_data *axp_data;
+	int i, irq, ret;
 
-	अगर (!of_device_is_available(pdev->dev.of_node))
-		वापस -ENODEV;
+	if (!of_device_is_available(pdev->dev.of_node))
+		return -ENODEV;
 
-	अगर (!axp20x) अणु
+	if (!axp20x) {
 		dev_err(&pdev->dev, "Parent drvdata not set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	axp_data = of_device_get_match_data(&pdev->dev);
 
-	घातer = devm_kzalloc(&pdev->dev,
-			     काष्ठा_size(घातer, irqs, axp_data->num_irq_names),
+	power = devm_kzalloc(&pdev->dev,
+			     struct_size(power, irqs, axp_data->num_irq_names),
 			     GFP_KERNEL);
-	अगर (!घातer)
-		वापस -ENOMEM;
+	if (!power)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, घातer);
+	platform_set_drvdata(pdev, power);
 
-	घातer->axp20x_id = axp_data->axp20x_id;
-	घातer->regmap = axp20x->regmap;
-	घातer->num_irqs = axp_data->num_irq_names;
+	power->axp20x_id = axp_data->axp20x_id;
+	power->regmap = axp20x->regmap;
+	power->num_irqs = axp_data->num_irq_names;
 
-	ret = devm_delayed_work_स्वतःcancel(&pdev->dev, &घातer->vbus_detect,
-					   axp20x_usb_घातer_poll_vbus);
-	अगर (ret)
-		वापस ret;
+	ret = devm_delayed_work_autocancel(&pdev->dev, &power->vbus_detect,
+					   axp20x_usb_power_poll_vbus);
+	if (ret)
+		return ret;
 
-	अगर (घातer->axp20x_id == AXP202_ID) अणु
+	if (power->axp20x_id == AXP202_ID) {
 		/* Enable vbus valid checking */
-		ret = regmap_update_bits(घातer->regmap, AXP20X_VBUS_MON,
+		ret = regmap_update_bits(power->regmap, AXP20X_VBUS_MON,
 					 AXP20X_VBUS_MON_VBUS_VALID,
 					 AXP20X_VBUS_MON_VBUS_VALID);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (IS_ENABLED(CONFIG_AXP20X_ADC))
-			ret = configure_iio_channels(pdev, घातer);
-		अन्यथा
-			ret = configure_adc_रेजिस्टरs(घातer);
+		if (IS_ENABLED(CONFIG_AXP20X_ADC))
+			ret = configure_iio_channels(pdev, power);
+		else
+			ret = configure_adc_registers(power);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (घातer->axp20x_id == AXP813_ID) अणु
-		/* Enable USB Battery Charging specअगरication detection */
+	if (power->axp20x_id == AXP813_ID) {
+		/* Enable USB Battery Charging specification detection */
 		ret = regmap_update_bits(axp20x->regmap, AXP288_BC_GLOBAL,
 				   AXP813_BC_EN, AXP813_BC_EN);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	psy_cfg.of_node = pdev->dev.of_node;
-	psy_cfg.drv_data = घातer;
+	psy_cfg.drv_data = power;
 
-	घातer->supply = devm_घातer_supply_रेजिस्टर(&pdev->dev,
-						   axp_data->घातer_desc,
+	power->supply = devm_power_supply_register(&pdev->dev,
+						   axp_data->power_desc,
 						   &psy_cfg);
-	अगर (IS_ERR(घातer->supply))
-		वापस PTR_ERR(घातer->supply);
+	if (IS_ERR(power->supply))
+		return PTR_ERR(power->supply);
 
-	/* Request irqs after रेजिस्टरing, as irqs may trigger immediately */
-	क्रम (i = 0; i < axp_data->num_irq_names; i++) अणु
-		irq = platक्रमm_get_irq_byname(pdev, axp_data->irq_names[i]);
-		अगर (irq < 0) अणु
+	/* Request irqs after registering, as irqs may trigger immediately */
+	for (i = 0; i < axp_data->num_irq_names; i++) {
+		irq = platform_get_irq_byname(pdev, axp_data->irq_names[i]);
+		if (irq < 0) {
 			dev_err(&pdev->dev, "No IRQ for %s: %d\n",
 				axp_data->irq_names[i], irq);
-			वापस irq;
-		पूर्ण
-		घातer->irqs[i] = regmap_irq_get_virq(axp20x->regmap_irqc, irq);
-		ret = devm_request_any_context_irq(&pdev->dev, घातer->irqs[i],
-						   axp20x_usb_घातer_irq, 0,
-						   DRVNAME, घातer);
-		अगर (ret < 0) अणु
+			return irq;
+		}
+		power->irqs[i] = regmap_irq_get_virq(axp20x->regmap_irqc, irq);
+		ret = devm_request_any_context_irq(&pdev->dev, power->irqs[i],
+						   axp20x_usb_power_irq, 0,
+						   DRVNAME, power);
+		if (ret < 0) {
 			dev_err(&pdev->dev, "Error requesting %s IRQ: %d\n",
 				axp_data->irq_names[i], ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (axp20x_usb_vbus_needs_polling(घातer))
-		queue_delayed_work(प्रणाली_घातer_efficient_wq, &घातer->vbus_detect, 0);
+	if (axp20x_usb_vbus_needs_polling(power))
+		queue_delayed_work(system_power_efficient_wq, &power->vbus_detect, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id axp20x_usb_घातer_match[] = अणु
-	अणु
+static const struct of_device_id axp20x_usb_power_match[] = {
+	{
 		.compatible = "x-powers,axp202-usb-power-supply",
 		.data = &axp202_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "x-powers,axp221-usb-power-supply",
 		.data = &axp221_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "x-powers,axp223-usb-power-supply",
 		.data = &axp223_data,
-	पूर्ण, अणु
+	}, {
 		.compatible = "x-powers,axp813-usb-power-supply",
 		.data = &axp813_data,
-	पूर्ण, अणु /* sentinel */ पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(of, axp20x_usb_घातer_match);
+	}, { /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, axp20x_usb_power_match);
 
-अटल काष्ठा platक्रमm_driver axp20x_usb_घातer_driver = अणु
-	.probe = axp20x_usb_घातer_probe,
-	.driver = अणु
+static struct platform_driver axp20x_usb_power_driver = {
+	.probe = axp20x_usb_power_probe,
+	.driver = {
 		.name		= DRVNAME,
-		.of_match_table	= axp20x_usb_घातer_match,
-		.pm		= &axp20x_usb_घातer_pm_ops,
-	पूर्ण,
-पूर्ण;
+		.of_match_table	= axp20x_usb_power_match,
+		.pm		= &axp20x_usb_power_pm_ops,
+	},
+};
 
-module_platक्रमm_driver(axp20x_usb_घातer_driver);
+module_platform_driver(axp20x_usb_power_driver);
 
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");
 MODULE_DESCRIPTION("AXP20x PMIC USB power supply status driver");

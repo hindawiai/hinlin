@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2019 NXP
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/platform_device.h>
 
-#समावेश "pinctrl-imx.h"
+#include "pinctrl-imx.h"
 
-क्रमागत imx8mp_pads अणु
+enum imx8mp_pads {
 	MX8MP_IOMUXC_RESERVE0 = 0,
 	MX8MP_IOMUXC_RESERVE1 = 1,
 	MX8MP_IOMUXC_RESERVE2 = 2,
@@ -70,25 +69,25 @@
 	MX8MP_IOMUXC_SD2_DATA3 = 53,
 	MX8MP_IOMUXC_SD2_RESET_B = 54,
 	MX8MP_IOMUXC_SD2_WP = 55,
-	MX8MP_IOMUXC_न_अंकD_ALE = 56,
-	MX8MP_IOMUXC_न_अंकD_CE0_B = 57,
-	MX8MP_IOMUXC_न_अंकD_CE1_B = 58,
-	MX8MP_IOMUXC_न_अंकD_CE2_B = 59,
-	MX8MP_IOMUXC_न_अंकD_CE3_B = 60,
-	MX8MP_IOMUXC_न_अंकD_CLE = 61,
-	MX8MP_IOMUXC_न_अंकD_DATA00 = 62,
-	MX8MP_IOMUXC_न_अंकD_DATA01 = 63,
-	MX8MP_IOMUXC_न_अंकD_DATA02 = 64,
-	MX8MP_IOMUXC_न_अंकD_DATA03 = 65,
-	MX8MP_IOMUXC_न_अंकD_DATA04 = 66,
-	MX8MP_IOMUXC_न_अंकD_DATA05 = 67,
-	MX8MP_IOMUXC_न_अंकD_DATA06 = 68,
-	MX8MP_IOMUXC_न_अंकD_DATA07 = 69,
-	MX8MP_IOMUXC_न_अंकD_DQS = 70,
-	MX8MP_IOMUXC_न_अंकD_RE_B = 71,
-	MX8MP_IOMUXC_न_अंकD_READY_B = 72,
-	MX8MP_IOMUXC_न_अंकD_WE_B = 73,
-	MX8MP_IOMUXC_न_अंकD_WP_B = 74,
+	MX8MP_IOMUXC_NAND_ALE = 56,
+	MX8MP_IOMUXC_NAND_CE0_B = 57,
+	MX8MP_IOMUXC_NAND_CE1_B = 58,
+	MX8MP_IOMUXC_NAND_CE2_B = 59,
+	MX8MP_IOMUXC_NAND_CE3_B = 60,
+	MX8MP_IOMUXC_NAND_CLE = 61,
+	MX8MP_IOMUXC_NAND_DATA00 = 62,
+	MX8MP_IOMUXC_NAND_DATA01 = 63,
+	MX8MP_IOMUXC_NAND_DATA02 = 64,
+	MX8MP_IOMUXC_NAND_DATA03 = 65,
+	MX8MP_IOMUXC_NAND_DATA04 = 66,
+	MX8MP_IOMUXC_NAND_DATA05 = 67,
+	MX8MP_IOMUXC_NAND_DATA06 = 68,
+	MX8MP_IOMUXC_NAND_DATA07 = 69,
+	MX8MP_IOMUXC_NAND_DQS = 70,
+	MX8MP_IOMUXC_NAND_RE_B = 71,
+	MX8MP_IOMUXC_NAND_READY_B = 72,
+	MX8MP_IOMUXC_NAND_WE_B = 73,
+	MX8MP_IOMUXC_NAND_WP_B = 74,
 	MX8MP_IOMUXC_SAI5_RXFS = 75,
 	MX8MP_IOMUXC_SAI5_RXC = 76,
 	MX8MP_IOMUXC_SAI5_RXD0 = 77,
@@ -162,10 +161,10 @@
 	MX8MP_IOMUXC_HDMI_DDC_SDA = 145,
 	MX8MP_IOMUXC_HDMI_CEC = 146,
 	MX8MP_IOMUXC_HDMI_HPD = 147,
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc imx8mp_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc imx8mp_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_RESERVE0),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_RESERVE1),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_RESERVE2),
@@ -222,25 +221,25 @@
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_SD2_DATA3),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_SD2_RESET_B),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_SD2_WP),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_ALE),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_CE0_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_CE1_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_CE2_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_CE3_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_CLE),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA00),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA01),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA02),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA03),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA04),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA05),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA06),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DATA07),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_DQS),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_RE_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_READY_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_WE_B),
-	IMX_PINCTRL_PIN(MX8MP_IOMUXC_न_अंकD_WP_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_ALE),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_CE0_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_CE1_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_CE2_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_CE3_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_CLE),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA00),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA01),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA02),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA03),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA04),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA05),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA06),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DATA07),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_DQS),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_RE_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_READY_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_WE_B),
+	IMX_PINCTRL_PIN(MX8MP_IOMUXC_NAND_WP_B),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_SAI5_RXFS),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_SAI5_RXC),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_SAI5_RXD0),
@@ -314,38 +313,38 @@
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_HDMI_DDC_SDA),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_HDMI_CEC),
 	IMX_PINCTRL_PIN(MX8MP_IOMUXC_HDMI_HPD),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा imx_pinctrl_soc_info imx8mp_pinctrl_info = अणु
+static const struct imx_pinctrl_soc_info imx8mp_pinctrl_info = {
 	.pins = imx8mp_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx8mp_pinctrl_pads),
 	.gpr_compatible = "fsl,imx8mp-iomuxc-gpr",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id imx8mp_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx8mp-iomuxc", .data = &imx8mp_pinctrl_info, पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx8mp_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx8mp-iomuxc", .data = &imx8mp_pinctrl_info, },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, imx8mp_pinctrl_of_match);
 
-अटल पूर्णांक imx8mp_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस imx_pinctrl_probe(pdev, &imx8mp_pinctrl_info);
-पूर्ण
+static int imx8mp_pinctrl_probe(struct platform_device *pdev)
+{
+	return imx_pinctrl_probe(pdev, &imx8mp_pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver imx8mp_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx8mp_pinctrl_driver = {
+	.driver = {
 		.name = "imx8mp-pinctrl",
 		.of_match_table = imx8mp_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = imx8mp_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx8mp_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx8mp_pinctrl_driver);
-पूर्ण
+static int __init imx8mp_pinctrl_init(void)
+{
+	return platform_driver_register(&imx8mp_pinctrl_driver);
+}
 arch_initcall(imx8mp_pinctrl_init);
 
 MODULE_AUTHOR("Anson Huang <Anson.Huang@nxp.com>");

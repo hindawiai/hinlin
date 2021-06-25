@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * drivers/rtc/rtc-spear.c
  *
@@ -10,484 +9,484 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/bcd.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/bcd.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/rtc.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-/* RTC रेजिस्टरs */
-#घोषणा TIME_REG		0x00
-#घोषणा DATE_REG		0x04
-#घोषणा ALARM_TIME_REG		0x08
-#घोषणा ALARM_DATE_REG		0x0C
-#घोषणा CTRL_REG		0x10
-#घोषणा STATUS_REG		0x14
+/* RTC registers */
+#define TIME_REG		0x00
+#define DATE_REG		0x04
+#define ALARM_TIME_REG		0x08
+#define ALARM_DATE_REG		0x0C
+#define CTRL_REG		0x10
+#define STATUS_REG		0x14
 
 /* TIME_REG & ALARM_TIME_REG */
-#घोषणा SECONDS_UNITS		(0xf<<0)	/* seconds units position */
-#घोषणा SECONDS_TENS		(0x7<<4)	/* seconds tens position */
-#घोषणा MINUTES_UNITS		(0xf<<8)	/* minutes units position */
-#घोषणा MINUTES_TENS		(0x7<<12)	/* minutes tens position */
-#घोषणा HOURS_UNITS		(0xf<<16)	/* hours units position */
-#घोषणा HOURS_TENS		(0x3<<20)	/* hours tens position */
+#define SECONDS_UNITS		(0xf<<0)	/* seconds units position */
+#define SECONDS_TENS		(0x7<<4)	/* seconds tens position */
+#define MINUTES_UNITS		(0xf<<8)	/* minutes units position */
+#define MINUTES_TENS		(0x7<<12)	/* minutes tens position */
+#define HOURS_UNITS		(0xf<<16)	/* hours units position */
+#define HOURS_TENS		(0x3<<20)	/* hours tens position */
 
 /* DATE_REG & ALARM_DATE_REG */
-#घोषणा DAYS_UNITS		(0xf<<0)	/* days units position */
-#घोषणा DAYS_TENS		(0x3<<4)	/* days tens position */
-#घोषणा MONTHS_UNITS		(0xf<<8)	/* months units position */
-#घोषणा MONTHS_TENS		(0x1<<12)	/* months tens position */
-#घोषणा YEARS_UNITS		(0xf<<16)	/* years units position */
-#घोषणा YEARS_TENS		(0xf<<20)	/* years tens position */
-#घोषणा YEARS_HUNDREDS		(0xf<<24)	/* years hundereds position */
-#घोषणा YEARS_MILLENIUMS	(0xf<<28)	/* years millenium position */
+#define DAYS_UNITS		(0xf<<0)	/* days units position */
+#define DAYS_TENS		(0x3<<4)	/* days tens position */
+#define MONTHS_UNITS		(0xf<<8)	/* months units position */
+#define MONTHS_TENS		(0x1<<12)	/* months tens position */
+#define YEARS_UNITS		(0xf<<16)	/* years units position */
+#define YEARS_TENS		(0xf<<20)	/* years tens position */
+#define YEARS_HUNDREDS		(0xf<<24)	/* years hundereds position */
+#define YEARS_MILLENIUMS	(0xf<<28)	/* years millenium position */
 
 /* MASK SHIFT TIME_REG & ALARM_TIME_REG*/
-#घोषणा SECOND_SHIFT		0x00		/* seconds units */
-#घोषणा MINUTE_SHIFT		0x08		/* minutes units position */
-#घोषणा HOUR_SHIFT		0x10		/* hours units position */
-#घोषणा MDAY_SHIFT		0x00		/* Month day shअगरt */
-#घोषणा MONTH_SHIFT		0x08		/* Month shअगरt */
-#घोषणा YEAR_SHIFT		0x10		/* Year shअगरt */
+#define SECOND_SHIFT		0x00		/* seconds units */
+#define MINUTE_SHIFT		0x08		/* minutes units position */
+#define HOUR_SHIFT		0x10		/* hours units position */
+#define MDAY_SHIFT		0x00		/* Month day shift */
+#define MONTH_SHIFT		0x08		/* Month shift */
+#define YEAR_SHIFT		0x10		/* Year shift */
 
-#घोषणा SECOND_MASK		0x7F
-#घोषणा MIN_MASK		0x7F
-#घोषणा HOUR_MASK		0x3F
-#घोषणा DAY_MASK		0x3F
-#घोषणा MONTH_MASK		0x7F
-#घोषणा YEAR_MASK		0xFFFF
+#define SECOND_MASK		0x7F
+#define MIN_MASK		0x7F
+#define HOUR_MASK		0x3F
+#define DAY_MASK		0x3F
+#define MONTH_MASK		0x7F
+#define YEAR_MASK		0xFFFF
 
-/* date reg equal to समय reg, क्रम debug only */
-#घोषणा TIME_BYP		(1<<9)
-#घोषणा INT_ENABLE		(1<<31)		/* पूर्णांकerrupt enable */
+/* date reg equal to time reg, for debug only */
+#define TIME_BYP		(1<<9)
+#define INT_ENABLE		(1<<31)		/* interrupt enable */
 
 /* STATUS_REG */
-#घोषणा CLK_UNCONNECTED		(1<<0)
-#घोषणा PEND_WR_TIME		(1<<2)
-#घोषणा PEND_WR_DATE		(1<<3)
-#घोषणा LOST_WR_TIME		(1<<4)
-#घोषणा LOST_WR_DATE		(1<<5)
-#घोषणा RTC_INT_MASK		(1<<31)
-#घोषणा STATUS_BUSY		(PEND_WR_TIME | PEND_WR_DATE)
-#घोषणा STATUS_FAIL		(LOST_WR_TIME | LOST_WR_DATE)
+#define CLK_UNCONNECTED		(1<<0)
+#define PEND_WR_TIME		(1<<2)
+#define PEND_WR_DATE		(1<<3)
+#define LOST_WR_TIME		(1<<4)
+#define LOST_WR_DATE		(1<<5)
+#define RTC_INT_MASK		(1<<31)
+#define STATUS_BUSY		(PEND_WR_TIME | PEND_WR_DATE)
+#define STATUS_FAIL		(LOST_WR_TIME | LOST_WR_DATE)
 
-काष्ठा spear_rtc_config अणु
-	काष्ठा rtc_device *rtc;
-	काष्ठा clk *clk;
+struct spear_rtc_config {
+	struct rtc_device *rtc;
+	struct clk *clk;
 	spinlock_t lock;
-	व्योम __iomem *ioaddr;
-	अचिन्हित पूर्णांक irq_wake;
-पूर्ण;
+	void __iomem *ioaddr;
+	unsigned int irq_wake;
+};
 
-अटल अंतरभूत व्योम spear_rtc_clear_पूर्णांकerrupt(काष्ठा spear_rtc_config *config)
-अणु
-	अचिन्हित पूर्णांक val;
-	अचिन्हित दीर्घ flags;
+static inline void spear_rtc_clear_interrupt(struct spear_rtc_config *config)
+{
+	unsigned int val;
+	unsigned long flags;
 
 	spin_lock_irqsave(&config->lock, flags);
-	val = पढ़ोl(config->ioaddr + STATUS_REG);
+	val = readl(config->ioaddr + STATUS_REG);
 	val |= RTC_INT_MASK;
-	ग_लिखोl(val, config->ioaddr + STATUS_REG);
+	writel(val, config->ioaddr + STATUS_REG);
 	spin_unlock_irqrestore(&config->lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम spear_rtc_enable_पूर्णांकerrupt(काष्ठा spear_rtc_config *config)
-अणु
-	अचिन्हित पूर्णांक val;
+static inline void spear_rtc_enable_interrupt(struct spear_rtc_config *config)
+{
+	unsigned int val;
 
-	val = पढ़ोl(config->ioaddr + CTRL_REG);
-	अगर (!(val & INT_ENABLE)) अणु
-		spear_rtc_clear_पूर्णांकerrupt(config);
+	val = readl(config->ioaddr + CTRL_REG);
+	if (!(val & INT_ENABLE)) {
+		spear_rtc_clear_interrupt(config);
 		val |= INT_ENABLE;
-		ग_लिखोl(val, config->ioaddr + CTRL_REG);
-	पूर्ण
-पूर्ण
+		writel(val, config->ioaddr + CTRL_REG);
+	}
+}
 
-अटल अंतरभूत व्योम spear_rtc_disable_पूर्णांकerrupt(काष्ठा spear_rtc_config *config)
-अणु
-	अचिन्हित पूर्णांक val;
+static inline void spear_rtc_disable_interrupt(struct spear_rtc_config *config)
+{
+	unsigned int val;
 
-	val = पढ़ोl(config->ioaddr + CTRL_REG);
-	अगर (val & INT_ENABLE) अणु
+	val = readl(config->ioaddr + CTRL_REG);
+	if (val & INT_ENABLE) {
 		val &= ~INT_ENABLE;
-		ग_लिखोl(val, config->ioaddr + CTRL_REG);
-	पूर्ण
-पूर्ण
+		writel(val, config->ioaddr + CTRL_REG);
+	}
+}
 
-अटल अंतरभूत पूर्णांक is_ग_लिखो_complete(काष्ठा spear_rtc_config *config)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ flags;
+static inline int is_write_complete(struct spear_rtc_config *config)
+{
+	int ret = 0;
+	unsigned long flags;
 
 	spin_lock_irqsave(&config->lock, flags);
-	अगर ((पढ़ोl(config->ioaddr + STATUS_REG)) & STATUS_FAIL)
+	if ((readl(config->ioaddr + STATUS_REG)) & STATUS_FAIL)
 		ret = -EIO;
 	spin_unlock_irqrestore(&config->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम rtc_रुको_not_busy(काष्ठा spear_rtc_config *config)
-अणु
-	पूर्णांक status, count = 0;
-	अचिन्हित दीर्घ flags;
+static void rtc_wait_not_busy(struct spear_rtc_config *config)
+{
+	int status, count = 0;
+	unsigned long flags;
 
-	/* Assuming BUSY may stay active क्रम 80 msec) */
-	क्रम (count = 0; count < 80; count++) अणु
+	/* Assuming BUSY may stay active for 80 msec) */
+	for (count = 0; count < 80; count++) {
 		spin_lock_irqsave(&config->lock, flags);
-		status = पढ़ोl(config->ioaddr + STATUS_REG);
+		status = readl(config->ioaddr + STATUS_REG);
 		spin_unlock_irqrestore(&config->lock, flags);
-		अगर ((status & STATUS_BUSY) == 0)
-			अवरोध;
+		if ((status & STATUS_BUSY) == 0)
+			break;
 		/* check status busy, after each msec */
 		msleep(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t spear_rtc_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा spear_rtc_config *config = dev_id;
-	अचिन्हित दीर्घ events = 0;
-	अचिन्हित पूर्णांक irq_data;
+static irqreturn_t spear_rtc_irq(int irq, void *dev_id)
+{
+	struct spear_rtc_config *config = dev_id;
+	unsigned long events = 0;
+	unsigned int irq_data;
 
 	spin_lock(&config->lock);
-	irq_data = पढ़ोl(config->ioaddr + STATUS_REG);
+	irq_data = readl(config->ioaddr + STATUS_REG);
 	spin_unlock(&config->lock);
 
-	अगर ((irq_data & RTC_INT_MASK)) अणु
-		spear_rtc_clear_पूर्णांकerrupt(config);
+	if ((irq_data & RTC_INT_MASK)) {
+		spear_rtc_clear_interrupt(config);
 		events = RTC_IRQF | RTC_AF;
 		rtc_update_irq(config->rtc, 1, events);
-		वापस IRQ_HANDLED;
-	पूर्ण अन्यथा
-		वापस IRQ_NONE;
+		return IRQ_HANDLED;
+	} else
+		return IRQ_NONE;
 
-पूर्ण
+}
 
-अटल व्योम पंचांग2bcd(काष्ठा rtc_समय *पंचांग)
-अणु
-	पंचांग->पंचांग_sec = bin2bcd(पंचांग->पंचांग_sec);
-	पंचांग->पंचांग_min = bin2bcd(पंचांग->पंचांग_min);
-	पंचांग->पंचांग_hour = bin2bcd(पंचांग->पंचांग_hour);
-	पंचांग->पंचांग_mday = bin2bcd(पंचांग->पंचांग_mday);
-	पंचांग->पंचांग_mon = bin2bcd(पंचांग->पंचांग_mon + 1);
-	पंचांग->पंचांग_year = bin2bcd(पंचांग->पंचांग_year);
-पूर्ण
+static void tm2bcd(struct rtc_time *tm)
+{
+	tm->tm_sec = bin2bcd(tm->tm_sec);
+	tm->tm_min = bin2bcd(tm->tm_min);
+	tm->tm_hour = bin2bcd(tm->tm_hour);
+	tm->tm_mday = bin2bcd(tm->tm_mday);
+	tm->tm_mon = bin2bcd(tm->tm_mon + 1);
+	tm->tm_year = bin2bcd(tm->tm_year);
+}
 
-अटल व्योम bcd2पंचांग(काष्ठा rtc_समय *पंचांग)
-अणु
-	पंचांग->पंचांग_sec = bcd2bin(पंचांग->पंचांग_sec);
-	पंचांग->पंचांग_min = bcd2bin(पंचांग->पंचांग_min);
-	पंचांग->पंचांग_hour = bcd2bin(पंचांग->पंचांग_hour);
-	पंचांग->पंचांग_mday = bcd2bin(पंचांग->पंचांग_mday);
-	पंचांग->पंचांग_mon = bcd2bin(पंचांग->पंचांग_mon) - 1;
+static void bcd2tm(struct rtc_time *tm)
+{
+	tm->tm_sec = bcd2bin(tm->tm_sec);
+	tm->tm_min = bcd2bin(tm->tm_min);
+	tm->tm_hour = bcd2bin(tm->tm_hour);
+	tm->tm_mday = bcd2bin(tm->tm_mday);
+	tm->tm_mon = bcd2bin(tm->tm_mon) - 1;
 	/* epoch == 1900 */
-	पंचांग->पंचांग_year = bcd2bin(पंचांग->पंचांग_year);
-पूर्ण
+	tm->tm_year = bcd2bin(tm->tm_year);
+}
 
 /*
- * spear_rtc_पढ़ो_समय - set the समय
+ * spear_rtc_read_time - set the time
  * @dev: rtc device in use
- * @पंचांग: holds date and समय
+ * @tm: holds date and time
  *
- * This function पढ़ो समय and date. On success it will वापस 0
- * otherwise -ve error is वापसed.
+ * This function read time and date. On success it will return 0
+ * otherwise -ve error is returned.
  */
-अटल पूर्णांक spear_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा spear_rtc_config *config = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक समय, date;
+static int spear_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct spear_rtc_config *config = dev_get_drvdata(dev);
+	unsigned int time, date;
 
-	/* we करोn't report wday/yday/isdst ... */
-	rtc_रुको_not_busy(config);
+	/* we don't report wday/yday/isdst ... */
+	rtc_wait_not_busy(config);
 
-	समय = पढ़ोl(config->ioaddr + TIME_REG);
-	date = पढ़ोl(config->ioaddr + DATE_REG);
-	पंचांग->पंचांग_sec = (समय >> SECOND_SHIFT) & SECOND_MASK;
-	पंचांग->पंचांग_min = (समय >> MINUTE_SHIFT) & MIN_MASK;
-	पंचांग->पंचांग_hour = (समय >> HOUR_SHIFT) & HOUR_MASK;
-	पंचांग->पंचांग_mday = (date >> MDAY_SHIFT) & DAY_MASK;
-	पंचांग->पंचांग_mon = (date >> MONTH_SHIFT) & MONTH_MASK;
-	पंचांग->पंचांग_year = (date >> YEAR_SHIFT) & YEAR_MASK;
+	time = readl(config->ioaddr + TIME_REG);
+	date = readl(config->ioaddr + DATE_REG);
+	tm->tm_sec = (time >> SECOND_SHIFT) & SECOND_MASK;
+	tm->tm_min = (time >> MINUTE_SHIFT) & MIN_MASK;
+	tm->tm_hour = (time >> HOUR_SHIFT) & HOUR_MASK;
+	tm->tm_mday = (date >> MDAY_SHIFT) & DAY_MASK;
+	tm->tm_mon = (date >> MONTH_SHIFT) & MONTH_MASK;
+	tm->tm_year = (date >> YEAR_SHIFT) & YEAR_MASK;
 
-	bcd2पंचांग(पंचांग);
-	वापस 0;
-पूर्ण
+	bcd2tm(tm);
+	return 0;
+}
 
 /*
- * spear_rtc_set_समय - set the समय
+ * spear_rtc_set_time - set the time
  * @dev: rtc device in use
- * @पंचांग: holds date and समय
+ * @tm: holds date and time
  *
- * This function set समय and date. On success it will वापस 0
- * otherwise -ve error is वापसed.
+ * This function set time and date. On success it will return 0
+ * otherwise -ve error is returned.
  */
-अटल पूर्णांक spear_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
-अणु
-	काष्ठा spear_rtc_config *config = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक समय, date;
+static int spear_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct spear_rtc_config *config = dev_get_drvdata(dev);
+	unsigned int time, date;
 
-	पंचांग2bcd(पंचांग);
+	tm2bcd(tm);
 
-	rtc_रुको_not_busy(config);
-	समय = (पंचांग->पंचांग_sec << SECOND_SHIFT) | (पंचांग->पंचांग_min << MINUTE_SHIFT) |
-		(पंचांग->पंचांग_hour << HOUR_SHIFT);
-	date = (पंचांग->पंचांग_mday << MDAY_SHIFT) | (पंचांग->पंचांग_mon << MONTH_SHIFT) |
-		(पंचांग->पंचांग_year << YEAR_SHIFT);
-	ग_लिखोl(समय, config->ioaddr + TIME_REG);
-	ग_लिखोl(date, config->ioaddr + DATE_REG);
+	rtc_wait_not_busy(config);
+	time = (tm->tm_sec << SECOND_SHIFT) | (tm->tm_min << MINUTE_SHIFT) |
+		(tm->tm_hour << HOUR_SHIFT);
+	date = (tm->tm_mday << MDAY_SHIFT) | (tm->tm_mon << MONTH_SHIFT) |
+		(tm->tm_year << YEAR_SHIFT);
+	writel(time, config->ioaddr + TIME_REG);
+	writel(date, config->ioaddr + DATE_REG);
 
-	वापस is_ग_लिखो_complete(config);
-पूर्ण
+	return is_write_complete(config);
+}
 
 /*
- * spear_rtc_पढ़ो_alarm - पढ़ो the alarm समय
+ * spear_rtc_read_alarm - read the alarm time
  * @dev: rtc device in use
- * @alm: holds alarm date and समय
+ * @alm: holds alarm date and time
  *
- * This function पढ़ो alarm समय and date. On success it will वापस 0
- * otherwise -ve error is वापसed.
+ * This function read alarm time and date. On success it will return 0
+ * otherwise -ve error is returned.
  */
-अटल पूर्णांक spear_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा spear_rtc_config *config = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक समय, date;
+static int spear_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct spear_rtc_config *config = dev_get_drvdata(dev);
+	unsigned int time, date;
 
-	rtc_रुको_not_busy(config);
+	rtc_wait_not_busy(config);
 
-	समय = पढ़ोl(config->ioaddr + ALARM_TIME_REG);
-	date = पढ़ोl(config->ioaddr + ALARM_DATE_REG);
-	alm->समय.पंचांग_sec = (समय >> SECOND_SHIFT) & SECOND_MASK;
-	alm->समय.पंचांग_min = (समय >> MINUTE_SHIFT) & MIN_MASK;
-	alm->समय.पंचांग_hour = (समय >> HOUR_SHIFT) & HOUR_MASK;
-	alm->समय.पंचांग_mday = (date >> MDAY_SHIFT) & DAY_MASK;
-	alm->समय.पंचांग_mon = (date >> MONTH_SHIFT) & MONTH_MASK;
-	alm->समय.पंचांग_year = (date >> YEAR_SHIFT) & YEAR_MASK;
+	time = readl(config->ioaddr + ALARM_TIME_REG);
+	date = readl(config->ioaddr + ALARM_DATE_REG);
+	alm->time.tm_sec = (time >> SECOND_SHIFT) & SECOND_MASK;
+	alm->time.tm_min = (time >> MINUTE_SHIFT) & MIN_MASK;
+	alm->time.tm_hour = (time >> HOUR_SHIFT) & HOUR_MASK;
+	alm->time.tm_mday = (date >> MDAY_SHIFT) & DAY_MASK;
+	alm->time.tm_mon = (date >> MONTH_SHIFT) & MONTH_MASK;
+	alm->time.tm_year = (date >> YEAR_SHIFT) & YEAR_MASK;
 
-	bcd2पंचांग(&alm->समय);
-	alm->enabled = पढ़ोl(config->ioaddr + CTRL_REG) & INT_ENABLE;
+	bcd2tm(&alm->time);
+	alm->enabled = readl(config->ioaddr + CTRL_REG) & INT_ENABLE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * spear_rtc_set_alarm - set the alarm समय
+ * spear_rtc_set_alarm - set the alarm time
  * @dev: rtc device in use
- * @alm: holds alarm date and समय
+ * @alm: holds alarm date and time
  *
- * This function set alarm समय and date. On success it will वापस 0
- * otherwise -ve error is वापसed.
+ * This function set alarm time and date. On success it will return 0
+ * otherwise -ve error is returned.
  */
-अटल पूर्णांक spear_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alm)
-अणु
-	काष्ठा spear_rtc_config *config = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक समय, date;
-	पूर्णांक err;
+static int spear_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
+{
+	struct spear_rtc_config *config = dev_get_drvdata(dev);
+	unsigned int time, date;
+	int err;
 
-	पंचांग2bcd(&alm->समय);
+	tm2bcd(&alm->time);
 
-	rtc_रुको_not_busy(config);
+	rtc_wait_not_busy(config);
 
-	समय = (alm->समय.पंचांग_sec << SECOND_SHIFT) | (alm->समय.पंचांग_min <<
-			MINUTE_SHIFT) |	(alm->समय.पंचांग_hour << HOUR_SHIFT);
-	date = (alm->समय.पंचांग_mday << MDAY_SHIFT) | (alm->समय.पंचांग_mon <<
-			MONTH_SHIFT) | (alm->समय.पंचांग_year << YEAR_SHIFT);
+	time = (alm->time.tm_sec << SECOND_SHIFT) | (alm->time.tm_min <<
+			MINUTE_SHIFT) |	(alm->time.tm_hour << HOUR_SHIFT);
+	date = (alm->time.tm_mday << MDAY_SHIFT) | (alm->time.tm_mon <<
+			MONTH_SHIFT) | (alm->time.tm_year << YEAR_SHIFT);
 
-	ग_लिखोl(समय, config->ioaddr + ALARM_TIME_REG);
-	ग_लिखोl(date, config->ioaddr + ALARM_DATE_REG);
-	err = is_ग_लिखो_complete(config);
-	अगर (err < 0)
-		वापस err;
+	writel(time, config->ioaddr + ALARM_TIME_REG);
+	writel(date, config->ioaddr + ALARM_DATE_REG);
+	err = is_write_complete(config);
+	if (err < 0)
+		return err;
 
-	अगर (alm->enabled)
-		spear_rtc_enable_पूर्णांकerrupt(config);
-	अन्यथा
-		spear_rtc_disable_पूर्णांकerrupt(config);
+	if (alm->enabled)
+		spear_rtc_enable_interrupt(config);
+	else
+		spear_rtc_disable_interrupt(config);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spear_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा spear_rtc_config *config = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+static int spear_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct spear_rtc_config *config = dev_get_drvdata(dev);
+	int ret = 0;
 
-	spear_rtc_clear_पूर्णांकerrupt(config);
+	spear_rtc_clear_interrupt(config);
 
-	चयन (enabled) अणु
-	हाल 0:
+	switch (enabled) {
+	case 0:
 		/* alarm off */
-		spear_rtc_disable_पूर्णांकerrupt(config);
-		अवरोध;
-	हाल 1:
+		spear_rtc_disable_interrupt(config);
+		break;
+	case 1:
 		/* alarm on */
-		spear_rtc_enable_पूर्णांकerrupt(config);
-		अवरोध;
-	शेष:
+		spear_rtc_enable_interrupt(config);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops spear_rtc_ops = अणु
-	.पढ़ो_समय = spear_rtc_पढ़ो_समय,
-	.set_समय = spear_rtc_set_समय,
-	.पढ़ो_alarm = spear_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops spear_rtc_ops = {
+	.read_time = spear_rtc_read_time,
+	.set_time = spear_rtc_set_time,
+	.read_alarm = spear_rtc_read_alarm,
 	.set_alarm = spear_rtc_set_alarm,
 	.alarm_irq_enable = spear_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक spear_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spear_rtc_config *config;
-	पूर्णांक status = 0;
-	पूर्णांक irq;
+static int spear_rtc_probe(struct platform_device *pdev)
+{
+	struct spear_rtc_config *config;
+	int status = 0;
+	int irq;
 
-	config = devm_kzalloc(&pdev->dev, माप(*config), GFP_KERNEL);
-	अगर (!config)
-		वापस -ENOMEM;
+	config = devm_kzalloc(&pdev->dev, sizeof(*config), GFP_KERNEL);
+	if (!config)
+		return -ENOMEM;
 
 	/* alarm irqs */
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	status = devm_request_irq(&pdev->dev, irq, spear_rtc_irq, 0, pdev->name,
 			config);
-	अगर (status) अणु
+	if (status) {
 		dev_err(&pdev->dev, "Alarm interrupt IRQ%d already claimed\n",
 				irq);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
-	config->ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(config->ioaddr))
-		वापस PTR_ERR(config->ioaddr);
+	config->ioaddr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(config->ioaddr))
+		return PTR_ERR(config->ioaddr);
 
-	config->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(config->clk))
-		वापस PTR_ERR(config->clk);
+	config->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(config->clk))
+		return PTR_ERR(config->clk);
 
 	status = clk_prepare_enable(config->clk);
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
 	spin_lock_init(&config->lock);
-	platक्रमm_set_drvdata(pdev, config);
+	platform_set_drvdata(pdev, config);
 
-	config->rtc = devm_rtc_device_रेजिस्टर(&pdev->dev, pdev->name,
+	config->rtc = devm_rtc_device_register(&pdev->dev, pdev->name,
 					&spear_rtc_ops, THIS_MODULE);
-	अगर (IS_ERR(config->rtc)) अणु
+	if (IS_ERR(config->rtc)) {
 		dev_err(&pdev->dev, "can't register RTC device, err %ld\n",
 				PTR_ERR(config->rtc));
 		status = PTR_ERR(config->rtc);
-		जाओ err_disable_घड़ी;
-	पूर्ण
+		goto err_disable_clock;
+	}
 
 	config->rtc->uie_unsupported = 1;
 
-	अगर (!device_can_wakeup(&pdev->dev))
+	if (!device_can_wakeup(&pdev->dev))
 		device_init_wakeup(&pdev->dev, 1);
 
-	वापस 0;
+	return 0;
 
-err_disable_घड़ी:
+err_disable_clock:
 	clk_disable_unprepare(config->clk);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक spear_rtc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spear_rtc_config *config = platक्रमm_get_drvdata(pdev);
+static int spear_rtc_remove(struct platform_device *pdev)
+{
+	struct spear_rtc_config *config = platform_get_drvdata(pdev);
 
-	spear_rtc_disable_पूर्णांकerrupt(config);
+	spear_rtc_disable_interrupt(config);
 	clk_disable_unprepare(config->clk);
 	device_init_wakeup(&pdev->dev, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक spear_rtc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा spear_rtc_config *config = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq;
+#ifdef CONFIG_PM_SLEEP
+static int spear_rtc_suspend(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct spear_rtc_config *config = platform_get_drvdata(pdev);
+	int irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (!enable_irq_wake(irq))
+	irq = platform_get_irq(pdev, 0);
+	if (device_may_wakeup(&pdev->dev)) {
+		if (!enable_irq_wake(irq))
 			config->irq_wake = 1;
-	पूर्ण अन्यथा अणु
-		spear_rtc_disable_पूर्णांकerrupt(config);
+	} else {
+		spear_rtc_disable_interrupt(config);
 		clk_disable(config->clk);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spear_rtc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा spear_rtc_config *config = platक्रमm_get_drvdata(pdev);
-	पूर्णांक irq;
+static int spear_rtc_resume(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct spear_rtc_config *config = platform_get_drvdata(pdev);
+	int irq;
 
-	irq = platक्रमm_get_irq(pdev, 0);
+	irq = platform_get_irq(pdev, 0);
 
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (config->irq_wake) अणु
+	if (device_may_wakeup(&pdev->dev)) {
+		if (config->irq_wake) {
 			disable_irq_wake(irq);
 			config->irq_wake = 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		clk_enable(config->clk);
-		spear_rtc_enable_पूर्णांकerrupt(config);
-	पूर्ण
+		spear_rtc_enable_interrupt(config);
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(spear_rtc_pm_ops, spear_rtc_suspend, spear_rtc_resume);
+static SIMPLE_DEV_PM_OPS(spear_rtc_pm_ops, spear_rtc_suspend, spear_rtc_resume);
 
-अटल व्योम spear_rtc_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spear_rtc_config *config = platक्रमm_get_drvdata(pdev);
+static void spear_rtc_shutdown(struct platform_device *pdev)
+{
+	struct spear_rtc_config *config = platform_get_drvdata(pdev);
 
-	spear_rtc_disable_पूर्णांकerrupt(config);
+	spear_rtc_disable_interrupt(config);
 	clk_disable(config->clk);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id spear_rtc_id_table[] = अणु
-	अणु .compatible = "st,spear600-rtc" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id spear_rtc_id_table[] = {
+	{ .compatible = "st,spear600-rtc" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, spear_rtc_id_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver spear_rtc_driver = अणु
+static struct platform_driver spear_rtc_driver = {
 	.probe = spear_rtc_probe,
-	.हटाओ = spear_rtc_हटाओ,
-	.shutकरोwn = spear_rtc_shutकरोwn,
-	.driver = अणु
+	.remove = spear_rtc_remove,
+	.shutdown = spear_rtc_shutdown,
+	.driver = {
 		.name = "rtc-spear",
 		.pm = &spear_rtc_pm_ops,
 		.of_match_table = of_match_ptr(spear_rtc_id_table),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(spear_rtc_driver);
+module_platform_driver(spear_rtc_driver);
 
 MODULE_ALIAS("platform:rtc-spear");
 MODULE_AUTHOR("Rajeev Kumar <rajeev-dlh.kumar@st.com>");

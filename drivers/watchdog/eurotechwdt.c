@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *	Eurotech CPU-1220/1410/1420 on board WDT driver
  *
  *	(c) Copyright 2001 Ascensit <support@ascensit.com>
- *	(c) Copyright 2001 Roकरोlfo Giometti <giometti@ascensit.com>
+ *	(c) Copyright 2001 Rodolfo Giometti <giometti@ascensit.com>
  *	(c) Copyright 2002 Rob Radez <rob@osinvestor.com>
  *
  *	Based on wdt.c.
@@ -14,67 +13,67 @@
  *						All Rights Reserved.
  *
  *	Neither Alan Cox nor CymruNet Ltd. admit liability nor provide
- *	warranty क्रम any of this software. This material is provided
- *	"AS-IS" and at no अक्षरge.
+ *	warranty for any of this software. This material is provided
+ *	"AS-IS" and at no charge.
  *
  *	(c) Copyright 1995    Alan Cox <alan@lxorguk.ukuu.org.uk>*
  */
 
 /* Changelog:
  *
- * 2001 - Roकरोlfo Giometti
+ * 2001 - Rodolfo Giometti
  *	Initial release
  *
  * 2002/04/25 - Rob Radez
- *	clean up #समावेशs
+ *	clean up #includes
  *	clean up locking
  *	make __setup param unique
- *	proper options in watchकरोg_info
+ *	proper options in watchdog_info
  *	add WDIOC_GETSTATUS and WDIOC_SETOPTIONS ioctls
- *	add expect_बंद support
+ *	add expect_close support
  *
  * 2002.05.30 - Joel Becker <joel.becker@oracle.com>
  *	Added Matt Domsch's nowayout module option.
  */
 
 /*
- *	The eurotech CPU-1220/1410/1420's watchकरोg is a part
+ *	The eurotech CPU-1220/1410/1420's watchdog is a part
  *	of the on-board SUPER I/O device SMSC FDC 37B782.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/types.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/fs.h>
+#include <linux/ioport.h>
+#include <linux/notifier.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/uaccess.h>
 
 
-अटल अचिन्हित दीर्घ eurwdt_is_खोलो;
-अटल पूर्णांक eurwdt_समयout;
-अटल अक्षर eur_expect_बंद;
-अटल DEFINE_SPINLOCK(eurwdt_lock);
+static unsigned long eurwdt_is_open;
+static int eurwdt_timeout;
+static char eur_expect_close;
+static DEFINE_SPINLOCK(eurwdt_lock);
 
 /*
- * You must set these - there is no sane way to probe क्रम this board.
+ * You must set these - there is no sane way to probe for this board.
  */
 
-अटल पूर्णांक io = 0x3f0;
-अटल पूर्णांक irq = 10;
-अटल अक्षर *ev = "int";
+static int io = 0x3f0;
+static int irq = 10;
+static char *ev = "int";
 
-#घोषणा WDT_TIMEOUT		60                /* 1 minute */
+#define WDT_TIMEOUT		60                /* 1 minute */
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
@@ -84,21 +83,21 @@ MODULE_PARM_DESC(nowayout,
  * Some symbolic names
  */
 
-#घोषणा WDT_CTRL_REG		0x30
-#घोषणा WDT_OUTPIN_CFG		0xe2
-#घोषणा WDT_EVENT_INT		0x00
-#घोषणा WDT_EVENT_REBOOT	0x08
-#घोषणा WDT_UNIT_SEL		0xf1
-#घोषणा WDT_UNIT_SECS		0x80
-#घोषणा WDT_TIMEOUT_VAL		0xf2
-#घोषणा WDT_TIMER_CFG		0xf3
+#define WDT_CTRL_REG		0x30
+#define WDT_OUTPIN_CFG		0xe2
+#define WDT_EVENT_INT		0x00
+#define WDT_EVENT_REBOOT	0x08
+#define WDT_UNIT_SEL		0xf1
+#define WDT_UNIT_SECS		0x80
+#define WDT_TIMEOUT_VAL		0xf2
+#define WDT_TIMER_CFG		0xf3
 
 
-module_param_hw(io, पूर्णांक, ioport, 0);
+module_param_hw(io, int, ioport, 0);
 MODULE_PARM_DESC(io, "Eurotech WDT io port (default=0x3f0)");
-module_param_hw(irq, पूर्णांक, irq, 0);
+module_param_hw(irq, int, irq, 0);
 MODULE_PARM_DESC(irq, "Eurotech WDT irq (default=10)");
-module_param(ev, अक्षरp, 0);
+module_param(ev, charp, 0);
 MODULE_PARM_DESC(ev, "Eurotech WDT event type (default is `int')");
 
 
@@ -106,371 +105,371 @@ MODULE_PARM_DESC(ev, "Eurotech WDT event type (default is `int')");
  * Programming support
  */
 
-अटल अंतरभूत व्योम eurwdt_ग_लिखो_reg(u8 index, u8 data)
-अणु
+static inline void eurwdt_write_reg(u8 index, u8 data)
+{
 	outb(index, io);
 	outb(data, io+1);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम eurwdt_lock_chip(व्योम)
-अणु
+static inline void eurwdt_lock_chip(void)
+{
 	outb(0xaa, io);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम eurwdt_unlock_chip(व्योम)
-अणु
+static inline void eurwdt_unlock_chip(void)
+{
 	outb(0x55, io);
-	eurwdt_ग_लिखो_reg(0x07, 0x08);	/* set the logical device */
-पूर्ण
+	eurwdt_write_reg(0x07, 0x08);	/* set the logical device */
+}
 
-अटल अंतरभूत व्योम eurwdt_set_समयout(पूर्णांक समयout)
-अणु
-	eurwdt_ग_लिखो_reg(WDT_TIMEOUT_VAL, (u8) समयout);
-पूर्ण
+static inline void eurwdt_set_timeout(int timeout)
+{
+	eurwdt_write_reg(WDT_TIMEOUT_VAL, (u8) timeout);
+}
 
-अटल अंतरभूत व्योम eurwdt_disable_समयr(व्योम)
-अणु
-	eurwdt_set_समयout(0);
-पूर्ण
+static inline void eurwdt_disable_timer(void)
+{
+	eurwdt_set_timeout(0);
+}
 
-अटल व्योम eurwdt_activate_समयr(व्योम)
-अणु
-	eurwdt_disable_समयr();
-	eurwdt_ग_लिखो_reg(WDT_CTRL_REG, 0x01);	/* activate the WDT */
-	eurwdt_ग_लिखो_reg(WDT_OUTPIN_CFG,
-		!म_भेद("int", ev) ? WDT_EVENT_INT : WDT_EVENT_REBOOT);
+static void eurwdt_activate_timer(void)
+{
+	eurwdt_disable_timer();
+	eurwdt_write_reg(WDT_CTRL_REG, 0x01);	/* activate the WDT */
+	eurwdt_write_reg(WDT_OUTPIN_CFG,
+		!strcmp("int", ev) ? WDT_EVENT_INT : WDT_EVENT_REBOOT);
 
-	/* Setting पूर्णांकerrupt line */
-	अगर (irq == 2 || irq > 15 || irq < 0) अणु
+	/* Setting interrupt line */
+	if (irq == 2 || irq > 15 || irq < 0) {
 		pr_err("invalid irq number\n");
-		irq = 0;	/* अगर invalid we disable पूर्णांकerrupt */
-	पूर्ण
-	अगर (irq == 0)
+		irq = 0;	/* if invalid we disable interrupt */
+	}
+	if (irq == 0)
 		pr_info("interrupt disabled\n");
 
-	eurwdt_ग_लिखो_reg(WDT_TIMER_CFG, irq << 4);
+	eurwdt_write_reg(WDT_TIMER_CFG, irq << 4);
 
-	eurwdt_ग_लिखो_reg(WDT_UNIT_SEL, WDT_UNIT_SECS);	/* we use seconds */
-	eurwdt_set_समयout(0);	/* the शेष समयout */
-पूर्ण
+	eurwdt_write_reg(WDT_UNIT_SEL, WDT_UNIT_SECS);	/* we use seconds */
+	eurwdt_set_timeout(0);	/* the default timeout */
+}
 
 
 /*
  * Kernel methods.
  */
 
-अटल irqवापस_t eurwdt_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t eurwdt_interrupt(int irq, void *dev_id)
+{
 	pr_crit("timeout WDT timeout\n");
 
-#अगर_घोषित ONLY_TESTING
+#ifdef ONLY_TESTING
 	pr_crit("Would Reboot\n");
-#अन्यथा
+#else
 	pr_crit("Initiating system reboot\n");
 	emergency_restart();
-#पूर्ण_अगर
-	वापस IRQ_HANDLED;
-पूर्ण
+#endif
+	return IRQ_HANDLED;
+}
 
 
 /**
  * eurwdt_ping:
  *
- * Reload counter one with the watchकरोg समयout.
+ * Reload counter one with the watchdog timeout.
  */
 
-अटल व्योम eurwdt_ping(व्योम)
-अणु
-	/* Write the watchकरोg शेष value */
-	eurwdt_set_समयout(eurwdt_समयout);
-पूर्ण
+static void eurwdt_ping(void)
+{
+	/* Write the watchdog default value */
+	eurwdt_set_timeout(eurwdt_timeout);
+}
 
 /**
- * eurwdt_ग_लिखो:
- * @file: file handle to the watchकरोg
- * @buf: buffer to ग_लिखो (unused as data करोes not matter here
+ * eurwdt_write:
+ * @file: file handle to the watchdog
+ * @buf: buffer to write (unused as data does not matter here
  * @count: count of bytes
- * @ppos: poपूर्णांकer to the position to ग_लिखो. No seeks allowed
+ * @ppos: pointer to the position to write. No seeks allowed
  *
- * A ग_लिखो to a watchकरोg device is defined as a keepalive संकेत. Any
- * ग_लिखो of data will करो, as we we करोn't define content meaning.
+ * A write to a watchdog device is defined as a keepalive signal. Any
+ * write of data will do, as we we don't define content meaning.
  */
 
-अटल sमाप_प्रकार eurwdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-माप_प्रकार count, loff_t *ppos)
-अणु
-	अगर (count) अणु
-		अगर (!nowayout) अणु
-			माप_प्रकार i;
+static ssize_t eurwdt_write(struct file *file, const char __user *buf,
+size_t count, loff_t *ppos)
+{
+	if (count) {
+		if (!nowayout) {
+			size_t i;
 
-			eur_expect_बंद = 0;
+			eur_expect_close = 0;
 
-			क्रम (i = 0; i != count; i++) अणु
-				अक्षर c;
-				अगर (get_user(c, buf + i))
-					वापस -EFAULT;
-				अगर (c == 'V')
-					eur_expect_बंद = 42;
-			पूर्ण
-		पूर्ण
+			for (i = 0; i != count; i++) {
+				char c;
+				if (get_user(c, buf + i))
+					return -EFAULT;
+				if (c == 'V')
+					eur_expect_close = 42;
+			}
+		}
 		spin_lock(&eurwdt_lock);
-		eurwdt_ping();	/* the शेष समयout */
+		eurwdt_ping();	/* the default timeout */
 		spin_unlock(&eurwdt_lock);
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
 /**
  * eurwdt_ioctl:
  * @file: file handle to the device
- * @cmd: watchकरोg command
- * @arg: argument poपूर्णांकer
+ * @cmd: watchdog command
+ * @arg: argument pointer
  *
- * The watchकरोg API defines a common set of functions क्रम all watchकरोgs
+ * The watchdog API defines a common set of functions for all watchdogs
  * according to their available features.
  */
 
-अटल दीर्घ eurwdt_ioctl(काष्ठा file *file,
-					अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक __user *p = argp;
-	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
+static long eurwdt_ioctl(struct file *file,
+					unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
+	static const struct watchdog_info ident = {
 		.options	  = WDIOF_KEEPALIVEPING | WDIOF_SETTIMEOUT
 							| WDIOF_MAGICCLOSE,
 		.firmware_version = 1,
 		.identity	  = "WDT Eurotech CPU-1220/1410",
-	पूर्ण;
+	};
 
-	पूर्णांक समय;
-	पूर्णांक options, retval = -EINVAL;
+	int time;
+	int options, retval = -EINVAL;
 
-	चयन (cmd) अणु
-	हाल WDIOC_GETSUPPORT:
-		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
+	switch (cmd) {
+	case WDIOC_GETSUPPORT:
+		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
 
-	हाल WDIOC_GETSTATUS:
-	हाल WDIOC_GETBOOTSTATUS:
-		वापस put_user(0, p);
+	case WDIOC_GETSTATUS:
+	case WDIOC_GETBOOTSTATUS:
+		return put_user(0, p);
 
-	हाल WDIOC_SETOPTIONS:
-		अगर (get_user(options, p))
-			वापस -EFAULT;
+	case WDIOC_SETOPTIONS:
+		if (get_user(options, p))
+			return -EFAULT;
 		spin_lock(&eurwdt_lock);
-		अगर (options & WDIOS_DISABLECARD) अणु
-			eurwdt_disable_समयr();
+		if (options & WDIOS_DISABLECARD) {
+			eurwdt_disable_timer();
 			retval = 0;
-		पूर्ण
-		अगर (options & WDIOS_ENABLECARD) अणु
-			eurwdt_activate_समयr();
+		}
+		if (options & WDIOS_ENABLECARD) {
+			eurwdt_activate_timer();
 			eurwdt_ping();
 			retval = 0;
-		पूर्ण
+		}
 		spin_unlock(&eurwdt_lock);
-		वापस retval;
+		return retval;
 
-	हाल WDIOC_KEEPALIVE:
+	case WDIOC_KEEPALIVE:
 		spin_lock(&eurwdt_lock);
 		eurwdt_ping();
 		spin_unlock(&eurwdt_lock);
-		वापस 0;
+		return 0;
 
-	हाल WDIOC_SETTIMEOUT:
-		अगर (copy_from_user(&समय, p, माप(पूर्णांक)))
-			वापस -EFAULT;
+	case WDIOC_SETTIMEOUT:
+		if (copy_from_user(&time, p, sizeof(int)))
+			return -EFAULT;
 
 		/* Sanity check */
-		अगर (समय < 0 || समय > 255)
-			वापस -EINVAL;
+		if (time < 0 || time > 255)
+			return -EINVAL;
 
 		spin_lock(&eurwdt_lock);
-		eurwdt_समयout = समय;
-		eurwdt_set_समयout(समय);
+		eurwdt_timeout = time;
+		eurwdt_set_timeout(time);
 		spin_unlock(&eurwdt_lock);
 		fallthrough;
 
-	हाल WDIOC_GETTIMEOUT:
-		वापस put_user(eurwdt_समयout, p);
+	case WDIOC_GETTIMEOUT:
+		return put_user(eurwdt_timeout, p);
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTTY;
+	}
+}
 
 /**
- * eurwdt_खोलो:
+ * eurwdt_open:
  * @inode: inode of device
  * @file: file handle to device
  *
- * The misc device has been खोलोed. The watchकरोg device is single
- * खोलो and on खोलोing we load the counter.
+ * The misc device has been opened. The watchdog device is single
+ * open and on opening we load the counter.
  */
 
-अटल पूर्णांक eurwdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (test_and_set_bit(0, &eurwdt_is_खोलो))
-		वापस -EBUSY;
-	eurwdt_समयout = WDT_TIMEOUT;	/* initial समयout */
+static int eurwdt_open(struct inode *inode, struct file *file)
+{
+	if (test_and_set_bit(0, &eurwdt_is_open))
+		return -EBUSY;
+	eurwdt_timeout = WDT_TIMEOUT;	/* initial timeout */
 	/* Activate the WDT */
-	eurwdt_activate_समयr();
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	eurwdt_activate_timer();
+	return stream_open(inode, file);
+}
 
 /**
  * eurwdt_release:
  * @inode: inode to board
  * @file: file handle to board
  *
- * The watchकरोg has a configurable API. There is a religious dispute
- * between people who want their watchकरोg to be able to shut करोwn and
- * those who want to be sure अगर the watchकरोg manager dies the machine
- * reboots. In the क्रमmer हाल we disable the counters, in the latter
- * हाल you have to खोलो it again very soon.
+ * The watchdog has a configurable API. There is a religious dispute
+ * between people who want their watchdog to be able to shut down and
+ * those who want to be sure if the watchdog manager dies the machine
+ * reboots. In the former case we disable the counters, in the latter
+ * case you have to open it again very soon.
  */
 
-अटल पूर्णांक eurwdt_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अगर (eur_expect_बंद == 42)
-		eurwdt_disable_समयr();
-	अन्यथा अणु
+static int eurwdt_release(struct inode *inode, struct file *file)
+{
+	if (eur_expect_close == 42)
+		eurwdt_disable_timer();
+	else {
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		eurwdt_ping();
-	पूर्ण
-	clear_bit(0, &eurwdt_is_खोलो);
-	eur_expect_बंद = 0;
-	वापस 0;
-पूर्ण
+	}
+	clear_bit(0, &eurwdt_is_open);
+	eur_expect_close = 0;
+	return 0;
+}
 
 /**
- * eurwdt_notअगरy_sys:
- * @this: our notअगरier block
+ * eurwdt_notify_sys:
+ * @this: our notifier block
  * @code: the event being reported
  * @unused: unused
  *
- * Our notअगरier is called on प्रणाली shutकरोwns. We want to turn the card
+ * Our notifier is called on system shutdowns. We want to turn the card
  * off at reboot otherwise the machine will reboot again during memory
  * test or worse yet during the following fsck. This would suck, in fact
- * trust me - अगर it happens it करोes suck.
+ * trust me - if it happens it does suck.
  */
 
-अटल पूर्णांक eurwdt_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
-	व्योम *unused)
-अणु
-	अगर (code == SYS_DOWN || code == SYS_HALT)
-		eurwdt_disable_समयr();	/* Turn the card off */
+static int eurwdt_notify_sys(struct notifier_block *this, unsigned long code,
+	void *unused)
+{
+	if (code == SYS_DOWN || code == SYS_HALT)
+		eurwdt_disable_timer();	/* Turn the card off */
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*
  * Kernel Interfaces
  */
 
 
-अटल स्थिर काष्ठा file_operations eurwdt_fops = अणु
+static const struct file_operations eurwdt_fops = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.ग_लिखो		= eurwdt_ग_लिखो,
+	.write		= eurwdt_write,
 	.unlocked_ioctl	= eurwdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= eurwdt_खोलो,
+	.open		= eurwdt_open,
 	.release	= eurwdt_release,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice eurwdt_miscdev = अणु
+static struct miscdevice eurwdt_miscdev = {
 	.minor	= WATCHDOG_MINOR,
 	.name	= "watchdog",
 	.fops	= &eurwdt_fops,
-पूर्ण;
+};
 
 /*
- * The WDT card needs to learn about soft shutकरोwns in order to
- * turn the समयbomb रेजिस्टरs off.
+ * The WDT card needs to learn about soft shutdowns in order to
+ * turn the timebomb registers off.
  */
 
-अटल काष्ठा notअगरier_block eurwdt_notअगरier = अणु
-	.notअगरier_call = eurwdt_notअगरy_sys,
-पूर्ण;
+static struct notifier_block eurwdt_notifier = {
+	.notifier_call = eurwdt_notify_sys,
+};
 
 /**
  * cleanup_module:
  *
- * Unload the watchकरोg. You cannot करो this with any file handles खोलो.
- * If your watchकरोg is set to जारी ticking on बंद and you unload
- * it, well it keeps ticking. We won't get the पूर्णांकerrupt but the board
+ * Unload the watchdog. You cannot do this with any file handles open.
+ * If your watchdog is set to continue ticking on close and you unload
+ * it, well it keeps ticking. We won't get the interrupt but the board
  * will not touch PC memory so all is fine. You just have to load a new
  * module in 60 seconds or reboot.
  */
 
-अटल व्योम __निकास eurwdt_निकास(व्योम)
-अणु
+static void __exit eurwdt_exit(void)
+{
 	eurwdt_lock_chip();
 
-	misc_deरेजिस्टर(&eurwdt_miscdev);
+	misc_deregister(&eurwdt_miscdev);
 
-	unरेजिस्टर_reboot_notअगरier(&eurwdt_notअगरier);
+	unregister_reboot_notifier(&eurwdt_notifier);
 	release_region(io, 2);
-	मुक्त_irq(irq, शून्य);
-पूर्ण
+	free_irq(irq, NULL);
+}
 
 /**
  * eurwdt_init:
  *
- * Set up the WDT watchकरोg board. After grabbing the resources
+ * Set up the WDT watchdog board. After grabbing the resources
  * we require we need also to unlock the device.
- * The खोलो() function will actually kick the board off.
+ * The open() function will actually kick the board off.
  */
 
-अटल पूर्णांक __init eurwdt_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init eurwdt_init(void)
+{
+	int ret;
 
-	ret = request_irq(irq, eurwdt_पूर्णांकerrupt, 0, "eurwdt", शून्य);
-	अगर (ret) अणु
+	ret = request_irq(irq, eurwdt_interrupt, 0, "eurwdt", NULL);
+	if (ret) {
 		pr_err("IRQ %d is not free\n", irq);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!request_region(io, 2, "eurwdt")) अणु
+	if (!request_region(io, 2, "eurwdt")) {
 		pr_err("IO %X is not free\n", io);
 		ret = -EBUSY;
-		जाओ outirq;
-	पूर्ण
+		goto outirq;
+	}
 
-	ret = रेजिस्टर_reboot_notअगरier(&eurwdt_notअगरier);
-	अगर (ret) अणु
+	ret = register_reboot_notifier(&eurwdt_notifier);
+	if (ret) {
 		pr_err("can't register reboot notifier (err=%d)\n", ret);
-		जाओ outreg;
-	पूर्ण
+		goto outreg;
+	}
 
-	ret = misc_रेजिस्टर(&eurwdt_miscdev);
-	अगर (ret) अणु
+	ret = misc_register(&eurwdt_miscdev);
+	if (ret) {
 		pr_err("can't misc_register on minor=%d\n", WATCHDOG_MINOR);
-		जाओ outreboot;
-	पूर्ण
+		goto outreboot;
+	}
 
 	eurwdt_unlock_chip();
 
 	ret = 0;
 	pr_info("Eurotech WDT driver 0.01 at %X (Interrupt %d) - timeout event: %s\n",
-		io, irq, (!म_भेद("int", ev) ? "int" : "reboot"));
+		io, irq, (!strcmp("int", ev) ? "int" : "reboot"));
 
 out:
-	वापस ret;
+	return ret;
 
 outreboot:
-	unरेजिस्टर_reboot_notअगरier(&eurwdt_notअगरier);
+	unregister_reboot_notifier(&eurwdt_notifier);
 
 outreg:
 	release_region(io, 2);
 
 outirq:
-	मुक्त_irq(irq, शून्य);
-	जाओ out;
-पूर्ण
+	free_irq(irq, NULL);
+	goto out;
+}
 
 module_init(eurwdt_init);
-module_निकास(eurwdt_निकास);
+module_exit(eurwdt_exit);
 
 MODULE_AUTHOR("Rodolfo Giometti");
 MODULE_DESCRIPTION("Driver for Eurotech CPU-1220/1410 on board watchdog");

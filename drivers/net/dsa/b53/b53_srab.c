@@ -1,654 +1,653 @@
-<शैली गुरु>
 /*
- * B53 रेजिस्टर access through Switch Register Access Bridge Registers
+ * B53 register access through Switch Register Access Bridge Registers
  *
  * Copyright (C) 2013 Hauke Mehrtens <hauke@hauke-m.de>
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/b53.h>
-#समावेश <linux/of.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/b53.h>
+#include <linux/of.h>
 
-#समावेश "b53_priv.h"
-#समावेश "b53_serdes.h"
+#include "b53_priv.h"
+#include "b53_serdes.h"
 
-/* command and status रेजिस्टर of the SRAB */
-#घोषणा B53_SRAB_CMDSTAT		0x2c
-#घोषणा  B53_SRAB_CMDSTAT_RST		BIT(2)
-#घोषणा  B53_SRAB_CMDSTAT_WRITE		BIT(1)
-#घोषणा  B53_SRAB_CMDSTAT_GORDYN	BIT(0)
-#घोषणा  B53_SRAB_CMDSTAT_PAGE		24
-#घोषणा  B53_SRAB_CMDSTAT_REG		16
+/* command and status register of the SRAB */
+#define B53_SRAB_CMDSTAT		0x2c
+#define  B53_SRAB_CMDSTAT_RST		BIT(2)
+#define  B53_SRAB_CMDSTAT_WRITE		BIT(1)
+#define  B53_SRAB_CMDSTAT_GORDYN	BIT(0)
+#define  B53_SRAB_CMDSTAT_PAGE		24
+#define  B53_SRAB_CMDSTAT_REG		16
 
-/* high order word of ग_लिखो data to चयन registe */
-#घोषणा B53_SRAB_WD_H			0x30
+/* high order word of write data to switch registe */
+#define B53_SRAB_WD_H			0x30
 
-/* low order word of ग_लिखो data to चयन registe */
-#घोषणा B53_SRAB_WD_L			0x34
+/* low order word of write data to switch registe */
+#define B53_SRAB_WD_L			0x34
 
-/* high order word of पढ़ो data from चयन रेजिस्टर */
-#घोषणा B53_SRAB_RD_H			0x38
+/* high order word of read data from switch register */
+#define B53_SRAB_RD_H			0x38
 
-/* low order word of पढ़ो data from चयन रेजिस्टर */
-#घोषणा B53_SRAB_RD_L			0x3c
+/* low order word of read data from switch register */
+#define B53_SRAB_RD_L			0x3c
 
-/* command and status रेजिस्टर of the SRAB */
-#घोषणा B53_SRAB_CTRLS			0x40
-#घोषणा  B53_SRAB_CTRLS_HOST_INTR	BIT(1)
-#घोषणा  B53_SRAB_CTRLS_RCAREQ		BIT(3)
-#घोषणा  B53_SRAB_CTRLS_RCAGNT		BIT(4)
-#घोषणा  B53_SRAB_CTRLS_SW_INIT_DONE	BIT(6)
+/* command and status register of the SRAB */
+#define B53_SRAB_CTRLS			0x40
+#define  B53_SRAB_CTRLS_HOST_INTR	BIT(1)
+#define  B53_SRAB_CTRLS_RCAREQ		BIT(3)
+#define  B53_SRAB_CTRLS_RCAGNT		BIT(4)
+#define  B53_SRAB_CTRLS_SW_INIT_DONE	BIT(6)
 
-/* the रेजिस्टर captures पूर्णांकerrupt pulses from the चयन */
-#घोषणा B53_SRAB_INTR			0x44
-#घोषणा  B53_SRAB_INTR_P(x)		BIT(x)
-#घोषणा  B53_SRAB_SWITCH_PHY		BIT(8)
-#घोषणा  B53_SRAB_1588_SYNC		BIT(9)
-#घोषणा  B53_SRAB_IMP1_SLEEP_TIMER	BIT(10)
-#घोषणा  B53_SRAB_P7_SLEEP_TIMER	BIT(11)
-#घोषणा  B53_SRAB_IMP0_SLEEP_TIMER	BIT(12)
+/* the register captures interrupt pulses from the switch */
+#define B53_SRAB_INTR			0x44
+#define  B53_SRAB_INTR_P(x)		BIT(x)
+#define  B53_SRAB_SWITCH_PHY		BIT(8)
+#define  B53_SRAB_1588_SYNC		BIT(9)
+#define  B53_SRAB_IMP1_SLEEP_TIMER	BIT(10)
+#define  B53_SRAB_P7_SLEEP_TIMER	BIT(11)
+#define  B53_SRAB_IMP0_SLEEP_TIMER	BIT(12)
 
-/* Port mux configuration रेजिस्टरs */
-#घोषणा B53_MUX_CONFIG_P5		0x00
-#घोषणा  MUX_CONFIG_SGMII		0
-#घोषणा  MUX_CONFIG_MII_LITE		1
-#घोषणा  MUX_CONFIG_RGMII		2
-#घोषणा  MUX_CONFIG_GMII		3
-#घोषणा  MUX_CONFIG_GPHY		4
-#घोषणा  MUX_CONFIG_INTERNAL		5
-#घोषणा  MUX_CONFIG_MASK		0x7
-#घोषणा B53_MUX_CONFIG_P4		0x04
+/* Port mux configuration registers */
+#define B53_MUX_CONFIG_P5		0x00
+#define  MUX_CONFIG_SGMII		0
+#define  MUX_CONFIG_MII_LITE		1
+#define  MUX_CONFIG_RGMII		2
+#define  MUX_CONFIG_GMII		3
+#define  MUX_CONFIG_GPHY		4
+#define  MUX_CONFIG_INTERNAL		5
+#define  MUX_CONFIG_MASK		0x7
+#define B53_MUX_CONFIG_P4		0x04
 
-काष्ठा b53_srab_port_priv अणु
-	पूर्णांक irq;
+struct b53_srab_port_priv {
+	int irq;
 	bool irq_enabled;
-	काष्ठा b53_device *dev;
-	अचिन्हित पूर्णांक num;
-	phy_पूर्णांकerface_t mode;
-पूर्ण;
+	struct b53_device *dev;
+	unsigned int num;
+	phy_interface_t mode;
+};
 
-काष्ठा b53_srab_priv अणु
-	व्योम __iomem *regs;
-	व्योम __iomem *mux_config;
-	काष्ठा b53_srab_port_priv port_पूर्णांकrs[B53_N_PORTS];
-पूर्ण;
+struct b53_srab_priv {
+	void __iomem *regs;
+	void __iomem *mux_config;
+	struct b53_srab_port_priv port_intrs[B53_N_PORTS];
+};
 
-अटल पूर्णांक b53_srab_request_grant(काष्ठा b53_device *dev)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_request_grant(struct b53_device *dev)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
 	u32 ctrls;
-	पूर्णांक i;
+	int i;
 
-	ctrls = पढ़ोl(regs + B53_SRAB_CTRLS);
+	ctrls = readl(regs + B53_SRAB_CTRLS);
 	ctrls |= B53_SRAB_CTRLS_RCAREQ;
-	ग_लिखोl(ctrls, regs + B53_SRAB_CTRLS);
+	writel(ctrls, regs + B53_SRAB_CTRLS);
 
-	क्रम (i = 0; i < 20; i++) अणु
-		ctrls = पढ़ोl(regs + B53_SRAB_CTRLS);
-		अगर (ctrls & B53_SRAB_CTRLS_RCAGNT)
-			अवरोध;
+	for (i = 0; i < 20; i++) {
+		ctrls = readl(regs + B53_SRAB_CTRLS);
+		if (ctrls & B53_SRAB_CTRLS_RCAGNT)
+			break;
 		usleep_range(10, 100);
-	पूर्ण
-	अगर (WARN_ON(i == 5))
-		वापस -EIO;
+	}
+	if (WARN_ON(i == 5))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम b53_srab_release_grant(काष्ठा b53_device *dev)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static void b53_srab_release_grant(struct b53_device *dev)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
 	u32 ctrls;
 
-	ctrls = पढ़ोl(regs + B53_SRAB_CTRLS);
+	ctrls = readl(regs + B53_SRAB_CTRLS);
 	ctrls &= ~B53_SRAB_CTRLS_RCAREQ;
-	ग_लिखोl(ctrls, regs + B53_SRAB_CTRLS);
-पूर्ण
+	writel(ctrls, regs + B53_SRAB_CTRLS);
+}
 
-अटल पूर्णांक b53_srab_op(काष्ठा b53_device *dev, u8 page, u8 reg, u32 op)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_op(struct b53_device *dev, u8 page, u8 reg, u32 op)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक i;
+	int i;
 	u32 cmdstat;
 
-	/* set रेजिस्टर address */
+	/* set register address */
 	cmdstat = (page << B53_SRAB_CMDSTAT_PAGE) |
 		  (reg << B53_SRAB_CMDSTAT_REG) |
 		  B53_SRAB_CMDSTAT_GORDYN |
 		  op;
-	ग_लिखोl(cmdstat, regs + B53_SRAB_CMDSTAT);
+	writel(cmdstat, regs + B53_SRAB_CMDSTAT);
 
-	/* check अगर operation completed */
-	क्रम (i = 0; i < 5; ++i) अणु
-		cmdstat = पढ़ोl(regs + B53_SRAB_CMDSTAT);
-		अगर (!(cmdstat & B53_SRAB_CMDSTAT_GORDYN))
-			अवरोध;
+	/* check if operation completed */
+	for (i = 0; i < 5; ++i) {
+		cmdstat = readl(regs + B53_SRAB_CMDSTAT);
+		if (!(cmdstat & B53_SRAB_CMDSTAT_GORDYN))
+			break;
 		usleep_range(10, 100);
-	पूर्ण
+	}
 
-	अगर (WARN_ON(i == 5))
-		वापस -EIO;
+	if (WARN_ON(i == 5))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक b53_srab_पढ़ो8(काष्ठा b53_device *dev, u8 page, u8 reg, u8 *val)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_read8(struct b53_device *dev, u8 page, u8 reg, u8 *val)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = b53_srab_op(dev, page, reg, 0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	*val = पढ़ोl(regs + B53_SRAB_RD_L) & 0xff;
+	*val = readl(regs + B53_SRAB_RD_L) & 0xff;
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_पढ़ो16(काष्ठा b53_device *dev, u8 page, u8 reg, u16 *val)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_read16(struct b53_device *dev, u8 page, u8 reg, u16 *val)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = b53_srab_op(dev, page, reg, 0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	*val = पढ़ोl(regs + B53_SRAB_RD_L) & 0xffff;
+	*val = readl(regs + B53_SRAB_RD_L) & 0xffff;
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_पढ़ो32(काष्ठा b53_device *dev, u8 page, u8 reg, u32 *val)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_read32(struct b53_device *dev, u8 page, u8 reg, u32 *val)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = b53_srab_op(dev, page, reg, 0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	*val = पढ़ोl(regs + B53_SRAB_RD_L);
+	*val = readl(regs + B53_SRAB_RD_L);
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_पढ़ो48(काष्ठा b53_device *dev, u8 page, u8 reg, u64 *val)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_read48(struct b53_device *dev, u8 page, u8 reg, u64 *val)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = b53_srab_op(dev, page, reg, 0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	*val = पढ़ोl(regs + B53_SRAB_RD_L);
-	*val += ((u64)पढ़ोl(regs + B53_SRAB_RD_H) & 0xffff) << 32;
+	*val = readl(regs + B53_SRAB_RD_L);
+	*val += ((u64)readl(regs + B53_SRAB_RD_H) & 0xffff) << 32;
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_पढ़ो64(काष्ठा b53_device *dev, u8 page, u8 reg, u64 *val)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_read64(struct b53_device *dev, u8 page, u8 reg, u64 *val)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = b53_srab_op(dev, page, reg, 0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	*val = पढ़ोl(regs + B53_SRAB_RD_L);
-	*val += (u64)पढ़ोl(regs + B53_SRAB_RD_H) << 32;
+	*val = readl(regs + B53_SRAB_RD_L);
+	*val += (u64)readl(regs + B53_SRAB_RD_H) << 32;
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_ग_लिखो8(काष्ठा b53_device *dev, u8 page, u8 reg, u8 value)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_write8(struct b53_device *dev, u8 page, u8 reg, u8 value)
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ग_लिखोl(value, regs + B53_SRAB_WD_L);
+	writel(value, regs + B53_SRAB_WD_L);
 
 	ret = b53_srab_op(dev, page, reg, B53_SRAB_CMDSTAT_WRITE);
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_ग_लिखो16(काष्ठा b53_device *dev, u8 page, u8 reg,
+static int b53_srab_write16(struct b53_device *dev, u8 page, u8 reg,
 			    u16 value)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ग_लिखोl(value, regs + B53_SRAB_WD_L);
+	writel(value, regs + B53_SRAB_WD_L);
 
 	ret = b53_srab_op(dev, page, reg, B53_SRAB_CMDSTAT_WRITE);
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_ग_लिखो32(काष्ठा b53_device *dev, u8 page, u8 reg,
+static int b53_srab_write32(struct b53_device *dev, u8 page, u8 reg,
 			    u32 value)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ग_लिखोl(value, regs + B53_SRAB_WD_L);
+	writel(value, regs + B53_SRAB_WD_L);
 
 	ret = b53_srab_op(dev, page, reg, B53_SRAB_CMDSTAT_WRITE);
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_ग_लिखो48(काष्ठा b53_device *dev, u8 page, u8 reg,
+static int b53_srab_write48(struct b53_device *dev, u8 page, u8 reg,
 			    u64 value)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ग_लिखोl((u32)value, regs + B53_SRAB_WD_L);
-	ग_लिखोl((u16)(value >> 32), regs + B53_SRAB_WD_H);
+	writel((u32)value, regs + B53_SRAB_WD_L);
+	writel((u16)(value >> 32), regs + B53_SRAB_WD_H);
 
 	ret = b53_srab_op(dev, page, reg, B53_SRAB_CMDSTAT_WRITE);
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक b53_srab_ग_लिखो64(काष्ठा b53_device *dev, u8 page, u8 reg,
+static int b53_srab_write64(struct b53_device *dev, u8 page, u8 reg,
 			    u64 value)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
+{
+	struct b53_srab_priv *priv = dev->priv;
 	u8 __iomem *regs = priv->regs;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	ret = b53_srab_request_grant(dev);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	ग_लिखोl((u32)value, regs + B53_SRAB_WD_L);
-	ग_लिखोl((u32)(value >> 32), regs + B53_SRAB_WD_H);
+	writel((u32)value, regs + B53_SRAB_WD_L);
+	writel((u32)(value >> 32), regs + B53_SRAB_WD_H);
 
 	ret = b53_srab_op(dev, page, reg, B53_SRAB_CMDSTAT_WRITE);
 
 err:
 	b53_srab_release_grant(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t b53_srab_port_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा b53_srab_port_priv *port = dev_id;
-	काष्ठा b53_device *dev = port->dev;
+static irqreturn_t b53_srab_port_thread(int irq, void *dev_id)
+{
+	struct b53_srab_port_priv *port = dev_id;
+	struct b53_device *dev = port->dev;
 
-	अगर (port->mode == PHY_INTERFACE_MODE_SGMII)
+	if (port->mode == PHY_INTERFACE_MODE_SGMII)
 		b53_port_event(dev->ds, port->num);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t b53_srab_port_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा b53_srab_port_priv *port = dev_id;
-	काष्ठा b53_device *dev = port->dev;
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static irqreturn_t b53_srab_port_isr(int irq, void *dev_id)
+{
+	struct b53_srab_port_priv *port = dev_id;
+	struct b53_device *dev = port->dev;
+	struct b53_srab_priv *priv = dev->priv;
 
-	/* Acknowledge the पूर्णांकerrupt */
-	ग_लिखोl(BIT(port->num), priv->regs + B53_SRAB_INTR);
+	/* Acknowledge the interrupt */
+	writel(BIT(port->num), priv->regs + B53_SRAB_INTR);
 
-	वापस IRQ_WAKE_THREAD;
-पूर्ण
+	return IRQ_WAKE_THREAD;
+}
 
-#अगर IS_ENABLED(CONFIG_B53_SERDES)
-अटल u8 b53_srab_serdes_map_lane(काष्ठा b53_device *dev, पूर्णांक port)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
-	काष्ठा b53_srab_port_priv *p = &priv->port_पूर्णांकrs[port];
+#if IS_ENABLED(CONFIG_B53_SERDES)
+static u8 b53_srab_serdes_map_lane(struct b53_device *dev, int port)
+{
+	struct b53_srab_priv *priv = dev->priv;
+	struct b53_srab_port_priv *p = &priv->port_intrs[port];
 
-	अगर (p->mode != PHY_INTERFACE_MODE_SGMII)
-		वापस B53_INVALID_LANE;
+	if (p->mode != PHY_INTERFACE_MODE_SGMII)
+		return B53_INVALID_LANE;
 
-	चयन (port) अणु
-	हाल 5:
-		वापस 0;
-	हाल 4:
-		वापस 1;
-	शेष:
-		वापस B53_INVALID_LANE;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	switch (port) {
+	case 5:
+		return 0;
+	case 4:
+		return 1;
+	default:
+		return B53_INVALID_LANE;
+	}
+}
+#endif
 
-अटल पूर्णांक b53_srab_irq_enable(काष्ठा b53_device *dev, पूर्णांक port)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
-	काष्ठा b53_srab_port_priv *p = &priv->port_पूर्णांकrs[port];
-	पूर्णांक ret = 0;
+static int b53_srab_irq_enable(struct b53_device *dev, int port)
+{
+	struct b53_srab_priv *priv = dev->priv;
+	struct b53_srab_port_priv *p = &priv->port_intrs[port];
+	int ret = 0;
 
-	/* Interrupt is optional and was not specअगरied, करो not make
+	/* Interrupt is optional and was not specified, do not make
 	 * this fatal
 	 */
-	अगर (p->irq == -ENXIO)
-		वापस ret;
+	if (p->irq == -ENXIO)
+		return ret;
 
-	ret = request_thपढ़ोed_irq(p->irq, b53_srab_port_isr,
-				   b53_srab_port_thपढ़ो, 0,
+	ret = request_threaded_irq(p->irq, b53_srab_port_isr,
+				   b53_srab_port_thread, 0,
 				   dev_name(dev->dev), p);
-	अगर (!ret)
+	if (!ret)
 		p->irq_enabled = true;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम b53_srab_irq_disable(काष्ठा b53_device *dev, पूर्णांक port)
-अणु
-	काष्ठा b53_srab_priv *priv = dev->priv;
-	काष्ठा b53_srab_port_priv *p = &priv->port_पूर्णांकrs[port];
+static void b53_srab_irq_disable(struct b53_device *dev, int port)
+{
+	struct b53_srab_priv *priv = dev->priv;
+	struct b53_srab_port_priv *p = &priv->port_intrs[port];
 
-	अगर (p->irq_enabled) अणु
-		मुक्त_irq(p->irq, p);
+	if (p->irq_enabled) {
+		free_irq(p->irq, p);
 		p->irq_enabled = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा b53_io_ops b53_srab_ops = अणु
-	.पढ़ो8 = b53_srab_पढ़ो8,
-	.पढ़ो16 = b53_srab_पढ़ो16,
-	.पढ़ो32 = b53_srab_पढ़ो32,
-	.पढ़ो48 = b53_srab_पढ़ो48,
-	.पढ़ो64 = b53_srab_पढ़ो64,
-	.ग_लिखो8 = b53_srab_ग_लिखो8,
-	.ग_लिखो16 = b53_srab_ग_लिखो16,
-	.ग_लिखो32 = b53_srab_ग_लिखो32,
-	.ग_लिखो48 = b53_srab_ग_लिखो48,
-	.ग_लिखो64 = b53_srab_ग_लिखो64,
+static const struct b53_io_ops b53_srab_ops = {
+	.read8 = b53_srab_read8,
+	.read16 = b53_srab_read16,
+	.read32 = b53_srab_read32,
+	.read48 = b53_srab_read48,
+	.read64 = b53_srab_read64,
+	.write8 = b53_srab_write8,
+	.write16 = b53_srab_write16,
+	.write32 = b53_srab_write32,
+	.write48 = b53_srab_write48,
+	.write64 = b53_srab_write64,
 	.irq_enable = b53_srab_irq_enable,
 	.irq_disable = b53_srab_irq_disable,
-#अगर IS_ENABLED(CONFIG_B53_SERDES)
+#if IS_ENABLED(CONFIG_B53_SERDES)
 	.serdes_map_lane = b53_srab_serdes_map_lane,
 	.serdes_link_state = b53_serdes_link_state,
 	.serdes_config = b53_serdes_config,
 	.serdes_an_restart = b53_serdes_an_restart,
 	.serdes_link_set = b53_serdes_link_set,
 	.serdes_phylink_validate = b53_serdes_phylink_validate,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल स्थिर काष्ठा of_device_id b53_srab_of_match[] = अणु
-	अणु .compatible = "brcm,bcm53010-srab" पूर्ण,
-	अणु .compatible = "brcm,bcm53011-srab" पूर्ण,
-	अणु .compatible = "brcm,bcm53012-srab" पूर्ण,
-	अणु .compatible = "brcm,bcm53018-srab" पूर्ण,
-	अणु .compatible = "brcm,bcm53019-srab" पूर्ण,
-	अणु .compatible = "brcm,bcm5301x-srab" पूर्ण,
-	अणु .compatible = "brcm,bcm11360-srab", .data = (व्योम *)BCM583XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm58522-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm58525-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm58535-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm58622-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm58623-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm58625-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,bcm88312-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,cygnus-srab", .data = (व्योम *)BCM583XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,nsp-srab", .data = (व्योम *)BCM58XX_DEVICE_ID पूर्ण,
-	अणु .compatible = "brcm,omega-srab", .data = (व्योम *)BCM583XX_DEVICE_ID पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id b53_srab_of_match[] = {
+	{ .compatible = "brcm,bcm53010-srab" },
+	{ .compatible = "brcm,bcm53011-srab" },
+	{ .compatible = "brcm,bcm53012-srab" },
+	{ .compatible = "brcm,bcm53018-srab" },
+	{ .compatible = "brcm,bcm53019-srab" },
+	{ .compatible = "brcm,bcm5301x-srab" },
+	{ .compatible = "brcm,bcm11360-srab", .data = (void *)BCM583XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm58522-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm58525-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm58535-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm58622-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm58623-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm58625-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,bcm88312-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,cygnus-srab", .data = (void *)BCM583XX_DEVICE_ID },
+	{ .compatible = "brcm,nsp-srab", .data = (void *)BCM58XX_DEVICE_ID },
+	{ .compatible = "brcm,omega-srab", .data = (void *)BCM583XX_DEVICE_ID },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, b53_srab_of_match);
 
-अटल व्योम b53_srab_पूर्णांकr_set(काष्ठा b53_srab_priv *priv, bool set)
-अणु
+static void b53_srab_intr_set(struct b53_srab_priv *priv, bool set)
+{
 	u32 reg;
 
-	reg = पढ़ोl(priv->regs + B53_SRAB_CTRLS);
-	अगर (set)
+	reg = readl(priv->regs + B53_SRAB_CTRLS);
+	if (set)
 		reg |= B53_SRAB_CTRLS_HOST_INTR;
-	अन्यथा
+	else
 		reg &= ~B53_SRAB_CTRLS_HOST_INTR;
-	ग_लिखोl(reg, priv->regs + B53_SRAB_CTRLS);
-पूर्ण
+	writel(reg, priv->regs + B53_SRAB_CTRLS);
+}
 
-अटल व्योम b53_srab_prepare_irq(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा b53_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा b53_srab_priv *priv = dev->priv;
-	काष्ठा b53_srab_port_priv *port;
-	अचिन्हित पूर्णांक i;
-	अक्षर *name;
+static void b53_srab_prepare_irq(struct platform_device *pdev)
+{
+	struct b53_device *dev = platform_get_drvdata(pdev);
+	struct b53_srab_priv *priv = dev->priv;
+	struct b53_srab_port_priv *port;
+	unsigned int i;
+	char *name;
 
-	/* Clear all pending पूर्णांकerrupts */
-	ग_लिखोl(0xffffffff, priv->regs + B53_SRAB_INTR);
+	/* Clear all pending interrupts */
+	writel(0xffffffff, priv->regs + B53_SRAB_INTR);
 
-	क्रम (i = 0; i < B53_N_PORTS; i++) अणु
-		port = &priv->port_पूर्णांकrs[i];
+	for (i = 0; i < B53_N_PORTS; i++) {
+		port = &priv->port_intrs[i];
 
 		/* There is no port 6 */
-		अगर (i == 6)
-			जारी;
+		if (i == 6)
+			continue;
 
-		name = kaप्र_लिखो(GFP_KERNEL, "link_state_p%d", i);
-		अगर (!name)
-			वापस;
+		name = kasprintf(GFP_KERNEL, "link_state_p%d", i);
+		if (!name)
+			return;
 
 		port->num = i;
 		port->dev = dev;
-		port->irq = platक्रमm_get_irq_byname_optional(pdev, name);
-		kमुक्त(name);
-	पूर्ण
+		port->irq = platform_get_irq_byname_optional(pdev, name);
+		kfree(name);
+	}
 
-	b53_srab_पूर्णांकr_set(priv, true);
-पूर्ण
+	b53_srab_intr_set(priv, true);
+}
 
-अटल व्योम b53_srab_mux_init(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा b53_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा b53_srab_priv *priv = dev->priv;
-	काष्ठा b53_srab_port_priv *p;
-	अचिन्हित पूर्णांक port;
+static void b53_srab_mux_init(struct platform_device *pdev)
+{
+	struct b53_device *dev = platform_get_drvdata(pdev);
+	struct b53_srab_priv *priv = dev->priv;
+	struct b53_srab_port_priv *p;
+	unsigned int port;
 	u32 reg, off = 0;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (dev->pdata && dev->pdata->chip_id != BCM58XX_DEVICE_ID)
-		वापस;
+	if (dev->pdata && dev->pdata->chip_id != BCM58XX_DEVICE_ID)
+		return;
 
-	priv->mux_config = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(priv->mux_config))
-		वापस;
+	priv->mux_config = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(priv->mux_config))
+		return;
 
 	/* Obtain the port mux configuration so we know which lanes
 	 * actually map to SerDes lanes
 	 */
-	क्रम (port = 5; port > 3; port--, off += 4) अणु
-		p = &priv->port_पूर्णांकrs[port];
+	for (port = 5; port > 3; port--, off += 4) {
+		p = &priv->port_intrs[port];
 
-		reg = पढ़ोl(priv->mux_config + B53_MUX_CONFIG_P5 + off);
-		चयन (reg & MUX_CONFIG_MASK) अणु
-		हाल MUX_CONFIG_SGMII:
+		reg = readl(priv->mux_config + B53_MUX_CONFIG_P5 + off);
+		switch (reg & MUX_CONFIG_MASK) {
+		case MUX_CONFIG_SGMII:
 			p->mode = PHY_INTERFACE_MODE_SGMII;
 			ret = b53_serdes_init(dev, port);
-			अगर (ret)
-				जारी;
-			अवरोध;
-		हाल MUX_CONFIG_MII_LITE:
+			if (ret)
+				continue;
+			break;
+		case MUX_CONFIG_MII_LITE:
 			p->mode = PHY_INTERFACE_MODE_MII;
-			अवरोध;
-		हाल MUX_CONFIG_GMII:
+			break;
+		case MUX_CONFIG_GMII:
 			p->mode = PHY_INTERFACE_MODE_GMII;
-			अवरोध;
-		हाल MUX_CONFIG_RGMII:
+			break;
+		case MUX_CONFIG_RGMII:
 			p->mode = PHY_INTERFACE_MODE_RGMII;
-			अवरोध;
-		हाल MUX_CONFIG_INTERNAL:
+			break;
+		case MUX_CONFIG_INTERNAL:
 			p->mode = PHY_INTERFACE_MODE_INTERNAL;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			p->mode = PHY_INTERFACE_MODE_NA;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (p->mode != PHY_INTERFACE_MODE_NA)
+		if (p->mode != PHY_INTERFACE_MODE_NA)
 			dev_info(&pdev->dev, "Port %d mode: %s\n",
 				 port, phy_modes(p->mode));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक b53_srab_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा b53_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
-	काष्ठा device_node *dn = pdev->dev.of_node;
-	स्थिर काष्ठा of_device_id *of_id = शून्य;
-	काष्ठा b53_srab_priv *priv;
-	काष्ठा b53_device *dev;
+static int b53_srab_probe(struct platform_device *pdev)
+{
+	struct b53_platform_data *pdata = pdev->dev.platform_data;
+	struct device_node *dn = pdev->dev.of_node;
+	const struct of_device_id *of_id = NULL;
+	struct b53_srab_priv *priv;
+	struct b53_device *dev;
 
-	अगर (dn)
+	if (dn)
 		of_id = of_match_node(b53_srab_of_match, dn);
 
-	अगर (of_id) अणु
-		pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-		अगर (!pdata)
-			वापस -ENOMEM;
+	if (of_id) {
+		pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+		if (!pdata)
+			return -ENOMEM;
 
-		pdata->chip_id = (u32)(अचिन्हित दीर्घ)of_id->data;
-	पूर्ण
+		pdata->chip_id = (u32)(unsigned long)of_id->data;
+	}
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->regs))
-		वापस PTR_ERR(priv->regs);
+	priv->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->regs))
+		return PTR_ERR(priv->regs);
 
-	dev = b53_चयन_alloc(&pdev->dev, &b53_srab_ops, priv);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = b53_switch_alloc(&pdev->dev, &b53_srab_ops, priv);
+	if (!dev)
+		return -ENOMEM;
 
-	अगर (pdata)
+	if (pdata)
 		dev->pdata = pdata;
 
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
 	b53_srab_prepare_irq(pdev);
 	b53_srab_mux_init(pdev);
 
-	वापस b53_चयन_रेजिस्टर(dev);
-पूर्ण
+	return b53_switch_register(dev);
+}
 
-अटल पूर्णांक b53_srab_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा b53_device *dev = platक्रमm_get_drvdata(pdev);
-	काष्ठा b53_srab_priv *priv = dev->priv;
+static int b53_srab_remove(struct platform_device *pdev)
+{
+	struct b53_device *dev = platform_get_drvdata(pdev);
+	struct b53_srab_priv *priv = dev->priv;
 
-	b53_srab_पूर्णांकr_set(priv, false);
-	अगर (dev)
-		b53_चयन_हटाओ(dev);
+	b53_srab_intr_set(priv, false);
+	if (dev)
+		b53_switch_remove(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver b53_srab_driver = अणु
+static struct platform_driver b53_srab_driver = {
 	.probe = b53_srab_probe,
-	.हटाओ = b53_srab_हटाओ,
-	.driver = अणु
+	.remove = b53_srab_remove,
+	.driver = {
 		.name = "b53-srab-switch",
 		.of_match_table = b53_srab_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(b53_srab_driver);
+module_platform_driver(b53_srab_driver);
 MODULE_AUTHOR("Hauke Mehrtens <hauke@hauke-m.de>");
 MODULE_DESCRIPTION("B53 Switch Register Access Bridge Registers (SRAB) access driver");
 MODULE_LICENSE("Dual BSD/GPL");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,191 +23,191 @@
  *
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-#समावेश "dce/dce_11_0_d.h"
-#समावेश "dce/dce_11_0_sh_mask.h"
-#समावेश "gmc/gmc_8_2_sh_mask.h"
-#समावेश "gmc/gmc_8_2_d.h"
+#include "dce/dce_11_0_d.h"
+#include "dce/dce_11_0_sh_mask.h"
+#include "gmc/gmc_8_2_sh_mask.h"
+#include "gmc/gmc_8_2_d.h"
 
-#समावेश "include/logger_interface.h"
+#include "include/logger_interface.h"
 
-#समावेश "dce110_compressor.h"
+#include "dce110_compressor.h"
 
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 		cp110->base.ctx->logger
-#घोषणा DCP_REG(reg)\
+#define DCP_REG(reg)\
 	(reg + cp110->offsets.dcp_offset)
-#घोषणा DMIF_REG(reg)\
-	(reg + cp110->offsets.dmअगर_offset)
+#define DMIF_REG(reg)\
+	(reg + cp110->offsets.dmif_offset)
 
-अटल स्थिर काष्ठा dce110_compressor_reg_offsets reg_offsets[] = अणु
-अणु
+static const struct dce110_compressor_reg_offsets reg_offsets[] = {
+{
 	.dcp_offset = (mmDCP0_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-	.dmअगर_offset =
+	.dmif_offset =
 		(mmDMIF_PG0_DPG_PIPE_DPM_CONTROL
 			- mmDMIF_PG0_DPG_PIPE_DPM_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.dcp_offset = (mmDCP1_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-	.dmअगर_offset =
+	.dmif_offset =
 		(mmDMIF_PG1_DPG_PIPE_DPM_CONTROL
 			- mmDMIF_PG0_DPG_PIPE_DPM_CONTROL),
-पूर्ण,
-अणु
+},
+{
 	.dcp_offset = (mmDCP2_GRPH_CONTROL - mmDCP0_GRPH_CONTROL),
-	.dmअगर_offset =
+	.dmif_offset =
 		(mmDMIF_PG2_DPG_PIPE_DPM_CONTROL
 			- mmDMIF_PG0_DPG_PIPE_DPM_CONTROL),
-पूर्ण
-पूर्ण;
+}
+};
 
-अटल uपूर्णांक32_t align_to_chunks_number_per_line(uपूर्णांक32_t pixels)
-अणु
-	वापस 256 * ((pixels + 255) / 256);
-पूर्ण
+static uint32_t align_to_chunks_number_per_line(uint32_t pixels)
+{
+	return 256 * ((pixels + 255) / 256);
+}
 
-अटल व्योम reset_lb_on_vblank(काष्ठा compressor *compressor, uपूर्णांक32_t crtc_inst)
-अणु
-	uपूर्णांक32_t value;
-	uपूर्णांक32_t frame_count;
-	uपूर्णांक32_t status_pos;
-	uपूर्णांक32_t retry = 0;
-	काष्ठा dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
+static void reset_lb_on_vblank(struct compressor *compressor, uint32_t crtc_inst)
+{
+	uint32_t value;
+	uint32_t frame_count;
+	uint32_t status_pos;
+	uint32_t retry = 0;
+	struct dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
 
 	cp110->offsets = reg_offsets[crtc_inst];
 
-	status_pos = dm_पढ़ो_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_POSITION));
+	status_pos = dm_read_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_POSITION));
 
 
-	/* Only अगर CRTC is enabled and counter is moving we रुको क्रम one frame. */
-	अगर (status_pos != dm_पढ़ो_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_POSITION))) अणु
+	/* Only if CRTC is enabled and counter is moving we wait for one frame. */
+	if (status_pos != dm_read_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_POSITION))) {
 		/* Resetting LB on VBlank */
-		value = dm_पढ़ो_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL));
+		value = dm_read_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL));
 		set_reg_field_value(value, 3, LB_SYNC_RESET_SEL, LB_SYNC_RESET_SEL);
 		set_reg_field_value(value, 1, LB_SYNC_RESET_SEL, LB_SYNC_RESET_SEL2);
-		dm_ग_लिखो_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL), value);
+		dm_write_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL), value);
 
-		frame_count = dm_पढ़ो_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_FRAME_COUNT));
+		frame_count = dm_read_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_FRAME_COUNT));
 
 
-		क्रम (retry = 10000; retry > 0; retry--) अणु
-			अगर (frame_count != dm_पढ़ो_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_FRAME_COUNT)))
-				अवरोध;
+		for (retry = 10000; retry > 0; retry--) {
+			if (frame_count != dm_read_reg(compressor->ctx, DCP_REG(mmCRTC_STATUS_FRAME_COUNT)))
+				break;
 			udelay(10);
-		पूर्ण
-		अगर (!retry)
+		}
+		if (!retry)
 			dm_error("Frame count did not increase for 100ms.\n");
 
 		/* Resetting LB on VBlank */
-		value = dm_पढ़ो_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL));
+		value = dm_read_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL));
 		set_reg_field_value(value, 2, LB_SYNC_RESET_SEL, LB_SYNC_RESET_SEL);
 		set_reg_field_value(value, 0, LB_SYNC_RESET_SEL, LB_SYNC_RESET_SEL2);
-		dm_ग_लिखो_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL), value);
-	पूर्ण
-पूर्ण
+		dm_write_reg(compressor->ctx, DCP_REG(mmLB_SYNC_RESET_SEL), value);
+	}
+}
 
-अटल व्योम रुको_क्रम_fbc_state_changed(
-	काष्ठा dce110_compressor *cp110,
+static void wait_for_fbc_state_changed(
+	struct dce110_compressor *cp110,
 	bool enabled)
-अणु
-	uपूर्णांक32_t counter = 0;
-	uपूर्णांक32_t addr = mmFBC_STATUS;
-	uपूर्णांक32_t value;
+{
+	uint32_t counter = 0;
+	uint32_t addr = mmFBC_STATUS;
+	uint32_t value;
 
-	जबतक (counter < 1000) अणु
-		value = dm_पढ़ो_reg(cp110->base.ctx, addr);
-		अगर (get_reg_field_value(
+	while (counter < 1000) {
+		value = dm_read_reg(cp110->base.ctx, addr);
+		if (get_reg_field_value(
 			value,
 			FBC_STATUS,
 			FBC_ENABLE_STATUS) == enabled)
-			अवरोध;
+			break;
 		udelay(100);
 		counter++;
-	पूर्ण
+	}
 
-	अगर (counter == 1000) अणु
+	if (counter == 1000) {
 		DC_LOG_WARNING("%s: wait counter exceeded, changes to HW not applied",
 			__func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		DC_LOG_SYNC("FBC status changed to %d", enabled);
-	पूर्ण
+	}
 
 
-पूर्ण
+}
 
-व्योम dce110_compressor_घातer_up_fbc(काष्ठा compressor *compressor)
-अणु
-	uपूर्णांक32_t value;
-	uपूर्णांक32_t addr;
+void dce110_compressor_power_up_fbc(struct compressor *compressor)
+{
+	uint32_t value;
+	uint32_t addr;
 
 	addr = mmFBC_CNTL;
-	value = dm_पढ़ो_reg(compressor->ctx, addr);
+	value = dm_read_reg(compressor->ctx, addr);
 	set_reg_field_value(value, 0, FBC_CNTL, FBC_GRPH_COMP_EN);
 	set_reg_field_value(value, 1, FBC_CNTL, FBC_EN);
 	set_reg_field_value(value, 2, FBC_CNTL, FBC_COHERENCY_MODE);
-	अगर (compressor->options.bits.CLK_GATING_DISABLED == 1) अणु
-		/* HW needs to करो घातer measurement comparison. */
+	if (compressor->options.bits.CLK_GATING_DISABLED == 1) {
+		/* HW needs to do power measurement comparison. */
 		set_reg_field_value(
 			value,
 			0,
 			FBC_CNTL,
 			FBC_COMP_CLK_GATE_EN);
-	पूर्ण
-	dm_ग_लिखो_reg(compressor->ctx, addr, value);
+	}
+	dm_write_reg(compressor->ctx, addr, value);
 
 	addr = mmFBC_COMP_MODE;
-	value = dm_पढ़ो_reg(compressor->ctx, addr);
+	value = dm_read_reg(compressor->ctx, addr);
 	set_reg_field_value(value, 1, FBC_COMP_MODE, FBC_RLE_EN);
 	set_reg_field_value(value, 1, FBC_COMP_MODE, FBC_DPCM4_RGB_EN);
 	set_reg_field_value(value, 1, FBC_COMP_MODE, FBC_IND_EN);
-	dm_ग_लिखो_reg(compressor->ctx, addr, value);
+	dm_write_reg(compressor->ctx, addr, value);
 
 	addr = mmFBC_COMP_CNTL;
-	value = dm_पढ़ो_reg(compressor->ctx, addr);
+	value = dm_read_reg(compressor->ctx, addr);
 	set_reg_field_value(value, 1, FBC_COMP_CNTL, FBC_DEPTH_RGB08_EN);
-	dm_ग_लिखो_reg(compressor->ctx, addr, value);
+	dm_write_reg(compressor->ctx, addr, value);
 	/*FBC_MIN_COMPRESSION 0 ==> 2:1 */
 	/*                    1 ==> 4:1 */
 	/*                    2 ==> 8:1 */
 	/*                  0xF ==> 1:1 */
 	set_reg_field_value(value, 0xF, FBC_COMP_CNTL, FBC_MIN_COMPRESSION);
-	dm_ग_लिखो_reg(compressor->ctx, addr, value);
+	dm_write_reg(compressor->ctx, addr, value);
 	compressor->min_compress_ratio = FBC_COMPRESS_RATIO_1TO1;
 
 	value = 0;
-	dm_ग_लिखो_reg(compressor->ctx, mmFBC_IND_LUT0, value);
+	dm_write_reg(compressor->ctx, mmFBC_IND_LUT0, value);
 
 	value = 0xFFFFFF;
-	dm_ग_लिखो_reg(compressor->ctx, mmFBC_IND_LUT1, value);
-पूर्ण
+	dm_write_reg(compressor->ctx, mmFBC_IND_LUT1, value);
+}
 
-व्योम dce110_compressor_enable_fbc(
-	काष्ठा compressor *compressor,
-	काष्ठा compr_addr_and_pitch_params *params)
-अणु
-	काष्ठा dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
+void dce110_compressor_enable_fbc(
+	struct compressor *compressor,
+	struct compr_addr_and_pitch_params *params)
+{
+	struct dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
 
-	अगर (compressor->options.bits.FBC_SUPPORT &&
-		(!dce110_compressor_is_fbc_enabled_in_hw(compressor, शून्य))) अणु
+	if (compressor->options.bits.FBC_SUPPORT &&
+		(!dce110_compressor_is_fbc_enabled_in_hw(compressor, NULL))) {
 
-		uपूर्णांक32_t addr;
-		uपूर्णांक32_t value, misc_value;
+		uint32_t addr;
+		uint32_t value, misc_value;
 
 		addr = mmFBC_CNTL;
-		value = dm_पढ़ो_reg(compressor->ctx, addr);
+		value = dm_read_reg(compressor->ctx, addr);
 		set_reg_field_value(value, 1, FBC_CNTL, FBC_GRPH_COMP_EN);
 		/* params->inst is valid HW CRTC instance start from 0 */
 		set_reg_field_value(
 			value,
 			params->inst,
 			FBC_CNTL, FBC_SRC_SEL);
-		dm_ग_लिखो_reg(compressor->ctx, addr, value);
+		dm_write_reg(compressor->ctx, addr, value);
 
-		/* Keep track of क्रमागत controller_id FBC is attached to */
+		/* Keep track of enum controller_id FBC is attached to */
 		compressor->is_enabled = true;
 		/* attached_inst is SW CRTC instance start from 1
 		 * 0 = CONTROLLER_ID_UNDEFINED means not attached crtc
@@ -217,10 +216,10 @@
 
 		/* Toggle it as there is bug in HW */
 		set_reg_field_value(value, 0, FBC_CNTL, FBC_GRPH_COMP_EN);
-		dm_ग_लिखो_reg(compressor->ctx, addr, value);
+		dm_write_reg(compressor->ctx, addr, value);
 
-		/* FBC usage with scatter & gather क्रम dce110 */
-		misc_value = dm_पढ़ो_reg(compressor->ctx, mmFBC_MISC);
+		/* FBC usage with scatter & gather for dce110 */
+		misc_value = dm_read_reg(compressor->ctx, mmFBC_MISC);
 
 		set_reg_field_value(misc_value, 1,
 				FBC_MISC, FBC_INVALIDATE_ON_ERROR);
@@ -229,110 +228,110 @@
 		set_reg_field_value(misc_value, 0x14,
 				FBC_MISC, FBC_SLOW_REQ_INTERVAL);
 
-		dm_ग_लिखो_reg(compressor->ctx, mmFBC_MISC, misc_value);
+		dm_write_reg(compressor->ctx, mmFBC_MISC, misc_value);
 
 		/* Enable FBC */
 		set_reg_field_value(value, 1, FBC_CNTL, FBC_GRPH_COMP_EN);
-		dm_ग_लिखो_reg(compressor->ctx, addr, value);
+		dm_write_reg(compressor->ctx, addr, value);
 
-		रुको_क्रम_fbc_state_changed(cp110, true);
-	पूर्ण
-पूर्ण
+		wait_for_fbc_state_changed(cp110, true);
+	}
+}
 
-व्योम dce110_compressor_disable_fbc(काष्ठा compressor *compressor)
-अणु
-	काष्ठा dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
-	uपूर्णांक32_t crtc_inst = 0;
+void dce110_compressor_disable_fbc(struct compressor *compressor)
+{
+	struct dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
+	uint32_t crtc_inst = 0;
 
-	अगर (compressor->options.bits.FBC_SUPPORT) अणु
-		अगर (dce110_compressor_is_fbc_enabled_in_hw(compressor, &crtc_inst)) अणु
-			uपूर्णांक32_t reg_data;
+	if (compressor->options.bits.FBC_SUPPORT) {
+		if (dce110_compressor_is_fbc_enabled_in_hw(compressor, &crtc_inst)) {
+			uint32_t reg_data;
 			/* Turn off compression */
-			reg_data = dm_पढ़ो_reg(compressor->ctx, mmFBC_CNTL);
+			reg_data = dm_read_reg(compressor->ctx, mmFBC_CNTL);
 			set_reg_field_value(reg_data, 0, FBC_CNTL, FBC_GRPH_COMP_EN);
-			dm_ग_लिखो_reg(compressor->ctx, mmFBC_CNTL, reg_data);
+			dm_write_reg(compressor->ctx, mmFBC_CNTL, reg_data);
 
-			/* Reset क्रमागत controller_id to undefined */
+			/* Reset enum controller_id to undefined */
 			compressor->attached_inst = 0;
 			compressor->is_enabled = false;
 
-			रुको_क्रम_fbc_state_changed(cp110, false);
-		पूर्ण
+			wait_for_fbc_state_changed(cp110, false);
+		}
 
 		/* Sync line buffer which fbc was attached to dce100/110 only */
-		अगर (crtc_inst > CONTROLLER_ID_UNDEFINED && crtc_inst < CONTROLLER_ID_D3)
+		if (crtc_inst > CONTROLLER_ID_UNDEFINED && crtc_inst < CONTROLLER_ID_D3)
 			reset_lb_on_vblank(compressor,
 					crtc_inst - CONTROLLER_ID_D0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 bool dce110_compressor_is_fbc_enabled_in_hw(
-	काष्ठा compressor *compressor,
-	uपूर्णांक32_t *inst)
-अणु
-	/* Check the hardware रेजिस्टर */
-	uपूर्णांक32_t value;
+	struct compressor *compressor,
+	uint32_t *inst)
+{
+	/* Check the hardware register */
+	uint32_t value;
 
-	value = dm_पढ़ो_reg(compressor->ctx, mmFBC_STATUS);
-	अगर (get_reg_field_value(value, FBC_STATUS, FBC_ENABLE_STATUS)) अणु
-		अगर (inst != शून्य)
+	value = dm_read_reg(compressor->ctx, mmFBC_STATUS);
+	if (get_reg_field_value(value, FBC_STATUS, FBC_ENABLE_STATUS)) {
+		if (inst != NULL)
 			*inst = compressor->attached_inst;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	value = dm_पढ़ो_reg(compressor->ctx, mmFBC_MISC);
-	अगर (get_reg_field_value(value, FBC_MISC, FBC_STOP_ON_HFLIP_EVENT)) अणु
-		value = dm_पढ़ो_reg(compressor->ctx, mmFBC_CNTL);
+	value = dm_read_reg(compressor->ctx, mmFBC_MISC);
+	if (get_reg_field_value(value, FBC_MISC, FBC_STOP_ON_HFLIP_EVENT)) {
+		value = dm_read_reg(compressor->ctx, mmFBC_CNTL);
 
-		अगर (get_reg_field_value(value, FBC_CNTL, FBC_GRPH_COMP_EN)) अणु
-			अगर (inst != शून्य)
+		if (get_reg_field_value(value, FBC_CNTL, FBC_GRPH_COMP_EN)) {
+			if (inst != NULL)
 				*inst =
 					compressor->attached_inst;
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
 
-व्योम dce110_compressor_program_compressed_surface_address_and_pitch(
-	काष्ठा compressor *compressor,
-	काष्ठा compr_addr_and_pitch_params *params)
-अणु
-	काष्ठा dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
-	uपूर्णांक32_t value = 0;
-	uपूर्णांक32_t fbc_pitch = 0;
-	uपूर्णांक32_t compressed_surf_address_low_part =
+void dce110_compressor_program_compressed_surface_address_and_pitch(
+	struct compressor *compressor,
+	struct compr_addr_and_pitch_params *params)
+{
+	struct dce110_compressor *cp110 = TO_DCE110_COMPRESSOR(compressor);
+	uint32_t value = 0;
+	uint32_t fbc_pitch = 0;
+	uint32_t compressed_surf_address_low_part =
 		compressor->compr_surface_address.addr.low_part;
 
 	cp110->offsets = reg_offsets[params->inst];
 
 	/* Clear content first. */
-	dm_ग_लिखो_reg(
+	dm_write_reg(
 		compressor->ctx,
 		DCP_REG(mmGRPH_COMPRESS_SURFACE_ADDRESS_HIGH),
 		0);
-	dm_ग_लिखो_reg(compressor->ctx,
+	dm_write_reg(compressor->ctx,
 		DCP_REG(mmGRPH_COMPRESS_SURFACE_ADDRESS), 0);
 
 	/* Write address, HIGH has to be first. */
-	dm_ग_लिखो_reg(compressor->ctx,
+	dm_write_reg(compressor->ctx,
 		DCP_REG(mmGRPH_COMPRESS_SURFACE_ADDRESS_HIGH),
 		compressor->compr_surface_address.addr.high_part);
-	dm_ग_लिखो_reg(compressor->ctx,
+	dm_write_reg(compressor->ctx,
 		DCP_REG(mmGRPH_COMPRESS_SURFACE_ADDRESS),
 		compressed_surf_address_low_part);
 
 	fbc_pitch = align_to_chunks_number_per_line(params->source_view_width);
 
-	अगर (compressor->min_compress_ratio == FBC_COMPRESS_RATIO_1TO1)
+	if (compressor->min_compress_ratio == FBC_COMPRESS_RATIO_1TO1)
 		fbc_pitch = fbc_pitch / 8;
-	अन्यथा
+	else
 		DC_LOG_WARNING("%s: Unexpected DCE11 compression ratio",
 			__func__);
 
 	/* Clear content first. */
-	dm_ग_लिखो_reg(compressor->ctx, DCP_REG(mmGRPH_COMPRESS_PITCH), 0);
+	dm_write_reg(compressor->ctx, DCP_REG(mmGRPH_COMPRESS_PITCH), 0);
 
 	/* Write FBC Pitch. */
 	set_reg_field_value(
@@ -340,26 +339,26 @@ bool dce110_compressor_is_fbc_enabled_in_hw(
 		fbc_pitch,
 		GRPH_COMPRESS_PITCH,
 		GRPH_COMPRESS_PITCH);
-	dm_ग_लिखो_reg(compressor->ctx, DCP_REG(mmGRPH_COMPRESS_PITCH), value);
+	dm_write_reg(compressor->ctx, DCP_REG(mmGRPH_COMPRESS_PITCH), value);
 
-पूर्ण
+}
 
-व्योम dce110_compressor_set_fbc_invalidation_triggers(
-	काष्ठा compressor *compressor,
-	uपूर्णांक32_t fbc_trigger)
-अणु
+void dce110_compressor_set_fbc_invalidation_triggers(
+	struct compressor *compressor,
+	uint32_t fbc_trigger)
+{
 	/* Disable region hit event, FBC_MEMORY_REGION_MASK = 0 (bits 16-19)
-	 * क्रम DCE 11 regions cannot be used - करोes not work with S/G
+	 * for DCE 11 regions cannot be used - does not work with S/G
 	 */
-	uपूर्णांक32_t addr = mmFBC_CLIENT_REGION_MASK;
-	uपूर्णांक32_t value = dm_पढ़ो_reg(compressor->ctx, addr);
+	uint32_t addr = mmFBC_CLIENT_REGION_MASK;
+	uint32_t value = dm_read_reg(compressor->ctx, addr);
 
 	set_reg_field_value(
 		value,
 		0,
 		FBC_CLIENT_REGION_MASK,
 		FBC_MEMORY_REGION_MASK);
-	dm_ग_लिखो_reg(compressor->ctx, addr, value);
+	dm_write_reg(compressor->ctx, addr, value);
 
 	/* Setup events when to clear all CSM entries (effectively marking
 	 * current compressed data invalid)
@@ -368,87 +367,87 @@ bool dce110_compressor_is_fbc_enabled_in_hw(
 	 * after invalidation, to indicate that the compressor should attempt
 	 * to compress all chunks on the current pass.  Also used when the chunk
 	 * is not successfully written to memory.
-	 * When this CSM value is detected, FBC पढ़ोs from the uncompressed
+	 * When this CSM value is detected, FBC reads from the uncompressed
 	 * buffer. Set events according to passed in value, these events are
-	 * valid क्रम DCE11:
-	 *     - bit  0 - display रेजिस्टर updated
-	 *     - bit 28 - memory ग_लिखो from any client except from MCIF
-	 *     - bit 29 - CG अटल screen संकेत is inactive
-	 * In addition, DCE11.1 also needs to set new DCE11.1 specअगरic events
-	 * that are used to trigger invalidation on certain रेजिस्टर changes,
-	 * क्रम example enabling of Alpha Compression may trigger invalidation of
+	 * valid for DCE11:
+	 *     - bit  0 - display register updated
+	 *     - bit 28 - memory write from any client except from MCIF
+	 *     - bit 29 - CG static screen signal is inactive
+	 * In addition, DCE11.1 also needs to set new DCE11.1 specific events
+	 * that are used to trigger invalidation on certain register changes,
+	 * for example enabling of Alpha Compression may trigger invalidation of
 	 * FBC once bit is set. These events are as follows:
-	 *      - Bit 2 - FBC_GRPH_COMP_EN रेजिस्टर updated
-	 *      - Bit 3 - FBC_SRC_SEL रेजिस्टर updated
-	 *      - Bit 4 - FBC_MIN_COMPRESSION रेजिस्टर updated
-	 *      - Bit 5 - FBC_ALPHA_COMP_EN रेजिस्टर updated
-	 *      - Bit 6 - FBC_ZERO_ALPHA_CHUNK_SKIP_EN रेजिस्टर updated
-	 *      - Bit 7 - FBC_FORCE_COPY_TO_COMP_BUF रेजिस्टर updated
+	 *      - Bit 2 - FBC_GRPH_COMP_EN register updated
+	 *      - Bit 3 - FBC_SRC_SEL register updated
+	 *      - Bit 4 - FBC_MIN_COMPRESSION register updated
+	 *      - Bit 5 - FBC_ALPHA_COMP_EN register updated
+	 *      - Bit 6 - FBC_ZERO_ALPHA_CHUNK_SKIP_EN register updated
+	 *      - Bit 7 - FBC_FORCE_COPY_TO_COMP_BUF register updated
 	 */
 	addr = mmFBC_IDLE_FORCE_CLEAR_MASK;
-	value = dm_पढ़ो_reg(compressor->ctx, addr);
+	value = dm_read_reg(compressor->ctx, addr);
 	set_reg_field_value(
 		value,
 		fbc_trigger,
 		FBC_IDLE_FORCE_CLEAR_MASK,
 		FBC_IDLE_FORCE_CLEAR_MASK);
-	dm_ग_लिखो_reg(compressor->ctx, addr, value);
-पूर्ण
+	dm_write_reg(compressor->ctx, addr, value);
+}
 
-काष्ठा compressor *dce110_compressor_create(काष्ठा dc_context *ctx)
-अणु
-	काष्ठा dce110_compressor *cp110 =
-		kzalloc(माप(काष्ठा dce110_compressor), GFP_KERNEL);
+struct compressor *dce110_compressor_create(struct dc_context *ctx)
+{
+	struct dce110_compressor *cp110 =
+		kzalloc(sizeof(struct dce110_compressor), GFP_KERNEL);
 
-	अगर (!cp110)
-		वापस शून्य;
+	if (!cp110)
+		return NULL;
 
-	dce110_compressor_स्थिरruct(cp110, ctx);
-	वापस &cp110->base;
-पूर्ण
+	dce110_compressor_construct(cp110, ctx);
+	return &cp110->base;
+}
 
-व्योम dce110_compressor_destroy(काष्ठा compressor **compressor)
-अणु
-	kमुक्त(TO_DCE110_COMPRESSOR(*compressor));
-	*compressor = शून्य;
-पूर्ण
+void dce110_compressor_destroy(struct compressor **compressor)
+{
+	kfree(TO_DCE110_COMPRESSOR(*compressor));
+	*compressor = NULL;
+}
 
-व्योम get_max_support_fbc_buffersize(अचिन्हित पूर्णांक *max_x, अचिन्हित पूर्णांक *max_y)
-अणु
+void get_max_support_fbc_buffersize(unsigned int *max_x, unsigned int *max_y)
+{
 	*max_x = FBC_MAX_X;
 	*max_y = FBC_MAX_Y;
 
-	/* अगर (m_smallLocalFrameBufferMemory == 1)
-	 * अणु
+	/* if (m_smallLocalFrameBufferMemory == 1)
+	 * {
 	 *	*max_x = FBC_MAX_X_SG;
 	 *	*max_y = FBC_MAX_Y_SG;
-	 * पूर्ण
+	 * }
 	 */
-पूर्ण
+}
 
-अटल स्थिर काष्ठा compressor_funcs dce110_compressor_funcs = अणु
-	.घातer_up_fbc = dce110_compressor_घातer_up_fbc,
+static const struct compressor_funcs dce110_compressor_funcs = {
+	.power_up_fbc = dce110_compressor_power_up_fbc,
 	.enable_fbc = dce110_compressor_enable_fbc,
 	.disable_fbc = dce110_compressor_disable_fbc,
 	.set_fbc_invalidation_triggers = dce110_compressor_set_fbc_invalidation_triggers,
 	.surface_address_and_pitch = dce110_compressor_program_compressed_surface_address_and_pitch,
 	.is_fbc_enabled_in_hw = dce110_compressor_is_fbc_enabled_in_hw
-पूर्ण;
+};
 
 
-व्योम dce110_compressor_स्थिरruct(काष्ठा dce110_compressor *compressor,
-	काष्ठा dc_context *ctx)
-अणु
+void dce110_compressor_construct(struct dce110_compressor *compressor,
+	struct dc_context *ctx)
+{
 
 	compressor->base.options.raw = 0;
 	compressor->base.options.bits.FBC_SUPPORT = true;
 
-	/* क्रम dce 11 always use one dram channel क्रम lpt */
+	/* for dce 11 always use one dram channel for lpt */
 	compressor->base.lpt_channels_num = 1;
 	compressor->base.options.bits.DUMMY_BACKEND = false;
 
 	/*
-	 * check अगर this प्रणाली has more than 1 dram channel; अगर only 1 then lpt
+	 * check if this system has more than 1 dram channel; if only 1 then lpt
 	 * should not be supported
 	 */
 
@@ -464,12 +463,12 @@ bool dce110_compressor_is_fbc_enabled_in_hw(
 	compressor->base.min_compress_ratio = FBC_COMPRESS_RATIO_INVALID;
 	compressor->base.banks_num = 0;
 	compressor->base.raw_size = 0;
-	compressor->base.channel_पूर्णांकerleave_size = 0;
+	compressor->base.channel_interleave_size = 0;
 	compressor->base.dram_channels_num = 0;
 	compressor->base.lpt_channels_num = 0;
 	compressor->base.attached_inst = CONTROLLER_ID_UNDEFINED;
 	compressor->base.is_enabled = false;
 	compressor->base.funcs = &dce110_compressor_funcs;
 
-पूर्ण
+}
 

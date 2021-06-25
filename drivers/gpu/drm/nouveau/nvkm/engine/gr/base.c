@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,162 +21,162 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <engine/fअगरo.h>
+#include <engine/fifo.h>
 
 u32
-nvkm_gr_ctxsw_inst(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_gr *gr = device->gr;
-	अगर (gr && gr->func->ctxsw.inst)
-		वापस gr->func->ctxsw.inst(gr);
-	वापस 0;
-पूर्ण
+nvkm_gr_ctxsw_inst(struct nvkm_device *device)
+{
+	struct nvkm_gr *gr = device->gr;
+	if (gr && gr->func->ctxsw.inst)
+		return gr->func->ctxsw.inst(gr);
+	return 0;
+}
 
-पूर्णांक
-nvkm_gr_ctxsw_resume(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_gr *gr = device->gr;
-	अगर (gr && gr->func->ctxsw.resume)
-		वापस gr->func->ctxsw.resume(gr);
-	वापस 0;
-पूर्ण
+int
+nvkm_gr_ctxsw_resume(struct nvkm_device *device)
+{
+	struct nvkm_gr *gr = device->gr;
+	if (gr && gr->func->ctxsw.resume)
+		return gr->func->ctxsw.resume(gr);
+	return 0;
+}
 
-पूर्णांक
-nvkm_gr_ctxsw_छोड़ो(काष्ठा nvkm_device *device)
-अणु
-	काष्ठा nvkm_gr *gr = device->gr;
-	अगर (gr && gr->func->ctxsw.छोड़ो)
-		वापस gr->func->ctxsw.छोड़ो(gr);
-	वापस 0;
-पूर्ण
+int
+nvkm_gr_ctxsw_pause(struct nvkm_device *device)
+{
+	struct nvkm_gr *gr = device->gr;
+	if (gr && gr->func->ctxsw.pause)
+		return gr->func->ctxsw.pause(gr);
+	return 0;
+}
 
-अटल bool
-nvkm_gr_chsw_load(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	अगर (gr->func->chsw_load)
-		वापस gr->func->chsw_load(gr);
-	वापस false;
-पूर्ण
+static bool
+nvkm_gr_chsw_load(struct nvkm_engine *engine)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	if (gr->func->chsw_load)
+		return gr->func->chsw_load(gr);
+	return false;
+}
 
-अटल व्योम
-nvkm_gr_tile(काष्ठा nvkm_engine *engine, पूर्णांक region, काष्ठा nvkm_fb_tile *tile)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	अगर (gr->func->tile)
+static void
+nvkm_gr_tile(struct nvkm_engine *engine, int region, struct nvkm_fb_tile *tile)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	if (gr->func->tile)
 		gr->func->tile(gr, region, tile);
-पूर्ण
+}
 
 u64
-nvkm_gr_units(काष्ठा nvkm_gr *gr)
-अणु
-	अगर (gr->func->units)
-		वापस gr->func->units(gr);
-	वापस 0;
-पूर्ण
+nvkm_gr_units(struct nvkm_gr *gr)
+{
+	if (gr->func->units)
+		return gr->func->units(gr);
+	return 0;
+}
 
-पूर्णांक
-nvkm_gr_tlb_flush(काष्ठा nvkm_gr *gr)
-अणु
-	अगर (gr->func->tlb_flush)
-		वापस gr->func->tlb_flush(gr);
-	वापस -ENODEV;
-पूर्ण
+int
+nvkm_gr_tlb_flush(struct nvkm_gr *gr)
+{
+	if (gr->func->tlb_flush)
+		return gr->func->tlb_flush(gr);
+	return -ENODEV;
+}
 
-अटल पूर्णांक
-nvkm_gr_oclass_get(काष्ठा nvkm_oclass *oclass, पूर्णांक index)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(oclass->engine);
-	पूर्णांक c = 0;
+static int
+nvkm_gr_oclass_get(struct nvkm_oclass *oclass, int index)
+{
+	struct nvkm_gr *gr = nvkm_gr(oclass->engine);
+	int c = 0;
 
-	अगर (gr->func->object_get) अणु
-		पूर्णांक ret = gr->func->object_get(gr, index, &oclass->base);
-		अगर (oclass->base.oclass)
-			वापस index;
-		वापस ret;
-	पूर्ण
+	if (gr->func->object_get) {
+		int ret = gr->func->object_get(gr, index, &oclass->base);
+		if (oclass->base.oclass)
+			return index;
+		return ret;
+	}
 
-	जबतक (gr->func->sclass[c].oclass) अणु
-		अगर (c++ == index) अणु
+	while (gr->func->sclass[c].oclass) {
+		if (c++ == index) {
 			oclass->base = gr->func->sclass[index];
-			वापस index;
-		पूर्ण
-	पूर्ण
+			return index;
+		}
+	}
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल पूर्णांक
-nvkm_gr_cclass_new(काष्ठा nvkm_fअगरo_chan *chan,
-		   स्थिर काष्ठा nvkm_oclass *oclass,
-		   काष्ठा nvkm_object **pobject)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(oclass->engine);
-	अगर (gr->func->chan_new)
-		वापस gr->func->chan_new(gr, chan, oclass, pobject);
-	वापस 0;
-पूर्ण
+static int
+nvkm_gr_cclass_new(struct nvkm_fifo_chan *chan,
+		   const struct nvkm_oclass *oclass,
+		   struct nvkm_object **pobject)
+{
+	struct nvkm_gr *gr = nvkm_gr(oclass->engine);
+	if (gr->func->chan_new)
+		return gr->func->chan_new(gr, chan, oclass, pobject);
+	return 0;
+}
 
-अटल व्योम
-nvkm_gr_पूर्णांकr(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	gr->func->पूर्णांकr(gr);
-पूर्ण
+static void
+nvkm_gr_intr(struct nvkm_engine *engine)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	gr->func->intr(gr);
+}
 
-अटल पूर्णांक
-nvkm_gr_oneinit(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	अगर (gr->func->oneinit)
-		वापस gr->func->oneinit(gr);
-	वापस 0;
-पूर्ण
+static int
+nvkm_gr_oneinit(struct nvkm_engine *engine)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	if (gr->func->oneinit)
+		return gr->func->oneinit(gr);
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_gr_init(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	वापस gr->func->init(gr);
-पूर्ण
+static int
+nvkm_gr_init(struct nvkm_engine *engine)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	return gr->func->init(gr);
+}
 
-अटल पूर्णांक
-nvkm_gr_fini(काष्ठा nvkm_engine *engine, bool suspend)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	अगर (gr->func->fini)
-		वापस gr->func->fini(gr, suspend);
-	वापस 0;
-पूर्ण
+static int
+nvkm_gr_fini(struct nvkm_engine *engine, bool suspend)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	if (gr->func->fini)
+		return gr->func->fini(gr, suspend);
+	return 0;
+}
 
-अटल व्योम *
-nvkm_gr_dtor(काष्ठा nvkm_engine *engine)
-अणु
-	काष्ठा nvkm_gr *gr = nvkm_gr(engine);
-	अगर (gr->func->dtor)
-		वापस gr->func->dtor(gr);
-	वापस gr;
-पूर्ण
+static void *
+nvkm_gr_dtor(struct nvkm_engine *engine)
+{
+	struct nvkm_gr *gr = nvkm_gr(engine);
+	if (gr->func->dtor)
+		return gr->func->dtor(gr);
+	return gr;
+}
 
-अटल स्थिर काष्ठा nvkm_engine_func
-nvkm_gr = अणु
+static const struct nvkm_engine_func
+nvkm_gr = {
 	.dtor = nvkm_gr_dtor,
 	.oneinit = nvkm_gr_oneinit,
 	.init = nvkm_gr_init,
 	.fini = nvkm_gr_fini,
-	.पूर्णांकr = nvkm_gr_पूर्णांकr,
+	.intr = nvkm_gr_intr,
 	.tile = nvkm_gr_tile,
 	.chsw_load = nvkm_gr_chsw_load,
-	.fअगरo.cclass = nvkm_gr_cclass_new,
-	.fअगरo.sclass = nvkm_gr_oclass_get,
-पूर्ण;
+	.fifo.cclass = nvkm_gr_cclass_new,
+	.fifo.sclass = nvkm_gr_oclass_get,
+};
 
-पूर्णांक
-nvkm_gr_ctor(स्थिर काष्ठा nvkm_gr_func *func, काष्ठा nvkm_device *device,
-	     क्रमागत nvkm_subdev_type type, पूर्णांक inst, bool enable, काष्ठा nvkm_gr *gr)
-अणु
+int
+nvkm_gr_ctor(const struct nvkm_gr_func *func, struct nvkm_device *device,
+	     enum nvkm_subdev_type type, int inst, bool enable, struct nvkm_gr *gr)
+{
 	gr->func = func;
-	वापस nvkm_engine_ctor(&nvkm_gr, device, type, inst, enable, &gr->engine);
-पूर्ण
+	return nvkm_engine_ctor(&nvkm_gr, device, type, inst, enable, &gr->engine);
+}

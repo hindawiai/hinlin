@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
- * Module Name: utstring - Common functions क्रम strings and अक्षरacters
+ * Module Name: utstring - Common functions for strings and characters
  *
  ******************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
 
-#घोषणा _COMPONENT          ACPI_UTILITIES
+#define _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utstring")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_prपूर्णांक_string
+ * FUNCTION:    acpi_ut_print_string
  *
  * PARAMETERS:  string          - Null terminated ASCII string
- *              max_length      - Maximum output length. Used to स्थिरrain the
+ *              max_length      - Maximum output length. Used to constrain the
  *                                length of strings during debug output only.
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump an ASCII string with support क्रम ACPI-defined escape
+ * DESCRIPTION: Dump an ASCII string with support for ACPI-defined escape
  *              sequences.
  *
  ******************************************************************************/
-व्योम acpi_ut_prपूर्णांक_string(अक्षर *string, u16 max_length)
-अणु
+void acpi_ut_print_string(char *string, u16 max_length)
+{
 	u32 i;
 
-	अगर (!string) अणु
-		acpi_os_म_लिखो("<\"NULL STRING PTR\">");
-		वापस;
-	पूर्ण
+	if (!string) {
+		acpi_os_printf("<\"NULL STRING PTR\">");
+		return;
+	}
 
-	acpi_os_म_लिखो("\"");
-	क्रम (i = 0; (i < max_length) && string[i]; i++) अणु
+	acpi_os_printf("\"");
+	for (i = 0; (i < max_length) && string[i]; i++) {
 
 		/* Escape sequences */
 
-		चयन (string[i]) अणु
-		हाल 0x07:
+		switch (string[i]) {
+		case 0x07:
 
-			acpi_os_म_लिखो("\\a");	/* BELL */
-			अवरोध;
+			acpi_os_printf("\\a");	/* BELL */
+			break;
 
-		हाल 0x08:
+		case 0x08:
 
-			acpi_os_म_लिखो("\\b");	/* BACKSPACE */
-			अवरोध;
+			acpi_os_printf("\\b");	/* BACKSPACE */
+			break;
 
-		हाल 0x0C:
+		case 0x0C:
 
-			acpi_os_म_लिखो("\\f");	/* FORMFEED */
-			अवरोध;
+			acpi_os_printf("\\f");	/* FORMFEED */
+			break;
 
-		हाल 0x0A:
+		case 0x0A:
 
-			acpi_os_म_लिखो("\\n");	/* LINEFEED */
-			अवरोध;
+			acpi_os_printf("\\n");	/* LINEFEED */
+			break;
 
-		हाल 0x0D:
+		case 0x0D:
 
-			acpi_os_म_लिखो("\\r");	/* CARRIAGE RETURN */
-			अवरोध;
+			acpi_os_printf("\\r");	/* CARRIAGE RETURN */
+			break;
 
-		हाल 0x09:
+		case 0x09:
 
-			acpi_os_म_लिखो("\\t");	/* HORIZONTAL TAB */
-			अवरोध;
+			acpi_os_printf("\\t");	/* HORIZONTAL TAB */
+			break;
 
-		हाल 0x0B:
+		case 0x0B:
 
-			acpi_os_म_लिखो("\\v");	/* VERTICAL TAB */
-			अवरोध;
+			acpi_os_printf("\\v");	/* VERTICAL TAB */
+			break;
 
-		हाल '\'':	/* Single Quote */
-		हाल '\"':	/* Double Quote */
-		हाल '\\':	/* Backslash */
+		case '\'':	/* Single Quote */
+		case '\"':	/* Double Quote */
+		case '\\':	/* Backslash */
 
-			acpi_os_म_लिखो("\\%c", (पूर्णांक)string[i]);
-			अवरोध;
+			acpi_os_printf("\\%c", (int)string[i]);
+			break;
 
-		शेष:
+		default:
 
-			/* Check क्रम prपूर्णांकable अक्षरacter or hex escape */
+			/* Check for printable character or hex escape */
 
-			अगर (है_छाप((पूर्णांक)string[i])) अणु
-				/* This is a normal अक्षरacter */
+			if (isprint((int)string[i])) {
+				/* This is a normal character */
 
-				acpi_os_म_लिखो("%c", (पूर्णांक)string[i]);
-			पूर्ण अन्यथा अणु
+				acpi_os_printf("%c", (int)string[i]);
+			} else {
 				/* All others will be Hex escapes */
 
-				acpi_os_म_लिखो("\\x%2.2X", (s32)string[i]);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				acpi_os_printf("\\x%2.2X", (s32)string[i]);
+			}
+			break;
+		}
+	}
 
-	acpi_os_म_लिखो("\"");
+	acpi_os_printf("\"");
 
-	अगर (i == max_length && string[i]) अणु
-		acpi_os_म_लिखो("...");
-	पूर्ण
-पूर्ण
+	if (i == max_length && string[i]) {
+		acpi_os_printf("...");
+	}
+}
 
 /*******************************************************************************
  *
@@ -116,97 +115,97 @@ ACPI_MODULE_NAME("utstring")
  *
  * RETURN:      Repaired version of the name
  *
- * DESCRIPTION: Repair an ACPI name: Change invalid अक्षरacters to '*' and
- *              वापस the new name. NOTE: the Name parameter must reside in
- *              पढ़ो/ग_लिखो memory, cannot be a स्थिर.
+ * DESCRIPTION: Repair an ACPI name: Change invalid characters to '*' and
+ *              return the new name. NOTE: the Name parameter must reside in
+ *              read/write memory, cannot be a const.
  *
- * An ACPI Name must consist of valid ACPI अक्षरacters. We will repair the name
- * अगर necessary because we करोn't want to पात because of this, but we want
- * all namespace names to be prपूर्णांकable. A warning message is appropriate.
+ * An ACPI Name must consist of valid ACPI characters. We will repair the name
+ * if necessary because we don't want to abort because of this, but we want
+ * all namespace names to be printable. A warning message is appropriate.
  *
  * This issue came up because there are in fact machines that exhibit
- * this problem, and we want to be able to enable ACPI support क्रम them,
+ * this problem, and we want to be able to enable ACPI support for them,
  * even though there are a few bad names.
  *
  ******************************************************************************/
 
-व्योम acpi_ut_repair_name(अक्षर *name)
-अणु
+void acpi_ut_repair_name(char *name)
+{
 	u32 i;
-	u8 found_bad_अक्षर = FALSE;
+	u8 found_bad_char = FALSE;
 	u32 original_name;
 
 	ACPI_FUNCTION_NAME(ut_repair_name);
 
 	/*
-	 * Special हाल क्रम the root node. This can happen अगर we get an
+	 * Special case for the root node. This can happen if we get an
 	 * error during the execution of module-level code.
 	 */
-	अगर (ACPI_COMPARE_NAMESEG(name, ACPI_ROOT_PATHNAME)) अणु
-		वापस;
-	पूर्ण
+	if (ACPI_COMPARE_NAMESEG(name, ACPI_ROOT_PATHNAME)) {
+		return;
+	}
 
 	ACPI_COPY_NAMESEG(&original_name, name);
 
-	/* Check each अक्षरacter in the name */
+	/* Check each character in the name */
 
-	क्रम (i = 0; i < ACPI_NAMESEG_SIZE; i++) अणु
-		अगर (acpi_ut_valid_name_अक्षर(name[i], i)) अणु
-			जारी;
-		पूर्ण
+	for (i = 0; i < ACPI_NAMESEG_SIZE; i++) {
+		if (acpi_ut_valid_name_char(name[i], i)) {
+			continue;
+		}
 
 		/*
-		 * Replace a bad अक्षरacter with something prपूर्णांकable, yet technically
+		 * Replace a bad character with something printable, yet technically
 		 * still invalid. This prevents any collisions with existing "good"
 		 * names in the namespace.
 		 */
 		name[i] = '*';
-		found_bad_अक्षर = TRUE;
-	पूर्ण
+		found_bad_char = TRUE;
+	}
 
-	अगर (found_bad_अक्षर) अणु
+	if (found_bad_char) {
 
-		/* Report warning only अगर in strict mode or debug mode */
+		/* Report warning only if in strict mode or debug mode */
 
-		अगर (!acpi_gbl_enable_पूर्णांकerpreter_slack) अणु
+		if (!acpi_gbl_enable_interpreter_slack) {
 			ACPI_WARNING((AE_INFO,
 				      "Invalid character(s) in name (0x%.8X), repaired: [%4.4s]",
 				      original_name, name));
-		पूर्ण अन्यथा अणु
+		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 					  "Invalid character(s) in name (0x%.8X), repaired: [%4.4s]",
 					  original_name, name));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-#अगर defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP
+#if defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP
 /*******************************************************************************
  *
  * FUNCTION:    ut_convert_backslashes
  *
  * PARAMETERS:  pathname        - File pathname string to be converted
  *
- * RETURN:      Modअगरies the input Pathname
+ * RETURN:      Modifies the input Pathname
  *
- * DESCRIPTION: Convert all backslashes (0x5C) to क्रमward slashes (0x2F) within
+ * DESCRIPTION: Convert all backslashes (0x5C) to forward slashes (0x2F) within
  *              the entire input file pathname string.
  *
  ******************************************************************************/
 
-व्योम ut_convert_backslashes(अक्षर *pathname)
-अणु
+void ut_convert_backslashes(char *pathname)
+{
 
-	अगर (!pathname) अणु
-		वापस;
-	पूर्ण
+	if (!pathname) {
+		return;
+	}
 
-	जबतक (*pathname) अणु
-		अगर (*pathname == '\\') अणु
+	while (*pathname) {
+		if (*pathname == '\\') {
 			*pathname = '/';
-		पूर्ण
+		}
 
 		pathname++;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif

@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI_LINUX_NETCONF_H_
-#घोषणा _UAPI_LINUX_NETCONF_H_
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_LINUX_NETCONF_H_
+#define _UAPI_LINUX_NETCONF_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/netlink.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
 
-काष्ठा netconfmsg अणु
+struct netconfmsg {
 	__u8	ncm_family;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	NETCONFA_UNSPEC,
 	NETCONFA_IFINDEX,
 	NETCONFA_FORWARDING,
@@ -21,11 +20,11 @@
 	NETCONFA_INPUT,
 	NETCONFA_BC_FORWARDING,
 	__NETCONFA_MAX
-पूर्ण;
-#घोषणा NETCONFA_MAX	(__NETCONFA_MAX - 1)
-#घोषणा NETCONFA_ALL	-1
+};
+#define NETCONFA_MAX	(__NETCONFA_MAX - 1)
+#define NETCONFA_ALL	-1
 
-#घोषणा NETCONFA_IFINDEX_ALL		-1
-#घोषणा NETCONFA_IFINDEX_DEFAULT	-2
+#define NETCONFA_IFINDEX_ALL		-1
+#define NETCONFA_IFINDEX_DEFAULT	-2
 
-#पूर्ण_अगर /* _UAPI_LINUX_NETCONF_H_ */
+#endif /* _UAPI_LINUX_NETCONF_H_ */

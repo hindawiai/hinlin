@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Freescale MXS On-Chip OTP driver
  *
@@ -7,192 +6,192 @@
  *
  * Based on the driver from Huang Shijie and Christoph G. Baumann
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/nvmem-provider.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sपंचांगp_device.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/nvmem-provider.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/stmp_device.h>
 
-/* OCOTP रेजिस्टरs and bits */
+/* OCOTP registers and bits */
 
-#घोषणा BM_OCOTP_CTRL_RD_BANK_OPEN	BIT(12)
-#घोषणा BM_OCOTP_CTRL_ERROR		BIT(9)
-#घोषणा BM_OCOTP_CTRL_BUSY		BIT(8)
+#define BM_OCOTP_CTRL_RD_BANK_OPEN	BIT(12)
+#define BM_OCOTP_CTRL_ERROR		BIT(9)
+#define BM_OCOTP_CTRL_BUSY		BIT(8)
 
-#घोषणा OCOTP_TIMEOUT		10000
-#घोषणा OCOTP_DATA_OFFSET	0x20
+#define OCOTP_TIMEOUT		10000
+#define OCOTP_DATA_OFFSET	0x20
 
-काष्ठा mxs_ocotp अणु
-	काष्ठा clk *clk;
-	व्योम __iomem *base;
-	काष्ठा nvmem_device *nvmem;
-पूर्ण;
+struct mxs_ocotp {
+	struct clk *clk;
+	void __iomem *base;
+	struct nvmem_device *nvmem;
+};
 
-अटल पूर्णांक mxs_ocotp_रुको(काष्ठा mxs_ocotp *otp)
-अणु
-	पूर्णांक समयout = OCOTP_TIMEOUT;
-	अचिन्हित पूर्णांक status = 0;
+static int mxs_ocotp_wait(struct mxs_ocotp *otp)
+{
+	int timeout = OCOTP_TIMEOUT;
+	unsigned int status = 0;
 
-	जबतक (समयout--) अणु
-		status = पढ़ोl(otp->base);
+	while (timeout--) {
+		status = readl(otp->base);
 
-		अगर (!(status & (BM_OCOTP_CTRL_BUSY | BM_OCOTP_CTRL_ERROR)))
-			अवरोध;
+		if (!(status & (BM_OCOTP_CTRL_BUSY | BM_OCOTP_CTRL_ERROR)))
+			break;
 
 		cpu_relax();
-	पूर्ण
+	}
 
-	अगर (status & BM_OCOTP_CTRL_BUSY)
-		वापस -EBUSY;
-	अन्यथा अगर (status & BM_OCOTP_CTRL_ERROR)
-		वापस -EIO;
+	if (status & BM_OCOTP_CTRL_BUSY)
+		return -EBUSY;
+	else if (status & BM_OCOTP_CTRL_ERROR)
+		return -EIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mxs_ocotp_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
-			  व्योम *val, माप_प्रकार bytes)
-अणु
-	काष्ठा mxs_ocotp *otp = context;
+static int mxs_ocotp_read(void *context, unsigned int offset,
+			  void *val, size_t bytes)
+{
+	struct mxs_ocotp *otp = context;
 	u32 *buf = val;
-	पूर्णांक ret;
+	int ret;
 
 	ret = clk_enable(otp->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ग_लिखोl(BM_OCOTP_CTRL_ERROR, otp->base + STMP_OFFSET_REG_CLR);
+	writel(BM_OCOTP_CTRL_ERROR, otp->base + STMP_OFFSET_REG_CLR);
 
-	ret = mxs_ocotp_रुको(otp);
-	अगर (ret)
-		जाओ disable_clk;
+	ret = mxs_ocotp_wait(otp);
+	if (ret)
+		goto disable_clk;
 
-	/* खोलो OCOTP banks क्रम पढ़ो */
-	ग_लिखोl(BM_OCOTP_CTRL_RD_BANK_OPEN, otp->base + STMP_OFFSET_REG_SET);
+	/* open OCOTP banks for read */
+	writel(BM_OCOTP_CTRL_RD_BANK_OPEN, otp->base + STMP_OFFSET_REG_SET);
 
-	/* approximately रुको 33 hclk cycles */
+	/* approximately wait 33 hclk cycles */
 	udelay(1);
 
-	ret = mxs_ocotp_रुको(otp);
-	अगर (ret)
-		जाओ बंद_banks;
+	ret = mxs_ocotp_wait(otp);
+	if (ret)
+		goto close_banks;
 
-	जबतक (bytes) अणु
-		अगर ((offset < OCOTP_DATA_OFFSET) || (offset % 16)) अणु
-			/* fill up non-data रेजिस्टर */
+	while (bytes) {
+		if ((offset < OCOTP_DATA_OFFSET) || (offset % 16)) {
+			/* fill up non-data register */
 			*buf++ = 0;
-		पूर्ण अन्यथा अणु
-			*buf++ = पढ़ोl(otp->base + offset);
-		पूर्ण
+		} else {
+			*buf++ = readl(otp->base + offset);
+		}
 
 		bytes -= 4;
 		offset += 4;
-	पूर्ण
+	}
 
-बंद_banks:
-	/* बंद banks क्रम घातer saving */
-	ग_लिखोl(BM_OCOTP_CTRL_RD_BANK_OPEN, otp->base + STMP_OFFSET_REG_CLR);
+close_banks:
+	/* close banks for power saving */
+	writel(BM_OCOTP_CTRL_RD_BANK_OPEN, otp->base + STMP_OFFSET_REG_CLR);
 
 disable_clk:
 	clk_disable(otp->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा nvmem_config ocotp_config = अणु
+static struct nvmem_config ocotp_config = {
 	.name = "mxs-ocotp",
 	.stride = 16,
 	.word_size = 4,
-	.reg_पढ़ो = mxs_ocotp_पढ़ो,
-पूर्ण;
+	.reg_read = mxs_ocotp_read,
+};
 
-काष्ठा mxs_data अणु
-	पूर्णांक size;
-पूर्ण;
+struct mxs_data {
+	int size;
+};
 
-अटल स्थिर काष्ठा mxs_data imx23_data = अणु
+static const struct mxs_data imx23_data = {
 	.size = 0x220,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mxs_data imx28_data = अणु
+static const struct mxs_data imx28_data = {
 	.size = 0x2a0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mxs_ocotp_match[] = अणु
-	अणु .compatible = "fsl,imx23-ocotp", .data = &imx23_data पूर्ण,
-	अणु .compatible = "fsl,imx28-ocotp", .data = &imx28_data पूर्ण,
-	अणु /* sentinel */पूर्ण,
-पूर्ण;
+static const struct of_device_id mxs_ocotp_match[] = {
+	{ .compatible = "fsl,imx23-ocotp", .data = &imx23_data },
+	{ .compatible = "fsl,imx28-ocotp", .data = &imx28_data },
+	{ /* sentinel */},
+};
 MODULE_DEVICE_TABLE(of, mxs_ocotp_match);
 
-अटल व्योम mxs_ocotp_action(व्योम *data)
-अणु
+static void mxs_ocotp_action(void *data)
+{
 	clk_unprepare(data);
-पूर्ण
+}
 
-अटल पूर्णांक mxs_ocotp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर काष्ठा mxs_data *data;
-	काष्ठा mxs_ocotp *otp;
-	स्थिर काष्ठा of_device_id *match;
-	पूर्णांक ret;
+static int mxs_ocotp_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	const struct mxs_data *data;
+	struct mxs_ocotp *otp;
+	const struct of_device_id *match;
+	int ret;
 
 	match = of_match_device(dev->driver->of_match_table, dev);
-	अगर (!match || !match->data)
-		वापस -EINVAL;
+	if (!match || !match->data)
+		return -EINVAL;
 
-	otp = devm_kzalloc(dev, माप(*otp), GFP_KERNEL);
-	अगर (!otp)
-		वापस -ENOMEM;
+	otp = devm_kzalloc(dev, sizeof(*otp), GFP_KERNEL);
+	if (!otp)
+		return -ENOMEM;
 
-	otp->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(otp->base))
-		वापस PTR_ERR(otp->base);
+	otp->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(otp->base))
+		return PTR_ERR(otp->base);
 
-	otp->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(otp->clk))
-		वापस PTR_ERR(otp->clk);
+	otp->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(otp->clk))
+		return PTR_ERR(otp->clk);
 
 	ret = clk_prepare(otp->clk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "failed to prepare clk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_add_action_or_reset(&pdev->dev, mxs_ocotp_action, otp->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	data = match->data;
 
 	ocotp_config.size = data->size;
 	ocotp_config.priv = otp;
 	ocotp_config.dev = dev;
-	otp->nvmem = devm_nvmem_रेजिस्टर(dev, &ocotp_config);
-	अगर (IS_ERR(otp->nvmem))
-		वापस PTR_ERR(otp->nvmem);
+	otp->nvmem = devm_nvmem_register(dev, &ocotp_config);
+	if (IS_ERR(otp->nvmem))
+		return PTR_ERR(otp->nvmem);
 
-	platक्रमm_set_drvdata(pdev, otp);
+	platform_set_drvdata(pdev, otp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mxs_ocotp_driver = अणु
+static struct platform_driver mxs_ocotp_driver = {
 	.probe = mxs_ocotp_probe,
-	.driver = अणु
+	.driver = {
 		.name = "mxs-ocotp",
 		.of_match_table = mxs_ocotp_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(mxs_ocotp_driver);
+module_platform_driver(mxs_ocotp_driver);
 MODULE_AUTHOR("Stefan Wahren <wahrenst@gmx.net");
 MODULE_DESCRIPTION("driver for OCOTP in i.MX23/i.MX28");
 MODULE_LICENSE("GPL v2");

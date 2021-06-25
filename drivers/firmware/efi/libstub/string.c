@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Taken from:
  *  linux/lib/string.c
@@ -7,110 +6,110 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/string.h>
 
-#अगर_अघोषित __HAVE_ARCH_STRSTR
+#ifndef __HAVE_ARCH_STRSTR
 /**
- * म_माला - Find the first substring in a %NUL terminated string
+ * strstr - Find the first substring in a %NUL terminated string
  * @s1: The string to be searched
- * @s2: The string to search क्रम
+ * @s2: The string to search for
  */
-अक्षर *म_माला(स्थिर अक्षर *s1, स्थिर अक्षर *s2)
-अणु
-	माप_प्रकार l1, l2;
+char *strstr(const char *s1, const char *s2)
+{
+	size_t l1, l2;
 
-	l2 = म_माप(s2);
-	अगर (!l2)
-		वापस (अक्षर *)s1;
-	l1 = म_माप(s1);
-	जबतक (l1 >= l2) अणु
+	l2 = strlen(s2);
+	if (!l2)
+		return (char *)s1;
+	l1 = strlen(s1);
+	while (l1 >= l2) {
 		l1--;
-		अगर (!स_भेद(s1, s2, l2))
-			वापस (अक्षर *)s1;
+		if (!memcmp(s1, s2, l2))
+			return (char *)s1;
 		s1++;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-#पूर्ण_अगर
+	}
+	return NULL;
+}
+#endif
 
-#अगर_अघोषित __HAVE_ARCH_STRNCMP
+#ifndef __HAVE_ARCH_STRNCMP
 /**
- * म_भेदन - Compare two length-limited strings
+ * strncmp - Compare two length-limited strings
  * @cs: One string
  * @ct: Another string
  * @count: The maximum number of bytes to compare
  */
-पूर्णांक म_भेदन(स्थिर अक्षर *cs, स्थिर अक्षर *ct, माप_प्रकार count)
-अणु
-	अचिन्हित अक्षर c1, c2;
+int strncmp(const char *cs, const char *ct, size_t count)
+{
+	unsigned char c1, c2;
 
-	जबतक (count) अणु
+	while (count) {
 		c1 = *cs++;
 		c2 = *ct++;
-		अगर (c1 != c2)
-			वापस c1 < c2 ? -1 : 1;
-		अगर (!c1)
-			अवरोध;
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
 		count--;
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	}
+	return 0;
+}
+#endif
 
-/* Works only क्रम digits and letters, but small and fast */
-#घोषणा TOLOWER(x) ((x) | 0x20)
+/* Works only for digits and letters, but small and fast */
+#define TOLOWER(x) ((x) | 0x20)
 
-अटल अचिन्हित पूर्णांक simple_guess_base(स्थिर अक्षर *cp)
-अणु
-	अगर (cp[0] == '0') अणु
-		अगर (TOLOWER(cp[1]) == 'x' && है_षष्ठादशक(cp[2]))
-			वापस 16;
-		अन्यथा
-			वापस 8;
-	पूर्ण अन्यथा अणु
-		वापस 10;
-	पूर्ण
-पूर्ण
+static unsigned int simple_guess_base(const char *cp)
+{
+	if (cp[0] == '0') {
+		if (TOLOWER(cp[1]) == 'x' && isxdigit(cp[2]))
+			return 16;
+		else
+			return 8;
+	} else {
+		return 10;
+	}
+}
 
 /**
- * simple_म_से_अदीर्घl - convert a string to an अचिन्हित दीर्घ दीर्घ
+ * simple_strtoull - convert a string to an unsigned long long
  * @cp: The start of the string
- * @endp: A poपूर्णांकer to the end of the parsed string will be placed here
+ * @endp: A pointer to the end of the parsed string will be placed here
  * @base: The number base to use
  */
 
-अचिन्हित दीर्घ दीर्घ simple_म_से_अदीर्घl(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
-अणु
-	अचिन्हित दीर्घ दीर्घ result = 0;
+unsigned long long simple_strtoull(const char *cp, char **endp, unsigned int base)
+{
+	unsigned long long result = 0;
 
-	अगर (!base)
+	if (!base)
 		base = simple_guess_base(cp);
 
-	अगर (base == 16 && cp[0] == '0' && TOLOWER(cp[1]) == 'x')
+	if (base == 16 && cp[0] == '0' && TOLOWER(cp[1]) == 'x')
 		cp += 2;
 
-	जबतक (है_षष्ठादशक(*cp)) अणु
-		अचिन्हित पूर्णांक value;
+	while (isxdigit(*cp)) {
+		unsigned int value;
 
-		value = है_अंक(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10;
-		अगर (value >= base)
-			अवरोध;
+		value = isdigit(*cp) ? *cp - '0' : TOLOWER(*cp) - 'a' + 10;
+		if (value >= base)
+			break;
 		result = result * base + value;
 		cp++;
-	पूर्ण
-	अगर (endp)
-		*endp = (अक्षर *)cp;
+	}
+	if (endp)
+		*endp = (char *)cp;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-दीर्घ simple_म_से_दीर्घ(स्थिर अक्षर *cp, अक्षर **endp, अचिन्हित पूर्णांक base)
-अणु
-	अगर (*cp == '-')
-		वापस -simple_म_से_अदीर्घl(cp + 1, endp, base);
+long simple_strtol(const char *cp, char **endp, unsigned int base)
+{
+	if (*cp == '-')
+		return -simple_strtoull(cp + 1, endp, base);
 
-	वापस simple_म_से_अदीर्घl(cp, endp, base);
-पूर्ण
+	return simple_strtoull(cp, endp, base);
+}

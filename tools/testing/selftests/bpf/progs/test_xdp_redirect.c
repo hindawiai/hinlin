@@ -1,29 +1,28 @@
-<शैली गुरु>
 /* Copyright (c) 2017 VMware
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of version 2 of the GNU General Public
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  */
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 
-पूर्णांक _version SEC("version") = 1;
+int _version SEC("version") = 1;
 
 SEC("redirect_to_111")
-पूर्णांक xdp_redirect_to_111(काष्ठा xdp_md *xdp)
-अणु
-	वापस bpf_redirect(111, 0);
-पूर्ण
+int xdp_redirect_to_111(struct xdp_md *xdp)
+{
+	return bpf_redirect(111, 0);
+}
 SEC("redirect_to_222")
-पूर्णांक xdp_redirect_to_222(काष्ठा xdp_md *xdp)
-अणु
-	वापस bpf_redirect(222, 0);
-पूर्ण
+int xdp_redirect_to_222(struct xdp_md *xdp)
+{
+	return bpf_redirect(222, 0);
+}
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";

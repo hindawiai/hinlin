@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_HYPEVISOR_H
-#घोषणा __LINUX_HYPEVISOR_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_HYPEVISOR_H
+#define __LINUX_HYPEVISOR_H
 
 /*
  *	Generic Hypervisor support
  *		Juergen Gross <jgross@suse.com>
  */
 
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 
-#समावेश <यंत्र/jailhouse_para.h>
-#समावेश <यंत्र/x86_init.h>
+#include <asm/jailhouse_para.h>
+#include <asm/x86_init.h>
 
-अटल अंतरभूत व्योम hypervisor_pin_vcpu(पूर्णांक cpu)
-अणु
-	x86_platक्रमm.hyper.pin_vcpu(cpu);
-पूर्ण
+static inline void hypervisor_pin_vcpu(int cpu)
+{
+	x86_platform.hyper.pin_vcpu(cpu);
+}
 
-#अन्यथा /* !CONFIG_X86 */
+#else /* !CONFIG_X86 */
 
-#समावेश <linux/of.h>
+#include <linux/of.h>
 
-अटल अंतरभूत व्योम hypervisor_pin_vcpu(पूर्णांक cpu)
-अणु
-पूर्ण
+static inline void hypervisor_pin_vcpu(int cpu)
+{
+}
 
-अटल अंतरभूत bool jailhouse_paravirt(व्योम)
-अणु
-	वापस of_find_compatible_node(शून्य, शून्य, "jailhouse,cell");
-पूर्ण
+static inline bool jailhouse_paravirt(void)
+{
+	return of_find_compatible_node(NULL, NULL, "jailhouse,cell");
+}
 
-#पूर्ण_अगर /* !CONFIG_X86 */
+#endif /* !CONFIG_X86 */
 
-#पूर्ण_अगर /* __LINUX_HYPEVISOR_H */
+#endif /* __LINUX_HYPEVISOR_H */

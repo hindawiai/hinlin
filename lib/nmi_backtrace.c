@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  NMI backtrace support
  *
  * Gratuitously copied from arch/x86/kernel/apic/hw_nmi.c by Russell King,
  * with the following header:
  *
- *  HW NMI watchकरोg support
+ *  HW NMI watchdog support
  *
  *  started by Don Zickus, Copyright (C) 2010 Red Hat, Inc.
  *
- *  Arch specअगरic calls to support NMI watchकरोg
+ *  Arch specific calls to support NMI watchdog
  *
  *  Bits copied from original nmi.c file
  */
-#समावेश <linux/cpumask.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/sched/debug.h>
+#include <linux/cpumask.h>
+#include <linux/delay.h>
+#include <linux/kprobes.h>
+#include <linux/nmi.h>
+#include <linux/cpu.h>
+#include <linux/sched/debug.h>
 
-#अगर_घोषित arch_trigger_cpumask_backtrace
+#ifdef arch_trigger_cpumask_backtrace
 /* For reliability, we're prepared to waste bits here. */
-अटल DECLARE_BITMAP(backtrace_mask, NR_CPUS) __पढ़ो_mostly;
+static DECLARE_BITMAP(backtrace_mask, NR_CPUS) __read_mostly;
 
 /* "in progress" flag of arch_trigger_cpumask_backtrace */
-अटल अचिन्हित दीर्घ backtrace_flag;
+static unsigned long backtrace_flag;
 
 /*
- * When उठाओ() is called it will be passed a poपूर्णांकer to the
+ * When raise() is called it will be passed a pointer to the
  * backtrace_mask. Architectures that call nmi_cpu_backtrace()
- * directly from their उठाओ() functions may rely on the mask
+ * directly from their raise() functions may rely on the mask
  * they are passed being updated as a side effect of this call.
  */
-व्योम nmi_trigger_cpumask_backtrace(स्थिर cpumask_t *mask,
+void nmi_trigger_cpumask_backtrace(const cpumask_t *mask,
 				   bool exclude_self,
-				   व्योम (*उठाओ)(cpumask_t *mask))
-अणु
-	पूर्णांक i, this_cpu = get_cpu();
+				   void (*raise)(cpumask_t *mask))
+{
+	int i, this_cpu = get_cpu();
 
-	अगर (test_and_set_bit(0, &backtrace_flag)) अणु
+	if (test_and_set_bit(0, &backtrace_flag)) {
 		/*
-		 * If there is alपढ़ोy a trigger_all_cpu_backtrace() in progress
-		 * (backtrace_flag == 1), करोn't output द्विगुन cpu dump infos.
+		 * If there is already a trigger_all_cpu_backtrace() in progress
+		 * (backtrace_flag == 1), don't output double cpu dump infos.
 		 */
 		put_cpu();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cpumask_copy(to_cpumask(backtrace_mask), mask);
-	अगर (exclude_self)
+	if (exclude_self)
 		cpumask_clear_cpu(this_cpu, to_cpumask(backtrace_mask));
 
 	/*
 	 * Don't try to send an NMI to this cpu; it may work on some
 	 * architectures, but on others it may not, and we'll get
-	 * inक्रमmation at least as useful just by करोing a dump_stack() here.
-	 * Note that nmi_cpu_backtrace(शून्य) will clear the cpu bit.
+	 * information at least as useful just by doing a dump_stack() here.
+	 * Note that nmi_cpu_backtrace(NULL) will clear the cpu bit.
 	 */
-	अगर (cpumask_test_cpu(this_cpu, to_cpumask(backtrace_mask)))
-		nmi_cpu_backtrace(शून्य);
+	if (cpumask_test_cpu(this_cpu, to_cpumask(backtrace_mask)))
+		nmi_cpu_backtrace(NULL);
 
-	अगर (!cpumask_empty(to_cpumask(backtrace_mask))) अणु
+	if (!cpumask_empty(to_cpumask(backtrace_mask))) {
 		pr_info("Sending NMI from CPU %d to CPUs %*pbl:\n",
 			this_cpu, nr_cpumask_bits, to_cpumask(backtrace_mask));
-		उठाओ(to_cpumask(backtrace_mask));
-	पूर्ण
+		raise(to_cpumask(backtrace_mask));
+	}
 
-	/* Wait क्रम up to 10 seconds क्रम all CPUs to करो the backtrace */
-	क्रम (i = 0; i < 10 * 1000; i++) अणु
-		अगर (cpumask_empty(to_cpumask(backtrace_mask)))
-			अवरोध;
+	/* Wait for up to 10 seconds for all CPUs to do the backtrace */
+	for (i = 0; i < 10 * 1000; i++) {
+		if (cpumask_empty(to_cpumask(backtrace_mask)))
+			break;
 		mdelay(1);
-		touch_softlockup_watchकरोg();
-	पूर्ण
+		touch_softlockup_watchdog();
+	}
 
 	/*
 	 * Force flush any remote buffers that might be stuck in IRQ context
-	 * and thereक्रमe could not run their irq_work.
+	 * and therefore could not run their irq_work.
 	 */
-	prपूर्णांकk_safe_flush();
+	printk_safe_flush();
 
 	clear_bit_unlock(0, &backtrace_flag);
 	put_cpu();
-पूर्ण
+}
 
-// Dump stacks even क्रम idle CPUs.
-अटल bool backtrace_idle;
+// Dump stacks even for idle CPUs.
+static bool backtrace_idle;
 module_param(backtrace_idle, bool, 0644);
 
-bool nmi_cpu_backtrace(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+bool nmi_cpu_backtrace(struct pt_regs *regs)
+{
+	int cpu = smp_processor_id();
 
-	अगर (cpumask_test_cpu(cpu, to_cpumask(backtrace_mask))) अणु
-		अगर (!READ_ONCE(backtrace_idle) && regs && cpu_in_idle(inकाष्ठाion_poपूर्णांकer(regs))) अणु
+	if (cpumask_test_cpu(cpu, to_cpumask(backtrace_mask))) {
+		if (!READ_ONCE(backtrace_idle) && regs && cpu_in_idle(instruction_pointer(regs))) {
 			pr_warn("NMI backtrace for cpu %d skipped: idling at %pS\n",
-				cpu, (व्योम *)inकाष्ठाion_poपूर्णांकer(regs));
-		पूर्ण अन्यथा अणु
+				cpu, (void *)instruction_pointer(regs));
+		} else {
 			pr_warn("NMI backtrace for cpu %d\n", cpu);
-			अगर (regs)
+			if (regs)
 				show_regs(regs);
-			अन्यथा
+			else
 				dump_stack();
-		पूर्ण
+		}
 		cpumask_clear_cpu(cpu, to_cpumask(backtrace_mask));
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 NOKPROBE_SYMBOL(nmi_cpu_backtrace);
-#पूर्ण_अगर
+#endif

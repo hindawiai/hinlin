@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Copyright 2019, 2020 Amazon.com, Inc. or its affiliates. All rights reserved.
@@ -8,113 +7,113 @@
  *
  * Author: Frank van der Linden <fllinden@amazon.com>
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/hashtable.h>
-#समावेश <linux/refcount.h>
-#समावेश <uapi/linux/xattr.h>
+#include <linux/errno.h>
+#include <linux/nfs_fs.h>
+#include <linux/hashtable.h>
+#include <linux/refcount.h>
+#include <uapi/linux/xattr.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "internal.h"
+#include "nfs4_fs.h"
+#include "internal.h"
 
 /*
  * User extended attributes client side caching is implemented by having
- * a cache काष्ठाure attached to NFS inodes. This काष्ठाure is allocated
- * when needed, and मुक्तd when the cache is zapped.
+ * a cache structure attached to NFS inodes. This structure is allocated
+ * when needed, and freed when the cache is zapped.
  *
- * The cache काष्ठाure contains as hash table of entries, and a poपूर्णांकer
- * to a special-हालd entry क्रम the listxattr cache.
+ * The cache structure contains as hash table of entries, and a pointer
+ * to a special-cased entry for the listxattr cache.
  *
- * Accessing and allocating / मुक्तing the caches is करोne via reference
+ * Accessing and allocating / freeing the caches is done via reference
  * counting. The cache entries use a similar refcounting scheme.
  *
- * This makes मुक्तing a cache, both from the shrinker and from the
- * zap cache path, easy. It also means that, in current use हालs,
+ * This makes freeing a cache, both from the shrinker and from the
+ * zap cache path, easy. It also means that, in current use cases,
  * the large majority of inodes will not waste any memory, as they
- * will never have any user extended attributes asचिन्हित to them.
+ * will never have any user extended attributes assigned to them.
  *
  * Attribute entries are hashed in to a simple hash table. They are
  * also part of an LRU.
  *
  * There are three shrinkers.
  *
- * Two shrinkers deal with the cache entries themselves: one क्रम
- * large entries (> PAGE_SIZE), and one क्रम smaller entries. The
- * shrinker क्रम the larger entries works more aggressively than
- * those क्रम the smaller entries.
+ * Two shrinkers deal with the cache entries themselves: one for
+ * large entries (> PAGE_SIZE), and one for smaller entries. The
+ * shrinker for the larger entries works more aggressively than
+ * those for the smaller entries.
  *
- * The other shrinker मुक्तs the cache काष्ठाures themselves.
+ * The other shrinker frees the cache structures themselves.
  */
 
 /*
- * 64 buckets is a good शेष. There is likely no reasonable
+ * 64 buckets is a good default. There is likely no reasonable
  * workload that uses more than even 64 user extended attributes.
- * You can certainly add a lot more - but you get what you ask क्रम
+ * You can certainly add a lot more - but you get what you ask for
  * in those circumstances.
  */
-#घोषणा NFS4_XATTR_HASH_SIZE	64
+#define NFS4_XATTR_HASH_SIZE	64
 
-#घोषणा NFSDBG_FACILITY	NFSDBG_XATTRCACHE
+#define NFSDBG_FACILITY	NFSDBG_XATTRCACHE
 
-काष्ठा nfs4_xattr_cache;
-काष्ठा nfs4_xattr_entry;
+struct nfs4_xattr_cache;
+struct nfs4_xattr_entry;
 
-काष्ठा nfs4_xattr_bucket अणु
+struct nfs4_xattr_bucket {
 	spinlock_t lock;
-	काष्ठा hlist_head hlist;
-	काष्ठा nfs4_xattr_cache *cache;
+	struct hlist_head hlist;
+	struct nfs4_xattr_cache *cache;
 	bool draining;
-पूर्ण;
+};
 
-काष्ठा nfs4_xattr_cache अणु
-	काष्ठा kref ref;
-	काष्ठा nfs4_xattr_bucket buckets[NFS4_XATTR_HASH_SIZE];
-	काष्ठा list_head lru;
-	काष्ठा list_head dispose;
-	atomic_दीर्घ_t nent;
+struct nfs4_xattr_cache {
+	struct kref ref;
+	struct nfs4_xattr_bucket buckets[NFS4_XATTR_HASH_SIZE];
+	struct list_head lru;
+	struct list_head dispose;
+	atomic_long_t nent;
 	spinlock_t listxattr_lock;
-	काष्ठा inode *inode;
-	काष्ठा nfs4_xattr_entry *listxattr;
-पूर्ण;
+	struct inode *inode;
+	struct nfs4_xattr_entry *listxattr;
+};
 
-काष्ठा nfs4_xattr_entry अणु
-	काष्ठा kref ref;
-	काष्ठा hlist_node hnode;
-	काष्ठा list_head lru;
-	काष्ठा list_head dispose;
-	अक्षर *xattr_name;
-	व्योम *xattr_value;
-	माप_प्रकार xattr_size;
-	काष्ठा nfs4_xattr_bucket *bucket;
-	uपूर्णांक32_t flags;
-पूर्ण;
+struct nfs4_xattr_entry {
+	struct kref ref;
+	struct hlist_node hnode;
+	struct list_head lru;
+	struct list_head dispose;
+	char *xattr_name;
+	void *xattr_value;
+	size_t xattr_size;
+	struct nfs4_xattr_bucket *bucket;
+	uint32_t flags;
+};
 
-#घोषणा	NFS4_XATTR_ENTRY_EXTVAL	0x0001
+#define	NFS4_XATTR_ENTRY_EXTVAL	0x0001
 
 /*
  * LRU list of NFS inodes that have xattr caches.
  */
-अटल काष्ठा list_lru nfs4_xattr_cache_lru;
-अटल काष्ठा list_lru nfs4_xattr_entry_lru;
-अटल काष्ठा list_lru nfs4_xattr_large_entry_lru;
+static struct list_lru nfs4_xattr_cache_lru;
+static struct list_lru nfs4_xattr_entry_lru;
+static struct list_lru nfs4_xattr_large_entry_lru;
 
-अटल काष्ठा kmem_cache *nfs4_xattr_cache_cachep;
+static struct kmem_cache *nfs4_xattr_cache_cachep;
 
 /*
  * Hashing helper functions.
  */
-अटल व्योम
-nfs4_xattr_hash_init(काष्ठा nfs4_xattr_cache *cache)
-अणु
-	अचिन्हित पूर्णांक i;
+static void
+nfs4_xattr_hash_init(struct nfs4_xattr_cache *cache)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < NFS4_XATTR_HASH_SIZE; i++) अणु
+	for (i = 0; i < NFS4_XATTR_HASH_SIZE; i++) {
 		INIT_HLIST_HEAD(&cache->buckets[i].hlist);
 		spin_lock_init(&cache->buckets[i].lock);
 		cache->buckets[i].cache = cache;
 		cache->buckets[i].draining = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Locking order:
@@ -125,27 +124,27 @@ nfs4_xattr_hash_init(काष्ठा nfs4_xattr_cache *cache)
 /*
  * Wrapper functions to add a cache entry to the right LRU.
  */
-अटल bool
-nfs4_xattr_entry_lru_add(काष्ठा nfs4_xattr_entry *entry)
-अणु
-	काष्ठा list_lru *lru;
+static bool
+nfs4_xattr_entry_lru_add(struct nfs4_xattr_entry *entry)
+{
+	struct list_lru *lru;
 
 	lru = (entry->flags & NFS4_XATTR_ENTRY_EXTVAL) ?
 	    &nfs4_xattr_large_entry_lru : &nfs4_xattr_entry_lru;
 
-	वापस list_lru_add(lru, &entry->lru);
-पूर्ण
+	return list_lru_add(lru, &entry->lru);
+}
 
-अटल bool
-nfs4_xattr_entry_lru_del(काष्ठा nfs4_xattr_entry *entry)
-अणु
-	काष्ठा list_lru *lru;
+static bool
+nfs4_xattr_entry_lru_del(struct nfs4_xattr_entry *entry)
+{
+	struct list_lru *lru;
 
 	lru = (entry->flags & NFS4_XATTR_ENTRY_EXTVAL) ?
 	    &nfs4_xattr_large_entry_lru : &nfs4_xattr_entry_lru;
 
-	वापस list_lru_del(lru, &entry->lru);
-पूर्ण
+	return list_lru_del(lru, &entry->lru);
+}
 
 /*
  * This function allocates cache entries. They are the normal
@@ -154,401 +153,401 @@ nfs4_xattr_entry_lru_del(काष्ठा nfs4_xattr_entry *entry)
  * treated as one by the memory shrinker.
  *
  * xattr cache entries are allocated together with names. If the
- * value fits in to one page with the entry काष्ठाure and the name,
- * it will also be part of the same allocation (kदो_स्मृति). This is
- * expected to be the vast majority of हालs. Larger allocations
- * have a value poपूर्णांकer that is allocated separately by kvदो_स्मृति.
+ * value fits in to one page with the entry structure and the name,
+ * it will also be part of the same allocation (kmalloc). This is
+ * expected to be the vast majority of cases. Larger allocations
+ * have a value pointer that is allocated separately by kvmalloc.
  *
  * Parameters:
  *
- * @name:  Name of the extended attribute. शून्य क्रम listxattr cache
+ * @name:  Name of the extended attribute. NULL for listxattr cache
  *         entry.
- * @value: Value of attribute, or listxattr cache. शून्य अगर the
+ * @value: Value of attribute, or listxattr cache. NULL if the
  *         value is to be copied from pages instead.
- * @pages: Pages to copy the value from, अगर not शून्य. Passed in to
- *	   make it easier to copy the value after an RPC, even अगर
+ * @pages: Pages to copy the value from, if not NULL. Passed in to
+ *	   make it easier to copy the value after an RPC, even if
  *	   the value will not be passed up to application (e.g.
- *	   क्रम a 'query' getxattr with शून्य buffer).
- * @len:   Length of the value. Can be 0 क्रम zero-length attributes.
- *         @value and @pages will be शून्य अगर @len is 0.
+ *	   for a 'query' getxattr with NULL buffer).
+ * @len:   Length of the value. Can be 0 for zero-length attributes.
+ *         @value and @pages will be NULL if @len is 0.
  */
-अटल काष्ठा nfs4_xattr_entry *
-nfs4_xattr_alloc_entry(स्थिर अक्षर *name, स्थिर व्योम *value,
-		       काष्ठा page **pages, माप_प्रकार len)
-अणु
-	काष्ठा nfs4_xattr_entry *entry;
-	व्योम *valp;
-	अक्षर *namep;
-	माप_प्रकार alloclen, slen;
-	अक्षर *buf;
-	uपूर्णांक32_t flags;
+static struct nfs4_xattr_entry *
+nfs4_xattr_alloc_entry(const char *name, const void *value,
+		       struct page **pages, size_t len)
+{
+	struct nfs4_xattr_entry *entry;
+	void *valp;
+	char *namep;
+	size_t alloclen, slen;
+	char *buf;
+	uint32_t flags;
 
-	BUILD_BUG_ON(माप(काष्ठा nfs4_xattr_entry) +
+	BUILD_BUG_ON(sizeof(struct nfs4_xattr_entry) +
 	    XATTR_NAME_MAX + 1 > PAGE_SIZE);
 
-	alloclen = माप(काष्ठा nfs4_xattr_entry);
-	अगर (name != शून्य) अणु
-		slen = म_माप(name) + 1;
+	alloclen = sizeof(struct nfs4_xattr_entry);
+	if (name != NULL) {
+		slen = strlen(name) + 1;
 		alloclen += slen;
-	पूर्ण अन्यथा
+	} else
 		slen = 0;
 
-	अगर (alloclen + len <= PAGE_SIZE) अणु
+	if (alloclen + len <= PAGE_SIZE) {
 		alloclen += len;
 		flags = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		flags = NFS4_XATTR_ENTRY_EXTVAL;
-	पूर्ण
+	}
 
-	buf = kदो_स्मृति(alloclen, GFP_KERNEL_ACCOUNT | GFP_NOFS);
-	अगर (buf == शून्य)
-		वापस शून्य;
-	entry = (काष्ठा nfs4_xattr_entry *)buf;
+	buf = kmalloc(alloclen, GFP_KERNEL_ACCOUNT | GFP_NOFS);
+	if (buf == NULL)
+		return NULL;
+	entry = (struct nfs4_xattr_entry *)buf;
 
-	अगर (name != शून्य) अणु
-		namep = buf + माप(काष्ठा nfs4_xattr_entry);
-		स_नकल(namep, name, slen);
-	पूर्ण अन्यथा अणु
-		namep = शून्य;
-	पूर्ण
+	if (name != NULL) {
+		namep = buf + sizeof(struct nfs4_xattr_entry);
+		memcpy(namep, name, slen);
+	} else {
+		namep = NULL;
+	}
 
 
-	अगर (flags & NFS4_XATTR_ENTRY_EXTVAL) अणु
-		valp = kvदो_स्मृति(len, GFP_KERNEL_ACCOUNT | GFP_NOFS);
-		अगर (valp == शून्य) अणु
-			kमुक्त(buf);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अगर (len != 0) अणु
-		valp = buf + माप(काष्ठा nfs4_xattr_entry) + slen;
-	पूर्ण अन्यथा
-		valp = शून्य;
+	if (flags & NFS4_XATTR_ENTRY_EXTVAL) {
+		valp = kvmalloc(len, GFP_KERNEL_ACCOUNT | GFP_NOFS);
+		if (valp == NULL) {
+			kfree(buf);
+			return NULL;
+		}
+	} else if (len != 0) {
+		valp = buf + sizeof(struct nfs4_xattr_entry) + slen;
+	} else
+		valp = NULL;
 
-	अगर (valp != शून्य) अणु
-		अगर (value != शून्य)
-			स_नकल(valp, value, len);
-		अन्यथा
+	if (valp != NULL) {
+		if (value != NULL)
+			memcpy(valp, value, len);
+		else
 			_copy_from_pages(valp, pages, 0, len);
-	पूर्ण
+	}
 
 	entry->flags = flags;
 	entry->xattr_value = valp;
 	kref_init(&entry->ref);
 	entry->xattr_name = namep;
 	entry->xattr_size = len;
-	entry->bucket = शून्य;
+	entry->bucket = NULL;
 	INIT_LIST_HEAD(&entry->lru);
 	INIT_LIST_HEAD(&entry->dispose);
 	INIT_HLIST_NODE(&entry->hnode);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल व्योम
-nfs4_xattr_मुक्त_entry(काष्ठा nfs4_xattr_entry *entry)
-अणु
-	अगर (entry->flags & NFS4_XATTR_ENTRY_EXTVAL)
-		kvमुक्त(entry->xattr_value);
-	kमुक्त(entry);
-पूर्ण
+static void
+nfs4_xattr_free_entry(struct nfs4_xattr_entry *entry)
+{
+	if (entry->flags & NFS4_XATTR_ENTRY_EXTVAL)
+		kvfree(entry->xattr_value);
+	kfree(entry);
+}
 
-अटल व्योम
-nfs4_xattr_मुक्त_entry_cb(काष्ठा kref *kref)
-अणु
-	काष्ठा nfs4_xattr_entry *entry;
+static void
+nfs4_xattr_free_entry_cb(struct kref *kref)
+{
+	struct nfs4_xattr_entry *entry;
 
-	entry = container_of(kref, काष्ठा nfs4_xattr_entry, ref);
+	entry = container_of(kref, struct nfs4_xattr_entry, ref);
 
-	अगर (WARN_ON(!list_empty(&entry->lru)))
-		वापस;
+	if (WARN_ON(!list_empty(&entry->lru)))
+		return;
 
-	nfs4_xattr_मुक्त_entry(entry);
-पूर्ण
+	nfs4_xattr_free_entry(entry);
+}
 
-अटल व्योम
-nfs4_xattr_मुक्त_cache_cb(काष्ठा kref *kref)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
-	पूर्णांक i;
+static void
+nfs4_xattr_free_cache_cb(struct kref *kref)
+{
+	struct nfs4_xattr_cache *cache;
+	int i;
 
-	cache = container_of(kref, काष्ठा nfs4_xattr_cache, ref);
+	cache = container_of(kref, struct nfs4_xattr_cache, ref);
 
-	क्रम (i = 0; i < NFS4_XATTR_HASH_SIZE; i++) अणु
-		अगर (WARN_ON(!hlist_empty(&cache->buckets[i].hlist)))
-			वापस;
+	for (i = 0; i < NFS4_XATTR_HASH_SIZE; i++) {
+		if (WARN_ON(!hlist_empty(&cache->buckets[i].hlist)))
+			return;
 		cache->buckets[i].draining = false;
-	पूर्ण
+	}
 
-	cache->listxattr = शून्य;
+	cache->listxattr = NULL;
 
-	kmem_cache_मुक्त(nfs4_xattr_cache_cachep, cache);
+	kmem_cache_free(nfs4_xattr_cache_cachep, cache);
 
-पूर्ण
+}
 
-अटल काष्ठा nfs4_xattr_cache *
-nfs4_xattr_alloc_cache(व्योम)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
+static struct nfs4_xattr_cache *
+nfs4_xattr_alloc_cache(void)
+{
+	struct nfs4_xattr_cache *cache;
 
 	cache = kmem_cache_alloc(nfs4_xattr_cache_cachep,
 	    GFP_KERNEL_ACCOUNT | GFP_NOFS);
-	अगर (cache == शून्य)
-		वापस शून्य;
+	if (cache == NULL)
+		return NULL;
 
 	kref_init(&cache->ref);
-	atomic_दीर्घ_set(&cache->nent, 0);
+	atomic_long_set(&cache->nent, 0);
 
-	वापस cache;
-पूर्ण
+	return cache;
+}
 
 /*
- * Set the listxattr cache, which is a special-हालd cache entry.
+ * Set the listxattr cache, which is a special-cased cache entry.
  * The special value ERR_PTR(-ESTALE) is used to indicate that
  * the cache is being drained - this prevents a new listxattr
  * cache from being added to what is now a stale cache.
  */
-अटल पूर्णांक
-nfs4_xattr_set_listcache(काष्ठा nfs4_xattr_cache *cache,
-			 काष्ठा nfs4_xattr_entry *new)
-अणु
-	काष्ठा nfs4_xattr_entry *old;
-	पूर्णांक ret = 1;
+static int
+nfs4_xattr_set_listcache(struct nfs4_xattr_cache *cache,
+			 struct nfs4_xattr_entry *new)
+{
+	struct nfs4_xattr_entry *old;
+	int ret = 1;
 
 	spin_lock(&cache->listxattr_lock);
 
 	old = cache->listxattr;
 
-	अगर (old == ERR_PTR(-ESTALE)) अणु
+	if (old == ERR_PTR(-ESTALE)) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cache->listxattr = new;
-	अगर (new != शून्य && new != ERR_PTR(-ESTALE))
+	if (new != NULL && new != ERR_PTR(-ESTALE))
 		nfs4_xattr_entry_lru_add(new);
 
-	अगर (old != शून्य) अणु
+	if (old != NULL) {
 		nfs4_xattr_entry_lru_del(old);
-		kref_put(&old->ref, nfs4_xattr_मुक्त_entry_cb);
-	पूर्ण
+		kref_put(&old->ref, nfs4_xattr_free_entry_cb);
+	}
 out:
 	spin_unlock(&cache->listxattr_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Unlink a cache from its parent inode, clearing out an invalid
  * cache. Must be called with i_lock held.
  */
-अटल काष्ठा nfs4_xattr_cache *
-nfs4_xattr_cache_unlink(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_inode *nfsi;
-	काष्ठा nfs4_xattr_cache *oldcache;
+static struct nfs4_xattr_cache *
+nfs4_xattr_cache_unlink(struct inode *inode)
+{
+	struct nfs_inode *nfsi;
+	struct nfs4_xattr_cache *oldcache;
 
 	nfsi = NFS_I(inode);
 
 	oldcache = nfsi->xattr_cache;
-	अगर (oldcache != शून्य) अणु
+	if (oldcache != NULL) {
 		list_lru_del(&nfs4_xattr_cache_lru, &oldcache->lru);
-		oldcache->inode = शून्य;
-	पूर्ण
-	nfsi->xattr_cache = शून्य;
+		oldcache->inode = NULL;
+	}
+	nfsi->xattr_cache = NULL;
 	nfsi->cache_validity &= ~NFS_INO_INVALID_XATTR;
 
-	वापस oldcache;
+	return oldcache;
 
-पूर्ण
+}
 
 /*
- * Discard a cache. Called by get_cache() अगर there was an old,
+ * Discard a cache. Called by get_cache() if there was an old,
  * invalid cache. Can also be called from a shrinker callback.
  *
- * The cache is dead, it has alपढ़ोy been unlinked from its inode,
- * and no दीर्घer appears on the cache LRU list.
+ * The cache is dead, it has already been unlinked from its inode,
+ * and no longer appears on the cache LRU list.
  *
  * Mark all buckets as draining, so that no new entries are added. This
- * could still happen in the unlikely, but possible हाल that another
- * thपढ़ो had grabbed a reference beक्रमe it was unlinked from the inode,
- * and is still holding it क्रम an add operation.
+ * could still happen in the unlikely, but possible case that another
+ * thread had grabbed a reference before it was unlinked from the inode,
+ * and is still holding it for an add operation.
  *
- * Remove all entries from the LRU lists, so that there is no दीर्घer
- * any way to 'find' this cache. Then, हटाओ the entries from the hash
+ * Remove all entries from the LRU lists, so that there is no longer
+ * any way to 'find' this cache. Then, remove the entries from the hash
  * table.
  *
- * At that poपूर्णांक, the cache will reमुख्य empty and can be मुक्तd when the final
+ * At that point, the cache will remain empty and can be freed when the final
  * reference drops, which is very likely the kref_put at the end of
  * this function, or the one called immediately afterwards in the
  * shrinker callback.
  */
-अटल व्योम
-nfs4_xattr_discard_cache(काष्ठा nfs4_xattr_cache *cache)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा nfs4_xattr_entry *entry;
-	काष्ठा nfs4_xattr_bucket *bucket;
-	काष्ठा hlist_node *n;
+static void
+nfs4_xattr_discard_cache(struct nfs4_xattr_cache *cache)
+{
+	unsigned int i;
+	struct nfs4_xattr_entry *entry;
+	struct nfs4_xattr_bucket *bucket;
+	struct hlist_node *n;
 
 	nfs4_xattr_set_listcache(cache, ERR_PTR(-ESTALE));
 
-	क्रम (i = 0; i < NFS4_XATTR_HASH_SIZE; i++) अणु
+	for (i = 0; i < NFS4_XATTR_HASH_SIZE; i++) {
 		bucket = &cache->buckets[i];
 
 		spin_lock(&bucket->lock);
 		bucket->draining = true;
-		hlist_क्रम_each_entry_safe(entry, n, &bucket->hlist, hnode) अणु
+		hlist_for_each_entry_safe(entry, n, &bucket->hlist, hnode) {
 			nfs4_xattr_entry_lru_del(entry);
 			hlist_del_init(&entry->hnode);
-			kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
-		पूर्ण
+			kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
+		}
 		spin_unlock(&bucket->lock);
-	पूर्ण
+	}
 
-	atomic_दीर्घ_set(&cache->nent, 0);
+	atomic_long_set(&cache->nent, 0);
 
-	kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
-पूर्ण
+	kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
+}
 
 /*
- * Get a referenced copy of the cache काष्ठाure. Aव्योम करोing allocs
- * जबतक holding i_lock. Which means that we करो some optimistic allocation,
- * and might have to मुक्त the result in rare हालs.
+ * Get a referenced copy of the cache structure. Avoid doing allocs
+ * while holding i_lock. Which means that we do some optimistic allocation,
+ * and might have to free the result in rare cases.
  *
  * This function only checks the NFS_INO_INVALID_XATTR cache validity bit
- * and acts accordingly, replacing the cache when needed. For the पढ़ो हाल
+ * and acts accordingly, replacing the cache when needed. For the read case
  * (!add), this means that the caller must make sure that the cache
- * is valid beक्रमe caling this function. getxattr and listxattr call
- * revalidate_inode to करो this. The attribute cache समयout (क्रम the
- * non-delegated हाल) is expected to be dealt with in the revalidate
+ * is valid before caling this function. getxattr and listxattr call
+ * revalidate_inode to do this. The attribute cache timeout (for the
+ * non-delegated case) is expected to be dealt with in the revalidate
  * call.
  */
 
-अटल काष्ठा nfs4_xattr_cache *
-nfs4_xattr_get_cache(काष्ठा inode *inode, पूर्णांक add)
-अणु
-	काष्ठा nfs_inode *nfsi;
-	काष्ठा nfs4_xattr_cache *cache, *oldcache, *newcache;
+static struct nfs4_xattr_cache *
+nfs4_xattr_get_cache(struct inode *inode, int add)
+{
+	struct nfs_inode *nfsi;
+	struct nfs4_xattr_cache *cache, *oldcache, *newcache;
 
 	nfsi = NFS_I(inode);
 
-	cache = oldcache = शून्य;
+	cache = oldcache = NULL;
 
 	spin_lock(&inode->i_lock);
 
-	अगर (nfsi->cache_validity & NFS_INO_INVALID_XATTR)
+	if (nfsi->cache_validity & NFS_INO_INVALID_XATTR)
 		oldcache = nfs4_xattr_cache_unlink(inode);
-	अन्यथा
+	else
 		cache = nfsi->xattr_cache;
 
-	अगर (cache != शून्य)
+	if (cache != NULL)
 		kref_get(&cache->ref);
 
 	spin_unlock(&inode->i_lock);
 
-	अगर (add && cache == शून्य) अणु
-		newcache = शून्य;
+	if (add && cache == NULL) {
+		newcache = NULL;
 
 		cache = nfs4_xattr_alloc_cache();
-		अगर (cache == शून्य)
-			जाओ out;
+		if (cache == NULL)
+			goto out;
 
 		spin_lock(&inode->i_lock);
-		अगर (nfsi->cache_validity & NFS_INO_INVALID_XATTR) अणु
+		if (nfsi->cache_validity & NFS_INO_INVALID_XATTR) {
 			/*
 			 * The cache was invalidated again. Give up,
 			 * since what we want to enter is now likely
 			 * outdated anyway.
 			 */
 			spin_unlock(&inode->i_lock);
-			kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
-			cache = शून्य;
-			जाओ out;
-		पूर्ण
+			kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
+			cache = NULL;
+			goto out;
+		}
 
 		/*
-		 * Check अगर someone beat us to it.
+		 * Check if someone beat us to it.
 		 */
-		अगर (nfsi->xattr_cache != शून्य) अणु
+		if (nfsi->xattr_cache != NULL) {
 			newcache = nfsi->xattr_cache;
 			kref_get(&newcache->ref);
-		पूर्ण अन्यथा अणु
+		} else {
 			kref_get(&cache->ref);
 			nfsi->xattr_cache = cache;
 			cache->inode = inode;
 			list_lru_add(&nfs4_xattr_cache_lru, &cache->lru);
-		पूर्ण
+		}
 
 		spin_unlock(&inode->i_lock);
 
 		/*
 		 * If there was a race, throw away the cache we just
 		 * allocated, and use the new one allocated by someone
-		 * अन्यथा.
+		 * else.
 		 */
-		अगर (newcache != शून्य) अणु
-			kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
+		if (newcache != NULL) {
+			kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
 			cache = newcache;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out:
 	/*
 	 * Discard the now orphaned old cache.
 	 */
-	अगर (oldcache != शून्य)
+	if (oldcache != NULL)
 		nfs4_xattr_discard_cache(oldcache);
 
-	वापस cache;
-पूर्ण
+	return cache;
+}
 
-अटल अंतरभूत काष्ठा nfs4_xattr_bucket *
-nfs4_xattr_hash_bucket(काष्ठा nfs4_xattr_cache *cache, स्थिर अक्षर *name)
-अणु
-	वापस &cache->buckets[jhash(name, म_माप(name), 0) &
+static inline struct nfs4_xattr_bucket *
+nfs4_xattr_hash_bucket(struct nfs4_xattr_cache *cache, const char *name)
+{
+	return &cache->buckets[jhash(name, strlen(name), 0) &
 	    (ARRAY_SIZE(cache->buckets) - 1)];
-पूर्ण
+}
 
-अटल काष्ठा nfs4_xattr_entry *
-nfs4_xattr_get_entry(काष्ठा nfs4_xattr_bucket *bucket, स्थिर अक्षर *name)
-अणु
-	काष्ठा nfs4_xattr_entry *entry;
+static struct nfs4_xattr_entry *
+nfs4_xattr_get_entry(struct nfs4_xattr_bucket *bucket, const char *name)
+{
+	struct nfs4_xattr_entry *entry;
 
-	entry = शून्य;
+	entry = NULL;
 
-	hlist_क्रम_each_entry(entry, &bucket->hlist, hnode) अणु
-		अगर (!म_भेद(entry->xattr_name, name))
-			अवरोध;
-	पूर्ण
+	hlist_for_each_entry(entry, &bucket->hlist, hnode) {
+		if (!strcmp(entry->xattr_name, name))
+			break;
+	}
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल पूर्णांक
-nfs4_xattr_hash_add(काष्ठा nfs4_xattr_cache *cache,
-		    काष्ठा nfs4_xattr_entry *entry)
-अणु
-	काष्ठा nfs4_xattr_bucket *bucket;
-	काष्ठा nfs4_xattr_entry *oldentry = शून्य;
-	पूर्णांक ret = 1;
+static int
+nfs4_xattr_hash_add(struct nfs4_xattr_cache *cache,
+		    struct nfs4_xattr_entry *entry)
+{
+	struct nfs4_xattr_bucket *bucket;
+	struct nfs4_xattr_entry *oldentry = NULL;
+	int ret = 1;
 
 	bucket = nfs4_xattr_hash_bucket(cache, entry->xattr_name);
 	entry->bucket = bucket;
 
 	spin_lock(&bucket->lock);
 
-	अगर (bucket->draining) अणु
+	if (bucket->draining) {
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	oldentry = nfs4_xattr_get_entry(bucket, entry->xattr_name);
-	अगर (oldentry != शून्य) अणु
+	if (oldentry != NULL) {
 		hlist_del_init(&oldentry->hnode);
 		nfs4_xattr_entry_lru_del(oldentry);
-	पूर्ण अन्यथा अणु
-		atomic_दीर्घ_inc(&cache->nent);
-	पूर्ण
+	} else {
+		atomic_long_inc(&cache->nent);
+	}
 
 	hlist_add_head(&entry->hnode, &bucket->hlist);
 	nfs4_xattr_entry_lru_add(entry);
@@ -556,162 +555,162 @@ nfs4_xattr_hash_add(काष्ठा nfs4_xattr_cache *cache,
 out:
 	spin_unlock(&bucket->lock);
 
-	अगर (oldentry != शून्य)
-		kref_put(&oldentry->ref, nfs4_xattr_मुक्त_entry_cb);
+	if (oldentry != NULL)
+		kref_put(&oldentry->ref, nfs4_xattr_free_entry_cb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-nfs4_xattr_hash_हटाओ(काष्ठा nfs4_xattr_cache *cache, स्थिर अक्षर *name)
-अणु
-	काष्ठा nfs4_xattr_bucket *bucket;
-	काष्ठा nfs4_xattr_entry *entry;
+static void
+nfs4_xattr_hash_remove(struct nfs4_xattr_cache *cache, const char *name)
+{
+	struct nfs4_xattr_bucket *bucket;
+	struct nfs4_xattr_entry *entry;
 
 	bucket = nfs4_xattr_hash_bucket(cache, name);
 
 	spin_lock(&bucket->lock);
 
 	entry = nfs4_xattr_get_entry(bucket, name);
-	अगर (entry != शून्य) अणु
+	if (entry != NULL) {
 		hlist_del_init(&entry->hnode);
 		nfs4_xattr_entry_lru_del(entry);
-		atomic_दीर्घ_dec(&cache->nent);
-	पूर्ण
+		atomic_long_dec(&cache->nent);
+	}
 
 	spin_unlock(&bucket->lock);
 
-	अगर (entry != शून्य)
-		kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
-पूर्ण
+	if (entry != NULL)
+		kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
+}
 
-अटल काष्ठा nfs4_xattr_entry *
-nfs4_xattr_hash_find(काष्ठा nfs4_xattr_cache *cache, स्थिर अक्षर *name)
-अणु
-	काष्ठा nfs4_xattr_bucket *bucket;
-	काष्ठा nfs4_xattr_entry *entry;
+static struct nfs4_xattr_entry *
+nfs4_xattr_hash_find(struct nfs4_xattr_cache *cache, const char *name)
+{
+	struct nfs4_xattr_bucket *bucket;
+	struct nfs4_xattr_entry *entry;
 
 	bucket = nfs4_xattr_hash_bucket(cache, name);
 
 	spin_lock(&bucket->lock);
 
 	entry = nfs4_xattr_get_entry(bucket, name);
-	अगर (entry != शून्य)
+	if (entry != NULL)
 		kref_get(&entry->ref);
 
 	spin_unlock(&bucket->lock);
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
 /*
- * Entry poपूर्णांक to retrieve an entry from the cache.
+ * Entry point to retrieve an entry from the cache.
  */
-sमाप_प्रकार nfs4_xattr_cache_get(काष्ठा inode *inode, स्थिर अक्षर *name, अक्षर *buf,
-			 sमाप_प्रकार buflen)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
-	काष्ठा nfs4_xattr_entry *entry;
-	sमाप_प्रकार ret;
+ssize_t nfs4_xattr_cache_get(struct inode *inode, const char *name, char *buf,
+			 ssize_t buflen)
+{
+	struct nfs4_xattr_cache *cache;
+	struct nfs4_xattr_entry *entry;
+	ssize_t ret;
 
 	cache = nfs4_xattr_get_cache(inode, 0);
-	अगर (cache == शून्य)
-		वापस -ENOENT;
+	if (cache == NULL)
+		return -ENOENT;
 
 	ret = 0;
 	entry = nfs4_xattr_hash_find(cache, name);
 
-	अगर (entry != शून्य) अणु
-		dprपूर्णांकk("%s: cache hit '%s', len %lu\n", __func__,
-		    entry->xattr_name, (अचिन्हित दीर्घ)entry->xattr_size);
-		अगर (buflen == 0) अणु
+	if (entry != NULL) {
+		dprintk("%s: cache hit '%s', len %lu\n", __func__,
+		    entry->xattr_name, (unsigned long)entry->xattr_size);
+		if (buflen == 0) {
 			/* Length probe only */
 			ret = entry->xattr_size;
-		पूर्ण अन्यथा अगर (buflen < entry->xattr_size)
-			ret = -दुस्फल;
-		अन्यथा अणु
-			स_नकल(buf, entry->xattr_value, entry->xattr_size);
+		} else if (buflen < entry->xattr_size)
+			ret = -ERANGE;
+		else {
+			memcpy(buf, entry->xattr_value, entry->xattr_size);
 			ret = entry->xattr_size;
-		पूर्ण
-		kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
-	पूर्ण अन्यथा अणु
-		dprपूर्णांकk("%s: cache miss '%s'\n", __func__, name);
+		}
+		kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
+	} else {
+		dprintk("%s: cache miss '%s'\n", __func__, name);
 		ret = -ENOENT;
-	पूर्ण
+	}
 
-	kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
+	kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Retrieve a cached list of xattrs from the cache.
  */
-sमाप_प्रकार nfs4_xattr_cache_list(काष्ठा inode *inode, अक्षर *buf, sमाप_प्रकार buflen)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
-	काष्ठा nfs4_xattr_entry *entry;
-	sमाप_प्रकार ret;
+ssize_t nfs4_xattr_cache_list(struct inode *inode, char *buf, ssize_t buflen)
+{
+	struct nfs4_xattr_cache *cache;
+	struct nfs4_xattr_entry *entry;
+	ssize_t ret;
 
 	cache = nfs4_xattr_get_cache(inode, 0);
-	अगर (cache == शून्य)
-		वापस -ENOENT;
+	if (cache == NULL)
+		return -ENOENT;
 
 	spin_lock(&cache->listxattr_lock);
 
 	entry = cache->listxattr;
 
-	अगर (entry != शून्य && entry != ERR_PTR(-ESTALE)) अणु
-		अगर (buflen == 0) अणु
+	if (entry != NULL && entry != ERR_PTR(-ESTALE)) {
+		if (buflen == 0) {
 			/* Length probe only */
 			ret = entry->xattr_size;
-		पूर्ण अन्यथा अगर (entry->xattr_size > buflen)
-			ret = -दुस्फल;
-		अन्यथा अणु
-			स_नकल(buf, entry->xattr_value, entry->xattr_size);
+		} else if (entry->xattr_size > buflen)
+			ret = -ERANGE;
+		else {
+			memcpy(buf, entry->xattr_value, entry->xattr_size);
 			ret = entry->xattr_size;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ret = -ENOENT;
-	पूर्ण
+	}
 
 	spin_unlock(&cache->listxattr_lock);
 
-	kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
+	kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Add an xattr to the cache.
  *
  * This also invalidates the xattr list cache.
  */
-व्योम nfs4_xattr_cache_add(काष्ठा inode *inode, स्थिर अक्षर *name,
-			  स्थिर अक्षर *buf, काष्ठा page **pages, sमाप_प्रकार buflen)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
-	काष्ठा nfs4_xattr_entry *entry;
+void nfs4_xattr_cache_add(struct inode *inode, const char *name,
+			  const char *buf, struct page **pages, ssize_t buflen)
+{
+	struct nfs4_xattr_cache *cache;
+	struct nfs4_xattr_entry *entry;
 
-	dprपूर्णांकk("%s: add '%s' len %lu\n", __func__,
-	    name, (अचिन्हित दीर्घ)buflen);
+	dprintk("%s: add '%s' len %lu\n", __func__,
+	    name, (unsigned long)buflen);
 
 	cache = nfs4_xattr_get_cache(inode, 1);
-	अगर (cache == शून्य)
-		वापस;
+	if (cache == NULL)
+		return;
 
 	entry = nfs4_xattr_alloc_entry(name, buf, pages, buflen);
-	अगर (entry == शून्य)
-		जाओ out;
+	if (entry == NULL)
+		goto out;
 
-	(व्योम)nfs4_xattr_set_listcache(cache, शून्य);
+	(void)nfs4_xattr_set_listcache(cache, NULL);
 
-	अगर (!nfs4_xattr_hash_add(cache, entry))
-		kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
+	if (!nfs4_xattr_hash_add(cache, entry))
+		kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
 
 out:
-	kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
-पूर्ण
+	kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
+}
 
 
 /*
@@ -719,239 +718,239 @@ out:
  *
  * This also invalidates the xattr list cache.
  */
-व्योम nfs4_xattr_cache_हटाओ(काष्ठा inode *inode, स्थिर अक्षर *name)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
+void nfs4_xattr_cache_remove(struct inode *inode, const char *name)
+{
+	struct nfs4_xattr_cache *cache;
 
-	dprपूर्णांकk("%s: remove '%s'\n", __func__, name);
+	dprintk("%s: remove '%s'\n", __func__, name);
 
 	cache = nfs4_xattr_get_cache(inode, 0);
-	अगर (cache == शून्य)
-		वापस;
+	if (cache == NULL)
+		return;
 
-	(व्योम)nfs4_xattr_set_listcache(cache, शून्य);
-	nfs4_xattr_hash_हटाओ(cache, name);
+	(void)nfs4_xattr_set_listcache(cache, NULL);
+	nfs4_xattr_hash_remove(cache, name);
 
-	kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
-पूर्ण
+	kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
+}
 
 /*
  * Cache listxattr output, replacing any possible old one.
  */
-व्योम nfs4_xattr_cache_set_list(काष्ठा inode *inode, स्थिर अक्षर *buf,
-			       sमाप_प्रकार buflen)
-अणु
-	काष्ठा nfs4_xattr_cache *cache;
-	काष्ठा nfs4_xattr_entry *entry;
+void nfs4_xattr_cache_set_list(struct inode *inode, const char *buf,
+			       ssize_t buflen)
+{
+	struct nfs4_xattr_cache *cache;
+	struct nfs4_xattr_entry *entry;
 
 	cache = nfs4_xattr_get_cache(inode, 1);
-	अगर (cache == शून्य)
-		वापस;
+	if (cache == NULL)
+		return;
 
-	entry = nfs4_xattr_alloc_entry(शून्य, buf, शून्य, buflen);
-	अगर (entry == शून्य)
-		जाओ out;
+	entry = nfs4_xattr_alloc_entry(NULL, buf, NULL, buflen);
+	if (entry == NULL)
+		goto out;
 
 	/*
 	 * This is just there to be able to get to bucket->cache,
-	 * which is obviously the same क्रम all buckets, so just
+	 * which is obviously the same for all buckets, so just
 	 * use bucket 0.
 	 */
 	entry->bucket = &cache->buckets[0];
 
-	अगर (!nfs4_xattr_set_listcache(cache, entry))
-		kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
+	if (!nfs4_xattr_set_listcache(cache, entry))
+		kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
 
 out:
-	kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
-पूर्ण
+	kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
+}
 
 /*
  * Zap the entire cache. Called when an inode is evicted.
  */
-व्योम nfs4_xattr_cache_zap(काष्ठा inode *inode)
-अणु
-	काष्ठा nfs4_xattr_cache *oldcache;
+void nfs4_xattr_cache_zap(struct inode *inode)
+{
+	struct nfs4_xattr_cache *oldcache;
 
 	spin_lock(&inode->i_lock);
 	oldcache = nfs4_xattr_cache_unlink(inode);
 	spin_unlock(&inode->i_lock);
 
-	अगर (oldcache)
+	if (oldcache)
 		nfs4_xattr_discard_cache(oldcache);
-पूर्ण
+}
 
 /*
  * The entry LRU is shrunk more aggressively than the cache LRU,
  * by settings @seeks to 1.
  *
- * Cache काष्ठाures are मुक्तd only when they've become empty, after
+ * Cache structures are freed only when they've become empty, after
  * pruning all but one entry.
  */
 
-अटल अचिन्हित दीर्घ nfs4_xattr_cache_count(काष्ठा shrinker *shrink,
-					    काष्ठा shrink_control *sc);
-अटल अचिन्हित दीर्घ nfs4_xattr_entry_count(काष्ठा shrinker *shrink,
-					    काष्ठा shrink_control *sc);
-अटल अचिन्हित दीर्घ nfs4_xattr_cache_scan(काष्ठा shrinker *shrink,
-					   काष्ठा shrink_control *sc);
-अटल अचिन्हित दीर्घ nfs4_xattr_entry_scan(काष्ठा shrinker *shrink,
-					   काष्ठा shrink_control *sc);
+static unsigned long nfs4_xattr_cache_count(struct shrinker *shrink,
+					    struct shrink_control *sc);
+static unsigned long nfs4_xattr_entry_count(struct shrinker *shrink,
+					    struct shrink_control *sc);
+static unsigned long nfs4_xattr_cache_scan(struct shrinker *shrink,
+					   struct shrink_control *sc);
+static unsigned long nfs4_xattr_entry_scan(struct shrinker *shrink,
+					   struct shrink_control *sc);
 
-अटल काष्ठा shrinker nfs4_xattr_cache_shrinker = अणु
+static struct shrinker nfs4_xattr_cache_shrinker = {
 	.count_objects	= nfs4_xattr_cache_count,
 	.scan_objects	= nfs4_xattr_cache_scan,
 	.seeks		= DEFAULT_SEEKS,
 	.flags		= SHRINKER_MEMCG_AWARE,
-पूर्ण;
+};
 
-अटल काष्ठा shrinker nfs4_xattr_entry_shrinker = अणु
+static struct shrinker nfs4_xattr_entry_shrinker = {
 	.count_objects	= nfs4_xattr_entry_count,
 	.scan_objects	= nfs4_xattr_entry_scan,
 	.seeks		= DEFAULT_SEEKS,
 	.batch		= 512,
 	.flags		= SHRINKER_MEMCG_AWARE,
-पूर्ण;
+};
 
-अटल काष्ठा shrinker nfs4_xattr_large_entry_shrinker = अणु
+static struct shrinker nfs4_xattr_large_entry_shrinker = {
 	.count_objects	= nfs4_xattr_entry_count,
 	.scan_objects	= nfs4_xattr_entry_scan,
 	.seeks		= 1,
 	.batch		= 512,
 	.flags		= SHRINKER_MEMCG_AWARE,
-पूर्ण;
+};
 
-अटल क्रमागत lru_status
-cache_lru_isolate(काष्ठा list_head *item,
-	काष्ठा list_lru_one *lru, spinlock_t *lru_lock, व्योम *arg)
-अणु
-	काष्ठा list_head *dispose = arg;
-	काष्ठा inode *inode;
-	काष्ठा nfs4_xattr_cache *cache = container_of(item,
-	    काष्ठा nfs4_xattr_cache, lru);
+static enum lru_status
+cache_lru_isolate(struct list_head *item,
+	struct list_lru_one *lru, spinlock_t *lru_lock, void *arg)
+{
+	struct list_head *dispose = arg;
+	struct inode *inode;
+	struct nfs4_xattr_cache *cache = container_of(item,
+	    struct nfs4_xattr_cache, lru);
 
-	अगर (atomic_दीर्घ_पढ़ो(&cache->nent) > 1)
-		वापस LRU_SKIP;
+	if (atomic_long_read(&cache->nent) > 1)
+		return LRU_SKIP;
 
 	/*
-	 * If a cache काष्ठाure is on the LRU list, we know that
-	 * its inode is valid. Try to lock it to अवरोध the link.
+	 * If a cache structure is on the LRU list, we know that
+	 * its inode is valid. Try to lock it to break the link.
 	 * Since we're inverting the lock order here, only try.
 	 */
 	inode = cache->inode;
 
-	अगर (!spin_trylock(&inode->i_lock))
-		वापस LRU_SKIP;
+	if (!spin_trylock(&inode->i_lock))
+		return LRU_SKIP;
 
 	kref_get(&cache->ref);
 
-	cache->inode = शून्य;
-	NFS_I(inode)->xattr_cache = शून्य;
+	cache->inode = NULL;
+	NFS_I(inode)->xattr_cache = NULL;
 	NFS_I(inode)->cache_validity &= ~NFS_INO_INVALID_XATTR;
 	list_lru_isolate(lru, &cache->lru);
 
 	spin_unlock(&inode->i_lock);
 
 	list_add_tail(&cache->dispose, dispose);
-	वापस LRU_REMOVED;
-पूर्ण
+	return LRU_REMOVED;
+}
 
-अटल अचिन्हित दीर्घ
-nfs4_xattr_cache_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
+static unsigned long
+nfs4_xattr_cache_scan(struct shrinker *shrink, struct shrink_control *sc)
+{
 	LIST_HEAD(dispose);
-	अचिन्हित दीर्घ मुक्तd;
-	काष्ठा nfs4_xattr_cache *cache;
+	unsigned long freed;
+	struct nfs4_xattr_cache *cache;
 
-	मुक्तd = list_lru_shrink_walk(&nfs4_xattr_cache_lru, sc,
+	freed = list_lru_shrink_walk(&nfs4_xattr_cache_lru, sc,
 	    cache_lru_isolate, &dispose);
-	जबतक (!list_empty(&dispose)) अणु
-		cache = list_first_entry(&dispose, काष्ठा nfs4_xattr_cache,
+	while (!list_empty(&dispose)) {
+		cache = list_first_entry(&dispose, struct nfs4_xattr_cache,
 		    dispose);
 		list_del_init(&cache->dispose);
 		nfs4_xattr_discard_cache(cache);
-		kref_put(&cache->ref, nfs4_xattr_मुक्त_cache_cb);
-	पूर्ण
+		kref_put(&cache->ref, nfs4_xattr_free_cache_cb);
+	}
 
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
 
-अटल अचिन्हित दीर्घ
-nfs4_xattr_cache_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
-	अचिन्हित दीर्घ count;
+static unsigned long
+nfs4_xattr_cache_count(struct shrinker *shrink, struct shrink_control *sc)
+{
+	unsigned long count;
 
 	count = list_lru_shrink_count(&nfs4_xattr_cache_lru, sc);
-	वापस vfs_pressure_ratio(count);
-पूर्ण
+	return vfs_pressure_ratio(count);
+}
 
-अटल क्रमागत lru_status
-entry_lru_isolate(काष्ठा list_head *item,
-	काष्ठा list_lru_one *lru, spinlock_t *lru_lock, व्योम *arg)
-अणु
-	काष्ठा list_head *dispose = arg;
-	काष्ठा nfs4_xattr_bucket *bucket;
-	काष्ठा nfs4_xattr_cache *cache;
-	काष्ठा nfs4_xattr_entry *entry = container_of(item,
-	    काष्ठा nfs4_xattr_entry, lru);
+static enum lru_status
+entry_lru_isolate(struct list_head *item,
+	struct list_lru_one *lru, spinlock_t *lru_lock, void *arg)
+{
+	struct list_head *dispose = arg;
+	struct nfs4_xattr_bucket *bucket;
+	struct nfs4_xattr_cache *cache;
+	struct nfs4_xattr_entry *entry = container_of(item,
+	    struct nfs4_xattr_entry, lru);
 
 	bucket = entry->bucket;
 	cache = bucket->cache;
 
 	/*
 	 * Unhook the entry from its parent (either a cache bucket
-	 * or a cache काष्ठाure अगर it's a listxattr buf), so that
-	 * it's no दीर्घer found. Then add it to the isolate list,
-	 * to be मुक्तd later.
+	 * or a cache structure if it's a listxattr buf), so that
+	 * it's no longer found. Then add it to the isolate list,
+	 * to be freed later.
 	 *
-	 * In both हालs, we're reverting lock order, so use
-	 * trylock and skip the entry अगर we can't get the lock.
+	 * In both cases, we're reverting lock order, so use
+	 * trylock and skip the entry if we can't get the lock.
 	 */
-	अगर (entry->xattr_name != शून्य) अणु
+	if (entry->xattr_name != NULL) {
 		/* Regular cache entry */
-		अगर (!spin_trylock(&bucket->lock))
-			वापस LRU_SKIP;
+		if (!spin_trylock(&bucket->lock))
+			return LRU_SKIP;
 
 		kref_get(&entry->ref);
 
 		hlist_del_init(&entry->hnode);
-		atomic_दीर्घ_dec(&cache->nent);
+		atomic_long_dec(&cache->nent);
 		list_lru_isolate(lru, &entry->lru);
 
 		spin_unlock(&bucket->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Listxattr cache entry */
-		अगर (!spin_trylock(&cache->listxattr_lock))
-			वापस LRU_SKIP;
+		if (!spin_trylock(&cache->listxattr_lock))
+			return LRU_SKIP;
 
 		kref_get(&entry->ref);
 
-		cache->listxattr = शून्य;
+		cache->listxattr = NULL;
 		list_lru_isolate(lru, &entry->lru);
 
 		spin_unlock(&cache->listxattr_lock);
-	पूर्ण
+	}
 
 	list_add_tail(&entry->dispose, dispose);
-	वापस LRU_REMOVED;
-पूर्ण
+	return LRU_REMOVED;
+}
 
-अटल अचिन्हित दीर्घ
-nfs4_xattr_entry_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
+static unsigned long
+nfs4_xattr_entry_scan(struct shrinker *shrink, struct shrink_control *sc)
+{
 	LIST_HEAD(dispose);
-	अचिन्हित दीर्घ मुक्तd;
-	काष्ठा nfs4_xattr_entry *entry;
-	काष्ठा list_lru *lru;
+	unsigned long freed;
+	struct nfs4_xattr_entry *entry;
+	struct list_lru *lru;
 
 	lru = (shrink == &nfs4_xattr_large_entry_shrinker) ?
 	    &nfs4_xattr_large_entry_lru : &nfs4_xattr_entry_lru;
 
-	मुक्तd = list_lru_shrink_walk(lru, sc, entry_lru_isolate, &dispose);
+	freed = list_lru_shrink_walk(lru, sc, entry_lru_isolate, &dispose);
 
-	जबतक (!list_empty(&dispose)) अणु
-		entry = list_first_entry(&dispose, काष्ठा nfs4_xattr_entry,
+	while (!list_empty(&dispose)) {
+		entry = list_first_entry(&dispose, struct nfs4_xattr_entry,
 		    dispose);
 		list_del_init(&entry->dispose);
 
@@ -960,80 +959,80 @@ nfs4_xattr_entry_scan(काष्ठा shrinker *shrink, काष्ठा sh
 		 * in entry_lru_isolate, and the one that was set
 		 * when the entry was first allocated.
 		 */
-		kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
-		kref_put(&entry->ref, nfs4_xattr_मुक्त_entry_cb);
-	पूर्ण
+		kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
+		kref_put(&entry->ref, nfs4_xattr_free_entry_cb);
+	}
 
-	वापस मुक्तd;
-पूर्ण
+	return freed;
+}
 
-अटल अचिन्हित दीर्घ
-nfs4_xattr_entry_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
-अणु
-	अचिन्हित दीर्घ count;
-	काष्ठा list_lru *lru;
+static unsigned long
+nfs4_xattr_entry_count(struct shrinker *shrink, struct shrink_control *sc)
+{
+	unsigned long count;
+	struct list_lru *lru;
 
 	lru = (shrink == &nfs4_xattr_large_entry_shrinker) ?
 	    &nfs4_xattr_large_entry_lru : &nfs4_xattr_entry_lru;
 
 	count = list_lru_shrink_count(lru, sc);
-	वापस vfs_pressure_ratio(count);
-पूर्ण
+	return vfs_pressure_ratio(count);
+}
 
 
-अटल व्योम nfs4_xattr_cache_init_once(व्योम *p)
-अणु
-	काष्ठा nfs4_xattr_cache *cache = (काष्ठा nfs4_xattr_cache *)p;
+static void nfs4_xattr_cache_init_once(void *p)
+{
+	struct nfs4_xattr_cache *cache = (struct nfs4_xattr_cache *)p;
 
 	spin_lock_init(&cache->listxattr_lock);
-	atomic_दीर्घ_set(&cache->nent, 0);
+	atomic_long_set(&cache->nent, 0);
 	nfs4_xattr_hash_init(cache);
-	cache->listxattr = शून्य;
+	cache->listxattr = NULL;
 	INIT_LIST_HEAD(&cache->lru);
 	INIT_LIST_HEAD(&cache->dispose);
-पूर्ण
+}
 
-पूर्णांक __init nfs4_xattr_cache_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+int __init nfs4_xattr_cache_init(void)
+{
+	int ret = 0;
 
 	nfs4_xattr_cache_cachep = kmem_cache_create("nfs4_xattr_cache_cache",
-	    माप(काष्ठा nfs4_xattr_cache), 0,
+	    sizeof(struct nfs4_xattr_cache), 0,
 	    (SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD|SLAB_ACCOUNT),
 	    nfs4_xattr_cache_init_once);
-	अगर (nfs4_xattr_cache_cachep == शून्य)
-		वापस -ENOMEM;
+	if (nfs4_xattr_cache_cachep == NULL)
+		return -ENOMEM;
 
 	ret = list_lru_init_memcg(&nfs4_xattr_large_entry_lru,
 	    &nfs4_xattr_large_entry_shrinker);
-	अगर (ret)
-		जाओ out4;
+	if (ret)
+		goto out4;
 
 	ret = list_lru_init_memcg(&nfs4_xattr_entry_lru,
 	    &nfs4_xattr_entry_shrinker);
-	अगर (ret)
-		जाओ out3;
+	if (ret)
+		goto out3;
 
 	ret = list_lru_init_memcg(&nfs4_xattr_cache_lru,
 	    &nfs4_xattr_cache_shrinker);
-	अगर (ret)
-		जाओ out2;
+	if (ret)
+		goto out2;
 
-	ret = रेजिस्टर_shrinker(&nfs4_xattr_cache_shrinker);
-	अगर (ret)
-		जाओ out1;
+	ret = register_shrinker(&nfs4_xattr_cache_shrinker);
+	if (ret)
+		goto out1;
 
-	ret = रेजिस्टर_shrinker(&nfs4_xattr_entry_shrinker);
-	अगर (ret)
-		जाओ out;
+	ret = register_shrinker(&nfs4_xattr_entry_shrinker);
+	if (ret)
+		goto out;
 
-	ret = रेजिस्टर_shrinker(&nfs4_xattr_large_entry_shrinker);
-	अगर (!ret)
-		वापस 0;
+	ret = register_shrinker(&nfs4_xattr_large_entry_shrinker);
+	if (!ret)
+		return 0;
 
-	unरेजिस्टर_shrinker(&nfs4_xattr_entry_shrinker);
+	unregister_shrinker(&nfs4_xattr_entry_shrinker);
 out:
-	unरेजिस्टर_shrinker(&nfs4_xattr_cache_shrinker);
+	unregister_shrinker(&nfs4_xattr_cache_shrinker);
 out1:
 	list_lru_destroy(&nfs4_xattr_cache_lru);
 out2:
@@ -1043,16 +1042,16 @@ out3:
 out4:
 	kmem_cache_destroy(nfs4_xattr_cache_cachep);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम nfs4_xattr_cache_निकास(व्योम)
-अणु
-	unरेजिस्टर_shrinker(&nfs4_xattr_large_entry_shrinker);
-	unरेजिस्टर_shrinker(&nfs4_xattr_entry_shrinker);
-	unरेजिस्टर_shrinker(&nfs4_xattr_cache_shrinker);
+void nfs4_xattr_cache_exit(void)
+{
+	unregister_shrinker(&nfs4_xattr_large_entry_shrinker);
+	unregister_shrinker(&nfs4_xattr_entry_shrinker);
+	unregister_shrinker(&nfs4_xattr_cache_shrinker);
 	list_lru_destroy(&nfs4_xattr_large_entry_lru);
 	list_lru_destroy(&nfs4_xattr_entry_lru);
 	list_lru_destroy(&nfs4_xattr_cache_lru);
 	kmem_cache_destroy(nfs4_xattr_cache_cachep);
-पूर्ण
+}

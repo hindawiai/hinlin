@@ -1,318 +1,317 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <arch.h>
-#समावेश <as-layout.h>
-#समावेश <kern_util.h>
-#समावेश <os.h>
-#समावेश <skas.h>
+#include <linux/mm.h>
+#include <linux/sched/signal.h>
+#include <linux/hardirq.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
+#include <linux/sched/debug.h>
+#include <asm/current.h>
+#include <asm/tlbflush.h>
+#include <arch.h>
+#include <as-layout.h>
+#include <kern_util.h>
+#include <os.h>
+#include <skas.h>
 
 /*
- * Note this is स्थिरrained to वापस 0, -EFAULT, -EACCES, -ENOMEM by
+ * Note this is constrained to return 0, -EFAULT, -EACCES, -ENOMEM by
  * segv().
  */
-पूर्णांक handle_page_fault(अचिन्हित दीर्घ address, अचिन्हित दीर्घ ip,
-		      पूर्णांक is_ग_लिखो, पूर्णांक is_user, पूर्णांक *code_out)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	काष्ठा vm_area_काष्ठा *vma;
+int handle_page_fault(unsigned long address, unsigned long ip,
+		      int is_write, int is_user, int *code_out)
+{
+	struct mm_struct *mm = current->mm;
+	struct vm_area_struct *vma;
 	pmd_t *pmd;
 	pte_t *pte;
-	पूर्णांक err = -EFAULT;
-	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
+	int err = -EFAULT;
+	unsigned int flags = FAULT_FLAG_DEFAULT;
 
 	*code_out = SEGV_MAPERR;
 
 	/*
-	 * If the fault was with pagefaults disabled, करोn't take the fault, just
+	 * If the fault was with pagefaults disabled, don't take the fault, just
 	 * fail.
 	 */
-	अगर (faulthandler_disabled())
-		जाओ out_nosemaphore;
+	if (faulthandler_disabled())
+		goto out_nosemaphore;
 
-	अगर (is_user)
+	if (is_user)
 		flags |= FAULT_FLAG_USER;
 retry:
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	vma = find_vma(mm, address);
-	अगर (!vma)
-		जाओ out;
-	अन्यथा अगर (vma->vm_start <= address)
-		जाओ good_area;
-	अन्यथा अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		जाओ out;
-	अन्यथा अगर (is_user && !ARCH_IS_STACKGROW(address))
-		जाओ out;
-	अन्यथा अगर (expand_stack(vma, address))
-		जाओ out;
+	if (!vma)
+		goto out;
+	else if (vma->vm_start <= address)
+		goto good_area;
+	else if (!(vma->vm_flags & VM_GROWSDOWN))
+		goto out;
+	else if (is_user && !ARCH_IS_STACKGROW(address))
+		goto out;
+	else if (expand_stack(vma, address))
+		goto out;
 
 good_area:
 	*code_out = SEGV_ACCERR;
-	अगर (is_ग_लिखो) अणु
-		अगर (!(vma->vm_flags & VM_WRITE))
-			जाओ out;
+	if (is_write) {
+		if (!(vma->vm_flags & VM_WRITE))
+			goto out;
 		flags |= FAULT_FLAG_WRITE;
-	पूर्ण अन्यथा अणु
-		/* Don't require VM_READ|VM_EXEC क्रम ग_लिखो faults! */
-		अगर (!(vma->vm_flags & (VM_READ | VM_EXEC)))
-			जाओ out;
-	पूर्ण
+	} else {
+		/* Don't require VM_READ|VM_EXEC for write faults! */
+		if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
+			goto out;
+	}
 
-	करो अणु
+	do {
 		vm_fault_t fault;
 
-		fault = handle_mm_fault(vma, address, flags, शून्य);
+		fault = handle_mm_fault(vma, address, flags, NULL);
 
-		अगर ((fault & VM_FAULT_RETRY) && fatal_संकेत_pending(current))
-			जाओ out_nosemaphore;
+		if ((fault & VM_FAULT_RETRY) && fatal_signal_pending(current))
+			goto out_nosemaphore;
 
-		अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
-			अगर (fault & VM_FAULT_OOM) अणु
-				जाओ out_of_memory;
-			पूर्ण अन्यथा अगर (fault & VM_FAULT_संक_अंश) अणु
-				जाओ out;
-			पूर्ण अन्यथा अगर (fault & VM_FAULT_SIGBUS) अणु
+		if (unlikely(fault & VM_FAULT_ERROR)) {
+			if (fault & VM_FAULT_OOM) {
+				goto out_of_memory;
+			} else if (fault & VM_FAULT_SIGSEGV) {
+				goto out;
+			} else if (fault & VM_FAULT_SIGBUS) {
 				err = -EACCES;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			BUG();
-		पूर्ण
-		अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
-			अगर (fault & VM_FAULT_RETRY) अणु
+		}
+		if (flags & FAULT_FLAG_ALLOW_RETRY) {
+			if (fault & VM_FAULT_RETRY) {
 				flags |= FAULT_FLAG_TRIED;
 
-				जाओ retry;
-			पूर्ण
-		पूर्ण
+				goto retry;
+			}
+		}
 
 		pmd = pmd_off(mm, address);
 		pte = pte_offset_kernel(pmd, address);
-	पूर्ण जबतक (!pte_present(*pte));
+	} while (!pte_present(*pte));
 	err = 0;
 	/*
 	 * The below warning was added in place of
-	 *	pte_mkyoung(); अगर (is_ग_लिखो) pte_सूची_गढ़ोty();
+	 *	pte_mkyoung(); if (is_write) pte_mkdirty();
 	 * If it's triggered, we'd see normally a hang here (a clean pte is
-	 * marked पढ़ो-only to emulate the dirty bit).
+	 * marked read-only to emulate the dirty bit).
 	 * However, the generic code can mark a PTE writable but clean on a
-	 * concurrent पढ़ो fault, triggering this harmlessly. So comment it out.
+	 * concurrent read fault, triggering this harmlessly. So comment it out.
 	 */
-#अगर 0
-	WARN_ON(!pte_young(*pte) || (is_ग_लिखो && !pte_dirty(*pte)));
-#पूर्ण_अगर
+#if 0
+	WARN_ON(!pte_young(*pte) || (is_write && !pte_dirty(*pte)));
+#endif
 	flush_tlb_page(vma, address);
 out:
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 out_nosemaphore:
-	वापस err;
+	return err;
 
 out_of_memory:
 	/*
-	 * We ran out of memory, call the OOM समाप्तer, and वापस the userspace
-	 * (which will retry the fault, or समाप्त us अगर we got oom-समाप्तed).
+	 * We ran out of memory, call the OOM killer, and return the userspace
+	 * (which will retry the fault, or kill us if we got oom-killed).
 	 */
-	mmap_पढ़ो_unlock(mm);
-	अगर (!is_user)
-		जाओ out_nosemaphore;
+	mmap_read_unlock(mm);
+	if (!is_user)
+		goto out_nosemaphore;
 	pagefault_out_of_memory();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(handle_page_fault);
 
-अटल व्योम show_segv_info(काष्ठा uml_pt_regs *regs)
-अणु
-	काष्ठा task_काष्ठा *tsk = current;
-	काष्ठा faultinfo *fi = UPT_FAULTINFO(regs);
+static void show_segv_info(struct uml_pt_regs *regs)
+{
+	struct task_struct *tsk = current;
+	struct faultinfo *fi = UPT_FAULTINFO(regs);
 
-	अगर (!unhandled_संकेत(tsk, संक_अंश))
-		वापस;
+	if (!unhandled_signal(tsk, SIGSEGV))
+		return;
 
-	अगर (!prपूर्णांकk_ratelimit())
-		वापस;
+	if (!printk_ratelimit())
+		return;
 
-	prपूर्णांकk("%s%s[%d]: segfault at %lx ip %px sp %px error %x",
+	printk("%s%s[%d]: segfault at %lx ip %px sp %px error %x",
 		task_pid_nr(tsk) > 1 ? KERN_INFO : KERN_EMERG,
 		tsk->comm, task_pid_nr(tsk), FAULT_ADDRESS(*fi),
-		(व्योम *)UPT_IP(regs), (व्योम *)UPT_SP(regs),
+		(void *)UPT_IP(regs), (void *)UPT_SP(regs),
 		fi->error_code);
 
-	prपूर्णांक_vma_addr(KERN_CONT " in ", UPT_IP(regs));
-	prपूर्णांकk(KERN_CONT "\n");
-पूर्ण
+	print_vma_addr(KERN_CONT " in ", UPT_IP(regs));
+	printk(KERN_CONT "\n");
+}
 
-अटल व्योम bad_segv(काष्ठा faultinfo fi, अचिन्हित दीर्घ ip)
-अणु
-	current->thपढ़ो.arch.faultinfo = fi;
-	क्रमce_sig_fault(संक_अंश, SEGV_ACCERR, (व्योम __user *) FAULT_ADDRESS(fi));
-पूर्ण
+static void bad_segv(struct faultinfo fi, unsigned long ip)
+{
+	current->thread.arch.faultinfo = fi;
+	force_sig_fault(SIGSEGV, SEGV_ACCERR, (void __user *) FAULT_ADDRESS(fi));
+}
 
-व्योम fatal_sigsegv(व्योम)
-अणु
-	क्रमce_sigsegv(संक_अंश);
-	करो_संकेत(&current->thपढ़ो.regs);
+void fatal_sigsegv(void)
+{
+	force_sigsegv(SIGSEGV);
+	do_signal(&current->thread.regs);
 	/*
-	 * This is to tell gcc that we're not वापसing - करो_संकेत
-	 * can, in general, वापस, but in this हाल, it's not, since
-	 * we just got a fatal संक_अंश queued.
+	 * This is to tell gcc that we're not returning - do_signal
+	 * can, in general, return, but in this case, it's not, since
+	 * we just got a fatal SIGSEGV queued.
 	 */
 	os_dump_core();
-पूर्ण
+}
 
 /**
- * segv_handler() - the संक_अंश handler
- * @sig:	the संकेत number
- * @unused_si:	the संकेत info काष्ठा; unused in this handler
- * @regs:	the ptrace रेजिस्टर inक्रमmation
+ * segv_handler() - the SIGSEGV handler
+ * @sig:	the signal number
+ * @unused_si:	the signal info struct; unused in this handler
+ * @regs:	the ptrace register information
  *
- * The handler first extracts the faultinfo from the UML ptrace regs काष्ठा.
+ * The handler first extracts the faultinfo from the UML ptrace regs struct.
  * If the userfault did not happen in an UML userspace process, bad_segv is called.
- * Otherwise the संकेत did happen in a cloned userspace process, handle it.
+ * Otherwise the signal did happen in a cloned userspace process, handle it.
  */
-व्योम segv_handler(पूर्णांक sig, काष्ठा siginfo *unused_si, काष्ठा uml_pt_regs *regs)
-अणु
-	काष्ठा faultinfo * fi = UPT_FAULTINFO(regs);
+void segv_handler(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs)
+{
+	struct faultinfo * fi = UPT_FAULTINFO(regs);
 
-	अगर (UPT_IS_USER(regs) && !SEGV_IS_FIXABLE(fi)) अणु
+	if (UPT_IS_USER(regs) && !SEGV_IS_FIXABLE(fi)) {
 		show_segv_info(regs);
 		bad_segv(*fi, UPT_IP(regs));
-		वापस;
-	पूर्ण
+		return;
+	}
 	segv(*fi, UPT_IP(regs), UPT_IS_USER(regs), regs);
-पूर्ण
+}
 
 /*
  * We give a *copy* of the faultinfo in the regs to segv.
- * This must be करोne, since nesting SEGVs could overग_लिखो
- * the info in the regs. A poपूर्णांकer to the info then would
+ * This must be done, since nesting SEGVs could overwrite
+ * the info in the regs. A pointer to the info then would
  * give us bad data!
  */
-अचिन्हित दीर्घ segv(काष्ठा faultinfo fi, अचिन्हित दीर्घ ip, पूर्णांक is_user,
-		   काष्ठा uml_pt_regs *regs)
-अणु
-	लाँघ_बफ *catcher;
-	पूर्णांक si_code;
-	पूर्णांक err;
-	पूर्णांक is_ग_लिखो = FAULT_WRITE(fi);
-	अचिन्हित दीर्घ address = FAULT_ADDRESS(fi);
+unsigned long segv(struct faultinfo fi, unsigned long ip, int is_user,
+		   struct uml_pt_regs *regs)
+{
+	jmp_buf *catcher;
+	int si_code;
+	int err;
+	int is_write = FAULT_WRITE(fi);
+	unsigned long address = FAULT_ADDRESS(fi);
 
-	अगर (!is_user && regs)
-		current->thपढ़ो.segv_regs = container_of(regs, काष्ठा pt_regs, regs);
+	if (!is_user && regs)
+		current->thread.segv_regs = container_of(regs, struct pt_regs, regs);
 
-	अगर (!is_user && (address >= start_vm) && (address < end_vm)) अणु
+	if (!is_user && (address >= start_vm) && (address < end_vm)) {
 		flush_tlb_kernel_vm();
-		जाओ out;
-	पूर्ण
-	अन्यथा अगर (current->mm == शून्य) अणु
-		show_regs(container_of(regs, काष्ठा pt_regs, regs));
+		goto out;
+	}
+	else if (current->mm == NULL) {
+		show_regs(container_of(regs, struct pt_regs, regs));
 		panic("Segfault with no mm");
-	पूर्ण
-	अन्यथा अगर (!is_user && address > PAGE_SIZE && address < TASK_SIZE) अणु
-		show_regs(container_of(regs, काष्ठा pt_regs, regs));
+	}
+	else if (!is_user && address > PAGE_SIZE && address < TASK_SIZE) {
+		show_regs(container_of(regs, struct pt_regs, regs));
 		panic("Kernel tried to access user memory at addr 0x%lx, ip 0x%lx",
 		       address, ip);
-	पूर्ण
+	}
 
-	अगर (SEGV_IS_FIXABLE(&fi))
-		err = handle_page_fault(address, ip, is_ग_लिखो, is_user,
+	if (SEGV_IS_FIXABLE(&fi))
+		err = handle_page_fault(address, ip, is_write, is_user,
 					&si_code);
-	अन्यथा अणु
+	else {
 		err = -EFAULT;
 		/*
-		 * A thपढ़ो accessed शून्य, we get a fault, but CR2 is invalid.
-		 * This code is used in __करो_copy_from_user() of TT mode.
+		 * A thread accessed NULL, we get a fault, but CR2 is invalid.
+		 * This code is used in __do_copy_from_user() of TT mode.
 		 * XXX tt mode is gone, so maybe this isn't needed any more
 		 */
 		address = 0;
-	पूर्ण
+	}
 
-	catcher = current->thपढ़ो.fault_catcher;
-	अगर (!err)
-		जाओ out;
-	अन्यथा अगर (catcher != शून्य) अणु
-		current->thपढ़ो.fault_addr = (व्योम *) address;
+	catcher = current->thread.fault_catcher;
+	if (!err)
+		goto out;
+	else if (catcher != NULL) {
+		current->thread.fault_addr = (void *) address;
 		UML_LONGJMP(catcher, 1);
-	पूर्ण
-	अन्यथा अगर (current->thपढ़ो.fault_addr != शून्य)
+	}
+	else if (current->thread.fault_addr != NULL)
 		panic("fault_addr set but no fault catcher");
-	अन्यथा अगर (!is_user && arch_fixup(ip, regs))
-		जाओ out;
+	else if (!is_user && arch_fixup(ip, regs))
+		goto out;
 
-	अगर (!is_user) अणु
-		show_regs(container_of(regs, काष्ठा pt_regs, regs));
+	if (!is_user) {
+		show_regs(container_of(regs, struct pt_regs, regs));
 		panic("Kernel mode fault at addr 0x%lx, ip 0x%lx",
 		      address, ip);
-	पूर्ण
+	}
 
 	show_segv_info(regs);
 
-	अगर (err == -EACCES) अणु
-		current->thपढ़ो.arch.faultinfo = fi;
-		क्रमce_sig_fault(SIGBUS, BUS_ADRERR, (व्योम __user *)address);
-	पूर्ण अन्यथा अणु
+	if (err == -EACCES) {
+		current->thread.arch.faultinfo = fi;
+		force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)address);
+	} else {
 		BUG_ON(err != -EFAULT);
-		current->thपढ़ो.arch.faultinfo = fi;
-		क्रमce_sig_fault(संक_अंश, si_code, (व्योम __user *) address);
-	पूर्ण
+		current->thread.arch.faultinfo = fi;
+		force_sig_fault(SIGSEGV, si_code, (void __user *) address);
+	}
 
 out:
-	अगर (regs)
-		current->thपढ़ो.segv_regs = शून्य;
+	if (regs)
+		current->thread.segv_regs = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम relay_संकेत(पूर्णांक sig, काष्ठा siginfo *si, काष्ठा uml_pt_regs *regs)
-अणु
-	पूर्णांक code, err;
-	अगर (!UPT_IS_USER(regs)) अणु
-		अगर (sig == SIGBUS)
-			prपूर्णांकk(KERN_ERR "Bus error - the host /dev/shm or /tmp "
+void relay_signal(int sig, struct siginfo *si, struct uml_pt_regs *regs)
+{
+	int code, err;
+	if (!UPT_IS_USER(regs)) {
+		if (sig == SIGBUS)
+			printk(KERN_ERR "Bus error - the host /dev/shm or /tmp "
 			       "mount likely just ran out of space\n");
 		panic("Kernel mode signal %d", sig);
-	पूर्ण
+	}
 
-	arch_examine_संकेत(sig, regs);
+	arch_examine_signal(sig, regs);
 
-	/* Is the संकेत layout क्रम the संकेत known?
-	 * Signal data must be scrubbed to prevent inक्रमmation leaks.
+	/* Is the signal layout for the signal known?
+	 * Signal data must be scrubbed to prevent information leaks.
 	 */
 	code = si->si_code;
-	err = si->si_त्रुटि_सं;
-	अगर ((err == 0) && (siginfo_layout(sig, code) == SIL_FAULT)) अणु
-		काष्ठा faultinfo *fi = UPT_FAULTINFO(regs);
-		current->thपढ़ो.arch.faultinfo = *fi;
-		क्रमce_sig_fault(sig, code, (व्योम __user *)FAULT_ADDRESS(*fi));
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR "Attempted to relay unknown signal %d (si_code = %d) with errno %d\n",
+	err = si->si_errno;
+	if ((err == 0) && (siginfo_layout(sig, code) == SIL_FAULT)) {
+		struct faultinfo *fi = UPT_FAULTINFO(regs);
+		current->thread.arch.faultinfo = *fi;
+		force_sig_fault(sig, code, (void __user *)FAULT_ADDRESS(*fi));
+	} else {
+		printk(KERN_ERR "Attempted to relay unknown signal %d (si_code = %d) with errno %d\n",
 		       sig, code, err);
-		क्रमce_sig(sig);
-	पूर्ण
-पूर्ण
+		force_sig(sig);
+	}
+}
 
-व्योम bus_handler(पूर्णांक sig, काष्ठा siginfo *si, काष्ठा uml_pt_regs *regs)
-अणु
-	अगर (current->thपढ़ो.fault_catcher != शून्य)
-		UML_LONGJMP(current->thपढ़ो.fault_catcher, 1);
-	अन्यथा
-		relay_संकेत(sig, si, regs);
-पूर्ण
+void bus_handler(int sig, struct siginfo *si, struct uml_pt_regs *regs)
+{
+	if (current->thread.fault_catcher != NULL)
+		UML_LONGJMP(current->thread.fault_catcher, 1);
+	else
+		relay_signal(sig, si, regs);
+}
 
-व्योम winch(पूर्णांक sig, काष्ठा siginfo *unused_si, काष्ठा uml_pt_regs *regs)
-अणु
-	करो_IRQ(WINCH_IRQ, regs);
-पूर्ण
+void winch(int sig, struct siginfo *unused_si, struct uml_pt_regs *regs)
+{
+	do_IRQ(WINCH_IRQ, regs);
+}
 
-व्योम trap_init(व्योम)
-अणु
-पूर्ण
+void trap_init(void)
+{
+}

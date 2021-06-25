@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * RCU segmented callback lists, function definitions
  *
@@ -8,163 +7,163 @@
  * Authors: Paul E. McKenney <paulmck@linux.ibm.com>
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
+#include <linux/cpu.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
 
-#समावेश "rcu_segcblist.h"
+#include "rcu_segcblist.h"
 
 /* Initialize simple callback list. */
-व्योम rcu_cblist_init(काष्ठा rcu_cblist *rclp)
-अणु
-	rclp->head = शून्य;
+void rcu_cblist_init(struct rcu_cblist *rclp)
+{
+	rclp->head = NULL;
 	rclp->tail = &rclp->head;
 	rclp->len = 0;
-पूर्ण
+}
 
 /*
- * Enqueue an rcu_head काष्ठाure onto the specअगरied callback list.
+ * Enqueue an rcu_head structure onto the specified callback list.
  */
-व्योम rcu_cblist_enqueue(काष्ठा rcu_cblist *rclp, काष्ठा rcu_head *rhp)
-अणु
+void rcu_cblist_enqueue(struct rcu_cblist *rclp, struct rcu_head *rhp)
+{
 	*rclp->tail = rhp;
 	rclp->tail = &rhp->next;
 	WRITE_ONCE(rclp->len, rclp->len + 1);
-पूर्ण
+}
 
 /*
- * Flush the second rcu_cblist काष्ठाure onto the first one, obliterating
- * any contents of the first.  If rhp is non-शून्य, enqueue it as the sole
- * element of the second rcu_cblist काष्ठाure, but ensuring that the second
- * rcu_cblist काष्ठाure, अगर initially non-empty, always appears non-empty
- * throughout the process.  If rdp is शून्य, the second rcu_cblist काष्ठाure
+ * Flush the second rcu_cblist structure onto the first one, obliterating
+ * any contents of the first.  If rhp is non-NULL, enqueue it as the sole
+ * element of the second rcu_cblist structure, but ensuring that the second
+ * rcu_cblist structure, if initially non-empty, always appears non-empty
+ * throughout the process.  If rdp is NULL, the second rcu_cblist structure
  * is instead initialized to empty.
  */
-व्योम rcu_cblist_flush_enqueue(काष्ठा rcu_cblist *drclp,
-			      काष्ठा rcu_cblist *srclp,
-			      काष्ठा rcu_head *rhp)
-अणु
+void rcu_cblist_flush_enqueue(struct rcu_cblist *drclp,
+			      struct rcu_cblist *srclp,
+			      struct rcu_head *rhp)
+{
 	drclp->head = srclp->head;
-	अगर (drclp->head)
+	if (drclp->head)
 		drclp->tail = srclp->tail;
-	अन्यथा
+	else
 		drclp->tail = &drclp->head;
 	drclp->len = srclp->len;
-	अगर (!rhp) अणु
+	if (!rhp) {
 		rcu_cblist_init(srclp);
-	पूर्ण अन्यथा अणु
-		rhp->next = शून्य;
+	} else {
+		rhp->next = NULL;
 		srclp->head = rhp;
 		srclp->tail = &rhp->next;
 		WRITE_ONCE(srclp->len, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Dequeue the oldest rcu_head काष्ठाure from the specअगरied callback
+ * Dequeue the oldest rcu_head structure from the specified callback
  * list.
  */
-काष्ठा rcu_head *rcu_cblist_dequeue(काष्ठा rcu_cblist *rclp)
-अणु
-	काष्ठा rcu_head *rhp;
+struct rcu_head *rcu_cblist_dequeue(struct rcu_cblist *rclp)
+{
+	struct rcu_head *rhp;
 
 	rhp = rclp->head;
-	अगर (!rhp)
-		वापस शून्य;
+	if (!rhp)
+		return NULL;
 	rclp->len--;
 	rclp->head = rhp->next;
-	अगर (!rclp->head)
+	if (!rclp->head)
 		rclp->tail = &rclp->head;
-	वापस rhp;
-पूर्ण
+	return rhp;
+}
 
-/* Set the length of an rcu_segcblist काष्ठाure. */
-अटल व्योम rcu_segcblist_set_len(काष्ठा rcu_segcblist *rsclp, दीर्घ v)
-अणु
-#अगर_घोषित CONFIG_RCU_NOCB_CPU
-	atomic_दीर्घ_set(&rsclp->len, v);
-#अन्यथा
+/* Set the length of an rcu_segcblist structure. */
+static void rcu_segcblist_set_len(struct rcu_segcblist *rsclp, long v)
+{
+#ifdef CONFIG_RCU_NOCB_CPU
+	atomic_long_set(&rsclp->len, v);
+#else
 	WRITE_ONCE(rsclp->len, v);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-/* Get the length of a segment of the rcu_segcblist काष्ठाure. */
-अटल दीर्घ rcu_segcblist_get_seglen(काष्ठा rcu_segcblist *rsclp, पूर्णांक seg)
-अणु
-	वापस READ_ONCE(rsclp->seglen[seg]);
-पूर्ण
+/* Get the length of a segment of the rcu_segcblist structure. */
+static long rcu_segcblist_get_seglen(struct rcu_segcblist *rsclp, int seg)
+{
+	return READ_ONCE(rsclp->seglen[seg]);
+}
 
 /* Return number of callbacks in segmented callback list by summing seglen. */
-दीर्घ rcu_segcblist_n_segment_cbs(काष्ठा rcu_segcblist *rsclp)
-अणु
-	दीर्घ len = 0;
-	पूर्णांक i;
+long rcu_segcblist_n_segment_cbs(struct rcu_segcblist *rsclp)
+{
+	long len = 0;
+	int i;
 
-	क्रम (i = RCU_DONE_TAIL; i < RCU_CBLIST_NSEGS; i++)
+	for (i = RCU_DONE_TAIL; i < RCU_CBLIST_NSEGS; i++)
 		len += rcu_segcblist_get_seglen(rsclp, i);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-/* Set the length of a segment of the rcu_segcblist काष्ठाure. */
-अटल व्योम rcu_segcblist_set_seglen(काष्ठा rcu_segcblist *rsclp, पूर्णांक seg, दीर्घ v)
-अणु
+/* Set the length of a segment of the rcu_segcblist structure. */
+static void rcu_segcblist_set_seglen(struct rcu_segcblist *rsclp, int seg, long v)
+{
 	WRITE_ONCE(rsclp->seglen[seg], v);
-पूर्ण
+}
 
-/* Increase the numeric length of a segment by a specअगरied amount. */
-अटल व्योम rcu_segcblist_add_seglen(काष्ठा rcu_segcblist *rsclp, पूर्णांक seg, दीर्घ v)
-अणु
+/* Increase the numeric length of a segment by a specified amount. */
+static void rcu_segcblist_add_seglen(struct rcu_segcblist *rsclp, int seg, long v)
+{
 	WRITE_ONCE(rsclp->seglen[seg], rsclp->seglen[seg] + v);
-पूर्ण
+}
 
 /* Move from's segment length to to's segment. */
-अटल व्योम rcu_segcblist_move_seglen(काष्ठा rcu_segcblist *rsclp, पूर्णांक from, पूर्णांक to)
-अणु
-	दीर्घ len;
+static void rcu_segcblist_move_seglen(struct rcu_segcblist *rsclp, int from, int to)
+{
+	long len;
 
-	अगर (from == to)
-		वापस;
+	if (from == to)
+		return;
 
 	len = rcu_segcblist_get_seglen(rsclp, from);
-	अगर (!len)
-		वापस;
+	if (!len)
+		return;
 
 	rcu_segcblist_add_seglen(rsclp, to, len);
 	rcu_segcblist_set_seglen(rsclp, from, 0);
-पूर्ण
+}
 
 /* Increment segment's length. */
-अटल व्योम rcu_segcblist_inc_seglen(काष्ठा rcu_segcblist *rsclp, पूर्णांक seg)
-अणु
+static void rcu_segcblist_inc_seglen(struct rcu_segcblist *rsclp, int seg)
+{
 	rcu_segcblist_add_seglen(rsclp, seg, 1);
-पूर्ण
+}
 
 /*
- * Increase the numeric length of an rcu_segcblist काष्ठाure by the
- * specअगरied amount, which can be negative.  This can cause the ->len
- * field to disagree with the actual number of callbacks on the काष्ठाure.
+ * Increase the numeric length of an rcu_segcblist structure by the
+ * specified amount, which can be negative.  This can cause the ->len
+ * field to disagree with the actual number of callbacks on the structure.
  * This increase is fully ordered with respect to the callers accesses
- * both beक्रमe and after.
+ * both before and after.
  *
- * So why on earth is a memory barrier required both beक्रमe and after
+ * So why on earth is a memory barrier required both before and after
  * the update to the ->len field???
  *
  * The reason is that rcu_barrier() locklessly samples each CPU's ->len
- * field, and अगर a given CPU's field is zero, aव्योमs IPIing that CPU.
+ * field, and if a given CPU's field is zero, avoids IPIing that CPU.
  * This can of course race with both queuing and invoking of callbacks.
  * Failing to correctly handle either of these races could result in
  * rcu_barrier() failing to IPI a CPU that actually had callbacks queued
- * which rcu_barrier() was obligated to रुको on.  And अगर rcu_barrier()
- * failed to रुको on such a callback, unloading certain kernel modules
- * would result in calls to functions whose code was no दीर्घer present in
- * the kernel, क्रम but one example.
+ * which rcu_barrier() was obligated to wait on.  And if rcu_barrier()
+ * failed to wait on such a callback, unloading certain kernel modules
+ * would result in calls to functions whose code was no longer present in
+ * the kernel, for but one example.
  *
- * Thereक्रमe, ->len transitions from 1->0 and 0->1 have to be carefully
- * ordered with respect with both list modअगरications and the rcu_barrier().
+ * Therefore, ->len transitions from 1->0 and 0->1 have to be carefully
+ * ordered with respect with both list modifications and the rcu_barrier().
  *
- * The queuing हाल is CASE 1 and the invoking हाल is CASE 2.
+ * The queuing case is CASE 1 and the invoking case is CASE 2.
  *
  * CASE 1: Suppose that CPU 0 has no callbacks queued, but invokes
  * call_rcu() just as CPU 1 invokes rcu_barrier().  CPU 0's ->len field
@@ -177,21 +176,21 @@
  * call_rcu().
  *					rcu_barrier() sees ->len as 0.
  * set ->len = 1.
- *					rcu_barrier() करोes nothing.
+ *					rcu_barrier() does nothing.
  *					module is unloaded.
  * callback invokes unloaded function!
  *
- * With the full barriers, any हाल where rcu_barrier() sees ->len as 0 will
- * have unambiguously preceded the वापस from the racing call_rcu(), which
- * means that this call_rcu() invocation is OK to not रुको on.  After all,
+ * With the full barriers, any case where rcu_barrier() sees ->len as 0 will
+ * have unambiguously preceded the return from the racing call_rcu(), which
+ * means that this call_rcu() invocation is OK to not wait on.  After all,
  * you are supposed to make sure that any problematic call_rcu() invocations
- * happen beक्रमe the rcu_barrier().
+ * happen before the rcu_barrier().
  *
  *
  * CASE 2: Suppose that CPU 0 is invoking its last callback just as
  * CPU 1 invokes rcu_barrier().  CPU 0's ->len field will transition from
  * 1->0, which is one of the transitions that must be handled carefully.
- * Without the full memory barriers beक्रमe the ->len update and at the
+ * Without the full memory barriers before the ->len update and at the
  * end of rcu_barrier(), the following could happen:
  *
  * CPU 0				CPU 1
@@ -199,372 +198,372 @@
  * start invoking last callback
  * set ->len = 0 (reordered)
  *					rcu_barrier() sees ->len as 0
- *					rcu_barrier() करोes nothing.
+ *					rcu_barrier() does nothing.
  *					module is unloaded
  * callback executing after unloaded!
  *
- * With the full barriers, any हाल where rcu_barrier() sees ->len as 0
+ * With the full barriers, any case where rcu_barrier() sees ->len as 0
  * will be fully ordered after the completion of the callback function,
  * so that the module unloading operation is completely safe.
  *
  */
-व्योम rcu_segcblist_add_len(काष्ठा rcu_segcblist *rsclp, दीर्घ v)
-अणु
-#अगर_घोषित CONFIG_RCU_NOCB_CPU
-	smp_mb__beक्रमe_atomic(); // Read header comment above.
-	atomic_दीर्घ_add(v, &rsclp->len);
+void rcu_segcblist_add_len(struct rcu_segcblist *rsclp, long v)
+{
+#ifdef CONFIG_RCU_NOCB_CPU
+	smp_mb__before_atomic(); // Read header comment above.
+	atomic_long_add(v, &rsclp->len);
 	smp_mb__after_atomic();  // Read header comment above.
-#अन्यथा
+#else
 	smp_mb(); // Read header comment above.
 	WRITE_ONCE(rsclp->len, rsclp->len + v);
 	smp_mb(); // Read header comment above.
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
- * Increase the numeric length of an rcu_segcblist काष्ठाure by one.
+ * Increase the numeric length of an rcu_segcblist structure by one.
  * This can cause the ->len field to disagree with the actual number of
- * callbacks on the काष्ठाure.  This increase is fully ordered with respect
- * to the callers accesses both beक्रमe and after.
+ * callbacks on the structure.  This increase is fully ordered with respect
+ * to the callers accesses both before and after.
  */
-व्योम rcu_segcblist_inc_len(काष्ठा rcu_segcblist *rsclp)
-अणु
+void rcu_segcblist_inc_len(struct rcu_segcblist *rsclp)
+{
 	rcu_segcblist_add_len(rsclp, 1);
-पूर्ण
+}
 
 /*
- * Initialize an rcu_segcblist काष्ठाure.
+ * Initialize an rcu_segcblist structure.
  */
-व्योम rcu_segcblist_init(काष्ठा rcu_segcblist *rsclp)
-अणु
-	पूर्णांक i;
+void rcu_segcblist_init(struct rcu_segcblist *rsclp)
+{
+	int i;
 
 	BUILD_BUG_ON(RCU_NEXT_TAIL + 1 != ARRAY_SIZE(rsclp->gp_seq));
 	BUILD_BUG_ON(ARRAY_SIZE(rsclp->tails) != ARRAY_SIZE(rsclp->gp_seq));
-	rsclp->head = शून्य;
-	क्रम (i = 0; i < RCU_CBLIST_NSEGS; i++) अणु
+	rsclp->head = NULL;
+	for (i = 0; i < RCU_CBLIST_NSEGS; i++) {
 		rsclp->tails[i] = &rsclp->head;
 		rcu_segcblist_set_seglen(rsclp, i, 0);
-	पूर्ण
+	}
 	rcu_segcblist_set_len(rsclp, 0);
 	rcu_segcblist_set_flags(rsclp, SEGCBLIST_ENABLED);
-पूर्ण
+}
 
 /*
- * Disable the specअगरied rcu_segcblist काष्ठाure, so that callbacks can
- * no दीर्घer be posted to it.  This काष्ठाure must be empty.
+ * Disable the specified rcu_segcblist structure, so that callbacks can
+ * no longer be posted to it.  This structure must be empty.
  */
-व्योम rcu_segcblist_disable(काष्ठा rcu_segcblist *rsclp)
-अणु
+void rcu_segcblist_disable(struct rcu_segcblist *rsclp)
+{
 	WARN_ON_ONCE(!rcu_segcblist_empty(rsclp));
 	WARN_ON_ONCE(rcu_segcblist_n_cbs(rsclp));
 	rcu_segcblist_clear_flags(rsclp, SEGCBLIST_ENABLED);
-पूर्ण
+}
 
 /*
- * Mark the specअगरied rcu_segcblist काष्ठाure as offloaded.
+ * Mark the specified rcu_segcblist structure as offloaded.
  */
-व्योम rcu_segcblist_offload(काष्ठा rcu_segcblist *rsclp, bool offload)
-अणु
-	अगर (offload) अणु
+void rcu_segcblist_offload(struct rcu_segcblist *rsclp, bool offload)
+{
+	if (offload) {
 		rcu_segcblist_clear_flags(rsclp, SEGCBLIST_SOFTIRQ_ONLY);
 		rcu_segcblist_set_flags(rsclp, SEGCBLIST_OFFLOADED);
-	पूर्ण अन्यथा अणु
+	} else {
 		rcu_segcblist_clear_flags(rsclp, SEGCBLIST_OFFLOADED);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Does the specअगरied rcu_segcblist काष्ठाure contain callbacks that
- * are पढ़ोy to be invoked?
+ * Does the specified rcu_segcblist structure contain callbacks that
+ * are ready to be invoked?
  */
-bool rcu_segcblist_पढ़ोy_cbs(काष्ठा rcu_segcblist *rsclp)
-अणु
-	वापस rcu_segcblist_is_enabled(rsclp) &&
+bool rcu_segcblist_ready_cbs(struct rcu_segcblist *rsclp)
+{
+	return rcu_segcblist_is_enabled(rsclp) &&
 	       &rsclp->head != READ_ONCE(rsclp->tails[RCU_DONE_TAIL]);
-पूर्ण
+}
 
 /*
- * Does the specअगरied rcu_segcblist काष्ठाure contain callbacks that
- * are still pending, that is, not yet पढ़ोy to be invoked?
+ * Does the specified rcu_segcblist structure contain callbacks that
+ * are still pending, that is, not yet ready to be invoked?
  */
-bool rcu_segcblist_pend_cbs(काष्ठा rcu_segcblist *rsclp)
-अणु
-	वापस rcu_segcblist_is_enabled(rsclp) &&
+bool rcu_segcblist_pend_cbs(struct rcu_segcblist *rsclp)
+{
+	return rcu_segcblist_is_enabled(rsclp) &&
 	       !rcu_segcblist_restempty(rsclp, RCU_DONE_TAIL);
-पूर्ण
+}
 
 /*
- * Return a poपूर्णांकer to the first callback in the specअगरied rcu_segcblist
- * काष्ठाure.  This is useful क्रम diagnostics.
+ * Return a pointer to the first callback in the specified rcu_segcblist
+ * structure.  This is useful for diagnostics.
  */
-काष्ठा rcu_head *rcu_segcblist_first_cb(काष्ठा rcu_segcblist *rsclp)
-अणु
-	अगर (rcu_segcblist_is_enabled(rsclp))
-		वापस rsclp->head;
-	वापस शून्य;
-पूर्ण
+struct rcu_head *rcu_segcblist_first_cb(struct rcu_segcblist *rsclp)
+{
+	if (rcu_segcblist_is_enabled(rsclp))
+		return rsclp->head;
+	return NULL;
+}
 
 /*
- * Return a poपूर्णांकer to the first pending callback in the specअगरied
- * rcu_segcblist काष्ठाure.  This is useful just after posting a given
- * callback -- अगर that callback is the first pending callback, then
- * you cannot rely on someone अन्यथा having alपढ़ोy started up the required
+ * Return a pointer to the first pending callback in the specified
+ * rcu_segcblist structure.  This is useful just after posting a given
+ * callback -- if that callback is the first pending callback, then
+ * you cannot rely on someone else having already started up the required
  * grace period.
  */
-काष्ठा rcu_head *rcu_segcblist_first_pend_cb(काष्ठा rcu_segcblist *rsclp)
-अणु
-	अगर (rcu_segcblist_is_enabled(rsclp))
-		वापस *rsclp->tails[RCU_DONE_TAIL];
-	वापस शून्य;
-पूर्ण
+struct rcu_head *rcu_segcblist_first_pend_cb(struct rcu_segcblist *rsclp)
+{
+	if (rcu_segcblist_is_enabled(rsclp))
+		return *rsclp->tails[RCU_DONE_TAIL];
+	return NULL;
+}
 
 /*
- * Return false अगर there are no CBs aरुकोing grace periods, otherwise,
- * वापस true and store the nearest रुकोed-upon grace period पूर्णांकo *lp.
+ * Return false if there are no CBs awaiting grace periods, otherwise,
+ * return true and store the nearest waited-upon grace period into *lp.
  */
-bool rcu_segcblist_nextgp(काष्ठा rcu_segcblist *rsclp, अचिन्हित दीर्घ *lp)
-अणु
-	अगर (!rcu_segcblist_pend_cbs(rsclp))
-		वापस false;
+bool rcu_segcblist_nextgp(struct rcu_segcblist *rsclp, unsigned long *lp)
+{
+	if (!rcu_segcblist_pend_cbs(rsclp))
+		return false;
 	*lp = rsclp->gp_seq[RCU_WAIT_TAIL];
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Enqueue the specअगरied callback onto the specअगरied rcu_segcblist
- * काष्ठाure, updating accounting as needed.  Note that the ->len
+ * Enqueue the specified callback onto the specified rcu_segcblist
+ * structure, updating accounting as needed.  Note that the ->len
  * field may be accessed locklessly, hence the WRITE_ONCE().
- * The ->len field is used by rcu_barrier() and मित्रs to determine
- * अगर it must post a callback on this काष्ठाure, and it is OK
- * क्रम rcu_barrier() to someबार post callbacks needlessly, but
- * असलolutely not OK क्रम it to ever miss posting a callback.
+ * The ->len field is used by rcu_barrier() and friends to determine
+ * if it must post a callback on this structure, and it is OK
+ * for rcu_barrier() to sometimes post callbacks needlessly, but
+ * absolutely not OK for it to ever miss posting a callback.
  */
-व्योम rcu_segcblist_enqueue(काष्ठा rcu_segcblist *rsclp,
-			   काष्ठा rcu_head *rhp)
-अणु
+void rcu_segcblist_enqueue(struct rcu_segcblist *rsclp,
+			   struct rcu_head *rhp)
+{
 	rcu_segcblist_inc_len(rsclp);
 	rcu_segcblist_inc_seglen(rsclp, RCU_NEXT_TAIL);
-	rhp->next = शून्य;
+	rhp->next = NULL;
 	WRITE_ONCE(*rsclp->tails[RCU_NEXT_TAIL], rhp);
 	WRITE_ONCE(rsclp->tails[RCU_NEXT_TAIL], &rhp->next);
-पूर्ण
+}
 
 /*
- * Entrain the specअगरied callback onto the specअगरied rcu_segcblist at
+ * Entrain the specified callback onto the specified rcu_segcblist at
  * the end of the last non-empty segment.  If the entire rcu_segcblist
- * is empty, make no change, but वापस false.
+ * is empty, make no change, but return false.
  *
- * This is पूर्णांकended क्रम use by rcu_barrier()-like primitives, -not-
- * क्रम normal grace-period use.  IMPORTANT:  The callback you enqueue
- * will रुको क्रम all prior callbacks, NOT necessarily क्रम a grace
+ * This is intended for use by rcu_barrier()-like primitives, -not-
+ * for normal grace-period use.  IMPORTANT:  The callback you enqueue
+ * will wait for all prior callbacks, NOT necessarily for a grace
  * period.  You have been warned.
  */
-bool rcu_segcblist_entrain(काष्ठा rcu_segcblist *rsclp,
-			   काष्ठा rcu_head *rhp)
-अणु
-	पूर्णांक i;
+bool rcu_segcblist_entrain(struct rcu_segcblist *rsclp,
+			   struct rcu_head *rhp)
+{
+	int i;
 
-	अगर (rcu_segcblist_n_cbs(rsclp) == 0)
-		वापस false;
+	if (rcu_segcblist_n_cbs(rsclp) == 0)
+		return false;
 	rcu_segcblist_inc_len(rsclp);
-	smp_mb(); /* Ensure counts are updated beक्रमe callback is entrained. */
-	rhp->next = शून्य;
-	क्रम (i = RCU_NEXT_TAIL; i > RCU_DONE_TAIL; i--)
-		अगर (rsclp->tails[i] != rsclp->tails[i - 1])
-			अवरोध;
+	smp_mb(); /* Ensure counts are updated before callback is entrained. */
+	rhp->next = NULL;
+	for (i = RCU_NEXT_TAIL; i > RCU_DONE_TAIL; i--)
+		if (rsclp->tails[i] != rsclp->tails[i - 1])
+			break;
 	rcu_segcblist_inc_seglen(rsclp, i);
 	WRITE_ONCE(*rsclp->tails[i], rhp);
-	क्रम (; i <= RCU_NEXT_TAIL; i++)
+	for (; i <= RCU_NEXT_TAIL; i++)
 		WRITE_ONCE(rsclp->tails[i], &rhp->next);
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Extract only those callbacks पढ़ोy to be invoked from the specअगरied
- * rcu_segcblist काष्ठाure and place them in the specअगरied rcu_cblist
- * काष्ठाure.
+ * Extract only those callbacks ready to be invoked from the specified
+ * rcu_segcblist structure and place them in the specified rcu_cblist
+ * structure.
  */
-व्योम rcu_segcblist_extract_करोne_cbs(काष्ठा rcu_segcblist *rsclp,
-				    काष्ठा rcu_cblist *rclp)
-अणु
-	पूर्णांक i;
+void rcu_segcblist_extract_done_cbs(struct rcu_segcblist *rsclp,
+				    struct rcu_cblist *rclp)
+{
+	int i;
 
-	अगर (!rcu_segcblist_पढ़ोy_cbs(rsclp))
-		वापस; /* Nothing to करो. */
+	if (!rcu_segcblist_ready_cbs(rsclp))
+		return; /* Nothing to do. */
 	rclp->len = rcu_segcblist_get_seglen(rsclp, RCU_DONE_TAIL);
 	*rclp->tail = rsclp->head;
 	WRITE_ONCE(rsclp->head, *rsclp->tails[RCU_DONE_TAIL]);
-	WRITE_ONCE(*rsclp->tails[RCU_DONE_TAIL], शून्य);
+	WRITE_ONCE(*rsclp->tails[RCU_DONE_TAIL], NULL);
 	rclp->tail = rsclp->tails[RCU_DONE_TAIL];
-	क्रम (i = RCU_CBLIST_NSEGS - 1; i >= RCU_DONE_TAIL; i--)
-		अगर (rsclp->tails[i] == rsclp->tails[RCU_DONE_TAIL])
+	for (i = RCU_CBLIST_NSEGS - 1; i >= RCU_DONE_TAIL; i--)
+		if (rsclp->tails[i] == rsclp->tails[RCU_DONE_TAIL])
 			WRITE_ONCE(rsclp->tails[i], &rsclp->head);
 	rcu_segcblist_set_seglen(rsclp, RCU_DONE_TAIL, 0);
-पूर्ण
+}
 
 /*
- * Extract only those callbacks still pending (not yet पढ़ोy to be
- * invoked) from the specअगरied rcu_segcblist काष्ठाure and place them in
- * the specअगरied rcu_cblist काष्ठाure.  Note that this loses inक्रमmation
- * about any callbacks that might have been partway करोne रुकोing क्रम
+ * Extract only those callbacks still pending (not yet ready to be
+ * invoked) from the specified rcu_segcblist structure and place them in
+ * the specified rcu_cblist structure.  Note that this loses information
+ * about any callbacks that might have been partway done waiting for
  * their grace period.  Too bad!  They will have to start over.
  */
-व्योम rcu_segcblist_extract_pend_cbs(काष्ठा rcu_segcblist *rsclp,
-				    काष्ठा rcu_cblist *rclp)
-अणु
-	पूर्णांक i;
+void rcu_segcblist_extract_pend_cbs(struct rcu_segcblist *rsclp,
+				    struct rcu_cblist *rclp)
+{
+	int i;
 
-	अगर (!rcu_segcblist_pend_cbs(rsclp))
-		वापस; /* Nothing to करो. */
+	if (!rcu_segcblist_pend_cbs(rsclp))
+		return; /* Nothing to do. */
 	rclp->len = 0;
 	*rclp->tail = *rsclp->tails[RCU_DONE_TAIL];
 	rclp->tail = rsclp->tails[RCU_NEXT_TAIL];
-	WRITE_ONCE(*rsclp->tails[RCU_DONE_TAIL], शून्य);
-	क्रम (i = RCU_DONE_TAIL + 1; i < RCU_CBLIST_NSEGS; i++) अणु
+	WRITE_ONCE(*rsclp->tails[RCU_DONE_TAIL], NULL);
+	for (i = RCU_DONE_TAIL + 1; i < RCU_CBLIST_NSEGS; i++) {
 		rclp->len += rcu_segcblist_get_seglen(rsclp, i);
 		WRITE_ONCE(rsclp->tails[i], rsclp->tails[RCU_DONE_TAIL]);
 		rcu_segcblist_set_seglen(rsclp, i, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Insert counts from the specअगरied rcu_cblist काष्ठाure in the
- * specअगरied rcu_segcblist काष्ठाure.
+ * Insert counts from the specified rcu_cblist structure in the
+ * specified rcu_segcblist structure.
  */
-व्योम rcu_segcblist_insert_count(काष्ठा rcu_segcblist *rsclp,
-				काष्ठा rcu_cblist *rclp)
-अणु
+void rcu_segcblist_insert_count(struct rcu_segcblist *rsclp,
+				struct rcu_cblist *rclp)
+{
 	rcu_segcblist_add_len(rsclp, rclp->len);
-पूर्ण
+}
 
 /*
- * Move callbacks from the specअगरied rcu_cblist to the beginning of the
- * करोne-callbacks segment of the specअगरied rcu_segcblist.
+ * Move callbacks from the specified rcu_cblist to the beginning of the
+ * done-callbacks segment of the specified rcu_segcblist.
  */
-व्योम rcu_segcblist_insert_करोne_cbs(काष्ठा rcu_segcblist *rsclp,
-				   काष्ठा rcu_cblist *rclp)
-अणु
-	पूर्णांक i;
+void rcu_segcblist_insert_done_cbs(struct rcu_segcblist *rsclp,
+				   struct rcu_cblist *rclp)
+{
+	int i;
 
-	अगर (!rclp->head)
-		वापस; /* No callbacks to move. */
+	if (!rclp->head)
+		return; /* No callbacks to move. */
 	rcu_segcblist_add_seglen(rsclp, RCU_DONE_TAIL, rclp->len);
 	*rclp->tail = rsclp->head;
 	WRITE_ONCE(rsclp->head, rclp->head);
-	क्रम (i = RCU_DONE_TAIL; i < RCU_CBLIST_NSEGS; i++)
-		अगर (&rsclp->head == rsclp->tails[i])
+	for (i = RCU_DONE_TAIL; i < RCU_CBLIST_NSEGS; i++)
+		if (&rsclp->head == rsclp->tails[i])
 			WRITE_ONCE(rsclp->tails[i], rclp->tail);
-		अन्यथा
-			अवरोध;
-	rclp->head = शून्य;
+		else
+			break;
+	rclp->head = NULL;
 	rclp->tail = &rclp->head;
-पूर्ण
+}
 
 /*
- * Move callbacks from the specअगरied rcu_cblist to the end of the
- * new-callbacks segment of the specअगरied rcu_segcblist.
+ * Move callbacks from the specified rcu_cblist to the end of the
+ * new-callbacks segment of the specified rcu_segcblist.
  */
-व्योम rcu_segcblist_insert_pend_cbs(काष्ठा rcu_segcblist *rsclp,
-				   काष्ठा rcu_cblist *rclp)
-अणु
-	अगर (!rclp->head)
-		वापस; /* Nothing to करो. */
+void rcu_segcblist_insert_pend_cbs(struct rcu_segcblist *rsclp,
+				   struct rcu_cblist *rclp)
+{
+	if (!rclp->head)
+		return; /* Nothing to do. */
 
 	rcu_segcblist_add_seglen(rsclp, RCU_NEXT_TAIL, rclp->len);
 	WRITE_ONCE(*rsclp->tails[RCU_NEXT_TAIL], rclp->head);
 	WRITE_ONCE(rsclp->tails[RCU_NEXT_TAIL], rclp->tail);
-पूर्ण
+}
 
 /*
- * Advance the callbacks in the specअगरied rcu_segcblist काष्ठाure based
- * on the current value passed in क्रम the grace-period counter.
+ * Advance the callbacks in the specified rcu_segcblist structure based
+ * on the current value passed in for the grace-period counter.
  */
-व्योम rcu_segcblist_advance(काष्ठा rcu_segcblist *rsclp, अचिन्हित दीर्घ seq)
-अणु
-	पूर्णांक i, j;
+void rcu_segcblist_advance(struct rcu_segcblist *rsclp, unsigned long seq)
+{
+	int i, j;
 
 	WARN_ON_ONCE(!rcu_segcblist_is_enabled(rsclp));
-	अगर (rcu_segcblist_restempty(rsclp, RCU_DONE_TAIL))
-		वापस;
+	if (rcu_segcblist_restempty(rsclp, RCU_DONE_TAIL))
+		return;
 
 	/*
 	 * Find all callbacks whose ->gp_seq numbers indicate that they
-	 * are पढ़ोy to invoke, and put them पूर्णांकo the RCU_DONE_TAIL segment.
+	 * are ready to invoke, and put them into the RCU_DONE_TAIL segment.
 	 */
-	क्रम (i = RCU_WAIT_TAIL; i < RCU_NEXT_TAIL; i++) अणु
-		अगर (ULONG_CMP_LT(seq, rsclp->gp_seq[i]))
-			अवरोध;
+	for (i = RCU_WAIT_TAIL; i < RCU_NEXT_TAIL; i++) {
+		if (ULONG_CMP_LT(seq, rsclp->gp_seq[i]))
+			break;
 		WRITE_ONCE(rsclp->tails[RCU_DONE_TAIL], rsclp->tails[i]);
 		rcu_segcblist_move_seglen(rsclp, i, RCU_DONE_TAIL);
-	पूर्ण
+	}
 
-	/* If no callbacks moved, nothing more need be करोne. */
-	अगर (i == RCU_WAIT_TAIL)
-		वापस;
+	/* If no callbacks moved, nothing more need be done. */
+	if (i == RCU_WAIT_TAIL)
+		return;
 
-	/* Clean up tail poपूर्णांकers that might have been misordered above. */
-	क्रम (j = RCU_WAIT_TAIL; j < i; j++)
+	/* Clean up tail pointers that might have been misordered above. */
+	for (j = RCU_WAIT_TAIL; j < i; j++)
 		WRITE_ONCE(rsclp->tails[j], rsclp->tails[RCU_DONE_TAIL]);
 
 	/*
-	 * Callbacks moved, so clean up the misordered ->tails[] poपूर्णांकers
-	 * that now poपूर्णांक पूर्णांकo the middle of the list of पढ़ोy-to-invoke
-	 * callbacks.  The overall effect is to copy करोwn the later poपूर्णांकers
-	 * पूर्णांकo the gap that was created by the now-पढ़ोy segments.
+	 * Callbacks moved, so clean up the misordered ->tails[] pointers
+	 * that now point into the middle of the list of ready-to-invoke
+	 * callbacks.  The overall effect is to copy down the later pointers
+	 * into the gap that was created by the now-ready segments.
 	 */
-	क्रम (j = RCU_WAIT_TAIL; i < RCU_NEXT_TAIL; i++, j++) अणु
-		अगर (rsclp->tails[j] == rsclp->tails[RCU_NEXT_TAIL])
-			अवरोध;  /* No more callbacks. */
+	for (j = RCU_WAIT_TAIL; i < RCU_NEXT_TAIL; i++, j++) {
+		if (rsclp->tails[j] == rsclp->tails[RCU_NEXT_TAIL])
+			break;  /* No more callbacks. */
 		WRITE_ONCE(rsclp->tails[j], rsclp->tails[i]);
 		rcu_segcblist_move_seglen(rsclp, i, j);
 		rsclp->gp_seq[j] = rsclp->gp_seq[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * "Accelerate" callbacks based on more-accurate grace-period inक्रमmation.
- * The reason क्रम this is that RCU करोes not synchronize the beginnings and
+ * "Accelerate" callbacks based on more-accurate grace-period information.
+ * The reason for this is that RCU does not synchronize the beginnings and
  * ends of grace periods, and that callbacks are posted locally.  This in
  * turn means that the callbacks must be labelled conservatively early
- * on, as getting exact inक्रमmation would degrade both perक्रमmance and
- * scalability.  When more accurate grace-period inक्रमmation becomes
+ * on, as getting exact information would degrade both performance and
+ * scalability.  When more accurate grace-period information becomes
  * available, previously posted callbacks can be "accelerated", marking
  * them to complete at the end of the earlier grace period.
  *
- * This function operates on an rcu_segcblist काष्ठाure, and also the
+ * This function operates on an rcu_segcblist structure, and also the
  * grace-period sequence number seq at which new callbacks would become
- * पढ़ोy to invoke.  Returns true अगर there are callbacks that won't be
- * पढ़ोy to invoke until seq, false otherwise.
+ * ready to invoke.  Returns true if there are callbacks that won't be
+ * ready to invoke until seq, false otherwise.
  */
-bool rcu_segcblist_accelerate(काष्ठा rcu_segcblist *rsclp, अचिन्हित दीर्घ seq)
-अणु
-	पूर्णांक i, j;
+bool rcu_segcblist_accelerate(struct rcu_segcblist *rsclp, unsigned long seq)
+{
+	int i, j;
 
 	WARN_ON_ONCE(!rcu_segcblist_is_enabled(rsclp));
-	अगर (rcu_segcblist_restempty(rsclp, RCU_DONE_TAIL))
-		वापस false;
+	if (rcu_segcblist_restempty(rsclp, RCU_DONE_TAIL))
+		return false;
 
 	/*
 	 * Find the segment preceding the oldest segment of callbacks
 	 * whose ->gp_seq[] completion is at or after that passed in via
-	 * "seq", skipping any empty segments.  This oldest segment, aदीर्घ
+	 * "seq", skipping any empty segments.  This oldest segment, along
 	 * with any later segments, can be merged in with any newly arrived
-	 * callbacks in the RCU_NEXT_TAIL segment, and asचिन्हित "seq"
+	 * callbacks in the RCU_NEXT_TAIL segment, and assigned "seq"
 	 * as their ->gp_seq[] grace-period completion sequence number.
 	 */
-	क्रम (i = RCU_NEXT_READY_TAIL; i > RCU_DONE_TAIL; i--)
-		अगर (rsclp->tails[i] != rsclp->tails[i - 1] &&
+	for (i = RCU_NEXT_READY_TAIL; i > RCU_DONE_TAIL; i--)
+		if (rsclp->tails[i] != rsclp->tails[i - 1] &&
 		    ULONG_CMP_LT(rsclp->gp_seq[i], seq))
-			अवरोध;
+			break;
 
 	/*
 	 * If all the segments contain callbacks that correspond to
 	 * earlier grace-period sequence numbers than "seq", leave.
-	 * Assuming that the rcu_segcblist काष्ठाure has enough
-	 * segments in its arrays, this can only happen अगर some of
-	 * the non-करोne segments contain callbacks that really are
-	 * पढ़ोy to invoke.  This situation will get straightened
+	 * Assuming that the rcu_segcblist structure has enough
+	 * segments in its arrays, this can only happen if some of
+	 * the non-done segments contain callbacks that really are
+	 * ready to invoke.  This situation will get straightened
 	 * out by the next call to rcu_segcblist_advance().
 	 *
 	 * Also advance to the oldest segment of callbacks whose
@@ -573,64 +572,64 @@ bool rcu_segcblist_accelerate(काष्ठा rcu_segcblist *rsclp, अचि
 	 *
 	 * Note that segment "i" (and any lower-numbered segments
 	 * containing older callbacks) will be unaffected, and their
-	 * grace-period numbers reमुख्य unchanged.  For example, अगर i ==
+	 * grace-period numbers remain unchanged.  For example, if i ==
 	 * WAIT_TAIL, then neither WAIT_TAIL nor DONE_TAIL will be touched.
 	 * Instead, the CBs in NEXT_TAIL will be merged with those in
 	 * NEXT_READY_TAIL and the grace-period number of NEXT_READY_TAIL
 	 * would be updated.  NEXT_TAIL would then be empty.
 	 */
-	अगर (rcu_segcblist_restempty(rsclp, i) || ++i >= RCU_NEXT_TAIL)
-		वापस false;
+	if (rcu_segcblist_restempty(rsclp, i) || ++i >= RCU_NEXT_TAIL)
+		return false;
 
-	/* Accounting: everything below i is about to get merged पूर्णांकo i. */
-	क्रम (j = i + 1; j <= RCU_NEXT_TAIL; j++)
+	/* Accounting: everything below i is about to get merged into i. */
+	for (j = i + 1; j <= RCU_NEXT_TAIL; j++)
 		rcu_segcblist_move_seglen(rsclp, j, i);
 
 	/*
 	 * Merge all later callbacks, including newly arrived callbacks,
-	 * पूर्णांकo the segment located by the क्रम-loop above.  Assign "seq"
-	 * as the ->gp_seq[] value in order to correctly handle the हाल
+	 * into the segment located by the for-loop above.  Assign "seq"
+	 * as the ->gp_seq[] value in order to correctly handle the case
 	 * where there were no pending callbacks in the rcu_segcblist
-	 * काष्ठाure other than in the RCU_NEXT_TAIL segment.
+	 * structure other than in the RCU_NEXT_TAIL segment.
 	 */
-	क्रम (; i < RCU_NEXT_TAIL; i++) अणु
+	for (; i < RCU_NEXT_TAIL; i++) {
 		WRITE_ONCE(rsclp->tails[i], rsclp->tails[RCU_NEXT_TAIL]);
 		rsclp->gp_seq[i] = seq;
-	पूर्ण
-	वापस true;
-पूर्ण
+	}
+	return true;
+}
 
 /*
- * Merge the source rcu_segcblist काष्ठाure पूर्णांकo the destination
- * rcu_segcblist काष्ठाure, then initialize the source.  Any pending
+ * Merge the source rcu_segcblist structure into the destination
+ * rcu_segcblist structure, then initialize the source.  Any pending
  * callbacks from the source get to start over.  It is best to
  * advance and accelerate both the destination and the source
- * beक्रमe merging.
+ * before merging.
  */
-व्योम rcu_segcblist_merge(काष्ठा rcu_segcblist *dst_rsclp,
-			 काष्ठा rcu_segcblist *src_rsclp)
-अणु
-	काष्ठा rcu_cblist करोnecbs;
-	काष्ठा rcu_cblist pendcbs;
+void rcu_segcblist_merge(struct rcu_segcblist *dst_rsclp,
+			 struct rcu_segcblist *src_rsclp)
+{
+	struct rcu_cblist donecbs;
+	struct rcu_cblist pendcbs;
 
-	lockdep_निश्चित_cpus_held();
+	lockdep_assert_cpus_held();
 
-	rcu_cblist_init(&करोnecbs);
+	rcu_cblist_init(&donecbs);
 	rcu_cblist_init(&pendcbs);
 
-	rcu_segcblist_extract_करोne_cbs(src_rsclp, &करोnecbs);
+	rcu_segcblist_extract_done_cbs(src_rsclp, &donecbs);
 	rcu_segcblist_extract_pend_cbs(src_rsclp, &pendcbs);
 
 	/*
-	 * No need smp_mb() beक्रमe setting length to 0, because CPU hotplug
+	 * No need smp_mb() before setting length to 0, because CPU hotplug
 	 * lock excludes rcu_barrier.
 	 */
 	rcu_segcblist_set_len(src_rsclp, 0);
 
-	rcu_segcblist_insert_count(dst_rsclp, &करोnecbs);
+	rcu_segcblist_insert_count(dst_rsclp, &donecbs);
 	rcu_segcblist_insert_count(dst_rsclp, &pendcbs);
-	rcu_segcblist_insert_करोne_cbs(dst_rsclp, &करोnecbs);
+	rcu_segcblist_insert_done_cbs(dst_rsclp, &donecbs);
 	rcu_segcblist_insert_pend_cbs(dst_rsclp, &pendcbs);
 
 	rcu_segcblist_init(src_rsclp);
-पूर्ण
+}

@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Setup code क्रम AT91RM9200
+ *  Setup code for AT91RM9200
  *
- *  Copyright (C) 2011 Aपंचांगel,
- *                2011 Nicolas Ferre <nicolas.ferre@aपंचांगel.com>
+ *  Copyright (C) 2011 Atmel,
+ *                2011 Nicolas Ferre <nicolas.ferre@atmel.com>
  *                2012 Joachim Eastwood <manabian@gmail.com>
  */
 
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/mach/arch.h>
+#include <asm/mach/arch.h>
 
-#समावेश "generic.h"
+#include "generic.h"
 
-अटल व्योम __init at91rm9200_dt_device_init(व्योम)
-अणु
-	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
+static void __init at91rm9200_dt_device_init(void)
+{
+	of_platform_default_populate(NULL, NULL, NULL);
 
 	at91rm9200_pm_init();
-पूर्ण
+}
 
-अटल स्थिर अक्षर *स्थिर at91rm9200_dt_board_compat[] __initस्थिर = अणु
+static const char *const at91rm9200_dt_board_compat[] __initconst = {
 	"atmel,at91rm9200",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(at91rm9200_dt, "Atmel AT91RM9200")
 	.init_machine	= at91rm9200_dt_device_init,

@@ -1,125 +1,124 @@
-<शैली गुरु>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
-#समावेश <sys/mman.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
-#समावेश "utils.h"
+#include "utils.h"
 
-बाह्य अक्षर __start___ex_table[];
-बाह्य अक्षर __stop___ex_table[];
+extern char __start___ex_table[];
+extern char __stop___ex_table[];
 
-#अगर defined(__घातerpc64__)
-#घोषणा UCONTEXT_NIA(UC)	(UC)->uc_mcontext.gp_regs[PT_NIP]
-#या_अगर defined(__घातerpc__)
-#घोषणा UCONTEXT_NIA(UC)	(UC)->uc_mcontext.uc_regs->gregs[PT_NIP]
-#अन्यथा
-#त्रुटि implement UCONTEXT_NIA
-#पूर्ण_अगर
+#if defined(__powerpc64__)
+#define UCONTEXT_NIA(UC)	(UC)->uc_mcontext.gp_regs[PT_NIP]
+#elif defined(__powerpc__)
+#define UCONTEXT_NIA(UC)	(UC)->uc_mcontext.uc_regs->gregs[PT_NIP]
+#else
+#error implement UCONTEXT_NIA
+#endif
 
-अटल व्योम segv_handler(पूर्णांक signr, siginfo_t *info, व्योम *ptr)
-अणु
+static void segv_handler(int signr, siginfo_t *info, void *ptr)
+{
 	ucontext_t *uc = (ucontext_t *)ptr;
-	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)info->si_addr;
-	अचिन्हित दीर्घ *ip = &UCONTEXT_NIA(uc);
-	अचिन्हित दीर्घ *ex_p = (अचिन्हित दीर्घ *)__start___ex_table;
+	unsigned long addr = (unsigned long)info->si_addr;
+	unsigned long *ip = &UCONTEXT_NIA(uc);
+	unsigned long *ex_p = (unsigned long *)__start___ex_table;
 
-	जबतक (ex_p < (अचिन्हित दीर्घ *)__stop___ex_table) अणु
-		अचिन्हित दीर्घ insn, fixup;
+	while (ex_p < (unsigned long *)__stop___ex_table) {
+		unsigned long insn, fixup;
 
 		insn = *ex_p++;
 		fixup = *ex_p++;
 
-		अगर (insn == *ip) अणु
+		if (insn == *ip) {
 			*ip = fixup;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	म_लिखो("No exception table match for NIA %lx ADDR %lx\n", *ip, addr);
-	पात();
-पूर्ण
+	printf("No exception table match for NIA %lx ADDR %lx\n", *ip, addr);
+	abort();
+}
 
-अटल व्योम setup_segv_handler(व्योम)
-अणु
-	काष्ठा sigaction action;
+static void setup_segv_handler(void)
+{
+	struct sigaction action;
 
-	स_रखो(&action, 0, माप(action));
+	memset(&action, 0, sizeof(action));
 	action.sa_sigaction = segv_handler;
 	action.sa_flags = SA_SIGINFO;
-	sigaction(संक_अंश, &action, शून्य);
-पूर्ण
+	sigaction(SIGSEGV, &action, NULL);
+}
 
-अचिन्हित दीर्घ COPY_LOOP(व्योम *to, स्थिर व्योम *from, अचिन्हित दीर्घ size);
-अचिन्हित दीर्घ test_copy_tofrom_user_reference(व्योम *to, स्थिर व्योम *from, अचिन्हित दीर्घ size);
+unsigned long COPY_LOOP(void *to, const void *from, unsigned long size);
+unsigned long test_copy_tofrom_user_reference(void *to, const void *from, unsigned long size);
 
-अटल पूर्णांक total_passed;
-अटल पूर्णांक total_failed;
+static int total_passed;
+static int total_failed;
 
-अटल व्योम करो_one_test(अक्षर *dstp, अक्षर *srcp, अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ got, expected;
+static void do_one_test(char *dstp, char *srcp, unsigned long len)
+{
+	unsigned long got, expected;
 
 	got = COPY_LOOP(dstp, srcp, len);
 	expected = test_copy_tofrom_user_reference(dstp, srcp, len);
 
-	अगर (got != expected) अणु
+	if (got != expected) {
 		total_failed++;
-		म_लिखो("FAIL from=%p to=%p len=%ld returned %ld, expected %ld\n",
+		printf("FAIL from=%p to=%p len=%ld returned %ld, expected %ld\n",
 		       srcp, dstp, len, got, expected);
-		//पात();
-	पूर्ण अन्यथा
+		//abort();
+	} else
 		total_passed++;
-पूर्ण
+}
 
-//#घोषणा MAX_LEN 512
-#घोषणा MAX_LEN 16
+//#define MAX_LEN 512
+#define MAX_LEN 16
 
-पूर्णांक test_copy_exception(व्योम)
-अणु
-	पूर्णांक page_size;
-	अटल अक्षर *p, *q;
-	अचिन्हित दीर्घ src, dst, len;
+int test_copy_exception(void)
+{
+	int page_size;
+	static char *p, *q;
+	unsigned long src, dst, len;
 
 	page_size = getpagesize();
-	p = mmap(शून्य, page_size * 2, PROT_READ|PROT_WRITE,
+	p = mmap(NULL, page_size * 2, PROT_READ|PROT_WRITE,
 		MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 
-	अगर (p == MAP_FAILED) अणु
-		लिखो_त्रुटि("mmap");
-		निकास(1);
-	पूर्ण
+	if (p == MAP_FAILED) {
+		perror("mmap");
+		exit(1);
+	}
 
-	स_रखो(p, 0, page_size);
+	memset(p, 0, page_size);
 
 	setup_segv_handler();
 
-	अगर (mprotect(p + page_size, page_size, PROT_NONE)) अणु
-		लिखो_त्रुटि("mprotect");
-		निकास(1);
-	पूर्ण
+	if (mprotect(p + page_size, page_size, PROT_NONE)) {
+		perror("mprotect");
+		exit(1);
+	}
 
 	q = p + page_size - MAX_LEN;
 
-	क्रम (src = 0; src < MAX_LEN; src++) अणु
-		क्रम (dst = 0; dst < MAX_LEN; dst++) अणु
-			क्रम (len = 0; len < MAX_LEN+1; len++) अणु
-				// म_लिखो("from=%p to=%p len=%ld\n", q+dst, q+src, len);
-				करो_one_test(q+dst, q+src, len);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+	for (src = 0; src < MAX_LEN; src++) {
+		for (dst = 0; dst < MAX_LEN; dst++) {
+			for (len = 0; len < MAX_LEN+1; len++) {
+				// printf("from=%p to=%p len=%ld\n", q+dst, q+src, len);
+				do_one_test(q+dst, q+src, len);
+			}
+		}
+	}
 
-	म_लिखो("Totals:\n");
-	म_लिखो("  Pass: %d\n", total_passed);
-	म_लिखो("  Fail: %d\n", total_failed);
+	printf("Totals:\n");
+	printf("  Pass: %d\n", total_passed);
+	printf("  Fail: %d\n", total_failed);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(test_copy_exception, str(COPY_LOOP));
-पूर्ण
+int main(void)
+{
+	return test_harness(test_copy_exception, str(COPY_LOOP));
+}

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  HID driver क्रम Steअन्यथाries SRW-S1
+ *  HID driver for Steelseries SRW-S1
  *
  *  Copyright (c) 2013 Simon Wood
  */
@@ -9,30 +8,30 @@
 /*
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/module.h>
+#include <linux/device.h>
+#include <linux/hid.h>
+#include <linux/module.h>
 
-#समावेश "hid-ids.h"
+#include "hid-ids.h"
 
-#अगर IS_BUILTIN(CONFIG_LEDS_CLASS) || \
+#if IS_BUILTIN(CONFIG_LEDS_CLASS) || \
     (IS_MODULE(CONFIG_LEDS_CLASS) && IS_MODULE(CONFIG_HID_STEELSERIES))
-#घोषणा SRWS1_NUMBER_LEDS 15
-काष्ठा steअन्यथाries_srws1_data अणु
+#define SRWS1_NUMBER_LEDS 15
+struct steelseries_srws1_data {
 	__u16 led_state;
-	/* the last element is used क्रम setting all leds simultaneously */
-	काष्ठा led_classdev *led[SRWS1_NUMBER_LEDS + 1];
-पूर्ण;
-#पूर्ण_अगर
+	/* the last element is used for setting all leds simultaneously */
+	struct led_classdev *led[SRWS1_NUMBER_LEDS + 1];
+};
+#endif
 
-/* Fixed report descriptor क्रम Steअन्यथाries SRW-S1 wheel controller
+/* Fixed report descriptor for Steelseries SRW-S1 wheel controller
  *
  * The original descriptor hides the sensitivity and assists dials
- * a custom venकरोr usage page. This inserts a patch to make them
+ * a custom vendor usage page. This inserts a patch to make them
  * appear in the 'Generic Desktop' usage.
  */
 
-अटल __u8 steअन्यथाries_srws1_rdesc_fixed[] = अणु
+static __u8 steelseries_srws1_rdesc_fixed[] = {
 0x05, 0x01,         /*  Usage Page (Desktop)                */
 0x09, 0x08,         /*  Usage (MultiAxis), Changed          */
 0xA1, 0x01,         /*  Collection (Application),           */
@@ -103,14 +102,14 @@
 0x91, 0x02,         /*          Output (Variable),          */
 0xC0,               /*      End Collection,                 */
 0xC0                /*  End Collection                      */
-पूर्ण;
+};
 
-#अगर IS_BUILTIN(CONFIG_LEDS_CLASS) || \
+#if IS_BUILTIN(CONFIG_LEDS_CLASS) || \
     (IS_MODULE(CONFIG_LEDS_CLASS) && IS_MODULE(CONFIG_HID_STEELSERIES))
-अटल व्योम steअन्यथाries_srws1_set_leds(काष्ठा hid_device *hdev, __u16 leds)
-अणु
-	काष्ठा list_head *report_list = &hdev->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
-	काष्ठा hid_report *report = list_entry(report_list->next, काष्ठा hid_report, list);
+static void steelseries_srws1_set_leds(struct hid_device *hdev, __u16 leds)
+{
+	struct list_head *report_list = &hdev->report_enum[HID_OUTPUT_REPORT].report_list;
+	struct hid_report *report = list_entry(report_list->next, struct hid_report, list);
 	__s32 *value = report->field[0]->value;
 
 	value[0] = 0x40;
@@ -132,255 +131,255 @@
 
 	hid_hw_request(hdev, report, HID_REQ_SET_REPORT);
 
-	/* Note: LED change करोes not show on device until the device is पढ़ो/polled */
-पूर्ण
+	/* Note: LED change does not show on device until the device is read/polled */
+}
 
-अटल व्योम steअन्यथाries_srws1_led_all_set_brightness(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	काष्ठा device *dev = led_cdev->dev->parent;
-	काष्ठा hid_device *hid = to_hid_device(dev);
-	काष्ठा steअन्यथाries_srws1_data *drv_data = hid_get_drvdata(hid);
+static void steelseries_srws1_led_all_set_brightness(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	struct device *dev = led_cdev->dev->parent;
+	struct hid_device *hid = to_hid_device(dev);
+	struct steelseries_srws1_data *drv_data = hid_get_drvdata(hid);
 
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hid, "Device data not found.");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (value == LED_OFF)
+	if (value == LED_OFF)
 		drv_data->led_state = 0;
-	अन्यथा
+	else
 		drv_data->led_state = (1 << (SRWS1_NUMBER_LEDS + 1)) - 1;
 
-	steअन्यथाries_srws1_set_leds(hid, drv_data->led_state);
-पूर्ण
+	steelseries_srws1_set_leds(hid, drv_data->led_state);
+}
 
-अटल क्रमागत led_brightness steअन्यथाries_srws1_led_all_get_brightness(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा device *dev = led_cdev->dev->parent;
-	काष्ठा hid_device *hid = to_hid_device(dev);
-	काष्ठा steअन्यथाries_srws1_data *drv_data;
+static enum led_brightness steelseries_srws1_led_all_get_brightness(struct led_classdev *led_cdev)
+{
+	struct device *dev = led_cdev->dev->parent;
+	struct hid_device *hid = to_hid_device(dev);
+	struct steelseries_srws1_data *drv_data;
 
 	drv_data = hid_get_drvdata(hid);
 
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hid, "Device data not found.");
-		वापस LED_OFF;
-	पूर्ण
+		return LED_OFF;
+	}
 
-	वापस (drv_data->led_state >> SRWS1_NUMBER_LEDS) ? LED_FULL : LED_OFF;
-पूर्ण
+	return (drv_data->led_state >> SRWS1_NUMBER_LEDS) ? LED_FULL : LED_OFF;
+}
 
-अटल व्योम steअन्यथाries_srws1_led_set_brightness(काष्ठा led_classdev *led_cdev,
-			क्रमागत led_brightness value)
-अणु
-	काष्ठा device *dev = led_cdev->dev->parent;
-	काष्ठा hid_device *hid = to_hid_device(dev);
-	काष्ठा steअन्यथाries_srws1_data *drv_data = hid_get_drvdata(hid);
-	पूर्णांक i, state = 0;
+static void steelseries_srws1_led_set_brightness(struct led_classdev *led_cdev,
+			enum led_brightness value)
+{
+	struct device *dev = led_cdev->dev->parent;
+	struct hid_device *hid = to_hid_device(dev);
+	struct steelseries_srws1_data *drv_data = hid_get_drvdata(hid);
+	int i, state = 0;
 
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hid, "Device data not found.");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < SRWS1_NUMBER_LEDS; i++) अणु
-		अगर (led_cdev != drv_data->led[i])
-			जारी;
+	for (i = 0; i < SRWS1_NUMBER_LEDS; i++) {
+		if (led_cdev != drv_data->led[i])
+			continue;
 
 		state = (drv_data->led_state >> i) & 1;
-		अगर (value == LED_OFF && state) अणु
+		if (value == LED_OFF && state) {
 			drv_data->led_state &= ~(1 << i);
-			steअन्यथाries_srws1_set_leds(hid, drv_data->led_state);
-		पूर्ण अन्यथा अगर (value != LED_OFF && !state) अणु
+			steelseries_srws1_set_leds(hid, drv_data->led_state);
+		} else if (value != LED_OFF && !state) {
 			drv_data->led_state |= 1 << i;
-			steअन्यथाries_srws1_set_leds(hid, drv_data->led_state);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			steelseries_srws1_set_leds(hid, drv_data->led_state);
+		}
+		break;
+	}
+}
 
-अटल क्रमागत led_brightness steअन्यथाries_srws1_led_get_brightness(काष्ठा led_classdev *led_cdev)
-अणु
-	काष्ठा device *dev = led_cdev->dev->parent;
-	काष्ठा hid_device *hid = to_hid_device(dev);
-	काष्ठा steअन्यथाries_srws1_data *drv_data;
-	पूर्णांक i, value = 0;
+static enum led_brightness steelseries_srws1_led_get_brightness(struct led_classdev *led_cdev)
+{
+	struct device *dev = led_cdev->dev->parent;
+	struct hid_device *hid = to_hid_device(dev);
+	struct steelseries_srws1_data *drv_data;
+	int i, value = 0;
 
 	drv_data = hid_get_drvdata(hid);
 
-	अगर (!drv_data) अणु
+	if (!drv_data) {
 		hid_err(hid, "Device data not found.");
-		वापस LED_OFF;
-	पूर्ण
+		return LED_OFF;
+	}
 
-	क्रम (i = 0; i < SRWS1_NUMBER_LEDS; i++)
-		अगर (led_cdev == drv_data->led[i]) अणु
+	for (i = 0; i < SRWS1_NUMBER_LEDS; i++)
+		if (led_cdev == drv_data->led[i]) {
 			value = (drv_data->led_state >> i) & 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	वापस value ? LED_FULL : LED_OFF;
-पूर्ण
+	return value ? LED_FULL : LED_OFF;
+}
 
-अटल पूर्णांक steअन्यथाries_srws1_probe(काष्ठा hid_device *hdev,
-		स्थिर काष्ठा hid_device_id *id)
-अणु
-	पूर्णांक ret, i;
-	काष्ठा led_classdev *led;
-	माप_प्रकार name_sz;
-	अक्षर *name;
+static int steelseries_srws1_probe(struct hid_device *hdev,
+		const struct hid_device_id *id)
+{
+	int ret, i;
+	struct led_classdev *led;
+	size_t name_sz;
+	char *name;
 
-	काष्ठा steअन्यथाries_srws1_data *drv_data = kzalloc(माप(*drv_data), GFP_KERNEL);
+	struct steelseries_srws1_data *drv_data = kzalloc(sizeof(*drv_data), GFP_KERNEL);
 
-	अगर (drv_data == शून्य) अणु
+	if (drv_data == NULL) {
 		hid_err(hdev, "can't alloc SRW-S1 memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	hid_set_drvdata(hdev, drv_data);
 
 	ret = hid_parse(hdev);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "parse failed\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (!hid_validate_values(hdev, HID_OUTPUT_REPORT, 0, 0, 16)) अणु
+	if (!hid_validate_values(hdev, HID_OUTPUT_REPORT, 0, 0, 16)) {
 		ret = -ENODEV;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);
-	अगर (ret) अणु
+	if (ret) {
 		hid_err(hdev, "hw start failed\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	/* रेजिस्टर led subप्रणाली */
+	/* register led subsystem */
 	drv_data->led_state = 0;
-	क्रम (i = 0; i < SRWS1_NUMBER_LEDS + 1; i++)
-		drv_data->led[i] = शून्य;
+	for (i = 0; i < SRWS1_NUMBER_LEDS + 1; i++)
+		drv_data->led[i] = NULL;
 
-	steअन्यथाries_srws1_set_leds(hdev, 0);
+	steelseries_srws1_set_leds(hdev, 0);
 
-	name_sz = म_माप(hdev->uniq) + 16;
+	name_sz = strlen(hdev->uniq) + 16;
 
-	/* 'ALL', क्रम setting all LEDs simultaneously */
-	led = kzalloc(माप(काष्ठा led_classdev)+name_sz, GFP_KERNEL);
-	अगर (!led) अणु
+	/* 'ALL', for setting all LEDs simultaneously */
+	led = kzalloc(sizeof(struct led_classdev)+name_sz, GFP_KERNEL);
+	if (!led) {
 		hid_err(hdev, "can't allocate memory for LED ALL\n");
-		जाओ err_led;
-	पूर्ण
+		goto err_led;
+	}
 
-	name = (व्योम *)(&led[1]);
-	snम_लिखो(name, name_sz, "SRWS1::%s::RPMALL", hdev->uniq);
+	name = (void *)(&led[1]);
+	snprintf(name, name_sz, "SRWS1::%s::RPMALL", hdev->uniq);
 	led->name = name;
 	led->brightness = 0;
 	led->max_brightness = 1;
-	led->brightness_get = steअन्यथाries_srws1_led_all_get_brightness;
-	led->brightness_set = steअन्यथाries_srws1_led_all_set_brightness;
+	led->brightness_get = steelseries_srws1_led_all_get_brightness;
+	led->brightness_set = steelseries_srws1_led_all_set_brightness;
 
 	drv_data->led[SRWS1_NUMBER_LEDS] = led;
-	ret = led_classdev_रेजिस्टर(&hdev->dev, led);
-	अगर (ret)
-		जाओ err_led;
+	ret = led_classdev_register(&hdev->dev, led);
+	if (ret)
+		goto err_led;
 
-	/* Each inभागidual LED */
-	क्रम (i = 0; i < SRWS1_NUMBER_LEDS; i++) अणु
-		led = kzalloc(माप(काष्ठा led_classdev)+name_sz, GFP_KERNEL);
-		अगर (!led) अणु
+	/* Each individual LED */
+	for (i = 0; i < SRWS1_NUMBER_LEDS; i++) {
+		led = kzalloc(sizeof(struct led_classdev)+name_sz, GFP_KERNEL);
+		if (!led) {
 			hid_err(hdev, "can't allocate memory for LED %d\n", i);
-			जाओ err_led;
-		पूर्ण
+			goto err_led;
+		}
 
-		name = (व्योम *)(&led[1]);
-		snम_लिखो(name, name_sz, "SRWS1::%s::RPM%d", hdev->uniq, i+1);
+		name = (void *)(&led[1]);
+		snprintf(name, name_sz, "SRWS1::%s::RPM%d", hdev->uniq, i+1);
 		led->name = name;
 		led->brightness = 0;
 		led->max_brightness = 1;
-		led->brightness_get = steअन्यथाries_srws1_led_get_brightness;
-		led->brightness_set = steअन्यथाries_srws1_led_set_brightness;
+		led->brightness_get = steelseries_srws1_led_get_brightness;
+		led->brightness_set = steelseries_srws1_led_set_brightness;
 
 		drv_data->led[i] = led;
-		ret = led_classdev_रेजिस्टर(&hdev->dev, led);
+		ret = led_classdev_register(&hdev->dev, led);
 
-		अगर (ret) अणु
+		if (ret) {
 			hid_err(hdev, "failed to register LED %d. Aborting.\n", i);
 err_led:
-			/* Deरेजिस्टर all LEDs (अगर any) */
-			क्रम (i = 0; i < SRWS1_NUMBER_LEDS + 1; i++) अणु
+			/* Deregister all LEDs (if any) */
+			for (i = 0; i < SRWS1_NUMBER_LEDS + 1; i++) {
 				led = drv_data->led[i];
-				drv_data->led[i] = शून्य;
-				अगर (!led)
-					जारी;
-				led_classdev_unरेजिस्टर(led);
-				kमुक्त(led);
-			पूर्ण
-			जाओ out;	/* but let the driver जारी without LEDs */
-		पूर्ण
-	पूर्ण
+				drv_data->led[i] = NULL;
+				if (!led)
+					continue;
+				led_classdev_unregister(led);
+				kfree(led);
+			}
+			goto out;	/* but let the driver continue without LEDs */
+		}
+	}
 out:
-	वापस 0;
-err_मुक्त:
-	kमुक्त(drv_data);
-	वापस ret;
-पूर्ण
+	return 0;
+err_free:
+	kfree(drv_data);
+	return ret;
+}
 
-अटल व्योम steअन्यथाries_srws1_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक i;
-	काष्ठा led_classdev *led;
+static void steelseries_srws1_remove(struct hid_device *hdev)
+{
+	int i;
+	struct led_classdev *led;
 
-	काष्ठा steअन्यथाries_srws1_data *drv_data = hid_get_drvdata(hdev);
+	struct steelseries_srws1_data *drv_data = hid_get_drvdata(hdev);
 
-	अगर (drv_data) अणु
-		/* Deरेजिस्टर LEDs (अगर any) */
-		क्रम (i = 0; i < SRWS1_NUMBER_LEDS + 1; i++) अणु
+	if (drv_data) {
+		/* Deregister LEDs (if any) */
+		for (i = 0; i < SRWS1_NUMBER_LEDS + 1; i++) {
 			led = drv_data->led[i];
-			drv_data->led[i] = शून्य;
-			अगर (!led)
-				जारी;
-			led_classdev_unरेजिस्टर(led);
-			kमुक्त(led);
-		पूर्ण
+			drv_data->led[i] = NULL;
+			if (!led)
+				continue;
+			led_classdev_unregister(led);
+			kfree(led);
+		}
 
-	पूर्ण
+	}
 
 	hid_hw_stop(hdev);
-	kमुक्त(drv_data);
-	वापस;
-पूर्ण
-#पूर्ण_अगर
+	kfree(drv_data);
+	return;
+}
+#endif
 
-अटल __u8 *steअन्यथाries_srws1_report_fixup(काष्ठा hid_device *hdev, __u8 *rdesc,
-		अचिन्हित पूर्णांक *rsize)
-अणु
-	अगर (*rsize >= 115 && rdesc[11] == 0x02 && rdesc[13] == 0xc8
-			&& rdesc[29] == 0xbb && rdesc[40] == 0xc5) अणु
+static __u8 *steelseries_srws1_report_fixup(struct hid_device *hdev, __u8 *rdesc,
+		unsigned int *rsize)
+{
+	if (*rsize >= 115 && rdesc[11] == 0x02 && rdesc[13] == 0xc8
+			&& rdesc[29] == 0xbb && rdesc[40] == 0xc5) {
 		hid_info(hdev, "Fixing up Steelseries SRW-S1 report descriptor\n");
-		rdesc = steअन्यथाries_srws1_rdesc_fixed;
-		*rsize = माप(steअन्यथाries_srws1_rdesc_fixed);
-	पूर्ण
-	वापस rdesc;
-पूर्ण
+		rdesc = steelseries_srws1_rdesc_fixed;
+		*rsize = sizeof(steelseries_srws1_rdesc_fixed);
+	}
+	return rdesc;
+}
 
-अटल स्थिर काष्ठा hid_device_id steअन्यथाries_srws1_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_STEELSERIES, USB_DEVICE_ID_STEELSERIES_SRWS1) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(hid, steअन्यथाries_srws1_devices);
+static const struct hid_device_id steelseries_srws1_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_STEELSERIES, USB_DEVICE_ID_STEELSERIES_SRWS1) },
+	{ }
+};
+MODULE_DEVICE_TABLE(hid, steelseries_srws1_devices);
 
-अटल काष्ठा hid_driver steअन्यथाries_srws1_driver = अणु
+static struct hid_driver steelseries_srws1_driver = {
 	.name = "steelseries_srws1",
-	.id_table = steअन्यथाries_srws1_devices,
-#अगर IS_BUILTIN(CONFIG_LEDS_CLASS) || \
+	.id_table = steelseries_srws1_devices,
+#if IS_BUILTIN(CONFIG_LEDS_CLASS) || \
     (IS_MODULE(CONFIG_LEDS_CLASS) && IS_MODULE(CONFIG_HID_STEELSERIES))
-	.probe = steअन्यथाries_srws1_probe,
-	.हटाओ = steअन्यथाries_srws1_हटाओ,
-#पूर्ण_अगर
-	.report_fixup = steअन्यथाries_srws1_report_fixup
-पूर्ण;
+	.probe = steelseries_srws1_probe,
+	.remove = steelseries_srws1_remove,
+#endif
+	.report_fixup = steelseries_srws1_report_fixup
+};
 
-module_hid_driver(steअन्यथाries_srws1_driver);
+module_hid_driver(steelseries_srws1_driver);
 MODULE_LICENSE("GPL");

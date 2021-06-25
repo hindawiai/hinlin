@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PPC_BOOT_FSL_SOC_H_
-#घोषणा _PPC_BOOT_FSL_SOC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PPC_BOOT_FSL_SOC_H_
+#define _PPC_BOOT_FSL_SOC_H_
 
-#समावेश "types.h"
+#include "types.h"
 
-u32 *fsl_get_immr(व्योम);
+u32 *fsl_get_immr(void);
 
-#पूर्ण_अगर
+#endif

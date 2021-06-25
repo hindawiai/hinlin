@@ -1,269 +1,268 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  */
 
-#समावेश <QCheckBox>
-#समावेश <QDialog>
-#समावेश <QHeaderView>
-#समावेश <QLineEdit>
-#समावेश <QMainWinकरोw>
-#समावेश <QPushButton>
-#समावेश <QSettings>
-#समावेश <QSplitter>
-#समावेश <QStyledItemDelegate>
-#समावेश <QTextBrowser>
-#समावेश <QTreeWidget>
+#include <QCheckBox>
+#include <QDialog>
+#include <QHeaderView>
+#include <QLineEdit>
+#include <QMainWindow>
+#include <QPushButton>
+#include <QSettings>
+#include <QSplitter>
+#include <QStyledItemDelegate>
+#include <QTextBrowser>
+#include <QTreeWidget>
 
-#समावेश "expr.h"
+#include "expr.h"
 
 class ConfigList;
 class ConfigItem;
-class ConfigMainWinकरोw;
+class ConfigMainWindow;
 
-class ConfigSettings : खुला QSettings अणु
-खुला:
+class ConfigSettings : public QSettings {
+public:
 	ConfigSettings();
-	QList<पूर्णांक> पढ़ोSizes(स्थिर QString& key, bool *ok);
-	bool ग_लिखोSizes(स्थिर QString& key, स्थिर QList<पूर्णांक>& value);
-पूर्ण;
+	QList<int> readSizes(const QString& key, bool *ok);
+	bool writeSizes(const QString& key, const QList<int>& value);
+};
 
-क्रमागत colIdx अणु
+enum colIdx {
 	promptColIdx, nameColIdx, dataColIdx
-पूर्ण;
-क्रमागत listMode अणु
+};
+enum listMode {
 	singleMode, menuMode, symbolMode, fullMode, listMode
-पूर्ण;
-क्रमागत optionMode अणु
+};
+enum optionMode {
 	normalOpt = 0, allOpt, promptOpt
-पूर्ण;
+};
 
-class ConfigList : खुला QTreeWidget अणु
+class ConfigList : public QTreeWidget {
 	Q_OBJECT
-	प्रकार class QTreeWidget Parent;
-खुला:
-	ConfigList(QWidget *parent, स्थिर अक्षर *name = 0);
+	typedef class QTreeWidget Parent;
+public:
+	ConfigList(QWidget *parent, const char *name = 0);
 	~ConfigList();
-	व्योम reinit(व्योम);
-	ConfigItem* findConfigItem(काष्ठा menu *);
-	व्योम setSelected(QTreeWidgetItem *item, bool enable) अणु
-		क्रम (पूर्णांक i = 0; i < selectedItems().size(); i++)
+	void reinit(void);
+	ConfigItem* findConfigItem(struct menu *);
+	void setSelected(QTreeWidgetItem *item, bool enable) {
+		for (int i = 0; i < selectedItems().size(); i++)
 			selectedItems().at(i)->setSelected(false);
 
 		item->setSelected(enable);
-	पूर्ण
+	}
 
-रक्षित:
-	व्योम keyPressEvent(QKeyEvent *e);
-	व्योम mousePressEvent(QMouseEvent *e);
-	व्योम mouseReleaseEvent(QMouseEvent *e);
-	व्योम mouseMoveEvent(QMouseEvent *e);
-	व्योम mouseDoubleClickEvent(QMouseEvent *e);
-	व्योम focusInEvent(QFocusEvent *e);
-	व्योम contextMenuEvent(QContextMenuEvent *e);
+protected:
+	void keyPressEvent(QKeyEvent *e);
+	void mousePressEvent(QMouseEvent *e);
+	void mouseReleaseEvent(QMouseEvent *e);
+	void mouseMoveEvent(QMouseEvent *e);
+	void mouseDoubleClickEvent(QMouseEvent *e);
+	void focusInEvent(QFocusEvent *e);
+	void contextMenuEvent(QContextMenuEvent *e);
 
-खुला slots:
-	व्योम setRootMenu(काष्ठा menu *menu);
+public slots:
+	void setRootMenu(struct menu *menu);
 
-	व्योम updateList();
-	व्योम setValue(ConfigItem* item, tristate val);
-	व्योम changeValue(ConfigItem* item);
-	व्योम updateSelection(व्योम);
-	व्योम saveSettings(व्योम);
-	व्योम setOptionMode(QAction *action);
-	व्योम setShowName(bool on);
+	void updateList();
+	void setValue(ConfigItem* item, tristate val);
+	void changeValue(ConfigItem* item);
+	void updateSelection(void);
+	void saveSettings(void);
+	void setOptionMode(QAction *action);
+	void setShowName(bool on);
 
-संकेतs:
-	व्योम menuChanged(काष्ठा menu *menu);
-	व्योम menuSelected(काष्ठा menu *menu);
-	व्योम itemSelected(काष्ठा menu *menu);
-	व्योम parentSelected(व्योम);
-	व्योम gotFocus(काष्ठा menu *);
-	व्योम showNameChanged(bool on);
+signals:
+	void menuChanged(struct menu *menu);
+	void menuSelected(struct menu *menu);
+	void itemSelected(struct menu *menu);
+	void parentSelected(void);
+	void gotFocus(struct menu *);
+	void showNameChanged(bool on);
 
-खुला:
-	व्योम updateListAll(व्योम)
-	अणु
+public:
+	void updateListAll(void)
+	{
 		updateAll = true;
 		updateList();
 		updateAll = false;
-	पूर्ण
-	व्योम setAllOpen(bool खोलो);
-	व्योम setParentMenu(व्योम);
+	}
+	void setAllOpen(bool open);
+	void setParentMenu(void);
 
-	bool menuSkip(काष्ठा menu *);
+	bool menuSkip(struct menu *);
 
-	व्योम updateMenuList(ConfigItem *parent, काष्ठा menu*);
-	व्योम updateMenuList(काष्ठा menu *menu);
+	void updateMenuList(ConfigItem *parent, struct menu*);
+	void updateMenuList(struct menu *menu);
 
 	bool updateAll;
 
 	bool showName;
-	क्रमागत listMode mode;
-	क्रमागत optionMode optMode;
-	काष्ठा menu *rootEntry;
+	enum listMode mode;
+	enum optionMode optMode;
+	struct menu *rootEntry;
 	QPalette disabledColorGroup;
 	QPalette inactivedColorGroup;
 	QMenu* headerPopup;
 
-	अटल QList<ConfigList *> allLists;
-	अटल व्योम updateListForAll();
-	अटल व्योम updateListAllForAll();
+	static QList<ConfigList *> allLists;
+	static void updateListForAll();
+	static void updateListAllForAll();
 
-	अटल QAction *showNormalAction, *showAllAction, *showPromptAction;
-पूर्ण;
+	static QAction *showNormalAction, *showAllAction, *showPromptAction;
+};
 
-class ConfigItem : खुला QTreeWidgetItem अणु
-	प्रकार class QTreeWidgetItem Parent;
-खुला:
-	ConfigItem(ConfigList *parent, ConfigItem *after, काष्ठा menu *m, bool v)
+class ConfigItem : public QTreeWidgetItem {
+	typedef class QTreeWidgetItem Parent;
+public:
+	ConfigItem(ConfigList *parent, ConfigItem *after, struct menu *m, bool v)
 	: Parent(parent, after), nextItem(0), menu(m), visible(v), goParent(false)
-	अणु
+	{
 		init();
-	पूर्ण
-	ConfigItem(ConfigItem *parent, ConfigItem *after, काष्ठा menu *m, bool v)
+	}
+	ConfigItem(ConfigItem *parent, ConfigItem *after, struct menu *m, bool v)
 	: Parent(parent, after), nextItem(0), menu(m), visible(v), goParent(false)
-	अणु
+	{
 		init();
-	पूर्ण
+	}
 	ConfigItem(ConfigList *parent, ConfigItem *after, bool v)
 	: Parent(parent, after), nextItem(0), menu(0), visible(v), goParent(true)
-	अणु
+	{
 		init();
-	पूर्ण
-	~ConfigItem(व्योम);
-	व्योम init(व्योम);
-	व्योम updateMenu(व्योम);
-	व्योम testUpdateMenu(bool v);
-	ConfigList* listView() स्थिर
-	अणु
-		वापस (ConfigList*)Parent::treeWidget();
-	पूर्ण
-	ConfigItem* firstChild() स्थिर
-	अणु
-		वापस (ConfigItem *)Parent::child(0);
-	पूर्ण
+	}
+	~ConfigItem(void);
+	void init(void);
+	void updateMenu(void);
+	void testUpdateMenu(bool v);
+	ConfigList* listView() const
+	{
+		return (ConfigList*)Parent::treeWidget();
+	}
+	ConfigItem* firstChild() const
+	{
+		return (ConfigItem *)Parent::child(0);
+	}
 	ConfigItem* nextSibling()
-	अणु
-		ConfigItem *ret = शून्य;
+	{
+		ConfigItem *ret = NULL;
 		ConfigItem *_parent = (ConfigItem *)parent();
 
-		अगर(_parent) अणु
+		if(_parent) {
 			ret = (ConfigItem *)_parent->child(_parent->indexOfChild(this)+1);
-		पूर्ण अन्यथा अणु
+		} else {
 			QTreeWidget *_treeWidget = treeWidget();
 			ret = (ConfigItem *)_treeWidget->topLevelItem(_treeWidget->indexOfTopLevelItem(this)+1);
-		पूर्ण
+		}
 
-		वापस ret;
-	पूर्ण
-	// TODO: Implement paपूर्णांकCell
+		return ret;
+	}
+	// TODO: Implement paintCell
 
 	ConfigItem* nextItem;
-	काष्ठा menu *menu;
+	struct menu *menu;
 	bool visible;
 	bool goParent;
 
-	अटल QIcon symbolYesIcon, symbolModIcon, symbolNoIcon;
-	अटल QIcon choiceYesIcon, choiceNoIcon;
-	अटल QIcon menuIcon, menubackIcon;
-पूर्ण;
+	static QIcon symbolYesIcon, symbolModIcon, symbolNoIcon;
+	static QIcon choiceYesIcon, choiceNoIcon;
+	static QIcon menuIcon, menubackIcon;
+};
 
-class ConfigItemDelegate : खुला QStyledItemDelegate
-अणु
-निजी:
-	काष्ठा menu *menu;
-खुला:
+class ConfigItemDelegate : public QStyledItemDelegate
+{
+private:
+	struct menu *menu;
+public:
 	ConfigItemDelegate(QObject *parent = nullptr)
-		: QStyledItemDelegate(parent) अणुपूर्ण
+		: QStyledItemDelegate(parent) {}
 	QWidget *createEditor(QWidget *parent,
-			      स्थिर QStyleOptionViewItem &option,
-			      स्थिर QModelIndex &index) स्थिर override;
-	व्योम setModelData(QWidget *editor, QAbstractItemModel *model,
-			  स्थिर QModelIndex &index) स्थिर override;
-पूर्ण;
+			      const QStyleOptionViewItem &option,
+			      const QModelIndex &index) const override;
+	void setModelData(QWidget *editor, QAbstractItemModel *model,
+			  const QModelIndex &index) const override;
+};
 
-class ConfigInfoView : खुला QTextBrowser अणु
+class ConfigInfoView : public QTextBrowser {
 	Q_OBJECT
-	प्रकार class QTextBrowser Parent;
+	typedef class QTextBrowser Parent;
 	QMenu *contextMenu;
-खुला:
-	ConfigInfoView(QWidget* parent, स्थिर अक्षर *name = 0);
-	bool showDebug(व्योम) स्थिर अणु वापस _showDebug; पूर्ण
+public:
+	ConfigInfoView(QWidget* parent, const char *name = 0);
+	bool showDebug(void) const { return _showDebug; }
 
-खुला slots:
-	व्योम setInfo(काष्ठा menu *menu);
-	व्योम saveSettings(व्योम);
-	व्योम setShowDebug(bool);
-	व्योम clicked (स्थिर QUrl &url);
+public slots:
+	void setInfo(struct menu *menu);
+	void saveSettings(void);
+	void setShowDebug(bool);
+	void clicked (const QUrl &url);
 
-संकेतs:
-	व्योम showDebugChanged(bool);
-	व्योम menuSelected(काष्ठा menu *);
+signals:
+	void showDebugChanged(bool);
+	void menuSelected(struct menu *);
 
-रक्षित:
-	व्योम symbolInfo(व्योम);
-	व्योम menuInfo(व्योम);
-	QString debug_info(काष्ठा symbol *sym);
-	अटल QString prपूर्णांक_filter(स्थिर QString &str);
-	अटल व्योम expr_prपूर्णांक_help(व्योम *data, काष्ठा symbol *sym, स्थिर अक्षर *str);
-	व्योम contextMenuEvent(QContextMenuEvent *event);
+protected:
+	void symbolInfo(void);
+	void menuInfo(void);
+	QString debug_info(struct symbol *sym);
+	static QString print_filter(const QString &str);
+	static void expr_print_help(void *data, struct symbol *sym, const char *str);
+	void contextMenuEvent(QContextMenuEvent *event);
 
-	काष्ठा symbol *sym;
-	काष्ठा menu *_menu;
+	struct symbol *sym;
+	struct menu *_menu;
 	bool _showDebug;
-पूर्ण;
+};
 
-class ConfigSearchWinकरोw : खुला QDialog अणु
+class ConfigSearchWindow : public QDialog {
 	Q_OBJECT
-	प्रकार class QDialog Parent;
-खुला:
-	ConfigSearchWinकरोw(ConfigMainWinकरोw *parent);
+	typedef class QDialog Parent;
+public:
+	ConfigSearchWindow(ConfigMainWindow *parent);
 
-खुला slots:
-	व्योम saveSettings(व्योम);
-	व्योम search(व्योम);
+public slots:
+	void saveSettings(void);
+	void search(void);
 
-रक्षित:
+protected:
 	QLineEdit* editField;
 	QPushButton* searchButton;
 	QSplitter* split;
 	ConfigList *list;
 	ConfigInfoView* info;
 
-	काष्ठा symbol **result;
-पूर्ण;
+	struct symbol **result;
+};
 
-class ConfigMainWinकरोw : खुला QMainWinकरोw अणु
+class ConfigMainWindow : public QMainWindow {
 	Q_OBJECT
 
-	अक्षर *configname;
-	अटल QAction *saveAction;
-	अटल व्योम conf_changed(व्योम);
-खुला:
-	ConfigMainWinकरोw(व्योम);
-खुला slots:
-	व्योम changeMenu(काष्ठा menu *);
-	व्योम changeItens(काष्ठा menu *);
-	व्योम setMenuLink(काष्ठा menu *);
-	व्योम listFocusChanged(व्योम);
-	व्योम goBack(व्योम);
-	व्योम loadConfig(व्योम);
-	bool saveConfig(व्योम);
-	व्योम saveConfigAs(व्योम);
-	व्योम searchConfig(व्योम);
-	व्योम showSingleView(व्योम);
-	व्योम showSplitView(व्योम);
-	व्योम showFullView(व्योम);
-	व्योम showIntro(व्योम);
-	व्योम showAbout(व्योम);
-	व्योम saveSettings(व्योम);
+	char *configname;
+	static QAction *saveAction;
+	static void conf_changed(void);
+public:
+	ConfigMainWindow(void);
+public slots:
+	void changeMenu(struct menu *);
+	void changeItens(struct menu *);
+	void setMenuLink(struct menu *);
+	void listFocusChanged(void);
+	void goBack(void);
+	void loadConfig(void);
+	bool saveConfig(void);
+	void saveConfigAs(void);
+	void searchConfig(void);
+	void showSingleView(void);
+	void showSplitView(void);
+	void showFullView(void);
+	void showIntro(void);
+	void showAbout(void);
+	void saveSettings(void);
 
-रक्षित:
-	व्योम बंदEvent(QCloseEvent *e);
+protected:
+	void closeEvent(QCloseEvent *e);
 
-	ConfigSearchWinकरोw *searchWinकरोw;
+	ConfigSearchWindow *searchWindow;
 	ConfigList *menuList;
 	ConfigList *configList;
 	ConfigInfoView *helpText;
@@ -273,4 +272,4 @@ class ConfigMainWinकरोw : खुला QMainWinकरोw अणु
 	QAction *fullViewAction;
 	QSplitter *split1;
 	QSplitter *split2;
-पूर्ण;
+};

@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc.
  *
  * Author: Lorenzo Bianconi <lorenzo@kernel.org>
  *	   Sean Wang <sean.wang@mediatek.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/usb.h>
 
-#समावेश "mt7615.h"
-#समावेश "mac.h"
-#समावेश "mcu.h"
-#समावेश "regs.h"
+#include "mt7615.h"
+#include "mac.h"
+#include "mcu.h"
+#include "regs.h"
 
-स्थिर u32 mt7663_usb_sdio_reg_map[] = अणु
+const u32 mt7663_usb_sdio_reg_map[] = {
 	[MT_TOP_CFG_BASE]	= 0x80020000,
 	[MT_HW_BASE]		= 0x80000000,
 	[MT_DMA_SHDL_BASE]	= 0x5000a000,
@@ -38,45 +37,45 @@
 	[MT_WTBL_BASE_OFF]	= 0x820f9800,
 	[MT_LPON_BASE]		= 0x820fb000,
 	[MT_MIB_BASE]		= 0x820fd000,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(mt7663_usb_sdio_reg_map);
 
-अटल व्योम
-mt7663_usb_sdio_ग_लिखो_txwi(काष्ठा mt7615_dev *dev, काष्ठा mt76_wcid *wcid,
-			   क्रमागत mt76_txq_id qid, काष्ठा ieee80211_sta *sta,
-			   काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	काष्ठा ieee80211_key_conf *key = info->control.hw_key;
+static void
+mt7663_usb_sdio_write_txwi(struct mt7615_dev *dev, struct mt76_wcid *wcid,
+			   enum mt76_txq_id qid, struct ieee80211_sta *sta,
+			   struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_key_conf *key = info->control.hw_key;
 	__le32 *txwi;
-	पूर्णांक pid;
+	int pid;
 
-	अगर (!wcid)
+	if (!wcid)
 		wcid = &dev->mt76.global_wcid;
 
 	pid = mt76_tx_status_skb_add(&dev->mt76, wcid, skb);
 
 	txwi = (__le32 *)(skb->data - MT_USB_TXD_SIZE);
-	स_रखो(txwi, 0, MT_USB_TXD_SIZE);
-	mt7615_mac_ग_लिखो_txwi(dev, txwi, skb, wcid, sta, pid, key, false);
+	memset(txwi, 0, MT_USB_TXD_SIZE);
+	mt7615_mac_write_txwi(dev, txwi, skb, wcid, sta, pid, key, false);
 	skb_push(skb, MT_USB_TXD_SIZE);
-पूर्ण
+}
 
-अटल पूर्णांक mt7663_usb_sdio_set_rates(काष्ठा mt7615_dev *dev,
-				     काष्ठा mt7615_wtbl_rate_desc *wrd)
-अणु
-	काष्ठा mt7615_rate_desc *rate = &wrd->rate;
-	काष्ठा mt7615_sta *sta = wrd->sta;
+static int mt7663_usb_sdio_set_rates(struct mt7615_dev *dev,
+				     struct mt7615_wtbl_rate_desc *wrd)
+{
+	struct mt7615_rate_desc *rate = &wrd->rate;
+	struct mt7615_sta *sta = wrd->sta;
 	u32 w5, w27, addr, val;
 	u16 idx;
 
-	lockdep_निश्चित_held(&dev->mt76.mutex);
+	lockdep_assert_held(&dev->mt76.mutex);
 
-	अगर (!sta)
-		वापस -EINVAL;
+	if (!sta)
+		return -EINVAL;
 
-	अगर (!mt76_poll(dev, MT_WTBL_UPDATE, MT_WTBL_UPDATE_BUSY, 0, 5000))
-		वापस -ETIMEDOUT;
+	if (!mt76_poll(dev, MT_WTBL_UPDATE, MT_WTBL_UPDATE_BUSY, 0, 5000))
+		return -ETIMEDOUT;
 
 	addr = mt7615_mac_wtbl_addr(dev, sta->wcid.idx);
 
@@ -120,30 +119,30 @@ mt7663_usb_sdio_ग_लिखो_txwi(काष्ठा mt7615_dev *dev, का
 
 	sta->rate_probe = sta->rateset[rate->rateset].probe_rate.idx != -1;
 
-	idx = sta->vअगर->mt76.omac_idx;
+	idx = sta->vif->mt76.omac_idx;
 	idx = idx > HW_BSSID_MAX ? HW_BSSID_0 : idx;
 	addr = idx > 1 ? MT_LPON_TCR2(idx): MT_LPON_TCR0(idx);
 
-	mt76_set(dev, addr, MT_LPON_TCR_MODE); /* TSF पढ़ो */
+	mt76_set(dev, addr, MT_LPON_TCR_MODE); /* TSF read */
 	val = mt76_rr(dev, MT_LPON_UTTR0);
 	sta->rate_set_tsf = (val & ~BIT(0)) | rate->rateset;
 
-	अगर (!(sta->wcid.tx_info & MT_WCID_TX_INFO_SET))
+	if (!(sta->wcid.tx_info & MT_WCID_TX_INFO_SET))
 		mt76_poll(dev, MT_WTBL_UPDATE, MT_WTBL_UPDATE_BUSY, 0, 5000);
 
 	sta->rate_count = 2 * MT7615_RATE_RETRY * sta->n_rates;
 	sta->wcid.tx_info |= MT_WCID_TX_INFO_SET;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mt7663_usb_sdio_rate_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mt7615_wtbl_rate_desc *wrd, *wrd_next;
-	काष्ठा list_head wrd_list;
-	काष्ठा mt7615_dev *dev;
+static void mt7663_usb_sdio_rate_work(struct work_struct *work)
+{
+	struct mt7615_wtbl_rate_desc *wrd, *wrd_next;
+	struct list_head wrd_list;
+	struct mt7615_dev *dev;
 
-	dev = (काष्ठा mt7615_dev *)container_of(work, काष्ठा mt7615_dev,
+	dev = (struct mt7615_dev *)container_of(work, struct mt7615_dev,
 						rate_work);
 
 	INIT_LIST_HEAD(&wrd_list);
@@ -151,92 +150,92 @@ mt7663_usb_sdio_ग_लिखो_txwi(काष्ठा mt7615_dev *dev, का
 	list_splice_init(&dev->wrd_head, &wrd_list);
 	spin_unlock_bh(&dev->mt76.lock);
 
-	list_क्रम_each_entry_safe(wrd, wrd_next, &wrd_list, node) अणु
+	list_for_each_entry_safe(wrd, wrd_next, &wrd_list, node) {
 		list_del(&wrd->node);
 
 		mt7615_mutex_acquire(dev);
 		mt7663_usb_sdio_set_rates(dev, wrd);
 		mt7615_mutex_release(dev);
 
-		kमुक्त(wrd);
-	पूर्ण
-पूर्ण
+		kfree(wrd);
+	}
+}
 
-bool mt7663_usb_sdio_tx_status_data(काष्ठा mt76_dev *mdev, u8 *update)
-अणु
-	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
+bool mt7663_usb_sdio_tx_status_data(struct mt76_dev *mdev, u8 *update)
+{
+	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
 
 	mt7615_mutex_acquire(dev);
 	mt7615_mac_sta_poll(dev);
 	mt7615_mutex_release(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mt7663_usb_sdio_tx_status_data);
 
-व्योम mt7663_usb_sdio_tx_complete_skb(काष्ठा mt76_dev *mdev,
-				     काष्ठा mt76_queue_entry *e)
-अणु
-	अचिन्हित पूर्णांक headroom = MT_USB_TXD_SIZE;
+void mt7663_usb_sdio_tx_complete_skb(struct mt76_dev *mdev,
+				     struct mt76_queue_entry *e)
+{
+	unsigned int headroom = MT_USB_TXD_SIZE;
 
-	अगर (mt76_is_usb(mdev))
+	if (mt76_is_usb(mdev))
 		headroom += MT_USB_HDR_SIZE;
 	skb_pull(e->skb, headroom);
 
 	mt76_tx_complete_skb(mdev, e->wcid, e->skb);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(mt7663_usb_sdio_tx_complete_skb);
 
-पूर्णांक mt7663_usb_sdio_tx_prepare_skb(काष्ठा mt76_dev *mdev, व्योम *txwi_ptr,
-				   क्रमागत mt76_txq_id qid, काष्ठा mt76_wcid *wcid,
-				   काष्ठा ieee80211_sta *sta,
-				   काष्ठा mt76_tx_info *tx_info)
-अणु
-	काष्ठा mt7615_sta *msta = container_of(wcid, काष्ठा mt7615_sta, wcid);
-	काष्ठा mt7615_dev *dev = container_of(mdev, काष्ठा mt7615_dev, mt76);
-	काष्ठा sk_buff *skb = tx_info->skb;
-	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	पूर्णांक pad;
+int mt7663_usb_sdio_tx_prepare_skb(struct mt76_dev *mdev, void *txwi_ptr,
+				   enum mt76_txq_id qid, struct mt76_wcid *wcid,
+				   struct ieee80211_sta *sta,
+				   struct mt76_tx_info *tx_info)
+{
+	struct mt7615_sta *msta = container_of(wcid, struct mt7615_sta, wcid);
+	struct mt7615_dev *dev = container_of(mdev, struct mt7615_dev, mt76);
+	struct sk_buff *skb = tx_info->skb;
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	int pad;
 
-	अगर ((info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE) &&
-	    !msta->rate_probe) अणु
+	if ((info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE) &&
+	    !msta->rate_probe) {
 		/* request to configure sampling rate */
 		spin_lock_bh(&dev->mt76.lock);
 		mt7615_mac_set_rates(&dev->phy, msta, &info->control.rates[0],
 				     msta->rates);
 		spin_unlock_bh(&dev->mt76.lock);
-	पूर्ण
+	}
 
-	mt7663_usb_sdio_ग_लिखो_txwi(dev, wcid, qid, sta, skb);
-	अगर (mt76_is_usb(mdev)) अणु
+	mt7663_usb_sdio_write_txwi(dev, wcid, qid, sta, skb);
+	if (mt76_is_usb(mdev)) {
 		u32 len = skb->len;
 
-		put_unaligned_le32(len, skb_push(skb, माप(len)));
+		put_unaligned_le32(len, skb_push(skb, sizeof(len)));
 		pad = round_up(skb->len, 4) + 4 - skb->len;
-	पूर्ण अन्यथा अणु
+	} else {
 		pad = round_up(skb->len, 4) - skb->len;
-	पूर्ण
+	}
 
-	वापस mt76_skb_adjust_pad(skb, pad);
-पूर्ण
+	return mt76_skb_adjust_pad(skb, pad);
+}
 EXPORT_SYMBOL_GPL(mt7663_usb_sdio_tx_prepare_skb);
 
-अटल पूर्णांक mt7663u_dma_sched_init(काष्ठा mt7615_dev *dev)
-अणु
-	पूर्णांक i;
+static int mt7663u_dma_sched_init(struct mt7615_dev *dev)
+{
+	int i;
 
 	mt76_rmw(dev, MT_DMA_SHDL(MT_DMASHDL_PKT_MAX_SIZE),
 		 MT_DMASHDL_PKT_MAX_SIZE_PLE | MT_DMASHDL_PKT_MAX_SIZE_PSE,
 		 FIELD_PREP(MT_DMASHDL_PKT_MAX_SIZE_PLE, 1) |
 		 FIELD_PREP(MT_DMASHDL_PKT_MAX_SIZE_PSE, 8));
 
-	/* disable refill group 5 - group 15 and उठाओ group 2
+	/* disable refill group 5 - group 15 and raise group 2
 	 * and 3 as high priority.
 	 */
 	mt76_wr(dev, MT_DMA_SHDL(MT_DMASHDL_REFILL), 0xffe00006);
 	mt76_clear(dev, MT_DMA_SHDL(MT_DMASHDL_PAGE), BIT(16));
 
-	क्रम (i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)
 		mt76_wr(dev, MT_DMA_SHDL(MT_DMASHDL_GROUP_QUOTA(i)),
 			FIELD_PREP(MT_DMASHDL_GROUP_QUOTA_MIN, 0x3) |
 			FIELD_PREP(MT_DMASHDL_GROUP_QUOTA_MAX, 0x1ff));
@@ -259,7 +258,7 @@ EXPORT_SYMBOL_GPL(mt7663_usb_sdio_tx_prepare_skb);
 
 	/* setup UDMA Rx Flush */
 	mt76_clear(dev, MT_UDMA_WLCFG_0, MT_WL_RX_FLUSH);
-	/* hअगर reset */
+	/* hif reset */
 	mt76_set(dev, MT_HIF_RST, MT_HIF_LOGIC_RST_N);
 
 	mt76_set(dev, MT_UDMA_WLCFG_0,
@@ -270,80 +269,80 @@ EXPORT_SYMBOL_GPL(mt7663_usb_sdio_tx_prepare_skb);
 		 FIELD_PREP(MT_WL_RX_AGG_LMT, 32) |
 		 FIELD_PREP(MT_WL_RX_AGG_TO, 100));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt7663_usb_sdio_init_hardware(काष्ठा mt7615_dev *dev)
-अणु
-	पूर्णांक ret, idx;
+static int mt7663_usb_sdio_init_hardware(struct mt7615_dev *dev)
+{
+	int ret, idx;
 
 	ret = mt7615_eeprom_init(dev, MT_EFUSE_BASE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (mt76_is_usb(&dev->mt76)) अणु
+	if (mt76_is_usb(&dev->mt76)) {
 		ret = mt7663u_dma_sched_init(dev);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	set_bit(MT76_STATE_INITIALIZED, &dev->mphy.state);
 
 	/* Beacon and mgmt frames should occupy wcid 0 */
 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7615_WTBL_STA - 1);
-	अगर (idx)
-		वापस -ENOSPC;
+	if (idx)
+		return -ENOSPC;
 
 	dev->mt76.global_wcid.idx = idx;
 	dev->mt76.global_wcid.hw_key_idx = -1;
-	rcu_assign_poपूर्णांकer(dev->mt76.wcid[idx], &dev->mt76.global_wcid);
+	rcu_assign_pointer(dev->mt76.wcid[idx], &dev->mt76.global_wcid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mt7663_usb_sdio_रेजिस्टर_device(काष्ठा mt7615_dev *dev)
-अणु
-	काष्ठा ieee80211_hw *hw = mt76_hw(dev);
-	पूर्णांक err;
+int mt7663_usb_sdio_register_device(struct mt7615_dev *dev)
+{
+	struct ieee80211_hw *hw = mt76_hw(dev);
+	int err;
 
 	INIT_WORK(&dev->rate_work, mt7663_usb_sdio_rate_work);
 	INIT_LIST_HEAD(&dev->wrd_head);
 	mt7615_init_device(dev);
 
 	err = mt7663_usb_sdio_init_hardware(dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	hw->extra_tx_headroom += MT_USB_TXD_SIZE;
-	अगर (mt76_is_usb(&dev->mt76)) अणु
+	if (mt76_is_usb(&dev->mt76)) {
 		hw->extra_tx_headroom += MT_USB_HDR_SIZE;
 		/* check hw sg support in order to enable AMSDU */
-		अगर (dev->mt76.usb.sg_en)
+		if (dev->mt76.usb.sg_en)
 			hw->max_tx_fragments = MT_HW_TXP_MAX_BUF_NUM;
-		अन्यथा
+		else
 			hw->max_tx_fragments = 1;
-	पूर्ण
+	}
 
-	err = mt76_रेजिस्टर_device(&dev->mt76, true, mt7615_rates,
+	err = mt76_register_device(&dev->mt76, true, mt7615_rates,
 				   ARRAY_SIZE(mt7615_rates));
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!dev->mt76.usb.sg_en) अणु
-		काष्ठा ieee80211_sta_vht_cap *vht_cap;
+	if (!dev->mt76.usb.sg_en) {
+		struct ieee80211_sta_vht_cap *vht_cap;
 
-		/* decrease max A-MSDU size अगर SG is not supported */
+		/* decrease max A-MSDU size if SG is not supported */
 		vht_cap = &dev->mphy.sband_5g.sband.vht_cap;
 		vht_cap->cap &= ~IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454;
-	पूर्ण
+	}
 
 	ieee80211_queue_work(hw, &dev->mcu_work);
-	mt7615_init_txघातer(dev, &dev->mphy.sband_2g.sband);
-	mt7615_init_txघातer(dev, &dev->mphy.sband_5g.sband);
+	mt7615_init_txpower(dev, &dev->mphy.sband_2g.sband);
+	mt7615_init_txpower(dev, &dev->mphy.sband_5g.sband);
 
-	वापस mt7615_init_debugfs(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(mt7663_usb_sdio_रेजिस्टर_device);
+	return mt7615_init_debugfs(dev);
+}
+EXPORT_SYMBOL_GPL(mt7663_usb_sdio_register_device);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo@kernel.org>");
 MODULE_AUTHOR("Sean Wang <sean.wang@mediatek.com>");

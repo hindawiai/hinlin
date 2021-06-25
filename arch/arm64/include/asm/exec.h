@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/यंत्र/exec.h
+ * Based on arch/arm/include/asm/exec.h
  *
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_EXEC_H
-#घोषणा __ASM_EXEC_H
+#ifndef __ASM_EXEC_H
+#define __ASM_EXEC_H
 
-#समावेश <linux/sched.h>
+#include <linux/sched.h>
 
-बाह्य अचिन्हित दीर्घ arch_align_stack(अचिन्हित दीर्घ sp);
+extern unsigned long arch_align_stack(unsigned long sp);
 
-#पूर्ण_अगर	/* __ASM_EXEC_H */
+#endif	/* __ASM_EXEC_H */

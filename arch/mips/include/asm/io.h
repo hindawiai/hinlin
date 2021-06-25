@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
- * Copyright (C) 1994, 1995 Walकरोrf GmbH
+ * Copyright (C) 1994, 1995 Waldorf GmbH
  * Copyright (C) 1994 - 2000, 06 Ralf Baechle
  * Copyright (C) 1999, 2000 Silicon Graphics, Inc.
  * Copyright (C) 2004, 2005  MIPS Technologies, Inc.  All rights reserved.
  *	Author: Maciej W. Rozycki <macro@mips.com>
  */
-#अगर_अघोषित _ASM_IO_H
-#घोषणा _ASM_IO_H
+#ifndef _ASM_IO_H
+#define _ASM_IO_H
 
-#घोषणा ARCH_HAS_IOREMAP_WC
+#define ARCH_HAS_IOREMAP_WC
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/irqflags.h>
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/irqflags.h>
 
-#समावेश <यंत्र/addrspace.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/bug.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cpu-features.h>
-#समावेश <यंत्र-generic/iomap.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/pgtable-bits.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/माला.स>
-#समावेश <mangle-port.h>
+#include <asm/addrspace.h>
+#include <asm/barrier.h>
+#include <asm/bug.h>
+#include <asm/byteorder.h>
+#include <asm/cpu.h>
+#include <asm/cpu-features.h>
+#include <asm-generic/iomap.h>
+#include <asm/page.h>
+#include <asm/pgtable-bits.h>
+#include <asm/processor.h>
+#include <asm/string.h>
+#include <mangle-port.h>
 
 /*
  * Raw operations are never swapped in software.  OTOH values that raw
  * operations are working on may or may not have been swapped by the bus
- * hardware.  An example use would be क्रम flash memory that's used क्रम
+ * hardware.  An example use would be for flash memory that's used for
  * execute in place.
  */
 # define __raw_ioswabb(a, x)	(x)
@@ -54,204 +53,204 @@
 
 /*
  * On MIPS I/O ports are memory mapped, so we access them using normal
- * load/store inकाष्ठाions. mips_io_port_base is the भव address to
+ * load/store instructions. mips_io_port_base is the virtual address to
  * which all ports are being mapped.  For sake of efficiency some code
  * assumes that this is an address that can be loaded with a single lui
- * inकाष्ठाion, so the lower 16 bits must be zero.  Should be true on
- * any sane architecture; generic code करोes not use this assumption.
+ * instruction, so the lower 16 bits must be zero.  Should be true on
+ * any sane architecture; generic code does not use this assumption.
  */
-बाह्य अचिन्हित दीर्घ mips_io_port_base;
+extern unsigned long mips_io_port_base;
 
-अटल अंतरभूत व्योम set_io_port_base(अचिन्हित दीर्घ base)
-अणु
+static inline void set_io_port_base(unsigned long base)
+{
 	mips_io_port_base = base;
-पूर्ण
+}
 
 /*
- * Provide the necessary definitions क्रम generic iomap. We make use of
- * mips_io_port_base क्रम iomap(), but we करोn't reserve any low addresses क्रम
+ * Provide the necessary definitions for generic iomap. We make use of
+ * mips_io_port_base for iomap(), but we don't reserve any low addresses for
  * use with I/O ports.
  */
 
-#घोषणा HAVE_ARCH_PIO_SIZE
-#घोषणा PIO_OFFSET	mips_io_port_base
-#घोषणा PIO_MASK	IO_SPACE_LIMIT
-#घोषणा PIO_RESERVED	0x0UL
+#define HAVE_ARCH_PIO_SIZE
+#define PIO_OFFSET	mips_io_port_base
+#define PIO_MASK	IO_SPACE_LIMIT
+#define PIO_RESERVED	0x0UL
 
 /*
- * Enक्रमce in-order execution of data I/O.  In the MIPS architecture
- * these are equivalent to corresponding platक्रमm-specअगरic memory
- * barriers defined in <यंत्र/barrier.h>.  API pinched from PowerPC,
+ * Enforce in-order execution of data I/O.  In the MIPS architecture
+ * these are equivalent to corresponding platform-specific memory
+ * barriers defined in <asm/barrier.h>.  API pinched from PowerPC,
  * with sync additionally defined.
  */
-#घोषणा iobarrier_rw() mb()
-#घोषणा iobarrier_r() rmb()
-#घोषणा iobarrier_w() wmb()
-#घोषणा iobarrier_sync() iob()
+#define iobarrier_rw() mb()
+#define iobarrier_r() rmb()
+#define iobarrier_w() wmb()
+#define iobarrier_sync() iob()
 
 /*
- *     virt_to_phys    -       map भव addresses to physical
+ *     virt_to_phys    -       map virtual addresses to physical
  *     @address: address to remap
  *
- *     The वापसed physical address is the physical (CPU) mapping क्रम
+ *     The returned physical address is the physical (CPU) mapping for
  *     the memory address given. It is only valid to use this function on
- *     addresses directly mapped or allocated via kदो_स्मृति.
+ *     addresses directly mapped or allocated via kmalloc.
  *
- *     This function करोes not give bus mappings क्रम DMA transfers. In
- *     almost all conceivable हालs a device driver should not be using
+ *     This function does not give bus mappings for DMA transfers. In
+ *     almost all conceivable cases a device driver should not be using
  *     this function
  */
-अटल अंतरभूत अचिन्हित दीर्घ __virt_to_phys_nodebug(अस्थिर स्थिर व्योम *address)
-अणु
-	वापस __pa(address);
-पूर्ण
+static inline unsigned long __virt_to_phys_nodebug(volatile const void *address)
+{
+	return __pa(address);
+}
 
-#अगर_घोषित CONFIG_DEBUG_VIRTUAL
-बाह्य phys_addr_t __virt_to_phys(अस्थिर स्थिर व्योम *x);
-#अन्यथा
-#घोषणा __virt_to_phys(x)	__virt_to_phys_nodebug(x)
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_VIRTUAL
+extern phys_addr_t __virt_to_phys(volatile const void *x);
+#else
+#define __virt_to_phys(x)	__virt_to_phys_nodebug(x)
+#endif
 
-#घोषणा virt_to_phys virt_to_phys
-अटल अंतरभूत phys_addr_t virt_to_phys(स्थिर अस्थिर व्योम *x)
-अणु
-	वापस __virt_to_phys(x);
-पूर्ण
+#define virt_to_phys virt_to_phys
+static inline phys_addr_t virt_to_phys(const volatile void *x)
+{
+	return __virt_to_phys(x);
+}
 
 /*
- *     phys_to_virt    -       map physical address to भव
+ *     phys_to_virt    -       map physical address to virtual
  *     @address: address to remap
  *
- *     The वापसed भव address is a current CPU mapping क्रम
+ *     The returned virtual address is a current CPU mapping for
  *     the memory address given. It is only valid to use this function on
  *     addresses that have a kernel mapping
  *
- *     This function करोes not handle bus mappings क्रम DMA transfers. In
- *     almost all conceivable हालs a device driver should not be using
+ *     This function does not handle bus mappings for DMA transfers. In
+ *     almost all conceivable cases a device driver should not be using
  *     this function
  */
-अटल अंतरभूत व्योम * phys_to_virt(अचिन्हित दीर्घ address)
-अणु
-	वापस (व्योम *)(address + PAGE_OFFSET - PHYS_OFFSET);
-पूर्ण
+static inline void * phys_to_virt(unsigned long address)
+{
+	return (void *)(address + PAGE_OFFSET - PHYS_OFFSET);
+}
 
 /*
  * ISA I/O bus memory addresses are 1:1 with the physical address.
  */
-अटल अंतरभूत अचिन्हित दीर्घ isa_virt_to_bus(अस्थिर व्योम *address)
-अणु
-	वापस virt_to_phys(address);
-पूर्ण
+static inline unsigned long isa_virt_to_bus(volatile void *address)
+{
+	return virt_to_phys(address);
+}
 
-अटल अंतरभूत व्योम *isa_bus_to_virt(अचिन्हित दीर्घ address)
-अणु
-	वापस phys_to_virt(address);
-पूर्ण
+static inline void *isa_bus_to_virt(unsigned long address)
+{
+	return phys_to_virt(address);
+}
 
 /*
- * However PCI ones are not necessarily 1:1 and thereक्रमe these पूर्णांकerfaces
- * are क्रमbidden in portable PCI drivers.
+ * However PCI ones are not necessarily 1:1 and therefore these interfaces
+ * are forbidden in portable PCI drivers.
  *
- * Allow them क्रम x86 क्रम legacy drivers, though.
+ * Allow them for x86 for legacy drivers, though.
  */
-#घोषणा virt_to_bus virt_to_phys
-#घोषणा bus_to_virt phys_to_virt
+#define virt_to_bus virt_to_phys
+#define bus_to_virt phys_to_virt
 
 /*
  * Change "struct page" to physical address.
  */
-#घोषणा page_to_phys(page)	((dma_addr_t)page_to_pfn(page) << PAGE_SHIFT)
+#define page_to_phys(page)	((dma_addr_t)page_to_pfn(page) << PAGE_SHIFT)
 
-व्योम __iomem *ioremap_prot(phys_addr_t offset, अचिन्हित दीर्घ size,
-		अचिन्हित दीर्घ prot_val);
-व्योम iounmap(स्थिर अस्थिर व्योम __iomem *addr);
+void __iomem *ioremap_prot(phys_addr_t offset, unsigned long size,
+		unsigned long prot_val);
+void iounmap(const volatile void __iomem *addr);
 
 /*
- * ioremap     -   map bus memory पूर्णांकo CPU space
+ * ioremap     -   map bus memory into CPU space
  * @offset:    bus address of the memory
  * @size:      size of the resource to map
  *
- * ioremap perक्रमms a platक्रमm specअगरic sequence of operations to
- * make bus memory CPU accessible via the पढ़ोb/पढ़ोw/पढ़ोl/ग_लिखोb/
- * ग_लिखोw/ग_लिखोl functions and the other mmio helpers. The वापसed
- * address is not guaranteed to be usable directly as a भव
+ * ioremap performs a platform specific sequence of operations to
+ * make bus memory CPU accessible via the readb/readw/readl/writeb/
+ * writew/writel functions and the other mmio helpers. The returned
+ * address is not guaranteed to be usable directly as a virtual
  * address.
  */
-#घोषणा ioremap(offset, size)						\
+#define ioremap(offset, size)						\
 	ioremap_prot((offset), (size), _CACHE_UNCACHED)
-#घोषणा ioremap_uc		ioremap
+#define ioremap_uc		ioremap
 
 /*
- * ioremap_cache -	map bus memory पूर्णांकo CPU space
+ * ioremap_cache -	map bus memory into CPU space
  * @offset:	    bus address of the memory
  * @size:	    size of the resource to map
  *
- * ioremap_cache perक्रमms a platक्रमm specअगरic sequence of operations to
- * make bus memory CPU accessible via the पढ़ोb/पढ़ोw/पढ़ोl/ग_लिखोb/
- * ग_लिखोw/ग_लिखोl functions and the other mmio helpers. The वापसed
- * address is not guaranteed to be usable directly as a भव
+ * ioremap_cache performs a platform specific sequence of operations to
+ * make bus memory CPU accessible via the readb/readw/readl/writeb/
+ * writew/writel functions and the other mmio helpers. The returned
+ * address is not guaranteed to be usable directly as a virtual
  * address.
  *
  * This version of ioremap ensures that the memory is marked cachable by
- * the CPU.  Also enables full ग_लिखो-combining.	 Useful क्रम some
+ * the CPU.  Also enables full write-combining.	 Useful for some
  * memory-like regions on I/O busses.
  */
-#घोषणा ioremap_cache(offset, size)					\
-	ioremap_prot((offset), (size), _page_cachable_शेष)
+#define ioremap_cache(offset, size)					\
+	ioremap_prot((offset), (size), _page_cachable_default)
 
 /*
- * ioremap_wc     -   map bus memory पूर्णांकo CPU space
+ * ioremap_wc     -   map bus memory into CPU space
  * @offset:    bus address of the memory
  * @size:      size of the resource to map
  *
- * ioremap_wc perक्रमms a platक्रमm specअगरic sequence of operations to
- * make bus memory CPU accessible via the पढ़ोb/पढ़ोw/पढ़ोl/ग_लिखोb/
- * ग_लिखोw/ग_लिखोl functions and the other mmio helpers. The वापसed
- * address is not guaranteed to be usable directly as a भव
+ * ioremap_wc performs a platform specific sequence of operations to
+ * make bus memory CPU accessible via the readb/readw/readl/writeb/
+ * writew/writel functions and the other mmio helpers. The returned
+ * address is not guaranteed to be usable directly as a virtual
  * address.
  *
  * This version of ioremap ensures that the memory is marked uncachable
- * but accelerated by means of ग_लिखो-combining feature. It is specअगरically
- * useful क्रम PCIe prefetchable winकरोws, which may vastly improve a
- * communications perक्रमmance. If it was determined on boot stage, what
- * CPU CCA करोesn't support UCA, the method shall fall-back to the
+ * but accelerated by means of write-combining feature. It is specifically
+ * useful for PCIe prefetchable windows, which may vastly improve a
+ * communications performance. If it was determined on boot stage, what
+ * CPU CCA doesn't support UCA, the method shall fall-back to the
  * _CACHE_UNCACHED option (see cpu_probe() method).
  */
-#घोषणा ioremap_wc(offset, size)					\
-	ioremap_prot((offset), (size), boot_cpu_data.ग_लिखोcombine)
+#define ioremap_wc(offset, size)					\
+	ioremap_prot((offset), (size), boot_cpu_data.writecombine)
 
-#अगर defined(CONFIG_CPU_CAVIUM_OCTEON) || defined(CONFIG_CPU_LOONGSON64)
-#घोषणा war_io_reorder_wmb()		wmb()
-#अन्यथा
-#घोषणा war_io_reorder_wmb()		barrier()
-#पूर्ण_अगर
+#if defined(CONFIG_CPU_CAVIUM_OCTEON) || defined(CONFIG_CPU_LOONGSON64)
+#define war_io_reorder_wmb()		wmb()
+#else
+#define war_io_reorder_wmb()		barrier()
+#endif
 
-#घोषणा __BUILD_MEMORY_SINGLE(pfx, bwlq, type, barrier, relax, irq)	\
+#define __BUILD_MEMORY_SINGLE(pfx, bwlq, type, barrier, relax, irq)	\
 									\
-अटल अंतरभूत व्योम pfx##ग_लिखो##bwlq(type val,				\
-				    अस्थिर व्योम __iomem *mem)		\
-अणु									\
-	अस्थिर type *__mem;						\
+static inline void pfx##write##bwlq(type val,				\
+				    volatile void __iomem *mem)		\
+{									\
+	volatile type *__mem;						\
 	type __val;							\
 									\
-	अगर (barrier)							\
+	if (barrier)							\
 		iobarrier_rw();						\
-	अन्यथा								\
+	else								\
 		war_io_reorder_wmb();					\
 									\
-	__mem = (व्योम *)__swizzle_addr_##bwlq((अचिन्हित दीर्घ)(mem));	\
+	__mem = (void *)__swizzle_addr_##bwlq((unsigned long)(mem));	\
 									\
 	__val = pfx##ioswab##bwlq(__mem, val);				\
 									\
-	अगर (माप(type) != माप(u64) || माप(u64) == माप(दीर्घ)) \
+	if (sizeof(type) != sizeof(u64) || sizeof(u64) == sizeof(long)) \
 		*__mem = __val;						\
-	अन्यथा अगर (cpu_has_64bits) अणु					\
-		अचिन्हित दीर्घ __flags;					\
-		type __पंचांगp;						\
+	else if (cpu_has_64bits) {					\
+		unsigned long __flags;					\
+		type __tmp;						\
 									\
-		अगर (irq)						\
+		if (irq)						\
 			local_irq_save(__flags);			\
-		__यंत्र__ __अस्थिर__(					\
+		__asm__ __volatile__(					\
 			".set	push"		"\t\t# __writeq""\n\t"	\
 			".set	arch=r4000"			"\n\t"	\
 			"dsll32 %L0, %L0, 0"			"\n\t"	\
@@ -260,32 +259,32 @@
 			"or	%L0, %L0, %M0"			"\n\t"	\
 			"sd	%L0, %2"			"\n\t"	\
 			".set	pop"				"\n"	\
-			: "=r" (__पंचांगp)					\
+			: "=r" (__tmp)					\
 			: "0" (__val), "m" (*__mem));			\
-		अगर (irq)						\
+		if (irq)						\
 			local_irq_restore(__flags);			\
-	पूर्ण अन्यथा								\
+	} else								\
 		BUG();							\
-पूर्ण									\
+}									\
 									\
-अटल अंतरभूत type pfx##पढ़ो##bwlq(स्थिर अस्थिर व्योम __iomem *mem)	\
-अणु									\
-	अस्थिर type *__mem;						\
+static inline type pfx##read##bwlq(const volatile void __iomem *mem)	\
+{									\
+	volatile type *__mem;						\
 	type __val;							\
 									\
-	__mem = (व्योम *)__swizzle_addr_##bwlq((अचिन्हित दीर्घ)(mem));	\
+	__mem = (void *)__swizzle_addr_##bwlq((unsigned long)(mem));	\
 									\
-	अगर (barrier)							\
+	if (barrier)							\
 		iobarrier_rw();						\
 									\
-	अगर (माप(type) != माप(u64) || माप(u64) == माप(दीर्घ)) \
+	if (sizeof(type) != sizeof(u64) || sizeof(u64) == sizeof(long)) \
 		__val = *__mem;						\
-	अन्यथा अगर (cpu_has_64bits) अणु					\
-		अचिन्हित दीर्घ __flags;					\
+	else if (cpu_has_64bits) {					\
+		unsigned long __flags;					\
 									\
-		अगर (irq)						\
+		if (irq)						\
 			local_irq_save(__flags);			\
-		__यंत्र__ __अस्थिर__(					\
+		__asm__ __volatile__(					\
 			".set	push"		"\t\t# __readq" "\n\t"	\
 			".set	arch=r4000"			"\n\t"	\
 			"ld	%L0, %1"			"\n\t"	\
@@ -294,66 +293,66 @@
 			".set	pop"				"\n"	\
 			: "=r" (__val)					\
 			: "m" (*__mem));				\
-		अगर (irq)						\
+		if (irq)						\
 			local_irq_restore(__flags);			\
-	पूर्ण अन्यथा अणु							\
+	} else {							\
 		__val = 0;						\
 		BUG();							\
-	पूर्ण								\
+	}								\
 									\
 	/* prevent prefetching of coherent DMA data prematurely */	\
-	अगर (!relax)							\
+	if (!relax)							\
 		rmb();							\
-	वापस pfx##ioswab##bwlq(__mem, __val);				\
-पूर्ण
+	return pfx##ioswab##bwlq(__mem, __val);				\
+}
 
-#घोषणा __BUILD_IOPORT_SINGLE(pfx, bwlq, type, barrier, relax, p)	\
+#define __BUILD_IOPORT_SINGLE(pfx, bwlq, type, barrier, relax, p)	\
 									\
-अटल अंतरभूत व्योम pfx##out##bwlq##p(type val, अचिन्हित दीर्घ port)	\
-अणु									\
-	अस्थिर type *__addr;						\
+static inline void pfx##out##bwlq##p(type val, unsigned long port)	\
+{									\
+	volatile type *__addr;						\
 	type __val;							\
 									\
-	अगर (barrier)							\
+	if (barrier)							\
 		iobarrier_rw();						\
-	अन्यथा								\
+	else								\
 		war_io_reorder_wmb();					\
 									\
-	__addr = (व्योम *)__swizzle_addr_##bwlq(mips_io_port_base + port); \
+	__addr = (void *)__swizzle_addr_##bwlq(mips_io_port_base + port); \
 									\
 	__val = pfx##ioswab##bwlq(__addr, val);				\
 									\
 	/* Really, we want this to be atomic */				\
-	BUILD_BUG_ON(माप(type) > माप(अचिन्हित दीर्घ));		\
+	BUILD_BUG_ON(sizeof(type) > sizeof(unsigned long));		\
 									\
 	*__addr = __val;						\
-पूर्ण									\
+}									\
 									\
-अटल अंतरभूत type pfx##in##bwlq##p(अचिन्हित दीर्घ port)			\
-अणु									\
-	अस्थिर type *__addr;						\
+static inline type pfx##in##bwlq##p(unsigned long port)			\
+{									\
+	volatile type *__addr;						\
 	type __val;							\
 									\
-	__addr = (व्योम *)__swizzle_addr_##bwlq(mips_io_port_base + port); \
+	__addr = (void *)__swizzle_addr_##bwlq(mips_io_port_base + port); \
 									\
-	BUILD_BUG_ON(माप(type) > माप(अचिन्हित दीर्घ));		\
+	BUILD_BUG_ON(sizeof(type) > sizeof(unsigned long));		\
 									\
-	अगर (barrier)							\
+	if (barrier)							\
 		iobarrier_rw();						\
 									\
 	__val = *__addr;						\
 									\
 	/* prevent prefetching of coherent DMA data prematurely */	\
-	अगर (!relax)							\
+	if (!relax)							\
 		rmb();							\
-	वापस pfx##ioswab##bwlq(__addr, __val);			\
-पूर्ण
+	return pfx##ioswab##bwlq(__addr, __val);			\
+}
 
-#घोषणा __BUILD_MEMORY_PFX(bus, bwlq, type, relax)			\
+#define __BUILD_MEMORY_PFX(bus, bwlq, type, relax)			\
 									\
 __BUILD_MEMORY_SINGLE(bus, bwlq, type, 1, relax, 1)
 
-#घोषणा BUILDIO_MEM(bwlq, type)						\
+#define BUILDIO_MEM(bwlq, type)						\
 									\
 __BUILD_MEMORY_PFX(__raw_, bwlq, type, 0)				\
 __BUILD_MEMORY_PFX(__relaxed_, bwlq, type, 1)				\
@@ -363,123 +362,123 @@ __BUILD_MEMORY_PFX(, bwlq, type, 0)
 BUILDIO_MEM(b, u8)
 BUILDIO_MEM(w, u16)
 BUILDIO_MEM(l, u32)
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 BUILDIO_MEM(q, u64)
-#अन्यथा
+#else
 __BUILD_MEMORY_PFX(__raw_, q, u64, 0)
 __BUILD_MEMORY_PFX(__mem_, q, u64, 0)
-#पूर्ण_अगर
+#endif
 
-#घोषणा __BUILD_IOPORT_PFX(bus, bwlq, type)				\
+#define __BUILD_IOPORT_PFX(bus, bwlq, type)				\
 	__BUILD_IOPORT_SINGLE(bus, bwlq, type, 1, 0,)			\
 	__BUILD_IOPORT_SINGLE(bus, bwlq, type, 1, 0, _p)
 
-#घोषणा BUILDIO_IOPORT(bwlq, type)					\
+#define BUILDIO_IOPORT(bwlq, type)					\
 	__BUILD_IOPORT_PFX(, bwlq, type)				\
 	__BUILD_IOPORT_PFX(__mem_, bwlq, type)
 
 BUILDIO_IOPORT(b, u8)
 BUILDIO_IOPORT(w, u16)
 BUILDIO_IOPORT(l, u32)
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 BUILDIO_IOPORT(q, u64)
-#पूर्ण_अगर
+#endif
 
-#घोषणा __BUILDIO(bwlq, type)						\
+#define __BUILDIO(bwlq, type)						\
 									\
 __BUILD_MEMORY_SINGLE(____raw_, bwlq, type, 1, 0, 0)
 
 __BUILDIO(q, u64)
 
-#घोषणा पढ़ोb_relaxed			__relaxed_पढ़ोb
-#घोषणा पढ़ोw_relaxed			__relaxed_पढ़ोw
-#घोषणा पढ़ोl_relaxed			__relaxed_पढ़ोl
-#अगर_घोषित CONFIG_64BIT
-#घोषणा पढ़ोq_relaxed			__relaxed_पढ़ोq
-#पूर्ण_अगर
+#define readb_relaxed			__relaxed_readb
+#define readw_relaxed			__relaxed_readw
+#define readl_relaxed			__relaxed_readl
+#ifdef CONFIG_64BIT
+#define readq_relaxed			__relaxed_readq
+#endif
 
-#घोषणा ग_लिखोb_relaxed			__relaxed_ग_लिखोb
-#घोषणा ग_लिखोw_relaxed			__relaxed_ग_लिखोw
-#घोषणा ग_लिखोl_relaxed			__relaxed_ग_लिखोl
-#अगर_घोषित CONFIG_64BIT
-#घोषणा ग_लिखोq_relaxed			__relaxed_ग_लिखोq
-#पूर्ण_अगर
+#define writeb_relaxed			__relaxed_writeb
+#define writew_relaxed			__relaxed_writew
+#define writel_relaxed			__relaxed_writel
+#ifdef CONFIG_64BIT
+#define writeq_relaxed			__relaxed_writeq
+#endif
 
-#घोषणा पढ़ोb_be(addr)							\
-	__raw_पढ़ोb((__क्रमce अचिन्हित *)(addr))
-#घोषणा पढ़ोw_be(addr)							\
-	be16_to_cpu(__raw_पढ़ोw((__क्रमce अचिन्हित *)(addr)))
-#घोषणा पढ़ोl_be(addr)							\
-	be32_to_cpu(__raw_पढ़ोl((__क्रमce अचिन्हित *)(addr)))
-#घोषणा पढ़ोq_be(addr)							\
-	be64_to_cpu(__raw_पढ़ोq((__क्रमce अचिन्हित *)(addr)))
+#define readb_be(addr)							\
+	__raw_readb((__force unsigned *)(addr))
+#define readw_be(addr)							\
+	be16_to_cpu(__raw_readw((__force unsigned *)(addr)))
+#define readl_be(addr)							\
+	be32_to_cpu(__raw_readl((__force unsigned *)(addr)))
+#define readq_be(addr)							\
+	be64_to_cpu(__raw_readq((__force unsigned *)(addr)))
 
-#घोषणा ग_लिखोb_be(val, addr)						\
-	__raw_ग_लिखोb((val), (__क्रमce अचिन्हित *)(addr))
-#घोषणा ग_लिखोw_be(val, addr)						\
-	__raw_ग_लिखोw(cpu_to_be16((val)), (__क्रमce अचिन्हित *)(addr))
-#घोषणा ग_लिखोl_be(val, addr)						\
-	__raw_ग_लिखोl(cpu_to_be32((val)), (__क्रमce अचिन्हित *)(addr))
-#घोषणा ग_लिखोq_be(val, addr)						\
-	__raw_ग_लिखोq(cpu_to_be64((val)), (__क्रमce अचिन्हित *)(addr))
+#define writeb_be(val, addr)						\
+	__raw_writeb((val), (__force unsigned *)(addr))
+#define writew_be(val, addr)						\
+	__raw_writew(cpu_to_be16((val)), (__force unsigned *)(addr))
+#define writel_be(val, addr)						\
+	__raw_writel(cpu_to_be32((val)), (__force unsigned *)(addr))
+#define writeq_be(val, addr)						\
+	__raw_writeq(cpu_to_be64((val)), (__force unsigned *)(addr))
 
 /*
- * Some code tests क्रम these symbols
+ * Some code tests for these symbols
  */
-#अगर_घोषित CONFIG_64BIT
-#घोषणा पढ़ोq				पढ़ोq
-#घोषणा ग_लिखोq				ग_लिखोq
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define readq				readq
+#define writeq				writeq
+#endif
 
-#घोषणा __BUILD_MEMORY_STRING(bwlq, type)				\
+#define __BUILD_MEMORY_STRING(bwlq, type)				\
 									\
-अटल अंतरभूत व्योम ग_लिखोs##bwlq(अस्थिर व्योम __iomem *mem,		\
-				स्थिर व्योम *addr, अचिन्हित पूर्णांक count)	\
-अणु									\
-	स्थिर अस्थिर type *__addr = addr;				\
+static inline void writes##bwlq(volatile void __iomem *mem,		\
+				const void *addr, unsigned int count)	\
+{									\
+	const volatile type *__addr = addr;				\
 									\
-	जबतक (count--) अणु						\
-		__mem_ग_लिखो##bwlq(*__addr, mem);			\
+	while (count--) {						\
+		__mem_write##bwlq(*__addr, mem);			\
 		__addr++;						\
-	पूर्ण								\
-पूर्ण									\
+	}								\
+}									\
 									\
-अटल अंतरभूत व्योम पढ़ोs##bwlq(अस्थिर व्योम __iomem *mem, व्योम *addr,	\
-			       अचिन्हित पूर्णांक count)			\
-अणु									\
-	अस्थिर type *__addr = addr;					\
+static inline void reads##bwlq(volatile void __iomem *mem, void *addr,	\
+			       unsigned int count)			\
+{									\
+	volatile type *__addr = addr;					\
 									\
-	जबतक (count--) अणु						\
-		*__addr = __mem_पढ़ो##bwlq(mem);			\
+	while (count--) {						\
+		*__addr = __mem_read##bwlq(mem);			\
 		__addr++;						\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा __BUILD_IOPORT_STRING(bwlq, type)				\
+#define __BUILD_IOPORT_STRING(bwlq, type)				\
 									\
-अटल अंतरभूत व्योम outs##bwlq(अचिन्हित दीर्घ port, स्थिर व्योम *addr,	\
-			      अचिन्हित पूर्णांक count)			\
-अणु									\
-	स्थिर अस्थिर type *__addr = addr;				\
+static inline void outs##bwlq(unsigned long port, const void *addr,	\
+			      unsigned int count)			\
+{									\
+	const volatile type *__addr = addr;				\
 									\
-	जबतक (count--) अणु						\
+	while (count--) {						\
 		__mem_out##bwlq(*__addr, port);				\
 		__addr++;						\
-	पूर्ण								\
-पूर्ण									\
+	}								\
+}									\
 									\
-अटल अंतरभूत व्योम ins##bwlq(अचिन्हित दीर्घ port, व्योम *addr,		\
-			     अचिन्हित पूर्णांक count)			\
-अणु									\
-	अस्थिर type *__addr = addr;					\
+static inline void ins##bwlq(unsigned long port, void *addr,		\
+			     unsigned int count)			\
+{									\
+	volatile type *__addr = addr;					\
 									\
-	जबतक (count--) अणु						\
+	while (count--) {						\
 		*__addr = __mem_in##bwlq(port);				\
 		__addr++;						\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा BUILDSTRING(bwlq, type)						\
+#define BUILDSTRING(bwlq, type)						\
 									\
 __BUILD_MEMORY_STRING(bwlq, type)					\
 __BUILD_IOPORT_STRING(bwlq, type)
@@ -487,22 +486,22 @@ __BUILD_IOPORT_STRING(bwlq, type)
 BUILDSTRING(b, u8)
 BUILDSTRING(w, u16)
 BUILDSTRING(l, u32)
-#अगर_घोषित CONFIG_64BIT
+#ifdef CONFIG_64BIT
 BUILDSTRING(q, u64)
-#पूर्ण_अगर
+#endif
 
-अटल अंतरभूत व्योम स_रखो_io(अस्थिर व्योम __iomem *addr, अचिन्हित अक्षर val, पूर्णांक count)
-अणु
-	स_रखो((व्योम __क्रमce *) addr, val, count);
-पूर्ण
-अटल अंतरभूत व्योम स_नकल_fromio(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src, पूर्णांक count)
-अणु
-	स_नकल(dst, (व्योम __क्रमce *) src, count);
-पूर्ण
-अटल अंतरभूत व्योम स_नकल_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src, पूर्णांक count)
-अणु
-	स_नकल((व्योम __क्रमce *) dst, src, count);
-पूर्ण
+static inline void memset_io(volatile void __iomem *addr, unsigned char val, int count)
+{
+	memset((void __force *) addr, val, count);
+}
+static inline void memcpy_fromio(void *dst, const volatile void __iomem *src, int count)
+{
+	memcpy(dst, (void __force *) src, count);
+}
+static inline void memcpy_toio(volatile void __iomem *dst, const void *src, int count)
+{
+	memcpy((void __force *) dst, src, count);
+}
 
 /*
  * The caches on some architectures aren't dma-coherent and have need to
@@ -510,61 +509,61 @@ BUILDSTRING(q, u64)
  * can be applied to dma buffers.
  *
  *  - dma_cache_wback_inv(start, size) makes caches and coherent by
- *    writing the content of the caches back to memory, अगर necessary.
+ *    writing the content of the caches back to memory, if necessary.
  *    The function also invalidates the affected part of the caches as
- *    necessary beक्रमe DMA transfers from outside to memory.
+ *    necessary before DMA transfers from outside to memory.
  *  - dma_cache_wback(start, size) makes caches and coherent by
- *    writing the content of the caches back to memory, अगर necessary.
+ *    writing the content of the caches back to memory, if necessary.
  *    The function also invalidates the affected part of the caches as
- *    necessary beक्रमe DMA transfers from outside to memory.
+ *    necessary before DMA transfers from outside to memory.
  *  - dma_cache_inv(start, size) invalidates the affected parts of the
  *    caches.  Dirty lines of the caches may be written back or simply
- *    be discarded.  This operation is necessary beक्रमe dma operations
+ *    be discarded.  This operation is necessary before dma operations
  *    to the memory.
  *
- * This API used to be exported; it now is क्रम arch code पूर्णांकernal use only.
+ * This API used to be exported; it now is for arch code internal use only.
  */
-#अगर_घोषित CONFIG_DMA_NONCOHERENT
+#ifdef CONFIG_DMA_NONCOHERENT
 
-बाह्य व्योम (*_dma_cache_wback_inv)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size);
-बाह्य व्योम (*_dma_cache_wback)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size);
-बाह्य व्योम (*_dma_cache_inv)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ size);
+extern void (*_dma_cache_wback_inv)(unsigned long start, unsigned long size);
+extern void (*_dma_cache_wback)(unsigned long start, unsigned long size);
+extern void (*_dma_cache_inv)(unsigned long start, unsigned long size);
 
-#घोषणा dma_cache_wback_inv(start, size)	_dma_cache_wback_inv(start, size)
-#घोषणा dma_cache_wback(start, size)		_dma_cache_wback(start, size)
-#घोषणा dma_cache_inv(start, size)		_dma_cache_inv(start, size)
+#define dma_cache_wback_inv(start, size)	_dma_cache_wback_inv(start, size)
+#define dma_cache_wback(start, size)		_dma_cache_wback(start, size)
+#define dma_cache_inv(start, size)		_dma_cache_inv(start, size)
 
-#अन्यथा /* Sane hardware */
+#else /* Sane hardware */
 
-#घोषणा dma_cache_wback_inv(start,size) \
-	करो अणु (व्योम) (start); (व्योम) (size); पूर्ण जबतक (0)
-#घोषणा dma_cache_wback(start,size)	\
-	करो अणु (व्योम) (start); (व्योम) (size); पूर्ण जबतक (0)
-#घोषणा dma_cache_inv(start,size)	\
-	करो अणु (व्योम) (start); (व्योम) (size); पूर्ण जबतक (0)
+#define dma_cache_wback_inv(start,size) \
+	do { (void) (start); (void) (size); } while (0)
+#define dma_cache_wback(start,size)	\
+	do { (void) (start); (void) (size); } while (0)
+#define dma_cache_inv(start,size)	\
+	do { (void) (start); (void) (size); } while (0)
 
-#पूर्ण_अगर /* CONFIG_DMA_NONCOHERENT */
+#endif /* CONFIG_DMA_NONCOHERENT */
 
 /*
- * Read a 32-bit रेजिस्टर that requires a 64-bit पढ़ो cycle on the bus.
- * Aव्योम पूर्णांकerrupt mucking, just adjust the address क्रम 4-byte access.
+ * Read a 32-bit register that requires a 64-bit read cycle on the bus.
+ * Avoid interrupt mucking, just adjust the address for 4-byte access.
  * Assume the addresses are 8-byte aligned.
  */
-#अगर_घोषित __MIPSEB__
-#घोषणा __CSR_32_ADJUST 4
-#अन्यथा
-#घोषणा __CSR_32_ADJUST 0
-#पूर्ण_अगर
+#ifdef __MIPSEB__
+#define __CSR_32_ADJUST 4
+#else
+#define __CSR_32_ADJUST 0
+#endif
 
-#घोषणा csr_out32(v, a) (*(अस्थिर u32 *)((अचिन्हित दीर्घ)(a) + __CSR_32_ADJUST) = (v))
-#घोषणा csr_in32(a)    (*(अस्थिर u32 *)((अचिन्हित दीर्घ)(a) + __CSR_32_ADJUST))
+#define csr_out32(v, a) (*(volatile u32 *)((unsigned long)(a) + __CSR_32_ADJUST) = (v))
+#define csr_in32(a)    (*(volatile u32 *)((unsigned long)(a) + __CSR_32_ADJUST))
 
 /*
- * Convert a physical poपूर्णांकer to a भव kernel poपूर्णांकer क्रम /dev/mem
+ * Convert a physical pointer to a virtual kernel pointer for /dev/mem
  * access
  */
-#घोषणा xlate_dev_mem_ptr(p)	__va(p)
+#define xlate_dev_mem_ptr(p)	__va(p)
 
-व्योम __ioपढ़ो64_copy(व्योम *to, स्थिर व्योम __iomem *from, माप_प्रकार count);
+void __ioread64_copy(void *to, const void __iomem *from, size_t count);
 
-#पूर्ण_अगर /* _ASM_IO_H */
+#endif /* _ASM_IO_H */

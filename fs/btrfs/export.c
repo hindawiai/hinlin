@@ -1,282 +1,281 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#समावेश <linux/fs.h>
-#समावेश <linux/types.h>
-#समावेश "ctree.h"
-#समावेश "disk-io.h"
-#समावेश "btrfs_inode.h"
-#समावेश "print-tree.h"
-#समावेश "export.h"
+#include <linux/fs.h>
+#include <linux/types.h>
+#include "ctree.h"
+#include "disk-io.h"
+#include "btrfs_inode.h"
+#include "print-tree.h"
+#include "export.h"
 
-#घोषणा BTRFS_FID_SIZE_NON_CONNECTABLE (दुरत्व(काष्ठा btrfs_fid, \
+#define BTRFS_FID_SIZE_NON_CONNECTABLE (offsetof(struct btrfs_fid, \
 						 parent_objectid) / 4)
-#घोषणा BTRFS_FID_SIZE_CONNECTABLE (दुरत्व(काष्ठा btrfs_fid, \
+#define BTRFS_FID_SIZE_CONNECTABLE (offsetof(struct btrfs_fid, \
 					     parent_root_objectid) / 4)
-#घोषणा BTRFS_FID_SIZE_CONNECTABLE_ROOT (माप(काष्ठा btrfs_fid) / 4)
+#define BTRFS_FID_SIZE_CONNECTABLE_ROOT (sizeof(struct btrfs_fid) / 4)
 
-अटल पूर्णांक btrfs_encode_fh(काष्ठा inode *inode, u32 *fh, पूर्णांक *max_len,
-			   काष्ठा inode *parent)
-अणु
-	काष्ठा btrfs_fid *fid = (काष्ठा btrfs_fid *)fh;
-	पूर्णांक len = *max_len;
-	पूर्णांक type;
+static int btrfs_encode_fh(struct inode *inode, u32 *fh, int *max_len,
+			   struct inode *parent)
+{
+	struct btrfs_fid *fid = (struct btrfs_fid *)fh;
+	int len = *max_len;
+	int type;
 
-	अगर (parent && (len < BTRFS_FID_SIZE_CONNECTABLE)) अणु
+	if (parent && (len < BTRFS_FID_SIZE_CONNECTABLE)) {
 		*max_len = BTRFS_FID_SIZE_CONNECTABLE;
-		वापस खाताID_INVALID;
-	पूर्ण अन्यथा अगर (len < BTRFS_FID_SIZE_NON_CONNECTABLE) अणु
+		return FILEID_INVALID;
+	} else if (len < BTRFS_FID_SIZE_NON_CONNECTABLE) {
 		*max_len = BTRFS_FID_SIZE_NON_CONNECTABLE;
-		वापस खाताID_INVALID;
-	पूर्ण
+		return FILEID_INVALID;
+	}
 
 	len  = BTRFS_FID_SIZE_NON_CONNECTABLE;
-	type = खाताID_BTRFS_WITHOUT_PARENT;
+	type = FILEID_BTRFS_WITHOUT_PARENT;
 
 	fid->objectid = btrfs_ino(BTRFS_I(inode));
 	fid->root_objectid = BTRFS_I(inode)->root->root_key.objectid;
 	fid->gen = inode->i_generation;
 
-	अगर (parent) अणु
+	if (parent) {
 		u64 parent_root_id;
 
 		fid->parent_objectid = BTRFS_I(parent)->location.objectid;
 		fid->parent_gen = parent->i_generation;
 		parent_root_id = BTRFS_I(parent)->root->root_key.objectid;
 
-		अगर (parent_root_id != fid->root_objectid) अणु
+		if (parent_root_id != fid->root_objectid) {
 			fid->parent_root_objectid = parent_root_id;
 			len = BTRFS_FID_SIZE_CONNECTABLE_ROOT;
-			type = खाताID_BTRFS_WITH_PARENT_ROOT;
-		पूर्ण अन्यथा अणु
+			type = FILEID_BTRFS_WITH_PARENT_ROOT;
+		} else {
 			len = BTRFS_FID_SIZE_CONNECTABLE;
-			type = खाताID_BTRFS_WITH_PARENT;
-		पूर्ण
-	पूर्ण
+			type = FILEID_BTRFS_WITH_PARENT;
+		}
+	}
 
 	*max_len = len;
-	वापस type;
-पूर्ण
+	return type;
+}
 
-काष्ठा dentry *btrfs_get_dentry(काष्ठा super_block *sb, u64 objectid,
+struct dentry *btrfs_get_dentry(struct super_block *sb, u64 objectid,
 				u64 root_objectid, u32 generation,
-				पूर्णांक check_generation)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(sb);
-	काष्ठा btrfs_root *root;
-	काष्ठा inode *inode;
+				int check_generation)
+{
+	struct btrfs_fs_info *fs_info = btrfs_sb(sb);
+	struct btrfs_root *root;
+	struct inode *inode;
 
-	अगर (objectid < BTRFS_FIRST_FREE_OBJECTID)
-		वापस ERR_PTR(-ESTALE);
+	if (objectid < BTRFS_FIRST_FREE_OBJECTID)
+		return ERR_PTR(-ESTALE);
 
 	root = btrfs_get_fs_root(fs_info, root_objectid, true);
-	अगर (IS_ERR(root))
-		वापस ERR_CAST(root);
+	if (IS_ERR(root))
+		return ERR_CAST(root);
 
 	inode = btrfs_iget(sb, objectid, root);
 	btrfs_put_root(root);
-	अगर (IS_ERR(inode))
-		वापस ERR_CAST(inode);
+	if (IS_ERR(inode))
+		return ERR_CAST(inode);
 
-	अगर (check_generation && generation != inode->i_generation) अणु
+	if (check_generation && generation != inode->i_generation) {
 		iput(inode);
-		वापस ERR_PTR(-ESTALE);
-	पूर्ण
+		return ERR_PTR(-ESTALE);
+	}
 
-	वापस d_obtain_alias(inode);
-पूर्ण
+	return d_obtain_alias(inode);
+}
 
-अटल काष्ठा dentry *btrfs_fh_to_parent(काष्ठा super_block *sb, काष्ठा fid *fh,
-					 पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा btrfs_fid *fid = (काष्ठा btrfs_fid *) fh;
+static struct dentry *btrfs_fh_to_parent(struct super_block *sb, struct fid *fh,
+					 int fh_len, int fh_type)
+{
+	struct btrfs_fid *fid = (struct btrfs_fid *) fh;
 	u64 objectid, root_objectid;
 	u32 generation;
 
-	अगर (fh_type == खाताID_BTRFS_WITH_PARENT) अणु
-		अगर (fh_len <  BTRFS_FID_SIZE_CONNECTABLE)
-			वापस शून्य;
+	if (fh_type == FILEID_BTRFS_WITH_PARENT) {
+		if (fh_len <  BTRFS_FID_SIZE_CONNECTABLE)
+			return NULL;
 		root_objectid = fid->root_objectid;
-	पूर्ण अन्यथा अगर (fh_type == खाताID_BTRFS_WITH_PARENT_ROOT) अणु
-		अगर (fh_len < BTRFS_FID_SIZE_CONNECTABLE_ROOT)
-			वापस शून्य;
+	} else if (fh_type == FILEID_BTRFS_WITH_PARENT_ROOT) {
+		if (fh_len < BTRFS_FID_SIZE_CONNECTABLE_ROOT)
+			return NULL;
 		root_objectid = fid->parent_root_objectid;
-	पूर्ण अन्यथा
-		वापस शून्य;
+	} else
+		return NULL;
 
 	objectid = fid->parent_objectid;
 	generation = fid->parent_gen;
 
-	वापस btrfs_get_dentry(sb, objectid, root_objectid, generation, 1);
-पूर्ण
+	return btrfs_get_dentry(sb, objectid, root_objectid, generation, 1);
+}
 
-अटल काष्ठा dentry *btrfs_fh_to_dentry(काष्ठा super_block *sb, काष्ठा fid *fh,
-					 पूर्णांक fh_len, पूर्णांक fh_type)
-अणु
-	काष्ठा btrfs_fid *fid = (काष्ठा btrfs_fid *) fh;
+static struct dentry *btrfs_fh_to_dentry(struct super_block *sb, struct fid *fh,
+					 int fh_len, int fh_type)
+{
+	struct btrfs_fid *fid = (struct btrfs_fid *) fh;
 	u64 objectid, root_objectid;
 	u32 generation;
 
-	अगर ((fh_type != खाताID_BTRFS_WITH_PARENT ||
+	if ((fh_type != FILEID_BTRFS_WITH_PARENT ||
 	     fh_len < BTRFS_FID_SIZE_CONNECTABLE) &&
-	    (fh_type != खाताID_BTRFS_WITH_PARENT_ROOT ||
+	    (fh_type != FILEID_BTRFS_WITH_PARENT_ROOT ||
 	     fh_len < BTRFS_FID_SIZE_CONNECTABLE_ROOT) &&
-	    (fh_type != खाताID_BTRFS_WITHOUT_PARENT ||
+	    (fh_type != FILEID_BTRFS_WITHOUT_PARENT ||
 	     fh_len < BTRFS_FID_SIZE_NON_CONNECTABLE))
-		वापस शून्य;
+		return NULL;
 
 	objectid = fid->objectid;
 	root_objectid = fid->root_objectid;
 	generation = fid->gen;
 
-	वापस btrfs_get_dentry(sb, objectid, root_objectid, generation, 1);
-पूर्ण
+	return btrfs_get_dentry(sb, objectid, root_objectid, generation, 1);
+}
 
-काष्ठा dentry *btrfs_get_parent(काष्ठा dentry *child)
-अणु
-	काष्ठा inode *dir = d_inode(child);
-	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
-	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_root_ref *ref;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_key found_key;
-	पूर्णांक ret;
+struct dentry *btrfs_get_parent(struct dentry *child)
+{
+	struct inode *dir = d_inode(child);
+	struct btrfs_fs_info *fs_info = btrfs_sb(dir->i_sb);
+	struct btrfs_root *root = BTRFS_I(dir)->root;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_root_ref *ref;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	int ret;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस ERR_PTR(-ENOMEM);
+	if (!path)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (btrfs_ino(BTRFS_I(dir)) == BTRFS_FIRST_FREE_OBJECTID) अणु
+	if (btrfs_ino(BTRFS_I(dir)) == BTRFS_FIRST_FREE_OBJECTID) {
 		key.objectid = root->root_key.objectid;
 		key.type = BTRFS_ROOT_BACKREF_KEY;
 		key.offset = (u64)-1;
 		root = fs_info->tree_root;
-	पूर्ण अन्यथा अणु
+	} else {
 		key.objectid = btrfs_ino(BTRFS_I(dir));
 		key.type = BTRFS_INODE_REF_KEY;
 		key.offset = (u64)-1;
-	पूर्ण
+	}
 
-	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ fail;
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto fail;
 
 	BUG_ON(ret == 0); /* Key with offset of -1 found */
-	अगर (path->slots[0] == 0) अणु
+	if (path->slots[0] == 0) {
 		ret = -ENOENT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	path->slots[0]--;
 	leaf = path->nodes[0];
 
 	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
-	अगर (found_key.objectid != key.objectid || found_key.type != key.type) अणु
+	if (found_key.objectid != key.objectid || found_key.type != key.type) {
 		ret = -ENOENT;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	अगर (found_key.type == BTRFS_ROOT_BACKREF_KEY) अणु
+	if (found_key.type == BTRFS_ROOT_BACKREF_KEY) {
 		ref = btrfs_item_ptr(leaf, path->slots[0],
-				     काष्ठा btrfs_root_ref);
+				     struct btrfs_root_ref);
 		key.objectid = btrfs_root_ref_dirid(leaf, ref);
-	पूर्ण अन्यथा अणु
+	} else {
 		key.objectid = found_key.offset;
-	पूर्ण
-	btrfs_मुक्त_path(path);
+	}
+	btrfs_free_path(path);
 
-	अगर (found_key.type == BTRFS_ROOT_BACKREF_KEY) अणु
-		वापस btrfs_get_dentry(fs_info->sb, key.objectid,
+	if (found_key.type == BTRFS_ROOT_BACKREF_KEY) {
+		return btrfs_get_dentry(fs_info->sb, key.objectid,
 					found_key.offset, 0, 0);
-	पूर्ण
+	}
 
-	वापस d_obtain_alias(btrfs_iget(fs_info->sb, key.objectid, root));
+	return d_obtain_alias(btrfs_iget(fs_info->sb, key.objectid, root));
 fail:
-	btrfs_मुक्त_path(path);
-	वापस ERR_PTR(ret);
-पूर्ण
+	btrfs_free_path(path);
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक btrfs_get_name(काष्ठा dentry *parent, अक्षर *name,
-			  काष्ठा dentry *child)
-अणु
-	काष्ठा inode *inode = d_inode(child);
-	काष्ठा inode *dir = d_inode(parent);
-	काष्ठा btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_root *root = BTRFS_I(dir)->root;
-	काष्ठा btrfs_inode_ref *iref;
-	काष्ठा btrfs_root_ref *rref;
-	काष्ठा extent_buffer *leaf;
-	अचिन्हित दीर्घ name_ptr;
-	काष्ठा btrfs_key key;
-	पूर्णांक name_len;
-	पूर्णांक ret;
+static int btrfs_get_name(struct dentry *parent, char *name,
+			  struct dentry *child)
+{
+	struct inode *inode = d_inode(child);
+	struct inode *dir = d_inode(parent);
+	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+	struct btrfs_path *path;
+	struct btrfs_root *root = BTRFS_I(dir)->root;
+	struct btrfs_inode_ref *iref;
+	struct btrfs_root_ref *rref;
+	struct extent_buffer *leaf;
+	unsigned long name_ptr;
+	struct btrfs_key key;
+	int name_len;
+	int ret;
 	u64 ino;
 
-	अगर (!S_ISसूची(dir->i_mode))
-		वापस -EINVAL;
+	if (!S_ISDIR(dir->i_mode))
+		return -EINVAL;
 
 	ino = btrfs_ino(BTRFS_I(inode));
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
-	अगर (ino == BTRFS_FIRST_FREE_OBJECTID) अणु
+	if (ino == BTRFS_FIRST_FREE_OBJECTID) {
 		key.objectid = BTRFS_I(inode)->root->root_key.objectid;
 		key.type = BTRFS_ROOT_BACKREF_KEY;
 		key.offset = (u64)-1;
 		root = fs_info->tree_root;
-	पूर्ण अन्यथा अणु
+	} else {
 		key.objectid = ino;
 		key.offset = btrfs_ino(BTRFS_I(dir));
 		key.type = BTRFS_INODE_REF_KEY;
-	पूर्ण
+	}
 
-	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-	अगर (ret < 0) अणु
-		btrfs_मुक्त_path(path);
-		वापस ret;
-	पूर्ण अन्यथा अगर (ret > 0) अणु
-		अगर (ino == BTRFS_FIRST_FREE_OBJECTID) अणु
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0) {
+		btrfs_free_path(path);
+		return ret;
+	} else if (ret > 0) {
+		if (ino == BTRFS_FIRST_FREE_OBJECTID) {
 			path->slots[0]--;
-		पूर्ण अन्यथा अणु
-			btrfs_मुक्त_path(path);
-			वापस -ENOENT;
-		पूर्ण
-	पूर्ण
+		} else {
+			btrfs_free_path(path);
+			return -ENOENT;
+		}
+	}
 	leaf = path->nodes[0];
 
-	अगर (ino == BTRFS_FIRST_FREE_OBJECTID) अणु
+	if (ino == BTRFS_FIRST_FREE_OBJECTID) {
 		rref = btrfs_item_ptr(leaf, path->slots[0],
-				     काष्ठा btrfs_root_ref);
-		name_ptr = (अचिन्हित दीर्घ)(rref + 1);
+				     struct btrfs_root_ref);
+		name_ptr = (unsigned long)(rref + 1);
 		name_len = btrfs_root_ref_name_len(leaf, rref);
-	पूर्ण अन्यथा अणु
+	} else {
 		iref = btrfs_item_ptr(leaf, path->slots[0],
-				      काष्ठा btrfs_inode_ref);
-		name_ptr = (अचिन्हित दीर्घ)(iref + 1);
+				      struct btrfs_inode_ref);
+		name_ptr = (unsigned long)(iref + 1);
 		name_len = btrfs_inode_ref_name_len(leaf, iref);
-	पूर्ण
+	}
 
-	पढ़ो_extent_buffer(leaf, name, name_ptr, name_len);
-	btrfs_मुक्त_path(path);
+	read_extent_buffer(leaf, name, name_ptr, name_len);
+	btrfs_free_path(path);
 
 	/*
 	 * have to add the null termination to make sure that reconnect_path
-	 * माला_लो the right len क्रम म_माप
+	 * gets the right len for strlen
 	 */
 	name[name_len] = '\0';
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा export_operations btrfs_export_ops = अणु
+const struct export_operations btrfs_export_ops = {
 	.encode_fh	= btrfs_encode_fh,
 	.fh_to_dentry	= btrfs_fh_to_dentry,
 	.fh_to_parent	= btrfs_fh_to_parent,
 	.get_parent	= btrfs_get_parent,
 	.get_name	= btrfs_get_name,
-पूर्ण;
+};

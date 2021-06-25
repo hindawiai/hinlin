@@ -1,168 +1,167 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2000 Jens Axboe <axboe@suse.de>
  * Copyright (C) 2001-2004 Peter Osterlund <petero2@telia.com>
- * Copyright (C) 2006 Thomas Maier <balagi@jusपंचांगail.de>
+ * Copyright (C) 2006 Thomas Maier <balagi@justmail.de>
  *
- * May be copied or modअगरied under the terms of the GNU General Public
- * License.  See linux/COPYING क्रम more inक्रमmation.
+ * May be copied or modified under the terms of the GNU General Public
+ * License.  See linux/COPYING for more information.
  *
- * Packet writing layer क्रम ATAPI and SCSI CD-RW, DVD+RW, DVD-RW and
+ * Packet writing layer for ATAPI and SCSI CD-RW, DVD+RW, DVD-RW and
  * DVD-RAM devices.
  *
  * Theory of operation:
  *
- * At the lowest level, there is the standard driver क्रम the CD/DVD device,
- * typically ide-cd.c or sr.c. This driver can handle पढ़ो and ग_लिखो requests,
- * but it करोesn't know anything about the special restrictions that apply to
- * packet writing. One restriction is that ग_लिखो requests must be aligned to
- * packet boundaries on the physical media, and the size of a ग_लिखो request
+ * At the lowest level, there is the standard driver for the CD/DVD device,
+ * typically ide-cd.c or sr.c. This driver can handle read and write requests,
+ * but it doesn't know anything about the special restrictions that apply to
+ * packet writing. One restriction is that write requests must be aligned to
+ * packet boundaries on the physical media, and the size of a write request
  * must be equal to the packet size. Another restriction is that a
- * GPCMD_FLUSH_CACHE command has to be issued to the drive beक्रमe a पढ़ो
- * command, अगर the previous command was a ग_लिखो.
+ * GPCMD_FLUSH_CACHE command has to be issued to the drive before a read
+ * command, if the previous command was a write.
  *
  * The purpose of the packet writing driver is to hide these restrictions from
- * higher layers, such as file प्रणालीs, and present a block device that can be
- * अक्रमomly पढ़ो and written using 2kB-sized blocks.
+ * higher layers, such as file systems, and present a block device that can be
+ * randomly read and written using 2kB-sized blocks.
  *
  * The lowest layer in the packet writing driver is the packet I/O scheduler.
- * Its data is defined by the काष्ठा packet_iosched and includes two bio
- * queues with pending पढ़ो and ग_लिखो requests. These queues are processed
- * by the pkt_iosched_process_queue() function. The ग_लिखो requests in this
- * queue are alपढ़ोy properly aligned and sized. This layer is responsible क्रम
+ * Its data is defined by the struct packet_iosched and includes two bio
+ * queues with pending read and write requests. These queues are processed
+ * by the pkt_iosched_process_queue() function. The write requests in this
+ * queue are already properly aligned and sized. This layer is responsible for
  * issuing the flush cache commands and scheduling the I/O in a good order.
  *
- * The next layer transक्रमms unaligned ग_लिखो requests to aligned ग_लिखोs. This
- * transक्रमmation requires पढ़ोing missing pieces of data from the underlying
+ * The next layer transforms unaligned write requests to aligned writes. This
+ * transformation requires reading missing pieces of data from the underlying
  * block device, assembling the pieces to full packets and queuing them to the
  * packet I/O scheduler.
  *
- * At the top layer there is a custom ->submit_bio function that क्रमwards
- * पढ़ो requests directly to the iosched queue and माला_दो ग_लिखो requests in the
- * unaligned ग_लिखो queue. A kernel thपढ़ो perक्रमms the necessary पढ़ो
- * gathering to convert the unaligned ग_लिखोs to aligned ग_लिखोs and then feeds
+ * At the top layer there is a custom ->submit_bio function that forwards
+ * read requests directly to the iosched queue and puts write requests in the
+ * unaligned write queue. A kernel thread performs the necessary read
+ * gathering to convert the unaligned writes to aligned writes and then feeds
  * them to the packet I/O scheduler.
  *
  *************************************************************************/
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/pktcdvd.h>
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <scsi/scsi_ioctl.h>
-#समावेश <scsi/scsi.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/uaccess.h>
+#include <linux/pktcdvd.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/compat.h>
+#include <linux/kthread.h>
+#include <linux/errno.h>
+#include <linux/spinlock.h>
+#include <linux/file.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/miscdevice.h>
+#include <linux/freezer.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/backing-dev.h>
+#include <scsi/scsi_cmnd.h>
+#include <scsi/scsi_ioctl.h>
+#include <scsi/scsi.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/nospec.h>
+#include <linux/uaccess.h>
 
-#घोषणा DRIVER_NAME	"pktcdvd"
+#define DRIVER_NAME	"pktcdvd"
 
-#घोषणा pkt_err(pd, fmt, ...)						\
+#define pkt_err(pd, fmt, ...)						\
 	pr_err("%s: " fmt, pd->name, ##__VA_ARGS__)
-#घोषणा pkt_notice(pd, fmt, ...)					\
+#define pkt_notice(pd, fmt, ...)					\
 	pr_notice("%s: " fmt, pd->name, ##__VA_ARGS__)
-#घोषणा pkt_info(pd, fmt, ...)						\
+#define pkt_info(pd, fmt, ...)						\
 	pr_info("%s: " fmt, pd->name, ##__VA_ARGS__)
 
-#घोषणा pkt_dbg(level, pd, fmt, ...)					\
-करो अणु									\
-	अगर (level == 2 && PACKET_DEBUG >= 2)				\
+#define pkt_dbg(level, pd, fmt, ...)					\
+do {									\
+	if (level == 2 && PACKET_DEBUG >= 2)				\
 		pr_notice("%s: %s():" fmt,				\
 			  pd->name, __func__, ##__VA_ARGS__);		\
-	अन्यथा अगर (level == 1 && PACKET_DEBUG >= 1)			\
+	else if (level == 1 && PACKET_DEBUG >= 1)			\
 		pr_notice("%s: " fmt, pd->name, ##__VA_ARGS__);		\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा MAX_SPEED 0xffff
+#define MAX_SPEED 0xffff
 
-अटल DEFINE_MUTEX(pktcdvd_mutex);
-अटल काष्ठा pktcdvd_device *pkt_devs[MAX_WRITERS];
-अटल काष्ठा proc_dir_entry *pkt_proc;
-अटल पूर्णांक pktdev_major;
-अटल पूर्णांक ग_लिखो_congestion_on  = PKT_WRITE_CONGESTION_ON;
-अटल पूर्णांक ग_लिखो_congestion_off = PKT_WRITE_CONGESTION_OFF;
-अटल काष्ठा mutex ctl_mutex;	/* Serialize खोलो/बंद/setup/tearकरोwn */
-अटल mempool_t psd_pool;
-अटल काष्ठा bio_set pkt_bio_set;
+static DEFINE_MUTEX(pktcdvd_mutex);
+static struct pktcdvd_device *pkt_devs[MAX_WRITERS];
+static struct proc_dir_entry *pkt_proc;
+static int pktdev_major;
+static int write_congestion_on  = PKT_WRITE_CONGESTION_ON;
+static int write_congestion_off = PKT_WRITE_CONGESTION_OFF;
+static struct mutex ctl_mutex;	/* Serialize open/close/setup/teardown */
+static mempool_t psd_pool;
+static struct bio_set pkt_bio_set;
 
-अटल काष्ठा class	*class_pktcdvd = शून्य;    /* /sys/class/pktcdvd */
-अटल काष्ठा dentry	*pkt_debugfs_root = शून्य; /* /sys/kernel/debug/pktcdvd */
+static struct class	*class_pktcdvd = NULL;    /* /sys/class/pktcdvd */
+static struct dentry	*pkt_debugfs_root = NULL; /* /sys/kernel/debug/pktcdvd */
 
-/* क्रमward declaration */
-अटल पूर्णांक pkt_setup_dev(dev_t dev, dev_t* pkt_dev);
-अटल पूर्णांक pkt_हटाओ_dev(dev_t pkt_dev);
-अटल पूर्णांक pkt_seq_show(काष्ठा seq_file *m, व्योम *p);
+/* forward declaration */
+static int pkt_setup_dev(dev_t dev, dev_t* pkt_dev);
+static int pkt_remove_dev(dev_t pkt_dev);
+static int pkt_seq_show(struct seq_file *m, void *p);
 
-अटल sector_t get_zone(sector_t sector, काष्ठा pktcdvd_device *pd)
-अणु
-	वापस (sector + pd->offset) & ~(sector_t)(pd->settings.size - 1);
-पूर्ण
+static sector_t get_zone(sector_t sector, struct pktcdvd_device *pd)
+{
+	return (sector + pd->offset) & ~(sector_t)(pd->settings.size - 1);
+}
 
 /*
- * create and रेजिस्टर a pktcdvd kernel object.
+ * create and register a pktcdvd kernel object.
  */
-अटल काष्ठा pktcdvd_kobj* pkt_kobj_create(काष्ठा pktcdvd_device *pd,
-					स्थिर अक्षर* name,
-					काष्ठा kobject* parent,
-					काष्ठा kobj_type* ktype)
-अणु
-	काष्ठा pktcdvd_kobj *p;
-	पूर्णांक error;
+static struct pktcdvd_kobj* pkt_kobj_create(struct pktcdvd_device *pd,
+					const char* name,
+					struct kobject* parent,
+					struct kobj_type* ktype)
+{
+	struct pktcdvd_kobj *p;
+	int error;
 
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस शून्य;
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return NULL;
 	p->pd = pd;
 	error = kobject_init_and_add(&p->kobj, ktype, parent, "%s", name);
-	अगर (error) अणु
+	if (error) {
 		kobject_put(&p->kobj);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	kobject_uevent(&p->kobj, KOBJ_ADD);
-	वापस p;
-पूर्ण
+	return p;
+}
 /*
- * हटाओ a pktcdvd kernel object.
+ * remove a pktcdvd kernel object.
  */
-अटल व्योम pkt_kobj_हटाओ(काष्ठा pktcdvd_kobj *p)
-अणु
-	अगर (p)
+static void pkt_kobj_remove(struct pktcdvd_kobj *p)
+{
+	if (p)
 		kobject_put(&p->kobj);
-पूर्ण
+}
 /*
- * शेष release function क्रम pktcdvd kernel objects.
+ * default release function for pktcdvd kernel objects.
  */
-अटल व्योम pkt_kobj_release(काष्ठा kobject *kobj)
-अणु
-	kमुक्त(to_pktcdvdkobj(kobj));
-पूर्ण
+static void pkt_kobj_release(struct kobject *kobj)
+{
+	kfree(to_pktcdvdkobj(kobj));
+}
 
 
 /**********************************************************
  *
- * sysfs पूर्णांकerface क्रम pktcdvd
- * by (C) 2006  Thomas Maier <balagi@jusपंचांगail.de>
+ * sysfs interface for pktcdvd
+ * by (C) 2006  Thomas Maier <balagi@justmail.de>
  *
  **********************************************************/
 
-#घोषणा DEF_ATTR(_obj,_name,_mode) \
-	अटल काष्ठा attribute _obj = अणु .name = _name, .mode = _mode पूर्ण
+#define DEF_ATTR(_obj,_name,_mode) \
+	static struct attribute _obj = { .name = _name, .mode = _mode }
 
 /**********************************************************
   /sys/class/pktcdvd/pktcdvd[0-7]/
@@ -170,11 +169,11 @@
                      stat/packets_started
                      stat/packets_finished
                      stat/kb_written
-                     stat/kb_पढ़ो
-                     stat/kb_पढ़ो_gather
-                     ग_लिखो_queue/size
-                     ग_लिखो_queue/congestion_off
-                     ग_लिखो_queue/congestion_on
+                     stat/kb_read
+                     stat/kb_read_gather
+                     write_queue/size
+                     write_queue/congestion_off
+                     write_queue/congestion_on
  **********************************************************/
 
 DEF_ATTR(kobj_pkt_attr_st1, "reset", 0200);
@@ -184,266 +183,266 @@ DEF_ATTR(kobj_pkt_attr_st4, "kb_written", 0444);
 DEF_ATTR(kobj_pkt_attr_st5, "kb_read", 0444);
 DEF_ATTR(kobj_pkt_attr_st6, "kb_read_gather", 0444);
 
-अटल काष्ठा attribute *kobj_pkt_attrs_stat[] = अणु
+static struct attribute *kobj_pkt_attrs_stat[] = {
 	&kobj_pkt_attr_st1,
 	&kobj_pkt_attr_st2,
 	&kobj_pkt_attr_st3,
 	&kobj_pkt_attr_st4,
 	&kobj_pkt_attr_st5,
 	&kobj_pkt_attr_st6,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DEF_ATTR(kobj_pkt_attr_wq1, "size", 0444);
 DEF_ATTR(kobj_pkt_attr_wq2, "congestion_off", 0644);
 DEF_ATTR(kobj_pkt_attr_wq3, "congestion_on",  0644);
 
-अटल काष्ठा attribute *kobj_pkt_attrs_wqueue[] = अणु
+static struct attribute *kobj_pkt_attrs_wqueue[] = {
 	&kobj_pkt_attr_wq1,
 	&kobj_pkt_attr_wq2,
 	&kobj_pkt_attr_wq3,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल sमाप_प्रकार kobj_pkt_show(काष्ठा kobject *kobj,
-			काष्ठा attribute *attr, अक्षर *data)
-अणु
-	काष्ठा pktcdvd_device *pd = to_pktcdvdkobj(kobj)->pd;
-	पूर्णांक n = 0;
-	पूर्णांक v;
-	अगर (म_भेद(attr->name, "packets_started") == 0) अणु
-		n = प्र_लिखो(data, "%lu\n", pd->stats.pkt_started);
+static ssize_t kobj_pkt_show(struct kobject *kobj,
+			struct attribute *attr, char *data)
+{
+	struct pktcdvd_device *pd = to_pktcdvdkobj(kobj)->pd;
+	int n = 0;
+	int v;
+	if (strcmp(attr->name, "packets_started") == 0) {
+		n = sprintf(data, "%lu\n", pd->stats.pkt_started);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "packets_finished") == 0) अणु
-		n = प्र_लिखो(data, "%lu\n", pd->stats.pkt_ended);
+	} else if (strcmp(attr->name, "packets_finished") == 0) {
+		n = sprintf(data, "%lu\n", pd->stats.pkt_ended);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "kb_written") == 0) अणु
-		n = प्र_लिखो(data, "%lu\n", pd->stats.secs_w >> 1);
+	} else if (strcmp(attr->name, "kb_written") == 0) {
+		n = sprintf(data, "%lu\n", pd->stats.secs_w >> 1);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "kb_read") == 0) अणु
-		n = प्र_लिखो(data, "%lu\n", pd->stats.secs_r >> 1);
+	} else if (strcmp(attr->name, "kb_read") == 0) {
+		n = sprintf(data, "%lu\n", pd->stats.secs_r >> 1);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "kb_read_gather") == 0) अणु
-		n = प्र_लिखो(data, "%lu\n", pd->stats.secs_rg >> 1);
+	} else if (strcmp(attr->name, "kb_read_gather") == 0) {
+		n = sprintf(data, "%lu\n", pd->stats.secs_rg >> 1);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "size") == 0) अणु
+	} else if (strcmp(attr->name, "size") == 0) {
 		spin_lock(&pd->lock);
 		v = pd->bio_queue_size;
 		spin_unlock(&pd->lock);
-		n = प्र_लिखो(data, "%d\n", v);
+		n = sprintf(data, "%d\n", v);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "congestion_off") == 0) अणु
+	} else if (strcmp(attr->name, "congestion_off") == 0) {
 		spin_lock(&pd->lock);
-		v = pd->ग_लिखो_congestion_off;
+		v = pd->write_congestion_off;
 		spin_unlock(&pd->lock);
-		n = प्र_लिखो(data, "%d\n", v);
+		n = sprintf(data, "%d\n", v);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "congestion_on") == 0) अणु
+	} else if (strcmp(attr->name, "congestion_on") == 0) {
 		spin_lock(&pd->lock);
-		v = pd->ग_लिखो_congestion_on;
+		v = pd->write_congestion_on;
 		spin_unlock(&pd->lock);
-		n = प्र_लिखो(data, "%d\n", v);
-	पूर्ण
-	वापस n;
-पूर्ण
+		n = sprintf(data, "%d\n", v);
+	}
+	return n;
+}
 
-अटल व्योम init_ग_लिखो_congestion_marks(पूर्णांक* lo, पूर्णांक* hi)
-अणु
-	अगर (*hi > 0) अणु
+static void init_write_congestion_marks(int* lo, int* hi)
+{
+	if (*hi > 0) {
 		*hi = max(*hi, 500);
 		*hi = min(*hi, 1000000);
-		अगर (*lo <= 0)
+		if (*lo <= 0)
 			*lo = *hi - 100;
-		अन्यथा अणु
+		else {
 			*lo = min(*lo, *hi - 100);
 			*lo = max(*lo, 100);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		*hi = -1;
 		*lo = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार kobj_pkt_store(काष्ठा kobject *kobj,
-			काष्ठा attribute *attr,
-			स्थिर अक्षर *data, माप_प्रकार len)
-अणु
-	काष्ठा pktcdvd_device *pd = to_pktcdvdkobj(kobj)->pd;
-	पूर्णांक val;
+static ssize_t kobj_pkt_store(struct kobject *kobj,
+			struct attribute *attr,
+			const char *data, size_t len)
+{
+	struct pktcdvd_device *pd = to_pktcdvdkobj(kobj)->pd;
+	int val;
 
-	अगर (म_भेद(attr->name, "reset") == 0 && len > 0) अणु
+	if (strcmp(attr->name, "reset") == 0 && len > 0) {
 		pd->stats.pkt_started = 0;
 		pd->stats.pkt_ended = 0;
 		pd->stats.secs_w = 0;
 		pd->stats.secs_rg = 0;
 		pd->stats.secs_r = 0;
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "congestion_off") == 0
-		   && माला_पूछो(data, "%d", &val) == 1) अणु
+	} else if (strcmp(attr->name, "congestion_off") == 0
+		   && sscanf(data, "%d", &val) == 1) {
 		spin_lock(&pd->lock);
-		pd->ग_लिखो_congestion_off = val;
-		init_ग_लिखो_congestion_marks(&pd->ग_लिखो_congestion_off,
-					&pd->ग_लिखो_congestion_on);
+		pd->write_congestion_off = val;
+		init_write_congestion_marks(&pd->write_congestion_off,
+					&pd->write_congestion_on);
 		spin_unlock(&pd->lock);
 
-	पूर्ण अन्यथा अगर (म_भेद(attr->name, "congestion_on") == 0
-		   && माला_पूछो(data, "%d", &val) == 1) अणु
+	} else if (strcmp(attr->name, "congestion_on") == 0
+		   && sscanf(data, "%d", &val) == 1) {
 		spin_lock(&pd->lock);
-		pd->ग_लिखो_congestion_on = val;
-		init_ग_लिखो_congestion_marks(&pd->ग_लिखो_congestion_off,
-					&pd->ग_लिखो_congestion_on);
+		pd->write_congestion_on = val;
+		init_write_congestion_marks(&pd->write_congestion_off,
+					&pd->write_congestion_on);
 		spin_unlock(&pd->lock);
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल स्थिर काष्ठा sysfs_ops kobj_pkt_ops = अणु
+static const struct sysfs_ops kobj_pkt_ops = {
 	.show = kobj_pkt_show,
 	.store = kobj_pkt_store
-पूर्ण;
-अटल काष्ठा kobj_type kobj_pkt_type_stat = अणु
+};
+static struct kobj_type kobj_pkt_type_stat = {
 	.release = pkt_kobj_release,
 	.sysfs_ops = &kobj_pkt_ops,
-	.शेष_attrs = kobj_pkt_attrs_stat
-पूर्ण;
-अटल काष्ठा kobj_type kobj_pkt_type_wqueue = अणु
+	.default_attrs = kobj_pkt_attrs_stat
+};
+static struct kobj_type kobj_pkt_type_wqueue = {
 	.release = pkt_kobj_release,
 	.sysfs_ops = &kobj_pkt_ops,
-	.शेष_attrs = kobj_pkt_attrs_wqueue
-पूर्ण;
+	.default_attrs = kobj_pkt_attrs_wqueue
+};
 
-अटल व्योम pkt_sysfs_dev_new(काष्ठा pktcdvd_device *pd)
-अणु
-	अगर (class_pktcdvd) अणु
-		pd->dev = device_create(class_pktcdvd, शून्य, MKDEV(0, 0), शून्य,
+static void pkt_sysfs_dev_new(struct pktcdvd_device *pd)
+{
+	if (class_pktcdvd) {
+		pd->dev = device_create(class_pktcdvd, NULL, MKDEV(0, 0), NULL,
 					"%s", pd->name);
-		अगर (IS_ERR(pd->dev))
-			pd->dev = शून्य;
-	पूर्ण
-	अगर (pd->dev) अणु
+		if (IS_ERR(pd->dev))
+			pd->dev = NULL;
+	}
+	if (pd->dev) {
 		pd->kobj_stat = pkt_kobj_create(pd, "stat",
 					&pd->dev->kobj,
 					&kobj_pkt_type_stat);
 		pd->kobj_wqueue = pkt_kobj_create(pd, "write_queue",
 					&pd->dev->kobj,
 					&kobj_pkt_type_wqueue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pkt_sysfs_dev_हटाओ(काष्ठा pktcdvd_device *pd)
-अणु
-	pkt_kobj_हटाओ(pd->kobj_stat);
-	pkt_kobj_हटाओ(pd->kobj_wqueue);
-	अगर (class_pktcdvd)
-		device_unरेजिस्टर(pd->dev);
-पूर्ण
+static void pkt_sysfs_dev_remove(struct pktcdvd_device *pd)
+{
+	pkt_kobj_remove(pd->kobj_stat);
+	pkt_kobj_remove(pd->kobj_wqueue);
+	if (class_pktcdvd)
+		device_unregister(pd->dev);
+}
 
 
 /********************************************************************
   /sys/class/pktcdvd/
                      add            map block device
-                     हटाओ         unmap packet dev
+                     remove         unmap packet dev
                      device_map     show mappings
  *******************************************************************/
 
-अटल व्योम class_pktcdvd_release(काष्ठा class *cls)
-अणु
-	kमुक्त(cls);
-पूर्ण
+static void class_pktcdvd_release(struct class *cls)
+{
+	kfree(cls);
+}
 
-अटल sमाप_प्रकार device_map_show(काष्ठा class *c, काष्ठा class_attribute *attr,
-			       अक्षर *data)
-अणु
-	पूर्णांक n = 0;
-	पूर्णांक idx;
+static ssize_t device_map_show(struct class *c, struct class_attribute *attr,
+			       char *data)
+{
+	int n = 0;
+	int idx;
 	mutex_lock_nested(&ctl_mutex, SINGLE_DEPTH_NESTING);
-	क्रम (idx = 0; idx < MAX_WRITERS; idx++) अणु
-		काष्ठा pktcdvd_device *pd = pkt_devs[idx];
-		अगर (!pd)
-			जारी;
-		n += प्र_लिखो(data+n, "%s %u:%u %u:%u\n",
+	for (idx = 0; idx < MAX_WRITERS; idx++) {
+		struct pktcdvd_device *pd = pkt_devs[idx];
+		if (!pd)
+			continue;
+		n += sprintf(data+n, "%s %u:%u %u:%u\n",
 			pd->name,
 			MAJOR(pd->pkt_dev), MINOR(pd->pkt_dev),
 			MAJOR(pd->bdev->bd_dev),
 			MINOR(pd->bdev->bd_dev));
-	पूर्ण
+	}
 	mutex_unlock(&ctl_mutex);
-	वापस n;
-पूर्ण
-अटल CLASS_ATTR_RO(device_map);
+	return n;
+}
+static CLASS_ATTR_RO(device_map);
 
-अटल sमाप_प्रकार add_store(काष्ठा class *c, काष्ठा class_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक major, minor;
+static ssize_t add_store(struct class *c, struct class_attribute *attr,
+			 const char *buf, size_t count)
+{
+	unsigned int major, minor;
 
-	अगर (माला_पूछो(buf, "%u:%u", &major, &minor) == 2) अणु
+	if (sscanf(buf, "%u:%u", &major, &minor) == 2) {
 		/* pkt_setup_dev() expects caller to hold reference to self */
-		अगर (!try_module_get(THIS_MODULE))
-			वापस -ENODEV;
+		if (!try_module_get(THIS_MODULE))
+			return -ENODEV;
 
-		pkt_setup_dev(MKDEV(major, minor), शून्य);
+		pkt_setup_dev(MKDEV(major, minor), NULL);
 
 		module_put(THIS_MODULE);
 
-		वापस count;
-	पूर्ण
+		return count;
+	}
 
-	वापस -EINVAL;
-पूर्ण
-अटल CLASS_ATTR_WO(add);
+	return -EINVAL;
+}
+static CLASS_ATTR_WO(add);
 
-अटल sमाप_प्रकार हटाओ_store(काष्ठा class *c, काष्ठा class_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक major, minor;
-	अगर (माला_पूछो(buf, "%u:%u", &major, &minor) == 2) अणु
-		pkt_हटाओ_dev(MKDEV(major, minor));
-		वापस count;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
-अटल CLASS_ATTR_WO(हटाओ);
+static ssize_t remove_store(struct class *c, struct class_attribute *attr,
+			    const char *buf, size_t count)
+{
+	unsigned int major, minor;
+	if (sscanf(buf, "%u:%u", &major, &minor) == 2) {
+		pkt_remove_dev(MKDEV(major, minor));
+		return count;
+	}
+	return -EINVAL;
+}
+static CLASS_ATTR_WO(remove);
 
-अटल काष्ठा attribute *class_pktcdvd_attrs[] = अणु
+static struct attribute *class_pktcdvd_attrs[] = {
 	&class_attr_add.attr,
-	&class_attr_हटाओ.attr,
+	&class_attr_remove.attr,
 	&class_attr_device_map.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(class_pktcdvd);
 
-अटल पूर्णांक pkt_sysfs_init(व्योम)
-अणु
-	पूर्णांक ret = 0;
+static int pkt_sysfs_init(void)
+{
+	int ret = 0;
 
 	/*
 	 * create control files in sysfs
 	 * /sys/class/pktcdvd/...
 	 */
-	class_pktcdvd = kzalloc(माप(*class_pktcdvd), GFP_KERNEL);
-	अगर (!class_pktcdvd)
-		वापस -ENOMEM;
+	class_pktcdvd = kzalloc(sizeof(*class_pktcdvd), GFP_KERNEL);
+	if (!class_pktcdvd)
+		return -ENOMEM;
 	class_pktcdvd->name = DRIVER_NAME;
 	class_pktcdvd->owner = THIS_MODULE;
 	class_pktcdvd->class_release = class_pktcdvd_release;
 	class_pktcdvd->class_groups = class_pktcdvd_groups;
-	ret = class_रेजिस्टर(class_pktcdvd);
-	अगर (ret) अणु
-		kमुक्त(class_pktcdvd);
-		class_pktcdvd = शून्य;
+	ret = class_register(class_pktcdvd);
+	if (ret) {
+		kfree(class_pktcdvd);
+		class_pktcdvd = NULL;
 		pr_err("failed to create class pktcdvd\n");
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम pkt_sysfs_cleanup(व्योम)
-अणु
-	अगर (class_pktcdvd)
+static void pkt_sysfs_cleanup(void)
+{
+	if (class_pktcdvd)
 		class_destroy(class_pktcdvd);
-	class_pktcdvd = शून्य;
-पूर्ण
+	class_pktcdvd = NULL;
+}
 
 /********************************************************************
   entries in debugfs
@@ -453,521 +452,521 @@ ATTRIBUTE_GROUPS(class_pktcdvd);
 
  *******************************************************************/
 
-अटल पूर्णांक pkt_debugfs_seq_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	वापस pkt_seq_show(m, p);
-पूर्ण
+static int pkt_debugfs_seq_show(struct seq_file *m, void *p)
+{
+	return pkt_seq_show(m, p);
+}
 
-अटल पूर्णांक pkt_debugfs_fops_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, pkt_debugfs_seq_show, inode->i_निजी);
-पूर्ण
+static int pkt_debugfs_fops_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, pkt_debugfs_seq_show, inode->i_private);
+}
 
-अटल स्थिर काष्ठा file_operations debug_fops = अणु
-	.खोलो		= pkt_debugfs_fops_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations debug_fops = {
+	.open		= pkt_debugfs_fops_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल व्योम pkt_debugfs_dev_new(काष्ठा pktcdvd_device *pd)
-अणु
-	अगर (!pkt_debugfs_root)
-		वापस;
+static void pkt_debugfs_dev_new(struct pktcdvd_device *pd)
+{
+	if (!pkt_debugfs_root)
+		return;
 	pd->dfs_d_root = debugfs_create_dir(pd->name, pkt_debugfs_root);
-	अगर (!pd->dfs_d_root)
-		वापस;
+	if (!pd->dfs_d_root)
+		return;
 
 	pd->dfs_f_info = debugfs_create_file("info", 0444,
 					     pd->dfs_d_root, pd, &debug_fops);
-पूर्ण
+}
 
-अटल व्योम pkt_debugfs_dev_हटाओ(काष्ठा pktcdvd_device *pd)
-अणु
-	अगर (!pkt_debugfs_root)
-		वापस;
-	debugfs_हटाओ(pd->dfs_f_info);
-	debugfs_हटाओ(pd->dfs_d_root);
-	pd->dfs_f_info = शून्य;
-	pd->dfs_d_root = शून्य;
-पूर्ण
+static void pkt_debugfs_dev_remove(struct pktcdvd_device *pd)
+{
+	if (!pkt_debugfs_root)
+		return;
+	debugfs_remove(pd->dfs_f_info);
+	debugfs_remove(pd->dfs_d_root);
+	pd->dfs_f_info = NULL;
+	pd->dfs_d_root = NULL;
+}
 
-अटल व्योम pkt_debugfs_init(व्योम)
-अणु
-	pkt_debugfs_root = debugfs_create_dir(DRIVER_NAME, शून्य);
-पूर्ण
+static void pkt_debugfs_init(void)
+{
+	pkt_debugfs_root = debugfs_create_dir(DRIVER_NAME, NULL);
+}
 
-अटल व्योम pkt_debugfs_cleanup(व्योम)
-अणु
-	debugfs_हटाओ(pkt_debugfs_root);
-	pkt_debugfs_root = शून्य;
-पूर्ण
+static void pkt_debugfs_cleanup(void)
+{
+	debugfs_remove(pkt_debugfs_root);
+	pkt_debugfs_root = NULL;
+}
 
 /* ----------------------------------------------------------*/
 
 
-अटल व्योम pkt_bio_finished(काष्ठा pktcdvd_device *pd)
-अणु
-	BUG_ON(atomic_पढ़ो(&pd->cdrw.pending_bios) <= 0);
-	अगर (atomic_dec_and_test(&pd->cdrw.pending_bios)) अणु
+static void pkt_bio_finished(struct pktcdvd_device *pd)
+{
+	BUG_ON(atomic_read(&pd->cdrw.pending_bios) <= 0);
+	if (atomic_dec_and_test(&pd->cdrw.pending_bios)) {
 		pkt_dbg(2, pd, "queue empty\n");
 		atomic_set(&pd->iosched.attention, 1);
 		wake_up(&pd->wqueue);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Allocate a packet_data काष्ठा
+ * Allocate a packet_data struct
  */
-अटल काष्ठा packet_data *pkt_alloc_packet_data(पूर्णांक frames)
-अणु
-	पूर्णांक i;
-	काष्ठा packet_data *pkt;
+static struct packet_data *pkt_alloc_packet_data(int frames)
+{
+	int i;
+	struct packet_data *pkt;
 
-	pkt = kzalloc(माप(काष्ठा packet_data), GFP_KERNEL);
-	अगर (!pkt)
-		जाओ no_pkt;
+	pkt = kzalloc(sizeof(struct packet_data), GFP_KERNEL);
+	if (!pkt)
+		goto no_pkt;
 
 	pkt->frames = frames;
-	pkt->w_bio = bio_kदो_स्मृति(GFP_KERNEL, frames);
-	अगर (!pkt->w_bio)
-		जाओ no_bio;
+	pkt->w_bio = bio_kmalloc(GFP_KERNEL, frames);
+	if (!pkt->w_bio)
+		goto no_bio;
 
-	क्रम (i = 0; i < frames / FRAMES_PER_PAGE; i++) अणु
+	for (i = 0; i < frames / FRAMES_PER_PAGE; i++) {
 		pkt->pages[i] = alloc_page(GFP_KERNEL|__GFP_ZERO);
-		अगर (!pkt->pages[i])
-			जाओ no_page;
-	पूर्ण
+		if (!pkt->pages[i])
+			goto no_page;
+	}
 
 	spin_lock_init(&pkt->lock);
 	bio_list_init(&pkt->orig_bios);
 
-	क्रम (i = 0; i < frames; i++) अणु
-		काष्ठा bio *bio = bio_kदो_स्मृति(GFP_KERNEL, 1);
-		अगर (!bio)
-			जाओ no_rd_bio;
+	for (i = 0; i < frames; i++) {
+		struct bio *bio = bio_kmalloc(GFP_KERNEL, 1);
+		if (!bio)
+			goto no_rd_bio;
 
 		pkt->r_bios[i] = bio;
-	पूर्ण
+	}
 
-	वापस pkt;
+	return pkt;
 
 no_rd_bio:
-	क्रम (i = 0; i < frames; i++) अणु
-		काष्ठा bio *bio = pkt->r_bios[i];
-		अगर (bio)
+	for (i = 0; i < frames; i++) {
+		struct bio *bio = pkt->r_bios[i];
+		if (bio)
 			bio_put(bio);
-	पूर्ण
+	}
 
 no_page:
-	क्रम (i = 0; i < frames / FRAMES_PER_PAGE; i++)
-		अगर (pkt->pages[i])
-			__मुक्त_page(pkt->pages[i]);
+	for (i = 0; i < frames / FRAMES_PER_PAGE; i++)
+		if (pkt->pages[i])
+			__free_page(pkt->pages[i]);
 	bio_put(pkt->w_bio);
 no_bio:
-	kमुक्त(pkt);
+	kfree(pkt);
 no_pkt:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Free a packet_data काष्ठा
+ * Free a packet_data struct
  */
-अटल व्योम pkt_मुक्त_packet_data(काष्ठा packet_data *pkt)
-अणु
-	पूर्णांक i;
+static void pkt_free_packet_data(struct packet_data *pkt)
+{
+	int i;
 
-	क्रम (i = 0; i < pkt->frames; i++) अणु
-		काष्ठा bio *bio = pkt->r_bios[i];
-		अगर (bio)
+	for (i = 0; i < pkt->frames; i++) {
+		struct bio *bio = pkt->r_bios[i];
+		if (bio)
 			bio_put(bio);
-	पूर्ण
-	क्रम (i = 0; i < pkt->frames / FRAMES_PER_PAGE; i++)
-		__मुक्त_page(pkt->pages[i]);
+	}
+	for (i = 0; i < pkt->frames / FRAMES_PER_PAGE; i++)
+		__free_page(pkt->pages[i]);
 	bio_put(pkt->w_bio);
-	kमुक्त(pkt);
-पूर्ण
+	kfree(pkt);
+}
 
-अटल व्योम pkt_shrink_pktlist(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_data *pkt, *next;
+static void pkt_shrink_pktlist(struct pktcdvd_device *pd)
+{
+	struct packet_data *pkt, *next;
 
 	BUG_ON(!list_empty(&pd->cdrw.pkt_active_list));
 
-	list_क्रम_each_entry_safe(pkt, next, &pd->cdrw.pkt_मुक्त_list, list) अणु
-		pkt_मुक्त_packet_data(pkt);
-	पूर्ण
-	INIT_LIST_HEAD(&pd->cdrw.pkt_मुक्त_list);
-पूर्ण
+	list_for_each_entry_safe(pkt, next, &pd->cdrw.pkt_free_list, list) {
+		pkt_free_packet_data(pkt);
+	}
+	INIT_LIST_HEAD(&pd->cdrw.pkt_free_list);
+}
 
-अटल पूर्णांक pkt_grow_pktlist(काष्ठा pktcdvd_device *pd, पूर्णांक nr_packets)
-अणु
-	काष्ठा packet_data *pkt;
+static int pkt_grow_pktlist(struct pktcdvd_device *pd, int nr_packets)
+{
+	struct packet_data *pkt;
 
-	BUG_ON(!list_empty(&pd->cdrw.pkt_मुक्त_list));
+	BUG_ON(!list_empty(&pd->cdrw.pkt_free_list));
 
-	जबतक (nr_packets > 0) अणु
+	while (nr_packets > 0) {
 		pkt = pkt_alloc_packet_data(pd->settings.size >> 2);
-		अगर (!pkt) अणु
+		if (!pkt) {
 			pkt_shrink_pktlist(pd);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		pkt->id = nr_packets;
 		pkt->pd = pd;
-		list_add(&pkt->list, &pd->cdrw.pkt_मुक्त_list);
+		list_add(&pkt->list, &pd->cdrw.pkt_free_list);
 		nr_packets--;
-	पूर्ण
-	वापस 1;
-पूर्ण
+	}
+	return 1;
+}
 
-अटल अंतरभूत काष्ठा pkt_rb_node *pkt_rbtree_next(काष्ठा pkt_rb_node *node)
-अणु
-	काष्ठा rb_node *n = rb_next(&node->rb_node);
-	अगर (!n)
-		वापस शून्य;
-	वापस rb_entry(n, काष्ठा pkt_rb_node, rb_node);
-पूर्ण
+static inline struct pkt_rb_node *pkt_rbtree_next(struct pkt_rb_node *node)
+{
+	struct rb_node *n = rb_next(&node->rb_node);
+	if (!n)
+		return NULL;
+	return rb_entry(n, struct pkt_rb_node, rb_node);
+}
 
-अटल व्योम pkt_rbtree_erase(काष्ठा pktcdvd_device *pd, काष्ठा pkt_rb_node *node)
-अणु
+static void pkt_rbtree_erase(struct pktcdvd_device *pd, struct pkt_rb_node *node)
+{
 	rb_erase(&node->rb_node, &pd->bio_queue);
-	mempool_मुक्त(node, &pd->rb_pool);
+	mempool_free(node, &pd->rb_pool);
 	pd->bio_queue_size--;
 	BUG_ON(pd->bio_queue_size < 0);
-पूर्ण
+}
 
 /*
  * Find the first node in the pd->bio_queue rb tree with a starting sector >= s.
  */
-अटल काष्ठा pkt_rb_node *pkt_rbtree_find(काष्ठा pktcdvd_device *pd, sector_t s)
-अणु
-	काष्ठा rb_node *n = pd->bio_queue.rb_node;
-	काष्ठा rb_node *next;
-	काष्ठा pkt_rb_node *पंचांगp;
+static struct pkt_rb_node *pkt_rbtree_find(struct pktcdvd_device *pd, sector_t s)
+{
+	struct rb_node *n = pd->bio_queue.rb_node;
+	struct rb_node *next;
+	struct pkt_rb_node *tmp;
 
-	अगर (!n) अणु
+	if (!n) {
 		BUG_ON(pd->bio_queue_size > 0);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	क्रम (;;) अणु
-		पंचांगp = rb_entry(n, काष्ठा pkt_rb_node, rb_node);
-		अगर (s <= पंचांगp->bio->bi_iter.bi_sector)
+	for (;;) {
+		tmp = rb_entry(n, struct pkt_rb_node, rb_node);
+		if (s <= tmp->bio->bi_iter.bi_sector)
 			next = n->rb_left;
-		अन्यथा
+		else
 			next = n->rb_right;
-		अगर (!next)
-			अवरोध;
+		if (!next)
+			break;
 		n = next;
-	पूर्ण
+	}
 
-	अगर (s > पंचांगp->bio->bi_iter.bi_sector) अणु
-		पंचांगp = pkt_rbtree_next(पंचांगp);
-		अगर (!पंचांगp)
-			वापस शून्य;
-	पूर्ण
-	BUG_ON(s > पंचांगp->bio->bi_iter.bi_sector);
-	वापस पंचांगp;
-पूर्ण
+	if (s > tmp->bio->bi_iter.bi_sector) {
+		tmp = pkt_rbtree_next(tmp);
+		if (!tmp)
+			return NULL;
+	}
+	BUG_ON(s > tmp->bio->bi_iter.bi_sector);
+	return tmp;
+}
 
 /*
- * Insert a node पूर्णांकo the pd->bio_queue rb tree.
+ * Insert a node into the pd->bio_queue rb tree.
  */
-अटल व्योम pkt_rbtree_insert(काष्ठा pktcdvd_device *pd, काष्ठा pkt_rb_node *node)
-अणु
-	काष्ठा rb_node **p = &pd->bio_queue.rb_node;
-	काष्ठा rb_node *parent = शून्य;
+static void pkt_rbtree_insert(struct pktcdvd_device *pd, struct pkt_rb_node *node)
+{
+	struct rb_node **p = &pd->bio_queue.rb_node;
+	struct rb_node *parent = NULL;
 	sector_t s = node->bio->bi_iter.bi_sector;
-	काष्ठा pkt_rb_node *पंचांगp;
+	struct pkt_rb_node *tmp;
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		पंचांगp = rb_entry(parent, काष्ठा pkt_rb_node, rb_node);
-		अगर (s < पंचांगp->bio->bi_iter.bi_sector)
+		tmp = rb_entry(parent, struct pkt_rb_node, rb_node);
+		if (s < tmp->bio->bi_iter.bi_sector)
 			p = &(*p)->rb_left;
-		अन्यथा
+		else
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 	rb_link_node(&node->rb_node, parent, p);
 	rb_insert_color(&node->rb_node, &pd->bio_queue);
 	pd->bio_queue_size++;
-पूर्ण
+}
 
 /*
  * Send a packet_command to the underlying block device and
- * रुको क्रम completion.
+ * wait for completion.
  */
-अटल पूर्णांक pkt_generic_packet(काष्ठा pktcdvd_device *pd, काष्ठा packet_command *cgc)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(pd->bdev);
-	काष्ठा request *rq;
-	पूर्णांक ret = 0;
+static int pkt_generic_packet(struct pktcdvd_device *pd, struct packet_command *cgc)
+{
+	struct request_queue *q = bdev_get_queue(pd->bdev);
+	struct request *rq;
+	int ret = 0;
 
 	rq = blk_get_request(q, (cgc->data_direction == CGC_DATA_WRITE) ?
 			     REQ_OP_SCSI_OUT : REQ_OP_SCSI_IN, 0);
-	अगर (IS_ERR(rq))
-		वापस PTR_ERR(rq);
+	if (IS_ERR(rq))
+		return PTR_ERR(rq);
 
-	अगर (cgc->buflen) अणु
+	if (cgc->buflen) {
 		ret = blk_rq_map_kern(q, rq, cgc->buffer, cgc->buflen,
 				      GFP_NOIO);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	scsi_req(rq)->cmd_len = COMMAND_SIZE(cgc->cmd[0]);
-	स_नकल(scsi_req(rq)->cmd, cgc->cmd, CDROM_PACKET_SIZE);
+	memcpy(scsi_req(rq)->cmd, cgc->cmd, CDROM_PACKET_SIZE);
 
-	rq->समयout = 60*HZ;
-	अगर (cgc->quiet)
+	rq->timeout = 60*HZ;
+	if (cgc->quiet)
 		rq->rq_flags |= RQF_QUIET;
 
 	blk_execute_rq(pd->bdev->bd_disk, rq, 0);
-	अगर (scsi_req(rq)->result)
+	if (scsi_req(rq)->result)
 		ret = -EIO;
 out:
 	blk_put_request(rq);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर *sense_key_string(__u8 index)
-अणु
-	अटल स्थिर अक्षर * स्थिर info[] = अणु
+static const char *sense_key_string(__u8 index)
+{
+	static const char * const info[] = {
 		"No sense", "Recovered error", "Not ready",
 		"Medium error", "Hardware error", "Illegal request",
 		"Unit attention", "Data protect", "Blank check",
-	पूर्ण;
+	};
 
-	वापस index < ARRAY_SIZE(info) ? info[index] : "INVALID";
-पूर्ण
+	return index < ARRAY_SIZE(info) ? info[index] : "INVALID";
+}
 
 /*
  * A generic sense dump / resolve mechanism should be implemented across
  * all ATAPI + SCSI devices.
  */
-अटल व्योम pkt_dump_sense(काष्ठा pktcdvd_device *pd,
-			   काष्ठा packet_command *cgc)
-अणु
-	काष्ठा scsi_sense_hdr *sshdr = cgc->sshdr;
+static void pkt_dump_sense(struct pktcdvd_device *pd,
+			   struct packet_command *cgc)
+{
+	struct scsi_sense_hdr *sshdr = cgc->sshdr;
 
-	अगर (sshdr)
+	if (sshdr)
 		pkt_err(pd, "%*ph - sense %02x.%02x.%02x (%s)\n",
 			CDROM_PACKET_SIZE, cgc->cmd,
 			sshdr->sense_key, sshdr->asc, sshdr->ascq,
 			sense_key_string(sshdr->sense_key));
-	अन्यथा
+	else
 		pkt_err(pd, "%*ph - no sense\n", CDROM_PACKET_SIZE, cgc->cmd);
-पूर्ण
+}
 
 /*
  * flush the drive cache to media
  */
-अटल पूर्णांक pkt_flush_cache(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_command cgc;
+static int pkt_flush_cache(struct pktcdvd_device *pd)
+{
+	struct packet_command cgc;
 
-	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_FLUSH_CACHE;
 	cgc.quiet = 1;
 
 	/*
-	 * the IMMED bit -- we शेष to not setting it, although that
-	 * would allow a much faster बंद, this is safer
+	 * the IMMED bit -- we default to not setting it, although that
+	 * would allow a much faster close, this is safer
 	 */
-#अगर 0
+#if 0
 	cgc.cmd[1] = 1 << 1;
-#पूर्ण_अगर
-	वापस pkt_generic_packet(pd, &cgc);
-पूर्ण
+#endif
+	return pkt_generic_packet(pd, &cgc);
+}
 
 /*
- * speed is given as the normal factor, e.g. 4 क्रम 4x
+ * speed is given as the normal factor, e.g. 4 for 4x
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_set_speed(काष्ठा pktcdvd_device *pd,
-				अचिन्हित ग_लिखो_speed, अचिन्हित पढ़ो_speed)
-अणु
-	काष्ठा packet_command cgc;
-	काष्ठा scsi_sense_hdr sshdr;
-	पूर्णांक ret;
+static noinline_for_stack int pkt_set_speed(struct pktcdvd_device *pd,
+				unsigned write_speed, unsigned read_speed)
+{
+	struct packet_command cgc;
+	struct scsi_sense_hdr sshdr;
+	int ret;
 
-	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
 	cgc.sshdr = &sshdr;
 	cgc.cmd[0] = GPCMD_SET_SPEED;
-	cgc.cmd[2] = (पढ़ो_speed >> 8) & 0xff;
-	cgc.cmd[3] = पढ़ो_speed & 0xff;
-	cgc.cmd[4] = (ग_लिखो_speed >> 8) & 0xff;
-	cgc.cmd[5] = ग_लिखो_speed & 0xff;
+	cgc.cmd[2] = (read_speed >> 8) & 0xff;
+	cgc.cmd[3] = read_speed & 0xff;
+	cgc.cmd[4] = (write_speed >> 8) & 0xff;
+	cgc.cmd[5] = write_speed & 0xff;
 
 	ret = pkt_generic_packet(pd, &cgc);
-	अगर (ret)
+	if (ret)
 		pkt_dump_sense(pd, &cgc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Queue a bio क्रम processing by the low-level CD device. Must be called
+ * Queue a bio for processing by the low-level CD device. Must be called
  * from process context.
  */
-अटल व्योम pkt_queue_bio(काष्ठा pktcdvd_device *pd, काष्ठा bio *bio)
-अणु
+static void pkt_queue_bio(struct pktcdvd_device *pd, struct bio *bio)
+{
 	spin_lock(&pd->iosched.lock);
-	अगर (bio_data_dir(bio) == READ)
-		bio_list_add(&pd->iosched.पढ़ो_queue, bio);
-	अन्यथा
-		bio_list_add(&pd->iosched.ग_लिखो_queue, bio);
+	if (bio_data_dir(bio) == READ)
+		bio_list_add(&pd->iosched.read_queue, bio);
+	else
+		bio_list_add(&pd->iosched.write_queue, bio);
 	spin_unlock(&pd->iosched.lock);
 
 	atomic_set(&pd->iosched.attention, 1);
 	wake_up(&pd->wqueue);
-पूर्ण
+}
 
 /*
- * Process the queued पढ़ो/ग_लिखो requests. This function handles special
- * requirements क्रम CDRW drives:
- * - A cache flush command must be inserted beक्रमe a पढ़ो request अगर the
- *   previous request was a ग_लिखो.
- * - Switching between पढ़ोing and writing is slow, so करोn't करो it more often
+ * Process the queued read/write requests. This function handles special
+ * requirements for CDRW drives:
+ * - A cache flush command must be inserted before a read request if the
+ *   previous request was a write.
+ * - Switching between reading and writing is slow, so don't do it more often
  *   than necessary.
- * - Optimize क्रम throughput at the expense of latency. This means that streaming
- *   ग_लिखोs will never be पूर्णांकerrupted by a पढ़ो, but अगर the drive has to seek
- *   beक्रमe the next ग_लिखो, चयन to पढ़ोing instead अगर there are any pending
- *   पढ़ो requests.
- * - Set the पढ़ो speed according to current usage pattern. When only पढ़ोing
- *   from the device, it's best to use the highest possible पढ़ो speed, but
- *   when चयनing often between पढ़ोing and writing, it's better to have the
- *   same पढ़ो and ग_लिखो speeds.
+ * - Optimize for throughput at the expense of latency. This means that streaming
+ *   writes will never be interrupted by a read, but if the drive has to seek
+ *   before the next write, switch to reading instead if there are any pending
+ *   read requests.
+ * - Set the read speed according to current usage pattern. When only reading
+ *   from the device, it's best to use the highest possible read speed, but
+ *   when switching often between reading and writing, it's better to have the
+ *   same read and write speeds.
  */
-अटल व्योम pkt_iosched_process_queue(काष्ठा pktcdvd_device *pd)
-अणु
+static void pkt_iosched_process_queue(struct pktcdvd_device *pd)
+{
 
-	अगर (atomic_पढ़ो(&pd->iosched.attention) == 0)
-		वापस;
+	if (atomic_read(&pd->iosched.attention) == 0)
+		return;
 	atomic_set(&pd->iosched.attention, 0);
 
-	क्रम (;;) अणु
-		काष्ठा bio *bio;
-		पूर्णांक पढ़ोs_queued, ग_लिखोs_queued;
+	for (;;) {
+		struct bio *bio;
+		int reads_queued, writes_queued;
 
 		spin_lock(&pd->iosched.lock);
-		पढ़ोs_queued = !bio_list_empty(&pd->iosched.पढ़ो_queue);
-		ग_लिखोs_queued = !bio_list_empty(&pd->iosched.ग_लिखो_queue);
+		reads_queued = !bio_list_empty(&pd->iosched.read_queue);
+		writes_queued = !bio_list_empty(&pd->iosched.write_queue);
 		spin_unlock(&pd->iosched.lock);
 
-		अगर (!पढ़ोs_queued && !ग_लिखोs_queued)
-			अवरोध;
+		if (!reads_queued && !writes_queued)
+			break;
 
-		अगर (pd->iosched.writing) अणु
-			पूर्णांक need_ग_लिखो_seek = 1;
+		if (pd->iosched.writing) {
+			int need_write_seek = 1;
 			spin_lock(&pd->iosched.lock);
-			bio = bio_list_peek(&pd->iosched.ग_लिखो_queue);
+			bio = bio_list_peek(&pd->iosched.write_queue);
 			spin_unlock(&pd->iosched.lock);
-			अगर (bio && (bio->bi_iter.bi_sector ==
-				    pd->iosched.last_ग_लिखो))
-				need_ग_लिखो_seek = 0;
-			अगर (need_ग_लिखो_seek && पढ़ोs_queued) अणु
-				अगर (atomic_पढ़ो(&pd->cdrw.pending_bios) > 0) अणु
+			if (bio && (bio->bi_iter.bi_sector ==
+				    pd->iosched.last_write))
+				need_write_seek = 0;
+			if (need_write_seek && reads_queued) {
+				if (atomic_read(&pd->cdrw.pending_bios) > 0) {
 					pkt_dbg(2, pd, "write, waiting\n");
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				pkt_flush_cache(pd);
 				pd->iosched.writing = 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!पढ़ोs_queued && ग_लिखोs_queued) अणु
-				अगर (atomic_पढ़ो(&pd->cdrw.pending_bios) > 0) अणु
+			}
+		} else {
+			if (!reads_queued && writes_queued) {
+				if (atomic_read(&pd->cdrw.pending_bios) > 0) {
 					pkt_dbg(2, pd, "read, waiting\n");
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				pd->iosched.writing = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		spin_lock(&pd->iosched.lock);
-		अगर (pd->iosched.writing)
-			bio = bio_list_pop(&pd->iosched.ग_लिखो_queue);
-		अन्यथा
-			bio = bio_list_pop(&pd->iosched.पढ़ो_queue);
+		if (pd->iosched.writing)
+			bio = bio_list_pop(&pd->iosched.write_queue);
+		else
+			bio = bio_list_pop(&pd->iosched.read_queue);
 		spin_unlock(&pd->iosched.lock);
 
-		अगर (!bio)
-			जारी;
+		if (!bio)
+			continue;
 
-		अगर (bio_data_dir(bio) == READ)
-			pd->iosched.successive_पढ़ोs +=
+		if (bio_data_dir(bio) == READ)
+			pd->iosched.successive_reads +=
 				bio->bi_iter.bi_size >> 10;
-		अन्यथा अणु
-			pd->iosched.successive_पढ़ोs = 0;
-			pd->iosched.last_ग_लिखो = bio_end_sector(bio);
-		पूर्ण
-		अगर (pd->iosched.successive_पढ़ोs >= HI_SPEED_SWITCH) अणु
-			अगर (pd->पढ़ो_speed == pd->ग_लिखो_speed) अणु
-				pd->पढ़ो_speed = MAX_SPEED;
-				pkt_set_speed(pd, pd->ग_लिखो_speed, pd->पढ़ो_speed);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (pd->पढ़ो_speed != pd->ग_लिखो_speed) अणु
-				pd->पढ़ो_speed = pd->ग_लिखो_speed;
-				pkt_set_speed(pd, pd->ग_लिखो_speed, pd->पढ़ो_speed);
-			पूर्ण
-		पूर्ण
+		else {
+			pd->iosched.successive_reads = 0;
+			pd->iosched.last_write = bio_end_sector(bio);
+		}
+		if (pd->iosched.successive_reads >= HI_SPEED_SWITCH) {
+			if (pd->read_speed == pd->write_speed) {
+				pd->read_speed = MAX_SPEED;
+				pkt_set_speed(pd, pd->write_speed, pd->read_speed);
+			}
+		} else {
+			if (pd->read_speed != pd->write_speed) {
+				pd->read_speed = pd->write_speed;
+				pkt_set_speed(pd, pd->write_speed, pd->read_speed);
+			}
+		}
 
 		atomic_inc(&pd->cdrw.pending_bios);
 		submit_bio_noacct(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Special care is needed अगर the underlying block device has a small
+ * Special care is needed if the underlying block device has a small
  * max_phys_segments value.
  */
-अटल पूर्णांक pkt_set_segment_merging(काष्ठा pktcdvd_device *pd, काष्ठा request_queue *q)
-अणु
-	अगर ((pd->settings.size << 9) / CD_FRAMESIZE
-	    <= queue_max_segments(q)) अणु
+static int pkt_set_segment_merging(struct pktcdvd_device *pd, struct request_queue *q)
+{
+	if ((pd->settings.size << 9) / CD_FRAMESIZE
+	    <= queue_max_segments(q)) {
 		/*
 		 * The cdrom device can handle one segment/frame
 		 */
 		clear_bit(PACKET_MERGE_SEGS, &pd->flags);
-		वापस 0;
-	पूर्ण अन्यथा अगर ((pd->settings.size << 9) / PAGE_SIZE
-		   <= queue_max_segments(q)) अणु
+		return 0;
+	} else if ((pd->settings.size << 9) / PAGE_SIZE
+		   <= queue_max_segments(q)) {
 		/*
-		 * We can handle this हाल at the expense of some extra memory
-		 * copies during ग_लिखो operations
+		 * We can handle this case at the expense of some extra memory
+		 * copies during write operations
 		 */
 		set_bit(PACKET_MERGE_SEGS, &pd->flags);
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		pkt_err(pd, "cdrom max_phys_segments too small\n");
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+		return -EIO;
+	}
+}
 
-अटल व्योम pkt_end_io_पढ़ो(काष्ठा bio *bio)
-अणु
-	काष्ठा packet_data *pkt = bio->bi_निजी;
-	काष्ठा pktcdvd_device *pd = pkt->pd;
+static void pkt_end_io_read(struct bio *bio)
+{
+	struct packet_data *pkt = bio->bi_private;
+	struct pktcdvd_device *pd = pkt->pd;
 	BUG_ON(!pd);
 
 	pkt_dbg(2, pd, "bio=%p sec0=%llx sec=%llx err=%d\n",
-		bio, (अचिन्हित दीर्घ दीर्घ)pkt->sector,
-		(अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector, bio->bi_status);
+		bio, (unsigned long long)pkt->sector,
+		(unsigned long long)bio->bi_iter.bi_sector, bio->bi_status);
 
-	अगर (bio->bi_status)
+	if (bio->bi_status)
 		atomic_inc(&pkt->io_errors);
-	अगर (atomic_dec_and_test(&pkt->io_रुको)) अणु
+	if (atomic_dec_and_test(&pkt->io_wait)) {
 		atomic_inc(&pkt->run_sm);
 		wake_up(&pd->wqueue);
-	पूर्ण
+	}
 	pkt_bio_finished(pd);
-पूर्ण
+}
 
-अटल व्योम pkt_end_io_packet_ग_लिखो(काष्ठा bio *bio)
-अणु
-	काष्ठा packet_data *pkt = bio->bi_निजी;
-	काष्ठा pktcdvd_device *pd = pkt->pd;
+static void pkt_end_io_packet_write(struct bio *bio)
+{
+	struct packet_data *pkt = bio->bi_private;
+	struct pktcdvd_device *pd = pkt->pd;
 	BUG_ON(!pd);
 
 	pkt_dbg(2, pd, "id=%d, err=%d\n", pkt->id, bio->bi_status);
@@ -975,221 +974,221 @@ out:
 	pd->stats.pkt_ended++;
 
 	pkt_bio_finished(pd);
-	atomic_dec(&pkt->io_रुको);
+	atomic_dec(&pkt->io_wait);
 	atomic_inc(&pkt->run_sm);
 	wake_up(&pd->wqueue);
-पूर्ण
+}
 
 /*
- * Schedule पढ़ोs क्रम the holes in a packet
+ * Schedule reads for the holes in a packet
  */
-अटल व्योम pkt_gather_data(काष्ठा pktcdvd_device *pd, काष्ठा packet_data *pkt)
-अणु
-	पूर्णांक frames_पढ़ो = 0;
-	काष्ठा bio *bio;
-	पूर्णांक f;
-	अक्षर written[PACKET_MAX_SIZE];
+static void pkt_gather_data(struct pktcdvd_device *pd, struct packet_data *pkt)
+{
+	int frames_read = 0;
+	struct bio *bio;
+	int f;
+	char written[PACKET_MAX_SIZE];
 
 	BUG_ON(bio_list_empty(&pkt->orig_bios));
 
-	atomic_set(&pkt->io_रुको, 0);
+	atomic_set(&pkt->io_wait, 0);
 	atomic_set(&pkt->io_errors, 0);
 
 	/*
-	 * Figure out which frames we need to पढ़ो beक्रमe we can ग_लिखो.
+	 * Figure out which frames we need to read before we can write.
 	 */
-	स_रखो(written, 0, माप(written));
+	memset(written, 0, sizeof(written));
 	spin_lock(&pkt->lock);
-	bio_list_क्रम_each(bio, &pkt->orig_bios) अणु
-		पूर्णांक first_frame = (bio->bi_iter.bi_sector - pkt->sector) /
+	bio_list_for_each(bio, &pkt->orig_bios) {
+		int first_frame = (bio->bi_iter.bi_sector - pkt->sector) /
 			(CD_FRAMESIZE >> 9);
-		पूर्णांक num_frames = bio->bi_iter.bi_size / CD_FRAMESIZE;
+		int num_frames = bio->bi_iter.bi_size / CD_FRAMESIZE;
 		pd->stats.secs_w += num_frames * (CD_FRAMESIZE >> 9);
 		BUG_ON(first_frame < 0);
 		BUG_ON(first_frame + num_frames > pkt->frames);
-		क्रम (f = first_frame; f < first_frame + num_frames; f++)
+		for (f = first_frame; f < first_frame + num_frames; f++)
 			written[f] = 1;
-	पूर्ण
+	}
 	spin_unlock(&pkt->lock);
 
-	अगर (pkt->cache_valid) अणु
+	if (pkt->cache_valid) {
 		pkt_dbg(2, pd, "zone %llx cached\n",
-			(अचिन्हित दीर्घ दीर्घ)pkt->sector);
-		जाओ out_account;
-	पूर्ण
+			(unsigned long long)pkt->sector);
+		goto out_account;
+	}
 
 	/*
-	 * Schedule पढ़ोs क्रम missing parts of the packet.
+	 * Schedule reads for missing parts of the packet.
 	 */
-	क्रम (f = 0; f < pkt->frames; f++) अणु
-		पूर्णांक p, offset;
+	for (f = 0; f < pkt->frames; f++) {
+		int p, offset;
 
-		अगर (written[f])
-			जारी;
+		if (written[f])
+			continue;
 
 		bio = pkt->r_bios[f];
 		bio_reset(bio);
 		bio->bi_iter.bi_sector = pkt->sector + f * (CD_FRAMESIZE >> 9);
 		bio_set_dev(bio, pd->bdev);
-		bio->bi_end_io = pkt_end_io_पढ़ो;
-		bio->bi_निजी = pkt;
+		bio->bi_end_io = pkt_end_io_read;
+		bio->bi_private = pkt;
 
 		p = (f * CD_FRAMESIZE) / PAGE_SIZE;
 		offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
 		pkt_dbg(2, pd, "Adding frame %d, page:%p offs:%d\n",
 			f, pkt->pages[p], offset);
-		अगर (!bio_add_page(bio, pkt->pages[p], CD_FRAMESIZE, offset))
+		if (!bio_add_page(bio, pkt->pages[p], CD_FRAMESIZE, offset))
 			BUG();
 
-		atomic_inc(&pkt->io_रुको);
+		atomic_inc(&pkt->io_wait);
 		bio_set_op_attrs(bio, REQ_OP_READ, 0);
 		pkt_queue_bio(pd, bio);
-		frames_पढ़ो++;
-	पूर्ण
+		frames_read++;
+	}
 
 out_account:
 	pkt_dbg(2, pd, "need %d frames for zone %llx\n",
-		frames_पढ़ो, (अचिन्हित दीर्घ दीर्घ)pkt->sector);
+		frames_read, (unsigned long long)pkt->sector);
 	pd->stats.pkt_started++;
-	pd->stats.secs_rg += frames_पढ़ो * (CD_FRAMESIZE >> 9);
-पूर्ण
+	pd->stats.secs_rg += frames_read * (CD_FRAMESIZE >> 9);
+}
 
 /*
- * Find a packet matching zone, or the least recently used packet अगर
+ * Find a packet matching zone, or the least recently used packet if
  * there is no match.
  */
-अटल काष्ठा packet_data *pkt_get_packet_data(काष्ठा pktcdvd_device *pd, पूर्णांक zone)
-अणु
-	काष्ठा packet_data *pkt;
+static struct packet_data *pkt_get_packet_data(struct pktcdvd_device *pd, int zone)
+{
+	struct packet_data *pkt;
 
-	list_क्रम_each_entry(pkt, &pd->cdrw.pkt_मुक्त_list, list) अणु
-		अगर (pkt->sector == zone || pkt->list.next == &pd->cdrw.pkt_मुक्त_list) अणु
+	list_for_each_entry(pkt, &pd->cdrw.pkt_free_list, list) {
+		if (pkt->sector == zone || pkt->list.next == &pd->cdrw.pkt_free_list) {
 			list_del_init(&pkt->list);
-			अगर (pkt->sector != zone)
+			if (pkt->sector != zone)
 				pkt->cache_valid = 0;
-			वापस pkt;
-		पूर्ण
-	पूर्ण
+			return pkt;
+		}
+	}
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम pkt_put_packet_data(काष्ठा pktcdvd_device *pd, काष्ठा packet_data *pkt)
-अणु
-	अगर (pkt->cache_valid) अणु
-		list_add(&pkt->list, &pd->cdrw.pkt_मुक्त_list);
-	पूर्ण अन्यथा अणु
-		list_add_tail(&pkt->list, &pd->cdrw.pkt_मुक्त_list);
-	पूर्ण
-पूर्ण
+static void pkt_put_packet_data(struct pktcdvd_device *pd, struct packet_data *pkt)
+{
+	if (pkt->cache_valid) {
+		list_add(&pkt->list, &pd->cdrw.pkt_free_list);
+	} else {
+		list_add_tail(&pkt->list, &pd->cdrw.pkt_free_list);
+	}
+}
 
-अटल अंतरभूत व्योम pkt_set_state(काष्ठा packet_data *pkt, क्रमागत packet_data_state state)
-अणु
-#अगर PACKET_DEBUG > 1
-	अटल स्थिर अक्षर *state_name[] = अणु
+static inline void pkt_set_state(struct packet_data *pkt, enum packet_data_state state)
+{
+#if PACKET_DEBUG > 1
+	static const char *state_name[] = {
 		"IDLE", "WAITING", "READ_WAIT", "WRITE_WAIT", "RECOVERY", "FINISHED"
-	पूर्ण;
-	क्रमागत packet_data_state old_state = pkt->state;
+	};
+	enum packet_data_state old_state = pkt->state;
 	pkt_dbg(2, pd, "pkt %2d : s=%6llx %s -> %s\n",
-		pkt->id, (अचिन्हित दीर्घ दीर्घ)pkt->sector,
+		pkt->id, (unsigned long long)pkt->sector,
 		state_name[old_state], state_name[state]);
-#पूर्ण_अगर
+#endif
 	pkt->state = state;
-पूर्ण
+}
 
 /*
- * Scan the work queue to see अगर we can start a new packet.
- * वापसs non-zero अगर any work was करोne.
+ * Scan the work queue to see if we can start a new packet.
+ * returns non-zero if any work was done.
  */
-अटल पूर्णांक pkt_handle_queue(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_data *pkt, *p;
-	काष्ठा bio *bio = शून्य;
+static int pkt_handle_queue(struct pktcdvd_device *pd)
+{
+	struct packet_data *pkt, *p;
+	struct bio *bio = NULL;
 	sector_t zone = 0; /* Suppress gcc warning */
-	काष्ठा pkt_rb_node *node, *first_node;
-	काष्ठा rb_node *n;
-	पूर्णांक wakeup;
+	struct pkt_rb_node *node, *first_node;
+	struct rb_node *n;
+	int wakeup;
 
 	atomic_set(&pd->scan_queue, 0);
 
-	अगर (list_empty(&pd->cdrw.pkt_मुक्त_list)) अणु
+	if (list_empty(&pd->cdrw.pkt_free_list)) {
 		pkt_dbg(2, pd, "no pkt\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Try to find a zone we are not alपढ़ोy working on.
+	 * Try to find a zone we are not already working on.
 	 */
 	spin_lock(&pd->lock);
 	first_node = pkt_rbtree_find(pd, pd->current_sector);
-	अगर (!first_node) अणु
+	if (!first_node) {
 		n = rb_first(&pd->bio_queue);
-		अगर (n)
-			first_node = rb_entry(n, काष्ठा pkt_rb_node, rb_node);
-	पूर्ण
+		if (n)
+			first_node = rb_entry(n, struct pkt_rb_node, rb_node);
+	}
 	node = first_node;
-	जबतक (node) अणु
+	while (node) {
 		bio = node->bio;
 		zone = get_zone(bio->bi_iter.bi_sector, pd);
-		list_क्रम_each_entry(p, &pd->cdrw.pkt_active_list, list) अणु
-			अगर (p->sector == zone) अणु
-				bio = शून्य;
-				जाओ try_next_bio;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+		list_for_each_entry(p, &pd->cdrw.pkt_active_list, list) {
+			if (p->sector == zone) {
+				bio = NULL;
+				goto try_next_bio;
+			}
+		}
+		break;
 try_next_bio:
 		node = pkt_rbtree_next(node);
-		अगर (!node) अणु
+		if (!node) {
 			n = rb_first(&pd->bio_queue);
-			अगर (n)
-				node = rb_entry(n, काष्ठा pkt_rb_node, rb_node);
-		पूर्ण
-		अगर (node == first_node)
-			node = शून्य;
-	पूर्ण
+			if (n)
+				node = rb_entry(n, struct pkt_rb_node, rb_node);
+		}
+		if (node == first_node)
+			node = NULL;
+	}
 	spin_unlock(&pd->lock);
-	अगर (!bio) अणु
+	if (!bio) {
 		pkt_dbg(2, pd, "no bio\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pkt = pkt_get_packet_data(pd, zone);
 
 	pd->current_sector = zone + pd->settings.size;
 	pkt->sector = zone;
 	BUG_ON(pkt->frames != pd->settings.size >> 2);
-	pkt->ग_लिखो_size = 0;
+	pkt->write_size = 0;
 
 	/*
-	 * Scan work queue क्रम bios in the same zone and link them
+	 * Scan work queue for bios in the same zone and link them
 	 * to this packet.
 	 */
 	spin_lock(&pd->lock);
-	pkt_dbg(2, pd, "looking for zone %llx\n", (अचिन्हित दीर्घ दीर्घ)zone);
-	जबतक ((node = pkt_rbtree_find(pd, zone)) != शून्य) अणु
+	pkt_dbg(2, pd, "looking for zone %llx\n", (unsigned long long)zone);
+	while ((node = pkt_rbtree_find(pd, zone)) != NULL) {
 		bio = node->bio;
-		pkt_dbg(2, pd, "found zone=%llx\n", (अचिन्हित दीर्घ दीर्घ)
+		pkt_dbg(2, pd, "found zone=%llx\n", (unsigned long long)
 			get_zone(bio->bi_iter.bi_sector, pd));
-		अगर (get_zone(bio->bi_iter.bi_sector, pd) != zone)
-			अवरोध;
+		if (get_zone(bio->bi_iter.bi_sector, pd) != zone)
+			break;
 		pkt_rbtree_erase(pd, node);
 		spin_lock(&pkt->lock);
 		bio_list_add(&pkt->orig_bios, bio);
-		pkt->ग_लिखो_size += bio->bi_iter.bi_size / CD_FRAMESIZE;
+		pkt->write_size += bio->bi_iter.bi_size / CD_FRAMESIZE;
 		spin_unlock(&pkt->lock);
-	पूर्ण
-	/* check ग_लिखो congestion marks, and अगर bio_queue_size is
-	   below, wake up any रुकोers */
-	wakeup = (pd->ग_लिखो_congestion_on > 0
-	 		&& pd->bio_queue_size <= pd->ग_लिखो_congestion_off);
+	}
+	/* check write congestion marks, and if bio_queue_size is
+	   below, wake up any waiters */
+	wakeup = (pd->write_congestion_on > 0
+	 		&& pd->bio_queue_size <= pd->write_congestion_off);
 	spin_unlock(&pd->lock);
-	अगर (wakeup) अणु
+	if (wakeup) {
 		clear_bdi_congested(pd->disk->queue->backing_dev_info,
 					BLK_RW_ASYNC);
-	पूर्ण
+	}
 
-	pkt->sleep_समय = max(PACKET_WAIT_TIME, 1);
+	pkt->sleep_time = max(PACKET_WAIT_TIME, 1);
 	pkt_set_state(pkt, PACKET_WAITING_STATE);
 	atomic_set(&pkt->run_sm, 1);
 
@@ -1197,8 +1196,8 @@ try_next_bio:
 	list_add(&pkt->list, &pd->cdrw.pkt_active_list);
 	spin_unlock(&pd->cdrw.active_list_lock);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  * bio_list_copy_data - copy contents of data buffers from one chain of bios to
@@ -1207,277 +1206,277 @@ try_next_bio:
  * @dst: destination bio list
  *
  * Stops when it reaches the end of either the @src list or @dst list - that is,
- * copies min(src->bi_size, dst->bi_size) bytes (or the equivalent क्रम lists of
+ * copies min(src->bi_size, dst->bi_size) bytes (or the equivalent for lists of
  * bios).
  */
-अटल व्योम bio_list_copy_data(काष्ठा bio *dst, काष्ठा bio *src)
-अणु
-	काष्ठा bvec_iter src_iter = src->bi_iter;
-	काष्ठा bvec_iter dst_iter = dst->bi_iter;
+static void bio_list_copy_data(struct bio *dst, struct bio *src)
+{
+	struct bvec_iter src_iter = src->bi_iter;
+	struct bvec_iter dst_iter = dst->bi_iter;
 
-	जबतक (1) अणु
-		अगर (!src_iter.bi_size) अणु
+	while (1) {
+		if (!src_iter.bi_size) {
 			src = src->bi_next;
-			अगर (!src)
-				अवरोध;
+			if (!src)
+				break;
 
 			src_iter = src->bi_iter;
-		पूर्ण
+		}
 
-		अगर (!dst_iter.bi_size) अणु
+		if (!dst_iter.bi_size) {
 			dst = dst->bi_next;
-			अगर (!dst)
-				अवरोध;
+			if (!dst)
+				break;
 
 			dst_iter = dst->bi_iter;
-		पूर्ण
+		}
 
 		bio_copy_data_iter(dst, &dst_iter, src, &src_iter);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Assemble a bio to ग_लिखो one packet and queue the bio क्रम processing
+ * Assemble a bio to write one packet and queue the bio for processing
  * by the underlying block device.
  */
-अटल व्योम pkt_start_ग_लिखो(काष्ठा pktcdvd_device *pd, काष्ठा packet_data *pkt)
-अणु
-	पूर्णांक f;
+static void pkt_start_write(struct pktcdvd_device *pd, struct packet_data *pkt)
+{
+	int f;
 
 	bio_reset(pkt->w_bio);
 	pkt->w_bio->bi_iter.bi_sector = pkt->sector;
 	bio_set_dev(pkt->w_bio, pd->bdev);
-	pkt->w_bio->bi_end_io = pkt_end_io_packet_ग_लिखो;
-	pkt->w_bio->bi_निजी = pkt;
+	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
+	pkt->w_bio->bi_private = pkt;
 
 	/* XXX: locking? */
-	क्रम (f = 0; f < pkt->frames; f++) अणु
-		काष्ठा page *page = pkt->pages[(f * CD_FRAMESIZE) / PAGE_SIZE];
-		अचिन्हित offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
+	for (f = 0; f < pkt->frames; f++) {
+		struct page *page = pkt->pages[(f * CD_FRAMESIZE) / PAGE_SIZE];
+		unsigned offset = (f * CD_FRAMESIZE) % PAGE_SIZE;
 
-		अगर (!bio_add_page(pkt->w_bio, page, CD_FRAMESIZE, offset))
+		if (!bio_add_page(pkt->w_bio, page, CD_FRAMESIZE, offset))
 			BUG();
-	पूर्ण
+	}
 	pkt_dbg(2, pd, "vcnt=%d\n", pkt->w_bio->bi_vcnt);
 
 	/*
 	 * Fill-in bvec with data from orig_bios.
 	 */
 	spin_lock(&pkt->lock);
-	bio_list_copy_data(pkt->w_bio, pkt->orig_मूलप्रण.सead);
+	bio_list_copy_data(pkt->w_bio, pkt->orig_bios.head);
 
 	pkt_set_state(pkt, PACKET_WRITE_WAIT_STATE);
 	spin_unlock(&pkt->lock);
 
 	pkt_dbg(2, pd, "Writing %d frames for zone %llx\n",
-		pkt->ग_लिखो_size, (अचिन्हित दीर्घ दीर्घ)pkt->sector);
+		pkt->write_size, (unsigned long long)pkt->sector);
 
-	अगर (test_bit(PACKET_MERGE_SEGS, &pd->flags) || (pkt->ग_लिखो_size < pkt->frames))
+	if (test_bit(PACKET_MERGE_SEGS, &pd->flags) || (pkt->write_size < pkt->frames))
 		pkt->cache_valid = 1;
-	अन्यथा
+	else
 		pkt->cache_valid = 0;
 
-	/* Start the ग_लिखो request */
-	atomic_set(&pkt->io_रुको, 1);
+	/* Start the write request */
+	atomic_set(&pkt->io_wait, 1);
 	bio_set_op_attrs(pkt->w_bio, REQ_OP_WRITE, 0);
 	pkt_queue_bio(pd, pkt->w_bio);
-पूर्ण
+}
 
-अटल व्योम pkt_finish_packet(काष्ठा packet_data *pkt, blk_status_t status)
-अणु
-	काष्ठा bio *bio;
+static void pkt_finish_packet(struct packet_data *pkt, blk_status_t status)
+{
+	struct bio *bio;
 
-	अगर (status)
+	if (status)
 		pkt->cache_valid = 0;
 
 	/* Finish all bios corresponding to this packet */
-	जबतक ((bio = bio_list_pop(&pkt->orig_bios))) अणु
+	while ((bio = bio_list_pop(&pkt->orig_bios))) {
 		bio->bi_status = status;
 		bio_endio(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम pkt_run_state_machine(काष्ठा pktcdvd_device *pd, काष्ठा packet_data *pkt)
-अणु
+static void pkt_run_state_machine(struct pktcdvd_device *pd, struct packet_data *pkt)
+{
 	pkt_dbg(2, pd, "pkt %d\n", pkt->id);
 
-	क्रम (;;) अणु
-		चयन (pkt->state) अणु
-		हाल PACKET_WAITING_STATE:
-			अगर ((pkt->ग_लिखो_size < pkt->frames) && (pkt->sleep_समय > 0))
-				वापस;
+	for (;;) {
+		switch (pkt->state) {
+		case PACKET_WAITING_STATE:
+			if ((pkt->write_size < pkt->frames) && (pkt->sleep_time > 0))
+				return;
 
-			pkt->sleep_समय = 0;
+			pkt->sleep_time = 0;
 			pkt_gather_data(pd, pkt);
 			pkt_set_state(pkt, PACKET_READ_WAIT_STATE);
-			अवरोध;
+			break;
 
-		हाल PACKET_READ_WAIT_STATE:
-			अगर (atomic_पढ़ो(&pkt->io_रुको) > 0)
-				वापस;
+		case PACKET_READ_WAIT_STATE:
+			if (atomic_read(&pkt->io_wait) > 0)
+				return;
 
-			अगर (atomic_पढ़ो(&pkt->io_errors) > 0) अणु
+			if (atomic_read(&pkt->io_errors) > 0) {
 				pkt_set_state(pkt, PACKET_RECOVERY_STATE);
-			पूर्ण अन्यथा अणु
-				pkt_start_ग_लिखो(pd, pkt);
-			पूर्ण
-			अवरोध;
+			} else {
+				pkt_start_write(pd, pkt);
+			}
+			break;
 
-		हाल PACKET_WRITE_WAIT_STATE:
-			अगर (atomic_पढ़ो(&pkt->io_रुको) > 0)
-				वापस;
+		case PACKET_WRITE_WAIT_STATE:
+			if (atomic_read(&pkt->io_wait) > 0)
+				return;
 
-			अगर (!pkt->w_bio->bi_status) अणु
+			if (!pkt->w_bio->bi_status) {
 				pkt_set_state(pkt, PACKET_FINISHED_STATE);
-			पूर्ण अन्यथा अणु
+			} else {
 				pkt_set_state(pkt, PACKET_RECOVERY_STATE);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल PACKET_RECOVERY_STATE:
+		case PACKET_RECOVERY_STATE:
 			pkt_dbg(2, pd, "No recovery possible\n");
 			pkt_set_state(pkt, PACKET_FINISHED_STATE);
-			अवरोध;
+			break;
 
-		हाल PACKET_FINISHED_STATE:
+		case PACKET_FINISHED_STATE:
 			pkt_finish_packet(pkt, pkt->w_bio->bi_status);
-			वापस;
+			return;
 
-		शेष:
+		default:
 			BUG();
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल व्योम pkt_handle_packets(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_data *pkt, *next;
+static void pkt_handle_packets(struct pktcdvd_device *pd)
+{
+	struct packet_data *pkt, *next;
 
 	/*
-	 * Run state machine क्रम active packets
+	 * Run state machine for active packets
 	 */
-	list_क्रम_each_entry(pkt, &pd->cdrw.pkt_active_list, list) अणु
-		अगर (atomic_पढ़ो(&pkt->run_sm) > 0) अणु
+	list_for_each_entry(pkt, &pd->cdrw.pkt_active_list, list) {
+		if (atomic_read(&pkt->run_sm) > 0) {
 			atomic_set(&pkt->run_sm, 0);
 			pkt_run_state_machine(pd, pkt);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Move no दीर्घer active packets to the मुक्त list
+	 * Move no longer active packets to the free list
 	 */
 	spin_lock(&pd->cdrw.active_list_lock);
-	list_क्रम_each_entry_safe(pkt, next, &pd->cdrw.pkt_active_list, list) अणु
-		अगर (pkt->state == PACKET_FINISHED_STATE) अणु
+	list_for_each_entry_safe(pkt, next, &pd->cdrw.pkt_active_list, list) {
+		if (pkt->state == PACKET_FINISHED_STATE) {
 			list_del(&pkt->list);
 			pkt_put_packet_data(pd, pkt);
 			pkt_set_state(pkt, PACKET_IDLE_STATE);
 			atomic_set(&pd->scan_queue, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&pd->cdrw.active_list_lock);
-पूर्ण
+}
 
-अटल व्योम pkt_count_states(काष्ठा pktcdvd_device *pd, पूर्णांक *states)
-अणु
-	काष्ठा packet_data *pkt;
-	पूर्णांक i;
+static void pkt_count_states(struct pktcdvd_device *pd, int *states)
+{
+	struct packet_data *pkt;
+	int i;
 
-	क्रम (i = 0; i < PACKET_NUM_STATES; i++)
+	for (i = 0; i < PACKET_NUM_STATES; i++)
 		states[i] = 0;
 
 	spin_lock(&pd->cdrw.active_list_lock);
-	list_क्रम_each_entry(pkt, &pd->cdrw.pkt_active_list, list) अणु
+	list_for_each_entry(pkt, &pd->cdrw.pkt_active_list, list) {
 		states[pkt->state]++;
-	पूर्ण
+	}
 	spin_unlock(&pd->cdrw.active_list_lock);
-पूर्ण
+}
 
 /*
- * kcdrwd is woken up when ग_लिखोs have been queued क्रम one of our
- * रेजिस्टरed devices
+ * kcdrwd is woken up when writes have been queued for one of our
+ * registered devices
  */
-अटल पूर्णांक kcdrwd(व्योम *foobar)
-अणु
-	काष्ठा pktcdvd_device *pd = foobar;
-	काष्ठा packet_data *pkt;
-	दीर्घ min_sleep_समय, residue;
+static int kcdrwd(void *foobar)
+{
+	struct pktcdvd_device *pd = foobar;
+	struct packet_data *pkt;
+	long min_sleep_time, residue;
 
 	set_user_nice(current, MIN_NICE);
-	set_मुक्तzable();
+	set_freezable();
 
-	क्रम (;;) अणु
-		DECLARE_WAITQUEUE(रुको, current);
+	for (;;) {
+		DECLARE_WAITQUEUE(wait, current);
 
 		/*
-		 * Wait until there is something to करो
+		 * Wait until there is something to do
 		 */
-		add_रुको_queue(&pd->wqueue, &रुको);
-		क्रम (;;) अणु
+		add_wait_queue(&pd->wqueue, &wait);
+		for (;;) {
 			set_current_state(TASK_INTERRUPTIBLE);
 
-			/* Check अगर we need to run pkt_handle_queue */
-			अगर (atomic_पढ़ो(&pd->scan_queue) > 0)
-				जाओ work_to_करो;
+			/* Check if we need to run pkt_handle_queue */
+			if (atomic_read(&pd->scan_queue) > 0)
+				goto work_to_do;
 
-			/* Check अगर we need to run the state machine क्रम some packet */
-			list_क्रम_each_entry(pkt, &pd->cdrw.pkt_active_list, list) अणु
-				अगर (atomic_पढ़ो(&pkt->run_sm) > 0)
-					जाओ work_to_करो;
-			पूर्ण
+			/* Check if we need to run the state machine for some packet */
+			list_for_each_entry(pkt, &pd->cdrw.pkt_active_list, list) {
+				if (atomic_read(&pkt->run_sm) > 0)
+					goto work_to_do;
+			}
 
-			/* Check अगर we need to process the iosched queues */
-			अगर (atomic_पढ़ो(&pd->iosched.attention) != 0)
-				जाओ work_to_करो;
+			/* Check if we need to process the iosched queues */
+			if (atomic_read(&pd->iosched.attention) != 0)
+				goto work_to_do;
 
 			/* Otherwise, go to sleep */
-			अगर (PACKET_DEBUG > 1) अणु
-				पूर्णांक states[PACKET_NUM_STATES];
+			if (PACKET_DEBUG > 1) {
+				int states[PACKET_NUM_STATES];
 				pkt_count_states(pd, states);
 				pkt_dbg(2, pd, "i:%d ow:%d rw:%d ww:%d rec:%d fin:%d\n",
 					states[0], states[1], states[2],
 					states[3], states[4], states[5]);
-			पूर्ण
+			}
 
-			min_sleep_समय = MAX_SCHEDULE_TIMEOUT;
-			list_क्रम_each_entry(pkt, &pd->cdrw.pkt_active_list, list) अणु
-				अगर (pkt->sleep_समय && pkt->sleep_समय < min_sleep_समय)
-					min_sleep_समय = pkt->sleep_समय;
-			पूर्ण
+			min_sleep_time = MAX_SCHEDULE_TIMEOUT;
+			list_for_each_entry(pkt, &pd->cdrw.pkt_active_list, list) {
+				if (pkt->sleep_time && pkt->sleep_time < min_sleep_time)
+					min_sleep_time = pkt->sleep_time;
+			}
 
 			pkt_dbg(2, pd, "sleeping\n");
-			residue = schedule_समयout(min_sleep_समय);
+			residue = schedule_timeout(min_sleep_time);
 			pkt_dbg(2, pd, "wake up\n");
 
-			/* make swsusp happy with our thपढ़ो */
-			try_to_मुक्तze();
+			/* make swsusp happy with our thread */
+			try_to_freeze();
 
-			list_क्रम_each_entry(pkt, &pd->cdrw.pkt_active_list, list) अणु
-				अगर (!pkt->sleep_समय)
-					जारी;
-				pkt->sleep_समय -= min_sleep_समय - residue;
-				अगर (pkt->sleep_समय <= 0) अणु
-					pkt->sleep_समय = 0;
+			list_for_each_entry(pkt, &pd->cdrw.pkt_active_list, list) {
+				if (!pkt->sleep_time)
+					continue;
+				pkt->sleep_time -= min_sleep_time - residue;
+				if (pkt->sleep_time <= 0) {
+					pkt->sleep_time = 0;
 					atomic_inc(&pkt->run_sm);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (kthपढ़ो_should_stop())
-				अवरोध;
-		पूर्ण
-work_to_करो:
+			if (kthread_should_stop())
+				break;
+		}
+work_to_do:
 		set_current_state(TASK_RUNNING);
-		हटाओ_रुको_queue(&pd->wqueue, &रुको);
+		remove_wait_queue(&pd->wqueue, &wait);
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
 		/*
-		 * अगर pkt_handle_queue वापसs true, we can queue
+		 * if pkt_handle_queue returns true, we can queue
 		 * another request.
 		 */
-		जबतक (pkt_handle_queue(pd))
+		while (pkt_handle_queue(pd))
 			;
 
 		/*
@@ -1489,75 +1488,75 @@ work_to_करो:
 		 * Handle iosched queues
 		 */
 		pkt_iosched_process_queue(pd);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pkt_prपूर्णांक_settings(काष्ठा pktcdvd_device *pd)
-अणु
+static void pkt_print_settings(struct pktcdvd_device *pd)
+{
 	pkt_info(pd, "%s packets, %u blocks, Mode-%c disc\n",
 		 pd->settings.fp ? "Fixed" : "Variable",
 		 pd->settings.size >> 2,
 		 pd->settings.block_mode == 8 ? '1' : '2');
-पूर्ण
+}
 
-अटल पूर्णांक pkt_mode_sense(काष्ठा pktcdvd_device *pd, काष्ठा packet_command *cgc, पूर्णांक page_code, पूर्णांक page_control)
-अणु
-	स_रखो(cgc->cmd, 0, माप(cgc->cmd));
+static int pkt_mode_sense(struct pktcdvd_device *pd, struct packet_command *cgc, int page_code, int page_control)
+{
+	memset(cgc->cmd, 0, sizeof(cgc->cmd));
 
 	cgc->cmd[0] = GPCMD_MODE_SENSE_10;
 	cgc->cmd[2] = page_code | (page_control << 6);
 	cgc->cmd[7] = cgc->buflen >> 8;
 	cgc->cmd[8] = cgc->buflen & 0xff;
 	cgc->data_direction = CGC_DATA_READ;
-	वापस pkt_generic_packet(pd, cgc);
-पूर्ण
+	return pkt_generic_packet(pd, cgc);
+}
 
-अटल पूर्णांक pkt_mode_select(काष्ठा pktcdvd_device *pd, काष्ठा packet_command *cgc)
-अणु
-	स_रखो(cgc->cmd, 0, माप(cgc->cmd));
-	स_रखो(cgc->buffer, 0, 2);
+static int pkt_mode_select(struct pktcdvd_device *pd, struct packet_command *cgc)
+{
+	memset(cgc->cmd, 0, sizeof(cgc->cmd));
+	memset(cgc->buffer, 0, 2);
 	cgc->cmd[0] = GPCMD_MODE_SELECT_10;
 	cgc->cmd[1] = 0x10;		/* PF */
 	cgc->cmd[7] = cgc->buflen >> 8;
 	cgc->cmd[8] = cgc->buflen & 0xff;
 	cgc->data_direction = CGC_DATA_WRITE;
-	वापस pkt_generic_packet(pd, cgc);
-पूर्ण
+	return pkt_generic_packet(pd, cgc);
+}
 
-अटल पूर्णांक pkt_get_disc_info(काष्ठा pktcdvd_device *pd, disc_inक्रमmation *di)
-अणु
-	काष्ठा packet_command cgc;
-	पूर्णांक ret;
+static int pkt_get_disc_info(struct pktcdvd_device *pd, disc_information *di)
+{
+	struct packet_command cgc;
+	int ret;
 
 	/* set up command and get the disc info */
-	init_cdrom_command(&cgc, di, माप(*di), CGC_DATA_READ);
+	init_cdrom_command(&cgc, di, sizeof(*di), CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_READ_DISC_INFO;
 	cgc.cmd[8] = cgc.buflen = 2;
 	cgc.quiet = 1;
 
 	ret = pkt_generic_packet(pd, &cgc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* not all drives have the same disc_info length, so requeue
 	 * packet with the length the drive tells us it can supply
 	 */
-	cgc.buflen = be16_to_cpu(di->disc_inक्रमmation_length) +
-		     माप(di->disc_inक्रमmation_length);
+	cgc.buflen = be16_to_cpu(di->disc_information_length) +
+		     sizeof(di->disc_information_length);
 
-	अगर (cgc.buflen > माप(disc_inक्रमmation))
-		cgc.buflen = माप(disc_inक्रमmation);
+	if (cgc.buflen > sizeof(disc_information))
+		cgc.buflen = sizeof(disc_information);
 
 	cgc.cmd[8] = cgc.buflen;
-	वापस pkt_generic_packet(pd, &cgc);
-पूर्ण
+	return pkt_generic_packet(pd, &cgc);
+}
 
-अटल पूर्णांक pkt_get_track_info(काष्ठा pktcdvd_device *pd, __u16 track, __u8 type, track_inक्रमmation *ti)
-अणु
-	काष्ठा packet_command cgc;
-	पूर्णांक ret;
+static int pkt_get_track_info(struct pktcdvd_device *pd, __u16 track, __u8 type, track_information *ti)
+{
+	struct packet_command cgc;
+	int ret;
 
 	init_cdrom_command(&cgc, ti, 8, CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_READ_TRACK_RZONE_INFO;
@@ -1568,85 +1567,85 @@ work_to_करो:
 	cgc.quiet = 1;
 
 	ret = pkt_generic_packet(pd, &cgc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	cgc.buflen = be16_to_cpu(ti->track_inक्रमmation_length) +
-		     माप(ti->track_inक्रमmation_length);
+	cgc.buflen = be16_to_cpu(ti->track_information_length) +
+		     sizeof(ti->track_information_length);
 
-	अगर (cgc.buflen > माप(track_inक्रमmation))
-		cgc.buflen = माप(track_inक्रमmation);
+	if (cgc.buflen > sizeof(track_information))
+		cgc.buflen = sizeof(track_information);
 
 	cgc.cmd[8] = cgc.buflen;
-	वापस pkt_generic_packet(pd, &cgc);
-पूर्ण
+	return pkt_generic_packet(pd, &cgc);
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_get_last_written(काष्ठा pktcdvd_device *pd,
-						दीर्घ *last_written)
-अणु
-	disc_inक्रमmation di;
-	track_inक्रमmation ti;
+static noinline_for_stack int pkt_get_last_written(struct pktcdvd_device *pd,
+						long *last_written)
+{
+	disc_information di;
+	track_information ti;
 	__u32 last_track;
-	पूर्णांक ret;
+	int ret;
 
 	ret = pkt_get_disc_info(pd, &di);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	last_track = (di.last_track_msb << 8) | di.last_track_lsb;
 	ret = pkt_get_track_info(pd, last_track, 1, &ti);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* अगर this track is blank, try the previous. */
-	अगर (ti.blank) अणु
+	/* if this track is blank, try the previous. */
+	if (ti.blank) {
 		last_track--;
 		ret = pkt_get_track_info(pd, last_track, 1, &ti);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	/* अगर last recorded field is valid, वापस it. */
-	अगर (ti.lra_v) अणु
+	/* if last recorded field is valid, return it. */
+	if (ti.lra_v) {
 		*last_written = be32_to_cpu(ti.last_rec_address);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* make it up instead */
 		*last_written = be32_to_cpu(ti.track_start) +
 				be32_to_cpu(ti.track_size);
-		अगर (ti.मुक्त_blocks)
-			*last_written -= (be32_to_cpu(ti.मुक्त_blocks) + 7);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ti.free_blocks)
+			*last_written -= (be32_to_cpu(ti.free_blocks) + 7);
+	}
+	return 0;
+}
 
 /*
- * ग_लिखो mode select package based on pd->settings
+ * write mode select package based on pd->settings
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_set_ग_लिखो_settings(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_command cgc;
-	काष्ठा scsi_sense_hdr sshdr;
-	ग_लिखो_param_page *wp;
-	अक्षर buffer[128];
-	पूर्णांक ret, size;
+static noinline_for_stack int pkt_set_write_settings(struct pktcdvd_device *pd)
+{
+	struct packet_command cgc;
+	struct scsi_sense_hdr sshdr;
+	write_param_page *wp;
+	char buffer[128];
+	int ret, size;
 
-	/* करोesn't apply to DVD+RW or DVD-RAM */
-	अगर ((pd->mmc3_profile == 0x1a) || (pd->mmc3_profile == 0x12))
-		वापस 0;
+	/* doesn't apply to DVD+RW or DVD-RAM */
+	if ((pd->mmc3_profile == 0x1a) || (pd->mmc3_profile == 0x12))
+		return 0;
 
-	स_रखो(buffer, 0, माप(buffer));
-	init_cdrom_command(&cgc, buffer, माप(*wp), CGC_DATA_READ);
+	memset(buffer, 0, sizeof(buffer));
+	init_cdrom_command(&cgc, buffer, sizeof(*wp), CGC_DATA_READ);
 	cgc.sshdr = &sshdr;
 	ret = pkt_mode_sense(pd, &cgc, GPMODE_WRITE_PARMS_PAGE, 0);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_dump_sense(pd, &cgc);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	size = 2 + ((buffer[0] << 8) | (buffer[1] & 0xff));
 	pd->mode_offset = (buffer[6] << 8) | (buffer[7] & 0xff);
-	अगर (size > माप(buffer))
-		size = माप(buffer);
+	if (size > sizeof(buffer))
+		size = sizeof(buffer);
 
 	/*
 	 * now get it all
@@ -1654,247 +1653,247 @@ work_to_करो:
 	init_cdrom_command(&cgc, buffer, size, CGC_DATA_READ);
 	cgc.sshdr = &sshdr;
 	ret = pkt_mode_sense(pd, &cgc, GPMODE_WRITE_PARMS_PAGE, 0);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_dump_sense(pd, &cgc);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * ग_लिखो page is offset header + block descriptor length
+	 * write page is offset header + block descriptor length
 	 */
-	wp = (ग_लिखो_param_page *) &buffer[माप(काष्ठा mode_page_header) + pd->mode_offset];
+	wp = (write_param_page *) &buffer[sizeof(struct mode_page_header) + pd->mode_offset];
 
 	wp->fp = pd->settings.fp;
 	wp->track_mode = pd->settings.track_mode;
-	wp->ग_लिखो_type = pd->settings.ग_लिखो_type;
+	wp->write_type = pd->settings.write_type;
 	wp->data_block_type = pd->settings.block_mode;
 
 	wp->multi_session = 0;
 
-#अगर_घोषित PACKET_USE_LS
+#ifdef PACKET_USE_LS
 	wp->link_size = 7;
 	wp->ls_v = 1;
-#पूर्ण_अगर
+#endif
 
-	अगर (wp->data_block_type == PACKET_BLOCK_MODE1) अणु
-		wp->session_क्रमmat = 0;
+	if (wp->data_block_type == PACKET_BLOCK_MODE1) {
+		wp->session_format = 0;
 		wp->subhdr2 = 0x20;
-	पूर्ण अन्यथा अगर (wp->data_block_type == PACKET_BLOCK_MODE2) अणु
-		wp->session_क्रमmat = 0x20;
+	} else if (wp->data_block_type == PACKET_BLOCK_MODE2) {
+		wp->session_format = 0x20;
 		wp->subhdr2 = 8;
-#अगर 0
+#if 0
 		wp->mcn[0] = 0x80;
-		स_नकल(&wp->mcn[1], PACKET_MCN, माप(wp->mcn) - 1);
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
+		memcpy(&wp->mcn[1], PACKET_MCN, sizeof(wp->mcn) - 1);
+#endif
+	} else {
 		/*
 		 * paranoia
 		 */
 		pkt_err(pd, "write mode wrong %d\n", wp->data_block_type);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	wp->packet_size = cpu_to_be32(pd->settings.size >> 2);
 
 	cgc.buflen = cgc.cmd[8] = size;
 	ret = pkt_mode_select(pd, &cgc);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_dump_sense(pd, &cgc);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pkt_prपूर्णांक_settings(pd);
-	वापस 0;
-पूर्ण
+	pkt_print_settings(pd);
+	return 0;
+}
 
 /*
- * 1 -- we can ग_लिखो to this track, 0 -- we can't
+ * 1 -- we can write to this track, 0 -- we can't
  */
-अटल पूर्णांक pkt_writable_track(काष्ठा pktcdvd_device *pd, track_inक्रमmation *ti)
-अणु
-	चयन (pd->mmc3_profile) अणु
-		हाल 0x1a: /* DVD+RW */
-		हाल 0x12: /* DVD-RAM */
+static int pkt_writable_track(struct pktcdvd_device *pd, track_information *ti)
+{
+	switch (pd->mmc3_profile) {
+		case 0x1a: /* DVD+RW */
+		case 0x12: /* DVD-RAM */
 			/* The track is always writable on DVD+RW/DVD-RAM */
-			वापस 1;
-		शेष:
-			अवरोध;
-	पूर्ण
+			return 1;
+		default:
+			break;
+	}
 
-	अगर (!ti->packet || !ti->fp)
-		वापस 0;
+	if (!ti->packet || !ti->fp)
+		return 0;
 
 	/*
 	 * "good" settings as per Mt Fuji.
 	 */
-	अगर (ti->rt == 0 && ti->blank == 0)
-		वापस 1;
+	if (ti->rt == 0 && ti->blank == 0)
+		return 1;
 
-	अगर (ti->rt == 0 && ti->blank == 1)
-		वापस 1;
+	if (ti->rt == 0 && ti->blank == 1)
+		return 1;
 
-	अगर (ti->rt == 1 && ti->blank == 0)
-		वापस 1;
+	if (ti->rt == 1 && ti->blank == 0)
+		return 1;
 
 	pkt_err(pd, "bad state %d-%d-%d\n", ti->rt, ti->blank, ti->packet);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * 1 -- we can ग_लिखो to this disc, 0 -- we can't
+ * 1 -- we can write to this disc, 0 -- we can't
  */
-अटल पूर्णांक pkt_writable_disc(काष्ठा pktcdvd_device *pd, disc_inक्रमmation *di)
-अणु
-	चयन (pd->mmc3_profile) अणु
-		हाल 0x0a: /* CD-RW */
-		हाल 0xffff: /* MMC3 not supported */
-			अवरोध;
-		हाल 0x1a: /* DVD+RW */
-		हाल 0x13: /* DVD-RW */
-		हाल 0x12: /* DVD-RAM */
-			वापस 1;
-		शेष:
+static int pkt_writable_disc(struct pktcdvd_device *pd, disc_information *di)
+{
+	switch (pd->mmc3_profile) {
+		case 0x0a: /* CD-RW */
+		case 0xffff: /* MMC3 not supported */
+			break;
+		case 0x1a: /* DVD+RW */
+		case 0x13: /* DVD-RW */
+		case 0x12: /* DVD-RAM */
+			return 1;
+		default:
 			pkt_dbg(2, pd, "Wrong disc profile (%x)\n",
 				pd->mmc3_profile);
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
 	/*
-	 * क्रम disc type 0xff we should probably reserve a new track.
+	 * for disc type 0xff we should probably reserve a new track.
 	 * but i'm not sure, should we leave this to user apps? probably.
 	 */
-	अगर (di->disc_type == 0xff) अणु
+	if (di->disc_type == 0xff) {
 		pkt_notice(pd, "unknown disc - no track?\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (di->disc_type != 0x20 && di->disc_type != 0) अणु
+	if (di->disc_type != 0x20 && di->disc_type != 0) {
 		pkt_err(pd, "wrong disc type (%x)\n", di->disc_type);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (di->erasable == 0) अणु
+	if (di->erasable == 0) {
 		pkt_notice(pd, "disc not erasable\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (di->border_status == PACKET_SESSION_RESERVED) अणु
+	if (di->border_status == PACKET_SESSION_RESERVED) {
 		pkt_err(pd, "can't write to last track (reserved)\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_probe_settings(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_command cgc;
-	अचिन्हित अक्षर buf[12];
-	disc_inक्रमmation di;
-	track_inक्रमmation ti;
-	पूर्णांक ret, track;
+static noinline_for_stack int pkt_probe_settings(struct pktcdvd_device *pd)
+{
+	struct packet_command cgc;
+	unsigned char buf[12];
+	disc_information di;
+	track_information ti;
+	int ret, track;
 
-	init_cdrom_command(&cgc, buf, माप(buf), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buf, sizeof(buf), CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_GET_CONFIGURATION;
 	cgc.cmd[8] = 8;
 	ret = pkt_generic_packet(pd, &cgc);
 	pd->mmc3_profile = ret ? 0xffff : buf[6] << 8 | buf[7];
 
-	स_रखो(&di, 0, माप(disc_inक्रमmation));
-	स_रखो(&ti, 0, माप(track_inक्रमmation));
+	memset(&di, 0, sizeof(disc_information));
+	memset(&ti, 0, sizeof(track_information));
 
 	ret = pkt_get_disc_info(pd, &di);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_err(pd, "failed get_disc\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!pkt_writable_disc(pd, &di))
-		वापस -EROFS;
+	if (!pkt_writable_disc(pd, &di))
+		return -EROFS;
 
 	pd->type = di.erasable ? PACKET_CDRW : PACKET_CDR;
 
 	track = 1; /* (di.last_track_msb << 8) | di.last_track_lsb; */
 	ret = pkt_get_track_info(pd, track, 1, &ti);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_err(pd, "failed get_track\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!pkt_writable_track(pd, &ti)) अणु
+	if (!pkt_writable_track(pd, &ti)) {
 		pkt_err(pd, "can't write to this track\n");
-		वापस -EROFS;
-	पूर्ण
+		return -EROFS;
+	}
 
 	/*
 	 * we keep packet size in 512 byte units, makes it easier to
 	 * deal with request calculations.
 	 */
 	pd->settings.size = be32_to_cpu(ti.fixed_packet_size) << 2;
-	अगर (pd->settings.size == 0) अणु
+	if (pd->settings.size == 0) {
 		pkt_notice(pd, "detected zero packet size!\n");
-		वापस -ENXIO;
-	पूर्ण
-	अगर (pd->settings.size > PACKET_MAX_SECTORS) अणु
+		return -ENXIO;
+	}
+	if (pd->settings.size > PACKET_MAX_SECTORS) {
 		pkt_err(pd, "packet size is too big\n");
-		वापस -EROFS;
-	पूर्ण
+		return -EROFS;
+	}
 	pd->settings.fp = ti.fp;
 	pd->offset = (be32_to_cpu(ti.track_start) << 2) & (pd->settings.size - 1);
 
-	अगर (ti.nwa_v) अणु
+	if (ti.nwa_v) {
 		pd->nwa = be32_to_cpu(ti.next_writable);
 		set_bit(PACKET_NWA_VALID, &pd->flags);
-	पूर्ण
+	}
 
 	/*
 	 * in theory we could use lra on -RW media as well and just zero
 	 * blocks that haven't been written yet, but in practice that
-	 * is just a no-go. we'll use that क्रम -R, naturally.
+	 * is just a no-go. we'll use that for -R, naturally.
 	 */
-	अगर (ti.lra_v) अणु
+	if (ti.lra_v) {
 		pd->lra = be32_to_cpu(ti.last_rec_address);
 		set_bit(PACKET_LRA_VALID, &pd->flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		pd->lra = 0xffffffff;
 		set_bit(PACKET_LRA_VALID, &pd->flags);
-	पूर्ण
+	}
 
 	/*
-	 * fine क्रम now
+	 * fine for now
 	 */
 	pd->settings.link_loss = 7;
-	pd->settings.ग_लिखो_type = 0;	/* packet */
+	pd->settings.write_type = 0;	/* packet */
 	pd->settings.track_mode = ti.track_mode;
 
 	/*
 	 * mode1 or mode2 disc
 	 */
-	चयन (ti.data_mode) अणु
-		हाल PACKET_MODE1:
+	switch (ti.data_mode) {
+		case PACKET_MODE1:
 			pd->settings.block_mode = PACKET_BLOCK_MODE1;
-			अवरोध;
-		हाल PACKET_MODE2:
+			break;
+		case PACKET_MODE2:
 			pd->settings.block_mode = PACKET_BLOCK_MODE2;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pkt_err(pd, "unknown data mode\n");
-			वापस -EROFS;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EROFS;
+	}
+	return 0;
+}
 
 /*
- * enable/disable ग_लिखो caching on drive
+ * enable/disable write caching on drive
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_ग_लिखो_caching(काष्ठा pktcdvd_device *pd,
-						पूर्णांक set)
-अणु
-	काष्ठा packet_command cgc;
-	काष्ठा scsi_sense_hdr sshdr;
-	अचिन्हित अक्षर buf[64];
-	पूर्णांक ret;
+static noinline_for_stack int pkt_write_caching(struct pktcdvd_device *pd,
+						int set)
+{
+	struct packet_command cgc;
+	struct scsi_sense_hdr sshdr;
+	unsigned char buf[64];
+	int ret;
 
-	init_cdrom_command(&cgc, buf, माप(buf), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buf, sizeof(buf), CGC_DATA_READ);
 	cgc.sshdr = &sshdr;
 	cgc.buflen = pd->mode_offset + 12;
 
@@ -1904,103 +1903,103 @@ work_to_करो:
 	cgc.quiet = 1;
 
 	ret = pkt_mode_sense(pd, &cgc, GPMODE_WCACHING_PAGE, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	buf[pd->mode_offset + 10] |= (!!set << 2);
 
 	cgc.buflen = cgc.cmd[8] = 2 + ((buf[0] << 8) | (buf[1] & 0xff));
 	ret = pkt_mode_select(pd, &cgc);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_err(pd, "write caching control failed\n");
 		pkt_dump_sense(pd, &cgc);
-	पूर्ण अन्यथा अगर (!ret && set)
+	} else if (!ret && set)
 		pkt_notice(pd, "enabled write caching\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pkt_lock_करोor(काष्ठा pktcdvd_device *pd, पूर्णांक lockflag)
-अणु
-	काष्ठा packet_command cgc;
+static int pkt_lock_door(struct pktcdvd_device *pd, int lockflag)
+{
+	struct packet_command cgc;
 
-	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_PREVENT_ALLOW_MEDIUM_REMOVAL;
 	cgc.cmd[4] = lockflag ? 1 : 0;
-	वापस pkt_generic_packet(pd, &cgc);
-पूर्ण
+	return pkt_generic_packet(pd, &cgc);
+}
 
 /*
- * Returns drive maximum ग_लिखो speed
+ * Returns drive maximum write speed
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_get_max_speed(काष्ठा pktcdvd_device *pd,
-						अचिन्हित *ग_लिखो_speed)
-अणु
-	काष्ठा packet_command cgc;
-	काष्ठा scsi_sense_hdr sshdr;
-	अचिन्हित अक्षर buf[256+18];
-	अचिन्हित अक्षर *cap_buf;
-	पूर्णांक ret, offset;
+static noinline_for_stack int pkt_get_max_speed(struct pktcdvd_device *pd,
+						unsigned *write_speed)
+{
+	struct packet_command cgc;
+	struct scsi_sense_hdr sshdr;
+	unsigned char buf[256+18];
+	unsigned char *cap_buf;
+	int ret, offset;
 
-	cap_buf = &buf[माप(काष्ठा mode_page_header) + pd->mode_offset];
-	init_cdrom_command(&cgc, buf, माप(buf), CGC_DATA_UNKNOWN);
+	cap_buf = &buf[sizeof(struct mode_page_header) + pd->mode_offset];
+	init_cdrom_command(&cgc, buf, sizeof(buf), CGC_DATA_UNKNOWN);
 	cgc.sshdr = &sshdr;
 
 	ret = pkt_mode_sense(pd, &cgc, GPMODE_CAPABILITIES_PAGE, 0);
-	अगर (ret) अणु
+	if (ret) {
 		cgc.buflen = pd->mode_offset + cap_buf[1] + 2 +
-			     माप(काष्ठा mode_page_header);
+			     sizeof(struct mode_page_header);
 		ret = pkt_mode_sense(pd, &cgc, GPMODE_CAPABILITIES_PAGE, 0);
-		अगर (ret) अणु
+		if (ret) {
 			pkt_dump_sense(pd, &cgc);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	offset = 20;			    /* Obsoleted field, used by older drives */
-	अगर (cap_buf[1] >= 28)
-		offset = 28;		    /* Current ग_लिखो speed selected */
-	अगर (cap_buf[1] >= 30) अणु
+	if (cap_buf[1] >= 28)
+		offset = 28;		    /* Current write speed selected */
+	if (cap_buf[1] >= 30) {
 		/* If the drive reports at least one "Logical Unit Write
-		 * Speed Perक्रमmance Descriptor Block", use the inक्रमmation
+		 * Speed Performance Descriptor Block", use the information
 		 * in the first block. (contains the highest speed)
 		 */
-		पूर्णांक num_spdb = (cap_buf[30] << 8) + cap_buf[31];
-		अगर (num_spdb > 0)
+		int num_spdb = (cap_buf[30] << 8) + cap_buf[31];
+		if (num_spdb > 0)
 			offset = 34;
-	पूर्ण
+	}
 
-	*ग_लिखो_speed = (cap_buf[offset] << 8) | cap_buf[offset + 1];
-	वापस 0;
-पूर्ण
+	*write_speed = (cap_buf[offset] << 8) | cap_buf[offset + 1];
+	return 0;
+}
 
-/* These tables from cdrecord - I करोn't have orange book */
+/* These tables from cdrecord - I don't have orange book */
 /* standard speed CD-RW (1-4x) */
-अटल अक्षर clv_to_speed[16] = अणु
+static char clv_to_speed[16] = {
 	/* 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
 	   0, 2, 4, 6, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-पूर्ण;
+};
 /* high speed CD-RW (-10x) */
-अटल अक्षर hs_clv_to_speed[16] = अणु
+static char hs_clv_to_speed[16] = {
 	/* 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
 	   0, 2, 4, 6, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-पूर्ण;
+};
 /* ultra high speed CD-RW */
-अटल अक्षर us_clv_to_speed[16] = अणु
+static char us_clv_to_speed[16] = {
 	/* 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
 	   0, 2, 4, 8, 0, 0,16, 0,24,32,40,48, 0, 0, 0, 0
-पूर्ण;
+};
 
 /*
- * पढ़ोs the maximum media speed from ATIP
+ * reads the maximum media speed from ATIP
  */
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_media_speed(काष्ठा pktcdvd_device *pd,
-						अचिन्हित *speed)
-अणु
-	काष्ठा packet_command cgc;
-	काष्ठा scsi_sense_hdr sshdr;
-	अचिन्हित अक्षर buf[64];
-	अचिन्हित पूर्णांक size, st, sp;
-	पूर्णांक ret;
+static noinline_for_stack int pkt_media_speed(struct pktcdvd_device *pd,
+						unsigned *speed)
+{
+	struct packet_command cgc;
+	struct scsi_sense_hdr sshdr;
+	unsigned char buf[64];
+	unsigned int size, st, sp;
+	int ret;
 
 	init_cdrom_command(&cgc, buf, 2, CGC_DATA_READ);
 	cgc.sshdr = &sshdr;
@@ -2009,13 +2008,13 @@ work_to_करो:
 	cgc.cmd[2] = 4; /* READ ATIP */
 	cgc.cmd[8] = 2;
 	ret = pkt_generic_packet(pd, &cgc);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_dump_sense(pd, &cgc);
-		वापस ret;
-	पूर्ण
-	size = ((अचिन्हित पूर्णांक) buf[0]<<8) + buf[1] + 2;
-	अगर (size > माप(buf))
-		size = माप(buf);
+		return ret;
+	}
+	size = ((unsigned int) buf[0]<<8) + buf[1] + 2;
+	if (size > sizeof(buf))
+		size = sizeof(buf);
 
 	init_cdrom_command(&cgc, buf, size, CGC_DATA_READ);
 	cgc.sshdr = &sshdr;
@@ -2024,308 +2023,308 @@ work_to_करो:
 	cgc.cmd[2] = 4;
 	cgc.cmd[8] = size;
 	ret = pkt_generic_packet(pd, &cgc);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_dump_sense(pd, &cgc);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (!(buf[6] & 0x40)) अणु
+	if (!(buf[6] & 0x40)) {
 		pkt_notice(pd, "disc type is not CD-RW\n");
-		वापस 1;
-	पूर्ण
-	अगर (!(buf[6] & 0x4)) अणु
+		return 1;
+	}
+	if (!(buf[6] & 0x4)) {
 		pkt_notice(pd, "A1 values on media are not valid, maybe not CDRW?\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	st = (buf[6] >> 3) & 0x7; /* disc sub-type */
 
 	sp = buf[16] & 0xf; /* max speed from ATIP A1 field */
 
 	/* Info from cdrecord */
-	चयन (st) अणु
-		हाल 0: /* standard speed */
+	switch (st) {
+		case 0: /* standard speed */
 			*speed = clv_to_speed[sp];
-			अवरोध;
-		हाल 1: /* high speed */
+			break;
+		case 1: /* high speed */
 			*speed = hs_clv_to_speed[sp];
-			अवरोध;
-		हाल 2: /* ultra high speed */
+			break;
+		case 2: /* ultra high speed */
 			*speed = us_clv_to_speed[sp];
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pkt_notice(pd, "unknown disc sub-type %d\n", st);
-			वापस 1;
-	पूर्ण
-	अगर (*speed) अणु
+			return 1;
+	}
+	if (*speed) {
 		pkt_info(pd, "maximum media speed: %d\n", *speed);
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		pkt_notice(pd, "unknown speed %d for sub-type %d\n", sp, st);
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 1;
+	}
+}
 
-अटल noअंतरभूत_क्रम_stack पूर्णांक pkt_perक्रमm_opc(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा packet_command cgc;
-	काष्ठा scsi_sense_hdr sshdr;
-	पूर्णांक ret;
+static noinline_for_stack int pkt_perform_opc(struct pktcdvd_device *pd)
+{
+	struct packet_command cgc;
+	struct scsi_sense_hdr sshdr;
+	int ret;
 
 	pkt_dbg(2, pd, "Performing OPC\n");
 
-	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
 	cgc.sshdr = &sshdr;
-	cgc.समयout = 60*HZ;
+	cgc.timeout = 60*HZ;
 	cgc.cmd[0] = GPCMD_SEND_OPC;
 	cgc.cmd[1] = 1;
 	ret = pkt_generic_packet(pd, &cgc);
-	अगर (ret)
+	if (ret)
 		pkt_dump_sense(pd, &cgc);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pkt_खोलो_ग_लिखो(काष्ठा pktcdvd_device *pd)
-अणु
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक ग_लिखो_speed, media_ग_लिखो_speed, पढ़ो_speed;
+static int pkt_open_write(struct pktcdvd_device *pd)
+{
+	int ret;
+	unsigned int write_speed, media_write_speed, read_speed;
 
 	ret = pkt_probe_settings(pd);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_dbg(2, pd, "failed probe\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = pkt_set_ग_लिखो_settings(pd);
-	अगर (ret) अणु
+	ret = pkt_set_write_settings(pd);
+	if (ret) {
 		pkt_dbg(1, pd, "failed saving write settings\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	pkt_ग_लिखो_caching(pd, USE_WCACHING);
+	pkt_write_caching(pd, USE_WCACHING);
 
-	ret = pkt_get_max_speed(pd, &ग_लिखो_speed);
-	अगर (ret)
-		ग_लिखो_speed = 16 * 177;
-	चयन (pd->mmc3_profile) अणु
-		हाल 0x13: /* DVD-RW */
-		हाल 0x1a: /* DVD+RW */
-		हाल 0x12: /* DVD-RAM */
-			pkt_dbg(1, pd, "write speed %ukB/s\n", ग_लिखो_speed);
-			अवरोध;
-		शेष:
-			ret = pkt_media_speed(pd, &media_ग_लिखो_speed);
-			अगर (ret)
-				media_ग_लिखो_speed = 16;
-			ग_लिखो_speed = min(ग_लिखो_speed, media_ग_लिखो_speed * 177);
-			pkt_dbg(1, pd, "write speed %ux\n", ग_लिखो_speed / 176);
-			अवरोध;
-	पूर्ण
-	पढ़ो_speed = ग_लिखो_speed;
+	ret = pkt_get_max_speed(pd, &write_speed);
+	if (ret)
+		write_speed = 16 * 177;
+	switch (pd->mmc3_profile) {
+		case 0x13: /* DVD-RW */
+		case 0x1a: /* DVD+RW */
+		case 0x12: /* DVD-RAM */
+			pkt_dbg(1, pd, "write speed %ukB/s\n", write_speed);
+			break;
+		default:
+			ret = pkt_media_speed(pd, &media_write_speed);
+			if (ret)
+				media_write_speed = 16;
+			write_speed = min(write_speed, media_write_speed * 177);
+			pkt_dbg(1, pd, "write speed %ux\n", write_speed / 176);
+			break;
+	}
+	read_speed = write_speed;
 
-	ret = pkt_set_speed(pd, ग_लिखो_speed, पढ़ो_speed);
-	अगर (ret) अणु
+	ret = pkt_set_speed(pd, write_speed, read_speed);
+	if (ret) {
 		pkt_dbg(1, pd, "couldn't set write speed\n");
-		वापस -EIO;
-	पूर्ण
-	pd->ग_लिखो_speed = ग_लिखो_speed;
-	pd->पढ़ो_speed = पढ़ो_speed;
+		return -EIO;
+	}
+	pd->write_speed = write_speed;
+	pd->read_speed = read_speed;
 
-	ret = pkt_perक्रमm_opc(pd);
-	अगर (ret) अणु
+	ret = pkt_perform_opc(pd);
+	if (ret) {
 		pkt_dbg(1, pd, "Optimum Power Calibration failed\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * called at खोलो समय.
+ * called at open time.
  */
-अटल पूर्णांक pkt_खोलो_dev(काष्ठा pktcdvd_device *pd, भ_शेषe_t ग_लिखो)
-अणु
-	पूर्णांक ret;
-	दीर्घ lba;
-	काष्ठा request_queue *q;
-	काष्ठा block_device *bdev;
+static int pkt_open_dev(struct pktcdvd_device *pd, fmode_t write)
+{
+	int ret;
+	long lba;
+	struct request_queue *q;
+	struct block_device *bdev;
 
 	/*
-	 * We need to re-खोलो the cdrom device without O_NONBLOCK to be able
-	 * to पढ़ो/ग_लिखो from/to it. It is alपढ़ोy खोलोed in O_NONBLOCK mode
-	 * so खोलो should not fail.
+	 * We need to re-open the cdrom device without O_NONBLOCK to be able
+	 * to read/write from/to it. It is already opened in O_NONBLOCK mode
+	 * so open should not fail.
 	 */
 	bdev = blkdev_get_by_dev(pd->bdev->bd_dev, FMODE_READ | FMODE_EXCL, pd);
-	अगर (IS_ERR(bdev)) अणु
+	if (IS_ERR(bdev)) {
 		ret = PTR_ERR(bdev);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = pkt_get_last_written(pd, &lba);
-	अगर (ret) अणु
+	if (ret) {
 		pkt_err(pd, "pkt_get_last_written failed\n");
-		जाओ out_putdev;
-	पूर्ण
+		goto out_putdev;
+	}
 
 	set_capacity(pd->disk, lba << 2);
-	set_capacity_and_notअगरy(pd->bdev->bd_disk, lba << 2);
+	set_capacity_and_notify(pd->bdev->bd_disk, lba << 2);
 
 	q = bdev_get_queue(pd->bdev);
-	अगर (ग_लिखो) अणु
-		ret = pkt_खोलो_ग_लिखो(pd);
-		अगर (ret)
-			जाओ out_putdev;
+	if (write) {
+		ret = pkt_open_write(pd);
+		if (ret)
+			goto out_putdev;
 		/*
-		 * Some CDRW drives can not handle ग_लिखोs larger than one packet,
-		 * even अगर the size is a multiple of the packet size.
+		 * Some CDRW drives can not handle writes larger than one packet,
+		 * even if the size is a multiple of the packet size.
 		 */
 		blk_queue_max_hw_sectors(q, pd->settings.size);
 		set_bit(PACKET_WRITABLE, &pd->flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		pkt_set_speed(pd, MAX_SPEED, MAX_SPEED);
 		clear_bit(PACKET_WRITABLE, &pd->flags);
-	पूर्ण
+	}
 
 	ret = pkt_set_segment_merging(pd, q);
-	अगर (ret)
-		जाओ out_putdev;
+	if (ret)
+		goto out_putdev;
 
-	अगर (ग_लिखो) अणु
-		अगर (!pkt_grow_pktlist(pd, CONFIG_CDROM_PKTCDVD_BUFFERS)) अणु
+	if (write) {
+		if (!pkt_grow_pktlist(pd, CONFIG_CDROM_PKTCDVD_BUFFERS)) {
 			pkt_err(pd, "not enough memory for buffers\n");
 			ret = -ENOMEM;
-			जाओ out_putdev;
-		पूर्ण
+			goto out_putdev;
+		}
 		pkt_info(pd, "%lukB available on disc\n", lba << 1);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out_putdev:
 	blkdev_put(bdev, FMODE_READ | FMODE_EXCL);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * called when the device is बंदd. makes sure that the device flushes
- * the पूर्णांकernal cache beक्रमe we बंद.
+ * called when the device is closed. makes sure that the device flushes
+ * the internal cache before we close.
  */
-अटल व्योम pkt_release_dev(काष्ठा pktcdvd_device *pd, पूर्णांक flush)
-अणु
-	अगर (flush && pkt_flush_cache(pd))
+static void pkt_release_dev(struct pktcdvd_device *pd, int flush)
+{
+	if (flush && pkt_flush_cache(pd))
 		pkt_dbg(1, pd, "not flushing cache\n");
 
-	pkt_lock_करोor(pd, 0);
+	pkt_lock_door(pd, 0);
 
 	pkt_set_speed(pd, MAX_SPEED, MAX_SPEED);
 	blkdev_put(pd->bdev, FMODE_READ | FMODE_EXCL);
 
 	pkt_shrink_pktlist(pd);
-पूर्ण
+}
 
-अटल काष्ठा pktcdvd_device *pkt_find_dev_from_minor(अचिन्हित पूर्णांक dev_minor)
-अणु
-	अगर (dev_minor >= MAX_WRITERS)
-		वापस शून्य;
+static struct pktcdvd_device *pkt_find_dev_from_minor(unsigned int dev_minor)
+{
+	if (dev_minor >= MAX_WRITERS)
+		return NULL;
 
 	dev_minor = array_index_nospec(dev_minor, MAX_WRITERS);
-	वापस pkt_devs[dev_minor];
-पूर्ण
+	return pkt_devs[dev_minor];
+}
 
-अटल पूर्णांक pkt_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा pktcdvd_device *pd = शून्य;
-	पूर्णांक ret;
+static int pkt_open(struct block_device *bdev, fmode_t mode)
+{
+	struct pktcdvd_device *pd = NULL;
+	int ret;
 
 	mutex_lock(&pktcdvd_mutex);
 	mutex_lock(&ctl_mutex);
 	pd = pkt_find_dev_from_minor(MINOR(bdev->bd_dev));
-	अगर (!pd) अणु
+	if (!pd) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	BUG_ON(pd->refcnt < 0);
 
 	pd->refcnt++;
-	अगर (pd->refcnt > 1) अणु
-		अगर ((mode & FMODE_WRITE) &&
-		    !test_bit(PACKET_WRITABLE, &pd->flags)) अणु
+	if (pd->refcnt > 1) {
+		if ((mode & FMODE_WRITE) &&
+		    !test_bit(PACKET_WRITABLE, &pd->flags)) {
 			ret = -EBUSY;
-			जाओ out_dec;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ret = pkt_खोलो_dev(pd, mode & FMODE_WRITE);
-		अगर (ret)
-			जाओ out_dec;
+			goto out_dec;
+		}
+	} else {
+		ret = pkt_open_dev(pd, mode & FMODE_WRITE);
+		if (ret)
+			goto out_dec;
 		/*
 		 * needed here as well, since ext2 (among others) may change
-		 * the blocksize at mount समय
+		 * the blocksize at mount time
 		 */
 		set_blocksize(bdev, CD_FRAMESIZE);
-	पूर्ण
+	}
 
 	mutex_unlock(&ctl_mutex);
 	mutex_unlock(&pktcdvd_mutex);
-	वापस 0;
+	return 0;
 
 out_dec:
 	pd->refcnt--;
 out:
 	mutex_unlock(&ctl_mutex);
 	mutex_unlock(&pktcdvd_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pkt_बंद(काष्ठा gendisk *disk, भ_शेषe_t mode)
-अणु
-	काष्ठा pktcdvd_device *pd = disk->निजी_data;
+static void pkt_close(struct gendisk *disk, fmode_t mode)
+{
+	struct pktcdvd_device *pd = disk->private_data;
 
 	mutex_lock(&pktcdvd_mutex);
 	mutex_lock(&ctl_mutex);
 	pd->refcnt--;
 	BUG_ON(pd->refcnt < 0);
-	अगर (pd->refcnt == 0) अणु
-		पूर्णांक flush = test_bit(PACKET_WRITABLE, &pd->flags);
+	if (pd->refcnt == 0) {
+		int flush = test_bit(PACKET_WRITABLE, &pd->flags);
 		pkt_release_dev(pd, flush);
-	पूर्ण
+	}
 	mutex_unlock(&ctl_mutex);
 	mutex_unlock(&pktcdvd_mutex);
-पूर्ण
+}
 
 
-अटल व्योम pkt_end_io_पढ़ो_cloned(काष्ठा bio *bio)
-अणु
-	काष्ठा packet_stacked_data *psd = bio->bi_निजी;
-	काष्ठा pktcdvd_device *pd = psd->pd;
+static void pkt_end_io_read_cloned(struct bio *bio)
+{
+	struct packet_stacked_data *psd = bio->bi_private;
+	struct pktcdvd_device *pd = psd->pd;
 
 	psd->bio->bi_status = bio->bi_status;
 	bio_put(bio);
 	bio_endio(psd->bio);
-	mempool_मुक्त(psd, &psd_pool);
+	mempool_free(psd, &psd_pool);
 	pkt_bio_finished(pd);
-पूर्ण
+}
 
-अटल व्योम pkt_make_request_पढ़ो(काष्ठा pktcdvd_device *pd, काष्ठा bio *bio)
-अणु
-	काष्ठा bio *cloned_bio = bio_clone_fast(bio, GFP_NOIO, &pkt_bio_set);
-	काष्ठा packet_stacked_data *psd = mempool_alloc(&psd_pool, GFP_NOIO);
+static void pkt_make_request_read(struct pktcdvd_device *pd, struct bio *bio)
+{
+	struct bio *cloned_bio = bio_clone_fast(bio, GFP_NOIO, &pkt_bio_set);
+	struct packet_stacked_data *psd = mempool_alloc(&psd_pool, GFP_NOIO);
 
 	psd->pd = pd;
 	psd->bio = bio;
 	bio_set_dev(cloned_bio, pd->bdev);
-	cloned_bio->bi_निजी = psd;
-	cloned_bio->bi_end_io = pkt_end_io_पढ़ो_cloned;
+	cloned_bio->bi_private = psd;
+	cloned_bio->bi_end_io = pkt_end_io_read_cloned;
 	pd->stats.secs_r += bio_sectors(bio);
 	pkt_queue_bio(pd, cloned_bio);
-पूर्ण
+}
 
-अटल व्योम pkt_make_request_ग_लिखो(काष्ठा request_queue *q, काष्ठा bio *bio)
-अणु
-	काष्ठा pktcdvd_device *pd = q->queuedata;
+static void pkt_make_request_write(struct request_queue *q, struct bio *bio)
+{
+	struct pktcdvd_device *pd = q->queuedata;
 	sector_t zone;
-	काष्ठा packet_data *pkt;
-	पूर्णांक was_empty, blocked_bio;
-	काष्ठा pkt_rb_node *node;
+	struct packet_data *pkt;
+	int was_empty, blocked_bio;
+	struct pkt_rb_node *node;
 
 	zone = get_zone(bio->bi_iter.bi_sector, pd);
 
@@ -2335,45 +2334,45 @@ out:
 	 */
 	spin_lock(&pd->cdrw.active_list_lock);
 	blocked_bio = 0;
-	list_क्रम_each_entry(pkt, &pd->cdrw.pkt_active_list, list) अणु
-		अगर (pkt->sector == zone) अणु
+	list_for_each_entry(pkt, &pd->cdrw.pkt_active_list, list) {
+		if (pkt->sector == zone) {
 			spin_lock(&pkt->lock);
-			अगर ((pkt->state == PACKET_WAITING_STATE) ||
-			    (pkt->state == PACKET_READ_WAIT_STATE)) अणु
+			if ((pkt->state == PACKET_WAITING_STATE) ||
+			    (pkt->state == PACKET_READ_WAIT_STATE)) {
 				bio_list_add(&pkt->orig_bios, bio);
-				pkt->ग_लिखो_size +=
+				pkt->write_size +=
 					bio->bi_iter.bi_size / CD_FRAMESIZE;
-				अगर ((pkt->ग_लिखो_size >= pkt->frames) &&
-				    (pkt->state == PACKET_WAITING_STATE)) अणु
+				if ((pkt->write_size >= pkt->frames) &&
+				    (pkt->state == PACKET_WAITING_STATE)) {
 					atomic_inc(&pkt->run_sm);
 					wake_up(&pd->wqueue);
-				पूर्ण
+				}
 				spin_unlock(&pkt->lock);
 				spin_unlock(&pd->cdrw.active_list_lock);
-				वापस;
-			पूर्ण अन्यथा अणु
+				return;
+			} else {
 				blocked_bio = 1;
-			पूर्ण
+			}
 			spin_unlock(&pkt->lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&pd->cdrw.active_list_lock);
 
  	/*
-	 * Test अगर there is enough room left in the bio work queue
+	 * Test if there is enough room left in the bio work queue
 	 * (queue size >= congestion on mark).
-	 * If not, रुको till the work queue size is below the congestion off mark.
+	 * If not, wait till the work queue size is below the congestion off mark.
 	 */
 	spin_lock(&pd->lock);
-	अगर (pd->ग_लिखो_congestion_on > 0
-	    && pd->bio_queue_size >= pd->ग_लिखो_congestion_on) अणु
+	if (pd->write_congestion_on > 0
+	    && pd->bio_queue_size >= pd->write_congestion_on) {
 		set_bdi_congested(q->backing_dev_info, BLK_RW_ASYNC);
-		करो अणु
+		do {
 			spin_unlock(&pd->lock);
-			congestion_रुको(BLK_RW_ASYNC, HZ);
+			congestion_wait(BLK_RW_ASYNC, HZ);
 			spin_lock(&pd->lock);
-		पूर्ण जबतक(pd->bio_queue_size > pd->ग_लिखो_congestion_off);
-	पूर्ण
+		} while(pd->bio_queue_size > pd->write_congestion_off);
+	}
 	spin_unlock(&pd->lock);
 
 	/*
@@ -2388,187 +2387,187 @@ out:
 	spin_unlock(&pd->lock);
 
 	/*
-	 * Wake up the worker thपढ़ो.
+	 * Wake up the worker thread.
 	 */
 	atomic_set(&pd->scan_queue, 1);
-	अगर (was_empty) अणु
-		/* This wake_up is required क्रम correct operation */
+	if (was_empty) {
+		/* This wake_up is required for correct operation */
 		wake_up(&pd->wqueue);
-	पूर्ण अन्यथा अगर (!list_empty(&pd->cdrw.pkt_मुक्त_list) && !blocked_bio) अणु
+	} else if (!list_empty(&pd->cdrw.pkt_free_list) && !blocked_bio) {
 		/*
-		 * This wake up is not required क्रम correct operation,
-		 * but improves perक्रमmance in some हालs.
+		 * This wake up is not required for correct operation,
+		 * but improves performance in some cases.
 		 */
 		wake_up(&pd->wqueue);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल blk_qc_t pkt_submit_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा pktcdvd_device *pd;
-	अक्षर b[BDEVNAME_SIZE];
-	काष्ठा bio *split;
+static blk_qc_t pkt_submit_bio(struct bio *bio)
+{
+	struct pktcdvd_device *pd;
+	char b[BDEVNAME_SIZE];
+	struct bio *split;
 
 	blk_queue_split(&bio);
 
 	pd = bio->bi_bdev->bd_disk->queue->queuedata;
-	अगर (!pd) अणु
+	if (!pd) {
 		pr_err("%s incorrect request queue\n", bio_devname(bio, b));
-		जाओ end_io;
-	पूर्ण
+		goto end_io;
+	}
 
 	pkt_dbg(2, pd, "start = %6llx stop = %6llx\n",
-		(अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector,
-		(अचिन्हित दीर्घ दीर्घ)bio_end_sector(bio));
+		(unsigned long long)bio->bi_iter.bi_sector,
+		(unsigned long long)bio_end_sector(bio));
 
 	/*
 	 * Clone READ bios so we can have our own bi_end_io callback.
 	 */
-	अगर (bio_data_dir(bio) == READ) अणु
-		pkt_make_request_पढ़ो(pd, bio);
-		वापस BLK_QC_T_NONE;
-	पूर्ण
+	if (bio_data_dir(bio) == READ) {
+		pkt_make_request_read(pd, bio);
+		return BLK_QC_T_NONE;
+	}
 
-	अगर (!test_bit(PACKET_WRITABLE, &pd->flags)) अणु
+	if (!test_bit(PACKET_WRITABLE, &pd->flags)) {
 		pkt_notice(pd, "WRITE for ro device (%llu)\n",
-			   (अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector);
-		जाओ end_io;
-	पूर्ण
+			   (unsigned long long)bio->bi_iter.bi_sector);
+		goto end_io;
+	}
 
-	अगर (!bio->bi_iter.bi_size || (bio->bi_iter.bi_size % CD_FRAMESIZE)) अणु
+	if (!bio->bi_iter.bi_size || (bio->bi_iter.bi_size % CD_FRAMESIZE)) {
 		pkt_err(pd, "wrong bio size\n");
-		जाओ end_io;
-	पूर्ण
+		goto end_io;
+	}
 
-	करो अणु
+	do {
 		sector_t zone = get_zone(bio->bi_iter.bi_sector, pd);
 		sector_t last_zone = get_zone(bio_end_sector(bio) - 1, pd);
 
-		अगर (last_zone != zone) अणु
+		if (last_zone != zone) {
 			BUG_ON(last_zone != zone + pd->settings.size);
 
 			split = bio_split(bio, last_zone -
 					  bio->bi_iter.bi_sector,
 					  GFP_NOIO, &pkt_bio_set);
 			bio_chain(split, bio);
-		पूर्ण अन्यथा अणु
+		} else {
 			split = bio;
-		पूर्ण
+		}
 
-		pkt_make_request_ग_लिखो(bio->bi_bdev->bd_disk->queue, split);
-	पूर्ण जबतक (split != bio);
+		pkt_make_request_write(bio->bi_bdev->bd_disk->queue, split);
+	} while (split != bio);
 
-	वापस BLK_QC_T_NONE;
+	return BLK_QC_T_NONE;
 end_io:
 	bio_io_error(bio);
-	वापस BLK_QC_T_NONE;
-पूर्ण
+	return BLK_QC_T_NONE;
+}
 
-अटल व्योम pkt_init_queue(काष्ठा pktcdvd_device *pd)
-अणु
-	काष्ठा request_queue *q = pd->disk->queue;
+static void pkt_init_queue(struct pktcdvd_device *pd)
+{
+	struct request_queue *q = pd->disk->queue;
 
 	blk_queue_logical_block_size(q, CD_FRAMESIZE);
 	blk_queue_max_hw_sectors(q, PACKET_MAX_SECTORS);
 	q->queuedata = pd;
-पूर्ण
+}
 
-अटल पूर्णांक pkt_seq_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	काष्ठा pktcdvd_device *pd = m->निजी;
-	अक्षर *msg;
-	अक्षर bdev_buf[BDEVNAME_SIZE];
-	पूर्णांक states[PACKET_NUM_STATES];
+static int pkt_seq_show(struct seq_file *m, void *p)
+{
+	struct pktcdvd_device *pd = m->private;
+	char *msg;
+	char bdev_buf[BDEVNAME_SIZE];
+	int states[PACKET_NUM_STATES];
 
-	seq_म_लिखो(m, "Writer %s mapped to %s:\n", pd->name,
+	seq_printf(m, "Writer %s mapped to %s:\n", pd->name,
 		   bdevname(pd->bdev, bdev_buf));
 
-	seq_म_लिखो(m, "\nSettings:\n");
-	seq_म_लिखो(m, "\tpacket size:\t\t%dkB\n", pd->settings.size / 2);
+	seq_printf(m, "\nSettings:\n");
+	seq_printf(m, "\tpacket size:\t\t%dkB\n", pd->settings.size / 2);
 
-	अगर (pd->settings.ग_लिखो_type == 0)
+	if (pd->settings.write_type == 0)
 		msg = "Packet";
-	अन्यथा
+	else
 		msg = "Unknown";
-	seq_म_लिखो(m, "\twrite type:\t\t%s\n", msg);
+	seq_printf(m, "\twrite type:\t\t%s\n", msg);
 
-	seq_म_लिखो(m, "\tpacket type:\t\t%s\n", pd->settings.fp ? "Fixed" : "Variable");
-	seq_म_लिखो(m, "\tlink loss:\t\t%d\n", pd->settings.link_loss);
+	seq_printf(m, "\tpacket type:\t\t%s\n", pd->settings.fp ? "Fixed" : "Variable");
+	seq_printf(m, "\tlink loss:\t\t%d\n", pd->settings.link_loss);
 
-	seq_म_लिखो(m, "\ttrack mode:\t\t%d\n", pd->settings.track_mode);
+	seq_printf(m, "\ttrack mode:\t\t%d\n", pd->settings.track_mode);
 
-	अगर (pd->settings.block_mode == PACKET_BLOCK_MODE1)
+	if (pd->settings.block_mode == PACKET_BLOCK_MODE1)
 		msg = "Mode 1";
-	अन्यथा अगर (pd->settings.block_mode == PACKET_BLOCK_MODE2)
+	else if (pd->settings.block_mode == PACKET_BLOCK_MODE2)
 		msg = "Mode 2";
-	अन्यथा
+	else
 		msg = "Unknown";
-	seq_म_लिखो(m, "\tblock mode:\t\t%s\n", msg);
+	seq_printf(m, "\tblock mode:\t\t%s\n", msg);
 
-	seq_म_लिखो(m, "\nStatistics:\n");
-	seq_म_लिखो(m, "\tpackets started:\t%lu\n", pd->stats.pkt_started);
-	seq_म_लिखो(m, "\tpackets ended:\t\t%lu\n", pd->stats.pkt_ended);
-	seq_म_लिखो(m, "\twritten:\t\t%lukB\n", pd->stats.secs_w >> 1);
-	seq_म_लिखो(m, "\tread gather:\t\t%lukB\n", pd->stats.secs_rg >> 1);
-	seq_म_लिखो(m, "\tread:\t\t\t%lukB\n", pd->stats.secs_r >> 1);
+	seq_printf(m, "\nStatistics:\n");
+	seq_printf(m, "\tpackets started:\t%lu\n", pd->stats.pkt_started);
+	seq_printf(m, "\tpackets ended:\t\t%lu\n", pd->stats.pkt_ended);
+	seq_printf(m, "\twritten:\t\t%lukB\n", pd->stats.secs_w >> 1);
+	seq_printf(m, "\tread gather:\t\t%lukB\n", pd->stats.secs_rg >> 1);
+	seq_printf(m, "\tread:\t\t\t%lukB\n", pd->stats.secs_r >> 1);
 
-	seq_म_लिखो(m, "\nMisc:\n");
-	seq_म_लिखो(m, "\treference count:\t%d\n", pd->refcnt);
-	seq_म_लिखो(m, "\tflags:\t\t\t0x%lx\n", pd->flags);
-	seq_म_लिखो(m, "\tread speed:\t\t%ukB/s\n", pd->पढ़ो_speed);
-	seq_म_लिखो(m, "\twrite speed:\t\t%ukB/s\n", pd->ग_लिखो_speed);
-	seq_म_लिखो(m, "\tstart offset:\t\t%lu\n", pd->offset);
-	seq_म_लिखो(m, "\tmode page offset:\t%u\n", pd->mode_offset);
+	seq_printf(m, "\nMisc:\n");
+	seq_printf(m, "\treference count:\t%d\n", pd->refcnt);
+	seq_printf(m, "\tflags:\t\t\t0x%lx\n", pd->flags);
+	seq_printf(m, "\tread speed:\t\t%ukB/s\n", pd->read_speed);
+	seq_printf(m, "\twrite speed:\t\t%ukB/s\n", pd->write_speed);
+	seq_printf(m, "\tstart offset:\t\t%lu\n", pd->offset);
+	seq_printf(m, "\tmode page offset:\t%u\n", pd->mode_offset);
 
-	seq_म_लिखो(m, "\nQueue state:\n");
-	seq_म_लिखो(m, "\tbios queued:\t\t%d\n", pd->bio_queue_size);
-	seq_म_लिखो(m, "\tbios pending:\t\t%d\n", atomic_पढ़ो(&pd->cdrw.pending_bios));
-	seq_म_लिखो(m, "\tcurrent sector:\t\t0x%llx\n", (अचिन्हित दीर्घ दीर्घ)pd->current_sector);
+	seq_printf(m, "\nQueue state:\n");
+	seq_printf(m, "\tbios queued:\t\t%d\n", pd->bio_queue_size);
+	seq_printf(m, "\tbios pending:\t\t%d\n", atomic_read(&pd->cdrw.pending_bios));
+	seq_printf(m, "\tcurrent sector:\t\t0x%llx\n", (unsigned long long)pd->current_sector);
 
 	pkt_count_states(pd, states);
-	seq_म_लिखो(m, "\tstate:\t\t\ti:%d ow:%d rw:%d ww:%d rec:%d fin:%d\n",
+	seq_printf(m, "\tstate:\t\t\ti:%d ow:%d rw:%d ww:%d rec:%d fin:%d\n",
 		   states[0], states[1], states[2], states[3], states[4], states[5]);
 
-	seq_म_लिखो(m, "\twrite congestion marks:\toff=%d on=%d\n",
-			pd->ग_लिखो_congestion_off,
-			pd->ग_लिखो_congestion_on);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "\twrite congestion marks:\toff=%d on=%d\n",
+			pd->write_congestion_off,
+			pd->write_congestion_on);
+	return 0;
+}
 
-अटल पूर्णांक pkt_new_dev(काष्ठा pktcdvd_device *pd, dev_t dev)
-अणु
-	पूर्णांक i;
-	अक्षर b[BDEVNAME_SIZE];
-	काष्ठा block_device *bdev;
+static int pkt_new_dev(struct pktcdvd_device *pd, dev_t dev)
+{
+	int i;
+	char b[BDEVNAME_SIZE];
+	struct block_device *bdev;
 
-	अगर (pd->pkt_dev == dev) अणु
+	if (pd->pkt_dev == dev) {
 		pkt_err(pd, "recursive setup not allowed\n");
-		वापस -EBUSY;
-	पूर्ण
-	क्रम (i = 0; i < MAX_WRITERS; i++) अणु
-		काष्ठा pktcdvd_device *pd2 = pkt_devs[i];
-		अगर (!pd2)
-			जारी;
-		अगर (pd2->bdev->bd_dev == dev) अणु
+		return -EBUSY;
+	}
+	for (i = 0; i < MAX_WRITERS; i++) {
+		struct pktcdvd_device *pd2 = pkt_devs[i];
+		if (!pd2)
+			continue;
+		if (pd2->bdev->bd_dev == dev) {
 			pkt_err(pd, "%s already setup\n",
 				bdevname(pd2->bdev, b));
-			वापस -EBUSY;
-		पूर्ण
-		अगर (pd2->pkt_dev == dev) अणु
+			return -EBUSY;
+		}
+		if (pd2->pkt_dev == dev) {
 			pkt_err(pd, "can't chain pktcdvd devices\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
-	bdev = blkdev_get_by_dev(dev, FMODE_READ | FMODE_NDELAY, शून्य);
-	अगर (IS_ERR(bdev))
-		वापस PTR_ERR(bdev);
-	अगर (!blk_queue_scsi_passthrough(bdev_get_queue(bdev))) अणु
+	bdev = blkdev_get_by_dev(dev, FMODE_READ | FMODE_NDELAY, NULL);
+	if (IS_ERR(bdev))
+		return PTR_ERR(bdev);
+	if (!blk_queue_scsi_passthrough(bdev_get_queue(bdev))) {
 		blkdev_put(bdev, FMODE_READ | FMODE_NDELAY);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* This is safe, since we have a reference from खोलो(). */
+	/* This is safe, since we have a reference from open(). */
 	__module_get(THIS_MODULE);
 
 	pd->bdev = bdev;
@@ -2577,159 +2576,159 @@ end_io:
 	pkt_init_queue(pd);
 
 	atomic_set(&pd->cdrw.pending_bios, 0);
-	pd->cdrw.thपढ़ो = kthपढ़ो_run(kcdrwd, pd, "%s", pd->name);
-	अगर (IS_ERR(pd->cdrw.thपढ़ो)) अणु
+	pd->cdrw.thread = kthread_run(kcdrwd, pd, "%s", pd->name);
+	if (IS_ERR(pd->cdrw.thread)) {
 		pkt_err(pd, "can't start kernel thread\n");
-		जाओ out_mem;
-	पूर्ण
+		goto out_mem;
+	}
 
 	proc_create_single_data(pd->name, 0, pkt_proc, pkt_seq_show, pd);
 	pkt_dbg(1, pd, "writer mapped to %s\n", bdevname(bdev, b));
-	वापस 0;
+	return 0;
 
 out_mem:
 	blkdev_put(bdev, FMODE_READ | FMODE_NDELAY);
-	/* This is safe: खोलो() is still holding a reference. */
+	/* This is safe: open() is still holding a reference. */
 	module_put(THIS_MODULE);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक pkt_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा pktcdvd_device *pd = bdev->bd_disk->निजी_data;
-	पूर्णांक ret;
+static int pkt_ioctl(struct block_device *bdev, fmode_t mode, unsigned int cmd, unsigned long arg)
+{
+	struct pktcdvd_device *pd = bdev->bd_disk->private_data;
+	int ret;
 
 	pkt_dbg(2, pd, "cmd %x, dev %d:%d\n",
 		cmd, MAJOR(bdev->bd_dev), MINOR(bdev->bd_dev));
 
 	mutex_lock(&pktcdvd_mutex);
-	चयन (cmd) अणु
-	हाल CDROMEJECT:
+	switch (cmd) {
+	case CDROMEJECT:
 		/*
-		 * The करोor माला_लो locked when the device is खोलोed, so we
-		 * have to unlock it or अन्यथा the eject command fails.
+		 * The door gets locked when the device is opened, so we
+		 * have to unlock it or else the eject command fails.
 		 */
-		अगर (pd->refcnt == 1)
-			pkt_lock_करोor(pd, 0);
+		if (pd->refcnt == 1)
+			pkt_lock_door(pd, 0);
 		fallthrough;
 	/*
-	 * क्रमward selected CDROM ioctls to CD-ROM, क्रम UDF
+	 * forward selected CDROM ioctls to CD-ROM, for UDF
 	 */
-	हाल CDROMMULTISESSION:
-	हाल CDROMREADTOCENTRY:
-	हाल CDROM_LAST_WRITTEN:
-	हाल CDROM_SEND_PACKET:
-	हाल SCSI_IOCTL_SEND_COMMAND:
-		अगर (!bdev->bd_disk->fops->ioctl)
+	case CDROMMULTISESSION:
+	case CDROMREADTOCENTRY:
+	case CDROM_LAST_WRITTEN:
+	case CDROM_SEND_PACKET:
+	case SCSI_IOCTL_SEND_COMMAND:
+		if (!bdev->bd_disk->fops->ioctl)
 			ret = -ENOTTY;
-		अन्यथा
+		else
 			ret = bdev->bd_disk->fops->ioctl(bdev, mode, cmd, arg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pkt_dbg(2, pd, "Unknown ioctl (%x)\n", cmd);
 		ret = -ENOTTY;
-	पूर्ण
+	}
 	mutex_unlock(&pktcdvd_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक pkt_check_events(काष्ठा gendisk *disk,
-				     अचिन्हित पूर्णांक clearing)
-अणु
-	काष्ठा pktcdvd_device *pd = disk->निजी_data;
-	काष्ठा gendisk *attached_disk;
+static unsigned int pkt_check_events(struct gendisk *disk,
+				     unsigned int clearing)
+{
+	struct pktcdvd_device *pd = disk->private_data;
+	struct gendisk *attached_disk;
 
-	अगर (!pd)
-		वापस 0;
-	अगर (!pd->bdev)
-		वापस 0;
+	if (!pd)
+		return 0;
+	if (!pd->bdev)
+		return 0;
 	attached_disk = pd->bdev->bd_disk;
-	अगर (!attached_disk || !attached_disk->fops->check_events)
-		वापस 0;
-	वापस attached_disk->fops->check_events(attached_disk, clearing);
-पूर्ण
+	if (!attached_disk || !attached_disk->fops->check_events)
+		return 0;
+	return attached_disk->fops->check_events(attached_disk, clearing);
+}
 
-अटल अक्षर *pkt_devnode(काष्ठा gendisk *disk, umode_t *mode)
-अणु
-	वापस kaप्र_लिखो(GFP_KERNEL, "pktcdvd/%s", disk->disk_name);
-पूर्ण
+static char *pkt_devnode(struct gendisk *disk, umode_t *mode)
+{
+	return kasprintf(GFP_KERNEL, "pktcdvd/%s", disk->disk_name);
+}
 
-अटल स्थिर काष्ठा block_device_operations pktcdvd_ops = अणु
+static const struct block_device_operations pktcdvd_ops = {
 	.owner =		THIS_MODULE,
 	.submit_bio =		pkt_submit_bio,
-	.खोलो =			pkt_खोलो,
-	.release =		pkt_बंद,
+	.open =			pkt_open,
+	.release =		pkt_close,
 	.ioctl =		pkt_ioctl,
 	.compat_ioctl =		blkdev_compat_ptr_ioctl,
 	.check_events =		pkt_check_events,
 	.devnode =		pkt_devnode,
-पूर्ण;
+};
 
 /*
  * Set up mapping from pktcdvd device to CD-ROM device.
  */
-अटल पूर्णांक pkt_setup_dev(dev_t dev, dev_t* pkt_dev)
-अणु
-	पूर्णांक idx;
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा pktcdvd_device *pd;
-	काष्ठा gendisk *disk;
+static int pkt_setup_dev(dev_t dev, dev_t* pkt_dev)
+{
+	int idx;
+	int ret = -ENOMEM;
+	struct pktcdvd_device *pd;
+	struct gendisk *disk;
 
 	mutex_lock_nested(&ctl_mutex, SINGLE_DEPTH_NESTING);
 
-	क्रम (idx = 0; idx < MAX_WRITERS; idx++)
-		अगर (!pkt_devs[idx])
-			अवरोध;
-	अगर (idx == MAX_WRITERS) अणु
+	for (idx = 0; idx < MAX_WRITERS; idx++)
+		if (!pkt_devs[idx])
+			break;
+	if (idx == MAX_WRITERS) {
 		pr_err("max %d writers supported\n", MAX_WRITERS);
 		ret = -EBUSY;
-		जाओ out_mutex;
-	पूर्ण
+		goto out_mutex;
+	}
 
-	pd = kzalloc(माप(काष्ठा pktcdvd_device), GFP_KERNEL);
-	अगर (!pd)
-		जाओ out_mutex;
+	pd = kzalloc(sizeof(struct pktcdvd_device), GFP_KERNEL);
+	if (!pd)
+		goto out_mutex;
 
-	ret = mempool_init_kदो_स्मृति_pool(&pd->rb_pool, PKT_RB_POOL_SIZE,
-					माप(काष्ठा pkt_rb_node));
-	अगर (ret)
-		जाओ out_mem;
+	ret = mempool_init_kmalloc_pool(&pd->rb_pool, PKT_RB_POOL_SIZE,
+					sizeof(struct pkt_rb_node));
+	if (ret)
+		goto out_mem;
 
-	INIT_LIST_HEAD(&pd->cdrw.pkt_मुक्त_list);
+	INIT_LIST_HEAD(&pd->cdrw.pkt_free_list);
 	INIT_LIST_HEAD(&pd->cdrw.pkt_active_list);
 	spin_lock_init(&pd->cdrw.active_list_lock);
 
 	spin_lock_init(&pd->lock);
 	spin_lock_init(&pd->iosched.lock);
-	bio_list_init(&pd->iosched.पढ़ो_queue);
-	bio_list_init(&pd->iosched.ग_लिखो_queue);
-	प्र_लिखो(pd->name, DRIVER_NAME"%d", idx);
-	init_रुकोqueue_head(&pd->wqueue);
+	bio_list_init(&pd->iosched.read_queue);
+	bio_list_init(&pd->iosched.write_queue);
+	sprintf(pd->name, DRIVER_NAME"%d", idx);
+	init_waitqueue_head(&pd->wqueue);
 	pd->bio_queue = RB_ROOT;
 
-	pd->ग_लिखो_congestion_on  = ग_लिखो_congestion_on;
-	pd->ग_लिखो_congestion_off = ग_लिखो_congestion_off;
+	pd->write_congestion_on  = write_congestion_on;
+	pd->write_congestion_off = write_congestion_off;
 
 	ret = -ENOMEM;
 	disk = alloc_disk(1);
-	अगर (!disk)
-		जाओ out_mem;
+	if (!disk)
+		goto out_mem;
 	pd->disk = disk;
 	disk->major = pktdev_major;
 	disk->first_minor = idx;
 	disk->fops = &pktcdvd_ops;
 	disk->flags = GENHD_FL_REMOVABLE;
-	म_नकल(disk->disk_name, pd->name);
-	disk->निजी_data = pd;
+	strcpy(disk->disk_name, pd->name);
+	disk->private_data = pd;
 	disk->queue = blk_alloc_queue(NUMA_NO_NODE);
-	अगर (!disk->queue)
-		जाओ out_mem2;
+	if (!disk->queue)
+		goto out_mem2;
 
 	pd->pkt_dev = MKDEV(pktdev_major, idx);
 	ret = pkt_new_dev(pd, dev);
-	अगर (ret)
-		जाओ out_mem2;
+	if (ret)
+		goto out_mem2;
 
 	/* inherit events of the host device */
 	disk->events = pd->bdev->bd_disk->events;
@@ -2740,224 +2739,224 @@ out_mem:
 	pkt_debugfs_dev_new(pd);
 
 	pkt_devs[idx] = pd;
-	अगर (pkt_dev)
+	if (pkt_dev)
 		*pkt_dev = pd->pkt_dev;
 
 	mutex_unlock(&ctl_mutex);
-	वापस 0;
+	return 0;
 
 out_mem2:
 	put_disk(disk);
 out_mem:
-	mempool_निकास(&pd->rb_pool);
-	kमुक्त(pd);
+	mempool_exit(&pd->rb_pool);
+	kfree(pd);
 out_mutex:
 	mutex_unlock(&ctl_mutex);
 	pr_err("setup of pktcdvd device failed\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Tear करोwn mapping from pktcdvd device to CD-ROM device.
+ * Tear down mapping from pktcdvd device to CD-ROM device.
  */
-अटल पूर्णांक pkt_हटाओ_dev(dev_t pkt_dev)
-अणु
-	काष्ठा pktcdvd_device *pd;
-	पूर्णांक idx;
-	पूर्णांक ret = 0;
+static int pkt_remove_dev(dev_t pkt_dev)
+{
+	struct pktcdvd_device *pd;
+	int idx;
+	int ret = 0;
 
 	mutex_lock_nested(&ctl_mutex, SINGLE_DEPTH_NESTING);
 
-	क्रम (idx = 0; idx < MAX_WRITERS; idx++) अणु
+	for (idx = 0; idx < MAX_WRITERS; idx++) {
 		pd = pkt_devs[idx];
-		अगर (pd && (pd->pkt_dev == pkt_dev))
-			अवरोध;
-	पूर्ण
-	अगर (idx == MAX_WRITERS) अणु
+		if (pd && (pd->pkt_dev == pkt_dev))
+			break;
+	}
+	if (idx == MAX_WRITERS) {
 		pr_debug("dev not setup\n");
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pd->refcnt > 0) अणु
+	if (pd->refcnt > 0) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
-	अगर (!IS_ERR(pd->cdrw.thपढ़ो))
-		kthपढ़ो_stop(pd->cdrw.thपढ़ो);
+		goto out;
+	}
+	if (!IS_ERR(pd->cdrw.thread))
+		kthread_stop(pd->cdrw.thread);
 
-	pkt_devs[idx] = शून्य;
+	pkt_devs[idx] = NULL;
 
-	pkt_debugfs_dev_हटाओ(pd);
-	pkt_sysfs_dev_हटाओ(pd);
+	pkt_debugfs_dev_remove(pd);
+	pkt_sysfs_dev_remove(pd);
 
 	blkdev_put(pd->bdev, FMODE_READ | FMODE_NDELAY);
 
-	हटाओ_proc_entry(pd->name, pkt_proc);
+	remove_proc_entry(pd->name, pkt_proc);
 	pkt_dbg(1, pd, "writer unmapped\n");
 
 	del_gendisk(pd->disk);
 	blk_cleanup_queue(pd->disk->queue);
 	put_disk(pd->disk);
 
-	mempool_निकास(&pd->rb_pool);
-	kमुक्त(pd);
+	mempool_exit(&pd->rb_pool);
+	kfree(pd);
 
-	/* This is safe: खोलो() is still holding a reference. */
+	/* This is safe: open() is still holding a reference. */
 	module_put(THIS_MODULE);
 
 out:
 	mutex_unlock(&ctl_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम pkt_get_status(काष्ठा pkt_ctrl_command *ctrl_cmd)
-अणु
-	काष्ठा pktcdvd_device *pd;
+static void pkt_get_status(struct pkt_ctrl_command *ctrl_cmd)
+{
+	struct pktcdvd_device *pd;
 
 	mutex_lock_nested(&ctl_mutex, SINGLE_DEPTH_NESTING);
 
 	pd = pkt_find_dev_from_minor(ctrl_cmd->dev_index);
-	अगर (pd) अणु
+	if (pd) {
 		ctrl_cmd->dev = new_encode_dev(pd->bdev->bd_dev);
 		ctrl_cmd->pkt_dev = new_encode_dev(pd->pkt_dev);
-	पूर्ण अन्यथा अणु
+	} else {
 		ctrl_cmd->dev = 0;
 		ctrl_cmd->pkt_dev = 0;
-	पूर्ण
+	}
 	ctrl_cmd->num_devices = MAX_WRITERS;
 
 	mutex_unlock(&ctl_mutex);
-पूर्ण
+}
 
-अटल दीर्घ pkt_ctl_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = (व्योम __user *)arg;
-	काष्ठा pkt_ctrl_command ctrl_cmd;
-	पूर्णांक ret = 0;
+static long pkt_ctl_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	void __user *argp = (void __user *)arg;
+	struct pkt_ctrl_command ctrl_cmd;
+	int ret = 0;
 	dev_t pkt_dev = 0;
 
-	अगर (cmd != PACKET_CTRL_CMD)
-		वापस -ENOTTY;
+	if (cmd != PACKET_CTRL_CMD)
+		return -ENOTTY;
 
-	अगर (copy_from_user(&ctrl_cmd, argp, माप(काष्ठा pkt_ctrl_command)))
-		वापस -EFAULT;
+	if (copy_from_user(&ctrl_cmd, argp, sizeof(struct pkt_ctrl_command)))
+		return -EFAULT;
 
-	चयन (ctrl_cmd.command) अणु
-	हाल PKT_CTRL_CMD_SETUP:
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+	switch (ctrl_cmd.command) {
+	case PKT_CTRL_CMD_SETUP:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 		ret = pkt_setup_dev(new_decode_dev(ctrl_cmd.dev), &pkt_dev);
 		ctrl_cmd.pkt_dev = new_encode_dev(pkt_dev);
-		अवरोध;
-	हाल PKT_CTRL_CMD_TEARDOWN:
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
-		ret = pkt_हटाओ_dev(new_decode_dev(ctrl_cmd.pkt_dev));
-		अवरोध;
-	हाल PKT_CTRL_CMD_STATUS:
+		break;
+	case PKT_CTRL_CMD_TEARDOWN:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
+		ret = pkt_remove_dev(new_decode_dev(ctrl_cmd.pkt_dev));
+		break;
+	case PKT_CTRL_CMD_STATUS:
 		pkt_get_status(&ctrl_cmd);
-		अवरोध;
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
+		break;
+	default:
+		return -ENOTTY;
+	}
 
-	अगर (copy_to_user(argp, &ctrl_cmd, माप(काष्ठा pkt_ctrl_command)))
-		वापस -EFAULT;
-	वापस ret;
-पूर्ण
+	if (copy_to_user(argp, &ctrl_cmd, sizeof(struct pkt_ctrl_command)))
+		return -EFAULT;
+	return ret;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ pkt_ctl_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	वापस pkt_ctl_ioctl(file, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+static long pkt_ctl_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	return pkt_ctl_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations pkt_ctl_fops = अणु
-	.खोलो		= nonseekable_खोलो,
+static const struct file_operations pkt_ctl_fops = {
+	.open		= nonseekable_open,
 	.unlocked_ioctl	= pkt_ctl_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= pkt_ctl_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice pkt_misc = अणु
+static struct miscdevice pkt_misc = {
 	.minor 		= MISC_DYNAMIC_MINOR,
 	.name  		= DRIVER_NAME,
 	.nodename	= "pktcdvd/control",
 	.fops  		= &pkt_ctl_fops
-पूर्ण;
+};
 
-अटल पूर्णांक __init pkt_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pkt_init(void)
+{
+	int ret;
 
 	mutex_init(&ctl_mutex);
 
-	ret = mempool_init_kदो_स्मृति_pool(&psd_pool, PSD_POOL_SIZE,
-				    माप(काष्ठा packet_stacked_data));
-	अगर (ret)
-		वापस ret;
+	ret = mempool_init_kmalloc_pool(&psd_pool, PSD_POOL_SIZE,
+				    sizeof(struct packet_stacked_data));
+	if (ret)
+		return ret;
 	ret = bioset_init(&pkt_bio_set, BIO_POOL_SIZE, 0, 0);
-	अगर (ret) अणु
-		mempool_निकास(&psd_pool);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		mempool_exit(&psd_pool);
+		return ret;
+	}
 
-	ret = रेजिस्टर_blkdev(pktdev_major, DRIVER_NAME);
-	अगर (ret < 0) अणु
+	ret = register_blkdev(pktdev_major, DRIVER_NAME);
+	if (ret < 0) {
 		pr_err("unable to register block device\n");
-		जाओ out2;
-	पूर्ण
-	अगर (!pktdev_major)
+		goto out2;
+	}
+	if (!pktdev_major)
 		pktdev_major = ret;
 
 	ret = pkt_sysfs_init();
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	pkt_debugfs_init();
 
-	ret = misc_रेजिस्टर(&pkt_misc);
-	अगर (ret) अणु
+	ret = misc_register(&pkt_misc);
+	if (ret) {
 		pr_err("unable to register misc device\n");
-		जाओ out_misc;
-	पूर्ण
+		goto out_misc;
+	}
 
-	pkt_proc = proc_सूची_गढ़ो("driver/"DRIVER_NAME, शून्य);
+	pkt_proc = proc_mkdir("driver/"DRIVER_NAME, NULL);
 
-	वापस 0;
+	return 0;
 
 out_misc:
 	pkt_debugfs_cleanup();
 	pkt_sysfs_cleanup();
 out:
-	unरेजिस्टर_blkdev(pktdev_major, DRIVER_NAME);
+	unregister_blkdev(pktdev_major, DRIVER_NAME);
 out2:
-	mempool_निकास(&psd_pool);
-	bioset_निकास(&pkt_bio_set);
-	वापस ret;
-पूर्ण
+	mempool_exit(&psd_pool);
+	bioset_exit(&pkt_bio_set);
+	return ret;
+}
 
-अटल व्योम __निकास pkt_निकास(व्योम)
-अणु
-	हटाओ_proc_entry("driver/"DRIVER_NAME, शून्य);
-	misc_deरेजिस्टर(&pkt_misc);
+static void __exit pkt_exit(void)
+{
+	remove_proc_entry("driver/"DRIVER_NAME, NULL);
+	misc_deregister(&pkt_misc);
 
 	pkt_debugfs_cleanup();
 	pkt_sysfs_cleanup();
 
-	unरेजिस्टर_blkdev(pktdev_major, DRIVER_NAME);
-	mempool_निकास(&psd_pool);
-	bioset_निकास(&pkt_bio_set);
-पूर्ण
+	unregister_blkdev(pktdev_major, DRIVER_NAME);
+	mempool_exit(&psd_pool);
+	bioset_exit(&pkt_bio_set);
+}
 
 MODULE_DESCRIPTION("Packet writing layer for CD/DVD drives");
 MODULE_AUTHOR("Jens Axboe <axboe@suse.de>");
 MODULE_LICENSE("GPL");
 
 module_init(pkt_init);
-module_निकास(pkt_निकास);
+module_exit(pkt_exit);

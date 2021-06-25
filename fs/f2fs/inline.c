@@ -1,218 +1,217 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * fs/f2fs/अंतरभूत.c
+ * fs/f2fs/inline.c
  * Copyright (c) 2013, Intel Corporation
- * Authors: Huajun Li <huajun.li@पूर्णांकel.com>
- *          Haicheng Li <haicheng.li@पूर्णांकel.com>
+ * Authors: Huajun Li <huajun.li@intel.com>
+ *          Haicheng Li <haicheng.li@intel.com>
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/f2fs_fs.h>
-#समावेश <linux/fiemap.h>
+#include <linux/fs.h>
+#include <linux/f2fs_fs.h>
+#include <linux/fiemap.h>
 
-#समावेश "f2fs.h"
-#समावेश "node.h"
-#समावेश <trace/events/f2fs.h>
+#include "f2fs.h"
+#include "node.h"
+#include <trace/events/f2fs.h>
 
-bool f2fs_may_अंतरभूत_data(काष्ठा inode *inode)
-अणु
-	अगर (f2fs_is_atomic_file(inode))
-		वापस false;
+bool f2fs_may_inline_data(struct inode *inode)
+{
+	if (f2fs_is_atomic_file(inode))
+		return false;
 
-	अगर (!S_ISREG(inode->i_mode) && !S_ISLNK(inode->i_mode))
-		वापस false;
+	if (!S_ISREG(inode->i_mode) && !S_ISLNK(inode->i_mode))
+		return false;
 
-	अगर (i_size_पढ़ो(inode) > MAX_INLINE_DATA(inode))
-		वापस false;
+	if (i_size_read(inode) > MAX_INLINE_DATA(inode))
+		return false;
 
-	अगर (f2fs_post_पढ़ो_required(inode))
-		वापस false;
+	if (f2fs_post_read_required(inode))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool f2fs_may_अंतरभूत_dentry(काष्ठा inode *inode)
-अणु
-	अगर (!test_opt(F2FS_I_SB(inode), INLINE_DENTRY))
-		वापस false;
+bool f2fs_may_inline_dentry(struct inode *inode)
+{
+	if (!test_opt(F2FS_I_SB(inode), INLINE_DENTRY))
+		return false;
 
-	अगर (!S_ISसूची(inode->i_mode))
-		वापस false;
+	if (!S_ISDIR(inode->i_mode))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम f2fs_करो_पढ़ो_अंतरभूत_data(काष्ठा page *page, काष्ठा page *ipage)
-अणु
-	काष्ठा inode *inode = page->mapping->host;
-	व्योम *src_addr, *dst_addr;
+void f2fs_do_read_inline_data(struct page *page, struct page *ipage)
+{
+	struct inode *inode = page->mapping->host;
+	void *src_addr, *dst_addr;
 
-	अगर (PageUptodate(page))
-		वापस;
+	if (PageUptodate(page))
+		return;
 
 	f2fs_bug_on(F2FS_P_SB(page), page->index);
 
 	zero_user_segment(page, MAX_INLINE_DATA(inode), PAGE_SIZE);
 
-	/* Copy the whole अंतरभूत data block */
-	src_addr = अंतरभूत_data_addr(inode, ipage);
+	/* Copy the whole inline data block */
+	src_addr = inline_data_addr(inode, ipage);
 	dst_addr = kmap_atomic(page);
-	स_नकल(dst_addr, src_addr, MAX_INLINE_DATA(inode));
+	memcpy(dst_addr, src_addr, MAX_INLINE_DATA(inode));
 	flush_dcache_page(page);
 	kunmap_atomic(dst_addr);
-	अगर (!PageUptodate(page))
+	if (!PageUptodate(page))
 		SetPageUptodate(page);
-पूर्ण
+}
 
-व्योम f2fs_truncate_अंतरभूत_inode(काष्ठा inode *inode,
-					काष्ठा page *ipage, u64 from)
-अणु
-	व्योम *addr;
+void f2fs_truncate_inline_inode(struct inode *inode,
+					struct page *ipage, u64 from)
+{
+	void *addr;
 
-	अगर (from >= MAX_INLINE_DATA(inode))
-		वापस;
+	if (from >= MAX_INLINE_DATA(inode))
+		return;
 
-	addr = अंतरभूत_data_addr(inode, ipage);
+	addr = inline_data_addr(inode, ipage);
 
-	f2fs_रुको_on_page_ग_लिखोback(ipage, NODE, true, true);
-	स_रखो(addr + from, 0, MAX_INLINE_DATA(inode) - from);
+	f2fs_wait_on_page_writeback(ipage, NODE, true, true);
+	memset(addr + from, 0, MAX_INLINE_DATA(inode) - from);
 	set_page_dirty(ipage);
 
-	अगर (from == 0)
+	if (from == 0)
 		clear_inode_flag(inode, FI_DATA_EXIST);
-पूर्ण
+}
 
-पूर्णांक f2fs_पढ़ो_अंतरभूत_data(काष्ठा inode *inode, काष्ठा page *page)
-अणु
-	काष्ठा page *ipage;
+int f2fs_read_inline_data(struct inode *inode, struct page *page)
+{
+	struct page *ipage;
 
 	ipage = f2fs_get_node_page(F2FS_I_SB(inode), inode->i_ino);
-	अगर (IS_ERR(ipage)) अणु
+	if (IS_ERR(ipage)) {
 		unlock_page(page);
-		वापस PTR_ERR(ipage);
-	पूर्ण
+		return PTR_ERR(ipage);
+	}
 
-	अगर (!f2fs_has_अंतरभूत_data(inode)) अणु
+	if (!f2fs_has_inline_data(inode)) {
 		f2fs_put_page(ipage, 1);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (page->index)
+	if (page->index)
 		zero_user_segment(page, 0, PAGE_SIZE);
-	अन्यथा
-		f2fs_करो_पढ़ो_अंतरभूत_data(page, ipage);
+	else
+		f2fs_do_read_inline_data(page, ipage);
 
-	अगर (!PageUptodate(page))
+	if (!PageUptodate(page))
 		SetPageUptodate(page);
 	f2fs_put_page(ipage, 1);
 	unlock_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक f2fs_convert_अंतरभूत_page(काष्ठा dnode_of_data *dn, काष्ठा page *page)
-अणु
-	काष्ठा f2fs_io_info fio = अणु
+int f2fs_convert_inline_page(struct dnode_of_data *dn, struct page *page)
+{
+	struct f2fs_io_info fio = {
 		.sbi = F2FS_I_SB(dn->inode),
 		.ino = dn->inode->i_ino,
 		.type = DATA,
 		.op = REQ_OP_WRITE,
 		.op_flags = REQ_SYNC | REQ_PRIO,
 		.page = page,
-		.encrypted_page = शून्य,
+		.encrypted_page = NULL,
 		.io_type = FS_DATA_IO,
-	पूर्ण;
-	काष्ठा node_info ni;
-	पूर्णांक dirty, err;
+	};
+	struct node_info ni;
+	int dirty, err;
 
-	अगर (!f2fs_exist_data(dn->inode))
-		जाओ clear_out;
+	if (!f2fs_exist_data(dn->inode))
+		goto clear_out;
 
 	err = f2fs_reserve_block(dn, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = f2fs_get_node_info(fio.sbi, dn->nid, &ni);
-	अगर (err) अणु
+	if (err) {
 		f2fs_truncate_data_blocks_range(dn, 1);
 		f2fs_put_dnode(dn);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	fio.version = ni.version;
 
-	अगर (unlikely(dn->data_blkaddr != NEW_ADDR)) अणु
+	if (unlikely(dn->data_blkaddr != NEW_ADDR)) {
 		f2fs_put_dnode(dn);
 		set_sbi_flag(fio.sbi, SBI_NEED_FSCK);
 		f2fs_warn(fio.sbi, "%s: corrupted inline inode ino=%lx, i_addr[0]:0x%x, run fsck to fix.",
 			  __func__, dn->inode->i_ino, dn->data_blkaddr);
-		वापस -EFSCORRUPTED;
-	पूर्ण
+		return -EFSCORRUPTED;
+	}
 
 	f2fs_bug_on(F2FS_P_SB(page), PageWriteback(page));
 
-	f2fs_करो_पढ़ो_अंतरभूत_data(page, dn->inode_page);
+	f2fs_do_read_inline_data(page, dn->inode_page);
 	set_page_dirty(page);
 
 	/* clear dirty state */
-	dirty = clear_page_dirty_क्रम_io(page);
+	dirty = clear_page_dirty_for_io(page);
 
-	/* ग_लिखो data page to try to make data consistent */
-	set_page_ग_लिखोback(page);
+	/* write data page to try to make data consistent */
+	set_page_writeback(page);
 	ClearPageError(page);
 	fio.old_blkaddr = dn->data_blkaddr;
 	set_inode_flag(dn->inode, FI_HOT_DATA);
-	f2fs_outplace_ग_लिखो_data(dn, &fio);
-	f2fs_रुको_on_page_ग_लिखोback(page, DATA, true, true);
-	अगर (dirty) अणु
+	f2fs_outplace_write_data(dn, &fio);
+	f2fs_wait_on_page_writeback(page, DATA, true, true);
+	if (dirty) {
 		inode_dec_dirty_pages(dn->inode);
-		f2fs_हटाओ_dirty_inode(dn->inode);
-	पूर्ण
+		f2fs_remove_dirty_inode(dn->inode);
+	}
 
-	/* this converted अंतरभूत_data should be recovered. */
+	/* this converted inline_data should be recovered. */
 	set_inode_flag(dn->inode, FI_APPEND_WRITE);
 
-	/* clear अंतरभूत data and flag after data ग_लिखोback */
-	f2fs_truncate_अंतरभूत_inode(dn->inode, dn->inode_page, 0);
-	clear_अंतरभूत_node(dn->inode_page);
+	/* clear inline data and flag after data writeback */
+	f2fs_truncate_inline_inode(dn->inode, dn->inode_page, 0);
+	clear_inline_node(dn->inode_page);
 clear_out:
-	stat_dec_अंतरभूत_inode(dn->inode);
+	stat_dec_inline_inode(dn->inode);
 	clear_inode_flag(dn->inode, FI_INLINE_DATA);
 	f2fs_put_dnode(dn);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक f2fs_convert_अंतरभूत_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा dnode_of_data dn;
-	काष्ठा page *ipage, *page;
-	पूर्णांक err = 0;
+int f2fs_convert_inline_inode(struct inode *inode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct dnode_of_data dn;
+	struct page *ipage, *page;
+	int err = 0;
 
-	अगर (!f2fs_has_अंतरभूत_data(inode) ||
-			f2fs_hw_is_पढ़ोonly(sbi) || f2fs_पढ़ोonly(sbi->sb))
-		वापस 0;
+	if (!f2fs_has_inline_data(inode) ||
+			f2fs_hw_is_readonly(sbi) || f2fs_readonly(sbi->sb))
+		return 0;
 
 	err = dquot_initialize(inode);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	page = f2fs_grab_cache_page(inode->i_mapping, 0, false);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	f2fs_lock_op(sbi);
 
 	ipage = f2fs_get_node_page(sbi, inode->i_ino);
-	अगर (IS_ERR(ipage)) अणु
+	if (IS_ERR(ipage)) {
 		err = PTR_ERR(ipage);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	set_new_dnode(&dn, inode, ipage, ipage, 0);
 
-	अगर (f2fs_has_अंतरभूत_data(inode))
-		err = f2fs_convert_अंतरभूत_page(&dn, page);
+	if (f2fs_has_inline_data(inode))
+		err = f2fs_convert_inline_page(&dn, page);
 
 	f2fs_put_dnode(&dn);
 out:
@@ -220,34 +219,34 @@ out:
 
 	f2fs_put_page(page, 1);
 
-	अगर (!err)
+	if (!err)
 		f2fs_balance_fs(sbi, dn.node_changed);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक f2fs_ग_लिखो_अंतरभूत_data(काष्ठा inode *inode, काष्ठा page *page)
-अणु
-	व्योम *src_addr, *dst_addr;
-	काष्ठा dnode_of_data dn;
-	पूर्णांक err;
+int f2fs_write_inline_data(struct inode *inode, struct page *page)
+{
+	void *src_addr, *dst_addr;
+	struct dnode_of_data dn;
+	int err;
 
-	set_new_dnode(&dn, inode, शून्य, शून्य, 0);
+	set_new_dnode(&dn, inode, NULL, NULL, 0);
 	err = f2fs_get_dnode_of_data(&dn, 0, LOOKUP_NODE);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!f2fs_has_अंतरभूत_data(inode)) अणु
+	if (!f2fs_has_inline_data(inode)) {
 		f2fs_put_dnode(&dn);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	f2fs_bug_on(F2FS_I_SB(inode), page->index);
 
-	f2fs_रुको_on_page_ग_लिखोback(dn.inode_page, NODE, true, true);
+	f2fs_wait_on_page_writeback(dn.inode_page, NODE, true, true);
 	src_addr = kmap_atomic(page);
-	dst_addr = अंतरभूत_data_addr(inode, dn.inode_page);
-	स_नकल(dst_addr, src_addr, MAX_INLINE_DATA(inode));
+	dst_addr = inline_data_addr(inode, dn.inode_page);
+	memcpy(dst_addr, src_addr, MAX_INLINE_DATA(inode));
 	kunmap_atomic(src_addr);
 	set_page_dirty(dn.inode_page);
 
@@ -256,231 +255,231 @@ out:
 	set_inode_flag(inode, FI_APPEND_WRITE);
 	set_inode_flag(inode, FI_DATA_EXIST);
 
-	clear_अंतरभूत_node(dn.inode_page);
+	clear_inline_node(dn.inode_page);
 	f2fs_put_dnode(&dn);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक f2fs_recover_अंतरभूत_data(काष्ठा inode *inode, काष्ठा page *npage)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(inode);
-	काष्ठा f2fs_inode *ri = शून्य;
-	व्योम *src_addr, *dst_addr;
-	काष्ठा page *ipage;
+int f2fs_recover_inline_data(struct inode *inode, struct page *npage)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct f2fs_inode *ri = NULL;
+	void *src_addr, *dst_addr;
+	struct page *ipage;
 
 	/*
-	 * The अंतरभूत_data recovery policy is as follows.
-	 * [prev.] [next] of अंतरभूत_data flag
-	 *    o       o  -> recover अंतरभूत_data
-	 *    o       x  -> हटाओ अंतरभूत_data, and then recover data blocks
-	 *    x       o  -> हटाओ data blocks, and then recover अंतरभूत_data
+	 * The inline_data recovery policy is as follows.
+	 * [prev.] [next] of inline_data flag
+	 *    o       o  -> recover inline_data
+	 *    o       x  -> remove inline_data, and then recover data blocks
+	 *    x       o  -> remove data blocks, and then recover inline_data
 	 *    x       x  -> recover data blocks
 	 */
-	अगर (IS_INODE(npage))
+	if (IS_INODE(npage))
 		ri = F2FS_INODE(npage);
 
-	अगर (f2fs_has_अंतरभूत_data(inode) &&
-			ri && (ri->i_अंतरभूत & F2FS_INLINE_DATA)) अणु
-process_अंतरभूत:
+	if (f2fs_has_inline_data(inode) &&
+			ri && (ri->i_inline & F2FS_INLINE_DATA)) {
+process_inline:
 		ipage = f2fs_get_node_page(sbi, inode->i_ino);
-		अगर (IS_ERR(ipage))
-			वापस PTR_ERR(ipage);
+		if (IS_ERR(ipage))
+			return PTR_ERR(ipage);
 
-		f2fs_रुको_on_page_ग_लिखोback(ipage, NODE, true, true);
+		f2fs_wait_on_page_writeback(ipage, NODE, true, true);
 
-		src_addr = अंतरभूत_data_addr(inode, npage);
-		dst_addr = अंतरभूत_data_addr(inode, ipage);
-		स_नकल(dst_addr, src_addr, MAX_INLINE_DATA(inode));
+		src_addr = inline_data_addr(inode, npage);
+		dst_addr = inline_data_addr(inode, ipage);
+		memcpy(dst_addr, src_addr, MAX_INLINE_DATA(inode));
 
 		set_inode_flag(inode, FI_INLINE_DATA);
 		set_inode_flag(inode, FI_DATA_EXIST);
 
 		set_page_dirty(ipage);
 		f2fs_put_page(ipage, 1);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (f2fs_has_अंतरभूत_data(inode)) अणु
+	if (f2fs_has_inline_data(inode)) {
 		ipage = f2fs_get_node_page(sbi, inode->i_ino);
-		अगर (IS_ERR(ipage))
-			वापस PTR_ERR(ipage);
-		f2fs_truncate_अंतरभूत_inode(inode, ipage, 0);
-		stat_dec_अंतरभूत_inode(inode);
+		if (IS_ERR(ipage))
+			return PTR_ERR(ipage);
+		f2fs_truncate_inline_inode(inode, ipage, 0);
+		stat_dec_inline_inode(inode);
 		clear_inode_flag(inode, FI_INLINE_DATA);
 		f2fs_put_page(ipage, 1);
-	पूर्ण अन्यथा अगर (ri && (ri->i_अंतरभूत & F2FS_INLINE_DATA)) अणु
-		पूर्णांक ret;
+	} else if (ri && (ri->i_inline & F2FS_INLINE_DATA)) {
+		int ret;
 
 		ret = f2fs_truncate_blocks(inode, 0, false);
-		अगर (ret)
-			वापस ret;
-		stat_inc_अंतरभूत_inode(inode);
-		जाओ process_अंतरभूत;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+		stat_inc_inline_inode(inode);
+		goto process_inline;
+	}
+	return 0;
+}
 
-काष्ठा f2fs_dir_entry *f2fs_find_in_अंतरभूत_dir(काष्ठा inode *dir,
-					स्थिर काष्ठा f2fs_filename *fname,
-					काष्ठा page **res_page)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_SB(dir->i_sb);
-	काष्ठा f2fs_dir_entry *de;
-	काष्ठा f2fs_dentry_ptr d;
-	काष्ठा page *ipage;
-	व्योम *अंतरभूत_dentry;
+struct f2fs_dir_entry *f2fs_find_in_inline_dir(struct inode *dir,
+					const struct f2fs_filename *fname,
+					struct page **res_page)
+{
+	struct f2fs_sb_info *sbi = F2FS_SB(dir->i_sb);
+	struct f2fs_dir_entry *de;
+	struct f2fs_dentry_ptr d;
+	struct page *ipage;
+	void *inline_dentry;
 
 	ipage = f2fs_get_node_page(sbi, dir->i_ino);
-	अगर (IS_ERR(ipage)) अणु
+	if (IS_ERR(ipage)) {
 		*res_page = ipage;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(dir, ipage);
+	inline_dentry = inline_data_addr(dir, ipage);
 
-	make_dentry_ptr_अंतरभूत(dir, &d, अंतरभूत_dentry);
-	de = f2fs_find_target_dentry(&d, fname, शून्य);
+	make_dentry_ptr_inline(dir, &d, inline_dentry);
+	de = f2fs_find_target_dentry(&d, fname, NULL);
 	unlock_page(ipage);
-	अगर (IS_ERR(de)) अणु
+	if (IS_ERR(de)) {
 		*res_page = ERR_CAST(de);
-		de = शून्य;
-	पूर्ण
-	अगर (de)
+		de = NULL;
+	}
+	if (de)
 		*res_page = ipage;
-	अन्यथा
+	else
 		f2fs_put_page(ipage, 0);
 
-	वापस de;
-पूर्ण
+	return de;
+}
 
-पूर्णांक f2fs_make_empty_अंतरभूत_dir(काष्ठा inode *inode, काष्ठा inode *parent,
-							काष्ठा page *ipage)
-अणु
-	काष्ठा f2fs_dentry_ptr d;
-	व्योम *अंतरभूत_dentry;
+int f2fs_make_empty_inline_dir(struct inode *inode, struct inode *parent,
+							struct page *ipage)
+{
+	struct f2fs_dentry_ptr d;
+	void *inline_dentry;
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(inode, ipage);
+	inline_dentry = inline_data_addr(inode, ipage);
 
-	make_dentry_ptr_अंतरभूत(inode, &d, अंतरभूत_dentry);
-	f2fs_करो_make_empty_dir(inode, parent, &d);
+	make_dentry_ptr_inline(inode, &d, inline_dentry);
+	f2fs_do_make_empty_dir(inode, parent, &d);
 
 	set_page_dirty(ipage);
 
 	/* update i_size to MAX_INLINE_DATA */
-	अगर (i_size_पढ़ो(inode) < MAX_INLINE_DATA(inode))
-		f2fs_i_size_ग_लिखो(inode, MAX_INLINE_DATA(inode));
-	वापस 0;
-पूर्ण
+	if (i_size_read(inode) < MAX_INLINE_DATA(inode))
+		f2fs_i_size_write(inode, MAX_INLINE_DATA(inode));
+	return 0;
+}
 
 /*
- * NOTE: ipage is grabbed by caller, but अगर any error occurs, we should
+ * NOTE: ipage is grabbed by caller, but if any error occurs, we should
  * release ipage in this function.
  */
-अटल पूर्णांक f2fs_move_अंतरभूत_dirents(काष्ठा inode *dir, काष्ठा page *ipage,
-							व्योम *अंतरभूत_dentry)
-अणु
-	काष्ठा page *page;
-	काष्ठा dnode_of_data dn;
-	काष्ठा f2fs_dentry_block *dentry_blk;
-	काष्ठा f2fs_dentry_ptr src, dst;
-	पूर्णांक err;
+static int f2fs_move_inline_dirents(struct inode *dir, struct page *ipage,
+							void *inline_dentry)
+{
+	struct page *page;
+	struct dnode_of_data dn;
+	struct f2fs_dentry_block *dentry_blk;
+	struct f2fs_dentry_ptr src, dst;
+	int err;
 
 	page = f2fs_grab_cache_page(dir->i_mapping, 0, true);
-	अगर (!page) अणु
+	if (!page) {
 		f2fs_put_page(ipage, 1);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	set_new_dnode(&dn, dir, ipage, शून्य, 0);
+	set_new_dnode(&dn, dir, ipage, NULL, 0);
 	err = f2fs_reserve_block(&dn, 0);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (unlikely(dn.data_blkaddr != NEW_ADDR)) अणु
+	if (unlikely(dn.data_blkaddr != NEW_ADDR)) {
 		f2fs_put_dnode(&dn);
 		set_sbi_flag(F2FS_P_SB(page), SBI_NEED_FSCK);
 		f2fs_warn(F2FS_P_SB(page), "%s: corrupted inline inode ino=%lx, i_addr[0]:0x%x, run fsck to fix.",
 			  __func__, dir->i_ino, dn.data_blkaddr);
 		err = -EFSCORRUPTED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	f2fs_रुको_on_page_ग_लिखोback(page, DATA, true, true);
+	f2fs_wait_on_page_writeback(page, DATA, true, true);
 
 	dentry_blk = page_address(page);
 
-	make_dentry_ptr_अंतरभूत(dir, &src, अंतरभूत_dentry);
+	make_dentry_ptr_inline(dir, &src, inline_dentry);
 	make_dentry_ptr_block(dir, &dst, dentry_blk);
 
-	/* copy data from अंतरभूत dentry block to new dentry block */
-	स_नकल(dst.biपंचांगap, src.biपंचांगap, src.nr_biपंचांगap);
-	स_रखो(dst.biपंचांगap + src.nr_biपंचांगap, 0, dst.nr_biपंचांगap - src.nr_biपंचांगap);
+	/* copy data from inline dentry block to new dentry block */
+	memcpy(dst.bitmap, src.bitmap, src.nr_bitmap);
+	memset(dst.bitmap + src.nr_bitmap, 0, dst.nr_bitmap - src.nr_bitmap);
 	/*
-	 * we करो not need to zero out reमुख्यder part of dentry and filename
-	 * field, since we have used biपंचांगap क्रम marking the usage status of
+	 * we do not need to zero out remainder part of dentry and filename
+	 * field, since we have used bitmap for marking the usage status of
 	 * them, besides, we can also ignore copying/zeroing reserved space
 	 * of dentry block, because them haven't been used so far.
 	 */
-	स_नकल(dst.dentry, src.dentry, SIZE_OF_सूची_ENTRY * src.max);
-	स_नकल(dst.filename, src.filename, src.max * F2FS_SLOT_LEN);
+	memcpy(dst.dentry, src.dentry, SIZE_OF_DIR_ENTRY * src.max);
+	memcpy(dst.filename, src.filename, src.max * F2FS_SLOT_LEN);
 
-	अगर (!PageUptodate(page))
+	if (!PageUptodate(page))
 		SetPageUptodate(page);
 	set_page_dirty(page);
 
-	/* clear अंतरभूत dir and flag after data ग_लिखोback */
-	f2fs_truncate_अंतरभूत_inode(dir, ipage, 0);
+	/* clear inline dir and flag after data writeback */
+	f2fs_truncate_inline_inode(dir, ipage, 0);
 
-	stat_dec_अंतरभूत_dir(dir);
+	stat_dec_inline_dir(dir);
 	clear_inode_flag(dir, FI_INLINE_DENTRY);
 
 	/*
 	 * should retrieve reserved space which was used to keep
-	 * अंतरभूत_dentry's काष्ठाure क्रम backward compatibility.
+	 * inline_dentry's structure for backward compatibility.
 	 */
-	अगर (!f2fs_sb_has_flexible_अंतरभूत_xattr(F2FS_I_SB(dir)) &&
-			!f2fs_has_अंतरभूत_xattr(dir))
-		F2FS_I(dir)->i_अंतरभूत_xattr_size = 0;
+	if (!f2fs_sb_has_flexible_inline_xattr(F2FS_I_SB(dir)) &&
+			!f2fs_has_inline_xattr(dir))
+		F2FS_I(dir)->i_inline_xattr_size = 0;
 
-	f2fs_i_depth_ग_लिखो(dir, 1);
-	अगर (i_size_पढ़ो(dir) < PAGE_SIZE)
-		f2fs_i_size_ग_लिखो(dir, PAGE_SIZE);
+	f2fs_i_depth_write(dir, 1);
+	if (i_size_read(dir) < PAGE_SIZE)
+		f2fs_i_size_write(dir, PAGE_SIZE);
 out:
 	f2fs_put_page(page, 1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक f2fs_add_अंतरभूत_entries(काष्ठा inode *dir, व्योम *अंतरभूत_dentry)
-अणु
-	काष्ठा f2fs_dentry_ptr d;
-	अचिन्हित दीर्घ bit_pos = 0;
-	पूर्णांक err = 0;
+static int f2fs_add_inline_entries(struct inode *dir, void *inline_dentry)
+{
+	struct f2fs_dentry_ptr d;
+	unsigned long bit_pos = 0;
+	int err = 0;
 
-	make_dentry_ptr_अंतरभूत(dir, &d, अंतरभूत_dentry);
+	make_dentry_ptr_inline(dir, &d, inline_dentry);
 
-	जबतक (bit_pos < d.max) अणु
-		काष्ठा f2fs_dir_entry *de;
-		काष्ठा f2fs_filename fname;
+	while (bit_pos < d.max) {
+		struct f2fs_dir_entry *de;
+		struct f2fs_filename fname;
 		nid_t ino;
 		umode_t fake_mode;
 
-		अगर (!test_bit_le(bit_pos, d.biपंचांगap)) अणु
+		if (!test_bit_le(bit_pos, d.bitmap)) {
 			bit_pos++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		de = &d.dentry[bit_pos];
 
-		अगर (unlikely(!de->name_len)) अणु
+		if (unlikely(!de->name_len)) {
 			bit_pos++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * We only need the disk_name and hash to move the dentry.
-		 * We करोn't need the original or हालfolded filenames.
+		 * We don't need the original or casefolded filenames.
 		 */
-		स_रखो(&fname, 0, माप(fname));
+		memset(&fname, 0, sizeof(fname));
 		fname.disk_name.name = d.filename[bit_pos];
 		fname.disk_name.len = le16_to_cpu(de->name_len);
 		fname.hash = de->hash_code;
@@ -488,315 +487,315 @@ out:
 		ino = le32_to_cpu(de->ino);
 		fake_mode = f2fs_get_de_type(de) << S_SHIFT;
 
-		err = f2fs_add_regular_entry(dir, &fname, शून्य, ino, fake_mode);
-		अगर (err)
-			जाओ punch_dentry_pages;
+		err = f2fs_add_regular_entry(dir, &fname, NULL, ino, fake_mode);
+		if (err)
+			goto punch_dentry_pages;
 
 		bit_pos += GET_DENTRY_SLOTS(le16_to_cpu(de->name_len));
-	पूर्ण
-	वापस 0;
+	}
+	return 0;
 punch_dentry_pages:
 	truncate_inode_pages(&dir->i_data, 0);
 	f2fs_truncate_blocks(dir, 0, false);
-	f2fs_हटाओ_dirty_inode(dir);
-	वापस err;
-पूर्ण
+	f2fs_remove_dirty_inode(dir);
+	return err;
+}
 
-अटल पूर्णांक f2fs_move_rehashed_dirents(काष्ठा inode *dir, काष्ठा page *ipage,
-							व्योम *अंतरभूत_dentry)
-अणु
-	व्योम *backup_dentry;
-	पूर्णांक err;
+static int f2fs_move_rehashed_dirents(struct inode *dir, struct page *ipage,
+							void *inline_dentry)
+{
+	void *backup_dentry;
+	int err;
 
-	backup_dentry = f2fs_kदो_स्मृति(F2FS_I_SB(dir),
+	backup_dentry = f2fs_kmalloc(F2FS_I_SB(dir),
 				MAX_INLINE_DATA(dir), GFP_F2FS_ZERO);
-	अगर (!backup_dentry) अणु
+	if (!backup_dentry) {
 		f2fs_put_page(ipage, 1);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	स_नकल(backup_dentry, अंतरभूत_dentry, MAX_INLINE_DATA(dir));
-	f2fs_truncate_अंतरभूत_inode(dir, ipage, 0);
+	memcpy(backup_dentry, inline_dentry, MAX_INLINE_DATA(dir));
+	f2fs_truncate_inline_inode(dir, ipage, 0);
 
 	unlock_page(ipage);
 
-	err = f2fs_add_अंतरभूत_entries(dir, backup_dentry);
-	अगर (err)
-		जाओ recover;
+	err = f2fs_add_inline_entries(dir, backup_dentry);
+	if (err)
+		goto recover;
 
 	lock_page(ipage);
 
-	stat_dec_अंतरभूत_dir(dir);
+	stat_dec_inline_dir(dir);
 	clear_inode_flag(dir, FI_INLINE_DENTRY);
 
 	/*
 	 * should retrieve reserved space which was used to keep
-	 * अंतरभूत_dentry's काष्ठाure क्रम backward compatibility.
+	 * inline_dentry's structure for backward compatibility.
 	 */
-	अगर (!f2fs_sb_has_flexible_अंतरभूत_xattr(F2FS_I_SB(dir)) &&
-			!f2fs_has_अंतरभूत_xattr(dir))
-		F2FS_I(dir)->i_अंतरभूत_xattr_size = 0;
+	if (!f2fs_sb_has_flexible_inline_xattr(F2FS_I_SB(dir)) &&
+			!f2fs_has_inline_xattr(dir))
+		F2FS_I(dir)->i_inline_xattr_size = 0;
 
-	kमुक्त(backup_dentry);
-	वापस 0;
+	kfree(backup_dentry);
+	return 0;
 recover:
 	lock_page(ipage);
-	f2fs_रुको_on_page_ग_लिखोback(ipage, NODE, true, true);
-	स_नकल(अंतरभूत_dentry, backup_dentry, MAX_INLINE_DATA(dir));
-	f2fs_i_depth_ग_लिखो(dir, 0);
-	f2fs_i_size_ग_लिखो(dir, MAX_INLINE_DATA(dir));
+	f2fs_wait_on_page_writeback(ipage, NODE, true, true);
+	memcpy(inline_dentry, backup_dentry, MAX_INLINE_DATA(dir));
+	f2fs_i_depth_write(dir, 0);
+	f2fs_i_size_write(dir, MAX_INLINE_DATA(dir));
 	set_page_dirty(ipage);
 	f2fs_put_page(ipage, 1);
 
-	kमुक्त(backup_dentry);
-	वापस err;
-पूर्ण
+	kfree(backup_dentry);
+	return err;
+}
 
-अटल पूर्णांक करो_convert_अंतरभूत_dir(काष्ठा inode *dir, काष्ठा page *ipage,
-							व्योम *अंतरभूत_dentry)
-अणु
-	अगर (!F2FS_I(dir)->i_dir_level)
-		वापस f2fs_move_अंतरभूत_dirents(dir, ipage, अंतरभूत_dentry);
-	अन्यथा
-		वापस f2fs_move_rehashed_dirents(dir, ipage, अंतरभूत_dentry);
-पूर्ण
+static int do_convert_inline_dir(struct inode *dir, struct page *ipage,
+							void *inline_dentry)
+{
+	if (!F2FS_I(dir)->i_dir_level)
+		return f2fs_move_inline_dirents(dir, ipage, inline_dentry);
+	else
+		return f2fs_move_rehashed_dirents(dir, ipage, inline_dentry);
+}
 
-पूर्णांक f2fs_try_convert_अंतरभूत_dir(काष्ठा inode *dir, काष्ठा dentry *dentry)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा page *ipage;
-	काष्ठा f2fs_filename fname;
-	व्योम *अंतरभूत_dentry = शून्य;
-	पूर्णांक err = 0;
+int f2fs_try_convert_inline_dir(struct inode *dir, struct dentry *dentry)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct page *ipage;
+	struct f2fs_filename fname;
+	void *inline_dentry = NULL;
+	int err = 0;
 
-	अगर (!f2fs_has_अंतरभूत_dentry(dir))
-		वापस 0;
+	if (!f2fs_has_inline_dentry(dir))
+		return 0;
 
 	f2fs_lock_op(sbi);
 
 	err = f2fs_setup_filename(dir, &dentry->d_name, 0, &fname);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	ipage = f2fs_get_node_page(sbi, dir->i_ino);
-	अगर (IS_ERR(ipage)) अणु
+	if (IS_ERR(ipage)) {
 		err = PTR_ERR(ipage);
-		जाओ out_fname;
-	पूर्ण
+		goto out_fname;
+	}
 
-	अगर (f2fs_has_enough_room(dir, ipage, &fname)) अणु
+	if (f2fs_has_enough_room(dir, ipage, &fname)) {
 		f2fs_put_page(ipage, 1);
-		जाओ out_fname;
-	पूर्ण
+		goto out_fname;
+	}
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(dir, ipage);
+	inline_dentry = inline_data_addr(dir, ipage);
 
-	err = करो_convert_अंतरभूत_dir(dir, ipage, अंतरभूत_dentry);
-	अगर (!err)
+	err = do_convert_inline_dir(dir, ipage, inline_dentry);
+	if (!err)
 		f2fs_put_page(ipage, 1);
 out_fname:
-	f2fs_मुक्त_filename(&fname);
+	f2fs_free_filename(&fname);
 out:
 	f2fs_unlock_op(sbi);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक f2fs_add_अंतरभूत_entry(काष्ठा inode *dir, स्थिर काष्ठा f2fs_filename *fname,
-			  काष्ठा inode *inode, nid_t ino, umode_t mode)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा page *ipage;
-	अचिन्हित पूर्णांक bit_pos;
-	व्योम *अंतरभूत_dentry = शून्य;
-	काष्ठा f2fs_dentry_ptr d;
-	पूर्णांक slots = GET_DENTRY_SLOTS(fname->disk_name.len);
-	काष्ठा page *page = शून्य;
-	पूर्णांक err = 0;
+int f2fs_add_inline_entry(struct inode *dir, const struct f2fs_filename *fname,
+			  struct inode *inode, nid_t ino, umode_t mode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct page *ipage;
+	unsigned int bit_pos;
+	void *inline_dentry = NULL;
+	struct f2fs_dentry_ptr d;
+	int slots = GET_DENTRY_SLOTS(fname->disk_name.len);
+	struct page *page = NULL;
+	int err = 0;
 
 	ipage = f2fs_get_node_page(sbi, dir->i_ino);
-	अगर (IS_ERR(ipage))
-		वापस PTR_ERR(ipage);
+	if (IS_ERR(ipage))
+		return PTR_ERR(ipage);
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(dir, ipage);
-	make_dentry_ptr_अंतरभूत(dir, &d, अंतरभूत_dentry);
+	inline_dentry = inline_data_addr(dir, ipage);
+	make_dentry_ptr_inline(dir, &d, inline_dentry);
 
-	bit_pos = f2fs_room_क्रम_filename(d.biपंचांगap, slots, d.max);
-	अगर (bit_pos >= d.max) अणु
-		err = करो_convert_अंतरभूत_dir(dir, ipage, अंतरभूत_dentry);
-		अगर (err)
-			वापस err;
+	bit_pos = f2fs_room_for_filename(d.bitmap, slots, d.max);
+	if (bit_pos >= d.max) {
+		err = do_convert_inline_dir(dir, ipage, inline_dentry);
+		if (err)
+			return err;
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (inode) अणु
-		करोwn_ग_लिखो(&F2FS_I(inode)->i_sem);
+	if (inode) {
+		down_write(&F2FS_I(inode)->i_sem);
 		page = f2fs_init_inode_metadata(inode, dir, fname, ipage);
-		अगर (IS_ERR(page)) अणु
+		if (IS_ERR(page)) {
 			err = PTR_ERR(page);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
-	f2fs_रुको_on_page_ग_लिखोback(ipage, NODE, true, true);
+	f2fs_wait_on_page_writeback(ipage, NODE, true, true);
 
 	f2fs_update_dentry(ino, mode, &d, &fname->disk_name, fname->hash,
 			   bit_pos);
 
 	set_page_dirty(ipage);
 
-	/* we करोn't need to mark_inode_dirty now */
-	अगर (inode) अणु
-		f2fs_i_pino_ग_लिखो(inode, dir->i_ino);
+	/* we don't need to mark_inode_dirty now */
+	if (inode) {
+		f2fs_i_pino_write(inode, dir->i_ino);
 
 		/* synchronize inode page's data from inode cache */
-		अगर (is_inode_flag_set(inode, FI_NEW_INODE))
+		if (is_inode_flag_set(inode, FI_NEW_INODE))
 			f2fs_update_inode(inode, page);
 
 		f2fs_put_page(page, 1);
-	पूर्ण
+	}
 
 	f2fs_update_parent_metadata(dir, inode, 0);
 fail:
-	अगर (inode)
-		up_ग_लिखो(&F2FS_I(inode)->i_sem);
+	if (inode)
+		up_write(&F2FS_I(inode)->i_sem);
 out:
 	f2fs_put_page(ipage, 1);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम f2fs_delete_अंतरभूत_entry(काष्ठा f2fs_dir_entry *dentry, काष्ठा page *page,
-					काष्ठा inode *dir, काष्ठा inode *inode)
-अणु
-	काष्ठा f2fs_dentry_ptr d;
-	व्योम *अंतरभूत_dentry;
-	पूर्णांक slots = GET_DENTRY_SLOTS(le16_to_cpu(dentry->name_len));
-	अचिन्हित पूर्णांक bit_pos;
-	पूर्णांक i;
+void f2fs_delete_inline_entry(struct f2fs_dir_entry *dentry, struct page *page,
+					struct inode *dir, struct inode *inode)
+{
+	struct f2fs_dentry_ptr d;
+	void *inline_dentry;
+	int slots = GET_DENTRY_SLOTS(le16_to_cpu(dentry->name_len));
+	unsigned int bit_pos;
+	int i;
 
 	lock_page(page);
-	f2fs_रुको_on_page_ग_लिखोback(page, NODE, true, true);
+	f2fs_wait_on_page_writeback(page, NODE, true, true);
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(dir, page);
-	make_dentry_ptr_अंतरभूत(dir, &d, अंतरभूत_dentry);
+	inline_dentry = inline_data_addr(dir, page);
+	make_dentry_ptr_inline(dir, &d, inline_dentry);
 
 	bit_pos = dentry - d.dentry;
-	क्रम (i = 0; i < slots; i++)
-		__clear_bit_le(bit_pos + i, d.biपंचांगap);
+	for (i = 0; i < slots; i++)
+		__clear_bit_le(bit_pos + i, d.bitmap);
 
 	set_page_dirty(page);
 	f2fs_put_page(page, 1);
 
-	dir->i_स_समय = dir->i_mसमय = current_समय(dir);
+	dir->i_ctime = dir->i_mtime = current_time(dir);
 	f2fs_mark_inode_dirty_sync(dir, false);
 
-	अगर (inode)
+	if (inode)
 		f2fs_drop_nlink(dir, inode);
-पूर्ण
+}
 
-bool f2fs_empty_अंतरभूत_dir(काष्ठा inode *dir)
-अणु
-	काष्ठा f2fs_sb_info *sbi = F2FS_I_SB(dir);
-	काष्ठा page *ipage;
-	अचिन्हित पूर्णांक bit_pos = 2;
-	व्योम *अंतरभूत_dentry;
-	काष्ठा f2fs_dentry_ptr d;
+bool f2fs_empty_inline_dir(struct inode *dir)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(dir);
+	struct page *ipage;
+	unsigned int bit_pos = 2;
+	void *inline_dentry;
+	struct f2fs_dentry_ptr d;
 
 	ipage = f2fs_get_node_page(sbi, dir->i_ino);
-	अगर (IS_ERR(ipage))
-		वापस false;
+	if (IS_ERR(ipage))
+		return false;
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(dir, ipage);
-	make_dentry_ptr_अंतरभूत(dir, &d, अंतरभूत_dentry);
+	inline_dentry = inline_data_addr(dir, ipage);
+	make_dentry_ptr_inline(dir, &d, inline_dentry);
 
-	bit_pos = find_next_bit_le(d.biपंचांगap, d.max, bit_pos);
+	bit_pos = find_next_bit_le(d.bitmap, d.max, bit_pos);
 
 	f2fs_put_page(ipage, 1);
 
-	अगर (bit_pos < d.max)
-		वापस false;
+	if (bit_pos < d.max)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक f2fs_पढ़ो_अंतरभूत_dir(काष्ठा file *file, काष्ठा dir_context *ctx,
-				काष्ठा fscrypt_str *fstr)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा page *ipage = शून्य;
-	काष्ठा f2fs_dentry_ptr d;
-	व्योम *अंतरभूत_dentry = शून्य;
-	पूर्णांक err;
+int f2fs_read_inline_dir(struct file *file, struct dir_context *ctx,
+				struct fscrypt_str *fstr)
+{
+	struct inode *inode = file_inode(file);
+	struct page *ipage = NULL;
+	struct f2fs_dentry_ptr d;
+	void *inline_dentry = NULL;
+	int err;
 
-	make_dentry_ptr_अंतरभूत(inode, &d, अंतरभूत_dentry);
+	make_dentry_ptr_inline(inode, &d, inline_dentry);
 
-	अगर (ctx->pos == d.max)
-		वापस 0;
+	if (ctx->pos == d.max)
+		return 0;
 
 	ipage = f2fs_get_node_page(F2FS_I_SB(inode), inode->i_ino);
-	अगर (IS_ERR(ipage))
-		वापस PTR_ERR(ipage);
+	if (IS_ERR(ipage))
+		return PTR_ERR(ipage);
 
 	/*
-	 * f2fs_सूची_पढ़ो was रक्षित by inode.i_rwsem, it is safe to access
+	 * f2fs_readdir was protected by inode.i_rwsem, it is safe to access
 	 * ipage without page's lock held.
 	 */
 	unlock_page(ipage);
 
-	अंतरभूत_dentry = अंतरभूत_data_addr(inode, ipage);
+	inline_dentry = inline_data_addr(inode, ipage);
 
-	make_dentry_ptr_अंतरभूत(inode, &d, अंतरभूत_dentry);
+	make_dentry_ptr_inline(inode, &d, inline_dentry);
 
 	err = f2fs_fill_dentries(ctx, &d, 0, fstr);
-	अगर (!err)
+	if (!err)
 		ctx->pos = d.max;
 
 	f2fs_put_page(ipage, 0);
-	वापस err < 0 ? err : 0;
-पूर्ण
+	return err < 0 ? err : 0;
+}
 
-पूर्णांक f2fs_अंतरभूत_data_fiemap(काष्ठा inode *inode,
-		काष्ठा fiemap_extent_info *fieinfo, __u64 start, __u64 len)
-अणु
+int f2fs_inline_data_fiemap(struct inode *inode,
+		struct fiemap_extent_info *fieinfo, __u64 start, __u64 len)
+{
 	__u64 byteaddr, ilen;
 	__u32 flags = FIEMAP_EXTENT_DATA_INLINE | FIEMAP_EXTENT_NOT_ALIGNED |
 		FIEMAP_EXTENT_LAST;
-	काष्ठा node_info ni;
-	काष्ठा page *ipage;
-	पूर्णांक err = 0;
+	struct node_info ni;
+	struct page *ipage;
+	int err = 0;
 
 	ipage = f2fs_get_node_page(F2FS_I_SB(inode), inode->i_ino);
-	अगर (IS_ERR(ipage))
-		वापस PTR_ERR(ipage);
+	if (IS_ERR(ipage))
+		return PTR_ERR(ipage);
 
-	अगर ((S_ISREG(inode->i_mode) || S_ISLNK(inode->i_mode)) &&
-				!f2fs_has_अंतरभूत_data(inode)) अणु
+	if ((S_ISREG(inode->i_mode) || S_ISLNK(inode->i_mode)) &&
+				!f2fs_has_inline_data(inode)) {
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (S_ISसूची(inode->i_mode) && !f2fs_has_अंतरभूत_dentry(inode)) अणु
+	if (S_ISDIR(inode->i_mode) && !f2fs_has_inline_dentry(inode)) {
 		err = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ilen = min_t(माप_प्रकार, MAX_INLINE_DATA(inode), i_size_पढ़ो(inode));
-	अगर (start >= ilen)
-		जाओ out;
-	अगर (start + len < ilen)
+	ilen = min_t(size_t, MAX_INLINE_DATA(inode), i_size_read(inode));
+	if (start >= ilen)
+		goto out;
+	if (start + len < ilen)
 		ilen = start + len;
 	ilen -= start;
 
 	err = f2fs_get_node_info(F2FS_I_SB(inode), inode->i_ino, &ni);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	byteaddr = (__u64)ni.blk_addr << inode->i_sb->s_blocksize_bits;
-	byteaddr += (अक्षर *)अंतरभूत_data_addr(inode, ipage) -
-					(अक्षर *)F2FS_INODE(ipage);
+	byteaddr += (char *)inline_data_addr(inode, ipage) -
+					(char *)F2FS_INODE(ipage);
 	err = fiemap_fill_next_extent(fieinfo, start, byteaddr, ilen, flags);
 	trace_f2fs_fiemap(inode, start, byteaddr, ilen, flags, err);
 out:
 	f2fs_put_page(ipage, 1);
-	वापस err;
-पूर्ण
+	return err;
+}

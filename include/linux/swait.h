@@ -1,288 +1,287 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SWAIT_H
-#घोषणा _LINUX_SWAIT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SWAIT_H
+#define _LINUX_SWAIT_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <यंत्र/current.h>
+#include <linux/list.h>
+#include <linux/stddef.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <asm/current.h>
 
 /*
- * Simple रुकोqueues are semantically very dअगरferent to regular रुको queues
- * (रुको.h). The most important dअगरference is that the simple रुकोqueue allows
- * क्रम deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
- * बार.
+ * Simple waitqueues are semantically very different to regular wait queues
+ * (wait.h). The most important difference is that the simple waitqueue allows
+ * for deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
+ * times.
  *
  * Mainly, this is accomplished by two things. Firstly not allowing swake_up_all
  * from IRQ disabled, and dropping the lock upon every wakeup, giving a higher
  * priority task a chance to run.
  *
- * Secondly, we had to drop a fair number of features of the other रुकोqueue
+ * Secondly, we had to drop a fair number of features of the other waitqueue
  * code; notably:
  *
- *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same रुकोqueue;
- *    all wakeups are TASK_NORMAL in order to aव्योम O(n) lookups क्रम the right
+ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same waitqueue;
+ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for the right
  *    sleeper state.
  *
  *  - the !exclusive mode; because that leads to O(n) wakeups, everything is
- *    exclusive. As such swake_up_one will only ever awake _one_ रुकोer.
+ *    exclusive. As such swake_up_one will only ever awake _one_ waiter.
  *
  *  - custom wake callback functions; because you cannot give any guarantees
- *    about अक्रमom code. This also allows sरुको to be used in RT, such that
- *    raw spinlock can be used क्रम the sरुको queue head.
+ *    about random code. This also allows swait to be used in RT, such that
+ *    raw spinlock can be used for the swait queue head.
  *
- * As a side effect of these; the data काष्ठाures are slimmer albeit more ad-hoc.
- * For all the above, note that simple रुको queues should _only_ be used under
- * very specअगरic realसमय स्थिरraपूर्णांकs -- it is best to stick with the regular
- * रुको queues in most हालs.
+ * As a side effect of these; the data structures are slimmer albeit more ad-hoc.
+ * For all the above, note that simple wait queues should _only_ be used under
+ * very specific realtime constraints -- it is best to stick with the regular
+ * wait queues in most cases.
  */
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-काष्ठा sरुको_queue_head अणु
+struct swait_queue_head {
 	raw_spinlock_t		lock;
-	काष्ठा list_head	task_list;
-पूर्ण;
+	struct list_head	task_list;
+};
 
-काष्ठा sरुको_queue अणु
-	काष्ठा task_काष्ठा	*task;
-	काष्ठा list_head	task_list;
-पूर्ण;
+struct swait_queue {
+	struct task_struct	*task;
+	struct list_head	task_list;
+};
 
-#घोषणा __SWAITQUEUE_INITIALIZER(name) अणु				\
+#define __SWAITQUEUE_INITIALIZER(name) {				\
 	.task		= current,					\
 	.task_list	= LIST_HEAD_INIT((name).task_list),		\
-पूर्ण
+}
 
-#घोषणा DECLARE_SWAITQUEUE(name)					\
-	काष्ठा sरुको_queue name = __SWAITQUEUE_INITIALIZER(name)
+#define DECLARE_SWAITQUEUE(name)					\
+	struct swait_queue name = __SWAITQUEUE_INITIALIZER(name)
 
-#घोषणा __SWAIT_QUEUE_HEAD_INITIALIZER(name) अणु				\
+#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
 	.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
 	.task_list	= LIST_HEAD_INIT((name).task_list),		\
-पूर्ण
+}
 
-#घोषणा DECLARE_SWAIT_QUEUE_HEAD(name)					\
-	काष्ठा sरुको_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
+#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
+	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
 
-बाह्य व्योम __init_sरुको_queue_head(काष्ठा sरुको_queue_head *q, स्थिर अक्षर *name,
-				    काष्ठा lock_class_key *key);
+extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
+				    struct lock_class_key *key);
 
-#घोषणा init_sरुको_queue_head(q)				\
-	करो अणु							\
-		अटल काष्ठा lock_class_key __key;		\
-		__init_sरुको_queue_head((q), #q, &__key);	\
-	पूर्ण जबतक (0)
+#define init_swait_queue_head(q)				\
+	do {							\
+		static struct lock_class_key __key;		\
+		__init_swait_queue_head((q), #q, &__key);	\
+	} while (0)
 
-#अगर_घोषित CONFIG_LOCKDEP
+#ifdef CONFIG_LOCKDEP
 # define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
-	(अणु init_sरुको_queue_head(&name); name; पूर्ण)
+	({ init_swait_queue_head(&name); name; })
 # define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
-	काष्ठा sरुको_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
-#अन्यथा
+	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
+#else
 # define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
 	DECLARE_SWAIT_QUEUE_HEAD(name)
-#पूर्ण_अगर
+#endif
 
 /**
- * sरुको_active -- locklessly test क्रम रुकोers on the queue
- * @wq: the रुकोqueue to test क्रम रुकोers
+ * swait_active -- locklessly test for waiters on the queue
+ * @wq: the waitqueue to test for waiters
  *
- * वापसs true अगर the रुको list is not empty
+ * returns true if the wait list is not empty
  *
  * NOTE: this function is lockless and requires care, incorrect usage _will_
  * lead to sporadic and non-obvious failure.
  *
- * NOTE2: this function has the same above implications as regular रुकोqueues.
+ * NOTE2: this function has the same above implications as regular waitqueues.
  *
- * Use either जबतक holding sरुको_queue_head::lock or when used क्रम wakeups
+ * Use either while holding swait_queue_head::lock or when used for wakeups
  * with an extra smp_mb() like:
  *
- *      CPU0 - waker                    CPU1 - रुकोer
+ *      CPU0 - waker                    CPU1 - waiter
  *
- *                                      क्रम (;;) अणु
- *      @cond = true;                     prepare_to_sरुको_exclusive(&wq_head, &रुको, state);
+ *                                      for (;;) {
+ *      @cond = true;                     prepare_to_swait_exclusive(&wq_head, &wait, state);
  *      smp_mb();                         // smp_mb() from set_current_state()
- *      अगर (sरुको_active(wq_head))        अगर (@cond)
- *        wake_up(wq_head);                      अवरोध;
+ *      if (swait_active(wq_head))        if (@cond)
+ *        wake_up(wq_head);                      break;
  *                                        schedule();
- *                                      पूर्ण
- *                                      finish_sरुको(&wq_head, &रुको);
+ *                                      }
+ *                                      finish_swait(&wq_head, &wait);
  *
- * Because without the explicit smp_mb() it's possible क्रम the
- * sरुको_active() load to get hoisted over the @cond store such that we'll
- * observe an empty रुको list जबतक the रुकोer might not observe @cond.
+ * Because without the explicit smp_mb() it's possible for the
+ * swait_active() load to get hoisted over the @cond store such that we'll
+ * observe an empty wait list while the waiter might not observe @cond.
  * This, in turn, can trigger missing wakeups.
  *
- * Also note that this 'optimization' trades a spin_lock() क्रम an smp_mb(),
+ * Also note that this 'optimization' trades a spin_lock() for an smp_mb(),
  * which (when the lock is uncontended) are of roughly equal cost.
  */
-अटल अंतरभूत पूर्णांक sरुको_active(काष्ठा sरुको_queue_head *wq)
-अणु
-	वापस !list_empty(&wq->task_list);
-पूर्ण
+static inline int swait_active(struct swait_queue_head *wq)
+{
+	return !list_empty(&wq->task_list);
+}
 
 /**
- * swq_has_sleeper - check अगर there are any रुकोing processes
- * @wq: the रुकोqueue to test क्रम रुकोers
+ * swq_has_sleeper - check if there are any waiting processes
+ * @wq: the waitqueue to test for waiters
  *
- * Returns true अगर @wq has रुकोing processes
+ * Returns true if @wq has waiting processes
  *
- * Please refer to the comment क्रम sरुको_active.
+ * Please refer to the comment for swait_active.
  */
-अटल अंतरभूत bool swq_has_sleeper(काष्ठा sरुको_queue_head *wq)
-अणु
+static inline bool swq_has_sleeper(struct swait_queue_head *wq)
+{
 	/*
 	 * We need to be sure we are in sync with the list_add()
-	 * modअगरications to the रुको queue (task_list).
+	 * modifications to the wait queue (task_list).
 	 *
 	 * This memory barrier should be paired with one on the
-	 * रुकोing side.
+	 * waiting side.
 	 */
 	smp_mb();
-	वापस sरुको_active(wq);
-पूर्ण
+	return swait_active(wq);
+}
 
-बाह्य व्योम swake_up_one(काष्ठा sरुको_queue_head *q);
-बाह्य व्योम swake_up_all(काष्ठा sरुको_queue_head *q);
-बाह्य व्योम swake_up_locked(काष्ठा sरुको_queue_head *q);
+extern void swake_up_one(struct swait_queue_head *q);
+extern void swake_up_all(struct swait_queue_head *q);
+extern void swake_up_locked(struct swait_queue_head *q);
 
-बाह्य व्योम prepare_to_sरुको_exclusive(काष्ठा sरुको_queue_head *q, काष्ठा sरुको_queue *रुको, पूर्णांक state);
-बाह्य दीर्घ prepare_to_sरुको_event(काष्ठा sरुको_queue_head *q, काष्ठा sरुको_queue *रुको, पूर्णांक state);
+extern void prepare_to_swait_exclusive(struct swait_queue_head *q, struct swait_queue *wait, int state);
+extern long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state);
 
-बाह्य व्योम __finish_sरुको(काष्ठा sरुको_queue_head *q, काष्ठा sरुको_queue *रुको);
-बाह्य व्योम finish_sरुको(काष्ठा sरुको_queue_head *q, काष्ठा sरुको_queue *रुको);
+extern void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
+extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
 
-/* as per ___रुको_event() but क्रम sरुको, thereक्रमe "exclusive == 1" */
-#घोषणा ___sरुको_event(wq, condition, state, ret, cmd)			\
-(अणु									\
+/* as per ___wait_event() but for swait, therefore "exclusive == 1" */
+#define ___swait_event(wq, condition, state, ret, cmd)			\
+({									\
 	__label__ __out;						\
-	काष्ठा sरुको_queue __रुको;					\
-	दीर्घ __ret = ret;						\
+	struct swait_queue __wait;					\
+	long __ret = ret;						\
 									\
-	INIT_LIST_HEAD(&__रुको.task_list);				\
-	क्रम (;;) अणु							\
-		दीर्घ __पूर्णांक = prepare_to_sरुको_event(&wq, &__रुको, state);\
+	INIT_LIST_HEAD(&__wait.task_list);				\
+	for (;;) {							\
+		long __int = prepare_to_swait_event(&wq, &__wait, state);\
 									\
-		अगर (condition)						\
-			अवरोध;						\
+		if (condition)						\
+			break;						\
 									\
-		अगर (___रुको_is_पूर्णांकerruptible(state) && __पूर्णांक) अणु		\
-			__ret = __पूर्णांक;					\
-			जाओ __out;					\
-		पूर्ण							\
+		if (___wait_is_interruptible(state) && __int) {		\
+			__ret = __int;					\
+			goto __out;					\
+		}							\
 									\
 		cmd;							\
-	पूर्ण								\
-	finish_sरुको(&wq, &__रुको);					\
+	}								\
+	finish_swait(&wq, &__wait);					\
 __out:	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __sरुको_event(wq, condition)					\
-	(व्योम)___sरुको_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
+#define __swait_event(wq, condition)					\
+	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
 			    schedule())
 
-#घोषणा sरुको_event_exclusive(wq, condition)				\
-करो अणु									\
-	अगर (condition)							\
-		अवरोध;							\
-	__sरुको_event(wq, condition);					\
-पूर्ण जबतक (0)
+#define swait_event_exclusive(wq, condition)				\
+do {									\
+	if (condition)							\
+		break;							\
+	__swait_event(wq, condition);					\
+} while (0)
 
-#घोषणा __sरुको_event_समयout(wq, condition, समयout)			\
-	___sरुको_event(wq, ___रुको_cond_समयout(condition),		\
-		      TASK_UNINTERRUPTIBLE, समयout,			\
-		      __ret = schedule_समयout(__ret))
+#define __swait_event_timeout(wq, condition, timeout)			\
+	___swait_event(wq, ___wait_cond_timeout(condition),		\
+		      TASK_UNINTERRUPTIBLE, timeout,			\
+		      __ret = schedule_timeout(__ret))
 
-#घोषणा sरुको_event_समयout_exclusive(wq, condition, समयout)		\
-(अणु									\
-	दीर्घ __ret = समयout;						\
-	अगर (!___रुको_cond_समयout(condition))				\
-		__ret = __sरुको_event_समयout(wq, condition, समयout);	\
+#define swait_event_timeout_exclusive(wq, condition, timeout)		\
+({									\
+	long __ret = timeout;						\
+	if (!___wait_cond_timeout(condition))				\
+		__ret = __swait_event_timeout(wq, condition, timeout);	\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __sरुको_event_पूर्णांकerruptible(wq, condition)			\
-	___sरुको_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
+#define __swait_event_interruptible(wq, condition)			\
+	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
 		      schedule())
 
-#घोषणा sरुको_event_पूर्णांकerruptible_exclusive(wq, condition)		\
-(अणु									\
-	पूर्णांक __ret = 0;							\
-	अगर (!(condition))						\
-		__ret = __sरुको_event_पूर्णांकerruptible(wq, condition);	\
+#define swait_event_interruptible_exclusive(wq, condition)		\
+({									\
+	int __ret = 0;							\
+	if (!(condition))						\
+		__ret = __swait_event_interruptible(wq, condition);	\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __sरुको_event_पूर्णांकerruptible_समयout(wq, condition, समयout)	\
-	___sरुको_event(wq, ___रुको_cond_समयout(condition),		\
-		      TASK_INTERRUPTIBLE, समयout,			\
-		      __ret = schedule_समयout(__ret))
+#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
+	___swait_event(wq, ___wait_cond_timeout(condition),		\
+		      TASK_INTERRUPTIBLE, timeout,			\
+		      __ret = schedule_timeout(__ret))
 
-#घोषणा sरुको_event_पूर्णांकerruptible_समयout_exclusive(wq, condition, समयout)\
-(अणु									\
-	दीर्घ __ret = समयout;						\
-	अगर (!___रुको_cond_समयout(condition))				\
-		__ret = __sरुको_event_पूर्णांकerruptible_समयout(wq,		\
-						condition, समयout);	\
+#define swait_event_interruptible_timeout_exclusive(wq, condition, timeout)\
+({									\
+	long __ret = timeout;						\
+	if (!___wait_cond_timeout(condition))				\
+		__ret = __swait_event_interruptible_timeout(wq,		\
+						condition, timeout);	\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा __sरुको_event_idle(wq, condition)				\
-	(व्योम)___sरुको_event(wq, condition, TASK_IDLE, 0, schedule())
+#define __swait_event_idle(wq, condition)				\
+	(void)___swait_event(wq, condition, TASK_IDLE, 0, schedule())
 
 /**
- * sरुको_event_idle_exclusive - रुको without प्रणाली load contribution
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
+ * swait_event_idle_exclusive - wait without system load contribution
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
  *
  * The process is put to sleep (TASK_IDLE) until the @condition evaluates to
- * true. The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * true. The @condition is checked each time the waitqueue @wq is woken up.
  *
- * This function is mostly used when a kthपढ़ो or workqueue रुकोs क्रम some
- * condition and करोesn't want to contribute to प्रणाली load. Signals are
+ * This function is mostly used when a kthread or workqueue waits for some
+ * condition and doesn't want to contribute to system load. Signals are
  * ignored.
  */
-#घोषणा sरुको_event_idle_exclusive(wq, condition)			\
-करो अणु									\
-	अगर (condition)							\
-		अवरोध;							\
-	__sरुको_event_idle(wq, condition);				\
-पूर्ण जबतक (0)
+#define swait_event_idle_exclusive(wq, condition)			\
+do {									\
+	if (condition)							\
+		break;							\
+	__swait_event_idle(wq, condition);				\
+} while (0)
 
-#घोषणा __sरुको_event_idle_समयout(wq, condition, समयout)		\
-	___sरुको_event(wq, ___रुको_cond_समयout(condition),		\
-		       TASK_IDLE, समयout,				\
-		       __ret = schedule_समयout(__ret))
+#define __swait_event_idle_timeout(wq, condition, timeout)		\
+	___swait_event(wq, ___wait_cond_timeout(condition),		\
+		       TASK_IDLE, timeout,				\
+		       __ret = schedule_timeout(__ret))
 
 /**
- * sरुको_event_idle_समयout_exclusive - रुको up to समयout without load contribution
- * @wq: the रुकोqueue to रुको on
- * @condition: a C expression क्रम the event to रुको क्रम
- * @समयout: समयout at which we'll give up in jअगरfies
+ * swait_event_idle_timeout_exclusive - wait up to timeout without load contribution
+ * @wq: the waitqueue to wait on
+ * @condition: a C expression for the event to wait for
+ * @timeout: timeout at which we'll give up in jiffies
  *
  * The process is put to sleep (TASK_IDLE) until the @condition evaluates to
- * true. The @condition is checked each समय the रुकोqueue @wq is woken up.
+ * true. The @condition is checked each time the waitqueue @wq is woken up.
  *
- * This function is mostly used when a kthपढ़ो or workqueue रुकोs क्रम some
- * condition and करोesn't want to contribute to प्रणाली load. Signals are
+ * This function is mostly used when a kthread or workqueue waits for some
+ * condition and doesn't want to contribute to system load. Signals are
  * ignored.
  *
  * Returns:
- * 0 अगर the @condition evaluated to %false after the @समयout elapsed,
- * 1 अगर the @condition evaluated to %true after the @समयout elapsed,
- * or the reमुख्यing jअगरfies (at least 1) अगर the @condition evaluated
- * to %true beक्रमe the @समयout elapsed.
+ * 0 if the @condition evaluated to %false after the @timeout elapsed,
+ * 1 if the @condition evaluated to %true after the @timeout elapsed,
+ * or the remaining jiffies (at least 1) if the @condition evaluated
+ * to %true before the @timeout elapsed.
  */
-#घोषणा sरुको_event_idle_समयout_exclusive(wq, condition, समयout)	\
-(अणु									\
-	दीर्घ __ret = समयout;						\
-	अगर (!___रुको_cond_समयout(condition))				\
-		__ret = __sरुको_event_idle_समयout(wq,			\
-						   condition, समयout);	\
+#define swait_event_idle_timeout_exclusive(wq, condition, timeout)	\
+({									\
+	long __ret = timeout;						\
+	if (!___wait_cond_timeout(condition))				\
+		__ret = __swait_event_idle_timeout(wq,			\
+						   condition, timeout);	\
 	__ret;								\
-पूर्ण)
+})
 
-#पूर्ण_अगर /* _LINUX_SWAIT_H */
+#endif /* _LINUX_SWAIT_H */

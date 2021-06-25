@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित SOUND_FIREWIRE_LIB_H_INCLUDED
-#घोषणा SOUND_FIREWIRE_LIB_H_INCLUDED
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef SOUND_FIREWIRE_LIB_H_INCLUDED
+#define SOUND_FIREWIRE_LIB_H_INCLUDED
 
-#समावेश <linux/firewire-स्थिरants.h>
-#समावेश <linux/types.h>
-#समावेश <linux/sched.h>
-#समावेश <sound/rawmidi.h>
+#include <linux/firewire-constants.h>
+#include <linux/types.h>
+#include <linux/sched.h>
+#include <sound/rawmidi.h>
 
-काष्ठा fw_unit;
+struct fw_unit;
 
-#घोषणा FW_GENERATION_MASK	0x00ff
-#घोषणा FW_FIXED_GENERATION	0x0100
-#घोषणा FW_QUIET		0x0200
+#define FW_GENERATION_MASK	0x00ff
+#define FW_FIXED_GENERATION	0x0100
+#define FW_QUIET		0x0200
 
-पूर्णांक snd_fw_transaction(काष्ठा fw_unit *unit, पूर्णांक tcode,
-		       u64 offset, व्योम *buffer, माप_प्रकार length,
-		       अचिन्हित पूर्णांक flags);
+int snd_fw_transaction(struct fw_unit *unit, int tcode,
+		       u64 offset, void *buffer, size_t length,
+		       unsigned int flags);
 
-/* वापसs true अगर retrying the transaction would not make sense */
-अटल अंतरभूत bool rcode_is_permanent_error(पूर्णांक rcode)
-अणु
-	वापस rcode == RCODE_TYPE_ERROR || rcode == RCODE_ADDRESS_ERROR;
-पूर्ण
+/* returns true if retrying the transaction would not make sense */
+static inline bool rcode_is_permanent_error(int rcode)
+{
+	return rcode == RCODE_TYPE_ERROR || rcode == RCODE_ADDRESS_ERROR;
+}
 
-व्योम snd_fw_schedule_registration(काष्ठा fw_unit *unit,
-				  काष्ठा delayed_work *dwork);
+void snd_fw_schedule_registration(struct fw_unit *unit,
+				  struct delayed_work *dwork);
 
-#पूर्ण_अगर
+#endif

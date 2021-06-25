@@ -1,92 +1,91 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_PAGE_EXT_H
-#घोषणा __LINUX_PAGE_EXT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_PAGE_EXT_H
+#define __LINUX_PAGE_EXT_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/stacktrace.h>
-#समावेश <linux/stackdepot.h>
+#include <linux/types.h>
+#include <linux/stacktrace.h>
+#include <linux/stackdepot.h>
 
-काष्ठा pglist_data;
-काष्ठा page_ext_operations अणु
-	माप_प्रकार offset;
-	माप_प्रकार size;
-	bool (*need)(व्योम);
-	व्योम (*init)(व्योम);
-पूर्ण;
+struct pglist_data;
+struct page_ext_operations {
+	size_t offset;
+	size_t size;
+	bool (*need)(void);
+	void (*init)(void);
+};
 
-#अगर_घोषित CONFIG_PAGE_EXTENSION
+#ifdef CONFIG_PAGE_EXTENSION
 
-क्रमागत page_ext_flags अणु
+enum page_ext_flags {
 	PAGE_EXT_OWNER,
 	PAGE_EXT_OWNER_ALLOCATED,
-#अगर defined(CONFIG_IDLE_PAGE_TRACKING) && !defined(CONFIG_64BIT)
+#if defined(CONFIG_IDLE_PAGE_TRACKING) && !defined(CONFIG_64BIT)
 	PAGE_EXT_YOUNG,
 	PAGE_EXT_IDLE,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 /*
  * Page Extension can be considered as an extended mem_map.
  * A page_ext page is associated with every page descriptor. The
- * page_ext helps us add more inक्रमmation about the page.
+ * page_ext helps us add more information about the page.
  * All page_ext are allocated at boot or memory hotplug event,
- * then the page_ext क्रम pfn always exists.
+ * then the page_ext for pfn always exists.
  */
-काष्ठा page_ext अणु
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+struct page_ext {
+	unsigned long flags;
+};
 
-बाह्य अचिन्हित दीर्घ page_ext_size;
-बाह्य व्योम pgdat_page_ext_init(काष्ठा pglist_data *pgdat);
+extern unsigned long page_ext_size;
+extern void pgdat_page_ext_init(struct pglist_data *pgdat);
 
-#अगर_घोषित CONFIG_SPARSEMEM
-अटल अंतरभूत व्योम page_ext_init_flaपंचांगem(व्योम)
-अणु
-पूर्ण
-बाह्य व्योम page_ext_init(व्योम);
-अटल अंतरभूत व्योम page_ext_init_flaपंचांगem_late(व्योम)
-अणु
-पूर्ण
-#अन्यथा
-बाह्य व्योम page_ext_init_flaपंचांगem(व्योम);
-बाह्य व्योम page_ext_init_flaपंचांगem_late(व्योम);
-अटल अंतरभूत व्योम page_ext_init(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SPARSEMEM
+static inline void page_ext_init_flatmem(void)
+{
+}
+extern void page_ext_init(void);
+static inline void page_ext_init_flatmem_late(void)
+{
+}
+#else
+extern void page_ext_init_flatmem(void);
+extern void page_ext_init_flatmem_late(void);
+static inline void page_ext_init(void)
+{
+}
+#endif
 
-काष्ठा page_ext *lookup_page_ext(स्थिर काष्ठा page *page);
+struct page_ext *lookup_page_ext(const struct page *page);
 
-अटल अंतरभूत काष्ठा page_ext *page_ext_next(काष्ठा page_ext *curr)
-अणु
-	व्योम *next = curr;
+static inline struct page_ext *page_ext_next(struct page_ext *curr)
+{
+	void *next = curr;
 	next += page_ext_size;
-	वापस next;
-पूर्ण
+	return next;
+}
 
-#अन्यथा /* !CONFIG_PAGE_EXTENSION */
-काष्ठा page_ext;
+#else /* !CONFIG_PAGE_EXTENSION */
+struct page_ext;
 
-अटल अंतरभूत व्योम pgdat_page_ext_init(काष्ठा pglist_data *pgdat)
-अणु
-पूर्ण
+static inline void pgdat_page_ext_init(struct pglist_data *pgdat)
+{
+}
 
-अटल अंतरभूत काष्ठा page_ext *lookup_page_ext(स्थिर काष्ठा page *page)
-अणु
-	वापस शून्य;
-पूर्ण
+static inline struct page_ext *lookup_page_ext(const struct page *page)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम page_ext_init(व्योम)
-अणु
-पूर्ण
+static inline void page_ext_init(void)
+{
+}
 
-अटल अंतरभूत व्योम page_ext_init_flaपंचांगem_late(व्योम)
-अणु
-पूर्ण
+static inline void page_ext_init_flatmem_late(void)
+{
+}
 
-अटल अंतरभूत व्योम page_ext_init_flaपंचांगem(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PAGE_EXTENSION */
-#पूर्ण_अगर /* __LINUX_PAGE_EXT_H */
+static inline void page_ext_init_flatmem(void)
+{
+}
+#endif /* CONFIG_PAGE_EXTENSION */
+#endif /* __LINUX_PAGE_EXT_H */

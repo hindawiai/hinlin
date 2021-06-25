@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Originally करोne by Vince Weaver <vincent.weaver@मुख्यe.edu> क्रम
+ * Originally done by Vince Weaver <vincent.weaver@maine.edu> for
  * perf_event_tests (git://github.com/deater/perf_event_tests)
  */
 
 /*
- * Powerpc needs __SANE_USERSPACE_TYPES__ beक्रमe <linux/types.h> to select
- * 'int-ll64.h' and aव्योम compile warnings when prपूर्णांकing __u64 with %llu.
+ * Powerpc needs __SANE_USERSPACE_TYPES__ before <linux/types.h> to select
+ * 'int-ll64.h' and avoid compile warnings when printing __u64 with %llu.
  */
-#घोषणा __SANE_USERSPACE_TYPES__
+#define __SANE_USERSPACE_TYPES__
 
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <sys/ioctl.h>
-#समावेश <समय.स>
-#समावेश <fcntl.h>
-#समावेश <संकेत.स>
-#समावेश <sys/mman.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <time.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/mman.h>
+#include <linux/compiler.h>
+#include <linux/hw_breakpoint.h>
 
-#समावेश "tests.h"
-#समावेश "debug.h"
-#समावेश "event.h"
-#समावेश "../perf-sys.h"
-#समावेश "cloexec.h"
+#include "tests.h"
+#include "debug.h"
+#include "event.h"
+#include "../perf-sys.h"
+#include "cloexec.h"
 
-अटल पूर्णांक overflows;
+static int overflows;
 
-अटल noअंतरभूत पूर्णांक test_function(व्योम)
-अणु
-	वापस समय(शून्य);
-पूर्ण
+static noinline int test_function(void)
+{
+	return time(NULL);
+}
 
-अटल व्योम sig_handler(पूर्णांक signum __maybe_unused,
+static void sig_handler(int signum __maybe_unused,
 			siginfo_t *oh __maybe_unused,
-			व्योम *uc __maybe_unused)
-अणु
+			void *uc __maybe_unused)
+{
 	overflows++;
-पूर्ण
+}
 
-अटल दीर्घ दीर्घ bp_count(पूर्णांक fd)
-अणु
-	दीर्घ दीर्घ count;
-	पूर्णांक ret;
+static long long bp_count(int fd)
+{
+	long long count;
+	int ret;
 
-	ret = पढ़ो(fd, &count, माप(दीर्घ दीर्घ));
-	अगर (ret != माप(दीर्घ दीर्घ)) अणु
+	ret = read(fd, &count, sizeof(long long));
+	if (ret != sizeof(long long)) {
 		pr_debug("failed to read: %d\n", ret);
-		वापस TEST_FAIL;
-	पूर्ण
+		return TEST_FAIL;
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-#घोषणा EXECUTIONS 10000
-#घोषणा THRESHOLD  100
+#define EXECUTIONS 10000
+#define THRESHOLD  100
 
-पूर्णांक test__bp_संकेत_overflow(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	काष्ठा perf_event_attr pe;
-	काष्ठा sigaction sa;
-	दीर्घ दीर्घ count;
-	पूर्णांक fd, i, fails = 0;
+int test__bp_signal_overflow(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	struct perf_event_attr pe;
+	struct sigaction sa;
+	long long count;
+	int fd, i, fails = 0;
 
-	/* setup SIGIO संकेत handler */
-	स_रखो(&sa, 0, माप(काष्ठा sigaction));
-	sa.sa_sigaction = (व्योम *) sig_handler;
+	/* setup SIGIO signal handler */
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_sigaction = (void *) sig_handler;
 	sa.sa_flags = SA_SIGINFO;
 
-	अगर (sigaction(SIGIO, &sa, शून्य) < 0) अणु
+	if (sigaction(SIGIO, &sa, NULL) < 0) {
 		pr_debug("failed setting up signal handler\n");
-		वापस TEST_FAIL;
-	पूर्ण
+		return TEST_FAIL;
+	}
 
-	स_रखो(&pe, 0, माप(काष्ठा perf_event_attr));
+	memset(&pe, 0, sizeof(struct perf_event_attr));
 	pe.type = PERF_TYPE_BREAKPOINT;
-	pe.size = माप(काष्ठा perf_event_attr);
+	pe.size = sizeof(struct perf_event_attr);
 
 	pe.config = 0;
 	pe.bp_type = HW_BREAKPOINT_X;
-	pe.bp_addr = (अचिन्हित दीर्घ) test_function;
-	pe.bp_len = माप(दीर्घ);
+	pe.bp_addr = (unsigned long) test_function;
+	pe.bp_len = sizeof(long);
 
 	pe.sample_period = THRESHOLD;
 	pe.sample_type = PERF_SAMPLE_IP;
@@ -94,12 +93,12 @@
 	pe.exclude_kernel = 1;
 	pe.exclude_hv = 1;
 
-	fd = sys_perf_event_खोलो(&pe, 0, -1, -1,
-				 perf_event_खोलो_cloexec_flag());
-	अगर (fd < 0) अणु
+	fd = sys_perf_event_open(&pe, 0, -1, -1,
+				 perf_event_open_cloexec_flag());
+	if (fd < 0) {
 		pr_debug("failed opening event %llx\n", pe.config);
-		वापस TEST_FAIL;
-	पूर्ण
+		return TEST_FAIL;
+	}
 
 	fcntl(fd, F_SETFL, O_RDWR|O_NONBLOCK|O_ASYNC);
 	fcntl(fd, F_SETSIG, SIGIO);
@@ -108,29 +107,29 @@
 	ioctl(fd, PERF_EVENT_IOC_RESET, 0);
 	ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
 
-	क्रम (i = 0; i < EXECUTIONS; i++)
+	for (i = 0; i < EXECUTIONS; i++)
 		test_function();
 
 	ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
 
 	count = bp_count(fd);
 
-	बंद(fd);
+	close(fd);
 
 	pr_debug("count %lld, overflow %d\n",
 		 count, overflows);
 
-	अगर (count != EXECUTIONS) अणु
+	if (count != EXECUTIONS) {
 		pr_debug("\tWrong number of executions %lld != %d\n",
 		count, EXECUTIONS);
 		fails++;
-	पूर्ण
+	}
 
-	अगर (overflows != EXECUTIONS / THRESHOLD) अणु
+	if (overflows != EXECUTIONS / THRESHOLD) {
 		pr_debug("\tWrong number of overflows %d != %d\n",
 		overflows, EXECUTIONS / THRESHOLD);
 		fails++;
-	पूर्ण
+	}
 
-	वापस fails ? TEST_FAIL : TEST_OK;
-पूर्ण
+	return fails ? TEST_FAIL : TEST_OK;
+}

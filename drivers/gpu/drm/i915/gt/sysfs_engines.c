@@ -1,487 +1,486 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/kobject.h>
-#समावेश <linux/sysfs.h>
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
 
-#समावेश "i915_drv.h"
-#समावेश "intel_engine.h"
-#समावेश "intel_engine_heartbeat.h"
-#समावेश "sysfs_engines.h"
+#include "i915_drv.h"
+#include "intel_engine.h"
+#include "intel_engine_heartbeat.h"
+#include "sysfs_engines.h"
 
-काष्ठा kobj_engine अणु
-	काष्ठा kobject base;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-पूर्ण;
+struct kobj_engine {
+	struct kobject base;
+	struct intel_engine_cs *engine;
+};
 
-अटल काष्ठा पूर्णांकel_engine_cs *kobj_to_engine(काष्ठा kobject *kobj)
-अणु
-	वापस container_of(kobj, काष्ठा kobj_engine, base)->engine;
-पूर्ण
+static struct intel_engine_cs *kobj_to_engine(struct kobject *kobj)
+{
+	return container_of(kobj, struct kobj_engine, base)->engine;
+}
 
-अटल sमाप_प्रकार
-name_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%s\n", kobj_to_engine(kobj)->name);
-पूर्ण
+static ssize_t
+name_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%s\n", kobj_to_engine(kobj)->name);
+}
 
-अटल काष्ठा kobj_attribute name_attr =
-__ATTR(name, 0444, name_show, शून्य);
+static struct kobj_attribute name_attr =
+__ATTR(name, 0444, name_show, NULL);
 
-अटल sमाप_प्रकार
-class_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", kobj_to_engine(kobj)->uabi_class);
-पूर्ण
+static ssize_t
+class_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", kobj_to_engine(kobj)->uabi_class);
+}
 
-अटल काष्ठा kobj_attribute class_attr =
-__ATTR(class, 0444, class_show, शून्य);
+static struct kobj_attribute class_attr =
+__ATTR(class, 0444, class_show, NULL);
 
-अटल sमाप_प्रकार
-inst_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "%d\n", kobj_to_engine(kobj)->uabi_instance);
-पूर्ण
+static ssize_t
+inst_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", kobj_to_engine(kobj)->uabi_instance);
+}
 
-अटल काष्ठा kobj_attribute inst_attr =
-__ATTR(instance, 0444, inst_show, शून्य);
+static struct kobj_attribute inst_attr =
+__ATTR(instance, 0444, inst_show, NULL);
 
-अटल sमाप_प्रकार
-mmio_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "0x%x\n", kobj_to_engine(kobj)->mmio_base);
-पूर्ण
+static ssize_t
+mmio_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "0x%x\n", kobj_to_engine(kobj)->mmio_base);
+}
 
-अटल काष्ठा kobj_attribute mmio_attr =
-__ATTR(mmio_base, 0444, mmio_show, शून्य);
+static struct kobj_attribute mmio_attr =
+__ATTR(mmio_base, 0444, mmio_show, NULL);
 
-अटल स्थिर अक्षर * स्थिर vcs_caps[] = अणु
+static const char * const vcs_caps[] = {
 	[ilog2(I915_VIDEO_CLASS_CAPABILITY_HEVC)] = "hevc",
 	[ilog2(I915_VIDEO_AND_ENHANCE_CLASS_CAPABILITY_SFC)] = "sfc",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर vecs_caps[] = अणु
+static const char * const vecs_caps[] = {
 	[ilog2(I915_VIDEO_AND_ENHANCE_CLASS_CAPABILITY_SFC)] = "sfc",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार repr_trim(अक्षर *buf, sमाप_प्रकार len)
-अणु
+static ssize_t repr_trim(char *buf, ssize_t len)
+{
 	/* Trim off the trailing space and replace with a newline */
-	अगर (len > PAGE_SIZE)
+	if (len > PAGE_SIZE)
 		len = PAGE_SIZE;
-	अगर (len > 0)
+	if (len > 0)
 		buf[len - 1] = '\n';
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार
-__caps_show(काष्ठा पूर्णांकel_engine_cs *engine,
-	    अचिन्हित दीर्घ caps, अक्षर *buf, bool show_unknown)
-अणु
-	स्थिर अक्षर * स्थिर *repr;
-	पूर्णांक count, n;
-	sमाप_प्रकार len;
+static ssize_t
+__caps_show(struct intel_engine_cs *engine,
+	    unsigned long caps, char *buf, bool show_unknown)
+{
+	const char * const *repr;
+	int count, n;
+	ssize_t len;
 
-	चयन (engine->class) अणु
-	हाल VIDEO_DECODE_CLASS:
+	switch (engine->class) {
+	case VIDEO_DECODE_CLASS:
 		repr = vcs_caps;
 		count = ARRAY_SIZE(vcs_caps);
-		अवरोध;
+		break;
 
-	हाल VIDEO_ENHANCEMENT_CLASS:
+	case VIDEO_ENHANCEMENT_CLASS:
 		repr = vecs_caps;
 		count = ARRAY_SIZE(vecs_caps);
-		अवरोध;
+		break;
 
-	शेष:
-		repr = शून्य;
+	default:
+		repr = NULL;
 		count = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	GEM_BUG_ON(count > BITS_PER_LONG);
 
 	len = 0;
-	क्रम_each_set_bit(n, &caps, show_unknown ? BITS_PER_LONG : count) अणु
-		अगर (n >= count || !repr[n]) अणु
-			अगर (GEM_WARN_ON(show_unknown))
-				len += snम_लिखो(buf + len, PAGE_SIZE - len,
+	for_each_set_bit(n, &caps, show_unknown ? BITS_PER_LONG : count) {
+		if (n >= count || !repr[n]) {
+			if (GEM_WARN_ON(show_unknown))
+				len += snprintf(buf + len, PAGE_SIZE - len,
 						"[%x] ", n);
-		पूर्ण अन्यथा अणु
-			len += snम_लिखो(buf + len, PAGE_SIZE - len,
+		} else {
+			len += snprintf(buf + len, PAGE_SIZE - len,
 					"%s ", repr[n]);
-		पूर्ण
-		अगर (GEM_WARN_ON(len >= PAGE_SIZE))
-			अवरोध;
-	पूर्ण
-	वापस repr_trim(buf, len);
-पूर्ण
+		}
+		if (GEM_WARN_ON(len >= PAGE_SIZE))
+			break;
+	}
+	return repr_trim(buf, len);
+}
 
-अटल sमाप_प्रकार
-caps_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+caps_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस __caps_show(engine, engine->uabi_capabilities, buf, true);
-पूर्ण
+	return __caps_show(engine, engine->uabi_capabilities, buf, true);
+}
 
-अटल काष्ठा kobj_attribute caps_attr =
-__ATTR(capabilities, 0444, caps_show, शून्य);
+static struct kobj_attribute caps_attr =
+__ATTR(capabilities, 0444, caps_show, NULL);
 
-अटल sमाप_प्रकार
-all_caps_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस __caps_show(kobj_to_engine(kobj), -1, buf, false);
-पूर्ण
+static ssize_t
+all_caps_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	return __caps_show(kobj_to_engine(kobj), -1, buf, false);
+}
 
-अटल काष्ठा kobj_attribute all_caps_attr =
-__ATTR(known_capabilities, 0444, all_caps_show, शून्य);
+static struct kobj_attribute all_caps_attr =
+__ATTR(known_capabilities, 0444, all_caps_show, NULL);
 
-अटल sमाप_प्रकार
-max_spin_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-	       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
-	अचिन्हित दीर्घ दीर्घ duration;
-	पूर्णांक err;
+static ssize_t
+max_spin_store(struct kobject *kobj, struct kobj_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
+	unsigned long long duration;
+	int err;
 
 	/*
-	 * When रुकोing क्रम a request, अगर is it currently being executed
-	 * on the GPU, we busyरुको क्रम a लघु जबतक beक्रमe sleeping. The
-	 * premise is that most requests are लघु, and अगर it is alपढ़ोy
+	 * When waiting for a request, if is it currently being executed
+	 * on the GPU, we busywait for a short while before sleeping. The
+	 * premise is that most requests are short, and if it is already
 	 * executing then there is a good chance that it will complete
-	 * beक्रमe we can setup the पूर्णांकerrupt handler and go to sleep.
+	 * before we can setup the interrupt handler and go to sleep.
 	 * We try to offset the cost of going to sleep, by first spinning
-	 * on the request -- अगर it completed in less समय than it would take
-	 * to go sleep, process the पूर्णांकerrupt and वापस back to the client,
+	 * on the request -- if it completed in less time than it would take
+	 * to go sleep, process the interrupt and return back to the client,
 	 * then we have saved the client some latency, albeit at the cost
 	 * of spinning on an expensive CPU core.
 	 *
-	 * While we try to aव्योम रुकोing at all क्रम a request that is unlikely
-	 * to complete, deciding how दीर्घ it is worth spinning is क्रम is an
-	 * arbitrary decision: trading off घातer vs latency.
+	 * While we try to avoid waiting at all for a request that is unlikely
+	 * to complete, deciding how long it is worth spinning is for is an
+	 * arbitrary decision: trading off power vs latency.
 	 */
 
-	err = kम_से_अदीर्घl(buf, 0, &duration);
-	अगर (err)
-		वापस err;
+	err = kstrtoull(buf, 0, &duration);
+	if (err)
+		return err;
 
-	अगर (duration > jअगरfies_to_nsecs(2))
-		वापस -EINVAL;
+	if (duration > jiffies_to_nsecs(2))
+		return -EINVAL;
 
-	WRITE_ONCE(engine->props.max_busyरुको_duration_ns, duration);
+	WRITE_ONCE(engine->props.max_busywait_duration_ns, duration);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-max_spin_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+max_spin_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->props.max_busyरुको_duration_ns);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->props.max_busywait_duration_ns);
+}
 
-अटल काष्ठा kobj_attribute max_spin_attr =
-__ATTR(max_busyरुको_duration_ns, 0644, max_spin_show, max_spin_store);
+static struct kobj_attribute max_spin_attr =
+__ATTR(max_busywait_duration_ns, 0644, max_spin_show, max_spin_store);
 
-अटल sमाप_प्रकार
-max_spin_शेष(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+max_spin_default(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->शेषs.max_busyरुको_duration_ns);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->defaults.max_busywait_duration_ns);
+}
 
-अटल काष्ठा kobj_attribute max_spin_def =
-__ATTR(max_busyरुको_duration_ns, 0444, max_spin_शेष, शून्य);
+static struct kobj_attribute max_spin_def =
+__ATTR(max_busywait_duration_ns, 0444, max_spin_default, NULL);
 
-अटल sमाप_प्रकार
-बारlice_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
-	अचिन्हित दीर्घ दीर्घ duration;
-	पूर्णांक err;
+static ssize_t
+timeslice_store(struct kobject *kobj, struct kobj_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
+	unsigned long long duration;
+	int err;
 
 	/*
-	 * Execlists uses a scheduling quantum (a बारlice) to alternate
-	 * execution between पढ़ोy-to-run contexts of equal priority. This
-	 * ensures that all users (though only अगर they of equal importance)
+	 * Execlists uses a scheduling quantum (a timeslice) to alternate
+	 * execution between ready-to-run contexts of equal priority. This
+	 * ensures that all users (though only if they of equal importance)
 	 * have the opportunity to run and prevents livelocks where contexts
 	 * may have implicit ordering due to userspace semaphores.
 	 */
 
-	err = kम_से_अदीर्घl(buf, 0, &duration);
-	अगर (err)
-		वापस err;
+	err = kstrtoull(buf, 0, &duration);
+	if (err)
+		return err;
 
-	अगर (duration > jअगरfies_to_msecs(MAX_SCHEDULE_TIMEOUT))
-		वापस -EINVAL;
+	if (duration > jiffies_to_msecs(MAX_SCHEDULE_TIMEOUT))
+		return -EINVAL;
 
-	WRITE_ONCE(engine->props.बारlice_duration_ms, duration);
+	WRITE_ONCE(engine->props.timeslice_duration_ms, duration);
 
-	अगर (execlists_active(&engine->execlists))
-		set_समयr_ms(&engine->execlists.समयr, duration);
+	if (execlists_active(&engine->execlists))
+		set_timer_ms(&engine->execlists.timer, duration);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-बारlice_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+timeslice_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->props.बारlice_duration_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->props.timeslice_duration_ms);
+}
 
-अटल काष्ठा kobj_attribute बारlice_duration_attr =
-__ATTR(बारlice_duration_ms, 0644, बारlice_show, बारlice_store);
+static struct kobj_attribute timeslice_duration_attr =
+__ATTR(timeslice_duration_ms, 0644, timeslice_show, timeslice_store);
 
-अटल sमाप_प्रकार
-बारlice_शेष(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+timeslice_default(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->शेषs.बारlice_duration_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->defaults.timeslice_duration_ms);
+}
 
-अटल काष्ठा kobj_attribute बारlice_duration_def =
-__ATTR(बारlice_duration_ms, 0444, बारlice_शेष, शून्य);
+static struct kobj_attribute timeslice_duration_def =
+__ATTR(timeslice_duration_ms, 0444, timeslice_default, NULL);
 
-अटल sमाप_प्रकार
-stop_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-	   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
-	अचिन्हित दीर्घ दीर्घ duration;
-	पूर्णांक err;
+static ssize_t
+stop_store(struct kobject *kobj, struct kobj_attribute *attr,
+	   const char *buf, size_t count)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
+	unsigned long long duration;
+	int err;
 
 	/*
-	 * When we allow ourselves to sleep beक्रमe a GPU reset after disabling
-	 * submission, even क्रम a few milliseconds, gives an innocent context
-	 * the opportunity to clear the GPU beक्रमe the reset occurs. However,
-	 * how दीर्घ to sleep depends on the typical non-preemptible duration
-	 * (a similar problem to determining the ideal preempt-reset समयout
-	 * or even the heartbeat पूर्णांकerval).
+	 * When we allow ourselves to sleep before a GPU reset after disabling
+	 * submission, even for a few milliseconds, gives an innocent context
+	 * the opportunity to clear the GPU before the reset occurs. However,
+	 * how long to sleep depends on the typical non-preemptible duration
+	 * (a similar problem to determining the ideal preempt-reset timeout
+	 * or even the heartbeat interval).
 	 */
 
-	err = kम_से_अदीर्घl(buf, 0, &duration);
-	अगर (err)
-		वापस err;
+	err = kstrtoull(buf, 0, &duration);
+	if (err)
+		return err;
 
-	अगर (duration > jअगरfies_to_msecs(MAX_SCHEDULE_TIMEOUT))
-		वापस -EINVAL;
+	if (duration > jiffies_to_msecs(MAX_SCHEDULE_TIMEOUT))
+		return -EINVAL;
 
-	WRITE_ONCE(engine->props.stop_समयout_ms, duration);
-	वापस count;
-पूर्ण
+	WRITE_ONCE(engine->props.stop_timeout_ms, duration);
+	return count;
+}
 
-अटल sमाप_प्रकार
-stop_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+stop_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->props.stop_समयout_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->props.stop_timeout_ms);
+}
 
-अटल काष्ठा kobj_attribute stop_समयout_attr =
-__ATTR(stop_समयout_ms, 0644, stop_show, stop_store);
+static struct kobj_attribute stop_timeout_attr =
+__ATTR(stop_timeout_ms, 0644, stop_show, stop_store);
 
-अटल sमाप_प्रकार
-stop_शेष(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+stop_default(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->शेषs.stop_समयout_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->defaults.stop_timeout_ms);
+}
 
-अटल काष्ठा kobj_attribute stop_समयout_def =
-__ATTR(stop_समयout_ms, 0444, stop_शेष, शून्य);
+static struct kobj_attribute stop_timeout_def =
+__ATTR(stop_timeout_ms, 0444, stop_default, NULL);
 
-अटल sमाप_प्रकार
-preempt_समयout_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-		      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
-	अचिन्हित दीर्घ दीर्घ समयout;
-	पूर्णांक err;
+static ssize_t
+preempt_timeout_store(struct kobject *kobj, struct kobj_attribute *attr,
+		      const char *buf, size_t count)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
+	unsigned long long timeout;
+	int err;
 
 	/*
 	 * After initialising a preemption request, we give the current
-	 * resident a small amount of समय to vacate the GPU. The preemption
-	 * request is क्रम a higher priority context and should be immediate to
-	 * मुख्यtain high quality of service (and aव्योम priority inversion).
+	 * resident a small amount of time to vacate the GPU. The preemption
+	 * request is for a higher priority context and should be immediate to
+	 * maintain high quality of service (and avoid priority inversion).
 	 * However, the preemption granularity of the GPU can be quite coarse
 	 * and so we need a compromise.
 	 */
 
-	err = kम_से_अदीर्घl(buf, 0, &समयout);
-	अगर (err)
-		वापस err;
+	err = kstrtoull(buf, 0, &timeout);
+	if (err)
+		return err;
 
-	अगर (समयout > jअगरfies_to_msecs(MAX_SCHEDULE_TIMEOUT))
-		वापस -EINVAL;
+	if (timeout > jiffies_to_msecs(MAX_SCHEDULE_TIMEOUT))
+		return -EINVAL;
 
-	WRITE_ONCE(engine->props.preempt_समयout_ms, समयout);
+	WRITE_ONCE(engine->props.preempt_timeout_ms, timeout);
 
-	अगर (READ_ONCE(engine->execlists.pending[0]))
-		set_समयr_ms(&engine->execlists.preempt, समयout);
+	if (READ_ONCE(engine->execlists.pending[0]))
+		set_timer_ms(&engine->execlists.preempt, timeout);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-preempt_समयout_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+preempt_timeout_show(struct kobject *kobj, struct kobj_attribute *attr,
+		     char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->props.preempt_समयout_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->props.preempt_timeout_ms);
+}
 
-अटल काष्ठा kobj_attribute preempt_समयout_attr =
-__ATTR(preempt_समयout_ms, 0644, preempt_समयout_show, preempt_समयout_store);
+static struct kobj_attribute preempt_timeout_attr =
+__ATTR(preempt_timeout_ms, 0644, preempt_timeout_show, preempt_timeout_store);
 
-अटल sमाप_प्रकार
-preempt_समयout_शेष(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+preempt_timeout_default(struct kobject *kobj, struct kobj_attribute *attr,
+			char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->शेषs.preempt_समयout_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->defaults.preempt_timeout_ms);
+}
 
-अटल काष्ठा kobj_attribute preempt_समयout_def =
-__ATTR(preempt_समयout_ms, 0444, preempt_समयout_शेष, शून्य);
+static struct kobj_attribute preempt_timeout_def =
+__ATTR(preempt_timeout_ms, 0444, preempt_timeout_default, NULL);
 
-अटल sमाप_प्रकार
-heartbeat_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
-	अचिन्हित दीर्घ दीर्घ delay;
-	पूर्णांक err;
+static ssize_t
+heartbeat_store(struct kobject *kobj, struct kobj_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
+	unsigned long long delay;
+	int err;
 
 	/*
-	 * We monitor the health of the प्रणाली via periodic heartbeat pulses.
-	 * The pulses also provide the opportunity to perक्रमm garbage
-	 * collection.  However, we पूर्णांकerpret an incomplete pulse (a missed
-	 * heartbeat) as an indication that the प्रणाली is no दीर्घer responsive,
-	 * i.e. hung, and perक्रमm an engine or full GPU reset. Given that the
-	 * preemption granularity can be very coarse on a प्रणाली, the optimal
-	 * value क्रम any workload is unknowable!
+	 * We monitor the health of the system via periodic heartbeat pulses.
+	 * The pulses also provide the opportunity to perform garbage
+	 * collection.  However, we interpret an incomplete pulse (a missed
+	 * heartbeat) as an indication that the system is no longer responsive,
+	 * i.e. hung, and perform an engine or full GPU reset. Given that the
+	 * preemption granularity can be very coarse on a system, the optimal
+	 * value for any workload is unknowable!
 	 */
 
-	err = kम_से_अदीर्घl(buf, 0, &delay);
-	अगर (err)
-		वापस err;
+	err = kstrtoull(buf, 0, &delay);
+	if (err)
+		return err;
 
-	अगर (delay >= jअगरfies_to_msecs(MAX_SCHEDULE_TIMEOUT))
-		वापस -EINVAL;
+	if (delay >= jiffies_to_msecs(MAX_SCHEDULE_TIMEOUT))
+		return -EINVAL;
 
-	err = पूर्णांकel_engine_set_heartbeat(engine, delay);
-	अगर (err)
-		वापस err;
+	err = intel_engine_set_heartbeat(engine, delay);
+	if (err)
+		return err;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-heartbeat_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+heartbeat_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->props.heartbeat_पूर्णांकerval_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->props.heartbeat_interval_ms);
+}
 
-अटल काष्ठा kobj_attribute heartbeat_पूर्णांकerval_attr =
-__ATTR(heartbeat_पूर्णांकerval_ms, 0644, heartbeat_show, heartbeat_store);
+static struct kobj_attribute heartbeat_interval_attr =
+__ATTR(heartbeat_interval_ms, 0644, heartbeat_show, heartbeat_store);
 
-अटल sमाप_प्रकार
-heartbeat_शेष(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = kobj_to_engine(kobj);
+static ssize_t
+heartbeat_default(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct intel_engine_cs *engine = kobj_to_engine(kobj);
 
-	वापस प्र_लिखो(buf, "%lu\n", engine->शेषs.heartbeat_पूर्णांकerval_ms);
-पूर्ण
+	return sprintf(buf, "%lu\n", engine->defaults.heartbeat_interval_ms);
+}
 
-अटल काष्ठा kobj_attribute heartbeat_पूर्णांकerval_def =
-__ATTR(heartbeat_पूर्णांकerval_ms, 0444, heartbeat_शेष, शून्य);
+static struct kobj_attribute heartbeat_interval_def =
+__ATTR(heartbeat_interval_ms, 0444, heartbeat_default, NULL);
 
-अटल व्योम kobj_engine_release(काष्ठा kobject *kobj)
-अणु
-	kमुक्त(kobj);
-पूर्ण
+static void kobj_engine_release(struct kobject *kobj)
+{
+	kfree(kobj);
+}
 
-अटल काष्ठा kobj_type kobj_engine_type = अणु
+static struct kobj_type kobj_engine_type = {
 	.release = kobj_engine_release,
 	.sysfs_ops = &kobj_sysfs_ops
-पूर्ण;
+};
 
-अटल काष्ठा kobject *
-kobj_engine(काष्ठा kobject *dir, काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा kobj_engine *ke;
+static struct kobject *
+kobj_engine(struct kobject *dir, struct intel_engine_cs *engine)
+{
+	struct kobj_engine *ke;
 
-	ke = kzalloc(माप(*ke), GFP_KERNEL);
-	अगर (!ke)
-		वापस शून्य;
+	ke = kzalloc(sizeof(*ke), GFP_KERNEL);
+	if (!ke)
+		return NULL;
 
 	kobject_init(&ke->base, &kobj_engine_type);
 	ke->engine = engine;
 
-	अगर (kobject_add(&ke->base, dir, "%s", engine->name)) अणु
+	if (kobject_add(&ke->base, dir, "%s", engine->name)) {
 		kobject_put(&ke->base);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* xfer ownership to sysfs tree */
-	वापस &ke->base;
-पूर्ण
+	return &ke->base;
+}
 
-अटल व्योम add_शेषs(काष्ठा kobj_engine *parent)
-अणु
-	अटल स्थिर काष्ठा attribute *files[] = अणु
+static void add_defaults(struct kobj_engine *parent)
+{
+	static const struct attribute *files[] = {
 		&max_spin_def.attr,
-		&stop_समयout_def.attr,
-#अगर CONFIG_DRM_I915_HEARTBEAT_INTERVAL
-		&heartbeat_पूर्णांकerval_def.attr,
-#पूर्ण_अगर
-		शून्य
-	पूर्ण;
-	काष्ठा kobj_engine *ke;
+		&stop_timeout_def.attr,
+#if CONFIG_DRM_I915_HEARTBEAT_INTERVAL
+		&heartbeat_interval_def.attr,
+#endif
+		NULL
+	};
+	struct kobj_engine *ke;
 
-	ke = kzalloc(माप(*ke), GFP_KERNEL);
-	अगर (!ke)
-		वापस;
+	ke = kzalloc(sizeof(*ke), GFP_KERNEL);
+	if (!ke)
+		return;
 
 	kobject_init(&ke->base, &kobj_engine_type);
 	ke->engine = parent->engine;
 
-	अगर (kobject_add(&ke->base, &parent->base, "%s", ".defaults")) अणु
+	if (kobject_add(&ke->base, &parent->base, "%s", ".defaults")) {
 		kobject_put(&ke->base);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (sysfs_create_files(&ke->base, files))
-		वापस;
+	if (sysfs_create_files(&ke->base, files))
+		return;
 
-	अगर (पूर्णांकel_engine_has_बारlices(ke->engine) &&
-	    sysfs_create_file(&ke->base, &बारlice_duration_def.attr))
-		वापस;
+	if (intel_engine_has_timeslices(ke->engine) &&
+	    sysfs_create_file(&ke->base, &timeslice_duration_def.attr))
+		return;
 
-	अगर (पूर्णांकel_engine_has_preempt_reset(ke->engine) &&
-	    sysfs_create_file(&ke->base, &preempt_समयout_def.attr))
-		वापस;
-पूर्ण
+	if (intel_engine_has_preempt_reset(ke->engine) &&
+	    sysfs_create_file(&ke->base, &preempt_timeout_def.attr))
+		return;
+}
 
-व्योम पूर्णांकel_engines_add_sysfs(काष्ठा drm_i915_निजी *i915)
-अणु
-	अटल स्थिर काष्ठा attribute *files[] = अणु
+void intel_engines_add_sysfs(struct drm_i915_private *i915)
+{
+	static const struct attribute *files[] = {
 		&name_attr.attr,
 		&class_attr.attr,
 		&inst_attr.attr,
@@ -489,48 +488,48 @@ kobj_engine(काष्ठा kobject *dir, काष्ठा पूर्ण�
 		&caps_attr.attr,
 		&all_caps_attr.attr,
 		&max_spin_attr.attr,
-		&stop_समयout_attr.attr,
-#अगर CONFIG_DRM_I915_HEARTBEAT_INTERVAL
-		&heartbeat_पूर्णांकerval_attr.attr,
-#पूर्ण_अगर
-		शून्य
-	पूर्ण;
+		&stop_timeout_attr.attr,
+#if CONFIG_DRM_I915_HEARTBEAT_INTERVAL
+		&heartbeat_interval_attr.attr,
+#endif
+		NULL
+	};
 
-	काष्ठा device *kdev = i915->drm.primary->kdev;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा kobject *dir;
+	struct device *kdev = i915->drm.primary->kdev;
+	struct intel_engine_cs *engine;
+	struct kobject *dir;
 
 	dir = kobject_create_and_add("engine", &kdev->kobj);
-	अगर (!dir)
-		वापस;
+	if (!dir)
+		return;
 
-	क्रम_each_uabi_engine(engine, i915) अणु
-		काष्ठा kobject *kobj;
+	for_each_uabi_engine(engine, i915) {
+		struct kobject *kobj;
 
 		kobj = kobj_engine(dir, engine);
-		अगर (!kobj)
-			जाओ err_engine;
+		if (!kobj)
+			goto err_engine;
 
-		अगर (sysfs_create_files(kobj, files))
-			जाओ err_object;
+		if (sysfs_create_files(kobj, files))
+			goto err_object;
 
-		अगर (पूर्णांकel_engine_has_बारlices(engine) &&
-		    sysfs_create_file(kobj, &बारlice_duration_attr.attr))
-			जाओ err_engine;
+		if (intel_engine_has_timeslices(engine) &&
+		    sysfs_create_file(kobj, &timeslice_duration_attr.attr))
+			goto err_engine;
 
-		अगर (पूर्णांकel_engine_has_preempt_reset(engine) &&
-		    sysfs_create_file(kobj, &preempt_समयout_attr.attr))
-			जाओ err_engine;
+		if (intel_engine_has_preempt_reset(engine) &&
+		    sysfs_create_file(kobj, &preempt_timeout_attr.attr))
+			goto err_engine;
 
-		add_शेषs(container_of(kobj, काष्ठा kobj_engine, base));
+		add_defaults(container_of(kobj, struct kobj_engine, base));
 
-		अगर (0) अणु
+		if (0) {
 err_object:
 			kobject_put(kobj);
 err_engine:
 			dev_err(kdev, "Failed to add sysfs engine '%s'\n",
 				engine->name);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}

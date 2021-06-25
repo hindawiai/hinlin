@@ -1,46 +1,45 @@
-<शैली गुरु>
 /*
  *   This file is provided under a dual BSD/GPLv2 license.  When using or
- *   redistributing this file, you may करो so under either license.
+ *   redistributing this file, you may do so under either license.
  *
  *   GPL LICENSE SUMMARY
  *
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
- *   Copyright (C) 2017 T-Platक्रमms. All Rights Reserved.
+ *   Copyright (C) 2017 T-Platforms. All Rights Reserved.
  *
- *   This program is मुक्त software; you can redistribute it and/or modअगरy
+ *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of version 2 of the GNU General Public License as
  *   published by the Free Software Foundation.
  *
  *   This program is distributed in the hope that it will be useful, but
  *   WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *   General Public License क्रम more details.
+ *   General Public License for more details.
  *
  *   BSD LICENSE
  *
  *   Copyright (C) 2015 EMC Corporation. All Rights Reserved.
- *   Copyright (C) 2017 T-Platक्रमms. All Rights Reserved.
+ *   Copyright (C) 2017 T-Platforms. All Rights Reserved.
  *
- *   Redistribution and use in source and binary क्रमms, with or without
- *   modअगरication, are permitted provided that the following conditions
+ *   Redistribution and use in source and binary forms, with or without
+ *   modification, are permitted provided that the following conditions
  *   are met:
  *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copy
+ *     * Redistributions in binary form must reproduce the above copy
  *       notice, this list of conditions and the following disclaimer in
- *       the करोcumentation and/or other materials provided with the
+ *       the documentation and/or other materials provided with the
  *       distribution.
  *     * Neither the name of Intel Corporation nor the names of its
- *       contributors may be used to enकरोrse or promote products derived
- *       from this software without specअगरic prior written permission.
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
  *
  *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ *   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  *   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  *   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  *   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -54,80 +53,80 @@
 /*
  * How to use this tool, by example.
  *
- * Assuming $DBG_सूची is something like:
+ * Assuming $DBG_DIR is something like:
  * '/sys/kernel/debug/ntb_perf/0000:00:03.0'
  * Suppose aside from local device there is at least one remote device
  * connected to NTB with index 0.
  *-----------------------------------------------------------------------------
- * Eg: install driver with specअगरied delay between करोorbell event and response
+ * Eg: install driver with specified delay between doorbell event and response
  *
  * root@self# insmod ntb_pingpong.ko delay_ms=1000
  *-----------------------------------------------------------------------------
- * Eg: get number of ping-pong cycles perक्रमmed
+ * Eg: get number of ping-pong cycles performed
  *
- * root@self# cat $DBG_सूची/count
+ * root@self# cat $DBG_DIR/count
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/bitops.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/bitops.h>
 
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/debugfs.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/hrtimer.h>
+#include <linux/debugfs.h>
 
-#समावेश <linux/ntb.h>
+#include <linux/ntb.h>
 
-#घोषणा DRIVER_NAME		"ntb_pingpong"
-#घोषणा DRIVER_VERSION		"2.0"
+#define DRIVER_NAME		"ntb_pingpong"
+#define DRIVER_VERSION		"2.0"
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_AUTHOR("Allen Hubbe <Allen.Hubbe@emc.com>");
 MODULE_DESCRIPTION("PCIe NTB Simple Pingpong Client");
 
-अटल अचिन्हित पूर्णांक unsafe;
-module_param(unsafe, uपूर्णांक, 0644);
+static unsigned int unsafe;
+module_param(unsafe, uint, 0644);
 MODULE_PARM_DESC(unsafe, "Run even though ntb operations may be unsafe");
 
-अटल अचिन्हित पूर्णांक delay_ms = 1000;
-module_param(delay_ms, uपूर्णांक, 0644);
+static unsigned int delay_ms = 1000;
+module_param(delay_ms, uint, 0644);
 MODULE_PARM_DESC(delay_ms, "Milliseconds to delay the response to peer");
 
-काष्ठा pp_ctx अणु
-	काष्ठा ntb_dev *ntb;
-	काष्ठा hrसमयr समयr;
+struct pp_ctx {
+	struct ntb_dev *ntb;
+	struct hrtimer timer;
 	u64 in_db;
 	u64 out_db;
-	पूर्णांक out_pidx;
+	int out_pidx;
 	u64 nmask;
 	u64 pmask;
 	atomic_t count;
 	spinlock_t lock;
-	काष्ठा dentry *dbgfs_dir;
-पूर्ण;
-#घोषणा to_pp_समयr(__समयr) \
-	container_of(__समयr, काष्ठा pp_ctx, समयr)
+	struct dentry *dbgfs_dir;
+};
+#define to_pp_timer(__timer) \
+	container_of(__timer, struct pp_ctx, timer)
 
-अटल काष्ठा dentry *pp_dbgfs_topdir;
+static struct dentry *pp_dbgfs_topdir;
 
-अटल पूर्णांक pp_find_next_peer(काष्ठा pp_ctx *pp)
-अणु
+static int pp_find_next_peer(struct pp_ctx *pp)
+{
 	u64 link, out_db;
-	पूर्णांक pidx;
+	int pidx;
 
-	link = ntb_link_is_up(pp->ntb, शून्य, शून्य);
+	link = ntb_link_is_up(pp->ntb, NULL, NULL);
 
 	/* Find next available peer */
-	अगर (link & pp->nmask)
+	if (link & pp->nmask)
 		pidx = __ffs64(link & pp->nmask);
-	अन्यथा अगर (link & pp->pmask)
+	else if (link & pp->pmask)
 		pidx = __ffs64(link & pp->pmask);
-	अन्यथा
-		वापस -ENODEV;
+	else
+		return -ENODEV;
 
 	out_db = BIT_ULL(ntb_peer_port_number(pp->ntb, pidx));
 
@@ -136,47 +135,47 @@ MODULE_PARM_DESC(delay_ms, "Milliseconds to delay the response to peer");
 	pp->out_db = out_db;
 	spin_unlock(&pp->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pp_setup(काष्ठा pp_ctx *pp)
-अणु
-	पूर्णांक ret;
+static void pp_setup(struct pp_ctx *pp)
+{
+	int ret;
 
 	ntb_db_set_mask(pp->ntb, pp->in_db);
 
-	hrसमयr_cancel(&pp->समयr);
+	hrtimer_cancel(&pp->timer);
 
 	ret = pp_find_next_peer(pp);
-	अगर (ret == -ENODEV) अणु
+	if (ret == -ENODEV) {
 		dev_dbg(&pp->ntb->dev, "Got no peers, so cancel\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev_dbg(&pp->ntb->dev, "Ping-pong started with port %d, db %#llx\n",
 		ntb_peer_port_number(pp->ntb, pp->out_pidx), pp->out_db);
 
-	hrसमयr_start(&pp->समयr, ms_to_kसमय(delay_ms), HRTIMER_MODE_REL);
-पूर्ण
+	hrtimer_start(&pp->timer, ms_to_ktime(delay_ms), HRTIMER_MODE_REL);
+}
 
-अटल व्योम pp_clear(काष्ठा pp_ctx *pp)
-अणु
-	hrसमयr_cancel(&pp->समयr);
+static void pp_clear(struct pp_ctx *pp)
+{
+	hrtimer_cancel(&pp->timer);
 
 	ntb_db_set_mask(pp->ntb, pp->in_db);
 
 	dev_dbg(&pp->ntb->dev, "Ping-pong cancelled\n");
-पूर्ण
+}
 
-अटल व्योम pp_ping(काष्ठा pp_ctx *pp)
-अणु
+static void pp_ping(struct pp_ctx *pp)
+{
 	u32 count;
 
-	count = atomic_पढ़ो(&pp->count);
+	count = atomic_read(&pp->count);
 
 	spin_lock(&pp->lock);
-	ntb_peer_spad_ग_लिखो(pp->ntb, pp->out_pidx, 0, count);
-	ntb_peer_msg_ग_लिखो(pp->ntb, pp->out_pidx, 0, count);
+	ntb_peer_spad_write(pp->ntb, pp->out_pidx, 0, count);
+	ntb_peer_msg_write(pp->ntb, pp->out_pidx, 0, count);
 
 	dev_dbg(&pp->ntb->dev, "Ping port %d spad %#x, msg %#x\n",
 		ntb_peer_port_number(pp->ntb, pp->out_pidx), count, count);
@@ -184,20 +183,20 @@ MODULE_PARM_DESC(delay_ms, "Milliseconds to delay the response to peer");
 	ntb_peer_db_set(pp->ntb, pp->out_db);
 	ntb_db_clear_mask(pp->ntb, pp->in_db);
 	spin_unlock(&pp->lock);
-पूर्ण
+}
 
-अटल व्योम pp_pong(काष्ठा pp_ctx *pp)
-अणु
+static void pp_pong(struct pp_ctx *pp)
+{
 	u32 msg_data = -1, spad_data = -1;
-	पूर्णांक pidx = 0;
+	int pidx = 0;
 
 	/* Read pong data */
-	spad_data = ntb_spad_पढ़ो(pp->ntb, 0);
-	msg_data = ntb_msg_पढ़ो(pp->ntb, &pidx, 0);
+	spad_data = ntb_spad_read(pp->ntb, 0);
+	msg_data = ntb_msg_read(pp->ntb, &pidx, 0);
 	ntb_msg_clear_sts(pp->ntb, -1);
 
 	/*
-	 * Scratchpad and message data may dअगरfer, since message रेजिस्टर can't
+	 * Scratchpad and message data may differ, since message register can't
 	 * be rewritten unless status is cleared. Additionally either of them
 	 * might be unsupported
 	 */
@@ -209,99 +208,99 @@ MODULE_PARM_DESC(delay_ms, "Milliseconds to delay the response to peer");
 	ntb_db_set_mask(pp->ntb, pp->in_db);
 	ntb_db_clear(pp->ntb, pp->in_db);
 
-	hrसमयr_start(&pp->समयr, ms_to_kसमय(delay_ms), HRTIMER_MODE_REL);
-पूर्ण
+	hrtimer_start(&pp->timer, ms_to_ktime(delay_ms), HRTIMER_MODE_REL);
+}
 
-अटल क्रमागत hrसमयr_restart pp_समयr_func(काष्ठा hrसमयr *t)
-अणु
-	काष्ठा pp_ctx *pp = to_pp_समयr(t);
+static enum hrtimer_restart pp_timer_func(struct hrtimer *t)
+{
+	struct pp_ctx *pp = to_pp_timer(t);
 
 	pp_ping(pp);
 
-	वापस HRTIMER_NORESTART;
-पूर्ण
+	return HRTIMER_NORESTART;
+}
 
-अटल व्योम pp_link_event(व्योम *ctx)
-अणु
-	काष्ठा pp_ctx *pp = ctx;
+static void pp_link_event(void *ctx)
+{
+	struct pp_ctx *pp = ctx;
 
 	pp_setup(pp);
-पूर्ण
+}
 
-अटल व्योम pp_db_event(व्योम *ctx, पूर्णांक vec)
-अणु
-	काष्ठा pp_ctx *pp = ctx;
+static void pp_db_event(void *ctx, int vec)
+{
+	struct pp_ctx *pp = ctx;
 
 	pp_pong(pp);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ntb_ctx_ops pp_ops = अणु
+static const struct ntb_ctx_ops pp_ops = {
 	.link_event = pp_link_event,
 	.db_event = pp_db_event
-पूर्ण;
+};
 
-अटल पूर्णांक pp_check_ntb(काष्ठा ntb_dev *ntb)
-अणु
+static int pp_check_ntb(struct ntb_dev *ntb)
+{
 	u64 pmask;
 
-	अगर (ntb_db_is_unsafe(ntb)) अणु
+	if (ntb_db_is_unsafe(ntb)) {
 		dev_dbg(&ntb->dev, "Doorbell is unsafe\n");
-		अगर (!unsafe)
-			वापस -EINVAL;
-	पूर्ण
+		if (!unsafe)
+			return -EINVAL;
+	}
 
-	अगर (ntb_spad_is_unsafe(ntb)) अणु
+	if (ntb_spad_is_unsafe(ntb)) {
 		dev_dbg(&ntb->dev, "Scratchpad is unsafe\n");
-		अगर (!unsafe)
-			वापस -EINVAL;
-	पूर्ण
+		if (!unsafe)
+			return -EINVAL;
+	}
 
 	pmask = GENMASK_ULL(ntb_peer_port_count(ntb), 0);
-	अगर ((ntb_db_valid_mask(ntb) & pmask) != pmask) अणु
+	if ((ntb_db_valid_mask(ntb) & pmask) != pmask) {
 		dev_err(&ntb->dev, "Unsupported DB configuration\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ntb_spad_count(ntb) < 1 && ntb_msg_count(ntb) < 1) अणु
+	if (ntb_spad_count(ntb) < 1 && ntb_msg_count(ntb) < 1) {
 		dev_err(&ntb->dev, "Scratchpads and messages unsupported\n");
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (ntb_spad_count(ntb) < 1) अणु
+		return -EINVAL;
+	} else if (ntb_spad_count(ntb) < 1) {
 		dev_dbg(&ntb->dev, "Scratchpads unsupported\n");
-	पूर्ण अन्यथा अगर (ntb_msg_count(ntb) < 1) अणु
+	} else if (ntb_msg_count(ntb) < 1) {
 		dev_dbg(&ntb->dev, "Messages unsupported\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pp_ctx *pp_create_data(काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा pp_ctx *pp;
+static struct pp_ctx *pp_create_data(struct ntb_dev *ntb)
+{
+	struct pp_ctx *pp;
 
-	pp = devm_kzalloc(&ntb->dev, माप(*pp), GFP_KERNEL);
-	अगर (!pp)
-		वापस ERR_PTR(-ENOMEM);
+	pp = devm_kzalloc(&ntb->dev, sizeof(*pp), GFP_KERNEL);
+	if (!pp)
+		return ERR_PTR(-ENOMEM);
 
 	pp->ntb = ntb;
 	atomic_set(&pp->count, 0);
 	spin_lock_init(&pp->lock);
-	hrसमयr_init(&pp->समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	pp->समयr.function = pp_समयr_func;
+	hrtimer_init(&pp->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	pp->timer.function = pp_timer_func;
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 
-अटल व्योम pp_init_flds(काष्ठा pp_ctx *pp)
-अणु
-	पूर्णांक pidx, lport, pcnt;
+static void pp_init_flds(struct pp_ctx *pp)
+{
+	int pidx, lport, pcnt;
 
 	/* Find global port index */
 	lport = ntb_port_number(pp->ntb);
 	pcnt = ntb_peer_port_count(pp->ntb);
-	क्रम (pidx = 0; pidx < pcnt; pidx++) अणु
-		अगर (lport < ntb_peer_port_number(pp->ntb, pidx))
-			अवरोध;
-	पूर्ण
+	for (pidx = 0; pidx < pcnt; pidx++) {
+		if (lport < ntb_peer_port_number(pp->ntb, pidx))
+			break;
+	}
 
 	pp->in_db = BIT_ULL(lport);
 	pp->pmask = GENMASK_ULL(pidx, 0) >> 1;
@@ -309,126 +308,126 @@ MODULE_PARM_DESC(delay_ms, "Milliseconds to delay the response to peer");
 
 	dev_dbg(&pp->ntb->dev, "Inbound db %#llx, prev %#llx, next %#llx\n",
 		pp->in_db, pp->pmask, pp->nmask);
-पूर्ण
+}
 
-अटल पूर्णांक pp_mask_events(काष्ठा pp_ctx *pp)
-अणु
+static int pp_mask_events(struct pp_ctx *pp)
+{
 	u64 db_mask, msg_mask;
-	पूर्णांक ret;
+	int ret;
 
 	db_mask = ntb_db_valid_mask(pp->ntb);
 	ret = ntb_db_set_mask(pp->ntb, db_mask);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Skip message events masking अगर unsupported */
-	अगर (ntb_msg_count(pp->ntb) < 1)
-		वापस 0;
+	/* Skip message events masking if unsupported */
+	if (ntb_msg_count(pp->ntb) < 1)
+		return 0;
 
 	msg_mask = ntb_msg_outbits(pp->ntb) | ntb_msg_inbits(pp->ntb);
-	वापस ntb_msg_set_mask(pp->ntb, msg_mask);
-पूर्ण
+	return ntb_msg_set_mask(pp->ntb, msg_mask);
+}
 
-अटल पूर्णांक pp_setup_ctx(काष्ठा pp_ctx *pp)
-अणु
-	पूर्णांक ret;
+static int pp_setup_ctx(struct pp_ctx *pp)
+{
+	int ret;
 
 	ret = ntb_set_ctx(pp->ntb, pp, &pp_ops);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ntb_link_enable(pp->ntb, NTB_SPEED_AUTO, NTB_WIDTH_AUTO);
 	/* Might be not necessary */
 	ntb_link_event(pp->ntb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pp_clear_ctx(काष्ठा pp_ctx *pp)
-अणु
+static void pp_clear_ctx(struct pp_ctx *pp)
+{
 	ntb_link_disable(pp->ntb);
 
 	ntb_clear_ctx(pp->ntb);
-पूर्ण
+}
 
-अटल व्योम pp_setup_dbgfs(काष्ठा pp_ctx *pp)
-अणु
-	काष्ठा pci_dev *pdev = pp->ntb->pdev;
+static void pp_setup_dbgfs(struct pp_ctx *pp)
+{
+	struct pci_dev *pdev = pp->ntb->pdev;
 
 	pp->dbgfs_dir = debugfs_create_dir(pci_name(pdev), pp_dbgfs_topdir);
 
 	debugfs_create_atomic_t("count", 0600, pp->dbgfs_dir, &pp->count);
-पूर्ण
+}
 
-अटल व्योम pp_clear_dbgfs(काष्ठा pp_ctx *pp)
-अणु
-	debugfs_हटाओ_recursive(pp->dbgfs_dir);
-पूर्ण
+static void pp_clear_dbgfs(struct pp_ctx *pp)
+{
+	debugfs_remove_recursive(pp->dbgfs_dir);
+}
 
-अटल पूर्णांक pp_probe(काष्ठा ntb_client *client, काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा pp_ctx *pp;
-	पूर्णांक ret;
+static int pp_probe(struct ntb_client *client, struct ntb_dev *ntb)
+{
+	struct pp_ctx *pp;
+	int ret;
 
 	ret = pp_check_ntb(ntb);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pp = pp_create_data(ntb);
-	अगर (IS_ERR(pp))
-		वापस PTR_ERR(pp);
+	if (IS_ERR(pp))
+		return PTR_ERR(pp);
 
 	pp_init_flds(pp);
 
 	ret = pp_mask_events(pp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = pp_setup_ctx(pp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	pp_setup_dbgfs(pp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम pp_हटाओ(काष्ठा ntb_client *client, काष्ठा ntb_dev *ntb)
-अणु
-	काष्ठा pp_ctx *pp = ntb->ctx;
+static void pp_remove(struct ntb_client *client, struct ntb_dev *ntb)
+{
+	struct pp_ctx *pp = ntb->ctx;
 
 	pp_clear_dbgfs(pp);
 
 	pp_clear_ctx(pp);
 
 	pp_clear(pp);
-पूर्ण
+}
 
-अटल काष्ठा ntb_client pp_client = अणु
-	.ops = अणु
+static struct ntb_client pp_client = {
+	.ops = {
 		.probe = pp_probe,
-		.हटाओ = pp_हटाओ
-	पूर्ण
-पूर्ण;
+		.remove = pp_remove
+	}
+};
 
-अटल पूर्णांक __init pp_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init pp_init(void)
+{
+	int ret;
 
-	अगर (debugfs_initialized())
-		pp_dbgfs_topdir = debugfs_create_dir(KBUILD_MODNAME, शून्य);
+	if (debugfs_initialized())
+		pp_dbgfs_topdir = debugfs_create_dir(KBUILD_MODNAME, NULL);
 
-	ret = ntb_रेजिस्टर_client(&pp_client);
-	अगर (ret)
-		debugfs_हटाओ_recursive(pp_dbgfs_topdir);
+	ret = ntb_register_client(&pp_client);
+	if (ret)
+		debugfs_remove_recursive(pp_dbgfs_topdir);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 module_init(pp_init);
 
-अटल व्योम __निकास pp_निकास(व्योम)
-अणु
-	ntb_unरेजिस्टर_client(&pp_client);
-	debugfs_हटाओ_recursive(pp_dbgfs_topdir);
-पूर्ण
-module_निकास(pp_निकास);
+static void __exit pp_exit(void)
+{
+	ntb_unregister_client(&pp_client);
+	debugfs_remove_recursive(pp_dbgfs_topdir);
+}
+module_exit(pp_exit);

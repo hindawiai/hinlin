@@ -1,172 +1,171 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <पूर्णांकtypes.h>
-#समावेश <unistd.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/types.h>
-#समावेश <sys/mman.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश "debug.h"
-#समावेश "event.h"
-#समावेश "tests.h"
-#समावेश "machine.h"
-#समावेश "thread_map.h"
-#समावेश "map.h"
-#समावेश "symbol.h"
-#समावेश "util/synthetic-events.h"
-#समावेश "thread.h"
-#समावेश <पूर्णांकernal/lib.h> // page_size
+// SPDX-License-Identifier: GPL-2.0
+#include <inttypes.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "debug.h"
+#include "event.h"
+#include "tests.h"
+#include "machine.h"
+#include "thread_map.h"
+#include "map.h"
+#include "symbol.h"
+#include "util/synthetic-events.h"
+#include "thread.h"
+#include <internal/lib.h> // page_size
 
-#घोषणा THREADS 4
+#define THREADS 4
 
-अटल पूर्णांक go_away;
+static int go_away;
 
-काष्ठा thपढ़ो_data अणु
-	pthपढ़ो_t	pt;
+struct thread_data {
+	pthread_t	pt;
 	pid_t		tid;
-	व्योम		*map;
-	पूर्णांक		पढ़ोy[2];
-पूर्ण;
+	void		*map;
+	int		ready[2];
+};
 
-अटल काष्ठा thपढ़ो_data thपढ़ोs[THREADS];
+static struct thread_data threads[THREADS];
 
-अटल पूर्णांक thपढ़ो_init(काष्ठा thपढ़ो_data *td)
-अणु
-	व्योम *map;
+static int thread_init(struct thread_data *td)
+{
+	void *map;
 
-	map = mmap(शून्य, page_size,
+	map = mmap(NULL, page_size,
 		   PROT_READ|PROT_WRITE|PROT_EXEC,
 		   MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-	अगर (map == MAP_FAILED) अणु
-		लिखो_त्रुटि("mmap failed");
-		वापस -1;
-	पूर्ण
+	if (map == MAP_FAILED) {
+		perror("mmap failed");
+		return -1;
+	}
 
 	td->map = map;
 	td->tid = syscall(SYS_gettid);
 
 	pr_debug("tid = %d, map = %p\n", td->tid, map);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *thपढ़ो_fn(व्योम *arg)
-अणु
-	काष्ठा thपढ़ो_data *td = arg;
-	sमाप_प्रकार ret;
-	पूर्णांक go = 0;
+static void *thread_fn(void *arg)
+{
+	struct thread_data *td = arg;
+	ssize_t ret;
+	int go = 0;
 
-	अगर (thपढ़ो_init(td))
-		वापस शून्य;
+	if (thread_init(td))
+		return NULL;
 
-	/* Signal thपढ़ो_create thपढ़ो is initialized. */
-	ret = ग_लिखो(td->पढ़ोy[1], &go, माप(पूर्णांक));
-	अगर (ret != माप(पूर्णांक)) अणु
+	/* Signal thread_create thread is initialized. */
+	ret = write(td->ready[1], &go, sizeof(int));
+	if (ret != sizeof(int)) {
 		pr_err("failed to notify\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	जबतक (!go_away) अणु
-		/* Waiting क्रम मुख्य thपढ़ो to समाप्त us. */
+	while (!go_away) {
+		/* Waiting for main thread to kill us. */
 		usleep(100);
-	पूर्ण
+	}
 
 	munmap(td->map, page_size);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक thपढ़ो_create(पूर्णांक i)
-अणु
-	काष्ठा thपढ़ो_data *td = &thपढ़ोs[i];
-	पूर्णांक err, go;
+static int thread_create(int i)
+{
+	struct thread_data *td = &threads[i];
+	int err, go;
 
-	अगर (pipe(td->पढ़ोy))
-		वापस -1;
+	if (pipe(td->ready))
+		return -1;
 
-	err = pthपढ़ो_create(&td->pt, शून्य, thपढ़ो_fn, td);
-	अगर (!err) अणु
-		/* Wait क्रम thपढ़ो initialization. */
-		sमाप_प्रकार ret = पढ़ो(td->पढ़ोy[0], &go, माप(पूर्णांक));
-		err = ret != माप(पूर्णांक);
-	पूर्ण
+	err = pthread_create(&td->pt, NULL, thread_fn, td);
+	if (!err) {
+		/* Wait for thread initialization. */
+		ssize_t ret = read(td->ready[0], &go, sizeof(int));
+		err = ret != sizeof(int);
+	}
 
-	बंद(td->पढ़ोy[0]);
-	बंद(td->पढ़ोy[1]);
-	वापस err;
-पूर्ण
+	close(td->ready[0]);
+	close(td->ready[1]);
+	return err;
+}
 
-अटल पूर्णांक thपढ़ोs_create(व्योम)
-अणु
-	काष्ठा thपढ़ो_data *td0 = &thपढ़ोs[0];
-	पूर्णांक i, err = 0;
+static int threads_create(void)
+{
+	struct thread_data *td0 = &threads[0];
+	int i, err = 0;
 
 	go_away = 0;
 
-	/* 0 is मुख्य thपढ़ो */
-	अगर (thपढ़ो_init(td0))
-		वापस -1;
+	/* 0 is main thread */
+	if (thread_init(td0))
+		return -1;
 
-	क्रम (i = 1; !err && i < THREADS; i++)
-		err = thपढ़ो_create(i);
+	for (i = 1; !err && i < THREADS; i++)
+		err = thread_create(i);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक thपढ़ोs_destroy(व्योम)
-अणु
-	काष्ठा thपढ़ो_data *td0 = &thपढ़ोs[0];
-	पूर्णांक i, err = 0;
+static int threads_destroy(void)
+{
+	struct thread_data *td0 = &threads[0];
+	int i, err = 0;
 
-	/* cleanup the मुख्य thपढ़ो */
+	/* cleanup the main thread */
 	munmap(td0->map, page_size);
 
 	go_away = 1;
 
-	क्रम (i = 1; !err && i < THREADS; i++)
-		err = pthपढ़ो_join(thपढ़ोs[i].pt, शून्य);
+	for (i = 1; !err && i < THREADS; i++)
+		err = pthread_join(threads[i].pt, NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-प्रकार पूर्णांक (*synth_cb)(काष्ठा machine *machine);
+typedef int (*synth_cb)(struct machine *machine);
 
-अटल पूर्णांक synth_all(काष्ठा machine *machine)
-अणु
-	वापस perf_event__syntheमाप_प्रकारhपढ़ोs(शून्य,
+static int synth_all(struct machine *machine)
+{
+	return perf_event__synthesize_threads(NULL,
 					      perf_event__process,
 					      machine, 0, 1);
-पूर्ण
+}
 
-अटल पूर्णांक synth_process(काष्ठा machine *machine)
-अणु
-	काष्ठा perf_thपढ़ो_map *map;
-	पूर्णांक err;
+static int synth_process(struct machine *machine)
+{
+	struct perf_thread_map *map;
+	int err;
 
-	map = thपढ़ो_map__new_by_pid(getpid());
+	map = thread_map__new_by_pid(getpid());
 
-	err = perf_event__syntheमाप_प्रकारhपढ़ो_map(शून्य, map,
+	err = perf_event__synthesize_thread_map(NULL, map,
 						perf_event__process,
 						machine, 0);
 
-	perf_thपढ़ो_map__put(map);
-	वापस err;
-पूर्ण
+	perf_thread_map__put(map);
+	return err;
+}
 
-अटल पूर्णांक mmap_events(synth_cb synth)
-अणु
-	काष्ठा machine *machine;
-	पूर्णांक err, i;
+static int mmap_events(synth_cb synth)
+{
+	struct machine *machine;
+	int err, i;
 
 	/*
-	 * The thपढ़ोs_create will not वापस beक्रमe all thपढ़ोs
+	 * The threads_create will not return before all threads
 	 * are spawned and all created memory map.
 	 *
-	 * They will loop until thपढ़ोs_destroy is called, so we
+	 * They will loop until threads_destroy is called, so we
 	 * can safely run synthesizing function.
 	 */
-	TEST_ASSERT_VAL("failed to create threads", !thपढ़ोs_create());
+	TEST_ASSERT_VAL("failed to create threads", !threads_create());
 
 	machine = machine__new_host();
 
@@ -176,64 +175,64 @@
 
 	dump_trace = 0;
 
-	TEST_ASSERT_VAL("failed to destroy threads", !thपढ़ोs_destroy());
+	TEST_ASSERT_VAL("failed to destroy threads", !threads_destroy());
 	TEST_ASSERT_VAL("failed to synthesize maps", !err);
 
 	/*
-	 * All data is synthesized, try to find map क्रम each
-	 * thपढ़ो object.
+	 * All data is synthesized, try to find map for each
+	 * thread object.
 	 */
-	क्रम (i = 0; i < THREADS; i++) अणु
-		काष्ठा thपढ़ो_data *td = &thपढ़ोs[i];
-		काष्ठा addr_location al;
-		काष्ठा thपढ़ो *thपढ़ो;
+	for (i = 0; i < THREADS; i++) {
+		struct thread_data *td = &threads[i];
+		struct addr_location al;
+		struct thread *thread;
 
-		thपढ़ो = machine__findnew_thपढ़ो(machine, getpid(), td->tid);
+		thread = machine__findnew_thread(machine, getpid(), td->tid);
 
 		pr_debug("looking for map %p\n", td->map);
 
-		thपढ़ो__find_map(thपढ़ो, PERF_RECORD_MISC_USER,
-				 (अचिन्हित दीर्घ) (td->map + 1), &al);
+		thread__find_map(thread, PERF_RECORD_MISC_USER,
+				 (unsigned long) (td->map + 1), &al);
 
-		thपढ़ो__put(thपढ़ो);
+		thread__put(thread);
 
-		अगर (!al.map) अणु
+		if (!al.map) {
 			pr_debug("failed, couldn't find map\n");
 			err = -1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		pr_debug("map %p, addr %" PRIx64 "\n", al.map, al.map->start);
-	पूर्ण
+	}
 
-	machine__delete_thपढ़ोs(machine);
+	machine__delete_threads(machine);
 	machine__delete(machine);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * This test creates 'THREADS' number of thपढ़ोs (including
- * मुख्य thपढ़ो) and each thपढ़ो creates memory map.
+ * This test creates 'THREADS' number of threads (including
+ * main thread) and each thread creates memory map.
  *
- * When thपढ़ोs are created, we synthesize them with both
+ * When threads are created, we synthesize them with both
  * (separate tests):
- *   perf_event__syntheमाप_प्रकारhपढ़ो_map (process based)
- *   perf_event__syntheमाप_प्रकारhपढ़ोs    (global)
+ *   perf_event__synthesize_thread_map (process based)
+ *   perf_event__synthesize_threads    (global)
  *
  * We test we can find all memory maps via:
- *   thपढ़ो__find_map
+ *   thread__find_map
  *
- * by using all thपढ़ो objects.
+ * by using all thread objects.
  */
-पूर्णांक test__mmap_thपढ़ो_lookup(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
-अणु
-	/* perf_event__syntheमाप_प्रकारhपढ़ोs synthesize */
+int test__mmap_thread_lookup(struct test *test __maybe_unused, int subtest __maybe_unused)
+{
+	/* perf_event__synthesize_threads synthesize */
 	TEST_ASSERT_VAL("failed with sythesizing all",
 			!mmap_events(synth_all));
 
-	/* perf_event__syntheमाप_प्रकारhपढ़ो_map synthesize */
+	/* perf_event__synthesize_thread_map synthesize */
 	TEST_ASSERT_VAL("failed with sythesizing process",
 			!mmap_events(synth_process));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SPARC64_FUTEX_H
-#घोषणा _SPARC64_FUTEX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SPARC64_FUTEX_H
+#define _SPARC64_FUTEX_H
 
-#समावेश <linux/futex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/त्रुटिसं.स>
+#include <linux/futex.h>
+#include <linux/uaccess.h>
+#include <asm/errno.h>
 
-#घोषणा __futex_cas_op(insn, ret, oldval, uaddr, oparg)	\
-	__यंत्र__ __अस्थिर__(				\
+#define __futex_cas_op(insn, ret, oldval, uaddr, oparg)	\
+	__asm__ __volatile__(				\
 	"\n1:	lduwa	[%3] %%asi, %2\n"		\
 	"	" insn "\n"				\
 	"2:	casa	[%3] %%asi, %2, %1\n"		\
@@ -31,47 +30,47 @@
 	: "r" (uaddr), "r" (oparg), "i" (-EFAULT)	\
 	: "memory")
 
-अटल अंतरभूत पूर्णांक arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval,
+static inline int arch_futex_atomic_op_inuser(int op, int oparg, int *oval,
 		u32 __user *uaddr)
-अणु
-	पूर्णांक oldval = 0, ret, tem;
+{
+	int oldval = 0, ret, tem;
 
-	अगर (unlikely((((अचिन्हित दीर्घ) uaddr) & 0x3UL)))
-		वापस -EINVAL;
+	if (unlikely((((unsigned long) uaddr) & 0x3UL)))
+		return -EINVAL;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
+	switch (op) {
+	case FUTEX_OP_SET:
 		__futex_cas_op("mov\t%4, %1", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ADD:
+		break;
+	case FUTEX_OP_ADD:
 		__futex_cas_op("add\t%2, %4, %1", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_OR:
+		break;
+	case FUTEX_OP_OR:
 		__futex_cas_op("or\t%2, %4, %1", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
+		break;
+	case FUTEX_OP_ANDN:
 		__futex_cas_op("andn\t%2, %4, %1", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_XOR:
+		break;
+	case FUTEX_OP_XOR:
 		__futex_cas_op("xor\t%2, %4, %1", ret, oldval, uaddr, oparg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"\n1:	casa	[%4] %%asi, %3, %1\n"
 	"2:\n"
 	"	.section .fixup,#alloc,#execinstr\n"
@@ -89,7 +88,7 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	: "memory");
 
 	*uval = newval;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* !(_SPARC64_FUTEX_H) */
+#endif /* !(_SPARC64_FUTEX_H) */

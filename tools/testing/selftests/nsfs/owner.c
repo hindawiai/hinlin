@@ -1,93 +1,92 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
-#समावेश <unistd.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/prctl.h>
-#समावेश <sys/रुको.h>
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <sched.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/prctl.h>
+#include <sys/wait.h>
 
-#घोषणा NSIO    0xb7
-#घोषणा NS_GET_USERNS   _IO(NSIO, 0x1)
+#define NSIO    0xb7
+#define NS_GET_USERNS   _IO(NSIO, 0x1)
 
-#घोषणा pr_err(fmt, ...) \
-		(अणु \
-			ख_लिखो(मानक_त्रुटि, "%s:%d:" fmt ": %m\n", \
+#define pr_err(fmt, ...) \
+		({ \
+			fprintf(stderr, "%s:%d:" fmt ": %m\n", \
 				__func__, __LINE__, ##__VA_ARGS__); \
 			1; \
-		पूर्ण)
+		})
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argvp[])
-अणु
-	पूर्णांक pfd[2], ns, uns, init_uns;
-	काष्ठा stat st1, st2;
-	अक्षर path[128];
+int main(int argc, char *argvp[])
+{
+	int pfd[2], ns, uns, init_uns;
+	struct stat st1, st2;
+	char path[128];
 	pid_t pid;
-	अक्षर c;
+	char c;
 
-	अगर (pipe(pfd))
-		वापस 1;
+	if (pipe(pfd))
+		return 1;
 
-	pid = विभाजन();
-	अगर (pid < 0)
-		वापस pr_err("fork");
-	अगर (pid == 0) अणु
+	pid = fork();
+	if (pid < 0)
+		return pr_err("fork");
+	if (pid == 0) {
 		prctl(PR_SET_PDEATHSIG, SIGKILL);
-		अगर (unshare(CLONE_NEWUTS | CLONE_NEWUSER))
-			वापस pr_err("unshare");
-		बंद(pfd[0]);
-		बंद(pfd[1]);
-		जबतक (1)
+		if (unshare(CLONE_NEWUTS | CLONE_NEWUSER))
+			return pr_err("unshare");
+		close(pfd[0]);
+		close(pfd[1]);
+		while (1)
 			sleep(1);
-		वापस 0;
-	पूर्ण
-	बंद(pfd[1]);
-	अगर (पढ़ो(pfd[0], &c, 1) != 0)
-		वापस pr_err("Unable to read from pipe");
-	बंद(pfd[0]);
+		return 0;
+	}
+	close(pfd[1]);
+	if (read(pfd[0], &c, 1) != 0)
+		return pr_err("Unable to read from pipe");
+	close(pfd[0]);
 
-	snम_लिखो(path, माप(path), "/proc/%d/ns/uts", pid);
-	ns = खोलो(path, O_RDONLY);
-	अगर (ns < 0)
-		वापस pr_err("Unable to open %s", path);
+	snprintf(path, sizeof(path), "/proc/%d/ns/uts", pid);
+	ns = open(path, O_RDONLY);
+	if (ns < 0)
+		return pr_err("Unable to open %s", path);
 
 	uns = ioctl(ns, NS_GET_USERNS);
-	अगर (uns < 0)
-		वापस pr_err("Unable to get an owning user namespace");
+	if (uns < 0)
+		return pr_err("Unable to get an owning user namespace");
 
-	अगर (ख_स्थिति(uns, &st1))
-		वापस pr_err("fstat");
+	if (fstat(uns, &st1))
+		return pr_err("fstat");
 
-	snम_लिखो(path, माप(path), "/proc/%d/ns/user", pid);
-	अगर (stat(path, &st2))
-		वापस pr_err("stat");
+	snprintf(path, sizeof(path), "/proc/%d/ns/user", pid);
+	if (stat(path, &st2))
+		return pr_err("stat");
 
-	अगर (st1.st_ino != st2.st_ino)
-		वापस pr_err("NS_GET_USERNS returned a wrong namespace");
+	if (st1.st_ino != st2.st_ino)
+		return pr_err("NS_GET_USERNS returned a wrong namespace");
 
 	init_uns = ioctl(uns, NS_GET_USERNS);
-	अगर (uns < 0)
-		वापस pr_err("Unable to get an owning user namespace");
+	if (uns < 0)
+		return pr_err("Unable to get an owning user namespace");
 
-	अगर (ioctl(init_uns, NS_GET_USERNS) >= 0 || त्रुटि_सं != EPERM)
-		वापस pr_err("Don't get EPERM");
+	if (ioctl(init_uns, NS_GET_USERNS) >= 0 || errno != EPERM)
+		return pr_err("Don't get EPERM");
 
-	अगर (unshare(CLONE_NEWUSER))
-		वापस pr_err("unshare");
+	if (unshare(CLONE_NEWUSER))
+		return pr_err("unshare");
 
-	अगर (ioctl(ns, NS_GET_USERNS) >= 0 || त्रुटि_सं != EPERM)
-		वापस pr_err("Don't get EPERM");
-	अगर (ioctl(init_uns, NS_GET_USERNS) >= 0 || त्रुटि_सं != EPERM)
-		वापस pr_err("Don't get EPERM");
+	if (ioctl(ns, NS_GET_USERNS) >= 0 || errno != EPERM)
+		return pr_err("Don't get EPERM");
+	if (ioctl(init_uns, NS_GET_USERNS) >= 0 || errno != EPERM)
+		return pr_err("Don't get EPERM");
 
-	समाप्त(pid, SIGKILL);
-	रुको(शून्य);
-	वापस 0;
-पूर्ण
+	kill(pid, SIGKILL);
+	wait(NULL);
+	return 0;
+}

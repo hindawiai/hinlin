@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_घोषित CONFIG_ARCH_S3C24XX
-#समावेश "regs-irq-s3c24xx.h"
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_S3C24XX
+#include "regs-irq-s3c24xx.h"
+#endif
 
-#अगर_घोषित CONFIG_ARCH_S3C64XX
-#समावेश "regs-irq-s3c64xx.h"
-#पूर्ण_अगर
+#ifdef CONFIG_ARCH_S3C64XX
+#include "regs-irq-s3c64xx.h"
+#endif

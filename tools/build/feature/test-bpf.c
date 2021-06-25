@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <यंत्र/unistd.h>
-#समावेश <linux/bpf.h>
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <asm/unistd.h>
+#include <linux/bpf.h>
+#include <unistd.h>
 
-#अगर_अघोषित __NR_bpf
-# अगर defined(__i386__)
+#ifndef __NR_bpf
+# if defined(__i386__)
 #  define __NR_bpf 357
-# elअगर defined(__x86_64__)
+# elif defined(__x86_64__)
 #  define __NR_bpf 321
-# elअगर defined(__aarch64__)
+# elif defined(__aarch64__)
 #  define __NR_bpf 280
-# elअगर defined(__sparc__)
+# elif defined(__sparc__)
 #  define __NR_bpf 349
-# elअगर defined(__s390__)
+# elif defined(__s390__)
 #  define __NR_bpf 351
-# अन्यथा
-#  error __NR_bpf not defined. libbpf करोes not support your arch.
-# endअगर
-#पूर्ण_अगर
+# else
+#  error __NR_bpf not defined. libbpf does not support your arch.
+# endif
+#endif
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	जोड़ bpf_attr attr;
+int main(void)
+{
+	union bpf_attr attr;
 
 	/* Check fields in attr */
 	attr.prog_type = BPF_PROG_TYPE_KPROBE;
@@ -37,7 +36,7 @@
 
 	/*
 	 * Test existence of __NR_bpf and BPF_PROG_LOAD.
-	 * This call should fail अगर we run the testहाल.
+	 * This call should fail if we run the testcase.
 	 */
-	वापस syscall(__NR_bpf, BPF_PROG_LOAD, &attr, माप(attr));
-पूर्ण
+	return syscall(__NR_bpf, BPF_PROG_LOAD, &attr, sizeof(attr));
+}

@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
-/* Google भव Ethernet (gve) driver
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/* Google virtual Ethernet (gve) driver
  *
  * Copyright (C) 2015-2019 Google, Inc.
  */
 
-#समावेश "gve.h"
-#समावेश "gve_adminq.h"
-#समावेश <linux/etherdevice.h>
+#include "gve.h"
+#include "gve_adminq.h"
+#include <linux/etherdevice.h>
 
-अटल व्योम gve_rx_हटाओ_from_block(काष्ठा gve_priv *priv, पूर्णांक queue_idx)
-अणु
-	काष्ठा gve_notअगरy_block *block =
+static void gve_rx_remove_from_block(struct gve_priv *priv, int queue_idx)
+{
+	struct gve_notify_block *block =
 			&priv->ntfy_blocks[gve_rx_idx_to_ntfy(priv, queue_idx)];
 
-	block->rx = शून्य;
-पूर्ण
+	block->rx = NULL;
+}
 
-अटल व्योम gve_rx_मुक्त_buffer(काष्ठा device *dev,
-			       काष्ठा gve_rx_slot_page_info *page_info,
-			       जोड़ gve_rx_data_slot *data_slot)
-अणु
+static void gve_rx_free_buffer(struct device *dev,
+			       struct gve_rx_slot_page_info *page_info,
+			       union gve_rx_data_slot *data_slot)
+{
 	dma_addr_t dma = (dma_addr_t)(be64_to_cpu(data_slot->addr) &
 				      GVE_DATA_SLOT_ADDR_PAGE_MASK);
 
-	gve_मुक्त_page(dev, page_info->page, dma, DMA_FROM_DEVICE);
-पूर्ण
+	gve_free_page(dev, page_info->page, dma, DMA_FROM_DEVICE);
+}
 
-अटल व्योम gve_rx_unfill_pages(काष्ठा gve_priv *priv, काष्ठा gve_rx_ring *rx)
-अणु
-	अगर (rx->data.raw_addressing) अणु
+static void gve_rx_unfill_pages(struct gve_priv *priv, struct gve_rx_ring *rx)
+{
+	if (rx->data.raw_addressing) {
 		u32 slots = rx->mask + 1;
-		पूर्णांक i;
+		int i;
 
-		क्रम (i = 0; i < slots; i++)
-			gve_rx_मुक्त_buffer(&priv->pdev->dev, &rx->data.page_info[i],
+		for (i = 0; i < slots; i++)
+			gve_rx_free_buffer(&priv->pdev->dev, &rx->data.page_info[i],
 					   &rx->data.data_ring[i]);
-	पूर्ण अन्यथा अणु
+	} else {
 		gve_unassign_qpl(priv, rx->data.qpl->id);
-		rx->data.qpl = शून्य;
-	पूर्ण
-	kvमुक्त(rx->data.page_info);
-	rx->data.page_info = शून्य;
-पूर्ण
+		rx->data.qpl = NULL;
+	}
+	kvfree(rx->data.page_info);
+	rx->data.page_info = NULL;
+}
 
-अटल व्योम gve_rx_मुक्त_ring(काष्ठा gve_priv *priv, पूर्णांक idx)
-अणु
-	काष्ठा gve_rx_ring *rx = &priv->rx[idx];
-	काष्ठा device *dev = &priv->pdev->dev;
+static void gve_rx_free_ring(struct gve_priv *priv, int idx)
+{
+	struct gve_rx_ring *rx = &priv->rx[idx];
+	struct device *dev = &priv->pdev->dev;
 	u32 slots = rx->mask + 1;
-	माप_प्रकार bytes;
+	size_t bytes;
 
-	gve_rx_हटाओ_from_block(priv, idx);
+	gve_rx_remove_from_block(priv, idx);
 
-	bytes = माप(काष्ठा gve_rx_desc) * priv->rx_desc_cnt;
-	dma_मुक्त_coherent(dev, bytes, rx->desc.desc_ring, rx->desc.bus);
-	rx->desc.desc_ring = शून्य;
+	bytes = sizeof(struct gve_rx_desc) * priv->rx_desc_cnt;
+	dma_free_coherent(dev, bytes, rx->desc.desc_ring, rx->desc.bus);
+	rx->desc.desc_ring = NULL;
 
-	dma_मुक्त_coherent(dev, माप(*rx->q_resources),
+	dma_free_coherent(dev, sizeof(*rx->q_resources),
 			  rx->q_resources, rx->q_resources_bus);
-	rx->q_resources = शून्य;
+	rx->q_resources = NULL;
 
 	gve_rx_unfill_pages(priv, rx);
 
-	bytes = माप(*rx->data.data_ring) * slots;
-	dma_मुक्त_coherent(dev, bytes, rx->data.data_ring,
+	bytes = sizeof(*rx->data.data_ring) * slots;
+	dma_free_coherent(dev, bytes, rx->data.data_ring,
 			  rx->data.data_bus);
-	rx->data.data_ring = शून्य;
-	netअगर_dbg(priv, drv, priv->dev, "freed rx ring %d\n", idx);
-पूर्ण
+	rx->data.data_ring = NULL;
+	netif_dbg(priv, drv, priv->dev, "freed rx ring %d\n", idx);
+}
 
-अटल व्योम gve_setup_rx_buffer(काष्ठा gve_rx_slot_page_info *page_info,
-			     dma_addr_t addr, काष्ठा page *page, __be64 *slot_addr)
-अणु
+static void gve_setup_rx_buffer(struct gve_rx_slot_page_info *page_info,
+			     dma_addr_t addr, struct page *page, __be64 *slot_addr)
+{
 	page_info->page = page;
 	page_info->page_offset = 0;
 	page_info->page_address = page_address(page);
 	*slot_addr = cpu_to_be64(addr);
-पूर्ण
+}
 
-अटल पूर्णांक gve_rx_alloc_buffer(काष्ठा gve_priv *priv, काष्ठा device *dev,
-			       काष्ठा gve_rx_slot_page_info *page_info,
-			       जोड़ gve_rx_data_slot *data_slot)
-अणु
-	काष्ठा page *page;
+static int gve_rx_alloc_buffer(struct gve_priv *priv, struct device *dev,
+			       struct gve_rx_slot_page_info *page_info,
+			       union gve_rx_data_slot *data_slot)
+{
+	struct page *page;
 	dma_addr_t dma;
-	पूर्णांक err;
+	int err;
 
 	err = gve_alloc_page(priv, dev, &page, &dma, DMA_FROM_DEVICE);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	gve_setup_rx_buffer(page_info, dma, page, &data_slot->addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gve_prefill_rx_pages(काष्ठा gve_rx_ring *rx)
-अणु
-	काष्ठा gve_priv *priv = rx->gve;
+static int gve_prefill_rx_pages(struct gve_rx_ring *rx)
+{
+	struct gve_priv *priv = rx->gve;
 	u32 slots;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	/* Allocate one page per Rx queue slot. Each page is split पूर्णांकo two
+	/* Allocate one page per Rx queue slot. Each page is split into two
 	 * packet buffers, when possible we "page flip" between the two.
 	 */
 	slots = rx->mask + 1;
 
 	rx->data.page_info = kvzalloc(slots *
-				      माप(*rx->data.page_info), GFP_KERNEL);
-	अगर (!rx->data.page_info)
-		वापस -ENOMEM;
+				      sizeof(*rx->data.page_info), GFP_KERNEL);
+	if (!rx->data.page_info)
+		return -ENOMEM;
 
-	अगर (!rx->data.raw_addressing)
+	if (!rx->data.raw_addressing)
 		rx->data.qpl = gve_assign_rx_qpl(priv);
-	क्रम (i = 0; i < slots; i++) अणु
-		अगर (!rx->data.raw_addressing) अणु
-			काष्ठा page *page = rx->data.qpl->pages[i];
+	for (i = 0; i < slots; i++) {
+		if (!rx->data.raw_addressing) {
+			struct page *page = rx->data.qpl->pages[i];
 			dma_addr_t addr = i * PAGE_SIZE;
 
 			gve_setup_rx_buffer(&rx->data.page_info[i], addr, page,
 					    &rx->data.data_ring[i].qpl_offset);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = gve_rx_alloc_buffer(priv, &priv->pdev->dev, &rx->data.page_info[i],
 					  &rx->data.data_ring[i]);
-		अगर (err)
-			जाओ alloc_err;
-	पूर्ण
+		if (err)
+			goto alloc_err;
+	}
 
-	वापस slots;
+	return slots;
 alloc_err:
-	जबतक (i--)
-		gve_rx_मुक्त_buffer(&priv->pdev->dev,
+	while (i--)
+		gve_rx_free_buffer(&priv->pdev->dev,
 				   &rx->data.page_info[i],
 				   &rx->data.data_ring[i]);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम gve_rx_add_to_block(काष्ठा gve_priv *priv, पूर्णांक queue_idx)
-अणु
+static void gve_rx_add_to_block(struct gve_priv *priv, int queue_idx)
+{
 	u32 ntfy_idx = gve_rx_idx_to_ntfy(priv, queue_idx);
-	काष्ठा gve_notअगरy_block *block = &priv->ntfy_blocks[ntfy_idx];
-	काष्ठा gve_rx_ring *rx = &priv->rx[queue_idx];
+	struct gve_notify_block *block = &priv->ntfy_blocks[ntfy_idx];
+	struct gve_rx_ring *rx = &priv->rx[queue_idx];
 
 	block->rx = rx;
 	rx->ntfy_id = ntfy_idx;
-पूर्ण
+}
 
-अटल पूर्णांक gve_rx_alloc_ring(काष्ठा gve_priv *priv, पूर्णांक idx)
-अणु
-	काष्ठा gve_rx_ring *rx = &priv->rx[idx];
-	काष्ठा device *hdev = &priv->pdev->dev;
+static int gve_rx_alloc_ring(struct gve_priv *priv, int idx)
+{
+	struct gve_rx_ring *rx = &priv->rx[idx];
+	struct device *hdev = &priv->pdev->dev;
 	u32 slots, npages;
-	पूर्णांक filled_pages;
-	माप_प्रकार bytes;
-	पूर्णांक err;
+	int filled_pages;
+	size_t bytes;
+	int err;
 
-	netअगर_dbg(priv, drv, priv->dev, "allocating rx ring\n");
+	netif_dbg(priv, drv, priv->dev, "allocating rx ring\n");
 	/* Make sure everything is zeroed to start with */
-	स_रखो(rx, 0, माप(*rx));
+	memset(rx, 0, sizeof(*rx));
 
 	rx->gve = priv;
 	rx->q_num = idx;
@@ -169,17 +168,17 @@ alloc_err:
 	rx->data.raw_addressing = priv->raw_addressing;
 
 	/* alloc rx data ring */
-	bytes = माप(*rx->data.data_ring) * slots;
+	bytes = sizeof(*rx->data.data_ring) * slots;
 	rx->data.data_ring = dma_alloc_coherent(hdev, bytes,
 						&rx->data.data_bus,
 						GFP_KERNEL);
-	अगर (!rx->data.data_ring)
-		वापस -ENOMEM;
+	if (!rx->data.data_ring)
+		return -ENOMEM;
 	filled_pages = gve_prefill_rx_pages(rx);
-	अगर (filled_pages < 0) अणु
+	if (filled_pages < 0) {
 		err = -ENOMEM;
-		जाओ पात_with_slots;
-	पूर्ण
+		goto abort_with_slots;
+	}
 	rx->fill_cnt = filled_pages;
 	/* Ensure data ring slots (packet buffers) are visible. */
 	dma_wmb();
@@ -187,110 +186,110 @@ alloc_err:
 	/* Alloc gve_queue_resources */
 	rx->q_resources =
 		dma_alloc_coherent(hdev,
-				   माप(*rx->q_resources),
+				   sizeof(*rx->q_resources),
 				   &rx->q_resources_bus,
 				   GFP_KERNEL);
-	अगर (!rx->q_resources) अणु
+	if (!rx->q_resources) {
 		err = -ENOMEM;
-		जाओ पात_filled;
-	पूर्ण
-	netअगर_dbg(priv, drv, priv->dev, "rx[%d]->data.data_bus=%lx\n", idx,
-		  (अचिन्हित दीर्घ)rx->data.data_bus);
+		goto abort_filled;
+	}
+	netif_dbg(priv, drv, priv->dev, "rx[%d]->data.data_bus=%lx\n", idx,
+		  (unsigned long)rx->data.data_bus);
 
 	/* alloc rx desc ring */
-	bytes = माप(काष्ठा gve_rx_desc) * priv->rx_desc_cnt;
+	bytes = sizeof(struct gve_rx_desc) * priv->rx_desc_cnt;
 	npages = bytes / PAGE_SIZE;
-	अगर (npages * PAGE_SIZE != bytes) अणु
+	if (npages * PAGE_SIZE != bytes) {
 		err = -EIO;
-		जाओ पात_with_q_resources;
-	पूर्ण
+		goto abort_with_q_resources;
+	}
 
 	rx->desc.desc_ring = dma_alloc_coherent(hdev, bytes, &rx->desc.bus,
 						GFP_KERNEL);
-	अगर (!rx->desc.desc_ring) अणु
+	if (!rx->desc.desc_ring) {
 		err = -ENOMEM;
-		जाओ पात_with_q_resources;
-	पूर्ण
+		goto abort_with_q_resources;
+	}
 	rx->cnt = 0;
 	rx->db_threshold = priv->rx_desc_cnt / 2;
 	rx->desc.seqno = 1;
 	gve_rx_add_to_block(priv, idx);
 
-	वापस 0;
+	return 0;
 
-पात_with_q_resources:
-	dma_मुक्त_coherent(hdev, माप(*rx->q_resources),
+abort_with_q_resources:
+	dma_free_coherent(hdev, sizeof(*rx->q_resources),
 			  rx->q_resources, rx->q_resources_bus);
-	rx->q_resources = शून्य;
-पात_filled:
+	rx->q_resources = NULL;
+abort_filled:
 	gve_rx_unfill_pages(priv, rx);
-पात_with_slots:
-	bytes = माप(*rx->data.data_ring) * slots;
-	dma_मुक्त_coherent(hdev, bytes, rx->data.data_ring, rx->data.data_bus);
-	rx->data.data_ring = शून्य;
+abort_with_slots:
+	bytes = sizeof(*rx->data.data_ring) * slots;
+	dma_free_coherent(hdev, bytes, rx->data.data_ring, rx->data.data_bus);
+	rx->data.data_ring = NULL;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक gve_rx_alloc_rings(काष्ठा gve_priv *priv)
-अणु
-	पूर्णांक err = 0;
-	पूर्णांक i;
+int gve_rx_alloc_rings(struct gve_priv *priv)
+{
+	int err = 0;
+	int i;
 
-	क्रम (i = 0; i < priv->rx_cfg.num_queues; i++) अणु
+	for (i = 0; i < priv->rx_cfg.num_queues; i++) {
 		err = gve_rx_alloc_ring(priv, i);
-		अगर (err) अणु
-			netअगर_err(priv, drv, priv->dev,
+		if (err) {
+			netif_err(priv, drv, priv->dev,
 				  "Failed to alloc rx ring=%d: err=%d\n",
 				  i, err);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	/* Unallocate अगर there was an error */
-	अगर (err) अणु
-		पूर्णांक j;
+			break;
+		}
+	}
+	/* Unallocate if there was an error */
+	if (err) {
+		int j;
 
-		क्रम (j = 0; j < i; j++)
-			gve_rx_मुक्त_ring(priv, j);
-	पूर्ण
-	वापस err;
-पूर्ण
+		for (j = 0; j < i; j++)
+			gve_rx_free_ring(priv, j);
+	}
+	return err;
+}
 
-व्योम gve_rx_मुक्त_rings(काष्ठा gve_priv *priv)
-अणु
-	पूर्णांक i;
+void gve_rx_free_rings(struct gve_priv *priv)
+{
+	int i;
 
-	क्रम (i = 0; i < priv->rx_cfg.num_queues; i++)
-		gve_rx_मुक्त_ring(priv, i);
-पूर्ण
+	for (i = 0; i < priv->rx_cfg.num_queues; i++)
+		gve_rx_free_ring(priv, i);
+}
 
-व्योम gve_rx_ग_लिखो_करोorbell(काष्ठा gve_priv *priv, काष्ठा gve_rx_ring *rx)
-अणु
+void gve_rx_write_doorbell(struct gve_priv *priv, struct gve_rx_ring *rx)
+{
 	u32 db_idx = be32_to_cpu(rx->q_resources->db_index);
 
-	ioग_लिखो32be(rx->fill_cnt, &priv->db_bar2[db_idx]);
-पूर्ण
+	iowrite32be(rx->fill_cnt, &priv->db_bar2[db_idx]);
+}
 
-अटल क्रमागत pkt_hash_types gve_rss_type(__be16 pkt_flags)
-अणु
-	अगर (likely(pkt_flags & (GVE_RXF_TCP | GVE_RXF_UDP)))
-		वापस PKT_HASH_TYPE_L4;
-	अगर (pkt_flags & (GVE_RXF_IPV4 | GVE_RXF_IPV6))
-		वापस PKT_HASH_TYPE_L3;
-	वापस PKT_HASH_TYPE_L2;
-पूर्ण
+static enum pkt_hash_types gve_rss_type(__be16 pkt_flags)
+{
+	if (likely(pkt_flags & (GVE_RXF_TCP | GVE_RXF_UDP)))
+		return PKT_HASH_TYPE_L4;
+	if (pkt_flags & (GVE_RXF_IPV4 | GVE_RXF_IPV6))
+		return PKT_HASH_TYPE_L3;
+	return PKT_HASH_TYPE_L2;
+}
 
-अटल काष्ठा sk_buff *gve_rx_copy(काष्ठा net_device *dev,
-				   काष्ठा napi_काष्ठा *napi,
-				   काष्ठा gve_rx_slot_page_info *page_info,
+static struct sk_buff *gve_rx_copy(struct net_device *dev,
+				   struct napi_struct *napi,
+				   struct gve_rx_slot_page_info *page_info,
 				   u16 len)
-अणु
-	काष्ठा sk_buff *skb = napi_alloc_skb(napi, len);
-	व्योम *va = page_info->page_address + GVE_RX_PAD +
+{
+	struct sk_buff *skb = napi_alloc_skb(napi, len);
+	void *va = page_info->page_address + GVE_RX_PAD +
 		   (page_info->page_offset ? PAGE_SIZE / 2 : 0);
 
-	अगर (unlikely(!skb))
-		वापस शून्य;
+	if (unlikely(!skb))
+		return NULL;
 
 	__skb_put(skb, len);
 
@@ -298,126 +297,126 @@ alloc_err:
 
 	skb->protocol = eth_type_trans(skb, dev);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *gve_rx_add_frags(काष्ठा napi_काष्ठा *napi,
-					काष्ठा gve_rx_slot_page_info *page_info,
+static struct sk_buff *gve_rx_add_frags(struct napi_struct *napi,
+					struct gve_rx_slot_page_info *page_info,
 					u16 len)
-अणु
-	काष्ठा sk_buff *skb = napi_get_frags(napi);
+{
+	struct sk_buff *skb = napi_get_frags(napi);
 
-	अगर (unlikely(!skb))
-		वापस शून्य;
+	if (unlikely(!skb))
+		return NULL;
 
 	skb_add_rx_frag(skb, 0, page_info->page,
 			(page_info->page_offset ? PAGE_SIZE / 2 : 0) +
 			GVE_RX_PAD, len, PAGE_SIZE / 2);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम gve_rx_flip_buff(काष्ठा gve_rx_slot_page_info *page_info, __be64 *slot_addr)
-अणु
-	स्थिर __be64 offset = cpu_to_be64(PAGE_SIZE / 2);
+static void gve_rx_flip_buff(struct gve_rx_slot_page_info *page_info, __be64 *slot_addr)
+{
+	const __be64 offset = cpu_to_be64(PAGE_SIZE / 2);
 
 	/* "flip" to other packet buffer on this page */
 	page_info->page_offset ^= 0x1;
 	*(slot_addr) ^= offset;
-पूर्ण
+}
 
-अटल bool gve_rx_can_flip_buffers(काष्ठा net_device *netdev)
-अणु
-	वापस PAGE_SIZE == 4096
+static bool gve_rx_can_flip_buffers(struct net_device *netdev)
+{
+	return PAGE_SIZE == 4096
 		? netdev->mtu + GVE_RX_PAD + ETH_HLEN <= PAGE_SIZE / 2 : false;
-पूर्ण
+}
 
-अटल पूर्णांक gve_rx_can_recycle_buffer(काष्ठा page *page)
-अणु
-	पूर्णांक pagecount = page_count(page);
+static int gve_rx_can_recycle_buffer(struct page *page)
+{
+	int pagecount = page_count(page);
 
 	/* This page is not being used by any SKBs - reuse */
-	अगर (pagecount == 1)
-		वापस 1;
+	if (pagecount == 1)
+		return 1;
 	/* This page is still being used by an SKB - we can't reuse */
-	अन्यथा अगर (pagecount >= 2)
-		वापस 0;
+	else if (pagecount >= 2)
+		return 0;
 	WARN(pagecount < 1, "Pagecount should never be < 1");
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा sk_buff *
-gve_rx_raw_addressing(काष्ठा device *dev, काष्ठा net_device *netdev,
-		      काष्ठा gve_rx_slot_page_info *page_info, u16 len,
-		      काष्ठा napi_काष्ठा *napi,
-		      जोड़ gve_rx_data_slot *data_slot)
-अणु
-	काष्ठा sk_buff *skb;
+static struct sk_buff *
+gve_rx_raw_addressing(struct device *dev, struct net_device *netdev,
+		      struct gve_rx_slot_page_info *page_info, u16 len,
+		      struct napi_struct *napi,
+		      union gve_rx_data_slot *data_slot)
+{
+	struct sk_buff *skb;
 
 	skb = gve_rx_add_frags(napi, page_info, len);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	/* Optimistically stop the kernel from मुक्तing the page by increasing
-	 * the page bias. We will check the refcount in refill to determine अगर
+	/* Optimistically stop the kernel from freeing the page by increasing
+	 * the page bias. We will check the refcount in refill to determine if
 	 * we need to alloc a new page.
 	 */
 	get_page(page_info->page);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *
-gve_rx_qpl(काष्ठा device *dev, काष्ठा net_device *netdev,
-	   काष्ठा gve_rx_ring *rx, काष्ठा gve_rx_slot_page_info *page_info,
-	   u16 len, काष्ठा napi_काष्ठा *napi,
-	   जोड़ gve_rx_data_slot *data_slot)
-अणु
-	काष्ठा sk_buff *skb;
+static struct sk_buff *
+gve_rx_qpl(struct device *dev, struct net_device *netdev,
+	   struct gve_rx_ring *rx, struct gve_rx_slot_page_info *page_info,
+	   u16 len, struct napi_struct *napi,
+	   union gve_rx_data_slot *data_slot)
+{
+	struct sk_buff *skb;
 
-	/* अगर raw_addressing mode is not enabled gvnic can only receive पूर्णांकo
-	 * रेजिस्टरed segments. If the buffer can't be recycled, our only
-	 * choice is to copy the data out of it so that we can वापस it to the
+	/* if raw_addressing mode is not enabled gvnic can only receive into
+	 * registered segments. If the buffer can't be recycled, our only
+	 * choice is to copy the data out of it so that we can return it to the
 	 * device.
 	 */
-	अगर (page_info->can_flip) अणु
+	if (page_info->can_flip) {
 		skb = gve_rx_add_frags(napi, page_info, len);
-		/* No poपूर्णांक in recycling अगर we didn't get the skb */
-		अगर (skb) अणु
-			/* Make sure that the page isn't मुक्तd. */
+		/* No point in recycling if we didn't get the skb */
+		if (skb) {
+			/* Make sure that the page isn't freed. */
 			get_page(page_info->page);
 			gve_rx_flip_buff(page_info, &data_slot->qpl_offset);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		skb = gve_rx_copy(netdev, napi, page_info, len);
-		अगर (skb) अणु
+		if (skb) {
 			u64_stats_update_begin(&rx->statss);
 			rx->rx_copied_pkt++;
 			u64_stats_update_end(&rx->statss);
-		पूर्ण
-	पूर्ण
-	वापस skb;
-पूर्ण
+		}
+	}
+	return skb;
+}
 
-अटल bool gve_rx(काष्ठा gve_rx_ring *rx, काष्ठा gve_rx_desc *rx_desc,
+static bool gve_rx(struct gve_rx_ring *rx, struct gve_rx_desc *rx_desc,
 		   netdev_features_t feat, u32 idx)
-अणु
-	काष्ठा gve_rx_slot_page_info *page_info;
-	काष्ठा gve_priv *priv = rx->gve;
-	काष्ठा napi_काष्ठा *napi = &priv->ntfy_blocks[rx->ntfy_id].napi;
-	काष्ठा net_device *dev = priv->dev;
-	जोड़ gve_rx_data_slot *data_slot;
-	काष्ठा sk_buff *skb = शून्य;
+{
+	struct gve_rx_slot_page_info *page_info;
+	struct gve_priv *priv = rx->gve;
+	struct napi_struct *napi = &priv->ntfy_blocks[rx->ntfy_id].napi;
+	struct net_device *dev = priv->dev;
+	union gve_rx_data_slot *data_slot;
+	struct sk_buff *skb = NULL;
 	dma_addr_t page_bus;
 	u16 len;
 
 	/* drop this packet */
-	अगर (unlikely(rx_desc->flags_seq & GVE_RXF_ERR)) अणु
+	if (unlikely(rx_desc->flags_seq & GVE_RXF_ERR)) {
 		u64_stats_update_begin(&rx->statss);
 		rx->rx_desc_err_dropped_pkt++;
 		u64_stats_update_end(&rx->statss);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	len = be16_to_cpu(rx_desc->len) - GVE_RX_PAD;
 	page_info = &rx->data.page_info[idx];
@@ -426,72 +425,72 @@ gve_rx_qpl(काष्ठा device *dev, काष्ठा net_device *netdev
 	page_bus = (rx->data.raw_addressing) ?
 			be64_to_cpu(data_slot->addr) & GVE_DATA_SLOT_ADDR_PAGE_MASK :
 			rx->data.qpl->page_buses[idx];
-	dma_sync_single_क्रम_cpu(&priv->pdev->dev, page_bus,
+	dma_sync_single_for_cpu(&priv->pdev->dev, page_bus,
 				PAGE_SIZE, DMA_FROM_DEVICE);
 
-	अगर (len <= priv->rx_copyअवरोध) अणु
+	if (len <= priv->rx_copybreak) {
 		/* Just copy small packets */
 		skb = gve_rx_copy(dev, napi, page_info, len);
 		u64_stats_update_begin(&rx->statss);
 		rx->rx_copied_pkt++;
-		rx->rx_copyअवरोध_pkt++;
+		rx->rx_copybreak_pkt++;
 		u64_stats_update_end(&rx->statss);
-	पूर्ण अन्यथा अणु
+	} else {
 		u8 can_flip = gve_rx_can_flip_buffers(dev);
-		पूर्णांक recycle = 0;
+		int recycle = 0;
 
-		अगर (can_flip) अणु
+		if (can_flip) {
 			recycle = gve_rx_can_recycle_buffer(page_info->page);
-			अगर (recycle < 0) अणु
-				अगर (!rx->data.raw_addressing)
+			if (recycle < 0) {
+				if (!rx->data.raw_addressing)
 					gve_schedule_reset(priv);
-				वापस false;
-			पूर्ण
-		पूर्ण
+				return false;
+			}
+		}
 
 		page_info->can_flip = can_flip && recycle;
-		अगर (rx->data.raw_addressing) अणु
+		if (rx->data.raw_addressing) {
 			skb = gve_rx_raw_addressing(&priv->pdev->dev, dev,
 						    page_info, len, napi,
 						    data_slot);
-		पूर्ण अन्यथा अणु
+		} else {
 			skb = gve_rx_qpl(&priv->pdev->dev, dev, rx,
 					 page_info, len, napi, data_slot);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!skb) अणु
+	if (!skb) {
 		u64_stats_update_begin(&rx->statss);
 		rx->rx_skb_alloc_fail++;
 		u64_stats_update_end(&rx->statss);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (likely(feat & NETIF_F_RXCSUM)) अणु
+	if (likely(feat & NETIF_F_RXCSUM)) {
 		/* NIC passes up the partial sum */
-		अगर (rx_desc->csum)
+		if (rx_desc->csum)
 			skb->ip_summed = CHECKSUM_COMPLETE;
-		अन्यथा
+		else
 			skb->ip_summed = CHECKSUM_NONE;
 		skb->csum = csum_unfold(rx_desc->csum);
-	पूर्ण
+	}
 
 	/* parse flags & pass relevant info up */
-	अगर (likely(feat & NETIF_F_RXHASH) &&
+	if (likely(feat & NETIF_F_RXHASH) &&
 	    gve_needs_rss(rx_desc->flags_seq))
 		skb_set_hash(skb, be32_to_cpu(rx_desc->rss_hash),
 			     gve_rss_type(rx_desc->flags_seq));
 
-	अगर (skb_is_nonlinear(skb))
+	if (skb_is_nonlinear(skb))
 		napi_gro_frags(napi);
-	अन्यथा
+	else
 		napi_gro_receive(napi, skb);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool gve_rx_work_pending(काष्ठा gve_rx_ring *rx)
-अणु
-	काष्ठा gve_rx_desc *desc;
+static bool gve_rx_work_pending(struct gve_rx_ring *rx)
+{
+	struct gve_rx_desc *desc;
 	__be16 flags_seq;
 	u32 next_idx;
 
@@ -502,97 +501,97 @@ gve_rx_qpl(काष्ठा device *dev, काष्ठा net_device *netdev
 	/* Make sure we have synchronized the seq no with the device */
 	smp_rmb();
 
-	वापस (GVE_SEQNO(flags_seq) == rx->desc.seqno);
-पूर्ण
+	return (GVE_SEQNO(flags_seq) == rx->desc.seqno);
+}
 
-अटल bool gve_rx_refill_buffers(काष्ठा gve_priv *priv, काष्ठा gve_rx_ring *rx)
-अणु
-	पूर्णांक refill_target = rx->mask + 1;
+static bool gve_rx_refill_buffers(struct gve_priv *priv, struct gve_rx_ring *rx)
+{
+	int refill_target = rx->mask + 1;
 	u32 fill_cnt = rx->fill_cnt;
 
-	जबतक (fill_cnt - rx->cnt < refill_target) अणु
-		काष्ठा gve_rx_slot_page_info *page_info;
+	while (fill_cnt - rx->cnt < refill_target) {
+		struct gve_rx_slot_page_info *page_info;
 		u32 idx = fill_cnt & rx->mask;
 
 		page_info = &rx->data.page_info[idx];
-		अगर (page_info->can_flip) अणु
-			/* The other half of the page is मुक्त because it was
-			 * मुक्त when we processed the descriptor. Flip to it.
+		if (page_info->can_flip) {
+			/* The other half of the page is free because it was
+			 * free when we processed the descriptor. Flip to it.
 			 */
-			जोड़ gve_rx_data_slot *data_slot =
+			union gve_rx_data_slot *data_slot =
 						&rx->data.data_ring[idx];
 
 			gve_rx_flip_buff(page_info, &data_slot->addr);
 			page_info->can_flip = 0;
-		पूर्ण अन्यथा अणु
-			/* It is possible that the networking stack has alपढ़ोy
+		} else {
+			/* It is possible that the networking stack has already
 			 * finished processing all outstanding packets in the buffer
 			 * and it can be reused.
-			 * Flipping is unnecessary here - अगर the networking stack still
+			 * Flipping is unnecessary here - if the networking stack still
 			 * owns half the page it is impossible to tell which half. Either
-			 * the whole page is मुक्त or it needs to be replaced.
+			 * the whole page is free or it needs to be replaced.
 			 */
-			पूर्णांक recycle = gve_rx_can_recycle_buffer(page_info->page);
+			int recycle = gve_rx_can_recycle_buffer(page_info->page);
 
-			अगर (recycle < 0) अणु
-				अगर (!rx->data.raw_addressing)
+			if (recycle < 0) {
+				if (!rx->data.raw_addressing)
 					gve_schedule_reset(priv);
-				वापस false;
-			पूर्ण
-			अगर (!recycle) अणु
+				return false;
+			}
+			if (!recycle) {
 				/* We can't reuse the buffer - alloc a new one*/
-				जोड़ gve_rx_data_slot *data_slot =
+				union gve_rx_data_slot *data_slot =
 						&rx->data.data_ring[idx];
-				काष्ठा device *dev = &priv->pdev->dev;
+				struct device *dev = &priv->pdev->dev;
 
-				gve_rx_मुक्त_buffer(dev, page_info, data_slot);
-				page_info->page = शून्य;
-				अगर (gve_rx_alloc_buffer(priv, dev, page_info, data_slot))
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				gve_rx_free_buffer(dev, page_info, data_slot);
+				page_info->page = NULL;
+				if (gve_rx_alloc_buffer(priv, dev, page_info, data_slot))
+					break;
+			}
+		}
 		fill_cnt++;
-	पूर्ण
+	}
 	rx->fill_cnt = fill_cnt;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool gve_clean_rx_करोne(काष्ठा gve_rx_ring *rx, पूर्णांक budget,
+bool gve_clean_rx_done(struct gve_rx_ring *rx, int budget,
 		       netdev_features_t feat)
-अणु
-	काष्ठा gve_priv *priv = rx->gve;
-	u32 work_करोne = 0, packets = 0;
-	काष्ठा gve_rx_desc *desc;
+{
+	struct gve_priv *priv = rx->gve;
+	u32 work_done = 0, packets = 0;
+	struct gve_rx_desc *desc;
 	u32 cnt = rx->cnt;
 	u32 idx = cnt & rx->mask;
 	u64 bytes = 0;
 
 	desc = rx->desc.desc_ring + idx;
-	जबतक ((GVE_SEQNO(desc->flags_seq) == rx->desc.seqno) &&
-	       work_करोne < budget) अणु
+	while ((GVE_SEQNO(desc->flags_seq) == rx->desc.seqno) &&
+	       work_done < budget) {
 		bool dropped;
 
-		netअगर_info(priv, rx_status, priv->dev,
+		netif_info(priv, rx_status, priv->dev,
 			   "[%d] idx=%d desc=%p desc->flags_seq=0x%x\n",
 			   rx->q_num, idx, desc, desc->flags_seq);
-		netअगर_info(priv, rx_status, priv->dev,
+		netif_info(priv, rx_status, priv->dev,
 			   "[%d] seqno=%d rx->desc.seqno=%d\n",
 			   rx->q_num, GVE_SEQNO(desc->flags_seq),
 			   rx->desc.seqno);
 		dropped = !gve_rx(rx, desc, feat, idx);
-		अगर (!dropped) अणु
+		if (!dropped) {
 			bytes += be16_to_cpu(desc->len) - GVE_RX_PAD;
 			packets++;
-		पूर्ण
+		}
 		cnt++;
 		idx = cnt & rx->mask;
 		desc = rx->desc.desc_ring + idx;
 		rx->desc.seqno = gve_next_seqno(rx->desc.seqno);
-		work_करोne++;
-	पूर्ण
+		work_done++;
+	}
 
-	अगर (!work_करोne && rx->fill_cnt - cnt > rx->db_threshold)
-		वापस false;
+	if (!work_done && rx->fill_cnt - cnt > rx->db_threshold)
+		return false;
 
 	u64_stats_update_begin(&rx->statss);
 	rx->rpackets += packets;
@@ -601,44 +600,44 @@ bool gve_clean_rx_करोne(काष्ठा gve_rx_ring *rx, पूर्�
 	rx->cnt = cnt;
 
 	/* restock ring slots */
-	अगर (!rx->data.raw_addressing) अणु
+	if (!rx->data.raw_addressing) {
 		/* In QPL mode buffs are refilled as the desc are processed */
-		rx->fill_cnt += work_करोne;
-	पूर्ण अन्यथा अगर (rx->fill_cnt - cnt <= rx->db_threshold) अणु
-		/* In raw addressing mode buffs are only refilled अगर the avail
+		rx->fill_cnt += work_done;
+	} else if (rx->fill_cnt - cnt <= rx->db_threshold) {
+		/* In raw addressing mode buffs are only refilled if the avail
 		 * falls below a threshold.
 		 */
-		अगर (!gve_rx_refill_buffers(priv, rx))
-			वापस false;
+		if (!gve_rx_refill_buffers(priv, rx))
+			return false;
 
 		/* If we were not able to completely refill buffers, we'll want
-		 * to schedule this queue क्रम work again to refill buffers.
+		 * to schedule this queue for work again to refill buffers.
 		 */
-		अगर (rx->fill_cnt - cnt <= rx->db_threshold) अणु
-			gve_rx_ग_लिखो_करोorbell(priv, rx);
-			वापस true;
-		पूर्ण
-	पूर्ण
+		if (rx->fill_cnt - cnt <= rx->db_threshold) {
+			gve_rx_write_doorbell(priv, rx);
+			return true;
+		}
+	}
 
-	gve_rx_ग_लिखो_करोorbell(priv, rx);
-	वापस gve_rx_work_pending(rx);
-पूर्ण
+	gve_rx_write_doorbell(priv, rx);
+	return gve_rx_work_pending(rx);
+}
 
-bool gve_rx_poll(काष्ठा gve_notअगरy_block *block, पूर्णांक budget)
-अणु
-	काष्ठा gve_rx_ring *rx = block->rx;
+bool gve_rx_poll(struct gve_notify_block *block, int budget)
+{
+	struct gve_rx_ring *rx = block->rx;
 	netdev_features_t feat;
 	bool repoll = false;
 
 	feat = block->napi.dev->features;
 
-	/* If budget is 0, करो all the work */
-	अगर (budget == 0)
-		budget = पूर्णांक_उच्च;
+	/* If budget is 0, do all the work */
+	if (budget == 0)
+		budget = INT_MAX;
 
-	अगर (budget > 0)
-		repoll |= gve_clean_rx_करोne(rx, budget, feat);
-	अन्यथा
+	if (budget > 0)
+		repoll |= gve_clean_rx_done(rx, budget, feat);
+	else
 		repoll |= gve_rx_work_pending(rx);
-	वापस repoll;
-पूर्ण
+	return repoll;
+}

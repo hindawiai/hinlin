@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * common code क्रम virtio vsock
+ * common code for virtio vsock
  *
  * Copyright (C) 2013-2015 Red Hat, Inc.
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/list.h>
-#समावेश <linux/virtio_vsock.h>
-#समावेश <uapi/linux/vsockmon.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/sched/signal.h>
+#include <linux/ctype.h>
+#include <linux/list.h>
+#include <linux/virtio_vsock.h>
+#include <uapi/linux/vsockmon.h>
 
-#समावेश <net/sock.h>
-#समावेश <net/af_vsock.h>
+#include <net/sock.h>
+#include <net/af_vsock.h>
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/vsock_virtio_transport_common.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/vsock_virtio_transport_common.h>
 
-/* How दीर्घ to रुको क्रम graceful shutकरोwn of a connection */
-#घोषणा VSOCK_CLOSE_TIMEOUT (8 * HZ)
+/* How long to wait for graceful shutdown of a connection */
+#define VSOCK_CLOSE_TIMEOUT (8 * HZ)
 
-/* Threshold क्रम detecting small packets to copy */
-#घोषणा GOOD_COPY_LEN  128
+/* Threshold for detecting small packets to copy */
+#define GOOD_COPY_LEN  128
 
-अटल स्थिर काष्ठा virtio_transport *
-virtio_transport_get_ops(काष्ठा vsock_sock *vsk)
-अणु
-	स्थिर काष्ठा vsock_transport *t = vsock_core_get_transport(vsk);
+static const struct virtio_transport *
+virtio_transport_get_ops(struct vsock_sock *vsk)
+{
+	const struct vsock_transport *t = vsock_core_get_transport(vsk);
 
-	अगर (WARN_ON(!t))
-		वापस शून्य;
+	if (WARN_ON(!t))
+		return NULL;
 
-	वापस container_of(t, काष्ठा virtio_transport, transport);
-पूर्ण
+	return container_of(t, struct virtio_transport, transport);
+}
 
-अटल काष्ठा virtio_vsock_pkt *
-virtio_transport_alloc_pkt(काष्ठा virtio_vsock_pkt_info *info,
-			   माप_प्रकार len,
+static struct virtio_vsock_pkt *
+virtio_transport_alloc_pkt(struct virtio_vsock_pkt_info *info,
+			   size_t len,
 			   u32 src_cid,
 			   u32 src_port,
 			   u32 dst_cid,
 			   u32 dst_port)
-अणु
-	काष्ठा virtio_vsock_pkt *pkt;
-	पूर्णांक err;
+{
+	struct virtio_vsock_pkt *pkt;
+	int err;
 
-	pkt = kzalloc(माप(*pkt), GFP_KERNEL);
-	अगर (!pkt)
-		वापस शून्य;
+	pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
+	if (!pkt)
+		return NULL;
 
 	pkt->hdr.type		= cpu_to_le16(info->type);
 	pkt->hdr.op		= cpu_to_le16(info->op);
@@ -65,17 +64,17 @@ virtio_transport_alloc_pkt(काष्ठा virtio_vsock_pkt_info *info,
 	pkt->reply		= info->reply;
 	pkt->vsk		= info->vsk;
 
-	अगर (info->msg && len > 0) अणु
-		pkt->buf = kदो_स्मृति(len, GFP_KERNEL);
-		अगर (!pkt->buf)
-			जाओ out_pkt;
+	if (info->msg && len > 0) {
+		pkt->buf = kmalloc(len, GFP_KERNEL);
+		if (!pkt->buf)
+			goto out_pkt;
 
 		pkt->buf_len = len;
 
-		err = स_नकल_from_msg(pkt->buf, info->msg, len);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		err = memcpy_from_msg(pkt->buf, info->msg, len);
+		if (err)
+			goto out;
+	}
 
 	trace_virtio_transport_alloc_pkt(src_cid, src_port,
 					 dst_cid, dst_port,
@@ -84,37 +83,37 @@ virtio_transport_alloc_pkt(काष्ठा virtio_vsock_pkt_info *info,
 					 info->op,
 					 info->flags);
 
-	वापस pkt;
+	return pkt;
 
 out:
-	kमुक्त(pkt->buf);
+	kfree(pkt->buf);
 out_pkt:
-	kमुक्त(pkt);
-	वापस शून्य;
-पूर्ण
+	kfree(pkt);
+	return NULL;
+}
 
 /* Packet capture */
-अटल काष्ठा sk_buff *virtio_transport_build_skb(व्योम *opaque)
-अणु
-	काष्ठा virtio_vsock_pkt *pkt = opaque;
-	काष्ठा af_vsockmon_hdr *hdr;
-	काष्ठा sk_buff *skb;
-	माप_प्रकार payload_len;
-	व्योम *payload_buf;
+static struct sk_buff *virtio_transport_build_skb(void *opaque)
+{
+	struct virtio_vsock_pkt *pkt = opaque;
+	struct af_vsockmon_hdr *hdr;
+	struct sk_buff *skb;
+	size_t payload_len;
+	void *payload_buf;
 
 	/* A packet could be split to fit the RX buffer, so we can retrieve
-	 * the payload length from the header and the buffer poपूर्णांकer taking
+	 * the payload length from the header and the buffer pointer taking
 	 * care of the offset in the original packet.
 	 */
 	payload_len = le32_to_cpu(pkt->hdr.len);
 	payload_buf = pkt->buf + pkt->off;
 
-	skb = alloc_skb(माप(*hdr) + माप(pkt->hdr) + payload_len,
+	skb = alloc_skb(sizeof(*hdr) + sizeof(pkt->hdr) + payload_len,
 			GFP_ATOMIC);
-	अगर (!skb)
-		वापस शून्य;
+	if (!skb)
+		return NULL;
 
-	hdr = skb_put(skb, माप(*hdr));
+	hdr = skb_put(skb, sizeof(*hdr));
 
 	/* pkt->hdr is little-endian so no need to byteswap here */
 	hdr->src_cid = pkt->hdr.src_cid;
@@ -123,358 +122,358 @@ out_pkt:
 	hdr->dst_port = pkt->hdr.dst_port;
 
 	hdr->transport = cpu_to_le16(AF_VSOCK_TRANSPORT_VIRTIO);
-	hdr->len = cpu_to_le16(माप(pkt->hdr));
-	स_रखो(hdr->reserved, 0, माप(hdr->reserved));
+	hdr->len = cpu_to_le16(sizeof(pkt->hdr));
+	memset(hdr->reserved, 0, sizeof(hdr->reserved));
 
-	चयन (le16_to_cpu(pkt->hdr.op)) अणु
-	हाल VIRTIO_VSOCK_OP_REQUEST:
-	हाल VIRTIO_VSOCK_OP_RESPONSE:
+	switch (le16_to_cpu(pkt->hdr.op)) {
+	case VIRTIO_VSOCK_OP_REQUEST:
+	case VIRTIO_VSOCK_OP_RESPONSE:
 		hdr->op = cpu_to_le16(AF_VSOCK_OP_CONNECT);
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_RST:
-	हाल VIRTIO_VSOCK_OP_SHUTDOWN:
+		break;
+	case VIRTIO_VSOCK_OP_RST:
+	case VIRTIO_VSOCK_OP_SHUTDOWN:
 		hdr->op = cpu_to_le16(AF_VSOCK_OP_DISCONNECT);
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_RW:
+		break;
+	case VIRTIO_VSOCK_OP_RW:
 		hdr->op = cpu_to_le16(AF_VSOCK_OP_PAYLOAD);
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_CREDIT_UPDATE:
-	हाल VIRTIO_VSOCK_OP_CREDIT_REQUEST:
+		break;
+	case VIRTIO_VSOCK_OP_CREDIT_UPDATE:
+	case VIRTIO_VSOCK_OP_CREDIT_REQUEST:
 		hdr->op = cpu_to_le16(AF_VSOCK_OP_CONTROL);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		hdr->op = cpu_to_le16(AF_VSOCK_OP_UNKNOWN);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	skb_put_data(skb, &pkt->hdr, माप(pkt->hdr));
+	skb_put_data(skb, &pkt->hdr, sizeof(pkt->hdr));
 
-	अगर (payload_len) अणु
+	if (payload_len) {
 		skb_put_data(skb, payload_buf, payload_len);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-व्योम virtio_transport_deliver_tap_pkt(काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	अगर (pkt->tap_delivered)
-		वापस;
+void virtio_transport_deliver_tap_pkt(struct virtio_vsock_pkt *pkt)
+{
+	if (pkt->tap_delivered)
+		return;
 
 	vsock_deliver_tap(virtio_transport_build_skb, pkt);
 	pkt->tap_delivered = true;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(virtio_transport_deliver_tap_pkt);
 
 /* This function can only be used on connecting/connected sockets,
- * since a socket asचिन्हित to a transport is required.
+ * since a socket assigned to a transport is required.
  *
  * Do not use on listener sockets!
  */
-अटल पूर्णांक virtio_transport_send_pkt_info(काष्ठा vsock_sock *vsk,
-					  काष्ठा virtio_vsock_pkt_info *info)
-अणु
+static int virtio_transport_send_pkt_info(struct vsock_sock *vsk,
+					  struct virtio_vsock_pkt_info *info)
+{
 	u32 src_cid, src_port, dst_cid, dst_port;
-	स्थिर काष्ठा virtio_transport *t_ops;
-	काष्ठा virtio_vsock_sock *vvs;
-	काष्ठा virtio_vsock_pkt *pkt;
+	const struct virtio_transport *t_ops;
+	struct virtio_vsock_sock *vvs;
+	struct virtio_vsock_pkt *pkt;
 	u32 pkt_len = info->pkt_len;
 
 	t_ops = virtio_transport_get_ops(vsk);
-	अगर (unlikely(!t_ops))
-		वापस -EFAULT;
+	if (unlikely(!t_ops))
+		return -EFAULT;
 
 	src_cid = t_ops->transport.get_local_cid();
 	src_port = vsk->local_addr.svm_port;
-	अगर (!info->remote_cid) अणु
+	if (!info->remote_cid) {
 		dst_cid	= vsk->remote_addr.svm_cid;
 		dst_port = vsk->remote_addr.svm_port;
-	पूर्ण अन्यथा अणु
+	} else {
 		dst_cid = info->remote_cid;
 		dst_port = info->remote_port;
-	पूर्ण
+	}
 
 	vvs = vsk->trans;
 
 	/* we can send less than pkt_len bytes */
-	अगर (pkt_len > VIRTIO_VSOCK_MAX_PKT_BUF_SIZE)
+	if (pkt_len > VIRTIO_VSOCK_MAX_PKT_BUF_SIZE)
 		pkt_len = VIRTIO_VSOCK_MAX_PKT_BUF_SIZE;
 
-	/* virtio_transport_get_credit might वापस less than pkt_len credit */
+	/* virtio_transport_get_credit might return less than pkt_len credit */
 	pkt_len = virtio_transport_get_credit(vvs, pkt_len);
 
 	/* Do not send zero length OP_RW pkt */
-	अगर (pkt_len == 0 && info->op == VIRTIO_VSOCK_OP_RW)
-		वापस pkt_len;
+	if (pkt_len == 0 && info->op == VIRTIO_VSOCK_OP_RW)
+		return pkt_len;
 
 	pkt = virtio_transport_alloc_pkt(info, pkt_len,
 					 src_cid, src_port,
 					 dst_cid, dst_port);
-	अगर (!pkt) अणु
+	if (!pkt) {
 		virtio_transport_put_credit(vvs, pkt_len);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	virtio_transport_inc_tx_pkt(vvs, pkt);
 
-	वापस t_ops->send_pkt(pkt);
-पूर्ण
+	return t_ops->send_pkt(pkt);
+}
 
-अटल bool virtio_transport_inc_rx_pkt(काष्ठा virtio_vsock_sock *vvs,
-					काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	अगर (vvs->rx_bytes + pkt->len > vvs->buf_alloc)
-		वापस false;
+static bool virtio_transport_inc_rx_pkt(struct virtio_vsock_sock *vvs,
+					struct virtio_vsock_pkt *pkt)
+{
+	if (vvs->rx_bytes + pkt->len > vvs->buf_alloc)
+		return false;
 
 	vvs->rx_bytes += pkt->len;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम virtio_transport_dec_rx_pkt(काष्ठा virtio_vsock_sock *vvs,
-					काष्ठा virtio_vsock_pkt *pkt)
-अणु
+static void virtio_transport_dec_rx_pkt(struct virtio_vsock_sock *vvs,
+					struct virtio_vsock_pkt *pkt)
+{
 	vvs->rx_bytes -= pkt->len;
 	vvs->fwd_cnt += pkt->len;
-पूर्ण
+}
 
-व्योम virtio_transport_inc_tx_pkt(काष्ठा virtio_vsock_sock *vvs, काष्ठा virtio_vsock_pkt *pkt)
-अणु
+void virtio_transport_inc_tx_pkt(struct virtio_vsock_sock *vvs, struct virtio_vsock_pkt *pkt)
+{
 	spin_lock_bh(&vvs->rx_lock);
 	vvs->last_fwd_cnt = vvs->fwd_cnt;
 	pkt->hdr.fwd_cnt = cpu_to_le32(vvs->fwd_cnt);
 	pkt->hdr.buf_alloc = cpu_to_le32(vvs->buf_alloc);
 	spin_unlock_bh(&vvs->rx_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(virtio_transport_inc_tx_pkt);
 
-u32 virtio_transport_get_credit(काष्ठा virtio_vsock_sock *vvs, u32 credit)
-अणु
+u32 virtio_transport_get_credit(struct virtio_vsock_sock *vvs, u32 credit)
+{
 	u32 ret;
 
 	spin_lock_bh(&vvs->tx_lock);
 	ret = vvs->peer_buf_alloc - (vvs->tx_cnt - vvs->peer_fwd_cnt);
-	अगर (ret > credit)
+	if (ret > credit)
 		ret = credit;
 	vvs->tx_cnt += ret;
 	spin_unlock_bh(&vvs->tx_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_get_credit);
 
-व्योम virtio_transport_put_credit(काष्ठा virtio_vsock_sock *vvs, u32 credit)
-अणु
+void virtio_transport_put_credit(struct virtio_vsock_sock *vvs, u32 credit)
+{
 	spin_lock_bh(&vvs->tx_lock);
 	vvs->tx_cnt -= credit;
 	spin_unlock_bh(&vvs->tx_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(virtio_transport_put_credit);
 
-अटल पूर्णांक virtio_transport_send_credit_update(काष्ठा vsock_sock *vsk,
-					       पूर्णांक type,
-					       काष्ठा virtio_vsock_hdr *hdr)
-अणु
-	काष्ठा virtio_vsock_pkt_info info = अणु
+static int virtio_transport_send_credit_update(struct vsock_sock *vsk,
+					       int type,
+					       struct virtio_vsock_hdr *hdr)
+{
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_CREDIT_UPDATE,
 		.type = type,
 		.vsk = vsk,
-	पूर्ण;
+	};
 
-	वापस virtio_transport_send_pkt_info(vsk, &info);
-पूर्ण
+	return virtio_transport_send_pkt_info(vsk, &info);
+}
 
-अटल sमाप_प्रकार
-virtio_transport_stream_करो_peek(काष्ठा vsock_sock *vsk,
-				काष्ठा msghdr *msg,
-				माप_प्रकार len)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
-	काष्ठा virtio_vsock_pkt *pkt;
-	माप_प्रकार bytes, total = 0, off;
-	पूर्णांक err = -EFAULT;
+static ssize_t
+virtio_transport_stream_do_peek(struct vsock_sock *vsk,
+				struct msghdr *msg,
+				size_t len)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
+	struct virtio_vsock_pkt *pkt;
+	size_t bytes, total = 0, off;
+	int err = -EFAULT;
 
 	spin_lock_bh(&vvs->rx_lock);
 
-	list_क्रम_each_entry(pkt, &vvs->rx_queue, list) अणु
+	list_for_each_entry(pkt, &vvs->rx_queue, list) {
 		off = pkt->off;
 
-		अगर (total == len)
-			अवरोध;
+		if (total == len)
+			break;
 
-		जबतक (total < len && off < pkt->len) अणु
+		while (total < len && off < pkt->len) {
 			bytes = len - total;
-			अगर (bytes > pkt->len - off)
+			if (bytes > pkt->len - off)
 				bytes = pkt->len - off;
 
-			/* sk_lock is held by caller so no one अन्यथा can dequeue.
-			 * Unlock rx_lock since स_नकल_to_msg() may sleep.
+			/* sk_lock is held by caller so no one else can dequeue.
+			 * Unlock rx_lock since memcpy_to_msg() may sleep.
 			 */
 			spin_unlock_bh(&vvs->rx_lock);
 
-			err = स_नकल_to_msg(msg, pkt->buf + off, bytes);
-			अगर (err)
-				जाओ out;
+			err = memcpy_to_msg(msg, pkt->buf + off, bytes);
+			if (err)
+				goto out;
 
 			spin_lock_bh(&vvs->rx_lock);
 
 			total += bytes;
 			off += bytes;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_bh(&vvs->rx_lock);
 
-	वापस total;
+	return total;
 
 out:
-	अगर (total)
+	if (total)
 		err = total;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल sमाप_प्रकार
-virtio_transport_stream_करो_dequeue(काष्ठा vsock_sock *vsk,
-				   काष्ठा msghdr *msg,
-				   माप_प्रकार len)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
-	काष्ठा virtio_vsock_pkt *pkt;
-	माप_प्रकार bytes, total = 0;
-	u32 मुक्त_space;
-	पूर्णांक err = -EFAULT;
+static ssize_t
+virtio_transport_stream_do_dequeue(struct vsock_sock *vsk,
+				   struct msghdr *msg,
+				   size_t len)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
+	struct virtio_vsock_pkt *pkt;
+	size_t bytes, total = 0;
+	u32 free_space;
+	int err = -EFAULT;
 
 	spin_lock_bh(&vvs->rx_lock);
-	जबतक (total < len && !list_empty(&vvs->rx_queue)) अणु
+	while (total < len && !list_empty(&vvs->rx_queue)) {
 		pkt = list_first_entry(&vvs->rx_queue,
-				       काष्ठा virtio_vsock_pkt, list);
+				       struct virtio_vsock_pkt, list);
 
 		bytes = len - total;
-		अगर (bytes > pkt->len - pkt->off)
+		if (bytes > pkt->len - pkt->off)
 			bytes = pkt->len - pkt->off;
 
-		/* sk_lock is held by caller so no one अन्यथा can dequeue.
-		 * Unlock rx_lock since स_नकल_to_msg() may sleep.
+		/* sk_lock is held by caller so no one else can dequeue.
+		 * Unlock rx_lock since memcpy_to_msg() may sleep.
 		 */
 		spin_unlock_bh(&vvs->rx_lock);
 
-		err = स_नकल_to_msg(msg, pkt->buf + pkt->off, bytes);
-		अगर (err)
-			जाओ out;
+		err = memcpy_to_msg(msg, pkt->buf + pkt->off, bytes);
+		if (err)
+			goto out;
 
 		spin_lock_bh(&vvs->rx_lock);
 
 		total += bytes;
 		pkt->off += bytes;
-		अगर (pkt->off == pkt->len) अणु
+		if (pkt->off == pkt->len) {
 			virtio_transport_dec_rx_pkt(vvs, pkt);
 			list_del(&pkt->list);
-			virtio_transport_मुक्त_pkt(pkt);
-		पूर्ण
-	पूर्ण
+			virtio_transport_free_pkt(pkt);
+		}
+	}
 
-	मुक्त_space = vvs->buf_alloc - (vvs->fwd_cnt - vvs->last_fwd_cnt);
+	free_space = vvs->buf_alloc - (vvs->fwd_cnt - vvs->last_fwd_cnt);
 
 	spin_unlock_bh(&vvs->rx_lock);
 
 	/* To reduce the number of credit update messages,
-	 * करोn't update credits as दीर्घ as lots of space is available.
+	 * don't update credits as long as lots of space is available.
 	 * Note: the limit chosen here is arbitrary. Setting the limit
 	 * too high causes extra messages. Too low causes transmitter
 	 * stalls. As stalls are in theory more expensive than extra
 	 * messages, we set the limit to a high value. TODO: experiment
-	 * with dअगरferent values.
+	 * with different values.
 	 */
-	अगर (मुक्त_space < VIRTIO_VSOCK_MAX_PKT_BUF_SIZE) अणु
+	if (free_space < VIRTIO_VSOCK_MAX_PKT_BUF_SIZE) {
 		virtio_transport_send_credit_update(vsk,
 						    VIRTIO_VSOCK_TYPE_STREAM,
-						    शून्य);
-	पूर्ण
+						    NULL);
+	}
 
-	वापस total;
+	return total;
 
 out:
-	अगर (total)
+	if (total)
 		err = total;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-sमाप_प्रकार
-virtio_transport_stream_dequeue(काष्ठा vsock_sock *vsk,
-				काष्ठा msghdr *msg,
-				माप_प्रकार len, पूर्णांक flags)
-अणु
-	अगर (flags & MSG_PEEK)
-		वापस virtio_transport_stream_करो_peek(vsk, msg, len);
-	अन्यथा
-		वापस virtio_transport_stream_करो_dequeue(vsk, msg, len);
-पूर्ण
+ssize_t
+virtio_transport_stream_dequeue(struct vsock_sock *vsk,
+				struct msghdr *msg,
+				size_t len, int flags)
+{
+	if (flags & MSG_PEEK)
+		return virtio_transport_stream_do_peek(vsk, msg, len);
+	else
+		return virtio_transport_stream_do_dequeue(vsk, msg, len);
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_dequeue);
 
-पूर्णांक
-virtio_transport_dgram_dequeue(काष्ठा vsock_sock *vsk,
-			       काष्ठा msghdr *msg,
-			       माप_प्रकार len, पूर्णांक flags)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+int
+virtio_transport_dgram_dequeue(struct vsock_sock *vsk,
+			       struct msghdr *msg,
+			       size_t len, int flags)
+{
+	return -EOPNOTSUPP;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_dequeue);
 
-s64 virtio_transport_stream_has_data(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
+s64 virtio_transport_stream_has_data(struct vsock_sock *vsk)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
 	s64 bytes;
 
 	spin_lock_bh(&vvs->rx_lock);
 	bytes = vvs->rx_bytes;
 	spin_unlock_bh(&vvs->rx_lock);
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_has_data);
 
-अटल s64 virtio_transport_has_space(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
+static s64 virtio_transport_has_space(struct vsock_sock *vsk)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
 	s64 bytes;
 
 	bytes = vvs->peer_buf_alloc - (vvs->tx_cnt - vvs->peer_fwd_cnt);
-	अगर (bytes < 0)
+	if (bytes < 0)
 		bytes = 0;
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-s64 virtio_transport_stream_has_space(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
+s64 virtio_transport_stream_has_space(struct vsock_sock *vsk)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
 	s64 bytes;
 
 	spin_lock_bh(&vvs->tx_lock);
 	bytes = virtio_transport_has_space(vsk);
 	spin_unlock_bh(&vvs->tx_lock);
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_has_space);
 
-पूर्णांक virtio_transport_करो_socket_init(काष्ठा vsock_sock *vsk,
-				    काष्ठा vsock_sock *psk)
-अणु
-	काष्ठा virtio_vsock_sock *vvs;
+int virtio_transport_do_socket_init(struct vsock_sock *vsk,
+				    struct vsock_sock *psk)
+{
+	struct virtio_vsock_sock *vvs;
 
-	vvs = kzalloc(माप(*vvs), GFP_KERNEL);
-	अगर (!vvs)
-		वापस -ENOMEM;
+	vvs = kzalloc(sizeof(*vvs), GFP_KERNEL);
+	if (!vvs)
+		return -ENOMEM;
 
 	vsk->trans = vvs;
 	vvs->vsk = vsk;
-	अगर (psk && psk->trans) अणु
-		काष्ठा virtio_vsock_sock *ptrans = psk->trans;
+	if (psk && psk->trans) {
+		struct virtio_vsock_sock *ptrans = psk->trans;
 
 		vvs->peer_buf_alloc = ptrans->peer_buf_alloc;
-	पूर्ण
+	}
 
-	अगर (vsk->buffer_size > VIRTIO_VSOCK_MAX_BUF_SIZE)
+	if (vsk->buffer_size > VIRTIO_VSOCK_MAX_BUF_SIZE)
 		vsk->buffer_size = VIRTIO_VSOCK_MAX_BUF_SIZE;
 
 	vvs->buf_alloc = vsk->buffer_size;
@@ -483,159 +482,159 @@ EXPORT_SYMBOL_GPL(virtio_transport_stream_has_space);
 	spin_lock_init(&vvs->tx_lock);
 	INIT_LIST_HEAD(&vvs->rx_queue);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_करो_socket_init);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_do_socket_init);
 
 /* sk_lock held by the caller */
-व्योम virtio_transport_notअगरy_buffer_size(काष्ठा vsock_sock *vsk, u64 *val)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
+void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
 
-	अगर (*val > VIRTIO_VSOCK_MAX_BUF_SIZE)
+	if (*val > VIRTIO_VSOCK_MAX_BUF_SIZE)
 		*val = VIRTIO_VSOCK_MAX_BUF_SIZE;
 
 	vvs->buf_alloc = *val;
 
 	virtio_transport_send_credit_update(vsk, VIRTIO_VSOCK_TYPE_STREAM,
-					    शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_buffer_size);
+					    NULL);
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_buffer_size);
 
-पूर्णांक
-virtio_transport_notअगरy_poll_in(काष्ठा vsock_sock *vsk,
-				माप_प्रकार target,
-				bool *data_पढ़ोy_now)
-अणु
-	अगर (vsock_stream_has_data(vsk))
-		*data_पढ़ोy_now = true;
-	अन्यथा
-		*data_पढ़ोy_now = false;
+int
+virtio_transport_notify_poll_in(struct vsock_sock *vsk,
+				size_t target,
+				bool *data_ready_now)
+{
+	if (vsock_stream_has_data(vsk))
+		*data_ready_now = true;
+	else
+		*data_ready_now = false;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_poll_in);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_poll_in);
 
-पूर्णांक
-virtio_transport_notअगरy_poll_out(काष्ठा vsock_sock *vsk,
-				 माप_प्रकार target,
+int
+virtio_transport_notify_poll_out(struct vsock_sock *vsk,
+				 size_t target,
 				 bool *space_avail_now)
-अणु
-	s64 मुक्त_space;
+{
+	s64 free_space;
 
-	मुक्त_space = vsock_stream_has_space(vsk);
-	अगर (मुक्त_space > 0)
+	free_space = vsock_stream_has_space(vsk);
+	if (free_space > 0)
 		*space_avail_now = true;
-	अन्यथा अगर (मुक्त_space == 0)
+	else if (free_space == 0)
 		*space_avail_now = false;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_poll_out);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_poll_out);
 
-पूर्णांक virtio_transport_notअगरy_recv_init(काष्ठा vsock_sock *vsk,
-	माप_प्रकार target, काष्ठा vsock_transport_recv_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_recv_init);
+int virtio_transport_notify_recv_init(struct vsock_sock *vsk,
+	size_t target, struct vsock_transport_recv_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_recv_init);
 
-पूर्णांक virtio_transport_notअगरy_recv_pre_block(काष्ठा vsock_sock *vsk,
-	माप_प्रकार target, काष्ठा vsock_transport_recv_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_recv_pre_block);
+int virtio_transport_notify_recv_pre_block(struct vsock_sock *vsk,
+	size_t target, struct vsock_transport_recv_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_recv_pre_block);
 
-पूर्णांक virtio_transport_notअगरy_recv_pre_dequeue(काष्ठा vsock_sock *vsk,
-	माप_प्रकार target, काष्ठा vsock_transport_recv_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_recv_pre_dequeue);
+int virtio_transport_notify_recv_pre_dequeue(struct vsock_sock *vsk,
+	size_t target, struct vsock_transport_recv_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_recv_pre_dequeue);
 
-पूर्णांक virtio_transport_notअगरy_recv_post_dequeue(काष्ठा vsock_sock *vsk,
-	माप_प्रकार target, sमाप_प्रकार copied, bool data_पढ़ो,
-	काष्ठा vsock_transport_recv_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_recv_post_dequeue);
+int virtio_transport_notify_recv_post_dequeue(struct vsock_sock *vsk,
+	size_t target, ssize_t copied, bool data_read,
+	struct vsock_transport_recv_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_recv_post_dequeue);
 
-पूर्णांक virtio_transport_notअगरy_send_init(काष्ठा vsock_sock *vsk,
-	काष्ठा vsock_transport_send_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_send_init);
+int virtio_transport_notify_send_init(struct vsock_sock *vsk,
+	struct vsock_transport_send_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_send_init);
 
-पूर्णांक virtio_transport_notअगरy_send_pre_block(काष्ठा vsock_sock *vsk,
-	काष्ठा vsock_transport_send_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_send_pre_block);
+int virtio_transport_notify_send_pre_block(struct vsock_sock *vsk,
+	struct vsock_transport_send_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_send_pre_block);
 
-पूर्णांक virtio_transport_notअगरy_send_pre_enqueue(काष्ठा vsock_sock *vsk,
-	काष्ठा vsock_transport_send_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_send_pre_enqueue);
+int virtio_transport_notify_send_pre_enqueue(struct vsock_sock *vsk,
+	struct vsock_transport_send_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_send_pre_enqueue);
 
-पूर्णांक virtio_transport_notअगरy_send_post_enqueue(काष्ठा vsock_sock *vsk,
-	sमाप_प्रकार written, काष्ठा vsock_transport_send_notअगरy_data *data)
-अणु
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_notअगरy_send_post_enqueue);
+int virtio_transport_notify_send_post_enqueue(struct vsock_sock *vsk,
+	ssize_t written, struct vsock_transport_send_notify_data *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL_GPL(virtio_transport_notify_send_post_enqueue);
 
-u64 virtio_transport_stream_rcvhiwat(काष्ठा vsock_sock *vsk)
-अणु
-	वापस vsk->buffer_size;
-पूर्ण
+u64 virtio_transport_stream_rcvhiwat(struct vsock_sock *vsk)
+{
+	return vsk->buffer_size;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_rcvhiwat);
 
-bool virtio_transport_stream_is_active(काष्ठा vsock_sock *vsk)
-अणु
-	वापस true;
-पूर्ण
+bool virtio_transport_stream_is_active(struct vsock_sock *vsk)
+{
+	return true;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_is_active);
 
 bool virtio_transport_stream_allow(u32 cid, u32 port)
-अणु
-	वापस true;
-पूर्ण
+{
+	return true;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_allow);
 
-पूर्णांक virtio_transport_dgram_bind(काष्ठा vsock_sock *vsk,
-				काष्ठा sockaddr_vm *addr)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+int virtio_transport_dgram_bind(struct vsock_sock *vsk,
+				struct sockaddr_vm *addr)
+{
+	return -EOPNOTSUPP;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_bind);
 
 bool virtio_transport_dgram_allow(u32 cid, u32 port)
-अणु
-	वापस false;
-पूर्ण
+{
+	return false;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_allow);
 
-पूर्णांक virtio_transport_connect(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा virtio_vsock_pkt_info info = अणु
+int virtio_transport_connect(struct vsock_sock *vsk)
+{
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_REQUEST,
 		.type = VIRTIO_VSOCK_TYPE_STREAM,
 		.vsk = vsk,
-	पूर्ण;
+	};
 
-	वापस virtio_transport_send_pkt_info(vsk, &info);
-पूर्ण
+	return virtio_transport_send_pkt_info(vsk, &info);
+}
 EXPORT_SYMBOL_GPL(virtio_transport_connect);
 
-पूर्णांक virtio_transport_shutकरोwn(काष्ठा vsock_sock *vsk, पूर्णांक mode)
-अणु
-	काष्ठा virtio_vsock_pkt_info info = अणु
+int virtio_transport_shutdown(struct vsock_sock *vsk, int mode)
+{
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_SHUTDOWN,
 		.type = VIRTIO_VSOCK_TYPE_STREAM,
 		.flags = (mode & RCV_SHUTDOWN ?
@@ -643,264 +642,264 @@ EXPORT_SYMBOL_GPL(virtio_transport_connect);
 			 (mode & SEND_SHUTDOWN ?
 			  VIRTIO_VSOCK_SHUTDOWN_SEND : 0),
 		.vsk = vsk,
-	पूर्ण;
+	};
 
-	वापस virtio_transport_send_pkt_info(vsk, &info);
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_shutकरोwn);
+	return virtio_transport_send_pkt_info(vsk, &info);
+}
+EXPORT_SYMBOL_GPL(virtio_transport_shutdown);
 
-पूर्णांक
-virtio_transport_dgram_enqueue(काष्ठा vsock_sock *vsk,
-			       काष्ठा sockaddr_vm *remote_addr,
-			       काष्ठा msghdr *msg,
-			       माप_प्रकार dgram_len)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+int
+virtio_transport_dgram_enqueue(struct vsock_sock *vsk,
+			       struct sockaddr_vm *remote_addr,
+			       struct msghdr *msg,
+			       size_t dgram_len)
+{
+	return -EOPNOTSUPP;
+}
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_enqueue);
 
-sमाप_प्रकार
-virtio_transport_stream_enqueue(काष्ठा vsock_sock *vsk,
-				काष्ठा msghdr *msg,
-				माप_प्रकार len)
-अणु
-	काष्ठा virtio_vsock_pkt_info info = अणु
+ssize_t
+virtio_transport_stream_enqueue(struct vsock_sock *vsk,
+				struct msghdr *msg,
+				size_t len)
+{
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_RW,
 		.type = VIRTIO_VSOCK_TYPE_STREAM,
 		.msg = msg,
 		.pkt_len = len,
 		.vsk = vsk,
-	पूर्ण;
+	};
 
-	वापस virtio_transport_send_pkt_info(vsk, &info);
-पूर्ण
+	return virtio_transport_send_pkt_info(vsk, &info);
+}
 EXPORT_SYMBOL_GPL(virtio_transport_stream_enqueue);
 
-व्योम virtio_transport_deकाष्ठा(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
+void virtio_transport_destruct(struct vsock_sock *vsk)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
 
-	kमुक्त(vvs);
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_deकाष्ठा);
+	kfree(vvs);
+}
+EXPORT_SYMBOL_GPL(virtio_transport_destruct);
 
-अटल पूर्णांक virtio_transport_reset(काष्ठा vsock_sock *vsk,
-				  काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा virtio_vsock_pkt_info info = अणु
+static int virtio_transport_reset(struct vsock_sock *vsk,
+				  struct virtio_vsock_pkt *pkt)
+{
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_RST,
 		.type = VIRTIO_VSOCK_TYPE_STREAM,
 		.reply = !!pkt,
 		.vsk = vsk,
-	पूर्ण;
+	};
 
-	/* Send RST only अगर the original pkt is not a RST pkt */
-	अगर (pkt && le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_RST)
-		वापस 0;
+	/* Send RST only if the original pkt is not a RST pkt */
+	if (pkt && le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_RST)
+		return 0;
 
-	वापस virtio_transport_send_pkt_info(vsk, &info);
-पूर्ण
+	return virtio_transport_send_pkt_info(vsk, &info);
+}
 
-/* Normally packets are associated with a socket.  There may be no socket अगर an
- * attempt was made to connect to a socket that करोes not exist.
+/* Normally packets are associated with a socket.  There may be no socket if an
+ * attempt was made to connect to a socket that does not exist.
  */
-अटल पूर्णांक virtio_transport_reset_no_sock(स्थिर काष्ठा virtio_transport *t,
-					  काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा virtio_vsock_pkt *reply;
-	काष्ठा virtio_vsock_pkt_info info = अणु
+static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
+					  struct virtio_vsock_pkt *pkt)
+{
+	struct virtio_vsock_pkt *reply;
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_RST,
 		.type = le16_to_cpu(pkt->hdr.type),
 		.reply = true,
-	पूर्ण;
+	};
 
-	/* Send RST only अगर the original pkt is not a RST pkt */
-	अगर (le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_RST)
-		वापस 0;
+	/* Send RST only if the original pkt is not a RST pkt */
+	if (le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_RST)
+		return 0;
 
 	reply = virtio_transport_alloc_pkt(&info, 0,
 					   le64_to_cpu(pkt->hdr.dst_cid),
 					   le32_to_cpu(pkt->hdr.dst_port),
 					   le64_to_cpu(pkt->hdr.src_cid),
 					   le32_to_cpu(pkt->hdr.src_port));
-	अगर (!reply)
-		वापस -ENOMEM;
+	if (!reply)
+		return -ENOMEM;
 
-	अगर (!t) अणु
-		virtio_transport_मुक्त_pkt(reply);
-		वापस -ENOTCONN;
-	पूर्ण
+	if (!t) {
+		virtio_transport_free_pkt(reply);
+		return -ENOTCONN;
+	}
 
-	वापस t->send_pkt(reply);
-पूर्ण
+	return t->send_pkt(reply);
+}
 
 /* This function should be called with sk_lock held and SOCK_DONE set */
-अटल व्योम virtio_transport_हटाओ_sock(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
-	काष्ठा virtio_vsock_pkt *pkt, *पंचांगp;
+static void virtio_transport_remove_sock(struct vsock_sock *vsk)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
+	struct virtio_vsock_pkt *pkt, *tmp;
 
-	/* We करोn't need to take rx_lock, as the socket is closing and we are
+	/* We don't need to take rx_lock, as the socket is closing and we are
 	 * removing it.
 	 */
-	list_क्रम_each_entry_safe(pkt, पंचांगp, &vvs->rx_queue, list) अणु
+	list_for_each_entry_safe(pkt, tmp, &vvs->rx_queue, list) {
 		list_del(&pkt->list);
-		virtio_transport_मुक्त_pkt(pkt);
-	पूर्ण
+		virtio_transport_free_pkt(pkt);
+	}
 
-	vsock_हटाओ_sock(vsk);
-पूर्ण
+	vsock_remove_sock(vsk);
+}
 
-अटल व्योम virtio_transport_रुको_बंद(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	अगर (समयout) अणु
-		DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+static void virtio_transport_wait_close(struct sock *sk, long timeout)
+{
+	if (timeout) {
+		DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
-		add_रुको_queue(sk_sleep(sk), &रुको);
+		add_wait_queue(sk_sleep(sk), &wait);
 
-		करो अणु
-			अगर (sk_रुको_event(sk, &समयout,
-					  sock_flag(sk, SOCK_DONE), &रुको))
-				अवरोध;
-		पूर्ण जबतक (!संकेत_pending(current) && समयout);
+		do {
+			if (sk_wait_event(sk, &timeout,
+					  sock_flag(sk, SOCK_DONE), &wait))
+				break;
+		} while (!signal_pending(current) && timeout);
 
-		हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	पूर्ण
-पूर्ण
+		remove_wait_queue(sk_sleep(sk), &wait);
+	}
+}
 
-अटल व्योम virtio_transport_करो_बंद(काष्ठा vsock_sock *vsk,
-				      bool cancel_समयout)
-अणु
-	काष्ठा sock *sk = sk_vsock(vsk);
+static void virtio_transport_do_close(struct vsock_sock *vsk,
+				      bool cancel_timeout)
+{
+	struct sock *sk = sk_vsock(vsk);
 
 	sock_set_flag(sk, SOCK_DONE);
-	vsk->peer_shutकरोwn = SHUTDOWN_MASK;
-	अगर (vsock_stream_has_data(vsk) <= 0)
+	vsk->peer_shutdown = SHUTDOWN_MASK;
+	if (vsock_stream_has_data(vsk) <= 0)
 		sk->sk_state = TCP_CLOSING;
 	sk->sk_state_change(sk);
 
-	अगर (vsk->बंद_work_scheduled &&
-	    (!cancel_समयout || cancel_delayed_work(&vsk->बंद_work))) अणु
-		vsk->बंद_work_scheduled = false;
+	if (vsk->close_work_scheduled &&
+	    (!cancel_timeout || cancel_delayed_work(&vsk->close_work))) {
+		vsk->close_work_scheduled = false;
 
-		virtio_transport_हटाओ_sock(vsk);
+		virtio_transport_remove_sock(vsk);
 
-		/* Release refcnt obtained when we scheduled the समयout */
+		/* Release refcnt obtained when we scheduled the timeout */
 		sock_put(sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम virtio_transport_बंद_समयout(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा vsock_sock *vsk =
-		container_of(work, काष्ठा vsock_sock, बंद_work.work);
-	काष्ठा sock *sk = sk_vsock(vsk);
+static void virtio_transport_close_timeout(struct work_struct *work)
+{
+	struct vsock_sock *vsk =
+		container_of(work, struct vsock_sock, close_work.work);
+	struct sock *sk = sk_vsock(vsk);
 
 	sock_hold(sk);
 	lock_sock(sk);
 
-	अगर (!sock_flag(sk, SOCK_DONE)) अणु
-		(व्योम)virtio_transport_reset(vsk, शून्य);
+	if (!sock_flag(sk, SOCK_DONE)) {
+		(void)virtio_transport_reset(vsk, NULL);
 
-		virtio_transport_करो_बंद(vsk, false);
-	पूर्ण
+		virtio_transport_do_close(vsk, false);
+	}
 
-	vsk->बंद_work_scheduled = false;
+	vsk->close_work_scheduled = false;
 
 	release_sock(sk);
 	sock_put(sk);
-पूर्ण
+}
 
 /* User context, vsk->sk is locked */
-अटल bool virtio_transport_बंद(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा sock *sk = &vsk->sk;
+static bool virtio_transport_close(struct vsock_sock *vsk)
+{
+	struct sock *sk = &vsk->sk;
 
-	अगर (!(sk->sk_state == TCP_ESTABLISHED ||
+	if (!(sk->sk_state == TCP_ESTABLISHED ||
 	      sk->sk_state == TCP_CLOSING))
-		वापस true;
+		return true;
 
-	/* Alपढ़ोy received SHUTDOWN from peer, reply with RST */
-	अगर ((vsk->peer_shutकरोwn & SHUTDOWN_MASK) == SHUTDOWN_MASK) अणु
-		(व्योम)virtio_transport_reset(vsk, शून्य);
-		वापस true;
-	पूर्ण
+	/* Already received SHUTDOWN from peer, reply with RST */
+	if ((vsk->peer_shutdown & SHUTDOWN_MASK) == SHUTDOWN_MASK) {
+		(void)virtio_transport_reset(vsk, NULL);
+		return true;
+	}
 
-	अगर ((sk->sk_shutकरोwn & SHUTDOWN_MASK) != SHUTDOWN_MASK)
-		(व्योम)virtio_transport_shutकरोwn(vsk, SHUTDOWN_MASK);
+	if ((sk->sk_shutdown & SHUTDOWN_MASK) != SHUTDOWN_MASK)
+		(void)virtio_transport_shutdown(vsk, SHUTDOWN_MASK);
 
-	अगर (sock_flag(sk, SOCK_LINGER) && !(current->flags & PF_EXITING))
-		virtio_transport_रुको_बंद(sk, sk->sk_lingerसमय);
+	if (sock_flag(sk, SOCK_LINGER) && !(current->flags & PF_EXITING))
+		virtio_transport_wait_close(sk, sk->sk_lingertime);
 
-	अगर (sock_flag(sk, SOCK_DONE)) अणु
-		वापस true;
-	पूर्ण
+	if (sock_flag(sk, SOCK_DONE)) {
+		return true;
+	}
 
 	sock_hold(sk);
-	INIT_DELAYED_WORK(&vsk->बंद_work,
-			  virtio_transport_बंद_समयout);
-	vsk->बंद_work_scheduled = true;
-	schedule_delayed_work(&vsk->बंद_work, VSOCK_CLOSE_TIMEOUT);
-	वापस false;
-पूर्ण
+	INIT_DELAYED_WORK(&vsk->close_work,
+			  virtio_transport_close_timeout);
+	vsk->close_work_scheduled = true;
+	schedule_delayed_work(&vsk->close_work, VSOCK_CLOSE_TIMEOUT);
+	return false;
+}
 
-व्योम virtio_transport_release(काष्ठा vsock_sock *vsk)
-अणु
-	काष्ठा sock *sk = &vsk->sk;
-	bool हटाओ_sock = true;
+void virtio_transport_release(struct vsock_sock *vsk)
+{
+	struct sock *sk = &vsk->sk;
+	bool remove_sock = true;
 
-	अगर (sk->sk_type == SOCK_STREAM)
-		हटाओ_sock = virtio_transport_बंद(vsk);
+	if (sk->sk_type == SOCK_STREAM)
+		remove_sock = virtio_transport_close(vsk);
 
-	अगर (हटाओ_sock) अणु
+	if (remove_sock) {
 		sock_set_flag(sk, SOCK_DONE);
-		virtio_transport_हटाओ_sock(vsk);
-	पूर्ण
-पूर्ण
+		virtio_transport_remove_sock(vsk);
+	}
+}
 EXPORT_SYMBOL_GPL(virtio_transport_release);
 
-अटल पूर्णांक
-virtio_transport_recv_connecting(काष्ठा sock *sk,
-				 काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	पूर्णांक err;
-	पूर्णांक skerr;
+static int
+virtio_transport_recv_connecting(struct sock *sk,
+				 struct virtio_vsock_pkt *pkt)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	int err;
+	int skerr;
 
-	चयन (le16_to_cpu(pkt->hdr.op)) अणु
-	हाल VIRTIO_VSOCK_OP_RESPONSE:
+	switch (le16_to_cpu(pkt->hdr.op)) {
+	case VIRTIO_VSOCK_OP_RESPONSE:
 		sk->sk_state = TCP_ESTABLISHED;
 		sk->sk_socket->state = SS_CONNECTED;
 		vsock_insert_connected(vsk);
 		sk->sk_state_change(sk);
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_INVALID:
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_RST:
+		break;
+	case VIRTIO_VSOCK_OP_INVALID:
+		break;
+	case VIRTIO_VSOCK_OP_RST:
 		skerr = ECONNRESET;
 		err = 0;
-		जाओ destroy;
-	शेष:
+		goto destroy;
+	default:
 		skerr = EPROTO;
 		err = -EINVAL;
-		जाओ destroy;
-	पूर्ण
-	वापस 0;
+		goto destroy;
+	}
+	return 0;
 
 destroy:
 	virtio_transport_reset(vsk, pkt);
 	sk->sk_state = TCP_CLOSE;
 	sk->sk_err = skerr;
 	sk->sk_error_report(sk);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-virtio_transport_recv_enqueue(काष्ठा vsock_sock *vsk,
-			      काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
-	bool can_enqueue, मुक्त_pkt = false;
+static void
+virtio_transport_recv_enqueue(struct vsock_sock *vsk,
+			      struct virtio_vsock_pkt *pkt)
+{
+	struct virtio_vsock_sock *vvs = vsk->trans;
+	bool can_enqueue, free_pkt = false;
 
 	pkt->len = le32_to_cpu(pkt->hdr.len);
 	pkt->off = 0;
@@ -908,123 +907,123 @@ virtio_transport_recv_enqueue(काष्ठा vsock_sock *vsk,
 	spin_lock_bh(&vvs->rx_lock);
 
 	can_enqueue = virtio_transport_inc_rx_pkt(vvs, pkt);
-	अगर (!can_enqueue) अणु
-		मुक्त_pkt = true;
-		जाओ out;
-	पूर्ण
+	if (!can_enqueue) {
+		free_pkt = true;
+		goto out;
+	}
 
-	/* Try to copy small packets पूर्णांकo the buffer of last packet queued,
-	 * to aव्योम wasting memory queueing the entire buffer with a small
+	/* Try to copy small packets into the buffer of last packet queued,
+	 * to avoid wasting memory queueing the entire buffer with a small
 	 * payload.
 	 */
-	अगर (pkt->len <= GOOD_COPY_LEN && !list_empty(&vvs->rx_queue)) अणु
-		काष्ठा virtio_vsock_pkt *last_pkt;
+	if (pkt->len <= GOOD_COPY_LEN && !list_empty(&vvs->rx_queue)) {
+		struct virtio_vsock_pkt *last_pkt;
 
 		last_pkt = list_last_entry(&vvs->rx_queue,
-					   काष्ठा virtio_vsock_pkt, list);
+					   struct virtio_vsock_pkt, list);
 
 		/* If there is space in the last packet queued, we copy the
 		 * new packet in its buffer.
 		 */
-		अगर (pkt->len <= last_pkt->buf_len - last_pkt->len) अणु
-			स_नकल(last_pkt->buf + last_pkt->len, pkt->buf,
+		if (pkt->len <= last_pkt->buf_len - last_pkt->len) {
+			memcpy(last_pkt->buf + last_pkt->len, pkt->buf,
 			       pkt->len);
 			last_pkt->len += pkt->len;
-			मुक्त_pkt = true;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			free_pkt = true;
+			goto out;
+		}
+	}
 
 	list_add_tail(&pkt->list, &vvs->rx_queue);
 
 out:
 	spin_unlock_bh(&vvs->rx_lock);
-	अगर (मुक्त_pkt)
-		virtio_transport_मुक्त_pkt(pkt);
-पूर्ण
+	if (free_pkt)
+		virtio_transport_free_pkt(pkt);
+}
 
-अटल पूर्णांक
-virtio_transport_recv_connected(काष्ठा sock *sk,
-				काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	पूर्णांक err = 0;
+static int
+virtio_transport_recv_connected(struct sock *sk,
+				struct virtio_vsock_pkt *pkt)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	int err = 0;
 
-	चयन (le16_to_cpu(pkt->hdr.op)) अणु
-	हाल VIRTIO_VSOCK_OP_RW:
+	switch (le16_to_cpu(pkt->hdr.op)) {
+	case VIRTIO_VSOCK_OP_RW:
 		virtio_transport_recv_enqueue(vsk, pkt);
-		sk->sk_data_पढ़ोy(sk);
-		वापस err;
-	हाल VIRTIO_VSOCK_OP_CREDIT_UPDATE:
-		sk->sk_ग_लिखो_space(sk);
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_SHUTDOWN:
-		अगर (le32_to_cpu(pkt->hdr.flags) & VIRTIO_VSOCK_SHUTDOWN_RCV)
-			vsk->peer_shutकरोwn |= RCV_SHUTDOWN;
-		अगर (le32_to_cpu(pkt->hdr.flags) & VIRTIO_VSOCK_SHUTDOWN_SEND)
-			vsk->peer_shutकरोwn |= SEND_SHUTDOWN;
-		अगर (vsk->peer_shutकरोwn == SHUTDOWN_MASK &&
+		sk->sk_data_ready(sk);
+		return err;
+	case VIRTIO_VSOCK_OP_CREDIT_UPDATE:
+		sk->sk_write_space(sk);
+		break;
+	case VIRTIO_VSOCK_OP_SHUTDOWN:
+		if (le32_to_cpu(pkt->hdr.flags) & VIRTIO_VSOCK_SHUTDOWN_RCV)
+			vsk->peer_shutdown |= RCV_SHUTDOWN;
+		if (le32_to_cpu(pkt->hdr.flags) & VIRTIO_VSOCK_SHUTDOWN_SEND)
+			vsk->peer_shutdown |= SEND_SHUTDOWN;
+		if (vsk->peer_shutdown == SHUTDOWN_MASK &&
 		    vsock_stream_has_data(vsk) <= 0 &&
-		    !sock_flag(sk, SOCK_DONE)) अणु
-			(व्योम)virtio_transport_reset(vsk, शून्य);
+		    !sock_flag(sk, SOCK_DONE)) {
+			(void)virtio_transport_reset(vsk, NULL);
 
-			virtio_transport_करो_बंद(vsk, true);
-		पूर्ण
-		अगर (le32_to_cpu(pkt->hdr.flags))
+			virtio_transport_do_close(vsk, true);
+		}
+		if (le32_to_cpu(pkt->hdr.flags))
 			sk->sk_state_change(sk);
-		अवरोध;
-	हाल VIRTIO_VSOCK_OP_RST:
-		virtio_transport_करो_बंद(vsk, true);
-		अवरोध;
-	शेष:
+		break;
+	case VIRTIO_VSOCK_OP_RST:
+		virtio_transport_do_close(vsk, true);
+		break;
+	default:
 		err = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	virtio_transport_मुक्त_pkt(pkt);
-	वापस err;
-पूर्ण
+	virtio_transport_free_pkt(pkt);
+	return err;
+}
 
-अटल व्योम
-virtio_transport_recv_disconnecting(काष्ठा sock *sk,
-				    काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
+static void
+virtio_transport_recv_disconnecting(struct sock *sk,
+				    struct virtio_vsock_pkt *pkt)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
 
-	अगर (le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_RST)
-		virtio_transport_करो_बंद(vsk, true);
-पूर्ण
+	if (le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_RST)
+		virtio_transport_do_close(vsk, true);
+}
 
-अटल पूर्णांक
-virtio_transport_send_response(काष्ठा vsock_sock *vsk,
-			       काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा virtio_vsock_pkt_info info = अणु
+static int
+virtio_transport_send_response(struct vsock_sock *vsk,
+			       struct virtio_vsock_pkt *pkt)
+{
+	struct virtio_vsock_pkt_info info = {
 		.op = VIRTIO_VSOCK_OP_RESPONSE,
 		.type = VIRTIO_VSOCK_TYPE_STREAM,
 		.remote_cid = le64_to_cpu(pkt->hdr.src_cid),
 		.remote_port = le32_to_cpu(pkt->hdr.src_port),
 		.reply = true,
 		.vsk = vsk,
-	पूर्ण;
+	};
 
-	वापस virtio_transport_send_pkt_info(vsk, &info);
-पूर्ण
+	return virtio_transport_send_pkt_info(vsk, &info);
+}
 
-अटल bool virtio_transport_space_update(काष्ठा sock *sk,
-					  काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	काष्ठा virtio_vsock_sock *vvs = vsk->trans;
+static bool virtio_transport_space_update(struct sock *sk,
+					  struct virtio_vsock_pkt *pkt)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	struct virtio_vsock_sock *vvs = vsk->trans;
 	bool space_available;
 
 	/* Listener sockets are not associated with any transport, so we are
-	 * not able to take the state to see अगर there is space available in the
+	 * not able to take the state to see if there is space available in the
 	 * remote peer, but since they are only used to receive requests, we
 	 * can assume that there is always space available in the other peer.
 	 */
-	अगर (!vvs)
-		वापस true;
+	if (!vvs)
+		return true;
 
 	/* buf_alloc and fwd_cnt is always included in the hdr */
 	spin_lock_bh(&vvs->tx_lock);
@@ -1032,34 +1031,34 @@ virtio_transport_send_response(काष्ठा vsock_sock *vsk,
 	vvs->peer_fwd_cnt = le32_to_cpu(pkt->hdr.fwd_cnt);
 	space_available = virtio_transport_has_space(vsk);
 	spin_unlock_bh(&vvs->tx_lock);
-	वापस space_available;
-पूर्ण
+	return space_available;
+}
 
 /* Handle server socket */
-अटल पूर्णांक
-virtio_transport_recv_listen(काष्ठा sock *sk, काष्ठा virtio_vsock_pkt *pkt,
-			     काष्ठा virtio_transport *t)
-अणु
-	काष्ठा vsock_sock *vsk = vsock_sk(sk);
-	काष्ठा vsock_sock *vchild;
-	काष्ठा sock *child;
-	पूर्णांक ret;
+static int
+virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
+			     struct virtio_transport *t)
+{
+	struct vsock_sock *vsk = vsock_sk(sk);
+	struct vsock_sock *vchild;
+	struct sock *child;
+	int ret;
 
-	अगर (le16_to_cpu(pkt->hdr.op) != VIRTIO_VSOCK_OP_REQUEST) अणु
+	if (le16_to_cpu(pkt->hdr.op) != VIRTIO_VSOCK_OP_REQUEST) {
 		virtio_transport_reset_no_sock(t, pkt);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (sk_acceptq_is_full(sk)) अणु
+	if (sk_acceptq_is_full(sk)) {
 		virtio_transport_reset_no_sock(t, pkt);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	child = vsock_create_connected(sk);
-	अगर (!child) अणु
+	if (!child) {
 		virtio_transport_reset_no_sock(t, pkt);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	sk_acceptq_added(sk);
 
@@ -1074,18 +1073,18 @@ virtio_transport_recv_listen(काष्ठा sock *sk, काष्ठा vir
 			le32_to_cpu(pkt->hdr.src_port));
 
 	ret = vsock_assign_transport(vchild, vsk);
-	/* Transport asचिन्हित (looking at remote_addr) must be the same
+	/* Transport assigned (looking at remote_addr) must be the same
 	 * where we received the request.
 	 */
-	अगर (ret || vchild->transport != &t->transport) अणु
+	if (ret || vchild->transport != &t->transport) {
 		release_sock(child);
 		virtio_transport_reset_no_sock(t, pkt);
 		sock_put(child);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (virtio_transport_space_update(child, pkt))
-		child->sk_ग_लिखो_space(child);
+	if (virtio_transport_space_update(child, pkt))
+		child->sk_write_space(child);
 
 	vsock_insert_connected(vchild);
 	vsock_enqueue_accept(sk, child);
@@ -1093,19 +1092,19 @@ virtio_transport_recv_listen(काष्ठा sock *sk, काष्ठा vir
 
 	release_sock(child);
 
-	sk->sk_data_पढ़ोy(sk);
-	वापस 0;
-पूर्ण
+	sk->sk_data_ready(sk);
+	return 0;
+}
 
 /* We are under the virtio-vsock's vsock->rx_lock or vhost-vsock's vq->mutex
  * lock.
  */
-व्योम virtio_transport_recv_pkt(काष्ठा virtio_transport *t,
-			       काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	काष्ठा sockaddr_vm src, dst;
-	काष्ठा vsock_sock *vsk;
-	काष्ठा sock *sk;
+void virtio_transport_recv_pkt(struct virtio_transport *t,
+			       struct virtio_vsock_pkt *pkt)
+{
+	struct sockaddr_vm src, dst;
+	struct vsock_sock *vsk;
+	struct sock *sk;
 	bool space_available;
 
 	vsock_addr_init(&src, le64_to_cpu(pkt->hdr.src_cid),
@@ -1122,64 +1121,64 @@ virtio_transport_recv_listen(काष्ठा sock *sk, काष्ठा vir
 					le32_to_cpu(pkt->hdr.buf_alloc),
 					le32_to_cpu(pkt->hdr.fwd_cnt));
 
-	अगर (le16_to_cpu(pkt->hdr.type) != VIRTIO_VSOCK_TYPE_STREAM) अणु
-		(व्योम)virtio_transport_reset_no_sock(t, pkt);
-		जाओ मुक्त_pkt;
-	पूर्ण
+	if (le16_to_cpu(pkt->hdr.type) != VIRTIO_VSOCK_TYPE_STREAM) {
+		(void)virtio_transport_reset_no_sock(t, pkt);
+		goto free_pkt;
+	}
 
 	/* The socket must be in connected or bound table
 	 * otherwise send reset back
 	 */
 	sk = vsock_find_connected_socket(&src, &dst);
-	अगर (!sk) अणु
+	if (!sk) {
 		sk = vsock_find_bound_socket(&dst);
-		अगर (!sk) अणु
-			(व्योम)virtio_transport_reset_no_sock(t, pkt);
-			जाओ मुक्त_pkt;
-		पूर्ण
-	पूर्ण
+		if (!sk) {
+			(void)virtio_transport_reset_no_sock(t, pkt);
+			goto free_pkt;
+		}
+	}
 
 	vsk = vsock_sk(sk);
 
 	lock_sock(sk);
 
-	/* Check अगर sk has been बंदd beक्रमe lock_sock */
-	अगर (sock_flag(sk, SOCK_DONE)) अणु
-		(व्योम)virtio_transport_reset_no_sock(t, pkt);
+	/* Check if sk has been closed before lock_sock */
+	if (sock_flag(sk, SOCK_DONE)) {
+		(void)virtio_transport_reset_no_sock(t, pkt);
 		release_sock(sk);
 		sock_put(sk);
-		जाओ मुक्त_pkt;
-	पूर्ण
+		goto free_pkt;
+	}
 
 	space_available = virtio_transport_space_update(sk, pkt);
 
-	/* Update CID in हाल it has changed after a transport reset event */
+	/* Update CID in case it has changed after a transport reset event */
 	vsk->local_addr.svm_cid = dst.svm_cid;
 
-	अगर (space_available)
-		sk->sk_ग_लिखो_space(sk);
+	if (space_available)
+		sk->sk_write_space(sk);
 
-	चयन (sk->sk_state) अणु
-	हाल TCP_LISTEN:
+	switch (sk->sk_state) {
+	case TCP_LISTEN:
 		virtio_transport_recv_listen(sk, pkt, t);
-		virtio_transport_मुक्त_pkt(pkt);
-		अवरोध;
-	हाल TCP_SYN_SENT:
+		virtio_transport_free_pkt(pkt);
+		break;
+	case TCP_SYN_SENT:
 		virtio_transport_recv_connecting(sk, pkt);
-		virtio_transport_मुक्त_pkt(pkt);
-		अवरोध;
-	हाल TCP_ESTABLISHED:
+		virtio_transport_free_pkt(pkt);
+		break;
+	case TCP_ESTABLISHED:
 		virtio_transport_recv_connected(sk, pkt);
-		अवरोध;
-	हाल TCP_CLOSING:
+		break;
+	case TCP_CLOSING:
 		virtio_transport_recv_disconnecting(sk, pkt);
-		virtio_transport_मुक्त_pkt(pkt);
-		अवरोध;
-	शेष:
-		(व्योम)virtio_transport_reset_no_sock(t, pkt);
-		virtio_transport_मुक्त_pkt(pkt);
-		अवरोध;
-	पूर्ण
+		virtio_transport_free_pkt(pkt);
+		break;
+	default:
+		(void)virtio_transport_reset_no_sock(t, pkt);
+		virtio_transport_free_pkt(pkt);
+		break;
+	}
 
 	release_sock(sk);
 
@@ -1187,19 +1186,19 @@ virtio_transport_recv_listen(काष्ठा sock *sk, काष्ठा vir
 	 * bound or connected list.
 	 */
 	sock_put(sk);
-	वापस;
+	return;
 
-मुक्त_pkt:
-	virtio_transport_मुक्त_pkt(pkt);
-पूर्ण
+free_pkt:
+	virtio_transport_free_pkt(pkt);
+}
 EXPORT_SYMBOL_GPL(virtio_transport_recv_pkt);
 
-व्योम virtio_transport_मुक्त_pkt(काष्ठा virtio_vsock_pkt *pkt)
-अणु
-	kमुक्त(pkt->buf);
-	kमुक्त(pkt);
-पूर्ण
-EXPORT_SYMBOL_GPL(virtio_transport_मुक्त_pkt);
+void virtio_transport_free_pkt(struct virtio_vsock_pkt *pkt)
+{
+	kfree(pkt->buf);
+	kfree(pkt);
+}
+EXPORT_SYMBOL_GPL(virtio_transport_free_pkt);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Asias He");

@@ -1,124 +1,123 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2000 - 2003 Jeff Dike (jdike@addtoit.com)
  * Copyright 2003 PathScale, Inc.
  */
 
-#अगर_अघोषित __UM_PAGE_H
-#घोषणा __UM_PAGE_H
+#ifndef __UM_PAGE_H
+#define __UM_PAGE_H
 
-#समावेश <linux/स्थिर.h>
+#include <linux/const.h>
 
 /* PAGE_SHIFT determines the page size */
-#घोषणा PAGE_SHIFT	12
-#घोषणा PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
-#घोषणा PAGE_MASK	(~(PAGE_SIZE-1))
+#define PAGE_SHIFT	12
+#define PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
+#define PAGE_MASK	(~(PAGE_SIZE-1))
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-काष्ठा page;
+struct page;
 
-#समावेश <linux/pfn.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/vm-flags.h>
+#include <linux/pfn.h>
+#include <linux/types.h>
+#include <asm/vm-flags.h>
 
 /*
  * These are used to make use of C type-checking..
  */
 
-#घोषणा clear_page(page)	स_रखो((व्योम *)(page), 0, PAGE_SIZE)
-#घोषणा copy_page(to,from)	स_नकल((व्योम *)(to), (व्योम *)(from), PAGE_SIZE)
+#define clear_page(page)	memset((void *)(page), 0, PAGE_SIZE)
+#define copy_page(to,from)	memcpy((void *)(to), (void *)(from), PAGE_SIZE)
 
-#घोषणा clear_user_page(page, vaddr, pg)	clear_page(page)
-#घोषणा copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
+#define clear_user_page(page, vaddr, pg)	clear_page(page)
+#define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
 
-#अगर defined(CONFIG_3_LEVEL_PGTABLES) && !defined(CONFIG_64BIT)
+#if defined(CONFIG_3_LEVEL_PGTABLES) && !defined(CONFIG_64BIT)
 
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pte; पूर्ण pte_t;
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pmd; पूर्ण pmd_t;
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgd; पूर्ण pgd_t;
-#घोषणा pte_val(p) ((p).pte)
+typedef struct { unsigned long pte; } pte_t;
+typedef struct { unsigned long pmd; } pmd_t;
+typedef struct { unsigned long pgd; } pgd_t;
+#define pte_val(p) ((p).pte)
 
-#घोषणा pte_get_bits(p, bits) ((p).pte & (bits))
-#घोषणा pte_set_bits(p, bits) ((p).pte |= (bits))
-#घोषणा pte_clear_bits(p, bits) ((p).pte &= ~(bits))
-#घोषणा pte_copy(to, from) (अणु (to).pte = (from).pte; पूर्ण)
-#घोषणा pte_is_zero(p) (!((p).pte & ~_PAGE_NEWPAGE))
-#घोषणा pte_set_val(p, phys, prot) \
-	(अणु (p).pte = (phys) | pgprot_val(prot); पूर्ण)
+#define pte_get_bits(p, bits) ((p).pte & (bits))
+#define pte_set_bits(p, bits) ((p).pte |= (bits))
+#define pte_clear_bits(p, bits) ((p).pte &= ~(bits))
+#define pte_copy(to, from) ({ (to).pte = (from).pte; })
+#define pte_is_zero(p) (!((p).pte & ~_PAGE_NEWPAGE))
+#define pte_set_val(p, phys, prot) \
+	({ (p).pte = (phys) | pgprot_val(prot); })
 
-#घोषणा pmd_val(x)	((x).pmd)
-#घोषणा __pmd(x) ((pmd_t) अणु (x) पूर्ण )
+#define pmd_val(x)	((x).pmd)
+#define __pmd(x) ((pmd_t) { (x) } )
 
-प्रकार अचिन्हित दीर्घ दीर्घ phys_t;
+typedef unsigned long long phys_t;
 
-#अन्यथा
+#else
 
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pte; पूर्ण pte_t;
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgd; पूर्ण pgd_t;
+typedef struct { unsigned long pte; } pte_t;
+typedef struct { unsigned long pgd; } pgd_t;
 
-#अगर_घोषित CONFIG_3_LEVEL_PGTABLES
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pmd; पूर्ण pmd_t;
-#घोषणा pmd_val(x)	((x).pmd)
-#घोषणा __pmd(x) ((pmd_t) अणु (x) पूर्ण )
-#पूर्ण_अगर
+#ifdef CONFIG_3_LEVEL_PGTABLES
+typedef struct { unsigned long pmd; } pmd_t;
+#define pmd_val(x)	((x).pmd)
+#define __pmd(x) ((pmd_t) { (x) } )
+#endif
 
-#घोषणा pte_val(x)	((x).pte)
+#define pte_val(x)	((x).pte)
 
 
-#घोषणा pte_get_bits(p, bits) ((p).pte & (bits))
-#घोषणा pte_set_bits(p, bits) ((p).pte |= (bits))
-#घोषणा pte_clear_bits(p, bits) ((p).pte &= ~(bits))
-#घोषणा pte_copy(to, from) ((to).pte = (from).pte)
-#घोषणा pte_is_zero(p) (!((p).pte & ~_PAGE_NEWPAGE))
-#घोषणा pte_set_val(p, phys, prot) (p).pte = (phys | pgprot_val(prot))
+#define pte_get_bits(p, bits) ((p).pte & (bits))
+#define pte_set_bits(p, bits) ((p).pte |= (bits))
+#define pte_clear_bits(p, bits) ((p).pte &= ~(bits))
+#define pte_copy(to, from) ((to).pte = (from).pte)
+#define pte_is_zero(p) (!((p).pte & ~_PAGE_NEWPAGE))
+#define pte_set_val(p, phys, prot) (p).pte = (phys | pgprot_val(prot))
 
-प्रकार अचिन्हित दीर्घ phys_t;
+typedef unsigned long phys_t;
 
-#पूर्ण_अगर
+#endif
 
-प्रकार काष्ठा अणु अचिन्हित दीर्घ pgprot; पूर्ण pgprot_t;
+typedef struct { unsigned long pgprot; } pgprot_t;
 
-प्रकार काष्ठा page *pgtable_t;
+typedef struct page *pgtable_t;
 
-#घोषणा pgd_val(x)	((x).pgd)
-#घोषणा pgprot_val(x)	((x).pgprot)
+#define pgd_val(x)	((x).pgd)
+#define pgprot_val(x)	((x).pgprot)
 
-#घोषणा __pte(x) ((pte_t) अणु (x) पूर्ण )
-#घोषणा __pgd(x) ((pgd_t) अणु (x) पूर्ण )
-#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण )
+#define __pte(x) ((pte_t) { (x) } )
+#define __pgd(x) ((pgd_t) { (x) } )
+#define __pgprot(x)	((pgprot_t) { (x) } )
 
-बाह्य अचिन्हित दीर्घ uml_physmem;
+extern unsigned long uml_physmem;
 
-#घोषणा PAGE_OFFSET (uml_physmem)
-#घोषणा KERNELBASE PAGE_OFFSET
+#define PAGE_OFFSET (uml_physmem)
+#define KERNELBASE PAGE_OFFSET
 
-#घोषणा __va_space (8*1024*1024)
+#define __va_space (8*1024*1024)
 
-#समावेश <स्मृति.स>
+#include <mem.h>
 
-/* Cast to अचिन्हित दीर्घ beक्रमe casting to व्योम * to aव्योम a warning from
- * mmap_kmem about cutting a दीर्घ दीर्घ करोwn to a व्योम *.  Not sure that
- * casting is the right thing, but 32-bit UML can't have 64-bit भव
+/* Cast to unsigned long before casting to void * to avoid a warning from
+ * mmap_kmem about cutting a long long down to a void *.  Not sure that
+ * casting is the right thing, but 32-bit UML can't have 64-bit virtual
  * addresses
  */
-#घोषणा __pa(virt) to_phys((व्योम *) (अचिन्हित दीर्घ) (virt))
-#घोषणा __va(phys) to_virt((अचिन्हित दीर्घ) (phys))
+#define __pa(virt) to_phys((void *) (unsigned long) (virt))
+#define __va(phys) to_virt((unsigned long) (phys))
 
-#घोषणा phys_to_pfn(p) ((p) >> PAGE_SHIFT)
-#घोषणा pfn_to_phys(pfn) PFN_PHYS(pfn)
+#define phys_to_pfn(p) ((p) >> PAGE_SHIFT)
+#define pfn_to_phys(pfn) PFN_PHYS(pfn)
 
-#घोषणा pfn_valid(pfn) ((pfn) < max_mapnr)
-#घोषणा virt_addr_valid(v) pfn_valid(phys_to_pfn(__pa(v)))
+#define pfn_valid(pfn) ((pfn) < max_mapnr)
+#define virt_addr_valid(v) pfn_valid(phys_to_pfn(__pa(v)))
 
-#समावेश <यंत्र-generic/memory_model.h>
-#समावेश <यंत्र-generic/getorder.h>
+#include <asm-generic/memory_model.h>
+#include <asm-generic/getorder.h>
 
-#पूर्ण_अगर	/* __ASSEMBLY__ */
+#endif	/* __ASSEMBLY__ */
 
-#अगर_घोषित CONFIG_X86_32
-#घोषणा __HAVE_ARCH_GATE_AREA 1
-#पूर्ण_अगर
+#ifdef CONFIG_X86_32
+#define __HAVE_ARCH_GATE_AREA 1
+#endif
 
-#पूर्ण_अगर	/* __UM_PAGE_H */
+#endif	/* __UM_PAGE_H */

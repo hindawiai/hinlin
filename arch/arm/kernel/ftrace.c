@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Dynamic function tracing support.
  *
@@ -13,228 +12,228 @@
  * All code mutation routines here are called under stop_machine().
  */
 
-#समावेश <linux/ftrace.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/stop_machine.h>
+#include <linux/ftrace.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/stop_machine.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/opcodes.h>
-#समावेश <यंत्र/ftrace.h>
-#समावेश <यंत्र/insn.h>
-#समावेश <यंत्र/set_memory.h>
-#समावेश <यंत्र/patch.h>
+#include <asm/cacheflush.h>
+#include <asm/opcodes.h>
+#include <asm/ftrace.h>
+#include <asm/insn.h>
+#include <asm/set_memory.h>
+#include <asm/patch.h>
 
-#अगर_घोषित CONFIG_THUMB2_KERNEL
-#घोषणा	NOP		0xf85deb04	/* pop.w अणुlrपूर्ण */
-#अन्यथा
-#घोषणा	NOP		0xe8bd4000	/* pop अणुlrपूर्ण */
-#पूर्ण_अगर
+#ifdef CONFIG_THUMB2_KERNEL
+#define	NOP		0xf85deb04	/* pop.w {lr} */
+#else
+#define	NOP		0xe8bd4000	/* pop {lr} */
+#endif
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#ifdef CONFIG_DYNAMIC_FTRACE
 
-अटल पूर्णांक __ftrace_modअगरy_code(व्योम *data)
-अणु
-	पूर्णांक *command = data;
+static int __ftrace_modify_code(void *data)
+{
+	int *command = data;
 
-	ftrace_modअगरy_all_code(*command);
+	ftrace_modify_all_code(*command);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम arch_ftrace_update_code(पूर्णांक command)
-अणु
-	stop_machine(__ftrace_modअगरy_code, &command, शून्य);
-पूर्ण
+void arch_ftrace_update_code(int command)
+{
+	stop_machine(__ftrace_modify_code, &command, NULL);
+}
 
-अटल अचिन्हित दीर्घ ftrace_nop_replace(काष्ठा dyn_ftrace *rec)
-अणु
-	वापस NOP;
-पूर्ण
+static unsigned long ftrace_nop_replace(struct dyn_ftrace *rec)
+{
+	return NOP;
+}
 
-अटल अचिन्हित दीर्घ adjust_address(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	वापस addr;
-पूर्ण
+static unsigned long adjust_address(struct dyn_ftrace *rec, unsigned long addr)
+{
+	return addr;
+}
 
-पूर्णांक ftrace_arch_code_modअगरy_prepare(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+int ftrace_arch_code_modify_prepare(void)
+{
+	return 0;
+}
 
-पूर्णांक ftrace_arch_code_modअगरy_post_process(व्योम)
-अणु
+int ftrace_arch_code_modify_post_process(void)
+{
 	/* Make sure any TLB misses during machine stop are cleared. */
 	flush_tlb_all();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ ftrace_call_replace(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ addr)
-अणु
-	वापस arm_gen_branch_link(pc, addr);
-पूर्ण
+static unsigned long ftrace_call_replace(unsigned long pc, unsigned long addr)
+{
+	return arm_gen_branch_link(pc, addr);
+}
 
-अटल पूर्णांक ftrace_modअगरy_code(अचिन्हित दीर्घ pc, अचिन्हित दीर्घ old,
-			      अचिन्हित दीर्घ new, bool validate)
-अणु
-	अचिन्हित दीर्घ replaced;
+static int ftrace_modify_code(unsigned long pc, unsigned long old,
+			      unsigned long new, bool validate)
+{
+	unsigned long replaced;
 
-	अगर (IS_ENABLED(CONFIG_THUMB2_KERNEL))
+	if (IS_ENABLED(CONFIG_THUMB2_KERNEL))
 		old = __opcode_to_mem_thumb32(old);
-	अन्यथा
+	else
 		old = __opcode_to_mem_arm(old);
 
-	अगर (validate) अणु
-		अगर (copy_from_kernel_nofault(&replaced, (व्योम *)pc,
+	if (validate) {
+		if (copy_from_kernel_nofault(&replaced, (void *)pc,
 				MCOUNT_INSN_SIZE))
-			वापस -EFAULT;
+			return -EFAULT;
 
-		अगर (replaced != old)
-			वापस -EINVAL;
-	पूर्ण
+		if (replaced != old)
+			return -EINVAL;
+	}
 
-	__patch_text((व्योम *)pc, new);
+	__patch_text((void *)pc, new);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
-अणु
-	अचिन्हित दीर्घ pc;
-	अचिन्हित दीर्घ new;
-	पूर्णांक ret;
+int ftrace_update_ftrace_func(ftrace_func_t func)
+{
+	unsigned long pc;
+	unsigned long new;
+	int ret;
 
-	pc = (अचिन्हित दीर्घ)&ftrace_call;
-	new = ftrace_call_replace(pc, (अचिन्हित दीर्घ)func);
+	pc = (unsigned long)&ftrace_call;
+	new = ftrace_call_replace(pc, (unsigned long)func);
 
-	ret = ftrace_modअगरy_code(pc, 0, new, false);
+	ret = ftrace_modify_code(pc, 0, new, false);
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-	अगर (!ret) अणु
-		pc = (अचिन्हित दीर्घ)&ftrace_regs_call;
-		new = ftrace_call_replace(pc, (अचिन्हित दीर्घ)func);
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	if (!ret) {
+		pc = (unsigned long)&ftrace_regs_call;
+		new = ftrace_call_replace(pc, (unsigned long)func);
 
-		ret = ftrace_modअगरy_code(pc, 0, new, false);
-	पूर्ण
-#पूर्ण_अगर
+		ret = ftrace_modify_code(pc, 0, new, false);
+	}
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ new, old;
-	अचिन्हित दीर्घ ip = rec->ip;
+int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
+{
+	unsigned long new, old;
+	unsigned long ip = rec->ip;
 
 	old = ftrace_nop_replace(rec);
 
 	new = ftrace_call_replace(ip, adjust_address(rec, addr));
 
-	वापस ftrace_modअगरy_code(rec->ip, old, new, true);
-पूर्ण
+	return ftrace_modify_code(rec->ip, old, new, true);
+}
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
 
-पूर्णांक ftrace_modअगरy_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ old_addr,
-				अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ new, old;
-	अचिन्हित दीर्घ ip = rec->ip;
+int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+				unsigned long addr)
+{
+	unsigned long new, old;
+	unsigned long ip = rec->ip;
 
 	old = ftrace_call_replace(ip, adjust_address(rec, old_addr));
 
 	new = ftrace_call_replace(ip, adjust_address(rec, addr));
 
-	वापस ftrace_modअगरy_code(rec->ip, old, new, true);
-पूर्ण
+	return ftrace_modify_code(rec->ip, old, new, true);
+}
 
-#पूर्ण_अगर
+#endif
 
-पूर्णांक ftrace_make_nop(काष्ठा module *mod,
-		    काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
-	अचिन्हित दीर्घ ip = rec->ip;
-	अचिन्हित दीर्घ old;
-	अचिन्हित दीर्घ new;
-	पूर्णांक ret;
+int ftrace_make_nop(struct module *mod,
+		    struct dyn_ftrace *rec, unsigned long addr)
+{
+	unsigned long ip = rec->ip;
+	unsigned long old;
+	unsigned long new;
+	int ret;
 
 	old = ftrace_call_replace(ip, adjust_address(rec, addr));
 	new = ftrace_nop_replace(rec);
-	ret = ftrace_modअगरy_code(ip, old, new, true);
+	ret = ftrace_modify_code(ip, old, new, true);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक __init ftrace_dyn_arch_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
+int __init ftrace_dyn_arch_init(void)
+{
+	return 0;
+}
+#endif /* CONFIG_DYNAMIC_FTRACE */
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-व्योम prepare_ftrace_वापस(अचिन्हित दीर्घ *parent, अचिन्हित दीर्घ self_addr,
-			   अचिन्हित दीर्घ frame_poपूर्णांकer)
-अणु
-	अचिन्हित दीर्घ वापस_hooker = (अचिन्हित दीर्घ) &वापस_to_handler;
-	अचिन्हित दीर्घ old;
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+void prepare_ftrace_return(unsigned long *parent, unsigned long self_addr,
+			   unsigned long frame_pointer)
+{
+	unsigned long return_hooker = (unsigned long) &return_to_handler;
+	unsigned long old;
 
-	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
-		वापस;
+	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+		return;
 
 	old = *parent;
-	*parent = वापस_hooker;
+	*parent = return_hooker;
 
-	अगर (function_graph_enter(old, self_addr, frame_poपूर्णांकer, शून्य))
+	if (function_graph_enter(old, self_addr, frame_pointer, NULL))
 		*parent = old;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
-बाह्य अचिन्हित दीर्घ ftrace_graph_call;
-बाह्य अचिन्हित दीर्घ ftrace_graph_call_old;
-बाह्य व्योम ftrace_graph_caller_old(व्योम);
-बाह्य अचिन्हित दीर्घ ftrace_graph_regs_call;
-बाह्य व्योम ftrace_graph_regs_caller(व्योम);
+#ifdef CONFIG_DYNAMIC_FTRACE
+extern unsigned long ftrace_graph_call;
+extern unsigned long ftrace_graph_call_old;
+extern void ftrace_graph_caller_old(void);
+extern unsigned long ftrace_graph_regs_call;
+extern void ftrace_graph_regs_caller(void);
 
-अटल पूर्णांक __ftrace_modअगरy_caller(अचिन्हित दीर्घ *callsite,
-				  व्योम (*func) (व्योम), bool enable)
-अणु
-	अचिन्हित दीर्घ caller_fn = (अचिन्हित दीर्घ) func;
-	अचिन्हित दीर्घ pc = (अचिन्हित दीर्घ) callsite;
-	अचिन्हित दीर्घ branch = arm_gen_branch(pc, caller_fn);
-	अचिन्हित दीर्घ nop = 0xe1a00000;	/* mov r0, r0 */
-	अचिन्हित दीर्घ old = enable ? nop : branch;
-	अचिन्हित दीर्घ new = enable ? branch : nop;
+static int __ftrace_modify_caller(unsigned long *callsite,
+				  void (*func) (void), bool enable)
+{
+	unsigned long caller_fn = (unsigned long) func;
+	unsigned long pc = (unsigned long) callsite;
+	unsigned long branch = arm_gen_branch(pc, caller_fn);
+	unsigned long nop = 0xe1a00000;	/* mov r0, r0 */
+	unsigned long old = enable ? nop : branch;
+	unsigned long new = enable ? branch : nop;
 
-	वापस ftrace_modअगरy_code(pc, old, new, true);
-पूर्ण
+	return ftrace_modify_code(pc, old, new, true);
+}
 
-अटल पूर्णांक ftrace_modअगरy_graph_caller(bool enable)
-अणु
-	पूर्णांक ret;
+static int ftrace_modify_graph_caller(bool enable)
+{
+	int ret;
 
-	ret = __ftrace_modअगरy_caller(&ftrace_graph_call,
+	ret = __ftrace_modify_caller(&ftrace_graph_call,
 				     ftrace_graph_caller,
 				     enable);
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE_WITH_REGS
-	अगर (!ret)
-		ret = __ftrace_modअगरy_caller(&ftrace_graph_regs_call,
+#ifdef CONFIG_DYNAMIC_FTRACE_WITH_REGS
+	if (!ret)
+		ret = __ftrace_modify_caller(&ftrace_graph_regs_call,
 				     ftrace_graph_regs_caller,
 				     enable);
-#पूर्ण_अगर
+#endif
 
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
-अणु
-	वापस ftrace_modअगरy_graph_caller(true);
-पूर्ण
+int ftrace_enable_ftrace_graph_caller(void)
+{
+	return ftrace_modify_graph_caller(true);
+}
 
-पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
-अणु
-	वापस ftrace_modअगरy_graph_caller(false);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
-#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
+int ftrace_disable_ftrace_graph_caller(void)
+{
+	return ftrace_modify_graph_caller(false);
+}
+#endif /* CONFIG_DYNAMIC_FTRACE */
+#endif /* CONFIG_FUNCTION_GRAPH_TRACER */

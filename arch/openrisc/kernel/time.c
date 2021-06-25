@@ -1,173 +1,172 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * OpenRISC समय.c
+ * OpenRISC time.c
  *
  * Linux architectural port borrowing liberally from similar works of
  * others.  All original copyrights apply as per the original source
  * declaration.
  *
- * Modअगरications क्रम the OpenRISC architecture:
+ * Modifications for the OpenRISC architecture:
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/समयx.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ftrace.h>
+#include <linux/kernel.h>
+#include <linux/time.h>
+#include <linux/timex.h>
+#include <linux/interrupt.h>
+#include <linux/ftrace.h>
 
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/irq.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/cpuinfo.h>
+#include <asm/cpuinfo.h>
 
-/* Test the समयr ticks to count, used in sync routine */
-अंतरभूत व्योम खोलोrisc_समयr_set(अचिन्हित दीर्घ count)
-अणु
+/* Test the timer ticks to count, used in sync routine */
+inline void openrisc_timer_set(unsigned long count)
+{
 	mtspr(SPR_TTCR, count);
-पूर्ण
+}
 
-/* Set the समयr to trigger in delta cycles */
-अंतरभूत व्योम खोलोrisc_समयr_set_next(अचिन्हित दीर्घ delta)
-अणु
+/* Set the timer to trigger in delta cycles */
+inline void openrisc_timer_set_next(unsigned long delta)
+{
 	u32 c;
 
 	/* Read 32-bit counter value, add delta, mask off the low 28 bits.
 	 * We're guaranteed delta won't be bigger than 28 bits because the
-	 * generic समयkeeping code ensures that क्रम us.
+	 * generic timekeeping code ensures that for us.
 	 */
 	c = mfspr(SPR_TTCR);
 	c += delta;
 	c &= SPR_TTMR_TP;
 
-	/* Set counter and enable पूर्णांकerrupt.
-	 * Keep समयr in continuous mode always.
+	/* Set counter and enable interrupt.
+	 * Keep timer in continuous mode always.
 	 */
 	mtspr(SPR_TTMR, SPR_TTMR_CR | SPR_TTMR_IE | c);
-पूर्ण
+}
 
-अटल पूर्णांक खोलोrisc_समयr_set_next_event(अचिन्हित दीर्घ delta,
-					 काष्ठा घड़ी_event_device *dev)
-अणु
-	खोलोrisc_समयr_set_next(delta);
-	वापस 0;
-पूर्ण
+static int openrisc_timer_set_next_event(unsigned long delta,
+					 struct clock_event_device *dev)
+{
+	openrisc_timer_set_next(delta);
+	return 0;
+}
 
-/* This is the घड़ी event device based on the OR1K tick समयr.
- * As the समयr is being used as a continuous घड़ी-source (required क्रम HR
- * समयrs) we cannot enable the PERIODIC feature.  The tick समयr can run using
+/* This is the clock event device based on the OR1K tick timer.
+ * As the timer is being used as a continuous clock-source (required for HR
+ * timers) we cannot enable the PERIODIC feature.  The tick timer can run using
  * one-shot events, so no problem.
  */
-DEFINE_PER_CPU(काष्ठा घड़ी_event_device, घड़ीevent_खोलोrisc_समयr);
+DEFINE_PER_CPU(struct clock_event_device, clockevent_openrisc_timer);
 
-व्योम खोलोrisc_घड़ीevent_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	काष्ठा घड़ी_event_device *evt =
-		&per_cpu(घड़ीevent_खोलोrisc_समयr, cpu);
-	काष्ठा cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[cpu];
+void openrisc_clockevent_init(void)
+{
+	unsigned int cpu = smp_processor_id();
+	struct clock_event_device *evt =
+		&per_cpu(clockevent_openrisc_timer, cpu);
+	struct cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[cpu];
 
 	mtspr(SPR_TTMR, SPR_TTMR_CR);
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	evt->broadcast = tick_broadcast;
-#पूर्ण_अगर
+#endif
 	evt->name = "openrisc_timer_clockevent",
 	evt->features = CLOCK_EVT_FEAT_ONESHOT,
 	evt->rating = 300,
-	evt->set_next_event = खोलोrisc_समयr_set_next_event,
+	evt->set_next_event = openrisc_timer_set_next_event,
 
 	evt->cpumask = cpumask_of(cpu);
 
 	/* We only have 28 bits */
-	घड़ीevents_config_and_रेजिस्टर(evt, cpuinfo->घड़ी_frequency,
+	clockevents_config_and_register(evt, cpuinfo->clock_frequency,
 					100, 0x0fffffff);
 
-पूर्ण
+}
 
-अटल अंतरभूत व्योम समयr_ack(व्योम)
-अणु
-	/* Clear the IP bit and disable further पूर्णांकerrupts */
-	/* This can be करोne very simply... we just need to keep the समयr
-	   running, so just मुख्यtain the CR bits जबतक clearing the rest
-	   of the रेजिस्टर
+static inline void timer_ack(void)
+{
+	/* Clear the IP bit and disable further interrupts */
+	/* This can be done very simply... we just need to keep the timer
+	   running, so just maintain the CR bits while clearing the rest
+	   of the register
 	 */
 	mtspr(SPR_TTMR, SPR_TTMR_CR);
-पूर्ण
+}
 
 /*
- * The समयr पूर्णांकerrupt is mostly handled in generic code nowadays... this
- * function just acknowledges the पूर्णांकerrupt and fires the event handler that
- * has been set on the घड़ीevent device by the generic समय management code.
+ * The timer interrupt is mostly handled in generic code nowadays... this
+ * function just acknowledges the interrupt and fires the event handler that
+ * has been set on the clockevent device by the generic time management code.
  *
- * This function needs to be called by the समयr exception handler and that's
- * all the exception handler needs to करो.
+ * This function needs to be called by the timer exception handler and that's
+ * all the exception handler needs to do.
  */
 
-irqवापस_t __irq_entry समयr_पूर्णांकerrupt(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा pt_regs *old_regs = set_irq_regs(regs);
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	काष्ठा घड़ी_event_device *evt =
-		&per_cpu(घड़ीevent_खोलोrisc_समयr, cpu);
+irqreturn_t __irq_entry timer_interrupt(struct pt_regs *regs)
+{
+	struct pt_regs *old_regs = set_irq_regs(regs);
+	unsigned int cpu = smp_processor_id();
+	struct clock_event_device *evt =
+		&per_cpu(clockevent_openrisc_timer, cpu);
 
-	समयr_ack();
+	timer_ack();
 
 	/*
-	 * update_process_बार() expects us to have called irq_enter().
+	 * update_process_times() expects us to have called irq_enter().
 	 */
 	irq_enter();
 	evt->event_handler(evt);
-	irq_निकास();
+	irq_exit();
 
 	set_irq_regs(old_regs);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * Clocksource: Based on OpenRISC समयr/counter
+ * Clocksource: Based on OpenRISC timer/counter
  *
- * This sets up the OpenRISC Tick Timer as a घड़ी source.  The tick समयr
- * is 32 bits wide and runs at the CPU घड़ी frequency.
+ * This sets up the OpenRISC Tick Timer as a clock source.  The tick timer
+ * is 32 bits wide and runs at the CPU clock frequency.
  */
-अटल u64 खोलोrisc_समयr_पढ़ो(काष्ठा घड़ीsource *cs)
-अणु
-	वापस (u64) mfspr(SPR_TTCR);
-पूर्ण
+static u64 openrisc_timer_read(struct clocksource *cs)
+{
+	return (u64) mfspr(SPR_TTCR);
+}
 
-अटल काष्ठा घड़ीsource खोलोrisc_समयr = अणु
+static struct clocksource openrisc_timer = {
 	.name = "openrisc_timer",
 	.rating = 200,
-	.पढ़ो = खोलोrisc_समयr_पढ़ो,
+	.read = openrisc_timer_read,
 	.mask = CLOCKSOURCE_MASK(32),
 	.flags = CLOCK_SOURCE_IS_CONTINUOUS,
-पूर्ण;
+};
 
-अटल पूर्णांक __init खोलोrisc_समयr_init(व्योम)
-अणु
-	काष्ठा cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[smp_processor_id()];
+static int __init openrisc_timer_init(void)
+{
+	struct cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[smp_processor_id()];
 
-	अगर (घड़ीsource_रेजिस्टर_hz(&खोलोrisc_समयr, cpuinfo->घड़ी_frequency))
+	if (clocksource_register_hz(&openrisc_timer, cpuinfo->clock_frequency))
 		panic("failed to register clocksource");
 
-	/* Enable the incrementer: 'continuous' mode with पूर्णांकerrupt disabled */
+	/* Enable the incrementer: 'continuous' mode with interrupt disabled */
 	mtspr(SPR_TTMR, SPR_TTMR_CR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __init समय_init(व्योम)
-अणु
+void __init time_init(void)
+{
 	u32 upr;
 
 	upr = mfspr(SPR_UPR);
-	अगर (!(upr & SPR_UPR_TTP))
+	if (!(upr & SPR_UPR_TTP))
 		panic("Linux not supported on devices without tick timer");
 
-	खोलोrisc_समयr_init();
-	खोलोrisc_घड़ीevent_init();
-पूर्ण
+	openrisc_timer_init();
+	openrisc_clockevent_init();
+}

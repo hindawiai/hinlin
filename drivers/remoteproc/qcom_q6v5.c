@@ -1,176 +1,175 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Qualcomm Peripheral Image Loader क्रम Q6V5
+ * Qualcomm Peripheral Image Loader for Q6V5
  *
  * Copyright (C) 2016-2018 Linaro Ltd.
  * Copyright (C) 2014 Sony Mobile Communications AB
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/soc/qcom/sस्मृति.स>
-#समावेश <linux/soc/qcom/smem_state.h>
-#समावेश <linux/remoteproc.h>
-#समावेश "qcom_common.h"
-#समावेश "qcom_q6v5.h"
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/soc/qcom/smem.h>
+#include <linux/soc/qcom/smem_state.h>
+#include <linux/remoteproc.h>
+#include "qcom_common.h"
+#include "qcom_q6v5.h"
 
-#घोषणा Q6V5_PANIC_DELAY_MS	200
+#define Q6V5_PANIC_DELAY_MS	200
 
 /**
- * qcom_q6v5_prepare() - reinitialize the qcom_q6v5 context beक्रमe start
+ * qcom_q6v5_prepare() - reinitialize the qcom_q6v5 context before start
  * @q6v5:	reference to qcom_q6v5 context to be reinitialized
  *
- * Return: 0 on success, negative त्रुटि_सं on failure
+ * Return: 0 on success, negative errno on failure
  */
-पूर्णांक qcom_q6v5_prepare(काष्ठा qcom_q6v5 *q6v5)
-अणु
-	reinit_completion(&q6v5->start_करोne);
-	reinit_completion(&q6v5->stop_करोne);
+int qcom_q6v5_prepare(struct qcom_q6v5 *q6v5)
+{
+	reinit_completion(&q6v5->start_done);
+	reinit_completion(&q6v5->stop_done);
 
 	q6v5->running = true;
-	q6v5->hanकरोver_issued = false;
+	q6v5->handover_issued = false;
 
-	enable_irq(q6v5->hanकरोver_irq);
+	enable_irq(q6v5->handover_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(qcom_q6v5_prepare);
 
 /**
  * qcom_q6v5_unprepare() - unprepare the qcom_q6v5 context after stop
  * @q6v5:	reference to qcom_q6v5 context to be unprepared
  *
- * Return: 0 on success, 1 अगर hanकरोver hasn't yet been called
+ * Return: 0 on success, 1 if handover hasn't yet been called
  */
-पूर्णांक qcom_q6v5_unprepare(काष्ठा qcom_q6v5 *q6v5)
-अणु
-	disable_irq(q6v5->hanकरोver_irq);
+int qcom_q6v5_unprepare(struct qcom_q6v5 *q6v5)
+{
+	disable_irq(q6v5->handover_irq);
 
-	वापस !q6v5->hanकरोver_issued;
-पूर्ण
+	return !q6v5->handover_issued;
+}
 EXPORT_SYMBOL_GPL(qcom_q6v5_unprepare);
 
-अटल irqवापस_t q6v5_wकरोg_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_q6v5 *q6v5 = data;
-	माप_प्रकार len;
-	अक्षर *msg;
+static irqreturn_t q6v5_wdog_interrupt(int irq, void *data)
+{
+	struct qcom_q6v5 *q6v5 = data;
+	size_t len;
+	char *msg;
 
-	/* Someबार the stop triggers a watchकरोg rather than a stop-ack */
-	अगर (!q6v5->running) अणु
-		complete(&q6v5->stop_करोne);
-		वापस IRQ_HANDLED;
-	पूर्ण
+	/* Sometimes the stop triggers a watchdog rather than a stop-ack */
+	if (!q6v5->running) {
+		complete(&q6v5->stop_done);
+		return IRQ_HANDLED;
+	}
 
 	msg = qcom_smem_get(QCOM_SMEM_HOST_ANY, q6v5->crash_reason, &len);
-	अगर (!IS_ERR(msg) && len > 0 && msg[0])
+	if (!IS_ERR(msg) && len > 0 && msg[0])
 		dev_err(q6v5->dev, "watchdog received: %s\n", msg);
-	अन्यथा
+	else
 		dev_err(q6v5->dev, "watchdog without message\n");
 
 	rproc_report_crash(q6v5->rproc, RPROC_WATCHDOG);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t q6v5_fatal_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_q6v5 *q6v5 = data;
-	माप_प्रकार len;
-	अक्षर *msg;
+static irqreturn_t q6v5_fatal_interrupt(int irq, void *data)
+{
+	struct qcom_q6v5 *q6v5 = data;
+	size_t len;
+	char *msg;
 
 	msg = qcom_smem_get(QCOM_SMEM_HOST_ANY, q6v5->crash_reason, &len);
-	अगर (!IS_ERR(msg) && len > 0 && msg[0])
+	if (!IS_ERR(msg) && len > 0 && msg[0])
 		dev_err(q6v5->dev, "fatal error received: %s\n", msg);
-	अन्यथा
+	else
 		dev_err(q6v5->dev, "fatal error without message\n");
 
 	q6v5->running = false;
 	rproc_report_crash(q6v5->rproc, RPROC_FATAL_ERROR);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t q6v5_पढ़ोy_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_q6v5 *q6v5 = data;
+static irqreturn_t q6v5_ready_interrupt(int irq, void *data)
+{
+	struct qcom_q6v5 *q6v5 = data;
 
-	complete(&q6v5->start_करोne);
+	complete(&q6v5->start_done);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
- * qcom_q6v5_रुको_क्रम_start() - रुको क्रम remote processor start संकेत
+ * qcom_q6v5_wait_for_start() - wait for remote processor start signal
  * @q6v5:	reference to qcom_q6v5 context
- * @समयout:	समयout to रुको क्रम the event, in jअगरfies
+ * @timeout:	timeout to wait for the event, in jiffies
  *
  * qcom_q6v5_unprepare() should not be called when this function fails.
  *
- * Return: 0 on success, -ETIMEDOUT on समयout
+ * Return: 0 on success, -ETIMEDOUT on timeout
  */
-पूर्णांक qcom_q6v5_रुको_क्रम_start(काष्ठा qcom_q6v5 *q6v5, पूर्णांक समयout)
-अणु
-	पूर्णांक ret;
+int qcom_q6v5_wait_for_start(struct qcom_q6v5 *q6v5, int timeout)
+{
+	int ret;
 
-	ret = रुको_क्रम_completion_समयout(&q6v5->start_करोne, समयout);
-	अगर (!ret)
-		disable_irq(q6v5->hanकरोver_irq);
+	ret = wait_for_completion_timeout(&q6v5->start_done, timeout);
+	if (!ret)
+		disable_irq(q6v5->handover_irq);
 
-	वापस !ret ? -ETIMEDOUT : 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(qcom_q6v5_रुको_क्रम_start);
+	return !ret ? -ETIMEDOUT : 0;
+}
+EXPORT_SYMBOL_GPL(qcom_q6v5_wait_for_start);
 
-अटल irqवापस_t q6v5_hanकरोver_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_q6v5 *q6v5 = data;
+static irqreturn_t q6v5_handover_interrupt(int irq, void *data)
+{
+	struct qcom_q6v5 *q6v5 = data;
 
-	अगर (q6v5->hanकरोver)
-		q6v5->hanकरोver(q6v5);
+	if (q6v5->handover)
+		q6v5->handover(q6v5);
 
-	q6v5->hanकरोver_issued = true;
+	q6v5->handover_issued = true;
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t q6v5_stop_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा qcom_q6v5 *q6v5 = data;
+static irqreturn_t q6v5_stop_interrupt(int irq, void *data)
+{
+	struct qcom_q6v5 *q6v5 = data;
 
-	complete(&q6v5->stop_करोne);
+	complete(&q6v5->stop_done);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /**
  * qcom_q6v5_request_stop() - request the remote processor to stop
  * @q6v5:	reference to qcom_q6v5 context
- * @sysmon:	reference to the remote's sysmon instance, or शून्य
+ * @sysmon:	reference to the remote's sysmon instance, or NULL
  *
- * Return: 0 on success, negative त्रुटि_सं on failure
+ * Return: 0 on success, negative errno on failure
  */
-पूर्णांक qcom_q6v5_request_stop(काष्ठा qcom_q6v5 *q6v5, काष्ठा qcom_sysmon *sysmon)
-अणु
-	पूर्णांक ret;
+int qcom_q6v5_request_stop(struct qcom_q6v5 *q6v5, struct qcom_sysmon *sysmon)
+{
+	int ret;
 
 	q6v5->running = false;
 
-	/* Don't perक्रमm SMP2P dance अगर sysmon alपढ़ोy shut करोwn the remote */
-	अगर (qcom_sysmon_shutकरोwn_acked(sysmon))
-		वापस 0;
+	/* Don't perform SMP2P dance if sysmon already shut down the remote */
+	if (qcom_sysmon_shutdown_acked(sysmon))
+		return 0;
 
 	qcom_smem_state_update_bits(q6v5->state,
 				    BIT(q6v5->stop_bit), BIT(q6v5->stop_bit));
 
-	ret = रुको_क्रम_completion_समयout(&q6v5->stop_करोne, 5 * HZ);
+	ret = wait_for_completion_timeout(&q6v5->stop_done, 5 * HZ);
 
 	qcom_smem_state_update_bits(q6v5->state, BIT(q6v5->stop_bit), 0);
 
-	वापस ret == 0 ? -ETIMEDOUT : 0;
-पूर्ण
+	return ret == 0 ? -ETIMEDOUT : 0;
+}
 EXPORT_SYMBOL_GPL(qcom_q6v5_request_stop);
 
 /**
@@ -178,117 +177,117 @@ EXPORT_SYMBOL_GPL(qcom_q6v5_request_stop);
  * @q6v5:	reference to qcom_q6v5 context
  *
  * Set the stop bit and sleep in order to allow the remote processor to flush
- * its caches etc क्रम post mortem debugging.
+ * its caches etc for post mortem debugging.
  *
  * Return: 200ms
  */
-अचिन्हित दीर्घ qcom_q6v5_panic(काष्ठा qcom_q6v5 *q6v5)
-अणु
+unsigned long qcom_q6v5_panic(struct qcom_q6v5 *q6v5)
+{
 	qcom_smem_state_update_bits(q6v5->state,
 				    BIT(q6v5->stop_bit), BIT(q6v5->stop_bit));
 
-	वापस Q6V5_PANIC_DELAY_MS;
-पूर्ण
+	return Q6V5_PANIC_DELAY_MS;
+}
 EXPORT_SYMBOL_GPL(qcom_q6v5_panic);
 
 /**
- * qcom_q6v5_init() - initializer of the q6v5 common काष्ठा
+ * qcom_q6v5_init() - initializer of the q6v5 common struct
  * @q6v5:	handle to be initialized
- * @pdev:	platक्रमm_device reference क्रम acquiring resources
+ * @pdev:	platform_device reference for acquiring resources
  * @rproc:	associated remoteproc instance
- * @crash_reason: SMEM id क्रम crash reason string, or 0 अगर none
- * @hanकरोver:	function to be called when proxy resources should be released
+ * @crash_reason: SMEM id for crash reason string, or 0 if none
+ * @handover:	function to be called when proxy resources should be released
  *
- * Return: 0 on success, negative त्रुटि_सं on failure
+ * Return: 0 on success, negative errno on failure
  */
-पूर्णांक qcom_q6v5_init(काष्ठा qcom_q6v5 *q6v5, काष्ठा platक्रमm_device *pdev,
-		   काष्ठा rproc *rproc, पूर्णांक crash_reason,
-		   व्योम (*hanकरोver)(काष्ठा qcom_q6v5 *q6v5))
-अणु
-	पूर्णांक ret;
+int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
+		   struct rproc *rproc, int crash_reason,
+		   void (*handover)(struct qcom_q6v5 *q6v5))
+{
+	int ret;
 
 	q6v5->rproc = rproc;
 	q6v5->dev = &pdev->dev;
 	q6v5->crash_reason = crash_reason;
-	q6v5->hanकरोver = hanकरोver;
+	q6v5->handover = handover;
 
-	init_completion(&q6v5->start_करोne);
-	init_completion(&q6v5->stop_करोne);
+	init_completion(&q6v5->start_done);
+	init_completion(&q6v5->stop_done);
 
-	q6v5->wकरोg_irq = platक्रमm_get_irq_byname(pdev, "wdog");
-	अगर (q6v5->wकरोg_irq < 0)
-		वापस q6v5->wकरोg_irq;
+	q6v5->wdog_irq = platform_get_irq_byname(pdev, "wdog");
+	if (q6v5->wdog_irq < 0)
+		return q6v5->wdog_irq;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, q6v5->wकरोg_irq,
-					शून्य, q6v5_wकरोg_पूर्णांकerrupt,
+	ret = devm_request_threaded_irq(&pdev->dev, q6v5->wdog_irq,
+					NULL, q6v5_wdog_interrupt,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					"q6v5 wdog", q6v5);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to acquire wdog IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	q6v5->fatal_irq = platक्रमm_get_irq_byname(pdev, "fatal");
-	अगर (q6v5->fatal_irq < 0)
-		वापस q6v5->fatal_irq;
+	q6v5->fatal_irq = platform_get_irq_byname(pdev, "fatal");
+	if (q6v5->fatal_irq < 0)
+		return q6v5->fatal_irq;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, q6v5->fatal_irq,
-					शून्य, q6v5_fatal_पूर्णांकerrupt,
+	ret = devm_request_threaded_irq(&pdev->dev, q6v5->fatal_irq,
+					NULL, q6v5_fatal_interrupt,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					"q6v5 fatal", q6v5);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to acquire fatal IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	q6v5->पढ़ोy_irq = platक्रमm_get_irq_byname(pdev, "ready");
-	अगर (q6v5->पढ़ोy_irq < 0)
-		वापस q6v5->पढ़ोy_irq;
+	q6v5->ready_irq = platform_get_irq_byname(pdev, "ready");
+	if (q6v5->ready_irq < 0)
+		return q6v5->ready_irq;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, q6v5->पढ़ोy_irq,
-					शून्य, q6v5_पढ़ोy_पूर्णांकerrupt,
+	ret = devm_request_threaded_irq(&pdev->dev, q6v5->ready_irq,
+					NULL, q6v5_ready_interrupt,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					"q6v5 ready", q6v5);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to acquire ready IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	q6v5->hanकरोver_irq = platक्रमm_get_irq_byname(pdev, "handover");
-	अगर (q6v5->hanकरोver_irq < 0)
-		वापस q6v5->hanकरोver_irq;
+	q6v5->handover_irq = platform_get_irq_byname(pdev, "handover");
+	if (q6v5->handover_irq < 0)
+		return q6v5->handover_irq;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, q6v5->hanकरोver_irq,
-					शून्य, q6v5_hanकरोver_पूर्णांकerrupt,
+	ret = devm_request_threaded_irq(&pdev->dev, q6v5->handover_irq,
+					NULL, q6v5_handover_interrupt,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					"q6v5 handover", q6v5);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to acquire handover IRQ\n");
-		वापस ret;
-	पूर्ण
-	disable_irq(q6v5->hanकरोver_irq);
+		return ret;
+	}
+	disable_irq(q6v5->handover_irq);
 
-	q6v5->stop_irq = platक्रमm_get_irq_byname(pdev, "stop-ack");
-	अगर (q6v5->stop_irq < 0)
-		वापस q6v5->stop_irq;
+	q6v5->stop_irq = platform_get_irq_byname(pdev, "stop-ack");
+	if (q6v5->stop_irq < 0)
+		return q6v5->stop_irq;
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, q6v5->stop_irq,
-					शून्य, q6v5_stop_पूर्णांकerrupt,
+	ret = devm_request_threaded_irq(&pdev->dev, q6v5->stop_irq,
+					NULL, q6v5_stop_interrupt,
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					"q6v5 stop", q6v5);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "failed to acquire stop-ack IRQ\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	q6v5->state = qcom_smem_state_get(&pdev->dev, "stop", &q6v5->stop_bit);
-	अगर (IS_ERR(q6v5->state)) अणु
+	if (IS_ERR(q6v5->state)) {
 		dev_err(&pdev->dev, "failed to acquire stop state\n");
-		वापस PTR_ERR(q6v5->state);
-	पूर्ण
+		return PTR_ERR(q6v5->state);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(qcom_q6v5_init);
 
 MODULE_LICENSE("GPL v2");

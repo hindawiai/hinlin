@@ -1,139 +1,138 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Intel Platक्रमm Monitory Technology Telemetry driver
+ * Intel Platform Monitory Technology Telemetry driver
  *
  * Copyright (c) 2020, Intel Corporation.
  * All Rights Reserved.
  *
- * Author: "David E. Box" <david.e.box@linux.पूर्णांकel.com>
+ * Author: "David E. Box" <david.e.box@linux.intel.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/overflow.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/overflow.h>
 
-#समावेश "intel_pmt_class.h"
+#include "intel_pmt_class.h"
 
-#घोषणा TELEM_DEV_NAME		"pmt_telemetry"
+#define TELEM_DEV_NAME		"pmt_telemetry"
 
-#घोषणा TELEM_SIZE_OFFSET	0x0
-#घोषणा TELEM_GUID_OFFSET	0x4
-#घोषणा TELEM_BASE_OFFSET	0x8
-#घोषणा TELEM_ACCESS(v)		((v) & GENMASK(3, 0))
+#define TELEM_SIZE_OFFSET	0x0
+#define TELEM_GUID_OFFSET	0x4
+#define TELEM_BASE_OFFSET	0x8
+#define TELEM_ACCESS(v)		((v) & GENMASK(3, 0))
 /* size is in bytes */
-#घोषणा TELEM_SIZE(v)		(((v) & GENMASK(27, 12)) >> 10)
+#define TELEM_SIZE(v)		(((v) & GENMASK(27, 12)) >> 10)
 
-/* Used by client hardware to identअगरy a fixed telemetry entry*/
-#घोषणा TELEM_CLIENT_FIXED_BLOCK_GUID	0x10000000
+/* Used by client hardware to identify a fixed telemetry entry*/
+#define TELEM_CLIENT_FIXED_BLOCK_GUID	0x10000000
 
-काष्ठा pmt_telem_priv अणु
-	पूर्णांक				num_entries;
-	काष्ठा पूर्णांकel_pmt_entry		entry[];
-पूर्ण;
+struct pmt_telem_priv {
+	int				num_entries;
+	struct intel_pmt_entry		entry[];
+};
 
-अटल bool pmt_telem_region_overlaps(काष्ठा पूर्णांकel_pmt_entry *entry,
-				      काष्ठा device *dev)
-अणु
-	u32 guid = पढ़ोl(entry->disc_table + TELEM_GUID_OFFSET);
+static bool pmt_telem_region_overlaps(struct intel_pmt_entry *entry,
+				      struct device *dev)
+{
+	u32 guid = readl(entry->disc_table + TELEM_GUID_OFFSET);
 
-	अगर (guid != TELEM_CLIENT_FIXED_BLOCK_GUID)
-		वापस false;
+	if (guid != TELEM_CLIENT_FIXED_BLOCK_GUID)
+		return false;
 
-	वापस पूर्णांकel_pmt_is_early_client_hw(dev);
-पूर्ण
+	return intel_pmt_is_early_client_hw(dev);
+}
 
-अटल पूर्णांक pmt_telem_header_decode(काष्ठा पूर्णांकel_pmt_entry *entry,
-				   काष्ठा पूर्णांकel_pmt_header *header,
-				   काष्ठा device *dev)
-अणु
-	व्योम __iomem *disc_table = entry->disc_table;
+static int pmt_telem_header_decode(struct intel_pmt_entry *entry,
+				   struct intel_pmt_header *header,
+				   struct device *dev)
+{
+	void __iomem *disc_table = entry->disc_table;
 
-	अगर (pmt_telem_region_overlaps(entry, dev))
-		वापस 1;
+	if (pmt_telem_region_overlaps(entry, dev))
+		return 1;
 
-	header->access_type = TELEM_ACCESS(पढ़ोl(disc_table));
-	header->guid = पढ़ोl(disc_table + TELEM_GUID_OFFSET);
-	header->base_offset = पढ़ोl(disc_table + TELEM_BASE_OFFSET);
+	header->access_type = TELEM_ACCESS(readl(disc_table));
+	header->guid = readl(disc_table + TELEM_GUID_OFFSET);
+	header->base_offset = readl(disc_table + TELEM_BASE_OFFSET);
 
-	/* Size is measured in DWORDS, but accessor वापसs bytes */
-	header->size = TELEM_SIZE(पढ़ोl(disc_table));
+	/* Size is measured in DWORDS, but accessor returns bytes */
+	header->size = TELEM_SIZE(readl(disc_table));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEFINE_XARRAY_ALLOC(telem_array);
-अटल काष्ठा पूर्णांकel_pmt_namespace pmt_telem_ns = अणु
+static DEFINE_XARRAY_ALLOC(telem_array);
+static struct intel_pmt_namespace pmt_telem_ns = {
 	.name = "telem",
 	.xa = &telem_array,
 	.pmt_header_decode = pmt_telem_header_decode,
-पूर्ण;
+};
 
-अटल पूर्णांक pmt_telem_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pmt_telem_priv *priv = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int pmt_telem_remove(struct platform_device *pdev)
+{
+	struct pmt_telem_priv *priv = platform_get_drvdata(pdev);
+	int i;
 
-	क्रम (i = 0; i < priv->num_entries; i++)
-		पूर्णांकel_pmt_dev_destroy(&priv->entry[i], &pmt_telem_ns);
+	for (i = 0; i < priv->num_entries; i++)
+		intel_pmt_dev_destroy(&priv->entry[i], &pmt_telem_ns);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pmt_telem_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pmt_telem_priv *priv;
-	माप_प्रकार size;
-	पूर्णांक i, ret;
+static int pmt_telem_probe(struct platform_device *pdev)
+{
+	struct pmt_telem_priv *priv;
+	size_t size;
+	int i, ret;
 
-	size = काष्ठा_size(priv, entry, pdev->num_resources);
+	size = struct_size(priv, entry, pdev->num_resources);
 	priv = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	if (!priv)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	क्रम (i = 0; i < pdev->num_resources; i++) अणु
-		काष्ठा पूर्णांकel_pmt_entry *entry = &priv->entry[i];
+	for (i = 0; i < pdev->num_resources; i++) {
+		struct intel_pmt_entry *entry = &priv->entry[i];
 
-		ret = पूर्णांकel_pmt_dev_create(entry, &pmt_telem_ns, pdev, i);
-		अगर (ret < 0)
-			जाओ पात_probe;
-		अगर (ret)
-			जारी;
+		ret = intel_pmt_dev_create(entry, &pmt_telem_ns, pdev, i);
+		if (ret < 0)
+			goto abort_probe;
+		if (ret)
+			continue;
 
 		priv->num_entries++;
-	पूर्ण
+	}
 
-	वापस 0;
-पात_probe:
-	pmt_telem_हटाओ(pdev);
-	वापस ret;
-पूर्ण
+	return 0;
+abort_probe:
+	pmt_telem_remove(pdev);
+	return ret;
+}
 
-अटल काष्ठा platक्रमm_driver pmt_telem_driver = अणु
-	.driver = अणु
+static struct platform_driver pmt_telem_driver = {
+	.driver = {
 		.name   = TELEM_DEV_NAME,
-	पूर्ण,
-	.हटाओ = pmt_telem_हटाओ,
+	},
+	.remove = pmt_telem_remove,
 	.probe  = pmt_telem_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pmt_telem_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&pmt_telem_driver);
-पूर्ण
+static int __init pmt_telem_init(void)
+{
+	return platform_driver_register(&pmt_telem_driver);
+}
 module_init(pmt_telem_init);
 
-अटल व्योम __निकास pmt_telem_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&pmt_telem_driver);
+static void __exit pmt_telem_exit(void)
+{
+	platform_driver_unregister(&pmt_telem_driver);
 	xa_destroy(&telem_array);
-पूर्ण
-module_निकास(pmt_telem_निकास);
+}
+module_exit(pmt_telem_exit);
 
 MODULE_AUTHOR("David E. Box <david.e.box@linux.intel.com>");
 MODULE_DESCRIPTION("Intel PMT Telemetry driver");

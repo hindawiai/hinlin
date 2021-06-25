@@ -1,486 +1,485 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * slot_map.c
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/highस्मृति.स>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/highmem.h>
 
-#समावेश <cluster/masklog.h>
+#include <cluster/masklog.h>
 
-#समावेश "ocfs2.h"
+#include "ocfs2.h"
 
-#समावेश "dlmglue.h"
-#समावेश "extent_map.h"
-#समावेश "heartbeat.h"
-#समावेश "inode.h"
-#समावेश "slot_map.h"
-#समावेश "super.h"
-#समावेश "sysfile.h"
-#समावेश "ocfs2_trace.h"
+#include "dlmglue.h"
+#include "extent_map.h"
+#include "heartbeat.h"
+#include "inode.h"
+#include "slot_map.h"
+#include "super.h"
+#include "sysfile.h"
+#include "ocfs2_trace.h"
 
-#समावेश "buffer_head_io.h"
-
-
-काष्ठा ocfs2_slot अणु
-	पूर्णांक sl_valid;
-	अचिन्हित पूर्णांक sl_node_num;
-पूर्ण;
-
-काष्ठा ocfs2_slot_info अणु
-	पूर्णांक si_extended;
-	पूर्णांक si_slots_per_block;
-	काष्ठा inode *si_inode;
-	अचिन्हित पूर्णांक si_blocks;
-	काष्ठा buffer_head **si_bh;
-	अचिन्हित पूर्णांक si_num_slots;
-	काष्ठा ocfs2_slot si_slots[];
-पूर्ण;
+#include "buffer_head_io.h"
 
 
-अटल पूर्णांक __ocfs2_node_num_to_slot(काष्ठा ocfs2_slot_info *si,
-				    अचिन्हित पूर्णांक node_num);
+struct ocfs2_slot {
+	int sl_valid;
+	unsigned int sl_node_num;
+};
 
-अटल व्योम ocfs2_invalidate_slot(काष्ठा ocfs2_slot_info *si,
-				  पूर्णांक slot_num)
-अणु
+struct ocfs2_slot_info {
+	int si_extended;
+	int si_slots_per_block;
+	struct inode *si_inode;
+	unsigned int si_blocks;
+	struct buffer_head **si_bh;
+	unsigned int si_num_slots;
+	struct ocfs2_slot si_slots[];
+};
+
+
+static int __ocfs2_node_num_to_slot(struct ocfs2_slot_info *si,
+				    unsigned int node_num);
+
+static void ocfs2_invalidate_slot(struct ocfs2_slot_info *si,
+				  int slot_num)
+{
 	BUG_ON((slot_num < 0) || (slot_num >= si->si_num_slots));
 	si->si_slots[slot_num].sl_valid = 0;
-पूर्ण
+}
 
-अटल व्योम ocfs2_set_slot(काष्ठा ocfs2_slot_info *si,
-			   पूर्णांक slot_num, अचिन्हित पूर्णांक node_num)
-अणु
+static void ocfs2_set_slot(struct ocfs2_slot_info *si,
+			   int slot_num, unsigned int node_num)
+{
 	BUG_ON((slot_num < 0) || (slot_num >= si->si_num_slots));
 
 	si->si_slots[slot_num].sl_valid = 1;
 	si->si_slots[slot_num].sl_node_num = node_num;
-पूर्ण
+}
 
-/* This version is क्रम the extended slot map */
-अटल व्योम ocfs2_update_slot_info_extended(काष्ठा ocfs2_slot_info *si)
-अणु
-	पूर्णांक b, i, slotno;
-	काष्ठा ocfs2_slot_map_extended *se;
+/* This version is for the extended slot map */
+static void ocfs2_update_slot_info_extended(struct ocfs2_slot_info *si)
+{
+	int b, i, slotno;
+	struct ocfs2_slot_map_extended *se;
 
 	slotno = 0;
-	क्रम (b = 0; b < si->si_blocks; b++) अणु
-		se = (काष्ठा ocfs2_slot_map_extended *)si->si_bh[b]->b_data;
-		क्रम (i = 0;
+	for (b = 0; b < si->si_blocks; b++) {
+		se = (struct ocfs2_slot_map_extended *)si->si_bh[b]->b_data;
+		for (i = 0;
 		     (i < si->si_slots_per_block) &&
 		     (slotno < si->si_num_slots);
-		     i++, slotno++) अणु
-			अगर (se->se_slots[i].es_valid)
+		     i++, slotno++) {
+			if (se->se_slots[i].es_valid)
 				ocfs2_set_slot(si, slotno,
 					       le32_to_cpu(se->se_slots[i].es_node_num));
-			अन्यथा
+			else
 				ocfs2_invalidate_slot(si, slotno);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Post the slot inक्रमmation on disk पूर्णांकo our slot_info काष्ठा.
- * Must be रक्षित by osb_lock.
+ * Post the slot information on disk into our slot_info struct.
+ * Must be protected by osb_lock.
  */
-अटल व्योम ocfs2_update_slot_info_old(काष्ठा ocfs2_slot_info *si)
-अणु
-	पूर्णांक i;
-	काष्ठा ocfs2_slot_map *sm;
+static void ocfs2_update_slot_info_old(struct ocfs2_slot_info *si)
+{
+	int i;
+	struct ocfs2_slot_map *sm;
 
-	sm = (काष्ठा ocfs2_slot_map *)si->si_bh[0]->b_data;
+	sm = (struct ocfs2_slot_map *)si->si_bh[0]->b_data;
 
-	क्रम (i = 0; i < si->si_num_slots; i++) अणु
-		अगर (le16_to_cpu(sm->sm_slots[i]) == (u16)OCFS2_INVALID_SLOT)
+	for (i = 0; i < si->si_num_slots; i++) {
+		if (le16_to_cpu(sm->sm_slots[i]) == (u16)OCFS2_INVALID_SLOT)
 			ocfs2_invalidate_slot(si, i);
-		अन्यथा
+		else
 			ocfs2_set_slot(si, i, le16_to_cpu(sm->sm_slots[i]));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ocfs2_update_slot_info(काष्ठा ocfs2_slot_info *si)
-अणु
+static void ocfs2_update_slot_info(struct ocfs2_slot_info *si)
+{
 	/*
 	 * The slot data will have been refreshed when ocfs2_super_lock
 	 * was taken.
 	 */
-	अगर (si->si_extended)
+	if (si->si_extended)
 		ocfs2_update_slot_info_extended(si);
-	अन्यथा
+	else
 		ocfs2_update_slot_info_old(si);
-पूर्ण
+}
 
-पूर्णांक ocfs2_refresh_slot_info(काष्ठा ocfs2_super *osb)
-अणु
-	पूर्णांक ret;
-	काष्ठा ocfs2_slot_info *si = osb->slot_info;
+int ocfs2_refresh_slot_info(struct ocfs2_super *osb)
+{
+	int ret;
+	struct ocfs2_slot_info *si = osb->slot_info;
 
-	अगर (si == शून्य)
-		वापस 0;
+	if (si == NULL)
+		return 0;
 
 	BUG_ON(si->si_blocks == 0);
-	BUG_ON(si->si_bh == शून्य);
+	BUG_ON(si->si_bh == NULL);
 
 	trace_ocfs2_refresh_slot_info(si->si_blocks);
 
 	/*
 	 * We pass -1 as blocknr because we expect all of si->si_bh to
-	 * be !शून्य.  Thus, ocfs2_पढ़ो_blocks() will ignore blocknr.  If
-	 * this is not true, the पढ़ो of -1 (UINT64_MAX) will fail.
+	 * be !NULL.  Thus, ocfs2_read_blocks() will ignore blocknr.  If
+	 * this is not true, the read of -1 (UINT64_MAX) will fail.
 	 */
-	ret = ocfs2_पढ़ो_blocks(INODE_CACHE(si->si_inode), -1, si->si_blocks,
-				si->si_bh, OCFS2_BH_IGNORE_CACHE, शून्य);
-	अगर (ret == 0) अणु
+	ret = ocfs2_read_blocks(INODE_CACHE(si->si_inode), -1, si->si_blocks,
+				si->si_bh, OCFS2_BH_IGNORE_CACHE, NULL);
+	if (ret == 0) {
 		spin_lock(&osb->osb_lock);
 		ocfs2_update_slot_info(si);
 		spin_unlock(&osb->osb_lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* post the our slot info stuff पूर्णांकo it's destination bh and ग_लिखो it
+/* post the our slot info stuff into it's destination bh and write it
  * out. */
-अटल व्योम ocfs2_update_disk_slot_extended(काष्ठा ocfs2_slot_info *si,
-					    पूर्णांक slot_num,
-					    काष्ठा buffer_head **bh)
-अणु
-	पूर्णांक blkind = slot_num / si->si_slots_per_block;
-	पूर्णांक slotno = slot_num % si->si_slots_per_block;
-	काष्ठा ocfs2_slot_map_extended *se;
+static void ocfs2_update_disk_slot_extended(struct ocfs2_slot_info *si,
+					    int slot_num,
+					    struct buffer_head **bh)
+{
+	int blkind = slot_num / si->si_slots_per_block;
+	int slotno = slot_num % si->si_slots_per_block;
+	struct ocfs2_slot_map_extended *se;
 
 	BUG_ON(blkind >= si->si_blocks);
 
-	se = (काष्ठा ocfs2_slot_map_extended *)si->si_bh[blkind]->b_data;
+	se = (struct ocfs2_slot_map_extended *)si->si_bh[blkind]->b_data;
 	se->se_slots[slotno].es_valid = si->si_slots[slot_num].sl_valid;
-	अगर (si->si_slots[slot_num].sl_valid)
+	if (si->si_slots[slot_num].sl_valid)
 		se->se_slots[slotno].es_node_num =
 			cpu_to_le32(si->si_slots[slot_num].sl_node_num);
 	*bh = si->si_bh[blkind];
-पूर्ण
+}
 
-अटल व्योम ocfs2_update_disk_slot_old(काष्ठा ocfs2_slot_info *si,
-				       पूर्णांक slot_num,
-				       काष्ठा buffer_head **bh)
-अणु
-	पूर्णांक i;
-	काष्ठा ocfs2_slot_map *sm;
+static void ocfs2_update_disk_slot_old(struct ocfs2_slot_info *si,
+				       int slot_num,
+				       struct buffer_head **bh)
+{
+	int i;
+	struct ocfs2_slot_map *sm;
 
-	sm = (काष्ठा ocfs2_slot_map *)si->si_bh[0]->b_data;
-	क्रम (i = 0; i < si->si_num_slots; i++) अणु
-		अगर (si->si_slots[i].sl_valid)
+	sm = (struct ocfs2_slot_map *)si->si_bh[0]->b_data;
+	for (i = 0; i < si->si_num_slots; i++) {
+		if (si->si_slots[i].sl_valid)
 			sm->sm_slots[i] =
 				cpu_to_le16(si->si_slots[i].sl_node_num);
-		अन्यथा
+		else
 			sm->sm_slots[i] = cpu_to_le16(OCFS2_INVALID_SLOT);
-	पूर्ण
+	}
 	*bh = si->si_bh[0];
-पूर्ण
+}
 
-अटल पूर्णांक ocfs2_update_disk_slot(काष्ठा ocfs2_super *osb,
-				  काष्ठा ocfs2_slot_info *si,
-				  पूर्णांक slot_num)
-अणु
-	पूर्णांक status;
-	काष्ठा buffer_head *bh;
+static int ocfs2_update_disk_slot(struct ocfs2_super *osb,
+				  struct ocfs2_slot_info *si,
+				  int slot_num)
+{
+	int status;
+	struct buffer_head *bh;
 
 	spin_lock(&osb->osb_lock);
-	अगर (si->si_extended)
+	if (si->si_extended)
 		ocfs2_update_disk_slot_extended(si, slot_num, &bh);
-	अन्यथा
+	else
 		ocfs2_update_disk_slot_old(si, slot_num, &bh);
 	spin_unlock(&osb->osb_lock);
 
-	status = ocfs2_ग_लिखो_block(osb, bh, INODE_CACHE(si->si_inode));
-	अगर (status < 0)
-		mlog_त्रुटि_सं(status);
+	status = ocfs2_write_block(osb, bh, INODE_CACHE(si->si_inode));
+	if (status < 0)
+		mlog_errno(status);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * Calculate how many bytes are needed by the slot map.  Returns
- * an error अगर the slot map file is too small.
+ * an error if the slot map file is too small.
  */
-अटल पूर्णांक ocfs2_slot_map_physical_size(काष्ठा ocfs2_super *osb,
-					काष्ठा inode *inode,
-					अचिन्हित दीर्घ दीर्घ *bytes)
-अणु
-	अचिन्हित दीर्घ दीर्घ bytes_needed;
+static int ocfs2_slot_map_physical_size(struct ocfs2_super *osb,
+					struct inode *inode,
+					unsigned long long *bytes)
+{
+	unsigned long long bytes_needed;
 
-	अगर (ocfs2_uses_extended_slot_map(osb)) अणु
+	if (ocfs2_uses_extended_slot_map(osb)) {
 		bytes_needed = osb->max_slots *
-			माप(काष्ठा ocfs2_extended_slot);
-	पूर्ण अन्यथा अणु
-		bytes_needed = osb->max_slots * माप(__le16);
-	पूर्ण
-	अगर (bytes_needed > i_size_पढ़ो(inode)) अणु
+			sizeof(struct ocfs2_extended_slot);
+	} else {
+		bytes_needed = osb->max_slots * sizeof(__le16);
+	}
+	if (bytes_needed > i_size_read(inode)) {
 		mlog(ML_ERROR,
 		     "Slot map file is too small!  (size %llu, needed %llu)\n",
-		     i_size_पढ़ो(inode), bytes_needed);
-		वापस -ENOSPC;
-	पूर्ण
+		     i_size_read(inode), bytes_needed);
+		return -ENOSPC;
+	}
 
 	*bytes = bytes_needed;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* try to find global node in the slot info. Returns -ENOENT
- * अगर nothing is found. */
-अटल पूर्णांक __ocfs2_node_num_to_slot(काष्ठा ocfs2_slot_info *si,
-				    अचिन्हित पूर्णांक node_num)
-अणु
-	पूर्णांक i, ret = -ENOENT;
+ * if nothing is found. */
+static int __ocfs2_node_num_to_slot(struct ocfs2_slot_info *si,
+				    unsigned int node_num)
+{
+	int i, ret = -ENOENT;
 
-	क्रम(i = 0; i < si->si_num_slots; i++) अणु
-		अगर (si->si_slots[i].sl_valid &&
-		    (node_num == si->si_slots[i].sl_node_num)) अणु
+	for(i = 0; i < si->si_num_slots; i++) {
+		if (si->si_slots[i].sl_valid &&
+		    (node_num == si->si_slots[i].sl_node_num)) {
 			ret = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __ocfs2_find_empty_slot(काष्ठा ocfs2_slot_info *si,
-				   पूर्णांक preferred)
-अणु
-	पूर्णांक i, ret = -ENOSPC;
+static int __ocfs2_find_empty_slot(struct ocfs2_slot_info *si,
+				   int preferred)
+{
+	int i, ret = -ENOSPC;
 
-	अगर ((preferred >= 0) && (preferred < si->si_num_slots)) अणु
-		अगर (!si->si_slots[preferred].sl_valid ||
-		    !si->si_slots[preferred].sl_node_num) अणु
+	if ((preferred >= 0) && (preferred < si->si_num_slots)) {
+		if (!si->si_slots[preferred].sl_valid ||
+		    !si->si_slots[preferred].sl_node_num) {
 			ret = preferred;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	क्रम(i = 0; i < si->si_num_slots; i++) अणु
-		अगर (!si->si_slots[i].sl_valid ||
-		    !si->si_slots[i].sl_node_num) अणु
+	for(i = 0; i < si->si_num_slots; i++) {
+		if (!si->si_slots[i].sl_valid ||
+		    !si->si_slots[i].sl_node_num) {
 			ret = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक ocfs2_node_num_to_slot(काष्ठा ocfs2_super *osb, अचिन्हित पूर्णांक node_num)
-अणु
-	पूर्णांक slot;
-	काष्ठा ocfs2_slot_info *si = osb->slot_info;
+int ocfs2_node_num_to_slot(struct ocfs2_super *osb, unsigned int node_num)
+{
+	int slot;
+	struct ocfs2_slot_info *si = osb->slot_info;
 
 	spin_lock(&osb->osb_lock);
 	slot = __ocfs2_node_num_to_slot(si, node_num);
 	spin_unlock(&osb->osb_lock);
 
-	वापस slot;
-पूर्ण
+	return slot;
+}
 
-पूर्णांक ocfs2_slot_to_node_num_locked(काष्ठा ocfs2_super *osb, पूर्णांक slot_num,
-				  अचिन्हित पूर्णांक *node_num)
-अणु
-	काष्ठा ocfs2_slot_info *si = osb->slot_info;
+int ocfs2_slot_to_node_num_locked(struct ocfs2_super *osb, int slot_num,
+				  unsigned int *node_num)
+{
+	struct ocfs2_slot_info *si = osb->slot_info;
 
-	निश्चित_spin_locked(&osb->osb_lock);
+	assert_spin_locked(&osb->osb_lock);
 
 	BUG_ON(slot_num < 0);
 	BUG_ON(slot_num >= osb->max_slots);
 
-	अगर (!si->si_slots[slot_num].sl_valid)
-		वापस -ENOENT;
+	if (!si->si_slots[slot_num].sl_valid)
+		return -ENOENT;
 
 	*node_num = si->si_slots[slot_num].sl_node_num;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __ocfs2_मुक्त_slot_info(काष्ठा ocfs2_slot_info *si)
-अणु
-	अचिन्हित पूर्णांक i;
+static void __ocfs2_free_slot_info(struct ocfs2_slot_info *si)
+{
+	unsigned int i;
 
-	अगर (si == शून्य)
-		वापस;
+	if (si == NULL)
+		return;
 
 	iput(si->si_inode);
-	अगर (si->si_bh) अणु
-		क्रम (i = 0; i < si->si_blocks; i++) अणु
-			अगर (si->si_bh[i]) अणु
-				brअन्यथा(si->si_bh[i]);
-				si->si_bh[i] = शून्य;
-			पूर्ण
-		पूर्ण
-		kमुक्त(si->si_bh);
-	पूर्ण
+	if (si->si_bh) {
+		for (i = 0; i < si->si_blocks; i++) {
+			if (si->si_bh[i]) {
+				brelse(si->si_bh[i]);
+				si->si_bh[i] = NULL;
+			}
+		}
+		kfree(si->si_bh);
+	}
 
-	kमुक्त(si);
-पूर्ण
+	kfree(si);
+}
 
-पूर्णांक ocfs2_clear_slot(काष्ठा ocfs2_super *osb, पूर्णांक slot_num)
-अणु
-	काष्ठा ocfs2_slot_info *si = osb->slot_info;
+int ocfs2_clear_slot(struct ocfs2_super *osb, int slot_num)
+{
+	struct ocfs2_slot_info *si = osb->slot_info;
 
-	अगर (si == शून्य)
-		वापस 0;
+	if (si == NULL)
+		return 0;
 
 	spin_lock(&osb->osb_lock);
 	ocfs2_invalidate_slot(si, slot_num);
 	spin_unlock(&osb->osb_lock);
 
-	वापस ocfs2_update_disk_slot(osb, osb->slot_info, slot_num);
-पूर्ण
+	return ocfs2_update_disk_slot(osb, osb->slot_info, slot_num);
+}
 
-अटल पूर्णांक ocfs2_map_slot_buffers(काष्ठा ocfs2_super *osb,
-				  काष्ठा ocfs2_slot_info *si)
-अणु
-	पूर्णांक status = 0;
+static int ocfs2_map_slot_buffers(struct ocfs2_super *osb,
+				  struct ocfs2_slot_info *si)
+{
+	int status = 0;
 	u64 blkno;
-	अचिन्हित दीर्घ दीर्घ blocks, bytes = 0;
-	अचिन्हित पूर्णांक i;
-	काष्ठा buffer_head *bh;
+	unsigned long long blocks, bytes = 0;
+	unsigned int i;
+	struct buffer_head *bh;
 
 	status = ocfs2_slot_map_physical_size(osb, si->si_inode, &bytes);
-	अगर (status)
-		जाओ bail;
+	if (status)
+		goto bail;
 
-	blocks = ocfs2_blocks_क्रम_bytes(si->si_inode->i_sb, bytes);
-	BUG_ON(blocks > अच_पूर्णांक_उच्च);
+	blocks = ocfs2_blocks_for_bytes(si->si_inode->i_sb, bytes);
+	BUG_ON(blocks > UINT_MAX);
 	si->si_blocks = blocks;
-	अगर (!si->si_blocks)
-		जाओ bail;
+	if (!si->si_blocks)
+		goto bail;
 
-	अगर (si->si_extended)
+	if (si->si_extended)
 		si->si_slots_per_block =
 			(osb->sb->s_blocksize /
-			 माप(काष्ठा ocfs2_extended_slot));
-	अन्यथा
-		si->si_slots_per_block = osb->sb->s_blocksize / माप(__le16);
+			 sizeof(struct ocfs2_extended_slot));
+	else
+		si->si_slots_per_block = osb->sb->s_blocksize / sizeof(__le16);
 
 	/* The size checks above should ensure this */
 	BUG_ON((osb->max_slots / si->si_slots_per_block) > blocks);
 
 	trace_ocfs2_map_slot_buffers(bytes, si->si_blocks);
 
-	si->si_bh = kसुस्मृति(si->si_blocks, माप(काष्ठा buffer_head *),
+	si->si_bh = kcalloc(si->si_blocks, sizeof(struct buffer_head *),
 			    GFP_KERNEL);
-	अगर (!si->si_bh) अणु
+	if (!si->si_bh) {
 		status = -ENOMEM;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
-	क्रम (i = 0; i < si->si_blocks; i++) अणु
+	for (i = 0; i < si->si_blocks; i++) {
 		status = ocfs2_extent_map_get_blocks(si->si_inode, i,
-						     &blkno, शून्य, शून्य);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+						     &blkno, NULL, NULL);
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 
-		trace_ocfs2_map_slot_buffers_block((अचिन्हित दीर्घ दीर्घ)blkno, i);
+		trace_ocfs2_map_slot_buffers_block((unsigned long long)blkno, i);
 
-		bh = शून्य;  /* Acquire a fresh bh */
-		status = ocfs2_पढ़ो_blocks(INODE_CACHE(si->si_inode), blkno,
-					   1, &bh, OCFS2_BH_IGNORE_CACHE, शून्य);
-		अगर (status < 0) अणु
-			mlog_त्रुटि_सं(status);
-			जाओ bail;
-		पूर्ण
+		bh = NULL;  /* Acquire a fresh bh */
+		status = ocfs2_read_blocks(INODE_CACHE(si->si_inode), blkno,
+					   1, &bh, OCFS2_BH_IGNORE_CACHE, NULL);
+		if (status < 0) {
+			mlog_errno(status);
+			goto bail;
+		}
 
 		si->si_bh[i] = bh;
-	पूर्ण
+	}
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक ocfs2_init_slot_info(काष्ठा ocfs2_super *osb)
-अणु
-	पूर्णांक status;
-	काष्ठा inode *inode = शून्य;
-	काष्ठा ocfs2_slot_info *si;
+int ocfs2_init_slot_info(struct ocfs2_super *osb)
+{
+	int status;
+	struct inode *inode = NULL;
+	struct ocfs2_slot_info *si;
 
-	si = kzalloc(काष्ठा_size(si, si_slots, osb->max_slots), GFP_KERNEL);
-	अगर (!si) अणु
+	si = kzalloc(struct_size(si, si_slots, osb->max_slots), GFP_KERNEL);
+	if (!si) {
 		status = -ENOMEM;
-		mlog_त्रुटि_सं(status);
-		वापस status;
-	पूर्ण
+		mlog_errno(status);
+		return status;
+	}
 
 	si->si_extended = ocfs2_uses_extended_slot_map(osb);
 	si->si_num_slots = osb->max_slots;
 
-	inode = ocfs2_get_प्रणाली_file_inode(osb, SLOT_MAP_SYSTEM_INODE,
+	inode = ocfs2_get_system_file_inode(osb, SLOT_MAP_SYSTEM_INODE,
 					    OCFS2_INVALID_SLOT);
-	अगर (!inode) अणु
+	if (!inode) {
 		status = -EINVAL;
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+		mlog_errno(status);
+		goto bail;
+	}
 
 	si->si_inode = inode;
 	status = ocfs2_map_slot_buffers(osb, si);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
-		जाओ bail;
-	पूर्ण
+	if (status < 0) {
+		mlog_errno(status);
+		goto bail;
+	}
 
-	osb->slot_info = (काष्ठा ocfs2_slot_info *)si;
+	osb->slot_info = (struct ocfs2_slot_info *)si;
 bail:
-	अगर (status < 0)
-		__ocfs2_मुक्त_slot_info(si);
+	if (status < 0)
+		__ocfs2_free_slot_info(si);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम ocfs2_मुक्त_slot_info(काष्ठा ocfs2_super *osb)
-अणु
-	काष्ठा ocfs2_slot_info *si = osb->slot_info;
+void ocfs2_free_slot_info(struct ocfs2_super *osb)
+{
+	struct ocfs2_slot_info *si = osb->slot_info;
 
-	osb->slot_info = शून्य;
-	__ocfs2_मुक्त_slot_info(si);
-पूर्ण
+	osb->slot_info = NULL;
+	__ocfs2_free_slot_info(si);
+}
 
-पूर्णांक ocfs2_find_slot(काष्ठा ocfs2_super *osb)
-अणु
-	पूर्णांक status;
-	पूर्णांक slot;
-	काष्ठा ocfs2_slot_info *si;
+int ocfs2_find_slot(struct ocfs2_super *osb)
+{
+	int status;
+	int slot;
+	struct ocfs2_slot_info *si;
 
 	si = osb->slot_info;
 
 	spin_lock(&osb->osb_lock);
 	ocfs2_update_slot_info(si);
 
-	अगर (ocfs2_mount_local(osb))
+	if (ocfs2_mount_local(osb))
 		/* use slot 0 directly in local mode */
 		slot = 0;
-	अन्यथा अणु
-		/* search क्रम ourselves first and take the slot अगर it alपढ़ोy
-		 * exists. Perhaps we need to mark this in a variable क्रम our
+	else {
+		/* search for ourselves first and take the slot if it already
+		 * exists. Perhaps we need to mark this in a variable for our
 		 * own journal recovery? Possibly not, though we certainly
 		 * need to warn to the user */
 		slot = __ocfs2_node_num_to_slot(si, osb->node_num);
-		अगर (slot < 0) अणु
-			/* अगर no slot yet, then just take 1st available
+		if (slot < 0) {
+			/* if no slot yet, then just take 1st available
 			 * one. */
 			slot = __ocfs2_find_empty_slot(si, osb->preferred_slot);
-			अगर (slot < 0) अणु
+			if (slot < 0) {
 				spin_unlock(&osb->osb_lock);
 				mlog(ML_ERROR, "no free slots available!\n");
 				status = -EINVAL;
-				जाओ bail;
-			पूर्ण
-		पूर्ण अन्यथा
-			prपूर्णांकk(KERN_INFO "ocfs2: Slot %d on device (%s) was "
+				goto bail;
+			}
+		} else
+			printk(KERN_INFO "ocfs2: Slot %d on device (%s) was "
 			       "already allocated to this node!\n",
 			       slot, osb->dev_str);
-	पूर्ण
+	}
 
 	ocfs2_set_slot(si, slot, osb->node_num);
 	osb->slot_num = slot;
@@ -489,29 +488,29 @@ bail:
 	trace_ocfs2_find_slot(osb->slot_num);
 
 	status = ocfs2_update_disk_slot(osb, si, osb->slot_num);
-	अगर (status < 0) अणु
-		mlog_त्रुटि_सं(status);
+	if (status < 0) {
+		mlog_errno(status);
 		/*
-		 * अगर ग_लिखो block failed, invalidate slot to aव्योम overग_लिखो
-		 * slot during dismount in हाल another node rightly has mounted
+		 * if write block failed, invalidate slot to avoid overwrite
+		 * slot during dismount in case another node rightly has mounted
 		 */
 		spin_lock(&osb->osb_lock);
 		ocfs2_invalidate_slot(si, osb->slot_num);
 		osb->slot_num = OCFS2_INVALID_SLOT;
 		spin_unlock(&osb->osb_lock);
-	पूर्ण
+	}
 
 bail:
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम ocfs2_put_slot(काष्ठा ocfs2_super *osb)
-अणु
-	पूर्णांक status, slot_num;
-	काष्ठा ocfs2_slot_info *si = osb->slot_info;
+void ocfs2_put_slot(struct ocfs2_super *osb)
+{
+	int status, slot_num;
+	struct ocfs2_slot_info *si = osb->slot_info;
 
-	अगर (!si)
-		वापस;
+	if (!si)
+		return;
 
 	spin_lock(&osb->osb_lock);
 	ocfs2_update_slot_info(si);
@@ -522,8 +521,8 @@ bail:
 	spin_unlock(&osb->osb_lock);
 
 	status = ocfs2_update_disk_slot(osb, si, slot_num);
-	अगर (status < 0)
-		mlog_त्रुटि_सं(status);
+	if (status < 0)
+		mlog_errno(status);
 
-	ocfs2_मुक्त_slot_info(osb);
-पूर्ण
+	ocfs2_free_slot_info(osb);
+}

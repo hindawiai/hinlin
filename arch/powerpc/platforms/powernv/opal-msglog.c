@@ -1,162 +1,161 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * PowerNV OPAL in-memory console पूर्णांकerface
+ * PowerNV OPAL in-memory console interface
  *
  * Copyright 2014 IBM Corp.
  */
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/opal.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/of.h>
-#समावेश <linux/types.h>
-#समावेश <यंत्र/barrier.h>
+#include <asm/io.h>
+#include <asm/opal.h>
+#include <linux/debugfs.h>
+#include <linux/of.h>
+#include <linux/types.h>
+#include <asm/barrier.h>
 
-#समावेश "powernv.h"
+#include "powernv.h"
 
 /* OPAL in-memory console. Defined in OPAL source at core/console.c */
-काष्ठा memcons अणु
+struct memcons {
 	__be64 magic;
-#घोषणा MEMCONS_MAGIC	0x6630696567726173L
+#define MEMCONS_MAGIC	0x6630696567726173L
 	__be64 obuf_phys;
 	__be64 ibuf_phys;
 	__be32 obuf_size;
 	__be32 ibuf_size;
 	__be32 out_pos;
-#घोषणा MEMCONS_OUT_POS_WRAP	0x80000000u
-#घोषणा MEMCONS_OUT_POS_MASK	0x00ffffffu
+#define MEMCONS_OUT_POS_WRAP	0x80000000u
+#define MEMCONS_OUT_POS_MASK	0x00ffffffu
 	__be32 in_prod;
 	__be32 in_cons;
-पूर्ण;
+};
 
-अटल काष्ठा memcons *opal_memcons = शून्य;
+static struct memcons *opal_memcons = NULL;
 
-sमाप_प्रकार memcons_copy(काष्ठा memcons *mc, अक्षर *to, loff_t pos, माप_प्रकार count)
-अणु
-	स्थिर अक्षर *conbuf;
-	sमाप_प्रकार ret;
-	माप_प्रकार first_पढ़ो = 0;
-	uपूर्णांक32_t out_pos, avail;
+ssize_t memcons_copy(struct memcons *mc, char *to, loff_t pos, size_t count)
+{
+	const char *conbuf;
+	ssize_t ret;
+	size_t first_read = 0;
+	uint32_t out_pos, avail;
 
-	अगर (!mc)
-		वापस -ENODEV;
+	if (!mc)
+		return -ENODEV;
 
 	out_pos = be32_to_cpu(READ_ONCE(mc->out_pos));
 
-	/* Now we've पढ़ो out_pos, put a barrier in beक्रमe पढ़ोing the new
-	 * data it poपूर्णांकs to in conbuf. */
+	/* Now we've read out_pos, put a barrier in before reading the new
+	 * data it points to in conbuf. */
 	smp_rmb();
 
 	conbuf = phys_to_virt(be64_to_cpu(mc->obuf_phys));
 
-	/* When the buffer has wrapped, पढ़ो from the out_pos marker to the end
-	 * of the buffer, and then पढ़ो the reमुख्यing data as in the un-wrapped
-	 * हाल. */
-	अगर (out_pos & MEMCONS_OUT_POS_WRAP) अणु
+	/* When the buffer has wrapped, read from the out_pos marker to the end
+	 * of the buffer, and then read the remaining data as in the un-wrapped
+	 * case. */
+	if (out_pos & MEMCONS_OUT_POS_WRAP) {
 
 		out_pos &= MEMCONS_OUT_POS_MASK;
 		avail = be32_to_cpu(mc->obuf_size) - out_pos;
 
-		ret = memory_पढ़ो_from_buffer(to, count, &pos,
+		ret = memory_read_from_buffer(to, count, &pos,
 				conbuf + out_pos, avail);
 
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 
-		first_पढ़ो = ret;
-		to += first_पढ़ो;
-		count -= first_पढ़ो;
+		first_read = ret;
+		to += first_read;
+		count -= first_read;
 		pos -= avail;
 
-		अगर (count <= 0)
-			जाओ out;
-	पूर्ण
+		if (count <= 0)
+			goto out;
+	}
 
-	/* Sanity check. The firmware should not करो this to us. */
-	अगर (out_pos > be32_to_cpu(mc->obuf_size)) अणु
+	/* Sanity check. The firmware should not do this to us. */
+	if (out_pos > be32_to_cpu(mc->obuf_size)) {
 		pr_err("OPAL: memory console corruption. Aborting read.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = memory_पढ़ो_from_buffer(to, count, &pos, conbuf, out_pos);
+	ret = memory_read_from_buffer(to, count, &pos, conbuf, out_pos);
 
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	ret += first_पढ़ो;
+	ret += first_read;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-sमाप_प्रकार opal_msglog_copy(अक्षर *to, loff_t pos, माप_प्रकार count)
-अणु
-	वापस memcons_copy(opal_memcons, to, pos, count);
-पूर्ण
+ssize_t opal_msglog_copy(char *to, loff_t pos, size_t count)
+{
+	return memcons_copy(opal_memcons, to, pos, count);
+}
 
-अटल sमाप_प्रकार opal_msglog_पढ़ो(काष्ठा file *file, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr, अक्षर *to,
-				loff_t pos, माप_प्रकार count)
-अणु
-	वापस opal_msglog_copy(to, pos, count);
-पूर्ण
+static ssize_t opal_msglog_read(struct file *file, struct kobject *kobj,
+				struct bin_attribute *bin_attr, char *to,
+				loff_t pos, size_t count)
+{
+	return opal_msglog_copy(to, pos, count);
+}
 
-अटल काष्ठा bin_attribute opal_msglog_attr = अणु
-	.attr = अणु.name = "msglog", .mode = 0400पूर्ण,
-	.पढ़ो = opal_msglog_पढ़ो
-पूर्ण;
+static struct bin_attribute opal_msglog_attr = {
+	.attr = {.name = "msglog", .mode = 0400},
+	.read = opal_msglog_read
+};
 
-काष्ठा memcons *memcons_init(काष्ठा device_node *node, स्थिर अक्षर *mc_prop_name)
-अणु
+struct memcons *memcons_init(struct device_node *node, const char *mc_prop_name)
+{
 	u64 mcaddr;
-	काष्ठा memcons *mc;
+	struct memcons *mc;
 
-	अगर (of_property_पढ़ो_u64(node, mc_prop_name, &mcaddr)) अणु
+	if (of_property_read_u64(node, mc_prop_name, &mcaddr)) {
 		pr_warn("%s property not found, no message log\n",
 			mc_prop_name);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	mc = phys_to_virt(mcaddr);
-	अगर (!mc) अणु
+	if (!mc) {
 		pr_warn("memory console address is invalid\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (be64_to_cpu(mc->magic) != MEMCONS_MAGIC) अणु
+	if (be64_to_cpu(mc->magic) != MEMCONS_MAGIC) {
 		pr_warn("memory console version is invalid\n");
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	वापस mc;
+	return mc;
 
 out_err:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-u32 memcons_get_size(काष्ठा memcons *mc)
-अणु
-	वापस be32_to_cpu(mc->ibuf_size) + be32_to_cpu(mc->obuf_size);
-पूर्ण
+u32 memcons_get_size(struct memcons *mc)
+{
+	return be32_to_cpu(mc->ibuf_size) + be32_to_cpu(mc->obuf_size);
+}
 
-व्योम __init opal_msglog_init(व्योम)
-अणु
+void __init opal_msglog_init(void)
+{
 	opal_memcons = memcons_init(opal_node, "ibm,opal-memcons");
-	अगर (!opal_memcons) अणु
+	if (!opal_memcons) {
 		pr_warn("OPAL: memcons failed to load from ibm,opal-memcons\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	opal_msglog_attr.size = memcons_get_size(opal_memcons);
-पूर्ण
+}
 
-व्योम __init opal_msglog_sysfs_init(व्योम)
-अणु
-	अगर (!opal_memcons) अणु
+void __init opal_msglog_sysfs_init(void)
+{
+	if (!opal_memcons) {
 		pr_warn("OPAL: message log initialisation failed, not creating sysfs entry\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (sysfs_create_bin_file(opal_kobj, &opal_msglog_attr) != 0)
+	if (sysfs_create_bin_file(opal_kobj, &opal_msglog_attr) != 0)
 		pr_warn("OPAL: sysfs file creation failed\n");
-पूर्ण
+}

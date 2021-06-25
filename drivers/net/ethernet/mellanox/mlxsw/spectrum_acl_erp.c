@@ -1,759 +1,758 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/gfp.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/objagg.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/slab.h>
+#include <linux/bitmap.h>
+#include <linux/errno.h>
+#include <linux/genalloc.h>
+#include <linux/gfp.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/objagg.h>
+#include <linux/rtnetlink.h>
+#include <linux/slab.h>
 
-#समावेश "core.h"
-#समावेश "reg.h"
-#समावेश "spectrum.h"
-#समावेश "spectrum_acl_tcam.h"
+#include "core.h"
+#include "reg.h"
+#include "spectrum.h"
+#include "spectrum_acl_tcam.h"
 
-/* gen_pool_alloc() वापसs 0 when allocation fails, so use an offset */
-#घोषणा MLXSW_SP_ACL_ERP_GENALLOC_OFFSET 0x100
-#घोषणा MLXSW_SP_ACL_ERP_MAX_PER_REGION 16
+/* gen_pool_alloc() returns 0 when allocation fails, so use an offset */
+#define MLXSW_SP_ACL_ERP_GENALLOC_OFFSET 0x100
+#define MLXSW_SP_ACL_ERP_MAX_PER_REGION 16
 
-काष्ठा mlxsw_sp_acl_erp_core अणु
-	अचिन्हित पूर्णांक erpt_entries_size[MLXSW_SP_ACL_ATCAM_REGION_TYPE_MAX + 1];
-	काष्ठा gen_pool *erp_tables;
-	काष्ठा mlxsw_sp *mlxsw_sp;
-	काष्ठा mlxsw_sp_acl_bf *bf;
-	अचिन्हित पूर्णांक num_erp_banks;
-पूर्ण;
+struct mlxsw_sp_acl_erp_core {
+	unsigned int erpt_entries_size[MLXSW_SP_ACL_ATCAM_REGION_TYPE_MAX + 1];
+	struct gen_pool *erp_tables;
+	struct mlxsw_sp *mlxsw_sp;
+	struct mlxsw_sp_acl_bf *bf;
+	unsigned int num_erp_banks;
+};
 
-काष्ठा mlxsw_sp_acl_erp_key अणु
-	अक्षर mask[MLXSW_REG_PTCEX_FLEX_KEY_BLOCKS_LEN];
-#घोषणा __MASK_LEN 0x38
-#घोषणा __MASK_IDX(i) (__MASK_LEN - (i) - 1)
+struct mlxsw_sp_acl_erp_key {
+	char mask[MLXSW_REG_PTCEX_FLEX_KEY_BLOCKS_LEN];
+#define __MASK_LEN 0x38
+#define __MASK_IDX(i) (__MASK_LEN - (i) - 1)
 	bool ctcam;
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp_acl_erp अणु
-	काष्ठा mlxsw_sp_acl_erp_key key;
+struct mlxsw_sp_acl_erp {
+	struct mlxsw_sp_acl_erp_key key;
 	u8 id;
 	u8 index;
-	DECLARE_BITMAP(mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN);
-	काष्ठा list_head list;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table;
-पूर्ण;
+	DECLARE_BITMAP(mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN);
+	struct list_head list;
+	struct mlxsw_sp_acl_erp_table *erp_table;
+};
 
-काष्ठा mlxsw_sp_acl_erp_master_mask अणु
-	DECLARE_BITMAP(biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN);
-	अचिन्हित पूर्णांक count[MLXSW_SP_ACL_TCAM_MASK_LEN];
-पूर्ण;
+struct mlxsw_sp_acl_erp_master_mask {
+	DECLARE_BITMAP(bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN);
+	unsigned int count[MLXSW_SP_ACL_TCAM_MASK_LEN];
+};
 
-काष्ठा mlxsw_sp_acl_erp_table अणु
-	काष्ठा mlxsw_sp_acl_erp_master_mask master_mask;
-	DECLARE_BITMAP(erp_id_biपंचांगap, MLXSW_SP_ACL_ERP_MAX_PER_REGION);
-	DECLARE_BITMAP(erp_index_biपंचांगap, MLXSW_SP_ACL_ERP_MAX_PER_REGION);
-	काष्ठा list_head atcam_erps_list;
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core;
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion;
-	स्थिर काष्ठा mlxsw_sp_acl_erp_table_ops *ops;
-	अचिन्हित दीर्घ base_index;
-	अचिन्हित पूर्णांक num_atcam_erps;
-	अचिन्हित पूर्णांक num_max_atcam_erps;
-	अचिन्हित पूर्णांक num_ctcam_erps;
-	अचिन्हित पूर्णांक num_deltas;
-	काष्ठा objagg *objagg;
-	काष्ठा mutex objagg_lock; /* guards objagg manipulation */
-पूर्ण;
+struct mlxsw_sp_acl_erp_table {
+	struct mlxsw_sp_acl_erp_master_mask master_mask;
+	DECLARE_BITMAP(erp_id_bitmap, MLXSW_SP_ACL_ERP_MAX_PER_REGION);
+	DECLARE_BITMAP(erp_index_bitmap, MLXSW_SP_ACL_ERP_MAX_PER_REGION);
+	struct list_head atcam_erps_list;
+	struct mlxsw_sp_acl_erp_core *erp_core;
+	struct mlxsw_sp_acl_atcam_region *aregion;
+	const struct mlxsw_sp_acl_erp_table_ops *ops;
+	unsigned long base_index;
+	unsigned int num_atcam_erps;
+	unsigned int num_max_atcam_erps;
+	unsigned int num_ctcam_erps;
+	unsigned int num_deltas;
+	struct objagg *objagg;
+	struct mutex objagg_lock; /* guards objagg manipulation */
+};
 
-काष्ठा mlxsw_sp_acl_erp_table_ops अणु
-	काष्ठा mlxsw_sp_acl_erp *
-		(*erp_create)(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			      काष्ठा mlxsw_sp_acl_erp_key *key);
-	व्योम (*erp_destroy)(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			    काष्ठा mlxsw_sp_acl_erp *erp);
-पूर्ण;
+struct mlxsw_sp_acl_erp_table_ops {
+	struct mlxsw_sp_acl_erp *
+		(*erp_create)(struct mlxsw_sp_acl_erp_table *erp_table,
+			      struct mlxsw_sp_acl_erp_key *key);
+	void (*erp_destroy)(struct mlxsw_sp_acl_erp_table *erp_table,
+			    struct mlxsw_sp_acl_erp *erp);
+};
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			     काष्ठा mlxsw_sp_acl_erp_key *key);
-अटल व्योम
-mlxsw_sp_acl_erp_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			      काष्ठा mlxsw_sp_acl_erp *erp);
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_second_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				    काष्ठा mlxsw_sp_acl_erp_key *key);
-अटल व्योम
-mlxsw_sp_acl_erp_second_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				     काष्ठा mlxsw_sp_acl_erp *erp);
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_first_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				   काष्ठा mlxsw_sp_acl_erp_key *key);
-अटल व्योम
-mlxsw_sp_acl_erp_first_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				    काष्ठा mlxsw_sp_acl_erp *erp);
-अटल व्योम
-mlxsw_sp_acl_erp_no_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				 काष्ठा mlxsw_sp_acl_erp *erp);
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+			     struct mlxsw_sp_acl_erp_key *key);
+static void
+mlxsw_sp_acl_erp_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+			      struct mlxsw_sp_acl_erp *erp);
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_second_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+				    struct mlxsw_sp_acl_erp_key *key);
+static void
+mlxsw_sp_acl_erp_second_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+				     struct mlxsw_sp_acl_erp *erp);
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_first_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+				   struct mlxsw_sp_acl_erp_key *key);
+static void
+mlxsw_sp_acl_erp_first_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+				    struct mlxsw_sp_acl_erp *erp);
+static void
+mlxsw_sp_acl_erp_no_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+				 struct mlxsw_sp_acl_erp *erp);
 
-अटल स्थिर काष्ठा mlxsw_sp_acl_erp_table_ops erp_multiple_masks_ops = अणु
+static const struct mlxsw_sp_acl_erp_table_ops erp_multiple_masks_ops = {
 	.erp_create = mlxsw_sp_acl_erp_mask_create,
 	.erp_destroy = mlxsw_sp_acl_erp_mask_destroy,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_acl_erp_table_ops erp_two_masks_ops = अणु
+static const struct mlxsw_sp_acl_erp_table_ops erp_two_masks_ops = {
 	.erp_create = mlxsw_sp_acl_erp_mask_create,
 	.erp_destroy = mlxsw_sp_acl_erp_second_mask_destroy,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_acl_erp_table_ops erp_single_mask_ops = अणु
+static const struct mlxsw_sp_acl_erp_table_ops erp_single_mask_ops = {
 	.erp_create = mlxsw_sp_acl_erp_second_mask_create,
 	.erp_destroy = mlxsw_sp_acl_erp_first_mask_destroy,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_acl_erp_table_ops erp_no_mask_ops = अणु
+static const struct mlxsw_sp_acl_erp_table_ops erp_no_mask_ops = {
 	.erp_create = mlxsw_sp_acl_erp_first_mask_create,
 	.erp_destroy = mlxsw_sp_acl_erp_no_mask_destroy,
-पूर्ण;
+};
 
-अटल bool
-mlxsw_sp_acl_erp_table_is_used(स्थिर काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	वापस erp_table->ops != &erp_single_mask_ops &&
+static bool
+mlxsw_sp_acl_erp_table_is_used(const struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	return erp_table->ops != &erp_single_mask_ops &&
 	       erp_table->ops != &erp_no_mask_ops;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक
-mlxsw_sp_acl_erp_bank_get(स्थिर काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	वापस erp->index % erp->erp_table->erp_core->num_erp_banks;
-पूर्ण
+static unsigned int
+mlxsw_sp_acl_erp_bank_get(const struct mlxsw_sp_acl_erp *erp)
+{
+	return erp->index % erp->erp_table->erp_core->num_erp_banks;
+}
 
-अटल अचिन्हित पूर्णांक
-mlxsw_sp_acl_erp_table_entry_size(स्थिर काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = erp_table->aregion;
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
+static unsigned int
+mlxsw_sp_acl_erp_table_entry_size(const struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	struct mlxsw_sp_acl_atcam_region *aregion = erp_table->aregion;
+	struct mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
 
-	वापस erp_core->erpt_entries_size[aregion->type];
-पूर्ण
+	return erp_core->erpt_entries_size[aregion->type];
+}
 
-अटल पूर्णांक mlxsw_sp_acl_erp_id_get(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
+static int mlxsw_sp_acl_erp_id_get(struct mlxsw_sp_acl_erp_table *erp_table,
 				   u8 *p_id)
-अणु
+{
 	u8 id;
 
-	id = find_first_zero_bit(erp_table->erp_id_biपंचांगap,
+	id = find_first_zero_bit(erp_table->erp_id_bitmap,
 				 MLXSW_SP_ACL_ERP_MAX_PER_REGION);
-	अगर (id < MLXSW_SP_ACL_ERP_MAX_PER_REGION) अणु
-		__set_bit(id, erp_table->erp_id_biपंचांगap);
+	if (id < MLXSW_SP_ACL_ERP_MAX_PER_REGION) {
+		__set_bit(id, erp_table->erp_id_bitmap);
 		*p_id = id;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOBUFS;
-पूर्ण
+	return -ENOBUFS;
+}
 
-अटल व्योम mlxsw_sp_acl_erp_id_put(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
+static void mlxsw_sp_acl_erp_id_put(struct mlxsw_sp_acl_erp_table *erp_table,
 				    u8 id)
-अणु
-	__clear_bit(id, erp_table->erp_id_biपंचांगap);
-पूर्ण
+{
+	__clear_bit(id, erp_table->erp_id_bitmap);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_master_mask_bit_set(अचिन्हित दीर्घ bit,
-				     काष्ठा mlxsw_sp_acl_erp_master_mask *mask)
-अणु
-	अगर (mask->count[bit]++ == 0)
-		__set_bit(bit, mask->biपंचांगap);
-पूर्ण
+static void
+mlxsw_sp_acl_erp_master_mask_bit_set(unsigned long bit,
+				     struct mlxsw_sp_acl_erp_master_mask *mask)
+{
+	if (mask->count[bit]++ == 0)
+		__set_bit(bit, mask->bitmap);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_master_mask_bit_clear(अचिन्हित दीर्घ bit,
-				       काष्ठा mlxsw_sp_acl_erp_master_mask *mask)
-अणु
-	अगर (--mask->count[bit] == 0)
-		__clear_bit(bit, mask->biपंचांगap);
-पूर्ण
+static void
+mlxsw_sp_acl_erp_master_mask_bit_clear(unsigned long bit,
+				       struct mlxsw_sp_acl_erp_master_mask *mask)
+{
+	if (--mask->count[bit] == 0)
+		__clear_bit(bit, mask->bitmap);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_master_mask_update(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	काष्ठा mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
-	काष्ठा mlxsw_sp *mlxsw_sp = region->mlxsw_sp;
-	अक्षर percr_pl[MLXSW_REG_PERCR_LEN];
-	अक्षर *master_mask;
+static int
+mlxsw_sp_acl_erp_master_mask_update(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	struct mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
+	struct mlxsw_sp *mlxsw_sp = region->mlxsw_sp;
+	char percr_pl[MLXSW_REG_PERCR_LEN];
+	char *master_mask;
 
 	mlxsw_reg_percr_pack(percr_pl, region->id);
 	master_mask = mlxsw_reg_percr_master_mask_data(percr_pl);
-	biपंचांगap_to_arr32((u32 *) master_mask, erp_table->master_mask.biपंचांगap,
+	bitmap_to_arr32((u32 *) master_mask, erp_table->master_mask.bitmap,
 			MLXSW_SP_ACL_TCAM_MASK_LEN);
 
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(percr), percr_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(percr), percr_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_master_mask_set(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				 काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	DECLARE_BITMAP(mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN);
-	अचिन्हित दीर्घ bit;
-	पूर्णांक err;
+static int
+mlxsw_sp_acl_erp_master_mask_set(struct mlxsw_sp_acl_erp_table *erp_table,
+				 struct mlxsw_sp_acl_erp_key *key)
+{
+	DECLARE_BITMAP(mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN);
+	unsigned long bit;
+	int err;
 
-	biपंचांगap_from_arr32(mask_biपंचांगap, (u32 *) key->mask,
+	bitmap_from_arr32(mask_bitmap, (u32 *) key->mask,
 			  MLXSW_SP_ACL_TCAM_MASK_LEN);
-	क्रम_each_set_bit(bit, mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN)
+	for_each_set_bit(bit, mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN)
 		mlxsw_sp_acl_erp_master_mask_bit_set(bit,
 						     &erp_table->master_mask);
 
 	err = mlxsw_sp_acl_erp_master_mask_update(erp_table);
-	अगर (err)
-		जाओ err_master_mask_update;
+	if (err)
+		goto err_master_mask_update;
 
-	वापस 0;
+	return 0;
 
 err_master_mask_update:
-	क्रम_each_set_bit(bit, mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN)
+	for_each_set_bit(bit, mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN)
 		mlxsw_sp_acl_erp_master_mask_bit_clear(bit,
 						       &erp_table->master_mask);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_master_mask_clear(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				   काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	DECLARE_BITMAP(mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN);
-	अचिन्हित दीर्घ bit;
-	पूर्णांक err;
+static int
+mlxsw_sp_acl_erp_master_mask_clear(struct mlxsw_sp_acl_erp_table *erp_table,
+				   struct mlxsw_sp_acl_erp_key *key)
+{
+	DECLARE_BITMAP(mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN);
+	unsigned long bit;
+	int err;
 
-	biपंचांगap_from_arr32(mask_biपंचांगap, (u32 *) key->mask,
+	bitmap_from_arr32(mask_bitmap, (u32 *) key->mask,
 			  MLXSW_SP_ACL_TCAM_MASK_LEN);
-	क्रम_each_set_bit(bit, mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN)
+	for_each_set_bit(bit, mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN)
 		mlxsw_sp_acl_erp_master_mask_bit_clear(bit,
 						       &erp_table->master_mask);
 
 	err = mlxsw_sp_acl_erp_master_mask_update(erp_table);
-	अगर (err)
-		जाओ err_master_mask_update;
+	if (err)
+		goto err_master_mask_update;
 
-	वापस 0;
+	return 0;
 
 err_master_mask_update:
-	क्रम_each_set_bit(bit, mask_biपंचांगap, MLXSW_SP_ACL_TCAM_MASK_LEN)
+	for_each_set_bit(bit, mask_bitmap, MLXSW_SP_ACL_TCAM_MASK_LEN)
 		mlxsw_sp_acl_erp_master_mask_bit_set(bit,
 						     &erp_table->master_mask);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_generic_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	काष्ठा mlxsw_sp_acl_erp *erp;
-	पूर्णांक err;
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_generic_create(struct mlxsw_sp_acl_erp_table *erp_table,
+				struct mlxsw_sp_acl_erp_key *key)
+{
+	struct mlxsw_sp_acl_erp *erp;
+	int err;
 
-	erp = kzalloc(माप(*erp), GFP_KERNEL);
-	अगर (!erp)
-		वापस ERR_PTR(-ENOMEM);
+	erp = kzalloc(sizeof(*erp), GFP_KERNEL);
+	if (!erp)
+		return ERR_PTR(-ENOMEM);
 
 	err = mlxsw_sp_acl_erp_id_get(erp_table, &erp->id);
-	अगर (err)
-		जाओ err_erp_id_get;
+	if (err)
+		goto err_erp_id_get;
 
-	स_नकल(&erp->key, key, माप(*key));
+	memcpy(&erp->key, key, sizeof(*key));
 	list_add(&erp->list, &erp_table->atcam_erps_list);
 	erp_table->num_atcam_erps++;
 	erp->erp_table = erp_table;
 
 	err = mlxsw_sp_acl_erp_master_mask_set(erp_table, &erp->key);
-	अगर (err)
-		जाओ err_master_mask_set;
+	if (err)
+		goto err_master_mask_set;
 
-	वापस erp;
+	return erp;
 
 err_master_mask_set:
 	erp_table->num_atcam_erps--;
 	list_del(&erp->list);
 	mlxsw_sp_acl_erp_id_put(erp_table, erp->id);
 err_erp_id_get:
-	kमुक्त(erp);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(erp);
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_generic_destroy(काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
+static void
+mlxsw_sp_acl_erp_generic_destroy(struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
 
 	mlxsw_sp_acl_erp_master_mask_clear(erp_table, &erp->key);
 	erp_table->num_atcam_erps--;
 	list_del(&erp->list);
 	mlxsw_sp_acl_erp_id_put(erp_table, erp->id);
-	kमुक्त(erp);
-पूर्ण
+	kfree(erp);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_table_alloc(काष्ठा mlxsw_sp_acl_erp_core *erp_core,
-			     अचिन्हित पूर्णांक num_erps,
-			     क्रमागत mlxsw_sp_acl_atcam_region_type region_type,
-			     अचिन्हित दीर्घ *p_index)
-अणु
-	अचिन्हित पूर्णांक num_rows, entry_size;
+static int
+mlxsw_sp_acl_erp_table_alloc(struct mlxsw_sp_acl_erp_core *erp_core,
+			     unsigned int num_erps,
+			     enum mlxsw_sp_acl_atcam_region_type region_type,
+			     unsigned long *p_index)
+{
+	unsigned int num_rows, entry_size;
 
 	/* We only allow allocations of entire rows */
-	अगर (num_erps % erp_core->num_erp_banks != 0)
-		वापस -EINVAL;
+	if (num_erps % erp_core->num_erp_banks != 0)
+		return -EINVAL;
 
 	entry_size = erp_core->erpt_entries_size[region_type];
 	num_rows = num_erps / erp_core->num_erp_banks;
 
 	*p_index = gen_pool_alloc(erp_core->erp_tables, num_rows * entry_size);
-	अगर (*p_index == 0)
-		वापस -ENOBUFS;
+	if (*p_index == 0)
+		return -ENOBUFS;
 	*p_index -= MLXSW_SP_ACL_ERP_GENALLOC_OFFSET;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_table_मुक्त(काष्ठा mlxsw_sp_acl_erp_core *erp_core,
-			    अचिन्हित पूर्णांक num_erps,
-			    क्रमागत mlxsw_sp_acl_atcam_region_type region_type,
-			    अचिन्हित दीर्घ index)
-अणु
-	अचिन्हित दीर्घ base_index;
-	अचिन्हित पूर्णांक entry_size;
-	माप_प्रकार size;
+static void
+mlxsw_sp_acl_erp_table_free(struct mlxsw_sp_acl_erp_core *erp_core,
+			    unsigned int num_erps,
+			    enum mlxsw_sp_acl_atcam_region_type region_type,
+			    unsigned long index)
+{
+	unsigned long base_index;
+	unsigned int entry_size;
+	size_t size;
 
 	entry_size = erp_core->erpt_entries_size[region_type];
 	base_index = index + MLXSW_SP_ACL_ERP_GENALLOC_OFFSET;
 	size = num_erps / erp_core->num_erp_banks * entry_size;
-	gen_pool_मुक्त(erp_core->erp_tables, base_index, size);
-पूर्ण
+	gen_pool_free(erp_core->erp_tables, base_index, size);
+}
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_table_master_rp(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	अगर (!list_is_singular(&erp_table->atcam_erps_list))
-		वापस शून्य;
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_table_master_rp(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	if (!list_is_singular(&erp_table->atcam_erps_list))
+		return NULL;
 
-	वापस list_first_entry(&erp_table->atcam_erps_list,
-				काष्ठा mlxsw_sp_acl_erp, list);
-पूर्ण
+	return list_first_entry(&erp_table->atcam_erps_list,
+				struct mlxsw_sp_acl_erp, list);
+}
 
-अटल पूर्णांक mlxsw_sp_acl_erp_index_get(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
+static int mlxsw_sp_acl_erp_index_get(struct mlxsw_sp_acl_erp_table *erp_table,
 				      u8 *p_index)
-अणु
+{
 	u8 index;
 
-	index = find_first_zero_bit(erp_table->erp_index_biपंचांगap,
+	index = find_first_zero_bit(erp_table->erp_index_bitmap,
 				    erp_table->num_max_atcam_erps);
-	अगर (index < erp_table->num_max_atcam_erps) अणु
-		__set_bit(index, erp_table->erp_index_biपंचांगap);
+	if (index < erp_table->num_max_atcam_erps) {
+		__set_bit(index, erp_table->erp_index_bitmap);
 		*p_index = index;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOBUFS;
-पूर्ण
+	return -ENOBUFS;
+}
 
-अटल व्योम mlxsw_sp_acl_erp_index_put(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
+static void mlxsw_sp_acl_erp_index_put(struct mlxsw_sp_acl_erp_table *erp_table,
 				       u8 index)
-अणु
-	__clear_bit(index, erp_table->erp_index_biपंचांगap);
-पूर्ण
+{
+	__clear_bit(index, erp_table->erp_index_bitmap);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_table_locate(स्थिर काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			      स्थिर काष्ठा mlxsw_sp_acl_erp *erp,
+static void
+mlxsw_sp_acl_erp_table_locate(const struct mlxsw_sp_acl_erp_table *erp_table,
+			      const struct mlxsw_sp_acl_erp *erp,
 			      u8 *p_erpt_bank, u8 *p_erpt_index)
-अणु
-	अचिन्हित पूर्णांक entry_size = mlxsw_sp_acl_erp_table_entry_size(erp_table);
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
-	अचिन्हित पूर्णांक row;
+{
+	unsigned int entry_size = mlxsw_sp_acl_erp_table_entry_size(erp_table);
+	struct mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
+	unsigned int row;
 
 	*p_erpt_bank = erp->index % erp_core->num_erp_banks;
 	row = erp->index / erp_core->num_erp_banks;
 	*p_erpt_index = erp_table->base_index + row * entry_size;
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_table_erp_add(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			       काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
-	क्रमागत mlxsw_reg_perpt_key_size key_size;
-	अक्षर perpt_pl[MLXSW_REG_PERPT_LEN];
+static int
+mlxsw_sp_acl_erp_table_erp_add(struct mlxsw_sp_acl_erp_table *erp_table,
+			       struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
+	enum mlxsw_reg_perpt_key_size key_size;
+	char perpt_pl[MLXSW_REG_PERPT_LEN];
 	u8 erpt_bank, erpt_index;
 
 	mlxsw_sp_acl_erp_table_locate(erp_table, erp, &erpt_bank, &erpt_index);
-	key_size = (क्रमागत mlxsw_reg_perpt_key_size) erp_table->aregion->type;
+	key_size = (enum mlxsw_reg_perpt_key_size) erp_table->aregion->type;
 	mlxsw_reg_perpt_pack(perpt_pl, erpt_bank, erpt_index, key_size, erp->id,
 			     0, erp_table->base_index, erp->index,
 			     erp->key.mask);
-	mlxsw_reg_perpt_erp_vector_pack(perpt_pl, erp_table->erp_index_biपंचांगap,
+	mlxsw_reg_perpt_erp_vector_pack(perpt_pl, erp_table->erp_index_bitmap,
 					MLXSW_SP_ACL_ERP_MAX_PER_REGION);
 	mlxsw_reg_perpt_erp_vector_set(perpt_pl, erp->index, true);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(perpt), perpt_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(perpt), perpt_pl);
+}
 
-अटल व्योम mlxsw_sp_acl_erp_table_erp_del(काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	अक्षर empty_mask[MLXSW_REG_PTCEX_FLEX_KEY_BLOCKS_LEN] = अणु 0 पूर्ण;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
-	काष्ठा mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
-	क्रमागत mlxsw_reg_perpt_key_size key_size;
-	अक्षर perpt_pl[MLXSW_REG_PERPT_LEN];
+static void mlxsw_sp_acl_erp_table_erp_del(struct mlxsw_sp_acl_erp *erp)
+{
+	char empty_mask[MLXSW_REG_PTCEX_FLEX_KEY_BLOCKS_LEN] = { 0 };
+	struct mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
+	struct mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
+	enum mlxsw_reg_perpt_key_size key_size;
+	char perpt_pl[MLXSW_REG_PERPT_LEN];
 	u8 erpt_bank, erpt_index;
 
 	mlxsw_sp_acl_erp_table_locate(erp_table, erp, &erpt_bank, &erpt_index);
-	key_size = (क्रमागत mlxsw_reg_perpt_key_size) erp_table->aregion->type;
+	key_size = (enum mlxsw_reg_perpt_key_size) erp_table->aregion->type;
 	mlxsw_reg_perpt_pack(perpt_pl, erpt_bank, erpt_index, key_size, erp->id,
 			     0, erp_table->base_index, erp->index, empty_mask);
-	mlxsw_reg_perpt_erp_vector_pack(perpt_pl, erp_table->erp_index_biपंचांगap,
+	mlxsw_reg_perpt_erp_vector_pack(perpt_pl, erp_table->erp_index_bitmap,
 					MLXSW_SP_ACL_ERP_MAX_PER_REGION);
 	mlxsw_reg_perpt_erp_vector_set(perpt_pl, erp->index, false);
-	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(perpt), perpt_pl);
-पूर्ण
+	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(perpt), perpt_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_table_enable(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
+static int
+mlxsw_sp_acl_erp_table_enable(struct mlxsw_sp_acl_erp_table *erp_table,
 			      bool ctcam_le)
-अणु
-	काष्ठा mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
-	काष्ठा mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
-	अक्षर pererp_pl[MLXSW_REG_PERERP_LEN];
+{
+	struct mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
+	struct mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
+	char pererp_pl[MLXSW_REG_PERERP_LEN];
 
 	mlxsw_reg_pererp_pack(pererp_pl, region->id, ctcam_le, true, 0,
 			      erp_table->base_index, 0);
-	mlxsw_reg_pererp_erp_vector_pack(pererp_pl, erp_table->erp_index_biपंचांगap,
+	mlxsw_reg_pererp_erp_vector_pack(pererp_pl, erp_table->erp_index_bitmap,
 					 MLXSW_SP_ACL_ERP_MAX_PER_REGION);
 
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_table_disable(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	काष्ठा mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
-	काष्ठा mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
-	अक्षर pererp_pl[MLXSW_REG_PERERP_LEN];
-	काष्ठा mlxsw_sp_acl_erp *master_rp;
+static void
+mlxsw_sp_acl_erp_table_disable(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	struct mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
+	struct mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
+	char pererp_pl[MLXSW_REG_PERERP_LEN];
+	struct mlxsw_sp_acl_erp *master_rp;
 
 	master_rp = mlxsw_sp_acl_erp_table_master_rp(erp_table);
-	/* It is possible we करो not have a master RP when we disable the
+	/* It is possible we do not have a master RP when we disable the
 	 * table when there are no rules in the A-TCAM and the last C-TCAM
 	 * rule is deleted
 	 */
 	mlxsw_reg_pererp_pack(pererp_pl, region->id, false, false, 0, 0,
 			      master_rp ? master_rp->id : 0);
-	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
-पूर्ण
+	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_table_relocate(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	काष्ठा mlxsw_sp_acl_erp *erp;
-	पूर्णांक err;
+static int
+mlxsw_sp_acl_erp_table_relocate(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	struct mlxsw_sp_acl_erp *erp;
+	int err;
 
-	list_क्रम_each_entry(erp, &erp_table->atcam_erps_list, list) अणु
+	list_for_each_entry(erp, &erp_table->atcam_erps_list, list) {
 		err = mlxsw_sp_acl_erp_table_erp_add(erp_table, erp);
-		अगर (err)
-			जाओ err_table_erp_add;
-	पूर्ण
+		if (err)
+			goto err_table_erp_add;
+	}
 
-	वापस 0;
+	return 0;
 
 err_table_erp_add:
-	list_क्रम_each_entry_जारी_reverse(erp, &erp_table->atcam_erps_list,
+	list_for_each_entry_continue_reverse(erp, &erp_table->atcam_erps_list,
 					     list)
 		mlxsw_sp_acl_erp_table_erp_del(erp);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_table_expand(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	अचिन्हित पूर्णांक num_erps, old_num_erps = erp_table->num_max_atcam_erps;
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
-	अचिन्हित दीर्घ old_base_index = erp_table->base_index;
+static int
+mlxsw_sp_acl_erp_table_expand(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	unsigned int num_erps, old_num_erps = erp_table->num_max_atcam_erps;
+	struct mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
+	unsigned long old_base_index = erp_table->base_index;
 	bool ctcam_le = erp_table->num_ctcam_erps > 0;
-	पूर्णांक err;
+	int err;
 
-	अगर (erp_table->num_atcam_erps < erp_table->num_max_atcam_erps)
-		वापस 0;
+	if (erp_table->num_atcam_erps < erp_table->num_max_atcam_erps)
+		return 0;
 
-	अगर (erp_table->num_max_atcam_erps == MLXSW_SP_ACL_ERP_MAX_PER_REGION)
-		वापस -ENOBUFS;
+	if (erp_table->num_max_atcam_erps == MLXSW_SP_ACL_ERP_MAX_PER_REGION)
+		return -ENOBUFS;
 
 	num_erps = old_num_erps + erp_core->num_erp_banks;
 	err = mlxsw_sp_acl_erp_table_alloc(erp_core, num_erps,
 					   erp_table->aregion->type,
 					   &erp_table->base_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	erp_table->num_max_atcam_erps = num_erps;
 
 	err = mlxsw_sp_acl_erp_table_relocate(erp_table);
-	अगर (err)
-		जाओ err_table_relocate;
+	if (err)
+		goto err_table_relocate;
 
 	err = mlxsw_sp_acl_erp_table_enable(erp_table, ctcam_le);
-	अगर (err)
-		जाओ err_table_enable;
+	if (err)
+		goto err_table_enable;
 
-	mlxsw_sp_acl_erp_table_मुक्त(erp_core, old_num_erps,
+	mlxsw_sp_acl_erp_table_free(erp_core, old_num_erps,
 				    erp_table->aregion->type, old_base_index);
 
-	वापस 0;
+	return 0;
 
 err_table_enable:
 err_table_relocate:
 	erp_table->num_max_atcam_erps = old_num_erps;
-	mlxsw_sp_acl_erp_table_मुक्त(erp_core, num_erps,
+	mlxsw_sp_acl_erp_table_free(erp_core, num_erps,
 				    erp_table->aregion->type,
 				    erp_table->base_index);
 	erp_table->base_index = old_base_index;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_acl_erp_table_bf_add(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			   काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = erp_table->aregion;
-	अचिन्हित पूर्णांक erp_bank = mlxsw_sp_acl_erp_bank_get(erp);
-	काष्ठा mlxsw_sp_acl_atcam_entry *aentry;
-	पूर्णांक err;
+static int
+mlxsw_acl_erp_table_bf_add(struct mlxsw_sp_acl_erp_table *erp_table,
+			   struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp_acl_atcam_region *aregion = erp_table->aregion;
+	unsigned int erp_bank = mlxsw_sp_acl_erp_bank_get(erp);
+	struct mlxsw_sp_acl_atcam_entry *aentry;
+	int err;
 
-	list_क्रम_each_entry(aentry, &aregion->entries_list, list) अणु
+	list_for_each_entry(aentry, &aregion->entries_list, list) {
 		err = mlxsw_sp_acl_bf_entry_add(aregion->region->mlxsw_sp,
 						erp_table->erp_core->bf,
 						aregion, erp_bank, aentry);
-		अगर (err)
-			जाओ bf_entry_add_err;
-	पूर्ण
+		if (err)
+			goto bf_entry_add_err;
+	}
 
-	वापस 0;
+	return 0;
 
 bf_entry_add_err:
-	list_क्रम_each_entry_जारी_reverse(aentry, &aregion->entries_list,
+	list_for_each_entry_continue_reverse(aentry, &aregion->entries_list,
 					     list)
 		mlxsw_sp_acl_bf_entry_del(aregion->region->mlxsw_sp,
 					  erp_table->erp_core->bf,
 					  aregion, erp_bank, aentry);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-mlxsw_acl_erp_table_bf_del(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			   काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = erp_table->aregion;
-	अचिन्हित पूर्णांक erp_bank = mlxsw_sp_acl_erp_bank_get(erp);
-	काष्ठा mlxsw_sp_acl_atcam_entry *aentry;
+static void
+mlxsw_acl_erp_table_bf_del(struct mlxsw_sp_acl_erp_table *erp_table,
+			   struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp_acl_atcam_region *aregion = erp_table->aregion;
+	unsigned int erp_bank = mlxsw_sp_acl_erp_bank_get(erp);
+	struct mlxsw_sp_acl_atcam_entry *aentry;
 
-	list_क्रम_each_entry_reverse(aentry, &aregion->entries_list, list)
+	list_for_each_entry_reverse(aentry, &aregion->entries_list, list)
 		mlxsw_sp_acl_bf_entry_del(aregion->region->mlxsw_sp,
 					  erp_table->erp_core->bf,
 					  aregion, erp_bank, aentry);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_region_table_trans(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
-	काष्ठा mlxsw_sp_acl_erp *master_rp;
-	पूर्णांक err;
+static int
+mlxsw_sp_acl_erp_region_table_trans(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	struct mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
+	struct mlxsw_sp_acl_erp *master_rp;
+	int err;
 
 	/* Initially, allocate a single eRP row. Expand later as needed */
 	err = mlxsw_sp_acl_erp_table_alloc(erp_core, erp_core->num_erp_banks,
 					   erp_table->aregion->type,
 					   &erp_table->base_index);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	erp_table->num_max_atcam_erps = erp_core->num_erp_banks;
 
 	/* Transition the sole RP currently configured (the master RP)
 	 * to the eRP table
 	 */
 	master_rp = mlxsw_sp_acl_erp_table_master_rp(erp_table);
-	अगर (!master_rp) अणु
+	if (!master_rp) {
 		err = -EINVAL;
-		जाओ err_table_master_rp;
-	पूर्ण
+		goto err_table_master_rp;
+	}
 
 	/* Make sure the master RP is using a valid index, as
 	 * only a single eRP row is currently allocated.
 	 */
 	master_rp->index = 0;
-	__set_bit(master_rp->index, erp_table->erp_index_biपंचांगap);
+	__set_bit(master_rp->index, erp_table->erp_index_bitmap);
 
 	err = mlxsw_sp_acl_erp_table_erp_add(erp_table, master_rp);
-	अगर (err)
-		जाओ err_table_master_rp_add;
+	if (err)
+		goto err_table_master_rp_add;
 
-	/* Update Bloom filter beक्रमe enabling eRP table, as rules
+	/* Update Bloom filter before enabling eRP table, as rules
 	 * on the master RP were not set to Bloom filter up to this
-	 * poपूर्णांक.
+	 * point.
 	 */
 	err = mlxsw_acl_erp_table_bf_add(erp_table, master_rp);
-	अगर (err)
-		जाओ err_table_bf_add;
+	if (err)
+		goto err_table_bf_add;
 
 	err = mlxsw_sp_acl_erp_table_enable(erp_table, false);
-	अगर (err)
-		जाओ err_table_enable;
+	if (err)
+		goto err_table_enable;
 
-	वापस 0;
+	return 0;
 
 err_table_enable:
 	mlxsw_acl_erp_table_bf_del(erp_table, master_rp);
 err_table_bf_add:
 	mlxsw_sp_acl_erp_table_erp_del(master_rp);
 err_table_master_rp_add:
-	__clear_bit(master_rp->index, erp_table->erp_index_biपंचांगap);
+	__clear_bit(master_rp->index, erp_table->erp_index_bitmap);
 err_table_master_rp:
-	mlxsw_sp_acl_erp_table_मुक्त(erp_core, erp_table->num_max_atcam_erps,
+	mlxsw_sp_acl_erp_table_free(erp_core, erp_table->num_max_atcam_erps,
 				    erp_table->aregion->type,
 				    erp_table->base_index);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_region_master_mask_trans(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
-	काष्ठा mlxsw_sp_acl_erp *master_rp;
+static void
+mlxsw_sp_acl_erp_region_master_mask_trans(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	struct mlxsw_sp_acl_erp_core *erp_core = erp_table->erp_core;
+	struct mlxsw_sp_acl_erp *master_rp;
 
 	mlxsw_sp_acl_erp_table_disable(erp_table);
 	master_rp = mlxsw_sp_acl_erp_table_master_rp(erp_table);
-	अगर (!master_rp)
-		वापस;
+	if (!master_rp)
+		return;
 	mlxsw_acl_erp_table_bf_del(erp_table, master_rp);
 	mlxsw_sp_acl_erp_table_erp_del(master_rp);
-	__clear_bit(master_rp->index, erp_table->erp_index_biपंचांगap);
-	mlxsw_sp_acl_erp_table_मुक्त(erp_core, erp_table->num_max_atcam_erps,
+	__clear_bit(master_rp->index, erp_table->erp_index_bitmap);
+	mlxsw_sp_acl_erp_table_free(erp_core, erp_table->num_max_atcam_erps,
 				    erp_table->aregion->type,
 				    erp_table->base_index);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_region_erp_add(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
-	काष्ठा mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
+static int
+mlxsw_sp_acl_erp_region_erp_add(struct mlxsw_sp_acl_erp_table *erp_table,
+				struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
+	struct mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
 	bool ctcam_le = erp_table->num_ctcam_erps > 0;
-	अक्षर pererp_pl[MLXSW_REG_PERERP_LEN];
+	char pererp_pl[MLXSW_REG_PERERP_LEN];
 
 	mlxsw_reg_pererp_pack(pererp_pl, region->id, ctcam_le, true, 0,
 			      erp_table->base_index, 0);
-	mlxsw_reg_pererp_erp_vector_pack(pererp_pl, erp_table->erp_index_biपंचांगap,
+	mlxsw_reg_pererp_erp_vector_pack(pererp_pl, erp_table->erp_index_bitmap,
 					 MLXSW_SP_ACL_ERP_MAX_PER_REGION);
 	mlxsw_reg_pererp_erpt_vector_set(pererp_pl, erp->index, true);
 
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
+}
 
-अटल व्योम mlxsw_sp_acl_erp_region_erp_del(काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
-	काष्ठा mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
-	काष्ठा mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
+static void mlxsw_sp_acl_erp_region_erp_del(struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
+	struct mlxsw_sp_acl_tcam_region *region = erp_table->aregion->region;
+	struct mlxsw_sp *mlxsw_sp = erp_table->erp_core->mlxsw_sp;
 	bool ctcam_le = erp_table->num_ctcam_erps > 0;
-	अक्षर pererp_pl[MLXSW_REG_PERERP_LEN];
+	char pererp_pl[MLXSW_REG_PERERP_LEN];
 
 	mlxsw_reg_pererp_pack(pererp_pl, region->id, ctcam_le, true, 0,
 			      erp_table->base_index, 0);
-	mlxsw_reg_pererp_erp_vector_pack(pererp_pl, erp_table->erp_index_biपंचांगap,
+	mlxsw_reg_pererp_erp_vector_pack(pererp_pl, erp_table->erp_index_bitmap,
 					 MLXSW_SP_ACL_ERP_MAX_PER_REGION);
 	mlxsw_reg_pererp_erpt_vector_set(pererp_pl, erp->index, false);
 
-	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
-पूर्ण
+	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_region_ctcam_enable(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
+static int
+mlxsw_sp_acl_erp_region_ctcam_enable(struct mlxsw_sp_acl_erp_table *erp_table)
+{
 	/* No need to re-enable lookup in the C-TCAM */
-	अगर (erp_table->num_ctcam_erps > 1)
-		वापस 0;
+	if (erp_table->num_ctcam_erps > 1)
+		return 0;
 
-	वापस mlxsw_sp_acl_erp_table_enable(erp_table, true);
-पूर्ण
+	return mlxsw_sp_acl_erp_table_enable(erp_table, true);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_region_ctcam_disable(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
+static void
+mlxsw_sp_acl_erp_region_ctcam_disable(struct mlxsw_sp_acl_erp_table *erp_table)
+{
 	/* Only disable C-TCAM lookup when last C-TCAM eRP is deleted */
-	अगर (erp_table->num_ctcam_erps > 1)
-		वापस;
+	if (erp_table->num_ctcam_erps > 1)
+		return;
 
 	mlxsw_sp_acl_erp_table_enable(erp_table, false);
-पूर्ण
+}
 
-अटल पूर्णांक
-__mlxsw_sp_acl_erp_table_other_inc(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				   अचिन्हित पूर्णांक *inc_num)
-अणु
-	पूर्णांक err;
+static int
+__mlxsw_sp_acl_erp_table_other_inc(struct mlxsw_sp_acl_erp_table *erp_table,
+				   unsigned int *inc_num)
+{
+	int err;
 
 	/* If there are C-TCAM eRP or deltas in use we need to transition
-	 * the region to use eRP table, अगर it is not alपढ़ोy करोne
+	 * the region to use eRP table, if it is not already done
 	 */
-	अगर (!mlxsw_sp_acl_erp_table_is_used(erp_table)) अणु
+	if (!mlxsw_sp_acl_erp_table_is_used(erp_table)) {
 		err = mlxsw_sp_acl_erp_region_table_trans(erp_table);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	/* When C-TCAM or deltas are used, the eRP table must be used */
-	अगर (erp_table->ops != &erp_multiple_masks_ops)
+	if (erp_table->ops != &erp_multiple_masks_ops)
 		erp_table->ops = &erp_multiple_masks_ops;
 
 	(*inc_num)++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_acl_erp_ctcam_inc(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	वापस __mlxsw_sp_acl_erp_table_other_inc(erp_table,
+static int mlxsw_sp_acl_erp_ctcam_inc(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	return __mlxsw_sp_acl_erp_table_other_inc(erp_table,
 						  &erp_table->num_ctcam_erps);
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_acl_erp_delta_inc(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
-	वापस __mlxsw_sp_acl_erp_table_other_inc(erp_table,
+static int mlxsw_sp_acl_erp_delta_inc(struct mlxsw_sp_acl_erp_table *erp_table)
+{
+	return __mlxsw_sp_acl_erp_table_other_inc(erp_table,
 						  &erp_table->num_deltas);
-पूर्ण
+}
 
-अटल व्योम
-__mlxsw_sp_acl_erp_table_other_dec(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				   अचिन्हित पूर्णांक *dec_num)
-अणु
+static void
+__mlxsw_sp_acl_erp_table_other_dec(struct mlxsw_sp_acl_erp_table *erp_table,
+				   unsigned int *dec_num)
+{
 	(*dec_num)--;
 
 	/* If there are no C-TCAM eRP or deltas in use, the state we
 	 * transition to depends on the number of A-TCAM eRPs currently
 	 * in use.
 	 */
-	अगर (erp_table->num_ctcam_erps > 0 || erp_table->num_deltas > 0)
-		वापस;
+	if (erp_table->num_ctcam_erps > 0 || erp_table->num_deltas > 0)
+		return;
 
-	चयन (erp_table->num_atcam_erps) अणु
-	हाल 2:
+	switch (erp_table->num_atcam_erps) {
+	case 2:
 		/* Keep using the eRP table, but correctly set the
-		 * operations poपूर्णांकer so that when an A-TCAM eRP is
+		 * operations pointer so that when an A-TCAM eRP is
 		 * deleted we will transition to use the master mask
 		 */
 		erp_table->ops = &erp_two_masks_ops;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		/* We only kept the eRP table because we had C-TCAM
 		 * eRPs in use. Now that the last C-TCAM eRP is gone we
 		 * can stop using the table and transition to use the
@@ -761,120 +760,120 @@ __mlxsw_sp_acl_erp_table_other_dec(काष्ठा mlxsw_sp_acl_erp_table *er
 		 */
 		mlxsw_sp_acl_erp_region_master_mask_trans(erp_table);
 		erp_table->ops = &erp_single_mask_ops;
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		/* There are no more eRPs of any kind used by the region
-		 * so मुक्त its eRP table and transition to initial state
+		 * so free its eRP table and transition to initial state
 		 */
 		mlxsw_sp_acl_erp_table_disable(erp_table);
-		mlxsw_sp_acl_erp_table_मुक्त(erp_table->erp_core,
+		mlxsw_sp_acl_erp_table_free(erp_table->erp_core,
 					    erp_table->num_max_atcam_erps,
 					    erp_table->aregion->type,
 					    erp_table->base_index);
 		erp_table->ops = &erp_no_mask_ops;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम mlxsw_sp_acl_erp_ctcam_dec(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
+static void mlxsw_sp_acl_erp_ctcam_dec(struct mlxsw_sp_acl_erp_table *erp_table)
+{
 	__mlxsw_sp_acl_erp_table_other_dec(erp_table,
 					   &erp_table->num_ctcam_erps);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp_acl_erp_delta_dec(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
+static void mlxsw_sp_acl_erp_delta_dec(struct mlxsw_sp_acl_erp_table *erp_table)
+{
 	__mlxsw_sp_acl_erp_table_other_dec(erp_table,
 					   &erp_table->num_deltas);
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_ctcam_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				   काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	काष्ठा mlxsw_sp_acl_erp *erp;
-	पूर्णांक err;
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_ctcam_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+				   struct mlxsw_sp_acl_erp_key *key)
+{
+	struct mlxsw_sp_acl_erp *erp;
+	int err;
 
-	erp = kzalloc(माप(*erp), GFP_KERNEL);
-	अगर (!erp)
-		वापस ERR_PTR(-ENOMEM);
+	erp = kzalloc(sizeof(*erp), GFP_KERNEL);
+	if (!erp)
+		return ERR_PTR(-ENOMEM);
 
-	स_नकल(&erp->key, key, माप(*key));
-	biपंचांगap_from_arr32(erp->mask_biपंचांगap, (u32 *) key->mask,
+	memcpy(&erp->key, key, sizeof(*key));
+	bitmap_from_arr32(erp->mask_bitmap, (u32 *) key->mask,
 			  MLXSW_SP_ACL_TCAM_MASK_LEN);
 
 	err = mlxsw_sp_acl_erp_ctcam_inc(erp_table);
-	अगर (err)
-		जाओ err_erp_ctcam_inc;
+	if (err)
+		goto err_erp_ctcam_inc;
 
 	erp->erp_table = erp_table;
 
 	err = mlxsw_sp_acl_erp_master_mask_set(erp_table, &erp->key);
-	अगर (err)
-		जाओ err_master_mask_set;
+	if (err)
+		goto err_master_mask_set;
 
 	err = mlxsw_sp_acl_erp_region_ctcam_enable(erp_table);
-	अगर (err)
-		जाओ err_erp_region_ctcam_enable;
+	if (err)
+		goto err_erp_region_ctcam_enable;
 
-	वापस erp;
+	return erp;
 
 err_erp_region_ctcam_enable:
 	mlxsw_sp_acl_erp_master_mask_clear(erp_table, &erp->key);
 err_master_mask_set:
 	mlxsw_sp_acl_erp_ctcam_dec(erp_table);
 err_erp_ctcam_inc:
-	kमुक्त(erp);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(erp);
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_ctcam_mask_destroy(काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
+static void
+mlxsw_sp_acl_erp_ctcam_mask_destroy(struct mlxsw_sp_acl_erp *erp)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table = erp->erp_table;
 
 	mlxsw_sp_acl_erp_region_ctcam_disable(erp_table);
 	mlxsw_sp_acl_erp_master_mask_clear(erp_table, &erp->key);
 	mlxsw_sp_acl_erp_ctcam_dec(erp_table);
-	kमुक्त(erp);
-पूर्ण
+	kfree(erp);
+}
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			     काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	काष्ठा mlxsw_sp_acl_erp *erp;
-	पूर्णांक err;
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+			     struct mlxsw_sp_acl_erp_key *key)
+{
+	struct mlxsw_sp_acl_erp *erp;
+	int err;
 
-	अगर (key->ctcam)
-		वापस mlxsw_sp_acl_erp_ctcam_mask_create(erp_table, key);
+	if (key->ctcam)
+		return mlxsw_sp_acl_erp_ctcam_mask_create(erp_table, key);
 
-	/* Expand the eRP table क्रम the new eRP, अगर needed */
+	/* Expand the eRP table for the new eRP, if needed */
 	err = mlxsw_sp_acl_erp_table_expand(erp_table);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
 	erp = mlxsw_sp_acl_erp_generic_create(erp_table, key);
-	अगर (IS_ERR(erp))
-		वापस erp;
+	if (IS_ERR(erp))
+		return erp;
 
 	err = mlxsw_sp_acl_erp_index_get(erp_table, &erp->index);
-	अगर (err)
-		जाओ err_erp_index_get;
+	if (err)
+		goto err_erp_index_get;
 
 	err = mlxsw_sp_acl_erp_table_erp_add(erp_table, erp);
-	अगर (err)
-		जाओ err_table_erp_add;
+	if (err)
+		goto err_table_erp_add;
 
 	err = mlxsw_sp_acl_erp_region_erp_add(erp_table, erp);
-	अगर (err)
-		जाओ err_region_erp_add;
+	if (err)
+		goto err_region_erp_add;
 
 	erp_table->ops = &erp_multiple_masks_ops;
 
-	वापस erp;
+	return erp;
 
 err_region_erp_add:
 	mlxsw_sp_acl_erp_table_erp_del(erp);
@@ -882,62 +881,62 @@ err_table_erp_add:
 	mlxsw_sp_acl_erp_index_put(erp_table, erp->index);
 err_erp_index_get:
 	mlxsw_sp_acl_erp_generic_destroy(erp);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-			      काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	अगर (erp->key.ctcam)
-		वापस mlxsw_sp_acl_erp_ctcam_mask_destroy(erp);
+static void
+mlxsw_sp_acl_erp_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+			      struct mlxsw_sp_acl_erp *erp)
+{
+	if (erp->key.ctcam)
+		return mlxsw_sp_acl_erp_ctcam_mask_destroy(erp);
 
 	mlxsw_sp_acl_erp_region_erp_del(erp);
 	mlxsw_sp_acl_erp_table_erp_del(erp);
 	mlxsw_sp_acl_erp_index_put(erp_table, erp->index);
 	mlxsw_sp_acl_erp_generic_destroy(erp);
 
-	अगर (erp_table->num_atcam_erps == 2 && erp_table->num_ctcam_erps == 0 &&
+	if (erp_table->num_atcam_erps == 2 && erp_table->num_ctcam_erps == 0 &&
 	    erp_table->num_deltas == 0)
 		erp_table->ops = &erp_two_masks_ops;
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_second_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				    काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	काष्ठा mlxsw_sp_acl_erp *erp;
-	पूर्णांक err;
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_second_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+				    struct mlxsw_sp_acl_erp_key *key)
+{
+	struct mlxsw_sp_acl_erp *erp;
+	int err;
 
-	अगर (key->ctcam)
-		वापस mlxsw_sp_acl_erp_ctcam_mask_create(erp_table, key);
+	if (key->ctcam)
+		return mlxsw_sp_acl_erp_ctcam_mask_create(erp_table, key);
 
 	/* Transition to use eRP table instead of master mask */
 	err = mlxsw_sp_acl_erp_region_table_trans(erp_table);
-	अगर (err)
-		वापस ERR_PTR(err);
+	if (err)
+		return ERR_PTR(err);
 
 	erp = mlxsw_sp_acl_erp_generic_create(erp_table, key);
-	अगर (IS_ERR(erp)) अणु
+	if (IS_ERR(erp)) {
 		err = PTR_ERR(erp);
-		जाओ err_erp_create;
-	पूर्ण
+		goto err_erp_create;
+	}
 
 	err = mlxsw_sp_acl_erp_index_get(erp_table, &erp->index);
-	अगर (err)
-		जाओ err_erp_index_get;
+	if (err)
+		goto err_erp_index_get;
 
 	err = mlxsw_sp_acl_erp_table_erp_add(erp_table, erp);
-	अगर (err)
-		जाओ err_table_erp_add;
+	if (err)
+		goto err_table_erp_add;
 
 	err = mlxsw_sp_acl_erp_region_erp_add(erp_table, erp);
-	अगर (err)
-		जाओ err_region_erp_add;
+	if (err)
+		goto err_region_erp_add;
 
 	erp_table->ops = &erp_two_masks_ops;
 
-	वापस erp;
+	return erp;
 
 err_region_erp_add:
 	mlxsw_sp_acl_erp_table_erp_del(erp);
@@ -947,15 +946,15 @@ err_erp_index_get:
 	mlxsw_sp_acl_erp_generic_destroy(erp);
 err_erp_create:
 	mlxsw_sp_acl_erp_region_master_mask_trans(erp_table);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_second_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				     काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
-	अगर (erp->key.ctcam)
-		वापस mlxsw_sp_acl_erp_ctcam_mask_destroy(erp);
+static void
+mlxsw_sp_acl_erp_second_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+				     struct mlxsw_sp_acl_erp *erp)
+{
+	if (erp->key.ctcam)
+		return mlxsw_sp_acl_erp_ctcam_mask_destroy(erp);
 
 	mlxsw_sp_acl_erp_region_erp_del(erp);
 	mlxsw_sp_acl_erp_table_erp_del(erp);
@@ -965,372 +964,372 @@ mlxsw_sp_acl_erp_second_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *
 	mlxsw_sp_acl_erp_region_master_mask_trans(erp_table);
 
 	erp_table->ops = &erp_single_mask_ops;
-पूर्ण
+}
 
-अटल काष्ठा mlxsw_sp_acl_erp *
-mlxsw_sp_acl_erp_first_mask_create(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				   काष्ठा mlxsw_sp_acl_erp_key *key)
-अणु
-	काष्ठा mlxsw_sp_acl_erp *erp;
+static struct mlxsw_sp_acl_erp *
+mlxsw_sp_acl_erp_first_mask_create(struct mlxsw_sp_acl_erp_table *erp_table,
+				   struct mlxsw_sp_acl_erp_key *key)
+{
+	struct mlxsw_sp_acl_erp *erp;
 
-	अगर (key->ctcam)
-		वापस ERR_PTR(-EINVAL);
+	if (key->ctcam)
+		return ERR_PTR(-EINVAL);
 
 	erp = mlxsw_sp_acl_erp_generic_create(erp_table, key);
-	अगर (IS_ERR(erp))
-		वापस erp;
+	if (IS_ERR(erp))
+		return erp;
 
 	erp_table->ops = &erp_single_mask_ops;
 
-	वापस erp;
-पूर्ण
+	return erp;
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_first_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				    काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
+static void
+mlxsw_sp_acl_erp_first_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+				    struct mlxsw_sp_acl_erp *erp)
+{
 	mlxsw_sp_acl_erp_generic_destroy(erp);
 	erp_table->ops = &erp_no_mask_ops;
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_no_mask_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table,
-				 काष्ठा mlxsw_sp_acl_erp *erp)
-अणु
+static void
+mlxsw_sp_acl_erp_no_mask_destroy(struct mlxsw_sp_acl_erp_table *erp_table,
+				 struct mlxsw_sp_acl_erp *erp)
+{
 	WARN_ON(1);
-पूर्ण
+}
 
-काष्ठा mlxsw_sp_acl_erp_mask *
-mlxsw_sp_acl_erp_mask_get(काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-			  स्थिर अक्षर *mask, bool ctcam)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
-	काष्ठा mlxsw_sp_acl_erp_key key;
-	काष्ठा objagg_obj *objagg_obj;
+struct mlxsw_sp_acl_erp_mask *
+mlxsw_sp_acl_erp_mask_get(struct mlxsw_sp_acl_atcam_region *aregion,
+			  const char *mask, bool ctcam)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+	struct mlxsw_sp_acl_erp_key key;
+	struct objagg_obj *objagg_obj;
 
-	स_नकल(key.mask, mask, MLXSW_REG_PTCEX_FLEX_KEY_BLOCKS_LEN);
+	memcpy(key.mask, mask, MLXSW_REG_PTCEX_FLEX_KEY_BLOCKS_LEN);
 	key.ctcam = ctcam;
 	mutex_lock(&erp_table->objagg_lock);
 	objagg_obj = objagg_obj_get(erp_table->objagg, &key);
 	mutex_unlock(&erp_table->objagg_lock);
-	अगर (IS_ERR(objagg_obj))
-		वापस ERR_CAST(objagg_obj);
-	वापस (काष्ठा mlxsw_sp_acl_erp_mask *) objagg_obj;
-पूर्ण
+	if (IS_ERR(objagg_obj))
+		return ERR_CAST(objagg_obj);
+	return (struct mlxsw_sp_acl_erp_mask *) objagg_obj;
+}
 
-व्योम mlxsw_sp_acl_erp_mask_put(काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-			       काष्ठा mlxsw_sp_acl_erp_mask *erp_mask)
-अणु
-	काष्ठा objagg_obj *objagg_obj = (काष्ठा objagg_obj *) erp_mask;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+void mlxsw_sp_acl_erp_mask_put(struct mlxsw_sp_acl_atcam_region *aregion,
+			       struct mlxsw_sp_acl_erp_mask *erp_mask)
+{
+	struct objagg_obj *objagg_obj = (struct objagg_obj *) erp_mask;
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
 
 	mutex_lock(&erp_table->objagg_lock);
 	objagg_obj_put(erp_table->objagg, objagg_obj);
 	mutex_unlock(&erp_table->objagg_lock);
-पूर्ण
+}
 
-पूर्णांक mlxsw_sp_acl_erp_bf_insert(काष्ठा mlxsw_sp *mlxsw_sp,
-			       काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-			       काष्ठा mlxsw_sp_acl_erp_mask *erp_mask,
-			       काष्ठा mlxsw_sp_acl_atcam_entry *aentry)
-अणु
-	काष्ठा objagg_obj *objagg_obj = (काष्ठा objagg_obj *) erp_mask;
-	स्थिर काष्ठा mlxsw_sp_acl_erp *erp = objagg_obj_root_priv(objagg_obj);
-	अचिन्हित पूर्णांक erp_bank;
+int mlxsw_sp_acl_erp_bf_insert(struct mlxsw_sp *mlxsw_sp,
+			       struct mlxsw_sp_acl_atcam_region *aregion,
+			       struct mlxsw_sp_acl_erp_mask *erp_mask,
+			       struct mlxsw_sp_acl_atcam_entry *aentry)
+{
+	struct objagg_obj *objagg_obj = (struct objagg_obj *) erp_mask;
+	const struct mlxsw_sp_acl_erp *erp = objagg_obj_root_priv(objagg_obj);
+	unsigned int erp_bank;
 
-	अगर (!mlxsw_sp_acl_erp_table_is_used(erp->erp_table))
-		वापस 0;
+	if (!mlxsw_sp_acl_erp_table_is_used(erp->erp_table))
+		return 0;
 
 	erp_bank = mlxsw_sp_acl_erp_bank_get(erp);
-	वापस mlxsw_sp_acl_bf_entry_add(mlxsw_sp,
+	return mlxsw_sp_acl_bf_entry_add(mlxsw_sp,
 					erp->erp_table->erp_core->bf,
 					aregion, erp_bank, aentry);
-पूर्ण
+}
 
-व्योम mlxsw_sp_acl_erp_bf_हटाओ(काष्ठा mlxsw_sp *mlxsw_sp,
-				काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-				काष्ठा mlxsw_sp_acl_erp_mask *erp_mask,
-				काष्ठा mlxsw_sp_acl_atcam_entry *aentry)
-अणु
-	काष्ठा objagg_obj *objagg_obj = (काष्ठा objagg_obj *) erp_mask;
-	स्थिर काष्ठा mlxsw_sp_acl_erp *erp = objagg_obj_root_priv(objagg_obj);
-	अचिन्हित पूर्णांक erp_bank;
+void mlxsw_sp_acl_erp_bf_remove(struct mlxsw_sp *mlxsw_sp,
+				struct mlxsw_sp_acl_atcam_region *aregion,
+				struct mlxsw_sp_acl_erp_mask *erp_mask,
+				struct mlxsw_sp_acl_atcam_entry *aentry)
+{
+	struct objagg_obj *objagg_obj = (struct objagg_obj *) erp_mask;
+	const struct mlxsw_sp_acl_erp *erp = objagg_obj_root_priv(objagg_obj);
+	unsigned int erp_bank;
 
-	अगर (!mlxsw_sp_acl_erp_table_is_used(erp->erp_table))
-		वापस;
+	if (!mlxsw_sp_acl_erp_table_is_used(erp->erp_table))
+		return;
 
 	erp_bank = mlxsw_sp_acl_erp_bank_get(erp);
 	mlxsw_sp_acl_bf_entry_del(mlxsw_sp,
 				  erp->erp_table->erp_core->bf,
 				  aregion, erp_bank, aentry);
-पूर्ण
+}
 
 bool
-mlxsw_sp_acl_erp_mask_is_ctcam(स्थिर काष्ठा mlxsw_sp_acl_erp_mask *erp_mask)
-अणु
-	काष्ठा objagg_obj *objagg_obj = (काष्ठा objagg_obj *) erp_mask;
-	स्थिर काष्ठा mlxsw_sp_acl_erp_key *key = objagg_obj_raw(objagg_obj);
+mlxsw_sp_acl_erp_mask_is_ctcam(const struct mlxsw_sp_acl_erp_mask *erp_mask)
+{
+	struct objagg_obj *objagg_obj = (struct objagg_obj *) erp_mask;
+	const struct mlxsw_sp_acl_erp_key *key = objagg_obj_raw(objagg_obj);
 
-	वापस key->ctcam;
-पूर्ण
+	return key->ctcam;
+}
 
-u8 mlxsw_sp_acl_erp_mask_erp_id(स्थिर काष्ठा mlxsw_sp_acl_erp_mask *erp_mask)
-अणु
-	काष्ठा objagg_obj *objagg_obj = (काष्ठा objagg_obj *) erp_mask;
-	स्थिर काष्ठा mlxsw_sp_acl_erp *erp = objagg_obj_root_priv(objagg_obj);
+u8 mlxsw_sp_acl_erp_mask_erp_id(const struct mlxsw_sp_acl_erp_mask *erp_mask)
+{
+	struct objagg_obj *objagg_obj = (struct objagg_obj *) erp_mask;
+	const struct mlxsw_sp_acl_erp *erp = objagg_obj_root_priv(objagg_obj);
 
-	वापस erp->id;
-पूर्ण
+	return erp->id;
+}
 
-काष्ठा mlxsw_sp_acl_erp_delta अणु
-	काष्ठा mlxsw_sp_acl_erp_key key;
+struct mlxsw_sp_acl_erp_delta {
+	struct mlxsw_sp_acl_erp_key key;
 	u16 start;
 	u8 mask;
-पूर्ण;
+};
 
-u16 mlxsw_sp_acl_erp_delta_start(स्थिर काष्ठा mlxsw_sp_acl_erp_delta *delta)
-अणु
-	वापस delta->start;
-पूर्ण
+u16 mlxsw_sp_acl_erp_delta_start(const struct mlxsw_sp_acl_erp_delta *delta)
+{
+	return delta->start;
+}
 
-u8 mlxsw_sp_acl_erp_delta_mask(स्थिर काष्ठा mlxsw_sp_acl_erp_delta *delta)
-अणु
-	वापस delta->mask;
-पूर्ण
+u8 mlxsw_sp_acl_erp_delta_mask(const struct mlxsw_sp_acl_erp_delta *delta)
+{
+	return delta->mask;
+}
 
-u8 mlxsw_sp_acl_erp_delta_value(स्थिर काष्ठा mlxsw_sp_acl_erp_delta *delta,
-				स्थिर अक्षर *enc_key)
-अणु
+u8 mlxsw_sp_acl_erp_delta_value(const struct mlxsw_sp_acl_erp_delta *delta,
+				const char *enc_key)
+{
 	u16 start = delta->start;
 	u8 mask = delta->mask;
-	u16 पंचांगp;
+	u16 tmp;
 
-	अगर (!mask)
-		वापस 0;
+	if (!mask)
+		return 0;
 
-	पंचांगp = (अचिन्हित अक्षर) enc_key[__MASK_IDX(start / 8)];
-	अगर (start / 8 + 1 < __MASK_LEN)
-		पंचांगp |= (अचिन्हित अक्षर) enc_key[__MASK_IDX(start / 8 + 1)] << 8;
-	पंचांगp >>= start % 8;
-	पंचांगp &= mask;
-	वापस पंचांगp;
-पूर्ण
+	tmp = (unsigned char) enc_key[__MASK_IDX(start / 8)];
+	if (start / 8 + 1 < __MASK_LEN)
+		tmp |= (unsigned char) enc_key[__MASK_IDX(start / 8 + 1)] << 8;
+	tmp >>= start % 8;
+	tmp &= mask;
+	return tmp;
+}
 
-व्योम mlxsw_sp_acl_erp_delta_clear(स्थिर काष्ठा mlxsw_sp_acl_erp_delta *delta,
-				  स्थिर अक्षर *enc_key)
-अणु
+void mlxsw_sp_acl_erp_delta_clear(const struct mlxsw_sp_acl_erp_delta *delta,
+				  const char *enc_key)
+{
 	u16 start = delta->start;
 	u8 mask = delta->mask;
-	अचिन्हित अक्षर *byte;
-	u16 पंचांगp;
+	unsigned char *byte;
+	u16 tmp;
 
-	पंचांगp = mask;
-	पंचांगp <<= start % 8;
-	पंचांगp = ~पंचांगp;
+	tmp = mask;
+	tmp <<= start % 8;
+	tmp = ~tmp;
 
-	byte = (अचिन्हित अक्षर *) &enc_key[__MASK_IDX(start / 8)];
-	*byte &= पंचांगp & 0xff;
-	अगर (start / 8 + 1 < __MASK_LEN) अणु
-		byte = (अचिन्हित अक्षर *) &enc_key[__MASK_IDX(start / 8 + 1)];
-		*byte &= (पंचांगp >> 8) & 0xff;
-	पूर्ण
-पूर्ण
+	byte = (unsigned char *) &enc_key[__MASK_IDX(start / 8)];
+	*byte &= tmp & 0xff;
+	if (start / 8 + 1 < __MASK_LEN) {
+		byte = (unsigned char *) &enc_key[__MASK_IDX(start / 8 + 1)];
+		*byte &= (tmp >> 8) & 0xff;
+	}
+}
 
-अटल स्थिर काष्ठा mlxsw_sp_acl_erp_delta
-mlxsw_sp_acl_erp_delta_शेष = अणुपूर्ण;
+static const struct mlxsw_sp_acl_erp_delta
+mlxsw_sp_acl_erp_delta_default = {};
 
-स्थिर काष्ठा mlxsw_sp_acl_erp_delta *
-mlxsw_sp_acl_erp_delta(स्थिर काष्ठा mlxsw_sp_acl_erp_mask *erp_mask)
-अणु
-	काष्ठा objagg_obj *objagg_obj = (काष्ठा objagg_obj *) erp_mask;
-	स्थिर काष्ठा mlxsw_sp_acl_erp_delta *delta;
+const struct mlxsw_sp_acl_erp_delta *
+mlxsw_sp_acl_erp_delta(const struct mlxsw_sp_acl_erp_mask *erp_mask)
+{
+	struct objagg_obj *objagg_obj = (struct objagg_obj *) erp_mask;
+	const struct mlxsw_sp_acl_erp_delta *delta;
 
 	delta = objagg_obj_delta_priv(objagg_obj);
-	अगर (!delta)
-		delta = &mlxsw_sp_acl_erp_delta_शेष;
-	वापस delta;
-पूर्ण
+	if (!delta)
+		delta = &mlxsw_sp_acl_erp_delta_default;
+	return delta;
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_delta_fill(स्थिर काष्ठा mlxsw_sp_acl_erp_key *parent_key,
-			    स्थिर काष्ठा mlxsw_sp_acl_erp_key *key,
+static int
+mlxsw_sp_acl_erp_delta_fill(const struct mlxsw_sp_acl_erp_key *parent_key,
+			    const struct mlxsw_sp_acl_erp_key *key,
 			    u16 *delta_start, u8 *delta_mask)
-अणु
-	पूर्णांक offset = 0;
-	पूर्णांक si = -1;
+{
+	int offset = 0;
+	int si = -1;
 	u16 pmask;
 	u16 mask;
-	पूर्णांक i;
+	int i;
 
-	/* The dअगरference between 2 masks can be up to 8 consecutive bits. */
-	क्रम (i = 0; i < __MASK_LEN; i++) अणु
-		अगर (parent_key->mask[__MASK_IDX(i)] == key->mask[__MASK_IDX(i)])
-			जारी;
-		अगर (si == -1)
+	/* The difference between 2 masks can be up to 8 consecutive bits. */
+	for (i = 0; i < __MASK_LEN; i++) {
+		if (parent_key->mask[__MASK_IDX(i)] == key->mask[__MASK_IDX(i)])
+			continue;
+		if (si == -1)
 			si = i;
-		अन्यथा अगर (si != i - 1)
-			वापस -EINVAL;
-	पूर्ण
-	अगर (si == -1) अणु
-		/* The masks are the same, this can happen in हाल eRPs with
+		else if (si != i - 1)
+			return -EINVAL;
+	}
+	if (si == -1) {
+		/* The masks are the same, this can happen in case eRPs with
 		 * the same mask were created in both A-TCAM and C-TCAM.
 		 * The only possible condition under which this can happen
 		 * is identical rule insertion. Delta is not possible here.
 		 */
-		वापस -EINVAL;
-	पूर्ण
-	pmask = (अचिन्हित अक्षर) parent_key->mask[__MASK_IDX(si)];
-	mask = (अचिन्हित अक्षर) key->mask[__MASK_IDX(si)];
-	अगर (si + 1 < __MASK_LEN) अणु
-		pmask |= (अचिन्हित अक्षर) parent_key->mask[__MASK_IDX(si + 1)] << 8;
-		mask |= (अचिन्हित अक्षर) key->mask[__MASK_IDX(si + 1)] << 8;
-	पूर्ण
+		return -EINVAL;
+	}
+	pmask = (unsigned char) parent_key->mask[__MASK_IDX(si)];
+	mask = (unsigned char) key->mask[__MASK_IDX(si)];
+	if (si + 1 < __MASK_LEN) {
+		pmask |= (unsigned char) parent_key->mask[__MASK_IDX(si + 1)] << 8;
+		mask |= (unsigned char) key->mask[__MASK_IDX(si + 1)] << 8;
+	}
 
-	अगर ((pmask ^ mask) & pmask)
-		वापस -EINVAL;
+	if ((pmask ^ mask) & pmask)
+		return -EINVAL;
 	mask &= ~pmask;
-	जबतक (!(mask & (1 << offset)))
+	while (!(mask & (1 << offset)))
 		offset++;
-	जबतक (!(mask & 1))
+	while (!(mask & 1))
 		mask >>= 1;
-	अगर (mask & 0xff00)
-		वापस -EINVAL;
+	if (mask & 0xff00)
+		return -EINVAL;
 
 	*delta_start = si * 8 + offset;
 	*delta_mask = mask;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool mlxsw_sp_acl_erp_delta_check(व्योम *priv, स्थिर व्योम *parent_obj,
-					 स्थिर व्योम *obj)
-अणु
-	स्थिर काष्ठा mlxsw_sp_acl_erp_key *parent_key = parent_obj;
-	स्थिर काष्ठा mlxsw_sp_acl_erp_key *key = obj;
+static bool mlxsw_sp_acl_erp_delta_check(void *priv, const void *parent_obj,
+					 const void *obj)
+{
+	const struct mlxsw_sp_acl_erp_key *parent_key = parent_obj;
+	const struct mlxsw_sp_acl_erp_key *key = obj;
 	u16 delta_start;
 	u8 delta_mask;
-	पूर्णांक err;
+	int err;
 
 	err = mlxsw_sp_acl_erp_delta_fill(parent_key, key,
 					  &delta_start, &delta_mask);
-	वापस err ? false : true;
-पूर्ण
+	return err ? false : true;
+}
 
-अटल पूर्णांक mlxsw_sp_acl_erp_hपूर्णांकs_obj_cmp(स्थिर व्योम *obj1, स्थिर व्योम *obj2)
-अणु
-	स्थिर काष्ठा mlxsw_sp_acl_erp_key *key1 = obj1;
-	स्थिर काष्ठा mlxsw_sp_acl_erp_key *key2 = obj2;
+static int mlxsw_sp_acl_erp_hints_obj_cmp(const void *obj1, const void *obj2)
+{
+	const struct mlxsw_sp_acl_erp_key *key1 = obj1;
+	const struct mlxsw_sp_acl_erp_key *key2 = obj2;
 
-	/* For hपूर्णांकs purposes, two objects are considered equal
-	 * in हाल the masks are the same. Does not matter what
+	/* For hints purposes, two objects are considered equal
+	 * in case the masks are the same. Does not matter what
 	 * the "ctcam" value is.
 	 */
-	वापस स_भेद(key1->mask, key2->mask, माप(key1->mask));
-पूर्ण
+	return memcmp(key1->mask, key2->mask, sizeof(key1->mask));
+}
 
-अटल व्योम *mlxsw_sp_acl_erp_delta_create(व्योम *priv, व्योम *parent_obj,
-					   व्योम *obj)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_key *parent_key = parent_obj;
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = priv;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
-	काष्ठा mlxsw_sp_acl_erp_key *key = obj;
-	काष्ठा mlxsw_sp_acl_erp_delta *delta;
+static void *mlxsw_sp_acl_erp_delta_create(void *priv, void *parent_obj,
+					   void *obj)
+{
+	struct mlxsw_sp_acl_erp_key *parent_key = parent_obj;
+	struct mlxsw_sp_acl_atcam_region *aregion = priv;
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+	struct mlxsw_sp_acl_erp_key *key = obj;
+	struct mlxsw_sp_acl_erp_delta *delta;
 	u16 delta_start;
 	u8 delta_mask;
-	पूर्णांक err;
+	int err;
 
-	अगर (parent_key->ctcam || key->ctcam)
-		वापस ERR_PTR(-EINVAL);
+	if (parent_key->ctcam || key->ctcam)
+		return ERR_PTR(-EINVAL);
 	err = mlxsw_sp_acl_erp_delta_fill(parent_key, key,
 					  &delta_start, &delta_mask);
-	अगर (err)
-		वापस ERR_PTR(-EINVAL);
+	if (err)
+		return ERR_PTR(-EINVAL);
 
-	delta = kzalloc(माप(*delta), GFP_KERNEL);
-	अगर (!delta)
-		वापस ERR_PTR(-ENOMEM);
+	delta = kzalloc(sizeof(*delta), GFP_KERNEL);
+	if (!delta)
+		return ERR_PTR(-ENOMEM);
 	delta->start = delta_start;
 	delta->mask = delta_mask;
 
 	err = mlxsw_sp_acl_erp_delta_inc(erp_table);
-	अगर (err)
-		जाओ err_erp_delta_inc;
+	if (err)
+		goto err_erp_delta_inc;
 
-	स_नकल(&delta->key, key, माप(*key));
+	memcpy(&delta->key, key, sizeof(*key));
 	err = mlxsw_sp_acl_erp_master_mask_set(erp_table, &delta->key);
-	अगर (err)
-		जाओ err_master_mask_set;
+	if (err)
+		goto err_master_mask_set;
 
-	वापस delta;
+	return delta;
 
 err_master_mask_set:
 	mlxsw_sp_acl_erp_delta_dec(erp_table);
 err_erp_delta_inc:
-	kमुक्त(delta);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(delta);
+	return ERR_PTR(err);
+}
 
-अटल व्योम mlxsw_sp_acl_erp_delta_destroy(व्योम *priv, व्योम *delta_priv)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_delta *delta = delta_priv;
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = priv;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+static void mlxsw_sp_acl_erp_delta_destroy(void *priv, void *delta_priv)
+{
+	struct mlxsw_sp_acl_erp_delta *delta = delta_priv;
+	struct mlxsw_sp_acl_atcam_region *aregion = priv;
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
 
 	mlxsw_sp_acl_erp_master_mask_clear(erp_table, &delta->key);
 	mlxsw_sp_acl_erp_delta_dec(erp_table);
-	kमुक्त(delta);
-पूर्ण
+	kfree(delta);
+}
 
-अटल व्योम *mlxsw_sp_acl_erp_root_create(व्योम *priv, व्योम *obj,
-					  अचिन्हित पूर्णांक root_id)
-अणु
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = priv;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
-	काष्ठा mlxsw_sp_acl_erp_key *key = obj;
+static void *mlxsw_sp_acl_erp_root_create(void *priv, void *obj,
+					  unsigned int root_id)
+{
+	struct mlxsw_sp_acl_atcam_region *aregion = priv;
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+	struct mlxsw_sp_acl_erp_key *key = obj;
 
-	अगर (!key->ctcam &&
+	if (!key->ctcam &&
 	    root_id != OBJAGG_OBJ_ROOT_ID_INVALID &&
 	    root_id >= MLXSW_SP_ACL_ERP_MAX_PER_REGION)
-		वापस ERR_PTR(-ENOBUFS);
-	वापस erp_table->ops->erp_create(erp_table, key);
-पूर्ण
+		return ERR_PTR(-ENOBUFS);
+	return erp_table->ops->erp_create(erp_table, key);
+}
 
-अटल व्योम mlxsw_sp_acl_erp_root_destroy(व्योम *priv, व्योम *root_priv)
-अणु
-	काष्ठा mlxsw_sp_acl_atcam_region *aregion = priv;
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+static void mlxsw_sp_acl_erp_root_destroy(void *priv, void *root_priv)
+{
+	struct mlxsw_sp_acl_atcam_region *aregion = priv;
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
 
 	erp_table->ops->erp_destroy(erp_table, root_priv);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा objagg_ops mlxsw_sp_acl_erp_objagg_ops = अणु
-	.obj_size = माप(काष्ठा mlxsw_sp_acl_erp_key),
+static const struct objagg_ops mlxsw_sp_acl_erp_objagg_ops = {
+	.obj_size = sizeof(struct mlxsw_sp_acl_erp_key),
 	.delta_check = mlxsw_sp_acl_erp_delta_check,
-	.hपूर्णांकs_obj_cmp = mlxsw_sp_acl_erp_hपूर्णांकs_obj_cmp,
+	.hints_obj_cmp = mlxsw_sp_acl_erp_hints_obj_cmp,
 	.delta_create = mlxsw_sp_acl_erp_delta_create,
 	.delta_destroy = mlxsw_sp_acl_erp_delta_destroy,
 	.root_create = mlxsw_sp_acl_erp_root_create,
 	.root_destroy = mlxsw_sp_acl_erp_root_destroy,
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_sp_acl_erp_table *
-mlxsw_sp_acl_erp_table_create(काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-			      काष्ठा objagg_hपूर्णांकs *hपूर्णांकs)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table;
-	पूर्णांक err;
+static struct mlxsw_sp_acl_erp_table *
+mlxsw_sp_acl_erp_table_create(struct mlxsw_sp_acl_atcam_region *aregion,
+			      struct objagg_hints *hints)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table;
+	int err;
 
-	erp_table = kzalloc(माप(*erp_table), GFP_KERNEL);
-	अगर (!erp_table)
-		वापस ERR_PTR(-ENOMEM);
+	erp_table = kzalloc(sizeof(*erp_table), GFP_KERNEL);
+	if (!erp_table)
+		return ERR_PTR(-ENOMEM);
 
 	erp_table->objagg = objagg_create(&mlxsw_sp_acl_erp_objagg_ops,
-					  hपूर्णांकs, aregion);
-	अगर (IS_ERR(erp_table->objagg)) अणु
+					  hints, aregion);
+	if (IS_ERR(erp_table->objagg)) {
 		err = PTR_ERR(erp_table->objagg);
-		जाओ err_objagg_create;
-	पूर्ण
+		goto err_objagg_create;
+	}
 
 	erp_table->erp_core = aregion->atcam->erp_core;
 	erp_table->ops = &erp_no_mask_ops;
@@ -1338,168 +1337,168 @@ mlxsw_sp_acl_erp_table_create(काष्ठा mlxsw_sp_acl_atcam_region *areg
 	erp_table->aregion = aregion;
 	mutex_init(&erp_table->objagg_lock);
 
-	वापस erp_table;
+	return erp_table;
 
 err_objagg_create:
-	kमुक्त(erp_table);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(erp_table);
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-mlxsw_sp_acl_erp_table_destroy(काष्ठा mlxsw_sp_acl_erp_table *erp_table)
-अणु
+static void
+mlxsw_sp_acl_erp_table_destroy(struct mlxsw_sp_acl_erp_table *erp_table)
+{
 	WARN_ON(!list_empty(&erp_table->atcam_erps_list));
 	mutex_destroy(&erp_table->objagg_lock);
 	objagg_destroy(erp_table->objagg);
-	kमुक्त(erp_table);
-पूर्ण
+	kfree(erp_table);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_master_mask_init(काष्ठा mlxsw_sp_acl_atcam_region *aregion)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = aregion->region->mlxsw_sp;
-	अक्षर percr_pl[MLXSW_REG_PERCR_LEN];
+static int
+mlxsw_sp_acl_erp_master_mask_init(struct mlxsw_sp_acl_atcam_region *aregion)
+{
+	struct mlxsw_sp *mlxsw_sp = aregion->region->mlxsw_sp;
+	char percr_pl[MLXSW_REG_PERCR_LEN];
 
 	mlxsw_reg_percr_pack(percr_pl, aregion->region->id);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(percr), percr_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(percr), percr_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_region_param_init(काष्ठा mlxsw_sp_acl_atcam_region *aregion)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = aregion->region->mlxsw_sp;
-	अक्षर pererp_pl[MLXSW_REG_PERERP_LEN];
+static int
+mlxsw_sp_acl_erp_region_param_init(struct mlxsw_sp_acl_atcam_region *aregion)
+{
+	struct mlxsw_sp *mlxsw_sp = aregion->region->mlxsw_sp;
+	char pererp_pl[MLXSW_REG_PERERP_LEN];
 
 	mlxsw_reg_pererp_pack(pererp_pl, aregion->region->id, false, false, 0,
 			      0, 0);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(pererp), pererp_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_hपूर्णांकs_check(काष्ठा mlxsw_sp *mlxsw_sp,
-			     काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-			     काष्ठा objagg_hपूर्णांकs *hपूर्णांकs, bool *p_rehash_needed)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
-	स्थिर काष्ठा objagg_stats *ostats;
-	स्थिर काष्ठा objagg_stats *hstats;
-	पूर्णांक err;
+static int
+mlxsw_sp_acl_erp_hints_check(struct mlxsw_sp *mlxsw_sp,
+			     struct mlxsw_sp_acl_atcam_region *aregion,
+			     struct objagg_hints *hints, bool *p_rehash_needed)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+	const struct objagg_stats *ostats;
+	const struct objagg_stats *hstats;
+	int err;
 
 	*p_rehash_needed = false;
 
 	mutex_lock(&erp_table->objagg_lock);
 	ostats = objagg_stats_get(erp_table->objagg);
 	mutex_unlock(&erp_table->objagg_lock);
-	अगर (IS_ERR(ostats)) अणु
+	if (IS_ERR(ostats)) {
 		dev_err_ratelimited(mlxsw_sp->bus_info->dev, "Failed to get ERP stats\n");
-		वापस PTR_ERR(ostats);
-	पूर्ण
+		return PTR_ERR(ostats);
+	}
 
-	hstats = objagg_hपूर्णांकs_stats_get(hपूर्णांकs);
-	अगर (IS_ERR(hstats)) अणु
+	hstats = objagg_hints_stats_get(hints);
+	if (IS_ERR(hstats)) {
 		dev_err_ratelimited(mlxsw_sp->bus_info->dev, "Failed to get ERP hints stats\n");
 		err = PTR_ERR(hstats);
-		जाओ err_hपूर्णांकs_stats_get;
-	पूर्ण
+		goto err_hints_stats_get;
+	}
 
-	/* Very basic criterion क्रम now. */
-	अगर (hstats->root_count < ostats->root_count)
+	/* Very basic criterion for now. */
+	if (hstats->root_count < ostats->root_count)
 		*p_rehash_needed = true;
 
 	err = 0;
 
 	objagg_stats_put(hstats);
-err_hपूर्णांकs_stats_get:
+err_hints_stats_get:
 	objagg_stats_put(ostats);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम *
-mlxsw_sp_acl_erp_rehash_hपूर्णांकs_get(काष्ठा mlxsw_sp_acl_atcam_region *aregion)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
-	काष्ठा mlxsw_sp *mlxsw_sp = aregion->region->mlxsw_sp;
-	काष्ठा objagg_hपूर्णांकs *hपूर्णांकs;
+void *
+mlxsw_sp_acl_erp_rehash_hints_get(struct mlxsw_sp_acl_atcam_region *aregion)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table = aregion->erp_table;
+	struct mlxsw_sp *mlxsw_sp = aregion->region->mlxsw_sp;
+	struct objagg_hints *hints;
 	bool rehash_needed;
-	पूर्णांक err;
+	int err;
 
 	mutex_lock(&erp_table->objagg_lock);
-	hपूर्णांकs = objagg_hपूर्णांकs_get(erp_table->objagg,
+	hints = objagg_hints_get(erp_table->objagg,
 				 OBJAGG_OPT_ALGO_SIMPLE_GREEDY);
 	mutex_unlock(&erp_table->objagg_lock);
-	अगर (IS_ERR(hपूर्णांकs)) अणु
+	if (IS_ERR(hints)) {
 		dev_err_ratelimited(mlxsw_sp->bus_info->dev, "Failed to create ERP hints\n");
-		वापस ERR_CAST(hपूर्णांकs);
-	पूर्ण
-	err = mlxsw_sp_acl_erp_hपूर्णांकs_check(mlxsw_sp, aregion, hपूर्णांकs,
+		return ERR_CAST(hints);
+	}
+	err = mlxsw_sp_acl_erp_hints_check(mlxsw_sp, aregion, hints,
 					   &rehash_needed);
-	अगर (err)
-		जाओ errout;
+	if (err)
+		goto errout;
 
-	अगर (!rehash_needed) अणु
+	if (!rehash_needed) {
 		err = -EAGAIN;
-		जाओ errout;
-	पूर्ण
-	वापस hपूर्णांकs;
+		goto errout;
+	}
+	return hints;
 
 errout:
-	objagg_hपूर्णांकs_put(hपूर्णांकs);
-	वापस ERR_PTR(err);
-पूर्ण
+	objagg_hints_put(hints);
+	return ERR_PTR(err);
+}
 
-व्योम mlxsw_sp_acl_erp_rehash_hपूर्णांकs_put(व्योम *hपूर्णांकs_priv)
-अणु
-	काष्ठा objagg_hपूर्णांकs *hपूर्णांकs = hपूर्णांकs_priv;
+void mlxsw_sp_acl_erp_rehash_hints_put(void *hints_priv)
+{
+	struct objagg_hints *hints = hints_priv;
 
-	objagg_hपूर्णांकs_put(hपूर्णांकs);
-पूर्ण
+	objagg_hints_put(hints);
+}
 
-पूर्णांक mlxsw_sp_acl_erp_region_init(काष्ठा mlxsw_sp_acl_atcam_region *aregion,
-				 व्योम *hपूर्णांकs_priv)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_table *erp_table;
-	काष्ठा objagg_hपूर्णांकs *hपूर्णांकs = hपूर्णांकs_priv;
-	पूर्णांक err;
+int mlxsw_sp_acl_erp_region_init(struct mlxsw_sp_acl_atcam_region *aregion,
+				 void *hints_priv)
+{
+	struct mlxsw_sp_acl_erp_table *erp_table;
+	struct objagg_hints *hints = hints_priv;
+	int err;
 
-	erp_table = mlxsw_sp_acl_erp_table_create(aregion, hपूर्णांकs);
-	अगर (IS_ERR(erp_table))
-		वापस PTR_ERR(erp_table);
+	erp_table = mlxsw_sp_acl_erp_table_create(aregion, hints);
+	if (IS_ERR(erp_table))
+		return PTR_ERR(erp_table);
 	aregion->erp_table = erp_table;
 
 	/* Initialize the region's master mask to all zeroes */
 	err = mlxsw_sp_acl_erp_master_mask_init(aregion);
-	अगर (err)
-		जाओ err_erp_master_mask_init;
+	if (err)
+		goto err_erp_master_mask_init;
 
 	/* Initialize the region to not use the eRP table */
 	err = mlxsw_sp_acl_erp_region_param_init(aregion);
-	अगर (err)
-		जाओ err_erp_region_param_init;
+	if (err)
+		goto err_erp_region_param_init;
 
-	वापस 0;
+	return 0;
 
 err_erp_region_param_init:
 err_erp_master_mask_init:
 	mlxsw_sp_acl_erp_table_destroy(erp_table);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mlxsw_sp_acl_erp_region_fini(काष्ठा mlxsw_sp_acl_atcam_region *aregion)
-अणु
+void mlxsw_sp_acl_erp_region_fini(struct mlxsw_sp_acl_atcam_region *aregion)
+{
 	mlxsw_sp_acl_erp_table_destroy(aregion->erp_table);
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_acl_erp_tables_sizes_query(काष्ठा mlxsw_sp *mlxsw_sp,
-				    काष्ठा mlxsw_sp_acl_erp_core *erp_core)
-अणु
-	अचिन्हित पूर्णांक size;
+static int
+mlxsw_sp_acl_erp_tables_sizes_query(struct mlxsw_sp *mlxsw_sp,
+				    struct mlxsw_sp_acl_erp_core *erp_core)
+{
+	unsigned int size;
 
-	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_ERPT_ENTRIES_2KB) ||
+	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_ERPT_ENTRIES_2KB) ||
 	    !MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_ERPT_ENTRIES_4KB) ||
 	    !MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_ERPT_ENTRIES_8KB) ||
 	    !MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_ERPT_ENTRIES_12KB))
-		वापस -EIO;
+		return -EIO;
 
 	size = MLXSW_CORE_RES_GET(mlxsw_sp->core, ACL_ERPT_ENTRIES_2KB);
 	erp_core->erpt_entries_size[MLXSW_SP_ACL_ATCAM_REGION_TYPE_2KB] = size;
@@ -1513,88 +1512,88 @@ mlxsw_sp_acl_erp_tables_sizes_query(काष्ठा mlxsw_sp *mlxsw_sp,
 	size = MLXSW_CORE_RES_GET(mlxsw_sp->core, ACL_ERPT_ENTRIES_12KB);
 	erp_core->erpt_entries_size[MLXSW_SP_ACL_ATCAM_REGION_TYPE_12KB] = size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_acl_erp_tables_init(काष्ठा mlxsw_sp *mlxsw_sp,
-					काष्ठा mlxsw_sp_acl_erp_core *erp_core)
-अणु
-	अचिन्हित पूर्णांक erpt_bank_size;
-	पूर्णांक err;
+static int mlxsw_sp_acl_erp_tables_init(struct mlxsw_sp *mlxsw_sp,
+					struct mlxsw_sp_acl_erp_core *erp_core)
+{
+	unsigned int erpt_bank_size;
+	int err;
 
-	अगर (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_MAX_ERPT_BANK_SIZE) ||
+	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_MAX_ERPT_BANK_SIZE) ||
 	    !MLXSW_CORE_RES_VALID(mlxsw_sp->core, ACL_MAX_ERPT_BANKS))
-		वापस -EIO;
+		return -EIO;
 	erpt_bank_size = MLXSW_CORE_RES_GET(mlxsw_sp->core,
 					    ACL_MAX_ERPT_BANK_SIZE);
 	erp_core->num_erp_banks = MLXSW_CORE_RES_GET(mlxsw_sp->core,
 						     ACL_MAX_ERPT_BANKS);
 
 	erp_core->erp_tables = gen_pool_create(0, -1);
-	अगर (!erp_core->erp_tables)
-		वापस -ENOMEM;
-	gen_pool_set_algo(erp_core->erp_tables, gen_pool_best_fit, शून्य);
+	if (!erp_core->erp_tables)
+		return -ENOMEM;
+	gen_pool_set_algo(erp_core->erp_tables, gen_pool_best_fit, NULL);
 
 	err = gen_pool_add(erp_core->erp_tables,
 			   MLXSW_SP_ACL_ERP_GENALLOC_OFFSET, erpt_bank_size,
 			   -1);
-	अगर (err)
-		जाओ err_gen_pool_add;
+	if (err)
+		goto err_gen_pool_add;
 
 	erp_core->bf = mlxsw_sp_acl_bf_init(mlxsw_sp, erp_core->num_erp_banks);
-	अगर (IS_ERR(erp_core->bf)) अणु
+	if (IS_ERR(erp_core->bf)) {
 		err = PTR_ERR(erp_core->bf);
-		जाओ err_bf_init;
-	पूर्ण
+		goto err_bf_init;
+	}
 
-	/* Dअगरferent regions require masks of dअगरferent sizes */
+	/* Different regions require masks of different sizes */
 	err = mlxsw_sp_acl_erp_tables_sizes_query(mlxsw_sp, erp_core);
-	अगर (err)
-		जाओ err_erp_tables_sizes_query;
+	if (err)
+		goto err_erp_tables_sizes_query;
 
-	वापस 0;
+	return 0;
 
 err_erp_tables_sizes_query:
 	mlxsw_sp_acl_bf_fini(erp_core->bf);
 err_bf_init:
 err_gen_pool_add:
 	gen_pool_destroy(erp_core->erp_tables);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mlxsw_sp_acl_erp_tables_fini(काष्ठा mlxsw_sp *mlxsw_sp,
-					 काष्ठा mlxsw_sp_acl_erp_core *erp_core)
-अणु
+static void mlxsw_sp_acl_erp_tables_fini(struct mlxsw_sp *mlxsw_sp,
+					 struct mlxsw_sp_acl_erp_core *erp_core)
+{
 	mlxsw_sp_acl_bf_fini(erp_core->bf);
 	gen_pool_destroy(erp_core->erp_tables);
-पूर्ण
+}
 
-पूर्णांक mlxsw_sp_acl_erps_init(काष्ठा mlxsw_sp *mlxsw_sp,
-			   काष्ठा mlxsw_sp_acl_atcam *atcam)
-अणु
-	काष्ठा mlxsw_sp_acl_erp_core *erp_core;
-	पूर्णांक err;
+int mlxsw_sp_acl_erps_init(struct mlxsw_sp *mlxsw_sp,
+			   struct mlxsw_sp_acl_atcam *atcam)
+{
+	struct mlxsw_sp_acl_erp_core *erp_core;
+	int err;
 
-	erp_core = kzalloc(माप(*erp_core), GFP_KERNEL);
-	अगर (!erp_core)
-		वापस -ENOMEM;
+	erp_core = kzalloc(sizeof(*erp_core), GFP_KERNEL);
+	if (!erp_core)
+		return -ENOMEM;
 	erp_core->mlxsw_sp = mlxsw_sp;
 	atcam->erp_core = erp_core;
 
 	err = mlxsw_sp_acl_erp_tables_init(mlxsw_sp, erp_core);
-	अगर (err)
-		जाओ err_erp_tables_init;
+	if (err)
+		goto err_erp_tables_init;
 
-	वापस 0;
+	return 0;
 
 err_erp_tables_init:
-	kमुक्त(erp_core);
-	वापस err;
-पूर्ण
+	kfree(erp_core);
+	return err;
+}
 
-व्योम mlxsw_sp_acl_erps_fini(काष्ठा mlxsw_sp *mlxsw_sp,
-			    काष्ठा mlxsw_sp_acl_atcam *atcam)
-अणु
+void mlxsw_sp_acl_erps_fini(struct mlxsw_sp *mlxsw_sp,
+			    struct mlxsw_sp_acl_atcam *atcam)
+{
 	mlxsw_sp_acl_erp_tables_fini(mlxsw_sp, atcam->erp_core);
-	kमुक्त(atcam->erp_core);
-पूर्ण
+	kfree(atcam->erp_core);
+}

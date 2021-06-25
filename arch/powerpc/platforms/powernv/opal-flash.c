@@ -1,137 +1,136 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * PowerNV OPAL Firmware Update Interface
  *
  * Copyright 2013 IBM Corp.
  */
 
-#घोषणा DEBUG
+#define DEBUG
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/reboot.h>
+#include <linux/init.h>
+#include <linux/kobject.h>
+#include <linux/sysfs.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <linux/pagemap.h>
+#include <linux/delay.h>
 
-#समावेश <यंत्र/opal.h>
+#include <asm/opal.h>
 
 /* FLASH status codes */
-#घोषणा FLASH_NO_OP		-1099	/* No operation initiated by user */
-#घोषणा FLASH_NO_AUTH		-9002	/* Not a service authority partition */
+#define FLASH_NO_OP		-1099	/* No operation initiated by user */
+#define FLASH_NO_AUTH		-9002	/* Not a service authority partition */
 
 /* Validate image status values */
-#घोषणा VALIDATE_IMG_READY	-1001	/* Image पढ़ोy क्रम validation */
-#घोषणा VALIDATE_IMG_INCOMPLETE	-1002	/* User copied < VALIDATE_BUF_SIZE */
+#define VALIDATE_IMG_READY	-1001	/* Image ready for validation */
+#define VALIDATE_IMG_INCOMPLETE	-1002	/* User copied < VALIDATE_BUF_SIZE */
 
 /* Manage image status values */
-#घोषणा MANAGE_ACTIVE_ERR	-9001	/* Cannot overग_लिखो active img */
+#define MANAGE_ACTIVE_ERR	-9001	/* Cannot overwrite active img */
 
 /* Flash image status values */
-#घोषणा FLASH_IMG_READY		0	/* Img पढ़ोy क्रम flash on reboot */
-#घोषणा FLASH_INVALID_IMG	-1003	/* Flash image लघुer than expected */
-#घोषणा FLASH_IMG_शून्य_DATA	-1004	/* Bad data in sg list entry */
-#घोषणा FLASH_IMG_BAD_LEN	-1005	/* Bad length in sg list entry */
+#define FLASH_IMG_READY		0	/* Img ready for flash on reboot */
+#define FLASH_INVALID_IMG	-1003	/* Flash image shorter than expected */
+#define FLASH_IMG_NULL_DATA	-1004	/* Bad data in sg list entry */
+#define FLASH_IMG_BAD_LEN	-1005	/* Bad length in sg list entry */
 
 /* Manage operation tokens */
-#घोषणा FLASH_REJECT_TMP_SIDE	0	/* Reject temporary fw image */
-#घोषणा FLASH_COMMIT_TMP_SIDE	1	/* Commit temporary fw image */
+#define FLASH_REJECT_TMP_SIDE	0	/* Reject temporary fw image */
+#define FLASH_COMMIT_TMP_SIDE	1	/* Commit temporary fw image */
 
 /* Update tokens */
-#घोषणा FLASH_UPDATE_CANCEL	0	/* Cancel update request */
-#घोषणा FLASH_UPDATE_INIT	1	/* Initiate update */
+#define FLASH_UPDATE_CANCEL	0	/* Cancel update request */
+#define FLASH_UPDATE_INIT	1	/* Initiate update */
 
 /* Validate image update result tokens */
-#घोषणा VALIDATE_TMP_UPDATE	0     /* T side will be updated */
-#घोषणा VALIDATE_FLASH_AUTH	1     /* Partition करोes not have authority */
-#घोषणा VALIDATE_INVALID_IMG	2     /* Candidate image is not valid */
-#घोषणा VALIDATE_CUR_UNKNOWN	3     /* Current fixpack level is unknown */
+#define VALIDATE_TMP_UPDATE	0     /* T side will be updated */
+#define VALIDATE_FLASH_AUTH	1     /* Partition does not have authority */
+#define VALIDATE_INVALID_IMG	2     /* Candidate image is not valid */
+#define VALIDATE_CUR_UNKNOWN	3     /* Current fixpack level is unknown */
 /*
- * Current T side will be committed to P side beक्रमe being replace with new
- * image, and the new image is करोwnlevel from current image
+ * Current T side will be committed to P side before being replace with new
+ * image, and the new image is downlevel from current image
  */
-#घोषणा VALIDATE_TMP_COMMIT_DL	4
+#define VALIDATE_TMP_COMMIT_DL	4
 /*
- * Current T side will be committed to P side beक्रमe being replaced with new
+ * Current T side will be committed to P side before being replaced with new
  * image
  */
-#घोषणा VALIDATE_TMP_COMMIT	5
+#define VALIDATE_TMP_COMMIT	5
 /*
- * T side will be updated with a करोwnlevel image
+ * T side will be updated with a downlevel image
  */
-#घोषणा VALIDATE_TMP_UPDATE_DL	6
+#define VALIDATE_TMP_UPDATE_DL	6
 /*
  * The candidate image's release date is later than the system's firmware
  * service entitlement date - service warranty period has expired
  */
-#घोषणा VALIDATE_OUT_OF_WRNTY	7
+#define VALIDATE_OUT_OF_WRNTY	7
 
 /* Validate buffer size */
-#घोषणा VALIDATE_BUF_SIZE	4096
+#define VALIDATE_BUF_SIZE	4096
 
 /* XXX: Assume candidate image size is <= 1GB */
-#घोषणा MAX_IMAGE_SIZE	0x40000000
+#define MAX_IMAGE_SIZE	0x40000000
 
 /* Image status */
-क्रमागत अणु
+enum {
 	IMAGE_INVALID,
 	IMAGE_LOADING,
 	IMAGE_READY,
-पूर्ण;
+};
 
 /* Candidate image data */
-काष्ठा image_data_t अणु
-	पूर्णांक		status;
-	व्योम		*data;
-	uपूर्णांक32_t	size;
-पूर्ण;
+struct image_data_t {
+	int		status;
+	void		*data;
+	uint32_t	size;
+};
 
 /* Candidate image header */
-काष्ठा image_header_t अणु
-	uपूर्णांक16_t	magic;
-	uपूर्णांक16_t	version;
-	uपूर्णांक32_t	size;
-पूर्ण;
+struct image_header_t {
+	uint16_t	magic;
+	uint16_t	version;
+	uint32_t	size;
+};
 
-काष्ठा validate_flash_t अणु
-	पूर्णांक		status;		/* Return status */
-	व्योम		*buf;		/* Candidate image buffer */
-	uपूर्णांक32_t	buf_size;	/* Image size */
-	uपूर्णांक32_t	result;		/* Update results token */
-पूर्ण;
+struct validate_flash_t {
+	int		status;		/* Return status */
+	void		*buf;		/* Candidate image buffer */
+	uint32_t	buf_size;	/* Image size */
+	uint32_t	result;		/* Update results token */
+};
 
-काष्ठा manage_flash_t अणु
-	पूर्णांक status;		/* Return status */
-पूर्ण;
+struct manage_flash_t {
+	int status;		/* Return status */
+};
 
-काष्ठा update_flash_t अणु
-	पूर्णांक status;		/* Return status */
-पूर्ण;
+struct update_flash_t {
+	int status;		/* Return status */
+};
 
-अटल काष्ठा image_header_t	image_header;
-अटल काष्ठा image_data_t	image_data;
-अटल काष्ठा validate_flash_t	validate_flash_data;
-अटल काष्ठा manage_flash_t	manage_flash_data;
+static struct image_header_t	image_header;
+static struct image_data_t	image_data;
+static struct validate_flash_t	validate_flash_data;
+static struct manage_flash_t	manage_flash_data;
 
 /* Initialize update_flash_data status to No Operation */
-अटल काष्ठा update_flash_t	update_flash_data = अणु
+static struct update_flash_t	update_flash_data = {
 	.status = FLASH_NO_OP,
-पूर्ण;
+};
 
-अटल DEFINE_MUTEX(image_data_mutex);
+static DEFINE_MUTEX(image_data_mutex);
 
 /*
  * Validate candidate image
  */
-अटल अंतरभूत व्योम opal_flash_validate(व्योम)
-अणु
-	दीर्घ ret;
-	व्योम *buf = validate_flash_data.buf;
+static inline void opal_flash_validate(void)
+{
+	long ret;
+	void *buf = validate_flash_data.buf;
 	__be32 size = cpu_to_be32(validate_flash_data.buf_size);
 	__be32 result;
 
@@ -140,74 +139,74 @@
 	validate_flash_data.status = ret;
 	validate_flash_data.buf_size = be32_to_cpu(size);
 	validate_flash_data.result = be32_to_cpu(result);
-पूर्ण
+}
 
 /*
- * Validate output क्रमmat:
+ * Validate output format:
  *     validate result token
  *     current image version details
  *     new image version details
  */
-अटल sमाप_प्रकार validate_show(काष्ठा kobject *kobj,
-			     काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा validate_flash_t *args_buf = &validate_flash_data;
-	पूर्णांक len;
+static ssize_t validate_show(struct kobject *kobj,
+			     struct kobj_attribute *attr, char *buf)
+{
+	struct validate_flash_t *args_buf = &validate_flash_data;
+	int len;
 
 	/* Candidate image is not validated */
-	अगर (args_buf->status < VALIDATE_TMP_UPDATE) अणु
-		len = प्र_लिखो(buf, "%d\n", args_buf->status);
-		जाओ out;
-	पूर्ण
+	if (args_buf->status < VALIDATE_TMP_UPDATE) {
+		len = sprintf(buf, "%d\n", args_buf->status);
+		goto out;
+	}
 
 	/* Result token */
-	len = प्र_लिखो(buf, "%d\n", args_buf->result);
+	len = sprintf(buf, "%d\n", args_buf->result);
 
 	/* Current and candidate image version details */
-	अगर ((args_buf->result != VALIDATE_TMP_UPDATE) &&
+	if ((args_buf->result != VALIDATE_TMP_UPDATE) &&
 	    (args_buf->result < VALIDATE_CUR_UNKNOWN))
-		जाओ out;
+		goto out;
 
-	अगर (args_buf->buf_size > (VALIDATE_BUF_SIZE - len)) अणु
-		स_नकल(buf + len, args_buf->buf, VALIDATE_BUF_SIZE - len);
+	if (args_buf->buf_size > (VALIDATE_BUF_SIZE - len)) {
+		memcpy(buf + len, args_buf->buf, VALIDATE_BUF_SIZE - len);
 		len = VALIDATE_BUF_SIZE;
-	पूर्ण अन्यथा अणु
-		स_नकल(buf + len, args_buf->buf, args_buf->buf_size);
+	} else {
+		memcpy(buf + len, args_buf->buf, args_buf->buf_size);
 		len += args_buf->buf_size;
-	पूर्ण
+	}
 out:
-	/* Set status to शेष */
+	/* Set status to default */
 	args_buf->status = FLASH_NO_OP;
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
  * Validate candidate firmware image
  *
  * Note:
- *   We are only पूर्णांकerested in first 4K bytes of the
+ *   We are only interested in first 4K bytes of the
  *   candidate image.
  */
-अटल sमाप_प्रकार validate_store(काष्ठा kobject *kobj,
-			      काष्ठा kobj_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा validate_flash_t *args_buf = &validate_flash_data;
+static ssize_t validate_store(struct kobject *kobj,
+			      struct kobj_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct validate_flash_t *args_buf = &validate_flash_data;
 
-	अगर (buf[0] != '1')
-		वापस -EINVAL;
+	if (buf[0] != '1')
+		return -EINVAL;
 
 	mutex_lock(&image_data_mutex);
 
-	अगर (image_data.status != IMAGE_READY ||
-	    image_data.size < VALIDATE_BUF_SIZE) अणु
+	if (image_data.status != IMAGE_READY ||
+	    image_data.size < VALIDATE_BUF_SIZE) {
 		args_buf->result = VALIDATE_INVALID_IMG;
 		args_buf->status = VALIDATE_IMG_INCOMPLETE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Copy first 4k bytes of candidate image */
-	स_नकल(args_buf->buf, image_data.data, VALIDATE_BUF_SIZE);
+	memcpy(args_buf->buf, image_data.data, VALIDATE_BUF_SIZE);
 
 	args_buf->status = VALIDATE_IMG_READY;
 	args_buf->buf_size = VALIDATE_BUF_SIZE;
@@ -217,78 +216,78 @@ out:
 
 out:
 	mutex_unlock(&image_data_mutex);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
  * Manage flash routine
  */
-अटल अंतरभूत व्योम opal_flash_manage(uपूर्णांक8_t op)
-अणु
-	काष्ठा manage_flash_t *स्थिर args_buf = &manage_flash_data;
+static inline void opal_flash_manage(uint8_t op)
+{
+	struct manage_flash_t *const args_buf = &manage_flash_data;
 
 	args_buf->status = opal_manage_flash(op);
-पूर्ण
+}
 
 /*
  * Show manage flash status
  */
-अटल sमाप_प्रकार manage_show(काष्ठा kobject *kobj,
-			   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा manage_flash_t *स्थिर args_buf = &manage_flash_data;
-	पूर्णांक rc;
+static ssize_t manage_show(struct kobject *kobj,
+			   struct kobj_attribute *attr, char *buf)
+{
+	struct manage_flash_t *const args_buf = &manage_flash_data;
+	int rc;
 
-	rc = प्र_लिखो(buf, "%d\n", args_buf->status);
-	/* Set status to शेष*/
+	rc = sprintf(buf, "%d\n", args_buf->status);
+	/* Set status to default*/
 	args_buf->status = FLASH_NO_OP;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Manage operations:
  *   0 - Reject
  *   1 - Commit
  */
-अटल sमाप_प्रकार manage_store(काष्ठा kobject *kobj,
-			    काष्ठा kobj_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	uपूर्णांक8_t op;
-	चयन (buf[0]) अणु
-	हाल '0':
+static ssize_t manage_store(struct kobject *kobj,
+			    struct kobj_attribute *attr,
+			    const char *buf, size_t count)
+{
+	uint8_t op;
+	switch (buf[0]) {
+	case '0':
 		op = FLASH_REJECT_TMP_SIDE;
-		अवरोध;
-	हाल '1':
+		break;
+	case '1':
 		op = FLASH_COMMIT_TMP_SIDE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	/* commit/reject temporary image */
 	opal_flash_manage(op);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /*
  * OPAL update flash
  */
-अटल पूर्णांक opal_flash_update(पूर्णांक op)
-अणु
-	काष्ठा opal_sg_list *list;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक64_t rc = OPAL_PARAMETER;
+static int opal_flash_update(int op)
+{
+	struct opal_sg_list *list;
+	unsigned long addr;
+	int64_t rc = OPAL_PARAMETER;
 
-	अगर (op == FLASH_UPDATE_CANCEL) अणु
+	if (op == FLASH_UPDATE_CANCEL) {
 		pr_alert("FLASH: Image update cancelled\n");
 		addr = '\0';
-		जाओ flash;
-	पूर्ण
+		goto flash;
+	}
 
-	list = opal_vदो_स्मृति_to_sg_list(image_data.data, image_data.size);
-	अगर (!list)
-		जाओ invalid_img;
+	list = opal_vmalloc_to_sg_list(image_data.data, image_data.size);
+	if (!list)
+		goto invalid_img;
 
 	/* First entry address */
 	addr = __pa(list);
@@ -297,14 +296,14 @@ flash:
 	rc = opal_update_flash(addr);
 
 invalid_img:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* This माला_लो called just beक्रमe प्रणाली reboots */
-व्योम opal_flash_update_prपूर्णांक_message(व्योम)
-अणु
-	अगर (update_flash_data.status != FLASH_IMG_READY)
-		वापस;
+/* This gets called just before system reboots */
+void opal_flash_update_print_message(void)
+{
+	if (update_flash_data.status != FLASH_IMG_READY)
+		return;
 
 	pr_alert("FLASH: Flashing new firmware\n");
 	pr_alert("FLASH: Image is %u bytes\n", image_data.size);
@@ -313,118 +312,118 @@ invalid_img:
 
 	/* Small delay to help getting the above message out */
 	msleep(500);
-पूर्ण
+}
 
 /*
  * Show candidate image status
  */
-अटल sमाप_प्रकार update_show(काष्ठा kobject *kobj,
-			   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा update_flash_t *स्थिर args_buf = &update_flash_data;
-	वापस प्र_लिखो(buf, "%d\n", args_buf->status);
-पूर्ण
+static ssize_t update_show(struct kobject *kobj,
+			   struct kobj_attribute *attr, char *buf)
+{
+	struct update_flash_t *const args_buf = &update_flash_data;
+	return sprintf(buf, "%d\n", args_buf->status);
+}
 
 /*
  * Set update image flag
  *  1 - Flash new image
  *  0 - Cancel flash request
  */
-अटल sमाप_प्रकार update_store(काष्ठा kobject *kobj,
-			    काष्ठा kobj_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा update_flash_t *स्थिर args_buf = &update_flash_data;
-	पूर्णांक rc = count;
+static ssize_t update_store(struct kobject *kobj,
+			    struct kobj_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct update_flash_t *const args_buf = &update_flash_data;
+	int rc = count;
 
 	mutex_lock(&image_data_mutex);
 
-	चयन (buf[0]) अणु
-	हाल '0':
-		अगर (args_buf->status == FLASH_IMG_READY)
+	switch (buf[0]) {
+	case '0':
+		if (args_buf->status == FLASH_IMG_READY)
 			opal_flash_update(FLASH_UPDATE_CANCEL);
 		args_buf->status = FLASH_NO_OP;
-		अवरोध;
-	हाल '1':
+		break;
+	case '1':
 		/* Image is loaded? */
-		अगर (image_data.status == IMAGE_READY)
+		if (image_data.status == IMAGE_READY)
 			args_buf->status =
 				opal_flash_update(FLASH_UPDATE_INIT);
-		अन्यथा
+		else
 			args_buf->status = FLASH_INVALID_IMG;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		rc = -EINVAL;
-	पूर्ण
+	}
 
 	mutex_unlock(&image_data_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * Free image buffer
  */
-अटल व्योम मुक्त_image_buf(व्योम)
-अणु
-	व्योम *addr;
-	पूर्णांक size;
+static void free_image_buf(void)
+{
+	void *addr;
+	int size;
 
 	addr = image_data.data;
 	size = PAGE_ALIGN(image_data.size);
-	जबतक (size > 0) अणु
-		ClearPageReserved(vदो_स्मृति_to_page(addr));
+	while (size > 0) {
+		ClearPageReserved(vmalloc_to_page(addr));
 		addr += PAGE_SIZE;
 		size -= PAGE_SIZE;
-	पूर्ण
-	vमुक्त(image_data.data);
-	image_data.data = शून्य;
+	}
+	vfree(image_data.data);
+	image_data.data = NULL;
 	image_data.status = IMAGE_INVALID;
-पूर्ण
+}
 
 /*
  * Allocate image buffer.
  */
-अटल पूर्णांक alloc_image_buf(अक्षर *buffer, माप_प्रकार count)
-अणु
-	व्योम *addr;
-	पूर्णांक size;
+static int alloc_image_buf(char *buffer, size_t count)
+{
+	void *addr;
+	int size;
 
-	अगर (count < माप(image_header)) अणु
+	if (count < sizeof(image_header)) {
 		pr_warn("FLASH: Invalid candidate image\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(&image_header, (व्योम *)buffer, माप(image_header));
+	memcpy(&image_header, (void *)buffer, sizeof(image_header));
 	image_data.size = be32_to_cpu(image_header.size);
 	pr_debug("FLASH: Candidate image size = %u\n", image_data.size);
 
-	अगर (image_data.size > MAX_IMAGE_SIZE) अणु
+	if (image_data.size > MAX_IMAGE_SIZE) {
 		pr_warn("FLASH: Too large image\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (image_data.size < VALIDATE_BUF_SIZE) अणु
+		return -EINVAL;
+	}
+	if (image_data.size < VALIDATE_BUF_SIZE) {
 		pr_warn("FLASH: Image is shorter than expected\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	image_data.data = vzalloc(PAGE_ALIGN(image_data.size));
-	अगर (!image_data.data) अणु
+	if (!image_data.data) {
 		pr_err("%s : Failed to allocate memory\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Pin memory */
 	addr = image_data.data;
 	size = PAGE_ALIGN(image_data.size);
-	जबतक (size > 0) अणु
-		SetPageReserved(vदो_स्मृति_to_page(addr));
+	while (size > 0) {
+		SetPageReserved(vmalloc_to_page(addr));
 		addr += PAGE_SIZE;
 		size -= PAGE_SIZE;
-	पूर्ण
+	}
 
 	image_data.status = IMAGE_LOADING;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Copy candidate image
@@ -432,57 +431,57 @@ invalid_img:
  * Parse candidate image header to get total image size
  * and pre-allocate required memory.
  */
-अटल sमाप_प्रकार image_data_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *bin_attr,
-				अक्षर *buffer, loff_t pos, माप_प्रकार count)
-अणु
-	पूर्णांक rc;
+static ssize_t image_data_write(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *bin_attr,
+				char *buffer, loff_t pos, size_t count)
+{
+	int rc;
 
 	mutex_lock(&image_data_mutex);
 
 	/* New image ? */
-	अगर (pos == 0) अणु
-		/* Free memory, अगर alपढ़ोy allocated */
-		अगर (image_data.data)
-			मुक्त_image_buf();
+	if (pos == 0) {
+		/* Free memory, if already allocated */
+		if (image_data.data)
+			free_image_buf();
 
 		/* Cancel outstanding image update request */
-		अगर (update_flash_data.status == FLASH_IMG_READY)
+		if (update_flash_data.status == FLASH_IMG_READY)
 			opal_flash_update(FLASH_UPDATE_CANCEL);
 
 		/* Allocate memory */
 		rc = alloc_image_buf(buffer, count);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		if (rc)
+			goto out;
+	}
 
-	अगर (image_data.status != IMAGE_LOADING) अणु
+	if (image_data.status != IMAGE_LOADING) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((pos + count) > image_data.size) अणु
+	if ((pos + count) > image_data.size) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	स_नकल(image_data.data + pos, (व्योम *)buffer, count);
+	memcpy(image_data.data + pos, (void *)buffer, count);
 	rc = count;
 
 	/* Set image status */
-	अगर ((pos + count) == image_data.size) अणु
+	if ((pos + count) == image_data.size) {
 		pr_debug("FLASH: Candidate image loaded....\n");
 		image_data.status = IMAGE_READY;
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&image_data_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * sysfs पूर्णांकerface :
- *  OPAL uses below sysfs files क्रम code update.
+ * sysfs interface :
+ *  OPAL uses below sysfs files for code update.
  *  We create these files under /sys/firmware/opal.
  *
  *   image		: Interface to load candidate firmware image
@@ -491,73 +490,73 @@ out:
  *   update_flash	: Flash new firmware image
  *
  */
-अटल स्थिर काष्ठा bin_attribute image_data_attr = अणु
-	.attr = अणु.name = "image", .mode = 0200पूर्ण,
+static const struct bin_attribute image_data_attr = {
+	.attr = {.name = "image", .mode = 0200},
 	.size = MAX_IMAGE_SIZE,	/* Limit image size */
-	.ग_लिखो = image_data_ग_लिखो,
-पूर्ण;
+	.write = image_data_write,
+};
 
-अटल काष्ठा kobj_attribute validate_attribute =
+static struct kobj_attribute validate_attribute =
 	__ATTR(validate_flash, 0600, validate_show, validate_store);
 
-अटल काष्ठा kobj_attribute manage_attribute =
+static struct kobj_attribute manage_attribute =
 	__ATTR(manage_flash, 0600, manage_show, manage_store);
 
-अटल काष्ठा kobj_attribute update_attribute =
+static struct kobj_attribute update_attribute =
 	__ATTR(update_flash, 0600, update_show, update_store);
 
-अटल काष्ठा attribute *image_op_attrs[] = अणु
+static struct attribute *image_op_attrs[] = {
 	&validate_attribute.attr,
 	&manage_attribute.attr,
 	&update_attribute.attr,
-	शून्य	/* need to शून्य terminate the list of attributes */
-पूर्ण;
+	NULL	/* need to NULL terminate the list of attributes */
+};
 
-अटल काष्ठा attribute_group image_op_attr_group = अणु
+static struct attribute_group image_op_attr_group = {
 	.attrs = image_op_attrs,
-पूर्ण;
+};
 
-व्योम __init opal_flash_update_init(व्योम)
-अणु
-	पूर्णांक ret;
+void __init opal_flash_update_init(void)
+{
+	int ret;
 
 	/* Allocate validate image buffer */
 	validate_flash_data.buf = kzalloc(VALIDATE_BUF_SIZE, GFP_KERNEL);
-	अगर (!validate_flash_data.buf) अणु
+	if (!validate_flash_data.buf) {
 		pr_err("%s : Failed to allocate memory\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Make sure /sys/firmware/opal directory is created */
-	अगर (!opal_kobj) अणु
+	if (!opal_kobj) {
 		pr_warn("FLASH: opal kobject is not available\n");
-		जाओ nokobj;
-	पूर्ण
+		goto nokobj;
+	}
 
 	/* Create the sysfs files */
 	ret = sysfs_create_group(opal_kobj, &image_op_attr_group);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("FLASH: Failed to create sysfs files\n");
-		जाओ nokobj;
-	पूर्ण
+		goto nokobj;
+	}
 
 	ret = sysfs_create_bin_file(opal_kobj, &image_data_attr);
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("FLASH: Failed to create sysfs files\n");
-		जाओ nosysfs_file;
-	पूर्ण
+		goto nosysfs_file;
+	}
 
-	/* Set शेष status */
+	/* Set default status */
 	validate_flash_data.status = FLASH_NO_OP;
 	manage_flash_data.status = FLASH_NO_OP;
 	update_flash_data.status = FLASH_NO_OP;
 	image_data.status = IMAGE_INVALID;
-	वापस;
+	return;
 
 nosysfs_file:
-	sysfs_हटाओ_group(opal_kobj, &image_op_attr_group);
+	sysfs_remove_group(opal_kobj, &image_op_attr_group);
 
 nokobj:
-	kमुक्त(validate_flash_data.buf);
-	वापस;
-पूर्ण
+	kfree(validate_flash_data.buf);
+	return;
+}

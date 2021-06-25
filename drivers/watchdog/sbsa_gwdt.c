@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * SBSA(Server Base System Architecture) Generic Watchकरोg driver
+ * SBSA(Server Base System Architecture) Generic Watchdog driver
  *
  * Copyright (c) 2015, Linaro Ltd.
  * Author: Fu Wei <fu.wei@linaro.org>
@@ -9,242 +8,242 @@
  *         Al Stone <al.stone@linaro.org>
  *         Timur Tabi <timur@codeaurora.org>
  *
- * ARM SBSA Generic Watchकरोg has two stage समयouts:
- * the first संकेत (WS0) is क्रम alerting the प्रणाली by पूर्णांकerrupt,
+ * ARM SBSA Generic Watchdog has two stage timeouts:
+ * the first signal (WS0) is for alerting the system by interrupt,
  * the second one (WS1) is a real hardware reset.
- * More details about the hardware specअगरication of this device:
+ * More details about the hardware specification of this device:
  * ARM DEN0029B - Server Base System Architecture (SBSA)
  *
- * This driver can operate ARM SBSA Generic Watchकरोg as a single stage watchकरोg
- * or a two stages watchकरोg, it's set up by the module parameter "action".
- * In the single stage mode, when the समयout is reached, your प्रणाली
- * will be reset by WS1. The first संकेत (WS0) is ignored.
- * In the two stages mode, when the समयout is reached, the first संकेत (WS0)
- * will trigger panic. If the प्रणाली is getting पूर्णांकo trouble and cannot be reset
- * by panic or restart properly by the kdump kernel(अगर supported), then the
- * second stage (as दीर्घ as the first stage) will be reached, प्रणाली will be
- * reset by WS1. This function can help administrator to backup the प्रणाली
+ * This driver can operate ARM SBSA Generic Watchdog as a single stage watchdog
+ * or a two stages watchdog, it's set up by the module parameter "action".
+ * In the single stage mode, when the timeout is reached, your system
+ * will be reset by WS1. The first signal (WS0) is ignored.
+ * In the two stages mode, when the timeout is reached, the first signal (WS0)
+ * will trigger panic. If the system is getting into trouble and cannot be reset
+ * by panic or restart properly by the kdump kernel(if supported), then the
+ * second stage (as long as the first stage) will be reached, system will be
+ * reset by WS1. This function can help administrator to backup the system
  * context info by panic console output or kdump.
  *
  * SBSA GWDT:
- * अगर action is 1 (the two stages mode):
+ * if action is 1 (the two stages mode):
  * |--------WOR-------WS0--------WOR-------WS1
- * |----समयout-----(panic)----समयout-----reset
+ * |----timeout-----(panic)----timeout-----reset
  *
- * अगर action is 0 (the single stage mode):
+ * if action is 0 (the single stage mode):
  * |------WOR-----WS0(ignored)-----WOR------WS1
- * |--------------समयout-------------------reset
+ * |--------------timeout-------------------reset
  *
- * Note: Since this watchकरोg समयr has two stages, and each stage is determined
- * by WOR, in the single stage mode, the समयout is (WOR * 2); in the two
- * stages mode, the समयout is WOR. The maximum समयout in the two stages mode
+ * Note: Since this watchdog timer has two stages, and each stage is determined
+ * by WOR, in the single stage mode, the timeout is (WOR * 2); in the two
+ * stages mode, the timeout is WOR. The maximum timeout in the two stages mode
  * is half of that in the single stage mode.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/io-64-nonatomic-lo-hi.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <यंत्र/arch_समयr.h>
+#include <linux/io.h>
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
+#include <linux/watchdog.h>
+#include <asm/arch_timer.h>
 
-#घोषणा DRV_NAME		"sbsa-gwdt"
-#घोषणा WATCHDOG_NAME		"SBSA Generic Watchdog"
+#define DRV_NAME		"sbsa-gwdt"
+#define WATCHDOG_NAME		"SBSA Generic Watchdog"
 
-/* SBSA Generic Watchकरोg रेजिस्टर definitions */
+/* SBSA Generic Watchdog register definitions */
 /* refresh frame */
-#घोषणा SBSA_GWDT_WRR		0x000
+#define SBSA_GWDT_WRR		0x000
 
 /* control frame */
-#घोषणा SBSA_GWDT_WCS		0x000
-#घोषणा SBSA_GWDT_WOR		0x008
-#घोषणा SBSA_GWDT_WCV		0x010
+#define SBSA_GWDT_WCS		0x000
+#define SBSA_GWDT_WOR		0x008
+#define SBSA_GWDT_WCV		0x010
 
 /* refresh/control frame */
-#घोषणा SBSA_GWDT_W_IIDR	0xfcc
-#घोषणा SBSA_GWDT_IDR		0xfd0
+#define SBSA_GWDT_W_IIDR	0xfcc
+#define SBSA_GWDT_IDR		0xfd0
 
-/* Watchकरोg Control and Status Register */
-#घोषणा SBSA_GWDT_WCS_EN	BIT(0)
-#घोषणा SBSA_GWDT_WCS_WS0	BIT(1)
-#घोषणा SBSA_GWDT_WCS_WS1	BIT(2)
+/* Watchdog Control and Status Register */
+#define SBSA_GWDT_WCS_EN	BIT(0)
+#define SBSA_GWDT_WCS_WS0	BIT(1)
+#define SBSA_GWDT_WCS_WS1	BIT(2)
 
 /**
- * काष्ठा sbsa_gwdt - Internal representation of the SBSA GWDT
- * @wdd:		kernel watchकरोg_device काष्ठाure
- * @clk:		store the System Counter घड़ी frequency, in Hz.
- * @refresh_base:	Virtual address of the watchकरोg refresh frame
- * @control_base:	Virtual address of the watchकरोg control frame
+ * struct sbsa_gwdt - Internal representation of the SBSA GWDT
+ * @wdd:		kernel watchdog_device structure
+ * @clk:		store the System Counter clock frequency, in Hz.
+ * @refresh_base:	Virtual address of the watchdog refresh frame
+ * @control_base:	Virtual address of the watchdog control frame
  */
-काष्ठा sbsa_gwdt अणु
-	काष्ठा watchकरोg_device	wdd;
+struct sbsa_gwdt {
+	struct watchdog_device	wdd;
 	u32			clk;
-	व्योम __iomem		*refresh_base;
-	व्योम __iomem		*control_base;
-पूर्ण;
+	void __iomem		*refresh_base;
+	void __iomem		*control_base;
+};
 
-#घोषणा DEFAULT_TIMEOUT		10 /* seconds */
+#define DEFAULT_TIMEOUT		10 /* seconds */
 
-अटल अचिन्हित पूर्णांक समयout;
-module_param(समयout, uपूर्णांक, 0);
-MODULE_PARM_DESC(समयout,
+static unsigned int timeout;
+module_param(timeout, uint, 0);
+MODULE_PARM_DESC(timeout,
 		 "Watchdog timeout in seconds. (>=0, default="
 		 __MODULE_STRING(DEFAULT_TIMEOUT) ")");
 
 /*
- * action refers to action taken when watchकरोg माला_लो WS0
+ * action refers to action taken when watchdog gets WS0
  * 0 = skip
  * 1 = panic
- * शेषs to skip (0)
+ * defaults to skip (0)
  */
-अटल पूर्णांक action;
-module_param(action, पूर्णांक, 0);
+static int action;
+module_param(action, int, 0);
 MODULE_PARM_DESC(action, "after watchdog gets WS0 interrupt, do: "
 		 "0 = skip(*)  1 = panic");
 
-अटल bool nowayout = WATCHDOG_NOWAYOUT;
+static bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, S_IRUGO);
 MODULE_PARM_DESC(nowayout,
 		 "Watchdog cannot be stopped once started (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /*
- * watchकरोg operation functions
+ * watchdog operation functions
  */
-अटल पूर्णांक sbsa_gwdt_set_समयout(काष्ठा watchकरोg_device *wdd,
-				 अचिन्हित पूर्णांक समयout)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = watchकरोg_get_drvdata(wdd);
+static int sbsa_gwdt_set_timeout(struct watchdog_device *wdd,
+				 unsigned int timeout)
+{
+	struct sbsa_gwdt *gwdt = watchdog_get_drvdata(wdd);
 
-	wdd->समयout = समयout;
+	wdd->timeout = timeout;
 
-	अगर (action)
-		ग_लिखोl(gwdt->clk * समयout,
+	if (action)
+		writel(gwdt->clk * timeout,
 		       gwdt->control_base + SBSA_GWDT_WOR);
-	अन्यथा
+	else
 		/*
-		 * In the single stage mode, The first संकेत (WS0) is ignored,
-		 * the समयout is (WOR * 2), so the WOR should be configured
-		 * to half value of समयout.
+		 * In the single stage mode, The first signal (WS0) is ignored,
+		 * the timeout is (WOR * 2), so the WOR should be configured
+		 * to half value of timeout.
 		 */
-		ग_लिखोl(gwdt->clk / 2 * समयout,
+		writel(gwdt->clk / 2 * timeout,
 		       gwdt->control_base + SBSA_GWDT_WOR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक sbsa_gwdt_get_समयleft(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = watchकरोg_get_drvdata(wdd);
-	u64 समयleft = 0;
-
-	/*
-	 * In the single stage mode, अगर WS0 is deनिश्चितed
-	 * (watchकरोg is in the first stage),
-	 * समयleft = WOR + (WCV - प्रणाली counter)
-	 */
-	अगर (!action &&
-	    !(पढ़ोl(gwdt->control_base + SBSA_GWDT_WCS) & SBSA_GWDT_WCS_WS0))
-		समयleft += पढ़ोl(gwdt->control_base + SBSA_GWDT_WOR);
-
-	समयleft += lo_hi_पढ़ोq(gwdt->control_base + SBSA_GWDT_WCV) -
-		    arch_समयr_पढ़ो_counter();
-
-	करो_भाग(समयleft, gwdt->clk);
-
-	वापस समयleft;
-पूर्ण
-
-अटल पूर्णांक sbsa_gwdt_keepalive(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = watchकरोg_get_drvdata(wdd);
+static unsigned int sbsa_gwdt_get_timeleft(struct watchdog_device *wdd)
+{
+	struct sbsa_gwdt *gwdt = watchdog_get_drvdata(wdd);
+	u64 timeleft = 0;
 
 	/*
-	 * Writing WRR क्रम an explicit watchकरोg refresh.
-	 * You can ग_लिखो anyting (like 0).
+	 * In the single stage mode, if WS0 is deasserted
+	 * (watchdog is in the first stage),
+	 * timeleft = WOR + (WCV - system counter)
 	 */
-	ग_लिखोl(0, gwdt->refresh_base + SBSA_GWDT_WRR);
+	if (!action &&
+	    !(readl(gwdt->control_base + SBSA_GWDT_WCS) & SBSA_GWDT_WCS_WS0))
+		timeleft += readl(gwdt->control_base + SBSA_GWDT_WOR);
 
-	वापस 0;
-पूर्ण
+	timeleft += lo_hi_readq(gwdt->control_base + SBSA_GWDT_WCV) -
+		    arch_timer_read_counter();
 
-अटल पूर्णांक sbsa_gwdt_start(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = watchकरोg_get_drvdata(wdd);
+	do_div(timeleft, gwdt->clk);
 
-	/* writing WCS will cause an explicit watchकरोg refresh */
-	ग_लिखोl(SBSA_GWDT_WCS_EN, gwdt->control_base + SBSA_GWDT_WCS);
+	return timeleft;
+}
 
-	वापस 0;
-पूर्ण
+static int sbsa_gwdt_keepalive(struct watchdog_device *wdd)
+{
+	struct sbsa_gwdt *gwdt = watchdog_get_drvdata(wdd);
 
-अटल पूर्णांक sbsa_gwdt_stop(काष्ठा watchकरोg_device *wdd)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = watchकरोg_get_drvdata(wdd);
+	/*
+	 * Writing WRR for an explicit watchdog refresh.
+	 * You can write anyting (like 0).
+	 */
+	writel(0, gwdt->refresh_base + SBSA_GWDT_WRR);
 
-	/* Simply ग_लिखो 0 to WCS to clean WCS_EN bit */
-	ग_लिखोl(0, gwdt->control_base + SBSA_GWDT_WCS);
+	return 0;
+}
 
-	वापस 0;
-पूर्ण
+static int sbsa_gwdt_start(struct watchdog_device *wdd)
+{
+	struct sbsa_gwdt *gwdt = watchdog_get_drvdata(wdd);
 
-अटल irqवापस_t sbsa_gwdt_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
+	/* writing WCS will cause an explicit watchdog refresh */
+	writel(SBSA_GWDT_WCS_EN, gwdt->control_base + SBSA_GWDT_WCS);
+
+	return 0;
+}
+
+static int sbsa_gwdt_stop(struct watchdog_device *wdd)
+{
+	struct sbsa_gwdt *gwdt = watchdog_get_drvdata(wdd);
+
+	/* Simply write 0 to WCS to clean WCS_EN bit */
+	writel(0, gwdt->control_base + SBSA_GWDT_WCS);
+
+	return 0;
+}
+
+static irqreturn_t sbsa_gwdt_interrupt(int irq, void *dev_id)
+{
 	panic(WATCHDOG_NAME " timeout");
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा watchकरोg_info sbsa_gwdt_info = अणु
+static const struct watchdog_info sbsa_gwdt_info = {
 	.identity	= WATCHDOG_NAME,
 	.options	= WDIOF_SETTIMEOUT |
 			  WDIOF_KEEPALIVEPING |
 			  WDIOF_MAGICCLOSE |
 			  WDIOF_CARDRESET,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा watchकरोg_ops sbsa_gwdt_ops = अणु
+static const struct watchdog_ops sbsa_gwdt_ops = {
 	.owner		= THIS_MODULE,
 	.start		= sbsa_gwdt_start,
 	.stop		= sbsa_gwdt_stop,
 	.ping		= sbsa_gwdt_keepalive,
-	.set_समयout	= sbsa_gwdt_set_समयout,
-	.get_समयleft	= sbsa_gwdt_get_समयleft,
-पूर्ण;
+	.set_timeout	= sbsa_gwdt_set_timeout,
+	.get_timeleft	= sbsa_gwdt_get_timeleft,
+};
 
-अटल पूर्णांक sbsa_gwdt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	व्योम __iomem *rf_base, *cf_base;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा watchकरोg_device *wdd;
-	काष्ठा sbsa_gwdt *gwdt;
-	पूर्णांक ret, irq;
+static int sbsa_gwdt_probe(struct platform_device *pdev)
+{
+	void __iomem *rf_base, *cf_base;
+	struct device *dev = &pdev->dev;
+	struct watchdog_device *wdd;
+	struct sbsa_gwdt *gwdt;
+	int ret, irq;
 	u32 status;
 
-	gwdt = devm_kzalloc(dev, माप(*gwdt), GFP_KERNEL);
-	अगर (!gwdt)
-		वापस -ENOMEM;
-	platक्रमm_set_drvdata(pdev, gwdt);
+	gwdt = devm_kzalloc(dev, sizeof(*gwdt), GFP_KERNEL);
+	if (!gwdt)
+		return -ENOMEM;
+	platform_set_drvdata(pdev, gwdt);
 
-	cf_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(cf_base))
-		वापस PTR_ERR(cf_base);
+	cf_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(cf_base))
+		return PTR_ERR(cf_base);
 
-	rf_base = devm_platक्रमm_ioremap_resource(pdev, 1);
-	अगर (IS_ERR(rf_base))
-		वापस PTR_ERR(rf_base);
+	rf_base = devm_platform_ioremap_resource(pdev, 1);
+	if (IS_ERR(rf_base))
+		return PTR_ERR(rf_base);
 
 	/*
-	 * Get the frequency of प्रणाली counter from the cp15 पूर्णांकerface of ARM
-	 * Generic समयr. We करोn't need to check it, because अगर it वापसs "0",
-	 * प्रणाली would panic in very early stage.
+	 * Get the frequency of system counter from the cp15 interface of ARM
+	 * Generic timer. We don't need to check it, because if it returns "0",
+	 * system would panic in very early stage.
 	 */
-	gwdt->clk = arch_समयr_get_cntfrq();
+	gwdt->clk = arch_timer_get_cntfrq();
 	gwdt->refresh_base = rf_base;
 	gwdt->control_base = cf_base;
 
@@ -252,117 +251,117 @@ MODULE_PARM_DESC(nowayout,
 	wdd->parent = dev;
 	wdd->info = &sbsa_gwdt_info;
 	wdd->ops = &sbsa_gwdt_ops;
-	wdd->min_समयout = 1;
+	wdd->min_timeout = 1;
 	wdd->max_hw_heartbeat_ms = U32_MAX / gwdt->clk * 1000;
-	wdd->समयout = DEFAULT_TIMEOUT;
-	watchकरोg_set_drvdata(wdd, gwdt);
-	watchकरोg_set_nowayout(wdd, nowayout);
+	wdd->timeout = DEFAULT_TIMEOUT;
+	watchdog_set_drvdata(wdd, gwdt);
+	watchdog_set_nowayout(wdd, nowayout);
 
-	status = पढ़ोl(cf_base + SBSA_GWDT_WCS);
-	अगर (status & SBSA_GWDT_WCS_WS1) अणु
+	status = readl(cf_base + SBSA_GWDT_WCS);
+	if (status & SBSA_GWDT_WCS_WS1) {
 		dev_warn(dev, "System reset by WDT.\n");
 		wdd->bootstatus |= WDIOF_CARDRESET;
-	पूर्ण
-	अगर (status & SBSA_GWDT_WCS_EN)
+	}
+	if (status & SBSA_GWDT_WCS_EN)
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
 
-	अगर (action) अणु
-		irq = platक्रमm_get_irq(pdev, 0);
-		अगर (irq < 0) अणु
+	if (action) {
+		irq = platform_get_irq(pdev, 0);
+		if (irq < 0) {
 			action = 0;
 			dev_warn(dev, "unable to get ws0 interrupt.\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * In हाल there is a pending ws0 पूर्णांकerrupt, just ping
-			 * the watchकरोg beक्रमe रेजिस्टरing the पूर्णांकerrupt routine
+			 * In case there is a pending ws0 interrupt, just ping
+			 * the watchdog before registering the interrupt routine
 			 */
-			ग_लिखोl(0, rf_base + SBSA_GWDT_WRR);
-			अगर (devm_request_irq(dev, irq, sbsa_gwdt_पूर्णांकerrupt, 0,
-					     pdev->name, gwdt)) अणु
+			writel(0, rf_base + SBSA_GWDT_WRR);
+			if (devm_request_irq(dev, irq, sbsa_gwdt_interrupt, 0,
+					     pdev->name, gwdt)) {
 				action = 0;
 				dev_warn(dev, "unable to request IRQ %d.\n",
 					 irq);
-			पूर्ण
-		पूर्ण
-		अगर (!action)
+			}
+		}
+		if (!action)
 			dev_warn(dev, "falling back to single stage mode.\n");
-	पूर्ण
+	}
 	/*
-	 * In the single stage mode, The first संकेत (WS0) is ignored,
-	 * the समयout is (WOR * 2), so the maximum समयout should be द्विगुनd.
+	 * In the single stage mode, The first signal (WS0) is ignored,
+	 * the timeout is (WOR * 2), so the maximum timeout should be doubled.
 	 */
-	अगर (!action)
+	if (!action)
 		wdd->max_hw_heartbeat_ms *= 2;
 
-	watchकरोg_init_समयout(wdd, समयout, dev);
+	watchdog_init_timeout(wdd, timeout, dev);
 	/*
-	 * Update समयout to WOR.
-	 * Because of the explicit watchकरोg refresh mechanism,
-	 * it's also a ping, अगर watchकरोg is enabled.
+	 * Update timeout to WOR.
+	 * Because of the explicit watchdog refresh mechanism,
+	 * it's also a ping, if watchdog is enabled.
 	 */
-	sbsa_gwdt_set_समयout(wdd, wdd->समयout);
+	sbsa_gwdt_set_timeout(wdd, wdd->timeout);
 
-	watchकरोg_stop_on_reboot(wdd);
-	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
-	अगर (ret)
-		वापस ret;
+	watchdog_stop_on_reboot(wdd);
+	ret = devm_watchdog_register_device(dev, wdd);
+	if (ret)
+		return ret;
 
 	dev_info(dev, "Initialized with %ds timeout @ %u Hz, action=%d.%s\n",
-		 wdd->समयout, gwdt->clk, action,
+		 wdd->timeout, gwdt->clk, action,
 		 status & SBSA_GWDT_WCS_EN ? " [enabled]" : "");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Disable watchकरोg अगर it is active during suspend */
-अटल पूर्णांक __maybe_unused sbsa_gwdt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = dev_get_drvdata(dev);
+/* Disable watchdog if it is active during suspend */
+static int __maybe_unused sbsa_gwdt_suspend(struct device *dev)
+{
+	struct sbsa_gwdt *gwdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&gwdt->wdd))
+	if (watchdog_active(&gwdt->wdd))
 		sbsa_gwdt_stop(&gwdt->wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Enable watchकरोg अगर necessary */
-अटल पूर्णांक __maybe_unused sbsa_gwdt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा sbsa_gwdt *gwdt = dev_get_drvdata(dev);
+/* Enable watchdog if necessary */
+static int __maybe_unused sbsa_gwdt_resume(struct device *dev)
+{
+	struct sbsa_gwdt *gwdt = dev_get_drvdata(dev);
 
-	अगर (watchकरोg_active(&gwdt->wdd))
+	if (watchdog_active(&gwdt->wdd))
 		sbsa_gwdt_start(&gwdt->wdd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sbsa_gwdt_pm_ops = अणु
+static const struct dev_pm_ops sbsa_gwdt_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(sbsa_gwdt_suspend, sbsa_gwdt_resume)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sbsa_gwdt_of_match[] = अणु
-	अणु .compatible = "arm,sbsa-gwdt", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id sbsa_gwdt_of_match[] = {
+	{ .compatible = "arm,sbsa-gwdt", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, sbsa_gwdt_of_match);
 
-अटल स्थिर काष्ठा platक्रमm_device_id sbsa_gwdt_pdev_match[] = अणु
-	अणु .name = DRV_NAME, पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, sbsa_gwdt_pdev_match);
+static const struct platform_device_id sbsa_gwdt_pdev_match[] = {
+	{ .name = DRV_NAME, },
+	{},
+};
+MODULE_DEVICE_TABLE(platform, sbsa_gwdt_pdev_match);
 
-अटल काष्ठा platक्रमm_driver sbsa_gwdt_driver = अणु
-	.driver = अणु
+static struct platform_driver sbsa_gwdt_driver = {
+	.driver = {
 		.name = DRV_NAME,
 		.pm = &sbsa_gwdt_pm_ops,
 		.of_match_table = sbsa_gwdt_of_match,
-	पूर्ण,
+	},
 	.probe = sbsa_gwdt_probe,
 	.id_table = sbsa_gwdt_pdev_match,
-पूर्ण;
+};
 
-module_platक्रमm_driver(sbsa_gwdt_driver);
+module_platform_driver(sbsa_gwdt_driver);
 
 MODULE_DESCRIPTION("SBSA Generic Watchdog Driver");
 MODULE_AUTHOR("Fu Wei <fu.wei@linaro.org>");

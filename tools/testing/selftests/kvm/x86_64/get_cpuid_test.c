@@ -1,39 +1,38 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2021, Red Hat Inc.
  *
- * Generic tests क्रम KVM CPUID set/get ioctls
+ * Generic tests for KVM CPUID set/get ioctls
  */
-#समावेश <यंत्र/kvm_para.h>
-#समावेश <linux/kvm_para.h>
-#समावेश <मानक_निवेशt.h>
+#include <asm/kvm_para.h>
+#include <linux/kvm_para.h>
+#include <stdint.h>
 
-#समावेश "test_util.h"
-#समावेश "kvm_util.h"
-#समावेश "processor.h"
+#include "test_util.h"
+#include "kvm_util.h"
+#include "processor.h"
 
-#घोषणा VCPU_ID 0
+#define VCPU_ID 0
 
-/* CPUIDs known to dअगरfer */
-काष्ठा अणु
+/* CPUIDs known to differ */
+struct {
 	u32 function;
 	u32 index;
-पूर्ण mangled_cpuids[] = अणु
+} mangled_cpuids[] = {
 	/*
-	 * These entries depend on the vCPU's XCR0 रेजिस्टर and IA32_XSS MSR,
-	 * which are not controlled क्रम by this test.
+	 * These entries depend on the vCPU's XCR0 register and IA32_XSS MSR,
+	 * which are not controlled for by this test.
 	 */
-	अणु.function = 0xd, .index = 0पूर्ण,
-	अणु.function = 0xd, .index = 1पूर्ण,
-पूर्ण;
+	{.function = 0xd, .index = 0},
+	{.function = 0xd, .index = 1},
+};
 
-अटल व्योम test_guest_cpuids(काष्ठा kvm_cpuid2 *guest_cpuid)
-अणु
-	पूर्णांक i;
+static void test_guest_cpuids(struct kvm_cpuid2 *guest_cpuid)
+{
+	int i;
 	u32 eax, ebx, ecx, edx;
 
-	क्रम (i = 0; i < guest_cpuid->nent; i++) अणु
+	for (i = 0; i < guest_cpuid->nent; i++) {
 		eax = guest_cpuid->entries[i].function;
 		ecx = guest_cpuid->entries[i].index;
 
@@ -43,21 +42,21 @@
 			     ebx == guest_cpuid->entries[i].ebx &&
 			     ecx == guest_cpuid->entries[i].ecx &&
 			     edx == guest_cpuid->entries[i].edx);
-	पूर्ण
+	}
 
-पूर्ण
+}
 
-अटल व्योम test_cpuid_40000000(काष्ठा kvm_cpuid2 *guest_cpuid)
-अणु
+static void test_cpuid_40000000(struct kvm_cpuid2 *guest_cpuid)
+{
 	u32 eax = 0x40000000, ebx, ecx = 0, edx;
 
 	cpuid(&eax, &ebx, &ecx, &edx);
 
 	GUEST_ASSERT(eax == 0x40000001);
-पूर्ण
+}
 
-अटल व्योम guest_मुख्य(काष्ठा kvm_cpuid2 *guest_cpuid)
-अणु
+static void guest_main(struct kvm_cpuid2 *guest_cpuid)
+{
 	GUEST_SYNC(1);
 
 	test_guest_cpuids(guest_cpuid);
@@ -67,30 +66,30 @@
 	test_cpuid_40000000(guest_cpuid);
 
 	GUEST_DONE();
-पूर्ण
+}
 
-अटल bool is_cpuid_mangled(काष्ठा kvm_cpuid_entry2 *entrie)
-अणु
-	पूर्णांक i;
+static bool is_cpuid_mangled(struct kvm_cpuid_entry2 *entrie)
+{
+	int i;
 
-	क्रम (i = 0; i < माप(mangled_cpuids); i++) अणु
-		अगर (mangled_cpuids[i].function == entrie->function &&
+	for (i = 0; i < sizeof(mangled_cpuids); i++) {
+		if (mangled_cpuids[i].function == entrie->function &&
 		    mangled_cpuids[i].index == entrie->index)
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम check_cpuid(काष्ठा kvm_cpuid2 *cpuid, काष्ठा kvm_cpuid_entry2 *entrie)
-अणु
-	पूर्णांक i;
+static void check_cpuid(struct kvm_cpuid2 *cpuid, struct kvm_cpuid_entry2 *entrie)
+{
+	int i;
 
-	क्रम (i = 0; i < cpuid->nent; i++) अणु
-		अगर (cpuid->entries[i].function == entrie->function &&
-		    cpuid->entries[i].index == entrie->index) अणु
-			अगर (is_cpuid_mangled(entrie))
-				वापस;
+	for (i = 0; i < cpuid->nent; i++) {
+		if (cpuid->entries[i].function == entrie->function &&
+		    cpuid->entries[i].index == entrie->index) {
+			if (is_cpuid_mangled(entrie))
+				return;
 
 			TEST_ASSERT(cpuid->entries[i].eax == entrie->eax &&
 				    cpuid->entries[i].ebx == entrie->ebx &&
@@ -101,69 +100,69 @@
 				    cpuid->entries[i].eax, cpuid->entries[i].ebx,
 				    cpuid->entries[i].ecx, cpuid->entries[i].edx,
 				    entrie->eax, entrie->ebx, entrie->ecx, entrie->edx);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	TEST_ASSERT(false, "CPUID 0x%x.%x not found", entrie->function, entrie->index);
-पूर्ण
+}
 
-अटल व्योम compare_cpuids(काष्ठा kvm_cpuid2 *cpuid1, काष्ठा kvm_cpuid2 *cpuid2)
-अणु
-	पूर्णांक i;
+static void compare_cpuids(struct kvm_cpuid2 *cpuid1, struct kvm_cpuid2 *cpuid2)
+{
+	int i;
 
-	क्रम (i = 0; i < cpuid1->nent; i++)
+	for (i = 0; i < cpuid1->nent; i++)
 		check_cpuid(cpuid2, &cpuid1->entries[i]);
 
-	क्रम (i = 0; i < cpuid2->nent; i++)
+	for (i = 0; i < cpuid2->nent; i++)
 		check_cpuid(cpuid1, &cpuid2->entries[i]);
-पूर्ण
+}
 
-अटल व्योम run_vcpu(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, पूर्णांक stage)
-अणु
-	काष्ठा ucall uc;
+static void run_vcpu(struct kvm_vm *vm, uint32_t vcpuid, int stage)
+{
+	struct ucall uc;
 
 	_vcpu_run(vm, vcpuid);
 
-	चयन (get_ucall(vm, vcpuid, &uc)) अणु
-	हाल UCALL_SYNC:
-		TEST_ASSERT(!म_भेद((स्थिर अक्षर *)uc.args[0], "hello") &&
+	switch (get_ucall(vm, vcpuid, &uc)) {
+	case UCALL_SYNC:
+		TEST_ASSERT(!strcmp((const char *)uc.args[0], "hello") &&
 			    uc.args[1] == stage + 1,
 			    "Stage %d: Unexpected register values vmexit, got %lx",
-			    stage + 1, (uदीर्घ)uc.args[1]);
-		वापस;
-	हाल UCALL_DONE:
-		वापस;
-	हाल UCALL_ABORT:
-		TEST_ASSERT(false, "%s at %s:%ld\n\tvalues: %#lx, %#lx", (स्थिर अक्षर *)uc.args[0],
-			    __खाता__, uc.args[1], uc.args[2], uc.args[3]);
-	शेष:
+			    stage + 1, (ulong)uc.args[1]);
+		return;
+	case UCALL_DONE:
+		return;
+	case UCALL_ABORT:
+		TEST_ASSERT(false, "%s at %s:%ld\n\tvalues: %#lx, %#lx", (const char *)uc.args[0],
+			    __FILE__, uc.args[1], uc.args[2], uc.args[3]);
+	default:
 		TEST_ASSERT(false, "Unexpected exit: %s",
-			    निकास_reason_str(vcpu_state(vm, vcpuid)->निकास_reason));
-	पूर्ण
-पूर्ण
+			    exit_reason_str(vcpu_state(vm, vcpuid)->exit_reason));
+	}
+}
 
-काष्ठा kvm_cpuid2 *vcpu_alloc_cpuid(काष्ठा kvm_vm *vm, vm_vaddr_t *p_gva, काष्ठा kvm_cpuid2 *cpuid)
-अणु
-	पूर्णांक size = माप(*cpuid) + cpuid->nent * माप(cpuid->entries[0]);
+struct kvm_cpuid2 *vcpu_alloc_cpuid(struct kvm_vm *vm, vm_vaddr_t *p_gva, struct kvm_cpuid2 *cpuid)
+{
+	int size = sizeof(*cpuid) + cpuid->nent * sizeof(cpuid->entries[0]);
 	vm_vaddr_t gva = vm_vaddr_alloc(vm, size,
 					getpagesize(), 0, 0);
-	काष्ठा kvm_cpuid2 *guest_cpuids = addr_gva2hva(vm, gva);
+	struct kvm_cpuid2 *guest_cpuids = addr_gva2hva(vm, gva);
 
-	स_नकल(guest_cpuids, cpuid, size);
+	memcpy(guest_cpuids, cpuid, size);
 
 	*p_gva = gva;
-	वापस guest_cpuids;
-पूर्ण
+	return guest_cpuids;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	काष्ठा kvm_cpuid2 *supp_cpuid, *cpuid2;
+int main(void)
+{
+	struct kvm_cpuid2 *supp_cpuid, *cpuid2;
 	vm_vaddr_t cpuid_gva;
-	काष्ठा kvm_vm *vm;
-	पूर्णांक stage;
+	struct kvm_vm *vm;
+	int stage;
 
-	vm = vm_create_शेष(VCPU_ID, 0, guest_मुख्य);
+	vm = vm_create_default(VCPU_ID, 0, guest_main);
 
 	supp_cpuid = kvm_get_supported_cpuid();
 	cpuid2 = vcpu_get_cpuid(vm, VCPU_ID);
@@ -174,8 +173,8 @@
 
 	vcpu_args_set(vm, VCPU_ID, 1, cpuid_gva);
 
-	क्रम (stage = 0; stage < 3; stage++)
+	for (stage = 0; stage < 3; stage++)
 		run_vcpu(vm, VCPU_ID, stage);
 
-	kvm_vm_मुक्त(vm);
-पूर्ण
+	kvm_vm_free(vm);
+}

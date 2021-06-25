@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Cryptographic API क्रम the 842 software compression algorithm.
+ * Cryptographic API for the 842 software compression algorithm.
  *
  * Copyright (C) IBM Corporation, 2011-2015
  *
  * Original Authors: Robert Jennings <rcj@linux.vnet.ibm.com>
  *                   Seth Jennings <sjenning@linux.vnet.ibm.com>
  *
- * Reग_लिखो: Dan Streeपंचांगan <ddstreet@ieee.org>
+ * Rewrite: Dan Streetman <ddstreet@ieee.org>
  *
  * This is the software implementation of compression and decompression using
- * the 842 क्रमmat.  This uses the software 842 library at lib/842/ which is
+ * the 842 format.  This uses the software 842 library at lib/842/ which is
  * only a reference implementation, and is very, very slow as compared to other
- * software compressors.  You probably करो not want to use this software
+ * software compressors.  You probably do not want to use this software
  * compression.  If you have access to the PowerPC 842 compression hardware, you
- * want to use the 842 hardware compression पूर्णांकerface, which is at:
+ * want to use the 842 hardware compression interface, which is at:
  * drivers/crypto/nx/nx-842-crypto.c
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/sw842.h>
-#समावेश <crypto/पूर्णांकernal/scompress.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/crypto.h>
+#include <linux/sw842.h>
+#include <crypto/internal/scompress.h>
 
-काष्ठा crypto842_ctx अणु
-	व्योम *wmem;	/* working memory क्रम compress */
-पूर्ण;
+struct crypto842_ctx {
+	void *wmem;	/* working memory for compress */
+};
 
-अटल व्योम *crypto842_alloc_ctx(काष्ठा crypto_scomp *tfm)
-अणु
-	व्योम *ctx;
+static void *crypto842_alloc_ctx(struct crypto_scomp *tfm)
+{
+	void *ctx;
 
-	ctx = kदो_स्मृति(SW842_MEM_COMPRESS, GFP_KERNEL);
-	अगर (!ctx)
-		वापस ERR_PTR(-ENOMEM);
+	ctx = kmalloc(SW842_MEM_COMPRESS, GFP_KERNEL);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
 
-	वापस ctx;
-पूर्ण
+	return ctx;
+}
 
-अटल पूर्णांक crypto842_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto842_ctx *ctx = crypto_tfm_ctx(tfm);
+static int crypto842_init(struct crypto_tfm *tfm)
+{
+	struct crypto842_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	ctx->wmem = crypto842_alloc_ctx(शून्य);
-	अगर (IS_ERR(ctx->wmem))
-		वापस -ENOMEM;
+	ctx->wmem = crypto842_alloc_ctx(NULL);
+	if (IS_ERR(ctx->wmem))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम crypto842_मुक्त_ctx(काष्ठा crypto_scomp *tfm, व्योम *ctx)
-अणु
-	kमुक्त(ctx);
-पूर्ण
+static void crypto842_free_ctx(struct crypto_scomp *tfm, void *ctx)
+{
+	kfree(ctx);
+}
 
-अटल व्योम crypto842_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto842_ctx *ctx = crypto_tfm_ctx(tfm);
+static void crypto842_exit(struct crypto_tfm *tfm)
+{
+	struct crypto842_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	crypto842_मुक्त_ctx(शून्य, ctx->wmem);
-पूर्ण
+	crypto842_free_ctx(NULL, ctx->wmem);
+}
 
-अटल पूर्णांक crypto842_compress(काष्ठा crypto_tfm *tfm,
-			      स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			      u8 *dst, अचिन्हित पूर्णांक *dlen)
-अणु
-	काष्ठा crypto842_ctx *ctx = crypto_tfm_ctx(tfm);
+static int crypto842_compress(struct crypto_tfm *tfm,
+			      const u8 *src, unsigned int slen,
+			      u8 *dst, unsigned int *dlen)
+{
+	struct crypto842_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	वापस sw842_compress(src, slen, dst, dlen, ctx->wmem);
-पूर्ण
+	return sw842_compress(src, slen, dst, dlen, ctx->wmem);
+}
 
-अटल पूर्णांक crypto842_scompress(काष्ठा crypto_scomp *tfm,
-			       स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-			       u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
-अणु
-	वापस sw842_compress(src, slen, dst, dlen, ctx);
-पूर्ण
+static int crypto842_scompress(struct crypto_scomp *tfm,
+			       const u8 *src, unsigned int slen,
+			       u8 *dst, unsigned int *dlen, void *ctx)
+{
+	return sw842_compress(src, slen, dst, dlen, ctx);
+}
 
-अटल पूर्णांक crypto842_decompress(काष्ठा crypto_tfm *tfm,
-				स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-				u8 *dst, अचिन्हित पूर्णांक *dlen)
-अणु
-	वापस sw842_decompress(src, slen, dst, dlen);
-पूर्ण
+static int crypto842_decompress(struct crypto_tfm *tfm,
+				const u8 *src, unsigned int slen,
+				u8 *dst, unsigned int *dlen)
+{
+	return sw842_decompress(src, slen, dst, dlen);
+}
 
-अटल पूर्णांक crypto842_sdecompress(काष्ठा crypto_scomp *tfm,
-				 स्थिर u8 *src, अचिन्हित पूर्णांक slen,
-				 u8 *dst, अचिन्हित पूर्णांक *dlen, व्योम *ctx)
-अणु
-	वापस sw842_decompress(src, slen, dst, dlen);
-पूर्ण
+static int crypto842_sdecompress(struct crypto_scomp *tfm,
+				 const u8 *src, unsigned int slen,
+				 u8 *dst, unsigned int *dlen, void *ctx)
+{
+	return sw842_decompress(src, slen, dst, dlen);
+}
 
-अटल काष्ठा crypto_alg alg = अणु
+static struct crypto_alg alg = {
 	.cra_name		= "842",
 	.cra_driver_name	= "842-generic",
 	.cra_priority		= 100,
 	.cra_flags		= CRYPTO_ALG_TYPE_COMPRESS,
-	.cra_ctxsize		= माप(काष्ठा crypto842_ctx),
+	.cra_ctxsize		= sizeof(struct crypto842_ctx),
 	.cra_module		= THIS_MODULE,
 	.cra_init		= crypto842_init,
-	.cra_निकास		= crypto842_निकास,
-	.cra_u			= अणु .compress = अणु
+	.cra_exit		= crypto842_exit,
+	.cra_u			= { .compress = {
 	.coa_compress		= crypto842_compress,
-	.coa_decompress		= crypto842_decompress पूर्ण पूर्ण
-पूर्ण;
+	.coa_decompress		= crypto842_decompress } }
+};
 
-अटल काष्ठा scomp_alg scomp = अणु
+static struct scomp_alg scomp = {
 	.alloc_ctx		= crypto842_alloc_ctx,
-	.मुक्त_ctx		= crypto842_मुक्त_ctx,
+	.free_ctx		= crypto842_free_ctx,
 	.compress		= crypto842_scompress,
 	.decompress		= crypto842_sdecompress,
-	.base			= अणु
+	.base			= {
 		.cra_name	= "842",
 		.cra_driver_name = "842-scomp",
 		.cra_priority	 = 100,
 		.cra_module	 = THIS_MODULE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक __init crypto842_mod_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init crypto842_mod_init(void)
+{
+	int ret;
 
-	ret = crypto_रेजिस्टर_alg(&alg);
-	अगर (ret)
-		वापस ret;
+	ret = crypto_register_alg(&alg);
+	if (ret)
+		return ret;
 
-	ret = crypto_रेजिस्टर_scomp(&scomp);
-	अगर (ret) अणु
-		crypto_unरेजिस्टर_alg(&alg);
-		वापस ret;
-	पूर्ण
+	ret = crypto_register_scomp(&scomp);
+	if (ret) {
+		crypto_unregister_alg(&alg);
+		return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 subsys_initcall(crypto842_mod_init);
 
-अटल व्योम __निकास crypto842_mod_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_alg(&alg);
-	crypto_unरेजिस्टर_scomp(&scomp);
-पूर्ण
-module_निकास(crypto842_mod_निकास);
+static void __exit crypto842_mod_exit(void)
+{
+	crypto_unregister_alg(&alg);
+	crypto_unregister_scomp(&scomp);
+}
+module_exit(crypto842_mod_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("842 Software Compression Algorithm");

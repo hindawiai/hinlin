@@ -1,38 +1,37 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ALPHA_SPINLOCK_H
-#घोषणा _ALPHA_SPINLOCK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ALPHA_SPINLOCK_H
+#define _ALPHA_SPINLOCK_H
 
-#समावेश <linux/kernel.h>
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/barrier.h>
-#समावेश <यंत्र/processor.h>
+#include <linux/kernel.h>
+#include <asm/current.h>
+#include <asm/barrier.h>
+#include <asm/processor.h>
 
 /*
  * Simple spin lock operations.  There are two variants, one clears IRQ's
- * on the local processor, one करोes not.
+ * on the local processor, one does not.
  *
  * We make no fairness assumptions. They have a cost.
  */
 
-#घोषणा arch_spin_is_locked(x)	((x)->lock != 0)
+#define arch_spin_is_locked(x)	((x)->lock != 0)
 
-अटल अंतरभूत पूर्णांक arch_spin_value_unlocked(arch_spinlock_t lock)
-अणु
-        वापस lock.lock == 0;
-पूर्ण
+static inline int arch_spin_value_unlocked(arch_spinlock_t lock)
+{
+        return lock.lock == 0;
+}
 
-अटल अंतरभूत व्योम arch_spin_unlock(arch_spinlock_t * lock)
-अणु
+static inline void arch_spin_unlock(arch_spinlock_t * lock)
+{
 	mb();
 	lock->lock = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_spin_lock(arch_spinlock_t * lock)
-अणु
-	दीर्घ पंचांगp;
+static inline void arch_spin_lock(arch_spinlock_t * lock)
+{
+	long tmp;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ldl_l	%0,%1\n"
 	"	bne	%0,2f\n"
 	"	lda	%0,1\n"
@@ -44,22 +43,22 @@
 	"	bne	%0,2b\n"
 	"	br	1b\n"
 	".previous"
-	: "=&r" (पंचांगp), "=m" (lock->lock)
+	: "=&r" (tmp), "=m" (lock->lock)
 	: "m"(lock->lock) : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक arch_spin_trylock(arch_spinlock_t *lock)
-अणु
-	वापस !test_and_set_bit(0, &lock->lock);
-पूर्ण
+static inline int arch_spin_trylock(arch_spinlock_t *lock)
+{
+	return !test_and_set_bit(0, &lock->lock);
+}
 
 /***********************************************************/
 
-अटल अंतरभूत व्योम arch_पढ़ो_lock(arch_rwlock_t *lock)
-अणु
-	दीर्घ regx;
+static inline void arch_read_lock(arch_rwlock_t *lock)
+{
+	long regx;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ldl_l	%1,%0\n"
 	"	blbs	%1,6f\n"
 	"	subl	%1,2,%1\n"
@@ -73,13 +72,13 @@
 	".previous"
 	: "=m" (*lock), "=&r" (regx)
 	: "m" (*lock) : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_lock(arch_rwlock_t *lock)
-अणु
-	दीर्घ regx;
+static inline void arch_write_lock(arch_rwlock_t *lock)
+{
+	long regx;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ldl_l	%1,%0\n"
 	"	bne	%1,6f\n"
 	"	lda	%1,1\n"
@@ -93,14 +92,14 @@
 	".previous"
 	: "=m" (*lock), "=&r" (regx)
 	: "m" (*lock) : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक arch_पढ़ो_trylock(arch_rwlock_t * lock)
-अणु
-	दीर्घ regx;
-	पूर्णांक success;
+static inline int arch_read_trylock(arch_rwlock_t * lock)
+{
+	long regx;
+	int success;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ldl_l	%1,%0\n"
 	"	lda	%2,0\n"
 	"	blbs	%1,2f\n"
@@ -114,15 +113,15 @@
 	: "=m" (*lock), "=&r" (regx), "=&r" (success)
 	: "m" (*lock) : "memory");
 
-	वापस success;
-पूर्ण
+	return success;
+}
 
-अटल अंतरभूत पूर्णांक arch_ग_लिखो_trylock(arch_rwlock_t * lock)
-अणु
-	दीर्घ regx;
-	पूर्णांक success;
+static inline int arch_write_trylock(arch_rwlock_t * lock)
+{
+	long regx;
+	int success;
 
-	__यंत्र__ __अस्थिर__(
+	__asm__ __volatile__(
 	"1:	ldl_l	%1,%0\n"
 	"	lda	%2,0\n"
 	"	bne	%1,2f\n"
@@ -136,13 +135,13 @@
 	: "=m" (*lock), "=&r" (regx), "=&r" (success)
 	: "m" (*lock) : "memory");
 
-	वापस success;
-पूर्ण
+	return success;
+}
 
-अटल अंतरभूत व्योम arch_पढ़ो_unlock(arch_rwlock_t * lock)
-अणु
-	दीर्घ regx;
-	__यंत्र__ __अस्थिर__(
+static inline void arch_read_unlock(arch_rwlock_t * lock)
+{
+	long regx;
+	__asm__ __volatile__(
 	"	mb\n"
 	"1:	ldl_l	%1,%0\n"
 	"	addl	%1,2,%1\n"
@@ -153,12 +152,12 @@
 	".previous"
 	: "=m" (*lock), "=&r" (regx)
 	: "m" (*lock) : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम arch_ग_लिखो_unlock(arch_rwlock_t * lock)
-अणु
+static inline void arch_write_unlock(arch_rwlock_t * lock)
+{
 	mb();
 	lock->lock = 0;
-पूर्ण
+}
 
-#पूर्ण_अगर /* _ALPHA_SPINLOCK_H */
+#endif /* _ALPHA_SPINLOCK_H */

@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Thermal throttle event support code (such as syslog messaging and rate
- * limiting) that was factored out from x86_64 (mce_पूर्णांकel.c) and i386 (p4.c).
+ * limiting) that was factored out from x86_64 (mce_intel.c) and i386 (p4.c).
  *
  * This allows consistent reporting of CPU thermal throttle events.
  *
- * Maपूर्णांकains a counter in /sys that keeps track of the number of thermal
+ * Maintains a counter in /sys that keeps track of the number of thermal
  * events, such that the user knows how bad the thermal problem might be
  * (since the logging to syslog is rate limited).
  *
  * Author: Dmitriy Zavin (dmitriyz@google.com)
  *
- * Credits: Adapted from Zwane Mwaikambo's original code in mce_पूर्णांकel.c.
+ * Credits: Adapted from Zwane Mwaikambo's original code in mce_intel.c.
  *          Inspired by Ross Biro's and Al Borchers' counter code.
  */
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/export.h>
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/cpu.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/percpu.h>
+#include <linux/export.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/smp.h>
+#include <linux/cpu.h>
 
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/thermal.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/apic.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/msr.h>
+#include <asm/processor.h>
+#include <asm/thermal.h>
+#include <asm/traps.h>
+#include <asm/apic.h>
+#include <asm/irq.h>
+#include <asm/msr.h>
 
-#समावेश "thermal_interrupt.h"
+#include "thermal_interrupt.h"
 
-/* How दीर्घ to रुको between reporting thermal events */
-#घोषणा CHECK_INTERVAL		(300 * HZ)
+/* How long to wait between reporting thermal events */
+#define CHECK_INTERVAL		(300 * HZ)
 
-#घोषणा THERMAL_THROTTLING_EVENT	0
-#घोषणा POWER_LIMIT_EVENT		1
+#define THERMAL_THROTTLING_EVENT	0
+#define POWER_LIMIT_EVENT		1
 
 /**
- * काष्ठा _thermal_state - Represent the current thermal event state
- * @next_check:			Stores the next बारtamp, when it is allowed
+ * struct _thermal_state - Represent the current thermal event state
+ * @next_check:			Stores the next timestamp, when it is allowed
  *				to log the next warning message.
- * @last_पूर्णांकerrupt_समय:	Stores the बारtamp क्रम the last threshold
+ * @last_interrupt_time:	Stores the timestamp for the last threshold
  *				high event.
- * @therm_work:			Delayed workqueue काष्ठाure
- * @count:			Stores the current running count क्रम thermal
- *				or घातer threshold पूर्णांकerrupts.
- * @last_count:			Stores the previous running count क्रम thermal
- *				or घातer threshold पूर्णांकerrupts.
- * @max_समय_ms:		This shows the maximum amount of समय CPU was
- *				in throttled state क्रम a single thermal
+ * @therm_work:			Delayed workqueue structure
+ * @count:			Stores the current running count for thermal
+ *				or power threshold interrupts.
+ * @last_count:			Stores the previous running count for thermal
+ *				or power threshold interrupts.
+ * @max_time_ms:		This shows the maximum amount of time CPU was
+ *				in throttled state for a single thermal
  *				threshold high to low state.
- * @total_समय_ms:		This is a cumulative समय during which CPU was
+ * @total_time_ms:		This is a cumulative time during which CPU was
  *				in the throttled state.
  * @rate_control_active:	Set when a throttling message is logged.
- *				This is used क्रम the purpose of rate-control.
+ *				This is used for the purpose of rate-control.
  * @new_event:			Stores the last high/low status of the
  *				THERM_STATUS_PROCHOT or
  *				THERM_STATUS_POWER_LIMIT.
  * @level:			Stores whether this _thermal_state instance is
- *				क्रम a CORE level or क्रम PACKAGE level.
- * @sample_index:		Index क्रम storing the next sample in the buffer
+ *				for a CORE level or for PACKAGE level.
+ * @sample_index:		Index for storing the next sample in the buffer
  *				temp_samples[].
  * @sample_count:		Total number of samples collected in the buffer
  *				temp_samples[].
  * @average:			The last moving average of temperature samples
  * @baseline_temp:		Temperature at which thermal threshold high
- *				पूर्णांकerrupt was generated.
- * @temp_samples:		Storage क्रम temperature samples to calculate
+ *				interrupt was generated.
+ * @temp_samples:		Storage for temperature samples to calculate
  *				moving average.
  *
- * This काष्ठाure is used to represent data related to thermal state क्रम a CPU.
- * There is a separate storage क्रम core and package level क्रम each CPU.
+ * This structure is used to represent data related to thermal state for a CPU.
+ * There is a separate storage for core and package level for each CPU.
  */
-काष्ठा _thermal_state अणु
+struct _thermal_state {
 	u64			next_check;
-	u64			last_पूर्णांकerrupt_समय;
-	काष्ठा delayed_work	therm_work;
-	अचिन्हित दीर्घ		count;
-	अचिन्हित दीर्घ		last_count;
-	अचिन्हित दीर्घ		max_समय_ms;
-	अचिन्हित दीर्घ		total_समय_ms;
+	u64			last_interrupt_time;
+	struct delayed_work	therm_work;
+	unsigned long		count;
+	unsigned long		last_count;
+	unsigned long		max_time_ms;
+	unsigned long		total_time_ms;
 	bool			rate_control_active;
 	bool			new_event;
 	u8			level;
@@ -93,381 +92,381 @@
 	u8			average;
 	u8			baseline_temp;
 	u8			temp_samples[3];
-पूर्ण;
+};
 
-काष्ठा thermal_state अणु
-	काष्ठा _thermal_state core_throttle;
-	काष्ठा _thermal_state core_घातer_limit;
-	काष्ठा _thermal_state package_throttle;
-	काष्ठा _thermal_state package_घातer_limit;
-	काष्ठा _thermal_state core_thresh0;
-	काष्ठा _thermal_state core_thresh1;
-	काष्ठा _thermal_state pkg_thresh0;
-	काष्ठा _thermal_state pkg_thresh1;
-पूर्ण;
+struct thermal_state {
+	struct _thermal_state core_throttle;
+	struct _thermal_state core_power_limit;
+	struct _thermal_state package_throttle;
+	struct _thermal_state package_power_limit;
+	struct _thermal_state core_thresh0;
+	struct _thermal_state core_thresh1;
+	struct _thermal_state pkg_thresh0;
+	struct _thermal_state pkg_thresh1;
+};
 
-/* Callback to handle core threshold पूर्णांकerrupts */
-पूर्णांक (*platक्रमm_thermal_notअगरy)(__u64 msr_val);
-EXPORT_SYMBOL(platक्रमm_thermal_notअगरy);
+/* Callback to handle core threshold interrupts */
+int (*platform_thermal_notify)(__u64 msr_val);
+EXPORT_SYMBOL(platform_thermal_notify);
 
-/* Callback to handle core package threshold_पूर्णांकerrupts */
-पूर्णांक (*platक्रमm_thermal_package_notअगरy)(__u64 msr_val);
-EXPORT_SYMBOL_GPL(platक्रमm_thermal_package_notअगरy);
+/* Callback to handle core package threshold_interrupts */
+int (*platform_thermal_package_notify)(__u64 msr_val);
+EXPORT_SYMBOL_GPL(platform_thermal_package_notify);
 
-/* Callback support of rate control, वापस true, अगर
+/* Callback support of rate control, return true, if
  * callback has rate control */
-bool (*platक्रमm_thermal_package_rate_control)(व्योम);
-EXPORT_SYMBOL_GPL(platक्रमm_thermal_package_rate_control);
+bool (*platform_thermal_package_rate_control)(void);
+EXPORT_SYMBOL_GPL(platform_thermal_package_rate_control);
 
 
-अटल DEFINE_PER_CPU(काष्ठा thermal_state, thermal_state);
+static DEFINE_PER_CPU(struct thermal_state, thermal_state);
 
-अटल atomic_t therm_throt_en	= ATOMIC_INIT(0);
+static atomic_t therm_throt_en	= ATOMIC_INIT(0);
 
-अटल u32 lvtthmr_init __पढ़ो_mostly;
+static u32 lvtthmr_init __read_mostly;
 
-#अगर_घोषित CONFIG_SYSFS
-#घोषणा define_therm_throt_device_one_ro(_name)				\
-	अटल DEVICE_ATTR(_name, 0444,					\
+#ifdef CONFIG_SYSFS
+#define define_therm_throt_device_one_ro(_name)				\
+	static DEVICE_ATTR(_name, 0444,					\
 			   therm_throt_device_show_##_name,		\
-				   शून्य)				\
+				   NULL)				\
 
-#घोषणा define_therm_throt_device_show_func(event, name)		\
+#define define_therm_throt_device_show_func(event, name)		\
 									\
-अटल sमाप_प्रकार therm_throt_device_show_##event##_##name(		\
-			काष्ठा device *dev,				\
-			काष्ठा device_attribute *attr,			\
-			अक्षर *buf)					\
-अणु									\
-	अचिन्हित पूर्णांक cpu = dev->id;					\
-	sमाप_प्रकार ret;							\
+static ssize_t therm_throt_device_show_##event##_##name(		\
+			struct device *dev,				\
+			struct device_attribute *attr,			\
+			char *buf)					\
+{									\
+	unsigned int cpu = dev->id;					\
+	ssize_t ret;							\
 									\
 	preempt_disable();	/* CPU hotplug */			\
-	अगर (cpu_online(cpu)) अणु						\
-		ret = प्र_लिखो(buf, "%lu\n",				\
+	if (cpu_online(cpu)) {						\
+		ret = sprintf(buf, "%lu\n",				\
 			      per_cpu(thermal_state, cpu).event.name);	\
-	पूर्ण अन्यथा								\
+	} else								\
 		ret = 0;						\
 	preempt_enable();						\
 									\
-	वापस ret;							\
-पूर्ण
+	return ret;							\
+}
 
 define_therm_throt_device_show_func(core_throttle, count);
 define_therm_throt_device_one_ro(core_throttle_count);
 
-define_therm_throt_device_show_func(core_घातer_limit, count);
-define_therm_throt_device_one_ro(core_घातer_limit_count);
+define_therm_throt_device_show_func(core_power_limit, count);
+define_therm_throt_device_one_ro(core_power_limit_count);
 
 define_therm_throt_device_show_func(package_throttle, count);
 define_therm_throt_device_one_ro(package_throttle_count);
 
-define_therm_throt_device_show_func(package_घातer_limit, count);
-define_therm_throt_device_one_ro(package_घातer_limit_count);
+define_therm_throt_device_show_func(package_power_limit, count);
+define_therm_throt_device_one_ro(package_power_limit_count);
 
-define_therm_throt_device_show_func(core_throttle, max_समय_ms);
-define_therm_throt_device_one_ro(core_throttle_max_समय_ms);
+define_therm_throt_device_show_func(core_throttle, max_time_ms);
+define_therm_throt_device_one_ro(core_throttle_max_time_ms);
 
-define_therm_throt_device_show_func(package_throttle, max_समय_ms);
-define_therm_throt_device_one_ro(package_throttle_max_समय_ms);
+define_therm_throt_device_show_func(package_throttle, max_time_ms);
+define_therm_throt_device_one_ro(package_throttle_max_time_ms);
 
-define_therm_throt_device_show_func(core_throttle, total_समय_ms);
-define_therm_throt_device_one_ro(core_throttle_total_समय_ms);
+define_therm_throt_device_show_func(core_throttle, total_time_ms);
+define_therm_throt_device_one_ro(core_throttle_total_time_ms);
 
-define_therm_throt_device_show_func(package_throttle, total_समय_ms);
-define_therm_throt_device_one_ro(package_throttle_total_समय_ms);
+define_therm_throt_device_show_func(package_throttle, total_time_ms);
+define_therm_throt_device_one_ro(package_throttle_total_time_ms);
 
-अटल काष्ठा attribute *thermal_throttle_attrs[] = अणु
+static struct attribute *thermal_throttle_attrs[] = {
 	&dev_attr_core_throttle_count.attr,
-	&dev_attr_core_throttle_max_समय_ms.attr,
-	&dev_attr_core_throttle_total_समय_ms.attr,
-	शून्य
-पूर्ण;
+	&dev_attr_core_throttle_max_time_ms.attr,
+	&dev_attr_core_throttle_total_time_ms.attr,
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group thermal_attr_group = अणु
+static const struct attribute_group thermal_attr_group = {
 	.attrs	= thermal_throttle_attrs,
 	.name	= "thermal_throttle"
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SYSFS */
+};
+#endif /* CONFIG_SYSFS */
 
-#घोषणा CORE_LEVEL	0
-#घोषणा PACKAGE_LEVEL	1
+#define CORE_LEVEL	0
+#define PACKAGE_LEVEL	1
 
-#घोषणा THERM_THROT_POLL_INTERVAL	HZ
-#घोषणा THERM_STATUS_PROCHOT_LOG	BIT(1)
+#define THERM_THROT_POLL_INTERVAL	HZ
+#define THERM_STATUS_PROCHOT_LOG	BIT(1)
 
-#घोषणा THERM_STATUS_CLEAR_CORE_MASK (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(13) | BIT(15))
-#घोषणा THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11))
+#define THERM_STATUS_CLEAR_CORE_MASK (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11) | BIT(13) | BIT(15))
+#define THERM_STATUS_CLEAR_PKG_MASK  (BIT(1) | BIT(3) | BIT(5) | BIT(7) | BIT(9) | BIT(11))
 
-अटल व्योम clear_therm_status_log(पूर्णांक level)
-अणु
-	पूर्णांक msr;
+static void clear_therm_status_log(int level)
+{
+	int msr;
 	u64 mask, msr_val;
 
-	अगर (level == CORE_LEVEL) अणु
+	if (level == CORE_LEVEL) {
 		msr  = MSR_IA32_THERM_STATUS;
 		mask = THERM_STATUS_CLEAR_CORE_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		msr  = MSR_IA32_PACKAGE_THERM_STATUS;
 		mask = THERM_STATUS_CLEAR_PKG_MASK;
-	पूर्ण
+	}
 
 	rdmsrl(msr, msr_val);
 	msr_val &= mask;
 	wrmsrl(msr, msr_val & ~THERM_STATUS_PROCHOT_LOG);
-पूर्ण
+}
 
-अटल व्योम get_therm_status(पूर्णांक level, bool *proc_hot, u8 *temp)
-अणु
-	पूर्णांक msr;
+static void get_therm_status(int level, bool *proc_hot, u8 *temp)
+{
+	int msr;
 	u64 msr_val;
 
-	अगर (level == CORE_LEVEL)
+	if (level == CORE_LEVEL)
 		msr = MSR_IA32_THERM_STATUS;
-	अन्यथा
+	else
 		msr = MSR_IA32_PACKAGE_THERM_STATUS;
 
 	rdmsrl(msr, msr_val);
-	अगर (msr_val & THERM_STATUS_PROCHOT_LOG)
+	if (msr_val & THERM_STATUS_PROCHOT_LOG)
 		*proc_hot = true;
-	अन्यथा
+	else
 		*proc_hot = false;
 
 	*temp = (msr_val >> 16) & 0x7F;
-पूर्ण
+}
 
-अटल व्योम __maybe_unused throttle_active_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा _thermal_state *state = container_of(to_delayed_work(work),
-						काष्ठा _thermal_state, therm_work);
-	अचिन्हित पूर्णांक i, avg, this_cpu = smp_processor_id();
-	u64 now = get_jअगरfies_64();
+static void __maybe_unused throttle_active_work(struct work_struct *work)
+{
+	struct _thermal_state *state = container_of(to_delayed_work(work),
+						struct _thermal_state, therm_work);
+	unsigned int i, avg, this_cpu = smp_processor_id();
+	u64 now = get_jiffies_64();
 	bool hot;
 	u8 temp;
 
 	get_therm_status(state->level, &hot, &temp);
 	/* temperature value is offset from the max so lesser means hotter */
-	अगर (!hot && temp > state->baseline_temp) अणु
-		अगर (state->rate_control_active)
+	if (!hot && temp > state->baseline_temp) {
+		if (state->rate_control_active)
 			pr_info("CPU%d: %s temperature/speed normal (total events = %lu)\n",
 				this_cpu,
 				state->level == CORE_LEVEL ? "Core" : "Package",
 				state->count);
 
 		state->rate_control_active = false;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (समय_beक्रमe64(now, state->next_check) &&
+	if (time_before64(now, state->next_check) &&
 			  state->rate_control_active)
-		जाओ re_arm;
+		goto re_arm;
 
 	state->next_check = now + CHECK_INTERVAL;
 
-	अगर (state->count != state->last_count) अणु
-		/* There was one new thermal पूर्णांकerrupt */
+	if (state->count != state->last_count) {
+		/* There was one new thermal interrupt */
 		state->last_count = state->count;
 		state->average = 0;
 		state->sample_count = 0;
 		state->sample_index = 0;
-	पूर्ण
+	}
 
 	state->temp_samples[state->sample_index] = temp;
 	state->sample_count++;
 	state->sample_index = (state->sample_index + 1) % ARRAY_SIZE(state->temp_samples);
-	अगर (state->sample_count < ARRAY_SIZE(state->temp_samples))
-		जाओ re_arm;
+	if (state->sample_count < ARRAY_SIZE(state->temp_samples))
+		goto re_arm;
 
 	avg = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(state->temp_samples); ++i)
+	for (i = 0; i < ARRAY_SIZE(state->temp_samples); ++i)
 		avg += state->temp_samples[i];
 
 	avg /= ARRAY_SIZE(state->temp_samples);
 
-	अगर (state->average > avg) अणु
+	if (state->average > avg) {
 		pr_warn("CPU%d: %s temperature is above threshold, cpu clock is throttled (total events = %lu)\n",
 			this_cpu,
 			state->level == CORE_LEVEL ? "Core" : "Package",
 			state->count);
 		state->rate_control_active = true;
-	पूर्ण
+	}
 
 	state->average = avg;
 
 re_arm:
 	clear_therm_status_log(state->level);
 	schedule_delayed_work_on(this_cpu, &state->therm_work, THERM_THROT_POLL_INTERVAL);
-पूर्ण
+}
 
 /***
- * therm_throt_process - Process thermal throttling event from पूर्णांकerrupt
+ * therm_throt_process - Process thermal throttling event from interrupt
  * @curr: Whether the condition is current or not (boolean), since the
- *        thermal पूर्णांकerrupt normally माला_लो called both when the thermal
+ *        thermal interrupt normally gets called both when the thermal
  *        event begins and once the event has ended.
  *
- * This function is called by the thermal पूर्णांकerrupt after the
+ * This function is called by the thermal interrupt after the
  * IRQ has been acknowledged.
  *
- * It will take care of rate limiting and prपूर्णांकing messages to the syslog.
+ * It will take care of rate limiting and printing messages to the syslog.
  */
-अटल व्योम therm_throt_process(bool new_event, पूर्णांक event, पूर्णांक level)
-अणु
-	काष्ठा _thermal_state *state;
-	अचिन्हित पूर्णांक this_cpu = smp_processor_id();
+static void therm_throt_process(bool new_event, int event, int level)
+{
+	struct _thermal_state *state;
+	unsigned int this_cpu = smp_processor_id();
 	bool old_event;
 	u64 now;
-	काष्ठा thermal_state *pstate = &per_cpu(thermal_state, this_cpu);
+	struct thermal_state *pstate = &per_cpu(thermal_state, this_cpu);
 
-	now = get_jअगरfies_64();
-	अगर (level == CORE_LEVEL) अणु
-		अगर (event == THERMAL_THROTTLING_EVENT)
+	now = get_jiffies_64();
+	if (level == CORE_LEVEL) {
+		if (event == THERMAL_THROTTLING_EVENT)
 			state = &pstate->core_throttle;
-		अन्यथा अगर (event == POWER_LIMIT_EVENT)
-			state = &pstate->core_घातer_limit;
-		अन्यथा
-			वापस;
-	पूर्ण अन्यथा अगर (level == PACKAGE_LEVEL) अणु
-		अगर (event == THERMAL_THROTTLING_EVENT)
+		else if (event == POWER_LIMIT_EVENT)
+			state = &pstate->core_power_limit;
+		else
+			return;
+	} else if (level == PACKAGE_LEVEL) {
+		if (event == THERMAL_THROTTLING_EVENT)
 			state = &pstate->package_throttle;
-		अन्यथा अगर (event == POWER_LIMIT_EVENT)
-			state = &pstate->package_घातer_limit;
-		अन्यथा
-			वापस;
-	पूर्ण अन्यथा
-		वापस;
+		else if (event == POWER_LIMIT_EVENT)
+			state = &pstate->package_power_limit;
+		else
+			return;
+	} else
+		return;
 
 	old_event = state->new_event;
 	state->new_event = new_event;
 
-	अगर (new_event)
+	if (new_event)
 		state->count++;
 
-	अगर (event != THERMAL_THROTTLING_EVENT)
-		वापस;
+	if (event != THERMAL_THROTTLING_EVENT)
+		return;
 
-	अगर (new_event && !state->last_पूर्णांकerrupt_समय) अणु
+	if (new_event && !state->last_interrupt_time) {
 		bool hot;
 		u8 temp;
 
 		get_therm_status(state->level, &hot, &temp);
 		/*
-		 * Ignore लघु temperature spike as the प्रणाली is not बंद
+		 * Ignore short temperature spike as the system is not close
 		 * to PROCHOT. 10C offset is large enough to ignore. It is
-		 * alपढ़ोy dropped from the high threshold temperature.
+		 * already dropped from the high threshold temperature.
 		 */
-		अगर (temp > 10)
-			वापस;
+		if (temp > 10)
+			return;
 
 		state->baseline_temp = temp;
-		state->last_पूर्णांकerrupt_समय = now;
+		state->last_interrupt_time = now;
 		schedule_delayed_work_on(this_cpu, &state->therm_work, THERM_THROT_POLL_INTERVAL);
-	पूर्ण अन्यथा अगर (old_event && state->last_पूर्णांकerrupt_समय) अणु
-		अचिन्हित दीर्घ throttle_समय;
+	} else if (old_event && state->last_interrupt_time) {
+		unsigned long throttle_time;
 
-		throttle_समय = jअगरfies_delta_to_msecs(now - state->last_पूर्णांकerrupt_समय);
-		अगर (throttle_समय > state->max_समय_ms)
-			state->max_समय_ms = throttle_समय;
-		state->total_समय_ms += throttle_समय;
-		state->last_पूर्णांकerrupt_समय = 0;
-	पूर्ण
-पूर्ण
+		throttle_time = jiffies_delta_to_msecs(now - state->last_interrupt_time);
+		if (throttle_time > state->max_time_ms)
+			state->max_time_ms = throttle_time;
+		state->total_time_ms += throttle_time;
+		state->last_interrupt_time = 0;
+	}
+}
 
-अटल पूर्णांक thresh_event_valid(पूर्णांक level, पूर्णांक event)
-अणु
-	काष्ठा _thermal_state *state;
-	अचिन्हित पूर्णांक this_cpu = smp_processor_id();
-	काष्ठा thermal_state *pstate = &per_cpu(thermal_state, this_cpu);
-	u64 now = get_jअगरfies_64();
+static int thresh_event_valid(int level, int event)
+{
+	struct _thermal_state *state;
+	unsigned int this_cpu = smp_processor_id();
+	struct thermal_state *pstate = &per_cpu(thermal_state, this_cpu);
+	u64 now = get_jiffies_64();
 
-	अगर (level == PACKAGE_LEVEL)
+	if (level == PACKAGE_LEVEL)
 		state = (event == 0) ? &pstate->pkg_thresh0 :
 						&pstate->pkg_thresh1;
-	अन्यथा
+	else
 		state = (event == 0) ? &pstate->core_thresh0 :
 						&pstate->core_thresh1;
 
-	अगर (समय_beक्रमe64(now, state->next_check))
-		वापस 0;
+	if (time_before64(now, state->next_check))
+		return 0;
 
 	state->next_check = now + CHECK_INTERVAL;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल bool पूर्णांक_pln_enable;
-अटल पूर्णांक __init पूर्णांक_pln_enable_setup(अक्षर *s)
-अणु
-	पूर्णांक_pln_enable = true;
+static bool int_pln_enable;
+static int __init int_pln_enable_setup(char *s)
+{
+	int_pln_enable = true;
 
-	वापस 1;
-पूर्ण
-__setup("int_pln_enable", पूर्णांक_pln_enable_setup);
+	return 1;
+}
+__setup("int_pln_enable", int_pln_enable_setup);
 
-#अगर_घोषित CONFIG_SYSFS
-/* Add/Remove thermal_throttle पूर्णांकerface क्रम CPU device: */
-अटल पूर्णांक thermal_throttle_add_dev(काष्ठा device *dev, अचिन्हित पूर्णांक cpu)
-अणु
-	पूर्णांक err;
-	काष्ठा cpuinfo_x86 *c = &cpu_data(cpu);
+#ifdef CONFIG_SYSFS
+/* Add/Remove thermal_throttle interface for CPU device: */
+static int thermal_throttle_add_dev(struct device *dev, unsigned int cpu)
+{
+	int err;
+	struct cpuinfo_x86 *c = &cpu_data(cpu);
 
 	err = sysfs_create_group(&dev->kobj, &thermal_attr_group);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (cpu_has(c, X86_FEATURE_PLN) && पूर्णांक_pln_enable) अणु
+	if (cpu_has(c, X86_FEATURE_PLN) && int_pln_enable) {
 		err = sysfs_add_file_to_group(&dev->kobj,
-					      &dev_attr_core_घातer_limit_count.attr,
+					      &dev_attr_core_power_limit_count.attr,
 					      thermal_attr_group.name);
-		अगर (err)
-			जाओ del_group;
-	पूर्ण
+		if (err)
+			goto del_group;
+	}
 
-	अगर (cpu_has(c, X86_FEATURE_PTS)) अणु
+	if (cpu_has(c, X86_FEATURE_PTS)) {
 		err = sysfs_add_file_to_group(&dev->kobj,
 					      &dev_attr_package_throttle_count.attr,
 					      thermal_attr_group.name);
-		अगर (err)
-			जाओ del_group;
+		if (err)
+			goto del_group;
 
 		err = sysfs_add_file_to_group(&dev->kobj,
-					      &dev_attr_package_throttle_max_समय_ms.attr,
+					      &dev_attr_package_throttle_max_time_ms.attr,
 					      thermal_attr_group.name);
-		अगर (err)
-			जाओ del_group;
+		if (err)
+			goto del_group;
 
 		err = sysfs_add_file_to_group(&dev->kobj,
-					      &dev_attr_package_throttle_total_समय_ms.attr,
+					      &dev_attr_package_throttle_total_time_ms.attr,
 					      thermal_attr_group.name);
-		अगर (err)
-			जाओ del_group;
+		if (err)
+			goto del_group;
 
-		अगर (cpu_has(c, X86_FEATURE_PLN) && पूर्णांक_pln_enable) अणु
+		if (cpu_has(c, X86_FEATURE_PLN) && int_pln_enable) {
 			err = sysfs_add_file_to_group(&dev->kobj,
-					&dev_attr_package_घातer_limit_count.attr,
+					&dev_attr_package_power_limit_count.attr,
 					thermal_attr_group.name);
-			अगर (err)
-				जाओ del_group;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto del_group;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 del_group:
-	sysfs_हटाओ_group(&dev->kobj, &thermal_attr_group);
+	sysfs_remove_group(&dev->kobj, &thermal_attr_group);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम thermal_throttle_हटाओ_dev(काष्ठा device *dev)
-अणु
-	sysfs_हटाओ_group(&dev->kobj, &thermal_attr_group);
-पूर्ण
+static void thermal_throttle_remove_dev(struct device *dev)
+{
+	sysfs_remove_group(&dev->kobj, &thermal_attr_group);
+}
 
-/* Get notअगरied when a cpu comes on/off. Be hotplug मित्रly. */
-अटल पूर्णांक thermal_throttle_online(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा thermal_state *state = &per_cpu(thermal_state, cpu);
-	काष्ठा device *dev = get_cpu_device(cpu);
+/* Get notified when a cpu comes on/off. Be hotplug friendly. */
+static int thermal_throttle_online(unsigned int cpu)
+{
+	struct thermal_state *state = &per_cpu(thermal_state, cpu);
+	struct device *dev = get_cpu_device(cpu);
 	u32 l;
 
 	state->package_throttle.level = PACKAGE_LEVEL;
@@ -477,21 +476,21 @@ del_group:
 	INIT_DELAYED_WORK(&state->core_throttle.therm_work, throttle_active_work);
 
 	/* Unmask the thermal vector after the above workqueues are initialized. */
-	l = apic_पढ़ो(APIC_LVTTHMR);
-	apic_ग_लिखो(APIC_LVTTHMR, l & ~APIC_LVT_MASKED);
+	l = apic_read(APIC_LVTTHMR);
+	apic_write(APIC_LVTTHMR, l & ~APIC_LVT_MASKED);
 
-	वापस thermal_throttle_add_dev(dev, cpu);
-पूर्ण
+	return thermal_throttle_add_dev(dev, cpu);
+}
 
-अटल पूर्णांक thermal_throttle_offline(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा thermal_state *state = &per_cpu(thermal_state, cpu);
-	काष्ठा device *dev = get_cpu_device(cpu);
+static int thermal_throttle_offline(unsigned int cpu)
+{
+	struct thermal_state *state = &per_cpu(thermal_state, cpu);
+	struct device *dev = get_cpu_device(cpu);
 	u32 l;
 
-	/* Mask the thermal vector beक्रमe draining evtl. pending work */
-	l = apic_पढ़ो(APIC_LVTTHMR);
-	apic_ग_लिखो(APIC_LVTTHMR, l | APIC_LVT_MASKED);
+	/* Mask the thermal vector before draining evtl. pending work */
+	l = apic_read(APIC_LVTTHMR);
+	apic_write(APIC_LVTTHMR, l | APIC_LVT_MASKED);
 
 	cancel_delayed_work_sync(&state->package_throttle.therm_work);
 	cancel_delayed_work_sync(&state->core_throttle.therm_work);
@@ -499,228 +498,228 @@ del_group:
 	state->package_throttle.rate_control_active = false;
 	state->core_throttle.rate_control_active = false;
 
-	thermal_throttle_हटाओ_dev(dev);
-	वापस 0;
-पूर्ण
+	thermal_throttle_remove_dev(dev);
+	return 0;
+}
 
-अटल __init पूर्णांक thermal_throttle_init_device(व्योम)
-अणु
-	पूर्णांक ret;
+static __init int thermal_throttle_init_device(void)
+{
+	int ret;
 
-	अगर (!atomic_पढ़ो(&therm_throt_en))
-		वापस 0;
+	if (!atomic_read(&therm_throt_en))
+		return 0;
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "x86/therm:online",
 				thermal_throttle_online,
 				thermal_throttle_offline);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	return ret < 0 ? ret : 0;
+}
 device_initcall(thermal_throttle_init_device);
 
-#पूर्ण_अगर /* CONFIG_SYSFS */
+#endif /* CONFIG_SYSFS */
 
-अटल व्योम notअगरy_package_thresholds(__u64 msr_val)
-अणु
-	bool notअगरy_thres_0 = false;
-	bool notअगरy_thres_1 = false;
+static void notify_package_thresholds(__u64 msr_val)
+{
+	bool notify_thres_0 = false;
+	bool notify_thres_1 = false;
 
-	अगर (!platक्रमm_thermal_package_notअगरy)
-		वापस;
+	if (!platform_thermal_package_notify)
+		return;
 
 	/* lower threshold check */
-	अगर (msr_val & THERM_LOG_THRESHOLD0)
-		notअगरy_thres_0 = true;
+	if (msr_val & THERM_LOG_THRESHOLD0)
+		notify_thres_0 = true;
 	/* higher threshold check */
-	अगर (msr_val & THERM_LOG_THRESHOLD1)
-		notअगरy_thres_1 = true;
+	if (msr_val & THERM_LOG_THRESHOLD1)
+		notify_thres_1 = true;
 
-	अगर (!notअगरy_thres_0 && !notअगरy_thres_1)
-		वापस;
+	if (!notify_thres_0 && !notify_thres_1)
+		return;
 
-	अगर (platक्रमm_thermal_package_rate_control &&
-		platक्रमm_thermal_package_rate_control()) अणु
+	if (platform_thermal_package_rate_control &&
+		platform_thermal_package_rate_control()) {
 		/* Rate control is implemented in callback */
-		platक्रमm_thermal_package_notअगरy(msr_val);
-		वापस;
-	पूर्ण
+		platform_thermal_package_notify(msr_val);
+		return;
+	}
 
 	/* lower threshold reached */
-	अगर (notअगरy_thres_0 && thresh_event_valid(PACKAGE_LEVEL, 0))
-		platक्रमm_thermal_package_notअगरy(msr_val);
+	if (notify_thres_0 && thresh_event_valid(PACKAGE_LEVEL, 0))
+		platform_thermal_package_notify(msr_val);
 	/* higher threshold reached */
-	अगर (notअगरy_thres_1 && thresh_event_valid(PACKAGE_LEVEL, 1))
-		platक्रमm_thermal_package_notअगरy(msr_val);
-पूर्ण
+	if (notify_thres_1 && thresh_event_valid(PACKAGE_LEVEL, 1))
+		platform_thermal_package_notify(msr_val);
+}
 
-अटल व्योम notअगरy_thresholds(__u64 msr_val)
-अणु
-	/* check whether the पूर्णांकerrupt handler is defined;
-	 * otherwise simply वापस
+static void notify_thresholds(__u64 msr_val)
+{
+	/* check whether the interrupt handler is defined;
+	 * otherwise simply return
 	 */
-	अगर (!platक्रमm_thermal_notअगरy)
-		वापस;
+	if (!platform_thermal_notify)
+		return;
 
 	/* lower threshold reached */
-	अगर ((msr_val & THERM_LOG_THRESHOLD0) &&
+	if ((msr_val & THERM_LOG_THRESHOLD0) &&
 			thresh_event_valid(CORE_LEVEL, 0))
-		platक्रमm_thermal_notअगरy(msr_val);
+		platform_thermal_notify(msr_val);
 	/* higher threshold reached */
-	अगर ((msr_val & THERM_LOG_THRESHOLD1) &&
+	if ((msr_val & THERM_LOG_THRESHOLD1) &&
 			thresh_event_valid(CORE_LEVEL, 1))
-		platक्रमm_thermal_notअगरy(msr_val);
-पूर्ण
+		platform_thermal_notify(msr_val);
+}
 
-/* Thermal transition पूर्णांकerrupt handler */
-व्योम पूर्णांकel_thermal_पूर्णांकerrupt(व्योम)
-अणु
+/* Thermal transition interrupt handler */
+void intel_thermal_interrupt(void)
+{
 	__u64 msr_val;
 
-	अगर (अटल_cpu_has(X86_FEATURE_HWP))
+	if (static_cpu_has(X86_FEATURE_HWP))
 		wrmsrl_safe(MSR_HWP_STATUS, 0);
 
 	rdmsrl(MSR_IA32_THERM_STATUS, msr_val);
 
-	/* Check क्रम violation of core thermal thresholds*/
-	notअगरy_thresholds(msr_val);
+	/* Check for violation of core thermal thresholds*/
+	notify_thresholds(msr_val);
 
 	therm_throt_process(msr_val & THERM_STATUS_PROCHOT,
 			    THERMAL_THROTTLING_EVENT,
 			    CORE_LEVEL);
 
-	अगर (this_cpu_has(X86_FEATURE_PLN) && पूर्णांक_pln_enable)
+	if (this_cpu_has(X86_FEATURE_PLN) && int_pln_enable)
 		therm_throt_process(msr_val & THERM_STATUS_POWER_LIMIT,
 					POWER_LIMIT_EVENT,
 					CORE_LEVEL);
 
-	अगर (this_cpu_has(X86_FEATURE_PTS)) अणु
+	if (this_cpu_has(X86_FEATURE_PTS)) {
 		rdmsrl(MSR_IA32_PACKAGE_THERM_STATUS, msr_val);
 		/* check violations of package thermal thresholds */
-		notअगरy_package_thresholds(msr_val);
+		notify_package_thresholds(msr_val);
 		therm_throt_process(msr_val & PACKAGE_THERM_STATUS_PROCHOT,
 					THERMAL_THROTTLING_EVENT,
 					PACKAGE_LEVEL);
-		अगर (this_cpu_has(X86_FEATURE_PLN) && पूर्णांक_pln_enable)
+		if (this_cpu_has(X86_FEATURE_PLN) && int_pln_enable)
 			therm_throt_process(msr_val &
 					PACKAGE_THERM_STATUS_POWER_LIMIT,
 					POWER_LIMIT_EVENT,
 					PACKAGE_LEVEL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Thermal monitoring depends on APIC, ACPI and घड़ी modulation */
-अटल पूर्णांक पूर्णांकel_thermal_supported(काष्ठा cpuinfo_x86 *c)
-अणु
-	अगर (!boot_cpu_has(X86_FEATURE_APIC))
-		वापस 0;
-	अगर (!cpu_has(c, X86_FEATURE_ACPI) || !cpu_has(c, X86_FEATURE_ACC))
-		वापस 0;
-	वापस 1;
-पूर्ण
+/* Thermal monitoring depends on APIC, ACPI and clock modulation */
+static int intel_thermal_supported(struct cpuinfo_x86 *c)
+{
+	if (!boot_cpu_has(X86_FEATURE_APIC))
+		return 0;
+	if (!cpu_has(c, X86_FEATURE_ACPI) || !cpu_has(c, X86_FEATURE_ACC))
+		return 0;
+	return 1;
+}
 
-bool x86_thermal_enabled(व्योम)
-अणु
-	वापस atomic_पढ़ो(&therm_throt_en);
-पूर्ण
+bool x86_thermal_enabled(void)
+{
+	return atomic_read(&therm_throt_en);
+}
 
-व्योम __init therm_lvt_init(व्योम)
-अणु
+void __init therm_lvt_init(void)
+{
 	/*
 	 * This function is only called on boot CPU. Save the init thermal
 	 * LVT value on BSP and use that value to restore APs' thermal LVT
 	 * entry BIOS programmed later
 	 */
-	अगर (पूर्णांकel_thermal_supported(&boot_cpu_data))
-		lvtthmr_init = apic_पढ़ो(APIC_LVTTHMR);
-पूर्ण
+	if (intel_thermal_supported(&boot_cpu_data))
+		lvtthmr_init = apic_read(APIC_LVTTHMR);
+}
 
-व्योम पूर्णांकel_init_thermal(काष्ठा cpuinfo_x86 *c)
-अणु
-	अचिन्हित पूर्णांक cpu = smp_processor_id();
-	पूर्णांक पंचांग2 = 0;
+void intel_init_thermal(struct cpuinfo_x86 *c)
+{
+	unsigned int cpu = smp_processor_id();
+	int tm2 = 0;
 	u32 l, h;
 
-	अगर (!पूर्णांकel_thermal_supported(c))
-		वापस;
+	if (!intel_thermal_supported(c))
+		return;
 
 	/*
-	 * First check अगर its enabled alपढ़ोy, in which हाल there might
+	 * First check if its enabled already, in which case there might
 	 * be some SMM goo which handles it, so we can't even put a handler
-	 * since it might be delivered via SMI alपढ़ोy:
+	 * since it might be delivered via SMI already:
 	 */
 	rdmsr(MSR_IA32_MISC_ENABLE, l, h);
 
 	h = lvtthmr_init;
 	/*
-	 * The initial value of thermal LVT entries on all APs always पढ़ोs
+	 * The initial value of thermal LVT entries on all APs always reads
 	 * 0x10000 because APs are woken up by BSP issuing INIT-SIPI-SIPI
-	 * sequence to them and LVT रेजिस्टरs are reset to 0s except क्रम
+	 * sequence to them and LVT registers are reset to 0s except for
 	 * the mask bits which are set to 1s when APs receive INIT IPI.
-	 * If BIOS takes over the thermal पूर्णांकerrupt and sets its पूर्णांकerrupt
+	 * If BIOS takes over the thermal interrupt and sets its interrupt
 	 * delivery mode to SMI (not fixed), it restores the value that the
 	 * BIOS has programmed on AP based on BSP's info we saved since BIOS
-	 * is always setting the same value क्रम all thपढ़ोs/cores.
+	 * is always setting the same value for all threads/cores.
 	 */
-	अगर ((h & APIC_DM_FIXED_MASK) != APIC_DM_FIXED)
-		apic_ग_लिखो(APIC_LVTTHMR, lvtthmr_init);
+	if ((h & APIC_DM_FIXED_MASK) != APIC_DM_FIXED)
+		apic_write(APIC_LVTTHMR, lvtthmr_init);
 
 
-	अगर ((l & MSR_IA32_MISC_ENABLE_TM1) && (h & APIC_DM_SMI)) अणु
-		अगर (प्रणाली_state == SYSTEM_BOOTING)
+	if ((l & MSR_IA32_MISC_ENABLE_TM1) && (h & APIC_DM_SMI)) {
+		if (system_state == SYSTEM_BOOTING)
 			pr_debug("CPU%d: Thermal monitoring handled by SMI\n", cpu);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* early Pentium M models use dअगरferent method क्रम enabling TM2 */
-	अगर (cpu_has(c, X86_FEATURE_TM2)) अणु
-		अगर (c->x86 == 6 && (c->x86_model == 9 || c->x86_model == 13)) अणु
+	/* early Pentium M models use different method for enabling TM2 */
+	if (cpu_has(c, X86_FEATURE_TM2)) {
+		if (c->x86 == 6 && (c->x86_model == 9 || c->x86_model == 13)) {
 			rdmsr(MSR_THERM2_CTL, l, h);
-			अगर (l & MSR_THERM2_CTL_TM_SELECT)
-				पंचांग2 = 1;
-		पूर्ण अन्यथा अगर (l & MSR_IA32_MISC_ENABLE_TM2)
-			पंचांग2 = 1;
-	पूर्ण
+			if (l & MSR_THERM2_CTL_TM_SELECT)
+				tm2 = 1;
+		} else if (l & MSR_IA32_MISC_ENABLE_TM2)
+			tm2 = 1;
+	}
 
-	/* We'll mask the thermal vector in the lapic till we're पढ़ोy: */
+	/* We'll mask the thermal vector in the lapic till we're ready: */
 	h = THERMAL_APIC_VECTOR | APIC_DM_FIXED | APIC_LVT_MASKED;
-	apic_ग_लिखो(APIC_LVTTHMR, h);
+	apic_write(APIC_LVTTHMR, h);
 
 	rdmsr(MSR_IA32_THERM_INTERRUPT, l, h);
-	अगर (cpu_has(c, X86_FEATURE_PLN) && !पूर्णांक_pln_enable)
+	if (cpu_has(c, X86_FEATURE_PLN) && !int_pln_enable)
 		wrmsr(MSR_IA32_THERM_INTERRUPT,
 			(l | (THERM_INT_LOW_ENABLE
 			| THERM_INT_HIGH_ENABLE)) & ~THERM_INT_PLN_ENABLE, h);
-	अन्यथा अगर (cpu_has(c, X86_FEATURE_PLN) && पूर्णांक_pln_enable)
+	else if (cpu_has(c, X86_FEATURE_PLN) && int_pln_enable)
 		wrmsr(MSR_IA32_THERM_INTERRUPT,
 			l | (THERM_INT_LOW_ENABLE
 			| THERM_INT_HIGH_ENABLE | THERM_INT_PLN_ENABLE), h);
-	अन्यथा
+	else
 		wrmsr(MSR_IA32_THERM_INTERRUPT,
 		      l | (THERM_INT_LOW_ENABLE | THERM_INT_HIGH_ENABLE), h);
 
-	अगर (cpu_has(c, X86_FEATURE_PTS)) अणु
+	if (cpu_has(c, X86_FEATURE_PTS)) {
 		rdmsr(MSR_IA32_PACKAGE_THERM_INTERRUPT, l, h);
-		अगर (cpu_has(c, X86_FEATURE_PLN) && !पूर्णांक_pln_enable)
+		if (cpu_has(c, X86_FEATURE_PLN) && !int_pln_enable)
 			wrmsr(MSR_IA32_PACKAGE_THERM_INTERRUPT,
 				(l | (PACKAGE_THERM_INT_LOW_ENABLE
 				| PACKAGE_THERM_INT_HIGH_ENABLE))
 				& ~PACKAGE_THERM_INT_PLN_ENABLE, h);
-		अन्यथा अगर (cpu_has(c, X86_FEATURE_PLN) && पूर्णांक_pln_enable)
+		else if (cpu_has(c, X86_FEATURE_PLN) && int_pln_enable)
 			wrmsr(MSR_IA32_PACKAGE_THERM_INTERRUPT,
 				l | (PACKAGE_THERM_INT_LOW_ENABLE
 				| PACKAGE_THERM_INT_HIGH_ENABLE
 				| PACKAGE_THERM_INT_PLN_ENABLE), h);
-		अन्यथा
+		else
 			wrmsr(MSR_IA32_PACKAGE_THERM_INTERRUPT,
 			      l | (PACKAGE_THERM_INT_LOW_ENABLE
 				| PACKAGE_THERM_INT_HIGH_ENABLE), h);
-	पूर्ण
+	}
 
 	rdmsr(MSR_IA32_MISC_ENABLE, l, h);
 	wrmsr(MSR_IA32_MISC_ENABLE, l | MSR_IA32_MISC_ENABLE_TM1, h);
 
 	pr_info_once("CPU0: Thermal monitoring enabled (%s)\n",
-		      पंचांग2 ? "TM2" : "TM1");
+		      tm2 ? "TM2" : "TM1");
 
 	/* enable thermal throttle processing */
 	atomic_set(&therm_throt_en, 1);
-पूर्ण
+}

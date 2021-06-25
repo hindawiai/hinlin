@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright (c) 2007 Jiri Kosina
  */
-#अगर_अघोषित _HIDRAW_H
-#घोषणा _HIDRAW_H
+#ifndef _HIDRAW_H
+#define _HIDRAW_H
 
-#समावेश <uapi/linux/hidraw.h>
+#include <uapi/linux/hidraw.h>
 
 
-काष्ठा hidraw अणु
-	अचिन्हित पूर्णांक minor;
-	पूर्णांक exist;
-	पूर्णांक खोलो;
-	रुको_queue_head_t रुको;
-	काष्ठा hid_device *hid;
-	काष्ठा device *dev;
+struct hidraw {
+	unsigned int minor;
+	int exist;
+	int open;
+	wait_queue_head_t wait;
+	struct hid_device *hid;
+	struct device *dev;
 	spinlock_t list_lock;
-	काष्ठा list_head list;
-पूर्ण;
+	struct list_head list;
+};
 
-काष्ठा hidraw_report अणु
+struct hidraw_report {
 	__u8 *value;
-	पूर्णांक len;
-पूर्ण;
+	int len;
+};
 
-काष्ठा hidraw_list अणु
-	काष्ठा hidraw_report buffer[HIDRAW_BUFFER_SIZE];
-	पूर्णांक head;
-	पूर्णांक tail;
-	काष्ठा fasync_काष्ठा *fasync;
-	काष्ठा hidraw *hidraw;
-	काष्ठा list_head node;
-	काष्ठा mutex पढ़ो_mutex;
-पूर्ण;
+struct hidraw_list {
+	struct hidraw_report buffer[HIDRAW_BUFFER_SIZE];
+	int head;
+	int tail;
+	struct fasync_struct *fasync;
+	struct hidraw *hidraw;
+	struct list_head node;
+	struct mutex read_mutex;
+};
 
-#अगर_घोषित CONFIG_HIDRAW
-पूर्णांक hidraw_init(व्योम);
-व्योम hidraw_निकास(व्योम);
-पूर्णांक hidraw_report_event(काष्ठा hid_device *, u8 *, पूर्णांक);
-पूर्णांक hidraw_connect(काष्ठा hid_device *);
-व्योम hidraw_disconnect(काष्ठा hid_device *);
-#अन्यथा
-अटल अंतरभूत पूर्णांक hidraw_init(व्योम) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम hidraw_निकास(व्योम) अणु पूर्ण
-अटल अंतरभूत पूर्णांक hidraw_report_event(काष्ठा hid_device *hid, u8 *data, पूर्णांक len) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक hidraw_connect(काष्ठा hid_device *hid) अणु वापस -1; पूर्ण
-अटल अंतरभूत व्योम hidraw_disconnect(काष्ठा hid_device *hid) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_HIDRAW
+int hidraw_init(void);
+void hidraw_exit(void);
+int hidraw_report_event(struct hid_device *, u8 *, int);
+int hidraw_connect(struct hid_device *);
+void hidraw_disconnect(struct hid_device *);
+#else
+static inline int hidraw_init(void) { return 0; }
+static inline void hidraw_exit(void) { }
+static inline int hidraw_report_event(struct hid_device *hid, u8 *data, int len) { return 0; }
+static inline int hidraw_connect(struct hid_device *hid) { return -1; }
+static inline void hidraw_disconnect(struct hid_device *hid) { }
+#endif
 
-#पूर्ण_अगर
+#endif

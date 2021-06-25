@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Intel I/OAT DMA Linux driver
  * Copyright(c) 2004 - 2015 Intel Corporation.
  */
 
 /*
- * This driver supports an Intel I/OAT DMA engine, which करोes asynchronous
+ * This driver supports an Intel I/OAT DMA engine, which does asynchronous
  * copy operations.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/sizes.h>
-#समावेश "dma.h"
-#समावेश "registers.h"
-#समावेश "hw.h"
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/interrupt.h>
+#include <linux/dmaengine.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/workqueue.h>
+#include <linux/prefetch.h>
+#include <linux/sizes.h>
+#include "dma.h"
+#include "registers.h"
+#include "hw.h"
 
-#समावेश "../dmaengine.h"
+#include "../dmaengine.h"
 
-अटल पूर्णांक completion_समयout = 200;
-module_param(completion_समयout, पूर्णांक, 0644);
-MODULE_PARM_DESC(completion_समयout,
+static int completion_timeout = 200;
+module_param(completion_timeout, int, 0644);
+MODULE_PARM_DESC(completion_timeout,
 		"set ioat completion timeout [msec] (default 200 [msec])");
-अटल पूर्णांक idle_समयout = 2000;
-module_param(idle_समयout, पूर्णांक, 0644);
-MODULE_PARM_DESC(idle_समयout,
+static int idle_timeout = 2000;
+module_param(idle_timeout, int, 0644);
+MODULE_PARM_DESC(idle_timeout,
 		"set ioat idel timeout [msec] (default 2000 [msec])");
 
-#घोषणा IDLE_TIMEOUT msecs_to_jअगरfies(idle_समयout)
-#घोषणा COMPLETION_TIMEOUT msecs_to_jअगरfies(completion_समयout)
+#define IDLE_TIMEOUT msecs_to_jiffies(idle_timeout)
+#define COMPLETION_TIMEOUT msecs_to_jiffies(completion_timeout)
 
-अटल अक्षर *chanerr_str[] = अणु
+static char *chanerr_str[] = {
 	"DMA Transfer Source Address Error",
 	"DMA Transfer Destination Address Error",
 	"Next Descriptor Address Error",
@@ -68,153 +67,153 @@ MODULE_PARM_DESC(idle_समयout,
 	"Result Guard Tag verification Error",
 	"Result Application Tag verification Error",
 	"Result Reference Tag verification Error",
-पूर्ण;
+};
 
-अटल व्योम ioat_eh(काष्ठा ioatdma_chan *ioat_chan);
+static void ioat_eh(struct ioatdma_chan *ioat_chan);
 
-अटल व्योम ioat_prपूर्णांक_chanerrs(काष्ठा ioatdma_chan *ioat_chan, u32 chanerr)
-अणु
-	पूर्णांक i;
+static void ioat_print_chanerrs(struct ioatdma_chan *ioat_chan, u32 chanerr)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(chanerr_str); i++) अणु
-		अगर ((chanerr >> i) & 1) अणु
+	for (i = 0; i < ARRAY_SIZE(chanerr_str); i++) {
+		if ((chanerr >> i) & 1) {
 			dev_err(to_dev(ioat_chan), "Err(%d): %s\n",
 				i, chanerr_str[i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- * ioat_dma_करो_पूर्णांकerrupt - handler used क्रम single vector पूर्णांकerrupt mode
- * @irq: पूर्णांकerrupt id
- * @data: पूर्णांकerrupt data
+ * ioat_dma_do_interrupt - handler used for single vector interrupt mode
+ * @irq: interrupt id
+ * @data: interrupt data
  */
-irqवापस_t ioat_dma_करो_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा ioatdma_device *instance = data;
-	काष्ठा ioatdma_chan *ioat_chan;
-	अचिन्हित दीर्घ attnstatus;
-	पूर्णांक bit;
-	u8 पूर्णांकrctrl;
+irqreturn_t ioat_dma_do_interrupt(int irq, void *data)
+{
+	struct ioatdma_device *instance = data;
+	struct ioatdma_chan *ioat_chan;
+	unsigned long attnstatus;
+	int bit;
+	u8 intrctrl;
 
-	पूर्णांकrctrl = पढ़ोb(instance->reg_base + IOAT_INTRCTRL_OFFSET);
+	intrctrl = readb(instance->reg_base + IOAT_INTRCTRL_OFFSET);
 
-	अगर (!(पूर्णांकrctrl & IOAT_INTRCTRL_MASTER_INT_EN))
-		वापस IRQ_NONE;
+	if (!(intrctrl & IOAT_INTRCTRL_MASTER_INT_EN))
+		return IRQ_NONE;
 
-	अगर (!(पूर्णांकrctrl & IOAT_INTRCTRL_INT_STATUS)) अणु
-		ग_लिखोb(पूर्णांकrctrl, instance->reg_base + IOAT_INTRCTRL_OFFSET);
-		वापस IRQ_NONE;
-	पूर्ण
+	if (!(intrctrl & IOAT_INTRCTRL_INT_STATUS)) {
+		writeb(intrctrl, instance->reg_base + IOAT_INTRCTRL_OFFSET);
+		return IRQ_NONE;
+	}
 
-	attnstatus = पढ़ोl(instance->reg_base + IOAT_ATTNSTATUS_OFFSET);
-	क्रम_each_set_bit(bit, &attnstatus, BITS_PER_LONG) अणु
+	attnstatus = readl(instance->reg_base + IOAT_ATTNSTATUS_OFFSET);
+	for_each_set_bit(bit, &attnstatus, BITS_PER_LONG) {
 		ioat_chan = ioat_chan_by_index(instance, bit);
-		अगर (test_bit(IOAT_RUN, &ioat_chan->state))
+		if (test_bit(IOAT_RUN, &ioat_chan->state))
 			tasklet_schedule(&ioat_chan->cleanup_task);
-	पूर्ण
+	}
 
-	ग_लिखोb(पूर्णांकrctrl, instance->reg_base + IOAT_INTRCTRL_OFFSET);
-	वापस IRQ_HANDLED;
-पूर्ण
+	writeb(intrctrl, instance->reg_base + IOAT_INTRCTRL_OFFSET);
+	return IRQ_HANDLED;
+}
 
 /**
- * ioat_dma_करो_पूर्णांकerrupt_msix - handler used क्रम vector-per-channel पूर्णांकerrupt mode
- * @irq: पूर्णांकerrupt id
- * @data: पूर्णांकerrupt data
+ * ioat_dma_do_interrupt_msix - handler used for vector-per-channel interrupt mode
+ * @irq: interrupt id
+ * @data: interrupt data
  */
-irqवापस_t ioat_dma_करो_पूर्णांकerrupt_msix(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = data;
+irqreturn_t ioat_dma_do_interrupt_msix(int irq, void *data)
+{
+	struct ioatdma_chan *ioat_chan = data;
 
-	अगर (test_bit(IOAT_RUN, &ioat_chan->state))
+	if (test_bit(IOAT_RUN, &ioat_chan->state))
 		tasklet_schedule(&ioat_chan->cleanup_task);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-व्योम ioat_stop(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा pci_dev *pdev = ioat_dma->pdev;
-	पूर्णांक chan_id = chan_num(ioat_chan);
-	काष्ठा msix_entry *msix;
+void ioat_stop(struct ioatdma_chan *ioat_chan)
+{
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct pci_dev *pdev = ioat_dma->pdev;
+	int chan_id = chan_num(ioat_chan);
+	struct msix_entry *msix;
 
 	/* 1/ stop irq from firing tasklets
 	 * 2/ stop the tasklet from re-arming irqs
 	 */
 	clear_bit(IOAT_RUN, &ioat_chan->state);
 
-	/* flush inflight पूर्णांकerrupts */
-	चयन (ioat_dma->irq_mode) अणु
-	हाल IOAT_MSIX:
+	/* flush inflight interrupts */
+	switch (ioat_dma->irq_mode) {
+	case IOAT_MSIX:
 		msix = &ioat_dma->msix_entries[chan_id];
 		synchronize_irq(msix->vector);
-		अवरोध;
-	हाल IOAT_MSI:
-	हाल IOAT_INTX:
+		break;
+	case IOAT_MSI:
+	case IOAT_INTX:
 		synchronize_irq(pdev->irq);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	/* flush inflight समयrs */
-	del_समयr_sync(&ioat_chan->समयr);
+	/* flush inflight timers */
+	del_timer_sync(&ioat_chan->timer);
 
 	/* flush inflight tasklet runs */
-	tasklet_समाप्त(&ioat_chan->cleanup_task);
+	tasklet_kill(&ioat_chan->cleanup_task);
 
 	/* final cleanup now that everything is quiesced and can't re-arm */
 	ioat_cleanup_event(&ioat_chan->cleanup_task);
-पूर्ण
+}
 
-अटल व्योम __ioat_issue_pending(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+static void __ioat_issue_pending(struct ioatdma_chan *ioat_chan)
+{
 	ioat_chan->dmacount += ioat_ring_pending(ioat_chan);
 	ioat_chan->issued = ioat_chan->head;
-	ग_लिखोw(ioat_chan->dmacount,
+	writew(ioat_chan->dmacount,
 	       ioat_chan->reg_base + IOAT_CHAN_DMACOUNT_OFFSET);
 	dev_dbg(to_dev(ioat_chan),
 		"%s: head: %#x tail: %#x issued: %#x count: %#x\n",
 		__func__, ioat_chan->head, ioat_chan->tail,
 		ioat_chan->issued, ioat_chan->dmacount);
-पूर्ण
+}
 
-व्योम ioat_issue_pending(काष्ठा dma_chan *c)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
+void ioat_issue_pending(struct dma_chan *c)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
 
-	अगर (ioat_ring_pending(ioat_chan)) अणु
+	if (ioat_ring_pending(ioat_chan)) {
 		spin_lock_bh(&ioat_chan->prep_lock);
 		__ioat_issue_pending(ioat_chan);
 		spin_unlock_bh(&ioat_chan->prep_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * ioat_update_pending - log pending descriptors
  * @ioat_chan: ioat+ channel
  *
- * Check अगर the number of unsubmitted descriptors has exceeded the
+ * Check if the number of unsubmitted descriptors has exceeded the
  * watermark.  Called with prep_lock held
  */
-अटल व्योम ioat_update_pending(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	अगर (ioat_ring_pending(ioat_chan) > ioat_pending_level)
+static void ioat_update_pending(struct ioatdma_chan *ioat_chan)
+{
+	if (ioat_ring_pending(ioat_chan) > ioat_pending_level)
 		__ioat_issue_pending(ioat_chan);
-पूर्ण
+}
 
-अटल व्योम __ioat_start_null_desc(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	काष्ठा ioat_ring_ent *desc;
-	काष्ठा ioat_dma_descriptor *hw;
+static void __ioat_start_null_desc(struct ioatdma_chan *ioat_chan)
+{
+	struct ioat_ring_ent *desc;
+	struct ioat_dma_descriptor *hw;
 
-	अगर (ioat_ring_space(ioat_chan) < 1) अणु
+	if (ioat_ring_space(ioat_chan) < 1) {
 		dev_err(to_dev(ioat_chan),
 			"Unable to start null desc - ring full\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dev_dbg(to_dev(ioat_chan),
 		"%s: head: %#x tail: %#x issued: %#x\n",
@@ -224,103 +223,103 @@ irqवापस_t ioat_dma_करो_पूर्णांकerrupt_msix(पू�
 	hw = desc->hw;
 	hw->ctl = 0;
 	hw->ctl_f.null = 1;
-	hw->ctl_f.पूर्णांक_en = 1;
-	hw->ctl_f.compl_ग_लिखो = 1;
-	/* set size to non-zero value (channel वापसs error when size is 0) */
-	hw->size = शून्य_DESC_BUFFER_SIZE;
+	hw->ctl_f.int_en = 1;
+	hw->ctl_f.compl_write = 1;
+	/* set size to non-zero value (channel returns error when size is 0) */
+	hw->size = NULL_DESC_BUFFER_SIZE;
 	hw->src_addr = 0;
 	hw->dst_addr = 0;
 	async_tx_ack(&desc->txd);
 	ioat_set_chainaddr(ioat_chan, desc->txd.phys);
 	dump_desc_dbg(ioat_chan, desc);
-	/* make sure descriptors are written beक्रमe we submit */
+	/* make sure descriptors are written before we submit */
 	wmb();
 	ioat_chan->head += 1;
 	__ioat_issue_pending(ioat_chan);
-पूर्ण
+}
 
-व्योम ioat_start_null_desc(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+void ioat_start_null_desc(struct ioatdma_chan *ioat_chan)
+{
 	spin_lock_bh(&ioat_chan->prep_lock);
-	अगर (!test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
+	if (!test_bit(IOAT_CHAN_DOWN, &ioat_chan->state))
 		__ioat_start_null_desc(ioat_chan);
 	spin_unlock_bh(&ioat_chan->prep_lock);
-पूर्ण
+}
 
-अटल व्योम __ioat_restart_chan(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+static void __ioat_restart_chan(struct ioatdma_chan *ioat_chan)
+{
 	/* set the tail to be re-issued */
 	ioat_chan->issued = ioat_chan->tail;
 	ioat_chan->dmacount = 0;
-	mod_समयr(&ioat_chan->समयr, jअगरfies + COMPLETION_TIMEOUT);
+	mod_timer(&ioat_chan->timer, jiffies + COMPLETION_TIMEOUT);
 
 	dev_dbg(to_dev(ioat_chan),
 		"%s: head: %#x tail: %#x issued: %#x count: %#x\n",
 		__func__, ioat_chan->head, ioat_chan->tail,
 		ioat_chan->issued, ioat_chan->dmacount);
 
-	अगर (ioat_ring_pending(ioat_chan)) अणु
-		काष्ठा ioat_ring_ent *desc;
+	if (ioat_ring_pending(ioat_chan)) {
+		struct ioat_ring_ent *desc;
 
 		desc = ioat_get_ring_ent(ioat_chan, ioat_chan->tail);
 		ioat_set_chainaddr(ioat_chan, desc->txd.phys);
 		__ioat_issue_pending(ioat_chan);
-	पूर्ण अन्यथा
+	} else
 		__ioat_start_null_desc(ioat_chan);
-पूर्ण
+}
 
-अटल पूर्णांक ioat_quiesce(काष्ठा ioatdma_chan *ioat_chan, अचिन्हित दीर्घ पंचांगo)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + पंचांगo;
-	पूर्णांक err = 0;
+static int ioat_quiesce(struct ioatdma_chan *ioat_chan, unsigned long tmo)
+{
+	unsigned long end = jiffies + tmo;
+	int err = 0;
 	u32 status;
 
 	status = ioat_chansts(ioat_chan);
-	अगर (is_ioat_active(status) || is_ioat_idle(status))
+	if (is_ioat_active(status) || is_ioat_idle(status))
 		ioat_suspend(ioat_chan);
-	जबतक (is_ioat_active(status) || is_ioat_idle(status)) अणु
-		अगर (पंचांगo && समय_after(jअगरfies, end)) अणु
+	while (is_ioat_active(status) || is_ioat_idle(status)) {
+		if (tmo && time_after(jiffies, end)) {
 			err = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		status = ioat_chansts(ioat_chan);
 		cpu_relax();
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ioat_reset_sync(काष्ठा ioatdma_chan *ioat_chan, अचिन्हित दीर्घ पंचांगo)
-अणु
-	अचिन्हित दीर्घ end = jअगरfies + पंचांगo;
-	पूर्णांक err = 0;
+static int ioat_reset_sync(struct ioatdma_chan *ioat_chan, unsigned long tmo)
+{
+	unsigned long end = jiffies + tmo;
+	int err = 0;
 
 	ioat_reset(ioat_chan);
-	जबतक (ioat_reset_pending(ioat_chan)) अणु
-		अगर (end && समय_after(jअगरfies, end)) अणु
+	while (ioat_reset_pending(ioat_chan)) {
+		if (end && time_after(jiffies, end)) {
 			err = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		cpu_relax();
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल dma_cookie_t ioat_tx_submit_unlock(काष्ठा dma_async_tx_descriptor *tx)
+static dma_cookie_t ioat_tx_submit_unlock(struct dma_async_tx_descriptor *tx)
 	__releases(&ioat_chan->prep_lock)
-अणु
-	काष्ठा dma_chan *c = tx->chan;
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
+{
+	struct dma_chan *c = tx->chan;
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
 	dma_cookie_t cookie;
 
 	cookie = dma_cookie_assign(tx);
 	dev_dbg(to_dev(ioat_chan), "%s: cookie: %d\n", __func__, cookie);
 
-	अगर (!test_and_set_bit(IOAT_CHAN_ACTIVE, &ioat_chan->state))
-		mod_समयr(&ioat_chan->समयr, jअगरfies + COMPLETION_TIMEOUT);
+	if (!test_and_set_bit(IOAT_CHAN_ACTIVE, &ioat_chan->state))
+		mod_timer(&ioat_chan->timer, jiffies + COMPLETION_TIMEOUT);
 
-	/* make descriptor updates visible beक्रमe advancing ioat->head,
+	/* make descriptor updates visible before advancing ioat->head,
 	 * this is purposefully not smp_wmb() since we are also
 	 * publishing the descriptor updates to a dma device
 	 */
@@ -331,16 +330,16 @@ irqवापस_t ioat_dma_करो_पूर्णांकerrupt_msix(पू�
 	ioat_update_pending(ioat_chan);
 	spin_unlock_bh(&ioat_chan->prep_lock);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल काष्ठा ioat_ring_ent *
-ioat_alloc_ring_ent(काष्ठा dma_chan *chan, पूर्णांक idx, gfp_t flags)
-अणु
-	काष्ठा ioat_dma_descriptor *hw;
-	काष्ठा ioat_ring_ent *desc;
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(chan);
-	पूर्णांक chunk;
+static struct ioat_ring_ent *
+ioat_alloc_ring_ent(struct dma_chan *chan, int idx, gfp_t flags)
+{
+	struct ioat_dma_descriptor *hw;
+	struct ioat_ring_ent *desc;
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(chan);
+	int chunk;
 	dma_addr_t phys;
 	u8 *pos;
 	off_t offs;
@@ -350,132 +349,132 @@ ioat_alloc_ring_ent(काष्ठा dma_chan *chan, पूर्णांक 
 	offs = idx * IOAT_DESC_SZ;
 	pos = (u8 *)ioat_chan->descs[chunk].virt + offs;
 	phys = ioat_chan->descs[chunk].hw + offs;
-	hw = (काष्ठा ioat_dma_descriptor *)pos;
-	स_रखो(hw, 0, माप(*hw));
+	hw = (struct ioat_dma_descriptor *)pos;
+	memset(hw, 0, sizeof(*hw));
 
 	desc = kmem_cache_zalloc(ioat_cache, flags);
-	अगर (!desc)
-		वापस शून्य;
+	if (!desc)
+		return NULL;
 
 	dma_async_tx_descriptor_init(&desc->txd, chan);
 	desc->txd.tx_submit = ioat_tx_submit_unlock;
 	desc->hw = hw;
 	desc->txd.phys = phys;
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
-व्योम ioat_मुक्त_ring_ent(काष्ठा ioat_ring_ent *desc, काष्ठा dma_chan *chan)
-अणु
-	kmem_cache_मुक्त(ioat_cache, desc);
-पूर्ण
+void ioat_free_ring_ent(struct ioat_ring_ent *desc, struct dma_chan *chan)
+{
+	kmem_cache_free(ioat_cache, desc);
+}
 
-काष्ठा ioat_ring_ent **
-ioat_alloc_ring(काष्ठा dma_chan *c, पूर्णांक order, gfp_t flags)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा ioat_ring_ent **ring;
-	पूर्णांक total_descs = 1 << order;
-	पूर्णांक i, chunks;
+struct ioat_ring_ent **
+ioat_alloc_ring(struct dma_chan *c, int order, gfp_t flags)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct ioat_ring_ent **ring;
+	int total_descs = 1 << order;
+	int i, chunks;
 
 	/* allocate the array to hold the software ring */
-	ring = kसुस्मृति(total_descs, माप(*ring), flags);
-	अगर (!ring)
-		वापस शून्य;
+	ring = kcalloc(total_descs, sizeof(*ring), flags);
+	if (!ring)
+		return NULL;
 
 	chunks = (total_descs * IOAT_DESC_SZ) / IOAT_CHUNK_SIZE;
 	ioat_chan->desc_chunks = chunks;
 
-	क्रम (i = 0; i < chunks; i++) अणु
-		काष्ठा ioat_descs *descs = &ioat_chan->descs[i];
+	for (i = 0; i < chunks; i++) {
+		struct ioat_descs *descs = &ioat_chan->descs[i];
 
 		descs->virt = dma_alloc_coherent(to_dev(ioat_chan),
 					IOAT_CHUNK_SIZE, &descs->hw, flags);
-		अगर (!descs->virt) अणु
-			पूर्णांक idx;
+		if (!descs->virt) {
+			int idx;
 
-			क्रम (idx = 0; idx < i; idx++) अणु
+			for (idx = 0; idx < i; idx++) {
 				descs = &ioat_chan->descs[idx];
-				dma_मुक्त_coherent(to_dev(ioat_chan),
+				dma_free_coherent(to_dev(ioat_chan),
 						IOAT_CHUNK_SIZE,
 						descs->virt, descs->hw);
-				descs->virt = शून्य;
+				descs->virt = NULL;
 				descs->hw = 0;
-			पूर्ण
+			}
 
 			ioat_chan->desc_chunks = 0;
-			kमुक्त(ring);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+			kfree(ring);
+			return NULL;
+		}
+	}
 
-	क्रम (i = 0; i < total_descs; i++) अणु
+	for (i = 0; i < total_descs; i++) {
 		ring[i] = ioat_alloc_ring_ent(c, i, flags);
-		अगर (!ring[i]) अणु
-			पूर्णांक idx;
+		if (!ring[i]) {
+			int idx;
 
-			जबतक (i--)
-				ioat_मुक्त_ring_ent(ring[i], c);
+			while (i--)
+				ioat_free_ring_ent(ring[i], c);
 
-			क्रम (idx = 0; idx < ioat_chan->desc_chunks; idx++) अणु
-				dma_मुक्त_coherent(to_dev(ioat_chan),
+			for (idx = 0; idx < ioat_chan->desc_chunks; idx++) {
+				dma_free_coherent(to_dev(ioat_chan),
 						  IOAT_CHUNK_SIZE,
 						  ioat_chan->descs[idx].virt,
 						  ioat_chan->descs[idx].hw);
-				ioat_chan->descs[idx].virt = शून्य;
+				ioat_chan->descs[idx].virt = NULL;
 				ioat_chan->descs[idx].hw = 0;
-			पूर्ण
+			}
 
 			ioat_chan->desc_chunks = 0;
-			kमुक्त(ring);
-			वापस शून्य;
-		पूर्ण
+			kfree(ring);
+			return NULL;
+		}
 		set_desc_id(ring[i], i);
-	पूर्ण
+	}
 
 	/* link descs */
-	क्रम (i = 0; i < total_descs-1; i++) अणु
-		काष्ठा ioat_ring_ent *next = ring[i+1];
-		काष्ठा ioat_dma_descriptor *hw = ring[i]->hw;
+	for (i = 0; i < total_descs-1; i++) {
+		struct ioat_ring_ent *next = ring[i+1];
+		struct ioat_dma_descriptor *hw = ring[i]->hw;
 
 		hw->next = next->txd.phys;
-	पूर्ण
+	}
 	ring[i]->hw->next = ring[0]->txd.phys;
 
-	/* setup descriptor pre-fetching क्रम v3.4 */
-	अगर (ioat_dma->cap & IOAT_CAP_DPS) अणु
+	/* setup descriptor pre-fetching for v3.4 */
+	if (ioat_dma->cap & IOAT_CAP_DPS) {
 		u16 drsctl = IOAT_CHAN_DRSZ_2MB | IOAT_CHAN_DRS_EN;
 
-		अगर (chunks == 1)
+		if (chunks == 1)
 			drsctl |= IOAT_CHAN_DRS_AUTOWRAP;
 
-		ग_लिखोw(drsctl, ioat_chan->reg_base + IOAT_CHAN_DRSCTL_OFFSET);
+		writew(drsctl, ioat_chan->reg_base + IOAT_CHAN_DRSCTL_OFFSET);
 
-	पूर्ण
+	}
 
-	वापस ring;
-पूर्ण
+	return ring;
+}
 
 /**
- * ioat_check_space_lock - verअगरy space and grab ring producer lock
+ * ioat_check_space_lock - verify space and grab ring producer lock
  * @ioat_chan: ioat,3 channel (ring) to operate on
  * @num_descs: allocation length
  */
-पूर्णांक ioat_check_space_lock(काष्ठा ioatdma_chan *ioat_chan, पूर्णांक num_descs)
+int ioat_check_space_lock(struct ioatdma_chan *ioat_chan, int num_descs)
 	__acquires(&ioat_chan->prep_lock)
-अणु
+{
 	spin_lock_bh(&ioat_chan->prep_lock);
 	/* never allow the last descriptor to be consumed, we need at
-	 * least one मुक्त at all बार to allow क्रम on-the-fly ring
+	 * least one free at all times to allow for on-the-fly ring
 	 * resizing.
 	 */
-	अगर (likely(ioat_ring_space(ioat_chan) > num_descs)) अणु
+	if (likely(ioat_ring_space(ioat_chan) > num_descs)) {
 		dev_dbg(to_dev(ioat_chan), "%s: num_descs: %d (%x:%x:%x)\n",
 			__func__, num_descs, ioat_chan->head,
 			ioat_chan->tail, ioat_chan->issued);
 		ioat_chan->produce = num_descs;
-		वापस 0;  /* with ioat->prep_lock held */
-	पूर्ण
+		return 0;  /* with ioat->prep_lock held */
+	}
 	spin_unlock_bh(&ioat_chan->prep_lock);
 
 	dev_dbg_ratelimited(to_dev(ioat_chan),
@@ -483,52 +482,52 @@ ioat_alloc_ring(काष्ठा dma_chan *c, पूर्णांक order, 
 			    __func__, num_descs, ioat_chan->head,
 			    ioat_chan->tail, ioat_chan->issued);
 
-	/* progress reclaim in the allocation failure हाल we may be
-	 * called under bh_disabled so we need to trigger the समयr
+	/* progress reclaim in the allocation failure case we may be
+	 * called under bh_disabled so we need to trigger the timer
 	 * event directly
 	 */
-	अगर (समय_is_beक्रमe_jअगरfies(ioat_chan->समयr.expires)
-	    && समयr_pending(&ioat_chan->समयr)) अणु
-		mod_समयr(&ioat_chan->समयr, jअगरfies + COMPLETION_TIMEOUT);
-		ioat_समयr_event(&ioat_chan->समयr);
-	पूर्ण
+	if (time_is_before_jiffies(ioat_chan->timer.expires)
+	    && timer_pending(&ioat_chan->timer)) {
+		mod_timer(&ioat_chan->timer, jiffies + COMPLETION_TIMEOUT);
+		ioat_timer_event(&ioat_chan->timer);
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल bool desc_has_ext(काष्ठा ioat_ring_ent *desc)
-अणु
-	काष्ठा ioat_dma_descriptor *hw = desc->hw;
+static bool desc_has_ext(struct ioat_ring_ent *desc)
+{
+	struct ioat_dma_descriptor *hw = desc->hw;
 
-	अगर (hw->ctl_f.op == IOAT_OP_XOR ||
-	    hw->ctl_f.op == IOAT_OP_XOR_VAL) अणु
-		काष्ठा ioat_xor_descriptor *xor = desc->xor;
+	if (hw->ctl_f.op == IOAT_OP_XOR ||
+	    hw->ctl_f.op == IOAT_OP_XOR_VAL) {
+		struct ioat_xor_descriptor *xor = desc->xor;
 
-		अगर (src_cnt_to_sw(xor->ctl_f.src_cnt) > 5)
-			वापस true;
-	पूर्ण अन्यथा अगर (hw->ctl_f.op == IOAT_OP_PQ ||
-		   hw->ctl_f.op == IOAT_OP_PQ_VAL) अणु
-		काष्ठा ioat_pq_descriptor *pq = desc->pq;
+		if (src_cnt_to_sw(xor->ctl_f.src_cnt) > 5)
+			return true;
+	} else if (hw->ctl_f.op == IOAT_OP_PQ ||
+		   hw->ctl_f.op == IOAT_OP_PQ_VAL) {
+		struct ioat_pq_descriptor *pq = desc->pq;
 
-		अगर (src_cnt_to_sw(pq->ctl_f.src_cnt) > 3)
-			वापस true;
-	पूर्ण
+		if (src_cnt_to_sw(pq->ctl_f.src_cnt) > 3)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम
-ioat_मुक्त_sed(काष्ठा ioatdma_device *ioat_dma, काष्ठा ioat_sed_ent *sed)
-अणु
-	अगर (!sed)
-		वापस;
+static void
+ioat_free_sed(struct ioatdma_device *ioat_dma, struct ioat_sed_ent *sed)
+{
+	if (!sed)
+		return;
 
-	dma_pool_मुक्त(ioat_dma->sed_hw_pool[sed->hw_pool], sed->hw, sed->dma);
-	kmem_cache_मुक्त(ioat_sed_cache, sed);
-पूर्ण
+	dma_pool_free(ioat_dma->sed_hw_pool[sed->hw_pool], sed->hw, sed->dma);
+	kmem_cache_free(ioat_sed_cache, sed);
+}
 
-अटल u64 ioat_get_current_completion(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+static u64 ioat_get_current_completion(struct ioatdma_chan *ioat_chan)
+{
 	u64 phys_complete;
 	u64 completion;
 
@@ -536,65 +535,65 @@ ioat_मुक्त_sed(काष्ठा ioatdma_device *ioat_dma, काष�
 	phys_complete = ioat_chansts_to_addr(completion);
 
 	dev_dbg(to_dev(ioat_chan), "%s: phys_complete: %#llx\n", __func__,
-		(अचिन्हित दीर्घ दीर्घ) phys_complete);
+		(unsigned long long) phys_complete);
 
-	वापस phys_complete;
-पूर्ण
+	return phys_complete;
+}
 
-अटल bool ioat_cleanup_preamble(काष्ठा ioatdma_chan *ioat_chan,
+static bool ioat_cleanup_preamble(struct ioatdma_chan *ioat_chan,
 				   u64 *phys_complete)
-अणु
+{
 	*phys_complete = ioat_get_current_completion(ioat_chan);
-	अगर (*phys_complete == ioat_chan->last_completion)
-		वापस false;
+	if (*phys_complete == ioat_chan->last_completion)
+		return false;
 
 	clear_bit(IOAT_COMPLETION_ACK, &ioat_chan->state);
-	mod_समयr(&ioat_chan->समयr, jअगरfies + COMPLETION_TIMEOUT);
+	mod_timer(&ioat_chan->timer, jiffies + COMPLETION_TIMEOUT);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम
-desc_get_errstat(काष्ठा ioatdma_chan *ioat_chan, काष्ठा ioat_ring_ent *desc)
-अणु
-	काष्ठा ioat_dma_descriptor *hw = desc->hw;
+static void
+desc_get_errstat(struct ioatdma_chan *ioat_chan, struct ioat_ring_ent *desc)
+{
+	struct ioat_dma_descriptor *hw = desc->hw;
 
-	चयन (hw->ctl_f.op) अणु
-	हाल IOAT_OP_PQ_VAL:
-	हाल IOAT_OP_PQ_VAL_16S:
-	अणु
-		काष्ठा ioat_pq_descriptor *pq = desc->pq;
+	switch (hw->ctl_f.op) {
+	case IOAT_OP_PQ_VAL:
+	case IOAT_OP_PQ_VAL_16S:
+	{
+		struct ioat_pq_descriptor *pq = desc->pq;
 
-		/* check अगर there's error written */
-		अगर (!pq->dwbes_f.wbes)
-			वापस;
+		/* check if there's error written */
+		if (!pq->dwbes_f.wbes)
+			return;
 
-		/* need to set a chanerr var क्रम checking to clear later */
+		/* need to set a chanerr var for checking to clear later */
 
-		अगर (pq->dwbes_f.p_val_err)
+		if (pq->dwbes_f.p_val_err)
 			*desc->result |= SUM_CHECK_P_RESULT;
 
-		अगर (pq->dwbes_f.q_val_err)
+		if (pq->dwbes_f.q_val_err)
 			*desc->result |= SUM_CHECK_Q_RESULT;
 
-		वापस;
-	पूर्ण
-	शेष:
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+	default:
+		return;
+	}
+}
 
 /**
  * __cleanup - reclaim used descriptors
  * @ioat_chan: channel (ring) to clean
  * @phys_complete: zeroed (or not) completion address (from status)
  */
-अटल व्योम __cleanup(काष्ठा ioatdma_chan *ioat_chan, dma_addr_t phys_complete)
-अणु
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा ioat_ring_ent *desc;
+static void __cleanup(struct ioatdma_chan *ioat_chan, dma_addr_t phys_complete)
+{
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct ioat_ring_ent *desc;
 	bool seen_current = false;
-	पूर्णांक idx = ioat_chan->tail, i;
+	int idx = ioat_chan->tail, i;
 	u16 active;
 
 	dev_dbg(to_dev(ioat_chan), "%s: head: %#x tail: %#x issued: %#x\n",
@@ -604,292 +603,292 @@ desc_get_errstat(काष्ठा ioatdma_chan *ioat_chan, काष्ठा 
 	 * At restart of the channel, the completion address and the
 	 * channel status will be 0 due to starting a new chain. Since
 	 * it's new chain and the first descriptor "fails", there is
-	 * nothing to clean up. We करो not want to reap the entire submitted
+	 * nothing to clean up. We do not want to reap the entire submitted
 	 * chain due to this 0 address value and then BUG.
 	 */
-	अगर (!phys_complete)
-		वापस;
+	if (!phys_complete)
+		return;
 
 	active = ioat_ring_active(ioat_chan);
-	क्रम (i = 0; i < active && !seen_current; i++) अणु
-		काष्ठा dma_async_tx_descriptor *tx;
+	for (i = 0; i < active && !seen_current; i++) {
+		struct dma_async_tx_descriptor *tx;
 
 		prefetch(ioat_get_ring_ent(ioat_chan, idx + i + 1));
 		desc = ioat_get_ring_ent(ioat_chan, idx + i);
 		dump_desc_dbg(ioat_chan, desc);
 
-		/* set err stat अगर we are using dwbes */
-		अगर (ioat_dma->cap & IOAT_CAP_DWBES)
+		/* set err stat if we are using dwbes */
+		if (ioat_dma->cap & IOAT_CAP_DWBES)
 			desc_get_errstat(ioat_chan, desc);
 
 		tx = &desc->txd;
-		अगर (tx->cookie) अणु
+		if (tx->cookie) {
 			dma_cookie_complete(tx);
 			dma_descriptor_unmap(tx);
-			dmaengine_desc_get_callback_invoke(tx, शून्य);
-			tx->callback = शून्य;
-			tx->callback_result = शून्य;
-		पूर्ण
+			dmaengine_desc_get_callback_invoke(tx, NULL);
+			tx->callback = NULL;
+			tx->callback_result = NULL;
+		}
 
-		अगर (tx->phys == phys_complete)
+		if (tx->phys == phys_complete)
 			seen_current = true;
 
 		/* skip extended descriptors */
-		अगर (desc_has_ext(desc)) अणु
+		if (desc_has_ext(desc)) {
 			BUG_ON(i + 1 >= active);
 			i++;
-		पूर्ण
+		}
 
 		/* cleanup super extended descriptors */
-		अगर (desc->sed) अणु
-			ioat_मुक्त_sed(ioat_dma, desc->sed);
-			desc->sed = शून्य;
-		पूर्ण
-	पूर्ण
+		if (desc->sed) {
+			ioat_free_sed(ioat_dma, desc->sed);
+			desc->sed = NULL;
+		}
+	}
 
-	/* finish all descriptor पढ़ोs beक्रमe incrementing tail */
+	/* finish all descriptor reads before incrementing tail */
 	smp_mb();
 	ioat_chan->tail = idx + i;
 	/* no active descs have written a completion? */
 	BUG_ON(active && !seen_current);
 	ioat_chan->last_completion = phys_complete;
 
-	अगर (active - i == 0) अणु
+	if (active - i == 0) {
 		dev_dbg(to_dev(ioat_chan), "%s: cancel completion timeout\n",
 			__func__);
-		mod_समयr(&ioat_chan->समयr, jअगरfies + IDLE_TIMEOUT);
-	पूर्ण
+		mod_timer(&ioat_chan->timer, jiffies + IDLE_TIMEOUT);
+	}
 
 	/* microsecond delay by sysfs variable  per pending descriptor */
-	अगर (ioat_chan->पूर्णांकr_coalesce != ioat_chan->prev_पूर्णांकr_coalesce) अणु
-		ग_लिखोw(min((ioat_chan->पूर्णांकr_coalesce * (active - i)),
+	if (ioat_chan->intr_coalesce != ioat_chan->prev_intr_coalesce) {
+		writew(min((ioat_chan->intr_coalesce * (active - i)),
 		       IOAT_INTRDELAY_MASK),
 		       ioat_chan->ioat_dma->reg_base + IOAT_INTRDELAY_OFFSET);
-		ioat_chan->prev_पूर्णांकr_coalesce = ioat_chan->पूर्णांकr_coalesce;
-	पूर्ण
-पूर्ण
+		ioat_chan->prev_intr_coalesce = ioat_chan->intr_coalesce;
+	}
+}
 
-अटल व्योम ioat_cleanup(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+static void ioat_cleanup(struct ioatdma_chan *ioat_chan)
+{
 	u64 phys_complete;
 
 	spin_lock_bh(&ioat_chan->cleanup_lock);
 
-	अगर (ioat_cleanup_preamble(ioat_chan, &phys_complete))
+	if (ioat_cleanup_preamble(ioat_chan, &phys_complete))
 		__cleanup(ioat_chan, phys_complete);
 
-	अगर (is_ioat_halted(*ioat_chan->completion)) अणु
-		u32 chanerr = पढ़ोl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+	if (is_ioat_halted(*ioat_chan->completion)) {
+		u32 chanerr = readl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
 
-		अगर (chanerr &
-		    (IOAT_CHANERR_HANDLE_MASK | IOAT_CHANERR_RECOVER_MASK)) अणु
-			mod_समयr(&ioat_chan->समयr, jअगरfies + IDLE_TIMEOUT);
+		if (chanerr &
+		    (IOAT_CHANERR_HANDLE_MASK | IOAT_CHANERR_RECOVER_MASK)) {
+			mod_timer(&ioat_chan->timer, jiffies + IDLE_TIMEOUT);
 			ioat_eh(ioat_chan);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_bh(&ioat_chan->cleanup_lock);
-पूर्ण
+}
 
-व्योम ioat_cleanup_event(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = from_tasklet(ioat_chan, t, cleanup_task);
+void ioat_cleanup_event(struct tasklet_struct *t)
+{
+	struct ioatdma_chan *ioat_chan = from_tasklet(ioat_chan, t, cleanup_task);
 
 	ioat_cleanup(ioat_chan);
-	अगर (!test_bit(IOAT_RUN, &ioat_chan->state))
-		वापस;
-	ग_लिखोw(IOAT_CHANCTRL_RUN, ioat_chan->reg_base + IOAT_CHANCTRL_OFFSET);
-पूर्ण
+	if (!test_bit(IOAT_RUN, &ioat_chan->state))
+		return;
+	writew(IOAT_CHANCTRL_RUN, ioat_chan->reg_base + IOAT_CHANCTRL_OFFSET);
+}
 
-अटल व्योम ioat_restart_channel(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+static void ioat_restart_channel(struct ioatdma_chan *ioat_chan)
+{
 	u64 phys_complete;
 
-	/* set the completion address रेजिस्टर again */
-	ग_लिखोl(lower_32_bits(ioat_chan->completion_dma),
+	/* set the completion address register again */
+	writel(lower_32_bits(ioat_chan->completion_dma),
 	       ioat_chan->reg_base + IOAT_CHANCMP_OFFSET_LOW);
-	ग_लिखोl(upper_32_bits(ioat_chan->completion_dma),
+	writel(upper_32_bits(ioat_chan->completion_dma),
 	       ioat_chan->reg_base + IOAT_CHANCMP_OFFSET_HIGH);
 
 	ioat_quiesce(ioat_chan, 0);
-	अगर (ioat_cleanup_preamble(ioat_chan, &phys_complete))
+	if (ioat_cleanup_preamble(ioat_chan, &phys_complete))
 		__cleanup(ioat_chan, phys_complete);
 
 	__ioat_restart_chan(ioat_chan);
-पूर्ण
+}
 
 
-अटल व्योम ioat_पात_descs(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा ioat_ring_ent *desc;
+static void ioat_abort_descs(struct ioatdma_chan *ioat_chan)
+{
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct ioat_ring_ent *desc;
 	u16 active;
-	पूर्णांक idx = ioat_chan->tail, i;
+	int idx = ioat_chan->tail, i;
 
 	/*
 	 * We assume that the failed descriptor has been processed.
-	 * Now we are just वापसing all the reमुख्यing submitted
-	 * descriptors to पात.
+	 * Now we are just returning all the remaining submitted
+	 * descriptors to abort.
 	 */
 	active = ioat_ring_active(ioat_chan);
 
-	/* we skip the failed descriptor that tail poपूर्णांकs to */
-	क्रम (i = 1; i < active; i++) अणु
-		काष्ठा dma_async_tx_descriptor *tx;
+	/* we skip the failed descriptor that tail points to */
+	for (i = 1; i < active; i++) {
+		struct dma_async_tx_descriptor *tx;
 
 		prefetch(ioat_get_ring_ent(ioat_chan, idx + i + 1));
 		desc = ioat_get_ring_ent(ioat_chan, idx + i);
 
 		tx = &desc->txd;
-		अगर (tx->cookie) अणु
-			काष्ठा dmaengine_result res;
+		if (tx->cookie) {
+			struct dmaengine_result res;
 
 			dma_cookie_complete(tx);
 			dma_descriptor_unmap(tx);
 			res.result = DMA_TRANS_ABORTED;
 			dmaengine_desc_get_callback_invoke(tx, &res);
-			tx->callback = शून्य;
-			tx->callback_result = शून्य;
-		पूर्ण
+			tx->callback = NULL;
+			tx->callback_result = NULL;
+		}
 
 		/* skip extended descriptors */
-		अगर (desc_has_ext(desc)) अणु
+		if (desc_has_ext(desc)) {
 			WARN_ON(i + 1 >= active);
 			i++;
-		पूर्ण
+		}
 
 		/* cleanup super extended descriptors */
-		अगर (desc->sed) अणु
-			ioat_मुक्त_sed(ioat_dma, desc->sed);
-			desc->sed = शून्य;
-		पूर्ण
-	पूर्ण
+		if (desc->sed) {
+			ioat_free_sed(ioat_dma, desc->sed);
+			desc->sed = NULL;
+		}
+	}
 
-	smp_mb(); /* finish all descriptor पढ़ोs beक्रमe incrementing tail */
+	smp_mb(); /* finish all descriptor reads before incrementing tail */
 	ioat_chan->tail = idx + active;
 
 	desc = ioat_get_ring_ent(ioat_chan, ioat_chan->tail);
 	ioat_chan->last_completion = *ioat_chan->completion = desc->txd.phys;
-पूर्ण
+}
 
-अटल व्योम ioat_eh(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	काष्ठा pci_dev *pdev = to_pdev(ioat_chan);
-	काष्ठा ioat_dma_descriptor *hw;
-	काष्ठा dma_async_tx_descriptor *tx;
+static void ioat_eh(struct ioatdma_chan *ioat_chan)
+{
+	struct pci_dev *pdev = to_pdev(ioat_chan);
+	struct ioat_dma_descriptor *hw;
+	struct dma_async_tx_descriptor *tx;
 	u64 phys_complete;
-	काष्ठा ioat_ring_ent *desc;
+	struct ioat_ring_ent *desc;
 	u32 err_handled = 0;
-	u32 chanerr_पूर्णांक;
+	u32 chanerr_int;
 	u32 chanerr;
-	bool पात = false;
-	काष्ठा dmaengine_result res;
+	bool abort = false;
+	struct dmaengine_result res;
 
-	/* cleanup so tail poपूर्णांकs to descriptor that caused the error */
-	अगर (ioat_cleanup_preamble(ioat_chan, &phys_complete))
+	/* cleanup so tail points to descriptor that caused the error */
+	if (ioat_cleanup_preamble(ioat_chan, &phys_complete))
 		__cleanup(ioat_chan, phys_complete);
 
-	chanerr = पढ़ोl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
-	pci_पढ़ो_config_dword(pdev, IOAT_PCI_CHANERR_INT_OFFSET, &chanerr_पूर्णांक);
+	chanerr = readl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+	pci_read_config_dword(pdev, IOAT_PCI_CHANERR_INT_OFFSET, &chanerr_int);
 
 	dev_dbg(to_dev(ioat_chan), "%s: error = %x:%x\n",
-		__func__, chanerr, chanerr_पूर्णांक);
+		__func__, chanerr, chanerr_int);
 
 	desc = ioat_get_ring_ent(ioat_chan, ioat_chan->tail);
 	hw = desc->hw;
 	dump_desc_dbg(ioat_chan, desc);
 
-	चयन (hw->ctl_f.op) अणु
-	हाल IOAT_OP_XOR_VAL:
-		अगर (chanerr & IOAT_CHANERR_XOR_P_OR_CRC_ERR) अणु
+	switch (hw->ctl_f.op) {
+	case IOAT_OP_XOR_VAL:
+		if (chanerr & IOAT_CHANERR_XOR_P_OR_CRC_ERR) {
 			*desc->result |= SUM_CHECK_P_RESULT;
 			err_handled |= IOAT_CHANERR_XOR_P_OR_CRC_ERR;
-		पूर्ण
-		अवरोध;
-	हाल IOAT_OP_PQ_VAL:
-	हाल IOAT_OP_PQ_VAL_16S:
-		अगर (chanerr & IOAT_CHANERR_XOR_P_OR_CRC_ERR) अणु
+		}
+		break;
+	case IOAT_OP_PQ_VAL:
+	case IOAT_OP_PQ_VAL_16S:
+		if (chanerr & IOAT_CHANERR_XOR_P_OR_CRC_ERR) {
 			*desc->result |= SUM_CHECK_P_RESULT;
 			err_handled |= IOAT_CHANERR_XOR_P_OR_CRC_ERR;
-		पूर्ण
-		अगर (chanerr & IOAT_CHANERR_XOR_Q_ERR) अणु
+		}
+		if (chanerr & IOAT_CHANERR_XOR_Q_ERR) {
 			*desc->result |= SUM_CHECK_Q_RESULT;
 			err_handled |= IOAT_CHANERR_XOR_Q_ERR;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	अगर (chanerr & IOAT_CHANERR_RECOVER_MASK) अणु
-		अगर (chanerr & IOAT_CHANERR_READ_DATA_ERR) अणु
+	if (chanerr & IOAT_CHANERR_RECOVER_MASK) {
+		if (chanerr & IOAT_CHANERR_READ_DATA_ERR) {
 			res.result = DMA_TRANS_READ_FAILED;
 			err_handled |= IOAT_CHANERR_READ_DATA_ERR;
-		पूर्ण अन्यथा अगर (chanerr & IOAT_CHANERR_WRITE_DATA_ERR) अणु
+		} else if (chanerr & IOAT_CHANERR_WRITE_DATA_ERR) {
 			res.result = DMA_TRANS_WRITE_FAILED;
 			err_handled |= IOAT_CHANERR_WRITE_DATA_ERR;
-		पूर्ण
+		}
 
-		पात = true;
-	पूर्ण अन्यथा
+		abort = true;
+	} else
 		res.result = DMA_TRANS_NOERROR;
 
 	/* fault on unhandled error or spurious halt */
-	अगर (chanerr ^ err_handled || chanerr == 0) अणु
+	if (chanerr ^ err_handled || chanerr == 0) {
 		dev_err(to_dev(ioat_chan), "%s: fatal error (%x:%x)\n",
 			__func__, chanerr, err_handled);
 		dev_err(to_dev(ioat_chan), "Errors handled:\n");
-		ioat_prपूर्णांक_chanerrs(ioat_chan, err_handled);
+		ioat_print_chanerrs(ioat_chan, err_handled);
 		dev_err(to_dev(ioat_chan), "Errors not handled:\n");
-		ioat_prपूर्णांक_chanerrs(ioat_chan, (chanerr & ~err_handled));
+		ioat_print_chanerrs(ioat_chan, (chanerr & ~err_handled));
 
 		BUG();
-	पूर्ण
+	}
 
 	/* cleanup the faulty descriptor since we are continuing */
 	tx = &desc->txd;
-	अगर (tx->cookie) अणु
+	if (tx->cookie) {
 		dma_cookie_complete(tx);
 		dma_descriptor_unmap(tx);
 		dmaengine_desc_get_callback_invoke(tx, &res);
-		tx->callback = शून्य;
-		tx->callback_result = शून्य;
-	पूर्ण
+		tx->callback = NULL;
+		tx->callback_result = NULL;
+	}
 
 	/* mark faulting descriptor as complete */
 	*ioat_chan->completion = desc->txd.phys;
 
 	spin_lock_bh(&ioat_chan->prep_lock);
-	/* we need पात all descriptors */
-	अगर (पात) अणु
-		ioat_पात_descs(ioat_chan);
+	/* we need abort all descriptors */
+	if (abort) {
+		ioat_abort_descs(ioat_chan);
 		/* clean up the channel, we could be in weird state */
 		ioat_reset_hw(ioat_chan);
-	पूर्ण
+	}
 
-	ग_लिखोl(chanerr, ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
-	pci_ग_लिखो_config_dword(pdev, IOAT_PCI_CHANERR_INT_OFFSET, chanerr_पूर्णांक);
+	writel(chanerr, ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+	pci_write_config_dword(pdev, IOAT_PCI_CHANERR_INT_OFFSET, chanerr_int);
 
 	ioat_restart_channel(ioat_chan);
 	spin_unlock_bh(&ioat_chan->prep_lock);
-पूर्ण
+}
 
-अटल व्योम check_active(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	अगर (ioat_ring_active(ioat_chan)) अणु
-		mod_समयr(&ioat_chan->समयr, jअगरfies + COMPLETION_TIMEOUT);
-		वापस;
-	पूर्ण
+static void check_active(struct ioatdma_chan *ioat_chan)
+{
+	if (ioat_ring_active(ioat_chan)) {
+		mod_timer(&ioat_chan->timer, jiffies + COMPLETION_TIMEOUT);
+		return;
+	}
 
-	अगर (test_and_clear_bit(IOAT_CHAN_ACTIVE, &ioat_chan->state))
-		mod_समयr(&ioat_chan->समयr, jअगरfies + IDLE_TIMEOUT);
-पूर्ण
+	if (test_and_clear_bit(IOAT_CHAN_ACTIVE, &ioat_chan->state))
+		mod_timer(&ioat_chan->timer, jiffies + IDLE_TIMEOUT);
+}
 
-अटल व्योम ioat_reboot_chan(काष्ठा ioatdma_chan *ioat_chan)
-अणु
+static void ioat_reboot_chan(struct ioatdma_chan *ioat_chan)
+{
 	spin_lock_bh(&ioat_chan->prep_lock);
 	set_bit(IOAT_CHAN_DOWN, &ioat_chan->state);
 	spin_unlock_bh(&ioat_chan->prep_lock);
 
-	ioat_पात_descs(ioat_chan);
+	ioat_abort_descs(ioat_chan);
 	dev_warn(to_dev(ioat_chan), "Reset channel...\n");
 	ioat_reset_hw(ioat_chan);
 	dev_warn(to_dev(ioat_chan), "Restart channel...\n");
@@ -898,165 +897,165 @@ desc_get_errstat(काष्ठा ioatdma_chan *ioat_chan, काष्ठा 
 	spin_lock_bh(&ioat_chan->prep_lock);
 	clear_bit(IOAT_CHAN_DOWN, &ioat_chan->state);
 	spin_unlock_bh(&ioat_chan->prep_lock);
-पूर्ण
+}
 
-व्योम ioat_समयr_event(काष्ठा समयr_list *t)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = from_समयr(ioat_chan, t, समयr);
+void ioat_timer_event(struct timer_list *t)
+{
+	struct ioatdma_chan *ioat_chan = from_timer(ioat_chan, t, timer);
 	dma_addr_t phys_complete;
 	u64 status;
 
 	status = ioat_chansts(ioat_chan);
 
-	/* when halted due to errors check क्रम channel
-	 * programming errors beक्रमe advancing the completion state
+	/* when halted due to errors check for channel
+	 * programming errors before advancing the completion state
 	 */
-	अगर (is_ioat_halted(status)) अणु
+	if (is_ioat_halted(status)) {
 		u32 chanerr;
 
-		chanerr = पढ़ोl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+		chanerr = readl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
 		dev_err(to_dev(ioat_chan), "%s: Channel halted (%x)\n",
 			__func__, chanerr);
 		dev_err(to_dev(ioat_chan), "Errors:\n");
-		ioat_prपूर्णांक_chanerrs(ioat_chan, chanerr);
+		ioat_print_chanerrs(ioat_chan, chanerr);
 
-		अगर (test_bit(IOAT_RUN, &ioat_chan->state)) अणु
+		if (test_bit(IOAT_RUN, &ioat_chan->state)) {
 			spin_lock_bh(&ioat_chan->cleanup_lock);
 			ioat_reboot_chan(ioat_chan);
 			spin_unlock_bh(&ioat_chan->cleanup_lock);
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_bh(&ioat_chan->cleanup_lock);
 
-	/* handle the no-actives हाल */
-	अगर (!ioat_ring_active(ioat_chan)) अणु
+	/* handle the no-actives case */
+	if (!ioat_ring_active(ioat_chan)) {
 		spin_lock_bh(&ioat_chan->prep_lock);
 		check_active(ioat_chan);
 		spin_unlock_bh(&ioat_chan->prep_lock);
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
-	/* handle the missed cleanup हाल */
-	अगर (ioat_cleanup_preamble(ioat_chan, &phys_complete)) अणु
-		/* समयr restarted in ioat_cleanup_preamble
+	/* handle the missed cleanup case */
+	if (ioat_cleanup_preamble(ioat_chan, &phys_complete)) {
+		/* timer restarted in ioat_cleanup_preamble
 		 * and IOAT_COMPLETION_ACK cleared
 		 */
 		__cleanup(ioat_chan, phys_complete);
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
-	/* अगर we haven't made progress and we have alपढ़ोy
+	/* if we haven't made progress and we have already
 	 * acknowledged a pending completion once, then be more
-	 * क्रमceful with a restart
+	 * forceful with a restart
 	 */
-	अगर (test_bit(IOAT_COMPLETION_ACK, &ioat_chan->state)) अणु
+	if (test_bit(IOAT_COMPLETION_ACK, &ioat_chan->state)) {
 		u32 chanerr;
 
-		chanerr = पढ़ोl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+		chanerr = readl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
 		dev_err(to_dev(ioat_chan), "CHANSTS: %#Lx CHANERR: %#x\n",
 			status, chanerr);
 		dev_err(to_dev(ioat_chan), "Errors:\n");
-		ioat_prपूर्णांक_chanerrs(ioat_chan, chanerr);
+		ioat_print_chanerrs(ioat_chan, chanerr);
 
 		dev_dbg(to_dev(ioat_chan), "Active descriptors: %d\n",
 			ioat_ring_active(ioat_chan));
 
 		ioat_reboot_chan(ioat_chan);
 
-		जाओ unlock_out;
-	पूर्ण
+		goto unlock_out;
+	}
 
-	/* handle missed issue pending हाल */
-	अगर (ioat_ring_pending(ioat_chan)) अणु
+	/* handle missed issue pending case */
+	if (ioat_ring_pending(ioat_chan)) {
 		dev_warn(to_dev(ioat_chan),
 			"Completion timeout with pending descriptors\n");
 		spin_lock_bh(&ioat_chan->prep_lock);
 		__ioat_issue_pending(ioat_chan);
 		spin_unlock_bh(&ioat_chan->prep_lock);
-	पूर्ण
+	}
 
 	set_bit(IOAT_COMPLETION_ACK, &ioat_chan->state);
-	mod_समयr(&ioat_chan->समयr, jअगरfies + COMPLETION_TIMEOUT);
+	mod_timer(&ioat_chan->timer, jiffies + COMPLETION_TIMEOUT);
 unlock_out:
 	spin_unlock_bh(&ioat_chan->cleanup_lock);
-पूर्ण
+}
 
-क्रमागत dma_status
-ioat_tx_status(काष्ठा dma_chan *c, dma_cookie_t cookie,
-		काष्ठा dma_tx_state *txstate)
-अणु
-	काष्ठा ioatdma_chan *ioat_chan = to_ioat_chan(c);
-	क्रमागत dma_status ret;
+enum dma_status
+ioat_tx_status(struct dma_chan *c, dma_cookie_t cookie,
+		struct dma_tx_state *txstate)
+{
+	struct ioatdma_chan *ioat_chan = to_ioat_chan(c);
+	enum dma_status ret;
 
 	ret = dma_cookie_status(c, cookie, txstate);
-	अगर (ret == DMA_COMPLETE)
-		वापस ret;
+	if (ret == DMA_COMPLETE)
+		return ret;
 
 	ioat_cleanup(ioat_chan);
 
-	वापस dma_cookie_status(c, cookie, txstate);
-पूर्ण
+	return dma_cookie_status(c, cookie, txstate);
+}
 
-पूर्णांक ioat_reset_hw(काष्ठा ioatdma_chan *ioat_chan)
-अणु
-	/* throw away whatever the channel was करोing and get it
-	 * initialized, with ioat3 specअगरic workarounds
+int ioat_reset_hw(struct ioatdma_chan *ioat_chan)
+{
+	/* throw away whatever the channel was doing and get it
+	 * initialized, with ioat3 specific workarounds
 	 */
-	काष्ठा ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
-	काष्ठा pci_dev *pdev = ioat_dma->pdev;
+	struct ioatdma_device *ioat_dma = ioat_chan->ioat_dma;
+	struct pci_dev *pdev = ioat_dma->pdev;
 	u32 chanerr;
 	u16 dev_id;
-	पूर्णांक err;
+	int err;
 
-	ioat_quiesce(ioat_chan, msecs_to_jअगरfies(100));
+	ioat_quiesce(ioat_chan, msecs_to_jiffies(100));
 
-	chanerr = पढ़ोl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
-	ग_लिखोl(chanerr, ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+	chanerr = readl(ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
+	writel(chanerr, ioat_chan->reg_base + IOAT_CHANERR_OFFSET);
 
-	अगर (ioat_dma->version < IOAT_VER_3_3) अणु
+	if (ioat_dma->version < IOAT_VER_3_3) {
 		/* clear any pending errors */
-		err = pci_पढ़ो_config_dword(pdev,
+		err = pci_read_config_dword(pdev,
 				IOAT_PCI_CHANERR_INT_OFFSET, &chanerr);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev,
 				"channel error register unreachable\n");
-			वापस err;
-		पूर्ण
-		pci_ग_लिखो_config_dword(pdev,
+			return err;
+		}
+		pci_write_config_dword(pdev,
 				IOAT_PCI_CHANERR_INT_OFFSET, chanerr);
 
 		/* Clear DMAUNCERRSTS Cfg-Reg Parity Error status bit
-		 * (workaround क्रम spurious config parity error after restart)
+		 * (workaround for spurious config parity error after restart)
 		 */
-		pci_पढ़ो_config_word(pdev, IOAT_PCI_DEVICE_ID_OFFSET, &dev_id);
-		अगर (dev_id == PCI_DEVICE_ID_INTEL_IOAT_TBG0) अणु
-			pci_ग_लिखो_config_dword(pdev,
+		pci_read_config_word(pdev, IOAT_PCI_DEVICE_ID_OFFSET, &dev_id);
+		if (dev_id == PCI_DEVICE_ID_INTEL_IOAT_TBG0) {
+			pci_write_config_dword(pdev,
 					       IOAT_PCI_DMAUNCERRSTS_OFFSET,
 					       0x10);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (is_bwd_ioat(pdev) && (ioat_dma->irq_mode == IOAT_MSIX)) अणु
-		ioat_dma->msixtba0 = पढ़ोq(ioat_dma->reg_base + 0x1000);
-		ioat_dma->msixdata0 = पढ़ोq(ioat_dma->reg_base + 0x1008);
-		ioat_dma->msixpba = पढ़ोq(ioat_dma->reg_base + 0x1800);
-	पूर्ण
+	if (is_bwd_ioat(pdev) && (ioat_dma->irq_mode == IOAT_MSIX)) {
+		ioat_dma->msixtba0 = readq(ioat_dma->reg_base + 0x1000);
+		ioat_dma->msixdata0 = readq(ioat_dma->reg_base + 0x1008);
+		ioat_dma->msixpba = readq(ioat_dma->reg_base + 0x1800);
+	}
 
 
-	err = ioat_reset_sync(ioat_chan, msecs_to_jअगरfies(200));
-	अगर (!err) अणु
-		अगर (is_bwd_ioat(pdev) && (ioat_dma->irq_mode == IOAT_MSIX)) अणु
-			ग_लिखोq(ioat_dma->msixtba0, ioat_dma->reg_base + 0x1000);
-			ग_लिखोq(ioat_dma->msixdata0, ioat_dma->reg_base + 0x1008);
-			ग_लिखोq(ioat_dma->msixpba, ioat_dma->reg_base + 0x1800);
-		पूर्ण
-	पूर्ण
+	err = ioat_reset_sync(ioat_chan, msecs_to_jiffies(200));
+	if (!err) {
+		if (is_bwd_ioat(pdev) && (ioat_dma->irq_mode == IOAT_MSIX)) {
+			writeq(ioat_dma->msixtba0, ioat_dma->reg_base + 0x1000);
+			writeq(ioat_dma->msixdata0, ioat_dma->reg_base + 0x1008);
+			writeq(ioat_dma->msixpba, ioat_dma->reg_base + 0x1800);
+		}
+	}
 
-	अगर (err)
+	if (err)
 		dev_err(&pdev->dev, "Failed to reset: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */
 
 /*
  * NETLINK      Netlink attributes
@@ -7,48 +6,48 @@
  * Copyright (c) 2003-2013 Thomas Graf <tgraf@suug.ch>
  */
 
-#अगर_अघोषित __LIBBPF_NLATTR_H
-#घोषणा __LIBBPF_NLATTR_H
+#ifndef __LIBBPF_NLATTR_H
+#define __LIBBPF_NLATTR_H
 
-#समावेश <मानक_निवेशt.h>
-#समावेश <linux/netlink.h>
-/* aव्योम multiple definition of netlink features */
-#घोषणा __LINUX_NETLINK_H
+#include <stdint.h>
+#include <linux/netlink.h>
+/* avoid multiple definition of netlink features */
+#define __LINUX_NETLINK_H
 
 /**
- * Standard attribute types to specअगरy validation policy
+ * Standard attribute types to specify validation policy
  */
-क्रमागत अणु
-	LIBBPF_NLA_UNSPEC,	/**< Unspecअगरied type, binary data chunk */
-	LIBBPF_NLA_U8,		/**< 8 bit पूर्णांकeger */
-	LIBBPF_NLA_U16,		/**< 16 bit पूर्णांकeger */
-	LIBBPF_NLA_U32,		/**< 32 bit पूर्णांकeger */
-	LIBBPF_NLA_U64,		/**< 64 bit पूर्णांकeger */
-	LIBBPF_NLA_STRING,	/**< NUL terminated अक्षरacter string */
+enum {
+	LIBBPF_NLA_UNSPEC,	/**< Unspecified type, binary data chunk */
+	LIBBPF_NLA_U8,		/**< 8 bit integer */
+	LIBBPF_NLA_U16,		/**< 16 bit integer */
+	LIBBPF_NLA_U32,		/**< 32 bit integer */
+	LIBBPF_NLA_U64,		/**< 64 bit integer */
+	LIBBPF_NLA_STRING,	/**< NUL terminated character string */
 	LIBBPF_NLA_FLAG,	/**< Flag */
 	LIBBPF_NLA_MSECS,	/**< Micro seconds (64bit) */
 	LIBBPF_NLA_NESTED,	/**< Nested attributes */
 	__LIBBPF_NLA_TYPE_MAX,
-पूर्ण;
+};
 
-#घोषणा LIBBPF_NLA_TYPE_MAX (__LIBBPF_NLA_TYPE_MAX - 1)
+#define LIBBPF_NLA_TYPE_MAX (__LIBBPF_NLA_TYPE_MAX - 1)
 
 /**
  * @ingroup attr
  * Attribute validation policy.
  *
- * See section @core_करोcअणुcore_attr_parse,Attribute Parsingपूर्ण क्रम more details.
+ * See section @core_doc{core_attr_parse,Attribute Parsing} for more details.
  */
-काष्ठा libbpf_nla_policy अणु
+struct libbpf_nla_policy {
 	/** Type of attribute or LIBBPF_NLA_UNSPEC */
-	uपूर्णांक16_t	type;
+	uint16_t	type;
 
 	/** Minimal length of payload required */
-	uपूर्णांक16_t	minlen;
+	uint16_t	minlen;
 
 	/** Maximal length of payload allowed */
-	uपूर्णांक16_t	maxlen;
-पूर्ण;
+	uint16_t	maxlen;
+};
 
 /**
  * @ingroup attr
@@ -56,10 +55,10 @@
  * @arg pos	loop counter, set to current attribute
  * @arg head	head of attribute stream
  * @arg len	length of attribute stream
- * @arg rem	initialized to len, holds bytes currently reमुख्यing in stream
+ * @arg rem	initialized to len, holds bytes currently remaining in stream
  */
-#घोषणा libbpf_nla_क्रम_each_attr(pos, head, len, rem) \
-	क्रम (pos = head, rem = len; \
+#define libbpf_nla_for_each_attr(pos, head, len, rem) \
+	for (pos = head, rem = len; \
 	     nla_ok(pos, rem); \
 	     pos = nla_next(pos, &(rem)))
 
@@ -67,41 +66,41 @@
  * libbpf_nla_data - head of payload
  * @nla: netlink attribute
  */
-अटल अंतरभूत व्योम *libbpf_nla_data(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस (अक्षर *) nla + NLA_HDRLEN;
-पूर्ण
+static inline void *libbpf_nla_data(const struct nlattr *nla)
+{
+	return (char *) nla + NLA_HDRLEN;
+}
 
-अटल अंतरभूत uपूर्णांक8_t libbpf_nla_getattr_u8(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(uपूर्णांक8_t *)libbpf_nla_data(nla);
-पूर्ण
+static inline uint8_t libbpf_nla_getattr_u8(const struct nlattr *nla)
+{
+	return *(uint8_t *)libbpf_nla_data(nla);
+}
 
-अटल अंतरभूत uपूर्णांक32_t libbpf_nla_getattr_u32(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(uपूर्णांक32_t *)libbpf_nla_data(nla);
-पूर्ण
+static inline uint32_t libbpf_nla_getattr_u32(const struct nlattr *nla)
+{
+	return *(uint32_t *)libbpf_nla_data(nla);
+}
 
-अटल अंतरभूत स्थिर अक्षर *libbpf_nla_getattr_str(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस (स्थिर अक्षर *)libbpf_nla_data(nla);
-पूर्ण
+static inline const char *libbpf_nla_getattr_str(const struct nlattr *nla)
+{
+	return (const char *)libbpf_nla_data(nla);
+}
 
 /**
  * libbpf_nla_len - length of payload
  * @nla: netlink attribute
  */
-अटल अंतरभूत पूर्णांक libbpf_nla_len(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस nla->nla_len - NLA_HDRLEN;
-पूर्ण
+static inline int libbpf_nla_len(const struct nlattr *nla)
+{
+	return nla->nla_len - NLA_HDRLEN;
+}
 
-पूर्णांक libbpf_nla_parse(काष्ठा nlattr *tb[], पूर्णांक maxtype, काष्ठा nlattr *head,
-		     पूर्णांक len, काष्ठा libbpf_nla_policy *policy);
-पूर्णांक libbpf_nla_parse_nested(काष्ठा nlattr *tb[], पूर्णांक maxtype,
-			    काष्ठा nlattr *nla,
-			    काष्ठा libbpf_nla_policy *policy);
+int libbpf_nla_parse(struct nlattr *tb[], int maxtype, struct nlattr *head,
+		     int len, struct libbpf_nla_policy *policy);
+int libbpf_nla_parse_nested(struct nlattr *tb[], int maxtype,
+			    struct nlattr *nla,
+			    struct libbpf_nla_policy *policy);
 
-पूर्णांक libbpf_nla_dump_errormsg(काष्ठा nlmsghdr *nlh);
+int libbpf_nla_dump_errormsg(struct nlmsghdr *nlh);
 
-#पूर्ण_अगर /* __LIBBPF_NLATTR_H */
+#endif /* __LIBBPF_NLATTR_H */

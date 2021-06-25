@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#समावेश "dpu_kms.h"
-#समावेश "dpu_hw_catalog.h"
-#समावेश "dpu_hwio.h"
-#समावेश "dpu_hw_lm.h"
-#समावेश "dpu_hw_mdss.h"
+#include "dpu_kms.h"
+#include "dpu_hw_catalog.h"
+#include "dpu_hwio.h"
+#include "dpu_hw_lm.h"
+#include "dpu_hw_mdss.h"
 
-#घोषणा LM_OP_MODE                        0x00
-#घोषणा LM_OUT_SIZE                       0x04
-#घोषणा LM_BORDER_COLOR_0                 0x08
-#घोषणा LM_BORDER_COLOR_1                 0x010
+#define LM_OP_MODE                        0x00
+#define LM_OUT_SIZE                       0x04
+#define LM_BORDER_COLOR_0                 0x08
+#define LM_BORDER_COLOR_1                 0x010
 
-/* These रेजिस्टर are offset to mixer base + stage base */
-#घोषणा LM_BLEND0_OP                     0x00
-#घोषणा LM_BLEND0_CONST_ALPHA            0x04
-#घोषणा LM_FG_COLOR_FILL_COLOR_0         0x08
-#घोषणा LM_FG_COLOR_FILL_COLOR_1         0x0C
-#घोषणा LM_FG_COLOR_FILL_SIZE            0x10
-#घोषणा LM_FG_COLOR_FILL_XY              0x14
+/* These register are offset to mixer base + stage base */
+#define LM_BLEND0_OP                     0x00
+#define LM_BLEND0_CONST_ALPHA            0x04
+#define LM_FG_COLOR_FILL_COLOR_0         0x08
+#define LM_FG_COLOR_FILL_COLOR_1         0x0C
+#define LM_FG_COLOR_FILL_SIZE            0x10
+#define LM_FG_COLOR_FILL_XY              0x14
 
-#घोषणा LM_BLEND0_FG_ALPHA               0x04
-#घोषणा LM_BLEND0_BG_ALPHA               0x08
+#define LM_BLEND0_FG_ALPHA               0x04
+#define LM_BLEND0_BG_ALPHA               0x08
 
-अटल स्थिर काष्ठा dpu_lm_cfg *_lm_offset(क्रमागत dpu_lm mixer,
-		स्थिर काष्ठा dpu_mdss_cfg *m,
-		व्योम __iomem *addr,
-		काष्ठा dpu_hw_blk_reg_map *b)
-अणु
-	पूर्णांक i;
+static const struct dpu_lm_cfg *_lm_offset(enum dpu_lm mixer,
+		const struct dpu_mdss_cfg *m,
+		void __iomem *addr,
+		struct dpu_hw_blk_reg_map *b)
+{
+	int i;
 
-	क्रम (i = 0; i < m->mixer_count; i++) अणु
-		अगर (mixer == m->mixer[i].id) अणु
+	for (i = 0; i < m->mixer_count; i++) {
+		if (mixer == m->mixer[i].id) {
 			b->base_off = addr;
 			b->blk_off = m->mixer[i].base;
 			b->length = m->mixer[i].len;
 			b->hwversion = m->hwversion;
 			b->log_mask = DPU_DBG_MASK_LM;
-			वापस &m->mixer[i];
-		पूर्ण
-	पूर्ण
+			return &m->mixer[i];
+		}
+	}
 
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 
 /**
- * _stage_offset(): वापसs the relative offset of the blend रेजिस्टरs
- * क्रम the stage to be setup
+ * _stage_offset(): returns the relative offset of the blend registers
+ * for the stage to be setup
  * @ctx:     mixer ctx contains the mixer to be programmed
  * @stage: stage index to setup
  */
-अटल अंतरभूत पूर्णांक _stage_offset(काष्ठा dpu_hw_mixer *ctx, क्रमागत dpu_stage stage)
-अणु
-	स्थिर काष्ठा dpu_lm_sub_blks *sblk = ctx->cap->sblk;
-	अगर (stage != DPU_STAGE_BASE && stage <= sblk->maxblendstages)
-		वापस sblk->blendstage_base[stage - DPU_STAGE_0];
+static inline int _stage_offset(struct dpu_hw_mixer *ctx, enum dpu_stage stage)
+{
+	const struct dpu_lm_sub_blks *sblk = ctx->cap->sblk;
+	if (stage != DPU_STAGE_BASE && stage <= sblk->maxblendstages)
+		return sblk->blendstage_base[stage - DPU_STAGE_0];
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल व्योम dpu_hw_lm_setup_out(काष्ठा dpu_hw_mixer *ctx,
-		काष्ठा dpu_hw_mixer_cfg *mixer)
-अणु
-	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
+static void dpu_hw_lm_setup_out(struct dpu_hw_mixer *ctx,
+		struct dpu_hw_mixer_cfg *mixer)
+{
+	struct dpu_hw_blk_reg_map *c = &ctx->hw;
 	u32 outsize;
 	u32 op_mode;
 
@@ -74,111 +73,111 @@
 	DPU_REG_WRITE(c, LM_OUT_SIZE, outsize);
 
 	/* SPLIT_LEFT_RIGHT */
-	अगर (mixer->right_mixer)
+	if (mixer->right_mixer)
 		op_mode |= BIT(31);
-	अन्यथा
+	else
 		op_mode &= ~BIT(31);
 	DPU_REG_WRITE(c, LM_OP_MODE, op_mode);
-पूर्ण
+}
 
-अटल व्योम dpu_hw_lm_setup_border_color(काष्ठा dpu_hw_mixer *ctx,
-		काष्ठा dpu_mdss_color *color,
+static void dpu_hw_lm_setup_border_color(struct dpu_hw_mixer *ctx,
+		struct dpu_mdss_color *color,
 		u8 border_en)
-अणु
-	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
+{
+	struct dpu_hw_blk_reg_map *c = &ctx->hw;
 
-	अगर (border_en) अणु
+	if (border_en) {
 		DPU_REG_WRITE(c, LM_BORDER_COLOR_0,
 			(color->color_0 & 0xFFF) |
 			((color->color_1 & 0xFFF) << 0x10));
 		DPU_REG_WRITE(c, LM_BORDER_COLOR_1,
 			(color->color_2 & 0xFFF) |
 			((color->color_3 & 0xFFF) << 0x10));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम dpu_hw_lm_setup_blend_config_sdm845(काष्ठा dpu_hw_mixer *ctx,
+static void dpu_hw_lm_setup_blend_config_sdm845(struct dpu_hw_mixer *ctx,
 	u32 stage, u32 fg_alpha, u32 bg_alpha, u32 blend_op)
-अणु
-	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
-	पूर्णांक stage_off;
-	u32 स्थिर_alpha;
+{
+	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+	int stage_off;
+	u32 const_alpha;
 
-	अगर (stage == DPU_STAGE_BASE)
-		वापस;
+	if (stage == DPU_STAGE_BASE)
+		return;
 
 	stage_off = _stage_offset(ctx, stage);
-	अगर (WARN_ON(stage_off < 0))
-		वापस;
+	if (WARN_ON(stage_off < 0))
+		return;
 
-	स्थिर_alpha = (bg_alpha & 0xFF) | ((fg_alpha & 0xFF) << 16);
-	DPU_REG_WRITE(c, LM_BLEND0_CONST_ALPHA + stage_off, स्थिर_alpha);
+	const_alpha = (bg_alpha & 0xFF) | ((fg_alpha & 0xFF) << 16);
+	DPU_REG_WRITE(c, LM_BLEND0_CONST_ALPHA + stage_off, const_alpha);
 	DPU_REG_WRITE(c, LM_BLEND0_OP + stage_off, blend_op);
-पूर्ण
+}
 
-अटल व्योम dpu_hw_lm_setup_blend_config(काष्ठा dpu_hw_mixer *ctx,
+static void dpu_hw_lm_setup_blend_config(struct dpu_hw_mixer *ctx,
 	u32 stage, u32 fg_alpha, u32 bg_alpha, u32 blend_op)
-अणु
-	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
-	पूर्णांक stage_off;
+{
+	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+	int stage_off;
 
-	अगर (stage == DPU_STAGE_BASE)
-		वापस;
+	if (stage == DPU_STAGE_BASE)
+		return;
 
 	stage_off = _stage_offset(ctx, stage);
-	अगर (WARN_ON(stage_off < 0))
-		वापस;
+	if (WARN_ON(stage_off < 0))
+		return;
 
 	DPU_REG_WRITE(c, LM_BLEND0_FG_ALPHA + stage_off, fg_alpha);
 	DPU_REG_WRITE(c, LM_BLEND0_BG_ALPHA + stage_off, bg_alpha);
 	DPU_REG_WRITE(c, LM_BLEND0_OP + stage_off, blend_op);
-पूर्ण
+}
 
-अटल व्योम dpu_hw_lm_setup_color3(काष्ठा dpu_hw_mixer *ctx,
-	uपूर्णांक32_t mixer_op_mode)
-अणु
-	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
-	पूर्णांक op_mode;
+static void dpu_hw_lm_setup_color3(struct dpu_hw_mixer *ctx,
+	uint32_t mixer_op_mode)
+{
+	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+	int op_mode;
 
-	/* पढ़ो the existing op_mode configuration */
+	/* read the existing op_mode configuration */
 	op_mode = DPU_REG_READ(c, LM_OP_MODE);
 
 	op_mode = (op_mode & (BIT(31) | BIT(30))) | mixer_op_mode;
 
 	DPU_REG_WRITE(c, LM_OP_MODE, op_mode);
-पूर्ण
+}
 
-अटल व्योम _setup_mixer_ops(स्थिर काष्ठा dpu_mdss_cfg *m,
-		काष्ठा dpu_hw_lm_ops *ops,
-		अचिन्हित दीर्घ features)
-अणु
+static void _setup_mixer_ops(const struct dpu_mdss_cfg *m,
+		struct dpu_hw_lm_ops *ops,
+		unsigned long features)
+{
 	ops->setup_mixer_out = dpu_hw_lm_setup_out;
-	अगर (m->hwversion >= DPU_HW_VER_400)
+	if (m->hwversion >= DPU_HW_VER_400)
 		ops->setup_blend_config = dpu_hw_lm_setup_blend_config_sdm845;
-	अन्यथा
+	else
 		ops->setup_blend_config = dpu_hw_lm_setup_blend_config;
 	ops->setup_alpha_out = dpu_hw_lm_setup_color3;
 	ops->setup_border_color = dpu_hw_lm_setup_border_color;
-पूर्ण
+}
 
-अटल काष्ठा dpu_hw_blk_ops dpu_hw_ops;
+static struct dpu_hw_blk_ops dpu_hw_ops;
 
-काष्ठा dpu_hw_mixer *dpu_hw_lm_init(क्रमागत dpu_lm idx,
-		व्योम __iomem *addr,
-		स्थिर काष्ठा dpu_mdss_cfg *m)
-अणु
-	काष्ठा dpu_hw_mixer *c;
-	स्थिर काष्ठा dpu_lm_cfg *cfg;
+struct dpu_hw_mixer *dpu_hw_lm_init(enum dpu_lm idx,
+		void __iomem *addr,
+		const struct dpu_mdss_cfg *m)
+{
+	struct dpu_hw_mixer *c;
+	const struct dpu_lm_cfg *cfg;
 
-	c = kzalloc(माप(*c), GFP_KERNEL);
-	अगर (!c)
-		वापस ERR_PTR(-ENOMEM);
+	c = kzalloc(sizeof(*c), GFP_KERNEL);
+	if (!c)
+		return ERR_PTR(-ENOMEM);
 
 	cfg = _lm_offset(idx, m, addr, &c->hw);
-	अगर (IS_ERR_OR_शून्य(cfg)) अणु
-		kमुक्त(c);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	if (IS_ERR_OR_NULL(cfg)) {
+		kfree(c);
+		return ERR_PTR(-EINVAL);
+	}
 
 	/* Assign ops */
 	c->idx = idx;
@@ -187,12 +186,12 @@
 
 	dpu_hw_blk_init(&c->base, DPU_HW_BLK_LM, idx, &dpu_hw_ops);
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-व्योम dpu_hw_lm_destroy(काष्ठा dpu_hw_mixer *lm)
-अणु
-	अगर (lm)
+void dpu_hw_lm_destroy(struct dpu_hw_mixer *lm)
+{
+	if (lm)
 		dpu_hw_blk_destroy(&lm->base);
-	kमुक्त(lm);
-पूर्ण
+	kfree(lm);
+}

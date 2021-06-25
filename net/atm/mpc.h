@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _MPC_H_
-#घोषणा _MPC_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _MPC_H_
+#define _MPC_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/aपंचांग.h>
-#समावेश <linux/aपंचांगmpc.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश "mpoa_caches.h"
+#include <linux/types.h>
+#include <linux/atm.h>
+#include <linux/atmmpc.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include "mpoa_caches.h"
 
 /* kernel -> mpc-daemon */
-पूर्णांक msg_to_mpoad(काष्ठा k_message *msg, काष्ठा mpoa_client *mpc);
+int msg_to_mpoad(struct k_message *msg, struct mpoa_client *mpc);
 
-काष्ठा mpoa_client अणु
-	काष्ठा mpoa_client *next;
-	काष्ठा net_device *dev;      /* lec in question                     */
-	पूर्णांक dev_num;                 /* e.g. 2 क्रम lec2                     */
+struct mpoa_client {
+	struct mpoa_client *next;
+	struct net_device *dev;      /* lec in question                     */
+	int dev_num;                 /* e.g. 2 for lec2                     */
 
-	काष्ठा aपंचांग_vcc *mpoad_vcc;   /* control channel to mpoad            */
-	uपूर्णांक8_t mps_ctrl_addr[ATM_ESA_LEN];  /* MPS control ATM address     */
-	uपूर्णांक8_t our_ctrl_addr[ATM_ESA_LEN];  /* MPC's control ATM address   */
+	struct atm_vcc *mpoad_vcc;   /* control channel to mpoad            */
+	uint8_t mps_ctrl_addr[ATM_ESA_LEN];  /* MPS control ATM address     */
+	uint8_t our_ctrl_addr[ATM_ESA_LEN];  /* MPC's control ATM address   */
 
 	rwlock_t ingress_lock;
-	स्थिर काष्ठा in_cache_ops *in_ops; /* ingress cache operations      */
+	const struct in_cache_ops *in_ops; /* ingress cache operations      */
 	in_cache_entry *in_cache;    /* the ingress cache of this MPC       */
 
 	rwlock_t egress_lock;
-	स्थिर काष्ठा eg_cache_ops *eg_ops; /* egress cache operations       */
+	const struct eg_cache_ops *eg_ops; /* egress cache operations       */
 	eg_cache_entry *eg_cache;    /* the egress  cache of this MPC       */
 
-	uपूर्णांक8_t *mps_macs;           /* array of MPS MAC addresses, >=1     */
-	पूर्णांक number_of_mps_macs;      /* number of the above MAC addresses   */
-	काष्ठा mpc_parameters parameters;  /* parameters क्रम this client    */
+	uint8_t *mps_macs;           /* array of MPS MAC addresses, >=1     */
+	int number_of_mps_macs;      /* number of the above MAC addresses   */
+	struct mpc_parameters parameters;  /* parameters for this client    */
 
-	स्थिर काष्ठा net_device_ops *old_ops;
-	काष्ठा net_device_ops new_ops;
-पूर्ण;
+	const struct net_device_ops *old_ops;
+	struct net_device_ops new_ops;
+};
 
 
-काष्ठा aपंचांग_mpoa_qos अणु
-	काष्ठा aपंचांग_mpoa_qos *next;
+struct atm_mpoa_qos {
+	struct atm_mpoa_qos *next;
 	__be32 ipaddr;
-	काष्ठा aपंचांग_qos qos;
-पूर्ण;
+	struct atm_qos qos;
+};
 
 
 /* MPOA QoS operations */
-काष्ठा aपंचांग_mpoa_qos *aपंचांग_mpoa_add_qos(__be32 dst_ip, काष्ठा aपंचांग_qos *qos);
-काष्ठा aपंचांग_mpoa_qos *aपंचांग_mpoa_search_qos(__be32 dst_ip);
-पूर्णांक aपंचांग_mpoa_delete_qos(काष्ठा aपंचांग_mpoa_qos *qos);
+struct atm_mpoa_qos *atm_mpoa_add_qos(__be32 dst_ip, struct atm_qos *qos);
+struct atm_mpoa_qos *atm_mpoa_search_qos(__be32 dst_ip);
+int atm_mpoa_delete_qos(struct atm_mpoa_qos *qos);
 
-/* Display QoS entries. This is क्रम the procfs */
-काष्ठा seq_file;
-व्योम aपंचांग_mpoa_disp_qos(काष्ठा seq_file *m);
+/* Display QoS entries. This is for the procfs */
+struct seq_file;
+void atm_mpoa_disp_qos(struct seq_file *m);
 
-#अगर_घोषित CONFIG_PROC_FS
-पूर्णांक mpc_proc_init(व्योम);
-व्योम mpc_proc_clean(व्योम);
-#अन्यथा
-#घोषणा mpc_proc_init() (0)
-#घोषणा mpc_proc_clean() करो अणु पूर्ण जबतक(0)
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+int mpc_proc_init(void);
+void mpc_proc_clean(void);
+#else
+#define mpc_proc_init() (0)
+#define mpc_proc_clean() do { } while(0)
+#endif
 
-#पूर्ण_अगर /* _MPC_H_ */
+#endif /* _MPC_H_ */

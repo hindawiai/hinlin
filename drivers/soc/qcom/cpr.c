@@ -1,514 +1,513 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  * Copyright (c) 2019, Linaro Limited
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/nvmem-consumer.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/debugfs.h>
+#include <linux/string.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_opp.h>
+#include <linux/interrupt.h>
+#include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regulator/consumer.h>
+#include <linux/clk.h>
+#include <linux/nvmem-consumer.h>
 
-/* Register Offsets क्रम RB-CPR and Bit Definitions */
+/* Register Offsets for RB-CPR and Bit Definitions */
 
 /* RBCPR Version Register */
-#घोषणा REG_RBCPR_VERSION		0
-#घोषणा RBCPR_VER_2			0x02
-#घोषणा FLAGS_IGNORE_1ST_IRQ_STATUS	BIT(0)
+#define REG_RBCPR_VERSION		0
+#define RBCPR_VER_2			0x02
+#define FLAGS_IGNORE_1ST_IRQ_STATUS	BIT(0)
 
 /* RBCPR Gate Count and Target Registers */
-#घोषणा REG_RBCPR_GCNT_TARGET(n)	(0x60 + 4 * (n))
+#define REG_RBCPR_GCNT_TARGET(n)	(0x60 + 4 * (n))
 
-#घोषणा RBCPR_GCNT_TARGET_TARGET_SHIFT	0
-#घोषणा RBCPR_GCNT_TARGET_TARGET_MASK	GENMASK(11, 0)
-#घोषणा RBCPR_GCNT_TARGET_GCNT_SHIFT	12
-#घोषणा RBCPR_GCNT_TARGET_GCNT_MASK	GENMASK(9, 0)
+#define RBCPR_GCNT_TARGET_TARGET_SHIFT	0
+#define RBCPR_GCNT_TARGET_TARGET_MASK	GENMASK(11, 0)
+#define RBCPR_GCNT_TARGET_GCNT_SHIFT	12
+#define RBCPR_GCNT_TARGET_GCNT_MASK	GENMASK(9, 0)
 
 /* RBCPR Timer Control */
-#घोषणा REG_RBCPR_TIMER_INTERVAL	0x44
-#घोषणा REG_RBIF_TIMER_ADJUST		0x4c
+#define REG_RBCPR_TIMER_INTERVAL	0x44
+#define REG_RBIF_TIMER_ADJUST		0x4c
 
-#घोषणा RBIF_TIMER_ADJ_CONS_UP_MASK	GENMASK(3, 0)
-#घोषणा RBIF_TIMER_ADJ_CONS_UP_SHIFT	0
-#घोषणा RBIF_TIMER_ADJ_CONS_DOWN_MASK	GENMASK(3, 0)
-#घोषणा RBIF_TIMER_ADJ_CONS_DOWN_SHIFT	4
-#घोषणा RBIF_TIMER_ADJ_CLAMP_INT_MASK	GENMASK(7, 0)
-#घोषणा RBIF_TIMER_ADJ_CLAMP_INT_SHIFT	8
+#define RBIF_TIMER_ADJ_CONS_UP_MASK	GENMASK(3, 0)
+#define RBIF_TIMER_ADJ_CONS_UP_SHIFT	0
+#define RBIF_TIMER_ADJ_CONS_DOWN_MASK	GENMASK(3, 0)
+#define RBIF_TIMER_ADJ_CONS_DOWN_SHIFT	4
+#define RBIF_TIMER_ADJ_CLAMP_INT_MASK	GENMASK(7, 0)
+#define RBIF_TIMER_ADJ_CLAMP_INT_SHIFT	8
 
 /* RBCPR Config Register */
-#घोषणा REG_RBIF_LIMIT			0x48
-#घोषणा RBIF_LIMIT_CEILING_MASK		GENMASK(5, 0)
-#घोषणा RBIF_LIMIT_CEILING_SHIFT	6
-#घोषणा RBIF_LIMIT_FLOOR_BITS		6
-#घोषणा RBIF_LIMIT_FLOOR_MASK		GENMASK(5, 0)
+#define REG_RBIF_LIMIT			0x48
+#define RBIF_LIMIT_CEILING_MASK		GENMASK(5, 0)
+#define RBIF_LIMIT_CEILING_SHIFT	6
+#define RBIF_LIMIT_FLOOR_BITS		6
+#define RBIF_LIMIT_FLOOR_MASK		GENMASK(5, 0)
 
-#घोषणा RBIF_LIMIT_CEILING_DEFAULT	RBIF_LIMIT_CEILING_MASK
-#घोषणा RBIF_LIMIT_FLOOR_DEFAULT	0
+#define RBIF_LIMIT_CEILING_DEFAULT	RBIF_LIMIT_CEILING_MASK
+#define RBIF_LIMIT_FLOOR_DEFAULT	0
 
-#घोषणा REG_RBIF_SW_VLEVEL		0x94
-#घोषणा RBIF_SW_VLEVEL_DEFAULT		0x20
+#define REG_RBIF_SW_VLEVEL		0x94
+#define RBIF_SW_VLEVEL_DEFAULT		0x20
 
-#घोषणा REG_RBCPR_STEP_QUOT		0x80
-#घोषणा RBCPR_STEP_QUOT_STEPQUOT_MASK	GENMASK(7, 0)
-#घोषणा RBCPR_STEP_QUOT_IDLE_CLK_MASK	GENMASK(3, 0)
-#घोषणा RBCPR_STEP_QUOT_IDLE_CLK_SHIFT	8
+#define REG_RBCPR_STEP_QUOT		0x80
+#define RBCPR_STEP_QUOT_STEPQUOT_MASK	GENMASK(7, 0)
+#define RBCPR_STEP_QUOT_IDLE_CLK_MASK	GENMASK(3, 0)
+#define RBCPR_STEP_QUOT_IDLE_CLK_SHIFT	8
 
 /* RBCPR Control Register */
-#घोषणा REG_RBCPR_CTL			0x90
+#define REG_RBCPR_CTL			0x90
 
-#घोषणा RBCPR_CTL_LOOP_EN			BIT(0)
-#घोषणा RBCPR_CTL_TIMER_EN			BIT(3)
-#घोषणा RBCPR_CTL_SW_AUTO_CONT_ACK_EN		BIT(5)
-#घोषणा RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN	BIT(6)
-#घोषणा RBCPR_CTL_COUNT_MODE			BIT(10)
-#घोषणा RBCPR_CTL_UP_THRESHOLD_MASK	GENMASK(3, 0)
-#घोषणा RBCPR_CTL_UP_THRESHOLD_SHIFT	24
-#घोषणा RBCPR_CTL_DN_THRESHOLD_MASK	GENMASK(3, 0)
-#घोषणा RBCPR_CTL_DN_THRESHOLD_SHIFT	28
+#define RBCPR_CTL_LOOP_EN			BIT(0)
+#define RBCPR_CTL_TIMER_EN			BIT(3)
+#define RBCPR_CTL_SW_AUTO_CONT_ACK_EN		BIT(5)
+#define RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN	BIT(6)
+#define RBCPR_CTL_COUNT_MODE			BIT(10)
+#define RBCPR_CTL_UP_THRESHOLD_MASK	GENMASK(3, 0)
+#define RBCPR_CTL_UP_THRESHOLD_SHIFT	24
+#define RBCPR_CTL_DN_THRESHOLD_MASK	GENMASK(3, 0)
+#define RBCPR_CTL_DN_THRESHOLD_SHIFT	28
 
 /* RBCPR Ack/Nack Response */
-#घोषणा REG_RBIF_CONT_ACK_CMD		0x98
-#घोषणा REG_RBIF_CONT_NACK_CMD		0x9c
+#define REG_RBIF_CONT_ACK_CMD		0x98
+#define REG_RBIF_CONT_NACK_CMD		0x9c
 
 /* RBCPR Result status Register */
-#घोषणा REG_RBCPR_RESULT_0		0xa0
+#define REG_RBCPR_RESULT_0		0xa0
 
-#घोषणा RBCPR_RESULT0_BUSY_SHIFT	19
-#घोषणा RBCPR_RESULT0_BUSY_MASK		BIT(RBCPR_RESULT0_BUSY_SHIFT)
-#घोषणा RBCPR_RESULT0_ERROR_LT0_SHIFT	18
-#घोषणा RBCPR_RESULT0_ERROR_SHIFT	6
-#घोषणा RBCPR_RESULT0_ERROR_MASK	GENMASK(11, 0)
-#घोषणा RBCPR_RESULT0_ERROR_STEPS_SHIFT	2
-#घोषणा RBCPR_RESULT0_ERROR_STEPS_MASK	GENMASK(3, 0)
-#घोषणा RBCPR_RESULT0_STEP_UP_SHIFT	1
+#define RBCPR_RESULT0_BUSY_SHIFT	19
+#define RBCPR_RESULT0_BUSY_MASK		BIT(RBCPR_RESULT0_BUSY_SHIFT)
+#define RBCPR_RESULT0_ERROR_LT0_SHIFT	18
+#define RBCPR_RESULT0_ERROR_SHIFT	6
+#define RBCPR_RESULT0_ERROR_MASK	GENMASK(11, 0)
+#define RBCPR_RESULT0_ERROR_STEPS_SHIFT	2
+#define RBCPR_RESULT0_ERROR_STEPS_MASK	GENMASK(3, 0)
+#define RBCPR_RESULT0_STEP_UP_SHIFT	1
 
 /* RBCPR Interrupt Control Register */
-#घोषणा REG_RBIF_IRQ_EN(n)		(0x100 + 4 * (n))
-#घोषणा REG_RBIF_IRQ_CLEAR		0x110
-#घोषणा REG_RBIF_IRQ_STATUS		0x114
+#define REG_RBIF_IRQ_EN(n)		(0x100 + 4 * (n))
+#define REG_RBIF_IRQ_CLEAR		0x110
+#define REG_RBIF_IRQ_STATUS		0x114
 
-#घोषणा CPR_INT_DONE		BIT(0)
-#घोषणा CPR_पूर्णांक_न्यून		BIT(1)
-#घोषणा CPR_INT_DOWN		BIT(2)
-#घोषणा CPR_INT_MID		BIT(3)
-#घोषणा CPR_INT_UP		BIT(4)
-#घोषणा CPR_पूर्णांक_उच्च		BIT(5)
-#घोषणा CPR_INT_CLAMP		BIT(6)
-#घोषणा CPR_INT_ALL	(CPR_INT_DONE | CPR_पूर्णांक_न्यून | CPR_INT_DOWN | \
-			CPR_INT_MID | CPR_INT_UP | CPR_पूर्णांक_उच्च | CPR_INT_CLAMP)
-#घोषणा CPR_INT_DEFAULT	(CPR_INT_UP | CPR_INT_DOWN)
+#define CPR_INT_DONE		BIT(0)
+#define CPR_INT_MIN		BIT(1)
+#define CPR_INT_DOWN		BIT(2)
+#define CPR_INT_MID		BIT(3)
+#define CPR_INT_UP		BIT(4)
+#define CPR_INT_MAX		BIT(5)
+#define CPR_INT_CLAMP		BIT(6)
+#define CPR_INT_ALL	(CPR_INT_DONE | CPR_INT_MIN | CPR_INT_DOWN | \
+			CPR_INT_MID | CPR_INT_UP | CPR_INT_MAX | CPR_INT_CLAMP)
+#define CPR_INT_DEFAULT	(CPR_INT_UP | CPR_INT_DOWN)
 
-#घोषणा CPR_NUM_RING_OSC	8
+#define CPR_NUM_RING_OSC	8
 
 /* CPR eFuse parameters */
-#घोषणा CPR_FUSE_TARGET_QUOT_BITS_MASK	GENMASK(11, 0)
+#define CPR_FUSE_TARGET_QUOT_BITS_MASK	GENMASK(11, 0)
 
-#घोषणा CPR_FUSE_MIN_QUOT_DIFF		50
+#define CPR_FUSE_MIN_QUOT_DIFF		50
 
-#घोषणा FUSE_REVISION_UNKNOWN		(-1)
+#define FUSE_REVISION_UNKNOWN		(-1)
 
-क्रमागत voltage_change_dir अणु
+enum voltage_change_dir {
 	NO_CHANGE,
 	DOWN,
 	UP,
-पूर्ण;
+};
 
-काष्ठा cpr_fuse अणु
-	अक्षर *ring_osc;
-	अक्षर *init_voltage;
-	अक्षर *quotient;
-	अक्षर *quotient_offset;
-पूर्ण;
+struct cpr_fuse {
+	char *ring_osc;
+	char *init_voltage;
+	char *quotient;
+	char *quotient_offset;
+};
 
-काष्ठा fuse_corner_data अणु
-	पूर्णांक ref_uV;
-	पूर्णांक max_uV;
-	पूर्णांक min_uV;
-	पूर्णांक max_volt_scale;
-	पूर्णांक max_quot_scale;
+struct fuse_corner_data {
+	int ref_uV;
+	int max_uV;
+	int min_uV;
+	int max_volt_scale;
+	int max_quot_scale;
 	/* fuse quot */
-	पूर्णांक quot_offset;
-	पूर्णांक quot_scale;
-	पूर्णांक quot_adjust;
+	int quot_offset;
+	int quot_scale;
+	int quot_adjust;
 	/* fuse quot_offset */
-	पूर्णांक quot_offset_scale;
-	पूर्णांक quot_offset_adjust;
-पूर्ण;
+	int quot_offset_scale;
+	int quot_offset_adjust;
+};
 
-काष्ठा cpr_fuses अणु
-	पूर्णांक init_voltage_step;
-	पूर्णांक init_voltage_width;
-	काष्ठा fuse_corner_data *fuse_corner_data;
-पूर्ण;
+struct cpr_fuses {
+	int init_voltage_step;
+	int init_voltage_width;
+	struct fuse_corner_data *fuse_corner_data;
+};
 
-काष्ठा corner_data अणु
-	अचिन्हित पूर्णांक fuse_corner;
-	अचिन्हित दीर्घ freq;
-पूर्ण;
+struct corner_data {
+	unsigned int fuse_corner;
+	unsigned long freq;
+};
 
-काष्ठा cpr_desc अणु
-	अचिन्हित पूर्णांक num_fuse_corners;
-	पूर्णांक min_dअगरf_quot;
-	पूर्णांक *step_quot;
+struct cpr_desc {
+	unsigned int num_fuse_corners;
+	int min_diff_quot;
+	int *step_quot;
 
-	अचिन्हित पूर्णांक		समयr_delay_us;
-	अचिन्हित पूर्णांक		समयr_cons_up;
-	अचिन्हित पूर्णांक		समयr_cons_करोwn;
-	अचिन्हित पूर्णांक		up_threshold;
-	अचिन्हित पूर्णांक		करोwn_threshold;
-	अचिन्हित पूर्णांक		idle_घड़ीs;
-	अचिन्हित पूर्णांक		gcnt_us;
-	अचिन्हित पूर्णांक		vdd_apc_step_up_limit;
-	अचिन्हित पूर्णांक		vdd_apc_step_करोwn_limit;
-	अचिन्हित पूर्णांक		clamp_समयr_पूर्णांकerval;
+	unsigned int		timer_delay_us;
+	unsigned int		timer_cons_up;
+	unsigned int		timer_cons_down;
+	unsigned int		up_threshold;
+	unsigned int		down_threshold;
+	unsigned int		idle_clocks;
+	unsigned int		gcnt_us;
+	unsigned int		vdd_apc_step_up_limit;
+	unsigned int		vdd_apc_step_down_limit;
+	unsigned int		clamp_timer_interval;
 
-	काष्ठा cpr_fuses cpr_fuses;
+	struct cpr_fuses cpr_fuses;
 	bool reduce_to_fuse_uV;
 	bool reduce_to_corner_uV;
-पूर्ण;
+};
 
-काष्ठा acc_desc अणु
-	अचिन्हित पूर्णांक	enable_reg;
+struct acc_desc {
+	unsigned int	enable_reg;
 	u32		enable_mask;
 
-	काष्ठा reg_sequence	*config;
-	काष्ठा reg_sequence	*settings;
-	पूर्णांक			num_regs_per_fuse;
-पूर्ण;
+	struct reg_sequence	*config;
+	struct reg_sequence	*settings;
+	int			num_regs_per_fuse;
+};
 
-काष्ठा cpr_acc_desc अणु
-	स्थिर काष्ठा cpr_desc *cpr_desc;
-	स्थिर काष्ठा acc_desc *acc_desc;
-पूर्ण;
+struct cpr_acc_desc {
+	const struct cpr_desc *cpr_desc;
+	const struct acc_desc *acc_desc;
+};
 
-काष्ठा fuse_corner अणु
-	पूर्णांक min_uV;
-	पूर्णांक max_uV;
-	पूर्णांक uV;
-	पूर्णांक quot;
-	पूर्णांक step_quot;
-	स्थिर काष्ठा reg_sequence *accs;
-	पूर्णांक num_accs;
-	अचिन्हित दीर्घ max_freq;
+struct fuse_corner {
+	int min_uV;
+	int max_uV;
+	int uV;
+	int quot;
+	int step_quot;
+	const struct reg_sequence *accs;
+	int num_accs;
+	unsigned long max_freq;
 	u8 ring_osc_idx;
-पूर्ण;
+};
 
-काष्ठा corner अणु
-	पूर्णांक min_uV;
-	पूर्णांक max_uV;
-	पूर्णांक uV;
-	पूर्णांक last_uV;
-	पूर्णांक quot_adjust;
+struct corner {
+	int min_uV;
+	int max_uV;
+	int uV;
+	int last_uV;
+	int quot_adjust;
 	u32 save_ctl;
 	u32 save_irq;
-	अचिन्हित दीर्घ freq;
-	काष्ठा fuse_corner *fuse_corner;
-पूर्ण;
+	unsigned long freq;
+	struct fuse_corner *fuse_corner;
+};
 
-काष्ठा cpr_drv अणु
-	अचिन्हित पूर्णांक		num_corners;
-	अचिन्हित पूर्णांक		ref_clk_khz;
+struct cpr_drv {
+	unsigned int		num_corners;
+	unsigned int		ref_clk_khz;
 
-	काष्ठा generic_pm_करोमुख्य pd;
-	काष्ठा device		*dev;
-	काष्ठा device		*attached_cpu_dev;
-	काष्ठा mutex		lock;
-	व्योम __iomem		*base;
-	काष्ठा corner		*corner;
-	काष्ठा regulator	*vdd_apc;
-	काष्ठा clk		*cpu_clk;
-	काष्ठा regmap		*tcsr;
+	struct generic_pm_domain pd;
+	struct device		*dev;
+	struct device		*attached_cpu_dev;
+	struct mutex		lock;
+	void __iomem		*base;
+	struct corner		*corner;
+	struct regulator	*vdd_apc;
+	struct clk		*cpu_clk;
+	struct regmap		*tcsr;
 	bool			loop_disabled;
 	u32			gcnt;
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 
-	काष्ठा fuse_corner	*fuse_corners;
-	काष्ठा corner		*corners;
+	struct fuse_corner	*fuse_corners;
+	struct corner		*corners;
 
-	स्थिर काष्ठा cpr_desc *desc;
-	स्थिर काष्ठा acc_desc *acc_desc;
-	स्थिर काष्ठा cpr_fuse *cpr_fuses;
+	const struct cpr_desc *desc;
+	const struct acc_desc *acc_desc;
+	const struct cpr_fuse *cpr_fuses;
 
-	काष्ठा dentry *debugfs;
-पूर्ण;
+	struct dentry *debugfs;
+};
 
-अटल bool cpr_is_allowed(काष्ठा cpr_drv *drv)
-अणु
-	वापस !drv->loop_disabled;
-पूर्ण
+static bool cpr_is_allowed(struct cpr_drv *drv)
+{
+	return !drv->loop_disabled;
+}
 
-अटल व्योम cpr_ग_लिखो(काष्ठा cpr_drv *drv, u32 offset, u32 value)
-अणु
-	ग_लिखोl_relaxed(value, drv->base + offset);
-पूर्ण
+static void cpr_write(struct cpr_drv *drv, u32 offset, u32 value)
+{
+	writel_relaxed(value, drv->base + offset);
+}
 
-अटल u32 cpr_पढ़ो(काष्ठा cpr_drv *drv, u32 offset)
-अणु
-	वापस पढ़ोl_relaxed(drv->base + offset);
-पूर्ण
+static u32 cpr_read(struct cpr_drv *drv, u32 offset)
+{
+	return readl_relaxed(drv->base + offset);
+}
 
-अटल व्योम
-cpr_masked_ग_लिखो(काष्ठा cpr_drv *drv, u32 offset, u32 mask, u32 value)
-अणु
+static void
+cpr_masked_write(struct cpr_drv *drv, u32 offset, u32 mask, u32 value)
+{
 	u32 val;
 
-	val = पढ़ोl_relaxed(drv->base + offset);
+	val = readl_relaxed(drv->base + offset);
 	val &= ~mask;
 	val |= value & mask;
-	ग_लिखोl_relaxed(val, drv->base + offset);
-पूर्ण
+	writel_relaxed(val, drv->base + offset);
+}
 
-अटल व्योम cpr_irq_clr(काष्ठा cpr_drv *drv)
-अणु
-	cpr_ग_लिखो(drv, REG_RBIF_IRQ_CLEAR, CPR_INT_ALL);
-पूर्ण
+static void cpr_irq_clr(struct cpr_drv *drv)
+{
+	cpr_write(drv, REG_RBIF_IRQ_CLEAR, CPR_INT_ALL);
+}
 
-अटल व्योम cpr_irq_clr_nack(काष्ठा cpr_drv *drv)
-अणु
+static void cpr_irq_clr_nack(struct cpr_drv *drv)
+{
 	cpr_irq_clr(drv);
-	cpr_ग_लिखो(drv, REG_RBIF_CONT_NACK_CMD, 1);
-पूर्ण
+	cpr_write(drv, REG_RBIF_CONT_NACK_CMD, 1);
+}
 
-अटल व्योम cpr_irq_clr_ack(काष्ठा cpr_drv *drv)
-अणु
+static void cpr_irq_clr_ack(struct cpr_drv *drv)
+{
 	cpr_irq_clr(drv);
-	cpr_ग_लिखो(drv, REG_RBIF_CONT_ACK_CMD, 1);
-पूर्ण
+	cpr_write(drv, REG_RBIF_CONT_ACK_CMD, 1);
+}
 
-अटल व्योम cpr_irq_set(काष्ठा cpr_drv *drv, u32 पूर्णांक_bits)
-अणु
-	cpr_ग_लिखो(drv, REG_RBIF_IRQ_EN(0), पूर्णांक_bits);
-पूर्ण
+static void cpr_irq_set(struct cpr_drv *drv, u32 int_bits)
+{
+	cpr_write(drv, REG_RBIF_IRQ_EN(0), int_bits);
+}
 
-अटल व्योम cpr_ctl_modअगरy(काष्ठा cpr_drv *drv, u32 mask, u32 value)
-अणु
-	cpr_masked_ग_लिखो(drv, REG_RBCPR_CTL, mask, value);
-पूर्ण
+static void cpr_ctl_modify(struct cpr_drv *drv, u32 mask, u32 value)
+{
+	cpr_masked_write(drv, REG_RBCPR_CTL, mask, value);
+}
 
-अटल व्योम cpr_ctl_enable(काष्ठा cpr_drv *drv, काष्ठा corner *corner)
-अणु
+static void cpr_ctl_enable(struct cpr_drv *drv, struct corner *corner)
+{
 	u32 val, mask;
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
+	const struct cpr_desc *desc = drv->desc;
 
 	/* Program Consecutive Up & Down */
-	val = desc->समयr_cons_करोwn << RBIF_TIMER_ADJ_CONS_DOWN_SHIFT;
-	val |= desc->समयr_cons_up << RBIF_TIMER_ADJ_CONS_UP_SHIFT;
+	val = desc->timer_cons_down << RBIF_TIMER_ADJ_CONS_DOWN_SHIFT;
+	val |= desc->timer_cons_up << RBIF_TIMER_ADJ_CONS_UP_SHIFT;
 	mask = RBIF_TIMER_ADJ_CONS_UP_MASK | RBIF_TIMER_ADJ_CONS_DOWN_MASK;
-	cpr_masked_ग_लिखो(drv, REG_RBIF_TIMER_ADJUST, mask, val);
-	cpr_masked_ग_लिखो(drv, REG_RBCPR_CTL,
+	cpr_masked_write(drv, REG_RBIF_TIMER_ADJUST, mask, val);
+	cpr_masked_write(drv, REG_RBCPR_CTL,
 			 RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN |
 			 RBCPR_CTL_SW_AUTO_CONT_ACK_EN,
 			 corner->save_ctl);
 	cpr_irq_set(drv, corner->save_irq);
 
-	अगर (cpr_is_allowed(drv) && corner->max_uV > corner->min_uV)
+	if (cpr_is_allowed(drv) && corner->max_uV > corner->min_uV)
 		val = RBCPR_CTL_LOOP_EN;
-	अन्यथा
+	else
 		val = 0;
-	cpr_ctl_modअगरy(drv, RBCPR_CTL_LOOP_EN, val);
-पूर्ण
+	cpr_ctl_modify(drv, RBCPR_CTL_LOOP_EN, val);
+}
 
-अटल व्योम cpr_ctl_disable(काष्ठा cpr_drv *drv)
-अणु
+static void cpr_ctl_disable(struct cpr_drv *drv)
+{
 	cpr_irq_set(drv, 0);
-	cpr_ctl_modअगरy(drv, RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN |
+	cpr_ctl_modify(drv, RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN |
 		       RBCPR_CTL_SW_AUTO_CONT_ACK_EN, 0);
-	cpr_masked_ग_लिखो(drv, REG_RBIF_TIMER_ADJUST,
+	cpr_masked_write(drv, REG_RBIF_TIMER_ADJUST,
 			 RBIF_TIMER_ADJ_CONS_UP_MASK |
 			 RBIF_TIMER_ADJ_CONS_DOWN_MASK, 0);
 	cpr_irq_clr(drv);
-	cpr_ग_लिखो(drv, REG_RBIF_CONT_ACK_CMD, 1);
-	cpr_ग_लिखो(drv, REG_RBIF_CONT_NACK_CMD, 1);
-	cpr_ctl_modअगरy(drv, RBCPR_CTL_LOOP_EN, 0);
-पूर्ण
+	cpr_write(drv, REG_RBIF_CONT_ACK_CMD, 1);
+	cpr_write(drv, REG_RBIF_CONT_NACK_CMD, 1);
+	cpr_ctl_modify(drv, RBCPR_CTL_LOOP_EN, 0);
+}
 
-अटल bool cpr_ctl_is_enabled(काष्ठा cpr_drv *drv)
-अणु
+static bool cpr_ctl_is_enabled(struct cpr_drv *drv)
+{
 	u32 reg_val;
 
-	reg_val = cpr_पढ़ो(drv, REG_RBCPR_CTL);
-	वापस reg_val & RBCPR_CTL_LOOP_EN;
-पूर्ण
+	reg_val = cpr_read(drv, REG_RBCPR_CTL);
+	return reg_val & RBCPR_CTL_LOOP_EN;
+}
 
-अटल bool cpr_ctl_is_busy(काष्ठा cpr_drv *drv)
-अणु
+static bool cpr_ctl_is_busy(struct cpr_drv *drv)
+{
 	u32 reg_val;
 
-	reg_val = cpr_पढ़ो(drv, REG_RBCPR_RESULT_0);
-	वापस reg_val & RBCPR_RESULT0_BUSY_MASK;
-पूर्ण
+	reg_val = cpr_read(drv, REG_RBCPR_RESULT_0);
+	return reg_val & RBCPR_RESULT0_BUSY_MASK;
+}
 
-अटल व्योम cpr_corner_save(काष्ठा cpr_drv *drv, काष्ठा corner *corner)
-अणु
-	corner->save_ctl = cpr_पढ़ो(drv, REG_RBCPR_CTL);
-	corner->save_irq = cpr_पढ़ो(drv, REG_RBIF_IRQ_EN(0));
-पूर्ण
+static void cpr_corner_save(struct cpr_drv *drv, struct corner *corner)
+{
+	corner->save_ctl = cpr_read(drv, REG_RBCPR_CTL);
+	corner->save_irq = cpr_read(drv, REG_RBIF_IRQ_EN(0));
+}
 
-अटल व्योम cpr_corner_restore(काष्ठा cpr_drv *drv, काष्ठा corner *corner)
-अणु
+static void cpr_corner_restore(struct cpr_drv *drv, struct corner *corner)
+{
 	u32 gcnt, ctl, irq, ro_sel, step_quot;
-	काष्ठा fuse_corner *fuse = corner->fuse_corner;
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
-	पूर्णांक i;
+	struct fuse_corner *fuse = corner->fuse_corner;
+	const struct cpr_desc *desc = drv->desc;
+	int i;
 
 	ro_sel = fuse->ring_osc_idx;
 	gcnt = drv->gcnt;
 	gcnt |= fuse->quot - corner->quot_adjust;
 
-	/* Program the step quotient and idle घड़ीs */
-	step_quot = desc->idle_घड़ीs << RBCPR_STEP_QUOT_IDLE_CLK_SHIFT;
+	/* Program the step quotient and idle clocks */
+	step_quot = desc->idle_clocks << RBCPR_STEP_QUOT_IDLE_CLK_SHIFT;
 	step_quot |= fuse->step_quot & RBCPR_STEP_QUOT_STEPQUOT_MASK;
-	cpr_ग_लिखो(drv, REG_RBCPR_STEP_QUOT, step_quot);
+	cpr_write(drv, REG_RBCPR_STEP_QUOT, step_quot);
 
 	/* Clear the target quotient value and gate count of all ROs */
-	क्रम (i = 0; i < CPR_NUM_RING_OSC; i++)
-		cpr_ग_लिखो(drv, REG_RBCPR_GCNT_TARGET(i), 0);
+	for (i = 0; i < CPR_NUM_RING_OSC; i++)
+		cpr_write(drv, REG_RBCPR_GCNT_TARGET(i), 0);
 
-	cpr_ग_लिखो(drv, REG_RBCPR_GCNT_TARGET(ro_sel), gcnt);
+	cpr_write(drv, REG_RBCPR_GCNT_TARGET(ro_sel), gcnt);
 	ctl = corner->save_ctl;
-	cpr_ग_लिखो(drv, REG_RBCPR_CTL, ctl);
+	cpr_write(drv, REG_RBCPR_CTL, ctl);
 	irq = corner->save_irq;
 	cpr_irq_set(drv, irq);
 	dev_dbg(drv->dev, "gcnt = %#08x, ctl = %#08x, irq = %#08x\n", gcnt,
 		ctl, irq);
-पूर्ण
+}
 
-अटल व्योम cpr_set_acc(काष्ठा regmap *tcsr, काष्ठा fuse_corner *f,
-			काष्ठा fuse_corner *end)
-अणु
-	अगर (f == end)
-		वापस;
+static void cpr_set_acc(struct regmap *tcsr, struct fuse_corner *f,
+			struct fuse_corner *end)
+{
+	if (f == end)
+		return;
 
-	अगर (f < end) अणु
-		क्रम (f += 1; f <= end; f++)
-			regmap_multi_reg_ग_लिखो(tcsr, f->accs, f->num_accs);
-	पूर्ण अन्यथा अणु
-		क्रम (f -= 1; f >= end; f--)
-			regmap_multi_reg_ग_लिखो(tcsr, f->accs, f->num_accs);
-	पूर्ण
-पूर्ण
+	if (f < end) {
+		for (f += 1; f <= end; f++)
+			regmap_multi_reg_write(tcsr, f->accs, f->num_accs);
+	} else {
+		for (f -= 1; f >= end; f--)
+			regmap_multi_reg_write(tcsr, f->accs, f->num_accs);
+	}
+}
 
-अटल पूर्णांक cpr_pre_voltage(काष्ठा cpr_drv *drv,
-			   काष्ठा fuse_corner *fuse_corner,
-			   क्रमागत voltage_change_dir dir)
-अणु
-	काष्ठा fuse_corner *prev_fuse_corner = drv->corner->fuse_corner;
+static int cpr_pre_voltage(struct cpr_drv *drv,
+			   struct fuse_corner *fuse_corner,
+			   enum voltage_change_dir dir)
+{
+	struct fuse_corner *prev_fuse_corner = drv->corner->fuse_corner;
 
-	अगर (drv->tcsr && dir == DOWN)
+	if (drv->tcsr && dir == DOWN)
 		cpr_set_acc(drv->tcsr, prev_fuse_corner, fuse_corner);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_post_voltage(काष्ठा cpr_drv *drv,
-			    काष्ठा fuse_corner *fuse_corner,
-			    क्रमागत voltage_change_dir dir)
-अणु
-	काष्ठा fuse_corner *prev_fuse_corner = drv->corner->fuse_corner;
+static int cpr_post_voltage(struct cpr_drv *drv,
+			    struct fuse_corner *fuse_corner,
+			    enum voltage_change_dir dir)
+{
+	struct fuse_corner *prev_fuse_corner = drv->corner->fuse_corner;
 
-	अगर (drv->tcsr && dir == UP)
+	if (drv->tcsr && dir == UP)
 		cpr_set_acc(drv->tcsr, prev_fuse_corner, fuse_corner);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_scale_voltage(काष्ठा cpr_drv *drv, काष्ठा corner *corner,
-			     पूर्णांक new_uV, क्रमागत voltage_change_dir dir)
-अणु
-	पूर्णांक ret;
-	काष्ठा fuse_corner *fuse_corner = corner->fuse_corner;
+static int cpr_scale_voltage(struct cpr_drv *drv, struct corner *corner,
+			     int new_uV, enum voltage_change_dir dir)
+{
+	int ret;
+	struct fuse_corner *fuse_corner = corner->fuse_corner;
 
 	ret = cpr_pre_voltage(drv, fuse_corner, dir);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regulator_set_voltage(drv->vdd_apc, new_uV, new_uV);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err_ratelimited(drv->dev, "failed to set apc voltage %d\n",
 				    new_uV);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = cpr_post_voltage(drv, fuse_corner, dir);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक cpr_get_cur_perf_state(काष्ठा cpr_drv *drv)
-अणु
-	वापस drv->corner ? drv->corner - drv->corners + 1 : 0;
-पूर्ण
+static unsigned int cpr_get_cur_perf_state(struct cpr_drv *drv)
+{
+	return drv->corner ? drv->corner - drv->corners + 1 : 0;
+}
 
-अटल पूर्णांक cpr_scale(काष्ठा cpr_drv *drv, क्रमागत voltage_change_dir dir)
-अणु
+static int cpr_scale(struct cpr_drv *drv, enum voltage_change_dir dir)
+{
 	u32 val, error_steps, reg_mask;
-	पूर्णांक last_uV, new_uV, step_uV, ret;
-	काष्ठा corner *corner;
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
+	int last_uV, new_uV, step_uV, ret;
+	struct corner *corner;
+	const struct cpr_desc *desc = drv->desc;
 
-	अगर (dir != UP && dir != DOWN)
-		वापस 0;
+	if (dir != UP && dir != DOWN)
+		return 0;
 
 	step_uV = regulator_get_linear_step(drv->vdd_apc);
-	अगर (!step_uV)
-		वापस -EINVAL;
+	if (!step_uV)
+		return -EINVAL;
 
 	corner = drv->corner;
 
-	val = cpr_पढ़ो(drv, REG_RBCPR_RESULT_0);
+	val = cpr_read(drv, REG_RBCPR_RESULT_0);
 
 	error_steps = val >> RBCPR_RESULT0_ERROR_STEPS_SHIFT;
 	error_steps &= RBCPR_RESULT0_ERROR_STEPS_MASK;
 	last_uV = corner->last_uV;
 
-	अगर (dir == UP) अणु
-		अगर (desc->clamp_समयr_पूर्णांकerval &&
-		    error_steps < desc->up_threshold) अणु
+	if (dir == UP) {
+		if (desc->clamp_timer_interval &&
+		    error_steps < desc->up_threshold) {
 			/*
-			 * Handle the हाल where another measurement started
-			 * after the पूर्णांकerrupt was triggered due to a core
-			 * निकासing from घातer collapse.
+			 * Handle the case where another measurement started
+			 * after the interrupt was triggered due to a core
+			 * exiting from power collapse.
 			 */
 			error_steps = max(desc->up_threshold,
 					  desc->vdd_apc_step_up_limit);
-		पूर्ण
+		}
 
-		अगर (last_uV >= corner->max_uV) अणु
+		if (last_uV >= corner->max_uV) {
 			cpr_irq_clr_nack(drv);
 
 			/* Maximize the UP threshold */
 			reg_mask = RBCPR_CTL_UP_THRESHOLD_MASK;
 			reg_mask <<= RBCPR_CTL_UP_THRESHOLD_SHIFT;
 			val = reg_mask;
-			cpr_ctl_modअगरy(drv, reg_mask, val);
+			cpr_ctl_modify(drv, reg_mask, val);
 
-			/* Disable UP पूर्णांकerrupt */
+			/* Disable UP interrupt */
 			cpr_irq_set(drv, CPR_INT_DEFAULT & ~CPR_INT_UP);
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (error_steps > desc->vdd_apc_step_up_limit)
+		if (error_steps > desc->vdd_apc_step_up_limit)
 			error_steps = desc->vdd_apc_step_up_limit;
 
 		/* Calculate new voltage */
@@ -518,35 +517,35 @@ cpr_masked_ग_लिखो(काष्ठा cpr_drv *drv, u32 offset, u32 mas
 		dev_dbg(drv->dev,
 			"UP: -> new_uV: %d last_uV: %d perf state: %u\n",
 			new_uV, last_uV, cpr_get_cur_perf_state(drv));
-	पूर्ण अन्यथा अणु
-		अगर (desc->clamp_समयr_पूर्णांकerval &&
-		    error_steps < desc->करोwn_threshold) अणु
+	} else {
+		if (desc->clamp_timer_interval &&
+		    error_steps < desc->down_threshold) {
 			/*
-			 * Handle the हाल where another measurement started
-			 * after the पूर्णांकerrupt was triggered due to a core
-			 * निकासing from घातer collapse.
+			 * Handle the case where another measurement started
+			 * after the interrupt was triggered due to a core
+			 * exiting from power collapse.
 			 */
-			error_steps = max(desc->करोwn_threshold,
-					  desc->vdd_apc_step_करोwn_limit);
-		पूर्ण
+			error_steps = max(desc->down_threshold,
+					  desc->vdd_apc_step_down_limit);
+		}
 
-		अगर (last_uV <= corner->min_uV) अणु
+		if (last_uV <= corner->min_uV) {
 			cpr_irq_clr_nack(drv);
 
-			/* Enable स्वतः nack करोwn */
+			/* Enable auto nack down */
 			reg_mask = RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN;
 			val = RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN;
 
-			cpr_ctl_modअगरy(drv, reg_mask, val);
+			cpr_ctl_modify(drv, reg_mask, val);
 
-			/* Disable DOWN पूर्णांकerrupt */
+			/* Disable DOWN interrupt */
 			cpr_irq_set(drv, CPR_INT_DEFAULT & ~CPR_INT_DOWN);
 
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (error_steps > desc->vdd_apc_step_करोwn_limit)
-			error_steps = desc->vdd_apc_step_करोwn_limit;
+		if (error_steps > desc->vdd_apc_step_down_limit)
+			error_steps = desc->vdd_apc_step_down_limit;
 
 		/* Calculate new voltage */
 		new_uV = last_uV - error_steps * step_uV;
@@ -555,153 +554,153 @@ cpr_masked_ग_लिखो(काष्ठा cpr_drv *drv, u32 offset, u32 mas
 		dev_dbg(drv->dev,
 			"DOWN: -> new_uV: %d last_uV: %d perf state: %u\n",
 			new_uV, last_uV, cpr_get_cur_perf_state(drv));
-	पूर्ण
+	}
 
 	ret = cpr_scale_voltage(drv, corner, new_uV, dir);
-	अगर (ret) अणु
+	if (ret) {
 		cpr_irq_clr_nack(drv);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	drv->corner->last_uV = new_uV;
 
-	अगर (dir == UP) अणु
-		/* Disable स्वतः nack करोwn */
+	if (dir == UP) {
+		/* Disable auto nack down */
 		reg_mask = RBCPR_CTL_SW_AUTO_CONT_NACK_DN_EN;
 		val = 0;
-	पूर्ण अन्यथा अणु
-		/* Restore शेष threshold क्रम UP */
+	} else {
+		/* Restore default threshold for UP */
 		reg_mask = RBCPR_CTL_UP_THRESHOLD_MASK;
 		reg_mask <<= RBCPR_CTL_UP_THRESHOLD_SHIFT;
 		val = desc->up_threshold;
 		val <<= RBCPR_CTL_UP_THRESHOLD_SHIFT;
-	पूर्ण
+	}
 
-	cpr_ctl_modअगरy(drv, reg_mask, val);
+	cpr_ctl_modify(drv, reg_mask, val);
 
-	/* Re-enable शेष पूर्णांकerrupts */
+	/* Re-enable default interrupts */
 	cpr_irq_set(drv, CPR_INT_DEFAULT);
 
 	/* Ack */
 	cpr_irq_clr_ack(drv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t cpr_irq_handler(पूर्णांक irq, व्योम *dev)
-अणु
-	काष्ठा cpr_drv *drv = dev;
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
-	irqवापस_t ret = IRQ_HANDLED;
+static irqreturn_t cpr_irq_handler(int irq, void *dev)
+{
+	struct cpr_drv *drv = dev;
+	const struct cpr_desc *desc = drv->desc;
+	irqreturn_t ret = IRQ_HANDLED;
 	u32 val;
 
 	mutex_lock(&drv->lock);
 
-	val = cpr_पढ़ो(drv, REG_RBIF_IRQ_STATUS);
-	अगर (drv->flags & FLAGS_IGNORE_1ST_IRQ_STATUS)
-		val = cpr_पढ़ो(drv, REG_RBIF_IRQ_STATUS);
+	val = cpr_read(drv, REG_RBIF_IRQ_STATUS);
+	if (drv->flags & FLAGS_IGNORE_1ST_IRQ_STATUS)
+		val = cpr_read(drv, REG_RBIF_IRQ_STATUS);
 
 	dev_dbg(drv->dev, "IRQ_STATUS = %#02x\n", val);
 
-	अगर (!cpr_ctl_is_enabled(drv)) अणु
+	if (!cpr_ctl_is_enabled(drv)) {
 		dev_dbg(drv->dev, "CPR is disabled\n");
 		ret = IRQ_NONE;
-	पूर्ण अन्यथा अगर (cpr_ctl_is_busy(drv) && !desc->clamp_समयr_पूर्णांकerval) अणु
+	} else if (cpr_ctl_is_busy(drv) && !desc->clamp_timer_interval) {
 		dev_dbg(drv->dev, "CPR measurement is not ready\n");
-	पूर्ण अन्यथा अगर (!cpr_is_allowed(drv)) अणु
-		val = cpr_पढ़ो(drv, REG_RBCPR_CTL);
+	} else if (!cpr_is_allowed(drv)) {
+		val = cpr_read(drv, REG_RBCPR_CTL);
 		dev_err_ratelimited(drv->dev,
 				    "Interrupt broken? RBCPR_CTL = %#02x\n",
 				    val);
 		ret = IRQ_NONE;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Following sequence of handling is as per each IRQ's
 		 * priority
 		 */
-		अगर (val & CPR_INT_UP) अणु
+		if (val & CPR_INT_UP) {
 			cpr_scale(drv, UP);
-		पूर्ण अन्यथा अगर (val & CPR_INT_DOWN) अणु
+		} else if (val & CPR_INT_DOWN) {
 			cpr_scale(drv, DOWN);
-		पूर्ण अन्यथा अगर (val & CPR_पूर्णांक_न्यून) अणु
+		} else if (val & CPR_INT_MIN) {
 			cpr_irq_clr_nack(drv);
-		पूर्ण अन्यथा अगर (val & CPR_पूर्णांक_उच्च) अणु
+		} else if (val & CPR_INT_MAX) {
 			cpr_irq_clr_nack(drv);
-		पूर्ण अन्यथा अगर (val & CPR_INT_MID) अणु
+		} else if (val & CPR_INT_MID) {
 			/* RBCPR_CTL_SW_AUTO_CONT_ACK_EN is enabled */
 			dev_dbg(drv->dev, "IRQ occurred for Mid Flag\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_dbg(drv->dev,
 				"IRQ occurred for unknown flag (%#08x)\n", val);
-		पूर्ण
+		}
 
-		/* Save रेजिस्टर values क्रम the corner */
+		/* Save register values for the corner */
 		cpr_corner_save(drv, drv->corner);
-	पूर्ण
+	}
 
 	mutex_unlock(&drv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpr_enable(काष्ठा cpr_drv *drv)
-अणु
-	पूर्णांक ret;
+static int cpr_enable(struct cpr_drv *drv)
+{
+	int ret;
 
 	ret = regulator_enable(drv->vdd_apc);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&drv->lock);
 
-	अगर (cpr_is_allowed(drv) && drv->corner) अणु
+	if (cpr_is_allowed(drv) && drv->corner) {
 		cpr_irq_clr(drv);
 		cpr_corner_restore(drv, drv->corner);
 		cpr_ctl_enable(drv, drv->corner);
-	पूर्ण
+	}
 
 	mutex_unlock(&drv->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_disable(काष्ठा cpr_drv *drv)
-अणु
+static int cpr_disable(struct cpr_drv *drv)
+{
 	mutex_lock(&drv->lock);
 
-	अगर (cpr_is_allowed(drv)) अणु
+	if (cpr_is_allowed(drv)) {
 		cpr_ctl_disable(drv);
 		cpr_irq_clr(drv);
-	पूर्ण
+	}
 
 	mutex_unlock(&drv->lock);
 
-	वापस regulator_disable(drv->vdd_apc);
-पूर्ण
+	return regulator_disable(drv->vdd_apc);
+}
 
-अटल पूर्णांक cpr_config(काष्ठा cpr_drv *drv)
-अणु
-	पूर्णांक i;
+static int cpr_config(struct cpr_drv *drv)
+{
+	int i;
 	u32 val, gcnt;
-	काष्ठा corner *corner;
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
+	struct corner *corner;
+	const struct cpr_desc *desc = drv->desc;
 
-	/* Disable पूर्णांकerrupt and CPR */
-	cpr_ग_लिखो(drv, REG_RBIF_IRQ_EN(0), 0);
-	cpr_ग_लिखो(drv, REG_RBCPR_CTL, 0);
+	/* Disable interrupt and CPR */
+	cpr_write(drv, REG_RBIF_IRQ_EN(0), 0);
+	cpr_write(drv, REG_RBCPR_CTL, 0);
 
-	/* Program the शेष HW उच्चमानing, न्यूनमान and vlevel */
+	/* Program the default HW ceiling, floor and vlevel */
 	val = (RBIF_LIMIT_CEILING_DEFAULT & RBIF_LIMIT_CEILING_MASK)
 		<< RBIF_LIMIT_CEILING_SHIFT;
 	val |= RBIF_LIMIT_FLOOR_DEFAULT & RBIF_LIMIT_FLOOR_MASK;
-	cpr_ग_लिखो(drv, REG_RBIF_LIMIT, val);
-	cpr_ग_लिखो(drv, REG_RBIF_SW_VLEVEL, RBIF_SW_VLEVEL_DEFAULT);
+	cpr_write(drv, REG_RBIF_LIMIT, val);
+	cpr_write(drv, REG_RBIF_SW_VLEVEL, RBIF_SW_VLEVEL_DEFAULT);
 
 	/*
 	 * Clear the target quotient value and gate count of all
 	 * ring oscillators
 	 */
-	क्रम (i = 0; i < CPR_NUM_RING_OSC; i++)
-		cpr_ग_लिखो(drv, REG_RBCPR_GCNT_TARGET(i), 0);
+	for (i = 0; i < CPR_NUM_RING_OSC; i++)
+		cpr_write(drv, REG_RBCPR_GCNT_TARGET(i), 0);
 
 	/* Init and save gcnt */
 	gcnt = (drv->ref_clk_khz * desc->gcnt_us) / 1000;
@@ -709,47 +708,47 @@ cpr_masked_ग_लिखो(काष्ठा cpr_drv *drv, u32 offset, u32 mas
 	gcnt <<= RBCPR_GCNT_TARGET_GCNT_SHIFT;
 	drv->gcnt = gcnt;
 
-	/* Program the delay count क्रम the समयr */
-	val = (drv->ref_clk_khz * desc->समयr_delay_us) / 1000;
-	cpr_ग_लिखो(drv, REG_RBCPR_TIMER_INTERVAL, val);
+	/* Program the delay count for the timer */
+	val = (drv->ref_clk_khz * desc->timer_delay_us) / 1000;
+	cpr_write(drv, REG_RBCPR_TIMER_INTERVAL, val);
 	dev_dbg(drv->dev, "Timer count: %#0x (for %d us)\n", val,
-		desc->समयr_delay_us);
+		desc->timer_delay_us);
 
 	/* Program Consecutive Up & Down */
-	val = desc->समयr_cons_करोwn << RBIF_TIMER_ADJ_CONS_DOWN_SHIFT;
-	val |= desc->समयr_cons_up << RBIF_TIMER_ADJ_CONS_UP_SHIFT;
-	val |= desc->clamp_समयr_पूर्णांकerval << RBIF_TIMER_ADJ_CLAMP_INT_SHIFT;
-	cpr_ग_लिखो(drv, REG_RBIF_TIMER_ADJUST, val);
+	val = desc->timer_cons_down << RBIF_TIMER_ADJ_CONS_DOWN_SHIFT;
+	val |= desc->timer_cons_up << RBIF_TIMER_ADJ_CONS_UP_SHIFT;
+	val |= desc->clamp_timer_interval << RBIF_TIMER_ADJ_CLAMP_INT_SHIFT;
+	cpr_write(drv, REG_RBIF_TIMER_ADJUST, val);
 
-	/* Program the control रेजिस्टर */
+	/* Program the control register */
 	val = desc->up_threshold << RBCPR_CTL_UP_THRESHOLD_SHIFT;
-	val |= desc->करोwn_threshold << RBCPR_CTL_DN_THRESHOLD_SHIFT;
+	val |= desc->down_threshold << RBCPR_CTL_DN_THRESHOLD_SHIFT;
 	val |= RBCPR_CTL_TIMER_EN | RBCPR_CTL_COUNT_MODE;
 	val |= RBCPR_CTL_SW_AUTO_CONT_ACK_EN;
-	cpr_ग_लिखो(drv, REG_RBCPR_CTL, val);
+	cpr_write(drv, REG_RBCPR_CTL, val);
 
-	क्रम (i = 0; i < drv->num_corners; i++) अणु
+	for (i = 0; i < drv->num_corners; i++) {
 		corner = &drv->corners[i];
 		corner->save_ctl = val;
 		corner->save_irq = CPR_INT_DEFAULT;
-	पूर्ण
+	}
 
 	cpr_irq_set(drv, CPR_INT_DEFAULT);
 
-	val = cpr_पढ़ो(drv, REG_RBCPR_VERSION);
-	अगर (val <= RBCPR_VER_2)
+	val = cpr_read(drv, REG_RBCPR_VERSION);
+	if (val <= RBCPR_VER_2)
 		drv->flags |= FLAGS_IGNORE_1ST_IRQ_STATUS;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_set_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *करोमुख्य,
-				     अचिन्हित पूर्णांक state)
-अणु
-	काष्ठा cpr_drv *drv = container_of(करोमुख्य, काष्ठा cpr_drv, pd);
-	काष्ठा corner *corner, *end;
-	क्रमागत voltage_change_dir dir;
-	पूर्णांक ret = 0, new_uV;
+static int cpr_set_performance_state(struct generic_pm_domain *domain,
+				     unsigned int state)
+{
+	struct cpr_drv *drv = container_of(domain, struct cpr_drv, pd);
+	struct corner *corner, *end;
+	enum voltage_change_dir dir;
+	int ret = 0, new_uV;
 
 	mutex_lock(&drv->lock);
 
@@ -758,184 +757,184 @@ cpr_masked_ग_लिखो(काष्ठा cpr_drv *drv, u32 offset, u32 mas
 
 	/*
 	 * Determine new corner we're going to.
-	 * Remove one since lowest perक्रमmance state is 1.
+	 * Remove one since lowest performance state is 1.
 	 */
 	corner = drv->corners + state - 1;
 	end = &drv->corners[drv->num_corners - 1];
-	अगर (corner > end || corner < drv->corners) अणु
+	if (corner > end || corner < drv->corners) {
 		ret = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* Determine direction */
-	अगर (drv->corner > corner)
+	if (drv->corner > corner)
 		dir = DOWN;
-	अन्यथा अगर (drv->corner < corner)
+	else if (drv->corner < corner)
 		dir = UP;
-	अन्यथा
+	else
 		dir = NO_CHANGE;
 
-	अगर (cpr_is_allowed(drv))
+	if (cpr_is_allowed(drv))
 		new_uV = corner->last_uV;
-	अन्यथा
+	else
 		new_uV = corner->uV;
 
-	अगर (cpr_is_allowed(drv))
+	if (cpr_is_allowed(drv))
 		cpr_ctl_disable(drv);
 
 	ret = cpr_scale_voltage(drv, corner, new_uV, dir);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
-	अगर (cpr_is_allowed(drv)) अणु
+	if (cpr_is_allowed(drv)) {
 		cpr_irq_clr(drv);
-		अगर (drv->corner != corner)
+		if (drv->corner != corner)
 			cpr_corner_restore(drv, corner);
 		cpr_ctl_enable(drv, corner);
-	पूर्ण
+	}
 
 	drv->corner = corner;
 
 unlock:
 	mutex_unlock(&drv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpr_पढ़ो_efuse(काष्ठा device *dev, स्थिर अक्षर *cname, u32 *data)
-अणु
-	काष्ठा nvmem_cell *cell;
-	sमाप_प्रकार len;
-	अक्षर *ret;
-	पूर्णांक i;
+static int cpr_read_efuse(struct device *dev, const char *cname, u32 *data)
+{
+	struct nvmem_cell *cell;
+	ssize_t len;
+	char *ret;
+	int i;
 
 	*data = 0;
 
 	cell = nvmem_cell_get(dev, cname);
-	अगर (IS_ERR(cell)) अणु
-		अगर (PTR_ERR(cell) != -EPROBE_DEFER)
+	if (IS_ERR(cell)) {
+		if (PTR_ERR(cell) != -EPROBE_DEFER)
 			dev_err(dev, "undefined cell %s\n", cname);
-		वापस PTR_ERR(cell);
-	पूर्ण
+		return PTR_ERR(cell);
+	}
 
-	ret = nvmem_cell_पढ़ो(cell, &len);
+	ret = nvmem_cell_read(cell, &len);
 	nvmem_cell_put(cell);
-	अगर (IS_ERR(ret)) अणु
+	if (IS_ERR(ret)) {
 		dev_err(dev, "can't read cell %s\n", cname);
-		वापस PTR_ERR(ret);
-	पूर्ण
+		return PTR_ERR(ret);
+	}
 
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		*data |= ret[i] << (8 * i);
 
-	kमुक्त(ret);
+	kfree(ret);
 	dev_dbg(dev, "efuse read(%s) = %x, bytes %zd\n", cname, *data, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-cpr_populate_ring_osc_idx(काष्ठा cpr_drv *drv)
-अणु
-	काष्ठा fuse_corner *fuse = drv->fuse_corners;
-	काष्ठा fuse_corner *end = fuse + drv->desc->num_fuse_corners;
-	स्थिर काष्ठा cpr_fuse *fuses = drv->cpr_fuses;
+static int
+cpr_populate_ring_osc_idx(struct cpr_drv *drv)
+{
+	struct fuse_corner *fuse = drv->fuse_corners;
+	struct fuse_corner *end = fuse + drv->desc->num_fuse_corners;
+	const struct cpr_fuse *fuses = drv->cpr_fuses;
 	u32 data;
-	पूर्णांक ret;
+	int ret;
 
-	क्रम (; fuse < end; fuse++, fuses++) अणु
-		ret = cpr_पढ़ो_efuse(drv->dev, fuses->ring_osc,
+	for (; fuse < end; fuse++, fuses++) {
+		ret = cpr_read_efuse(drv->dev, fuses->ring_osc,
 				     &data);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		fuse->ring_osc_idx = data;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_पढ़ो_fuse_uV(स्थिर काष्ठा cpr_desc *desc,
-			    स्थिर काष्ठा fuse_corner_data *fdata,
-			    स्थिर अक्षर *init_v_efuse,
-			    पूर्णांक step_volt,
-			    काष्ठा cpr_drv *drv)
-अणु
-	पूर्णांक step_size_uV, steps, uV;
+static int cpr_read_fuse_uV(const struct cpr_desc *desc,
+			    const struct fuse_corner_data *fdata,
+			    const char *init_v_efuse,
+			    int step_volt,
+			    struct cpr_drv *drv)
+{
+	int step_size_uV, steps, uV;
 	u32 bits = 0;
-	पूर्णांक ret;
+	int ret;
 
-	ret = cpr_पढ़ो_efuse(drv->dev, init_v_efuse, &bits);
-	अगर (ret)
-		वापस ret;
+	ret = cpr_read_efuse(drv->dev, init_v_efuse, &bits);
+	if (ret)
+		return ret;
 
 	steps = bits & ~BIT(desc->cpr_fuses.init_voltage_width - 1);
 	/* Not two's complement.. instead highest bit is sign bit */
-	अगर (bits & BIT(desc->cpr_fuses.init_voltage_width - 1))
+	if (bits & BIT(desc->cpr_fuses.init_voltage_width - 1))
 		steps = -steps;
 
 	step_size_uV = desc->cpr_fuses.init_voltage_step;
 
 	uV = fdata->ref_uV + steps * step_size_uV;
-	वापस DIV_ROUND_UP(uV, step_volt) * step_volt;
-पूर्ण
+	return DIV_ROUND_UP(uV, step_volt) * step_volt;
+}
 
-अटल पूर्णांक cpr_fuse_corner_init(काष्ठा cpr_drv *drv)
-अणु
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
-	स्थिर काष्ठा cpr_fuse *fuses = drv->cpr_fuses;
-	स्थिर काष्ठा acc_desc *acc_desc = drv->acc_desc;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक step_volt;
-	काष्ठा fuse_corner_data *fdata;
-	काष्ठा fuse_corner *fuse, *end;
-	पूर्णांक uV;
-	स्थिर काष्ठा reg_sequence *accs;
-	पूर्णांक ret;
+static int cpr_fuse_corner_init(struct cpr_drv *drv)
+{
+	const struct cpr_desc *desc = drv->desc;
+	const struct cpr_fuse *fuses = drv->cpr_fuses;
+	const struct acc_desc *acc_desc = drv->acc_desc;
+	int i;
+	unsigned int step_volt;
+	struct fuse_corner_data *fdata;
+	struct fuse_corner *fuse, *end;
+	int uV;
+	const struct reg_sequence *accs;
+	int ret;
 
 	accs = acc_desc->settings;
 
 	step_volt = regulator_get_linear_step(drv->vdd_apc);
-	अगर (!step_volt)
-		वापस -EINVAL;
+	if (!step_volt)
+		return -EINVAL;
 
 	/* Populate fuse_corner members */
 	fuse = drv->fuse_corners;
 	end = &fuse[desc->num_fuse_corners - 1];
 	fdata = desc->cpr_fuses.fuse_corner_data;
 
-	क्रम (i = 0; fuse <= end; fuse++, fuses++, i++, fdata++) अणु
+	for (i = 0; fuse <= end; fuse++, fuses++, i++, fdata++) {
 		/*
-		 * Update SoC voltages: platक्रमms might choose a dअगरferent
-		 * regulators than the one used to अक्षरacterize the algorithms
+		 * Update SoC voltages: platforms might choose a different
+		 * regulators than the one used to characterize the algorithms
 		 * (ie, init_voltage_step).
 		 */
 		fdata->min_uV = roundup(fdata->min_uV, step_volt);
 		fdata->max_uV = roundup(fdata->max_uV, step_volt);
 
 		/* Populate uV */
-		uV = cpr_पढ़ो_fuse_uV(desc, fdata, fuses->init_voltage,
+		uV = cpr_read_fuse_uV(desc, fdata, fuses->init_voltage,
 				      step_volt, drv);
-		अगर (uV < 0)
-			वापस uV;
+		if (uV < 0)
+			return uV;
 
 		fuse->min_uV = fdata->min_uV;
 		fuse->max_uV = fdata->max_uV;
 		fuse->uV = clamp(uV, fuse->min_uV, fuse->max_uV);
 
-		अगर (fuse == end) अणु
+		if (fuse == end) {
 			/*
 			 * Allow the highest fuse corner's PVS voltage to
-			 * define the उच्चमानing voltage क्रम that corner in order
-			 * to support SoC's in which variable उच्चमानing values
+			 * define the ceiling voltage for that corner in order
+			 * to support SoC's in which variable ceiling values
 			 * are required.
 			 */
 			end->max_uV = max(end->max_uV, end->uV);
-		पूर्ण
+		}
 
 		/* Populate target quotient by scaling */
-		ret = cpr_पढ़ो_efuse(drv->dev, fuses->quotient, &fuse->quot);
-		अगर (ret)
-			वापस ret;
+		ret = cpr_read_efuse(drv->dev, fuses->quotient, &fuse->quot);
+		if (ret)
+			return ret;
 
 		fuse->quot *= fdata->quot_scale;
 		fuse->quot += fdata->quot_offset;
@@ -946,85 +945,85 @@ cpr_populate_ring_osc_idx(काष्ठा cpr_drv *drv)
 		fuse->accs = accs;
 		fuse->num_accs = acc_desc->num_regs_per_fuse;
 		accs += acc_desc->num_regs_per_fuse;
-	पूर्ण
+	}
 
 	/*
 	 * Restrict all fuse corner PVS voltages based upon per corner
-	 * उच्चमानing and न्यूनमान voltages.
+	 * ceiling and floor voltages.
 	 */
-	क्रम (fuse = drv->fuse_corners, i = 0; fuse <= end; fuse++, i++) अणु
-		अगर (fuse->uV > fuse->max_uV)
+	for (fuse = drv->fuse_corners, i = 0; fuse <= end; fuse++, i++) {
+		if (fuse->uV > fuse->max_uV)
 			fuse->uV = fuse->max_uV;
-		अन्यथा अगर (fuse->uV < fuse->min_uV)
+		else if (fuse->uV < fuse->min_uV)
 			fuse->uV = fuse->min_uV;
 
 		ret = regulator_is_supported_voltage(drv->vdd_apc,
 						     fuse->min_uV,
 						     fuse->min_uV);
-		अगर (!ret) अणु
+		if (!ret) {
 			dev_err(drv->dev,
 				"min uV: %d (fuse corner: %d) not supported by regulator\n",
 				fuse->min_uV, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ret = regulator_is_supported_voltage(drv->vdd_apc,
 						     fuse->max_uV,
 						     fuse->max_uV);
-		अगर (!ret) अणु
+		if (!ret) {
 			dev_err(drv->dev,
 				"max uV: %d (fuse corner: %d) not supported by regulator\n",
 				fuse->max_uV, i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		dev_dbg(drv->dev,
 			"fuse corner %d: [%d %d %d] RO%hhu quot %d squot %d\n",
 			i, fuse->min_uV, fuse->uV, fuse->max_uV,
 			fuse->ring_osc_idx, fuse->quot, fuse->step_quot);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_calculate_scaling(स्थिर अक्षर *quot_offset,
-				 काष्ठा cpr_drv *drv,
-				 स्थिर काष्ठा fuse_corner_data *fdata,
-				 स्थिर काष्ठा corner *corner)
-अणु
-	u32 quot_dअगरf = 0;
-	अचिन्हित दीर्घ freq_dअगरf;
-	पूर्णांक scaling;
-	स्थिर काष्ठा fuse_corner *fuse, *prev_fuse;
-	पूर्णांक ret;
+static int cpr_calculate_scaling(const char *quot_offset,
+				 struct cpr_drv *drv,
+				 const struct fuse_corner_data *fdata,
+				 const struct corner *corner)
+{
+	u32 quot_diff = 0;
+	unsigned long freq_diff;
+	int scaling;
+	const struct fuse_corner *fuse, *prev_fuse;
+	int ret;
 
 	fuse = corner->fuse_corner;
 	prev_fuse = fuse - 1;
 
-	अगर (quot_offset) अणु
-		ret = cpr_पढ़ो_efuse(drv->dev, quot_offset, &quot_dअगरf);
-		अगर (ret)
-			वापस ret;
+	if (quot_offset) {
+		ret = cpr_read_efuse(drv->dev, quot_offset, &quot_diff);
+		if (ret)
+			return ret;
 
-		quot_dअगरf *= fdata->quot_offset_scale;
-		quot_dअगरf += fdata->quot_offset_adjust;
-	पूर्ण अन्यथा अणु
-		quot_dअगरf = fuse->quot - prev_fuse->quot;
-	पूर्ण
+		quot_diff *= fdata->quot_offset_scale;
+		quot_diff += fdata->quot_offset_adjust;
+	} else {
+		quot_diff = fuse->quot - prev_fuse->quot;
+	}
 
-	freq_dअगरf = fuse->max_freq - prev_fuse->max_freq;
-	freq_dअगरf /= 1000000; /* Convert to MHz */
-	scaling = 1000 * quot_dअगरf / freq_dअगरf;
-	वापस min(scaling, fdata->max_quot_scale);
-पूर्ण
+	freq_diff = fuse->max_freq - prev_fuse->max_freq;
+	freq_diff /= 1000000; /* Convert to MHz */
+	scaling = 1000 * quot_diff / freq_diff;
+	return min(scaling, fdata->max_quot_scale);
+}
 
-अटल पूर्णांक cpr_पूर्णांकerpolate(स्थिर काष्ठा corner *corner, पूर्णांक step_volt,
-			   स्थिर काष्ठा fuse_corner_data *fdata)
-अणु
-	अचिन्हित दीर्घ f_high, f_low, f_dअगरf;
-	पूर्णांक uV_high, uV_low, uV;
+static int cpr_interpolate(const struct corner *corner, int step_volt,
+			   const struct fuse_corner_data *fdata)
+{
+	unsigned long f_high, f_low, f_diff;
+	int uV_high, uV_low, uV;
 	u64 temp, temp_limit;
-	स्थिर काष्ठा fuse_corner *fuse, *prev_fuse;
+	const struct fuse_corner *fuse, *prev_fuse;
 
 	fuse = corner->fuse_corner;
 	prev_fuse = fuse - 1;
@@ -1033,70 +1032,70 @@ cpr_populate_ring_osc_idx(काष्ठा cpr_drv *drv)
 	f_low = prev_fuse->max_freq;
 	uV_high = fuse->uV;
 	uV_low = prev_fuse->uV;
-	f_dअगरf = fuse->max_freq - corner->freq;
+	f_diff = fuse->max_freq - corner->freq;
 
 	/*
-	 * Don't पूर्णांकerpolate in the wrong direction. This could happen
-	 * अगर the adjusted fuse voltage overlaps with the previous fuse's
+	 * Don't interpolate in the wrong direction. This could happen
+	 * if the adjusted fuse voltage overlaps with the previous fuse's
 	 * adjusted voltage.
 	 */
-	अगर (f_high <= f_low || uV_high <= uV_low || f_high <= corner->freq)
-		वापस corner->uV;
+	if (f_high <= f_low || uV_high <= uV_low || f_high <= corner->freq)
+		return corner->uV;
 
-	temp = f_dअगरf * (uV_high - uV_low);
-	करो_भाग(temp, f_high - f_low);
+	temp = f_diff * (uV_high - uV_low);
+	do_div(temp, f_high - f_low);
 
 	/*
-	 * max_volt_scale has units of uV/MHz जबतक freq values
+	 * max_volt_scale has units of uV/MHz while freq values
 	 * have units of Hz.  Divide by 1000000 to convert to.
 	 */
-	temp_limit = f_dअगरf * fdata->max_volt_scale;
-	करो_भाग(temp_limit, 1000000);
+	temp_limit = f_diff * fdata->max_volt_scale;
+	do_div(temp_limit, 1000000);
 
 	uV = uV_high - min(temp, temp_limit);
-	वापस roundup(uV, step_volt);
-पूर्ण
+	return roundup(uV, step_volt);
+}
 
-अटल अचिन्हित पूर्णांक cpr_get_fuse_corner(काष्ठा dev_pm_opp *opp)
-अणु
-	काष्ठा device_node *np;
-	अचिन्हित पूर्णांक fuse_corner = 0;
+static unsigned int cpr_get_fuse_corner(struct dev_pm_opp *opp)
+{
+	struct device_node *np;
+	unsigned int fuse_corner = 0;
 
 	np = dev_pm_opp_get_of_node(opp);
-	अगर (of_property_पढ़ो_u32(np, "qcom,opp-fuse-level", &fuse_corner))
+	if (of_property_read_u32(np, "qcom,opp-fuse-level", &fuse_corner))
 		pr_err("%s: missing 'qcom,opp-fuse-level' property\n",
 		       __func__);
 
 	of_node_put(np);
 
-	वापस fuse_corner;
-पूर्ण
+	return fuse_corner;
+}
 
-अटल अचिन्हित दीर्घ cpr_get_opp_hz_क्रम_req(काष्ठा dev_pm_opp *ref,
-					    काष्ठा device *cpu_dev)
-अणु
+static unsigned long cpr_get_opp_hz_for_req(struct dev_pm_opp *ref,
+					    struct device *cpu_dev)
+{
 	u64 rate = 0;
-	काष्ठा device_node *ref_np;
-	काष्ठा device_node *desc_np;
-	काष्ठा device_node *child_np = शून्य;
-	काष्ठा device_node *child_req_np = शून्य;
+	struct device_node *ref_np;
+	struct device_node *desc_np;
+	struct device_node *child_np = NULL;
+	struct device_node *child_req_np = NULL;
 
 	desc_np = dev_pm_opp_of_get_opp_desc_node(cpu_dev);
-	अगर (!desc_np)
-		वापस 0;
+	if (!desc_np)
+		return 0;
 
 	ref_np = dev_pm_opp_get_of_node(ref);
-	अगर (!ref_np)
-		जाओ out_ref;
+	if (!ref_np)
+		goto out_ref;
 
-	करो अणु
+	do {
 		of_node_put(child_req_np);
 		child_np = of_get_next_available_child(desc_np, child_np);
 		child_req_np = of_parse_phandle(child_np, "required-opps", 0);
-	पूर्ण जबतक (child_np && child_req_np != ref_np);
+	} while (child_np && child_req_np != ref_np);
 
-	अगर (child_np && child_req_np == ref_np)
-		of_property_पढ़ो_u64(child_np, "opp-hz", &rate);
+	if (child_np && child_req_np == ref_np)
+		of_property_read_u64(child_np, "opp-hz", &rate);
 
 	of_node_put(child_req_np);
 	of_node_put(child_np);
@@ -1104,83 +1103,83 @@ cpr_populate_ring_osc_idx(काष्ठा cpr_drv *drv)
 out_ref:
 	of_node_put(desc_np);
 
-	वापस (अचिन्हित दीर्घ) rate;
-पूर्ण
+	return (unsigned long) rate;
+}
 
-अटल पूर्णांक cpr_corner_init(काष्ठा cpr_drv *drv)
-अणु
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
-	स्थिर काष्ठा cpr_fuse *fuses = drv->cpr_fuses;
-	पूर्णांक i, level, scaling = 0;
-	अचिन्हित पूर्णांक fnum, fc;
-	स्थिर अक्षर *quot_offset;
-	काष्ठा fuse_corner *fuse, *prev_fuse;
-	काष्ठा corner *corner, *end;
-	काष्ठा corner_data *cdata;
-	स्थिर काष्ठा fuse_corner_data *fdata;
+static int cpr_corner_init(struct cpr_drv *drv)
+{
+	const struct cpr_desc *desc = drv->desc;
+	const struct cpr_fuse *fuses = drv->cpr_fuses;
+	int i, level, scaling = 0;
+	unsigned int fnum, fc;
+	const char *quot_offset;
+	struct fuse_corner *fuse, *prev_fuse;
+	struct corner *corner, *end;
+	struct corner_data *cdata;
+	const struct fuse_corner_data *fdata;
 	bool apply_scaling;
-	अचिन्हित दीर्घ freq_dअगरf, freq_dअगरf_mhz;
-	अचिन्हित दीर्घ freq;
-	पूर्णांक step_volt = regulator_get_linear_step(drv->vdd_apc);
-	काष्ठा dev_pm_opp *opp;
+	unsigned long freq_diff, freq_diff_mhz;
+	unsigned long freq;
+	int step_volt = regulator_get_linear_step(drv->vdd_apc);
+	struct dev_pm_opp *opp;
 
-	अगर (!step_volt)
-		वापस -EINVAL;
+	if (!step_volt)
+		return -EINVAL;
 
 	corner = drv->corners;
 	end = &corner[drv->num_corners - 1];
 
-	cdata = devm_kसुस्मृति(drv->dev, drv->num_corners,
-			     माप(काष्ठा corner_data),
+	cdata = devm_kcalloc(drv->dev, drv->num_corners,
+			     sizeof(struct corner_data),
 			     GFP_KERNEL);
-	अगर (!cdata)
-		वापस -ENOMEM;
+	if (!cdata)
+		return -ENOMEM;
 
 	/*
-	 * Store maximum frequency क्रम each fuse corner based on the frequency
+	 * Store maximum frequency for each fuse corner based on the frequency
 	 * plan
 	 */
-	क्रम (level = 1; level <= drv->num_corners; level++) अणु
+	for (level = 1; level <= drv->num_corners; level++) {
 		opp = dev_pm_opp_find_level_exact(&drv->pd.dev, level);
-		अगर (IS_ERR(opp))
-			वापस -EINVAL;
+		if (IS_ERR(opp))
+			return -EINVAL;
 		fc = cpr_get_fuse_corner(opp);
-		अगर (!fc) अणु
+		if (!fc) {
 			dev_pm_opp_put(opp);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		fnum = fc - 1;
-		freq = cpr_get_opp_hz_क्रम_req(opp, drv->attached_cpu_dev);
-		अगर (!freq) अणु
+		freq = cpr_get_opp_hz_for_req(opp, drv->attached_cpu_dev);
+		if (!freq) {
 			dev_pm_opp_put(opp);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		cdata[level - 1].fuse_corner = fnum;
 		cdata[level - 1].freq = freq;
 
 		fuse = &drv->fuse_corners[fnum];
 		dev_dbg(drv->dev, "freq: %lu level: %u fuse level: %u\n",
 			freq, dev_pm_opp_get_level(opp) - 1, fnum);
-		अगर (freq > fuse->max_freq)
+		if (freq > fuse->max_freq)
 			fuse->max_freq = freq;
 		dev_pm_opp_put(opp);
-	पूर्ण
+	}
 
 	/*
-	 * Get the quotient adjusपंचांगent scaling factor, according to:
+	 * Get the quotient adjustment scaling factor, according to:
 	 *
 	 * scaling = min(1000 * (QUOT(corner_N) - QUOT(corner_N-1))
 	 *		/ (freq(corner_N) - freq(corner_N-1)), max_factor)
 	 *
-	 * QUOT(corner_N):	quotient पढ़ो from fuse क्रम fuse corner N
-	 * QUOT(corner_N-1):	quotient पढ़ो from fuse क्रम fuse corner (N - 1)
+	 * QUOT(corner_N):	quotient read from fuse for fuse corner N
+	 * QUOT(corner_N-1):	quotient read from fuse for fuse corner (N - 1)
 	 * freq(corner_N):	max frequency in MHz supported by fuse corner N
 	 * freq(corner_N-1):	max frequency in MHz supported by fuse corner
 	 *			 (N - 1)
 	 *
 	 * Then walk through the corners mapped to each fuse corner
-	 * and calculate the quotient adjusपंचांगent क्रम each one using the
-	 * following क्रमmula:
+	 * and calculate the quotient adjustment for each one using the
+	 * following formula:
 	 *
 	 * quot_adjust = (freq_max - freq_corner) * scaling / 1000
 	 *
@@ -1205,198 +1204,198 @@ out_ref:
 	 *    f = fuse corner
 	 *
 	 */
-	क्रम (apply_scaling = false, i = 0; corner <= end; corner++, i++) अणु
+	for (apply_scaling = false, i = 0; corner <= end; corner++, i++) {
 		fnum = cdata[i].fuse_corner;
 		fdata = &desc->cpr_fuses.fuse_corner_data[fnum];
 		quot_offset = fuses[fnum].quotient_offset;
 		fuse = &drv->fuse_corners[fnum];
-		अगर (fnum)
+		if (fnum)
 			prev_fuse = &drv->fuse_corners[fnum - 1];
-		अन्यथा
-			prev_fuse = शून्य;
+		else
+			prev_fuse = NULL;
 
 		corner->fuse_corner = fuse;
 		corner->freq = cdata[i].freq;
 		corner->uV = fuse->uV;
 
-		अगर (prev_fuse && cdata[i - 1].freq == prev_fuse->max_freq) अणु
+		if (prev_fuse && cdata[i - 1].freq == prev_fuse->max_freq) {
 			scaling = cpr_calculate_scaling(quot_offset, drv,
 							fdata, corner);
-			अगर (scaling < 0)
-				वापस scaling;
+			if (scaling < 0)
+				return scaling;
 
 			apply_scaling = true;
-		पूर्ण अन्यथा अगर (corner->freq == fuse->max_freq) अणु
-			/* This is a fuse corner; करोn't scale anything */
+		} else if (corner->freq == fuse->max_freq) {
+			/* This is a fuse corner; don't scale anything */
 			apply_scaling = false;
-		पूर्ण
+		}
 
-		अगर (apply_scaling) अणु
-			freq_dअगरf = fuse->max_freq - corner->freq;
-			freq_dअगरf_mhz = freq_dअगरf / 1000000;
-			corner->quot_adjust = scaling * freq_dअगरf_mhz / 1000;
+		if (apply_scaling) {
+			freq_diff = fuse->max_freq - corner->freq;
+			freq_diff_mhz = freq_diff / 1000000;
+			corner->quot_adjust = scaling * freq_diff_mhz / 1000;
 
-			corner->uV = cpr_पूर्णांकerpolate(corner, step_volt, fdata);
-		पूर्ण
+			corner->uV = cpr_interpolate(corner, step_volt, fdata);
+		}
 
 		corner->max_uV = fuse->max_uV;
 		corner->min_uV = fuse->min_uV;
 		corner->uV = clamp(corner->uV, corner->min_uV, corner->max_uV);
 		corner->last_uV = corner->uV;
 
-		/* Reduce the उच्चमानing voltage अगर needed */
-		अगर (desc->reduce_to_corner_uV && corner->uV < corner->max_uV)
+		/* Reduce the ceiling voltage if needed */
+		if (desc->reduce_to_corner_uV && corner->uV < corner->max_uV)
 			corner->max_uV = corner->uV;
-		अन्यथा अगर (desc->reduce_to_fuse_uV && fuse->uV < corner->max_uV)
+		else if (desc->reduce_to_fuse_uV && fuse->uV < corner->max_uV)
 			corner->max_uV = max(corner->min_uV, fuse->uV);
 
 		dev_dbg(drv->dev, "corner %d: [%d %d %d] quot %d\n", i,
 			corner->min_uV, corner->uV, corner->max_uV,
 			fuse->quot - corner->quot_adjust);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा cpr_fuse *cpr_get_fuses(काष्ठा cpr_drv *drv)
-अणु
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
-	काष्ठा cpr_fuse *fuses;
-	पूर्णांक i;
+static const struct cpr_fuse *cpr_get_fuses(struct cpr_drv *drv)
+{
+	const struct cpr_desc *desc = drv->desc;
+	struct cpr_fuse *fuses;
+	int i;
 
-	fuses = devm_kसुस्मृति(drv->dev, desc->num_fuse_corners,
-			     माप(काष्ठा cpr_fuse),
+	fuses = devm_kcalloc(drv->dev, desc->num_fuse_corners,
+			     sizeof(struct cpr_fuse),
 			     GFP_KERNEL);
-	अगर (!fuses)
-		वापस ERR_PTR(-ENOMEM);
+	if (!fuses)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i = 0; i < desc->num_fuse_corners; i++) अणु
-		अक्षर tbuf[32];
+	for (i = 0; i < desc->num_fuse_corners; i++) {
+		char tbuf[32];
 
-		snम_लिखो(tbuf, 32, "cpr_ring_osc%d", i + 1);
+		snprintf(tbuf, 32, "cpr_ring_osc%d", i + 1);
 		fuses[i].ring_osc = devm_kstrdup(drv->dev, tbuf, GFP_KERNEL);
-		अगर (!fuses[i].ring_osc)
-			वापस ERR_PTR(-ENOMEM);
+		if (!fuses[i].ring_osc)
+			return ERR_PTR(-ENOMEM);
 
-		snम_लिखो(tbuf, 32, "cpr_init_voltage%d", i + 1);
+		snprintf(tbuf, 32, "cpr_init_voltage%d", i + 1);
 		fuses[i].init_voltage = devm_kstrdup(drv->dev, tbuf,
 						     GFP_KERNEL);
-		अगर (!fuses[i].init_voltage)
-			वापस ERR_PTR(-ENOMEM);
+		if (!fuses[i].init_voltage)
+			return ERR_PTR(-ENOMEM);
 
-		snम_लिखो(tbuf, 32, "cpr_quotient%d", i + 1);
+		snprintf(tbuf, 32, "cpr_quotient%d", i + 1);
 		fuses[i].quotient = devm_kstrdup(drv->dev, tbuf, GFP_KERNEL);
-		अगर (!fuses[i].quotient)
-			वापस ERR_PTR(-ENOMEM);
+		if (!fuses[i].quotient)
+			return ERR_PTR(-ENOMEM);
 
-		snम_लिखो(tbuf, 32, "cpr_quotient_offset%d", i + 1);
+		snprintf(tbuf, 32, "cpr_quotient_offset%d", i + 1);
 		fuses[i].quotient_offset = devm_kstrdup(drv->dev, tbuf,
 							GFP_KERNEL);
-		अगर (!fuses[i].quotient_offset)
-			वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		if (!fuses[i].quotient_offset)
+			return ERR_PTR(-ENOMEM);
+	}
 
-	वापस fuses;
-पूर्ण
+	return fuses;
+}
 
-अटल व्योम cpr_set_loop_allowed(काष्ठा cpr_drv *drv)
-अणु
+static void cpr_set_loop_allowed(struct cpr_drv *drv)
+{
 	drv->loop_disabled = false;
-पूर्ण
+}
 
-अटल पूर्णांक cpr_init_parameters(काष्ठा cpr_drv *drv)
-अणु
-	स्थिर काष्ठा cpr_desc *desc = drv->desc;
-	काष्ठा clk *clk;
+static int cpr_init_parameters(struct cpr_drv *drv)
+{
+	const struct cpr_desc *desc = drv->desc;
+	struct clk *clk;
 
 	clk = clk_get(drv->dev, "ref");
-	अगर (IS_ERR(clk))
-		वापस PTR_ERR(clk);
+	if (IS_ERR(clk))
+		return PTR_ERR(clk);
 
 	drv->ref_clk_khz = clk_get_rate(clk) / 1000;
 	clk_put(clk);
 
-	अगर (desc->समयr_cons_up > RBIF_TIMER_ADJ_CONS_UP_MASK ||
-	    desc->समयr_cons_करोwn > RBIF_TIMER_ADJ_CONS_DOWN_MASK ||
+	if (desc->timer_cons_up > RBIF_TIMER_ADJ_CONS_UP_MASK ||
+	    desc->timer_cons_down > RBIF_TIMER_ADJ_CONS_DOWN_MASK ||
 	    desc->up_threshold > RBCPR_CTL_UP_THRESHOLD_MASK ||
-	    desc->करोwn_threshold > RBCPR_CTL_DN_THRESHOLD_MASK ||
-	    desc->idle_घड़ीs > RBCPR_STEP_QUOT_IDLE_CLK_MASK ||
-	    desc->clamp_समयr_पूर्णांकerval > RBIF_TIMER_ADJ_CLAMP_INT_MASK)
-		वापस -EINVAL;
+	    desc->down_threshold > RBCPR_CTL_DN_THRESHOLD_MASK ||
+	    desc->idle_clocks > RBCPR_STEP_QUOT_IDLE_CLK_MASK ||
+	    desc->clamp_timer_interval > RBIF_TIMER_ADJ_CLAMP_INT_MASK)
+		return -EINVAL;
 
 	dev_dbg(drv->dev, "up threshold = %u, down threshold = %u\n",
-		desc->up_threshold, desc->करोwn_threshold);
+		desc->up_threshold, desc->down_threshold);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_find_initial_corner(काष्ठा cpr_drv *drv)
-अणु
-	अचिन्हित दीर्घ rate;
-	स्थिर काष्ठा corner *end;
-	काष्ठा corner *iter;
-	अचिन्हित पूर्णांक i = 0;
+static int cpr_find_initial_corner(struct cpr_drv *drv)
+{
+	unsigned long rate;
+	const struct corner *end;
+	struct corner *iter;
+	unsigned int i = 0;
 
-	अगर (!drv->cpu_clk) अणु
+	if (!drv->cpu_clk) {
 		dev_err(drv->dev, "cannot get rate from NULL clk\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	end = &drv->corners[drv->num_corners - 1];
 	rate = clk_get_rate(drv->cpu_clk);
 
 	/*
-	 * Some bootloaders set a CPU घड़ी frequency that is not defined
+	 * Some bootloaders set a CPU clock frequency that is not defined
 	 * in the OPP table. When running at an unlisted frequency,
 	 * cpufreq_online() will change to the OPP which has the lowest
 	 * frequency, at or above the unlisted frequency.
-	 * Since cpufreq_online() always "rounds up" in the हाल of an
-	 * unlisted frequency, this function always "rounds down" in हाल
+	 * Since cpufreq_online() always "rounds up" in the case of an
+	 * unlisted frequency, this function always "rounds down" in case
 	 * of an unlisted frequency. That way, when cpufreq_online()
-	 * triggers the first ever call to cpr_set_perक्रमmance_state(),
+	 * triggers the first ever call to cpr_set_performance_state(),
 	 * it will correctly determine the direction as UP.
 	 */
-	क्रम (iter = drv->corners; iter <= end; iter++) अणु
-		अगर (iter->freq > rate)
-			अवरोध;
+	for (iter = drv->corners; iter <= end; iter++) {
+		if (iter->freq > rate)
+			break;
 		i++;
-		अगर (iter->freq == rate) अणु
+		if (iter->freq == rate) {
 			drv->corner = iter;
-			अवरोध;
-		पूर्ण
-		अगर (iter->freq < rate)
+			break;
+		}
+		if (iter->freq < rate)
 			drv->corner = iter;
-	पूर्ण
+	}
 
-	अगर (!drv->corner) अणु
+	if (!drv->corner) {
 		dev_err(drv->dev, "boot up corner not found\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(drv->dev, "boot up perf state: %u\n", i);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा cpr_desc qcs404_cpr_desc = अणु
+static const struct cpr_desc qcs404_cpr_desc = {
 	.num_fuse_corners = 3,
-	.min_dअगरf_quot = CPR_FUSE_MIN_QUOT_DIFF,
-	.step_quot = (पूर्णांक [])अणु 25, 25, 25, पूर्ण,
-	.समयr_delay_us = 5000,
-	.समयr_cons_up = 0,
-	.समयr_cons_करोwn = 2,
+	.min_diff_quot = CPR_FUSE_MIN_QUOT_DIFF,
+	.step_quot = (int []){ 25, 25, 25, },
+	.timer_delay_us = 5000,
+	.timer_cons_up = 0,
+	.timer_cons_down = 2,
 	.up_threshold = 1,
-	.करोwn_threshold = 3,
-	.idle_घड़ीs = 15,
+	.down_threshold = 3,
+	.idle_clocks = 15,
 	.gcnt_us = 1,
 	.vdd_apc_step_up_limit = 1,
-	.vdd_apc_step_करोwn_limit = 1,
-	.cpr_fuses = अणु
+	.vdd_apc_step_down_limit = 1,
+	.cpr_fuses = {
 		.init_voltage_step = 8000,
 		.init_voltage_width = 6,
-		.fuse_corner_data = (काष्ठा fuse_corner_data[])अणु
+		.fuse_corner_data = (struct fuse_corner_data[]){
 			/* fuse corner 0 */
-			अणु
+			{
 				.ref_uV = 1224000,
 				.max_uV = 1224000,
 				.min_uV = 1048000,
@@ -1407,9 +1406,9 @@ out_ref:
 				.quot_adjust = 0,
 				.quot_offset_scale = 5,
 				.quot_offset_adjust = 0,
-			पूर्ण,
+			},
 			/* fuse corner 1 */
-			अणु
+			{
 				.ref_uV = 1288000,
 				.max_uV = 1288000,
 				.min_uV = 1048000,
@@ -1420,9 +1419,9 @@ out_ref:
 				.quot_adjust = -20,
 				.quot_offset_scale = 5,
 				.quot_offset_adjust = 0,
-			पूर्ण,
+			},
 			/* fuse corner 2 */
-			अणु
+			{
 				.ref_uV = 1352000,
 				.max_uV = 1384000,
 				.min_uV = 1088000,
@@ -1433,148 +1432,148 @@ out_ref:
 				.quot_adjust = 0,
 				.quot_offset_scale = 5,
 				.quot_offset_adjust = 0,
-			पूर्ण,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+			},
+		},
+	},
+};
 
-अटल स्थिर काष्ठा acc_desc qcs404_acc_desc = अणु
-	.settings = (काष्ठा reg_sequence[])अणु
-		अणु 0xb120, 0x1041040 पूर्ण,
-		अणु 0xb124, 0x41 पूर्ण,
-		अणु 0xb120, 0x0 पूर्ण,
-		अणु 0xb124, 0x0 पूर्ण,
-		अणु 0xb120, 0x0 पूर्ण,
-		अणु 0xb124, 0x0 पूर्ण,
-	पूर्ण,
-	.config = (काष्ठा reg_sequence[])अणु
-		अणु 0xb138, 0xff पूर्ण,
-		अणु 0xb130, 0x5555 पूर्ण,
-	पूर्ण,
+static const struct acc_desc qcs404_acc_desc = {
+	.settings = (struct reg_sequence[]){
+		{ 0xb120, 0x1041040 },
+		{ 0xb124, 0x41 },
+		{ 0xb120, 0x0 },
+		{ 0xb124, 0x0 },
+		{ 0xb120, 0x0 },
+		{ 0xb124, 0x0 },
+	},
+	.config = (struct reg_sequence[]){
+		{ 0xb138, 0xff },
+		{ 0xb130, 0x5555 },
+	},
 	.num_regs_per_fuse = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा cpr_acc_desc qcs404_cpr_acc_desc = अणु
+static const struct cpr_acc_desc qcs404_cpr_acc_desc = {
 	.cpr_desc = &qcs404_cpr_desc,
 	.acc_desc = &qcs404_acc_desc,
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक cpr_get_perक्रमmance_state(काष्ठा generic_pm_करोमुख्य *genpd,
-					      काष्ठा dev_pm_opp *opp)
-अणु
-	वापस dev_pm_opp_get_level(opp);
-पूर्ण
+static unsigned int cpr_get_performance_state(struct generic_pm_domain *genpd,
+					      struct dev_pm_opp *opp)
+{
+	return dev_pm_opp_get_level(opp);
+}
 
-अटल पूर्णांक cpr_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा cpr_drv *drv = container_of(करोमुख्य, काष्ठा cpr_drv, pd);
+static int cpr_power_off(struct generic_pm_domain *domain)
+{
+	struct cpr_drv *drv = container_of(domain, struct cpr_drv, pd);
 
-	वापस cpr_disable(drv);
-पूर्ण
+	return cpr_disable(drv);
+}
 
-अटल पूर्णांक cpr_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
-अणु
-	काष्ठा cpr_drv *drv = container_of(करोमुख्य, काष्ठा cpr_drv, pd);
+static int cpr_power_on(struct generic_pm_domain *domain)
+{
+	struct cpr_drv *drv = container_of(domain, struct cpr_drv, pd);
 
-	वापस cpr_enable(drv);
-पूर्ण
+	return cpr_enable(drv);
+}
 
-अटल पूर्णांक cpr_pd_attach_dev(काष्ठा generic_pm_करोमुख्य *करोमुख्य,
-			     काष्ठा device *dev)
-अणु
-	काष्ठा cpr_drv *drv = container_of(करोमुख्य, काष्ठा cpr_drv, pd);
-	स्थिर काष्ठा acc_desc *acc_desc = drv->acc_desc;
-	पूर्णांक ret = 0;
+static int cpr_pd_attach_dev(struct generic_pm_domain *domain,
+			     struct device *dev)
+{
+	struct cpr_drv *drv = container_of(domain, struct cpr_drv, pd);
+	const struct acc_desc *acc_desc = drv->acc_desc;
+	int ret = 0;
 
 	mutex_lock(&drv->lock);
 
 	dev_dbg(drv->dev, "attach callback for: %s\n", dev_name(dev));
 
 	/*
-	 * This driver only supports scaling voltage क्रम a CPU cluster
+	 * This driver only supports scaling voltage for a CPU cluster
 	 * where all CPUs in the cluster share a single regulator.
-	 * Thereक्रमe, save the काष्ठा device poपूर्णांकer only क्रम the first
-	 * CPU device that माला_लो attached. There is no need to करो any
+	 * Therefore, save the struct device pointer only for the first
+	 * CPU device that gets attached. There is no need to do any
 	 * additional initialization when further CPUs get attached.
 	 */
-	अगर (drv->attached_cpu_dev)
-		जाओ unlock;
+	if (drv->attached_cpu_dev)
+		goto unlock;
 
 	/*
-	 * cpr_scale_voltage() requires the direction (अगर we are changing
-	 * to a higher or lower OPP). The first समय
-	 * cpr_set_perक्रमmance_state() is called, there is no previous
-	 * perक्रमmance state defined. Thereक्रमe, we call
-	 * cpr_find_initial_corner() that माला_लो the CPU घड़ी frequency
+	 * cpr_scale_voltage() requires the direction (if we are changing
+	 * to a higher or lower OPP). The first time
+	 * cpr_set_performance_state() is called, there is no previous
+	 * performance state defined. Therefore, we call
+	 * cpr_find_initial_corner() that gets the CPU clock frequency
 	 * set by the bootloader, so that we can determine the direction
-	 * the first समय cpr_set_perक्रमmance_state() is called.
+	 * the first time cpr_set_performance_state() is called.
 	 */
-	drv->cpu_clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(drv->cpu_clk)) अणु
+	drv->cpu_clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(drv->cpu_clk)) {
 		ret = PTR_ERR(drv->cpu_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(drv->dev, "could not get cpu clk: %d\n", ret);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	drv->attached_cpu_dev = dev;
 
 	dev_dbg(drv->dev, "using cpu clk from: %s\n",
 		dev_name(drv->attached_cpu_dev));
 
 	/*
-	 * Everything related to (भव) corners has to be initialized
-	 * here, when attaching to the घातer करोमुख्य, since we need to know
-	 * the maximum frequency क्रम each fuse corner, and this is only
+	 * Everything related to (virtual) corners has to be initialized
+	 * here, when attaching to the power domain, since we need to know
+	 * the maximum frequency for each fuse corner, and this is only
 	 * available after the cpufreq driver has attached to us.
-	 * The reason क्रम this is that we need to know the highest
+	 * The reason for this is that we need to know the highest
 	 * frequency associated with each fuse corner.
 	 */
 	ret = dev_pm_opp_get_opp_count(&drv->pd.dev);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(drv->dev, "could not get OPP count\n");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	drv->num_corners = ret;
 
-	अगर (drv->num_corners < 2) अणु
+	if (drv->num_corners < 2) {
 		dev_err(drv->dev, "need at least 2 OPPs to use CPR\n");
 		ret = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	drv->corners = devm_kसुस्मृति(drv->dev, drv->num_corners,
-				    माप(*drv->corners),
+	drv->corners = devm_kcalloc(drv->dev, drv->num_corners,
+				    sizeof(*drv->corners),
 				    GFP_KERNEL);
-	अगर (!drv->corners) अणु
+	if (!drv->corners) {
 		ret = -ENOMEM;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ret = cpr_corner_init(drv);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
 	cpr_set_loop_allowed(drv);
 
 	ret = cpr_init_parameters(drv);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
 	/* Configure CPR HW but keep it disabled */
 	ret = cpr_config(drv);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
 	ret = cpr_find_initial_corner(drv);
-	अगर (ret)
-		जाओ unlock;
+	if (ret)
+		goto unlock;
 
-	अगर (acc_desc->config)
-		regmap_multi_reg_ग_लिखो(drv->tcsr, acc_desc->config,
+	if (acc_desc->config)
+		regmap_multi_reg_write(drv->tcsr, acc_desc->config,
 				       acc_desc->num_regs_per_fuse);
 
-	/* Enable ACC अगर required */
-	अगर (acc_desc->enable_mask)
+	/* Enable ACC if required */
+	if (acc_desc->enable_mask)
 		regmap_update_bits(drv->tcsr, acc_desc->enable_reg,
 				   acc_desc->enable_mask,
 				   acc_desc->enable_mask);
@@ -1585,205 +1584,205 @@ out_ref:
 unlock:
 	mutex_unlock(&drv->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cpr_debug_info_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
+static int cpr_debug_info_show(struct seq_file *s, void *unused)
+{
 	u32 gcnt, ro_sel, ctl, irq_status, reg, error_steps;
 	u32 step_dn, step_up, error, error_lt0, busy;
-	काष्ठा cpr_drv *drv = s->निजी;
-	काष्ठा fuse_corner *fuse_corner;
-	काष्ठा corner *corner;
+	struct cpr_drv *drv = s->private;
+	struct fuse_corner *fuse_corner;
+	struct corner *corner;
 
 	corner = drv->corner;
 	fuse_corner = corner->fuse_corner;
 
-	seq_म_लिखो(s, "corner, current_volt = %d uV\n",
+	seq_printf(s, "corner, current_volt = %d uV\n",
 		       corner->last_uV);
 
 	ro_sel = fuse_corner->ring_osc_idx;
-	gcnt = cpr_पढ़ो(drv, REG_RBCPR_GCNT_TARGET(ro_sel));
-	seq_म_लिखो(s, "rbcpr_gcnt_target (%u) = %#02X\n", ro_sel, gcnt);
+	gcnt = cpr_read(drv, REG_RBCPR_GCNT_TARGET(ro_sel));
+	seq_printf(s, "rbcpr_gcnt_target (%u) = %#02X\n", ro_sel, gcnt);
 
-	ctl = cpr_पढ़ो(drv, REG_RBCPR_CTL);
-	seq_म_लिखो(s, "rbcpr_ctl = %#02X\n", ctl);
+	ctl = cpr_read(drv, REG_RBCPR_CTL);
+	seq_printf(s, "rbcpr_ctl = %#02X\n", ctl);
 
-	irq_status = cpr_पढ़ो(drv, REG_RBIF_IRQ_STATUS);
-	seq_म_लिखो(s, "rbcpr_irq_status = %#02X\n", irq_status);
+	irq_status = cpr_read(drv, REG_RBIF_IRQ_STATUS);
+	seq_printf(s, "rbcpr_irq_status = %#02X\n", irq_status);
 
-	reg = cpr_पढ़ो(drv, REG_RBCPR_RESULT_0);
-	seq_म_लिखो(s, "rbcpr_result_0 = %#02X\n", reg);
+	reg = cpr_read(drv, REG_RBCPR_RESULT_0);
+	seq_printf(s, "rbcpr_result_0 = %#02X\n", reg);
 
 	step_dn = reg & 0x01;
 	step_up = (reg >> RBCPR_RESULT0_STEP_UP_SHIFT) & 0x01;
-	seq_म_लिखो(s, "  [step_dn = %u", step_dn);
+	seq_printf(s, "  [step_dn = %u", step_dn);
 
-	seq_म_लिखो(s, ", step_up = %u", step_up);
+	seq_printf(s, ", step_up = %u", step_up);
 
 	error_steps = (reg >> RBCPR_RESULT0_ERROR_STEPS_SHIFT)
 				& RBCPR_RESULT0_ERROR_STEPS_MASK;
-	seq_म_लिखो(s, ", error_steps = %u", error_steps);
+	seq_printf(s, ", error_steps = %u", error_steps);
 
 	error = (reg >> RBCPR_RESULT0_ERROR_SHIFT) & RBCPR_RESULT0_ERROR_MASK;
-	seq_म_लिखो(s, ", error = %u", error);
+	seq_printf(s, ", error = %u", error);
 
 	error_lt0 = (reg >> RBCPR_RESULT0_ERROR_LT0_SHIFT) & 0x01;
-	seq_म_लिखो(s, ", error_lt_0 = %u", error_lt0);
+	seq_printf(s, ", error_lt_0 = %u", error_lt0);
 
 	busy = (reg >> RBCPR_RESULT0_BUSY_SHIFT) & 0x01;
-	seq_म_लिखो(s, ", busy = %u]\n", busy);
+	seq_printf(s, ", busy = %u]\n", busy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(cpr_debug_info);
 
-अटल व्योम cpr_debugfs_init(काष्ठा cpr_drv *drv)
-अणु
-	drv->debugfs = debugfs_create_dir("qcom_cpr", शून्य);
+static void cpr_debugfs_init(struct cpr_drv *drv)
+{
+	drv->debugfs = debugfs_create_dir("qcom_cpr", NULL);
 
 	debugfs_create_file("debug_info", 0444, drv->debugfs,
 			    drv, &cpr_debug_info_fops);
-पूर्ण
+}
 
-अटल पूर्णांक cpr_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा cpr_drv *drv;
-	पूर्णांक irq, ret;
-	स्थिर काष्ठा cpr_acc_desc *data;
-	काष्ठा device_node *np;
+static int cpr_probe(struct platform_device *pdev)
+{
+	struct resource *res;
+	struct device *dev = &pdev->dev;
+	struct cpr_drv *drv;
+	int irq, ret;
+	const struct cpr_acc_desc *data;
+	struct device_node *np;
 	u32 cpr_rev = FUSE_REVISION_UNKNOWN;
 
 	data = of_device_get_match_data(dev);
-	अगर (!data || !data->cpr_desc || !data->acc_desc)
-		वापस -EINVAL;
+	if (!data || !data->cpr_desc || !data->acc_desc)
+		return -EINVAL;
 
-	drv = devm_kzalloc(dev, माप(*drv), GFP_KERNEL);
-	अगर (!drv)
-		वापस -ENOMEM;
+	drv = devm_kzalloc(dev, sizeof(*drv), GFP_KERNEL);
+	if (!drv)
+		return -ENOMEM;
 	drv->dev = dev;
 	drv->desc = data->cpr_desc;
 	drv->acc_desc = data->acc_desc;
 
-	drv->fuse_corners = devm_kसुस्मृति(dev, drv->desc->num_fuse_corners,
-					 माप(*drv->fuse_corners),
+	drv->fuse_corners = devm_kcalloc(dev, drv->desc->num_fuse_corners,
+					 sizeof(*drv->fuse_corners),
 					 GFP_KERNEL);
-	अगर (!drv->fuse_corners)
-		वापस -ENOMEM;
+	if (!drv->fuse_corners)
+		return -ENOMEM;
 
 	np = of_parse_phandle(dev->of_node, "acc-syscon", 0);
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	drv->tcsr = syscon_node_to_regmap(np);
 	of_node_put(np);
-	अगर (IS_ERR(drv->tcsr))
-		वापस PTR_ERR(drv->tcsr);
+	if (IS_ERR(drv->tcsr))
+		return PTR_ERR(drv->tcsr);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	drv->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(drv->base))
-		वापस PTR_ERR(drv->base);
+	if (IS_ERR(drv->base))
+		return PTR_ERR(drv->base);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस -EINVAL;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return -EINVAL;
 
 	drv->vdd_apc = devm_regulator_get(dev, "vdd-apc");
-	अगर (IS_ERR(drv->vdd_apc))
-		वापस PTR_ERR(drv->vdd_apc);
+	if (IS_ERR(drv->vdd_apc))
+		return PTR_ERR(drv->vdd_apc);
 
 	/*
 	 * Initialize fuse corners, since it simply depends
 	 * on data in efuses.
-	 * Everything related to (भव) corners has to be
-	 * initialized after attaching to the घातer करोमुख्य,
+	 * Everything related to (virtual) corners has to be
+	 * initialized after attaching to the power domain,
 	 * since it depends on the CPU's OPP table.
 	 */
-	ret = cpr_पढ़ो_efuse(dev, "cpr_fuse_revision", &cpr_rev);
-	अगर (ret)
-		वापस ret;
+	ret = cpr_read_efuse(dev, "cpr_fuse_revision", &cpr_rev);
+	if (ret)
+		return ret;
 
 	drv->cpr_fuses = cpr_get_fuses(drv);
-	अगर (IS_ERR(drv->cpr_fuses))
-		वापस PTR_ERR(drv->cpr_fuses);
+	if (IS_ERR(drv->cpr_fuses))
+		return PTR_ERR(drv->cpr_fuses);
 
 	ret = cpr_populate_ring_osc_idx(drv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = cpr_fuse_corner_init(drv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_init(&drv->lock);
 
-	ret = devm_request_thपढ़ोed_irq(dev, irq, शून्य,
+	ret = devm_request_threaded_irq(dev, irq, NULL,
 					cpr_irq_handler,
 					IRQF_ONESHOT | IRQF_TRIGGER_RISING,
 					"cpr", drv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	drv->pd.name = devm_kstrdup_स्थिर(dev, dev->of_node->full_name,
+	drv->pd.name = devm_kstrdup_const(dev, dev->of_node->full_name,
 					  GFP_KERNEL);
-	अगर (!drv->pd.name)
-		वापस -EINVAL;
+	if (!drv->pd.name)
+		return -EINVAL;
 
-	drv->pd.घातer_off = cpr_घातer_off;
-	drv->pd.घातer_on = cpr_घातer_on;
-	drv->pd.set_perक्रमmance_state = cpr_set_perक्रमmance_state;
-	drv->pd.opp_to_perक्रमmance_state = cpr_get_perक्रमmance_state;
+	drv->pd.power_off = cpr_power_off;
+	drv->pd.power_on = cpr_power_on;
+	drv->pd.set_performance_state = cpr_set_performance_state;
+	drv->pd.opp_to_performance_state = cpr_get_performance_state;
 	drv->pd.attach_dev = cpr_pd_attach_dev;
 
-	ret = pm_genpd_init(&drv->pd, शून्य, true);
-	अगर (ret)
-		वापस ret;
+	ret = pm_genpd_init(&drv->pd, NULL, true);
+	if (ret)
+		return ret;
 
 	ret = of_genpd_add_provider_simple(dev->of_node, &drv->pd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	platक्रमm_set_drvdata(pdev, drv);
+	platform_set_drvdata(pdev, drv);
 	cpr_debugfs_init(drv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpr_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cpr_drv *drv = platक्रमm_get_drvdata(pdev);
+static int cpr_remove(struct platform_device *pdev)
+{
+	struct cpr_drv *drv = platform_get_drvdata(pdev);
 
-	अगर (cpr_is_allowed(drv)) अणु
+	if (cpr_is_allowed(drv)) {
 		cpr_ctl_disable(drv);
 		cpr_irq_set(drv, 0);
-	पूर्ण
+	}
 
 	of_genpd_del_provider(pdev->dev.of_node);
-	pm_genpd_हटाओ(&drv->pd);
+	pm_genpd_remove(&drv->pd);
 
-	debugfs_हटाओ_recursive(drv->debugfs);
+	debugfs_remove_recursive(drv->debugfs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cpr_match_table[] = अणु
-	अणु .compatible = "qcom,qcs404-cpr", .data = &qcs404_cpr_acc_desc पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id cpr_match_table[] = {
+	{ .compatible = "qcom,qcs404-cpr", .data = &qcs404_cpr_acc_desc },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, cpr_match_table);
 
-अटल काष्ठा platक्रमm_driver cpr_driver = अणु
+static struct platform_driver cpr_driver = {
 	.probe		= cpr_probe,
-	.हटाओ		= cpr_हटाओ,
-	.driver		= अणु
+	.remove		= cpr_remove,
+	.driver		= {
 		.name	= "qcom-cpr",
 		.of_match_table = cpr_match_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(cpr_driver);
+	},
+};
+module_platform_driver(cpr_driver);
 
 MODULE_DESCRIPTION("Core Power Reduction (CPR) driver");
 MODULE_LICENSE("GPL v2");

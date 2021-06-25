@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * LCD panel support क्रम the TI OMAP1510 Innovator board
+ * LCD panel support for the TI OMAP1510 Innovator board
  *
  * Copyright (C) 2004 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
 
-#समावेश <mach/hardware.h>
+#include <mach/hardware.h>
 
-#समावेश "omapfb.h"
+#include "omapfb.h"
 
-अटल पूर्णांक innovator1510_panel_enable(काष्ठा lcd_panel *panel)
-अणु
-	__raw_ग_लिखोb(0x7, OMAP1510_FPGA_LCD_PANEL_CONTROL);
-	वापस 0;
-पूर्ण
+static int innovator1510_panel_enable(struct lcd_panel *panel)
+{
+	__raw_writeb(0x7, OMAP1510_FPGA_LCD_PANEL_CONTROL);
+	return 0;
+}
 
-अटल व्योम innovator1510_panel_disable(काष्ठा lcd_panel *panel)
-अणु
-	__raw_ग_लिखोb(0x0, OMAP1510_FPGA_LCD_PANEL_CONTROL);
-पूर्ण
+static void innovator1510_panel_disable(struct lcd_panel *panel)
+{
+	__raw_writeb(0x0, OMAP1510_FPGA_LCD_PANEL_CONTROL);
+}
 
-अटल काष्ठा lcd_panel innovator1510_panel = अणु
+static struct lcd_panel innovator1510_panel = {
 	.name		= "inn1510",
 	.config		= OMAP_LCDC_PANEL_TFT,
 
@@ -34,7 +33,7 @@
 	.data_lines	= 16,
 	.x_res		= 240,
 	.y_res		= 320,
-	.pixel_घड़ी	= 12500,
+	.pixel_clock	= 12500,
 	.hsw		= 40,
 	.hfp		= 40,
 	.hbp		= 72,
@@ -45,22 +44,22 @@
 
 	.enable		= innovator1510_panel_enable,
 	.disable	= innovator1510_panel_disable,
-पूर्ण;
+};
 
-अटल पूर्णांक innovator1510_panel_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	omapfb_रेजिस्टर_panel(&innovator1510_panel);
-	वापस 0;
-पूर्ण
+static int innovator1510_panel_probe(struct platform_device *pdev)
+{
+	omapfb_register_panel(&innovator1510_panel);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver innovator1510_panel_driver = अणु
+static struct platform_driver innovator1510_panel_driver = {
 	.probe		= innovator1510_panel_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "lcd_inn1510",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(innovator1510_panel_driver);
+module_platform_driver(innovator1510_panel_driver);
 
 MODULE_AUTHOR("Imre Deak");
 MODULE_DESCRIPTION("LCD panel support for the TI OMAP1510 Innovator board");

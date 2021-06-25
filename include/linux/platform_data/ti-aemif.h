@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * TI DaVinci AEMIF platक्रमm glue.
+ * TI DaVinci AEMIF platform glue.
  *
  * Copyright (C) 2017 BayLibre SAS
  *
@@ -9,38 +8,38 @@
  *   Bartosz Golaszewski <bgolaszewski@baylibre.com>
  */
 
-#अगर_अघोषित __TI_DAVINCI_AEMIF_DATA_H__
-#घोषणा __TI_DAVINCI_AEMIF_DATA_H__
+#ifndef __TI_DAVINCI_AEMIF_DATA_H__
+#define __TI_DAVINCI_AEMIF_DATA_H__
 
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/of_platform.h>
 
 /**
- * काष्ठा aemअगर_abus_data - Async bus configuration parameters.
+ * struct aemif_abus_data - Async bus configuration parameters.
  *
  * @cs - Chip-select number.
  */
-काष्ठा aemअगर_abus_data अणु
+struct aemif_abus_data {
 	u32 cs;
-पूर्ण;
+};
 
 /**
- * काष्ठा aemअगर_platक्रमm_data - Data to set up the TI aemअगर driver.
+ * struct aemif_platform_data - Data to set up the TI aemif driver.
  *
- * @dev_lookup: of_dev_auxdata passed to of_platक्रमm_populate() क्रम aemअगर
+ * @dev_lookup: of_dev_auxdata passed to of_platform_populate() for aemif
  *              subdevices.
  * @cs_offset: Lowest allowed chip-select number.
  * @abus_data: Array of async bus configuration entries.
  * @num_abus_data: Number of abus entries.
- * @sub_devices: Array of platक्रमm subdevices.
+ * @sub_devices: Array of platform subdevices.
  * @num_sub_devices: Number of subdevices.
  */
-काष्ठा aemअगर_platक्रमm_data अणु
-	काष्ठा of_dev_auxdata *dev_lookup;
+struct aemif_platform_data {
+	struct of_dev_auxdata *dev_lookup;
 	u32 cs_offset;
-	काष्ठा aemअगर_abus_data *abus_data;
-	माप_प्रकार num_abus_data;
-	काष्ठा platक्रमm_device *sub_devices;
-	माप_प्रकार num_sub_devices;
-पूर्ण;
+	struct aemif_abus_data *abus_data;
+	size_t num_abus_data;
+	struct platform_device *sub_devices;
+	size_t num_sub_devices;
+};
 
-#पूर्ण_अगर /* __TI_DAVINCI_AEMIF_DATA_H__ */
+#endif /* __TI_DAVINCI_AEMIF_DATA_H__ */

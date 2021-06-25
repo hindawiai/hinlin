@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
@@ -8,22 +7,22 @@
  * are located to set and get variables to and from the firmware.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <brcmu_utils.h>
-#समावेश <brcmu_wअगरi.h>
-#समावेश "core.h"
-#समावेश "bus.h"
-#समावेश "debug.h"
-#समावेश "tracepoint.h"
-#समावेश "fwil.h"
-#समावेश "proto.h"
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <brcmu_utils.h>
+#include <brcmu_wifi.h>
+#include "core.h"
+#include "bus.h"
+#include "debug.h"
+#include "tracepoint.h"
+#include "fwil.h"
+#include "proto.h"
 
 
-#घोषणा MAX_HEX_DUMP_LEN	64
+#define MAX_HEX_DUMP_LEN	64
 
-#अगर_घोषित DEBUG
-अटल स्थिर अक्षर * स्थिर brcmf_fil_errstr[] = अणु
+#ifdef DEBUG
+static const char * const brcmf_fil_errstr[] = {
 	"BCME_OK",
 	"BCME_ERROR",
 	"BCME_BADARG",
@@ -77,341 +76,341 @@
 	"BCME_MICERR",
 	"BCME_REPLAY",
 	"BCME_IE_NOTFOUND",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *brcmf_fil_get_errstr(u32 err)
-अणु
-	अगर (err >= ARRAY_SIZE(brcmf_fil_errstr))
-		वापस "(unknown)";
+static const char *brcmf_fil_get_errstr(u32 err)
+{
+	if (err >= ARRAY_SIZE(brcmf_fil_errstr))
+		return "(unknown)";
 
-	वापस brcmf_fil_errstr[err];
-पूर्ण
-#अन्यथा
-अटल स्थिर अक्षर *brcmf_fil_get_errstr(u32 err)
-अणु
-	वापस "";
-पूर्ण
-#पूर्ण_अगर /* DEBUG */
+	return brcmf_fil_errstr[err];
+}
+#else
+static const char *brcmf_fil_get_errstr(u32 err)
+{
+	return "";
+}
+#endif /* DEBUG */
 
-अटल s32
-brcmf_fil_cmd_data(काष्ठा brcmf_अगर *अगरp, u32 cmd, व्योम *data, u32 len, bool set)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+static s32
+brcmf_fil_cmd_data(struct brcmf_if *ifp, u32 cmd, void *data, u32 len, bool set)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err, fwerr;
 
-	अगर (drvr->bus_अगर->state != BRCMF_BUS_UP) अणु
+	if (drvr->bus_if->state != BRCMF_BUS_UP) {
 		bphy_err(drvr, "bus is down. we have nothing to do.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (data != शून्य)
-		len = min_t(uपूर्णांक, len, BRCMF_DCMD_MAXLEN);
-	अगर (set)
-		err = brcmf_proto_set_dcmd(drvr, अगरp->अगरidx, cmd,
+	if (data != NULL)
+		len = min_t(uint, len, BRCMF_DCMD_MAXLEN);
+	if (set)
+		err = brcmf_proto_set_dcmd(drvr, ifp->ifidx, cmd,
 					   data, len, &fwerr);
-	अन्यथा
-		err = brcmf_proto_query_dcmd(drvr, अगरp->अगरidx, cmd,
+	else
+		err = brcmf_proto_query_dcmd(drvr, ifp->ifidx, cmd,
 					     data, len, &fwerr);
 
-	अगर (err) अणु
+	if (err) {
 		brcmf_dbg(FIL, "Failed: error=%d\n", err);
-	पूर्ण अन्यथा अगर (fwerr < 0) अणु
+	} else if (fwerr < 0) {
 		brcmf_dbg(FIL, "Firmware error: %s (%d)\n",
 			  brcmf_fil_get_errstr((u32)(-fwerr)), fwerr);
 		err = -EBADE;
-	पूर्ण
-	अगर (अगरp->fwil_fwerr)
-		वापस fwerr;
+	}
+	if (ifp->fwil_fwerr)
+		return fwerr;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 s32
-brcmf_fil_cmd_data_set(काष्ठा brcmf_अगर *अगरp, u32 cmd, व्योम *data, u32 len)
-अणु
+brcmf_fil_cmd_data_set(struct brcmf_if *ifp, u32 cmd, void *data, u32 len)
+{
 	s32 err;
 
-	mutex_lock(&अगरp->drvr->proto_block);
+	mutex_lock(&ifp->drvr->proto_block);
 
-	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, len=%d\n", अगरp->अगरidx, cmd, len);
+	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, len=%d\n", ifp->ifidx, cmd, len);
 	brcmf_dbg_hex_dump(BRCMF_FIL_ON(), data,
-			   min_t(uपूर्णांक, len, MAX_HEX_DUMP_LEN), "data\n");
+			   min_t(uint, len, MAX_HEX_DUMP_LEN), "data\n");
 
-	err = brcmf_fil_cmd_data(अगरp, cmd, data, len, true);
-	mutex_unlock(&अगरp->drvr->proto_block);
+	err = brcmf_fil_cmd_data(ifp, cmd, data, len, true);
+	mutex_unlock(&ifp->drvr->proto_block);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 s32
-brcmf_fil_cmd_data_get(काष्ठा brcmf_अगर *अगरp, u32 cmd, व्योम *data, u32 len)
-अणु
+brcmf_fil_cmd_data_get(struct brcmf_if *ifp, u32 cmd, void *data, u32 len)
+{
 	s32 err;
 
-	mutex_lock(&अगरp->drvr->proto_block);
-	err = brcmf_fil_cmd_data(अगरp, cmd, data, len, false);
+	mutex_lock(&ifp->drvr->proto_block);
+	err = brcmf_fil_cmd_data(ifp, cmd, data, len, false);
 
-	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, len=%d\n", अगरp->अगरidx, cmd, len);
+	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, len=%d\n", ifp->ifidx, cmd, len);
 	brcmf_dbg_hex_dump(BRCMF_FIL_ON(), data,
-			   min_t(uपूर्णांक, len, MAX_HEX_DUMP_LEN), "data\n");
+			   min_t(uint, len, MAX_HEX_DUMP_LEN), "data\n");
 
-	mutex_unlock(&अगरp->drvr->proto_block);
+	mutex_unlock(&ifp->drvr->proto_block);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 s32
-brcmf_fil_cmd_पूर्णांक_set(काष्ठा brcmf_अगर *अगरp, u32 cmd, u32 data)
-अणु
+brcmf_fil_cmd_int_set(struct brcmf_if *ifp, u32 cmd, u32 data)
+{
 	s32 err;
 	__le32 data_le = cpu_to_le32(data);
 
-	mutex_lock(&अगरp->drvr->proto_block);
-	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, value=%d\n", अगरp->अगरidx, cmd, data);
-	err = brcmf_fil_cmd_data(अगरp, cmd, &data_le, माप(data_le), true);
-	mutex_unlock(&अगरp->drvr->proto_block);
+	mutex_lock(&ifp->drvr->proto_block);
+	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, value=%d\n", ifp->ifidx, cmd, data);
+	err = brcmf_fil_cmd_data(ifp, cmd, &data_le, sizeof(data_le), true);
+	mutex_unlock(&ifp->drvr->proto_block);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 s32
-brcmf_fil_cmd_पूर्णांक_get(काष्ठा brcmf_अगर *अगरp, u32 cmd, u32 *data)
-अणु
+brcmf_fil_cmd_int_get(struct brcmf_if *ifp, u32 cmd, u32 *data)
+{
 	s32 err;
 	__le32 data_le = cpu_to_le32(*data);
 
-	mutex_lock(&अगरp->drvr->proto_block);
-	err = brcmf_fil_cmd_data(अगरp, cmd, &data_le, माप(data_le), false);
-	mutex_unlock(&अगरp->drvr->proto_block);
+	mutex_lock(&ifp->drvr->proto_block);
+	err = brcmf_fil_cmd_data(ifp, cmd, &data_le, sizeof(data_le), false);
+	mutex_unlock(&ifp->drvr->proto_block);
 	*data = le32_to_cpu(data_le);
-	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, value=%d\n", अगरp->अगरidx, cmd, *data);
+	brcmf_dbg(FIL, "ifidx=%d, cmd=%d, value=%d\n", ifp->ifidx, cmd, *data);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u32
-brcmf_create_iovar(अक्षर *name, स्थिर अक्षर *data, u32 datalen,
-		   अक्षर *buf, u32 buflen)
-अणु
+static u32
+brcmf_create_iovar(char *name, const char *data, u32 datalen,
+		   char *buf, u32 buflen)
+{
 	u32 len;
 
-	len = म_माप(name) + 1;
+	len = strlen(name) + 1;
 
-	अगर ((len + datalen) > buflen)
-		वापस 0;
+	if ((len + datalen) > buflen)
+		return 0;
 
-	स_नकल(buf, name, len);
+	memcpy(buf, name, len);
 
 	/* append data onto the end of the name string */
-	अगर (data && datalen)
-		स_नकल(&buf[len], data, datalen);
+	if (data && datalen)
+		memcpy(&buf[len], data, datalen);
 
-	वापस len + datalen;
-पूर्ण
+	return len + datalen;
+}
 
 
 s32
-brcmf_fil_iovar_data_set(काष्ठा brcmf_अगर *अगरp, अक्षर *name, स्थिर व्योम *data,
+brcmf_fil_iovar_data_set(struct brcmf_if *ifp, char *name, const void *data,
 			 u32 len)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
 	u32 buflen;
 
 	mutex_lock(&drvr->proto_block);
 
-	brcmf_dbg(FIL, "ifidx=%d, name=%s, len=%d\n", अगरp->अगरidx, name, len);
+	brcmf_dbg(FIL, "ifidx=%d, name=%s, len=%d\n", ifp->ifidx, name, len);
 	brcmf_dbg_hex_dump(BRCMF_FIL_ON(), data,
-			   min_t(uपूर्णांक, len, MAX_HEX_DUMP_LEN), "data\n");
+			   min_t(uint, len, MAX_HEX_DUMP_LEN), "data\n");
 
 	buflen = brcmf_create_iovar(name, data, len, drvr->proto_buf,
-				    माप(drvr->proto_buf));
-	अगर (buflen) अणु
-		err = brcmf_fil_cmd_data(अगरp, BRCMF_C_SET_VAR, drvr->proto_buf,
+				    sizeof(drvr->proto_buf));
+	if (buflen) {
+		err = brcmf_fil_cmd_data(ifp, BRCMF_C_SET_VAR, drvr->proto_buf,
 					 buflen, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EPERM;
 		bphy_err(drvr, "Creating iovar failed\n");
-	पूर्ण
+	}
 
 	mutex_unlock(&drvr->proto_block);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 s32
-brcmf_fil_iovar_data_get(काष्ठा brcmf_अगर *अगरp, अक्षर *name, व्योम *data,
+brcmf_fil_iovar_data_get(struct brcmf_if *ifp, char *name, void *data,
 			 u32 len)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
 	u32 buflen;
 
 	mutex_lock(&drvr->proto_block);
 
 	buflen = brcmf_create_iovar(name, data, len, drvr->proto_buf,
-				    माप(drvr->proto_buf));
-	अगर (buflen) अणु
-		err = brcmf_fil_cmd_data(अगरp, BRCMF_C_GET_VAR, drvr->proto_buf,
+				    sizeof(drvr->proto_buf));
+	if (buflen) {
+		err = brcmf_fil_cmd_data(ifp, BRCMF_C_GET_VAR, drvr->proto_buf,
 					 buflen, false);
-		अगर (err == 0)
-			स_नकल(data, drvr->proto_buf, len);
-	पूर्ण अन्यथा अणु
+		if (err == 0)
+			memcpy(data, drvr->proto_buf, len);
+	} else {
 		err = -EPERM;
 		bphy_err(drvr, "Creating iovar failed\n");
-	पूर्ण
+	}
 
-	brcmf_dbg(FIL, "ifidx=%d, name=%s, len=%d\n", अगरp->अगरidx, name, len);
+	brcmf_dbg(FIL, "ifidx=%d, name=%s, len=%d\n", ifp->ifidx, name, len);
 	brcmf_dbg_hex_dump(BRCMF_FIL_ON(), data,
-			   min_t(uपूर्णांक, len, MAX_HEX_DUMP_LEN), "data\n");
+			   min_t(uint, len, MAX_HEX_DUMP_LEN), "data\n");
 
 	mutex_unlock(&drvr->proto_block);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 s32
-brcmf_fil_iovar_पूर्णांक_set(काष्ठा brcmf_अगर *अगरp, अक्षर *name, u32 data)
-अणु
+brcmf_fil_iovar_int_set(struct brcmf_if *ifp, char *name, u32 data)
+{
 	__le32 data_le = cpu_to_le32(data);
 
-	वापस brcmf_fil_iovar_data_set(अगरp, name, &data_le, माप(data_le));
-पूर्ण
+	return brcmf_fil_iovar_data_set(ifp, name, &data_le, sizeof(data_le));
+}
 
 s32
-brcmf_fil_iovar_पूर्णांक_get(काष्ठा brcmf_अगर *अगरp, अक्षर *name, u32 *data)
-अणु
+brcmf_fil_iovar_int_get(struct brcmf_if *ifp, char *name, u32 *data)
+{
 	__le32 data_le = cpu_to_le32(*data);
 	s32 err;
 
-	err = brcmf_fil_iovar_data_get(अगरp, name, &data_le, माप(data_le));
-	अगर (err == 0)
+	err = brcmf_fil_iovar_data_get(ifp, name, &data_le, sizeof(data_le));
+	if (err == 0)
 		*data = le32_to_cpu(data_le);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल u32
-brcmf_create_bsscfg(s32 bsscfgidx, अक्षर *name, अक्षर *data, u32 datalen,
-		    अक्षर *buf, u32 buflen)
-अणु
-	स्थिर s8 *prefix = "bsscfg:";
+static u32
+brcmf_create_bsscfg(s32 bsscfgidx, char *name, char *data, u32 datalen,
+		    char *buf, u32 buflen)
+{
+	const s8 *prefix = "bsscfg:";
 	s8 *p;
 	u32 prefixlen;
 	u32 namelen;
 	u32 iolen;
 	__le32 bsscfgidx_le;
 
-	अगर (bsscfgidx == 0)
-		वापस brcmf_create_iovar(name, data, datalen, buf, buflen);
+	if (bsscfgidx == 0)
+		return brcmf_create_iovar(name, data, datalen, buf, buflen);
 
-	prefixlen = म_माप(prefix);
-	namelen = म_माप(name) + 1; /* length of iovar  name + null */
-	iolen = prefixlen + namelen + माप(bsscfgidx_le) + datalen;
+	prefixlen = strlen(prefix);
+	namelen = strlen(name) + 1; /* length of iovar  name + null */
+	iolen = prefixlen + namelen + sizeof(bsscfgidx_le) + datalen;
 
-	अगर (buflen < iolen) अणु
+	if (buflen < iolen) {
 		brcmf_err("buffer is too short\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	p = buf;
 
 	/* copy prefix, no null */
-	स_नकल(p, prefix, prefixlen);
+	memcpy(p, prefix, prefixlen);
 	p += prefixlen;
 
 	/* copy iovar name including null */
-	स_नकल(p, name, namelen);
+	memcpy(p, name, namelen);
 	p += namelen;
 
 	/* bss config index as first data */
 	bsscfgidx_le = cpu_to_le32(bsscfgidx);
-	स_नकल(p, &bsscfgidx_le, माप(bsscfgidx_le));
-	p += माप(bsscfgidx_le);
+	memcpy(p, &bsscfgidx_le, sizeof(bsscfgidx_le));
+	p += sizeof(bsscfgidx_le);
 
 	/* parameter buffer follows */
-	अगर (datalen)
-		स_नकल(p, data, datalen);
+	if (datalen)
+		memcpy(p, data, datalen);
 
-	वापस iolen;
-पूर्ण
+	return iolen;
+}
 
 s32
-brcmf_fil_bsscfg_data_set(काष्ठा brcmf_अगर *अगरp, अक्षर *name,
-			  व्योम *data, u32 len)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+brcmf_fil_bsscfg_data_set(struct brcmf_if *ifp, char *name,
+			  void *data, u32 len)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
 	u32 buflen;
 
 	mutex_lock(&drvr->proto_block);
 
-	brcmf_dbg(FIL, "ifidx=%d, bsscfgidx=%d, name=%s, len=%d\n", अगरp->अगरidx,
-		  अगरp->bsscfgidx, name, len);
+	brcmf_dbg(FIL, "ifidx=%d, bsscfgidx=%d, name=%s, len=%d\n", ifp->ifidx,
+		  ifp->bsscfgidx, name, len);
 	brcmf_dbg_hex_dump(BRCMF_FIL_ON(), data,
-			   min_t(uपूर्णांक, len, MAX_HEX_DUMP_LEN), "data\n");
+			   min_t(uint, len, MAX_HEX_DUMP_LEN), "data\n");
 
-	buflen = brcmf_create_bsscfg(अगरp->bsscfgidx, name, data, len,
-				     drvr->proto_buf, माप(drvr->proto_buf));
-	अगर (buflen) अणु
-		err = brcmf_fil_cmd_data(अगरp, BRCMF_C_SET_VAR, drvr->proto_buf,
+	buflen = brcmf_create_bsscfg(ifp->bsscfgidx, name, data, len,
+				     drvr->proto_buf, sizeof(drvr->proto_buf));
+	if (buflen) {
+		err = brcmf_fil_cmd_data(ifp, BRCMF_C_SET_VAR, drvr->proto_buf,
 					 buflen, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -EPERM;
 		bphy_err(drvr, "Creating bsscfg failed\n");
-	पूर्ण
+	}
 
 	mutex_unlock(&drvr->proto_block);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 s32
-brcmf_fil_bsscfg_data_get(काष्ठा brcmf_अगर *अगरp, अक्षर *name,
-			  व्योम *data, u32 len)
-अणु
-	काष्ठा brcmf_pub *drvr = अगरp->drvr;
+brcmf_fil_bsscfg_data_get(struct brcmf_if *ifp, char *name,
+			  void *data, u32 len)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
 	s32 err;
 	u32 buflen;
 
 	mutex_lock(&drvr->proto_block);
 
-	buflen = brcmf_create_bsscfg(अगरp->bsscfgidx, name, data, len,
-				     drvr->proto_buf, माप(drvr->proto_buf));
-	अगर (buflen) अणु
-		err = brcmf_fil_cmd_data(अगरp, BRCMF_C_GET_VAR, drvr->proto_buf,
+	buflen = brcmf_create_bsscfg(ifp->bsscfgidx, name, data, len,
+				     drvr->proto_buf, sizeof(drvr->proto_buf));
+	if (buflen) {
+		err = brcmf_fil_cmd_data(ifp, BRCMF_C_GET_VAR, drvr->proto_buf,
 					 buflen, false);
-		अगर (err == 0)
-			स_नकल(data, drvr->proto_buf, len);
-	पूर्ण अन्यथा अणु
+		if (err == 0)
+			memcpy(data, drvr->proto_buf, len);
+	} else {
 		err = -EPERM;
 		bphy_err(drvr, "Creating bsscfg failed\n");
-	पूर्ण
-	brcmf_dbg(FIL, "ifidx=%d, bsscfgidx=%d, name=%s, len=%d\n", अगरp->अगरidx,
-		  अगरp->bsscfgidx, name, len);
+	}
+	brcmf_dbg(FIL, "ifidx=%d, bsscfgidx=%d, name=%s, len=%d\n", ifp->ifidx,
+		  ifp->bsscfgidx, name, len);
 	brcmf_dbg_hex_dump(BRCMF_FIL_ON(), data,
-			   min_t(uपूर्णांक, len, MAX_HEX_DUMP_LEN), "data\n");
+			   min_t(uint, len, MAX_HEX_DUMP_LEN), "data\n");
 
 	mutex_unlock(&drvr->proto_block);
-	वापस err;
+	return err;
 
-पूर्ण
+}
 
 s32
-brcmf_fil_bsscfg_पूर्णांक_set(काष्ठा brcmf_अगर *अगरp, अक्षर *name, u32 data)
-अणु
+brcmf_fil_bsscfg_int_set(struct brcmf_if *ifp, char *name, u32 data)
+{
 	__le32 data_le = cpu_to_le32(data);
 
-	वापस brcmf_fil_bsscfg_data_set(अगरp, name, &data_le,
-					 माप(data_le));
-पूर्ण
+	return brcmf_fil_bsscfg_data_set(ifp, name, &data_le,
+					 sizeof(data_le));
+}
 
 s32
-brcmf_fil_bsscfg_पूर्णांक_get(काष्ठा brcmf_अगर *अगरp, अक्षर *name, u32 *data)
-अणु
+brcmf_fil_bsscfg_int_get(struct brcmf_if *ifp, char *name, u32 *data)
+{
 	__le32 data_le = cpu_to_le32(*data);
 	s32 err;
 
-	err = brcmf_fil_bsscfg_data_get(अगरp, name, &data_le,
-					माप(data_le));
-	अगर (err == 0)
+	err = brcmf_fil_bsscfg_data_get(ifp, name, &data_le,
+					sizeof(data_le));
+	if (err == 0)
 		*data = le32_to_cpu(data_le);
-	वापस err;
-पूर्ण
+	return err;
+}

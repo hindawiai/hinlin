@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश "util/string2.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <string.h>
+#include <stdlib.h>
+#include "util/string2.h"
 
-#समावेश "demangle-ocaml.h"
+#include "demangle-ocaml.h"
 
-#समावेश <linux/प्रकार.स>
+#include <linux/ctype.h>
 
-अटल स्थिर अक्षर *caml_prefix = "caml";
-अटल स्थिर माप_प्रकार caml_prefix_len = 4;
+static const char *caml_prefix = "caml";
+static const size_t caml_prefix_len = 4;
 
-/* mangled OCaml symbols start with "caml" followed by an upper-हाल letter */
-अटल bool
-ocaml_is_mangled(स्थिर अक्षर *sym)
-अणु
-	वापस 0 == म_भेदन(sym, caml_prefix, caml_prefix_len)
-		&& है_बड़ा(sym[caml_prefix_len]);
-पूर्ण
+/* mangled OCaml symbols start with "caml" followed by an upper-case letter */
+static bool
+ocaml_is_mangled(const char *sym)
+{
+	return 0 == strncmp(sym, caml_prefix, caml_prefix_len)
+		&& isupper(sym[caml_prefix_len]);
+}
 
 /*
  * input:
  *     sym: a symbol which may have been mangled by the OCaml compiler
- * वापस:
- *     अगर the input करोesn't look like a mangled OCaml symbol, शून्य is वापसed
- *     otherwise, a newly allocated string containing the demangled symbol is वापसed
+ * return:
+ *     if the input doesn't look like a mangled OCaml symbol, NULL is returned
+ *     otherwise, a newly allocated string containing the demangled symbol is returned
  */
-अक्षर *
-ocaml_demangle_sym(स्थिर अक्षर *sym)
-अणु
-	अक्षर *result;
-	पूर्णांक j = 0;
-	पूर्णांक i;
-	पूर्णांक len;
+char *
+ocaml_demangle_sym(const char *sym)
+{
+	char *result;
+	int j = 0;
+	int i;
+	int len;
 
-	अगर (!ocaml_is_mangled(sym)) अणु
-		वापस शून्य;
-	पूर्ण
+	if (!ocaml_is_mangled(sym)) {
+		return NULL;
+	}
 
-	len = म_माप(sym);
+	len = strlen(sym);
 
 	/* the demangled symbol is always smaller than the mangled symbol */
-	result = दो_स्मृति(len + 1);
-	अगर (!result)
-		वापस शून्य;
+	result = malloc(len + 1);
+	if (!result)
+		return NULL;
 
 	/* skip "caml" prefix */
 	i = caml_prefix_len;
 
-	जबतक (i < len) अणु
-		अगर (sym[i] == '_' && sym[i + 1] == '_') अणु
+	while (i < len) {
+		if (sym[i] == '_' && sym[i + 1] == '_') {
 			/* "__" -> "." */
 			result[j++] = '.';
 			i += 2;
-		पूर्ण
-		अन्यथा अगर (sym[i] == '$' && है_षष्ठादशक(sym[i + 1]) && है_षष्ठादशक(sym[i + 2])) अणु
-			/* "$xx" is a hex-encoded अक्षरacter */
+		}
+		else if (sym[i] == '$' && isxdigit(sym[i + 1]) && isxdigit(sym[i + 2])) {
+			/* "$xx" is a hex-encoded character */
 			result[j++] = (hex(sym[i + 1]) << 4) | hex(sym[i + 2]);
 			i += 3;
-		पूर्ण
-		अन्यथा अणु
+		}
+		else {
 			result[j++] = sym[i++];
-		पूर्ण
-	पूर्ण
+		}
+	}
 	result[j] = '\0';
 
-	वापस result;
-पूर्ण
+	return result;
+}

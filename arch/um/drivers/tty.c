@@ -1,82 +1,81 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुlinux.पूर्णांकel,addtoitपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <termios.h>
-#समावेश "chan_user.h"
-#समावेश <os.h>
-#समावेश <um_दो_स्मृति.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <termios.h>
+#include "chan_user.h"
+#include <os.h>
+#include <um_malloc.h>
 
-काष्ठा tty_chan अणु
-	अक्षर *dev;
-	पूर्णांक raw;
-	काष्ठा termios tt;
-पूर्ण;
+struct tty_chan {
+	char *dev;
+	int raw;
+	struct termios tt;
+};
 
-अटल व्योम *tty_chan_init(अक्षर *str, पूर्णांक device, स्थिर काष्ठा chan_opts *opts)
-अणु
-	काष्ठा tty_chan *data;
+static void *tty_chan_init(char *str, int device, const struct chan_opts *opts)
+{
+	struct tty_chan *data;
 
-	अगर (*str != ':') अणु
-		prपूर्णांकk(UM_KERN_ERR "tty_init : channel type 'tty' must specify "
+	if (*str != ':') {
+		printk(UM_KERN_ERR "tty_init : channel type 'tty' must specify "
 		       "a device\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	str++;
 
-	data = uml_kदो_स्मृति(माप(*data), UM_GFP_KERNEL);
-	अगर (data == शून्य)
-		वापस शून्य;
-	*data = ((काष्ठा tty_chan) अणु .dev 	= str,
-				     .raw 	= opts->raw पूर्ण);
+	data = uml_kmalloc(sizeof(*data), UM_GFP_KERNEL);
+	if (data == NULL)
+		return NULL;
+	*data = ((struct tty_chan) { .dev 	= str,
+				     .raw 	= opts->raw });
 
-	वापस data;
-पूर्ण
+	return data;
+}
 
-अटल पूर्णांक tty_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *d,
-		    अक्षर **dev_out)
-अणु
-	काष्ठा tty_chan *data = d;
-	पूर्णांक fd, err, mode = 0;
+static int tty_open(int input, int output, int primary, void *d,
+		    char **dev_out)
+{
+	struct tty_chan *data = d;
+	int fd, err, mode = 0;
 
-	अगर (input && output)
+	if (input && output)
 		mode = O_RDWR;
-	अन्यथा अगर (input)
+	else if (input)
 		mode = O_RDONLY;
-	अन्यथा अगर (output)
+	else if (output)
 		mode = O_WRONLY;
 
-	fd = खोलो(data->dev, mode);
-	अगर (fd < 0)
-		वापस -त्रुटि_सं;
+	fd = open(data->dev, mode);
+	if (fd < 0)
+		return -errno;
 
-	अगर (data->raw) अणु
+	if (data->raw) {
 		CATCH_EINTR(err = tcgetattr(fd, &data->tt));
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = raw(fd);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	*dev_out = data->dev;
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-स्थिर काष्ठा chan_ops tty_ops = अणु
+const struct chan_ops tty_ops = {
 	.type		= "tty",
 	.init		= tty_chan_init,
-	.खोलो		= tty_खोलो,
-	.बंद		= generic_बंद,
-	.पढ़ो		= generic_पढ़ो,
-	.ग_लिखो		= generic_ग_लिखो,
-	.console_ग_लिखो	= generic_console_ग_लिखो,
-	.winकरोw_size	= generic_winकरोw_size,
-	.मुक्त		= generic_मुक्त,
+	.open		= tty_open,
+	.close		= generic_close,
+	.read		= generic_read,
+	.write		= generic_write,
+	.console_write	= generic_console_write,
+	.window_size	= generic_window_size,
+	.free		= generic_free,
 	.winch		= 0,
-पूर्ण;
+};

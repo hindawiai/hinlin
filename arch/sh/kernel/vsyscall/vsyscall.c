@@ -1,94 +1,93 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/kernel/vsyscall/vsyscall.c
  *
  *  Copyright (C) 2006 Paul Mundt
  *
- * vDSO अक्रमomization
+ * vDSO randomization
  * Copyright(C) 2005-2006, Red Hat, Inc., Ingo Molnar
  */
-#समावेश <linux/mm.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/err.h>
+#include <linux/mm.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/elf.h>
+#include <linux/sched.h>
+#include <linux/err.h>
 
 /*
- * Should the kernel map a VDSO page पूर्णांकo processes and pass its
- * address करोwn to glibc upon exec()?
+ * Should the kernel map a VDSO page into processes and pass its
+ * address down to glibc upon exec()?
  */
-अचिन्हित पूर्णांक __पढ़ो_mostly vdso_enabled = 1;
+unsigned int __read_mostly vdso_enabled = 1;
 EXPORT_SYMBOL_GPL(vdso_enabled);
 
-अटल पूर्णांक __init vdso_setup(अक्षर *s)
-अणु
-	vdso_enabled = simple_म_से_अदीर्घ(s, शून्य, 0);
-	वापस 1;
-पूर्ण
+static int __init vdso_setup(char *s)
+{
+	vdso_enabled = simple_strtoul(s, NULL, 0);
+	return 1;
+}
 __setup("vdso=", vdso_setup);
 
 /*
  * These symbols are defined by vsyscall.o to mark the bounds
  * of the ELF DSO images included therein.
  */
-बाह्य स्थिर अक्षर vsyscall_trapa_start, vsyscall_trapa_end;
-अटल काष्ठा page *syscall_pages[1];
+extern const char vsyscall_trapa_start, vsyscall_trapa_end;
+static struct page *syscall_pages[1];
 
-पूर्णांक __init vsyscall_init(व्योम)
-अणु
-	व्योम *syscall_page = (व्योम *)get_zeroed_page(GFP_ATOMIC);
+int __init vsyscall_init(void)
+{
+	void *syscall_page = (void *)get_zeroed_page(GFP_ATOMIC);
 	syscall_pages[0] = virt_to_page(syscall_page);
 
 	/*
-	 * XXX: Map this page to a fixmap entry अगर we get around
+	 * XXX: Map this page to a fixmap entry if we get around
 	 * to adding the page to ELF core dumps
 	 */
 
-	स_नकल(syscall_page,
+	memcpy(syscall_page,
 	       &vsyscall_trapa_start,
 	       &vsyscall_trapa_end - &vsyscall_trapa_start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Setup a VMA at program startup क्रम the vsyscall page */
-पूर्णांक arch_setup_additional_pages(काष्ठा linux_binprm *bprm, पूर्णांक uses_पूर्णांकerp)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक ret;
+/* Setup a VMA at program startup for the vsyscall page */
+int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
+{
+	struct mm_struct *mm = current->mm;
+	unsigned long addr;
+	int ret;
 
-	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
-		वापस -EINTR;
+	if (mmap_write_lock_killable(mm))
+		return -EINTR;
 
-	addr = get_unmapped_area(शून्य, 0, PAGE_SIZE, 0, 0);
-	अगर (IS_ERR_VALUE(addr)) अणु
+	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
+	if (IS_ERR_VALUE(addr)) {
 		ret = addr;
-		जाओ up_fail;
-	पूर्ण
+		goto up_fail;
+	}
 
 	ret = install_special_mapping(mm, addr, PAGE_SIZE,
 				      VM_READ | VM_EXEC |
 				      VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC,
 				      syscall_pages);
-	अगर (unlikely(ret))
-		जाओ up_fail;
+	if (unlikely(ret))
+		goto up_fail;
 
-	current->mm->context.vdso = (व्योम *)addr;
+	current->mm->context.vdso = (void *)addr;
 
 up_fail:
-	mmap_ग_लिखो_unlock(mm);
-	वापस ret;
-पूर्ण
+	mmap_write_unlock(mm);
+	return ret;
+}
 
-स्थिर अक्षर *arch_vma_name(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (vma->vm_mm && vma->vm_start == (दीर्घ)vma->vm_mm->context.vdso)
-		वापस "[vdso]";
+const char *arch_vma_name(struct vm_area_struct *vma)
+{
+	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
+		return "[vdso]";
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}

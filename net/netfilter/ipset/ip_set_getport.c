@@ -1,151 +1,150 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2003-2011 Jozsef Kadlecsik <kadlec@netfilter.org>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
 /* Get Layer-4 data from the packets */
 
-#समावेश <linux/ip.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/icmpv6.h>
-#समावेश <linux/sctp.h>
-#समावेश <linux/netfilter_ipv6/ip6_tables.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
+#include <linux/ip.h>
+#include <linux/skbuff.h>
+#include <linux/icmp.h>
+#include <linux/icmpv6.h>
+#include <linux/sctp.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
 
-#समावेश <linux/netfilter/ipset/ip_set_getport.h>
-#समावेश <linux/export.h>
+#include <linux/netfilter/ipset/ip_set_getport.h>
+#include <linux/export.h>
 
 /* We must handle non-linear skbs */
-अटल bool
-get_port(स्थिर काष्ठा sk_buff *skb, पूर्णांक protocol, अचिन्हित पूर्णांक protooff,
+static bool
+get_port(const struct sk_buff *skb, int protocol, unsigned int protooff,
 	 bool src, __be16 *port, u8 *proto)
-अणु
-	चयन (protocol) अणु
-	हाल IPPROTO_TCP: अणु
-		काष्ठा tcphdr _tcph;
-		स्थिर काष्ठा tcphdr *th;
+{
+	switch (protocol) {
+	case IPPROTO_TCP: {
+		struct tcphdr _tcph;
+		const struct tcphdr *th;
 
-		th = skb_header_poपूर्णांकer(skb, protooff, माप(_tcph), &_tcph);
-		अगर (!th)
+		th = skb_header_pointer(skb, protooff, sizeof(_tcph), &_tcph);
+		if (!th)
 			/* No choice either */
-			वापस false;
+			return false;
 
 		*port = src ? th->source : th->dest;
-		अवरोध;
-	पूर्ण
-	हाल IPPROTO_SCTP: अणु
-		काष्ठा sctphdr _sh;
-		स्थिर काष्ठा sctphdr *sh;
+		break;
+	}
+	case IPPROTO_SCTP: {
+		struct sctphdr _sh;
+		const struct sctphdr *sh;
 
-		sh = skb_header_poपूर्णांकer(skb, protooff, माप(_sh), &_sh);
-		अगर (!sh)
+		sh = skb_header_pointer(skb, protooff, sizeof(_sh), &_sh);
+		if (!sh)
 			/* No choice either */
-			वापस false;
+			return false;
 
 		*port = src ? sh->source : sh->dest;
-		अवरोध;
-	पूर्ण
-	हाल IPPROTO_UDP:
-	हाल IPPROTO_UDPLITE: अणु
-		काष्ठा udphdr _udph;
-		स्थिर काष्ठा udphdr *uh;
+		break;
+	}
+	case IPPROTO_UDP:
+	case IPPROTO_UDPLITE: {
+		struct udphdr _udph;
+		const struct udphdr *uh;
 
-		uh = skb_header_poपूर्णांकer(skb, protooff, माप(_udph), &_udph);
-		अगर (!uh)
+		uh = skb_header_pointer(skb, protooff, sizeof(_udph), &_udph);
+		if (!uh)
 			/* No choice either */
-			वापस false;
+			return false;
 
 		*port = src ? uh->source : uh->dest;
-		अवरोध;
-	पूर्ण
-	हाल IPPROTO_ICMP: अणु
-		काष्ठा icmphdr _ich;
-		स्थिर काष्ठा icmphdr *ic;
+		break;
+	}
+	case IPPROTO_ICMP: {
+		struct icmphdr _ich;
+		const struct icmphdr *ic;
 
-		ic = skb_header_poपूर्णांकer(skb, protooff, माप(_ich), &_ich);
-		अगर (!ic)
-			वापस false;
+		ic = skb_header_pointer(skb, protooff, sizeof(_ich), &_ich);
+		if (!ic)
+			return false;
 
-		*port = (__क्रमce __be16)htons((ic->type << 8) | ic->code);
-		अवरोध;
-	पूर्ण
-	हाल IPPROTO_ICMPV6: अणु
-		काष्ठा icmp6hdr _ich;
-		स्थिर काष्ठा icmp6hdr *ic;
+		*port = (__force __be16)htons((ic->type << 8) | ic->code);
+		break;
+	}
+	case IPPROTO_ICMPV6: {
+		struct icmp6hdr _ich;
+		const struct icmp6hdr *ic;
 
-		ic = skb_header_poपूर्णांकer(skb, protooff, माप(_ich), &_ich);
-		अगर (!ic)
-			वापस false;
+		ic = skb_header_pointer(skb, protooff, sizeof(_ich), &_ich);
+		if (!ic)
+			return false;
 
-		*port = (__क्रमce __be16)
+		*port = (__force __be16)
 			htons((ic->icmp6_type << 8) | ic->icmp6_code);
-		अवरोध;
-	पूर्ण
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	}
+	default:
+		break;
+	}
 	*proto = protocol;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 bool
-ip_set_get_ip4_port(स्थिर काष्ठा sk_buff *skb, bool src,
+ip_set_get_ip4_port(const struct sk_buff *skb, bool src,
 		    __be16 *port, u8 *proto)
-अणु
-	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
-	अचिन्हित पूर्णांक protooff = skb_network_offset(skb) + ip_hdrlen(skb);
-	पूर्णांक protocol = iph->protocol;
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	unsigned int protooff = skb_network_offset(skb) + ip_hdrlen(skb);
+	int protocol = iph->protocol;
 
 	/* See comments at tcp_match in ip_tables.c */
-	अगर (protocol <= 0)
-		वापस false;
+	if (protocol <= 0)
+		return false;
 
-	अगर (ntohs(iph->frag_off) & IP_OFFSET)
-		चयन (protocol) अणु
-		हाल IPPROTO_TCP:
-		हाल IPPROTO_SCTP:
-		हाल IPPROTO_UDP:
-		हाल IPPROTO_UDPLITE:
-		हाल IPPROTO_ICMP:
-			/* Port info not available क्रम fragment offset > 0 */
-			वापस false;
-		शेष:
-			/* Other protocols करोesn't have ports,
+	if (ntohs(iph->frag_off) & IP_OFFSET)
+		switch (protocol) {
+		case IPPROTO_TCP:
+		case IPPROTO_SCTP:
+		case IPPROTO_UDP:
+		case IPPROTO_UDPLITE:
+		case IPPROTO_ICMP:
+			/* Port info not available for fragment offset > 0 */
+			return false;
+		default:
+			/* Other protocols doesn't have ports,
 			 * so we can match fragments.
 			 */
 			*proto = protocol;
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-	वापस get_port(skb, protocol, protooff, src, port, proto);
-पूर्ण
+	return get_port(skb, protocol, protooff, src, port, proto);
+}
 EXPORT_SYMBOL_GPL(ip_set_get_ip4_port);
 
-#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
 bool
-ip_set_get_ip6_port(स्थिर काष्ठा sk_buff *skb, bool src,
+ip_set_get_ip6_port(const struct sk_buff *skb, bool src,
 		    __be16 *port, u8 *proto)
-अणु
-	पूर्णांक protoff;
+{
+	int protoff;
 	u8 nexthdr;
 	__be16 frag_off = 0;
 
 	nexthdr = ipv6_hdr(skb)->nexthdr;
 	protoff = ipv6_skip_exthdr(skb,
 				   skb_network_offset(skb) +
-					माप(काष्ठा ipv6hdr), &nexthdr,
+					sizeof(struct ipv6hdr), &nexthdr,
 				   &frag_off);
-	अगर (protoff < 0 || (frag_off & htons(~0x7)) != 0)
-		वापस false;
+	if (protoff < 0 || (frag_off & htons(~0x7)) != 0)
+		return false;
 
-	वापस get_port(skb, nexthdr, protoff, src, port, proto);
-पूर्ण
+	return get_port(skb, nexthdr, protoff, src, port, proto);
+}
 EXPORT_SYMBOL_GPL(ip_set_get_ip6_port);
-#पूर्ण_अगर
+#endif

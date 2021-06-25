@@ -1,278 +1,277 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * bebob.c - a part of driver क्रम BeBoB based devices
+ * bebob.c - a part of driver for BeBoB based devices
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
 /*
  * BeBoB is 'BridgeCo enhanced Breakout Box'. This is installed to firewire
- * devices with DM1000/DM1100/DM1500 chipset. It gives common way क्रम host
- * प्रणाली to handle BeBoB based devices.
+ * devices with DM1000/DM1100/DM1500 chipset. It gives common way for host
+ * system to handle BeBoB based devices.
  */
 
-#समावेश "bebob.h"
+#include "bebob.h"
 
 MODULE_DESCRIPTION("BridgeCo BeBoB driver");
 MODULE_AUTHOR("Takashi Sakamoto <o-takashi@sakamocchi.jp>");
 MODULE_LICENSE("GPL v2");
 
-अटल पूर्णांक index[SNDRV_CARDS]	= SNDRV_DEFAULT_IDX;
-अटल अक्षर *id[SNDRV_CARDS]	= SNDRV_DEFAULT_STR;
-अटल bool enable[SNDRV_CARDS]	= SNDRV_DEFAULT_ENABLE_PNP;
+static int index[SNDRV_CARDS]	= SNDRV_DEFAULT_IDX;
+static char *id[SNDRV_CARDS]	= SNDRV_DEFAULT_STR;
+static bool enable[SNDRV_CARDS]	= SNDRV_DEFAULT_ENABLE_PNP;
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "card index");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "enable BeBoB sound card");
 
-अटल DEFINE_MUTEX(devices_mutex);
-अटल DECLARE_BITMAP(devices_used, SNDRV_CARDS);
+static DEFINE_MUTEX(devices_mutex);
+static DECLARE_BITMAP(devices_used, SNDRV_CARDS);
 
-/* Offsets from inक्रमmation रेजिस्टर. */
-#घोषणा INFO_OFFSET_BEBOB_VERSION	0x08
-#घोषणा INFO_OFFSET_GUID		0x10
-#घोषणा INFO_OFFSET_HW_MODEL_ID		0x18
-#घोषणा INFO_OFFSET_HW_MODEL_REVISION	0x1c
+/* Offsets from information register. */
+#define INFO_OFFSET_BEBOB_VERSION	0x08
+#define INFO_OFFSET_GUID		0x10
+#define INFO_OFFSET_HW_MODEL_ID		0x18
+#define INFO_OFFSET_HW_MODEL_REVISION	0x1c
 
-#घोषणा VEN_EसूचीOL	0x000040ab
-#घोषणा VEN_PRESONUS	0x00000a92
-#घोषणा VEN_BRIDGECO	0x000007f5
-#घोषणा VEN_MACKIE1	0x0000000f
-#घोषणा VEN_MACKIE2	0x00000ff2
-#घोषणा VEN_STANTON	0x00001260
-#घोषणा VEN_TASCAM	0x0000022e
-#घोषणा VEN_BEHRINGER	0x00001564
-#घोषणा VEN_APOGEE	0x000003db
-#घोषणा VEN_ESI		0x00000f1b
-#घोषणा VEN_ACOUSTIC	0x00000002
-#घोषणा VEN_CME		0x0000000a
-#घोषणा VEN_PHONIC	0x00001496
-#घोषणा VEN_LYNX	0x000019e5
-#घोषणा VEN_ICON	0x00001a9e
-#घोषणा VEN_PRISMSOUND	0x00001198
-#घोषणा VEN_TERRATEC	0x00000aac
-#घोषणा VEN_YAMAHA	0x0000a0de
-#घोषणा VEN_FOCUSRITE	0x0000130e
-#घोषणा VEN_MAUDIO1	0x00000d6c
-#घोषणा VEN_MAUDIO2	0x000007f5
-#घोषणा VEN_DIGIDESIGN	0x00a07e
+#define VEN_EDIROL	0x000040ab
+#define VEN_PRESONUS	0x00000a92
+#define VEN_BRIDGECO	0x000007f5
+#define VEN_MACKIE1	0x0000000f
+#define VEN_MACKIE2	0x00000ff2
+#define VEN_STANTON	0x00001260
+#define VEN_TASCAM	0x0000022e
+#define VEN_BEHRINGER	0x00001564
+#define VEN_APOGEE	0x000003db
+#define VEN_ESI		0x00000f1b
+#define VEN_ACOUSTIC	0x00000002
+#define VEN_CME		0x0000000a
+#define VEN_PHONIC	0x00001496
+#define VEN_LYNX	0x000019e5
+#define VEN_ICON	0x00001a9e
+#define VEN_PRISMSOUND	0x00001198
+#define VEN_TERRATEC	0x00000aac
+#define VEN_YAMAHA	0x0000a0de
+#define VEN_FOCUSRITE	0x0000130e
+#define VEN_MAUDIO1	0x00000d6c
+#define VEN_MAUDIO2	0x000007f5
+#define VEN_DIGIDESIGN	0x00a07e
 
-#घोषणा MODEL_FOCUSRITE_SAFFIRE_BOTH	0x00000000
-#घोषणा MODEL_MAUDIO_AUDIOPHILE_BOTH	0x00010060
-#घोषणा MODEL_MAUDIO_FW1814		0x00010071
-#घोषणा MODEL_MAUDIO_PROJECTMIX		0x00010091
+#define MODEL_FOCUSRITE_SAFFIRE_BOTH	0x00000000
+#define MODEL_MAUDIO_AUDIOPHILE_BOTH	0x00010060
+#define MODEL_MAUDIO_FW1814		0x00010071
+#define MODEL_MAUDIO_PROJECTMIX		0x00010091
 
-अटल पूर्णांक
-name_device(काष्ठा snd_bebob *bebob)
-अणु
-	काष्ठा fw_device *fw_dev = fw_parent_device(bebob->unit);
-	अक्षर venकरोr[24] = अणु0पूर्ण;
-	अक्षर model[32] = अणु0पूर्ण;
+static int
+name_device(struct snd_bebob *bebob)
+{
+	struct fw_device *fw_dev = fw_parent_device(bebob->unit);
+	char vendor[24] = {0};
+	char model[32] = {0};
 	u32 hw_id;
-	u32 data[2] = अणु0पूर्ण;
+	u32 data[2] = {0};
 	u32 revision;
 	u32 version;
-	पूर्णांक err;
+	int err;
 
-	/* get venकरोr name from root directory */
+	/* get vendor name from root directory */
 	err = fw_csr_string(fw_dev->config_rom + 5, CSR_VENDOR,
-			    venकरोr, माप(venकरोr));
-	अगर (err < 0)
-		जाओ end;
+			    vendor, sizeof(vendor));
+	if (err < 0)
+		goto end;
 
 	/* get model name from unit directory */
 	err = fw_csr_string(bebob->unit->directory, CSR_MODEL,
-			    model, माप(model));
-	अगर (err < 0)
-		जाओ end;
+			    model, sizeof(model));
+	if (err < 0)
+		goto end;
 
 	/* get hardware id */
-	err = snd_bebob_पढ़ो_quad(bebob->unit, INFO_OFFSET_HW_MODEL_ID,
+	err = snd_bebob_read_quad(bebob->unit, INFO_OFFSET_HW_MODEL_ID,
 				  &hw_id);
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	/* get hardware revision */
-	err = snd_bebob_पढ़ो_quad(bebob->unit, INFO_OFFSET_HW_MODEL_REVISION,
+	err = snd_bebob_read_quad(bebob->unit, INFO_OFFSET_HW_MODEL_REVISION,
 				  &revision);
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 
 	/* get GUID */
-	err = snd_bebob_पढ़ो_block(bebob->unit, INFO_OFFSET_GUID,
-				   data, माप(data));
-	अगर (err < 0)
-		जाओ end;
+	err = snd_bebob_read_block(bebob->unit, INFO_OFFSET_GUID,
+				   data, sizeof(data));
+	if (err < 0)
+		goto end;
 
-	err = snd_bebob_पढ़ो_quad(bebob->unit, INFO_OFFSET_BEBOB_VERSION,
+	err = snd_bebob_read_quad(bebob->unit, INFO_OFFSET_BEBOB_VERSION,
 				  &version);
-	अगर (err < 0)
-		जाओ end;
+	if (err < 0)
+		goto end;
 	bebob->version = version;
 
-	म_नकल(bebob->card->driver, "BeBoB");
-	म_नकल(bebob->card->लघुname, model);
-	म_नकल(bebob->card->mixername, model);
-	snम_लिखो(bebob->card->दीर्घname, माप(bebob->card->दीर्घname),
+	strcpy(bebob->card->driver, "BeBoB");
+	strcpy(bebob->card->shortname, model);
+	strcpy(bebob->card->mixername, model);
+	snprintf(bebob->card->longname, sizeof(bebob->card->longname),
 		 "%s %s (id:%d, rev:%d), GUID %08x%08x at %s, S%d",
-		 venकरोr, model, hw_id, revision,
+		 vendor, model, hw_id, revision,
 		 data[0], data[1], dev_name(&bebob->unit->device),
 		 100 << fw_dev->max_speed);
 end:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-bebob_card_मुक्त(काष्ठा snd_card *card)
-अणु
-	काष्ठा snd_bebob *bebob = card->निजी_data;
+static void
+bebob_card_free(struct snd_card *card)
+{
+	struct snd_bebob *bebob = card->private_data;
 
 	mutex_lock(&devices_mutex);
 	clear_bit(bebob->card_index, devices_used);
 	mutex_unlock(&devices_mutex);
 
 	snd_bebob_stream_destroy_duplex(bebob);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_bebob_spec *
-get_saffire_spec(काष्ठा fw_unit *unit)
-अणु
-	अक्षर name[24] = अणु0पूर्ण;
+static const struct snd_bebob_spec *
+get_saffire_spec(struct fw_unit *unit)
+{
+	char name[24] = {0};
 
-	अगर (fw_csr_string(unit->directory, CSR_MODEL, name, माप(name)) < 0)
-		वापस शून्य;
+	if (fw_csr_string(unit->directory, CSR_MODEL, name, sizeof(name)) < 0)
+		return NULL;
 
-	अगर (म_भेद(name, "SaffireLE") == 0)
-		वापस &saffire_le_spec;
-	अन्यथा
-		वापस &saffire_spec;
-पूर्ण
+	if (strcmp(name, "SaffireLE") == 0)
+		return &saffire_le_spec;
+	else
+		return &saffire_spec;
+}
 
-अटल bool
-check_audiophile_booted(काष्ठा fw_unit *unit)
-अणु
-	अक्षर name[28] = अणु0पूर्ण;
+static bool
+check_audiophile_booted(struct fw_unit *unit)
+{
+	char name[28] = {0};
 
-	अगर (fw_csr_string(unit->directory, CSR_MODEL, name, माप(name)) < 0)
-		वापस false;
+	if (fw_csr_string(unit->directory, CSR_MODEL, name, sizeof(name)) < 0)
+		return false;
 
-	वापस म_भेदन(name, "FW Audiophile Bootloader", 24) != 0;
-पूर्ण
+	return strncmp(name, "FW Audiophile Bootloader", 24) != 0;
+}
 
-अटल व्योम
-करो_registration(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा snd_bebob *bebob =
-			container_of(work, काष्ठा snd_bebob, dwork.work);
-	अचिन्हित पूर्णांक card_index;
-	पूर्णांक err;
+static void
+do_registration(struct work_struct *work)
+{
+	struct snd_bebob *bebob =
+			container_of(work, struct snd_bebob, dwork.work);
+	unsigned int card_index;
+	int err;
 
-	अगर (bebob->रेजिस्टरed)
-		वापस;
+	if (bebob->registered)
+		return;
 
 	mutex_lock(&devices_mutex);
-	क्रम (card_index = 0; card_index < SNDRV_CARDS; card_index++) अणु
-		अगर (!test_bit(card_index, devices_used) && enable[card_index])
-			अवरोध;
-	पूर्ण
-	अगर (card_index >= SNDRV_CARDS) अणु
+	for (card_index = 0; card_index < SNDRV_CARDS; card_index++) {
+		if (!test_bit(card_index, devices_used) && enable[card_index])
+			break;
+	}
+	if (card_index >= SNDRV_CARDS) {
 		mutex_unlock(&devices_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	err = snd_card_new(&bebob->unit->device, index[card_index],
 			   id[card_index], THIS_MODULE, 0, &bebob->card);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		mutex_unlock(&devices_mutex);
-		वापस;
-	पूर्ण
+		return;
+	}
 	set_bit(card_index, devices_used);
 	mutex_unlock(&devices_mutex);
 
-	bebob->card->निजी_मुक्त = bebob_card_मुक्त;
-	bebob->card->निजी_data = bebob;
+	bebob->card->private_free = bebob_card_free;
+	bebob->card->private_data = bebob;
 
 	err = name_device(bebob);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	अगर (bebob->spec == &maudio_special_spec) अणु
-		अगर (bebob->entry->model_id == MODEL_MAUDIO_FW1814)
+	if (bebob->spec == &maudio_special_spec) {
+		if (bebob->entry->model_id == MODEL_MAUDIO_FW1814)
 			err = snd_bebob_maudio_special_discover(bebob, true);
-		अन्यथा
+		else
 			err = snd_bebob_maudio_special_discover(bebob, false);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = snd_bebob_stream_discover(bebob);
-	पूर्ण
-	अगर (err < 0)
-		जाओ error;
+	}
+	if (err < 0)
+		goto error;
 
 	err = snd_bebob_stream_init_duplex(bebob);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
 	snd_bebob_proc_init(bebob);
 
-	अगर (bebob->midi_input_ports > 0 || bebob->midi_output_ports > 0) अणु
+	if (bebob->midi_input_ports > 0 || bebob->midi_output_ports > 0) {
 		err = snd_bebob_create_midi_devices(bebob);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	err = snd_bebob_create_pcm_devices(bebob);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
 	err = snd_bebob_create_hwdep_device(bebob);
-	अगर (err < 0)
-		जाओ error;
+	if (err < 0)
+		goto error;
 
-	err = snd_card_रेजिस्टर(bebob->card);
-	अगर (err < 0)
-		जाओ error;
+	err = snd_card_register(bebob->card);
+	if (err < 0)
+		goto error;
 
-	bebob->रेजिस्टरed = true;
+	bebob->registered = true;
 
-	वापस;
+	return;
 error:
-	snd_card_मुक्त(bebob->card);
+	snd_card_free(bebob->card);
 	dev_info(&bebob->unit->device,
 		 "Sound card registration failed: %d\n", err);
-पूर्ण
+}
 
-अटल पूर्णांक
-bebob_probe(काष्ठा fw_unit *unit, स्थिर काष्ठा ieee1394_device_id *entry)
-अणु
-	काष्ठा snd_bebob *bebob;
-	स्थिर काष्ठा snd_bebob_spec *spec;
+static int
+bebob_probe(struct fw_unit *unit, const struct ieee1394_device_id *entry)
+{
+	struct snd_bebob *bebob;
+	const struct snd_bebob_spec *spec;
 
-	अगर (entry->venकरोr_id == VEN_FOCUSRITE &&
+	if (entry->vendor_id == VEN_FOCUSRITE &&
 	    entry->model_id == MODEL_FOCUSRITE_SAFFIRE_BOTH)
 		spec = get_saffire_spec(unit);
-	अन्यथा अगर (entry->venकरोr_id == VEN_MAUDIO1 &&
+	else if (entry->vendor_id == VEN_MAUDIO1 &&
 		 entry->model_id == MODEL_MAUDIO_AUDIOPHILE_BOTH &&
 		 !check_audiophile_booted(unit))
-		spec = शून्य;
-	अन्यथा
-		spec = (स्थिर काष्ठा snd_bebob_spec *)entry->driver_data;
+		spec = NULL;
+	else
+		spec = (const struct snd_bebob_spec *)entry->driver_data;
 
-	अगर (spec == शून्य) अणु
-		अगर (entry->venकरोr_id == VEN_MAUDIO1 ||
-		    entry->venकरोr_id == VEN_MAUDIO2)
-			वापस snd_bebob_maudio_load_firmware(unit);
-		अन्यथा
-			वापस -ENODEV;
-	पूर्ण
+	if (spec == NULL) {
+		if (entry->vendor_id == VEN_MAUDIO1 ||
+		    entry->vendor_id == VEN_MAUDIO2)
+			return snd_bebob_maudio_load_firmware(unit);
+		else
+			return -ENODEV;
+	}
 
 	/* Allocate this independent of sound card instance. */
-	bebob = devm_kzalloc(&unit->device, माप(काष्ठा snd_bebob),
+	bebob = devm_kzalloc(&unit->device, sizeof(struct snd_bebob),
 			     GFP_KERNEL);
-	अगर (!bebob)
-		वापस -ENOMEM;
+	if (!bebob)
+		return -ENOMEM;
 	bebob->unit = fw_unit_get(unit);
 	dev_set_drvdata(&unit->device, bebob);
 
@@ -280,16 +279,16 @@ bebob_probe(काष्ठा fw_unit *unit, स्थिर काष्ठा
 	bebob->spec = spec;
 	mutex_init(&bebob->mutex);
 	spin_lock_init(&bebob->lock);
-	init_रुकोqueue_head(&bebob->hwdep_रुको);
+	init_waitqueue_head(&bebob->hwdep_wait);
 
-	/* Allocate and रेजिस्टर this sound card later. */
-	INIT_DEFERRABLE_WORK(&bebob->dwork, करो_registration);
+	/* Allocate and register this sound card later. */
+	INIT_DEFERRABLE_WORK(&bebob->dwork, do_registration);
 
-	अगर (entry->venकरोr_id != VEN_MAUDIO1 ||
+	if (entry->vendor_id != VEN_MAUDIO1 ||
 	    (entry->model_id != MODEL_MAUDIO_FW1814 &&
-	     entry->model_id != MODEL_MAUDIO_PROJECTMIX)) अणु
+	     entry->model_id != MODEL_MAUDIO_PROJECTMIX)) {
 		snd_fw_schedule_registration(unit, &bebob->dwork);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * This is a workaround. This bus reset seems to have an effect
 		 * to make devices correctly handling transactions. Without
@@ -297,21 +296,21 @@ bebob_probe(काष्ठा fw_unit *unit, स्थिर काष्ठा
 		 * failure of transaction.
 		 *
 		 * Just after registration, user-land application receive
-		 * संकेतs from dbus and starts I/Os. To aव्योम I/Os till the
-		 * future bus reset, registration is करोne in next update().
+		 * signals from dbus and starts I/Os. To avoid I/Os till the
+		 * future bus reset, registration is done in next update().
 		 */
 		fw_schedule_bus_reset(fw_parent_device(bebob->unit)->card,
 				      false, true);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * This driver करोesn't update streams in bus reset handler.
+ * This driver doesn't update streams in bus reset handler.
  *
  * DM1000/ DM1100/DM1500 chipsets with BeBoB firmware transfer packets with
- * disजारीd counter at bus reset. This discontinuity is immediately
+ * discontinued counter at bus reset. This discontinuity is immediately
  * detected in packet streaming layer, then it sets XRUN to PCM substream.
  *
  * ALSA PCM applications can know the XRUN by getting -EPIPE from PCM operation.
@@ -319,63 +318,63 @@ bebob_probe(काष्ठा fw_unit *unit, स्थिर काष्ठा
  * SNDRV_PCM_IOCTL_PREPARE. 'struct snd_pcm_ops.prepare' is called and drivers
  * restart packet streaming.
  *
- * The above processing may be executed beक्रमe this bus-reset handler is
+ * The above processing may be executed before this bus-reset handler is
  * executed. When this handler updates streams with current isochronous
- * channels, the streams alपढ़ोy have the current ones.
+ * channels, the streams already have the current ones.
  */
-अटल व्योम
-bebob_update(काष्ठा fw_unit *unit)
-अणु
-	काष्ठा snd_bebob *bebob = dev_get_drvdata(&unit->device);
+static void
+bebob_update(struct fw_unit *unit)
+{
+	struct snd_bebob *bebob = dev_get_drvdata(&unit->device);
 
-	अगर (bebob == शून्य)
-		वापस;
+	if (bebob == NULL)
+		return;
 
-	/* Postpone a workqueue क्रम deferred registration. */
-	अगर (!bebob->रेजिस्टरed)
+	/* Postpone a workqueue for deferred registration. */
+	if (!bebob->registered)
 		snd_fw_schedule_registration(unit, &bebob->dwork);
-	अन्यथा
+	else
 		fcp_bus_reset(bebob->unit);
-पूर्ण
+}
 
-अटल व्योम bebob_हटाओ(काष्ठा fw_unit *unit)
-अणु
-	काष्ठा snd_bebob *bebob = dev_get_drvdata(&unit->device);
+static void bebob_remove(struct fw_unit *unit)
+{
+	struct snd_bebob *bebob = dev_get_drvdata(&unit->device);
 
-	अगर (bebob == शून्य)
-		वापस;
+	if (bebob == NULL)
+		return;
 
 	/*
-	 * Confirm to stop the work क्रम registration beक्रमe the sound card is
+	 * Confirm to stop the work for registration before the sound card is
 	 * going to be released. The work is not scheduled again because bus
 	 * reset handler is not called anymore.
 	 */
 	cancel_delayed_work_sync(&bebob->dwork);
 
-	अगर (bebob->रेजिस्टरed) अणु
-		// Block till all of ALSA अक्षरacter devices are released.
-		snd_card_मुक्त(bebob->card);
-	पूर्ण
+	if (bebob->registered) {
+		// Block till all of ALSA character devices are released.
+		snd_card_free(bebob->card);
+	}
 
 	mutex_destroy(&bebob->mutex);
 	fw_unit_put(bebob->unit);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_bebob_rate_spec normal_rate_spec = अणु
+static const struct snd_bebob_rate_spec normal_rate_spec = {
 	.get	= &snd_bebob_stream_get_rate,
 	.set	= &snd_bebob_stream_set_rate
-पूर्ण;
-अटल स्थिर काष्ठा snd_bebob_spec spec_normal = अणु
-	.घड़ी	= शून्य,
+};
+static const struct snd_bebob_spec spec_normal = {
+	.clock	= NULL,
 	.rate	= &normal_rate_spec,
-	.meter	= शून्य
-पूर्ण;
+	.meter	= NULL
+};
 
-अटल स्थिर काष्ठा ieee1394_device_id bebob_id_table[] = अणु
+static const struct ieee1394_device_id bebob_id_table[] = {
 	/* Edirol, FA-66 */
-	SND_BEBOB_DEV_ENTRY(VEN_EसूचीOL, 0x00010049, &spec_normal),
+	SND_BEBOB_DEV_ENTRY(VEN_EDIROL, 0x00010049, &spec_normal),
 	/* Edirol, FA-101 */
-	SND_BEBOB_DEV_ENTRY(VEN_EसूचीOL, 0x00010048, &spec_normal),
+	SND_BEBOB_DEV_ENTRY(VEN_EDIROL, 0x00010048, &spec_normal),
 	/* Presonus, FIREBOX */
 	SND_BEBOB_DEV_ENTRY(VEN_PRESONUS, 0x00010000, &spec_normal),
 	/* PreSonus, FIREPOD/FP10 */
@@ -448,24 +447,24 @@ bebob_update(काष्ठा fw_unit *unit)
 	/* Focusrite, SaffirePro 26 I/O */
 	SND_BEBOB_DEV_ENTRY(VEN_FOCUSRITE, 0x00000003, &saffirepro_26_spec),
 	/* Focusrite, SaffirePro 10 I/O */
-	अणु
-		// The combination of venकरोr_id and model_id is the same as the
+	{
+		// The combination of vendor_id and model_id is the same as the
 		// same as the one of Liquid Saffire 56.
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
 				  IEEE1394_MATCH_MODEL_ID |
 				  IEEE1394_MATCH_SPECIFIER_ID |
 				  IEEE1394_MATCH_VERSION,
-		.venकरोr_id	= VEN_FOCUSRITE,
+		.vendor_id	= VEN_FOCUSRITE,
 		.model_id	= 0x000006,
-		.specअगरier_id	= 0x00a02d,
+		.specifier_id	= 0x00a02d,
 		.version	= 0x010001,
-		.driver_data	= (kernel_uदीर्घ_t)&saffirepro_10_spec,
-	पूर्ण,
+		.driver_data	= (kernel_ulong_t)&saffirepro_10_spec,
+	},
 	/* Focusrite, Saffire(no label and LE) */
 	SND_BEBOB_DEV_ENTRY(VEN_FOCUSRITE, MODEL_FOCUSRITE_SAFFIRE_BOTH,
 			    &saffire_spec),
 	/* M-Audio, Firewire 410 */
-	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO2, 0x00010058, शून्य),	/* bootloader */
+	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO2, 0x00010058, NULL),	/* bootloader */
 	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO2, 0x00010046, &maudio_fw410_spec),
 	/* M-Audio, Firewire Audiophile */
 	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO1, MODEL_MAUDIO_AUDIOPHILE_BOTH,
@@ -479,7 +478,7 @@ bebob_update(काष्ठा fw_unit *unit)
 	/* M-Audio, ProFireLightbridge */
 	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO1, 0x000100a1, &spec_normal),
 	/* Firewire 1814 */
-	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO1, 0x00010070, शून्य),	/* bootloader */
+	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO1, 0x00010070, NULL),	/* bootloader */
 	SND_BEBOB_DEV_ENTRY(VEN_MAUDIO1, MODEL_MAUDIO_FW1814,
 			    &maudio_special_spec),
 	/* M-Audio ProjectMix */
@@ -503,33 +502,33 @@ bebob_update(काष्ठा fw_unit *unit)
 	/*  Phonic, FireFly 202 */
 	/*  Phonic, FireFly 302 */
 	/*  Rolf Spuler, Firewire Guitar */
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 MODULE_DEVICE_TABLE(ieee1394, bebob_id_table);
 
-अटल काष्ठा fw_driver bebob_driver = अणु
-	.driver = अणु
+static struct fw_driver bebob_driver = {
+	.driver = {
 		.owner	= THIS_MODULE,
 		.name	= KBUILD_MODNAME,
 		.bus	= &fw_bus_type,
-	पूर्ण,
+	},
 	.probe    = bebob_probe,
 	.update	  = bebob_update,
-	.हटाओ   = bebob_हटाओ,
+	.remove   = bebob_remove,
 	.id_table = bebob_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक __init
-snd_bebob_init(व्योम)
-अणु
-	वापस driver_रेजिस्टर(&bebob_driver.driver);
-पूर्ण
+static int __init
+snd_bebob_init(void)
+{
+	return driver_register(&bebob_driver.driver);
+}
 
-अटल व्योम __निकास
-snd_bebob_निकास(व्योम)
-अणु
-	driver_unरेजिस्टर(&bebob_driver.driver);
-पूर्ण
+static void __exit
+snd_bebob_exit(void)
+{
+	driver_unregister(&bebob_driver.driver);
+}
 
 module_init(snd_bebob_init);
-module_निकास(snd_bebob_निकास);
+module_exit(snd_bebob_exit);

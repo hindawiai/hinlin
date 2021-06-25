@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * kexec क्रम arm64
+ * kexec for arm64
  *
  * Copyright (C) Linaro.
  * Copyright (C) Huawei Futurewei Technologies.
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/page-flags.h>
-#समावेश <linux/smp.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/kexec.h>
+#include <linux/page-flags.h>
+#include <linux/smp.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/cpu_ops.h>
-#समावेश <यंत्र/daअगरflags.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/mmu.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/page.h>
+#include <asm/cacheflush.h>
+#include <asm/cpu_ops.h>
+#include <asm/daifflags.h>
+#include <asm/memory.h>
+#include <asm/mmu.h>
+#include <asm/mmu_context.h>
+#include <asm/page.h>
 
-#समावेश "cpu-reset.h"
+#include "cpu-reset.h"
 
-/* Global variables क्रम the arm64_relocate_new_kernel routine. */
-बाह्य स्थिर अचिन्हित अक्षर arm64_relocate_new_kernel[];
-बाह्य स्थिर अचिन्हित दीर्घ arm64_relocate_new_kernel_size;
+/* Global variables for the arm64_relocate_new_kernel routine. */
+extern const unsigned char arm64_relocate_new_kernel[];
+extern const unsigned long arm64_relocate_new_kernel_size;
 
 /**
  * kexec_image_info - For debugging output.
  */
-#घोषणा kexec_image_info(_i) _kexec_image_info(__func__, __LINE__, _i)
-अटल व्योम _kexec_image_info(स्थिर अक्षर *func, पूर्णांक line,
-	स्थिर काष्ठा kimage *kimage)
-अणु
-	अचिन्हित दीर्घ i;
+#define kexec_image_info(_i) _kexec_image_info(__func__, __LINE__, _i)
+static void _kexec_image_info(const char *func, int line,
+	const struct kimage *kimage)
+{
+	unsigned long i;
 
 	pr_debug("%s:%d:\n", func, line);
 	pr_debug("  kexec kimage info:\n");
@@ -45,102 +44,102 @@
 	pr_debug("    nr_segments: %lu\n", kimage->nr_segments);
 	pr_debug("    kern_reloc: %pa\n", &kimage->arch.kern_reloc);
 
-	क्रम (i = 0; i < kimage->nr_segments; i++) अणु
+	for (i = 0; i < kimage->nr_segments; i++) {
 		pr_debug("      segment[%lu]: %016lx - %016lx, 0x%lx bytes, %lu pages\n",
 			i,
 			kimage->segment[i].mem,
 			kimage->segment[i].mem + kimage->segment[i].memsz,
 			kimage->segment[i].memsz,
 			kimage->segment[i].memsz /  PAGE_SIZE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम machine_kexec_cleanup(काष्ठा kimage *kimage)
-अणु
-	/* Empty routine needed to aव्योम build errors. */
-पूर्ण
+void machine_kexec_cleanup(struct kimage *kimage)
+{
+	/* Empty routine needed to avoid build errors. */
+}
 
-पूर्णांक machine_kexec_post_load(काष्ठा kimage *kimage)
-अणु
-	व्योम *reloc_code = page_to_virt(kimage->control_code_page);
+int machine_kexec_post_load(struct kimage *kimage)
+{
+	void *reloc_code = page_to_virt(kimage->control_code_page);
 
-	स_नकल(reloc_code, arm64_relocate_new_kernel,
+	memcpy(reloc_code, arm64_relocate_new_kernel,
 	       arm64_relocate_new_kernel_size);
 	kimage->arch.kern_reloc = __pa(reloc_code);
 	kexec_image_info(kimage);
 
-	/* Flush the reloc_code in preparation क्रम its execution. */
+	/* Flush the reloc_code in preparation for its execution. */
 	__flush_dcache_area(reloc_code, arm64_relocate_new_kernel_size);
-	flush_icache_range((uपूर्णांकptr_t)reloc_code, (uपूर्णांकptr_t)reloc_code +
+	flush_icache_range((uintptr_t)reloc_code, (uintptr_t)reloc_code +
 			   arm64_relocate_new_kernel_size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * machine_kexec_prepare - Prepare क्रम a kexec reboot.
+ * machine_kexec_prepare - Prepare for a kexec reboot.
  *
  * Called from the core kexec code when a kernel image is loaded.
- * Forbid loading a kexec kernel अगर we have no way of hotplugging cpus or cpus
- * are stuck in the kernel. This aव्योमs a panic once we hit machine_kexec().
+ * Forbid loading a kexec kernel if we have no way of hotplugging cpus or cpus
+ * are stuck in the kernel. This avoids a panic once we hit machine_kexec().
  */
-पूर्णांक machine_kexec_prepare(काष्ठा kimage *kimage)
-अणु
-	अगर (kimage->type != KEXEC_TYPE_CRASH && cpus_are_stuck_in_kernel()) अणु
+int machine_kexec_prepare(struct kimage *kimage)
+{
+	if (kimage->type != KEXEC_TYPE_CRASH && cpus_are_stuck_in_kernel()) {
 		pr_err("Can't kexec: CPUs are stuck in the kernel.\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * kexec_list_flush - Helper to flush the kimage list and source pages to PoC.
  */
-अटल व्योम kexec_list_flush(काष्ठा kimage *kimage)
-अणु
+static void kexec_list_flush(struct kimage *kimage)
+{
 	kimage_entry_t *entry;
 
-	क्रम (entry = &kimage->head; ; entry++) अणु
-		अचिन्हित पूर्णांक flag;
-		व्योम *addr;
+	for (entry = &kimage->head; ; entry++) {
+		unsigned int flag;
+		void *addr;
 
 		/* flush the list entries. */
-		__flush_dcache_area(entry, माप(kimage_entry_t));
+		__flush_dcache_area(entry, sizeof(kimage_entry_t));
 
 		flag = *entry & IND_FLAGS;
-		अगर (flag == IND_DONE)
-			अवरोध;
+		if (flag == IND_DONE)
+			break;
 
 		addr = phys_to_virt(*entry & PAGE_MASK);
 
-		चयन (flag) अणु
-		हाल IND_INसूचीECTION:
-			/* Set entry poपूर्णांक just beक्रमe the new list page. */
+		switch (flag) {
+		case IND_INDIRECTION:
+			/* Set entry point just before the new list page. */
 			entry = (kimage_entry_t *)addr - 1;
-			अवरोध;
-		हाल IND_SOURCE:
+			break;
+		case IND_SOURCE:
 			/* flush the source pages. */
 			__flush_dcache_area(addr, PAGE_SIZE);
-			अवरोध;
-		हाल IND_DESTINATION:
-			अवरोध;
-		शेष:
+			break;
+		case IND_DESTINATION:
+			break;
+		default:
 			BUG();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
  * kexec_segment_flush - Helper to flush the kimage segments to PoC.
  */
-अटल व्योम kexec_segment_flush(स्थिर काष्ठा kimage *kimage)
-अणु
-	अचिन्हित दीर्घ i;
+static void kexec_segment_flush(const struct kimage *kimage)
+{
+	unsigned long i;
 
 	pr_debug("%s:\n", __func__);
 
-	क्रम (i = 0; i < kimage->nr_segments; i++) अणु
+	for (i = 0; i < kimage->nr_segments; i++) {
 		pr_debug("  segment[%lu]: %016lx - %016lx, 0x%lx bytes, %lu pages\n",
 			i,
 			kimage->segment[i].mem,
@@ -150,16 +149,16 @@
 
 		__flush_dcache_area(phys_to_virt(kimage->segment[i].mem),
 			kimage->segment[i].memsz);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * machine_kexec - Do the kexec reboot.
  *
- * Called from the core kexec code क्रम a sys_reboot with LINUX_REBOOT_CMD_KEXEC.
+ * Called from the core kexec code for a sys_reboot with LINUX_REBOOT_CMD_KEXEC.
  */
-व्योम machine_kexec(काष्ठा kimage *kimage)
-अणु
+void machine_kexec(struct kimage *kimage)
+{
 	bool in_kexec_crash = (kimage == kexec_crash_image);
 	bool stuck_cpus = cpus_are_stuck_in_kernel();
 
@@ -173,167 +172,167 @@
 	/* Flush the kimage list and its buffers. */
 	kexec_list_flush(kimage);
 
-	/* Flush the new image अगर alपढ़ोy in place. */
-	अगर ((kimage != kexec_crash_image) && (kimage->head & IND_DONE))
+	/* Flush the new image if already in place. */
+	if ((kimage != kexec_crash_image) && (kimage->head & IND_DONE))
 		kexec_segment_flush(kimage);
 
 	pr_info("Bye!\n");
 
-	local_daअगर_mask();
+	local_daif_mask();
 
 	/*
-	 * cpu_soft_restart will shutकरोwn the MMU, disable data caches, then
+	 * cpu_soft_restart will shutdown the MMU, disable data caches, then
 	 * transfer control to the kern_reloc which contains a copy of
 	 * the arm64_relocate_new_kernel routine.  arm64_relocate_new_kernel
 	 * uses physical addressing to relocate the new image to its final
-	 * position and transfers control to the image entry poपूर्णांक when the
+	 * position and transfers control to the image entry point when the
 	 * relocation is complete.
-	 * In kexec हाल, kimage->start poपूर्णांकs to purgatory assuming that
+	 * In kexec case, kimage->start points to purgatory assuming that
 	 * kernel entry and dtb address are embedded in purgatory by
 	 * userspace (kexec-tools).
-	 * In kexec_file हाल, the kernel starts directly without purgatory.
+	 * In kexec_file case, the kernel starts directly without purgatory.
 	 */
 	cpu_soft_restart(kimage->arch.kern_reloc, kimage->head, kimage->start,
 			 kimage->arch.dtb_mem);
 
 	BUG(); /* Should never get here. */
-पूर्ण
+}
 
-अटल व्योम machine_kexec_mask_पूर्णांकerrupts(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा irq_desc *desc;
+static void machine_kexec_mask_interrupts(void)
+{
+	unsigned int i;
+	struct irq_desc *desc;
 
-	क्रम_each_irq_desc(i, desc) अणु
-		काष्ठा irq_chip *chip;
-		पूर्णांक ret;
+	for_each_irq_desc(i, desc) {
+		struct irq_chip *chip;
+		int ret;
 
 		chip = irq_desc_get_chip(desc);
-		अगर (!chip)
-			जारी;
+		if (!chip)
+			continue;
 
 		/*
-		 * First try to हटाओ the active state. If this
-		 * fails, try to EOI the पूर्णांकerrupt.
+		 * First try to remove the active state. If this
+		 * fails, try to EOI the interrupt.
 		 */
 		ret = irq_set_irqchip_state(i, IRQCHIP_STATE_ACTIVE, false);
 
-		अगर (ret && irqd_irq_inprogress(&desc->irq_data) &&
+		if (ret && irqd_irq_inprogress(&desc->irq_data) &&
 		    chip->irq_eoi)
 			chip->irq_eoi(&desc->irq_data);
 
-		अगर (chip->irq_mask)
+		if (chip->irq_mask)
 			chip->irq_mask(&desc->irq_data);
 
-		अगर (chip->irq_disable && !irqd_irq_disabled(&desc->irq_data))
+		if (chip->irq_disable && !irqd_irq_disabled(&desc->irq_data))
 			chip->irq_disable(&desc->irq_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * machine_crash_shutकरोwn - shutकरोwn non-crashing cpus and save रेजिस्टरs
+ * machine_crash_shutdown - shutdown non-crashing cpus and save registers
  */
-व्योम machine_crash_shutकरोwn(काष्ठा pt_regs *regs)
-अणु
+void machine_crash_shutdown(struct pt_regs *regs)
+{
 	local_irq_disable();
 
-	/* shutकरोwn non-crashing cpus */
+	/* shutdown non-crashing cpus */
 	crash_smp_send_stop();
 
-	/* क्रम crashing cpu */
+	/* for crashing cpu */
 	crash_save_cpu(regs, smp_processor_id());
-	machine_kexec_mask_पूर्णांकerrupts();
+	machine_kexec_mask_interrupts();
 
 	pr_info("Starting crashdump kernel...\n");
-पूर्ण
+}
 
-व्योम arch_kexec_protect_crashkres(व्योम)
-अणु
-	पूर्णांक i;
+void arch_kexec_protect_crashkres(void)
+{
+	int i;
 
 	kexec_segment_flush(kexec_crash_image);
 
-	क्रम (i = 0; i < kexec_crash_image->nr_segments; i++)
+	for (i = 0; i < kexec_crash_image->nr_segments; i++)
 		set_memory_valid(
 			__phys_to_virt(kexec_crash_image->segment[i].mem),
 			kexec_crash_image->segment[i].memsz >> PAGE_SHIFT, 0);
-पूर्ण
+}
 
-व्योम arch_kexec_unprotect_crashkres(व्योम)
-अणु
-	पूर्णांक i;
+void arch_kexec_unprotect_crashkres(void)
+{
+	int i;
 
-	क्रम (i = 0; i < kexec_crash_image->nr_segments; i++)
+	for (i = 0; i < kexec_crash_image->nr_segments; i++)
 		set_memory_valid(
 			__phys_to_virt(kexec_crash_image->segment[i].mem),
 			kexec_crash_image->segment[i].memsz >> PAGE_SHIFT, 1);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_HIBERNATION
+#ifdef CONFIG_HIBERNATION
 /*
  * To preserve the crash dump kernel image, the relevant memory segments
  * should be mapped again around the hibernation.
  */
-व्योम crash_prepare_suspend(व्योम)
-अणु
-	अगर (kexec_crash_image)
+void crash_prepare_suspend(void)
+{
+	if (kexec_crash_image)
 		arch_kexec_unprotect_crashkres();
-पूर्ण
+}
 
-व्योम crash_post_resume(व्योम)
-अणु
-	अगर (kexec_crash_image)
+void crash_post_resume(void)
+{
+	if (kexec_crash_image)
 		arch_kexec_protect_crashkres();
-पूर्ण
+}
 
 /*
  * crash_is_nosave
  *
- * Return true only अगर a page is part of reserved memory क्रम crash dump kernel,
- * but करोes not hold any data of loaded kernel image.
+ * Return true only if a page is part of reserved memory for crash dump kernel,
+ * but does not hold any data of loaded kernel image.
  *
  * Note that all the pages in crash dump kernel memory have been initially
  * marked as Reserved as memory was allocated via memblock_reserve().
  *
  * In hibernation, the pages which are Reserved and yet "nosave" are excluded
- * from the hibernation iamge. crash_is_nosave() करोes thich check क्रम crash
+ * from the hibernation iamge. crash_is_nosave() does thich check for crash
  * dump kernel and will reduce the total size of hibernation image.
  */
 
-bool crash_is_nosave(अचिन्हित दीर्घ pfn)
-अणु
-	पूर्णांक i;
+bool crash_is_nosave(unsigned long pfn)
+{
+	int i;
 	phys_addr_t addr;
 
-	अगर (!crashk_res.end)
-		वापस false;
+	if (!crashk_res.end)
+		return false;
 
 	/* in reserved memory? */
 	addr = __pfn_to_phys(pfn);
-	अगर ((addr < crashk_res.start) || (crashk_res.end < addr))
-		वापस false;
+	if ((addr < crashk_res.start) || (crashk_res.end < addr))
+		return false;
 
-	अगर (!kexec_crash_image)
-		वापस true;
+	if (!kexec_crash_image)
+		return true;
 
 	/* not part of loaded kernel image? */
-	क्रम (i = 0; i < kexec_crash_image->nr_segments; i++)
-		अगर (addr >= kexec_crash_image->segment[i].mem &&
+	for (i = 0; i < kexec_crash_image->nr_segments; i++)
+		if (addr >= kexec_crash_image->segment[i].mem &&
 				addr < (kexec_crash_image->segment[i].mem +
 					kexec_crash_image->segment[i].memsz))
-			वापस false;
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम crash_मुक्त_reserved_phys_range(अचिन्हित दीर्घ begin, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ addr;
-	काष्ठा page *page;
+void crash_free_reserved_phys_range(unsigned long begin, unsigned long end)
+{
+	unsigned long addr;
+	struct page *page;
 
-	क्रम (addr = begin; addr < end; addr += PAGE_SIZE) अणु
+	for (addr = begin; addr < end; addr += PAGE_SIZE) {
 		page = phys_to_page(addr);
-		मुक्त_reserved_page(page);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HIBERNATION */
+		free_reserved_page(page);
+	}
+}
+#endif /* CONFIG_HIBERNATION */

@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * apple-gmux.h - microcontroller built पूर्णांकo dual GPU MacBook Pro & Mac Pro
+ * apple-gmux.h - microcontroller built into dual GPU MacBook Pro & Mac Pro
  * Copyright (C) 2015 Lukas Wunner <lukas@wunner.de>
  */
 
-#अगर_अघोषित LINUX_APPLE_GMUX_H
-#घोषणा LINUX_APPLE_GMUX_H
+#ifndef LINUX_APPLE_GMUX_H
+#define LINUX_APPLE_GMUX_H
 
-#समावेश <linux/acpi.h>
+#include <linux/acpi.h>
 
-#घोषणा GMUX_ACPI_HID "APP000B"
+#define GMUX_ACPI_HID "APP000B"
 
-#अगर IS_ENABLED(CONFIG_APPLE_GMUX)
+#if IS_ENABLED(CONFIG_APPLE_GMUX)
 
 /**
- * apple_gmux_present() - detect अगर gmux is built पूर्णांकo the machine
+ * apple_gmux_present() - detect if gmux is built into the machine
  *
- * Drivers may use this to activate quirks specअगरic to dual GPU MacBook Pros
- * and Mac Pros, e.g. क्रम deferred probing, runसमय pm and backlight.
+ * Drivers may use this to activate quirks specific to dual GPU MacBook Pros
+ * and Mac Pros, e.g. for deferred probing, runtime pm and backlight.
  *
- * Return: %true अगर gmux is present and the kernel was configured
+ * Return: %true if gmux is present and the kernel was configured
  * with CONFIG_APPLE_GMUX, %false otherwise.
  */
-अटल अंतरभूत bool apple_gmux_present(व्योम)
-अणु
-	वापस acpi_dev_found(GMUX_ACPI_HID);
-पूर्ण
+static inline bool apple_gmux_present(void)
+{
+	return acpi_dev_found(GMUX_ACPI_HID);
+}
 
-#अन्यथा  /* !CONFIG_APPLE_GMUX */
+#else  /* !CONFIG_APPLE_GMUX */
 
-अटल अंतरभूत bool apple_gmux_present(व्योम)
-अणु
-	वापस false;
-पूर्ण
+static inline bool apple_gmux_present(void)
+{
+	return false;
+}
 
-#पूर्ण_अगर /* !CONFIG_APPLE_GMUX */
+#endif /* !CONFIG_APPLE_GMUX */
 
-#पूर्ण_अगर /* LINUX_APPLE_GMUX_H */
+#endif /* LINUX_APPLE_GMUX_H */

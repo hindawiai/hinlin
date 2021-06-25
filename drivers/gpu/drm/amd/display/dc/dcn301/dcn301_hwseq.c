@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,20 +23,20 @@
  *
  */
 
-#समावेश "core_types.h"
-#समावेश "dce/dce_hwseq.h"
-#समावेश "dcn301_hwseq.h"
-#समावेश "reg_helper.h"
+#include "core_types.h"
+#include "dce/dce_hwseq.h"
+#include "dcn301_hwseq.h"
+#include "reg_helper.h"
 
-#घोषणा DC_LOGGER_INIT(logger)
+#define DC_LOGGER_INIT(logger)
 
-#घोषणा CTX \
+#define CTX \
 	hws->ctx
-#घोषणा REG(reg)\
+#define REG(reg)\
 	hws->regs->reg
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	hws->shअगरts->field_name, hws->masks->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	hws->shifts->field_name, hws->masks->field_name
 
 

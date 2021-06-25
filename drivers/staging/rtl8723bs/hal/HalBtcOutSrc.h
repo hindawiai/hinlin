@@ -1,75 +1,74 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित	__HALBTC_OUT_SRC_H__
-#घोषणा __HALBTC_OUT_SRC_H__
+#ifndef	__HALBTC_OUT_SRC_H__
+#define __HALBTC_OUT_SRC_H__
 
-#घोषणा NORMAL_EXEC		false
-#घोषणा FORCE_EXEC		true
+#define NORMAL_EXEC		false
+#define FORCE_EXEC		true
 
-#घोषणा BTC_RF_OFF		0x0
-#घोषणा BTC_RF_ON		0x1
+#define BTC_RF_OFF		0x0
+#define BTC_RF_ON		0x1
 
-#घोषणा BTC_RF_A		0x0
-#घोषणा BTC_RF_B		0x1
-#घोषणा BTC_RF_C		0x2
-#घोषणा BTC_RF_D		0x3
+#define BTC_RF_A		0x0
+#define BTC_RF_B		0x1
+#define BTC_RF_C		0x2
+#define BTC_RF_D		0x3
 
-#घोषणा BTC_SMSP		SINGLEMAC_SINGLEPHY
-#घोषणा BTC_DMDP		DUALMAC_DUALPHY
-#घोषणा BTC_DMSP		DUALMAC_SINGLEPHY
-#घोषणा BTC_MP_UNKNOWN		0xff
+#define BTC_SMSP		SINGLEMAC_SINGLEPHY
+#define BTC_DMDP		DUALMAC_DUALPHY
+#define BTC_DMSP		DUALMAC_SINGLEPHY
+#define BTC_MP_UNKNOWN		0xff
 
-#घोषणा BT_COEX_ANT_TYPE_PG	0
-#घोषणा BT_COEX_ANT_TYPE_ANTDIV		1
-#घोषणा BT_COEX_ANT_TYPE_DETECTED	2
+#define BT_COEX_ANT_TYPE_PG	0
+#define BT_COEX_ANT_TYPE_ANTDIV		1
+#define BT_COEX_ANT_TYPE_DETECTED	2
 
-#घोषणा BTC_MIMO_PS_STATIC	0	/*  1ss */
-#घोषणा BTC_MIMO_PS_DYNAMIC	1	/*  2ss */
+#define BTC_MIMO_PS_STATIC	0	/*  1ss */
+#define BTC_MIMO_PS_DYNAMIC	1	/*  2ss */
 
-#घोषणा BTC_RATE_DISABLE	0
-#घोषणा BTC_RATE_ENABLE		1
+#define BTC_RATE_DISABLE	0
+#define BTC_RATE_ENABLE		1
 
 /*  single Antenna definition */
-#घोषणा BTC_ANT_PATH_WIFI	0
-#घोषणा BTC_ANT_PATH_BT		1
-#घोषणा BTC_ANT_PATH_PTA	2
+#define BTC_ANT_PATH_WIFI	0
+#define BTC_ANT_PATH_BT		1
+#define BTC_ANT_PATH_PTA	2
 /*  dual Antenna definition */
-#घोषणा BTC_ANT_WIFI_AT_MAIN	0
-#घोषणा BTC_ANT_WIFI_AT_AUX	1
+#define BTC_ANT_WIFI_AT_MAIN	0
+#define BTC_ANT_WIFI_AT_AUX	1
 /*  coupler Antenna definition */
-#घोषणा BTC_ANT_WIFI_AT_CPL_MAIN	0
-#घोषणा BTC_ANT_WIFI_AT_CPL_AUX		1
+#define BTC_ANT_WIFI_AT_CPL_MAIN	0
+#define BTC_ANT_WIFI_AT_CPL_AUX		1
 
-क्रमागत अणु
-	BTC_PS_WIFI_NATIVE	= 0,	/*  wअगरi original घातer save behavior */
+enum {
+	BTC_PS_WIFI_NATIVE	= 0,	/*  wifi original power save behavior */
 	BTC_PS_LPS_ON		= 1,
 	BTC_PS_LPS_OFF		= 2,
 	BTC_PS_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_BT_REG_RF		= 0,
 	BTC_BT_REG_MODEM	= 1,
 	BTC_BT_REG_BLUEWIZE	= 2,
 	BTC_BT_REG_VENDOR	= 3,
 	BTC_BT_REG_LE		= 4,
 	BTC_BT_REG_MAX
-पूर्ण;
+};
 
-क्रमागत btc_chip_पूर्णांकerface अणु
+enum btc_chip_interface {
 	BTC_INTF_UNKNOWN	= 0,
 	BTC_INTF_PCI		= 1,
 	BTC_INTF_USB		= 2,
 	BTC_INTF_SDIO		= 3,
 	BTC_INTF_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_CHIP_UNDEF		= 0,
 	BTC_CHIP_CSR_BC4	= 1,
 	BTC_CHIP_CSR_BC8	= 2,
@@ -77,97 +76,97 @@
 	BTC_CHIP_RTL8821	= 4,
 	BTC_CHIP_RTL8723B	= 5,
 	BTC_CHIP_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_MSG_INTERFACE	= 0x0,
 	BTC_MSG_ALGORITHM	= 0x1,
 	BTC_MSG_MAX
-पूर्ण;
-बाह्य u32 		GLBtcDbgType[];
+};
+extern u32 		GLBtcDbgType[];
 
-/*  following is क्रम BTC_MSG_INTERFACE */
-#घोषणा INTF_INIT	BIT0
-#घोषणा INTF_NOTIFY	BIT2
+/*  following is for BTC_MSG_INTERFACE */
+#define INTF_INIT	BIT0
+#define INTF_NOTIFY	BIT2
 
-/*  following is क्रम BTC_ALGORITHM */
-#घोषणा ALGO_BT_RSSI_STATE				BIT0
-#घोषणा ALGO_WIFI_RSSI_STATE			BIT1
-#घोषणा ALGO_BT_MONITOR					BIT2
-#घोषणा ALGO_TRACE						BIT3
-#घोषणा ALGO_TRACE_FW					BIT4
-#घोषणा ALGO_TRACE_FW_DETAIL			BIT5
-#घोषणा ALGO_TRACE_FW_EXEC				BIT6
-#घोषणा ALGO_TRACE_SW					BIT7
-#घोषणा ALGO_TRACE_SW_DETAIL			BIT8
-#घोषणा ALGO_TRACE_SW_EXEC				BIT9
+/*  following is for BTC_ALGORITHM */
+#define ALGO_BT_RSSI_STATE				BIT0
+#define ALGO_WIFI_RSSI_STATE			BIT1
+#define ALGO_BT_MONITOR					BIT2
+#define ALGO_TRACE						BIT3
+#define ALGO_TRACE_FW					BIT4
+#define ALGO_TRACE_FW_DETAIL			BIT5
+#define ALGO_TRACE_FW_EXEC				BIT6
+#define ALGO_TRACE_SW					BIT7
+#define ALGO_TRACE_SW_DETAIL			BIT8
+#define ALGO_TRACE_SW_EXEC				BIT9
 
-/*  following is क्रम wअगरi link status */
-#घोषणा WIFI_STA_CONNECTED				BIT0
-#घोषणा WIFI_AP_CONNECTED				BIT1
-#घोषणा WIFI_HS_CONNECTED				BIT2
-#घोषणा WIFI_P2P_GO_CONNECTED			BIT3
-#घोषणा WIFI_P2P_GC_CONNECTED			BIT4
+/*  following is for wifi link status */
+#define WIFI_STA_CONNECTED				BIT0
+#define WIFI_AP_CONNECTED				BIT1
+#define WIFI_HS_CONNECTED				BIT2
+#define WIFI_P2P_GO_CONNECTED			BIT3
+#define WIFI_P2P_GC_CONNECTED			BIT4
 
-/*  following is क्रम command line utility */
-#घोषणा CL_SPRINTF	snम_लिखो
-#घोषणा CL_PRINTF	DCMD_Prपूर्णांकf
+/*  following is for command line utility */
+#define CL_SPRINTF	snprintf
+#define CL_PRINTF	DCMD_Printf
 
-/*  The following is क्रम dbgview prपूर्णांक */
-#अगर DBG
-#घोषणा BTC_PRINT(dbgtype, dbgflag, prपूर्णांकstr)\
-अणु\
-	अगर (GLBtcDbgType[dbgtype] & dbgflag)\
-		DbgPrपूर्णांक prपूर्णांकstr;\
-पूर्ण
+/*  The following is for dbgview print */
+#if DBG
+#define BTC_PRINT(dbgtype, dbgflag, printstr)\
+{\
+	if (GLBtcDbgType[dbgtype] & dbgflag)\
+		DbgPrint printstr;\
+}
 
-#घोषणा BTC_PRINT_ADDR(dbgtype, dbgflag, prपूर्णांकstr, _Ptr)\
-अणु\
-	अगर (GLBtcDbgType[dbgtype] & dbgflag) अणु\
-		पूर्णांक __i;\
+#define BTC_PRINT_ADDR(dbgtype, dbgflag, printstr, _Ptr)\
+{\
+	if (GLBtcDbgType[dbgtype] & dbgflag) {\
+		int __i;\
 		u8 *ptr = (u8 *)_Ptr;\
-		DbgPrपूर्णांक prपूर्णांकstr;\
-		DbgPrपूर्णांक(" ");\
-		क्रम (__i = 0; __i < 6; __i++)\
-			DbgPrपूर्णांक("%02X%s", ptr[__i], (__i == 5) ? "" : "-");\
-		DbgPrपूर्णांक("\n");\
-	पूर्ण \
-पूर्ण
+		DbgPrint printstr;\
+		DbgPrint(" ");\
+		for (__i = 0; __i < 6; __i++)\
+			DbgPrint("%02X%s", ptr[__i], (__i == 5) ? "" : "-");\
+		DbgPrint("\n");\
+	} \
+}
 
-#घोषणा BTC_PRINT_DATA(dbgtype, dbgflag, _TitleString, _HexData, _HexDataLen)\
-अणु\
-	अगर (GLBtcDbgType[dbgtype] & dbgflag) अणु\
-		पूर्णांक __i;\
+#define BTC_PRINT_DATA(dbgtype, dbgflag, _TitleString, _HexData, _HexDataLen)\
+{\
+	if (GLBtcDbgType[dbgtype] & dbgflag) {\
+		int __i;\
 		u8 *ptr = (u8 *)_HexData;\
-		DbgPrपूर्णांक(_TitleString);\
-		क्रम (__i = 0; __i < (पूर्णांक)_HexDataLen; __i++) अणु\
-			DbgPrपूर्णांक("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");\
-			अगर (((__i + 1) % 16) == 0)\
-				DbgPrपूर्णांक("\n");\
-		पूर्ण \
-		DbgPrपूर्णांक("\n");\
-	पूर्ण \
-पूर्ण
+		DbgPrint(_TitleString);\
+		for (__i = 0; __i < (int)_HexDataLen; __i++) {\
+			DbgPrint("%02X%s", ptr[__i], (((__i + 1) % 4) == 0) ? "  " : " ");\
+			if (((__i + 1) % 16) == 0)\
+				DbgPrint("\n");\
+		} \
+		DbgPrint("\n");\
+	} \
+}
 
-#अन्यथा
-#घोषणा BTC_PRINT(dbgtype, dbgflag, prपूर्णांकstr)		 no_prपूर्णांकk prपूर्णांकstr
-#घोषणा BTC_PRINT_F(dbgtype, dbgflag, prपूर्णांकstr)		 no_prपूर्णांकk prपूर्णांकstr
-#घोषणा BTC_PRINT_ADDR(dbgtype, dbgflag, prपूर्णांकstr, _Ptr) no_prपूर्णांकk prपूर्णांकstr
-#घोषणा BTC_PRINT_DATA(dbgtype, dbgflag, _TitleString, _HexData, _HexDataLen) \
-			no_prपूर्णांकk("%s %p %zu", _TitleString, _HexData, _HexDataLen)
-#पूर्ण_अगर
+#else
+#define BTC_PRINT(dbgtype, dbgflag, printstr)		 no_printk printstr
+#define BTC_PRINT_F(dbgtype, dbgflag, printstr)		 no_printk printstr
+#define BTC_PRINT_ADDR(dbgtype, dbgflag, printstr, _Ptr) no_printk printstr
+#define BTC_PRINT_DATA(dbgtype, dbgflag, _TitleString, _HexData, _HexDataLen) \
+			no_printk("%s %p %zu", _TitleString, _HexData, _HexDataLen)
+#endif
 
-काष्ठा btc_board_info अणु
-	/*  The following is some board inक्रमmation */
+struct btc_board_info {
+	/*  The following is some board information */
 	u8 btChipType;
 	u8 pgAntNum;	/*  pg ant number */
-	u8 btdmAntNum;	/*  ant number क्रम btdm */
-	u8 btdmAntPos;		/* Bryant Add to indicate Antenna Position क्रम (pgAntNum = 2) && (btdmAntNum = 1)  (DPDT+1Ant हाल) */
-	u8 singleAntPath;	/*  current used क्रम 8723b only, 1 =>s0,  0 =>s1 */
+	u8 btdmAntNum;	/*  ant number for btdm */
+	u8 btdmAntPos;		/* Bryant Add to indicate Antenna Position for (pgAntNum = 2) && (btdmAntNum = 1)  (DPDT+1Ant case) */
+	u8 singleAntPath;	/*  current used for 8723b only, 1 =>s0,  0 =>s1 */
 	/* bool				bBtExist; */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_RSSI_STATE_HIGH			    = 0x0,
 	BTC_RSSI_STATE_MEDIUM			= 0x1,
 	BTC_RSSI_STATE_LOW			    = 0x2,
@@ -175,32 +174,32 @@
 	BTC_RSSI_STATE_STAY_MEDIUM		= 0x4,
 	BTC_RSSI_STATE_STAY_LOW			= 0x5,
 	BTC_RSSI_MAX
-पूर्ण;
-#घोषणा BTC_RSSI_HIGH(_rssi_)	((_rssi_ == BTC_RSSI_STATE_HIGH || _rssi_ == BTC_RSSI_STATE_STAY_HIGH) ? true : false)
-#घोषणा BTC_RSSI_MEDIUM(_rssi_)	((_rssi_ == BTC_RSSI_STATE_MEDIUM || _rssi_ == BTC_RSSI_STATE_STAY_MEDIUM) ? true : false)
-#घोषणा BTC_RSSI_LOW(_rssi_)	((_rssi_ == BTC_RSSI_STATE_LOW || _rssi_ == BTC_RSSI_STATE_STAY_LOW) ? true : false)
+};
+#define BTC_RSSI_HIGH(_rssi_)	((_rssi_ == BTC_RSSI_STATE_HIGH || _rssi_ == BTC_RSSI_STATE_STAY_HIGH) ? true : false)
+#define BTC_RSSI_MEDIUM(_rssi_)	((_rssi_ == BTC_RSSI_STATE_MEDIUM || _rssi_ == BTC_RSSI_STATE_STAY_MEDIUM) ? true : false)
+#define BTC_RSSI_LOW(_rssi_)	((_rssi_ == BTC_RSSI_STATE_LOW || _rssi_ == BTC_RSSI_STATE_STAY_LOW) ? true : false)
 
-क्रमागत अणु
+enum {
 	BTC_WIFI_BW_LEGACY			= 0x0,
 	BTC_WIFI_BW_HT20			= 0x1,
 	BTC_WIFI_BW_HT40			= 0x2,
 	BTC_WIFI_BW_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_WIFI_TRAFFIC_TX			= 0x0,
 	BTC_WIFI_TRAFFIC_RX			= 0x1,
 	BTC_WIFI_TRAFFIC_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_WIFI_PNP_WAKE_UP		= 0x0,
 	BTC_WIFI_PNP_SLEEP			= 0x1,
 	BTC_WIFI_PNP_MAX
-पूर्ण;
+};
 
-/*  defined क्रम BFP_BTC_GET */
-क्रमागत अणु
+/*  defined for BFP_BTC_GET */
+enum {
 	/*  type bool */
 	BTC_GET_BL_HS_OPERATION,
 	BTC_GET_BL_HS_CONNECTING,
@@ -223,7 +222,7 @@
 
 	/*  type u32 */
 	BTC_GET_U4_WIFI_BW,
-	BTC_GET_U4_WIFI_TRAFFIC_सूचीECTION,
+	BTC_GET_U4_WIFI_TRAFFIC_DIRECTION,
 	BTC_GET_U4_WIFI_FW_VER,
 	BTC_GET_U4_WIFI_LINK_STATUS,
 	BTC_GET_U4_BT_PATCH_VER,
@@ -235,14 +234,14 @@
 	BTC_GET_U1_MAC_PHY_MODE,
 	BTC_GET_U1_AP_NUM,
 
-	/*  क्रम 1Ant ====== */
+	/*  for 1Ant ====== */
 	BTC_GET_U1_LPS_MODE,
 
 	BTC_GET_MAX
-पूर्ण;
+};
 
-/*  defined क्रम BFP_BTC_SET */
-क्रमागत अणु
+/*  defined for BFP_BTC_SET */
+enum {
 	/*  type bool */
 	BTC_SET_BL_BT_DISABLE,
 	BTC_SET_BL_BT_TRAFFIC_BUSY,
@@ -260,7 +259,7 @@
 	/*  type trigger some action */
 	BTC_SET_ACT_GET_BT_RSSI,
 	BTC_SET_ACT_AGGREGATE_CTRL,
-	/*  क्रम 1Ant ====== */
+	/*  for 1Ant ====== */
 	/*  type bool */
 
 	/*  type u8 */
@@ -280,93 +279,93 @@
 	BTC_SET_ACT_CTRL_8723B_ANT,
 	/*  */
 	BTC_SET_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_DBG_DISP_COEX_STATISTICS		= 0x0,
 	BTC_DBG_DISP_BT_LINK_INFO			= 0x1,
 	BTC_DBG_DISP_FW_PWR_MODE_CMD		= 0x2,
 	BTC_DBG_DISP_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_IPS_LEAVE						= 0x0,
 	BTC_IPS_ENTER						= 0x1,
 	BTC_IPS_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_LPS_DISABLE						= 0x0,
 	BTC_LPS_ENABLE						= 0x1,
 	BTC_LPS_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_SCAN_FINISH						= 0x0,
 	BTC_SCAN_START						= 0x1,
 	BTC_SCAN_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_ASSOCIATE_FINISH				= 0x0,
 	BTC_ASSOCIATE_START					= 0x1,
 	BTC_ASSOCIATE_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_MEDIA_DISCONNECT				= 0x0,
 	BTC_MEDIA_CONNECT					= 0x1,
 	BTC_MEDIA_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BTC_PACKET_UNKNOWN					= 0x0,
 	BTC_PACKET_DHCP						= 0x1,
 	BTC_PACKET_ARP						= 0x2,
 	BTC_PACKET_EAPOL					= 0x3,
 	BTC_PACKET_MAX
-पूर्ण;
+};
 
 /* Bryant Add */
-क्रमागत अणु
+enum {
 	BTC_ANTENNA_AT_MAIN_PORT = 0x1,
 	BTC_ANTENNA_AT_AUX_PORT  = 0x2,
-पूर्ण;
+};
 
-प्रकार u8 (*BFP_BTC_R1)(व्योम *pBtcContext, u32 RegAddr);
-प्रकार u16(*BFP_BTC_R2)(व्योम *pBtcContext, u32 RegAddr);
-प्रकार u32 (*BFP_BTC_R4)(व्योम *pBtcContext, u32 RegAddr);
-प्रकार व्योम (*BFP_BTC_W1)(व्योम *pBtcContext, u32 RegAddr, u8 Data);
-प्रकार व्योम(*BFP_BTC_W1_BIT_MASK)(
-	व्योम *pBtcContext, u32 regAddr, u8 bitMask, u8 data1b
+typedef u8 (*BFP_BTC_R1)(void *pBtcContext, u32 RegAddr);
+typedef u16(*BFP_BTC_R2)(void *pBtcContext, u32 RegAddr);
+typedef u32 (*BFP_BTC_R4)(void *pBtcContext, u32 RegAddr);
+typedef void (*BFP_BTC_W1)(void *pBtcContext, u32 RegAddr, u8 Data);
+typedef void(*BFP_BTC_W1_BIT_MASK)(
+	void *pBtcContext, u32 regAddr, u8 bitMask, u8 data1b
 );
-प्रकार व्योम (*BFP_BTC_W2)(व्योम *pBtcContext, u32 RegAddr, u16 Data);
-प्रकार व्योम (*BFP_BTC_W4)(व्योम *pBtcContext, u32 RegAddr, u32 Data);
-प्रकार व्योम (*BFP_BTC_LOCAL_REG_W1)(व्योम *pBtcContext, u32 RegAddr, u8 Data);
-प्रकार व्योम (*BFP_BTC_SET_BB_REG)(
-	व्योम *pBtcContext, u32 RegAddr, u32 BitMask, u32 Data
+typedef void (*BFP_BTC_W2)(void *pBtcContext, u32 RegAddr, u16 Data);
+typedef void (*BFP_BTC_W4)(void *pBtcContext, u32 RegAddr, u32 Data);
+typedef void (*BFP_BTC_LOCAL_REG_W1)(void *pBtcContext, u32 RegAddr, u8 Data);
+typedef void (*BFP_BTC_SET_BB_REG)(
+	void *pBtcContext, u32 RegAddr, u32 BitMask, u32 Data
 );
-प्रकार u32 (*BFP_BTC_GET_BB_REG)(व्योम *pBtcContext, u32 RegAddr, u32 BitMask);
-प्रकार व्योम (*BFP_BTC_SET_RF_REG)(
-	व्योम *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask, u32 Data
+typedef u32 (*BFP_BTC_GET_BB_REG)(void *pBtcContext, u32 RegAddr, u32 BitMask);
+typedef void (*BFP_BTC_SET_RF_REG)(
+	void *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask, u32 Data
 );
-प्रकार u32 (*BFP_BTC_GET_RF_REG)(
-	व्योम *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask
+typedef u32 (*BFP_BTC_GET_RF_REG)(
+	void *pBtcContext, u8 eRFPath, u32 RegAddr, u32 BitMask
 );
-प्रकार व्योम (*BFP_BTC_FILL_H2C)(
-	व्योम *pBtcContext, u8 elementId, u32 cmdLen, u8 *pCmdBuffer
+typedef void (*BFP_BTC_FILL_H2C)(
+	void *pBtcContext, u8 elementId, u32 cmdLen, u8 *pCmdBuffer
 );
 
-प्रकार	u8 (*BFP_BTC_GET)(व्योम *pBtCoexist, u8 getType, व्योम *pOutBuf);
+typedef	u8 (*BFP_BTC_GET)(void *pBtCoexist, u8 getType, void *pOutBuf);
 
-प्रकार	u8 (*BFP_BTC_SET)(व्योम *pBtCoexist, u8 setType, व्योम *pInBuf);
-प्रकार व्योम (*BFP_BTC_SET_BT_REG)(
-	व्योम *pBtcContext, u8 regType, u32 offset, u32 value
+typedef	u8 (*BFP_BTC_SET)(void *pBtCoexist, u8 setType, void *pInBuf);
+typedef void (*BFP_BTC_SET_BT_REG)(
+	void *pBtcContext, u8 regType, u32 offset, u32 value
 );
-प्रकार u32 (*BFP_BTC_GET_BT_REG)(व्योम *pBtcContext, u8 regType, u32 offset);
-प्रकार व्योम (*BFP_BTC_DISP_DBG_MSG)(व्योम *pBtCoexist, u8 dispType);
+typedef u32 (*BFP_BTC_GET_BT_REG)(void *pBtcContext, u8 regType, u32 offset);
+typedef void (*BFP_BTC_DISP_DBG_MSG)(void *pBtCoexist, u8 dispType);
 
-काष्ठा btc_bt_info अणु
+struct btc_bt_info {
 	bool bBtDisabled;
 	u8 rssiAdjustForAgcTableOn;
 	u8 rssiAdjustFor1AntCoexType;
@@ -388,14 +387,14 @@
 
 	bool bBtCtrlLps;
 	bool bBtLpsOn;
-	bool bForceToRoam;	/*  क्रम 1Ant solution */
+	bool bForceToRoam;	/*  for 1Ant solution */
 	u8 lpsVal;
 	u8 rpwmVal;
 	u32 raMask;
-पूर्ण;
+};
 
-काष्ठा btc_stack_info अणु
-	bool bProfileNotअगरied;
+struct btc_stack_info {
+	bool bProfileNotified;
 	u16 hciVersion;	/*  stack hci version */
 	u8 numOfLink;
 	bool bBtLinkExist;
@@ -407,9 +406,9 @@
 	bool bPanExist;
 	bool bUnknownAclExist;
 	s8 minBtRssi;
-पूर्ण;
+};
 
-काष्ठा btc_bt_link_info अणु
+struct btc_bt_link_info {
 	bool bBtLinkExist;
 	bool bScoExist;
 	bool bScoOnly;
@@ -420,44 +419,44 @@
 	bool bPanExist;
 	bool bPanOnly;
 	bool bSlaveRole;
-पूर्ण;
+};
 
-काष्ठा btc_statistics अणु
+struct btc_statistics {
 	u32 cntBind;
 	u32 cntPowerOn;
 	u32 cntInitHwConfig;
 	u32 cntInitCoexDm;
-	u32 cntIpsNotअगरy;
-	u32 cntLpsNotअगरy;
-	u32 cntScanNotअगरy;
-	u32 cntConnectNotअगरy;
-	u32 cntMediaStatusNotअगरy;
-	u32 cntSpecialPacketNotअगरy;
-	u32 cntBtInfoNotअगरy;
-	u32 cntRfStatusNotअगरy;
+	u32 cntIpsNotify;
+	u32 cntLpsNotify;
+	u32 cntScanNotify;
+	u32 cntConnectNotify;
+	u32 cntMediaStatusNotify;
+	u32 cntSpecialPacketNotify;
+	u32 cntBtInfoNotify;
+	u32 cntRfStatusNotify;
 	u32 cntPeriodical;
 	u32 cntCoexDmSwitch;
-	u32 cntStackOperationNotअगरy;
+	u32 cntStackOperationNotify;
 	u32 cntDbgCtrl;
-पूर्ण;
+};
 
-काष्ठा btc_coexist अणु
+struct btc_coexist {
 	bool bBinded;		/*  make sure only one adapter can bind the data context */
-	व्योम *Adapter;		/*  शेष adapter */
-	काष्ठा btc_board_info boardInfo;
-	काष्ठा btc_bt_info btInfo;		/*  some bt info referenced by non-bt module */
-	काष्ठा btc_stack_info stackInfo;
-	काष्ठा btc_bt_link_info btLinkInfo;
-	क्रमागत btc_chip_पूर्णांकerface chipInterface;
+	void *Adapter;		/*  default adapter */
+	struct btc_board_info boardInfo;
+	struct btc_bt_info btInfo;		/*  some bt info referenced by non-bt module */
+	struct btc_stack_info stackInfo;
+	struct btc_bt_link_info btLinkInfo;
+	enum btc_chip_interface chipInterface;
 
 	bool bInitilized;
 	bool bStopCoexDm;
 	bool bManualControl;
 	u8 *cliBuf;
-	काष्ठा btc_statistics statistics;
+	struct btc_statistics statistics;
 	u8 pwrModeVal[10];
 
-	/*  function poपूर्णांकers */
+	/*  function pointers */
 	/*  io related */
 	BFP_BTC_R1 fBtcRead1Byte;
 	BFP_BTC_W1 fBtcWrite1Byte;
@@ -467,11 +466,11 @@
 	BFP_BTC_R4 fBtcRead4Byte;
 	BFP_BTC_W4 fBtcWrite4Byte;
 	BFP_BTC_LOCAL_REG_W1 fBtcWriteLocalReg1Byte;
-	/*  पढ़ो/ग_लिखो bb related */
+	/*  read/write bb related */
 	BFP_BTC_SET_BB_REG fBtcSetBbReg;
 	BFP_BTC_GET_BB_REG fBtcGetBbReg;
 
-	/*  पढ़ो/ग_लिखो rf related */
+	/*  read/write rf related */
 	BFP_BTC_SET_RF_REG fBtcSetRfReg;
 	BFP_BTC_GET_RF_REG fBtcGetRfReg;
 
@@ -485,30 +484,30 @@
 
 	BFP_BTC_GET_BT_REG fBtcGetBtReg;
 	BFP_BTC_SET_BT_REG fBtcSetBtReg;
-पूर्ण;
+};
 
-बाह्य काष्ठा btc_coexist GLBtCoexist;
+extern struct btc_coexist GLBtCoexist;
 
-व्योम EXhalbtcoutsrc_PowerOnSetting(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtcoutsrc_InitHwConfig(काष्ठा btc_coexist *pBtCoexist, u8 bWअगरiOnly);
-व्योम EXhalbtcoutsrc_InitCoexDm(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtcoutsrc_IpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtcoutsrc_LpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtcoutsrc_ScanNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtcoutsrc_ConnectNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 action);
-व्योम EXhalbtcoutsrc_MediaStatusNotअगरy(
-	काष्ठा btc_coexist *pBtCoexist, क्रमागत rt_media_status mediaStatus
+void EXhalbtcoutsrc_PowerOnSetting(struct btc_coexist *pBtCoexist);
+void EXhalbtcoutsrc_InitHwConfig(struct btc_coexist *pBtCoexist, u8 bWifiOnly);
+void EXhalbtcoutsrc_InitCoexDm(struct btc_coexist *pBtCoexist);
+void EXhalbtcoutsrc_IpsNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtcoutsrc_LpsNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtcoutsrc_ScanNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtcoutsrc_ConnectNotify(struct btc_coexist *pBtCoexist, u8 action);
+void EXhalbtcoutsrc_MediaStatusNotify(
+	struct btc_coexist *pBtCoexist, enum rt_media_status mediaStatus
 );
-व्योम EXhalbtcoutsrc_SpecialPacketNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 pktType);
-व्योम EXhalbtcoutsrc_BtInfoNotअगरy(
-	काष्ठा btc_coexist *pBtCoexist, u8 *पंचांगpBuf, u8 length
+void EXhalbtcoutsrc_SpecialPacketNotify(struct btc_coexist *pBtCoexist, u8 pktType);
+void EXhalbtcoutsrc_BtInfoNotify(
+	struct btc_coexist *pBtCoexist, u8 *tmpBuf, u8 length
 );
-व्योम EXhalbtcoutsrc_HaltNotअगरy(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtcoutsrc_PnpNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 pnpState);
-व्योम EXhalbtcoutsrc_Periodical(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtcoutsrc_SetChipType(u8 chipType);
-व्योम EXhalbtcoutsrc_SetAntNum(u8 type, u8 antNum);
-व्योम EXhalbtcoutsrc_SetSingleAntPath(u8 singleAntPath);
-व्योम EXhalbtcoutsrc_DisplayBtCoexInfo(काष्ठा btc_coexist *pBtCoexist);
+void EXhalbtcoutsrc_HaltNotify(struct btc_coexist *pBtCoexist);
+void EXhalbtcoutsrc_PnpNotify(struct btc_coexist *pBtCoexist, u8 pnpState);
+void EXhalbtcoutsrc_Periodical(struct btc_coexist *pBtCoexist);
+void EXhalbtcoutsrc_SetChipType(u8 chipType);
+void EXhalbtcoutsrc_SetAntNum(u8 type, u8 antNum);
+void EXhalbtcoutsrc_SetSingleAntPath(u8 singleAntPath);
+void EXhalbtcoutsrc_DisplayBtCoexInfo(struct btc_coexist *pBtCoexist);
 
-#पूर्ण_अगर
+#endif

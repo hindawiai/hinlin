@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
    drbd.c
 
    This file is part of DRBD by Philipp Reisner and Lars Ellenberg.
 
-   Copyright (C) 2001-2008, LINBIT Inक्रमmation Technologies GmbH.
+   Copyright (C) 2001-2008, LINBIT Information Technologies GmbH.
    Copyright (C) 1999-2008, Philipp Reisner <philipp.reisner@linbit.com>.
    Copyright (C) 2002-2008, Lars Ellenberg <lars.ellenberg@linbit.com>.
 
    Thanks to Carter Burden, Bart Grantham and Gennadiy Nerubayev
-   from Logicworks, Inc. क्रम making SDP replication support possible.
+   from Logicworks, Inc. for making SDP replication support possible.
 
 
  */
 
-#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/drbd.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/types.h>
-#समावेश <net/sock.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/file.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/memcontrol.h>
-#समावेश <linux/mm_अंतरभूत.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/workqueue.h>
-#घोषणा __KERNEL_SYSCALLS__
-#समावेश <linux/unistd.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/drbd.h>
+#include <linux/uaccess.h>
+#include <asm/types.h>
+#include <net/sock.h>
+#include <linux/ctype.h>
+#include <linux/mutex.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#include <linux/proc_fs.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/memcontrol.h>
+#include <linux/mm_inline.h>
+#include <linux/slab.h>
+#include <linux/random.h>
+#include <linux/reboot.h>
+#include <linux/notifier.h>
+#include <linux/kthread.h>
+#include <linux/workqueue.h>
+#define __KERNEL_SYSCALLS__
+#include <linux/unistd.h>
+#include <linux/vmalloc.h>
+#include <linux/sched/signal.h>
 
-#समावेश <linux/drbd_सीमा.स>
-#समावेश "drbd_int.h"
-#समावेश "drbd_protocol.h"
-#समावेश "drbd_req.h" /* only क्रम _req_mod in tl_release and tl_clear */
-#समावेश "drbd_vli.h"
-#समावेश "drbd_debugfs.h"
+#include <linux/drbd_limits.h>
+#include "drbd_int.h"
+#include "drbd_protocol.h"
+#include "drbd_req.h" /* only for _req_mod in tl_release and tl_clear */
+#include "drbd_vli.h"
+#include "drbd_debugfs.h"
 
-अटल DEFINE_MUTEX(drbd_मुख्य_mutex);
-अटल पूर्णांक drbd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode);
-अटल व्योम drbd_release(काष्ठा gendisk *gd, भ_शेषe_t mode);
-अटल व्योम md_sync_समयr_fn(काष्ठा समयr_list *t);
-अटल पूर्णांक w_biपंचांगap_io(काष्ठा drbd_work *w, पूर्णांक unused);
+static DEFINE_MUTEX(drbd_main_mutex);
+static int drbd_open(struct block_device *bdev, fmode_t mode);
+static void drbd_release(struct gendisk *gd, fmode_t mode);
+static void md_sync_timer_fn(struct timer_list *t);
+static int w_bitmap_io(struct drbd_work *w, int unused);
 
 MODULE_AUTHOR("Philipp Reisner <phil@linbit.com>, "
 	      "Lars Ellenberg <lars@linbit.com>");
@@ -62,280 +61,280 @@ MODULE_DESCRIPTION("drbd - Distributed Replicated Block Device v" REL_VERSION);
 MODULE_VERSION(REL_VERSION);
 MODULE_LICENSE("GPL");
 MODULE_PARM_DESC(minor_count, "Approximate number of drbd devices ("
-		 __stringअगरy(DRBD_MINOR_COUNT_MIN) "-" __stringअगरy(DRBD_MINOR_COUNT_MAX) ")");
+		 __stringify(DRBD_MINOR_COUNT_MIN) "-" __stringify(DRBD_MINOR_COUNT_MAX) ")");
 MODULE_ALIAS_BLOCKDEV_MAJOR(DRBD_MAJOR);
 
-#समावेश <linux/moduleparam.h>
-/* thanks to these macros, अगर compiled पूर्णांकo the kernel (not-module),
+#include <linux/moduleparam.h>
+/* thanks to these macros, if compiled into the kernel (not-module),
  * these become boot parameters (e.g., drbd.minor_count) */
 
-#अगर_घोषित CONFIG_DRBD_FAULT_INJECTION
-पूर्णांक drbd_enable_faults;
-पूर्णांक drbd_fault_rate;
-अटल पूर्णांक drbd_fault_count;
-अटल पूर्णांक drbd_fault_devs;
-/* biपंचांगap of enabled faults */
-module_param_named(enable_faults, drbd_enable_faults, पूर्णांक, 0664);
+#ifdef CONFIG_DRBD_FAULT_INJECTION
+int drbd_enable_faults;
+int drbd_fault_rate;
+static int drbd_fault_count;
+static int drbd_fault_devs;
+/* bitmap of enabled faults */
+module_param_named(enable_faults, drbd_enable_faults, int, 0664);
 /* fault rate % value - applies to all enabled faults */
-module_param_named(fault_rate, drbd_fault_rate, पूर्णांक, 0664);
+module_param_named(fault_rate, drbd_fault_rate, int, 0664);
 /* count of faults inserted */
-module_param_named(fault_count, drbd_fault_count, पूर्णांक, 0664);
-/* biपंचांगap of devices to insert faults on */
-module_param_named(fault_devs, drbd_fault_devs, पूर्णांक, 0644);
-#पूर्ण_अगर
+module_param_named(fault_count, drbd_fault_count, int, 0664);
+/* bitmap of devices to insert faults on */
+module_param_named(fault_devs, drbd_fault_devs, int, 0644);
+#endif
 
-/* module parameters we can keep अटल */
-अटल bool drbd_allow_oos; /* allow_खोलो_on_secondary */
-अटल bool drbd_disable_sendpage;
+/* module parameters we can keep static */
+static bool drbd_allow_oos; /* allow_open_on_secondary */
+static bool drbd_disable_sendpage;
 MODULE_PARM_DESC(allow_oos, "DONT USE!");
 module_param_named(allow_oos, drbd_allow_oos, bool, 0);
 module_param_named(disable_sendpage, drbd_disable_sendpage, bool, 0644);
 
 /* module parameters we share */
-पूर्णांक drbd_proc_details; /* Detail level in proc drbd*/
-module_param_named(proc_details, drbd_proc_details, पूर्णांक, 0644);
-/* module parameters shared with शेषs */
-अचिन्हित पूर्णांक drbd_minor_count = DRBD_MINOR_COUNT_DEF;
-/* Module parameter क्रम setting the user mode helper program
+int drbd_proc_details; /* Detail level in proc drbd*/
+module_param_named(proc_details, drbd_proc_details, int, 0644);
+/* module parameters shared with defaults */
+unsigned int drbd_minor_count = DRBD_MINOR_COUNT_DEF;
+/* Module parameter for setting the user mode helper program
  * to run. Default is /sbin/drbdadm */
-अक्षर drbd_usermode_helper[80] = "/sbin/drbdadm";
-module_param_named(minor_count, drbd_minor_count, uपूर्णांक, 0444);
-module_param_string(usermode_helper, drbd_usermode_helper, माप(drbd_usermode_helper), 0644);
+char drbd_usermode_helper[80] = "/sbin/drbdadm";
+module_param_named(minor_count, drbd_minor_count, uint, 0444);
+module_param_string(usermode_helper, drbd_usermode_helper, sizeof(drbd_usermode_helper), 0644);
 
-/* in 2.6.x, our device mapping and config info contains our भव gendisks
+/* in 2.6.x, our device mapping and config info contains our virtual gendisks
  * as member "struct gendisk *vdisk;"
  */
-काष्ठा idr drbd_devices;
-काष्ठा list_head drbd_resources;
-काष्ठा mutex resources_mutex;
+struct idr drbd_devices;
+struct list_head drbd_resources;
+struct mutex resources_mutex;
 
-काष्ठा kmem_cache *drbd_request_cache;
-काष्ठा kmem_cache *drbd_ee_cache;	/* peer requests */
-काष्ठा kmem_cache *drbd_bm_ext_cache;	/* biपंचांगap extents */
-काष्ठा kmem_cache *drbd_al_ext_cache;	/* activity log extents */
+struct kmem_cache *drbd_request_cache;
+struct kmem_cache *drbd_ee_cache;	/* peer requests */
+struct kmem_cache *drbd_bm_ext_cache;	/* bitmap extents */
+struct kmem_cache *drbd_al_ext_cache;	/* activity log extents */
 mempool_t drbd_request_mempool;
 mempool_t drbd_ee_mempool;
 mempool_t drbd_md_io_page_pool;
-काष्ठा bio_set drbd_md_io_bio_set;
-काष्ठा bio_set drbd_io_bio_set;
+struct bio_set drbd_md_io_bio_set;
+struct bio_set drbd_io_bio_set;
 
-/* I करो not use a standard mempool, because:
+/* I do not use a standard mempool, because:
    1) I want to hand out the pre-allocated objects first.
-   2) I want to be able to पूर्णांकerrupt sleeping allocation with a संकेत.
-   Note: This is a single linked list, the next poपूर्णांकer is the निजी
-	 member of काष्ठा page.
+   2) I want to be able to interrupt sleeping allocation with a signal.
+   Note: This is a single linked list, the next pointer is the private
+	 member of struct page.
  */
-काष्ठा page *drbd_pp_pool;
+struct page *drbd_pp_pool;
 DEFINE_SPINLOCK(drbd_pp_lock);
-पूर्णांक          drbd_pp_vacant;
-रुको_queue_head_t drbd_pp_रुको;
+int          drbd_pp_vacant;
+wait_queue_head_t drbd_pp_wait;
 
 DEFINE_RATELIMIT_STATE(drbd_ratelimit_state, 5 * HZ, 5);
 
-अटल स्थिर काष्ठा block_device_operations drbd_ops = अणु
+static const struct block_device_operations drbd_ops = {
 	.owner		= THIS_MODULE,
 	.submit_bio	= drbd_submit_bio,
-	.खोलो		= drbd_खोलो,
+	.open		= drbd_open,
 	.release	= drbd_release,
-पूर्ण;
+};
 
-#अगर_घोषित __CHECKER__
-/* When checking with sparse, and this is an अंतरभूत function, sparse will
+#ifdef __CHECKER__
+/* When checking with sparse, and this is an inline function, sparse will
    give tons of false positives. When this is a real functions sparse works.
  */
-पूर्णांक _get_ldev_अगर_state(काष्ठा drbd_device *device, क्रमागत drbd_disk_state mins)
-अणु
-	पूर्णांक io_allowed;
+int _get_ldev_if_state(struct drbd_device *device, enum drbd_disk_state mins)
+{
+	int io_allowed;
 
 	atomic_inc(&device->local_cnt);
 	io_allowed = (device->state.disk >= mins);
-	अगर (!io_allowed) अणु
-		अगर (atomic_dec_and_test(&device->local_cnt))
-			wake_up(&device->misc_रुको);
-	पूर्ण
-	वापस io_allowed;
-पूर्ण
+	if (!io_allowed) {
+		if (atomic_dec_and_test(&device->local_cnt))
+			wake_up(&device->misc_wait);
+	}
+	return io_allowed;
+}
 
-#पूर्ण_अगर
+#endif
 
 /**
  * tl_release() - mark as BARRIER_ACKED all requests in the corresponding transfer log epoch
  * @connection:	DRBD connection.
- * @barrier_nr:	Expected identअगरier of the DRBD ग_लिखो barrier packet.
- * @set_size:	Expected number of requests beक्रमe that barrier.
+ * @barrier_nr:	Expected identifier of the DRBD write barrier packet.
+ * @set_size:	Expected number of requests before that barrier.
  *
- * In हाल the passed barrier_nr or set_size करोes not match the oldest
+ * In case the passed barrier_nr or set_size does not match the oldest
  * epoch of not yet barrier-acked requests, this function will cause a
  * termination of the connection.
  */
-व्योम tl_release(काष्ठा drbd_connection *connection, अचिन्हित पूर्णांक barrier_nr,
-		अचिन्हित पूर्णांक set_size)
-अणु
-	काष्ठा drbd_request *r;
-	काष्ठा drbd_request *req = शून्य;
-	पूर्णांक expect_epoch = 0;
-	पूर्णांक expect_size = 0;
+void tl_release(struct drbd_connection *connection, unsigned int barrier_nr,
+		unsigned int set_size)
+{
+	struct drbd_request *r;
+	struct drbd_request *req = NULL;
+	int expect_epoch = 0;
+	int expect_size = 0;
 
 	spin_lock_irq(&connection->resource->req_lock);
 
-	/* find oldest not yet barrier-acked ग_लिखो request,
-	 * count ग_लिखोs in its epoch. */
-	list_क्रम_each_entry(r, &connection->transfer_log, tl_requests) अणु
-		स्थिर अचिन्हित s = r->rq_state;
-		अगर (!req) अणु
-			अगर (!(s & RQ_WRITE))
-				जारी;
-			अगर (!(s & RQ_NET_MASK))
-				जारी;
-			अगर (s & RQ_NET_DONE)
-				जारी;
+	/* find oldest not yet barrier-acked write request,
+	 * count writes in its epoch. */
+	list_for_each_entry(r, &connection->transfer_log, tl_requests) {
+		const unsigned s = r->rq_state;
+		if (!req) {
+			if (!(s & RQ_WRITE))
+				continue;
+			if (!(s & RQ_NET_MASK))
+				continue;
+			if (s & RQ_NET_DONE)
+				continue;
 			req = r;
 			expect_epoch = req->epoch;
 			expect_size ++;
-		पूर्ण अन्यथा अणु
-			अगर (r->epoch != expect_epoch)
-				अवरोध;
-			अगर (!(s & RQ_WRITE))
-				जारी;
-			/* अगर (s & RQ_DONE): not expected */
-			/* अगर (!(s & RQ_NET_MASK)): not expected */
+		} else {
+			if (r->epoch != expect_epoch)
+				break;
+			if (!(s & RQ_WRITE))
+				continue;
+			/* if (s & RQ_DONE): not expected */
+			/* if (!(s & RQ_NET_MASK)): not expected */
 			expect_size++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* first some paranoia code */
-	अगर (req == शून्य) अणु
+	if (req == NULL) {
 		drbd_err(connection, "BAD! BarrierAck #%u received, but no epoch in tl!?\n",
 			 barrier_nr);
-		जाओ bail;
-	पूर्ण
-	अगर (expect_epoch != barrier_nr) अणु
+		goto bail;
+	}
+	if (expect_epoch != barrier_nr) {
 		drbd_err(connection, "BAD! BarrierAck #%u received, expected #%u!\n",
 			 barrier_nr, expect_epoch);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
-	अगर (expect_size != set_size) अणु
+	if (expect_size != set_size) {
 		drbd_err(connection, "BAD! BarrierAck #%u received with n_writes=%u, expected n_writes=%u!\n",
 			 barrier_nr, set_size, expect_size);
-		जाओ bail;
-	पूर्ण
+		goto bail;
+	}
 
 	/* Clean up list of requests processed during current epoch. */
 	/* this extra list walk restart is paranoia,
 	 * to catch requests being barrier-acked "unexpectedly".
 	 * It usually should find the same req again, or some READ preceding it. */
-	list_क्रम_each_entry(req, &connection->transfer_log, tl_requests)
-		अगर (req->epoch == expect_epoch)
-			अवरोध;
-	list_क्रम_each_entry_safe_from(req, r, &connection->transfer_log, tl_requests) अणु
-		अगर (req->epoch != expect_epoch)
-			अवरोध;
+	list_for_each_entry(req, &connection->transfer_log, tl_requests)
+		if (req->epoch == expect_epoch)
+			break;
+	list_for_each_entry_safe_from(req, r, &connection->transfer_log, tl_requests) {
+		if (req->epoch != expect_epoch)
+			break;
 		_req_mod(req, BARRIER_ACKED);
-	पूर्ण
+	}
 	spin_unlock_irq(&connection->resource->req_lock);
 
-	वापस;
+	return;
 
 bail:
 	spin_unlock_irq(&connection->resource->req_lock);
 	conn_request_state(connection, NS(conn, C_PROTOCOL_ERROR), CS_HARD);
-पूर्ण
+}
 
 
 /**
  * _tl_restart() - Walks the transfer log, and applies an action to all requests
  * @connection:	DRBD connection to operate on.
- * @what:       The action/event to perक्रमm with all request objects
+ * @what:       The action/event to perform with all request objects
  *
  * @what might be one of CONNECTION_LOST_WHILE_PENDING, RESEND, FAIL_FROZEN_DISK_IO,
  * RESTART_FROZEN_DISK_IO.
  */
 /* must hold resource->req_lock */
-व्योम _tl_restart(काष्ठा drbd_connection *connection, क्रमागत drbd_req_event what)
-अणु
-	काष्ठा drbd_request *req, *r;
+void _tl_restart(struct drbd_connection *connection, enum drbd_req_event what)
+{
+	struct drbd_request *req, *r;
 
-	list_क्रम_each_entry_safe(req, r, &connection->transfer_log, tl_requests)
+	list_for_each_entry_safe(req, r, &connection->transfer_log, tl_requests)
 		_req_mod(req, what);
-पूर्ण
+}
 
-व्योम tl_restart(काष्ठा drbd_connection *connection, क्रमागत drbd_req_event what)
-अणु
+void tl_restart(struct drbd_connection *connection, enum drbd_req_event what)
+{
 	spin_lock_irq(&connection->resource->req_lock);
 	_tl_restart(connection, what);
 	spin_unlock_irq(&connection->resource->req_lock);
-पूर्ण
+}
 
 /**
- * tl_clear() - Clears all requests and &काष्ठा drbd_tl_epoch objects out of the TL
+ * tl_clear() - Clears all requests and &struct drbd_tl_epoch objects out of the TL
  * @connection:	DRBD connection.
  *
  * This is called after the connection to the peer was lost. The storage covered
- * by the requests on the transfer माला_लो marked as our of sync. Called from the
- * receiver thपढ़ो and the worker thपढ़ो.
+ * by the requests on the transfer gets marked as our of sync. Called from the
+ * receiver thread and the worker thread.
  */
-व्योम tl_clear(काष्ठा drbd_connection *connection)
-अणु
+void tl_clear(struct drbd_connection *connection)
+{
 	tl_restart(connection, CONNECTION_LOST_WHILE_PENDING);
-पूर्ण
+}
 
 /**
- * tl_पात_disk_io() - Abort disk I/O क्रम all requests क्रम a certain device in the TL
+ * tl_abort_disk_io() - Abort disk I/O for all requests for a certain device in the TL
  * @device:	DRBD device.
  */
-व्योम tl_पात_disk_io(काष्ठा drbd_device *device)
-अणु
-	काष्ठा drbd_connection *connection = first_peer_device(device)->connection;
-	काष्ठा drbd_request *req, *r;
+void tl_abort_disk_io(struct drbd_device *device)
+{
+	struct drbd_connection *connection = first_peer_device(device)->connection;
+	struct drbd_request *req, *r;
 
 	spin_lock_irq(&connection->resource->req_lock);
-	list_क्रम_each_entry_safe(req, r, &connection->transfer_log, tl_requests) अणु
-		अगर (!(req->rq_state & RQ_LOCAL_PENDING))
-			जारी;
-		अगर (req->device != device)
-			जारी;
+	list_for_each_entry_safe(req, r, &connection->transfer_log, tl_requests) {
+		if (!(req->rq_state & RQ_LOCAL_PENDING))
+			continue;
+		if (req->device != device)
+			continue;
 		_req_mod(req, ABORT_DISK_IO);
-	पूर्ण
+	}
 	spin_unlock_irq(&connection->resource->req_lock);
-पूर्ण
+}
 
-अटल पूर्णांक drbd_thपढ़ो_setup(व्योम *arg)
-अणु
-	काष्ठा drbd_thपढ़ो *thi = (काष्ठा drbd_thपढ़ो *) arg;
-	काष्ठा drbd_resource *resource = thi->resource;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval;
+static int drbd_thread_setup(void *arg)
+{
+	struct drbd_thread *thi = (struct drbd_thread *) arg;
+	struct drbd_resource *resource = thi->resource;
+	unsigned long flags;
+	int retval;
 
-	snम_लिखो(current->comm, माप(current->comm), "drbd_%c_%s",
+	snprintf(current->comm, sizeof(current->comm), "drbd_%c_%s",
 		 thi->name[0],
 		 resource->name);
 
-	allow_kernel_संकेत(DRBD_SIGKILL);
-	allow_kernel_संकेत(SIGXCPU);
+	allow_kernel_signal(DRBD_SIGKILL);
+	allow_kernel_signal(SIGXCPU);
 restart:
 	retval = thi->function(thi);
 
 	spin_lock_irqsave(&thi->t_lock, flags);
 
-	/* अगर the receiver has been "EXITING", the last thing it did
+	/* if the receiver has been "EXITING", the last thing it did
 	 * was set the conn state to "StandAlone",
-	 * अगर now a re-connect request comes in, conn state goes C_UNCONNECTED,
-	 * and receiver thपढ़ो will be "started".
-	 * drbd_thपढ़ो_start needs to set "RESTARTING" in that हाल.
+	 * if now a re-connect request comes in, conn state goes C_UNCONNECTED,
+	 * and receiver thread will be "started".
+	 * drbd_thread_start needs to set "RESTARTING" in that case.
 	 * t_state check and assignment needs to be within the same spinlock,
-	 * so either thपढ़ो_start sees EXITING, and can remap to RESTARTING,
-	 * or thपढ़ो_start see NONE, and can proceed as normal.
+	 * so either thread_start sees EXITING, and can remap to RESTARTING,
+	 * or thread_start see NONE, and can proceed as normal.
 	 */
 
-	अगर (thi->t_state == RESTARTING) अणु
+	if (thi->t_state == RESTARTING) {
 		drbd_info(resource, "Restarting %s thread\n", thi->name);
 		thi->t_state = RUNNING;
 		spin_unlock_irqrestore(&thi->t_lock, flags);
-		जाओ restart;
-	पूर्ण
+		goto restart;
+	}
 
-	thi->task = शून्य;
+	thi->task = NULL;
 	thi->t_state = NONE;
 	smp_mb();
 	complete_all(&thi->stop);
@@ -343,296 +342,296 @@ restart:
 
 	drbd_info(resource, "Terminating %s\n", current->comm);
 
-	/* Release mod reference taken when thपढ़ो was started */
+	/* Release mod reference taken when thread was started */
 
-	अगर (thi->connection)
+	if (thi->connection)
 		kref_put(&thi->connection->kref, drbd_destroy_connection);
 	kref_put(&resource->kref, drbd_destroy_resource);
 	module_put(THIS_MODULE);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम drbd_thपढ़ो_init(काष्ठा drbd_resource *resource, काष्ठा drbd_thपढ़ो *thi,
-			     पूर्णांक (*func) (काष्ठा drbd_thपढ़ो *), स्थिर अक्षर *name)
-अणु
+static void drbd_thread_init(struct drbd_resource *resource, struct drbd_thread *thi,
+			     int (*func) (struct drbd_thread *), const char *name)
+{
 	spin_lock_init(&thi->t_lock);
-	thi->task    = शून्य;
+	thi->task    = NULL;
 	thi->t_state = NONE;
 	thi->function = func;
 	thi->resource = resource;
-	thi->connection = शून्य;
+	thi->connection = NULL;
 	thi->name = name;
-पूर्ण
+}
 
-पूर्णांक drbd_thपढ़ो_start(काष्ठा drbd_thपढ़ो *thi)
-अणु
-	काष्ठा drbd_resource *resource = thi->resource;
-	काष्ठा task_काष्ठा *nt;
-	अचिन्हित दीर्घ flags;
+int drbd_thread_start(struct drbd_thread *thi)
+{
+	struct drbd_resource *resource = thi->resource;
+	struct task_struct *nt;
+	unsigned long flags;
 
-	/* is used from state engine करोing drbd_thपढ़ो_stop_noरुको,
-	 * जबतक holding the req lock irqsave */
+	/* is used from state engine doing drbd_thread_stop_nowait,
+	 * while holding the req lock irqsave */
 	spin_lock_irqsave(&thi->t_lock, flags);
 
-	चयन (thi->t_state) अणु
-	हाल NONE:
+	switch (thi->t_state) {
+	case NONE:
 		drbd_info(resource, "Starting %s thread (from %s [%d])\n",
 			 thi->name, current->comm, current->pid);
 
-		/* Get ref on module क्रम thपढ़ो - this is released when thपढ़ो निकासs */
-		अगर (!try_module_get(THIS_MODULE)) अणु
+		/* Get ref on module for thread - this is released when thread exits */
+		if (!try_module_get(THIS_MODULE)) {
 			drbd_err(resource, "Failed to get module reference in drbd_thread_start\n");
 			spin_unlock_irqrestore(&thi->t_lock, flags);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
 		kref_get(&resource->kref);
-		अगर (thi->connection)
+		if (thi->connection)
 			kref_get(&thi->connection->kref);
 
 		init_completion(&thi->stop);
 		thi->reset_cpu_mask = 1;
 		thi->t_state = RUNNING;
 		spin_unlock_irqrestore(&thi->t_lock, flags);
-		flush_संकेतs(current); /* otherw. may get -ERESTARTNOINTR */
+		flush_signals(current); /* otherw. may get -ERESTARTNOINTR */
 
-		nt = kthपढ़ो_create(drbd_thपढ़ो_setup, (व्योम *) thi,
+		nt = kthread_create(drbd_thread_setup, (void *) thi,
 				    "drbd_%c_%s", thi->name[0], thi->resource->name);
 
-		अगर (IS_ERR(nt)) अणु
+		if (IS_ERR(nt)) {
 			drbd_err(resource, "Couldn't start thread\n");
 
-			अगर (thi->connection)
+			if (thi->connection)
 				kref_put(&thi->connection->kref, drbd_destroy_connection);
 			kref_put(&resource->kref, drbd_destroy_resource);
 			module_put(THIS_MODULE);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 		spin_lock_irqsave(&thi->t_lock, flags);
 		thi->task = nt;
 		thi->t_state = RUNNING;
 		spin_unlock_irqrestore(&thi->t_lock, flags);
 		wake_up_process(nt);
-		अवरोध;
-	हाल EXITING:
+		break;
+	case EXITING:
 		thi->t_state = RESTARTING;
 		drbd_info(resource, "Restarting %s thread (from %s [%d])\n",
 				thi->name, current->comm, current->pid);
 		fallthrough;
-	हाल RUNNING:
-	हाल RESTARTING:
-	शेष:
+	case RUNNING:
+	case RESTARTING:
+	default:
 		spin_unlock_irqrestore(&thi->t_lock, flags);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-व्योम _drbd_thपढ़ो_stop(काष्ठा drbd_thपढ़ो *thi, पूर्णांक restart, पूर्णांक रुको)
-अणु
-	अचिन्हित दीर्घ flags;
+void _drbd_thread_stop(struct drbd_thread *thi, int restart, int wait)
+{
+	unsigned long flags;
 
-	क्रमागत drbd_thपढ़ो_state ns = restart ? RESTARTING : EXITING;
+	enum drbd_thread_state ns = restart ? RESTARTING : EXITING;
 
 	/* may be called from state engine, holding the req lock irqsave */
 	spin_lock_irqsave(&thi->t_lock, flags);
 
-	अगर (thi->t_state == NONE) अणु
+	if (thi->t_state == NONE) {
 		spin_unlock_irqrestore(&thi->t_lock, flags);
-		अगर (restart)
-			drbd_thपढ़ो_start(thi);
-		वापस;
-	पूर्ण
+		if (restart)
+			drbd_thread_start(thi);
+		return;
+	}
 
-	अगर (thi->t_state != ns) अणु
-		अगर (thi->task == शून्य) अणु
+	if (thi->t_state != ns) {
+		if (thi->task == NULL) {
 			spin_unlock_irqrestore(&thi->t_lock, flags);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		thi->t_state = ns;
 		smp_mb();
 		init_completion(&thi->stop);
-		अगर (thi->task != current)
+		if (thi->task != current)
 			send_sig(DRBD_SIGKILL, thi->task, 1);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&thi->t_lock, flags);
 
-	अगर (रुको)
-		रुको_क्रम_completion(&thi->stop);
-पूर्ण
+	if (wait)
+		wait_for_completion(&thi->stop);
+}
 
-पूर्णांक conn_lowest_minor(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr = 0, minor = -1;
+int conn_lowest_minor(struct drbd_connection *connection)
+{
+	struct drbd_peer_device *peer_device;
+	int vnr = 0, minor = -1;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	peer_device = idr_get_next(&connection->peer_devices, &vnr);
-	अगर (peer_device)
+	if (peer_device)
 		minor = device_to_minor(peer_device->device);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस minor;
-पूर्ण
+	return minor;
+}
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 /*
- * drbd_calc_cpu_mask() - Generate CPU masks, spपढ़ो over all CPUs
+ * drbd_calc_cpu_mask() - Generate CPU masks, spread over all CPUs
  *
- * Forces all thपढ़ोs of a resource onto the same CPU. This is beneficial क्रम
+ * Forces all threads of a resource onto the same CPU. This is beneficial for
  * DRBD's performance. May be overwritten by user's configuration.
  */
-अटल व्योम drbd_calc_cpu_mask(cpumask_var_t *cpu_mask)
-अणु
-	अचिन्हित पूर्णांक *resources_per_cpu, min_index = ~0;
+static void drbd_calc_cpu_mask(cpumask_var_t *cpu_mask)
+{
+	unsigned int *resources_per_cpu, min_index = ~0;
 
-	resources_per_cpu = kसुस्मृति(nr_cpu_ids, माप(*resources_per_cpu),
+	resources_per_cpu = kcalloc(nr_cpu_ids, sizeof(*resources_per_cpu),
 				    GFP_KERNEL);
-	अगर (resources_per_cpu) अणु
-		काष्ठा drbd_resource *resource;
-		अचिन्हित पूर्णांक cpu, min = ~0;
+	if (resources_per_cpu) {
+		struct drbd_resource *resource;
+		unsigned int cpu, min = ~0;
 
-		rcu_पढ़ो_lock();
-		क्रम_each_resource_rcu(resource, &drbd_resources) अणु
-			क्रम_each_cpu(cpu, resource->cpu_mask)
+		rcu_read_lock();
+		for_each_resource_rcu(resource, &drbd_resources) {
+			for_each_cpu(cpu, resource->cpu_mask)
 				resources_per_cpu[cpu]++;
-		पूर्ण
-		rcu_पढ़ो_unlock();
-		क्रम_each_online_cpu(cpu) अणु
-			अगर (resources_per_cpu[cpu] < min) अणु
+		}
+		rcu_read_unlock();
+		for_each_online_cpu(cpu) {
+			if (resources_per_cpu[cpu] < min) {
 				min = resources_per_cpu[cpu];
 				min_index = cpu;
-			पूर्ण
-		पूर्ण
-		kमुक्त(resources_per_cpu);
-	पूर्ण
-	अगर (min_index == ~0) अणु
+			}
+		}
+		kfree(resources_per_cpu);
+	}
+	if (min_index == ~0) {
 		cpumask_setall(*cpu_mask);
-		वापस;
-	पूर्ण
+		return;
+	}
 	cpumask_set_cpu(min_index, *cpu_mask);
-पूर्ण
+}
 
 /**
- * drbd_thपढ़ो_current_set_cpu() - modअगरies the cpu mask of the _current_ thपढ़ो
- * @thi:	drbd_thपढ़ो object
+ * drbd_thread_current_set_cpu() - modifies the cpu mask of the _current_ thread
+ * @thi:	drbd_thread object
  *
- * call in the "main loop" of _all_ thपढ़ोs, no need क्रम any mutex, current won't die
+ * call in the "main loop" of _all_ threads, no need for any mutex, current won't die
  * prematurely.
  */
-व्योम drbd_thपढ़ो_current_set_cpu(काष्ठा drbd_thपढ़ो *thi)
-अणु
-	काष्ठा drbd_resource *resource = thi->resource;
-	काष्ठा task_काष्ठा *p = current;
+void drbd_thread_current_set_cpu(struct drbd_thread *thi)
+{
+	struct drbd_resource *resource = thi->resource;
+	struct task_struct *p = current;
 
-	अगर (!thi->reset_cpu_mask)
-		वापस;
+	if (!thi->reset_cpu_mask)
+		return;
 	thi->reset_cpu_mask = 0;
 	set_cpus_allowed_ptr(p, resource->cpu_mask);
-पूर्ण
-#अन्यथा
-#घोषणा drbd_calc_cpu_mask(A) (अणुपूर्ण)
-#पूर्ण_अगर
+}
+#else
+#define drbd_calc_cpu_mask(A) ({})
+#endif
 
 /*
  * drbd_header_size  -  size of a packet header
  *
  * The header size is a multiple of 8, so any payload following the header is
- * word aligned on 64-bit architectures.  (The biपंचांगap send and receive code
+ * word aligned on 64-bit architectures.  (The bitmap send and receive code
  * relies on this.)
  */
-अचिन्हित पूर्णांक drbd_header_size(काष्ठा drbd_connection *connection)
-अणु
-	अगर (connection->agreed_pro_version >= 100) अणु
-		BUILD_BUG_ON(!IS_ALIGNED(माप(काष्ठा p_header100), 8));
-		वापस माप(काष्ठा p_header100);
-	पूर्ण अन्यथा अणु
-		BUILD_BUG_ON(माप(काष्ठा p_header80) !=
-			     माप(काष्ठा p_header95));
-		BUILD_BUG_ON(!IS_ALIGNED(माप(काष्ठा p_header80), 8));
-		वापस माप(काष्ठा p_header80);
-	पूर्ण
-पूर्ण
+unsigned int drbd_header_size(struct drbd_connection *connection)
+{
+	if (connection->agreed_pro_version >= 100) {
+		BUILD_BUG_ON(!IS_ALIGNED(sizeof(struct p_header100), 8));
+		return sizeof(struct p_header100);
+	} else {
+		BUILD_BUG_ON(sizeof(struct p_header80) !=
+			     sizeof(struct p_header95));
+		BUILD_BUG_ON(!IS_ALIGNED(sizeof(struct p_header80), 8));
+		return sizeof(struct p_header80);
+	}
+}
 
-अटल अचिन्हित पूर्णांक prepare_header80(काष्ठा p_header80 *h, क्रमागत drbd_packet cmd, पूर्णांक size)
-अणु
+static unsigned int prepare_header80(struct p_header80 *h, enum drbd_packet cmd, int size)
+{
 	h->magic   = cpu_to_be32(DRBD_MAGIC);
 	h->command = cpu_to_be16(cmd);
 	h->length  = cpu_to_be16(size);
-	वापस माप(काष्ठा p_header80);
-पूर्ण
+	return sizeof(struct p_header80);
+}
 
-अटल अचिन्हित पूर्णांक prepare_header95(काष्ठा p_header95 *h, क्रमागत drbd_packet cmd, पूर्णांक size)
-अणु
+static unsigned int prepare_header95(struct p_header95 *h, enum drbd_packet cmd, int size)
+{
 	h->magic   = cpu_to_be16(DRBD_MAGIC_BIG);
 	h->command = cpu_to_be16(cmd);
 	h->length = cpu_to_be32(size);
-	वापस माप(काष्ठा p_header95);
-पूर्ण
+	return sizeof(struct p_header95);
+}
 
-अटल अचिन्हित पूर्णांक prepare_header100(काष्ठा p_header100 *h, क्रमागत drbd_packet cmd,
-				      पूर्णांक size, पूर्णांक vnr)
-अणु
+static unsigned int prepare_header100(struct p_header100 *h, enum drbd_packet cmd,
+				      int size, int vnr)
+{
 	h->magic = cpu_to_be32(DRBD_MAGIC_100);
 	h->volume = cpu_to_be16(vnr);
 	h->command = cpu_to_be16(cmd);
 	h->length = cpu_to_be32(size);
 	h->pad = 0;
-	वापस माप(काष्ठा p_header100);
-पूर्ण
+	return sizeof(struct p_header100);
+}
 
-अटल अचिन्हित पूर्णांक prepare_header(काष्ठा drbd_connection *connection, पूर्णांक vnr,
-				   व्योम *buffer, क्रमागत drbd_packet cmd, पूर्णांक size)
-अणु
-	अगर (connection->agreed_pro_version >= 100)
-		वापस prepare_header100(buffer, cmd, size, vnr);
-	अन्यथा अगर (connection->agreed_pro_version >= 95 &&
+static unsigned int prepare_header(struct drbd_connection *connection, int vnr,
+				   void *buffer, enum drbd_packet cmd, int size)
+{
+	if (connection->agreed_pro_version >= 100)
+		return prepare_header100(buffer, cmd, size, vnr);
+	else if (connection->agreed_pro_version >= 95 &&
 		 size > DRBD_MAX_SIZE_H80_PACKET)
-		वापस prepare_header95(buffer, cmd, size);
-	अन्यथा
-		वापस prepare_header80(buffer, cmd, size);
-पूर्ण
+		return prepare_header95(buffer, cmd, size);
+	else
+		return prepare_header80(buffer, cmd, size);
+}
 
-अटल व्योम *__conn_prepare_command(काष्ठा drbd_connection *connection,
-				    काष्ठा drbd_socket *sock)
-अणु
-	अगर (!sock->socket)
-		वापस शून्य;
-	वापस sock->sbuf + drbd_header_size(connection);
-पूर्ण
+static void *__conn_prepare_command(struct drbd_connection *connection,
+				    struct drbd_socket *sock)
+{
+	if (!sock->socket)
+		return NULL;
+	return sock->sbuf + drbd_header_size(connection);
+}
 
-व्योम *conn_prepare_command(काष्ठा drbd_connection *connection, काष्ठा drbd_socket *sock)
-अणु
-	व्योम *p;
+void *conn_prepare_command(struct drbd_connection *connection, struct drbd_socket *sock)
+{
+	void *p;
 
 	mutex_lock(&sock->mutex);
 	p = __conn_prepare_command(connection, sock);
-	अगर (!p)
+	if (!p)
 		mutex_unlock(&sock->mutex);
 
-	वापस p;
-पूर्ण
+	return p;
+}
 
-व्योम *drbd_prepare_command(काष्ठा drbd_peer_device *peer_device, काष्ठा drbd_socket *sock)
-अणु
-	वापस conn_prepare_command(peer_device->connection, sock);
-पूर्ण
+void *drbd_prepare_command(struct drbd_peer_device *peer_device, struct drbd_socket *sock)
+{
+	return conn_prepare_command(peer_device->connection, sock);
+}
 
-अटल पूर्णांक __send_command(काष्ठा drbd_connection *connection, पूर्णांक vnr,
-			  काष्ठा drbd_socket *sock, क्रमागत drbd_packet cmd,
-			  अचिन्हित पूर्णांक header_size, व्योम *data,
-			  अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक msg_flags;
-	पूर्णांक err;
+static int __send_command(struct drbd_connection *connection, int vnr,
+			  struct drbd_socket *sock, enum drbd_packet cmd,
+			  unsigned int header_size, void *data,
+			  unsigned int size)
+{
+	int msg_flags;
+	int err;
 
 	/*
-	 * Called with @data == शून्य and the size of the data blocks in @size
-	 * क्रम commands that send data blocks.  For those commands, omit the
+	 * Called with @data == NULL and the size of the data blocks in @size
+	 * for commands that send data blocks.  For those commands, omit the
 	 * MSG_MORE flag: this will increase the likelihood that data blocks
 	 * which are page aligned on the sender will end up page aligned on the
 	 * receiver.
@@ -643,96 +642,96 @@ restart:
 				      header_size + size);
 	err = drbd_send_all(connection, sock->socket, sock->sbuf, header_size,
 			    msg_flags);
-	अगर (data && !err)
+	if (data && !err)
 		err = drbd_send_all(connection, sock->socket, data, size, 0);
 	/* DRBD protocol "pings" are latency critical.
 	 * This is supposed to trigger tcp_push_pending_frames() */
-	अगर (!err && (cmd == P_PING || cmd == P_PING_ACK))
+	if (!err && (cmd == P_PING || cmd == P_PING_ACK))
 		tcp_sock_set_nodelay(sock->socket->sk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __conn_send_command(काष्ठा drbd_connection *connection, काष्ठा drbd_socket *sock,
-			       क्रमागत drbd_packet cmd, अचिन्हित पूर्णांक header_size,
-			       व्योम *data, अचिन्हित पूर्णांक size)
-अणु
-	वापस __send_command(connection, 0, sock, cmd, header_size, data, size);
-पूर्ण
+static int __conn_send_command(struct drbd_connection *connection, struct drbd_socket *sock,
+			       enum drbd_packet cmd, unsigned int header_size,
+			       void *data, unsigned int size)
+{
+	return __send_command(connection, 0, sock, cmd, header_size, data, size);
+}
 
-पूर्णांक conn_send_command(काष्ठा drbd_connection *connection, काष्ठा drbd_socket *sock,
-		      क्रमागत drbd_packet cmd, अचिन्हित पूर्णांक header_size,
-		      व्योम *data, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+int conn_send_command(struct drbd_connection *connection, struct drbd_socket *sock,
+		      enum drbd_packet cmd, unsigned int header_size,
+		      void *data, unsigned int size)
+{
+	int err;
 
 	err = __conn_send_command(connection, sock, cmd, header_size, data, size);
 	mutex_unlock(&sock->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक drbd_send_command(काष्ठा drbd_peer_device *peer_device, काष्ठा drbd_socket *sock,
-		      क्रमागत drbd_packet cmd, अचिन्हित पूर्णांक header_size,
-		      व्योम *data, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+int drbd_send_command(struct drbd_peer_device *peer_device, struct drbd_socket *sock,
+		      enum drbd_packet cmd, unsigned int header_size,
+		      void *data, unsigned int size)
+{
+	int err;
 
 	err = __send_command(peer_device->connection, peer_device->device->vnr,
 			     sock, cmd, header_size, data, size);
 	mutex_unlock(&sock->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक drbd_send_ping(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_socket *sock;
-
-	sock = &connection->meta;
-	अगर (!conn_prepare_command(connection, sock))
-		वापस -EIO;
-	वापस conn_send_command(connection, sock, P_PING, 0, शून्य, 0);
-पूर्ण
-
-पूर्णांक drbd_send_ping_ack(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_socket *sock;
+int drbd_send_ping(struct drbd_connection *connection)
+{
+	struct drbd_socket *sock;
 
 	sock = &connection->meta;
-	अगर (!conn_prepare_command(connection, sock))
-		वापस -EIO;
-	वापस conn_send_command(connection, sock, P_PING_ACK, 0, शून्य, 0);
-पूर्ण
+	if (!conn_prepare_command(connection, sock))
+		return -EIO;
+	return conn_send_command(connection, sock, P_PING, 0, NULL, 0);
+}
 
-पूर्णांक drbd_send_sync_param(काष्ठा drbd_peer_device *peer_device)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_rs_param_95 *p;
-	पूर्णांक size;
-	स्थिर पूर्णांक apv = peer_device->connection->agreed_pro_version;
-	क्रमागत drbd_packet cmd;
-	काष्ठा net_conf *nc;
-	काष्ठा disk_conf *dc;
+int drbd_send_ping_ack(struct drbd_connection *connection)
+{
+	struct drbd_socket *sock;
+
+	sock = &connection->meta;
+	if (!conn_prepare_command(connection, sock))
+		return -EIO;
+	return conn_send_command(connection, sock, P_PING_ACK, 0, NULL, 0);
+}
+
+int drbd_send_sync_param(struct drbd_peer_device *peer_device)
+{
+	struct drbd_socket *sock;
+	struct p_rs_param_95 *p;
+	int size;
+	const int apv = peer_device->connection->agreed_pro_version;
+	enum drbd_packet cmd;
+	struct net_conf *nc;
+	struct disk_conf *dc;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	nc = rcu_dereference(peer_device->connection->net_conf);
 
-	size = apv <= 87 ? माप(काष्ठा p_rs_param)
-		: apv == 88 ? माप(काष्ठा p_rs_param)
-			+ म_माप(nc->verअगरy_alg) + 1
-		: apv <= 94 ? माप(काष्ठा p_rs_param_89)
-		: /* apv >= 95 */ माप(काष्ठा p_rs_param_95);
+	size = apv <= 87 ? sizeof(struct p_rs_param)
+		: apv == 88 ? sizeof(struct p_rs_param)
+			+ strlen(nc->verify_alg) + 1
+		: apv <= 94 ? sizeof(struct p_rs_param_89)
+		: /* apv >= 95 */ sizeof(struct p_rs_param_95);
 
 	cmd = apv >= 89 ? P_SYNC_PARAM89 : P_SYNC_PARAM;
 
-	/* initialize verअगरy_alg and csums_alg */
-	स_रखो(p->verअगरy_alg, 0, 2 * SHARED_SECRET_MAX);
+	/* initialize verify_alg and csums_alg */
+	memset(p->verify_alg, 0, 2 * SHARED_SECRET_MAX);
 
-	अगर (get_ldev(peer_device->device)) अणु
+	if (get_ldev(peer_device->device)) {
 		dc = rcu_dereference(peer_device->device->ldev->disk_conf);
 		p->resync_rate = cpu_to_be32(dc->resync_rate);
 		p->c_plan_ahead = cpu_to_be32(dc->c_plan_ahead);
@@ -740,47 +739,47 @@ restart:
 		p->c_fill_target = cpu_to_be32(dc->c_fill_target);
 		p->c_max_rate = cpu_to_be32(dc->c_max_rate);
 		put_ldev(peer_device->device);
-	पूर्ण अन्यथा अणु
+	} else {
 		p->resync_rate = cpu_to_be32(DRBD_RESYNC_RATE_DEF);
 		p->c_plan_ahead = cpu_to_be32(DRBD_C_PLAN_AHEAD_DEF);
 		p->c_delay_target = cpu_to_be32(DRBD_C_DELAY_TARGET_DEF);
 		p->c_fill_target = cpu_to_be32(DRBD_C_FILL_TARGET_DEF);
 		p->c_max_rate = cpu_to_be32(DRBD_C_MAX_RATE_DEF);
-	पूर्ण
+	}
 
-	अगर (apv >= 88)
-		म_नकल(p->verअगरy_alg, nc->verअगरy_alg);
-	अगर (apv >= 89)
-		म_नकल(p->csums_alg, nc->csums_alg);
-	rcu_पढ़ो_unlock();
+	if (apv >= 88)
+		strcpy(p->verify_alg, nc->verify_alg);
+	if (apv >= 89)
+		strcpy(p->csums_alg, nc->csums_alg);
+	rcu_read_unlock();
 
-	वापस drbd_send_command(peer_device, sock, cmd, size, शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, cmd, size, NULL, 0);
+}
 
-पूर्णांक __drbd_send_protocol(काष्ठा drbd_connection *connection, क्रमागत drbd_packet cmd)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_protocol *p;
-	काष्ठा net_conf *nc;
-	पूर्णांक size, cf;
+int __drbd_send_protocol(struct drbd_connection *connection, enum drbd_packet cmd)
+{
+	struct drbd_socket *sock;
+	struct p_protocol *p;
+	struct net_conf *nc;
+	int size, cf;
 
 	sock = &connection->data;
 	p = __conn_prepare_command(connection, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	nc = rcu_dereference(connection->net_conf);
 
-	अगर (nc->tentative && connection->agreed_pro_version < 92) अणु
-		rcu_पढ़ो_unlock();
+	if (nc->tentative && connection->agreed_pro_version < 92) {
+		rcu_read_unlock();
 		drbd_err(connection, "--dry-run is not supported by peer");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	size = माप(*p);
-	अगर (connection->agreed_pro_version >= 87)
-		size += म_माप(nc->पूर्णांकegrity_alg) + 1;
+	size = sizeof(*p);
+	if (connection->agreed_pro_version >= 87)
+		size += strlen(nc->integrity_alg) + 1;
 
 	p->protocol      = cpu_to_be32(nc->wire_protocol);
 	p->after_sb_0p   = cpu_to_be32(nc->after_sb_0p);
@@ -788,132 +787,132 @@ restart:
 	p->after_sb_2p   = cpu_to_be32(nc->after_sb_2p);
 	p->two_primaries = cpu_to_be32(nc->two_primaries);
 	cf = 0;
-	अगर (nc->discard_my_data)
+	if (nc->discard_my_data)
 		cf |= CF_DISCARD_MY_DATA;
-	अगर (nc->tentative)
+	if (nc->tentative)
 		cf |= CF_DRY_RUN;
 	p->conn_flags    = cpu_to_be32(cf);
 
-	अगर (connection->agreed_pro_version >= 87)
-		म_नकल(p->पूर्णांकegrity_alg, nc->पूर्णांकegrity_alg);
-	rcu_पढ़ो_unlock();
+	if (connection->agreed_pro_version >= 87)
+		strcpy(p->integrity_alg, nc->integrity_alg);
+	rcu_read_unlock();
 
-	वापस __conn_send_command(connection, sock, cmd, size, शून्य, 0);
-पूर्ण
+	return __conn_send_command(connection, sock, cmd, size, NULL, 0);
+}
 
-पूर्णांक drbd_send_protocol(काष्ठा drbd_connection *connection)
-अणु
-	पूर्णांक err;
+int drbd_send_protocol(struct drbd_connection *connection)
+{
+	int err;
 
 	mutex_lock(&connection->data.mutex);
 	err = __drbd_send_protocol(connection, P_PROTOCOL);
 	mutex_unlock(&connection->data.mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक _drbd_send_uuids(काष्ठा drbd_peer_device *peer_device, u64 uuid_flags)
-अणु
-	काष्ठा drbd_device *device = peer_device->device;
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_uuids *p;
-	पूर्णांक i;
+static int _drbd_send_uuids(struct drbd_peer_device *peer_device, u64 uuid_flags)
+{
+	struct drbd_device *device = peer_device->device;
+	struct drbd_socket *sock;
+	struct p_uuids *p;
+	int i;
 
-	अगर (!get_ldev_अगर_state(device, D_NEGOTIATING))
-		वापस 0;
+	if (!get_ldev_if_state(device, D_NEGOTIATING))
+		return 0;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p) अणु
+	if (!p) {
 		put_ldev(device);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	spin_lock_irq(&device->ldev->md.uuid_lock);
-	क्रम (i = UI_CURRENT; i < UI_SIZE; i++)
+	for (i = UI_CURRENT; i < UI_SIZE; i++)
 		p->uuid[i] = cpu_to_be64(device->ldev->md.uuid[i]);
 	spin_unlock_irq(&device->ldev->md.uuid_lock);
 
 	device->comm_bm_set = drbd_bm_total_weight(device);
 	p->uuid[UI_SIZE] = cpu_to_be64(device->comm_bm_set);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	uuid_flags |= rcu_dereference(peer_device->connection->net_conf)->discard_my_data ? 1 : 0;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 	uuid_flags |= test_bit(CRASHED_PRIMARY, &device->flags) ? 2 : 0;
-	uuid_flags |= device->new_state_पंचांगp.disk == D_INCONSISTENT ? 4 : 0;
+	uuid_flags |= device->new_state_tmp.disk == D_INCONSISTENT ? 4 : 0;
 	p->uuid[UI_FLAGS] = cpu_to_be64(uuid_flags);
 
 	put_ldev(device);
-	वापस drbd_send_command(peer_device, sock, P_UUIDS, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_UUIDS, sizeof(*p), NULL, 0);
+}
 
-पूर्णांक drbd_send_uuids(काष्ठा drbd_peer_device *peer_device)
-अणु
-	वापस _drbd_send_uuids(peer_device, 0);
-पूर्ण
+int drbd_send_uuids(struct drbd_peer_device *peer_device)
+{
+	return _drbd_send_uuids(peer_device, 0);
+}
 
-पूर्णांक drbd_send_uuids_skip_initial_sync(काष्ठा drbd_peer_device *peer_device)
-अणु
-	वापस _drbd_send_uuids(peer_device, 8);
-पूर्ण
+int drbd_send_uuids_skip_initial_sync(struct drbd_peer_device *peer_device)
+{
+	return _drbd_send_uuids(peer_device, 8);
+}
 
-व्योम drbd_prपूर्णांक_uuids(काष्ठा drbd_device *device, स्थिर अक्षर *text)
-अणु
-	अगर (get_ldev_अगर_state(device, D_NEGOTIATING)) अणु
+void drbd_print_uuids(struct drbd_device *device, const char *text)
+{
+	if (get_ldev_if_state(device, D_NEGOTIATING)) {
 		u64 *uuid = device->ldev->md.uuid;
 		drbd_info(device, "%s %016llX:%016llX:%016llX:%016llX\n",
 		     text,
-		     (अचिन्हित दीर्घ दीर्घ)uuid[UI_CURRENT],
-		     (अचिन्हित दीर्घ दीर्घ)uuid[UI_BITMAP],
-		     (अचिन्हित दीर्घ दीर्घ)uuid[UI_HISTORY_START],
-		     (अचिन्हित दीर्घ दीर्घ)uuid[UI_HISTORY_END]);
+		     (unsigned long long)uuid[UI_CURRENT],
+		     (unsigned long long)uuid[UI_BITMAP],
+		     (unsigned long long)uuid[UI_HISTORY_START],
+		     (unsigned long long)uuid[UI_HISTORY_END]);
 		put_ldev(device);
-	पूर्ण अन्यथा अणु
+	} else {
 		drbd_info(device, "%s effective data uuid: %016llX\n",
 				text,
-				(अचिन्हित दीर्घ दीर्घ)device->ed_uuid);
-	पूर्ण
-पूर्ण
+				(unsigned long long)device->ed_uuid);
+	}
+}
 
-व्योम drbd_gen_and_send_sync_uuid(काष्ठा drbd_peer_device *peer_device)
-अणु
-	काष्ठा drbd_device *device = peer_device->device;
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_rs_uuid *p;
+void drbd_gen_and_send_sync_uuid(struct drbd_peer_device *peer_device)
+{
+	struct drbd_device *device = peer_device->device;
+	struct drbd_socket *sock;
+	struct p_rs_uuid *p;
 	u64 uuid;
 
 	D_ASSERT(device, device->state.disk == D_UP_TO_DATE);
 
 	uuid = device->ldev->md.uuid[UI_BITMAP];
-	अगर (uuid && uuid != UUID_JUST_CREATED)
+	if (uuid && uuid != UUID_JUST_CREATED)
 		uuid = uuid + UUID_NEW_BM_OFFSET;
-	अन्यथा
-		get_अक्रमom_bytes(&uuid, माप(u64));
+	else
+		get_random_bytes(&uuid, sizeof(u64));
 	drbd_uuid_set(device, UI_BITMAP, uuid);
-	drbd_prपूर्णांक_uuids(device, "updated sync UUID");
+	drbd_print_uuids(device, "updated sync UUID");
 	drbd_md_sync(device);
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (p) अणु
+	if (p) {
 		p->uuid = cpu_to_be64(uuid);
-		drbd_send_command(peer_device, sock, P_SYNC_UUID, माप(*p), शून्य, 0);
-	पूर्ण
-पूर्ण
+		drbd_send_command(peer_device, sock, P_SYNC_UUID, sizeof(*p), NULL, 0);
+	}
+}
 
-/* communicated अगर (agreed_features & DRBD_FF_WSAME) */
-अटल व्योम
-assign_p_sizes_qlim(काष्ठा drbd_device *device, काष्ठा p_sizes *p,
-					काष्ठा request_queue *q)
-अणु
-	अगर (q) अणु
+/* communicated if (agreed_features & DRBD_FF_WSAME) */
+static void
+assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p,
+					struct request_queue *q)
+{
+	if (q) {
 		p->qlim->physical_block_size = cpu_to_be32(queue_physical_block_size(q));
 		p->qlim->logical_block_size = cpu_to_be32(queue_logical_block_size(q));
 		p->qlim->alignment_offset = cpu_to_be32(queue_alignment_offset(q));
 		p->qlim->io_min = cpu_to_be32(queue_io_min(q));
 		p->qlim->io_opt = cpu_to_be32(queue_io_opt(q));
 		p->qlim->discard_enabled = blk_queue_discard(q);
-		p->qlim->ग_लिखो_same_capable = !!q->limits.max_ग_लिखो_same_sectors;
-	पूर्ण अन्यथा अणु
+		p->qlim->write_same_capable = !!q->limits.max_write_same_sectors;
+	} else {
 		q = device->rq_queue;
 		p->qlim->physical_block_size = cpu_to_be32(queue_physical_block_size(q));
 		p->qlim->logical_block_size = cpu_to_be32(queue_logical_block_size(q));
@@ -921,83 +920,83 @@ assign_p_sizes_qlim(काष्ठा drbd_device *device, काष्ठा p
 		p->qlim->io_min = cpu_to_be32(queue_io_min(q));
 		p->qlim->io_opt = cpu_to_be32(queue_io_opt(q));
 		p->qlim->discard_enabled = 0;
-		p->qlim->ग_लिखो_same_capable = 0;
-	पूर्ण
-पूर्ण
+		p->qlim->write_same_capable = 0;
+	}
+}
 
-पूर्णांक drbd_send_sizes(काष्ठा drbd_peer_device *peer_device, पूर्णांक trigger_reply, क्रमागत dds_flags flags)
-अणु
-	काष्ठा drbd_device *device = peer_device->device;
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_sizes *p;
+int drbd_send_sizes(struct drbd_peer_device *peer_device, int trigger_reply, enum dds_flags flags)
+{
+	struct drbd_device *device = peer_device->device;
+	struct drbd_socket *sock;
+	struct p_sizes *p;
 	sector_t d_size, u_size;
-	पूर्णांक q_order_type;
-	अचिन्हित पूर्णांक max_bio_size;
-	अचिन्हित पूर्णांक packet_size;
+	int q_order_type;
+	unsigned int max_bio_size;
+	unsigned int packet_size;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 
-	packet_size = माप(*p);
-	अगर (peer_device->connection->agreed_features & DRBD_FF_WSAME)
-		packet_size += माप(p->qlim[0]);
+	packet_size = sizeof(*p);
+	if (peer_device->connection->agreed_features & DRBD_FF_WSAME)
+		packet_size += sizeof(p->qlim[0]);
 
-	स_रखो(p, 0, packet_size);
-	अगर (get_ldev_अगर_state(device, D_NEGOTIATING)) अणु
-		काष्ठा request_queue *q = bdev_get_queue(device->ldev->backing_bdev);
+	memset(p, 0, packet_size);
+	if (get_ldev_if_state(device, D_NEGOTIATING)) {
+		struct request_queue *q = bdev_get_queue(device->ldev->backing_bdev);
 		d_size = drbd_get_max_capacity(device->ldev);
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		u_size = rcu_dereference(device->ldev->disk_conf)->disk_size;
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		q_order_type = drbd_queue_order_type(device);
 		max_bio_size = queue_max_hw_sectors(q) << 9;
 		max_bio_size = min(max_bio_size, DRBD_MAX_BIO_SIZE);
 		assign_p_sizes_qlim(device, p, q);
 		put_ldev(device);
-	पूर्ण अन्यथा अणु
+	} else {
 		d_size = 0;
 		u_size = 0;
 		q_order_type = QUEUE_ORDERED_NONE;
 		max_bio_size = DRBD_MAX_BIO_SIZE; /* ... multiple BIOs per peer_request */
-		assign_p_sizes_qlim(device, p, शून्य);
-	पूर्ण
+		assign_p_sizes_qlim(device, p, NULL);
+	}
 
-	अगर (peer_device->connection->agreed_pro_version <= 94)
+	if (peer_device->connection->agreed_pro_version <= 94)
 		max_bio_size = min(max_bio_size, DRBD_MAX_SIZE_H80_PACKET);
-	अन्यथा अगर (peer_device->connection->agreed_pro_version < 100)
+	else if (peer_device->connection->agreed_pro_version < 100)
 		max_bio_size = min(max_bio_size, DRBD_MAX_BIO_SIZE_P95);
 
 	p->d_size = cpu_to_be64(d_size);
 	p->u_size = cpu_to_be64(u_size);
-	अगर (trigger_reply)
+	if (trigger_reply)
 		p->c_size = 0;
-	अन्यथा
+	else
 		p->c_size = cpu_to_be64(get_capacity(device->vdisk));
 	p->max_bio_size = cpu_to_be32(max_bio_size);
 	p->queue_order_type = cpu_to_be16(q_order_type);
 	p->dds_flags = cpu_to_be16(flags);
 
-	वापस drbd_send_command(peer_device, sock, P_SIZES, packet_size, शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_SIZES, packet_size, NULL, 0);
+}
 
 /**
  * drbd_send_current_state() - Sends the drbd state to the peer
  * @peer_device:	DRBD peer device.
  */
-पूर्णांक drbd_send_current_state(काष्ठा drbd_peer_device *peer_device)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_state *p;
+int drbd_send_current_state(struct drbd_peer_device *peer_device)
+{
+	struct drbd_socket *sock;
+	struct p_state *p;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->state = cpu_to_be32(peer_device->device->state.i); /* Within the send mutex */
-	वापस drbd_send_command(peer_device, sock, P_STATE, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_STATE, sizeof(*p), NULL, 0);
+}
 
 /**
  * drbd_send_state() - After a state change, sends the new state to the peer
@@ -1007,121 +1006,121 @@ assign_p_sizes_qlim(काष्ठा drbd_device *device, काष्ठा p
  * Each state change queues an "after_state_ch" work, which will eventually
  * send the resulting new state to the peer. If more state changes happen
  * between queuing and processing of the after_state_ch work, we still
- * want to send each पूर्णांकermediary state in the order it occurred.
+ * want to send each intermediary state in the order it occurred.
  */
-पूर्णांक drbd_send_state(काष्ठा drbd_peer_device *peer_device, जोड़ drbd_state state)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_state *p;
+int drbd_send_state(struct drbd_peer_device *peer_device, union drbd_state state)
+{
+	struct drbd_socket *sock;
+	struct p_state *p;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->state = cpu_to_be32(state.i); /* Within the send mutex */
-	वापस drbd_send_command(peer_device, sock, P_STATE, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_STATE, sizeof(*p), NULL, 0);
+}
 
-पूर्णांक drbd_send_state_req(काष्ठा drbd_peer_device *peer_device, जोड़ drbd_state mask, जोड़ drbd_state val)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_req_state *p;
+int drbd_send_state_req(struct drbd_peer_device *peer_device, union drbd_state mask, union drbd_state val)
+{
+	struct drbd_socket *sock;
+	struct p_req_state *p;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->mask = cpu_to_be32(mask.i);
 	p->val = cpu_to_be32(val.i);
-	वापस drbd_send_command(peer_device, sock, P_STATE_CHG_REQ, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_STATE_CHG_REQ, sizeof(*p), NULL, 0);
+}
 
-पूर्णांक conn_send_state_req(काष्ठा drbd_connection *connection, जोड़ drbd_state mask, जोड़ drbd_state val)
-अणु
-	क्रमागत drbd_packet cmd;
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_req_state *p;
+int conn_send_state_req(struct drbd_connection *connection, union drbd_state mask, union drbd_state val)
+{
+	enum drbd_packet cmd;
+	struct drbd_socket *sock;
+	struct p_req_state *p;
 
 	cmd = connection->agreed_pro_version < 100 ? P_STATE_CHG_REQ : P_CONN_ST_CHG_REQ;
 	sock = &connection->data;
 	p = conn_prepare_command(connection, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->mask = cpu_to_be32(mask.i);
 	p->val = cpu_to_be32(val.i);
-	वापस conn_send_command(connection, sock, cmd, माप(*p), शून्य, 0);
-पूर्ण
+	return conn_send_command(connection, sock, cmd, sizeof(*p), NULL, 0);
+}
 
-व्योम drbd_send_sr_reply(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_state_rv retcode)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_req_state_reply *p;
+void drbd_send_sr_reply(struct drbd_peer_device *peer_device, enum drbd_state_rv retcode)
+{
+	struct drbd_socket *sock;
+	struct p_req_state_reply *p;
 
 	sock = &peer_device->connection->meta;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (p) अणु
+	if (p) {
 		p->retcode = cpu_to_be32(retcode);
-		drbd_send_command(peer_device, sock, P_STATE_CHG_REPLY, माप(*p), शून्य, 0);
-	पूर्ण
-पूर्ण
+		drbd_send_command(peer_device, sock, P_STATE_CHG_REPLY, sizeof(*p), NULL, 0);
+	}
+}
 
-व्योम conn_send_sr_reply(काष्ठा drbd_connection *connection, क्रमागत drbd_state_rv retcode)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_req_state_reply *p;
-	क्रमागत drbd_packet cmd = connection->agreed_pro_version < 100 ? P_STATE_CHG_REPLY : P_CONN_ST_CHG_REPLY;
+void conn_send_sr_reply(struct drbd_connection *connection, enum drbd_state_rv retcode)
+{
+	struct drbd_socket *sock;
+	struct p_req_state_reply *p;
+	enum drbd_packet cmd = connection->agreed_pro_version < 100 ? P_STATE_CHG_REPLY : P_CONN_ST_CHG_REPLY;
 
 	sock = &connection->meta;
 	p = conn_prepare_command(connection, sock);
-	अगर (p) अणु
+	if (p) {
 		p->retcode = cpu_to_be32(retcode);
-		conn_send_command(connection, sock, cmd, माप(*p), शून्य, 0);
-	पूर्ण
-पूर्ण
+		conn_send_command(connection, sock, cmd, sizeof(*p), NULL, 0);
+	}
+}
 
-अटल व्योम dcbp_set_code(काष्ठा p_compressed_bm *p, क्रमागत drbd_biपंचांगap_code code)
-अणु
+static void dcbp_set_code(struct p_compressed_bm *p, enum drbd_bitmap_code code)
+{
 	BUG_ON(code & ~0xf);
 	p->encoding = (p->encoding & ~0xf) | code;
-पूर्ण
+}
 
-अटल व्योम dcbp_set_start(काष्ठा p_compressed_bm *p, पूर्णांक set)
-अणु
+static void dcbp_set_start(struct p_compressed_bm *p, int set)
+{
 	p->encoding = (p->encoding & ~0x80) | (set ? 0x80 : 0);
-पूर्ण
+}
 
-अटल व्योम dcbp_set_pad_bits(काष्ठा p_compressed_bm *p, पूर्णांक n)
-अणु
+static void dcbp_set_pad_bits(struct p_compressed_bm *p, int n)
+{
 	BUG_ON(n & ~0x7);
 	p->encoding = (p->encoding & (~0x7 << 4)) | (n << 4);
-पूर्ण
+}
 
-अटल पूर्णांक fill_biपंचांगap_rle_bits(काष्ठा drbd_device *device,
-			 काष्ठा p_compressed_bm *p,
-			 अचिन्हित पूर्णांक size,
-			 काष्ठा bm_xfer_ctx *c)
-अणु
-	काष्ठा bitstream bs;
-	अचिन्हित दीर्घ plain_bits;
-	अचिन्हित दीर्घ पंचांगp;
-	अचिन्हित दीर्घ rl;
-	अचिन्हित len;
-	अचिन्हित toggle;
-	पूर्णांक bits, use_rle;
+static int fill_bitmap_rle_bits(struct drbd_device *device,
+			 struct p_compressed_bm *p,
+			 unsigned int size,
+			 struct bm_xfer_ctx *c)
+{
+	struct bitstream bs;
+	unsigned long plain_bits;
+	unsigned long tmp;
+	unsigned long rl;
+	unsigned len;
+	unsigned toggle;
+	int bits, use_rle;
 
 	/* may we use this feature? */
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	use_rle = rcu_dereference(first_peer_device(device)->connection->net_conf)->use_rle;
-	rcu_पढ़ो_unlock();
-	अगर (!use_rle || first_peer_device(device)->connection->agreed_pro_version < 90)
-		वापस 0;
+	rcu_read_unlock();
+	if (!use_rle || first_peer_device(device)->connection->agreed_pro_version < 90)
+		return 0;
 
-	अगर (c->bit_offset >= c->bm_bits)
-		वापस 0; /* nothing to करो. */
+	if (c->bit_offset >= c->bm_bits)
+		return 0; /* nothing to do. */
 
 	/* use at most thus many bytes */
 	bitstream_init(&bs, p->code, size, 0);
-	स_रखो(p->code, 0, size);
+	memset(p->code, 0, size);
 	/* plain bits covered in this code string */
 	plain_bits = 0;
 
@@ -1130,58 +1129,58 @@ assign_p_sizes_qlim(काष्ठा drbd_device *device, काष्ठा p
 	 * start with toggle == 2 to be able to tell the first iteration */
 	toggle = 2;
 
-	/* see how much plain bits we can stuff पूर्णांकo one packet
+	/* see how much plain bits we can stuff into one packet
 	 * using RLE and VLI. */
-	करो अणु
-		पंचांगp = (toggle == 0) ? _drbd_bm_find_next_zero(device, c->bit_offset)
+	do {
+		tmp = (toggle == 0) ? _drbd_bm_find_next_zero(device, c->bit_offset)
 				    : _drbd_bm_find_next(device, c->bit_offset);
-		अगर (पंचांगp == -1UL)
-			पंचांगp = c->bm_bits;
-		rl = पंचांगp - c->bit_offset;
+		if (tmp == -1UL)
+			tmp = c->bm_bits;
+		rl = tmp - c->bit_offset;
 
-		अगर (toggle == 2) अणु /* first iteration */
-			अगर (rl == 0) अणु
+		if (toggle == 2) { /* first iteration */
+			if (rl == 0) {
 				/* the first checked bit was set,
 				 * store start value, */
 				dcbp_set_start(p, 1);
 				/* but skip encoding of zero run length */
 				toggle = !toggle;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			dcbp_set_start(p, 0);
-		पूर्ण
+		}
 
 		/* paranoia: catch zero runlength.
-		 * can only happen अगर biपंचांगap is modअगरied जबतक we scan it. */
-		अगर (rl == 0) अणु
+		 * can only happen if bitmap is modified while we scan it. */
+		if (rl == 0) {
 			drbd_err(device, "unexpected zero runlength while encoding bitmap "
 			    "t:%u bo:%lu\n", toggle, c->bit_offset);
-			वापस -1;
-		पूर्ण
+			return -1;
+		}
 
 		bits = vli_encode_bits(&bs, rl);
-		अगर (bits == -ENOBUFS) /* buffer full */
-			अवरोध;
-		अगर (bits <= 0) अणु
+		if (bits == -ENOBUFS) /* buffer full */
+			break;
+		if (bits <= 0) {
 			drbd_err(device, "error while encoding bitmap: %d\n", bits);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		toggle = !toggle;
 		plain_bits += rl;
-		c->bit_offset = पंचांगp;
-	पूर्ण जबतक (c->bit_offset < c->bm_bits);
+		c->bit_offset = tmp;
+	} while (c->bit_offset < c->bm_bits);
 
 	len = bs.cur.b - p->code + !!bs.cur.bit;
 
-	अगर (plain_bits < (len << 3)) अणु
+	if (plain_bits < (len << 3)) {
 		/* incompressible with this method.
-		 * we need to शुरुआत both word and bit position. */
+		 * we need to rewind both word and bit position. */
 		c->bit_offset -= plain_bits;
 		bm_xfer_ctx_bit_to_word_offset(c);
 		c->bit_offset = c->word_offset * BITS_PER_LONG;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* RLE + VLI was able to compress it just fine.
 	 * update c->word_offset. */
@@ -1190,137 +1189,137 @@ assign_p_sizes_qlim(काष्ठा drbd_device *device, काष्ठा p
 	/* store pad_bits */
 	dcbp_set_pad_bits(p, (8 - bs.cur.bit) & 0x7);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * send_biपंचांगap_rle_or_plain
+ * send_bitmap_rle_or_plain
  *
- * Return 0 when करोne, 1 when another iteration is needed, and a negative error
+ * Return 0 when done, 1 when another iteration is needed, and a negative error
  * code upon failure.
  */
-अटल पूर्णांक
-send_biपंचांगap_rle_or_plain(काष्ठा drbd_device *device, काष्ठा bm_xfer_ctx *c)
-अणु
-	काष्ठा drbd_socket *sock = &first_peer_device(device)->connection->data;
-	अचिन्हित पूर्णांक header_size = drbd_header_size(first_peer_device(device)->connection);
-	काष्ठा p_compressed_bm *p = sock->sbuf + header_size;
-	पूर्णांक len, err;
+static int
+send_bitmap_rle_or_plain(struct drbd_device *device, struct bm_xfer_ctx *c)
+{
+	struct drbd_socket *sock = &first_peer_device(device)->connection->data;
+	unsigned int header_size = drbd_header_size(first_peer_device(device)->connection);
+	struct p_compressed_bm *p = sock->sbuf + header_size;
+	int len, err;
 
-	len = fill_biपंचांगap_rle_bits(device, p,
-			DRBD_SOCKET_BUFFER_SIZE - header_size - माप(*p), c);
-	अगर (len < 0)
-		वापस -EIO;
+	len = fill_bitmap_rle_bits(device, p,
+			DRBD_SOCKET_BUFFER_SIZE - header_size - sizeof(*p), c);
+	if (len < 0)
+		return -EIO;
 
-	अगर (len) अणु
+	if (len) {
 		dcbp_set_code(p, RLE_VLI_Bits);
 		err = __send_command(first_peer_device(device)->connection, device->vnr, sock,
-				     P_COMPRESSED_BITMAP, माप(*p) + len,
-				     शून्य, 0);
+				     P_COMPRESSED_BITMAP, sizeof(*p) + len,
+				     NULL, 0);
 		c->packets[0]++;
-		c->bytes[0] += header_size + माप(*p) + len;
+		c->bytes[0] += header_size + sizeof(*p) + len;
 
-		अगर (c->bit_offset >= c->bm_bits)
+		if (c->bit_offset >= c->bm_bits)
 			len = 0; /* DONE */
-	पूर्ण अन्यथा अणु
+	} else {
 		/* was not compressible.
 		 * send a buffer full of plain text bits instead. */
-		अचिन्हित पूर्णांक data_size;
-		अचिन्हित दीर्घ num_words;
-		अचिन्हित दीर्घ *p = sock->sbuf + header_size;
+		unsigned int data_size;
+		unsigned long num_words;
+		unsigned long *p = sock->sbuf + header_size;
 
 		data_size = DRBD_SOCKET_BUFFER_SIZE - header_size;
-		num_words = min_t(माप_प्रकार, data_size / माप(*p),
+		num_words = min_t(size_t, data_size / sizeof(*p),
 				  c->bm_words - c->word_offset);
-		len = num_words * माप(*p);
-		अगर (len)
+		len = num_words * sizeof(*p);
+		if (len)
 			drbd_bm_get_lel(device, c->word_offset, num_words, p);
-		err = __send_command(first_peer_device(device)->connection, device->vnr, sock, P_BITMAP, len, शून्य, 0);
+		err = __send_command(first_peer_device(device)->connection, device->vnr, sock, P_BITMAP, len, NULL, 0);
 		c->word_offset += num_words;
 		c->bit_offset = c->word_offset * BITS_PER_LONG;
 
 		c->packets[1]++;
 		c->bytes[1] += header_size + len;
 
-		अगर (c->bit_offset > c->bm_bits)
+		if (c->bit_offset > c->bm_bits)
 			c->bit_offset = c->bm_bits;
-	पूर्ण
-	अगर (!err) अणु
-		अगर (len == 0) अणु
+	}
+	if (!err) {
+		if (len == 0) {
 			INFO_bm_xfer_stats(device, "send", c);
-			वापस 0;
-		पूर्ण अन्यथा
-			वापस 1;
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+			return 0;
+		} else
+			return 1;
+	}
+	return -EIO;
+}
 
-/* See the comment at receive_biपंचांगap() */
-अटल पूर्णांक _drbd_send_biपंचांगap(काष्ठा drbd_device *device)
-अणु
-	काष्ठा bm_xfer_ctx c;
-	पूर्णांक err;
+/* See the comment at receive_bitmap() */
+static int _drbd_send_bitmap(struct drbd_device *device)
+{
+	struct bm_xfer_ctx c;
+	int err;
 
-	अगर (!expect(device->biपंचांगap))
-		वापस false;
+	if (!expect(device->bitmap))
+		return false;
 
-	अगर (get_ldev(device)) अणु
-		अगर (drbd_md_test_flag(device->ldev, MDF_FULL_SYNC)) अणु
+	if (get_ldev(device)) {
+		if (drbd_md_test_flag(device->ldev, MDF_FULL_SYNC)) {
 			drbd_info(device, "Writing the whole bitmap, MDF_FullSync was set.\n");
 			drbd_bm_set_all(device);
-			अगर (drbd_bm_ग_लिखो(device)) अणु
-				/* ग_लिखो_bm did fail! Leave full sync flag set in Meta P_DATA
+			if (drbd_bm_write(device)) {
+				/* write_bm did fail! Leave full sync flag set in Meta P_DATA
 				 * but otherwise process as per normal - need to tell other
 				 * side that a full resync is required! */
 				drbd_err(device, "Failed to write bitmap to disk!\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				drbd_md_clear_flag(device, MDF_FULL_SYNC);
 				drbd_md_sync(device);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		put_ldev(device);
-	पूर्ण
+	}
 
-	c = (काष्ठा bm_xfer_ctx) अणु
+	c = (struct bm_xfer_ctx) {
 		.bm_bits = drbd_bm_bits(device),
 		.bm_words = drbd_bm_words(device),
-	पूर्ण;
+	};
 
-	करो अणु
-		err = send_biपंचांगap_rle_or_plain(device, &c);
-	पूर्ण जबतक (err > 0);
+	do {
+		err = send_bitmap_rle_or_plain(device, &c);
+	} while (err > 0);
 
-	वापस err == 0;
-पूर्ण
+	return err == 0;
+}
 
-पूर्णांक drbd_send_biपंचांगap(काष्ठा drbd_device *device)
-अणु
-	काष्ठा drbd_socket *sock = &first_peer_device(device)->connection->data;
-	पूर्णांक err = -1;
+int drbd_send_bitmap(struct drbd_device *device)
+{
+	struct drbd_socket *sock = &first_peer_device(device)->connection->data;
+	int err = -1;
 
 	mutex_lock(&sock->mutex);
-	अगर (sock->socket)
-		err = !_drbd_send_biपंचांगap(device);
+	if (sock->socket)
+		err = !_drbd_send_bitmap(device);
 	mutex_unlock(&sock->mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम drbd_send_b_ack(काष्ठा drbd_connection *connection, u32 barrier_nr, u32 set_size)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_barrier_ack *p;
+void drbd_send_b_ack(struct drbd_connection *connection, u32 barrier_nr, u32 set_size)
+{
+	struct drbd_socket *sock;
+	struct p_barrier_ack *p;
 
-	अगर (connection->cstate < C_WF_REPORT_PARAMS)
-		वापस;
+	if (connection->cstate < C_WF_REPORT_PARAMS)
+		return;
 
 	sock = &connection->meta;
 	p = conn_prepare_command(connection, sock);
-	अगर (!p)
-		वापस;
+	if (!p)
+		return;
 	p->barrier = barrier_nr;
 	p->set_size = cpu_to_be32(set_size);
-	conn_send_command(connection, sock, P_BARRIER_ACK, माप(*p), शून्य, 0);
-पूर्ण
+	conn_send_command(connection, sock, P_BARRIER_ACK, sizeof(*p), NULL, 0);
+}
 
 /**
  * _drbd_send_ack() - Sends an ack packet
@@ -1330,43 +1329,43 @@ send_biपंचांगap_rle_or_plain(काष्ठा drbd_device *device,
  * @blksize:		size in byte, needs to be in big endian byte order
  * @block_id:		Id, big endian byte order
  */
-अटल पूर्णांक _drbd_send_ack(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_packet cmd,
+static int _drbd_send_ack(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
 			  u64 sector, u32 blksize, u64 block_id)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_block_ack *p;
+{
+	struct drbd_socket *sock;
+	struct p_block_ack *p;
 
-	अगर (peer_device->device->state.conn < C_CONNECTED)
-		वापस -EIO;
+	if (peer_device->device->state.conn < C_CONNECTED)
+		return -EIO;
 
 	sock = &peer_device->connection->meta;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = sector;
 	p->block_id = block_id;
 	p->blksize = blksize;
-	p->seq_num = cpu_to_be32(atomic_inc_वापस(&peer_device->device->packet_seq));
-	वापस drbd_send_command(peer_device, sock, cmd, माप(*p), शून्य, 0);
-पूर्ण
+	p->seq_num = cpu_to_be32(atomic_inc_return(&peer_device->device->packet_seq));
+	return drbd_send_command(peer_device, sock, cmd, sizeof(*p), NULL, 0);
+}
 
-/* dp->sector and dp->block_id alपढ़ोy/still in network byte order,
+/* dp->sector and dp->block_id already/still in network byte order,
  * data_size is payload size according to dp->head,
- * and may need to be corrected क्रम digest size. */
-व्योम drbd_send_ack_dp(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_packet cmd,
-		      काष्ठा p_data *dp, पूर्णांक data_size)
-अणु
-	अगर (peer_device->connection->peer_पूर्णांकegrity_tfm)
-		data_size -= crypto_shash_digestsize(peer_device->connection->peer_पूर्णांकegrity_tfm);
+ * and may need to be corrected for digest size. */
+void drbd_send_ack_dp(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
+		      struct p_data *dp, int data_size)
+{
+	if (peer_device->connection->peer_integrity_tfm)
+		data_size -= crypto_shash_digestsize(peer_device->connection->peer_integrity_tfm);
 	_drbd_send_ack(peer_device, cmd, dp->sector, cpu_to_be32(data_size),
 		       dp->block_id);
-पूर्ण
+}
 
-व्योम drbd_send_ack_rp(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_packet cmd,
-		      काष्ठा p_block_req *rp)
-अणु
+void drbd_send_ack_rp(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
+		      struct p_block_req *rp)
+{
 	_drbd_send_ack(peer_device, cmd, rp->sector, rp->blksize, rp->block_id);
-पूर्ण
+}
 
 /**
  * drbd_send_ack() - Sends an ack packet
@@ -1374,276 +1373,276 @@ send_biपंचांगap_rle_or_plain(काष्ठा drbd_device *device,
  * @cmd:		packet command code
  * @peer_req:		peer request
  */
-पूर्णांक drbd_send_ack(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_packet cmd,
-		  काष्ठा drbd_peer_request *peer_req)
-अणु
-	वापस _drbd_send_ack(peer_device, cmd,
+int drbd_send_ack(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
+		  struct drbd_peer_request *peer_req)
+{
+	return _drbd_send_ack(peer_device, cmd,
 			      cpu_to_be64(peer_req->i.sector),
 			      cpu_to_be32(peer_req->i.size),
 			      peer_req->block_id);
-पूर्ण
+}
 
-/* This function misuses the block_id field to संकेत अगर the blocks
+/* This function misuses the block_id field to signal if the blocks
  * are is sync or not. */
-पूर्णांक drbd_send_ack_ex(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_packet cmd,
-		     sector_t sector, पूर्णांक blksize, u64 block_id)
-अणु
-	वापस _drbd_send_ack(peer_device, cmd,
+int drbd_send_ack_ex(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
+		     sector_t sector, int blksize, u64 block_id)
+{
+	return _drbd_send_ack(peer_device, cmd,
 			      cpu_to_be64(sector),
 			      cpu_to_be32(blksize),
 			      cpu_to_be64(block_id));
-पूर्ण
+}
 
-पूर्णांक drbd_send_rs_deallocated(काष्ठा drbd_peer_device *peer_device,
-			     काष्ठा drbd_peer_request *peer_req)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_block_desc *p;
+int drbd_send_rs_deallocated(struct drbd_peer_device *peer_device,
+			     struct drbd_peer_request *peer_req)
+{
+	struct drbd_socket *sock;
+	struct p_block_desc *p;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = cpu_to_be64(peer_req->i.sector);
 	p->blksize = cpu_to_be32(peer_req->i.size);
 	p->pad = 0;
-	वापस drbd_send_command(peer_device, sock, P_RS_DEALLOCATED, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_RS_DEALLOCATED, sizeof(*p), NULL, 0);
+}
 
-पूर्णांक drbd_send_drequest(काष्ठा drbd_peer_device *peer_device, पूर्णांक cmd,
-		       sector_t sector, पूर्णांक size, u64 block_id)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_block_req *p;
+int drbd_send_drequest(struct drbd_peer_device *peer_device, int cmd,
+		       sector_t sector, int size, u64 block_id)
+{
+	struct drbd_socket *sock;
+	struct p_block_req *p;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = cpu_to_be64(sector);
 	p->block_id = block_id;
 	p->blksize = cpu_to_be32(size);
-	वापस drbd_send_command(peer_device, sock, cmd, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, cmd, sizeof(*p), NULL, 0);
+}
 
-पूर्णांक drbd_send_drequest_csum(काष्ठा drbd_peer_device *peer_device, sector_t sector, पूर्णांक size,
-			    व्योम *digest, पूर्णांक digest_size, क्रमागत drbd_packet cmd)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_block_req *p;
+int drbd_send_drequest_csum(struct drbd_peer_device *peer_device, sector_t sector, int size,
+			    void *digest, int digest_size, enum drbd_packet cmd)
+{
+	struct drbd_socket *sock;
+	struct p_block_req *p;
 
-	/* FIXME: Put the digest पूर्णांकo the pपुनः_स्मृतिated socket buffer.  */
-
-	sock = &peer_device->connection->data;
-	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
-	p->sector = cpu_to_be64(sector);
-	p->block_id = ID_SYNCER /* unused */;
-	p->blksize = cpu_to_be32(size);
-	वापस drbd_send_command(peer_device, sock, cmd, माप(*p), digest, digest_size);
-पूर्ण
-
-पूर्णांक drbd_send_ov_request(काष्ठा drbd_peer_device *peer_device, sector_t sector, पूर्णांक size)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_block_req *p;
+	/* FIXME: Put the digest into the preallocated socket buffer.  */
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = cpu_to_be64(sector);
 	p->block_id = ID_SYNCER /* unused */;
 	p->blksize = cpu_to_be32(size);
-	वापस drbd_send_command(peer_device, sock, P_OV_REQUEST, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, cmd, sizeof(*p), digest, digest_size);
+}
 
-/* called on sndसमयo
- * वापसs false अगर we should retry,
- * true अगर we think connection is dead
+int drbd_send_ov_request(struct drbd_peer_device *peer_device, sector_t sector, int size)
+{
+	struct drbd_socket *sock;
+	struct p_block_req *p;
+
+	sock = &peer_device->connection->data;
+	p = drbd_prepare_command(peer_device, sock);
+	if (!p)
+		return -EIO;
+	p->sector = cpu_to_be64(sector);
+	p->block_id = ID_SYNCER /* unused */;
+	p->blksize = cpu_to_be32(size);
+	return drbd_send_command(peer_device, sock, P_OV_REQUEST, sizeof(*p), NULL, 0);
+}
+
+/* called on sndtimeo
+ * returns false if we should retry,
+ * true if we think connection is dead
  */
-अटल पूर्णांक we_should_drop_the_connection(काष्ठा drbd_connection *connection, काष्ठा socket *sock)
-अणु
-	पूर्णांक drop_it;
-	/* दीर्घ elapsed = (दीर्घ)(jअगरfies - device->last_received); */
+static int we_should_drop_the_connection(struct drbd_connection *connection, struct socket *sock)
+{
+	int drop_it;
+	/* long elapsed = (long)(jiffies - device->last_received); */
 
 	drop_it =   connection->meta.socket == sock
 		|| !connection->ack_receiver.task
 		|| get_t_state(&connection->ack_receiver) != RUNNING
 		|| connection->cstate < C_WF_REPORT_PARAMS;
 
-	अगर (drop_it)
-		वापस true;
+	if (drop_it)
+		return true;
 
 	drop_it = !--connection->ko_count;
-	अगर (!drop_it) अणु
+	if (!drop_it) {
 		drbd_err(connection, "[%s/%d] sock_sendmsg time expired, ko = %u\n",
 			 current->comm, current->pid, connection->ko_count);
 		request_ping(connection);
-	पूर्ण
+	}
 
-	वापस drop_it; /* && (device->state == R_PRIMARY) */;
-पूर्ण
+	return drop_it; /* && (device->state == R_PRIMARY) */;
+}
 
-अटल व्योम drbd_update_congested(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा sock *sk = connection->data.socket->sk;
-	अगर (sk->sk_wmem_queued > sk->sk_sndbuf * 4 / 5)
+static void drbd_update_congested(struct drbd_connection *connection)
+{
+	struct sock *sk = connection->data.socket->sk;
+	if (sk->sk_wmem_queued > sk->sk_sndbuf * 4 / 5)
 		set_bit(NET_CONGESTED, &connection->flags);
-पूर्ण
+}
 
 /* The idea of sendpage seems to be to put some kind of reference
- * to the page पूर्णांकo the skb, and to hand it over to the NIC. In
- * this process get_page() माला_लो called.
+ * to the page into the skb, and to hand it over to the NIC. In
+ * this process get_page() gets called.
  *
  * As soon as the page was really sent over the network put_page()
- * माला_लो called by some part of the network layer. [ NIC driver? ]
+ * gets called by some part of the network layer. [ NIC driver? ]
  *
  * [ get_page() / put_page() increment/decrement the count. If count
- *   reaches 0 the page will be मुक्तd. ]
+ *   reaches 0 the page will be freed. ]
  *
  * This works nicely with pages from FSs.
- * But this means that in protocol A we might संकेत IO completion too early!
+ * But this means that in protocol A we might signal IO completion too early!
  *
  * In order not to corrupt data during a resync we must make sure
- * that we करो not reuse our own buffer pages (EEs) to early, thereक्रमe
+ * that we do not reuse our own buffer pages (EEs) to early, therefore
  * we have the net_ee list.
  *
  * XFS seems to have problems, still, it submits pages with page_count == 0!
  * As a workaround, we disable sendpage on pages
  * with page_count == 0 or PageSlab.
  */
-अटल पूर्णांक _drbd_no_send_page(काष्ठा drbd_peer_device *peer_device, काष्ठा page *page,
-			      पूर्णांक offset, माप_प्रकार size, अचिन्हित msg_flags)
-अणु
-	काष्ठा socket *socket;
-	व्योम *addr;
-	पूर्णांक err;
+static int _drbd_no_send_page(struct drbd_peer_device *peer_device, struct page *page,
+			      int offset, size_t size, unsigned msg_flags)
+{
+	struct socket *socket;
+	void *addr;
+	int err;
 
 	socket = peer_device->connection->data.socket;
 	addr = kmap(page) + offset;
 	err = drbd_send_all(peer_device->connection, socket, addr, size, msg_flags);
 	kunmap(page);
-	अगर (!err)
+	if (!err)
 		peer_device->device->send_cnt += size >> 9;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक _drbd_send_page(काष्ठा drbd_peer_device *peer_device, काष्ठा page *page,
-		    पूर्णांक offset, माप_प्रकार size, अचिन्हित msg_flags)
-अणु
-	काष्ठा socket *socket = peer_device->connection->data.socket;
-	पूर्णांक len = size;
-	पूर्णांक err = -EIO;
+static int _drbd_send_page(struct drbd_peer_device *peer_device, struct page *page,
+		    int offset, size_t size, unsigned msg_flags)
+{
+	struct socket *socket = peer_device->connection->data.socket;
+	int len = size;
+	int err = -EIO;
 
 	/* e.g. XFS meta- & log-data is in slab pages, which have a
 	 * page_count of 0 and/or have PageSlab() set.
-	 * we cannot use send_page क्रम those, as that करोes get_page();
+	 * we cannot use send_page for those, as that does get_page();
 	 * put_page(); and would cause either a VM_BUG directly, or
 	 * __page_cache_release a page that would actually still be referenced
-	 * by someone, leading to some obscure delayed Oops somewhere अन्यथा. */
-	अगर (drbd_disable_sendpage || !sendpage_ok(page))
-		वापस _drbd_no_send_page(peer_device, page, offset, size, msg_flags);
+	 * by someone, leading to some obscure delayed Oops somewhere else. */
+	if (drbd_disable_sendpage || !sendpage_ok(page))
+		return _drbd_no_send_page(peer_device, page, offset, size, msg_flags);
 
 	msg_flags |= MSG_NOSIGNAL;
 	drbd_update_congested(peer_device->connection);
-	करो अणु
-		पूर्णांक sent;
+	do {
+		int sent;
 
 		sent = socket->ops->sendpage(socket, page, offset, len, msg_flags);
-		अगर (sent <= 0) अणु
-			अगर (sent == -EAGAIN) अणु
-				अगर (we_should_drop_the_connection(peer_device->connection, socket))
-					अवरोध;
-				जारी;
-			पूर्ण
+		if (sent <= 0) {
+			if (sent == -EAGAIN) {
+				if (we_should_drop_the_connection(peer_device->connection, socket))
+					break;
+				continue;
+			}
 			drbd_warn(peer_device->device, "%s: size=%d len=%d sent=%d\n",
-			     __func__, (पूर्णांक)size, len, sent);
-			अगर (sent < 0)
+			     __func__, (int)size, len, sent);
+			if (sent < 0)
 				err = sent;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		len    -= sent;
 		offset += sent;
-	पूर्ण जबतक (len > 0 /* THINK && device->cstate >= C_CONNECTED*/);
+	} while (len > 0 /* THINK && device->cstate >= C_CONNECTED*/);
 	clear_bit(NET_CONGESTED, &peer_device->connection->flags);
 
-	अगर (len == 0) अणु
+	if (len == 0) {
 		err = 0;
 		peer_device->device->send_cnt += size >> 9;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक _drbd_send_bio(काष्ठा drbd_peer_device *peer_device, काष्ठा bio *bio)
-अणु
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
+static int _drbd_send_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+{
+	struct bio_vec bvec;
+	struct bvec_iter iter;
 
-	/* hपूर्णांक all but last page with MSG_MORE */
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		पूर्णांक err;
+	/* hint all but last page with MSG_MORE */
+	bio_for_each_segment(bvec, bio, iter) {
+		int err;
 
 		err = _drbd_no_send_page(peer_device, bvec.bv_page,
 					 bvec.bv_offset, bvec.bv_len,
 					 bio_iter_last(bvec, iter)
 					 ? 0 : MSG_MORE);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		/* REQ_OP_WRITE_SAME has only one segment */
-		अगर (bio_op(bio) == REQ_OP_WRITE_SAME)
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (bio_op(bio) == REQ_OP_WRITE_SAME)
+			break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक _drbd_send_zc_bio(काष्ठा drbd_peer_device *peer_device, काष्ठा bio *bio)
-अणु
-	काष्ठा bio_vec bvec;
-	काष्ठा bvec_iter iter;
+static int _drbd_send_zc_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+{
+	struct bio_vec bvec;
+	struct bvec_iter iter;
 
-	/* hपूर्णांक all but last page with MSG_MORE */
-	bio_क्रम_each_segment(bvec, bio, iter) अणु
-		पूर्णांक err;
+	/* hint all but last page with MSG_MORE */
+	bio_for_each_segment(bvec, bio, iter) {
+		int err;
 
 		err = _drbd_send_page(peer_device, bvec.bv_page,
 				      bvec.bv_offset, bvec.bv_len,
 				      bio_iter_last(bvec, iter) ? 0 : MSG_MORE);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		/* REQ_OP_WRITE_SAME has only one segment */
-		अगर (bio_op(bio) == REQ_OP_WRITE_SAME)
-			अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (bio_op(bio) == REQ_OP_WRITE_SAME)
+			break;
+	}
+	return 0;
+}
 
-अटल पूर्णांक _drbd_send_zc_ee(काष्ठा drbd_peer_device *peer_device,
-			    काष्ठा drbd_peer_request *peer_req)
-अणु
-	काष्ठा page *page = peer_req->pages;
-	अचिन्हित len = peer_req->i.size;
-	पूर्णांक err;
+static int _drbd_send_zc_ee(struct drbd_peer_device *peer_device,
+			    struct drbd_peer_request *peer_req)
+{
+	struct page *page = peer_req->pages;
+	unsigned len = peer_req->i.size;
+	int err;
 
-	/* hपूर्णांक all but last page with MSG_MORE */
-	page_chain_क्रम_each(page) अणु
-		अचिन्हित l = min_t(अचिन्हित, len, PAGE_SIZE);
+	/* hint all but last page with MSG_MORE */
+	page_chain_for_each(page) {
+		unsigned l = min_t(unsigned, len, PAGE_SIZE);
 
 		err = _drbd_send_page(peer_device, page, 0, l,
 				      page_chain_next(page) ? MSG_MORE : 0);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		len -= l;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल u32 bio_flags_to_wire(काष्ठा drbd_connection *connection,
-			     काष्ठा bio *bio)
-अणु
-	अगर (connection->agreed_pro_version >= 95)
-		वापस  (bio->bi_opf & REQ_SYNC ? DP_RW_SYNC : 0) |
+static u32 bio_flags_to_wire(struct drbd_connection *connection,
+			     struct bio *bio)
+{
+	if (connection->agreed_pro_version >= 95)
+		return  (bio->bi_opf & REQ_SYNC ? DP_RW_SYNC : 0) |
 			(bio->bi_opf & REQ_FUA ? DP_FUA : 0) |
 			(bio->bi_opf & REQ_PREFLUSH ? DP_FLUSH : 0) |
 			(bio_op(bio) == REQ_OP_WRITE_SAME ? DP_WSAME : 0) |
@@ -1653,319 +1652,319 @@ send_biपंचांगap_rle_or_plain(काष्ठा drbd_device *device,
 			   (DP_ZEROES |(!(bio->bi_opf & REQ_NOUNMAP) ? DP_DISCARD : 0))
 			   : DP_DISCARD)
 			: 0);
-	अन्यथा
-		वापस bio->bi_opf & REQ_SYNC ? DP_RW_SYNC : 0;
-पूर्ण
+	else
+		return bio->bi_opf & REQ_SYNC ? DP_RW_SYNC : 0;
+}
 
-/* Used to send ग_लिखो or TRIM aka REQ_OP_DISCARD requests
+/* Used to send write or TRIM aka REQ_OP_DISCARD requests
  * R_PRIMARY -> Peer	(P_DATA, P_TRIM)
  */
-पूर्णांक drbd_send_dblock(काष्ठा drbd_peer_device *peer_device, काष्ठा drbd_request *req)
-अणु
-	काष्ठा drbd_device *device = peer_device->device;
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_data *p;
-	काष्ठा p_wsame *wsame = शून्य;
-	व्योम *digest_out;
-	अचिन्हित पूर्णांक dp_flags = 0;
-	पूर्णांक digest_size;
-	पूर्णांक err;
+int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *req)
+{
+	struct drbd_device *device = peer_device->device;
+	struct drbd_socket *sock;
+	struct p_data *p;
+	struct p_wsame *wsame = NULL;
+	void *digest_out;
+	unsigned int dp_flags = 0;
+	int digest_size;
+	int err;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	digest_size = peer_device->connection->पूर्णांकegrity_tfm ?
-		      crypto_shash_digestsize(peer_device->connection->पूर्णांकegrity_tfm) : 0;
+	digest_size = peer_device->connection->integrity_tfm ?
+		      crypto_shash_digestsize(peer_device->connection->integrity_tfm) : 0;
 
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = cpu_to_be64(req->i.sector);
-	p->block_id = (अचिन्हित दीर्घ)req;
-	p->seq_num = cpu_to_be32(atomic_inc_वापस(&device->packet_seq));
+	p->block_id = (unsigned long)req;
+	p->seq_num = cpu_to_be32(atomic_inc_return(&device->packet_seq));
 	dp_flags = bio_flags_to_wire(peer_device->connection, req->master_bio);
-	अगर (device->state.conn >= C_SYNC_SOURCE &&
+	if (device->state.conn >= C_SYNC_SOURCE &&
 	    device->state.conn <= C_PAUSED_SYNC_T)
 		dp_flags |= DP_MAY_SET_IN_SYNC;
-	अगर (peer_device->connection->agreed_pro_version >= 100) अणु
-		अगर (req->rq_state & RQ_EXP_RECEIVE_ACK)
+	if (peer_device->connection->agreed_pro_version >= 100) {
+		if (req->rq_state & RQ_EXP_RECEIVE_ACK)
 			dp_flags |= DP_SEND_RECEIVE_ACK;
-		/* During resync, request an explicit ग_लिखो ack,
+		/* During resync, request an explicit write ack,
 		 * even in protocol != C */
-		अगर (req->rq_state & RQ_EXP_WRITE_ACK
+		if (req->rq_state & RQ_EXP_WRITE_ACK
 		|| (dp_flags & DP_MAY_SET_IN_SYNC))
 			dp_flags |= DP_SEND_WRITE_ACK;
-	पूर्ण
+	}
 	p->dp_flags = cpu_to_be32(dp_flags);
 
-	अगर (dp_flags & (DP_DISCARD|DP_ZEROES)) अणु
-		क्रमागत drbd_packet cmd = (dp_flags & DP_ZEROES) ? P_ZEROES : P_TRIM;
-		काष्ठा p_trim *t = (काष्ठा p_trim*)p;
+	if (dp_flags & (DP_DISCARD|DP_ZEROES)) {
+		enum drbd_packet cmd = (dp_flags & DP_ZEROES) ? P_ZEROES : P_TRIM;
+		struct p_trim *t = (struct p_trim*)p;
 		t->size = cpu_to_be32(req->i.size);
-		err = __send_command(peer_device->connection, device->vnr, sock, cmd, माप(*t), शून्य, 0);
-		जाओ out;
-	पूर्ण
-	अगर (dp_flags & DP_WSAME) अणु
-		/* this will only work अगर DRBD_FF_WSAME is set AND the
+		err = __send_command(peer_device->connection, device->vnr, sock, cmd, sizeof(*t), NULL, 0);
+		goto out;
+	}
+	if (dp_flags & DP_WSAME) {
+		/* this will only work if DRBD_FF_WSAME is set AND the
 		 * handshake agreed that all nodes and backend devices are
 		 * WRITE_SAME capable and agree on logical_block_size */
-		wsame = (काष्ठा p_wsame*)p;
+		wsame = (struct p_wsame*)p;
 		digest_out = wsame + 1;
 		wsame->size = cpu_to_be32(req->i.size);
-	पूर्ण अन्यथा
+	} else
 		digest_out = p + 1;
 
 	/* our digest is still only over the payload.
-	 * TRIM करोes not carry any payload. */
-	अगर (digest_size)
-		drbd_csum_bio(peer_device->connection->पूर्णांकegrity_tfm, req->master_bio, digest_out);
-	अगर (wsame) अणु
+	 * TRIM does not carry any payload. */
+	if (digest_size)
+		drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest_out);
+	if (wsame) {
 		err =
 		    __send_command(peer_device->connection, device->vnr, sock, P_WSAME,
-				   माप(*wsame) + digest_size, शून्य,
+				   sizeof(*wsame) + digest_size, NULL,
 				   bio_iovec(req->master_bio).bv_len);
-	पूर्ण अन्यथा
+	} else
 		err =
 		    __send_command(peer_device->connection, device->vnr, sock, P_DATA,
-				   माप(*p) + digest_size, शून्य, req->i.size);
-	अगर (!err) अणु
-		/* For protocol A, we have to स_नकल the payload पूर्णांकo
+				   sizeof(*p) + digest_size, NULL, req->i.size);
+	if (!err) {
+		/* For protocol A, we have to memcpy the payload into
 		 * socket buffers, as we may complete right away
-		 * as soon as we handed it over to tcp, at which poपूर्णांक the data
+		 * as soon as we handed it over to tcp, at which point the data
 		 * pages may become invalid.
 		 *
-		 * For data-पूर्णांकegrity enabled, we copy it as well, so we can be
-		 * sure that even अगर the bio pages may still be modअगरied, it
-		 * won't change the data on the wire, thus अगर the digest checks
-		 * out ok after sending on this side, but करोes not fit on the
-		 * receiving side, we sure have detected corruption अन्यथाwhere.
+		 * For data-integrity enabled, we copy it as well, so we can be
+		 * sure that even if the bio pages may still be modified, it
+		 * won't change the data on the wire, thus if the digest checks
+		 * out ok after sending on this side, but does not fit on the
+		 * receiving side, we sure have detected corruption elsewhere.
 		 */
-		अगर (!(req->rq_state & (RQ_EXP_RECEIVE_ACK | RQ_EXP_WRITE_ACK)) || digest_size)
+		if (!(req->rq_state & (RQ_EXP_RECEIVE_ACK | RQ_EXP_WRITE_ACK)) || digest_size)
 			err = _drbd_send_bio(peer_device, req->master_bio);
-		अन्यथा
+		else
 			err = _drbd_send_zc_bio(peer_device, req->master_bio);
 
-		/* द्विगुन check digest, someबार buffers have been modअगरied in flight. */
-		अगर (digest_size > 0 && digest_size <= 64) अणु
+		/* double check digest, sometimes buffers have been modified in flight. */
+		if (digest_size > 0 && digest_size <= 64) {
 			/* 64 byte, 512 bit, is the largest digest size
 			 * currently supported in kernel crypto. */
-			अचिन्हित अक्षर digest[64];
-			drbd_csum_bio(peer_device->connection->पूर्णांकegrity_tfm, req->master_bio, digest);
-			अगर (स_भेद(p + 1, digest, digest_size)) अणु
+			unsigned char digest[64];
+			drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest);
+			if (memcmp(p + 1, digest, digest_size)) {
 				drbd_warn(device,
 					"Digest mismatch, buffer modified by upper layers during write: %llus +%u\n",
-					(अचिन्हित दीर्घ दीर्घ)req->i.sector, req->i.size);
-			पूर्ण
-		पूर्ण /* अन्यथा अगर (digest_size > 64) अणु
+					(unsigned long long)req->i.sector, req->i.size);
+			}
+		} /* else if (digest_size > 64) {
 		     ... Be noisy about digest too large ...
-		पूर्ण */
-	पूर्ण
+		} */
+	}
 out:
 	mutex_unlock(&sock->mutex);  /* locked by drbd_prepare_command() */
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* answer packet, used to send data back क्रम पढ़ो requests:
+/* answer packet, used to send data back for read requests:
  *  Peer       -> (diskless) R_PRIMARY   (P_DATA_REPLY)
  *  C_SYNC_SOURCE -> C_SYNC_TARGET         (P_RS_DATA_REPLY)
  */
-पूर्णांक drbd_send_block(काष्ठा drbd_peer_device *peer_device, क्रमागत drbd_packet cmd,
-		    काष्ठा drbd_peer_request *peer_req)
-अणु
-	काष्ठा drbd_device *device = peer_device->device;
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_data *p;
-	पूर्णांक err;
-	पूर्णांक digest_size;
+int drbd_send_block(struct drbd_peer_device *peer_device, enum drbd_packet cmd,
+		    struct drbd_peer_request *peer_req)
+{
+	struct drbd_device *device = peer_device->device;
+	struct drbd_socket *sock;
+	struct p_data *p;
+	int err;
+	int digest_size;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
 
-	digest_size = peer_device->connection->पूर्णांकegrity_tfm ?
-		      crypto_shash_digestsize(peer_device->connection->पूर्णांकegrity_tfm) : 0;
+	digest_size = peer_device->connection->integrity_tfm ?
+		      crypto_shash_digestsize(peer_device->connection->integrity_tfm) : 0;
 
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = cpu_to_be64(peer_req->i.sector);
 	p->block_id = peer_req->block_id;
 	p->seq_num = 0;  /* unused */
 	p->dp_flags = 0;
-	अगर (digest_size)
-		drbd_csum_ee(peer_device->connection->पूर्णांकegrity_tfm, peer_req, p + 1);
-	err = __send_command(peer_device->connection, device->vnr, sock, cmd, माप(*p) + digest_size, शून्य, peer_req->i.size);
-	अगर (!err)
+	if (digest_size)
+		drbd_csum_ee(peer_device->connection->integrity_tfm, peer_req, p + 1);
+	err = __send_command(peer_device->connection, device->vnr, sock, cmd, sizeof(*p) + digest_size, NULL, peer_req->i.size);
+	if (!err)
 		err = _drbd_send_zc_ee(peer_device, peer_req);
 	mutex_unlock(&sock->mutex);  /* locked by drbd_prepare_command() */
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक drbd_send_out_of_sync(काष्ठा drbd_peer_device *peer_device, काष्ठा drbd_request *req)
-अणु
-	काष्ठा drbd_socket *sock;
-	काष्ठा p_block_desc *p;
+int drbd_send_out_of_sync(struct drbd_peer_device *peer_device, struct drbd_request *req)
+{
+	struct drbd_socket *sock;
+	struct p_block_desc *p;
 
 	sock = &peer_device->connection->data;
 	p = drbd_prepare_command(peer_device, sock);
-	अगर (!p)
-		वापस -EIO;
+	if (!p)
+		return -EIO;
 	p->sector = cpu_to_be64(req->i.sector);
 	p->blksize = cpu_to_be32(req->i.size);
-	वापस drbd_send_command(peer_device, sock, P_OUT_OF_SYNC, माप(*p), शून्य, 0);
-पूर्ण
+	return drbd_send_command(peer_device, sock, P_OUT_OF_SYNC, sizeof(*p), NULL, 0);
+}
 
 /*
-  drbd_send distinguishes two हालs:
+  drbd_send distinguishes two cases:
 
   Packets sent via the data socket "sock"
   and packets sent via the meta data socket "msock"
 
 		    sock                      msock
   -----------------+-------------------------+------------------------------
-  समयout           conf.समयout / 2          conf.समयout / 2
-  समयout action    send a ping via msock     Abort communication
-					      and बंद all sockets
+  timeout           conf.timeout / 2          conf.timeout / 2
+  timeout action    send a ping via msock     Abort communication
+					      and close all sockets
 */
 
 /*
- * you must have करोwn()ed the appropriate [m]sock_mutex अन्यथाwhere!
+ * you must have down()ed the appropriate [m]sock_mutex elsewhere!
  */
-पूर्णांक drbd_send(काष्ठा drbd_connection *connection, काष्ठा socket *sock,
-	      व्योम *buf, माप_प्रकार size, अचिन्हित msg_flags)
-अणु
-	काष्ठा kvec iov = अणु.iov_base = buf, .iov_len = sizeपूर्ण;
-	काष्ठा msghdr msg = अणु.msg_flags = msg_flags | MSG_NOSIGNALपूर्ण;
-	पूर्णांक rv, sent = 0;
+int drbd_send(struct drbd_connection *connection, struct socket *sock,
+	      void *buf, size_t size, unsigned msg_flags)
+{
+	struct kvec iov = {.iov_base = buf, .iov_len = size};
+	struct msghdr msg = {.msg_flags = msg_flags | MSG_NOSIGNAL};
+	int rv, sent = 0;
 
-	अगर (!sock)
-		वापस -EBADR;
+	if (!sock)
+		return -EBADR;
 
-	/* THINK  अगर (संकेत_pending) वापस ... ? */
+	/* THINK  if (signal_pending) return ... ? */
 
 	iov_iter_kvec(&msg.msg_iter, WRITE, &iov, 1, size);
 
-	अगर (sock == connection->data.socket) अणु
-		rcu_पढ़ो_lock();
+	if (sock == connection->data.socket) {
+		rcu_read_lock();
 		connection->ko_count = rcu_dereference(connection->net_conf)->ko_count;
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		drbd_update_congested(connection);
-	पूर्ण
-	करो अणु
+	}
+	do {
 		rv = sock_sendmsg(sock, &msg);
-		अगर (rv == -EAGAIN) अणु
-			अगर (we_should_drop_the_connection(connection, sock))
-				अवरोध;
-			अन्यथा
-				जारी;
-		पूर्ण
-		अगर (rv == -EINTR) अणु
-			flush_संकेतs(current);
+		if (rv == -EAGAIN) {
+			if (we_should_drop_the_connection(connection, sock))
+				break;
+			else
+				continue;
+		}
+		if (rv == -EINTR) {
+			flush_signals(current);
 			rv = 0;
-		पूर्ण
-		अगर (rv < 0)
-			अवरोध;
+		}
+		if (rv < 0)
+			break;
 		sent += rv;
-	पूर्ण जबतक (sent < size);
+	} while (sent < size);
 
-	अगर (sock == connection->data.socket)
+	if (sock == connection->data.socket)
 		clear_bit(NET_CONGESTED, &connection->flags);
 
-	अगर (rv <= 0) अणु
-		अगर (rv != -EAGAIN) अणु
+	if (rv <= 0) {
+		if (rv != -EAGAIN) {
 			drbd_err(connection, "%s_sendmsg returned %d\n",
 				 sock == connection->meta.socket ? "msock" : "sock",
 				 rv);
 			conn_request_state(connection, NS(conn, C_BROKEN_PIPE), CS_HARD);
-		पूर्ण अन्यथा
+		} else
 			conn_request_state(connection, NS(conn, C_TIMEOUT), CS_HARD);
-	पूर्ण
+	}
 
-	वापस sent;
-पूर्ण
+	return sent;
+}
 
 /*
  * drbd_send_all  -  Send an entire buffer
  *
  * Returns 0 upon success and a negative error value otherwise.
  */
-पूर्णांक drbd_send_all(काष्ठा drbd_connection *connection, काष्ठा socket *sock, व्योम *buffer,
-		  माप_प्रकार size, अचिन्हित msg_flags)
-अणु
-	पूर्णांक err;
+int drbd_send_all(struct drbd_connection *connection, struct socket *sock, void *buffer,
+		  size_t size, unsigned msg_flags)
+{
+	int err;
 
 	err = drbd_send(connection, sock, buffer, size, msg_flags);
-	अगर (err < 0)
-		वापस err;
-	अगर (err != size)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+	if (err < 0)
+		return err;
+	if (err != size)
+		return -EIO;
+	return 0;
+}
 
-अटल पूर्णांक drbd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
-अणु
-	काष्ठा drbd_device *device = bdev->bd_disk->निजी_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rv = 0;
+static int drbd_open(struct block_device *bdev, fmode_t mode)
+{
+	struct drbd_device *device = bdev->bd_disk->private_data;
+	unsigned long flags;
+	int rv = 0;
 
-	mutex_lock(&drbd_मुख्य_mutex);
+	mutex_lock(&drbd_main_mutex);
 	spin_lock_irqsave(&device->resource->req_lock, flags);
 	/* to have a stable device->state.role
-	 * and no race with updating खोलो_cnt */
+	 * and no race with updating open_cnt */
 
-	अगर (device->state.role != R_PRIMARY) अणु
-		अगर (mode & FMODE_WRITE)
+	if (device->state.role != R_PRIMARY) {
+		if (mode & FMODE_WRITE)
 			rv = -EROFS;
-		अन्यथा अगर (!drbd_allow_oos)
+		else if (!drbd_allow_oos)
 			rv = -EMEDIUMTYPE;
-	पूर्ण
+	}
 
-	अगर (!rv)
-		device->खोलो_cnt++;
+	if (!rv)
+		device->open_cnt++;
 	spin_unlock_irqrestore(&device->resource->req_lock, flags);
-	mutex_unlock(&drbd_मुख्य_mutex);
+	mutex_unlock(&drbd_main_mutex);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल व्योम drbd_release(काष्ठा gendisk *gd, भ_शेषe_t mode)
-अणु
-	काष्ठा drbd_device *device = gd->निजी_data;
-	mutex_lock(&drbd_मुख्य_mutex);
-	device->खोलो_cnt--;
-	mutex_unlock(&drbd_मुख्य_mutex);
-पूर्ण
+static void drbd_release(struct gendisk *gd, fmode_t mode)
+{
+	struct drbd_device *device = gd->private_data;
+	mutex_lock(&drbd_main_mutex);
+	device->open_cnt--;
+	mutex_unlock(&drbd_main_mutex);
+}
 
 /* need to hold resource->req_lock */
-व्योम drbd_queue_unplug(काष्ठा drbd_device *device)
-अणु
-	अगर (device->state.pdsk >= D_INCONSISTENT && device->state.conn >= C_CONNECTED) अणु
+void drbd_queue_unplug(struct drbd_device *device)
+{
+	if (device->state.pdsk >= D_INCONSISTENT && device->state.conn >= C_CONNECTED) {
 		D_ASSERT(device, device->state.role == R_PRIMARY);
-		अगर (test_and_clear_bit(UNPLUG_REMOTE, &device->flags)) अणु
-			drbd_queue_work_अगर_unqueued(
+		if (test_and_clear_bit(UNPLUG_REMOTE, &device->flags)) {
+			drbd_queue_work_if_unqueued(
 				&first_peer_device(device)->connection->sender_work,
 				&device->unplug_work);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम drbd_set_शेषs(काष्ठा drbd_device *device)
-अणु
-	/* Beware! The actual layout dअगरfers
+static void drbd_set_defaults(struct drbd_device *device)
+{
+	/* Beware! The actual layout differs
 	 * between big endian and little endian */
-	device->state = (जोड़ drbd_dev_state) अणु
-		अणु .role = R_SECONDARY,
+	device->state = (union drbd_dev_state) {
+		{ .role = R_SECONDARY,
 		  .peer = R_UNKNOWN,
 		  .conn = C_STANDALONE,
 		  .disk = D_DISKLESS,
 		  .pdsk = D_UNKNOWN,
-		पूर्ण पूर्ण;
-पूर्ण
+		} };
+}
 
-व्योम drbd_init_set_शेषs(काष्ठा drbd_device *device)
-अणु
-	/* the स_रखो(,0,) did most of this.
+void drbd_init_set_defaults(struct drbd_device *device)
+{
+	/* the memset(,0,) did most of this.
 	 * note: only assignments, no allocation in here */
 
-	drbd_set_शेषs(device);
+	drbd_set_defaults(device);
 
 	atomic_set(&device->ap_bio_cnt, 0);
 	atomic_set(&device->ap_actlog_cnt, 0);
@@ -1987,10 +1986,10 @@ out:
 
 	INIT_LIST_HEAD(&device->active_ee);
 	INIT_LIST_HEAD(&device->sync_ee);
-	INIT_LIST_HEAD(&device->करोne_ee);
-	INIT_LIST_HEAD(&device->पढ़ो_ee);
+	INIT_LIST_HEAD(&device->done_ee);
+	INIT_LIST_HEAD(&device->read_ee);
 	INIT_LIST_HEAD(&device->net_ee);
-	INIT_LIST_HEAD(&device->resync_पढ़ोs);
+	INIT_LIST_HEAD(&device->resync_reads);
 	INIT_LIST_HEAD(&device->resync_work.list);
 	INIT_LIST_HEAD(&device->unplug_work.list);
 	INIT_LIST_HEAD(&device->bm_io_work.w.list);
@@ -1999,46 +1998,46 @@ out:
 	INIT_LIST_HEAD(&device->pending_completion[0]);
 	INIT_LIST_HEAD(&device->pending_completion[1]);
 
-	device->resync_work.cb  = w_resync_समयr;
-	device->unplug_work.cb  = w_send_ग_लिखो_hपूर्णांक;
-	device->bm_io_work.w.cb = w_biपंचांगap_io;
+	device->resync_work.cb  = w_resync_timer;
+	device->unplug_work.cb  = w_send_write_hint;
+	device->bm_io_work.w.cb = w_bitmap_io;
 
-	समयr_setup(&device->resync_समयr, resync_समयr_fn, 0);
-	समयr_setup(&device->md_sync_समयr, md_sync_समयr_fn, 0);
-	समयr_setup(&device->start_resync_समयr, start_resync_समयr_fn, 0);
-	समयr_setup(&device->request_समयr, request_समयr_fn, 0);
+	timer_setup(&device->resync_timer, resync_timer_fn, 0);
+	timer_setup(&device->md_sync_timer, md_sync_timer_fn, 0);
+	timer_setup(&device->start_resync_timer, start_resync_timer_fn, 0);
+	timer_setup(&device->request_timer, request_timer_fn, 0);
 
-	init_रुकोqueue_head(&device->misc_रुको);
-	init_रुकोqueue_head(&device->state_रुको);
-	init_रुकोqueue_head(&device->ee_रुको);
-	init_रुकोqueue_head(&device->al_रुको);
-	init_रुकोqueue_head(&device->seq_रुको);
+	init_waitqueue_head(&device->misc_wait);
+	init_waitqueue_head(&device->state_wait);
+	init_waitqueue_head(&device->ee_wait);
+	init_waitqueue_head(&device->al_wait);
+	init_waitqueue_head(&device->seq_wait);
 
 	device->resync_wenr = LC_FREE;
 	device->peer_max_bio_size = DRBD_MAX_BIO_SIZE_SAFE;
 	device->local_max_bio_size = DRBD_MAX_BIO_SIZE_SAFE;
-पूर्ण
+}
 
-व्योम drbd_set_my_capacity(काष्ठा drbd_device *device, sector_t size)
-अणु
-	अक्षर ppb[10];
+void drbd_set_my_capacity(struct drbd_device *device, sector_t size)
+{
+	char ppb[10];
 
-	set_capacity_and_notअगरy(device->vdisk, size);
+	set_capacity_and_notify(device->vdisk, size);
 
 	drbd_info(device, "size = %s (%llu KB)\n",
-		ppsize(ppb, size>>1), (अचिन्हित दीर्घ दीर्घ)size>>1);
-पूर्ण
+		ppsize(ppb, size>>1), (unsigned long long)size>>1);
+}
 
-व्योम drbd_device_cleanup(काष्ठा drbd_device *device)
-अणु
-	पूर्णांक i;
-	अगर (first_peer_device(device)->connection->receiver.t_state != NONE)
+void drbd_device_cleanup(struct drbd_device *device)
+{
+	int i;
+	if (first_peer_device(device)->connection->receiver.t_state != NONE)
 		drbd_err(device, "ASSERT FAILED: receiver t_state == %d expected 0.\n",
 				first_peer_device(device)->connection->receiver.t_state);
 
 	device->al_writ_cnt  =
 	device->bm_writ_cnt  =
-	device->पढ़ो_cnt     =
+	device->read_cnt     =
 	device->recv_cnt     =
 	device->send_cnt     =
 	device->writ_cnt     =
@@ -2048,565 +2047,565 @@ out:
 	device->rs_failed    = 0;
 	device->rs_last_events = 0;
 	device->rs_last_sect_ev = 0;
-	क्रम (i = 0; i < DRBD_SYNC_MARKS; i++) अणु
+	for (i = 0; i < DRBD_SYNC_MARKS; i++) {
 		device->rs_mark_left[i] = 0;
-		device->rs_mark_समय[i] = 0;
-	पूर्ण
-	D_ASSERT(device, first_peer_device(device)->connection->net_conf == शून्य);
+		device->rs_mark_time[i] = 0;
+	}
+	D_ASSERT(device, first_peer_device(device)->connection->net_conf == NULL);
 
-	set_capacity_and_notअगरy(device->vdisk, 0);
-	अगर (device->biपंचांगap) अणु
+	set_capacity_and_notify(device->vdisk, 0);
+	if (device->bitmap) {
 		/* maybe never allocated. */
 		drbd_bm_resize(device, 0, 1);
 		drbd_bm_cleanup(device);
-	पूर्ण
+	}
 
-	drbd_backing_dev_मुक्त(device, device->ldev);
-	device->ldev = शून्य;
+	drbd_backing_dev_free(device, device->ldev);
+	device->ldev = NULL;
 
 	clear_bit(AL_SUSPENDED, &device->flags);
 
 	D_ASSERT(device, list_empty(&device->active_ee));
 	D_ASSERT(device, list_empty(&device->sync_ee));
-	D_ASSERT(device, list_empty(&device->करोne_ee));
-	D_ASSERT(device, list_empty(&device->पढ़ो_ee));
+	D_ASSERT(device, list_empty(&device->done_ee));
+	D_ASSERT(device, list_empty(&device->read_ee));
 	D_ASSERT(device, list_empty(&device->net_ee));
-	D_ASSERT(device, list_empty(&device->resync_पढ़ोs));
+	D_ASSERT(device, list_empty(&device->resync_reads));
 	D_ASSERT(device, list_empty(&first_peer_device(device)->connection->sender_work.q));
 	D_ASSERT(device, list_empty(&device->resync_work.list));
 	D_ASSERT(device, list_empty(&device->unplug_work.list));
 
-	drbd_set_शेषs(device);
-पूर्ण
+	drbd_set_defaults(device);
+}
 
 
-अटल व्योम drbd_destroy_mempools(व्योम)
-अणु
-	काष्ठा page *page;
+static void drbd_destroy_mempools(void)
+{
+	struct page *page;
 
-	जबतक (drbd_pp_pool) अणु
+	while (drbd_pp_pool) {
 		page = drbd_pp_pool;
-		drbd_pp_pool = (काष्ठा page *)page_निजी(page);
-		__मुक्त_page(page);
+		drbd_pp_pool = (struct page *)page_private(page);
+		__free_page(page);
 		drbd_pp_vacant--;
-	पूर्ण
+	}
 
-	/* D_ASSERT(device, atomic_पढ़ो(&drbd_pp_vacant)==0); */
+	/* D_ASSERT(device, atomic_read(&drbd_pp_vacant)==0); */
 
-	bioset_निकास(&drbd_io_bio_set);
-	bioset_निकास(&drbd_md_io_bio_set);
-	mempool_निकास(&drbd_md_io_page_pool);
-	mempool_निकास(&drbd_ee_mempool);
-	mempool_निकास(&drbd_request_mempool);
+	bioset_exit(&drbd_io_bio_set);
+	bioset_exit(&drbd_md_io_bio_set);
+	mempool_exit(&drbd_md_io_page_pool);
+	mempool_exit(&drbd_ee_mempool);
+	mempool_exit(&drbd_request_mempool);
 	kmem_cache_destroy(drbd_ee_cache);
 	kmem_cache_destroy(drbd_request_cache);
 	kmem_cache_destroy(drbd_bm_ext_cache);
 	kmem_cache_destroy(drbd_al_ext_cache);
 
-	drbd_ee_cache        = शून्य;
-	drbd_request_cache   = शून्य;
-	drbd_bm_ext_cache    = शून्य;
-	drbd_al_ext_cache    = शून्य;
+	drbd_ee_cache        = NULL;
+	drbd_request_cache   = NULL;
+	drbd_bm_ext_cache    = NULL;
+	drbd_al_ext_cache    = NULL;
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल पूर्णांक drbd_create_mempools(व्योम)
-अणु
-	काष्ठा page *page;
-	स्थिर पूर्णांक number = (DRBD_MAX_BIO_SIZE/PAGE_SIZE) * drbd_minor_count;
-	पूर्णांक i, ret;
+static int drbd_create_mempools(void)
+{
+	struct page *page;
+	const int number = (DRBD_MAX_BIO_SIZE/PAGE_SIZE) * drbd_minor_count;
+	int i, ret;
 
 	/* caches */
 	drbd_request_cache = kmem_cache_create(
-		"drbd_req", माप(काष्ठा drbd_request), 0, 0, शून्य);
-	अगर (drbd_request_cache == शून्य)
-		जाओ Enomem;
+		"drbd_req", sizeof(struct drbd_request), 0, 0, NULL);
+	if (drbd_request_cache == NULL)
+		goto Enomem;
 
 	drbd_ee_cache = kmem_cache_create(
-		"drbd_ee", माप(काष्ठा drbd_peer_request), 0, 0, शून्य);
-	अगर (drbd_ee_cache == शून्य)
-		जाओ Enomem;
+		"drbd_ee", sizeof(struct drbd_peer_request), 0, 0, NULL);
+	if (drbd_ee_cache == NULL)
+		goto Enomem;
 
 	drbd_bm_ext_cache = kmem_cache_create(
-		"drbd_bm", माप(काष्ठा bm_extent), 0, 0, शून्य);
-	अगर (drbd_bm_ext_cache == शून्य)
-		जाओ Enomem;
+		"drbd_bm", sizeof(struct bm_extent), 0, 0, NULL);
+	if (drbd_bm_ext_cache == NULL)
+		goto Enomem;
 
 	drbd_al_ext_cache = kmem_cache_create(
-		"drbd_al", माप(काष्ठा lc_element), 0, 0, शून्य);
-	अगर (drbd_al_ext_cache == शून्य)
-		जाओ Enomem;
+		"drbd_al", sizeof(struct lc_element), 0, 0, NULL);
+	if (drbd_al_ext_cache == NULL)
+		goto Enomem;
 
 	/* mempools */
 	ret = bioset_init(&drbd_io_bio_set, BIO_POOL_SIZE, 0, 0);
-	अगर (ret)
-		जाओ Enomem;
+	if (ret)
+		goto Enomem;
 
 	ret = bioset_init(&drbd_md_io_bio_set, DRBD_MIN_POOL_PAGES, 0,
 			  BIOSET_NEED_BVECS);
-	अगर (ret)
-		जाओ Enomem;
+	if (ret)
+		goto Enomem;
 
 	ret = mempool_init_page_pool(&drbd_md_io_page_pool, DRBD_MIN_POOL_PAGES, 0);
-	अगर (ret)
-		जाओ Enomem;
+	if (ret)
+		goto Enomem;
 
 	ret = mempool_init_slab_pool(&drbd_request_mempool, number,
 				     drbd_request_cache);
-	अगर (ret)
-		जाओ Enomem;
+	if (ret)
+		goto Enomem;
 
 	ret = mempool_init_slab_pool(&drbd_ee_mempool, number, drbd_ee_cache);
-	अगर (ret)
-		जाओ Enomem;
+	if (ret)
+		goto Enomem;
 
-	क्रम (i = 0; i < number; i++) अणु
+	for (i = 0; i < number; i++) {
 		page = alloc_page(GFP_HIGHUSER);
-		अगर (!page)
-			जाओ Enomem;
-		set_page_निजी(page, (अचिन्हित दीर्घ)drbd_pp_pool);
+		if (!page)
+			goto Enomem;
+		set_page_private(page, (unsigned long)drbd_pp_pool);
 		drbd_pp_pool = page;
-	पूर्ण
+	}
 	drbd_pp_vacant = number;
 
-	वापस 0;
+	return 0;
 
 Enomem:
-	drbd_destroy_mempools(); /* in हाल we allocated some */
-	वापस -ENOMEM;
-पूर्ण
+	drbd_destroy_mempools(); /* in case we allocated some */
+	return -ENOMEM;
+}
 
-अटल व्योम drbd_release_all_peer_reqs(काष्ठा drbd_device *device)
-अणु
-	पूर्णांक rr;
+static void drbd_release_all_peer_reqs(struct drbd_device *device)
+{
+	int rr;
 
-	rr = drbd_मुक्त_peer_reqs(device, &device->active_ee);
-	अगर (rr)
+	rr = drbd_free_peer_reqs(device, &device->active_ee);
+	if (rr)
 		drbd_err(device, "%d EEs in active list found!\n", rr);
 
-	rr = drbd_मुक्त_peer_reqs(device, &device->sync_ee);
-	अगर (rr)
+	rr = drbd_free_peer_reqs(device, &device->sync_ee);
+	if (rr)
 		drbd_err(device, "%d EEs in sync list found!\n", rr);
 
-	rr = drbd_मुक्त_peer_reqs(device, &device->पढ़ो_ee);
-	अगर (rr)
+	rr = drbd_free_peer_reqs(device, &device->read_ee);
+	if (rr)
 		drbd_err(device, "%d EEs in read list found!\n", rr);
 
-	rr = drbd_मुक्त_peer_reqs(device, &device->करोne_ee);
-	अगर (rr)
+	rr = drbd_free_peer_reqs(device, &device->done_ee);
+	if (rr)
 		drbd_err(device, "%d EEs in done list found!\n", rr);
 
-	rr = drbd_मुक्त_peer_reqs(device, &device->net_ee);
-	अगर (rr)
+	rr = drbd_free_peer_reqs(device, &device->net_ee);
+	if (rr)
 		drbd_err(device, "%d EEs in net list found!\n", rr);
-पूर्ण
+}
 
 /* caution. no locking. */
-व्योम drbd_destroy_device(काष्ठा kref *kref)
-अणु
-	काष्ठा drbd_device *device = container_of(kref, काष्ठा drbd_device, kref);
-	काष्ठा drbd_resource *resource = device->resource;
-	काष्ठा drbd_peer_device *peer_device, *पंचांगp_peer_device;
+void drbd_destroy_device(struct kref *kref)
+{
+	struct drbd_device *device = container_of(kref, struct drbd_device, kref);
+	struct drbd_resource *resource = device->resource;
+	struct drbd_peer_device *peer_device, *tmp_peer_device;
 
-	del_समयr_sync(&device->request_समयr);
+	del_timer_sync(&device->request_timer);
 
-	/* paranoia निश्चितs */
-	D_ASSERT(device, device->खोलो_cnt == 0);
-	/* end paranoia निश्चितs */
+	/* paranoia asserts */
+	D_ASSERT(device, device->open_cnt == 0);
+	/* end paranoia asserts */
 
 	/* cleanup stuff that may have been allocated during
 	 * device (re-)configuration or state changes */
 
-	drbd_backing_dev_मुक्त(device, device->ldev);
-	device->ldev = शून्य;
+	drbd_backing_dev_free(device, device->ldev);
+	device->ldev = NULL;
 
 	drbd_release_all_peer_reqs(device);
 
 	lc_destroy(device->act_log);
 	lc_destroy(device->resync);
 
-	kमुक्त(device->p_uuid);
-	/* device->p_uuid = शून्य; */
+	kfree(device->p_uuid);
+	/* device->p_uuid = NULL; */
 
-	अगर (device->biपंचांगap) /* should no दीर्घer be there. */
+	if (device->bitmap) /* should no longer be there. */
 		drbd_bm_cleanup(device);
-	__मुक्त_page(device->md_io.page);
+	__free_page(device->md_io.page);
 	put_disk(device->vdisk);
 	blk_cleanup_queue(device->rq_queue);
-	kमुक्त(device->rs_plan_s);
+	kfree(device->rs_plan_s);
 
-	/* not क्रम_each_connection(connection, resource):
-	 * those may have been cleaned up and disassociated alपढ़ोy.
+	/* not for_each_connection(connection, resource):
+	 * those may have been cleaned up and disassociated already.
 	 */
-	क्रम_each_peer_device_safe(peer_device, पंचांगp_peer_device, device) अणु
+	for_each_peer_device_safe(peer_device, tmp_peer_device, device) {
 		kref_put(&peer_device->connection->kref, drbd_destroy_connection);
-		kमुक्त(peer_device);
-	पूर्ण
-	स_रखो(device, 0xfd, माप(*device));
-	kमुक्त(device);
+		kfree(peer_device);
+	}
+	memset(device, 0xfd, sizeof(*device));
+	kfree(device);
 	kref_put(&resource->kref, drbd_destroy_resource);
-पूर्ण
+}
 
-/* One global retry thपढ़ो, अगर we need to push back some bio and have it
+/* One global retry thread, if we need to push back some bio and have it
  * reinserted through our make request function.
  */
-अटल काष्ठा retry_worker अणु
-	काष्ठा workqueue_काष्ठा *wq;
-	काष्ठा work_काष्ठा worker;
+static struct retry_worker {
+	struct workqueue_struct *wq;
+	struct work_struct worker;
 
 	spinlock_t lock;
-	काष्ठा list_head ग_लिखोs;
-पूर्ण retry;
+	struct list_head writes;
+} retry;
 
-अटल व्योम करो_retry(काष्ठा work_काष्ठा *ws)
-अणु
-	काष्ठा retry_worker *retry = container_of(ws, काष्ठा retry_worker, worker);
-	LIST_HEAD(ग_लिखोs);
-	काष्ठा drbd_request *req, *पंचांगp;
+static void do_retry(struct work_struct *ws)
+{
+	struct retry_worker *retry = container_of(ws, struct retry_worker, worker);
+	LIST_HEAD(writes);
+	struct drbd_request *req, *tmp;
 
 	spin_lock_irq(&retry->lock);
-	list_splice_init(&retry->ग_लिखोs, &ग_लिखोs);
+	list_splice_init(&retry->writes, &writes);
 	spin_unlock_irq(&retry->lock);
 
-	list_क्रम_each_entry_safe(req, पंचांगp, &ग_लिखोs, tl_requests) अणु
-		काष्ठा drbd_device *device = req->device;
-		काष्ठा bio *bio = req->master_bio;
+	list_for_each_entry_safe(req, tmp, &writes, tl_requests) {
+		struct drbd_device *device = req->device;
+		struct bio *bio = req->master_bio;
 		bool expected;
 
 		expected =
-			expect(atomic_पढ़ो(&req->completion_ref) == 0) &&
+			expect(atomic_read(&req->completion_ref) == 0) &&
 			expect(req->rq_state & RQ_POSTPONED) &&
 			expect((req->rq_state & RQ_LOCAL_PENDING) == 0 ||
 				(req->rq_state & RQ_LOCAL_ABORTED) != 0);
 
-		अगर (!expected)
+		if (!expected)
 			drbd_err(device, "req=%p completion_ref=%d rq_state=%x\n",
-				req, atomic_पढ़ो(&req->completion_ref),
+				req, atomic_read(&req->completion_ref),
 				req->rq_state);
 
 		/* We still need to put one kref associated with the
 		 * "completion_ref" going zero in the code path that queued it
 		 * here.  The request object may still be referenced by a
-		 * frozen local req->निजी_bio, in हाल we क्रमce-detached.
+		 * frozen local req->private_bio, in case we force-detached.
 		 */
 		kref_put(&req->kref, drbd_req_destroy);
 
 		/* A single suspended or otherwise blocking device may stall
 		 * all others as well.  Fortunately, this code path is to
 		 * recover from a situation that "should not happen":
-		 * concurrent ग_लिखोs in multi-primary setup.
-		 * In a "normal" lअगरecycle, this workqueue is supposed to be
-		 * destroyed without ever करोing anything.
-		 * If it turns out to be an issue anyways, we can करो per
+		 * concurrent writes in multi-primary setup.
+		 * In a "normal" lifecycle, this workqueue is supposed to be
+		 * destroyed without ever doing anything.
+		 * If it turns out to be an issue anyways, we can do per
 		 * resource (replication group) or per device (minor) retry
 		 * workqueues instead.
 		 */
 
-		/* We are not just करोing submit_bio_noacct(),
-		 * as we want to keep the start_समय inक्रमmation. */
+		/* We are not just doing submit_bio_noacct(),
+		 * as we want to keep the start_time information. */
 		inc_ap_bio(device);
 		__drbd_make_request(device, bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* called via drbd_req_put_completion_ref(),
  * holds resource->req_lock */
-व्योम drbd_restart_request(काष्ठा drbd_request *req)
-अणु
-	अचिन्हित दीर्घ flags;
+void drbd_restart_request(struct drbd_request *req)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&retry.lock, flags);
-	list_move_tail(&req->tl_requests, &retry.ग_लिखोs);
+	list_move_tail(&req->tl_requests, &retry.writes);
 	spin_unlock_irqrestore(&retry.lock, flags);
 
 	/* Drop the extra reference that would otherwise
 	 * have been dropped by complete_master_bio.
-	 * करो_retry() needs to grab a new one. */
+	 * do_retry() needs to grab a new one. */
 	dec_ap_bio(req->device);
 
 	queue_work(retry.wq, &retry.worker);
-पूर्ण
+}
 
-व्योम drbd_destroy_resource(काष्ठा kref *kref)
-अणु
-	काष्ठा drbd_resource *resource =
-		container_of(kref, काष्ठा drbd_resource, kref);
+void drbd_destroy_resource(struct kref *kref)
+{
+	struct drbd_resource *resource =
+		container_of(kref, struct drbd_resource, kref);
 
 	idr_destroy(&resource->devices);
-	मुक्त_cpumask_var(resource->cpu_mask);
-	kमुक्त(resource->name);
-	स_रखो(resource, 0xf2, माप(*resource));
-	kमुक्त(resource);
-पूर्ण
+	free_cpumask_var(resource->cpu_mask);
+	kfree(resource->name);
+	memset(resource, 0xf2, sizeof(*resource));
+	kfree(resource);
+}
 
-व्योम drbd_मुक्त_resource(काष्ठा drbd_resource *resource)
-अणु
-	काष्ठा drbd_connection *connection, *पंचांगp;
+void drbd_free_resource(struct drbd_resource *resource)
+{
+	struct drbd_connection *connection, *tmp;
 
-	क्रम_each_connection_safe(connection, पंचांगp, resource) अणु
+	for_each_connection_safe(connection, tmp, resource) {
 		list_del(&connection->connections);
 		drbd_debugfs_connection_cleanup(connection);
 		kref_put(&connection->kref, drbd_destroy_connection);
-	पूर्ण
+	}
 	drbd_debugfs_resource_cleanup(resource);
 	kref_put(&resource->kref, drbd_destroy_resource);
-पूर्ण
+}
 
-अटल व्योम drbd_cleanup(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा drbd_device *device;
-	काष्ठा drbd_resource *resource, *पंचांगp;
+static void drbd_cleanup(void)
+{
+	unsigned int i;
+	struct drbd_device *device;
+	struct drbd_resource *resource, *tmp;
 
-	/* first हटाओ proc,
+	/* first remove proc,
 	 * drbdsetup uses it's presence to detect
 	 * whether DRBD is loaded.
 	 * If we would get stuck in proc removal,
-	 * but have netlink alपढ़ोy deरेजिस्टरed,
-	 * some drbdsetup commands may रुको क्रमever
-	 * क्रम an answer.
+	 * but have netlink already deregistered,
+	 * some drbdsetup commands may wait forever
+	 * for an answer.
 	 */
-	अगर (drbd_proc)
-		हटाओ_proc_entry("drbd", शून्य);
+	if (drbd_proc)
+		remove_proc_entry("drbd", NULL);
 
-	अगर (retry.wq)
+	if (retry.wq)
 		destroy_workqueue(retry.wq);
 
-	drbd_genl_unरेजिस्टर();
+	drbd_genl_unregister();
 
-	idr_क्रम_each_entry(&drbd_devices, device, i)
+	idr_for_each_entry(&drbd_devices, device, i)
 		drbd_delete_device(device);
 
-	/* not _rcu since, no other updater anymore. Genl alपढ़ोy unरेजिस्टरed */
-	क्रम_each_resource_safe(resource, पंचांगp, &drbd_resources) अणु
+	/* not _rcu since, no other updater anymore. Genl already unregistered */
+	for_each_resource_safe(resource, tmp, &drbd_resources) {
 		list_del(&resource->resources);
-		drbd_मुक्त_resource(resource);
-	पूर्ण
+		drbd_free_resource(resource);
+	}
 
 	drbd_debugfs_cleanup();
 
 	drbd_destroy_mempools();
-	unरेजिस्टर_blkdev(DRBD_MAJOR, "drbd");
+	unregister_blkdev(DRBD_MAJOR, "drbd");
 
 	idr_destroy(&drbd_devices);
 
 	pr_info("module cleanup done.\n");
-पूर्ण
+}
 
-अटल व्योम drbd_init_workqueue(काष्ठा drbd_work_queue* wq)
-अणु
+static void drbd_init_workqueue(struct drbd_work_queue* wq)
+{
 	spin_lock_init(&wq->q_lock);
 	INIT_LIST_HEAD(&wq->q);
-	init_रुकोqueue_head(&wq->q_रुको);
-पूर्ण
+	init_waitqueue_head(&wq->q_wait);
+}
 
-काष्ठा completion_work अणु
-	काष्ठा drbd_work w;
-	काष्ठा completion करोne;
-पूर्ण;
+struct completion_work {
+	struct drbd_work w;
+	struct completion done;
+};
 
-अटल पूर्णांक w_complete(काष्ठा drbd_work *w, पूर्णांक cancel)
-अणु
-	काष्ठा completion_work *completion_work =
-		container_of(w, काष्ठा completion_work, w);
+static int w_complete(struct drbd_work *w, int cancel)
+{
+	struct completion_work *completion_work =
+		container_of(w, struct completion_work, w);
 
-	complete(&completion_work->करोne);
-	वापस 0;
-पूर्ण
+	complete(&completion_work->done);
+	return 0;
+}
 
-व्योम drbd_flush_workqueue(काष्ठा drbd_work_queue *work_queue)
-अणु
-	काष्ठा completion_work completion_work;
+void drbd_flush_workqueue(struct drbd_work_queue *work_queue)
+{
+	struct completion_work completion_work;
 
 	completion_work.w.cb = w_complete;
-	init_completion(&completion_work.करोne);
+	init_completion(&completion_work.done);
 	drbd_queue_work(work_queue, &completion_work.w);
-	रुको_क्रम_completion(&completion_work.करोne);
-पूर्ण
+	wait_for_completion(&completion_work.done);
+}
 
-काष्ठा drbd_resource *drbd_find_resource(स्थिर अक्षर *name)
-अणु
-	काष्ठा drbd_resource *resource;
+struct drbd_resource *drbd_find_resource(const char *name)
+{
+	struct drbd_resource *resource;
 
-	अगर (!name || !name[0])
-		वापस शून्य;
+	if (!name || !name[0])
+		return NULL;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_resource_rcu(resource, &drbd_resources) अणु
-		अगर (!म_भेद(resource->name, name)) अणु
+	rcu_read_lock();
+	for_each_resource_rcu(resource, &drbd_resources) {
+		if (!strcmp(resource->name, name)) {
 			kref_get(&resource->kref);
-			जाओ found;
-		पूर्ण
-	पूर्ण
-	resource = शून्य;
+			goto found;
+		}
+	}
+	resource = NULL;
 found:
-	rcu_पढ़ो_unlock();
-	वापस resource;
-पूर्ण
+	rcu_read_unlock();
+	return resource;
+}
 
-काष्ठा drbd_connection *conn_get_by_addrs(व्योम *my_addr, पूर्णांक my_addr_len,
-				     व्योम *peer_addr, पूर्णांक peer_addr_len)
-अणु
-	काष्ठा drbd_resource *resource;
-	काष्ठा drbd_connection *connection;
+struct drbd_connection *conn_get_by_addrs(void *my_addr, int my_addr_len,
+				     void *peer_addr, int peer_addr_len)
+{
+	struct drbd_resource *resource;
+	struct drbd_connection *connection;
 
-	rcu_पढ़ो_lock();
-	क्रम_each_resource_rcu(resource, &drbd_resources) अणु
-		क्रम_each_connection_rcu(connection, resource) अणु
-			अगर (connection->my_addr_len == my_addr_len &&
+	rcu_read_lock();
+	for_each_resource_rcu(resource, &drbd_resources) {
+		for_each_connection_rcu(connection, resource) {
+			if (connection->my_addr_len == my_addr_len &&
 			    connection->peer_addr_len == peer_addr_len &&
-			    !स_भेद(&connection->my_addr, my_addr, my_addr_len) &&
-			    !स_भेद(&connection->peer_addr, peer_addr, peer_addr_len)) अणु
+			    !memcmp(&connection->my_addr, my_addr, my_addr_len) &&
+			    !memcmp(&connection->peer_addr, peer_addr, peer_addr_len)) {
 				kref_get(&connection->kref);
-				जाओ found;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	connection = शून्य;
+				goto found;
+			}
+		}
+	}
+	connection = NULL;
 found:
-	rcu_पढ़ो_unlock();
-	वापस connection;
-पूर्ण
+	rcu_read_unlock();
+	return connection;
+}
 
-अटल पूर्णांक drbd_alloc_socket(काष्ठा drbd_socket *socket)
-अणु
-	socket->rbuf = (व्योम *) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!socket->rbuf)
-		वापस -ENOMEM;
-	socket->sbuf = (व्योम *) __get_मुक्त_page(GFP_KERNEL);
-	अगर (!socket->sbuf)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int drbd_alloc_socket(struct drbd_socket *socket)
+{
+	socket->rbuf = (void *) __get_free_page(GFP_KERNEL);
+	if (!socket->rbuf)
+		return -ENOMEM;
+	socket->sbuf = (void *) __get_free_page(GFP_KERNEL);
+	if (!socket->sbuf)
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम drbd_मुक्त_socket(काष्ठा drbd_socket *socket)
-अणु
-	मुक्त_page((अचिन्हित दीर्घ) socket->sbuf);
-	मुक्त_page((अचिन्हित दीर्घ) socket->rbuf);
-पूर्ण
+static void drbd_free_socket(struct drbd_socket *socket)
+{
+	free_page((unsigned long) socket->sbuf);
+	free_page((unsigned long) socket->rbuf);
+}
 
-व्योम conn_मुक्त_crypto(काष्ठा drbd_connection *connection)
-अणु
-	drbd_मुक्त_sock(connection);
+void conn_free_crypto(struct drbd_connection *connection)
+{
+	drbd_free_sock(connection);
 
-	crypto_मुक्त_shash(connection->csums_tfm);
-	crypto_मुक्त_shash(connection->verअगरy_tfm);
-	crypto_मुक्त_shash(connection->cram_hmac_tfm);
-	crypto_मुक्त_shash(connection->पूर्णांकegrity_tfm);
-	crypto_मुक्त_shash(connection->peer_पूर्णांकegrity_tfm);
-	kमुक्त(connection->पूर्णांक_dig_in);
-	kमुक्त(connection->पूर्णांक_dig_vv);
+	crypto_free_shash(connection->csums_tfm);
+	crypto_free_shash(connection->verify_tfm);
+	crypto_free_shash(connection->cram_hmac_tfm);
+	crypto_free_shash(connection->integrity_tfm);
+	crypto_free_shash(connection->peer_integrity_tfm);
+	kfree(connection->int_dig_in);
+	kfree(connection->int_dig_vv);
 
-	connection->csums_tfm = शून्य;
-	connection->verअगरy_tfm = शून्य;
-	connection->cram_hmac_tfm = शून्य;
-	connection->पूर्णांकegrity_tfm = शून्य;
-	connection->peer_पूर्णांकegrity_tfm = शून्य;
-	connection->पूर्णांक_dig_in = शून्य;
-	connection->पूर्णांक_dig_vv = शून्य;
-पूर्ण
+	connection->csums_tfm = NULL;
+	connection->verify_tfm = NULL;
+	connection->cram_hmac_tfm = NULL;
+	connection->integrity_tfm = NULL;
+	connection->peer_integrity_tfm = NULL;
+	connection->int_dig_in = NULL;
+	connection->int_dig_vv = NULL;
+}
 
-पूर्णांक set_resource_options(काष्ठा drbd_resource *resource, काष्ठा res_opts *res_opts)
-अणु
-	काष्ठा drbd_connection *connection;
+int set_resource_options(struct drbd_resource *resource, struct res_opts *res_opts)
+{
+	struct drbd_connection *connection;
 	cpumask_var_t new_cpu_mask;
-	पूर्णांक err;
+	int err;
 
-	अगर (!zalloc_cpumask_var(&new_cpu_mask, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!zalloc_cpumask_var(&new_cpu_mask, GFP_KERNEL))
+		return -ENOMEM;
 
 	/* silently ignore cpu mask on UP kernel */
-	अगर (nr_cpu_ids > 1 && res_opts->cpu_mask[0] != 0) अणु
-		err = biपंचांगap_parse(res_opts->cpu_mask, DRBD_CPU_MASK_SIZE,
+	if (nr_cpu_ids > 1 && res_opts->cpu_mask[0] != 0) {
+		err = bitmap_parse(res_opts->cpu_mask, DRBD_CPU_MASK_SIZE,
 				   cpumask_bits(new_cpu_mask), nr_cpu_ids);
-		अगर (err == -EOVERFLOW) अणु
+		if (err == -EOVERFLOW) {
 			/* So what. mask it out. */
-			cpumask_var_t पंचांगp_cpu_mask;
-			अगर (zalloc_cpumask_var(&पंचांगp_cpu_mask, GFP_KERNEL)) अणु
-				cpumask_setall(पंचांगp_cpu_mask);
-				cpumask_and(new_cpu_mask, new_cpu_mask, पंचांगp_cpu_mask);
+			cpumask_var_t tmp_cpu_mask;
+			if (zalloc_cpumask_var(&tmp_cpu_mask, GFP_KERNEL)) {
+				cpumask_setall(tmp_cpu_mask);
+				cpumask_and(new_cpu_mask, new_cpu_mask, tmp_cpu_mask);
 				drbd_warn(resource, "Overflow in bitmap_parse(%.12s%s), truncating to %u bits\n",
 					res_opts->cpu_mask,
-					म_माप(res_opts->cpu_mask) > 12 ? "..." : "",
+					strlen(res_opts->cpu_mask) > 12 ? "..." : "",
 					nr_cpu_ids);
-				मुक्त_cpumask_var(पंचांगp_cpu_mask);
+				free_cpumask_var(tmp_cpu_mask);
 				err = 0;
-			पूर्ण
-		पूर्ण
-		अगर (err) अणु
+			}
+		}
+		if (err) {
 			drbd_warn(resource, "bitmap_parse() failed with %d\n", err);
 			/* retcode = ERR_CPU_MASK_PARSE; */
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 	resource->res_opts = *res_opts;
-	अगर (cpumask_empty(new_cpu_mask))
+	if (cpumask_empty(new_cpu_mask))
 		drbd_calc_cpu_mask(&new_cpu_mask);
-	अगर (!cpumask_equal(resource->cpu_mask, new_cpu_mask)) अणु
+	if (!cpumask_equal(resource->cpu_mask, new_cpu_mask)) {
 		cpumask_copy(resource->cpu_mask, new_cpu_mask);
-		क्रम_each_connection_rcu(connection, resource) अणु
+		for_each_connection_rcu(connection, resource) {
 			connection->receiver.reset_cpu_mask = 1;
 			connection->ack_receiver.reset_cpu_mask = 1;
 			connection->worker.reset_cpu_mask = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	err = 0;
 
 fail:
-	मुक्त_cpumask_var(new_cpu_mask);
-	वापस err;
+	free_cpumask_var(new_cpu_mask);
+	return err;
 
-पूर्ण
+}
 
-काष्ठा drbd_resource *drbd_create_resource(स्थिर अक्षर *name)
-अणु
-	काष्ठा drbd_resource *resource;
+struct drbd_resource *drbd_create_resource(const char *name)
+{
+	struct drbd_resource *resource;
 
-	resource = kzalloc(माप(काष्ठा drbd_resource), GFP_KERNEL);
-	अगर (!resource)
-		जाओ fail;
+	resource = kzalloc(sizeof(struct drbd_resource), GFP_KERNEL);
+	if (!resource)
+		goto fail;
 	resource->name = kstrdup(name, GFP_KERNEL);
-	अगर (!resource->name)
-		जाओ fail_मुक्त_resource;
-	अगर (!zalloc_cpumask_var(&resource->cpu_mask, GFP_KERNEL))
-		जाओ fail_मुक्त_name;
+	if (!resource->name)
+		goto fail_free_resource;
+	if (!zalloc_cpumask_var(&resource->cpu_mask, GFP_KERNEL))
+		goto fail_free_name;
 	kref_init(&resource->kref);
 	idr_init(&resource->devices);
 	INIT_LIST_HEAD(&resource->connections);
-	resource->ग_लिखो_ordering = WO_BDEV_FLUSH;
+	resource->write_ordering = WO_BDEV_FLUSH;
 	list_add_tail_rcu(&resource->resources, &drbd_resources);
 	mutex_init(&resource->conf_update);
 	mutex_init(&resource->adm_mutex);
 	spin_lock_init(&resource->req_lock);
 	drbd_debugfs_resource_add(resource);
-	वापस resource;
+	return resource;
 
-fail_मुक्त_name:
-	kमुक्त(resource->name);
-fail_मुक्त_resource:
-	kमुक्त(resource);
+fail_free_name:
+	kfree(resource->name);
+fail_free_resource:
+	kfree(resource);
 fail:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /* caller must be under adm_mutex */
-काष्ठा drbd_connection *conn_create(स्थिर अक्षर *name, काष्ठा res_opts *res_opts)
-अणु
-	काष्ठा drbd_resource *resource;
-	काष्ठा drbd_connection *connection;
+struct drbd_connection *conn_create(const char *name, struct res_opts *res_opts)
+{
+	struct drbd_resource *resource;
+	struct drbd_connection *connection;
 
-	connection = kzalloc(माप(काष्ठा drbd_connection), GFP_KERNEL);
-	अगर (!connection)
-		वापस शून्य;
+	connection = kzalloc(sizeof(struct drbd_connection), GFP_KERNEL);
+	if (!connection)
+		return NULL;
 
-	अगर (drbd_alloc_socket(&connection->data))
-		जाओ fail;
-	अगर (drbd_alloc_socket(&connection->meta))
-		जाओ fail;
+	if (drbd_alloc_socket(&connection->data))
+		goto fail;
+	if (drbd_alloc_socket(&connection->meta))
+		goto fail;
 
-	connection->current_epoch = kzalloc(माप(काष्ठा drbd_epoch), GFP_KERNEL);
-	अगर (!connection->current_epoch)
-		जाओ fail;
+	connection->current_epoch = kzalloc(sizeof(struct drbd_epoch), GFP_KERNEL);
+	if (!connection->current_epoch)
+		goto fail;
 
 	INIT_LIST_HEAD(&connection->transfer_log);
 
@@ -2614,107 +2613,107 @@ fail:
 	connection->epochs = 1;
 	spin_lock_init(&connection->epoch_lock);
 
-	connection->send.seen_any_ग_लिखो_yet = false;
+	connection->send.seen_any_write_yet = false;
 	connection->send.current_epoch_nr = 0;
-	connection->send.current_epoch_ग_लिखोs = 0;
+	connection->send.current_epoch_writes = 0;
 
 	resource = drbd_create_resource(name);
-	अगर (!resource)
-		जाओ fail;
+	if (!resource)
+		goto fail;
 
 	connection->cstate = C_STANDALONE;
 	mutex_init(&connection->cstate_mutex);
-	init_रुकोqueue_head(&connection->ping_रुको);
+	init_waitqueue_head(&connection->ping_wait);
 	idr_init(&connection->peer_devices);
 
 	drbd_init_workqueue(&connection->sender_work);
 	mutex_init(&connection->data.mutex);
 	mutex_init(&connection->meta.mutex);
 
-	drbd_thपढ़ो_init(resource, &connection->receiver, drbd_receiver, "receiver");
+	drbd_thread_init(resource, &connection->receiver, drbd_receiver, "receiver");
 	connection->receiver.connection = connection;
-	drbd_thपढ़ो_init(resource, &connection->worker, drbd_worker, "worker");
+	drbd_thread_init(resource, &connection->worker, drbd_worker, "worker");
 	connection->worker.connection = connection;
-	drbd_thपढ़ो_init(resource, &connection->ack_receiver, drbd_ack_receiver, "ack_recv");
+	drbd_thread_init(resource, &connection->ack_receiver, drbd_ack_receiver, "ack_recv");
 	connection->ack_receiver.connection = connection;
 
 	kref_init(&connection->kref);
 
 	connection->resource = resource;
 
-	अगर (set_resource_options(resource, res_opts))
-		जाओ fail_resource;
+	if (set_resource_options(resource, res_opts))
+		goto fail_resource;
 
 	kref_get(&resource->kref);
 	list_add_tail_rcu(&connection->connections, &resource->connections);
 	drbd_debugfs_connection_add(connection);
-	वापस connection;
+	return connection;
 
 fail_resource:
 	list_del(&resource->resources);
-	drbd_मुक्त_resource(resource);
+	drbd_free_resource(resource);
 fail:
-	kमुक्त(connection->current_epoch);
-	drbd_मुक्त_socket(&connection->meta);
-	drbd_मुक्त_socket(&connection->data);
-	kमुक्त(connection);
-	वापस शून्य;
-पूर्ण
+	kfree(connection->current_epoch);
+	drbd_free_socket(&connection->meta);
+	drbd_free_socket(&connection->data);
+	kfree(connection);
+	return NULL;
+}
 
-व्योम drbd_destroy_connection(काष्ठा kref *kref)
-अणु
-	काष्ठा drbd_connection *connection = container_of(kref, काष्ठा drbd_connection, kref);
-	काष्ठा drbd_resource *resource = connection->resource;
+void drbd_destroy_connection(struct kref *kref)
+{
+	struct drbd_connection *connection = container_of(kref, struct drbd_connection, kref);
+	struct drbd_resource *resource = connection->resource;
 
-	अगर (atomic_पढ़ो(&connection->current_epoch->epoch_size) !=  0)
-		drbd_err(connection, "epoch_size:%d\n", atomic_पढ़ो(&connection->current_epoch->epoch_size));
-	kमुक्त(connection->current_epoch);
+	if (atomic_read(&connection->current_epoch->epoch_size) !=  0)
+		drbd_err(connection, "epoch_size:%d\n", atomic_read(&connection->current_epoch->epoch_size));
+	kfree(connection->current_epoch);
 
 	idr_destroy(&connection->peer_devices);
 
-	drbd_मुक्त_socket(&connection->meta);
-	drbd_मुक्त_socket(&connection->data);
-	kमुक्त(connection->पूर्णांक_dig_in);
-	kमुक्त(connection->पूर्णांक_dig_vv);
-	स_रखो(connection, 0xfc, माप(*connection));
-	kमुक्त(connection);
+	drbd_free_socket(&connection->meta);
+	drbd_free_socket(&connection->data);
+	kfree(connection->int_dig_in);
+	kfree(connection->int_dig_vv);
+	memset(connection, 0xfc, sizeof(*connection));
+	kfree(connection);
 	kref_put(&resource->kref, drbd_destroy_resource);
-पूर्ण
+}
 
-अटल पूर्णांक init_submitter(काष्ठा drbd_device *device)
-अणु
-	/* खोलोcoded create_singlethपढ़ो_workqueue(),
+static int init_submitter(struct drbd_device *device)
+{
+	/* opencoded create_singlethread_workqueue(),
 	 * to be able to say "drbd%d", ..., minor */
 	device->submit.wq =
 		alloc_ordered_workqueue("drbd%u_submit", WQ_MEM_RECLAIM, device->minor);
-	अगर (!device->submit.wq)
-		वापस -ENOMEM;
+	if (!device->submit.wq)
+		return -ENOMEM;
 
-	INIT_WORK(&device->submit.worker, करो_submit);
-	INIT_LIST_HEAD(&device->submit.ग_लिखोs);
-	वापस 0;
-पूर्ण
+	INIT_WORK(&device->submit.worker, do_submit);
+	INIT_LIST_HEAD(&device->submit.writes);
+	return 0;
+}
 
-क्रमागत drbd_ret_code drbd_create_device(काष्ठा drbd_config_context *adm_ctx, अचिन्हित पूर्णांक minor)
-अणु
-	काष्ठा drbd_resource *resource = adm_ctx->resource;
-	काष्ठा drbd_connection *connection;
-	काष्ठा drbd_device *device;
-	काष्ठा drbd_peer_device *peer_device, *पंचांगp_peer_device;
-	काष्ठा gendisk *disk;
-	काष्ठा request_queue *q;
-	पूर्णांक id;
-	पूर्णांक vnr = adm_ctx->volume;
-	क्रमागत drbd_ret_code err = ERR_NOMEM;
+enum drbd_ret_code drbd_create_device(struct drbd_config_context *adm_ctx, unsigned int minor)
+{
+	struct drbd_resource *resource = adm_ctx->resource;
+	struct drbd_connection *connection;
+	struct drbd_device *device;
+	struct drbd_peer_device *peer_device, *tmp_peer_device;
+	struct gendisk *disk;
+	struct request_queue *q;
+	int id;
+	int vnr = adm_ctx->volume;
+	enum drbd_ret_code err = ERR_NOMEM;
 
 	device = minor_to_device(minor);
-	अगर (device)
-		वापस ERR_MINOR_OR_VOLUME_EXISTS;
+	if (device)
+		return ERR_MINOR_OR_VOLUME_EXISTS;
 
-	/* GFP_KERNEL, we are outside of all ग_लिखो-out paths */
-	device = kzalloc(माप(काष्ठा drbd_device), GFP_KERNEL);
-	अगर (!device)
-		वापस ERR_NOMEM;
+	/* GFP_KERNEL, we are outside of all write-out paths */
+	device = kzalloc(sizeof(struct drbd_device), GFP_KERNEL);
+	if (!device)
+		return ERR_NOMEM;
 	kref_init(&device->kref);
 
 	kref_get(&resource->kref);
@@ -2722,16 +2721,16 @@ fail:
 	device->minor = minor;
 	device->vnr = vnr;
 
-	drbd_init_set_शेषs(device);
+	drbd_init_set_defaults(device);
 
 	q = blk_alloc_queue(NUMA_NO_NODE);
-	अगर (!q)
-		जाओ out_no_q;
+	if (!q)
+		goto out_no_q;
 	device->rq_queue = q;
 
 	disk = alloc_disk(1);
-	अगर (!disk)
-		जाओ out_no_disk;
+	if (!disk)
+		goto out_no_disk;
 	device->vdisk = disk;
 
 	set_disk_ro(disk, true);
@@ -2740,45 +2739,45 @@ fail:
 	disk->major = DRBD_MAJOR;
 	disk->first_minor = minor;
 	disk->fops = &drbd_ops;
-	प्र_लिखो(disk->disk_name, "drbd%d", minor);
-	disk->निजी_data = device;
+	sprintf(disk->disk_name, "drbd%d", minor);
+	disk->private_data = device;
 
-	blk_queue_ग_लिखो_cache(q, true, true);
+	blk_queue_write_cache(q, true, true);
 	/* Setting the max_hw_sectors to an odd value of 8kibyte here
 	   This triggers a max_bio_size message upon first attach or connect */
 	blk_queue_max_hw_sectors(q, DRBD_MAX_BIO_SIZE_SAFE >> 8);
 
 	device->md_io.page = alloc_page(GFP_KERNEL);
-	अगर (!device->md_io.page)
-		जाओ out_no_io_page;
+	if (!device->md_io.page)
+		goto out_no_io_page;
 
-	अगर (drbd_bm_init(device))
-		जाओ out_no_biपंचांगap;
-	device->पढ़ो_requests = RB_ROOT;
-	device->ग_लिखो_requests = RB_ROOT;
+	if (drbd_bm_init(device))
+		goto out_no_bitmap;
+	device->read_requests = RB_ROOT;
+	device->write_requests = RB_ROOT;
 
 	id = idr_alloc(&drbd_devices, device, minor, minor + 1, GFP_KERNEL);
-	अगर (id < 0) अणु
-		अगर (id == -ENOSPC)
+	if (id < 0) {
+		if (id == -ENOSPC)
 			err = ERR_MINOR_OR_VOLUME_EXISTS;
-		जाओ out_no_minor_idr;
-	पूर्ण
+		goto out_no_minor_idr;
+	}
 	kref_get(&device->kref);
 
 	id = idr_alloc(&resource->devices, device, vnr, vnr + 1, GFP_KERNEL);
-	अगर (id < 0) अणु
-		अगर (id == -ENOSPC)
+	if (id < 0) {
+		if (id == -ENOSPC)
 			err = ERR_MINOR_OR_VOLUME_EXISTS;
-		जाओ out_idr_हटाओ_minor;
-	पूर्ण
+		goto out_idr_remove_minor;
+	}
 	kref_get(&device->kref);
 
 	INIT_LIST_HEAD(&device->peer_devices);
-	INIT_LIST_HEAD(&device->pending_biपंचांगap_io);
-	क्रम_each_connection(connection, resource) अणु
-		peer_device = kzalloc(माप(काष्ठा drbd_peer_device), GFP_KERNEL);
-		अगर (!peer_device)
-			जाओ out_idr_हटाओ_from_resource;
+	INIT_LIST_HEAD(&device->pending_bitmap_io);
+	for_each_connection(connection, resource) {
+		peer_device = kzalloc(sizeof(struct drbd_peer_device), GFP_KERNEL);
+		if (!peer_device)
+			goto out_idr_remove_from_resource;
 		peer_device->connection = connection;
 		peer_device->device = device;
 
@@ -2786,143 +2785,143 @@ fail:
 		kref_get(&device->kref);
 
 		id = idr_alloc(&connection->peer_devices, peer_device, vnr, vnr + 1, GFP_KERNEL);
-		अगर (id < 0) अणु
-			अगर (id == -ENOSPC)
+		if (id < 0) {
+			if (id == -ENOSPC)
 				err = ERR_INVALID_REQUEST;
-			जाओ out_idr_हटाओ_from_resource;
-		पूर्ण
+			goto out_idr_remove_from_resource;
+		}
 		kref_get(&connection->kref);
 		INIT_WORK(&peer_device->send_acks_work, drbd_send_acks_wf);
-	पूर्ण
+	}
 
-	अगर (init_submitter(device)) अणु
+	if (init_submitter(device)) {
 		err = ERR_NOMEM;
-		जाओ out_idr_हटाओ_vol;
-	पूर्ण
+		goto out_idr_remove_vol;
+	}
 
 	add_disk(disk);
 
 	/* inherit the connection state */
 	device->state.conn = first_connection(resource)->cstate;
-	अगर (device->state.conn == C_WF_REPORT_PARAMS) अणु
-		क्रम_each_peer_device(peer_device, device)
+	if (device->state.conn == C_WF_REPORT_PARAMS) {
+		for_each_peer_device(peer_device, device)
 			drbd_connected(peer_device);
-	पूर्ण
+	}
 	/* move to create_peer_device() */
-	क्रम_each_peer_device(peer_device, device)
+	for_each_peer_device(peer_device, device)
 		drbd_debugfs_peer_device_add(peer_device);
 	drbd_debugfs_device_add(device);
-	वापस NO_ERROR;
+	return NO_ERROR;
 
-out_idr_हटाओ_vol:
-	idr_हटाओ(&connection->peer_devices, vnr);
-out_idr_हटाओ_from_resource:
-	क्रम_each_connection(connection, resource) अणु
-		peer_device = idr_हटाओ(&connection->peer_devices, vnr);
-		अगर (peer_device)
+out_idr_remove_vol:
+	idr_remove(&connection->peer_devices, vnr);
+out_idr_remove_from_resource:
+	for_each_connection(connection, resource) {
+		peer_device = idr_remove(&connection->peer_devices, vnr);
+		if (peer_device)
 			kref_put(&connection->kref, drbd_destroy_connection);
-	पूर्ण
-	क्रम_each_peer_device_safe(peer_device, पंचांगp_peer_device, device) अणु
+	}
+	for_each_peer_device_safe(peer_device, tmp_peer_device, device) {
 		list_del(&peer_device->peer_devices);
-		kमुक्त(peer_device);
-	पूर्ण
-	idr_हटाओ(&resource->devices, vnr);
-out_idr_हटाओ_minor:
-	idr_हटाओ(&drbd_devices, minor);
+		kfree(peer_device);
+	}
+	idr_remove(&resource->devices, vnr);
+out_idr_remove_minor:
+	idr_remove(&drbd_devices, minor);
 	synchronize_rcu();
 out_no_minor_idr:
 	drbd_bm_cleanup(device);
-out_no_biपंचांगap:
-	__मुक्त_page(device->md_io.page);
+out_no_bitmap:
+	__free_page(device->md_io.page);
 out_no_io_page:
 	put_disk(disk);
 out_no_disk:
 	blk_cleanup_queue(q);
 out_no_q:
 	kref_put(&resource->kref, drbd_destroy_resource);
-	kमुक्त(device);
-	वापस err;
-पूर्ण
+	kfree(device);
+	return err;
+}
 
-व्योम drbd_delete_device(काष्ठा drbd_device *device)
-अणु
-	काष्ठा drbd_resource *resource = device->resource;
-	काष्ठा drbd_connection *connection;
-	काष्ठा drbd_peer_device *peer_device;
+void drbd_delete_device(struct drbd_device *device)
+{
+	struct drbd_resource *resource = device->resource;
+	struct drbd_connection *connection;
+	struct drbd_peer_device *peer_device;
 
-	/* move to मुक्त_peer_device() */
-	क्रम_each_peer_device(peer_device, device)
+	/* move to free_peer_device() */
+	for_each_peer_device(peer_device, device)
 		drbd_debugfs_peer_device_cleanup(peer_device);
 	drbd_debugfs_device_cleanup(device);
-	क्रम_each_connection(connection, resource) अणु
-		idr_हटाओ(&connection->peer_devices, device->vnr);
+	for_each_connection(connection, resource) {
+		idr_remove(&connection->peer_devices, device->vnr);
 		kref_put(&device->kref, drbd_destroy_device);
-	पूर्ण
-	idr_हटाओ(&resource->devices, device->vnr);
+	}
+	idr_remove(&resource->devices, device->vnr);
 	kref_put(&device->kref, drbd_destroy_device);
-	idr_हटाओ(&drbd_devices, device_to_minor(device));
+	idr_remove(&drbd_devices, device_to_minor(device));
 	kref_put(&device->kref, drbd_destroy_device);
 	del_gendisk(device->vdisk);
 	synchronize_rcu();
 	kref_put(&device->kref, drbd_destroy_device);
-पूर्ण
+}
 
-अटल पूर्णांक __init drbd_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init drbd_init(void)
+{
+	int err;
 
-	अगर (drbd_minor_count < DRBD_MINOR_COUNT_MIN || drbd_minor_count > DRBD_MINOR_COUNT_MAX) अणु
+	if (drbd_minor_count < DRBD_MINOR_COUNT_MIN || drbd_minor_count > DRBD_MINOR_COUNT_MAX) {
 		pr_err("invalid minor_count (%d)\n", drbd_minor_count);
-#अगर_घोषित MODULE
-		वापस -EINVAL;
-#अन्यथा
+#ifdef MODULE
+		return -EINVAL;
+#else
 		drbd_minor_count = DRBD_MINOR_COUNT_DEF;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	err = रेजिस्टर_blkdev(DRBD_MAJOR, "drbd");
-	अगर (err) अणु
+	err = register_blkdev(DRBD_MAJOR, "drbd");
+	if (err) {
 		pr_err("unable to register block device major %d\n",
 		       DRBD_MAJOR);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
-	 * allocate all necessary काष्ठाs
+	 * allocate all necessary structs
 	 */
-	init_रुकोqueue_head(&drbd_pp_रुको);
+	init_waitqueue_head(&drbd_pp_wait);
 
-	drbd_proc = शून्य; /* play safe क्रम drbd_cleanup */
+	drbd_proc = NULL; /* play safe for drbd_cleanup */
 	idr_init(&drbd_devices);
 
 	mutex_init(&resources_mutex);
 	INIT_LIST_HEAD(&drbd_resources);
 
-	err = drbd_genl_रेजिस्टर();
-	अगर (err) अणु
+	err = drbd_genl_register();
+	if (err) {
 		pr_err("unable to register generic netlink family\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	err = drbd_create_mempools();
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
 	err = -ENOMEM;
-	drbd_proc = proc_create_single("drbd", S_IFREG | 0444 , शून्य, drbd_seq_show);
-	अगर (!drbd_proc)	अणु
+	drbd_proc = proc_create_single("drbd", S_IFREG | 0444 , NULL, drbd_seq_show);
+	if (!drbd_proc)	{
 		pr_err("unable to register proc file\n");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	retry.wq = create_singlethपढ़ो_workqueue("drbd-reissue");
-	अगर (!retry.wq) अणु
+	retry.wq = create_singlethread_workqueue("drbd-reissue");
+	if (!retry.wq) {
 		pr_err("unable to create retry workqueue\n");
-		जाओ fail;
-	पूर्ण
-	INIT_WORK(&retry.worker, करो_retry);
+		goto fail;
+	}
+	INIT_WORK(&retry.worker, do_retry);
 	spin_lock_init(&retry.lock);
-	INIT_LIST_HEAD(&retry.ग_लिखोs);
+	INIT_LIST_HEAD(&retry.writes);
 
 	drbd_debugfs_init();
 
@@ -2931,62 +2930,62 @@ out_no_q:
 	       API_VERSION, PRO_VERSION_MIN, PRO_VERSION_MAX);
 	pr_info("%s\n", drbd_buildtag());
 	pr_info("registered as block device major %d\n", DRBD_MAJOR);
-	वापस 0; /* Success! */
+	return 0; /* Success! */
 
 fail:
 	drbd_cleanup();
-	अगर (err == -ENOMEM)
+	if (err == -ENOMEM)
 		pr_err("ran out of memory\n");
-	अन्यथा
+	else
 		pr_err("initialization failure\n");
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम drbd_मुक्त_one_sock(काष्ठा drbd_socket *ds)
-अणु
-	काष्ठा socket *s;
+static void drbd_free_one_sock(struct drbd_socket *ds)
+{
+	struct socket *s;
 	mutex_lock(&ds->mutex);
 	s = ds->socket;
-	ds->socket = शून्य;
+	ds->socket = NULL;
 	mutex_unlock(&ds->mutex);
-	अगर (s) अणु
-		/* so debugfs करोes not need to mutex_lock() */
+	if (s) {
+		/* so debugfs does not need to mutex_lock() */
 		synchronize_rcu();
-		kernel_sock_shutकरोwn(s, SHUT_RDWR);
+		kernel_sock_shutdown(s, SHUT_RDWR);
 		sock_release(s);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम drbd_मुक्त_sock(काष्ठा drbd_connection *connection)
-अणु
-	अगर (connection->data.socket)
-		drbd_मुक्त_one_sock(&connection->data);
-	अगर (connection->meta.socket)
-		drbd_मुक्त_one_sock(&connection->meta);
-पूर्ण
+void drbd_free_sock(struct drbd_connection *connection)
+{
+	if (connection->data.socket)
+		drbd_free_one_sock(&connection->data);
+	if (connection->meta.socket)
+		drbd_free_one_sock(&connection->meta);
+}
 
 /* meta data management */
 
-व्योम conn_md_sync(काष्ठा drbd_connection *connection)
-अणु
-	काष्ठा drbd_peer_device *peer_device;
-	पूर्णांक vnr;
+void conn_md_sync(struct drbd_connection *connection)
+{
+	struct drbd_peer_device *peer_device;
+	int vnr;
 
-	rcu_पढ़ो_lock();
-	idr_क्रम_each_entry(&connection->peer_devices, peer_device, vnr) अणु
-		काष्ठा drbd_device *device = peer_device->device;
+	rcu_read_lock();
+	idr_for_each_entry(&connection->peer_devices, peer_device, vnr) {
+		struct drbd_device *device = peer_device->device;
 
 		kref_get(&device->kref);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		drbd_md_sync(device);
 		kref_put(&device->kref, drbd_destroy_device);
-		rcu_पढ़ो_lock();
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+		rcu_read_lock();
+	}
+	rcu_read_unlock();
+}
 
 /* aligned 4kByte */
-काष्ठा meta_data_on_disk अणु
+struct meta_data_on_disk {
 	u64 la_size_sect;      /* last agreed size. */
 	u64 uuid[UI_SIZE];   /* UUIDs. */
 	u64 device_uuid;
@@ -2995,9 +2994,9 @@ fail:
 	u32 magic;
 	u32 md_size_sect;
 	u32 al_offset;         /* offset to this block */
-	u32 al_nr_extents;     /* important क्रम restoring the AL (userspace) */
+	u32 al_nr_extents;     /* important for restoring the AL (userspace) */
 	      /* `-- act_log->nr_elements <-- ldev->dc.al_extents */
-	u32 bm_offset;         /* offset to the biपंचांगap, from here */
+	u32 bm_offset;         /* offset to the bitmap, from here */
 	u32 bm_bytes_per_bit;  /* BM_BLOCK_SIZE */
 	u32 la_peer_max_bio_size;   /* last peer max_bio_size */
 
@@ -3006,20 +3005,20 @@ fail:
 	u32 al_stripe_size_4k;
 
 	u8 reserved_u8[4096 - (7*8 + 10*4)];
-पूर्ण __packed;
+} __packed;
 
 
 
-व्योम drbd_md_ग_लिखो(काष्ठा drbd_device *device, व्योम *b)
-अणु
-	काष्ठा meta_data_on_disk *buffer = b;
+void drbd_md_write(struct drbd_device *device, void *b)
+{
+	struct meta_data_on_disk *buffer = b;
 	sector_t sector;
-	पूर्णांक i;
+	int i;
 
-	स_रखो(buffer, 0, माप(*buffer));
+	memset(buffer, 0, sizeof(*buffer));
 
 	buffer->la_size_sect = cpu_to_be64(get_capacity(device->vdisk));
-	क्रम (i = UI_CURRENT; i < UI_SIZE; i++)
+	for (i = UI_CURRENT; i < UI_SIZE; i++)
 		buffer->uuid[i] = cpu_to_be64(device->ldev->md.uuid[i]);
 	buffer->flags = cpu_to_be32(device->ldev->md.flags);
 	buffer->magic = cpu_to_be32(DRBD_MD_MAGIC_84_UNCLEAN);
@@ -3039,40 +3038,40 @@ fail:
 	D_ASSERT(device, drbd_md_ss(device->ldev) == device->ldev->md.md_offset);
 	sector = device->ldev->md.md_offset;
 
-	अगर (drbd_md_sync_page_io(device, device->ldev, sector, REQ_OP_WRITE)) अणु
+	if (drbd_md_sync_page_io(device, device->ldev, sector, REQ_OP_WRITE)) {
 		/* this was a try anyways ... */
 		drbd_err(device, "meta data update failed!\n");
 		drbd_chk_io_error(device, 1, DRBD_META_IO_ERROR);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * drbd_md_sync() - Writes the meta data super block अगर the MD_सूचीTY flag bit is set
+ * drbd_md_sync() - Writes the meta data super block if the MD_DIRTY flag bit is set
  * @device:	DRBD device.
  */
-व्योम drbd_md_sync(काष्ठा drbd_device *device)
-अणु
-	काष्ठा meta_data_on_disk *buffer;
+void drbd_md_sync(struct drbd_device *device)
+{
+	struct meta_data_on_disk *buffer;
 
 	/* Don't accidentally change the DRBD meta data layout. */
 	BUILD_BUG_ON(UI_SIZE != 4);
-	BUILD_BUG_ON(माप(काष्ठा meta_data_on_disk) != 4096);
+	BUILD_BUG_ON(sizeof(struct meta_data_on_disk) != 4096);
 
-	del_समयr(&device->md_sync_समयr);
-	/* समयr may be rearmed by drbd_md_mark_dirty() now. */
-	अगर (!test_and_clear_bit(MD_सूचीTY, &device->flags))
-		वापस;
+	del_timer(&device->md_sync_timer);
+	/* timer may be rearmed by drbd_md_mark_dirty() now. */
+	if (!test_and_clear_bit(MD_DIRTY, &device->flags))
+		return;
 
-	/* We use here D_FAILED and not D_ATTACHING because we try to ग_लिखो
-	 * metadata even अगर we detach due to a disk failure! */
-	अगर (!get_ldev_अगर_state(device, D_FAILED))
-		वापस;
+	/* We use here D_FAILED and not D_ATTACHING because we try to write
+	 * metadata even if we detach due to a disk failure! */
+	if (!get_ldev_if_state(device, D_FAILED))
+		return;
 
 	buffer = drbd_md_get_buffer(device, __func__);
-	अगर (!buffer)
-		जाओ out;
+	if (!buffer)
+		goto out;
 
-	drbd_md_ग_लिखो(device, buffer);
+	drbd_md_write(device, buffer);
 
 	/* Update device->ldev->md.la_size_sect,
 	 * since we updated it on metadata. */
@@ -3081,118 +3080,118 @@ fail:
 	drbd_md_put_buffer(device);
 out:
 	put_ldev(device);
-पूर्ण
+}
 
-अटल पूर्णांक check_activity_log_stripe_size(काष्ठा drbd_device *device,
-		काष्ठा meta_data_on_disk *on_disk,
-		काष्ठा drbd_md *in_core)
-अणु
+static int check_activity_log_stripe_size(struct drbd_device *device,
+		struct meta_data_on_disk *on_disk,
+		struct drbd_md *in_core)
+{
 	u32 al_stripes = be32_to_cpu(on_disk->al_stripes);
 	u32 al_stripe_size_4k = be32_to_cpu(on_disk->al_stripe_size_4k);
 	u64 al_size_4k;
 
-	/* both not set: शेष to old fixed size activity log */
-	अगर (al_stripes == 0 && al_stripe_size_4k == 0) अणु
+	/* both not set: default to old fixed size activity log */
+	if (al_stripes == 0 && al_stripe_size_4k == 0) {
 		al_stripes = 1;
 		al_stripe_size_4k = MD_32kB_SECT/8;
-	पूर्ण
+	}
 
 	/* some paranoia plausibility checks */
 
 	/* we need both values to be set */
-	अगर (al_stripes == 0 || al_stripe_size_4k == 0)
-		जाओ err;
+	if (al_stripes == 0 || al_stripe_size_4k == 0)
+		goto err;
 
 	al_size_4k = (u64)al_stripes * al_stripe_size_4k;
 
-	/* Upper limit of activity log area, to aव्योम potential overflow
+	/* Upper limit of activity log area, to avoid potential overflow
 	 * problems in al_tr_number_to_on_disk_sector(). As right now, more
 	 * than 72 * 4k blocks total only increases the amount of history,
 	 * limiting this arbitrarily to 16 GB is not a real limitation ;-)  */
-	अगर (al_size_4k > (16 * 1024 * 1024/4))
-		जाओ err;
+	if (al_size_4k > (16 * 1024 * 1024/4))
+		goto err;
 
 	/* Lower limit: we need at least 8 transaction slots (32kB)
-	 * to not अवरोध existing setups */
-	अगर (al_size_4k < MD_32kB_SECT/8)
-		जाओ err;
+	 * to not break existing setups */
+	if (al_size_4k < MD_32kB_SECT/8)
+		goto err;
 
 	in_core->al_stripe_size_4k = al_stripe_size_4k;
 	in_core->al_stripes = al_stripes;
 	in_core->al_size_4k = al_size_4k;
 
-	वापस 0;
+	return 0;
 err:
 	drbd_err(device, "invalid activity log striping: al_stripes=%u, al_stripe_size_4k=%u\n",
 			al_stripes, al_stripe_size_4k);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक check_offsets_and_sizes(काष्ठा drbd_device *device, काष्ठा drbd_backing_dev *bdev)
-अणु
+static int check_offsets_and_sizes(struct drbd_device *device, struct drbd_backing_dev *bdev)
+{
 	sector_t capacity = drbd_get_capacity(bdev->md_bdev);
-	काष्ठा drbd_md *in_core = &bdev->md;
+	struct drbd_md *in_core = &bdev->md;
 	s32 on_disk_al_sect;
 	s32 on_disk_bm_sect;
 
 	/* The on-disk size of the activity log, calculated from offsets, and
 	 * the size of the activity log calculated from the stripe settings,
 	 * should match.
-	 * Though we could relax this a bit: it is ok, अगर the striped activity log
+	 * Though we could relax this a bit: it is ok, if the striped activity log
 	 * fits in the available on-disk activity log size.
-	 * Right now, that would अवरोध how resize is implemented.
+	 * Right now, that would break how resize is implemented.
 	 * TODO: make drbd_determine_dev_size() (and the drbdmeta tool) aware
 	 * of possible unused padding space in the on disk layout. */
-	अगर (in_core->al_offset < 0) अणु
-		अगर (in_core->bm_offset > in_core->al_offset)
-			जाओ err;
+	if (in_core->al_offset < 0) {
+		if (in_core->bm_offset > in_core->al_offset)
+			goto err;
 		on_disk_al_sect = -in_core->al_offset;
 		on_disk_bm_sect = in_core->al_offset - in_core->bm_offset;
-	पूर्ण अन्यथा अणु
-		अगर (in_core->al_offset != MD_4kB_SECT)
-			जाओ err;
-		अगर (in_core->bm_offset < in_core->al_offset + in_core->al_size_4k * MD_4kB_SECT)
-			जाओ err;
+	} else {
+		if (in_core->al_offset != MD_4kB_SECT)
+			goto err;
+		if (in_core->bm_offset < in_core->al_offset + in_core->al_size_4k * MD_4kB_SECT)
+			goto err;
 
 		on_disk_al_sect = in_core->bm_offset - MD_4kB_SECT;
 		on_disk_bm_sect = in_core->md_size_sect - in_core->bm_offset;
-	पूर्ण
+	}
 
 	/* old fixed size meta data is exactly that: fixed. */
-	अगर (in_core->meta_dev_idx >= 0) अणु
-		अगर (in_core->md_size_sect != MD_128MB_SECT
+	if (in_core->meta_dev_idx >= 0) {
+		if (in_core->md_size_sect != MD_128MB_SECT
 		||  in_core->al_offset != MD_4kB_SECT
 		||  in_core->bm_offset != MD_4kB_SECT + MD_32kB_SECT
 		||  in_core->al_stripes != 1
 		||  in_core->al_stripe_size_4k != MD_32kB_SECT/8)
-			जाओ err;
-	पूर्ण
+			goto err;
+	}
 
-	अगर (capacity < in_core->md_size_sect)
-		जाओ err;
-	अगर (capacity - in_core->md_size_sect < drbd_md_first_sector(bdev))
-		जाओ err;
+	if (capacity < in_core->md_size_sect)
+		goto err;
+	if (capacity - in_core->md_size_sect < drbd_md_first_sector(bdev))
+		goto err;
 
 	/* should be aligned, and at least 32k */
-	अगर ((on_disk_al_sect & 7) || (on_disk_al_sect < MD_32kB_SECT))
-		जाओ err;
+	if ((on_disk_al_sect & 7) || (on_disk_al_sect < MD_32kB_SECT))
+		goto err;
 
-	/* should fit (क्रम now: exactly) पूर्णांकo the available on-disk space;
+	/* should fit (for now: exactly) into the available on-disk space;
 	 * overflow prevention is in check_activity_log_stripe_size() above. */
-	अगर (on_disk_al_sect != in_core->al_size_4k * MD_4kB_SECT)
-		जाओ err;
+	if (on_disk_al_sect != in_core->al_size_4k * MD_4kB_SECT)
+		goto err;
 
 	/* again, should be aligned */
-	अगर (in_core->bm_offset & 7)
-		जाओ err;
+	if (in_core->bm_offset & 7)
+		goto err;
 
-	/* FIXME check क्रम device grow with flex बाह्यal meta data? */
+	/* FIXME check for device grow with flex external meta data? */
 
-	/* can the available biपंचांगap space cover the last agreed device size? */
-	अगर (on_disk_bm_sect < (in_core->la_size_sect+7)/MD_4kB_SECT/8/512)
-		जाओ err;
+	/* can the available bitmap space cover the last agreed device size? */
+	if (on_disk_bm_sect < (in_core->la_size_sect+7)/MD_4kB_SECT/8/512)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
 	drbd_err(device, "meta data offsets don't make sense: idx=%d "
@@ -3201,84 +3200,84 @@ err:
 			in_core->meta_dev_idx,
 			in_core->al_stripes, in_core->al_stripe_size_4k,
 			in_core->al_offset, in_core->bm_offset, in_core->md_size_sect,
-			(अचिन्हित दीर्घ दीर्घ)in_core->la_size_sect,
-			(अचिन्हित दीर्घ दीर्घ)capacity);
+			(unsigned long long)in_core->la_size_sect,
+			(unsigned long long)capacity);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 
 /**
- * drbd_md_पढ़ो() - Reads in the meta data super block
+ * drbd_md_read() - Reads in the meta data super block
  * @device:	DRBD device.
- * @bdev:	Device from which the meta data should be पढ़ो in.
+ * @bdev:	Device from which the meta data should be read in.
  *
- * Return NO_ERROR on success, and an क्रमागत drbd_ret_code in हाल
+ * Return NO_ERROR on success, and an enum drbd_ret_code in case
  * something goes wrong.
  *
- * Called exactly once during drbd_adm_attach(), जबतक still being D_DISKLESS,
- * even beक्रमe @bdev is asचिन्हित to @device->ldev.
+ * Called exactly once during drbd_adm_attach(), while still being D_DISKLESS,
+ * even before @bdev is assigned to @device->ldev.
  */
-पूर्णांक drbd_md_पढ़ो(काष्ठा drbd_device *device, काष्ठा drbd_backing_dev *bdev)
-अणु
-	काष्ठा meta_data_on_disk *buffer;
+int drbd_md_read(struct drbd_device *device, struct drbd_backing_dev *bdev)
+{
+	struct meta_data_on_disk *buffer;
 	u32 magic, flags;
-	पूर्णांक i, rv = NO_ERROR;
+	int i, rv = NO_ERROR;
 
-	अगर (device->state.disk != D_DISKLESS)
-		वापस ERR_DISK_CONFIGURED;
+	if (device->state.disk != D_DISKLESS)
+		return ERR_DISK_CONFIGURED;
 
 	buffer = drbd_md_get_buffer(device, __func__);
-	अगर (!buffer)
-		वापस ERR_NOMEM;
+	if (!buffer)
+		return ERR_NOMEM;
 
 	/* First, figure out where our meta data superblock is located,
-	 * and पढ़ो it. */
+	 * and read it. */
 	bdev->md.meta_dev_idx = bdev->disk_conf->meta_dev_idx;
 	bdev->md.md_offset = drbd_md_ss(bdev);
-	/* Even क्रम (flexible or indexed) बाह्यal meta data,
-	 * initially restrict us to the 4k superblock क्रम now.
+	/* Even for (flexible or indexed) external meta data,
+	 * initially restrict us to the 4k superblock for now.
 	 * Affects the paranoia out-of-range access check in drbd_md_sync_page_io(). */
 	bdev->md.md_size_sect = 8;
 
-	अगर (drbd_md_sync_page_io(device, bdev, bdev->md.md_offset,
-				 REQ_OP_READ)) अणु
-		/* NOTE: can't करो normal error processing here as this is
+	if (drbd_md_sync_page_io(device, bdev, bdev->md.md_offset,
+				 REQ_OP_READ)) {
+		/* NOTE: can't do normal error processing here as this is
 		   called BEFORE disk is attached */
 		drbd_err(device, "Error while reading metadata.\n");
 		rv = ERR_IO_MD_DISK;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	magic = be32_to_cpu(buffer->magic);
 	flags = be32_to_cpu(buffer->flags);
-	अगर (magic == DRBD_MD_MAGIC_84_UNCLEAN ||
-	    (magic == DRBD_MD_MAGIC_08 && !(flags & MDF_AL_CLEAN))) अणु
+	if (magic == DRBD_MD_MAGIC_84_UNCLEAN ||
+	    (magic == DRBD_MD_MAGIC_08 && !(flags & MDF_AL_CLEAN))) {
 			/* btw: that's Activity Log clean, not "all" clean. */
 		drbd_err(device, "Found unclean meta data. Did you \"drbdadm apply-al\"?\n");
 		rv = ERR_MD_UNCLEAN;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	rv = ERR_MD_INVALID;
-	अगर (magic != DRBD_MD_MAGIC_08) अणु
-		अगर (magic == DRBD_MD_MAGIC_07)
+	if (magic != DRBD_MD_MAGIC_08) {
+		if (magic == DRBD_MD_MAGIC_07)
 			drbd_err(device, "Found old (0.7) meta data magic. Did you \"drbdadm create-md\"?\n");
-		अन्यथा
+		else
 			drbd_err(device, "Meta data magic not found. Did you \"drbdadm create-md\"?\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (be32_to_cpu(buffer->bm_bytes_per_bit) != BM_BLOCK_SIZE) अणु
+	if (be32_to_cpu(buffer->bm_bytes_per_bit) != BM_BLOCK_SIZE) {
 		drbd_err(device, "unexpected bm_bytes_per_bit: %u (expected %u)\n",
 		    be32_to_cpu(buffer->bm_bytes_per_bit), BM_BLOCK_SIZE);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 
 	/* convert to in_core endian */
 	bdev->md.la_size_sect = be64_to_cpu(buffer->la_size_sect);
-	क्रम (i = UI_CURRENT; i < UI_SIZE; i++)
+	for (i = UI_CURRENT; i < UI_SIZE; i++)
 		bdev->md.uuid[i] = be64_to_cpu(buffer->uuid[i]);
 	bdev->md.flags = be32_to_cpu(buffer->flags);
 	bdev->md.device_uuid = be64_to_cpu(buffer->device_uuid);
@@ -3287,330 +3286,330 @@ err:
 	bdev->md.al_offset = be32_to_cpu(buffer->al_offset);
 	bdev->md.bm_offset = be32_to_cpu(buffer->bm_offset);
 
-	अगर (check_activity_log_stripe_size(device, buffer, &bdev->md))
-		जाओ err;
-	अगर (check_offsets_and_sizes(device, bdev))
-		जाओ err;
+	if (check_activity_log_stripe_size(device, buffer, &bdev->md))
+		goto err;
+	if (check_offsets_and_sizes(device, bdev))
+		goto err;
 
-	अगर (be32_to_cpu(buffer->bm_offset) != bdev->md.bm_offset) अणु
+	if (be32_to_cpu(buffer->bm_offset) != bdev->md.bm_offset) {
 		drbd_err(device, "unexpected bm_offset: %d (expected %d)\n",
 		    be32_to_cpu(buffer->bm_offset), bdev->md.bm_offset);
-		जाओ err;
-	पूर्ण
-	अगर (be32_to_cpu(buffer->md_size_sect) != bdev->md.md_size_sect) अणु
+		goto err;
+	}
+	if (be32_to_cpu(buffer->md_size_sect) != bdev->md.md_size_sect) {
 		drbd_err(device, "unexpected md_size: %u (expected %u)\n",
 		    be32_to_cpu(buffer->md_size_sect), bdev->md.md_size_sect);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	rv = NO_ERROR;
 
 	spin_lock_irq(&device->resource->req_lock);
-	अगर (device->state.conn < C_CONNECTED) अणु
-		अचिन्हित पूर्णांक peer;
+	if (device->state.conn < C_CONNECTED) {
+		unsigned int peer;
 		peer = be32_to_cpu(buffer->la_peer_max_bio_size);
 		peer = max(peer, DRBD_MAX_BIO_SIZE_SAFE);
 		device->peer_max_bio_size = peer;
-	पूर्ण
+	}
 	spin_unlock_irq(&device->resource->req_lock);
 
  err:
 	drbd_md_put_buffer(device);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
  * drbd_md_mark_dirty() - Mark meta data super block as dirty
  * @device:	DRBD device.
  *
- * Call this function अगर you change anything that should be written to
- * the meta-data super block. This function sets MD_सूचीTY, and starts a
- * समयr that ensures that within five seconds you have to call drbd_md_sync().
+ * Call this function if you change anything that should be written to
+ * the meta-data super block. This function sets MD_DIRTY, and starts a
+ * timer that ensures that within five seconds you have to call drbd_md_sync().
  */
-व्योम drbd_md_mark_dirty(काष्ठा drbd_device *device)
-अणु
-	अगर (!test_and_set_bit(MD_सूचीTY, &device->flags))
-		mod_समयr(&device->md_sync_समयr, jअगरfies + 5*HZ);
-पूर्ण
+void drbd_md_mark_dirty(struct drbd_device *device)
+{
+	if (!test_and_set_bit(MD_DIRTY, &device->flags))
+		mod_timer(&device->md_sync_timer, jiffies + 5*HZ);
+}
 
-व्योम drbd_uuid_move_history(काष्ठा drbd_device *device) __must_hold(local)
-अणु
-	पूर्णांक i;
+void drbd_uuid_move_history(struct drbd_device *device) __must_hold(local)
+{
+	int i;
 
-	क्रम (i = UI_HISTORY_START; i < UI_HISTORY_END; i++)
+	for (i = UI_HISTORY_START; i < UI_HISTORY_END; i++)
 		device->ldev->md.uuid[i+1] = device->ldev->md.uuid[i];
-पूर्ण
+}
 
-व्योम __drbd_uuid_set(काष्ठा drbd_device *device, पूर्णांक idx, u64 val) __must_hold(local)
-अणु
-	अगर (idx == UI_CURRENT) अणु
-		अगर (device->state.role == R_PRIMARY)
+void __drbd_uuid_set(struct drbd_device *device, int idx, u64 val) __must_hold(local)
+{
+	if (idx == UI_CURRENT) {
+		if (device->state.role == R_PRIMARY)
 			val |= 1;
-		अन्यथा
+		else
 			val &= ~((u64)1);
 
 		drbd_set_ed_uuid(device, val);
-	पूर्ण
+	}
 
 	device->ldev->md.uuid[idx] = val;
 	drbd_md_mark_dirty(device);
-पूर्ण
+}
 
-व्योम _drbd_uuid_set(काष्ठा drbd_device *device, पूर्णांक idx, u64 val) __must_hold(local)
-अणु
-	अचिन्हित दीर्घ flags;
+void _drbd_uuid_set(struct drbd_device *device, int idx, u64 val) __must_hold(local)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&device->ldev->md.uuid_lock, flags);
 	__drbd_uuid_set(device, idx, val);
 	spin_unlock_irqrestore(&device->ldev->md.uuid_lock, flags);
-पूर्ण
+}
 
-व्योम drbd_uuid_set(काष्ठा drbd_device *device, पूर्णांक idx, u64 val) __must_hold(local)
-अणु
-	अचिन्हित दीर्घ flags;
+void drbd_uuid_set(struct drbd_device *device, int idx, u64 val) __must_hold(local)
+{
+	unsigned long flags;
 	spin_lock_irqsave(&device->ldev->md.uuid_lock, flags);
-	अगर (device->ldev->md.uuid[idx]) अणु
+	if (device->ldev->md.uuid[idx]) {
 		drbd_uuid_move_history(device);
 		device->ldev->md.uuid[UI_HISTORY_START] = device->ldev->md.uuid[idx];
-	पूर्ण
+	}
 	__drbd_uuid_set(device, idx, val);
 	spin_unlock_irqrestore(&device->ldev->md.uuid_lock, flags);
-पूर्ण
+}
 
 /**
  * drbd_uuid_new_current() - Creates a new current UUID
  * @device:	DRBD device.
  *
- * Creates a new current UUID, and rotates the old current UUID पूर्णांकo
- * the biपंचांगap slot. Causes an incremental resync upon next connect.
+ * Creates a new current UUID, and rotates the old current UUID into
+ * the bitmap slot. Causes an incremental resync upon next connect.
  */
-व्योम drbd_uuid_new_current(काष्ठा drbd_device *device) __must_hold(local)
-अणु
+void drbd_uuid_new_current(struct drbd_device *device) __must_hold(local)
+{
 	u64 val;
-	अचिन्हित दीर्घ दीर्घ bm_uuid;
+	unsigned long long bm_uuid;
 
-	get_अक्रमom_bytes(&val, माप(u64));
+	get_random_bytes(&val, sizeof(u64));
 
 	spin_lock_irq(&device->ldev->md.uuid_lock);
 	bm_uuid = device->ldev->md.uuid[UI_BITMAP];
 
-	अगर (bm_uuid)
+	if (bm_uuid)
 		drbd_warn(device, "bm UUID was already set: %llX\n", bm_uuid);
 
 	device->ldev->md.uuid[UI_BITMAP] = device->ldev->md.uuid[UI_CURRENT];
 	__drbd_uuid_set(device, UI_CURRENT, val);
 	spin_unlock_irq(&device->ldev->md.uuid_lock);
 
-	drbd_prपूर्णांक_uuids(device, "new current UUID");
+	drbd_print_uuids(device, "new current UUID");
 	/* get it to stable storage _now_ */
 	drbd_md_sync(device);
-पूर्ण
+}
 
-व्योम drbd_uuid_set_bm(काष्ठा drbd_device *device, u64 val) __must_hold(local)
-अणु
-	अचिन्हित दीर्घ flags;
-	अगर (device->ldev->md.uuid[UI_BITMAP] == 0 && val == 0)
-		वापस;
+void drbd_uuid_set_bm(struct drbd_device *device, u64 val) __must_hold(local)
+{
+	unsigned long flags;
+	if (device->ldev->md.uuid[UI_BITMAP] == 0 && val == 0)
+		return;
 
 	spin_lock_irqsave(&device->ldev->md.uuid_lock, flags);
-	अगर (val == 0) अणु
+	if (val == 0) {
 		drbd_uuid_move_history(device);
 		device->ldev->md.uuid[UI_HISTORY_START] = device->ldev->md.uuid[UI_BITMAP];
 		device->ldev->md.uuid[UI_BITMAP] = 0;
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ दीर्घ bm_uuid = device->ldev->md.uuid[UI_BITMAP];
-		अगर (bm_uuid)
+	} else {
+		unsigned long long bm_uuid = device->ldev->md.uuid[UI_BITMAP];
+		if (bm_uuid)
 			drbd_warn(device, "bm UUID was already set: %llX\n", bm_uuid);
 
 		device->ldev->md.uuid[UI_BITMAP] = val & ~((u64)1);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&device->ldev->md.uuid_lock, flags);
 
 	drbd_md_mark_dirty(device);
-पूर्ण
+}
 
 /**
- * drbd_bmio_set_n_ग_लिखो() - io_fn क्रम drbd_queue_biपंचांगap_io() or drbd_biपंचांगap_io()
+ * drbd_bmio_set_n_write() - io_fn for drbd_queue_bitmap_io() or drbd_bitmap_io()
  * @device:	DRBD device.
  *
- * Sets all bits in the biपंचांगap and ग_लिखोs the whole biपंचांगap to stable storage.
+ * Sets all bits in the bitmap and writes the whole bitmap to stable storage.
  */
-पूर्णांक drbd_bmio_set_n_ग_लिखो(काष्ठा drbd_device *device) __must_hold(local)
-अणु
-	पूर्णांक rv = -EIO;
+int drbd_bmio_set_n_write(struct drbd_device *device) __must_hold(local)
+{
+	int rv = -EIO;
 
 	drbd_md_set_flag(device, MDF_FULL_SYNC);
 	drbd_md_sync(device);
 	drbd_bm_set_all(device);
 
-	rv = drbd_bm_ग_लिखो(device);
+	rv = drbd_bm_write(device);
 
-	अगर (!rv) अणु
+	if (!rv) {
 		drbd_md_clear_flag(device, MDF_FULL_SYNC);
 		drbd_md_sync(device);
-	पूर्ण
+	}
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /**
- * drbd_bmio_clear_n_ग_लिखो() - io_fn क्रम drbd_queue_biपंचांगap_io() or drbd_biपंचांगap_io()
+ * drbd_bmio_clear_n_write() - io_fn for drbd_queue_bitmap_io() or drbd_bitmap_io()
  * @device:	DRBD device.
  *
- * Clears all bits in the biपंचांगap and ग_लिखोs the whole biपंचांगap to stable storage.
+ * Clears all bits in the bitmap and writes the whole bitmap to stable storage.
  */
-पूर्णांक drbd_bmio_clear_n_ग_लिखो(काष्ठा drbd_device *device) __must_hold(local)
-अणु
+int drbd_bmio_clear_n_write(struct drbd_device *device) __must_hold(local)
+{
 	drbd_resume_al(device);
 	drbd_bm_clear_all(device);
-	वापस drbd_bm_ग_लिखो(device);
-पूर्ण
+	return drbd_bm_write(device);
+}
 
-अटल पूर्णांक w_biपंचांगap_io(काष्ठा drbd_work *w, पूर्णांक unused)
-अणु
-	काष्ठा drbd_device *device =
-		container_of(w, काष्ठा drbd_device, bm_io_work.w);
-	काष्ठा bm_io_work *work = &device->bm_io_work;
-	पूर्णांक rv = -EIO;
+static int w_bitmap_io(struct drbd_work *w, int unused)
+{
+	struct drbd_device *device =
+		container_of(w, struct drbd_device, bm_io_work.w);
+	struct bm_io_work *work = &device->bm_io_work;
+	int rv = -EIO;
 
-	अगर (work->flags != BM_LOCKED_CHANGE_ALLOWED) अणु
-		पूर्णांक cnt = atomic_पढ़ो(&device->ap_bio_cnt);
-		अगर (cnt)
+	if (work->flags != BM_LOCKED_CHANGE_ALLOWED) {
+		int cnt = atomic_read(&device->ap_bio_cnt);
+		if (cnt)
 			drbd_err(device, "FIXME: ap_bio_cnt %d, expected 0; queued for '%s'\n",
 					cnt, work->why);
-	पूर्ण
+	}
 
-	अगर (get_ldev(device)) अणु
+	if (get_ldev(device)) {
 		drbd_bm_lock(device, work->why, work->flags);
 		rv = work->io_fn(device);
 		drbd_bm_unlock(device);
 		put_ldev(device);
-	पूर्ण
+	}
 
 	clear_bit_unlock(BITMAP_IO, &device->flags);
-	wake_up(&device->misc_रुको);
+	wake_up(&device->misc_wait);
 
-	अगर (work->करोne)
-		work->करोne(device, rv);
+	if (work->done)
+		work->done(device, rv);
 
 	clear_bit(BITMAP_IO_QUEUED, &device->flags);
-	work->why = शून्य;
+	work->why = NULL;
 	work->flags = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * drbd_queue_biपंचांगap_io() - Queues an IO operation on the whole biपंचांगap
+ * drbd_queue_bitmap_io() - Queues an IO operation on the whole bitmap
  * @device:	DRBD device.
- * @io_fn:	IO callback to be called when biपंचांगap IO is possible
- * @करोne:	callback to be called after the biपंचांगap IO was perक्रमmed
- * @why:	Descriptive text of the reason क्रम करोing the IO
- * @flags:	Biपंचांगap flags
+ * @io_fn:	IO callback to be called when bitmap IO is possible
+ * @done:	callback to be called after the bitmap IO was performed
+ * @why:	Descriptive text of the reason for doing the IO
+ * @flags:	Bitmap flags
  *
- * While IO on the biपंचांगap happens we मुक्तze application IO thus we ensure
+ * While IO on the bitmap happens we freeze application IO thus we ensure
  * that drbd_set_out_of_sync() can not be called. This function MAY ONLY be
- * called from worker context. It MUST NOT be used जबतक a previous such
+ * called from worker context. It MUST NOT be used while a previous such
  * work is still pending!
  *
- * Its worker function enबंदs the call of io_fn() by get_ldev() and
+ * Its worker function encloses the call of io_fn() by get_ldev() and
  * put_ldev().
  */
-व्योम drbd_queue_biपंचांगap_io(काष्ठा drbd_device *device,
-			  पूर्णांक (*io_fn)(काष्ठा drbd_device *),
-			  व्योम (*करोne)(काष्ठा drbd_device *, पूर्णांक),
-			  अक्षर *why, क्रमागत bm_flag flags)
-अणु
+void drbd_queue_bitmap_io(struct drbd_device *device,
+			  int (*io_fn)(struct drbd_device *),
+			  void (*done)(struct drbd_device *, int),
+			  char *why, enum bm_flag flags)
+{
 	D_ASSERT(device, current == first_peer_device(device)->connection->worker.task);
 
 	D_ASSERT(device, !test_bit(BITMAP_IO_QUEUED, &device->flags));
 	D_ASSERT(device, !test_bit(BITMAP_IO, &device->flags));
 	D_ASSERT(device, list_empty(&device->bm_io_work.w.list));
-	अगर (device->bm_io_work.why)
+	if (device->bm_io_work.why)
 		drbd_err(device, "FIXME going to queue '%s' but '%s' still pending?\n",
 			why, device->bm_io_work.why);
 
 	device->bm_io_work.io_fn = io_fn;
-	device->bm_io_work.करोne = करोne;
+	device->bm_io_work.done = done;
 	device->bm_io_work.why = why;
 	device->bm_io_work.flags = flags;
 
 	spin_lock_irq(&device->resource->req_lock);
 	set_bit(BITMAP_IO, &device->flags);
-	/* करोn't रुको क्रम pending application IO अगर the caller indicates that
-	 * application IO करोes not conflict anyways. */
-	अगर (flags == BM_LOCKED_CHANGE_ALLOWED || atomic_पढ़ो(&device->ap_bio_cnt) == 0) अणु
-		अगर (!test_and_set_bit(BITMAP_IO_QUEUED, &device->flags))
+	/* don't wait for pending application IO if the caller indicates that
+	 * application IO does not conflict anyways. */
+	if (flags == BM_LOCKED_CHANGE_ALLOWED || atomic_read(&device->ap_bio_cnt) == 0) {
+		if (!test_and_set_bit(BITMAP_IO_QUEUED, &device->flags))
 			drbd_queue_work(&first_peer_device(device)->connection->sender_work,
 					&device->bm_io_work.w);
-	पूर्ण
+	}
 	spin_unlock_irq(&device->resource->req_lock);
-पूर्ण
+}
 
 /**
- * drbd_biपंचांगap_io() -  Does an IO operation on the whole biपंचांगap
+ * drbd_bitmap_io() -  Does an IO operation on the whole bitmap
  * @device:	DRBD device.
- * @io_fn:	IO callback to be called when biपंचांगap IO is possible
- * @why:	Descriptive text of the reason क्रम करोing the IO
- * @flags:	Biपंचांगap flags
+ * @io_fn:	IO callback to be called when bitmap IO is possible
+ * @why:	Descriptive text of the reason for doing the IO
+ * @flags:	Bitmap flags
  *
- * मुक्तzes application IO जबतक that the actual IO operations runs. This
+ * freezes application IO while that the actual IO operations runs. This
  * functions MAY NOT be called from worker context.
  */
-पूर्णांक drbd_biपंचांगap_io(काष्ठा drbd_device *device, पूर्णांक (*io_fn)(काष्ठा drbd_device *),
-		अक्षर *why, क्रमागत bm_flag flags)
-अणु
-	/* Only suspend io, अगर some operation is supposed to be locked out */
-	स्थिर bool करो_suspend_io = flags & (BM_DONT_CLEAR|BM_DONT_SET|BM_DONT_TEST);
-	पूर्णांक rv;
+int drbd_bitmap_io(struct drbd_device *device, int (*io_fn)(struct drbd_device *),
+		char *why, enum bm_flag flags)
+{
+	/* Only suspend io, if some operation is supposed to be locked out */
+	const bool do_suspend_io = flags & (BM_DONT_CLEAR|BM_DONT_SET|BM_DONT_TEST);
+	int rv;
 
 	D_ASSERT(device, current != first_peer_device(device)->connection->worker.task);
 
-	अगर (करो_suspend_io)
+	if (do_suspend_io)
 		drbd_suspend_io(device);
 
 	drbd_bm_lock(device, why, flags);
 	rv = io_fn(device);
 	drbd_bm_unlock(device);
 
-	अगर (करो_suspend_io)
+	if (do_suspend_io)
 		drbd_resume_io(device);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-व्योम drbd_md_set_flag(काष्ठा drbd_device *device, पूर्णांक flag) __must_hold(local)
-अणु
-	अगर ((device->ldev->md.flags & flag) != flag) अणु
+void drbd_md_set_flag(struct drbd_device *device, int flag) __must_hold(local)
+{
+	if ((device->ldev->md.flags & flag) != flag) {
 		drbd_md_mark_dirty(device);
 		device->ldev->md.flags |= flag;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम drbd_md_clear_flag(काष्ठा drbd_device *device, पूर्णांक flag) __must_hold(local)
-अणु
-	अगर ((device->ldev->md.flags & flag) != 0) अणु
+void drbd_md_clear_flag(struct drbd_device *device, int flag) __must_hold(local)
+{
+	if ((device->ldev->md.flags & flag) != 0) {
 		drbd_md_mark_dirty(device);
 		device->ldev->md.flags &= ~flag;
-	पूर्ण
-पूर्ण
-पूर्णांक drbd_md_test_flag(काष्ठा drbd_backing_dev *bdev, पूर्णांक flag)
-अणु
-	वापस (bdev->md.flags & flag) != 0;
-पूर्ण
+	}
+}
+int drbd_md_test_flag(struct drbd_backing_dev *bdev, int flag)
+{
+	return (bdev->md.flags & flag) != 0;
+}
 
-अटल व्योम md_sync_समयr_fn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा drbd_device *device = from_समयr(device, t, md_sync_समयr);
+static void md_sync_timer_fn(struct timer_list *t)
+{
+	struct drbd_device *device = from_timer(device, t, md_sync_timer);
 	drbd_device_post_work(device, MD_SYNC);
-पूर्ण
+}
 
-स्थिर अक्षर *cmdname(क्रमागत drbd_packet cmd)
-अणु
+const char *cmdname(enum drbd_packet cmd)
+{
 	/* THINK may need to become several global tables
 	 * when we want to support more than
 	 * one PRO_VERSION */
-	अटल स्थिर अक्षर *cmdnames[] = अणु
+	static const char *cmdnames[] = {
 		[P_DATA]	        = "Data",
 		[P_WSAME]	        = "WriteSame",
 		[P_TRIM]	        = "Trim",
@@ -3660,113 +3659,113 @@ err:
 		[P_RS_THIN_REQ]         = "rs_thin_req",
 		[P_RS_DEALLOCATED]      = "rs_deallocated",
 
-		/* क्रमागत drbd_packet, but not commands - obsoleted flags:
+		/* enum drbd_packet, but not commands - obsoleted flags:
 		 *	P_MAY_IGNORE
 		 *	P_MAX_OPT_CMD
 		 */
-	पूर्ण;
+	};
 
-	/* too big क्रम the array: 0xfffX */
-	अगर (cmd == P_INITIAL_META)
-		वापस "InitialMeta";
-	अगर (cmd == P_INITIAL_DATA)
-		वापस "InitialData";
-	अगर (cmd == P_CONNECTION_FEATURES)
-		वापस "ConnectionFeatures";
-	अगर (cmd >= ARRAY_SIZE(cmdnames))
-		वापस "Unknown";
-	वापस cmdnames[cmd];
-पूर्ण
+	/* too big for the array: 0xfffX */
+	if (cmd == P_INITIAL_META)
+		return "InitialMeta";
+	if (cmd == P_INITIAL_DATA)
+		return "InitialData";
+	if (cmd == P_CONNECTION_FEATURES)
+		return "ConnectionFeatures";
+	if (cmd >= ARRAY_SIZE(cmdnames))
+		return "Unknown";
+	return cmdnames[cmd];
+}
 
 /**
- * drbd_रुको_misc  -  रुको क्रम a request to make progress
+ * drbd_wait_misc  -  wait for a request to make progress
  * @device:	device associated with the request
- * @i:		the काष्ठा drbd_पूर्णांकerval embedded in काष्ठा drbd_request or
- *		काष्ठा drbd_peer_request
+ * @i:		the struct drbd_interval embedded in struct drbd_request or
+ *		struct drbd_peer_request
  */
-पूर्णांक drbd_रुको_misc(काष्ठा drbd_device *device, काष्ठा drbd_पूर्णांकerval *i)
-अणु
-	काष्ठा net_conf *nc;
-	DEFINE_WAIT(रुको);
-	दीर्घ समयout;
+int drbd_wait_misc(struct drbd_device *device, struct drbd_interval *i)
+{
+	struct net_conf *nc;
+	DEFINE_WAIT(wait);
+	long timeout;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	nc = rcu_dereference(first_peer_device(device)->connection->net_conf);
-	अगर (!nc) अणु
-		rcu_पढ़ो_unlock();
-		वापस -ETIMEDOUT;
-	पूर्ण
-	समयout = nc->ko_count ? nc->समयout * HZ / 10 * nc->ko_count : MAX_SCHEDULE_TIMEOUT;
-	rcu_पढ़ो_unlock();
+	if (!nc) {
+		rcu_read_unlock();
+		return -ETIMEDOUT;
+	}
+	timeout = nc->ko_count ? nc->timeout * HZ / 10 * nc->ko_count : MAX_SCHEDULE_TIMEOUT;
+	rcu_read_unlock();
 
-	/* Indicate to wake up device->misc_रुको on progress.  */
-	i->रुकोing = true;
-	prepare_to_रुको(&device->misc_रुको, &रुको, TASK_INTERRUPTIBLE);
+	/* Indicate to wake up device->misc_wait on progress.  */
+	i->waiting = true;
+	prepare_to_wait(&device->misc_wait, &wait, TASK_INTERRUPTIBLE);
 	spin_unlock_irq(&device->resource->req_lock);
-	समयout = schedule_समयout(समयout);
-	finish_रुको(&device->misc_रुको, &रुको);
+	timeout = schedule_timeout(timeout);
+	finish_wait(&device->misc_wait, &wait);
 	spin_lock_irq(&device->resource->req_lock);
-	अगर (!समयout || device->state.conn < C_CONNECTED)
-		वापस -ETIMEDOUT;
-	अगर (संकेत_pending(current))
-		वापस -ERESTARTSYS;
-	वापस 0;
-पूर्ण
+	if (!timeout || device->state.conn < C_CONNECTED)
+		return -ETIMEDOUT;
+	if (signal_pending(current))
+		return -ERESTARTSYS;
+	return 0;
+}
 
-व्योम lock_all_resources(व्योम)
-अणु
-	काष्ठा drbd_resource *resource;
-	पूर्णांक __maybe_unused i = 0;
+void lock_all_resources(void)
+{
+	struct drbd_resource *resource;
+	int __maybe_unused i = 0;
 
 	mutex_lock(&resources_mutex);
 	local_irq_disable();
-	क्रम_each_resource(resource, &drbd_resources)
+	for_each_resource(resource, &drbd_resources)
 		spin_lock_nested(&resource->req_lock, i++);
-पूर्ण
+}
 
-व्योम unlock_all_resources(व्योम)
-अणु
-	काष्ठा drbd_resource *resource;
+void unlock_all_resources(void)
+{
+	struct drbd_resource *resource;
 
-	क्रम_each_resource(resource, &drbd_resources)
+	for_each_resource(resource, &drbd_resources)
 		spin_unlock(&resource->req_lock);
 	local_irq_enable();
 	mutex_unlock(&resources_mutex);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DRBD_FAULT_INJECTION
-/* Fault insertion support including अक्रमom number generator shamelessly
+#ifdef CONFIG_DRBD_FAULT_INJECTION
+/* Fault insertion support including random number generator shamelessly
  * stolen from kernel/rcutorture.c */
-काष्ठा fault_अक्रमom_state अणु
-	अचिन्हित दीर्घ state;
-	अचिन्हित दीर्घ count;
-पूर्ण;
+struct fault_random_state {
+	unsigned long state;
+	unsigned long count;
+};
 
-#घोषणा FAULT_RANDOM_MULT 39916801  /* prime */
-#घोषणा FAULT_RANDOM_ADD	479001701 /* prime */
-#घोषणा FAULT_RANDOM_REFRESH 10000
+#define FAULT_RANDOM_MULT 39916801  /* prime */
+#define FAULT_RANDOM_ADD	479001701 /* prime */
+#define FAULT_RANDOM_REFRESH 10000
 
 /*
- * Crude but fast अक्रमom-number generator.  Uses a linear congruential
- * generator, with occasional help from get_अक्रमom_bytes().
+ * Crude but fast random-number generator.  Uses a linear congruential
+ * generator, with occasional help from get_random_bytes().
  */
-अटल अचिन्हित दीर्घ
-_drbd_fault_अक्रमom(काष्ठा fault_अक्रमom_state *rsp)
-अणु
-	दीर्घ refresh;
+static unsigned long
+_drbd_fault_random(struct fault_random_state *rsp)
+{
+	long refresh;
 
-	अगर (!rsp->count--) अणु
-		get_अक्रमom_bytes(&refresh, माप(refresh));
+	if (!rsp->count--) {
+		get_random_bytes(&refresh, sizeof(refresh));
 		rsp->state += refresh;
 		rsp->count = FAULT_RANDOM_REFRESH;
-	पूर्ण
+	}
 	rsp->state = rsp->state * FAULT_RANDOM_MULT + FAULT_RANDOM_ADD;
-	वापस swahw32(rsp->state);
-पूर्ण
+	return swahw32(rsp->state);
+}
 
-अटल अक्षर *
-_drbd_fault_str(अचिन्हित पूर्णांक type) अणु
-	अटल अक्षर *_faults[] = अणु
+static char *
+_drbd_fault_str(unsigned int type) {
+	static char *_faults[] = {
 		[DRBD_FAULT_MD_WR] = "Meta-data write",
 		[DRBD_FAULT_MD_RD] = "Meta-data read",
 		[DRBD_FAULT_RS_WR] = "Resync write",
@@ -3777,53 +3776,53 @@ _drbd_fault_str(अचिन्हित पूर्णांक type) अण�
 		[DRBD_FAULT_BM_ALLOC] = "BM allocation",
 		[DRBD_FAULT_AL_EE] = "EE allocation",
 		[DRBD_FAULT_RECEIVE] = "receive data corruption",
-	पूर्ण;
+	};
 
-	वापस (type < DRBD_FAULT_MAX) ? _faults[type] : "**Unknown**";
-पूर्ण
+	return (type < DRBD_FAULT_MAX) ? _faults[type] : "**Unknown**";
+}
 
-अचिन्हित पूर्णांक
-_drbd_insert_fault(काष्ठा drbd_device *device, अचिन्हित पूर्णांक type)
-अणु
-	अटल काष्ठा fault_अक्रमom_state rrs = अणु0, 0पूर्ण;
+unsigned int
+_drbd_insert_fault(struct drbd_device *device, unsigned int type)
+{
+	static struct fault_random_state rrs = {0, 0};
 
-	अचिन्हित पूर्णांक ret = (
+	unsigned int ret = (
 		(drbd_fault_devs == 0 ||
 			((1 << device_to_minor(device)) & drbd_fault_devs) != 0) &&
-		(((_drbd_fault_अक्रमom(&rrs) % 100) + 1) <= drbd_fault_rate));
+		(((_drbd_fault_random(&rrs) % 100) + 1) <= drbd_fault_rate));
 
-	अगर (ret) अणु
+	if (ret) {
 		drbd_fault_count++;
 
-		अगर (__ratelimit(&drbd_ratelimit_state))
+		if (__ratelimit(&drbd_ratelimit_state))
 			drbd_warn(device, "***Simulating %s failure\n",
 				_drbd_fault_str(type));
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-स्थिर अक्षर *drbd_buildtag(व्योम)
-अणु
-	/* DRBD built from बाह्यal sources has here a reference to the
+const char *drbd_buildtag(void)
+{
+	/* DRBD built from external sources has here a reference to the
 	   git hash of the source code. */
 
-	अटल अक्षर buildtag[38] = "\0uilt-in";
+	static char buildtag[38] = "\0uilt-in";
 
-	अगर (buildtag[0] == 0) अणु
-#अगर_घोषित MODULE
-		प्र_लिखो(buildtag, "srcversion: %-24s", THIS_MODULE->srcversion);
-#अन्यथा
+	if (buildtag[0] == 0) {
+#ifdef MODULE
+		sprintf(buildtag, "srcversion: %-24s", THIS_MODULE->srcversion);
+#else
 		buildtag[0] = 'b';
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
-	वापस buildtag;
-पूर्ण
+	return buildtag;
+}
 
 module_init(drbd_init)
-module_निकास(drbd_cleanup)
+module_exit(drbd_cleanup)
 
 EXPORT_SYMBOL(drbd_conn_str);
 EXPORT_SYMBOL(drbd_role_str);

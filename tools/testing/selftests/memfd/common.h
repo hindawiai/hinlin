@@ -1,10 +1,9 @@
-<शैली गुरु>
-#अगर_अघोषित COMMON_H_
-#घोषणा COMMON_H_
+#ifndef COMMON_H_
+#define COMMON_H_
 
-बाह्य पूर्णांक hugetlbfs_test;
+extern int hugetlbfs_test;
 
-अचिन्हित दीर्घ शेष_huge_page_size(व्योम);
-पूर्णांक sys_memfd_create(स्थिर अक्षर *name, अचिन्हित पूर्णांक flags);
+unsigned long default_huge_page_size(void);
+int sys_memfd_create(const char *name, unsigned int flags);
 
-#पूर्ण_अगर
+#endif

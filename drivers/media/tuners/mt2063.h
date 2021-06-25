@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MT2063_H__
-#घोषणा __MT2063_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MT2063_H__
+#define __MT2063_H__
 
-#समावेश <media/dvb_frontend.h>
+#include <media/dvb_frontend.h>
 
-काष्ठा mt2063_config अणु
+struct mt2063_config {
 	u8 tuner_address;
-	u32 refघड़ी;
-पूर्ण;
+	u32 refclock;
+};
 
-#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_MT2063)
-काष्ठा dvb_frontend *mt2063_attach(काष्ठा dvb_frontend *fe,
-				   काष्ठा mt2063_config *config,
-				   काष्ठा i2c_adapter *i2c);
+#if IS_REACHABLE(CONFIG_MEDIA_TUNER_MT2063)
+struct dvb_frontend *mt2063_attach(struct dvb_frontend *fe,
+				   struct mt2063_config *config,
+				   struct i2c_adapter *i2c);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत काष्ठा dvb_frontend *mt2063_attach(काष्ठा dvb_frontend *fe,
-				   काष्ठा mt2063_config *config,
-				   काष्ठा i2c_adapter *i2c)
-अणु
-	prपूर्णांकk(KERN_WARNING "%s: Driver disabled by Kconfig\n", __func__);
-	वापस शून्य;
-पूर्ण
+static inline struct dvb_frontend *mt2063_attach(struct dvb_frontend *fe,
+				   struct mt2063_config *config,
+				   struct i2c_adapter *i2c)
+{
+	printk(KERN_WARNING "%s: Driver disabled by Kconfig\n", __func__);
+	return NULL;
+}
 
-#पूर्ण_अगर /* CONFIG_DVB_MT2063 */
+#endif /* CONFIG_DVB_MT2063 */
 
-#पूर्ण_अगर /* __MT2063_H__ */
+#endif /* __MT2063_H__ */

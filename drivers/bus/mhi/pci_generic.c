@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * MHI PCI driver - MHI over PCI controller driver
  *
- * This module is a generic driver क्रम रेजिस्टरing MHI-over-PCI devices,
+ * This module is a generic driver for registering MHI-over-PCI devices,
  * such as PCIe QCOM modems.
  *
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
-#समावेश <linux/aer.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/mhi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/workqueue.h>
+#include <linux/aer.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/mhi.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
+#include <linux/timer.h>
+#include <linux/workqueue.h>
 
-#घोषणा MHI_PCI_DEFAULT_BAR_NUM 0
+#define MHI_PCI_DEFAULT_BAR_NUM 0
 
-#घोषणा MHI_POST_RESET_DELAY_MS 500
+#define MHI_POST_RESET_DELAY_MS 500
 
-#घोषणा HEALTH_CHECK_PERIOD (HZ * 2)
+#define HEALTH_CHECK_PERIOD (HZ * 2)
 
 /**
- * काष्ठा mhi_pci_dev_info - MHI PCI device specअगरic inक्रमmation
+ * struct mhi_pci_dev_info - MHI PCI device specific information
  * @config: MHI controller configuration
  * @name: name of the PCI module
- * @fw: firmware path (अगर any)
- * @edl: emergency करोwnload mode firmware path (अगर any)
- * @bar_num: PCI base address रेजिस्टर to use क्रम MHI MMIO रेजिस्टर space
+ * @fw: firmware path (if any)
+ * @edl: emergency download mode firmware path (if any)
+ * @bar_num: PCI base address register to use for MHI MMIO register space
  * @dma_data_width: DMA transfer word size (32 or 64 bits)
  */
-काष्ठा mhi_pci_dev_info अणु
-	स्थिर काष्ठा mhi_controller_config *config;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *fw;
-	स्थिर अक्षर *edl;
-	अचिन्हित पूर्णांक bar_num;
-	अचिन्हित पूर्णांक dma_data_width;
-पूर्ण;
+struct mhi_pci_dev_info {
+	const struct mhi_controller_config *config;
+	const char *name;
+	const char *fw;
+	const char *edl;
+	unsigned int bar_num;
+	unsigned int dma_data_width;
+};
 
-#घोषणा MHI_CHANNEL_CONFIG_UL(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_UL(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -52,14 +51,14 @@
 		.dir = DMA_TO_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_AMSS),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_DISABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_DISABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = false,		\
-	पूर्ण						\
+		.doorbell_mode_switch = false,		\
+	}						\
 
-#घोषणा MHI_CHANNEL_CONFIG_DL(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_DL(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -67,14 +66,14 @@
 		.dir = DMA_FROM_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_AMSS),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_DISABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_DISABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = false,		\
-	पूर्ण
+		.doorbell_mode_switch = false,		\
+	}
 
-#घोषणा MHI_EVENT_CONFIG_CTRL(ev_ring, el_count) \
-	अणु					\
+#define MHI_EVENT_CONFIG_CTRL(ev_ring, el_count) \
+	{					\
 		.num_elements = el_count,	\
 		.irq_moderation_ms = 0,		\
 		.irq = (ev_ring) + 1,		\
@@ -84,10 +83,10 @@
 		.hardware_event = false,	\
 		.client_managed = false,	\
 		.offload_channel = false,	\
-	पूर्ण
+	}
 
-#घोषणा MHI_CHANNEL_CONFIG_HW_UL(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_HW_UL(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -95,14 +94,14 @@
 		.dir = DMA_TO_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_AMSS),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_ENABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_ENABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = true,		\
-	पूर्ण						\
+		.doorbell_mode_switch = true,		\
+	}						\
 
-#घोषणा MHI_CHANNEL_CONFIG_HW_DL(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_HW_DL(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -110,14 +109,14 @@
 		.dir = DMA_FROM_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_AMSS),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_ENABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_ENABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = true,		\
-	पूर्ण
+		.doorbell_mode_switch = true,		\
+	}
 
-#घोषणा MHI_CHANNEL_CONFIG_UL_SBL(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_UL_SBL(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -125,14 +124,14 @@
 		.dir = DMA_TO_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_SBL),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_DISABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_DISABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = false,		\
-	पूर्ण						\
+		.doorbell_mode_switch = false,		\
+	}						\
 
-#घोषणा MHI_CHANNEL_CONFIG_DL_SBL(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_DL_SBL(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -140,14 +139,14 @@
 		.dir = DMA_FROM_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_SBL),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_DISABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_DISABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = false,		\
-	पूर्ण
+		.doorbell_mode_switch = false,		\
+	}
 
-#घोषणा MHI_CHANNEL_CONFIG_UL_FP(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_UL_FP(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -155,14 +154,14 @@
 		.dir = DMA_TO_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_FP),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_DISABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_DISABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = false,		\
-	पूर्ण						\
+		.doorbell_mode_switch = false,		\
+	}						\
 
-#घोषणा MHI_CHANNEL_CONFIG_DL_FP(ch_num, ch_name, el_count, ev_ring) \
-	अणु						\
+#define MHI_CHANNEL_CONFIG_DL_FP(ch_num, ch_name, el_count, ev_ring) \
+	{						\
 		.num = ch_num,				\
 		.name = ch_name,			\
 		.num_elements = el_count,		\
@@ -170,14 +169,14 @@
 		.dir = DMA_FROM_DEVICE,			\
 		.ee_mask = BIT(MHI_EE_FP),		\
 		.pollcfg = 0,				\
-		.करोorbell = MHI_DB_BRST_DISABLE,	\
-		.lpm_notअगरy = false,			\
+		.doorbell = MHI_DB_BRST_DISABLE,	\
+		.lpm_notify = false,			\
 		.offload_channel = false,		\
-		.करोorbell_mode_चयन = false,		\
-	पूर्ण
+		.doorbell_mode_switch = false,		\
+	}
 
-#घोषणा MHI_EVENT_CONFIG_DATA(ev_ring, el_count) \
-	अणु					\
+#define MHI_EVENT_CONFIG_DATA(ev_ring, el_count) \
+	{					\
 		.num_elements = el_count,	\
 		.irq_moderation_ms = 5,		\
 		.irq = (ev_ring) + 1,		\
@@ -187,10 +186,10 @@
 		.hardware_event = false,	\
 		.client_managed = false,	\
 		.offload_channel = false,	\
-	पूर्ण
+	}
 
-#घोषणा MHI_EVENT_CONFIG_HW_DATA(ev_ring, el_count, ch_num) \
-	अणु					\
+#define MHI_EVENT_CONFIG_HW_DATA(ev_ring, el_count, ch_num) \
+	{					\
 		.num_elements = el_count,	\
 		.irq_moderation_ms = 1,		\
 		.irq = (ev_ring) + 1,		\
@@ -201,9 +200,9 @@
 		.client_managed = false,	\
 		.offload_channel = false,	\
 		.channel = ch_num,		\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mhi_channel_config modem_qcom_v1_mhi_channels[] = अणु
+static const struct mhi_channel_config modem_qcom_v1_mhi_channels[] = {
 	MHI_CHANNEL_CONFIG_UL(4, "DIAG", 16, 1),
 	MHI_CHANNEL_CONFIG_DL(5, "DIAG", 16, 1),
 	MHI_CHANNEL_CONFIG_UL(12, "MBIM", 4, 0),
@@ -216,9 +215,9 @@
 	MHI_CHANNEL_CONFIG_DL_FP(35, "FIREHOSE", 32, 0),
 	MHI_CHANNEL_CONFIG_HW_UL(100, "IP_HW0", 128, 2),
 	MHI_CHANNEL_CONFIG_HW_DL(101, "IP_HW0", 128, 3),
-पूर्ण;
+};
 
-अटल काष्ठा mhi_event_config modem_qcom_v1_mhi_events[] = अणु
+static struct mhi_event_config modem_qcom_v1_mhi_events[] = {
 	/* first ring is control+data ring */
 	MHI_EVENT_CONFIG_CTRL(0, 64),
 	/* DIAG dedicated event ring */
@@ -226,44 +225,44 @@
 	/* Hardware channels request dedicated hardware event rings */
 	MHI_EVENT_CONFIG_HW_DATA(2, 1024, 100),
 	MHI_EVENT_CONFIG_HW_DATA(3, 2048, 101)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_controller_config modem_qcom_v1_mhiv_config = अणु
+static const struct mhi_controller_config modem_qcom_v1_mhiv_config = {
 	.max_channels = 128,
-	.समयout_ms = 8000,
+	.timeout_ms = 8000,
 	.num_channels = ARRAY_SIZE(modem_qcom_v1_mhi_channels),
 	.ch_cfg = modem_qcom_v1_mhi_channels,
 	.num_events = ARRAY_SIZE(modem_qcom_v1_mhi_events),
 	.event_cfg = modem_qcom_v1_mhi_events,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_pci_dev_info mhi_qcom_sdx65_info = अणु
+static const struct mhi_pci_dev_info mhi_qcom_sdx65_info = {
 	.name = "qcom-sdx65m",
 	.fw = "qcom/sdx65m/xbl.elf",
 	.edl = "qcom/sdx65m/edl.mbn",
 	.config = &modem_qcom_v1_mhiv_config,
 	.bar_num = MHI_PCI_DEFAULT_BAR_NUM,
 	.dma_data_width = 32
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_pci_dev_info mhi_qcom_sdx55_info = अणु
+static const struct mhi_pci_dev_info mhi_qcom_sdx55_info = {
 	.name = "qcom-sdx55m",
 	.fw = "qcom/sdx55m/sbl1.mbn",
 	.edl = "qcom/sdx55m/edl.mbn",
 	.config = &modem_qcom_v1_mhiv_config,
 	.bar_num = MHI_PCI_DEFAULT_BAR_NUM,
 	.dma_data_width = 32
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_pci_dev_info mhi_qcom_sdx24_info = अणु
+static const struct mhi_pci_dev_info mhi_qcom_sdx24_info = {
 	.name = "qcom-sdx24",
 	.edl = "qcom/prog_firehose_sdx24.mbn",
 	.config = &modem_qcom_v1_mhiv_config,
 	.bar_num = MHI_PCI_DEFAULT_BAR_NUM,
 	.dma_data_width = 32
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_channel_config mhi_quectel_em1xx_channels[] = अणु
+static const struct mhi_channel_config mhi_quectel_em1xx_channels[] = {
 	MHI_CHANNEL_CONFIG_UL(0, "NMEA", 32, 0),
 	MHI_CHANNEL_CONFIG_DL(1, "NMEA", 32, 0),
 	MHI_CHANNEL_CONFIG_UL_SBL(2, "SAHARA", 32, 0),
@@ -279,33 +278,33 @@
 	MHI_CHANNEL_CONFIG_DL_FP(35, "FIREHOSE", 32, 0),
 	MHI_CHANNEL_CONFIG_HW_UL(100, "IP_HW0_MBIM", 128, 2),
 	MHI_CHANNEL_CONFIG_HW_DL(101, "IP_HW0_MBIM", 128, 3),
-पूर्ण;
+};
 
-अटल काष्ठा mhi_event_config mhi_quectel_em1xx_events[] = अणु
+static struct mhi_event_config mhi_quectel_em1xx_events[] = {
 	MHI_EVENT_CONFIG_CTRL(0, 128),
 	MHI_EVENT_CONFIG_DATA(1, 128),
 	MHI_EVENT_CONFIG_HW_DATA(2, 1024, 100),
 	MHI_EVENT_CONFIG_HW_DATA(3, 1024, 101)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_controller_config modem_quectel_em1xx_config = अणु
+static const struct mhi_controller_config modem_quectel_em1xx_config = {
 	.max_channels = 128,
-	.समयout_ms = 20000,
+	.timeout_ms = 20000,
 	.num_channels = ARRAY_SIZE(mhi_quectel_em1xx_channels),
 	.ch_cfg = mhi_quectel_em1xx_channels,
 	.num_events = ARRAY_SIZE(mhi_quectel_em1xx_events),
 	.event_cfg = mhi_quectel_em1xx_events,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_pci_dev_info mhi_quectel_em1xx_info = अणु
+static const struct mhi_pci_dev_info mhi_quectel_em1xx_info = {
 	.name = "quectel-em1xx",
 	.edl = "qcom/prog_firehose_sdx24.mbn",
 	.config = &modem_quectel_em1xx_config,
 	.bar_num = MHI_PCI_DEFAULT_BAR_NUM,
 	.dma_data_width = 32
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_channel_config mhi_foxconn_sdx55_channels[] = अणु
+static const struct mhi_channel_config mhi_foxconn_sdx55_channels[] = {
 	MHI_CHANNEL_CONFIG_UL(0, "LOOPBACK", 32, 0),
 	MHI_CHANNEL_CONFIG_DL(1, "LOOPBACK", 32, 0),
 	MHI_CHANNEL_CONFIG_UL(4, "DIAG", 32, 1),
@@ -316,674 +315,674 @@
 	MHI_CHANNEL_CONFIG_DL(33, "DUN", 32, 0),
 	MHI_CHANNEL_CONFIG_HW_UL(100, "IP_HW0_MBIM", 128, 2),
 	MHI_CHANNEL_CONFIG_HW_DL(101, "IP_HW0_MBIM", 128, 3),
-पूर्ण;
+};
 
-अटल काष्ठा mhi_event_config mhi_foxconn_sdx55_events[] = अणु
+static struct mhi_event_config mhi_foxconn_sdx55_events[] = {
 	MHI_EVENT_CONFIG_CTRL(0, 128),
 	MHI_EVENT_CONFIG_DATA(1, 128),
 	MHI_EVENT_CONFIG_HW_DATA(2, 1024, 100),
 	MHI_EVENT_CONFIG_HW_DATA(3, 1024, 101)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_controller_config modem_foxconn_sdx55_config = अणु
+static const struct mhi_controller_config modem_foxconn_sdx55_config = {
 	.max_channels = 128,
-	.समयout_ms = 20000,
+	.timeout_ms = 20000,
 	.num_channels = ARRAY_SIZE(mhi_foxconn_sdx55_channels),
 	.ch_cfg = mhi_foxconn_sdx55_channels,
 	.num_events = ARRAY_SIZE(mhi_foxconn_sdx55_events),
 	.event_cfg = mhi_foxconn_sdx55_events,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mhi_pci_dev_info mhi_foxconn_sdx55_info = अणु
+static const struct mhi_pci_dev_info mhi_foxconn_sdx55_info = {
 	.name = "foxconn-sdx55",
 	.fw = "qcom/sdx55m/sbl1.mbn",
 	.edl = "qcom/sdx55m/edl.mbn",
 	.config = &modem_foxconn_sdx55_config,
 	.bar_num = MHI_PCI_DEFAULT_BAR_NUM,
 	.dma_data_width = 32
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pci_device_id mhi_pci_id_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_QCOM, 0x0306),
-		.driver_data = (kernel_uदीर्घ_t) &mhi_qcom_sdx55_info पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_QCOM, 0x0304),
-		.driver_data = (kernel_uदीर्घ_t) &mhi_qcom_sdx24_info पूर्ण,
-	अणु PCI_DEVICE(0x1eac, 0x1001), /* EM120R-GL (sdx24) */
-		.driver_data = (kernel_uदीर्घ_t) &mhi_quectel_em1xx_info पूर्ण,
-	अणु PCI_DEVICE(0x1eac, 0x1002), /* EM160R-GL (sdx24) */
-		.driver_data = (kernel_uदीर्घ_t) &mhi_quectel_em1xx_info पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_QCOM, 0x0308),
-		.driver_data = (kernel_uदीर्घ_t) &mhi_qcom_sdx65_info पूर्ण,
-	/* T99W175 (sdx55), Both क्रम eSIM and Non-eSIM */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_FOXCONN, 0xe0ab),
-		.driver_data = (kernel_uदीर्घ_t) &mhi_foxconn_sdx55_info पूर्ण,
+static const struct pci_device_id mhi_pci_id_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_QCOM, 0x0306),
+		.driver_data = (kernel_ulong_t) &mhi_qcom_sdx55_info },
+	{ PCI_DEVICE(PCI_VENDOR_ID_QCOM, 0x0304),
+		.driver_data = (kernel_ulong_t) &mhi_qcom_sdx24_info },
+	{ PCI_DEVICE(0x1eac, 0x1001), /* EM120R-GL (sdx24) */
+		.driver_data = (kernel_ulong_t) &mhi_quectel_em1xx_info },
+	{ PCI_DEVICE(0x1eac, 0x1002), /* EM160R-GL (sdx24) */
+		.driver_data = (kernel_ulong_t) &mhi_quectel_em1xx_info },
+	{ PCI_DEVICE(PCI_VENDOR_ID_QCOM, 0x0308),
+		.driver_data = (kernel_ulong_t) &mhi_qcom_sdx65_info },
+	/* T99W175 (sdx55), Both for eSIM and Non-eSIM */
+	{ PCI_DEVICE(PCI_VENDOR_ID_FOXCONN, 0xe0ab),
+		.driver_data = (kernel_ulong_t) &mhi_foxconn_sdx55_info },
 	/* DW5930e (sdx55), With eSIM, It's also T99W175 */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_FOXCONN, 0xe0b0),
-		.driver_data = (kernel_uदीर्घ_t) &mhi_foxconn_sdx55_info पूर्ण,
+	{ PCI_DEVICE(PCI_VENDOR_ID_FOXCONN, 0xe0b0),
+		.driver_data = (kernel_ulong_t) &mhi_foxconn_sdx55_info },
 	/* DW5930e (sdx55), Non-eSIM, It's also T99W175 */
-	अणु PCI_DEVICE(PCI_VENDOR_ID_FOXCONN, 0xe0b1),
-		.driver_data = (kernel_uदीर्घ_t) &mhi_foxconn_sdx55_info पूर्ण,
-	अणु  पूर्ण
-पूर्ण;
+	{ PCI_DEVICE(PCI_VENDOR_ID_FOXCONN, 0xe0b1),
+		.driver_data = (kernel_ulong_t) &mhi_foxconn_sdx55_info },
+	{  }
+};
 MODULE_DEVICE_TABLE(pci, mhi_pci_id_table);
 
-क्रमागत mhi_pci_device_status अणु
+enum mhi_pci_device_status {
 	MHI_PCI_DEV_STARTED,
 	MHI_PCI_DEV_SUSPENDED,
-पूर्ण;
+};
 
-काष्ठा mhi_pci_device अणु
-	काष्ठा mhi_controller mhi_cntrl;
-	काष्ठा pci_saved_state *pci_state;
-	काष्ठा work_काष्ठा recovery_work;
-	काष्ठा समयr_list health_check_समयr;
-	अचिन्हित दीर्घ status;
-पूर्ण;
+struct mhi_pci_device {
+	struct mhi_controller mhi_cntrl;
+	struct pci_saved_state *pci_state;
+	struct work_struct recovery_work;
+	struct timer_list health_check_timer;
+	unsigned long status;
+};
 
-अटल पूर्णांक mhi_pci_पढ़ो_reg(काष्ठा mhi_controller *mhi_cntrl,
-			    व्योम __iomem *addr, u32 *out)
-अणु
-	*out = पढ़ोl(addr);
-	वापस 0;
-पूर्ण
+static int mhi_pci_read_reg(struct mhi_controller *mhi_cntrl,
+			    void __iomem *addr, u32 *out)
+{
+	*out = readl(addr);
+	return 0;
+}
 
-अटल व्योम mhi_pci_ग_लिखो_reg(काष्ठा mhi_controller *mhi_cntrl,
-			      व्योम __iomem *addr, u32 val)
-अणु
-	ग_लिखोl(val, addr);
-पूर्ण
+static void mhi_pci_write_reg(struct mhi_controller *mhi_cntrl,
+			      void __iomem *addr, u32 val)
+{
+	writel(val, addr);
+}
 
-अटल व्योम mhi_pci_status_cb(काष्ठा mhi_controller *mhi_cntrl,
-			      क्रमागत mhi_callback cb)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
+static void mhi_pci_status_cb(struct mhi_controller *mhi_cntrl,
+			      enum mhi_callback cb)
+{
+	struct pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
 
-	/* Nothing to करो क्रम now */
-	चयन (cb) अणु
-	हाल MHI_CB_FATAL_ERROR:
-	हाल MHI_CB_SYS_ERROR:
+	/* Nothing to do for now */
+	switch (cb) {
+	case MHI_CB_FATAL_ERROR:
+	case MHI_CB_SYS_ERROR:
 		dev_warn(&pdev->dev, "firmware crashed (%u)\n", cb);
-		pm_runसमय_क्रमbid(&pdev->dev);
-		अवरोध;
-	हाल MHI_CB_EE_MISSION_MODE:
-		pm_runसमय_allow(&pdev->dev);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		pm_runtime_forbid(&pdev->dev);
+		break;
+	case MHI_CB_EE_MISSION_MODE:
+		pm_runtime_allow(&pdev->dev);
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम mhi_pci_wake_get_nop(काष्ठा mhi_controller *mhi_cntrl, bool क्रमce)
-अणु
+static void mhi_pci_wake_get_nop(struct mhi_controller *mhi_cntrl, bool force)
+{
 	/* no-op */
-पूर्ण
+}
 
-अटल व्योम mhi_pci_wake_put_nop(काष्ठा mhi_controller *mhi_cntrl, bool override)
-अणु
+static void mhi_pci_wake_put_nop(struct mhi_controller *mhi_cntrl, bool override)
+{
 	/* no-op */
-पूर्ण
+}
 
-अटल व्योम mhi_pci_wake_toggle_nop(काष्ठा mhi_controller *mhi_cntrl)
-अणु
+static void mhi_pci_wake_toggle_nop(struct mhi_controller *mhi_cntrl)
+{
 	/* no-op */
-पूर्ण
+}
 
-अटल bool mhi_pci_is_alive(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
-	u16 venकरोr = 0;
+static bool mhi_pci_is_alive(struct mhi_controller *mhi_cntrl)
+{
+	struct pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
+	u16 vendor = 0;
 
-	अगर (pci_पढ़ो_config_word(pdev, PCI_VENDOR_ID, &venकरोr))
-		वापस false;
+	if (pci_read_config_word(pdev, PCI_VENDOR_ID, &vendor))
+		return false;
 
-	अगर (venकरोr == (u16) ~0 || venकरोr == 0)
-		वापस false;
+	if (vendor == (u16) ~0 || vendor == 0)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक mhi_pci_claim(काष्ठा mhi_controller *mhi_cntrl,
-			 अचिन्हित पूर्णांक bar_num, u64 dma_mask)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
-	पूर्णांक err;
+static int mhi_pci_claim(struct mhi_controller *mhi_cntrl,
+			 unsigned int bar_num, u64 dma_mask)
+{
+	struct pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
+	int err;
 
 	err = pci_assign_resource(pdev, bar_num);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = pcim_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to enable pci device: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = pcim_iomap_regions(pdev, 1 << bar_num, pci_name(pdev));
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to map pci region: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	mhi_cntrl->regs = pcim_iomap_table(pdev)[bar_num];
 
 	err = pci_set_dma_mask(pdev, dma_mask);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Cannot set proper DMA mask\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = pci_set_consistent_dma_mask(pdev, dma_mask);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "set consistent dma mask failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pci_set_master(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mhi_pci_get_irqs(काष्ठा mhi_controller *mhi_cntrl,
-			    स्थिर काष्ठा mhi_controller_config *mhi_cntrl_config)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
-	पूर्णांक nr_vectors, i;
-	पूर्णांक *irq;
+static int mhi_pci_get_irqs(struct mhi_controller *mhi_cntrl,
+			    const struct mhi_controller_config *mhi_cntrl_config)
+{
+	struct pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
+	int nr_vectors, i;
+	int *irq;
 
 	/*
-	 * Alloc one MSI vector क्रम BHI + one vector per event ring, ideally...
-	 * No explicit pci_मुक्त_irq_vectors required, करोne by pcim_release.
+	 * Alloc one MSI vector for BHI + one vector per event ring, ideally...
+	 * No explicit pci_free_irq_vectors required, done by pcim_release.
 	 */
 	mhi_cntrl->nr_irqs = 1 + mhi_cntrl_config->num_events;
 
 	nr_vectors = pci_alloc_irq_vectors(pdev, 1, mhi_cntrl->nr_irqs, PCI_IRQ_MSI);
-	अगर (nr_vectors < 0) अणु
+	if (nr_vectors < 0) {
 		dev_err(&pdev->dev, "Error allocating MSI vectors %d\n",
 			nr_vectors);
-		वापस nr_vectors;
-	पूर्ण
+		return nr_vectors;
+	}
 
-	अगर (nr_vectors < mhi_cntrl->nr_irqs) अणु
+	if (nr_vectors < mhi_cntrl->nr_irqs) {
 		dev_warn(&pdev->dev, "using shared MSI\n");
 
 		/* Patch msi vectors, use only one (shared) */
-		क्रम (i = 0; i < mhi_cntrl_config->num_events; i++)
+		for (i = 0; i < mhi_cntrl_config->num_events; i++)
 			mhi_cntrl_config->event_cfg[i].irq = 0;
 		mhi_cntrl->nr_irqs = 1;
-	पूर्ण
+	}
 
-	irq = devm_kसुस्मृति(&pdev->dev, mhi_cntrl->nr_irqs, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!irq)
-		वापस -ENOMEM;
+	irq = devm_kcalloc(&pdev->dev, mhi_cntrl->nr_irqs, sizeof(int), GFP_KERNEL);
+	if (!irq)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < mhi_cntrl->nr_irqs; i++) अणु
-		पूर्णांक vector = i >= nr_vectors ? (nr_vectors - 1) : i;
+	for (i = 0; i < mhi_cntrl->nr_irqs; i++) {
+		int vector = i >= nr_vectors ? (nr_vectors - 1) : i;
 
 		irq[i] = pci_irq_vector(pdev, vector);
-	पूर्ण
+	}
 
 	mhi_cntrl->irq = irq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mhi_pci_runसमय_get(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	/* The runसमय_get() MHI callback means:
+static int mhi_pci_runtime_get(struct mhi_controller *mhi_cntrl)
+{
+	/* The runtime_get() MHI callback means:
 	 *    Do whatever is requested to leave M3.
 	 */
-	वापस pm_runसमय_get(mhi_cntrl->cntrl_dev);
-पूर्ण
+	return pm_runtime_get(mhi_cntrl->cntrl_dev);
+}
 
-अटल व्योम mhi_pci_runसमय_put(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	/* The runसमय_put() MHI callback means:
+static void mhi_pci_runtime_put(struct mhi_controller *mhi_cntrl)
+{
+	/* The runtime_put() MHI callback means:
 	 *    Device can be moved in M3 state.
 	 */
-	pm_runसमय_mark_last_busy(mhi_cntrl->cntrl_dev);
-	pm_runसमय_put(mhi_cntrl->cntrl_dev);
-पूर्ण
+	pm_runtime_mark_last_busy(mhi_cntrl->cntrl_dev);
+	pm_runtime_put(mhi_cntrl->cntrl_dev);
+}
 
-अटल व्योम mhi_pci_recovery_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = container_of(work, काष्ठा mhi_pci_device,
+static void mhi_pci_recovery_work(struct work_struct *work)
+{
+	struct mhi_pci_device *mhi_pdev = container_of(work, struct mhi_pci_device,
 						       recovery_work);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
-	काष्ठा pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
-	पूर्णांक err;
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+	struct pci_dev *pdev = to_pci_dev(mhi_cntrl->cntrl_dev);
+	int err;
 
 	dev_warn(&pdev->dev, "device recovery started\n");
 
-	del_समयr(&mhi_pdev->health_check_समयr);
-	pm_runसमय_क्रमbid(&pdev->dev);
+	del_timer(&mhi_pdev->health_check_timer);
+	pm_runtime_forbid(&pdev->dev);
 
 	/* Clean up MHI state */
-	अगर (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) अणु
-		mhi_घातer_करोwn(mhi_cntrl, false);
-		mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-	पूर्ण
+	if (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) {
+		mhi_power_down(mhi_cntrl, false);
+		mhi_unprepare_after_power_down(mhi_cntrl);
+	}
 
-	pci_set_घातer_state(pdev, PCI_D0);
+	pci_set_power_state(pdev, PCI_D0);
 	pci_load_saved_state(pdev, mhi_pdev->pci_state);
 	pci_restore_state(pdev);
 
-	अगर (!mhi_pci_is_alive(mhi_cntrl))
-		जाओ err_try_reset;
+	if (!mhi_pci_is_alive(mhi_cntrl))
+		goto err_try_reset;
 
-	err = mhi_prepare_क्रम_घातer_up(mhi_cntrl);
-	अगर (err)
-		जाओ err_try_reset;
+	err = mhi_prepare_for_power_up(mhi_cntrl);
+	if (err)
+		goto err_try_reset;
 
-	err = mhi_sync_घातer_up(mhi_cntrl);
-	अगर (err)
-		जाओ err_unprepare;
+	err = mhi_sync_power_up(mhi_cntrl);
+	if (err)
+		goto err_unprepare;
 
 	dev_dbg(&pdev->dev, "Recovery completed\n");
 
 	set_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status);
-	mod_समयr(&mhi_pdev->health_check_समयr, jअगरfies + HEALTH_CHECK_PERIOD);
-	वापस;
+	mod_timer(&mhi_pdev->health_check_timer, jiffies + HEALTH_CHECK_PERIOD);
+	return;
 
 err_unprepare:
-	mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
+	mhi_unprepare_after_power_down(mhi_cntrl);
 err_try_reset:
-	अगर (pci_reset_function(pdev))
+	if (pci_reset_function(pdev))
 		dev_err(&pdev->dev, "Recovery failed\n");
-पूर्ण
+}
 
-अटल व्योम health_check(काष्ठा समयr_list *t)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = from_समयr(mhi_pdev, t, health_check_समयr);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+static void health_check(struct timer_list *t)
+{
+	struct mhi_pci_device *mhi_pdev = from_timer(mhi_pdev, t, health_check_timer);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
 
-	अगर (!test_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status) ||
+	if (!test_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status) ||
 			test_bit(MHI_PCI_DEV_SUSPENDED, &mhi_pdev->status))
-		वापस;
+		return;
 
-	अगर (!mhi_pci_is_alive(mhi_cntrl)) अणु
+	if (!mhi_pci_is_alive(mhi_cntrl)) {
 		dev_err(mhi_cntrl->cntrl_dev, "Device died\n");
-		queue_work(प्रणाली_दीर्घ_wq, &mhi_pdev->recovery_work);
-		वापस;
-	पूर्ण
+		queue_work(system_long_wq, &mhi_pdev->recovery_work);
+		return;
+	}
 
 	/* reschedule in two seconds */
-	mod_समयr(&mhi_pdev->health_check_समयr, jअगरfies + HEALTH_CHECK_PERIOD);
-पूर्ण
+	mod_timer(&mhi_pdev->health_check_timer, jiffies + HEALTH_CHECK_PERIOD);
+}
 
-अटल पूर्णांक mhi_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	स्थिर काष्ठा mhi_pci_dev_info *info = (काष्ठा mhi_pci_dev_info *) id->driver_data;
-	स्थिर काष्ठा mhi_controller_config *mhi_cntrl_config;
-	काष्ठा mhi_pci_device *mhi_pdev;
-	काष्ठा mhi_controller *mhi_cntrl;
-	पूर्णांक err;
+static int mhi_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	const struct mhi_pci_dev_info *info = (struct mhi_pci_dev_info *) id->driver_data;
+	const struct mhi_controller_config *mhi_cntrl_config;
+	struct mhi_pci_device *mhi_pdev;
+	struct mhi_controller *mhi_cntrl;
+	int err;
 
 	dev_dbg(&pdev->dev, "MHI PCI device found: %s\n", info->name);
 
 	/* mhi_pdev.mhi_cntrl must be zero-initialized */
-	mhi_pdev = devm_kzalloc(&pdev->dev, माप(*mhi_pdev), GFP_KERNEL);
-	अगर (!mhi_pdev)
-		वापस -ENOMEM;
+	mhi_pdev = devm_kzalloc(&pdev->dev, sizeof(*mhi_pdev), GFP_KERNEL);
+	if (!mhi_pdev)
+		return -ENOMEM;
 
 	INIT_WORK(&mhi_pdev->recovery_work, mhi_pci_recovery_work);
-	समयr_setup(&mhi_pdev->health_check_समयr, health_check, 0);
+	timer_setup(&mhi_pdev->health_check_timer, health_check, 0);
 
 	mhi_cntrl_config = info->config;
 	mhi_cntrl = &mhi_pdev->mhi_cntrl;
 
 	mhi_cntrl->cntrl_dev = &pdev->dev;
-	mhi_cntrl->ioबहु_शुरू = 0;
+	mhi_cntrl->iova_start = 0;
 	mhi_cntrl->iova_stop = (dma_addr_t)DMA_BIT_MASK(info->dma_data_width);
 	mhi_cntrl->fw_image = info->fw;
 	mhi_cntrl->edl_image = info->edl;
 
-	mhi_cntrl->पढ़ो_reg = mhi_pci_पढ़ो_reg;
-	mhi_cntrl->ग_लिखो_reg = mhi_pci_ग_लिखो_reg;
+	mhi_cntrl->read_reg = mhi_pci_read_reg;
+	mhi_cntrl->write_reg = mhi_pci_write_reg;
 	mhi_cntrl->status_cb = mhi_pci_status_cb;
-	mhi_cntrl->runसमय_get = mhi_pci_runसमय_get;
-	mhi_cntrl->runसमय_put = mhi_pci_runसमय_put;
+	mhi_cntrl->runtime_get = mhi_pci_runtime_get;
+	mhi_cntrl->runtime_put = mhi_pci_runtime_put;
 	mhi_cntrl->wake_get = mhi_pci_wake_get_nop;
 	mhi_cntrl->wake_put = mhi_pci_wake_put_nop;
 	mhi_cntrl->wake_toggle = mhi_pci_wake_toggle_nop;
 
 	err = mhi_pci_claim(mhi_cntrl, info->bar_num, DMA_BIT_MASK(info->dma_data_width));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = mhi_pci_get_irqs(mhi_cntrl, mhi_cntrl_config);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	pci_set_drvdata(pdev, mhi_pdev);
 
-	/* Have stored pci confspace at hand क्रम restore in sudden PCI error.
+	/* Have stored pci confspace at hand for restore in sudden PCI error.
 	 * cache the state locally and discard the PCI core one.
 	 */
 	pci_save_state(pdev);
 	mhi_pdev->pci_state = pci_store_saved_state(pdev);
-	pci_load_saved_state(pdev, शून्य);
+	pci_load_saved_state(pdev, NULL);
 
 	pci_enable_pcie_error_reporting(pdev);
 
-	err = mhi_रेजिस्टर_controller(mhi_cntrl, mhi_cntrl_config);
-	अगर (err)
-		वापस err;
+	err = mhi_register_controller(mhi_cntrl, mhi_cntrl_config);
+	if (err)
+		return err;
 
-	/* MHI bus करोes not घातer up the controller by शेष */
-	err = mhi_prepare_क्रम_घातer_up(mhi_cntrl);
-	अगर (err) अणु
+	/* MHI bus does not power up the controller by default */
+	err = mhi_prepare_for_power_up(mhi_cntrl);
+	if (err) {
 		dev_err(&pdev->dev, "failed to prepare MHI controller\n");
-		जाओ err_unरेजिस्टर;
-	पूर्ण
+		goto err_unregister;
+	}
 
-	err = mhi_sync_घातer_up(mhi_cntrl);
-	अगर (err) अणु
+	err = mhi_sync_power_up(mhi_cntrl);
+	if (err) {
 		dev_err(&pdev->dev, "failed to power up MHI controller\n");
-		जाओ err_unprepare;
-	पूर्ण
+		goto err_unprepare;
+	}
 
 	set_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status);
 
 	/* start health check */
-	mod_समयr(&mhi_pdev->health_check_समयr, jअगरfies + HEALTH_CHECK_PERIOD);
+	mod_timer(&mhi_pdev->health_check_timer, jiffies + HEALTH_CHECK_PERIOD);
 
-	/* Only allow runसमय-suspend अगर PME capable (क्रम wakeup) */
-	अगर (pci_pme_capable(pdev, PCI_D3hot)) अणु
-		pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, 2000);
-		pm_runसमय_use_स्वतःsuspend(&pdev->dev);
-		pm_runसमय_mark_last_busy(&pdev->dev);
-		pm_runसमय_put_noidle(&pdev->dev);
-	पूर्ण
+	/* Only allow runtime-suspend if PME capable (for wakeup) */
+	if (pci_pme_capable(pdev, PCI_D3hot)) {
+		pm_runtime_set_autosuspend_delay(&pdev->dev, 2000);
+		pm_runtime_use_autosuspend(&pdev->dev);
+		pm_runtime_mark_last_busy(&pdev->dev);
+		pm_runtime_put_noidle(&pdev->dev);
+	}
 
-	वापस 0;
+	return 0;
 
 err_unprepare:
-	mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-err_unरेजिस्टर:
-	mhi_unरेजिस्टर_controller(mhi_cntrl);
+	mhi_unprepare_after_power_down(mhi_cntrl);
+err_unregister:
+	mhi_unregister_controller(mhi_cntrl);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mhi_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+static void mhi_pci_remove(struct pci_dev *pdev)
+{
+	struct mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
 
-	del_समयr_sync(&mhi_pdev->health_check_समयr);
+	del_timer_sync(&mhi_pdev->health_check_timer);
 	cancel_work_sync(&mhi_pdev->recovery_work);
 
-	अगर (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) अणु
-		mhi_घातer_करोwn(mhi_cntrl, true);
-		mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-	पूर्ण
+	if (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) {
+		mhi_power_down(mhi_cntrl, true);
+		mhi_unprepare_after_power_down(mhi_cntrl);
+	}
 
 	/* balancing probe put_noidle */
-	अगर (pci_pme_capable(pdev, PCI_D3hot))
-		pm_runसमय_get_noresume(&pdev->dev);
+	if (pci_pme_capable(pdev, PCI_D3hot))
+		pm_runtime_get_noresume(&pdev->dev);
 
-	mhi_unरेजिस्टर_controller(mhi_cntrl);
-पूर्ण
+	mhi_unregister_controller(mhi_cntrl);
+}
 
-अटल व्योम mhi_pci_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	mhi_pci_हटाओ(pdev);
-	pci_set_घातer_state(pdev, PCI_D3hot);
-पूर्ण
+static void mhi_pci_shutdown(struct pci_dev *pdev)
+{
+	mhi_pci_remove(pdev);
+	pci_set_power_state(pdev, PCI_D3hot);
+}
 
-अटल व्योम mhi_pci_reset_prepare(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+static void mhi_pci_reset_prepare(struct pci_dev *pdev)
+{
+	struct mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
 
 	dev_info(&pdev->dev, "reset\n");
 
-	del_समयr(&mhi_pdev->health_check_समयr);
+	del_timer(&mhi_pdev->health_check_timer);
 
 	/* Clean up MHI state */
-	अगर (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) अणु
-		mhi_घातer_करोwn(mhi_cntrl, false);
-		mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-	पूर्ण
+	if (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) {
+		mhi_power_down(mhi_cntrl, false);
+		mhi_unprepare_after_power_down(mhi_cntrl);
+	}
 
-	/* cause पूर्णांकernal device reset */
+	/* cause internal device reset */
 	mhi_soc_reset(mhi_cntrl);
 
 	/* Be sure device reset has been executed */
 	msleep(MHI_POST_RESET_DELAY_MS);
-पूर्ण
+}
 
-अटल व्योम mhi_pci_reset_करोne(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
-	पूर्णांक err;
+static void mhi_pci_reset_done(struct pci_dev *pdev)
+{
+	struct mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+	int err;
 
 	/* Restore initial known working PCI state */
 	pci_load_saved_state(pdev, mhi_pdev->pci_state);
 	pci_restore_state(pdev);
 
 	/* Is device status available ? */
-	अगर (!mhi_pci_is_alive(mhi_cntrl)) अणु
+	if (!mhi_pci_is_alive(mhi_cntrl)) {
 		dev_err(&pdev->dev, "reset failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	err = mhi_prepare_क्रम_घातer_up(mhi_cntrl);
-	अगर (err) अणु
+	err = mhi_prepare_for_power_up(mhi_cntrl);
+	if (err) {
 		dev_err(&pdev->dev, "failed to prepare MHI controller\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	err = mhi_sync_घातer_up(mhi_cntrl);
-	अगर (err) अणु
+	err = mhi_sync_power_up(mhi_cntrl);
+	if (err) {
 		dev_err(&pdev->dev, "failed to power up MHI controller\n");
-		mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-		वापस;
-	पूर्ण
+		mhi_unprepare_after_power_down(mhi_cntrl);
+		return;
+	}
 
 	set_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status);
-	mod_समयr(&mhi_pdev->health_check_समयr, jअगरfies + HEALTH_CHECK_PERIOD);
-पूर्ण
+	mod_timer(&mhi_pdev->health_check_timer, jiffies + HEALTH_CHECK_PERIOD);
+}
 
-अटल pci_ers_result_t mhi_pci_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t mhi_pci_error_detected(struct pci_dev *pdev,
 					       pci_channel_state_t state)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+{
+	struct mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
 
 	dev_err(&pdev->dev, "PCI error detected, state = %u\n", state);
 
-	अगर (state == pci_channel_io_perm_failure)
-		वापस PCI_ERS_RESULT_DISCONNECT;
+	if (state == pci_channel_io_perm_failure)
+		return PCI_ERS_RESULT_DISCONNECT;
 
 	/* Clean up MHI state */
-	अगर (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) अणु
-		mhi_घातer_करोwn(mhi_cntrl, false);
-		mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-	पूर्ण अन्यथा अणु
-		/* Nothing to करो */
-		वापस PCI_ERS_RESULT_RECOVERED;
-	पूर्ण
+	if (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) {
+		mhi_power_down(mhi_cntrl, false);
+		mhi_unprepare_after_power_down(mhi_cntrl);
+	} else {
+		/* Nothing to do */
+		return PCI_ERS_RESULT_RECOVERED;
+	}
 
 	pci_disable_device(pdev);
 
-	वापस PCI_ERS_RESULT_NEED_RESET;
-पूर्ण
+	return PCI_ERS_RESULT_NEED_RESET;
+}
 
-अटल pci_ers_result_t mhi_pci_slot_reset(काष्ठा pci_dev *pdev)
-अणु
-	अगर (pci_enable_device(pdev)) अणु
+static pci_ers_result_t mhi_pci_slot_reset(struct pci_dev *pdev)
+{
+	if (pci_enable_device(pdev)) {
 		dev_err(&pdev->dev, "Cannot re-enable PCI device after reset.\n");
-		वापस PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण
+		return PCI_ERS_RESULT_DISCONNECT;
+	}
 
-	वापस PCI_ERS_RESULT_RECOVERED;
-पूर्ण
+	return PCI_ERS_RESULT_RECOVERED;
+}
 
-अटल व्योम mhi_pci_io_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
+static void mhi_pci_io_resume(struct pci_dev *pdev)
+{
+	struct mhi_pci_device *mhi_pdev = pci_get_drvdata(pdev);
 
 	dev_err(&pdev->dev, "PCI slot reset done\n");
 
-	queue_work(प्रणाली_दीर्घ_wq, &mhi_pdev->recovery_work);
-पूर्ण
+	queue_work(system_long_wq, &mhi_pdev->recovery_work);
+}
 
-अटल स्थिर काष्ठा pci_error_handlers mhi_pci_err_handler = अणु
+static const struct pci_error_handlers mhi_pci_err_handler = {
 	.error_detected = mhi_pci_error_detected,
 	.slot_reset = mhi_pci_slot_reset,
 	.resume = mhi_pci_io_resume,
 	.reset_prepare = mhi_pci_reset_prepare,
-	.reset_करोne = mhi_pci_reset_करोne,
-पूर्ण;
+	.reset_done = mhi_pci_reset_done,
+};
 
-अटल पूर्णांक  __maybe_unused mhi_pci_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
-	पूर्णांक err;
+static int  __maybe_unused mhi_pci_runtime_suspend(struct device *dev)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+	int err;
 
-	अगर (test_and_set_bit(MHI_PCI_DEV_SUSPENDED, &mhi_pdev->status))
-		वापस 0;
+	if (test_and_set_bit(MHI_PCI_DEV_SUSPENDED, &mhi_pdev->status))
+		return 0;
 
-	del_समयr(&mhi_pdev->health_check_समयr);
+	del_timer(&mhi_pdev->health_check_timer);
 	cancel_work_sync(&mhi_pdev->recovery_work);
 
-	अगर (!test_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status) ||
+	if (!test_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status) ||
 			mhi_cntrl->ee != MHI_EE_AMSS)
-		जाओ pci_suspend; /* Nothing to करो at MHI level */
+		goto pci_suspend; /* Nothing to do at MHI level */
 
 	/* Transition to M3 state */
 	err = mhi_pm_suspend(mhi_cntrl);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to suspend device: %d\n", err);
 		clear_bit(MHI_PCI_DEV_SUSPENDED, &mhi_pdev->status);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 pci_suspend:
 	pci_disable_device(pdev);
 	pci_wake_from_d3(pdev, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused mhi_pci_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	काष्ठा mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
-	पूर्णांक err;
+static int __maybe_unused mhi_pci_runtime_resume(struct device *dev)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+	int err;
 
-	अगर (!test_and_clear_bit(MHI_PCI_DEV_SUSPENDED, &mhi_pdev->status))
-		वापस 0;
+	if (!test_and_clear_bit(MHI_PCI_DEV_SUSPENDED, &mhi_pdev->status))
+		return 0;
 
 	err = pci_enable_device(pdev);
-	अगर (err)
-		जाओ err_recovery;
+	if (err)
+		goto err_recovery;
 
 	pci_set_master(pdev);
 	pci_wake_from_d3(pdev, false);
 
-	अगर (!test_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status) ||
+	if (!test_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status) ||
 			mhi_cntrl->ee != MHI_EE_AMSS)
-		वापस 0; /* Nothing to करो at MHI level */
+		return 0; /* Nothing to do at MHI level */
 
 	/* Exit M3, transition to M0 state */
 	err = mhi_pm_resume(mhi_cntrl);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to resume device: %d\n", err);
-		जाओ err_recovery;
-	पूर्ण
+		goto err_recovery;
+	}
 
 	/* Resume health check */
-	mod_समयr(&mhi_pdev->health_check_समयr, jअगरfies + HEALTH_CHECK_PERIOD);
+	mod_timer(&mhi_pdev->health_check_timer, jiffies + HEALTH_CHECK_PERIOD);
 
-	/* It can be a remote wakeup (no mhi runसमय_get), update access समय */
-	pm_runसमय_mark_last_busy(dev);
+	/* It can be a remote wakeup (no mhi runtime_get), update access time */
+	pm_runtime_mark_last_busy(dev);
 
-	वापस 0;
+	return 0;
 
 err_recovery:
 	/* Do not fail to not mess up our PCI device state, the device likely
-	 * lost घातer (d3cold) and we simply need to reset it from the recovery
-	 * procedure, trigger the recovery asynchronously to prevent प्रणाली
-	 * suspend निकास delaying.
+	 * lost power (d3cold) and we simply need to reset it from the recovery
+	 * procedure, trigger the recovery asynchronously to prevent system
+	 * suspend exit delaying.
 	 */
-	queue_work(प्रणाली_दीर्घ_wq, &mhi_pdev->recovery_work);
-	pm_runसमय_mark_last_busy(dev);
+	queue_work(system_long_wq, &mhi_pdev->recovery_work);
+	pm_runtime_mark_last_busy(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक  __maybe_unused mhi_pci_suspend(काष्ठा device *dev)
-अणु
-	pm_runसमय_disable(dev);
-	वापस mhi_pci_runसमय_suspend(dev);
-पूर्ण
+static int  __maybe_unused mhi_pci_suspend(struct device *dev)
+{
+	pm_runtime_disable(dev);
+	return mhi_pci_runtime_suspend(dev);
+}
 
-अटल पूर्णांक __maybe_unused mhi_pci_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
+static int __maybe_unused mhi_pci_resume(struct device *dev)
+{
+	int ret;
 
-	/* Depending the platक्रमm, device may have lost घातer (d3cold), we need
+	/* Depending the platform, device may have lost power (d3cold), we need
 	 * to resume it now to check its state and recover when necessary.
 	 */
-	ret = mhi_pci_runसमय_resume(dev);
-	pm_runसमय_enable(dev);
+	ret = mhi_pci_runtime_resume(dev);
+	pm_runtime_enable(dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused mhi_pci_मुक्तze(काष्ठा device *dev)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
-	काष्ठा mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
+static int __maybe_unused mhi_pci_freeze(struct device *dev)
+{
+	struct mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
+	struct mhi_controller *mhi_cntrl = &mhi_pdev->mhi_cntrl;
 
-	/* We want to stop all operations, hibernation करोes not guarantee that
-	 * device will be in the same state as beक्रमe मुक्तzing, especially अगर
-	 * the पूर्णांकermediate restore kernel reinitializes MHI device with new
+	/* We want to stop all operations, hibernation does not guarantee that
+	 * device will be in the same state as before freezing, especially if
+	 * the intermediate restore kernel reinitializes MHI device with new
 	 * context.
 	 */
-	अगर (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) अणु
-		mhi_घातer_करोwn(mhi_cntrl, false);
-		mhi_unprepare_after_घातer_करोwn(mhi_cntrl);
-	पूर्ण
+	if (test_and_clear_bit(MHI_PCI_DEV_STARTED, &mhi_pdev->status)) {
+		mhi_power_down(mhi_cntrl, false);
+		mhi_unprepare_after_power_down(mhi_cntrl);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused mhi_pci_restore(काष्ठा device *dev)
-अणु
-	काष्ठा mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
+static int __maybe_unused mhi_pci_restore(struct device *dev)
+{
+	struct mhi_pci_device *mhi_pdev = dev_get_drvdata(dev);
 
 	/* Reinitialize the device */
-	queue_work(प्रणाली_दीर्घ_wq, &mhi_pdev->recovery_work);
+	queue_work(system_long_wq, &mhi_pdev->recovery_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops mhi_pci_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(mhi_pci_runसमय_suspend, mhi_pci_runसमय_resume, शून्य)
-#अगर_घोषित CONFIG_PM_SLEEP
+static const struct dev_pm_ops mhi_pci_pm_ops = {
+	SET_RUNTIME_PM_OPS(mhi_pci_runtime_suspend, mhi_pci_runtime_resume, NULL)
+#ifdef CONFIG_PM_SLEEP
 	.suspend = mhi_pci_suspend,
 	.resume = mhi_pci_resume,
-	.मुक्तze = mhi_pci_मुक्तze,
+	.freeze = mhi_pci_freeze,
 	.thaw = mhi_pci_restore,
 	.restore = mhi_pci_restore,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा pci_driver mhi_pci_driver = अणु
+static struct pci_driver mhi_pci_driver = {
 	.name		= "mhi-pci-generic",
 	.id_table	= mhi_pci_id_table,
 	.probe		= mhi_pci_probe,
-	.हटाओ		= mhi_pci_हटाओ,
-	.shutकरोwn	= mhi_pci_shutकरोwn,
+	.remove		= mhi_pci_remove,
+	.shutdown	= mhi_pci_shutdown,
 	.err_handler	= &mhi_pci_err_handler,
 	.driver.pm	= &mhi_pci_pm_ops
-पूर्ण;
+};
 module_pci_driver(mhi_pci_driver);
 
 MODULE_AUTHOR("Loic Poulain <loic.poulain@linaro.org>");

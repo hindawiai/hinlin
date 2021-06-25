@@ -1,396 +1,395 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Handle fileserver selection and rotation.
  *
  * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश "internal.h"
-#समावेश "afs_fs.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/sched/signal.h>
+#include "internal.h"
+#include "afs_fs.h"
 
 /*
  * Begin iteration through a server list, starting with the vnode's last used
- * server अगर possible, or the last recorded good server अगर not.
+ * server if possible, or the last recorded good server if not.
  */
-अटल bool afs_start_fs_iteration(काष्ठा afs_operation *op,
-				   काष्ठा afs_vnode *vnode)
-अणु
-	काष्ठा afs_server *server;
-	व्योम *cb_server;
-	पूर्णांक i;
+static bool afs_start_fs_iteration(struct afs_operation *op,
+				   struct afs_vnode *vnode)
+{
+	struct afs_server *server;
+	void *cb_server;
+	int i;
 
-	पढ़ो_lock(&op->volume->servers_lock);
+	read_lock(&op->volume->servers_lock);
 	op->server_list = afs_get_serverlist(
-		rcu_dereference_रक्षित(op->volume->servers,
+		rcu_dereference_protected(op->volume->servers,
 					  lockdep_is_held(&op->volume->servers_lock)));
-	पढ़ो_unlock(&op->volume->servers_lock);
+	read_unlock(&op->volume->servers_lock);
 
 	op->untried = (1UL << op->server_list->nr_servers) - 1;
 	op->index = READ_ONCE(op->server_list->preferred);
 
 	cb_server = vnode->cb_server;
-	अगर (cb_server) अणु
-		/* See अगर the vnode's preferred record is still available */
-		क्रम (i = 0; i < op->server_list->nr_servers; i++) अणु
+	if (cb_server) {
+		/* See if the vnode's preferred record is still available */
+		for (i = 0; i < op->server_list->nr_servers; i++) {
 			server = op->server_list->servers[i].server;
-			अगर (server == cb_server) अणु
+			if (server == cb_server) {
 				op->index = i;
-				जाओ found_पूर्णांकerest;
-			पूर्ण
-		पूर्ण
+				goto found_interest;
+			}
+		}
 
-		/* If we have a lock outstanding on a server that's no दीर्घer
-		 * serving this vnode, then we can't चयन to another server
-		 * and have to वापस an error.
+		/* If we have a lock outstanding on a server that's no longer
+		 * serving this vnode, then we can't switch to another server
+		 * and have to return an error.
 		 */
-		अगर (op->flags & AFS_OPERATION_CUR_ONLY) अणु
+		if (op->flags & AFS_OPERATION_CUR_ONLY) {
 			op->error = -ESTALE;
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
 		/* Note that the callback promise is effectively broken */
-		ग_लिखो_seqlock(&vnode->cb_lock);
+		write_seqlock(&vnode->cb_lock);
 		ASSERTCMP(cb_server, ==, vnode->cb_server);
-		vnode->cb_server = शून्य;
-		अगर (test_and_clear_bit(AFS_VNODE_CB_PROMISED, &vnode->flags))
-			vnode->cb_अवरोध++;
-		ग_लिखो_sequnlock(&vnode->cb_lock);
-	पूर्ण
+		vnode->cb_server = NULL;
+		if (test_and_clear_bit(AFS_VNODE_CB_PROMISED, &vnode->flags))
+			vnode->cb_break++;
+		write_sequnlock(&vnode->cb_lock);
+	}
 
-found_पूर्णांकerest:
-	वापस true;
-पूर्ण
+found_interest:
+	return true;
+}
 
 /*
  * Post volume busy note.
  */
-अटल व्योम afs_busy(काष्ठा afs_volume *volume, u32 पात_code)
-अणु
-	स्थिर अक्षर *m;
+static void afs_busy(struct afs_volume *volume, u32 abort_code)
+{
+	const char *m;
 
-	चयन (पात_code) अणु
-	हाल VOFFLINE:		m = "offline";		अवरोध;
-	हाल VRESTARTING:	m = "restarting";	अवरोध;
-	हाल VSALVAGING:	m = "being salvaged";	अवरोध;
-	शेष:		m = "busy";		अवरोध;
-	पूर्ण
+	switch (abort_code) {
+	case VOFFLINE:		m = "offline";		break;
+	case VRESTARTING:	m = "restarting";	break;
+	case VSALVAGING:	m = "being salvaged";	break;
+	default:		m = "busy";		break;
+	}
 
 	pr_notice("kAFS: Volume %llu '%s' is %s\n", volume->vid, volume->name, m);
-पूर्ण
+}
 
 /*
  * Sleep and retry the operation to the same fileserver.
  */
-अटल bool afs_sleep_and_retry(काष्ठा afs_operation *op)
-अणु
-	अगर (!(op->flags & AFS_OPERATION_UNINTR)) अणु
-		msleep_पूर्णांकerruptible(1000);
-		अगर (संकेत_pending(current)) अणु
+static bool afs_sleep_and_retry(struct afs_operation *op)
+{
+	if (!(op->flags & AFS_OPERATION_UNINTR)) {
+		msleep_interruptible(1000);
+		if (signal_pending(current)) {
 			op->error = -ERESTARTSYS;
-			वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return false;
+		}
+	} else {
 		msleep(1000);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * Select the fileserver to use.  May be called multiple बार to rotate
+ * Select the fileserver to use.  May be called multiple times to rotate
  * through the fileservers.
  */
-bool afs_select_fileserver(काष्ठा afs_operation *op)
-अणु
-	काष्ठा afs_addr_list *alist;
-	काष्ठा afs_server *server;
-	काष्ठा afs_vnode *vnode = op->file[0].vnode;
-	काष्ठा afs_error e;
+bool afs_select_fileserver(struct afs_operation *op)
+{
+	struct afs_addr_list *alist;
+	struct afs_server *server;
+	struct afs_vnode *vnode = op->file[0].vnode;
+	struct afs_error e;
 	u32 rtt;
-	पूर्णांक error = op->ac.error, i;
+	int error = op->ac.error, i;
 
 	_enter("%lx[%d],%lx[%d],%d,%d",
 	       op->untried, op->index,
 	       op->ac.tried, op->ac.index,
-	       error, op->ac.पात_code);
+	       error, op->ac.abort_code);
 
-	अगर (op->flags & AFS_OPERATION_STOP) अणु
+	if (op->flags & AFS_OPERATION_STOP) {
 		_leave(" = f [stopped]");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	op->nr_iterations++;
 
-	/* Evaluate the result of the previous operation, अगर there was one. */
-	चयन (error) अणु
-	हाल लघु_उच्च:
-		जाओ start;
+	/* Evaluate the result of the previous operation, if there was one. */
+	switch (error) {
+	case SHRT_MAX:
+		goto start;
 
-	हाल 0:
-	शेष:
+	case 0:
+	default:
 		/* Success or local failure.  Stop. */
 		op->error = error;
 		op->flags |= AFS_OPERATION_STOP;
 		_leave(" = f [okay/local %d]", error);
-		वापस false;
+		return false;
 
-	हाल -ECONNABORTED:
+	case -ECONNABORTED:
 		/* The far side rejected the operation on some grounds.  This
 		 * might involve the server being busy or the volume having been moved.
 		 */
-		चयन (op->ac.पात_code) अणु
-		हाल VNOVOL:
-			/* This fileserver करोesn't know about the volume.
+		switch (op->ac.abort_code) {
+		case VNOVOL:
+			/* This fileserver doesn't know about the volume.
 			 * - May indicate that the VL is wrong - retry once and compare
 			 *   the results.
 			 * - May indicate that the fileserver couldn't attach to the vol.
 			 */
-			अगर (op->flags & AFS_OPERATION_VNOVOL) अणु
+			if (op->flags & AFS_OPERATION_VNOVOL) {
 				op->error = -EREMOTEIO;
-				जाओ next_server;
-			पूर्ण
+				goto next_server;
+			}
 
-			ग_लिखो_lock(&op->volume->servers_lock);
+			write_lock(&op->volume->servers_lock);
 			op->server_list->vnovol_mask |= 1 << op->index;
-			ग_लिखो_unlock(&op->volume->servers_lock);
+			write_unlock(&op->volume->servers_lock);
 
 			set_bit(AFS_VOLUME_NEEDS_UPDATE, &op->volume->flags);
 			error = afs_check_volume_status(op->volume, op);
-			अगर (error < 0)
-				जाओ failed_set_error;
+			if (error < 0)
+				goto failed_set_error;
 
-			अगर (test_bit(AFS_VOLUME_DELETED, &op->volume->flags)) अणु
+			if (test_bit(AFS_VOLUME_DELETED, &op->volume->flags)) {
 				op->error = -ENOMEDIUM;
-				जाओ failed;
-			पूर्ण
+				goto failed;
+			}
 
 			/* If the server list didn't change, then assume that
 			 * it's the fileserver having trouble.
 			 */
-			अगर (rcu_access_poपूर्णांकer(op->volume->servers) == op->server_list) अणु
+			if (rcu_access_pointer(op->volume->servers) == op->server_list) {
 				op->error = -EREMOTEIO;
-				जाओ next_server;
-			पूर्ण
+				goto next_server;
+			}
 
 			/* Try again */
 			op->flags |= AFS_OPERATION_VNOVOL;
 			_leave(" = t [vnovol]");
-			वापस true;
+			return true;
 
-		हाल VSALVAGE: /* TODO: Should this वापस an error or iterate? */
-		हाल VVOLEXISTS:
-		हाल VNOSERVICE:
-		हाल VONLINE:
-		हाल VDISKFULL:
-		हाल VOVERQUOTA:
-			op->error = afs_पात_to_error(op->ac.पात_code);
-			जाओ next_server;
+		case VSALVAGE: /* TODO: Should this return an error or iterate? */
+		case VVOLEXISTS:
+		case VNOSERVICE:
+		case VONLINE:
+		case VDISKFULL:
+		case VOVERQUOTA:
+			op->error = afs_abort_to_error(op->ac.abort_code);
+			goto next_server;
 
-		हाल VOFFLINE:
-			अगर (!test_and_set_bit(AFS_VOLUME_OFFLINE, &op->volume->flags)) अणु
-				afs_busy(op->volume, op->ac.पात_code);
+		case VOFFLINE:
+			if (!test_and_set_bit(AFS_VOLUME_OFFLINE, &op->volume->flags)) {
+				afs_busy(op->volume, op->ac.abort_code);
 				clear_bit(AFS_VOLUME_BUSY, &op->volume->flags);
-			पूर्ण
-			अगर (op->flags & AFS_OPERATION_NO_VSLEEP) अणु
+			}
+			if (op->flags & AFS_OPERATION_NO_VSLEEP) {
 				op->error = -EADV;
-				जाओ failed;
-			पूर्ण
-			अगर (op->flags & AFS_OPERATION_CUR_ONLY) अणु
+				goto failed;
+			}
+			if (op->flags & AFS_OPERATION_CUR_ONLY) {
 				op->error = -ESTALE;
-				जाओ failed;
-			पूर्ण
-			जाओ busy;
+				goto failed;
+			}
+			goto busy;
 
-		हाल VSALVAGING:
-		हाल VRESTARTING:
-		हाल VBUSY:
+		case VSALVAGING:
+		case VRESTARTING:
+		case VBUSY:
 			/* Retry after going round all the servers unless we
-			 * have a file lock we need to मुख्यtain.
+			 * have a file lock we need to maintain.
 			 */
-			अगर (op->flags & AFS_OPERATION_NO_VSLEEP) अणु
+			if (op->flags & AFS_OPERATION_NO_VSLEEP) {
 				op->error = -EBUSY;
-				जाओ failed;
-			पूर्ण
-			अगर (!test_and_set_bit(AFS_VOLUME_BUSY, &op->volume->flags)) अणु
-				afs_busy(op->volume, op->ac.पात_code);
+				goto failed;
+			}
+			if (!test_and_set_bit(AFS_VOLUME_BUSY, &op->volume->flags)) {
+				afs_busy(op->volume, op->ac.abort_code);
 				clear_bit(AFS_VOLUME_OFFLINE, &op->volume->flags);
-			पूर्ण
+			}
 		busy:
-			अगर (op->flags & AFS_OPERATION_CUR_ONLY) अणु
-				अगर (!afs_sleep_and_retry(op))
-					जाओ failed;
+			if (op->flags & AFS_OPERATION_CUR_ONLY) {
+				if (!afs_sleep_and_retry(op))
+					goto failed;
 
 				 /* Retry with same server & address */
 				_leave(" = t [vbusy]");
-				वापस true;
-			पूर्ण
+				return true;
+			}
 
 			op->flags |= AFS_OPERATION_VBUSY;
-			जाओ next_server;
+			goto next_server;
 
-		हाल VMOVED:
+		case VMOVED:
 			/* The volume migrated to another server.  We consider
 			 * consider all locks and callbacks broken and request
 			 * an update from the VLDB.
 			 *
 			 * We also limit the number of VMOVED hops we will
-			 * honour, just in हाल someone sets up a loop.
+			 * honour, just in case someone sets up a loop.
 			 */
-			अगर (op->flags & AFS_OPERATION_VMOVED) अणु
+			if (op->flags & AFS_OPERATION_VMOVED) {
 				op->error = -EREMOTEIO;
-				जाओ failed;
-			पूर्ण
+				goto failed;
+			}
 			op->flags |= AFS_OPERATION_VMOVED;
 
 			set_bit(AFS_VOLUME_WAIT, &op->volume->flags);
 			set_bit(AFS_VOLUME_NEEDS_UPDATE, &op->volume->flags);
 			error = afs_check_volume_status(op->volume, op);
-			अगर (error < 0)
-				जाओ failed_set_error;
+			if (error < 0)
+				goto failed_set_error;
 
 			/* If the server list didn't change, then the VLDB is
 			 * out of sync with the fileservers.  This is hopefully
-			 * a temporary condition, however, so we करोn't want to
+			 * a temporary condition, however, so we don't want to
 			 * permanently block access to the file.
 			 *
-			 * TODO: Try other fileservers अगर we can.
+			 * TODO: Try other fileservers if we can.
 			 *
-			 * TODO: Retry a few बार with sleeps.
+			 * TODO: Retry a few times with sleeps.
 			 */
-			अगर (rcu_access_poपूर्णांकer(op->volume->servers) == op->server_list) अणु
+			if (rcu_access_pointer(op->volume->servers) == op->server_list) {
 				op->error = -ENOMEDIUM;
-				जाओ failed;
-			पूर्ण
+				goto failed;
+			}
 
-			जाओ restart_from_beginning;
+			goto restart_from_beginning;
 
-		शेष:
+		default:
 			clear_bit(AFS_VOLUME_OFFLINE, &op->volume->flags);
 			clear_bit(AFS_VOLUME_BUSY, &op->volume->flags);
-			op->error = afs_पात_to_error(op->ac.पात_code);
-			जाओ failed;
-		पूर्ण
+			op->error = afs_abort_to_error(op->ac.abort_code);
+			goto failed;
+		}
 
-	हाल -ETIMEDOUT:
-	हाल -ETIME:
-		अगर (op->error != -EDESTADDRREQ)
-			जाओ iterate_address;
+	case -ETIMEDOUT:
+	case -ETIME:
+		if (op->error != -EDESTADDRREQ)
+			goto iterate_address;
 		fallthrough;
-	हाल -ERFKILL:
-	हाल -EADDRNOTAVAIL:
-	हाल -ENETUNREACH:
-	हाल -EHOSTUNREACH:
-	हाल -EHOSTDOWN:
-	हाल -ECONNREFUSED:
+	case -ERFKILL:
+	case -EADDRNOTAVAIL:
+	case -ENETUNREACH:
+	case -EHOSTUNREACH:
+	case -EHOSTDOWN:
+	case -ECONNREFUSED:
 		_debug("no conn");
 		op->error = error;
-		जाओ iterate_address;
+		goto iterate_address;
 
-	हाल -ECONNRESET:
+	case -ECONNRESET:
 		_debug("call reset");
 		op->error = error;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 restart_from_beginning:
 	_debug("restart");
 	afs_end_cursor(&op->ac);
-	op->server = शून्य;
+	op->server = NULL;
 	afs_put_serverlist(op->net, op->server_list);
-	op->server_list = शून्य;
+	op->server_list = NULL;
 start:
 	_debug("start");
-	/* See अगर we need to करो an update of the volume record.  Note that the
+	/* See if we need to do an update of the volume record.  Note that the
 	 * volume may have moved or even have been deleted.
 	 */
 	error = afs_check_volume_status(op->volume, op);
-	अगर (error < 0)
-		जाओ failed_set_error;
+	if (error < 0)
+		goto failed_set_error;
 
-	अगर (!afs_start_fs_iteration(op, vnode))
-		जाओ failed;
+	if (!afs_start_fs_iteration(op, vnode))
+		goto failed;
 
 	_debug("__ VOL %llx __", op->volume->vid);
 
 pick_server:
 	_debug("pick [%lx]", op->untried);
 
-	error = afs_रुको_क्रम_fs_probes(op->server_list, op->untried);
-	अगर (error < 0)
-		जाओ failed_set_error;
+	error = afs_wait_for_fs_probes(op->server_list, op->untried);
+	if (error < 0)
+		goto failed_set_error;
 
 	/* Pick the untried server with the lowest RTT.  If we have outstanding
-	 * callbacks, we stick with the server we're alपढ़ोy using अगर we can.
+	 * callbacks, we stick with the server we're already using if we can.
 	 */
-	अगर (op->server) अणु
+	if (op->server) {
 		_debug("server %u", op->index);
-		अगर (test_bit(op->index, &op->untried))
-			जाओ selected_server;
-		op->server = शून्य;
+		if (test_bit(op->index, &op->untried))
+			goto selected_server;
+		op->server = NULL;
 		_debug("no server");
-	पूर्ण
+	}
 
 	op->index = -1;
 	rtt = U32_MAX;
-	क्रम (i = 0; i < op->server_list->nr_servers; i++) अणु
-		काष्ठा afs_server *s = op->server_list->servers[i].server;
+	for (i = 0; i < op->server_list->nr_servers; i++) {
+		struct afs_server *s = op->server_list->servers[i].server;
 
-		अगर (!test_bit(i, &op->untried) ||
+		if (!test_bit(i, &op->untried) ||
 		    !test_bit(AFS_SERVER_FL_RESPONDING, &s->flags))
-			जारी;
-		अगर (s->probe.rtt < rtt) अणु
+			continue;
+		if (s->probe.rtt < rtt) {
 			op->index = i;
 			rtt = s->probe.rtt;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (op->index == -1)
-		जाओ no_more_servers;
+	if (op->index == -1)
+		goto no_more_servers;
 
 selected_server:
 	_debug("use %d", op->index);
 	__clear_bit(op->index, &op->untried);
 
-	/* We're starting on a dअगरferent fileserver from the list.  We need to
-	 * check it, create a callback पूर्णांकercept, find its address list and
-	 * probe its capabilities beक्रमe we use it.
+	/* We're starting on a different fileserver from the list.  We need to
+	 * check it, create a callback intercept, find its address list and
+	 * probe its capabilities before we use it.
 	 */
-	ASSERTCMP(op->ac.alist, ==, शून्य);
+	ASSERTCMP(op->ac.alist, ==, NULL);
 	server = op->server_list->servers[op->index].server;
 
-	अगर (!afs_check_server_record(op, server))
-		जाओ failed;
+	if (!afs_check_server_record(op, server))
+		goto failed;
 
 	_debug("USING SERVER: %pU", &server->uuid);
 
 	op->flags |= AFS_OPERATION_RETRY_SERVER;
 	op->server = server;
-	अगर (vnode->cb_server != server) अणु
+	if (vnode->cb_server != server) {
 		vnode->cb_server = server;
-		vnode->cb_s_अवरोध = server->cb_s_अवरोध;
-		vnode->cb_v_अवरोध = vnode->volume->cb_v_अवरोध;
+		vnode->cb_s_break = server->cb_s_break;
+		vnode->cb_v_break = vnode->volume->cb_v_break;
 		clear_bit(AFS_VNODE_CB_PROMISED, &vnode->flags);
-	पूर्ण
+	}
 
-	पढ़ो_lock(&server->fs_lock);
-	alist = rcu_dereference_रक्षित(server->addresses,
+	read_lock(&server->fs_lock);
+	alist = rcu_dereference_protected(server->addresses,
 					  lockdep_is_held(&server->fs_lock));
 	afs_get_addrlist(alist);
-	पढ़ो_unlock(&server->fs_lock);
+	read_unlock(&server->fs_lock);
 
 retry_server:
-	स_रखो(&op->ac, 0, माप(op->ac));
+	memset(&op->ac, 0, sizeof(op->ac));
 
-	अगर (!op->ac.alist)
+	if (!op->ac.alist)
 		op->ac.alist = alist;
-	अन्यथा
+	else
 		afs_put_addrlist(alist);
 
 	op->ac.index = -1;
@@ -400,57 +399,57 @@ iterate_address:
 	/* Iterate over the current server's address list to try and find an
 	 * address on which it will respond to us.
 	 */
-	अगर (!afs_iterate_addresses(&op->ac))
-		जाओ out_of_addresses;
+	if (!afs_iterate_addresses(&op->ac))
+		goto out_of_addresses;
 
 	_debug("address [%u] %u/%u %pISp",
 	       op->index, op->ac.index, op->ac.alist->nr_addrs,
 	       &op->ac.alist->addrs[op->ac.index].transport);
 
 	_leave(" = t");
-	वापस true;
+	return true;
 
 out_of_addresses:
 	/* We've now had a failure to respond on all of a server's addresses -
 	 * immediately probe them again and consider retrying the server.
 	 */
 	afs_probe_fileserver(op->net, op->server);
-	अगर (op->flags & AFS_OPERATION_RETRY_SERVER) अणु
+	if (op->flags & AFS_OPERATION_RETRY_SERVER) {
 		alist = op->ac.alist;
-		error = afs_रुको_क्रम_one_fs_probe(
+		error = afs_wait_for_one_fs_probe(
 			op->server, !(op->flags & AFS_OPERATION_UNINTR));
-		चयन (error) अणु
-		हाल 0:
+		switch (error) {
+		case 0:
 			op->flags &= ~AFS_OPERATION_RETRY_SERVER;
-			जाओ retry_server;
-		हाल -ERESTARTSYS:
-			जाओ failed_set_error;
-		हाल -ETIME:
-		हाल -EDESTADDRREQ:
-			जाओ next_server;
-		पूर्ण
-	पूर्ण
+			goto retry_server;
+		case -ERESTARTSYS:
+			goto failed_set_error;
+		case -ETIME:
+		case -EDESTADDRREQ:
+			goto next_server;
+		}
+	}
 
 next_server:
 	_debug("next");
 	afs_end_cursor(&op->ac);
-	जाओ pick_server;
+	goto pick_server;
 
 no_more_servers:
-	/* That's all the servers poked to no good effect.  Try again अगर some
+	/* That's all the servers poked to no good effect.  Try again if some
 	 * of them were busy.
 	 */
-	अगर (op->flags & AFS_OPERATION_VBUSY)
-		जाओ restart_from_beginning;
+	if (op->flags & AFS_OPERATION_VBUSY)
+		goto restart_from_beginning;
 
 	e.error = -EDESTADDRREQ;
 	e.responded = false;
-	क्रम (i = 0; i < op->server_list->nr_servers; i++) अणु
-		काष्ठा afs_server *s = op->server_list->servers[i].server;
+	for (i = 0; i < op->server_list->nr_servers; i++) {
+		struct afs_server *s = op->server_list->servers[i].server;
 
 		afs_prioritise_error(&e, READ_ONCE(s->probe.error),
-				     s->probe.पात_code);
-	पूर्ण
+				     s->probe.abort_code);
+	}
 
 	error = e.error;
 
@@ -460,40 +459,40 @@ failed:
 	op->flags |= AFS_OPERATION_STOP;
 	afs_end_cursor(&op->ac);
 	_leave(" = f [failed %d]", op->error);
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
- * Dump cursor state in the हाल of the error being EDESTADDRREQ.
+ * Dump cursor state in the case of the error being EDESTADDRREQ.
  */
-व्योम afs_dump_edestaddrreq(स्थिर काष्ठा afs_operation *op)
-अणु
-	अटल पूर्णांक count;
-	पूर्णांक i;
+void afs_dump_edestaddrreq(const struct afs_operation *op)
+{
+	static int count;
+	int i;
 
-	अगर (!IS_ENABLED(CONFIG_AFS_DEBUG_CURSOR) || count > 3)
-		वापस;
+	if (!IS_ENABLED(CONFIG_AFS_DEBUG_CURSOR) || count > 3)
+		return;
 	count++;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	pr_notice("EDESTADDR occurred\n");
 	pr_notice("FC: cbb=%x cbb2=%x fl=%x err=%hd\n",
-		  op->file[0].cb_अवरोध_beक्रमe,
-		  op->file[1].cb_अवरोध_beक्रमe, op->flags, op->error);
+		  op->file[0].cb_break_before,
+		  op->file[1].cb_break_before, op->flags, op->error);
 	pr_notice("FC: ut=%lx ix=%d ni=%u\n",
 		  op->untried, op->index, op->nr_iterations);
 
-	अगर (op->server_list) अणु
-		स्थिर काष्ठा afs_server_list *sl = op->server_list;
+	if (op->server_list) {
+		const struct afs_server_list *sl = op->server_list;
 		pr_notice("FC: SL nr=%u pr=%u vnov=%hx\n",
 			  sl->nr_servers, sl->preferred, sl->vnovol_mask);
-		क्रम (i = 0; i < sl->nr_servers; i++) अणु
-			स्थिर काष्ठा afs_server *s = sl->servers[i].server;
+		for (i = 0; i < sl->nr_servers; i++) {
+			const struct afs_server *s = sl->servers[i].server;
 			pr_notice("FC: server fl=%lx av=%u %pU\n",
 				  s->flags, s->addr_version, &s->uuid);
-			अगर (s->addresses) अणु
-				स्थिर काष्ठा afs_addr_list *a =
+			if (s->addresses) {
+				const struct afs_addr_list *a =
 					rcu_dereference(s->addresses);
 				pr_notice("FC:  - av=%u nr=%u/%u/%u pr=%u\n",
 					  a->version,
@@ -501,14 +500,14 @@ failed:
 					  a->preferred);
 				pr_notice("FC:  - R=%lx F=%lx\n",
 					  a->responded, a->failed);
-				अगर (a == op->ac.alist)
+				if (a == op->ac.alist)
 					pr_notice("FC:  - current\n");
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	pr_notice("AC: t=%lx ax=%u ac=%d er=%d r=%u ni=%u\n",
-		  op->ac.tried, op->ac.index, op->ac.पात_code, op->ac.error,
+		  op->ac.tried, op->ac.index, op->ac.abort_code, op->ac.error,
 		  op->ac.responded, op->ac.nr_iterations);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}

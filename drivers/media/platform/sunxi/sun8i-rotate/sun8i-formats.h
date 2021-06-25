@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) 2020 Jernej Skrabec <jernej.skrabec@siol.net> */
 
-#अगर_अघोषित _SUN8I_FORMATS_H_
-#घोषणा _SUN8I_FORMATS_H_
+#ifndef _SUN8I_FORMATS_H_
+#define _SUN8I_FORMATS_H_
 
-#समावेश <linux/videodev2.h>
+#include <linux/videodev2.h>
 
-#घोषणा ROTATE_FLAG_YUV    BIT(0)
-#घोषणा ROTATE_FLAG_OUTPUT BIT(1)
+#define ROTATE_FLAG_YUV    BIT(0)
+#define ROTATE_FLAG_OUTPUT BIT(1)
 
-काष्ठा rotate_क्रमmat अणु
+struct rotate_format {
 	u32 fourcc;
-	u32 hw_क्रमmat;
-	पूर्णांक planes;
-	पूर्णांक bpp[3];
-	पूर्णांक hsub;
-	पूर्णांक vsub;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+	u32 hw_format;
+	int planes;
+	int bpp[3];
+	int hsub;
+	int vsub;
+	unsigned int flags;
+};
 
-स्थिर काष्ठा rotate_क्रमmat *rotate_find_क्रमmat(u32 pixelक्रमmat);
-पूर्णांक rotate_क्रमागत_fmt(काष्ठा v4l2_fmtdesc *f, bool dst);
+const struct rotate_format *rotate_find_format(u32 pixelformat);
+int rotate_enum_fmt(struct v4l2_fmtdesc *f, bool dst);
 
-#पूर्ण_अगर
+#endif

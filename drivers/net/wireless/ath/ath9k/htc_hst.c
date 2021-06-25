@@ -1,165 +1,164 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश "htc.h"
+#include "htc.h"
 
-अटल पूर्णांक htc_issue_send(काष्ठा htc_target *target, काष्ठा sk_buff* skb,
+static int htc_issue_send(struct htc_target *target, struct sk_buff* skb,
 			  u16 len, u8 flags, u8 epid)
 
-अणु
-	काष्ठा htc_frame_hdr *hdr;
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक = &target->endpoपूर्णांक[epid];
-	पूर्णांक status;
+{
+	struct htc_frame_hdr *hdr;
+	struct htc_endpoint *endpoint = &target->endpoint[epid];
+	int status;
 
-	hdr = skb_push(skb, माप(काष्ठा htc_frame_hdr));
-	hdr->endpoपूर्णांक_id = epid;
+	hdr = skb_push(skb, sizeof(struct htc_frame_hdr));
+	hdr->endpoint_id = epid;
 	hdr->flags = flags;
 	hdr->payload_len = cpu_to_be16(len);
 
-	status = target->hअगर->send(target->hअगर_dev, endpoपूर्णांक->ul_pipeid, skb);
+	status = target->hif->send(target->hif_dev, endpoint->ul_pipeid, skb);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल काष्ठा htc_endpoपूर्णांक *get_next_avail_ep(काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक)
-अणु
-	क्रमागत htc_endpoपूर्णांक_id avail_epid;
+static struct htc_endpoint *get_next_avail_ep(struct htc_endpoint *endpoint)
+{
+	enum htc_endpoint_id avail_epid;
 
-	क्रम (avail_epid = (ENDPOपूर्णांक_उच्च - 1); avail_epid > ENDPOINT0; avail_epid--)
-		अगर (endpoपूर्णांक[avail_epid].service_id == 0)
-			वापस &endpoपूर्णांक[avail_epid];
-	वापस शून्य;
-पूर्ण
+	for (avail_epid = (ENDPOINT_MAX - 1); avail_epid > ENDPOINT0; avail_epid--)
+		if (endpoint[avail_epid].service_id == 0)
+			return &endpoint[avail_epid];
+	return NULL;
+}
 
-अटल u8 service_to_ulpipe(u16 service_id)
-अणु
-	चयन (service_id) अणु
-	हाल WMI_CONTROL_SVC:
-		वापस 4;
-	हाल WMI_BEACON_SVC:
-	हाल WMI_CAB_SVC:
-	हाल WMI_UAPSD_SVC:
-	हाल WMI_MGMT_SVC:
-	हाल WMI_DATA_VO_SVC:
-	हाल WMI_DATA_VI_SVC:
-	हाल WMI_DATA_BE_SVC:
-	हाल WMI_DATA_BK_SVC:
-		वापस 1;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static u8 service_to_ulpipe(u16 service_id)
+{
+	switch (service_id) {
+	case WMI_CONTROL_SVC:
+		return 4;
+	case WMI_BEACON_SVC:
+	case WMI_CAB_SVC:
+	case WMI_UAPSD_SVC:
+	case WMI_MGMT_SVC:
+	case WMI_DATA_VO_SVC:
+	case WMI_DATA_VI_SVC:
+	case WMI_DATA_BE_SVC:
+	case WMI_DATA_BK_SVC:
+		return 1;
+	default:
+		return 0;
+	}
+}
 
-अटल u8 service_to_dlpipe(u16 service_id)
-अणु
-	चयन (service_id) अणु
-	हाल WMI_CONTROL_SVC:
-		वापस 3;
-	हाल WMI_BEACON_SVC:
-	हाल WMI_CAB_SVC:
-	हाल WMI_UAPSD_SVC:
-	हाल WMI_MGMT_SVC:
-	हाल WMI_DATA_VO_SVC:
-	हाल WMI_DATA_VI_SVC:
-	हाल WMI_DATA_BE_SVC:
-	हाल WMI_DATA_BK_SVC:
-		वापस 2;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static u8 service_to_dlpipe(u16 service_id)
+{
+	switch (service_id) {
+	case WMI_CONTROL_SVC:
+		return 3;
+	case WMI_BEACON_SVC:
+	case WMI_CAB_SVC:
+	case WMI_UAPSD_SVC:
+	case WMI_MGMT_SVC:
+	case WMI_DATA_VO_SVC:
+	case WMI_DATA_VI_SVC:
+	case WMI_DATA_BE_SVC:
+	case WMI_DATA_BK_SVC:
+		return 2;
+	default:
+		return 0;
+	}
+}
 
-अटल व्योम htc_process_target_rdy(काष्ठा htc_target *target,
-				   व्योम *buf)
-अणु
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक;
-	काष्ठा htc_पढ़ोy_msg *htc_पढ़ोy_msg = (काष्ठा htc_पढ़ोy_msg *) buf;
+static void htc_process_target_rdy(struct htc_target *target,
+				   void *buf)
+{
+	struct htc_endpoint *endpoint;
+	struct htc_ready_msg *htc_ready_msg = (struct htc_ready_msg *) buf;
 
-	target->credit_size = be16_to_cpu(htc_पढ़ोy_msg->credit_size);
+	target->credit_size = be16_to_cpu(htc_ready_msg->credit_size);
 
-	endpoपूर्णांक = &target->endpoपूर्णांक[ENDPOINT0];
-	endpoपूर्णांक->service_id = HTC_CTRL_RSVD_SVC;
-	endpoपूर्णांक->max_msglen = HTC_MAX_CONTROL_MESSAGE_LENGTH;
-	atomic_inc(&target->tgt_पढ़ोy);
-	complete(&target->target_रुको);
-पूर्ण
+	endpoint = &target->endpoint[ENDPOINT0];
+	endpoint->service_id = HTC_CTRL_RSVD_SVC;
+	endpoint->max_msglen = HTC_MAX_CONTROL_MESSAGE_LENGTH;
+	atomic_inc(&target->tgt_ready);
+	complete(&target->target_wait);
+}
 
-अटल व्योम htc_process_conn_rsp(काष्ठा htc_target *target,
-				 काष्ठा htc_frame_hdr *htc_hdr)
-अणु
-	काष्ठा htc_conn_svc_rspmsg *svc_rspmsg;
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक, *पंचांगp_endpoपूर्णांक = शून्य;
+static void htc_process_conn_rsp(struct htc_target *target,
+				 struct htc_frame_hdr *htc_hdr)
+{
+	struct htc_conn_svc_rspmsg *svc_rspmsg;
+	struct htc_endpoint *endpoint, *tmp_endpoint = NULL;
 	u16 service_id;
 	u16 max_msglen;
-	क्रमागत htc_endpoपूर्णांक_id epid, tepid;
+	enum htc_endpoint_id epid, tepid;
 
-	svc_rspmsg = (काष्ठा htc_conn_svc_rspmsg *)
-		((व्योम *) htc_hdr + माप(काष्ठा htc_frame_hdr));
+	svc_rspmsg = (struct htc_conn_svc_rspmsg *)
+		((void *) htc_hdr + sizeof(struct htc_frame_hdr));
 
-	अगर (svc_rspmsg->status == HTC_SERVICE_SUCCESS) अणु
-		epid = svc_rspmsg->endpoपूर्णांक_id;
-		अगर (epid < 0 || epid >= ENDPOपूर्णांक_उच्च)
-			वापस;
+	if (svc_rspmsg->status == HTC_SERVICE_SUCCESS) {
+		epid = svc_rspmsg->endpoint_id;
+		if (epid < 0 || epid >= ENDPOINT_MAX)
+			return;
 
 		service_id = be16_to_cpu(svc_rspmsg->service_id);
 		max_msglen = be16_to_cpu(svc_rspmsg->max_msg_len);
-		endpoपूर्णांक = &target->endpoपूर्णांक[epid];
+		endpoint = &target->endpoint[epid];
 
-		क्रम (tepid = (ENDPOपूर्णांक_उच्च - 1); tepid > ENDPOINT0; tepid--) अणु
-			पंचांगp_endpoपूर्णांक = &target->endpoपूर्णांक[tepid];
-			अगर (पंचांगp_endpoपूर्णांक->service_id == service_id) अणु
-				पंचांगp_endpoपूर्णांक->service_id = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+		for (tepid = (ENDPOINT_MAX - 1); tepid > ENDPOINT0; tepid--) {
+			tmp_endpoint = &target->endpoint[tepid];
+			if (tmp_endpoint->service_id == service_id) {
+				tmp_endpoint->service_id = 0;
+				break;
+			}
+		}
 
-		अगर (tepid == ENDPOINT0)
-			वापस;
+		if (tepid == ENDPOINT0)
+			return;
 
-		endpoपूर्णांक->service_id = service_id;
-		endpoपूर्णांक->max_txqdepth = पंचांगp_endpoपूर्णांक->max_txqdepth;
-		endpoपूर्णांक->ep_callbacks = पंचांगp_endpoपूर्णांक->ep_callbacks;
-		endpoपूर्णांक->ul_pipeid = पंचांगp_endpoपूर्णांक->ul_pipeid;
-		endpoपूर्णांक->dl_pipeid = पंचांगp_endpoपूर्णांक->dl_pipeid;
-		endpoपूर्णांक->max_msglen = max_msglen;
+		endpoint->service_id = service_id;
+		endpoint->max_txqdepth = tmp_endpoint->max_txqdepth;
+		endpoint->ep_callbacks = tmp_endpoint->ep_callbacks;
+		endpoint->ul_pipeid = tmp_endpoint->ul_pipeid;
+		endpoint->dl_pipeid = tmp_endpoint->dl_pipeid;
+		endpoint->max_msglen = max_msglen;
 		target->conn_rsp_epid = epid;
-		complete(&target->cmd_रुको);
-	पूर्ण अन्यथा अणु
+		complete(&target->cmd_wait);
+	} else {
 		target->conn_rsp_epid = ENDPOINT_UNUSED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक htc_config_pipe_credits(काष्ठा htc_target *target)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा htc_config_pipe_msg *cp_msg;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ समय_left;
+static int htc_config_pipe_credits(struct htc_target *target)
+{
+	struct sk_buff *skb;
+	struct htc_config_pipe_msg *cp_msg;
+	int ret;
+	unsigned long time_left;
 
-	skb = alloc_skb(50 + माप(काष्ठा htc_frame_hdr), GFP_ATOMIC);
-	अगर (!skb) अणु
+	skb = alloc_skb(50 + sizeof(struct htc_frame_hdr), GFP_ATOMIC);
+	if (!skb) {
 		dev_err(target->dev, "failed to allocate send buffer\n");
-		वापस -ENOMEM;
-	पूर्ण
-	skb_reserve(skb, माप(काष्ठा htc_frame_hdr));
+		return -ENOMEM;
+	}
+	skb_reserve(skb, sizeof(struct htc_frame_hdr));
 
-	cp_msg = skb_put(skb, माप(काष्ठा htc_config_pipe_msg));
+	cp_msg = skb_put(skb, sizeof(struct htc_config_pipe_msg));
 
 	cp_msg->message_id = cpu_to_be16(HTC_MSG_CONFIG_PIPE_ID);
 	cp_msg->pipe_id = USB_WLAN_TX_PIPE;
@@ -168,349 +167,349 @@
 	target->htc_flags |= HTC_OP_CONFIG_PIPE_CREDITS;
 
 	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	समय_left = रुको_क्रम_completion_समयout(&target->cmd_रुको, HZ);
-	अगर (!समय_left) अणु
+	time_left = wait_for_completion_timeout(&target->cmd_wait, HZ);
+	if (!time_left) {
 		dev_err(target->dev, "HTC credit config timeout\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
+	return 0;
 err:
-	kमुक्त_skb(skb);
-	वापस -EINVAL;
-पूर्ण
+	kfree_skb(skb);
+	return -EINVAL;
+}
 
-अटल पूर्णांक htc_setup_complete(काष्ठा htc_target *target)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा htc_comp_msg *comp_msg;
-	पूर्णांक ret = 0;
-	अचिन्हित दीर्घ समय_left;
+static int htc_setup_complete(struct htc_target *target)
+{
+	struct sk_buff *skb;
+	struct htc_comp_msg *comp_msg;
+	int ret = 0;
+	unsigned long time_left;
 
-	skb = alloc_skb(50 + माप(काष्ठा htc_frame_hdr), GFP_ATOMIC);
-	अगर (!skb) अणु
+	skb = alloc_skb(50 + sizeof(struct htc_frame_hdr), GFP_ATOMIC);
+	if (!skb) {
 		dev_err(target->dev, "failed to allocate send buffer\n");
-		वापस -ENOMEM;
-	पूर्ण
-	skb_reserve(skb, माप(काष्ठा htc_frame_hdr));
+		return -ENOMEM;
+	}
+	skb_reserve(skb, sizeof(struct htc_frame_hdr));
 
-	comp_msg = skb_put(skb, माप(काष्ठा htc_comp_msg));
+	comp_msg = skb_put(skb, sizeof(struct htc_comp_msg));
 	comp_msg->msg_id = cpu_to_be16(HTC_MSG_SETUP_COMPLETE_ID);
 
 	target->htc_flags |= HTC_OP_START_WAIT;
 
 	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	समय_left = रुको_क्रम_completion_समयout(&target->cmd_रुको, HZ);
-	अगर (!समय_left) अणु
+	time_left = wait_for_completion_timeout(&target->cmd_wait, HZ);
+	if (!time_left) {
 		dev_err(target->dev, "HTC start timeout\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	kमुक्त_skb(skb);
-	वापस -EINVAL;
-पूर्ण
+	kfree_skb(skb);
+	return -EINVAL;
+}
 
 /* HTC APIs */
 
-पूर्णांक htc_init(काष्ठा htc_target *target)
-अणु
-	पूर्णांक ret;
+int htc_init(struct htc_target *target)
+{
+	int ret;
 
 	ret = htc_config_pipe_credits(target);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस htc_setup_complete(target);
-पूर्ण
+	return htc_setup_complete(target);
+}
 
-पूर्णांक htc_connect_service(काष्ठा htc_target *target,
-		     काष्ठा htc_service_connreq *service_connreq,
-		     क्रमागत htc_endpoपूर्णांक_id *conn_rsp_epid)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक;
-	काष्ठा htc_conn_svc_msg *conn_msg;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ समय_left;
+int htc_connect_service(struct htc_target *target,
+		     struct htc_service_connreq *service_connreq,
+		     enum htc_endpoint_id *conn_rsp_epid)
+{
+	struct sk_buff *skb;
+	struct htc_endpoint *endpoint;
+	struct htc_conn_svc_msg *conn_msg;
+	int ret;
+	unsigned long time_left;
 
-	/* Find an available endpoपूर्णांक */
-	endpoपूर्णांक = get_next_avail_ep(target->endpoपूर्णांक);
-	अगर (!endpoपूर्णांक) अणु
+	/* Find an available endpoint */
+	endpoint = get_next_avail_ep(target->endpoint);
+	if (!endpoint) {
 		dev_err(target->dev, "Endpoint is not available for service %d\n",
 			service_connreq->service_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	endpoपूर्णांक->service_id = service_connreq->service_id;
-	endpoपूर्णांक->max_txqdepth = service_connreq->max_send_qdepth;
-	endpoपूर्णांक->ul_pipeid = service_to_ulpipe(service_connreq->service_id);
-	endpoपूर्णांक->dl_pipeid = service_to_dlpipe(service_connreq->service_id);
-	endpoपूर्णांक->ep_callbacks = service_connreq->ep_callbacks;
+	endpoint->service_id = service_connreq->service_id;
+	endpoint->max_txqdepth = service_connreq->max_send_qdepth;
+	endpoint->ul_pipeid = service_to_ulpipe(service_connreq->service_id);
+	endpoint->dl_pipeid = service_to_dlpipe(service_connreq->service_id);
+	endpoint->ep_callbacks = service_connreq->ep_callbacks;
 
-	skb = alloc_skb(माप(काष्ठा htc_conn_svc_msg) +
-			    माप(काष्ठा htc_frame_hdr), GFP_ATOMIC);
-	अगर (!skb) अणु
+	skb = alloc_skb(sizeof(struct htc_conn_svc_msg) +
+			    sizeof(struct htc_frame_hdr), GFP_ATOMIC);
+	if (!skb) {
 		dev_err(target->dev, "Failed to allocate buf to send"
 			"service connect req\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	skb_reserve(skb, माप(काष्ठा htc_frame_hdr));
+	skb_reserve(skb, sizeof(struct htc_frame_hdr));
 
-	conn_msg = skb_put(skb, माप(काष्ठा htc_conn_svc_msg));
+	conn_msg = skb_put(skb, sizeof(struct htc_conn_svc_msg));
 	conn_msg->service_id = cpu_to_be16(service_connreq->service_id);
 	conn_msg->msg_id = cpu_to_be16(HTC_MSG_CONNECT_SERVICE_ID);
 	conn_msg->con_flags = cpu_to_be16(service_connreq->con_flags);
-	conn_msg->dl_pipeid = endpoपूर्णांक->dl_pipeid;
-	conn_msg->ul_pipeid = endpoपूर्णांक->ul_pipeid;
+	conn_msg->dl_pipeid = endpoint->dl_pipeid;
+	conn_msg->ul_pipeid = endpoint->ul_pipeid;
 
 	ret = htc_issue_send(target, skb, skb->len, 0, ENDPOINT0);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	समय_left = रुको_क्रम_completion_समयout(&target->cmd_रुको, HZ);
-	अगर (!समय_left) अणु
+	time_left = wait_for_completion_timeout(&target->cmd_wait, HZ);
+	if (!time_left) {
 		dev_err(target->dev, "Service connection timeout for: %d\n",
 			service_connreq->service_id);
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
 	*conn_rsp_epid = target->conn_rsp_epid;
-	वापस 0;
+	return 0;
 err:
-	kमुक्त_skb(skb);
-	वापस ret;
-पूर्ण
+	kfree_skb(skb);
+	return ret;
+}
 
-पूर्णांक htc_send(काष्ठा htc_target *target, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ath9k_htc_tx_ctl *tx_ctl;
+int htc_send(struct htc_target *target, struct sk_buff *skb)
+{
+	struct ath9k_htc_tx_ctl *tx_ctl;
 
 	tx_ctl = HTC_SKB_CB(skb);
-	वापस htc_issue_send(target, skb, skb->len, 0, tx_ctl->epid);
-पूर्ण
+	return htc_issue_send(target, skb, skb->len, 0, tx_ctl->epid);
+}
 
-पूर्णांक htc_send_epid(काष्ठा htc_target *target, काष्ठा sk_buff *skb,
-		  क्रमागत htc_endpoपूर्णांक_id epid)
-अणु
-	वापस htc_issue_send(target, skb, skb->len, 0, epid);
-पूर्ण
+int htc_send_epid(struct htc_target *target, struct sk_buff *skb,
+		  enum htc_endpoint_id epid)
+{
+	return htc_issue_send(target, skb, skb->len, 0, epid);
+}
 
-व्योम htc_stop(काष्ठा htc_target *target)
-अणु
-	target->hअगर->stop(target->hअगर_dev);
-पूर्ण
+void htc_stop(struct htc_target *target)
+{
+	target->hif->stop(target->hif_dev);
+}
 
-व्योम htc_start(काष्ठा htc_target *target)
-अणु
-	target->hअगर->start(target->hअगर_dev);
-पूर्ण
+void htc_start(struct htc_target *target)
+{
+	target->hif->start(target->hif_dev);
+}
 
-व्योम htc_sta_drain(काष्ठा htc_target *target, u8 idx)
-अणु
-	target->hअगर->sta_drain(target->hअगर_dev, idx);
-पूर्ण
+void htc_sta_drain(struct htc_target *target, u8 idx)
+{
+	target->hif->sta_drain(target->hif_dev, idx);
+}
 
-व्योम ath9k_htc_txcompletion_cb(काष्ठा htc_target *htc_handle,
-			       काष्ठा sk_buff *skb, bool txok)
-अणु
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक;
-	काष्ठा htc_frame_hdr *htc_hdr = शून्य;
+void ath9k_htc_txcompletion_cb(struct htc_target *htc_handle,
+			       struct sk_buff *skb, bool txok)
+{
+	struct htc_endpoint *endpoint;
+	struct htc_frame_hdr *htc_hdr = NULL;
 
-	अगर (htc_handle->htc_flags & HTC_OP_CONFIG_PIPE_CREDITS) अणु
-		complete(&htc_handle->cmd_रुको);
+	if (htc_handle->htc_flags & HTC_OP_CONFIG_PIPE_CREDITS) {
+		complete(&htc_handle->cmd_wait);
 		htc_handle->htc_flags &= ~HTC_OP_CONFIG_PIPE_CREDITS;
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
-	अगर (htc_handle->htc_flags & HTC_OP_START_WAIT) अणु
-		complete(&htc_handle->cmd_रुको);
+	if (htc_handle->htc_flags & HTC_OP_START_WAIT) {
+		complete(&htc_handle->cmd_wait);
 		htc_handle->htc_flags &= ~HTC_OP_START_WAIT;
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
-	अगर (skb) अणु
-		htc_hdr = (काष्ठा htc_frame_hdr *) skb->data;
-		अगर (htc_hdr->endpoपूर्णांक_id >= ARRAY_SIZE(htc_handle->endpoपूर्णांक))
-			जाओ ret;
-		endpoपूर्णांक = &htc_handle->endpoपूर्णांक[htc_hdr->endpoपूर्णांक_id];
-		skb_pull(skb, माप(काष्ठा htc_frame_hdr));
+	if (skb) {
+		htc_hdr = (struct htc_frame_hdr *) skb->data;
+		if (htc_hdr->endpoint_id >= ARRAY_SIZE(htc_handle->endpoint))
+			goto ret;
+		endpoint = &htc_handle->endpoint[htc_hdr->endpoint_id];
+		skb_pull(skb, sizeof(struct htc_frame_hdr));
 
-		अगर (endpoपूर्णांक->ep_callbacks.tx) अणु
-			endpoपूर्णांक->ep_callbacks.tx(endpoपूर्णांक->ep_callbacks.priv,
-						  skb, htc_hdr->endpoपूर्णांक_id,
+		if (endpoint->ep_callbacks.tx) {
+			endpoint->ep_callbacks.tx(endpoint->ep_callbacks.priv,
+						  skb, htc_hdr->endpoint_id,
 						  txok);
-		पूर्ण अन्यथा अणु
-			kमुक्त_skb(skb);
-		पूर्ण
-	पूर्ण
+		} else {
+			kfree_skb(skb);
+		}
+	}
 
-	वापस;
+	return;
 ret:
-	kमुक्त_skb(skb);
-पूर्ण
+	kfree_skb(skb);
+}
 
-अटल व्योम ath9k_htc_fw_panic_report(काष्ठा htc_target *htc_handle,
-				      काष्ठा sk_buff *skb)
-अणु
-	uपूर्णांक32_t *pattern = (uपूर्णांक32_t *)skb->data;
+static void ath9k_htc_fw_panic_report(struct htc_target *htc_handle,
+				      struct sk_buff *skb)
+{
+	uint32_t *pattern = (uint32_t *)skb->data;
 
-	चयन (*pattern) अणु
-	हाल 0x33221199:
-		अणु
-		काष्ठा htc_panic_bad_vaddr *htc_panic;
-		htc_panic = (काष्ठा htc_panic_bad_vaddr *) skb->data;
+	switch (*pattern) {
+	case 0x33221199:
+		{
+		struct htc_panic_bad_vaddr *htc_panic;
+		htc_panic = (struct htc_panic_bad_vaddr *) skb->data;
 		dev_err(htc_handle->dev, "ath: firmware panic! "
 			"exccause: 0x%08x; pc: 0x%08x; badvaddr: 0x%08x.\n",
 			htc_panic->exccause, htc_panic->pc,
 			htc_panic->badvaddr);
-		अवरोध;
-		पूर्ण
-	हाल 0x33221299:
-		अणु
-		काष्ठा htc_panic_bad_epid *htc_panic;
-		htc_panic = (काष्ठा htc_panic_bad_epid *) skb->data;
+		break;
+		}
+	case 0x33221299:
+		{
+		struct htc_panic_bad_epid *htc_panic;
+		htc_panic = (struct htc_panic_bad_epid *) skb->data;
 		dev_err(htc_handle->dev, "ath: firmware panic! "
 			"bad epid: 0x%08x\n", htc_panic->epid);
-		अवरोध;
-		पूर्ण
-	शेष:
+		break;
+		}
+	default:
 		dev_err(htc_handle->dev, "ath: unknown panic pattern!\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
  * HTC Messages are handled directly here and the obtained SKB
- * is मुक्तd.
+ * is freed.
  *
  * Service messages (Data, WMI) passed to the corresponding
- * endpoपूर्णांक RX handlers, which have to मुक्त the SKB.
+ * endpoint RX handlers, which have to free the SKB.
  */
-व्योम ath9k_htc_rx_msg(काष्ठा htc_target *htc_handle,
-		      काष्ठा sk_buff *skb, u32 len, u8 pipe_id)
-अणु
-	काष्ठा htc_frame_hdr *htc_hdr;
-	क्रमागत htc_endpoपूर्णांक_id epid;
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक;
+void ath9k_htc_rx_msg(struct htc_target *htc_handle,
+		      struct sk_buff *skb, u32 len, u8 pipe_id)
+{
+	struct htc_frame_hdr *htc_hdr;
+	enum htc_endpoint_id epid;
+	struct htc_endpoint *endpoint;
 	__be16 *msg_id;
 
-	अगर (!htc_handle || !skb)
-		वापस;
+	if (!htc_handle || !skb)
+		return;
 
-	htc_hdr = (काष्ठा htc_frame_hdr *) skb->data;
-	epid = htc_hdr->endpoपूर्णांक_id;
+	htc_hdr = (struct htc_frame_hdr *) skb->data;
+	epid = htc_hdr->endpoint_id;
 
-	अगर (epid == 0x99) अणु
+	if (epid == 0x99) {
 		ath9k_htc_fw_panic_report(htc_handle, skb);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+		kfree_skb(skb);
+		return;
+	}
 
-	अगर (epid < 0 || epid >= ENDPOपूर्णांक_उच्च) अणु
-		अगर (pipe_id != USB_REG_IN_PIPE)
-			dev_kमुक्त_skb_any(skb);
-		अन्यथा
-			kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (epid < 0 || epid >= ENDPOINT_MAX) {
+		if (pipe_id != USB_REG_IN_PIPE)
+			dev_kfree_skb_any(skb);
+		else
+			kfree_skb(skb);
+		return;
+	}
 
-	अगर (epid == ENDPOINT0) अणु
+	if (epid == ENDPOINT0) {
 
 		/* Handle trailer */
-		अगर (htc_hdr->flags & HTC_FLAGS_RECV_TRAILER) अणु
-			अगर (be32_to_cpu(*(__be32 *) skb->data) == 0x00C60000)
-				/* Move past the Watchकरोg pattern */
-				htc_hdr = (काष्ठा htc_frame_hdr *)(skb->data + 4);
-		पूर्ण
+		if (htc_hdr->flags & HTC_FLAGS_RECV_TRAILER) {
+			if (be32_to_cpu(*(__be32 *) skb->data) == 0x00C60000)
+				/* Move past the Watchdog pattern */
+				htc_hdr = (struct htc_frame_hdr *)(skb->data + 4);
+		}
 
 		/* Get the message ID */
-		msg_id = (__be16 *) ((व्योम *) htc_hdr +
-				     माप(काष्ठा htc_frame_hdr));
+		msg_id = (__be16 *) ((void *) htc_hdr +
+				     sizeof(struct htc_frame_hdr));
 
 		/* Now process HTC messages */
-		चयन (be16_to_cpu(*msg_id)) अणु
-		हाल HTC_MSG_READY_ID:
+		switch (be16_to_cpu(*msg_id)) {
+		case HTC_MSG_READY_ID:
 			htc_process_target_rdy(htc_handle, htc_hdr);
-			अवरोध;
-		हाल HTC_MSG_CONNECT_SERVICE_RESPONSE_ID:
+			break;
+		case HTC_MSG_CONNECT_SERVICE_RESPONSE_ID:
 			htc_process_conn_rsp(htc_handle, htc_hdr);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+			break;
+		default:
+			break;
+		}
 
-		kमुक्त_skb(skb);
+		kfree_skb(skb);
 
-	पूर्ण अन्यथा अणु
-		अगर (htc_hdr->flags & HTC_FLAGS_RECV_TRAILER)
+	} else {
+		if (htc_hdr->flags & HTC_FLAGS_RECV_TRAILER)
 			skb_trim(skb, len - htc_hdr->control[0]);
 
-		skb_pull(skb, माप(काष्ठा htc_frame_hdr));
+		skb_pull(skb, sizeof(struct htc_frame_hdr));
 
-		endpoपूर्णांक = &htc_handle->endpoपूर्णांक[epid];
-		अगर (endpoपूर्णांक->ep_callbacks.rx)
-			endpoपूर्णांक->ep_callbacks.rx(endpoपूर्णांक->ep_callbacks.priv,
+		endpoint = &htc_handle->endpoint[epid];
+		if (endpoint->ep_callbacks.rx)
+			endpoint->ep_callbacks.rx(endpoint->ep_callbacks.priv,
 						  skb, epid);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा htc_target *ath9k_htc_hw_alloc(व्योम *hअगर_handle,
-				      काष्ठा ath9k_htc_hअगर *hअगर,
-				      काष्ठा device *dev)
-अणु
-	काष्ठा htc_endpoपूर्णांक *endpoपूर्णांक;
-	काष्ठा htc_target *target;
+struct htc_target *ath9k_htc_hw_alloc(void *hif_handle,
+				      struct ath9k_htc_hif *hif,
+				      struct device *dev)
+{
+	struct htc_endpoint *endpoint;
+	struct htc_target *target;
 
-	target = kzalloc(माप(काष्ठा htc_target), GFP_KERNEL);
-	अगर (!target)
-		वापस शून्य;
+	target = kzalloc(sizeof(struct htc_target), GFP_KERNEL);
+	if (!target)
+		return NULL;
 
-	init_completion(&target->target_रुको);
-	init_completion(&target->cmd_रुको);
+	init_completion(&target->target_wait);
+	init_completion(&target->cmd_wait);
 
-	target->hअगर = hअगर;
-	target->hअगर_dev = hअगर_handle;
+	target->hif = hif;
+	target->hif_dev = hif_handle;
 	target->dev = dev;
 
-	/* Assign control endpoपूर्णांक pipe IDs */
-	endpoपूर्णांक = &target->endpoपूर्णांक[ENDPOINT0];
-	endpoपूर्णांक->ul_pipeid = hअगर->control_ul_pipe;
-	endpoपूर्णांक->dl_pipeid = hअगर->control_dl_pipe;
+	/* Assign control endpoint pipe IDs */
+	endpoint = &target->endpoint[ENDPOINT0];
+	endpoint->ul_pipeid = hif->control_ul_pipe;
+	endpoint->dl_pipeid = hif->control_dl_pipe;
 
-	atomic_set(&target->tgt_पढ़ोy, 0);
+	atomic_set(&target->tgt_ready, 0);
 
-	वापस target;
-पूर्ण
+	return target;
+}
 
-व्योम ath9k_htc_hw_मुक्त(काष्ठा htc_target *htc)
-अणु
-	kमुक्त(htc);
-पूर्ण
+void ath9k_htc_hw_free(struct htc_target *htc)
+{
+	kfree(htc);
+}
 
-पूर्णांक ath9k_htc_hw_init(काष्ठा htc_target *target,
-		      काष्ठा device *dev, u16 devid,
-		      अक्षर *product, u32 drv_info)
-अणु
-	अगर (ath9k_htc_probe_device(target, dev, devid, product, drv_info)) अणु
+int ath9k_htc_hw_init(struct htc_target *target,
+		      struct device *dev, u16 devid,
+		      char *product, u32 drv_info)
+{
+	if (ath9k_htc_probe_device(target, dev, devid, product, drv_info)) {
 		pr_err("Failed to initialize the device\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ath9k_htc_hw_deinit(काष्ठा htc_target *target, bool hot_unplug)
-अणु
-	अगर (target)
+void ath9k_htc_hw_deinit(struct htc_target *target, bool hot_unplug)
+{
+	if (target)
 		ath9k_htc_disconnect_device(target, hot_unplug);
-पूर्ण
+}

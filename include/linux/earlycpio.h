@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_EARLYCPIO_H
-#घोषणा _LINUX_EARLYCPIO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_EARLYCPIO_H
+#define _LINUX_EARLYCPIO_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा MAX_CPIO_खाता_NAME 18
+#define MAX_CPIO_FILE_NAME 18
 
-काष्ठा cpio_data अणु
-	व्योम *data;
-	माप_प्रकार size;
-	अक्षर name[MAX_CPIO_खाता_NAME];
-पूर्ण;
+struct cpio_data {
+	void *data;
+	size_t size;
+	char name[MAX_CPIO_FILE_NAME];
+};
 
-काष्ठा cpio_data find_cpio_data(स्थिर अक्षर *path, व्योम *data, माप_प्रकार len,
-				दीर्घ *offset);
+struct cpio_data find_cpio_data(const char *path, void *data, size_t len,
+				long *offset);
 
-#पूर्ण_अगर /* _LINUX_EARLYCPIO_H */
+#endif /* _LINUX_EARLYCPIO_H */

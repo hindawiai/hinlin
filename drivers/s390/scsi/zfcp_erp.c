@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * zfcp device driver
  *
@@ -8,834 +7,834 @@
  * Copyright IBM Corp. 2002, 2020
  */
 
-#घोषणा KMSG_COMPONENT "zfcp"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "zfcp"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/bug.h>
-#समावेश "zfcp_ext.h"
-#समावेश "zfcp_reqlist.h"
-#समावेश "zfcp_diag.h"
+#include <linux/kthread.h>
+#include <linux/bug.h>
+#include "zfcp_ext.h"
+#include "zfcp_reqlist.h"
+#include "zfcp_diag.h"
 
-#घोषणा ZFCP_MAX_ERPS                   3
+#define ZFCP_MAX_ERPS                   3
 
-क्रमागत zfcp_erp_act_flags अणु
+enum zfcp_erp_act_flags {
 	ZFCP_STATUS_ERP_TIMEDOUT	= 0x10000000,
 	ZFCP_STATUS_ERP_CLOSE_ONLY	= 0x01000000,
 	ZFCP_STATUS_ERP_DISMISSED	= 0x00200000,
 	ZFCP_STATUS_ERP_LOWMEM		= 0x00400000,
 	ZFCP_STATUS_ERP_NO_REF		= 0x00800000,
-पूर्ण;
+};
 
 /*
- * Eyecatcher pseuकरो flag to bitwise or-combine with क्रमागत zfcp_erp_act_type.
+ * Eyecatcher pseudo flag to bitwise or-combine with enum zfcp_erp_act_type.
  * Used to indicate that an ERP action could not be set up despite a detected
- * need क्रम some recovery.
+ * need for some recovery.
  */
-#घोषणा ZFCP_ERP_ACTION_NONE		0xc0
+#define ZFCP_ERP_ACTION_NONE		0xc0
 /*
- * Eyecatcher pseuकरो flag to bitwise or-combine with क्रमागत zfcp_erp_act_type.
+ * Eyecatcher pseudo flag to bitwise or-combine with enum zfcp_erp_act_type.
  * Used to indicate that ERP not needed because the object has
  * ZFCP_STATUS_COMMON_ERP_FAILED.
  */
-#घोषणा ZFCP_ERP_ACTION_FAILED		0xe0
+#define ZFCP_ERP_ACTION_FAILED		0xe0
 
-क्रमागत zfcp_erp_act_result अणु
+enum zfcp_erp_act_result {
 	ZFCP_ERP_SUCCEEDED = 0,
 	ZFCP_ERP_FAILED    = 1,
 	ZFCP_ERP_CONTINUES = 2,
 	ZFCP_ERP_EXIT      = 3,
 	ZFCP_ERP_DISMISSED = 4,
 	ZFCP_ERP_NOMEM     = 5,
-पूर्ण;
+};
 
-अटल व्योम zfcp_erp_adapter_block(काष्ठा zfcp_adapter *adapter, पूर्णांक mask)
-अणु
+static void zfcp_erp_adapter_block(struct zfcp_adapter *adapter, int mask)
+{
 	zfcp_erp_clear_adapter_status(adapter,
 				       ZFCP_STATUS_COMMON_UNBLOCKED | mask);
-पूर्ण
+}
 
-अटल bool zfcp_erp_action_is_running(काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_erp_action *curr_act;
+static bool zfcp_erp_action_is_running(struct zfcp_erp_action *act)
+{
+	struct zfcp_erp_action *curr_act;
 
-	list_क्रम_each_entry(curr_act, &act->adapter->erp_running_head, list)
-		अगर (act == curr_act)
-			वापस true;
-	वापस false;
-पूर्ण
+	list_for_each_entry(curr_act, &act->adapter->erp_running_head, list)
+		if (act == curr_act)
+			return true;
+	return false;
+}
 
-अटल व्योम zfcp_erp_action_पढ़ोy(काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
+static void zfcp_erp_action_ready(struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
 
-	list_move(&act->list, &adapter->erp_पढ़ोy_head);
+	list_move(&act->list, &adapter->erp_ready_head);
 	zfcp_dbf_rec_run("erardy1", act);
-	wake_up(&adapter->erp_पढ़ोy_wq);
+	wake_up(&adapter->erp_ready_wq);
 	zfcp_dbf_rec_run("erardy2", act);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_action_dismiss(काष्ठा zfcp_erp_action *act)
-अणु
+static void zfcp_erp_action_dismiss(struct zfcp_erp_action *act)
+{
 	act->status |= ZFCP_STATUS_ERP_DISMISSED;
-	अगर (zfcp_erp_action_is_running(act))
-		zfcp_erp_action_पढ़ोy(act);
-पूर्ण
+	if (zfcp_erp_action_is_running(act))
+		zfcp_erp_action_ready(act);
+}
 
-अटल व्योम zfcp_erp_action_dismiss_lun(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+static void zfcp_erp_action_dismiss_lun(struct scsi_device *sdev)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
-	अगर (atomic_पढ़ो(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_ERP_INUSE)
+	if (atomic_read(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_ERP_INUSE)
 		zfcp_erp_action_dismiss(&zfcp_sdev->erp_action);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_action_dismiss_port(काष्ठा zfcp_port *port)
-अणु
-	काष्ठा scsi_device *sdev;
+static void zfcp_erp_action_dismiss_port(struct zfcp_port *port)
+{
+	struct scsi_device *sdev;
 
-	अगर (atomic_पढ़ो(&port->status) & ZFCP_STATUS_COMMON_ERP_INUSE)
+	if (atomic_read(&port->status) & ZFCP_STATUS_COMMON_ERP_INUSE)
 		zfcp_erp_action_dismiss(&port->erp_action);
-	अन्यथा अणु
+	else {
 		spin_lock(port->adapter->scsi_host->host_lock);
-		__shost_क्रम_each_device(sdev, port->adapter->scsi_host)
-			अगर (sdev_to_zfcp(sdev)->port == port)
+		__shost_for_each_device(sdev, port->adapter->scsi_host)
+			if (sdev_to_zfcp(sdev)->port == port)
 				zfcp_erp_action_dismiss_lun(sdev);
 		spin_unlock(port->adapter->scsi_host->host_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम zfcp_erp_action_dismiss_adapter(काष्ठा zfcp_adapter *adapter)
-अणु
-	काष्ठा zfcp_port *port;
+static void zfcp_erp_action_dismiss_adapter(struct zfcp_adapter *adapter)
+{
+	struct zfcp_port *port;
 
-	अगर (atomic_पढ़ो(&adapter->status) & ZFCP_STATUS_COMMON_ERP_INUSE)
+	if (atomic_read(&adapter->status) & ZFCP_STATUS_COMMON_ERP_INUSE)
 		zfcp_erp_action_dismiss(&adapter->erp_action);
-	अन्यथा अणु
-		पढ़ो_lock(&adapter->port_list_lock);
-		list_क्रम_each_entry(port, &adapter->port_list, list)
+	else {
+		read_lock(&adapter->port_list_lock);
+		list_for_each_entry(port, &adapter->port_list, list)
 		    zfcp_erp_action_dismiss_port(port);
-		पढ़ो_unlock(&adapter->port_list_lock);
-	पूर्ण
-पूर्ण
+		read_unlock(&adapter->port_list_lock);
+	}
+}
 
-अटल क्रमागत zfcp_erp_act_type zfcp_erp_handle_failed(
-	क्रमागत zfcp_erp_act_type want, काष्ठा zfcp_adapter *adapter,
-	काष्ठा zfcp_port *port,	काष्ठा scsi_device *sdev)
-अणु
-	क्रमागत zfcp_erp_act_type need = want;
-	काष्ठा zfcp_scsi_dev *zsdev;
+static enum zfcp_erp_act_type zfcp_erp_handle_failed(
+	enum zfcp_erp_act_type want, struct zfcp_adapter *adapter,
+	struct zfcp_port *port,	struct scsi_device *sdev)
+{
+	enum zfcp_erp_act_type need = want;
+	struct zfcp_scsi_dev *zsdev;
 
-	चयन (want) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+	switch (want) {
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		zsdev = sdev_to_zfcp(sdev);
-		अगर (atomic_पढ़ो(&zsdev->status) & ZFCP_STATUS_COMMON_ERP_FAILED)
+		if (atomic_read(&zsdev->status) & ZFCP_STATUS_COMMON_ERP_FAILED)
 			need = 0;
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-		अगर (atomic_पढ़ो(&port->status) & ZFCP_STATUS_COMMON_ERP_FAILED)
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+		if (atomic_read(&port->status) & ZFCP_STATUS_COMMON_ERP_FAILED)
 			need = 0;
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		अगर (atomic_पढ़ो(&port->status) &
-		    ZFCP_STATUS_COMMON_ERP_FAILED) अणु
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		if (atomic_read(&port->status) &
+		    ZFCP_STATUS_COMMON_ERP_FAILED) {
 			need = 0;
 			/* ensure propagation of failed status to new devices */
 			zfcp_erp_set_port_status(
 				port, ZFCP_STATUS_COMMON_ERP_FAILED);
-		पूर्ण
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		अगर (atomic_पढ़ो(&adapter->status) &
-		    ZFCP_STATUS_COMMON_ERP_FAILED) अणु
+		}
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		if (atomic_read(&adapter->status) &
+		    ZFCP_STATUS_COMMON_ERP_FAILED) {
 			need = 0;
 			/* ensure propagation of failed status to new devices */
 			zfcp_erp_set_adapter_status(
 				adapter, ZFCP_STATUS_COMMON_ERP_FAILED);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	वापस need;
-पूर्ण
+	return need;
+}
 
-अटल क्रमागत zfcp_erp_act_type zfcp_erp_required_act(क्रमागत zfcp_erp_act_type want,
-				 काष्ठा zfcp_adapter *adapter,
-				 काष्ठा zfcp_port *port,
-				 काष्ठा scsi_device *sdev)
-अणु
-	क्रमागत zfcp_erp_act_type need = want;
-	पूर्णांक l_status, p_status, a_status;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev;
+static enum zfcp_erp_act_type zfcp_erp_required_act(enum zfcp_erp_act_type want,
+				 struct zfcp_adapter *adapter,
+				 struct zfcp_port *port,
+				 struct scsi_device *sdev)
+{
+	enum zfcp_erp_act_type need = want;
+	int l_status, p_status, a_status;
+	struct zfcp_scsi_dev *zfcp_sdev;
 
-	चयन (want) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+	switch (want) {
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		zfcp_sdev = sdev_to_zfcp(sdev);
-		l_status = atomic_पढ़ो(&zfcp_sdev->status);
-		अगर (l_status & ZFCP_STATUS_COMMON_ERP_INUSE)
-			वापस 0;
-		p_status = atomic_पढ़ो(&port->status);
-		अगर (!(p_status & ZFCP_STATUS_COMMON_RUNNING) ||
+		l_status = atomic_read(&zfcp_sdev->status);
+		if (l_status & ZFCP_STATUS_COMMON_ERP_INUSE)
+			return 0;
+		p_status = atomic_read(&port->status);
+		if (!(p_status & ZFCP_STATUS_COMMON_RUNNING) ||
 		    p_status & ZFCP_STATUS_COMMON_ERP_FAILED)
-			वापस 0;
-		अगर (!(p_status & ZFCP_STATUS_COMMON_UNBLOCKED))
+			return 0;
+		if (!(p_status & ZFCP_STATUS_COMMON_UNBLOCKED))
 			need = ZFCP_ERP_ACTION_REOPEN_PORT;
 		fallthrough;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-		p_status = atomic_पढ़ो(&port->status);
-		अगर (!(p_status & ZFCP_STATUS_COMMON_OPEN))
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+		p_status = atomic_read(&port->status);
+		if (!(p_status & ZFCP_STATUS_COMMON_OPEN))
 			need = ZFCP_ERP_ACTION_REOPEN_PORT;
 		fallthrough;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		p_status = atomic_पढ़ो(&port->status);
-		अगर (p_status & ZFCP_STATUS_COMMON_ERP_INUSE)
-			वापस 0;
-		a_status = atomic_पढ़ो(&adapter->status);
-		अगर (!(a_status & ZFCP_STATUS_COMMON_RUNNING) ||
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		p_status = atomic_read(&port->status);
+		if (p_status & ZFCP_STATUS_COMMON_ERP_INUSE)
+			return 0;
+		a_status = atomic_read(&adapter->status);
+		if (!(a_status & ZFCP_STATUS_COMMON_RUNNING) ||
 		    a_status & ZFCP_STATUS_COMMON_ERP_FAILED)
-			वापस 0;
-		अगर (p_status & ZFCP_STATUS_COMMON_NOESC)
-			वापस need;
-		अगर (!(a_status & ZFCP_STATUS_COMMON_UNBLOCKED))
+			return 0;
+		if (p_status & ZFCP_STATUS_COMMON_NOESC)
+			return need;
+		if (!(a_status & ZFCP_STATUS_COMMON_UNBLOCKED))
 			need = ZFCP_ERP_ACTION_REOPEN_ADAPTER;
 		fallthrough;
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		a_status = atomic_पढ़ो(&adapter->status);
-		अगर (a_status & ZFCP_STATUS_COMMON_ERP_INUSE)
-			वापस 0;
-		अगर (!(a_status & ZFCP_STATUS_COMMON_RUNNING) &&
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		a_status = atomic_read(&adapter->status);
+		if (a_status & ZFCP_STATUS_COMMON_ERP_INUSE)
+			return 0;
+		if (!(a_status & ZFCP_STATUS_COMMON_RUNNING) &&
 		    !(a_status & ZFCP_STATUS_COMMON_OPEN))
-			वापस 0; /* shutकरोwn requested क्रम बंदd adapter */
-	पूर्ण
+			return 0; /* shutdown requested for closed adapter */
+	}
 
-	वापस need;
-पूर्ण
+	return need;
+}
 
-अटल काष्ठा zfcp_erp_action *zfcp_erp_setup_act(क्रमागत zfcp_erp_act_type need,
+static struct zfcp_erp_action *zfcp_erp_setup_act(enum zfcp_erp_act_type need,
 						  u32 act_status,
-						  काष्ठा zfcp_adapter *adapter,
-						  काष्ठा zfcp_port *port,
-						  काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा zfcp_erp_action *erp_action;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev;
+						  struct zfcp_adapter *adapter,
+						  struct zfcp_port *port,
+						  struct scsi_device *sdev)
+{
+	struct zfcp_erp_action *erp_action;
+	struct zfcp_scsi_dev *zfcp_sdev;
 
-	अगर (WARN_ON_ONCE(need != ZFCP_ERP_ACTION_REOPEN_LUN &&
+	if (WARN_ON_ONCE(need != ZFCP_ERP_ACTION_REOPEN_LUN &&
 			 need != ZFCP_ERP_ACTION_REOPEN_PORT &&
 			 need != ZFCP_ERP_ACTION_REOPEN_PORT_FORCED &&
 			 need != ZFCP_ERP_ACTION_REOPEN_ADAPTER))
-		वापस शून्य;
+		return NULL;
 
-	चयन (need) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+	switch (need) {
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		zfcp_sdev = sdev_to_zfcp(sdev);
-		अगर (!(act_status & ZFCP_STATUS_ERP_NO_REF))
-			अगर (scsi_device_get(sdev))
-				वापस शून्य;
+		if (!(act_status & ZFCP_STATUS_ERP_NO_REF))
+			if (scsi_device_get(sdev))
+				return NULL;
 		atomic_or(ZFCP_STATUS_COMMON_ERP_INUSE,
 				&zfcp_sdev->status);
 		erp_action = &zfcp_sdev->erp_action;
 		WARN_ON_ONCE(erp_action->port != port);
 		WARN_ON_ONCE(erp_action->sdev != sdev);
-		अगर (!(atomic_पढ़ो(&zfcp_sdev->status) &
+		if (!(atomic_read(&zfcp_sdev->status) &
 		      ZFCP_STATUS_COMMON_RUNNING))
 			act_status |= ZFCP_STATUS_ERP_CLOSE_ONLY;
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-		अगर (!get_device(&port->dev))
-			वापस शून्य;
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+		if (!get_device(&port->dev))
+			return NULL;
 		zfcp_erp_action_dismiss_port(port);
 		atomic_or(ZFCP_STATUS_COMMON_ERP_INUSE, &port->status);
 		erp_action = &port->erp_action;
 		WARN_ON_ONCE(erp_action->port != port);
-		WARN_ON_ONCE(erp_action->sdev != शून्य);
-		अगर (!(atomic_पढ़ो(&port->status) & ZFCP_STATUS_COMMON_RUNNING))
+		WARN_ON_ONCE(erp_action->sdev != NULL);
+		if (!(atomic_read(&port->status) & ZFCP_STATUS_COMMON_RUNNING))
 			act_status |= ZFCP_STATUS_ERP_CLOSE_ONLY;
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
 		kref_get(&adapter->ref);
 		zfcp_erp_action_dismiss_adapter(adapter);
 		atomic_or(ZFCP_STATUS_COMMON_ERP_INUSE, &adapter->status);
 		erp_action = &adapter->erp_action;
-		WARN_ON_ONCE(erp_action->port != शून्य);
-		WARN_ON_ONCE(erp_action->sdev != शून्य);
-		अगर (!(atomic_पढ़ो(&adapter->status) &
+		WARN_ON_ONCE(erp_action->port != NULL);
+		WARN_ON_ONCE(erp_action->sdev != NULL);
+		if (!(atomic_read(&adapter->status) &
 		      ZFCP_STATUS_COMMON_RUNNING))
 			act_status |= ZFCP_STATUS_ERP_CLOSE_ONLY;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	WARN_ON_ONCE(erp_action->adapter != adapter);
-	स_रखो(&erp_action->list, 0, माप(erp_action->list));
-	स_रखो(&erp_action->समयr, 0, माप(erp_action->समयr));
+	memset(&erp_action->list, 0, sizeof(erp_action->list));
+	memset(&erp_action->timer, 0, sizeof(erp_action->timer));
 	erp_action->step = ZFCP_ERP_STEP_UNINITIALIZED;
 	erp_action->fsf_req_id = 0;
 	erp_action->type = need;
 	erp_action->status = act_status;
 
-	वापस erp_action;
-पूर्ण
+	return erp_action;
+}
 
-अटल व्योम zfcp_erp_action_enqueue(क्रमागत zfcp_erp_act_type want,
-				    काष्ठा zfcp_adapter *adapter,
-				    काष्ठा zfcp_port *port,
-				    काष्ठा scsi_device *sdev,
-				    अक्षर *dbftag, u32 act_status)
-अणु
-	क्रमागत zfcp_erp_act_type need;
-	काष्ठा zfcp_erp_action *act;
+static void zfcp_erp_action_enqueue(enum zfcp_erp_act_type want,
+				    struct zfcp_adapter *adapter,
+				    struct zfcp_port *port,
+				    struct scsi_device *sdev,
+				    char *dbftag, u32 act_status)
+{
+	enum zfcp_erp_act_type need;
+	struct zfcp_erp_action *act;
 
 	need = zfcp_erp_handle_failed(want, adapter, port, sdev);
-	अगर (!need) अणु
-		need = ZFCP_ERP_ACTION_FAILED; /* marker क्रम trace */
-		जाओ out;
-	पूर्ण
+	if (!need) {
+		need = ZFCP_ERP_ACTION_FAILED; /* marker for trace */
+		goto out;
+	}
 
-	अगर (!adapter->erp_thपढ़ो) अणु
-		need = ZFCP_ERP_ACTION_NONE; /* marker क्रम trace */
-		जाओ out;
-	पूर्ण
+	if (!adapter->erp_thread) {
+		need = ZFCP_ERP_ACTION_NONE; /* marker for trace */
+		goto out;
+	}
 
 	need = zfcp_erp_required_act(want, adapter, port, sdev);
-	अगर (!need)
-		जाओ out;
+	if (!need)
+		goto out;
 
 	act = zfcp_erp_setup_act(need, act_status, adapter, port, sdev);
-	अगर (!act) अणु
-		need |= ZFCP_ERP_ACTION_NONE; /* marker क्रम trace */
-		जाओ out;
-	पूर्ण
+	if (!act) {
+		need |= ZFCP_ERP_ACTION_NONE; /* marker for trace */
+		goto out;
+	}
 	atomic_or(ZFCP_STATUS_ADAPTER_ERP_PENDING, &adapter->status);
 	++adapter->erp_total_count;
-	list_add_tail(&act->list, &adapter->erp_पढ़ोy_head);
-	wake_up(&adapter->erp_पढ़ोy_wq);
+	list_add_tail(&act->list, &adapter->erp_ready_head);
+	wake_up(&adapter->erp_ready_wq);
  out:
 	zfcp_dbf_rec_trig(dbftag, adapter, port, sdev, want, need);
-पूर्ण
+}
 
-व्योम zfcp_erp_port_क्रमced_no_port_dbf(अक्षर *dbftag,
-				      काष्ठा zfcp_adapter *adapter,
+void zfcp_erp_port_forced_no_port_dbf(char *dbftag,
+				      struct zfcp_adapter *adapter,
 				      u64 port_name, u32 port_id)
-अणु
-	अचिन्हित दीर्घ flags;
-	अटल /* करोn't waste stack */ काष्ठा zfcp_port पंचांगpport;
+{
+	unsigned long flags;
+	static /* don't waste stack */ struct zfcp_port tmpport;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	/* Stand-in zfcp port with fields just good enough क्रम
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	/* Stand-in zfcp port with fields just good enough for
 	 * zfcp_dbf_rec_trig() and zfcp_dbf_set_common().
-	 * Under lock because पंचांगpport is अटल.
+	 * Under lock because tmpport is static.
 	 */
-	atomic_set(&पंचांगpport.status, -1); /* unknown */
-	पंचांगpport.wwpn = port_name;
-	पंचांगpport.d_id = port_id;
-	zfcp_dbf_rec_trig(dbftag, adapter, &पंचांगpport, शून्य,
+	atomic_set(&tmpport.status, -1); /* unknown */
+	tmpport.wwpn = port_name;
+	tmpport.d_id = port_id;
+	zfcp_dbf_rec_trig(dbftag, adapter, &tmpport, NULL,
 			  ZFCP_ERP_ACTION_REOPEN_PORT_FORCED,
 			  ZFCP_ERP_ACTION_NONE);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
-अटल व्योम _zfcp_erp_adapter_reखोलो(काष्ठा zfcp_adapter *adapter,
-				    पूर्णांक clear_mask, अक्षर *dbftag)
-अणु
+static void _zfcp_erp_adapter_reopen(struct zfcp_adapter *adapter,
+				    int clear_mask, char *dbftag)
+{
 	zfcp_erp_adapter_block(adapter, clear_mask);
 	zfcp_scsi_schedule_rports_block(adapter);
 
 	zfcp_erp_action_enqueue(ZFCP_ERP_ACTION_REOPEN_ADAPTER,
-				adapter, शून्य, शून्य, dbftag, 0);
-पूर्ण
+				adapter, NULL, NULL, dbftag, 0);
+}
 
 /**
- * zfcp_erp_adapter_reखोलो - Reखोलो adapter.
- * @adapter: Adapter to reखोलो.
+ * zfcp_erp_adapter_reopen - Reopen adapter.
+ * @adapter: Adapter to reopen.
  * @clear: Status flags to clear.
- * @dbftag: Tag क्रम debug trace event.
+ * @dbftag: Tag for debug trace event.
  */
-व्योम zfcp_erp_adapter_reखोलो(काष्ठा zfcp_adapter *adapter, पूर्णांक clear,
-			     अक्षर *dbftag)
-अणु
-	अचिन्हित दीर्घ flags;
+void zfcp_erp_adapter_reopen(struct zfcp_adapter *adapter, int clear,
+			     char *dbftag)
+{
+	unsigned long flags;
 
 	zfcp_erp_adapter_block(adapter, clear);
 	zfcp_scsi_schedule_rports_block(adapter);
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
+	write_lock_irqsave(&adapter->erp_lock, flags);
 	zfcp_erp_action_enqueue(ZFCP_ERP_ACTION_REOPEN_ADAPTER, adapter,
-				शून्य, शून्य, dbftag, 0);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+				NULL, NULL, dbftag, 0);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
 /**
- * zfcp_erp_adapter_shutकरोwn - Shutकरोwn adapter.
- * @adapter: Adapter to shut करोwn.
+ * zfcp_erp_adapter_shutdown - Shutdown adapter.
+ * @adapter: Adapter to shut down.
  * @clear: Status flags to clear.
- * @dbftag: Tag क्रम debug trace event.
+ * @dbftag: Tag for debug trace event.
  */
-व्योम zfcp_erp_adapter_shutकरोwn(काष्ठा zfcp_adapter *adapter, पूर्णांक clear,
-			       अक्षर *dbftag)
-अणु
-	पूर्णांक flags = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
-	zfcp_erp_adapter_reखोलो(adapter, clear | flags, dbftag);
-पूर्ण
+void zfcp_erp_adapter_shutdown(struct zfcp_adapter *adapter, int clear,
+			       char *dbftag)
+{
+	int flags = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
+	zfcp_erp_adapter_reopen(adapter, clear | flags, dbftag);
+}
 
 /**
- * zfcp_erp_port_shutकरोwn - Shutकरोwn port
- * @port: Port to shut करोwn.
+ * zfcp_erp_port_shutdown - Shutdown port
+ * @port: Port to shut down.
  * @clear: Status flags to clear.
- * @dbftag: Tag क्रम debug trace event.
+ * @dbftag: Tag for debug trace event.
  */
-व्योम zfcp_erp_port_shutकरोwn(काष्ठा zfcp_port *port, पूर्णांक clear, अक्षर *dbftag)
-अणु
-	पूर्णांक flags = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
-	zfcp_erp_port_reखोलो(port, clear | flags, dbftag);
-पूर्ण
+void zfcp_erp_port_shutdown(struct zfcp_port *port, int clear, char *dbftag)
+{
+	int flags = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
+	zfcp_erp_port_reopen(port, clear | flags, dbftag);
+}
 
-अटल व्योम zfcp_erp_port_block(काष्ठा zfcp_port *port, पूर्णांक clear)
-अणु
+static void zfcp_erp_port_block(struct zfcp_port *port, int clear)
+{
 	zfcp_erp_clear_port_status(port,
 				    ZFCP_STATUS_COMMON_UNBLOCKED | clear);
-पूर्ण
+}
 
-अटल व्योम _zfcp_erp_port_क्रमced_reखोलो(काष्ठा zfcp_port *port, पूर्णांक clear,
-					 अक्षर *dbftag)
-अणु
+static void _zfcp_erp_port_forced_reopen(struct zfcp_port *port, int clear,
+					 char *dbftag)
+{
 	zfcp_erp_port_block(port, clear);
 	zfcp_scsi_schedule_rport_block(port);
 
 	zfcp_erp_action_enqueue(ZFCP_ERP_ACTION_REOPEN_PORT_FORCED,
-				port->adapter, port, शून्य, dbftag, 0);
-पूर्ण
+				port->adapter, port, NULL, dbftag, 0);
+}
 
 /**
- * zfcp_erp_port_क्रमced_reखोलो - Forced बंद of port and खोलो again
- * @port: Port to क्रमce बंद and to reखोलो.
+ * zfcp_erp_port_forced_reopen - Forced close of port and open again
+ * @port: Port to force close and to reopen.
  * @clear: Status flags to clear.
- * @dbftag: Tag क्रम debug trace event.
+ * @dbftag: Tag for debug trace event.
  */
-व्योम zfcp_erp_port_क्रमced_reखोलो(काष्ठा zfcp_port *port, पूर्णांक clear,
-				 अक्षर *dbftag)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_adapter *adapter = port->adapter;
+void zfcp_erp_port_forced_reopen(struct zfcp_port *port, int clear,
+				 char *dbftag)
+{
+	unsigned long flags;
+	struct zfcp_adapter *adapter = port->adapter;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	_zfcp_erp_port_क्रमced_reखोलो(port, clear, dbftag);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	_zfcp_erp_port_forced_reopen(port, clear, dbftag);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
-अटल व्योम _zfcp_erp_port_reखोलो(काष्ठा zfcp_port *port, पूर्णांक clear,
-				  अक्षर *dbftag)
-अणु
+static void _zfcp_erp_port_reopen(struct zfcp_port *port, int clear,
+				  char *dbftag)
+{
 	zfcp_erp_port_block(port, clear);
 	zfcp_scsi_schedule_rport_block(port);
 
 	zfcp_erp_action_enqueue(ZFCP_ERP_ACTION_REOPEN_PORT,
-				port->adapter, port, शून्य, dbftag, 0);
-पूर्ण
+				port->adapter, port, NULL, dbftag, 0);
+}
 
 /**
- * zfcp_erp_port_reखोलो - trigger remote port recovery
+ * zfcp_erp_port_reopen - trigger remote port recovery
  * @port: port to recover
  * @clear: flags in port status to be cleared
- * @dbftag: Tag क्रम debug trace event.
+ * @dbftag: Tag for debug trace event.
  */
-व्योम zfcp_erp_port_reखोलो(काष्ठा zfcp_port *port, पूर्णांक clear, अक्षर *dbftag)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_adapter *adapter = port->adapter;
+void zfcp_erp_port_reopen(struct zfcp_port *port, int clear, char *dbftag)
+{
+	unsigned long flags;
+	struct zfcp_adapter *adapter = port->adapter;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	_zfcp_erp_port_reखोलो(port, clear, dbftag);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	_zfcp_erp_port_reopen(port, clear, dbftag);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
-अटल व्योम zfcp_erp_lun_block(काष्ठा scsi_device *sdev, पूर्णांक clear_mask)
-अणु
+static void zfcp_erp_lun_block(struct scsi_device *sdev, int clear_mask)
+{
 	zfcp_erp_clear_lun_status(sdev,
 				  ZFCP_STATUS_COMMON_UNBLOCKED | clear_mask);
-पूर्ण
+}
 
-अटल व्योम _zfcp_erp_lun_reखोलो(काष्ठा scsi_device *sdev, पूर्णांक clear,
-				 अक्षर *dbftag, u32 act_status)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
-	काष्ठा zfcp_adapter *adapter = zfcp_sdev->port->adapter;
+static void _zfcp_erp_lun_reopen(struct scsi_device *sdev, int clear,
+				 char *dbftag, u32 act_status)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+	struct zfcp_adapter *adapter = zfcp_sdev->port->adapter;
 
 	zfcp_erp_lun_block(sdev, clear);
 
 	zfcp_erp_action_enqueue(ZFCP_ERP_ACTION_REOPEN_LUN, adapter,
 				zfcp_sdev->port, sdev, dbftag, act_status);
-पूर्ण
+}
 
 /**
- * zfcp_erp_lun_reखोलो - initiate reखोलो of a LUN
- * @sdev: SCSI device / LUN to be reखोलोed
- * @clear: specअगरies flags in LUN status to be cleared
- * @dbftag: Tag क्रम debug trace event.
+ * zfcp_erp_lun_reopen - initiate reopen of a LUN
+ * @sdev: SCSI device / LUN to be reopened
+ * @clear: specifies flags in LUN status to be cleared
+ * @dbftag: Tag for debug trace event.
  *
  * Return: 0 on success, < 0 on error
  */
-व्योम zfcp_erp_lun_reखोलो(काष्ठा scsi_device *sdev, पूर्णांक clear, अक्षर *dbftag)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
-	काष्ठा zfcp_port *port = zfcp_sdev->port;
-	काष्ठा zfcp_adapter *adapter = port->adapter;
+void zfcp_erp_lun_reopen(struct scsi_device *sdev, int clear, char *dbftag)
+{
+	unsigned long flags;
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+	struct zfcp_port *port = zfcp_sdev->port;
+	struct zfcp_adapter *adapter = port->adapter;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	_zfcp_erp_lun_reखोलो(sdev, clear, dbftag, 0);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	_zfcp_erp_lun_reopen(sdev, clear, dbftag, 0);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
 /**
- * zfcp_erp_lun_shutकरोwn - Shutकरोwn LUN
- * @sdev: SCSI device / LUN to shut करोwn.
+ * zfcp_erp_lun_shutdown - Shutdown LUN
+ * @sdev: SCSI device / LUN to shut down.
  * @clear: Status flags to clear.
- * @dbftag: Tag क्रम debug trace event.
+ * @dbftag: Tag for debug trace event.
  */
-व्योम zfcp_erp_lun_shutकरोwn(काष्ठा scsi_device *sdev, पूर्णांक clear, अक्षर *dbftag)
-अणु
-	पूर्णांक flags = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
-	zfcp_erp_lun_reखोलो(sdev, clear | flags, dbftag);
-पूर्ण
+void zfcp_erp_lun_shutdown(struct scsi_device *sdev, int clear, char *dbftag)
+{
+	int flags = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
+	zfcp_erp_lun_reopen(sdev, clear | flags, dbftag);
+}
 
 /**
- * zfcp_erp_lun_shutकरोwn_रुको - Shutकरोwn LUN and रुको क्रम erp completion
- * @sdev: SCSI device / LUN to shut करोwn.
- * @dbftag: Tag क्रम debug trace event.
+ * zfcp_erp_lun_shutdown_wait - Shutdown LUN and wait for erp completion
+ * @sdev: SCSI device / LUN to shut down.
+ * @dbftag: Tag for debug trace event.
  *
- * Do not acquire a reference क्रम the LUN when creating the ERP
- * action. It is safe, because this function रुकोs क्रम the ERP to
- * complete first. This allows to shutकरोwn the LUN, even when the SCSI
+ * Do not acquire a reference for the LUN when creating the ERP
+ * action. It is safe, because this function waits for the ERP to
+ * complete first. This allows to shutdown the LUN, even when the SCSI
  * device is in the state SDEV_DEL when scsi_device_get will fail.
  */
-व्योम zfcp_erp_lun_shutकरोwn_रुको(काष्ठा scsi_device *sdev, अक्षर *dbftag)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
-	काष्ठा zfcp_port *port = zfcp_sdev->port;
-	काष्ठा zfcp_adapter *adapter = port->adapter;
-	पूर्णांक clear = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
+void zfcp_erp_lun_shutdown_wait(struct scsi_device *sdev, char *dbftag)
+{
+	unsigned long flags;
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+	struct zfcp_port *port = zfcp_sdev->port;
+	struct zfcp_adapter *adapter = port->adapter;
+	int clear = ZFCP_STATUS_COMMON_RUNNING | ZFCP_STATUS_COMMON_ERP_FAILED;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	_zfcp_erp_lun_reखोलो(sdev, clear, dbftag, ZFCP_STATUS_ERP_NO_REF);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	_zfcp_erp_lun_reopen(sdev, clear, dbftag, ZFCP_STATUS_ERP_NO_REF);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
 
-	zfcp_erp_रुको(adapter);
-पूर्ण
+	zfcp_erp_wait(adapter);
+}
 
-अटल पूर्णांक zfcp_erp_status_change_set(अचिन्हित दीर्घ mask, atomic_t *status)
-अणु
-	वापस (atomic_पढ़ो(status) ^ mask) & mask;
-पूर्ण
+static int zfcp_erp_status_change_set(unsigned long mask, atomic_t *status)
+{
+	return (atomic_read(status) ^ mask) & mask;
+}
 
-अटल व्योम zfcp_erp_adapter_unblock(काष्ठा zfcp_adapter *adapter)
-अणु
-	अगर (zfcp_erp_status_change_set(ZFCP_STATUS_COMMON_UNBLOCKED,
+static void zfcp_erp_adapter_unblock(struct zfcp_adapter *adapter)
+{
+	if (zfcp_erp_status_change_set(ZFCP_STATUS_COMMON_UNBLOCKED,
 				       &adapter->status))
 		zfcp_dbf_rec_run("eraubl1", &adapter->erp_action);
 	atomic_or(ZFCP_STATUS_COMMON_UNBLOCKED, &adapter->status);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_port_unblock(काष्ठा zfcp_port *port)
-अणु
-	अगर (zfcp_erp_status_change_set(ZFCP_STATUS_COMMON_UNBLOCKED,
+static void zfcp_erp_port_unblock(struct zfcp_port *port)
+{
+	if (zfcp_erp_status_change_set(ZFCP_STATUS_COMMON_UNBLOCKED,
 				       &port->status))
 		zfcp_dbf_rec_run("erpubl1", &port->erp_action);
 	atomic_or(ZFCP_STATUS_COMMON_UNBLOCKED, &port->status);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_lun_unblock(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+static void zfcp_erp_lun_unblock(struct scsi_device *sdev)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
-	अगर (zfcp_erp_status_change_set(ZFCP_STATUS_COMMON_UNBLOCKED,
+	if (zfcp_erp_status_change_set(ZFCP_STATUS_COMMON_UNBLOCKED,
 				       &zfcp_sdev->status))
 		zfcp_dbf_rec_run("erlubl1", &sdev_to_zfcp(sdev)->erp_action);
 	atomic_or(ZFCP_STATUS_COMMON_UNBLOCKED, &zfcp_sdev->status);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_action_to_running(काष्ठा zfcp_erp_action *erp_action)
-अणु
+static void zfcp_erp_action_to_running(struct zfcp_erp_action *erp_action)
+{
 	list_move(&erp_action->list, &erp_action->adapter->erp_running_head);
 	zfcp_dbf_rec_run("erator1", erp_action);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_strategy_check_fsfreq(काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
-	काष्ठा zfcp_fsf_req *req;
+static void zfcp_erp_strategy_check_fsfreq(struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
+	struct zfcp_fsf_req *req;
 
-	अगर (!act->fsf_req_id)
-		वापस;
+	if (!act->fsf_req_id)
+		return;
 
 	spin_lock(&adapter->req_list->lock);
 	req = _zfcp_reqlist_find(adapter->req_list, act->fsf_req_id);
-	अगर (req && req->erp_action == act) अणु
-		अगर (act->status & (ZFCP_STATUS_ERP_DISMISSED |
-				   ZFCP_STATUS_ERP_TIMEDOUT)) अणु
+	if (req && req->erp_action == act) {
+		if (act->status & (ZFCP_STATUS_ERP_DISMISSED |
+				   ZFCP_STATUS_ERP_TIMEDOUT)) {
 			req->status |= ZFCP_STATUS_FSFREQ_DISMISSED;
 			zfcp_dbf_rec_run("erscf_1", act);
-			/* lock-मुक्त concurrent access with
-			 * zfcp_erp_समयout_handler()
+			/* lock-free concurrent access with
+			 * zfcp_erp_timeout_handler()
 			 */
-			WRITE_ONCE(req->erp_action, शून्य);
-		पूर्ण
-		अगर (act->status & ZFCP_STATUS_ERP_TIMEDOUT)
+			WRITE_ONCE(req->erp_action, NULL);
+		}
+		if (act->status & ZFCP_STATUS_ERP_TIMEDOUT)
 			zfcp_dbf_rec_run("erscf_2", act);
-		अगर (req->status & ZFCP_STATUS_FSFREQ_DISMISSED)
+		if (req->status & ZFCP_STATUS_FSFREQ_DISMISSED)
 			act->fsf_req_id = 0;
-	पूर्ण अन्यथा
+	} else
 		act->fsf_req_id = 0;
 	spin_unlock(&adapter->req_list->lock);
-पूर्ण
+}
 
 /**
- * zfcp_erp_notअगरy - Trigger ERP action.
- * @erp_action: ERP action to जारी.
+ * zfcp_erp_notify - Trigger ERP action.
+ * @erp_action: ERP action to continue.
  * @set_mask: ERP action status flags to set.
  */
-व्योम zfcp_erp_notअगरy(काष्ठा zfcp_erp_action *erp_action, अचिन्हित दीर्घ set_mask)
-अणु
-	काष्ठा zfcp_adapter *adapter = erp_action->adapter;
-	अचिन्हित दीर्घ flags;
+void zfcp_erp_notify(struct zfcp_erp_action *erp_action, unsigned long set_mask)
+{
+	struct zfcp_adapter *adapter = erp_action->adapter;
+	unsigned long flags;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	अगर (zfcp_erp_action_is_running(erp_action)) अणु
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	if (zfcp_erp_action_is_running(erp_action)) {
 		erp_action->status |= set_mask;
-		zfcp_erp_action_पढ़ोy(erp_action);
-	पूर्ण
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+		zfcp_erp_action_ready(erp_action);
+	}
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
 /**
- * zfcp_erp_समयout_handler - Trigger ERP action from समयd out ERP request
- * @t: समयr list entry embedded in zfcp FSF request
+ * zfcp_erp_timeout_handler - Trigger ERP action from timed out ERP request
+ * @t: timer list entry embedded in zfcp FSF request
  */
-व्योम zfcp_erp_समयout_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा zfcp_fsf_req *fsf_req = from_समयr(fsf_req, t, समयr);
-	काष्ठा zfcp_erp_action *act;
+void zfcp_erp_timeout_handler(struct timer_list *t)
+{
+	struct zfcp_fsf_req *fsf_req = from_timer(fsf_req, t, timer);
+	struct zfcp_erp_action *act;
 
-	अगर (fsf_req->status & ZFCP_STATUS_FSFREQ_DISMISSED)
-		वापस;
-	/* lock-मुक्त concurrent access with zfcp_erp_strategy_check_fsfreq() */
+	if (fsf_req->status & ZFCP_STATUS_FSFREQ_DISMISSED)
+		return;
+	/* lock-free concurrent access with zfcp_erp_strategy_check_fsfreq() */
 	act = READ_ONCE(fsf_req->erp_action);
-	अगर (!act)
-		वापस;
-	zfcp_erp_notअगरy(act, ZFCP_STATUS_ERP_TIMEDOUT);
-पूर्ण
+	if (!act)
+		return;
+	zfcp_erp_notify(act, ZFCP_STATUS_ERP_TIMEDOUT);
+}
 
-अटल व्योम zfcp_erp_memरुको_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा zfcp_erp_action *act = from_समयr(act, t, समयr);
+static void zfcp_erp_memwait_handler(struct timer_list *t)
+{
+	struct zfcp_erp_action *act = from_timer(act, t, timer);
 
-	zfcp_erp_notअगरy(act, 0);
-पूर्ण
+	zfcp_erp_notify(act, 0);
+}
 
-अटल व्योम zfcp_erp_strategy_memरुको(काष्ठा zfcp_erp_action *erp_action)
-अणु
-	समयr_setup(&erp_action->समयr, zfcp_erp_memरुको_handler, 0);
-	erp_action->समयr.expires = jअगरfies + HZ;
-	add_समयr(&erp_action->समयr);
-पूर्ण
+static void zfcp_erp_strategy_memwait(struct zfcp_erp_action *erp_action)
+{
+	timer_setup(&erp_action->timer, zfcp_erp_memwait_handler, 0);
+	erp_action->timer.expires = jiffies + HZ;
+	add_timer(&erp_action->timer);
+}
 
-व्योम zfcp_erp_port_क्रमced_reखोलो_all(काष्ठा zfcp_adapter *adapter,
-				     पूर्णांक clear, अक्षर *dbftag)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_port *port;
+void zfcp_erp_port_forced_reopen_all(struct zfcp_adapter *adapter,
+				     int clear, char *dbftag)
+{
+	unsigned long flags;
+	struct zfcp_port *port;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	पढ़ो_lock(&adapter->port_list_lock);
-	list_क्रम_each_entry(port, &adapter->port_list, list)
-		_zfcp_erp_port_क्रमced_reखोलो(port, clear, dbftag);
-	पढ़ो_unlock(&adapter->port_list_lock);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	read_lock(&adapter->port_list_lock);
+	list_for_each_entry(port, &adapter->port_list, list)
+		_zfcp_erp_port_forced_reopen(port, clear, dbftag);
+	read_unlock(&adapter->port_list_lock);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
-अटल व्योम _zfcp_erp_port_reखोलो_all(काष्ठा zfcp_adapter *adapter,
-				      पूर्णांक clear, अक्षर *dbftag)
-अणु
-	काष्ठा zfcp_port *port;
+static void _zfcp_erp_port_reopen_all(struct zfcp_adapter *adapter,
+				      int clear, char *dbftag)
+{
+	struct zfcp_port *port;
 
-	पढ़ो_lock(&adapter->port_list_lock);
-	list_क्रम_each_entry(port, &adapter->port_list, list)
-		_zfcp_erp_port_reखोलो(port, clear, dbftag);
-	पढ़ो_unlock(&adapter->port_list_lock);
-पूर्ण
+	read_lock(&adapter->port_list_lock);
+	list_for_each_entry(port, &adapter->port_list, list)
+		_zfcp_erp_port_reopen(port, clear, dbftag);
+	read_unlock(&adapter->port_list_lock);
+}
 
-अटल व्योम _zfcp_erp_lun_reखोलो_all(काष्ठा zfcp_port *port, पूर्णांक clear,
-				     अक्षर *dbftag)
-अणु
-	काष्ठा scsi_device *sdev;
+static void _zfcp_erp_lun_reopen_all(struct zfcp_port *port, int clear,
+				     char *dbftag)
+{
+	struct scsi_device *sdev;
 
 	spin_lock(port->adapter->scsi_host->host_lock);
-	__shost_क्रम_each_device(sdev, port->adapter->scsi_host)
-		अगर (sdev_to_zfcp(sdev)->port == port)
-			_zfcp_erp_lun_reखोलो(sdev, clear, dbftag, 0);
+	__shost_for_each_device(sdev, port->adapter->scsi_host)
+		if (sdev_to_zfcp(sdev)->port == port)
+			_zfcp_erp_lun_reopen(sdev, clear, dbftag, 0);
 	spin_unlock(port->adapter->scsi_host->host_lock);
-पूर्ण
+}
 
-अटल व्योम zfcp_erp_strategy_followup_failed(काष्ठा zfcp_erp_action *act)
-अणु
-	चयन (act->type) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		_zfcp_erp_adapter_reखोलो(act->adapter, 0, "ersff_1");
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-		_zfcp_erp_port_क्रमced_reखोलो(act->port, 0, "ersff_2");
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		_zfcp_erp_port_reखोलो(act->port, 0, "ersff_3");
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
-		_zfcp_erp_lun_reखोलो(act->sdev, 0, "ersff_4", 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+static void zfcp_erp_strategy_followup_failed(struct zfcp_erp_action *act)
+{
+	switch (act->type) {
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		_zfcp_erp_adapter_reopen(act->adapter, 0, "ersff_1");
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+		_zfcp_erp_port_forced_reopen(act->port, 0, "ersff_2");
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		_zfcp_erp_port_reopen(act->port, 0, "ersff_3");
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
+		_zfcp_erp_lun_reopen(act->sdev, 0, "ersff_4", 0);
+		break;
+	}
+}
 
-अटल व्योम zfcp_erp_strategy_followup_success(काष्ठा zfcp_erp_action *act)
-अणु
-	चयन (act->type) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		_zfcp_erp_port_reखोलो_all(act->adapter, 0, "ersfs_1");
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-		_zfcp_erp_port_reखोलो(act->port, 0, "ersfs_2");
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		_zfcp_erp_lun_reखोलो_all(act->port, 0, "ersfs_3");
-		अवरोध;
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+static void zfcp_erp_strategy_followup_success(struct zfcp_erp_action *act)
+{
+	switch (act->type) {
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		_zfcp_erp_port_reopen_all(act->adapter, 0, "ersfs_1");
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+		_zfcp_erp_port_reopen(act->port, 0, "ersfs_2");
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		_zfcp_erp_lun_reopen_all(act->port, 0, "ersfs_3");
+		break;
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		/* NOP */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम zfcp_erp_wakeup(काष्ठा zfcp_adapter *adapter)
-अणु
-	अचिन्हित दीर्घ flags;
+static void zfcp_erp_wakeup(struct zfcp_adapter *adapter)
+{
+	unsigned long flags;
 
-	पढ़ो_lock_irqsave(&adapter->erp_lock, flags);
-	अगर (list_empty(&adapter->erp_पढ़ोy_head) &&
-	    list_empty(&adapter->erp_running_head)) अणु
+	read_lock_irqsave(&adapter->erp_lock, flags);
+	if (list_empty(&adapter->erp_ready_head) &&
+	    list_empty(&adapter->erp_running_head)) {
 			atomic_andnot(ZFCP_STATUS_ADAPTER_ERP_PENDING,
 					  &adapter->status);
-			wake_up(&adapter->erp_करोne_wqh);
-	पूर्ण
-	पढ़ो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+			wake_up(&adapter->erp_done_wqh);
+	}
+	read_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
-अटल व्योम zfcp_erp_enqueue_ptp_port(काष्ठा zfcp_adapter *adapter)
-अणु
-	काष्ठा zfcp_port *port;
+static void zfcp_erp_enqueue_ptp_port(struct zfcp_adapter *adapter)
+{
+	struct zfcp_port *port;
 	port = zfcp_port_enqueue(adapter, adapter->peer_wwpn, 0,
 				 adapter->peer_d_id);
-	अगर (IS_ERR(port)) /* error or port alपढ़ोy attached */
-		वापस;
-	zfcp_erp_port_reखोलो(port, 0, "ereptp1");
-पूर्ण
+	if (IS_ERR(port)) /* error or port already attached */
+		return;
+	zfcp_erp_port_reopen(port, 0, "ereptp1");
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_adapter_strat_fsf_xconf(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	पूर्णांक retries;
-	पूर्णांक sleep = 1;
-	काष्ठा zfcp_adapter *adapter = erp_action->adapter;
+static enum zfcp_erp_act_result zfcp_erp_adapter_strat_fsf_xconf(
+	struct zfcp_erp_action *erp_action)
+{
+	int retries;
+	int sleep = 1;
+	struct zfcp_adapter *adapter = erp_action->adapter;
 
 	atomic_andnot(ZFCP_STATUS_ADAPTER_XCONFIG_OK, &adapter->status);
 
-	क्रम (retries = 7; retries; retries--) अणु
+	for (retries = 7; retries; retries--) {
 		atomic_andnot(ZFCP_STATUS_ADAPTER_HOST_CON_INIT,
 				  &adapter->status);
-		ग_लिखो_lock_irq(&adapter->erp_lock);
+		write_lock_irq(&adapter->erp_lock);
 		zfcp_erp_action_to_running(erp_action);
-		ग_लिखो_unlock_irq(&adapter->erp_lock);
-		अगर (zfcp_fsf_exchange_config_data(erp_action)) अणु
+		write_unlock_irq(&adapter->erp_lock);
+		if (zfcp_fsf_exchange_config_data(erp_action)) {
 			atomic_andnot(ZFCP_STATUS_ADAPTER_HOST_CON_INIT,
 					  &adapter->status);
-			वापस ZFCP_ERP_FAILED;
-		पूर्ण
+			return ZFCP_ERP_FAILED;
+		}
 
-		रुको_event(adapter->erp_पढ़ोy_wq,
-			   !list_empty(&adapter->erp_पढ़ोy_head));
-		अगर (erp_action->status & ZFCP_STATUS_ERP_TIMEDOUT)
-			अवरोध;
+		wait_event(adapter->erp_ready_wq,
+			   !list_empty(&adapter->erp_ready_head));
+		if (erp_action->status & ZFCP_STATUS_ERP_TIMEDOUT)
+			break;
 
-		अगर (!(atomic_पढ़ो(&adapter->status) &
+		if (!(atomic_read(&adapter->status) &
 		      ZFCP_STATUS_ADAPTER_HOST_CON_INIT))
-			अवरोध;
+			break;
 
 		ssleep(sleep);
 		sleep *= 2;
-	पूर्ण
+	}
 
 	atomic_andnot(ZFCP_STATUS_ADAPTER_HOST_CON_INIT,
 			  &adapter->status);
 
-	अगर (!(atomic_पढ़ो(&adapter->status) & ZFCP_STATUS_ADAPTER_XCONFIG_OK))
-		वापस ZFCP_ERP_FAILED;
+	if (!(atomic_read(&adapter->status) & ZFCP_STATUS_ADAPTER_XCONFIG_OK))
+		return ZFCP_ERP_FAILED;
 
-	वापस ZFCP_ERP_SUCCEEDED;
-पूर्ण
+	return ZFCP_ERP_SUCCEEDED;
+}
 
-अटल व्योम
-zfcp_erp_adapter_strategy_खोलो_ptp_port(काष्ठा zfcp_adapter *स्थिर adapter)
-अणु
-	अगर (fc_host_port_type(adapter->scsi_host) == FC_PORTTYPE_PTP)
+static void
+zfcp_erp_adapter_strategy_open_ptp_port(struct zfcp_adapter *const adapter)
+{
+	if (fc_host_port_type(adapter->scsi_host) == FC_PORTTYPE_PTP)
 		zfcp_erp_enqueue_ptp_port(adapter);
-पूर्ण
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_adapter_strategy_खोलो_fsf_xport(
-	काष्ठा zfcp_erp_action *act)
-अणु
-	पूर्णांक ret;
-	काष्ठा zfcp_adapter *adapter = act->adapter;
+static enum zfcp_erp_act_result zfcp_erp_adapter_strategy_open_fsf_xport(
+	struct zfcp_erp_action *act)
+{
+	int ret;
+	struct zfcp_adapter *adapter = act->adapter;
 
-	ग_लिखो_lock_irq(&adapter->erp_lock);
+	write_lock_irq(&adapter->erp_lock);
 	zfcp_erp_action_to_running(act);
-	ग_लिखो_unlock_irq(&adapter->erp_lock);
+	write_unlock_irq(&adapter->erp_lock);
 
 	ret = zfcp_fsf_exchange_port_data(act);
-	अगर (ret == -EOPNOTSUPP)
-		वापस ZFCP_ERP_SUCCEEDED;
-	अगर (ret)
-		वापस ZFCP_ERP_FAILED;
+	if (ret == -EOPNOTSUPP)
+		return ZFCP_ERP_SUCCEEDED;
+	if (ret)
+		return ZFCP_ERP_FAILED;
 
 	zfcp_dbf_rec_run("erasox1", act);
-	रुको_event(adapter->erp_पढ़ोy_wq,
-		   !list_empty(&adapter->erp_पढ़ोy_head));
+	wait_event(adapter->erp_ready_wq,
+		   !list_empty(&adapter->erp_ready_head));
 	zfcp_dbf_rec_run("erasox2", act);
-	अगर (act->status & ZFCP_STATUS_ERP_TIMEDOUT)
-		वापस ZFCP_ERP_FAILED;
+	if (act->status & ZFCP_STATUS_ERP_TIMEDOUT)
+		return ZFCP_ERP_FAILED;
 
-	वापस ZFCP_ERP_SUCCEEDED;
-पूर्ण
+	return ZFCP_ERP_SUCCEEDED;
+}
 
-अटल क्रमागत zfcp_erp_act_result
-zfcp_erp_adapter_strategy_alloc_shost(काष्ठा zfcp_adapter *स्थिर adapter)
-अणु
-	काष्ठा zfcp_diag_adapter_config_data *स्थिर config_data =
+static enum zfcp_erp_act_result
+zfcp_erp_adapter_strategy_alloc_shost(struct zfcp_adapter *const adapter)
+{
+	struct zfcp_diag_adapter_config_data *const config_data =
 		&adapter->diagnostics->config_data;
-	काष्ठा zfcp_diag_adapter_port_data *स्थिर port_data =
+	struct zfcp_diag_adapter_port_data *const port_data =
 		&adapter->diagnostics->port_data;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
+	unsigned long flags;
+	int rc;
 
-	rc = zfcp_scsi_adapter_रेजिस्टर(adapter);
-	अगर (rc == -EEXIST)
-		वापस ZFCP_ERP_SUCCEEDED;
-	अन्यथा अगर (rc)
-		वापस ZFCP_ERP_FAILED;
+	rc = zfcp_scsi_adapter_register(adapter);
+	if (rc == -EEXIST)
+		return ZFCP_ERP_SUCCEEDED;
+	else if (rc)
+		return ZFCP_ERP_FAILED;
 
 	/*
-	 * We allocated the shost क्रम the first समय. Beक्रमe it was शून्य,
+	 * We allocated the shost for the first time. Before it was NULL,
 	 * and so we deferred all updates in the xconf- and xport-data
-	 * handlers. We need to make up क्रम that now, and make all the updates
-	 * that would have been करोne beक्रमe.
+	 * handlers. We need to make up for that now, and make all the updates
+	 * that would have been done before.
 	 *
 	 * We can be sure that xconf- and xport-data succeeded, because
 	 * otherwise this function is not called. But they might have been
@@ -847,842 +846,842 @@ zfcp_erp_adapter_strategy_alloc_shost(काष्ठा zfcp_adapter *स्थ
 					   !!config_data->header.incomplete);
 	spin_unlock_irqrestore(&config_data->header.access_lock, flags);
 
-	अगर (adapter->adapter_features & FSF_FEATURE_HBAAPI_MANAGEMENT) अणु
+	if (adapter->adapter_features & FSF_FEATURE_HBAAPI_MANAGEMENT) {
 		spin_lock_irqsave(&port_data->header.access_lock, flags);
 		zfcp_scsi_shost_update_port_data(adapter, &port_data->data);
 		spin_unlock_irqrestore(&port_data->header.access_lock, flags);
-	पूर्ण
+	}
 
 	/*
 	 * There is a remote possibility that the 'Exchange Port Data' request
-	 * reports a dअगरferent connectivity status than 'Exchange Config Data'.
+	 * reports a different connectivity status than 'Exchange Config Data'.
 	 * But any change to the connectivity status of the local optic that
 	 * happens after the initial xconf request is expected to be reported
 	 * to us, as soon as we post Status Read Buffers to the FCP channel
 	 * firmware after this function. So any resulting inconsistency will
 	 * only be momentary.
 	 */
-	अगर (config_data->header.incomplete)
-		zfcp_fsf_fc_host_link_करोwn(adapter);
+	if (config_data->header.incomplete)
+		zfcp_fsf_fc_host_link_down(adapter);
 
-	वापस ZFCP_ERP_SUCCEEDED;
-पूर्ण
+	return ZFCP_ERP_SUCCEEDED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_adapter_strategy_खोलो_fsf(
-	काष्ठा zfcp_erp_action *act)
-अणु
-	अगर (zfcp_erp_adapter_strat_fsf_xconf(act) == ZFCP_ERP_FAILED)
-		वापस ZFCP_ERP_FAILED;
+static enum zfcp_erp_act_result zfcp_erp_adapter_strategy_open_fsf(
+	struct zfcp_erp_action *act)
+{
+	if (zfcp_erp_adapter_strat_fsf_xconf(act) == ZFCP_ERP_FAILED)
+		return ZFCP_ERP_FAILED;
 
-	अगर (zfcp_erp_adapter_strategy_खोलो_fsf_xport(act) == ZFCP_ERP_FAILED)
-		वापस ZFCP_ERP_FAILED;
+	if (zfcp_erp_adapter_strategy_open_fsf_xport(act) == ZFCP_ERP_FAILED)
+		return ZFCP_ERP_FAILED;
 
-	अगर (zfcp_erp_adapter_strategy_alloc_shost(act->adapter) ==
+	if (zfcp_erp_adapter_strategy_alloc_shost(act->adapter) ==
 	    ZFCP_ERP_FAILED)
-		वापस ZFCP_ERP_FAILED;
+		return ZFCP_ERP_FAILED;
 
-	zfcp_erp_adapter_strategy_खोलो_ptp_port(act->adapter);
+	zfcp_erp_adapter_strategy_open_ptp_port(act->adapter);
 
-	अगर (mempool_resize(act->adapter->pool.sr_data,
-			   act->adapter->stat_पढ़ो_buf_num))
-		वापस ZFCP_ERP_FAILED;
+	if (mempool_resize(act->adapter->pool.sr_data,
+			   act->adapter->stat_read_buf_num))
+		return ZFCP_ERP_FAILED;
 
-	अगर (mempool_resize(act->adapter->pool.status_पढ़ो_req,
-			   act->adapter->stat_पढ़ो_buf_num))
-		वापस ZFCP_ERP_FAILED;
+	if (mempool_resize(act->adapter->pool.status_read_req,
+			   act->adapter->stat_read_buf_num))
+		return ZFCP_ERP_FAILED;
 
-	atomic_set(&act->adapter->stat_miss, act->adapter->stat_पढ़ो_buf_num);
-	अगर (zfcp_status_पढ़ो_refill(act->adapter))
-		वापस ZFCP_ERP_FAILED;
+	atomic_set(&act->adapter->stat_miss, act->adapter->stat_read_buf_num);
+	if (zfcp_status_read_refill(act->adapter))
+		return ZFCP_ERP_FAILED;
 
-	वापस ZFCP_ERP_SUCCEEDED;
-पूर्ण
+	return ZFCP_ERP_SUCCEEDED;
+}
 
-अटल व्योम zfcp_erp_adapter_strategy_बंद(काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
+static void zfcp_erp_adapter_strategy_close(struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
 
-	/* बंद queues to ensure that buffers are not accessed by adapter */
-	zfcp_qdio_बंद(adapter->qdio);
+	/* close queues to ensure that buffers are not accessed by adapter */
+	zfcp_qdio_close(adapter->qdio);
 	zfcp_fsf_req_dismiss_all(adapter);
 	adapter->fsf_req_seq_no = 0;
-	zfcp_fc_wka_ports_क्रमce_offline(adapter->gs);
-	/* all ports and LUNs are बंदd */
+	zfcp_fc_wka_ports_force_offline(adapter->gs);
+	/* all ports and LUNs are closed */
 	zfcp_erp_clear_adapter_status(adapter, ZFCP_STATUS_COMMON_OPEN);
 
 	atomic_andnot(ZFCP_STATUS_ADAPTER_XCONFIG_OK |
 			  ZFCP_STATUS_ADAPTER_LINK_UNPLUGGED, &adapter->status);
-पूर्ण
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_adapter_strategy_खोलो(
-	काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
+static enum zfcp_erp_act_result zfcp_erp_adapter_strategy_open(
+	struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
 
-	अगर (zfcp_qdio_खोलो(adapter->qdio)) अणु
+	if (zfcp_qdio_open(adapter->qdio)) {
 		atomic_andnot(ZFCP_STATUS_ADAPTER_XCONFIG_OK |
 				  ZFCP_STATUS_ADAPTER_LINK_UNPLUGGED,
 				  &adapter->status);
-		वापस ZFCP_ERP_FAILED;
-	पूर्ण
+		return ZFCP_ERP_FAILED;
+	}
 
-	अगर (zfcp_erp_adapter_strategy_खोलो_fsf(act)) अणु
-		zfcp_erp_adapter_strategy_बंद(act);
-		वापस ZFCP_ERP_FAILED;
-	पूर्ण
+	if (zfcp_erp_adapter_strategy_open_fsf(act)) {
+		zfcp_erp_adapter_strategy_close(act);
+		return ZFCP_ERP_FAILED;
+	}
 
 	atomic_or(ZFCP_STATUS_COMMON_OPEN, &adapter->status);
 
-	वापस ZFCP_ERP_SUCCEEDED;
-पूर्ण
+	return ZFCP_ERP_SUCCEEDED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_adapter_strategy(
-	काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
+static enum zfcp_erp_act_result zfcp_erp_adapter_strategy(
+	struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
 
-	अगर (atomic_पढ़ो(&adapter->status) & ZFCP_STATUS_COMMON_OPEN) अणु
-		zfcp_erp_adapter_strategy_बंद(act);
-		अगर (act->status & ZFCP_STATUS_ERP_CLOSE_ONLY)
-			वापस ZFCP_ERP_EXIT;
-	पूर्ण
+	if (atomic_read(&adapter->status) & ZFCP_STATUS_COMMON_OPEN) {
+		zfcp_erp_adapter_strategy_close(act);
+		if (act->status & ZFCP_STATUS_ERP_CLOSE_ONLY)
+			return ZFCP_ERP_EXIT;
+	}
 
-	अगर (zfcp_erp_adapter_strategy_खोलो(act)) अणु
+	if (zfcp_erp_adapter_strategy_open(act)) {
 		ssleep(8);
-		वापस ZFCP_ERP_FAILED;
-	पूर्ण
+		return ZFCP_ERP_FAILED;
+	}
 
-	वापस ZFCP_ERP_SUCCEEDED;
-पूर्ण
+	return ZFCP_ERP_SUCCEEDED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_port_क्रमced_strategy_बंद(
-	काष्ठा zfcp_erp_action *act)
-अणु
-	पूर्णांक retval;
+static enum zfcp_erp_act_result zfcp_erp_port_forced_strategy_close(
+	struct zfcp_erp_action *act)
+{
+	int retval;
 
-	retval = zfcp_fsf_बंद_physical_port(act);
-	अगर (retval == -ENOMEM)
-		वापस ZFCP_ERP_NOMEM;
+	retval = zfcp_fsf_close_physical_port(act);
+	if (retval == -ENOMEM)
+		return ZFCP_ERP_NOMEM;
 	act->step = ZFCP_ERP_STEP_PHYS_PORT_CLOSING;
-	अगर (retval)
-		वापस ZFCP_ERP_FAILED;
+	if (retval)
+		return ZFCP_ERP_FAILED;
 
-	वापस ZFCP_ERP_CONTINUES;
-पूर्ण
+	return ZFCP_ERP_CONTINUES;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_port_क्रमced_strategy(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	काष्ठा zfcp_port *port = erp_action->port;
-	पूर्णांक status = atomic_पढ़ो(&port->status);
+static enum zfcp_erp_act_result zfcp_erp_port_forced_strategy(
+	struct zfcp_erp_action *erp_action)
+{
+	struct zfcp_port *port = erp_action->port;
+	int status = atomic_read(&port->status);
 
-	चयन (erp_action->step) अणु
-	हाल ZFCP_ERP_STEP_UNINITIALIZED:
-		अगर ((status & ZFCP_STATUS_PORT_PHYS_OPEN) &&
+	switch (erp_action->step) {
+	case ZFCP_ERP_STEP_UNINITIALIZED:
+		if ((status & ZFCP_STATUS_PORT_PHYS_OPEN) &&
 		    (status & ZFCP_STATUS_COMMON_OPEN))
-			वापस zfcp_erp_port_क्रमced_strategy_बंद(erp_action);
-		अन्यथा
-			वापस ZFCP_ERP_FAILED;
+			return zfcp_erp_port_forced_strategy_close(erp_action);
+		else
+			return ZFCP_ERP_FAILED;
 
-	हाल ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
-		अगर (!(status & ZFCP_STATUS_PORT_PHYS_OPEN))
-			वापस ZFCP_ERP_SUCCEEDED;
-		अवरोध;
-	हाल ZFCP_ERP_STEP_PORT_CLOSING:
-	हाल ZFCP_ERP_STEP_PORT_OPENING:
-	हाल ZFCP_ERP_STEP_LUN_CLOSING:
-	हाल ZFCP_ERP_STEP_LUN_OPENING:
+	case ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
+		if (!(status & ZFCP_STATUS_PORT_PHYS_OPEN))
+			return ZFCP_ERP_SUCCEEDED;
+		break;
+	case ZFCP_ERP_STEP_PORT_CLOSING:
+	case ZFCP_ERP_STEP_PORT_OPENING:
+	case ZFCP_ERP_STEP_LUN_CLOSING:
+	case ZFCP_ERP_STEP_LUN_OPENING:
 		/* NOP */
-		अवरोध;
-	पूर्ण
-	वापस ZFCP_ERP_FAILED;
-पूर्ण
+		break;
+	}
+	return ZFCP_ERP_FAILED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_port_strategy_बंद(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	पूर्णांक retval;
+static enum zfcp_erp_act_result zfcp_erp_port_strategy_close(
+	struct zfcp_erp_action *erp_action)
+{
+	int retval;
 
-	retval = zfcp_fsf_बंद_port(erp_action);
-	अगर (retval == -ENOMEM)
-		वापस ZFCP_ERP_NOMEM;
+	retval = zfcp_fsf_close_port(erp_action);
+	if (retval == -ENOMEM)
+		return ZFCP_ERP_NOMEM;
 	erp_action->step = ZFCP_ERP_STEP_PORT_CLOSING;
-	अगर (retval)
-		वापस ZFCP_ERP_FAILED;
-	वापस ZFCP_ERP_CONTINUES;
-पूर्ण
+	if (retval)
+		return ZFCP_ERP_FAILED;
+	return ZFCP_ERP_CONTINUES;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_port_strategy_खोलो_port(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	पूर्णांक retval;
+static enum zfcp_erp_act_result zfcp_erp_port_strategy_open_port(
+	struct zfcp_erp_action *erp_action)
+{
+	int retval;
 
-	retval = zfcp_fsf_खोलो_port(erp_action);
-	अगर (retval == -ENOMEM)
-		वापस ZFCP_ERP_NOMEM;
+	retval = zfcp_fsf_open_port(erp_action);
+	if (retval == -ENOMEM)
+		return ZFCP_ERP_NOMEM;
 	erp_action->step = ZFCP_ERP_STEP_PORT_OPENING;
-	अगर (retval)
-		वापस ZFCP_ERP_FAILED;
-	वापस ZFCP_ERP_CONTINUES;
-पूर्ण
+	if (retval)
+		return ZFCP_ERP_FAILED;
+	return ZFCP_ERP_CONTINUES;
+}
 
-अटल पूर्णांक zfcp_erp_खोलो_ptp_port(काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
-	काष्ठा zfcp_port *port = act->port;
+static int zfcp_erp_open_ptp_port(struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
+	struct zfcp_port *port = act->port;
 
-	अगर (port->wwpn != adapter->peer_wwpn) अणु
+	if (port->wwpn != adapter->peer_wwpn) {
 		zfcp_erp_set_port_status(port, ZFCP_STATUS_COMMON_ERP_FAILED);
-		वापस ZFCP_ERP_FAILED;
-	पूर्ण
+		return ZFCP_ERP_FAILED;
+	}
 	port->d_id = adapter->peer_d_id;
-	वापस zfcp_erp_port_strategy_खोलो_port(act);
-पूर्ण
+	return zfcp_erp_port_strategy_open_port(act);
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_port_strategy_खोलो_common(
-	काष्ठा zfcp_erp_action *act)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
-	काष्ठा zfcp_port *port = act->port;
-	पूर्णांक p_status = atomic_पढ़ो(&port->status);
+static enum zfcp_erp_act_result zfcp_erp_port_strategy_open_common(
+	struct zfcp_erp_action *act)
+{
+	struct zfcp_adapter *adapter = act->adapter;
+	struct zfcp_port *port = act->port;
+	int p_status = atomic_read(&port->status);
 
-	चयन (act->step) अणु
-	हाल ZFCP_ERP_STEP_UNINITIALIZED:
-	हाल ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
-	हाल ZFCP_ERP_STEP_PORT_CLOSING:
-		अगर (fc_host_port_type(adapter->scsi_host) == FC_PORTTYPE_PTP)
-			वापस zfcp_erp_खोलो_ptp_port(act);
-		अगर (!port->d_id) अणु
+	switch (act->step) {
+	case ZFCP_ERP_STEP_UNINITIALIZED:
+	case ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
+	case ZFCP_ERP_STEP_PORT_CLOSING:
+		if (fc_host_port_type(adapter->scsi_host) == FC_PORTTYPE_PTP)
+			return zfcp_erp_open_ptp_port(act);
+		if (!port->d_id) {
 			zfcp_fc_trigger_did_lookup(port);
-			वापस ZFCP_ERP_EXIT;
-		पूर्ण
-		वापस zfcp_erp_port_strategy_खोलो_port(act);
+			return ZFCP_ERP_EXIT;
+		}
+		return zfcp_erp_port_strategy_open_port(act);
 
-	हाल ZFCP_ERP_STEP_PORT_OPENING:
-		/* D_ID might have changed during खोलो */
-		अगर (p_status & ZFCP_STATUS_COMMON_OPEN) अणु
-			अगर (!port->d_id) अणु
+	case ZFCP_ERP_STEP_PORT_OPENING:
+		/* D_ID might have changed during open */
+		if (p_status & ZFCP_STATUS_COMMON_OPEN) {
+			if (!port->d_id) {
 				zfcp_fc_trigger_did_lookup(port);
-				वापस ZFCP_ERP_EXIT;
-			पूर्ण
-			वापस ZFCP_ERP_SUCCEEDED;
-		पूर्ण
-		अगर (port->d_id && !(p_status & ZFCP_STATUS_COMMON_NOESC)) अणु
+				return ZFCP_ERP_EXIT;
+			}
+			return ZFCP_ERP_SUCCEEDED;
+		}
+		if (port->d_id && !(p_status & ZFCP_STATUS_COMMON_NOESC)) {
 			port->d_id = 0;
-			वापस ZFCP_ERP_FAILED;
-		पूर्ण
-		/* no early वापस otherwise, जारी after चयन हाल */
-		अवरोध;
-	हाल ZFCP_ERP_STEP_LUN_CLOSING:
-	हाल ZFCP_ERP_STEP_LUN_OPENING:
+			return ZFCP_ERP_FAILED;
+		}
+		/* no early return otherwise, continue after switch case */
+		break;
+	case ZFCP_ERP_STEP_LUN_CLOSING:
+	case ZFCP_ERP_STEP_LUN_OPENING:
 		/* NOP */
-		अवरोध;
-	पूर्ण
-	वापस ZFCP_ERP_FAILED;
-पूर्ण
+		break;
+	}
+	return ZFCP_ERP_FAILED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_port_strategy(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	काष्ठा zfcp_port *port = erp_action->port;
-	पूर्णांक p_status = atomic_पढ़ो(&port->status);
+static enum zfcp_erp_act_result zfcp_erp_port_strategy(
+	struct zfcp_erp_action *erp_action)
+{
+	struct zfcp_port *port = erp_action->port;
+	int p_status = atomic_read(&port->status);
 
-	अगर ((p_status & ZFCP_STATUS_COMMON_NOESC) &&
+	if ((p_status & ZFCP_STATUS_COMMON_NOESC) &&
 	    !(p_status & ZFCP_STATUS_COMMON_OPEN))
-		जाओ बंद_init_करोne;
+		goto close_init_done;
 
-	चयन (erp_action->step) अणु
-	हाल ZFCP_ERP_STEP_UNINITIALIZED:
-		अगर (p_status & ZFCP_STATUS_COMMON_OPEN)
-			वापस zfcp_erp_port_strategy_बंद(erp_action);
-		अवरोध;
+	switch (erp_action->step) {
+	case ZFCP_ERP_STEP_UNINITIALIZED:
+		if (p_status & ZFCP_STATUS_COMMON_OPEN)
+			return zfcp_erp_port_strategy_close(erp_action);
+		break;
 
-	हाल ZFCP_ERP_STEP_PORT_CLOSING:
-		अगर (p_status & ZFCP_STATUS_COMMON_OPEN)
-			वापस ZFCP_ERP_FAILED;
-		अवरोध;
-	हाल ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
-	हाल ZFCP_ERP_STEP_PORT_OPENING:
-	हाल ZFCP_ERP_STEP_LUN_CLOSING:
-	हाल ZFCP_ERP_STEP_LUN_OPENING:
+	case ZFCP_ERP_STEP_PORT_CLOSING:
+		if (p_status & ZFCP_STATUS_COMMON_OPEN)
+			return ZFCP_ERP_FAILED;
+		break;
+	case ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
+	case ZFCP_ERP_STEP_PORT_OPENING:
+	case ZFCP_ERP_STEP_LUN_CLOSING:
+	case ZFCP_ERP_STEP_LUN_OPENING:
 		/* NOP */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-बंद_init_करोne:
-	अगर (erp_action->status & ZFCP_STATUS_ERP_CLOSE_ONLY)
-		वापस ZFCP_ERP_EXIT;
+close_init_done:
+	if (erp_action->status & ZFCP_STATUS_ERP_CLOSE_ONLY)
+		return ZFCP_ERP_EXIT;
 
-	वापस zfcp_erp_port_strategy_खोलो_common(erp_action);
-पूर्ण
+	return zfcp_erp_port_strategy_open_common(erp_action);
+}
 
-अटल व्योम zfcp_erp_lun_strategy_clearstati(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+static void zfcp_erp_lun_strategy_clearstati(struct scsi_device *sdev)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
 	atomic_andnot(ZFCP_STATUS_COMMON_ACCESS_DENIED,
 			  &zfcp_sdev->status);
-पूर्ण
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_lun_strategy_बंद(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	पूर्णांक retval = zfcp_fsf_बंद_lun(erp_action);
-	अगर (retval == -ENOMEM)
-		वापस ZFCP_ERP_NOMEM;
+static enum zfcp_erp_act_result zfcp_erp_lun_strategy_close(
+	struct zfcp_erp_action *erp_action)
+{
+	int retval = zfcp_fsf_close_lun(erp_action);
+	if (retval == -ENOMEM)
+		return ZFCP_ERP_NOMEM;
 	erp_action->step = ZFCP_ERP_STEP_LUN_CLOSING;
-	अगर (retval)
-		वापस ZFCP_ERP_FAILED;
-	वापस ZFCP_ERP_CONTINUES;
-पूर्ण
+	if (retval)
+		return ZFCP_ERP_FAILED;
+	return ZFCP_ERP_CONTINUES;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_lun_strategy_खोलो(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	पूर्णांक retval = zfcp_fsf_खोलो_lun(erp_action);
-	अगर (retval == -ENOMEM)
-		वापस ZFCP_ERP_NOMEM;
+static enum zfcp_erp_act_result zfcp_erp_lun_strategy_open(
+	struct zfcp_erp_action *erp_action)
+{
+	int retval = zfcp_fsf_open_lun(erp_action);
+	if (retval == -ENOMEM)
+		return ZFCP_ERP_NOMEM;
 	erp_action->step = ZFCP_ERP_STEP_LUN_OPENING;
-	अगर (retval)
-		वापस  ZFCP_ERP_FAILED;
-	वापस ZFCP_ERP_CONTINUES;
-पूर्ण
+	if (retval)
+		return  ZFCP_ERP_FAILED;
+	return ZFCP_ERP_CONTINUES;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_lun_strategy(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	काष्ठा scsi_device *sdev = erp_action->sdev;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+static enum zfcp_erp_act_result zfcp_erp_lun_strategy(
+	struct zfcp_erp_action *erp_action)
+{
+	struct scsi_device *sdev = erp_action->sdev;
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
-	चयन (erp_action->step) अणु
-	हाल ZFCP_ERP_STEP_UNINITIALIZED:
+	switch (erp_action->step) {
+	case ZFCP_ERP_STEP_UNINITIALIZED:
 		zfcp_erp_lun_strategy_clearstati(sdev);
-		अगर (atomic_पढ़ो(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_OPEN)
-			वापस zfcp_erp_lun_strategy_बंद(erp_action);
-		/* alपढ़ोy बंदd */
+		if (atomic_read(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_OPEN)
+			return zfcp_erp_lun_strategy_close(erp_action);
+		/* already closed */
 		fallthrough;
-	हाल ZFCP_ERP_STEP_LUN_CLOSING:
-		अगर (atomic_पढ़ो(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_OPEN)
-			वापस ZFCP_ERP_FAILED;
-		अगर (erp_action->status & ZFCP_STATUS_ERP_CLOSE_ONLY)
-			वापस ZFCP_ERP_EXIT;
-		वापस zfcp_erp_lun_strategy_खोलो(erp_action);
+	case ZFCP_ERP_STEP_LUN_CLOSING:
+		if (atomic_read(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_OPEN)
+			return ZFCP_ERP_FAILED;
+		if (erp_action->status & ZFCP_STATUS_ERP_CLOSE_ONLY)
+			return ZFCP_ERP_EXIT;
+		return zfcp_erp_lun_strategy_open(erp_action);
 
-	हाल ZFCP_ERP_STEP_LUN_OPENING:
-		अगर (atomic_पढ़ो(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_OPEN)
-			वापस ZFCP_ERP_SUCCEEDED;
-		अवरोध;
-	हाल ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
-	हाल ZFCP_ERP_STEP_PORT_CLOSING:
-	हाल ZFCP_ERP_STEP_PORT_OPENING:
+	case ZFCP_ERP_STEP_LUN_OPENING:
+		if (atomic_read(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_OPEN)
+			return ZFCP_ERP_SUCCEEDED;
+		break;
+	case ZFCP_ERP_STEP_PHYS_PORT_CLOSING:
+	case ZFCP_ERP_STEP_PORT_CLOSING:
+	case ZFCP_ERP_STEP_PORT_OPENING:
 		/* NOP */
-		अवरोध;
-	पूर्ण
-	वापस ZFCP_ERP_FAILED;
-पूर्ण
+		break;
+	}
+	return ZFCP_ERP_FAILED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy_check_lun(
-	काष्ठा scsi_device *sdev, क्रमागत zfcp_erp_act_result result)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+static enum zfcp_erp_act_result zfcp_erp_strategy_check_lun(
+	struct scsi_device *sdev, enum zfcp_erp_act_result result)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
-	चयन (result) अणु
-	हाल ZFCP_ERP_SUCCEEDED :
+	switch (result) {
+	case ZFCP_ERP_SUCCEEDED :
 		atomic_set(&zfcp_sdev->erp_counter, 0);
 		zfcp_erp_lun_unblock(sdev);
-		अवरोध;
-	हाल ZFCP_ERP_FAILED :
+		break;
+	case ZFCP_ERP_FAILED :
 		atomic_inc(&zfcp_sdev->erp_counter);
-		अगर (atomic_पढ़ो(&zfcp_sdev->erp_counter) > ZFCP_MAX_ERPS) अणु
+		if (atomic_read(&zfcp_sdev->erp_counter) > ZFCP_MAX_ERPS) {
 			dev_err(&zfcp_sdev->port->adapter->ccw_device->dev,
 				"ERP failed for LUN 0x%016Lx on "
 				"port 0x%016Lx\n",
-				(अचिन्हित दीर्घ दीर्घ)zfcp_scsi_dev_lun(sdev),
-				(अचिन्हित दीर्घ दीर्घ)zfcp_sdev->port->wwpn);
+				(unsigned long long)zfcp_scsi_dev_lun(sdev),
+				(unsigned long long)zfcp_sdev->port->wwpn);
 			zfcp_erp_set_lun_status(sdev,
 						ZFCP_STATUS_COMMON_ERP_FAILED);
-		पूर्ण
-		अवरोध;
-	हाल ZFCP_ERP_CONTINUES:
-	हाल ZFCP_ERP_EXIT:
-	हाल ZFCP_ERP_DISMISSED:
-	हाल ZFCP_ERP_NOMEM:
+		}
+		break;
+	case ZFCP_ERP_CONTINUES:
+	case ZFCP_ERP_EXIT:
+	case ZFCP_ERP_DISMISSED:
+	case ZFCP_ERP_NOMEM:
 		/* NOP */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (atomic_पढ़ो(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_ERP_FAILED) अणु
+	if (atomic_read(&zfcp_sdev->status) & ZFCP_STATUS_COMMON_ERP_FAILED) {
 		zfcp_erp_lun_block(sdev, 0);
 		result = ZFCP_ERP_EXIT;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy_check_port(
-	काष्ठा zfcp_port *port, क्रमागत zfcp_erp_act_result result)
-अणु
-	चयन (result) अणु
-	हाल ZFCP_ERP_SUCCEEDED :
+static enum zfcp_erp_act_result zfcp_erp_strategy_check_port(
+	struct zfcp_port *port, enum zfcp_erp_act_result result)
+{
+	switch (result) {
+	case ZFCP_ERP_SUCCEEDED :
 		atomic_set(&port->erp_counter, 0);
 		zfcp_erp_port_unblock(port);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_FAILED :
-		अगर (atomic_पढ़ो(&port->status) & ZFCP_STATUS_COMMON_NOESC) अणु
+	case ZFCP_ERP_FAILED :
+		if (atomic_read(&port->status) & ZFCP_STATUS_COMMON_NOESC) {
 			zfcp_erp_port_block(port, 0);
 			result = ZFCP_ERP_EXIT;
-		पूर्ण
+		}
 		atomic_inc(&port->erp_counter);
-		अगर (atomic_पढ़ो(&port->erp_counter) > ZFCP_MAX_ERPS) अणु
+		if (atomic_read(&port->erp_counter) > ZFCP_MAX_ERPS) {
 			dev_err(&port->adapter->ccw_device->dev,
 				"ERP failed for remote port 0x%016Lx\n",
-				(अचिन्हित दीर्घ दीर्घ)port->wwpn);
+				(unsigned long long)port->wwpn);
 			zfcp_erp_set_port_status(port,
 					 ZFCP_STATUS_COMMON_ERP_FAILED);
-		पूर्ण
-		अवरोध;
-	हाल ZFCP_ERP_CONTINUES:
-	हाल ZFCP_ERP_EXIT:
-	हाल ZFCP_ERP_DISMISSED:
-	हाल ZFCP_ERP_NOMEM:
+		}
+		break;
+	case ZFCP_ERP_CONTINUES:
+	case ZFCP_ERP_EXIT:
+	case ZFCP_ERP_DISMISSED:
+	case ZFCP_ERP_NOMEM:
 		/* NOP */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (atomic_पढ़ो(&port->status) & ZFCP_STATUS_COMMON_ERP_FAILED) अणु
+	if (atomic_read(&port->status) & ZFCP_STATUS_COMMON_ERP_FAILED) {
 		zfcp_erp_port_block(port, 0);
 		result = ZFCP_ERP_EXIT;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy_check_adapter(
-	काष्ठा zfcp_adapter *adapter, क्रमागत zfcp_erp_act_result result)
-अणु
-	चयन (result) अणु
-	हाल ZFCP_ERP_SUCCEEDED :
+static enum zfcp_erp_act_result zfcp_erp_strategy_check_adapter(
+	struct zfcp_adapter *adapter, enum zfcp_erp_act_result result)
+{
+	switch (result) {
+	case ZFCP_ERP_SUCCEEDED :
 		atomic_set(&adapter->erp_counter, 0);
 		zfcp_erp_adapter_unblock(adapter);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_FAILED :
+	case ZFCP_ERP_FAILED :
 		atomic_inc(&adapter->erp_counter);
-		अगर (atomic_पढ़ो(&adapter->erp_counter) > ZFCP_MAX_ERPS) अणु
+		if (atomic_read(&adapter->erp_counter) > ZFCP_MAX_ERPS) {
 			dev_err(&adapter->ccw_device->dev,
 				"ERP cannot recover an error "
 				"on the FCP device\n");
 			zfcp_erp_set_adapter_status(adapter,
 					    ZFCP_STATUS_COMMON_ERP_FAILED);
-		पूर्ण
-		अवरोध;
-	हाल ZFCP_ERP_CONTINUES:
-	हाल ZFCP_ERP_EXIT:
-	हाल ZFCP_ERP_DISMISSED:
-	हाल ZFCP_ERP_NOMEM:
+		}
+		break;
+	case ZFCP_ERP_CONTINUES:
+	case ZFCP_ERP_EXIT:
+	case ZFCP_ERP_DISMISSED:
+	case ZFCP_ERP_NOMEM:
 		/* NOP */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (atomic_पढ़ो(&adapter->status) & ZFCP_STATUS_COMMON_ERP_FAILED) अणु
+	if (atomic_read(&adapter->status) & ZFCP_STATUS_COMMON_ERP_FAILED) {
 		zfcp_erp_adapter_block(adapter, 0);
 		result = ZFCP_ERP_EXIT;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy_check_target(
-	काष्ठा zfcp_erp_action *erp_action, क्रमागत zfcp_erp_act_result result)
-अणु
-	काष्ठा zfcp_adapter *adapter = erp_action->adapter;
-	काष्ठा zfcp_port *port = erp_action->port;
-	काष्ठा scsi_device *sdev = erp_action->sdev;
+static enum zfcp_erp_act_result zfcp_erp_strategy_check_target(
+	struct zfcp_erp_action *erp_action, enum zfcp_erp_act_result result)
+{
+	struct zfcp_adapter *adapter = erp_action->adapter;
+	struct zfcp_port *port = erp_action->port;
+	struct scsi_device *sdev = erp_action->sdev;
 
-	चयन (erp_action->type) अणु
+	switch (erp_action->type) {
 
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		result = zfcp_erp_strategy_check_lun(sdev, result);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
 		result = zfcp_erp_strategy_check_port(port, result);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
 		result = zfcp_erp_strategy_check_adapter(adapter, result);
-		अवरोध;
-	पूर्ण
-	वापस result;
-पूर्ण
+		break;
+	}
+	return result;
+}
 
-अटल पूर्णांक zfcp_erp_strat_change_det(atomic_t *target_status, u32 erp_status)
-अणु
-	पूर्णांक status = atomic_पढ़ो(target_status);
+static int zfcp_erp_strat_change_det(atomic_t *target_status, u32 erp_status)
+{
+	int status = atomic_read(target_status);
 
-	अगर ((status & ZFCP_STATUS_COMMON_RUNNING) &&
+	if ((status & ZFCP_STATUS_COMMON_RUNNING) &&
 	    (erp_status & ZFCP_STATUS_ERP_CLOSE_ONLY))
-		वापस 1; /* take it online */
+		return 1; /* take it online */
 
-	अगर (!(status & ZFCP_STATUS_COMMON_RUNNING) &&
+	if (!(status & ZFCP_STATUS_COMMON_RUNNING) &&
 	    !(erp_status & ZFCP_STATUS_ERP_CLOSE_ONLY))
-		वापस 1; /* take it offline */
+		return 1; /* take it offline */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy_statechange(
-	काष्ठा zfcp_erp_action *act, क्रमागत zfcp_erp_act_result result)
-अणु
-	क्रमागत zfcp_erp_act_type type = act->type;
-	काष्ठा zfcp_adapter *adapter = act->adapter;
-	काष्ठा zfcp_port *port = act->port;
-	काष्ठा scsi_device *sdev = act->sdev;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev;
+static enum zfcp_erp_act_result zfcp_erp_strategy_statechange(
+	struct zfcp_erp_action *act, enum zfcp_erp_act_result result)
+{
+	enum zfcp_erp_act_type type = act->type;
+	struct zfcp_adapter *adapter = act->adapter;
+	struct zfcp_port *port = act->port;
+	struct scsi_device *sdev = act->sdev;
+	struct zfcp_scsi_dev *zfcp_sdev;
 	u32 erp_status = act->status;
 
-	चयन (type) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		अगर (zfcp_erp_strat_change_det(&adapter->status, erp_status)) अणु
-			_zfcp_erp_adapter_reखोलो(adapter,
+	switch (type) {
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		if (zfcp_erp_strat_change_det(&adapter->status, erp_status)) {
+			_zfcp_erp_adapter_reopen(adapter,
 						 ZFCP_STATUS_COMMON_ERP_FAILED,
 						 "ersscg1");
-			वापस ZFCP_ERP_EXIT;
-		पूर्ण
-		अवरोध;
+			return ZFCP_ERP_EXIT;
+		}
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		अगर (zfcp_erp_strat_change_det(&port->status, erp_status)) अणु
-			_zfcp_erp_port_reखोलो(port,
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		if (zfcp_erp_strat_change_det(&port->status, erp_status)) {
+			_zfcp_erp_port_reopen(port,
 					      ZFCP_STATUS_COMMON_ERP_FAILED,
 					      "ersscg2");
-			वापस ZFCP_ERP_EXIT;
-		पूर्ण
-		अवरोध;
+			return ZFCP_ERP_EXIT;
+		}
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		zfcp_sdev = sdev_to_zfcp(sdev);
-		अगर (zfcp_erp_strat_change_det(&zfcp_sdev->status, erp_status)) अणु
-			_zfcp_erp_lun_reखोलो(sdev,
+		if (zfcp_erp_strat_change_det(&zfcp_sdev->status, erp_status)) {
+			_zfcp_erp_lun_reopen(sdev,
 					     ZFCP_STATUS_COMMON_ERP_FAILED,
 					     "ersscg3", 0);
-			वापस ZFCP_ERP_EXIT;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस result;
-पूर्ण
+			return ZFCP_ERP_EXIT;
+		}
+		break;
+	}
+	return result;
+}
 
-अटल व्योम zfcp_erp_action_dequeue(काष्ठा zfcp_erp_action *erp_action)
-अणु
-	काष्ठा zfcp_adapter *adapter = erp_action->adapter;
-	काष्ठा zfcp_scsi_dev *zfcp_sdev;
+static void zfcp_erp_action_dequeue(struct zfcp_erp_action *erp_action)
+{
+	struct zfcp_adapter *adapter = erp_action->adapter;
+	struct zfcp_scsi_dev *zfcp_sdev;
 
 	adapter->erp_total_count--;
-	अगर (erp_action->status & ZFCP_STATUS_ERP_LOWMEM) अणु
+	if (erp_action->status & ZFCP_STATUS_ERP_LOWMEM) {
 		adapter->erp_low_mem_count--;
 		erp_action->status &= ~ZFCP_STATUS_ERP_LOWMEM;
-	पूर्ण
+	}
 
 	list_del(&erp_action->list);
 	zfcp_dbf_rec_run("eractd1", erp_action);
 
-	चयन (erp_action->type) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
+	switch (erp_action->type) {
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
 		zfcp_sdev = sdev_to_zfcp(erp_action->sdev);
 		atomic_andnot(ZFCP_STATUS_COMMON_ERP_INUSE,
 				  &zfcp_sdev->status);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
 		atomic_andnot(ZFCP_STATUS_COMMON_ERP_INUSE,
 				  &erp_action->port->status);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
 		atomic_andnot(ZFCP_STATUS_COMMON_ERP_INUSE,
 				  &erp_action->adapter->status);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /**
- * zfcp_erp_try_rport_unblock - unblock rport अगर no more/new recovery
+ * zfcp_erp_try_rport_unblock - unblock rport if no more/new recovery
  * @port: zfcp_port whose fc_rport we should try to unblock
  */
-अटल व्योम zfcp_erp_try_rport_unblock(काष्ठा zfcp_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_adapter *adapter = port->adapter;
-	पूर्णांक port_status;
-	काष्ठा Scsi_Host *shost = adapter->scsi_host;
-	काष्ठा scsi_device *sdev;
+static void zfcp_erp_try_rport_unblock(struct zfcp_port *port)
+{
+	unsigned long flags;
+	struct zfcp_adapter *adapter = port->adapter;
+	int port_status;
+	struct Scsi_Host *shost = adapter->scsi_host;
+	struct scsi_device *sdev;
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-	port_status = atomic_पढ़ो(&port->status);
-	अगर ((port_status & ZFCP_STATUS_COMMON_UNBLOCKED)    == 0 ||
+	write_lock_irqsave(&adapter->erp_lock, flags);
+	port_status = atomic_read(&port->status);
+	if ((port_status & ZFCP_STATUS_COMMON_UNBLOCKED)    == 0 ||
 	    (port_status & (ZFCP_STATUS_COMMON_ERP_INUSE |
-			    ZFCP_STATUS_COMMON_ERP_FAILED)) != 0) अणु
-		/* new ERP of severity >= port triggered अन्यथाwhere meanजबतक or
-		 * local link करोwn (adapter erp_failed but not clear unblock)
+			    ZFCP_STATUS_COMMON_ERP_FAILED)) != 0) {
+		/* new ERP of severity >= port triggered elsewhere meanwhile or
+		 * local link down (adapter erp_failed but not clear unblock)
 		 */
 		zfcp_dbf_rec_run_lvl(4, "ertru_p", &port->erp_action);
-		ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-		वापस;
-	पूर्ण
+		write_unlock_irqrestore(&adapter->erp_lock, flags);
+		return;
+	}
 	spin_lock(shost->host_lock);
-	__shost_क्रम_each_device(sdev, shost) अणु
-		काष्ठा zfcp_scsi_dev *zsdev = sdev_to_zfcp(sdev);
-		पूर्णांक lun_status;
+	__shost_for_each_device(sdev, shost) {
+		struct zfcp_scsi_dev *zsdev = sdev_to_zfcp(sdev);
+		int lun_status;
 
-		अगर (sdev->sdev_state == SDEV_DEL ||
+		if (sdev->sdev_state == SDEV_DEL ||
 		    sdev->sdev_state == SDEV_CANCEL)
-			जारी;
-		अगर (zsdev->port != port)
-			जारी;
-		/* LUN under port of पूर्णांकerest */
-		lun_status = atomic_पढ़ो(&zsdev->status);
-		अगर ((lun_status & ZFCP_STATUS_COMMON_ERP_FAILED) != 0)
-			जारी; /* unblock rport despite failed LUNs */
+			continue;
+		if (zsdev->port != port)
+			continue;
+		/* LUN under port of interest */
+		lun_status = atomic_read(&zsdev->status);
+		if ((lun_status & ZFCP_STATUS_COMMON_ERP_FAILED) != 0)
+			continue; /* unblock rport despite failed LUNs */
 		/* LUN recovery not given up yet [maybe follow-up pending] */
-		अगर ((lun_status & ZFCP_STATUS_COMMON_UNBLOCKED) == 0 ||
-		    (lun_status & ZFCP_STATUS_COMMON_ERP_INUSE) != 0) अणु
+		if ((lun_status & ZFCP_STATUS_COMMON_UNBLOCKED) == 0 ||
+		    (lun_status & ZFCP_STATUS_COMMON_ERP_INUSE) != 0) {
 			/* LUN blocked:
 			 * not yet unblocked [LUN recovery pending]
-			 * or meanजबतक blocked [new LUN recovery triggered]
+			 * or meanwhile blocked [new LUN recovery triggered]
 			 */
 			zfcp_dbf_rec_run_lvl(4, "ertru_l", &zsdev->erp_action);
 			spin_unlock(shost->host_lock);
-			ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-			वापस;
-		पूर्ण
-	पूर्ण
+			write_unlock_irqrestore(&adapter->erp_lock, flags);
+			return;
+		}
+	}
 	/* now port has no child or all children have completed recovery,
-	 * and no ERP of severity >= port was meanजबतक triggered अन्यथाwhere
+	 * and no ERP of severity >= port was meanwhile triggered elsewhere
 	 */
-	zfcp_scsi_schedule_rport_रेजिस्टर(port);
+	zfcp_scsi_schedule_rport_register(port);
 	spin_unlock(shost->host_lock);
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-पूर्ण
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+}
 
-अटल व्योम zfcp_erp_action_cleanup(काष्ठा zfcp_erp_action *act,
-				    क्रमागत zfcp_erp_act_result result)
-अणु
-	काष्ठा zfcp_adapter *adapter = act->adapter;
-	काष्ठा zfcp_port *port = act->port;
-	काष्ठा scsi_device *sdev = act->sdev;
+static void zfcp_erp_action_cleanup(struct zfcp_erp_action *act,
+				    enum zfcp_erp_act_result result)
+{
+	struct zfcp_adapter *adapter = act->adapter;
+	struct zfcp_port *port = act->port;
+	struct scsi_device *sdev = act->sdev;
 
-	चयन (act->type) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
-		अगर (!(act->status & ZFCP_STATUS_ERP_NO_REF))
+	switch (act->type) {
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
+		if (!(act->status & ZFCP_STATUS_ERP_NO_REF))
 			scsi_device_put(sdev);
 		zfcp_erp_try_rport_unblock(port);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		/* This चयन हाल might also happen after a क्रमced reखोलो
-		 * was successfully करोne and thus overwritten with a new
-		 * non-क्रमced reखोलो at `ersfs_2'. In this हाल, we must not
-		 * करो the clean-up of the non-क्रमced version.
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		/* This switch case might also happen after a forced reopen
+		 * was successfully done and thus overwritten with a new
+		 * non-forced reopen at `ersfs_2'. In this case, we must not
+		 * do the clean-up of the non-forced version.
 		 */
-		अगर (act->step != ZFCP_ERP_STEP_UNINITIALIZED)
-			अगर (result == ZFCP_ERP_SUCCEEDED)
+		if (act->step != ZFCP_ERP_STEP_UNINITIALIZED)
+			if (result == ZFCP_ERP_SUCCEEDED)
 				zfcp_erp_try_rport_unblock(port);
 		fallthrough;
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
 		put_device(&port->dev);
-		अवरोध;
+		break;
 
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		अगर (result == ZFCP_ERP_SUCCEEDED) अणु
-			रेजिस्टर_service_level(&adapter->service_level);
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		if (result == ZFCP_ERP_SUCCEEDED) {
+			register_service_level(&adapter->service_level);
 			zfcp_fc_conditional_port_scan(adapter);
 			queue_work(adapter->work_queue, &adapter->ns_up_work);
-		पूर्ण अन्यथा
-			unरेजिस्टर_service_level(&adapter->service_level);
+		} else
+			unregister_service_level(&adapter->service_level);
 
 		kref_put(&adapter->ref, zfcp_adapter_release);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy_करो_action(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	चयन (erp_action->type) अणु
-	हाल ZFCP_ERP_ACTION_REOPEN_ADAPTER:
-		वापस zfcp_erp_adapter_strategy(erp_action);
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
-		वापस zfcp_erp_port_क्रमced_strategy(erp_action);
-	हाल ZFCP_ERP_ACTION_REOPEN_PORT:
-		वापस zfcp_erp_port_strategy(erp_action);
-	हाल ZFCP_ERP_ACTION_REOPEN_LUN:
-		वापस zfcp_erp_lun_strategy(erp_action);
-	पूर्ण
-	वापस ZFCP_ERP_FAILED;
-पूर्ण
+static enum zfcp_erp_act_result zfcp_erp_strategy_do_action(
+	struct zfcp_erp_action *erp_action)
+{
+	switch (erp_action->type) {
+	case ZFCP_ERP_ACTION_REOPEN_ADAPTER:
+		return zfcp_erp_adapter_strategy(erp_action);
+	case ZFCP_ERP_ACTION_REOPEN_PORT_FORCED:
+		return zfcp_erp_port_forced_strategy(erp_action);
+	case ZFCP_ERP_ACTION_REOPEN_PORT:
+		return zfcp_erp_port_strategy(erp_action);
+	case ZFCP_ERP_ACTION_REOPEN_LUN:
+		return zfcp_erp_lun_strategy(erp_action);
+	}
+	return ZFCP_ERP_FAILED;
+}
 
-अटल क्रमागत zfcp_erp_act_result zfcp_erp_strategy(
-	काष्ठा zfcp_erp_action *erp_action)
-अणु
-	क्रमागत zfcp_erp_act_result result;
-	अचिन्हित दीर्घ flags;
-	काष्ठा zfcp_adapter *adapter = erp_action->adapter;
+static enum zfcp_erp_act_result zfcp_erp_strategy(
+	struct zfcp_erp_action *erp_action)
+{
+	enum zfcp_erp_act_result result;
+	unsigned long flags;
+	struct zfcp_adapter *adapter = erp_action->adapter;
 
 	kref_get(&adapter->ref);
 
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
+	write_lock_irqsave(&adapter->erp_lock, flags);
 	zfcp_erp_strategy_check_fsfreq(erp_action);
 
-	अगर (erp_action->status & ZFCP_STATUS_ERP_DISMISSED) अणु
+	if (erp_action->status & ZFCP_STATUS_ERP_DISMISSED) {
 		zfcp_erp_action_dequeue(erp_action);
 		result = ZFCP_ERP_DISMISSED;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (erp_action->status & ZFCP_STATUS_ERP_TIMEDOUT) अणु
+	if (erp_action->status & ZFCP_STATUS_ERP_TIMEDOUT) {
 		result = ZFCP_ERP_FAILED;
-		जाओ check_target;
-	पूर्ण
+		goto check_target;
+	}
 
 	zfcp_erp_action_to_running(erp_action);
 
-	/* no lock to allow क्रम blocking operations */
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
-	result = zfcp_erp_strategy_करो_action(erp_action);
-	ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
+	/* no lock to allow for blocking operations */
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
+	result = zfcp_erp_strategy_do_action(erp_action);
+	write_lock_irqsave(&adapter->erp_lock, flags);
 
-	अगर (erp_action->status & ZFCP_STATUS_ERP_DISMISSED)
+	if (erp_action->status & ZFCP_STATUS_ERP_DISMISSED)
 		result = ZFCP_ERP_CONTINUES;
 
-	चयन (result) अणु
-	हाल ZFCP_ERP_NOMEM:
-		अगर (!(erp_action->status & ZFCP_STATUS_ERP_LOWMEM)) अणु
+	switch (result) {
+	case ZFCP_ERP_NOMEM:
+		if (!(erp_action->status & ZFCP_STATUS_ERP_LOWMEM)) {
 			++adapter->erp_low_mem_count;
 			erp_action->status |= ZFCP_STATUS_ERP_LOWMEM;
-		पूर्ण
-		अगर (adapter->erp_total_count == adapter->erp_low_mem_count)
-			_zfcp_erp_adapter_reखोलो(adapter, 0, "erstgy1");
-		अन्यथा अणु
-			zfcp_erp_strategy_memरुको(erp_action);
+		}
+		if (adapter->erp_total_count == adapter->erp_low_mem_count)
+			_zfcp_erp_adapter_reopen(adapter, 0, "erstgy1");
+		else {
+			zfcp_erp_strategy_memwait(erp_action);
 			result = ZFCP_ERP_CONTINUES;
-		पूर्ण
-		जाओ unlock;
+		}
+		goto unlock;
 
-	हाल ZFCP_ERP_CONTINUES:
-		अगर (erp_action->status & ZFCP_STATUS_ERP_LOWMEM) अणु
+	case ZFCP_ERP_CONTINUES:
+		if (erp_action->status & ZFCP_STATUS_ERP_LOWMEM) {
 			--adapter->erp_low_mem_count;
 			erp_action->status &= ~ZFCP_STATUS_ERP_LOWMEM;
-		पूर्ण
-		जाओ unlock;
-	हाल ZFCP_ERP_SUCCEEDED:
-	हाल ZFCP_ERP_FAILED:
-	हाल ZFCP_ERP_EXIT:
-	हाल ZFCP_ERP_DISMISSED:
+		}
+		goto unlock;
+	case ZFCP_ERP_SUCCEEDED:
+	case ZFCP_ERP_FAILED:
+	case ZFCP_ERP_EXIT:
+	case ZFCP_ERP_DISMISSED:
 		/* NOP */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 check_target:
 	result = zfcp_erp_strategy_check_target(erp_action, result);
 	zfcp_erp_action_dequeue(erp_action);
 	result = zfcp_erp_strategy_statechange(erp_action, result);
-	अगर (result == ZFCP_ERP_EXIT)
-		जाओ unlock;
-	अगर (result == ZFCP_ERP_SUCCEEDED)
+	if (result == ZFCP_ERP_EXIT)
+		goto unlock;
+	if (result == ZFCP_ERP_SUCCEEDED)
 		zfcp_erp_strategy_followup_success(erp_action);
-	अगर (result == ZFCP_ERP_FAILED)
+	if (result == ZFCP_ERP_FAILED)
 		zfcp_erp_strategy_followup_failed(erp_action);
 
  unlock:
-	ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
+	write_unlock_irqrestore(&adapter->erp_lock, flags);
 
-	अगर (result != ZFCP_ERP_CONTINUES)
+	if (result != ZFCP_ERP_CONTINUES)
 		zfcp_erp_action_cleanup(erp_action, result);
 
 	kref_put(&adapter->ref, zfcp_adapter_release);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक zfcp_erp_thपढ़ो(व्योम *data)
-अणु
-	काष्ठा zfcp_adapter *adapter = (काष्ठा zfcp_adapter *) data;
-	काष्ठा zfcp_erp_action *act;
-	अचिन्हित दीर्घ flags;
+static int zfcp_erp_thread(void *data)
+{
+	struct zfcp_adapter *adapter = (struct zfcp_adapter *) data;
+	struct zfcp_erp_action *act;
+	unsigned long flags;
 
-	क्रम (;;) अणु
-		रुको_event_पूर्णांकerruptible(adapter->erp_पढ़ोy_wq,
-			   !list_empty(&adapter->erp_पढ़ोy_head) ||
-			   kthपढ़ो_should_stop());
+	for (;;) {
+		wait_event_interruptible(adapter->erp_ready_wq,
+			   !list_empty(&adapter->erp_ready_head) ||
+			   kthread_should_stop());
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
-		ग_लिखो_lock_irqsave(&adapter->erp_lock, flags);
-		act = list_first_entry_or_null(&adapter->erp_पढ़ोy_head,
-					       काष्ठा zfcp_erp_action, list);
-		ग_लिखो_unlock_irqrestore(&adapter->erp_lock, flags);
+		write_lock_irqsave(&adapter->erp_lock, flags);
+		act = list_first_entry_or_null(&adapter->erp_ready_head,
+					       struct zfcp_erp_action, list);
+		write_unlock_irqrestore(&adapter->erp_lock, flags);
 
-		अगर (act) अणु
-			/* there is more to come after dismission, no notअगरy */
-			अगर (zfcp_erp_strategy(act) != ZFCP_ERP_DISMISSED)
+		if (act) {
+			/* there is more to come after dismission, no notify */
+			if (zfcp_erp_strategy(act) != ZFCP_ERP_DISMISSED)
 				zfcp_erp_wakeup(adapter);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * zfcp_erp_thपढ़ो_setup - Start ERP thपढ़ो क्रम adapter
- * @adapter: Adapter to start the ERP thपढ़ो क्रम
+ * zfcp_erp_thread_setup - Start ERP thread for adapter
+ * @adapter: Adapter to start the ERP thread for
  *
- * Return: 0 on success, or error code from kthपढ़ो_run().
+ * Return: 0 on success, or error code from kthread_run().
  */
-पूर्णांक zfcp_erp_thपढ़ो_setup(काष्ठा zfcp_adapter *adapter)
-अणु
-	काष्ठा task_काष्ठा *thपढ़ो;
+int zfcp_erp_thread_setup(struct zfcp_adapter *adapter)
+{
+	struct task_struct *thread;
 
-	thपढ़ो = kthपढ़ो_run(zfcp_erp_thपढ़ो, adapter, "zfcperp%s",
+	thread = kthread_run(zfcp_erp_thread, adapter, "zfcperp%s",
 			     dev_name(&adapter->ccw_device->dev));
-	अगर (IS_ERR(thपढ़ो)) अणु
+	if (IS_ERR(thread)) {
 		dev_err(&adapter->ccw_device->dev,
 			"Creating an ERP thread for the FCP device failed.\n");
-		वापस PTR_ERR(thपढ़ो);
-	पूर्ण
+		return PTR_ERR(thread);
+	}
 
-	adapter->erp_thपढ़ो = thपढ़ो;
-	वापस 0;
-पूर्ण
+	adapter->erp_thread = thread;
+	return 0;
+}
 
 /**
- * zfcp_erp_thपढ़ो_समाप्त - Stop ERP thपढ़ो.
- * @adapter: Adapter where the ERP thपढ़ो should be stopped.
+ * zfcp_erp_thread_kill - Stop ERP thread.
+ * @adapter: Adapter where the ERP thread should be stopped.
  *
- * The caller of this routine ensures that the specअगरied adapter has
- * been shut करोwn and that this operation has been completed. Thus,
+ * The caller of this routine ensures that the specified adapter has
+ * been shut down and that this operation has been completed. Thus,
  * there are no pending erp_actions which would need to be handled
  * here.
  */
-व्योम zfcp_erp_thपढ़ो_समाप्त(काष्ठा zfcp_adapter *adapter)
-अणु
-	kthपढ़ो_stop(adapter->erp_thपढ़ो);
-	adapter->erp_thपढ़ो = शून्य;
-	WARN_ON(!list_empty(&adapter->erp_पढ़ोy_head));
+void zfcp_erp_thread_kill(struct zfcp_adapter *adapter)
+{
+	kthread_stop(adapter->erp_thread);
+	adapter->erp_thread = NULL;
+	WARN_ON(!list_empty(&adapter->erp_ready_head));
 	WARN_ON(!list_empty(&adapter->erp_running_head));
-पूर्ण
+}
 
 /**
- * zfcp_erp_रुको - रुको क्रम completion of error recovery on an adapter
- * @adapter: adapter क्रम which to रुको क्रम completion of its error recovery
+ * zfcp_erp_wait - wait for completion of error recovery on an adapter
+ * @adapter: adapter for which to wait for completion of its error recovery
  */
-व्योम zfcp_erp_रुको(काष्ठा zfcp_adapter *adapter)
-अणु
-	रुको_event(adapter->erp_करोne_wqh,
-		   !(atomic_पढ़ो(&adapter->status) &
+void zfcp_erp_wait(struct zfcp_adapter *adapter)
+{
+	wait_event(adapter->erp_done_wqh,
+		   !(atomic_read(&adapter->status) &
 			ZFCP_STATUS_ADAPTER_ERP_PENDING));
-पूर्ण
+}
 
 /**
  * zfcp_erp_set_adapter_status - set adapter status bits
@@ -1691,35 +1690,35 @@ check_target:
  *
  * Changes in common status bits are propagated to attached ports and LUNs.
  */
-व्योम zfcp_erp_set_adapter_status(काष्ठा zfcp_adapter *adapter, u32 mask)
-अणु
-	काष्ठा zfcp_port *port;
-	काष्ठा scsi_device *sdev;
-	अचिन्हित दीर्घ flags;
+void zfcp_erp_set_adapter_status(struct zfcp_adapter *adapter, u32 mask)
+{
+	struct zfcp_port *port;
+	struct scsi_device *sdev;
+	unsigned long flags;
 	u32 common_mask = mask & ZFCP_COMMON_FLAGS;
 
 	atomic_or(mask, &adapter->status);
 
-	अगर (!common_mask)
-		वापस;
+	if (!common_mask)
+		return;
 
-	पढ़ो_lock_irqsave(&adapter->port_list_lock, flags);
-	list_क्रम_each_entry(port, &adapter->port_list, list)
+	read_lock_irqsave(&adapter->port_list_lock, flags);
+	list_for_each_entry(port, &adapter->port_list, list)
 		atomic_or(common_mask, &port->status);
-	पढ़ो_unlock_irqrestore(&adapter->port_list_lock, flags);
+	read_unlock_irqrestore(&adapter->port_list_lock, flags);
 
 	/*
-	 * अगर `scsi_host` is missing, xconfig/xport data has never completed
+	 * if `scsi_host` is missing, xconfig/xport data has never completed
 	 * yet, so we can't access it, but there are also no SDEVs yet
 	 */
-	अगर (adapter->scsi_host == शून्य)
-		वापस;
+	if (adapter->scsi_host == NULL)
+		return;
 
 	spin_lock_irqsave(adapter->scsi_host->host_lock, flags);
-	__shost_क्रम_each_device(sdev, adapter->scsi_host)
+	__shost_for_each_device(sdev, adapter->scsi_host)
 		atomic_or(common_mask, &sdev_to_zfcp(sdev)->status);
 	spin_unlock_irqrestore(adapter->scsi_host->host_lock, flags);
-पूर्ण
+}
 
 /**
  * zfcp_erp_clear_adapter_status - clear adapter status bits
@@ -1728,45 +1727,45 @@ check_target:
  *
  * Changes in common status bits are propagated to attached ports and LUNs.
  */
-व्योम zfcp_erp_clear_adapter_status(काष्ठा zfcp_adapter *adapter, u32 mask)
-अणु
-	काष्ठा zfcp_port *port;
-	काष्ठा scsi_device *sdev;
-	अचिन्हित दीर्घ flags;
+void zfcp_erp_clear_adapter_status(struct zfcp_adapter *adapter, u32 mask)
+{
+	struct zfcp_port *port;
+	struct scsi_device *sdev;
+	unsigned long flags;
 	u32 common_mask = mask & ZFCP_COMMON_FLAGS;
 	u32 clear_counter = mask & ZFCP_STATUS_COMMON_ERP_FAILED;
 
 	atomic_andnot(mask, &adapter->status);
 
-	अगर (!common_mask)
-		वापस;
+	if (!common_mask)
+		return;
 
-	अगर (clear_counter)
+	if (clear_counter)
 		atomic_set(&adapter->erp_counter, 0);
 
-	पढ़ो_lock_irqsave(&adapter->port_list_lock, flags);
-	list_क्रम_each_entry(port, &adapter->port_list, list) अणु
+	read_lock_irqsave(&adapter->port_list_lock, flags);
+	list_for_each_entry(port, &adapter->port_list, list) {
 		atomic_andnot(common_mask, &port->status);
-		अगर (clear_counter)
+		if (clear_counter)
 			atomic_set(&port->erp_counter, 0);
-	पूर्ण
-	पढ़ो_unlock_irqrestore(&adapter->port_list_lock, flags);
+	}
+	read_unlock_irqrestore(&adapter->port_list_lock, flags);
 
 	/*
-	 * अगर `scsi_host` is missing, xconfig/xport data has never completed
+	 * if `scsi_host` is missing, xconfig/xport data has never completed
 	 * yet, so we can't access it, but there are also no SDEVs yet
 	 */
-	अगर (adapter->scsi_host == शून्य)
-		वापस;
+	if (adapter->scsi_host == NULL)
+		return;
 
 	spin_lock_irqsave(adapter->scsi_host->host_lock, flags);
-	__shost_क्रम_each_device(sdev, adapter->scsi_host) अणु
+	__shost_for_each_device(sdev, adapter->scsi_host) {
 		atomic_andnot(common_mask, &sdev_to_zfcp(sdev)->status);
-		अगर (clear_counter)
+		if (clear_counter)
 			atomic_set(&sdev_to_zfcp(sdev)->erp_counter, 0);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(adapter->scsi_host->host_lock, flags);
-पूर्ण
+}
 
 /**
  * zfcp_erp_set_port_status - set port status bits
@@ -1775,24 +1774,24 @@ check_target:
  *
  * Changes in common status bits are propagated to attached LUNs.
  */
-व्योम zfcp_erp_set_port_status(काष्ठा zfcp_port *port, u32 mask)
-अणु
-	काष्ठा scsi_device *sdev;
+void zfcp_erp_set_port_status(struct zfcp_port *port, u32 mask)
+{
+	struct scsi_device *sdev;
 	u32 common_mask = mask & ZFCP_COMMON_FLAGS;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	atomic_or(mask, &port->status);
 
-	अगर (!common_mask)
-		वापस;
+	if (!common_mask)
+		return;
 
 	spin_lock_irqsave(port->adapter->scsi_host->host_lock, flags);
-	__shost_क्रम_each_device(sdev, port->adapter->scsi_host)
-		अगर (sdev_to_zfcp(sdev)->port == port)
+	__shost_for_each_device(sdev, port->adapter->scsi_host)
+		if (sdev_to_zfcp(sdev)->port == port)
 			atomic_or(common_mask,
 					&sdev_to_zfcp(sdev)->status);
 	spin_unlock_irqrestore(port->adapter->scsi_host->host_lock, flags);
-पूर्ण
+}
 
 /**
  * zfcp_erp_clear_port_status - clear port status bits
@@ -1801,67 +1800,67 @@ check_target:
  *
  * Changes in common status bits are propagated to attached LUNs.
  */
-व्योम zfcp_erp_clear_port_status(काष्ठा zfcp_port *port, u32 mask)
-अणु
-	काष्ठा scsi_device *sdev;
+void zfcp_erp_clear_port_status(struct zfcp_port *port, u32 mask)
+{
+	struct scsi_device *sdev;
 	u32 common_mask = mask & ZFCP_COMMON_FLAGS;
 	u32 clear_counter = mask & ZFCP_STATUS_COMMON_ERP_FAILED;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	atomic_andnot(mask, &port->status);
 
-	अगर (!common_mask)
-		वापस;
+	if (!common_mask)
+		return;
 
-	अगर (clear_counter)
+	if (clear_counter)
 		atomic_set(&port->erp_counter, 0);
 
 	spin_lock_irqsave(port->adapter->scsi_host->host_lock, flags);
-	__shost_क्रम_each_device(sdev, port->adapter->scsi_host)
-		अगर (sdev_to_zfcp(sdev)->port == port) अणु
+	__shost_for_each_device(sdev, port->adapter->scsi_host)
+		if (sdev_to_zfcp(sdev)->port == port) {
 			atomic_andnot(common_mask,
 					  &sdev_to_zfcp(sdev)->status);
-			अगर (clear_counter)
+			if (clear_counter)
 				atomic_set(&sdev_to_zfcp(sdev)->erp_counter, 0);
-		पूर्ण
+		}
 	spin_unlock_irqrestore(port->adapter->scsi_host->host_lock, flags);
-पूर्ण
+}
 
 /**
  * zfcp_erp_set_lun_status - set lun status bits
  * @sdev: SCSI device / lun to set the status bits
  * @mask: status bits to change
  */
-व्योम zfcp_erp_set_lun_status(काष्ठा scsi_device *sdev, u32 mask)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+void zfcp_erp_set_lun_status(struct scsi_device *sdev, u32 mask)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
 	atomic_or(mask, &zfcp_sdev->status);
-पूर्ण
+}
 
 /**
  * zfcp_erp_clear_lun_status - clear lun status bits
  * @sdev: SCSi device / lun to clear the status bits
  * @mask: status bits to change
  */
-व्योम zfcp_erp_clear_lun_status(काष्ठा scsi_device *sdev, u32 mask)
-अणु
-	काष्ठा zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
+void zfcp_erp_clear_lun_status(struct scsi_device *sdev, u32 mask)
+{
+	struct zfcp_scsi_dev *zfcp_sdev = sdev_to_zfcp(sdev);
 
 	atomic_andnot(mask, &zfcp_sdev->status);
 
-	अगर (mask & ZFCP_STATUS_COMMON_ERP_FAILED)
+	if (mask & ZFCP_STATUS_COMMON_ERP_FAILED)
 		atomic_set(&zfcp_sdev->erp_counter, 0);
-पूर्ण
+}
 
 /**
- * zfcp_erp_adapter_reset_sync() - Really reखोलो adapter and रुको.
- * @adapter: Poपूर्णांकer to zfcp_adapter to reखोलो.
+ * zfcp_erp_adapter_reset_sync() - Really reopen adapter and wait.
+ * @adapter: Pointer to zfcp_adapter to reopen.
  * @dbftag: Trace tag string of length %ZFCP_DBF_TAG_LEN.
  */
-व्योम zfcp_erp_adapter_reset_sync(काष्ठा zfcp_adapter *adapter, अक्षर *dbftag)
-अणु
+void zfcp_erp_adapter_reset_sync(struct zfcp_adapter *adapter, char *dbftag)
+{
 	zfcp_erp_set_adapter_status(adapter, ZFCP_STATUS_COMMON_RUNNING);
-	zfcp_erp_adapter_reखोलो(adapter, ZFCP_STATUS_COMMON_ERP_FAILED, dbftag);
-	zfcp_erp_रुको(adapter);
-पूर्ण
+	zfcp_erp_adapter_reopen(adapter, ZFCP_STATUS_COMMON_ERP_FAILED, dbftag);
+	zfcp_erp_wait(adapter);
+}

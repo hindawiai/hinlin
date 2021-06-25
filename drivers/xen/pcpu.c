@@ -1,23 +1,22 @@
-<शैली गुरु>
 /******************************************************************************
  * pcpu.c
- * Management physical cpu in करोm0, get pcpu info and provide sys पूर्णांकerface
+ * Management physical cpu in dom0, get pcpu info and provide sys interface
  *
  * Copyright (c) 2012 Intel Corporation
- * Author: Liu, Jinsong <jinsong.liu@पूर्णांकel.com>
- * Author: Jiang, Yunhong <yunhong.jiang@पूर्णांकel.com>
+ * Author: Liu, Jinsong <jinsong.liu@intel.com>
+ * Author: Jiang, Yunhong <yunhong.jiang@intel.com>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -32,21 +31,21 @@
  * IN THE SOFTWARE.
  */
 
-#घोषणा pr_fmt(fmt) "xen_cpu: " fmt
+#define pr_fmt(fmt) "xen_cpu: " fmt
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/capability.h>
+#include <linux/interrupt.h>
+#include <linux/spinlock.h>
+#include <linux/cpu.h>
+#include <linux/stat.h>
+#include <linux/capability.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/acpi.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/events.h>
-#समावेश <xen/पूर्णांकerface/platक्रमm.h>
-#समावेश <यंत्र/xen/hypervisor.h>
-#समावेश <यंत्र/xen/hypercall.h>
+#include <xen/xen.h>
+#include <xen/acpi.h>
+#include <xen/xenbus.h>
+#include <xen/events.h>
+#include <xen/interface/platform.h>
+#include <asm/xen/hypervisor.h>
+#include <asm/xen/hypercall.h>
 
 
 /*
@@ -55,171 +54,171 @@
  * - XEN_PCPU_FLAGS_ONLINE: cpu is online
  * - XEN_PCPU_FLAGS_INVALID: cpu is not present
  */
-काष्ठा pcpu अणु
-	काष्ठा list_head list;
-	काष्ठा device dev;
-	uपूर्णांक32_t cpu_id;
-	uपूर्णांक32_t flags;
-पूर्ण;
+struct pcpu {
+	struct list_head list;
+	struct device dev;
+	uint32_t cpu_id;
+	uint32_t flags;
+};
 
-अटल काष्ठा bus_type xen_pcpu_subsys = अणु
+static struct bus_type xen_pcpu_subsys = {
 	.name = "xen_cpu",
 	.dev_name = "xen_cpu",
-पूर्ण;
+};
 
-अटल DEFINE_MUTEX(xen_pcpu_lock);
+static DEFINE_MUTEX(xen_pcpu_lock);
 
-अटल LIST_HEAD(xen_pcpus);
+static LIST_HEAD(xen_pcpus);
 
-अटल पूर्णांक xen_pcpu_करोwn(uपूर्णांक32_t cpu_id)
-अणु
-	काष्ठा xen_platक्रमm_op op = अणु
+static int xen_pcpu_down(uint32_t cpu_id)
+{
+	struct xen_platform_op op = {
 		.cmd			= XENPF_cpu_offline,
-		.पूर्णांकerface_version	= XENPF_INTERFACE_VERSION,
+		.interface_version	= XENPF_INTERFACE_VERSION,
 		.u.cpu_ol.cpuid		= cpu_id,
-	पूर्ण;
+	};
 
-	वापस HYPERVISOR_platक्रमm_op(&op);
-पूर्ण
+	return HYPERVISOR_platform_op(&op);
+}
 
-अटल पूर्णांक xen_pcpu_up(uपूर्णांक32_t cpu_id)
-अणु
-	काष्ठा xen_platक्रमm_op op = अणु
+static int xen_pcpu_up(uint32_t cpu_id)
+{
+	struct xen_platform_op op = {
 		.cmd			= XENPF_cpu_online,
-		.पूर्णांकerface_version	= XENPF_INTERFACE_VERSION,
+		.interface_version	= XENPF_INTERFACE_VERSION,
 		.u.cpu_ol.cpuid		= cpu_id,
-	पूर्ण;
+	};
 
-	वापस HYPERVISOR_platक्रमm_op(&op);
-पूर्ण
+	return HYPERVISOR_platform_op(&op);
+}
 
-अटल sमाप_प्रकार show_online(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा pcpu *cpu = container_of(dev, काष्ठा pcpu, dev);
+static ssize_t show_online(struct device *dev,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct pcpu *cpu = container_of(dev, struct pcpu, dev);
 
-	वापस प्र_लिखो(buf, "%u\n", !!(cpu->flags & XEN_PCPU_FLAGS_ONLINE));
-पूर्ण
+	return sprintf(buf, "%u\n", !!(cpu->flags & XEN_PCPU_FLAGS_ONLINE));
+}
 
-अटल sमाप_प्रकार __ref store_online(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा pcpu *pcpu = container_of(dev, काष्ठा pcpu, dev);
-	अचिन्हित दीर्घ दीर्घ val;
-	sमाप_प्रकार ret;
+static ssize_t __ref store_online(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct pcpu *pcpu = container_of(dev, struct pcpu, dev);
+	unsigned long long val;
+	ssize_t ret;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (kम_से_अदीर्घl(buf, 0, &val) < 0)
-		वापस -EINVAL;
+	if (kstrtoull(buf, 0, &val) < 0)
+		return -EINVAL;
 
-	चयन (val) अणु
-	हाल 0:
-		ret = xen_pcpu_करोwn(pcpu->cpu_id);
-		अवरोध;
-	हाल 1:
+	switch (val) {
+	case 0:
+		ret = xen_pcpu_down(pcpu->cpu_id);
+		break;
+	case 1:
 		ret = xen_pcpu_up(pcpu->cpu_id);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (ret >= 0)
+	if (ret >= 0)
 		ret = count;
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR(online, S_IRUGO | S_IWUSR, show_online, store_online);
+	return ret;
+}
+static DEVICE_ATTR(online, S_IRUGO | S_IWUSR, show_online, store_online);
 
-अटल काष्ठा attribute *pcpu_dev_attrs[] = अणु
+static struct attribute *pcpu_dev_attrs[] = {
 	&dev_attr_online.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल umode_t pcpu_dev_is_visible(काष्ठा kobject *kobj,
-				   काष्ठा attribute *attr, पूर्णांक idx)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
+static umode_t pcpu_dev_is_visible(struct kobject *kobj,
+				   struct attribute *attr, int idx)
+{
+	struct device *dev = kobj_to_dev(kobj);
 	/*
 	 * Xen never offline cpu0 due to several restrictions
-	 * and assumptions. This basically करोesn't add a sys control
+	 * and assumptions. This basically doesn't add a sys control
 	 * to user, one cannot attempt to offline BSP.
 	 */
-	वापस dev->id ? attr->mode : 0;
-पूर्ण
+	return dev->id ? attr->mode : 0;
+}
 
-अटल स्थिर काष्ठा attribute_group pcpu_dev_group = अणु
+static const struct attribute_group pcpu_dev_group = {
 	.attrs = pcpu_dev_attrs,
 	.is_visible = pcpu_dev_is_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *pcpu_dev_groups[] = अणु
+static const struct attribute_group *pcpu_dev_groups[] = {
 	&pcpu_dev_group,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल bool xen_pcpu_online(uपूर्णांक32_t flags)
-अणु
-	वापस !!(flags & XEN_PCPU_FLAGS_ONLINE);
-पूर्ण
+static bool xen_pcpu_online(uint32_t flags)
+{
+	return !!(flags & XEN_PCPU_FLAGS_ONLINE);
+}
 
-अटल व्योम pcpu_online_status(काष्ठा xenpf_pcpuinfo *info,
-			       काष्ठा pcpu *pcpu)
-अणु
-	अगर (xen_pcpu_online(info->flags) &&
-	   !xen_pcpu_online(pcpu->flags)) अणु
+static void pcpu_online_status(struct xenpf_pcpuinfo *info,
+			       struct pcpu *pcpu)
+{
+	if (xen_pcpu_online(info->flags) &&
+	   !xen_pcpu_online(pcpu->flags)) {
 		/* the pcpu is onlined */
 		pcpu->flags |= XEN_PCPU_FLAGS_ONLINE;
 		kobject_uevent(&pcpu->dev.kobj, KOBJ_ONLINE);
-	पूर्ण अन्यथा अगर (!xen_pcpu_online(info->flags) &&
-		    xen_pcpu_online(pcpu->flags)) अणु
+	} else if (!xen_pcpu_online(info->flags) &&
+		    xen_pcpu_online(pcpu->flags)) {
 		/* The pcpu is offlined */
 		pcpu->flags &= ~XEN_PCPU_FLAGS_ONLINE;
 		kobject_uevent(&pcpu->dev.kobj, KOBJ_OFFLINE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा pcpu *get_pcpu(uपूर्णांक32_t cpu_id)
-अणु
-	काष्ठा pcpu *pcpu;
+static struct pcpu *get_pcpu(uint32_t cpu_id)
+{
+	struct pcpu *pcpu;
 
-	list_क्रम_each_entry(pcpu, &xen_pcpus, list) अणु
-		अगर (pcpu->cpu_id == cpu_id)
-			वापस pcpu;
-	पूर्ण
+	list_for_each_entry(pcpu, &xen_pcpus, list) {
+		if (pcpu->cpu_id == cpu_id)
+			return pcpu;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम pcpu_release(काष्ठा device *dev)
-अणु
-	काष्ठा pcpu *pcpu = container_of(dev, काष्ठा pcpu, dev);
+static void pcpu_release(struct device *dev)
+{
+	struct pcpu *pcpu = container_of(dev, struct pcpu, dev);
 
 	list_del(&pcpu->list);
-	kमुक्त(pcpu);
-पूर्ण
+	kfree(pcpu);
+}
 
-अटल व्योम unरेजिस्टर_and_हटाओ_pcpu(काष्ठा pcpu *pcpu)
-अणु
-	काष्ठा device *dev;
+static void unregister_and_remove_pcpu(struct pcpu *pcpu)
+{
+	struct device *dev;
 
-	अगर (!pcpu)
-		वापस;
+	if (!pcpu)
+		return;
 
 	dev = &pcpu->dev;
-	/* pcpu हटाओ would be implicitly करोne */
-	device_unरेजिस्टर(dev);
-पूर्ण
+	/* pcpu remove would be implicitly done */
+	device_unregister(dev);
+}
 
-अटल पूर्णांक रेजिस्टर_pcpu(काष्ठा pcpu *pcpu)
-अणु
-	काष्ठा device *dev;
-	पूर्णांक err = -EINVAL;
+static int register_pcpu(struct pcpu *pcpu)
+{
+	struct device *dev;
+	int err = -EINVAL;
 
-	अगर (!pcpu)
-		वापस err;
+	if (!pcpu)
+		return err;
 
 	dev = &pcpu->dev;
 	dev->bus = &xen_pcpu_subsys;
@@ -227,158 +226,158 @@
 	dev->release = pcpu_release;
 	dev->groups = pcpu_dev_groups;
 
-	err = device_रेजिस्टर(dev);
-	अगर (err) अणु
+	err = device_register(dev);
+	if (err) {
 		pcpu_release(dev);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pcpu *create_and_रेजिस्टर_pcpu(काष्ठा xenpf_pcpuinfo *info)
-अणु
-	काष्ठा pcpu *pcpu;
-	पूर्णांक err;
+static struct pcpu *create_and_register_pcpu(struct xenpf_pcpuinfo *info)
+{
+	struct pcpu *pcpu;
+	int err;
 
-	अगर (info->flags & XEN_PCPU_FLAGS_INVALID)
-		वापस ERR_PTR(-ENODEV);
+	if (info->flags & XEN_PCPU_FLAGS_INVALID)
+		return ERR_PTR(-ENODEV);
 
-	pcpu = kzalloc(माप(काष्ठा pcpu), GFP_KERNEL);
-	अगर (!pcpu)
-		वापस ERR_PTR(-ENOMEM);
+	pcpu = kzalloc(sizeof(struct pcpu), GFP_KERNEL);
+	if (!pcpu)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&pcpu->list);
 	pcpu->cpu_id = info->xen_cpuid;
 	pcpu->flags = info->flags;
 
-	/* Need hold on xen_pcpu_lock beक्रमe pcpu list manipulations */
+	/* Need hold on xen_pcpu_lock before pcpu list manipulations */
 	list_add_tail(&pcpu->list, &xen_pcpus);
 
-	err = रेजिस्टर_pcpu(pcpu);
-	अगर (err) अणु
+	err = register_pcpu(pcpu);
+	if (err) {
 		pr_warn("Failed to register pcpu%u\n", info->xen_cpuid);
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+		return ERR_PTR(-ENOENT);
+	}
 
-	वापस pcpu;
-पूर्ण
+	return pcpu;
+}
 
 /*
  * Caller should hold the xen_pcpu_lock
  */
-अटल पूर्णांक sync_pcpu(uपूर्णांक32_t cpu, uपूर्णांक32_t *max_cpu)
-अणु
-	पूर्णांक ret;
-	काष्ठा pcpu *pcpu = शून्य;
-	काष्ठा xenpf_pcpuinfo *info;
-	काष्ठा xen_platक्रमm_op op = अणु
+static int sync_pcpu(uint32_t cpu, uint32_t *max_cpu)
+{
+	int ret;
+	struct pcpu *pcpu = NULL;
+	struct xenpf_pcpuinfo *info;
+	struct xen_platform_op op = {
 		.cmd                   = XENPF_get_cpuinfo,
-		.पूर्णांकerface_version     = XENPF_INTERFACE_VERSION,
+		.interface_version     = XENPF_INTERFACE_VERSION,
 		.u.pcpu_info.xen_cpuid = cpu,
-	पूर्ण;
+	};
 
-	ret = HYPERVISOR_platक्रमm_op(&op);
-	अगर (ret)
-		वापस ret;
+	ret = HYPERVISOR_platform_op(&op);
+	if (ret)
+		return ret;
 
 	info = &op.u.pcpu_info;
-	अगर (max_cpu)
+	if (max_cpu)
 		*max_cpu = info->max_present;
 
 	pcpu = get_pcpu(cpu);
 
 	/*
-	 * Only those at cpu present map has its sys पूर्णांकerface.
+	 * Only those at cpu present map has its sys interface.
 	 */
-	अगर (info->flags & XEN_PCPU_FLAGS_INVALID) अणु
-		unरेजिस्टर_and_हटाओ_pcpu(pcpu);
-		वापस 0;
-	पूर्ण
+	if (info->flags & XEN_PCPU_FLAGS_INVALID) {
+		unregister_and_remove_pcpu(pcpu);
+		return 0;
+	}
 
-	अगर (!pcpu) अणु
-		pcpu = create_and_रेजिस्टर_pcpu(info);
-		अगर (IS_ERR_OR_शून्य(pcpu))
-			वापस -ENODEV;
-	पूर्ण अन्यथा
+	if (!pcpu) {
+		pcpu = create_and_register_pcpu(info);
+		if (IS_ERR_OR_NULL(pcpu))
+			return -ENODEV;
+	} else
 		pcpu_online_status(info, pcpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Sync करोm0's pcpu information with xen hypervisor's
+ * Sync dom0's pcpu information with xen hypervisor's
  */
-अटल पूर्णांक xen_sync_pcpus(व्योम)
-अणु
+static int xen_sync_pcpus(void)
+{
 	/*
 	 * Boot cpu always have cpu_id 0 in xen
 	 */
-	uपूर्णांक32_t cpu = 0, max_cpu = 0;
-	पूर्णांक err = 0;
-	काष्ठा pcpu *pcpu, *पंचांगp;
+	uint32_t cpu = 0, max_cpu = 0;
+	int err = 0;
+	struct pcpu *pcpu, *tmp;
 
 	mutex_lock(&xen_pcpu_lock);
 
-	जबतक (!err && (cpu <= max_cpu)) अणु
+	while (!err && (cpu <= max_cpu)) {
 		err = sync_pcpu(cpu, &max_cpu);
 		cpu++;
-	पूर्ण
+	}
 
-	अगर (err)
-		list_क्रम_each_entry_safe(pcpu, पंचांगp, &xen_pcpus, list)
-			unरेजिस्टर_and_हटाओ_pcpu(pcpu);
+	if (err)
+		list_for_each_entry_safe(pcpu, tmp, &xen_pcpus, list)
+			unregister_and_remove_pcpu(pcpu);
 
 	mutex_unlock(&xen_pcpu_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xen_pcpu_work_fn(काष्ठा work_काष्ठा *work)
-अणु
+static void xen_pcpu_work_fn(struct work_struct *work)
+{
 	xen_sync_pcpus();
-पूर्ण
-अटल DECLARE_WORK(xen_pcpu_work, xen_pcpu_work_fn);
+}
+static DECLARE_WORK(xen_pcpu_work, xen_pcpu_work_fn);
 
-अटल irqवापस_t xen_pcpu_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
+static irqreturn_t xen_pcpu_interrupt(int irq, void *dev_id)
+{
 	schedule_work(&xen_pcpu_work);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक __init xen_pcpu_init(व्योम)
-अणु
-	पूर्णांक irq, ret;
+static int __init xen_pcpu_init(void)
+{
+	int irq, ret;
 
-	अगर (!xen_initial_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_initial_domain())
+		return -ENODEV;
 
 	irq = bind_virq_to_irqhandler(VIRQ_PCPU_STATE, 0,
-				      xen_pcpu_पूर्णांकerrupt, 0,
-				      "xen-pcpu", शून्य);
-	अगर (irq < 0) अणु
+				      xen_pcpu_interrupt, 0,
+				      "xen-pcpu", NULL);
+	if (irq < 0) {
 		pr_warn("Failed to bind pcpu virq\n");
-		वापस irq;
-	पूर्ण
+		return irq;
+	}
 
-	ret = subsys_प्रणाली_रेजिस्टर(&xen_pcpu_subsys, शून्य);
-	अगर (ret) अणु
+	ret = subsys_system_register(&xen_pcpu_subsys, NULL);
+	if (ret) {
 		pr_warn("Failed to register pcpu subsys\n");
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	ret = xen_sync_pcpus();
-	अगर (ret) अणु
+	if (ret) {
 		pr_warn("Failed to sync pcpu info\n");
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	वापस 0;
+	return 0;
 
 err2:
-	bus_unरेजिस्टर(&xen_pcpu_subsys);
+	bus_unregister(&xen_pcpu_subsys);
 err1:
-	unbind_from_irqhandler(irq, शून्य);
-	वापस ret;
-पूर्ण
+	unbind_from_irqhandler(irq, NULL);
+	return ret;
+}
 arch_initcall(xen_pcpu_init);

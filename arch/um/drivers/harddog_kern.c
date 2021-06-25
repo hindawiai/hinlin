@@ -1,180 +1,179 @@
-<शैली गुरु>
-/* UML hardware watchकरोg, shamelessly stolen from:
+/* UML hardware watchdog, shamelessly stolen from:
  *
- *	SoftDog	0.05:	A Software Watchकरोg Device
+ *	SoftDog	0.05:	A Software Watchdog Device
  *
  *	(c) Copyright 1996 Alan Cox <alan@redhat.com>, All Rights Reserved.
  *				http://www.redhat.com
  *
- *	This program is मुक्त software; you can redistribute it and/or
- *	modअगरy it under the terms of the GNU General Public License
+ *	This program is free software; you can redistribute it and/or
+ *	modify it under the terms of the GNU General Public License
  *	as published by the Free Software Foundation; either version
  *	2 of the License, or (at your option) any later version.
  *
  *	Neither Alan Cox nor CymruNet Ltd. admit liability nor provide
- *	warranty क्रम any of this software. This material is provided
- *	"AS-IS" and at no अक्षरge.
+ *	warranty for any of this software. This material is provided
+ *	"AS-IS" and at no charge.
  *
  *	(c) Copyright 1995    Alan Cox <alan@lxorguk.ukuu.org.uk>
  *
- *	Software only watchकरोg driver. Unlike its big brother the WDT501P
+ *	Software only watchdog driver. Unlike its big brother the WDT501P
  *	driver this won't always recover a failed machine.
  *
- *  03/96: Angelo Haritsis <ah@करोc.ic.ac.uk> :
+ *  03/96: Angelo Haritsis <ah@doc.ic.ac.uk> :
  *	Modularised.
- *	Added soft_margin; use upon insmod to change the समयr delay.
+ *	Added soft_margin; use upon insmod to change the timer delay.
  *	NB: uses same minor as wdt (WATCHDOG_MINOR); we could use separate
  *	    minors.
  *
  *  19980911 Alan Cox
- *	Made SMP safe क्रम 2.3.x
+ *	Made SMP safe for 2.3.x
  *
  *  20011127 Joel Becker (jlbec@evilplan.org>
- *	Added soft_noboot; Allows testing the softकरोg trigger without
+ *	Added soft_noboot; Allows testing the softdog trigger without
  *	requiring a recompile.
  *	Added WDIOC_GETTIMEOUT and WDIOC_SETTIMOUT.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/watchकरोg.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश "mconsole.h"
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/miscdevice.h>
+#include <linux/watchdog.h>
+#include <linux/reboot.h>
+#include <linux/mutex.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include "mconsole.h"
 
 MODULE_LICENSE("GPL");
 
-अटल DEFINE_MUTEX(hardकरोg_mutex);
-अटल DEFINE_SPINLOCK(lock);
-अटल पूर्णांक समयr_alive;
-अटल पूर्णांक hardकरोg_in_fd = -1;
-अटल पूर्णांक hardकरोg_out_fd = -1;
+static DEFINE_MUTEX(harddog_mutex);
+static DEFINE_SPINLOCK(lock);
+static int timer_alive;
+static int harddog_in_fd = -1;
+static int harddog_out_fd = -1;
 
 /*
- *	Allow only one person to hold it खोलो
+ *	Allow only one person to hold it open
  */
 
-बाह्य पूर्णांक start_watchकरोg(पूर्णांक *in_fd_ret, पूर्णांक *out_fd_ret, अक्षर *sock);
+extern int start_watchdog(int *in_fd_ret, int *out_fd_ret, char *sock);
 
-अटल पूर्णांक hardकरोg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक err = -EBUSY;
-	अक्षर *sock = शून्य;
+static int harddog_open(struct inode *inode, struct file *file)
+{
+	int err = -EBUSY;
+	char *sock = NULL;
 
-	mutex_lock(&hardकरोg_mutex);
+	mutex_lock(&harddog_mutex);
 	spin_lock(&lock);
-	अगर(समयr_alive)
-		जाओ err;
-#अगर_घोषित CONFIG_WATCHDOG_NOWAYOUT
+	if(timer_alive)
+		goto err;
+#ifdef CONFIG_WATCHDOG_NOWAYOUT
 	__module_get(THIS_MODULE);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_MCONSOLE
-	sock = mconsole_notअगरy_socket();
-#पूर्ण_अगर
-	err = start_watchकरोg(&hardकरोg_in_fd, &hardकरोg_out_fd, sock);
-	अगर(err)
-		जाओ err;
+#ifdef CONFIG_MCONSOLE
+	sock = mconsole_notify_socket();
+#endif
+	err = start_watchdog(&harddog_in_fd, &harddog_out_fd, sock);
+	if(err)
+		goto err;
 
-	समयr_alive = 1;
+	timer_alive = 1;
 	spin_unlock(&lock);
-	mutex_unlock(&hardकरोg_mutex);
-	वापस stream_खोलो(inode, file);
+	mutex_unlock(&harddog_mutex);
+	return stream_open(inode, file);
 err:
 	spin_unlock(&lock);
-	mutex_unlock(&hardकरोg_mutex);
-	वापस err;
-पूर्ण
+	mutex_unlock(&harddog_mutex);
+	return err;
+}
 
-बाह्य व्योम stop_watchकरोg(पूर्णांक in_fd, पूर्णांक out_fd);
+extern void stop_watchdog(int in_fd, int out_fd);
 
-अटल पूर्णांक hardकरोg_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int harddog_release(struct inode *inode, struct file *file)
+{
 	/*
-	 *	Shut off the समयr.
+	 *	Shut off the timer.
 	 */
 
 	spin_lock(&lock);
 
-	stop_watchकरोg(hardकरोg_in_fd, hardकरोg_out_fd);
-	hardकरोg_in_fd = -1;
-	hardकरोg_out_fd = -1;
+	stop_watchdog(harddog_in_fd, harddog_out_fd);
+	harddog_in_fd = -1;
+	harddog_out_fd = -1;
 
-	समयr_alive=0;
+	timer_alive=0;
 	spin_unlock(&lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-बाह्य पूर्णांक ping_watchकरोg(पूर्णांक fd);
+extern int ping_watchdog(int fd);
 
-अटल sमाप_प्रकार hardकरोg_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data, माप_प्रकार len,
+static ssize_t harddog_write(struct file *file, const char __user *data, size_t len,
 			     loff_t *ppos)
-अणु
+{
 	/*
-	 *	Refresh the समयr.
+	 *	Refresh the timer.
 	 */
-	अगर(len)
-		वापस ping_watchकरोg(hardकरोg_out_fd);
-	वापस 0;
-पूर्ण
+	if(len)
+		return ping_watchdog(harddog_out_fd);
+	return 0;
+}
 
-अटल पूर्णांक hardकरोg_ioctl_unlocked(काष्ठा file *file,
-				  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp= (व्योम __user *)arg;
-	अटल काष्ठा watchकरोg_info ident = अणु
+static int harddog_ioctl_unlocked(struct file *file,
+				  unsigned int cmd, unsigned long arg)
+{
+	void __user *argp= (void __user *)arg;
+	static struct watchdog_info ident = {
 		WDIOC_SETTIMEOUT,
 		0,
 		"UML Hardware Watchdog"
-	पूर्ण;
-	चयन (cmd) अणु
-		शेष:
-			वापस -ENOTTY;
-		हाल WDIOC_GETSUPPORT:
-			अगर(copy_to_user(argp, &ident, माप(ident)))
-				वापस -EFAULT;
-			वापस 0;
-		हाल WDIOC_GETSTATUS:
-		हाल WDIOC_GETBOOTSTATUS:
-			वापस put_user(0,(पूर्णांक __user *)argp);
-		हाल WDIOC_KEEPALIVE:
-			वापस ping_watchकरोg(hardकरोg_out_fd);
-	पूर्ण
-पूर्ण
+	};
+	switch (cmd) {
+		default:
+			return -ENOTTY;
+		case WDIOC_GETSUPPORT:
+			if(copy_to_user(argp, &ident, sizeof(ident)))
+				return -EFAULT;
+			return 0;
+		case WDIOC_GETSTATUS:
+		case WDIOC_GETBOOTSTATUS:
+			return put_user(0,(int __user *)argp);
+		case WDIOC_KEEPALIVE:
+			return ping_watchdog(harddog_out_fd);
+	}
+}
 
-अटल दीर्घ hardकरोg_ioctl(काष्ठा file *file,
-			  अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	दीर्घ ret;
+static long harddog_ioctl(struct file *file,
+			  unsigned int cmd, unsigned long arg)
+{
+	long ret;
 
-	mutex_lock(&hardकरोg_mutex);
-	ret = hardकरोg_ioctl_unlocked(file, cmd, arg);
-	mutex_unlock(&hardकरोg_mutex);
+	mutex_lock(&harddog_mutex);
+	ret = harddog_ioctl_unlocked(file, cmd, arg);
+	mutex_unlock(&harddog_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations hardकरोg_fops = अणु
+static const struct file_operations harddog_fops = {
 	.owner		= THIS_MODULE,
-	.ग_लिखो		= hardकरोg_ग_लिखो,
-	.unlocked_ioctl	= hardकरोg_ioctl,
+	.write		= harddog_write,
+	.unlocked_ioctl	= harddog_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.खोलो		= hardकरोg_खोलो,
-	.release	= hardकरोg_release,
+	.open		= harddog_open,
+	.release	= harddog_release,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice hardकरोg_miscdev = अणु
+static struct miscdevice harddog_miscdev = {
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
-	.fops		= &hardकरोg_fops,
-पूर्ण;
-module_misc_device(hardकरोg_miscdev);
+	.fops		= &harddog_fops,
+};
+module_misc_device(harddog_miscdev);

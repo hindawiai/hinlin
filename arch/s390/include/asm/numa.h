@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * NUMA support क्रम s390
+ * NUMA support for s390
  *
- * Declare the NUMA core code काष्ठाures and functions.
+ * Declare the NUMA core code structures and functions.
  *
  * Copyright IBM Corp. 2015
  */
 
-#अगर_अघोषित _ASM_S390_NUMA_H
-#घोषणा _ASM_S390_NUMA_H
+#ifndef _ASM_S390_NUMA_H
+#define _ASM_S390_NUMA_H
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
-#समावेश <linux/numa.h>
+#include <linux/numa.h>
 
-व्योम numa_setup(व्योम);
+void numa_setup(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम numa_setup(व्योम) अणु पूर्ण
+static inline void numa_setup(void) { }
 
-#पूर्ण_अगर /* CONFIG_NUMA */
+#endif /* CONFIG_NUMA */
 
-#पूर्ण_अगर /* _ASM_S390_NUMA_H */
+#endif /* _ASM_S390_NUMA_H */

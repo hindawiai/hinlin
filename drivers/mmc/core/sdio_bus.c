@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  linux/drivers/mmc/core/sdio_bus.c
  *
@@ -8,65 +7,65 @@
  * SDIO function driver model
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/acpi.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/pm_domain.h>
+#include <linux/acpi.h>
 
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/sdio_func.h>
-#समावेश <linux/of.h>
+#include <linux/mmc/card.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/sdio_func.h>
+#include <linux/of.h>
 
-#समावेश "core.h"
-#समावेश "card.h"
-#समावेश "sdio_cis.h"
-#समावेश "sdio_bus.h"
+#include "core.h"
+#include "card.h"
+#include "sdio_cis.h"
+#include "sdio_bus.h"
 
-#घोषणा to_sdio_driver(d)	container_of(d, काष्ठा sdio_driver, drv)
+#define to_sdio_driver(d)	container_of(d, struct sdio_driver, drv)
 
 /* show configuration fields */
-#घोषणा sdio_config_attr(field, क्रमmat_string, args...)			\
-अटल sमाप_प्रकार								\
-field##_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)				\
-अणु									\
-	काष्ठा sdio_func *func;						\
+#define sdio_config_attr(field, format_string, args...)			\
+static ssize_t								\
+field##_show(struct device *dev, struct device_attribute *attr, char *buf)				\
+{									\
+	struct sdio_func *func;						\
 									\
 	func = dev_to_sdio_func (dev);					\
-	वापस प्र_लिखो(buf, क्रमmat_string, args);			\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(field)
+	return sprintf(buf, format_string, args);			\
+}									\
+static DEVICE_ATTR_RO(field)
 
 sdio_config_attr(class, "0x%02x\n", func->class);
-sdio_config_attr(venकरोr, "0x%04x\n", func->venकरोr);
+sdio_config_attr(vendor, "0x%04x\n", func->vendor);
 sdio_config_attr(device, "0x%04x\n", func->device);
 sdio_config_attr(revision, "%u.%u\n", func->major_rev, func->minor_rev);
-sdio_config_attr(modalias, "sdio:c%02Xv%04Xd%04X\n", func->class, func->venकरोr, func->device);
+sdio_config_attr(modalias, "sdio:c%02Xv%04Xd%04X\n", func->class, func->vendor, func->device);
 
-#घोषणा sdio_info_attr(num)									\
-अटल sमाप_प्रकार info##num##_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु												\
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);						\
+#define sdio_info_attr(num)									\
+static ssize_t info##num##_show(struct device *dev, struct device_attribute *attr, char *buf)	\
+{												\
+	struct sdio_func *func = dev_to_sdio_func(dev);						\
 												\
-	अगर (num > func->num_info)								\
-		वापस -ENODATA;								\
-	अगर (!func->info[num-1][0])								\
-		वापस 0;									\
-	वापस प्र_लिखो(buf, "%s\n", func->info[num-1]);						\
-पूर्ण												\
-अटल DEVICE_ATTR_RO(info##num)
+	if (num > func->num_info)								\
+		return -ENODATA;								\
+	if (!func->info[num-1][0])								\
+		return 0;									\
+	return sprintf(buf, "%s\n", func->info[num-1]);						\
+}												\
+static DEVICE_ATTR_RO(info##num)
 
 sdio_info_attr(1);
 sdio_info_attr(2);
 sdio_info_attr(3);
 sdio_info_attr(4);
 
-अटल काष्ठा attribute *sdio_dev_attrs[] = अणु
+static struct attribute *sdio_dev_attrs[] = {
 	&dev_attr_class.attr,
-	&dev_attr_venकरोr.attr,
+	&dev_attr_vendor.attr,
 	&dev_attr_device.attr,
 	&dev_attr_revision.attr,
 	&dev_attr_info1.attr,
@@ -74,252 +73,252 @@ sdio_info_attr(4);
 	&dev_attr_info3.attr,
 	&dev_attr_info4.attr,
 	&dev_attr_modalias.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(sdio_dev);
 
-अटल स्थिर काष्ठा sdio_device_id *sdio_match_one(काष्ठा sdio_func *func,
-	स्थिर काष्ठा sdio_device_id *id)
-अणु
-	अगर (id->class != (__u8)SDIO_ANY_ID && id->class != func->class)
-		वापस शून्य;
-	अगर (id->venकरोr != (__u16)SDIO_ANY_ID && id->venकरोr != func->venकरोr)
-		वापस शून्य;
-	अगर (id->device != (__u16)SDIO_ANY_ID && id->device != func->device)
-		वापस शून्य;
-	वापस id;
-पूर्ण
+static const struct sdio_device_id *sdio_match_one(struct sdio_func *func,
+	const struct sdio_device_id *id)
+{
+	if (id->class != (__u8)SDIO_ANY_ID && id->class != func->class)
+		return NULL;
+	if (id->vendor != (__u16)SDIO_ANY_ID && id->vendor != func->vendor)
+		return NULL;
+	if (id->device != (__u16)SDIO_ANY_ID && id->device != func->device)
+		return NULL;
+	return id;
+}
 
-अटल स्थिर काष्ठा sdio_device_id *sdio_match_device(काष्ठा sdio_func *func,
-	काष्ठा sdio_driver *sdrv)
-अणु
-	स्थिर काष्ठा sdio_device_id *ids;
+static const struct sdio_device_id *sdio_match_device(struct sdio_func *func,
+	struct sdio_driver *sdrv)
+{
+	const struct sdio_device_id *ids;
 
 	ids = sdrv->id_table;
 
-	अगर (ids) अणु
-		जबतक (ids->class || ids->venकरोr || ids->device) अणु
-			अगर (sdio_match_one(func, ids))
-				वापस ids;
+	if (ids) {
+		while (ids->class || ids->vendor || ids->device) {
+			if (sdio_match_one(func, ids))
+				return ids;
 			ids++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक sdio_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	काष्ठा sdio_driver *sdrv = to_sdio_driver(drv);
+static int sdio_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	struct sdio_driver *sdrv = to_sdio_driver(drv);
 
-	अगर (sdio_match_device(func, sdrv))
-		वापस 1;
+	if (sdio_match_device(func, sdrv))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sdio_bus_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	अचिन्हित पूर्णांक i;
+static int
+sdio_bus_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	unsigned int i;
 
-	अगर (add_uevent_var(env,
+	if (add_uevent_var(env,
 			"SDIO_CLASS=%02X", func->class))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, 
-			"SDIO_ID=%04X:%04X", func->venकरोr, func->device))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, 
+			"SDIO_ID=%04X:%04X", func->vendor, func->device))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env,
+	if (add_uevent_var(env,
 			"SDIO_REVISION=%u.%u", func->major_rev, func->minor_rev))
-		वापस -ENOMEM;
+		return -ENOMEM;
 
-	क्रम (i = 0; i < func->num_info; i++) अणु
-		अगर (add_uevent_var(env, "SDIO_INFO%u=%s", i+1, func->info[i]))
-			वापस -ENOMEM;
-	पूर्ण
+	for (i = 0; i < func->num_info; i++) {
+		if (add_uevent_var(env, "SDIO_INFO%u=%s", i+1, func->info[i]))
+			return -ENOMEM;
+	}
 
-	अगर (add_uevent_var(env,
+	if (add_uevent_var(env,
 			"MODALIAS=sdio:c%02Xv%04Xd%04X",
-			func->class, func->venकरोr, func->device))
-		वापस -ENOMEM;
+			func->class, func->vendor, func->device))
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdio_bus_probe(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_driver *drv = to_sdio_driver(dev->driver);
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
-	स्थिर काष्ठा sdio_device_id *id;
-	पूर्णांक ret;
+static int sdio_bus_probe(struct device *dev)
+{
+	struct sdio_driver *drv = to_sdio_driver(dev->driver);
+	struct sdio_func *func = dev_to_sdio_func(dev);
+	const struct sdio_device_id *id;
+	int ret;
 
 	id = sdio_match_device(func, drv);
-	अगर (!id)
-		वापस -ENODEV;
+	if (!id)
+		return -ENODEV;
 
-	ret = dev_pm_करोमुख्य_attach(dev, false);
-	अगर (ret)
-		वापस ret;
+	ret = dev_pm_domain_attach(dev, false);
+	if (ret)
+		return ret;
 
 	atomic_inc(&func->card->sdio_funcs_probed);
 
 	/* Unbound SDIO functions are always suspended.
 	 * During probe, the function is set active and the usage count
-	 * is incremented.  If the driver supports runसमय PM,
-	 * it should call pm_runसमय_put_noidle() in its probe routine and
-	 * pm_runसमय_get_noresume() in its हटाओ routine.
+	 * is incremented.  If the driver supports runtime PM,
+	 * it should call pm_runtime_put_noidle() in its probe routine and
+	 * pm_runtime_get_noresume() in its remove routine.
 	 */
-	अगर (func->card->host->caps & MMC_CAP_POWER_OFF_CARD) अणु
-		ret = pm_runसमय_get_sync(dev);
-		अगर (ret < 0)
-			जाओ disable_runसमयpm;
-	पूर्ण
+	if (func->card->host->caps & MMC_CAP_POWER_OFF_CARD) {
+		ret = pm_runtime_get_sync(dev);
+		if (ret < 0)
+			goto disable_runtimepm;
+	}
 
-	/* Set the शेष block size so the driver is sure it's something
+	/* Set the default block size so the driver is sure it's something
 	 * sensible. */
 	sdio_claim_host(func);
-	अगर (mmc_card_हटाओd(func->card))
+	if (mmc_card_removed(func->card))
 		ret = -ENOMEDIUM;
-	अन्यथा
+	else
 		ret = sdio_set_block_size(func, 0);
 	sdio_release_host(func);
-	अगर (ret)
-		जाओ disable_runसमयpm;
+	if (ret)
+		goto disable_runtimepm;
 
 	ret = drv->probe(func, id);
-	अगर (ret)
-		जाओ disable_runसमयpm;
+	if (ret)
+		goto disable_runtimepm;
 
-	वापस 0;
+	return 0;
 
-disable_runसमयpm:
+disable_runtimepm:
 	atomic_dec(&func->card->sdio_funcs_probed);
-	अगर (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
-		pm_runसमय_put_noidle(dev);
-	dev_pm_करोमुख्य_detach(dev, false);
-	वापस ret;
-पूर्ण
+	if (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
+		pm_runtime_put_noidle(dev);
+	dev_pm_domain_detach(dev, false);
+	return ret;
+}
 
-अटल पूर्णांक sdio_bus_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_driver *drv = to_sdio_driver(dev->driver);
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+static int sdio_bus_remove(struct device *dev)
+{
+	struct sdio_driver *drv = to_sdio_driver(dev->driver);
+	struct sdio_func *func = dev_to_sdio_func(dev);
 
-	/* Make sure card is घातered beक्रमe invoking ->हटाओ() */
-	अगर (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
-		pm_runसमय_get_sync(dev);
+	/* Make sure card is powered before invoking ->remove() */
+	if (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
+		pm_runtime_get_sync(dev);
 
-	drv->हटाओ(func);
+	drv->remove(func);
 	atomic_dec(&func->card->sdio_funcs_probed);
 
-	अगर (func->irq_handler) अणु
+	if (func->irq_handler) {
 		pr_warn("WARNING: driver %s did not remove its interrupt handler!\n",
 			drv->name);
 		sdio_claim_host(func);
 		sdio_release_irq(func);
 		sdio_release_host(func);
-	पूर्ण
+	}
 
-	/* First, unकरो the increment made directly above */
-	अगर (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
-		pm_runसमय_put_noidle(dev);
+	/* First, undo the increment made directly above */
+	if (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
+		pm_runtime_put_noidle(dev);
 
-	/* Then unकरो the runसमय PM settings in sdio_bus_probe() */
-	अगर (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
-		pm_runसमय_put_sync(dev);
+	/* Then undo the runtime PM settings in sdio_bus_probe() */
+	if (func->card->host->caps & MMC_CAP_POWER_OFF_CARD)
+		pm_runtime_put_sync(dev);
 
-	dev_pm_करोमुख्य_detach(dev, false);
+	dev_pm_domain_detach(dev, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sdio_bus_pm_ops = अणु
+static const struct dev_pm_ops sdio_bus_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(pm_generic_suspend, pm_generic_resume)
 	SET_RUNTIME_PM_OPS(
-		pm_generic_runसमय_suspend,
-		pm_generic_runसमय_resume,
-		शून्य
+		pm_generic_runtime_suspend,
+		pm_generic_runtime_resume,
+		NULL
 	)
-पूर्ण;
+};
 
-अटल काष्ठा bus_type sdio_bus_type = अणु
+static struct bus_type sdio_bus_type = {
 	.name		= "sdio",
 	.dev_groups	= sdio_dev_groups,
 	.match		= sdio_bus_match,
 	.uevent		= sdio_bus_uevent,
 	.probe		= sdio_bus_probe,
-	.हटाओ		= sdio_bus_हटाओ,
+	.remove		= sdio_bus_remove,
 	.pm		= &sdio_bus_pm_ops,
-पूर्ण;
+};
 
-पूर्णांक sdio_रेजिस्टर_bus(व्योम)
-अणु
-	वापस bus_रेजिस्टर(&sdio_bus_type);
-पूर्ण
+int sdio_register_bus(void)
+{
+	return bus_register(&sdio_bus_type);
+}
 
-व्योम sdio_unरेजिस्टर_bus(व्योम)
-अणु
-	bus_unरेजिस्टर(&sdio_bus_type);
-पूर्ण
+void sdio_unregister_bus(void)
+{
+	bus_unregister(&sdio_bus_type);
+}
 
 /**
- *	sdio_रेजिस्टर_driver - रेजिस्टर a function driver
+ *	sdio_register_driver - register a function driver
  *	@drv: SDIO function driver
  */
-पूर्णांक sdio_रेजिस्टर_driver(काष्ठा sdio_driver *drv)
-अणु
+int sdio_register_driver(struct sdio_driver *drv)
+{
 	drv->drv.name = drv->name;
 	drv->drv.bus = &sdio_bus_type;
-	वापस driver_रेजिस्टर(&drv->drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_रेजिस्टर_driver);
+	return driver_register(&drv->drv);
+}
+EXPORT_SYMBOL_GPL(sdio_register_driver);
 
 /**
- *	sdio_unरेजिस्टर_driver - unरेजिस्टर a function driver
+ *	sdio_unregister_driver - unregister a function driver
  *	@drv: SDIO function driver
  */
-व्योम sdio_unरेजिस्टर_driver(काष्ठा sdio_driver *drv)
-अणु
+void sdio_unregister_driver(struct sdio_driver *drv)
+{
 	drv->drv.bus = &sdio_bus_type;
-	driver_unरेजिस्टर(&drv->drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_unरेजिस्टर_driver);
+	driver_unregister(&drv->drv);
+}
+EXPORT_SYMBOL_GPL(sdio_unregister_driver);
 
-अटल व्योम sdio_release_func(काष्ठा device *dev)
-अणु
-	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+static void sdio_release_func(struct device *dev)
+{
+	struct sdio_func *func = dev_to_sdio_func(dev);
 
-	sdio_मुक्त_func_cis(func);
+	sdio_free_func_cis(func);
 
-	kमुक्त(func->info);
-	kमुक्त(func->पंचांगpbuf);
-	kमुक्त(func);
-पूर्ण
+	kfree(func->info);
+	kfree(func->tmpbuf);
+	kfree(func);
+}
 
 /*
- * Allocate and initialise a new SDIO function काष्ठाure.
+ * Allocate and initialise a new SDIO function structure.
  */
-काष्ठा sdio_func *sdio_alloc_func(काष्ठा mmc_card *card)
-अणु
-	काष्ठा sdio_func *func;
+struct sdio_func *sdio_alloc_func(struct mmc_card *card)
+{
+	struct sdio_func *func;
 
-	func = kzalloc(माप(काष्ठा sdio_func), GFP_KERNEL);
-	अगर (!func)
-		वापस ERR_PTR(-ENOMEM);
+	func = kzalloc(sizeof(struct sdio_func), GFP_KERNEL);
+	if (!func)
+		return ERR_PTR(-ENOMEM);
 
 	/*
-	 * allocate buffer separately to make sure it's properly aligned क्रम
+	 * allocate buffer separately to make sure it's properly aligned for
 	 * DMA usage (incl. 64 bit DMA)
 	 */
-	func->पंचांगpbuf = kदो_स्मृति(4, GFP_KERNEL);
-	अगर (!func->पंचांगpbuf) अणु
-		kमुक्त(func);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	func->tmpbuf = kmalloc(4, GFP_KERNEL);
+	if (!func->tmpbuf) {
+		kfree(func);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	func->card = card;
 
@@ -329,34 +328,34 @@ EXPORT_SYMBOL_GPL(sdio_unरेजिस्टर_driver);
 	func->dev.bus = &sdio_bus_type;
 	func->dev.release = sdio_release_func;
 
-	वापस func;
-पूर्ण
+	return func;
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल व्योम sdio_acpi_set_handle(काष्ठा sdio_func *func)
-अणु
-	काष्ठा mmc_host *host = func->card->host;
+#ifdef CONFIG_ACPI
+static void sdio_acpi_set_handle(struct sdio_func *func)
+{
+	struct mmc_host *host = func->card->host;
 	u64 addr = ((u64)host->slotno << 16) | func->num;
 
 	acpi_preset_companion(&func->dev, ACPI_COMPANION(host->parent), addr);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम sdio_acpi_set_handle(काष्ठा sdio_func *func) अणुपूर्ण
-#पूर्ण_अगर
+}
+#else
+static inline void sdio_acpi_set_handle(struct sdio_func *func) {}
+#endif
 
-अटल व्योम sdio_set_of_node(काष्ठा sdio_func *func)
-अणु
-	काष्ठा mmc_host *host = func->card->host;
+static void sdio_set_of_node(struct sdio_func *func)
+{
+	struct mmc_host *host = func->card->host;
 
 	func->dev.of_node = mmc_of_find_child_device(host, func->num);
-पूर्ण
+}
 
 /*
  * Register a new SDIO function with the driver model.
  */
-पूर्णांक sdio_add_func(काष्ठा sdio_func *func)
-अणु
-	पूर्णांक ret;
+int sdio_add_func(struct sdio_func *func)
+{
+	int ret;
 
 	dev_set_name(&func->dev, "%s:%d", mmc_card_id(func->card), func->num);
 
@@ -364,25 +363,25 @@ EXPORT_SYMBOL_GPL(sdio_unरेजिस्टर_driver);
 	sdio_acpi_set_handle(func);
 	device_enable_async_suspend(&func->dev);
 	ret = device_add(&func->dev);
-	अगर (ret == 0)
+	if (ret == 0)
 		sdio_func_set_present(func);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Unरेजिस्टर a SDIO function with the driver model, and
- * (eventually) मुक्त it.
+ * Unregister a SDIO function with the driver model, and
+ * (eventually) free it.
  * This function can be called through error paths where sdio_add_func() was
- * never executed (because a failure occurred at an earlier poपूर्णांक).
+ * never executed (because a failure occurred at an earlier point).
  */
-व्योम sdio_हटाओ_func(काष्ठा sdio_func *func)
-अणु
-	अगर (!sdio_func_present(func))
-		वापस;
+void sdio_remove_func(struct sdio_func *func)
+{
+	if (!sdio_func_present(func))
+		return;
 
 	device_del(&func->dev);
 	of_node_put(func->dev.of_node);
 	put_device(&func->dev);
-पूर्ण
+}
 

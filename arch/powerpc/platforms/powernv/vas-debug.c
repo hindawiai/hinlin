@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2016-17 IBM Corp.
  */
 
-#घोषणा pr_fmt(fmt) "vas: " fmt
+#define pr_fmt(fmt) "vas: " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
-#समावेश "vas.h"
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
+#include "vas.h"
 
-अटल काष्ठा dentry *vas_debugfs;
+static struct dentry *vas_debugfs;
 
-अटल अक्षर *cop_to_str(पूर्णांक cop)
-अणु
-	चयन (cop) अणु
-	हाल VAS_COP_TYPE_FAULT:	वापस "Fault";
-	हाल VAS_COP_TYPE_842:		वापस "NX-842 Normal Priority";
-	हाल VAS_COP_TYPE_842_HIPRI:	वापस "NX-842 High Priority";
-	हाल VAS_COP_TYPE_GZIP:		वापस "NX-GZIP Normal Priority";
-	हाल VAS_COP_TYPE_GZIP_HIPRI:	वापस "NX-GZIP High Priority";
-	हाल VAS_COP_TYPE_FTW:		वापस "Fast Thread-wakeup";
-	शेष:			वापस "Unknown";
-	पूर्ण
-पूर्ण
+static char *cop_to_str(int cop)
+{
+	switch (cop) {
+	case VAS_COP_TYPE_FAULT:	return "Fault";
+	case VAS_COP_TYPE_842:		return "NX-842 Normal Priority";
+	case VAS_COP_TYPE_842_HIPRI:	return "NX-842 High Priority";
+	case VAS_COP_TYPE_GZIP:		return "NX-GZIP Normal Priority";
+	case VAS_COP_TYPE_GZIP_HIPRI:	return "NX-GZIP High Priority";
+	case VAS_COP_TYPE_FTW:		return "Fast Thread-wakeup";
+	default:			return "Unknown";
+	}
+}
 
-अटल पूर्णांक info_show(काष्ठा seq_file *s, व्योम *निजी)
-अणु
-	काष्ठा vas_winकरोw *winकरोw = s->निजी;
+static int info_show(struct seq_file *s, void *private)
+{
+	struct vas_window *window = s->private;
 
 	mutex_lock(&vas_mutex);
 
-	/* ensure winकरोw is not unmapped */
-	अगर (!winकरोw->hvwc_map)
-		जाओ unlock;
+	/* ensure window is not unmapped */
+	if (!window->hvwc_map)
+		goto unlock;
 
-	seq_म_लिखो(s, "Type: %s, %s\n", cop_to_str(winकरोw->cop),
-					winकरोw->tx_win ? "Send" : "Receive");
-	seq_म_लिखो(s, "Pid : %d\n", vas_winकरोw_pid(winकरोw));
+	seq_printf(s, "Type: %s, %s\n", cop_to_str(window->cop),
+					window->tx_win ? "Send" : "Receive");
+	seq_printf(s, "Pid : %d\n", vas_window_pid(window));
 
 unlock:
 	mutex_unlock(&vas_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(info);
 
-अटल अंतरभूत व्योम prपूर्णांक_reg(काष्ठा seq_file *s, काष्ठा vas_winकरोw *win,
-			अक्षर *name, u32 reg)
-अणु
-	seq_म_लिखो(s, "0x%016llx %s\n", पढ़ो_hvwc_reg(win, name, reg), name);
-पूर्ण
+static inline void print_reg(struct seq_file *s, struct vas_window *win,
+			char *name, u32 reg)
+{
+	seq_printf(s, "0x%016llx %s\n", read_hvwc_reg(win, name, reg), name);
+}
 
-अटल पूर्णांक hvwc_show(काष्ठा seq_file *s, व्योम *निजी)
-अणु
-	काष्ठा vas_winकरोw *winकरोw = s->निजी;
+static int hvwc_show(struct seq_file *s, void *private)
+{
+	struct vas_window *window = s->private;
 
 	mutex_lock(&vas_mutex);
 
-	/* ensure winकरोw is not unmapped */
-	अगर (!winकरोw->hvwc_map)
-		जाओ unlock;
+	/* ensure window is not unmapped */
+	if (!window->hvwc_map)
+		goto unlock;
 
-	prपूर्णांक_reg(s, winकरोw, VREG(LPID));
-	prपूर्णांक_reg(s, winकरोw, VREG(PID));
-	prपूर्णांक_reg(s, winकरोw, VREG(XLATE_MSR));
-	prपूर्णांक_reg(s, winकरोw, VREG(XLATE_LPCR));
-	prपूर्णांक_reg(s, winकरोw, VREG(XLATE_CTL));
-	prपूर्णांक_reg(s, winकरोw, VREG(AMR));
-	prपूर्णांक_reg(s, winकरोw, VREG(SEIDR));
-	prपूर्णांक_reg(s, winकरोw, VREG(FAULT_TX_WIN));
-	prपूर्णांक_reg(s, winकरोw, VREG(OSU_INTR_SRC_RA));
-	prपूर्णांक_reg(s, winकरोw, VREG(HV_INTR_SRC_RA));
-	prपूर्णांक_reg(s, winकरोw, VREG(PSWID));
-	prपूर्णांक_reg(s, winकरोw, VREG(LFIFO_BAR));
-	prपूर्णांक_reg(s, winकरोw, VREG(LDATA_STAMP_CTL));
-	prपूर्णांक_reg(s, winकरोw, VREG(LDMA_CACHE_CTL));
-	prपूर्णांक_reg(s, winकरोw, VREG(LRFIFO_PUSH));
-	prपूर्णांक_reg(s, winकरोw, VREG(CURR_MSG_COUNT));
-	prपूर्णांक_reg(s, winकरोw, VREG(LNOTIFY_AFTER_COUNT));
-	prपूर्णांक_reg(s, winकरोw, VREG(LRX_WCRED));
-	prपूर्णांक_reg(s, winकरोw, VREG(LRX_WCRED_ADDER));
-	prपूर्णांक_reg(s, winकरोw, VREG(TX_WCRED));
-	prपूर्णांक_reg(s, winकरोw, VREG(TX_WCRED_ADDER));
-	prपूर्णांक_reg(s, winकरोw, VREG(LFIFO_SIZE));
-	prपूर्णांक_reg(s, winकरोw, VREG(WINCTL));
-	prपूर्णांक_reg(s, winकरोw, VREG(WIN_STATUS));
-	prपूर्णांक_reg(s, winकरोw, VREG(WIN_CTX_CACHING_CTL));
-	prपूर्णांक_reg(s, winकरोw, VREG(TX_RSVD_BUF_COUNT));
-	prपूर्णांक_reg(s, winकरोw, VREG(LRFIFO_WIN_PTR));
-	prपूर्णांक_reg(s, winकरोw, VREG(LNOTIFY_CTL));
-	prपूर्णांक_reg(s, winकरोw, VREG(LNOTIFY_PID));
-	prपूर्णांक_reg(s, winकरोw, VREG(LNOTIFY_LPID));
-	prपूर्णांक_reg(s, winकरोw, VREG(LNOTIFY_TID));
-	prपूर्णांक_reg(s, winकरोw, VREG(LNOTIFY_SCOPE));
-	prपूर्णांक_reg(s, winकरोw, VREG(NX_UTIL_ADDER));
+	print_reg(s, window, VREG(LPID));
+	print_reg(s, window, VREG(PID));
+	print_reg(s, window, VREG(XLATE_MSR));
+	print_reg(s, window, VREG(XLATE_LPCR));
+	print_reg(s, window, VREG(XLATE_CTL));
+	print_reg(s, window, VREG(AMR));
+	print_reg(s, window, VREG(SEIDR));
+	print_reg(s, window, VREG(FAULT_TX_WIN));
+	print_reg(s, window, VREG(OSU_INTR_SRC_RA));
+	print_reg(s, window, VREG(HV_INTR_SRC_RA));
+	print_reg(s, window, VREG(PSWID));
+	print_reg(s, window, VREG(LFIFO_BAR));
+	print_reg(s, window, VREG(LDATA_STAMP_CTL));
+	print_reg(s, window, VREG(LDMA_CACHE_CTL));
+	print_reg(s, window, VREG(LRFIFO_PUSH));
+	print_reg(s, window, VREG(CURR_MSG_COUNT));
+	print_reg(s, window, VREG(LNOTIFY_AFTER_COUNT));
+	print_reg(s, window, VREG(LRX_WCRED));
+	print_reg(s, window, VREG(LRX_WCRED_ADDER));
+	print_reg(s, window, VREG(TX_WCRED));
+	print_reg(s, window, VREG(TX_WCRED_ADDER));
+	print_reg(s, window, VREG(LFIFO_SIZE));
+	print_reg(s, window, VREG(WINCTL));
+	print_reg(s, window, VREG(WIN_STATUS));
+	print_reg(s, window, VREG(WIN_CTX_CACHING_CTL));
+	print_reg(s, window, VREG(TX_RSVD_BUF_COUNT));
+	print_reg(s, window, VREG(LRFIFO_WIN_PTR));
+	print_reg(s, window, VREG(LNOTIFY_CTL));
+	print_reg(s, window, VREG(LNOTIFY_PID));
+	print_reg(s, window, VREG(LNOTIFY_LPID));
+	print_reg(s, window, VREG(LNOTIFY_TID));
+	print_reg(s, window, VREG(LNOTIFY_SCOPE));
+	print_reg(s, window, VREG(NX_UTIL_ADDER));
 unlock:
 	mutex_unlock(&vas_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SHOW_ATTRIBUTE(hvwc);
 
-व्योम vas_winकरोw_मुक्त_dbgdir(काष्ठा vas_winकरोw *winकरोw)
-अणु
-	अगर (winकरोw->dbgdir) अणु
-		debugfs_हटाओ_recursive(winकरोw->dbgdir);
-		kमुक्त(winकरोw->dbgname);
-		winकरोw->dbgdir = शून्य;
-		winकरोw->dbgname = शून्य;
-	पूर्ण
-पूर्ण
+void vas_window_free_dbgdir(struct vas_window *window)
+{
+	if (window->dbgdir) {
+		debugfs_remove_recursive(window->dbgdir);
+		kfree(window->dbgname);
+		window->dbgdir = NULL;
+		window->dbgname = NULL;
+	}
+}
 
-व्योम vas_winकरोw_init_dbgdir(काष्ठा vas_winकरोw *winकरोw)
-अणु
-	काष्ठा dentry *d;
+void vas_window_init_dbgdir(struct vas_window *window)
+{
+	struct dentry *d;
 
-	अगर (!winकरोw->vinst->dbgdir)
-		वापस;
+	if (!window->vinst->dbgdir)
+		return;
 
-	winकरोw->dbgname = kzalloc(16, GFP_KERNEL);
-	अगर (!winकरोw->dbgname)
-		वापस;
+	window->dbgname = kzalloc(16, GFP_KERNEL);
+	if (!window->dbgname)
+		return;
 
-	snम_लिखो(winकरोw->dbgname, 16, "w%d", winकरोw->winid);
+	snprintf(window->dbgname, 16, "w%d", window->winid);
 
-	d = debugfs_create_dir(winकरोw->dbgname, winकरोw->vinst->dbgdir);
-	winकरोw->dbgdir = d;
+	d = debugfs_create_dir(window->dbgname, window->vinst->dbgdir);
+	window->dbgdir = d;
 
-	debugfs_create_file("info", 0444, d, winकरोw, &info_fops);
-	debugfs_create_file("hvwc", 0444, d, winकरोw, &hvwc_fops);
-पूर्ण
+	debugfs_create_file("info", 0444, d, window, &info_fops);
+	debugfs_create_file("hvwc", 0444, d, window, &hvwc_fops);
+}
 
-व्योम vas_instance_init_dbgdir(काष्ठा vas_instance *vinst)
-अणु
-	काष्ठा dentry *d;
+void vas_instance_init_dbgdir(struct vas_instance *vinst)
+{
+	struct dentry *d;
 
 	vas_init_dbgdir();
 
 	vinst->dbgname = kzalloc(16, GFP_KERNEL);
-	अगर (!vinst->dbgname)
-		वापस;
+	if (!vinst->dbgname)
+		return;
 
-	snम_लिखो(vinst->dbgname, 16, "v%d", vinst->vas_id);
+	snprintf(vinst->dbgname, 16, "v%d", vinst->vas_id);
 
 	d = debugfs_create_dir(vinst->dbgname, vas_debugfs);
 	vinst->dbgdir = d;
-पूर्ण
+}
 
 /*
- * Set up the "root" VAS debugfs dir. Return अगर we alपढ़ोy set it up
+ * Set up the "root" VAS debugfs dir. Return if we already set it up
  * (or failed to) in an earlier instance of VAS.
  */
-व्योम vas_init_dbgdir(व्योम)
-अणु
-	अटल bool first_समय = true;
+void vas_init_dbgdir(void)
+{
+	static bool first_time = true;
 
-	अगर (!first_समय)
-		वापस;
+	if (!first_time)
+		return;
 
-	first_समय = false;
-	vas_debugfs = debugfs_create_dir("vas", शून्य);
-पूर्ण
+	first_time = false;
+	vas_debugfs = debugfs_create_dir("vas", NULL);
+}

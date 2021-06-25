@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
  * Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2017-2019 NXP
  *
  */
-#अगर_अघोषित __FSL_DPAA2_IO_H
-#घोषणा __FSL_DPAA2_IO_H
+#ifndef __FSL_DPAA2_IO_H
+#define __FSL_DPAA2_IO_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/irqवापस.h>
+#include <linux/types.h>
+#include <linux/cpumask.h>
+#include <linux/irqreturn.h>
 
-#समावेश "dpaa2-fd.h"
-#समावेश "dpaa2-global.h"
+#include "dpaa2-fd.h"
+#include "dpaa2-global.h"
 
-काष्ठा dpaa2_io;
-काष्ठा dpaa2_io_store;
-काष्ठा device;
+struct dpaa2_io;
+struct dpaa2_io_store;
+struct device;
 
 /**
  * DOC: DPIO Service
  *
- * The DPIO service provides APIs क्रम users to पूर्णांकeract with the datapath
+ * The DPIO service provides APIs for users to interact with the datapath
  * by enqueueing and dequeing frame descriptors.
  *
  * The following set of APIs can be used to enqueue and dequeue frames
- * as well as producing notअगरication callbacks when data is available
- * क्रम dequeue.
+ * as well as producing notification callbacks when data is available
+ * for dequeue.
  */
 
-#घोषणा DPAA2_IO_ANY_CPU	-1
+#define DPAA2_IO_ANY_CPU	-1
 
 /**
- * काष्ठा dpaa2_io_desc - The DPIO descriptor
- * @receives_notअगरications: Use notअगरicaton mode. Non-zero अगर the DPIO
+ * struct dpaa2_io_desc - The DPIO descriptor
+ * @receives_notifications: Use notificaton mode. Non-zero if the DPIO
  *                  has a channel.
- * @has_8prio:      Set to non-zero क्रम channel with 8 priority WQs.  Ignored
- *                  unless receives_notअगरication is TRUE.
- * @cpu:            The cpu index that at least पूर्णांकerrupt handlers will
+ * @has_8prio:      Set to non-zero for channel with 8 priority WQs.  Ignored
+ *                  unless receives_notification is TRUE.
+ * @cpu:            The cpu index that at least interrupt handlers will
  *                  execute on.
- * @stash_affinity: The stash affinity क्रम this portal favour 'cpu'
+ * @stash_affinity: The stash affinity for this portal favour 'cpu'
  * @regs_cena:      The cache enabled regs.
  * @regs_cinh:      The cache inhibited regs
  * @dpio_id:        The dpio index
@@ -48,86 +47,86 @@
  *
  * Describes the attributes and features of the DPIO object.
  */
-काष्ठा dpaa2_io_desc अणु
-	पूर्णांक receives_notअगरications;
-	पूर्णांक has_8prio;
-	पूर्णांक cpu;
-	व्योम *regs_cena;
-	व्योम __iomem *regs_cinh;
-	पूर्णांक dpio_id;
+struct dpaa2_io_desc {
+	int receives_notifications;
+	int has_8prio;
+	int cpu;
+	void *regs_cena;
+	void __iomem *regs_cinh;
+	int dpio_id;
 	u32 qman_version;
-पूर्ण;
+};
 
-काष्ठा dpaa2_io *dpaa2_io_create(स्थिर काष्ठा dpaa2_io_desc *desc,
-				 काष्ठा device *dev);
+struct dpaa2_io *dpaa2_io_create(const struct dpaa2_io_desc *desc,
+				 struct device *dev);
 
-व्योम dpaa2_io_करोwn(काष्ठा dpaa2_io *d);
+void dpaa2_io_down(struct dpaa2_io *d);
 
-irqवापस_t dpaa2_io_irq(काष्ठा dpaa2_io *obj);
+irqreturn_t dpaa2_io_irq(struct dpaa2_io *obj);
 
-काष्ठा dpaa2_io *dpaa2_io_service_select(पूर्णांक cpu);
+struct dpaa2_io *dpaa2_io_service_select(int cpu);
 
 /**
- * काष्ठा dpaa2_io_notअगरication_ctx - The DPIO notअगरication context काष्ठाure
- * @cb:           The callback to be invoked when the notअगरication arrives
- * @is_cdan:      Zero क्रम FQDAN, non-zero क्रम CDAN
- * @id:           FQID or channel ID, needed क्रम rearm
- * @desired_cpu:  The cpu on which the notअगरications will show up. Use
- *                DPAA2_IO_ANY_CPU अगर करोn't care
+ * struct dpaa2_io_notification_ctx - The DPIO notification context structure
+ * @cb:           The callback to be invoked when the notification arrives
+ * @is_cdan:      Zero for FQDAN, non-zero for CDAN
+ * @id:           FQID or channel ID, needed for rearm
+ * @desired_cpu:  The cpu on which the notifications will show up. Use
+ *                DPAA2_IO_ANY_CPU if don't care
  * @dpio_id:      The dpio index
  * @qman64:       The 64-bit context value shows up in the FQDAN/CDAN.
  * @node:         The list node
- * @dpio_निजी: The dpio object पूर्णांकernal to dpio_service
+ * @dpio_private: The dpio object internal to dpio_service
  *
  * Used when a FQDAN/CDAN registration is made by drivers.
  */
-काष्ठा dpaa2_io_notअगरication_ctx अणु
-	व्योम (*cb)(काष्ठा dpaa2_io_notअगरication_ctx *ctx);
-	पूर्णांक is_cdan;
+struct dpaa2_io_notification_ctx {
+	void (*cb)(struct dpaa2_io_notification_ctx *ctx);
+	int is_cdan;
 	u32 id;
-	पूर्णांक desired_cpu;
-	पूर्णांक dpio_id;
+	int desired_cpu;
+	int dpio_id;
 	u64 qman64;
-	काष्ठा list_head node;
-	व्योम *dpio_निजी;
-पूर्ण;
+	struct list_head node;
+	void *dpio_private;
+};
 
-पूर्णांक dpaa2_io_get_cpu(काष्ठा dpaa2_io *d);
+int dpaa2_io_get_cpu(struct dpaa2_io *d);
 
-पूर्णांक dpaa2_io_service_रेजिस्टर(काष्ठा dpaa2_io *service,
-			      काष्ठा dpaa2_io_notअगरication_ctx *ctx,
-			      काष्ठा device *dev);
-व्योम dpaa2_io_service_deरेजिस्टर(काष्ठा dpaa2_io *service,
-				 काष्ठा dpaa2_io_notअगरication_ctx *ctx,
-				 काष्ठा device *dev);
-पूर्णांक dpaa2_io_service_rearm(काष्ठा dpaa2_io *service,
-			   काष्ठा dpaa2_io_notअगरication_ctx *ctx);
+int dpaa2_io_service_register(struct dpaa2_io *service,
+			      struct dpaa2_io_notification_ctx *ctx,
+			      struct device *dev);
+void dpaa2_io_service_deregister(struct dpaa2_io *service,
+				 struct dpaa2_io_notification_ctx *ctx,
+				 struct device *dev);
+int dpaa2_io_service_rearm(struct dpaa2_io *service,
+			   struct dpaa2_io_notification_ctx *ctx);
 
-पूर्णांक dpaa2_io_service_pull_fq(काष्ठा dpaa2_io *d, u32 fqid,
-			     काष्ठा dpaa2_io_store *s);
-पूर्णांक dpaa2_io_service_pull_channel(काष्ठा dpaa2_io *d, u32 channelid,
-				  काष्ठा dpaa2_io_store *s);
+int dpaa2_io_service_pull_fq(struct dpaa2_io *d, u32 fqid,
+			     struct dpaa2_io_store *s);
+int dpaa2_io_service_pull_channel(struct dpaa2_io *d, u32 channelid,
+				  struct dpaa2_io_store *s);
 
-पूर्णांक dpaa2_io_service_enqueue_fq(काष्ठा dpaa2_io *d, u32 fqid,
-				स्थिर काष्ठा dpaa2_fd *fd);
-पूर्णांक dpaa2_io_service_enqueue_multiple_fq(काष्ठा dpaa2_io *d, u32 fqid,
-				स्थिर काष्ठा dpaa2_fd *fd, पूर्णांक number_of_frame);
-पूर्णांक dpaa2_io_service_enqueue_multiple_desc_fq(काष्ठा dpaa2_io *d, u32 *fqid,
-				स्थिर काष्ठा dpaa2_fd *fd, पूर्णांक number_of_frame);
-पूर्णांक dpaa2_io_service_enqueue_qd(काष्ठा dpaa2_io *d, u32 qdid, u8 prio,
-				u16 qdbin, स्थिर काष्ठा dpaa2_fd *fd);
-पूर्णांक dpaa2_io_service_release(काष्ठा dpaa2_io *d, u16 bpid,
-			     स्थिर u64 *buffers, अचिन्हित पूर्णांक num_buffers);
-पूर्णांक dpaa2_io_service_acquire(काष्ठा dpaa2_io *d, u16 bpid,
-			     u64 *buffers, अचिन्हित पूर्णांक num_buffers);
+int dpaa2_io_service_enqueue_fq(struct dpaa2_io *d, u32 fqid,
+				const struct dpaa2_fd *fd);
+int dpaa2_io_service_enqueue_multiple_fq(struct dpaa2_io *d, u32 fqid,
+				const struct dpaa2_fd *fd, int number_of_frame);
+int dpaa2_io_service_enqueue_multiple_desc_fq(struct dpaa2_io *d, u32 *fqid,
+				const struct dpaa2_fd *fd, int number_of_frame);
+int dpaa2_io_service_enqueue_qd(struct dpaa2_io *d, u32 qdid, u8 prio,
+				u16 qdbin, const struct dpaa2_fd *fd);
+int dpaa2_io_service_release(struct dpaa2_io *d, u16 bpid,
+			     const u64 *buffers, unsigned int num_buffers);
+int dpaa2_io_service_acquire(struct dpaa2_io *d, u16 bpid,
+			     u64 *buffers, unsigned int num_buffers);
 
-काष्ठा dpaa2_io_store *dpaa2_io_store_create(अचिन्हित पूर्णांक max_frames,
-					     काष्ठा device *dev);
-व्योम dpaa2_io_store_destroy(काष्ठा dpaa2_io_store *s);
-काष्ठा dpaa2_dq *dpaa2_io_store_next(काष्ठा dpaa2_io_store *s, पूर्णांक *is_last);
+struct dpaa2_io_store *dpaa2_io_store_create(unsigned int max_frames,
+					     struct device *dev);
+void dpaa2_io_store_destroy(struct dpaa2_io_store *s);
+struct dpaa2_dq *dpaa2_io_store_next(struct dpaa2_io_store *s, int *is_last);
 
-पूर्णांक dpaa2_io_query_fq_count(काष्ठा dpaa2_io *d, u32 fqid,
+int dpaa2_io_query_fq_count(struct dpaa2_io *d, u32 fqid,
 			    u32 *fcnt, u32 *bcnt);
-पूर्णांक dpaa2_io_query_bp_count(काष्ठा dpaa2_io *d, u16 bpid,
+int dpaa2_io_query_bp_count(struct dpaa2_io *d, u16 bpid,
 			    u32 *num);
-#पूर्ण_अगर /* __FSL_DPAA2_IO_H */
+#endif /* __FSL_DPAA2_IO_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: nsload - namespace loading/expanding/contracting procedures
@@ -8,112 +7,112 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acnamesp.h"
-#समावेश "acdispat.h"
-#समावेश "actables.h"
-#समावेश "acinterp.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acnamesp.h"
+#include "acdispat.h"
+#include "actables.h"
+#include "acinterp.h"
 
-#घोषणा _COMPONENT          ACPI_NAMESPACE
+#define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsload")
 
 /* Local prototypes */
-#अगर_घोषित ACPI_FUTURE_IMPLEMENTATION
+#ifdef ACPI_FUTURE_IMPLEMENTATION
 acpi_status acpi_ns_unload_namespace(acpi_handle handle);
 
-अटल acpi_status acpi_ns_delete_subtree(acpi_handle start_handle);
-#पूर्ण_अगर
+static acpi_status acpi_ns_delete_subtree(acpi_handle start_handle);
+#endif
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_load_table
  *
- * PARAMETERS:  table_index     - Index क्रम table to be loaded
+ * PARAMETERS:  table_index     - Index for table to be loaded
  *              node            - Owning NS node
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Load one ACPI table पूर्णांकo the namespace
+ * DESCRIPTION: Load one ACPI table into the namespace
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ns_load_table(u32 table_index, काष्ठा acpi_namespace_node *node)
-अणु
+acpi_ns_load_table(u32 table_index, struct acpi_namespace_node *node)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ns_load_table);
 
-	/* If table alपढ़ोy loaded पूर्णांकo namespace, just वापस */
+	/* If table already loaded into namespace, just return */
 
-	अगर (acpi_tb_is_table_loaded(table_index)) अणु
+	if (acpi_tb_is_table_loaded(table_index)) {
 		status = AE_ALREADY_EXISTS;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 			  "**** Loading table into namespace ****\n"));
 
 	status = acpi_tb_allocate_owner_id(table_index);
-	अगर (ACPI_FAILURE(status)) अणु
-		जाओ unlock;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		goto unlock;
+	}
 
 	/*
 	 * Parse the table and load the namespace with all named
 	 * objects found within. Control methods are NOT parsed
-	 * at this समय. In fact, the control methods cannot be
+	 * at this time. In fact, the control methods cannot be
 	 * parsed until the entire namespace is loaded, because
-	 * अगर a control method makes a क्रमward reference (call)
-	 * to another control method, we can't जारी parsing
-	 * because we करोn't know how many arguments to parse next!
+	 * if a control method makes a forward reference (call)
+	 * to another control method, we can't continue parsing
+	 * because we don't know how many arguments to parse next!
 	 */
 	status = acpi_ns_parse_table(table_index, node);
-	अगर (ACPI_SUCCESS(status)) अणु
+	if (ACPI_SUCCESS(status)) {
 		acpi_tb_set_table_loaded_flag(table_index, TRUE);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * On error, delete any namespace objects created by this table.
 		 * We cannot initialize these objects, so delete them. There are
-		 * a couple of especially bad हालs:
+		 * a couple of especially bad cases:
 		 * AE_ALREADY_EXISTS - namespace collision.
-		 * AE_NOT_FOUND - the target of a Scope चालक करोes not
-		 * exist. This target of Scope must alपढ़ोy exist in the
-		 * namespace, as per the ACPI specअगरication.
+		 * AE_NOT_FOUND - the target of a Scope operator does not
+		 * exist. This target of Scope must already exist in the
+		 * namespace, as per the ACPI specification.
 		 */
 		acpi_ns_delete_namespace_by_owner(acpi_gbl_root_table_list.
 						  tables[table_index].owner_id);
 
 		acpi_tb_release_owner_id(table_index);
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+		return_ACPI_STATUS(status);
+	}
 
 unlock:
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/*
 	 * Now we can parse the control methods. We always parse
-	 * them here क्रम a sanity check, and अगर configured क्रम
-	 * just-in-समय parsing, we delete the control method
+	 * them here for a sanity check, and if configured for
+	 * just-in-time parsing, we delete the control method
 	 * parse trees.
 	 */
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 			  "**** Begin Table Object Initialization\n"));
 
-	acpi_ex_enter_पूर्णांकerpreter();
+	acpi_ex_enter_interpreter();
 	status = acpi_ds_initialize_objects(table_index, node);
-	acpi_ex_निकास_पूर्णांकerpreter();
+	acpi_ex_exit_interpreter();
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 			  "**** Completed Table Object Initialization\n"));
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}
 
-#अगर_घोषित ACPI_OBSOLETE_FUNCTIONS
+#ifdef ACPI_OBSOLETE_FUNCTIONS
 /*******************************************************************************
  *
  * FUNCTION:    acpi_load_namespace
@@ -122,47 +121,47 @@ unlock:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Load the name space from what ever is poपूर्णांकed to by DSDT.
- *              (DSDT poपूर्णांकs to either the BIOS or a buffer.)
+ * DESCRIPTION: Load the name space from what ever is pointed to by DSDT.
+ *              (DSDT points to either the BIOS or a buffer.)
  *
  ******************************************************************************/
 
-acpi_status acpi_ns_load_namespace(व्योम)
-अणु
+acpi_status acpi_ns_load_namespace(void)
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(acpi_load_name_space);
 
 	/* There must be at least a DSDT installed */
 
-	अगर (acpi_gbl_DSDT == शून्य) अणु
+	if (acpi_gbl_DSDT == NULL) {
 		ACPI_ERROR((AE_INFO, "DSDT is not in memory"));
-		वापस_ACPI_STATUS(AE_NO_ACPI_TABLES);
-	पूर्ण
+		return_ACPI_STATUS(AE_NO_ACPI_TABLES);
+	}
 
 	/*
 	 * Load the namespace. The DSDT is required,
 	 * but the SSDT and PSDT tables are optional.
 	 */
 	status = acpi_ns_load_table_by_type(ACPI_TABLE_ID_DSDT);
-	अगर (ACPI_FAILURE(status)) अणु
-		वापस_ACPI_STATUS(status);
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		return_ACPI_STATUS(status);
+	}
 
 	/* Ignore exceptions from these */
 
-	(व्योम)acpi_ns_load_table_by_type(ACPI_TABLE_ID_SSDT);
-	(व्योम)acpi_ns_load_table_by_type(ACPI_TABLE_ID_PSDT);
+	(void)acpi_ns_load_table_by_type(ACPI_TABLE_ID_SSDT);
+	(void)acpi_ns_load_table_by_type(ACPI_TABLE_ID_PSDT);
 
 	ACPI_DEBUG_PRINT_RAW((ACPI_DB_INIT,
 			      "ACPI Namespace successfully loaded at root %p\n",
 			      acpi_gbl_root_node));
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
-#पूर्ण_अगर
+	return_ACPI_STATUS(status);
+}
+#endif
 
-#अगर_घोषित ACPI_FUTURE_IMPLEMENTATION
+#ifdef ACPI_FUTURE_IMPLEMENTATION
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_delete_subtree
@@ -174,13 +173,13 @@ acpi_status acpi_ns_load_namespace(व्योम)
  * DESCRIPTION: Walks the namespace starting at the given handle and deletes
  *              all objects, entries, and scopes in the entire subtree.
  *
- *              Namespace/Interpreter should be locked or the subप्रणाली should
- *              be in shutकरोwn beक्रमe this routine is called.
+ *              Namespace/Interpreter should be locked or the subsystem should
+ *              be in shutdown before this routine is called.
  *
  ******************************************************************************/
 
-अटल acpi_status acpi_ns_delete_subtree(acpi_handle start_handle)
-अणु
+static acpi_status acpi_ns_delete_subtree(acpi_handle start_handle)
+{
 	acpi_status status;
 	acpi_handle child_handle;
 	acpi_handle parent_handle;
@@ -191,14 +190,14 @@ acpi_status acpi_ns_load_namespace(व्योम)
 	ACPI_FUNCTION_TRACE(ns_delete_subtree);
 
 	parent_handle = start_handle;
-	child_handle = शून्य;
+	child_handle = NULL;
 	level = 1;
 
 	/*
 	 * Traverse the tree of objects until we bubble back up
 	 * to where we started.
 	 */
-	जबतक (level > 0) अणु
+	while (level > 0) {
 
 		/* Attempt to get the next object in this scope */
 
@@ -209,22 +208,22 @@ acpi_status acpi_ns_load_namespace(व्योम)
 
 		/* Did we get a new object? */
 
-		अगर (ACPI_SUCCESS(status)) अणु
+		if (ACPI_SUCCESS(status)) {
 
-			/* Check अगर this object has any children */
+			/* Check if this object has any children */
 
-			अगर (ACPI_SUCCESS
+			if (ACPI_SUCCESS
 			    (acpi_get_next_object
-			     (ACPI_TYPE_ANY, child_handle, शून्य, &dummy))) अणु
+			     (ACPI_TYPE_ANY, child_handle, NULL, &dummy))) {
 				/*
 				 * There is at least one child of this object,
 				 * visit the object
 				 */
 				level++;
 				parent_handle = child_handle;
-				child_handle = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				child_handle = NULL;
+			}
+		} else {
 			/*
 			 * No more children in this object, go back up to
 			 * the object's parent
@@ -237,17 +236,17 @@ acpi_status acpi_ns_load_namespace(व्योम)
 
 			child_handle = parent_handle;
 			status = acpi_get_parent(parent_handle, &parent_handle);
-			अगर (ACPI_FAILURE(status)) अणु
-				वापस_ACPI_STATUS(status);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (ACPI_FAILURE(status)) {
+				return_ACPI_STATUS(status);
+			}
+		}
+	}
 
-	/* Now delete the starting object, and we are करोne */
+	/* Now delete the starting object, and we are done */
 
-	acpi_ns_हटाओ_node(child_handle);
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	acpi_ns_remove_node(child_handle);
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -257,31 +256,31 @@ acpi_status acpi_ns_load_namespace(व्योम)
  *
  *  RETURN:         Status
  *
- *  DESCRIPTION:    Shrinks the namespace, typically in response to an unकरोcking
+ *  DESCRIPTION:    Shrinks the namespace, typically in response to an undocking
  *                  event. Deletes an entire subtree starting from (and
  *                  including) the given handle.
  *
  ******************************************************************************/
 
 acpi_status acpi_ns_unload_namespace(acpi_handle handle)
-अणु
+{
 	acpi_status status;
 
 	ACPI_FUNCTION_TRACE(ns_unload_name_space);
 
 	/* Parameter validation */
 
-	अगर (!acpi_gbl_root_node) अणु
-		वापस_ACPI_STATUS(AE_NO_NAMESPACE);
-	पूर्ण
+	if (!acpi_gbl_root_node) {
+		return_ACPI_STATUS(AE_NO_NAMESPACE);
+	}
 
-	अगर (!handle) अणु
-		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-	पूर्ण
+	if (!handle) {
+		return_ACPI_STATUS(AE_BAD_PARAMETER);
+	}
 
-	/* This function करोes the real work */
+	/* This function does the real work */
 
 	status = acpi_ns_delete_subtree(handle);
-	वापस_ACPI_STATUS(status);
-पूर्ण
-#पूर्ण_अगर
+	return_ACPI_STATUS(status);
+}
+#endif

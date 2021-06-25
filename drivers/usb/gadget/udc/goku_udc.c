@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Toshiba TC86C001 ("Goku-S") USB Device Controller driver
  *
@@ -10,47 +9,47 @@
  */
 
 /*
- * This device has ep0 and three semi-configurable bulk/पूर्णांकerrupt endpoपूर्णांकs.
+ * This device has ep0 and three semi-configurable bulk/interrupt endpoints.
  *
- *  - Endpoपूर्णांक numbering is fixed: epअणु1,2,3पूर्ण-bulk
+ *  - Endpoint numbering is fixed: ep{1,2,3}-bulk
  *  - Gadget drivers can choose ep maxpacket (8/16/32/64)
  *  - Gadget drivers can choose direction (IN, OUT)
  *  - DMA works with ep1 (OUT transfers) and ep2 (IN transfers).
  */
 
-// #घोषणा	VERBOSE		/* extra debug messages (success too) */
-// #घोषणा	USB_TRACE	/* packet-level success messages */
+// #define	VERBOSE		/* extra debug messages (success too) */
+// #define	USB_TRACE	/* packet-level success messages */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/device.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/prefetch.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/timer.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/device.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/prefetch.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/unaligned.h>
+#include <asm/byteorder.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <asm/unaligned.h>
 
 
-#समावेश "goku_udc.h"
+#include "goku_udc.h"
 
-#घोषणा	DRIVER_DESC		"TC86C001 USB Device Controller"
-#घोषणा	DRIVER_VERSION		"30-Oct 2003"
+#define	DRIVER_DESC		"TC86C001 USB Device Controller"
+#define	DRIVER_VERSION		"30-Oct 2003"
 
-अटल स्थिर अक्षर driver_name [] = "goku_udc";
-अटल स्थिर अक्षर driver_desc [] = DRIVER_DESC;
+static const char driver_name [] = "goku_udc";
+static const char driver_desc [] = DRIVER_DESC;
 
 MODULE_AUTHOR("source@mvista.com");
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -58,124 +57,124 @@ MODULE_LICENSE("GPL");
 
 
 /*
- * IN dma behaves ok under testing, though the IN-dma पात paths करोn't
- * seem to behave quite as expected.  Used by शेष.
+ * IN dma behaves ok under testing, though the IN-dma abort paths don't
+ * seem to behave quite as expected.  Used by default.
  *
- * OUT dma करोcuments design problems handling the common "short packet"
- * transfer termination policy; it couldn't be enabled by शेष, even
- * अगर the OUT-dma पात problems had a resolution.
+ * OUT dma documents design problems handling the common "short packet"
+ * transfer termination policy; it couldn't be enabled by default, even
+ * if the OUT-dma abort problems had a resolution.
  */
-अटल अचिन्हित use_dma = 1;
+static unsigned use_dma = 1;
 
-#अगर 0
-//#समावेश <linux/moduleparam.h>
+#if 0
+//#include <linux/moduleparam.h>
 /* "modprobe goku_udc use_dma=1" etc
  *	0 to disable dma
  *	1 to use IN dma only (normal operation)
  *	2 to use IN and OUT dma
  */
-module_param(use_dma, uपूर्णांक, S_IRUGO);
-#पूर्ण_अगर
+module_param(use_dma, uint, S_IRUGO);
+#endif
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम nuke(काष्ठा goku_ep *, पूर्णांक status);
+static void nuke(struct goku_ep *, int status);
 
-अटल अंतरभूत व्योम
-command(काष्ठा goku_udc_regs __iomem *regs, पूर्णांक command, अचिन्हित epnum)
-अणु
-	ग_लिखोl(COMMAND_EP(epnum) | command, &regs->Command);
+static inline void
+command(struct goku_udc_regs __iomem *regs, int command, unsigned epnum)
+{
+	writel(COMMAND_EP(epnum) | command, &regs->Command);
 	udelay(300);
-पूर्ण
+}
 
-अटल पूर्णांक
-goku_ep_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा goku_udc	*dev;
-	काष्ठा goku_ep	*ep;
+static int
+goku_ep_enable(struct usb_ep *_ep, const struct usb_endpoint_descriptor *desc)
+{
+	struct goku_udc	*dev;
+	struct goku_ep	*ep;
 	u32		mode;
 	u16		max;
-	अचिन्हित दीर्घ	flags;
+	unsigned long	flags;
 
-	ep = container_of(_ep, काष्ठा goku_ep, ep);
-	अगर (!_ep || !desc
+	ep = container_of(_ep, struct goku_ep, ep);
+	if (!_ep || !desc
 			|| desc->bDescriptorType != USB_DT_ENDPOINT)
-		वापस -EINVAL;
+		return -EINVAL;
 	dev = ep->dev;
-	अगर (ep == &dev->ep[0])
-		वापस -EINVAL;
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
-	अगर (ep->num != usb_endpoपूर्णांक_num(desc))
-		वापस -EINVAL;
+	if (ep == &dev->ep[0])
+		return -EINVAL;
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
+	if (ep->num != usb_endpoint_num(desc))
+		return -EINVAL;
 
-	चयन (usb_endpoपूर्णांक_type(desc)) अणु
-	हाल USB_ENDPOINT_XFER_BULK:
-	हाल USB_ENDPOINT_XFER_INT:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (usb_endpoint_type(desc)) {
+	case USB_ENDPOINT_XFER_BULK:
+	case USB_ENDPOINT_XFER_INT:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर ((पढ़ोl(ep->reg_status) & EPxSTATUS_EP_MASK)
+	if ((readl(ep->reg_status) & EPxSTATUS_EP_MASK)
 			!= EPxSTATUS_EP_INVALID)
-		वापस -EBUSY;
+		return -EBUSY;
 
-	/* enabling the no-toggle पूर्णांकerrupt mode would need an api hook */
+	/* enabling the no-toggle interrupt mode would need an api hook */
 	mode = 0;
 	max = get_unaligned_le16(&desc->wMaxPacketSize);
-	चयन (max) अणु
-	हाल 64:
+	switch (max) {
+	case 64:
 		mode++;
 		fallthrough;
-	हाल 32:
+	case 32:
 		mode++;
 		fallthrough;
-	हाल 16:
+	case 16:
 		mode++;
 		fallthrough;
-	हाल 8:
+	case 8:
 		mode <<= 3;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	mode |= 2 << 1;		/* bulk, or पूर्णांकr-with-toggle */
+		break;
+	default:
+		return -EINVAL;
+	}
+	mode |= 2 << 1;		/* bulk, or intr-with-toggle */
 
 	/* ep1/ep2 dma direction is chosen early; it works in the other
 	 * direction, with pio.  be cautious with out-dma.
 	 */
-	ep->is_in = usb_endpoपूर्णांक_dir_in(desc);
-	अगर (ep->is_in) अणु
+	ep->is_in = usb_endpoint_dir_in(desc);
+	if (ep->is_in) {
 		mode |= 1;
 		ep->dma = (use_dma != 0) && (ep->num == UDC_MSTRD_ENDPOINT);
-	पूर्ण अन्यथा अणु
+	} else {
 		ep->dma = (use_dma == 2) && (ep->num == UDC_MSTWR_ENDPOINT);
-		अगर (ep->dma)
+		if (ep->dma)
 			DBG(dev, "%s out-dma hides short packets\n",
 				ep->ep.name);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&ep->dev->lock, flags);
 
-	/* ep1 and ep2 can करो द्विगुन buffering and/or dma */
-	अगर (ep->num < 3) अणु
-		काष्ठा goku_udc_regs __iomem	*regs = ep->dev->regs;
-		u32				पंचांगp;
+	/* ep1 and ep2 can do double buffering and/or dma */
+	if (ep->num < 3) {
+		struct goku_udc_regs __iomem	*regs = ep->dev->regs;
+		u32				tmp;
 
-		/* द्विगुन buffer except (क्रम now) with pio in */
-		पंचांगp = ((ep->dma || !ep->is_in)
-				? 0x10	/* द्विगुन buffered */
+		/* double buffer except (for now) with pio in */
+		tmp = ((ep->dma || !ep->is_in)
+				? 0x10	/* double buffered */
 				: 0x11	/* single buffer */
 			) << ep->num;
-		पंचांगp |= पढ़ोl(&regs->EPxSingle);
-		ग_लिखोl(पंचांगp, &regs->EPxSingle);
+		tmp |= readl(&regs->EPxSingle);
+		writel(tmp, &regs->EPxSingle);
 
-		पंचांगp = (ep->dma ? 0x10/*dma*/ : 0x11/*pio*/) << ep->num;
-		पंचांगp |= पढ़ोl(&regs->EPxBCS);
-		ग_लिखोl(पंचांगp, &regs->EPxBCS);
-	पूर्ण
-	ग_लिखोl(mode, ep->reg_mode);
+		tmp = (ep->dma ? 0x10/*dma*/ : 0x11/*pio*/) << ep->num;
+		tmp |= readl(&regs->EPxBCS);
+		writel(tmp, &regs->EPxBCS);
+	}
+	writel(mode, ep->reg_mode);
 	command(ep->dev->regs, COMMAND_RESET, ep->num);
 	ep->ep.maxpacket = max;
 	ep->stopped = 0;
@@ -187,73 +186,73 @@ goku_ep_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठ�
 		ep->dma ? "dma" : "pio",
 		max);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ep_reset(काष्ठा goku_udc_regs __iomem *regs, काष्ठा goku_ep *ep)
-अणु
-	काष्ठा goku_udc		*dev = ep->dev;
+static void ep_reset(struct goku_udc_regs __iomem *regs, struct goku_ep *ep)
+{
+	struct goku_udc		*dev = ep->dev;
 
-	अगर (regs) अणु
+	if (regs) {
 		command(regs, COMMAND_INVALID, ep->num);
-		अगर (ep->num) अणु
-			अगर (ep->num == UDC_MSTWR_ENDPOINT)
-				dev->पूर्णांक_enable &= ~(INT_MSTWREND
+		if (ep->num) {
+			if (ep->num == UDC_MSTWR_ENDPOINT)
+				dev->int_enable &= ~(INT_MSTWREND
 							|INT_MSTWRTMOUT);
-			अन्यथा अगर (ep->num == UDC_MSTRD_ENDPOINT)
-				dev->पूर्णांक_enable &= ~INT_MSTRDEND;
-			dev->पूर्णांक_enable &= ~INT_EPxDATASET (ep->num);
-		पूर्ण अन्यथा
-			dev->पूर्णांक_enable &= ~INT_EP0;
-		ग_लिखोl(dev->पूर्णांक_enable, &regs->पूर्णांक_enable);
-		पढ़ोl(&regs->पूर्णांक_enable);
-		अगर (ep->num < 3) अणु
-			काष्ठा goku_udc_regs __iomem	*r = ep->dev->regs;
-			u32				पंचांगp;
+			else if (ep->num == UDC_MSTRD_ENDPOINT)
+				dev->int_enable &= ~INT_MSTRDEND;
+			dev->int_enable &= ~INT_EPxDATASET (ep->num);
+		} else
+			dev->int_enable &= ~INT_EP0;
+		writel(dev->int_enable, &regs->int_enable);
+		readl(&regs->int_enable);
+		if (ep->num < 3) {
+			struct goku_udc_regs __iomem	*r = ep->dev->regs;
+			u32				tmp;
 
-			पंचांगp = पढ़ोl(&r->EPxSingle);
-			पंचांगp &= ~(0x11 << ep->num);
-			ग_लिखोl(पंचांगp, &r->EPxSingle);
+			tmp = readl(&r->EPxSingle);
+			tmp &= ~(0x11 << ep->num);
+			writel(tmp, &r->EPxSingle);
 
-			पंचांगp = पढ़ोl(&r->EPxBCS);
-			पंचांगp &= ~(0x11 << ep->num);
-			ग_लिखोl(पंचांगp, &r->EPxBCS);
-		पूर्ण
-		/* reset dma in हाल we're still using it */
-		अगर (ep->dma) अणु
+			tmp = readl(&r->EPxBCS);
+			tmp &= ~(0x11 << ep->num);
+			writel(tmp, &r->EPxBCS);
+		}
+		/* reset dma in case we're still using it */
+		if (ep->dma) {
 			u32	master;
 
-			master = पढ़ोl(&regs->dma_master) & MST_RW_BITS;
-			अगर (ep->num == UDC_MSTWR_ENDPOINT) अणु
+			master = readl(&regs->dma_master) & MST_RW_BITS;
+			if (ep->num == UDC_MSTWR_ENDPOINT) {
 				master &= ~MST_W_BITS;
 				master |= MST_WR_RESET;
-			पूर्ण अन्यथा अणु
+			} else {
 				master &= ~MST_R_BITS;
 				master |= MST_RD_RESET;
-			पूर्ण
-			ग_लिखोl(master, &regs->dma_master);
-		पूर्ण
-	पूर्ण
+			}
+			writel(master, &regs->dma_master);
+		}
+	}
 
 	usb_ep_set_maxpacket_limit(&ep->ep, MAX_FIFO_SIZE);
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 	ep->stopped = 1;
 	ep->irqs = 0;
 	ep->dma = 0;
-पूर्ण
+}
 
-अटल पूर्णांक goku_ep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा goku_ep	*ep;
-	काष्ठा goku_udc	*dev;
-	अचिन्हित दीर्घ	flags;
+static int goku_ep_disable(struct usb_ep *_ep)
+{
+	struct goku_ep	*ep;
+	struct goku_udc	*dev;
+	unsigned long	flags;
 
-	ep = container_of(_ep, काष्ठा goku_ep, ep);
-	अगर (!_ep || !ep->ep.desc)
-		वापस -ENODEV;
+	ep = container_of(_ep, struct goku_ep, ep);
+	if (!_ep || !ep->ep.desc)
+		return -ENODEV;
 	dev = ep->dev;
-	अगर (dev->ep0state == EP0_SUSPEND)
-		वापस -EBUSY;
+	if (dev->ep0state == EP0_SUSPEND)
+		return -EBUSY;
 
 	VDBG(dev, "disable %s\n", _ep->name);
 
@@ -262,432 +261,432 @@ goku_ep_enable(काष्ठा usb_ep *_ep, स्थिर काष्ठ�
 	ep_reset(dev->regs, ep);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल काष्ठा usb_request *
-goku_alloc_request(काष्ठा usb_ep *_ep, gfp_t gfp_flags)
-अणु
-	काष्ठा goku_request	*req;
+static struct usb_request *
+goku_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
+{
+	struct goku_request	*req;
 
-	अगर (!_ep)
-		वापस शून्य;
-	req = kzalloc(माप *req, gfp_flags);
-	अगर (!req)
-		वापस शून्य;
+	if (!_ep)
+		return NULL;
+	req = kzalloc(sizeof *req, gfp_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->queue);
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
-अटल व्योम
-goku_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा goku_request	*req;
+static void
+goku_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct goku_request	*req;
 
-	अगर (!_ep || !_req)
-		वापस;
+	if (!_ep || !_req)
+		return;
 
-	req = container_of(_req, काष्ठा goku_request, req);
+	req = container_of(_req, struct goku_request, req);
 	WARN_ON(!list_empty(&req->queue));
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम
-करोne(काष्ठा goku_ep *ep, काष्ठा goku_request *req, पूर्णांक status)
-अणु
-	काष्ठा goku_udc		*dev;
-	अचिन्हित		stopped = ep->stopped;
+static void
+done(struct goku_ep *ep, struct goku_request *req, int status)
+{
+	struct goku_udc		*dev;
+	unsigned		stopped = ep->stopped;
 
 	list_del_init(&req->queue);
 
-	अगर (likely(req->req.status == -EINPROGRESS))
+	if (likely(req->req.status == -EINPROGRESS))
 		req->req.status = status;
-	अन्यथा
+	else
 		status = req->req.status;
 
 	dev = ep->dev;
 
-	अगर (ep->dma)
+	if (ep->dma)
 		usb_gadget_unmap_request(&dev->gadget, &req->req, ep->is_in);
 
-#अगर_अघोषित USB_TRACE
-	अगर (status && status != -ESHUTDOWN)
-#पूर्ण_अगर
+#ifndef USB_TRACE
+	if (status && status != -ESHUTDOWN)
+#endif
 		VDBG(dev, "complete %s req %p stat %d len %u/%u\n",
 			ep->ep.name, &req->req, status,
 			req->req.actual, req->req.length);
 
-	/* करोn't modअगरy queue heads during completion callback */
+	/* don't modify queue heads during completion callback */
 	ep->stopped = 1;
 	spin_unlock(&dev->lock);
 	usb_gadget_giveback_request(&ep->ep, &req->req);
 	spin_lock(&dev->lock);
 	ep->stopped = stopped;
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल अंतरभूत पूर्णांक
-ग_लिखो_packet(u32 __iomem *fअगरo, u8 *buf, काष्ठा goku_request *req, अचिन्हित max)
-अणु
-	अचिन्हित	length, count;
+static inline int
+write_packet(u32 __iomem *fifo, u8 *buf, struct goku_request *req, unsigned max)
+{
+	unsigned	length, count;
 
 	length = min(req->req.length - req->req.actual, max);
 	req->req.actual += length;
 
 	count = length;
-	जबतक (likely(count--))
-		ग_लिखोl(*buf++, fअगरo);
-	वापस length;
-पूर्ण
+	while (likely(count--))
+		writel(*buf++, fifo);
+	return length;
+}
 
-// वापस:  0 = still running, 1 = completed, negative = त्रुटि_सं
-अटल पूर्णांक ग_लिखो_fअगरo(काष्ठा goku_ep *ep, काष्ठा goku_request *req)
-अणु
-	काष्ठा goku_udc	*dev = ep->dev;
-	u32		पंचांगp;
+// return:  0 = still running, 1 = completed, negative = errno
+static int write_fifo(struct goku_ep *ep, struct goku_request *req)
+{
+	struct goku_udc	*dev = ep->dev;
+	u32		tmp;
 	u8		*buf;
-	अचिन्हित	count;
-	पूर्णांक		is_last;
+	unsigned	count;
+	int		is_last;
 
-	पंचांगp = पढ़ोl(&dev->regs->DataSet);
+	tmp = readl(&dev->regs->DataSet);
 	buf = req->req.buf + req->req.actual;
 	prefetch(buf);
 
 	dev = ep->dev;
-	अगर (unlikely(ep->num == 0 && dev->ep0state != EP0_IN))
-		वापस -EL2HLT;
+	if (unlikely(ep->num == 0 && dev->ep0state != EP0_IN))
+		return -EL2HLT;
 
-	/* NOTE:  just single-buffered PIO-IN क्रम now.  */
-	अगर (unlikely((पंचांगp & DATASET_A(ep->num)) != 0))
-		वापस 0;
+	/* NOTE:  just single-buffered PIO-IN for now.  */
+	if (unlikely((tmp & DATASET_A(ep->num)) != 0))
+		return 0;
 
 	/* clear our "packet available" irq */
-	अगर (ep->num != 0)
-		ग_लिखोl(~INT_EPxDATASET(ep->num), &dev->regs->पूर्णांक_status);
+	if (ep->num != 0)
+		writel(~INT_EPxDATASET(ep->num), &dev->regs->int_status);
 
-	count = ग_लिखो_packet(ep->reg_fअगरo, buf, req, ep->ep.maxpacket);
+	count = write_packet(ep->reg_fifo, buf, req, ep->ep.maxpacket);
 
-	/* last packet often लघु (someबार a zlp, especially on ep0) */
-	अगर (unlikely(count != ep->ep.maxpacket)) अणु
-		ग_लिखोl(~(1<<ep->num), &dev->regs->EOP);
-		अगर (ep->num == 0) अणु
+	/* last packet often short (sometimes a zlp, especially on ep0) */
+	if (unlikely(count != ep->ep.maxpacket)) {
+		writel(~(1<<ep->num), &dev->regs->EOP);
+		if (ep->num == 0) {
 			dev->ep[0].stopped = 1;
 			dev->ep0state = EP0_STATUS;
-		पूर्ण
+		}
 		is_last = 1;
-	पूर्ण अन्यथा अणु
-		अगर (likely(req->req.length != req->req.actual)
+	} else {
+		if (likely(req->req.length != req->req.actual)
 				|| req->req.zero)
 			is_last = 0;
-		अन्यथा
+		else
 			is_last = 1;
-	पूर्ण
-#अगर 0		/* prपूर्णांकk seemed to trash is_last...*/
-//#अगर_घोषित USB_TRACE
+	}
+#if 0		/* printk seemed to trash is_last...*/
+//#ifdef USB_TRACE
 	VDBG(dev, "wrote %s %u bytes%s IN %u left %p\n",
 		ep->ep.name, count, is_last ? "/last" : "",
 		req->req.length - req->req.actual, req);
-#पूर्ण_अगर
+#endif
 
 	/* requests complete when all IN data is in the FIFO,
-	 * or someबार later, अगर a zlp was needed.
+	 * or sometimes later, if a zlp was needed.
 	 */
-	अगर (is_last) अणु
-		करोne(ep, req, 0);
-		वापस 1;
-	पूर्ण
+	if (is_last) {
+		done(ep, req, 0);
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_fअगरo(काष्ठा goku_ep *ep, काष्ठा goku_request *req)
-अणु
-	काष्ठा goku_udc_regs __iomem	*regs;
+static int read_fifo(struct goku_ep *ep, struct goku_request *req)
+{
+	struct goku_udc_regs __iomem	*regs;
 	u32				size, set;
 	u8				*buf;
-	अचिन्हित			bufferspace, is_लघु, dbuff;
+	unsigned			bufferspace, is_short, dbuff;
 
 	regs = ep->dev->regs;
 top:
 	buf = req->req.buf + req->req.actual;
 	prefetchw(buf);
 
-	अगर (unlikely(ep->num == 0 && ep->dev->ep0state != EP0_OUT))
-		वापस -EL2HLT;
+	if (unlikely(ep->num == 0 && ep->dev->ep0state != EP0_OUT))
+		return -EL2HLT;
 
 	dbuff = (ep->num == 1 || ep->num == 2);
-	करो अणु
+	do {
 		/* ack dataset irq matching the status we'll handle */
-		अगर (ep->num != 0)
-			ग_लिखोl(~INT_EPxDATASET(ep->num), &regs->पूर्णांक_status);
+		if (ep->num != 0)
+			writel(~INT_EPxDATASET(ep->num), &regs->int_status);
 
-		set = पढ़ोl(&regs->DataSet) & DATASET_AB(ep->num);
-		size = पढ़ोl(&regs->EPxSizeLA[ep->num]);
+		set = readl(&regs->DataSet) & DATASET_AB(ep->num);
+		size = readl(&regs->EPxSizeLA[ep->num]);
 		bufferspace = req->req.length - req->req.actual;
 
-		/* usually करो nothing without an OUT packet */
-		अगर (likely(ep->num != 0 || bufferspace != 0)) अणु
-			अगर (unlikely(set == 0))
-				अवरोध;
-			/* use ep1/ep2 द्विगुन-buffering क्रम OUT */
-			अगर (!(size & PACKET_ACTIVE))
-				size = पढ़ोl(&regs->EPxSizeLB[ep->num]);
-			अगर (!(size & PACKET_ACTIVE))	/* "can't happen" */
-				अवरोध;
+		/* usually do nothing without an OUT packet */
+		if (likely(ep->num != 0 || bufferspace != 0)) {
+			if (unlikely(set == 0))
+				break;
+			/* use ep1/ep2 double-buffering for OUT */
+			if (!(size & PACKET_ACTIVE))
+				size = readl(&regs->EPxSizeLB[ep->num]);
+			if (!(size & PACKET_ACTIVE))	/* "can't happen" */
+				break;
 			size &= DATASIZE;	/* EPxSizeH == 0 */
 
-		/* ep0out no-out-data हाल क्रम set_config, etc */
-		पूर्ण अन्यथा
+		/* ep0out no-out-data case for set_config, etc */
+		} else
 			size = 0;
 
-		/* पढ़ो all bytes from this packet */
+		/* read all bytes from this packet */
 		req->req.actual += size;
-		is_लघु = (size < ep->ep.maxpacket);
-#अगर_घोषित USB_TRACE
+		is_short = (size < ep->ep.maxpacket);
+#ifdef USB_TRACE
 		VDBG(ep->dev, "read %s %u bytes%s OUT req %p %u/%u\n",
-			ep->ep.name, size, is_लघु ? "/S" : "",
+			ep->ep.name, size, is_short ? "/S" : "",
 			req, req->req.actual, req->req.length);
-#पूर्ण_अगर
-		जबतक (likely(size-- != 0)) अणु
-			u8	byte = (u8) पढ़ोl(ep->reg_fअगरo);
+#endif
+		while (likely(size-- != 0)) {
+			u8	byte = (u8) readl(ep->reg_fifo);
 
-			अगर (unlikely(bufferspace == 0)) अणु
+			if (unlikely(bufferspace == 0)) {
 				/* this happens when the driver's buffer
 				 * is smaller than what the host sent.
 				 * discard the extra data in this packet.
 				 */
-				अगर (req->req.status != -EOVERFLOW)
+				if (req->req.status != -EOVERFLOW)
 					DBG(ep->dev, "%s overflow %u\n",
 						ep->ep.name, size);
 				req->req.status = -EOVERFLOW;
-			पूर्ण अन्यथा अणु
+			} else {
 				*buf++ = byte;
 				bufferspace--;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* completion */
-		अगर (unlikely(is_लघु || req->req.actual == req->req.length)) अणु
-			अगर (unlikely(ep->num == 0)) अणु
-				/* non-control endpoपूर्णांकs now usable? */
-				अगर (ep->dev->req_config)
-					ग_लिखोl(ep->dev->configured
+		if (unlikely(is_short || req->req.actual == req->req.length)) {
+			if (unlikely(ep->num == 0)) {
+				/* non-control endpoints now usable? */
+				if (ep->dev->req_config)
+					writel(ep->dev->configured
 							? USBSTATE_CONFIGURED
 							: 0,
 						&regs->UsbState);
 				/* ep0out status stage */
-				ग_लिखोl(~(1<<0), &regs->EOP);
+				writel(~(1<<0), &regs->EOP);
 				ep->stopped = 1;
 				ep->dev->ep0state = EP0_STATUS;
-			पूर्ण
-			करोne(ep, req, 0);
+			}
+			done(ep, req, 0);
 
 			/* empty the second buffer asap */
-			अगर (dbuff && !list_empty(&ep->queue)) अणु
+			if (dbuff && !list_empty(&ep->queue)) {
 				req = list_entry(ep->queue.next,
-						काष्ठा goku_request, queue);
-				जाओ top;
-			पूर्ण
-			वापस 1;
-		पूर्ण
-	पूर्ण जबतक (dbuff);
-	वापस 0;
-पूर्ण
+						struct goku_request, queue);
+				goto top;
+			}
+			return 1;
+		}
+	} while (dbuff);
+	return 0;
+}
 
-अटल अंतरभूत व्योम
-pio_irq_enable(काष्ठा goku_udc *dev,
-		काष्ठा goku_udc_regs __iomem *regs, पूर्णांक epnum)
-अणु
-	dev->पूर्णांक_enable |= INT_EPxDATASET (epnum);
-	ग_लिखोl(dev->पूर्णांक_enable, &regs->पूर्णांक_enable);
-	/* ग_लिखो may still be posted */
-पूर्ण
+static inline void
+pio_irq_enable(struct goku_udc *dev,
+		struct goku_udc_regs __iomem *regs, int epnum)
+{
+	dev->int_enable |= INT_EPxDATASET (epnum);
+	writel(dev->int_enable, &regs->int_enable);
+	/* write may still be posted */
+}
 
-अटल अंतरभूत व्योम
-pio_irq_disable(काष्ठा goku_udc *dev,
-		काष्ठा goku_udc_regs __iomem *regs, पूर्णांक epnum)
-अणु
-	dev->पूर्णांक_enable &= ~INT_EPxDATASET (epnum);
-	ग_लिखोl(dev->पूर्णांक_enable, &regs->पूर्णांक_enable);
-	/* ग_लिखो may still be posted */
-पूर्ण
+static inline void
+pio_irq_disable(struct goku_udc *dev,
+		struct goku_udc_regs __iomem *regs, int epnum)
+{
+	dev->int_enable &= ~INT_EPxDATASET (epnum);
+	writel(dev->int_enable, &regs->int_enable);
+	/* write may still be posted */
+}
 
-अटल अंतरभूत व्योम
-pio_advance(काष्ठा goku_ep *ep)
-अणु
-	काष्ठा goku_request	*req;
+static inline void
+pio_advance(struct goku_ep *ep)
+{
+	struct goku_request	*req;
 
-	अगर (unlikely(list_empty (&ep->queue)))
-		वापस;
-	req = list_entry(ep->queue.next, काष्ठा goku_request, queue);
-	(ep->is_in ? ग_लिखो_fअगरo : पढ़ो_fअगरo)(ep, req);
-पूर्ण
+	if (unlikely(list_empty (&ep->queue)))
+		return;
+	req = list_entry(ep->queue.next, struct goku_request, queue);
+	(ep->is_in ? write_fifo : read_fifo)(ep, req);
+}
 
 
 /*-------------------------------------------------------------------------*/
 
-// वापस:  0 = q running, 1 = q stopped, negative = त्रुटि_सं
-अटल पूर्णांक start_dma(काष्ठा goku_ep *ep, काष्ठा goku_request *req)
-अणु
-	काष्ठा goku_udc_regs __iomem	*regs = ep->dev->regs;
+// return:  0 = q running, 1 = q stopped, negative = errno
+static int start_dma(struct goku_ep *ep, struct goku_request *req)
+{
+	struct goku_udc_regs __iomem	*regs = ep->dev->regs;
 	u32				master;
 	u32				start = req->req.dma;
 	u32				end = start + req->req.length - 1;
 
-	master = पढ़ोl(&regs->dma_master) & MST_RW_BITS;
+	master = readl(&regs->dma_master) & MST_RW_BITS;
 
 	/* re-init the bits affecting IN dma; careful with zlps */
-	अगर (likely(ep->is_in)) अणु
-		अगर (unlikely(master & MST_RD_ENA)) अणु
+	if (likely(ep->is_in)) {
+		if (unlikely(master & MST_RD_ENA)) {
 			DBG (ep->dev, "start, IN active dma %03x!!\n",
 				master);
-//			वापस -EL2HLT;
-		पूर्ण
-		ग_लिखोl(end, &regs->in_dma_end);
-		ग_लिखोl(start, &regs->in_dma_start);
+//			return -EL2HLT;
+		}
+		writel(end, &regs->in_dma_end);
+		writel(start, &regs->in_dma_start);
 
 		master &= ~MST_R_BITS;
-		अगर (unlikely(req->req.length == 0))
+		if (unlikely(req->req.length == 0))
 			master = MST_RD_ENA | MST_RD_EOPB;
-		अन्यथा अगर ((req->req.length % ep->ep.maxpacket) != 0
+		else if ((req->req.length % ep->ep.maxpacket) != 0
 					|| req->req.zero)
 			master = MST_RD_ENA | MST_EOPB_ENA;
-		अन्यथा
+		else
 			master = MST_RD_ENA | MST_EOPB_DIS;
 
-		ep->dev->पूर्णांक_enable |= INT_MSTRDEND;
+		ep->dev->int_enable |= INT_MSTRDEND;
 
-	/* Goku DMA-OUT merges लघु packets, which plays poorly with
-	 * protocols where लघु packets mark the transfer boundaries.
+	/* Goku DMA-OUT merges short packets, which plays poorly with
+	 * protocols where short packets mark the transfer boundaries.
 	 * The chip supports a nonstandard policy with INT_MSTWRTMOUT,
-	 * ending transfers after 3 SOFs; we करोn't turn it on.
+	 * ending transfers after 3 SOFs; we don't turn it on.
 	 */
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(master & MST_WR_ENA)) अणु
+	} else {
+		if (unlikely(master & MST_WR_ENA)) {
 			DBG (ep->dev, "start, OUT active dma %03x!!\n",
 				master);
-//			वापस -EL2HLT;
-		पूर्ण
-		ग_लिखोl(end, &regs->out_dma_end);
-		ग_लिखोl(start, &regs->out_dma_start);
+//			return -EL2HLT;
+		}
+		writel(end, &regs->out_dma_end);
+		writel(start, &regs->out_dma_start);
 
 		master &= ~MST_W_BITS;
 		master |= MST_WR_ENA | MST_TIMEOUT_DIS;
 
-		ep->dev->पूर्णांक_enable |= INT_MSTWREND|INT_MSTWRTMOUT;
-	पूर्ण
+		ep->dev->int_enable |= INT_MSTWREND|INT_MSTWRTMOUT;
+	}
 
-	ग_लिखोl(master, &regs->dma_master);
-	ग_लिखोl(ep->dev->पूर्णांक_enable, &regs->पूर्णांक_enable);
-	वापस 0;
-पूर्ण
+	writel(master, &regs->dma_master);
+	writel(ep->dev->int_enable, &regs->int_enable);
+	return 0;
+}
 
-अटल व्योम dma_advance(काष्ठा goku_udc *dev, काष्ठा goku_ep *ep)
-अणु
-	काष्ठा goku_request		*req;
-	काष्ठा goku_udc_regs __iomem	*regs = ep->dev->regs;
+static void dma_advance(struct goku_udc *dev, struct goku_ep *ep)
+{
+	struct goku_request		*req;
+	struct goku_udc_regs __iomem	*regs = ep->dev->regs;
 	u32				master;
 
-	master = पढ़ोl(&regs->dma_master);
+	master = readl(&regs->dma_master);
 
-	अगर (unlikely(list_empty(&ep->queue))) अणु
+	if (unlikely(list_empty(&ep->queue))) {
 stop:
-		अगर (ep->is_in)
-			dev->पूर्णांक_enable &= ~INT_MSTRDEND;
-		अन्यथा
-			dev->पूर्णांक_enable &= ~(INT_MSTWREND|INT_MSTWRTMOUT);
-		ग_लिखोl(dev->पूर्णांक_enable, &regs->पूर्णांक_enable);
-		वापस;
-	पूर्ण
-	req = list_entry(ep->queue.next, काष्ठा goku_request, queue);
+		if (ep->is_in)
+			dev->int_enable &= ~INT_MSTRDEND;
+		else
+			dev->int_enable &= ~(INT_MSTWREND|INT_MSTWRTMOUT);
+		writel(dev->int_enable, &regs->int_enable);
+		return;
+	}
+	req = list_entry(ep->queue.next, struct goku_request, queue);
 
-	/* normal hw dma completion (not पात) */
-	अगर (likely(ep->is_in)) अणु
-		अगर (unlikely(master & MST_RD_ENA))
-			वापस;
-		req->req.actual = पढ़ोl(&regs->in_dma_current);
-	पूर्ण अन्यथा अणु
-		अगर (unlikely(master & MST_WR_ENA))
-			वापस;
+	/* normal hw dma completion (not abort) */
+	if (likely(ep->is_in)) {
+		if (unlikely(master & MST_RD_ENA))
+			return;
+		req->req.actual = readl(&regs->in_dma_current);
+	} else {
+		if (unlikely(master & MST_WR_ENA))
+			return;
 
-		/* hardware merges लघु packets, and also hides packet
-		 * overruns.  a partial packet MAY be in the fअगरo here.
+		/* hardware merges short packets, and also hides packet
+		 * overruns.  a partial packet MAY be in the fifo here.
 		 */
-		req->req.actual = पढ़ोl(&regs->out_dma_current);
-	पूर्ण
+		req->req.actual = readl(&regs->out_dma_current);
+	}
 	req->req.actual -= req->req.dma;
 	req->req.actual++;
 
-#अगर_घोषित USB_TRACE
+#ifdef USB_TRACE
 	VDBG(dev, "done %s %s dma, %u/%u bytes, req %p\n",
 		ep->ep.name, ep->is_in ? "IN" : "OUT",
 		req->req.actual, req->req.length, req);
-#पूर्ण_अगर
-	करोne(ep, req, 0);
-	अगर (list_empty(&ep->queue))
-		जाओ stop;
-	req = list_entry(ep->queue.next, काष्ठा goku_request, queue);
-	(व्योम) start_dma(ep, req);
-पूर्ण
+#endif
+	done(ep, req, 0);
+	if (list_empty(&ep->queue))
+		goto stop;
+	req = list_entry(ep->queue.next, struct goku_request, queue);
+	(void) start_dma(ep, req);
+}
 
-अटल व्योम पात_dma(काष्ठा goku_ep *ep, पूर्णांक status)
-अणु
-	काष्ठा goku_udc_regs __iomem	*regs = ep->dev->regs;
-	काष्ठा goku_request		*req;
+static void abort_dma(struct goku_ep *ep, int status)
+{
+	struct goku_udc_regs __iomem	*regs = ep->dev->regs;
+	struct goku_request		*req;
 	u32				curr, master;
 
 	/* NAK future host requests, hoping the implicit delay lets the
-	 * dma engine finish पढ़ोing (or writing) its latest packet and
+	 * dma engine finish reading (or writing) its latest packet and
 	 * empty the dma buffer (up to 16 bytes).
 	 *
-	 * This aव्योमs needing to clean up a partial packet in the fअगरo;
-	 * we can't करो that क्रम IN without side effects to HALT and TOGGLE.
+	 * This avoids needing to clean up a partial packet in the fifo;
+	 * we can't do that for IN without side effects to HALT and TOGGLE.
 	 */
 	command(regs, COMMAND_FIFO_DISABLE, ep->num);
-	req = list_entry(ep->queue.next, काष्ठा goku_request, queue);
-	master = पढ़ोl(&regs->dma_master) & MST_RW_BITS;
+	req = list_entry(ep->queue.next, struct goku_request, queue);
+	master = readl(&regs->dma_master) & MST_RW_BITS;
 
-	/* FIXME using these resets isn't usably करोcumented. this may
-	 * not work unless it's followed by disabling the endpoपूर्णांक.
+	/* FIXME using these resets isn't usably documented. this may
+	 * not work unless it's followed by disabling the endpoint.
 	 *
-	 * FIXME the OUT reset path करोesn't even behave consistently.
+	 * FIXME the OUT reset path doesn't even behave consistently.
 	 */
-	अगर (ep->is_in) अणु
-		अगर (unlikely((पढ़ोl(&regs->dma_master) & MST_RD_ENA) == 0))
-			जाओ finished;
-		curr = पढ़ोl(&regs->in_dma_current);
+	if (ep->is_in) {
+		if (unlikely((readl(&regs->dma_master) & MST_RD_ENA) == 0))
+			goto finished;
+		curr = readl(&regs->in_dma_current);
 
-		ग_लिखोl(curr, &regs->in_dma_end);
-		ग_लिखोl(curr, &regs->in_dma_start);
+		writel(curr, &regs->in_dma_end);
+		writel(curr, &regs->in_dma_start);
 
 		master &= ~MST_R_BITS;
 		master |= MST_RD_RESET;
-		ग_लिखोl(master, &regs->dma_master);
+		writel(master, &regs->dma_master);
 
-		अगर (पढ़ोl(&regs->dma_master) & MST_RD_ENA)
+		if (readl(&regs->dma_master) & MST_RD_ENA)
 			DBG(ep->dev, "IN dma active after reset!\n");
 
-	पूर्ण अन्यथा अणु
-		अगर (unlikely((पढ़ोl(&regs->dma_master) & MST_WR_ENA) == 0))
-			जाओ finished;
-		curr = पढ़ोl(&regs->out_dma_current);
+	} else {
+		if (unlikely((readl(&regs->dma_master) & MST_WR_ENA) == 0))
+			goto finished;
+		curr = readl(&regs->out_dma_current);
 
-		ग_लिखोl(curr, &regs->out_dma_end);
-		ग_लिखोl(curr, &regs->out_dma_start);
+		writel(curr, &regs->out_dma_end);
+		writel(curr, &regs->out_dma_start);
 
 		master &= ~MST_W_BITS;
 		master |= MST_WR_RESET;
-		ग_लिखोl(master, &regs->dma_master);
+		writel(master, &regs->dma_master);
 
-		अगर (पढ़ोl(&regs->dma_master) & MST_WR_ENA)
+		if (readl(&regs->dma_master) & MST_WR_ENA)
 			DBG(ep->dev, "OUT dma active after reset!\n");
-	पूर्ण
+	}
 	req->req.actual = (curr - req->req.dma) + 1;
 	req->req.status = status;
 
@@ -697,134 +696,134 @@ stop:
 
 	command(regs, COMMAND_FIFO_ENABLE, ep->num);
 
-	वापस;
+	return;
 
 finished:
-	/* dma alपढ़ोy completed; no पात needed */
+	/* dma already completed; no abort needed */
 	command(regs, COMMAND_FIFO_ENABLE, ep->num);
 	req->req.actual = req->req.length;
 	req->req.status = 0;
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक
-goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req, gfp_t gfp_flags)
-अणु
-	काष्ठा goku_request	*req;
-	काष्ठा goku_ep		*ep;
-	काष्ठा goku_udc		*dev;
-	अचिन्हित दीर्घ		flags;
-	पूर्णांक			status;
+static int
+goku_queue(struct usb_ep *_ep, struct usb_request *_req, gfp_t gfp_flags)
+{
+	struct goku_request	*req;
+	struct goku_ep		*ep;
+	struct goku_udc		*dev;
+	unsigned long		flags;
+	int			status;
 
 	/* always require a cpu-view buffer so pio works */
-	req = container_of(_req, काष्ठा goku_request, req);
-	अगर (unlikely(!_req || !_req->complete
+	req = container_of(_req, struct goku_request, req);
+	if (unlikely(!_req || !_req->complete
 			|| !_req->buf || !list_empty(&req->queue)))
-		वापस -EINVAL;
-	ep = container_of(_ep, काष्ठा goku_ep, ep);
-	अगर (unlikely(!_ep || (!ep->ep.desc && ep->num != 0)))
-		वापस -EINVAL;
+		return -EINVAL;
+	ep = container_of(_ep, struct goku_ep, ep);
+	if (unlikely(!_ep || (!ep->ep.desc && ep->num != 0)))
+		return -EINVAL;
 	dev = ep->dev;
-	अगर (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN))
-		वापस -ESHUTDOWN;
+	if (unlikely(!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN))
+		return -ESHUTDOWN;
 
-	/* can't touch रेजिस्टरs when suspended */
-	अगर (dev->ep0state == EP0_SUSPEND)
-		वापस -EBUSY;
+	/* can't touch registers when suspended */
+	if (dev->ep0state == EP0_SUSPEND)
+		return -EBUSY;
 
-	/* set up dma mapping in हाल the caller didn't */
-	अगर (ep->dma) अणु
+	/* set up dma mapping in case the caller didn't */
+	if (ep->dma) {
 		status = usb_gadget_map_request(&dev->gadget, &req->req,
 				ep->is_in);
-		अगर (status)
-			वापस status;
-	पूर्ण
+		if (status)
+			return status;
+	}
 
-#अगर_घोषित USB_TRACE
+#ifdef USB_TRACE
 	VDBG(dev, "%s queue req %p, len %u buf %p\n",
 			_ep->name, _req, _req->length, _req->buf);
-#पूर्ण_अगर
+#endif
 
 	spin_lock_irqsave(&dev->lock, flags);
 
 	_req->status = -EINPROGRESS;
 	_req->actual = 0;
 
-	/* क्रम ep0 IN without premature status, zlp is required and
+	/* for ep0 IN without premature status, zlp is required and
 	 * writing EOP starts the status stage (OUT).
 	 */
-	अगर (unlikely(ep->num == 0 && ep->is_in))
+	if (unlikely(ep->num == 0 && ep->is_in))
 		_req->zero = 1;
 
 	/* kickstart this i/o queue? */
 	status = 0;
-	अगर (list_empty(&ep->queue) && likely(!ep->stopped)) अणु
-		/* dma:  करोne after dma completion IRQ (or error)
-		 * pio:  करोne after last fअगरo operation
+	if (list_empty(&ep->queue) && likely(!ep->stopped)) {
+		/* dma:  done after dma completion IRQ (or error)
+		 * pio:  done after last fifo operation
 		 */
-		अगर (ep->dma)
+		if (ep->dma)
 			status = start_dma(ep, req);
-		अन्यथा
-			status = (ep->is_in ? ग_लिखो_fअगरo : पढ़ो_fअगरo)(ep, req);
+		else
+			status = (ep->is_in ? write_fifo : read_fifo)(ep, req);
 
-		अगर (unlikely(status != 0)) अणु
-			अगर (status > 0)
+		if (unlikely(status != 0)) {
+			if (status > 0)
 				status = 0;
-			req = शून्य;
-		पूर्ण
+			req = NULL;
+		}
 
-	पूर्ण /* अन्यथा pio or dma irq handler advances the queue. */
+	} /* else pio or dma irq handler advances the queue. */
 
-	अगर (likely(req != शून्य))
+	if (likely(req != NULL))
 		list_add_tail(&req->queue, &ep->queue);
 
-	अगर (likely(!list_empty(&ep->queue))
+	if (likely(!list_empty(&ep->queue))
 			&& likely(ep->num != 0)
 			&& !ep->dma
-			&& !(dev->पूर्णांक_enable & INT_EPxDATASET (ep->num)))
+			&& !(dev->int_enable & INT_EPxDATASET (ep->num)))
 		pio_irq_enable(dev, dev->regs, ep->num);
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	/* pci ग_लिखोs may still be posted */
-	वापस status;
-पूर्ण
+	/* pci writes may still be posted */
+	return status;
+}
 
 /* dequeue ALL requests */
-अटल व्योम nuke(काष्ठा goku_ep *ep, पूर्णांक status)
-अणु
-	काष्ठा goku_request	*req;
+static void nuke(struct goku_ep *ep, int status)
+{
+	struct goku_request	*req;
 
 	ep->stopped = 1;
-	अगर (list_empty(&ep->queue))
-		वापस;
-	अगर (ep->dma)
-		पात_dma(ep, status);
-	जबतक (!list_empty(&ep->queue)) अणु
-		req = list_entry(ep->queue.next, काष्ठा goku_request, queue);
-		करोne(ep, req, status);
-	पूर्ण
-पूर्ण
+	if (list_empty(&ep->queue))
+		return;
+	if (ep->dma)
+		abort_dma(ep, status);
+	while (!list_empty(&ep->queue)) {
+		req = list_entry(ep->queue.next, struct goku_request, queue);
+		done(ep, req, status);
+	}
+}
 
 /* dequeue JUST ONE request */
-अटल पूर्णांक goku_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा goku_request	*req;
-	काष्ठा goku_ep		*ep;
-	काष्ठा goku_udc		*dev;
-	अचिन्हित दीर्घ		flags;
+static int goku_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct goku_request	*req;
+	struct goku_ep		*ep;
+	struct goku_udc		*dev;
+	unsigned long		flags;
 
-	ep = container_of(_ep, काष्ठा goku_ep, ep);
-	अगर (!_ep || !_req || (!ep->ep.desc && ep->num != 0))
-		वापस -EINVAL;
+	ep = container_of(_ep, struct goku_ep, ep);
+	if (!_ep || !_req || (!ep->ep.desc && ep->num != 0))
+		return -EINVAL;
 	dev = ep->dev;
-	अगर (!dev->driver)
-		वापस -ESHUTDOWN;
+	if (!dev->driver)
+		return -ESHUTDOWN;
 
-	/* we can't touch (dma) रेजिस्टरs when suspended */
-	अगर (dev->ep0state == EP0_SUSPEND)
-		वापस -EBUSY;
+	/* we can't touch (dma) registers when suspended */
+	if (dev->ep0state == EP0_SUSPEND)
+		return -EBUSY;
 
 	VDBG(dev, "%s %s %s %s %p\n", __func__, _ep->name,
 		ep->is_in ? "IN" : "OUT",
@@ -833,233 +832,233 @@ goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 
 	spin_lock_irqsave(&dev->lock, flags);
 
-	/* make sure it's actually queued on this endpoपूर्णांक */
-	list_क्रम_each_entry (req, &ep->queue, queue) अणु
-		अगर (&req->req == _req)
-			अवरोध;
-	पूर्ण
-	अगर (&req->req != _req) अणु
+	/* make sure it's actually queued on this endpoint */
+	list_for_each_entry (req, &ep->queue, queue) {
+		if (&req->req == _req)
+			break;
+	}
+	if (&req->req != _req) {
 		spin_unlock_irqrestore (&dev->lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ep->dma && ep->queue.next == &req->queue && !ep->stopped) अणु
-		पात_dma(ep, -ECONNRESET);
-		करोne(ep, req, -ECONNRESET);
+	if (ep->dma && ep->queue.next == &req->queue && !ep->stopped) {
+		abort_dma(ep, -ECONNRESET);
+		done(ep, req, -ECONNRESET);
 		dma_advance(dev, ep);
-	पूर्ण अन्यथा अगर (!list_empty(&req->queue))
-		करोne(ep, req, -ECONNRESET);
-	अन्यथा
-		req = शून्य;
+	} else if (!list_empty(&req->queue))
+		done(ep, req, -ECONNRESET);
+	else
+		req = NULL;
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस req ? 0 : -EOPNOTSUPP;
-पूर्ण
+	return req ? 0 : -EOPNOTSUPP;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम goku_clear_halt(काष्ठा goku_ep *ep)
-अणु
-	// निश्चित (ep->num !=0)
+static void goku_clear_halt(struct goku_ep *ep)
+{
+	// assert (ep->num !=0)
 	VDBG(ep->dev, "%s clear halt\n", ep->ep.name);
 	command(ep->dev->regs, COMMAND_SETDATA0, ep->num);
 	command(ep->dev->regs, COMMAND_STALL_CLEAR, ep->num);
-	अगर (ep->stopped) अणु
+	if (ep->stopped) {
 		ep->stopped = 0;
-		अगर (ep->dma) अणु
-			काष्ठा goku_request	*req;
+		if (ep->dma) {
+			struct goku_request	*req;
 
-			अगर (list_empty(&ep->queue))
-				वापस;
-			req = list_entry(ep->queue.next, काष्ठा goku_request,
+			if (list_empty(&ep->queue))
+				return;
+			req = list_entry(ep->queue.next, struct goku_request,
 						queue);
-			(व्योम) start_dma(ep, req);
-		पूर्ण अन्यथा
+			(void) start_dma(ep, req);
+		} else
 			pio_advance(ep);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक goku_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	काष्ठा goku_ep	*ep;
-	अचिन्हित दीर्घ	flags;
-	पूर्णांक		retval = 0;
+static int goku_set_halt(struct usb_ep *_ep, int value)
+{
+	struct goku_ep	*ep;
+	unsigned long	flags;
+	int		retval = 0;
 
-	अगर (!_ep)
-		वापस -ENODEV;
-	ep = container_of (_ep, काष्ठा goku_ep, ep);
+	if (!_ep)
+		return -ENODEV;
+	ep = container_of (_ep, struct goku_ep, ep);
 
-	अगर (ep->num == 0) अणु
-		अगर (value) अणु
+	if (ep->num == 0) {
+		if (value) {
 			ep->dev->ep0state = EP0_STALL;
 			ep->dev->ep[0].stopped = 1;
-		पूर्ण अन्यथा
-			वापस -EINVAL;
+		} else
+			return -EINVAL;
 
-	/* करोn't change EPxSTATUS_EP_INVALID to READY */
-	पूर्ण अन्यथा अगर (!ep->ep.desc) अणु
+	/* don't change EPxSTATUS_EP_INVALID to READY */
+	} else if (!ep->ep.desc) {
 		DBG(ep->dev, "%s %s inactive?\n", __func__, ep->ep.name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(&ep->dev->lock, flags);
-	अगर (!list_empty(&ep->queue))
+	if (!list_empty(&ep->queue))
 		retval = -EAGAIN;
-	अन्यथा अगर (ep->is_in && value
+	else if (ep->is_in && value
 			/* data in (either) packet buffer? */
-			&& (पढ़ोl(&ep->dev->regs->DataSet)
+			&& (readl(&ep->dev->regs->DataSet)
 					& DATASET_AB(ep->num)))
 		retval = -EAGAIN;
-	अन्यथा अगर (!value)
+	else if (!value)
 		goku_clear_halt(ep);
-	अन्यथा अणु
+	else {
 		ep->stopped = 1;
 		VDBG(ep->dev, "%s set halt\n", ep->ep.name);
 		command(ep->dev->regs, COMMAND_STALL, ep->num);
-		पढ़ोl(ep->reg_status);
-	पूर्ण
+		readl(ep->reg_status);
+	}
 	spin_unlock_irqrestore(&ep->dev->lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक goku_fअगरo_status(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा goku_ep			*ep;
-	काष्ठा goku_udc_regs __iomem	*regs;
+static int goku_fifo_status(struct usb_ep *_ep)
+{
+	struct goku_ep			*ep;
+	struct goku_udc_regs __iomem	*regs;
 	u32				size;
 
-	अगर (!_ep)
-		वापस -ENODEV;
-	ep = container_of(_ep, काष्ठा goku_ep, ep);
+	if (!_ep)
+		return -ENODEV;
+	ep = container_of(_ep, struct goku_ep, ep);
 
-	/* size is only reported sanely क्रम OUT */
-	अगर (ep->is_in)
-		वापस -EOPNOTSUPP;
+	/* size is only reported sanely for OUT */
+	if (ep->is_in)
+		return -EOPNOTSUPP;
 
 	/* ignores 16-byte dma buffer; SizeH == 0 */
 	regs = ep->dev->regs;
-	size = पढ़ोl(&regs->EPxSizeLA[ep->num]) & DATASIZE;
-	size += पढ़ोl(&regs->EPxSizeLB[ep->num]) & DATASIZE;
+	size = readl(&regs->EPxSizeLA[ep->num]) & DATASIZE;
+	size += readl(&regs->EPxSizeLB[ep->num]) & DATASIZE;
 	VDBG(ep->dev, "%s %s %u\n", __func__, ep->ep.name, size);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम goku_fअगरo_flush(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा goku_ep			*ep;
-	काष्ठा goku_udc_regs __iomem	*regs;
+static void goku_fifo_flush(struct usb_ep *_ep)
+{
+	struct goku_ep			*ep;
+	struct goku_udc_regs __iomem	*regs;
 	u32				size;
 
-	अगर (!_ep)
-		वापस;
-	ep = container_of(_ep, काष्ठा goku_ep, ep);
+	if (!_ep)
+		return;
+	ep = container_of(_ep, struct goku_ep, ep);
 	VDBG(ep->dev, "%s %s\n", __func__, ep->ep.name);
 
-	/* करोn't change EPxSTATUS_EP_INVALID to READY */
-	अगर (!ep->ep.desc && ep->num != 0) अणु
+	/* don't change EPxSTATUS_EP_INVALID to READY */
+	if (!ep->ep.desc && ep->num != 0) {
 		DBG(ep->dev, "%s %s inactive?\n", __func__, ep->ep.name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	regs = ep->dev->regs;
-	size = पढ़ोl(&regs->EPxSizeLA[ep->num]);
+	size = readl(&regs->EPxSizeLA[ep->num]);
 	size &= DATASIZE;
 
 	/* Non-desirable behavior:  FIFO_CLEAR also clears the
-	 * endpoपूर्णांक halt feature.  For OUT, we _could_ just पढ़ो
-	 * the bytes out (PIO, अगर !ep->dma); क्रम in, no choice.
+	 * endpoint halt feature.  For OUT, we _could_ just read
+	 * the bytes out (PIO, if !ep->dma); for in, no choice.
 	 */
-	अगर (size)
+	if (size)
 		command(regs, COMMAND_FIFO_CLEAR, ep->num);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा usb_ep_ops goku_ep_ops = अणु
+static const struct usb_ep_ops goku_ep_ops = {
 	.enable		= goku_ep_enable,
 	.disable	= goku_ep_disable,
 
 	.alloc_request	= goku_alloc_request,
-	.मुक्त_request	= goku_मुक्त_request,
+	.free_request	= goku_free_request,
 
 	.queue		= goku_queue,
 	.dequeue	= goku_dequeue,
 
 	.set_halt	= goku_set_halt,
-	.fअगरo_status	= goku_fअगरo_status,
-	.fअगरo_flush	= goku_fअगरo_flush,
-पूर्ण;
+	.fifo_status	= goku_fifo_status,
+	.fifo_flush	= goku_fifo_flush,
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक goku_get_frame(काष्ठा usb_gadget *_gadget)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static int goku_get_frame(struct usb_gadget *_gadget)
+{
+	return -EOPNOTSUPP;
+}
 
-अटल काष्ठा usb_ep *goku_match_ep(काष्ठा usb_gadget *g,
-		काष्ठा usb_endpoपूर्णांक_descriptor *desc,
-		काष्ठा usb_ss_ep_comp_descriptor *ep_comp)
-अणु
-	काष्ठा goku_udc	*dev = to_goku_udc(g);
-	काष्ठा usb_ep *ep;
+static struct usb_ep *goku_match_ep(struct usb_gadget *g,
+		struct usb_endpoint_descriptor *desc,
+		struct usb_ss_ep_comp_descriptor *ep_comp)
+{
+	struct goku_udc	*dev = to_goku_udc(g);
+	struct usb_ep *ep;
 
-	चयन (usb_endpoपूर्णांक_type(desc)) अणु
-	हाल USB_ENDPOINT_XFER_INT:
+	switch (usb_endpoint_type(desc)) {
+	case USB_ENDPOINT_XFER_INT:
 		/* single buffering is enough */
 		ep = &dev->ep[3].ep;
-		अगर (usb_gadget_ep_match_desc(g, ep, desc, ep_comp))
-			वापस ep;
-		अवरोध;
-	हाल USB_ENDPOINT_XFER_BULK:
-		अगर (usb_endpoपूर्णांक_dir_in(desc)) अणु
+		if (usb_gadget_ep_match_desc(g, ep, desc, ep_comp))
+			return ep;
+		break;
+	case USB_ENDPOINT_XFER_BULK:
+		if (usb_endpoint_dir_in(desc)) {
 			/* DMA may be available */
 			ep = &dev->ep[2].ep;
-			अगर (usb_gadget_ep_match_desc(g, ep, desc, ep_comp))
-				वापस ep;
-		पूर्ण
-		अवरोध;
-	शेष:
+			if (usb_gadget_ep_match_desc(g, ep, desc, ep_comp))
+				return ep;
+		}
+		break;
+	default:
 		/* nothing */ ;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक goku_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक goku_udc_stop(काष्ठा usb_gadget *g);
+static int goku_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver);
+static int goku_udc_stop(struct usb_gadget *g);
 
-अटल स्थिर काष्ठा usb_gadget_ops goku_ops = अणु
+static const struct usb_gadget_ops goku_ops = {
 	.get_frame	= goku_get_frame,
 	.udc_start	= goku_udc_start,
 	.udc_stop	= goku_udc_stop,
 	.match_ep	= goku_match_ep,
 	// no remote wakeup
-	// not selfघातered
-पूर्ण;
+	// not selfpowered
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल अंतरभूत स्थिर अक्षर *dmastr(व्योम)
-अणु
-	अगर (use_dma == 0)
-		वापस "(dma disabled)";
-	अन्यथा अगर (use_dma == 2)
-		वापस "(dma IN and OUT)";
-	अन्यथा
-		वापस "(dma IN)";
-पूर्ण
+static inline const char *dmastr(void)
+{
+	if (use_dma == 0)
+		return "(dma disabled)";
+	else if (use_dma == 2)
+		return "(dma IN and OUT)";
+	else
+		return "(dma IN)";
+}
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
+#ifdef CONFIG_USB_GADGET_DEBUG_FILES
 
-अटल स्थिर अक्षर proc_node_name [] = "driver/udc";
+static const char proc_node_name [] = "driver/udc";
 
-#घोषणा FOURBITS "%s%s%s%s"
-#घोषणा EIGHTBITS FOURBITS FOURBITS
+#define FOURBITS "%s%s%s%s"
+#define EIGHTBITS FOURBITS FOURBITS
 
-अटल व्योम dump_पूर्णांकmask(काष्ठा seq_file *m, स्थिर अक्षर *label, u32 mask)
-अणु
-	/* पूर्णांक_status is the same क्रमmat ... */
-	seq_म_लिखो(m, "%s %05X =" FOURBITS EIGHTBITS EIGHTBITS "\n",
+static void dump_intmask(struct seq_file *m, const char *label, u32 mask)
+{
+	/* int_status is the same format ... */
+	seq_printf(m, "%s %05X =" FOURBITS EIGHTBITS EIGHTBITS "\n",
 		   label, mask,
 		   (mask & INT_PWRDETECT) ? " power" : "",
 		   (mask & INT_SYSERROR) ? " sys" : "",
@@ -1085,68 +1084,68 @@ goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 		   (mask & INT_ENDPOINT0) ? " ep0" : "",
 		   (mask & INT_USBRESET) ? " reset" : "",
 		   (mask & INT_SUSPEND) ? " suspend" : "");
-पूर्ण
+}
 
-अटल स्थिर अक्षर *udc_ep_state(क्रमागत ep0state state)
-अणु
-	चयन (state) अणु
-	हाल EP0_DISCONNECT:
-		वापस "ep0_disconnect";
-	हाल EP0_IDLE:
-		वापस "ep0_idle";
-	हाल EP0_IN:
-		वापस "ep0_in";
-	हाल EP0_OUT:
-		वापस "ep0_out";
-	हाल EP0_STATUS:
-		वापस "ep0_status";
-	हाल EP0_STALL:
-		वापस "ep0_stall";
-	हाल EP0_SUSPEND:
-		वापस "ep0_suspend";
-	पूर्ण
+static const char *udc_ep_state(enum ep0state state)
+{
+	switch (state) {
+	case EP0_DISCONNECT:
+		return "ep0_disconnect";
+	case EP0_IDLE:
+		return "ep0_idle";
+	case EP0_IN:
+		return "ep0_in";
+	case EP0_OUT:
+		return "ep0_out";
+	case EP0_STATUS:
+		return "ep0_status";
+	case EP0_STALL:
+		return "ep0_stall";
+	case EP0_SUSPEND:
+		return "ep0_suspend";
+	}
 
-	वापस "ep0_?";
-पूर्ण
+	return "ep0_?";
+}
 
-अटल स्थिर अक्षर *udc_ep_status(u32 status)
-अणु
-	चयन (status & EPxSTATUS_EP_MASK) अणु
-	हाल EPxSTATUS_EP_READY:
-		वापस "ready";
-	हाल EPxSTATUS_EP_DATAIN:
-		वापस "packet";
-	हाल EPxSTATUS_EP_FULL:
-		वापस "full";
-	हाल EPxSTATUS_EP_TX_ERR:	/* host will retry */
-		वापस "tx_err";
-	हाल EPxSTATUS_EP_RX_ERR:
-		वापस "rx_err";
-	हाल EPxSTATUS_EP_BUSY:		/* ep0 only */
-		वापस "busy";
-	हाल EPxSTATUS_EP_STALL:
-		वापस "stall";
-	हाल EPxSTATUS_EP_INVALID:	/* these "can't happen" */
-		वापस "invalid";
-	पूर्ण
+static const char *udc_ep_status(u32 status)
+{
+	switch (status & EPxSTATUS_EP_MASK) {
+	case EPxSTATUS_EP_READY:
+		return "ready";
+	case EPxSTATUS_EP_DATAIN:
+		return "packet";
+	case EPxSTATUS_EP_FULL:
+		return "full";
+	case EPxSTATUS_EP_TX_ERR:	/* host will retry */
+		return "tx_err";
+	case EPxSTATUS_EP_RX_ERR:
+		return "rx_err";
+	case EPxSTATUS_EP_BUSY:		/* ep0 only */
+		return "busy";
+	case EPxSTATUS_EP_STALL:
+		return "stall";
+	case EPxSTATUS_EP_INVALID:	/* these "can't happen" */
+		return "invalid";
+	}
 
-	वापस "?";
-पूर्ण
+	return "?";
+}
 
-अटल पूर्णांक udc_proc_पढ़ो(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा goku_udc			*dev = m->निजी;
-	काष्ठा goku_udc_regs __iomem	*regs = dev->regs;
-	अचिन्हित दीर्घ			flags;
-	पूर्णांक				i, is_usb_connected;
-	u32				पंचांगp;
+static int udc_proc_read(struct seq_file *m, void *v)
+{
+	struct goku_udc			*dev = m->private;
+	struct goku_udc_regs __iomem	*regs = dev->regs;
+	unsigned long			flags;
+	int				i, is_usb_connected;
+	u32				tmp;
 
 	local_irq_save(flags);
 
 	/* basic device status */
-	पंचांगp = पढ़ोl(&regs->घातer_detect);
-	is_usb_connected = पंचांगp & PW_DETECT;
-	seq_म_लिखो(m,
+	tmp = readl(&regs->power_detect);
+	is_usb_connected = tmp & PW_DETECT;
+	seq_printf(m,
 		   "%s - %s\n"
 		   "%s version: %s %s\n"
 		   "Gadget driver: %s\n"
@@ -1156,104 +1155,104 @@ goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 		   driver_name, DRIVER_VERSION, dmastr(),
 		   dev->driver ? dev->driver->driver.name : "(none)",
 		   is_usb_connected
-			   ? ((पंचांगp & PW_PULLUP) ? "full speed" : "powered")
+			   ? ((tmp & PW_PULLUP) ? "full speed" : "powered")
 			   : "disconnected",
 		   udc_ep_state(dev->ep0state));
 
-	dump_पूर्णांकmask(m, "int_status", पढ़ोl(&regs->पूर्णांक_status));
-	dump_पूर्णांकmask(m, "int_enable", पढ़ोl(&regs->पूर्णांक_enable));
+	dump_intmask(m, "int_status", readl(&regs->int_status));
+	dump_intmask(m, "int_enable", readl(&regs->int_enable));
 
-	अगर (!is_usb_connected || !dev->driver || (पंचांगp & PW_PULLUP) == 0)
-		जाओ करोne;
+	if (!is_usb_connected || !dev->driver || (tmp & PW_PULLUP) == 0)
+		goto done;
 
-	/* रेजिस्टरs क्रम (active) device and ep0 */
-	seq_म_लिखो(m, "\nirqs %lu\ndataset %02x single.bcs %02x.%02x state %x addr %u\n",
-		   dev->irqs, पढ़ोl(&regs->DataSet),
-		   पढ़ोl(&regs->EPxSingle), पढ़ोl(&regs->EPxBCS),
-		   पढ़ोl(&regs->UsbState),
-		   पढ़ोl(&regs->address));
-	अगर (seq_has_overflowed(m))
-		जाओ करोne;
+	/* registers for (active) device and ep0 */
+	seq_printf(m, "\nirqs %lu\ndataset %02x single.bcs %02x.%02x state %x addr %u\n",
+		   dev->irqs, readl(&regs->DataSet),
+		   readl(&regs->EPxSingle), readl(&regs->EPxBCS),
+		   readl(&regs->UsbState),
+		   readl(&regs->address));
+	if (seq_has_overflowed(m))
+		goto done;
 
-	पंचांगp = पढ़ोl(&regs->dma_master);
-	seq_म_लिखो(m, "dma %03X =" EIGHTBITS "%s %s\n",
-		   पंचांगp,
-		   (पंचांगp & MST_EOPB_DIS) ? " eopb-" : "",
-		   (पंचांगp & MST_EOPB_ENA) ? " eopb+" : "",
-		   (पंचांगp & MST_TIMEOUT_DIS) ? " tmo-" : "",
-		   (पंचांगp & MST_TIMEOUT_ENA) ? " tmo+" : "",
+	tmp = readl(&regs->dma_master);
+	seq_printf(m, "dma %03X =" EIGHTBITS "%s %s\n",
+		   tmp,
+		   (tmp & MST_EOPB_DIS) ? " eopb-" : "",
+		   (tmp & MST_EOPB_ENA) ? " eopb+" : "",
+		   (tmp & MST_TIMEOUT_DIS) ? " tmo-" : "",
+		   (tmp & MST_TIMEOUT_ENA) ? " tmo+" : "",
 
-		   (पंचांगp & MST_RD_EOPB) ? " eopb" : "",
-		   (पंचांगp & MST_RD_RESET) ? " in_reset" : "",
-		   (पंचांगp & MST_WR_RESET) ? " out_reset" : "",
-		   (पंचांगp & MST_RD_ENA) ? " IN" : "",
+		   (tmp & MST_RD_EOPB) ? " eopb" : "",
+		   (tmp & MST_RD_RESET) ? " in_reset" : "",
+		   (tmp & MST_WR_RESET) ? " out_reset" : "",
+		   (tmp & MST_RD_ENA) ? " IN" : "",
 
-		   (पंचांगp & MST_WR_ENA) ? " OUT" : "",
-		   (पंचांगp & MST_CONNECTION) ? "ep1in/ep2out" : "ep1out/ep2in");
-	अगर (seq_has_overflowed(m))
-		जाओ करोne;
+		   (tmp & MST_WR_ENA) ? " OUT" : "",
+		   (tmp & MST_CONNECTION) ? "ep1in/ep2out" : "ep1out/ep2in");
+	if (seq_has_overflowed(m))
+		goto done;
 
-	/* dump endpoपूर्णांक queues */
-	क्रम (i = 0; i < 4; i++) अणु
-		काष्ठा goku_ep		*ep = &dev->ep [i];
-		काष्ठा goku_request	*req;
+	/* dump endpoint queues */
+	for (i = 0; i < 4; i++) {
+		struct goku_ep		*ep = &dev->ep [i];
+		struct goku_request	*req;
 
-		अगर (i && !ep->ep.desc)
-			जारी;
+		if (i && !ep->ep.desc)
+			continue;
 
-		पंचांगp = पढ़ोl(ep->reg_status);
-		seq_म_लिखो(m, "%s %s max %u %s, irqs %lu, status %02x (%s) " FOURBITS "\n",
+		tmp = readl(ep->reg_status);
+		seq_printf(m, "%s %s max %u %s, irqs %lu, status %02x (%s) " FOURBITS "\n",
 			   ep->ep.name,
 			   ep->is_in ? "in" : "out",
 			   ep->ep.maxpacket,
 			   ep->dma ? "dma" : "pio",
 			   ep->irqs,
-			   पंचांगp, udc_ep_status(पंचांगp),
-			   (पंचांगp & EPxSTATUS_TOGGLE) ? "data1" : "data0",
-			   (पंचांगp & EPxSTATUS_SUSPEND) ? " suspend" : "",
-			   (पंचांगp & EPxSTATUS_FIFO_DISABLE) ? " disable" : "",
-			   (पंचांगp & EPxSTATUS_STAGE_ERROR) ? " ep0stat" : "");
-		अगर (seq_has_overflowed(m))
-			जाओ करोne;
+			   tmp, udc_ep_status(tmp),
+			   (tmp & EPxSTATUS_TOGGLE) ? "data1" : "data0",
+			   (tmp & EPxSTATUS_SUSPEND) ? " suspend" : "",
+			   (tmp & EPxSTATUS_FIFO_DISABLE) ? " disable" : "",
+			   (tmp & EPxSTATUS_STAGE_ERROR) ? " ep0stat" : "");
+		if (seq_has_overflowed(m))
+			goto done;
 
-		अगर (list_empty(&ep->queue)) अणु
-			seq_माला_दो(m, "\t(nothing queued)\n");
-			अगर (seq_has_overflowed(m))
-				जाओ करोne;
-			जारी;
-		पूर्ण
-		list_क्रम_each_entry(req, &ep->queue, queue) अणु
-			अगर (ep->dma && req->queue.prev == &ep->queue) अणु
-				अगर (i == UDC_MSTRD_ENDPOINT)
-					पंचांगp = पढ़ोl(&regs->in_dma_current);
-				अन्यथा
-					पंचांगp = पढ़ोl(&regs->out_dma_current);
-				पंचांगp -= req->req.dma;
-				पंचांगp++;
-			पूर्ण अन्यथा
-				पंचांगp = req->req.actual;
+		if (list_empty(&ep->queue)) {
+			seq_puts(m, "\t(nothing queued)\n");
+			if (seq_has_overflowed(m))
+				goto done;
+			continue;
+		}
+		list_for_each_entry(req, &ep->queue, queue) {
+			if (ep->dma && req->queue.prev == &ep->queue) {
+				if (i == UDC_MSTRD_ENDPOINT)
+					tmp = readl(&regs->in_dma_current);
+				else
+					tmp = readl(&regs->out_dma_current);
+				tmp -= req->req.dma;
+				tmp++;
+			} else
+				tmp = req->req.actual;
 
-			seq_म_लिखो(m, "\treq %p len %u/%u buf %p\n",
-				   &req->req, पंचांगp, req->req.length,
+			seq_printf(m, "\treq %p len %u/%u buf %p\n",
+				   &req->req, tmp, req->req.length,
 				   req->req.buf);
-			अगर (seq_has_overflowed(m))
-				जाओ करोne;
-		पूर्ण
-	पूर्ण
+			if (seq_has_overflowed(m))
+				goto done;
+		}
+	}
 
-करोne:
+done:
 	local_irq_restore(flags);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_USB_GADGET_DEBUG_खाताS */
+	return 0;
+}
+#endif	/* CONFIG_USB_GADGET_DEBUG_FILES */
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम udc_reinit (काष्ठा goku_udc *dev)
-अणु
-	अटल अक्षर *names [] = अणु "ep0", "ep1-bulk", "ep2-bulk", "ep3-bulk" पूर्ण;
+static void udc_reinit (struct goku_udc *dev)
+{
+	static char *names [] = { "ep0", "ep1-bulk", "ep2-bulk", "ep3-bulk" };
 
-	अचिन्हित i;
+	unsigned i;
 
 	INIT_LIST_HEAD (&dev->gadget.ep_list);
 	dev->gadget.ep0 = &dev->ep [0].ep;
@@ -1261,12 +1260,12 @@ goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 	dev->ep0state = EP0_DISCONNECT;
 	dev->irqs = 0;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		काष्ठा goku_ep	*ep = &dev->ep[i];
+	for (i = 0; i < 4; i++) {
+		struct goku_ep	*ep = &dev->ep[i];
 
 		ep->num = i;
 		ep->ep.name = names[i];
-		ep->reg_fअगरo = &dev->regs->ep_fअगरo [i];
+		ep->reg_fifo = &dev->regs->ep_fifo [i];
 		ep->reg_status = &dev->regs->ep_status [i];
 		ep->reg_mode = &dev->regs->ep_mode[i];
 
@@ -1275,85 +1274,85 @@ goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
 		ep->dev = dev;
 		INIT_LIST_HEAD (&ep->queue);
 
-		ep_reset(शून्य, ep);
+		ep_reset(NULL, ep);
 
-		अगर (i == 0)
+		if (i == 0)
 			ep->ep.caps.type_control = true;
-		अन्यथा
+		else
 			ep->ep.caps.type_bulk = true;
 
 		ep->ep.caps.dir_in = true;
 		ep->ep.caps.dir_out = true;
-	पूर्ण
+	}
 
-	dev->ep[0].reg_mode = शून्य;
+	dev->ep[0].reg_mode = NULL;
 	usb_ep_set_maxpacket_limit(&dev->ep[0].ep, MAX_EP0_SIZE);
 	list_del_init (&dev->ep[0].ep.ep_list);
-पूर्ण
+}
 
-अटल व्योम udc_reset(काष्ठा goku_udc *dev)
-अणु
-	काष्ठा goku_udc_regs __iomem	*regs = dev->regs;
+static void udc_reset(struct goku_udc *dev)
+{
+	struct goku_udc_regs __iomem	*regs = dev->regs;
 
-	ग_लिखोl(0, &regs->घातer_detect);
-	ग_लिखोl(0, &regs->पूर्णांक_enable);
-	पढ़ोl(&regs->पूर्णांक_enable);
-	dev->पूर्णांक_enable = 0;
+	writel(0, &regs->power_detect);
+	writel(0, &regs->int_enable);
+	readl(&regs->int_enable);
+	dev->int_enable = 0;
 
-	/* deनिश्चित reset, leave USB D+ at hi-Z (no pullup)
-	 * करोn't let INT_PWRDETECT sequence begin
+	/* deassert reset, leave USB D+ at hi-Z (no pullup)
+	 * don't let INT_PWRDETECT sequence begin
 	 */
 	udelay(250);
-	ग_लिखोl(PW_RESETB, &regs->घातer_detect);
-	पढ़ोl(&regs->पूर्णांक_enable);
-पूर्ण
+	writel(PW_RESETB, &regs->power_detect);
+	readl(&regs->int_enable);
+}
 
-अटल व्योम ep0_start(काष्ठा goku_udc *dev)
-अणु
-	काष्ठा goku_udc_regs __iomem	*regs = dev->regs;
-	अचिन्हित			i;
+static void ep0_start(struct goku_udc *dev)
+{
+	struct goku_udc_regs __iomem	*regs = dev->regs;
+	unsigned			i;
 
 	VDBG(dev, "%s\n", __func__);
 
 	udc_reset(dev);
 	udc_reinit (dev);
-	//ग_लिखोl(MST_EOPB_ENA | MST_TIMEOUT_ENA, &regs->dma_master);
+	//writel(MST_EOPB_ENA | MST_TIMEOUT_ENA, &regs->dma_master);
 
 	/* hw handles set_address, set_feature, get_status; maybe more */
-	ग_लिखोl(   G_REQMODE_SET_INTF | G_REQMODE_GET_INTF
+	writel(   G_REQMODE_SET_INTF | G_REQMODE_GET_INTF
 		| G_REQMODE_SET_CONF | G_REQMODE_GET_CONF
 		| G_REQMODE_GET_DESC
 		| G_REQMODE_CLEAR_FEAT
 		, &regs->reqmode);
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		dev->ep[i].irqs = 0;
 
-	/* can't modअगरy descriptors after writing UsbReady */
-	क्रम (i = 0; i < DESC_LEN; i++)
-		ग_लिखोl(0, &regs->descriptors[i]);
-	ग_लिखोl(0, &regs->UsbReady);
+	/* can't modify descriptors after writing UsbReady */
+	for (i = 0; i < DESC_LEN; i++)
+		writel(0, &regs->descriptors[i]);
+	writel(0, &regs->UsbReady);
 
 	/* expect ep0 requests when the host drops reset */
-	ग_लिखोl(PW_RESETB | PW_PULLUP, &regs->घातer_detect);
-	dev->पूर्णांक_enable = INT_DEVWIDE | INT_EP0;
-	ग_लिखोl(dev->पूर्णांक_enable, &dev->regs->पूर्णांक_enable);
-	पढ़ोl(&regs->पूर्णांक_enable);
+	writel(PW_RESETB | PW_PULLUP, &regs->power_detect);
+	dev->int_enable = INT_DEVWIDE | INT_EP0;
+	writel(dev->int_enable, &dev->regs->int_enable);
+	readl(&regs->int_enable);
 	dev->gadget.speed = USB_SPEED_FULL;
 	dev->ep0state = EP0_IDLE;
-पूर्ण
+}
 
-अटल व्योम udc_enable(काष्ठा goku_udc *dev)
-अणु
-	/* start क्रमागतeration now, or after घातer detect irq */
-	अगर (पढ़ोl(&dev->regs->घातer_detect) & PW_DETECT)
+static void udc_enable(struct goku_udc *dev)
+{
+	/* start enumeration now, or after power detect irq */
+	if (readl(&dev->regs->power_detect) & PW_DETECT)
 		ep0_start(dev);
-	अन्यथा अणु
+	else {
 		DBG(dev, "%s\n", __func__);
-		dev->पूर्णांक_enable = INT_PWRDETECT;
-		ग_लिखोl(dev->पूर्णांक_enable, &dev->regs->पूर्णांक_enable);
-	पूर्ण
-पूर्ण
+		dev->int_enable = INT_PWRDETECT;
+		writel(dev->int_enable, &dev->regs->int_enable);
+	}
+}
 
 /*-------------------------------------------------------------------------*/
 
@@ -1362,354 +1361,354 @@ goku_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
  * - one function driver, initted second
  */
 
-/* when a driver is successfully रेजिस्टरed, it will receive
+/* when a driver is successfully registered, it will receive
  * control requests including set_configuration(), which enables
  * non-control requests.  then usb traffic follows until a
  * disconnect is reported.  then a host may connect again, or
  * the driver might get unbound.
  */
-अटल पूर्णांक goku_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा goku_udc	*dev = to_goku_udc(g);
+static int goku_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver)
+{
+	struct goku_udc	*dev = to_goku_udc(g);
 
 	/* hook up the driver */
-	driver->driver.bus = शून्य;
+	driver->driver.bus = NULL;
 	dev->driver = driver;
 
 	/*
-	 * then enable host detection and ep0; and we're पढ़ोy
-	 * क्रम set_configuration as well as eventual disconnect.
+	 * then enable host detection and ep0; and we're ready
+	 * for set_configuration as well as eventual disconnect.
 	 */
 	udc_enable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम stop_activity(काष्ठा goku_udc *dev)
-अणु
-	अचिन्हित	i;
+static void stop_activity(struct goku_udc *dev)
+{
+	unsigned	i;
 
 	DBG (dev, "%s\n", __func__);
 
 	/* disconnect gadget driver after quiesceing hw and the driver */
 	udc_reset (dev);
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		nuke(&dev->ep [i], -ESHUTDOWN);
 
-	अगर (dev->driver)
+	if (dev->driver)
 		udc_enable(dev);
-पूर्ण
+}
 
-अटल पूर्णांक goku_udc_stop(काष्ठा usb_gadget *g)
-अणु
-	काष्ठा goku_udc	*dev = to_goku_udc(g);
-	अचिन्हित दीर्घ	flags;
+static int goku_udc_stop(struct usb_gadget *g)
+{
+	struct goku_udc	*dev = to_goku_udc(g);
+	unsigned long	flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
-	dev->driver = शून्य;
+	dev->driver = NULL;
 	stop_activity(dev);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम ep0_setup(काष्ठा goku_udc *dev)
-अणु
-	काष्ठा goku_udc_regs __iomem	*regs = dev->regs;
-	काष्ठा usb_ctrlrequest		ctrl;
-	पूर्णांक				पंचांगp;
+static void ep0_setup(struct goku_udc *dev)
+{
+	struct goku_udc_regs __iomem	*regs = dev->regs;
+	struct usb_ctrlrequest		ctrl;
+	int				tmp;
 
-	/* पढ़ो SETUP packet and enter DATA stage */
-	ctrl.bRequestType = पढ़ोl(&regs->bRequestType);
-	ctrl.bRequest = पढ़ोl(&regs->bRequest);
-	ctrl.wValue  = cpu_to_le16((पढ़ोl(&regs->wValueH)  << 8)
-					| पढ़ोl(&regs->wValueL));
-	ctrl.wIndex  = cpu_to_le16((पढ़ोl(&regs->wIndexH)  << 8)
-					| पढ़ोl(&regs->wIndexL));
-	ctrl.wLength = cpu_to_le16((पढ़ोl(&regs->wLengthH) << 8)
-					| पढ़ोl(&regs->wLengthL));
-	ग_लिखोl(0, &regs->SetupRecv);
+	/* read SETUP packet and enter DATA stage */
+	ctrl.bRequestType = readl(&regs->bRequestType);
+	ctrl.bRequest = readl(&regs->bRequest);
+	ctrl.wValue  = cpu_to_le16((readl(&regs->wValueH)  << 8)
+					| readl(&regs->wValueL));
+	ctrl.wIndex  = cpu_to_le16((readl(&regs->wIndexH)  << 8)
+					| readl(&regs->wIndexL));
+	ctrl.wLength = cpu_to_le16((readl(&regs->wLengthH) << 8)
+					| readl(&regs->wLengthL));
+	writel(0, &regs->SetupRecv);
 
 	nuke(&dev->ep[0], 0);
 	dev->ep[0].stopped = 0;
-	अगर (likely(ctrl.bRequestType & USB_सूची_IN)) अणु
+	if (likely(ctrl.bRequestType & USB_DIR_IN)) {
 		dev->ep[0].is_in = 1;
 		dev->ep0state = EP0_IN;
 		/* detect early status stages */
-		ग_लिखोl(ICONTROL_STATUSNAK, &dev->regs->IntControl);
-	पूर्ण अन्यथा अणु
+		writel(ICONTROL_STATUSNAK, &dev->regs->IntControl);
+	} else {
 		dev->ep[0].is_in = 0;
 		dev->ep0state = EP0_OUT;
 
-		/* NOTE:  CLEAR_FEATURE is करोne in software so that we can
+		/* NOTE:  CLEAR_FEATURE is done in software so that we can
 		 * synchronize transfer restarts after bulk IN stalls.  data
-		 * won't even enter the fअगरo until the halt is cleared.
+		 * won't even enter the fifo until the halt is cleared.
 		 */
-		चयन (ctrl.bRequest) अणु
-		हाल USB_REQ_CLEAR_FEATURE:
-			चयन (ctrl.bRequestType) अणु
-			हाल USB_RECIP_ENDPOINT:
-				पंचांगp = le16_to_cpu(ctrl.wIndex) & 0x0f;
-				/* active endpoपूर्णांक */
-				अगर (पंचांगp > 3 ||
-				    (!dev->ep[पंचांगp].ep.desc && पंचांगp != 0))
-					जाओ stall;
-				अगर (ctrl.wIndex & cpu_to_le16(
-						USB_सूची_IN)) अणु
-					अगर (!dev->ep[पंचांगp].is_in)
-						जाओ stall;
-				पूर्ण अन्यथा अणु
-					अगर (dev->ep[पंचांगp].is_in)
-						जाओ stall;
-				पूर्ण
-				अगर (ctrl.wValue != cpu_to_le16(
+		switch (ctrl.bRequest) {
+		case USB_REQ_CLEAR_FEATURE:
+			switch (ctrl.bRequestType) {
+			case USB_RECIP_ENDPOINT:
+				tmp = le16_to_cpu(ctrl.wIndex) & 0x0f;
+				/* active endpoint */
+				if (tmp > 3 ||
+				    (!dev->ep[tmp].ep.desc && tmp != 0))
+					goto stall;
+				if (ctrl.wIndex & cpu_to_le16(
+						USB_DIR_IN)) {
+					if (!dev->ep[tmp].is_in)
+						goto stall;
+				} else {
+					if (dev->ep[tmp].is_in)
+						goto stall;
+				}
+				if (ctrl.wValue != cpu_to_le16(
 						USB_ENDPOINT_HALT))
-					जाओ stall;
-				अगर (पंचांगp)
-					goku_clear_halt(&dev->ep[पंचांगp]);
+					goto stall;
+				if (tmp)
+					goku_clear_halt(&dev->ep[tmp]);
 succeed:
 				/* start ep0out status stage */
-				ग_लिखोl(~(1<<0), &regs->EOP);
+				writel(~(1<<0), &regs->EOP);
 				dev->ep[0].stopped = 1;
 				dev->ep0state = EP0_STATUS;
-				वापस;
-			हाल USB_RECIP_DEVICE:
+				return;
+			case USB_RECIP_DEVICE:
 				/* device remote wakeup: always clear */
-				अगर (ctrl.wValue != cpu_to_le16(1))
-					जाओ stall;
+				if (ctrl.wValue != cpu_to_le16(1))
+					goto stall;
 				VDBG(dev, "clear dev remote wakeup\n");
-				जाओ succeed;
-			हाल USB_RECIP_INTERFACE:
-				जाओ stall;
-			शेष:		/* pass to gadget driver */
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				goto succeed;
+			case USB_RECIP_INTERFACE:
+				goto stall;
+			default:		/* pass to gadget driver */
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+	}
 
-#अगर_घोषित USB_TRACE
+#ifdef USB_TRACE
 	VDBG(dev, "SETUP %02x.%02x v%04x i%04x l%04x\n",
 		ctrl.bRequestType, ctrl.bRequest,
 		le16_to_cpu(ctrl.wValue), le16_to_cpu(ctrl.wIndex),
 		le16_to_cpu(ctrl.wLength));
-#पूर्ण_अगर
+#endif
 
 	/* hw wants to know when we're configured (or not) */
 	dev->req_config = (ctrl.bRequest == USB_REQ_SET_CONFIGURATION
 				&& ctrl.bRequestType == USB_RECIP_DEVICE);
-	अगर (unlikely(dev->req_config))
+	if (unlikely(dev->req_config))
 		dev->configured = (ctrl.wValue != cpu_to_le16(0));
 
 	/* delegate everything to the gadget driver.
-	 * it may respond after this irq handler वापसs.
+	 * it may respond after this irq handler returns.
 	 */
 	spin_unlock (&dev->lock);
-	पंचांगp = dev->driver->setup(&dev->gadget, &ctrl);
+	tmp = dev->driver->setup(&dev->gadget, &ctrl);
 	spin_lock (&dev->lock);
-	अगर (unlikely(पंचांगp < 0)) अणु
+	if (unlikely(tmp < 0)) {
 stall:
-#अगर_घोषित USB_TRACE
+#ifdef USB_TRACE
 		VDBG(dev, "req %02x.%02x protocol STALL; err %d\n",
-				ctrl.bRequestType, ctrl.bRequest, पंचांगp);
-#पूर्ण_अगर
+				ctrl.bRequestType, ctrl.bRequest, tmp);
+#endif
 		command(regs, COMMAND_STALL, 0);
 		dev->ep[0].stopped = 1;
 		dev->ep0state = EP0_STALL;
-	पूर्ण
+	}
 
 	/* expect at least one data or status stage irq */
-पूर्ण
+}
 
-#घोषणा ACK(irqbit) अणु \
+#define ACK(irqbit) { \
 		stat &= ~irqbit; \
-		ग_लिखोl(~irqbit, &regs->पूर्णांक_status); \
+		writel(~irqbit, &regs->int_status); \
 		handled = 1; \
-		पूर्ण
+		}
 
-अटल irqवापस_t goku_irq(पूर्णांक irq, व्योम *_dev)
-अणु
-	काष्ठा goku_udc			*dev = _dev;
-	काष्ठा goku_udc_regs __iomem	*regs = dev->regs;
-	काष्ठा goku_ep			*ep;
+static irqreturn_t goku_irq(int irq, void *_dev)
+{
+	struct goku_udc			*dev = _dev;
+	struct goku_udc_regs __iomem	*regs = dev->regs;
+	struct goku_ep			*ep;
 	u32				stat, handled = 0;
-	अचिन्हित			i, rescans = 5;
+	unsigned			i, rescans = 5;
 
 	spin_lock(&dev->lock);
 
 rescan:
-	stat = पढ़ोl(&regs->पूर्णांक_status) & dev->पूर्णांक_enable;
-        अगर (!stat)
-		जाओ करोne;
+	stat = readl(&regs->int_status) & dev->int_enable;
+        if (!stat)
+		goto done;
 	dev->irqs++;
 
 	/* device-wide irqs */
-	अगर (unlikely(stat & INT_DEVWIDE)) अणु
-		अगर (stat & INT_SYSERROR) अणु
+	if (unlikely(stat & INT_DEVWIDE)) {
+		if (stat & INT_SYSERROR) {
 			ERROR(dev, "system error\n");
 			stop_activity(dev);
 			stat = 0;
 			handled = 1;
-			// FIXME have a neater way to prevent re-क्रमागतeration
-			dev->driver = शून्य;
-			जाओ करोne;
-		पूर्ण
-		अगर (stat & INT_PWRDETECT) अणु
-			ग_लिखोl(~stat, &regs->पूर्णांक_status);
-			अगर (पढ़ोl(&dev->regs->घातer_detect) & PW_DETECT) अणु
+			// FIXME have a neater way to prevent re-enumeration
+			dev->driver = NULL;
+			goto done;
+		}
+		if (stat & INT_PWRDETECT) {
+			writel(~stat, &regs->int_status);
+			if (readl(&dev->regs->power_detect) & PW_DETECT) {
 				VDBG(dev, "connect\n");
 				ep0_start(dev);
-			पूर्ण अन्यथा अणु
+			} else {
 				DBG(dev, "disconnect\n");
-				अगर (dev->gadget.speed == USB_SPEED_FULL)
+				if (dev->gadget.speed == USB_SPEED_FULL)
 					stop_activity(dev);
 				dev->ep0state = EP0_DISCONNECT;
-				dev->पूर्णांक_enable = INT_DEVWIDE;
-				ग_लिखोl(dev->पूर्णांक_enable, &dev->regs->पूर्णांक_enable);
-			पूर्ण
+				dev->int_enable = INT_DEVWIDE;
+				writel(dev->int_enable, &dev->regs->int_enable);
+			}
 			stat = 0;
 			handled = 1;
-			जाओ करोne;
-		पूर्ण
-		अगर (stat & INT_SUSPEND) अणु
+			goto done;
+		}
+		if (stat & INT_SUSPEND) {
 			ACK(INT_SUSPEND);
-			अगर (पढ़ोl(&regs->ep_status[0]) & EPxSTATUS_SUSPEND) अणु
-				चयन (dev->ep0state) अणु
-				हाल EP0_DISCONNECT:
-				हाल EP0_SUSPEND:
-					जाओ pm_next;
-				शेष:
-					अवरोध;
-				पूर्ण
+			if (readl(&regs->ep_status[0]) & EPxSTATUS_SUSPEND) {
+				switch (dev->ep0state) {
+				case EP0_DISCONNECT:
+				case EP0_SUSPEND:
+					goto pm_next;
+				default:
+					break;
+				}
 				DBG(dev, "USB suspend\n");
 				dev->ep0state = EP0_SUSPEND;
-				अगर (dev->gadget.speed != USB_SPEED_UNKNOWN
+				if (dev->gadget.speed != USB_SPEED_UNKNOWN
 						&& dev->driver
-						&& dev->driver->suspend) अणु
+						&& dev->driver->suspend) {
 					spin_unlock(&dev->lock);
 					dev->driver->suspend(&dev->gadget);
 					spin_lock(&dev->lock);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (dev->ep0state != EP0_SUSPEND) अणु
+				}
+			} else {
+				if (dev->ep0state != EP0_SUSPEND) {
 					DBG(dev, "bogus USB resume %d\n",
 						dev->ep0state);
-					जाओ pm_next;
-				पूर्ण
+					goto pm_next;
+				}
 				DBG(dev, "USB resume\n");
 				dev->ep0state = EP0_IDLE;
-				अगर (dev->gadget.speed != USB_SPEED_UNKNOWN
+				if (dev->gadget.speed != USB_SPEED_UNKNOWN
 						&& dev->driver
-						&& dev->driver->resume) अणु
+						&& dev->driver->resume) {
 					spin_unlock(&dev->lock);
 					dev->driver->resume(&dev->gadget);
 					spin_lock(&dev->lock);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 pm_next:
-		अगर (stat & INT_USBRESET) अणु		/* hub reset करोne */
+		if (stat & INT_USBRESET) {		/* hub reset done */
 			ACK(INT_USBRESET);
 			INFO(dev, "USB reset done, gadget %s\n",
 				dev->driver->driver.name);
-		पूर्ण
-		// and INT_ERR on some endpoपूर्णांक's crc/bitstuff/... problem
-	पूर्ण
+		}
+		// and INT_ERR on some endpoint's crc/bitstuff/... problem
+	}
 
 	/* progress ep0 setup, data, or status stages.
-	 * no transition अणुEP0_STATUS, EP0_STALLपूर्ण --> EP0_IDLE; saves irqs
+	 * no transition {EP0_STATUS, EP0_STALL} --> EP0_IDLE; saves irqs
 	 */
-	अगर (stat & INT_SETUP) अणु
+	if (stat & INT_SETUP) {
 		ACK(INT_SETUP);
 		dev->ep[0].irqs++;
 		ep0_setup(dev);
-	पूर्ण
-        अगर (stat & INT_STATUSNAK) अणु
+	}
+        if (stat & INT_STATUSNAK) {
 		ACK(INT_STATUSNAK|INT_ENDPOINT0);
-		अगर (dev->ep0state == EP0_IN) अणु
+		if (dev->ep0state == EP0_IN) {
 			ep = &dev->ep[0];
 			ep->irqs++;
 			nuke(ep, 0);
-			ग_लिखोl(~(1<<0), &regs->EOP);
+			writel(~(1<<0), &regs->EOP);
 			dev->ep0state = EP0_STATUS;
-		पूर्ण
-	पूर्ण
-        अगर (stat & INT_ENDPOINT0) अणु
+		}
+	}
+        if (stat & INT_ENDPOINT0) {
 		ACK(INT_ENDPOINT0);
 		ep = &dev->ep[0];
 		ep->irqs++;
 		pio_advance(ep);
-        पूर्ण
+        }
 
 	/* dma completion */
-        अगर (stat & INT_MSTRDEND) अणु	/* IN */
+        if (stat & INT_MSTRDEND) {	/* IN */
 		ACK(INT_MSTRDEND);
 		ep = &dev->ep[UDC_MSTRD_ENDPOINT];
 		ep->irqs++;
 		dma_advance(dev, ep);
-        पूर्ण
-        अगर (stat & INT_MSTWREND) अणु	/* OUT */
+        }
+        if (stat & INT_MSTWREND) {	/* OUT */
 		ACK(INT_MSTWREND);
 		ep = &dev->ep[UDC_MSTWR_ENDPOINT];
 		ep->irqs++;
 		dma_advance(dev, ep);
-        पूर्ण
-        अगर (stat & INT_MSTWRTMOUT) अणु	/* OUT */
+        }
+        if (stat & INT_MSTWRTMOUT) {	/* OUT */
 		ACK(INT_MSTWRTMOUT);
 		ep = &dev->ep[UDC_MSTWR_ENDPOINT];
 		ep->irqs++;
 		ERROR(dev, "%s write timeout ?\n", ep->ep.name);
 		// reset dma? then dma_advance()
-        पूर्ण
+        }
 
 	/* pio */
-	क्रम (i = 1; i < 4; i++) अणु
-		u32		पंचांगp = INT_EPxDATASET(i);
+	for (i = 1; i < 4; i++) {
+		u32		tmp = INT_EPxDATASET(i);
 
-		अगर (!(stat & पंचांगp))
-			जारी;
+		if (!(stat & tmp))
+			continue;
 		ep = &dev->ep[i];
 		pio_advance(ep);
-		अगर (list_empty (&ep->queue))
+		if (list_empty (&ep->queue))
 			pio_irq_disable(dev, regs, i);
-		stat &= ~पंचांगp;
+		stat &= ~tmp;
 		handled = 1;
 		ep->irqs++;
-	पूर्ण
+	}
 
-	अगर (rescans--)
-		जाओ rescan;
+	if (rescans--)
+		goto rescan;
 
-करोne:
-	(व्योम)पढ़ोl(&regs->पूर्णांक_enable);
+done:
+	(void)readl(&regs->int_enable);
 	spin_unlock(&dev->lock);
-	अगर (stat)
+	if (stat)
 		DBG(dev, "unhandled irq status: %05x (%05x, %05x)\n", stat,
-				पढ़ोl(&regs->पूर्णांक_status), dev->पूर्णांक_enable);
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+				readl(&regs->int_status), dev->int_enable);
+	return IRQ_RETVAL(handled);
+}
 
-#अघोषित ACK
+#undef ACK
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम gadget_release(काष्ठा device *_dev)
-अणु
-	काष्ठा goku_udc	*dev = dev_get_drvdata(_dev);
+static void gadget_release(struct device *_dev)
+{
+	struct goku_udc	*dev = dev_get_drvdata(_dev);
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-/* tear करोwn the binding between this driver and the pci device */
+/* tear down the binding between this driver and the pci device */
 
-अटल व्योम goku_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा goku_udc		*dev = pci_get_drvdata(pdev);
+static void goku_remove(struct pci_dev *pdev)
+{
+	struct goku_udc		*dev = pci_get_drvdata(pdev);
 
 	DBG(dev, "%s\n", __func__);
 
@@ -1717,49 +1716,49 @@ pm_next:
 
 	BUG_ON(dev->driver);
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
-	हटाओ_proc_entry(proc_node_name, शून्य);
-#पूर्ण_अगर
-	अगर (dev->regs)
+#ifdef CONFIG_USB_GADGET_DEBUG_FILES
+	remove_proc_entry(proc_node_name, NULL);
+#endif
+	if (dev->regs)
 		udc_reset(dev);
-	अगर (dev->got_irq)
-		मुक्त_irq(pdev->irq, dev);
-	अगर (dev->regs)
+	if (dev->got_irq)
+		free_irq(pdev->irq, dev);
+	if (dev->regs)
 		iounmap(dev->regs);
-	अगर (dev->got_region)
+	if (dev->got_region)
 		release_mem_region(pci_resource_start (pdev, 0),
 				pci_resource_len (pdev, 0));
-	अगर (dev->enabled)
+	if (dev->enabled)
 		pci_disable_device(pdev);
 
-	dev->regs = शून्य;
+	dev->regs = NULL;
 
 	INFO(dev, "unbind\n");
-पूर्ण
+}
 
-/* wrap this driver around the specअगरied pci device, but
- * करोn't respond over USB until a gadget driver binds to us.
+/* wrap this driver around the specified pci device, but
+ * don't respond over USB until a gadget driver binds to us.
  */
 
-अटल पूर्णांक goku_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा goku_udc		*dev = शून्य;
-	अचिन्हित दीर्घ		resource, len;
-	व्योम __iomem		*base = शून्य;
-	पूर्णांक			retval;
+static int goku_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	struct goku_udc		*dev = NULL;
+	unsigned long		resource, len;
+	void __iomem		*base = NULL;
+	int			retval;
 
-	अगर (!pdev->irq) अणु
-		prपूर्णांकk(KERN_ERR "Check PCI %s IRQ setup!\n", pci_name(pdev));
+	if (!pdev->irq) {
+		printk(KERN_ERR "Check PCI %s IRQ setup!\n", pci_name(pdev));
 		retval = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* alloc, and start init */
-	dev = kzalloc (माप *dev, GFP_KERNEL);
-	अगर (!dev) अणु
+	dev = kzalloc (sizeof *dev, GFP_KERNEL);
+	if (!dev) {
 		retval = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	pci_set_drvdata(pdev, dev);
 	spin_lock_init(&dev->lock);
@@ -1767,33 +1766,33 @@ pm_next:
 	dev->gadget.ops = &goku_ops;
 	dev->gadget.max_speed = USB_SPEED_FULL;
 
-	/* the "gadget" असलtracts/भवizes the controller */
+	/* the "gadget" abstracts/virtualizes the controller */
 	dev->gadget.name = driver_name;
 
 	/* now all the pci goodies ... */
 	retval = pci_enable_device(pdev);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		DBG(dev, "can't enable, %d\n", retval);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dev->enabled = 1;
 
 	resource = pci_resource_start(pdev, 0);
 	len = pci_resource_len(pdev, 0);
-	अगर (!request_mem_region(resource, len, driver_name)) अणु
+	if (!request_mem_region(resource, len, driver_name)) {
 		DBG(dev, "controller already in use\n");
 		retval = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dev->got_region = 1;
 
 	base = ioremap(resource, len);
-	अगर (base == शून्य) अणु
+	if (base == NULL) {
 		DBG(dev, "can't map memory\n");
 		retval = -EFAULT;
-		जाओ err;
-	पूर्ण
-	dev->regs = (काष्ठा goku_udc_regs __iomem *) base;
+		goto err;
+	}
+	dev->regs = (struct goku_udc_regs __iomem *) base;
 
 	INFO(dev, "%s\n", driver_desc);
 	INFO(dev, "version: " DRIVER_VERSION " %s\n", dmastr());
@@ -1802,59 +1801,59 @@ pm_next:
 	/* init to known state, then setup irqs */
 	udc_reset(dev);
 	udc_reinit (dev);
-	अगर (request_irq(pdev->irq, goku_irq, IRQF_SHARED,
-			driver_name, dev) != 0) अणु
+	if (request_irq(pdev->irq, goku_irq, IRQF_SHARED,
+			driver_name, dev) != 0) {
 		DBG(dev, "request interrupt %d failed\n", pdev->irq);
 		retval = -EBUSY;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dev->got_irq = 1;
-	अगर (use_dma)
+	if (use_dma)
 		pci_set_master(pdev);
 
 
-#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
-	proc_create_single_data(proc_node_name, 0, शून्य, udc_proc_पढ़ो, dev);
-#पूर्ण_अगर
+#ifdef CONFIG_USB_GADGET_DEBUG_FILES
+	proc_create_single_data(proc_node_name, 0, NULL, udc_proc_read, dev);
+#endif
 
 	retval = usb_add_gadget_udc_release(&pdev->dev, &dev->gadget,
 			gadget_release);
-	अगर (retval)
-		जाओ err;
+	if (retval)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
-	अगर (dev)
-		goku_हटाओ (pdev);
-	/* gadget_release is not रेजिस्टरed yet, kमुक्त explicitly */
-	kमुक्त(dev);
-	वापस retval;
-पूर्ण
+	if (dev)
+		goku_remove (pdev);
+	/* gadget_release is not registered yet, kfree explicitly */
+	kfree(dev);
+	return retval;
+}
 
 
 /*-------------------------------------------------------------------------*/
 
-अटल स्थिर काष्ठा pci_device_id pci_ids[] = अणु अणु
+static const struct pci_device_id pci_ids[] = { {
 	.class =	PCI_CLASS_SERIAL_USB_DEVICE,
 	.class_mask =	~0,
-	.venकरोr =	0x102f,		/* Toshiba */
+	.vendor =	0x102f,		/* Toshiba */
 	.device =	0x0107,		/* this UDC */
-	.subvenकरोr =	PCI_ANY_ID,
+	.subvendor =	PCI_ANY_ID,
 	.subdevice =	PCI_ANY_ID,
 
-पूर्ण, अणु /* end: all zeroes */ पूर्ण
-पूर्ण;
+}, { /* end: all zeroes */ }
+};
 MODULE_DEVICE_TABLE (pci, pci_ids);
 
-अटल काष्ठा pci_driver goku_pci_driver = अणु
+static struct pci_driver goku_pci_driver = {
 	.name =		driver_name,
 	.id_table =	pci_ids,
 
 	.probe =	goku_probe,
-	.हटाओ =	goku_हटाओ,
+	.remove =	goku_remove,
 
-	/* FIXME add घातer management support */
-पूर्ण;
+	/* FIXME add power management support */
+};
 
 module_pci_driver(goku_pci_driver);

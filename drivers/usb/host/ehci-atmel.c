@@ -1,248 +1,247 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम EHCI UHP on Aपंचांगel chips
+ * Driver for EHCI UHP on Atmel chips
  *
- *  Copyright (C) 2009 Aपंचांगel Corporation,
- *                     Nicolas Ferre <nicolas.ferre@aपंचांगel.com>
+ *  Copyright (C) 2009 Atmel Corporation,
+ *                     Nicolas Ferre <nicolas.ferre@atmel.com>
  *
  *  Based on various ehci-*.c drivers
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/hcd.h>
+#include <linux/clk.h>
+#include <linux/dma-mapping.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/usb.h>
+#include <linux/usb/hcd.h>
 
-#समावेश "ehci.h"
+#include "ehci.h"
 
-#घोषणा DRIVER_DESC "EHCI Atmel driver"
+#define DRIVER_DESC "EHCI Atmel driver"
 
-अटल स्थिर अक्षर hcd_name[] = "ehci-atmel";
+static const char hcd_name[] = "ehci-atmel";
 
-/* पूर्णांकerface and function घड़ीs */
-#घोषणा hcd_to_aपंचांगel_ehci_priv(h) \
-	((काष्ठा aपंचांगel_ehci_priv *)hcd_to_ehci(h)->priv)
+/* interface and function clocks */
+#define hcd_to_atmel_ehci_priv(h) \
+	((struct atmel_ehci_priv *)hcd_to_ehci(h)->priv)
 
-काष्ठा aपंचांगel_ehci_priv अणु
-	काष्ठा clk *iclk;
-	काष्ठा clk *uclk;
-	bool घड़ीed;
-पूर्ण;
+struct atmel_ehci_priv {
+	struct clk *iclk;
+	struct clk *uclk;
+	bool clocked;
+};
 
-अटल काष्ठा hc_driver __पढ़ो_mostly ehci_aपंचांगel_hc_driver;
+static struct hc_driver __read_mostly ehci_atmel_hc_driver;
 
-अटल स्थिर काष्ठा ehci_driver_overrides ehci_aपंचांगel_drv_overrides __initस्थिर = अणु
-	.extra_priv_size = माप(काष्ठा aपंचांगel_ehci_priv),
-पूर्ण;
+static const struct ehci_driver_overrides ehci_atmel_drv_overrides __initconst = {
+	.extra_priv_size = sizeof(struct atmel_ehci_priv),
+};
 
 /*-------------------------------------------------------------------------*/
 
-अटल व्योम aपंचांगel_start_घड़ी(काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci)
-अणु
-	अगर (aपंचांगel_ehci->घड़ीed)
-		वापस;
+static void atmel_start_clock(struct atmel_ehci_priv *atmel_ehci)
+{
+	if (atmel_ehci->clocked)
+		return;
 
-	clk_prepare_enable(aपंचांगel_ehci->uclk);
-	clk_prepare_enable(aपंचांगel_ehci->iclk);
-	aपंचांगel_ehci->घड़ीed = true;
-पूर्ण
+	clk_prepare_enable(atmel_ehci->uclk);
+	clk_prepare_enable(atmel_ehci->iclk);
+	atmel_ehci->clocked = true;
+}
 
-अटल व्योम aपंचांगel_stop_घड़ी(काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci)
-अणु
-	अगर (!aपंचांगel_ehci->घड़ीed)
-		वापस;
+static void atmel_stop_clock(struct atmel_ehci_priv *atmel_ehci)
+{
+	if (!atmel_ehci->clocked)
+		return;
 
-	clk_disable_unprepare(aपंचांगel_ehci->iclk);
-	clk_disable_unprepare(aपंचांगel_ehci->uclk);
-	aपंचांगel_ehci->घड़ीed = false;
-पूर्ण
+	clk_disable_unprepare(atmel_ehci->iclk);
+	clk_disable_unprepare(atmel_ehci->uclk);
+	atmel_ehci->clocked = false;
+}
 
-अटल व्योम aपंचांगel_start_ehci(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
-	काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci = hcd_to_aपंचांगel_ehci_priv(hcd);
+static void atmel_start_ehci(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
+	struct atmel_ehci_priv *atmel_ehci = hcd_to_atmel_ehci_priv(hcd);
 
 	dev_dbg(&pdev->dev, "start\n");
-	aपंचांगel_start_घड़ी(aपंचांगel_ehci);
-पूर्ण
+	atmel_start_clock(atmel_ehci);
+}
 
-अटल व्योम aपंचांगel_stop_ehci(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
-	काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci = hcd_to_aपंचांगel_ehci_priv(hcd);
+static void atmel_stop_ehci(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
+	struct atmel_ehci_priv *atmel_ehci = hcd_to_atmel_ehci_priv(hcd);
 
 	dev_dbg(&pdev->dev, "stop\n");
-	aपंचांगel_stop_घड़ी(aपंचांगel_ehci);
-पूर्ण
+	atmel_stop_clock(atmel_ehci);
+}
 
 /*-------------------------------------------------------------------------*/
 
-अटल पूर्णांक ehci_aपंचांगel_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd;
-	स्थिर काष्ठा hc_driver *driver = &ehci_aपंचांगel_hc_driver;
-	काष्ठा resource *res;
-	काष्ठा ehci_hcd *ehci;
-	काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci;
-	पूर्णांक irq;
-	पूर्णांक retval;
+static int ehci_atmel_drv_probe(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd;
+	const struct hc_driver *driver = &ehci_atmel_hc_driver;
+	struct resource *res;
+	struct ehci_hcd *ehci;
+	struct atmel_ehci_priv *atmel_ehci;
+	int irq;
+	int retval;
 
-	अगर (usb_disabled())
-		वापस -ENODEV;
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_debug("Initializing Atmel-SoC USB Host Controller\n");
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0) {
 		retval = -ENODEV;
-		जाओ fail_create_hcd;
-	पूर्ण
+		goto fail_create_hcd;
+	}
 
-	/* Right now device-tree probed devices करोn't get dma_mask set.
-	 * Since shared usb code relies on it, set it here क्रम now.
+	/* Right now device-tree probed devices don't get dma_mask set.
+	 * Since shared usb code relies on it, set it here for now.
 	 * Once we have dma capability bindings this can go away.
 	 */
 	retval = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	अगर (retval)
-		जाओ fail_create_hcd;
+	if (retval)
+		goto fail_create_hcd;
 
 	hcd = usb_create_hcd(driver, &pdev->dev, dev_name(&pdev->dev));
-	अगर (!hcd) अणु
+	if (!hcd) {
 		retval = -ENOMEM;
-		जाओ fail_create_hcd;
-	पूर्ण
-	aपंचांगel_ehci = hcd_to_aपंचांगel_ehci_priv(hcd);
+		goto fail_create_hcd;
+	}
+	atmel_ehci = hcd_to_atmel_ehci_priv(hcd);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(hcd->regs)) अणु
+	if (IS_ERR(hcd->regs)) {
 		retval = PTR_ERR(hcd->regs);
-		जाओ fail_request_resource;
-	पूर्ण
+		goto fail_request_resource;
+	}
 
 	hcd->rsrc_start = res->start;
 	hcd->rsrc_len = resource_size(res);
 
-	aपंचांगel_ehci->iclk = devm_clk_get(&pdev->dev, "ehci_clk");
-	अगर (IS_ERR(aपंचांगel_ehci->iclk)) अणु
+	atmel_ehci->iclk = devm_clk_get(&pdev->dev, "ehci_clk");
+	if (IS_ERR(atmel_ehci->iclk)) {
 		dev_err(&pdev->dev, "Error getting interface clock\n");
 		retval = -ENOENT;
-		जाओ fail_request_resource;
-	पूर्ण
+		goto fail_request_resource;
+	}
 
-	aपंचांगel_ehci->uclk = devm_clk_get(&pdev->dev, "usb_clk");
-	अगर (IS_ERR(aपंचांगel_ehci->uclk)) अणु
+	atmel_ehci->uclk = devm_clk_get(&pdev->dev, "usb_clk");
+	if (IS_ERR(atmel_ehci->uclk)) {
 		dev_err(&pdev->dev, "failed to get uclk\n");
-		retval = PTR_ERR(aपंचांगel_ehci->uclk);
-		जाओ fail_request_resource;
-	पूर्ण
+		retval = PTR_ERR(atmel_ehci->uclk);
+		goto fail_request_resource;
+	}
 
 	ehci = hcd_to_ehci(hcd);
-	/* रेजिस्टरs start at offset 0x0 */
+	/* registers start at offset 0x0 */
 	ehci->caps = hcd->regs;
 
-	aपंचांगel_start_ehci(pdev);
+	atmel_start_ehci(pdev);
 
 	retval = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	अगर (retval)
-		जाओ fail_add_hcd;
+	if (retval)
+		goto fail_add_hcd;
 	device_wakeup_enable(hcd->self.controller);
 
-	वापस retval;
+	return retval;
 
 fail_add_hcd:
-	aपंचांगel_stop_ehci(pdev);
+	atmel_stop_ehci(pdev);
 fail_request_resource:
 	usb_put_hcd(hcd);
 fail_create_hcd:
 	dev_err(&pdev->dev, "init %s fail, %d\n",
 		dev_name(&pdev->dev), retval);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक ehci_aपंचांगel_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(pdev);
+static int ehci_atmel_drv_remove(struct platform_device *pdev)
+{
+	struct usb_hcd *hcd = platform_get_drvdata(pdev);
 
-	usb_हटाओ_hcd(hcd);
+	usb_remove_hcd(hcd);
 	usb_put_hcd(hcd);
 
-	aपंचांगel_stop_ehci(pdev);
+	atmel_stop_ehci(pdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused ehci_aपंचांगel_drv_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci = hcd_to_aपंचांगel_ehci_priv(hcd);
-	पूर्णांक ret;
+static int __maybe_unused ehci_atmel_drv_suspend(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct atmel_ehci_priv *atmel_ehci = hcd_to_atmel_ehci_priv(hcd);
+	int ret;
 
 	ret = ehci_suspend(hcd, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	aपंचांगel_stop_घड़ी(aपंचांगel_ehci);
-	वापस 0;
-पूर्ण
+	atmel_stop_clock(atmel_ehci);
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused ehci_aपंचांगel_drv_resume(काष्ठा device *dev)
-अणु
-	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
-	काष्ठा aपंचांगel_ehci_priv *aपंचांगel_ehci = hcd_to_aपंचांगel_ehci_priv(hcd);
+static int __maybe_unused ehci_atmel_drv_resume(struct device *dev)
+{
+	struct usb_hcd *hcd = dev_get_drvdata(dev);
+	struct atmel_ehci_priv *atmel_ehci = hcd_to_atmel_ehci_priv(hcd);
 
-	aपंचांगel_start_घड़ी(aपंचांगel_ehci);
+	atmel_start_clock(atmel_ehci);
 	ehci_resume(hcd, false);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id aपंचांगel_ehci_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91sam9g45-ehci" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id atmel_ehci_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9g45-ehci" },
+	{ /* sentinel */ }
+};
 
-MODULE_DEVICE_TABLE(of, aपंचांगel_ehci_dt_ids);
-#पूर्ण_अगर
+MODULE_DEVICE_TABLE(of, atmel_ehci_dt_ids);
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(ehci_aपंचांगel_pm_ops, ehci_aपंचांगel_drv_suspend,
-					ehci_aपंचांगel_drv_resume);
+static SIMPLE_DEV_PM_OPS(ehci_atmel_pm_ops, ehci_atmel_drv_suspend,
+					ehci_atmel_drv_resume);
 
-अटल काष्ठा platक्रमm_driver ehci_aपंचांगel_driver = अणु
-	.probe		= ehci_aपंचांगel_drv_probe,
-	.हटाओ		= ehci_aपंचांगel_drv_हटाओ,
-	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
-	.driver		= अणु
+static struct platform_driver ehci_atmel_driver = {
+	.probe		= ehci_atmel_drv_probe,
+	.remove		= ehci_atmel_drv_remove,
+	.shutdown	= usb_hcd_platform_shutdown,
+	.driver		= {
 		.name	= "atmel-ehci",
-		.pm	= &ehci_aपंचांगel_pm_ops,
-		.of_match_table	= of_match_ptr(aपंचांगel_ehci_dt_ids),
-	पूर्ण,
-पूर्ण;
+		.pm	= &ehci_atmel_pm_ops,
+		.of_match_table	= of_match_ptr(atmel_ehci_dt_ids),
+	},
+};
 
-अटल पूर्णांक __init ehci_aपंचांगel_init(व्योम)
-अणु
-	अगर (usb_disabled())
-		वापस -ENODEV;
+static int __init ehci_atmel_init(void)
+{
+	if (usb_disabled())
+		return -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
-	ehci_init_driver(&ehci_aपंचांगel_hc_driver, &ehci_aपंचांगel_drv_overrides);
-	वापस platक्रमm_driver_रेजिस्टर(&ehci_aपंचांगel_driver);
-पूर्ण
-module_init(ehci_aपंचांगel_init);
+	ehci_init_driver(&ehci_atmel_hc_driver, &ehci_atmel_drv_overrides);
+	return platform_driver_register(&ehci_atmel_driver);
+}
+module_init(ehci_atmel_init);
 
-अटल व्योम __निकास ehci_aपंचांगel_cleanup(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ehci_aपंचांगel_driver);
-पूर्ण
-module_निकास(ehci_aपंचांगel_cleanup);
+static void __exit ehci_atmel_cleanup(void)
+{
+	platform_driver_unregister(&ehci_atmel_driver);
+}
+module_exit(ehci_atmel_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_ALIAS("platform:atmel-ehci");

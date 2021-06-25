@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Interconnect framework core driver
  *
@@ -7,162 +6,162 @@
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/device.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerconnect.h>
-#समावेश <linux/पूर्णांकerconnect-provider.h>
-#समावेश <linux/list.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/overflow.h>
+#include <linux/debugfs.h>
+#include <linux/device.h>
+#include <linux/idr.h>
+#include <linux/init.h>
+#include <linux/interconnect.h>
+#include <linux/interconnect-provider.h>
+#include <linux/list.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/overflow.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
-अटल DEFINE_IDR(icc_idr);
-अटल LIST_HEAD(icc_providers);
-अटल पूर्णांक providers_count;
-अटल bool synced_state;
-अटल DEFINE_MUTEX(icc_lock);
-अटल काष्ठा dentry *icc_debugfs_dir;
+static DEFINE_IDR(icc_idr);
+static LIST_HEAD(icc_providers);
+static int providers_count;
+static bool synced_state;
+static DEFINE_MUTEX(icc_lock);
+static struct dentry *icc_debugfs_dir;
 
-अटल व्योम icc_summary_show_one(काष्ठा seq_file *s, काष्ठा icc_node *n)
-अणु
-	अगर (!n)
-		वापस;
+static void icc_summary_show_one(struct seq_file *s, struct icc_node *n)
+{
+	if (!n)
+		return;
 
-	seq_म_लिखो(s, "%-42s %12u %12u\n",
+	seq_printf(s, "%-42s %12u %12u\n",
 		   n->name, n->avg_bw, n->peak_bw);
-पूर्ण
+}
 
-अटल पूर्णांक icc_summary_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा icc_provider *provider;
+static int icc_summary_show(struct seq_file *s, void *data)
+{
+	struct icc_provider *provider;
 
-	seq_माला_दो(s, " node                                  tag          avg         peak\n");
-	seq_माला_दो(s, "--------------------------------------------------------------------\n");
+	seq_puts(s, " node                                  tag          avg         peak\n");
+	seq_puts(s, "--------------------------------------------------------------------\n");
 
 	mutex_lock(&icc_lock);
 
-	list_क्रम_each_entry(provider, &icc_providers, provider_list) अणु
-		काष्ठा icc_node *n;
+	list_for_each_entry(provider, &icc_providers, provider_list) {
+		struct icc_node *n;
 
-		list_क्रम_each_entry(n, &provider->nodes, node_list) अणु
-			काष्ठा icc_req *r;
+		list_for_each_entry(n, &provider->nodes, node_list) {
+			struct icc_req *r;
 
 			icc_summary_show_one(s, n);
-			hlist_क्रम_each_entry(r, &n->req_list, req_node) अणु
+			hlist_for_each_entry(r, &n->req_list, req_node) {
 				u32 avg_bw = 0, peak_bw = 0;
 
-				अगर (!r->dev)
-					जारी;
+				if (!r->dev)
+					continue;
 
-				अगर (r->enabled) अणु
+				if (r->enabled) {
 					avg_bw = r->avg_bw;
 					peak_bw = r->peak_bw;
-				पूर्ण
+				}
 
-				seq_म_लिखो(s, "  %-27s %12u %12u %12u\n",
+				seq_printf(s, "  %-27s %12u %12u %12u\n",
 					   dev_name(r->dev), r->tag, avg_bw, peak_bw);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	mutex_unlock(&icc_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(icc_summary);
 
-अटल व्योम icc_graph_show_link(काष्ठा seq_file *s, पूर्णांक level,
-				काष्ठा icc_node *n, काष्ठा icc_node *m)
-अणु
-	seq_म_लिखो(s, "%s\"%d:%s\" -> \"%d:%s\"\n",
+static void icc_graph_show_link(struct seq_file *s, int level,
+				struct icc_node *n, struct icc_node *m)
+{
+	seq_printf(s, "%s\"%d:%s\" -> \"%d:%s\"\n",
 		   level == 2 ? "\t\t" : "\t",
 		   n->id, n->name, m->id, m->name);
-पूर्ण
+}
 
-अटल व्योम icc_graph_show_node(काष्ठा seq_file *s, काष्ठा icc_node *n)
-अणु
-	seq_म_लिखो(s, "\t\t\"%d:%s\" [label=\"%d:%s",
+static void icc_graph_show_node(struct seq_file *s, struct icc_node *n)
+{
+	seq_printf(s, "\t\t\"%d:%s\" [label=\"%d:%s",
 		   n->id, n->name, n->id, n->name);
-	seq_म_लिखो(s, "\n\t\t\t|avg_bw=%ukBps", n->avg_bw);
-	seq_म_लिखो(s, "\n\t\t\t|peak_bw=%ukBps", n->peak_bw);
-	seq_माला_दो(s, "\"]\n");
-पूर्ण
+	seq_printf(s, "\n\t\t\t|avg_bw=%ukBps", n->avg_bw);
+	seq_printf(s, "\n\t\t\t|peak_bw=%ukBps", n->peak_bw);
+	seq_puts(s, "\"]\n");
+}
 
-अटल पूर्णांक icc_graph_show(काष्ठा seq_file *s, व्योम *data)
-अणु
-	काष्ठा icc_provider *provider;
-	काष्ठा icc_node *n;
-	पूर्णांक cluster_index = 0;
-	पूर्णांक i;
+static int icc_graph_show(struct seq_file *s, void *data)
+{
+	struct icc_provider *provider;
+	struct icc_node *n;
+	int cluster_index = 0;
+	int i;
 
-	seq_माला_दो(s, "digraph {\n\trankdir = LR\n\tnode [shape = record]\n");
+	seq_puts(s, "digraph {\n\trankdir = LR\n\tnode [shape = record]\n");
 	mutex_lock(&icc_lock);
 
 	/* draw providers as cluster subgraphs */
 	cluster_index = 0;
-	list_क्रम_each_entry(provider, &icc_providers, provider_list) अणु
-		seq_म_लिखो(s, "\tsubgraph cluster_%d {\n", ++cluster_index);
-		अगर (provider->dev)
-			seq_म_लिखो(s, "\t\tlabel = \"%s\"\n",
+	list_for_each_entry(provider, &icc_providers, provider_list) {
+		seq_printf(s, "\tsubgraph cluster_%d {\n", ++cluster_index);
+		if (provider->dev)
+			seq_printf(s, "\t\tlabel = \"%s\"\n",
 				   dev_name(provider->dev));
 
 		/* draw nodes */
-		list_क्रम_each_entry(n, &provider->nodes, node_list)
+		list_for_each_entry(n, &provider->nodes, node_list)
 			icc_graph_show_node(s, n);
 
-		/* draw पूर्णांकernal links */
-		list_क्रम_each_entry(n, &provider->nodes, node_list)
-			क्रम (i = 0; i < n->num_links; ++i)
-				अगर (n->provider == n->links[i]->provider)
+		/* draw internal links */
+		list_for_each_entry(n, &provider->nodes, node_list)
+			for (i = 0; i < n->num_links; ++i)
+				if (n->provider == n->links[i]->provider)
 					icc_graph_show_link(s, 2, n,
 							    n->links[i]);
 
-		seq_माला_दो(s, "\t}\n");
-	पूर्ण
+		seq_puts(s, "\t}\n");
+	}
 
-	/* draw बाह्यal links */
-	list_क्रम_each_entry(provider, &icc_providers, provider_list)
-		list_क्रम_each_entry(n, &provider->nodes, node_list)
-			क्रम (i = 0; i < n->num_links; ++i)
-				अगर (n->provider != n->links[i]->provider)
+	/* draw external links */
+	list_for_each_entry(provider, &icc_providers, provider_list)
+		list_for_each_entry(n, &provider->nodes, node_list)
+			for (i = 0; i < n->num_links; ++i)
+				if (n->provider != n->links[i]->provider)
 					icc_graph_show_link(s, 1, n,
 							    n->links[i]);
 
 	mutex_unlock(&icc_lock);
-	seq_माला_दो(s, "}");
+	seq_puts(s, "}");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(icc_graph);
 
-अटल काष्ठा icc_node *node_find(स्थिर पूर्णांक id)
-अणु
-	वापस idr_find(&icc_idr, id);
-पूर्ण
+static struct icc_node *node_find(const int id)
+{
+	return idr_find(&icc_idr, id);
+}
 
-अटल काष्ठा icc_path *path_init(काष्ठा device *dev, काष्ठा icc_node *dst,
-				  sमाप_प्रकार num_nodes)
-अणु
-	काष्ठा icc_node *node = dst;
-	काष्ठा icc_path *path;
-	पूर्णांक i;
+static struct icc_path *path_init(struct device *dev, struct icc_node *dst,
+				  ssize_t num_nodes)
+{
+	struct icc_node *node = dst;
+	struct icc_path *path;
+	int i;
 
-	path = kzalloc(काष्ठा_size(path, reqs, num_nodes), GFP_KERNEL);
-	अगर (!path)
-		वापस ERR_PTR(-ENOMEM);
+	path = kzalloc(struct_size(path, reqs, num_nodes), GFP_KERNEL);
+	if (!path)
+		return ERR_PTR(-ENOMEM);
 
 	path->num_nodes = num_nodes;
 
-	क्रम (i = num_nodes - 1; i >= 0; i--) अणु
+	for (i = num_nodes - 1; i >= 0; i--) {
 		node->provider->users++;
 		hlist_add_head(&path->reqs[i].req_node, &node->req_list);
 		path->reqs[i].node = node;
@@ -170,20 +169,20 @@ DEFINE_SHOW_ATTRIBUTE(icc_graph);
 		path->reqs[i].enabled = true;
 		/* reference to previous node was saved during path traversal */
 		node = node->reverse;
-	पूर्ण
+	}
 
-	वापस path;
-पूर्ण
+	return path;
+}
 
-अटल काष्ठा icc_path *path_find(काष्ठा device *dev, काष्ठा icc_node *src,
-				  काष्ठा icc_node *dst)
-अणु
-	काष्ठा icc_path *path = ERR_PTR(-EPROBE_DEFER);
-	काष्ठा icc_node *n, *node = शून्य;
-	काष्ठा list_head traverse_list;
-	काष्ठा list_head edge_list;
-	काष्ठा list_head visited_list;
-	माप_प्रकार i, depth = 1;
+static struct icc_path *path_find(struct device *dev, struct icc_node *src,
+				  struct icc_node *dst)
+{
+	struct icc_path *path = ERR_PTR(-EPROBE_DEFER);
+	struct icc_node *n, *node = NULL;
+	struct list_head traverse_list;
+	struct list_head edge_list;
+	struct list_head visited_list;
+	size_t i, depth = 1;
 	bool found = false;
 
 	INIT_LIST_HEAD(&traverse_list);
@@ -191,35 +190,35 @@ DEFINE_SHOW_ATTRIBUTE(icc_graph);
 	INIT_LIST_HEAD(&visited_list);
 
 	list_add(&src->search_list, &traverse_list);
-	src->reverse = शून्य;
+	src->reverse = NULL;
 
-	करो अणु
-		list_क्रम_each_entry_safe(node, n, &traverse_list, search_list) अणु
-			अगर (node == dst) अणु
+	do {
+		list_for_each_entry_safe(node, n, &traverse_list, search_list) {
+			if (node == dst) {
 				found = true;
 				list_splice_init(&edge_list, &visited_list);
 				list_splice_init(&traverse_list, &visited_list);
-				अवरोध;
-			पूर्ण
-			क्रम (i = 0; i < node->num_links; i++) अणु
-				काष्ठा icc_node *पंचांगp = node->links[i];
+				break;
+			}
+			for (i = 0; i < node->num_links; i++) {
+				struct icc_node *tmp = node->links[i];
 
-				अगर (!पंचांगp) अणु
+				if (!tmp) {
 					path = ERR_PTR(-ENOENT);
-					जाओ out;
-				पूर्ण
+					goto out;
+				}
 
-				अगर (पंचांगp->is_traversed)
-					जारी;
+				if (tmp->is_traversed)
+					continue;
 
-				पंचांगp->is_traversed = true;
-				पंचांगp->reverse = node;
-				list_add_tail(&पंचांगp->search_list, &edge_list);
-			पूर्ण
-		पूर्ण
+				tmp->is_traversed = true;
+				tmp->reverse = node;
+				list_add_tail(&tmp->search_list, &edge_list);
+			}
+		}
 
-		अगर (found)
-			अवरोध;
+		if (found)
+			break;
 
 		list_splice_init(&traverse_list, &visited_list);
 		list_splice_init(&edge_list, &traverse_list);
@@ -227,340 +226,340 @@ DEFINE_SHOW_ATTRIBUTE(icc_graph);
 		/* count the hops including the source */
 		depth++;
 
-	पूर्ण जबतक (!list_empty(&traverse_list));
+	} while (!list_empty(&traverse_list));
 
 out:
 
 	/* reset the traversed state */
-	list_क्रम_each_entry_reverse(n, &visited_list, search_list)
+	list_for_each_entry_reverse(n, &visited_list, search_list)
 		n->is_traversed = false;
 
-	अगर (found)
+	if (found)
 		path = path_init(dev, dst, depth);
 
-	वापस path;
-पूर्ण
+	return path;
+}
 
 /*
  * We want the path to honor all bandwidth requests, so the average and peak
  * bandwidth requirements from each consumer are aggregated at each node.
- * The aggregation is platक्रमm specअगरic, so each platक्रमm can customize it by
+ * The aggregation is platform specific, so each platform can customize it by
  * implementing its own aggregate() function.
  */
 
-अटल पूर्णांक aggregate_requests(काष्ठा icc_node *node)
-अणु
-	काष्ठा icc_provider *p = node->provider;
-	काष्ठा icc_req *r;
+static int aggregate_requests(struct icc_node *node)
+{
+	struct icc_provider *p = node->provider;
+	struct icc_req *r;
 	u32 avg_bw, peak_bw;
 
 	node->avg_bw = 0;
 	node->peak_bw = 0;
 
-	अगर (p->pre_aggregate)
+	if (p->pre_aggregate)
 		p->pre_aggregate(node);
 
-	hlist_क्रम_each_entry(r, &node->req_list, req_node) अणु
-		अगर (r->enabled) अणु
+	hlist_for_each_entry(r, &node->req_list, req_node) {
+		if (r->enabled) {
 			avg_bw = r->avg_bw;
 			peak_bw = r->peak_bw;
-		पूर्ण अन्यथा अणु
+		} else {
 			avg_bw = 0;
 			peak_bw = 0;
-		पूर्ण
+		}
 		p->aggregate(node, r->tag, avg_bw, peak_bw,
 			     &node->avg_bw, &node->peak_bw);
 
-		/* during boot use the initial bandwidth as a न्यूनमान value */
-		अगर (!synced_state) अणु
+		/* during boot use the initial bandwidth as a floor value */
+		if (!synced_state) {
 			node->avg_bw = max(node->avg_bw, node->init_avg);
 			node->peak_bw = max(node->peak_bw, node->init_peak);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apply_स्थिरraपूर्णांकs(काष्ठा icc_path *path)
-अणु
-	काष्ठा icc_node *next, *prev = शून्य;
-	काष्ठा icc_provider *p;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक i;
+static int apply_constraints(struct icc_path *path)
+{
+	struct icc_node *next, *prev = NULL;
+	struct icc_provider *p;
+	int ret = -EINVAL;
+	int i;
 
-	क्रम (i = 0; i < path->num_nodes; i++) अणु
+	for (i = 0; i < path->num_nodes; i++) {
 		next = path->reqs[i].node;
 		p = next->provider;
 
-		/* both endpoपूर्णांकs should be valid master-slave pairs */
-		अगर (!prev || (p != prev->provider && !p->पूर्णांकer_set)) अणु
+		/* both endpoints should be valid master-slave pairs */
+		if (!prev || (p != prev->provider && !p->inter_set)) {
 			prev = next;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* set the स्थिरraपूर्णांकs */
+		/* set the constraints */
 		ret = p->set(prev, next);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
 		prev = next;
-	पूर्ण
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक icc_std_aggregate(काष्ठा icc_node *node, u32 tag, u32 avg_bw,
+int icc_std_aggregate(struct icc_node *node, u32 tag, u32 avg_bw,
 		      u32 peak_bw, u32 *agg_avg, u32 *agg_peak)
-अणु
+{
 	*agg_avg += avg_bw;
 	*agg_peak = max(*agg_peak, peak_bw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(icc_std_aggregate);
 
 /* of_icc_xlate_onecell() - Translate function using a single index.
- * @spec: OF phandle args to map पूर्णांकo an पूर्णांकerconnect node.
- * @data: निजी data (poपूर्णांकer to काष्ठा icc_onecell_data)
+ * @spec: OF phandle args to map into an interconnect node.
+ * @data: private data (pointer to struct icc_onecell_data)
  *
  * This is a generic translate function that can be used to model simple
- * पूर्णांकerconnect providers that have one device tree node and provide
- * multiple पूर्णांकerconnect nodes. A single cell is used as an index पूर्णांकo
- * an array of icc nodes specअगरied in the icc_onecell_data काष्ठा when
- * रेजिस्टरing the provider.
+ * interconnect providers that have one device tree node and provide
+ * multiple interconnect nodes. A single cell is used as an index into
+ * an array of icc nodes specified in the icc_onecell_data struct when
+ * registering the provider.
  */
-काष्ठा icc_node *of_icc_xlate_onecell(काष्ठा of_phandle_args *spec,
-				      व्योम *data)
-अणु
-	काष्ठा icc_onecell_data *icc_data = data;
-	अचिन्हित पूर्णांक idx = spec->args[0];
+struct icc_node *of_icc_xlate_onecell(struct of_phandle_args *spec,
+				      void *data)
+{
+	struct icc_onecell_data *icc_data = data;
+	unsigned int idx = spec->args[0];
 
-	अगर (idx >= icc_data->num_nodes) अणु
+	if (idx >= icc_data->num_nodes) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस icc_data->nodes[idx];
-पूर्ण
+	return icc_data->nodes[idx];
+}
 EXPORT_SYMBOL_GPL(of_icc_xlate_onecell);
 
 /**
- * of_icc_get_from_provider() - Look-up पूर्णांकerconnect node
- * @spec: OF phandle args to use क्रम look-up
+ * of_icc_get_from_provider() - Look-up interconnect node
+ * @spec: OF phandle args to use for look-up
  *
- * Looks क्रम पूर्णांकerconnect provider under the node specअगरied by @spec and अगर
+ * Looks for interconnect provider under the node specified by @spec and if
  * found, uses xlate function of the provider to map phandle args to node.
  *
- * Returns a valid poपूर्णांकer to काष्ठा icc_node_data on success or ERR_PTR()
+ * Returns a valid pointer to struct icc_node_data on success or ERR_PTR()
  * on failure.
  */
-काष्ठा icc_node_data *of_icc_get_from_provider(काष्ठा of_phandle_args *spec)
-अणु
-	काष्ठा icc_node *node = ERR_PTR(-EPROBE_DEFER);
-	काष्ठा icc_node_data *data = शून्य;
-	काष्ठा icc_provider *provider;
+struct icc_node_data *of_icc_get_from_provider(struct of_phandle_args *spec)
+{
+	struct icc_node *node = ERR_PTR(-EPROBE_DEFER);
+	struct icc_node_data *data = NULL;
+	struct icc_provider *provider;
 
-	अगर (!spec)
-		वापस ERR_PTR(-EINVAL);
+	if (!spec)
+		return ERR_PTR(-EINVAL);
 
 	mutex_lock(&icc_lock);
-	list_क्रम_each_entry(provider, &icc_providers, provider_list) अणु
-		अगर (provider->dev->of_node == spec->np) अणु
-			अगर (provider->xlate_extended) अणु
+	list_for_each_entry(provider, &icc_providers, provider_list) {
+		if (provider->dev->of_node == spec->np) {
+			if (provider->xlate_extended) {
 				data = provider->xlate_extended(spec, provider->data);
-				अगर (!IS_ERR(data)) अणु
+				if (!IS_ERR(data)) {
 					node = data->node;
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+					break;
+				}
+			} else {
 				node = provider->xlate(spec, provider->data);
-				अगर (!IS_ERR(node))
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (!IS_ERR(node))
+					break;
+			}
+		}
+	}
 	mutex_unlock(&icc_lock);
 
-	अगर (IS_ERR(node))
-		वापस ERR_CAST(node);
+	if (IS_ERR(node))
+		return ERR_CAST(node);
 
-	अगर (!data) अणु
-		data = kzalloc(माप(*data), GFP_KERNEL);
-		अगर (!data)
-			वापस ERR_PTR(-ENOMEM);
+	if (!data) {
+		data = kzalloc(sizeof(*data), GFP_KERNEL);
+		if (!data)
+			return ERR_PTR(-ENOMEM);
 		data->node = node;
-	पूर्ण
+	}
 
-	वापस data;
-पूर्ण
+	return data;
+}
 EXPORT_SYMBOL_GPL(of_icc_get_from_provider);
 
-अटल व्योम devm_icc_release(काष्ठा device *dev, व्योम *res)
-अणु
-	icc_put(*(काष्ठा icc_path **)res);
-पूर्ण
+static void devm_icc_release(struct device *dev, void *res)
+{
+	icc_put(*(struct icc_path **)res);
+}
 
-काष्ठा icc_path *devm_of_icc_get(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा icc_path **ptr, *path;
+struct icc_path *devm_of_icc_get(struct device *dev, const char *name)
+{
+	struct icc_path **ptr, *path;
 
-	ptr = devres_alloc(devm_icc_release, माप(**ptr), GFP_KERNEL);
-	अगर (!ptr)
-		वापस ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_icc_release, sizeof(**ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
 
 	path = of_icc_get(dev, name);
-	अगर (!IS_ERR(path)) अणु
+	if (!IS_ERR(path)) {
 		*ptr = path;
 		devres_add(dev, ptr);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(ptr);
-	पूर्ण
+	} else {
+		devres_free(ptr);
+	}
 
-	वापस path;
-पूर्ण
+	return path;
+}
 EXPORT_SYMBOL_GPL(devm_of_icc_get);
 
 /**
  * of_icc_get_by_index() - get a path handle from a DT node based on index
- * @dev: device poपूर्णांकer क्रम the consumer device
- * @idx: पूर्णांकerconnect path index
+ * @dev: device pointer for the consumer device
+ * @idx: interconnect path index
  *
- * This function will search क्रम a path between two endpoपूर्णांकs and वापस an
- * icc_path handle on success. Use icc_put() to release स्थिरraपूर्णांकs when they
+ * This function will search for a path between two endpoints and return an
+ * icc_path handle on success. Use icc_put() to release constraints when they
  * are not needed anymore.
- * If the पूर्णांकerconnect API is disabled, शून्य is वापसed and the consumer
- * drivers will still build. Drivers are मुक्त to handle this specअगरically,
- * but they करोn't have to.
+ * If the interconnect API is disabled, NULL is returned and the consumer
+ * drivers will still build. Drivers are free to handle this specifically,
+ * but they don't have to.
  *
- * Return: icc_path poपूर्णांकer on success or ERR_PTR() on error. शून्य is वापसed
+ * Return: icc_path pointer on success or ERR_PTR() on error. NULL is returned
  * when the API is disabled or the "interconnects" DT property is missing.
  */
-काष्ठा icc_path *of_icc_get_by_index(काष्ठा device *dev, पूर्णांक idx)
-अणु
-	काष्ठा icc_path *path;
-	काष्ठा icc_node_data *src_data, *dst_data;
-	काष्ठा device_node *np;
-	काष्ठा of_phandle_args src_args, dst_args;
-	पूर्णांक ret;
+struct icc_path *of_icc_get_by_index(struct device *dev, int idx)
+{
+	struct icc_path *path;
+	struct icc_node_data *src_data, *dst_data;
+	struct device_node *np;
+	struct of_phandle_args src_args, dst_args;
+	int ret;
 
-	अगर (!dev || !dev->of_node)
-		वापस ERR_PTR(-ENODEV);
+	if (!dev || !dev->of_node)
+		return ERR_PTR(-ENODEV);
 
 	np = dev->of_node;
 
 	/*
-	 * When the consumer DT node करो not have "interconnects" property
-	 * वापस a शून्य path to skip setting स्थिरraपूर्णांकs.
+	 * When the consumer DT node do not have "interconnects" property
+	 * return a NULL path to skip setting constraints.
 	 */
-	अगर (!of_find_property(np, "interconnects", शून्य))
-		वापस शून्य;
+	if (!of_find_property(np, "interconnects", NULL))
+		return NULL;
 
 	/*
-	 * We use a combination of phandle and specअगरier क्रम endpoपूर्णांक. For now
-	 * lets support only global ids and extend this in the future अगर needed
-	 * without अवरोधing DT compatibility.
+	 * We use a combination of phandle and specifier for endpoint. For now
+	 * lets support only global ids and extend this in the future if needed
+	 * without breaking DT compatibility.
 	 */
 	ret = of_parse_phandle_with_args(np, "interconnects",
 					 "#interconnect-cells", idx * 2,
 					 &src_args);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	of_node_put(src_args.np);
 
 	ret = of_parse_phandle_with_args(np, "interconnects",
 					 "#interconnect-cells", idx * 2 + 1,
 					 &dst_args);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	of_node_put(dst_args.np);
 
 	src_data = of_icc_get_from_provider(&src_args);
 
-	अगर (IS_ERR(src_data)) अणु
+	if (IS_ERR(src_data)) {
 		dev_err_probe(dev, PTR_ERR(src_data), "error finding src node\n");
-		वापस ERR_CAST(src_data);
-	पूर्ण
+		return ERR_CAST(src_data);
+	}
 
 	dst_data = of_icc_get_from_provider(&dst_args);
 
-	अगर (IS_ERR(dst_data)) अणु
+	if (IS_ERR(dst_data)) {
 		dev_err_probe(dev, PTR_ERR(dst_data), "error finding dst node\n");
-		kमुक्त(src_data);
-		वापस ERR_CAST(dst_data);
-	पूर्ण
+		kfree(src_data);
+		return ERR_CAST(dst_data);
+	}
 
 	mutex_lock(&icc_lock);
 	path = path_find(dev, src_data->node, dst_data->node);
 	mutex_unlock(&icc_lock);
-	अगर (IS_ERR(path)) अणु
+	if (IS_ERR(path)) {
 		dev_err(dev, "%s: invalid path=%ld\n", __func__, PTR_ERR(path));
-		जाओ मुक्त_icc_data;
-	पूर्ण
+		goto free_icc_data;
+	}
 
-	अगर (src_data->tag && src_data->tag == dst_data->tag)
+	if (src_data->tag && src_data->tag == dst_data->tag)
 		icc_set_tag(path, src_data->tag);
 
-	path->name = kaप्र_लिखो(GFP_KERNEL, "%s-%s",
+	path->name = kasprintf(GFP_KERNEL, "%s-%s",
 			       src_data->node->name, dst_data->node->name);
-	अगर (!path->name) अणु
-		kमुक्त(path);
+	if (!path->name) {
+		kfree(path);
 		path = ERR_PTR(-ENOMEM);
-	पूर्ण
+	}
 
-मुक्त_icc_data:
-	kमुक्त(src_data);
-	kमुक्त(dst_data);
-	वापस path;
-पूर्ण
+free_icc_data:
+	kfree(src_data);
+	kfree(dst_data);
+	return path;
+}
 EXPORT_SYMBOL_GPL(of_icc_get_by_index);
 
 /**
  * of_icc_get() - get a path handle from a DT node based on name
- * @dev: device poपूर्णांकer क्रम the consumer device
- * @name: पूर्णांकerconnect path name
+ * @dev: device pointer for the consumer device
+ * @name: interconnect path name
  *
- * This function will search क्रम a path between two endpoपूर्णांकs and वापस an
- * icc_path handle on success. Use icc_put() to release स्थिरraपूर्णांकs when they
+ * This function will search for a path between two endpoints and return an
+ * icc_path handle on success. Use icc_put() to release constraints when they
  * are not needed anymore.
- * If the पूर्णांकerconnect API is disabled, शून्य is वापसed and the consumer
- * drivers will still build. Drivers are मुक्त to handle this specअगरically,
- * but they करोn't have to.
+ * If the interconnect API is disabled, NULL is returned and the consumer
+ * drivers will still build. Drivers are free to handle this specifically,
+ * but they don't have to.
  *
- * Return: icc_path poपूर्णांकer on success or ERR_PTR() on error. शून्य is वापसed
+ * Return: icc_path pointer on success or ERR_PTR() on error. NULL is returned
  * when the API is disabled or the "interconnects" DT property is missing.
  */
-काष्ठा icc_path *of_icc_get(काष्ठा device *dev, स्थिर अक्षर *name)
-अणु
-	काष्ठा device_node *np;
-	पूर्णांक idx = 0;
+struct icc_path *of_icc_get(struct device *dev, const char *name)
+{
+	struct device_node *np;
+	int idx = 0;
 
-	अगर (!dev || !dev->of_node)
-		वापस ERR_PTR(-ENODEV);
+	if (!dev || !dev->of_node)
+		return ERR_PTR(-ENODEV);
 
 	np = dev->of_node;
 
 	/*
-	 * When the consumer DT node करो not have "interconnects" property
-	 * वापस a शून्य path to skip setting स्थिरraपूर्णांकs.
+	 * When the consumer DT node do not have "interconnects" property
+	 * return a NULL path to skip setting constraints.
 	 */
-	अगर (!of_find_property(np, "interconnects", शून्य))
-		वापस शून्य;
+	if (!of_find_property(np, "interconnects", NULL))
+		return NULL;
 
 	/*
-	 * We use a combination of phandle and specअगरier क्रम endpoपूर्णांक. For now
-	 * lets support only global ids and extend this in the future अगर needed
-	 * without अवरोधing DT compatibility.
+	 * We use a combination of phandle and specifier for endpoint. For now
+	 * lets support only global ids and extend this in the future if needed
+	 * without breaking DT compatibility.
 	 */
-	अगर (name) अणु
+	if (name) {
 		idx = of_property_match_string(np, "interconnect-names", name);
-		अगर (idx < 0)
-			वापस ERR_PTR(idx);
-	पूर्ण
+		if (idx < 0)
+			return ERR_PTR(idx);
+	}
 
-	वापस of_icc_get_by_index(dev, idx);
-पूर्ण
+	return of_icc_get_by_index(dev, idx);
+}
 EXPORT_SYMBOL_GPL(of_icc_get);
 
 /**
@@ -569,259 +568,259 @@ EXPORT_SYMBOL_GPL(of_icc_get);
  * @tag: the tag value
  *
  * This function allows consumers to append a tag to the requests associated
- * with a path, so that a dअगरferent aggregation could be करोne based on this tag.
+ * with a path, so that a different aggregation could be done based on this tag.
  */
-व्योम icc_set_tag(काष्ठा icc_path *path, u32 tag)
-अणु
-	पूर्णांक i;
+void icc_set_tag(struct icc_path *path, u32 tag)
+{
+	int i;
 
-	अगर (!path)
-		वापस;
+	if (!path)
+		return;
 
 	mutex_lock(&icc_lock);
 
-	क्रम (i = 0; i < path->num_nodes; i++)
+	for (i = 0; i < path->num_nodes; i++)
 		path->reqs[i].tag = tag;
 
 	mutex_unlock(&icc_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(icc_set_tag);
 
 /**
  * icc_get_name() - Get name of the icc path
- * @path: reference to the path वापसed by icc_get()
+ * @path: reference to the path returned by icc_get()
  *
- * This function is used by an पूर्णांकerconnect consumer to get the name of the icc
+ * This function is used by an interconnect consumer to get the name of the icc
  * path.
  *
- * Returns a valid poपूर्णांकer on success, or शून्य otherwise.
+ * Returns a valid pointer on success, or NULL otherwise.
  */
-स्थिर अक्षर *icc_get_name(काष्ठा icc_path *path)
-अणु
-	अगर (!path)
-		वापस शून्य;
+const char *icc_get_name(struct icc_path *path)
+{
+	if (!path)
+		return NULL;
 
-	वापस path->name;
-पूर्ण
+	return path->name;
+}
 EXPORT_SYMBOL_GPL(icc_get_name);
 
 /**
- * icc_set_bw() - set bandwidth स्थिरraपूर्णांकs on an पूर्णांकerconnect path
- * @path: reference to the path वापसed by icc_get()
+ * icc_set_bw() - set bandwidth constraints on an interconnect path
+ * @path: reference to the path returned by icc_get()
  * @avg_bw: average bandwidth in kilobytes per second
  * @peak_bw: peak bandwidth in kilobytes per second
  *
- * This function is used by an पूर्णांकerconnect consumer to express its own needs
- * in terms of bandwidth क्रम a previously requested path between two endpoपूर्णांकs.
+ * This function is used by an interconnect consumer to express its own needs
+ * in terms of bandwidth for a previously requested path between two endpoints.
  * The requests are aggregated and each node is updated accordingly. The entire
  * path is locked by a mutex to ensure that the set() is completed.
- * The @path can be शून्य when the "interconnects" DT properties is missing,
- * which will mean that no स्थिरraपूर्णांकs will be set.
+ * The @path can be NULL when the "interconnects" DT properties is missing,
+ * which will mean that no constraints will be set.
  *
  * Returns 0 on success, or an appropriate error code otherwise.
  */
-पूर्णांक icc_set_bw(काष्ठा icc_path *path, u32 avg_bw, u32 peak_bw)
-अणु
-	काष्ठा icc_node *node;
+int icc_set_bw(struct icc_path *path, u32 avg_bw, u32 peak_bw)
+{
+	struct icc_node *node;
 	u32 old_avg, old_peak;
-	माप_प्रकार i;
-	पूर्णांक ret;
+	size_t i;
+	int ret;
 
-	अगर (!path)
-		वापस 0;
+	if (!path)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(path) || !path->num_nodes))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(path) || !path->num_nodes))
+		return -EINVAL;
 
 	mutex_lock(&icc_lock);
 
 	old_avg = path->reqs[0].avg_bw;
 	old_peak = path->reqs[0].peak_bw;
 
-	क्रम (i = 0; i < path->num_nodes; i++) अणु
+	for (i = 0; i < path->num_nodes; i++) {
 		node = path->reqs[i].node;
 
-		/* update the consumer request क्रम this path */
+		/* update the consumer request for this path */
 		path->reqs[i].avg_bw = avg_bw;
 		path->reqs[i].peak_bw = peak_bw;
 
-		/* aggregate requests क्रम this node */
+		/* aggregate requests for this node */
 		aggregate_requests(node);
 
 		trace_icc_set_bw(path, node, i, avg_bw, peak_bw);
-	पूर्ण
+	}
 
-	ret = apply_स्थिरraपूर्णांकs(path);
-	अगर (ret) अणु
+	ret = apply_constraints(path);
+	if (ret) {
 		pr_debug("interconnect: error applying constraints (%d)\n",
 			 ret);
 
-		क्रम (i = 0; i < path->num_nodes; i++) अणु
+		for (i = 0; i < path->num_nodes; i++) {
 			node = path->reqs[i].node;
 			path->reqs[i].avg_bw = old_avg;
 			path->reqs[i].peak_bw = old_peak;
 			aggregate_requests(node);
-		पूर्ण
-		apply_स्थिरraपूर्णांकs(path);
-	पूर्ण
+		}
+		apply_constraints(path);
+	}
 
 	mutex_unlock(&icc_lock);
 
 	trace_icc_set_bw_end(path, ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(icc_set_bw);
 
-अटल पूर्णांक __icc_enable(काष्ठा icc_path *path, bool enable)
-अणु
-	पूर्णांक i;
+static int __icc_enable(struct icc_path *path, bool enable)
+{
+	int i;
 
-	अगर (!path)
-		वापस 0;
+	if (!path)
+		return 0;
 
-	अगर (WARN_ON(IS_ERR(path) || !path->num_nodes))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR(path) || !path->num_nodes))
+		return -EINVAL;
 
 	mutex_lock(&icc_lock);
 
-	क्रम (i = 0; i < path->num_nodes; i++)
+	for (i = 0; i < path->num_nodes; i++)
 		path->reqs[i].enabled = enable;
 
 	mutex_unlock(&icc_lock);
 
-	वापस icc_set_bw(path, path->reqs[0].avg_bw,
+	return icc_set_bw(path, path->reqs[0].avg_bw,
 			  path->reqs[0].peak_bw);
-पूर्ण
+}
 
-पूर्णांक icc_enable(काष्ठा icc_path *path)
-अणु
-	वापस __icc_enable(path, true);
-पूर्ण
+int icc_enable(struct icc_path *path)
+{
+	return __icc_enable(path, true);
+}
 EXPORT_SYMBOL_GPL(icc_enable);
 
-पूर्णांक icc_disable(काष्ठा icc_path *path)
-अणु
-	वापस __icc_enable(path, false);
-पूर्ण
+int icc_disable(struct icc_path *path)
+{
+	return __icc_enable(path, false);
+}
 EXPORT_SYMBOL_GPL(icc_disable);
 
 /**
- * icc_get() - वापस a handle क्रम path between two endpoपूर्णांकs
+ * icc_get() - return a handle for path between two endpoints
  * @dev: the device requesting the path
  * @src_id: source device port id
  * @dst_id: destination device port id
  *
- * This function will search क्रम a path between two endpoपूर्णांकs and वापस an
+ * This function will search for a path between two endpoints and return an
  * icc_path handle on success. Use icc_put() to release
- * स्थिरraपूर्णांकs when they are not needed anymore.
- * If the पूर्णांकerconnect API is disabled, शून्य is वापसed and the consumer
- * drivers will still build. Drivers are मुक्त to handle this specअगरically,
- * but they करोn't have to.
+ * constraints when they are not needed anymore.
+ * If the interconnect API is disabled, NULL is returned and the consumer
+ * drivers will still build. Drivers are free to handle this specifically,
+ * but they don't have to.
  *
- * Return: icc_path poपूर्णांकer on success, ERR_PTR() on error or शून्य अगर the
- * पूर्णांकerconnect API is disabled.
+ * Return: icc_path pointer on success, ERR_PTR() on error or NULL if the
+ * interconnect API is disabled.
  */
-काष्ठा icc_path *icc_get(काष्ठा device *dev, स्थिर पूर्णांक src_id, स्थिर पूर्णांक dst_id)
-अणु
-	काष्ठा icc_node *src, *dst;
-	काष्ठा icc_path *path = ERR_PTR(-EPROBE_DEFER);
+struct icc_path *icc_get(struct device *dev, const int src_id, const int dst_id)
+{
+	struct icc_node *src, *dst;
+	struct icc_path *path = ERR_PTR(-EPROBE_DEFER);
 
 	mutex_lock(&icc_lock);
 
 	src = node_find(src_id);
-	अगर (!src)
-		जाओ out;
+	if (!src)
+		goto out;
 
 	dst = node_find(dst_id);
-	अगर (!dst)
-		जाओ out;
+	if (!dst)
+		goto out;
 
 	path = path_find(dev, src, dst);
-	अगर (IS_ERR(path)) अणु
+	if (IS_ERR(path)) {
 		dev_err(dev, "%s: invalid path=%ld\n", __func__, PTR_ERR(path));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	path->name = kaप्र_लिखो(GFP_KERNEL, "%s-%s", src->name, dst->name);
-	अगर (!path->name) अणु
-		kमुक्त(path);
+	path->name = kasprintf(GFP_KERNEL, "%s-%s", src->name, dst->name);
+	if (!path->name) {
+		kfree(path);
 		path = ERR_PTR(-ENOMEM);
-	पूर्ण
+	}
 out:
 	mutex_unlock(&icc_lock);
-	वापस path;
-पूर्ण
+	return path;
+}
 EXPORT_SYMBOL_GPL(icc_get);
 
 /**
  * icc_put() - release the reference to the icc_path
- * @path: पूर्णांकerconnect path
+ * @path: interconnect path
  *
- * Use this function to release the स्थिरraपूर्णांकs on a path when the path is
- * no दीर्घer needed. The स्थिरraपूर्णांकs will be re-aggregated.
+ * Use this function to release the constraints on a path when the path is
+ * no longer needed. The constraints will be re-aggregated.
  */
-व्योम icc_put(काष्ठा icc_path *path)
-अणु
-	काष्ठा icc_node *node;
-	माप_प्रकार i;
-	पूर्णांक ret;
+void icc_put(struct icc_path *path)
+{
+	struct icc_node *node;
+	size_t i;
+	int ret;
 
-	अगर (!path || WARN_ON(IS_ERR(path)))
-		वापस;
+	if (!path || WARN_ON(IS_ERR(path)))
+		return;
 
 	ret = icc_set_bw(path, 0, 0);
-	अगर (ret)
+	if (ret)
 		pr_err("%s: error (%d)\n", __func__, ret);
 
 	mutex_lock(&icc_lock);
-	क्रम (i = 0; i < path->num_nodes; i++) अणु
+	for (i = 0; i < path->num_nodes; i++) {
 		node = path->reqs[i].node;
 		hlist_del(&path->reqs[i].req_node);
-		अगर (!WARN_ON(!node->provider->users))
+		if (!WARN_ON(!node->provider->users))
 			node->provider->users--;
-	पूर्ण
+	}
 	mutex_unlock(&icc_lock);
 
-	kमुक्त_स्थिर(path->name);
-	kमुक्त(path);
-पूर्ण
+	kfree_const(path->name);
+	kfree(path);
+}
 EXPORT_SYMBOL_GPL(icc_put);
 
-अटल काष्ठा icc_node *icc_node_create_nolock(पूर्णांक id)
-अणु
-	काष्ठा icc_node *node;
+static struct icc_node *icc_node_create_nolock(int id)
+{
+	struct icc_node *node;
 
-	/* check अगर node alपढ़ोy exists */
+	/* check if node already exists */
 	node = node_find(id);
-	अगर (node)
-		वापस node;
+	if (node)
+		return node;
 
-	node = kzalloc(माप(*node), GFP_KERNEL);
-	अगर (!node)
-		वापस ERR_PTR(-ENOMEM);
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	if (!node)
+		return ERR_PTR(-ENOMEM);
 
 	id = idr_alloc(&icc_idr, node, id, id + 1, GFP_KERNEL);
-	अगर (id < 0) अणु
+	if (id < 0) {
 		WARN(1, "%s: couldn't get idr\n", __func__);
-		kमुक्त(node);
-		वापस ERR_PTR(id);
-	पूर्ण
+		kfree(node);
+		return ERR_PTR(id);
+	}
 
 	node->id = id;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
 /**
  * icc_node_create() - create a node
  * @id: node id
  *
- * Return: icc_node poपूर्णांकer on success, or ERR_PTR() on error
+ * Return: icc_node pointer on success, or ERR_PTR() on error
  */
-काष्ठा icc_node *icc_node_create(पूर्णांक id)
-अणु
-	काष्ठा icc_node *node;
+struct icc_node *icc_node_create(int id)
+{
+	struct icc_node *node;
 
 	mutex_lock(&icc_lock);
 
@@ -829,30 +828,30 @@ EXPORT_SYMBOL_GPL(icc_put);
 
 	mutex_unlock(&icc_lock);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 EXPORT_SYMBOL_GPL(icc_node_create);
 
 /**
  * icc_node_destroy() - destroy a node
  * @id: node id
  */
-व्योम icc_node_destroy(पूर्णांक id)
-अणु
-	काष्ठा icc_node *node;
+void icc_node_destroy(int id)
+{
+	struct icc_node *node;
 
 	mutex_lock(&icc_lock);
 
 	node = node_find(id);
-	अगर (node) अणु
-		idr_हटाओ(&icc_idr, node->id);
+	if (node) {
+		idr_remove(&icc_idr, node->id);
 		WARN_ON(!hlist_empty(&node->req_list));
-	पूर्ण
+	}
 
 	mutex_unlock(&icc_lock);
 
-	kमुक्त(node);
-पूर्ण
+	kfree(node);
+}
 EXPORT_SYMBOL_GPL(icc_node_destroy);
 
 /**
@@ -860,42 +859,42 @@ EXPORT_SYMBOL_GPL(icc_node_destroy);
  * @node: source node id
  * @dst_id: destination node id
  *
- * Create a link between two nodes. The nodes might beदीर्घ to dअगरferent
- * पूर्णांकerconnect providers and the @dst_id node might not exist (अगर the
+ * Create a link between two nodes. The nodes might belong to different
+ * interconnect providers and the @dst_id node might not exist (if the
  * provider driver has not probed yet). So just create the @dst_id node
  * and when the actual provider driver is probed, the rest of the node
  * data is filled.
  *
  * Return: 0 on success, or an error code otherwise
  */
-पूर्णांक icc_link_create(काष्ठा icc_node *node, स्थिर पूर्णांक dst_id)
-अणु
-	काष्ठा icc_node *dst;
-	काष्ठा icc_node **new;
-	पूर्णांक ret = 0;
+int icc_link_create(struct icc_node *node, const int dst_id)
+{
+	struct icc_node *dst;
+	struct icc_node **new;
+	int ret = 0;
 
-	अगर (!node->provider)
-		वापस -EINVAL;
+	if (!node->provider)
+		return -EINVAL;
 
 	mutex_lock(&icc_lock);
 
 	dst = node_find(dst_id);
-	अगर (!dst) अणु
+	if (!dst) {
 		dst = icc_node_create_nolock(dst_id);
 
-		अगर (IS_ERR(dst)) अणु
+		if (IS_ERR(dst)) {
 			ret = PTR_ERR(dst);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	new = kपुनः_स्मृति(node->links,
-		       (node->num_links + 1) * माप(*node->links),
+	new = krealloc(node->links,
+		       (node->num_links + 1) * sizeof(*node->links),
 		       GFP_KERNEL);
-	अगर (!new) अणु
+	if (!new) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	node->links = new;
 	node->links[node->num_links++] = dst;
@@ -903,78 +902,78 @@ EXPORT_SYMBOL_GPL(icc_node_destroy);
 out:
 	mutex_unlock(&icc_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(icc_link_create);
 
 /**
  * icc_link_destroy() - destroy a link between two nodes
- * @src: poपूर्णांकer to source node
- * @dst: poपूर्णांकer to destination node
+ * @src: pointer to source node
+ * @dst: pointer to destination node
  *
  * Return: 0 on success, or an error code otherwise
  */
-पूर्णांक icc_link_destroy(काष्ठा icc_node *src, काष्ठा icc_node *dst)
-अणु
-	काष्ठा icc_node **new;
-	माप_प्रकार slot;
-	पूर्णांक ret = 0;
+int icc_link_destroy(struct icc_node *src, struct icc_node *dst)
+{
+	struct icc_node **new;
+	size_t slot;
+	int ret = 0;
 
-	अगर (IS_ERR_OR_शून्य(src))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(src))
+		return -EINVAL;
 
-	अगर (IS_ERR_OR_शून्य(dst))
-		वापस -EINVAL;
+	if (IS_ERR_OR_NULL(dst))
+		return -EINVAL;
 
 	mutex_lock(&icc_lock);
 
-	क्रम (slot = 0; slot < src->num_links; slot++)
-		अगर (src->links[slot] == dst)
-			अवरोध;
+	for (slot = 0; slot < src->num_links; slot++)
+		if (src->links[slot] == dst)
+			break;
 
-	अगर (WARN_ON(slot == src->num_links)) अणु
+	if (WARN_ON(slot == src->num_links)) {
 		ret = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	src->links[slot] = src->links[--src->num_links];
 
-	new = kपुनः_स्मृति(src->links, src->num_links * माप(*src->links),
+	new = krealloc(src->links, src->num_links * sizeof(*src->links),
 		       GFP_KERNEL);
-	अगर (new)
+	if (new)
 		src->links = new;
-	अन्यथा
+	else
 		ret = -ENOMEM;
 
 out:
 	mutex_unlock(&icc_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(icc_link_destroy);
 
 /**
- * icc_node_add() - add पूर्णांकerconnect node to पूर्णांकerconnect provider
- * @node: poपूर्णांकer to the पूर्णांकerconnect node
- * @provider: poपूर्णांकer to the पूर्णांकerconnect provider
+ * icc_node_add() - add interconnect node to interconnect provider
+ * @node: pointer to the interconnect node
+ * @provider: pointer to the interconnect provider
  */
-व्योम icc_node_add(काष्ठा icc_node *node, काष्ठा icc_provider *provider)
-अणु
+void icc_node_add(struct icc_node *node, struct icc_provider *provider)
+{
 	mutex_lock(&icc_lock);
 
 	node->provider = provider;
 	list_add_tail(&node->node_list, &provider->nodes);
 
 	/* get the initial bandwidth values and sync them with hardware */
-	अगर (provider->get_bw) अणु
+	if (provider->get_bw) {
 		provider->get_bw(node, &node->init_avg, &node->init_peak);
-	पूर्ण अन्यथा अणु
-		node->init_avg = पूर्णांक_उच्च;
-		node->init_peak = पूर्णांक_उच्च;
-	पूर्ण
+	} else {
+		node->init_avg = INT_MAX;
+		node->init_peak = INT_MAX;
+	}
 	node->avg_bw = node->init_avg;
 	node->peak_bw = node->init_peak;
-	अगर (provider->aggregate)
+	if (provider->aggregate)
 		provider->aggregate(node, 0, node->init_avg, node->init_peak,
 				    &node->avg_bw, &node->peak_bw);
 	provider->set(node, node);
@@ -982,57 +981,57 @@ EXPORT_SYMBOL_GPL(icc_link_destroy);
 	node->peak_bw = 0;
 
 	mutex_unlock(&icc_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(icc_node_add);
 
 /**
- * icc_node_del() - delete पूर्णांकerconnect node from पूर्णांकerconnect provider
- * @node: poपूर्णांकer to the पूर्णांकerconnect node
+ * icc_node_del() - delete interconnect node from interconnect provider
+ * @node: pointer to the interconnect node
  */
-व्योम icc_node_del(काष्ठा icc_node *node)
-अणु
+void icc_node_del(struct icc_node *node)
+{
 	mutex_lock(&icc_lock);
 
 	list_del(&node->node_list);
 
 	mutex_unlock(&icc_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(icc_node_del);
 
 /**
- * icc_nodes_हटाओ() - हटाओ all previously added nodes from provider
- * @provider: the पूर्णांकerconnect provider we are removing nodes from
+ * icc_nodes_remove() - remove all previously added nodes from provider
+ * @provider: the interconnect provider we are removing nodes from
  *
  * Return: 0 on success, or an error code otherwise
  */
-पूर्णांक icc_nodes_हटाओ(काष्ठा icc_provider *provider)
-अणु
-	काष्ठा icc_node *n, *पंचांगp;
+int icc_nodes_remove(struct icc_provider *provider)
+{
+	struct icc_node *n, *tmp;
 
-	अगर (WARN_ON(IS_ERR_OR_शून्य(provider)))
-		वापस -EINVAL;
+	if (WARN_ON(IS_ERR_OR_NULL(provider)))
+		return -EINVAL;
 
-	list_क्रम_each_entry_safe_reverse(n, पंचांगp, &provider->nodes, node_list) अणु
+	list_for_each_entry_safe_reverse(n, tmp, &provider->nodes, node_list) {
 		icc_node_del(n);
 		icc_node_destroy(n->id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(icc_nodes_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(icc_nodes_remove);
 
 /**
- * icc_provider_add() - add a new पूर्णांकerconnect provider
- * @provider: the पूर्णांकerconnect provider that will be added पूर्णांकo topology
+ * icc_provider_add() - add a new interconnect provider
+ * @provider: the interconnect provider that will be added into topology
  *
  * Return: 0 on success, or an error code otherwise
  */
-पूर्णांक icc_provider_add(काष्ठा icc_provider *provider)
-अणु
-	अगर (WARN_ON(!provider->set))
-		वापस -EINVAL;
-	अगर (WARN_ON(!provider->xlate && !provider->xlate_extended))
-		वापस -EINVAL;
+int icc_provider_add(struct icc_provider *provider)
+{
+	if (WARN_ON(!provider->set))
+		return -EINVAL;
+	if (WARN_ON(!provider->xlate && !provider->xlate_extended))
+		return -EINVAL;
 
 	mutex_lock(&icc_lock);
 
@@ -1043,93 +1042,93 @@ EXPORT_SYMBOL_GPL(icc_nodes_हटाओ);
 
 	dev_dbg(provider->dev, "interconnect provider added to topology\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(icc_provider_add);
 
 /**
- * icc_provider_del() - delete previously added पूर्णांकerconnect provider
- * @provider: the पूर्णांकerconnect provider that will be हटाओd from topology
+ * icc_provider_del() - delete previously added interconnect provider
+ * @provider: the interconnect provider that will be removed from topology
  *
  * Return: 0 on success, or an error code otherwise
  */
-पूर्णांक icc_provider_del(काष्ठा icc_provider *provider)
-अणु
+int icc_provider_del(struct icc_provider *provider)
+{
 	mutex_lock(&icc_lock);
-	अगर (provider->users) अणु
+	if (provider->users) {
 		pr_warn("interconnect provider still has %d users\n",
 			provider->users);
 		mutex_unlock(&icc_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (!list_empty(&provider->nodes)) अणु
+	if (!list_empty(&provider->nodes)) {
 		pr_warn("interconnect provider still has nodes\n");
 		mutex_unlock(&icc_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	list_del(&provider->provider_list);
 	mutex_unlock(&icc_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(icc_provider_del);
 
-अटल पूर्णांक of_count_icc_providers(काष्ठा device_node *np)
-अणु
-	काष्ठा device_node *child;
-	पूर्णांक count = 0;
+static int of_count_icc_providers(struct device_node *np)
+{
+	struct device_node *child;
+	int count = 0;
 
-	क्रम_each_available_child_of_node(np, child) अणु
-		अगर (of_property_पढ़ो_bool(child, "#interconnect-cells"))
+	for_each_available_child_of_node(np, child) {
+		if (of_property_read_bool(child, "#interconnect-cells"))
 			count++;
 		count += of_count_icc_providers(child);
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-व्योम icc_sync_state(काष्ठा device *dev)
-अणु
-	काष्ठा icc_provider *p;
-	काष्ठा icc_node *n;
-	अटल पूर्णांक count;
+void icc_sync_state(struct device *dev)
+{
+	struct icc_provider *p;
+	struct icc_node *n;
+	static int count;
 
 	count++;
 
-	अगर (count < providers_count)
-		वापस;
+	if (count < providers_count)
+		return;
 
 	mutex_lock(&icc_lock);
 	synced_state = true;
-	list_क्रम_each_entry(p, &icc_providers, provider_list) अणु
+	list_for_each_entry(p, &icc_providers, provider_list) {
 		dev_dbg(p->dev, "interconnect provider is in synced state\n");
-		list_क्रम_each_entry(n, &p->nodes, node_list) अणु
-			अगर (n->init_avg || n->init_peak) अणु
+		list_for_each_entry(n, &p->nodes, node_list) {
+			if (n->init_avg || n->init_peak) {
 				aggregate_requests(n);
 				p->set(n, n);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	mutex_unlock(&icc_lock);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(icc_sync_state);
 
-अटल पूर्णांक __init icc_init(व्योम)
-अणु
-	काष्ठा device_node *root = of_find_node_by_path("/");
+static int __init icc_init(void)
+{
+	struct device_node *root = of_find_node_by_path("/");
 
 	providers_count = of_count_icc_providers(root);
 	of_node_put(root);
 
-	icc_debugfs_dir = debugfs_create_dir("interconnect", शून्य);
+	icc_debugfs_dir = debugfs_create_dir("interconnect", NULL);
 	debugfs_create_file("interconnect_summary", 0444,
-			    icc_debugfs_dir, शून्य, &icc_summary_fops);
+			    icc_debugfs_dir, NULL, &icc_summary_fops);
 	debugfs_create_file("interconnect_graph", 0444,
-			    icc_debugfs_dir, शून्य, &icc_graph_fops);
-	वापस 0;
-पूर्ण
+			    icc_debugfs_dir, NULL, &icc_graph_fops);
+	return 0;
+}
 
 device_initcall(icc_init);
 

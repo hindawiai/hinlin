@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  include/linux/nfs4.h
  *
@@ -11,58 +10,58 @@
  *  Kendrick Smith <kmsmith@umich.edu>
  *  Andy Adamson   <andros@umich.edu>
  */
-#अगर_अघोषित _LINUX_NFS4_H
-#घोषणा _LINUX_NFS4_H
+#ifndef _LINUX_NFS4_H
+#define _LINUX_NFS4_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/uidgid.h>
-#समावेश <uapi/linux/nfs4.h>
-#समावेश <linux/sunrpc/msg_prot.h>
+#include <linux/list.h>
+#include <linux/uidgid.h>
+#include <uapi/linux/nfs4.h>
+#include <linux/sunrpc/msg_prot.h>
 
-क्रमागत nfs4_acl_whotype अणु
+enum nfs4_acl_whotype {
 	NFS4_ACL_WHO_NAMED = 0,
 	NFS4_ACL_WHO_OWNER,
 	NFS4_ACL_WHO_GROUP,
 	NFS4_ACL_WHO_EVERYONE,
-पूर्ण;
+};
 
-काष्ठा nfs4_ace अणु
-	uपूर्णांक32_t	type;
-	uपूर्णांक32_t	flag;
-	uपूर्णांक32_t	access_mask;
-	पूर्णांक		whotype;
-	जोड़ अणु
+struct nfs4_ace {
+	uint32_t	type;
+	uint32_t	flag;
+	uint32_t	access_mask;
+	int		whotype;
+	union {
 		kuid_t	who_uid;
 		kgid_t	who_gid;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-काष्ठा nfs4_acl अणु
-	uपूर्णांक32_t	naces;
-	काष्ठा nfs4_ace	aces[];
-पूर्ण;
+struct nfs4_acl {
+	uint32_t	naces;
+	struct nfs4_ace	aces[];
+};
 
-#घोषणा NFS4_MAXLABELLEN	2048
+#define NFS4_MAXLABELLEN	2048
 
-काष्ठा nfs4_label अणु
-	uपूर्णांक32_t	lfs;
-	uपूर्णांक32_t	pi;
+struct nfs4_label {
+	uint32_t	lfs;
+	uint32_t	pi;
 	u32		len;
-	अक्षर	*label;
-पूर्ण;
+	char	*label;
+};
 
-प्रकार काष्ठा अणु अक्षर data[NFS4_VERIFIER_SIZE]; पूर्ण nfs4_verअगरier;
+typedef struct { char data[NFS4_VERIFIER_SIZE]; } nfs4_verifier;
 
-काष्ठा nfs4_stateid_काष्ठा अणु
-	जोड़ अणु
-		अक्षर data[NFS4_STATEID_SIZE];
-		काष्ठा अणु
+struct nfs4_stateid_struct {
+	union {
+		char data[NFS4_STATEID_SIZE];
+		struct {
 			__be32 seqid;
-			अक्षर other[NFS4_STATEID_OTHER_SIZE];
-		पूर्ण __attribute__ ((packed));
-	पूर्ण;
+			char other[NFS4_STATEID_OTHER_SIZE];
+		} __attribute__ ((packed));
+	};
 
-	क्रमागत अणु
+	enum {
 		NFS4_INVALID_STATEID_TYPE = 0,
 		NFS4_SPECIAL_STATEID_TYPE,
 		NFS4_OPEN_STATEID_TYPE,
@@ -71,12 +70,12 @@
 		NFS4_LAYOUT_STATEID_TYPE,
 		NFS4_PNFS_DS_STATEID_TYPE,
 		NFS4_REVOKED_STATEID_TYPE,
-	पूर्ण type;
-पूर्ण;
+	} type;
+};
 
-प्रकार काष्ठा nfs4_stateid_काष्ठा nfs4_stateid;
+typedef struct nfs4_stateid_struct nfs4_stateid;
 
-क्रमागत nfs_opnum4 अणु
+enum nfs_opnum4 {
 	OP_ACCESS = 3,
 	OP_CLOSE = 4,
 	OP_COMMIT = 5,
@@ -100,7 +99,7 @@
 	OP_PUTPUBFH = 23,
 	OP_PUTROOTFH = 24,
 	OP_READ = 25,
-	OP_READसूची = 26,
+	OP_READDIR = 26,
 	OP_READLINK = 27,
 	OP_REMOVE = 28,
 	OP_RENAME = 29,
@@ -122,7 +121,7 @@
 	OP_CREATE_SESSION = 43,
 	OP_DESTROY_SESSION = 44,
 	OP_FREE_STATEID = 45,
-	OP_GET_सूची_DELEGATION = 46,
+	OP_GET_DIR_DELEGATION = 46,
 	OP_GETDEVICEINFO = 47,
 	OP_GETDEVICELIST = 48,
 	OP_LAYOUTCOMMIT = 49,
@@ -158,18 +157,18 @@
 	OP_REMOVEXATTR             = 75,
 
 	OP_ILLEGAL = 10044,
-पूर्ण;
+};
 
 /*Defining first and last NFS4 operations implemented.
-Needs to be updated अगर more operations are defined in future.*/
+Needs to be updated if more operations are defined in future.*/
 
-#घोषणा FIRST_NFS4_OP	OP_ACCESS
-#घोषणा LAST_NFS40_OP	OP_RELEASE_LOCKOWNER
-#घोषणा LAST_NFS41_OP	OP_RECLAIM_COMPLETE
-#घोषणा LAST_NFS42_OP	OP_REMOVEXATTR
-#घोषणा LAST_NFS4_OP	LAST_NFS42_OP
+#define FIRST_NFS4_OP	OP_ACCESS
+#define LAST_NFS40_OP	OP_RELEASE_LOCKOWNER
+#define LAST_NFS41_OP	OP_RECLAIM_COMPLETE
+#define LAST_NFS42_OP	OP_REMOVEXATTR
+#define LAST_NFS4_OP	LAST_NFS42_OP
 
-क्रमागत nfsstat4 अणु
+enum nfsstat4 {
 	NFS4_OK = 0,
 	NFS4ERR_PERM = 1,
 	NFS4ERR_NOENT = 2,
@@ -179,8 +178,8 @@ Needs to be updated अगर more operations are defined in future.*/
 	NFS4ERR_EXIST = 17,
 	NFS4ERR_XDEV = 18,
 	/* Unused/reserved 19 */
-	NFS4ERR_NOTसूची = 20,
-	NFS4ERR_ISसूची = 21,
+	NFS4ERR_NOTDIR = 20,
+	NFS4ERR_ISDIR = 21,
 	NFS4ERR_INVAL = 22,
 	NFS4ERR_FBIG = 27,
 	NFS4ERR_NOSPC = 28,
@@ -208,7 +207,7 @@ Needs to be updated अगर more operations are defined in future.*/
 	NFS4ERR_CLID_INUSE = 10017,
 	NFS4ERR_RESOURCE = 10018,
 	NFS4ERR_MOVED = 10019,
-	NFS4ERR_NOखाताHANDLE = 10020,
+	NFS4ERR_NOFILEHANDLE = 10020,
 	NFS4ERR_MINOR_VERS_MISMATCH = 10021,
 	NFS4ERR_STALE_CLIENTID = 10022,
 	NFS4ERR_STALE_STATEID = 10023,
@@ -234,7 +233,7 @@ Needs to be updated अगर more operations are defined in future.*/
 	NFS4ERR_LOCK_NOTSUPP = 10043,
 	NFS4ERR_OP_ILLEGAL = 10044,
 	NFS4ERR_DEADLOCK = 10045,
-	NFS4ERR_खाता_OPEN = 10046,
+	NFS4ERR_FILE_OPEN = 10046,
 	NFS4ERR_ADMIN_REVOKED = 10047,
 	NFS4ERR_CB_PATH_DOWN = 10048,
 
@@ -274,9 +273,9 @@ Needs to be updated अगर more operations are defined in future.*/
 	NFS4ERR_NOT_ONLY_OP	= 10081,	/* bad compound */
 	NFS4ERR_WRONG_CRED	= 10082,	/* permissions:state change */
 	NFS4ERR_WRONG_TYPE	= 10083,	/* current operation mismatch */
-	NFS4ERR_सूचीDELEG_UNAVAIL = 10084,	/* no directory delegation */
+	NFS4ERR_DIRDELEG_UNAVAIL = 10084,	/* no directory delegation */
 	NFS4ERR_REJECT_DELEG	= 10085,	/* on callback */
-	NFS4ERR_RETURNCONFLICT	= 10086,	/* outstanding layoutवापस */
+	NFS4ERR_RETURNCONFLICT	= 10086,	/* outstanding layoutreturn */
 	NFS4ERR_DELEG_REVOKED	= 10087,	/* deleg./layout revoked */
 
 	/* nfs42 */
@@ -291,58 +290,58 @@ Needs to be updated अगर more operations are defined in future.*/
 	/* xattr (RFC8276) */
 	NFS4ERR_NOXATTR        = 10095,
 	NFS4ERR_XATTR2BIG      = 10096,
-पूर्ण;
+};
 
-अटल अंतरभूत bool seqid_mutating_err(u32 err)
-अणु
+static inline bool seqid_mutating_err(u32 err)
+{
 	/* See RFC 7530, section 9.1.7 */
-	चयन (err) अणु
-	हाल NFS4ERR_STALE_CLIENTID:
-	हाल NFS4ERR_STALE_STATEID:
-	हाल NFS4ERR_BAD_STATEID:
-	हाल NFS4ERR_BAD_SEQID:
-	हाल NFS4ERR_BADXDR:
-	हाल NFS4ERR_RESOURCE:
-	हाल NFS4ERR_NOखाताHANDLE:
-	हाल NFS4ERR_MOVED:
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+	switch (err) {
+	case NFS4ERR_STALE_CLIENTID:
+	case NFS4ERR_STALE_STATEID:
+	case NFS4ERR_BAD_STATEID:
+	case NFS4ERR_BAD_SEQID:
+	case NFS4ERR_BADXDR:
+	case NFS4ERR_RESOURCE:
+	case NFS4ERR_NOFILEHANDLE:
+	case NFS4ERR_MOVED:
+		return false;
+	}
+	return true;
+}
 
 /*
  * Note: NF4BAD is not actually part of the protocol; it is just used
- * पूर्णांकernally by nfsd.
+ * internally by nfsd.
  */
-क्रमागत nfs_ftype4 अणु
+enum nfs_ftype4 {
 	NF4BAD		= 0,
         NF4REG          = 1,    /* Regular File */
-        NF4सूची          = 2,    /* Directory */
+        NF4DIR          = 2,    /* Directory */
         NF4BLK          = 3,    /* Special File - block device */
-        NF4CHR          = 4,    /* Special File - अक्षरacter device */
+        NF4CHR          = 4,    /* Special File - character device */
         NF4LNK          = 5,    /* Symbolic Link */
         NF4SOCK         = 6,    /* Special File - socket */
-        NF4FIFO         = 7,    /* Special File - fअगरo */
-        NF4ATTRसूची      = 8,    /* Attribute Directory */
+        NF4FIFO         = 7,    /* Special File - fifo */
+        NF4ATTRDIR      = 8,    /* Attribute Directory */
         NF4NAMEDATTR    = 9     /* Named Attribute */
-पूर्ण;
+};
 
-क्रमागत खोलो_claim_type4 अणु
-	NFS4_OPEN_CLAIM_शून्य = 0,
+enum open_claim_type4 {
+	NFS4_OPEN_CLAIM_NULL = 0,
 	NFS4_OPEN_CLAIM_PREVIOUS = 1,
 	NFS4_OPEN_CLAIM_DELEGATE_CUR = 2,
 	NFS4_OPEN_CLAIM_DELEGATE_PREV = 3,
 	NFS4_OPEN_CLAIM_FH = 4, /* 4.1 */
 	NFS4_OPEN_CLAIM_DELEG_CUR_FH = 5, /* 4.1 */
 	NFS4_OPEN_CLAIM_DELEG_PREV_FH = 6, /* 4.1 */
-पूर्ण;
+};
 
-क्रमागत खोलोtype4 अणु
+enum opentype4 {
 	NFS4_OPEN_NOCREATE = 0,
 	NFS4_OPEN_CREATE = 1
-पूर्ण;
+};
 
-क्रमागत createmode4 अणु
+enum createmode4 {
 	NFS4_CREATE_UNCHECKED = 0,
 	NFS4_CREATE_GUARDED = 1,
 	NFS4_CREATE_EXCLUSIVE = 2,
@@ -352,21 +351,21 @@ Needs to be updated अगर more operations are defined in future.*/
 	 * EXCLUSIVE4_1 instead of EXCLUSIVE4.
 	 */
 	NFS4_CREATE_EXCLUSIVE4_1 = 3
-पूर्ण;
+};
 
-क्रमागत limit_by4 अणु
+enum limit_by4 {
 	NFS4_LIMIT_SIZE = 1,
 	NFS4_LIMIT_BLOCKS = 2
-पूर्ण;
+};
 
-क्रमागत खोलो_delegation_type4 अणु
+enum open_delegation_type4 {
 	NFS4_OPEN_DELEGATE_NONE = 0,
 	NFS4_OPEN_DELEGATE_READ = 1,
 	NFS4_OPEN_DELEGATE_WRITE = 2,
 	NFS4_OPEN_DELEGATE_NONE_EXT = 3, /* 4.1 */
-पूर्ण;
+};
 
-क्रमागत why_no_delegation4 अणु /* new to v4.1 */
+enum why_no_delegation4 { /* new to v4.1 */
 	WND4_NOT_WANTED = 0,
 	WND4_CONTENTION = 1,
 	WND4_RESOURCE = 2,
@@ -375,111 +374,111 @@ Needs to be updated अगर more operations are defined in future.*/
 	WND4_NOT_SUPP_UPGRADE = 5,
 	WND4_NOT_SUPP_DOWNGRADE = 6,
 	WND4_CANCELLED = 7,
-	WND4_IS_सूची = 8,
-पूर्ण;
+	WND4_IS_DIR = 8,
+};
 
-क्रमागत lock_type4 अणु
+enum lock_type4 {
 	NFS4_UNLOCK_LT = 0,
 	NFS4_READ_LT = 1,
 	NFS4_WRITE_LT = 2,
 	NFS4_READW_LT = 3,
 	NFS4_WRITEW_LT = 4
-पूर्ण;
+};
 
 
 /* Mandatory Attributes */
-#घोषणा FATTR4_WORD0_SUPPORTED_ATTRS    (1UL << 0)
-#घोषणा FATTR4_WORD0_TYPE               (1UL << 1)
-#घोषणा FATTR4_WORD0_FH_EXPIRE_TYPE     (1UL << 2)
-#घोषणा FATTR4_WORD0_CHANGE             (1UL << 3)
-#घोषणा FATTR4_WORD0_SIZE               (1UL << 4)
-#घोषणा FATTR4_WORD0_LINK_SUPPORT       (1UL << 5)
-#घोषणा FATTR4_WORD0_SYMLINK_SUPPORT    (1UL << 6)
-#घोषणा FATTR4_WORD0_NAMED_ATTR         (1UL << 7)
-#घोषणा FATTR4_WORD0_FSID               (1UL << 8)
-#घोषणा FATTR4_WORD0_UNIQUE_HANDLES     (1UL << 9)
-#घोषणा FATTR4_WORD0_LEASE_TIME         (1UL << 10)
-#घोषणा FATTR4_WORD0_RDATTR_ERROR       (1UL << 11)
+#define FATTR4_WORD0_SUPPORTED_ATTRS    (1UL << 0)
+#define FATTR4_WORD0_TYPE               (1UL << 1)
+#define FATTR4_WORD0_FH_EXPIRE_TYPE     (1UL << 2)
+#define FATTR4_WORD0_CHANGE             (1UL << 3)
+#define FATTR4_WORD0_SIZE               (1UL << 4)
+#define FATTR4_WORD0_LINK_SUPPORT       (1UL << 5)
+#define FATTR4_WORD0_SYMLINK_SUPPORT    (1UL << 6)
+#define FATTR4_WORD0_NAMED_ATTR         (1UL << 7)
+#define FATTR4_WORD0_FSID               (1UL << 8)
+#define FATTR4_WORD0_UNIQUE_HANDLES     (1UL << 9)
+#define FATTR4_WORD0_LEASE_TIME         (1UL << 10)
+#define FATTR4_WORD0_RDATTR_ERROR       (1UL << 11)
 /* Mandatory in NFSv4.1 */
-#घोषणा FATTR4_WORD2_SUPPATTR_EXCLCREAT (1UL << 11)
+#define FATTR4_WORD2_SUPPATTR_EXCLCREAT (1UL << 11)
 
 /* Recommended Attributes */
-#घोषणा FATTR4_WORD0_ACL                (1UL << 12)
-#घोषणा FATTR4_WORD0_ACLSUPPORT         (1UL << 13)
-#घोषणा FATTR4_WORD0_ARCHIVE            (1UL << 14)
-#घोषणा FATTR4_WORD0_CANSETTIME         (1UL << 15)
-#घोषणा FATTR4_WORD0_CASE_INSENSITIVE   (1UL << 16)
-#घोषणा FATTR4_WORD0_CASE_PRESERVING    (1UL << 17)
-#घोषणा FATTR4_WORD0_CHOWN_RESTRICTED   (1UL << 18)
-#घोषणा FATTR4_WORD0_खाताHANDLE         (1UL << 19)
-#घोषणा FATTR4_WORD0_खाताID             (1UL << 20)
-#घोषणा FATTR4_WORD0_खाताS_AVAIL        (1UL << 21)
-#घोषणा FATTR4_WORD0_खाताS_FREE         (1UL << 22)
-#घोषणा FATTR4_WORD0_खाताS_TOTAL        (1UL << 23)
-#घोषणा FATTR4_WORD0_FS_LOCATIONS       (1UL << 24)
-#घोषणा FATTR4_WORD0_HIDDEN             (1UL << 25)
-#घोषणा FATTR4_WORD0_HOMOGENEOUS        (1UL << 26)
-#घोषणा FATTR4_WORD0_MAXखाताSIZE        (1UL << 27)
-#घोषणा FATTR4_WORD0_MAXLINK            (1UL << 28)
-#घोषणा FATTR4_WORD0_MAXNAME            (1UL << 29)
-#घोषणा FATTR4_WORD0_MAXREAD            (1UL << 30)
-#घोषणा FATTR4_WORD0_MAXWRITE           (1UL << 31)
-#घोषणा FATTR4_WORD1_MIMETYPE           (1UL << 0)
-#घोषणा FATTR4_WORD1_MODE               (1UL << 1)
-#घोषणा FATTR4_WORD1_NO_TRUNC           (1UL << 2)
-#घोषणा FATTR4_WORD1_NUMLINKS           (1UL << 3)
-#घोषणा FATTR4_WORD1_OWNER              (1UL << 4)
-#घोषणा FATTR4_WORD1_OWNER_GROUP        (1UL << 5)
-#घोषणा FATTR4_WORD1_QUOTA_HARD         (1UL << 6)
-#घोषणा FATTR4_WORD1_QUOTA_SOFT         (1UL << 7)
-#घोषणा FATTR4_WORD1_QUOTA_USED         (1UL << 8)
-#घोषणा FATTR4_WORD1_RAWDEV             (1UL << 9)
-#घोषणा FATTR4_WORD1_SPACE_AVAIL        (1UL << 10)
-#घोषणा FATTR4_WORD1_SPACE_FREE         (1UL << 11)
-#घोषणा FATTR4_WORD1_SPACE_TOTAL        (1UL << 12)
-#घोषणा FATTR4_WORD1_SPACE_USED         (1UL << 13)
-#घोषणा FATTR4_WORD1_SYSTEM             (1UL << 14)
-#घोषणा FATTR4_WORD1_TIME_ACCESS        (1UL << 15)
-#घोषणा FATTR4_WORD1_TIME_ACCESS_SET    (1UL << 16)
-#घोषणा FATTR4_WORD1_TIME_BACKUP        (1UL << 17)
-#घोषणा FATTR4_WORD1_TIME_CREATE        (1UL << 18)
-#घोषणा FATTR4_WORD1_TIME_DELTA         (1UL << 19)
-#घोषणा FATTR4_WORD1_TIME_METADATA      (1UL << 20)
-#घोषणा FATTR4_WORD1_TIME_MODIFY        (1UL << 21)
-#घोषणा FATTR4_WORD1_TIME_MODIFY_SET    (1UL << 22)
-#घोषणा FATTR4_WORD1_MOUNTED_ON_खाताID  (1UL << 23)
-#घोषणा FATTR4_WORD1_FS_LAYOUT_TYPES    (1UL << 30)
-#घोषणा FATTR4_WORD2_LAYOUT_TYPES       (1UL << 0)
-#घोषणा FATTR4_WORD2_LAYOUT_BLKSIZE     (1UL << 1)
-#घोषणा FATTR4_WORD2_MDSTHRESHOLD       (1UL << 4)
-#घोषणा FATTR4_WORD2_CLONE_BLKSIZE	(1UL << 13)
-#घोषणा FATTR4_WORD2_CHANGE_ATTR_TYPE	(1UL << 15)
-#घोषणा FATTR4_WORD2_SECURITY_LABEL     (1UL << 16)
-#घोषणा FATTR4_WORD2_MODE_UMASK		(1UL << 17)
-#घोषणा FATTR4_WORD2_XATTR_SUPPORT	(1UL << 18)
+#define FATTR4_WORD0_ACL                (1UL << 12)
+#define FATTR4_WORD0_ACLSUPPORT         (1UL << 13)
+#define FATTR4_WORD0_ARCHIVE            (1UL << 14)
+#define FATTR4_WORD0_CANSETTIME         (1UL << 15)
+#define FATTR4_WORD0_CASE_INSENSITIVE   (1UL << 16)
+#define FATTR4_WORD0_CASE_PRESERVING    (1UL << 17)
+#define FATTR4_WORD0_CHOWN_RESTRICTED   (1UL << 18)
+#define FATTR4_WORD0_FILEHANDLE         (1UL << 19)
+#define FATTR4_WORD0_FILEID             (1UL << 20)
+#define FATTR4_WORD0_FILES_AVAIL        (1UL << 21)
+#define FATTR4_WORD0_FILES_FREE         (1UL << 22)
+#define FATTR4_WORD0_FILES_TOTAL        (1UL << 23)
+#define FATTR4_WORD0_FS_LOCATIONS       (1UL << 24)
+#define FATTR4_WORD0_HIDDEN             (1UL << 25)
+#define FATTR4_WORD0_HOMOGENEOUS        (1UL << 26)
+#define FATTR4_WORD0_MAXFILESIZE        (1UL << 27)
+#define FATTR4_WORD0_MAXLINK            (1UL << 28)
+#define FATTR4_WORD0_MAXNAME            (1UL << 29)
+#define FATTR4_WORD0_MAXREAD            (1UL << 30)
+#define FATTR4_WORD0_MAXWRITE           (1UL << 31)
+#define FATTR4_WORD1_MIMETYPE           (1UL << 0)
+#define FATTR4_WORD1_MODE               (1UL << 1)
+#define FATTR4_WORD1_NO_TRUNC           (1UL << 2)
+#define FATTR4_WORD1_NUMLINKS           (1UL << 3)
+#define FATTR4_WORD1_OWNER              (1UL << 4)
+#define FATTR4_WORD1_OWNER_GROUP        (1UL << 5)
+#define FATTR4_WORD1_QUOTA_HARD         (1UL << 6)
+#define FATTR4_WORD1_QUOTA_SOFT         (1UL << 7)
+#define FATTR4_WORD1_QUOTA_USED         (1UL << 8)
+#define FATTR4_WORD1_RAWDEV             (1UL << 9)
+#define FATTR4_WORD1_SPACE_AVAIL        (1UL << 10)
+#define FATTR4_WORD1_SPACE_FREE         (1UL << 11)
+#define FATTR4_WORD1_SPACE_TOTAL        (1UL << 12)
+#define FATTR4_WORD1_SPACE_USED         (1UL << 13)
+#define FATTR4_WORD1_SYSTEM             (1UL << 14)
+#define FATTR4_WORD1_TIME_ACCESS        (1UL << 15)
+#define FATTR4_WORD1_TIME_ACCESS_SET    (1UL << 16)
+#define FATTR4_WORD1_TIME_BACKUP        (1UL << 17)
+#define FATTR4_WORD1_TIME_CREATE        (1UL << 18)
+#define FATTR4_WORD1_TIME_DELTA         (1UL << 19)
+#define FATTR4_WORD1_TIME_METADATA      (1UL << 20)
+#define FATTR4_WORD1_TIME_MODIFY        (1UL << 21)
+#define FATTR4_WORD1_TIME_MODIFY_SET    (1UL << 22)
+#define FATTR4_WORD1_MOUNTED_ON_FILEID  (1UL << 23)
+#define FATTR4_WORD1_FS_LAYOUT_TYPES    (1UL << 30)
+#define FATTR4_WORD2_LAYOUT_TYPES       (1UL << 0)
+#define FATTR4_WORD2_LAYOUT_BLKSIZE     (1UL << 1)
+#define FATTR4_WORD2_MDSTHRESHOLD       (1UL << 4)
+#define FATTR4_WORD2_CLONE_BLKSIZE	(1UL << 13)
+#define FATTR4_WORD2_CHANGE_ATTR_TYPE	(1UL << 15)
+#define FATTR4_WORD2_SECURITY_LABEL     (1UL << 16)
+#define FATTR4_WORD2_MODE_UMASK		(1UL << 17)
+#define FATTR4_WORD2_XATTR_SUPPORT	(1UL << 18)
 
-/* MDS threshold biपंचांगap bits */
-#घोषणा THRESHOLD_RD                    (1UL << 0)
-#घोषणा THRESHOLD_WR                    (1UL << 1)
-#घोषणा THRESHOLD_RD_IO                 (1UL << 2)
-#घोषणा THRESHOLD_WR_IO                 (1UL << 3)
+/* MDS threshold bitmap bits */
+#define THRESHOLD_RD                    (1UL << 0)
+#define THRESHOLD_WR                    (1UL << 1)
+#define THRESHOLD_RD_IO                 (1UL << 2)
+#define THRESHOLD_WR_IO                 (1UL << 3)
 
-#घोषणा NFSPROC4_शून्य 0
-#घोषणा NFSPROC4_COMPOUND 1
-#घोषणा NFS4_VERSION 4
-#घोषणा NFS4_MINOR_VERSION 0
+#define NFSPROC4_NULL 0
+#define NFSPROC4_COMPOUND 1
+#define NFS4_VERSION 4
+#define NFS4_MINOR_VERSION 0
 
-#घोषणा NFS4_DEBUG 1
+#define NFS4_DEBUG 1
 
 /*
  * Index of predefined Linux client operations
  *
- * To ensure that /proc/net/rpc/nfs reमुख्यs correctly ordered, please
- * append only to this क्रमागत when adding new client operations.
+ * To ensure that /proc/net/rpc/nfs remains correctly ordered, please
+ * append only to this enum when adding new client operations.
  */
 
-क्रमागत अणु
-	NFSPROC4_CLNT_शून्य = 0,		/* Unused */
+enum {
+	NFSPROC4_CLNT_NULL = 0,		/* Unused */
 	NFSPROC4_CLNT_READ,
 	NFSPROC4_CLNT_WRITE,
 	NFSPROC4_CLNT_COMMIT,
@@ -508,7 +507,7 @@ Needs to be updated अगर more operations are defined in future.*/
 	NFSPROC4_CLNT_PATHCONF,
 	NFSPROC4_CLNT_STATFS,
 	NFSPROC4_CLNT_READLINK,
-	NFSPROC4_CLNT_READसूची,
+	NFSPROC4_CLNT_READDIR,
 	NFSPROC4_CLNT_SERVER_CAPS,
 	NFSPROC4_CLNT_DELEGRETURN,
 	NFSPROC4_CLNT_GETACL,
@@ -552,114 +551,114 @@ Needs to be updated अगर more operations are defined in future.*/
 	NFSPROC4_CLNT_LISTXATTRS,
 	NFSPROC4_CLNT_REMOVEXATTR,
 	NFSPROC4_CLNT_READ_PLUS,
-पूर्ण;
+};
 
 /* nfs41 types */
-काष्ठा nfs4_sessionid अणु
-	अचिन्हित अक्षर data[NFS4_MAX_SESSIONID_LEN];
-पूर्ण;
+struct nfs4_sessionid {
+	unsigned char data[NFS4_MAX_SESSIONID_LEN];
+};
 
 /* Create Session Flags */
-#घोषणा SESSION4_PERSIST	0x001
-#घोषणा SESSION4_BACK_CHAN	0x002
-#घोषणा SESSION4_RDMA		0x004
+#define SESSION4_PERSIST	0x001
+#define SESSION4_BACK_CHAN	0x002
+#define SESSION4_RDMA		0x004
 
-#घोषणा SESSION4_FLAG_MASK_A	0x007
+#define SESSION4_FLAG_MASK_A	0x007
 
-क्रमागत state_protect_how4 अणु
+enum state_protect_how4 {
 	SP4_NONE	= 0,
 	SP4_MACH_CRED	= 1,
 	SP4_SSV		= 2
-पूर्ण;
+};
 
-क्रमागत pnfs_layouttype अणु
-	LAYOUT_NFSV4_1_खाताS  = 1,
+enum pnfs_layouttype {
+	LAYOUT_NFSV4_1_FILES  = 1,
 	LAYOUT_OSD2_OBJECTS = 2,
 	LAYOUT_BLOCK_VOLUME = 3,
-	LAYOUT_FLEX_खाताS = 4,
+	LAYOUT_FLEX_FILES = 4,
 	LAYOUT_SCSI = 5,
 	LAYOUT_TYPE_MAX
-पूर्ण;
+};
 
-/* used क्रम both layout वापस and recall */
-क्रमागत pnfs_layoutवापस_type अणु
-	RETURN_खाता = 1,
+/* used for both layout return and recall */
+enum pnfs_layoutreturn_type {
+	RETURN_FILE = 1,
 	RETURN_FSID = 2,
 	RETURN_ALL  = 3
-पूर्ण;
+};
 
-क्रमागत pnfs_iomode अणु
+enum pnfs_iomode {
 	IOMODE_READ = 1,
 	IOMODE_RW = 2,
 	IOMODE_ANY = 3,
-पूर्ण;
+};
 
-क्रमागत pnfs_notअगरy_deviceid_type4 अणु
+enum pnfs_notify_deviceid_type4 {
 	NOTIFY_DEVICEID4_CHANGE = 1 << 1,
 	NOTIFY_DEVICEID4_DELETE = 1 << 2,
-पूर्ण;
+};
 
-क्रमागत pnfs_block_volume_type अणु
+enum pnfs_block_volume_type {
 	PNFS_BLOCK_VOLUME_SIMPLE	= 0,
 	PNFS_BLOCK_VOLUME_SLICE		= 1,
 	PNFS_BLOCK_VOLUME_CONCAT	= 2,
 	PNFS_BLOCK_VOLUME_STRIPE	= 3,
 	PNFS_BLOCK_VOLUME_SCSI		= 4,
-पूर्ण;
+};
 
-क्रमागत pnfs_block_extent_state अणु
+enum pnfs_block_extent_state {
 	PNFS_BLOCK_READWRITE_DATA	= 0,
 	PNFS_BLOCK_READ_DATA		= 1,
 	PNFS_BLOCK_INVALID_DATA		= 2,
 	PNFS_BLOCK_NONE_DATA		= 3,
-पूर्ण;
+};
 
 /* on the wire size of a block layout extent */
-#घोषणा PNFS_BLOCK_EXTENT_SIZE \
-	(7 * माप(__be32) + NFS4_DEVICEID4_SIZE)
+#define PNFS_BLOCK_EXTENT_SIZE \
+	(7 * sizeof(__be32) + NFS4_DEVICEID4_SIZE)
 
 /* on the wire size of a scsi commit range */
-#घोषणा PNFS_SCSI_RANGE_SIZE \
-	(4 * माप(__be32))
+#define PNFS_SCSI_RANGE_SIZE \
+	(4 * sizeof(__be32))
 
-क्रमागत scsi_code_set अणु
+enum scsi_code_set {
 	PS_CODE_SET_BINARY	= 1,
 	PS_CODE_SET_ASCII	= 2,
 	PS_CODE_SET_UTF8	= 3
-पूर्ण;
+};
 
-क्रमागत scsi_designator_type अणु
+enum scsi_designator_type {
 	PS_DESIGNATOR_T10	= 1,
 	PS_DESIGNATOR_EUI64	= 2,
 	PS_DESIGNATOR_NAA	= 3,
 	PS_DESIGNATOR_NAME	= 8
-पूर्ण;
+};
 
-#घोषणा NFL4_UFLG_MASK			0x0000003F
-#घोषणा NFL4_UFLG_DENSE			0x00000001
-#घोषणा NFL4_UFLG_COMMIT_THRU_MDS	0x00000002
-#घोषणा NFL4_UFLG_STRIPE_UNIT_SIZE_MASK	0xFFFFFFC0
+#define NFL4_UFLG_MASK			0x0000003F
+#define NFL4_UFLG_DENSE			0x00000001
+#define NFL4_UFLG_COMMIT_THRU_MDS	0x00000002
+#define NFL4_UFLG_STRIPE_UNIT_SIZE_MASK	0xFFFFFFC0
 
-/* Encoded in the loh_body field of type layouthपूर्णांक4 */
-क्रमागत filelayout_hपूर्णांक_care4 अणु
+/* Encoded in the loh_body field of type layouthint4 */
+enum filelayout_hint_care4 {
 	NFLH4_CARE_DENSE		= NFL4_UFLG_DENSE,
 	NFLH4_CARE_COMMIT_THRU_MDS	= NFL4_UFLG_COMMIT_THRU_MDS,
 	NFLH4_CARE_STRIPE_UNIT_SIZE	= 0x00000040,
 	NFLH4_CARE_STRIPE_COUNT		= 0x00000080
-पूर्ण;
+};
 
-#घोषणा NFS4_DEVICEID4_SIZE 16
+#define NFS4_DEVICEID4_SIZE 16
 
-काष्ठा nfs4_deviceid अणु
-	अक्षर data[NFS4_DEVICEID4_SIZE];
-पूर्ण;
+struct nfs4_deviceid {
+	char data[NFS4_DEVICEID4_SIZE];
+};
 
-क्रमागत data_content4 अणु
+enum data_content4 {
 	NFS4_CONTENT_DATA		= 0,
 	NFS4_CONTENT_HOLE		= 1,
-पूर्ण;
+};
 
-क्रमागत pnfs_update_layout_reason अणु
+enum pnfs_update_layout_reason {
 	PNFS_UPDATE_LAYOUT_UNKNOWN = 0,
 	PNFS_UPDATE_LAYOUT_NO_PNFS,
 	PNFS_UPDATE_LAYOUT_RD_ZEROLEN,
@@ -674,57 +673,57 @@ Needs to be updated अगर more operations are defined in future.*/
 	PNFS_UPDATE_LAYOUT_INVALID_OPEN,
 	PNFS_UPDATE_LAYOUT_SEND_LAYOUTGET,
 	PNFS_UPDATE_LAYOUT_EXIT,
-पूर्ण;
+};
 
-#घोषणा NFS4_OP_MAP_NUM_LONGS					\
-	DIV_ROUND_UP(LAST_NFS4_OP, 8 * माप(अचिन्हित दीर्घ))
-#घोषणा NFS4_OP_MAP_NUM_WORDS \
-	(NFS4_OP_MAP_NUM_LONGS * माप(अचिन्हित दीर्घ) / माप(u32))
-काष्ठा nfs4_op_map अणु
-	जोड़ अणु
-		अचिन्हित दीर्घ दीर्घs[NFS4_OP_MAP_NUM_LONGS];
+#define NFS4_OP_MAP_NUM_LONGS					\
+	DIV_ROUND_UP(LAST_NFS4_OP, 8 * sizeof(unsigned long))
+#define NFS4_OP_MAP_NUM_WORDS \
+	(NFS4_OP_MAP_NUM_LONGS * sizeof(unsigned long) / sizeof(u32))
+struct nfs4_op_map {
+	union {
+		unsigned long longs[NFS4_OP_MAP_NUM_LONGS];
 		u32 words[NFS4_OP_MAP_NUM_WORDS];
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-काष्ठा nfs42_netaddr अणु
-	अक्षर		netid[RPCBIND_MAXNETIDLEN];
-	अक्षर		addr[RPCBIND_MAXUADDRLEN + 1];
+struct nfs42_netaddr {
+	char		netid[RPCBIND_MAXNETIDLEN];
+	char		addr[RPCBIND_MAXUADDRLEN + 1];
 	u32		netid_len;
 	u32		addr_len;
-पूर्ण;
+};
 
-क्रमागत netloc_type4 अणु
+enum netloc_type4 {
 	NL4_NAME		= 1,
 	NL4_URL			= 2,
 	NL4_NETADDR		= 3,
-पूर्ण;
+};
 
-काष्ठा nl4_server अणु
-	क्रमागत netloc_type4	nl4_type;
-	जोड़ अणु
-		काष्ठा अणु /* NL4_NAME, NL4_URL */
-			पूर्णांक	nl4_str_sz;
-			अक्षर	nl4_str[NFS4_OPAQUE_LIMIT + 1];
-		पूर्ण;
-		काष्ठा nfs42_netaddr	nl4_addr; /* NL4_NETADDR */
-	पूर्ण u;
-पूर्ण;
+struct nl4_server {
+	enum netloc_type4	nl4_type;
+	union {
+		struct { /* NL4_NAME, NL4_URL */
+			int	nl4_str_sz;
+			char	nl4_str[NFS4_OPAQUE_LIMIT + 1];
+		};
+		struct nfs42_netaddr	nl4_addr; /* NL4_NETADDR */
+	} u;
+};
 
-क्रमागत nfs4_change_attr_type अणु
+enum nfs4_change_attr_type {
 	NFS4_CHANGE_TYPE_IS_MONOTONIC_INCR = 0,
 	NFS4_CHANGE_TYPE_IS_VERSION_COUNTER = 1,
 	NFS4_CHANGE_TYPE_IS_VERSION_COUNTER_NOPNFS = 2,
 	NFS4_CHANGE_TYPE_IS_TIME_METADATA = 3,
 	NFS4_CHANGE_TYPE_IS_UNDEFINED = 4,
-पूर्ण;
+};
 
 /*
- * Options क्रम setxattr. These match the flags क्रम setxattr(2).
+ * Options for setxattr. These match the flags for setxattr(2).
  */
-क्रमागत nfs4_setxattr_options अणु
+enum nfs4_setxattr_options {
 	SETXATTR4_EITHER	= 0,
 	SETXATTR4_CREATE	= 1,
 	SETXATTR4_REPLACE	= 2,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

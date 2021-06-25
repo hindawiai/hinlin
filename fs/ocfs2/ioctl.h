@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * ioctl.h
  *
@@ -9,13 +8,13 @@
  *
  */
 
-#अगर_अघोषित OCFS2_IOCTL_PROTO_H
-#घोषणा OCFS2_IOCTL_PROTO_H
+#ifndef OCFS2_IOCTL_PROTO_H
+#define OCFS2_IOCTL_PROTO_H
 
-पूर्णांक ocfs2_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa);
-पूर्णांक ocfs2_fileattr_set(काष्ठा user_namespace *mnt_userns,
-		       काष्ठा dentry *dentry, काष्ठा fileattr *fa);
-दीर्घ ocfs2_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
-दीर्घ ocfs2_compat_ioctl(काष्ठा file *file, अचिन्हित cmd, अचिन्हित दीर्घ arg);
+int ocfs2_fileattr_get(struct dentry *dentry, struct fileattr *fa);
+int ocfs2_fileattr_set(struct user_namespace *mnt_userns,
+		       struct dentry *dentry, struct fileattr *fa);
+long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+long ocfs2_compat_ioctl(struct file *file, unsigned cmd, unsigned long arg);
 
-#पूर्ण_अगर /* OCFS2_IOCTL_PROTO_H */
+#endif /* OCFS2_IOCTL_PROTO_H */

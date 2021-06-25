@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Public Key Encryption
  *
  * Copyright (c) 2015, Intel Corporation
- * Authors: Tadeusz Struk <tadeusz.struk@पूर्णांकel.com>
+ * Authors: Tadeusz Struk <tadeusz.struk@intel.com>
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/crypto.h>
-#समावेश <linux/compiler.h>
-#समावेश <crypto/algapi.h>
-#समावेश <linux/cryptouser.h>
-#समावेश <net/netlink.h>
-#समावेश <crypto/akcipher.h>
-#समावेश <crypto/पूर्णांकernal/akcipher.h>
-#समावेश "internal.h"
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/crypto.h>
+#include <linux/compiler.h>
+#include <crypto/algapi.h>
+#include <linux/cryptouser.h>
+#include <net/netlink.h>
+#include <crypto/akcipher.h>
+#include <crypto/internal/akcipher.h>
+#include "internal.h"
 
-#अगर_घोषित CONFIG_NET
-अटल पूर्णांक crypto_akcipher_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_report_akcipher rakcipher;
+#ifdef CONFIG_NET
+static int crypto_akcipher_report(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_report_akcipher rakcipher;
 
-	स_रखो(&rakcipher, 0, माप(rakcipher));
+	memset(&rakcipher, 0, sizeof(rakcipher));
 
-	strscpy(rakcipher.type, "akcipher", माप(rakcipher.type));
+	strscpy(rakcipher.type, "akcipher", sizeof(rakcipher.type));
 
-	वापस nla_put(skb, CRYPTOCFGA_REPORT_AKCIPHER,
-		       माप(rakcipher), &rakcipher);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक crypto_akcipher_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	वापस -ENOSYS;
-पूर्ण
-#पूर्ण_अगर
+	return nla_put(skb, CRYPTOCFGA_REPORT_AKCIPHER,
+		       sizeof(rakcipher), &rakcipher);
+}
+#else
+static int crypto_akcipher_report(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	return -ENOSYS;
+}
+#endif
 
-अटल व्योम crypto_akcipher_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
+static void crypto_akcipher_show(struct seq_file *m, struct crypto_alg *alg)
 	__maybe_unused;
 
-अटल व्योम crypto_akcipher_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
-अणु
-	seq_माला_दो(m, "type         : akcipher\n");
-पूर्ण
+static void crypto_akcipher_show(struct seq_file *m, struct crypto_alg *alg)
+{
+	seq_puts(m, "type         : akcipher\n");
+}
 
-अटल व्योम crypto_akcipher_निकास_tfm(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_akcipher *akcipher = __crypto_akcipher_tfm(tfm);
-	काष्ठा akcipher_alg *alg = crypto_akcipher_alg(akcipher);
+static void crypto_akcipher_exit_tfm(struct crypto_tfm *tfm)
+{
+	struct crypto_akcipher *akcipher = __crypto_akcipher_tfm(tfm);
+	struct akcipher_alg *alg = crypto_akcipher_alg(akcipher);
 
-	alg->निकास(akcipher);
-पूर्ण
+	alg->exit(akcipher);
+}
 
-अटल पूर्णांक crypto_akcipher_init_tfm(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_akcipher *akcipher = __crypto_akcipher_tfm(tfm);
-	काष्ठा akcipher_alg *alg = crypto_akcipher_alg(akcipher);
+static int crypto_akcipher_init_tfm(struct crypto_tfm *tfm)
+{
+	struct crypto_akcipher *akcipher = __crypto_akcipher_tfm(tfm);
+	struct akcipher_alg *alg = crypto_akcipher_alg(akcipher);
 
-	अगर (alg->निकास)
-		akcipher->base.निकास = crypto_akcipher_निकास_tfm;
+	if (alg->exit)
+		akcipher->base.exit = crypto_akcipher_exit_tfm;
 
-	अगर (alg->init)
-		वापस alg->init(akcipher);
+	if (alg->init)
+		return alg->init(akcipher);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम crypto_akcipher_मुक्त_instance(काष्ठा crypto_instance *inst)
-अणु
-	काष्ठा akcipher_instance *akcipher = akcipher_instance(inst);
+static void crypto_akcipher_free_instance(struct crypto_instance *inst)
+{
+	struct akcipher_instance *akcipher = akcipher_instance(inst);
 
-	akcipher->मुक्त(akcipher);
-पूर्ण
+	akcipher->free(akcipher);
+}
 
-अटल स्थिर काष्ठा crypto_type crypto_akcipher_type = अणु
+static const struct crypto_type crypto_akcipher_type = {
 	.extsize = crypto_alg_extsize,
 	.init_tfm = crypto_akcipher_init_tfm,
-	.मुक्त = crypto_akcipher_मुक्त_instance,
-#अगर_घोषित CONFIG_PROC_FS
+	.free = crypto_akcipher_free_instance,
+#ifdef CONFIG_PROC_FS
 	.show = crypto_akcipher_show,
-#पूर्ण_अगर
+#endif
 	.report = crypto_akcipher_report,
 	.maskclear = ~CRYPTO_ALG_TYPE_MASK,
 	.maskset = CRYPTO_ALG_TYPE_MASK,
 	.type = CRYPTO_ALG_TYPE_AKCIPHER,
-	.tfmsize = दुरत्व(काष्ठा crypto_akcipher, base),
-पूर्ण;
+	.tfmsize = offsetof(struct crypto_akcipher, base),
+};
 
-पूर्णांक crypto_grab_akcipher(काष्ठा crypto_akcipher_spawn *spawn,
-			 काष्ठा crypto_instance *inst,
-			 स्थिर अक्षर *name, u32 type, u32 mask)
-अणु
+int crypto_grab_akcipher(struct crypto_akcipher_spawn *spawn,
+			 struct crypto_instance *inst,
+			 const char *name, u32 type, u32 mask)
+{
 	spawn->base.frontend = &crypto_akcipher_type;
-	वापस crypto_grab_spawn(&spawn->base, inst, name, type, mask);
-पूर्ण
+	return crypto_grab_spawn(&spawn->base, inst, name, type, mask);
+}
 EXPORT_SYMBOL_GPL(crypto_grab_akcipher);
 
-काष्ठा crypto_akcipher *crypto_alloc_akcipher(स्थिर अक्षर *alg_name, u32 type,
+struct crypto_akcipher *crypto_alloc_akcipher(const char *alg_name, u32 type,
 					      u32 mask)
-अणु
-	वापस crypto_alloc_tfm(alg_name, &crypto_akcipher_type, type, mask);
-पूर्ण
+{
+	return crypto_alloc_tfm(alg_name, &crypto_akcipher_type, type, mask);
+}
 EXPORT_SYMBOL_GPL(crypto_alloc_akcipher);
 
-अटल व्योम akcipher_prepare_alg(काष्ठा akcipher_alg *alg)
-अणु
-	काष्ठा crypto_alg *base = &alg->base;
+static void akcipher_prepare_alg(struct akcipher_alg *alg)
+{
+	struct crypto_alg *base = &alg->base;
 
 	base->cra_type = &crypto_akcipher_type;
 	base->cra_flags &= ~CRYPTO_ALG_TYPE_MASK;
 	base->cra_flags |= CRYPTO_ALG_TYPE_AKCIPHER;
-पूर्ण
+}
 
-अटल पूर्णांक akcipher_शेष_op(काष्ठा akcipher_request *req)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int akcipher_default_op(struct akcipher_request *req)
+{
+	return -ENOSYS;
+}
 
-पूर्णांक crypto_रेजिस्टर_akcipher(काष्ठा akcipher_alg *alg)
-अणु
-	काष्ठा crypto_alg *base = &alg->base;
+int crypto_register_akcipher(struct akcipher_alg *alg)
+{
+	struct crypto_alg *base = &alg->base;
 
-	अगर (!alg->sign)
-		alg->sign = akcipher_शेष_op;
-	अगर (!alg->verअगरy)
-		alg->verअगरy = akcipher_शेष_op;
-	अगर (!alg->encrypt)
-		alg->encrypt = akcipher_शेष_op;
-	अगर (!alg->decrypt)
-		alg->decrypt = akcipher_शेष_op;
+	if (!alg->sign)
+		alg->sign = akcipher_default_op;
+	if (!alg->verify)
+		alg->verify = akcipher_default_op;
+	if (!alg->encrypt)
+		alg->encrypt = akcipher_default_op;
+	if (!alg->decrypt)
+		alg->decrypt = akcipher_default_op;
 
 	akcipher_prepare_alg(alg);
-	वापस crypto_रेजिस्टर_alg(base);
-पूर्ण
-EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_akcipher);
+	return crypto_register_alg(base);
+}
+EXPORT_SYMBOL_GPL(crypto_register_akcipher);
 
-व्योम crypto_unरेजिस्टर_akcipher(काष्ठा akcipher_alg *alg)
-अणु
-	crypto_unरेजिस्टर_alg(&alg->base);
-पूर्ण
-EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_akcipher);
+void crypto_unregister_akcipher(struct akcipher_alg *alg)
+{
+	crypto_unregister_alg(&alg->base);
+}
+EXPORT_SYMBOL_GPL(crypto_unregister_akcipher);
 
-पूर्णांक akcipher_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
-			       काष्ठा akcipher_instance *inst)
-अणु
-	अगर (WARN_ON(!inst->मुक्त))
-		वापस -EINVAL;
+int akcipher_register_instance(struct crypto_template *tmpl,
+			       struct akcipher_instance *inst)
+{
+	if (WARN_ON(!inst->free))
+		return -EINVAL;
 	akcipher_prepare_alg(&inst->alg);
-	वापस crypto_रेजिस्टर_instance(पंचांगpl, akcipher_crypto_instance(inst));
-पूर्ण
-EXPORT_SYMBOL_GPL(akcipher_रेजिस्टर_instance);
+	return crypto_register_instance(tmpl, akcipher_crypto_instance(inst));
+}
+EXPORT_SYMBOL_GPL(akcipher_register_instance);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Generic public key cipher type");

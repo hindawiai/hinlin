@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2001 Lennert Buytenhek (buytenh@gnu.org) and
  * James Leu (jleu@mindspring.net).
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  * Copyright (C) 2001 by various other people who didn't put their name here.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/netdevice.h>
-#समावेश <net_kern.h>
-#समावेश "daemon.h"
+#include <linux/init.h>
+#include <linux/netdevice.h>
+#include <net_kern.h>
+#include "daemon.h"
 
-काष्ठा daemon_init अणु
-	अक्षर *sock_type;
-	अक्षर *ctl_sock;
-पूर्ण;
+struct daemon_init {
+	char *sock_type;
+	char *ctl_sock;
+};
 
-अटल व्योम daemon_init(काष्ठा net_device *dev, व्योम *data)
-अणु
-	काष्ठा uml_net_निजी *pri;
-	काष्ठा daemon_data *dpri;
-	काष्ठा daemon_init *init = data;
+static void daemon_init(struct net_device *dev, void *data)
+{
+	struct uml_net_private *pri;
+	struct daemon_data *dpri;
+	struct daemon_init *init = data;
 
 	pri = netdev_priv(dev);
-	dpri = (काष्ठा daemon_data *) pri->user;
+	dpri = (struct daemon_data *) pri->user;
 	dpri->sock_type = init->sock_type;
 	dpri->ctl_sock = init->ctl_sock;
 	dpri->fd = -1;
 	dpri->control = -1;
 	dpri->dev = dev;
-	/* We will मुक्त this poपूर्णांकer. If it contains crap we're burned. */
-	dpri->ctl_addr = शून्य;
-	dpri->data_addr = शून्य;
-	dpri->local_addr = शून्य;
+	/* We will free this pointer. If it contains crap we're burned. */
+	dpri->ctl_addr = NULL;
+	dpri->data_addr = NULL;
+	dpri->local_addr = NULL;
 
-	prपूर्णांकk("daemon backend (uml_switch version %d) - %s:%s",
+	printk("daemon backend (uml_switch version %d) - %s:%s",
 	       SWITCH_VERSION, dpri->sock_type, dpri->ctl_sock);
-	prपूर्णांकk("\n");
-पूर्ण
+	printk("\n");
+}
 
-अटल पूर्णांक daemon_पढ़ो(पूर्णांक fd, काष्ठा sk_buff *skb, काष्ठा uml_net_निजी *lp)
-अणु
-	वापस net_recvfrom(fd, skb_mac_header(skb),
+static int daemon_read(int fd, struct sk_buff *skb, struct uml_net_private *lp)
+{
+	return net_recvfrom(fd, skb_mac_header(skb),
 			    skb->dev->mtu + ETH_HEADER_OTHER);
-पूर्ण
+}
 
-अटल पूर्णांक daemon_ग_लिखो(पूर्णांक fd, काष्ठा sk_buff *skb, काष्ठा uml_net_निजी *lp)
-अणु
-	वापस daemon_user_ग_लिखो(fd, skb->data, skb->len,
-				 (काष्ठा daemon_data *) &lp->user);
-पूर्ण
+static int daemon_write(int fd, struct sk_buff *skb, struct uml_net_private *lp)
+{
+	return daemon_user_write(fd, skb->data, skb->len,
+				 (struct daemon_data *) &lp->user);
+}
 
-अटल स्थिर काष्ठा net_kern_info daemon_kern_info = अणु
+static const struct net_kern_info daemon_kern_info = {
 	.init			= daemon_init,
 	.protocol		= eth_protocol,
-	.पढ़ो			= daemon_पढ़ो,
-	.ग_लिखो			= daemon_ग_लिखो,
-पूर्ण;
+	.read			= daemon_read,
+	.write			= daemon_write,
+};
 
-अटल पूर्णांक daemon_setup(अक्षर *str, अक्षर **mac_out, व्योम *data)
-अणु
-	काष्ठा daemon_init *init = data;
-	अक्षर *reमुख्य;
+static int daemon_setup(char *str, char **mac_out, void *data)
+{
+	struct daemon_init *init = data;
+	char *remain;
 
-	*init = ((काष्ठा daemon_init)
-		अणु .sock_type 		= "unix",
-		  .ctl_sock 		= "/tmp/uml.ctl" पूर्ण);
+	*init = ((struct daemon_init)
+		{ .sock_type 		= "unix",
+		  .ctl_sock 		= "/tmp/uml.ctl" });
 
-	reमुख्य = split_अगर_spec(str, mac_out, &init->sock_type, &init->ctl_sock,
-			       शून्य);
-	अगर (reमुख्य != शून्य)
-		prपूर्णांकk(KERN_WARNING "daemon_setup : Ignoring data socket "
+	remain = split_if_spec(str, mac_out, &init->sock_type, &init->ctl_sock,
+			       NULL);
+	if (remain != NULL)
+		printk(KERN_WARNING "daemon_setup : Ignoring data socket "
 		       "specification\n");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल काष्ठा transport daemon_transport = अणु
+static struct transport daemon_transport = {
 	.list 		= LIST_HEAD_INIT(daemon_transport.list),
 	.name 		= "daemon",
 	.setup  	= daemon_setup,
 	.user 		= &daemon_user_info,
 	.kern 		= &daemon_kern_info,
-	.निजी_size 	= माप(काष्ठा daemon_data),
-	.setup_size 	= माप(काष्ठा daemon_init),
-पूर्ण;
+	.private_size 	= sizeof(struct daemon_data),
+	.setup_size 	= sizeof(struct daemon_init),
+};
 
-अटल पूर्णांक रेजिस्टर_daemon(व्योम)
-अणु
-	रेजिस्टर_transport(&daemon_transport);
-	वापस 0;
-पूर्ण
+static int register_daemon(void)
+{
+	register_transport(&daemon_transport);
+	return 0;
+}
 
-late_initcall(रेजिस्टर_daemon);
+late_initcall(register_daemon);

@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (c) 2013
  *  Minchan Kim <minchan@kernel.org>
  */
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/cpumask.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/bio.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/cpumask.h>
 
-#समावेश "squashfs_fs.h"
-#समावेश "squashfs_fs_sb.h"
-#समावेश "decompressor.h"
-#समावेश "squashfs.h"
+#include "squashfs_fs.h"
+#include "squashfs_fs_sb.h"
+#include "decompressor.h"
+#include "squashfs.h"
 
 /*
- * This file implements multi-thपढ़ोed decompression in the
+ * This file implements multi-threaded decompression in the
  * decompressor framework
  */
 
 
 /*
  * The reason that multiply two is that a CPU can request new I/O
- * जबतक it is रुकोing previous request.
+ * while it is waiting previous request.
  */
-#घोषणा MAX_DECOMPRESSOR	(num_online_cpus() * 2)
+#define MAX_DECOMPRESSOR	(num_online_cpus() * 2)
 
 
-पूर्णांक squashfs_max_decompressors(व्योम)
-अणु
-	वापस MAX_DECOMPRESSOR;
-पूर्ण
+int squashfs_max_decompressors(void)
+{
+	return MAX_DECOMPRESSOR;
+}
 
 
-काष्ठा squashfs_stream अणु
-	व्योम			*comp_opts;
-	काष्ठा list_head	strm_list;
-	काष्ठा mutex		mutex;
-	पूर्णांक			avail_decomp;
-	रुको_queue_head_t	रुको;
-पूर्ण;
+struct squashfs_stream {
+	void			*comp_opts;
+	struct list_head	strm_list;
+	struct mutex		mutex;
+	int			avail_decomp;
+	wait_queue_head_t	wait;
+};
 
 
-काष्ठा decomp_stream अणु
-	व्योम *stream;
-	काष्ठा list_head list;
-पूर्ण;
+struct decomp_stream {
+	void *stream;
+	struct list_head list;
+};
 
 
-अटल व्योम put_decomp_stream(काष्ठा decomp_stream *decomp_strm,
-				काष्ठा squashfs_stream *stream)
-अणु
+static void put_decomp_stream(struct decomp_stream *decomp_strm,
+				struct squashfs_stream *stream)
+{
 	mutex_lock(&stream->mutex);
 	list_add(&decomp_strm->list, &stream->strm_list);
 	mutex_unlock(&stream->mutex);
-	wake_up(&stream->रुको);
-पूर्ण
+	wake_up(&stream->wait);
+}
 
-व्योम *squashfs_decompressor_create(काष्ठा squashfs_sb_info *msblk,
-				व्योम *comp_opts)
-अणु
-	काष्ठा squashfs_stream *stream;
-	काष्ठा decomp_stream *decomp_strm = शून्य;
-	पूर्णांक err = -ENOMEM;
+void *squashfs_decompressor_create(struct squashfs_sb_info *msblk,
+				void *comp_opts)
+{
+	struct squashfs_stream *stream;
+	struct decomp_stream *decomp_strm = NULL;
+	int err = -ENOMEM;
 
-	stream = kzalloc(माप(*stream), GFP_KERNEL);
-	अगर (!stream)
-		जाओ out;
+	stream = kzalloc(sizeof(*stream), GFP_KERNEL);
+	if (!stream)
+		goto out;
 
 	stream->comp_opts = comp_opts;
 	mutex_init(&stream->mutex);
 	INIT_LIST_HEAD(&stream->strm_list);
-	init_रुकोqueue_head(&stream->रुको);
+	init_waitqueue_head(&stream->wait);
 
 	/*
-	 * We should have a decompressor at least as शेष
-	 * so अगर we fail to allocate new decompressor dynamically,
-	 * we could always fall back to शेष decompressor and
-	 * file प्रणाली works.
+	 * We should have a decompressor at least as default
+	 * so if we fail to allocate new decompressor dynamically,
+	 * we could always fall back to default decompressor and
+	 * file system works.
 	 */
-	decomp_strm = kदो_स्मृति(माप(*decomp_strm), GFP_KERNEL);
-	अगर (!decomp_strm)
-		जाओ out;
+	decomp_strm = kmalloc(sizeof(*decomp_strm), GFP_KERNEL);
+	if (!decomp_strm)
+		goto out;
 
 	decomp_strm->stream = msblk->decompressor->init(msblk,
 						stream->comp_opts);
-	अगर (IS_ERR(decomp_strm->stream)) अणु
+	if (IS_ERR(decomp_strm->stream)) {
 		err = PTR_ERR(decomp_strm->stream);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	list_add(&decomp_strm->list, &stream->strm_list);
 	stream->avail_decomp = 1;
-	वापस stream;
+	return stream;
 
 out:
-	kमुक्त(decomp_strm);
-	kमुक्त(stream);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(decomp_strm);
+	kfree(stream);
+	return ERR_PTR(err);
+}
 
 
-व्योम squashfs_decompressor_destroy(काष्ठा squashfs_sb_info *msblk)
-अणु
-	काष्ठा squashfs_stream *stream = msblk->stream;
-	अगर (stream) अणु
-		काष्ठा decomp_stream *decomp_strm;
+void squashfs_decompressor_destroy(struct squashfs_sb_info *msblk)
+{
+	struct squashfs_stream *stream = msblk->stream;
+	if (stream) {
+		struct decomp_stream *decomp_strm;
 
-		जबतक (!list_empty(&stream->strm_list)) अणु
+		while (!list_empty(&stream->strm_list)) {
 			decomp_strm = list_entry(stream->strm_list.prev,
-						काष्ठा decomp_stream, list);
+						struct decomp_stream, list);
 			list_del(&decomp_strm->list);
-			msblk->decompressor->मुक्त(decomp_strm->stream);
-			kमुक्त(decomp_strm);
+			msblk->decompressor->free(decomp_strm->stream);
+			kfree(decomp_strm);
 			stream->avail_decomp--;
-		पूर्ण
+		}
 		WARN_ON(stream->avail_decomp);
-		kमुक्त(stream->comp_opts);
-		kमुक्त(stream);
-	पूर्ण
-पूर्ण
+		kfree(stream->comp_opts);
+		kfree(stream);
+	}
+}
 
 
-अटल काष्ठा decomp_stream *get_decomp_stream(काष्ठा squashfs_sb_info *msblk,
-					काष्ठा squashfs_stream *stream)
-अणु
-	काष्ठा decomp_stream *decomp_strm;
+static struct decomp_stream *get_decomp_stream(struct squashfs_sb_info *msblk,
+					struct squashfs_stream *stream)
+{
+	struct decomp_stream *decomp_strm;
 
-	जबतक (1) अणु
+	while (1) {
 		mutex_lock(&stream->mutex);
 
 		/* There is available decomp_stream */
-		अगर (!list_empty(&stream->strm_list)) अणु
+		if (!list_empty(&stream->strm_list)) {
 			decomp_strm = list_entry(stream->strm_list.prev,
-				काष्ठा decomp_stream, list);
+				struct decomp_stream, list);
 			list_del(&decomp_strm->list);
 			mutex_unlock(&stream->mutex);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
-		 * If there is no available decomp and alपढ़ोy full,
-		 * let's रुको क्रम releasing decomp from other users.
+		 * If there is no available decomp and already full,
+		 * let's wait for releasing decomp from other users.
 		 */
-		अगर (stream->avail_decomp >= MAX_DECOMPRESSOR)
-			जाओ रुको;
+		if (stream->avail_decomp >= MAX_DECOMPRESSOR)
+			goto wait;
 
 		/* Let's allocate new decomp */
-		decomp_strm = kदो_स्मृति(माप(*decomp_strm), GFP_KERNEL);
-		अगर (!decomp_strm)
-			जाओ रुको;
+		decomp_strm = kmalloc(sizeof(*decomp_strm), GFP_KERNEL);
+		if (!decomp_strm)
+			goto wait;
 
 		decomp_strm->stream = msblk->decompressor->init(msblk,
 						stream->comp_opts);
-		अगर (IS_ERR(decomp_strm->stream)) अणु
-			kमुक्त(decomp_strm);
-			जाओ रुको;
-		पूर्ण
+		if (IS_ERR(decomp_strm->stream)) {
+			kfree(decomp_strm);
+			goto wait;
+		}
 
 		stream->avail_decomp++;
 		WARN_ON(stream->avail_decomp > MAX_DECOMPRESSOR);
 
 		mutex_unlock(&stream->mutex);
-		अवरोध;
-रुको:
+		break;
+wait:
 		/*
-		 * If प्रणाली memory is tough, let's for other's
+		 * If system memory is tough, let's for other's
 		 * releasing instead of hurting VM because it could
 		 * make page cache thrashing.
 		 */
 		mutex_unlock(&stream->mutex);
-		रुको_event(stream->रुको,
+		wait_event(stream->wait,
 			!list_empty(&stream->strm_list));
-	पूर्ण
+	}
 
-	वापस decomp_strm;
-पूर्ण
+	return decomp_strm;
+}
 
 
-पूर्णांक squashfs_decompress(काष्ठा squashfs_sb_info *msblk, काष्ठा bio *bio,
-			पूर्णांक offset, पूर्णांक length,
-			काष्ठा squashfs_page_actor *output)
-अणु
-	पूर्णांक res;
-	काष्ठा squashfs_stream *stream = msblk->stream;
-	काष्ठा decomp_stream *decomp_stream = get_decomp_stream(msblk, stream);
+int squashfs_decompress(struct squashfs_sb_info *msblk, struct bio *bio,
+			int offset, int length,
+			struct squashfs_page_actor *output)
+{
+	int res;
+	struct squashfs_stream *stream = msblk->stream;
+	struct decomp_stream *decomp_stream = get_decomp_stream(msblk, stream);
 	res = msblk->decompressor->decompress(msblk, decomp_stream->stream,
 		bio, offset, length, output);
 	put_decomp_stream(decomp_stream, stream);
-	अगर (res < 0)
+	if (res < 0)
 		ERROR("%s decompression failed, data probably corrupt\n",
 			msblk->decompressor->name);
-	वापस res;
-पूर्ण
+	return res;
+}

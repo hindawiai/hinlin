@@ -1,8 +1,7 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SPARC_BARRIER_H
-#घोषणा __SPARC_BARRIER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SPARC_BARRIER_H
+#define __SPARC_BARRIER_H
 
-#समावेश <यंत्र-generic/barrier.h>
+#include <asm-generic/barrier.h>
 
-#पूर्ण_अगर /* !(__SPARC_BARRIER_H) */
+#endif /* !(__SPARC_BARRIER_H) */

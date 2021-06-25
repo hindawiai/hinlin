@@ -1,302 +1,301 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * linux/drivers/scsi/scsi_proc.c
  *
- * The functions in this file provide an पूर्णांकerface between
- * the PROC file प्रणाली and the SCSI device drivers
- * It is मुख्यly used क्रम debugging, statistics and to pass 
- * inक्रमmation directly to the lowlevel driver.
+ * The functions in this file provide an interface between
+ * the PROC file system and the SCSI device drivers
+ * It is mainly used for debugging, statistics and to pass 
+ * information directly to the lowlevel driver.
  *
- * (c) 1995 Michael Neuffer neuffer@goofy.zdv.uni-मुख्यz.de 
+ * (c) 1995 Michael Neuffer neuffer@goofy.zdv.uni-mainz.de 
  * Version: 0.99.8   last change: 95/09/13
  * 
  * generic command parser provided by: 
- * Andreas Heilwagen <crashcar@inक्रमmatik.uni-koblenz.de>
+ * Andreas Heilwagen <crashcar@informatik.uni-koblenz.de>
  *
  * generic_proc_info() support of xxxx_info() by:
- * Michael A. Grअगरfith <grअगर@acm.org>
+ * Michael A. Griffith <grif@acm.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/proc_fs.h>
+#include <linux/errno.h>
+#include <linux/blkdev.h>
+#include <linux/seq_file.h>
+#include <linux/mutex.h>
+#include <linux/gfp.h>
+#include <linux/uaccess.h>
 
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_transport.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_transport.h>
 
-#समावेश "scsi_priv.h"
-#समावेश "scsi_logging.h"
+#include "scsi_priv.h"
+#include "scsi_logging.h"
 
 
-/* 4K page size, but our output routines, use some slack क्रम overruns */
-#घोषणा PROC_BLOCK_SIZE (3*1024)
+/* 4K page size, but our output routines, use some slack for overruns */
+#define PROC_BLOCK_SIZE (3*1024)
 
-अटल काष्ठा proc_dir_entry *proc_scsi;
+static struct proc_dir_entry *proc_scsi;
 
 /* Protect sht->present and sht->proc_dir */
-अटल DEFINE_MUTEX(global_host_ढाँचा_mutex);
+static DEFINE_MUTEX(global_host_template_mutex);
 
-अटल sमाप_प्रकार proc_scsi_host_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-                           माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा Scsi_Host *shost = PDE_DATA(file_inode(file));
-	sमाप_प्रकार ret = -ENOMEM;
-	अक्षर *page;
+static ssize_t proc_scsi_host_write(struct file *file, const char __user *buf,
+                           size_t count, loff_t *ppos)
+{
+	struct Scsi_Host *shost = PDE_DATA(file_inode(file));
+	ssize_t ret = -ENOMEM;
+	char *page;
     
-	अगर (count > PROC_BLOCK_SIZE)
-		वापस -EOVERFLOW;
+	if (count > PROC_BLOCK_SIZE)
+		return -EOVERFLOW;
 
-	अगर (!shost->hostt->ग_लिखो_info)
-		वापस -EINVAL;
+	if (!shost->hostt->write_info)
+		return -EINVAL;
 
-	page = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
-	अगर (page) अणु
+	page = (char *)__get_free_page(GFP_KERNEL);
+	if (page) {
 		ret = -EFAULT;
-		अगर (copy_from_user(page, buf, count))
-			जाओ out;
-		ret = shost->hostt->ग_लिखो_info(shost, page, count);
-	पूर्ण
+		if (copy_from_user(page, buf, count))
+			goto out;
+		ret = shost->hostt->write_info(shost, page, count);
+	}
 out:
-	मुक्त_page((अचिन्हित दीर्घ)page);
-	वापस ret;
-पूर्ण
+	free_page((unsigned long)page);
+	return ret;
+}
 
-अटल पूर्णांक proc_scsi_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा Scsi_Host *shost = m->निजी;
-	वापस shost->hostt->show_info(m, shost);
-पूर्ण
+static int proc_scsi_show(struct seq_file *m, void *v)
+{
+	struct Scsi_Host *shost = m->private;
+	return shost->hostt->show_info(m, shost);
+}
 
-अटल पूर्णांक proc_scsi_host_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो_size(file, proc_scsi_show, PDE_DATA(inode),
+static int proc_scsi_host_open(struct inode *inode, struct file *file)
+{
+	return single_open_size(file, proc_scsi_show, PDE_DATA(inode),
 				4 * PAGE_SIZE);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा proc_ops proc_scsi_ops = अणु
-	.proc_खोलो	= proc_scsi_host_खोलो,
+static const struct proc_ops proc_scsi_ops = {
+	.proc_open	= proc_scsi_host_open,
 	.proc_release	= single_release,
-	.proc_पढ़ो	= seq_पढ़ो,
+	.proc_read	= seq_read,
 	.proc_lseek	= seq_lseek,
-	.proc_ग_लिखो	= proc_scsi_host_ग_लिखो
-पूर्ण;
+	.proc_write	= proc_scsi_host_write
+};
 
 /**
- * scsi_proc_hostdir_add - Create directory in /proc क्रम a scsi host
+ * scsi_proc_hostdir_add - Create directory in /proc for a scsi host
  * @sht: owner of this directory
  *
  * Sets sht->proc_dir to the new directory.
  */
 
-व्योम scsi_proc_hostdir_add(काष्ठा scsi_host_ढाँचा *sht)
-अणु
-	अगर (!sht->show_info)
-		वापस;
+void scsi_proc_hostdir_add(struct scsi_host_template *sht)
+{
+	if (!sht->show_info)
+		return;
 
-	mutex_lock(&global_host_ढाँचा_mutex);
-	अगर (!sht->present++) अणु
-		sht->proc_dir = proc_सूची_गढ़ो(sht->proc_name, proc_scsi);
-        	अगर (!sht->proc_dir)
-			prपूर्णांकk(KERN_ERR "%s: proc_mkdir failed for %s\n",
+	mutex_lock(&global_host_template_mutex);
+	if (!sht->present++) {
+		sht->proc_dir = proc_mkdir(sht->proc_name, proc_scsi);
+        	if (!sht->proc_dir)
+			printk(KERN_ERR "%s: proc_mkdir failed for %s\n",
 			       __func__, sht->proc_name);
-	पूर्ण
-	mutex_unlock(&global_host_ढाँचा_mutex);
-पूर्ण
+	}
+	mutex_unlock(&global_host_template_mutex);
+}
 
 /**
- * scsi_proc_hostdir_rm - हटाओ directory in /proc क्रम a scsi host
+ * scsi_proc_hostdir_rm - remove directory in /proc for a scsi host
  * @sht: owner of directory
  */
-व्योम scsi_proc_hostdir_rm(काष्ठा scsi_host_ढाँचा *sht)
-अणु
-	अगर (!sht->show_info)
-		वापस;
+void scsi_proc_hostdir_rm(struct scsi_host_template *sht)
+{
+	if (!sht->show_info)
+		return;
 
-	mutex_lock(&global_host_ढाँचा_mutex);
-	अगर (!--sht->present && sht->proc_dir) अणु
-		हटाओ_proc_entry(sht->proc_name, proc_scsi);
-		sht->proc_dir = शून्य;
-	पूर्ण
-	mutex_unlock(&global_host_ढाँचा_mutex);
-पूर्ण
+	mutex_lock(&global_host_template_mutex);
+	if (!--sht->present && sht->proc_dir) {
+		remove_proc_entry(sht->proc_name, proc_scsi);
+		sht->proc_dir = NULL;
+	}
+	mutex_unlock(&global_host_template_mutex);
+}
 
 
 /**
- * scsi_proc_host_add - Add entry क्रम this host to appropriate /proc dir
+ * scsi_proc_host_add - Add entry for this host to appropriate /proc dir
  * @shost: host to add
  */
-व्योम scsi_proc_host_add(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा scsi_host_ढाँचा *sht = shost->hostt;
-	काष्ठा proc_dir_entry *p;
-	अक्षर name[10];
+void scsi_proc_host_add(struct Scsi_Host *shost)
+{
+	struct scsi_host_template *sht = shost->hostt;
+	struct proc_dir_entry *p;
+	char name[10];
 
-	अगर (!sht->proc_dir)
-		वापस;
+	if (!sht->proc_dir)
+		return;
 
-	प्र_लिखो(name,"%d", shost->host_no);
+	sprintf(name,"%d", shost->host_no);
 	p = proc_create_data(name, S_IRUGO | S_IWUSR,
 		sht->proc_dir, &proc_scsi_ops, shost);
-	अगर (!p)
-		prपूर्णांकk(KERN_ERR "%s: Failed to register host %d in"
+	if (!p)
+		printk(KERN_ERR "%s: Failed to register host %d in"
 		       "%s\n", __func__, shost->host_no,
 		       sht->proc_name);
-पूर्ण
+}
 
 /**
- * scsi_proc_host_rm - हटाओ this host's entry from /proc
+ * scsi_proc_host_rm - remove this host's entry from /proc
  * @shost: which host
  */
-व्योम scsi_proc_host_rm(काष्ठा Scsi_Host *shost)
-अणु
-	अक्षर name[10];
+void scsi_proc_host_rm(struct Scsi_Host *shost)
+{
+	char name[10];
 
-	अगर (!shost->hostt->proc_dir)
-		वापस;
+	if (!shost->hostt->proc_dir)
+		return;
 
-	प्र_लिखो(name,"%d", shost->host_no);
-	हटाओ_proc_entry(name, shost->hostt->proc_dir);
-पूर्ण
+	sprintf(name,"%d", shost->host_no);
+	remove_proc_entry(name, shost->hostt->proc_dir);
+}
 /**
- * proc_prपूर्णांक_scsidevice - वापस data about this host
+ * proc_print_scsidevice - return data about this host
  * @dev: A scsi device
- * @data: &काष्ठा seq_file to output to.
+ * @data: &struct seq_file to output to.
  *
- * Description: prपूर्णांकs Host, Channel, Id, Lun, Venकरोr, Model, Rev, Type,
+ * Description: prints Host, Channel, Id, Lun, Vendor, Model, Rev, Type,
  * and revision.
  */
-अटल पूर्णांक proc_prपूर्णांक_scsidevice(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा scsi_device *sdev;
-	काष्ठा seq_file *s = data;
-	पूर्णांक i;
+static int proc_print_scsidevice(struct device *dev, void *data)
+{
+	struct scsi_device *sdev;
+	struct seq_file *s = data;
+	int i;
 
-	अगर (!scsi_is_sdev_device(dev))
-		जाओ out;
+	if (!scsi_is_sdev_device(dev))
+		goto out;
 
 	sdev = to_scsi_device(dev);
-	seq_म_लिखो(s,
+	seq_printf(s,
 		"Host: scsi%d Channel: %02d Id: %02d Lun: %02llu\n  Vendor: ",
 		sdev->host->host_no, sdev->channel, sdev->id, sdev->lun);
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (sdev->venकरोr[i] >= 0x20)
-			seq_अ_दो(s, sdev->venकरोr[i]);
-		अन्यथा
-			seq_अ_दो(s, ' ');
-	पूर्ण
+	for (i = 0; i < 8; i++) {
+		if (sdev->vendor[i] >= 0x20)
+			seq_putc(s, sdev->vendor[i]);
+		else
+			seq_putc(s, ' ');
+	}
 
-	seq_माला_दो(s, " Model: ");
-	क्रम (i = 0; i < 16; i++) अणु
-		अगर (sdev->model[i] >= 0x20)
-			seq_अ_दो(s, sdev->model[i]);
-		अन्यथा
-			seq_अ_दो(s, ' ');
-	पूर्ण
+	seq_puts(s, " Model: ");
+	for (i = 0; i < 16; i++) {
+		if (sdev->model[i] >= 0x20)
+			seq_putc(s, sdev->model[i]);
+		else
+			seq_putc(s, ' ');
+	}
 
-	seq_माला_दो(s, " Rev: ");
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (sdev->rev[i] >= 0x20)
-			seq_अ_दो(s, sdev->rev[i]);
-		अन्यथा
-			seq_अ_दो(s, ' ');
-	पूर्ण
+	seq_puts(s, " Rev: ");
+	for (i = 0; i < 4; i++) {
+		if (sdev->rev[i] >= 0x20)
+			seq_putc(s, sdev->rev[i]);
+		else
+			seq_putc(s, ' ');
+	}
 
-	seq_अ_दो(s, '\n');
+	seq_putc(s, '\n');
 
-	seq_म_लिखो(s, "  Type:   %s ", scsi_device_type(sdev->type));
-	seq_म_लिखो(s, "               ANSI  SCSI revision: %02x",
+	seq_printf(s, "  Type:   %s ", scsi_device_type(sdev->type));
+	seq_printf(s, "               ANSI  SCSI revision: %02x",
 			sdev->scsi_level - (sdev->scsi_level > 1));
-	अगर (sdev->scsi_level == 2)
-		seq_माला_दो(s, " CCS\n");
-	अन्यथा
-		seq_अ_दो(s, '\n');
+	if (sdev->scsi_level == 2)
+		seq_puts(s, " CCS\n");
+	else
+		seq_putc(s, '\n');
 
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * scsi_add_single_device - Respond to user request to probe क्रम/add device
- * @host: user-supplied decimal पूर्णांकeger
- * @channel: user-supplied decimal पूर्णांकeger
- * @id: user-supplied decimal पूर्णांकeger
- * @lun: user-supplied decimal पूर्णांकeger
+ * scsi_add_single_device - Respond to user request to probe for/add device
+ * @host: user-supplied decimal integer
+ * @channel: user-supplied decimal integer
+ * @id: user-supplied decimal integer
+ * @lun: user-supplied decimal integer
  *
  * Description: called by writing "scsi add-single-device" to /proc/scsi/scsi.
  *
- * करोes scsi_host_lookup() and either user_scan() अगर that transport
- * type supports it, or अन्यथा scsi_scan_host_selected()
+ * does scsi_host_lookup() and either user_scan() if that transport
+ * type supports it, or else scsi_scan_host_selected()
  *
  * Note: this seems to be aimed exclusively at SCSI parallel busses.
  */
 
-अटल पूर्णांक scsi_add_single_device(uपूर्णांक host, uपूर्णांक channel, uपूर्णांक id, uपूर्णांक lun)
-अणु
-	काष्ठा Scsi_Host *shost;
-	पूर्णांक error = -ENXIO;
+static int scsi_add_single_device(uint host, uint channel, uint id, uint lun)
+{
+	struct Scsi_Host *shost;
+	int error = -ENXIO;
 
 	shost = scsi_host_lookup(host);
-	अगर (!shost)
-		वापस error;
+	if (!shost)
+		return error;
 
-	अगर (shost->transportt->user_scan)
+	if (shost->transportt->user_scan)
 		error = shost->transportt->user_scan(shost, channel, id, lun);
-	अन्यथा
+	else
 		error = scsi_scan_host_selected(shost, channel, id, lun,
 						SCSI_SCAN_MANUAL);
 	scsi_host_put(shost);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * scsi_हटाओ_single_device - Respond to user request to हटाओ a device
- * @host: user-supplied decimal पूर्णांकeger
- * @channel: user-supplied decimal पूर्णांकeger
- * @id: user-supplied decimal पूर्णांकeger
- * @lun: user-supplied decimal पूर्णांकeger
+ * scsi_remove_single_device - Respond to user request to remove a device
+ * @host: user-supplied decimal integer
+ * @channel: user-supplied decimal integer
+ * @id: user-supplied decimal integer
+ * @lun: user-supplied decimal integer
  *
  * Description: called by writing "scsi remove-single-device" to
- * /proc/scsi/scsi.  Does a scsi_device_lookup() and scsi_हटाओ_device()
+ * /proc/scsi/scsi.  Does a scsi_device_lookup() and scsi_remove_device()
  */
-अटल पूर्णांक scsi_हटाओ_single_device(uपूर्णांक host, uपूर्णांक channel, uपूर्णांक id, uपूर्णांक lun)
-अणु
-	काष्ठा scsi_device *sdev;
-	काष्ठा Scsi_Host *shost;
-	पूर्णांक error = -ENXIO;
+static int scsi_remove_single_device(uint host, uint channel, uint id, uint lun)
+{
+	struct scsi_device *sdev;
+	struct Scsi_Host *shost;
+	int error = -ENXIO;
 
 	shost = scsi_host_lookup(host);
-	अगर (!shost)
-		वापस error;
+	if (!shost)
+		return error;
 	sdev = scsi_device_lookup(shost, channel, id, lun);
-	अगर (sdev) अणु
-		scsi_हटाओ_device(sdev);
+	if (sdev) {
+		scsi_remove_device(sdev);
 		scsi_device_put(sdev);
 		error = 0;
-	पूर्ण
+	}
 
 	scsi_host_put(shost);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /**
- * proc_scsi_ग_लिखो - handle ग_लिखोs to /proc/scsi/scsi
+ * proc_scsi_write - handle writes to /proc/scsi/scsi
  * @file: not used
- * @buf: buffer to ग_लिखो
+ * @buf: buffer to write
  * @length: length of buf, at most PAGE_SIZE
  * @ppos: not used
  *
- * Description: this provides a legacy mechanism to add or हटाओ devices by
+ * Description: this provides a legacy mechanism to add or remove devices by
  * Host, Channel, ID, and Lun.  To use,
  * "echo 'scsi add-single-device 0 1 2 3' > /proc/scsi/scsi" or
  * "echo 'scsi remove-single-device 0 1 2 3' > /proc/scsi/scsi" with
@@ -304,45 +303,45 @@ out:
  *
  * Note: this seems to be aimed at parallel SCSI. Most modern busses (USB,
  * SATA, Firewire, Fibre Channel, etc) dynamically assign these values to
- * provide a unique identअगरier and nothing more.
+ * provide a unique identifier and nothing more.
  */
 
 
-अटल sमाप_प्रकार proc_scsi_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			       माप_प्रकार length, loff_t *ppos)
-अणु
-	पूर्णांक host, channel, id, lun;
-	अक्षर *buffer, *p;
-	पूर्णांक err;
+static ssize_t proc_scsi_write(struct file *file, const char __user *buf,
+			       size_t length, loff_t *ppos)
+{
+	int host, channel, id, lun;
+	char *buffer, *p;
+	int err;
 
-	अगर (!buf || length > PAGE_SIZE)
-		वापस -EINVAL;
+	if (!buf || length > PAGE_SIZE)
+		return -EINVAL;
 
-	buffer = (अक्षर *)__get_मुक्त_page(GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = (char *)__get_free_page(GFP_KERNEL);
+	if (!buffer)
+		return -ENOMEM;
 
 	err = -EFAULT;
-	अगर (copy_from_user(buffer, buf, length))
-		जाओ out;
+	if (copy_from_user(buffer, buf, length))
+		goto out;
 
 	err = -EINVAL;
-	अगर (length < PAGE_SIZE)
+	if (length < PAGE_SIZE)
 		buffer[length] = '\0';
-	अन्यथा अगर (buffer[PAGE_SIZE-1])
-		जाओ out;
+	else if (buffer[PAGE_SIZE-1])
+		goto out;
 
 	/*
 	 * Usage: echo "scsi add-single-device 0 1 2 3" >/proc/scsi/scsi
 	 * with  "0 1 2 3" replaced by your "Host Channel Id Lun".
 	 */
-	अगर (!म_भेदन("scsi add-single-device", buffer, 22)) अणु
+	if (!strncmp("scsi add-single-device", buffer, 22)) {
 		p = buffer + 23;
 
-		host = simple_म_से_अदीर्घ(p, &p, 0);
-		channel = simple_म_से_अदीर्घ(p + 1, &p, 0);
-		id = simple_म_से_अदीर्घ(p + 1, &p, 0);
-		lun = simple_म_से_अदीर्घ(p + 1, &p, 0);
+		host = simple_strtoul(p, &p, 0);
+		channel = simple_strtoul(p + 1, &p, 0);
+		id = simple_strtoul(p + 1, &p, 0);
+		lun = simple_strtoul(p + 1, &p, 0);
 
 		err = scsi_add_single_device(host, channel, id, lun);
 
@@ -350,129 +349,129 @@ out:
 	 * Usage: echo "scsi remove-single-device 0 1 2 3" >/proc/scsi/scsi
 	 * with  "0 1 2 3" replaced by your "Host Channel Id Lun".
 	 */
-	पूर्ण अन्यथा अगर (!म_भेदन("scsi remove-single-device", buffer, 25)) अणु
+	} else if (!strncmp("scsi remove-single-device", buffer, 25)) {
 		p = buffer + 26;
 
-		host = simple_म_से_अदीर्घ(p, &p, 0);
-		channel = simple_म_से_अदीर्घ(p + 1, &p, 0);
-		id = simple_म_से_अदीर्घ(p + 1, &p, 0);
-		lun = simple_म_से_अदीर्घ(p + 1, &p, 0);
+		host = simple_strtoul(p, &p, 0);
+		channel = simple_strtoul(p + 1, &p, 0);
+		id = simple_strtoul(p + 1, &p, 0);
+		lun = simple_strtoul(p + 1, &p, 0);
 
-		err = scsi_हटाओ_single_device(host, channel, id, lun);
-	पूर्ण
+		err = scsi_remove_single_device(host, channel, id, lun);
+	}
 
 	/*
-	 * convert success वापसs so that we वापस the 
+	 * convert success returns so that we return the 
 	 * number of bytes consumed.
 	 */
-	अगर (!err)
+	if (!err)
 		err = length;
 
  out:
-	मुक्त_page((अचिन्हित दीर्घ)buffer);
-	वापस err;
-पूर्ण
+	free_page((unsigned long)buffer);
+	return err;
+}
 
-अटल अंतरभूत काष्ठा device *next_scsi_device(काष्ठा device *start)
-अणु
-	काष्ठा device *next = bus_find_next_device(&scsi_bus_type, start);
+static inline struct device *next_scsi_device(struct device *start)
+{
+	struct device *next = bus_find_next_device(&scsi_bus_type, start);
 
 	put_device(start);
-	वापस next;
-पूर्ण
+	return next;
+}
 
-अटल व्योम *scsi_seq_start(काष्ठा seq_file *sfile, loff_t *pos)
-अणु
-	काष्ठा device *dev = शून्य;
+static void *scsi_seq_start(struct seq_file *sfile, loff_t *pos)
+{
+	struct device *dev = NULL;
 	loff_t n = *pos;
 
-	जबतक ((dev = next_scsi_device(dev))) अणु
-		अगर (!n--)
-			अवरोध;
-		sfile->निजी++;
-	पूर्ण
-	वापस dev;
-पूर्ण
+	while ((dev = next_scsi_device(dev))) {
+		if (!n--)
+			break;
+		sfile->private++;
+	}
+	return dev;
+}
 
-अटल व्योम *scsi_seq_next(काष्ठा seq_file *sfile, व्योम *v, loff_t *pos)
-अणु
+static void *scsi_seq_next(struct seq_file *sfile, void *v, loff_t *pos)
+{
 	(*pos)++;
-	sfile->निजी++;
-	वापस next_scsi_device(v);
-पूर्ण
+	sfile->private++;
+	return next_scsi_device(v);
+}
 
-अटल व्योम scsi_seq_stop(काष्ठा seq_file *sfile, व्योम *v)
-अणु
+static void scsi_seq_stop(struct seq_file *sfile, void *v)
+{
 	put_device(v);
-पूर्ण
+}
 
-अटल पूर्णांक scsi_seq_show(काष्ठा seq_file *sfile, व्योम *dev)
-अणु
-	अगर (!sfile->निजी)
-		seq_माला_दो(sfile, "Attached devices:\n");
+static int scsi_seq_show(struct seq_file *sfile, void *dev)
+{
+	if (!sfile->private)
+		seq_puts(sfile, "Attached devices:\n");
 
-	वापस proc_prपूर्णांक_scsidevice(dev, sfile);
-पूर्ण
+	return proc_print_scsidevice(dev, sfile);
+}
 
-अटल स्थिर काष्ठा seq_operations scsi_seq_ops = अणु
+static const struct seq_operations scsi_seq_ops = {
 	.start	= scsi_seq_start,
 	.next	= scsi_seq_next,
 	.stop	= scsi_seq_stop,
 	.show	= scsi_seq_show
-पूर्ण;
+};
 
 /**
- * proc_scsi_खोलो - glue function
+ * proc_scsi_open - glue function
  * @inode: not used
- * @file: passed to single_खोलो()
+ * @file: passed to single_open()
  *
  * Associates proc_scsi_show with this file
  */
-अटल पूर्णांक proc_scsi_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
+static int proc_scsi_open(struct inode *inode, struct file *file)
+{
 	/*
-	 * We करोn't really need this for the write case but it doesn't
+	 * We don't really need this for the write case but it doesn't
 	 * harm either.
 	 */
-	वापस seq_खोलो(file, &scsi_seq_ops);
-पूर्ण
+	return seq_open(file, &scsi_seq_ops);
+}
 
-अटल स्थिर काष्ठा proc_ops scsi_scsi_proc_ops = अणु
-	.proc_खोलो	= proc_scsi_खोलो,
-	.proc_पढ़ो	= seq_पढ़ो,
-	.proc_ग_लिखो	= proc_scsi_ग_लिखो,
+static const struct proc_ops scsi_scsi_proc_ops = {
+	.proc_open	= proc_scsi_open,
+	.proc_read	= seq_read,
+	.proc_write	= proc_scsi_write,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
-पूर्ण;
+};
 
 /**
  * scsi_init_procfs - create scsi and scsi/scsi in procfs
  */
-पूर्णांक __init scsi_init_procfs(व्योम)
-अणु
-	काष्ठा proc_dir_entry *pde;
+int __init scsi_init_procfs(void)
+{
+	struct proc_dir_entry *pde;
 
-	proc_scsi = proc_सूची_गढ़ो("scsi", शून्य);
-	अगर (!proc_scsi)
-		जाओ err1;
+	proc_scsi = proc_mkdir("scsi", NULL);
+	if (!proc_scsi)
+		goto err1;
 
-	pde = proc_create("scsi/scsi", 0, शून्य, &scsi_scsi_proc_ops);
-	अगर (!pde)
-		जाओ err2;
+	pde = proc_create("scsi/scsi", 0, NULL, &scsi_scsi_proc_ops);
+	if (!pde)
+		goto err2;
 
-	वापस 0;
+	return 0;
 
 err2:
-	हटाओ_proc_entry("scsi", शून्य);
+	remove_proc_entry("scsi", NULL);
 err1:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /**
- * scsi_निकास_procfs - Remove scsi/scsi and scsi from procfs
+ * scsi_exit_procfs - Remove scsi/scsi and scsi from procfs
  */
-व्योम scsi_निकास_procfs(व्योम)
-अणु
-	हटाओ_proc_entry("scsi/scsi", शून्य);
-	हटाओ_proc_entry("scsi", शून्य);
-पूर्ण
+void scsi_exit_procfs(void)
+{
+	remove_proc_entry("scsi/scsi", NULL);
+	remove_proc_entry("scsi", NULL);
+}

@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * FSI hub master driver
  *
  * Copyright (C) IBM Corporation 2016
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/fsi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/fsi.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/slab.h>
 
-#समावेश "fsi-master.h"
+#include "fsi-master.h"
 
-#घोषणा FSI_ENGID_HUB_MASTER		0x1c
+#define FSI_ENGID_HUB_MASTER		0x1c
 
-#घोषणा FSI_LINK_ENABLE_SETUP_TIME	10	/* in mS */
+#define FSI_LINK_ENABLE_SETUP_TIME	10	/* in mS */
 
 /*
  * FSI hub master support
@@ -26,184 +25,184 @@
  * each of those links can in turn be chained to a hub master with multiple
  * links of its own.
  *
- * The hub is controlled by a set of control रेजिस्टरs exposed as a regular fsi
- * device (the hub->upstream device), and provides access to the करोwnstream FSI
+ * The hub is controlled by a set of control registers exposed as a regular fsi
+ * device (the hub->upstream device), and provides access to the downstream FSI
  * bus as through an address range on the slave itself (->addr and ->size).
  *
- * [This dअगरfers from "cascaded" masters, which expose the entire करोwnstream
+ * [This differs from "cascaded" masters, which expose the entire downstream
  * bus entirely through the fsi device address range, and so have a smaller
  * accessible address space.]
  */
-काष्ठा fsi_master_hub अणु
-	काष्ठा fsi_master	master;
-	काष्ठा fsi_device	*upstream;
-	uपूर्णांक32_t		addr, size;	/* slave-relative addr of */
+struct fsi_master_hub {
+	struct fsi_master	master;
+	struct fsi_device	*upstream;
+	uint32_t		addr, size;	/* slave-relative addr of */
 						/* master address space */
-पूर्ण;
+};
 
-#घोषणा to_fsi_master_hub(m) container_of(m, काष्ठा fsi_master_hub, master)
+#define to_fsi_master_hub(m) container_of(m, struct fsi_master_hub, master)
 
-अटल पूर्णांक hub_master_पढ़ो(काष्ठा fsi_master *master, पूर्णांक link,
-			uपूर्णांक8_t id, uपूर्णांक32_t addr, व्योम *val, माप_प्रकार size)
-अणु
-	काष्ठा fsi_master_hub *hub = to_fsi_master_hub(master);
+static int hub_master_read(struct fsi_master *master, int link,
+			uint8_t id, uint32_t addr, void *val, size_t size)
+{
+	struct fsi_master_hub *hub = to_fsi_master_hub(master);
 
-	अगर (id != 0)
-		वापस -EINVAL;
-
-	addr += hub->addr + (link * FSI_HUB_LINK_SIZE);
-	वापस fsi_slave_पढ़ो(hub->upstream->slave, addr, val, size);
-पूर्ण
-
-अटल पूर्णांक hub_master_ग_लिखो(काष्ठा fsi_master *master, पूर्णांक link,
-			uपूर्णांक8_t id, uपूर्णांक32_t addr, स्थिर व्योम *val, माप_प्रकार size)
-अणु
-	काष्ठा fsi_master_hub *hub = to_fsi_master_hub(master);
-
-	अगर (id != 0)
-		वापस -EINVAL;
+	if (id != 0)
+		return -EINVAL;
 
 	addr += hub->addr + (link * FSI_HUB_LINK_SIZE);
-	वापस fsi_slave_ग_लिखो(hub->upstream->slave, addr, val, size);
-पूर्ण
+	return fsi_slave_read(hub->upstream->slave, addr, val, size);
+}
 
-अटल पूर्णांक hub_master_अवरोध(काष्ठा fsi_master *master, पूर्णांक link)
-अणु
-	uपूर्णांक32_t addr;
+static int hub_master_write(struct fsi_master *master, int link,
+			uint8_t id, uint32_t addr, const void *val, size_t size)
+{
+	struct fsi_master_hub *hub = to_fsi_master_hub(master);
+
+	if (id != 0)
+		return -EINVAL;
+
+	addr += hub->addr + (link * FSI_HUB_LINK_SIZE);
+	return fsi_slave_write(hub->upstream->slave, addr, val, size);
+}
+
+static int hub_master_break(struct fsi_master *master, int link)
+{
+	uint32_t addr;
 	__be32 cmd;
 
 	addr = 0x4;
 	cmd = cpu_to_be32(0xc0de0000);
 
-	वापस hub_master_ग_लिखो(master, link, 0, addr, &cmd, माप(cmd));
-पूर्ण
+	return hub_master_write(master, link, 0, addr, &cmd, sizeof(cmd));
+}
 
-अटल पूर्णांक hub_master_link_enable(काष्ठा fsi_master *master, पूर्णांक link,
+static int hub_master_link_enable(struct fsi_master *master, int link,
 				  bool enable)
-अणु
-	काष्ठा fsi_master_hub *hub = to_fsi_master_hub(master);
-	पूर्णांक idx, bit;
+{
+	struct fsi_master_hub *hub = to_fsi_master_hub(master);
+	int idx, bit;
 	__be32 reg;
-	पूर्णांक rc;
+	int rc;
 
 	idx = link / 32;
 	bit = link % 32;
 
 	reg = cpu_to_be32(0x80000000 >> bit);
 
-	अगर (!enable)
-		वापस fsi_device_ग_लिखो(hub->upstream, FSI_MCENP0 + (4 * idx),
+	if (!enable)
+		return fsi_device_write(hub->upstream, FSI_MCENP0 + (4 * idx),
 					&reg, 4);
 
-	rc = fsi_device_ग_लिखो(hub->upstream, FSI_MSENP0 + (4 * idx), &reg, 4);
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(hub->upstream, FSI_MSENP0 + (4 * idx), &reg, 4);
+	if (rc)
+		return rc;
 
 	mdelay(FSI_LINK_ENABLE_SETUP_TIME);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hub_master_release(काष्ठा device *dev)
-अणु
-	काष्ठा fsi_master_hub *hub = to_fsi_master_hub(dev_to_fsi_master(dev));
+static void hub_master_release(struct device *dev)
+{
+	struct fsi_master_hub *hub = to_fsi_master_hub(dev_to_fsi_master(dev));
 
-	kमुक्त(hub);
-पूर्ण
+	kfree(hub);
+}
 
 /* mmode encoders */
-अटल अंतरभूत u32 fsi_mmode_crs0(u32 x)
-अणु
-	वापस (x & FSI_MMODE_CRS0MASK) << FSI_MMODE_CRS0SHFT;
-पूर्ण
+static inline u32 fsi_mmode_crs0(u32 x)
+{
+	return (x & FSI_MMODE_CRS0MASK) << FSI_MMODE_CRS0SHFT;
+}
 
-अटल अंतरभूत u32 fsi_mmode_crs1(u32 x)
-अणु
-	वापस (x & FSI_MMODE_CRS1MASK) << FSI_MMODE_CRS1SHFT;
-पूर्ण
+static inline u32 fsi_mmode_crs1(u32 x)
+{
+	return (x & FSI_MMODE_CRS1MASK) << FSI_MMODE_CRS1SHFT;
+}
 
-अटल पूर्णांक hub_master_init(काष्ठा fsi_master_hub *hub)
-अणु
-	काष्ठा fsi_device *dev = hub->upstream;
+static int hub_master_init(struct fsi_master_hub *hub)
+{
+	struct fsi_device *dev = hub->upstream;
 	__be32 reg;
-	पूर्णांक rc;
+	int rc;
 
 	reg = cpu_to_be32(FSI_MRESP_RST_ALL_MASTER | FSI_MRESP_RST_ALL_LINK
 			| FSI_MRESP_RST_MCR | FSI_MRESP_RST_PYE);
-	rc = fsi_device_ग_लिखो(dev, FSI_MRESP0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MRESP0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	/* Initialize the MFSI (hub master) engine */
 	reg = cpu_to_be32(FSI_MRESP_RST_ALL_MASTER | FSI_MRESP_RST_ALL_LINK
 			| FSI_MRESP_RST_MCR | FSI_MRESP_RST_PYE);
-	rc = fsi_device_ग_लिखो(dev, FSI_MRESP0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MRESP0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	reg = cpu_to_be32(FSI_MECTRL_EOAE | FSI_MECTRL_P8_AUTO_TERM);
-	rc = fsi_device_ग_लिखो(dev, FSI_MECTRL, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MECTRL, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	reg = cpu_to_be32(FSI_MMODE_EIP | FSI_MMODE_ECRC | FSI_MMODE_EPC
 			| fsi_mmode_crs0(1) | fsi_mmode_crs1(1)
 			| FSI_MMODE_P8_TO_LSB);
-	rc = fsi_device_ग_लिखो(dev, FSI_MMODE, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MMODE, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	reg = cpu_to_be32(0xffff0000);
-	rc = fsi_device_ग_लिखो(dev, FSI_MDLYR, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MDLYR, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	reg = cpu_to_be32(~0);
-	rc = fsi_device_ग_लिखो(dev, FSI_MSENP0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MSENP0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
-	/* Leave enabled दीर्घ enough क्रम master logic to set up */
+	/* Leave enabled long enough for master logic to set up */
 	mdelay(FSI_LINK_ENABLE_SETUP_TIME);
 
-	rc = fsi_device_ग_लिखो(dev, FSI_MCENP0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MCENP0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
-	rc = fsi_device_पढ़ो(dev, FSI_MAEB, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_read(dev, FSI_MAEB, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	reg = cpu_to_be32(FSI_MRESP_RST_ALL_MASTER | FSI_MRESP_RST_ALL_LINK);
-	rc = fsi_device_ग_लिखो(dev, FSI_MRESP0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MRESP0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
-	rc = fsi_device_पढ़ो(dev, FSI_MLEVP0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_read(dev, FSI_MLEVP0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	/* Reset the master bridge */
 	reg = cpu_to_be32(FSI_MRESB_RST_GEN);
-	rc = fsi_device_ग_लिखो(dev, FSI_MRESB0, &reg, माप(reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_write(dev, FSI_MRESB0, &reg, sizeof(reg));
+	if (rc)
+		return rc;
 
 	reg = cpu_to_be32(FSI_MRESB_RST_ERR);
-	वापस fsi_device_ग_लिखो(dev, FSI_MRESB0, &reg, माप(reg));
-पूर्ण
+	return fsi_device_write(dev, FSI_MRESB0, &reg, sizeof(reg));
+}
 
-अटल पूर्णांक hub_master_probe(काष्ठा device *dev)
-अणु
-	काष्ठा fsi_device *fsi_dev = to_fsi_dev(dev);
-	काष्ठा fsi_master_hub *hub;
-	uपूर्णांक32_t reg, links;
+static int hub_master_probe(struct device *dev)
+{
+	struct fsi_device *fsi_dev = to_fsi_dev(dev);
+	struct fsi_master_hub *hub;
+	uint32_t reg, links;
 	__be32 __reg;
-	पूर्णांक rc;
+	int rc;
 
-	rc = fsi_device_पढ़ो(fsi_dev, FSI_MVER, &__reg, माप(__reg));
-	अगर (rc)
-		वापस rc;
+	rc = fsi_device_read(fsi_dev, FSI_MVER, &__reg, sizeof(__reg));
+	if (rc)
+		return rc;
 
 	reg = be32_to_cpu(__reg);
 	links = (reg >> 8) & 0xff;
@@ -211,16 +210,16 @@
 
 	rc = fsi_slave_claim_range(fsi_dev->slave, FSI_HUB_LINK_OFFSET,
 			FSI_HUB_LINK_SIZE * links);
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(dev, "can't claim slave address range for links");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	hub = kzalloc(माप(*hub), GFP_KERNEL);
-	अगर (!hub) अणु
+	hub = kzalloc(sizeof(*hub), GFP_KERNEL);
+	if (!hub) {
 		rc = -ENOMEM;
-		जाओ err_release;
-	पूर्ण
+		goto err_release;
+	}
 
 	hub->addr = FSI_HUB_LINK_OFFSET;
 	hub->size = FSI_HUB_LINK_SIZE * links;
@@ -231,69 +230,69 @@
 	hub->master.dev.of_node = of_node_get(dev_of_node(dev));
 
 	hub->master.n_links = links;
-	hub->master.पढ़ो = hub_master_पढ़ो;
-	hub->master.ग_लिखो = hub_master_ग_लिखो;
-	hub->master.send_अवरोध = hub_master_अवरोध;
+	hub->master.read = hub_master_read;
+	hub->master.write = hub_master_write;
+	hub->master.send_break = hub_master_break;
 	hub->master.link_enable = hub_master_link_enable;
 
 	dev_set_drvdata(dev, hub);
 
 	hub_master_init(hub);
 
-	rc = fsi_master_रेजिस्टर(&hub->master);
-	अगर (rc)
-		जाओ err_release;
+	rc = fsi_master_register(&hub->master);
+	if (rc)
+		goto err_release;
 
-	/* At this poपूर्णांक, fsi_master_रेजिस्टर perक्रमms the device_initialize(),
+	/* At this point, fsi_master_register performs the device_initialize(),
 	 * and holds the sole reference on master.dev. This means the device
-	 * will be मुक्तd (via ->release) during any subsequent call to
-	 * fsi_master_unरेजिस्टर.  We add our own reference to it here, so we
-	 * can perक्रमm cleanup (in _हटाओ()) without it being मुक्तd beक्रमe
-	 * we're पढ़ोy.
+	 * will be freed (via ->release) during any subsequent call to
+	 * fsi_master_unregister.  We add our own reference to it here, so we
+	 * can perform cleanup (in _remove()) without it being freed before
+	 * we're ready.
 	 */
 	get_device(&hub->master.dev);
-	वापस 0;
+	return 0;
 
 err_release:
 	fsi_slave_release_range(fsi_dev->slave, FSI_HUB_LINK_OFFSET,
 			FSI_HUB_LINK_SIZE * links);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक hub_master_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा fsi_master_hub *hub = dev_get_drvdata(dev);
+static int hub_master_remove(struct device *dev)
+{
+	struct fsi_master_hub *hub = dev_get_drvdata(dev);
 
-	fsi_master_unरेजिस्टर(&hub->master);
+	fsi_master_unregister(&hub->master);
 	fsi_slave_release_range(hub->upstream->slave, hub->addr, hub->size);
 	of_node_put(hub->master.dev.of_node);
 
 	/*
-	 * master.dev will likely be ->release()ed after this, which मुक्त()s
+	 * master.dev will likely be ->release()ed after this, which free()s
 	 * the hub
 	 */
 	put_device(&hub->master.dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा fsi_device_id hub_master_ids[] = अणु
-	अणु
+static const struct fsi_device_id hub_master_ids[] = {
+	{
 		.engine_type = FSI_ENGID_HUB_MASTER,
 		.version = FSI_VERSION_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
-अटल काष्ठा fsi_driver hub_master_driver = अणु
+static struct fsi_driver hub_master_driver = {
 	.id_table = hub_master_ids,
-	.drv = अणु
+	.drv = {
 		.name = "fsi-master-hub",
 		.bus = &fsi_bus_type,
 		.probe = hub_master_probe,
-		.हटाओ = hub_master_हटाओ,
-	पूर्ण
-पूर्ण;
+		.remove = hub_master_remove,
+	}
+};
 
 module_fsi_driver(hub_master_driver);
 MODULE_LICENSE("GPL");

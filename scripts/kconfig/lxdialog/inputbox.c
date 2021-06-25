@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  inputbox.c -- implements the input box
  *
@@ -7,53 +6,53 @@
  *  MODIFIED FOR LINUX KERNEL CONFIG BY: William Roadcap (roadcap@cfw.com)
  */
 
-#समावेश "dialog.h"
+#include "dialog.h"
 
-अक्षर dialog_input_result[MAX_LEN + 1];
+char dialog_input_result[MAX_LEN + 1];
 
 /*
- *  Prपूर्णांक the termination buttons
+ *  Print the termination buttons
  */
-अटल व्योम prपूर्णांक_buttons(WINDOW * dialog, पूर्णांक height, पूर्णांक width, पूर्णांक selected)
-अणु
-	पूर्णांक x = width / 2 - 11;
-	पूर्णांक y = height - 2;
+static void print_buttons(WINDOW * dialog, int height, int width, int selected)
+{
+	int x = width / 2 - 11;
+	int y = height - 2;
 
-	prपूर्णांक_button(dialog, "  Ok  ", y, x, selected == 0);
-	prपूर्णांक_button(dialog, " Help ", y, x + 14, selected == 1);
+	print_button(dialog, "  Ok  ", y, x, selected == 0);
+	print_button(dialog, " Help ", y, x + 14, selected == 1);
 
 	wmove(dialog, y, x + 1 + 14 * selected);
 	wrefresh(dialog);
-पूर्ण
+}
 
 /*
- * Display a dialog box क्रम inputing a string
+ * Display a dialog box for inputing a string
  */
-पूर्णांक dialog_inputbox(स्थिर अक्षर *title, स्थिर अक्षर *prompt, पूर्णांक height, पूर्णांक width,
-		    स्थिर अक्षर *init)
-अणु
-	पूर्णांक i, x, y, box_y, box_x, box_width;
-	पूर्णांक input_x = 0, key = 0, button = -1;
-	पूर्णांक show_x, len, pos;
-	अक्षर *instr = dialog_input_result;
+int dialog_inputbox(const char *title, const char *prompt, int height, int width,
+		    const char *init)
+{
+	int i, x, y, box_y, box_x, box_width;
+	int input_x = 0, key = 0, button = -1;
+	int show_x, len, pos;
+	char *instr = dialog_input_result;
 	WINDOW *dialog;
 
-	अगर (!init)
+	if (!init)
 		instr[0] = '\0';
-	अन्यथा
-		म_नकल(instr, init);
+	else
+		strcpy(instr, init);
 
-करो_resize:
-	अगर (geपंचांगaxy(stdscr) <= (height - INPUTBOX_HEIGTH_MIN))
-		वापस -ERRDISPLAYTOOSMALL;
-	अगर (geपंचांगaxx(stdscr) <= (width - INPUTBOX_WIDTH_MIN))
-		वापस -ERRDISPLAYTOOSMALL;
+do_resize:
+	if (getmaxy(stdscr) <= (height - INPUTBOX_HEIGTH_MIN))
+		return -ERRDISPLAYTOOSMALL;
+	if (getmaxx(stdscr) <= (width - INPUTBOX_WIDTH_MIN))
+		return -ERRDISPLAYTOOSMALL;
 
 	/* center dialog box on screen */
-	x = (geपंचांगaxx(stdscr) - width) / 2;
-	y = (geपंचांगaxy(stdscr) - height) / 2;
+	x = (getmaxx(stdscr) - width) / 2;
+	y = (getmaxy(stdscr) - height) / 2;
 
-	draw_shaकरोw(stdscr, y, x, height, width);
+	draw_shadow(stdscr, y, x, height, width);
 
 	dialog = newwin(height, width, y, x);
 	keypad(dialog, TRUE);
@@ -62,15 +61,15 @@
 		 dlg.dialog.atr, dlg.border.atr);
 	wattrset(dialog, dlg.border.atr);
 	mvwaddch(dialog, height - 3, 0, ACS_LTEE);
-	क्रम (i = 0; i < width - 2; i++)
+	for (i = 0; i < width - 2; i++)
 		waddch(dialog, ACS_HLINE);
 	wattrset(dialog, dlg.dialog.atr);
 	waddch(dialog, ACS_RTEE);
 
-	prपूर्णांक_title(dialog, title, width);
+	print_title(dialog, title, width);
 
 	wattrset(dialog, dlg.dialog.atr);
-	prपूर्णांक_स्वतःwrap(dialog, prompt, width - 2, 1, 3);
+	print_autowrap(dialog, prompt, width - 2, 1, 3);
 
 	/* Draw the input field box */
 	box_width = width - 6;
@@ -80,211 +79,211 @@
 	draw_box(dialog, y + 1, box_x - 1, 3, box_width + 2,
 		 dlg.dialog.atr, dlg.border.atr);
 
-	prपूर्णांक_buttons(dialog, height, width, 0);
+	print_buttons(dialog, height, width, 0);
 
 	/* Set up the initial value */
 	wmove(dialog, box_y, box_x);
 	wattrset(dialog, dlg.inputbox.atr);
 
-	len = म_माप(instr);
+	len = strlen(instr);
 	pos = len;
 
-	अगर (len >= box_width) अणु
+	if (len >= box_width) {
 		show_x = len - box_width + 1;
 		input_x = box_width - 1;
-		क्रम (i = 0; i < box_width - 1; i++)
+		for (i = 0; i < box_width - 1; i++)
 			waddch(dialog, instr[show_x + i]);
-	पूर्ण अन्यथा अणु
+	} else {
 		show_x = 0;
 		input_x = len;
 		waddstr(dialog, instr);
-	पूर्ण
+	}
 
 	wmove(dialog, box_y, box_x + input_x);
 
 	wrefresh(dialog);
 
-	जबतक (key != KEY_ESC) अणु
-		key = wअ_लोh(dialog);
+	while (key != KEY_ESC) {
+		key = wgetch(dialog);
 
-		अगर (button == -1) अणु	/* Input box selected */
-			चयन (key) अणु
-			हाल TAB:
-			हाल KEY_UP:
-			हाल KEY_DOWN:
-				अवरोध;
-			हाल KEY_BACKSPACE:
-			हाल 8:   /* ^H */
-			हाल 127: /* ^? */
-				अगर (pos) अणु
+		if (button == -1) {	/* Input box selected */
+			switch (key) {
+			case TAB:
+			case KEY_UP:
+			case KEY_DOWN:
+				break;
+			case KEY_BACKSPACE:
+			case 8:   /* ^H */
+			case 127: /* ^? */
+				if (pos) {
 					wattrset(dialog, dlg.inputbox.atr);
-					अगर (input_x == 0) अणु
+					if (input_x == 0) {
 						show_x--;
-					पूर्ण अन्यथा
+					} else
 						input_x--;
 
-					अगर (pos < len) अणु
-						क्रम (i = pos - 1; i < len; i++) अणु
+					if (pos < len) {
+						for (i = pos - 1; i < len; i++) {
 							instr[i] = instr[i+1];
-						पूर्ण
-					पूर्ण
+						}
+					}
 
 					pos--;
 					len--;
 					instr[len] = '\0';
 					wmove(dialog, box_y, box_x);
-					क्रम (i = 0; i < box_width; i++) अणु
-						अगर (!instr[show_x + i]) अणु
+					for (i = 0; i < box_width; i++) {
+						if (!instr[show_x + i]) {
 							waddch(dialog, ' ');
-							अवरोध;
-						पूर्ण
+							break;
+						}
 						waddch(dialog, instr[show_x + i]);
-					पूर्ण
+					}
 					wmove(dialog, box_y, input_x + box_x);
 					wrefresh(dialog);
-				पूर्ण
-				जारी;
-			हाल KEY_LEFT:
-				अगर (pos > 0) अणु
-					अगर (input_x > 0) अणु
+				}
+				continue;
+			case KEY_LEFT:
+				if (pos > 0) {
+					if (input_x > 0) {
 						wmove(dialog, box_y, --input_x + box_x);
-					पूर्ण अन्यथा अगर (input_x == 0) अणु
+					} else if (input_x == 0) {
 						show_x--;
 						wmove(dialog, box_y, box_x);
-						क्रम (i = 0; i < box_width; i++) अणु
-							अगर (!instr[show_x + i]) अणु
+						for (i = 0; i < box_width; i++) {
+							if (!instr[show_x + i]) {
 								waddch(dialog, ' ');
-								अवरोध;
-							पूर्ण
+								break;
+							}
 							waddch(dialog, instr[show_x + i]);
-						पूर्ण
+						}
 						wmove(dialog, box_y, box_x);
-					पूर्ण
+					}
 					pos--;
-				पूर्ण
-				जारी;
-			हाल KEY_RIGHT:
-				अगर (pos < len) अणु
-					अगर (input_x < box_width - 1) अणु
+				}
+				continue;
+			case KEY_RIGHT:
+				if (pos < len) {
+					if (input_x < box_width - 1) {
 						wmove(dialog, box_y, ++input_x + box_x);
-					पूर्ण अन्यथा अगर (input_x == box_width - 1) अणु
+					} else if (input_x == box_width - 1) {
 						show_x++;
 						wmove(dialog, box_y, box_x);
-						क्रम (i = 0; i < box_width; i++) अणु
-							अगर (!instr[show_x + i]) अणु
+						for (i = 0; i < box_width; i++) {
+							if (!instr[show_x + i]) {
 								waddch(dialog, ' ');
-								अवरोध;
-							पूर्ण
+								break;
+							}
 							waddch(dialog, instr[show_x + i]);
-						पूर्ण
+						}
 						wmove(dialog, box_y, input_x + box_x);
-					पूर्ण
+					}
 					pos++;
-				पूर्ण
-				जारी;
-			शेष:
-				अगर (key < 0x100 && है_छाप(key)) अणु
-					अगर (len < MAX_LEN) अणु
+				}
+				continue;
+			default:
+				if (key < 0x100 && isprint(key)) {
+					if (len < MAX_LEN) {
 						wattrset(dialog, dlg.inputbox.atr);
-						अगर (pos < len) अणु
-							क्रम (i = len; i > pos; i--)
+						if (pos < len) {
+							for (i = len; i > pos; i--)
 								instr[i] = instr[i-1];
 							instr[pos] = key;
-						पूर्ण अन्यथा अणु
+						} else {
 							instr[len] = key;
-						पूर्ण
+						}
 						pos++;
 						len++;
 						instr[len] = '\0';
 
-						अगर (input_x == box_width - 1) अणु
+						if (input_x == box_width - 1) {
 							show_x++;
-						पूर्ण अन्यथा अणु
+						} else {
 							input_x++;
-						पूर्ण
+						}
 
 						wmove(dialog, box_y, box_x);
-						क्रम (i = 0; i < box_width; i++) अणु
-							अगर (!instr[show_x + i]) अणु
+						for (i = 0; i < box_width; i++) {
+							if (!instr[show_x + i]) {
 								waddch(dialog, ' ');
-								अवरोध;
-							पूर्ण
+								break;
+							}
 							waddch(dialog, instr[show_x + i]);
-						पूर्ण
+						}
 						wmove(dialog, box_y, input_x + box_x);
 						wrefresh(dialog);
-					पूर्ण अन्यथा
+					} else
 						flash();	/* Alarm user about overflow */
-					जारी;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		चयन (key) अणु
-		हाल 'O':
-		हाल 'o':
+					continue;
+				}
+			}
+		}
+		switch (key) {
+		case 'O':
+		case 'o':
 			delwin(dialog);
-			वापस 0;
-		हाल 'H':
-		हाल 'h':
+			return 0;
+		case 'H':
+		case 'h':
 			delwin(dialog);
-			वापस 1;
-		हाल KEY_UP:
-		हाल KEY_LEFT:
-			चयन (button) अणु
-			हाल -1:
+			return 1;
+		case KEY_UP:
+		case KEY_LEFT:
+			switch (button) {
+			case -1:
 				button = 1;	/* Indicates "Help" button is selected */
-				prपूर्णांक_buttons(dialog, height, width, 1);
-				अवरोध;
-			हाल 0:
+				print_buttons(dialog, height, width, 1);
+				break;
+			case 0:
 				button = -1;	/* Indicates input box is selected */
-				prपूर्णांक_buttons(dialog, height, width, 0);
+				print_buttons(dialog, height, width, 0);
 				wmove(dialog, box_y, box_x + input_x);
 				wrefresh(dialog);
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				button = 0;	/* Indicates "OK" button is selected */
-				prपूर्णांक_buttons(dialog, height, width, 0);
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		हाल TAB:
-		हाल KEY_DOWN:
-		हाल KEY_RIGHT:
-			चयन (button) अणु
-			हाल -1:
+				print_buttons(dialog, height, width, 0);
+				break;
+			}
+			break;
+		case TAB:
+		case KEY_DOWN:
+		case KEY_RIGHT:
+			switch (button) {
+			case -1:
 				button = 0;	/* Indicates "OK" button is selected */
-				prपूर्णांक_buttons(dialog, height, width, 0);
-				अवरोध;
-			हाल 0:
+				print_buttons(dialog, height, width, 0);
+				break;
+			case 0:
 				button = 1;	/* Indicates "Help" button is selected */
-				prपूर्णांक_buttons(dialog, height, width, 1);
-				अवरोध;
-			हाल 1:
+				print_buttons(dialog, height, width, 1);
+				break;
+			case 1:
 				button = -1;	/* Indicates input box is selected */
-				prपूर्णांक_buttons(dialog, height, width, 0);
+				print_buttons(dialog, height, width, 0);
 				wmove(dialog, box_y, box_x + input_x);
 				wrefresh(dialog);
-				अवरोध;
-			पूर्ण
-			अवरोध;
-		हाल ' ':
-		हाल '\n':
+				break;
+			}
+			break;
+		case ' ':
+		case '\n':
 			delwin(dialog);
-			वापस (button == -1 ? 0 : button);
-		हाल 'X':
-		हाल 'x':
+			return (button == -1 ? 0 : button);
+		case 'X':
+		case 'x':
 			key = KEY_ESC;
-			अवरोध;
-		हाल KEY_ESC:
+			break;
+		case KEY_ESC:
 			key = on_key_esc(dialog);
-			अवरोध;
-		हाल KEY_RESIZE:
+			break;
+		case KEY_RESIZE:
 			delwin(dialog);
 			on_key_resize();
-			जाओ करो_resize;
-		पूर्ण
-	पूर्ण
+			goto do_resize;
+		}
+	}
 
 	delwin(dialog);
-	वापस KEY_ESC;		/* ESC pressed */
-पूर्ण
+	return KEY_ESC;		/* ESC pressed */
+}

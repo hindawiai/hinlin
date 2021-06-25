@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Xilinx Zynq MPSoC Firmware layer क्रम debugfs APIs
+ * Xilinx Zynq MPSoC Firmware layer for debugfs APIs
  *
  *  Copyright (C) 2014-2018 Xilinx, Inc.
  *
@@ -11,230 +10,230 @@
  *  Rajan Vaja <rajanv@xilinx.com>
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/uaccess.h>
+#include <linux/compiler.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
 
-#समावेश <linux/firmware/xlnx-zynqmp.h>
-#समावेश "zynqmp-debug.h"
+#include <linux/firmware/xlnx-zynqmp.h>
+#include "zynqmp-debug.h"
 
-#घोषणा PM_API_NAME_LEN			50
+#define PM_API_NAME_LEN			50
 
-काष्ठा pm_api_info अणु
+struct pm_api_info {
 	u32 api_id;
-	अक्षर api_name[PM_API_NAME_LEN];
-	अक्षर api_name_len;
-पूर्ण;
+	char api_name[PM_API_NAME_LEN];
+	char api_name_len;
+};
 
-अटल अक्षर debugfs_buf[PAGE_SIZE];
+static char debugfs_buf[PAGE_SIZE];
 
-#घोषणा PM_API(id)		 अणुid, #id, म_माप(#id)पूर्ण
-अटल काष्ठा pm_api_info pm_api_list[] = अणु
+#define PM_API(id)		 {id, #id, strlen(#id)}
+static struct pm_api_info pm_api_list[] = {
 	PM_API(PM_GET_API_VERSION),
 	PM_API(PM_QUERY_DATA),
-पूर्ण;
+};
 
-अटल काष्ठा dentry *firmware_debugfs_root;
+static struct dentry *firmware_debugfs_root;
 
 /**
  * zynqmp_pm_argument_value() - Extract argument value from a PM-API request
- * @arg:	Entered PM-API argument in string क्रमmat
+ * @arg:	Entered PM-API argument in string format
  *
- * Return: Argument value in अचिन्हित पूर्णांकeger क्रमmat on success
+ * Return: Argument value in unsigned integer format on success
  *	   0 otherwise
  */
-अटल u64 zynqmp_pm_argument_value(अक्षर *arg)
-अणु
+static u64 zynqmp_pm_argument_value(char *arg)
+{
 	u64 value;
 
-	अगर (!arg)
-		वापस 0;
+	if (!arg)
+		return 0;
 
-	अगर (!kstrtou64(arg, 0, &value))
-		वापस value;
+	if (!kstrtou64(arg, 0, &value))
+		return value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * get_pm_api_id() - Extract API-ID from a PM-API request
- * @pm_api_req:		Entered PM-API argument in string क्रमmat
+ * @pm_api_req:		Entered PM-API argument in string format
  * @pm_id:		API-ID
  *
- * Return: 0 on success अन्यथा error code
+ * Return: 0 on success else error code
  */
-अटल पूर्णांक get_pm_api_id(अक्षर *pm_api_req, u32 *pm_id)
-अणु
-	पूर्णांक i;
+static int get_pm_api_id(char *pm_api_req, u32 *pm_id)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pm_api_list) ; i++) अणु
-		अगर (!strnहालcmp(pm_api_req, pm_api_list[i].api_name,
-				 pm_api_list[i].api_name_len)) अणु
+	for (i = 0; i < ARRAY_SIZE(pm_api_list) ; i++) {
+		if (!strncasecmp(pm_api_req, pm_api_list[i].api_name,
+				 pm_api_list[i].api_name_len)) {
 			*pm_id = pm_api_list[i].api_id;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* If no name was entered look क्रम PM-API ID instead */
-	अगर (i == ARRAY_SIZE(pm_api_list) && kstrtouपूर्णांक(pm_api_req, 10, pm_id))
-		वापस -EINVAL;
+	/* If no name was entered look for PM-API ID instead */
+	if (i == ARRAY_SIZE(pm_api_list) && kstrtouint(pm_api_req, 10, pm_id))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक process_api_request(u32 pm_id, u64 *pm_api_arg, u32 *pm_api_ret)
-अणु
+static int process_api_request(u32 pm_id, u64 *pm_api_arg, u32 *pm_api_ret)
+{
 	u32 pm_api_version;
-	पूर्णांक ret;
-	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
+	int ret;
+	struct zynqmp_pm_query_data qdata = {0};
 
-	चयन (pm_id) अणु
-	हाल PM_GET_API_VERSION:
+	switch (pm_id) {
+	case PM_GET_API_VERSION:
 		ret = zynqmp_pm_get_api_version(&pm_api_version);
-		प्र_लिखो(debugfs_buf, "PM-API Version = %d.%d\n",
+		sprintf(debugfs_buf, "PM-API Version = %d.%d\n",
 			pm_api_version >> 16, pm_api_version & 0xffff);
-		अवरोध;
-	हाल PM_QUERY_DATA:
+		break;
+	case PM_QUERY_DATA:
 		qdata.qid = pm_api_arg[0];
 		qdata.arg1 = pm_api_arg[1];
 		qdata.arg2 = pm_api_arg[2];
 		qdata.arg3 = pm_api_arg[3];
 
 		ret = zynqmp_pm_query_data(qdata, pm_api_ret);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		चयन (qdata.qid) अणु
-		हाल PM_QID_CLOCK_GET_NAME:
-			प्र_लिखो(debugfs_buf, "Clock name = %s\n",
-				(अक्षर *)pm_api_ret);
-			अवरोध;
-		हाल PM_QID_CLOCK_GET_FIXEDFACTOR_PARAMS:
-			प्र_लिखो(debugfs_buf, "Multiplier = %d, Divider = %d\n",
+		switch (qdata.qid) {
+		case PM_QID_CLOCK_GET_NAME:
+			sprintf(debugfs_buf, "Clock name = %s\n",
+				(char *)pm_api_ret);
+			break;
+		case PM_QID_CLOCK_GET_FIXEDFACTOR_PARAMS:
+			sprintf(debugfs_buf, "Multiplier = %d, Divider = %d\n",
 				pm_api_ret[1], pm_api_ret[2]);
-			अवरोध;
-		शेष:
-			प्र_लिखो(debugfs_buf,
+			break;
+		default:
+			sprintf(debugfs_buf,
 				"data[0] = 0x%08x\ndata[1] = 0x%08x\n data[2] = 0x%08x\ndata[3] = 0x%08x\n",
 				pm_api_ret[0], pm_api_ret[1],
 				pm_api_ret[2], pm_api_ret[3]);
-		पूर्ण
-		अवरोध;
-	शेष:
-		प्र_लिखो(debugfs_buf, "Unsupported PM-API request\n");
+		}
+		break;
+	default:
+		sprintf(debugfs_buf, "Unsupported PM-API request\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * zynqmp_pm_debugfs_api_ग_लिखो() - debugfs ग_लिखो function
+ * zynqmp_pm_debugfs_api_write() - debugfs write function
  * @file:	User file
  * @ptr:	User entered PM-API string
  * @len:	Length of the userspace buffer
  * @off:	Offset within the file
  *
- * Used क्रम triggering pm api functions by writing
- * echo <pm_api_id>	> /sys/kernel/debug/zynqmp_pm/घातer or
- * echo <pm_api_name>	> /sys/kernel/debug/zynqmp_pm/घातer
+ * Used for triggering pm api functions by writing
+ * echo <pm_api_id>	> /sys/kernel/debug/zynqmp_pm/power or
+ * echo <pm_api_name>	> /sys/kernel/debug/zynqmp_pm/power
  *
- * Return: Number of bytes copied अगर PM-API request succeeds,
+ * Return: Number of bytes copied if PM-API request succeeds,
  *	   the corresponding error code otherwise
  */
-अटल sमाप_प्रकार zynqmp_pm_debugfs_api_ग_लिखो(काष्ठा file *file,
-					   स्थिर अक्षर __user *ptr, माप_प्रकार len,
+static ssize_t zynqmp_pm_debugfs_api_write(struct file *file,
+					   const char __user *ptr, size_t len,
 					   loff_t *off)
-अणु
-	अक्षर *kern_buff, *पंचांगp_buff;
-	अक्षर *pm_api_req;
+{
+	char *kern_buff, *tmp_buff;
+	char *pm_api_req;
 	u32 pm_id = 0;
-	u64 pm_api_arg[4] = अणु0, 0, 0, 0पूर्ण;
+	u64 pm_api_arg[4] = {0, 0, 0, 0};
 	/* Return values from PM APIs calls */
-	u32 pm_api_ret[4] = अणु0, 0, 0, 0पूर्ण;
+	u32 pm_api_ret[4] = {0, 0, 0, 0};
 
-	पूर्णांक ret;
-	पूर्णांक i = 0;
+	int ret;
+	int i = 0;
 
-	म_नकल(debugfs_buf, "");
+	strcpy(debugfs_buf, "");
 
-	अगर (*off != 0 || len <= 1 || len > PAGE_SIZE - 1)
-		वापस -EINVAL;
+	if (*off != 0 || len <= 1 || len > PAGE_SIZE - 1)
+		return -EINVAL;
 
 	kern_buff = memdup_user_nul(ptr, len);
-	अगर (IS_ERR(kern_buff))
-		वापस PTR_ERR(kern_buff);
-	पंचांगp_buff = kern_buff;
+	if (IS_ERR(kern_buff))
+		return PTR_ERR(kern_buff);
+	tmp_buff = kern_buff;
 
 	/* Read the API name from a user request */
 	pm_api_req = strsep(&kern_buff, " ");
 
 	ret = get_pm_api_id(pm_api_req, &pm_id);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
 	/* Read node_id and arguments from the PM-API request */
 	pm_api_req = strsep(&kern_buff, " ");
-	जबतक ((i < ARRAY_SIZE(pm_api_arg)) && pm_api_req) अणु
+	while ((i < ARRAY_SIZE(pm_api_arg)) && pm_api_req) {
 		pm_api_arg[i++] = zynqmp_pm_argument_value(pm_api_req);
 		pm_api_req = strsep(&kern_buff, " ");
-	पूर्ण
+	}
 
 	ret = process_api_request(pm_id, pm_api_arg, pm_api_ret);
 
 err:
-	kमुक्त(पंचांगp_buff);
-	अगर (ret)
-		वापस ret;
+	kfree(tmp_buff);
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /**
- * zynqmp_pm_debugfs_api_पढ़ो() - debugfs पढ़ो function
+ * zynqmp_pm_debugfs_api_read() - debugfs read function
  * @file:	User file
  * @ptr:	Requested pm_api_version string
  * @len:	Length of the userspace buffer
  * @off:	Offset within the file
  *
  * Return: Length of the version string on success
- *	   अन्यथा error code
+ *	   else error code
  */
-अटल sमाप_प्रकार zynqmp_pm_debugfs_api_पढ़ो(काष्ठा file *file, अक्षर __user *ptr,
-					  माप_प्रकार len, loff_t *off)
-अणु
-	वापस simple_पढ़ो_from_buffer(ptr, len, off, debugfs_buf,
-				       म_माप(debugfs_buf));
-पूर्ण
+static ssize_t zynqmp_pm_debugfs_api_read(struct file *file, char __user *ptr,
+					  size_t len, loff_t *off)
+{
+	return simple_read_from_buffer(ptr, len, off, debugfs_buf,
+				       strlen(debugfs_buf));
+}
 
 /* Setup debugfs fops */
-अटल स्थिर काष्ठा file_operations fops_zynqmp_pm_dbgfs = अणु
+static const struct file_operations fops_zynqmp_pm_dbgfs = {
 	.owner = THIS_MODULE,
-	.ग_लिखो = zynqmp_pm_debugfs_api_ग_लिखो,
-	.पढ़ो = zynqmp_pm_debugfs_api_पढ़ो,
-पूर्ण;
+	.write = zynqmp_pm_debugfs_api_write,
+	.read = zynqmp_pm_debugfs_api_read,
+};
 
 /**
- * zynqmp_pm_api_debugfs_init - Initialize debugfs पूर्णांकerface
+ * zynqmp_pm_api_debugfs_init - Initialize debugfs interface
  *
  * Return:	None
  */
-व्योम zynqmp_pm_api_debugfs_init(व्योम)
-अणु
-	/* Initialize debugfs पूर्णांकerface */
-	firmware_debugfs_root = debugfs_create_dir("zynqmp-firmware", शून्य);
-	debugfs_create_file("pm", 0660, firmware_debugfs_root, शून्य,
+void zynqmp_pm_api_debugfs_init(void)
+{
+	/* Initialize debugfs interface */
+	firmware_debugfs_root = debugfs_create_dir("zynqmp-firmware", NULL);
+	debugfs_create_file("pm", 0660, firmware_debugfs_root, NULL,
 			    &fops_zynqmp_pm_dbgfs);
-पूर्ण
+}
 
 /**
- * zynqmp_pm_api_debugfs_निकास - Remove debugfs पूर्णांकerface
+ * zynqmp_pm_api_debugfs_exit - Remove debugfs interface
  *
  * Return:	None
  */
-व्योम zynqmp_pm_api_debugfs_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(firmware_debugfs_root);
-पूर्ण
+void zynqmp_pm_api_debugfs_exit(void)
+{
+	debugfs_remove_recursive(firmware_debugfs_root);
+}

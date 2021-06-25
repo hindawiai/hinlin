@@ -1,74 +1,73 @@
-<शैली गुरु>
-#अगर_अघोषित __NV50_KMS_CORE_H__
-#घोषणा __NV50_KMS_CORE_H__
-#समावेश "disp.h"
-#समावेश "atom.h"
-#समावेश "crc.h"
-#समावेश <nouveau_encoder.h>
+#ifndef __NV50_KMS_CORE_H__
+#define __NV50_KMS_CORE_H__
+#include "disp.h"
+#include "atom.h"
+#include "crc.h"
+#include <nouveau_encoder.h>
 
-काष्ठा nv50_core अणु
-	स्थिर काष्ठा nv50_core_func *func;
-	काष्ठा nv50_dmac chan;
-	bool assign_winकरोws;
-पूर्ण;
+struct nv50_core {
+	const struct nv50_core_func *func;
+	struct nv50_dmac chan;
+	bool assign_windows;
+};
 
-पूर्णांक nv50_core_new(काष्ठा nouveau_drm *, काष्ठा nv50_core **);
-व्योम nv50_core_del(काष्ठा nv50_core **);
+int nv50_core_new(struct nouveau_drm *, struct nv50_core **);
+void nv50_core_del(struct nv50_core **);
 
-काष्ठा nv50_core_func अणु
-	पूर्णांक (*init)(काष्ठा nv50_core *);
-	व्योम (*ntfy_init)(काष्ठा nouveau_bo *, u32 offset);
-	पूर्णांक (*caps_init)(काष्ठा nouveau_drm *, काष्ठा nv50_disp *);
-	पूर्णांक (*ntfy_रुको_करोne)(काष्ठा nouveau_bo *, u32 offset,
-			      काष्ठा nvअगर_device *);
-	पूर्णांक (*update)(काष्ठा nv50_core *, u32 *पूर्णांकerlock, bool ntfy);
+struct nv50_core_func {
+	int (*init)(struct nv50_core *);
+	void (*ntfy_init)(struct nouveau_bo *, u32 offset);
+	int (*caps_init)(struct nouveau_drm *, struct nv50_disp *);
+	int (*ntfy_wait_done)(struct nouveau_bo *, u32 offset,
+			      struct nvif_device *);
+	int (*update)(struct nv50_core *, u32 *interlock, bool ntfy);
 
-	काष्ठा अणु
-		पूर्णांक (*owner)(काष्ठा nv50_core *);
-	पूर्ण wndw;
+	struct {
+		int (*owner)(struct nv50_core *);
+	} wndw;
 
-	स्थिर काष्ठा nv50_head_func *head;
-#अगर IS_ENABLED(CONFIG_DEBUG_FS)
-	स्थिर काष्ठा nv50_crc_func *crc;
-#पूर्ण_अगर
-	स्थिर काष्ठा nv50_outp_func अणु
-		पूर्णांक (*ctrl)(काष्ठा nv50_core *, पूर्णांक or, u32 ctrl,
-			     काष्ठा nv50_head_atom *);
-		/* XXX: Only used by SORs and PIORs क्रम now */
-		व्योम (*get_caps)(काष्ठा nv50_disp *,
-				 काष्ठा nouveau_encoder *, पूर्णांक or);
-	पूर्ण *dac, *pior, *sor;
-पूर्ण;
+	const struct nv50_head_func *head;
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	const struct nv50_crc_func *crc;
+#endif
+	const struct nv50_outp_func {
+		int (*ctrl)(struct nv50_core *, int or, u32 ctrl,
+			     struct nv50_head_atom *);
+		/* XXX: Only used by SORs and PIORs for now */
+		void (*get_caps)(struct nv50_disp *,
+				 struct nouveau_encoder *, int or);
+	} *dac, *pior, *sor;
+};
 
-पूर्णांक core507d_new(काष्ठा nouveau_drm *, s32, काष्ठा nv50_core **);
-पूर्णांक core507d_new_(स्थिर काष्ठा nv50_core_func *, काष्ठा nouveau_drm *, s32,
-		  काष्ठा nv50_core **);
-पूर्णांक core507d_init(काष्ठा nv50_core *);
-व्योम core507d_ntfy_init(काष्ठा nouveau_bo *, u32);
-पूर्णांक core507d_पढ़ो_caps(काष्ठा nv50_disp *disp);
-पूर्णांक core507d_caps_init(काष्ठा nouveau_drm *, काष्ठा nv50_disp *);
-पूर्णांक core507d_ntfy_रुको_करोne(काष्ठा nouveau_bo *, u32, काष्ठा nvअगर_device *);
-पूर्णांक core507d_update(काष्ठा nv50_core *, u32 *, bool);
+int core507d_new(struct nouveau_drm *, s32, struct nv50_core **);
+int core507d_new_(const struct nv50_core_func *, struct nouveau_drm *, s32,
+		  struct nv50_core **);
+int core507d_init(struct nv50_core *);
+void core507d_ntfy_init(struct nouveau_bo *, u32);
+int core507d_read_caps(struct nv50_disp *disp);
+int core507d_caps_init(struct nouveau_drm *, struct nv50_disp *);
+int core507d_ntfy_wait_done(struct nouveau_bo *, u32, struct nvif_device *);
+int core507d_update(struct nv50_core *, u32 *, bool);
 
-बाह्य स्थिर काष्ठा nv50_outp_func dac507d;
-बाह्य स्थिर काष्ठा nv50_outp_func sor507d;
-बाह्य स्थिर काष्ठा nv50_outp_func pior507d;
+extern const struct nv50_outp_func dac507d;
+extern const struct nv50_outp_func sor507d;
+extern const struct nv50_outp_func pior507d;
 
-पूर्णांक core827d_new(काष्ठा nouveau_drm *, s32, काष्ठा nv50_core **);
+int core827d_new(struct nouveau_drm *, s32, struct nv50_core **);
 
-पूर्णांक core907d_new(काष्ठा nouveau_drm *, s32, काष्ठा nv50_core **);
-पूर्णांक core907d_caps_init(काष्ठा nouveau_drm *drm, काष्ठा nv50_disp *disp);
-बाह्य स्थिर काष्ठा nv50_outp_func dac907d;
-बाह्य स्थिर काष्ठा nv50_outp_func sor907d;
+int core907d_new(struct nouveau_drm *, s32, struct nv50_core **);
+int core907d_caps_init(struct nouveau_drm *drm, struct nv50_disp *disp);
+extern const struct nv50_outp_func dac907d;
+extern const struct nv50_outp_func sor907d;
 
-पूर्णांक core917d_new(काष्ठा nouveau_drm *, s32, काष्ठा nv50_core **);
+int core917d_new(struct nouveau_drm *, s32, struct nv50_core **);
 
-पूर्णांक corec37d_new(काष्ठा nouveau_drm *, s32, काष्ठा nv50_core **);
-पूर्णांक corec37d_caps_init(काष्ठा nouveau_drm *, काष्ठा nv50_disp *);
-पूर्णांक corec37d_ntfy_रुको_करोne(काष्ठा nouveau_bo *, u32, काष्ठा nvअगर_device *);
-पूर्णांक corec37d_update(काष्ठा nv50_core *, u32 *, bool);
-पूर्णांक corec37d_wndw_owner(काष्ठा nv50_core *);
-बाह्य स्थिर काष्ठा nv50_outp_func sorc37d;
+int corec37d_new(struct nouveau_drm *, s32, struct nv50_core **);
+int corec37d_caps_init(struct nouveau_drm *, struct nv50_disp *);
+int corec37d_ntfy_wait_done(struct nouveau_bo *, u32, struct nvif_device *);
+int corec37d_update(struct nv50_core *, u32 *, bool);
+int corec37d_wndw_owner(struct nv50_core *);
+extern const struct nv50_outp_func sorc37d;
 
-पूर्णांक corec57d_new(काष्ठा nouveau_drm *, s32, काष्ठा nv50_core **);
-#पूर्ण_अगर
+int corec57d_new(struct nouveau_drm *, s32, struct nv50_core **);
+#endif

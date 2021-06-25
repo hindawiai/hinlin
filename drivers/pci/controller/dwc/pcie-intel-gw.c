@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PCIe host controller driver क्रम Intel Gateway SoCs
+ * PCIe host controller driver for Intel Gateway SoCs
  *
  * Copyright (c) 2019 Intel Corporation.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/pci_regs.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/gpio/consumer.h>
+#include <linux/iopoll.h>
+#include <linux/pci_regs.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
 
-#समावेश "../../pci.h"
-#समावेश "pcie-designware.h"
+#include "../../pci.h"
+#include "pcie-designware.h"
 
-#घोषणा PORT_AFR_N_FTS_GEN12_DFT	(SZ_128 - 1)
-#घोषणा PORT_AFR_N_FTS_GEN3		180
-#घोषणा PORT_AFR_N_FTS_GEN4		196
+#define PORT_AFR_N_FTS_GEN12_DFT	(SZ_128 - 1)
+#define PORT_AFR_N_FTS_GEN3		180
+#define PORT_AFR_N_FTS_GEN4		196
 
 /* PCIe Application logic Registers */
-#घोषणा PCIE_APP_CCR			0x10
-#घोषणा PCIE_APP_CCR_LTSSM_ENABLE	BIT(0)
+#define PCIE_APP_CCR			0x10
+#define PCIE_APP_CCR_LTSSM_ENABLE	BIT(0)
 
-#घोषणा PCIE_APP_MSG_CR			0x30
-#घोषणा PCIE_APP_MSG_XMT_PM_TURNOFF	BIT(0)
+#define PCIE_APP_MSG_CR			0x30
+#define PCIE_APP_MSG_XMT_PM_TURNOFF	BIT(0)
 
-#घोषणा PCIE_APP_PMC			0x44
-#घोषणा PCIE_APP_PMC_IN_L2		BIT(20)
+#define PCIE_APP_PMC			0x44
+#define PCIE_APP_PMC_IN_L2		BIT(20)
 
-#घोषणा PCIE_APP_IRNEN			0xF4
-#घोषणा PCIE_APP_IRNCR			0xF8
-#घोषणा PCIE_APP_IRN_AER_REPORT		BIT(0)
-#घोषणा PCIE_APP_IRN_PME		BIT(2)
-#घोषणा PCIE_APP_IRN_RX_VDM_MSG		BIT(4)
-#घोषणा PCIE_APP_IRN_PM_TO_ACK		BIT(9)
-#घोषणा PCIE_APP_IRN_LINK_AUTO_BW_STAT	BIT(11)
-#घोषणा PCIE_APP_IRN_BW_MGT		BIT(12)
-#घोषणा PCIE_APP_IRN_MSG_LTR		BIT(18)
-#घोषणा PCIE_APP_IRN_SYS_ERR_RC		BIT(29)
-#घोषणा PCIE_APP_INTX_OFST		12
+#define PCIE_APP_IRNEN			0xF4
+#define PCIE_APP_IRNCR			0xF8
+#define PCIE_APP_IRN_AER_REPORT		BIT(0)
+#define PCIE_APP_IRN_PME		BIT(2)
+#define PCIE_APP_IRN_RX_VDM_MSG		BIT(4)
+#define PCIE_APP_IRN_PM_TO_ACK		BIT(9)
+#define PCIE_APP_IRN_LINK_AUTO_BW_STAT	BIT(11)
+#define PCIE_APP_IRN_BW_MGT		BIT(12)
+#define PCIE_APP_IRN_MSG_LTR		BIT(18)
+#define PCIE_APP_IRN_SYS_ERR_RC		BIT(29)
+#define PCIE_APP_INTX_OFST		12
 
-#घोषणा PCIE_APP_IRN_INT \
+#define PCIE_APP_IRN_INT \
 	(PCIE_APP_IRN_AER_REPORT | PCIE_APP_IRN_PME | \
 	PCIE_APP_IRN_RX_VDM_MSG | PCIE_APP_IRN_SYS_ERR_RC | \
 	PCIE_APP_IRN_PM_TO_ACK | PCIE_APP_IRN_MSG_LTR | \
@@ -54,74 +53,74 @@
 	(PCIE_APP_INTX_OFST + PCI_INTERRUPT_INTC) | \
 	(PCIE_APP_INTX_OFST + PCI_INTERRUPT_INTD))
 
-#घोषणा BUS_IATU_OFFSET			SZ_256M
-#घोषणा RESET_INTERVAL_MS		100
+#define BUS_IATU_OFFSET			SZ_256M
+#define RESET_INTERVAL_MS		100
 
-काष्ठा पूर्णांकel_pcie_soc अणु
-	अचिन्हित पूर्णांक	pcie_ver;
-पूर्ण;
+struct intel_pcie_soc {
+	unsigned int	pcie_ver;
+};
 
-काष्ठा पूर्णांकel_pcie_port अणु
-	काष्ठा dw_pcie		pci;
-	व्योम __iomem		*app_base;
-	काष्ठा gpio_desc	*reset_gpio;
-	u32			rst_पूर्णांकrvl;
-	काष्ठा clk		*core_clk;
-	काष्ठा reset_control	*core_rst;
-	काष्ठा phy		*phy;
-पूर्ण;
+struct intel_pcie_port {
+	struct dw_pcie		pci;
+	void __iomem		*app_base;
+	struct gpio_desc	*reset_gpio;
+	u32			rst_intrvl;
+	struct clk		*core_clk;
+	struct reset_control	*core_rst;
+	struct phy		*phy;
+};
 
-अटल व्योम pcie_update_bits(व्योम __iomem *base, u32 ofs, u32 mask, u32 val)
-अणु
+static void pcie_update_bits(void __iomem *base, u32 ofs, u32 mask, u32 val)
+{
 	u32 old;
 
-	old = पढ़ोl(base + ofs);
+	old = readl(base + ofs);
 	val = (old & ~mask) | (val & mask);
 
-	अगर (val != old)
-		ग_लिखोl(val, base + ofs);
-पूर्ण
+	if (val != old)
+		writel(val, base + ofs);
+}
 
-अटल अंतरभूत व्योम pcie_app_wr(काष्ठा पूर्णांकel_pcie_port *lpp, u32 ofs, u32 val)
-अणु
-	ग_लिखोl(val, lpp->app_base + ofs);
-पूर्ण
+static inline void pcie_app_wr(struct intel_pcie_port *lpp, u32 ofs, u32 val)
+{
+	writel(val, lpp->app_base + ofs);
+}
 
-अटल व्योम pcie_app_wr_mask(काष्ठा पूर्णांकel_pcie_port *lpp, u32 ofs,
+static void pcie_app_wr_mask(struct intel_pcie_port *lpp, u32 ofs,
 			     u32 mask, u32 val)
-अणु
+{
 	pcie_update_bits(lpp->app_base, ofs, mask, val);
-पूर्ण
+}
 
-अटल अंतरभूत u32 pcie_rc_cfg_rd(काष्ठा पूर्णांकel_pcie_port *lpp, u32 ofs)
-अणु
-	वापस dw_pcie_पढ़ोl_dbi(&lpp->pci, ofs);
-पूर्ण
+static inline u32 pcie_rc_cfg_rd(struct intel_pcie_port *lpp, u32 ofs)
+{
+	return dw_pcie_readl_dbi(&lpp->pci, ofs);
+}
 
-अटल अंतरभूत व्योम pcie_rc_cfg_wr(काष्ठा पूर्णांकel_pcie_port *lpp, u32 ofs, u32 val)
-अणु
-	dw_pcie_ग_लिखोl_dbi(&lpp->pci, ofs, val);
-पूर्ण
+static inline void pcie_rc_cfg_wr(struct intel_pcie_port *lpp, u32 ofs, u32 val)
+{
+	dw_pcie_writel_dbi(&lpp->pci, ofs, val);
+}
 
-अटल व्योम pcie_rc_cfg_wr_mask(काष्ठा पूर्णांकel_pcie_port *lpp, u32 ofs,
+static void pcie_rc_cfg_wr_mask(struct intel_pcie_port *lpp, u32 ofs,
 				u32 mask, u32 val)
-अणु
+{
 	pcie_update_bits(lpp->pci.dbi_base, ofs, mask, val);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_ltssm_enable(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static void intel_pcie_ltssm_enable(struct intel_pcie_port *lpp)
+{
 	pcie_app_wr_mask(lpp, PCIE_APP_CCR, PCIE_APP_CCR_LTSSM_ENABLE,
 			 PCIE_APP_CCR_LTSSM_ENABLE);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_ltssm_disable(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static void intel_pcie_ltssm_disable(struct intel_pcie_port *lpp)
+{
 	pcie_app_wr_mask(lpp, PCIE_APP_CCR, PCIE_APP_CCR_LTSSM_ENABLE, 0);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_link_setup(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static void intel_pcie_link_setup(struct intel_pcie_port *lpp)
+{
 	u32 val;
 	u8 offset = dw_pcie_find_capability(&lpp->pci, PCI_CAP_ID_EXP);
 
@@ -129,334 +128,334 @@
 
 	val &= ~(PCI_EXP_LNKCTL_LD | PCI_EXP_LNKCTL_ASPMC);
 	pcie_rc_cfg_wr(lpp, offset + PCI_EXP_LNKCTL, val);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_init_n_fts(काष्ठा dw_pcie *pci)
-अणु
-	चयन (pci->link_gen) अणु
-	हाल 3:
+static void intel_pcie_init_n_fts(struct dw_pcie *pci)
+{
+	switch (pci->link_gen) {
+	case 3:
 		pci->n_fts[1] = PORT_AFR_N_FTS_GEN3;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		pci->n_fts[1] = PORT_AFR_N_FTS_GEN4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pci->n_fts[1] = PORT_AFR_N_FTS_GEN12_DFT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	pci->n_fts[0] = PORT_AFR_N_FTS_GEN12_DFT;
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pcie_ep_rst_init(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
-	काष्ठा device *dev = lpp->pci.dev;
-	पूर्णांक ret;
+static int intel_pcie_ep_rst_init(struct intel_pcie_port *lpp)
+{
+	struct device *dev = lpp->pci.dev;
+	int ret;
 
 	lpp->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	अगर (IS_ERR(lpp->reset_gpio)) अणु
+	if (IS_ERR(lpp->reset_gpio)) {
 		ret = PTR_ERR(lpp->reset_gpio);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to request PCIe GPIO: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Make initial reset last क्रम 100us */
+	/* Make initial reset last for 100us */
 	usleep_range(100, 200);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_pcie_core_rst_निश्चित(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
-	reset_control_निश्चित(lpp->core_rst);
-पूर्ण
+static void intel_pcie_core_rst_assert(struct intel_pcie_port *lpp)
+{
+	reset_control_assert(lpp->core_rst);
+}
 
-अटल व्योम पूर्णांकel_pcie_core_rst_deनिश्चित(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static void intel_pcie_core_rst_deassert(struct intel_pcie_port *lpp)
+{
 	/*
 	 * One micro-second delay to make sure the reset pulse
 	 * wide enough so that core reset is clean.
 	 */
 	udelay(1);
-	reset_control_deनिश्चित(lpp->core_rst);
+	reset_control_deassert(lpp->core_rst);
 
 	/*
 	 * Some SoC core reset also reset PHY, more delay needed
-	 * to make sure the reset process is करोne.
+	 * to make sure the reset process is done.
 	 */
 	usleep_range(1000, 2000);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_device_rst_निश्चित(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static void intel_pcie_device_rst_assert(struct intel_pcie_port *lpp)
+{
 	gpiod_set_value_cansleep(lpp->reset_gpio, 1);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_device_rst_deनिश्चित(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
-	msleep(lpp->rst_पूर्णांकrvl);
+static void intel_pcie_device_rst_deassert(struct intel_pcie_port *lpp)
+{
+	msleep(lpp->rst_intrvl);
 	gpiod_set_value_cansleep(lpp->reset_gpio, 0);
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_pcie_core_irq_disable(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static void intel_pcie_core_irq_disable(struct intel_pcie_port *lpp)
+{
 	pcie_app_wr(lpp, PCIE_APP_IRNEN, 0);
 	pcie_app_wr(lpp, PCIE_APP_IRNCR, PCIE_APP_IRN_INT);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pcie_get_resources(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_pcie_port *lpp = platक्रमm_get_drvdata(pdev);
-	काष्ठा dw_pcie *pci = &lpp->pci;
-	काष्ठा device *dev = pci->dev;
-	पूर्णांक ret;
+static int intel_pcie_get_resources(struct platform_device *pdev)
+{
+	struct intel_pcie_port *lpp = platform_get_drvdata(pdev);
+	struct dw_pcie *pci = &lpp->pci;
+	struct device *dev = pci->dev;
+	int ret;
 
-	lpp->core_clk = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(lpp->core_clk)) अणु
+	lpp->core_clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(lpp->core_clk)) {
 		ret = PTR_ERR(lpp->core_clk);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get clks: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	lpp->core_rst = devm_reset_control_get(dev, शून्य);
-	अगर (IS_ERR(lpp->core_rst)) अणु
+	lpp->core_rst = devm_reset_control_get(dev, NULL);
+	if (IS_ERR(lpp->core_rst)) {
 		ret = PTR_ERR(lpp->core_rst);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get resets: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = device_property_पढ़ो_u32(dev, "reset-assert-ms",
-				       &lpp->rst_पूर्णांकrvl);
-	अगर (ret)
-		lpp->rst_पूर्णांकrvl = RESET_INTERVAL_MS;
+	ret = device_property_read_u32(dev, "reset-assert-ms",
+				       &lpp->rst_intrvl);
+	if (ret)
+		lpp->rst_intrvl = RESET_INTERVAL_MS;
 
-	lpp->app_base = devm_platक्रमm_ioremap_resource_byname(pdev, "app");
-	अगर (IS_ERR(lpp->app_base))
-		वापस PTR_ERR(lpp->app_base);
+	lpp->app_base = devm_platform_ioremap_resource_byname(pdev, "app");
+	if (IS_ERR(lpp->app_base))
+		return PTR_ERR(lpp->app_base);
 
 	lpp->phy = devm_phy_get(dev, "pcie");
-	अगर (IS_ERR(lpp->phy)) अणु
+	if (IS_ERR(lpp->phy)) {
 		ret = PTR_ERR(lpp->phy);
-		अगर (ret != -EPROBE_DEFER)
+		if (ret != -EPROBE_DEFER)
 			dev_err(dev, "Couldn't get pcie-phy: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_pcie_रुको_l2(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
+static int intel_pcie_wait_l2(struct intel_pcie_port *lpp)
+{
 	u32 value;
-	पूर्णांक ret;
-	काष्ठा dw_pcie *pci = &lpp->pci;
+	int ret;
+	struct dw_pcie *pci = &lpp->pci;
 
-	अगर (pci->link_gen < 3)
-		वापस 0;
+	if (pci->link_gen < 3)
+		return 0;
 
 	/* Send PME_TURN_OFF message */
 	pcie_app_wr_mask(lpp, PCIE_APP_MSG_CR, PCIE_APP_MSG_XMT_PM_TURNOFF,
 			 PCIE_APP_MSG_XMT_PM_TURNOFF);
 
-	/* Read PMC status and रुको क्रम falling पूर्णांकo L2 link state */
-	ret = पढ़ोl_poll_समयout(lpp->app_base + PCIE_APP_PMC, value,
+	/* Read PMC status and wait for falling into L2 link state */
+	ret = readl_poll_timeout(lpp->app_base + PCIE_APP_PMC, value,
 				 value & PCIE_APP_PMC_IN_L2, 20,
-				 jअगरfies_to_usecs(5 * HZ));
-	अगर (ret)
+				 jiffies_to_usecs(5 * HZ));
+	if (ret)
 		dev_err(lpp->pci.dev, "PCIe link enter L2 timeout!\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पूर्णांकel_pcie_turn_off(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
-	अगर (dw_pcie_link_up(&lpp->pci))
-		पूर्णांकel_pcie_रुको_l2(lpp);
+static void intel_pcie_turn_off(struct intel_pcie_port *lpp)
+{
+	if (dw_pcie_link_up(&lpp->pci))
+		intel_pcie_wait_l2(lpp);
 
-	/* Put endpoपूर्णांक device in reset state */
-	पूर्णांकel_pcie_device_rst_निश्चित(lpp);
+	/* Put endpoint device in reset state */
+	intel_pcie_device_rst_assert(lpp);
 	pcie_rc_cfg_wr_mask(lpp, PCI_COMMAND, PCI_COMMAND_MEMORY, 0);
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_pcie_host_setup(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
-	पूर्णांक ret;
-	काष्ठा dw_pcie *pci = &lpp->pci;
+static int intel_pcie_host_setup(struct intel_pcie_port *lpp)
+{
+	int ret;
+	struct dw_pcie *pci = &lpp->pci;
 
-	पूर्णांकel_pcie_core_rst_निश्चित(lpp);
-	पूर्णांकel_pcie_device_rst_निश्चित(lpp);
+	intel_pcie_core_rst_assert(lpp);
+	intel_pcie_device_rst_assert(lpp);
 
 	ret = phy_init(lpp->phy);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	पूर्णांकel_pcie_core_rst_deनिश्चित(lpp);
+	intel_pcie_core_rst_deassert(lpp);
 
 	ret = clk_prepare_enable(lpp->core_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(lpp->pci.dev, "Core clock enable failed: %d\n", ret);
-		जाओ clk_err;
-	पूर्ण
+		goto clk_err;
+	}
 
 	pci->atu_base = pci->dbi_base + 0xC0000;
 
-	पूर्णांकel_pcie_ltssm_disable(lpp);
-	पूर्णांकel_pcie_link_setup(lpp);
-	पूर्णांकel_pcie_init_n_fts(pci);
+	intel_pcie_ltssm_disable(lpp);
+	intel_pcie_link_setup(lpp);
+	intel_pcie_init_n_fts(pci);
 	dw_pcie_setup_rc(&pci->pp);
 	dw_pcie_upconfig_setup(pci);
 
-	पूर्णांकel_pcie_device_rst_deनिश्चित(lpp);
-	पूर्णांकel_pcie_ltssm_enable(lpp);
+	intel_pcie_device_rst_deassert(lpp);
+	intel_pcie_ltssm_enable(lpp);
 
-	ret = dw_pcie_रुको_क्रम_link(pci);
-	अगर (ret)
-		जाओ app_init_err;
+	ret = dw_pcie_wait_for_link(pci);
+	if (ret)
+		goto app_init_err;
 
-	/* Enable पूर्णांकegrated पूर्णांकerrupts */
+	/* Enable integrated interrupts */
 	pcie_app_wr_mask(lpp, PCIE_APP_IRNEN, PCIE_APP_IRN_INT,
 			 PCIE_APP_IRN_INT);
 
-	वापस 0;
+	return 0;
 
 app_init_err:
 	clk_disable_unprepare(lpp->core_clk);
 clk_err:
-	पूर्णांकel_pcie_core_rst_निश्चित(lpp);
-	phy_निकास(lpp->phy);
+	intel_pcie_core_rst_assert(lpp);
+	phy_exit(lpp->phy);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __पूर्णांकel_pcie_हटाओ(काष्ठा पूर्णांकel_pcie_port *lpp)
-अणु
-	पूर्णांकel_pcie_core_irq_disable(lpp);
-	पूर्णांकel_pcie_turn_off(lpp);
+static void __intel_pcie_remove(struct intel_pcie_port *lpp)
+{
+	intel_pcie_core_irq_disable(lpp);
+	intel_pcie_turn_off(lpp);
 	clk_disable_unprepare(lpp->core_clk);
-	पूर्णांकel_pcie_core_rst_निश्चित(lpp);
-	phy_निकास(lpp->phy);
-पूर्ण
+	intel_pcie_core_rst_assert(lpp);
+	phy_exit(lpp->phy);
+}
 
-अटल पूर्णांक पूर्णांकel_pcie_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा पूर्णांकel_pcie_port *lpp = platक्रमm_get_drvdata(pdev);
-	काष्ठा pcie_port *pp = &lpp->pci.pp;
+static int intel_pcie_remove(struct platform_device *pdev)
+{
+	struct intel_pcie_port *lpp = platform_get_drvdata(pdev);
+	struct pcie_port *pp = &lpp->pci.pp;
 
 	dw_pcie_host_deinit(pp);
-	__पूर्णांकel_pcie_हटाओ(lpp);
+	__intel_pcie_remove(lpp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused पूर्णांकel_pcie_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_pcie_port *lpp = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused intel_pcie_suspend_noirq(struct device *dev)
+{
+	struct intel_pcie_port *lpp = dev_get_drvdata(dev);
+	int ret;
 
-	पूर्णांकel_pcie_core_irq_disable(lpp);
-	ret = पूर्णांकel_pcie_रुको_l2(lpp);
-	अगर (ret)
-		वापस ret;
+	intel_pcie_core_irq_disable(lpp);
+	ret = intel_pcie_wait_l2(lpp);
+	if (ret)
+		return ret;
 
-	phy_निकास(lpp->phy);
+	phy_exit(lpp->phy);
 	clk_disable_unprepare(lpp->core_clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक __maybe_unused पूर्णांकel_pcie_resume_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा पूर्णांकel_pcie_port *lpp = dev_get_drvdata(dev);
+static int __maybe_unused intel_pcie_resume_noirq(struct device *dev)
+{
+	struct intel_pcie_port *lpp = dev_get_drvdata(dev);
 
-	वापस पूर्णांकel_pcie_host_setup(lpp);
-पूर्ण
+	return intel_pcie_host_setup(lpp);
+}
 
-अटल पूर्णांक पूर्णांकel_pcie_rc_init(काष्ठा pcie_port *pp)
-अणु
-	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
-	काष्ठा पूर्णांकel_pcie_port *lpp = dev_get_drvdata(pci->dev);
+static int intel_pcie_rc_init(struct pcie_port *pp)
+{
+	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	struct intel_pcie_port *lpp = dev_get_drvdata(pci->dev);
 
-	वापस पूर्णांकel_pcie_host_setup(lpp);
-पूर्ण
+	return intel_pcie_host_setup(lpp);
+}
 
-अटल u64 पूर्णांकel_pcie_cpu_addr(काष्ठा dw_pcie *pcie, u64 cpu_addr)
-अणु
-	वापस cpu_addr + BUS_IATU_OFFSET;
-पूर्ण
+static u64 intel_pcie_cpu_addr(struct dw_pcie *pcie, u64 cpu_addr)
+{
+	return cpu_addr + BUS_IATU_OFFSET;
+}
 
-अटल स्थिर काष्ठा dw_pcie_ops पूर्णांकel_pcie_ops = अणु
-	.cpu_addr_fixup = पूर्णांकel_pcie_cpu_addr,
-पूर्ण;
+static const struct dw_pcie_ops intel_pcie_ops = {
+	.cpu_addr_fixup = intel_pcie_cpu_addr,
+};
 
-अटल स्थिर काष्ठा dw_pcie_host_ops पूर्णांकel_pcie_dw_ops = अणु
-	.host_init =		पूर्णांकel_pcie_rc_init,
-पूर्ण;
+static const struct dw_pcie_host_ops intel_pcie_dw_ops = {
+	.host_init =		intel_pcie_rc_init,
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_pcie_soc pcie_data = अणु
+static const struct intel_pcie_soc pcie_data = {
 	.pcie_ver =		0x520A,
-पूर्ण;
+};
 
-अटल पूर्णांक पूर्णांकel_pcie_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा पूर्णांकel_pcie_soc *data;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा पूर्णांकel_pcie_port *lpp;
-	काष्ठा pcie_port *pp;
-	काष्ठा dw_pcie *pci;
-	पूर्णांक ret;
+static int intel_pcie_probe(struct platform_device *pdev)
+{
+	const struct intel_pcie_soc *data;
+	struct device *dev = &pdev->dev;
+	struct intel_pcie_port *lpp;
+	struct pcie_port *pp;
+	struct dw_pcie *pci;
+	int ret;
 
-	lpp = devm_kzalloc(dev, माप(*lpp), GFP_KERNEL);
-	अगर (!lpp)
-		वापस -ENOMEM;
+	lpp = devm_kzalloc(dev, sizeof(*lpp), GFP_KERNEL);
+	if (!lpp)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, lpp);
+	platform_set_drvdata(pdev, lpp);
 	pci = &lpp->pci;
 	pci->dev = dev;
 	pp = &pci->pp;
 
-	ret = पूर्णांकel_pcie_get_resources(pdev);
-	अगर (ret)
-		वापस ret;
+	ret = intel_pcie_get_resources(pdev);
+	if (ret)
+		return ret;
 
-	ret = पूर्णांकel_pcie_ep_rst_init(lpp);
-	अगर (ret)
-		वापस ret;
+	ret = intel_pcie_ep_rst_init(lpp);
+	if (ret)
+		return ret;
 
 	data = device_get_match_data(dev);
-	अगर (!data)
-		वापस -ENODEV;
+	if (!data)
+		return -ENODEV;
 
-	pci->ops = &पूर्णांकel_pcie_ops;
+	pci->ops = &intel_pcie_ops;
 	pci->version = data->pcie_ver;
-	pp->ops = &पूर्णांकel_pcie_dw_ops;
+	pp->ops = &intel_pcie_dw_ops;
 
 	ret = dw_pcie_host_init(pp);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Cannot initialize host\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops पूर्णांकel_pcie_pm_ops = अणु
-	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(पूर्णांकel_pcie_suspend_noirq,
-				      पूर्णांकel_pcie_resume_noirq)
-पूर्ण;
+static const struct dev_pm_ops intel_pcie_pm_ops = {
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(intel_pcie_suspend_noirq,
+				      intel_pcie_resume_noirq)
+};
 
-अटल स्थिर काष्ठा of_device_id of_पूर्णांकel_pcie_match[] = अणु
-	अणु .compatible = "intel,lgm-pcie", .data = &pcie_data पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id of_intel_pcie_match[] = {
+	{ .compatible = "intel,lgm-pcie", .data = &pcie_data },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver पूर्णांकel_pcie_driver = अणु
-	.probe = पूर्णांकel_pcie_probe,
-	.हटाओ = पूर्णांकel_pcie_हटाओ,
-	.driver = अणु
+static struct platform_driver intel_pcie_driver = {
+	.probe = intel_pcie_probe,
+	.remove = intel_pcie_remove,
+	.driver = {
 		.name = "intel-gw-pcie",
-		.of_match_table = of_पूर्णांकel_pcie_match,
-		.pm = &पूर्णांकel_pcie_pm_ops,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(पूर्णांकel_pcie_driver);
+		.of_match_table = of_intel_pcie_match,
+		.pm = &intel_pcie_pm_ops,
+	},
+};
+builtin_platform_driver(intel_pcie_driver);

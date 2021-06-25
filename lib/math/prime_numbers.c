@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-#घोषणा pr_fmt(fmt) "prime numbers: " fmt
+// SPDX-License-Identifier: GPL-2.0-only
+#define pr_fmt(fmt) "prime numbers: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/prime_numbers.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/prime_numbers.h>
+#include <linux/slab.h>
 
-#घोषणा biपंचांगap_size(nbits) (BITS_TO_LONGS(nbits) * माप(अचिन्हित दीर्घ))
+#define bitmap_size(nbits) (BITS_TO_LONGS(nbits) * sizeof(unsigned long))
 
-काष्ठा primes अणु
-	काष्ठा rcu_head rcu;
-	अचिन्हित दीर्घ last, sz;
-	अचिन्हित दीर्घ primes[];
-पूर्ण;
+struct primes {
+	struct rcu_head rcu;
+	unsigned long last, sz;
+	unsigned long primes[];
+};
 
-#अगर BITS_PER_LONG == 64
-अटल स्थिर काष्ठा primes small_primes = अणु
+#if BITS_PER_LONG == 64
+static const struct primes small_primes = {
 	.last = 61,
 	.sz = 64,
-	.primes = अणु
+	.primes = {
 		BIT(2) |
 		BIT(3) |
 		BIT(5) |
@@ -38,13 +37,13 @@
 		BIT(53) |
 		BIT(59) |
 		BIT(61)
-	पूर्ण
-पूर्ण;
-#या_अगर BITS_PER_LONG == 32
-अटल स्थिर काष्ठा primes small_primes = अणु
+	}
+};
+#elif BITS_PER_LONG == 32
+static const struct primes small_primes = {
 	.last = 31,
 	.sz = 32,
-	.primes = अणु
+	.primes = {
 		BIT(2) |
 		BIT(3) |
 		BIT(5) |
@@ -56,262 +55,262 @@
 		BIT(23) |
 		BIT(29) |
 		BIT(31)
-	पूर्ण
-पूर्ण;
-#अन्यथा
-#त्रुटि "unhandled BITS_PER_LONG"
-#पूर्ण_अगर
+	}
+};
+#else
+#error "unhandled BITS_PER_LONG"
+#endif
 
-अटल DEFINE_MUTEX(lock);
-अटल स्थिर काष्ठा primes __rcu *primes = RCU_INITIALIZER(&small_primes);
+static DEFINE_MUTEX(lock);
+static const struct primes __rcu *primes = RCU_INITIALIZER(&small_primes);
 
-अटल अचिन्हित दीर्घ selftest_max;
+static unsigned long selftest_max;
 
-अटल bool slow_is_prime_number(अचिन्हित दीर्घ x)
-अणु
-	अचिन्हित दीर्घ y = पूर्णांक_वर्ग_मूल(x);
+static bool slow_is_prime_number(unsigned long x)
+{
+	unsigned long y = int_sqrt(x);
 
-	जबतक (y > 1) अणु
-		अगर ((x % y) == 0)
-			अवरोध;
+	while (y > 1) {
+		if ((x % y) == 0)
+			break;
 		y--;
-	पूर्ण
+	}
 
-	वापस y == 1;
-पूर्ण
+	return y == 1;
+}
 
-अटल अचिन्हित दीर्घ slow_next_prime_number(अचिन्हित दीर्घ x)
-अणु
-	जबतक (x < अच_दीर्घ_उच्च && !slow_is_prime_number(++x))
+static unsigned long slow_next_prime_number(unsigned long x)
+{
+	while (x < ULONG_MAX && !slow_is_prime_number(++x))
 		;
 
-	वापस x;
-पूर्ण
+	return x;
+}
 
-अटल अचिन्हित दीर्घ clear_multiples(अचिन्हित दीर्घ x,
-				     अचिन्हित दीर्घ *p,
-				     अचिन्हित दीर्घ start,
-				     अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ m;
+static unsigned long clear_multiples(unsigned long x,
+				     unsigned long *p,
+				     unsigned long start,
+				     unsigned long end)
+{
+	unsigned long m;
 
 	m = 2 * x;
-	अगर (m < start)
+	if (m < start)
 		m = roundup(start, x);
 
-	जबतक (m < end) अणु
+	while (m < end) {
 		__clear_bit(m, p);
 		m += x;
-	पूर्ण
+	}
 
-	वापस x;
-पूर्ण
+	return x;
+}
 
-अटल bool expand_to_next_prime(अचिन्हित दीर्घ x)
-अणु
-	स्थिर काष्ठा primes *p;
-	काष्ठा primes *new;
-	अचिन्हित दीर्घ sz, y;
+static bool expand_to_next_prime(unsigned long x)
+{
+	const struct primes *p;
+	struct primes *new;
+	unsigned long sz, y;
 
-	/* Betअक्रम's Postulate (or Chebyshev's theorem) states that अगर n > 3,
+	/* Betrand's Postulate (or Chebyshev's theorem) states that if n > 3,
 	 * there is always at least one prime p between n and 2n - 2.
-	 * Equivalently, अगर n > 1, then there is always at least one prime p
+	 * Equivalently, if n > 1, then there is always at least one prime p
 	 * such that n < p < 2n.
 	 *
-	 * http://mathworld.wolfram.com/Bertअक्रमsPostulate.hपंचांगl
-	 * https://en.wikipedia.org/wiki/Bertअक्रम's_postulate
+	 * http://mathworld.wolfram.com/BertrandsPostulate.html
+	 * https://en.wikipedia.org/wiki/Bertrand's_postulate
 	 */
 	sz = 2 * x;
-	अगर (sz < x)
-		वापस false;
+	if (sz < x)
+		return false;
 
 	sz = round_up(sz, BITS_PER_LONG);
-	new = kदो_स्मृति(माप(*new) + biपंचांगap_size(sz),
+	new = kmalloc(sizeof(*new) + bitmap_size(sz),
 		      GFP_KERNEL | __GFP_NOWARN);
-	अगर (!new)
-		वापस false;
+	if (!new)
+		return false;
 
 	mutex_lock(&lock);
-	p = rcu_dereference_रक्षित(primes, lockdep_is_held(&lock));
-	अगर (x < p->last) अणु
-		kमुक्त(new);
-		जाओ unlock;
-	पूर्ण
+	p = rcu_dereference_protected(primes, lockdep_is_held(&lock));
+	if (x < p->last) {
+		kfree(new);
+		goto unlock;
+	}
 
 	/* Where memory permits, track the primes using the
-	 * Sieve of Eratosthenes. The sieve is to हटाओ all multiples of known
-	 * primes from the set, what reमुख्यs in the set is thereक्रमe prime.
+	 * Sieve of Eratosthenes. The sieve is to remove all multiples of known
+	 * primes from the set, what remains in the set is therefore prime.
 	 */
-	biपंचांगap_fill(new->primes, sz);
-	biपंचांगap_copy(new->primes, p->primes, p->sz);
-	क्रम (y = 2UL; y < sz; y = find_next_bit(new->primes, sz, y + 1))
+	bitmap_fill(new->primes, sz);
+	bitmap_copy(new->primes, p->primes, p->sz);
+	for (y = 2UL; y < sz; y = find_next_bit(new->primes, sz, y + 1))
 		new->last = clear_multiples(y, new->primes, p->sz, sz);
 	new->sz = sz;
 
 	BUG_ON(new->last <= x);
 
-	rcu_assign_poपूर्णांकer(primes, new);
-	अगर (p != &small_primes)
-		kमुक्त_rcu((काष्ठा primes *)p, rcu);
+	rcu_assign_pointer(primes, new);
+	if (p != &small_primes)
+		kfree_rcu((struct primes *)p, rcu);
 
 unlock:
 	mutex_unlock(&lock);
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम मुक्त_primes(व्योम)
-अणु
-	स्थिर काष्ठा primes *p;
+static void free_primes(void)
+{
+	const struct primes *p;
 
 	mutex_lock(&lock);
-	p = rcu_dereference_रक्षित(primes, lockdep_is_held(&lock));
-	अगर (p != &small_primes) अणु
-		rcu_assign_poपूर्णांकer(primes, &small_primes);
-		kमुक्त_rcu((काष्ठा primes *)p, rcu);
-	पूर्ण
+	p = rcu_dereference_protected(primes, lockdep_is_held(&lock));
+	if (p != &small_primes) {
+		rcu_assign_pointer(primes, &small_primes);
+		kfree_rcu((struct primes *)p, rcu);
+	}
 	mutex_unlock(&lock);
-पूर्ण
+}
 
 /**
- * next_prime_number - वापस the next prime number
- * @x: the starting poपूर्णांक क्रम searching to test
+ * next_prime_number - return the next prime number
+ * @x: the starting point for searching to test
  *
- * A prime number is an पूर्णांकeger greater than 1 that is only भागisible by
+ * A prime number is an integer greater than 1 that is only divisible by
  * itself and 1.  The set of prime numbers is computed using the Sieve of
- * Eratoshenes (on finding a prime, all multiples of that prime are हटाओd
+ * Eratoshenes (on finding a prime, all multiples of that prime are removed
  * from the set) enabling a fast lookup of the next prime number larger than
  * @x. If the sieve fails (memory limitation), the search falls back to using
- * slow trial-भागison, up to the value of अच_दीर्घ_उच्च (which is reported as the
+ * slow trial-divison, up to the value of ULONG_MAX (which is reported as the
  * final prime as a sentinel).
  *
  * Returns: the next prime number larger than @x
  */
-अचिन्हित दीर्घ next_prime_number(अचिन्हित दीर्घ x)
-अणु
-	स्थिर काष्ठा primes *p;
+unsigned long next_prime_number(unsigned long x)
+{
+	const struct primes *p;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	p = rcu_dereference(primes);
-	जबतक (x >= p->last) अणु
-		rcu_पढ़ो_unlock();
+	while (x >= p->last) {
+		rcu_read_unlock();
 
-		अगर (!expand_to_next_prime(x))
-			वापस slow_next_prime_number(x);
+		if (!expand_to_next_prime(x))
+			return slow_next_prime_number(x);
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		p = rcu_dereference(primes);
-	पूर्ण
+	}
 	x = find_next_bit(p->primes, p->last, x + 1);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस x;
-पूर्ण
+	return x;
+}
 EXPORT_SYMBOL(next_prime_number);
 
 /**
  * is_prime_number - test whether the given number is prime
  * @x: the number to test
  *
- * A prime number is an पूर्णांकeger greater than 1 that is only भागisible by
+ * A prime number is an integer greater than 1 that is only divisible by
  * itself and 1. Internally a cache of prime numbers is kept (to speed up
- * searching क्रम sequential primes, see next_prime_number()), but अगर the number
- * falls outside of that cache, its primality is tested using trial-भागison.
+ * searching for sequential primes, see next_prime_number()), but if the number
+ * falls outside of that cache, its primality is tested using trial-divison.
  *
- * Returns: true अगर @x is prime, false क्रम composite numbers.
+ * Returns: true if @x is prime, false for composite numbers.
  */
-bool is_prime_number(अचिन्हित दीर्घ x)
-अणु
-	स्थिर काष्ठा primes *p;
+bool is_prime_number(unsigned long x)
+{
+	const struct primes *p;
 	bool result;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	p = rcu_dereference(primes);
-	जबतक (x >= p->sz) अणु
-		rcu_पढ़ो_unlock();
+	while (x >= p->sz) {
+		rcu_read_unlock();
 
-		अगर (!expand_to_next_prime(x))
-			वापस slow_is_prime_number(x);
+		if (!expand_to_next_prime(x))
+			return slow_is_prime_number(x);
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		p = rcu_dereference(primes);
-	पूर्ण
+	}
 	result = test_bit(x, p->primes);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस result;
-पूर्ण
+	return result;
+}
 EXPORT_SYMBOL(is_prime_number);
 
-अटल व्योम dump_primes(व्योम)
-अणु
-	स्थिर काष्ठा primes *p;
-	अक्षर *buf;
+static void dump_primes(void)
+{
+	const struct primes *p;
+	char *buf;
 
-	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	p = rcu_dereference(primes);
 
-	अगर (buf)
-		biपंचांगap_prपूर्णांक_to_pagebuf(true, buf, p->primes, p->sz);
+	if (buf)
+		bitmap_print_to_pagebuf(true, buf, p->primes, p->sz);
 	pr_info("primes.{last=%lu, .sz=%lu, .primes[]=...x%lx} = %s\n",
 		p->last, p->sz, p->primes[BITS_TO_LONGS(p->sz) - 1], buf);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
-अटल पूर्णांक selftest(अचिन्हित दीर्घ max)
-अणु
-	अचिन्हित दीर्घ x, last;
+static int selftest(unsigned long max)
+{
+	unsigned long x, last;
 
-	अगर (!max)
-		वापस 0;
+	if (!max)
+		return 0;
 
-	क्रम (last = 0, x = 2; x < max; x++) अणु
+	for (last = 0, x = 2; x < max; x++) {
 		bool slow = slow_is_prime_number(x);
 		bool fast = is_prime_number(x);
 
-		अगर (slow != fast) अणु
+		if (slow != fast) {
 			pr_err("inconsistent result for is-prime(%lu): slow=%s, fast=%s!\n",
 			       x, slow ? "yes" : "no", fast ? "yes" : "no");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (!slow)
-			जारी;
+		if (!slow)
+			continue;
 
-		अगर (next_prime_number(last) != x) अणु
+		if (next_prime_number(last) != x) {
 			pr_err("incorrect result for next-prime(%lu): expected %lu, got %lu\n",
 			       last, x, next_prime_number(last));
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		last = x;
-	पूर्ण
+	}
 
 	pr_info("%s(%lu) passed, last prime was %lu\n", __func__, x, last);
-	वापस 0;
+	return 0;
 
 err:
 	dump_primes();
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक __init primes_init(व्योम)
-अणु
-	वापस selftest(selftest_max);
-पूर्ण
+static int __init primes_init(void)
+{
+	return selftest(selftest_max);
+}
 
-अटल व्योम __निकास primes_निकास(व्योम)
-अणु
-	मुक्त_primes();
-पूर्ण
+static void __exit primes_exit(void)
+{
+	free_primes();
+}
 
 module_init(primes_init);
-module_निकास(primes_निकास);
+module_exit(primes_exit);
 
-module_param_named(selftest, selftest_max, uदीर्घ, 0400);
+module_param_named(selftest, selftest_max, ulong, 0400);
 
 MODULE_AUTHOR("Intel Corporation");
 MODULE_LICENSE("GPL");

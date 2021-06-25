@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * phy-uniphier-usb3ss.c - SS-PHY driver क्रम Socionext UniPhier USB3 controller
+ * phy-uniphier-usb3ss.c - SS-PHY driver for Socionext UniPhier USB3 controller
  * Copyright 2015-2018 Socionext Inc.
  * Author:
  *      Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
@@ -10,338 +9,338 @@
  *      Masami Hiramatsu <masami.hiramatsu@linaro.org>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/reset.h>
+#include <linux/bitfield.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/consumer.h>
+#include <linux/reset.h>
 
-#घोषणा SSPHY_TESTI		0x0
-#घोषणा SSPHY_TESTO		0x4
-#घोषणा TESTI_DAT_MASK		GENMASK(13, 6)
-#घोषणा TESTI_ADR_MASK		GENMASK(5, 1)
-#घोषणा TESTI_WR_EN		BIT(0)
+#define SSPHY_TESTI		0x0
+#define SSPHY_TESTO		0x4
+#define TESTI_DAT_MASK		GENMASK(13, 6)
+#define TESTI_ADR_MASK		GENMASK(5, 1)
+#define TESTI_WR_EN		BIT(0)
 
-#घोषणा PHY_F(regno, msb, lsb) अणु (regno), (msb), (lsb) पूर्ण
+#define PHY_F(regno, msb, lsb) { (regno), (msb), (lsb) }
 
-#घोषणा CDR_CPD_TRIM	PHY_F(7, 3, 0)	/* RxPLL अक्षरge pump current */
-#घोषणा CDR_CPF_TRIM	PHY_F(8, 3, 0)	/* RxPLL अक्षरge pump current 2 */
-#घोषणा TX_PLL_TRIM	PHY_F(9, 3, 0)	/* TxPLL अक्षरge pump current */
-#घोषणा BGAP_TRIM	PHY_F(11, 3, 0)	/* Bandgap voltage */
-#घोषणा CDR_TRIM	PHY_F(13, 6, 5)	/* Clock Data Recovery setting */
-#घोषणा VCO_CTRL	PHY_F(26, 7, 4)	/* VCO control */
-#घोषणा VCOPLL_CTRL	PHY_F(27, 2, 0)	/* TxPLL VCO tuning */
-#घोषणा VCOPLL_CM	PHY_F(28, 1, 0)	/* TxPLL voltage */
+#define CDR_CPD_TRIM	PHY_F(7, 3, 0)	/* RxPLL charge pump current */
+#define CDR_CPF_TRIM	PHY_F(8, 3, 0)	/* RxPLL charge pump current 2 */
+#define TX_PLL_TRIM	PHY_F(9, 3, 0)	/* TxPLL charge pump current */
+#define BGAP_TRIM	PHY_F(11, 3, 0)	/* Bandgap voltage */
+#define CDR_TRIM	PHY_F(13, 6, 5)	/* Clock Data Recovery setting */
+#define VCO_CTRL	PHY_F(26, 7, 4)	/* VCO control */
+#define VCOPLL_CTRL	PHY_F(27, 2, 0)	/* TxPLL VCO tuning */
+#define VCOPLL_CM	PHY_F(28, 1, 0)	/* TxPLL voltage */
 
-#घोषणा MAX_PHY_PARAMS	7
+#define MAX_PHY_PARAMS	7
 
-काष्ठा uniphier_u3ssphy_param अणु
-	काष्ठा अणु
-		पूर्णांक reg_no;
-		पूर्णांक msb;
-		पूर्णांक lsb;
-	पूर्ण field;
+struct uniphier_u3ssphy_param {
+	struct {
+		int reg_no;
+		int msb;
+		int lsb;
+	} field;
 	u8 value;
-पूर्ण;
+};
 
-काष्ठा uniphier_u3ssphy_priv अणु
-	काष्ठा device *dev;
-	व्योम __iomem *base;
-	काष्ठा clk *clk, *clk_ext, *clk_parent, *clk_parent_gio;
-	काष्ठा reset_control *rst, *rst_parent, *rst_parent_gio;
-	काष्ठा regulator *vbus;
-	स्थिर काष्ठा uniphier_u3ssphy_soc_data *data;
-पूर्ण;
+struct uniphier_u3ssphy_priv {
+	struct device *dev;
+	void __iomem *base;
+	struct clk *clk, *clk_ext, *clk_parent, *clk_parent_gio;
+	struct reset_control *rst, *rst_parent, *rst_parent_gio;
+	struct regulator *vbus;
+	const struct uniphier_u3ssphy_soc_data *data;
+};
 
-काष्ठा uniphier_u3ssphy_soc_data अणु
+struct uniphier_u3ssphy_soc_data {
 	bool is_legacy;
-	पूर्णांक nparams;
-	स्थिर काष्ठा uniphier_u3ssphy_param param[MAX_PHY_PARAMS];
-पूर्ण;
+	int nparams;
+	const struct uniphier_u3ssphy_param param[MAX_PHY_PARAMS];
+};
 
-अटल व्योम uniphier_u3ssphy_testio_ग_लिखो(काष्ठा uniphier_u3ssphy_priv *priv,
+static void uniphier_u3ssphy_testio_write(struct uniphier_u3ssphy_priv *priv,
 					  u32 data)
-अणु
-	/* need to पढ़ो TESTO twice after accessing TESTI */
-	ग_लिखोl(data, priv->base + SSPHY_TESTI);
-	पढ़ोl(priv->base + SSPHY_TESTO);
-	पढ़ोl(priv->base + SSPHY_TESTO);
-पूर्ण
+{
+	/* need to read TESTO twice after accessing TESTI */
+	writel(data, priv->base + SSPHY_TESTI);
+	readl(priv->base + SSPHY_TESTO);
+	readl(priv->base + SSPHY_TESTO);
+}
 
-अटल व्योम uniphier_u3ssphy_set_param(काष्ठा uniphier_u3ssphy_priv *priv,
-				       स्थिर काष्ठा uniphier_u3ssphy_param *p)
-अणु
+static void uniphier_u3ssphy_set_param(struct uniphier_u3ssphy_priv *priv,
+				       const struct uniphier_u3ssphy_param *p)
+{
 	u32 val;
 	u8 field_mask = GENMASK(p->field.msb, p->field.lsb);
 	u8 data;
 
-	/* पढ़ो previous data */
+	/* read previous data */
 	val  = FIELD_PREP(TESTI_DAT_MASK, 1);
 	val |= FIELD_PREP(TESTI_ADR_MASK, p->field.reg_no);
-	uniphier_u3ssphy_testio_ग_लिखो(priv, val);
-	val = पढ़ोl(priv->base + SSPHY_TESTO);
+	uniphier_u3ssphy_testio_write(priv, val);
+	val = readl(priv->base + SSPHY_TESTO);
 
 	/* update value */
 	val &= ~FIELD_PREP(TESTI_DAT_MASK, field_mask);
 	data = field_mask & (p->value << p->field.lsb);
 	val  = FIELD_PREP(TESTI_DAT_MASK, data);
 	val |= FIELD_PREP(TESTI_ADR_MASK, p->field.reg_no);
-	uniphier_u3ssphy_testio_ग_लिखो(priv, val);
-	uniphier_u3ssphy_testio_ग_लिखो(priv, val | TESTI_WR_EN);
-	uniphier_u3ssphy_testio_ग_लिखो(priv, val);
+	uniphier_u3ssphy_testio_write(priv, val);
+	uniphier_u3ssphy_testio_write(priv, val | TESTI_WR_EN);
+	uniphier_u3ssphy_testio_write(priv, val);
 
-	/* पढ़ो current data as dummy */
+	/* read current data as dummy */
 	val  = FIELD_PREP(TESTI_DAT_MASK, 1);
 	val |= FIELD_PREP(TESTI_ADR_MASK, p->field.reg_no);
-	uniphier_u3ssphy_testio_ग_लिखो(priv, val);
-	पढ़ोl(priv->base + SSPHY_TESTO);
-पूर्ण
+	uniphier_u3ssphy_testio_write(priv, val);
+	readl(priv->base + SSPHY_TESTO);
+}
 
-अटल पूर्णांक uniphier_u3ssphy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
-	पूर्णांक ret;
+static int uniphier_u3ssphy_power_on(struct phy *phy)
+{
+	struct uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
+	int ret;
 
 	ret = clk_prepare_enable(priv->clk_ext);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_prepare_enable(priv->clk);
-	अगर (ret)
-		जाओ out_clk_ext_disable;
+	if (ret)
+		goto out_clk_ext_disable;
 
-	ret = reset_control_deनिश्चित(priv->rst);
-	अगर (ret)
-		जाओ out_clk_disable;
+	ret = reset_control_deassert(priv->rst);
+	if (ret)
+		goto out_clk_disable;
 
-	अगर (priv->vbus) अणु
+	if (priv->vbus) {
 		ret = regulator_enable(priv->vbus);
-		अगर (ret)
-			जाओ out_rst_निश्चित;
-	पूर्ण
+		if (ret)
+			goto out_rst_assert;
+	}
 
-	वापस 0;
+	return 0;
 
-out_rst_निश्चित:
-	reset_control_निश्चित(priv->rst);
+out_rst_assert:
+	reset_control_assert(priv->rst);
 out_clk_disable:
 	clk_disable_unprepare(priv->clk);
 out_clk_ext_disable:
 	clk_disable_unprepare(priv->clk_ext);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uniphier_u3ssphy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
+static int uniphier_u3ssphy_power_off(struct phy *phy)
+{
+	struct uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
 
-	अगर (priv->vbus)
+	if (priv->vbus)
 		regulator_disable(priv->vbus);
 
-	reset_control_निश्चित(priv->rst);
+	reset_control_assert(priv->rst);
 	clk_disable_unprepare(priv->clk);
 	clk_disable_unprepare(priv->clk_ext);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक uniphier_u3ssphy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
-	पूर्णांक i, ret;
+static int uniphier_u3ssphy_init(struct phy *phy)
+{
+	struct uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
+	int i, ret;
 
 	ret = clk_prepare_enable(priv->clk_parent);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = clk_prepare_enable(priv->clk_parent_gio);
-	अगर (ret)
-		जाओ out_clk_disable;
+	if (ret)
+		goto out_clk_disable;
 
-	ret = reset_control_deनिश्चित(priv->rst_parent);
-	अगर (ret)
-		जाओ out_clk_gio_disable;
+	ret = reset_control_deassert(priv->rst_parent);
+	if (ret)
+		goto out_clk_gio_disable;
 
-	ret = reset_control_deनिश्चित(priv->rst_parent_gio);
-	अगर (ret)
-		जाओ out_rst_निश्चित;
+	ret = reset_control_deassert(priv->rst_parent_gio);
+	if (ret)
+		goto out_rst_assert;
 
-	अगर (priv->data->is_legacy)
-		वापस 0;
+	if (priv->data->is_legacy)
+		return 0;
 
-	क्रम (i = 0; i < priv->data->nparams; i++)
+	for (i = 0; i < priv->data->nparams; i++)
 		uniphier_u3ssphy_set_param(priv, &priv->data->param[i]);
 
-	वापस 0;
+	return 0;
 
-out_rst_निश्चित:
-	reset_control_निश्चित(priv->rst_parent);
+out_rst_assert:
+	reset_control_assert(priv->rst_parent);
 out_clk_gio_disable:
 	clk_disable_unprepare(priv->clk_parent_gio);
 out_clk_disable:
 	clk_disable_unprepare(priv->clk_parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक uniphier_u3ssphy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
+static int uniphier_u3ssphy_exit(struct phy *phy)
+{
+	struct uniphier_u3ssphy_priv *priv = phy_get_drvdata(phy);
 
-	reset_control_निश्चित(priv->rst_parent_gio);
-	reset_control_निश्चित(priv->rst_parent);
+	reset_control_assert(priv->rst_parent_gio);
+	reset_control_assert(priv->rst_parent);
 	clk_disable_unprepare(priv->clk_parent_gio);
 	clk_disable_unprepare(priv->clk_parent);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops uniphier_u3ssphy_ops = अणु
+static const struct phy_ops uniphier_u3ssphy_ops = {
 	.init           = uniphier_u3ssphy_init,
-	.निकास           = uniphier_u3ssphy_निकास,
-	.घातer_on       = uniphier_u3ssphy_घातer_on,
-	.घातer_off      = uniphier_u3ssphy_घातer_off,
+	.exit           = uniphier_u3ssphy_exit,
+	.power_on       = uniphier_u3ssphy_power_on,
+	.power_off      = uniphier_u3ssphy_power_off,
 	.owner          = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक uniphier_u3ssphy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा uniphier_u3ssphy_priv *priv;
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा phy *phy;
+static int uniphier_u3ssphy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct uniphier_u3ssphy_priv *priv;
+	struct phy_provider *phy_provider;
+	struct phy *phy;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = dev;
 	priv->data = of_device_get_match_data(dev);
-	अगर (WARN_ON(!priv->data ||
+	if (WARN_ON(!priv->data ||
 		    priv->data->nparams > MAX_PHY_PARAMS))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	priv->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
-	अगर (!priv->data->is_legacy) अणु
+	if (!priv->data->is_legacy) {
 		priv->clk = devm_clk_get(dev, "phy");
-		अगर (IS_ERR(priv->clk))
-			वापस PTR_ERR(priv->clk);
+		if (IS_ERR(priv->clk))
+			return PTR_ERR(priv->clk);
 
 		priv->clk_ext = devm_clk_get_optional(dev, "phy-ext");
-		अगर (IS_ERR(priv->clk_ext))
-			वापस PTR_ERR(priv->clk_ext);
+		if (IS_ERR(priv->clk_ext))
+			return PTR_ERR(priv->clk_ext);
 
 		priv->rst = devm_reset_control_get_shared(dev, "phy");
-		अगर (IS_ERR(priv->rst))
-			वापस PTR_ERR(priv->rst);
-	पूर्ण अन्यथा अणु
+		if (IS_ERR(priv->rst))
+			return PTR_ERR(priv->rst);
+	} else {
 		priv->clk_parent_gio = devm_clk_get(dev, "gio");
-		अगर (IS_ERR(priv->clk_parent_gio))
-			वापस PTR_ERR(priv->clk_parent_gio);
+		if (IS_ERR(priv->clk_parent_gio))
+			return PTR_ERR(priv->clk_parent_gio);
 
 		priv->rst_parent_gio =
 			devm_reset_control_get_shared(dev, "gio");
-		अगर (IS_ERR(priv->rst_parent_gio))
-			वापस PTR_ERR(priv->rst_parent_gio);
-	पूर्ण
+		if (IS_ERR(priv->rst_parent_gio))
+			return PTR_ERR(priv->rst_parent_gio);
+	}
 
 	priv->clk_parent = devm_clk_get(dev, "link");
-	अगर (IS_ERR(priv->clk_parent))
-		वापस PTR_ERR(priv->clk_parent);
+	if (IS_ERR(priv->clk_parent))
+		return PTR_ERR(priv->clk_parent);
 
 	priv->rst_parent = devm_reset_control_get_shared(dev, "link");
-	अगर (IS_ERR(priv->rst_parent))
-		वापस PTR_ERR(priv->rst_parent);
+	if (IS_ERR(priv->rst_parent))
+		return PTR_ERR(priv->rst_parent);
 
 	priv->vbus = devm_regulator_get_optional(dev, "vbus");
-	अगर (IS_ERR(priv->vbus)) अणु
-		अगर (PTR_ERR(priv->vbus) == -EPROBE_DEFER)
-			वापस PTR_ERR(priv->vbus);
-		priv->vbus = शून्य;
-	पूर्ण
+	if (IS_ERR(priv->vbus)) {
+		if (PTR_ERR(priv->vbus) == -EPROBE_DEFER)
+			return PTR_ERR(priv->vbus);
+		priv->vbus = NULL;
+	}
 
 	phy = devm_phy_create(dev, dev->of_node, &uniphier_u3ssphy_ops);
-	अगर (IS_ERR(phy))
-		वापस PTR_ERR(phy);
+	if (IS_ERR(phy))
+		return PTR_ERR(phy);
 
 	phy_set_drvdata(phy, priv);
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
 
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल स्थिर काष्ठा uniphier_u3ssphy_soc_data uniphier_pro4_data = अणु
+static const struct uniphier_u3ssphy_soc_data uniphier_pro4_data = {
 	.is_legacy = true,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा uniphier_u3ssphy_soc_data uniphier_pxs2_data = अणु
+static const struct uniphier_u3ssphy_soc_data uniphier_pxs2_data = {
 	.is_legacy = false,
 	.nparams = 7,
-	.param = अणु
-		अणु CDR_CPD_TRIM, 10 पूर्ण,
-		अणु CDR_CPF_TRIM, 3 पूर्ण,
-		अणु TX_PLL_TRIM, 5 पूर्ण,
-		अणु BGAP_TRIM, 9 पूर्ण,
-		अणु CDR_TRIM, 2 पूर्ण,
-		अणु VCOPLL_CTRL, 7 पूर्ण,
-		अणु VCOPLL_CM, 1 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.param = {
+		{ CDR_CPD_TRIM, 10 },
+		{ CDR_CPF_TRIM, 3 },
+		{ TX_PLL_TRIM, 5 },
+		{ BGAP_TRIM, 9 },
+		{ CDR_TRIM, 2 },
+		{ VCOPLL_CTRL, 7 },
+		{ VCOPLL_CM, 1 },
+	},
+};
 
-अटल स्थिर काष्ठा uniphier_u3ssphy_soc_data uniphier_ld20_data = अणु
+static const struct uniphier_u3ssphy_soc_data uniphier_ld20_data = {
 	.is_legacy = false,
 	.nparams = 3,
-	.param = अणु
-		अणु CDR_CPD_TRIM, 6 पूर्ण,
-		अणु CDR_TRIM, 2 पूर्ण,
-		अणु VCO_CTRL, 5 पूर्ण,
-	पूर्ण,
-पूर्ण;
+	.param = {
+		{ CDR_CPD_TRIM, 6 },
+		{ CDR_TRIM, 2 },
+		{ VCO_CTRL, 5 },
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id uniphier_u3ssphy_match[] = अणु
-	अणु
+static const struct of_device_id uniphier_u3ssphy_match[] = {
+	{
 		.compatible = "socionext,uniphier-pro4-usb3-ssphy",
 		.data = &uniphier_pro4_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "socionext,uniphier-pro5-usb3-ssphy",
 		.data = &uniphier_pro4_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "socionext,uniphier-pxs2-usb3-ssphy",
 		.data = &uniphier_pxs2_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "socionext,uniphier-ld20-usb3-ssphy",
 		.data = &uniphier_ld20_data,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "socionext,uniphier-pxs3-usb3-ssphy",
 		.data = &uniphier_ld20_data,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, uniphier_u3ssphy_match);
 
-अटल काष्ठा platक्रमm_driver uniphier_u3ssphy_driver = अणु
+static struct platform_driver uniphier_u3ssphy_driver = {
 	.probe = uniphier_u3ssphy_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "uniphier-usb3-ssphy",
 		.of_match_table	= uniphier_u3ssphy_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(uniphier_u3ssphy_driver);
+module_platform_driver(uniphier_u3ssphy_driver);
 
 MODULE_AUTHOR("Kunihiko Hayashi <hayashi.kunihiko@socionext.com>");
 MODULE_DESCRIPTION("UniPhier SS-PHY driver for USB3 controller");

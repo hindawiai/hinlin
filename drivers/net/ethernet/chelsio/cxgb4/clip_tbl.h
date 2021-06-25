@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- *  This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
+ *  This file is part of the Chelsio T4 Ethernet driver for Linux.
  *  Copyright (C) 2003-2014 Chelsio Communications.  All rights reserved.
  *
  *  Written by Deepak (deepak.s@chelsio.com)
@@ -8,39 +7,39 @@
  *  This program is distributed in the hope that it will be useful, but WITHOUT
  *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  *  FITNESS FOR A PARTICULAR PURPOSE.  See the LICENSE file included in this
- *  release क्रम licensing terms and conditions.
+ *  release for licensing terms and conditions.
  */
 
-#समावेश <linux/refcount.h>
+#include <linux/refcount.h>
 
-काष्ठा clip_entry अणु
-	spinlock_t lock;	/* Hold जबतक modअगरying clip reference */
+struct clip_entry {
+	spinlock_t lock;	/* Hold while modifying clip reference */
 	refcount_t refcnt;
-	काष्ठा list_head list;
-	जोड़ अणु
-		काष्ठा sockaddr_in addr;
-		काष्ठा sockaddr_in6 addr6;
-	पूर्ण;
-पूर्ण;
+	struct list_head list;
+	union {
+		struct sockaddr_in addr;
+		struct sockaddr_in6 addr6;
+	};
+};
 
-काष्ठा clip_tbl अणु
-	अचिन्हित पूर्णांक clipt_start;
-	अचिन्हित पूर्णांक clipt_size;
+struct clip_tbl {
+	unsigned int clipt_start;
+	unsigned int clipt_size;
 	rwlock_t lock;
-	atomic_t nमुक्त;
-	काष्ठा list_head ce_मुक्त_head;
-	व्योम *cl_list;
-	काष्ठा list_head hash_list[];
-पूर्ण;
+	atomic_t nfree;
+	struct list_head ce_free_head;
+	void *cl_list;
+	struct list_head hash_list[];
+};
 
-क्रमागत अणु
+enum {
 	CLIPT_MIN_HASH_BUCKETS = 2,
-पूर्ण;
+};
 
-काष्ठा clip_tbl *t4_init_clip_tbl(अचिन्हित पूर्णांक clipt_start,
-				  अचिन्हित पूर्णांक clipt_end);
-पूर्णांक cxgb4_clip_get(स्थिर काष्ठा net_device *dev, स्थिर u32 *lip, u8 v6);
-व्योम cxgb4_clip_release(स्थिर काष्ठा net_device *dev, स्थिर u32 *lip, u8 v6);
-पूर्णांक clip_tbl_show(काष्ठा seq_file *seq, व्योम *v);
-पूर्णांक cxgb4_update_root_dev_clip(काष्ठा net_device *dev);
-व्योम t4_cleanup_clip_tbl(काष्ठा adapter *adap);
+struct clip_tbl *t4_init_clip_tbl(unsigned int clipt_start,
+				  unsigned int clipt_end);
+int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6);
+void cxgb4_clip_release(const struct net_device *dev, const u32 *lip, u8 v6);
+int clip_tbl_show(struct seq_file *seq, void *v);
+int cxgb4_update_root_dev_clip(struct net_device *dev);
+void t4_cleanup_clip_tbl(struct adapter *adap);

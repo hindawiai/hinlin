@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2020 IBM Corp.
  *
  */
-#अगर_अघोषित _NX_H
-#घोषणा _NX_H
+#ifndef _NX_H
+#define _NX_H
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-#घोषणा	NX_FUNC_COMP_842	1
-#घोषणा NX_FUNC_COMP_GZIP	2
+#define	NX_FUNC_COMP_842	1
+#define NX_FUNC_COMP_GZIP	2
 
-#अगर_अघोषित __aligned
-#घोषणा __aligned(x)	__attribute__((aligned(x)))
-#पूर्ण_अगर
+#ifndef __aligned
+#define __aligned(x)	__attribute__((aligned(x)))
+#endif
 
-काष्ठा nx842_func_args अणु
+struct nx842_func_args {
 	bool use_crc;
 	bool decompress;		/* true decompress; false compress */
 	bool move_data;
-	पूर्णांक समयout;			/* seconds */
-पूर्ण;
+	int timeout;			/* seconds */
+};
 
-काष्ठा nxbuf_t अणु
-	पूर्णांक len;
-	अक्षर *buf;
-पूर्ण;
+struct nxbuf_t {
+	int len;
+	char *buf;
+};
 
 /* @function should be EFT (aka 842), GZIP etc */
-व्योम *nx_function_begin(पूर्णांक function, पूर्णांक pri);
+void *nx_function_begin(int function, int pri);
 
-पूर्णांक nx_function(व्योम *handle, काष्ठा nxbuf_t *in, काष्ठा nxbuf_t *out,
-		व्योम *arg);
+int nx_function(void *handle, struct nxbuf_t *in, struct nxbuf_t *out,
+		void *arg);
 
-पूर्णांक nx_function_end(व्योम *handle);
+int nx_function_end(void *handle);
 
-#पूर्ण_अगर	/* _NX_H */
+#endif	/* _NX_H */

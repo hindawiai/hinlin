@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2019 Pengutronix, Michael Tretter <kernel@pengutronix.de>
  *
  * Allegro VCU firmware mailbox mail definitions
  */
 
-#अगर_अघोषित ALLEGRO_MAIL_H
-#घोषणा ALLEGRO_MAIL_H
+#ifndef ALLEGRO_MAIL_H
+#define ALLEGRO_MAIL_H
 
-#समावेश <linux/kernel.h>
+#include <linux/kernel.h>
 
-क्रमागत mcu_msg_type अणु
+enum mcu_msg_type {
 	MCU_MSG_TYPE_INIT = 0x0000,
 	MCU_MSG_TYPE_CREATE_CHANNEL = 0x0005,
 	MCU_MSG_TYPE_DESTROY_CHANNEL = 0x0006,
@@ -19,45 +18,45 @@
 	MCU_MSG_TYPE_PUT_STREAM_BUFFER = 0x0012,
 	MCU_MSG_TYPE_PUSH_BUFFER_INTERMEDIATE = 0x000e,
 	MCU_MSG_TYPE_PUSH_BUFFER_REFERENCE = 0x000f,
-पूर्ण;
+};
 
-क्रमागत mcu_msg_version अणु
+enum mcu_msg_version {
 	MCU_MSG_VERSION_2018_2,
 	MCU_MSG_VERSION_2019_2,
-पूर्ण;
+};
 
-स्थिर अक्षर *msg_type_name(क्रमागत mcu_msg_type type);
+const char *msg_type_name(enum mcu_msg_type type);
 
-काष्ठा mcu_msg_header अणु
-	क्रमागत mcu_msg_type type;
-	क्रमागत mcu_msg_version version;
-पूर्ण;
+struct mcu_msg_header {
+	enum mcu_msg_type type;
+	enum mcu_msg_version version;
+};
 
-काष्ठा mcu_msg_init_request अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_init_request {
+	struct mcu_msg_header header;
 	u32 reserved0;		/* maybe a unused channel id */
 	u32 suballoc_dma;
 	u32 suballoc_size;
 	s32 l2_cache[3];
-पूर्ण;
+};
 
-काष्ठा mcu_msg_init_response अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_init_response {
+	struct mcu_msg_header header;
 	u32 reserved0;
-पूर्ण;
+};
 
-काष्ठा create_channel_param अणु
-	क्रमागत mcu_msg_version version;
+struct create_channel_param {
+	enum mcu_msg_version version;
 	u32 layer_id;
 	u16 width;
 	u16 height;
 	u32 videomode;
-	u32 क्रमmat;
+	u32 format;
 	u32 colorspace;
 	u32 src_mode;
 	u32 src_bit_depth;
 	u8 profile;
-	u16 स्थिरraपूर्णांक_set_flags;
+	u16 constraint_set_flags;
 	u32 codec;
 	u16 level;
 	u16 tier;
@@ -70,7 +69,7 @@
 	u32 num_ref_idx_l0;
 	u32 num_ref_idx_l1;
 	u32 custom_lda;
-	u32 rकरो_cost_mode;
+	u32 rdo_cost_mode;
 	u32 lf;
 	u32 lf_x_tile;
 	u32 lf_x_slice;
@@ -80,7 +79,7 @@
 	u32 unknown11;
 	u32 unknown12;
 	u16 num_slices;
-	u16 prefetch_स्वतः;
+	u16 prefetch_auto;
 	u32 prefetch_mem_offset;
 	u32 prefetch_mem_size;
 	u16 clip_hrz_range;
@@ -90,8 +89,8 @@
 	u8 min_cu_size;
 	u8 max_tu_size;
 	u8 min_tu_size;
-	u8 max_transfo_depth_पूर्णांकer;
-	u8 max_transfo_depth_पूर्णांकra;
+	u8 max_transfo_depth_inter;
+	u8 max_transfo_depth_intra;
 	u16 reserved20;
 	u32 entropy_mode;
 	u32 wp_mode;
@@ -127,7 +126,7 @@
 	u8 num_b;
 	u8 freq_golden_ref;
 	u32 enable_lt;
-	u32 पंचांगpdqp;
+	u32 tmpdqp;
 
 	u32 subframe_latency;
 	u32 lda_control_mode;
@@ -136,77 +135,77 @@
 	u32 lda_factors[6];
 
 	u32 max_num_merge_cand;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_create_channel अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_create_channel {
+	struct mcu_msg_header header;
 	u32 user_id;
 	u32 *blob;
-	माप_प्रकार blob_size;
+	size_t blob_size;
 	u32 blob_mcu_addr;
 	u32 ep1_addr;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_create_channel_response अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_create_channel_response {
+	struct mcu_msg_header header;
 	u32 channel_id;
 	u32 user_id;
 	u32 options;
 	u32 num_core;
 	u32 num_ref_idx_l0;
 	u32 num_ref_idx_l1;
-	u32 पूर्णांक_buffers_count;
-	u32 पूर्णांक_buffers_size;
+	u32 int_buffers_count;
+	u32 int_buffers_size;
 	u32 rec_buffers_count;
 	u32 rec_buffers_size;
 	u32 reserved;
 	u32 error_code;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_destroy_channel अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_destroy_channel {
+	struct mcu_msg_header header;
 	u32 channel_id;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_destroy_channel_response अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_destroy_channel_response {
+	struct mcu_msg_header header;
 	u32 channel_id;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_push_buffers_पूर्णांकernal_buffer अणु
+struct mcu_msg_push_buffers_internal_buffer {
 	u32 dma_addr;
 	u32 mcu_addr;
 	u32 size;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_push_buffers_पूर्णांकernal अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_push_buffers_internal {
+	struct mcu_msg_header header;
 	u32 channel_id;
-	माप_प्रकार num_buffers;
-	काष्ठा mcu_msg_push_buffers_पूर्णांकernal_buffer buffer[];
-पूर्ण;
+	size_t num_buffers;
+	struct mcu_msg_push_buffers_internal_buffer buffer[];
+};
 
-काष्ठा mcu_msg_put_stream_buffer अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_put_stream_buffer {
+	struct mcu_msg_header header;
 	u32 channel_id;
 	u32 dma_addr;
 	u32 mcu_addr;
 	u32 size;
 	u32 offset;
 	u64 dst_handle;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_encode_frame अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_encode_frame {
+	struct mcu_msg_header header;
 	u32 channel_id;
 	u32 reserved;
 
 	u32 encoding_options;
-#घोषणा AL_OPT_USE_QP_TABLE		BIT(0)
-#घोषणा AL_OPT_FORCE_LOAD		BIT(1)
-#घोषणा AL_OPT_USE_L2			BIT(2)
-#घोषणा AL_OPT_DISABLE_INTRA		BIT(3)
-#घोषणा AL_OPT_DEPENDENT_SLICES		BIT(4)
+#define AL_OPT_USE_QP_TABLE		BIT(0)
+#define AL_OPT_FORCE_LOAD		BIT(1)
+#define AL_OPT_USE_L2			BIT(2)
+#define AL_OPT_DISABLE_INTRA		BIT(3)
+#define AL_OPT_DEPENDENT_SLICES		BIT(4)
 
 	s16 pps_qp;
 	u16 padding;
@@ -214,10 +213,10 @@
 	u64 src_handle;
 
 	u32 request_options;
-#घोषणा AL_OPT_SCENE_CHANGE		BIT(0)
-#घोषणा AL_OPT_RESTART_GOP		BIT(1)
-#घोषणा AL_OPT_USE_LONG_TERM		BIT(2)
-#घोषणा AL_OPT_UPDATE_PARAMS		BIT(3)
+#define AL_OPT_SCENE_CHANGE		BIT(0)
+#define AL_OPT_RESTART_GOP		BIT(1)
+#define AL_OPT_USE_LONG_TERM		BIT(2)
+#define AL_OPT_UPDATE_PARAMS		BIT(3)
 
 	/* u32 scene_change_delay (optional) */
 	/* rate control param (optional) */
@@ -227,13 +226,13 @@
 	u32 src_uv;
 	u32 is_10_bit;
 	u32 stride;
-	u32 क्रमmat;
+	u32 format;
 	u32 ep2;
 	u64 ep2_v;
-पूर्ण;
+};
 
-काष्ठा mcu_msg_encode_frame_response अणु
-	काष्ठा mcu_msg_header header;
+struct mcu_msg_encode_frame_response {
+	struct mcu_msg_header header;
 	u32 channel_id;
 	u64 dst_handle;		/* see mcu_msg_put_stream_buffer */
 	u64 user_param;		/* see mcu_msg_encode_frame */
@@ -259,11 +258,11 @@
 	u32 error_code;
 
 	u32 slice_type;
-#घोषणा AL_ENC_SLICE_TYPE_B             0
-#घोषणा AL_ENC_SLICE_TYPE_P             1
-#घोषणा AL_ENC_SLICE_TYPE_I             2
+#define AL_ENC_SLICE_TYPE_B             0
+#define AL_ENC_SLICE_TYPE_P             1
+#define AL_ENC_SLICE_TYPE_I             2
 
-	u32 pic_काष्ठा;
+	u32 pic_struct;
 	u8 is_idr;
 	u8 is_first_slice;
 	u8 is_last_slice;
@@ -275,22 +274,22 @@
 	u32 reserved4;
 	u32 reserved5;
 	u32 reserved6;
-पूर्ण;
+};
 
-जोड़ mcu_msg_response अणु
-	काष्ठा mcu_msg_header header;
-	काष्ठा mcu_msg_init_response init;
-	काष्ठा mcu_msg_create_channel_response create_channel;
-	काष्ठा mcu_msg_destroy_channel_response destroy_channel;
-	काष्ठा mcu_msg_encode_frame_response encode_frame;
-पूर्ण;
+union mcu_msg_response {
+	struct mcu_msg_header header;
+	struct mcu_msg_init_response init;
+	struct mcu_msg_create_channel_response create_channel;
+	struct mcu_msg_destroy_channel_response destroy_channel;
+	struct mcu_msg_encode_frame_response encode_frame;
+};
 
-sमाप_प्रकार allegro_encode_config_blob(u32 *dst, काष्ठा create_channel_param *param);
-sमाप_प्रकार allegro_decode_config_blob(काष्ठा create_channel_param *param,
-				   काष्ठा mcu_msg_create_channel_response *msg,
+ssize_t allegro_encode_config_blob(u32 *dst, struct create_channel_param *param);
+ssize_t allegro_decode_config_blob(struct create_channel_param *param,
+				   struct mcu_msg_create_channel_response *msg,
 				   u32 *src);
 
-पूर्णांक allegro_decode_mail(व्योम *msg, u32 *src);
-sमाप_प्रकार allegro_encode_mail(u32 *dst, व्योम *msg);
+int allegro_decode_mail(void *msg, u32 *src);
+ssize_t allegro_encode_mail(u32 *dst, void *msg);
 
-#पूर्ण_अगर
+#endif

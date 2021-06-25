@@ -1,453 +1,452 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Thunderbolt bus support
  *
  * Copyright (C) 2017, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/dmar.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <crypto/hash.h>
+#include <linux/device.h>
+#include <linux/dmar.h>
+#include <linux/idr.h>
+#include <linux/iommu.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/random.h>
+#include <crypto/hash.h>
 
-#समावेश "tb.h"
+#include "tb.h"
 
-अटल DEFINE_IDA(tb_करोमुख्य_ida);
+static DEFINE_IDA(tb_domain_ida);
 
-अटल bool match_service_id(स्थिर काष्ठा tb_service_id *id,
-			     स्थिर काष्ठा tb_service *svc)
-अणु
-	अगर (id->match_flags & TBSVC_MATCH_PROTOCOL_KEY) अणु
-		अगर (म_भेद(id->protocol_key, svc->key))
-			वापस false;
-	पूर्ण
+static bool match_service_id(const struct tb_service_id *id,
+			     const struct tb_service *svc)
+{
+	if (id->match_flags & TBSVC_MATCH_PROTOCOL_KEY) {
+		if (strcmp(id->protocol_key, svc->key))
+			return false;
+	}
 
-	अगर (id->match_flags & TBSVC_MATCH_PROTOCOL_ID) अणु
-		अगर (id->protocol_id != svc->prtcid)
-			वापस false;
-	पूर्ण
+	if (id->match_flags & TBSVC_MATCH_PROTOCOL_ID) {
+		if (id->protocol_id != svc->prtcid)
+			return false;
+	}
 
-	अगर (id->match_flags & TBSVC_MATCH_PROTOCOL_VERSION) अणु
-		अगर (id->protocol_version != svc->prtcvers)
-			वापस false;
-	पूर्ण
+	if (id->match_flags & TBSVC_MATCH_PROTOCOL_VERSION) {
+		if (id->protocol_version != svc->prtcvers)
+			return false;
+	}
 
-	अगर (id->match_flags & TBSVC_MATCH_PROTOCOL_VERSION) अणु
-		अगर (id->protocol_revision != svc->prtcrevs)
-			वापस false;
-	पूर्ण
+	if (id->match_flags & TBSVC_MATCH_PROTOCOL_VERSION) {
+		if (id->protocol_revision != svc->prtcrevs)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर काष्ठा tb_service_id *__tb_service_match(काष्ठा device *dev,
-						      काष्ठा device_driver *drv)
-अणु
-	काष्ठा tb_service_driver *driver;
-	स्थिर काष्ठा tb_service_id *ids;
-	काष्ठा tb_service *svc;
+static const struct tb_service_id *__tb_service_match(struct device *dev,
+						      struct device_driver *drv)
+{
+	struct tb_service_driver *driver;
+	const struct tb_service_id *ids;
+	struct tb_service *svc;
 
 	svc = tb_to_service(dev);
-	अगर (!svc)
-		वापस शून्य;
+	if (!svc)
+		return NULL;
 
-	driver = container_of(drv, काष्ठा tb_service_driver, driver);
-	अगर (!driver->id_table)
-		वापस शून्य;
+	driver = container_of(drv, struct tb_service_driver, driver);
+	if (!driver->id_table)
+		return NULL;
 
-	क्रम (ids = driver->id_table; ids->match_flags != 0; ids++) अणु
-		अगर (match_service_id(ids, svc))
-			वापस ids;
-	पूर्ण
+	for (ids = driver->id_table; ids->match_flags != 0; ids++) {
+		if (match_service_id(ids, svc))
+			return ids;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक tb_service_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	वापस !!__tb_service_match(dev, drv);
-पूर्ण
+static int tb_service_match(struct device *dev, struct device_driver *drv)
+{
+	return !!__tb_service_match(dev, drv);
+}
 
-अटल पूर्णांक tb_service_probe(काष्ठा device *dev)
-अणु
-	काष्ठा tb_service *svc = tb_to_service(dev);
-	काष्ठा tb_service_driver *driver;
-	स्थिर काष्ठा tb_service_id *id;
+static int tb_service_probe(struct device *dev)
+{
+	struct tb_service *svc = tb_to_service(dev);
+	struct tb_service_driver *driver;
+	const struct tb_service_id *id;
 
-	driver = container_of(dev->driver, काष्ठा tb_service_driver, driver);
+	driver = container_of(dev->driver, struct tb_service_driver, driver);
 	id = __tb_service_match(dev, &driver->driver);
 
-	वापस driver->probe(svc, id);
-पूर्ण
+	return driver->probe(svc, id);
+}
 
-अटल पूर्णांक tb_service_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा tb_service *svc = tb_to_service(dev);
-	काष्ठा tb_service_driver *driver;
+static int tb_service_remove(struct device *dev)
+{
+	struct tb_service *svc = tb_to_service(dev);
+	struct tb_service_driver *driver;
 
-	driver = container_of(dev->driver, काष्ठा tb_service_driver, driver);
-	अगर (driver->हटाओ)
-		driver->हटाओ(svc);
+	driver = container_of(dev->driver, struct tb_service_driver, driver);
+	if (driver->remove)
+		driver->remove(svc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb_service_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा tb_service_driver *driver;
-	काष्ठा tb_service *svc;
+static void tb_service_shutdown(struct device *dev)
+{
+	struct tb_service_driver *driver;
+	struct tb_service *svc;
 
 	svc = tb_to_service(dev);
-	अगर (!svc || !dev->driver)
-		वापस;
+	if (!svc || !dev->driver)
+		return;
 
-	driver = container_of(dev->driver, काष्ठा tb_service_driver, driver);
-	अगर (driver->shutकरोwn)
-		driver->shutकरोwn(svc);
-पूर्ण
+	driver = container_of(dev->driver, struct tb_service_driver, driver);
+	if (driver->shutdown)
+		driver->shutdown(svc);
+}
 
-अटल स्थिर अक्षर * स्थिर tb_security_names[] = अणु
+static const char * const tb_security_names[] = {
 	[TB_SECURITY_NONE] = "none",
 	[TB_SECURITY_USER] = "user",
 	[TB_SECURITY_SECURE] = "secure",
 	[TB_SECURITY_DPONLY] = "dponly",
 	[TB_SECURITY_USBONLY] = "usbonly",
 	[TB_SECURITY_NOPCIE] = "nopcie",
-पूर्ण;
+};
 
-अटल sमाप_प्रकार boot_acl_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb *tb = container_of(dev, काष्ठा tb, dev);
+static ssize_t boot_acl_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb *tb = container_of(dev, struct tb, dev);
 	uuid_t *uuids;
-	sमाप_प्रकार ret;
-	पूर्णांक i;
+	ssize_t ret;
+	int i;
 
-	uuids = kसुस्मृति(tb->nboot_acl, माप(uuid_t), GFP_KERNEL);
-	अगर (!uuids)
-		वापस -ENOMEM;
+	uuids = kcalloc(tb->nboot_acl, sizeof(uuid_t), GFP_KERNEL);
+	if (!uuids)
+		return -ENOMEM;
 
-	pm_runसमय_get_sync(&tb->dev);
+	pm_runtime_get_sync(&tb->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = tb->cm_ops->get_boot_acl(tb, uuids, tb->nboot_acl);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&tb->lock);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	mutex_unlock(&tb->lock);
 
-	क्रम (ret = 0, i = 0; i < tb->nboot_acl; i++) अणु
-		अगर (!uuid_is_null(&uuids[i]))
-			ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%pUb",
+	for (ret = 0, i = 0; i < tb->nboot_acl; i++) {
+		if (!uuid_is_null(&uuids[i]))
+			ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%pUb",
 					&uuids[i]);
 
-		ret += scnम_लिखो(buf + ret, PAGE_SIZE - ret, "%s",
+		ret += scnprintf(buf + ret, PAGE_SIZE - ret, "%s",
 			       i < tb->nboot_acl - 1 ? "," : "\n");
-	पूर्ण
+	}
 
 out:
-	pm_runसमय_mark_last_busy(&tb->dev);
-	pm_runसमय_put_स्वतःsuspend(&tb->dev);
-	kमुक्त(uuids);
+	pm_runtime_mark_last_busy(&tb->dev);
+	pm_runtime_put_autosuspend(&tb->dev);
+	kfree(uuids);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार boot_acl_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा tb *tb = container_of(dev, काष्ठा tb, dev);
-	अक्षर *str, *s, *uuid_str;
-	sमाप_प्रकार ret = 0;
+static ssize_t boot_acl_store(struct device *dev, struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct tb *tb = container_of(dev, struct tb, dev);
+	char *str, *s, *uuid_str;
+	ssize_t ret = 0;
 	uuid_t *acl;
-	पूर्णांक i = 0;
+	int i = 0;
 
 	/*
 	 * Make sure the value is not bigger than tb->nboot_acl * UUID
 	 * length + commas and optional "\n". Also the smallest allowable
 	 * string is tb->nboot_acl * ",".
 	 */
-	अगर (count > (UUID_STRING_LEN + 1) * tb->nboot_acl + 1)
-		वापस -EINVAL;
-	अगर (count < tb->nboot_acl - 1)
-		वापस -EINVAL;
+	if (count > (UUID_STRING_LEN + 1) * tb->nboot_acl + 1)
+		return -EINVAL;
+	if (count < tb->nboot_acl - 1)
+		return -EINVAL;
 
 	str = kstrdup(buf, GFP_KERNEL);
-	अगर (!str)
-		वापस -ENOMEM;
+	if (!str)
+		return -ENOMEM;
 
-	acl = kसुस्मृति(tb->nboot_acl, माप(uuid_t), GFP_KERNEL);
-	अगर (!acl) अणु
+	acl = kcalloc(tb->nboot_acl, sizeof(uuid_t), GFP_KERNEL);
+	if (!acl) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_str;
-	पूर्ण
+		goto err_free_str;
+	}
 
 	uuid_str = strim(str);
-	जबतक ((s = strsep(&uuid_str, ",")) != शून्य && i < tb->nboot_acl) अणु
-		माप_प्रकार len = म_माप(s);
+	while ((s = strsep(&uuid_str, ",")) != NULL && i < tb->nboot_acl) {
+		size_t len = strlen(s);
 
-		अगर (len) अणु
-			अगर (len != UUID_STRING_LEN) अणु
+		if (len) {
+			if (len != UUID_STRING_LEN) {
 				ret = -EINVAL;
-				जाओ err_मुक्त_acl;
-			पूर्ण
+				goto err_free_acl;
+			}
 			ret = uuid_parse(s, &acl[i]);
-			अगर (ret)
-				जाओ err_मुक्त_acl;
-		पूर्ण
+			if (ret)
+				goto err_free_acl;
+		}
 
 		i++;
-	पूर्ण
+	}
 
-	अगर (s || i < tb->nboot_acl) अणु
+	if (s || i < tb->nboot_acl) {
 		ret = -EINVAL;
-		जाओ err_मुक्त_acl;
-	पूर्ण
+		goto err_free_acl;
+	}
 
-	pm_runसमय_get_sync(&tb->dev);
+	pm_runtime_get_sync(&tb->dev);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&tb->lock)) अणु
+	if (mutex_lock_interruptible(&tb->lock)) {
 		ret = -ERESTARTSYS;
-		जाओ err_rpm_put;
-	पूर्ण
+		goto err_rpm_put;
+	}
 	ret = tb->cm_ops->set_boot_acl(tb, acl, tb->nboot_acl);
-	अगर (!ret) अणु
-		/* Notअगरy userspace about the change */
+	if (!ret) {
+		/* Notify userspace about the change */
 		kobject_uevent(&tb->dev.kobj, KOBJ_CHANGE);
-	पूर्ण
+	}
 	mutex_unlock(&tb->lock);
 
 err_rpm_put:
-	pm_runसमय_mark_last_busy(&tb->dev);
-	pm_runसमय_put_स्वतःsuspend(&tb->dev);
-err_मुक्त_acl:
-	kमुक्त(acl);
-err_मुक्त_str:
-	kमुक्त(str);
+	pm_runtime_mark_last_busy(&tb->dev);
+	pm_runtime_put_autosuspend(&tb->dev);
+err_free_acl:
+	kfree(acl);
+err_free_str:
+	kfree(str);
 
-	वापस ret ?: count;
-पूर्ण
-अटल DEVICE_ATTR_RW(boot_acl);
+	return ret ?: count;
+}
+static DEVICE_ATTR_RW(boot_acl);
 
-अटल sमाप_प्रकार deauthorization_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    अक्षर *buf)
-अणु
-	स्थिर काष्ठा tb *tb = container_of(dev, काष्ठा tb, dev);
+static ssize_t deauthorization_show(struct device *dev,
+				    struct device_attribute *attr,
+				    char *buf)
+{
+	const struct tb *tb = container_of(dev, struct tb, dev);
 	bool deauthorization = false;
 
-	/* Only meaningful अगर authorization is supported */
-	अगर (tb->security_level == TB_SECURITY_USER ||
+	/* Only meaningful if authorization is supported */
+	if (tb->security_level == TB_SECURITY_USER ||
 	    tb->security_level == TB_SECURITY_SECURE)
-		deauthorization = !!tb->cm_ops->disapprove_चयन;
+		deauthorization = !!tb->cm_ops->disapprove_switch;
 
-	वापस प्र_लिखो(buf, "%d\n", deauthorization);
-पूर्ण
-अटल DEVICE_ATTR_RO(deauthorization);
+	return sprintf(buf, "%d\n", deauthorization);
+}
+static DEVICE_ATTR_RO(deauthorization);
 
-अटल sमाप_प्रकार iommu_dma_protection_show(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 अक्षर *buf)
-अणु
+static ssize_t iommu_dma_protection_show(struct device *dev,
+					 struct device_attribute *attr,
+					 char *buf)
+{
 	/*
 	 * Kernel DMA protection is a feature where Thunderbolt security is
 	 * handled natively using IOMMU. It is enabled when IOMMU is
 	 * enabled and ACPI DMAR table has DMAR_PLATFORM_OPT_IN set.
 	 */
-	वापस प्र_लिखो(buf, "%d\n",
-		       iommu_present(&pci_bus_type) && dmar_platक्रमm_optin());
-पूर्ण
-अटल DEVICE_ATTR_RO(iommu_dma_protection);
+	return sprintf(buf, "%d\n",
+		       iommu_present(&pci_bus_type) && dmar_platform_optin());
+}
+static DEVICE_ATTR_RO(iommu_dma_protection);
 
-अटल sमाप_प्रकार security_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा tb *tb = container_of(dev, काष्ठा tb, dev);
-	स्थिर अक्षर *name = "unknown";
+static ssize_t security_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct tb *tb = container_of(dev, struct tb, dev);
+	const char *name = "unknown";
 
-	अगर (tb->security_level < ARRAY_SIZE(tb_security_names))
+	if (tb->security_level < ARRAY_SIZE(tb_security_names))
 		name = tb_security_names[tb->security_level];
 
-	वापस प्र_लिखो(buf, "%s\n", name);
-पूर्ण
-अटल DEVICE_ATTR_RO(security);
+	return sprintf(buf, "%s\n", name);
+}
+static DEVICE_ATTR_RO(security);
 
-अटल काष्ठा attribute *करोमुख्य_attrs[] = अणु
+static struct attribute *domain_attrs[] = {
 	&dev_attr_boot_acl.attr,
 	&dev_attr_deauthorization.attr,
 	&dev_attr_iommu_dma_protection.attr,
 	&dev_attr_security.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल umode_t करोमुख्य_attr_is_visible(काष्ठा kobject *kobj,
-				      काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा tb *tb = container_of(dev, काष्ठा tb, dev);
+static umode_t domain_attr_is_visible(struct kobject *kobj,
+				      struct attribute *attr, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct tb *tb = container_of(dev, struct tb, dev);
 
-	अगर (attr == &dev_attr_boot_acl.attr) अणु
-		अगर (tb->nboot_acl &&
+	if (attr == &dev_attr_boot_acl.attr) {
+		if (tb->nboot_acl &&
 		    tb->cm_ops->get_boot_acl &&
 		    tb->cm_ops->set_boot_acl)
-			वापस attr->mode;
-		वापस 0;
-	पूर्ण
+			return attr->mode;
+		return 0;
+	}
 
-	वापस attr->mode;
-पूर्ण
+	return attr->mode;
+}
 
-अटल स्थिर काष्ठा attribute_group करोमुख्य_attr_group = अणु
-	.is_visible = करोमुख्य_attr_is_visible,
-	.attrs = करोमुख्य_attrs,
-पूर्ण;
+static const struct attribute_group domain_attr_group = {
+	.is_visible = domain_attr_is_visible,
+	.attrs = domain_attrs,
+};
 
-अटल स्थिर काष्ठा attribute_group *करोमुख्य_attr_groups[] = अणु
-	&करोमुख्य_attr_group,
-	शून्य,
-पूर्ण;
+static const struct attribute_group *domain_attr_groups[] = {
+	&domain_attr_group,
+	NULL,
+};
 
-काष्ठा bus_type tb_bus_type = अणु
+struct bus_type tb_bus_type = {
 	.name = "thunderbolt",
 	.match = tb_service_match,
 	.probe = tb_service_probe,
-	.हटाओ = tb_service_हटाओ,
-	.shutकरोwn = tb_service_shutकरोwn,
-पूर्ण;
+	.remove = tb_service_remove,
+	.shutdown = tb_service_shutdown,
+};
 
-अटल व्योम tb_करोमुख्य_release(काष्ठा device *dev)
-अणु
-	काष्ठा tb *tb = container_of(dev, काष्ठा tb, dev);
+static void tb_domain_release(struct device *dev)
+{
+	struct tb *tb = container_of(dev, struct tb, dev);
 
-	tb_ctl_मुक्त(tb->ctl);
+	tb_ctl_free(tb->ctl);
 	destroy_workqueue(tb->wq);
-	ida_simple_हटाओ(&tb_करोमुख्य_ida, tb->index);
+	ida_simple_remove(&tb_domain_ida, tb->index);
 	mutex_destroy(&tb->lock);
-	kमुक्त(tb);
-पूर्ण
+	kfree(tb);
+}
 
-काष्ठा device_type tb_करोमुख्य_type = अणु
+struct device_type tb_domain_type = {
 	.name = "thunderbolt_domain",
-	.release = tb_करोमुख्य_release,
-पूर्ण;
+	.release = tb_domain_release,
+};
 
-अटल bool tb_करोमुख्य_event_cb(व्योम *data, क्रमागत tb_cfg_pkg_type type,
-			       स्थिर व्योम *buf, माप_प्रकार size)
-अणु
-	काष्ठा tb *tb = data;
+static bool tb_domain_event_cb(void *data, enum tb_cfg_pkg_type type,
+			       const void *buf, size_t size)
+{
+	struct tb *tb = data;
 
-	अगर (!tb->cm_ops->handle_event) अणु
+	if (!tb->cm_ops->handle_event) {
 		tb_warn(tb, "domain does not have event handler\n");
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	चयन (type) अणु
-	हाल TB_CFG_PKG_XDOMAIN_REQ:
-	हाल TB_CFG_PKG_XDOMAIN_RESP:
-		अगर (tb_is_xकरोमुख्य_enabled())
-			वापस tb_xकरोमुख्य_handle_request(tb, type, buf, size);
-		अवरोध;
+	switch (type) {
+	case TB_CFG_PKG_XDOMAIN_REQ:
+	case TB_CFG_PKG_XDOMAIN_RESP:
+		if (tb_is_xdomain_enabled())
+			return tb_xdomain_handle_request(tb, type, buf, size);
+		break;
 
-	शेष:
+	default:
 		tb->cm_ops->handle_event(tb, type, buf, size);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * tb_करोमुख्य_alloc() - Allocate a करोमुख्य
- * @nhi: Poपूर्णांकer to the host controller
- * @समयout_msec: Control channel समयout क्रम non-raw messages
- * @privsize: Size of the connection manager निजी data
+ * tb_domain_alloc() - Allocate a domain
+ * @nhi: Pointer to the host controller
+ * @timeout_msec: Control channel timeout for non-raw messages
+ * @privsize: Size of the connection manager private data
  *
- * Allocates and initializes a new Thunderbolt करोमुख्य. Connection
+ * Allocates and initializes a new Thunderbolt domain. Connection
  * managers are expected to call this and then fill in @cm_ops
  * accordingly.
  *
- * Call tb_करोमुख्य_put() to release the करोमुख्य beक्रमe it has been added
- * to the प्रणाली.
+ * Call tb_domain_put() to release the domain before it has been added
+ * to the system.
  *
- * Return: allocated करोमुख्य काष्ठाure on %शून्य in हाल of error
+ * Return: allocated domain structure on %NULL in case of error
  */
-काष्ठा tb *tb_करोमुख्य_alloc(काष्ठा tb_nhi *nhi, पूर्णांक समयout_msec, माप_प्रकार privsize)
-अणु
-	काष्ठा tb *tb;
+struct tb *tb_domain_alloc(struct tb_nhi *nhi, int timeout_msec, size_t privsize)
+{
+	struct tb *tb;
 
 	/*
-	 * Make sure the काष्ठाure sizes map with that the hardware
+	 * Make sure the structure sizes map with that the hardware
 	 * expects because bit-fields are being used.
 	 */
-	BUILD_BUG_ON(माप(काष्ठा tb_regs_चयन_header) != 5 * 4);
-	BUILD_BUG_ON(माप(काष्ठा tb_regs_port_header) != 8 * 4);
-	BUILD_BUG_ON(माप(काष्ठा tb_regs_hop) != 2 * 4);
+	BUILD_BUG_ON(sizeof(struct tb_regs_switch_header) != 5 * 4);
+	BUILD_BUG_ON(sizeof(struct tb_regs_port_header) != 8 * 4);
+	BUILD_BUG_ON(sizeof(struct tb_regs_hop) != 2 * 4);
 
-	tb = kzalloc(माप(*tb) + privsize, GFP_KERNEL);
-	अगर (!tb)
-		वापस शून्य;
+	tb = kzalloc(sizeof(*tb) + privsize, GFP_KERNEL);
+	if (!tb)
+		return NULL;
 
 	tb->nhi = nhi;
 	mutex_init(&tb->lock);
 
-	tb->index = ida_simple_get(&tb_करोमुख्य_ida, 0, 0, GFP_KERNEL);
-	अगर (tb->index < 0)
-		जाओ err_मुक्त;
+	tb->index = ida_simple_get(&tb_domain_ida, 0, 0, GFP_KERNEL);
+	if (tb->index < 0)
+		goto err_free;
 
 	tb->wq = alloc_ordered_workqueue("thunderbolt%d", 0, tb->index);
-	अगर (!tb->wq)
-		जाओ err_हटाओ_ida;
+	if (!tb->wq)
+		goto err_remove_ida;
 
-	tb->ctl = tb_ctl_alloc(nhi, समयout_msec, tb_करोमुख्य_event_cb, tb);
-	अगर (!tb->ctl)
-		जाओ err_destroy_wq;
+	tb->ctl = tb_ctl_alloc(nhi, timeout_msec, tb_domain_event_cb, tb);
+	if (!tb->ctl)
+		goto err_destroy_wq;
 
 	tb->dev.parent = &nhi->pdev->dev;
 	tb->dev.bus = &tb_bus_type;
-	tb->dev.type = &tb_करोमुख्य_type;
-	tb->dev.groups = करोमुख्य_attr_groups;
+	tb->dev.type = &tb_domain_type;
+	tb->dev.groups = domain_attr_groups;
 	dev_set_name(&tb->dev, "domain%d", tb->index);
 	device_initialize(&tb->dev);
 
-	वापस tb;
+	return tb;
 
 err_destroy_wq:
 	destroy_workqueue(tb->wq);
-err_हटाओ_ida:
-	ida_simple_हटाओ(&tb_करोमुख्य_ida, tb->index);
-err_मुक्त:
-	kमुक्त(tb);
+err_remove_ida:
+	ida_simple_remove(&tb_domain_ida, tb->index);
+err_free:
+	kfree(tb);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * tb_करोमुख्य_add() - Add करोमुख्य to the प्रणाली
- * @tb: Doमुख्य to add
+ * tb_domain_add() - Add domain to the system
+ * @tb: Domain to add
  *
- * Starts the करोमुख्य and adds it to the प्रणाली. Hotplugging devices will
- * work after this has been वापसed successfully. In order to हटाओ
- * and release the करोमुख्य after this function has been called, call
- * tb_करोमुख्य_हटाओ().
+ * Starts the domain and adds it to the system. Hotplugging devices will
+ * work after this has been returned successfully. In order to remove
+ * and release the domain after this function has been called, call
+ * tb_domain_remove().
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं in हाल of error
+ * Return: %0 in case of success and negative errno in case of error
  */
-पूर्णांक tb_करोमुख्य_add(काष्ठा tb *tb)
-अणु
-	पूर्णांक ret;
+int tb_domain_add(struct tb *tb)
+{
+	int ret;
 
-	अगर (WARN_ON(!tb->cm_ops))
-		वापस -EINVAL;
+	if (WARN_ON(!tb->cm_ops))
+		return -EINVAL;
 
 	mutex_lock(&tb->lock);
 	/*
@@ -456,458 +455,458 @@ err_मुक्त:
 	 */
 	tb_ctl_start(tb->ctl);
 
-	अगर (tb->cm_ops->driver_पढ़ोy) अणु
-		ret = tb->cm_ops->driver_पढ़ोy(tb);
-		अगर (ret)
-			जाओ err_ctl_stop;
-	पूर्ण
+	if (tb->cm_ops->driver_ready) {
+		ret = tb->cm_ops->driver_ready(tb);
+		if (ret)
+			goto err_ctl_stop;
+	}
 
 	tb_dbg(tb, "security level set to %s\n",
 	       tb_security_names[tb->security_level]);
 
 	ret = device_add(&tb->dev);
-	अगर (ret)
-		जाओ err_ctl_stop;
+	if (ret)
+		goto err_ctl_stop;
 
-	/* Start the करोमुख्य */
-	अगर (tb->cm_ops->start) अणु
+	/* Start the domain */
+	if (tb->cm_ops->start) {
 		ret = tb->cm_ops->start(tb);
-		अगर (ret)
-			जाओ err_करोमुख्य_del;
-	पूर्ण
+		if (ret)
+			goto err_domain_del;
+	}
 
 	/* This starts event processing */
 	mutex_unlock(&tb->lock);
 
 	device_init_wakeup(&tb->dev, true);
 
-	pm_runसमय_no_callbacks(&tb->dev);
-	pm_runसमय_set_active(&tb->dev);
-	pm_runसमय_enable(&tb->dev);
-	pm_runसमय_set_स्वतःsuspend_delay(&tb->dev, TB_AUTOSUSPEND_DELAY);
-	pm_runसमय_mark_last_busy(&tb->dev);
-	pm_runसमय_use_स्वतःsuspend(&tb->dev);
+	pm_runtime_no_callbacks(&tb->dev);
+	pm_runtime_set_active(&tb->dev);
+	pm_runtime_enable(&tb->dev);
+	pm_runtime_set_autosuspend_delay(&tb->dev, TB_AUTOSUSPEND_DELAY);
+	pm_runtime_mark_last_busy(&tb->dev);
+	pm_runtime_use_autosuspend(&tb->dev);
 
-	वापस 0;
+	return 0;
 
-err_करोमुख्य_del:
+err_domain_del:
 	device_del(&tb->dev);
 err_ctl_stop:
 	tb_ctl_stop(tb->ctl);
 	mutex_unlock(&tb->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * tb_करोमुख्य_हटाओ() - Removes and releases a करोमुख्य
- * @tb: Doमुख्य to हटाओ
+ * tb_domain_remove() - Removes and releases a domain
+ * @tb: Domain to remove
  *
- * Stops the करोमुख्य, हटाओs it from the प्रणाली and releases all
+ * Stops the domain, removes it from the system and releases all
  * resources once the last reference has been released.
  */
-व्योम tb_करोमुख्य_हटाओ(काष्ठा tb *tb)
-अणु
+void tb_domain_remove(struct tb *tb)
+{
 	mutex_lock(&tb->lock);
-	अगर (tb->cm_ops->stop)
+	if (tb->cm_ops->stop)
 		tb->cm_ops->stop(tb);
-	/* Stop the करोमुख्य control traffic */
+	/* Stop the domain control traffic */
 	tb_ctl_stop(tb->ctl);
 	mutex_unlock(&tb->lock);
 
 	flush_workqueue(tb->wq);
-	device_unरेजिस्टर(&tb->dev);
-पूर्ण
+	device_unregister(&tb->dev);
+}
 
 /**
- * tb_करोमुख्य_suspend_noirq() - Suspend a करोमुख्य
- * @tb: Doमुख्य to suspend
+ * tb_domain_suspend_noirq() - Suspend a domain
+ * @tb: Domain to suspend
  *
- * Suspends all devices in the करोमुख्य and stops the control channel.
+ * Suspends all devices in the domain and stops the control channel.
  */
-पूर्णांक tb_करोमुख्य_suspend_noirq(काष्ठा tb *tb)
-अणु
-	पूर्णांक ret = 0;
+int tb_domain_suspend_noirq(struct tb *tb)
+{
+	int ret = 0;
 
 	/*
-	 * The control channel पूर्णांकerrupt is left enabled during suspend
-	 * and taking the lock here prevents any events happening beक्रमe
-	 * we actually have stopped the करोमुख्य and the control channel.
+	 * The control channel interrupt is left enabled during suspend
+	 * and taking the lock here prevents any events happening before
+	 * we actually have stopped the domain and the control channel.
 	 */
 	mutex_lock(&tb->lock);
-	अगर (tb->cm_ops->suspend_noirq)
+	if (tb->cm_ops->suspend_noirq)
 		ret = tb->cm_ops->suspend_noirq(tb);
-	अगर (!ret)
+	if (!ret)
 		tb_ctl_stop(tb->ctl);
 	mutex_unlock(&tb->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * tb_करोमुख्य_resume_noirq() - Resume a करोमुख्य
- * @tb: Doमुख्य to resume
+ * tb_domain_resume_noirq() - Resume a domain
+ * @tb: Domain to resume
  *
  * Re-starts the control channel, and resumes all devices connected to
- * the करोमुख्य.
+ * the domain.
  */
-पूर्णांक tb_करोमुख्य_resume_noirq(काष्ठा tb *tb)
-अणु
-	पूर्णांक ret = 0;
+int tb_domain_resume_noirq(struct tb *tb)
+{
+	int ret = 0;
 
 	mutex_lock(&tb->lock);
 	tb_ctl_start(tb->ctl);
-	अगर (tb->cm_ops->resume_noirq)
+	if (tb->cm_ops->resume_noirq)
 		ret = tb->cm_ops->resume_noirq(tb);
 	mutex_unlock(&tb->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक tb_करोमुख्य_suspend(काष्ठा tb *tb)
-अणु
-	वापस tb->cm_ops->suspend ? tb->cm_ops->suspend(tb) : 0;
-पूर्ण
+int tb_domain_suspend(struct tb *tb)
+{
+	return tb->cm_ops->suspend ? tb->cm_ops->suspend(tb) : 0;
+}
 
-पूर्णांक tb_करोमुख्य_मुक्तze_noirq(काष्ठा tb *tb)
-अणु
-	पूर्णांक ret = 0;
+int tb_domain_freeze_noirq(struct tb *tb)
+{
+	int ret = 0;
 
 	mutex_lock(&tb->lock);
-	अगर (tb->cm_ops->मुक्तze_noirq)
-		ret = tb->cm_ops->मुक्तze_noirq(tb);
-	अगर (!ret)
+	if (tb->cm_ops->freeze_noirq)
+		ret = tb->cm_ops->freeze_noirq(tb);
+	if (!ret)
 		tb_ctl_stop(tb->ctl);
 	mutex_unlock(&tb->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक tb_करोमुख्य_thaw_noirq(काष्ठा tb *tb)
-अणु
-	पूर्णांक ret = 0;
+int tb_domain_thaw_noirq(struct tb *tb)
+{
+	int ret = 0;
 
 	mutex_lock(&tb->lock);
 	tb_ctl_start(tb->ctl);
-	अगर (tb->cm_ops->thaw_noirq)
+	if (tb->cm_ops->thaw_noirq)
 		ret = tb->cm_ops->thaw_noirq(tb);
 	mutex_unlock(&tb->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम tb_करोमुख्य_complete(काष्ठा tb *tb)
-अणु
-	अगर (tb->cm_ops->complete)
+void tb_domain_complete(struct tb *tb)
+{
+	if (tb->cm_ops->complete)
 		tb->cm_ops->complete(tb);
-पूर्ण
+}
 
-पूर्णांक tb_करोमुख्य_runसमय_suspend(काष्ठा tb *tb)
-अणु
-	अगर (tb->cm_ops->runसमय_suspend) अणु
-		पूर्णांक ret = tb->cm_ops->runसमय_suspend(tb);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+int tb_domain_runtime_suspend(struct tb *tb)
+{
+	if (tb->cm_ops->runtime_suspend) {
+		int ret = tb->cm_ops->runtime_suspend(tb);
+		if (ret)
+			return ret;
+	}
 	tb_ctl_stop(tb->ctl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tb_करोमुख्य_runसमय_resume(काष्ठा tb *tb)
-अणु
+int tb_domain_runtime_resume(struct tb *tb)
+{
 	tb_ctl_start(tb->ctl);
-	अगर (tb->cm_ops->runसमय_resume) अणु
-		पूर्णांक ret = tb->cm_ops->runसमय_resume(tb);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (tb->cm_ops->runtime_resume) {
+		int ret = tb->cm_ops->runtime_resume(tb);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
 /**
- * tb_करोमुख्य_disapprove_चयन() - Disapprove चयन
- * @tb: Doमुख्य the चयन beदीर्घs to
+ * tb_domain_disapprove_switch() - Disapprove switch
+ * @tb: Domain the switch belongs to
  * @sw: Switch to disapprove
  *
  * This will disconnect PCIe tunnel from parent to this @sw.
  *
- * Return: %0 on success and negative त्रुटि_सं in हाल of failure.
+ * Return: %0 on success and negative errno in case of failure.
  */
-पूर्णांक tb_करोमुख्य_disapprove_चयन(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
-	अगर (!tb->cm_ops->disapprove_चयन)
-		वापस -EPERM;
+int tb_domain_disapprove_switch(struct tb *tb, struct tb_switch *sw)
+{
+	if (!tb->cm_ops->disapprove_switch)
+		return -EPERM;
 
-	वापस tb->cm_ops->disapprove_चयन(tb, sw);
-पूर्ण
+	return tb->cm_ops->disapprove_switch(tb, sw);
+}
 
 /**
- * tb_करोमुख्य_approve_चयन() - Approve चयन
- * @tb: Doमुख्य the चयन beदीर्घs to
+ * tb_domain_approve_switch() - Approve switch
+ * @tb: Domain the switch belongs to
  * @sw: Switch to approve
  *
- * This will approve चयन by connection manager specअगरic means. In
- * हाल of success the connection manager will create PCIe tunnel from
+ * This will approve switch by connection manager specific means. In
+ * case of success the connection manager will create PCIe tunnel from
  * parent to @sw.
  */
-पूर्णांक tb_करोमुख्य_approve_चयन(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_चयन *parent_sw;
+int tb_domain_approve_switch(struct tb *tb, struct tb_switch *sw)
+{
+	struct tb_switch *parent_sw;
 
-	अगर (!tb->cm_ops->approve_चयन)
-		वापस -EPERM;
+	if (!tb->cm_ops->approve_switch)
+		return -EPERM;
 
-	/* The parent चयन must be authorized beक्रमe this one */
-	parent_sw = tb_to_चयन(sw->dev.parent);
-	अगर (!parent_sw || !parent_sw->authorized)
-		वापस -EINVAL;
+	/* The parent switch must be authorized before this one */
+	parent_sw = tb_to_switch(sw->dev.parent);
+	if (!parent_sw || !parent_sw->authorized)
+		return -EINVAL;
 
-	वापस tb->cm_ops->approve_चयन(tb, sw);
-पूर्ण
+	return tb->cm_ops->approve_switch(tb, sw);
+}
 
 /**
- * tb_करोमुख्य_approve_चयन_key() - Approve चयन and add key
- * @tb: Doमुख्य the चयन beदीर्घs to
+ * tb_domain_approve_switch_key() - Approve switch and add key
+ * @tb: Domain the switch belongs to
  * @sw: Switch to approve
  *
- * For चयनes that support secure connect, this function first adds
- * key to the चयन NVM using connection manager specअगरic means. If
- * adding the key is successful, the चयन is approved and connected.
+ * For switches that support secure connect, this function first adds
+ * key to the switch NVM using connection manager specific means. If
+ * adding the key is successful, the switch is approved and connected.
  *
- * Return: %0 on success and negative त्रुटि_सं in हाल of failure.
+ * Return: %0 on success and negative errno in case of failure.
  */
-पूर्णांक tb_करोमुख्य_approve_चयन_key(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_चयन *parent_sw;
-	पूर्णांक ret;
+int tb_domain_approve_switch_key(struct tb *tb, struct tb_switch *sw)
+{
+	struct tb_switch *parent_sw;
+	int ret;
 
-	अगर (!tb->cm_ops->approve_चयन || !tb->cm_ops->add_चयन_key)
-		वापस -EPERM;
+	if (!tb->cm_ops->approve_switch || !tb->cm_ops->add_switch_key)
+		return -EPERM;
 
-	/* The parent चयन must be authorized beक्रमe this one */
-	parent_sw = tb_to_चयन(sw->dev.parent);
-	अगर (!parent_sw || !parent_sw->authorized)
-		वापस -EINVAL;
+	/* The parent switch must be authorized before this one */
+	parent_sw = tb_to_switch(sw->dev.parent);
+	if (!parent_sw || !parent_sw->authorized)
+		return -EINVAL;
 
-	ret = tb->cm_ops->add_चयन_key(tb, sw);
-	अगर (ret)
-		वापस ret;
+	ret = tb->cm_ops->add_switch_key(tb, sw);
+	if (ret)
+		return ret;
 
-	वापस tb->cm_ops->approve_चयन(tb, sw);
-पूर्ण
+	return tb->cm_ops->approve_switch(tb, sw);
+}
 
 /**
- * tb_करोमुख्य_challenge_चयन_key() - Challenge and approve चयन
- * @tb: Doमुख्य the चयन beदीर्घs to
+ * tb_domain_challenge_switch_key() - Challenge and approve switch
+ * @tb: Domain the switch belongs to
  * @sw: Switch to approve
  *
- * For चयनes that support secure connect, this function generates
- * अक्रमom challenge and sends it to the चयन. The चयन responds to
- * this and अगर the response matches our अक्रमom challenge, the चयन is
+ * For switches that support secure connect, this function generates
+ * random challenge and sends it to the switch. The switch responds to
+ * this and if the response matches our random challenge, the switch is
  * approved and connected.
  *
- * Return: %0 on success and negative त्रुटि_सं in हाल of failure.
+ * Return: %0 on success and negative errno in case of failure.
  */
-पूर्णांक tb_करोमुख्य_challenge_चयन_key(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
+int tb_domain_challenge_switch_key(struct tb *tb, struct tb_switch *sw)
+{
 	u8 challenge[TB_SWITCH_KEY_SIZE];
 	u8 response[TB_SWITCH_KEY_SIZE];
 	u8 hmac[TB_SWITCH_KEY_SIZE];
-	काष्ठा tb_चयन *parent_sw;
-	काष्ठा crypto_shash *tfm;
-	काष्ठा shash_desc *shash;
-	पूर्णांक ret;
+	struct tb_switch *parent_sw;
+	struct crypto_shash *tfm;
+	struct shash_desc *shash;
+	int ret;
 
-	अगर (!tb->cm_ops->approve_चयन || !tb->cm_ops->challenge_चयन_key)
-		वापस -EPERM;
+	if (!tb->cm_ops->approve_switch || !tb->cm_ops->challenge_switch_key)
+		return -EPERM;
 
-	/* The parent चयन must be authorized beक्रमe this one */
-	parent_sw = tb_to_चयन(sw->dev.parent);
-	अगर (!parent_sw || !parent_sw->authorized)
-		वापस -EINVAL;
+	/* The parent switch must be authorized before this one */
+	parent_sw = tb_to_switch(sw->dev.parent);
+	if (!parent_sw || !parent_sw->authorized)
+		return -EINVAL;
 
-	get_अक्रमom_bytes(challenge, माप(challenge));
-	ret = tb->cm_ops->challenge_चयन_key(tb, sw, challenge, response);
-	अगर (ret)
-		वापस ret;
+	get_random_bytes(challenge, sizeof(challenge));
+	ret = tb->cm_ops->challenge_switch_key(tb, sw, challenge, response);
+	if (ret)
+		return ret;
 
 	tfm = crypto_alloc_shash("hmac(sha256)", 0, 0);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	ret = crypto_shash_setkey(tfm, sw->key, TB_SWITCH_KEY_SIZE);
-	अगर (ret)
-		जाओ err_मुक्त_tfm;
+	if (ret)
+		goto err_free_tfm;
 
-	shash = kzalloc(माप(*shash) + crypto_shash_descsize(tfm),
+	shash = kzalloc(sizeof(*shash) + crypto_shash_descsize(tfm),
 			GFP_KERNEL);
-	अगर (!shash) अणु
+	if (!shash) {
 		ret = -ENOMEM;
-		जाओ err_मुक्त_tfm;
-	पूर्ण
+		goto err_free_tfm;
+	}
 
 	shash->tfm = tfm;
 
-	स_रखो(hmac, 0, माप(hmac));
-	ret = crypto_shash_digest(shash, challenge, माप(hmac), hmac);
-	अगर (ret)
-		जाओ err_मुक्त_shash;
+	memset(hmac, 0, sizeof(hmac));
+	ret = crypto_shash_digest(shash, challenge, sizeof(hmac), hmac);
+	if (ret)
+		goto err_free_shash;
 
-	/* The वापसed HMAC must match the one we calculated */
-	अगर (स_भेद(response, hmac, माप(hmac))) अणु
+	/* The returned HMAC must match the one we calculated */
+	if (memcmp(response, hmac, sizeof(hmac))) {
 		ret = -EKEYREJECTED;
-		जाओ err_मुक्त_shash;
-	पूर्ण
+		goto err_free_shash;
+	}
 
-	crypto_मुक्त_shash(tfm);
-	kमुक्त(shash);
+	crypto_free_shash(tfm);
+	kfree(shash);
 
-	वापस tb->cm_ops->approve_चयन(tb, sw);
+	return tb->cm_ops->approve_switch(tb, sw);
 
-err_मुक्त_shash:
-	kमुक्त(shash);
-err_मुक्त_tfm:
-	crypto_मुक्त_shash(tfm);
+err_free_shash:
+	kfree(shash);
+err_free_tfm:
+	crypto_free_shash(tfm);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * tb_करोमुख्य_disconnect_pcie_paths() - Disconnect all PCIe paths
- * @tb: Doमुख्य whose PCIe paths to disconnect
+ * tb_domain_disconnect_pcie_paths() - Disconnect all PCIe paths
+ * @tb: Domain whose PCIe paths to disconnect
  *
- * This needs to be called in preparation क्रम NVM upgrade of the host
+ * This needs to be called in preparation for NVM upgrade of the host
  * controller. Makes sure all PCIe paths are disconnected.
  *
- * Return %0 on success and negative त्रुटि_सं in हाल of error.
+ * Return %0 on success and negative errno in case of error.
  */
-पूर्णांक tb_करोमुख्य_disconnect_pcie_paths(काष्ठा tb *tb)
-अणु
-	अगर (!tb->cm_ops->disconnect_pcie_paths)
-		वापस -EPERM;
+int tb_domain_disconnect_pcie_paths(struct tb *tb)
+{
+	if (!tb->cm_ops->disconnect_pcie_paths)
+		return -EPERM;
 
-	वापस tb->cm_ops->disconnect_pcie_paths(tb);
-पूर्ण
+	return tb->cm_ops->disconnect_pcie_paths(tb);
+}
 
 /**
- * tb_करोमुख्य_approve_xकरोमुख्य_paths() - Enable DMA paths क्रम XDoमुख्य
- * @tb: Doमुख्य enabling the DMA paths
- * @xd: XDoमुख्य DMA paths are created to
+ * tb_domain_approve_xdomain_paths() - Enable DMA paths for XDomain
+ * @tb: Domain enabling the DMA paths
+ * @xd: XDomain DMA paths are created to
  * @transmit_path: HopID we are using to send out packets
  * @transmit_ring: DMA ring used to send out packets
  * @receive_path: HopID the other end is using to send packets to us
  * @receive_ring: DMA ring used to receive packets from @receive_path
  *
- * Calls connection manager specअगरic method to enable DMA paths to the
- * XDoमुख्य in question.
+ * Calls connection manager specific method to enable DMA paths to the
+ * XDomain in question.
  *
- * Return: 0% in हाल of success and negative त्रुटि_सं otherwise. In
- * particular वापसs %-ENOTSUPP अगर the connection manager
- * implementation करोes not support XDoमुख्यs.
+ * Return: 0% in case of success and negative errno otherwise. In
+ * particular returns %-ENOTSUPP if the connection manager
+ * implementation does not support XDomains.
  */
-पूर्णांक tb_करोमुख्य_approve_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
-				    पूर्णांक transmit_path, पूर्णांक transmit_ring,
-				    पूर्णांक receive_path, पूर्णांक receive_ring)
-अणु
-	अगर (!tb->cm_ops->approve_xकरोमुख्य_paths)
-		वापस -ENOTSUPP;
+int tb_domain_approve_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
+				    int transmit_path, int transmit_ring,
+				    int receive_path, int receive_ring)
+{
+	if (!tb->cm_ops->approve_xdomain_paths)
+		return -ENOTSUPP;
 
-	वापस tb->cm_ops->approve_xकरोमुख्य_paths(tb, xd, transmit_path,
+	return tb->cm_ops->approve_xdomain_paths(tb, xd, transmit_path,
 			transmit_ring, receive_path, receive_ring);
-पूर्ण
+}
 
 /**
- * tb_करोमुख्य_disconnect_xकरोमुख्य_paths() - Disable DMA paths क्रम XDoमुख्य
- * @tb: Doमुख्य disabling the DMA paths
- * @xd: XDoमुख्य whose DMA paths are disconnected
+ * tb_domain_disconnect_xdomain_paths() - Disable DMA paths for XDomain
+ * @tb: Domain disabling the DMA paths
+ * @xd: XDomain whose DMA paths are disconnected
  * @transmit_path: HopID we are using to send out packets
  * @transmit_ring: DMA ring used to send out packets
  * @receive_path: HopID the other end is using to send packets to us
  * @receive_ring: DMA ring used to receive packets from @receive_path
  *
- * Calls connection manager specअगरic method to disconnect DMA paths to
- * the XDoमुख्य in question.
+ * Calls connection manager specific method to disconnect DMA paths to
+ * the XDomain in question.
  *
- * Return: 0% in हाल of success and negative त्रुटि_सं otherwise. In
- * particular वापसs %-ENOTSUPP अगर the connection manager
- * implementation करोes not support XDoमुख्यs.
+ * Return: 0% in case of success and negative errno otherwise. In
+ * particular returns %-ENOTSUPP if the connection manager
+ * implementation does not support XDomains.
  */
-पूर्णांक tb_करोमुख्य_disconnect_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
-				       पूर्णांक transmit_path, पूर्णांक transmit_ring,
-				       पूर्णांक receive_path, पूर्णांक receive_ring)
-अणु
-	अगर (!tb->cm_ops->disconnect_xकरोमुख्य_paths)
-		वापस -ENOTSUPP;
+int tb_domain_disconnect_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
+				       int transmit_path, int transmit_ring,
+				       int receive_path, int receive_ring)
+{
+	if (!tb->cm_ops->disconnect_xdomain_paths)
+		return -ENOTSUPP;
 
-	वापस tb->cm_ops->disconnect_xकरोमुख्य_paths(tb, xd, transmit_path,
+	return tb->cm_ops->disconnect_xdomain_paths(tb, xd, transmit_path,
 			transmit_ring, receive_path, receive_ring);
-पूर्ण
+}
 
-अटल पूर्णांक disconnect_xकरोमुख्य(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा tb_xकरोमुख्य *xd;
-	काष्ठा tb *tb = data;
-	पूर्णांक ret = 0;
+static int disconnect_xdomain(struct device *dev, void *data)
+{
+	struct tb_xdomain *xd;
+	struct tb *tb = data;
+	int ret = 0;
 
-	xd = tb_to_xकरोमुख्य(dev);
-	अगर (xd && xd->tb == tb)
-		ret = tb_xकरोमुख्य_disable_all_paths(xd);
+	xd = tb_to_xdomain(dev);
+	if (xd && xd->tb == tb)
+		ret = tb_xdomain_disable_all_paths(xd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * tb_करोमुख्य_disconnect_all_paths() - Disconnect all paths क्रम the करोमुख्य
- * @tb: Doमुख्य whose paths are disconnected
+ * tb_domain_disconnect_all_paths() - Disconnect all paths for the domain
+ * @tb: Domain whose paths are disconnected
  *
- * This function can be used to disconnect all paths (PCIe, XDoमुख्य) क्रम
- * example in preparation क्रम host NVM firmware upgrade. After this is
- * called the paths cannot be established without resetting the चयन.
+ * This function can be used to disconnect all paths (PCIe, XDomain) for
+ * example in preparation for host NVM firmware upgrade. After this is
+ * called the paths cannot be established without resetting the switch.
  *
- * Return: %0 in हाल of success and negative त्रुटि_सं otherwise.
+ * Return: %0 in case of success and negative errno otherwise.
  */
-पूर्णांक tb_करोमुख्य_disconnect_all_paths(काष्ठा tb *tb)
-अणु
-	पूर्णांक ret;
+int tb_domain_disconnect_all_paths(struct tb *tb)
+{
+	int ret;
 
-	ret = tb_करोमुख्य_disconnect_pcie_paths(tb);
-	अगर (ret)
-		वापस ret;
+	ret = tb_domain_disconnect_pcie_paths(tb);
+	if (ret)
+		return ret;
 
-	वापस bus_क्रम_each_dev(&tb_bus_type, शून्य, tb, disconnect_xकरोमुख्य);
-पूर्ण
+	return bus_for_each_dev(&tb_bus_type, NULL, tb, disconnect_xdomain);
+}
 
-पूर्णांक tb_करोमुख्य_init(व्योम)
-अणु
-	पूर्णांक ret;
+int tb_domain_init(void)
+{
+	int ret;
 
 	tb_test_init();
 
 	tb_debugfs_init();
-	ret = tb_xकरोमुख्य_init();
-	अगर (ret)
-		जाओ err_debugfs;
-	ret = bus_रेजिस्टर(&tb_bus_type);
-	अगर (ret)
-		जाओ err_xकरोमुख्य;
+	ret = tb_xdomain_init();
+	if (ret)
+		goto err_debugfs;
+	ret = bus_register(&tb_bus_type);
+	if (ret)
+		goto err_xdomain;
 
-	वापस 0;
+	return 0;
 
-err_xकरोमुख्य:
-	tb_xकरोमुख्य_निकास();
+err_xdomain:
+	tb_xdomain_exit();
 err_debugfs:
-	tb_debugfs_निकास();
-	tb_test_निकास();
+	tb_debugfs_exit();
+	tb_test_exit();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम tb_करोमुख्य_निकास(व्योम)
-अणु
-	bus_unरेजिस्टर(&tb_bus_type);
-	ida_destroy(&tb_करोमुख्य_ida);
-	tb_nvm_निकास();
-	tb_xकरोमुख्य_निकास();
-	tb_debugfs_निकास();
-	tb_test_निकास();
-पूर्ण
+void tb_domain_exit(void)
+{
+	bus_unregister(&tb_bus_type);
+	ida_destroy(&tb_domain_ida);
+	tb_nvm_exit();
+	tb_xdomain_exit();
+	tb_debugfs_exit();
+	tb_test_exit();
+}

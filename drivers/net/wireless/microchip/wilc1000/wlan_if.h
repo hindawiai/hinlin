@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
  * All rights reserved.
  */
 
-#अगर_अघोषित WILC_WLAN_IF_H
-#घोषणा WILC_WLAN_IF_H
+#ifndef WILC_WLAN_IF_H
+#define WILC_WLAN_IF_H
 
-#समावेश <linux/netdevice.h>
-#समावेश "fw.h"
+#include <linux/netdevice.h>
+#include "fw.h"
 
 /********************************************
  *
@@ -17,55 +16,55 @@
  *
  ********************************************/
 
-क्रमागत bss_types अणु
+enum bss_types {
 	WILC_FW_BSS_TYPE_INFRA = 0,
 	WILC_FW_BSS_TYPE_INDEPENDENT,
 	WILC_FW_BSS_TYPE_AP,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_OPER_MODE_B_ONLY = 0,	 /* 1, 2 M, otherwise 5, 11 M */
 	WILC_FW_OPER_MODE_G_ONLY,	 /* 6,12,24 otherwise 9,18,36,48,54 */
 	WILC_FW_OPER_MODE_G_MIXED_11B_1, /* 1,2,5.5,11 otherwise all on */
 	WILC_FW_OPER_MODE_G_MIXED_11B_2, /* 1,2,5,11,6,12,24 otherwise all on */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_PREAMBLE_SHORT = 0,	/* Short Preamble */
 	WILC_FW_PREAMBLE_LONG = 1,	/* Long Preamble */
 	WILC_FW_PREAMBLE_AUTO = 2,	/* Auto Preamble Selection */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_PASSIVE_SCAN = 0,
 	WILC_FW_ACTIVE_SCAN = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_NO_POWERSAVE = 0,
 	WILC_FW_MIN_FAST_PS = 1,
 	WILC_FW_MAX_FAST_PS = 2,
 	WILC_FW_MIN_PSPOLL_PS = 3,
 	WILC_FW_MAX_PSPOLL_PS = 4
-पूर्ण;
+};
 
-क्रमागत chip_ps_states अणु
+enum chip_ps_states {
 	WILC_CHIP_WAKEDUP = 0,
 	WILC_CHIP_SLEEPING_AUTO = 1,
 	WILC_CHIP_SLEEPING_MANUAL = 2
-पूर्ण;
+};
 
-क्रमागत bus_acquire अणु
+enum bus_acquire {
 	WILC_BUS_ACQUIRE_ONLY = 0,
 	WILC_BUS_ACQUIRE_AND_WAKEUP = 1,
-पूर्ण;
+};
 
-क्रमागत bus_release अणु
+enum bus_release {
 	WILC_BUS_RELEASE_ONLY = 0,
 	WILC_BUS_RELEASE_ALLOW_SLEEP = 1,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_NO_ENCRYPT = 0,
 	WILC_FW_ENCRYPT_ENABLED = BIT(0),
 	WILC_FW_WEP = BIT(1),
@@ -74,9 +73,9 @@
 	WILC_FW_WPA2 = BIT(4),
 	WILC_FW_AES = BIT(5),
 	WILC_FW_TKIP = BIT(6)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_SEC_NO = WILC_FW_NO_ENCRYPT,
 	WILC_FW_SEC_WEP = WILC_FW_WEP | WILC_FW_ENCRYPT_ENABLED,
 	WILC_FW_SEC_WEP_EXTENDED = WILC_FW_WEP_EXTENDED | WILC_FW_SEC_WEP,
@@ -86,79 +85,79 @@
 	WILC_FW_SEC_WPA2 = WILC_FW_WPA2 | WILC_FW_ENCRYPT_ENABLED,
 	WILC_FW_SEC_WPA2_AES = WILC_FW_AES | WILC_FW_SEC_WPA2,
 	WILC_FW_SEC_WPA2_TKIP = WILC_FW_TKIP | WILC_FW_SEC_WPA2
-पूर्ण;
+};
 
-क्रमागत authtype अणु
+enum authtype {
 	WILC_FW_AUTH_OPEN_SYSTEM = 1,
 	WILC_FW_AUTH_SHARED_KEY = 2,
 	WILC_FW_AUTH_ANY = 3,
 	WILC_FW_AUTH_IEEE8021 = 5
-पूर्ण;
+};
 
-क्रमागत site_survey अणु
+enum site_survey {
 	WILC_FW_SITE_SURVEY_1CH = 0,
 	WILC_FW_SITE_SURVEY_ALL_CH = 1,
 	WILC_FW_SITE_SURVEY_OFF = 2
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_ACK_POLICY_NORMAL = 0,
 	WILC_FW_ACK_NO_POLICY,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_REKEY_POLICY_DISABLE = 1,
 	WILC_FW_REKEY_POLICY_TIME_BASE,
 	WILC_FW_REKEY_POLICY_PKT_BASE,
 	WILC_FW_REKEY_POLICY_TIME_PKT_BASE
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_FILTER_NO = 0x00,
 	WILC_FW_FILTER_AP_ONLY = 0x01,
 	WILC_FW_FILTER_STA_ONLY = 0x02
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_11N_PROT_AUTO = 0,	/* Auto */
 	WILC_FW_11N_NO_PROT,		/* Do not use any protection */
 	WILC_FW_11N_PROT_ERP,		/* Protect all ERP frame exchanges */
 	WILC_FW_11N_PROT_HT,		/* Protect all HT frame exchanges  */
 	WILC_FW_11N_PROT_GF		/* Protect all GF frame exchanges  */
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_ERP_PROT_SELF_CTS,
 	WILC_FW_ERP_PROT_RTS_CTS,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_11N_OP_MODE_HT_MIXED = 1,
 	WILC_FW_11N_OP_MODE_HT_ONLY_20MHZ,
 	WILC_FW_11N_OP_MODE_HT_ONLY_20_40MHZ,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_OBBS_NONHT_NO_DETECT = 0,
 	WILC_FW_OBBS_NONHT_DETECT_ONLY = 1,
 	WILC_FW_OBBS_NONHT_DETECT_PROTECT = 2,
 	WILC_FW_OBBS_NONHT_DETECT_PROTECT_REPORT = 3,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_HT_PROT_RTS_CTS_NONHT = 0,  /* RTS-CTS at non-HT rate */
 	WILC_FW_HT_PROT_FIRST_FRAME_NONHT,  /* First frame at non-HT rate */
 	WILC_FW_HT_PROT_LSIG_TXOP,	    /* LSIG TXOP Protection */
-	WILC_FW_HT_PROT_FIRST_FRAME_MIXED,  /* First frame at Mixed क्रमmat */
-पूर्ण;
+	WILC_FW_HT_PROT_FIRST_FRAME_MIXED,  /* First frame at Mixed format */
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_SMPS_MODE_STATIC = 1,
 	WILC_FW_SMPS_MODE_DYNAMIC = 2,
-	WILC_FW_SMPS_MODE_MIMO = 3,	/* घातer save disable */
-पूर्ण;
+	WILC_FW_SMPS_MODE_MIMO = 3,	/* power save disable */
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_TX_RATE_AUTO = 0,
 	WILC_FW_TX_RATE_MBPS_1 = 1,
 	WILC_FW_TX_RATE_MBPS_2 = 2,
@@ -172,43 +171,43 @@
 	WILC_FW_TX_RATE_MBPS_36 = 36,
 	WILC_FW_TX_RATE_MBPS_48 = 48,
 	WILC_FW_TX_RATE_MBPS_54 = 54
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_DEFAULT_SCAN = 0,
 	WILC_FW_USER_SCAN = BIT(0),
 	WILC_FW_OBSS_PERIODIC_SCAN = BIT(1),
 	WILC_FW_OBSS_ONETIME_SCAN = BIT(2)
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WILC_FW_ACTION_FRM_IDX = 0,
 	WILC_FW_PROBE_REQ_IDX = 1
-पूर्ण;
+};
 
-क्रमागत wid_type अणु
+enum wid_type {
 	WID_CHAR		= 0,
 	WID_SHORT		= 1,
 	WID_INT			= 2,
 	WID_STR			= 3,
 	WID_BIN_DATA		= 4,
 	WID_BIN			= 5,
-पूर्ण;
+};
 
-काष्ठा wid अणु
+struct wid {
 	u16 id;
-	क्रमागत wid_type type;
+	enum wid_type type;
 	s32 size;
 	s8 *val;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	WID_NIL				= 0xffff,
 
 	/*
 	 *  BSS Type
 	 *  -----------------------------------------------------------
-	 *  Configuration : Infraकाष्ठाure   Independent   Access Poपूर्णांक
+	 *  Configuration : Infrastructure   Independent   Access Point
 	 *  Values to set :         0               1            2
 	 *  -----------------------------------------------------------
 	 */
@@ -235,14 +234,14 @@
 	/*
 	 *  Preamble
 	 *  -----------------------------------------------------------
-	 *  Configuration :    लघु    दीर्घ      Auto
+	 *  Configuration :    short    long      Auto
 	 *  Values to set :       0       1         2
 	 *  -----------------------------------------------------------
 	 */
 	WID_PREAMBLE			= 0x0003,
 
 	/*
-	 * 11g operating mode (ignored अगर 11g not present)
+	 * 11g operating mode (ignored if 11g not present)
 	 *  -----------------------------------------------------------
 	 *  Configuration :   HighPerf  Compat(RSet #1) Compat(RSet #2)
 	 *  Values to set :          1               2               3
@@ -269,7 +268,7 @@
 	WID_SCAN_TYPE			= 0x0007,
 
 	/*
-	 *  Key Id (WEP शेष key Id)
+	 *  Key Id (WEP default key Id)
 	 *  -----------------------------------------------------------
 	 *  Configuration :   Any value between 0 to 3
 	 *  Values to set :   Same value. Default is 0
@@ -383,7 +382,7 @@
 	/*
 	 *  11a Tx Power Level
 	 *  -----------------------------------------------------------
-	 *  Configuration : Sets TX Power (Higher the value greater the घातer)
+	 *  Configuration : Sets TX Power (Higher the value greater the power)
 	 *  Values to set : Any value between 0 and 63 (inclusive Default 48)
 	 *  -----------------------------------------------------------
 	 */
@@ -392,7 +391,7 @@
 	/*
 	 *  Group Key Update Policy Selection
 	 *  -----------------------------------------------------------
-	 *  Configuration : Disabled समयBased packetBased समयPacketBased
+	 *  Configuration : Disabled timeBased packetBased timePacketBased
 	 *  Values to set :   1            2          3              4
 	 *  -----------------------------------------------------------
 	 */
@@ -402,7 +401,7 @@
 	 *  Allow Short Slot
 	 *  -----------------------------------------------------------
 	 *  Configuration : Disallow Short Slot      Allow Short Slot
-	 *          (Enable Only Long Slot) (Enable Short Slot अगर applicable)
+	 *          (Enable Only Long Slot) (Enable Short Slot if applicable)
 	 *  Values to set :    0         1
 	 *  -----------------------------------------------------------
 	 */
@@ -413,7 +412,7 @@
 	/*
 	 *  11b Tx Power Level
 	 *  -----------------------------------------------------------
-	 *  Configuration : Sets TX Power (Higher the value greater the घातer)
+	 *  Configuration : Sets TX Power (Higher the value greater the power)
 	 *  Values to set : Any value between 0 and 63 (inclusive Default 48)
 	 *  -----------------------------------------------------------
 	 */
@@ -422,7 +421,7 @@
 	/*
 	 *  Scan Request
 	 *  -----------------------------------------------------------
-	 *  Configuration : Request शेष scan
+	 *  Configuration : Request default scan
 	 *  Values to set : 0
 	 *  -----------------------------------------------------------
 	 */
@@ -505,7 +504,7 @@
 	WID_WPS_START			= 0x0043,
 
 	/*
-	 *  Protection mode क्रम MAC
+	 *  Protection mode for MAC
 	 *  -----------------------------------------------------------
 	 *  Configuration :  Auto  No protection  ERP    HT    GF
 	 *  Values to set :  0     1              2      3     4
@@ -514,7 +513,7 @@
 	WID_11N_PROT_MECH		= 0x0080,
 
 	/*
-	 *  ERP Protection type क्रम MAC
+	 *  ERP Protection type for MAC
 	 *  -----------------------------------------------------------
 	 *  Configuration :  Self-CTS   RTS-CTS
 	 *  Values to set :  0          1
@@ -533,7 +532,7 @@
 
 	/*
 	 *  11n Operating mode (Note that 11g operating mode will also be
-	 *  used in addition to this, अगर this is set to HT Mixed mode)
+	 *  used in addition to this, if this is set to HT Mixed mode)
 	 *  -----------------------------------------------------------
 	 *   Configuration :  HT Mixed  HT Only-20MHz   HT Only-20/40MHz
 	 *  Values to set :     1         2               3
@@ -546,9 +545,9 @@
 	 *  -----------------------------------------------------------
 	 *  Configuration :  Do not detect
 	 *  Values to set :  0
-	 *  Configuration :  Detect, करो not protect or report
+	 *  Configuration :  Detect, do not protect or report
 	 *  Values to set :  1
-	 *  Configuration :  Detect, protect and करो not report
+	 *  Configuration :  Detect, protect and do not report
 	 *  Values to set :  2
 	 *  Configuration :  Detect, protect and report to other BSS
 	 *  Values to set :  3
@@ -588,7 +587,7 @@
 	/*
 	 *  Current transmit MCS
 	 *  -----------------------------------------------------------
-	 *  Configuration :  MCS Index क्रम data rate
+	 *  Configuration :  MCS Index for data rate
 	 *  Values to set :  0 to 7
 	 *  -----------------------------------------------------------
 	 */
@@ -656,7 +655,7 @@
 	WID_TX_POWER_LEVEL_11N		= 0x00B1,
 
 	/* Custom Character WID list */
-	/* SCAN Complete notअगरication WID*/
+	/* SCAN Complete notification WID*/
 	WID_SCAN_COMPLETE		= 0x00C9,
 
 	WID_DEL_BEACON			= 0x00CA,
@@ -752,10 +751,10 @@
 	WID_REMOVE_KEY			= 0x301E,
 	WID_ASSOC_REQ_INFO		= 0x301F,
 	WID_ASSOC_RES_INFO		= 0x3020,
-	WID_MANUFACTURER		= 0x3026, /* Added क्रम CAPI tool */
-	WID_MODEL_NAME			= 0x3027, /* Added क्रम CAPI tool */
-	WID_MODEL_NUM			= 0x3028, /* Added क्रम CAPI tool */
-	WID_DEVICE_NAME			= 0x3029, /* Added क्रम CAPI tool */
+	WID_MANUFACTURER		= 0x3026, /* Added for CAPI tool */
+	WID_MODEL_NAME			= 0x3027, /* Added for CAPI tool */
+	WID_MODEL_NUM			= 0x3028, /* Added for CAPI tool */
+	WID_DEVICE_NAME			= 0x3029, /* Added for CAPI tool */
 
 	/* NMAC String WID list */
 	WID_SET_OPERATION_MODE		= 0x3079,
@@ -799,6 +798,6 @@
 	/* Miscellaneous WIDs */
 	WID_ALL				= 0x7FFE,
 	WID_MAX				= 0xFFFF
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

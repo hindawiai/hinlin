@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Greybus Module code
  *
@@ -7,101 +6,101 @@
  * Copyright 2016 Linaro Ltd.
  */
 
-#समावेश <linux/greybus.h>
-#समावेश "greybus_trace.h"
+#include <linux/greybus.h>
+#include "greybus_trace.h"
 
-अटल sमाप_प्रकार eject_store(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr,
-			   स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा gb_module *module = to_gb_module(dev);
-	काष्ठा gb_पूर्णांकerface *पूर्णांकf;
-	माप_प्रकार i;
-	दीर्घ val;
-	पूर्णांक ret;
+static ssize_t eject_store(struct device *dev,
+			   struct device_attribute *attr,
+			   const char *buf, size_t len)
+{
+	struct gb_module *module = to_gb_module(dev);
+	struct gb_interface *intf;
+	size_t i;
+	long val;
+	int ret;
 
-	ret = kम_से_दीर्घ(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtol(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (!val)
-		वापस len;
+	if (!val)
+		return len;
 
-	क्रम (i = 0; i < module->num_पूर्णांकerfaces; ++i) अणु
-		पूर्णांकf = module->पूर्णांकerfaces[i];
+	for (i = 0; i < module->num_interfaces; ++i) {
+		intf = module->interfaces[i];
 
-		mutex_lock(&पूर्णांकf->mutex);
+		mutex_lock(&intf->mutex);
 		/* Set flag to prevent concurrent activation. */
-		पूर्णांकf->ejected = true;
-		gb_पूर्णांकerface_disable(पूर्णांकf);
-		gb_पूर्णांकerface_deactivate(पूर्णांकf);
-		mutex_unlock(&पूर्णांकf->mutex);
-	पूर्ण
+		intf->ejected = true;
+		gb_interface_disable(intf);
+		gb_interface_deactivate(intf);
+		mutex_unlock(&intf->mutex);
+	}
 
-	/* Tell the SVC to eject the primary पूर्णांकerface. */
-	ret = gb_svc_पूर्णांकf_eject(module->hd->svc, module->module_id);
-	अगर (ret)
-		वापस ret;
+	/* Tell the SVC to eject the primary interface. */
+	ret = gb_svc_intf_eject(module->hd->svc, module->module_id);
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_WO(eject);
+	return len;
+}
+static DEVICE_ATTR_WO(eject);
 
-अटल sमाप_प्रकार module_id_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gb_module *module = to_gb_module(dev);
+static ssize_t module_id_show(struct device *dev,
+			      struct device_attribute *attr, char *buf)
+{
+	struct gb_module *module = to_gb_module(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", module->module_id);
-पूर्ण
-अटल DEVICE_ATTR_RO(module_id);
+	return sprintf(buf, "%u\n", module->module_id);
+}
+static DEVICE_ATTR_RO(module_id);
 
-अटल sमाप_प्रकार num_पूर्णांकerfaces_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा gb_module *module = to_gb_module(dev);
+static ssize_t num_interfaces_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct gb_module *module = to_gb_module(dev);
 
-	वापस प्र_लिखो(buf, "%zu\n", module->num_पूर्णांकerfaces);
-पूर्ण
-अटल DEVICE_ATTR_RO(num_पूर्णांकerfaces);
+	return sprintf(buf, "%zu\n", module->num_interfaces);
+}
+static DEVICE_ATTR_RO(num_interfaces);
 
-अटल काष्ठा attribute *module_attrs[] = अणु
+static struct attribute *module_attrs[] = {
 	&dev_attr_eject.attr,
 	&dev_attr_module_id.attr,
-	&dev_attr_num_पूर्णांकerfaces.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_num_interfaces.attr,
+	NULL,
+};
 ATTRIBUTE_GROUPS(module);
 
-अटल व्योम gb_module_release(काष्ठा device *dev)
-अणु
-	काष्ठा gb_module *module = to_gb_module(dev);
+static void gb_module_release(struct device *dev)
+{
+	struct gb_module *module = to_gb_module(dev);
 
 	trace_gb_module_release(module);
 
-	kमुक्त(module);
-पूर्ण
+	kfree(module);
+}
 
-काष्ठा device_type greybus_module_type = अणु
+struct device_type greybus_module_type = {
 	.name		= "greybus_module",
 	.release	= gb_module_release,
-पूर्ण;
+};
 
-काष्ठा gb_module *gb_module_create(काष्ठा gb_host_device *hd, u8 module_id,
-				   माप_प्रकार num_पूर्णांकerfaces)
-अणु
-	काष्ठा gb_पूर्णांकerface *पूर्णांकf;
-	काष्ठा gb_module *module;
-	पूर्णांक i;
+struct gb_module *gb_module_create(struct gb_host_device *hd, u8 module_id,
+				   size_t num_interfaces)
+{
+	struct gb_interface *intf;
+	struct gb_module *module;
+	int i;
 
-	module = kzalloc(काष्ठा_size(module, पूर्णांकerfaces, num_पूर्णांकerfaces),
+	module = kzalloc(struct_size(module, interfaces, num_interfaces),
 			 GFP_KERNEL);
-	अगर (!module)
-		वापस शून्य;
+	if (!module)
+		return NULL;
 
 	module->hd = hd;
 	module->module_id = module_id;
-	module->num_पूर्णांकerfaces = num_पूर्णांकerfaces;
+	module->num_interfaces = num_interfaces;
 
 	module->dev.parent = &hd->dev;
 	module->dev.bus = &greybus_bus_type;
@@ -113,125 +112,125 @@ ATTRIBUTE_GROUPS(module);
 
 	trace_gb_module_create(module);
 
-	क्रम (i = 0; i < num_पूर्णांकerfaces; ++i) अणु
-		पूर्णांकf = gb_पूर्णांकerface_create(module, module_id + i);
-		अगर (!पूर्णांकf) अणु
+	for (i = 0; i < num_interfaces; ++i) {
+		intf = gb_interface_create(module, module_id + i);
+		if (!intf) {
 			dev_err(&module->dev, "failed to create interface %u\n",
 				module_id + i);
-			जाओ err_put_पूर्णांकerfaces;
-		पूर्ण
-		module->पूर्णांकerfaces[i] = पूर्णांकf;
-	पूर्ण
+			goto err_put_interfaces;
+		}
+		module->interfaces[i] = intf;
+	}
 
-	वापस module;
+	return module;
 
-err_put_पूर्णांकerfaces:
-	क्रम (--i; i >= 0; --i)
-		gb_पूर्णांकerface_put(module->पूर्णांकerfaces[i]);
+err_put_interfaces:
+	for (--i; i >= 0; --i)
+		gb_interface_put(module->interfaces[i]);
 
 	put_device(&module->dev);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Register and enable an पूर्णांकerface after first attempting to activate it.
+ * Register and enable an interface after first attempting to activate it.
  */
-अटल व्योम gb_module_रेजिस्टर_पूर्णांकerface(काष्ठा gb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा gb_module *module = पूर्णांकf->module;
-	u8 पूर्णांकf_id = पूर्णांकf->पूर्णांकerface_id;
-	पूर्णांक ret;
+static void gb_module_register_interface(struct gb_interface *intf)
+{
+	struct gb_module *module = intf->module;
+	u8 intf_id = intf->interface_id;
+	int ret;
 
-	mutex_lock(&पूर्णांकf->mutex);
+	mutex_lock(&intf->mutex);
 
-	ret = gb_पूर्णांकerface_activate(पूर्णांकf);
-	अगर (ret) अणु
-		अगर (पूर्णांकf->type != GB_INTERFACE_TYPE_DUMMY) अणु
+	ret = gb_interface_activate(intf);
+	if (ret) {
+		if (intf->type != GB_INTERFACE_TYPE_DUMMY) {
 			dev_err(&module->dev,
 				"failed to activate interface %u: %d\n",
-				पूर्णांकf_id, ret);
-		पूर्ण
+				intf_id, ret);
+		}
 
-		gb_पूर्णांकerface_add(पूर्णांकf);
-		जाओ err_unlock;
-	पूर्ण
+		gb_interface_add(intf);
+		goto err_unlock;
+	}
 
-	ret = gb_पूर्णांकerface_add(पूर्णांकf);
-	अगर (ret)
-		जाओ err_पूर्णांकerface_deactivate;
+	ret = gb_interface_add(intf);
+	if (ret)
+		goto err_interface_deactivate;
 
-	ret = gb_पूर्णांकerface_enable(पूर्णांकf);
-	अगर (ret) अणु
+	ret = gb_interface_enable(intf);
+	if (ret) {
 		dev_err(&module->dev, "failed to enable interface %u: %d\n",
-			पूर्णांकf_id, ret);
-		जाओ err_पूर्णांकerface_deactivate;
-	पूर्ण
+			intf_id, ret);
+		goto err_interface_deactivate;
+	}
 
-	mutex_unlock(&पूर्णांकf->mutex);
+	mutex_unlock(&intf->mutex);
 
-	वापस;
+	return;
 
-err_पूर्णांकerface_deactivate:
-	gb_पूर्णांकerface_deactivate(पूर्णांकf);
+err_interface_deactivate:
+	gb_interface_deactivate(intf);
 err_unlock:
-	mutex_unlock(&पूर्णांकf->mutex);
-पूर्ण
+	mutex_unlock(&intf->mutex);
+}
 
-अटल व्योम gb_module_deरेजिस्टर_पूर्णांकerface(काष्ठा gb_पूर्णांकerface *पूर्णांकf)
-अणु
+static void gb_module_deregister_interface(struct gb_interface *intf)
+{
 	/* Mark as disconnected to prevent I/O during disable. */
-	अगर (पूर्णांकf->module->disconnected)
-		पूर्णांकf->disconnected = true;
+	if (intf->module->disconnected)
+		intf->disconnected = true;
 
-	mutex_lock(&पूर्णांकf->mutex);
-	पूर्णांकf->हटाओd = true;
-	gb_पूर्णांकerface_disable(पूर्णांकf);
-	gb_पूर्णांकerface_deactivate(पूर्णांकf);
-	mutex_unlock(&पूर्णांकf->mutex);
+	mutex_lock(&intf->mutex);
+	intf->removed = true;
+	gb_interface_disable(intf);
+	gb_interface_deactivate(intf);
+	mutex_unlock(&intf->mutex);
 
-	gb_पूर्णांकerface_del(पूर्णांकf);
-पूर्ण
+	gb_interface_del(intf);
+}
 
-/* Register a module and its पूर्णांकerfaces. */
-पूर्णांक gb_module_add(काष्ठा gb_module *module)
-अणु
-	माप_प्रकार i;
-	पूर्णांक ret;
+/* Register a module and its interfaces. */
+int gb_module_add(struct gb_module *module)
+{
+	size_t i;
+	int ret;
 
 	ret = device_add(&module->dev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&module->dev, "failed to register module: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	trace_gb_module_add(module);
 
-	क्रम (i = 0; i < module->num_पूर्णांकerfaces; ++i)
-		gb_module_रेजिस्टर_पूर्णांकerface(module->पूर्णांकerfaces[i]);
+	for (i = 0; i < module->num_interfaces; ++i)
+		gb_module_register_interface(module->interfaces[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Deरेजिस्टर a module and its पूर्णांकerfaces. */
-व्योम gb_module_del(काष्ठा gb_module *module)
-अणु
-	माप_प्रकार i;
+/* Deregister a module and its interfaces. */
+void gb_module_del(struct gb_module *module)
+{
+	size_t i;
 
-	क्रम (i = 0; i < module->num_पूर्णांकerfaces; ++i)
-		gb_module_deरेजिस्टर_पूर्णांकerface(module->पूर्णांकerfaces[i]);
+	for (i = 0; i < module->num_interfaces; ++i)
+		gb_module_deregister_interface(module->interfaces[i]);
 
 	trace_gb_module_del(module);
 
 	device_del(&module->dev);
-पूर्ण
+}
 
-व्योम gb_module_put(काष्ठा gb_module *module)
-अणु
-	माप_प्रकार i;
+void gb_module_put(struct gb_module *module)
+{
+	size_t i;
 
-	क्रम (i = 0; i < module->num_पूर्णांकerfaces; ++i)
-		gb_पूर्णांकerface_put(module->पूर्णांकerfaces[i]);
+	for (i = 0; i < module->num_interfaces; ++i)
+		gb_interface_put(module->interfaces[i]);
 
 	put_device(&module->dev);
-पूर्ण
+}

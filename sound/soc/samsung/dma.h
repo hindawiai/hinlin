@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * ALSA PCM पूर्णांकerface क्रम the Samsung SoC
+ * ALSA PCM interface for the Samsung SoC
  */
 
-#अगर_अघोषित _SAMSUNG_DMA_H
-#घोषणा _SAMSUNG_DMA_H
+#ifndef _SAMSUNG_DMA_H
+#define _SAMSUNG_DMA_H
 
-#समावेश <sound/dmaengine_pcm.h>
+#include <sound/dmaengine_pcm.h>
 
 /*
- * @tx, @rx arguments can be शून्य अगर the DMA channel names are "tx", "rx",
+ * @tx, @rx arguments can be NULL if the DMA channel names are "tx", "rx",
  * otherwise actual DMA channel names must be passed to this function.
  */
-पूर्णांक samsung_asoc_dma_platक्रमm_रेजिस्टर(काष्ठा device *dev, dma_filter_fn filter,
-				       स्थिर अक्षर *tx, स्थिर अक्षर *rx,
-				       काष्ठा device *dma_dev);
-#पूर्ण_अगर /* _SAMSUNG_DMA_H */
+int samsung_asoc_dma_platform_register(struct device *dev, dma_filter_fn filter,
+				       const char *tx, const char *rx,
+				       struct device *dma_dev);
+#endif /* _SAMSUNG_DMA_H */

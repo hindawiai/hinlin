@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,50 +20,50 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/types.h>
-#समावेश "kfd_priv.h"
-#समावेश "amdgpu_ids.h"
+#include <linux/types.h>
+#include "kfd_priv.h"
+#include "amdgpu_ids.h"
 
-अटल अचिन्हित पूर्णांक pasid_bits = 16;
-अटल bool pasids_allocated; /* = false */
+static unsigned int pasid_bits = 16;
+static bool pasids_allocated; /* = false */
 
-bool kfd_set_pasid_limit(अचिन्हित पूर्णांक new_limit)
-अणु
-	अगर (new_limit < 2)
-		वापस false;
+bool kfd_set_pasid_limit(unsigned int new_limit)
+{
+	if (new_limit < 2)
+		return false;
 
-	अगर (new_limit < (1U << pasid_bits)) अणु
-		अगर (pasids_allocated)
-			/* We've alपढ़ोy allocated user PASIDs, too late to
+	if (new_limit < (1U << pasid_bits)) {
+		if (pasids_allocated)
+			/* We've already allocated user PASIDs, too late to
 			 * change the limit
 			 */
-			वापस false;
+			return false;
 
-		जबतक (new_limit < (1U << pasid_bits))
+		while (new_limit < (1U << pasid_bits))
 			pasid_bits--;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अचिन्हित पूर्णांक kfd_get_pasid_limit(व्योम)
-अणु
-	वापस 1U << pasid_bits;
-पूर्ण
+unsigned int kfd_get_pasid_limit(void)
+{
+	return 1U << pasid_bits;
+}
 
-u32 kfd_pasid_alloc(व्योम)
-अणु
-	पूर्णांक r = amdgpu_pasid_alloc(pasid_bits);
+u32 kfd_pasid_alloc(void)
+{
+	int r = amdgpu_pasid_alloc(pasid_bits);
 
-	अगर (r > 0) अणु
+	if (r > 0) {
 		pasids_allocated = true;
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम kfd_pasid_मुक्त(u32 pasid)
-अणु
-	amdgpu_pasid_मुक्त(pasid);
-पूर्ण
+void kfd_pasid_free(u32 pasid)
+{
+	amdgpu_pasid_free(pasid);
+}

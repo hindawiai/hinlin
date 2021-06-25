@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-/*  The following is क्रम 8723B 1ANT BT Co-exist definition */
-#घोषणा	BT_INFO_8723B_1ANT_B_FTP		BIT7
-#घोषणा	BT_INFO_8723B_1ANT_B_A2DP		BIT6
-#घोषणा	BT_INFO_8723B_1ANT_B_HID		BIT5
-#घोषणा	BT_INFO_8723B_1ANT_B_SCO_BUSY		BIT4
-#घोषणा	BT_INFO_8723B_1ANT_B_ACL_BUSY		BIT3
-#घोषणा	BT_INFO_8723B_1ANT_B_INQ_PAGE		BIT2
-#घोषणा	BT_INFO_8723B_1ANT_B_SCO_ESCO		BIT1
-#घोषणा	BT_INFO_8723B_1ANT_B_CONNECTION		BIT0
+/*  The following is for 8723B 1ANT BT Co-exist definition */
+#define	BT_INFO_8723B_1ANT_B_FTP		BIT7
+#define	BT_INFO_8723B_1ANT_B_A2DP		BIT6
+#define	BT_INFO_8723B_1ANT_B_HID		BIT5
+#define	BT_INFO_8723B_1ANT_B_SCO_BUSY		BIT4
+#define	BT_INFO_8723B_1ANT_B_ACL_BUSY		BIT3
+#define	BT_INFO_8723B_1ANT_B_INQ_PAGE		BIT2
+#define	BT_INFO_8723B_1ANT_B_SCO_ESCO		BIT1
+#define	BT_INFO_8723B_1ANT_B_CONNECTION		BIT0
 
-#घोषणा	BT_INFO_8723B_1ANT_A2DP_BASIC_RATE(_BT_INFO_EXT_)	\
+#define	BT_INFO_8723B_1ANT_A2DP_BASIC_RATE(_BT_INFO_EXT_)	\
 		(((_BT_INFO_EXT_ & BIT0)) ? true : false)
 
-#घोषणा	BTC_RSSI_COEX_THRESH_TOL_8723B_1ANT 2
+#define	BTC_RSSI_COEX_THRESH_TOL_8723B_1ANT 2
 
-#घोषणा  BT_8723B_1ANT_WIFI_NOISY_THRESH 30   /* max: 255 */
+#define  BT_8723B_1ANT_WIFI_NOISY_THRESH 30   /* max: 255 */
 
-क्रमागत अणु
+enum {
 	BT_INFO_SRC_8723B_1ANT_WIFI_FW			= 0x0,
 	BT_INFO_SRC_8723B_1ANT_BT_RSP				= 0x1,
 	BT_INFO_SRC_8723B_1ANT_BT_ACTIVE_SEND		= 0x2,
 	BT_INFO_SRC_8723B_1ANT_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BT_8723B_1ANT_BT_STATUS_NON_CONNECTED_IDLE	= 0x0,
 	BT_8723B_1ANT_BT_STATUS_CONNECTED_IDLE		= 0x1,
 	BT_8723B_1ANT_BT_STATUS_INQ_PAGE				= 0x2,
@@ -37,9 +36,9 @@
 	BT_8723B_1ANT_BT_STATUS_SCO_BUSY				= 0x4,
 	BT_8723B_1ANT_BT_STATUS_ACL_SCO_BUSY			= 0x5,
 	BT_8723B_1ANT_BT_STATUS_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BT_8723B_1ANT_WIFI_STATUS_NON_CONNECTED_IDLE           = 0x0,
 	BT_8723B_1ANT_WIFI_STATUS_NON_CONNECTED_ASSO_AUTH_SCAN = 0x1,
 	BT_8723B_1ANT_WIFI_STATUS_CONNECTED_SCAN               = 0x2,
@@ -47,9 +46,9 @@
 	BT_8723B_1ANT_WIFI_STATUS_CONNECTED_IDLE               = 0x4,
 	BT_8723B_1ANT_WIFI_STATUS_CONNECTED_BUSY               = 0x5,
 	BT_8723B_1ANT_WIFI_STATUS_MAX
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	BT_8723B_1ANT_COEX_ALGO_UNDEFINED		= 0x0,
 	BT_8723B_1ANT_COEX_ALGO_SCO				= 0x1,
 	BT_8723B_1ANT_COEX_ALGO_HID				= 0x2,
@@ -62,9 +61,9 @@
 	BT_8723B_1ANT_COEX_ALGO_HID_A2DP_PANEDR	= 0x9,
 	BT_8723B_1ANT_COEX_ALGO_HID_A2DP		= 0xa,
 	BT_8723B_1ANT_COEX_ALGO_MAX				= 0xb,
-पूर्ण;
+};
 
-काष्ठा coex_dm_8723b_1ant अणु
+struct coex_dm_8723b_1ant {
 	/*  fw mechanism */
 	bool bCurIgnoreWlanAct;
 	bool bPreIgnoreWlanAct;
@@ -104,7 +103,7 @@
 	u8 preAlgorithm;
 	u8 curAlgorithm;
 	u8 btStatus;
-	u8 wअगरiChnlInfo[3];
+	u8 wifiChnlInfo[3];
 
 	u32 preRaMask;
 	u32 curRaMask;
@@ -117,9 +116,9 @@
 	u32 nArpCnt;
 
 	u8 errorCondition;
-पूर्ण;
+};
 
-काष्ठा coex_sta_8723b_1ant अणु
+struct coex_sta_8723b_1ant {
 	bool bBtLinkExist;
 	bool bScoExist;
 	bool bA2dpExist;
@@ -136,13 +135,13 @@
 	s8 btRssi;
 	bool bBtTxRxMask;
 	u8 preBtRssiState;
-	u8 preWअगरiRssiState[4];
+	u8 preWifiRssiState[4];
 	bool bC2hBtInfoReqSent;
 	u8 btInfoC2h[BT_INFO_SRC_8723B_1ANT_MAX][10];
 	u32 btInfoC2hCnt[BT_INFO_SRC_8723B_1ANT_MAX];
 	bool bC2hBtInquiryPage;
-	bool bC2hBtPage; /* Add क्रम win8.1 page out issue */
-	bool bWiFiIsHighPriTask; /* Add क्रम win8.1 page out issue */
+	bool bC2hBtPage; /* Add for win8.1 page out issue */
+	bool bWiFiIsHighPriTask; /* Add for win8.1 page out issue */
 	u8 btRetryCnt;
 	u8 btInfoExt;
 	u32 popEventCnt;
@@ -163,24 +162,24 @@
 	u8 nCoexTableType;
 
 	bool bForceLpsOn;
-पूर्ण;
+};
 
 /*  */
-/*  The following is पूर्णांकerface which will notअगरy coex module. */
+/*  The following is interface which will notify coex module. */
 /*  */
-व्योम EXhalbtc8723b1ant_PowerOnSetting(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtc8723b1ant_InitHwConfig(काष्ठा btc_coexist *pBtCoexist, bool bWअगरiOnly);
-व्योम EXhalbtc8723b1ant_InitCoexDm(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtc8723b1ant_IpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtc8723b1ant_LpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtc8723b1ant_ScanNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtc8723b1ant_ConnectNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtc8723b1ant_MediaStatusNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtc8723b1ant_SpecialPacketNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type);
-व्योम EXhalbtc8723b1ant_BtInfoNotअगरy(
-	काष्ठा btc_coexist *pBtCoexist, u8 *पंचांगpBuf, u8 length
+void EXhalbtc8723b1ant_PowerOnSetting(struct btc_coexist *pBtCoexist);
+void EXhalbtc8723b1ant_InitHwConfig(struct btc_coexist *pBtCoexist, bool bWifiOnly);
+void EXhalbtc8723b1ant_InitCoexDm(struct btc_coexist *pBtCoexist);
+void EXhalbtc8723b1ant_IpsNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtc8723b1ant_LpsNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtc8723b1ant_ScanNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtc8723b1ant_ConnectNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtc8723b1ant_MediaStatusNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtc8723b1ant_SpecialPacketNotify(struct btc_coexist *pBtCoexist, u8 type);
+void EXhalbtc8723b1ant_BtInfoNotify(
+	struct btc_coexist *pBtCoexist, u8 *tmpBuf, u8 length
 );
-व्योम EXhalbtc8723b1ant_HaltNotअगरy(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtc8723b1ant_PnpNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 pnpState);
-व्योम EXhalbtc8723b1ant_Periodical(काष्ठा btc_coexist *pBtCoexist);
-व्योम EXhalbtc8723b1ant_DisplayCoexInfo(काष्ठा btc_coexist *pBtCoexist);
+void EXhalbtc8723b1ant_HaltNotify(struct btc_coexist *pBtCoexist);
+void EXhalbtc8723b1ant_PnpNotify(struct btc_coexist *pBtCoexist, u8 pnpState);
+void EXhalbtc8723b1ant_Periodical(struct btc_coexist *pBtCoexist);
+void EXhalbtc8723b1ant_DisplayCoexInfo(struct btc_coexist *pBtCoexist);

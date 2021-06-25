@@ -1,354 +1,353 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Driver क्रम the NXP SAA7164 PCIe bridge
+ *  Driver for the NXP SAA7164 PCIe bridge
  *
- *  Copyright (c) 2010-2015 Steven Toth <stoth@kernelद_असल.com>
+ *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
  */
 
-#समावेश <linux/रुको.h>
+#include <linux/wait.h>
 
-#समावेश "saa7164.h"
+#include "saa7164.h"
 
-अटल पूर्णांक saa7164_cmd_alloc_seqno(काष्ठा saa7164_dev *dev)
-अणु
-	पूर्णांक i, ret = -1;
+static int saa7164_cmd_alloc_seqno(struct saa7164_dev *dev)
+{
+	int i, ret = -1;
 
 	mutex_lock(&dev->lock);
-	क्रम (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) अणु
-		अगर (dev->cmds[i].inuse == 0) अणु
+	for (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) {
+		if (dev->cmds[i].inuse == 0) {
 			dev->cmds[i].inuse = 1;
-			dev->cmds[i].संकेतled = 0;
-			dev->cmds[i].समयout = 0;
+			dev->cmds[i].signalled = 0;
+			dev->cmds[i].timeout = 0;
 			ret = dev->cmds[i].seqno;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	mutex_unlock(&dev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम saa7164_cmd_मुक्त_seqno(काष्ठा saa7164_dev *dev, u8 seqno)
-अणु
+static void saa7164_cmd_free_seqno(struct saa7164_dev *dev, u8 seqno)
+{
 	mutex_lock(&dev->lock);
-	अगर ((dev->cmds[seqno].inuse == 1) &&
-		(dev->cmds[seqno].seqno == seqno)) अणु
+	if ((dev->cmds[seqno].inuse == 1) &&
+		(dev->cmds[seqno].seqno == seqno)) {
 		dev->cmds[seqno].inuse = 0;
-		dev->cmds[seqno].संकेतled = 0;
-		dev->cmds[seqno].समयout = 0;
-	पूर्ण
+		dev->cmds[seqno].signalled = 0;
+		dev->cmds[seqno].timeout = 0;
+	}
 	mutex_unlock(&dev->lock);
-पूर्ण
+}
 
-अटल व्योम saa7164_cmd_समयout_seqno(काष्ठा saa7164_dev *dev, u8 seqno)
-अणु
+static void saa7164_cmd_timeout_seqno(struct saa7164_dev *dev, u8 seqno)
+{
 	mutex_lock(&dev->lock);
-	अगर ((dev->cmds[seqno].inuse == 1) &&
-		(dev->cmds[seqno].seqno == seqno)) अणु
-		dev->cmds[seqno].समयout = 1;
-	पूर्ण
+	if ((dev->cmds[seqno].inuse == 1) &&
+		(dev->cmds[seqno].seqno == seqno)) {
+		dev->cmds[seqno].timeout = 1;
+	}
 	mutex_unlock(&dev->lock);
-पूर्ण
+}
 
-अटल u32 saa7164_cmd_समयout_get(काष्ठा saa7164_dev *dev, u8 seqno)
-अणु
-	पूर्णांक ret = 0;
+static u32 saa7164_cmd_timeout_get(struct saa7164_dev *dev, u8 seqno)
+{
+	int ret = 0;
 
 	mutex_lock(&dev->lock);
-	अगर ((dev->cmds[seqno].inuse == 1) &&
-		(dev->cmds[seqno].seqno == seqno)) अणु
-		ret = dev->cmds[seqno].समयout;
-	पूर्ण
+	if ((dev->cmds[seqno].inuse == 1) &&
+		(dev->cmds[seqno].seqno == seqno)) {
+		ret = dev->cmds[seqno].timeout;
+	}
 	mutex_unlock(&dev->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Commands to the f/w get marshelled to/from this code then onto the PCI
  * -bus/c running buffer. */
-पूर्णांक saa7164_irq_dequeue(काष्ठा saa7164_dev *dev)
-अणु
-	पूर्णांक ret = SAA_OK, i = 0;
-	u32 समयout;
-	रुको_queue_head_t *q = शून्य;
-	u8 पंचांगp[512];
-	dprपूर्णांकk(DBGLVL_CMD, "%s()\n", __func__);
+int saa7164_irq_dequeue(struct saa7164_dev *dev)
+{
+	int ret = SAA_OK, i = 0;
+	u32 timeout;
+	wait_queue_head_t *q = NULL;
+	u8 tmp[512];
+	dprintk(DBGLVL_CMD, "%s()\n", __func__);
 
 	/* While any outstand message on the bus exists... */
-	करो अणु
+	do {
 
 		/* Peek the msg bus */
-		काष्ठा पंचांगComResInfo tRsp = अणु 0, 0, 0, 0, 0, 0 पूर्ण;
-		ret = saa7164_bus_get(dev, &tRsp, शून्य, 1);
-		अगर (ret != SAA_OK)
-			अवरोध;
+		struct tmComResInfo tRsp = { 0, 0, 0, 0, 0, 0 };
+		ret = saa7164_bus_get(dev, &tRsp, NULL, 1);
+		if (ret != SAA_OK)
+			break;
 
-		q = &dev->cmds[tRsp.seqno].रुको;
-		समयout = saa7164_cmd_समयout_get(dev, tRsp.seqno);
-		dprपूर्णांकk(DBGLVL_CMD, "%s() timeout = %d\n", __func__, समयout);
-		अगर (!समयout) अणु
-			dprपूर्णांकk(DBGLVL_CMD,
+		q = &dev->cmds[tRsp.seqno].wait;
+		timeout = saa7164_cmd_timeout_get(dev, tRsp.seqno);
+		dprintk(DBGLVL_CMD, "%s() timeout = %d\n", __func__, timeout);
+		if (!timeout) {
+			dprintk(DBGLVL_CMD,
 				"%s() signalled seqno(%d) (for dequeue)\n",
 				__func__, tRsp.seqno);
-			dev->cmds[tRsp.seqno].संकेतled = 1;
+			dev->cmds[tRsp.seqno].signalled = 1;
 			wake_up(q);
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR
+		} else {
+			printk(KERN_ERR
 				"%s() found timed out command on the bus\n",
 					__func__);
 
 			/* Clean the bus */
-			ret = saa7164_bus_get(dev, &tRsp, &पंचांगp, 0);
-			prपूर्णांकk(KERN_ERR "%s() ret = %x\n", __func__, ret);
-			अगर (ret == SAA_ERR_EMPTY)
-				/* Someone अन्यथा alपढ़ोy fetched the response */
-				वापस SAA_OK;
+			ret = saa7164_bus_get(dev, &tRsp, &tmp, 0);
+			printk(KERN_ERR "%s() ret = %x\n", __func__, ret);
+			if (ret == SAA_ERR_EMPTY)
+				/* Someone else already fetched the response */
+				return SAA_OK;
 
-			अगर (ret != SAA_OK)
-				वापस ret;
-		पूर्ण
+			if (ret != SAA_OK)
+				return ret;
+		}
 
 		/* It's unlikely to have more than 4 or 5 pending messages,
-		 * ensure we निकास at some poपूर्णांक regardless.
+		 * ensure we exit at some point regardless.
 		 */
-	पूर्ण जबतक (i++ < 32);
+	} while (i++ < 32);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Commands to the f/w get marshelled to/from this code then onto the PCI
  * -bus/c running buffer. */
-अटल पूर्णांक saa7164_cmd_dequeue(काष्ठा saa7164_dev *dev)
-अणु
-	पूर्णांक ret;
-	u32 समयout;
-	रुको_queue_head_t *q = शून्य;
-	u8 पंचांगp[512];
-	dprपूर्णांकk(DBGLVL_CMD, "%s()\n", __func__);
+static int saa7164_cmd_dequeue(struct saa7164_dev *dev)
+{
+	int ret;
+	u32 timeout;
+	wait_queue_head_t *q = NULL;
+	u8 tmp[512];
+	dprintk(DBGLVL_CMD, "%s()\n", __func__);
 
-	जबतक (true) अणु
+	while (true) {
 
-		काष्ठा पंचांगComResInfo tRsp = अणु 0, 0, 0, 0, 0, 0 पूर्ण;
-		ret = saa7164_bus_get(dev, &tRsp, शून्य, 1);
-		अगर (ret == SAA_ERR_EMPTY)
-			वापस SAA_OK;
+		struct tmComResInfo tRsp = { 0, 0, 0, 0, 0, 0 };
+		ret = saa7164_bus_get(dev, &tRsp, NULL, 1);
+		if (ret == SAA_ERR_EMPTY)
+			return SAA_OK;
 
-		अगर (ret != SAA_OK)
-			वापस ret;
+		if (ret != SAA_OK)
+			return ret;
 
-		q = &dev->cmds[tRsp.seqno].रुको;
-		समयout = saa7164_cmd_समयout_get(dev, tRsp.seqno);
-		dprपूर्णांकk(DBGLVL_CMD, "%s() timeout = %d\n", __func__, समयout);
-		अगर (समयout) अणु
-			prपूर्णांकk(KERN_ERR "found timed out command on the bus\n");
+		q = &dev->cmds[tRsp.seqno].wait;
+		timeout = saa7164_cmd_timeout_get(dev, tRsp.seqno);
+		dprintk(DBGLVL_CMD, "%s() timeout = %d\n", __func__, timeout);
+		if (timeout) {
+			printk(KERN_ERR "found timed out command on the bus\n");
 
 			/* Clean the bus */
-			ret = saa7164_bus_get(dev, &tRsp, &पंचांगp, 0);
-			prपूर्णांकk(KERN_ERR "ret = %x\n", ret);
-			अगर (ret == SAA_ERR_EMPTY)
-				/* Someone अन्यथा alपढ़ोy fetched the response */
-				वापस SAA_OK;
+			ret = saa7164_bus_get(dev, &tRsp, &tmp, 0);
+			printk(KERN_ERR "ret = %x\n", ret);
+			if (ret == SAA_ERR_EMPTY)
+				/* Someone else already fetched the response */
+				return SAA_OK;
 
-			अगर (ret != SAA_OK)
-				वापस ret;
+			if (ret != SAA_OK)
+				return ret;
 
-			अगर (tRsp.flags & PVC_CMDFLAG_CONTINUE)
-				prपूर्णांकk(KERN_ERR "split response\n");
-			अन्यथा
-				saa7164_cmd_मुक्त_seqno(dev, tRsp.seqno);
+			if (tRsp.flags & PVC_CMDFLAG_CONTINUE)
+				printk(KERN_ERR "split response\n");
+			else
+				saa7164_cmd_free_seqno(dev, tRsp.seqno);
 
-			prपूर्णांकk(KERN_ERR " timeout continue\n");
-			जारी;
-		पूर्ण
+			printk(KERN_ERR " timeout continue\n");
+			continue;
+		}
 
-		dprपूर्णांकk(DBGLVL_CMD, "%s() signalled seqno(%d) (for dequeue)\n",
+		dprintk(DBGLVL_CMD, "%s() signalled seqno(%d) (for dequeue)\n",
 			__func__, tRsp.seqno);
-		dev->cmds[tRsp.seqno].संकेतled = 1;
+		dev->cmds[tRsp.seqno].signalled = 1;
 		wake_up(q);
-		वापस SAA_OK;
-	पूर्ण
-पूर्ण
+		return SAA_OK;
+	}
+}
 
-अटल पूर्णांक saa7164_cmd_set(काष्ठा saa7164_dev *dev, काष्ठा पंचांगComResInfo *msg,
-			   व्योम *buf)
-अणु
-	काष्ठा पंचांगComResBusInfo *bus = &dev->bus;
+static int saa7164_cmd_set(struct saa7164_dev *dev, struct tmComResInfo *msg,
+			   void *buf)
+{
+	struct tmComResBusInfo *bus = &dev->bus;
 	u8 cmd_sent;
 	u16 size, idx;
 	u32 cmds;
-	व्योम *पंचांगp;
-	पूर्णांक ret = -1;
+	void *tmp;
+	int ret = -1;
 
-	अगर (!msg) अणु
-		prपूर्णांकk(KERN_ERR "%s() !msg\n", __func__);
-		वापस SAA_ERR_BAD_PARAMETER;
-	पूर्ण
+	if (!msg) {
+		printk(KERN_ERR "%s() !msg\n", __func__);
+		return SAA_ERR_BAD_PARAMETER;
+	}
 
 	mutex_lock(&dev->cmds[msg->id].lock);
 
 	size = msg->size;
 	idx = 0;
 	cmds = size / bus->m_wMaxReqSize;
-	अगर (size % bus->m_wMaxReqSize == 0)
+	if (size % bus->m_wMaxReqSize == 0)
 		cmds -= 1;
 
 	cmd_sent = 0;
 
-	/* Split the request पूर्णांकo smaller chunks */
-	क्रम (idx = 0; idx < cmds; idx++) अणु
+	/* Split the request into smaller chunks */
+	for (idx = 0; idx < cmds; idx++) {
 
 		msg->flags |= SAA_CMDFLAG_CONTINUE;
 		msg->size = bus->m_wMaxReqSize;
-		पंचांगp = buf + idx * bus->m_wMaxReqSize;
+		tmp = buf + idx * bus->m_wMaxReqSize;
 
-		ret = saa7164_bus_set(dev, msg, पंचांगp);
-		अगर (ret != SAA_OK) अणु
-			prपूर्णांकk(KERN_ERR "%s() set failed %d\n", __func__, ret);
+		ret = saa7164_bus_set(dev, msg, tmp);
+		if (ret != SAA_OK) {
+			printk(KERN_ERR "%s() set failed %d\n", __func__, ret);
 
-			अगर (cmd_sent) अणु
+			if (cmd_sent) {
 				ret = SAA_ERR_BUSY;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 			ret = SAA_ERR_OVERFLOW;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		cmd_sent = 1;
-	पूर्ण
+	}
 
 	/* If not the last command... */
-	अगर (idx != 0)
+	if (idx != 0)
 		msg->flags &= ~SAA_CMDFLAG_CONTINUE;
 
 	msg->size = size - idx * bus->m_wMaxReqSize;
 
 	ret = saa7164_bus_set(dev, msg, buf + idx * bus->m_wMaxReqSize);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() set last failed %d\n", __func__, ret);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() set last failed %d\n", __func__, ret);
 
-		अगर (cmd_sent) अणु
+		if (cmd_sent) {
 			ret = SAA_ERR_BUSY;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = SAA_ERR_OVERFLOW;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = SAA_OK;
 
 out:
 	mutex_unlock(&dev->cmds[msg->id].lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Wait क्रम a संकेत event, without holding a mutex. Either वापस TIMEOUT अगर
- * the event never occurred, or SAA_OK अगर it was संकेतed during the रुको.
+/* Wait for a signal event, without holding a mutex. Either return TIMEOUT if
+ * the event never occurred, or SAA_OK if it was signaled during the wait.
  */
-अटल पूर्णांक saa7164_cmd_रुको(काष्ठा saa7164_dev *dev, u8 seqno)
-अणु
-	रुको_queue_head_t *q = शून्य;
-	पूर्णांक ret = SAA_BUS_TIMEOUT;
-	अचिन्हित दीर्घ stamp;
-	पूर्णांक r;
+static int saa7164_cmd_wait(struct saa7164_dev *dev, u8 seqno)
+{
+	wait_queue_head_t *q = NULL;
+	int ret = SAA_BUS_TIMEOUT;
+	unsigned long stamp;
+	int r;
 
-	अगर (saa_debug >= 4)
+	if (saa_debug >= 4)
 		saa7164_bus_dump(dev);
 
-	dprपूर्णांकk(DBGLVL_CMD, "%s(seqno=%d)\n", __func__, seqno);
+	dprintk(DBGLVL_CMD, "%s(seqno=%d)\n", __func__, seqno);
 
 	mutex_lock(&dev->lock);
-	अगर ((dev->cmds[seqno].inuse == 1) &&
-		(dev->cmds[seqno].seqno == seqno)) अणु
-		q = &dev->cmds[seqno].रुको;
-	पूर्ण
+	if ((dev->cmds[seqno].inuse == 1) &&
+		(dev->cmds[seqno].seqno == seqno)) {
+		q = &dev->cmds[seqno].wait;
+	}
 	mutex_unlock(&dev->lock);
 
-	अगर (q) अणु
-		/* If we haven't been संकेतled we need to रुको */
-		अगर (dev->cmds[seqno].संकेतled == 0) अणु
-			stamp = jअगरfies;
-			dprपूर्णांकk(DBGLVL_CMD,
+	if (q) {
+		/* If we haven't been signalled we need to wait */
+		if (dev->cmds[seqno].signalled == 0) {
+			stamp = jiffies;
+			dprintk(DBGLVL_CMD,
 				"%s(seqno=%d) Waiting (signalled=%d)\n",
-				__func__, seqno, dev->cmds[seqno].संकेतled);
+				__func__, seqno, dev->cmds[seqno].signalled);
 
-			/* Wait क्रम संकेतled to be flagged or समयout */
-			/* In a highly stressed प्रणाली this can easily extend
-			 * पूर्णांकo multiple seconds beक्रमe the deferred worker
-			 * is scheduled, and we're woken up via संकेत.
-			 * We typically are संकेतled in < 50ms but it can
-			 * take MUCH दीर्घer.
+			/* Wait for signalled to be flagged or timeout */
+			/* In a highly stressed system this can easily extend
+			 * into multiple seconds before the deferred worker
+			 * is scheduled, and we're woken up via signal.
+			 * We typically are signalled in < 50ms but it can
+			 * take MUCH longer.
 			 */
-			रुको_event_समयout(*q, dev->cmds[seqno].संकेतled,
-				(HZ * रुकोsecs));
-			r = समय_beक्रमe(jअगरfies, stamp + (HZ * रुकोsecs));
-			अगर (r)
+			wait_event_timeout(*q, dev->cmds[seqno].signalled,
+				(HZ * waitsecs));
+			r = time_before(jiffies, stamp + (HZ * waitsecs));
+			if (r)
 				ret = SAA_OK;
-			अन्यथा
-				saa7164_cmd_समयout_seqno(dev, seqno);
+			else
+				saa7164_cmd_timeout_seqno(dev, seqno);
 
-			dprपूर्णांकk(DBGLVL_CMD, "%s(seqno=%d) Waiting res = %d (signalled=%d)\n",
+			dprintk(DBGLVL_CMD, "%s(seqno=%d) Waiting res = %d (signalled=%d)\n",
 				__func__, seqno, r,
-				dev->cmds[seqno].संकेतled);
-		पूर्ण अन्यथा
+				dev->cmds[seqno].signalled);
+		} else
 			ret = SAA_OK;
-	पूर्ण अन्यथा
-		prपूर्णांकk(KERN_ERR "%s(seqno=%d) seqno is invalid\n",
+	} else
+		printk(KERN_ERR "%s(seqno=%d) seqno is invalid\n",
 			__func__, seqno);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम saa7164_cmd_संकेत(काष्ठा saa7164_dev *dev, u8 seqno)
-अणु
-	पूर्णांक i;
-	dprपूर्णांकk(DBGLVL_CMD, "%s()\n", __func__);
+void saa7164_cmd_signal(struct saa7164_dev *dev, u8 seqno)
+{
+	int i;
+	dprintk(DBGLVL_CMD, "%s()\n", __func__);
 
 	mutex_lock(&dev->lock);
-	क्रम (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) अणु
-		अगर (dev->cmds[i].inuse == 1) अणु
-			dprपूर्णांकk(DBGLVL_CMD,
+	for (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) {
+		if (dev->cmds[i].inuse == 1) {
+			dprintk(DBGLVL_CMD,
 				"seqno %d inuse, sig = %d, t/out = %d\n",
 				dev->cmds[i].seqno,
-				dev->cmds[i].संकेतled,
-				dev->cmds[i].समयout);
-		पूर्ण
-	पूर्ण
+				dev->cmds[i].signalled,
+				dev->cmds[i].timeout);
+		}
+	}
 
-	क्रम (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) अणु
-		अगर ((dev->cmds[i].inuse == 1) && ((i == 0) ||
-			(dev->cmds[i].संकेतled) || (dev->cmds[i].समयout))) अणु
-			dprपूर्णांकk(DBGLVL_CMD, "%s(seqno=%d) calling wake_up\n",
+	for (i = 0; i < SAA_CMD_MAX_MSG_UNITS; i++) {
+		if ((dev->cmds[i].inuse == 1) && ((i == 0) ||
+			(dev->cmds[i].signalled) || (dev->cmds[i].timeout))) {
+			dprintk(DBGLVL_CMD, "%s(seqno=%d) calling wake_up\n",
 				__func__, i);
-			dev->cmds[i].संकेतled = 1;
-			wake_up(&dev->cmds[i].रुको);
-		पूर्ण
-	पूर्ण
+			dev->cmds[i].signalled = 1;
+			wake_up(&dev->cmds[i].wait);
+		}
+	}
 	mutex_unlock(&dev->lock);
-पूर्ण
+}
 
-पूर्णांक saa7164_cmd_send(काष्ठा saa7164_dev *dev, u8 id, क्रमागत पंचांगComResCmd command,
-	u16 controlselector, u16 size, व्योम *buf)
-अणु
-	काष्ठा पंचांगComResInfo command_t, *pcommand_t;
-	काष्ठा पंचांगComResInfo response_t, *presponse_t;
+int saa7164_cmd_send(struct saa7164_dev *dev, u8 id, enum tmComResCmd command,
+	u16 controlselector, u16 size, void *buf)
+{
+	struct tmComResInfo command_t, *pcommand_t;
+	struct tmComResInfo response_t, *presponse_t;
 	u8 errdata[256];
 	u16 resp_dsize;
 	u16 data_recd;
 	u32 loop;
-	पूर्णांक ret;
-	पूर्णांक safety = 0;
+	int ret;
+	int safety = 0;
 
-	dprपूर्णांकk(DBGLVL_CMD, "%s(unitid = %s (%d) , command = 0x%x, sel = 0x%x)\n",
+	dprintk(DBGLVL_CMD, "%s(unitid = %s (%d) , command = 0x%x, sel = 0x%x)\n",
 		__func__, saa7164_unitid_name(dev, id), id,
 		command, controlselector);
 
-	अगर ((size == 0) || (buf == शून्य)) अणु
-		prपूर्णांकk(KERN_ERR "%s() Invalid param\n", __func__);
-		वापस SAA_ERR_BAD_PARAMETER;
-	पूर्ण
+	if ((size == 0) || (buf == NULL)) {
+		printk(KERN_ERR "%s() Invalid param\n", __func__);
+		return SAA_ERR_BAD_PARAMETER;
+	}
 
-	/* Prepare some basic command/response काष्ठाures */
-	स_रखो(&command_t, 0, माप(command_t));
-	स_रखो(&response_t, 0, माप(response_t));
+	/* Prepare some basic command/response structures */
+	memset(&command_t, 0, sizeof(command_t));
+	memset(&response_t, 0, sizeof(response_t));
 	pcommand_t = &command_t;
 	presponse_t = &response_t;
 	command_t.id = id;
@@ -358,11 +357,11 @@ out:
 
 	/* Allocate a unique sequence number */
 	ret = saa7164_cmd_alloc_seqno(dev);
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "%s() No free sequences\n", __func__);
+	if (ret < 0) {
+		printk(KERN_ERR "%s() No free sequences\n", __func__);
 		ret = SAA_ERR_NO_RESOURCES;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	command_t.seqno = (u8)ret;
 
@@ -370,204 +369,204 @@ out:
 	resp_dsize = size;
 	pcommand_t->size = size;
 
-	dprपूर्णांकk(DBGLVL_CMD, "%s() pcommand_t.seqno = %d\n",
+	dprintk(DBGLVL_CMD, "%s() pcommand_t.seqno = %d\n",
 		__func__, pcommand_t->seqno);
 
-	dprपूर्णांकk(DBGLVL_CMD, "%s() pcommand_t.size = %d\n",
+	dprintk(DBGLVL_CMD, "%s() pcommand_t.size = %d\n",
 		__func__, pcommand_t->size);
 
 	ret = saa7164_cmd_set(dev, pcommand_t, buf);
-	अगर (ret != SAA_OK) अणु
-		prपूर्णांकk(KERN_ERR "%s() set command failed %d\n", __func__, ret);
+	if (ret != SAA_OK) {
+		printk(KERN_ERR "%s() set command failed %d\n", __func__, ret);
 
-		अगर (ret != SAA_ERR_BUSY)
-			saa7164_cmd_मुक्त_seqno(dev, pcommand_t->seqno);
-		अन्यथा
-			/* Flag a समयout, because at least one
+		if (ret != SAA_ERR_BUSY)
+			saa7164_cmd_free_seqno(dev, pcommand_t->seqno);
+		else
+			/* Flag a timeout, because at least one
 			 * command was sent */
-			saa7164_cmd_समयout_seqno(dev, pcommand_t->seqno);
+			saa7164_cmd_timeout_seqno(dev, pcommand_t->seqno);
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* With split responses we have to collect the msgs piece by piece */
 	data_recd = 0;
 	loop = 1;
-	जबतक (loop) अणु
-		dprपूर्णांकk(DBGLVL_CMD, "%s() loop\n", __func__);
+	while (loop) {
+		dprintk(DBGLVL_CMD, "%s() loop\n", __func__);
 
-		ret = saa7164_cmd_रुको(dev, pcommand_t->seqno);
-		dprपूर्णांकk(DBGLVL_CMD, "%s() loop ret = %d\n", __func__, ret);
+		ret = saa7164_cmd_wait(dev, pcommand_t->seqno);
+		dprintk(DBGLVL_CMD, "%s() loop ret = %d\n", __func__, ret);
 
-		/* अगर घातer is करोwn and this is not a घातer command ... */
+		/* if power is down and this is not a power command ... */
 
-		अगर (ret == SAA_BUS_TIMEOUT) अणु
-			prपूर्णांकk(KERN_ERR "Event timed out\n");
-			saa7164_cmd_समयout_seqno(dev, pcommand_t->seqno);
-			वापस ret;
-		पूर्ण
+		if (ret == SAA_BUS_TIMEOUT) {
+			printk(KERN_ERR "Event timed out\n");
+			saa7164_cmd_timeout_seqno(dev, pcommand_t->seqno);
+			return ret;
+		}
 
-		अगर (ret != SAA_OK) अणु
-			prपूर्णांकk(KERN_ERR "spurious error\n");
-			वापस ret;
-		पूर्ण
+		if (ret != SAA_OK) {
+			printk(KERN_ERR "spurious error\n");
+			return ret;
+		}
 
 		/* Peek response */
-		ret = saa7164_bus_get(dev, presponse_t, शून्य, 1);
-		अगर (ret == SAA_ERR_EMPTY) अणु
-			dprपूर्णांकk(4, "%s() SAA_ERR_EMPTY\n", __func__);
-			जारी;
-		पूर्ण
-		अगर (ret != SAA_OK) अणु
-			prपूर्णांकk(KERN_ERR "peek failed\n");
-			वापस ret;
-		पूर्ण
+		ret = saa7164_bus_get(dev, presponse_t, NULL, 1);
+		if (ret == SAA_ERR_EMPTY) {
+			dprintk(4, "%s() SAA_ERR_EMPTY\n", __func__);
+			continue;
+		}
+		if (ret != SAA_OK) {
+			printk(KERN_ERR "peek failed\n");
+			return ret;
+		}
 
-		dprपूर्णांकk(DBGLVL_CMD, "%s() presponse_t->seqno = %d\n",
+		dprintk(DBGLVL_CMD, "%s() presponse_t->seqno = %d\n",
 			__func__, presponse_t->seqno);
 
-		dprपूर्णांकk(DBGLVL_CMD, "%s() presponse_t->flags = 0x%x\n",
+		dprintk(DBGLVL_CMD, "%s() presponse_t->flags = 0x%x\n",
 			__func__, presponse_t->flags);
 
-		dprपूर्णांकk(DBGLVL_CMD, "%s() presponse_t->size = %d\n",
+		dprintk(DBGLVL_CMD, "%s() presponse_t->size = %d\n",
 			__func__, presponse_t->size);
 
-		/* Check अगर the response was क्रम our command */
-		अगर (presponse_t->seqno != pcommand_t->seqno) अणु
+		/* Check if the response was for our command */
+		if (presponse_t->seqno != pcommand_t->seqno) {
 
-			dprपूर्णांकk(DBGLVL_CMD,
+			dprintk(DBGLVL_CMD,
 				"wrong event: seqno = %d, expected seqno = %d, will dequeue regardless\n",
 				presponse_t->seqno, pcommand_t->seqno);
 
 			ret = saa7164_cmd_dequeue(dev);
-			अगर (ret != SAA_OK) अणु
-				prपूर्णांकk(KERN_ERR "dequeue failed, ret = %d\n",
+			if (ret != SAA_OK) {
+				printk(KERN_ERR "dequeue failed, ret = %d\n",
 					ret);
-				अगर (safety++ > 16) अणु
-					prपूर्णांकk(KERN_ERR
+				if (safety++ > 16) {
+					printk(KERN_ERR
 					"dequeue exceeded, safety exit\n");
-					वापस SAA_ERR_BUSY;
-				पूर्ण
-			पूर्ण
+					return SAA_ERR_BUSY;
+				}
+			}
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर ((presponse_t->flags & PVC_RESPONSEFLAG_ERROR) != 0) अणु
+		if ((presponse_t->flags & PVC_RESPONSEFLAG_ERROR) != 0) {
 
-			स_रखो(&errdata[0], 0, माप(errdata));
+			memset(&errdata[0], 0, sizeof(errdata));
 
 			ret = saa7164_bus_get(dev, presponse_t, &errdata[0], 0);
-			अगर (ret != SAA_OK) अणु
-				prपूर्णांकk(KERN_ERR "get error(2)\n");
-				वापस ret;
-			पूर्ण
+			if (ret != SAA_OK) {
+				printk(KERN_ERR "get error(2)\n");
+				return ret;
+			}
 
-			saa7164_cmd_मुक्त_seqno(dev, pcommand_t->seqno);
+			saa7164_cmd_free_seqno(dev, pcommand_t->seqno);
 
-			dprपूर्णांकk(DBGLVL_CMD, "%s() errdata %02x%02x%02x%02x\n",
+			dprintk(DBGLVL_CMD, "%s() errdata %02x%02x%02x%02x\n",
 				__func__, errdata[0], errdata[1], errdata[2],
 				errdata[3]);
 
 			/* Map error codes */
-			dprपूर्णांकk(DBGLVL_CMD, "%s() cmd, error code  = 0x%x\n",
+			dprintk(DBGLVL_CMD, "%s() cmd, error code  = 0x%x\n",
 				__func__, errdata[0]);
 
-			चयन (errdata[0]) अणु
-			हाल PVC_ERRORCODE_INVALID_COMMAND:
-				dprपूर्णांकk(DBGLVL_CMD, "%s() INVALID_COMMAND\n",
+			switch (errdata[0]) {
+			case PVC_ERRORCODE_INVALID_COMMAND:
+				dprintk(DBGLVL_CMD, "%s() INVALID_COMMAND\n",
 					__func__);
 				ret = SAA_ERR_INVALID_COMMAND;
-				अवरोध;
-			हाल PVC_ERRORCODE_INVALID_DATA:
-				dprपूर्णांकk(DBGLVL_CMD, "%s() INVALID_DATA\n",
+				break;
+			case PVC_ERRORCODE_INVALID_DATA:
+				dprintk(DBGLVL_CMD, "%s() INVALID_DATA\n",
 					__func__);
 				ret = SAA_ERR_BAD_PARAMETER;
-				अवरोध;
-			हाल PVC_ERRORCODE_TIMEOUT:
-				dprपूर्णांकk(DBGLVL_CMD, "%s() TIMEOUT\n", __func__);
+				break;
+			case PVC_ERRORCODE_TIMEOUT:
+				dprintk(DBGLVL_CMD, "%s() TIMEOUT\n", __func__);
 				ret = SAA_ERR_TIMEOUT;
-				अवरोध;
-			हाल PVC_ERRORCODE_NAK:
-				dprपूर्णांकk(DBGLVL_CMD, "%s() NAK\n", __func__);
-				ret = SAA_ERR_शून्य_PACKET;
-				अवरोध;
-			हाल PVC_ERRORCODE_UNKNOWN:
-			हाल PVC_ERRORCODE_INVALID_CONTROL:
-				dprपूर्णांकk(DBGLVL_CMD,
+				break;
+			case PVC_ERRORCODE_NAK:
+				dprintk(DBGLVL_CMD, "%s() NAK\n", __func__);
+				ret = SAA_ERR_NULL_PACKET;
+				break;
+			case PVC_ERRORCODE_UNKNOWN:
+			case PVC_ERRORCODE_INVALID_CONTROL:
+				dprintk(DBGLVL_CMD,
 					"%s() UNKNOWN OR INVALID CONTROL\n",
 					__func__);
 				ret = SAA_ERR_NOT_SUPPORTED;
-				अवरोध;
-			शेष:
-				dprपूर्णांकk(DBGLVL_CMD, "%s() UNKNOWN\n", __func__);
+				break;
+			default:
+				dprintk(DBGLVL_CMD, "%s() UNKNOWN\n", __func__);
 				ret = SAA_ERR_NOT_SUPPORTED;
-			पूर्ण
+			}
 
 			/* See of other commands are on the bus */
-			अगर (saa7164_cmd_dequeue(dev) != SAA_OK)
-				prपूर्णांकk(KERN_ERR "dequeue(2) failed\n");
+			if (saa7164_cmd_dequeue(dev) != SAA_OK)
+				printk(KERN_ERR "dequeue(2) failed\n");
 
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		/* If response is invalid */
-		अगर ((presponse_t->id != pcommand_t->id) ||
+		if ((presponse_t->id != pcommand_t->id) ||
 			(presponse_t->command != pcommand_t->command) ||
 			(presponse_t->controlselector !=
 				pcommand_t->controlselector) ||
 			(((resp_dsize - data_recd) != presponse_t->size) &&
 				!(presponse_t->flags & PVC_CMDFLAG_CONTINUE)) ||
-			((resp_dsize - data_recd) < presponse_t->size)) अणु
+			((resp_dsize - data_recd) < presponse_t->size)) {
 
 			/* Invalid */
-			dprपूर्णांकk(DBGLVL_CMD, "%s() Invalid\n", __func__);
-			ret = saa7164_bus_get(dev, presponse_t, शून्य, 0);
-			अगर (ret != SAA_OK) अणु
-				prपूर्णांकk(KERN_ERR "get failed\n");
-				वापस ret;
-			पूर्ण
+			dprintk(DBGLVL_CMD, "%s() Invalid\n", __func__);
+			ret = saa7164_bus_get(dev, presponse_t, NULL, 0);
+			if (ret != SAA_OK) {
+				printk(KERN_ERR "get failed\n");
+				return ret;
+			}
 
 			/* See of other commands are on the bus */
-			अगर (saa7164_cmd_dequeue(dev) != SAA_OK)
-				prपूर्णांकk(KERN_ERR "dequeue(3) failed\n");
-			जारी;
-		पूर्ण
+			if (saa7164_cmd_dequeue(dev) != SAA_OK)
+				printk(KERN_ERR "dequeue(3) failed\n");
+			continue;
+		}
 
 		/* OK, now we're actually getting out correct response */
 		ret = saa7164_bus_get(dev, presponse_t, buf + data_recd, 0);
-		अगर (ret != SAA_OK) अणु
-			prपूर्णांकk(KERN_ERR "get failed\n");
-			वापस ret;
-		पूर्ण
+		if (ret != SAA_OK) {
+			printk(KERN_ERR "get failed\n");
+			return ret;
+		}
 
 		data_recd = presponse_t->size + data_recd;
-		अगर (resp_dsize == data_recd) अणु
-			dprपूर्णांकk(DBGLVL_CMD, "%s() Resp recd\n", __func__);
-			अवरोध;
-		पूर्ण
+		if (resp_dsize == data_recd) {
+			dprintk(DBGLVL_CMD, "%s() Resp recd\n", __func__);
+			break;
+		}
 
 		/* See of other commands are on the bus */
-		अगर (saa7164_cmd_dequeue(dev) != SAA_OK)
-			prपूर्णांकk(KERN_ERR "dequeue(3) failed\n");
+		if (saa7164_cmd_dequeue(dev) != SAA_OK)
+			printk(KERN_ERR "dequeue(3) failed\n");
 
-		जारी;
+		continue;
 
-	पूर्ण /* (loop) */
+	} /* (loop) */
 
 	/* Release the sequence number allocation */
-	saa7164_cmd_मुक्त_seqno(dev, pcommand_t->seqno);
+	saa7164_cmd_free_seqno(dev, pcommand_t->seqno);
 
-	/* अगर घातerकरोwn संकेत all pending commands */
+	/* if powerdown signal all pending commands */
 
-	dprपूर्णांकk(DBGLVL_CMD, "%s() Calling dequeue then exit\n", __func__);
+	dprintk(DBGLVL_CMD, "%s() Calling dequeue then exit\n", __func__);
 
 	/* See of other commands are on the bus */
-	अगर (saa7164_cmd_dequeue(dev) != SAA_OK)
-		prपूर्णांकk(KERN_ERR "dequeue(4) failed\n");
+	if (saa7164_cmd_dequeue(dev) != SAA_OK)
+		printk(KERN_ERR "dequeue(4) failed\n");
 
 	ret = SAA_OK;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 

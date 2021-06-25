@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Backlight driver क्रम Dialog Semiconductor DA9030/DA9034
+ * Backlight driver for Dialog Semiconductor DA9030/DA9034
  *
  * Copyright (C) 2008 Compulab, Ltd.
  *	Mike Rapoport <mike@compulab.co.il>
@@ -10,150 +9,150 @@
  *	Eric Miao <eric.miao@marvell.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/mfd/da903x.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/mfd/da903x.h>
+#include <linux/slab.h>
+#include <linux/module.h>
 
-#घोषणा DA9030_WLED_CONTROL	0x25
-#घोषणा DA9030_WLED_CP_EN	(1 << 6)
-#घोषणा DA9030_WLED_TRIM(x)	((x) & 0x7)
+#define DA9030_WLED_CONTROL	0x25
+#define DA9030_WLED_CP_EN	(1 << 6)
+#define DA9030_WLED_TRIM(x)	((x) & 0x7)
 
-#घोषणा DA9034_WLED_CONTROL1	0x3C
-#घोषणा DA9034_WLED_CONTROL2	0x3D
-#घोषणा DA9034_WLED_ISET(x)	((x) & 0x1f)
+#define DA9034_WLED_CONTROL1	0x3C
+#define DA9034_WLED_CONTROL2	0x3D
+#define DA9034_WLED_ISET(x)	((x) & 0x1f)
 
-#घोषणा DA9034_WLED_BOOST_EN	(1 << 5)
+#define DA9034_WLED_BOOST_EN	(1 << 5)
 
-#घोषणा DA9030_MAX_BRIGHTNESS	7
-#घोषणा DA9034_MAX_BRIGHTNESS	0x7f
+#define DA9030_MAX_BRIGHTNESS	7
+#define DA9034_MAX_BRIGHTNESS	0x7f
 
-काष्ठा da903x_backlight_data अणु
-	काष्ठा device *da903x_dev;
-	पूर्णांक id;
-	पूर्णांक current_brightness;
-पूर्ण;
+struct da903x_backlight_data {
+	struct device *da903x_dev;
+	int id;
+	int current_brightness;
+};
 
-अटल पूर्णांक da903x_backlight_set(काष्ठा backlight_device *bl, पूर्णांक brightness)
-अणु
-	काष्ठा da903x_backlight_data *data = bl_get_data(bl);
-	काष्ठा device *dev = data->da903x_dev;
-	uपूर्णांक8_t val;
-	पूर्णांक ret = 0;
+static int da903x_backlight_set(struct backlight_device *bl, int brightness)
+{
+	struct da903x_backlight_data *data = bl_get_data(bl);
+	struct device *dev = data->da903x_dev;
+	uint8_t val;
+	int ret = 0;
 
-	चयन (data->id) अणु
-	हाल DA9034_ID_WLED:
+	switch (data->id) {
+	case DA9034_ID_WLED:
 		ret = da903x_update(dev, DA9034_WLED_CONTROL1,
 				brightness, 0x7f);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (data->current_brightness && brightness == 0)
+		if (data->current_brightness && brightness == 0)
 			ret = da903x_clr_bits(dev,
 					DA9034_WLED_CONTROL2,
 					DA9034_WLED_BOOST_EN);
 
-		अगर (data->current_brightness == 0 && brightness)
+		if (data->current_brightness == 0 && brightness)
 			ret = da903x_set_bits(dev,
 					DA9034_WLED_CONTROL2,
 					DA9034_WLED_BOOST_EN);
-		अवरोध;
-	हाल DA9030_ID_WLED:
+		break;
+	case DA9030_ID_WLED:
 		val = DA9030_WLED_TRIM(brightness);
 		val |= brightness ? DA9030_WLED_CP_EN : 0;
-		ret = da903x_ग_लिखो(dev, DA9030_WLED_CONTROL, val);
-		अवरोध;
-	पूर्ण
+		ret = da903x_write(dev, DA9030_WLED_CONTROL, val);
+		break;
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	data->current_brightness = brightness;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da903x_backlight_update_status(काष्ठा backlight_device *bl)
-अणु
-	वापस da903x_backlight_set(bl, backlight_get_brightness(bl));
-पूर्ण
+static int da903x_backlight_update_status(struct backlight_device *bl)
+{
+	return da903x_backlight_set(bl, backlight_get_brightness(bl));
+}
 
-अटल पूर्णांक da903x_backlight_get_brightness(काष्ठा backlight_device *bl)
-अणु
-	काष्ठा da903x_backlight_data *data = bl_get_data(bl);
+static int da903x_backlight_get_brightness(struct backlight_device *bl)
+{
+	struct da903x_backlight_data *data = bl_get_data(bl);
 
-	वापस data->current_brightness;
-पूर्ण
+	return data->current_brightness;
+}
 
-अटल स्थिर काष्ठा backlight_ops da903x_backlight_ops = अणु
+static const struct backlight_ops da903x_backlight_ops = {
 	.options	= BL_CORE_SUSPENDRESUME,
 	.update_status	= da903x_backlight_update_status,
 	.get_brightness	= da903x_backlight_get_brightness,
-पूर्ण;
+};
 
-अटल पूर्णांक da903x_backlight_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा da9034_backlight_pdata *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा da903x_backlight_data *data;
-	काष्ठा backlight_device *bl;
-	काष्ठा backlight_properties props;
-	पूर्णांक max_brightness;
+static int da903x_backlight_probe(struct platform_device *pdev)
+{
+	struct da9034_backlight_pdata *pdata = dev_get_platdata(&pdev->dev);
+	struct da903x_backlight_data *data;
+	struct backlight_device *bl;
+	struct backlight_properties props;
+	int max_brightness;
 
-	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
-	अगर (data == शून्य)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
+	if (data == NULL)
+		return -ENOMEM;
 
-	चयन (pdev->id) अणु
-	हाल DA9030_ID_WLED:
+	switch (pdev->id) {
+	case DA9030_ID_WLED:
 		max_brightness = DA9030_MAX_BRIGHTNESS;
-		अवरोध;
-	हाल DA9034_ID_WLED:
+		break;
+	case DA9034_ID_WLED:
 		max_brightness = DA9034_MAX_BRIGHTNESS;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&pdev->dev, "invalid backlight device ID(%d)\n",
 				pdev->id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	data->id = pdev->id;
 	data->da903x_dev = pdev->dev.parent;
 	data->current_brightness = 0;
 
 	/* adjust the WLED output current */
-	अगर (pdata)
-		da903x_ग_लिखो(data->da903x_dev, DA9034_WLED_CONTROL2,
+	if (pdata)
+		da903x_write(data->da903x_dev, DA9034_WLED_CONTROL2,
 				DA9034_WLED_ISET(pdata->output_current));
 
-	स_रखो(&props, 0, माप(props));
+	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = max_brightness;
-	bl = devm_backlight_device_रेजिस्टर(&pdev->dev, pdev->name,
+	bl = devm_backlight_device_register(&pdev->dev, pdev->name,
 					data->da903x_dev, data,
 					&da903x_backlight_ops, &props);
-	अगर (IS_ERR(bl)) अणु
+	if (IS_ERR(bl)) {
 		dev_err(&pdev->dev, "failed to register backlight\n");
-		वापस PTR_ERR(bl);
-	पूर्ण
+		return PTR_ERR(bl);
+	}
 
 	bl->props.brightness = max_brightness;
 
-	platक्रमm_set_drvdata(pdev, bl);
+	platform_set_drvdata(pdev, bl);
 	backlight_update_status(bl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver da903x_backlight_driver = अणु
-	.driver		= अणु
+static struct platform_driver da903x_backlight_driver = {
+	.driver		= {
 		.name	= "da903x-backlight",
-	पूर्ण,
+	},
 	.probe		= da903x_backlight_probe,
-पूर्ण;
+};
 
-module_platक्रमm_driver(da903x_backlight_driver);
+module_platform_driver(da903x_backlight_driver);
 
 MODULE_DESCRIPTION("Backlight Driver for Dialog Semiconductor DA9030/DA9034");
 MODULE_AUTHOR("Eric Miao <eric.miao@marvell.com>");

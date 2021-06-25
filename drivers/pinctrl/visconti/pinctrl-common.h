@@ -1,97 +1,96 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2020 TOSHIBA CORPORATION
  * Copyright (c) 2020 Toshiba Electronic Devices & Storage Corporation
  * Copyright (c) 2020 Nobuhiro Iwamatsu <nobuhiro1.iwamatsu@toshiba.co.jp>
  */
 
-#अगर_अघोषित __VISCONTI_PINCTRL_COMMON_H__
-#घोषणा __VISCONTI_PINCTRL_COMMON_H__
+#ifndef __VISCONTI_PINCTRL_COMMON_H__
+#define __VISCONTI_PINCTRL_COMMON_H__
 
-काष्ठा pinctrl_pin_desc;
+struct pinctrl_pin_desc;
 
 /* PIN */
-#घोषणा VISCONTI_PINS(pins_name, ...)  \
-	अटल स्थिर अचिन्हित पूर्णांक pins_name ## _pins[] = अणु __VA_ARGS__ पूर्ण
+#define VISCONTI_PINS(pins_name, ...)  \
+	static const unsigned int pins_name ## _pins[] = { __VA_ARGS__ }
 
-काष्ठा visconti_desc_pin अणु
-	काष्ठा pinctrl_pin_desc pin;
-	अचिन्हित पूर्णांक dsel_offset;
-	अचिन्हित पूर्णांक dsel_shअगरt;
-	अचिन्हित पूर्णांक pude_offset;
-	अचिन्हित पूर्णांक pudsel_offset;
-	अचिन्हित पूर्णांक pud_shअगरt;
-पूर्ण;
+struct visconti_desc_pin {
+	struct pinctrl_pin_desc pin;
+	unsigned int dsel_offset;
+	unsigned int dsel_shift;
+	unsigned int pude_offset;
+	unsigned int pudsel_offset;
+	unsigned int pud_shift;
+};
 
-#घोषणा VISCONTI_PIN(_pin, dsel, d_sh, pude, pudsel, p_sh)	\
-अणु								\
+#define VISCONTI_PIN(_pin, dsel, d_sh, pude, pudsel, p_sh)	\
+{								\
 	.pin = _pin,						\
 	.dsel_offset = dsel,					\
-	.dsel_shअगरt = d_sh,					\
+	.dsel_shift = d_sh,					\
 	.pude_offset = pude,					\
 	.pudsel_offset = pudsel,				\
-	.pud_shअगरt = p_sh,					\
-पूर्ण
+	.pud_shift = p_sh,					\
+}
 
 /* Group */
-#घोषणा VISCONTI_GROUPS(groups_name, ...)	\
-	अटल स्थिर अक्षर * स्थिर groups_name ## _grps[] = अणु __VA_ARGS__ पूर्ण
+#define VISCONTI_GROUPS(groups_name, ...)	\
+	static const char * const groups_name ## _grps[] = { __VA_ARGS__ }
 
-काष्ठा visconti_mux अणु
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक mask;
-	अचिन्हित पूर्णांक val;
-पूर्ण;
+struct visconti_mux {
+	unsigned int offset;
+	unsigned int mask;
+	unsigned int val;
+};
 
-काष्ठा visconti_pin_group अणु
-	स्थिर अक्षर *name;
-	स्थिर अचिन्हित पूर्णांक *pins;
-	अचिन्हित पूर्णांक nr_pins;
-	काष्ठा visconti_mux mux;
-पूर्ण;
+struct visconti_pin_group {
+	const char *name;
+	const unsigned int *pins;
+	unsigned int nr_pins;
+	struct visconti_mux mux;
+};
 
-#घोषणा VISCONTI_PIN_GROUP(group_name, off, msk, v)	\
-अणु							\
-	.name = __stringअगरy(group_name) "_grp",		\
+#define VISCONTI_PIN_GROUP(group_name, off, msk, v)	\
+{							\
+	.name = __stringify(group_name) "_grp",		\
 	.pins = group_name ## _pins,			\
 	.nr_pins = ARRAY_SIZE(group_name ## _pins),	\
-	.mux = अणु					\
+	.mux = {					\
 		.offset = off,				\
 		.mask = msk,				\
 		.val = v,				\
-	पूर्ण						\
-पूर्ण
+	}						\
+}
 
 /* MUX */
-काष्ठा visconti_pin_function अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर * स्थिर *groups;
-	अचिन्हित पूर्णांक nr_groups;
-पूर्ण;
+struct visconti_pin_function {
+	const char *name;
+	const char * const *groups;
+	unsigned int nr_groups;
+};
 
-#घोषणा VISCONTI_PIN_FUNCTION(func)		\
-अणु						\
+#define VISCONTI_PIN_FUNCTION(func)		\
+{						\
 	.name = #func,				\
 	.groups = func ## _grps,		\
 	.nr_groups = ARRAY_SIZE(func ## _grps),	\
-पूर्ण
+}
 
 /* chip dependent data */
-काष्ठा visconti_pinctrl_devdata अणु
-	स्थिर काष्ठा visconti_desc_pin *pins;
-	अचिन्हित पूर्णांक nr_pins;
-	स्थिर काष्ठा visconti_pin_group *groups;
-	अचिन्हित पूर्णांक nr_groups;
-	स्थिर काष्ठा visconti_pin_function *functions;
-	अचिन्हित पूर्णांक nr_functions;
+struct visconti_pinctrl_devdata {
+	const struct visconti_desc_pin *pins;
+	unsigned int nr_pins;
+	const struct visconti_pin_group *groups;
+	unsigned int nr_groups;
+	const struct visconti_pin_function *functions;
+	unsigned int nr_functions;
 
-	स्थिर काष्ठा visconti_mux *gpio_mux;
+	const struct visconti_mux *gpio_mux;
 
-	व्योम (*unlock)(व्योम __iomem *base);
-पूर्ण;
+	void (*unlock)(void __iomem *base);
+};
 
-पूर्णांक visconti_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
-			   स्थिर काष्ठा visconti_pinctrl_devdata *devdata);
+int visconti_pinctrl_probe(struct platform_device *pdev,
+			   const struct visconti_pinctrl_devdata *devdata);
 
-#पूर्ण_अगर /* __VISCONTI_PINCTRL_COMMON_H__ */
+#endif /* __VISCONTI_PINCTRL_COMMON_H__ */

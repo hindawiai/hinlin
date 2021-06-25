@@ -1,90 +1,89 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Linaro Limited
  * Copyright (c) 2017, EPAM Systems
  */
-#समावेश <linux/device.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/tee_drv.h>
-#समावेश "optee_private.h"
-#समावेश "optee_smc.h"
-#समावेश "shm_pool.h"
+#include <linux/device.h>
+#include <linux/dma-buf.h>
+#include <linux/genalloc.h>
+#include <linux/slab.h>
+#include <linux/tee_drv.h>
+#include "optee_private.h"
+#include "optee_smc.h"
+#include "shm_pool.h"
 
-अटल पूर्णांक pool_op_alloc(काष्ठा tee_shm_pool_mgr *poolm,
-			 काष्ठा tee_shm *shm, माप_प्रकार size)
-अणु
-	अचिन्हित पूर्णांक order = get_order(size);
-	काष्ठा page *page;
-	पूर्णांक rc = 0;
+static int pool_op_alloc(struct tee_shm_pool_mgr *poolm,
+			 struct tee_shm *shm, size_t size)
+{
+	unsigned int order = get_order(size);
+	struct page *page;
+	int rc = 0;
 
 	page = alloc_pages(GFP_KERNEL | __GFP_ZERO, order);
-	अगर (!page)
-		वापस -ENOMEM;
+	if (!page)
+		return -ENOMEM;
 
 	shm->kaddr = page_address(page);
 	shm->paddr = page_to_phys(page);
 	shm->size = PAGE_SIZE << order;
 
-	अगर (shm->flags & TEE_SHM_DMA_BUF) अणु
-		अचिन्हित पूर्णांक nr_pages = 1 << order, i;
-		काष्ठा page **pages;
+	if (shm->flags & TEE_SHM_DMA_BUF) {
+		unsigned int nr_pages = 1 << order, i;
+		struct page **pages;
 
-		pages = kसुस्मृति(nr_pages, माप(pages), GFP_KERNEL);
-		अगर (!pages)
-			वापस -ENOMEM;
+		pages = kcalloc(nr_pages, sizeof(pages), GFP_KERNEL);
+		if (!pages)
+			return -ENOMEM;
 
-		क्रम (i = 0; i < nr_pages; i++) अणु
+		for (i = 0; i < nr_pages; i++) {
 			pages[i] = page;
 			page++;
-		पूर्ण
+		}
 
 		shm->flags |= TEE_SHM_REGISTER;
-		rc = optee_shm_रेजिस्टर(shm->ctx, shm, pages, nr_pages,
-					(अचिन्हित दीर्घ)shm->kaddr);
-		kमुक्त(pages);
-	पूर्ण
+		rc = optee_shm_register(shm->ctx, shm, pages, nr_pages,
+					(unsigned long)shm->kaddr);
+		kfree(pages);
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम pool_op_मुक्त(काष्ठा tee_shm_pool_mgr *poolm,
-			 काष्ठा tee_shm *shm)
-अणु
-	अगर (shm->flags & TEE_SHM_DMA_BUF)
-		optee_shm_unरेजिस्टर(shm->ctx, shm);
+static void pool_op_free(struct tee_shm_pool_mgr *poolm,
+			 struct tee_shm *shm)
+{
+	if (shm->flags & TEE_SHM_DMA_BUF)
+		optee_shm_unregister(shm->ctx, shm);
 
-	मुक्त_pages((अचिन्हित दीर्घ)shm->kaddr, get_order(shm->size));
-	shm->kaddr = शून्य;
-पूर्ण
+	free_pages((unsigned long)shm->kaddr, get_order(shm->size));
+	shm->kaddr = NULL;
+}
 
-अटल व्योम pool_op_destroy_poolmgr(काष्ठा tee_shm_pool_mgr *poolm)
-अणु
-	kमुक्त(poolm);
-पूर्ण
+static void pool_op_destroy_poolmgr(struct tee_shm_pool_mgr *poolm)
+{
+	kfree(poolm);
+}
 
-अटल स्थिर काष्ठा tee_shm_pool_mgr_ops pool_ops = अणु
+static const struct tee_shm_pool_mgr_ops pool_ops = {
 	.alloc = pool_op_alloc,
-	.मुक्त = pool_op_मुक्त,
+	.free = pool_op_free,
 	.destroy_poolmgr = pool_op_destroy_poolmgr,
-पूर्ण;
+};
 
 /**
  * optee_shm_pool_alloc_pages() - create page-based allocator pool
  *
- * This pool is used when OP-TEE supports dymanic SHM. In this हाल
+ * This pool is used when OP-TEE supports dymanic SHM. In this case
  * command buffers and such are allocated from kernel's own memory.
  */
-काष्ठा tee_shm_pool_mgr *optee_shm_pool_alloc_pages(व्योम)
-अणु
-	काष्ठा tee_shm_pool_mgr *mgr = kzalloc(माप(*mgr), GFP_KERNEL);
+struct tee_shm_pool_mgr *optee_shm_pool_alloc_pages(void)
+{
+	struct tee_shm_pool_mgr *mgr = kzalloc(sizeof(*mgr), GFP_KERNEL);
 
-	अगर (!mgr)
-		वापस ERR_PTR(-ENOMEM);
+	if (!mgr)
+		return ERR_PTR(-ENOMEM);
 
 	mgr->ops = &pool_ops;
 
-	वापस mgr;
-पूर्ण
+	return mgr;
+}

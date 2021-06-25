@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *   Machine check handler
  *
@@ -10,134 +9,134 @@
  *		 Heiko Carstens <heiko.carstens@de.ibm.com>,
  */
 
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/module.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/kernel_stat.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/hardirq.h>
+#include <linux/log2.h>
+#include <linux/kprobes.h>
+#include <linux/kmemleak.h>
+#include <linux/time.h>
+#include <linux/module.h>
+#include <linux/sched/signal.h>
 
-#समावेश <linux/export.h>
-#समावेश <यंत्र/lowcore.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/stp.h>
-#समावेश <यंत्र/cpuसमय.स>
-#समावेश <यंत्र/nmi.h>
-#समावेश <यंत्र/crw.h>
-#समावेश <यंत्र/चयन_to.h>
-#समावेश <यंत्र/ctl_reg.h>
-#समावेश <यंत्र/यंत्र-offsets.h>
-#समावेश <linux/kvm_host.h>
+#include <linux/export.h>
+#include <asm/lowcore.h>
+#include <asm/smp.h>
+#include <asm/stp.h>
+#include <asm/cputime.h>
+#include <asm/nmi.h>
+#include <asm/crw.h>
+#include <asm/switch_to.h>
+#include <asm/ctl_reg.h>
+#include <asm/asm-offsets.h>
+#include <linux/kvm_host.h>
 
-काष्ठा mcck_काष्ठा अणु
-	अचिन्हित पूर्णांक समाप्त_task : 1;
-	अचिन्हित पूर्णांक channel_report : 1;
-	अचिन्हित पूर्णांक warning : 1;
-	अचिन्हित पूर्णांक stp_queue : 1;
-	अचिन्हित दीर्घ mcck_code;
-पूर्ण;
+struct mcck_struct {
+	unsigned int kill_task : 1;
+	unsigned int channel_report : 1;
+	unsigned int warning : 1;
+	unsigned int stp_queue : 1;
+	unsigned long mcck_code;
+};
 
-अटल DEFINE_PER_CPU(काष्ठा mcck_काष्ठा, cpu_mcck);
-अटल काष्ठा kmem_cache *mcesa_cache;
-अटल अचिन्हित दीर्घ mcesa_origin_lc;
+static DEFINE_PER_CPU(struct mcck_struct, cpu_mcck);
+static struct kmem_cache *mcesa_cache;
+static unsigned long mcesa_origin_lc;
 
-अटल अंतरभूत पूर्णांक nmi_needs_mcesa(व्योम)
-अणु
-	वापस MACHINE_HAS_VX || MACHINE_HAS_GS;
-पूर्ण
+static inline int nmi_needs_mcesa(void)
+{
+	return MACHINE_HAS_VX || MACHINE_HAS_GS;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ nmi_get_mcesa_size(व्योम)
-अणु
-	अगर (MACHINE_HAS_GS)
-		वापस MCESA_MAX_SIZE;
-	वापस MCESA_MIN_SIZE;
-पूर्ण
+static inline unsigned long nmi_get_mcesa_size(void)
+{
+	if (MACHINE_HAS_GS)
+		return MCESA_MAX_SIZE;
+	return MCESA_MIN_SIZE;
+}
 
 /*
- * The initial machine check extended save area क्रम the boot CPU.
- * It will be replaced by nmi_init() with an allocated काष्ठाure.
- * The काष्ठाure is required क्रम machine check happening early in
+ * The initial machine check extended save area for the boot CPU.
+ * It will be replaced by nmi_init() with an allocated structure.
+ * The structure is required for machine check happening early in
  * the boot process.
  */
-अटल काष्ठा mcesa boot_mcesa __initdata __aligned(MCESA_MAX_SIZE);
+static struct mcesa boot_mcesa __initdata __aligned(MCESA_MAX_SIZE);
 
-व्योम __init nmi_alloc_boot_cpu(काष्ठा lowcore *lc)
-अणु
-	अगर (!nmi_needs_mcesa())
-		वापस;
-	lc->mcesad = (अचिन्हित दीर्घ) &boot_mcesa;
-	अगर (MACHINE_HAS_GS)
+void __init nmi_alloc_boot_cpu(struct lowcore *lc)
+{
+	if (!nmi_needs_mcesa())
+		return;
+	lc->mcesad = (unsigned long) &boot_mcesa;
+	if (MACHINE_HAS_GS)
 		lc->mcesad |= ilog2(MCESA_MAX_SIZE);
-पूर्ण
+}
 
-अटल पूर्णांक __init nmi_init(व्योम)
-अणु
-	अचिन्हित दीर्घ origin, cr0, size;
+static int __init nmi_init(void)
+{
+	unsigned long origin, cr0, size;
 
-	अगर (!nmi_needs_mcesa())
-		वापस 0;
+	if (!nmi_needs_mcesa())
+		return 0;
 	size = nmi_get_mcesa_size();
-	अगर (size > MCESA_MIN_SIZE)
+	if (size > MCESA_MIN_SIZE)
 		mcesa_origin_lc = ilog2(size);
-	/* create slab cache क्रम the machine-check-extended-save-areas */
-	mcesa_cache = kmem_cache_create("nmi_save_areas", size, size, 0, शून्य);
-	अगर (!mcesa_cache)
+	/* create slab cache for the machine-check-extended-save-areas */
+	mcesa_cache = kmem_cache_create("nmi_save_areas", size, size, 0, NULL);
+	if (!mcesa_cache)
 		panic("Couldn't create nmi save area cache");
-	origin = (अचिन्हित दीर्घ) kmem_cache_alloc(mcesa_cache, GFP_KERNEL);
-	अगर (!origin)
+	origin = (unsigned long) kmem_cache_alloc(mcesa_cache, GFP_KERNEL);
+	if (!origin)
 		panic("Couldn't allocate nmi save area");
-	/* The poपूर्णांकer is stored with mcesa_bits ORed in */
-	kmemleak_not_leak((व्योम *) origin);
+	/* The pointer is stored with mcesa_bits ORed in */
+	kmemleak_not_leak((void *) origin);
 	__ctl_store(cr0, 0, 0);
 	__ctl_clear_bit(0, 28); /* disable lowcore protection */
 	/* Replace boot_mcesa on the boot CPU */
 	S390_lowcore.mcesad = origin | mcesa_origin_lc;
 	__ctl_load(cr0, 0, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(nmi_init);
 
-पूर्णांक nmi_alloc_per_cpu(काष्ठा lowcore *lc)
-अणु
-	अचिन्हित दीर्घ origin;
+int nmi_alloc_per_cpu(struct lowcore *lc)
+{
+	unsigned long origin;
 
-	अगर (!nmi_needs_mcesa())
-		वापस 0;
-	origin = (अचिन्हित दीर्घ) kmem_cache_alloc(mcesa_cache, GFP_KERNEL);
-	अगर (!origin)
-		वापस -ENOMEM;
-	/* The poपूर्णांकer is stored with mcesa_bits ORed in */
-	kmemleak_not_leak((व्योम *) origin);
+	if (!nmi_needs_mcesa())
+		return 0;
+	origin = (unsigned long) kmem_cache_alloc(mcesa_cache, GFP_KERNEL);
+	if (!origin)
+		return -ENOMEM;
+	/* The pointer is stored with mcesa_bits ORed in */
+	kmemleak_not_leak((void *) origin);
 	lc->mcesad = origin | mcesa_origin_lc;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nmi_मुक्त_per_cpu(काष्ठा lowcore *lc)
-अणु
-	अगर (!nmi_needs_mcesa())
-		वापस;
-	kmem_cache_मुक्त(mcesa_cache, (व्योम *)(lc->mcesad & MCESA_ORIGIN_MASK));
-पूर्ण
+void nmi_free_per_cpu(struct lowcore *lc)
+{
+	if (!nmi_needs_mcesa())
+		return;
+	kmem_cache_free(mcesa_cache, (void *)(lc->mcesad & MCESA_ORIGIN_MASK));
+}
 
-अटल notrace व्योम s390_handle_damage(व्योम)
-अणु
+static notrace void s390_handle_damage(void)
+{
 	smp_emergency_stop();
-	disabled_रुको();
-	जबतक (1);
-पूर्ण
+	disabled_wait();
+	while (1);
+}
 NOKPROBE_SYMBOL(s390_handle_damage);
 
 /*
- * Main machine check handler function. Will be called with पूर्णांकerrupts disabled
+ * Main machine check handler function. Will be called with interrupts disabled
  * and machine checks enabled.
  */
-व्योम __s390_handle_mcck(व्योम)
-अणु
-	काष्ठा mcck_काष्ठा mcck;
+void __s390_handle_mcck(void)
+{
+	struct mcck_struct mcck;
 
 	/*
 	 * Disable machine checks and get the current state of accumulated
@@ -146,227 +145,227 @@ NOKPROBE_SYMBOL(s390_handle_damage);
 	 */
 	local_mcck_disable();
 	mcck = *this_cpu_ptr(&cpu_mcck);
-	स_रखो(this_cpu_ptr(&cpu_mcck), 0, माप(mcck));
+	memset(this_cpu_ptr(&cpu_mcck), 0, sizeof(mcck));
 	local_mcck_enable();
 
-	अगर (mcck.channel_report)
+	if (mcck.channel_report)
 		crw_handle_channel_report();
 	/*
-	 * A warning may reमुख्य क्रम a proदीर्घed period on the bare iron.
-	 * (actually until the machine is घातered off, or the problem is gone)
-	 * So we just stop listening क्रम the WARNING MCH and aव्योम continuously
-	 * being पूर्णांकerrupted.  One caveat is however, that we must करो this per
+	 * A warning may remain for a prolonged period on the bare iron.
+	 * (actually until the machine is powered off, or the problem is gone)
+	 * So we just stop listening for the WARNING MCH and avoid continuously
+	 * being interrupted.  One caveat is however, that we must do this per
 	 * processor and cannot use the smp version of ctl_clear_bit().
-	 * On VM we only get one पूर्णांकerrupt per virtally presented machinecheck.
-	 * Though one suffices, we may get one पूर्णांकerrupt per (भव) cpu.
+	 * On VM we only get one interrupt per virtally presented machinecheck.
+	 * Though one suffices, we may get one interrupt per (virtual) cpu.
 	 */
-	अगर (mcck.warning) अणु	/* WARNING pending ? */
-		अटल पूर्णांक mchchk_wng_posted = 0;
+	if (mcck.warning) {	/* WARNING pending ? */
+		static int mchchk_wng_posted = 0;
 
 		/* Use single cpu clear, as we cannot handle smp here. */
 		__ctl_clear_bit(14, 24);	/* Disable WARNING MCH */
-		अगर (xchg(&mchchk_wng_posted, 1) == 0)
-			समाप्त_cad_pid(SIGPWR, 1);
-	पूर्ण
-	अगर (mcck.stp_queue)
+		if (xchg(&mchchk_wng_posted, 1) == 0)
+			kill_cad_pid(SIGPWR, 1);
+	}
+	if (mcck.stp_queue)
 		stp_queue_work();
-	अगर (mcck.समाप्त_task) अणु
+	if (mcck.kill_task) {
 		local_irq_enable();
-		prपूर्णांकk(KERN_EMERG "mcck: Terminating task because of machine "
+		printk(KERN_EMERG "mcck: Terminating task because of machine "
 		       "malfunction (code 0x%016lx).\n", mcck.mcck_code);
-		prपूर्णांकk(KERN_EMERG "mcck: task: %s, pid: %d.\n",
+		printk(KERN_EMERG "mcck: task: %s, pid: %d.\n",
 		       current->comm, current->pid);
-		करो_निकास(संक_अंश);
-	पूर्ण
-पूर्ण
+		do_exit(SIGSEGV);
+	}
+}
 
-व्योम noinstr s390_handle_mcck(व्योम)
-अणु
+void noinstr s390_handle_mcck(void)
+{
 	trace_hardirqs_off();
 	__s390_handle_mcck();
 	trace_hardirqs_on();
-पूर्ण
+}
 /*
- * वापसs 0 अगर all required रेजिस्टरs are available
- * वापसs 1 otherwise
+ * returns 0 if all required registers are available
+ * returns 1 otherwise
  */
-अटल पूर्णांक notrace s390_check_रेजिस्टरs(जोड़ mci mci, पूर्णांक umode)
-अणु
-	जोड़ ctlreg2 cr2;
-	पूर्णांक समाप्त_task;
+static int notrace s390_check_registers(union mci mci, int umode)
+{
+	union ctlreg2 cr2;
+	int kill_task;
 
-	समाप्त_task = 0;
+	kill_task = 0;
 
-	अगर (!mci.gr) अणु
+	if (!mci.gr) {
 		/*
-		 * General purpose रेजिस्टरs couldn't be restored and have
-		 * unknown contents. Stop प्रणाली or terminate process.
+		 * General purpose registers couldn't be restored and have
+		 * unknown contents. Stop system or terminate process.
 		 */
-		अगर (!umode)
+		if (!umode)
 			s390_handle_damage();
-		समाप्त_task = 1;
-	पूर्ण
-	/* Check control रेजिस्टरs */
-	अगर (!mci.cr) अणु
+		kill_task = 1;
+	}
+	/* Check control registers */
+	if (!mci.cr) {
 		/*
-		 * Control रेजिस्टरs have unknown contents.
-		 * Can't recover and thereक्रमe stopping machine.
+		 * Control registers have unknown contents.
+		 * Can't recover and therefore stopping machine.
 		 */
 		s390_handle_damage();
-	पूर्ण
-	अगर (!mci.fp) अणु
+	}
+	if (!mci.fp) {
 		/*
-		 * Floating poपूर्णांक रेजिस्टरs can't be restored. If the
-		 * kernel currently uses भग्नing poपूर्णांक रेजिस्टरs the
-		 * प्रणाली is stopped. If the process has its भग्नing
-		 * poपूर्णांकer रेजिस्टरs loaded it is terminated.
+		 * Floating point registers can't be restored. If the
+		 * kernel currently uses floating point registers the
+		 * system is stopped. If the process has its floating
+		 * pointer registers loaded it is terminated.
 		 */
-		अगर (S390_lowcore.fpu_flags & KERNEL_VXR_V0V7)
+		if (S390_lowcore.fpu_flags & KERNEL_VXR_V0V7)
 			s390_handle_damage();
-		अगर (!test_cpu_flag(CIF_FPU))
-			समाप्त_task = 1;
-	पूर्ण
-	अगर (!mci.fc) अणु
+		if (!test_cpu_flag(CIF_FPU))
+			kill_task = 1;
+	}
+	if (!mci.fc) {
 		/*
-		 * Floating poपूर्णांक control रेजिस्टर can't be restored.
-		 * If the kernel currently uses the भग्नing poपूर्णांकer
-		 * रेजिस्टरs and needs the FPC रेजिस्टर the प्रणाली is
-		 * stopped. If the process has its भग्नing poपूर्णांकer
-		 * रेजिस्टरs loaded it is terminated.
+		 * Floating point control register can't be restored.
+		 * If the kernel currently uses the floating pointer
+		 * registers and needs the FPC register the system is
+		 * stopped. If the process has its floating pointer
+		 * registers loaded it is terminated.
 		 */
-		अगर (S390_lowcore.fpu_flags & KERNEL_FPC)
+		if (S390_lowcore.fpu_flags & KERNEL_FPC)
 			s390_handle_damage();
-		अगर (!test_cpu_flag(CIF_FPU))
-			समाप्त_task = 1;
-	पूर्ण
+		if (!test_cpu_flag(CIF_FPU))
+			kill_task = 1;
+	}
 
-	अगर (MACHINE_HAS_VX) अणु
-		अगर (!mci.vr) अणु
+	if (MACHINE_HAS_VX) {
+		if (!mci.vr) {
 			/*
-			 * Vector रेजिस्टरs can't be restored. If the kernel
-			 * currently uses vector रेजिस्टरs the प्रणाली is
-			 * stopped. If the process has its vector रेजिस्टरs
+			 * Vector registers can't be restored. If the kernel
+			 * currently uses vector registers the system is
+			 * stopped. If the process has its vector registers
 			 * loaded it is terminated.
 			 */
-			अगर (S390_lowcore.fpu_flags & KERNEL_VXR)
+			if (S390_lowcore.fpu_flags & KERNEL_VXR)
 				s390_handle_damage();
-			अगर (!test_cpu_flag(CIF_FPU))
-				समाप्त_task = 1;
-		पूर्ण
-	पूर्ण
-	/* Check अगर access रेजिस्टरs are valid */
-	अगर (!mci.ar) अणु
+			if (!test_cpu_flag(CIF_FPU))
+				kill_task = 1;
+		}
+	}
+	/* Check if access registers are valid */
+	if (!mci.ar) {
 		/*
-		 * Access रेजिस्टरs have unknown contents.
+		 * Access registers have unknown contents.
 		 * Terminating task.
 		 */
-		समाप्त_task = 1;
-	पूर्ण
-	/* Check guarded storage रेजिस्टरs */
+		kill_task = 1;
+	}
+	/* Check guarded storage registers */
 	cr2.val = S390_lowcore.cregs_save_area[2];
-	अगर (cr2.gse) अणु
-		अगर (!mci.gs) अणु
+	if (cr2.gse) {
+		if (!mci.gs) {
 			/*
-			 * Guarded storage रेजिस्टर can't be restored and
+			 * Guarded storage register can't be restored and
 			 * the current processes uses guarded storage.
 			 * It has to be terminated.
 			 */
-			समाप्त_task = 1;
-		पूर्ण
-	पूर्ण
-	/* Check अगर old PSW is valid */
-	अगर (!mci.wp) अणु
+			kill_task = 1;
+		}
+	}
+	/* Check if old PSW is valid */
+	if (!mci.wp) {
 		/*
-		 * Can't tell अगर we come from user or kernel mode
+		 * Can't tell if we come from user or kernel mode
 		 * -> stopping machine.
 		 */
 		s390_handle_damage();
-	पूर्ण
-	/* Check क्रम invalid kernel inकाष्ठाion address */
-	अगर (!mci.ia && !umode) अणु
+	}
+	/* Check for invalid kernel instruction address */
+	if (!mci.ia && !umode) {
 		/*
-		 * The inकाष्ठाion address got lost जबतक running
+		 * The instruction address got lost while running
 		 * in the kernel -> stopping machine.
 		 */
 		s390_handle_damage();
-	पूर्ण
+	}
 
-	अगर (!mci.ms || !mci.pm || !mci.ia)
-		समाप्त_task = 1;
+	if (!mci.ms || !mci.pm || !mci.ia)
+		kill_task = 1;
 
-	वापस समाप्त_task;
-पूर्ण
-NOKPROBE_SYMBOL(s390_check_रेजिस्टरs);
+	return kill_task;
+}
+NOKPROBE_SYMBOL(s390_check_registers);
 
 /*
  * Backup the guest's machine check info to its description block
  */
-अटल व्योम notrace s390_backup_mcck_info(काष्ठा pt_regs *regs)
-अणु
-	काष्ठा mcck_अस्थिर_info *mcck_backup;
-	काष्ठा sie_page *sie_page;
+static void notrace s390_backup_mcck_info(struct pt_regs *regs)
+{
+	struct mcck_volatile_info *mcck_backup;
+	struct sie_page *sie_page;
 
 	/* r14 contains the sie block, which was set in sie64a */
-	काष्ठा kvm_s390_sie_block *sie_block =
-			(काष्ठा kvm_s390_sie_block *) regs->gprs[14];
+	struct kvm_s390_sie_block *sie_block =
+			(struct kvm_s390_sie_block *) regs->gprs[14];
 
-	अगर (sie_block == शून्य)
-		/* Something's seriously wrong, stop प्रणाली. */
+	if (sie_block == NULL)
+		/* Something's seriously wrong, stop system. */
 		s390_handle_damage();
 
-	sie_page = container_of(sie_block, काष्ठा sie_page, sie_block);
+	sie_page = container_of(sie_block, struct sie_page, sie_block);
 	mcck_backup = &sie_page->mcck_info;
-	mcck_backup->mcic = S390_lowcore.mcck_पूर्णांकerruption_code &
+	mcck_backup->mcic = S390_lowcore.mcck_interruption_code &
 				~(MCCK_CODE_CP | MCCK_CODE_EXT_DAMAGE);
-	mcck_backup->ext_damage_code = S390_lowcore.बाह्यal_damage_code;
+	mcck_backup->ext_damage_code = S390_lowcore.external_damage_code;
 	mcck_backup->failing_storage_address
 			= S390_lowcore.failing_storage_address;
-पूर्ण
+}
 NOKPROBE_SYMBOL(s390_backup_mcck_info);
 
-#घोषणा MAX_IPD_COUNT	29
-#घोषणा MAX_IPD_TIME	(5 * 60 * USEC_PER_SEC) /* 5 minutes */
+#define MAX_IPD_COUNT	29
+#define MAX_IPD_TIME	(5 * 60 * USEC_PER_SEC) /* 5 minutes */
 
-#घोषणा ED_STP_ISLAND	6	/* External damage STP island check */
-#घोषणा ED_STP_SYNC	7	/* External damage STP sync check */
+#define ED_STP_ISLAND	6	/* External damage STP island check */
+#define ED_STP_SYNC	7	/* External damage STP sync check */
 
-#घोषणा MCCK_CODE_NO_GUEST	(MCCK_CODE_CP | MCCK_CODE_EXT_DAMAGE)
+#define MCCK_CODE_NO_GUEST	(MCCK_CODE_CP | MCCK_CODE_EXT_DAMAGE)
 
 /*
  * machine check handler.
  */
-पूर्णांक notrace s390_करो_machine_check(काष्ठा pt_regs *regs)
-अणु
-	अटल पूर्णांक ipd_count;
-	अटल DEFINE_SPINLOCK(ipd_lock);
-	अटल अचिन्हित दीर्घ दीर्घ last_ipd;
-	काष्ठा mcck_काष्ठा *mcck;
-	अचिन्हित दीर्घ दीर्घ पंचांगp;
-	जोड़ mci mci;
-	अचिन्हित दीर्घ mcck_dam_code;
-	पूर्णांक mcck_pending = 0;
+int notrace s390_do_machine_check(struct pt_regs *regs)
+{
+	static int ipd_count;
+	static DEFINE_SPINLOCK(ipd_lock);
+	static unsigned long long last_ipd;
+	struct mcck_struct *mcck;
+	unsigned long long tmp;
+	union mci mci;
+	unsigned long mcck_dam_code;
+	int mcck_pending = 0;
 
 	nmi_enter();
 
-	अगर (user_mode(regs))
-		update_समयr_mcck();
+	if (user_mode(regs))
+		update_timer_mcck();
 	inc_irq_stat(NMI_NMI);
-	mci.val = S390_lowcore.mcck_पूर्णांकerruption_code;
+	mci.val = S390_lowcore.mcck_interruption_code;
 	mcck = this_cpu_ptr(&cpu_mcck);
 
-	अगर (mci.sd) अणु
+	if (mci.sd) {
 		/* System damage -> stopping machine */
 		s390_handle_damage();
-	पूर्ण
+	}
 
 	/*
-	 * Reinject the inकाष्ठाion processing damages' machine checks
-	 * including Delayed Access Exception पूर्णांकo the guest
-	 * instead of damaging the host अगर they happen in the guest.
+	 * Reinject the instruction processing damages' machine checks
+	 * including Delayed Access Exception into the guest
+	 * instead of damaging the host if they happen in the guest.
 	 */
-	अगर (mci.pd && !test_cpu_flag(CIF_MCCK_GUEST)) अणु
-		अगर (mci.b) अणु
-			/* Processing backup -> verअगरy अगर we can survive this */
+	if (mci.pd && !test_cpu_flag(CIF_MCCK_GUEST)) {
+		if (mci.b) {
+			/* Processing backup -> verify if we can survive this */
 			u64 z_mcic, o_mcic, t_mcic;
 			z_mcic = (1ULL<<63 | 1ULL<<59 | 1ULL<<29);
 			o_mcic = (1ULL<<43 | 1ULL<<42 | 1ULL<<41 | 1ULL<<40 |
@@ -375,117 +374,117 @@ NOKPROBE_SYMBOL(s390_backup_mcck_info);
 				  1ULL<<16);
 			t_mcic = mci.val;
 
-			अगर (((t_mcic & z_mcic) != 0) ||
-			    ((t_mcic & o_mcic) != o_mcic)) अणु
+			if (((t_mcic & z_mcic) != 0) ||
+			    ((t_mcic & o_mcic) != o_mcic)) {
 				s390_handle_damage();
-			पूर्ण
+			}
 
 			/*
-			 * Nullअगरying exigent condition, thereक्रमe we might
-			 * retry this inकाष्ठाion.
+			 * Nullifying exigent condition, therefore we might
+			 * retry this instruction.
 			 */
 			spin_lock(&ipd_lock);
-			पंचांगp = get_tod_घड़ी();
-			अगर (((पंचांगp - last_ipd) >> 12) < MAX_IPD_TIME)
+			tmp = get_tod_clock();
+			if (((tmp - last_ipd) >> 12) < MAX_IPD_TIME)
 				ipd_count++;
-			अन्यथा
+			else
 				ipd_count = 1;
-			last_ipd = पंचांगp;
-			अगर (ipd_count == MAX_IPD_COUNT)
+			last_ipd = tmp;
+			if (ipd_count == MAX_IPD_COUNT)
 				s390_handle_damage();
 			spin_unlock(&ipd_lock);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Processing damage -> stopping machine */
 			s390_handle_damage();
-		पूर्ण
-	पूर्ण
-	अगर (s390_check_रेजिस्टरs(mci, user_mode(regs))) अणु
+		}
+	}
+	if (s390_check_registers(mci, user_mode(regs))) {
 		/*
-		 * Couldn't restore all रेजिस्टर contents क्रम the
-		 * user space process -> mark task क्रम termination.
+		 * Couldn't restore all register contents for the
+		 * user space process -> mark task for termination.
 		 */
-		mcck->समाप्त_task = 1;
+		mcck->kill_task = 1;
 		mcck->mcck_code = mci.val;
 		mcck_pending = 1;
-	पूर्ण
+	}
 
 	/*
-	 * Backup the machine check's info अगर it happens when the guest
+	 * Backup the machine check's info if it happens when the guest
 	 * is running.
 	 */
-	अगर (test_cpu_flag(CIF_MCCK_GUEST))
+	if (test_cpu_flag(CIF_MCCK_GUEST))
 		s390_backup_mcck_info(regs);
 
-	अगर (mci.cd) अणु
+	if (mci.cd) {
 		/* Timing facility damage */
 		s390_handle_damage();
-	पूर्ण
-	अगर (mci.ed && mci.ec) अणु
+	}
+	if (mci.ed && mci.ec) {
 		/* External damage */
-		अगर (S390_lowcore.बाह्यal_damage_code & (1U << ED_STP_SYNC))
+		if (S390_lowcore.external_damage_code & (1U << ED_STP_SYNC))
 			mcck->stp_queue |= stp_sync_check();
-		अगर (S390_lowcore.बाह्यal_damage_code & (1U << ED_STP_ISLAND))
+		if (S390_lowcore.external_damage_code & (1U << ED_STP_ISLAND))
 			mcck->stp_queue |= stp_island_check();
 		mcck_pending = 1;
-	पूर्ण
+	}
 
 	/*
-	 * Reinject storage related machine checks पूर्णांकo the guest अगर they
+	 * Reinject storage related machine checks into the guest if they
 	 * happen when the guest is running.
 	 */
-	अगर (!test_cpu_flag(CIF_MCCK_GUEST)) अणु
-		अगर (mci.se)
+	if (!test_cpu_flag(CIF_MCCK_GUEST)) {
+		if (mci.se)
 			/* Storage error uncorrected */
 			s390_handle_damage();
-		अगर (mci.ke)
+		if (mci.ke)
 			/* Storage key-error uncorrected */
 			s390_handle_damage();
-		अगर (mci.ds && mci.fa)
+		if (mci.ds && mci.fa)
 			/* Storage degradation */
 			s390_handle_damage();
-	पूर्ण
-	अगर (mci.cp) अणु
+	}
+	if (mci.cp) {
 		/* Channel report word pending */
 		mcck->channel_report = 1;
 		mcck_pending = 1;
-	पूर्ण
-	अगर (mci.w) अणु
+	}
+	if (mci.w) {
 		/* Warning pending */
 		mcck->warning = 1;
 		mcck_pending = 1;
-	पूर्ण
+	}
 
 	/*
 	 * If there are only Channel Report Pending and External Damage
-	 * machine checks, they will not be reinjected पूर्णांकo the guest
+	 * machine checks, they will not be reinjected into the guest
 	 * because they refer to host conditions only.
 	 */
 	mcck_dam_code = (mci.val & MCIC_SUBCLASS_MASK);
-	अगर (test_cpu_flag(CIF_MCCK_GUEST) &&
-	(mcck_dam_code & MCCK_CODE_NO_GUEST) != mcck_dam_code) अणु
-		/* Set निकास reason code क्रम host's later handling */
-		*((दीर्घ *)(regs->gprs[15] + __SF_SIE_REASON)) = -EINTR;
-	पूर्ण
+	if (test_cpu_flag(CIF_MCCK_GUEST) &&
+	(mcck_dam_code & MCCK_CODE_NO_GUEST) != mcck_dam_code) {
+		/* Set exit reason code for host's later handling */
+		*((long *)(regs->gprs[15] + __SF_SIE_REASON)) = -EINTR;
+	}
 	clear_cpu_flag(CIF_MCCK_GUEST);
 
-	अगर (user_mode(regs) && mcck_pending) अणु
-		nmi_निकास();
-		वापस 1;
-	पूर्ण
+	if (user_mode(regs) && mcck_pending) {
+		nmi_exit();
+		return 1;
+	}
 
-	अगर (mcck_pending)
+	if (mcck_pending)
 		schedule_mcck_handler();
 
-	nmi_निकास();
-	वापस 0;
-पूर्ण
-NOKPROBE_SYMBOL(s390_करो_machine_check);
+	nmi_exit();
+	return 0;
+}
+NOKPROBE_SYMBOL(s390_do_machine_check);
 
-अटल पूर्णांक __init machine_check_init(व्योम)
-अणु
-	ctl_set_bit(14, 25);	/* enable बाह्यal damage MCH */
-	ctl_set_bit(14, 27);	/* enable प्रणाली recovery MCH */
+static int __init machine_check_init(void)
+{
+	ctl_set_bit(14, 25);	/* enable external damage MCH */
+	ctl_set_bit(14, 27);	/* enable system recovery MCH */
 	ctl_set_bit(14, 24);	/* enable warning MCH */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_initcall(machine_check_init);

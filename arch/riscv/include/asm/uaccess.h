@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  *
- * This file was copied from include/यंत्र-generic/uaccess.h
+ * This file was copied from include/asm-generic/uaccess.h
  */
 
-#अगर_अघोषित _ASM_RISCV_UACCESS_H
-#घोषणा _ASM_RISCV_UACCESS_H
+#ifndef _ASM_RISCV_UACCESS_H
+#define _ASM_RISCV_UACCESS_H
 
-#समावेश <यंत्र/pgtable.h>		/* क्रम TASK_SIZE */
+#include <asm/pgtable.h>		/* for TASK_SIZE */
 
 /*
  * User space memory access functions
  */
-#अगर_घोषित CONFIG_MMU
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/thपढ़ो_info.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/extable.h>
-#समावेश <यंत्र/यंत्र.h>
+#ifdef CONFIG_MMU
+#include <linux/errno.h>
+#include <linux/compiler.h>
+#include <linux/thread_info.h>
+#include <asm/byteorder.h>
+#include <asm/extable.h>
+#include <asm/asm.h>
 
-#घोषणा __enable_user_access()							\
-	__यंत्र__ __अस्थिर__ ("csrs sstatus, %0" : : "r" (SR_SUM) : "memory")
-#घोषणा __disable_user_access()							\
-	__यंत्र__ __अस्थिर__ ("csrc sstatus, %0" : : "r" (SR_SUM) : "memory")
+#define __enable_user_access()							\
+	__asm__ __volatile__ ("csrs sstatus, %0" : : "r" (SR_SUM) : "memory")
+#define __disable_user_access()							\
+	__asm__ __volatile__ ("csrc sstatus, %0" : : "r" (SR_SUM) : "memory")
 
 /**
- * access_ok: - Checks अगर a user space poपूर्णांकer is valid
- * @addr: User space poपूर्णांकer to start of block to check
+ * access_ok: - Checks if a user space pointer is valid
+ * @addr: User space pointer to start of block to check
  * @size: Size of block to check
  *
  * Context: User context only.  This function may sleep.
  *
- * Checks अगर a poपूर्णांकer to a block of memory in user space is valid.
+ * Checks if a pointer to a block of memory in user space is valid.
  *
- * Returns true (nonzero) अगर the memory block may be valid, false (zero)
- * अगर it is definitely invalid.
+ * Returns true (nonzero) if the memory block may be valid, false (zero)
+ * if it is definitely invalid.
  *
  * Note that, depending on architecture, this function probably just
- * checks that the poपूर्णांकer is in the user space range - after calling
- * this function, memory access functions may still वापस -EFAULT.
+ * checks that the pointer is in the user space range - after calling
+ * this function, memory access functions may still return -EFAULT.
  */
-#घोषणा access_ok(addr, size) (अणु					\
+#define access_ok(addr, size) ({					\
 	__chk_user_ptr(addr);						\
-	likely(__access_ok((अचिन्हित दीर्घ __क्रमce)(addr), (size)));	\
-पूर्ण)
+	likely(__access_ok((unsigned long __force)(addr), (size)));	\
+})
 
 /*
  * Ensure that the range [addr, addr+size) is within the process's
  * address space
  */
-अटल अंतरभूत पूर्णांक __access_ok(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size)
-अणु
-	वापस size <= TASK_SIZE && addr <= TASK_SIZE - size;
-पूर्ण
+static inline int __access_ok(unsigned long addr, unsigned long size)
+{
+	return size <= TASK_SIZE && addr <= TASK_SIZE - size;
+}
 
 /*
  * The exception table consists of pairs of addresses: the first is the
- * address of an inकाष्ठाion that is allowed to fault, and the second is
- * the address at which the program should जारी.  No रेजिस्टरs are
- * modअगरied, so it is entirely up to the continuation code to figure out
- * what to करो.
+ * address of an instruction that is allowed to fault, and the second is
+ * the address at which the program should continue.  No registers are
+ * modified, so it is entirely up to the continuation code to figure out
+ * what to do.
  *
  * All the routines below use bits of fixup code that are out of line
- * with the मुख्य inकाष्ठाion path.  This means when everything is well,
- * we करोn't even have to jump over them.  Further, they करो not पूर्णांकrude
+ * with the main instruction path.  This means when everything is well,
+ * we don't even have to jump over them.  Further, they do not intrude
  * on our cache or tlb entries.
  */
 
-#घोषणा __LSW	0
-#घोषणा __MSW	1
+#define __LSW	0
+#define __MSW	1
 
 /*
- * The "__xxx" versions of the user access functions करो not verअगरy the address
- * space - it must have been करोne previously with a separate "access_ok()"
+ * The "__xxx" versions of the user access functions do not verify the address
+ * space - it must have been done previously with a separate "access_ok()"
  * call.
  */
 
-#घोषणा __get_user_यंत्र(insn, x, ptr, err)			\
-करो अणु								\
-	uपूर्णांकptr_t __पंचांगp;					\
+#define __get_user_asm(insn, x, ptr, err)			\
+do {								\
+	uintptr_t __tmp;					\
 	__typeof__(x) __x;					\
-	__यंत्र__ __अस्थिर__ (					\
+	__asm__ __volatile__ (					\
 		"1:\n"						\
 		"	" insn " %1, %3\n"			\
 		"2:\n"						\
@@ -98,21 +97,21 @@
 		"	.balign " RISCV_SZPTR "\n"			\
 		"	" RISCV_PTR " 1b, 3b\n"			\
 		"	.previous"				\
-		: "+r" (err), "=&r" (__x), "=r" (__पंचांगp)		\
+		: "+r" (err), "=&r" (__x), "=r" (__tmp)		\
 		: "m" (*(ptr)), "i" (-EFAULT));			\
 	(x) = __x;						\
-पूर्ण जबतक (0)
+} while (0)
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा __get_user_8(x, ptr, err) \
-	__get_user_यंत्र("ld", x, ptr, err)
-#अन्यथा /* !CONFIG_64BIT */
-#घोषणा __get_user_8(x, ptr, err)				\
-करो अणु								\
+#ifdef CONFIG_64BIT
+#define __get_user_8(x, ptr, err) \
+	__get_user_asm("ld", x, ptr, err)
+#else /* !CONFIG_64BIT */
+#define __get_user_8(x, ptr, err)				\
+do {								\
 	u32 __user *__ptr = (u32 __user *)(ptr);		\
 	u32 __lo, __hi;						\
-	uपूर्णांकptr_t __पंचांगp;					\
-	__यंत्र__ __अस्थिर__ (					\
+	uintptr_t __tmp;					\
+	__asm__ __volatile__ (					\
 		"1:\n"						\
 		"	lw %1, %4\n"				\
 		"2:\n"						\
@@ -132,33 +131,33 @@
 		"	" RISCV_PTR " 2b, 4b\n"			\
 		"	.previous"				\
 		: "+r" (err), "=&r" (__lo), "=r" (__hi),	\
-			"=r" (__पंचांगp)				\
+			"=r" (__tmp)				\
 		: "m" (__ptr[__LSW]), "m" (__ptr[__MSW]),	\
 			"i" (-EFAULT));				\
 	(x) = (__typeof__(x))((__typeof__((x)-(x)))(		\
 		(((u64)__hi << 32) | __lo)));			\
-पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_64BIT */
+} while (0)
+#endif /* CONFIG_64BIT */
 
-#घोषणा __get_user_nocheck(x, __gu_ptr, __gu_err)		\
-करो अणु								\
-	चयन (माप(*__gu_ptr)) अणु				\
-	हाल 1:							\
-		__get_user_यंत्र("lb", (x), __gu_ptr, __gu_err);	\
-		अवरोध;						\
-	हाल 2:							\
-		__get_user_यंत्र("lh", (x), __gu_ptr, __gu_err);	\
-		अवरोध;						\
-	हाल 4:							\
-		__get_user_यंत्र("lw", (x), __gu_ptr, __gu_err);	\
-		अवरोध;						\
-	हाल 8:							\
+#define __get_user_nocheck(x, __gu_ptr, __gu_err)		\
+do {								\
+	switch (sizeof(*__gu_ptr)) {				\
+	case 1:							\
+		__get_user_asm("lb", (x), __gu_ptr, __gu_err);	\
+		break;						\
+	case 2:							\
+		__get_user_asm("lh", (x), __gu_ptr, __gu_err);	\
+		break;						\
+	case 4:							\
+		__get_user_asm("lw", (x), __gu_ptr, __gu_err);	\
+		break;						\
+	case 8:							\
 		__get_user_8((x), __gu_ptr, __gu_err);	\
-		अवरोध;						\
-	शेष:						\
+		break;						\
+	default:						\
 		BUILD_BUG();					\
-	पूर्ण							\
-पूर्ण जबतक (0)
+	}							\
+} while (0)
 
 /**
  * __get_user: - Get a simple variable from user space, with less checking.
@@ -168,22 +167,22 @@
  * Context: User context only.  This function may sleep.
  *
  * This macro copies a single simple variable from user space to kernel
- * space.  It supports simple types like अक्षर and पूर्णांक, but not larger
- * data types like काष्ठाures or arrays.
+ * space.  It supports simple types like char and int, but not larger
+ * data types like structures or arrays.
  *
- * @ptr must have poपूर्णांकer-to-simple-variable type, and the result of
+ * @ptr must have pointer-to-simple-variable type, and the result of
  * dereferencing @ptr must be assignable to @x without a cast.
  *
- * Caller must check the poपूर्णांकer with access_ok() beक्रमe calling this
+ * Caller must check the pointer with access_ok() before calling this
  * function.
  *
  * Returns zero on success, or -EFAULT on error.
  * On error, the variable @x is set to zero.
  */
-#घोषणा __get_user(x, ptr)					\
-(अणु								\
-	स्थिर __typeof__(*(ptr)) __user *__gu_ptr = (ptr);	\
-	दीर्घ __gu_err = 0;					\
+#define __get_user(x, ptr)					\
+({								\
+	const __typeof__(*(ptr)) __user *__gu_ptr = (ptr);	\
+	long __gu_err = 0;					\
 								\
 	__chk_user_ptr(__gu_ptr);				\
 								\
@@ -192,7 +191,7 @@
 	__disable_user_access();				\
 								\
 	__gu_err;						\
-पूर्ण)
+})
 
 /**
  * get_user: - Get a simple variable from user space.
@@ -202,29 +201,29 @@
  * Context: User context only.  This function may sleep.
  *
  * This macro copies a single simple variable from user space to kernel
- * space.  It supports simple types like अक्षर and पूर्णांक, but not larger
- * data types like काष्ठाures or arrays.
+ * space.  It supports simple types like char and int, but not larger
+ * data types like structures or arrays.
  *
- * @ptr must have poपूर्णांकer-to-simple-variable type, and the result of
+ * @ptr must have pointer-to-simple-variable type, and the result of
  * dereferencing @ptr must be assignable to @x without a cast.
  *
  * Returns zero on success, or -EFAULT on error.
  * On error, the variable @x is set to zero.
  */
-#घोषणा get_user(x, ptr)					\
-(अणु								\
-	स्थिर __typeof__(*(ptr)) __user *__p = (ptr);		\
+#define get_user(x, ptr)					\
+({								\
+	const __typeof__(*(ptr)) __user *__p = (ptr);		\
 	might_fault();						\
-	access_ok(__p, माप(*__p)) ?		\
+	access_ok(__p, sizeof(*__p)) ?		\
 		__get_user((x), __p) :				\
 		((x) = 0, -EFAULT);				\
-पूर्ण)
+})
 
-#घोषणा __put_user_यंत्र(insn, x, ptr, err)			\
-करो अणु								\
-	uपूर्णांकptr_t __पंचांगp;					\
+#define __put_user_asm(insn, x, ptr, err)			\
+do {								\
+	uintptr_t __tmp;					\
 	__typeof__(*(ptr)) __x = x;				\
-	__यंत्र__ __अस्थिर__ (					\
+	__asm__ __volatile__ (					\
 		"1:\n"						\
 		"	" insn " %z3, %2\n"			\
 		"2:\n"						\
@@ -238,20 +237,20 @@
 		"	.balign " RISCV_SZPTR "\n"			\
 		"	" RISCV_PTR " 1b, 3b\n"			\
 		"	.previous"				\
-		: "+r" (err), "=r" (__पंचांगp), "=m" (*(ptr))	\
+		: "+r" (err), "=r" (__tmp), "=m" (*(ptr))	\
 		: "rJ" (__x), "i" (-EFAULT));			\
-पूर्ण जबतक (0)
+} while (0)
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा __put_user_8(x, ptr, err) \
-	__put_user_यंत्र("sd", x, ptr, err)
-#अन्यथा /* !CONFIG_64BIT */
-#घोषणा __put_user_8(x, ptr, err)				\
-करो अणु								\
+#ifdef CONFIG_64BIT
+#define __put_user_8(x, ptr, err) \
+	__put_user_asm("sd", x, ptr, err)
+#else /* !CONFIG_64BIT */
+#define __put_user_8(x, ptr, err)				\
+do {								\
 	u32 __user *__ptr = (u32 __user *)(ptr);		\
 	u64 __x = (__typeof__((x)-(x)))(x);			\
-	uपूर्णांकptr_t __पंचांगp;					\
-	__यंत्र__ __अस्थिर__ (					\
+	uintptr_t __tmp;					\
+	__asm__ __volatile__ (					\
 		"1:\n"						\
 		"	sw %z4, %2\n"				\
 		"2:\n"						\
@@ -268,59 +267,59 @@
 		"	" RISCV_PTR " 1b, 4b\n"			\
 		"	" RISCV_PTR " 2b, 4b\n"			\
 		"	.previous"				\
-		: "+r" (err), "=r" (__पंचांगp),			\
+		: "+r" (err), "=r" (__tmp),			\
 			"=m" (__ptr[__LSW]),			\
 			"=m" (__ptr[__MSW])			\
 		: "rJ" (__x), "rJ" (__x >> 32), "i" (-EFAULT));	\
-पूर्ण जबतक (0)
-#पूर्ण_अगर /* CONFIG_64BIT */
+} while (0)
+#endif /* CONFIG_64BIT */
 
-#घोषणा __put_user_nocheck(x, __gu_ptr, __pu_err)					\
-करो अणु								\
-	चयन (माप(*__gu_ptr)) अणु				\
-	हाल 1:							\
-		__put_user_यंत्र("sb", (x), __gu_ptr, __pu_err);	\
-		अवरोध;						\
-	हाल 2:							\
-		__put_user_यंत्र("sh", (x), __gu_ptr, __pu_err);	\
-		अवरोध;						\
-	हाल 4:							\
-		__put_user_यंत्र("sw", (x), __gu_ptr, __pu_err);	\
-		अवरोध;						\
-	हाल 8:							\
+#define __put_user_nocheck(x, __gu_ptr, __pu_err)					\
+do {								\
+	switch (sizeof(*__gu_ptr)) {				\
+	case 1:							\
+		__put_user_asm("sb", (x), __gu_ptr, __pu_err);	\
+		break;						\
+	case 2:							\
+		__put_user_asm("sh", (x), __gu_ptr, __pu_err);	\
+		break;						\
+	case 4:							\
+		__put_user_asm("sw", (x), __gu_ptr, __pu_err);	\
+		break;						\
+	case 8:							\
 		__put_user_8((x), __gu_ptr, __pu_err);	\
-		अवरोध;						\
-	शेष:						\
+		break;						\
+	default:						\
 		BUILD_BUG();					\
-	पूर्ण							\
-पूर्ण जबतक (0)
+	}							\
+} while (0)
 
 /**
- * __put_user: - Write a simple value पूर्णांकo user space, with less checking.
+ * __put_user: - Write a simple value into user space, with less checking.
  * @x:   Value to copy to user space.
  * @ptr: Destination address, in user space.
  *
  * Context: User context only.  This function may sleep.
  *
  * This macro copies a single simple value from kernel space to user
- * space.  It supports simple types like अक्षर and पूर्णांक, but not larger
- * data types like काष्ठाures or arrays.
+ * space.  It supports simple types like char and int, but not larger
+ * data types like structures or arrays.
  *
- * @ptr must have poपूर्णांकer-to-simple-variable type, and @x must be assignable
- * to the result of dereferencing @ptr. The value of @x is copied to aव्योम
+ * @ptr must have pointer-to-simple-variable type, and @x must be assignable
+ * to the result of dereferencing @ptr. The value of @x is copied to avoid
  * re-ordering where @x is evaluated inside the block that enables user-space
- * access (thus bypassing user space protection अगर @x is a function).
+ * access (thus bypassing user space protection if @x is a function).
  *
- * Caller must check the poपूर्णांकer with access_ok() beक्रमe calling this
+ * Caller must check the pointer with access_ok() before calling this
  * function.
  *
  * Returns zero on success, or -EFAULT on error.
  */
-#घोषणा __put_user(x, ptr)					\
-(अणु								\
+#define __put_user(x, ptr)					\
+({								\
 	__typeof__(*(ptr)) __user *__gu_ptr = (ptr);		\
 	__typeof__(*__gu_ptr) __val = (x);			\
-	दीर्घ __pu_err = 0;					\
+	long __pu_err = 0;					\
 								\
 	__chk_user_ptr(__gu_ptr);				\
 								\
@@ -329,83 +328,83 @@
 	__disable_user_access();				\
 								\
 	__pu_err;						\
-पूर्ण)
+})
 
 /**
- * put_user: - Write a simple value पूर्णांकo user space.
+ * put_user: - Write a simple value into user space.
  * @x:   Value to copy to user space.
  * @ptr: Destination address, in user space.
  *
  * Context: User context only.  This function may sleep.
  *
  * This macro copies a single simple value from kernel space to user
- * space.  It supports simple types like अक्षर and पूर्णांक, but not larger
- * data types like काष्ठाures or arrays.
+ * space.  It supports simple types like char and int, but not larger
+ * data types like structures or arrays.
  *
- * @ptr must have poपूर्णांकer-to-simple-variable type, and @x must be assignable
+ * @ptr must have pointer-to-simple-variable type, and @x must be assignable
  * to the result of dereferencing @ptr.
  *
  * Returns zero on success, or -EFAULT on error.
  */
-#घोषणा put_user(x, ptr)					\
-(अणु								\
+#define put_user(x, ptr)					\
+({								\
 	__typeof__(*(ptr)) __user *__p = (ptr);			\
 	might_fault();						\
-	access_ok(__p, माप(*__p)) ?		\
+	access_ok(__p, sizeof(*__p)) ?		\
 		__put_user((x), __p) :				\
 		-EFAULT;					\
-पूर्ण)
+})
 
 
-अचिन्हित दीर्घ __must_check __यंत्र_copy_to_user(व्योम __user *to,
-	स्थिर व्योम *from, अचिन्हित दीर्घ n);
-अचिन्हित दीर्घ __must_check __यंत्र_copy_from_user(व्योम *to,
-	स्थिर व्योम __user *from, अचिन्हित दीर्घ n);
+unsigned long __must_check __asm_copy_to_user(void __user *to,
+	const void *from, unsigned long n);
+unsigned long __must_check __asm_copy_from_user(void *to,
+	const void __user *from, unsigned long n);
 
-अटल अंतरभूत अचिन्हित दीर्घ
-raw_copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
-अणु
-	वापस __यंत्र_copy_from_user(to, from, n);
-पूर्ण
+static inline unsigned long
+raw_copy_from_user(void *to, const void __user *from, unsigned long n)
+{
+	return __asm_copy_from_user(to, from, n);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ
-raw_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
-अणु
-	वापस __यंत्र_copy_to_user(to, from, n);
-पूर्ण
+static inline unsigned long
+raw_copy_to_user(void __user *to, const void *from, unsigned long n)
+{
+	return __asm_copy_to_user(to, from, n);
+}
 
-बाह्य दीर्घ म_नकलन_from_user(अक्षर *dest, स्थिर अक्षर __user *src, दीर्घ count);
+extern long strncpy_from_user(char *dest, const char __user *src, long count);
 
-बाह्य दीर्घ __must_check strnlen_user(स्थिर अक्षर __user *str, दीर्घ n);
+extern long __must_check strnlen_user(const char __user *str, long n);
 
-बाह्य
-अचिन्हित दीर्घ __must_check __clear_user(व्योम __user *addr, अचिन्हित दीर्घ n);
+extern
+unsigned long __must_check __clear_user(void __user *addr, unsigned long n);
 
-अटल अंतरभूत
-अचिन्हित दीर्घ __must_check clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
-अणु
+static inline
+unsigned long __must_check clear_user(void __user *to, unsigned long n)
+{
 	might_fault();
-	वापस access_ok(to, n) ?
+	return access_ok(to, n) ?
 		__clear_user(to, n) : n;
-पूर्ण
+}
 
 /*
- * Atomic compare-and-exchange, but with a fixup क्रम userspace faults.  Faults
- * will set "err" to -EFAULT, जबतक successful accesses वापस the previous
+ * Atomic compare-and-exchange, but with a fixup for userspace faults.  Faults
+ * will set "err" to -EFAULT, while successful accesses return the previous
  * value.
  */
-#घोषणा __cmpxchg_user(ptr, old, new, err, size, lrb, scb)	\
-(अणु								\
+#define __cmpxchg_user(ptr, old, new, err, size, lrb, scb)	\
+({								\
 	__typeof__(ptr) __ptr = (ptr);				\
 	__typeof__(*(ptr)) __old = (old);			\
 	__typeof__(*(ptr)) __new = (new);			\
 	__typeof__(*(ptr)) __ret;				\
 	__typeof__(err) __err = 0;				\
-	रेजिस्टर अचिन्हित पूर्णांक __rc;				\
+	register unsigned int __rc;				\
 	__enable_user_access();					\
-	चयन (size) अणु						\
-	हाल 4:							\
-		__यंत्र__ __अस्थिर__ (				\
+	switch (size) {						\
+	case 4:							\
+		__asm__ __volatile__ (				\
 		"0:\n"						\
 		"	lr.w" #scb " %[ret], %[ptr]\n"		\
 		"	bne          %[ret], %z[old], 1f\n"	\
@@ -429,9 +428,9 @@ raw_copy_to_user(व्योम __user *to, स्थिर व्योम *fr
 			: [old] "rJ" (__old),			\
 			  [new] "rJ" (__new),			\
 			  [efault] "i" (-EFAULT));		\
-		अवरोध;						\
-	हाल 8:							\
-		__यंत्र__ __अस्थिर__ (				\
+		break;						\
+	case 8:							\
+		__asm__ __volatile__ (				\
 		"0:\n"						\
 		"	lr.d" #scb " %[ret], %[ptr]\n"		\
 		"	bne          %[ret], %z[old], 1f\n"	\
@@ -455,36 +454,36 @@ raw_copy_to_user(व्योम __user *to, स्थिर व्योम *fr
 			: [old] "rJ" (__old),			\
 			  [new] "rJ" (__new),			\
 			  [efault] "i" (-EFAULT));		\
-		अवरोध;						\
-	शेष:						\
+		break;						\
+	default:						\
 		BUILD_BUG();					\
-	पूर्ण							\
+	}							\
 	__disable_user_access();				\
 	(err) = __err;						\
 	__ret;							\
-पूर्ण)
+})
 
-#घोषणा HAVE_GET_KERNEL_NOFAULT
+#define HAVE_GET_KERNEL_NOFAULT
 
-#घोषणा __get_kernel_nofault(dst, src, type, err_label)			\
-करो अणु									\
-	दीर्घ __kr_err;							\
+#define __get_kernel_nofault(dst, src, type, err_label)			\
+do {									\
+	long __kr_err;							\
 									\
 	__get_user_nocheck(*((type *)(dst)), (type *)(src), __kr_err);	\
-	अगर (unlikely(__kr_err))						\
-		जाओ err_label;						\
-पूर्ण जबतक (0)
+	if (unlikely(__kr_err))						\
+		goto err_label;						\
+} while (0)
 
-#घोषणा __put_kernel_nofault(dst, src, type, err_label)			\
-करो अणु									\
-	दीर्घ __kr_err;							\
+#define __put_kernel_nofault(dst, src, type, err_label)			\
+do {									\
+	long __kr_err;							\
 									\
 	__put_user_nocheck(*((type *)(src)), (type *)(dst), __kr_err);	\
-	अगर (unlikely(__kr_err))						\
-		जाओ err_label;						\
-पूर्ण जबतक (0)
+	if (unlikely(__kr_err))						\
+		goto err_label;						\
+} while (0)
 
-#अन्यथा /* CONFIG_MMU */
-#समावेश <यंत्र-generic/uaccess.h>
-#पूर्ण_अगर /* CONFIG_MMU */
-#पूर्ण_अगर /* _ASM_RISCV_UACCESS_H */
+#else /* CONFIG_MMU */
+#include <asm-generic/uaccess.h>
+#endif /* CONFIG_MMU */
+#endif /* _ASM_RISCV_UACCESS_H */

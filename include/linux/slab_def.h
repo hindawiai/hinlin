@@ -1,124 +1,123 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SLAB_DEF_H
-#घोषणा	_LINUX_SLAB_DEF_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SLAB_DEF_H
+#define	_LINUX_SLAB_DEF_H
 
-#समावेश <linux/kfence.h>
-#समावेश <linux/reciprocal_भाग.h>
+#include <linux/kfence.h>
+#include <linux/reciprocal_div.h>
 
 /*
  * Definitions unique to the original Linux SLAB allocator.
  */
 
-काष्ठा kmem_cache अणु
-	काष्ठा array_cache __percpu *cpu_cache;
+struct kmem_cache {
+	struct array_cache __percpu *cpu_cache;
 
 /* 1) Cache tunables. Protected by slab_mutex */
-	अचिन्हित पूर्णांक batchcount;
-	अचिन्हित पूर्णांक limit;
-	अचिन्हित पूर्णांक shared;
+	unsigned int batchcount;
+	unsigned int limit;
+	unsigned int shared;
 
-	अचिन्हित पूर्णांक size;
-	काष्ठा reciprocal_value reciprocal_buffer_size;
-/* 2) touched by every alloc & मुक्त from the backend */
+	unsigned int size;
+	struct reciprocal_value reciprocal_buffer_size;
+/* 2) touched by every alloc & free from the backend */
 
-	slab_flags_t flags;		/* स्थिरant flags */
-	अचिन्हित पूर्णांक num;		/* # of objs per slab */
+	slab_flags_t flags;		/* constant flags */
+	unsigned int num;		/* # of objs per slab */
 
 /* 3) cache_grow/shrink */
 	/* order of pgs per slab (2^n) */
-	अचिन्हित पूर्णांक gfporder;
+	unsigned int gfporder;
 
-	/* क्रमce GFP flags, e.g. GFP_DMA */
+	/* force GFP flags, e.g. GFP_DMA */
 	gfp_t allocflags;
 
-	माप_प्रकार colour;			/* cache colouring range */
-	अचिन्हित पूर्णांक colour_off;	/* colour offset */
-	काष्ठा kmem_cache *मुक्तlist_cache;
-	अचिन्हित पूर्णांक मुक्तlist_size;
+	size_t colour;			/* cache colouring range */
+	unsigned int colour_off;	/* colour offset */
+	struct kmem_cache *freelist_cache;
+	unsigned int freelist_size;
 
-	/* स्थिरructor func */
-	व्योम (*ctor)(व्योम *obj);
+	/* constructor func */
+	void (*ctor)(void *obj);
 
 /* 4) cache creation/removal */
-	स्थिर अक्षर *name;
-	काष्ठा list_head list;
-	पूर्णांक refcount;
-	पूर्णांक object_size;
-	पूर्णांक align;
+	const char *name;
+	struct list_head list;
+	int refcount;
+	int object_size;
+	int align;
 
 /* 5) statistics */
-#अगर_घोषित CONFIG_DEBUG_SLAB
-	अचिन्हित दीर्घ num_active;
-	अचिन्हित दीर्घ num_allocations;
-	अचिन्हित दीर्घ high_mark;
-	अचिन्हित दीर्घ grown;
-	अचिन्हित दीर्घ reaped;
-	अचिन्हित दीर्घ errors;
-	अचिन्हित दीर्घ max_मुक्तable;
-	अचिन्हित दीर्घ node_allocs;
-	अचिन्हित दीर्घ node_मुक्तs;
-	अचिन्हित दीर्घ node_overflow;
+#ifdef CONFIG_DEBUG_SLAB
+	unsigned long num_active;
+	unsigned long num_allocations;
+	unsigned long high_mark;
+	unsigned long grown;
+	unsigned long reaped;
+	unsigned long errors;
+	unsigned long max_freeable;
+	unsigned long node_allocs;
+	unsigned long node_frees;
+	unsigned long node_overflow;
 	atomic_t allochit;
 	atomic_t allocmiss;
-	atomic_t मुक्तhit;
-	atomic_t मुक्तmiss;
+	atomic_t freehit;
+	atomic_t freemiss;
 
 	/*
 	 * If debugging is enabled, then the allocator can add additional
 	 * fields and/or padding to every object. 'size' contains the total
-	 * object size including these पूर्णांकernal fields, जबतक 'obj_offset'
+	 * object size including these internal fields, while 'obj_offset'
 	 * and 'object_size' contain the offset to the user object and its
 	 * size.
 	 */
-	पूर्णांक obj_offset;
-#पूर्ण_अगर /* CONFIG_DEBUG_SLAB */
+	int obj_offset;
+#endif /* CONFIG_DEBUG_SLAB */
 
-#अगर_घोषित CONFIG_KASAN
-	काष्ठा kasan_cache kasan_info;
-#पूर्ण_अगर
+#ifdef CONFIG_KASAN
+	struct kasan_cache kasan_info;
+#endif
 
-#अगर_घोषित CONFIG_SLAB_FREELIST_RANDOM
-	अचिन्हित पूर्णांक *अक्रमom_seq;
-#पूर्ण_अगर
+#ifdef CONFIG_SLAB_FREELIST_RANDOM
+	unsigned int *random_seq;
+#endif
 
-	अचिन्हित पूर्णांक useroffset;	/* Usercopy region offset */
-	अचिन्हित पूर्णांक usersize;		/* Usercopy region size */
+	unsigned int useroffset;	/* Usercopy region offset */
+	unsigned int usersize;		/* Usercopy region size */
 
-	काष्ठा kmem_cache_node *node[MAX_NUMNODES];
-पूर्ण;
+	struct kmem_cache_node *node[MAX_NUMNODES];
+};
 
-अटल अंतरभूत व्योम *nearest_obj(काष्ठा kmem_cache *cache, काष्ठा page *page,
-				व्योम *x)
-अणु
-	व्योम *object = x - (x - page->s_mem) % cache->size;
-	व्योम *last_object = page->s_mem + (cache->num - 1) * cache->size;
+static inline void *nearest_obj(struct kmem_cache *cache, struct page *page,
+				void *x)
+{
+	void *object = x - (x - page->s_mem) % cache->size;
+	void *last_object = page->s_mem + (cache->num - 1) * cache->size;
 
-	अगर (unlikely(object > last_object))
-		वापस last_object;
-	अन्यथा
-		वापस object;
-पूर्ण
+	if (unlikely(object > last_object))
+		return last_object;
+	else
+		return object;
+}
 
 /*
- * We want to aव्योम an expensive भागide : (offset / cache->size)
- *   Using the fact that size is a स्थिरant क्रम a particular cache,
+ * We want to avoid an expensive divide : (offset / cache->size)
+ *   Using the fact that size is a constant for a particular cache,
  *   we can replace (offset / cache->size) by
- *   reciprocal_भागide(offset, cache->reciprocal_buffer_size)
+ *   reciprocal_divide(offset, cache->reciprocal_buffer_size)
  */
-अटल अंतरभूत अचिन्हित पूर्णांक obj_to_index(स्थिर काष्ठा kmem_cache *cache,
-					स्थिर काष्ठा page *page, व्योम *obj)
-अणु
+static inline unsigned int obj_to_index(const struct kmem_cache *cache,
+					const struct page *page, void *obj)
+{
 	u32 offset = (obj - page->s_mem);
-	वापस reciprocal_भागide(offset, cache->reciprocal_buffer_size);
-पूर्ण
+	return reciprocal_divide(offset, cache->reciprocal_buffer_size);
+}
 
-अटल अंतरभूत पूर्णांक objs_per_slab_page(स्थिर काष्ठा kmem_cache *cache,
-				     स्थिर काष्ठा page *page)
-अणु
-	अगर (is_kfence_address(page_address(page)))
-		वापस 1;
-	वापस cache->num;
-पूर्ण
+static inline int objs_per_slab_page(const struct kmem_cache *cache,
+				     const struct page *page)
+{
+	if (is_kfence_address(page_address(page)))
+		return 1;
+	return cache->num;
+}
 
-#पूर्ण_अगर	/* _LINUX_SLAB_DEF_H */
+#endif	/* _LINUX_SLAB_DEF_H */

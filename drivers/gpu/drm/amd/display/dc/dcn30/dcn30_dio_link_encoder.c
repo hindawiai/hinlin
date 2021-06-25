@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,48 +23,48 @@
  *
  */
 
-#समावेश "reg_helper.h"
+#include "reg_helper.h"
 
-#समावेश "core_types.h"
-#समावेश "link_encoder.h"
-#समावेश "dcn30_dio_link_encoder.h"
-#समावेश "stream_encoder.h"
-#समावेश "i2caux_interface.h"
-#समावेश "dc_bios_types.h"
-/* #समावेश "dcn3ag/dcn3ag_phy_fw.h" */
+#include "core_types.h"
+#include "link_encoder.h"
+#include "dcn30_dio_link_encoder.h"
+#include "stream_encoder.h"
+#include "i2caux_interface.h"
+#include "dc_bios_types.h"
+/* #include "dcn3ag/dcn3ag_phy_fw.h" */
 
-#समावेश "gpio_service_interface.h"
+#include "gpio_service_interface.h"
 
-#घोषणा CTX \
+#define CTX \
 	enc10->base.ctx
-#घोषणा DC_LOGGER \
+#define DC_LOGGER \
 	enc10->base.ctx->logger
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	(enc10->link_regs->reg)
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	enc10->link_shअगरt->field_name, enc10->link_mask->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	enc10->link_shift->field_name, enc10->link_mask->field_name
 
-#घोषणा IND_REG(index) \
+#define IND_REG(index) \
 	(enc10->link_regs->index)
 
 
 bool dcn30_link_encoder_validate_output_with_stream(
-	काष्ठा link_encoder *enc,
-	स्थिर काष्ठा dc_stream_state *stream)
-अणु
-		वापस dcn10_link_encoder_validate_output_with_stream(enc, stream);
-पूर्ण
+	struct link_encoder *enc,
+	const struct dc_stream_state *stream)
+{
+		return dcn10_link_encoder_validate_output_with_stream(enc, stream);
+}
 
-अटल स्थिर काष्ठा link_encoder_funcs dcn30_link_enc_funcs = अणु
-	.पढ़ो_state = link_enc2_पढ़ो_state,
+static const struct link_encoder_funcs dcn30_link_enc_funcs = {
+	.read_state = link_enc2_read_state,
 	.validate_output_with_stream =
 			dcn30_link_encoder_validate_output_with_stream,
 	.hw_init = enc3_hw_init,
 	.setup = dcn10_link_encoder_setup,
-	.enable_पंचांगds_output = dcn10_link_encoder_enable_पंचांगds_output,
+	.enable_tmds_output = dcn10_link_encoder_enable_tmds_output,
 	.enable_dp_output = dcn20_link_encoder_enable_dp_output,
 	.enable_dp_mst_output = dcn10_link_encoder_enable_dp_mst_output,
 	.disable_output = dcn10_link_encoder_disable_output,
@@ -82,28 +81,28 @@ bool dcn30_link_encoder_validate_output_with_stream(
 	.is_dig_enabled = dcn10_is_dig_enabled,
 	.destroy = dcn10_link_encoder_destroy,
 	.fec_set_enable = enc2_fec_set_enable,
-	.fec_set_पढ़ोy = enc2_fec_set_पढ़ोy,
+	.fec_set_ready = enc2_fec_set_ready,
 	.fec_is_active = enc2_fec_is_active,
 	.get_dig_frontend = dcn10_get_dig_frontend,
 	.get_dig_mode = dcn10_get_dig_mode,
 	.is_in_alt_mode = dcn20_link_encoder_is_in_alt_mode,
 	.get_max_link_cap = dcn20_link_encoder_get_max_link_cap,
-पूर्ण;
+};
 
-व्योम dcn30_link_encoder_स्थिरruct(
-	काष्ठा dcn20_link_encoder *enc20,
-	स्थिर काष्ठा encoder_init_data *init_data,
-	स्थिर काष्ठा encoder_feature_support *enc_features,
-	स्थिर काष्ठा dcn10_link_enc_रेजिस्टरs *link_regs,
-	स्थिर काष्ठा dcn10_link_enc_aux_रेजिस्टरs *aux_regs,
-	स्थिर काष्ठा dcn10_link_enc_hpd_रेजिस्टरs *hpd_regs,
-	स्थिर काष्ठा dcn10_link_enc_shअगरt *link_shअगरt,
-	स्थिर काष्ठा dcn10_link_enc_mask *link_mask)
-अणु
-	काष्ठा bp_encoder_cap_info bp_cap_info = अणु0पूर्ण;
-	स्थिर काष्ठा dc_vbios_funcs *bp_funcs = init_data->ctx->dc_bios->funcs;
-	क्रमागत bp_result result = BP_RESULT_OK;
-	काष्ठा dcn10_link_encoder *enc10 = &enc20->enc10;
+void dcn30_link_encoder_construct(
+	struct dcn20_link_encoder *enc20,
+	const struct encoder_init_data *init_data,
+	const struct encoder_feature_support *enc_features,
+	const struct dcn10_link_enc_registers *link_regs,
+	const struct dcn10_link_enc_aux_registers *aux_regs,
+	const struct dcn10_link_enc_hpd_registers *hpd_regs,
+	const struct dcn10_link_enc_shift *link_shift,
+	const struct dcn10_link_enc_mask *link_mask)
+{
+	struct bp_encoder_cap_info bp_cap_info = {0};
+	const struct dc_vbios_funcs *bp_funcs = init_data->ctx->dc_bios->funcs;
+	enum bp_result result = BP_RESULT_OK;
+	struct dcn10_link_encoder *enc10 = &enc20->enc10;
 
 	enc10->base.funcs = &dcn30_link_enc_funcs;
 	enc10->base.ctx = init_data->ctx;
@@ -119,15 +118,15 @@ bool dcn30_link_encoder_validate_output_with_stream(
 	enc10->base.transmitter = init_data->transmitter;
 
 	/* set the flag to indicate whether driver poll the I2C data pin
-	 * जबतक करोing the DP sink detect
+	 * while doing the DP sink detect
 	 */
 
-/*	अगर (dal_adapter_service_is_feature_supported(as,
+/*	if (dal_adapter_service_is_feature_supported(as,
 		FEATURE_DP_SINK_DETECT_POLL_DATA_PIN))
 		enc10->base.features.flags.bits.
 			DP_SINK_DETECT_POLL_DATA_PIN = true;*/
 
-	enc10->base.output_संकेतs =
+	enc10->base.output_signals =
 		SIGNAL_TYPE_DVI_SINGLE_LINK |
 		SIGNAL_TYPE_DVI_DUAL_LINK |
 		SIGNAL_TYPE_LVDS |
@@ -137,12 +136,12 @@ bool dcn30_link_encoder_validate_output_with_stream(
 		SIGNAL_TYPE_HDMI_TYPE_A;
 
 	/* For DCE 8.0 and 8.1, by design, UNIPHY is hardwired to DIG_BE.
-	 * SW always assign DIG_FE 1:1 mapped to DIG_FE क्रम non-MST UNIPHY.
+	 * SW always assign DIG_FE 1:1 mapped to DIG_FE for non-MST UNIPHY.
 	 * SW assign DIG_FE to non-MST UNIPHY first and MST last. So prefer
 	 * DIG is per UNIPHY and used by SST DP, eDP, HDMI, DVI and LVDS.
 	 * Prefer DIG assignment is decided by board design.
 	 * For DCE 8.0, there are only max 6 UNIPHYs, we assume board design
-	 * and VBIOS will filter out 7 UNIPHY क्रम DCE 8.0.
+	 * and VBIOS will filter out 7 UNIPHY for DCE 8.0.
 	 * By this, adding DIGG should not hurt DCE 8.0.
 	 * This will let DCE 8.1 share DCE 8.0 as much as possible
 	 */
@@ -150,44 +149,44 @@ bool dcn30_link_encoder_validate_output_with_stream(
 	enc10->link_regs = link_regs;
 	enc10->aux_regs = aux_regs;
 	enc10->hpd_regs = hpd_regs;
-	enc10->link_shअगरt = link_shअगरt;
+	enc10->link_shift = link_shift;
 	enc10->link_mask = link_mask;
 
-	चयन (enc10->base.transmitter) अणु
-	हाल TRANSMITTER_UNIPHY_A:
+	switch (enc10->base.transmitter) {
+	case TRANSMITTER_UNIPHY_A:
 		enc10->base.preferred_engine = ENGINE_ID_DIGA;
-	अवरोध;
-	हाल TRANSMITTER_UNIPHY_B:
+	break;
+	case TRANSMITTER_UNIPHY_B:
 		enc10->base.preferred_engine = ENGINE_ID_DIGB;
-	अवरोध;
-	हाल TRANSMITTER_UNIPHY_C:
+	break;
+	case TRANSMITTER_UNIPHY_C:
 		enc10->base.preferred_engine = ENGINE_ID_DIGC;
-	अवरोध;
-	हाल TRANSMITTER_UNIPHY_D:
+	break;
+	case TRANSMITTER_UNIPHY_D:
 		enc10->base.preferred_engine = ENGINE_ID_DIGD;
-	अवरोध;
-	हाल TRANSMITTER_UNIPHY_E:
+	break;
+	case TRANSMITTER_UNIPHY_E:
 		enc10->base.preferred_engine = ENGINE_ID_DIGE;
-	अवरोध;
-	हाल TRANSMITTER_UNIPHY_F:
+	break;
+	case TRANSMITTER_UNIPHY_F:
 		enc10->base.preferred_engine = ENGINE_ID_DIGF;
-	अवरोध;
-	हाल TRANSMITTER_UNIPHY_G:
+	break;
+	case TRANSMITTER_UNIPHY_G:
 		enc10->base.preferred_engine = ENGINE_ID_DIGG;
-	अवरोध;
-	शेष:
+	break;
+	default:
 		ASSERT_CRITICAL(false);
 		enc10->base.preferred_engine = ENGINE_ID_UNKNOWN;
-	पूर्ण
+	}
 
-	/* शेष to one to mirror Winकरोws behavior */
+	/* default to one to mirror Windows behavior */
 	enc10->base.features.flags.bits.HDMI_6GB_EN = 1;
 
 	result = bp_funcs->get_encoder_cap_info(enc10->base.ctx->dc_bios,
 						enc10->base.id, &bp_cap_info);
 
-	/* Override features with DCE-specअगरic values */
-	अगर (result == BP_RESULT_OK) अणु
+	/* Override features with DCE-specific values */
+	if (result == BP_RESULT_OK) {
 		enc10->base.features.flags.bits.IS_HBR2_CAPABLE =
 				bp_cap_info.DP_HBR2_EN;
 		enc10->base.features.flags.bits.IS_HBR3_CAPABLE =
@@ -195,27 +194,27 @@ bool dcn30_link_encoder_validate_output_with_stream(
 		enc10->base.features.flags.bits.HDMI_6GB_EN = bp_cap_info.HDMI_6GB_EN;
 		enc10->base.features.flags.bits.DP_IS_USB_C =
 				bp_cap_info.DP_IS_USB_C;
-	पूर्ण अन्यथा अणु
+	} else {
 		DC_LOG_WARNING("%s: Failed to get encoder_cap_info from VBIOS with error code %d!\n",
 				__func__,
 				result);
-	पूर्ण
-	अगर (enc10->base.ctx->dc->debug.hdmi20_disable) अणु
+	}
+	if (enc10->base.ctx->dc->debug.hdmi20_disable) {
 		enc10->base.features.flags.bits.HDMI_6GB_EN = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा AUX_REG(reg)\
+#define AUX_REG(reg)\
 	(enc10->aux_regs->reg)
 
-#घोषणा AUX_REG_READ(reg_name) \
-		dm_पढ़ो_reg(CTX, AUX_REG(reg_name))
+#define AUX_REG_READ(reg_name) \
+		dm_read_reg(CTX, AUX_REG(reg_name))
 
-#घोषणा AUX_REG_WRITE(reg_name, val) \
-			dm_ग_लिखो_reg(CTX, AUX_REG(reg_name), val)
-व्योम enc3_hw_init(काष्ठा link_encoder *enc)
-अणु
-	काष्ठा dcn10_link_encoder *enc10 = TO_DCN10_LINK_ENC(enc);
+#define AUX_REG_WRITE(reg_name, val) \
+			dm_write_reg(CTX, AUX_REG(reg_name), val)
+void enc3_hw_init(struct link_encoder *enc)
+{
+	struct dcn10_link_encoder *enc10 = TO_DCN10_LINK_ENC(enc);
 
 /*
 	00 - DP_AUX_DPHY_RX_DETECTION_THRESHOLD__1to2 : 1/2
@@ -231,20 +230,20 @@ bool dcn30_link_encoder_validate_output_with_stream(
 /*
 	AUX_REG_UPDATE_5(AUX_DPHY_RX_CONTROL0,
 	AUX_RX_START_WINDOW = 1 [6:4]
-	AUX_RX_RECEIVE_WINDOW = 1 शेष is 2 [10:8]
-	AUX_RX_HALF_SYM_DETECT_LEN  = 1 [13:12] शेष is 1
-	AUX_RX_TRANSITION_FILTER_EN = 1 [16] शेष is 1
-	AUX_RX_ALLOW_BELOW_THRESHOLD_PHASE_DETECT [17] is 0  शेष is 0
-	AUX_RX_ALLOW_BELOW_THRESHOLD_START [18] is 1  शेष is 1
-	AUX_RX_ALLOW_BELOW_THRESHOLD_STOP [19] is 1  शेष is 1
-	AUX_RX_PHASE_DETECT_LEN,  [21,20] = 0x3 शेष is 3
+	AUX_RX_RECEIVE_WINDOW = 1 default is 2 [10:8]
+	AUX_RX_HALF_SYM_DETECT_LEN  = 1 [13:12] default is 1
+	AUX_RX_TRANSITION_FILTER_EN = 1 [16] default is 1
+	AUX_RX_ALLOW_BELOW_THRESHOLD_PHASE_DETECT [17] is 0  default is 0
+	AUX_RX_ALLOW_BELOW_THRESHOLD_START [18] is 1  default is 1
+	AUX_RX_ALLOW_BELOW_THRESHOLD_STOP [19] is 1  default is 1
+	AUX_RX_PHASE_DETECT_LEN,  [21,20] = 0x3 default is 3
 	AUX_RX_DETECTION_THRESHOLD [30:28] = 1
 */
 	AUX_REG_WRITE(AUX_DPHY_RX_CONTROL0, 0x103d1110);
 
 	AUX_REG_WRITE(AUX_DPHY_TX_CONTROL, 0x21c7a);
 
-	//AUX_DPHY_TX_REF_CONTROL'AUX_TX_REF_DIV HW शेष is 0x32;
+	//AUX_DPHY_TX_REF_CONTROL'AUX_TX_REF_DIV HW default is 0x32;
 	// Set AUX_TX_REF_DIV Divider to generate 2 MHz reference from refclk
 	// 27MHz -> 0xd
 	// 100MHz -> 0x32
@@ -254,4 +253,4 @@ bool dcn30_link_encoder_validate_output_with_stream(
 	REG_UPDATE(TMDS_CTL_BITS, TMDS_CTL0, 1);
 
 	dcn10_aux_initialize(enc10);
-पूर्ण
+}

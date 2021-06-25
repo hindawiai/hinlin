@@ -1,110 +1,109 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright 2003 PathScale Inc
- * Derived from include/यंत्र-i386/pgtable.h
+ * Derived from include/asm-i386/pgtable.h
  */
 
-#अगर_अघोषित __UM_PGTABLE_3LEVEL_H
-#घोषणा __UM_PGTABLE_3LEVEL_H
+#ifndef __UM_PGTABLE_3LEVEL_H
+#define __UM_PGTABLE_3LEVEL_H
 
-#समावेश <यंत्र-generic/pgtable-nopud.h>
+#include <asm-generic/pgtable-nopud.h>
 
-/* PGसूची_SHIFT determines what a third-level page table entry can map */
+/* PGDIR_SHIFT determines what a third-level page table entry can map */
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा PGसूची_SHIFT	30
-#अन्यथा
-#घोषणा PGसूची_SHIFT	31
-#पूर्ण_अगर
-#घोषणा PGसूची_SIZE	(1UL << PGसूची_SHIFT)
-#घोषणा PGसूची_MASK	(~(PGसूची_SIZE-1))
+#ifdef CONFIG_64BIT
+#define PGDIR_SHIFT	30
+#else
+#define PGDIR_SHIFT	31
+#endif
+#define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
+#define PGDIR_MASK	(~(PGDIR_SIZE-1))
 
 /* PMD_SHIFT determines the size of the area a second-level page table can
  * map
  */
 
-#घोषणा PMD_SHIFT	21
-#घोषणा PMD_SIZE	(1UL << PMD_SHIFT)
-#घोषणा PMD_MASK	(~(PMD_SIZE-1))
+#define PMD_SHIFT	21
+#define PMD_SIZE	(1UL << PMD_SHIFT)
+#define PMD_MASK	(~(PMD_SIZE-1))
 
 /*
  * entries per page directory level
  */
 
-#घोषणा PTRS_PER_PTE 512
-#अगर_घोषित CONFIG_64BIT
-#घोषणा PTRS_PER_PMD 512
-#घोषणा PTRS_PER_PGD 512
-#अन्यथा
-#घोषणा PTRS_PER_PMD 1024
-#घोषणा PTRS_PER_PGD 1024
-#पूर्ण_अगर
+#define PTRS_PER_PTE 512
+#ifdef CONFIG_64BIT
+#define PTRS_PER_PMD 512
+#define PTRS_PER_PGD 512
+#else
+#define PTRS_PER_PMD 1024
+#define PTRS_PER_PGD 1024
+#endif
 
-#घोषणा USER_PTRS_PER_PGD ((TASK_SIZE + (PGसूची_SIZE - 1)) / PGसूची_SIZE)
-#घोषणा FIRST_USER_ADDRESS	0UL
+#define USER_PTRS_PER_PGD ((TASK_SIZE + (PGDIR_SIZE - 1)) / PGDIR_SIZE)
+#define FIRST_USER_ADDRESS	0UL
 
-#घोषणा pte_ERROR(e) \
-        prपूर्णांकk("%s:%d: bad pte %p(%016lx).\n", __खाता__, __LINE__, &(e), \
+#define pte_ERROR(e) \
+        printk("%s:%d: bad pte %p(%016lx).\n", __FILE__, __LINE__, &(e), \
 	       pte_val(e))
-#घोषणा pmd_ERROR(e) \
-        prपूर्णांकk("%s:%d: bad pmd %p(%016lx).\n", __खाता__, __LINE__, &(e), \
+#define pmd_ERROR(e) \
+        printk("%s:%d: bad pmd %p(%016lx).\n", __FILE__, __LINE__, &(e), \
 	       pmd_val(e))
-#घोषणा pgd_ERROR(e) \
-        prपूर्णांकk("%s:%d: bad pgd %p(%016lx).\n", __खाता__, __LINE__, &(e), \
+#define pgd_ERROR(e) \
+        printk("%s:%d: bad pgd %p(%016lx).\n", __FILE__, __LINE__, &(e), \
 	       pgd_val(e))
 
-#घोषणा pud_none(x)	(!(pud_val(x) & ~_PAGE_NEWPAGE))
-#घोषणा	pud_bad(x)	((pud_val(x) & (~PAGE_MASK & ~_PAGE_USER)) != _KERNPG_TABLE)
-#घोषणा pud_present(x)	(pud_val(x) & _PAGE_PRESENT)
-#घोषणा pud_populate(mm, pud, pmd) \
+#define pud_none(x)	(!(pud_val(x) & ~_PAGE_NEWPAGE))
+#define	pud_bad(x)	((pud_val(x) & (~PAGE_MASK & ~_PAGE_USER)) != _KERNPG_TABLE)
+#define pud_present(x)	(pud_val(x) & _PAGE_PRESENT)
+#define pud_populate(mm, pud, pmd) \
 	set_pud(pud, __pud(_PAGE_TABLE + __pa(pmd)))
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा set_pud(pudptr, pudval) set_64bit((u64 *) (pudptr), pud_val(pudval))
-#अन्यथा
-#घोषणा set_pud(pudptr, pudval) (*(pudptr) = (pudval))
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define set_pud(pudptr, pudval) set_64bit((u64 *) (pudptr), pud_val(pudval))
+#else
+#define set_pud(pudptr, pudval) (*(pudptr) = (pudval))
+#endif
 
-अटल अंतरभूत पूर्णांक pgd_newpage(pgd_t pgd)
-अणु
-	वापस(pgd_val(pgd) & _PAGE_NEWPAGE);
-पूर्ण
+static inline int pgd_newpage(pgd_t pgd)
+{
+	return(pgd_val(pgd) & _PAGE_NEWPAGE);
+}
 
-अटल अंतरभूत व्योम pgd_mkuptodate(pgd_t pgd) अणु pgd_val(pgd) &= ~_PAGE_NEWPAGE; पूर्ण
+static inline void pgd_mkuptodate(pgd_t pgd) { pgd_val(pgd) &= ~_PAGE_NEWPAGE; }
 
-#अगर_घोषित CONFIG_64BIT
-#घोषणा set_pmd(pmdptr, pmdval) set_64bit((u64 *) (pmdptr), pmd_val(pmdval))
-#अन्यथा
-#घोषणा set_pmd(pmdptr, pmdval) (*(pmdptr) = (pmdval))
-#पूर्ण_अगर
+#ifdef CONFIG_64BIT
+#define set_pmd(pmdptr, pmdval) set_64bit((u64 *) (pmdptr), pmd_val(pmdval))
+#else
+#define set_pmd(pmdptr, pmdval) (*(pmdptr) = (pmdval))
+#endif
 
-अटल अंतरभूत व्योम pud_clear (pud_t *pud)
-अणु
+static inline void pud_clear (pud_t *pud)
+{
 	set_pud(pud, __pud(_PAGE_NEWPAGE));
-पूर्ण
+}
 
-#घोषणा pud_page(pud) phys_to_page(pud_val(pud) & PAGE_MASK)
-#घोषणा pud_page_vaddr(pud) ((अचिन्हित दीर्घ) __va(pud_val(pud) & PAGE_MASK))
+#define pud_page(pud) phys_to_page(pud_val(pud) & PAGE_MASK)
+#define pud_page_vaddr(pud) ((unsigned long) __va(pud_val(pud) & PAGE_MASK))
 
-अटल अंतरभूत अचिन्हित दीर्घ pte_pfn(pte_t pte)
-अणु
-	वापस phys_to_pfn(pte_val(pte));
-पूर्ण
+static inline unsigned long pte_pfn(pte_t pte)
+{
+	return phys_to_pfn(pte_val(pte));
+}
 
-अटल अंतरभूत pte_t pfn_pte(अचिन्हित दीर्घ page_nr, pgprot_t pgprot)
-अणु
+static inline pte_t pfn_pte(unsigned long page_nr, pgprot_t pgprot)
+{
 	pte_t pte;
 	phys_t phys = pfn_to_phys(page_nr);
 
 	pte_set_val(pte, phys, pgprot);
-	वापस pte;
-पूर्ण
+	return pte;
+}
 
-अटल अंतरभूत pmd_t pfn_pmd(अचिन्हित दीर्घ page_nr, pgprot_t pgprot)
-अणु
-	वापस __pmd((page_nr << PAGE_SHIFT) | pgprot_val(pgprot));
-पूर्ण
+static inline pmd_t pfn_pmd(unsigned long page_nr, pgprot_t pgprot)
+{
+	return __pmd((page_nr << PAGE_SHIFT) | pgprot_val(pgprot));
+}
 
-#पूर्ण_अगर
+#endif
 

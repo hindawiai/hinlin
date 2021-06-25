@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _INCLUDE_LIBFDT_H_
-#घोषणा _INCLUDE_LIBFDT_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _INCLUDE_LIBFDT_H_
+#define _INCLUDE_LIBFDT_H_
 
-#समावेश <linux/libfdt_env.h>
-#समावेश "../../scripts/dtc/libfdt/libfdt.h"
+#include <linux/libfdt_env.h>
+#include "../../scripts/dtc/libfdt/libfdt.h"
 
-#पूर्ण_अगर /* _INCLUDE_LIBFDT_H_ */
+#endif /* _INCLUDE_LIBFDT_H_ */

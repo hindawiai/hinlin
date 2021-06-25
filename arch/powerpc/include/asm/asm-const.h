@@ -1,28 +1,27 @@
-<शैली गुरु>
-#अगर_अघोषित _ASM_POWERPC_ASM_CONST_H
-#घोषणा _ASM_POWERPC_ASM_CONST_H
+#ifndef _ASM_POWERPC_ASM_CONST_H
+#define _ASM_POWERPC_ASM_CONST_H
 
-#अगर_घोषित __ASSEMBLY__
-#  define stringअगरy_in_c(...)	__VA_ARGS__
+#ifdef __ASSEMBLY__
+#  define stringify_in_c(...)	__VA_ARGS__
 #  define ASM_CONST(x)		x
-#अन्यथा
-/* This version of stringअगरy will deal with commas... */
-#  define __stringअगरy_in_c(...)	#__VA_ARGS__
-#  define stringअगरy_in_c(...)	__stringअगरy_in_c(__VA_ARGS__) " "
+#else
+/* This version of stringify will deal with commas... */
+#  define __stringify_in_c(...)	#__VA_ARGS__
+#  define stringify_in_c(...)	__stringify_in_c(__VA_ARGS__) " "
 #  define __ASM_CONST(x)	x##UL
 #  define ASM_CONST(x)		__ASM_CONST(x)
-#पूर्ण_अगर
+#endif
 
 /*
- * Inline assembly memory स्थिरraपूर्णांक
+ * Inline assembly memory constraint
  *
- * GCC 4.9 करोesn't properly handle pre update memory स्थिरraपूर्णांक "m<>"
+ * GCC 4.9 doesn't properly handle pre update memory constraint "m<>"
  *
  */
-#अगर defined(GCC_VERSION) && GCC_VERSION < 50000
-#घोषणा UPD_CONSTR ""
-#अन्यथा
-#घोषणा UPD_CONSTR "<>"
-#पूर्ण_अगर
+#if defined(GCC_VERSION) && GCC_VERSION < 50000
+#define UPD_CONSTR ""
+#else
+#define UPD_CONSTR "<>"
+#endif
 
-#पूर्ण_अगर /* _ASM_POWERPC_ASM_CONST_H */
+#endif /* _ASM_POWERPC_ASM_CONST_H */

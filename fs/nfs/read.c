@@ -1,271 +1,270 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * linux/fs/nfs/पढ़ो.c
+ * linux/fs/nfs/read.c
  *
- * Block I/O क्रम NFS
+ * Block I/O for NFS
  *
- * Partial copy of Linus' पढ़ो cache modअगरications to fs/nfs/file.c
- * modअगरied क्रम async RPC by okir@monad.swb.de
+ * Partial copy of Linus' read cache modifications to fs/nfs/file.c
+ * modified for async RPC by okir@monad.swb.de
  */
 
-#समावेश <linux/समय.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/sunrpc/clnt.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_page.h>
-#समावेश <linux/module.h>
+#include <linux/time.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/fcntl.h>
+#include <linux/stat.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/pagemap.h>
+#include <linux/sunrpc/clnt.h>
+#include <linux/nfs_fs.h>
+#include <linux/nfs_page.h>
+#include <linux/module.h>
 
-#समावेश "nfs4_fs.h"
-#समावेश "internal.h"
-#समावेश "iostat.h"
-#समावेश "fscache.h"
-#समावेश "pnfs.h"
-#समावेश "nfstrace.h"
+#include "nfs4_fs.h"
+#include "internal.h"
+#include "iostat.h"
+#include "fscache.h"
+#include "pnfs.h"
+#include "nfstrace.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_PAGECACHE
+#define NFSDBG_FACILITY		NFSDBG_PAGECACHE
 
-अटल स्थिर काष्ठा nfs_pgio_completion_ops nfs_async_पढ़ो_completion_ops;
-अटल स्थिर काष्ठा nfs_rw_ops nfs_rw_पढ़ो_ops;
+static const struct nfs_pgio_completion_ops nfs_async_read_completion_ops;
+static const struct nfs_rw_ops nfs_rw_read_ops;
 
-अटल काष्ठा kmem_cache *nfs_rdata_cachep;
+static struct kmem_cache *nfs_rdata_cachep;
 
-अटल काष्ठा nfs_pgio_header *nfs_पढ़ोhdr_alloc(व्योम)
-अणु
-	काष्ठा nfs_pgio_header *p = kmem_cache_zalloc(nfs_rdata_cachep, GFP_KERNEL);
+static struct nfs_pgio_header *nfs_readhdr_alloc(void)
+{
+	struct nfs_pgio_header *p = kmem_cache_zalloc(nfs_rdata_cachep, GFP_KERNEL);
 
-	अगर (p)
+	if (p)
 		p->rw_mode = FMODE_READ;
-	वापस p;
-पूर्ण
+	return p;
+}
 
-अटल व्योम nfs_पढ़ोhdr_मुक्त(काष्ठा nfs_pgio_header *rhdr)
-अणु
-	kmem_cache_मुक्त(nfs_rdata_cachep, rhdr);
-पूर्ण
+static void nfs_readhdr_free(struct nfs_pgio_header *rhdr)
+{
+	kmem_cache_free(nfs_rdata_cachep, rhdr);
+}
 
-अटल
-पूर्णांक nfs_वापस_empty_page(काष्ठा page *page)
-अणु
+static
+int nfs_return_empty_page(struct page *page)
+{
 	zero_user(page, 0, PAGE_SIZE);
 	SetPageUptodate(page);
 	unlock_page(page);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nfs_pageio_init_पढ़ो(काष्ठा nfs_pageio_descriptor *pgio,
-			      काष्ठा inode *inode, bool क्रमce_mds,
-			      स्थिर काष्ठा nfs_pgio_completion_ops *compl_ops)
-अणु
-	काष्ठा nfs_server *server = NFS_SERVER(inode);
-	स्थिर काष्ठा nfs_pageio_ops *pg_ops = &nfs_pgio_rw_ops;
+void nfs_pageio_init_read(struct nfs_pageio_descriptor *pgio,
+			      struct inode *inode, bool force_mds,
+			      const struct nfs_pgio_completion_ops *compl_ops)
+{
+	struct nfs_server *server = NFS_SERVER(inode);
+	const struct nfs_pageio_ops *pg_ops = &nfs_pgio_rw_ops;
 
-#अगर_घोषित CONFIG_NFS_V4_1
-	अगर (server->pnfs_curr_ld && !क्रमce_mds)
-		pg_ops = server->pnfs_curr_ld->pg_पढ़ो_ops;
-#पूर्ण_अगर
-	nfs_pageio_init(pgio, inode, pg_ops, compl_ops, &nfs_rw_पढ़ो_ops,
+#ifdef CONFIG_NFS_V4_1
+	if (server->pnfs_curr_ld && !force_mds)
+		pg_ops = server->pnfs_curr_ld->pg_read_ops;
+#endif
+	nfs_pageio_init(pgio, inode, pg_ops, compl_ops, &nfs_rw_read_ops,
 			server->rsize, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_pageio_init_पढ़ो);
+}
+EXPORT_SYMBOL_GPL(nfs_pageio_init_read);
 
-अटल व्योम nfs_pageio_complete_पढ़ो(काष्ठा nfs_pageio_descriptor *pgio,
-				     काष्ठा inode *inode)
-अणु
-	काष्ठा nfs_pgio_mirror *pgm;
-	अचिन्हित दीर्घ npages;
+static void nfs_pageio_complete_read(struct nfs_pageio_descriptor *pgio,
+				     struct inode *inode)
+{
+	struct nfs_pgio_mirror *pgm;
+	unsigned long npages;
 
 	nfs_pageio_complete(pgio);
 
-	/* It करोesn't make sense to करो mirrored पढ़ोs! */
+	/* It doesn't make sense to do mirrored reads! */
 	WARN_ON_ONCE(pgio->pg_mirror_count != 1);
 
 	pgm = &pgio->pg_mirrors[0];
-	NFS_I(inode)->पढ़ो_io += pgm->pg_bytes_written;
+	NFS_I(inode)->read_io += pgm->pg_bytes_written;
 	npages = (pgm->pg_bytes_written + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	nfs_add_stats(inode, NFSIOS_READPAGES, npages);
-पूर्ण
+}
 
 
-व्योम nfs_pageio_reset_पढ़ो_mds(काष्ठा nfs_pageio_descriptor *pgio)
-अणु
-	काष्ठा nfs_pgio_mirror *mirror;
+void nfs_pageio_reset_read_mds(struct nfs_pageio_descriptor *pgio)
+{
+	struct nfs_pgio_mirror *mirror;
 
-	अगर (pgio->pg_ops && pgio->pg_ops->pg_cleanup)
+	if (pgio->pg_ops && pgio->pg_ops->pg_cleanup)
 		pgio->pg_ops->pg_cleanup(pgio);
 
 	pgio->pg_ops = &nfs_pgio_rw_ops;
 
-	/* पढ़ो path should never have more than one mirror */
+	/* read path should never have more than one mirror */
 	WARN_ON_ONCE(pgio->pg_mirror_count != 1);
 
 	mirror = &pgio->pg_mirrors[0];
 	mirror->pg_bsize = NFS_SERVER(pgio->pg_inode)->rsize;
-पूर्ण
-EXPORT_SYMBOL_GPL(nfs_pageio_reset_पढ़ो_mds);
+}
+EXPORT_SYMBOL_GPL(nfs_pageio_reset_read_mds);
 
-अटल व्योम nfs_पढ़ोpage_release(काष्ठा nfs_page *req, पूर्णांक error)
-अणु
-	काष्ठा inode *inode = d_inode(nfs_req_खोलोctx(req)->dentry);
-	काष्ठा page *page = req->wb_page;
+static void nfs_readpage_release(struct nfs_page *req, int error)
+{
+	struct inode *inode = d_inode(nfs_req_openctx(req)->dentry);
+	struct page *page = req->wb_page;
 
-	dprपूर्णांकk("NFS: read done (%s/%llu %d@%lld)\n", inode->i_sb->s_id,
-		(अचिन्हित दीर्घ दीर्घ)NFS_खाताID(inode), req->wb_bytes,
-		(दीर्घ दीर्घ)req_offset(req));
+	dprintk("NFS: read done (%s/%llu %d@%lld)\n", inode->i_sb->s_id,
+		(unsigned long long)NFS_FILEID(inode), req->wb_bytes,
+		(long long)req_offset(req));
 
-	अगर (nfs_error_is_fatal_on_server(error) && error != -ETIMEDOUT)
+	if (nfs_error_is_fatal_on_server(error) && error != -ETIMEDOUT)
 		SetPageError(page);
-	अगर (nfs_page_group_sync_on_bit(req, PG_UNLOCKPAGE)) अणु
-		काष्ठा address_space *mapping = page_file_mapping(page);
+	if (nfs_page_group_sync_on_bit(req, PG_UNLOCKPAGE)) {
+		struct address_space *mapping = page_file_mapping(page);
 
-		अगर (PageUptodate(page))
-			nfs_पढ़ोpage_to_fscache(inode, page, 0);
-		अन्यथा अगर (!PageError(page) && !PagePrivate(page))
-			generic_error_हटाओ_page(mapping, page);
+		if (PageUptodate(page))
+			nfs_readpage_to_fscache(inode, page, 0);
+		else if (!PageError(page) && !PagePrivate(page))
+			generic_error_remove_page(mapping, page);
 		unlock_page(page);
-	पूर्ण
+	}
 	nfs_release_request(req);
-पूर्ण
+}
 
-काष्ठा nfs_पढ़ोdesc अणु
-	काष्ठा nfs_pageio_descriptor pgio;
-	काष्ठा nfs_खोलो_context *ctx;
-पूर्ण;
+struct nfs_readdesc {
+	struct nfs_pageio_descriptor pgio;
+	struct nfs_open_context *ctx;
+};
 
-अटल व्योम nfs_page_group_set_uptodate(काष्ठा nfs_page *req)
-अणु
-	अगर (nfs_page_group_sync_on_bit(req, PG_UPTODATE))
+static void nfs_page_group_set_uptodate(struct nfs_page *req)
+{
+	if (nfs_page_group_sync_on_bit(req, PG_UPTODATE))
 		SetPageUptodate(req->wb_page);
-पूर्ण
+}
 
-अटल व्योम nfs_पढ़ो_completion(काष्ठा nfs_pgio_header *hdr)
-अणु
-	अचिन्हित दीर्घ bytes = 0;
-	पूर्णांक error;
+static void nfs_read_completion(struct nfs_pgio_header *hdr)
+{
+	unsigned long bytes = 0;
+	int error;
 
-	अगर (test_bit(NFS_IOHDR_REDO, &hdr->flags))
-		जाओ out;
-	जबतक (!list_empty(&hdr->pages)) अणु
-		काष्ठा nfs_page *req = nfs_list_entry(hdr->pages.next);
-		काष्ठा page *page = req->wb_page;
-		अचिन्हित दीर्घ start = req->wb_pgbase;
-		अचिन्हित दीर्घ end = req->wb_pgbase + req->wb_bytes;
+	if (test_bit(NFS_IOHDR_REDO, &hdr->flags))
+		goto out;
+	while (!list_empty(&hdr->pages)) {
+		struct nfs_page *req = nfs_list_entry(hdr->pages.next);
+		struct page *page = req->wb_page;
+		unsigned long start = req->wb_pgbase;
+		unsigned long end = req->wb_pgbase + req->wb_bytes;
 
-		अगर (test_bit(NFS_IOHDR_खातापूर्ण, &hdr->flags)) अणु
+		if (test_bit(NFS_IOHDR_EOF, &hdr->flags)) {
 			/* note: regions of the page not covered by a
-			 * request are zeroed in पढ़ोpage_async_filler */
-			अगर (bytes > hdr->good_bytes) अणु
+			 * request are zeroed in readpage_async_filler */
+			if (bytes > hdr->good_bytes) {
 				/* nothing in this request was good, so zero
 				 * the full extent of the request */
 				zero_user_segment(page, start, end);
 
-			पूर्ण अन्यथा अगर (hdr->good_bytes - bytes < req->wb_bytes) अणु
+			} else if (hdr->good_bytes - bytes < req->wb_bytes) {
 				/* part of this request has good bytes, but
 				 * not all. zero the bad bytes */
 				start += hdr->good_bytes - bytes;
 				WARN_ON(start < req->wb_pgbase);
 				zero_user_segment(page, start, end);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		error = 0;
 		bytes += req->wb_bytes;
-		अगर (test_bit(NFS_IOHDR_ERROR, &hdr->flags)) अणु
-			अगर (bytes <= hdr->good_bytes)
+		if (test_bit(NFS_IOHDR_ERROR, &hdr->flags)) {
+			if (bytes <= hdr->good_bytes)
 				nfs_page_group_set_uptodate(req);
-			अन्यथा अणु
+			else {
 				error = hdr->error;
-				xchg(&nfs_req_खोलोctx(req)->error, error);
-			पूर्ण
-		पूर्ण अन्यथा
+				xchg(&nfs_req_openctx(req)->error, error);
+			}
+		} else
 			nfs_page_group_set_uptodate(req);
-		nfs_list_हटाओ_request(req);
-		nfs_पढ़ोpage_release(req, error);
-	पूर्ण
+		nfs_list_remove_request(req);
+		nfs_readpage_release(req, error);
+	}
 out:
 	hdr->release(hdr);
-पूर्ण
+}
 
-अटल व्योम nfs_initiate_पढ़ो(काष्ठा nfs_pgio_header *hdr,
-			      काष्ठा rpc_message *msg,
-			      स्थिर काष्ठा nfs_rpc_ops *rpc_ops,
-			      काष्ठा rpc_task_setup *task_setup_data, पूर्णांक how)
-अणु
-	काष्ठा inode *inode = hdr->inode;
-	पूर्णांक swap_flags = IS_SWAPखाता(inode) ? NFS_RPC_SWAPFLAGS : 0;
+static void nfs_initiate_read(struct nfs_pgio_header *hdr,
+			      struct rpc_message *msg,
+			      const struct nfs_rpc_ops *rpc_ops,
+			      struct rpc_task_setup *task_setup_data, int how)
+{
+	struct inode *inode = hdr->inode;
+	int swap_flags = IS_SWAPFILE(inode) ? NFS_RPC_SWAPFLAGS : 0;
 
 	task_setup_data->flags |= swap_flags;
-	rpc_ops->पढ़ो_setup(hdr, msg);
-	trace_nfs_initiate_पढ़ो(hdr);
-पूर्ण
+	rpc_ops->read_setup(hdr, msg);
+	trace_nfs_initiate_read(hdr);
+}
 
-अटल व्योम
-nfs_async_पढ़ो_error(काष्ठा list_head *head, पूर्णांक error)
-अणु
-	काष्ठा nfs_page	*req;
+static void
+nfs_async_read_error(struct list_head *head, int error)
+{
+	struct nfs_page	*req;
 
-	जबतक (!list_empty(head)) अणु
+	while (!list_empty(head)) {
 		req = nfs_list_entry(head->next);
-		nfs_list_हटाओ_request(req);
-		nfs_पढ़ोpage_release(req, error);
-	पूर्ण
-पूर्ण
+		nfs_list_remove_request(req);
+		nfs_readpage_release(req, error);
+	}
+}
 
-अटल स्थिर काष्ठा nfs_pgio_completion_ops nfs_async_पढ़ो_completion_ops = अणु
-	.error_cleanup = nfs_async_पढ़ो_error,
-	.completion = nfs_पढ़ो_completion,
-पूर्ण;
+static const struct nfs_pgio_completion_ops nfs_async_read_completion_ops = {
+	.error_cleanup = nfs_async_read_error,
+	.completion = nfs_read_completion,
+};
 
 /*
  * This is the callback from RPC telling us whether a reply was
- * received or some error occurred (समयout or socket shutकरोwn).
+ * received or some error occurred (timeout or socket shutdown).
  */
-अटल पूर्णांक nfs_पढ़ोpage_करोne(काष्ठा rpc_task *task,
-			     काष्ठा nfs_pgio_header *hdr,
-			     काष्ठा inode *inode)
-अणु
-	पूर्णांक status = NFS_PROTO(inode)->पढ़ो_करोne(task, hdr);
-	अगर (status != 0)
-		वापस status;
+static int nfs_readpage_done(struct rpc_task *task,
+			     struct nfs_pgio_header *hdr,
+			     struct inode *inode)
+{
+	int status = NFS_PROTO(inode)->read_done(task, hdr);
+	if (status != 0)
+		return status;
 
 	nfs_add_stats(inode, NFSIOS_SERVERREADBYTES, hdr->res.count);
-	trace_nfs_पढ़ोpage_करोne(task, hdr);
+	trace_nfs_readpage_done(task, hdr);
 
-	अगर (task->tk_status == -ESTALE) अणु
+	if (task->tk_status == -ESTALE) {
 		nfs_set_inode_stale(inode);
-		nfs_mark_क्रम_revalidate(inode);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		nfs_mark_for_revalidate(inode);
+	}
+	return 0;
+}
 
-अटल व्योम nfs_पढ़ोpage_retry(काष्ठा rpc_task *task,
-			       काष्ठा nfs_pgio_header *hdr)
-अणु
-	काष्ठा nfs_pgio_args *argp = &hdr->args;
-	काष्ठा nfs_pgio_res  *resp = &hdr->res;
+static void nfs_readpage_retry(struct rpc_task *task,
+			       struct nfs_pgio_header *hdr)
+{
+	struct nfs_pgio_args *argp = &hdr->args;
+	struct nfs_pgio_res  *resp = &hdr->res;
 
-	/* This is a लघु पढ़ो! */
+	/* This is a short read! */
 	nfs_inc_stats(hdr->inode, NFSIOS_SHORTREAD);
-	trace_nfs_पढ़ोpage_लघु(task, hdr);
+	trace_nfs_readpage_short(task, hdr);
 
 	/* Has the server at least made some progress? */
-	अगर (resp->count == 0) अणु
+	if (resp->count == 0) {
 		nfs_set_pgio_error(hdr, -EIO, argp->offset);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* For non rpc-based layout drivers, retry-through-MDS */
-	अगर (!task->tk_ops) अणु
+	if (!task->tk_ops) {
 		hdr->pnfs_error = -EAGAIN;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Yes, so retry the पढ़ो at the end of the hdr */
+	/* Yes, so retry the read at the end of the hdr */
 	hdr->mds_offset += resp->count;
 	argp->offset += resp->count;
 	argp->pgbase += resp->count;
@@ -273,193 +272,193 @@ nfs_async_पढ़ो_error(काष्ठा list_head *head, पूर्ण
 	resp->count = 0;
 	resp->eof = 0;
 	rpc_restart_call_prepare(task);
-पूर्ण
+}
 
-अटल व्योम nfs_पढ़ोpage_result(काष्ठा rpc_task *task,
-				काष्ठा nfs_pgio_header *hdr)
-अणु
-	अगर (hdr->res.eof) अणु
+static void nfs_readpage_result(struct rpc_task *task,
+				struct nfs_pgio_header *hdr)
+{
+	if (hdr->res.eof) {
 		loff_t pos = hdr->args.offset + hdr->res.count;
-		अचिन्हित पूर्णांक new = pos - hdr->io_start;
+		unsigned int new = pos - hdr->io_start;
 
-		अगर (hdr->good_bytes > new) अणु
+		if (hdr->good_bytes > new) {
 			hdr->good_bytes = new;
-			set_bit(NFS_IOHDR_खातापूर्ण, &hdr->flags);
+			set_bit(NFS_IOHDR_EOF, &hdr->flags);
 			clear_bit(NFS_IOHDR_ERROR, &hdr->flags);
-		पूर्ण
-	पूर्ण अन्यथा अगर (hdr->res.count < hdr->args.count)
-		nfs_पढ़ोpage_retry(task, hdr);
-पूर्ण
+		}
+	} else if (hdr->res.count < hdr->args.count)
+		nfs_readpage_retry(task, hdr);
+}
 
-अटल पूर्णांक
-पढ़ोpage_async_filler(व्योम *data, काष्ठा page *page)
-अणु
-	काष्ठा nfs_पढ़ोdesc *desc = data;
-	काष्ठा nfs_page *new;
-	अचिन्हित पूर्णांक len;
-	पूर्णांक error;
+static int
+readpage_async_filler(void *data, struct page *page)
+{
+	struct nfs_readdesc *desc = data;
+	struct nfs_page *new;
+	unsigned int len;
+	int error;
 
 	len = nfs_page_length(page);
-	अगर (len == 0)
-		वापस nfs_वापस_empty_page(page);
+	if (len == 0)
+		return nfs_return_empty_page(page);
 
 	new = nfs_create_request(desc->ctx, page, 0, len);
-	अगर (IS_ERR(new))
-		जाओ out_error;
+	if (IS_ERR(new))
+		goto out_error;
 
-	अगर (len < PAGE_SIZE)
+	if (len < PAGE_SIZE)
 		zero_user_segment(page, len, PAGE_SIZE);
-	अगर (!nfs_pageio_add_request(&desc->pgio, new)) अणु
-		nfs_list_हटाओ_request(new);
+	if (!nfs_pageio_add_request(&desc->pgio, new)) {
+		nfs_list_remove_request(new);
 		error = desc->pgio.pg_error;
-		nfs_पढ़ोpage_release(new, error);
-		जाओ out;
-	पूर्ण
-	वापस 0;
+		nfs_readpage_release(new, error);
+		goto out;
+	}
+	return 0;
 out_error:
 	error = PTR_ERR(new);
 	unlock_page(page);
 out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Read a page over NFS.
- * We पढ़ो the page synchronously in the following हाल:
- *  -	The error flag is set क्रम this page. This happens only when a
- *	previous async पढ़ो operation failed.
+ * We read the page synchronously in the following case:
+ *  -	The error flag is set for this page. This happens only when a
+ *	previous async read operation failed.
  */
-पूर्णांक nfs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
-अणु
-	काष्ठा nfs_पढ़ोdesc desc;
-	काष्ठा inode *inode = page_file_mapping(page)->host;
-	पूर्णांक ret;
+int nfs_readpage(struct file *file, struct page *page)
+{
+	struct nfs_readdesc desc;
+	struct inode *inode = page_file_mapping(page)->host;
+	int ret;
 
-	dprपूर्णांकk("NFS: nfs_readpage (%p %ld@%lu)\n",
+	dprintk("NFS: nfs_readpage (%p %ld@%lu)\n",
 		page, PAGE_SIZE, page_index(page));
 	nfs_inc_stats(inode, NFSIOS_VFSREADPAGE);
 
 	/*
-	 * Try to flush any pending ग_लिखोs to the file..
+	 * Try to flush any pending writes to the file..
 	 *
 	 * NOTE! Because we own the page lock, there cannot
-	 * be any new pending ग_लिखोs generated at this poपूर्णांक
-	 * क्रम this page (other pages can be written to).
+	 * be any new pending writes generated at this point
+	 * for this page (other pages can be written to).
 	 */
 	ret = nfs_wb_page(inode, page);
-	अगर (ret)
-		जाओ out_unlock;
-	अगर (PageUptodate(page))
-		जाओ out_unlock;
+	if (ret)
+		goto out_unlock;
+	if (PageUptodate(page))
+		goto out_unlock;
 
 	ret = -ESTALE;
-	अगर (NFS_STALE(inode))
-		जाओ out_unlock;
+	if (NFS_STALE(inode))
+		goto out_unlock;
 
-	अगर (file == शून्य) अणु
+	if (file == NULL) {
 		ret = -EBADF;
-		desc.ctx = nfs_find_खोलो_context(inode, शून्य, FMODE_READ);
-		अगर (desc.ctx == शून्य)
-			जाओ out_unlock;
-	पूर्ण अन्यथा
-		desc.ctx = get_nfs_खोलो_context(nfs_file_खोलो_context(file));
+		desc.ctx = nfs_find_open_context(inode, NULL, FMODE_READ);
+		if (desc.ctx == NULL)
+			goto out_unlock;
+	} else
+		desc.ctx = get_nfs_open_context(nfs_file_open_context(file));
 
-	अगर (!IS_SYNC(inode)) अणु
-		ret = nfs_पढ़ोpage_from_fscache(desc.ctx, inode, page);
-		अगर (ret == 0)
-			जाओ out;
-	पूर्ण
+	if (!IS_SYNC(inode)) {
+		ret = nfs_readpage_from_fscache(desc.ctx, inode, page);
+		if (ret == 0)
+			goto out;
+	}
 
 	xchg(&desc.ctx->error, 0);
-	nfs_pageio_init_पढ़ो(&desc.pgio, inode, false,
-			     &nfs_async_पढ़ो_completion_ops);
+	nfs_pageio_init_read(&desc.pgio, inode, false,
+			     &nfs_async_read_completion_ops);
 
-	ret = पढ़ोpage_async_filler(&desc, page);
+	ret = readpage_async_filler(&desc, page);
 
-	अगर (!ret)
-		nfs_pageio_complete_पढ़ो(&desc.pgio, inode);
+	if (!ret)
+		nfs_pageio_complete_read(&desc.pgio, inode);
 
 	ret = desc.pgio.pg_error < 0 ? desc.pgio.pg_error : 0;
-	अगर (!ret) अणु
-		ret = रुको_on_page_locked_समाप्तable(page);
-		अगर (!PageUptodate(page) && !ret)
+	if (!ret) {
+		ret = wait_on_page_locked_killable(page);
+		if (!PageUptodate(page) && !ret)
 			ret = xchg(&desc.ctx->error, 0);
-	पूर्ण
+	}
 out:
-	put_nfs_खोलो_context(desc.ctx);
-	वापस ret;
+	put_nfs_open_context(desc.ctx);
+	return ret;
 out_unlock:
 	unlock_page(page);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक nfs_पढ़ोpages(काष्ठा file *file, काष्ठा address_space *mapping,
-		काष्ठा list_head *pages, अचिन्हित nr_pages)
-अणु
-	काष्ठा nfs_पढ़ोdesc desc;
-	काष्ठा inode *inode = mapping->host;
-	पूर्णांक ret;
+int nfs_readpages(struct file *file, struct address_space *mapping,
+		struct list_head *pages, unsigned nr_pages)
+{
+	struct nfs_readdesc desc;
+	struct inode *inode = mapping->host;
+	int ret;
 
-	dprपूर्णांकk("NFS: nfs_readpages (%s/%Lu %d)\n",
+	dprintk("NFS: nfs_readpages (%s/%Lu %d)\n",
 			inode->i_sb->s_id,
-			(अचिन्हित दीर्घ दीर्घ)NFS_खाताID(inode),
+			(unsigned long long)NFS_FILEID(inode),
 			nr_pages);
 	nfs_inc_stats(inode, NFSIOS_VFSREADPAGES);
 
 	ret = -ESTALE;
-	अगर (NFS_STALE(inode))
-		जाओ out;
+	if (NFS_STALE(inode))
+		goto out;
 
-	अगर (file == शून्य) अणु
+	if (file == NULL) {
 		ret = -EBADF;
-		desc.ctx = nfs_find_खोलो_context(inode, शून्य, FMODE_READ);
-		अगर (desc.ctx == शून्य)
-			जाओ out;
-	पूर्ण अन्यथा
-		desc.ctx = get_nfs_खोलो_context(nfs_file_खोलो_context(file));
+		desc.ctx = nfs_find_open_context(inode, NULL, FMODE_READ);
+		if (desc.ctx == NULL)
+			goto out;
+	} else
+		desc.ctx = get_nfs_open_context(nfs_file_open_context(file));
 
-	/* attempt to पढ़ो as many of the pages as possible from the cache
-	 * - this वापसs -ENOBUFS immediately अगर the cookie is negative
+	/* attempt to read as many of the pages as possible from the cache
+	 * - this returns -ENOBUFS immediately if the cookie is negative
 	 */
-	ret = nfs_पढ़ोpages_from_fscache(desc.ctx, inode, mapping,
+	ret = nfs_readpages_from_fscache(desc.ctx, inode, mapping,
 					 pages, &nr_pages);
-	अगर (ret == 0)
-		जाओ पढ़ो_complete; /* all pages were पढ़ो */
+	if (ret == 0)
+		goto read_complete; /* all pages were read */
 
-	nfs_pageio_init_पढ़ो(&desc.pgio, inode, false,
-			     &nfs_async_पढ़ो_completion_ops);
+	nfs_pageio_init_read(&desc.pgio, inode, false,
+			     &nfs_async_read_completion_ops);
 
-	ret = पढ़ो_cache_pages(mapping, pages, पढ़ोpage_async_filler, &desc);
+	ret = read_cache_pages(mapping, pages, readpage_async_filler, &desc);
 
-	nfs_pageio_complete_पढ़ो(&desc.pgio, inode);
+	nfs_pageio_complete_read(&desc.pgio, inode);
 
-पढ़ो_complete:
-	put_nfs_खोलो_context(desc.ctx);
+read_complete:
+	put_nfs_open_context(desc.ctx);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक __init nfs_init_पढ़ोpagecache(व्योम)
-अणु
+int __init nfs_init_readpagecache(void)
+{
 	nfs_rdata_cachep = kmem_cache_create("nfs_read_data",
-					     माप(काष्ठा nfs_pgio_header),
+					     sizeof(struct nfs_pgio_header),
 					     0, SLAB_HWCACHE_ALIGN,
-					     शून्य);
-	अगर (nfs_rdata_cachep == शून्य)
-		वापस -ENOMEM;
+					     NULL);
+	if (nfs_rdata_cachep == NULL)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nfs_destroy_पढ़ोpagecache(व्योम)
-अणु
+void nfs_destroy_readpagecache(void)
+{
 	kmem_cache_destroy(nfs_rdata_cachep);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nfs_rw_ops nfs_rw_पढ़ो_ops = अणु
-	.rw_alloc_header	= nfs_पढ़ोhdr_alloc,
-	.rw_मुक्त_header		= nfs_पढ़ोhdr_मुक्त,
-	.rw_करोne		= nfs_पढ़ोpage_करोne,
-	.rw_result		= nfs_पढ़ोpage_result,
-	.rw_initiate		= nfs_initiate_पढ़ो,
-पूर्ण;
+static const struct nfs_rw_ops nfs_rw_read_ops = {
+	.rw_alloc_header	= nfs_readhdr_alloc,
+	.rw_free_header		= nfs_readhdr_free,
+	.rw_done		= nfs_readpage_done,
+	.rw_result		= nfs_readpage_result,
+	.rw_initiate		= nfs_initiate_read,
+};

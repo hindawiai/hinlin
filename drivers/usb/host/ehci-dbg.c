@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (c) 2001-2002 by David Brownell
  */
 
 /* this file is part of ehci-hcd.c */
 
-#अगर_घोषित CONFIG_DYNAMIC_DEBUG
+#ifdef CONFIG_DYNAMIC_DEBUG
 
 /*
- * check the values in the HCSPARAMS रेजिस्टर
+ * check the values in the HCSPARAMS register
  * (host controller _Structural_ parameters)
- * see EHCI spec, Table 2-4 क्रम each value
+ * see EHCI spec, Table 2-4 for each value
  */
-अटल व्योम dbg_hcs_params(काष्ठा ehci_hcd *ehci, अक्षर *label)
-अणु
-	u32	params = ehci_पढ़ोl(ehci, &ehci->caps->hcs_params);
+static void dbg_hcs_params(struct ehci_hcd *ehci, char *label)
+{
+	u32	params = ehci_readl(ehci, &ehci->caps->hcs_params);
 
 	ehci_dbg(ehci,
 		"%s hcs_params 0x%x dbg=%d%s cc=%d pcc=%d%s%s ports=%d\n",
@@ -28,39 +27,39 @@
 		HCS_PPC(params) ? "" : " !ppc",
 		HCS_N_PORTS(params));
 	/* Port routing, per EHCI 0.95 Spec, Section 2.2.5 */
-	अगर (HCS_PORTROUTED(params)) अणु
-		पूर्णांक i;
-		अक्षर buf[46], पंचांगp[7], byte;
+	if (HCS_PORTROUTED(params)) {
+		int i;
+		char buf[46], tmp[7], byte;
 
 		buf[0] = 0;
-		क्रम (i = 0; i < HCS_N_PORTS(params); i++) अणु
-			/* FIXME MIPS won't पढ़ोb() ... */
-			byte = पढ़ोb(&ehci->caps->portroute[(i >> 1)]);
-			प्र_लिखो(पंचांगp, "%d ",
+		for (i = 0; i < HCS_N_PORTS(params); i++) {
+			/* FIXME MIPS won't readb() ... */
+			byte = readb(&ehci->caps->portroute[(i >> 1)]);
+			sprintf(tmp, "%d ",
 				(i & 0x1) ? byte & 0xf : (byte >> 4) & 0xf);
-			म_जोड़ो(buf, पंचांगp);
-		पूर्ण
+			strcat(buf, tmp);
+		}
 		ehci_dbg(ehci, "%s portroute %s\n", label, buf);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * check the values in the HCCPARAMS रेजिस्टर
+ * check the values in the HCCPARAMS register
  * (host controller _Capability_ parameters)
- * see EHCI Spec, Table 2-5 क्रम each value
+ * see EHCI Spec, Table 2-5 for each value
  */
-अटल व्योम dbg_hcc_params(काष्ठा ehci_hcd *ehci, अक्षर *label)
-अणु
-	u32	params = ehci_पढ़ोl(ehci, &ehci->caps->hcc_params);
+static void dbg_hcc_params(struct ehci_hcd *ehci, char *label)
+{
+	u32	params = ehci_readl(ehci, &ehci->caps->hcc_params);
 
-	अगर (HCC_ISOC_CACHE(params)) अणु
+	if (HCC_ISOC_CACHE(params)) {
 		ehci_dbg(ehci,
 			"%s hcc_params %04x caching frame %s%s%s\n",
 			label, params,
 			HCC_PGM_FRAMELISTLEN(params) ? "256/512/1024" : "1024",
 			HCC_CANPARK(params) ? " park" : "",
 			HCC_64BIT_ADDR(params) ? " 64 bit addr" : "");
-	पूर्ण अन्यथा अणु
+	} else {
 		ehci_dbg(ehci,
 			"%s hcc_params %04x thresh %d uframes %s%s%s%s%s%s%s\n",
 			label,
@@ -74,38 +73,38 @@
 			HCC_HW_PREFETCH(params) ? " hw prefetch" : "",
 			HCC_32FRAME_PERIODIC_LIST(params) ?
 				" 32 periodic list" : "");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __maybe_unused
-dbg_qtd(स्थिर अक्षर *label, काष्ठा ehci_hcd *ehci, काष्ठा ehci_qtd *qtd)
-अणु
+static void __maybe_unused
+dbg_qtd(const char *label, struct ehci_hcd *ehci, struct ehci_qtd *qtd)
+{
 	ehci_dbg(ehci, "%s td %p n%08x %08x t%08x p0=%08x\n", label, qtd,
 		hc32_to_cpup(ehci, &qtd->hw_next),
 		hc32_to_cpup(ehci, &qtd->hw_alt_next),
 		hc32_to_cpup(ehci, &qtd->hw_token),
 		hc32_to_cpup(ehci, &qtd->hw_buf[0]));
-	अगर (qtd->hw_buf[1])
+	if (qtd->hw_buf[1])
 		ehci_dbg(ehci, "  p1=%08x p2=%08x p3=%08x p4=%08x\n",
 			hc32_to_cpup(ehci, &qtd->hw_buf[1]),
 			hc32_to_cpup(ehci, &qtd->hw_buf[2]),
 			hc32_to_cpup(ehci, &qtd->hw_buf[3]),
 			hc32_to_cpup(ehci, &qtd->hw_buf[4]));
-पूर्ण
+}
 
-अटल व्योम __maybe_unused
-dbg_qh(स्थिर अक्षर *label, काष्ठा ehci_hcd *ehci, काष्ठा ehci_qh *qh)
-अणु
-	काष्ठा ehci_qh_hw *hw = qh->hw;
+static void __maybe_unused
+dbg_qh(const char *label, struct ehci_hcd *ehci, struct ehci_qh *qh)
+{
+	struct ehci_qh_hw *hw = qh->hw;
 
 	ehci_dbg(ehci, "%s qh %p n%08x info %x %x qtd %x\n", label,
 		qh, hw->hw_next, hw->hw_info1, hw->hw_info2, hw->hw_current);
-	dbg_qtd("overlay", ehci, (काष्ठा ehci_qtd *) &hw->hw_qtd_next);
-पूर्ण
+	dbg_qtd("overlay", ehci, (struct ehci_qtd *) &hw->hw_qtd_next);
+}
 
-अटल व्योम __maybe_unused
-dbg_itd(स्थिर अक्षर *label, काष्ठा ehci_hcd *ehci, काष्ठा ehci_itd *itd)
-अणु
+static void __maybe_unused
+dbg_itd(const char *label, struct ehci_hcd *ehci, struct ehci_itd *itd)
+{
 	ehci_dbg(ehci, "%s [%d] itd %p, next %08x, urb %p\n",
 		label, itd->frame, itd, hc32_to_cpu(ehci, itd->hw_next),
 		itd->urb);
@@ -132,11 +131,11 @@ dbg_itd(स्थिर अक्षर *label, काष्ठा ehci_hcd *ehc
 		itd->index[0], itd->index[1], itd->index[2],
 		itd->index[3], itd->index[4], itd->index[5],
 		itd->index[6], itd->index[7]);
-पूर्ण
+}
 
-अटल व्योम __maybe_unused
-dbg_sitd(स्थिर अक्षर *label, काष्ठा ehci_hcd *ehci, काष्ठा ehci_sitd *sitd)
-अणु
+static void __maybe_unused
+dbg_sitd(const char *label, struct ehci_hcd *ehci, struct ehci_sitd *sitd)
+{
 	ehci_dbg(ehci, "%s [%d] sitd %p, next %08x, urb %p\n",
 		label, sitd->frame, sitd, hc32_to_cpu(ehci, sitd->hw_next),
 		sitd->urb);
@@ -147,12 +146,12 @@ dbg_sitd(स्थिर अक्षर *label, काष्ठा ehci_hcd *eh
 		hc32_to_cpu(ehci, sitd->hw_results),
 		hc32_to_cpu(ehci, sitd->hw_buf[0]),
 		hc32_to_cpu(ehci, sitd->hw_buf[1]));
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused
-dbg_status_buf(अक्षर *buf, अचिन्हित len, स्थिर अक्षर *label, u32 status)
-अणु
-	वापस scnम_लिखो(buf, len,
+static int __maybe_unused
+dbg_status_buf(char *buf, unsigned len, const char *label, u32 status)
+{
+	return scnprintf(buf, len,
 		"%s%sstatus %04x%s%s%s%s%s%s%s%s%s%s%s",
 		label, label[0] ? " " : "", status,
 		(status & STS_PPCE_MASK) ? " PPCE" : "",
@@ -166,12 +165,12 @@ dbg_status_buf(अक्षर *buf, अचिन्हित len, स्थि�
 		(status & STS_PCD) ? " PCD" : "",
 		(status & STS_ERR) ? " ERR" : "",
 		(status & STS_INT) ? " INT" : "");
-पूर्ण
+}
 
-अटल पूर्णांक __maybe_unused
-dbg_पूर्णांकr_buf(अक्षर *buf, अचिन्हित len, स्थिर अक्षर *label, u32 enable)
-अणु
-	वापस scnम_लिखो(buf, len,
+static int __maybe_unused
+dbg_intr_buf(char *buf, unsigned len, const char *label, u32 enable)
+{
+	return scnprintf(buf, len,
 		"%s%sintrenable %02x%s%s%s%s%s%s%s",
 		label, label[0] ? " " : "", enable,
 		(enable & STS_PPCE_MASK) ? " PPCE" : "",
@@ -181,14 +180,14 @@ dbg_पूर्णांकr_buf(अक्षर *buf, अचिन्हित
 		(enable & STS_PCD) ? " PCD" : "",
 		(enable & STS_ERR) ? " ERR" : "",
 		(enable & STS_INT) ? " INT" : "");
-पूर्ण
+}
 
-अटल स्थिर अक्षर *स्थिर fls_strings[] = अणु "1024", "512", "256", "??" पूर्ण;
+static const char *const fls_strings[] = { "1024", "512", "256", "??" };
 
-अटल पूर्णांक
-dbg_command_buf(अक्षर *buf, अचिन्हित len, स्थिर अक्षर *label, u32 command)
-अणु
-	वापस scnम_लिखो(buf, len,
+static int
+dbg_command_buf(char *buf, unsigned len, const char *label, u32 command)
+{
+	return scnprintf(buf, len,
 		"%s%scommand %07x %s%s%s%s%s%s=%d ithresh=%d%s%s%s%s "
 		"period=%s%s %s",
 		label, label[0] ? " " : "", command,
@@ -207,30 +206,30 @@ dbg_command_buf(अक्षर *buf, अचिन्हित len, स्थि
 		fls_strings[(command >> 2) & 0x3],
 		(command & CMD_RESET) ? " Reset" : "",
 		(command & CMD_RUN) ? "RUN" : "HALT");
-पूर्ण
+}
 
-अटल पूर्णांक
-dbg_port_buf(अक्षर *buf, अचिन्हित len, स्थिर अक्षर *label, पूर्णांक port, u32 status)
-अणु
-	अक्षर	*sig;
+static int
+dbg_port_buf(char *buf, unsigned len, const char *label, int port, u32 status)
+{
+	char	*sig;
 
-	/* संकेतing state */
-	चयन (status & (3 << 10)) अणु
-	हाल 0 << 10:
+	/* signaling state */
+	switch (status & (3 << 10)) {
+	case 0 << 10:
 		sig = "se0";
-		अवरोध;
-	हाल 1 << 10: /* low speed */
+		break;
+	case 1 << 10: /* low speed */
 		sig = "k";
-		अवरोध;
-	हाल 2 << 10:
+		break;
+	case 2 << 10:
 		sig = "j";
-		अवरोध;
-	शेष:
+		break;
+	default:
 		sig = "?";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस scnम_लिखो(buf, len,
+	return scnprintf(buf, len,
 		"%s%sport:%d status %06x %d %s%s%s%s%s%s "
 		"sig=%s%s%s%s%s%s%s%s%s%s%s",
 		label, label[0] ? " " : "", port, status,
@@ -256,151 +255,151 @@ dbg_port_buf(अक्षर *buf, अचिन्हित len, स्थिर
 		(status & PORT_PE) ? " PE" : "",
 		(status & PORT_CSC) ? " CSC" : "",
 		(status & PORT_CONNECT) ? " CONNECT" : "");
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-dbg_status(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *label, u32 status)
-अणु
-	अक्षर buf[80];
+static inline void
+dbg_status(struct ehci_hcd *ehci, const char *label, u32 status)
+{
+	char buf[80];
 
-	dbg_status_buf(buf, माप(buf), label, status);
+	dbg_status_buf(buf, sizeof(buf), label, status);
 	ehci_dbg(ehci, "%s\n", buf);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-dbg_cmd(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *label, u32 command)
-अणु
-	अक्षर buf[80];
+static inline void
+dbg_cmd(struct ehci_hcd *ehci, const char *label, u32 command)
+{
+	char buf[80];
 
-	dbg_command_buf(buf, माप(buf), label, command);
+	dbg_command_buf(buf, sizeof(buf), label, command);
 	ehci_dbg(ehci, "%s\n", buf);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *label, पूर्णांक port, u32 status)
-अणु
-	अक्षर buf[80];
+static inline void
+dbg_port(struct ehci_hcd *ehci, const char *label, int port, u32 status)
+{
+	char buf[80];
 
-	dbg_port_buf(buf, माप(buf), label, port, status);
+	dbg_port_buf(buf, sizeof(buf), label, port, status);
 	ehci_dbg(ehci, "%s\n", buf);
-पूर्ण
+}
 
 /*-------------------------------------------------------------------------*/
 
 /* troubleshooting help: expose state in debugfs */
 
-अटल पूर्णांक debug_async_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक debug_bandwidth_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक debug_periodic_खोलो(काष्ठा inode *, काष्ठा file *);
-अटल पूर्णांक debug_रेजिस्टरs_खोलो(काष्ठा inode *, काष्ठा file *);
+static int debug_async_open(struct inode *, struct file *);
+static int debug_bandwidth_open(struct inode *, struct file *);
+static int debug_periodic_open(struct inode *, struct file *);
+static int debug_registers_open(struct inode *, struct file *);
 
-अटल sमाप_प्रकार debug_output(काष्ठा file*, अक्षर __user*, माप_प्रकार, loff_t*);
-अटल पूर्णांक debug_बंद(काष्ठा inode *, काष्ठा file *);
+static ssize_t debug_output(struct file*, char __user*, size_t, loff_t*);
+static int debug_close(struct inode *, struct file *);
 
-अटल स्थिर काष्ठा file_operations debug_async_fops = अणु
+static const struct file_operations debug_async_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_async_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.open		= debug_async_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
 
-अटल स्थिर काष्ठा file_operations debug_bandwidth_fops = अणु
+static const struct file_operations debug_bandwidth_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_bandwidth_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.open		= debug_bandwidth_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
 
-अटल स्थिर काष्ठा file_operations debug_periodic_fops = अणु
+static const struct file_operations debug_periodic_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_periodic_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.open		= debug_periodic_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
 
-अटल स्थिर काष्ठा file_operations debug_रेजिस्टरs_fops = अणु
+static const struct file_operations debug_registers_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो		= debug_रेजिस्टरs_खोलो,
-	.पढ़ो		= debug_output,
-	.release	= debug_बंद,
-	.llseek		= शेष_llseek,
-पूर्ण;
+	.open		= debug_registers_open,
+	.read		= debug_output,
+	.release	= debug_close,
+	.llseek		= default_llseek,
+};
 
-अटल काष्ठा dentry *ehci_debug_root;
+static struct dentry *ehci_debug_root;
 
-काष्ठा debug_buffer अणु
-	sमाप_प्रकार (*fill_func)(काष्ठा debug_buffer *);	/* fill method */
-	काष्ठा usb_bus *bus;
-	काष्ठा mutex mutex;	/* protect filling of buffer */
-	माप_प्रकार count;		/* number of अक्षरacters filled पूर्णांकo buffer */
-	अक्षर *output_buf;
-	माप_प्रकार alloc_size;
-पूर्ण;
+struct debug_buffer {
+	ssize_t (*fill_func)(struct debug_buffer *);	/* fill method */
+	struct usb_bus *bus;
+	struct mutex mutex;	/* protect filling of buffer */
+	size_t count;		/* number of characters filled into buffer */
+	char *output_buf;
+	size_t alloc_size;
+};
 
-अटल अंतरभूत अक्षर speed_अक्षर(u32 info1)
-अणु
-	चयन (info1 & (3 << 12)) अणु
-	हाल QH_FULL_SPEED:
-		वापस 'f';
-	हाल QH_LOW_SPEED:
-		वापस 'l';
-	हाल QH_HIGH_SPEED:
-		वापस 'h';
-	शेष:
-		वापस '?';
-	पूर्ण
-पूर्ण
+static inline char speed_char(u32 info1)
+{
+	switch (info1 & (3 << 12)) {
+	case QH_FULL_SPEED:
+		return 'f';
+	case QH_LOW_SPEED:
+		return 'l';
+	case QH_HIGH_SPEED:
+		return 'h';
+	default:
+		return '?';
+	}
+}
 
-अटल अंतरभूत अक्षर token_mark(काष्ठा ehci_hcd *ehci, __hc32 token)
-अणु
+static inline char token_mark(struct ehci_hcd *ehci, __hc32 token)
+{
 	__u32 v = hc32_to_cpu(ehci, token);
 
-	अगर (v & QTD_STS_ACTIVE)
-		वापस '*';
-	अगर (v & QTD_STS_HALT)
-		वापस '-';
-	अगर (!IS_SHORT_READ(v))
-		वापस ' ';
+	if (v & QTD_STS_ACTIVE)
+		return '*';
+	if (v & QTD_STS_HALT)
+		return '-';
+	if (!IS_SHORT_READ(v))
+		return ' ';
 	/* tries to advance through hw_alt_next */
-	वापस '/';
-पूर्ण
+	return '/';
+}
 
-अटल व्योम qh_lines(काष्ठा ehci_hcd *ehci, काष्ठा ehci_qh *qh,
-		अक्षर **nextp, अचिन्हित *sizep)
-अणु
+static void qh_lines(struct ehci_hcd *ehci, struct ehci_qh *qh,
+		char **nextp, unsigned *sizep)
+{
 	u32			scratch;
 	u32			hw_curr;
-	काष्ठा list_head	*entry;
-	काष्ठा ehci_qtd		*td;
-	अचिन्हित		temp;
-	अचिन्हित		size = *sizep;
-	अक्षर			*next = *nextp;
-	अक्षर			mark;
+	struct list_head	*entry;
+	struct ehci_qtd		*td;
+	unsigned		temp;
+	unsigned		size = *sizep;
+	char			*next = *nextp;
+	char			mark;
 	__le32			list_end = EHCI_LIST_END(ehci);
-	काष्ठा ehci_qh_hw	*hw = qh->hw;
+	struct ehci_qh_hw	*hw = qh->hw;
 
-	अगर (hw->hw_qtd_next == list_end)	/* NEC करोes this */
+	if (hw->hw_qtd_next == list_end)	/* NEC does this */
 		mark = '@';
-	अन्यथा
+	else
 		mark = token_mark(ehci, hw->hw_token);
-	अगर (mark == '/') अणु	/* qh_alt_next controls qh advance? */
-		अगर ((hw->hw_alt_next & QTD_MASK(ehci))
+	if (mark == '/') {	/* qh_alt_next controls qh advance? */
+		if ((hw->hw_alt_next & QTD_MASK(ehci))
 				== ehci->async->hw->hw_alt_next)
 			mark = '#';	/* blocked */
-		अन्यथा अगर (hw->hw_alt_next == list_end)
+		else if (hw->hw_alt_next == list_end)
 			mark = '.';	/* use hw_qtd_next */
-		/* अन्यथा alt_next poपूर्णांकs to some other qtd */
-	पूर्ण
+		/* else alt_next points to some other qtd */
+	}
 	scratch = hc32_to_cpup(ehci, &hw->hw_info1);
 	hw_curr = (mark == '*') ? hc32_to_cpup(ehci, &hw->hw_current) : 0;
-	temp = scnम_लिखो(next, size,
+	temp = scnprintf(next, size,
 			"qh/%p dev%d %cs ep%d %08x %08x (%08x%c %s nak%d)"
 			" [cur %08x next %08x buf[0] %08x]",
 			qh, scratch & 0x007f,
-			speed_अक्षर (scratch),
+			speed_char (scratch),
 			(scratch >> 8) & 0x000f,
 			scratch, hc32_to_cpup(ehci, &hw->hw_info2),
 			hc32_to_cpup(ehci, &hw->hw_token), mark,
@@ -413,38 +412,38 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 	size -= temp;
 	next += temp;
 
-	/* hc may be modअगरying the list as we पढ़ो it ... */
-	list_क्रम_each(entry, &qh->qtd_list) अणु
-		अक्षर *type;
+	/* hc may be modifying the list as we read it ... */
+	list_for_each(entry, &qh->qtd_list) {
+		char *type;
 
-		td = list_entry(entry, काष्ठा ehci_qtd, qtd_list);
+		td = list_entry(entry, struct ehci_qtd, qtd_list);
 		scratch = hc32_to_cpup(ehci, &td->hw_token);
 		mark = ' ';
-		अगर (hw_curr == td->qtd_dma) अणु
+		if (hw_curr == td->qtd_dma) {
 			mark = '*';
-		पूर्ण अन्यथा अगर (hw->hw_qtd_next == cpu_to_hc32(ehci, td->qtd_dma)) अणु
+		} else if (hw->hw_qtd_next == cpu_to_hc32(ehci, td->qtd_dma)) {
 			mark = '+';
-		पूर्ण अन्यथा अगर (QTD_LENGTH(scratch)) अणु
-			अगर (td->hw_alt_next == ehci->async->hw->hw_alt_next)
+		} else if (QTD_LENGTH(scratch)) {
+			if (td->hw_alt_next == ehci->async->hw->hw_alt_next)
 				mark = '#';
-			अन्यथा अगर (td->hw_alt_next != list_end)
+			else if (td->hw_alt_next != list_end)
 				mark = '/';
-		पूर्ण
-		चयन ((scratch >> 8) & 0x03) अणु
-		हाल 0:
+		}
+		switch ((scratch >> 8) & 0x03) {
+		case 0:
 			type = "out";
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			type = "in";
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			type = "setup";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			type = "?";
-			अवरोध;
-		पूर्ण
-		temp = scnम_लिखो(next, size,
+			break;
+		}
+		temp = scnprintf(next, size,
 				"\n\t%p%c%s len=%d %08x urb %p"
 				" [td %08x buf[0] %08x]",
 				td, mark, type,
@@ -455,27 +454,27 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 				hc32_to_cpup(ehci, &td->hw_buf[0]));
 		size -= temp;
 		next += temp;
-		अगर (temp == size)
-			जाओ करोne;
-	पूर्ण
+		if (temp == size)
+			goto done;
+	}
 
-	temp = scnम_लिखो(next, size, "\n");
+	temp = scnprintf(next, size, "\n");
 	size -= temp;
 	next += temp;
 
-करोne:
+done:
 	*sizep = size;
 	*nextp = next;
-पूर्ण
+}
 
-अटल sमाप_प्रकार fill_async_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा usb_hcd		*hcd;
-	काष्ठा ehci_hcd		*ehci;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित		temp, size;
-	अक्षर			*next;
-	काष्ठा ehci_qh		*qh;
+static ssize_t fill_async_buffer(struct debug_buffer *buf)
+{
+	struct usb_hcd		*hcd;
+	struct ehci_hcd		*ehci;
+	unsigned long		flags;
+	unsigned		temp, size;
+	char			*next;
+	struct ehci_qh		*qh;
 
 	hcd = bus_to_hcd(buf->bus);
 	ehci = hcd_to_ehci(hcd);
@@ -486,36 +485,36 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 
 	/*
 	 * dumps a snapshot of the async schedule.
-	 * usually empty except क्रम दीर्घ-term bulk पढ़ोs, or head.
+	 * usually empty except for long-term bulk reads, or head.
 	 * one QH per line, and TDs we know about
 	 */
 	spin_lock_irqsave(&ehci->lock, flags);
-	क्रम (qh = ehci->async->qh_next.qh; size > 0 && qh; qh = qh->qh_next.qh)
+	for (qh = ehci->async->qh_next.qh; size > 0 && qh; qh = qh->qh_next.qh)
 		qh_lines(ehci, qh, &next, &size);
-	अगर (!list_empty(&ehci->async_unlink) && size > 0) अणु
-		temp = scnम_लिखो(next, size, "\nunlink =\n");
+	if (!list_empty(&ehci->async_unlink) && size > 0) {
+		temp = scnprintf(next, size, "\nunlink =\n");
 		size -= temp;
 		next += temp;
 
-		list_क्रम_each_entry(qh, &ehci->async_unlink, unlink_node) अणु
-			अगर (size <= 0)
-				अवरोध;
+		list_for_each_entry(qh, &ehci->async_unlink, unlink_node) {
+			if (size <= 0)
+				break;
 			qh_lines(ehci, qh, &next, &size);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&ehci->lock, flags);
 
-	वापस म_माप(buf->output_buf);
-पूर्ण
+	return strlen(buf->output_buf);
+}
 
-अटल sमाप_प्रकार fill_bandwidth_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा ehci_hcd		*ehci;
-	काष्ठा ehci_tt		*tt;
-	काष्ठा ehci_per_sched	*ps;
-	अचिन्हित		temp, size;
-	अक्षर			*next;
-	अचिन्हित		i;
+static ssize_t fill_bandwidth_buffer(struct debug_buffer *buf)
+{
+	struct ehci_hcd		*ehci;
+	struct ehci_tt		*tt;
+	struct ehci_per_sched	*ps;
+	unsigned		temp, size;
+	char			*next;
+	unsigned		i;
 	u8			*bw;
 	u16			*bf;
 	u8			budget[EHCI_BANDWIDTH_SIZE];
@@ -529,23 +528,23 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 	spin_lock_irq(&ehci->lock);
 
 	/* Dump the HS bandwidth table */
-	temp = scnम_लिखो(next, size,
+	temp = scnprintf(next, size,
 			"HS bandwidth allocation (us per microframe)\n");
 	size -= temp;
 	next += temp;
-	क्रम (i = 0; i < EHCI_BANDWIDTH_SIZE; i += 8) अणु
+	for (i = 0; i < EHCI_BANDWIDTH_SIZE; i += 8) {
 		bw = &ehci->bandwidth[i];
-		temp = scnम_लिखो(next, size,
+		temp = scnprintf(next, size,
 				"%2u: %4u%4u%4u%4u%4u%4u%4u%4u\n",
 				i, bw[0], bw[1], bw[2], bw[3],
 					bw[4], bw[5], bw[6], bw[7]);
 		size -= temp;
 		next += temp;
-	पूर्ण
+	}
 
 	/* Dump all the FS/LS tables */
-	list_क्रम_each_entry(tt, &ehci->tt_list, tt_list) अणु
-		temp = scnम_लिखो(next, size,
+	list_for_each_entry(tt, &ehci->tt_list, tt_list) {
+		temp = scnprintf(next, size,
 				"\nTT %s port %d  FS/LS bandwidth allocation (us per frame)\n",
 				dev_name(&tt->usb_tt->hub->dev),
 				tt->tt_port + !!tt->usb_tt->multi);
@@ -553,86 +552,86 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 		next += temp;
 
 		bf = tt->bandwidth;
-		temp = scnम_लिखो(next, size,
+		temp = scnprintf(next, size,
 				"  %5u%5u%5u%5u%5u%5u%5u%5u\n",
 				bf[0], bf[1], bf[2], bf[3],
 					bf[4], bf[5], bf[6], bf[7]);
 		size -= temp;
 		next += temp;
 
-		temp = scnम_लिखो(next, size,
+		temp = scnprintf(next, size,
 				"FS/LS budget (us per microframe)\n");
 		size -= temp;
 		next += temp;
 		compute_tt_budget(budget, tt);
-		क्रम (i = 0; i < EHCI_BANDWIDTH_SIZE; i += 8) अणु
+		for (i = 0; i < EHCI_BANDWIDTH_SIZE; i += 8) {
 			bw = &budget[i];
-			temp = scnम_लिखो(next, size,
+			temp = scnprintf(next, size,
 					"%2u: %4u%4u%4u%4u%4u%4u%4u%4u\n",
 					i, bw[0], bw[1], bw[2], bw[3],
 						bw[4], bw[5], bw[6], bw[7]);
 			size -= temp;
 			next += temp;
-		पूर्ण
-		list_क्रम_each_entry(ps, &tt->ps_list, ps_list) अणु
-			temp = scnम_लिखो(next, size,
+		}
+		list_for_each_entry(ps, &tt->ps_list, ps_list) {
+			temp = scnprintf(next, size,
 					"%s ep %02x:  %4u @ %2u.%u+%u mask %04x\n",
 					dev_name(&ps->udev->dev),
-					ps->ep->desc.bEndpoपूर्णांकAddress,
+					ps->ep->desc.bEndpointAddress,
 					ps->tt_usecs,
 					ps->bw_phase, ps->phase_uf,
 					ps->bw_period, ps->cs_mask);
 			size -= temp;
 			next += temp;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irq(&ehci->lock);
 
-	वापस next - buf->output_buf;
-पूर्ण
+	return next - buf->output_buf;
+}
 
-अटल अचिन्हित output_buf_tds_dir(अक्षर *buf, काष्ठा ehci_hcd *ehci,
-		काष्ठा ehci_qh_hw *hw, काष्ठा ehci_qh *qh, अचिन्हित size)
-अणु
+static unsigned output_buf_tds_dir(char *buf, struct ehci_hcd *ehci,
+		struct ehci_qh_hw *hw, struct ehci_qh *qh, unsigned size)
+{
 	u32			scratch = hc32_to_cpup(ehci, &hw->hw_info1);
-	काष्ठा ehci_qtd		*qtd;
-	अक्षर			*type = "";
-	अचिन्हित		temp = 0;
+	struct ehci_qtd		*qtd;
+	char			*type = "";
+	unsigned		temp = 0;
 
 	/* count tds, get ep direction */
-	list_क्रम_each_entry(qtd, &qh->qtd_list, qtd_list) अणु
+	list_for_each_entry(qtd, &qh->qtd_list, qtd_list) {
 		temp++;
-		चयन ((hc32_to_cpu(ehci, qtd->hw_token) >> 8)	& 0x03) अणु
-		हाल 0:
+		switch ((hc32_to_cpu(ehci, qtd->hw_token) >> 8)	& 0x03) {
+		case 0:
 			type = "out";
-			जारी;
-		हाल 1:
+			continue;
+		case 1:
 			type = "in";
-			जारी;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+	}
 
-	वापस scnम_लिखो(buf, size, " (%c%d ep%d%s [%d/%d] q%d p%d)",
-			speed_अक्षर(scratch), scratch & 0x007f,
+	return scnprintf(buf, size, " (%c%d ep%d%s [%d/%d] q%d p%d)",
+			speed_char(scratch), scratch & 0x007f,
 			(scratch >> 8) & 0x000f, type, qh->ps.usecs,
 			qh->ps.c_usecs, temp, 0x7ff & (scratch >> 16));
-पूर्ण
+}
 
-#घोषणा DBG_SCHED_LIMIT 64
-अटल sमाप_प्रकार fill_periodic_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा usb_hcd		*hcd;
-	काष्ठा ehci_hcd		*ehci;
-	अचिन्हित दीर्घ		flags;
-	जोड़ ehci_shaकरोw	p, *seen;
-	अचिन्हित		temp, size, seen_count;
-	अक्षर			*next;
-	अचिन्हित		i;
+#define DBG_SCHED_LIMIT 64
+static ssize_t fill_periodic_buffer(struct debug_buffer *buf)
+{
+	struct usb_hcd		*hcd;
+	struct ehci_hcd		*ehci;
+	unsigned long		flags;
+	union ehci_shadow	p, *seen;
+	unsigned		temp, size, seen_count;
+	char			*next;
+	unsigned		i;
 	__hc32			tag;
 
-	seen = kदो_स्मृति_array(DBG_SCHED_LIMIT, माप(*seen), GFP_ATOMIC);
-	अगर (!seen)
-		वापस 0;
+	seen = kmalloc_array(DBG_SCHED_LIMIT, sizeof(*seen), GFP_ATOMIC);
+	if (!seen)
+		return 0;
 	seen_count = 0;
 
 	hcd = bus_to_hcd(buf->bus);
@@ -640,32 +639,32 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 	next = buf->output_buf;
 	size = buf->alloc_size;
 
-	temp = scnम_लिखो(next, size, "size = %d\n", ehci->periodic_size);
+	temp = scnprintf(next, size, "size = %d\n", ehci->periodic_size);
 	size -= temp;
 	next += temp;
 
 	/*
 	 * dump a snapshot of the periodic schedule.
-	 * iso changes, पूर्णांकerrupt usually करोesn't.
+	 * iso changes, interrupt usually doesn't.
 	 */
 	spin_lock_irqsave(&ehci->lock, flags);
-	क्रम (i = 0; i < ehci->periodic_size; i++) अणु
-		p = ehci->pshaकरोw[i];
-		अगर (likely(!p.ptr))
-			जारी;
+	for (i = 0; i < ehci->periodic_size; i++) {
+		p = ehci->pshadow[i];
+		if (likely(!p.ptr))
+			continue;
 		tag = Q_NEXT_TYPE(ehci, ehci->periodic[i]);
 
-		temp = scnम_लिखो(next, size, "%4d: ", i);
+		temp = scnprintf(next, size, "%4d: ", i);
 		size -= temp;
 		next += temp;
 
-		करो अणु
-			काष्ठा ehci_qh_hw *hw;
+		do {
+			struct ehci_qh_hw *hw;
 
-			चयन (hc32_to_cpu(ehci, tag)) अणु
-			हाल Q_TYPE_QH:
+			switch (hc32_to_cpu(ehci, tag)) {
+			case Q_TYPE_QH:
 				hw = p.qh->hw;
-				temp = scnम_लिखो(next, size, " qh%d-%04x/%p",
+				temp = scnprintf(next, size, " qh%d-%04x/%p",
 						p.qh->ps.period,
 						hc32_to_cpup(ehci,
 							&hw->hw_info2)
@@ -674,46 +673,46 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 						p.qh);
 				size -= temp;
 				next += temp;
-				/* करोn't repeat what follows this qh */
-				क्रम (temp = 0; temp < seen_count; temp++) अणु
-					अगर (seen[temp].ptr != p.ptr)
-						जारी;
-					अगर (p.qh->qh_next.ptr) अणु
-						temp = scnम_लिखो(next, size,
+				/* don't repeat what follows this qh */
+				for (temp = 0; temp < seen_count; temp++) {
+					if (seen[temp].ptr != p.ptr)
+						continue;
+					if (p.qh->qh_next.ptr) {
+						temp = scnprintf(next, size,
 							" ...");
 						size -= temp;
 						next += temp;
-					पूर्ण
-					अवरोध;
-				पूर्ण
-				/* show more info the first समय around */
-				अगर (temp == seen_count) अणु
+					}
+					break;
+				}
+				/* show more info the first time around */
+				if (temp == seen_count) {
 					temp = output_buf_tds_dir(next, ehci,
 						hw, p.qh, size);
 
-					अगर (seen_count < DBG_SCHED_LIMIT)
+					if (seen_count < DBG_SCHED_LIMIT)
 						seen[seen_count++].qh = p.qh;
-				पूर्ण अन्यथा अणु
+				} else {
 					temp = 0;
-				पूर्ण
+				}
 				tag = Q_NEXT_TYPE(ehci, hw->hw_next);
 				p = p.qh->qh_next;
-				अवरोध;
-			हाल Q_TYPE_FSTN:
-				temp = scnम_लिखो(next, size,
+				break;
+			case Q_TYPE_FSTN:
+				temp = scnprintf(next, size,
 					" fstn-%8x/%p", p.fstn->hw_prev,
 					p.fstn);
 				tag = Q_NEXT_TYPE(ehci, p.fstn->hw_next);
 				p = p.fstn->fstn_next;
-				अवरोध;
-			हाल Q_TYPE_ITD:
-				temp = scnम_लिखो(next, size,
+				break;
+			case Q_TYPE_ITD:
+				temp = scnprintf(next, size,
 					" itd/%p", p.itd);
 				tag = Q_NEXT_TYPE(ehci, p.itd->hw_next);
 				p = p.itd->itd_next;
-				अवरोध;
-			हाल Q_TYPE_SITD:
-				temp = scnम_लिखो(next, size,
+				break;
+			case Q_TYPE_SITD:
+				temp = scnprintf(next, size,
 					" sitd%d-%04x/%p",
 					p.sitd->stream->ps.period,
 					hc32_to_cpup(ehci, &p.sitd->hw_uframe)
@@ -721,47 +720,47 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 					p.sitd);
 				tag = Q_NEXT_TYPE(ehci, p.sitd->hw_next);
 				p = p.sitd->sitd_next;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			size -= temp;
 			next += temp;
-		पूर्ण जबतक (p.ptr);
+		} while (p.ptr);
 
-		temp = scnम_लिखो(next, size, "\n");
+		temp = scnprintf(next, size, "\n");
 		size -= temp;
 		next += temp;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ehci->lock, flags);
-	kमुक्त(seen);
+	kfree(seen);
 
-	वापस buf->alloc_size - size;
-पूर्ण
-#अघोषित DBG_SCHED_LIMIT
+	return buf->alloc_size - size;
+}
+#undef DBG_SCHED_LIMIT
 
-अटल स्थिर अक्षर *rh_state_string(काष्ठा ehci_hcd *ehci)
-अणु
-	चयन (ehci->rh_state) अणु
-	हाल EHCI_RH_HALTED:
-		वापस "halted";
-	हाल EHCI_RH_SUSPENDED:
-		वापस "suspended";
-	हाल EHCI_RH_RUNNING:
-		वापस "running";
-	हाल EHCI_RH_STOPPING:
-		वापस "stopping";
-	पूर्ण
-	वापस "?";
-पूर्ण
+static const char *rh_state_string(struct ehci_hcd *ehci)
+{
+	switch (ehci->rh_state) {
+	case EHCI_RH_HALTED:
+		return "halted";
+	case EHCI_RH_SUSPENDED:
+		return "suspended";
+	case EHCI_RH_RUNNING:
+		return "running";
+	case EHCI_RH_STOPPING:
+		return "stopping";
+	}
+	return "?";
+}
 
-अटल sमाप_प्रकार fill_रेजिस्टरs_buffer(काष्ठा debug_buffer *buf)
-अणु
-	काष्ठा usb_hcd		*hcd;
-	काष्ठा ehci_hcd		*ehci;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित		temp, size, i;
-	अक्षर			*next, scratch[80];
-	अटल अक्षर		fmt[] = "%*s\n";
-	अटल अक्षर		label[] = "";
+static ssize_t fill_registers_buffer(struct debug_buffer *buf)
+{
+	struct usb_hcd		*hcd;
+	struct ehci_hcd		*ehci;
+	unsigned long		flags;
+	unsigned		temp, size, i;
+	char			*next, scratch[80];
+	static char		fmt[] = "%*s\n";
+	static char		label[] = "";
 
 	hcd = bus_to_hcd(buf->bus);
 	ehci = hcd_to_ehci(hcd);
@@ -770,20 +769,20 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 
 	spin_lock_irqsave(&ehci->lock, flags);
 
-	अगर (!HCD_HW_ACCESSIBLE(hcd)) अणु
-		size = scnम_लिखो(next, size,
+	if (!HCD_HW_ACCESSIBLE(hcd)) {
+		size = scnprintf(next, size,
 			"bus %s, device %s\n"
 			"%s\n"
 			"SUSPENDED (no register access)\n",
 			hcd->self.controller->bus->name,
 			dev_name(hcd->self.controller),
 			hcd->product_desc);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Capability Registers */
-	i = HC_VERSION(ehci, ehci_पढ़ोl(ehci, &ehci->caps->hc_capbase));
-	temp = scnम_लिखो(next, size,
+	i = HC_VERSION(ehci, ehci_readl(ehci, &ehci->caps->hc_capbase));
+	temp = scnprintf(next, size,
 		"bus %s, device %s\n"
 		"%s\n"
 		"EHCI %x.%02x, rh state %s\n",
@@ -794,21 +793,21 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 	size -= temp;
 	next += temp;
 
-#अगर_घोषित	CONFIG_USB_PCI
+#ifdef	CONFIG_USB_PCI
 	/* EHCI 0.96 and later may have "extended capabilities" */
-	अगर (dev_is_pci(hcd->self.controller)) अणु
-		काष्ठा pci_dev	*pdev;
+	if (dev_is_pci(hcd->self.controller)) {
+		struct pci_dev	*pdev;
 		u32		offset, cap, cap2;
-		अचिन्हित	count = 256 / 4;
+		unsigned	count = 256 / 4;
 
 		pdev = to_pci_dev(ehci_to_hcd(ehci)->self.controller);
-		offset = HCC_EXT_CAPS(ehci_पढ़ोl(ehci,
+		offset = HCC_EXT_CAPS(ehci_readl(ehci,
 				&ehci->caps->hcc_params));
-		जबतक (offset && count--) अणु
-			pci_पढ़ो_config_dword(pdev, offset, &cap);
-			चयन (cap & 0xff) अणु
-			हाल 1:
-				temp = scnम_लिखो(next, size,
+		while (offset && count--) {
+			pci_read_config_dword(pdev, offset, &cap);
+			switch (cap & 0xff) {
+			case 1:
+				temp = scnprintf(next, size,
 					"ownership %08x%s%s\n", cap,
 					(cap & (1 << 24)) ? " linux" : "",
 					(cap & (1 << 16)) ? " firmware" : "");
@@ -816,217 +815,217 @@ dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *lab
 				next += temp;
 
 				offset += 4;
-				pci_पढ़ो_config_dword(pdev, offset, &cap2);
-				temp = scnम_लिखो(next, size,
+				pci_read_config_dword(pdev, offset, &cap2);
+				temp = scnprintf(next, size,
 					"SMI sts/enable 0x%08x\n", cap2);
 				size -= temp;
 				next += temp;
-				अवरोध;
-			हाल 0:		/* illegal reserved capability */
+				break;
+			case 0:		/* illegal reserved capability */
 				cap = 0;
 				fallthrough;
-			शेष:		/* unknown */
-				अवरोध;
-			पूर्ण
+			default:		/* unknown */
+				break;
+			}
 			offset = (cap >> 8) & 0xff;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	/* FIXME पूर्णांकerpret both types of params */
-	i = ehci_पढ़ोl(ehci, &ehci->caps->hcs_params);
-	temp = scnम_लिखो(next, size, "structural params 0x%08x\n", i);
+	/* FIXME interpret both types of params */
+	i = ehci_readl(ehci, &ehci->caps->hcs_params);
+	temp = scnprintf(next, size, "structural params 0x%08x\n", i);
 	size -= temp;
 	next += temp;
 
-	i = ehci_पढ़ोl(ehci, &ehci->caps->hcc_params);
-	temp = scnम_लिखो(next, size, "capability params 0x%08x\n", i);
+	i = ehci_readl(ehci, &ehci->caps->hcc_params);
+	temp = scnprintf(next, size, "capability params 0x%08x\n", i);
 	size -= temp;
 	next += temp;
 
 	/* Operational Registers */
-	temp = dbg_status_buf(scratch, माप(scratch), label,
-			ehci_पढ़ोl(ehci, &ehci->regs->status));
-	temp = scnम_लिखो(next, size, fmt, temp, scratch);
+	temp = dbg_status_buf(scratch, sizeof(scratch), label,
+			ehci_readl(ehci, &ehci->regs->status));
+	temp = scnprintf(next, size, fmt, temp, scratch);
 	size -= temp;
 	next += temp;
 
-	temp = dbg_command_buf(scratch, माप(scratch), label,
-			ehci_पढ़ोl(ehci, &ehci->regs->command));
-	temp = scnम_लिखो(next, size, fmt, temp, scratch);
+	temp = dbg_command_buf(scratch, sizeof(scratch), label,
+			ehci_readl(ehci, &ehci->regs->command));
+	temp = scnprintf(next, size, fmt, temp, scratch);
 	size -= temp;
 	next += temp;
 
-	temp = dbg_पूर्णांकr_buf(scratch, माप(scratch), label,
-			ehci_पढ़ोl(ehci, &ehci->regs->पूर्णांकr_enable));
-	temp = scnम_लिखो(next, size, fmt, temp, scratch);
+	temp = dbg_intr_buf(scratch, sizeof(scratch), label,
+			ehci_readl(ehci, &ehci->regs->intr_enable));
+	temp = scnprintf(next, size, fmt, temp, scratch);
 	size -= temp;
 	next += temp;
 
-	temp = scnम_लिखो(next, size, "uframe %04x\n",
-			ehci_पढ़ो_frame_index(ehci));
+	temp = scnprintf(next, size, "uframe %04x\n",
+			ehci_read_frame_index(ehci));
 	size -= temp;
 	next += temp;
 
-	क्रम (i = 1; i <= HCS_N_PORTS(ehci->hcs_params); i++) अणु
-		temp = dbg_port_buf(scratch, माप(scratch), label, i,
-				ehci_पढ़ोl(ehci,
+	for (i = 1; i <= HCS_N_PORTS(ehci->hcs_params); i++) {
+		temp = dbg_port_buf(scratch, sizeof(scratch), label, i,
+				ehci_readl(ehci,
 					&ehci->regs->port_status[i - 1]));
-		temp = scnम_लिखो(next, size, fmt, temp, scratch);
+		temp = scnprintf(next, size, fmt, temp, scratch);
 		size -= temp;
 		next += temp;
-		अगर (i == HCS_DEBUG_PORT(ehci->hcs_params) && ehci->debug) अणु
-			temp = scnम_लिखो(next, size,
+		if (i == HCS_DEBUG_PORT(ehci->hcs_params) && ehci->debug) {
+			temp = scnprintf(next, size,
 					"    debug control %08x\n",
-					ehci_पढ़ोl(ehci,
+					ehci_readl(ehci,
 						&ehci->debug->control));
 			size -= temp;
 			next += temp;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!list_empty(&ehci->async_unlink)) अणु
-		temp = scnम_लिखो(next, size, "async unlink qh %p\n",
+	if (!list_empty(&ehci->async_unlink)) {
+		temp = scnprintf(next, size, "async unlink qh %p\n",
 				list_first_entry(&ehci->async_unlink,
-						काष्ठा ehci_qh, unlink_node));
+						struct ehci_qh, unlink_node));
 		size -= temp;
 		next += temp;
-	पूर्ण
+	}
 
-#अगर_घोषित EHCI_STATS
-	temp = scnम_लिखो(next, size,
+#ifdef EHCI_STATS
+	temp = scnprintf(next, size,
 		"irq normal %ld err %ld iaa %ld (lost %ld)\n",
 		ehci->stats.normal, ehci->stats.error, ehci->stats.iaa,
 		ehci->stats.lost_iaa);
 	size -= temp;
 	next += temp;
 
-	temp = scnम_लिखो(next, size, "complete %ld unlink %ld\n",
+	temp = scnprintf(next, size, "complete %ld unlink %ld\n",
 		ehci->stats.complete, ehci->stats.unlink);
 	size -= temp;
 	next += temp;
-#पूर्ण_अगर
+#endif
 
-करोne:
+done:
 	spin_unlock_irqrestore(&ehci->lock, flags);
 
-	वापस buf->alloc_size - size;
-पूर्ण
+	return buf->alloc_size - size;
+}
 
-अटल काष्ठा debug_buffer *alloc_buffer(काष्ठा usb_bus *bus,
-		sमाप_प्रकार (*fill_func)(काष्ठा debug_buffer *))
-अणु
-	काष्ठा debug_buffer *buf;
+static struct debug_buffer *alloc_buffer(struct usb_bus *bus,
+		ssize_t (*fill_func)(struct debug_buffer *))
+{
+	struct debug_buffer *buf;
 
-	buf = kzalloc(माप(*buf), GFP_KERNEL);
+	buf = kzalloc(sizeof(*buf), GFP_KERNEL);
 
-	अगर (buf) अणु
+	if (buf) {
 		buf->bus = bus;
 		buf->fill_func = fill_func;
 		mutex_init(&buf->mutex);
 		buf->alloc_size = PAGE_SIZE;
-	पूर्ण
+	}
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल पूर्णांक fill_buffer(काष्ठा debug_buffer *buf)
-अणु
-	पूर्णांक ret = 0;
+static int fill_buffer(struct debug_buffer *buf)
+{
+	int ret = 0;
 
-	अगर (!buf->output_buf)
-		buf->output_buf = vदो_स्मृति(buf->alloc_size);
+	if (!buf->output_buf)
+		buf->output_buf = vmalloc(buf->alloc_size);
 
-	अगर (!buf->output_buf) अणु
+	if (!buf->output_buf) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = buf->fill_func(buf);
 
-	अगर (ret >= 0) अणु
+	if (ret >= 0) {
 		buf->count = ret;
 		ret = 0;
-	पूर्ण
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार debug_output(काष्ठा file *file, अक्षर __user *user_buf,
-		माप_प्रकार len, loff_t *offset)
-अणु
-	काष्ठा debug_buffer *buf = file->निजी_data;
-	पूर्णांक ret = 0;
+static ssize_t debug_output(struct file *file, char __user *user_buf,
+		size_t len, loff_t *offset)
+{
+	struct debug_buffer *buf = file->private_data;
+	int ret = 0;
 
 	mutex_lock(&buf->mutex);
-	अगर (buf->count == 0) अणु
+	if (buf->count == 0) {
 		ret = fill_buffer(buf);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			mutex_unlock(&buf->mutex);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 	mutex_unlock(&buf->mutex);
 
-	ret = simple_पढ़ो_from_buffer(user_buf, len, offset,
+	ret = simple_read_from_buffer(user_buf, len, offset,
 				      buf->output_buf, buf->count);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक debug_बंद(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा debug_buffer *buf = file->निजी_data;
+static int debug_close(struct inode *inode, struct file *file)
+{
+	struct debug_buffer *buf = file->private_data;
 
-	अगर (buf) अणु
-		vमुक्त(buf->output_buf);
-		kमुक्त(buf);
-	पूर्ण
+	if (buf) {
+		vfree(buf->output_buf);
+		kfree(buf);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक debug_async_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = alloc_buffer(inode->i_निजी, fill_async_buffer);
+static int debug_async_open(struct inode *inode, struct file *file)
+{
+	file->private_data = alloc_buffer(inode->i_private, fill_async_buffer);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
+	return file->private_data ? 0 : -ENOMEM;
+}
 
-अटल पूर्णांक debug_bandwidth_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = alloc_buffer(inode->i_निजी,
+static int debug_bandwidth_open(struct inode *inode, struct file *file)
+{
+	file->private_data = alloc_buffer(inode->i_private,
 			fill_bandwidth_buffer);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
+	return file->private_data ? 0 : -ENOMEM;
+}
 
-अटल पूर्णांक debug_periodic_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा debug_buffer *buf;
+static int debug_periodic_open(struct inode *inode, struct file *file)
+{
+	struct debug_buffer *buf;
 
-	buf = alloc_buffer(inode->i_निजी, fill_periodic_buffer);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = alloc_buffer(inode->i_private, fill_periodic_buffer);
+	if (!buf)
+		return -ENOMEM;
 
-	buf->alloc_size = (माप(व्योम *) == 4 ? 6 : 8) * PAGE_SIZE;
-	file->निजी_data = buf;
-	वापस 0;
-पूर्ण
+	buf->alloc_size = (sizeof(void *) == 4 ? 6 : 8) * PAGE_SIZE;
+	file->private_data = buf;
+	return 0;
+}
 
-अटल पूर्णांक debug_रेजिस्टरs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	file->निजी_data = alloc_buffer(inode->i_निजी,
-					  fill_रेजिस्टरs_buffer);
+static int debug_registers_open(struct inode *inode, struct file *file)
+{
+	file->private_data = alloc_buffer(inode->i_private,
+					  fill_registers_buffer);
 
-	वापस file->निजी_data ? 0 : -ENOMEM;
-पूर्ण
+	return file->private_data ? 0 : -ENOMEM;
+}
 
-अटल अंतरभूत व्योम create_debug_files(काष्ठा ehci_hcd *ehci)
-अणु
-	काष्ठा usb_bus *bus = &ehci_to_hcd(ehci)->self;
+static inline void create_debug_files(struct ehci_hcd *ehci)
+{
+	struct usb_bus *bus = &ehci_to_hcd(ehci)->self;
 
 	ehci->debug_dir = debugfs_create_dir(bus->bus_name, ehci_debug_root);
 
@@ -1037,46 +1036,46 @@ out:
 	debugfs_create_file("periodic", S_IRUGO, ehci->debug_dir, bus,
 			    &debug_periodic_fops);
 	debugfs_create_file("registers", S_IRUGO, ehci->debug_dir, bus,
-			    &debug_रेजिस्टरs_fops);
-पूर्ण
+			    &debug_registers_fops);
+}
 
-अटल अंतरभूत व्योम हटाओ_debug_files(काष्ठा ehci_hcd *ehci)
-अणु
-	debugfs_हटाओ_recursive(ehci->debug_dir);
-पूर्ण
+static inline void remove_debug_files(struct ehci_hcd *ehci)
+{
+	debugfs_remove_recursive(ehci->debug_dir);
+}
 
-#अन्यथा /* CONFIG_DYNAMIC_DEBUG */
+#else /* CONFIG_DYNAMIC_DEBUG */
 
-अटल अंतरभूत व्योम dbg_hcs_params(काष्ठा ehci_hcd *ehci, अक्षर *label) अणु पूर्ण
-अटल अंतरभूत व्योम dbg_hcc_params(काष्ठा ehci_hcd *ehci, अक्षर *label) अणु पूर्ण
+static inline void dbg_hcs_params(struct ehci_hcd *ehci, char *label) { }
+static inline void dbg_hcc_params(struct ehci_hcd *ehci, char *label) { }
 
-अटल अंतरभूत व्योम __maybe_unused dbg_qh(स्थिर अक्षर *label,
-		काष्ठा ehci_hcd *ehci, काष्ठा ehci_qh *qh) अणु पूर्ण
+static inline void __maybe_unused dbg_qh(const char *label,
+		struct ehci_hcd *ehci, struct ehci_qh *qh) { }
 
-अटल अंतरभूत पूर्णांक __maybe_unused dbg_status_buf(स्थिर अक्षर *buf,
-		अचिन्हित पूर्णांक len, स्थिर अक्षर *label, u32 status)
-अणु वापस 0; पूर्ण
+static inline int __maybe_unused dbg_status_buf(const char *buf,
+		unsigned int len, const char *label, u32 status)
+{ return 0; }
 
-अटल अंतरभूत पूर्णांक __maybe_unused dbg_command_buf(स्थिर अक्षर *buf,
-		अचिन्हित पूर्णांक len, स्थिर अक्षर *label, u32 command)
-अणु वापस 0; पूर्ण
+static inline int __maybe_unused dbg_command_buf(const char *buf,
+		unsigned int len, const char *label, u32 command)
+{ return 0; }
 
-अटल अंतरभूत पूर्णांक __maybe_unused dbg_पूर्णांकr_buf(स्थिर अक्षर *buf,
-		अचिन्हित पूर्णांक len, स्थिर अक्षर *label, u32 enable)
-अणु वापस 0; पूर्ण
+static inline int __maybe_unused dbg_intr_buf(const char *buf,
+		unsigned int len, const char *label, u32 enable)
+{ return 0; }
 
-अटल अंतरभूत पूर्णांक __maybe_unused dbg_port_buf(अक्षर *buf,
-		अचिन्हित पूर्णांक len, स्थिर अक्षर *label, पूर्णांक port, u32 status)
-अणु वापस 0; पूर्ण
+static inline int __maybe_unused dbg_port_buf(char *buf,
+		unsigned int len, const char *label, int port, u32 status)
+{ return 0; }
 
-अटल अंतरभूत व्योम dbg_status(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *label,
-		u32 status) अणु पूर्ण
-अटल अंतरभूत व्योम dbg_cmd(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *label,
-		u32 command) अणु पूर्ण
-अटल अंतरभूत व्योम dbg_port(काष्ठा ehci_hcd *ehci, स्थिर अक्षर *label,
-		पूर्णांक port, u32 status) अणु पूर्ण
+static inline void dbg_status(struct ehci_hcd *ehci, const char *label,
+		u32 status) { }
+static inline void dbg_cmd(struct ehci_hcd *ehci, const char *label,
+		u32 command) { }
+static inline void dbg_port(struct ehci_hcd *ehci, const char *label,
+		int port, u32 status) { }
 
-अटल अंतरभूत व्योम create_debug_files(काष्ठा ehci_hcd *bus) अणु पूर्ण
-अटल अंतरभूत व्योम हटाओ_debug_files(काष्ठा ehci_hcd *bus) अणु पूर्ण
+static inline void create_debug_files(struct ehci_hcd *bus) { }
+static inline void remove_debug_files(struct ehci_hcd *bus) { }
 
-#पूर्ण_अगर /* CONFIG_DYNAMIC_DEBUG */
+#endif /* CONFIG_DYNAMIC_DEBUG */

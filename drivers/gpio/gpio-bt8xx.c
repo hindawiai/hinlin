@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
     bt8xx GPIO abuser
 
     Copyright (C) 2008 Michael Buesch <m@bues.ch>
 
-    Please करो _only_ contact the people listed _above_ with issues related to this driver.
+    Please do _only_ contact the people listed _above_ with issues related to this driver.
     All the other people listed below are not related to this driver. Their names
     are only here, because this driver is derived from the bt848 driver.
 
@@ -32,122 +31,122 @@
 
 */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <linux/gpio/driver.h>
+#include <linux/slab.h>
 
 /* Steal the hardware definitions from the bttv driver. */
-#समावेश "../media/pci/bt8xx/bt848.h"
+#include "../media/pci/bt8xx/bt848.h"
 
 
-#घोषणा BT8XXGPIO_NR_GPIOS		24 /* We have 24 GPIO pins */
+#define BT8XXGPIO_NR_GPIOS		24 /* We have 24 GPIO pins */
 
 
-काष्ठा bt8xxgpio अणु
+struct bt8xxgpio {
 	spinlock_t lock;
 
-	व्योम __iomem *mmio;
-	काष्ठा pci_dev *pdev;
-	काष्ठा gpio_chip gpio;
+	void __iomem *mmio;
+	struct pci_dev *pdev;
+	struct gpio_chip gpio;
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	u32 saved_outen;
 	u32 saved_data;
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-#घोषणा bgग_लिखो(dat, adr)	ग_लिखोl((dat), bg->mmio+(adr))
-#घोषणा bgपढ़ो(adr)		पढ़ोl(bg->mmio+(adr))
+#define bgwrite(dat, adr)	writel((dat), bg->mmio+(adr))
+#define bgread(adr)		readl(bg->mmio+(adr))
 
 
-अटल पूर्णांक modparam_gpiobase = -1/* dynamic */;
-module_param_named(gpiobase, modparam_gpiobase, पूर्णांक, 0444);
+static int modparam_gpiobase = -1/* dynamic */;
+module_param_named(gpiobase, modparam_gpiobase, int, 0444);
 MODULE_PARM_DESC(gpiobase, "The GPIO number base. -1 means dynamic, which is the default.");
 
 
-अटल पूर्णांक bt8xxgpio_gpio_direction_input(काष्ठा gpio_chip *gpio, अचिन्हित nr)
-अणु
-	काष्ठा bt8xxgpio *bg = gpiochip_get_data(gpio);
-	अचिन्हित दीर्घ flags;
+static int bt8xxgpio_gpio_direction_input(struct gpio_chip *gpio, unsigned nr)
+{
+	struct bt8xxgpio *bg = gpiochip_get_data(gpio);
+	unsigned long flags;
 	u32 outen, data;
 
 	spin_lock_irqsave(&bg->lock, flags);
 
-	data = bgपढ़ो(BT848_GPIO_DATA);
+	data = bgread(BT848_GPIO_DATA);
 	data &= ~(1 << nr);
-	bgग_लिखो(data, BT848_GPIO_DATA);
+	bgwrite(data, BT848_GPIO_DATA);
 
-	outen = bgपढ़ो(BT848_GPIO_OUT_EN);
+	outen = bgread(BT848_GPIO_OUT_EN);
 	outen &= ~(1 << nr);
-	bgग_लिखो(outen, BT848_GPIO_OUT_EN);
+	bgwrite(outen, BT848_GPIO_OUT_EN);
 
 	spin_unlock_irqrestore(&bg->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bt8xxgpio_gpio_get(काष्ठा gpio_chip *gpio, अचिन्हित nr)
-अणु
-	काष्ठा bt8xxgpio *bg = gpiochip_get_data(gpio);
-	अचिन्हित दीर्घ flags;
+static int bt8xxgpio_gpio_get(struct gpio_chip *gpio, unsigned nr)
+{
+	struct bt8xxgpio *bg = gpiochip_get_data(gpio);
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&bg->lock, flags);
-	val = bgपढ़ो(BT848_GPIO_DATA);
+	val = bgread(BT848_GPIO_DATA);
 	spin_unlock_irqrestore(&bg->lock, flags);
 
-	वापस !!(val & (1 << nr));
-पूर्ण
+	return !!(val & (1 << nr));
+}
 
-अटल पूर्णांक bt8xxgpio_gpio_direction_output(काष्ठा gpio_chip *gpio,
-					अचिन्हित nr, पूर्णांक val)
-अणु
-	काष्ठा bt8xxgpio *bg = gpiochip_get_data(gpio);
-	अचिन्हित दीर्घ flags;
+static int bt8xxgpio_gpio_direction_output(struct gpio_chip *gpio,
+					unsigned nr, int val)
+{
+	struct bt8xxgpio *bg = gpiochip_get_data(gpio);
+	unsigned long flags;
 	u32 outen, data;
 
 	spin_lock_irqsave(&bg->lock, flags);
 
-	outen = bgपढ़ो(BT848_GPIO_OUT_EN);
+	outen = bgread(BT848_GPIO_OUT_EN);
 	outen |= (1 << nr);
-	bgग_लिखो(outen, BT848_GPIO_OUT_EN);
+	bgwrite(outen, BT848_GPIO_OUT_EN);
 
-	data = bgपढ़ो(BT848_GPIO_DATA);
-	अगर (val)
+	data = bgread(BT848_GPIO_DATA);
+	if (val)
 		data |= (1 << nr);
-	अन्यथा
+	else
 		data &= ~(1 << nr);
-	bgग_लिखो(data, BT848_GPIO_DATA);
+	bgwrite(data, BT848_GPIO_DATA);
 
 	spin_unlock_irqrestore(&bg->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bt8xxgpio_gpio_set(काष्ठा gpio_chip *gpio,
-			    अचिन्हित nr, पूर्णांक val)
-अणु
-	काष्ठा bt8xxgpio *bg = gpiochip_get_data(gpio);
-	अचिन्हित दीर्घ flags;
+static void bt8xxgpio_gpio_set(struct gpio_chip *gpio,
+			    unsigned nr, int val)
+{
+	struct bt8xxgpio *bg = gpiochip_get_data(gpio);
+	unsigned long flags;
 	u32 data;
 
 	spin_lock_irqsave(&bg->lock, flags);
 
-	data = bgपढ़ो(BT848_GPIO_DATA);
-	अगर (val)
+	data = bgread(BT848_GPIO_DATA);
+	if (val)
 		data |= (1 << nr);
-	अन्यथा
+	else
 		data &= ~(1 << nr);
-	bgग_लिखो(data, BT848_GPIO_DATA);
+	bgwrite(data, BT848_GPIO_DATA);
 
 	spin_unlock_irqrestore(&bg->lock, flags);
-पूर्ण
+}
 
-अटल व्योम bt8xxgpio_gpio_setup(काष्ठा bt8xxgpio *bg)
-अणु
-	काष्ठा gpio_chip *c = &bg->gpio;
+static void bt8xxgpio_gpio_setup(struct bt8xxgpio *bg)
+{
+	struct gpio_chip *c = &bg->gpio;
 
 	c->label = dev_name(&bg->pdev->dev);
 	c->owner = THIS_MODULE;
@@ -155,155 +154,155 @@ MODULE_PARM_DESC(gpiobase, "The GPIO number base. -1 means dynamic, which is the
 	c->get = bt8xxgpio_gpio_get;
 	c->direction_output = bt8xxgpio_gpio_direction_output;
 	c->set = bt8xxgpio_gpio_set;
-	c->dbg_show = शून्य;
+	c->dbg_show = NULL;
 	c->base = modparam_gpiobase;
 	c->ngpio = BT8XXGPIO_NR_GPIOS;
 	c->can_sleep = false;
-पूर्ण
+}
 
-अटल पूर्णांक bt8xxgpio_probe(काष्ठा pci_dev *dev,
-			स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	काष्ठा bt8xxgpio *bg;
-	पूर्णांक err;
+static int bt8xxgpio_probe(struct pci_dev *dev,
+			const struct pci_device_id *pci_id)
+{
+	struct bt8xxgpio *bg;
+	int err;
 
-	bg = devm_kzalloc(&dev->dev, माप(काष्ठा bt8xxgpio), GFP_KERNEL);
-	अगर (!bg)
-		वापस -ENOMEM;
+	bg = devm_kzalloc(&dev->dev, sizeof(struct bt8xxgpio), GFP_KERNEL);
+	if (!bg)
+		return -ENOMEM;
 
 	bg->pdev = dev;
 	spin_lock_init(&bg->lock);
 
 	err = pci_enable_device(dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "can't enable device.\n");
-		वापस err;
-	पूर्ण
-	अगर (!devm_request_mem_region(&dev->dev, pci_resource_start(dev, 0),
+		return err;
+	}
+	if (!devm_request_mem_region(&dev->dev, pci_resource_start(dev, 0),
 				pci_resource_len(dev, 0),
-				"bt8xxgpio")) अणु
+				"bt8xxgpio")) {
 		dev_warn(&dev->dev, "can't request iomem (0x%llx).\n",
-		       (अचिन्हित दीर्घ दीर्घ)pci_resource_start(dev, 0));
+		       (unsigned long long)pci_resource_start(dev, 0));
 		err = -EBUSY;
-		जाओ err_disable;
-	पूर्ण
+		goto err_disable;
+	}
 	pci_set_master(dev);
 	pci_set_drvdata(dev, bg);
 
 	bg->mmio = devm_ioremap(&dev->dev, pci_resource_start(dev, 0), 0x1000);
-	अगर (!bg->mmio) अणु
+	if (!bg->mmio) {
 		dev_err(&dev->dev, "ioremap() failed\n");
 		err = -EIO;
-		जाओ err_disable;
-	पूर्ण
+		goto err_disable;
+	}
 
-	/* Disable पूर्णांकerrupts */
-	bgग_लिखो(0, BT848_INT_MASK);
+	/* Disable interrupts */
+	bgwrite(0, BT848_INT_MASK);
 
 	/* gpio init */
-	bgग_लिखो(0, BT848_GPIO_DMA_CTL);
-	bgग_लिखो(0, BT848_GPIO_REG_INP);
-	bgग_लिखो(0, BT848_GPIO_OUT_EN);
+	bgwrite(0, BT848_GPIO_DMA_CTL);
+	bgwrite(0, BT848_GPIO_REG_INP);
+	bgwrite(0, BT848_GPIO_OUT_EN);
 
 	bt8xxgpio_gpio_setup(bg);
 	err = gpiochip_add_data(&bg->gpio, bg);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&dev->dev, "failed to register GPIOs\n");
-		जाओ err_disable;
-	पूर्ण
+		goto err_disable;
+	}
 
-	वापस 0;
+	return 0;
 
 err_disable:
 	pci_disable_device(dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम bt8xxgpio_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा bt8xxgpio *bg = pci_get_drvdata(pdev);
+static void bt8xxgpio_remove(struct pci_dev *pdev)
+{
+	struct bt8xxgpio *bg = pci_get_drvdata(pdev);
 
-	gpiochip_हटाओ(&bg->gpio);
+	gpiochip_remove(&bg->gpio);
 
-	bgग_लिखो(0, BT848_INT_MASK);
-	bgग_लिखो(~0x0, BT848_INT_STAT);
-	bgग_लिखो(0x0, BT848_GPIO_OUT_EN);
+	bgwrite(0, BT848_INT_MASK);
+	bgwrite(~0x0, BT848_INT_STAT);
+	bgwrite(0x0, BT848_GPIO_OUT_EN);
 
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक bt8xxgpio_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
-अणु
-	काष्ठा bt8xxgpio *bg = pci_get_drvdata(pdev);
-	अचिन्हित दीर्घ flags;
+#ifdef CONFIG_PM
+static int bt8xxgpio_suspend(struct pci_dev *pdev, pm_message_t state)
+{
+	struct bt8xxgpio *bg = pci_get_drvdata(pdev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&bg->lock, flags);
 
-	bg->saved_outen = bgपढ़ो(BT848_GPIO_OUT_EN);
-	bg->saved_data = bgपढ़ो(BT848_GPIO_DATA);
+	bg->saved_outen = bgread(BT848_GPIO_OUT_EN);
+	bg->saved_data = bgread(BT848_GPIO_DATA);
 
-	bgग_लिखो(0, BT848_INT_MASK);
-	bgग_लिखो(~0x0, BT848_INT_STAT);
-	bgग_लिखो(0x0, BT848_GPIO_OUT_EN);
+	bgwrite(0, BT848_INT_MASK);
+	bgwrite(~0x0, BT848_INT_STAT);
+	bgwrite(0x0, BT848_GPIO_OUT_EN);
 
 	spin_unlock_irqrestore(&bg->lock, flags);
 
 	pci_save_state(pdev);
 	pci_disable_device(pdev);
-	pci_set_घातer_state(pdev, pci_choose_state(pdev, state));
+	pci_set_power_state(pdev, pci_choose_state(pdev, state));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bt8xxgpio_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा bt8xxgpio *bg = pci_get_drvdata(pdev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+static int bt8xxgpio_resume(struct pci_dev *pdev)
+{
+	struct bt8xxgpio *bg = pci_get_drvdata(pdev);
+	unsigned long flags;
+	int err;
 
-	pci_set_घातer_state(pdev, PCI_D0);
+	pci_set_power_state(pdev, PCI_D0);
 	err = pci_enable_device(pdev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	pci_restore_state(pdev);
 
 	spin_lock_irqsave(&bg->lock, flags);
 
-	bgग_लिखो(0, BT848_INT_MASK);
-	bgग_लिखो(0, BT848_GPIO_DMA_CTL);
-	bgग_लिखो(0, BT848_GPIO_REG_INP);
-	bgग_लिखो(bg->saved_outen, BT848_GPIO_OUT_EN);
-	bgग_लिखो(bg->saved_data & bg->saved_outen,
+	bgwrite(0, BT848_INT_MASK);
+	bgwrite(0, BT848_GPIO_DMA_CTL);
+	bgwrite(0, BT848_GPIO_REG_INP);
+	bgwrite(bg->saved_outen, BT848_GPIO_OUT_EN);
+	bgwrite(bg->saved_data & bg->saved_outen,
 		BT848_GPIO_DATA);
 
 	spin_unlock_irqrestore(&bg->lock, flags);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा bt8xxgpio_suspend शून्य
-#घोषणा bt8xxgpio_resume शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#else
+#define bt8xxgpio_suspend NULL
+#define bt8xxgpio_resume NULL
+#endif /* CONFIG_PM */
 
-अटल स्थिर काष्ठा pci_device_id bt8xxgpio_pci_tbl[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT848) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT849) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT878) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT879) पूर्ण,
-	अणु 0, पूर्ण,
-पूर्ण;
+static const struct pci_device_id bt8xxgpio_pci_tbl[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT848) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT849) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT878) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_BROOKTREE, PCI_DEVICE_ID_BT879) },
+	{ 0, },
+};
 MODULE_DEVICE_TABLE(pci, bt8xxgpio_pci_tbl);
 
-अटल काष्ठा pci_driver bt8xxgpio_pci_driver = अणु
+static struct pci_driver bt8xxgpio_pci_driver = {
 	.name		= "bt8xxgpio",
 	.id_table	= bt8xxgpio_pci_tbl,
 	.probe		= bt8xxgpio_probe,
-	.हटाओ		= bt8xxgpio_हटाओ,
+	.remove		= bt8xxgpio_remove,
 	.suspend	= bt8xxgpio_suspend,
 	.resume		= bt8xxgpio_resume,
-पूर्ण;
+};
 
 module_pci_driver(bt8xxgpio_pci_driver);
 

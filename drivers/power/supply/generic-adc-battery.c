@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Generic battery driver code using IIO
  * Copyright (C) 2012, Anish Kumar <anish198519851985@gmail.com>
@@ -6,69 +5,69 @@
  * based on s3c_adc_battery.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive क्रम
+ * License.  See the file COPYING in the main directory of this archive for
  * more details.
  *
  */
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/err.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/iio/types.h>
-#समावेश <linux/घातer/generic-adc-battery.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/power_supply.h>
+#include <linux/gpio/consumer.h>
+#include <linux/err.h>
+#include <linux/timer.h>
+#include <linux/jiffies.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/iio/consumer.h>
+#include <linux/iio/types.h>
+#include <linux/power/generic-adc-battery.h>
 
-#घोषणा JITTER_DEFAULT 10 /* hope 10ms is enough */
+#define JITTER_DEFAULT 10 /* hope 10ms is enough */
 
-क्रमागत gab_chan_type अणु
+enum gab_chan_type {
 	GAB_VOLTAGE = 0,
 	GAB_CURRENT,
 	GAB_POWER,
 	GAB_MAX_CHAN_TYPE
-पूर्ण;
+};
 
 /*
- * gab_chan_name suggests the standard channel names क्रम commonly used
+ * gab_chan_name suggests the standard channel names for commonly used
  * channel types.
  */
-अटल स्थिर अक्षर *स्थिर gab_chan_name[] = अणु
+static const char *const gab_chan_name[] = {
 	[GAB_VOLTAGE]	= "voltage",
 	[GAB_CURRENT]	= "current",
 	[GAB_POWER]		= "power",
-पूर्ण;
+};
 
-काष्ठा gab अणु
-	काष्ठा घातer_supply		*psy;
-	काष्ठा घातer_supply_desc	psy_desc;
-	काष्ठा iio_channel	*channel[GAB_MAX_CHAN_TYPE];
-	काष्ठा gab_platक्रमm_data	*pdata;
-	काष्ठा delayed_work bat_work;
-	पूर्णांक	level;
-	पूर्णांक	status;
+struct gab {
+	struct power_supply		*psy;
+	struct power_supply_desc	psy_desc;
+	struct iio_channel	*channel[GAB_MAX_CHAN_TYPE];
+	struct gab_platform_data	*pdata;
+	struct delayed_work bat_work;
+	int	level;
+	int	status;
 	bool cable_plugged;
-	काष्ठा gpio_desc *अक्षरge_finished;
-पूर्ण;
+	struct gpio_desc *charge_finished;
+};
 
-अटल काष्ठा gab *to_generic_bat(काष्ठा घातer_supply *psy)
-अणु
-	वापस घातer_supply_get_drvdata(psy);
-पूर्ण
+static struct gab *to_generic_bat(struct power_supply *psy)
+{
+	return power_supply_get_drvdata(psy);
+}
 
-अटल व्योम gab_ext_घातer_changed(काष्ठा घातer_supply *psy)
-अणु
-	काष्ठा gab *adc_bat = to_generic_bat(psy);
+static void gab_ext_power_changed(struct power_supply *psy)
+{
+	struct gab *adc_bat = to_generic_bat(psy);
 
-	schedule_delayed_work(&adc_bat->bat_work, msecs_to_jअगरfies(0));
-पूर्ण
+	schedule_delayed_work(&adc_bat->bat_work, msecs_to_jiffies(0));
+}
 
-अटल स्थिर क्रमागत घातer_supply_property gab_props[] = अणु
+static const enum power_supply_property gab_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN,
@@ -79,237 +78,237 @@
 	POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
 	POWER_SUPPLY_PROP_MODEL_NAME,
-पूर्ण;
+};
 
 /*
- * This properties are set based on the received platक्रमm data and this
- * should correspond one-to-one with क्रमागत chan_type.
+ * This properties are set based on the received platform data and this
+ * should correspond one-to-one with enum chan_type.
  */
-अटल स्थिर क्रमागत घातer_supply_property gab_dyn_props[] = अणु
+static const enum power_supply_property gab_dyn_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_POWER_NOW,
-पूर्ण;
+};
 
-अटल bool gab_अक्षरge_finished(काष्ठा gab *adc_bat)
-अणु
-	अगर (!adc_bat->अक्षरge_finished)
-		वापस false;
-	वापस gpiod_get_value(adc_bat->अक्षरge_finished);
-पूर्ण
+static bool gab_charge_finished(struct gab *adc_bat)
+{
+	if (!adc_bat->charge_finished)
+		return false;
+	return gpiod_get_value(adc_bat->charge_finished);
+}
 
-अटल पूर्णांक gab_get_status(काष्ठा gab *adc_bat)
-अणु
-	काष्ठा gab_platक्रमm_data *pdata = adc_bat->pdata;
-	काष्ठा घातer_supply_info *bat_info;
+static int gab_get_status(struct gab *adc_bat)
+{
+	struct gab_platform_data *pdata = adc_bat->pdata;
+	struct power_supply_info *bat_info;
 
 	bat_info = &pdata->battery_info;
-	अगर (adc_bat->level == bat_info->अक्षरge_full_design)
-		वापस POWER_SUPPLY_STATUS_FULL;
-	वापस adc_bat->status;
-पूर्ण
+	if (adc_bat->level == bat_info->charge_full_design)
+		return POWER_SUPPLY_STATUS_FULL;
+	return adc_bat->status;
+}
 
-अटल क्रमागत gab_chan_type gab_prop_to_chan(क्रमागत घातer_supply_property psp)
-अणु
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_POWER_NOW:
-		वापस GAB_POWER;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		वापस GAB_VOLTAGE;
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-		वापस GAB_CURRENT;
-	शेष:
+static enum gab_chan_type gab_prop_to_chan(enum power_supply_property psp)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_POWER_NOW:
+		return GAB_POWER;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		return GAB_VOLTAGE;
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+		return GAB_CURRENT;
+	default:
 		WARN_ON(1);
-		अवरोध;
-	पूर्ण
-	वापस GAB_POWER;
-पूर्ण
+		break;
+	}
+	return GAB_POWER;
+}
 
-अटल पूर्णांक पढ़ो_channel(काष्ठा gab *adc_bat, क्रमागत घातer_supply_property psp,
-		पूर्णांक *result)
-अणु
-	पूर्णांक ret;
-	पूर्णांक chan_index;
+static int read_channel(struct gab *adc_bat, enum power_supply_property psp,
+		int *result)
+{
+	int ret;
+	int chan_index;
 
 	chan_index = gab_prop_to_chan(psp);
-	ret = iio_पढ़ो_channel_processed(adc_bat->channel[chan_index],
+	ret = iio_read_channel_processed(adc_bat->channel[chan_index],
 			result);
-	अगर (ret < 0)
+	if (ret < 0)
 		pr_err("read channel error\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक gab_get_property(काष्ठा घातer_supply *psy,
-		क्रमागत घातer_supply_property psp, जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा gab *adc_bat;
-	काष्ठा gab_platक्रमm_data *pdata;
-	काष्ठा घातer_supply_info *bat_info;
-	पूर्णांक result = 0;
-	पूर्णांक ret = 0;
+static int gab_get_property(struct power_supply *psy,
+		enum power_supply_property psp, union power_supply_propval *val)
+{
+	struct gab *adc_bat;
+	struct gab_platform_data *pdata;
+	struct power_supply_info *bat_info;
+	int result = 0;
+	int ret = 0;
 
 	adc_bat = to_generic_bat(psy);
-	अगर (!adc_bat) अणु
+	if (!adc_bat) {
 		dev_err(&psy->dev, "no battery infos ?!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	pdata = adc_bat->pdata;
 	bat_info = &pdata->battery_info;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = gab_get_status(adc_bat);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN:
-		val->पूर्णांकval = 0;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
-		val->पूर्णांकval = pdata->cal_अक्षरge(result);
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
-	हाल POWER_SUPPLY_PROP_POWER_NOW:
-		ret = पढ़ो_channel(adc_bat, psp, &result);
-		अगर (ret < 0)
-			जाओ err;
-		val->पूर्णांकval = result;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->पूर्णांकval = bat_info->technology;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-		val->पूर्णांकval = bat_info->voltage_min_design;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-		val->पूर्णांकval = bat_info->voltage_max_design;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		val->पूर्णांकval = bat_info->अक्षरge_full_design;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_MODEL_NAME:
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = gab_get_status(adc_bat);
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_EMPTY_DESIGN:
+		val->intval = 0;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_NOW:
+		val->intval = pdata->cal_charge(result);
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	case POWER_SUPPLY_PROP_CURRENT_NOW:
+	case POWER_SUPPLY_PROP_POWER_NOW:
+		ret = read_channel(adc_bat, psp, &result);
+		if (ret < 0)
+			goto err;
+		val->intval = result;
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = bat_info->technology;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+		val->intval = bat_info->voltage_min_design;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
+		val->intval = bat_info->voltage_max_design;
+		break;
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		val->intval = bat_info->charge_full_design;
+		break;
+	case POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = bat_info->name;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 err:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gab_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा gab *adc_bat;
-	काष्ठा delayed_work *delayed_work;
+static void gab_work(struct work_struct *work)
+{
+	struct gab *adc_bat;
+	struct delayed_work *delayed_work;
 	bool is_plugged;
-	पूर्णांक status;
+	int status;
 
 	delayed_work = to_delayed_work(work);
-	adc_bat = container_of(delayed_work, काष्ठा gab, bat_work);
+	adc_bat = container_of(delayed_work, struct gab, bat_work);
 	status = adc_bat->status;
 
-	is_plugged = घातer_supply_am_i_supplied(adc_bat->psy);
+	is_plugged = power_supply_am_i_supplied(adc_bat->psy);
 	adc_bat->cable_plugged = is_plugged;
 
-	अगर (!is_plugged)
+	if (!is_plugged)
 		adc_bat->status =  POWER_SUPPLY_STATUS_DISCHARGING;
-	अन्यथा अगर (gab_अक्षरge_finished(adc_bat))
+	else if (gab_charge_finished(adc_bat))
 		adc_bat->status = POWER_SUPPLY_STATUS_NOT_CHARGING;
-	अन्यथा
+	else
 		adc_bat->status = POWER_SUPPLY_STATUS_CHARGING;
 
-	अगर (status != adc_bat->status)
-		घातer_supply_changed(adc_bat->psy);
-पूर्ण
+	if (status != adc_bat->status)
+		power_supply_changed(adc_bat->psy);
+}
 
-अटल irqवापस_t gab_अक्षरged(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा gab *adc_bat = dev_id;
-	काष्ठा gab_platक्रमm_data *pdata = adc_bat->pdata;
-	पूर्णांक delay;
+static irqreturn_t gab_charged(int irq, void *dev_id)
+{
+	struct gab *adc_bat = dev_id;
+	struct gab_platform_data *pdata = adc_bat->pdata;
+	int delay;
 
 	delay = pdata->jitter_delay ? pdata->jitter_delay : JITTER_DEFAULT;
 	schedule_delayed_work(&adc_bat->bat_work,
-			msecs_to_jअगरfies(delay));
-	वापस IRQ_HANDLED;
-पूर्ण
+			msecs_to_jiffies(delay));
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक gab_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा gab *adc_bat;
-	काष्ठा घातer_supply_desc *psy_desc;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	काष्ठा gab_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
-	क्रमागत घातer_supply_property *properties;
-	पूर्णांक ret = 0;
-	पूर्णांक chan;
-	पूर्णांक index = ARRAY_SIZE(gab_props);
+static int gab_probe(struct platform_device *pdev)
+{
+	struct gab *adc_bat;
+	struct power_supply_desc *psy_desc;
+	struct power_supply_config psy_cfg = {};
+	struct gab_platform_data *pdata = pdev->dev.platform_data;
+	enum power_supply_property *properties;
+	int ret = 0;
+	int chan;
+	int index = ARRAY_SIZE(gab_props);
 	bool any = false;
 
-	adc_bat = devm_kzalloc(&pdev->dev, माप(*adc_bat), GFP_KERNEL);
-	अगर (!adc_bat) अणु
+	adc_bat = devm_kzalloc(&pdev->dev, sizeof(*adc_bat), GFP_KERNEL);
+	if (!adc_bat) {
 		dev_err(&pdev->dev, "failed to allocate memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	psy_cfg.drv_data = adc_bat;
 	psy_desc = &adc_bat->psy_desc;
 	psy_desc->name = pdata->battery_info.name;
 
-	/* bootup शेष values क्रम the battery */
+	/* bootup default values for the battery */
 	adc_bat->cable_plugged = false;
 	adc_bat->status = POWER_SUPPLY_STATUS_DISCHARGING;
 	psy_desc->type = POWER_SUPPLY_TYPE_BATTERY;
 	psy_desc->get_property = gab_get_property;
-	psy_desc->बाह्यal_घातer_changed = gab_ext_घातer_changed;
+	psy_desc->external_power_changed = gab_ext_power_changed;
 	adc_bat->pdata = pdata;
 
 	/*
-	 * copying the अटल properties and allocating extra memory क्रम holding
-	 * the extra configurable properties received from platक्रमm data.
+	 * copying the static properties and allocating extra memory for holding
+	 * the extra configurable properties received from platform data.
 	 */
-	properties = kसुस्मृति(ARRAY_SIZE(gab_props) +
+	properties = kcalloc(ARRAY_SIZE(gab_props) +
 			     ARRAY_SIZE(gab_chan_name),
-			     माप(*properties),
+			     sizeof(*properties),
 			     GFP_KERNEL);
-	अगर (!properties) अणु
+	if (!properties) {
 		ret = -ENOMEM;
-		जाओ first_mem_fail;
-	पूर्ण
+		goto first_mem_fail;
+	}
 
-	स_नकल(properties, gab_props, माप(gab_props));
+	memcpy(properties, gab_props, sizeof(gab_props));
 
 	/*
 	 * getting channel from iio and copying the battery properties
 	 * based on the channel supported by consumer device.
 	 */
-	क्रम (chan = 0; chan < ARRAY_SIZE(gab_chan_name); chan++) अणु
+	for (chan = 0; chan < ARRAY_SIZE(gab_chan_name); chan++) {
 		adc_bat->channel[chan] = iio_channel_get(&pdev->dev,
 							 gab_chan_name[chan]);
-		अगर (IS_ERR(adc_bat->channel[chan])) अणु
+		if (IS_ERR(adc_bat->channel[chan])) {
 			ret = PTR_ERR(adc_bat->channel[chan]);
-			adc_bat->channel[chan] = शून्य;
-		पूर्ण अन्यथा अणु
-			/* copying properties क्रम supported channels only */
-			पूर्णांक index2;
+			adc_bat->channel[chan] = NULL;
+		} else {
+			/* copying properties for supported channels only */
+			int index2;
 
-			क्रम (index2 = 0; index2 < index; index2++) अणु
-				अगर (properties[index2] == gab_dyn_props[chan])
-					अवरोध;	/* alपढ़ोy known */
-			पूर्ण
-			अगर (index2 == index)	/* really new */
+			for (index2 = 0; index2 < index; index2++) {
+				if (properties[index2] == gab_dyn_props[chan])
+					break;	/* already known */
+			}
+			if (index2 == index)	/* really new */
 				properties[index++] = gab_dyn_props[chan];
 			any = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* none of the channels are supported so let's bail out */
-	अगर (!any) अणु
+	if (!any) {
 		ret = -ENODEV;
-		जाओ second_mem_fail;
-	पूर्ण
+		goto second_mem_fail;
+	}
 
 	/*
-	 * Total number of properties is equal to अटल properties
+	 * Total number of properties is equal to static properties
 	 * plus the dynamic properties.Some properties may not be set
 	 * as come channels may be not be supported by the device.So
 	 * we need to take care of that.
@@ -317,101 +316,101 @@ err:
 	psy_desc->properties = properties;
 	psy_desc->num_properties = index;
 
-	adc_bat->psy = घातer_supply_रेजिस्टर(&pdev->dev, psy_desc, &psy_cfg);
-	अगर (IS_ERR(adc_bat->psy)) अणु
+	adc_bat->psy = power_supply_register(&pdev->dev, psy_desc, &psy_cfg);
+	if (IS_ERR(adc_bat->psy)) {
 		ret = PTR_ERR(adc_bat->psy);
-		जाओ err_reg_fail;
-	पूर्ण
+		goto err_reg_fail;
+	}
 
 	INIT_DELAYED_WORK(&adc_bat->bat_work, gab_work);
 
-	adc_bat->अक्षरge_finished = devm_gpiod_get_optional(&pdev->dev,
+	adc_bat->charge_finished = devm_gpiod_get_optional(&pdev->dev,
 							   "charged", GPIOD_IN);
-	अगर (adc_bat->अक्षरge_finished) अणु
-		पूर्णांक irq;
+	if (adc_bat->charge_finished) {
+		int irq;
 
-		irq = gpiod_to_irq(adc_bat->अक्षरge_finished);
-		ret = request_any_context_irq(irq, gab_अक्षरged,
+		irq = gpiod_to_irq(adc_bat->charge_finished);
+		ret = request_any_context_irq(irq, gab_charged,
 				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 				"battery charged", adc_bat);
-		अगर (ret < 0)
-			जाओ gpio_req_fail;
-	पूर्ण
+		if (ret < 0)
+			goto gpio_req_fail;
+	}
 
-	platक्रमm_set_drvdata(pdev, adc_bat);
+	platform_set_drvdata(pdev, adc_bat);
 
-	/* Schedule समयr to check current status */
+	/* Schedule timer to check current status */
 	schedule_delayed_work(&adc_bat->bat_work,
-			msecs_to_jअगरfies(0));
-	वापस 0;
+			msecs_to_jiffies(0));
+	return 0;
 
 gpio_req_fail:
-	घातer_supply_unरेजिस्टर(adc_bat->psy);
+	power_supply_unregister(adc_bat->psy);
 err_reg_fail:
-	क्रम (chan = 0; chan < ARRAY_SIZE(gab_chan_name); chan++) अणु
-		अगर (adc_bat->channel[chan])
+	for (chan = 0; chan < ARRAY_SIZE(gab_chan_name); chan++) {
+		if (adc_bat->channel[chan])
 			iio_channel_release(adc_bat->channel[chan]);
-	पूर्ण
+	}
 second_mem_fail:
-	kमुक्त(properties);
+	kfree(properties);
 first_mem_fail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक gab_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक chan;
-	काष्ठा gab *adc_bat = platक्रमm_get_drvdata(pdev);
+static int gab_remove(struct platform_device *pdev)
+{
+	int chan;
+	struct gab *adc_bat = platform_get_drvdata(pdev);
 
-	घातer_supply_unरेजिस्टर(adc_bat->psy);
+	power_supply_unregister(adc_bat->psy);
 
-	अगर (adc_bat->अक्षरge_finished)
-		मुक्त_irq(gpiod_to_irq(adc_bat->अक्षरge_finished), adc_bat);
+	if (adc_bat->charge_finished)
+		free_irq(gpiod_to_irq(adc_bat->charge_finished), adc_bat);
 
-	क्रम (chan = 0; chan < ARRAY_SIZE(gab_chan_name); chan++) अणु
-		अगर (adc_bat->channel[chan])
+	for (chan = 0; chan < ARRAY_SIZE(gab_chan_name); chan++) {
+		if (adc_bat->channel[chan])
 			iio_channel_release(adc_bat->channel[chan]);
-	पूर्ण
+	}
 
-	kमुक्त(adc_bat->psy_desc.properties);
+	kfree(adc_bat->psy_desc.properties);
 	cancel_delayed_work_sync(&adc_bat->bat_work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused gab_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा gab *adc_bat = dev_get_drvdata(dev);
+static int __maybe_unused gab_suspend(struct device *dev)
+{
+	struct gab *adc_bat = dev_get_drvdata(dev);
 
 	cancel_delayed_work_sync(&adc_bat->bat_work);
 	adc_bat->status = POWER_SUPPLY_STATUS_UNKNOWN;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused gab_resume(काष्ठा device *dev)
-अणु
-	काष्ठा gab *adc_bat = dev_get_drvdata(dev);
-	काष्ठा gab_platक्रमm_data *pdata = adc_bat->pdata;
-	पूर्णांक delay;
+static int __maybe_unused gab_resume(struct device *dev)
+{
+	struct gab *adc_bat = dev_get_drvdata(dev);
+	struct gab_platform_data *pdata = adc_bat->pdata;
+	int delay;
 
 	delay = pdata->jitter_delay ? pdata->jitter_delay : JITTER_DEFAULT;
 
-	/* Schedule समयr to check current status */
+	/* Schedule timer to check current status */
 	schedule_delayed_work(&adc_bat->bat_work,
-			msecs_to_jअगरfies(delay));
-	वापस 0;
-पूर्ण
+			msecs_to_jiffies(delay));
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(gab_pm_ops, gab_suspend, gab_resume);
+static SIMPLE_DEV_PM_OPS(gab_pm_ops, gab_suspend, gab_resume);
 
-अटल काष्ठा platक्रमm_driver gab_driver = अणु
-	.driver		= अणु
+static struct platform_driver gab_driver = {
+	.driver		= {
 		.name	= "generic-adc-battery",
 		.pm	= &gab_pm_ops,
-	पूर्ण,
+	},
 	.probe		= gab_probe,
-	.हटाओ		= gab_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(gab_driver);
+	.remove		= gab_remove,
+};
+module_platform_driver(gab_driver);
 
 MODULE_AUTHOR("anish kumar <anish198519851985@gmail.com>");
 MODULE_DESCRIPTION("generic battery driver using IIO");

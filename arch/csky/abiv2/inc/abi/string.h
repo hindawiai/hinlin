@@ -1,28 +1,27 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_CSKY_STRING_H
-#घोषणा __ABI_CSKY_STRING_H
+#ifndef __ABI_CSKY_STRING_H
+#define __ABI_CSKY_STRING_H
 
-#घोषणा __HAVE_ARCH_MEMCMP
-बाह्य पूर्णांक स_भेद(स्थिर व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+#define __HAVE_ARCH_MEMCMP
+extern int memcmp(const void *, const void *, __kernel_size_t);
 
-#घोषणा __HAVE_ARCH_MEMCPY
-बाह्य व्योम *स_नकल(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+#define __HAVE_ARCH_MEMCPY
+extern void *memcpy(void *, const void *, __kernel_size_t);
 
-#घोषणा __HAVE_ARCH_MEMMOVE
-बाह्य व्योम *स_हटाओ(व्योम *, स्थिर व्योम *, __kernel_माप_प्रकार);
+#define __HAVE_ARCH_MEMMOVE
+extern void *memmove(void *, const void *, __kernel_size_t);
 
-#घोषणा __HAVE_ARCH_MEMSET
-बाह्य व्योम *स_रखो(व्योम *, पूर्णांक,  __kernel_माप_प्रकार);
+#define __HAVE_ARCH_MEMSET
+extern void *memset(void *, int,  __kernel_size_t);
 
-#घोषणा __HAVE_ARCH_STRCMP
-बाह्य पूर्णांक म_भेद(स्थिर अक्षर *, स्थिर अक्षर *);
+#define __HAVE_ARCH_STRCMP
+extern int strcmp(const char *, const char *);
 
-#घोषणा __HAVE_ARCH_STRCPY
-बाह्य अक्षर *म_नकल(अक्षर *, स्थिर अक्षर *);
+#define __HAVE_ARCH_STRCPY
+extern char *strcpy(char *, const char *);
 
-#घोषणा __HAVE_ARCH_STRLEN
-बाह्य __kernel_माप_प्रकार म_माप(स्थिर अक्षर *);
+#define __HAVE_ARCH_STRLEN
+extern __kernel_size_t strlen(const char *);
 
-#पूर्ण_अगर /* __ABI_CSKY_STRING_H */
+#endif /* __ABI_CSKY_STRING_H */

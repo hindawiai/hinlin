@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright Intel Corporation (C) 2014-2016. All Rights Reserved
  *
- * GPIO driver क्रम  Altera Arria10 MAX5 System Resource Chip
+ * GPIO driver for  Altera Arria10 MAX5 System Resource Chip
  *
  * Adapted from gpio-tps65910.c
  */
 
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/mfd/altera-a10sr.h>
-#समावेश <linux/module.h>
+#include <linux/gpio/driver.h>
+#include <linux/mfd/altera-a10sr.h>
+#include <linux/module.h>
 
 /**
- * काष्ठा altr_a10sr_gpio - Altera Max5 GPIO device निजी data काष्ठाure
+ * struct altr_a10sr_gpio - Altera Max5 GPIO device private data structure
  * @gp:   : instance of the gpio_chip
  * @regmap: the regmap from the parent device.
  */
-काष्ठा altr_a10sr_gpio अणु
-	काष्ठा gpio_chip gp;
-	काष्ठा regmap *regmap;
-पूर्ण;
+struct altr_a10sr_gpio {
+	struct gpio_chip gp;
+	struct regmap *regmap;
+};
 
-अटल पूर्णांक altr_a10sr_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा altr_a10sr_gpio *gpio = gpiochip_get_data(chip);
-	पूर्णांक ret, val;
+static int altr_a10sr_gpio_get(struct gpio_chip *chip, unsigned int offset)
+{
+	struct altr_a10sr_gpio *gpio = gpiochip_get_data(chip);
+	int ret, val;
 
-	ret = regmap_पढ़ो(gpio->regmap, ALTR_A10SR_PBDSW_REG, &val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_read(gpio->regmap, ALTR_A10SR_PBDSW_REG, &val);
+	if (ret < 0)
+		return ret;
 
-	वापस !!(val & BIT(offset - ALTR_A10SR_LED_VALID_SHIFT));
-पूर्ण
+	return !!(val & BIT(offset - ALTR_A10SR_LED_VALID_SHIFT));
+}
 
-अटल व्योम altr_a10sr_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
-				पूर्णांक value)
-अणु
-	काष्ठा altr_a10sr_gpio *gpio = gpiochip_get_data(chip);
+static void altr_a10sr_gpio_set(struct gpio_chip *chip, unsigned int offset,
+				int value)
+{
+	struct altr_a10sr_gpio *gpio = gpiochip_get_data(chip);
 
 	regmap_update_bits(gpio->regmap, ALTR_A10SR_LED_REG,
 			   BIT(ALTR_A10SR_LED_VALID_SHIFT + offset),
 			   value ? BIT(ALTR_A10SR_LED_VALID_SHIFT + offset)
 			   : 0);
-पूर्ण
+}
 
-अटल पूर्णांक altr_a10sr_gpio_direction_input(काष्ठा gpio_chip *gc,
-					   अचिन्हित पूर्णांक nr)
-अणु
-	अगर (nr < (ALTR_A10SR_IN_VALID_RANGE_LO - ALTR_A10SR_LED_VALID_SHIFT))
-		वापस -EINVAL;
+static int altr_a10sr_gpio_direction_input(struct gpio_chip *gc,
+					   unsigned int nr)
+{
+	if (nr < (ALTR_A10SR_IN_VALID_RANGE_LO - ALTR_A10SR_LED_VALID_SHIFT))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक altr_a10sr_gpio_direction_output(काष्ठा gpio_chip *gc,
-					    अचिन्हित पूर्णांक nr, पूर्णांक value)
-अणु
-	अगर (nr > (ALTR_A10SR_OUT_VALID_RANGE_HI - ALTR_A10SR_LED_VALID_SHIFT))
-		वापस -EINVAL;
+static int altr_a10sr_gpio_direction_output(struct gpio_chip *gc,
+					    unsigned int nr, int value)
+{
+	if (nr > (ALTR_A10SR_OUT_VALID_RANGE_HI - ALTR_A10SR_LED_VALID_SHIFT))
+		return -EINVAL;
 
 	altr_a10sr_gpio_set(gc, nr, value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा gpio_chip altr_a10sr_gc = अणु
+static const struct gpio_chip altr_a10sr_gc = {
 	.label = "altr_a10sr_gpio",
 	.owner = THIS_MODULE,
 	.get = altr_a10sr_gpio_get,
@@ -74,17 +73,17 @@
 	.can_sleep = true,
 	.ngpio = 12,
 	.base = -1,
-पूर्ण;
+};
 
-अटल पूर्णांक altr_a10sr_gpio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा altr_a10sr_gpio *gpio;
-	पूर्णांक ret;
-	काष्ठा altr_a10sr *a10sr = dev_get_drvdata(pdev->dev.parent);
+static int altr_a10sr_gpio_probe(struct platform_device *pdev)
+{
+	struct altr_a10sr_gpio *gpio;
+	int ret;
+	struct altr_a10sr *a10sr = dev_get_drvdata(pdev->dev.parent);
 
-	gpio = devm_kzalloc(&pdev->dev, माप(*gpio), GFP_KERNEL);
-	अगर (!gpio)
-		वापस -ENOMEM;
+	gpio = devm_kzalloc(&pdev->dev, sizeof(*gpio), GFP_KERNEL);
+	if (!gpio)
+		return -ENOMEM;
 
 	gpio->regmap = a10sr->regmap;
 
@@ -93,30 +92,30 @@
 	gpio->gp.of_node = pdev->dev.of_node;
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &gpio->gp, gpio);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, gpio);
+	platform_set_drvdata(pdev, gpio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id altr_a10sr_gpio_of_match[] = अणु
-	अणु .compatible = "altr,a10sr-gpio" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id altr_a10sr_gpio_of_match[] = {
+	{ .compatible = "altr,a10sr-gpio" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, altr_a10sr_gpio_of_match);
 
-अटल काष्ठा platक्रमm_driver altr_a10sr_gpio_driver = अणु
+static struct platform_driver altr_a10sr_gpio_driver = {
 	.probe = altr_a10sr_gpio_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "altr_a10sr_gpio",
 		.of_match_table = of_match_ptr(altr_a10sr_gpio_of_match),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(altr_a10sr_gpio_driver);
+	},
+};
+module_platform_driver(altr_a10sr_gpio_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Thor Thayer <tthayer@opensource.altera.com>");

@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Microchip KSZ8XXX series रेजिस्टर access
+ * Microchip KSZ8XXX series register access
  *
  * Copyright (C) 2020 Pengutronix, Michael Grzeschik <kernel@pengutronix.de>
  */
 
-#अगर_अघोषित __KSZ8XXX_H
-#घोषणा __KSZ8XXX_H
-#समावेश <linux/kernel.h>
+#ifndef __KSZ8XXX_H
+#define __KSZ8XXX_H
+#include <linux/kernel.h>
 
-क्रमागत ksz_regs अणु
+enum ksz_regs {
 	REG_IND_CTRL_0,
 	REG_IND_DATA_8,
 	REG_IND_DATA_CHECK,
@@ -24,9 +23,9 @@
 	P_REMOTE_STATUS,
 	P_SPEED_STATUS,
 	S_TAIL_TAG_CTRL,
-पूर्ण;
+};
 
-क्रमागत ksz_masks अणु
+enum ksz_masks {
 	PORT_802_1P_REMAPPING,
 	SW_TAIL_TAG_ENABLE,
 	MIB_COUNTER_OVERFLOW,
@@ -46,9 +45,9 @@
 	DYNAMIC_MAC_TABLE_FID,
 	DYNAMIC_MAC_TABLE_SRC_PORT,
 	DYNAMIC_MAC_TABLE_TIMESTAMP,
-पूर्ण;
+};
 
-क्रमागत ksz_shअगरts अणु
+enum ksz_shifts {
 	VLAN_TABLE_MEMBERSHIP_S,
 	VLAN_TABLE,
 	STATIC_MAC_FWD_PORTS,
@@ -58,13 +57,13 @@
 	DYNAMIC_MAC_FID,
 	DYNAMIC_MAC_TIMESTAMP,
 	DYNAMIC_MAC_SRC_PORT,
-पूर्ण;
+};
 
-काष्ठा ksz8 अणु
-	स्थिर u8 *regs;
-	स्थिर u32 *masks;
-	स्थिर u8 *shअगरts;
-	व्योम *priv;
-पूर्ण;
+struct ksz8 {
+	const u8 *regs;
+	const u32 *masks;
+	const u8 *shifts;
+	void *priv;
+};
 
-#पूर्ण_अगर
+#endif

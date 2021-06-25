@@ -1,136 +1,135 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * ADIS16460 IMU driver
  *
  * Copyright 2019 Analog Devices Inc.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/spi/spi.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/imu/adis.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/imu/adis.h>
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-#घोषणा ADIS16460_REG_FLASH_CNT		0x00
-#घोषणा ADIS16460_REG_DIAG_STAT		0x02
-#घोषणा ADIS16460_REG_X_GYRO_LOW	0x04
-#घोषणा ADIS16460_REG_X_GYRO_OUT	0x06
-#घोषणा ADIS16460_REG_Y_GYRO_LOW	0x08
-#घोषणा ADIS16460_REG_Y_GYRO_OUT	0x0A
-#घोषणा ADIS16460_REG_Z_GYRO_LOW	0x0C
-#घोषणा ADIS16460_REG_Z_GYRO_OUT	0x0E
-#घोषणा ADIS16460_REG_X_ACCL_LOW	0x10
-#घोषणा ADIS16460_REG_X_ACCL_OUT	0x12
-#घोषणा ADIS16460_REG_Y_ACCL_LOW	0x14
-#घोषणा ADIS16460_REG_Y_ACCL_OUT	0x16
-#घोषणा ADIS16460_REG_Z_ACCL_LOW	0x18
-#घोषणा ADIS16460_REG_Z_ACCL_OUT	0x1A
-#घोषणा ADIS16460_REG_SMPL_CNTR		0x1C
-#घोषणा ADIS16460_REG_TEMP_OUT		0x1E
-#घोषणा ADIS16460_REG_X_DELT_ANG	0x24
-#घोषणा ADIS16460_REG_Y_DELT_ANG	0x26
-#घोषणा ADIS16460_REG_Z_DELT_ANG	0x28
-#घोषणा ADIS16460_REG_X_DELT_VEL	0x2A
-#घोषणा ADIS16460_REG_Y_DELT_VEL	0x2C
-#घोषणा ADIS16460_REG_Z_DELT_VEL	0x2E
-#घोषणा ADIS16460_REG_MSC_CTRL		0x32
-#घोषणा ADIS16460_REG_SYNC_SCAL		0x34
-#घोषणा ADIS16460_REG_DEC_RATE		0x36
-#घोषणा ADIS16460_REG_FLTR_CTRL		0x38
-#घोषणा ADIS16460_REG_GLOB_CMD		0x3E
-#घोषणा ADIS16460_REG_X_GYRO_OFF	0x40
-#घोषणा ADIS16460_REG_Y_GYRO_OFF	0x42
-#घोषणा ADIS16460_REG_Z_GYRO_OFF	0x44
-#घोषणा ADIS16460_REG_X_ACCL_OFF	0x46
-#घोषणा ADIS16460_REG_Y_ACCL_OFF	0x48
-#घोषणा ADIS16460_REG_Z_ACCL_OFF	0x4A
-#घोषणा ADIS16460_REG_LOT_ID1		0x52
-#घोषणा ADIS16460_REG_LOT_ID2		0x54
-#घोषणा ADIS16460_REG_PROD_ID		0x56
-#घोषणा ADIS16460_REG_SERIAL_NUM	0x58
-#घोषणा ADIS16460_REG_CAL_SGNTR		0x60
-#घोषणा ADIS16460_REG_CAL_CRC		0x62
-#घोषणा ADIS16460_REG_CODE_SGNTR	0x64
-#घोषणा ADIS16460_REG_CODE_CRC		0x66
+#define ADIS16460_REG_FLASH_CNT		0x00
+#define ADIS16460_REG_DIAG_STAT		0x02
+#define ADIS16460_REG_X_GYRO_LOW	0x04
+#define ADIS16460_REG_X_GYRO_OUT	0x06
+#define ADIS16460_REG_Y_GYRO_LOW	0x08
+#define ADIS16460_REG_Y_GYRO_OUT	0x0A
+#define ADIS16460_REG_Z_GYRO_LOW	0x0C
+#define ADIS16460_REG_Z_GYRO_OUT	0x0E
+#define ADIS16460_REG_X_ACCL_LOW	0x10
+#define ADIS16460_REG_X_ACCL_OUT	0x12
+#define ADIS16460_REG_Y_ACCL_LOW	0x14
+#define ADIS16460_REG_Y_ACCL_OUT	0x16
+#define ADIS16460_REG_Z_ACCL_LOW	0x18
+#define ADIS16460_REG_Z_ACCL_OUT	0x1A
+#define ADIS16460_REG_SMPL_CNTR		0x1C
+#define ADIS16460_REG_TEMP_OUT		0x1E
+#define ADIS16460_REG_X_DELT_ANG	0x24
+#define ADIS16460_REG_Y_DELT_ANG	0x26
+#define ADIS16460_REG_Z_DELT_ANG	0x28
+#define ADIS16460_REG_X_DELT_VEL	0x2A
+#define ADIS16460_REG_Y_DELT_VEL	0x2C
+#define ADIS16460_REG_Z_DELT_VEL	0x2E
+#define ADIS16460_REG_MSC_CTRL		0x32
+#define ADIS16460_REG_SYNC_SCAL		0x34
+#define ADIS16460_REG_DEC_RATE		0x36
+#define ADIS16460_REG_FLTR_CTRL		0x38
+#define ADIS16460_REG_GLOB_CMD		0x3E
+#define ADIS16460_REG_X_GYRO_OFF	0x40
+#define ADIS16460_REG_Y_GYRO_OFF	0x42
+#define ADIS16460_REG_Z_GYRO_OFF	0x44
+#define ADIS16460_REG_X_ACCL_OFF	0x46
+#define ADIS16460_REG_Y_ACCL_OFF	0x48
+#define ADIS16460_REG_Z_ACCL_OFF	0x4A
+#define ADIS16460_REG_LOT_ID1		0x52
+#define ADIS16460_REG_LOT_ID2		0x54
+#define ADIS16460_REG_PROD_ID		0x56
+#define ADIS16460_REG_SERIAL_NUM	0x58
+#define ADIS16460_REG_CAL_SGNTR		0x60
+#define ADIS16460_REG_CAL_CRC		0x62
+#define ADIS16460_REG_CODE_SGNTR	0x64
+#define ADIS16460_REG_CODE_CRC		0x66
 
-काष्ठा adis16460_chip_info अणु
-	अचिन्हित पूर्णांक num_channels;
-	स्थिर काष्ठा iio_chan_spec *channels;
-	अचिन्हित पूर्णांक gyro_max_val;
-	अचिन्हित पूर्णांक gyro_max_scale;
-	अचिन्हित पूर्णांक accel_max_val;
-	अचिन्हित पूर्णांक accel_max_scale;
-पूर्ण;
+struct adis16460_chip_info {
+	unsigned int num_channels;
+	const struct iio_chan_spec *channels;
+	unsigned int gyro_max_val;
+	unsigned int gyro_max_scale;
+	unsigned int accel_max_val;
+	unsigned int accel_max_scale;
+};
 
-काष्ठा adis16460 अणु
-	स्थिर काष्ठा adis16460_chip_info *chip_info;
-	काष्ठा adis adis;
-पूर्ण;
+struct adis16460 {
+	const struct adis16460_chip_info *chip_info;
+	struct adis adis;
+};
 
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 
-अटल पूर्णांक adis16460_show_serial_number(व्योम *arg, u64 *val)
-अणु
-	काष्ठा adis16460 *adis16460 = arg;
+static int adis16460_show_serial_number(void *arg, u64 *val)
+{
+	struct adis16460 *adis16460 = arg;
 	u16 serial;
-	पूर्णांक ret;
+	int ret;
 
-	ret = adis_पढ़ो_reg_16(&adis16460->adis, ADIS16460_REG_SERIAL_NUM,
+	ret = adis_read_reg_16(&adis16460->adis, ADIS16460_REG_SERIAL_NUM,
 		&serial);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = serial;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_DEBUGFS_ATTRIBUTE(adis16460_serial_number_fops,
-		adis16460_show_serial_number, शून्य, "0x%.4llx\n");
+		adis16460_show_serial_number, NULL, "0x%.4llx\n");
 
-अटल पूर्णांक adis16460_show_product_id(व्योम *arg, u64 *val)
-अणु
-	काष्ठा adis16460 *adis16460 = arg;
+static int adis16460_show_product_id(void *arg, u64 *val)
+{
+	struct adis16460 *adis16460 = arg;
 	u16 prod_id;
-	पूर्णांक ret;
+	int ret;
 
-	ret = adis_पढ़ो_reg_16(&adis16460->adis, ADIS16460_REG_PROD_ID,
+	ret = adis_read_reg_16(&adis16460->adis, ADIS16460_REG_PROD_ID,
 		&prod_id);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = prod_id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_DEBUGFS_ATTRIBUTE(adis16460_product_id_fops,
-		adis16460_show_product_id, शून्य, "%llu\n");
+		adis16460_show_product_id, NULL, "%llu\n");
 
-अटल पूर्णांक adis16460_show_flash_count(व्योम *arg, u64 *val)
-अणु
-	काष्ठा adis16460 *adis16460 = arg;
+static int adis16460_show_flash_count(void *arg, u64 *val)
+{
+	struct adis16460 *adis16460 = arg;
 	u32 flash_count;
-	पूर्णांक ret;
+	int ret;
 
-	ret = adis_पढ़ो_reg_32(&adis16460->adis, ADIS16460_REG_FLASH_CNT,
+	ret = adis_read_reg_32(&adis16460->adis, ADIS16460_REG_FLASH_CNT,
 		&flash_count);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	*val = flash_count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
-		adis16460_show_flash_count, शून्य, "%lld\n");
+		adis16460_show_flash_count, NULL, "%lld\n");
 
-अटल पूर्णांक adis16460_debugfs_init(काष्ठा iio_dev *indio_dev)
-अणु
-	काष्ठा adis16460 *adis16460 = iio_priv(indio_dev);
-	काष्ठा dentry *d = iio_get_debugfs_dentry(indio_dev);
+static int adis16460_debugfs_init(struct iio_dev *indio_dev)
+{
+	struct adis16460 *adis16460 = iio_priv(indio_dev);
+	struct dentry *d = iio_get_debugfs_dentry(indio_dev);
 
 	debugfs_create_file_unsafe("serial_number", 0400,
 			d, adis16460, &adis16460_serial_number_fops);
@@ -139,101 +138,101 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 	debugfs_create_file_unsafe("flash_count", 0400,
 			d, adis16460, &adis16460_flash_count_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
+#else
 
-अटल पूर्णांक adis16460_debugfs_init(काष्ठा iio_dev *indio_dev)
-अणु
-	वापस 0;
-पूर्ण
+static int adis16460_debugfs_init(struct iio_dev *indio_dev)
+{
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक adis16460_set_freq(काष्ठा iio_dev *indio_dev, पूर्णांक val, पूर्णांक val2)
-अणु
-	काष्ठा adis16460 *st = iio_priv(indio_dev);
-	पूर्णांक t;
+static int adis16460_set_freq(struct iio_dev *indio_dev, int val, int val2)
+{
+	struct adis16460 *st = iio_priv(indio_dev);
+	int t;
 
 	t =  val * 1000 + val2 / 1000;
-	अगर (t <= 0)
-		वापस -EINVAL;
+	if (t <= 0)
+		return -EINVAL;
 
 	t = 2048000 / t;
-	अगर (t > 2048)
+	if (t > 2048)
 		t = 2048;
 
-	अगर (t != 0)
+	if (t != 0)
 		t--;
 
-	वापस adis_ग_लिखो_reg_16(&st->adis, ADIS16460_REG_DEC_RATE, t);
-पूर्ण
+	return adis_write_reg_16(&st->adis, ADIS16460_REG_DEC_RATE, t);
+}
 
-अटल पूर्णांक adis16460_get_freq(काष्ठा iio_dev *indio_dev, पूर्णांक *val, पूर्णांक *val2)
-अणु
-	काष्ठा adis16460 *st = iio_priv(indio_dev);
-	uपूर्णांक16_t t;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक freq;
+static int adis16460_get_freq(struct iio_dev *indio_dev, int *val, int *val2)
+{
+	struct adis16460 *st = iio_priv(indio_dev);
+	uint16_t t;
+	int ret;
+	unsigned int freq;
 
-	ret = adis_पढ़ो_reg_16(&st->adis, ADIS16460_REG_DEC_RATE, &t);
-	अगर (ret)
-		वापस ret;
+	ret = adis_read_reg_16(&st->adis, ADIS16460_REG_DEC_RATE, &t);
+	if (ret)
+		return ret;
 
 	freq = 2048000 / (t + 1);
 	*val = freq / 1000;
 	*val2 = (freq % 1000) * 1000;
 
-	वापस IIO_VAL_INT_PLUS_MICRO;
-पूर्ण
+	return IIO_VAL_INT_PLUS_MICRO;
+}
 
-अटल पूर्णांक adis16460_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, पूर्णांक *val, पूर्णांक *val2, दीर्घ info)
-अणु
-	काष्ठा adis16460 *st = iio_priv(indio_dev);
+static int adis16460_read_raw(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, int *val, int *val2, long info)
+{
+	struct adis16460 *st = iio_priv(indio_dev);
 
-	चयन (info) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		वापस adis_single_conversion(indio_dev, chan, 0, val);
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_ANGL_VEL:
+	switch (info) {
+	case IIO_CHAN_INFO_RAW:
+		return adis_single_conversion(indio_dev, chan, 0, val);
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_ANGL_VEL:
 			*val = st->chip_info->gyro_max_scale;
 			*val2 = st->chip_info->gyro_max_val;
-			वापस IIO_VAL_FRACTIONAL;
-		हाल IIO_ACCEL:
+			return IIO_VAL_FRACTIONAL;
+		case IIO_ACCEL:
 			*val = st->chip_info->accel_max_scale;
 			*val2 = st->chip_info->accel_max_val;
-			वापस IIO_VAL_FRACTIONAL;
-		हाल IIO_TEMP:
+			return IIO_VAL_FRACTIONAL;
+		case IIO_TEMP:
 			*val = 50; /* 50 milli degrees Celsius/LSB */
-			वापस IIO_VAL_INT;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	हाल IIO_CHAN_INFO_OFFSET:
+			return IIO_VAL_INT;
+		default:
+			return -EINVAL;
+		}
+	case IIO_CHAN_INFO_OFFSET:
 		*val = 500; /* 25 degrees Celsius = 0x0000 */
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		वापस adis16460_get_freq(indio_dev, val, val2);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		return adis16460_get_freq(indio_dev, val, val2);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक adis16460_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-	स्थिर काष्ठा iio_chan_spec *chan, पूर्णांक val, पूर्णांक val2, दीर्घ info)
-अणु
-	चयन (info) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		वापस adis16460_set_freq(indio_dev, val, val2);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int adis16460_write_raw(struct iio_dev *indio_dev,
+	const struct iio_chan_spec *chan, int val, int val2, long info)
+{
+	switch (info) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		return adis16460_set_freq(indio_dev, val, val2);
+	default:
+		return -EINVAL;
+	}
+}
 
-क्रमागत अणु
+enum {
 	ADIS16460_SCAN_GYRO_X,
 	ADIS16460_SCAN_GYRO_Y,
 	ADIS16460_SCAN_GYRO_Z,
@@ -241,37 +240,37 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 	ADIS16460_SCAN_ACCEL_Y,
 	ADIS16460_SCAN_ACCEL_Z,
 	ADIS16460_SCAN_TEMP,
-पूर्ण;
+};
 
-#घोषणा ADIS16460_MOD_CHANNEL(_type, _mod, _address, _si, _bits) \
-	अणु \
+#define ADIS16460_MOD_CHANNEL(_type, _mod, _address, _si, _bits) \
+	{ \
 		.type = (_type), \
-		.modअगरied = 1, \
+		.modified = 1, \
 		.channel2 = (_mod), \
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE), \
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ), \
 		.address = (_address), \
 		.scan_index = (_si), \
-		.scan_type = अणु \
+		.scan_type = { \
 			.sign = 's', \
 			.realbits = (_bits), \
 			.storagebits = (_bits), \
 			.endianness = IIO_BE, \
-		पूर्ण, \
-	पूर्ण
+		}, \
+	}
 
-#घोषणा ADIS16460_GYRO_CHANNEL(_mod) \
+#define ADIS16460_GYRO_CHANNEL(_mod) \
 	ADIS16460_MOD_CHANNEL(IIO_ANGL_VEL, IIO_MOD_ ## _mod, \
 	ADIS16460_REG_ ## _mod ## _GYRO_LOW, ADIS16460_SCAN_GYRO_ ## _mod, \
 	32)
 
-#घोषणा ADIS16460_ACCEL_CHANNEL(_mod) \
+#define ADIS16460_ACCEL_CHANNEL(_mod) \
 	ADIS16460_MOD_CHANNEL(IIO_ACCEL, IIO_MOD_ ## _mod, \
 	ADIS16460_REG_ ## _mod ## _ACCL_LOW, ADIS16460_SCAN_ACCEL_ ## _mod, \
 	32)
 
-#घोषणा ADIS16460_TEMP_CHANNEL() अणु \
+#define ADIS16460_TEMP_CHANNEL() { \
 		.type = IIO_TEMP, \
 		.indexed = 1, \
 		.channel = 0, \
@@ -281,15 +280,15 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ), \
 		.address = ADIS16460_REG_TEMP_OUT, \
 		.scan_index = ADIS16460_SCAN_TEMP, \
-		.scan_type = अणु \
+		.scan_type = { \
 			.sign = 's', \
 			.realbits = 16, \
 			.storagebits = 16, \
 			.endianness = IIO_BE, \
-		पूर्ण, \
-	पूर्ण
+		}, \
+	}
 
-अटल स्थिर काष्ठा iio_chan_spec adis16460_channels[] = अणु
+static const struct iio_chan_spec adis16460_channels[] = {
 	ADIS16460_GYRO_CHANNEL(X),
 	ADIS16460_GYRO_CHANNEL(Y),
 	ADIS16460_GYRO_CHANNEL(Z),
@@ -298,9 +297,9 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 	ADIS16460_ACCEL_CHANNEL(Z),
 	ADIS16460_TEMP_CHANNEL(),
 	IIO_CHAN_SOFT_TIMESTAMP(7)
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा adis16460_chip_info adis16460_chip_info = अणु
+static const struct adis16460_chip_info adis16460_chip_info = {
 	.channels = adis16460_channels,
 	.num_channels = ARRAY_SIZE(adis16460_channels),
 	/*
@@ -312,52 +311,52 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 	.gyro_max_scale = 1,
 	.accel_max_val = IIO_M_S_2_TO_G(20000 << 16),
 	.accel_max_scale = 5,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info adis16460_info = अणु
-	.पढ़ो_raw = &adis16460_पढ़ो_raw,
-	.ग_लिखो_raw = &adis16460_ग_लिखो_raw,
+static const struct iio_info adis16460_info = {
+	.read_raw = &adis16460_read_raw,
+	.write_raw = &adis16460_write_raw,
 	.update_scan_mode = adis_update_scan_mode,
 	.debugfs_reg_access = adis_debugfs_reg_access,
-पूर्ण;
+};
 
-अटल पूर्णांक adis16460_enable_irq(काष्ठा adis *adis, bool enable)
-अणु
+static int adis16460_enable_irq(struct adis *adis, bool enable)
+{
 	/*
-	 * There is no way to gate the data-पढ़ोy संकेत पूर्णांकernally inside the
+	 * There is no way to gate the data-ready signal internally inside the
 	 * ADIS16460 :(
 	 */
-	अगर (enable)
+	if (enable)
 		enable_irq(adis->spi->irq);
-	अन्यथा
+	else
 		disable_irq(adis->spi->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा ADIS16460_DIAG_STAT_IN_CLK_OOS	7
-#घोषणा ADIS16460_DIAG_STAT_FLASH_MEM	6
-#घोषणा ADIS16460_DIAG_STAT_SELF_TEST	5
-#घोषणा ADIS16460_DIAG_STAT_OVERRANGE	4
-#घोषणा ADIS16460_DIAG_STAT_SPI_COMM	3
-#घोषणा ADIS16460_DIAG_STAT_FLASH_UPT	2
+#define ADIS16460_DIAG_STAT_IN_CLK_OOS	7
+#define ADIS16460_DIAG_STAT_FLASH_MEM	6
+#define ADIS16460_DIAG_STAT_SELF_TEST	5
+#define ADIS16460_DIAG_STAT_OVERRANGE	4
+#define ADIS16460_DIAG_STAT_SPI_COMM	3
+#define ADIS16460_DIAG_STAT_FLASH_UPT	2
 
-अटल स्थिर अक्षर * स्थिर adis16460_status_error_msgs[] = अणु
+static const char * const adis16460_status_error_msgs[] = {
 	[ADIS16460_DIAG_STAT_IN_CLK_OOS] = "Input clock out of sync",
 	[ADIS16460_DIAG_STAT_FLASH_MEM] = "Flash memory failure",
 	[ADIS16460_DIAG_STAT_SELF_TEST] = "Self test diagnostic failure",
 	[ADIS16460_DIAG_STAT_OVERRANGE] = "Sensor overrange",
 	[ADIS16460_DIAG_STAT_SPI_COMM] = "SPI communication failure",
 	[ADIS16460_DIAG_STAT_FLASH_UPT] = "Flash update failure",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा adis_समयout adis16460_समयouts = अणु
+static const struct adis_timeout adis16460_timeouts = {
 	.reset_ms = 225,
 	.sw_reset_ms = 225,
 	.self_test_ms = 10,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा adis_data adis16460_data = अणु
+static const struct adis_data adis16460_data = {
 	.diag_stat_reg = ADIS16460_REG_DIAG_STAT,
 	.glob_cmd_reg = ADIS16460_REG_GLOB_CMD,
 	.prod_id_reg = ADIS16460_REG_PROD_ID,
@@ -365,8 +364,8 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 	.self_test_mask = BIT(2),
 	.self_test_reg = ADIS16460_REG_GLOB_CMD,
 	.has_paging = false,
-	.पढ़ो_delay = 5,
-	.ग_लिखो_delay = 5,
+	.read_delay = 5,
+	.write_delay = 5,
 	.cs_change_delay = 16,
 	.status_error_msgs = adis16460_status_error_msgs,
 	.status_error_mask = BIT(ADIS16460_DIAG_STAT_IN_CLK_OOS) |
@@ -376,18 +375,18 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 		BIT(ADIS16460_DIAG_STAT_SPI_COMM) |
 		BIT(ADIS16460_DIAG_STAT_FLASH_UPT),
 	.enable_irq = adis16460_enable_irq,
-	.समयouts = &adis16460_समयouts,
-पूर्ण;
+	.timeouts = &adis16460_timeouts,
+};
 
-अटल पूर्णांक adis16460_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा adis16460 *st;
-	पूर्णांक ret;
+static int adis16460_probe(struct spi_device *spi)
+{
+	struct iio_dev *indio_dev;
+	struct adis16460 *st;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
-	अगर (indio_dev == शून्य)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
+	if (indio_dev == NULL)
+		return -ENOMEM;
 
 	spi_set_drvdata(spi, indio_dev);
 
@@ -398,51 +397,51 @@ DEFINE_DEBUGFS_ATTRIBUTE(adis16460_flash_count_fops,
 	indio_dev->channels = st->chip_info->channels;
 	indio_dev->num_channels = st->chip_info->num_channels;
 	indio_dev->info = &adis16460_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	ret = adis_init(&st->adis, indio_dev, spi, &adis16460_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* We cannot mask the पूर्णांकerrupt, so ensure it isn't स्वतः enabled */
+	/* We cannot mask the interrupt, so ensure it isn't auto enabled */
 	st->adis.irq_flag |= IRQF_NO_AUTOEN;
-	ret = devm_adis_setup_buffer_and_trigger(&st->adis, indio_dev, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = devm_adis_setup_buffer_and_trigger(&st->adis, indio_dev, NULL);
+	if (ret)
+		return ret;
 
 	ret = __adis_initial_startup(&st->adis);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = devm_iio_device_रेजिस्टर(&spi->dev, indio_dev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_iio_device_register(&spi->dev, indio_dev);
+	if (ret)
+		return ret;
 
 	adis16460_debugfs_init(indio_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा spi_device_id adis16460_ids[] = अणु
-	अणु "adis16460", 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct spi_device_id adis16460_ids[] = {
+	{ "adis16460", 0 },
+	{}
+};
 MODULE_DEVICE_TABLE(spi, adis16460_ids);
 
-अटल स्थिर काष्ठा of_device_id adis16460_of_match[] = अणु
-	अणु .compatible = "adi,adis16460" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id adis16460_of_match[] = {
+	{ .compatible = "adi,adis16460" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, adis16460_of_match);
 
-अटल काष्ठा spi_driver adis16460_driver = अणु
-	.driver = अणु
+static struct spi_driver adis16460_driver = {
+	.driver = {
 		.name = "adis16460",
 		.of_match_table = adis16460_of_match,
-	पूर्ण,
+	},
 	.id_table = adis16460_ids,
 	.probe = adis16460_probe,
-पूर्ण;
+};
 module_spi_driver(adis16460_driver);
 
 MODULE_AUTHOR("Dragos Bogdan <dragos.bogdan@analog.com>");

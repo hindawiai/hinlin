@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <दो_स्मृति.h>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <समय.स>
-#समावेश "utils.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <malloc.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "utils.h"
 
-#घोषणा SIZE 256
-#घोषणा ITERATIONS 1000
-#घोषणा ITERATIONS_BENCH 100000
+#define SIZE 256
+#define ITERATIONS 1000
+#define ITERATIONS_BENCH 100000
 
-पूर्णांक test_म_माप(स्थिर व्योम *s);
+int test_strlen(const void *s);
 
 /* test all offsets and lengths */
-अटल व्योम test_one(अक्षर *s)
-अणु
-	अचिन्हित दीर्घ offset;
+static void test_one(char *s)
+{
+	unsigned long offset;
 
-	क्रम (offset = 0; offset < SIZE; offset++) अणु
-		पूर्णांक x, y;
-		अचिन्हित दीर्घ i;
+	for (offset = 0; offset < SIZE; offset++) {
+		int x, y;
+		unsigned long i;
 
-		y = म_माप(s + offset);
-		x = test_म_माप(s + offset);
+		y = strlen(s + offset);
+		x = test_strlen(s + offset);
 
-		अगर (x != y) अणु
-			म_लिखो("strlen() returned %d, should have returned %d (%p offset %ld)\n", x, y, s, offset);
+		if (x != y) {
+			printf("strlen() returned %d, should have returned %d (%p offset %ld)\n", x, y, s, offset);
 
-			क्रम (i = offset; i < SIZE; i++)
-				म_लिखो("%02x ", s[i]);
-			म_लिखो("\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
+			for (i = offset; i < SIZE; i++)
+				printf("%02x ", s[i]);
+			printf("\n");
+		}
+	}
+}
 
-अटल व्योम bench_test(अक्षर *s)
-अणु
-	काष्ठा बारpec ts_start, ts_end;
-	पूर्णांक i;
+static void bench_test(char *s)
+{
+	struct timespec ts_start, ts_end;
+	int i;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts_start);
+	clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
-	क्रम (i = 0; i < ITERATIONS_BENCH; i++)
-		test_म_माप(s);
+	for (i = 0; i < ITERATIONS_BENCH; i++)
+		test_strlen(s);
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts_end);
+	clock_gettime(CLOCK_MONOTONIC, &ts_end);
 
-	म_लिखो("len %3.3d : time = %.6f\n", test_म_माप(s), ts_end.tv_sec - ts_start.tv_sec + (ts_end.tv_nsec - ts_start.tv_nsec) / 1e9);
-पूर्ण
+	printf("len %3.3d : time = %.6f\n", test_strlen(s), ts_end.tv_sec - ts_start.tv_sec + (ts_end.tv_nsec - ts_start.tv_nsec) / 1e9);
+}
 
-अटल पूर्णांक testहाल(व्योम)
-अणु
-	अक्षर *s;
-	अचिन्हित दीर्घ i;
+static int testcase(void)
+{
+	char *s;
+	unsigned long i;
 
 	s = memalign(128, SIZE);
-	अगर (!s) अणु
-		लिखो_त्रुटि("memalign");
-		निकास(1);
-	पूर्ण
+	if (!s) {
+		perror("memalign");
+		exit(1);
+	}
 
-	बेक्रमom(1);
+	srandom(1);
 
-	स_रखो(s, 0, SIZE);
-	क्रम (i = 0; i < SIZE; i++) अणु
-		अक्षर c;
+	memset(s, 0, SIZE);
+	for (i = 0; i < SIZE; i++) {
+		char c;
 
-		करो अणु
-			c = अक्रमom() & 0x7f;
-		पूर्ण जबतक (!c);
+		do {
+			c = random() & 0x7f;
+		} while (!c);
 		s[i] = c;
 		test_one(s);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < ITERATIONS; i++) अणु
-		अचिन्हित दीर्घ j;
+	for (i = 0; i < ITERATIONS; i++) {
+		unsigned long j;
 
-		क्रम (j = 0; j < SIZE; j++) अणु
-			अक्षर c;
+		for (j = 0; j < SIZE; j++) {
+			char c;
 
-			करो अणु
-				c = अक्रमom() & 0x7f;
-			पूर्ण जबतक (!c);
+			do {
+				c = random() & 0x7f;
+			} while (!c);
 			s[j] = c;
-		पूर्ण
-		क्रम (j = 0; j < माप(दीर्घ); j++) अणु
+		}
+		for (j = 0; j < sizeof(long); j++) {
 			s[SIZE - 1 - j] = 0;
 			test_one(s);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < SIZE; i++) अणु
-		अक्षर c;
+	for (i = 0; i < SIZE; i++) {
+		char c;
 
-		करो अणु
-			c = अक्रमom() & 0x7f;
-		पूर्ण जबतक (!c);
+		do {
+			c = random() & 0x7f;
+		} while (!c);
 		s[i] = c;
-	पूर्ण
+	}
 
 	bench_test(s);
 
@@ -119,10 +118,10 @@
 	s[1] = 0;
 	bench_test(s);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(testहाल, "strlen");
-पूर्ण
+int main(void)
+{
+	return test_harness(testcase, "strlen");
+}

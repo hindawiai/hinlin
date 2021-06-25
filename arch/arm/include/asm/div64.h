@@ -1,123 +1,122 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_ARM_DIV64
-#घोषणा __ASM_ARM_DIV64
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_ARM_DIV64
+#define __ASM_ARM_DIV64
 
-#समावेश <linux/types.h>
-#समावेश <यंत्र/compiler.h>
+#include <linux/types.h>
+#include <asm/compiler.h>
 
 /*
- * The semantics of __भाग64_32() are:
+ * The semantics of __div64_32() are:
  *
- * uपूर्णांक32_t __भाग64_32(uपूर्णांक64_t *n, uपूर्णांक32_t base)
- * अणु
- * 	uपूर्णांक32_t reमुख्यder = *n % base;
+ * uint32_t __div64_32(uint64_t *n, uint32_t base)
+ * {
+ * 	uint32_t remainder = *n % base;
  * 	*n = *n / base;
- * 	वापस reमुख्यder;
- * पूर्ण
+ * 	return remainder;
+ * }
  *
- * In other words, a 64-bit भागidend with a 32-bit भागisor producing
- * a 64-bit result and a 32-bit reमुख्यder.  To accomplish this optimally
- * we override the generic version in lib/भाग64.c to call our __करो_भाग64
+ * In other words, a 64-bit dividend with a 32-bit divisor producing
+ * a 64-bit result and a 32-bit remainder.  To accomplish this optimally
+ * we override the generic version in lib/div64.c to call our __do_div64
  * assembly implementation with completely non standard calling convention
- * क्रम arguments and results (beware).
+ * for arguments and results (beware).
  */
-अटल अंतरभूत uपूर्णांक32_t __भाग64_32(uपूर्णांक64_t *n, uपूर्णांक32_t base)
-अणु
-	रेजिस्टर अचिन्हित पूर्णांक __base      यंत्र("r4") = base;
-	रेजिस्टर अचिन्हित दीर्घ दीर्घ __n   यंत्र("r0") = *n;
-	रेजिस्टर अचिन्हित दीर्घ दीर्घ __res यंत्र("r2");
-	अचिन्हित पूर्णांक __rem;
-	यंत्र(	__यंत्रeq("%0", "r0")
-		__यंत्रeq("%1", "r2")
-		__यंत्रeq("%2", "r4")
+static inline uint32_t __div64_32(uint64_t *n, uint32_t base)
+{
+	register unsigned int __base      asm("r4") = base;
+	register unsigned long long __n   asm("r0") = *n;
+	register unsigned long long __res asm("r2");
+	unsigned int __rem;
+	asm(	__asmeq("%0", "r0")
+		__asmeq("%1", "r2")
+		__asmeq("%2", "r4")
 		"bl	__do_div64"
 		: "+r" (__n), "=r" (__res)
 		: "r" (__base)
 		: "ip", "lr", "cc");
 	__rem = __n >> 32;
 	*n = __res;
-	वापस __rem;
-पूर्ण
-#घोषणा __भाग64_32 __भाग64_32
+	return __rem;
+}
+#define __div64_32 __div64_32
 
-#अगर !defined(CONFIG_AEABI)
+#if !defined(CONFIG_AEABI)
 
 /*
- * In OABI configurations, some uses of the करो_भाग function
- * cause gcc to run out of रेजिस्टरs. To work around that,
- * we can क्रमce the use of the out-of-line version क्रम
+ * In OABI configurations, some uses of the do_div function
+ * cause gcc to run out of registers. To work around that,
+ * we can force the use of the out-of-line version for
  * configurations that build a OABI kernel.
  */
-#घोषणा करो_भाग(n, base) __भाग64_32(&(n), base)
+#define do_div(n, base) __div64_32(&(n), base)
 
-#अन्यथा
+#else
 
 /*
- * gcc versions earlier than 4.0 are simply too problematic क्रम the
- * __भाग64_स्थिर32() code in यंत्र-generic/भाग64.h. First there is
- * gcc PR 15089 that tend to trig on more complex स्थिरructs, spurious
- * .global __uभागsi3 are inserted even अगर none of those symbols are
+ * gcc versions earlier than 4.0 are simply too problematic for the
+ * __div64_const32() code in asm-generic/div64.h. First there is
+ * gcc PR 15089 that tend to trig on more complex constructs, spurious
+ * .global __udivsi3 are inserted even if none of those symbols are
  * referenced in the generated code, and those gcc versions are not able
- * to करो स्थिरant propagation on दीर्घ दीर्घ values anyway.
+ * to do constant propagation on long long values anyway.
  */
 
-#घोषणा __भाग64_स्थिर32_is_OK (__GNUC__ >= 4)
+#define __div64_const32_is_OK (__GNUC__ >= 4)
 
-अटल अंतरभूत uपूर्णांक64_t __arch_xprod_64(uपूर्णांक64_t m, uपूर्णांक64_t n, bool bias)
-अणु
-	अचिन्हित दीर्घ दीर्घ res;
-	रेजिस्टर अचिन्हित पूर्णांक पंचांगp यंत्र("ip") = 0;
+static inline uint64_t __arch_xprod_64(uint64_t m, uint64_t n, bool bias)
+{
+	unsigned long long res;
+	register unsigned int tmp asm("ip") = 0;
 
-	अगर (!bias) अणु
-		यंत्र (	"umull	%Q0, %R0, %Q1, %Q2\n\t"
+	if (!bias) {
+		asm (	"umull	%Q0, %R0, %Q1, %Q2\n\t"
 			"mov	%Q0, #0"
 			: "=&r" (res)
 			: "r" (m), "r" (n)
 			: "cc");
-	पूर्ण अन्यथा अगर (!(m & ((1ULL << 63) | (1ULL << 31)))) अणु
+	} else if (!(m & ((1ULL << 63) | (1ULL << 31)))) {
 		res = m;
-		यंत्र (	"umlal	%Q0, %R0, %Q1, %Q2\n\t"
+		asm (	"umlal	%Q0, %R0, %Q1, %Q2\n\t"
 			"mov	%Q0, #0"
 			: "+&r" (res)
 			: "r" (m), "r" (n)
 			: "cc");
-	पूर्ण अन्यथा अणु
-		यंत्र (	"umull	%Q0, %R0, %Q2, %Q3\n\t"
+	} else {
+		asm (	"umull	%Q0, %R0, %Q2, %Q3\n\t"
 			"cmn	%Q0, %Q2\n\t"
 			"adcs	%R0, %R0, %R2\n\t"
 			"adc	%Q0, %1, #0"
-			: "=&r" (res), "+&r" (पंचांगp)
+			: "=&r" (res), "+&r" (tmp)
 			: "r" (m), "r" (n)
 			: "cc");
-	पूर्ण
+	}
 
-	अगर (!(m & ((1ULL << 63) | (1ULL << 31)))) अणु
-		यंत्र (	"umlal	%R0, %Q0, %R1, %Q2\n\t"
+	if (!(m & ((1ULL << 63) | (1ULL << 31)))) {
+		asm (	"umlal	%R0, %Q0, %R1, %Q2\n\t"
 			"umlal	%R0, %Q0, %Q1, %R2\n\t"
 			"mov	%R0, #0\n\t"
 			"umlal	%Q0, %R0, %R1, %R2"
 			: "+&r" (res)
 			: "r" (m), "r" (n)
 			: "cc");
-	पूर्ण अन्यथा अणु
-		यंत्र (	"umlal	%R0, %Q0, %R2, %Q3\n\t"
+	} else {
+		asm (	"umlal	%R0, %Q0, %R2, %Q3\n\t"
 			"umlal	%R0, %1, %Q2, %R3\n\t"
 			"mov	%R0, #0\n\t"
 			"adds	%Q0, %1, %Q0\n\t"
 			"adc	%R0, %R0, #0\n\t"
 			"umlal	%Q0, %R0, %R2, %R3"
-			: "+&r" (res), "+&r" (पंचांगp)
+			: "+&r" (res), "+&r" (tmp)
 			: "r" (m), "r" (n)
 			: "cc");
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
-#घोषणा __arch_xprod_64 __arch_xprod_64
+	return res;
+}
+#define __arch_xprod_64 __arch_xprod_64
 
-#समावेश <यंत्र-generic/भाग64.h>
+#include <asm-generic/div64.h>
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

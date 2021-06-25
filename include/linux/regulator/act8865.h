@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * act8865.h  --  Voltage regulation क्रम active-semi act88xx PMUs
+ * act8865.h  --  Voltage regulation for active-semi act88xx PMUs
  *
- * Copyright (C) 2013 Aपंचांगel Corporation.
+ * Copyright (C) 2013 Atmel Corporation.
  */
 
-#अगर_अघोषित __LINUX_REGULATOR_ACT8865_H
-#घोषणा __LINUX_REGULATOR_ACT8865_H
+#ifndef __LINUX_REGULATOR_ACT8865_H
+#define __LINUX_REGULATOR_ACT8865_H
 
-#समावेश <linux/regulator/machine.h>
+#include <linux/regulator/machine.h>
 
-क्रमागत अणु
+enum {
 	ACT8600_ID_DCDC1,
 	ACT8600_ID_DCDC2,
 	ACT8600_ID_DCDC3,
@@ -22,9 +21,9 @@
 	ACT8600_ID_LDO8,
 	ACT8600_ID_LDO9,
 	ACT8600_ID_LDO10,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ACT8865_ID_DCDC1,
 	ACT8865_ID_DCDC2,
 	ACT8865_ID_DCDC3,
@@ -33,9 +32,9 @@
 	ACT8865_ID_LDO3,
 	ACT8865_ID_LDO4,
 	ACT8865_REG_NUM,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ACT8846_ID_REG1,
 	ACT8846_ID_REG2,
 	ACT8846_ID_REG3,
@@ -49,13 +48,13 @@
 	ACT8846_ID_REG11,
 	ACT8846_ID_REG12,
 	ACT8846_REG_NUM,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ACT8600,
 	ACT8865,
 	ACT8846,
-पूर्ण;
+};
 
 /**
  * act8865_regulator_data - regulator data
@@ -64,20 +63,20 @@
  * @init_data: regulator init data
  * @of_node: device tree node (optional)
  */
-काष्ठा act8865_regulator_data अणु
-	पूर्णांक id;
-	स्थिर अक्षर *name;
-	काष्ठा regulator_init_data *init_data;
-	काष्ठा device_node *of_node;
-पूर्ण;
+struct act8865_regulator_data {
+	int id;
+	const char *name;
+	struct regulator_init_data *init_data;
+	struct device_node *of_node;
+};
 
 /**
- * act8865_platक्रमm_data - platक्रमm data क्रम act8865
+ * act8865_platform_data - platform data for act8865
  * @num_regulators: number of regulators used
- * @regulators: poपूर्णांकer to regulators used
+ * @regulators: pointer to regulators used
  */
-काष्ठा act8865_platक्रमm_data अणु
-	पूर्णांक num_regulators;
-	काष्ठा act8865_regulator_data *regulators;
-पूर्ण;
-#पूर्ण_अगर
+struct act8865_platform_data {
+	int num_regulators;
+	struct act8865_regulator_data *regulators;
+};
+#endif

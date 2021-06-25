@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/init.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/export.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र/debug.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/init.h>
+#include <linux/kthread.h>
+#include <linux/hrtimer.h>
+#include <linux/fs.h>
+#include <linux/debugfs.h>
+#include <linux/export.h>
+#include <linux/spinlock.h>
+#include <asm/debug.h>
 
-अटल पूर्णांक ss_get(व्योम *data, u64 *val)
-अणु
-	kसमय_प्रकार start, finish;
-	पूर्णांक loops;
-	पूर्णांक cont;
+static int ss_get(void *data, u64 *val)
+{
+	ktime_t start, finish;
+	int loops;
+	int cont;
 	DEFINE_RAW_SPINLOCK(ss_spin);
 
 	loops = 1000000;
 	cont = 1;
 
-	start = kसमय_get();
+	start = ktime_get();
 
-	जबतक (cont) अणु
+	while (cont) {
 		raw_spin_lock(&ss_spin);
 		loops--;
-		अगर (loops == 0)
+		if (loops == 0)
 			cont = 0;
 		raw_spin_unlock(&ss_spin);
-	पूर्ण
+	}
 
-	finish = kसमय_get();
+	finish = ktime_get();
 
-	*val = kसमय_us_delta(finish, start);
+	*val = ktime_us_delta(finish, start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_ss, ss_get, शून्य, "%llu\n");
+DEFINE_DEBUGFS_ATTRIBUTE(fops_ss, ss_get, NULL, "%llu\n");
 
 
 
-काष्ठा spin_multi_state अणु
+struct spin_multi_state {
 	raw_spinlock_t lock;
-	atomic_t start_रुको;
-	atomic_t enter_रुको;
-	atomic_t निकास_रुको;
-	पूर्णांक loops;
-पूर्ण;
+	atomic_t start_wait;
+	atomic_t enter_wait;
+	atomic_t exit_wait;
+	int loops;
+};
 
-काष्ठा spin_multi_per_thपढ़ो अणु
-	काष्ठा spin_multi_state *state;
-	kसमय_प्रकार start;
-पूर्ण;
+struct spin_multi_per_thread {
+	struct spin_multi_state *state;
+	ktime_t start;
+};
 
-अटल पूर्णांक multi_other(व्योम *data)
-अणु
-	पूर्णांक loops;
-	पूर्णांक cont;
-	काष्ठा spin_multi_per_thपढ़ो *pt = data;
-	काष्ठा spin_multi_state *s = pt->state;
+static int multi_other(void *data)
+{
+	int loops;
+	int cont;
+	struct spin_multi_per_thread *pt = data;
+	struct spin_multi_state *s = pt->state;
 
 	loops = s->loops;
 	cont = 1;
 
-	atomic_dec(&s->enter_रुको);
+	atomic_dec(&s->enter_wait);
 
-	जबतक (atomic_पढ़ो(&s->enter_रुको))
+	while (atomic_read(&s->enter_wait))
 		; /* spin */
 
-	pt->start = kसमय_get();
+	pt->start = ktime_get();
 
-	atomic_dec(&s->start_रुको);
+	atomic_dec(&s->start_wait);
 
-	जबतक (atomic_पढ़ो(&s->start_रुको))
+	while (atomic_read(&s->start_wait))
 		; /* spin */
 
-	जबतक (cont) अणु
+	while (cont) {
 		raw_spin_lock(&s->lock);
 		loops--;
-		अगर (loops == 0)
+		if (loops == 0)
 			cont = 0;
 		raw_spin_unlock(&s->lock);
-	पूर्ण
+	}
 
-	atomic_dec(&s->निकास_रुको);
-	जबतक (atomic_पढ़ो(&s->निकास_रुको))
+	atomic_dec(&s->exit_wait);
+	while (atomic_read(&s->exit_wait))
 		; /* spin */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक multi_get(व्योम *data, u64 *val)
-अणु
-	kसमय_प्रकार finish;
-	काष्ठा spin_multi_state ms;
-	काष्ठा spin_multi_per_thपढ़ो t1, t2;
+static int multi_get(void *data, u64 *val)
+{
+	ktime_t finish;
+	struct spin_multi_state ms;
+	struct spin_multi_per_thread t1, t2;
 
 	ms.lock = __RAW_SPIN_LOCK_UNLOCKED("multi_get");
 	ms.loops = 1000000;
 
-	atomic_set(&ms.start_रुको, 2);
-	atomic_set(&ms.enter_रुको, 2);
-	atomic_set(&ms.निकास_रुको, 2);
+	atomic_set(&ms.start_wait, 2);
+	atomic_set(&ms.enter_wait, 2);
+	atomic_set(&ms.exit_wait, 2);
 	t1.state = &ms;
 	t2.state = &ms;
 
-	kthपढ़ो_run(multi_other, &t2, "multi_get");
+	kthread_run(multi_other, &t2, "multi_get");
 
 	multi_other(&t1);
 
-	finish = kसमय_get();
+	finish = ktime_get();
 
-	*val = kसमय_us_delta(finish, t1.start);
+	*val = ktime_us_delta(finish, t1.start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-DEFINE_DEBUGFS_ATTRIBUTE(fops_multi, multi_get, शून्य, "%llu\n");
+DEFINE_DEBUGFS_ATTRIBUTE(fops_multi, multi_get, NULL, "%llu\n");
 
-अटल पूर्णांक __init spinlock_test(व्योम)
-अणु
-	debugfs_create_file_unsafe("spin_single", S_IRUGO, mips_debugfs_dir, शून्य,
+static int __init spinlock_test(void)
+{
+	debugfs_create_file_unsafe("spin_single", S_IRUGO, mips_debugfs_dir, NULL,
 			    &fops_ss);
-	debugfs_create_file_unsafe("spin_multi", S_IRUGO, mips_debugfs_dir, शून्य,
+	debugfs_create_file_unsafe("spin_multi", S_IRUGO, mips_debugfs_dir, NULL,
 			    &fops_multi);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(spinlock_test);

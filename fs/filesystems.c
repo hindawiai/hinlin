@@ -1,288 +1,287 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  linux/fs/fileप्रणालीs.c
+ *  linux/fs/filesystems.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  table of configured fileप्रणालीs
+ *  table of configured filesystems
  */
 
-#समावेश <linux/syscalls.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/kmod.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fs_parser.h>
+#include <linux/syscalls.h>
+#include <linux/fs.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/kmod.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/fs_parser.h>
 
 /*
- * Handling of fileप्रणाली drivers list.
+ * Handling of filesystem drivers list.
  * Rules:
- *	Inclusion to/removals from/scanning of list are रक्षित by spinlock.
- *	During the unload module must call unरेजिस्टर_fileप्रणाली().
- *	We can access the fields of list element अगर:
+ *	Inclusion to/removals from/scanning of list are protected by spinlock.
+ *	During the unload module must call unregister_filesystem().
+ *	We can access the fields of list element if:
  *		1) spinlock is held or
  *		2) we hold the reference to the module.
- *	The latter can be guaranteed by call of try_module_get(); अगर it
- *	वापसed 0 we must skip the element, otherwise we got the reference.
+ *	The latter can be guaranteed by call of try_module_get(); if it
+ *	returned 0 we must skip the element, otherwise we got the reference.
  *	Once the reference is obtained we can drop the spinlock.
  */
 
-अटल काष्ठा file_प्रणाली_type *file_प्रणालीs;
-अटल DEFINE_RWLOCK(file_प्रणालीs_lock);
+static struct file_system_type *file_systems;
+static DEFINE_RWLOCK(file_systems_lock);
 
-/* WARNING: This can be used only अगर we _alपढ़ोy_ own a reference */
-काष्ठा file_प्रणाली_type *get_fileप्रणाली(काष्ठा file_प्रणाली_type *fs)
-अणु
+/* WARNING: This can be used only if we _already_ own a reference */
+struct file_system_type *get_filesystem(struct file_system_type *fs)
+{
 	__module_get(fs->owner);
-	वापस fs;
-पूर्ण
+	return fs;
+}
 
-व्योम put_fileप्रणाली(काष्ठा file_प्रणाली_type *fs)
-अणु
+void put_filesystem(struct file_system_type *fs)
+{
 	module_put(fs->owner);
-पूर्ण
+}
 
-अटल काष्ठा file_प्रणाली_type **find_fileप्रणाली(स्थिर अक्षर *name, अचिन्हित len)
-अणु
-	काष्ठा file_प्रणाली_type **p;
-	क्रम (p = &file_प्रणालीs; *p; p = &(*p)->next)
-		अगर (म_भेदन((*p)->name, name, len) == 0 &&
+static struct file_system_type **find_filesystem(const char *name, unsigned len)
+{
+	struct file_system_type **p;
+	for (p = &file_systems; *p; p = &(*p)->next)
+		if (strncmp((*p)->name, name, len) == 0 &&
 		    !(*p)->name[len])
-			अवरोध;
-	वापस p;
-पूर्ण
+			break;
+	return p;
+}
 
 /**
- *	रेजिस्टर_fileप्रणाली - रेजिस्टर a new fileप्रणाली
- *	@fs: the file प्रणाली काष्ठाure
+ *	register_filesystem - register a new filesystem
+ *	@fs: the file system structure
  *
- *	Adds the file प्रणाली passed to the list of file प्रणालीs the kernel
- *	is aware of क्रम mount and other syscalls. Returns 0 on success,
- *	or a negative त्रुटि_सं code on an error.
+ *	Adds the file system passed to the list of file systems the kernel
+ *	is aware of for mount and other syscalls. Returns 0 on success,
+ *	or a negative errno code on an error.
  *
- *	The &काष्ठा file_प्रणाली_type that is passed is linked पूर्णांकo the kernel 
- *	काष्ठाures and must not be मुक्तd until the file प्रणाली has been
- *	unरेजिस्टरed.
+ *	The &struct file_system_type that is passed is linked into the kernel 
+ *	structures and must not be freed until the file system has been
+ *	unregistered.
  */
  
-पूर्णांक रेजिस्टर_fileप्रणाली(काष्ठा file_प्रणाली_type * fs)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा file_प्रणाली_type ** p;
+int register_filesystem(struct file_system_type * fs)
+{
+	int res = 0;
+	struct file_system_type ** p;
 
-	अगर (fs->parameters &&
+	if (fs->parameters &&
 	    !fs_validate_description(fs->name, fs->parameters))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	BUG_ON(म_अक्षर(fs->name, '.'));
-	अगर (fs->next)
-		वापस -EBUSY;
-	ग_लिखो_lock(&file_प्रणालीs_lock);
-	p = find_fileप्रणाली(fs->name, म_माप(fs->name));
-	अगर (*p)
+	BUG_ON(strchr(fs->name, '.'));
+	if (fs->next)
+		return -EBUSY;
+	write_lock(&file_systems_lock);
+	p = find_filesystem(fs->name, strlen(fs->name));
+	if (*p)
 		res = -EBUSY;
-	अन्यथा
+	else
 		*p = fs;
-	ग_लिखो_unlock(&file_प्रणालीs_lock);
-	वापस res;
-पूर्ण
+	write_unlock(&file_systems_lock);
+	return res;
+}
 
-EXPORT_SYMBOL(रेजिस्टर_fileप्रणाली);
+EXPORT_SYMBOL(register_filesystem);
 
 /**
- *	unरेजिस्टर_fileप्रणाली - unरेजिस्टर a file प्रणाली
- *	@fs: fileप्रणाली to unरेजिस्टर
+ *	unregister_filesystem - unregister a file system
+ *	@fs: filesystem to unregister
  *
- *	Remove a file प्रणाली that was previously successfully रेजिस्टरed
- *	with the kernel. An error is वापसed अगर the file प्रणाली is not found.
- *	Zero is वापसed on a success.
+ *	Remove a file system that was previously successfully registered
+ *	with the kernel. An error is returned if the file system is not found.
+ *	Zero is returned on a success.
  *	
- *	Once this function has वापसed the &काष्ठा file_प्रणाली_type काष्ठाure
- *	may be मुक्तd or reused.
+ *	Once this function has returned the &struct file_system_type structure
+ *	may be freed or reused.
  */
  
-पूर्णांक unरेजिस्टर_fileप्रणाली(काष्ठा file_प्रणाली_type * fs)
-अणु
-	काष्ठा file_प्रणाली_type ** पंचांगp;
+int unregister_filesystem(struct file_system_type * fs)
+{
+	struct file_system_type ** tmp;
 
-	ग_लिखो_lock(&file_प्रणालीs_lock);
-	पंचांगp = &file_प्रणालीs;
-	जबतक (*पंचांगp) अणु
-		अगर (fs == *पंचांगp) अणु
-			*पंचांगp = fs->next;
-			fs->next = शून्य;
-			ग_लिखो_unlock(&file_प्रणालीs_lock);
+	write_lock(&file_systems_lock);
+	tmp = &file_systems;
+	while (*tmp) {
+		if (fs == *tmp) {
+			*tmp = fs->next;
+			fs->next = NULL;
+			write_unlock(&file_systems_lock);
 			synchronize_rcu();
-			वापस 0;
-		पूर्ण
-		पंचांगp = &(*पंचांगp)->next;
-	पूर्ण
-	ग_लिखो_unlock(&file_प्रणालीs_lock);
+			return 0;
+		}
+		tmp = &(*tmp)->next;
+	}
+	write_unlock(&file_systems_lock);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-EXPORT_SYMBOL(unरेजिस्टर_fileप्रणाली);
+EXPORT_SYMBOL(unregister_filesystem);
 
-#अगर_घोषित CONFIG_SYSFS_SYSCALL
-अटल पूर्णांक fs_index(स्थिर अक्षर __user * __name)
-अणु
-	काष्ठा file_प्रणाली_type * पंचांगp;
-	काष्ठा filename *name;
-	पूर्णांक err, index;
+#ifdef CONFIG_SYSFS_SYSCALL
+static int fs_index(const char __user * __name)
+{
+	struct file_system_type * tmp;
+	struct filename *name;
+	int err, index;
 
 	name = getname(__name);
 	err = PTR_ERR(name);
-	अगर (IS_ERR(name))
-		वापस err;
+	if (IS_ERR(name))
+		return err;
 
 	err = -EINVAL;
-	पढ़ो_lock(&file_प्रणालीs_lock);
-	क्रम (पंचांगp=file_प्रणालीs, index=0 ; पंचांगp ; पंचांगp=पंचांगp->next, index++) अणु
-		अगर (म_भेद(पंचांगp->name, name->name) == 0) अणु
+	read_lock(&file_systems_lock);
+	for (tmp=file_systems, index=0 ; tmp ; tmp=tmp->next, index++) {
+		if (strcmp(tmp->name, name->name) == 0) {
 			err = index;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&file_प्रणालीs_lock);
+			break;
+		}
+	}
+	read_unlock(&file_systems_lock);
 	putname(name);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक fs_name(अचिन्हित पूर्णांक index, अक्षर __user * buf)
-अणु
-	काष्ठा file_प्रणाली_type * पंचांगp;
-	पूर्णांक len, res;
+static int fs_name(unsigned int index, char __user * buf)
+{
+	struct file_system_type * tmp;
+	int len, res;
 
-	पढ़ो_lock(&file_प्रणालीs_lock);
-	क्रम (पंचांगp = file_प्रणालीs; पंचांगp; पंचांगp = पंचांगp->next, index--)
-		अगर (index <= 0 && try_module_get(पंचांगp->owner))
-			अवरोध;
-	पढ़ो_unlock(&file_प्रणालीs_lock);
-	अगर (!पंचांगp)
-		वापस -EINVAL;
+	read_lock(&file_systems_lock);
+	for (tmp = file_systems; tmp; tmp = tmp->next, index--)
+		if (index <= 0 && try_module_get(tmp->owner))
+			break;
+	read_unlock(&file_systems_lock);
+	if (!tmp)
+		return -EINVAL;
 
 	/* OK, we got the reference, so we can safely block */
-	len = म_माप(पंचांगp->name) + 1;
-	res = copy_to_user(buf, पंचांगp->name, len) ? -EFAULT : 0;
-	put_fileप्रणाली(पंचांगp);
-	वापस res;
-पूर्ण
+	len = strlen(tmp->name) + 1;
+	res = copy_to_user(buf, tmp->name, len) ? -EFAULT : 0;
+	put_filesystem(tmp);
+	return res;
+}
 
-अटल पूर्णांक fs_maxindex(व्योम)
-अणु
-	काष्ठा file_प्रणाली_type * पंचांगp;
-	पूर्णांक index;
+static int fs_maxindex(void)
+{
+	struct file_system_type * tmp;
+	int index;
 
-	पढ़ो_lock(&file_प्रणालीs_lock);
-	क्रम (पंचांगp = file_प्रणालीs, index = 0 ; पंचांगp ; पंचांगp = पंचांगp->next, index++)
+	read_lock(&file_systems_lock);
+	for (tmp = file_systems, index = 0 ; tmp ; tmp = tmp->next, index++)
 		;
-	पढ़ो_unlock(&file_प्रणालीs_lock);
-	वापस index;
-पूर्ण
+	read_unlock(&file_systems_lock);
+	return index;
+}
 
 /*
  * Whee.. Weird sysv syscall. 
  */
-SYSCALL_DEFINE3(sysfs, पूर्णांक, option, अचिन्हित दीर्घ, arg1, अचिन्हित दीर्घ, arg2)
-अणु
-	पूर्णांक retval = -EINVAL;
+SYSCALL_DEFINE3(sysfs, int, option, unsigned long, arg1, unsigned long, arg2)
+{
+	int retval = -EINVAL;
 
-	चयन (option) अणु
-		हाल 1:
-			retval = fs_index((स्थिर अक्षर __user *) arg1);
-			अवरोध;
+	switch (option) {
+		case 1:
+			retval = fs_index((const char __user *) arg1);
+			break;
 
-		हाल 2:
-			retval = fs_name(arg1, (अक्षर __user *) arg2);
-			अवरोध;
+		case 2:
+			retval = fs_name(arg1, (char __user *) arg2);
+			break;
 
-		हाल 3:
+		case 3:
 			retval = fs_maxindex();
-			अवरोध;
-	पूर्ण
-	वापस retval;
-पूर्ण
-#पूर्ण_अगर
+			break;
+	}
+	return retval;
+}
+#endif
 
-पूर्णांक __init get_fileप्रणाली_list(अक्षर *buf)
-अणु
-	पूर्णांक len = 0;
-	काष्ठा file_प्रणाली_type * पंचांगp;
+int __init get_filesystem_list(char *buf)
+{
+	int len = 0;
+	struct file_system_type * tmp;
 
-	पढ़ो_lock(&file_प्रणालीs_lock);
-	पंचांगp = file_प्रणालीs;
-	जबतक (पंचांगp && len < PAGE_SIZE - 80) अणु
-		len += प्र_लिखो(buf+len, "%s\t%s\n",
-			(पंचांगp->fs_flags & FS_REQUIRES_DEV) ? "" : "nodev",
-			पंचांगp->name);
-		पंचांगp = पंचांगp->next;
-	पूर्ण
-	पढ़ो_unlock(&file_प्रणालीs_lock);
-	वापस len;
-पूर्ण
+	read_lock(&file_systems_lock);
+	tmp = file_systems;
+	while (tmp && len < PAGE_SIZE - 80) {
+		len += sprintf(buf+len, "%s\t%s\n",
+			(tmp->fs_flags & FS_REQUIRES_DEV) ? "" : "nodev",
+			tmp->name);
+		tmp = tmp->next;
+	}
+	read_unlock(&file_systems_lock);
+	return len;
+}
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल पूर्णांक fileप्रणालीs_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	काष्ठा file_प्रणाली_type * पंचांगp;
+#ifdef CONFIG_PROC_FS
+static int filesystems_proc_show(struct seq_file *m, void *v)
+{
+	struct file_system_type * tmp;
 
-	पढ़ो_lock(&file_प्रणालीs_lock);
-	पंचांगp = file_प्रणालीs;
-	जबतक (पंचांगp) अणु
-		seq_म_लिखो(m, "%s\t%s\n",
-			(पंचांगp->fs_flags & FS_REQUIRES_DEV) ? "" : "nodev",
-			पंचांगp->name);
-		पंचांगp = पंचांगp->next;
-	पूर्ण
-	पढ़ो_unlock(&file_प्रणालीs_lock);
-	वापस 0;
-पूर्ण
+	read_lock(&file_systems_lock);
+	tmp = file_systems;
+	while (tmp) {
+		seq_printf(m, "%s\t%s\n",
+			(tmp->fs_flags & FS_REQUIRES_DEV) ? "" : "nodev",
+			tmp->name);
+		tmp = tmp->next;
+	}
+	read_unlock(&file_systems_lock);
+	return 0;
+}
 
-अटल पूर्णांक __init proc_fileप्रणालीs_init(व्योम)
-अणु
-	proc_create_single("filesystems", 0, शून्य, fileप्रणालीs_proc_show);
-	वापस 0;
-पूर्ण
-module_init(proc_fileप्रणालीs_init);
-#पूर्ण_अगर
+static int __init proc_filesystems_init(void)
+{
+	proc_create_single("filesystems", 0, NULL, filesystems_proc_show);
+	return 0;
+}
+module_init(proc_filesystems_init);
+#endif
 
-अटल काष्ठा file_प्रणाली_type *__get_fs_type(स्थिर अक्षर *name, पूर्णांक len)
-अणु
-	काष्ठा file_प्रणाली_type *fs;
+static struct file_system_type *__get_fs_type(const char *name, int len)
+{
+	struct file_system_type *fs;
 
-	पढ़ो_lock(&file_प्रणालीs_lock);
-	fs = *(find_fileप्रणाली(name, len));
-	अगर (fs && !try_module_get(fs->owner))
-		fs = शून्य;
-	पढ़ो_unlock(&file_प्रणालीs_lock);
-	वापस fs;
-पूर्ण
+	read_lock(&file_systems_lock);
+	fs = *(find_filesystem(name, len));
+	if (fs && !try_module_get(fs->owner))
+		fs = NULL;
+	read_unlock(&file_systems_lock);
+	return fs;
+}
 
-काष्ठा file_प्रणाली_type *get_fs_type(स्थिर अक्षर *name)
-अणु
-	काष्ठा file_प्रणाली_type *fs;
-	स्थिर अक्षर *करोt = म_अक्षर(name, '.');
-	पूर्णांक len = करोt ? करोt - name : म_माप(name);
+struct file_system_type *get_fs_type(const char *name)
+{
+	struct file_system_type *fs;
+	const char *dot = strchr(name, '.');
+	int len = dot ? dot - name : strlen(name);
 
 	fs = __get_fs_type(name, len);
-	अगर (!fs && (request_module("fs-%.*s", len, name) == 0)) अणु
+	if (!fs && (request_module("fs-%.*s", len, name) == 0)) {
 		fs = __get_fs_type(name, len);
-		अगर (!fs)
+		if (!fs)
 			pr_warn_once("request_module fs-%.*s succeeded, but still no fs?\n",
 				     len, name);
-	पूर्ण
+	}
 
-	अगर (करोt && fs && !(fs->fs_flags & FS_HAS_SUBTYPE)) अणु
-		put_fileप्रणाली(fs);
-		fs = शून्य;
-	पूर्ण
-	वापस fs;
-पूर्ण
+	if (dot && fs && !(fs->fs_flags & FS_HAS_SUBTYPE)) {
+		put_filesystem(fs);
+		fs = NULL;
+	}
+	return fs;
+}
 
 EXPORT_SYMBOL(get_fs_type);

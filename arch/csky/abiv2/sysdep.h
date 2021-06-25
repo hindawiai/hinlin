@@ -1,30 +1,29 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __SYSDEP_H
-#घोषणा __SYSDEP_H
+#ifndef __SYSDEP_H
+#define __SYSDEP_H
 
-#अगर_घोषित __ASSEMBLER__
+#ifdef __ASSEMBLER__
 
-#अगर defined(__CK860__)
-#घोषणा LABLE_ALIGN	\
+#if defined(__CK860__)
+#define LABLE_ALIGN	\
 	.balignw 16, 0x6c03
 
-#घोषणा PRE_BNEZAD(R)
+#define PRE_BNEZAD(R)
 
-#घोषणा BNEZAD(R, L)	\
+#define BNEZAD(R, L)	\
 	bnezad	R, L
-#अन्यथा
-#घोषणा LABLE_ALIGN	\
+#else
+#define LABLE_ALIGN	\
 	.balignw 8, 0x6c03
 
-#घोषणा PRE_BNEZAD(R)	\
+#define PRE_BNEZAD(R)	\
 	subi	R, 1
 
-#घोषणा BNEZAD(R, L)	\
+#define BNEZAD(R, L)	\
 	bnez	R, L
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

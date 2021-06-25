@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: tbprपूर्णांक - Table output utilities
+ * Module Name: tbprint - Table output utilities
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "actables.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "actables.h"
 
-#घोषणा _COMPONENT          ACPI_TABLES
+#define _COMPONENT          ACPI_TABLES
 ACPI_MODULE_NAME("tbprint")
 
 /* Local prototypes */
-अटल व्योम acpi_tb_fix_string(अक्षर *string, acpi_size length);
+static void acpi_tb_fix_string(char *string, acpi_size length);
 
-अटल व्योम
-acpi_tb_cleanup_table_header(काष्ठा acpi_table_header *out_header,
-			     काष्ठा acpi_table_header *header);
+static void
+acpi_tb_cleanup_table_header(struct acpi_table_header *out_header,
+			     struct acpi_table_header *header);
 
 /*******************************************************************************
  *
@@ -31,96 +30,96 @@ acpi_tb_cleanup_table_header(काष्ठा acpi_table_header *out_header,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Replace every non-prपूर्णांकable or non-ascii byte in the string
+ * DESCRIPTION: Replace every non-printable or non-ascii byte in the string
  *              with a question mark '?'.
  *
  ******************************************************************************/
 
-अटल व्योम acpi_tb_fix_string(अक्षर *string, acpi_size length)
-अणु
+static void acpi_tb_fix_string(char *string, acpi_size length)
+{
 
-	जबतक (length && *string) अणु
-		अगर (!है_छाप((पूर्णांक)*string)) अणु
+	while (length && *string) {
+		if (!isprint((int)*string)) {
 			*string = '?';
-		पूर्ण
+		}
 
 		string++;
 		length--;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_cleanup_table_header
  *
- * PARAMETERS:  out_header          - Where the cleaned header is वापसed
+ * PARAMETERS:  out_header          - Where the cleaned header is returned
  *              header              - Input ACPI table header
  *
  * RETURN:      Returns the cleaned header in out_header
  *
  * DESCRIPTION: Copy the table header and ensure that all "string" fields in
- *              the header consist of prपूर्णांकable अक्षरacters.
+ *              the header consist of printable characters.
  *
  ******************************************************************************/
 
-अटल व्योम
-acpi_tb_cleanup_table_header(काष्ठा acpi_table_header *out_header,
-			     काष्ठा acpi_table_header *header)
-अणु
+static void
+acpi_tb_cleanup_table_header(struct acpi_table_header *out_header,
+			     struct acpi_table_header *header)
+{
 
-	स_नकल(out_header, header, माप(काष्ठा acpi_table_header));
+	memcpy(out_header, header, sizeof(struct acpi_table_header));
 
 	acpi_tb_fix_string(out_header->signature, ACPI_NAMESEG_SIZE);
 	acpi_tb_fix_string(out_header->oem_id, ACPI_OEM_ID_SIZE);
 	acpi_tb_fix_string(out_header->oem_table_id, ACPI_OEM_TABLE_ID_SIZE);
 	acpi_tb_fix_string(out_header->asl_compiler_id, ACPI_NAMESEG_SIZE);
-पूर्ण
+}
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_tb_prपूर्णांक_table_header
+ * FUNCTION:    acpi_tb_print_table_header
  *
  * PARAMETERS:  address             - Table physical address
  *              header              - Table header
  *
  * RETURN:      None
  *
- * DESCRIPTION: Prपूर्णांक an ACPI table header. Special हालs क्रम FACS and RSDP.
+ * DESCRIPTION: Print an ACPI table header. Special cases for FACS and RSDP.
  *
  ******************************************************************************/
 
-व्योम
-acpi_tb_prपूर्णांक_table_header(acpi_physical_address address,
-			   काष्ठा acpi_table_header *header)
-अणु
-	काष्ठा acpi_table_header local_header;
+void
+acpi_tb_print_table_header(acpi_physical_address address,
+			   struct acpi_table_header *header)
+{
+	struct acpi_table_header local_header;
 
-	अगर (ACPI_COMPARE_NAMESEG(header->signature, ACPI_SIG_FACS)) अणु
+	if (ACPI_COMPARE_NAMESEG(header->signature, ACPI_SIG_FACS)) {
 
 		/* FACS only has signature and length fields */
 
 		ACPI_INFO(("%-4.4s 0x%8.8X%8.8X %06X",
 			   header->signature, ACPI_FORMAT_UINT64(address),
 			   header->length));
-	पूर्ण अन्यथा अगर (ACPI_VALIDATE_RSDP_SIG(header->signature)) अणु
+	} else if (ACPI_VALIDATE_RSDP_SIG(header->signature)) {
 
 		/* RSDP has no common fields */
 
-		स_नकल(local_header.oem_id,
-		       ACPI_CAST_PTR(काष्ठा acpi_table_rsdp, header)->oem_id,
+		memcpy(local_header.oem_id,
+		       ACPI_CAST_PTR(struct acpi_table_rsdp, header)->oem_id,
 		       ACPI_OEM_ID_SIZE);
 		acpi_tb_fix_string(local_header.oem_id, ACPI_OEM_ID_SIZE);
 
 		ACPI_INFO(("RSDP 0x%8.8X%8.8X %06X (v%.2d %-6.6s)",
 			   ACPI_FORMAT_UINT64(address),
-			   (ACPI_CAST_PTR(काष्ठा acpi_table_rsdp, header)->
+			   (ACPI_CAST_PTR(struct acpi_table_rsdp, header)->
 			    revision >
-			    0) ? ACPI_CAST_PTR(काष्ठा acpi_table_rsdp,
+			    0) ? ACPI_CAST_PTR(struct acpi_table_rsdp,
 					       header)->length : 20,
-			   ACPI_CAST_PTR(काष्ठा acpi_table_rsdp,
+			   ACPI_CAST_PTR(struct acpi_table_rsdp,
 					 header)->revision,
 			   local_header.oem_id));
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Standard ACPI table with full common header */
 
 		acpi_tb_cleanup_table_header(&local_header, header);
@@ -133,25 +132,25 @@ acpi_tb_prपूर्णांक_table_header(acpi_physical_address address,
 			   local_header.oem_revision,
 			   local_header.asl_compiler_id,
 			   local_header.asl_compiler_revision));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_validate_checksum
  *
- * PARAMETERS:  table               - ACPI table to verअगरy
+ * PARAMETERS:  table               - ACPI table to verify
  *              length              - Length of entire table
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Verअगरies that the table checksums to zero. Optionally वापसs
+ * DESCRIPTION: Verifies that the table checksums to zero. Optionally returns
  *              exception on bad checksum.
  *
  ******************************************************************************/
 
-acpi_status acpi_tb_verअगरy_checksum(काष्ठा acpi_table_header *table, u32 length)
-अणु
+acpi_status acpi_tb_verify_checksum(struct acpi_table_header *table, u32 length)
+{
 	u8 checksum;
 
 	/*
@@ -159,10 +158,10 @@ acpi_status acpi_tb_verअगरy_checksum(काष्ठा acpi_table_header 
 	 * They are the odd tables, have no standard ACPI header and no checksum
 	 */
 
-	अगर (ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_S3PT) ||
-	    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_FACS)) अणु
-		वापस (AE_OK);
-	पूर्ण
+	if (ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_S3PT) ||
+	    ACPI_COMPARE_NAMESEG(table->signature, ACPI_SIG_FACS)) {
+		return (AE_OK);
+	}
 
 	/* Compute the checksum on the table */
 
@@ -170,26 +169,26 @@ acpi_status acpi_tb_verअगरy_checksum(काष्ठा acpi_table_header 
 
 	/* Checksum ok? (should be zero) */
 
-	अगर (checksum) अणु
+	if (checksum) {
 		ACPI_BIOS_WARNING((AE_INFO,
 				   "Incorrect checksum in table [%4.4s] - 0x%2.2X, "
 				   "should be 0x%2.2X",
 				   table->signature, table->checksum,
 				   (u8)(table->checksum - checksum)));
 
-#अगर (ACPI_CHECKSUM_ABORT)
-		वापस (AE_BAD_CHECKSUM);
-#पूर्ण_अगर
-	पूर्ण
+#if (ACPI_CHECKSUM_ABORT)
+		return (AE_BAD_CHECKSUM);
+#endif
+	}
 
-	वापस (AE_OK);
-पूर्ण
+	return (AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_tb_checksum
  *
- * PARAMETERS:  buffer          - Poपूर्णांकer to memory region to be checked
+ * PARAMETERS:  buffer          - Pointer to memory region to be checked
  *              length          - Length of this memory region
  *
  * RETURN:      Checksum (u8)
@@ -199,13 +198,13 @@ acpi_status acpi_tb_verअगरy_checksum(काष्ठा acpi_table_header 
  ******************************************************************************/
 
 u8 acpi_tb_checksum(u8 *buffer, u32 length)
-अणु
+{
 	u8 sum = 0;
 	u8 *end = buffer + length;
 
-	जबतक (buffer < end) अणु
+	while (buffer < end) {
 		sum = (u8)(sum + *(buffer++));
-	पूर्ण
+	}
 
-	वापस (sum);
-पूर्ण
+	return (sum);
+}

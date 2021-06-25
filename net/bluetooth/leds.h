@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2015, Heiner Kallweit <hkallweit1@gmail.com>
  */
 
-#अगर IS_ENABLED(CONFIG_BT_LEDS)
+#if IS_ENABLED(CONFIG_BT_LEDS)
 
-व्योम hci_leds_update_घातered(काष्ठा hci_dev *hdev, bool enabled);
-व्योम hci_leds_init(काष्ठा hci_dev *hdev);
+void hci_leds_update_powered(struct hci_dev *hdev, bool enabled);
+void hci_leds_init(struct hci_dev *hdev);
 
-व्योम bt_leds_init(व्योम);
-व्योम bt_leds_cleanup(व्योम);
+void bt_leds_init(void);
+void bt_leds_cleanup(void);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम hci_leds_update_घातered(काष्ठा hci_dev *hdev,
-					   bool enabled) अणुपूर्ण
-अटल अंतरभूत व्योम hci_leds_init(काष्ठा hci_dev *hdev) अणुपूर्ण
+static inline void hci_leds_update_powered(struct hci_dev *hdev,
+					   bool enabled) {}
+static inline void hci_leds_init(struct hci_dev *hdev) {}
 
-अटल अंतरभूत व्योम bt_leds_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम bt_leds_cleanup(व्योम) अणुपूर्ण
+static inline void bt_leds_init(void) {}
+static inline void bt_leds_cleanup(void) {}
 
-#पूर्ण_अगर
+#endif

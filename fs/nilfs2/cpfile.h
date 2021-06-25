@@ -1,35 +1,34 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * cpfile.h - NILFS checkpoपूर्णांक file.
+ * cpfile.h - NILFS checkpoint file.
  *
  * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
  * Written by Koji Sato.
  */
 
-#अगर_अघोषित _NILFS_CPखाता_H
-#घोषणा _NILFS_CPखाता_H
+#ifndef _NILFS_CPFILE_H
+#define _NILFS_CPFILE_H
 
-#समावेश <linux/fs.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/nilfs2_api.h>		/* nilfs_cpstat */
-#समावेश <linux/nilfs2_ondisk.h>	/* nilfs_inode, nilfs_checkpoपूर्णांक */
+#include <linux/fs.h>
+#include <linux/buffer_head.h>
+#include <linux/nilfs2_api.h>		/* nilfs_cpstat */
+#include <linux/nilfs2_ondisk.h>	/* nilfs_inode, nilfs_checkpoint */
 
 
-पूर्णांक nilfs_cpfile_get_checkpoपूर्णांक(काष्ठा inode *, __u64, पूर्णांक,
-				काष्ठा nilfs_checkpoपूर्णांक **,
-				काष्ठा buffer_head **);
-व्योम nilfs_cpfile_put_checkpoपूर्णांक(काष्ठा inode *, __u64, काष्ठा buffer_head *);
-पूर्णांक nilfs_cpfile_delete_checkpoपूर्णांकs(काष्ठा inode *, __u64, __u64);
-पूर्णांक nilfs_cpfile_delete_checkpoपूर्णांक(काष्ठा inode *, __u64);
-पूर्णांक nilfs_cpfile_change_cpmode(काष्ठा inode *, __u64, पूर्णांक);
-पूर्णांक nilfs_cpfile_is_snapshot(काष्ठा inode *, __u64);
-पूर्णांक nilfs_cpfile_get_stat(काष्ठा inode *, काष्ठा nilfs_cpstat *);
-sमाप_प्रकार nilfs_cpfile_get_cpinfo(काष्ठा inode *, __u64 *, पूर्णांक, व्योम *,
-				अचिन्हित पूर्णांक, माप_प्रकार);
+int nilfs_cpfile_get_checkpoint(struct inode *, __u64, int,
+				struct nilfs_checkpoint **,
+				struct buffer_head **);
+void nilfs_cpfile_put_checkpoint(struct inode *, __u64, struct buffer_head *);
+int nilfs_cpfile_delete_checkpoints(struct inode *, __u64, __u64);
+int nilfs_cpfile_delete_checkpoint(struct inode *, __u64);
+int nilfs_cpfile_change_cpmode(struct inode *, __u64, int);
+int nilfs_cpfile_is_snapshot(struct inode *, __u64);
+int nilfs_cpfile_get_stat(struct inode *, struct nilfs_cpstat *);
+ssize_t nilfs_cpfile_get_cpinfo(struct inode *, __u64 *, int, void *,
+				unsigned int, size_t);
 
-पूर्णांक nilfs_cpfile_पढ़ो(काष्ठा super_block *sb, माप_प्रकार cpsize,
-		      काष्ठा nilfs_inode *raw_inode, काष्ठा inode **inodep);
+int nilfs_cpfile_read(struct super_block *sb, size_t cpsize,
+		      struct nilfs_inode *raw_inode, struct inode **inodep);
 
-#पूर्ण_अगर	/* _NILFS_CPखाता_H */
+#endif	/* _NILFS_CPFILE_H */

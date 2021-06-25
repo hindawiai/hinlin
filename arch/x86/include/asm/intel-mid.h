@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Intel MID specअगरic setup code
+ * Intel MID specific setup code
  *
  * (C) Copyright 2009, 2021 Intel Corporation
  */
-#अगर_अघोषित _ASM_X86_INTEL_MID_H
-#घोषणा _ASM_X86_INTEL_MID_H
+#ifndef _ASM_X86_INTEL_MID_H
+#define _ASM_X86_INTEL_MID_H
 
-#समावेश <linux/pci.h>
+#include <linux/pci.h>
 
-बाह्य पूर्णांक पूर्णांकel_mid_pci_init(व्योम);
-बाह्य पूर्णांक पूर्णांकel_mid_pci_set_घातer_state(काष्ठा pci_dev *pdev, pci_घातer_t state);
-बाह्य pci_घातer_t पूर्णांकel_mid_pci_get_घातer_state(काष्ठा pci_dev *pdev);
+extern int intel_mid_pci_init(void);
+extern int intel_mid_pci_set_power_state(struct pci_dev *pdev, pci_power_t state);
+extern pci_power_t intel_mid_pci_get_power_state(struct pci_dev *pdev);
 
-बाह्य व्योम पूर्णांकel_mid_pwr_घातer_off(व्योम);
+extern void intel_mid_pwr_power_off(void);
 
-#घोषणा INTEL_MID_PWR_LSS_OFFSET	4
-#घोषणा INTEL_MID_PWR_LSS_TYPE		(1 << 7)
+#define INTEL_MID_PWR_LSS_OFFSET	4
+#define INTEL_MID_PWR_LSS_TYPE		(1 << 7)
 
-बाह्य पूर्णांक पूर्णांकel_mid_pwr_get_lss_id(काष्ठा pci_dev *pdev);
+extern int intel_mid_pwr_get_lss_id(struct pci_dev *pdev);
 
-#अगर_घोषित CONFIG_X86_INTEL_MID
+#ifdef CONFIG_X86_INTEL_MID
 
-बाह्य व्योम पूर्णांकel_scu_devices_create(व्योम);
-बाह्य व्योम पूर्णांकel_scu_devices_destroy(व्योम);
+extern void intel_scu_devices_create(void);
+extern void intel_scu_devices_destroy(void);
 
-#अन्यथा /* !CONFIG_X86_INTEL_MID */
+#else /* !CONFIG_X86_INTEL_MID */
 
-अटल अंतरभूत व्योम पूर्णांकel_scu_devices_create(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम पूर्णांकel_scu_devices_destroy(व्योम) अणु पूर्ण
+static inline void intel_scu_devices_create(void) { }
+static inline void intel_scu_devices_destroy(void) { }
 
-#पूर्ण_अगर /* !CONFIG_X86_INTEL_MID */
+#endif /* !CONFIG_X86_INTEL_MID */
 
 /* Bus Select SoC Fuse value */
-#घोषणा BSEL_SOC_FUSE_MASK		0x7
+#define BSEL_SOC_FUSE_MASK		0x7
 /* FSB 133MHz */
-#घोषणा BSEL_SOC_FUSE_001		0x1
+#define BSEL_SOC_FUSE_001		0x1
 /* FSB 100MHz */
-#घोषणा BSEL_SOC_FUSE_101		0x5
+#define BSEL_SOC_FUSE_101		0x5
 /* FSB 83MHz */
-#घोषणा BSEL_SOC_FUSE_111		0x7
+#define BSEL_SOC_FUSE_111		0x7
 
-#पूर्ण_अगर /* _ASM_X86_INTEL_MID_H */
+#endif /* _ASM_X86_INTEL_MID_H */

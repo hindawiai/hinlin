@@ -1,44 +1,43 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1994 - 2001, 2003 by Ralf Baechle
  * Copyright (C) 1999, 2000, 2001 Silicon Graphics, Inc.
  */
 
-#अगर_अघोषित _ASM_NIOS2_PGALLOC_H
-#घोषणा _ASM_NIOS2_PGALLOC_H
+#ifndef _ASM_NIOS2_PGALLOC_H
+#define _ASM_NIOS2_PGALLOC_H
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-#समावेश <यंत्र-generic/pgभाग.स>
+#include <asm-generic/pgalloc.h>
 
-अटल अंतरभूत व्योम pmd_populate_kernel(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
+static inline void pmd_populate_kernel(struct mm_struct *mm, pmd_t *pmd,
 	pte_t *pte)
-अणु
-	set_pmd(pmd, __pmd((अचिन्हित दीर्घ)pte));
-पूर्ण
+{
+	set_pmd(pmd, __pmd((unsigned long)pte));
+}
 
-अटल अंतरभूत व्योम pmd_populate(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
+static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
 	pgtable_t pte)
-अणु
-	set_pmd(pmd, __pmd((अचिन्हित दीर्घ)page_address(pte)));
-पूर्ण
-#घोषणा pmd_pgtable(pmd) pmd_page(pmd)
+{
+	set_pmd(pmd, __pmd((unsigned long)page_address(pte)));
+}
+#define pmd_pgtable(pmd) pmd_page(pmd)
 
 /*
- * Initialize a new pmd table with invalid poपूर्णांकers.
+ * Initialize a new pmd table with invalid pointers.
  */
-बाह्य व्योम pmd_init(अचिन्हित दीर्घ page, अचिन्हित दीर्घ pagetable);
+extern void pmd_init(unsigned long page, unsigned long pagetable);
 
-बाह्य pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm);
+extern pgd_t *pgd_alloc(struct mm_struct *mm);
 
-#घोषणा __pte_मुक्त_tlb(tlb, pte, addr)				\
-	करो अणु							\
+#define __pte_free_tlb(tlb, pte, addr)				\
+	do {							\
 		pgtable_pte_page_dtor(pte);			\
-		tlb_हटाओ_page((tlb), (pte));			\
-	पूर्ण जबतक (0)
+		tlb_remove_page((tlb), (pte));			\
+	} while (0)
 
-#पूर्ण_अगर /* _ASM_NIOS2_PGALLOC_H */
+#endif /* _ASM_NIOS2_PGALLOC_H */

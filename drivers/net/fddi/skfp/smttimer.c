@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /******************************************************************************
  *
  *	(C)Copyright 1998,1999 SysKonnect,
- *	a business unit of Schneider & Koch & Co. Datenप्रणालीe GmbH.
+ *	a business unit of Schneider & Koch & Co. Datensysteme GmbH.
  *
- *	See the file "skfddi.c" क्रम further inक्रमmation.
+ *	See the file "skfddi.c" for further information.
  *
- *	The inक्रमmation in this file is provided "AS IS" without warranty.
+ *	The information in this file is provided "AS IS" without warranty.
  *
  ******************************************************************************/
 
 /*
-	SMT समयr
+	SMT timer
 */
 
-#समावेश "h/types.h"
-#समावेश "h/fddi.h"
-#समावेश "h/smc.h"
+#include "h/types.h"
+#include "h/fddi.h"
+#include "h/smc.h"
 
-अटल व्योम समयr_करोne(काष्ठा s_smc *smc, पूर्णांक restart);
+static void timer_done(struct s_smc *smc, int restart);
 
-व्योम smt_समयr_init(काष्ठा s_smc *smc)
-अणु
-	smc->t.st_queue = शून्य;
-	smc->t.st_fast.पंचांग_active = FALSE ;
-	smc->t.st_fast.पंचांग_next = शून्य;
+void smt_timer_init(struct s_smc *smc)
+{
+	smc->t.st_queue = NULL;
+	smc->t.st_fast.tm_active = FALSE ;
+	smc->t.st_fast.tm_next = NULL;
 	hwt_init(smc) ;
-पूर्ण
+}
 
-व्योम smt_समयr_stop(काष्ठा s_smc *smc, काष्ठा smt_समयr *समयr)
-अणु
-	काष्ठा smt_समयr	**prev ;
-	काष्ठा smt_समयr	*पंचांग ;
+void smt_timer_stop(struct s_smc *smc, struct smt_timer *timer)
+{
+	struct smt_timer	**prev ;
+	struct smt_timer	*tm ;
 
 	/*
-	 * हटाओ समयr from queue
+	 * remove timer from queue
 	 */
-	समयr->पंचांग_active = FALSE ;
-	अगर (smc->t.st_queue == समयr && !समयr->पंचांग_next) अणु
+	timer->tm_active = FALSE ;
+	if (smc->t.st_queue == timer && !timer->tm_next) {
 		hwt_stop(smc) ;
-	पूर्ण
-	क्रम (prev = &smc->t.st_queue ; (पंचांग = *prev) ; prev = &पंचांग->पंचांग_next ) अणु
-		अगर (पंचांग == समयr) अणु
-			*prev = पंचांग->पंचांग_next ;
-			अगर (पंचांग->पंचांग_next) अणु
-				पंचांग->पंचांग_next->पंचांग_delta += पंचांग->पंचांग_delta ;
-			पूर्ण
-			वापस ;
-		पूर्ण
-	पूर्ण
-पूर्ण
+	}
+	for (prev = &smc->t.st_queue ; (tm = *prev) ; prev = &tm->tm_next ) {
+		if (tm == timer) {
+			*prev = tm->tm_next ;
+			if (tm->tm_next) {
+				tm->tm_next->tm_delta += tm->tm_delta ;
+			}
+			return ;
+		}
+	}
+}
 
-व्योम smt_समयr_start(काष्ठा s_smc *smc, काष्ठा smt_समयr *समयr, u_दीर्घ समय,
-		     u_दीर्घ token)
-अणु
-	काष्ठा smt_समयr	**prev ;
-	काष्ठा smt_समयr	*पंचांग ;
-	u_दीर्घ			delta = 0 ;
+void smt_timer_start(struct s_smc *smc, struct smt_timer *timer, u_long time,
+		     u_long token)
+{
+	struct smt_timer	**prev ;
+	struct smt_timer	*tm ;
+	u_long			delta = 0 ;
 
-	समय /= 16 ;		/* input is uS, घड़ी ticks are 16uS */
-	अगर (!समय)
-		समय = 1 ;
-	smt_समयr_stop(smc,समयr) ;
-	समयr->पंचांग_smc = smc ;
-	समयr->पंचांग_token = token ;
-	समयr->पंचांग_active = TRUE ;
-	अगर (!smc->t.st_queue) अणु
-		smc->t.st_queue = समयr ;
-		समयr->पंचांग_next = शून्य;
-		समयr->पंचांग_delta = समय ;
-		hwt_start(smc,समय) ;
-		वापस ;
-	पूर्ण
+	time /= 16 ;		/* input is uS, clock ticks are 16uS */
+	if (!time)
+		time = 1 ;
+	smt_timer_stop(smc,timer) ;
+	timer->tm_smc = smc ;
+	timer->tm_token = token ;
+	timer->tm_active = TRUE ;
+	if (!smc->t.st_queue) {
+		smc->t.st_queue = timer ;
+		timer->tm_next = NULL;
+		timer->tm_delta = time ;
+		hwt_start(smc,time) ;
+		return ;
+	}
 	/*
-	 * समयr correction
+	 * timer correction
 	 */
-	समयr_करोne(smc,0) ;
+	timer_done(smc,0) ;
 
 	/*
 	 * find position in queue
 	 */
 	delta = 0 ;
-	क्रम (prev = &smc->t.st_queue ; (पंचांग = *prev) ; prev = &पंचांग->पंचांग_next ) अणु
-		अगर (delta + पंचांग->पंचांग_delta > समय) अणु
-			अवरोध ;
-		पूर्ण
-		delta += पंचांग->पंचांग_delta ;
-	पूर्ण
+	for (prev = &smc->t.st_queue ; (tm = *prev) ; prev = &tm->tm_next ) {
+		if (delta + tm->tm_delta > time) {
+			break ;
+		}
+		delta += tm->tm_delta ;
+	}
 	/* insert in queue */
-	*prev = समयr ;
-	समयr->पंचांग_next = पंचांग ;
-	समयr->पंचांग_delta = समय - delta ;
-	अगर (पंचांग)
-		पंचांग->पंचांग_delta -= समयr->पंचांग_delta ;
+	*prev = timer ;
+	timer->tm_next = tm ;
+	timer->tm_delta = time - delta ;
+	if (tm)
+		tm->tm_delta -= timer->tm_delta ;
 	/*
 	 * start new with first
 	 */
-	hwt_start(smc,smc->t.st_queue->पंचांग_delta) ;
-पूर्ण
+	hwt_start(smc,smc->t.st_queue->tm_delta) ;
+}
 
-व्योम smt_क्रमce_irq(काष्ठा s_smc *smc)
-अणु
-	smt_समयr_start(smc,&smc->t.st_fast,32L, EV_TOKEN(EVENT_SMT,SM_FAST)); 
-पूर्ण
+void smt_force_irq(struct s_smc *smc)
+{
+	smt_timer_start(smc,&smc->t.st_fast,32L, EV_TOKEN(EVENT_SMT,SM_FAST)); 
+}
 
-व्योम smt_समयr_करोne(काष्ठा s_smc *smc)
-अणु
-	समयr_करोne(smc,1) ;
-पूर्ण
+void smt_timer_done(struct s_smc *smc)
+{
+	timer_done(smc,1) ;
+}
 
-अटल व्योम समयr_करोne(काष्ठा s_smc *smc, पूर्णांक restart)
-अणु
-	u_दीर्घ			delta ;
-	काष्ठा smt_समयr	*पंचांग ;
-	काष्ठा smt_समयr	*next ;
-	काष्ठा smt_समयr	**last ;
-	पूर्णांक			करोne = 0 ;
+static void timer_done(struct s_smc *smc, int restart)
+{
+	u_long			delta ;
+	struct smt_timer	*tm ;
+	struct smt_timer	*next ;
+	struct smt_timer	**last ;
+	int			done = 0 ;
 
-	delta = hwt_पढ़ो(smc) ;
+	delta = hwt_read(smc) ;
 	last = &smc->t.st_queue ;
-	पंचांग = smc->t.st_queue ;
-	जबतक (पंचांग && !करोne) अणु
-		अगर (delta >= पंचांग->पंचांग_delta) अणु
-			पंचांग->पंचांग_active = FALSE ;
-			delta -= पंचांग->पंचांग_delta ;
-			last = &पंचांग->पंचांग_next ;
-			पंचांग = पंचांग->पंचांग_next ;
-		पूर्ण
-		अन्यथा अणु
-			पंचांग->पंचांग_delta -= delta ;
+	tm = smc->t.st_queue ;
+	while (tm && !done) {
+		if (delta >= tm->tm_delta) {
+			tm->tm_active = FALSE ;
+			delta -= tm->tm_delta ;
+			last = &tm->tm_next ;
+			tm = tm->tm_next ;
+		}
+		else {
+			tm->tm_delta -= delta ;
 			delta = 0 ;
-			करोne = 1 ;
-		पूर्ण
-	पूर्ण
-	*last = शून्य;
+			done = 1 ;
+		}
+	}
+	*last = NULL;
 	next = smc->t.st_queue ;
-	smc->t.st_queue = पंचांग ;
+	smc->t.st_queue = tm ;
 
-	क्रम ( पंचांग = next ; पंचांग ; पंचांग = next) अणु
-		next = पंचांग->पंचांग_next ;
-		समयr_event(smc,पंचांग->पंचांग_token) ;
-	पूर्ण
+	for ( tm = next ; tm ; tm = next) {
+		next = tm->tm_next ;
+		timer_event(smc,tm->tm_token) ;
+	}
 
-	अगर (restart && smc->t.st_queue)
-		hwt_start(smc,smc->t.st_queue->पंचांग_delta) ;
-पूर्ण
+	if (restart && smc->t.st_queue)
+		hwt_start(smc,smc->t.st_queue->tm_delta) ;
+}
 

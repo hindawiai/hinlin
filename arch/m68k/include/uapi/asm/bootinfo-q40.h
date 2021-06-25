@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
-** यंत्र/bootinfo-q40.h -- Q40-specअगरic boot inक्रमmation definitions
+** asm/bootinfo-q40.h -- Q40-specific boot information definitions
 */
 
-#अगर_अघोषित _UAPI_ASM_M68K_BOOTINFO_Q40_H
-#घोषणा _UAPI_ASM_M68K_BOOTINFO_Q40_H
+#ifndef _UAPI_ASM_M68K_BOOTINFO_Q40_H
+#define _UAPI_ASM_M68K_BOOTINFO_Q40_H
 
 
     /*
      *  Latest Q40 bootinfo version
      */
 
-#घोषणा Q40_BOOTI_VERSION	MK_BI_VERSION(2, 0)
+#define Q40_BOOTI_VERSION	MK_BI_VERSION(2, 0)
 
 
-#पूर्ण_अगर /* _UAPI_ASM_M68K_BOOTINFO_Q40_H */
+#endif /* _UAPI_ASM_M68K_BOOTINFO_Q40_H */

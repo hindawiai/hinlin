@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * IBM Hot Plug Controller Driver
  *
  * Written By: Irene Zubarev, IBM Corporation
  *
- * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
  * Copyright (C) 2001,2002 IBM Corp.
  *
  * All rights reserved.
@@ -14,149 +13,149 @@
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/list.h>
-#समावेश <linux/init.h>
-#समावेश "ibmphp.h"
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/list.h>
+#include <linux/init.h>
+#include "ibmphp.h"
 
-अटल पूर्णांक flags = 0;		/* क्रम testing */
+static int flags = 0;		/* for testing */
 
-अटल व्योम update_resources(काष्ठा bus_node *bus_cur, पूर्णांक type, पूर्णांक rangeno);
-अटल पूर्णांक once_over(व्योम);
-अटल पूर्णांक हटाओ_ranges(काष्ठा bus_node *, काष्ठा bus_node *);
-अटल पूर्णांक update_bridge_ranges(काष्ठा bus_node **);
-अटल पूर्णांक add_bus_range(पूर्णांक type, काष्ठा range_node *, काष्ठा bus_node *);
-अटल व्योम fix_resources(काष्ठा bus_node *);
-अटल काष्ठा bus_node *find_bus_wprev(u8, काष्ठा bus_node **, u8);
+static void update_resources(struct bus_node *bus_cur, int type, int rangeno);
+static int once_over(void);
+static int remove_ranges(struct bus_node *, struct bus_node *);
+static int update_bridge_ranges(struct bus_node **);
+static int add_bus_range(int type, struct range_node *, struct bus_node *);
+static void fix_resources(struct bus_node *);
+static struct bus_node *find_bus_wprev(u8, struct bus_node **, u8);
 
-अटल LIST_HEAD(gbuses);
+static LIST_HEAD(gbuses);
 
-अटल काष्ठा bus_node * __init alloc_error_bus(काष्ठा ebda_pci_rsrc *curr, u8 busno, पूर्णांक flag)
-अणु
-	काष्ठा bus_node *newbus;
+static struct bus_node * __init alloc_error_bus(struct ebda_pci_rsrc *curr, u8 busno, int flag)
+{
+	struct bus_node *newbus;
 
-	अगर (!(curr) && !(flag)) अणु
+	if (!(curr) && !(flag)) {
 		err("NULL pointer passed\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	newbus = kzalloc(माप(काष्ठा bus_node), GFP_KERNEL);
-	अगर (!newbus)
-		वापस शून्य;
+	newbus = kzalloc(sizeof(struct bus_node), GFP_KERNEL);
+	if (!newbus)
+		return NULL;
 
-	अगर (flag)
+	if (flag)
 		newbus->busno = busno;
-	अन्यथा
+	else
 		newbus->busno = curr->bus_num;
 	list_add_tail(&newbus->bus_list, &gbuses);
-	वापस newbus;
-पूर्ण
+	return newbus;
+}
 
-अटल काष्ठा resource_node * __init alloc_resources(काष्ठा ebda_pci_rsrc *curr)
-अणु
-	काष्ठा resource_node *rs;
+static struct resource_node * __init alloc_resources(struct ebda_pci_rsrc *curr)
+{
+	struct resource_node *rs;
 
-	अगर (!curr) अणु
+	if (!curr) {
 		err("NULL passed to allocate\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	rs = kzalloc(माप(काष्ठा resource_node), GFP_KERNEL);
-	अगर (!rs)
-		वापस शून्य;
+	rs = kzalloc(sizeof(struct resource_node), GFP_KERNEL);
+	if (!rs)
+		return NULL;
 
 	rs->busno = curr->bus_num;
 	rs->devfunc = curr->dev_fun;
 	rs->start = curr->start_addr;
 	rs->end = curr->end_addr;
 	rs->len = curr->end_addr - curr->start_addr + 1;
-	वापस rs;
-पूर्ण
+	return rs;
+}
 
-अटल पूर्णांक __init alloc_bus_range(काष्ठा bus_node **new_bus, काष्ठा range_node **new_range, काष्ठा ebda_pci_rsrc *curr, पूर्णांक flag, u8 first_bus)
-अणु
-	काष्ठा bus_node *newbus;
-	काष्ठा range_node *newrange;
+static int __init alloc_bus_range(struct bus_node **new_bus, struct range_node **new_range, struct ebda_pci_rsrc *curr, int flag, u8 first_bus)
+{
+	struct bus_node *newbus;
+	struct range_node *newrange;
 	u8 num_ranges = 0;
 
-	अगर (first_bus) अणु
-		newbus = kzalloc(माप(काष्ठा bus_node), GFP_KERNEL);
-		अगर (!newbus)
-			वापस -ENOMEM;
+	if (first_bus) {
+		newbus = kzalloc(sizeof(struct bus_node), GFP_KERNEL);
+		if (!newbus)
+			return -ENOMEM;
 
 		newbus->busno = curr->bus_num;
-	पूर्ण अन्यथा अणु
+	} else {
 		newbus = *new_bus;
-		चयन (flag) अणु
-			हाल MEM:
+		switch (flag) {
+			case MEM:
 				num_ranges = newbus->noMemRanges;
-				अवरोध;
-			हाल PFMEM:
+				break;
+			case PFMEM:
 				num_ranges = newbus->noPFMemRanges;
-				अवरोध;
-			हाल IO:
+				break;
+			case IO:
 				num_ranges = newbus->noIORanges;
-				अवरोध;
-		पूर्ण
-	पूर्ण
+				break;
+		}
+	}
 
-	newrange = kzalloc(माप(काष्ठा range_node), GFP_KERNEL);
-	अगर (!newrange) अणु
-		अगर (first_bus)
-			kमुक्त(newbus);
-		वापस -ENOMEM;
-	पूर्ण
+	newrange = kzalloc(sizeof(struct range_node), GFP_KERNEL);
+	if (!newrange) {
+		if (first_bus)
+			kfree(newbus);
+		return -ENOMEM;
+	}
 	newrange->start = curr->start_addr;
 	newrange->end = curr->end_addr;
 
-	अगर (first_bus || (!num_ranges))
+	if (first_bus || (!num_ranges))
 		newrange->rangeno = 1;
-	अन्यथा अणु
+	else {
 		/* need to insert our range */
 		add_bus_range(flag, newrange, newbus);
 		debug("%d resource Primary Bus inserted on bus %x [%x - %x]\n", flag, newbus->busno, newrange->start, newrange->end);
-	पूर्ण
+	}
 
-	चयन (flag) अणु
-		हाल MEM:
+	switch (flag) {
+		case MEM:
 			newbus->rangeMem = newrange;
-			अगर (first_bus)
+			if (first_bus)
 				newbus->noMemRanges = 1;
-			अन्यथा अणु
+			else {
 				debug("First Memory Primary on bus %x, [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
 				++newbus->noMemRanges;
 				fix_resources(newbus);
-			पूर्ण
-			अवरोध;
-		हाल IO:
+			}
+			break;
+		case IO:
 			newbus->rangeIO = newrange;
-			अगर (first_bus)
+			if (first_bus)
 				newbus->noIORanges = 1;
-			अन्यथा अणु
+			else {
 				debug("First IO Primary on bus %x, [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
 				++newbus->noIORanges;
 				fix_resources(newbus);
-			पूर्ण
-			अवरोध;
-		हाल PFMEM:
+			}
+			break;
+		case PFMEM:
 			newbus->rangePFMem = newrange;
-			अगर (first_bus)
+			if (first_bus)
 				newbus->noPFMemRanges = 1;
-			अन्यथा अणु
+			else {
 				debug("1st PFMemory Primary on Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
 				++newbus->noPFMemRanges;
 				fix_resources(newbus);
-			पूर्ण
+			}
 
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	*new_bus = newbus;
 	*new_range = newrange;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /* Notes:
@@ -164,13 +163,13 @@
  *
  * 2. If cannot allocate out of PFMem range, allocate from Mem ranges.  PFmemFromMem
  * are not sorted. (no need since use mem node). To not change the entire code, we
- * also add mem node whenever this हाल happens so as not to change
+ * also add mem node whenever this case happens so as not to change
  * ibmphp_check_mem_resource etc(and since it really is taking Mem resource)
  */
 
 /*****************************************************************************
  * This is the Resource Management initialization function.  It will go through
- * the Resource list taken from EBDA and fill in this module's data काष्ठाures
+ * the Resource list taken from EBDA and fill in this module's data structures
  *
  * THIS IS NOT TAKING INTO CONSIDERATION IO RESTRICTIONS OF PRIMARY BUSES,
  * SINCE WE'RE GOING TO ASSUME FOR NOW WE DON'T HAVE THOSE ON OUR BUSES FOR NOW
@@ -178,262 +177,262 @@
  * Input: ptr to the head of the resource list from EBDA
  * Output: 0, -1 or error codes
  ***************************************************************************/
-पूर्णांक __init ibmphp_rsrc_init(व्योम)
-अणु
-	काष्ठा ebda_pci_rsrc *curr;
-	काष्ठा range_node *newrange = शून्य;
-	काष्ठा bus_node *newbus = शून्य;
-	काष्ठा bus_node *bus_cur;
-	काष्ठा bus_node *bus_prev;
-	काष्ठा resource_node *new_io = शून्य;
-	काष्ठा resource_node *new_mem = शून्य;
-	काष्ठा resource_node *new_pfmem = शून्य;
-	पूर्णांक rc;
+int __init ibmphp_rsrc_init(void)
+{
+	struct ebda_pci_rsrc *curr;
+	struct range_node *newrange = NULL;
+	struct bus_node *newbus = NULL;
+	struct bus_node *bus_cur;
+	struct bus_node *bus_prev;
+	struct resource_node *new_io = NULL;
+	struct resource_node *new_mem = NULL;
+	struct resource_node *new_pfmem = NULL;
+	int rc;
 
-	list_क्रम_each_entry(curr, &ibmphp_ebda_pci_rsrc_head,
-			    ebda_pci_rsrc_list) अणु
-		अगर (!(curr->rsrc_type & PCIDEVMASK)) अणु
+	list_for_each_entry(curr, &ibmphp_ebda_pci_rsrc_head,
+			    ebda_pci_rsrc_list) {
+		if (!(curr->rsrc_type & PCIDEVMASK)) {
 			/* EBDA still lists non PCI devices, so ignore... */
 			debug("this is not a PCI DEVICE in rsrc_init, please take care\n");
-			// जारी;
-		पूर्ण
+			// continue;
+		}
 
 		/* this is a primary bus resource */
-		अगर (curr->rsrc_type & PRIMARYBUSMASK) अणु
+		if (curr->rsrc_type & PRIMARYBUSMASK) {
 			/* memory */
-			अगर ((curr->rsrc_type & RESTYPE) == MMASK) अणु
-				/* no bus काष्ठाure exists in place yet */
-				अगर (list_empty(&gbuses)) अणु
+			if ((curr->rsrc_type & RESTYPE) == MMASK) {
+				/* no bus structure exists in place yet */
+				if (list_empty(&gbuses)) {
 					rc = alloc_bus_range(&newbus, &newrange, curr, MEM, 1);
-					अगर (rc)
-						वापस rc;
+					if (rc)
+						return rc;
 					list_add_tail(&newbus->bus_list, &gbuses);
 					debug("gbuses = NULL, Memory Primary Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
-				पूर्ण अन्यथा अणु
+				} else {
 					bus_cur = find_bus_wprev(curr->bus_num, &bus_prev, 1);
 					/* found our bus */
-					अगर (bus_cur) अणु
+					if (bus_cur) {
 						rc = alloc_bus_range(&bus_cur, &newrange, curr, MEM, 0);
-						अगर (rc)
-							वापस rc;
-					पूर्ण अन्यथा अणु
+						if (rc)
+							return rc;
+					} else {
 						/* went through all the buses and didn't find ours, need to create a new bus node */
 						rc = alloc_bus_range(&newbus, &newrange, curr, MEM, 1);
-						अगर (rc)
-							वापस rc;
+						if (rc)
+							return rc;
 
 						list_add_tail(&newbus->bus_list, &gbuses);
 						debug("New Bus, Memory Primary Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
-					पूर्ण
-				पूर्ण
-			पूर्ण अन्यथा अगर ((curr->rsrc_type & RESTYPE) == PFMASK) अणु
+					}
+				}
+			} else if ((curr->rsrc_type & RESTYPE) == PFMASK) {
 				/* prefetchable memory */
-				अगर (list_empty(&gbuses)) अणु
-					/* no bus काष्ठाure exists in place yet */
+				if (list_empty(&gbuses)) {
+					/* no bus structure exists in place yet */
 					rc = alloc_bus_range(&newbus, &newrange, curr, PFMEM, 1);
-					अगर (rc)
-						वापस rc;
+					if (rc)
+						return rc;
 					list_add_tail(&newbus->bus_list, &gbuses);
 					debug("gbuses = NULL, PFMemory Primary Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
-				पूर्ण अन्यथा अणु
+				} else {
 					bus_cur = find_bus_wprev(curr->bus_num, &bus_prev, 1);
-					अगर (bus_cur) अणु
+					if (bus_cur) {
 						/* found our bus */
 						rc = alloc_bus_range(&bus_cur, &newrange, curr, PFMEM, 0);
-						अगर (rc)
-							वापस rc;
-					पूर्ण अन्यथा अणु
+						if (rc)
+							return rc;
+					} else {
 						/* went through all the buses and didn't find ours, need to create a new bus node */
 						rc = alloc_bus_range(&newbus, &newrange, curr, PFMEM, 1);
-						अगर (rc)
-							वापस rc;
+						if (rc)
+							return rc;
 						list_add_tail(&newbus->bus_list, &gbuses);
 						debug("1st Bus, PFMemory Primary Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
-					पूर्ण
-				पूर्ण
-			पूर्ण अन्यथा अगर ((curr->rsrc_type & RESTYPE) == IOMASK) अणु
+					}
+				}
+			} else if ((curr->rsrc_type & RESTYPE) == IOMASK) {
 				/* IO */
-				अगर (list_empty(&gbuses)) अणु
-					/* no bus काष्ठाure exists in place yet */
+				if (list_empty(&gbuses)) {
+					/* no bus structure exists in place yet */
 					rc = alloc_bus_range(&newbus, &newrange, curr, IO, 1);
-					अगर (rc)
-						वापस rc;
+					if (rc)
+						return rc;
 					list_add_tail(&newbus->bus_list, &gbuses);
 					debug("gbuses = NULL, IO Primary Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
-				पूर्ण अन्यथा अणु
+				} else {
 					bus_cur = find_bus_wprev(curr->bus_num, &bus_prev, 1);
-					अगर (bus_cur) अणु
+					if (bus_cur) {
 						rc = alloc_bus_range(&bus_cur, &newrange, curr, IO, 0);
-						अगर (rc)
-							वापस rc;
-					पूर्ण अन्यथा अणु
+						if (rc)
+							return rc;
+					} else {
 						/* went through all the buses and didn't find ours, need to create a new bus node */
 						rc = alloc_bus_range(&newbus, &newrange, curr, IO, 1);
-						अगर (rc)
-							वापस rc;
+						if (rc)
+							return rc;
 						list_add_tail(&newbus->bus_list, &gbuses);
 						debug("1st Bus, IO Primary Bus %x [%x - %x]\n", newbus->busno, newrange->start, newrange->end);
-					पूर्ण
-				पूर्ण
+					}
+				}
 
-			पूर्ण अन्यथा अणु
+			} else {
 				;	/* type is reserved  WHAT TO DO IN THIS CASE???
 					   NOTHING TO DO??? */
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/* regular pci device resource */
-			अगर ((curr->rsrc_type & RESTYPE) == MMASK) अणु
+			if ((curr->rsrc_type & RESTYPE) == MMASK) {
 				/* Memory resource */
 				new_mem = alloc_resources(curr);
-				अगर (!new_mem)
-					वापस -ENOMEM;
+				if (!new_mem)
+					return -ENOMEM;
 				new_mem->type = MEM;
 				/*
-				 * अगर it didn't find the bus, means PCI dev
+				 * if it didn't find the bus, means PCI dev
 				 * came b4 the Primary Bus info, so need to
 				 * create a bus rangeno becomes a problem...
 				 * assign a -1 and then update once the range
 				 * actually appears...
 				 */
-				अगर (ibmphp_add_resource(new_mem) < 0) अणु
+				if (ibmphp_add_resource(new_mem) < 0) {
 					newbus = alloc_error_bus(curr, 0, 0);
-					अगर (!newbus)
-						वापस -ENOMEM;
+					if (!newbus)
+						return -ENOMEM;
 					newbus->firstMem = new_mem;
 					++newbus->needMemUpdate;
 					new_mem->rangeno = -1;
-				पूर्ण
+				}
 				debug("Memory resource for device %x, bus %x, [%x - %x]\n", new_mem->devfunc, new_mem->busno, new_mem->start, new_mem->end);
 
-			पूर्ण अन्यथा अगर ((curr->rsrc_type & RESTYPE) == PFMASK) अणु
+			} else if ((curr->rsrc_type & RESTYPE) == PFMASK) {
 				/* PFMemory resource */
 				new_pfmem = alloc_resources(curr);
-				अगर (!new_pfmem)
-					वापस -ENOMEM;
+				if (!new_pfmem)
+					return -ENOMEM;
 				new_pfmem->type = PFMEM;
 				new_pfmem->fromMem = 0;
-				अगर (ibmphp_add_resource(new_pfmem) < 0) अणु
+				if (ibmphp_add_resource(new_pfmem) < 0) {
 					newbus = alloc_error_bus(curr, 0, 0);
-					अगर (!newbus)
-						वापस -ENOMEM;
+					if (!newbus)
+						return -ENOMEM;
 					newbus->firstPFMem = new_pfmem;
 					++newbus->needPFMemUpdate;
 					new_pfmem->rangeno = -1;
-				पूर्ण
+				}
 
 				debug("PFMemory resource for device %x, bus %x, [%x - %x]\n", new_pfmem->devfunc, new_pfmem->busno, new_pfmem->start, new_pfmem->end);
-			पूर्ण अन्यथा अगर ((curr->rsrc_type & RESTYPE) == IOMASK) अणु
+			} else if ((curr->rsrc_type & RESTYPE) == IOMASK) {
 				/* IO resource */
 				new_io = alloc_resources(curr);
-				अगर (!new_io)
-					वापस -ENOMEM;
+				if (!new_io)
+					return -ENOMEM;
 				new_io->type = IO;
 
 				/*
-				 * अगर it didn't find the bus, means PCI dev
+				 * if it didn't find the bus, means PCI dev
 				 * came b4 the Primary Bus info, so need to
 				 * create a bus rangeno becomes a problem...
 				 * Can assign a -1 and then update once the
 				 * range actually appears...
 				 */
-				अगर (ibmphp_add_resource(new_io) < 0) अणु
+				if (ibmphp_add_resource(new_io) < 0) {
 					newbus = alloc_error_bus(curr, 0, 0);
-					अगर (!newbus)
-						वापस -ENOMEM;
+					if (!newbus)
+						return -ENOMEM;
 					newbus->firstIO = new_io;
 					++newbus->needIOUpdate;
 					new_io->rangeno = -1;
-				पूर्ण
+				}
 				debug("IO resource for device %x, bus %x, [%x - %x]\n", new_io->devfunc, new_io->busno, new_io->start, new_io->end);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	list_क्रम_each_entry(bus_cur, &gbuses, bus_list) अणु
-		/* This is to get info about PPB resources, since EBDA करोesn't put this info पूर्णांकo the primary bus info */
+	list_for_each_entry(bus_cur, &gbuses, bus_list) {
+		/* This is to get info about PPB resources, since EBDA doesn't put this info into the primary bus info */
 		rc = update_bridge_ranges(&bus_cur);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
-	वापस once_over();	/* This is to align ranges (so no -1) */
-पूर्ण
+		if (rc)
+			return rc;
+	}
+	return once_over();	/* This is to align ranges (so no -1) */
+}
 
 /********************************************************************************
- * This function adds a range पूर्णांकo a sorted list of ranges per bus क्रम a particular
+ * This function adds a range into a sorted list of ranges per bus for a particular
  * range type, it then calls another routine to update the range numbers on the
- * pci devices' resources क्रम the appropriate resource
+ * pci devices' resources for the appropriate resource
  *
  * Input: type of the resource, range to add, current bus
  * Output: 0 or -1, bus and range ptrs
  ********************************************************************************/
-अटल पूर्णांक add_bus_range(पूर्णांक type, काष्ठा range_node *range, काष्ठा bus_node *bus_cur)
-अणु
-	काष्ठा range_node *range_cur = शून्य;
-	काष्ठा range_node *range_prev;
-	पूर्णांक count = 0, i_init;
-	पूर्णांक noRanges = 0;
+static int add_bus_range(int type, struct range_node *range, struct bus_node *bus_cur)
+{
+	struct range_node *range_cur = NULL;
+	struct range_node *range_prev;
+	int count = 0, i_init;
+	int noRanges = 0;
 
-	चयन (type) अणु
-		हाल MEM:
+	switch (type) {
+		case MEM:
 			range_cur = bus_cur->rangeMem;
 			noRanges = bus_cur->noMemRanges;
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			range_cur = bus_cur->rangePFMem;
 			noRanges = bus_cur->noPFMemRanges;
-			अवरोध;
-		हाल IO:
+			break;
+		case IO:
 			range_cur = bus_cur->rangeIO;
 			noRanges = bus_cur->noIORanges;
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	range_prev = शून्य;
-	जबतक (range_cur) अणु
-		अगर (range->start < range_cur->start)
-			अवरोध;
+	range_prev = NULL;
+	while (range_cur) {
+		if (range->start < range_cur->start)
+			break;
 		range_prev = range_cur;
 		range_cur = range_cur->next;
 		count = count + 1;
-	पूर्ण
-	अगर (!count) अणु
+	}
+	if (!count) {
 		/* our range will go at the beginning of the list */
-		चयन (type) अणु
-			हाल MEM:
+		switch (type) {
+			case MEM:
 				bus_cur->rangeMem = range;
-				अवरोध;
-			हाल PFMEM:
+				break;
+			case PFMEM:
 				bus_cur->rangePFMem = range;
-				अवरोध;
-			हाल IO:
+				break;
+			case IO:
 				bus_cur->rangeIO = range;
-				अवरोध;
-		पूर्ण
+				break;
+		}
 		range->next = range_cur;
 		range->rangeno = 1;
 		i_init = 0;
-	पूर्ण अन्यथा अगर (!range_cur) अणु
+	} else if (!range_cur) {
 		/* our range will go at the end of the list */
-		range->next = शून्य;
+		range->next = NULL;
 		range_prev->next = range;
 		range->rangeno = range_prev->rangeno + 1;
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		/* the range is in the middle */
 		range_prev->next = range;
 		range->next = range_cur;
 		range->rangeno = range_cur->rangeno;
 		i_init = range_prev->rangeno;
-	पूर्ण
+	}
 
-	क्रम (count = i_init; count < noRanges; ++count) अणु
+	for (count = i_init; count < noRanges; ++count) {
 		++range_cur->rangeno;
 		range_cur = range_cur->next;
-	पूर्ण
+	}
 
 	update_resources(bus_cur, type, i_init + 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*******************************************************************************
  * This routine goes through the list of resources of type 'type' and updates
@@ -441,546 +440,546 @@
  *
  * Input: bus, type of the resource, the rangeno starting from which to update
  ******************************************************************************/
-अटल व्योम update_resources(काष्ठा bus_node *bus_cur, पूर्णांक type, पूर्णांक rangeno)
-अणु
-	काष्ठा resource_node *res = शून्य;
+static void update_resources(struct bus_node *bus_cur, int type, int rangeno)
+{
+	struct resource_node *res = NULL;
 	u8 eol = 0;	/* end of list indicator */
 
-	चयन (type) अणु
-		हाल MEM:
-			अगर (bus_cur->firstMem)
+	switch (type) {
+		case MEM:
+			if (bus_cur->firstMem)
 				res = bus_cur->firstMem;
-			अवरोध;
-		हाल PFMEM:
-			अगर (bus_cur->firstPFMem)
+			break;
+		case PFMEM:
+			if (bus_cur->firstPFMem)
 				res = bus_cur->firstPFMem;
-			अवरोध;
-		हाल IO:
-			अगर (bus_cur->firstIO)
+			break;
+		case IO:
+			if (bus_cur->firstIO)
 				res = bus_cur->firstIO;
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (res) अणु
-		जबतक (res) अणु
-			अगर (res->rangeno == rangeno)
-				अवरोध;
-			अगर (res->next)
+	if (res) {
+		while (res) {
+			if (res->rangeno == rangeno)
+				break;
+			if (res->next)
 				res = res->next;
-			अन्यथा अगर (res->nextRange)
+			else if (res->nextRange)
 				res = res->nextRange;
-			अन्यथा अणु
+			else {
 				eol = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!eol) अणु
+		if (!eol) {
 			/* found the range */
-			जबतक (res) अणु
+			while (res) {
 				++res->rangeno;
 				res = res->next;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम fix_me(काष्ठा resource_node *res, काष्ठा bus_node *bus_cur, काष्ठा range_node *range)
-अणु
-	अक्षर *str = "";
-	चयन (res->type) अणु
-		हाल IO:
+static void fix_me(struct resource_node *res, struct bus_node *bus_cur, struct range_node *range)
+{
+	char *str = "";
+	switch (res->type) {
+		case IO:
 			str = "io";
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			str = "mem";
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			str = "pfmem";
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	जबतक (res) अणु
-		अगर (res->rangeno == -1) अणु
-			जबतक (range) अणु
-				अगर ((res->start >= range->start) && (res->end <= range->end)) अणु
+	while (res) {
+		if (res->rangeno == -1) {
+			while (range) {
+				if ((res->start >= range->start) && (res->end <= range->end)) {
 					res->rangeno = range->rangeno;
 					debug("%s->rangeno in fix_resources is %d\n", str, res->rangeno);
-					चयन (res->type) अणु
-						हाल IO:
+					switch (res->type) {
+						case IO:
 							--bus_cur->needIOUpdate;
-							अवरोध;
-						हाल MEM:
+							break;
+						case MEM:
 							--bus_cur->needMemUpdate;
-							अवरोध;
-						हाल PFMEM:
+							break;
+						case PFMEM:
 							--bus_cur->needPFMemUpdate;
-							अवरोध;
-					पूर्ण
-					अवरोध;
-				पूर्ण
+							break;
+					}
+					break;
+				}
 				range = range->next;
-			पूर्ण
-		पूर्ण
-		अगर (res->next)
+			}
+		}
+		if (res->next)
 			res = res->next;
-		अन्यथा
+		else
 			res = res->nextRange;
-	पूर्ण
+	}
 
-पूर्ण
+}
 
 /*****************************************************************************
  * This routine reassigns the range numbers to the resources that had a -1
- * This हाल can happen only अगर upon initialization, resources taken by pci dev
- * appear in EBDA beक्रमe the resources allocated क्रम that bus, since we करोn't
+ * This case can happen only if upon initialization, resources taken by pci dev
+ * appear in EBDA before the resources allocated for that bus, since we don't
  * know the range, we assign -1, and this routine is called after a new range
- * is asचिन्हित to see the resources with unknown range beदीर्घ to the added range
+ * is assigned to see the resources with unknown range belong to the added range
  *
  * Input: current bus
- * Output: none, list of resources क्रम that bus are fixed अगर can be
+ * Output: none, list of resources for that bus are fixed if can be
  *******************************************************************************/
-अटल व्योम fix_resources(काष्ठा bus_node *bus_cur)
-अणु
-	काष्ठा range_node *range;
-	काष्ठा resource_node *res;
+static void fix_resources(struct bus_node *bus_cur)
+{
+	struct range_node *range;
+	struct resource_node *res;
 
 	debug("%s - bus_cur->busno = %d\n", __func__, bus_cur->busno);
 
-	अगर (bus_cur->needIOUpdate) अणु
+	if (bus_cur->needIOUpdate) {
 		res = bus_cur->firstIO;
 		range = bus_cur->rangeIO;
 		fix_me(res, bus_cur, range);
-	पूर्ण
-	अगर (bus_cur->needMemUpdate) अणु
+	}
+	if (bus_cur->needMemUpdate) {
 		res = bus_cur->firstMem;
 		range = bus_cur->rangeMem;
 		fix_me(res, bus_cur, range);
-	पूर्ण
-	अगर (bus_cur->needPFMemUpdate) अणु
+	}
+	if (bus_cur->needPFMemUpdate) {
 		res = bus_cur->firstPFMem;
 		range = bus_cur->rangePFMem;
 		fix_me(res, bus_cur, range);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*******************************************************************************
  * This routine adds a resource to the list of resources to the appropriate bus
  * based on their resource type and sorted by their starting addresses.  It assigns
- * the ptrs to next and nextRange अगर needed.
+ * the ptrs to next and nextRange if needed.
  *
  * Input: resource ptr
- * Output: ptrs asचिन्हित (to the node)
+ * Output: ptrs assigned (to the node)
  * 0 or -1
  *******************************************************************************/
-पूर्णांक ibmphp_add_resource(काष्ठा resource_node *res)
-अणु
-	काष्ठा resource_node *res_cur;
-	काष्ठा resource_node *res_prev;
-	काष्ठा bus_node *bus_cur;
-	काष्ठा range_node *range_cur = शून्य;
-	काष्ठा resource_node *res_start = शून्य;
+int ibmphp_add_resource(struct resource_node *res)
+{
+	struct resource_node *res_cur;
+	struct resource_node *res_prev;
+	struct bus_node *bus_cur;
+	struct range_node *range_cur = NULL;
+	struct resource_node *res_start = NULL;
 
 	debug("%s - enter\n", __func__);
 
-	अगर (!res) अणु
+	if (!res) {
 		err("NULL passed to add\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	bus_cur = find_bus_wprev(res->busno, शून्य, 0);
+	bus_cur = find_bus_wprev(res->busno, NULL, 0);
 
-	अगर (!bus_cur) अणु
+	if (!bus_cur) {
 		/* didn't find a bus, something's wrong!!! */
 		debug("no bus in the system, either pci_dev's wrong or allocation failed\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Normal हाल */
-	चयन (res->type) अणु
-		हाल IO:
+	/* Normal case */
+	switch (res->type) {
+		case IO:
 			range_cur = bus_cur->rangeIO;
 			res_start = bus_cur->firstIO;
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			range_cur = bus_cur->rangeMem;
 			res_start = bus_cur->firstMem;
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			range_cur = bus_cur->rangePFMem;
 			res_start = bus_cur->firstPFMem;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err("cannot read the type of the resource to add... problem\n");
-			वापस -EINVAL;
-	पूर्ण
-	जबतक (range_cur) अणु
-		अगर ((res->start >= range_cur->start) && (res->end <= range_cur->end)) अणु
+			return -EINVAL;
+	}
+	while (range_cur) {
+		if ((res->start >= range_cur->start) && (res->end <= range_cur->end)) {
 			res->rangeno = range_cur->rangeno;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		range_cur = range_cur->next;
-	पूर्ण
+	}
 
 	/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	 * this is again the हाल of rangeno = -1
+	 * this is again the case of rangeno = -1
 	 * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	 */
 
-	अगर (!range_cur) अणु
-		चयन (res->type) अणु
-			हाल IO:
+	if (!range_cur) {
+		switch (res->type) {
+			case IO:
 				++bus_cur->needIOUpdate;
-				अवरोध;
-			हाल MEM:
+				break;
+			case MEM:
 				++bus_cur->needMemUpdate;
-				अवरोध;
-			हाल PFMEM:
+				break;
+			case PFMEM:
 				++bus_cur->needPFMemUpdate;
-				अवरोध;
-		पूर्ण
+				break;
+		}
 		res->rangeno = -1;
-	पूर्ण
+	}
 
 	debug("The range is %d\n", res->rangeno);
-	अगर (!res_start) अणु
-		/* no firstअणुIO,Mem,Pfmemपूर्ण on the bus, 1st IO/Mem/Pfmem resource ever */
-		चयन (res->type) अणु
-			हाल IO:
+	if (!res_start) {
+		/* no first{IO,Mem,Pfmem} on the bus, 1st IO/Mem/Pfmem resource ever */
+		switch (res->type) {
+			case IO:
 				bus_cur->firstIO = res;
-				अवरोध;
-			हाल MEM:
+				break;
+			case MEM:
 				bus_cur->firstMem = res;
-				अवरोध;
-			हाल PFMEM:
+				break;
+			case PFMEM:
 				bus_cur->firstPFMem = res;
-				अवरोध;
-		पूर्ण
-		res->next = शून्य;
-		res->nextRange = शून्य;
-	पूर्ण अन्यथा अणु
+				break;
+		}
+		res->next = NULL;
+		res->nextRange = NULL;
+	} else {
 		res_cur = res_start;
-		res_prev = शून्य;
+		res_prev = NULL;
 
 		debug("res_cur->rangeno is %d\n", res_cur->rangeno);
 
-		जबतक (res_cur) अणु
-			अगर (res_cur->rangeno >= res->rangeno)
-				अवरोध;
+		while (res_cur) {
+			if (res_cur->rangeno >= res->rangeno)
+				break;
 			res_prev = res_cur;
-			अगर (res_cur->next)
+			if (res_cur->next)
 				res_cur = res_cur->next;
-			अन्यथा
+			else
 				res_cur = res_cur->nextRange;
-		पूर्ण
+		}
 
-		अगर (!res_cur) अणु
+		if (!res_cur) {
 			/* at the end of the resource list */
 			debug("i should be here, [%x - %x]\n", res->start, res->end);
 			res_prev->nextRange = res;
-			res->next = शून्य;
-			res->nextRange = शून्य;
-		पूर्ण अन्यथा अगर (res_cur->rangeno == res->rangeno) अणु
+			res->next = NULL;
+			res->nextRange = NULL;
+		} else if (res_cur->rangeno == res->rangeno) {
 			/* in the same range */
-			जबतक (res_cur) अणु
-				अगर (res->start < res_cur->start)
-					अवरोध;
+			while (res_cur) {
+				if (res->start < res_cur->start)
+					break;
 				res_prev = res_cur;
 				res_cur = res_cur->next;
-			पूर्ण
-			अगर (!res_cur) अणु
+			}
+			if (!res_cur) {
 				/* the last resource in this range */
 				res_prev->next = res;
-				res->next = शून्य;
+				res->next = NULL;
 				res->nextRange = res_prev->nextRange;
-				res_prev->nextRange = शून्य;
-			पूर्ण अन्यथा अगर (res->start < res_cur->start) अणु
+				res_prev->nextRange = NULL;
+			} else if (res->start < res_cur->start) {
 				/* at the beginning or middle of the range */
-				अगर (!res_prev)	अणु
-					चयन (res->type) अणु
-						हाल IO:
+				if (!res_prev)	{
+					switch (res->type) {
+						case IO:
 							bus_cur->firstIO = res;
-							अवरोध;
-						हाल MEM:
+							break;
+						case MEM:
 							bus_cur->firstMem = res;
-							अवरोध;
-						हाल PFMEM:
+							break;
+						case PFMEM:
 							bus_cur->firstPFMem = res;
-							अवरोध;
-					पूर्ण
-				पूर्ण अन्यथा अगर (res_prev->rangeno == res_cur->rangeno)
+							break;
+					}
+				} else if (res_prev->rangeno == res_cur->rangeno)
 					res_prev->next = res;
-				अन्यथा
+				else
 					res_prev->nextRange = res;
 
 				res->next = res_cur;
-				res->nextRange = शून्य;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* this is the हाल where it is 1st occurrence of the range */
-			अगर (!res_prev) अणु
+				res->nextRange = NULL;
+			}
+		} else {
+			/* this is the case where it is 1st occurrence of the range */
+			if (!res_prev) {
 				/* at the beginning of the resource list */
-				res->next = शून्य;
-				चयन (res->type) अणु
-					हाल IO:
+				res->next = NULL;
+				switch (res->type) {
+					case IO:
 						res->nextRange = bus_cur->firstIO;
 						bus_cur->firstIO = res;
-						अवरोध;
-					हाल MEM:
+						break;
+					case MEM:
 						res->nextRange = bus_cur->firstMem;
 						bus_cur->firstMem = res;
-						अवरोध;
-					हाल PFMEM:
+						break;
+					case PFMEM:
 						res->nextRange = bus_cur->firstPFMem;
 						bus_cur->firstPFMem = res;
-						अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अगर (res_cur->rangeno > res->rangeno) अणु
+						break;
+				}
+			} else if (res_cur->rangeno > res->rangeno) {
 				/* in the middle of the resource list */
 				res_prev->nextRange = res;
-				res->next = शून्य;
+				res->next = NULL;
 				res->nextRange = res_cur;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	debug("%s - exit\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /****************************************************************************
- * This routine will हटाओ the resource from the list of resources
+ * This routine will remove the resource from the list of resources
  *
  * Input: io, mem, and/or pfmem resource to be deleted
- * Output: modअगरied resource list
+ * Output: modified resource list
  *        0 or error code
  ****************************************************************************/
-पूर्णांक ibmphp_हटाओ_resource(काष्ठा resource_node *res)
-अणु
-	काष्ठा bus_node *bus_cur;
-	काष्ठा resource_node *res_cur = शून्य;
-	काष्ठा resource_node *res_prev;
-	काष्ठा resource_node *mem_cur;
-	अक्षर *type = "";
+int ibmphp_remove_resource(struct resource_node *res)
+{
+	struct bus_node *bus_cur;
+	struct resource_node *res_cur = NULL;
+	struct resource_node *res_prev;
+	struct resource_node *mem_cur;
+	char *type = "";
 
-	अगर (!res)  अणु
+	if (!res)  {
 		err("resource to remove is NULL\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	bus_cur = find_bus_wprev(res->busno, शून्य, 0);
+	bus_cur = find_bus_wprev(res->busno, NULL, 0);
 
-	अगर (!bus_cur) अणु
+	if (!bus_cur) {
 		err("cannot find corresponding bus of the io resource to remove  bailing out...\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	चयन (res->type) अणु
-		हाल IO:
+	switch (res->type) {
+		case IO:
 			res_cur = bus_cur->firstIO;
 			type = "io";
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			res_cur = bus_cur->firstMem;
 			type = "mem";
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			res_cur = bus_cur->firstPFMem;
 			type = "pfmem";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err("unknown type for resource to remove\n");
-			वापस -EINVAL;
-	पूर्ण
-	res_prev = शून्य;
+			return -EINVAL;
+	}
+	res_prev = NULL;
 
-	जबतक (res_cur) अणु
-		अगर ((res_cur->start == res->start) && (res_cur->end == res->end))
-			अवरोध;
+	while (res_cur) {
+		if ((res_cur->start == res->start) && (res_cur->end == res->end))
+			break;
 		res_prev = res_cur;
-		अगर (res_cur->next)
+		if (res_cur->next)
 			res_cur = res_cur->next;
-		अन्यथा
+		else
 			res_cur = res_cur->nextRange;
-	पूर्ण
+	}
 
-	अगर (!res_cur) अणु
-		अगर (res->type == PFMEM) अणु
+	if (!res_cur) {
+		if (res->type == PFMEM) {
 			/*
-			 * हाल where pfmem might be in the PFMemFromMem list
-			 * so will also need to हटाओ the corresponding mem
+			 * case where pfmem might be in the PFMemFromMem list
+			 * so will also need to remove the corresponding mem
 			 * entry
 			 */
 			res_cur = bus_cur->firstPFMemFromMem;
-			res_prev = शून्य;
+			res_prev = NULL;
 
-			जबतक (res_cur) अणु
-				अगर ((res_cur->start == res->start) && (res_cur->end == res->end)) अणु
+			while (res_cur) {
+				if ((res_cur->start == res->start) && (res_cur->end == res->end)) {
 					mem_cur = bus_cur->firstMem;
-					जबतक (mem_cur) अणु
-						अगर ((mem_cur->start == res_cur->start)
+					while (mem_cur) {
+						if ((mem_cur->start == res_cur->start)
 						    && (mem_cur->end == res_cur->end))
-							अवरोध;
-						अगर (mem_cur->next)
+							break;
+						if (mem_cur->next)
 							mem_cur = mem_cur->next;
-						अन्यथा
+						else
 							mem_cur = mem_cur->nextRange;
-					पूर्ण
-					अगर (!mem_cur) अणु
+					}
+					if (!mem_cur) {
 						err("cannot find corresponding mem node for pfmem...\n");
-						वापस -EINVAL;
-					पूर्ण
+						return -EINVAL;
+					}
 
-					ibmphp_हटाओ_resource(mem_cur);
-					अगर (!res_prev)
+					ibmphp_remove_resource(mem_cur);
+					if (!res_prev)
 						bus_cur->firstPFMemFromMem = res_cur->next;
-					अन्यथा
+					else
 						res_prev->next = res_cur->next;
-					kमुक्त(res_cur);
-					वापस 0;
-				पूर्ण
+					kfree(res_cur);
+					return 0;
+				}
 				res_prev = res_cur;
-				अगर (res_cur->next)
+				if (res_cur->next)
 					res_cur = res_cur->next;
-				अन्यथा
+				else
 					res_cur = res_cur->nextRange;
-			पूर्ण
-			अगर (!res_cur) अणु
+			}
+			if (!res_cur) {
 				err("cannot find pfmem to delete...\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -EINVAL;
+			}
+		} else {
 			err("the %s resource is not in the list to be deleted...\n", type);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (!res_prev) अणु
+			return -EINVAL;
+		}
+	}
+	if (!res_prev) {
 		/* first device to be deleted */
-		अगर (res_cur->next) अणु
-			चयन (res->type) अणु
-				हाल IO:
+		if (res_cur->next) {
+			switch (res->type) {
+				case IO:
 					bus_cur->firstIO = res_cur->next;
-					अवरोध;
-				हाल MEM:
+					break;
+				case MEM:
 					bus_cur->firstMem = res_cur->next;
-					अवरोध;
-				हाल PFMEM:
+					break;
+				case PFMEM:
 					bus_cur->firstPFMem = res_cur->next;
-					अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अगर (res_cur->nextRange) अणु
-			चयन (res->type) अणु
-				हाल IO:
+					break;
+			}
+		} else if (res_cur->nextRange) {
+			switch (res->type) {
+				case IO:
 					bus_cur->firstIO = res_cur->nextRange;
-					अवरोध;
-				हाल MEM:
+					break;
+				case MEM:
 					bus_cur->firstMem = res_cur->nextRange;
-					अवरोध;
-				हाल PFMEM:
+					break;
+				case PFMEM:
 					bus_cur->firstPFMem = res_cur->nextRange;
-					अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			चयन (res->type) अणु
-				हाल IO:
-					bus_cur->firstIO = शून्य;
-					अवरोध;
-				हाल MEM:
-					bus_cur->firstMem = शून्य;
-					अवरोध;
-				हाल PFMEM:
-					bus_cur->firstPFMem = शून्य;
-					अवरोध;
-			पूर्ण
-		पूर्ण
-		kमुक्त(res_cur);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		अगर (res_cur->next) अणु
-			अगर (res_prev->rangeno == res_cur->rangeno)
+					break;
+			}
+		} else {
+			switch (res->type) {
+				case IO:
+					bus_cur->firstIO = NULL;
+					break;
+				case MEM:
+					bus_cur->firstMem = NULL;
+					break;
+				case PFMEM:
+					bus_cur->firstPFMem = NULL;
+					break;
+			}
+		}
+		kfree(res_cur);
+		return 0;
+	} else {
+		if (res_cur->next) {
+			if (res_prev->rangeno == res_cur->rangeno)
 				res_prev->next = res_cur->next;
-			अन्यथा
+			else
 				res_prev->nextRange = res_cur->next;
-		पूर्ण अन्यथा अगर (res_cur->nextRange) अणु
-			res_prev->next = शून्य;
+		} else if (res_cur->nextRange) {
+			res_prev->next = NULL;
 			res_prev->nextRange = res_cur->nextRange;
-		पूर्ण अन्यथा अणु
-			res_prev->next = शून्य;
-			res_prev->nextRange = शून्य;
-		पूर्ण
-		kमुक्त(res_cur);
-		वापस 0;
-	पूर्ण
+		} else {
+			res_prev->next = NULL;
+			res_prev->nextRange = NULL;
+		}
+		kfree(res_cur);
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा range_node *find_range(काष्ठा bus_node *bus_cur, काष्ठा resource_node *res)
-अणु
-	काष्ठा range_node *range = शून्य;
+static struct range_node *find_range(struct bus_node *bus_cur, struct resource_node *res)
+{
+	struct range_node *range = NULL;
 
-	चयन (res->type) अणु
-		हाल IO:
+	switch (res->type) {
+		case IO:
 			range = bus_cur->rangeIO;
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			range = bus_cur->rangeMem;
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			range = bus_cur->rangePFMem;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err("cannot read resource type in find_range\n");
-	पूर्ण
+	}
 
-	जबतक (range) अणु
-		अगर (res->rangeno == range->rangeno)
-			अवरोध;
+	while (range) {
+		if (res->rangeno == range->rangeno)
+			break;
 		range = range->next;
-	पूर्ण
-	वापस range;
-पूर्ण
+	}
+	return range;
+}
 
 /*****************************************************************************
- * This routine will check to make sure the io/mem/pfmem->len that the device asked क्रम
- * can fit w/i our list of available IO/MEM/PFMEM resources.  If cannot, वापसs -EINVAL,
- * otherwise, वापसs 0
+ * This routine will check to make sure the io/mem/pfmem->len that the device asked for
+ * can fit w/i our list of available IO/MEM/PFMEM resources.  If cannot, returns -EINVAL,
+ * otherwise, returns 0
  *
  * Input: resource
- * Output: the correct start and end address are inputted पूर्णांकo the resource node,
+ * Output: the correct start and end address are inputted into the resource node,
  *        0 or -EINVAL
  *****************************************************************************/
-पूर्णांक ibmphp_check_resource(काष्ठा resource_node *res, u8 bridge)
-अणु
-	काष्ठा bus_node *bus_cur;
-	काष्ठा range_node *range = शून्य;
-	काष्ठा resource_node *res_prev;
-	काष्ठा resource_node *res_cur = शून्य;
-	u32 len_cur = 0, start_cur = 0, len_पंचांगp = 0;
-	पूर्णांक noranges = 0;
-	u32 पंचांगp_start;		/* this is to make sure start address is भागisible by the length needed */
-	u32 पंचांगp_भागide;
+int ibmphp_check_resource(struct resource_node *res, u8 bridge)
+{
+	struct bus_node *bus_cur;
+	struct range_node *range = NULL;
+	struct resource_node *res_prev;
+	struct resource_node *res_cur = NULL;
+	u32 len_cur = 0, start_cur = 0, len_tmp = 0;
+	int noranges = 0;
+	u32 tmp_start;		/* this is to make sure start address is divisible by the length needed */
+	u32 tmp_divide;
 	u8 flag = 0;
 
-	अगर (!res)
-		वापस -EINVAL;
+	if (!res)
+		return -EINVAL;
 
-	अगर (bridge) अणु
-		/* The rules क्रम bridges are dअगरferent, 4K भागisible क्रम IO, 1M क्रम (pf)mem*/
-		अगर (res->type == IO)
-			पंचांगp_भागide = IOBRIDGE;
-		अन्यथा
-			पंचांगp_भागide = MEMBRIDGE;
-	पूर्ण अन्यथा
-		पंचांगp_भागide = res->len;
+	if (bridge) {
+		/* The rules for bridges are different, 4K divisible for IO, 1M for (pf)mem*/
+		if (res->type == IO)
+			tmp_divide = IOBRIDGE;
+		else
+			tmp_divide = MEMBRIDGE;
+	} else
+		tmp_divide = res->len;
 
-	bus_cur = find_bus_wprev(res->busno, शून्य, 0);
+	bus_cur = find_bus_wprev(res->busno, NULL, 0);
 
-	अगर (!bus_cur) अणु
+	if (!bus_cur) {
 		/* didn't find a bus, something's wrong!!! */
 		debug("no bus in the system, either pci_dev's wrong or allocation failed\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	debug("%s - enter\n", __func__);
 	debug("bus_cur->busno is %d\n", bus_cur->busno);
@@ -989,431 +988,431 @@
 	 * 2000-2fff, len = 1000, but when we compare, we need it to be fff */
 	res->len -= 1;
 
-	चयन (res->type) अणु
-		हाल IO:
+	switch (res->type) {
+		case IO:
 			res_cur = bus_cur->firstIO;
 			noranges = bus_cur->noIORanges;
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			res_cur = bus_cur->firstMem;
 			noranges = bus_cur->noMemRanges;
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			res_cur = bus_cur->firstPFMem;
 			noranges = bus_cur->noPFMemRanges;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err("wrong type of resource to check\n");
-			वापस -EINVAL;
-	पूर्ण
-	res_prev = शून्य;
+			return -EINVAL;
+	}
+	res_prev = NULL;
 
-	जबतक (res_cur) अणु
+	while (res_cur) {
 		range = find_range(bus_cur, res_cur);
 		debug("%s - rangeno = %d\n", __func__, res_cur->rangeno);
 
-		अगर (!range) अणु
+		if (!range) {
 			err("no range for the device exists... bailing out...\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* found our range */
-		अगर (!res_prev) अणु
-			/* first समय in the loop */
-			len_पंचांगp = res_cur->start - 1 - range->start;
+		if (!res_prev) {
+			/* first time in the loop */
+			len_tmp = res_cur->start - 1 - range->start;
 
-			अगर ((res_cur->start != range->start) && (len_पंचांगp >= res->len)) अणु
-				debug("len_tmp = %x\n", len_पंचांगp);
+			if ((res_cur->start != range->start) && (len_tmp >= res->len)) {
+				debug("len_tmp = %x\n", len_tmp);
 
-				अगर ((len_पंचांगp < len_cur) || (len_cur == 0)) अणु
+				if ((len_tmp < len_cur) || (len_cur == 0)) {
 
-					अगर ((range->start % पंचांगp_भागide) == 0) अणु
-						/* just perfect, starting address is भागisible by length */
+					if ((range->start % tmp_divide) == 0) {
+						/* just perfect, starting address is divisible by length */
 						flag = 1;
-						len_cur = len_पंचांगp;
+						len_cur = len_tmp;
 						start_cur = range->start;
-					पूर्ण अन्यथा अणु
+					} else {
 						/* Needs adjusting */
-						पंचांगp_start = range->start;
+						tmp_start = range->start;
 						flag = 0;
 
-						जबतक ((len_पंचांगp = res_cur->start - 1 - पंचांगp_start) >= res->len) अणु
-							अगर ((पंचांगp_start % पंचांगp_भागide) == 0) अणु
+						while ((len_tmp = res_cur->start - 1 - tmp_start) >= res->len) {
+							if ((tmp_start % tmp_divide) == 0) {
 								flag = 1;
-								len_cur = len_पंचांगp;
-								start_cur = पंचांगp_start;
-								अवरोध;
-							पूर्ण
-							पंचांगp_start += पंचांगp_भागide - पंचांगp_start % पंचांगp_भागide;
-							अगर (पंचांगp_start >= res_cur->start - 1)
-								अवरोध;
-						पूर्ण
-					पूर्ण
+								len_cur = len_tmp;
+								start_cur = tmp_start;
+								break;
+							}
+							tmp_start += tmp_divide - tmp_start % tmp_divide;
+							if (tmp_start >= res_cur->start - 1)
+								break;
+						}
+					}
 
-					अगर (flag && len_cur == res->len) अणु
+					if (flag && len_cur == res->len) {
 						debug("but we are not here, right?\n");
 						res->start = start_cur;
 						res->len += 1; /* To restore the balance */
 						res->end = res->start + res->len - 1;
-						वापस 0;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (!res_cur->next) अणु
+						return 0;
+					}
+				}
+			}
+		}
+		if (!res_cur->next) {
 			/* last device on the range */
-			len_पंचांगp = range->end - (res_cur->end + 1);
+			len_tmp = range->end - (res_cur->end + 1);
 
-			अगर ((range->end != res_cur->end) && (len_पंचांगp >= res->len)) अणु
-				debug("len_tmp = %x\n", len_पंचांगp);
-				अगर ((len_पंचांगp < len_cur) || (len_cur == 0)) अणु
+			if ((range->end != res_cur->end) && (len_tmp >= res->len)) {
+				debug("len_tmp = %x\n", len_tmp);
+				if ((len_tmp < len_cur) || (len_cur == 0)) {
 
-					अगर (((res_cur->end + 1) % पंचांगp_भागide) == 0) अणु
-						/* just perfect, starting address is भागisible by length */
+					if (((res_cur->end + 1) % tmp_divide) == 0) {
+						/* just perfect, starting address is divisible by length */
 						flag = 1;
-						len_cur = len_पंचांगp;
+						len_cur = len_tmp;
 						start_cur = res_cur->end + 1;
-					पूर्ण अन्यथा अणु
+					} else {
 						/* Needs adjusting */
-						पंचांगp_start = res_cur->end + 1;
+						tmp_start = res_cur->end + 1;
 						flag = 0;
 
-						जबतक ((len_पंचांगp = range->end - पंचांगp_start) >= res->len) अणु
-							अगर ((पंचांगp_start % पंचांगp_भागide) == 0) अणु
+						while ((len_tmp = range->end - tmp_start) >= res->len) {
+							if ((tmp_start % tmp_divide) == 0) {
 								flag = 1;
-								len_cur = len_पंचांगp;
-								start_cur = पंचांगp_start;
-								अवरोध;
-							पूर्ण
-							पंचांगp_start += पंचांगp_भागide - पंचांगp_start % पंचांगp_भागide;
-							अगर (पंचांगp_start >= range->end)
-								अवरोध;
-						पूर्ण
-					पूर्ण
-					अगर (flag && len_cur == res->len) अणु
+								len_cur = len_tmp;
+								start_cur = tmp_start;
+								break;
+							}
+							tmp_start += tmp_divide - tmp_start % tmp_divide;
+							if (tmp_start >= range->end)
+								break;
+						}
+					}
+					if (flag && len_cur == res->len) {
 						res->start = start_cur;
 						res->len += 1; /* To restore the balance */
 						res->end = res->start + res->len - 1;
-						वापस 0;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
+						return 0;
+					}
+				}
+			}
+		}
 
-		अगर (res_prev) अणु
-			अगर (res_prev->rangeno != res_cur->rangeno) अणु
+		if (res_prev) {
+			if (res_prev->rangeno != res_cur->rangeno) {
 				/* 1st device on this range */
-				len_पंचांगp = res_cur->start - 1 - range->start;
+				len_tmp = res_cur->start - 1 - range->start;
 
-				अगर ((res_cur->start != range->start) &&	(len_पंचांगp >= res->len)) अणु
-					अगर ((len_पंचांगp < len_cur) || (len_cur == 0)) अणु
-						अगर ((range->start % पंचांगp_भागide) == 0) अणु
-							/* just perfect, starting address is भागisible by length */
+				if ((res_cur->start != range->start) &&	(len_tmp >= res->len)) {
+					if ((len_tmp < len_cur) || (len_cur == 0)) {
+						if ((range->start % tmp_divide) == 0) {
+							/* just perfect, starting address is divisible by length */
 							flag = 1;
-							len_cur = len_पंचांगp;
+							len_cur = len_tmp;
 							start_cur = range->start;
-						पूर्ण अन्यथा अणु
+						} else {
 							/* Needs adjusting */
-							पंचांगp_start = range->start;
+							tmp_start = range->start;
 							flag = 0;
 
-							जबतक ((len_पंचांगp = res_cur->start - 1 - पंचांगp_start) >= res->len) अणु
-								अगर ((पंचांगp_start % पंचांगp_भागide) == 0) अणु
+							while ((len_tmp = res_cur->start - 1 - tmp_start) >= res->len) {
+								if ((tmp_start % tmp_divide) == 0) {
 									flag = 1;
-									len_cur = len_पंचांगp;
-									start_cur = पंचांगp_start;
-									अवरोध;
-								पूर्ण
-								पंचांगp_start += पंचांगp_भागide - पंचांगp_start % पंचांगp_भागide;
-								अगर (पंचांगp_start >= res_cur->start - 1)
-									अवरोध;
-							पूर्ण
-						पूर्ण
+									len_cur = len_tmp;
+									start_cur = tmp_start;
+									break;
+								}
+								tmp_start += tmp_divide - tmp_start % tmp_divide;
+								if (tmp_start >= res_cur->start - 1)
+									break;
+							}
+						}
 
-						अगर (flag && len_cur == res->len) अणु
+						if (flag && len_cur == res->len) {
 							res->start = start_cur;
 							res->len += 1; /* To restore the balance */
 							res->end = res->start + res->len - 1;
-							वापस 0;
-						पूर्ण
-					पूर्ण
-				पूर्ण
-			पूर्ण अन्यथा अणु
+							return 0;
+						}
+					}
+				}
+			} else {
 				/* in the same range */
-				len_पंचांगp = res_cur->start - 1 - res_prev->end - 1;
+				len_tmp = res_cur->start - 1 - res_prev->end - 1;
 
-				अगर (len_पंचांगp >= res->len) अणु
-					अगर ((len_पंचांगp < len_cur) || (len_cur == 0)) अणु
-						अगर (((res_prev->end + 1) % पंचांगp_भागide) == 0) अणु
-							/* just perfect, starting address's भागisible by length */
+				if (len_tmp >= res->len) {
+					if ((len_tmp < len_cur) || (len_cur == 0)) {
+						if (((res_prev->end + 1) % tmp_divide) == 0) {
+							/* just perfect, starting address's divisible by length */
 							flag = 1;
-							len_cur = len_पंचांगp;
+							len_cur = len_tmp;
 							start_cur = res_prev->end + 1;
-						पूर्ण अन्यथा अणु
+						} else {
 							/* Needs adjusting */
-							पंचांगp_start = res_prev->end + 1;
+							tmp_start = res_prev->end + 1;
 							flag = 0;
 
-							जबतक ((len_पंचांगp = res_cur->start - 1 - पंचांगp_start) >= res->len) अणु
-								अगर ((पंचांगp_start % पंचांगp_भागide) == 0) अणु
+							while ((len_tmp = res_cur->start - 1 - tmp_start) >= res->len) {
+								if ((tmp_start % tmp_divide) == 0) {
 									flag = 1;
-									len_cur = len_पंचांगp;
-									start_cur = पंचांगp_start;
-									अवरोध;
-								पूर्ण
-								पंचांगp_start += पंचांगp_भागide - पंचांगp_start % पंचांगp_भागide;
-								अगर (पंचांगp_start >= res_cur->start - 1)
-									अवरोध;
-							पूर्ण
-						पूर्ण
+									len_cur = len_tmp;
+									start_cur = tmp_start;
+									break;
+								}
+								tmp_start += tmp_divide - tmp_start % tmp_divide;
+								if (tmp_start >= res_cur->start - 1)
+									break;
+							}
+						}
 
-						अगर (flag && len_cur == res->len) अणु
+						if (flag && len_cur == res->len) {
 							res->start = start_cur;
 							res->len += 1; /* To restore the balance */
 							res->end = res->start + res->len - 1;
-							वापस 0;
-						पूर्ण
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		/* end अगर (res_prev) */
+							return 0;
+						}
+					}
+				}
+			}
+		}
+		/* end if (res_prev) */
 		res_prev = res_cur;
-		अगर (res_cur->next)
+		if (res_cur->next)
 			res_cur = res_cur->next;
-		अन्यथा
+		else
 			res_cur = res_cur->nextRange;
-	पूर्ण	/* end of जबतक */
+	}	/* end of while */
 
 
-	अगर (!res_prev) अणु
+	if (!res_prev) {
 		/* 1st device ever */
 		/* need to find appropriate range */
-		चयन (res->type) अणु
-			हाल IO:
+		switch (res->type) {
+			case IO:
 				range = bus_cur->rangeIO;
-				अवरोध;
-			हाल MEM:
+				break;
+			case MEM:
 				range = bus_cur->rangeMem;
-				अवरोध;
-			हाल PFMEM:
+				break;
+			case PFMEM:
 				range = bus_cur->rangePFMem;
-				अवरोध;
-		पूर्ण
-		जबतक (range) अणु
-			len_पंचांगp = range->end - range->start;
+				break;
+		}
+		while (range) {
+			len_tmp = range->end - range->start;
 
-			अगर (len_पंचांगp >= res->len) अणु
-				अगर ((len_पंचांगp < len_cur) || (len_cur == 0)) अणु
-					अगर ((range->start % पंचांगp_भागide) == 0) अणु
-						/* just perfect, starting address's भागisible by length */
+			if (len_tmp >= res->len) {
+				if ((len_tmp < len_cur) || (len_cur == 0)) {
+					if ((range->start % tmp_divide) == 0) {
+						/* just perfect, starting address's divisible by length */
 						flag = 1;
-						len_cur = len_पंचांगp;
+						len_cur = len_tmp;
 						start_cur = range->start;
-					पूर्ण अन्यथा अणु
+					} else {
 						/* Needs adjusting */
-						पंचांगp_start = range->start;
+						tmp_start = range->start;
 						flag = 0;
 
-						जबतक ((len_पंचांगp = range->end - पंचांगp_start) >= res->len) अणु
-							अगर ((पंचांगp_start % पंचांगp_भागide) == 0) अणु
+						while ((len_tmp = range->end - tmp_start) >= res->len) {
+							if ((tmp_start % tmp_divide) == 0) {
 								flag = 1;
-								len_cur = len_पंचांगp;
-								start_cur = पंचांगp_start;
-								अवरोध;
-							पूर्ण
-							पंचांगp_start += पंचांगp_भागide - पंचांगp_start % पंचांगp_भागide;
-							अगर (पंचांगp_start >= range->end)
-								अवरोध;
-						पूर्ण
-					पूर्ण
+								len_cur = len_tmp;
+								start_cur = tmp_start;
+								break;
+							}
+							tmp_start += tmp_divide - tmp_start % tmp_divide;
+							if (tmp_start >= range->end)
+								break;
+						}
+					}
 
-					अगर (flag && len_cur == res->len) अणु
+					if (flag && len_cur == res->len) {
 						res->start = start_cur;
 						res->len += 1; /* To restore the balance */
 						res->end = res->start + res->len - 1;
-						वापस 0;
-					पूर्ण
-				पूर्ण
-			पूर्ण
+						return 0;
+					}
+				}
+			}
 			range = range->next;
-		पूर्ण		/* end of जबतक */
+		}		/* end of while */
 
-		अगर ((!range) && (len_cur == 0)) अणु
+		if ((!range) && (len_cur == 0)) {
 			/* have gone through the list of devices and ranges and haven't found n.e.thing */
 			err("no appropriate range.. bailing out...\n");
-			वापस -EINVAL;
-		पूर्ण अन्यथा अगर (len_cur) अणु
+			return -EINVAL;
+		} else if (len_cur) {
 			res->start = start_cur;
 			res->len += 1; /* To restore the balance */
 			res->end = res->start + res->len - 1;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (!res_cur) अणु
+	if (!res_cur) {
 		debug("prev->rangeno = %d, noranges = %d\n", res_prev->rangeno, noranges);
-		अगर (res_prev->rangeno < noranges) अणु
-			/* अगर there're more ranges out there to check */
-			चयन (res->type) अणु
-				हाल IO:
+		if (res_prev->rangeno < noranges) {
+			/* if there're more ranges out there to check */
+			switch (res->type) {
+				case IO:
 					range = bus_cur->rangeIO;
-					अवरोध;
-				हाल MEM:
+					break;
+				case MEM:
 					range = bus_cur->rangeMem;
-					अवरोध;
-				हाल PFMEM:
+					break;
+				case PFMEM:
 					range = bus_cur->rangePFMem;
-					अवरोध;
-			पूर्ण
-			जबतक (range) अणु
-				len_पंचांगp = range->end - range->start;
+					break;
+			}
+			while (range) {
+				len_tmp = range->end - range->start;
 
-				अगर (len_पंचांगp >= res->len) अणु
-					अगर ((len_पंचांगp < len_cur) || (len_cur == 0)) अणु
-						अगर ((range->start % पंचांगp_भागide) == 0) अणु
-							/* just perfect, starting address's भागisible by length */
+				if (len_tmp >= res->len) {
+					if ((len_tmp < len_cur) || (len_cur == 0)) {
+						if ((range->start % tmp_divide) == 0) {
+							/* just perfect, starting address's divisible by length */
 							flag = 1;
-							len_cur = len_पंचांगp;
+							len_cur = len_tmp;
 							start_cur = range->start;
-						पूर्ण अन्यथा अणु
+						} else {
 							/* Needs adjusting */
-							पंचांगp_start = range->start;
+							tmp_start = range->start;
 							flag = 0;
 
-							जबतक ((len_पंचांगp = range->end - पंचांगp_start) >= res->len) अणु
-								अगर ((पंचांगp_start % पंचांगp_भागide) == 0) अणु
+							while ((len_tmp = range->end - tmp_start) >= res->len) {
+								if ((tmp_start % tmp_divide) == 0) {
 									flag = 1;
-									len_cur = len_पंचांगp;
-									start_cur = पंचांगp_start;
-									अवरोध;
-								पूर्ण
-								पंचांगp_start += पंचांगp_भागide - पंचांगp_start % पंचांगp_भागide;
-								अगर (पंचांगp_start >= range->end)
-									अवरोध;
-							पूर्ण
-						पूर्ण
+									len_cur = len_tmp;
+									start_cur = tmp_start;
+									break;
+								}
+								tmp_start += tmp_divide - tmp_start % tmp_divide;
+								if (tmp_start >= range->end)
+									break;
+							}
+						}
 
-						अगर (flag && len_cur == res->len) अणु
+						if (flag && len_cur == res->len) {
 							res->start = start_cur;
 							res->len += 1; /* To restore the balance */
 							res->end = res->start + res->len - 1;
-							वापस 0;
-						पूर्ण
-					पूर्ण
-				पूर्ण
+							return 0;
+						}
+					}
+				}
 				range = range->next;
-			पूर्ण	/* end of जबतक */
+			}	/* end of while */
 
-			अगर ((!range) && (len_cur == 0)) अणु
+			if ((!range) && (len_cur == 0)) {
 				/* have gone through the list of devices and ranges and haven't found n.e.thing */
 				err("no appropriate range.. bailing out...\n");
-				वापस -EINVAL;
-			पूर्ण अन्यथा अगर (len_cur) अणु
+				return -EINVAL;
+			} else if (len_cur) {
 				res->start = start_cur;
 				res->len += 1; /* To restore the balance */
 				res->end = res->start + res->len - 1;
-				वापस 0;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return 0;
+			}
+		} else {
 			/* no more ranges to check on */
-			अगर (len_cur) अणु
+			if (len_cur) {
 				res->start = start_cur;
 				res->len += 1; /* To restore the balance */
 				res->end = res->start + res->len - 1;
-				वापस 0;
-			पूर्ण अन्यथा अणु
+				return 0;
+			} else {
 				/* have gone through the list of devices and haven't found n.e.thing */
 				err("no appropriate range.. bailing out...\n");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण	/* end अगर (!res_cur) */
-	वापस -EINVAL;
-पूर्ण
+				return -EINVAL;
+			}
+		}
+	}	/* end if (!res_cur) */
+	return -EINVAL;
+}
 
 /********************************************************************************
- * This routine is called from हटाओ_card अगर the card contained PPB.
- * It will हटाओ all the resources on the bus as well as the bus itself
+ * This routine is called from remove_card if the card contained PPB.
+ * It will remove all the resources on the bus as well as the bus itself
  * Input: Bus
  * Output: 0, -ENODEV
  ********************************************************************************/
-पूर्णांक ibmphp_हटाओ_bus(काष्ठा bus_node *bus, u8 parent_busno)
-अणु
-	काष्ठा resource_node *res_cur;
-	काष्ठा resource_node *res_पंचांगp;
-	काष्ठा bus_node *prev_bus;
-	पूर्णांक rc;
+int ibmphp_remove_bus(struct bus_node *bus, u8 parent_busno)
+{
+	struct resource_node *res_cur;
+	struct resource_node *res_tmp;
+	struct bus_node *prev_bus;
+	int rc;
 
-	prev_bus = find_bus_wprev(parent_busno, शून्य, 0);
+	prev_bus = find_bus_wprev(parent_busno, NULL, 0);
 
-	अगर (!prev_bus) अणु
+	if (!prev_bus) {
 		debug("something terribly wrong. Cannot find parent bus to the one to remove\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	debug("In ibmphp_remove_bus... prev_bus->busno is %x\n", prev_bus->busno);
 
-	rc = हटाओ_ranges(bus, prev_bus);
-	अगर (rc)
-		वापस rc;
+	rc = remove_ranges(bus, prev_bus);
+	if (rc)
+		return rc;
 
-	अगर (bus->firstIO) अणु
+	if (bus->firstIO) {
 		res_cur = bus->firstIO;
-		जबतक (res_cur) अणु
-			res_पंचांगp = res_cur;
-			अगर (res_cur->next)
+		while (res_cur) {
+			res_tmp = res_cur;
+			if (res_cur->next)
 				res_cur = res_cur->next;
-			अन्यथा
+			else
 				res_cur = res_cur->nextRange;
-			kमुक्त(res_पंचांगp);
-			res_पंचांगp = शून्य;
-		पूर्ण
-		bus->firstIO = शून्य;
-	पूर्ण
-	अगर (bus->firstMem) अणु
+			kfree(res_tmp);
+			res_tmp = NULL;
+		}
+		bus->firstIO = NULL;
+	}
+	if (bus->firstMem) {
 		res_cur = bus->firstMem;
-		जबतक (res_cur) अणु
-			res_पंचांगp = res_cur;
-			अगर (res_cur->next)
+		while (res_cur) {
+			res_tmp = res_cur;
+			if (res_cur->next)
 				res_cur = res_cur->next;
-			अन्यथा
+			else
 				res_cur = res_cur->nextRange;
-			kमुक्त(res_पंचांगp);
-			res_पंचांगp = शून्य;
-		पूर्ण
-		bus->firstMem = शून्य;
-	पूर्ण
-	अगर (bus->firstPFMem) अणु
+			kfree(res_tmp);
+			res_tmp = NULL;
+		}
+		bus->firstMem = NULL;
+	}
+	if (bus->firstPFMem) {
 		res_cur = bus->firstPFMem;
-		जबतक (res_cur) अणु
-			res_पंचांगp = res_cur;
-			अगर (res_cur->next)
+		while (res_cur) {
+			res_tmp = res_cur;
+			if (res_cur->next)
 				res_cur = res_cur->next;
-			अन्यथा
+			else
 				res_cur = res_cur->nextRange;
-			kमुक्त(res_पंचांगp);
-			res_पंचांगp = शून्य;
-		पूर्ण
-		bus->firstPFMem = शून्य;
-	पूर्ण
+			kfree(res_tmp);
+			res_tmp = NULL;
+		}
+		bus->firstPFMem = NULL;
+	}
 
-	अगर (bus->firstPFMemFromMem) अणु
+	if (bus->firstPFMemFromMem) {
 		res_cur = bus->firstPFMemFromMem;
-		जबतक (res_cur) अणु
-			res_पंचांगp = res_cur;
+		while (res_cur) {
+			res_tmp = res_cur;
 			res_cur = res_cur->next;
 
-			kमुक्त(res_पंचांगp);
-			res_पंचांगp = शून्य;
-		पूर्ण
-		bus->firstPFMemFromMem = शून्य;
-	पूर्ण
+			kfree(res_tmp);
+			res_tmp = NULL;
+		}
+		bus->firstPFMemFromMem = NULL;
+	}
 
 	list_del(&bus->bus_list);
-	kमुक्त(bus);
-	वापस 0;
-पूर्ण
+	kfree(bus);
+	return 0;
+}
 
 /******************************************************************************
  * This routine deletes the ranges from a given bus, and the entries from the
@@ -1421,266 +1420,266 @@
  * Input: current bus, previous bus
  * Output: 0, -EINVAL
  ******************************************************************************/
-अटल पूर्णांक हटाओ_ranges(काष्ठा bus_node *bus_cur, काष्ठा bus_node *bus_prev)
-अणु
-	काष्ठा range_node *range_cur;
-	काष्ठा range_node *range_पंचांगp;
-	पूर्णांक i;
-	काष्ठा resource_node *res = शून्य;
+static int remove_ranges(struct bus_node *bus_cur, struct bus_node *bus_prev)
+{
+	struct range_node *range_cur;
+	struct range_node *range_tmp;
+	int i;
+	struct resource_node *res = NULL;
 
-	अगर (bus_cur->noIORanges) अणु
+	if (bus_cur->noIORanges) {
 		range_cur = bus_cur->rangeIO;
-		क्रम (i = 0; i < bus_cur->noIORanges; i++) अणु
-			अगर (ibmphp_find_resource(bus_prev, range_cur->start, &res, IO) < 0)
-				वापस -EINVAL;
-			ibmphp_हटाओ_resource(res);
+		for (i = 0; i < bus_cur->noIORanges; i++) {
+			if (ibmphp_find_resource(bus_prev, range_cur->start, &res, IO) < 0)
+				return -EINVAL;
+			ibmphp_remove_resource(res);
 
-			range_पंचांगp = range_cur;
+			range_tmp = range_cur;
 			range_cur = range_cur->next;
-			kमुक्त(range_पंचांगp);
-			range_पंचांगp = शून्य;
-		पूर्ण
-		bus_cur->rangeIO = शून्य;
-	पूर्ण
-	अगर (bus_cur->noMemRanges) अणु
+			kfree(range_tmp);
+			range_tmp = NULL;
+		}
+		bus_cur->rangeIO = NULL;
+	}
+	if (bus_cur->noMemRanges) {
 		range_cur = bus_cur->rangeMem;
-		क्रम (i = 0; i < bus_cur->noMemRanges; i++) अणु
-			अगर (ibmphp_find_resource(bus_prev, range_cur->start, &res, MEM) < 0)
-				वापस -EINVAL;
+		for (i = 0; i < bus_cur->noMemRanges; i++) {
+			if (ibmphp_find_resource(bus_prev, range_cur->start, &res, MEM) < 0)
+				return -EINVAL;
 
-			ibmphp_हटाओ_resource(res);
-			range_पंचांगp = range_cur;
+			ibmphp_remove_resource(res);
+			range_tmp = range_cur;
 			range_cur = range_cur->next;
-			kमुक्त(range_पंचांगp);
-			range_पंचांगp = शून्य;
-		पूर्ण
-		bus_cur->rangeMem = शून्य;
-	पूर्ण
-	अगर (bus_cur->noPFMemRanges) अणु
+			kfree(range_tmp);
+			range_tmp = NULL;
+		}
+		bus_cur->rangeMem = NULL;
+	}
+	if (bus_cur->noPFMemRanges) {
 		range_cur = bus_cur->rangePFMem;
-		क्रम (i = 0; i < bus_cur->noPFMemRanges; i++) अणु
-			अगर (ibmphp_find_resource(bus_prev, range_cur->start, &res, PFMEM) < 0)
-				वापस -EINVAL;
+		for (i = 0; i < bus_cur->noPFMemRanges; i++) {
+			if (ibmphp_find_resource(bus_prev, range_cur->start, &res, PFMEM) < 0)
+				return -EINVAL;
 
-			ibmphp_हटाओ_resource(res);
-			range_पंचांगp = range_cur;
+			ibmphp_remove_resource(res);
+			range_tmp = range_cur;
 			range_cur = range_cur->next;
-			kमुक्त(range_पंचांगp);
-			range_पंचांगp = शून्य;
-		पूर्ण
-		bus_cur->rangePFMem = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			kfree(range_tmp);
+			range_tmp = NULL;
+		}
+		bus_cur->rangePFMem = NULL;
+	}
+	return 0;
+}
 
 /*
  * find the resource node in the bus
  * Input: Resource needed, start address of the resource, type of resource
  */
-पूर्णांक ibmphp_find_resource(काष्ठा bus_node *bus, u32 start_address, काष्ठा resource_node **res, पूर्णांक flag)
-अणु
-	काष्ठा resource_node *res_cur = शून्य;
-	अक्षर *type = "";
+int ibmphp_find_resource(struct bus_node *bus, u32 start_address, struct resource_node **res, int flag)
+{
+	struct resource_node *res_cur = NULL;
+	char *type = "";
 
-	अगर (!bus) अणु
+	if (!bus) {
 		err("The bus passed in NULL to find resource\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	चयन (flag) अणु
-		हाल IO:
+	switch (flag) {
+		case IO:
 			res_cur = bus->firstIO;
 			type = "io";
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			res_cur = bus->firstMem;
 			type = "mem";
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			res_cur = bus->firstPFMem;
 			type = "pfmem";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err("wrong type of flag\n");
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	जबतक (res_cur) अणु
-		अगर (res_cur->start == start_address) अणु
+	while (res_cur) {
+		if (res_cur->start == start_address) {
 			*res = res_cur;
-			अवरोध;
-		पूर्ण
-		अगर (res_cur->next)
+			break;
+		}
+		if (res_cur->next)
 			res_cur = res_cur->next;
-		अन्यथा
+		else
 			res_cur = res_cur->nextRange;
-	पूर्ण
+	}
 
-	अगर (!res_cur) अणु
-		अगर (flag == PFMEM) अणु
+	if (!res_cur) {
+		if (flag == PFMEM) {
 			res_cur = bus->firstPFMemFromMem;
-			जबतक (res_cur) अणु
-				अगर (res_cur->start == start_address) अणु
+			while (res_cur) {
+				if (res_cur->start == start_address) {
 					*res = res_cur;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				res_cur = res_cur->next;
-			पूर्ण
-			अगर (!res_cur) अणु
+			}
+			if (!res_cur) {
 				debug("SOS...cannot find %s resource in the bus.\n", type);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				return -EINVAL;
+			}
+		} else {
 			debug("SOS... cannot find %s resource in the bus.\n", type);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (*res)
+	if (*res)
 		debug("*res->start = %x\n", (*res)->start);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /***********************************************************************
- * This routine will मुक्त the resource काष्ठाures used by the
- * प्रणाली.  It is called from cleanup routine क्रम the module
+ * This routine will free the resource structures used by the
+ * system.  It is called from cleanup routine for the module
  * Parameters: none
  * Returns: none
  ***********************************************************************/
-व्योम ibmphp_मुक्त_resources(व्योम)
-अणु
-	काष्ठा bus_node *bus_cur = शून्य, *next;
-	काष्ठा bus_node *bus_पंचांगp;
-	काष्ठा range_node *range_cur;
-	काष्ठा range_node *range_पंचांगp;
-	काष्ठा resource_node *res_cur;
-	काष्ठा resource_node *res_पंचांगp;
-	पूर्णांक i = 0;
+void ibmphp_free_resources(void)
+{
+	struct bus_node *bus_cur = NULL, *next;
+	struct bus_node *bus_tmp;
+	struct range_node *range_cur;
+	struct range_node *range_tmp;
+	struct resource_node *res_cur;
+	struct resource_node *res_tmp;
+	int i = 0;
 	flags = 1;
 
-	list_क्रम_each_entry_safe(bus_cur, next, &gbuses, bus_list) अणु
-		अगर (bus_cur->noIORanges) अणु
+	list_for_each_entry_safe(bus_cur, next, &gbuses, bus_list) {
+		if (bus_cur->noIORanges) {
 			range_cur = bus_cur->rangeIO;
-			क्रम (i = 0; i < bus_cur->noIORanges; i++) अणु
-				अगर (!range_cur)
-					अवरोध;
-				range_पंचांगp = range_cur;
+			for (i = 0; i < bus_cur->noIORanges; i++) {
+				if (!range_cur)
+					break;
+				range_tmp = range_cur;
 				range_cur = range_cur->next;
-				kमुक्त(range_पंचांगp);
-				range_पंचांगp = शून्य;
-			पूर्ण
-		पूर्ण
-		अगर (bus_cur->noMemRanges) अणु
+				kfree(range_tmp);
+				range_tmp = NULL;
+			}
+		}
+		if (bus_cur->noMemRanges) {
 			range_cur = bus_cur->rangeMem;
-			क्रम (i = 0; i < bus_cur->noMemRanges; i++) अणु
-				अगर (!range_cur)
-					अवरोध;
-				range_पंचांगp = range_cur;
+			for (i = 0; i < bus_cur->noMemRanges; i++) {
+				if (!range_cur)
+					break;
+				range_tmp = range_cur;
 				range_cur = range_cur->next;
-				kमुक्त(range_पंचांगp);
-				range_पंचांगp = शून्य;
-			पूर्ण
-		पूर्ण
-		अगर (bus_cur->noPFMemRanges) अणु
+				kfree(range_tmp);
+				range_tmp = NULL;
+			}
+		}
+		if (bus_cur->noPFMemRanges) {
 			range_cur = bus_cur->rangePFMem;
-			क्रम (i = 0; i < bus_cur->noPFMemRanges; i++) अणु
-				अगर (!range_cur)
-					अवरोध;
-				range_पंचांगp = range_cur;
+			for (i = 0; i < bus_cur->noPFMemRanges; i++) {
+				if (!range_cur)
+					break;
+				range_tmp = range_cur;
 				range_cur = range_cur->next;
-				kमुक्त(range_पंचांगp);
-				range_पंचांगp = शून्य;
-			पूर्ण
-		पूर्ण
+				kfree(range_tmp);
+				range_tmp = NULL;
+			}
+		}
 
-		अगर (bus_cur->firstIO) अणु
+		if (bus_cur->firstIO) {
 			res_cur = bus_cur->firstIO;
-			जबतक (res_cur) अणु
-				res_पंचांगp = res_cur;
-				अगर (res_cur->next)
+			while (res_cur) {
+				res_tmp = res_cur;
+				if (res_cur->next)
 					res_cur = res_cur->next;
-				अन्यथा
+				else
 					res_cur = res_cur->nextRange;
-				kमुक्त(res_पंचांगp);
-				res_पंचांगp = शून्य;
-			पूर्ण
-			bus_cur->firstIO = शून्य;
-		पूर्ण
-		अगर (bus_cur->firstMem) अणु
+				kfree(res_tmp);
+				res_tmp = NULL;
+			}
+			bus_cur->firstIO = NULL;
+		}
+		if (bus_cur->firstMem) {
 			res_cur = bus_cur->firstMem;
-			जबतक (res_cur) अणु
-				res_पंचांगp = res_cur;
-				अगर (res_cur->next)
+			while (res_cur) {
+				res_tmp = res_cur;
+				if (res_cur->next)
 					res_cur = res_cur->next;
-				अन्यथा
+				else
 					res_cur = res_cur->nextRange;
-				kमुक्त(res_पंचांगp);
-				res_पंचांगp = शून्य;
-			पूर्ण
-			bus_cur->firstMem = शून्य;
-		पूर्ण
-		अगर (bus_cur->firstPFMem) अणु
+				kfree(res_tmp);
+				res_tmp = NULL;
+			}
+			bus_cur->firstMem = NULL;
+		}
+		if (bus_cur->firstPFMem) {
 			res_cur = bus_cur->firstPFMem;
-			जबतक (res_cur) अणु
-				res_पंचांगp = res_cur;
-				अगर (res_cur->next)
+			while (res_cur) {
+				res_tmp = res_cur;
+				if (res_cur->next)
 					res_cur = res_cur->next;
-				अन्यथा
+				else
 					res_cur = res_cur->nextRange;
-				kमुक्त(res_पंचांगp);
-				res_पंचांगp = शून्य;
-			पूर्ण
-			bus_cur->firstPFMem = शून्य;
-		पूर्ण
+				kfree(res_tmp);
+				res_tmp = NULL;
+			}
+			bus_cur->firstPFMem = NULL;
+		}
 
-		अगर (bus_cur->firstPFMemFromMem) अणु
+		if (bus_cur->firstPFMemFromMem) {
 			res_cur = bus_cur->firstPFMemFromMem;
-			जबतक (res_cur) अणु
-				res_पंचांगp = res_cur;
+			while (res_cur) {
+				res_tmp = res_cur;
 				res_cur = res_cur->next;
 
-				kमुक्त(res_पंचांगp);
-				res_पंचांगp = शून्य;
-			पूर्ण
-			bus_cur->firstPFMemFromMem = शून्य;
-		पूर्ण
+				kfree(res_tmp);
+				res_tmp = NULL;
+			}
+			bus_cur->firstPFMemFromMem = NULL;
+		}
 
-		bus_पंचांगp = bus_cur;
+		bus_tmp = bus_cur;
 		list_del(&bus_cur->bus_list);
-		kमुक्त(bus_पंचांगp);
-		bus_पंचांगp = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(bus_tmp);
+		bus_tmp = NULL;
+	}
+}
 
 /*********************************************************************************
- * This function will go over the PFmem resources to check अगर the EBDA allocated
+ * This function will go over the PFmem resources to check if the EBDA allocated
  * pfmem out of memory buckets of the bus.  If so, it will change the range numbers
  * and a flag to indicate that this resource is out of memory. It will also move the
  * Pfmem out of the pfmem resource list to the PFMemFromMem list, and will create
  * a new Mem node
  * This routine is called right after initialization
  *******************************************************************************/
-अटल पूर्णांक __init once_over(व्योम)
-अणु
-	काष्ठा resource_node *pfmem_cur;
-	काष्ठा resource_node *pfmem_prev;
-	काष्ठा resource_node *mem;
-	काष्ठा bus_node *bus_cur;
+static int __init once_over(void)
+{
+	struct resource_node *pfmem_cur;
+	struct resource_node *pfmem_prev;
+	struct resource_node *mem;
+	struct bus_node *bus_cur;
 
-	list_क्रम_each_entry(bus_cur, &gbuses, bus_list) अणु
-		अगर ((!bus_cur->rangePFMem) && (bus_cur->firstPFMem)) अणु
-			क्रम (pfmem_cur = bus_cur->firstPFMem, pfmem_prev = शून्य; pfmem_cur; pfmem_prev = pfmem_cur, pfmem_cur = pfmem_cur->next) अणु
+	list_for_each_entry(bus_cur, &gbuses, bus_list) {
+		if ((!bus_cur->rangePFMem) && (bus_cur->firstPFMem)) {
+			for (pfmem_cur = bus_cur->firstPFMem, pfmem_prev = NULL; pfmem_cur; pfmem_prev = pfmem_cur, pfmem_cur = pfmem_cur->next) {
 				pfmem_cur->fromMem = 1;
-				अगर (pfmem_prev)
+				if (pfmem_prev)
 					pfmem_prev->next = pfmem_cur->next;
-				अन्यथा
+				else
 					bus_cur->firstPFMem = pfmem_cur->next;
 
-				अगर (!bus_cur->firstPFMemFromMem)
-					pfmem_cur->next = शून्य;
-				अन्यथा
-					/* we करोn't need to sort PFMemFromMem since we're using mem node क्रम
+				if (!bus_cur->firstPFMemFromMem)
+					pfmem_cur->next = NULL;
+				else
+					/* we don't need to sort PFMemFromMem since we're using mem node for
 					   all the real work anyways, so just insert at the beginning of the
 					   list
 					 */
@@ -1688,9 +1687,9 @@
 
 				bus_cur->firstPFMemFromMem = pfmem_cur;
 
-				mem = kzalloc(माप(काष्ठा resource_node), GFP_KERNEL);
-				अगर (!mem)
-					वापस -ENOMEM;
+				mem = kzalloc(sizeof(struct resource_node), GFP_KERNEL);
+				if (!mem)
+					return -ENOMEM;
 
 				mem->type = MEM;
 				mem->busno = pfmem_cur->busno;
@@ -1698,307 +1697,307 @@
 				mem->start = pfmem_cur->start;
 				mem->end = pfmem_cur->end;
 				mem->len = pfmem_cur->len;
-				अगर (ibmphp_add_resource(mem) < 0)
+				if (ibmphp_add_resource(mem) < 0)
 					err("Trouble...trouble... EBDA allocated pfmem from mem, but system doesn't display it has this space... unless not PCI device...\n");
 				pfmem_cur->rangeno = mem->rangeno;
-			पूर्ण	/* end क्रम pfmem */
-		पूर्ण	/* end अगर */
-	पूर्ण	/* end list_क्रम_each bus */
-	वापस 0;
-पूर्ण
+			}	/* end for pfmem */
+		}	/* end if */
+	}	/* end list_for_each bus */
+	return 0;
+}
 
-पूर्णांक ibmphp_add_pfmem_from_mem(काष्ठा resource_node *pfmem)
-अणु
-	काष्ठा bus_node *bus_cur = find_bus_wprev(pfmem->busno, शून्य, 0);
+int ibmphp_add_pfmem_from_mem(struct resource_node *pfmem)
+{
+	struct bus_node *bus_cur = find_bus_wprev(pfmem->busno, NULL, 0);
 
-	अगर (!bus_cur) अणु
+	if (!bus_cur) {
 		err("cannot find bus of pfmem to add...\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (bus_cur->firstPFMemFromMem)
+	if (bus_cur->firstPFMemFromMem)
 		pfmem->next = bus_cur->firstPFMemFromMem;
-	अन्यथा
-		pfmem->next = शून्य;
+	else
+		pfmem->next = NULL;
 
 	bus_cur->firstPFMemFromMem = pfmem;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This routine just goes through the buses to see अगर the bus alपढ़ोy exists.
- * It is called from ibmphp_find_sec_number, to find out a secondary bus number क्रम
+/* This routine just goes through the buses to see if the bus already exists.
+ * It is called from ibmphp_find_sec_number, to find out a secondary bus number for
  * bridged cards
  * Parameters: bus_number
- * Returns: Bus poपूर्णांकer or शून्य
+ * Returns: Bus pointer or NULL
  */
-काष्ठा bus_node *ibmphp_find_res_bus(u8 bus_number)
-अणु
-	वापस find_bus_wprev(bus_number, शून्य, 0);
-पूर्ण
+struct bus_node *ibmphp_find_res_bus(u8 bus_number)
+{
+	return find_bus_wprev(bus_number, NULL, 0);
+}
 
-अटल काष्ठा bus_node *find_bus_wprev(u8 bus_number, काष्ठा bus_node **prev, u8 flag)
-अणु
-	काष्ठा bus_node *bus_cur;
+static struct bus_node *find_bus_wprev(u8 bus_number, struct bus_node **prev, u8 flag)
+{
+	struct bus_node *bus_cur;
 
-	list_क्रम_each_entry(bus_cur, &gbuses, bus_list) अणु
-		अगर (flag)
+	list_for_each_entry(bus_cur, &gbuses, bus_list) {
+		if (flag)
 			*prev = list_prev_entry(bus_cur, bus_list);
-		अगर (bus_cur->busno == bus_number)
-			वापस bus_cur;
-	पूर्ण
+		if (bus_cur->busno == bus_number)
+			return bus_cur;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम ibmphp_prपूर्णांक_test(व्योम)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा bus_node *bus_cur = शून्य;
-	काष्ठा range_node *range;
-	काष्ठा resource_node *res;
+void ibmphp_print_test(void)
+{
+	int i = 0;
+	struct bus_node *bus_cur = NULL;
+	struct range_node *range;
+	struct resource_node *res;
 
 	debug_pci("*****************START**********************\n");
 
-	अगर ((!list_empty(&gbuses)) && flags) अणु
+	if ((!list_empty(&gbuses)) && flags) {
 		err("The GBUSES is not NULL?!?!?!?!?\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	list_क्रम_each_entry(bus_cur, &gbuses, bus_list) अणु
+	list_for_each_entry(bus_cur, &gbuses, bus_list) {
 		debug_pci ("This is bus # %d.  There are\n", bus_cur->busno);
 		debug_pci ("IORanges = %d\t", bus_cur->noIORanges);
 		debug_pci ("MemRanges = %d\t", bus_cur->noMemRanges);
 		debug_pci ("PFMemRanges = %d\n", bus_cur->noPFMemRanges);
 		debug_pci ("The IO Ranges are as follows:\n");
-		अगर (bus_cur->rangeIO) अणु
+		if (bus_cur->rangeIO) {
 			range = bus_cur->rangeIO;
-			क्रम (i = 0; i < bus_cur->noIORanges; i++) अणु
+			for (i = 0; i < bus_cur->noIORanges; i++) {
 				debug_pci("rangeno is %d\n", range->rangeno);
 				debug_pci("[%x - %x]\n", range->start, range->end);
 				range = range->next;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		debug_pci("The Mem Ranges are as follows:\n");
-		अगर (bus_cur->rangeMem) अणु
+		if (bus_cur->rangeMem) {
 			range = bus_cur->rangeMem;
-			क्रम (i = 0; i < bus_cur->noMemRanges; i++) अणु
+			for (i = 0; i < bus_cur->noMemRanges; i++) {
 				debug_pci("rangeno is %d\n", range->rangeno);
 				debug_pci("[%x - %x]\n", range->start, range->end);
 				range = range->next;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		debug_pci("The PFMem Ranges are as follows:\n");
 
-		अगर (bus_cur->rangePFMem) अणु
+		if (bus_cur->rangePFMem) {
 			range = bus_cur->rangePFMem;
-			क्रम (i = 0; i < bus_cur->noPFMemRanges; i++) अणु
+			for (i = 0; i < bus_cur->noPFMemRanges; i++) {
 				debug_pci("rangeno is %d\n", range->rangeno);
 				debug_pci("[%x - %x]\n", range->start, range->end);
 				range = range->next;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		debug_pci("The resources on this bus are as follows\n");
 
 		debug_pci("IO...\n");
-		अगर (bus_cur->firstIO) अणु
+		if (bus_cur->firstIO) {
 			res = bus_cur->firstIO;
-			जबतक (res) अणु
+			while (res) {
 				debug_pci("The range # is %d\n", res->rangeno);
 				debug_pci("The bus, devfnc is %d, %x\n", res->busno, res->devfunc);
 				debug_pci("[%x - %x], len=%x\n", res->start, res->end, res->len);
-				अगर (res->next)
+				if (res->next)
 					res = res->next;
-				अन्यथा अगर (res->nextRange)
+				else if (res->nextRange)
 					res = res->nextRange;
-				अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				else
+					break;
+			}
+		}
 		debug_pci("Mem...\n");
-		अगर (bus_cur->firstMem) अणु
+		if (bus_cur->firstMem) {
 			res = bus_cur->firstMem;
-			जबतक (res) अणु
+			while (res) {
 				debug_pci("The range # is %d\n", res->rangeno);
 				debug_pci("The bus, devfnc is %d, %x\n", res->busno, res->devfunc);
 				debug_pci("[%x - %x], len=%x\n", res->start, res->end, res->len);
-				अगर (res->next)
+				if (res->next)
 					res = res->next;
-				अन्यथा अगर (res->nextRange)
+				else if (res->nextRange)
 					res = res->nextRange;
-				अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				else
+					break;
+			}
+		}
 		debug_pci("PFMem...\n");
-		अगर (bus_cur->firstPFMem) अणु
+		if (bus_cur->firstPFMem) {
 			res = bus_cur->firstPFMem;
-			जबतक (res) अणु
+			while (res) {
 				debug_pci("The range # is %d\n", res->rangeno);
 				debug_pci("The bus, devfnc is %d, %x\n", res->busno, res->devfunc);
 				debug_pci("[%x - %x], len=%x\n", res->start, res->end, res->len);
-				अगर (res->next)
+				if (res->next)
 					res = res->next;
-				अन्यथा अगर (res->nextRange)
+				else if (res->nextRange)
 					res = res->nextRange;
-				अन्यथा
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				else
+					break;
+			}
+		}
 
 		debug_pci("PFMemFromMem...\n");
-		अगर (bus_cur->firstPFMemFromMem) अणु
+		if (bus_cur->firstPFMemFromMem) {
 			res = bus_cur->firstPFMemFromMem;
-			जबतक (res) अणु
+			while (res) {
 				debug_pci("The range # is %d\n", res->rangeno);
 				debug_pci("The bus, devfnc is %d, %x\n", res->busno, res->devfunc);
 				debug_pci("[%x - %x], len=%x\n", res->start, res->end, res->len);
 				res = res->next;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	debug_pci("***********************END***********************\n");
-पूर्ण
+}
 
-अटल पूर्णांक range_exists_alपढ़ोy(काष्ठा range_node *range, काष्ठा bus_node *bus_cur, u8 type)
-अणु
-	काष्ठा range_node *range_cur = शून्य;
-	चयन (type) अणु
-		हाल IO:
+static int range_exists_already(struct range_node *range, struct bus_node *bus_cur, u8 type)
+{
+	struct range_node *range_cur = NULL;
+	switch (type) {
+		case IO:
 			range_cur = bus_cur->rangeIO;
-			अवरोध;
-		हाल MEM:
+			break;
+		case MEM:
 			range_cur = bus_cur->rangeMem;
-			अवरोध;
-		हाल PFMEM:
+			break;
+		case PFMEM:
 			range_cur = bus_cur->rangePFMem;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err("wrong type passed to find out if range already exists\n");
-			वापस -ENODEV;
-	पूर्ण
+			return -ENODEV;
+	}
 
-	जबतक (range_cur) अणु
-		अगर ((range_cur->start == range->start) && (range_cur->end == range->end))
-			वापस 1;
+	while (range_cur) {
+		if ((range_cur->start == range->start) && (range_cur->end == range->end))
+			return 1;
 		range_cur = range_cur->next;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This routine will पढ़ो the winकरोws क्रम any PPB we have and update the
- * range info क्रम the secondary bus, and will also input this info पूर्णांकo
- * primary bus, since BIOS करोesn't. This is क्रम PPB that are in the प्रणाली
+/* This routine will read the windows for any PPB we have and update the
+ * range info for the secondary bus, and will also input this info into
+ * primary bus, since BIOS doesn't. This is for PPB that are in the system
  * on bootup.  For bridged cards that were added during previous load of the
- * driver, only the ranges and the bus काष्ठाure are added, the devices are
+ * driver, only the ranges and the bus structure are added, the devices are
  * added from NVRAM
  * Input: primary busno
  * Returns: none
- * Note: this function करोesn't take पूर्णांकo account IO restrictions etc,
- *	 so will only work क्रम bridges with no video/ISA devices behind them It
- *	 also will not work क्रम onboard PPBs that can have more than 1 *bus
+ * Note: this function doesn't take into account IO restrictions etc,
+ *	 so will only work for bridges with no video/ISA devices behind them It
+ *	 also will not work for onboard PPBs that can have more than 1 *bus
  *	 behind them All these are TO DO.
- *	 Also need to add more error checkings... (from fnc वापसs etc)
+ *	 Also need to add more error checkings... (from fnc returns etc)
  */
-अटल पूर्णांक __init update_bridge_ranges(काष्ठा bus_node **bus)
-अणु
+static int __init update_bridge_ranges(struct bus_node **bus)
+{
 	u8 sec_busno, device, function, hdr_type, start_io_address, end_io_address;
-	u16 venकरोr_id, upper_io_start, upper_io_end, start_mem_address, end_mem_address;
+	u16 vendor_id, upper_io_start, upper_io_end, start_mem_address, end_mem_address;
 	u32 start_address, end_address, upper_start, upper_end;
-	काष्ठा bus_node *bus_sec;
-	काष्ठा bus_node *bus_cur;
-	काष्ठा resource_node *io;
-	काष्ठा resource_node *mem;
-	काष्ठा resource_node *pfmem;
-	काष्ठा range_node *range;
-	अचिन्हित पूर्णांक devfn;
+	struct bus_node *bus_sec;
+	struct bus_node *bus_cur;
+	struct resource_node *io;
+	struct resource_node *mem;
+	struct resource_node *pfmem;
+	struct range_node *range;
+	unsigned int devfn;
 
 	bus_cur = *bus;
-	अगर (!bus_cur)
-		वापस -ENODEV;
+	if (!bus_cur)
+		return -ENODEV;
 	ibmphp_pci_bus->number = bus_cur->busno;
 
 	debug("inside %s\n", __func__);
 	debug("bus_cur->busno = %x\n", bus_cur->busno);
 
-	क्रम (device = 0; device < 32; device++) अणु
-		क्रम (function = 0x00; function < 0x08; function++) अणु
+	for (device = 0; device < 32; device++) {
+		for (function = 0x00; function < 0x08; function++) {
 			devfn = PCI_DEVFN(device, function);
-			pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_VENDOR_ID, &venकरोr_id);
+			pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_VENDOR_ID, &vendor_id);
 
-			अगर (venकरोr_id != PCI_VENDOR_ID_NOTVALID) अणु
+			if (vendor_id != PCI_VENDOR_ID_NOTVALID) {
 				/* found correct device!!! */
-				pci_bus_पढ़ो_config_byte(ibmphp_pci_bus, devfn, PCI_HEADER_TYPE, &hdr_type);
+				pci_bus_read_config_byte(ibmphp_pci_bus, devfn, PCI_HEADER_TYPE, &hdr_type);
 
-				चयन (hdr_type) अणु
-					हाल PCI_HEADER_TYPE_NORMAL:
+				switch (hdr_type) {
+					case PCI_HEADER_TYPE_NORMAL:
 						function = 0x8;
-						अवरोध;
-					हाल PCI_HEADER_TYPE_MULTIDEVICE:
-						अवरोध;
-					हाल PCI_HEADER_TYPE_BRIDGE:
+						break;
+					case PCI_HEADER_TYPE_MULTIDEVICE:
+						break;
+					case PCI_HEADER_TYPE_BRIDGE:
 						function = 0x8;
 						fallthrough;
-					हाल PCI_HEADER_TYPE_MULTIBRIDGE:
+					case PCI_HEADER_TYPE_MULTIBRIDGE:
 						/* We assume here that only 1 bus behind the bridge
-						   TO DO: add functionality क्रम several:
+						   TO DO: add functionality for several:
 						   temp = secondary;
-						   जबतक (temp < subordinate) अणु
+						   while (temp < subordinate) {
 						   ...
 						   temp++;
-						   पूर्ण
+						   }
 						 */
-						pci_bus_पढ़ो_config_byte(ibmphp_pci_bus, devfn, PCI_SECONDARY_BUS, &sec_busno);
-						bus_sec = find_bus_wprev(sec_busno, शून्य, 0);
-						/* this bus काष्ठाure करोesn't exist yet, PPB was configured during previous loading of ibmphp */
-						अगर (!bus_sec) अणु
-							bus_sec = alloc_error_bus(शून्य, sec_busno, 1);
+						pci_bus_read_config_byte(ibmphp_pci_bus, devfn, PCI_SECONDARY_BUS, &sec_busno);
+						bus_sec = find_bus_wprev(sec_busno, NULL, 0);
+						/* this bus structure doesn't exist yet, PPB was configured during previous loading of ibmphp */
+						if (!bus_sec) {
+							bus_sec = alloc_error_bus(NULL, sec_busno, 1);
 							/* the rest will be populated during NVRAM call */
-							वापस 0;
-						पूर्ण
-						pci_bus_पढ़ो_config_byte(ibmphp_pci_bus, devfn, PCI_IO_BASE, &start_io_address);
-						pci_bus_पढ़ो_config_byte(ibmphp_pci_bus, devfn, PCI_IO_LIMIT, &end_io_address);
-						pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_IO_BASE_UPPER16, &upper_io_start);
-						pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_IO_LIMIT_UPPER16, &upper_io_end);
+							return 0;
+						}
+						pci_bus_read_config_byte(ibmphp_pci_bus, devfn, PCI_IO_BASE, &start_io_address);
+						pci_bus_read_config_byte(ibmphp_pci_bus, devfn, PCI_IO_LIMIT, &end_io_address);
+						pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_IO_BASE_UPPER16, &upper_io_start);
+						pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_IO_LIMIT_UPPER16, &upper_io_end);
 						start_address = (start_io_address & PCI_IO_RANGE_MASK) << 8;
 						start_address |= (upper_io_start << 16);
 						end_address = (end_io_address & PCI_IO_RANGE_MASK) << 8;
 						end_address |= (upper_io_end << 16);
 
-						अगर ((start_address) && (start_address <= end_address)) अणु
-							range = kzalloc(माप(काष्ठा range_node), GFP_KERNEL);
-							अगर (!range)
-								वापस -ENOMEM;
+						if ((start_address) && (start_address <= end_address)) {
+							range = kzalloc(sizeof(struct range_node), GFP_KERNEL);
+							if (!range)
+								return -ENOMEM;
 
 							range->start = start_address;
 							range->end = end_address + 0xfff;
 
-							अगर (bus_sec->noIORanges > 0) अणु
-								अगर (!range_exists_alपढ़ोy(range, bus_sec, IO)) अणु
+							if (bus_sec->noIORanges > 0) {
+								if (!range_exists_already(range, bus_sec, IO)) {
 									add_bus_range(IO, range, bus_sec);
 									++bus_sec->noIORanges;
-								पूर्ण अन्यथा अणु
-									kमुक्त(range);
-									range = शून्य;
-								पूर्ण
-							पूर्ण अन्यथा अणु
+								} else {
+									kfree(range);
+									range = NULL;
+								}
+							} else {
 								/* 1st IO Range on the bus */
 								range->rangeno = 1;
 								bus_sec->rangeIO = range;
 								++bus_sec->noIORanges;
-							पूर्ण
+							}
 							fix_resources(bus_sec);
 
-							अगर (ibmphp_find_resource(bus_cur, start_address, &io, IO)) अणु
-								io = kzalloc(माप(काष्ठा resource_node), GFP_KERNEL);
-								अगर (!io) अणु
-									kमुक्त(range);
-									वापस -ENOMEM;
-								पूर्ण
+							if (ibmphp_find_resource(bus_cur, start_address, &io, IO)) {
+								io = kzalloc(sizeof(struct resource_node), GFP_KERNEL);
+								if (!io) {
+									kfree(range);
+									return -ENOMEM;
+								}
 								io->type = IO;
 								io->busno = bus_cur->busno;
 								io->devfunc = ((device << 3) | (function & 0x7));
@@ -2006,47 +2005,47 @@
 								io->end = end_address + 0xfff;
 								io->len = io->end - io->start + 1;
 								ibmphp_add_resource(io);
-							पूर्ण
-						पूर्ण
+							}
+						}
 
-						pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_MEMORY_BASE, &start_mem_address);
-						pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_MEMORY_LIMIT, &end_mem_address);
+						pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_MEMORY_BASE, &start_mem_address);
+						pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_MEMORY_LIMIT, &end_mem_address);
 
 						start_address = 0x00000000 | (start_mem_address & PCI_MEMORY_RANGE_MASK) << 16;
 						end_address = 0x00000000 | (end_mem_address & PCI_MEMORY_RANGE_MASK) << 16;
 
-						अगर ((start_address) && (start_address <= end_address)) अणु
+						if ((start_address) && (start_address <= end_address)) {
 
-							range = kzalloc(माप(काष्ठा range_node), GFP_KERNEL);
-							अगर (!range)
-								वापस -ENOMEM;
+							range = kzalloc(sizeof(struct range_node), GFP_KERNEL);
+							if (!range)
+								return -ENOMEM;
 
 							range->start = start_address;
 							range->end = end_address + 0xfffff;
 
-							अगर (bus_sec->noMemRanges > 0) अणु
-								अगर (!range_exists_alपढ़ोy(range, bus_sec, MEM)) अणु
+							if (bus_sec->noMemRanges > 0) {
+								if (!range_exists_already(range, bus_sec, MEM)) {
 									add_bus_range(MEM, range, bus_sec);
 									++bus_sec->noMemRanges;
-								पूर्ण अन्यथा अणु
-									kमुक्त(range);
-									range = शून्य;
-								पूर्ण
-							पूर्ण अन्यथा अणु
+								} else {
+									kfree(range);
+									range = NULL;
+								}
+							} else {
 								/* 1st Mem Range on the bus */
 								range->rangeno = 1;
 								bus_sec->rangeMem = range;
 								++bus_sec->noMemRanges;
-							पूर्ण
+							}
 
 							fix_resources(bus_sec);
 
-							अगर (ibmphp_find_resource(bus_cur, start_address, &mem, MEM)) अणु
-								mem = kzalloc(माप(काष्ठा resource_node), GFP_KERNEL);
-								अगर (!mem) अणु
-									kमुक्त(range);
-									वापस -ENOMEM;
-								पूर्ण
+							if (ibmphp_find_resource(bus_cur, start_address, &mem, MEM)) {
+								mem = kzalloc(sizeof(struct resource_node), GFP_KERNEL);
+								if (!mem) {
+									kfree(range);
+									return -ENOMEM;
+								}
 								mem->type = MEM;
 								mem->busno = bus_cur->busno;
 								mem->devfunc = ((device << 3) | (function & 0x7));
@@ -2054,50 +2053,50 @@
 								mem->end = end_address + 0xfffff;
 								mem->len = mem->end - mem->start + 1;
 								ibmphp_add_resource(mem);
-							पूर्ण
-						पूर्ण
-						pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_PREF_MEMORY_BASE, &start_mem_address);
-						pci_bus_पढ़ो_config_word(ibmphp_pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, &end_mem_address);
-						pci_bus_पढ़ो_config_dword(ibmphp_pci_bus, devfn, PCI_PREF_BASE_UPPER32, &upper_start);
-						pci_bus_पढ़ो_config_dword(ibmphp_pci_bus, devfn, PCI_PREF_LIMIT_UPPER32, &upper_end);
+							}
+						}
+						pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_PREF_MEMORY_BASE, &start_mem_address);
+						pci_bus_read_config_word(ibmphp_pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, &end_mem_address);
+						pci_bus_read_config_dword(ibmphp_pci_bus, devfn, PCI_PREF_BASE_UPPER32, &upper_start);
+						pci_bus_read_config_dword(ibmphp_pci_bus, devfn, PCI_PREF_LIMIT_UPPER32, &upper_end);
 						start_address = 0x00000000 | (start_mem_address & PCI_MEMORY_RANGE_MASK) << 16;
 						end_address = 0x00000000 | (end_mem_address & PCI_MEMORY_RANGE_MASK) << 16;
-#अगर BITS_PER_LONG == 64
-						start_address |= ((दीर्घ) upper_start) << 32;
-						end_address |= ((दीर्घ) upper_end) << 32;
-#पूर्ण_अगर
+#if BITS_PER_LONG == 64
+						start_address |= ((long) upper_start) << 32;
+						end_address |= ((long) upper_end) << 32;
+#endif
 
-						अगर ((start_address) && (start_address <= end_address)) अणु
+						if ((start_address) && (start_address <= end_address)) {
 
-							range = kzalloc(माप(काष्ठा range_node), GFP_KERNEL);
-							अगर (!range)
-								वापस -ENOMEM;
+							range = kzalloc(sizeof(struct range_node), GFP_KERNEL);
+							if (!range)
+								return -ENOMEM;
 
 							range->start = start_address;
 							range->end = end_address + 0xfffff;
 
-							अगर (bus_sec->noPFMemRanges > 0) अणु
-								अगर (!range_exists_alपढ़ोy(range, bus_sec, PFMEM)) अणु
+							if (bus_sec->noPFMemRanges > 0) {
+								if (!range_exists_already(range, bus_sec, PFMEM)) {
 									add_bus_range(PFMEM, range, bus_sec);
 									++bus_sec->noPFMemRanges;
-								पूर्ण अन्यथा अणु
-									kमुक्त(range);
-									range = शून्य;
-								पूर्ण
-							पूर्ण अन्यथा अणु
+								} else {
+									kfree(range);
+									range = NULL;
+								}
+							} else {
 								/* 1st PFMem Range on the bus */
 								range->rangeno = 1;
 								bus_sec->rangePFMem = range;
 								++bus_sec->noPFMemRanges;
-							पूर्ण
+							}
 
 							fix_resources(bus_sec);
-							अगर (ibmphp_find_resource(bus_cur, start_address, &pfmem, PFMEM)) अणु
-								pfmem = kzalloc(माप(काष्ठा resource_node), GFP_KERNEL);
-								अगर (!pfmem) अणु
-									kमुक्त(range);
-									वापस -ENOMEM;
-								पूर्ण
+							if (ibmphp_find_resource(bus_cur, start_address, &pfmem, PFMEM)) {
+								pfmem = kzalloc(sizeof(struct resource_node), GFP_KERNEL);
+								if (!pfmem) {
+									kfree(range);
+									return -ENOMEM;
+								}
 								pfmem->type = PFMEM;
 								pfmem->busno = bus_cur->busno;
 								pfmem->devfunc = ((device << 3) | (function & 0x7));
@@ -2107,14 +2106,14 @@
 								pfmem->fromMem = 0;
 
 								ibmphp_add_resource(pfmem);
-							पूर्ण
-						पूर्ण
-						अवरोध;
-				पूर्ण	/* end of चयन */
-			पूर्ण	/* end अगर venकरोr */
-		पूर्ण	/* end क्रम function */
-	पूर्ण	/* end क्रम device */
+							}
+						}
+						break;
+				}	/* end of switch */
+			}	/* end if vendor */
+		}	/* end for function */
+	}	/* end for device */
 
 	bus = &bus_cur;
-	वापस 0;
-पूर्ण
+	return 0;
+}

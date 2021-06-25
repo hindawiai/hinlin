@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  FUJITSU Extended Socket Network Device driver
  *  Copyright (c) 2015 FUJITSU LIMITED
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/nls.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/nls.h>
+#include <linux/platform_device.h>
+#include <linux/netdevice.h>
+#include <linux/interrupt.h>
 
-#समावेश "fjes.h"
-#समावेश "fjes_trace.h"
+#include "fjes.h"
+#include "fjes_trace.h"
 
-#घोषणा MAJ 1
-#घोषणा MIN 2
-#घोषणा DRV_VERSION __stringअगरy(MAJ) "." __stringअगरy(MIN)
-#घोषणा DRV_NAME	"fjes"
-अक्षर fjes_driver_name[] = DRV_NAME;
-अक्षर fjes_driver_version[] = DRV_VERSION;
-अटल स्थिर अक्षर fjes_driver_string[] =
+#define MAJ 1
+#define MIN 2
+#define DRV_VERSION __stringify(MAJ) "." __stringify(MIN)
+#define DRV_NAME	"fjes"
+char fjes_driver_name[] = DRV_NAME;
+char fjes_driver_version[] = DRV_VERSION;
+static const char fjes_driver_string[] =
 		"FUJITSU Extended Socket Network Device Driver";
-अटल स्थिर अक्षर fjes_copyright[] =
+static const char fjes_copyright[] =
 		"Copyright (c) 2015 FUJITSU LIMITED";
 
 MODULE_AUTHOR("Taku Izumi <izumi.taku@jp.fujitsu.com>");
@@ -31,373 +30,373 @@ MODULE_DESCRIPTION("FUJITSU Extended Socket Network Device Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_VERSION);
 
-#घोषणा ACPI_MOTHERBOARD_RESOURCE_HID "PNP0C02"
+#define ACPI_MOTHERBOARD_RESOURCE_HID "PNP0C02"
 
-अटल पूर्णांक fjes_request_irq(काष्ठा fjes_adapter *);
-अटल व्योम fjes_मुक्त_irq(काष्ठा fjes_adapter *);
+static int fjes_request_irq(struct fjes_adapter *);
+static void fjes_free_irq(struct fjes_adapter *);
 
-अटल पूर्णांक fjes_खोलो(काष्ठा net_device *);
-अटल पूर्णांक fjes_बंद(काष्ठा net_device *);
-अटल पूर्णांक fjes_setup_resources(काष्ठा fjes_adapter *);
-अटल व्योम fjes_मुक्त_resources(काष्ठा fjes_adapter *);
-अटल netdev_tx_t fjes_xmit_frame(काष्ठा sk_buff *, काष्ठा net_device *);
-अटल व्योम fjes_उठाओ_पूर्णांकr_rxdata_task(काष्ठा work_काष्ठा *);
-अटल व्योम fjes_tx_stall_task(काष्ठा work_काष्ठा *);
-अटल व्योम fjes_क्रमce_बंद_task(काष्ठा work_काष्ठा *);
-अटल irqवापस_t fjes_पूर्णांकr(पूर्णांक, व्योम*);
-अटल व्योम fjes_get_stats64(काष्ठा net_device *, काष्ठा rtnl_link_stats64 *);
-अटल पूर्णांक fjes_change_mtu(काष्ठा net_device *, पूर्णांक);
-अटल पूर्णांक fjes_vlan_rx_add_vid(काष्ठा net_device *, __be16 proto, u16);
-अटल पूर्णांक fjes_vlan_rx_समाप्त_vid(काष्ठा net_device *, __be16 proto, u16);
-अटल व्योम fjes_tx_retry(काष्ठा net_device *, अचिन्हित पूर्णांक txqueue);
+static int fjes_open(struct net_device *);
+static int fjes_close(struct net_device *);
+static int fjes_setup_resources(struct fjes_adapter *);
+static void fjes_free_resources(struct fjes_adapter *);
+static netdev_tx_t fjes_xmit_frame(struct sk_buff *, struct net_device *);
+static void fjes_raise_intr_rxdata_task(struct work_struct *);
+static void fjes_tx_stall_task(struct work_struct *);
+static void fjes_force_close_task(struct work_struct *);
+static irqreturn_t fjes_intr(int, void*);
+static void fjes_get_stats64(struct net_device *, struct rtnl_link_stats64 *);
+static int fjes_change_mtu(struct net_device *, int);
+static int fjes_vlan_rx_add_vid(struct net_device *, __be16 proto, u16);
+static int fjes_vlan_rx_kill_vid(struct net_device *, __be16 proto, u16);
+static void fjes_tx_retry(struct net_device *, unsigned int txqueue);
 
-अटल पूर्णांक fjes_acpi_add(काष्ठा acpi_device *);
-अटल पूर्णांक fjes_acpi_हटाओ(काष्ठा acpi_device *);
-अटल acpi_status fjes_get_acpi_resource(काष्ठा acpi_resource *, व्योम*);
+static int fjes_acpi_add(struct acpi_device *);
+static int fjes_acpi_remove(struct acpi_device *);
+static acpi_status fjes_get_acpi_resource(struct acpi_resource *, void*);
 
-अटल पूर्णांक fjes_probe(काष्ठा platक्रमm_device *);
-अटल पूर्णांक fjes_हटाओ(काष्ठा platक्रमm_device *);
+static int fjes_probe(struct platform_device *);
+static int fjes_remove(struct platform_device *);
 
-अटल पूर्णांक fjes_sw_init(काष्ठा fjes_adapter *);
-अटल व्योम fjes_netdev_setup(काष्ठा net_device *);
-अटल व्योम fjes_irq_watch_task(काष्ठा work_काष्ठा *);
-अटल व्योम fjes_watch_unshare_task(काष्ठा work_काष्ठा *);
-अटल व्योम fjes_rx_irq(काष्ठा fjes_adapter *, पूर्णांक);
-अटल पूर्णांक fjes_poll(काष्ठा napi_काष्ठा *, पूर्णांक);
+static int fjes_sw_init(struct fjes_adapter *);
+static void fjes_netdev_setup(struct net_device *);
+static void fjes_irq_watch_task(struct work_struct *);
+static void fjes_watch_unshare_task(struct work_struct *);
+static void fjes_rx_irq(struct fjes_adapter *, int);
+static int fjes_poll(struct napi_struct *, int);
 
-अटल स्थिर काष्ठा acpi_device_id fjes_acpi_ids[] = अणु
-	अणुACPI_MOTHERBOARD_RESOURCE_HID, 0पूर्ण,
-	अणु"", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id fjes_acpi_ids[] = {
+	{ACPI_MOTHERBOARD_RESOURCE_HID, 0},
+	{"", 0},
+};
 MODULE_DEVICE_TABLE(acpi, fjes_acpi_ids);
 
-अटल काष्ठा acpi_driver fjes_acpi_driver = अणु
+static struct acpi_driver fjes_acpi_driver = {
 	.name = DRV_NAME,
 	.class = DRV_NAME,
 	.owner = THIS_MODULE,
 	.ids = fjes_acpi_ids,
-	.ops = अणु
+	.ops = {
 		.add = fjes_acpi_add,
-		.हटाओ = fjes_acpi_हटाओ,
-	पूर्ण,
-पूर्ण;
+		.remove = fjes_acpi_remove,
+	},
+};
 
-अटल काष्ठा platक्रमm_driver fjes_driver = अणु
-	.driver = अणु
+static struct platform_driver fjes_driver = {
+	.driver = {
 		.name = DRV_NAME,
-	पूर्ण,
+	},
 	.probe = fjes_probe,
-	.हटाओ = fjes_हटाओ,
-पूर्ण;
+	.remove = fjes_remove,
+};
 
-अटल काष्ठा resource fjes_resource[] = अणु
-	अणु
+static struct resource fjes_resource[] = {
+	{
 		.flags = IORESOURCE_MEM,
 		.start = 0,
 		.end = 0,
-	पूर्ण,
-	अणु
+	},
+	{
 		.flags = IORESOURCE_IRQ,
 		.start = 0,
 		.end = 0,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल bool is_extended_socket_device(काष्ठा acpi_device *device)
-अणु
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
-	अक्षर str_buf[माप(FJES_ACPI_SYMBOL) + 1];
-	जोड़ acpi_object *str;
+static bool is_extended_socket_device(struct acpi_device *device)
+{
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL};
+	char str_buf[sizeof(FJES_ACPI_SYMBOL) + 1];
+	union acpi_object *str;
 	acpi_status status;
-	पूर्णांक result;
+	int result;
 
-	status = acpi_evaluate_object(device->handle, "_STR", शून्य, &buffer);
-	अगर (ACPI_FAILURE(status))
-		वापस false;
+	status = acpi_evaluate_object(device->handle, "_STR", NULL, &buffer);
+	if (ACPI_FAILURE(status))
+		return false;
 
-	str = buffer.poपूर्णांकer;
-	result = utf16s_to_utf8s((ब_अक्षर_प्रकार *)str->string.poपूर्णांकer,
+	str = buffer.pointer;
+	result = utf16s_to_utf8s((wchar_t *)str->string.pointer,
 				 str->string.length, UTF16_LITTLE_ENDIAN,
-				 str_buf, माप(str_buf) - 1);
+				 str_buf, sizeof(str_buf) - 1);
 	str_buf[result] = 0;
 
-	अगर (म_भेदन(FJES_ACPI_SYMBOL, str_buf, म_माप(FJES_ACPI_SYMBOL)) != 0) अणु
-		kमुक्त(buffer.poपूर्णांकer);
-		वापस false;
-	पूर्ण
-	kमुक्त(buffer.poपूर्णांकer);
+	if (strncmp(FJES_ACPI_SYMBOL, str_buf, strlen(FJES_ACPI_SYMBOL)) != 0) {
+		kfree(buffer.pointer);
+		return false;
+	}
+	kfree(buffer.pointer);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक acpi_check_extended_socket_status(काष्ठा acpi_device *device)
-अणु
-	अचिन्हित दीर्घ दीर्घ sta;
+static int acpi_check_extended_socket_status(struct acpi_device *device)
+{
+	unsigned long long sta;
 	acpi_status status;
 
-	status = acpi_evaluate_पूर्णांकeger(device->handle, "_STA", शून्य, &sta);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	status = acpi_evaluate_integer(device->handle, "_STA", NULL, &sta);
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	अगर (!((sta & ACPI_STA_DEVICE_PRESENT) &&
+	if (!((sta & ACPI_STA_DEVICE_PRESENT) &&
 	      (sta & ACPI_STA_DEVICE_ENABLED) &&
 	      (sta & ACPI_STA_DEVICE_UI) &&
 	      (sta & ACPI_STA_DEVICE_FUNCTIONING)))
-		वापस -ENODEV;
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fjes_acpi_add(काष्ठा acpi_device *device)
-अणु
-	काष्ठा platक्रमm_device *plat_dev;
+static int fjes_acpi_add(struct acpi_device *device)
+{
+	struct platform_device *plat_dev;
 	acpi_status status;
 
-	अगर (!is_extended_socket_device(device))
-		वापस -ENODEV;
+	if (!is_extended_socket_device(device))
+		return -ENODEV;
 
-	अगर (acpi_check_extended_socket_status(device))
-		वापस -ENODEV;
+	if (acpi_check_extended_socket_status(device))
+		return -ENODEV;
 
 	status = acpi_walk_resources(device->handle, METHOD_NAME__CRS,
 				     fjes_get_acpi_resource, fjes_resource);
-	अगर (ACPI_FAILURE(status))
-		वापस -ENODEV;
+	if (ACPI_FAILURE(status))
+		return -ENODEV;
 
-	/* create platक्रमm_device */
-	plat_dev = platक्रमm_device_रेजिस्टर_simple(DRV_NAME, 0, fjes_resource,
+	/* create platform_device */
+	plat_dev = platform_device_register_simple(DRV_NAME, 0, fjes_resource,
 						   ARRAY_SIZE(fjes_resource));
-	अगर (IS_ERR(plat_dev))
-		वापस PTR_ERR(plat_dev);
+	if (IS_ERR(plat_dev))
+		return PTR_ERR(plat_dev);
 
 	device->driver_data = plat_dev;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fjes_acpi_हटाओ(काष्ठा acpi_device *device)
-अणु
-	काष्ठा platक्रमm_device *plat_dev;
+static int fjes_acpi_remove(struct acpi_device *device)
+{
+	struct platform_device *plat_dev;
 
-	plat_dev = (काष्ठा platक्रमm_device *)acpi_driver_data(device);
-	platक्रमm_device_unरेजिस्टर(plat_dev);
+	plat_dev = (struct platform_device *)acpi_driver_data(device);
+	platform_device_unregister(plat_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल acpi_status
-fjes_get_acpi_resource(काष्ठा acpi_resource *acpi_res, व्योम *data)
-अणु
-	काष्ठा acpi_resource_address32 *addr;
-	काष्ठा acpi_resource_irq *irq;
-	काष्ठा resource *res = data;
+static acpi_status
+fjes_get_acpi_resource(struct acpi_resource *acpi_res, void *data)
+{
+	struct acpi_resource_address32 *addr;
+	struct acpi_resource_irq *irq;
+	struct resource *res = data;
 
-	चयन (acpi_res->type) अणु
-	हाल ACPI_RESOURCE_TYPE_ADDRESS32:
+	switch (acpi_res->type) {
+	case ACPI_RESOURCE_TYPE_ADDRESS32:
 		addr = &acpi_res->data.address32;
 		res[0].start = addr->address.minimum;
 		res[0].end = addr->address.minimum +
 			addr->address.address_length - 1;
-		अवरोध;
+		break;
 
-	हाल ACPI_RESOURCE_TYPE_IRQ:
+	case ACPI_RESOURCE_TYPE_IRQ:
 		irq = &acpi_res->data.irq;
-		अगर (irq->पूर्णांकerrupt_count != 1)
-			वापस AE_ERROR;
-		res[1].start = irq->पूर्णांकerrupts[0];
-		res[1].end = irq->पूर्णांकerrupts[0];
-		अवरोध;
+		if (irq->interrupt_count != 1)
+			return AE_ERROR;
+		res[1].start = irq->interrupts[0];
+		res[1].end = irq->interrupts[0];
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल पूर्णांक fjes_request_irq(काष्ठा fjes_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	पूर्णांक result = -1;
+static int fjes_request_irq(struct fjes_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	int result = -1;
 
-	adapter->पूर्णांकerrupt_watch_enable = true;
-	अगर (!delayed_work_pending(&adapter->पूर्णांकerrupt_watch_task)) अणु
+	adapter->interrupt_watch_enable = true;
+	if (!delayed_work_pending(&adapter->interrupt_watch_task)) {
 		queue_delayed_work(adapter->control_wq,
-				   &adapter->पूर्णांकerrupt_watch_task,
+				   &adapter->interrupt_watch_task,
 				   FJES_IRQ_WATCH_DELAY);
-	पूर्ण
+	}
 
-	अगर (!adapter->irq_रेजिस्टरed) अणु
-		result = request_irq(adapter->hw.hw_res.irq, fjes_पूर्णांकr,
+	if (!adapter->irq_registered) {
+		result = request_irq(adapter->hw.hw_res.irq, fjes_intr,
 				     IRQF_SHARED, netdev->name, adapter);
-		अगर (result)
-			adapter->irq_रेजिस्टरed = false;
-		अन्यथा
-			adapter->irq_रेजिस्टरed = true;
-	पूर्ण
+		if (result)
+			adapter->irq_registered = false;
+		else
+			adapter->irq_registered = true;
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल व्योम fjes_मुक्त_irq(काष्ठा fjes_adapter *adapter)
-अणु
-	काष्ठा fjes_hw *hw = &adapter->hw;
+static void fjes_free_irq(struct fjes_adapter *adapter)
+{
+	struct fjes_hw *hw = &adapter->hw;
 
-	adapter->पूर्णांकerrupt_watch_enable = false;
-	cancel_delayed_work_sync(&adapter->पूर्णांकerrupt_watch_task);
+	adapter->interrupt_watch_enable = false;
+	cancel_delayed_work_sync(&adapter->interrupt_watch_task);
 
 	fjes_hw_set_irqmask(hw, REG_ICTL_MASK_ALL, true);
 
-	अगर (adapter->irq_रेजिस्टरed) अणु
-		मुक्त_irq(adapter->hw.hw_res.irq, adapter);
-		adapter->irq_रेजिस्टरed = false;
-	पूर्ण
-पूर्ण
+	if (adapter->irq_registered) {
+		free_irq(adapter->hw.hw_res.irq, adapter);
+		adapter->irq_registered = false;
+	}
+}
 
-अटल स्थिर काष्ठा net_device_ops fjes_netdev_ops = अणु
-	.nकरो_खोलो		= fjes_खोलो,
-	.nकरो_stop		= fjes_बंद,
-	.nकरो_start_xmit		= fjes_xmit_frame,
-	.nकरो_get_stats64	= fjes_get_stats64,
-	.nकरो_change_mtu		= fjes_change_mtu,
-	.nकरो_tx_समयout		= fjes_tx_retry,
-	.nकरो_vlan_rx_add_vid	= fjes_vlan_rx_add_vid,
-	.nकरो_vlan_rx_समाप्त_vid = fjes_vlan_rx_समाप्त_vid,
-पूर्ण;
+static const struct net_device_ops fjes_netdev_ops = {
+	.ndo_open		= fjes_open,
+	.ndo_stop		= fjes_close,
+	.ndo_start_xmit		= fjes_xmit_frame,
+	.ndo_get_stats64	= fjes_get_stats64,
+	.ndo_change_mtu		= fjes_change_mtu,
+	.ndo_tx_timeout		= fjes_tx_retry,
+	.ndo_vlan_rx_add_vid	= fjes_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid = fjes_vlan_rx_kill_vid,
+};
 
-/* fjes_खोलो - Called when a network पूर्णांकerface is made active */
-अटल पूर्णांक fjes_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	पूर्णांक result;
+/* fjes_open - Called when a network interface is made active */
+static int fjes_open(struct net_device *netdev)
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	struct fjes_hw *hw = &adapter->hw;
+	int result;
 
-	अगर (adapter->खोलो_guard)
-		वापस -ENXIO;
+	if (adapter->open_guard)
+		return -ENXIO;
 
 	result = fjes_setup_resources(adapter);
-	अगर (result)
-		जाओ err_setup_res;
+	if (result)
+		goto err_setup_res;
 
 	hw->txrx_stop_req_bit = 0;
 	hw->epstop_req_bit = 0;
 
 	napi_enable(&adapter->napi);
 
-	fjes_hw_capture_पूर्णांकerrupt_status(hw);
+	fjes_hw_capture_interrupt_status(hw);
 
 	result = fjes_request_irq(adapter);
-	अगर (result)
-		जाओ err_req_irq;
+	if (result)
+		goto err_req_irq;
 
 	fjes_hw_set_irqmask(hw, REG_ICTL_MASK_ALL, false);
 
-	netअगर_tx_start_all_queues(netdev);
-	netअगर_carrier_on(netdev);
+	netif_tx_start_all_queues(netdev);
+	netif_carrier_on(netdev);
 
-	वापस 0;
+	return 0;
 
 err_req_irq:
-	fjes_मुक्त_irq(adapter);
+	fjes_free_irq(adapter);
 	napi_disable(&adapter->napi);
 
 err_setup_res:
-	fjes_मुक्त_resources(adapter);
-	वापस result;
-पूर्ण
+	fjes_free_resources(adapter);
+	return result;
+}
 
-/* fjes_बंद - Disables a network पूर्णांकerface */
-अटल पूर्णांक fjes_बंद(काष्ठा net_device *netdev)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक epidx;
+/* fjes_close - Disables a network interface */
+static int fjes_close(struct net_device *netdev)
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	struct fjes_hw *hw = &adapter->hw;
+	unsigned long flags;
+	int epidx;
 
-	netअगर_tx_stop_all_queues(netdev);
-	netअगर_carrier_off(netdev);
+	netif_tx_stop_all_queues(netdev);
+	netif_carrier_off(netdev);
 
-	fjes_hw_उठाओ_epstop(hw);
+	fjes_hw_raise_epstop(hw);
 
 	napi_disable(&adapter->napi);
 
 	spin_lock_irqsave(&hw->rx_status_lock, flags);
-	क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
-		अगर (epidx == hw->my_epid)
-			जारी;
+	for (epidx = 0; epidx < hw->max_epid; epidx++) {
+		if (epidx == hw->my_epid)
+			continue;
 
-		अगर (fjes_hw_get_partner_ep_status(hw, epidx) ==
+		if (fjes_hw_get_partner_ep_status(hw, epidx) ==
 		    EP_PARTNER_SHARED)
 			adapter->hw.ep_shm_info[epidx]
 				   .tx.info->v1i.rx_status &=
 				~FJES_RX_POLL_WORK;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 
-	fjes_मुक्त_irq(adapter);
+	fjes_free_irq(adapter);
 
-	cancel_delayed_work_sync(&adapter->पूर्णांकerrupt_watch_task);
+	cancel_delayed_work_sync(&adapter->interrupt_watch_task);
 	cancel_work_sync(&adapter->unshare_watch_task);
-	adapter->unshare_watch_biपंचांगask = 0;
-	cancel_work_sync(&adapter->उठाओ_पूर्णांकr_rxdata_task);
+	adapter->unshare_watch_bitmask = 0;
+	cancel_work_sync(&adapter->raise_intr_rxdata_task);
 	cancel_work_sync(&adapter->tx_stall_task);
 
 	cancel_work_sync(&hw->update_zone_task);
 	cancel_work_sync(&hw->epstop_task);
 
-	fjes_hw_रुको_epstop(hw);
+	fjes_hw_wait_epstop(hw);
 
-	fjes_मुक्त_resources(adapter);
+	fjes_free_resources(adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fjes_setup_resources(काष्ठा fjes_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा ep_share_mem_info *buf_pair;
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result;
-	पूर्णांक epidx;
+static int fjes_setup_resources(struct fjes_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	struct ep_share_mem_info *buf_pair;
+	struct fjes_hw *hw = &adapter->hw;
+	unsigned long flags;
+	int result;
+	int epidx;
 
 	mutex_lock(&hw->hw_info.lock);
 	result = fjes_hw_request_info(hw);
-	चयन (result) अणु
-	हाल 0:
-		क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
+	switch (result) {
+	case 0:
+		for (epidx = 0; epidx < hw->max_epid; epidx++) {
 			hw->ep_shm_info[epidx].es_status =
 			    hw->hw_info.res_buf->info.info[epidx].es_status;
 			hw->ep_shm_info[epidx].zone =
 			    hw->hw_info.res_buf->info.info[epidx].zone;
-		पूर्ण
-		अवरोध;
-	शेष:
-	हाल -ENOMSG:
-	हाल -EBUSY:
-		adapter->क्रमce_reset = true;
+		}
+		break;
+	default:
+	case -ENOMSG:
+	case -EBUSY:
+		adapter->force_reset = true;
 
 		mutex_unlock(&hw->hw_info.lock);
-		वापस result;
-	पूर्ण
+		return result;
+	}
 	mutex_unlock(&hw->hw_info.lock);
 
-	क्रम (epidx = 0; epidx < (hw->max_epid); epidx++) अणु
-		अगर ((epidx != hw->my_epid) &&
+	for (epidx = 0; epidx < (hw->max_epid); epidx++) {
+		if ((epidx != hw->my_epid) &&
 		    (hw->ep_shm_info[epidx].es_status ==
-		     FJES_ZONING_STATUS_ENABLE)) अणु
-			fjes_hw_उठाओ_पूर्णांकerrupt(hw, epidx,
+		     FJES_ZONING_STATUS_ENABLE)) {
+			fjes_hw_raise_interrupt(hw, epidx,
 						REG_ICTL_MASK_INFO_UPDATE);
 			hw->ep_shm_info[epidx].ep_stats
-				.send_पूर्णांकr_zoneupdate += 1;
-		पूर्ण
-	पूर्ण
+				.send_intr_zoneupdate += 1;
+		}
+	}
 
 	msleep(FJES_OPEN_ZONE_UPDATE_WAIT * hw->max_epid);
 
-	क्रम (epidx = 0; epidx < (hw->max_epid); epidx++) अणु
-		अगर (epidx == hw->my_epid)
-			जारी;
+	for (epidx = 0; epidx < (hw->max_epid); epidx++) {
+		if (epidx == hw->my_epid)
+			continue;
 
 		buf_pair = &hw->ep_shm_info[epidx];
 
@@ -406,52 +405,52 @@ err_setup_res:
 				    netdev->mtu);
 		spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 
-		अगर (fjes_hw_epid_is_same_zone(hw, epidx)) अणु
+		if (fjes_hw_epid_is_same_zone(hw, epidx)) {
 			mutex_lock(&hw->hw_info.lock);
 			result =
-			fjes_hw_रेजिस्टर_buff_addr(hw, epidx, buf_pair);
+			fjes_hw_register_buff_addr(hw, epidx, buf_pair);
 			mutex_unlock(&hw->hw_info.lock);
 
-			चयन (result) अणु
-			हाल 0:
-				अवरोध;
-			हाल -ENOMSG:
-			हाल -EBUSY:
-			शेष:
-				adapter->क्रमce_reset = true;
-				वापस result;
-			पूर्ण
+			switch (result) {
+			case 0:
+				break;
+			case -ENOMSG:
+			case -EBUSY:
+			default:
+				adapter->force_reset = true;
+				return result;
+			}
 
 			hw->ep_shm_info[epidx].ep_stats
 				.com_regist_buf_exec += 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fjes_मुक्त_resources(काष्ठा fjes_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा fjes_device_command_param param;
-	काष्ठा ep_share_mem_info *buf_pair;
-	काष्ठा fjes_hw *hw = &adapter->hw;
+static void fjes_free_resources(struct fjes_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	struct fjes_device_command_param param;
+	struct ep_share_mem_info *buf_pair;
+	struct fjes_hw *hw = &adapter->hw;
 	bool reset_flag = false;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result;
-	पूर्णांक epidx;
+	unsigned long flags;
+	int result;
+	int epidx;
 
-	क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
-		अगर (epidx == hw->my_epid)
-			जारी;
+	for (epidx = 0; epidx < hw->max_epid; epidx++) {
+		if (epidx == hw->my_epid)
+			continue;
 
 		mutex_lock(&hw->hw_info.lock);
-		result = fjes_hw_unरेजिस्टर_buff_addr(hw, epidx);
+		result = fjes_hw_unregister_buff_addr(hw, epidx);
 		mutex_unlock(&hw->hw_info.lock);
 
 		hw->ep_shm_info[epidx].ep_stats.com_unregist_buf_exec += 1;
 
-		अगर (result)
+		if (result)
 			reset_flag = true;
 
 		buf_pair = &hw->ep_shm_info[epidx];
@@ -462,19 +461,19 @@ err_setup_res:
 		spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 
 		clear_bit(epidx, &hw->txrx_stop_req_bit);
-	पूर्ण
+	}
 
-	अगर (reset_flag || adapter->क्रमce_reset) अणु
+	if (reset_flag || adapter->force_reset) {
 		result = fjes_hw_reset(hw);
 
-		adapter->क्रमce_reset = false;
+		adapter->force_reset = false;
 
-		अगर (result)
-			adapter->खोलो_guard = true;
+		if (result)
+			adapter->open_guard = true;
 
 		hw->hw_info.buffer_share_bit = 0;
 
-		स_रखो((व्योम *)&param, 0, माप(param));
+		memset((void *)&param, 0, sizeof(param));
 
 		param.req_len = hw->hw_info.req_buf_size;
 		param.req_start = __pa(hw->hw_info.req_buf);
@@ -482,170 +481,170 @@ err_setup_res:
 		param.res_start = __pa(hw->hw_info.res_buf);
 		param.share_start = __pa(hw->hw_info.share->ep_status);
 
-		fjes_hw_init_command_रेजिस्टरs(hw, &param);
-	पूर्ण
-पूर्ण
+		fjes_hw_init_command_registers(hw, &param);
+	}
+}
 
-अटल व्योम fjes_tx_stall_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fjes_adapter *adapter = container_of(work,
-			काष्ठा fjes_adapter, tx_stall_task);
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	पूर्णांक all_queue_available, sendable;
-	क्रमागत ep_partner_status pstatus;
-	पूर्णांक max_epid, my_epid, epid;
-	जोड़ ep_buffer_info *info;
-	पूर्णांक i;
+static void fjes_tx_stall_task(struct work_struct *work)
+{
+	struct fjes_adapter *adapter = container_of(work,
+			struct fjes_adapter, tx_stall_task);
+	struct net_device *netdev = adapter->netdev;
+	struct fjes_hw *hw = &adapter->hw;
+	int all_queue_available, sendable;
+	enum ep_partner_status pstatus;
+	int max_epid, my_epid, epid;
+	union ep_buffer_info *info;
+	int i;
 
-	अगर (((दीर्घ)jअगरfies -
-		dev_trans_start(netdev)) > FJES_TX_TX_STALL_TIMEOUT) अणु
-		netअगर_wake_queue(netdev);
-		वापस;
-	पूर्ण
+	if (((long)jiffies -
+		dev_trans_start(netdev)) > FJES_TX_TX_STALL_TIMEOUT) {
+		netif_wake_queue(netdev);
+		return;
+	}
 
 	my_epid = hw->my_epid;
 	max_epid = hw->max_epid;
 
-	क्रम (i = 0; i < 5; i++) अणु
+	for (i = 0; i < 5; i++) {
 		all_queue_available = 1;
 
-		क्रम (epid = 0; epid < max_epid; epid++) अणु
-			अगर (my_epid == epid)
-				जारी;
+		for (epid = 0; epid < max_epid; epid++) {
+			if (my_epid == epid)
+				continue;
 
 			pstatus = fjes_hw_get_partner_ep_status(hw, epid);
 			sendable = (pstatus == EP_PARTNER_SHARED);
-			अगर (!sendable)
-				जारी;
+			if (!sendable)
+				continue;
 
 			info = adapter->hw.ep_shm_info[epid].tx.info;
 
-			अगर (!(info->v1i.rx_status & FJES_RX_MTU_CHANGING_DONE))
-				वापस;
+			if (!(info->v1i.rx_status & FJES_RX_MTU_CHANGING_DONE))
+				return;
 
-			अगर (EP_RING_FULL(info->v1i.head, info->v1i.tail,
-					 info->v1i.count_max)) अणु
+			if (EP_RING_FULL(info->v1i.head, info->v1i.tail,
+					 info->v1i.count_max)) {
 				all_queue_available = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (all_queue_available) अणु
-			netअगर_wake_queue(netdev);
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (all_queue_available) {
+			netif_wake_queue(netdev);
+			return;
+		}
+	}
 
 	usleep_range(50, 100);
 
 	queue_work(adapter->txrx_wq, &adapter->tx_stall_task);
-पूर्ण
+}
 
-अटल व्योम fjes_क्रमce_बंद_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fjes_adapter *adapter = container_of(work,
-			काष्ठा fjes_adapter, क्रमce_बंद_task);
-	काष्ठा net_device *netdev = adapter->netdev;
+static void fjes_force_close_task(struct work_struct *work)
+{
+	struct fjes_adapter *adapter = container_of(work,
+			struct fjes_adapter, force_close_task);
+	struct net_device *netdev = adapter->netdev;
 
 	rtnl_lock();
-	dev_बंद(netdev);
+	dev_close(netdev);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम fjes_उठाओ_पूर्णांकr_rxdata_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fjes_adapter *adapter = container_of(work,
-			काष्ठा fjes_adapter, उठाओ_पूर्णांकr_rxdata_task);
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	क्रमागत ep_partner_status pstatus;
-	पूर्णांक max_epid, my_epid, epid;
+static void fjes_raise_intr_rxdata_task(struct work_struct *work)
+{
+	struct fjes_adapter *adapter = container_of(work,
+			struct fjes_adapter, raise_intr_rxdata_task);
+	struct fjes_hw *hw = &adapter->hw;
+	enum ep_partner_status pstatus;
+	int max_epid, my_epid, epid;
 
 	my_epid = hw->my_epid;
 	max_epid = hw->max_epid;
 
-	क्रम (epid = 0; epid < max_epid; epid++)
+	for (epid = 0; epid < max_epid; epid++)
 		hw->ep_shm_info[epid].tx_status_work = 0;
 
-	क्रम (epid = 0; epid < max_epid; epid++) अणु
-		अगर (epid == my_epid)
-			जारी;
+	for (epid = 0; epid < max_epid; epid++) {
+		if (epid == my_epid)
+			continue;
 
 		pstatus = fjes_hw_get_partner_ep_status(hw, epid);
-		अगर (pstatus == EP_PARTNER_SHARED) अणु
+		if (pstatus == EP_PARTNER_SHARED) {
 			hw->ep_shm_info[epid].tx_status_work =
 				hw->ep_shm_info[epid].tx.info->v1i.tx_status;
 
-			अगर (hw->ep_shm_info[epid].tx_status_work ==
-				FJES_TX_DELAY_SEND_PENDING) अणु
+			if (hw->ep_shm_info[epid].tx_status_work ==
+				FJES_TX_DELAY_SEND_PENDING) {
 				hw->ep_shm_info[epid].tx.info->v1i.tx_status =
 					FJES_TX_DELAY_SEND_NONE;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	क्रम (epid = 0; epid < max_epid; epid++) अणु
-		अगर (epid == my_epid)
-			जारी;
+	for (epid = 0; epid < max_epid; epid++) {
+		if (epid == my_epid)
+			continue;
 
 		pstatus = fjes_hw_get_partner_ep_status(hw, epid);
-		अगर ((hw->ep_shm_info[epid].tx_status_work ==
+		if ((hw->ep_shm_info[epid].tx_status_work ==
 		     FJES_TX_DELAY_SEND_PENDING) &&
 		    (pstatus == EP_PARTNER_SHARED) &&
 		    !(hw->ep_shm_info[epid].rx.info->v1i.rx_status &
-		      FJES_RX_POLL_WORK)) अणु
-			fjes_hw_उठाओ_पूर्णांकerrupt(hw, epid,
+		      FJES_RX_POLL_WORK)) {
+			fjes_hw_raise_interrupt(hw, epid,
 						REG_ICTL_MASK_RX_DATA);
-			hw->ep_shm_info[epid].ep_stats.send_पूर्णांकr_rx += 1;
-		पूर्ण
-	पूर्ण
+			hw->ep_shm_info[epid].ep_stats.send_intr_rx += 1;
+		}
+	}
 
 	usleep_range(500, 1000);
-पूर्ण
+}
 
-अटल पूर्णांक fjes_tx_send(काष्ठा fjes_adapter *adapter, पूर्णांक dest,
-			व्योम *data, माप_प्रकार len)
-अणु
-	पूर्णांक retval;
+static int fjes_tx_send(struct fjes_adapter *adapter, int dest,
+			void *data, size_t len)
+{
+	int retval;
 
 	retval = fjes_hw_epbuf_tx_pkt_send(&adapter->hw.ep_shm_info[dest].tx,
 					   data, len);
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
 	adapter->hw.ep_shm_info[dest].tx.info->v1i.tx_status =
 		FJES_TX_DELAY_SEND_PENDING;
-	अगर (!work_pending(&adapter->उठाओ_पूर्णांकr_rxdata_task))
+	if (!work_pending(&adapter->raise_intr_rxdata_task))
 		queue_work(adapter->txrx_wq,
-			   &adapter->उठाओ_पूर्णांकr_rxdata_task);
+			   &adapter->raise_intr_rxdata_task);
 
 	retval = 0;
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल netdev_tx_t
-fjes_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
-	काष्ठा fjes_hw *hw = &adapter->hw;
+static netdev_tx_t
+fjes_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	struct fjes_hw *hw = &adapter->hw;
 
-	पूर्णांक max_epid, my_epid, dest_epid;
-	क्रमागत ep_partner_status pstatus;
-	काष्ठा netdev_queue *cur_queue;
-	अक्षर लघुpkt[VLAN_ETH_HLEN];
+	int max_epid, my_epid, dest_epid;
+	enum ep_partner_status pstatus;
+	struct netdev_queue *cur_queue;
+	char shortpkt[VLAN_ETH_HLEN];
 	bool is_multi, vlan;
-	काष्ठा ethhdr *eth;
+	struct ethhdr *eth;
 	u16 queue_no = 0;
 	u16 vlan_id = 0;
 	netdev_tx_t ret;
-	अक्षर *data;
-	पूर्णांक len;
+	char *data;
+	int len;
 
 	ret = NETDEV_TX_OK;
 	is_multi = false;
 	cur_queue = netdev_get_tx_queue(netdev, queue_no);
 
-	eth = (काष्ठा ethhdr *)skb->data;
+	eth = (struct ethhdr *)skb->data;
 	my_epid = hw->my_epid;
 
 	vlan = (vlan_get_tag(skb, &vlan_id) == 0) ? true : false;
@@ -653,20 +652,20 @@ fjes_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *
 	data = skb->data;
 	len = skb->len;
 
-	अगर (is_multicast_ether_addr(eth->h_dest)) अणु
+	if (is_multicast_ether_addr(eth->h_dest)) {
 		dest_epid = 0;
 		max_epid = hw->max_epid;
 		is_multi = true;
-	पूर्ण अन्यथा अगर (is_local_ether_addr(eth->h_dest)) अणु
+	} else if (is_local_ether_addr(eth->h_dest)) {
 		dest_epid = eth->h_dest[ETH_ALEN - 1];
 		max_epid = dest_epid + 1;
 
-		अगर ((eth->h_dest[0] == 0x02) &&
+		if ((eth->h_dest[0] == 0x02) &&
 		    (0x00 == (eth->h_dest[1] | eth->h_dest[2] |
 			      eth->h_dest[3] | eth->h_dest[4])) &&
-		    (dest_epid < hw->max_epid)) अणु
+		    (dest_epid < hw->max_epid)) {
 			;
-		पूर्ण अन्यथा अणु
+		} else {
 			dest_epid = 0;
 			max_epid = 0;
 			ret = NETDEV_TX_OK;
@@ -675,8 +674,8 @@ fjes_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *
 			hw->ep_shm_info[my_epid].net_stats.tx_packets += 1;
 			adapter->stats64.tx_bytes += len;
 			hw->ep_shm_info[my_epid].net_stats.tx_bytes += len;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dest_epid = 0;
 		max_epid = 0;
 		ret = NETDEV_TX_OK;
@@ -685,20 +684,20 @@ fjes_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *
 		hw->ep_shm_info[my_epid].net_stats.tx_packets += 1;
 		adapter->stats64.tx_bytes += len;
 		hw->ep_shm_info[my_epid].net_stats.tx_bytes += len;
-	पूर्ण
+	}
 
-	क्रम (; dest_epid < max_epid; dest_epid++) अणु
-		अगर (my_epid == dest_epid)
-			जारी;
+	for (; dest_epid < max_epid; dest_epid++) {
+		if (my_epid == dest_epid)
+			continue;
 
 		pstatus = fjes_hw_get_partner_ep_status(hw, dest_epid);
-		अगर (pstatus != EP_PARTNER_SHARED) अणु
-			अगर (!is_multi)
+		if (pstatus != EP_PARTNER_SHARED) {
+			if (!is_multi)
 				hw->ep_shm_info[dest_epid].ep_stats
 					.tx_dropped_not_shared += 1;
 			ret = NETDEV_TX_OK;
-		पूर्ण अन्यथा अगर (!fjes_hw_check_epbuf_version(
-				&adapter->hw.ep_shm_info[dest_epid].rx, 0)) अणु
+		} else if (!fjes_hw_check_epbuf_version(
+				&adapter->hw.ep_shm_info[dest_epid].rx, 0)) {
 			/* version is NOT 0 */
 			adapter->stats64.tx_carrier_errors += 1;
 			hw->ep_shm_info[dest_epid].net_stats
@@ -707,9 +706,9 @@ fjes_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *
 					.tx_dropped_ver_mismatch += 1;
 
 			ret = NETDEV_TX_OK;
-		पूर्ण अन्यथा अगर (!fjes_hw_check_mtu(
+		} else if (!fjes_hw_check_mtu(
 				&adapter->hw.ep_shm_info[dest_epid].rx,
-				netdev->mtu)) अणु
+				netdev->mtu)) {
 			adapter->stats64.tx_dropped += 1;
 			hw->ep_shm_info[dest_epid].net_stats.tx_dropped += 1;
 			adapter->stats64.tx_errors += 1;
@@ -718,148 +717,148 @@ fjes_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *
 					.tx_dropped_buf_size_mismatch += 1;
 
 			ret = NETDEV_TX_OK;
-		पूर्ण अन्यथा अगर (vlan &&
+		} else if (vlan &&
 			   !fjes_hw_check_vlan_id(
 				&adapter->hw.ep_shm_info[dest_epid].rx,
-				vlan_id)) अणु
+				vlan_id)) {
 			hw->ep_shm_info[dest_epid].ep_stats
 				.tx_dropped_vlanid_mismatch += 1;
 			ret = NETDEV_TX_OK;
-		पूर्ण अन्यथा अणु
-			अगर (len < VLAN_ETH_HLEN) अणु
-				स_रखो(लघुpkt, 0, VLAN_ETH_HLEN);
-				स_नकल(लघुpkt, skb->data, skb->len);
+		} else {
+			if (len < VLAN_ETH_HLEN) {
+				memset(shortpkt, 0, VLAN_ETH_HLEN);
+				memcpy(shortpkt, skb->data, skb->len);
 				len = VLAN_ETH_HLEN;
-				data = लघुpkt;
-			पूर्ण
+				data = shortpkt;
+			}
 
-			अगर (adapter->tx_retry_count == 0) अणु
-				adapter->tx_start_jअगरfies = jअगरfies;
+			if (adapter->tx_retry_count == 0) {
+				adapter->tx_start_jiffies = jiffies;
 				adapter->tx_retry_count = 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				adapter->tx_retry_count++;
-			पूर्ण
+			}
 
-			अगर (fjes_tx_send(adapter, dest_epid, data, len)) अणु
-				अगर (is_multi) अणु
+			if (fjes_tx_send(adapter, dest_epid, data, len)) {
+				if (is_multi) {
 					ret = NETDEV_TX_OK;
-				पूर्ण अन्यथा अगर (
-					   ((दीर्घ)jअगरfies -
-					    (दीर्घ)adapter->tx_start_jअगरfies) >=
-					    FJES_TX_RETRY_TIMEOUT) अणु
-					adapter->stats64.tx_fअगरo_errors += 1;
+				} else if (
+					   ((long)jiffies -
+					    (long)adapter->tx_start_jiffies) >=
+					    FJES_TX_RETRY_TIMEOUT) {
+					adapter->stats64.tx_fifo_errors += 1;
 					hw->ep_shm_info[dest_epid].net_stats
-								.tx_fअगरo_errors += 1;
+								.tx_fifo_errors += 1;
 					adapter->stats64.tx_errors += 1;
 					hw->ep_shm_info[dest_epid].net_stats
 								.tx_errors += 1;
 
 					ret = NETDEV_TX_OK;
-				पूर्ण अन्यथा अणु
-					netअगर_trans_update(netdev);
+				} else {
+					netif_trans_update(netdev);
 					hw->ep_shm_info[dest_epid].ep_stats
 						.tx_buffer_full += 1;
-					netअगर_tx_stop_queue(cur_queue);
+					netif_tx_stop_queue(cur_queue);
 
-					अगर (!work_pending(&adapter->tx_stall_task))
+					if (!work_pending(&adapter->tx_stall_task))
 						queue_work(adapter->txrx_wq,
 							   &adapter->tx_stall_task);
 
 					ret = NETDEV_TX_BUSY;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (!is_multi) अणु
+				}
+			} else {
+				if (!is_multi) {
 					adapter->stats64.tx_packets += 1;
 					hw->ep_shm_info[dest_epid].net_stats
 								.tx_packets += 1;
 					adapter->stats64.tx_bytes += len;
 					hw->ep_shm_info[dest_epid].net_stats
 								.tx_bytes += len;
-				पूर्ण
+				}
 
 				adapter->tx_retry_count = 0;
 				ret = NETDEV_TX_OK;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (ret == NETDEV_TX_OK) अणु
-		dev_kमुक्त_skb(skb);
-		अगर (is_multi) अणु
+	if (ret == NETDEV_TX_OK) {
+		dev_kfree_skb(skb);
+		if (is_multi) {
 			adapter->stats64.tx_packets += 1;
 			hw->ep_shm_info[my_epid].net_stats.tx_packets += 1;
 			adapter->stats64.tx_bytes += 1;
 			hw->ep_shm_info[my_epid].net_stats.tx_bytes += len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fjes_tx_retry(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा netdev_queue *queue = netdev_get_tx_queue(netdev, 0);
+static void fjes_tx_retry(struct net_device *netdev, unsigned int txqueue)
+{
+	struct netdev_queue *queue = netdev_get_tx_queue(netdev, 0);
 
-	netअगर_tx_wake_queue(queue);
-पूर्ण
+	netif_tx_wake_queue(queue);
+}
 
-अटल व्योम
-fjes_get_stats64(काष्ठा net_device *netdev, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
+static void
+fjes_get_stats64(struct net_device *netdev, struct rtnl_link_stats64 *stats)
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
 
-	स_नकल(stats, &adapter->stats64, माप(काष्ठा rtnl_link_stats64));
-पूर्ण
+	memcpy(stats, &adapter->stats64, sizeof(struct rtnl_link_stats64));
+}
 
-अटल पूर्णांक fjes_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
-	bool running = netअगर_running(netdev);
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक idx, epidx;
+static int fjes_change_mtu(struct net_device *netdev, int new_mtu)
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	bool running = netif_running(netdev);
+	struct fjes_hw *hw = &adapter->hw;
+	unsigned long flags;
+	int ret = -EINVAL;
+	int idx, epidx;
 
-	क्रम (idx = 0; fjes_support_mtu[idx] != 0; idx++) अणु
-		अगर (new_mtu <= fjes_support_mtu[idx]) अणु
+	for (idx = 0; fjes_support_mtu[idx] != 0; idx++) {
+		if (new_mtu <= fjes_support_mtu[idx]) {
 			new_mtu = fjes_support_mtu[idx];
-			अगर (new_mtu == netdev->mtu)
-				वापस 0;
+			if (new_mtu == netdev->mtu)
+				return 0;
 
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (running) अणु
+	if (running) {
 		spin_lock_irqsave(&hw->rx_status_lock, flags);
-		क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
-			अगर (epidx == hw->my_epid)
-				जारी;
+		for (epidx = 0; epidx < hw->max_epid; epidx++) {
+			if (epidx == hw->my_epid)
+				continue;
 			hw->ep_shm_info[epidx].tx.info->v1i.rx_status &=
 				~FJES_RX_MTU_CHANGING_DONE;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 
-		netअगर_tx_stop_all_queues(netdev);
-		netअगर_carrier_off(netdev);
+		netif_tx_stop_all_queues(netdev);
+		netif_carrier_off(netdev);
 		cancel_work_sync(&adapter->tx_stall_task);
 		napi_disable(&adapter->napi);
 
 		msleep(1000);
 
-		netअगर_tx_stop_all_queues(netdev);
-	पूर्ण
+		netif_tx_stop_all_queues(netdev);
+	}
 
 	netdev->mtu = new_mtu;
 
-	अगर (running) अणु
-		क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
-			अगर (epidx == hw->my_epid)
-				जारी;
+	if (running) {
+		for (epidx = 0; epidx < hw->max_epid; epidx++) {
+			if (epidx == hw->my_epid)
+				continue;
 
 			spin_lock_irqsave(&hw->rx_status_lock, flags);
 			fjes_hw_setup_epbuf(&hw->ep_shm_info[epidx].tx,
@@ -869,289 +868,289 @@ fjes_get_stats64(काष्ठा net_device *netdev, काष्ठा rtnl_
 			hw->ep_shm_info[epidx].tx.info->v1i.rx_status |=
 				FJES_RX_MTU_CHANGING_DONE;
 			spin_unlock_irqrestore(&hw->rx_status_lock, flags);
-		पूर्ण
+		}
 
-		netअगर_tx_wake_all_queues(netdev);
-		netअगर_carrier_on(netdev);
+		netif_tx_wake_all_queues(netdev);
+		netif_carrier_on(netdev);
 		napi_enable(&adapter->napi);
 		napi_schedule(&adapter->napi);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fjes_vlan_rx_add_vid(काष्ठा net_device *netdev,
+static int fjes_vlan_rx_add_vid(struct net_device *netdev,
 				__be16 proto, u16 vid)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
 	bool ret = true;
-	पूर्णांक epid;
+	int epid;
 
-	क्रम (epid = 0; epid < adapter->hw.max_epid; epid++) अणु
-		अगर (epid == adapter->hw.my_epid)
-			जारी;
+	for (epid = 0; epid < adapter->hw.max_epid; epid++) {
+		if (epid == adapter->hw.my_epid)
+			continue;
 
-		अगर (!fjes_hw_check_vlan_id(
+		if (!fjes_hw_check_vlan_id(
 			&adapter->hw.ep_shm_info[epid].tx, vid))
 			ret = fjes_hw_set_vlan_id(
 				&adapter->hw.ep_shm_info[epid].tx, vid);
-	पूर्ण
+	}
 
-	वापस ret ? 0 : -ENOSPC;
-पूर्ण
+	return ret ? 0 : -ENOSPC;
+}
 
-अटल पूर्णांक fjes_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
+static int fjes_vlan_rx_kill_vid(struct net_device *netdev,
 				 __be16 proto, u16 vid)
-अणु
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
-	पूर्णांक epid;
+{
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	int epid;
 
-	क्रम (epid = 0; epid < adapter->hw.max_epid; epid++) अणु
-		अगर (epid == adapter->hw.my_epid)
-			जारी;
+	for (epid = 0; epid < adapter->hw.max_epid; epid++) {
+		if (epid == adapter->hw.my_epid)
+			continue;
 
 		fjes_hw_del_vlan_id(&adapter->hw.ep_shm_info[epid].tx, vid);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fjes_txrx_stop_req_irq(काष्ठा fjes_adapter *adapter,
-				   पूर्णांक src_epid)
-अणु
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	क्रमागत ep_partner_status status;
-	अचिन्हित दीर्घ flags;
+static void fjes_txrx_stop_req_irq(struct fjes_adapter *adapter,
+				   int src_epid)
+{
+	struct fjes_hw *hw = &adapter->hw;
+	enum ep_partner_status status;
+	unsigned long flags;
 
 	status = fjes_hw_get_partner_ep_status(hw, src_epid);
 	trace_fjes_txrx_stop_req_irq_pre(hw, src_epid, status);
-	चयन (status) अणु
-	हाल EP_PARTNER_UNSHARE:
-	हाल EP_PARTNER_COMPLETE:
-	शेष:
-		अवरोध;
-	हाल EP_PARTNER_WAITING:
-		अगर (src_epid < hw->my_epid) अणु
+	switch (status) {
+	case EP_PARTNER_UNSHARE:
+	case EP_PARTNER_COMPLETE:
+	default:
+		break;
+	case EP_PARTNER_WAITING:
+		if (src_epid < hw->my_epid) {
 			spin_lock_irqsave(&hw->rx_status_lock, flags);
 			hw->ep_shm_info[src_epid].tx.info->v1i.rx_status |=
 				FJES_RX_STOP_REQ_DONE;
 			spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 
 			clear_bit(src_epid, &hw->txrx_stop_req_bit);
-			set_bit(src_epid, &adapter->unshare_watch_biपंचांगask);
+			set_bit(src_epid, &adapter->unshare_watch_bitmask);
 
-			अगर (!work_pending(&adapter->unshare_watch_task))
+			if (!work_pending(&adapter->unshare_watch_task))
 				queue_work(adapter->control_wq,
 					   &adapter->unshare_watch_task);
-		पूर्ण
-		अवरोध;
-	हाल EP_PARTNER_SHARED:
-		अगर (hw->ep_shm_info[src_epid].rx.info->v1i.rx_status &
-		    FJES_RX_STOP_REQ_REQUEST) अणु
+		}
+		break;
+	case EP_PARTNER_SHARED:
+		if (hw->ep_shm_info[src_epid].rx.info->v1i.rx_status &
+		    FJES_RX_STOP_REQ_REQUEST) {
 			set_bit(src_epid, &hw->epstop_req_bit);
-			अगर (!work_pending(&hw->epstop_task))
+			if (!work_pending(&hw->epstop_task))
 				queue_work(adapter->control_wq,
 					   &hw->epstop_task);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 	trace_fjes_txrx_stop_req_irq_post(hw, src_epid);
-पूर्ण
+}
 
-अटल व्योम fjes_stop_req_irq(काष्ठा fjes_adapter *adapter, पूर्णांक src_epid)
-अणु
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	क्रमागत ep_partner_status status;
-	अचिन्हित दीर्घ flags;
+static void fjes_stop_req_irq(struct fjes_adapter *adapter, int src_epid)
+{
+	struct fjes_hw *hw = &adapter->hw;
+	enum ep_partner_status status;
+	unsigned long flags;
 
 	set_bit(src_epid, &hw->hw_info.buffer_unshare_reserve_bit);
 
 	status = fjes_hw_get_partner_ep_status(hw, src_epid);
 	trace_fjes_stop_req_irq_pre(hw, src_epid, status);
-	चयन (status) अणु
-	हाल EP_PARTNER_WAITING:
+	switch (status) {
+	case EP_PARTNER_WAITING:
 		spin_lock_irqsave(&hw->rx_status_lock, flags);
 		hw->ep_shm_info[src_epid].tx.info->v1i.rx_status |=
 				FJES_RX_STOP_REQ_DONE;
 		spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 		clear_bit(src_epid, &hw->txrx_stop_req_bit);
 		fallthrough;
-	हाल EP_PARTNER_UNSHARE:
-	हाल EP_PARTNER_COMPLETE:
-	शेष:
-		set_bit(src_epid, &adapter->unshare_watch_biपंचांगask);
-		अगर (!work_pending(&adapter->unshare_watch_task))
+	case EP_PARTNER_UNSHARE:
+	case EP_PARTNER_COMPLETE:
+	default:
+		set_bit(src_epid, &adapter->unshare_watch_bitmask);
+		if (!work_pending(&adapter->unshare_watch_task))
 			queue_work(adapter->control_wq,
 				   &adapter->unshare_watch_task);
-		अवरोध;
-	हाल EP_PARTNER_SHARED:
+		break;
+	case EP_PARTNER_SHARED:
 		set_bit(src_epid, &hw->epstop_req_bit);
 
-		अगर (!work_pending(&hw->epstop_task))
+		if (!work_pending(&hw->epstop_task))
 			queue_work(adapter->control_wq, &hw->epstop_task);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	trace_fjes_stop_req_irq_post(hw, src_epid);
-पूर्ण
+}
 
-अटल व्योम fjes_update_zone_irq(काष्ठा fjes_adapter *adapter,
-				 पूर्णांक src_epid)
-अणु
-	काष्ठा fjes_hw *hw = &adapter->hw;
+static void fjes_update_zone_irq(struct fjes_adapter *adapter,
+				 int src_epid)
+{
+	struct fjes_hw *hw = &adapter->hw;
 
-	अगर (!work_pending(&hw->update_zone_task))
+	if (!work_pending(&hw->update_zone_task))
 		queue_work(adapter->control_wq, &hw->update_zone_task);
-पूर्ण
+}
 
-अटल irqवापस_t fjes_पूर्णांकr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा fjes_adapter *adapter = data;
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	irqवापस_t ret;
+static irqreturn_t fjes_intr(int irq, void *data)
+{
+	struct fjes_adapter *adapter = data;
+	struct fjes_hw *hw = &adapter->hw;
+	irqreturn_t ret;
 	u32 icr;
 
-	icr = fjes_hw_capture_पूर्णांकerrupt_status(hw);
+	icr = fjes_hw_capture_interrupt_status(hw);
 
-	अगर (icr & REG_IS_MASK_IS_ASSERT) अणु
-		अगर (icr & REG_ICTL_MASK_RX_DATA) अणु
+	if (icr & REG_IS_MASK_IS_ASSERT) {
+		if (icr & REG_ICTL_MASK_RX_DATA) {
 			fjes_rx_irq(adapter, icr & REG_IS_MASK_EPID);
 			hw->ep_shm_info[icr & REG_IS_MASK_EPID].ep_stats
-				.recv_पूर्णांकr_rx += 1;
-		पूर्ण
+				.recv_intr_rx += 1;
+		}
 
-		अगर (icr & REG_ICTL_MASK_DEV_STOP_REQ) अणु
+		if (icr & REG_ICTL_MASK_DEV_STOP_REQ) {
 			fjes_stop_req_irq(adapter, icr & REG_IS_MASK_EPID);
 			hw->ep_shm_info[icr & REG_IS_MASK_EPID].ep_stats
-				.recv_पूर्णांकr_stop += 1;
-		पूर्ण
+				.recv_intr_stop += 1;
+		}
 
-		अगर (icr & REG_ICTL_MASK_TXRX_STOP_REQ) अणु
+		if (icr & REG_ICTL_MASK_TXRX_STOP_REQ) {
 			fjes_txrx_stop_req_irq(adapter, icr & REG_IS_MASK_EPID);
 			hw->ep_shm_info[icr & REG_IS_MASK_EPID].ep_stats
-				.recv_पूर्णांकr_unshare += 1;
-		पूर्ण
+				.recv_intr_unshare += 1;
+		}
 
-		अगर (icr & REG_ICTL_MASK_TXRX_STOP_DONE)
+		if (icr & REG_ICTL_MASK_TXRX_STOP_DONE)
 			fjes_hw_set_irqmask(hw,
 					    REG_ICTL_MASK_TXRX_STOP_DONE, true);
 
-		अगर (icr & REG_ICTL_MASK_INFO_UPDATE) अणु
+		if (icr & REG_ICTL_MASK_INFO_UPDATE) {
 			fjes_update_zone_irq(adapter, icr & REG_IS_MASK_EPID);
 			hw->ep_shm_info[icr & REG_IS_MASK_EPID].ep_stats
-				.recv_पूर्णांकr_zoneupdate += 1;
-		पूर्ण
+				.recv_intr_zoneupdate += 1;
+		}
 
 		ret = IRQ_HANDLED;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = IRQ_NONE;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fjes_rxframe_search_exist(काष्ठा fjes_adapter *adapter,
-				     पूर्णांक start_epid)
-अणु
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	क्रमागत ep_partner_status pstatus;
-	पूर्णांक max_epid, cur_epid;
-	पूर्णांक i;
+static int fjes_rxframe_search_exist(struct fjes_adapter *adapter,
+				     int start_epid)
+{
+	struct fjes_hw *hw = &adapter->hw;
+	enum ep_partner_status pstatus;
+	int max_epid, cur_epid;
+	int i;
 
 	max_epid = hw->max_epid;
 	start_epid = (start_epid + 1 + max_epid) % max_epid;
 
-	क्रम (i = 0; i < max_epid; i++) अणु
+	for (i = 0; i < max_epid; i++) {
 		cur_epid = (start_epid + i) % max_epid;
-		अगर (cur_epid == hw->my_epid)
-			जारी;
+		if (cur_epid == hw->my_epid)
+			continue;
 
 		pstatus = fjes_hw_get_partner_ep_status(hw, cur_epid);
-		अगर (pstatus == EP_PARTNER_SHARED) अणु
-			अगर (!fjes_hw_epbuf_rx_is_empty(
+		if (pstatus == EP_PARTNER_SHARED) {
+			if (!fjes_hw_epbuf_rx_is_empty(
 				&hw->ep_shm_info[cur_epid].rx))
-				वापस cur_epid;
-		पूर्ण
-	पूर्ण
-	वापस -1;
-पूर्ण
+				return cur_epid;
+		}
+	}
+	return -1;
+}
 
-अटल व्योम *fjes_rxframe_get(काष्ठा fjes_adapter *adapter, माप_प्रकार *psize,
-			      पूर्णांक *cur_epid)
-अणु
-	व्योम *frame;
+static void *fjes_rxframe_get(struct fjes_adapter *adapter, size_t *psize,
+			      int *cur_epid)
+{
+	void *frame;
 
 	*cur_epid = fjes_rxframe_search_exist(adapter, *cur_epid);
-	अगर (*cur_epid < 0)
-		वापस शून्य;
+	if (*cur_epid < 0)
+		return NULL;
 
 	frame =
 	fjes_hw_epbuf_rx_curpkt_get_addr(
 		&adapter->hw.ep_shm_info[*cur_epid].rx, psize);
 
-	वापस frame;
-पूर्ण
+	return frame;
+}
 
-अटल व्योम fjes_rxframe_release(काष्ठा fjes_adapter *adapter, पूर्णांक cur_epid)
-अणु
+static void fjes_rxframe_release(struct fjes_adapter *adapter, int cur_epid)
+{
 	fjes_hw_epbuf_rx_curpkt_drop(&adapter->hw.ep_shm_info[cur_epid].rx);
-पूर्ण
+}
 
-अटल व्योम fjes_rx_irq(काष्ठा fjes_adapter *adapter, पूर्णांक src_epid)
-अणु
-	काष्ठा fjes_hw *hw = &adapter->hw;
+static void fjes_rx_irq(struct fjes_adapter *adapter, int src_epid)
+{
+	struct fjes_hw *hw = &adapter->hw;
 
 	fjes_hw_set_irqmask(hw, REG_ICTL_MASK_RX_DATA, true);
 
 	adapter->unset_rx_last = true;
 	napi_schedule(&adapter->napi);
-पूर्ण
+}
 
-अटल पूर्णांक fjes_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा fjes_adapter *adapter =
-			container_of(napi, काष्ठा fjes_adapter, napi);
-	काष्ठा net_device *netdev = napi->dev;
-	काष्ठा fjes_hw *hw = &adapter->hw;
-	काष्ठा sk_buff *skb;
-	पूर्णांक work_करोne = 0;
-	पूर्णांक cur_epid = 0;
-	पूर्णांक epidx;
-	माप_प्रकार frame_len;
-	व्योम *frame;
+static int fjes_poll(struct napi_struct *napi, int budget)
+{
+	struct fjes_adapter *adapter =
+			container_of(napi, struct fjes_adapter, napi);
+	struct net_device *netdev = napi->dev;
+	struct fjes_hw *hw = &adapter->hw;
+	struct sk_buff *skb;
+	int work_done = 0;
+	int cur_epid = 0;
+	int epidx;
+	size_t frame_len;
+	void *frame;
 
 	spin_lock(&hw->rx_status_lock);
-	क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
-		अगर (epidx == hw->my_epid)
-			जारी;
+	for (epidx = 0; epidx < hw->max_epid; epidx++) {
+		if (epidx == hw->my_epid)
+			continue;
 
-		अगर (fjes_hw_get_partner_ep_status(hw, epidx) ==
+		if (fjes_hw_get_partner_ep_status(hw, epidx) ==
 		    EP_PARTNER_SHARED)
 			adapter->hw.ep_shm_info[epidx]
 				   .tx.info->v1i.rx_status |= FJES_RX_POLL_WORK;
-	पूर्ण
+	}
 	spin_unlock(&hw->rx_status_lock);
 
-	जबतक (work_करोne < budget) अणु
+	while (work_done < budget) {
 		prefetch(&adapter->hw);
 		frame = fjes_rxframe_get(adapter, &frame_len, &cur_epid);
 
-		अगर (frame) अणु
+		if (frame) {
 			skb = napi_alloc_skb(napi, frame_len);
-			अगर (!skb) अणु
+			if (!skb) {
 				adapter->stats64.rx_dropped += 1;
 				hw->ep_shm_info[cur_epid].net_stats
 							 .rx_dropped += 1;
 				adapter->stats64.rx_errors += 1;
 				hw->ep_shm_info[cur_epid].net_stats
 							 .rx_errors += 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				skb_put_data(skb, frame, frame_len);
 				skb->protocol = eth_type_trans(skb, netdev);
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-				netअगर_receive_skb(skb);
+				netif_receive_skb(skb);
 
-				work_करोne++;
+				work_done++;
 
 				adapter->stats64.rx_packets += 1;
 				hw->ep_shm_info[cur_epid].net_stats
@@ -1160,67 +1159,67 @@ fjes_get_stats64(काष्ठा net_device *netdev, काष्ठा rtnl_
 				hw->ep_shm_info[cur_epid].net_stats
 							 .rx_bytes += frame_len;
 
-				अगर (is_multicast_ether_addr(
-					((काष्ठा ethhdr *)frame)->h_dest)) अणु
+				if (is_multicast_ether_addr(
+					((struct ethhdr *)frame)->h_dest)) {
 					adapter->stats64.multicast += 1;
 					hw->ep_shm_info[cur_epid].net_stats
 								 .multicast += 1;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			fjes_rxframe_release(adapter, cur_epid);
 			adapter->unset_rx_last = true;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		} else {
+			break;
+		}
+	}
 
-	अगर (work_करोne < budget) अणु
-		napi_complete_करोne(napi, work_करोne);
+	if (work_done < budget) {
+		napi_complete_done(napi, work_done);
 
-		अगर (adapter->unset_rx_last) अणु
-			adapter->rx_last_jअगरfies = jअगरfies;
+		if (adapter->unset_rx_last) {
+			adapter->rx_last_jiffies = jiffies;
 			adapter->unset_rx_last = false;
-		पूर्ण
+		}
 
-		अगर (((दीर्घ)jअगरfies - (दीर्घ)adapter->rx_last_jअगरfies) < 3) अणु
+		if (((long)jiffies - (long)adapter->rx_last_jiffies) < 3) {
 			napi_reschedule(napi);
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_lock(&hw->rx_status_lock);
-			क्रम (epidx = 0; epidx < hw->max_epid; epidx++) अणु
-				अगर (epidx == hw->my_epid)
-					जारी;
-				अगर (fjes_hw_get_partner_ep_status(hw, epidx) ==
+			for (epidx = 0; epidx < hw->max_epid; epidx++) {
+				if (epidx == hw->my_epid)
+					continue;
+				if (fjes_hw_get_partner_ep_status(hw, epidx) ==
 				    EP_PARTNER_SHARED)
 					adapter->hw.ep_shm_info[epidx].tx
 						   .info->v1i.rx_status &=
 						~FJES_RX_POLL_WORK;
-			पूर्ण
+			}
 			spin_unlock(&hw->rx_status_lock);
 
 			fjes_hw_set_irqmask(hw, REG_ICTL_MASK_RX_DATA, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
 /* fjes_probe - Device Initialization Routine */
-अटल पूर्णांक fjes_probe(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	काष्ठा fjes_adapter *adapter;
-	काष्ठा net_device *netdev;
-	काष्ठा resource *res;
-	काष्ठा fjes_hw *hw;
-	पूर्णांक err;
+static int fjes_probe(struct platform_device *plat_dev)
+{
+	struct fjes_adapter *adapter;
+	struct net_device *netdev;
+	struct resource *res;
+	struct fjes_hw *hw;
+	int err;
 
 	err = -ENOMEM;
-	netdev = alloc_netdev_mq(माप(काष्ठा fjes_adapter), "es%d",
+	netdev = alloc_netdev_mq(sizeof(struct fjes_adapter), "es%d",
 				 NET_NAME_UNKNOWN, fjes_netdev_setup,
 				 FJES_MAX_QUEUES);
 
-	अगर (!netdev)
-		जाओ err_out;
+	if (!netdev)
+		goto err_out;
 
 	SET_NETDEV_DEV(netdev, &plat_dev->dev);
 
@@ -1231,44 +1230,44 @@ fjes_get_stats64(काष्ठा net_device *netdev, काष्ठा rtnl_
 	hw = &adapter->hw;
 	hw->back = adapter;
 
-	/* setup the निजी काष्ठाure */
+	/* setup the private structure */
 	err = fjes_sw_init(adapter);
-	अगर (err)
-		जाओ err_मुक्त_netdev;
+	if (err)
+		goto err_free_netdev;
 
-	INIT_WORK(&adapter->क्रमce_बंद_task, fjes_क्रमce_बंद_task);
-	adapter->क्रमce_reset = false;
-	adapter->खोलो_guard = false;
+	INIT_WORK(&adapter->force_close_task, fjes_force_close_task);
+	adapter->force_reset = false;
+	adapter->open_guard = false;
 
 	adapter->txrx_wq = alloc_workqueue(DRV_NAME "/txrx", WQ_MEM_RECLAIM, 0);
-	अगर (unlikely(!adapter->txrx_wq)) अणु
+	if (unlikely(!adapter->txrx_wq)) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_netdev;
-	पूर्ण
+		goto err_free_netdev;
+	}
 
 	adapter->control_wq = alloc_workqueue(DRV_NAME "/control",
 					      WQ_MEM_RECLAIM, 0);
-	अगर (unlikely(!adapter->control_wq)) अणु
+	if (unlikely(!adapter->control_wq)) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_txrx_wq;
-	पूर्ण
+		goto err_free_txrx_wq;
+	}
 
 	INIT_WORK(&adapter->tx_stall_task, fjes_tx_stall_task);
-	INIT_WORK(&adapter->उठाओ_पूर्णांकr_rxdata_task,
-		  fjes_उठाओ_पूर्णांकr_rxdata_task);
+	INIT_WORK(&adapter->raise_intr_rxdata_task,
+		  fjes_raise_intr_rxdata_task);
 	INIT_WORK(&adapter->unshare_watch_task, fjes_watch_unshare_task);
-	adapter->unshare_watch_biपंचांगask = 0;
+	adapter->unshare_watch_bitmask = 0;
 
-	INIT_DELAYED_WORK(&adapter->पूर्णांकerrupt_watch_task, fjes_irq_watch_task);
-	adapter->पूर्णांकerrupt_watch_enable = false;
+	INIT_DELAYED_WORK(&adapter->interrupt_watch_task, fjes_irq_watch_task);
+	adapter->interrupt_watch_enable = false;
 
-	res = platक्रमm_get_resource(plat_dev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(plat_dev, IORESOURCE_MEM, 0);
 	hw->hw_res.start = res->start;
 	hw->hw_res.size = resource_size(res);
-	hw->hw_res.irq = platक्रमm_get_irq(plat_dev, 0);
+	hw->hw_res.irq = platform_get_irq(plat_dev, 0);
 	err = fjes_hw_init(&adapter->hw);
-	अगर (err)
-		जाओ err_मुक्त_control_wq;
+	if (err)
+		goto err_free_control_wq;
 
 	/* setup MAC address (02:00:00:00:00:[epid])*/
 	netdev->dev_addr[0] = 2;
@@ -1278,163 +1277,163 @@ fjes_get_stats64(काष्ठा net_device *netdev, काष्ठा rtnl_
 	netdev->dev_addr[4] = 0;
 	netdev->dev_addr[5] = hw->my_epid; /* EPID */
 
-	err = रेजिस्टर_netdev(netdev);
-	अगर (err)
-		जाओ err_hw_निकास;
+	err = register_netdev(netdev);
+	if (err)
+		goto err_hw_exit;
 
-	netअगर_carrier_off(netdev);
+	netif_carrier_off(netdev);
 
 	fjes_dbg_adapter_init(adapter);
 
-	वापस 0;
+	return 0;
 
-err_hw_निकास:
-	fjes_hw_निकास(&adapter->hw);
-err_मुक्त_control_wq:
+err_hw_exit:
+	fjes_hw_exit(&adapter->hw);
+err_free_control_wq:
 	destroy_workqueue(adapter->control_wq);
-err_मुक्त_txrx_wq:
+err_free_txrx_wq:
 	destroy_workqueue(adapter->txrx_wq);
-err_मुक्त_netdev:
-	मुक्त_netdev(netdev);
+err_free_netdev:
+	free_netdev(netdev);
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* fjes_हटाओ - Device Removal Routine */
-अटल पूर्णांक fjes_हटाओ(काष्ठा platक्रमm_device *plat_dev)
-अणु
-	काष्ठा net_device *netdev = dev_get_drvdata(&plat_dev->dev);
-	काष्ठा fjes_adapter *adapter = netdev_priv(netdev);
-	काष्ठा fjes_hw *hw = &adapter->hw;
+/* fjes_remove - Device Removal Routine */
+static int fjes_remove(struct platform_device *plat_dev)
+{
+	struct net_device *netdev = dev_get_drvdata(&plat_dev->dev);
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	struct fjes_hw *hw = &adapter->hw;
 
-	fjes_dbg_adapter_निकास(adapter);
+	fjes_dbg_adapter_exit(adapter);
 
-	cancel_delayed_work_sync(&adapter->पूर्णांकerrupt_watch_task);
+	cancel_delayed_work_sync(&adapter->interrupt_watch_task);
 	cancel_work_sync(&adapter->unshare_watch_task);
-	cancel_work_sync(&adapter->उठाओ_पूर्णांकr_rxdata_task);
+	cancel_work_sync(&adapter->raise_intr_rxdata_task);
 	cancel_work_sync(&adapter->tx_stall_task);
-	अगर (adapter->control_wq)
+	if (adapter->control_wq)
 		destroy_workqueue(adapter->control_wq);
-	अगर (adapter->txrx_wq)
+	if (adapter->txrx_wq)
 		destroy_workqueue(adapter->txrx_wq);
 
-	unरेजिस्टर_netdev(netdev);
+	unregister_netdev(netdev);
 
-	fjes_hw_निकास(hw);
+	fjes_hw_exit(hw);
 
-	netअगर_napi_del(&adapter->napi);
+	netif_napi_del(&adapter->napi);
 
-	मुक्त_netdev(netdev);
+	free_netdev(netdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fjes_sw_init(काष्ठा fjes_adapter *adapter)
-अणु
-	काष्ठा net_device *netdev = adapter->netdev;
+static int fjes_sw_init(struct fjes_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
 
-	netअगर_napi_add(netdev, &adapter->napi, fjes_poll, 64);
+	netif_napi_add(netdev, &adapter->napi, fjes_poll, 64);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* fjes_netdev_setup - netdevice initialization routine */
-अटल व्योम fjes_netdev_setup(काष्ठा net_device *netdev)
-अणु
+static void fjes_netdev_setup(struct net_device *netdev)
+{
 	ether_setup(netdev);
 
-	netdev->watchकरोg_समयo = FJES_TX_RETRY_INTERVAL;
+	netdev->watchdog_timeo = FJES_TX_RETRY_INTERVAL;
 	netdev->netdev_ops = &fjes_netdev_ops;
 	fjes_set_ethtool_ops(netdev);
 	netdev->mtu = fjes_support_mtu[3];
 	netdev->min_mtu = fjes_support_mtu[0];
 	netdev->max_mtu = fjes_support_mtu[3];
 	netdev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
-पूर्ण
+}
 
-अटल व्योम fjes_irq_watch_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fjes_adapter *adapter = container_of(to_delayed_work(work),
-			काष्ठा fjes_adapter, पूर्णांकerrupt_watch_task);
+static void fjes_irq_watch_task(struct work_struct *work)
+{
+	struct fjes_adapter *adapter = container_of(to_delayed_work(work),
+			struct fjes_adapter, interrupt_watch_task);
 
 	local_irq_disable();
-	fjes_पूर्णांकr(adapter->hw.hw_res.irq, adapter);
+	fjes_intr(adapter->hw.hw_res.irq, adapter);
 	local_irq_enable();
 
-	अगर (fjes_rxframe_search_exist(adapter, 0) >= 0)
+	if (fjes_rxframe_search_exist(adapter, 0) >= 0)
 		napi_schedule(&adapter->napi);
 
-	अगर (adapter->पूर्णांकerrupt_watch_enable) अणु
-		अगर (!delayed_work_pending(&adapter->पूर्णांकerrupt_watch_task))
+	if (adapter->interrupt_watch_enable) {
+		if (!delayed_work_pending(&adapter->interrupt_watch_task))
 			queue_delayed_work(adapter->control_wq,
-					   &adapter->पूर्णांकerrupt_watch_task,
+					   &adapter->interrupt_watch_task,
 					   FJES_IRQ_WATCH_DELAY);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fjes_watch_unshare_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fjes_adapter *adapter =
-	container_of(work, काष्ठा fjes_adapter, unshare_watch_task);
+static void fjes_watch_unshare_task(struct work_struct *work)
+{
+	struct fjes_adapter *adapter =
+	container_of(work, struct fjes_adapter, unshare_watch_task);
 
-	काष्ठा net_device *netdev = adapter->netdev;
-	काष्ठा fjes_hw *hw = &adapter->hw;
+	struct net_device *netdev = adapter->netdev;
+	struct fjes_hw *hw = &adapter->hw;
 
-	पूर्णांक unshare_watch, unshare_reserve;
-	पूर्णांक max_epid, my_epid, epidx;
-	पूर्णांक stop_req, stop_req_करोne;
-	uदीर्घ unshare_watch_biपंचांगask;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक रुको_समय = 0;
-	पूर्णांक is_shared;
-	पूर्णांक ret;
+	int unshare_watch, unshare_reserve;
+	int max_epid, my_epid, epidx;
+	int stop_req, stop_req_done;
+	ulong unshare_watch_bitmask;
+	unsigned long flags;
+	int wait_time = 0;
+	int is_shared;
+	int ret;
 
 	my_epid = hw->my_epid;
 	max_epid = hw->max_epid;
 
-	unshare_watch_biपंचांगask = adapter->unshare_watch_biपंचांगask;
-	adapter->unshare_watch_biपंचांगask = 0;
+	unshare_watch_bitmask = adapter->unshare_watch_bitmask;
+	adapter->unshare_watch_bitmask = 0;
 
-	जबतक ((unshare_watch_biपंचांगask || hw->txrx_stop_req_bit) &&
-	       (रुको_समय < 3000)) अणु
-		क्रम (epidx = 0; epidx < max_epid; epidx++) अणु
-			अगर (epidx == my_epid)
-				जारी;
+	while ((unshare_watch_bitmask || hw->txrx_stop_req_bit) &&
+	       (wait_time < 3000)) {
+		for (epidx = 0; epidx < max_epid; epidx++) {
+			if (epidx == my_epid)
+				continue;
 
 			is_shared = fjes_hw_epid_is_shared(hw->hw_info.share,
 							   epidx);
 
 			stop_req = test_bit(epidx, &hw->txrx_stop_req_bit);
 
-			stop_req_करोne = hw->ep_shm_info[epidx].rx.info->v1i.rx_status &
+			stop_req_done = hw->ep_shm_info[epidx].rx.info->v1i.rx_status &
 					FJES_RX_STOP_REQ_DONE;
 
-			unshare_watch = test_bit(epidx, &unshare_watch_biपंचांगask);
+			unshare_watch = test_bit(epidx, &unshare_watch_bitmask);
 
 			unshare_reserve = test_bit(epidx,
 						   &hw->hw_info.buffer_unshare_reserve_bit);
 
-			अगर ((!stop_req ||
-			     (is_shared && (!is_shared || !stop_req_करोne))) &&
+			if ((!stop_req ||
+			     (is_shared && (!is_shared || !stop_req_done))) &&
 			    (is_shared || !unshare_watch || !unshare_reserve))
-				जारी;
+				continue;
 
 			mutex_lock(&hw->hw_info.lock);
-			ret = fjes_hw_unरेजिस्टर_buff_addr(hw, epidx);
-			चयन (ret) अणु
-			हाल 0:
-				अवरोध;
-			हाल -ENOMSG:
-			हाल -EBUSY:
-			शेष:
-				अगर (!work_pending(
-					&adapter->क्रमce_बंद_task)) अणु
-					adapter->क्रमce_reset = true;
+			ret = fjes_hw_unregister_buff_addr(hw, epidx);
+			switch (ret) {
+			case 0:
+				break;
+			case -ENOMSG:
+			case -EBUSY:
+			default:
+				if (!work_pending(
+					&adapter->force_close_task)) {
+					adapter->force_reset = true;
 					schedule_work(
-						&adapter->क्रमce_बंद_task);
-				पूर्ण
-				अवरोध;
-			पूर्ण
+						&adapter->force_close_task);
+				}
+				break;
+			}
 			mutex_unlock(&hw->hw_info.lock);
 			hw->ep_shm_info[epidx].ep_stats
 					.com_unregist_buf_exec += 1;
@@ -1445,39 +1444,39 @@ err_out:
 			spin_unlock_irqrestore(&hw->rx_status_lock, flags);
 
 			clear_bit(epidx, &hw->txrx_stop_req_bit);
-			clear_bit(epidx, &unshare_watch_biपंचांगask);
+			clear_bit(epidx, &unshare_watch_bitmask);
 			clear_bit(epidx,
 				  &hw->hw_info.buffer_unshare_reserve_bit);
-		पूर्ण
+		}
 
 		msleep(100);
-		रुको_समय += 100;
-	पूर्ण
+		wait_time += 100;
+	}
 
-	अगर (hw->hw_info.buffer_unshare_reserve_bit) अणु
-		क्रम (epidx = 0; epidx < max_epid; epidx++) अणु
-			अगर (epidx == my_epid)
-				जारी;
+	if (hw->hw_info.buffer_unshare_reserve_bit) {
+		for (epidx = 0; epidx < max_epid; epidx++) {
+			if (epidx == my_epid)
+				continue;
 
-			अगर (test_bit(epidx,
-				     &hw->hw_info.buffer_unshare_reserve_bit)) अणु
+			if (test_bit(epidx,
+				     &hw->hw_info.buffer_unshare_reserve_bit)) {
 				mutex_lock(&hw->hw_info.lock);
 
-				ret = fjes_hw_unरेजिस्टर_buff_addr(hw, epidx);
-				चयन (ret) अणु
-				हाल 0:
-					अवरोध;
-				हाल -ENOMSG:
-				हाल -EBUSY:
-				शेष:
-					अगर (!work_pending(
-						&adapter->क्रमce_बंद_task)) अणु
-						adapter->क्रमce_reset = true;
+				ret = fjes_hw_unregister_buff_addr(hw, epidx);
+				switch (ret) {
+				case 0:
+					break;
+				case -ENOMSG:
+				case -EBUSY:
+				default:
+					if (!work_pending(
+						&adapter->force_close_task)) {
+						adapter->force_reset = true;
 						schedule_work(
-							&adapter->क्रमce_बंद_task);
-					पूर्ण
-					अवरोध;
-				पूर्ण
+							&adapter->force_close_task);
+					}
+					break;
+				}
 				mutex_unlock(&hw->hw_info.lock);
 
 				hw->ep_shm_info[epidx].ep_stats
@@ -1491,90 +1490,90 @@ err_out:
 						       flags);
 
 				clear_bit(epidx, &hw->txrx_stop_req_bit);
-				clear_bit(epidx, &unshare_watch_biपंचांगask);
+				clear_bit(epidx, &unshare_watch_bitmask);
 				clear_bit(epidx, &hw->hw_info.buffer_unshare_reserve_bit);
-			पूर्ण
+			}
 
-			अगर (test_bit(epidx, &unshare_watch_biपंचांगask)) अणु
+			if (test_bit(epidx, &unshare_watch_bitmask)) {
 				spin_lock_irqsave(&hw->rx_status_lock, flags);
 				hw->ep_shm_info[epidx].tx.info->v1i.rx_status &=
 						~FJES_RX_STOP_REQ_DONE;
 				spin_unlock_irqrestore(&hw->rx_status_lock,
 						       flags);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल acpi_status
+static acpi_status
 acpi_find_extended_socket_device(acpi_handle obj_handle, u32 level,
-				 व्योम *context, व्योम **वापस_value)
-अणु
-	काष्ठा acpi_device *device;
+				 void *context, void **return_value)
+{
+	struct acpi_device *device;
 	bool *found = context;
-	पूर्णांक result;
+	int result;
 
 	result = acpi_bus_get_device(obj_handle, &device);
-	अगर (result)
-		वापस AE_OK;
+	if (result)
+		return AE_OK;
 
-	अगर (म_भेद(acpi_device_hid(device), ACPI_MOTHERBOARD_RESOURCE_HID))
-		वापस AE_OK;
+	if (strcmp(acpi_device_hid(device), ACPI_MOTHERBOARD_RESOURCE_HID))
+		return AE_OK;
 
-	अगर (!is_extended_socket_device(device))
-		वापस AE_OK;
+	if (!is_extended_socket_device(device))
+		return AE_OK;
 
-	अगर (acpi_check_extended_socket_status(device))
-		वापस AE_OK;
+	if (acpi_check_extended_socket_status(device))
+		return AE_OK;
 
 	*found = true;
-	वापस AE_CTRL_TERMINATE;
-पूर्ण
+	return AE_CTRL_TERMINATE;
+}
 
 /* fjes_init_module - Driver Registration Routine */
-अटल पूर्णांक __init fjes_init_module(व्योम)
-अणु
+static int __init fjes_init_module(void)
+{
 	bool found = false;
-	पूर्णांक result;
+	int result;
 
 	acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT, ACPI_UINT32_MAX,
-			    acpi_find_extended_socket_device, शून्य, &found,
-			    शून्य);
+			    acpi_find_extended_socket_device, NULL, &found,
+			    NULL);
 
-	अगर (!found)
-		वापस -ENODEV;
+	if (!found)
+		return -ENODEV;
 
 	pr_info("%s - version %s - %s\n",
 		fjes_driver_string, fjes_driver_version, fjes_copyright);
 
 	fjes_dbg_init();
 
-	result = platक्रमm_driver_रेजिस्टर(&fjes_driver);
-	अगर (result < 0) अणु
-		fjes_dbg_निकास();
-		वापस result;
-	पूर्ण
+	result = platform_driver_register(&fjes_driver);
+	if (result < 0) {
+		fjes_dbg_exit();
+		return result;
+	}
 
-	result = acpi_bus_रेजिस्टर_driver(&fjes_acpi_driver);
-	अगर (result < 0)
-		जाओ fail_acpi_driver;
+	result = acpi_bus_register_driver(&fjes_acpi_driver);
+	if (result < 0)
+		goto fail_acpi_driver;
 
-	वापस 0;
+	return 0;
 
 fail_acpi_driver:
-	platक्रमm_driver_unरेजिस्टर(&fjes_driver);
-	fjes_dbg_निकास();
-	वापस result;
-पूर्ण
+	platform_driver_unregister(&fjes_driver);
+	fjes_dbg_exit();
+	return result;
+}
 
 module_init(fjes_init_module);
 
-/* fjes_निकास_module - Driver Exit Cleanup Routine */
-अटल व्योम __निकास fjes_निकास_module(व्योम)
-अणु
-	acpi_bus_unरेजिस्टर_driver(&fjes_acpi_driver);
-	platक्रमm_driver_unरेजिस्टर(&fjes_driver);
-	fjes_dbg_निकास();
-पूर्ण
+/* fjes_exit_module - Driver Exit Cleanup Routine */
+static void __exit fjes_exit_module(void)
+{
+	acpi_bus_unregister_driver(&fjes_acpi_driver);
+	platform_driver_unregister(&fjes_driver);
+	fjes_dbg_exit();
+}
 
-module_निकास(fjes_निकास_module);
+module_exit(fjes_exit_module);

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 The Nouveau community
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,88 +21,88 @@
  *
  * Authors: Martin Peres
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <subdev/gpपन.स>
-#समावेश <subdev/समयr.h>
+#include <subdev/gpio.h>
+#include <subdev/timer.h>
 
-काष्ठा nvkm_fantog अणु
-	काष्ठा nvkm_fan base;
-	काष्ठा nvkm_alarm alarm;
+struct nvkm_fantog {
+	struct nvkm_fan base;
+	struct nvkm_alarm alarm;
 	spinlock_t lock;
 	u32 period_us;
 	u32 percent;
-	काष्ठा dcb_gpio_func func;
-पूर्ण;
+	struct dcb_gpio_func func;
+};
 
-अटल व्योम
-nvkm_fantog_update(काष्ठा nvkm_fantog *fan, पूर्णांक percent)
-अणु
-	काष्ठा nvkm_therm *therm = fan->base.parent;
-	काष्ठा nvkm_device *device = therm->subdev.device;
-	काष्ठा nvkm_समयr *पंचांगr = device->समयr;
-	काष्ठा nvkm_gpio *gpio = device->gpio;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक duty;
+static void
+nvkm_fantog_update(struct nvkm_fantog *fan, int percent)
+{
+	struct nvkm_therm *therm = fan->base.parent;
+	struct nvkm_device *device = therm->subdev.device;
+	struct nvkm_timer *tmr = device->timer;
+	struct nvkm_gpio *gpio = device->gpio;
+	unsigned long flags;
+	int duty;
 
 	spin_lock_irqsave(&fan->lock, flags);
-	अगर (percent < 0)
+	if (percent < 0)
 		percent = fan->percent;
 	fan->percent = percent;
 
 	duty = !nvkm_gpio_get(gpio, 0, DCB_GPIO_FAN, 0xff);
 	nvkm_gpio_set(gpio, 0, DCB_GPIO_FAN, 0xff, duty);
 
-	अगर (percent != (duty * 100)) अणु
+	if (percent != (duty * 100)) {
 		u64 next_change = (percent * fan->period_us) / 100;
-		अगर (!duty)
+		if (!duty)
 			next_change = fan->period_us - next_change;
-		nvkm_समयr_alarm(पंचांगr, next_change * 1000, &fan->alarm);
-	पूर्ण
+		nvkm_timer_alarm(tmr, next_change * 1000, &fan->alarm);
+	}
 	spin_unlock_irqrestore(&fan->lock, flags);
-पूर्ण
+}
 
-अटल व्योम
-nvkm_fantog_alarm(काष्ठा nvkm_alarm *alarm)
-अणु
-	काष्ठा nvkm_fantog *fan =
-	       container_of(alarm, काष्ठा nvkm_fantog, alarm);
+static void
+nvkm_fantog_alarm(struct nvkm_alarm *alarm)
+{
+	struct nvkm_fantog *fan =
+	       container_of(alarm, struct nvkm_fantog, alarm);
 	nvkm_fantog_update(fan, -1);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_fantog_get(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_fantog *fan = (व्योम *)therm->fan;
-	वापस fan->percent;
-पूर्ण
+static int
+nvkm_fantog_get(struct nvkm_therm *therm)
+{
+	struct nvkm_fantog *fan = (void *)therm->fan;
+	return fan->percent;
+}
 
-अटल पूर्णांक
-nvkm_fantog_set(काष्ठा nvkm_therm *therm, पूर्णांक percent)
-अणु
-	काष्ठा nvkm_fantog *fan = (व्योम *)therm->fan;
-	अगर (therm->func->pwm_ctrl)
+static int
+nvkm_fantog_set(struct nvkm_therm *therm, int percent)
+{
+	struct nvkm_fantog *fan = (void *)therm->fan;
+	if (therm->func->pwm_ctrl)
 		therm->func->pwm_ctrl(therm, fan->func.line, false);
 	nvkm_fantog_update(fan, percent);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_fantog_create(काष्ठा nvkm_therm *therm, काष्ठा dcb_gpio_func *func)
-अणु
-	काष्ठा nvkm_fantog *fan;
-	पूर्णांक ret;
+int
+nvkm_fantog_create(struct nvkm_therm *therm, struct dcb_gpio_func *func)
+{
+	struct nvkm_fantog *fan;
+	int ret;
 
-	अगर (therm->func->pwm_ctrl) अणु
+	if (therm->func->pwm_ctrl) {
 		ret = therm->func->pwm_ctrl(therm, func->line, false);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	fan = kzalloc(माप(*fan), GFP_KERNEL);
+	fan = kzalloc(sizeof(*fan), GFP_KERNEL);
 	therm->fan = &fan->base;
-	अगर (!fan)
-		वापस -ENOMEM;
+	if (!fan)
+		return -ENOMEM;
 
 	fan->base.type = "toggle";
 	fan->base.get = nvkm_fantog_get;
@@ -113,5 +112,5 @@ nvkm_fantog_create(काष्ठा nvkm_therm *therm, काष्ठा dcb_
 	fan->percent = 100;
 	fan->func = *func;
 	spin_lock_init(&fan->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}

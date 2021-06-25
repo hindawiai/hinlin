@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2020 Mellanox Technologies. All rights reserved */
 
-#समावेश "reg.h"
-#समावेश "core.h"
-#समावेश "spectrum.h"
-#समावेश "core_env.h"
+#include "reg.h"
+#include "core.h"
+#include "spectrum.h"
+#include "core_env.h"
 
-अटल स्थिर अक्षर mlxsw_sp_driver_version[] = "1.0";
+static const char mlxsw_sp_driver_version[] = "1.0";
 
-अटल व्योम mlxsw_sp_port_get_drvinfo(काष्ठा net_device *dev,
-				      काष्ठा ethtool_drvinfo *drvinfo)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+static void mlxsw_sp_port_get_drvinfo(struct net_device *dev,
+				      struct ethtool_drvinfo *drvinfo)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 
 	strlcpy(drvinfo->driver, mlxsw_sp->bus_info->device_kind,
-		माप(drvinfo->driver));
+		sizeof(drvinfo->driver));
 	strlcpy(drvinfo->version, mlxsw_sp_driver_version,
-		माप(drvinfo->version));
-	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
+		sizeof(drvinfo->version));
+	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
 		 "%d.%d.%d",
 		 mlxsw_sp->bus_info->fw_rev.major,
 		 mlxsw_sp->bus_info->fw_rev.minor,
 		 mlxsw_sp->bus_info->fw_rev.subminor);
 	strlcpy(drvinfo->bus_info, mlxsw_sp->bus_info->device_name,
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-काष्ठा mlxsw_sp_ethtool_link_ext_state_opcode_mapping अणु
+struct mlxsw_sp_ethtool_link_ext_state_opcode_mapping {
 	u32 status_opcode;
-	क्रमागत ethtool_link_ext_state link_ext_state;
+	enum ethtool_link_ext_state link_ext_state;
 	u8 link_ext_substate;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp_ethtool_link_ext_state_opcode_mapping
-mlxsw_sp_link_ext_state_opcode_map[] = अणु
-	अणु2, ETHTOOL_LINK_EXT_STATE_AUTONEG,
-		ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_PARTNER_DETECTEDपूर्ण,
-	अणु3, ETHTOOL_LINK_EXT_STATE_AUTONEG,
-		ETHTOOL_LINK_EXT_SUBSTATE_AN_ACK_NOT_RECEIVEDपूर्ण,
-	अणु4, ETHTOOL_LINK_EXT_STATE_AUTONEG,
-		ETHTOOL_LINK_EXT_SUBSTATE_AN_NEXT_PAGE_EXCHANGE_FAILEDपूर्ण,
-	अणु36, ETHTOOL_LINK_EXT_STATE_AUTONEG,
-		ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_PARTNER_DETECTED_FORCE_MODEपूर्ण,
-	अणु38, ETHTOOL_LINK_EXT_STATE_AUTONEG,
-		ETHTOOL_LINK_EXT_SUBSTATE_AN_FEC_MISMATCH_DURING_OVERRIDEपूर्ण,
-	अणु39, ETHTOOL_LINK_EXT_STATE_AUTONEG,
-		ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_HCDपूर्ण,
+static const struct mlxsw_sp_ethtool_link_ext_state_opcode_mapping
+mlxsw_sp_link_ext_state_opcode_map[] = {
+	{2, ETHTOOL_LINK_EXT_STATE_AUTONEG,
+		ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_PARTNER_DETECTED},
+	{3, ETHTOOL_LINK_EXT_STATE_AUTONEG,
+		ETHTOOL_LINK_EXT_SUBSTATE_AN_ACK_NOT_RECEIVED},
+	{4, ETHTOOL_LINK_EXT_STATE_AUTONEG,
+		ETHTOOL_LINK_EXT_SUBSTATE_AN_NEXT_PAGE_EXCHANGE_FAILED},
+	{36, ETHTOOL_LINK_EXT_STATE_AUTONEG,
+		ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_PARTNER_DETECTED_FORCE_MODE},
+	{38, ETHTOOL_LINK_EXT_STATE_AUTONEG,
+		ETHTOOL_LINK_EXT_SUBSTATE_AN_FEC_MISMATCH_DURING_OVERRIDE},
+	{39, ETHTOOL_LINK_EXT_STATE_AUTONEG,
+		ETHTOOL_LINK_EXT_SUBSTATE_AN_NO_HCD},
 
-	अणु5, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
-		ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_FRAME_LOCK_NOT_ACQUIREDपूर्ण,
-	अणु6, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
-		ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_LINK_INHIBIT_TIMEOUTपूर्ण,
-	अणु7, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
-		ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_LINK_PARTNER_DID_NOT_SET_RECEIVER_READYपूर्ण,
-	अणु8, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE, 0पूर्ण,
-	अणु14, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
-		ETHTOOL_LINK_EXT_SUBSTATE_LT_REMOTE_FAULTपूर्ण,
+	{5, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
+		ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_FRAME_LOCK_NOT_ACQUIRED},
+	{6, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
+		ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_LINK_INHIBIT_TIMEOUT},
+	{7, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
+		ETHTOOL_LINK_EXT_SUBSTATE_LT_KR_LINK_PARTNER_DID_NOT_SET_RECEIVER_READY},
+	{8, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE, 0},
+	{14, ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE,
+		ETHTOOL_LINK_EXT_SUBSTATE_LT_REMOTE_FAULT},
 
-	अणु9, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
-		ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_ACQUIRE_BLOCK_LOCKपूर्ण,
-	अणु10, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
-		ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_ACQUIRE_AM_LOCKपूर्ण,
-	अणु11, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
-		ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_GET_ALIGN_STATUSपूर्ण,
-	अणु12, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
-		ETHTOOL_LINK_EXT_SUBSTATE_LLM_FC_FEC_IS_NOT_LOCKEDपूर्ण,
-	अणु13, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
-		ETHTOOL_LINK_EXT_SUBSTATE_LLM_RS_FEC_IS_NOT_LOCKEDपूर्ण,
+	{9, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
+		ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_ACQUIRE_BLOCK_LOCK},
+	{10, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
+		ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_ACQUIRE_AM_LOCK},
+	{11, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
+		ETHTOOL_LINK_EXT_SUBSTATE_LLM_PCS_DID_NOT_GET_ALIGN_STATUS},
+	{12, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
+		ETHTOOL_LINK_EXT_SUBSTATE_LLM_FC_FEC_IS_NOT_LOCKED},
+	{13, ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH,
+		ETHTOOL_LINK_EXT_SUBSTATE_LLM_RS_FEC_IS_NOT_LOCKED},
 
-	अणु15, ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY, 0पूर्ण,
-	अणु17, ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY,
-		ETHTOOL_LINK_EXT_SUBSTATE_BSI_LARGE_NUMBER_OF_PHYSICAL_ERRORSपूर्ण,
-	अणु42, ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY,
-		ETHTOOL_LINK_EXT_SUBSTATE_BSI_UNSUPPORTED_RATEपूर्ण,
+	{15, ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY, 0},
+	{17, ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY,
+		ETHTOOL_LINK_EXT_SUBSTATE_BSI_LARGE_NUMBER_OF_PHYSICAL_ERRORS},
+	{42, ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY,
+		ETHTOOL_LINK_EXT_SUBSTATE_BSI_UNSUPPORTED_RATE},
 
-	अणु1024, ETHTOOL_LINK_EXT_STATE_NO_CABLE, 0पूर्ण,
+	{1024, ETHTOOL_LINK_EXT_STATE_NO_CABLE, 0},
 
-	अणु16, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
-		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLEपूर्ण,
-	अणु20, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
-		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLEपूर्ण,
-	अणु29, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
-		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLEपूर्ण,
-	अणु1025, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
-		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLEपूर्ण,
-	अणु1029, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
-		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLEपूर्ण,
-	अणु1031, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE, 0पूर्ण,
+	{16, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
+		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLE},
+	{20, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
+		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLE},
+	{29, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
+		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLE},
+	{1025, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
+		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLE},
+	{1029, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE,
+		ETHTOOL_LINK_EXT_SUBSTATE_CI_UNSUPPORTED_CABLE},
+	{1031, ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE, 0},
 
-	अणु1027, ETHTOOL_LINK_EXT_STATE_EEPROM_ISSUE, 0पूर्ण,
+	{1027, ETHTOOL_LINK_EXT_STATE_EEPROM_ISSUE, 0},
 
-	अणु23, ETHTOOL_LINK_EXT_STATE_CALIBRATION_FAILURE, 0पूर्ण,
+	{23, ETHTOOL_LINK_EXT_STATE_CALIBRATION_FAILURE, 0},
 
-	अणु1032, ETHTOOL_LINK_EXT_STATE_POWER_BUDGET_EXCEEDED, 0पूर्ण,
+	{1032, ETHTOOL_LINK_EXT_STATE_POWER_BUDGET_EXCEEDED, 0},
 
-	अणु1030, ETHTOOL_LINK_EXT_STATE_OVERHEAT, 0पूर्ण,
-पूर्ण;
+	{1030, ETHTOOL_LINK_EXT_STATE_OVERHEAT, 0},
+};
 
-अटल व्योम
-mlxsw_sp_port_set_link_ext_state(काष्ठा mlxsw_sp_ethtool_link_ext_state_opcode_mapping
+static void
+mlxsw_sp_port_set_link_ext_state(struct mlxsw_sp_ethtool_link_ext_state_opcode_mapping
 				 link_ext_state_mapping,
-				 काष्ठा ethtool_link_ext_state_info *link_ext_state_info)
-अणु
-	चयन (link_ext_state_mapping.link_ext_state) अणु
-	हाल ETHTOOL_LINK_EXT_STATE_AUTONEG:
-		link_ext_state_info->स्वतःneg =
+				 struct ethtool_link_ext_state_info *link_ext_state_info)
+{
+	switch (link_ext_state_mapping.link_ext_state) {
+	case ETHTOOL_LINK_EXT_STATE_AUTONEG:
+		link_ext_state_info->autoneg =
 			link_ext_state_mapping.link_ext_substate;
-		अवरोध;
-	हाल ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE:
+		break;
+	case ETHTOOL_LINK_EXT_STATE_LINK_TRAINING_FAILURE:
 		link_ext_state_info->link_training =
 			link_ext_state_mapping.link_ext_substate;
-		अवरोध;
-	हाल ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH:
+		break;
+	case ETHTOOL_LINK_EXT_STATE_LINK_LOGICAL_MISMATCH:
 		link_ext_state_info->link_logical_mismatch =
 			link_ext_state_mapping.link_ext_substate;
-		अवरोध;
-	हाल ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY:
-		link_ext_state_info->bad_संकेत_पूर्णांकegrity =
+		break;
+	case ETHTOOL_LINK_EXT_STATE_BAD_SIGNAL_INTEGRITY:
+		link_ext_state_info->bad_signal_integrity =
 			link_ext_state_mapping.link_ext_substate;
-		अवरोध;
-	हाल ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE:
+		break;
+	case ETHTOOL_LINK_EXT_STATE_CABLE_ISSUE:
 		link_ext_state_info->cable_issue =
 			link_ext_state_mapping.link_ext_substate;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 	link_ext_state_info->link_ext_state = link_ext_state_mapping.link_ext_state;
-पूर्ण
+}
 
-अटल पूर्णांक
-mlxsw_sp_port_get_link_ext_state(काष्ठा net_device *dev,
-				 काष्ठा ethtool_link_ext_state_info *link_ext_state_info)
-अणु
-	काष्ठा mlxsw_sp_ethtool_link_ext_state_opcode_mapping link_ext_state_mapping;
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	अक्षर pddr_pl[MLXSW_REG_PDDR_LEN];
-	पूर्णांक opcode, err, i;
+static int
+mlxsw_sp_port_get_link_ext_state(struct net_device *dev,
+				 struct ethtool_link_ext_state_info *link_ext_state_info)
+{
+	struct mlxsw_sp_ethtool_link_ext_state_opcode_mapping link_ext_state_mapping;
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	char pddr_pl[MLXSW_REG_PDDR_LEN];
+	int opcode, err, i;
 	u32 status_opcode;
 
-	अगर (netअगर_carrier_ok(dev))
-		वापस -ENODATA;
+	if (netif_carrier_ok(dev))
+		return -ENODATA;
 
 	mlxsw_reg_pddr_pack(pddr_pl, mlxsw_sp_port->local_port,
 			    MLXSW_REG_PDDR_PAGE_SELECT_TROUBLESHOOTING_INFO);
@@ -153,439 +152,439 @@ mlxsw_sp_port_get_link_ext_state(काष्ठा net_device *dev,
 
 	err = mlxsw_reg_query(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(pddr),
 			      pddr_pl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	status_opcode = mlxsw_reg_pddr_trblsh_status_opcode_get(pddr_pl);
-	अगर (!status_opcode)
-		वापस -ENODATA;
+	if (!status_opcode)
+		return -ENODATA;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mlxsw_sp_link_ext_state_opcode_map); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(mlxsw_sp_link_ext_state_opcode_map); i++) {
 		link_ext_state_mapping = mlxsw_sp_link_ext_state_opcode_map[i];
-		अगर (link_ext_state_mapping.status_opcode == status_opcode) अणु
+		if (link_ext_state_mapping.status_opcode == status_opcode) {
 			mlxsw_sp_port_set_link_ext_state(link_ext_state_mapping,
 							 link_ext_state_info);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -ENODATA;
-पूर्ण
+	return -ENODATA;
+}
 
-अटल व्योम mlxsw_sp_port_get_छोड़ोparam(काष्ठा net_device *dev,
-					 काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+static void mlxsw_sp_port_get_pauseparam(struct net_device *dev,
+					 struct ethtool_pauseparam *pause)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
 
-	छोड़ो->rx_छोड़ो = mlxsw_sp_port->link.rx_छोड़ो;
-	छोड़ो->tx_छोड़ो = mlxsw_sp_port->link.tx_छोड़ो;
-पूर्ण
+	pause->rx_pause = mlxsw_sp_port->link.rx_pause;
+	pause->tx_pause = mlxsw_sp_port->link.tx_pause;
+}
 
-अटल पूर्णांक mlxsw_sp_port_छोड़ो_set(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
-				   काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	अक्षर pfcc_pl[MLXSW_REG_PFCC_LEN];
+static int mlxsw_sp_port_pause_set(struct mlxsw_sp_port *mlxsw_sp_port,
+				   struct ethtool_pauseparam *pause)
+{
+	char pfcc_pl[MLXSW_REG_PFCC_LEN];
 
 	mlxsw_reg_pfcc_pack(pfcc_pl, mlxsw_sp_port->local_port);
-	mlxsw_reg_pfcc_pprx_set(pfcc_pl, छोड़ो->rx_छोड़ो);
-	mlxsw_reg_pfcc_pptx_set(pfcc_pl, छोड़ो->tx_छोड़ो);
+	mlxsw_reg_pfcc_pprx_set(pfcc_pl, pause->rx_pause);
+	mlxsw_reg_pfcc_pptx_set(pfcc_pl, pause->tx_pause);
 
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(pfcc),
+	return mlxsw_reg_write(mlxsw_sp_port->mlxsw_sp->core, MLXSW_REG(pfcc),
 			       pfcc_pl);
-पूर्ण
+}
 
-/* Maximum delay buffer needed in हाल of PAUSE frames. Similar to PFC delay, but is
- * measured in bytes. Assumes 100m cable and करोes not take पूर्णांकo account MTU.
+/* Maximum delay buffer needed in case of PAUSE frames. Similar to PFC delay, but is
+ * measured in bytes. Assumes 100m cable and does not take into account MTU.
  */
-#घोषणा MLXSW_SP_PAUSE_DELAY_BYTES 19476
+#define MLXSW_SP_PAUSE_DELAY_BYTES 19476
 
-अटल पूर्णांक mlxsw_sp_port_set_छोड़ोparam(काष्ठा net_device *dev,
-					काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	bool छोड़ो_en = छोड़ो->tx_छोड़ो || छोड़ो->rx_छोड़ो;
-	काष्ठा mlxsw_sp_hdroom orig_hdroom;
-	काष्ठा mlxsw_sp_hdroom hdroom;
-	पूर्णांक prio;
-	पूर्णांक err;
+static int mlxsw_sp_port_set_pauseparam(struct net_device *dev,
+					struct ethtool_pauseparam *pause)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	bool pause_en = pause->tx_pause || pause->rx_pause;
+	struct mlxsw_sp_hdroom orig_hdroom;
+	struct mlxsw_sp_hdroom hdroom;
+	int prio;
+	int err;
 
-	अगर (mlxsw_sp_port->dcb.pfc && mlxsw_sp_port->dcb.pfc->pfc_en) अणु
+	if (mlxsw_sp_port->dcb.pfc && mlxsw_sp_port->dcb.pfc->pfc_en) {
 		netdev_err(dev, "PFC already enabled on port\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (छोड़ो->स्वतःneg) अणु
+	if (pause->autoneg) {
 		netdev_err(dev, "PAUSE frames autonegotiation isn't supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	orig_hdroom = *mlxsw_sp_port->hdroom;
 
 	hdroom = orig_hdroom;
-	अगर (छोड़ो_en)
+	if (pause_en)
 		hdroom.delay_bytes = MLXSW_SP_PAUSE_DELAY_BYTES;
-	अन्यथा
+	else
 		hdroom.delay_bytes = 0;
 
-	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
-		hdroom.prios.prio[prio].lossy = !छोड़ो_en;
+	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
+		hdroom.prios.prio[prio].lossy = !pause_en;
 
 	mlxsw_sp_hdroom_bufs_reset_lossiness(&hdroom);
 	mlxsw_sp_hdroom_bufs_reset_sizes(mlxsw_sp_port, &hdroom);
 
 	err = mlxsw_sp_hdroom_configure(mlxsw_sp_port, &hdroom);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(dev, "Failed to configure port's headroom\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = mlxsw_sp_port_छोड़ो_set(mlxsw_sp_port, छोड़ो);
-	अगर (err) अणु
+	err = mlxsw_sp_port_pause_set(mlxsw_sp_port, pause);
+	if (err) {
 		netdev_err(dev, "Failed to set PAUSE parameters\n");
-		जाओ err_port_छोड़ो_configure;
-	पूर्ण
+		goto err_port_pause_configure;
+	}
 
-	mlxsw_sp_port->link.rx_छोड़ो = छोड़ो->rx_छोड़ो;
-	mlxsw_sp_port->link.tx_छोड़ो = छोड़ो->tx_छोड़ो;
+	mlxsw_sp_port->link.rx_pause = pause->rx_pause;
+	mlxsw_sp_port->link.tx_pause = pause->tx_pause;
 
-	वापस 0;
+	return 0;
 
-err_port_छोड़ो_configure:
+err_port_pause_configure:
 	mlxsw_sp_hdroom_configure(mlxsw_sp_port, &orig_hdroom);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा mlxsw_sp_port_hw_stats अणु
-	अक्षर str[ETH_GSTRING_LEN];
-	u64 (*getter)(स्थिर अक्षर *payload);
+struct mlxsw_sp_port_hw_stats {
+	char str[ETH_GSTRING_LEN];
+	u64 (*getter)(const char *payload);
 	bool cells_bytes;
-पूर्ण;
+};
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_stats[] = {
+	{
 		.str = "a_frames_transmitted_ok",
 		.getter = mlxsw_reg_ppcnt_a_frames_transmitted_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_frames_received_ok",
 		.getter = mlxsw_reg_ppcnt_a_frames_received_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_frame_check_sequence_errors",
 		.getter = mlxsw_reg_ppcnt_a_frame_check_sequence_errors_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_alignment_errors",
 		.getter = mlxsw_reg_ppcnt_a_alignment_errors_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_octets_transmitted_ok",
 		.getter = mlxsw_reg_ppcnt_a_octets_transmitted_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_octets_received_ok",
 		.getter = mlxsw_reg_ppcnt_a_octets_received_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_multicast_frames_xmitted_ok",
 		.getter = mlxsw_reg_ppcnt_a_multicast_frames_xmitted_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_broadcast_frames_xmitted_ok",
 		.getter = mlxsw_reg_ppcnt_a_broadcast_frames_xmitted_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_multicast_frames_received_ok",
 		.getter = mlxsw_reg_ppcnt_a_multicast_frames_received_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_broadcast_frames_received_ok",
 		.getter = mlxsw_reg_ppcnt_a_broadcast_frames_received_ok_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_in_range_length_errors",
 		.getter = mlxsw_reg_ppcnt_a_in_range_length_errors_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_out_of_range_length_field",
 		.getter = mlxsw_reg_ppcnt_a_out_of_range_length_field_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_frame_too_long_errors",
-		.getter = mlxsw_reg_ppcnt_a_frame_too_दीर्घ_errors_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_a_frame_too_long_errors_get,
+	},
+	{
 		.str = "a_symbol_error_during_carrier",
 		.getter = mlxsw_reg_ppcnt_a_symbol_error_during_carrier_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_mac_control_frames_transmitted",
 		.getter = mlxsw_reg_ppcnt_a_mac_control_frames_transmitted_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_mac_control_frames_received",
 		.getter = mlxsw_reg_ppcnt_a_mac_control_frames_received_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_unsupported_opcodes_received",
 		.getter = mlxsw_reg_ppcnt_a_unsupported_opcodes_received_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "a_pause_mac_ctrl_frames_received",
-		.getter = mlxsw_reg_ppcnt_a_छोड़ो_mac_ctrl_frames_received_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_a_pause_mac_ctrl_frames_received_get,
+	},
+	{
 		.str = "a_pause_mac_ctrl_frames_xmitted",
-		.getter = mlxsw_reg_ppcnt_a_छोड़ो_mac_ctrl_frames_transmitted_get,
-	पूर्ण,
-पूर्ण;
+		.getter = mlxsw_reg_ppcnt_a_pause_mac_ctrl_frames_transmitted_get,
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_stats)
+#define MLXSW_SP_PORT_HW_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_rfc_2863_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_rfc_2863_stats[] = {
+	{
 		.str = "if_in_discards",
-		.getter = mlxsw_reg_ppcnt_अगर_in_discards_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_if_in_discards_get,
+	},
+	{
 		.str = "if_out_discards",
-		.getter = mlxsw_reg_ppcnt_अगर_out_discards_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_if_out_discards_get,
+	},
+	{
 		.str = "if_out_errors",
-		.getter = mlxsw_reg_ppcnt_अगर_out_errors_get,
-	पूर्ण,
-पूर्ण;
+		.getter = mlxsw_reg_ppcnt_if_out_errors_get,
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_RFC_2863_STATS_LEN \
+#define MLXSW_SP_PORT_HW_RFC_2863_STATS_LEN \
 	ARRAY_SIZE(mlxsw_sp_port_hw_rfc_2863_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_rfc_2819_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_rfc_2819_stats[] = {
+	{
 		.str = "ether_stats_undersize_pkts",
 		.getter = mlxsw_reg_ppcnt_ether_stats_undersize_pkts_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_stats_oversize_pkts",
 		.getter = mlxsw_reg_ppcnt_ether_stats_oversize_pkts_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_stats_fragments",
 		.getter = mlxsw_reg_ppcnt_ether_stats_fragments_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts64octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts64octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts65to127octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts65to127octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts128to255octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts128to255octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts256to511octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts256to511octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts512to1023octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts512to1023octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts1024to1518octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts1024to1518octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts1519to2047octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts1519to2047octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts2048to4095octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts2048to4095octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts4096to8191octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts4096to8191octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "ether_pkts8192to10239octets",
 		.getter = mlxsw_reg_ppcnt_ether_stats_pkts8192to10239octets_get,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_RFC_2819_STATS_LEN \
+#define MLXSW_SP_PORT_HW_RFC_2819_STATS_LEN \
 	ARRAY_SIZE(mlxsw_sp_port_hw_rfc_2819_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_rfc_3635_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_rfc_3635_stats[] = {
+	{
 		.str = "dot3stats_fcs_errors",
-		.getter = mlxsw_reg_ppcnt_करोt3stats_fcs_errors_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_dot3stats_fcs_errors_get,
+	},
+	{
 		.str = "dot3stats_symbol_errors",
-		.getter = mlxsw_reg_ppcnt_करोt3stats_symbol_errors_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_dot3stats_symbol_errors_get,
+	},
+	{
 		.str = "dot3control_in_unknown_opcodes",
-		.getter = mlxsw_reg_ppcnt_करोt3control_in_unknown_opcodes_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_dot3control_in_unknown_opcodes_get,
+	},
+	{
 		.str = "dot3in_pause_frames",
-		.getter = mlxsw_reg_ppcnt_करोt3in_छोड़ो_frames_get,
-	पूर्ण,
-पूर्ण;
+		.getter = mlxsw_reg_ppcnt_dot3in_pause_frames_get,
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_RFC_3635_STATS_LEN \
+#define MLXSW_SP_PORT_HW_RFC_3635_STATS_LEN \
 	ARRAY_SIZE(mlxsw_sp_port_hw_rfc_3635_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_ext_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_ext_stats[] = {
+	{
 		.str = "ecn_marked",
 		.getter = mlxsw_reg_ppcnt_ecn_marked_get,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_EXT_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_ext_stats)
+#define MLXSW_SP_PORT_HW_EXT_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_ext_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_discard_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_discard_stats[] = {
+	{
 		.str = "discard_ingress_general",
 		.getter = mlxsw_reg_ppcnt_ingress_general_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_ingress_policy_engine",
 		.getter = mlxsw_reg_ppcnt_ingress_policy_engine_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_ingress_vlan_membership",
 		.getter = mlxsw_reg_ppcnt_ingress_vlan_membership_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_ingress_tag_frame_type",
 		.getter = mlxsw_reg_ppcnt_ingress_tag_frame_type_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_egress_vlan_membership",
 		.getter = mlxsw_reg_ppcnt_egress_vlan_membership_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_loopback_filter",
 		.getter = mlxsw_reg_ppcnt_loopback_filter_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_egress_general",
 		.getter = mlxsw_reg_ppcnt_egress_general_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_egress_hoq",
 		.getter = mlxsw_reg_ppcnt_egress_hoq_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_egress_policy_engine",
 		.getter = mlxsw_reg_ppcnt_egress_policy_engine_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_ingress_tx_link_down",
-		.getter = mlxsw_reg_ppcnt_ingress_tx_link_करोwn_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_ingress_tx_link_down_get,
+	},
+	{
 		.str = "discard_egress_stp_filter",
 		.getter = mlxsw_reg_ppcnt_egress_stp_filter_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "discard_egress_sll",
 		.getter = mlxsw_reg_ppcnt_egress_sll_get,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_DISCARD_STATS_LEN \
+#define MLXSW_SP_PORT_HW_DISCARD_STATS_LEN \
 	ARRAY_SIZE(mlxsw_sp_port_hw_discard_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_prio_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_prio_stats[] = {
+	{
 		.str = "rx_octets_prio",
 		.getter = mlxsw_reg_ppcnt_rx_octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "rx_frames_prio",
 		.getter = mlxsw_reg_ppcnt_rx_frames_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "tx_octets_prio",
 		.getter = mlxsw_reg_ppcnt_tx_octets_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "tx_frames_prio",
 		.getter = mlxsw_reg_ppcnt_tx_frames_get,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "rx_pause_prio",
-		.getter = mlxsw_reg_ppcnt_rx_छोड़ो_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_rx_pause_get,
+	},
+	{
 		.str = "rx_pause_duration_prio",
-		.getter = mlxsw_reg_ppcnt_rx_छोड़ो_duration_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_rx_pause_duration_get,
+	},
+	{
 		.str = "tx_pause_prio",
-		.getter = mlxsw_reg_ppcnt_tx_छोड़ो_get,
-	पूर्ण,
-	अणु
+		.getter = mlxsw_reg_ppcnt_tx_pause_get,
+	},
+	{
 		.str = "tx_pause_duration_prio",
-		.getter = mlxsw_reg_ppcnt_tx_छोड़ो_duration_get,
-	पूर्ण,
-पूर्ण;
+		.getter = mlxsw_reg_ppcnt_tx_pause_duration_get,
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_PRIO_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_prio_stats)
+#define MLXSW_SP_PORT_HW_PRIO_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_prio_stats)
 
-अटल काष्ठा mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_tc_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_hw_stats mlxsw_sp_port_hw_tc_stats[] = {
+	{
 		.str = "tc_transmit_queue_tc",
 		.getter = mlxsw_reg_ppcnt_tc_transmit_queue_get,
 		.cells_bytes = true,
-	पूर्ण,
-	अणु
+	},
+	{
 		.str = "tc_no_buffer_discard_uc_tc",
 		.getter = mlxsw_reg_ppcnt_tc_no_buffer_discard_uc_get,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_TC_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_tc_stats)
+#define MLXSW_SP_PORT_HW_TC_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_hw_tc_stats)
 
-काष्ठा mlxsw_sp_port_stats अणु
-	अक्षर str[ETH_GSTRING_LEN];
-	u64 (*getter)(काष्ठा mlxsw_sp_port *mlxsw_sp_port);
-पूर्ण;
+struct mlxsw_sp_port_stats {
+	char str[ETH_GSTRING_LEN];
+	u64 (*getter)(struct mlxsw_sp_port *mlxsw_sp_port);
+};
 
-अटल u64
-mlxsw_sp_port_get_transceiver_overheat_stats(काष्ठा mlxsw_sp_port *mlxsw_sp_port)
-अणु
-	काष्ठा mlxsw_sp_port_mapping port_mapping = mlxsw_sp_port->mapping;
-	काष्ठा mlxsw_core *mlxsw_core = mlxsw_sp_port->mlxsw_sp->core;
+static u64
+mlxsw_sp_port_get_transceiver_overheat_stats(struct mlxsw_sp_port *mlxsw_sp_port)
+{
+	struct mlxsw_sp_port_mapping port_mapping = mlxsw_sp_port->mapping;
+	struct mlxsw_core *mlxsw_core = mlxsw_sp_port->mlxsw_sp->core;
 	u64 stats;
-	पूर्णांक err;
+	int err;
 
 	err = mlxsw_env_module_overheat_counter_get(mlxsw_core,
 						    port_mapping.module,
 						    &stats);
-	अगर (err)
-		वापस mlxsw_sp_port->module_overheat_initial_val;
+	if (err)
+		return mlxsw_sp_port->module_overheat_initial_val;
 
-	वापस stats - mlxsw_sp_port->module_overheat_initial_val;
-पूर्ण
+	return stats - mlxsw_sp_port->module_overheat_initial_val;
+}
 
-अटल काष्ठा mlxsw_sp_port_stats mlxsw_sp_port_transceiver_stats[] = अणु
-	अणु
+static struct mlxsw_sp_port_stats mlxsw_sp_port_transceiver_stats[] = {
+	{
 		.str = "transceiver_overheat",
 		.getter = mlxsw_sp_port_get_transceiver_overheat_stats,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_transceiver_stats)
+#define MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN ARRAY_SIZE(mlxsw_sp_port_transceiver_stats)
 
-#घोषणा MLXSW_SP_PORT_ETHTOOL_STATS_LEN (MLXSW_SP_PORT_HW_STATS_LEN + \
+#define MLXSW_SP_PORT_ETHTOOL_STATS_LEN (MLXSW_SP_PORT_HW_STATS_LEN + \
 					 MLXSW_SP_PORT_HW_RFC_2863_STATS_LEN + \
 					 MLXSW_SP_PORT_HW_RFC_2819_STATS_LEN + \
 					 MLXSW_SP_PORT_HW_RFC_3635_STATS_LEN + \
@@ -597,197 +596,197 @@ mlxsw_sp_port_get_transceiver_overheat_stats(काष्ठा mlxsw_sp_port *m
 					  TC_MAX_QUEUE) + \
 					  MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN)
 
-अटल व्योम mlxsw_sp_port_get_prio_strings(u8 **p, पूर्णांक prio)
-अणु
-	पूर्णांक i;
+static void mlxsw_sp_port_get_prio_strings(u8 **p, int prio)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP_PORT_HW_PRIO_STATS_LEN; i++) अणु
-		snम_लिखो(*p, ETH_GSTRING_LEN, "%.29s_%.1d",
+	for (i = 0; i < MLXSW_SP_PORT_HW_PRIO_STATS_LEN; i++) {
+		snprintf(*p, ETH_GSTRING_LEN, "%.29s_%.1d",
 			 mlxsw_sp_port_hw_prio_stats[i].str, prio);
 		*p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlxsw_sp_port_get_tc_strings(u8 **p, पूर्णांक tc)
-अणु
-	पूर्णांक i;
+static void mlxsw_sp_port_get_tc_strings(u8 **p, int tc)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP_PORT_HW_TC_STATS_LEN; i++) अणु
-		snम_लिखो(*p, ETH_GSTRING_LEN, "%.29s_%.1d",
+	for (i = 0; i < MLXSW_SP_PORT_HW_TC_STATS_LEN; i++) {
+		snprintf(*p, ETH_GSTRING_LEN, "%.29s_%.1d",
 			 mlxsw_sp_port_hw_tc_stats[i].str, tc);
 		*p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mlxsw_sp_port_get_strings(काष्ठा net_device *dev,
+static void mlxsw_sp_port_get_strings(struct net_device *dev,
 				      u32 stringset, u8 *data)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_hw_stats[i].str,
+	switch (stringset) {
+	case ETH_SS_STATS:
+		for (i = 0; i < MLXSW_SP_PORT_HW_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_hw_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_RFC_2863_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_hw_rfc_2863_stats[i].str,
+		for (i = 0; i < MLXSW_SP_PORT_HW_RFC_2863_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_hw_rfc_2863_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_RFC_2819_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_hw_rfc_2819_stats[i].str,
+		for (i = 0; i < MLXSW_SP_PORT_HW_RFC_2819_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_hw_rfc_2819_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_RFC_3635_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_hw_rfc_3635_stats[i].str,
+		for (i = 0; i < MLXSW_SP_PORT_HW_RFC_3635_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_hw_rfc_3635_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_EXT_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_hw_ext_stats[i].str,
+		for (i = 0; i < MLXSW_SP_PORT_HW_EXT_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_hw_ext_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_DISCARD_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_hw_discard_stats[i].str,
+		for (i = 0; i < MLXSW_SP_PORT_HW_DISCARD_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_hw_discard_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++)
+		for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++)
 			mlxsw_sp_port_get_prio_strings(&p, i);
 
-		क्रम (i = 0; i < TC_MAX_QUEUE; i++)
+		for (i = 0; i < TC_MAX_QUEUE; i++)
 			mlxsw_sp_port_get_tc_strings(&p, i);
 
 		mlxsw_sp_port->mlxsw_sp->ptp_ops->get_stats_strings(&p);
 
-		क्रम (i = 0; i < MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN; i++) अणु
-			स_नकल(p, mlxsw_sp_port_transceiver_stats[i].str,
+		for (i = 0; i < MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN; i++) {
+			memcpy(p, mlxsw_sp_port_transceiver_stats[i].str,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
-अटल पूर्णांक mlxsw_sp_port_set_phys_id(काष्ठा net_device *dev,
-				     क्रमागत ethtool_phys_id_state state)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	अक्षर mlcr_pl[MLXSW_REG_MLCR_LEN];
+static int mlxsw_sp_port_set_phys_id(struct net_device *dev,
+				     enum ethtool_phys_id_state state)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	char mlcr_pl[MLXSW_REG_MLCR_LEN];
 	bool active;
 
-	चयन (state) अणु
-	हाल ETHTOOL_ID_ACTIVE:
+	switch (state) {
+	case ETHTOOL_ID_ACTIVE:
 		active = true;
-		अवरोध;
-	हाल ETHTOOL_ID_INACTIVE:
+		break;
+	case ETHTOOL_ID_INACTIVE:
 		active = false;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	mlxsw_reg_mlcr_pack(mlcr_pl, mlxsw_sp_port->local_port, active);
-	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mlcr), mlcr_pl);
-पूर्ण
+	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mlcr), mlcr_pl);
+}
 
-अटल पूर्णांक
-mlxsw_sp_get_hw_stats_by_group(काष्ठा mlxsw_sp_port_hw_stats **p_hw_stats,
-			       पूर्णांक *p_len, क्रमागत mlxsw_reg_ppcnt_grp grp)
-अणु
-	चयन (grp) अणु
-	हाल MLXSW_REG_PPCNT_IEEE_8023_CNT:
+static int
+mlxsw_sp_get_hw_stats_by_group(struct mlxsw_sp_port_hw_stats **p_hw_stats,
+			       int *p_len, enum mlxsw_reg_ppcnt_grp grp)
+{
+	switch (grp) {
+	case MLXSW_REG_PPCNT_IEEE_8023_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_stats;
 		*p_len = MLXSW_SP_PORT_HW_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_RFC_2863_CNT:
+		break;
+	case MLXSW_REG_PPCNT_RFC_2863_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_rfc_2863_stats;
 		*p_len = MLXSW_SP_PORT_HW_RFC_2863_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_RFC_2819_CNT:
+		break;
+	case MLXSW_REG_PPCNT_RFC_2819_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_rfc_2819_stats;
 		*p_len = MLXSW_SP_PORT_HW_RFC_2819_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_RFC_3635_CNT:
+		break;
+	case MLXSW_REG_PPCNT_RFC_3635_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_rfc_3635_stats;
 		*p_len = MLXSW_SP_PORT_HW_RFC_3635_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_EXT_CNT:
+		break;
+	case MLXSW_REG_PPCNT_EXT_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_ext_stats;
 		*p_len = MLXSW_SP_PORT_HW_EXT_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_DISCARD_CNT:
+		break;
+	case MLXSW_REG_PPCNT_DISCARD_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_discard_stats;
 		*p_len = MLXSW_SP_PORT_HW_DISCARD_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_PRIO_CNT:
+		break;
+	case MLXSW_REG_PPCNT_PRIO_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_prio_stats;
 		*p_len = MLXSW_SP_PORT_HW_PRIO_STATS_LEN;
-		अवरोध;
-	हाल MLXSW_REG_PPCNT_TC_CNT:
+		break;
+	case MLXSW_REG_PPCNT_TC_CNT:
 		*p_hw_stats = mlxsw_sp_port_hw_tc_stats;
 		*p_len = MLXSW_SP_PORT_HW_TC_STATS_LEN;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(1);
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
-अटल व्योम __mlxsw_sp_port_get_stats(काष्ठा net_device *dev,
-				      क्रमागत mlxsw_reg_ppcnt_grp grp, पूर्णांक prio,
-				      u64 *data, पूर्णांक data_index)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	काष्ठा mlxsw_sp_port_hw_stats *hw_stats;
-	अक्षर ppcnt_pl[MLXSW_REG_PPCNT_LEN];
-	पूर्णांक i, len;
-	पूर्णांक err;
+static void __mlxsw_sp_port_get_stats(struct net_device *dev,
+				      enum mlxsw_reg_ppcnt_grp grp, int prio,
+				      u64 *data, int data_index)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	struct mlxsw_sp_port_hw_stats *hw_stats;
+	char ppcnt_pl[MLXSW_REG_PPCNT_LEN];
+	int i, len;
+	int err;
 
 	err = mlxsw_sp_get_hw_stats_by_group(&hw_stats, &len, grp);
-	अगर (err)
-		वापस;
+	if (err)
+		return;
 	mlxsw_sp_port_get_stats_raw(dev, grp, prio, ppcnt_pl);
-	क्रम (i = 0; i < len; i++) अणु
+	for (i = 0; i < len; i++) {
 		data[data_index + i] = hw_stats[i].getter(ppcnt_pl);
-		अगर (!hw_stats[i].cells_bytes)
-			जारी;
+		if (!hw_stats[i].cells_bytes)
+			continue;
 		data[data_index + i] = mlxsw_sp_cells_bytes(mlxsw_sp,
 							    data[data_index + i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __mlxsw_sp_port_get_env_stats(काष्ठा net_device *dev, u64 *data, पूर्णांक data_index,
-					  काष्ठा mlxsw_sp_port_stats *port_stats,
-					  पूर्णांक len)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	पूर्णांक i;
+static void __mlxsw_sp_port_get_env_stats(struct net_device *dev, u64 *data, int data_index,
+					  struct mlxsw_sp_port_stats *port_stats,
+					  int len)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	int i;
 
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		data[data_index + i] = port_stats[i].getter(mlxsw_sp_port);
-पूर्ण
+}
 
-अटल व्योम mlxsw_sp_port_get_stats(काष्ठा net_device *dev,
-				    काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	पूर्णांक i, data_index = 0;
+static void mlxsw_sp_port_get_stats(struct net_device *dev,
+				    struct ethtool_stats *stats, u64 *data)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	int i, data_index = 0;
 
 	/* IEEE 802.3 Counters */
 	__mlxsw_sp_port_get_stats(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT, 0,
@@ -820,18 +819,18 @@ mlxsw_sp_get_hw_stats_by_group(काष्ठा mlxsw_sp_port_hw_stats **p_hw_
 	data_index += MLXSW_SP_PORT_HW_DISCARD_STATS_LEN;
 
 	/* Per-Priority Counters */
-	क्रम (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) अणु
+	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		__mlxsw_sp_port_get_stats(dev, MLXSW_REG_PPCNT_PRIO_CNT, i,
 					  data, data_index);
 		data_index += MLXSW_SP_PORT_HW_PRIO_STATS_LEN;
-	पूर्ण
+	}
 
 	/* Per-TC Counters */
-	क्रम (i = 0; i < TC_MAX_QUEUE; i++) अणु
+	for (i = 0; i < TC_MAX_QUEUE; i++) {
 		__mlxsw_sp_port_get_stats(dev, MLXSW_REG_PPCNT_TC_CNT, i,
 					  data, data_index);
 		data_index += MLXSW_SP_PORT_HW_TC_STATS_LEN;
-	पूर्ण
+	}
 
 	/* PTP counters */
 	mlxsw_sp_port->mlxsw_sp->ptp_ops->get_stats(mlxsw_sp_port,
@@ -842,26 +841,26 @@ mlxsw_sp_get_hw_stats_by_group(काष्ठा mlxsw_sp_port_hw_stats **p_hw_
 	__mlxsw_sp_port_get_env_stats(dev, data, data_index, mlxsw_sp_port_transceiver_stats,
 				      MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN);
 	data_index += MLXSW_SP_PORT_HW_TRANSCEIVER_STATS_LEN;
-पूर्ण
+}
 
-अटल पूर्णांक mlxsw_sp_port_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+static int mlxsw_sp_port_get_sset_count(struct net_device *dev, int sset)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस MLXSW_SP_PORT_ETHTOOL_STATS_LEN +
+	switch (sset) {
+	case ETH_SS_STATS:
+		return MLXSW_SP_PORT_ETHTOOL_STATS_LEN +
 			mlxsw_sp_port->mlxsw_sp->ptp_ops->get_stats_count();
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम
-mlxsw_sp_port_get_link_supported(काष्ठा mlxsw_sp *mlxsw_sp, u32 eth_proto_cap,
-				 काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	स्थिर काष्ठा mlxsw_sp_port_type_speed_ops *ops;
+static void
+mlxsw_sp_port_get_link_supported(struct mlxsw_sp *mlxsw_sp, u32 eth_proto_cap,
+				 struct ethtool_link_ksettings *cmd)
+{
+	const struct mlxsw_sp_port_type_speed_ops *ops;
 
 	ops = mlxsw_sp->port_type_speed_ops;
 
@@ -872,217 +871,217 @@ mlxsw_sp_port_get_link_supported(काष्ठा mlxsw_sp *mlxsw_sp, u32 eth_
 	ops->from_ptys_supported_port(mlxsw_sp, eth_proto_cap, cmd);
 	ops->from_ptys_link(mlxsw_sp, eth_proto_cap,
 			    cmd->link_modes.supported);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_port_get_link_advertise(काष्ठा mlxsw_sp *mlxsw_sp,
-				 u32 eth_proto_admin, bool स्वतःneg,
-				 काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	स्थिर काष्ठा mlxsw_sp_port_type_speed_ops *ops;
+static void
+mlxsw_sp_port_get_link_advertise(struct mlxsw_sp *mlxsw_sp,
+				 u32 eth_proto_admin, bool autoneg,
+				 struct ethtool_link_ksettings *cmd)
+{
+	const struct mlxsw_sp_port_type_speed_ops *ops;
 
 	ops = mlxsw_sp->port_type_speed_ops;
 
-	अगर (!स्वतःneg)
-		वापस;
+	if (!autoneg)
+		return;
 
 	ethtool_link_ksettings_add_link_mode(cmd, advertising, Autoneg);
 	ops->from_ptys_link(mlxsw_sp, eth_proto_admin,
 			    cmd->link_modes.advertising);
-पूर्ण
+}
 
-अटल u8
-mlxsw_sp_port_connector_port(क्रमागत mlxsw_reg_ptys_connector_type connector_type)
-अणु
-	चयन (connector_type) अणु
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_UNKNOWN_OR_NO_CONNECTOR:
-		वापस PORT_OTHER;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_NONE:
-		वापस PORT_NONE;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_TP:
-		वापस PORT_TP;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_AUI:
-		वापस PORT_AUI;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_BNC:
-		वापस PORT_BNC;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_MII:
-		वापस PORT_MII;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_FIBRE:
-		वापस PORT_FIBRE;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_DA:
-		वापस PORT_DA;
-	हाल MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_OTHER:
-		वापस PORT_OTHER;
-	शेष:
+static u8
+mlxsw_sp_port_connector_port(enum mlxsw_reg_ptys_connector_type connector_type)
+{
+	switch (connector_type) {
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_UNKNOWN_OR_NO_CONNECTOR:
+		return PORT_OTHER;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_NONE:
+		return PORT_NONE;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_TP:
+		return PORT_TP;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_AUI:
+		return PORT_AUI;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_BNC:
+		return PORT_BNC;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_MII:
+		return PORT_MII;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_FIBRE:
+		return PORT_FIBRE;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_DA:
+		return PORT_DA;
+	case MLXSW_REG_PTYS_CONNECTOR_TYPE_PORT_OTHER:
+		return PORT_OTHER;
+	default:
 		WARN_ON_ONCE(1);
-		वापस PORT_OTHER;
-	पूर्ण
-पूर्ण
+		return PORT_OTHER;
+	}
+}
 
-अटल पूर्णांक mlxsw_sp_port_ptys_query(काष्ठा mlxsw_sp_port *mlxsw_sp_port,
+static int mlxsw_sp_port_ptys_query(struct mlxsw_sp_port *mlxsw_sp_port,
 				    u32 *p_eth_proto_cap, u32 *p_eth_proto_admin,
 				    u32 *p_eth_proto_oper, u8 *p_connector_type)
-अणु
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	स्थिर काष्ठा mlxsw_sp_port_type_speed_ops *ops;
-	अक्षर ptys_pl[MLXSW_REG_PTYS_LEN];
-	पूर्णांक err;
+{
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	const struct mlxsw_sp_port_type_speed_ops *ops;
+	char ptys_pl[MLXSW_REG_PTYS_LEN];
+	int err;
 
 	ops = mlxsw_sp->port_type_speed_ops;
 
 	ops->reg_ptys_eth_pack(mlxsw_sp, ptys_pl, mlxsw_sp_port->local_port, 0, false);
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ops->reg_ptys_eth_unpack(mlxsw_sp, ptys_pl, p_eth_proto_cap, p_eth_proto_admin,
 				 p_eth_proto_oper);
-	अगर (p_connector_type)
+	if (p_connector_type)
 		*p_connector_type = mlxsw_reg_ptys_connector_type_get(ptys_pl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_port_get_link_ksettings(काष्ठा net_device *dev,
-					    काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static int mlxsw_sp_port_get_link_ksettings(struct net_device *dev,
+					    struct ethtool_link_ksettings *cmd)
+{
 	u32 eth_proto_cap, eth_proto_admin, eth_proto_oper;
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	स्थिर काष्ठा mlxsw_sp_port_type_speed_ops *ops;
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	const struct mlxsw_sp_port_type_speed_ops *ops;
 	u8 connector_type;
-	bool स्वतःneg;
-	पूर्णांक err;
+	bool autoneg;
+	int err;
 
 	err = mlxsw_sp_port_ptys_query(mlxsw_sp_port, &eth_proto_cap, &eth_proto_admin,
 				       &eth_proto_oper, &connector_type);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ops = mlxsw_sp->port_type_speed_ops;
-	स्वतःneg = mlxsw_sp_port->link.स्वतःneg;
+	autoneg = mlxsw_sp_port->link.autoneg;
 
 	mlxsw_sp_port_get_link_supported(mlxsw_sp, eth_proto_cap, cmd);
 
-	mlxsw_sp_port_get_link_advertise(mlxsw_sp, eth_proto_admin, स्वतःneg, cmd);
+	mlxsw_sp_port_get_link_advertise(mlxsw_sp, eth_proto_admin, autoneg, cmd);
 
-	cmd->base.स्वतःneg = स्वतःneg ? AUTONEG_ENABLE : AUTONEG_DISABLE;
+	cmd->base.autoneg = autoneg ? AUTONEG_ENABLE : AUTONEG_DISABLE;
 	cmd->base.port = mlxsw_sp_port_connector_port(connector_type);
-	ops->from_ptys_link_mode(mlxsw_sp, netअगर_carrier_ok(dev),
+	ops->from_ptys_link_mode(mlxsw_sp, netif_carrier_ok(dev),
 				 eth_proto_oper, cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mlxsw_sp_port_set_link_ksettings(काष्ठा net_device *dev,
-				 स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	स्थिर काष्ठा mlxsw_sp_port_type_speed_ops *ops;
-	अक्षर ptys_pl[MLXSW_REG_PTYS_LEN];
+static int
+mlxsw_sp_port_set_link_ksettings(struct net_device *dev,
+				 const struct ethtool_link_ksettings *cmd)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(dev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	const struct mlxsw_sp_port_type_speed_ops *ops;
+	char ptys_pl[MLXSW_REG_PTYS_LEN];
 	u32 eth_proto_cap, eth_proto_new;
-	bool स्वतःneg;
-	पूर्णांक err;
+	bool autoneg;
+	int err;
 
 	ops = mlxsw_sp->port_type_speed_ops;
 
 	ops->reg_ptys_eth_pack(mlxsw_sp, ptys_pl, mlxsw_sp_port->local_port,
 			       0, false);
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
-	अगर (err)
-		वापस err;
-	ops->reg_ptys_eth_unpack(mlxsw_sp, ptys_pl, &eth_proto_cap, शून्य, शून्य);
+	if (err)
+		return err;
+	ops->reg_ptys_eth_unpack(mlxsw_sp, ptys_pl, &eth_proto_cap, NULL, NULL);
 
-	स्वतःneg = cmd->base.स्वतःneg == AUTONEG_ENABLE;
-	eth_proto_new = स्वतःneg ?
+	autoneg = cmd->base.autoneg == AUTONEG_ENABLE;
+	eth_proto_new = autoneg ?
 		ops->to_ptys_advert_link(mlxsw_sp, cmd) :
 		ops->to_ptys_speed_lanes(mlxsw_sp, mlxsw_sp_port->mapping.width,
 					 cmd);
 
 	eth_proto_new = eth_proto_new & eth_proto_cap;
-	अगर (!eth_proto_new) अणु
+	if (!eth_proto_new) {
 		netdev_err(dev, "No supported speed or lanes requested\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ops->reg_ptys_eth_pack(mlxsw_sp, ptys_pl, mlxsw_sp_port->local_port,
-			       eth_proto_new, स्वतःneg);
-	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
-	अगर (err)
-		वापस err;
+			       eth_proto_new, autoneg);
+	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(ptys), ptys_pl);
+	if (err)
+		return err;
 
-	mlxsw_sp_port->link.स्वतःneg = स्वतःneg;
+	mlxsw_sp_port->link.autoneg = autoneg;
 
-	अगर (!netअगर_running(dev))
-		वापस 0;
+	if (!netif_running(dev))
+		return 0;
 
 	mlxsw_sp_port_admin_status_set(mlxsw_sp_port, false);
 	mlxsw_sp_port_admin_status_set(mlxsw_sp_port, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mlxsw_sp_get_module_info(काष्ठा net_device *netdev,
-				    काष्ठा ethtool_modinfo *modinfo)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(netdev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	पूर्णांक err;
+static int mlxsw_sp_get_module_info(struct net_device *netdev,
+				    struct ethtool_modinfo *modinfo)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(netdev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	int err;
 
 	err = mlxsw_env_get_module_info(mlxsw_sp->core,
 					mlxsw_sp_port->mapping.module,
 					modinfo);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mlxsw_sp_get_module_eeprom(काष्ठा net_device *netdev,
-				      काष्ठा ethtool_eeprom *ee, u8 *data)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(netdev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	पूर्णांक err;
+static int mlxsw_sp_get_module_eeprom(struct net_device *netdev,
+				      struct ethtool_eeprom *ee, u8 *data)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(netdev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+	int err;
 
 	err = mlxsw_env_get_module_eeprom(netdev, mlxsw_sp->core,
 					  mlxsw_sp_port->mapping.module, ee,
 					  data);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक
-mlxsw_sp_get_ts_info(काष्ठा net_device *netdev, काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा mlxsw_sp_port *mlxsw_sp_port = netdev_priv(netdev);
-	काष्ठा mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
+static int
+mlxsw_sp_get_ts_info(struct net_device *netdev, struct ethtool_ts_info *info)
+{
+	struct mlxsw_sp_port *mlxsw_sp_port = netdev_priv(netdev);
+	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
 
-	वापस mlxsw_sp->ptp_ops->get_ts_info(mlxsw_sp, info);
-पूर्ण
+	return mlxsw_sp->ptp_ops->get_ts_info(mlxsw_sp, info);
+}
 
-अटल व्योम
-mlxsw_sp_get_eth_phy_stats(काष्ठा net_device *dev,
-			   काष्ठा ethtool_eth_phy_stats *phy_stats)
-अणु
-	अक्षर ppcnt_pl[MLXSW_REG_PPCNT_LEN];
+static void
+mlxsw_sp_get_eth_phy_stats(struct net_device *dev,
+			   struct ethtool_eth_phy_stats *phy_stats)
+{
+	char ppcnt_pl[MLXSW_REG_PPCNT_LEN];
 
-	अगर (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT,
+	if (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT,
 					0, ppcnt_pl))
-		वापस;
+		return;
 
 	phy_stats->SymbolErrorDuringCarrier =
 		mlxsw_reg_ppcnt_a_symbol_error_during_carrier_get(ppcnt_pl);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp_get_eth_mac_stats(काष्ठा net_device *dev,
-			   काष्ठा ethtool_eth_mac_stats *mac_stats)
-अणु
-	अक्षर ppcnt_pl[MLXSW_REG_PPCNT_LEN];
+static void
+mlxsw_sp_get_eth_mac_stats(struct net_device *dev,
+			   struct ethtool_eth_mac_stats *mac_stats)
+{
+	char ppcnt_pl[MLXSW_REG_PPCNT_LEN];
 
-	अगर (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT,
+	if (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT,
 					0, ppcnt_pl))
-		वापस;
+		return;
 
 	mac_stats->FramesTransmittedOK =
 		mlxsw_reg_ppcnt_a_frames_transmitted_ok_get(ppcnt_pl);
@@ -1109,18 +1108,18 @@ mlxsw_sp_get_eth_mac_stats(काष्ठा net_device *dev,
 	mac_stats->OutOfRangeLengthField =
 		mlxsw_reg_ppcnt_a_out_of_range_length_field_get(ppcnt_pl);
 	mac_stats->FrameTooLongErrors =
-		mlxsw_reg_ppcnt_a_frame_too_दीर्घ_errors_get(ppcnt_pl);
-पूर्ण
+		mlxsw_reg_ppcnt_a_frame_too_long_errors_get(ppcnt_pl);
+}
 
-अटल व्योम
-mlxsw_sp_get_eth_ctrl_stats(काष्ठा net_device *dev,
-			    काष्ठा ethtool_eth_ctrl_stats *ctrl_stats)
-अणु
-	अक्षर ppcnt_pl[MLXSW_REG_PPCNT_LEN];
+static void
+mlxsw_sp_get_eth_ctrl_stats(struct net_device *dev,
+			    struct ethtool_eth_ctrl_stats *ctrl_stats)
+{
+	char ppcnt_pl[MLXSW_REG_PPCNT_LEN];
 
-	अगर (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT,
+	if (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_IEEE_8023_CNT,
 					0, ppcnt_pl))
-		वापस;
+		return;
 
 	ctrl_stats->MACControlFramesTransmitted =
 		mlxsw_reg_ppcnt_a_mac_control_frames_transmitted_get(ppcnt_pl);
@@ -1128,32 +1127,32 @@ mlxsw_sp_get_eth_ctrl_stats(काष्ठा net_device *dev,
 		mlxsw_reg_ppcnt_a_mac_control_frames_received_get(ppcnt_pl);
 	ctrl_stats->UnsupportedOpcodesReceived =
 		mlxsw_reg_ppcnt_a_unsupported_opcodes_received_get(ppcnt_pl);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा ethtool_rmon_hist_range mlxsw_rmon_ranges[] = अणु
-	अणु    0,    64 पूर्ण,
-	अणु   65,   127 पूर्ण,
-	अणु  128,   255 पूर्ण,
-	अणु  256,   511 पूर्ण,
-	अणु  512,  1023 पूर्ण,
-	अणु 1024,  1518 पूर्ण,
-	अणु 1519,  2047 पूर्ण,
-	अणु 2048,  4095 पूर्ण,
-	अणु 4096,  8191 पूर्ण,
-	अणु 8192, 10239 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct ethtool_rmon_hist_range mlxsw_rmon_ranges[] = {
+	{    0,    64 },
+	{   65,   127 },
+	{  128,   255 },
+	{  256,   511 },
+	{  512,  1023 },
+	{ 1024,  1518 },
+	{ 1519,  2047 },
+	{ 2048,  4095 },
+	{ 4096,  8191 },
+	{ 8192, 10239 },
+	{}
+};
 
-अटल व्योम
-mlxsw_sp_get_rmon_stats(काष्ठा net_device *dev,
-			काष्ठा ethtool_rmon_stats *rmon,
-			स्थिर काष्ठा ethtool_rmon_hist_range **ranges)
-अणु
-	अक्षर ppcnt_pl[MLXSW_REG_PPCNT_LEN];
+static void
+mlxsw_sp_get_rmon_stats(struct net_device *dev,
+			struct ethtool_rmon_stats *rmon,
+			const struct ethtool_rmon_hist_range **ranges)
+{
+	char ppcnt_pl[MLXSW_REG_PPCNT_LEN];
 
-	अगर (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_RFC_2819_CNT,
+	if (mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_RFC_2819_CNT,
 					0, ppcnt_pl))
-		वापस;
+		return;
 
 	rmon->undersize_pkts =
 		mlxsw_reg_ppcnt_ether_stats_undersize_pkts_get(ppcnt_pl);
@@ -1183,15 +1182,15 @@ mlxsw_sp_get_rmon_stats(काष्ठा net_device *dev,
 		mlxsw_reg_ppcnt_ether_stats_pkts8192to10239octets_get(ppcnt_pl);
 
 	*ranges = mlxsw_rmon_ranges;
-पूर्ण
+}
 
-स्थिर काष्ठा ethtool_ops mlxsw_sp_port_ethtool_ops = अणु
+const struct ethtool_ops mlxsw_sp_port_ethtool_ops = {
 	.cap_link_lanes_supported	= true,
 	.get_drvinfo			= mlxsw_sp_port_get_drvinfo,
 	.get_link			= ethtool_op_get_link,
 	.get_link_ext_state		= mlxsw_sp_port_get_link_ext_state,
-	.get_छोड़ोparam			= mlxsw_sp_port_get_छोड़ोparam,
-	.set_छोड़ोparam			= mlxsw_sp_port_set_छोड़ोparam,
+	.get_pauseparam			= mlxsw_sp_port_get_pauseparam,
+	.set_pauseparam			= mlxsw_sp_port_set_pauseparam,
 	.get_strings			= mlxsw_sp_port_get_strings,
 	.set_phys_id			= mlxsw_sp_port_set_phys_id,
 	.get_ethtool_stats		= mlxsw_sp_port_get_stats,
@@ -1205,115 +1204,115 @@ mlxsw_sp_get_rmon_stats(काष्ठा net_device *dev,
 	.get_eth_mac_stats		= mlxsw_sp_get_eth_mac_stats,
 	.get_eth_ctrl_stats		= mlxsw_sp_get_eth_ctrl_stats,
 	.get_rmon_stats			= mlxsw_sp_get_rmon_stats,
-पूर्ण;
+};
 
-काष्ठा mlxsw_sp1_port_link_mode अणु
-	क्रमागत ethtool_link_mode_bit_indices mask_ethtool;
+struct mlxsw_sp1_port_link_mode {
+	enum ethtool_link_mode_bit_indices mask_ethtool;
 	u32 mask;
 	u32 speed;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp1_port_link_mode mlxsw_sp1_port_link_mode[] = अणु
-	अणु
+static const struct mlxsw_sp1_port_link_mode mlxsw_sp1_port_link_mode[] = {
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_SGMII |
 				  MLXSW_REG_PTYS_ETH_SPEED_1000BASE_KX,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
 		.speed		= SPEED_1000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_10GBASE_CX4 |
 				  MLXSW_REG_PTYS_ETH_SPEED_10GBASE_KX4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT,
 		.speed		= SPEED_10000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_10GBASE_KR |
 				  MLXSW_REG_PTYS_ETH_SPEED_10GBASE_CR |
 				  MLXSW_REG_PTYS_ETH_SPEED_10GBASE_SR |
 				  MLXSW_REG_PTYS_ETH_SPEED_10GBASE_ER_LR,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_10000baseKR_Full_BIT,
 		.speed		= SPEED_10000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_40GBASE_CR4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_40000baseCR4_Full_BIT,
 		.speed		= SPEED_40000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_40GBASE_KR4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_40000baseKR4_Full_BIT,
 		.speed		= SPEED_40000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_40GBASE_SR4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_40000baseSR4_Full_BIT,
 		.speed		= SPEED_40000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_40GBASE_LR4_ER4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_40000baseLR4_Full_BIT,
 		.speed		= SPEED_40000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_25GBASE_CR,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_25000baseCR_Full_BIT,
 		.speed		= SPEED_25000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_25GBASE_KR,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_25000baseKR_Full_BIT,
 		.speed		= SPEED_25000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_25GBASE_SR,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_25000baseSR_Full_BIT,
 		.speed		= SPEED_25000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_50GBASE_CR2,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_50000baseCR2_Full_BIT,
 		.speed		= SPEED_50000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_50GBASE_KR2,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_50000baseKR2_Full_BIT,
 		.speed		= SPEED_50000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_50GBASE_SR2,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_50000baseSR2_Full_BIT,
 		.speed		= SPEED_50000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_100GBASE_CR4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_100000baseCR4_Full_BIT,
 		.speed		= SPEED_100000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_100GBASE_SR4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_100000baseSR4_Full_BIT,
 		.speed		= SPEED_100000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_100GBASE_KR4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_100000baseKR4_Full_BIT,
 		.speed		= SPEED_100000,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_ETH_SPEED_100GBASE_LR4_ER4,
 		.mask_ethtool	= ETHTOOL_LINK_MODE_100000baseLR4_ER4_Full_BIT,
 		.speed		= SPEED_100000,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP1_PORT_LINK_MODE_LEN ARRAY_SIZE(mlxsw_sp1_port_link_mode)
+#define MLXSW_SP1_PORT_LINK_MODE_LEN ARRAY_SIZE(mlxsw_sp1_port_link_mode)
 
-अटल व्योम
-mlxsw_sp1_from_ptys_supported_port(काष्ठा mlxsw_sp *mlxsw_sp,
+static void
+mlxsw_sp1_from_ptys_supported_port(struct mlxsw_sp *mlxsw_sp,
 				   u32 ptys_eth_proto,
-				   काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	अगर (ptys_eth_proto & (MLXSW_REG_PTYS_ETH_SPEED_10GBASE_CR |
+				   struct ethtool_link_ksettings *cmd)
+{
+	if (ptys_eth_proto & (MLXSW_REG_PTYS_ETH_SPEED_10GBASE_CR |
 			      MLXSW_REG_PTYS_ETH_SPEED_10GBASE_SR |
 			      MLXSW_REG_PTYS_ETH_SPEED_40GBASE_CR4 |
 			      MLXSW_REG_PTYS_ETH_SPEED_40GBASE_SR4 |
@@ -1321,147 +1320,147 @@ mlxsw_sp1_from_ptys_supported_port(काष्ठा mlxsw_sp *mlxsw_sp,
 			      MLXSW_REG_PTYS_ETH_SPEED_SGMII))
 		ethtool_link_ksettings_add_link_mode(cmd, supported, FIBRE);
 
-	अगर (ptys_eth_proto & (MLXSW_REG_PTYS_ETH_SPEED_10GBASE_KR |
+	if (ptys_eth_proto & (MLXSW_REG_PTYS_ETH_SPEED_10GBASE_KR |
 			      MLXSW_REG_PTYS_ETH_SPEED_10GBASE_KX4 |
 			      MLXSW_REG_PTYS_ETH_SPEED_40GBASE_KR4 |
 			      MLXSW_REG_PTYS_ETH_SPEED_100GBASE_KR4 |
 			      MLXSW_REG_PTYS_ETH_SPEED_1000BASE_KX))
 		ethtool_link_ksettings_add_link_mode(cmd, supported, Backplane);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp1_from_ptys_link(काष्ठा mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto,
-			 अचिन्हित दीर्घ *mode)
-अणु
-	पूर्णांक i;
+static void
+mlxsw_sp1_from_ptys_link(struct mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto,
+			 unsigned long *mode)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (ptys_eth_proto & mlxsw_sp1_port_link_mode[i].mask)
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if (ptys_eth_proto & mlxsw_sp1_port_link_mode[i].mask)
 			__set_bit(mlxsw_sp1_port_link_mode[i].mask_ethtool,
 				  mode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32
-mlxsw_sp1_from_ptys_speed(काष्ठा mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto)
-अणु
-	पूर्णांक i;
+static u32
+mlxsw_sp1_from_ptys_speed(struct mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (ptys_eth_proto & mlxsw_sp1_port_link_mode[i].mask)
-			वापस mlxsw_sp1_port_link_mode[i].speed;
-	पूर्ण
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if (ptys_eth_proto & mlxsw_sp1_port_link_mode[i].mask)
+			return mlxsw_sp1_port_link_mode[i].speed;
+	}
 
-	वापस SPEED_UNKNOWN;
-पूर्ण
+	return SPEED_UNKNOWN;
+}
 
-अटल व्योम
-mlxsw_sp1_from_ptys_link_mode(काष्ठा mlxsw_sp *mlxsw_sp, bool carrier_ok,
+static void
+mlxsw_sp1_from_ptys_link_mode(struct mlxsw_sp *mlxsw_sp, bool carrier_ok,
 			      u32 ptys_eth_proto,
-			      काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा mlxsw_sp1_port_link_mode link;
-	पूर्णांक i;
+			      struct ethtool_link_ksettings *cmd)
+{
+	struct mlxsw_sp1_port_link_mode link;
+	int i;
 
 	cmd->base.speed = SPEED_UNKNOWN;
 	cmd->base.duplex = DUPLEX_UNKNOWN;
 	cmd->lanes = 0;
 
-	अगर (!carrier_ok)
-		वापस;
+	if (!carrier_ok)
+		return;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (ptys_eth_proto & mlxsw_sp1_port_link_mode[i].mask) अणु
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if (ptys_eth_proto & mlxsw_sp1_port_link_mode[i].mask) {
 			link = mlxsw_sp1_port_link_mode[i];
 			ethtool_params_from_link_mode(cmd,
 						      link.mask_ethtool);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक mlxsw_sp1_ptys_max_speed(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 *p_max_speed)
-अणु
+static int mlxsw_sp1_ptys_max_speed(struct mlxsw_sp_port *mlxsw_sp_port, u32 *p_max_speed)
+{
 	u32 eth_proto_cap;
 	u32 max_speed = 0;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	err = mlxsw_sp_port_ptys_query(mlxsw_sp_port, &eth_proto_cap, शून्य, शून्य, शून्य);
-	अगर (err)
-		वापस err;
+	err = mlxsw_sp_port_ptys_query(mlxsw_sp_port, &eth_proto_cap, NULL, NULL, NULL);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर ((eth_proto_cap & mlxsw_sp1_port_link_mode[i].mask) &&
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if ((eth_proto_cap & mlxsw_sp1_port_link_mode[i].mask) &&
 		    mlxsw_sp1_port_link_mode[i].speed > max_speed)
 			max_speed = mlxsw_sp1_port_link_mode[i].speed;
-	पूर्ण
+	}
 
 	*p_max_speed = max_speed;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32
-mlxsw_sp1_to_ptys_advert_link(काष्ठा mlxsw_sp *mlxsw_sp,
-			      स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static u32
+mlxsw_sp1_to_ptys_advert_link(struct mlxsw_sp *mlxsw_sp,
+			      const struct ethtool_link_ksettings *cmd)
+{
 	u32 ptys_proto = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (test_bit(mlxsw_sp1_port_link_mode[i].mask_ethtool,
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if (test_bit(mlxsw_sp1_port_link_mode[i].mask_ethtool,
 			     cmd->link_modes.advertising))
 			ptys_proto |= mlxsw_sp1_port_link_mode[i].mask;
-	पूर्ण
-	वापस ptys_proto;
-पूर्ण
+	}
+	return ptys_proto;
+}
 
-अटल u32 mlxsw_sp1_to_ptys_speed_lanes(काष्ठा mlxsw_sp *mlxsw_sp, u8 width,
-					 स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static u32 mlxsw_sp1_to_ptys_speed_lanes(struct mlxsw_sp *mlxsw_sp, u8 width,
+					 const struct ethtool_link_ksettings *cmd)
+{
 	u32 ptys_proto = 0;
-	पूर्णांक i;
+	int i;
 
-	अगर (cmd->lanes > width)
-		वापस ptys_proto;
+	if (cmd->lanes > width)
+		return ptys_proto;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (cmd->base.speed == mlxsw_sp1_port_link_mode[i].speed)
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if (cmd->base.speed == mlxsw_sp1_port_link_mode[i].speed)
 			ptys_proto |= mlxsw_sp1_port_link_mode[i].mask;
-	पूर्ण
-	वापस ptys_proto;
-पूर्ण
+	}
+	return ptys_proto;
+}
 
-अटल व्योम
-mlxsw_sp1_reg_ptys_eth_pack(काष्ठा mlxsw_sp *mlxsw_sp, अक्षर *payload,
-			    u8 local_port, u32 proto_admin, bool स्वतःneg)
-अणु
-	mlxsw_reg_ptys_eth_pack(payload, local_port, proto_admin, स्वतःneg);
-पूर्ण
+static void
+mlxsw_sp1_reg_ptys_eth_pack(struct mlxsw_sp *mlxsw_sp, char *payload,
+			    u8 local_port, u32 proto_admin, bool autoneg)
+{
+	mlxsw_reg_ptys_eth_pack(payload, local_port, proto_admin, autoneg);
+}
 
-अटल व्योम
-mlxsw_sp1_reg_ptys_eth_unpack(काष्ठा mlxsw_sp *mlxsw_sp, अक्षर *payload,
+static void
+mlxsw_sp1_reg_ptys_eth_unpack(struct mlxsw_sp *mlxsw_sp, char *payload,
 			      u32 *p_eth_proto_cap, u32 *p_eth_proto_admin,
 			      u32 *p_eth_proto_oper)
-अणु
+{
 	mlxsw_reg_ptys_eth_unpack(payload, p_eth_proto_cap, p_eth_proto_admin,
 				  p_eth_proto_oper);
-पूर्ण
+}
 
-अटल u32 mlxsw_sp1_ptys_proto_cap_masked_get(u32 eth_proto_cap)
-अणु
+static u32 mlxsw_sp1_ptys_proto_cap_masked_get(u32 eth_proto_cap)
+{
 	u32 ptys_proto_cap_masked = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (mlxsw_sp1_port_link_mode[i].mask & eth_proto_cap)
+	for (i = 0; i < MLXSW_SP1_PORT_LINK_MODE_LEN; i++) {
+		if (mlxsw_sp1_port_link_mode[i].mask & eth_proto_cap)
 			ptys_proto_cap_masked |=
 				mlxsw_sp1_port_link_mode[i].mask;
-	पूर्ण
+	}
 
-	वापस ptys_proto_cap_masked;
-पूर्ण
+	return ptys_proto_cap_masked;
+}
 
-स्थिर काष्ठा mlxsw_sp_port_type_speed_ops mlxsw_sp1_port_type_speed_ops = अणु
+const struct mlxsw_sp_port_type_speed_ops mlxsw_sp1_port_type_speed_ops = {
 	.from_ptys_supported_port	= mlxsw_sp1_from_ptys_supported_port,
 	.from_ptys_link			= mlxsw_sp1_from_ptys_link,
 	.from_ptys_speed		= mlxsw_sp1_from_ptys_speed,
@@ -1472,35 +1471,35 @@ mlxsw_sp1_reg_ptys_eth_unpack(काष्ठा mlxsw_sp *mlxsw_sp, अक्�
 	.reg_ptys_eth_pack		= mlxsw_sp1_reg_ptys_eth_pack,
 	.reg_ptys_eth_unpack		= mlxsw_sp1_reg_ptys_eth_unpack,
 	.ptys_proto_cap_masked_get	= mlxsw_sp1_ptys_proto_cap_masked_get,
-पूर्ण;
+};
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_sgmii_100m[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_sgmii_100m[] = {
 	ETHTOOL_LINK_MODE_100baseT_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_SGMII_100M_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_SGMII_100M_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_sgmii_100m)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_1000base_x_sgmii[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_1000base_x_sgmii[] = {
 	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_1000BASE_X_SGMII_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_1000BASE_X_SGMII_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_1000base_x_sgmii)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_5gbase_r[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_5gbase_r[] = {
 	ETHTOOL_LINK_MODE_5000baseT_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_5GBASE_R_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_5GBASE_R_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_5gbase_r)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_xfi_xaui_1_10g[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_xfi_xaui_1_10g[] = {
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseR_FEC_BIT,
@@ -1508,134 +1507,134 @@ mlxsw_sp2_mask_ethtool_xfi_xaui_1_10g[] = अणु
 	ETHTOOL_LINK_MODE_10000baseSR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseLR_Full_BIT,
 	ETHTOOL_LINK_MODE_10000baseER_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_XFI_XAUI_1_10G_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_XFI_XAUI_1_10G_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_xfi_xaui_1_10g)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_xlaui_4_xlppi_4_40g[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_xlaui_4_xlppi_4_40g[] = {
 	ETHTOOL_LINK_MODE_40000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseCR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseSR4_Full_BIT,
 	ETHTOOL_LINK_MODE_40000baseLR4_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_XLAUI_4_XLPPI_4_40G_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_XLAUI_4_XLPPI_4_40G_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_xlaui_4_xlppi_4_40g)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_25gaui_1_25gbase_cr_kr[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_25gaui_1_25gbase_cr_kr[] = {
 	ETHTOOL_LINK_MODE_25000baseCR_Full_BIT,
 	ETHTOOL_LINK_MODE_25000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_25000baseSR_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_25GAUI_1_25GBASE_CR_KR_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_25GAUI_1_25GBASE_CR_KR_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_25gaui_1_25gbase_cr_kr)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_50gaui_2_laui_2_50gbase_cr2_kr2[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_50gaui_2_laui_2_50gbase_cr2_kr2[] = {
 	ETHTOOL_LINK_MODE_50000baseCR2_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseKR2_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseSR2_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_50GAUI_2_LAUI_2_50GBASE_CR2_KR2_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_50GAUI_2_LAUI_2_50GBASE_CR2_KR2_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_50gaui_2_laui_2_50gbase_cr2_kr2)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_50gaui_1_laui_1_50gbase_cr_kr[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_50gaui_1_laui_1_50gbase_cr_kr[] = {
 	ETHTOOL_LINK_MODE_50000baseKR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseSR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseCR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseLR_ER_FR_Full_BIT,
 	ETHTOOL_LINK_MODE_50000baseDR_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_50GAUI_1_LAUI_1_50GBASE_CR_KR_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_50GAUI_1_LAUI_1_50GBASE_CR_KR_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_50gaui_1_laui_1_50gbase_cr_kr)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_caui_4_100gbase_cr4_kr4[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_caui_4_100gbase_cr4_kr4[] = {
 	ETHTOOL_LINK_MODE_100000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseSR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseCR4_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseLR4_ER4_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_CAUI_4_100GBASE_CR4_KR4_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_CAUI_4_100GBASE_CR4_KR4_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_caui_4_100gbase_cr4_kr4)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_100gaui_2_100gbase_cr2_kr2[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_100gaui_2_100gbase_cr2_kr2[] = {
 	ETHTOOL_LINK_MODE_100000baseKR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseSR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseCR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseLR2_ER2_FR2_Full_BIT,
 	ETHTOOL_LINK_MODE_100000baseDR2_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_100GAUI_2_100GBASE_CR2_KR2_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_100GAUI_2_100GBASE_CR2_KR2_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_100gaui_2_100gbase_cr2_kr2)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_200gaui_4_200gbase_cr4_kr4[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_200gaui_4_200gbase_cr4_kr4[] = {
 	ETHTOOL_LINK_MODE_200000baseKR4_Full_BIT,
 	ETHTOOL_LINK_MODE_200000baseSR4_Full_BIT,
 	ETHTOOL_LINK_MODE_200000baseLR4_ER4_FR4_Full_BIT,
 	ETHTOOL_LINK_MODE_200000baseDR4_Full_BIT,
 	ETHTOOL_LINK_MODE_200000baseCR4_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_200GAUI_4_200GBASE_CR4_KR4_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_200GAUI_4_200GBASE_CR4_KR4_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_200gaui_4_200gbase_cr4_kr4)
 
-अटल स्थिर क्रमागत ethtool_link_mode_bit_indices
-mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
+static const enum ethtool_link_mode_bit_indices
+mlxsw_sp2_mask_ethtool_400gaui_8[] = {
 	ETHTOOL_LINK_MODE_400000baseKR8_Full_BIT,
 	ETHTOOL_LINK_MODE_400000baseSR8_Full_BIT,
 	ETHTOOL_LINK_MODE_400000baseLR8_ER8_FR8_Full_BIT,
 	ETHTOOL_LINK_MODE_400000baseDR8_Full_BIT,
 	ETHTOOL_LINK_MODE_400000baseCR8_Full_BIT,
-पूर्ण;
+};
 
-#घोषणा MLXSW_SP2_MASK_ETHTOOL_400GAUI_8_LEN \
+#define MLXSW_SP2_MASK_ETHTOOL_400GAUI_8_LEN \
 	ARRAY_SIZE(mlxsw_sp2_mask_ethtool_400gaui_8)
 
-#घोषणा MLXSW_SP_PORT_MASK_WIDTH_1X	BIT(0)
-#घोषणा MLXSW_SP_PORT_MASK_WIDTH_2X	BIT(1)
-#घोषणा MLXSW_SP_PORT_MASK_WIDTH_4X	BIT(2)
-#घोषणा MLXSW_SP_PORT_MASK_WIDTH_8X	BIT(3)
+#define MLXSW_SP_PORT_MASK_WIDTH_1X	BIT(0)
+#define MLXSW_SP_PORT_MASK_WIDTH_2X	BIT(1)
+#define MLXSW_SP_PORT_MASK_WIDTH_4X	BIT(2)
+#define MLXSW_SP_PORT_MASK_WIDTH_8X	BIT(3)
 
-अटल u8 mlxsw_sp_port_mask_width_get(u8 width)
-अणु
-	चयन (width) अणु
-	हाल 1:
-		वापस MLXSW_SP_PORT_MASK_WIDTH_1X;
-	हाल 2:
-		वापस MLXSW_SP_PORT_MASK_WIDTH_2X;
-	हाल 4:
-		वापस MLXSW_SP_PORT_MASK_WIDTH_4X;
-	हाल 8:
-		वापस MLXSW_SP_PORT_MASK_WIDTH_8X;
-	शेष:
+static u8 mlxsw_sp_port_mask_width_get(u8 width)
+{
+	switch (width) {
+	case 1:
+		return MLXSW_SP_PORT_MASK_WIDTH_1X;
+	case 2:
+		return MLXSW_SP_PORT_MASK_WIDTH_2X;
+	case 4:
+		return MLXSW_SP_PORT_MASK_WIDTH_4X;
+	case 8:
+		return MLXSW_SP_PORT_MASK_WIDTH_8X;
+	default:
 		WARN_ON_ONCE(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-काष्ठा mlxsw_sp2_port_link_mode अणु
-	स्थिर क्रमागत ethtool_link_mode_bit_indices *mask_ethtool;
-	पूर्णांक m_ethtool_len;
+struct mlxsw_sp2_port_link_mode {
+	const enum ethtool_link_mode_bit_indices *mask_ethtool;
+	int m_ethtool_len;
 	u32 mask;
 	u32 speed;
 	u32 width;
 	u8 mask_sup_width;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mlxsw_sp2_port_link_mode mlxsw_sp2_port_link_mode[] = अणु
-	अणु
+static const struct mlxsw_sp2_port_link_mode mlxsw_sp2_port_link_mode[] = {
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_SGMII_100M,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_sgmii_100m,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_SGMII_100M_LEN,
@@ -1645,8 +1644,8 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_100,
 		.width		= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_1000BASE_X_SGMII,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_1000base_x_sgmii,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_1000BASE_X_SGMII_LEN,
@@ -1656,8 +1655,8 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_1000,
 		.width		= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_5GBASE_R,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_5gbase_r,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_5GBASE_R_LEN,
@@ -1667,8 +1666,8 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_5000,
 		.width		= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_XFI_XAUI_1_10G,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_xfi_xaui_1_10g,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_XFI_XAUI_1_10G_LEN,
@@ -1678,8 +1677,8 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_10000,
 		.width		= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_XLAUI_4_XLPPI_4_40G,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_xlaui_4_xlppi_4_40g,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_XLAUI_4_XLPPI_4_40G_LEN,
@@ -1687,8 +1686,8 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_40000,
 		.width		= 4,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_25GAUI_1_25GBASE_CR_KR,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_25gaui_1_25gbase_cr_kr,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_25GAUI_1_25GBASE_CR_KR_LEN,
@@ -1698,8 +1697,8 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_25000,
 		.width		= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_50GAUI_2_LAUI_2_50GBASE_CR2_KR2,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_50gaui_2_laui_2_50gbase_cr2_kr2,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_50GAUI_2_LAUI_2_50GBASE_CR2_KR2_LEN,
@@ -1708,16 +1707,16 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_50000,
 		.width		= 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_50GAUI_1_LAUI_1_50GBASE_CR_KR,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_50gaui_1_laui_1_50gbase_cr_kr,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_50GAUI_1_LAUI_1_50GBASE_CR_KR_LEN,
 		.mask_sup_width	= MLXSW_SP_PORT_MASK_WIDTH_1X,
 		.speed		= SPEED_50000,
 		.width		= 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_CAUI_4_100GBASE_CR4_KR4,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_caui_4_100gbase_cr4_kr4,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_CAUI_4_100GBASE_CR4_KR4_LEN,
@@ -1725,16 +1724,16 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_100000,
 		.width		= 4,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_100GAUI_2_100GBASE_CR2_KR2,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_100gaui_2_100gbase_cr2_kr2,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_100GAUI_2_100GBASE_CR2_KR2_LEN,
 		.mask_sup_width	= MLXSW_SP_PORT_MASK_WIDTH_2X,
 		.speed		= SPEED_100000,
 		.width		= 2,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_200GAUI_4_200GBASE_CR4_KR4,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_200gaui_4_200gbase_cr4_kr4,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_200GAUI_4_200GBASE_CR4_KR4_LEN,
@@ -1742,205 +1741,205 @@ mlxsw_sp2_mask_ethtool_400gaui_8[] = अणु
 				  MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_200000,
 		.width		= 4,
-	पूर्ण,
-	अणु
+	},
+	{
 		.mask		= MLXSW_REG_PTYS_EXT_ETH_SPEED_400GAUI_8,
 		.mask_ethtool	= mlxsw_sp2_mask_ethtool_400gaui_8,
 		.m_ethtool_len	= MLXSW_SP2_MASK_ETHTOOL_400GAUI_8_LEN,
 		.mask_sup_width	= MLXSW_SP_PORT_MASK_WIDTH_8X,
 		.speed		= SPEED_400000,
 		.width		= 8,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा MLXSW_SP2_PORT_LINK_MODE_LEN ARRAY_SIZE(mlxsw_sp2_port_link_mode)
+#define MLXSW_SP2_PORT_LINK_MODE_LEN ARRAY_SIZE(mlxsw_sp2_port_link_mode)
 
-अटल व्योम
-mlxsw_sp2_from_ptys_supported_port(काष्ठा mlxsw_sp *mlxsw_sp,
+static void
+mlxsw_sp2_from_ptys_supported_port(struct mlxsw_sp *mlxsw_sp,
 				   u32 ptys_eth_proto,
-				   काष्ठा ethtool_link_ksettings *cmd)
-अणु
+				   struct ethtool_link_ksettings *cmd)
+{
 	ethtool_link_ksettings_add_link_mode(cmd, supported, FIBRE);
 	ethtool_link_ksettings_add_link_mode(cmd, supported, Backplane);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp2_set_bit_ethtool(स्थिर काष्ठा mlxsw_sp2_port_link_mode *link_mode,
-			  अचिन्हित दीर्घ *mode)
-अणु
-	पूर्णांक i;
+static void
+mlxsw_sp2_set_bit_ethtool(const struct mlxsw_sp2_port_link_mode *link_mode,
+			  unsigned long *mode)
+{
+	int i;
 
-	क्रम (i = 0; i < link_mode->m_ethtool_len; i++)
+	for (i = 0; i < link_mode->m_ethtool_len; i++)
 		__set_bit(link_mode->mask_ethtool[i], mode);
-पूर्ण
+}
 
-अटल व्योम
-mlxsw_sp2_from_ptys_link(काष्ठा mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto,
-			 अचिन्हित दीर्घ *mode)
-अणु
-	पूर्णांक i;
+static void
+mlxsw_sp2_from_ptys_link(struct mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto,
+			 unsigned long *mode)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (ptys_eth_proto & mlxsw_sp2_port_link_mode[i].mask)
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if (ptys_eth_proto & mlxsw_sp2_port_link_mode[i].mask)
 			mlxsw_sp2_set_bit_ethtool(&mlxsw_sp2_port_link_mode[i],
 						  mode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32
-mlxsw_sp2_from_ptys_speed(काष्ठा mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto)
-अणु
-	पूर्णांक i;
+static u32
+mlxsw_sp2_from_ptys_speed(struct mlxsw_sp *mlxsw_sp, u32 ptys_eth_proto)
+{
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (ptys_eth_proto & mlxsw_sp2_port_link_mode[i].mask)
-			वापस mlxsw_sp2_port_link_mode[i].speed;
-	पूर्ण
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if (ptys_eth_proto & mlxsw_sp2_port_link_mode[i].mask)
+			return mlxsw_sp2_port_link_mode[i].speed;
+	}
 
-	वापस SPEED_UNKNOWN;
-पूर्ण
+	return SPEED_UNKNOWN;
+}
 
-अटल व्योम
-mlxsw_sp2_from_ptys_link_mode(काष्ठा mlxsw_sp *mlxsw_sp, bool carrier_ok,
+static void
+mlxsw_sp2_from_ptys_link_mode(struct mlxsw_sp *mlxsw_sp, bool carrier_ok,
 			      u32 ptys_eth_proto,
-			      काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा mlxsw_sp2_port_link_mode link;
-	पूर्णांक i;
+			      struct ethtool_link_ksettings *cmd)
+{
+	struct mlxsw_sp2_port_link_mode link;
+	int i;
 
 	cmd->base.speed = SPEED_UNKNOWN;
 	cmd->base.duplex = DUPLEX_UNKNOWN;
 	cmd->lanes = 0;
 
-	अगर (!carrier_ok)
-		वापस;
+	if (!carrier_ok)
+		return;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (ptys_eth_proto & mlxsw_sp2_port_link_mode[i].mask) अणु
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if (ptys_eth_proto & mlxsw_sp2_port_link_mode[i].mask) {
 			link = mlxsw_sp2_port_link_mode[i];
 			ethtool_params_from_link_mode(cmd,
 						      link.mask_ethtool[1]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक mlxsw_sp2_ptys_max_speed(काष्ठा mlxsw_sp_port *mlxsw_sp_port, u32 *p_max_speed)
-अणु
+static int mlxsw_sp2_ptys_max_speed(struct mlxsw_sp_port *mlxsw_sp_port, u32 *p_max_speed)
+{
 	u32 eth_proto_cap;
 	u32 max_speed = 0;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	err = mlxsw_sp_port_ptys_query(mlxsw_sp_port, &eth_proto_cap, शून्य, शून्य, शून्य);
-	अगर (err)
-		वापस err;
+	err = mlxsw_sp_port_ptys_query(mlxsw_sp_port, &eth_proto_cap, NULL, NULL, NULL);
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर ((eth_proto_cap & mlxsw_sp2_port_link_mode[i].mask) &&
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if ((eth_proto_cap & mlxsw_sp2_port_link_mode[i].mask) &&
 		    mlxsw_sp2_port_link_mode[i].speed > max_speed)
 			max_speed = mlxsw_sp2_port_link_mode[i].speed;
-	पूर्ण
+	}
 
 	*p_max_speed = max_speed;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool
-mlxsw_sp2_test_bit_ethtool(स्थिर काष्ठा mlxsw_sp2_port_link_mode *link_mode,
-			   स्थिर अचिन्हित दीर्घ *mode)
-अणु
-	पूर्णांक cnt = 0;
-	पूर्णांक i;
+static bool
+mlxsw_sp2_test_bit_ethtool(const struct mlxsw_sp2_port_link_mode *link_mode,
+			   const unsigned long *mode)
+{
+	int cnt = 0;
+	int i;
 
-	क्रम (i = 0; i < link_mode->m_ethtool_len; i++) अणु
-		अगर (test_bit(link_mode->mask_ethtool[i], mode))
+	for (i = 0; i < link_mode->m_ethtool_len; i++) {
+		if (test_bit(link_mode->mask_ethtool[i], mode))
 			cnt++;
-	पूर्ण
+	}
 
-	वापस cnt == link_mode->m_ethtool_len;
-पूर्ण
+	return cnt == link_mode->m_ethtool_len;
+}
 
-अटल u32
-mlxsw_sp2_to_ptys_advert_link(काष्ठा mlxsw_sp *mlxsw_sp,
-			      स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static u32
+mlxsw_sp2_to_ptys_advert_link(struct mlxsw_sp *mlxsw_sp,
+			      const struct ethtool_link_ksettings *cmd)
+{
 	u32 ptys_proto = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (mlxsw_sp2_test_bit_ethtool(&mlxsw_sp2_port_link_mode[i],
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if (mlxsw_sp2_test_bit_ethtool(&mlxsw_sp2_port_link_mode[i],
 					       cmd->link_modes.advertising))
 			ptys_proto |= mlxsw_sp2_port_link_mode[i].mask;
-	पूर्ण
-	वापस ptys_proto;
-पूर्ण
+	}
+	return ptys_proto;
+}
 
-अटल u32 mlxsw_sp2_to_ptys_speed_lanes(काष्ठा mlxsw_sp *mlxsw_sp, u8 width,
-					 स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
+static u32 mlxsw_sp2_to_ptys_speed_lanes(struct mlxsw_sp *mlxsw_sp, u8 width,
+					 const struct ethtool_link_ksettings *cmd)
+{
 	u8 mask_width = mlxsw_sp_port_mask_width_get(width);
-	काष्ठा mlxsw_sp2_port_link_mode link_mode;
+	struct mlxsw_sp2_port_link_mode link_mode;
 	u32 ptys_proto = 0;
-	पूर्णांक i;
+	int i;
 
-	अगर (cmd->lanes > width)
-		वापस ptys_proto;
+	if (cmd->lanes > width)
+		return ptys_proto;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (cmd->base.speed == mlxsw_sp2_port_link_mode[i].speed) अणु
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if (cmd->base.speed == mlxsw_sp2_port_link_mode[i].speed) {
 			link_mode = mlxsw_sp2_port_link_mode[i];
 
-			अगर (!cmd->lanes) अणु
+			if (!cmd->lanes) {
 				/* If number of lanes was not set by user space,
 				 * choose the link mode that supports the width
 				 * of the port.
 				 */
-				अगर (mask_width & link_mode.mask_sup_width)
+				if (mask_width & link_mode.mask_sup_width)
 					ptys_proto |= link_mode.mask;
-			पूर्ण अन्यथा अगर (cmd->lanes == link_mode.width) अणु
-				/* Else अगर the number of lanes was set, choose
+			} else if (cmd->lanes == link_mode.width) {
+				/* Else if the number of lanes was set, choose
 				 * the link mode that its actual width equals to
 				 * it.
 				 */
 				ptys_proto |= link_mode.mask;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस ptys_proto;
-पूर्ण
+			}
+		}
+	}
+	return ptys_proto;
+}
 
-अटल व्योम
-mlxsw_sp2_reg_ptys_eth_pack(काष्ठा mlxsw_sp *mlxsw_sp, अक्षर *payload,
+static void
+mlxsw_sp2_reg_ptys_eth_pack(struct mlxsw_sp *mlxsw_sp, char *payload,
 			    u8 local_port, u32 proto_admin,
-			    bool स्वतःneg)
-अणु
-	mlxsw_reg_ptys_ext_eth_pack(payload, local_port, proto_admin, स्वतःneg);
-पूर्ण
+			    bool autoneg)
+{
+	mlxsw_reg_ptys_ext_eth_pack(payload, local_port, proto_admin, autoneg);
+}
 
-अटल व्योम
-mlxsw_sp2_reg_ptys_eth_unpack(काष्ठा mlxsw_sp *mlxsw_sp, अक्षर *payload,
+static void
+mlxsw_sp2_reg_ptys_eth_unpack(struct mlxsw_sp *mlxsw_sp, char *payload,
 			      u32 *p_eth_proto_cap, u32 *p_eth_proto_admin,
 			      u32 *p_eth_proto_oper)
-अणु
+{
 	mlxsw_reg_ptys_ext_eth_unpack(payload, p_eth_proto_cap,
 				      p_eth_proto_admin, p_eth_proto_oper);
-पूर्ण
+}
 
-अटल u32 mlxsw_sp2_ptys_proto_cap_masked_get(u32 eth_proto_cap)
-अणु
+static u32 mlxsw_sp2_ptys_proto_cap_masked_get(u32 eth_proto_cap)
+{
 	u32 ptys_proto_cap_masked = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) अणु
-		अगर (mlxsw_sp2_port_link_mode[i].mask & eth_proto_cap)
+	for (i = 0; i < MLXSW_SP2_PORT_LINK_MODE_LEN; i++) {
+		if (mlxsw_sp2_port_link_mode[i].mask & eth_proto_cap)
 			ptys_proto_cap_masked |=
 				mlxsw_sp2_port_link_mode[i].mask;
-	पूर्ण
+	}
 
-	वापस ptys_proto_cap_masked;
-पूर्ण
+	return ptys_proto_cap_masked;
+}
 
-स्थिर काष्ठा mlxsw_sp_port_type_speed_ops mlxsw_sp2_port_type_speed_ops = अणु
+const struct mlxsw_sp_port_type_speed_ops mlxsw_sp2_port_type_speed_ops = {
 	.from_ptys_supported_port	= mlxsw_sp2_from_ptys_supported_port,
 	.from_ptys_link			= mlxsw_sp2_from_ptys_link,
 	.from_ptys_speed		= mlxsw_sp2_from_ptys_speed,
@@ -1951,4 +1950,4 @@ mlxsw_sp2_reg_ptys_eth_unpack(काष्ठा mlxsw_sp *mlxsw_sp, अक्�
 	.reg_ptys_eth_pack		= mlxsw_sp2_reg_ptys_eth_pack,
 	.reg_ptys_eth_unpack		= mlxsw_sp2_reg_ptys_eth_unpack,
 	.ptys_proto_cap_masked_get	= mlxsw_sp2_ptys_proto_cap_masked_get,
-पूर्ण;
+};

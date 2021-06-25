@@ -1,44 +1,43 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <test_progs.h>
-#समावेश <network_helpers.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <test_progs.h>
+#include <network_helpers.h>
 
-अटल व्योम *spin_lock_thपढ़ो(व्योम *arg)
-अणु
+static void *spin_lock_thread(void *arg)
+{
 	__u32 duration, retval;
-	पूर्णांक err, prog_fd = *(u32 *) arg;
+	int err, prog_fd = *(u32 *) arg;
 
-	err = bpf_prog_test_run(prog_fd, 10000, &pkt_v4, माप(pkt_v4),
-				शून्य, शून्य, &retval, &duration);
+	err = bpf_prog_test_run(prog_fd, 10000, &pkt_v4, sizeof(pkt_v4),
+				NULL, NULL, &retval, &duration);
 	CHECK(err || retval, "",
 	      "err %d errno %d retval %d duration %d\n",
-	      err, त्रुटि_सं, retval, duration);
-	pthपढ़ो_निकास(arg);
-पूर्ण
+	      err, errno, retval, duration);
+	pthread_exit(arg);
+}
 
-व्योम test_spinlock(व्योम)
-अणु
-	स्थिर अक्षर *file = "./test_spin_lock.o";
-	pthपढ़ो_t thपढ़ो_id[4];
-	काष्ठा bpf_object *obj = शून्य;
-	पूर्णांक prog_fd;
-	पूर्णांक err = 0, i;
-	व्योम *ret;
+void test_spinlock(void)
+{
+	const char *file = "./test_spin_lock.o";
+	pthread_t thread_id[4];
+	struct bpf_object *obj = NULL;
+	int prog_fd;
+	int err = 0, i;
+	void *ret;
 
 	err = bpf_prog_load(file, BPF_PROG_TYPE_CGROUP_SKB, &obj, &prog_fd);
-	अगर (CHECK_FAIL(err)) अणु
-		म_लिखो("test_spin_lock:bpf_prog_load errno %d\n", त्रुटि_सं);
-		जाओ बंद_prog;
-	पूर्ण
-	क्रम (i = 0; i < 4; i++)
-		अगर (CHECK_FAIL(pthपढ़ो_create(&thपढ़ो_id[i], शून्य,
-					      &spin_lock_thपढ़ो, &prog_fd)))
-			जाओ बंद_prog;
+	if (CHECK_FAIL(err)) {
+		printf("test_spin_lock:bpf_prog_load errno %d\n", errno);
+		goto close_prog;
+	}
+	for (i = 0; i < 4; i++)
+		if (CHECK_FAIL(pthread_create(&thread_id[i], NULL,
+					      &spin_lock_thread, &prog_fd)))
+			goto close_prog;
 
-	क्रम (i = 0; i < 4; i++)
-		अगर (CHECK_FAIL(pthपढ़ो_join(thपढ़ो_id[i], &ret) ||
-			       ret != (व्योम *)&prog_fd))
-			जाओ बंद_prog;
-बंद_prog:
-	bpf_object__बंद(obj);
-पूर्ण
+	for (i = 0; i < 4; i++)
+		if (CHECK_FAIL(pthread_join(thread_id[i], &ret) ||
+			       ret != (void *)&prog_fd))
+			goto close_prog;
+close_prog:
+	bpf_object__close(obj);
+}

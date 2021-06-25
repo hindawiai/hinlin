@@ -1,24 +1,23 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,306 +30,306 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/माला.स>
-#समावेश <linux/gfp.h>
+#include <linux/string.h>
+#include <linux/gfp.h>
 
-#समावेश "mthca_dev.h"
-#समावेश "mthca_cmd.h"
+#include "mthca_dev.h"
+#include "mthca_cmd.h"
 
-काष्ठा mthca_mgm अणु
+struct mthca_mgm {
 	__be32 next_gid_index;
 	u32    reserved[3];
 	u8     gid[16];
 	__be32 qp[MTHCA_QP_PER_MGM];
-पूर्ण;
+};
 
-अटल स्थिर u8 zero_gid[16];	/* स्वतःmatically initialized to 0 */
+static const u8 zero_gid[16];	/* automatically initialized to 0 */
 
 /*
  * Caller must hold MCG table semaphore.  gid and mgm parameters must
- * be properly aligned क्रम command पूर्णांकerface.
+ * be properly aligned for command interface.
  *
  *  Returns 0 unless a firmware command error occurs.
  *
  * If GID is found in MGM or MGM is empty, *index = *hash, *prev = -1
  * and *mgm holds MGM entry.
  *
- * अगर GID is found in AMGM, *index = index in AMGM, *prev = index of
+ * if GID is found in AMGM, *index = index in AMGM, *prev = index of
  * previous entry in hash chain and *mgm holds AMGM entry.
  *
- * If no AMGM exists क्रम given gid, *index = -1, *prev = index of last
+ * If no AMGM exists for given gid, *index = -1, *prev = index of last
  * entry in hash chain and *mgm holds end of hash chain.
  */
-अटल पूर्णांक find_mgm(काष्ठा mthca_dev *dev,
-		    u8 *gid, काष्ठा mthca_mailbox *mgm_mailbox,
-		    u16 *hash, पूर्णांक *prev, पूर्णांक *index)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
-	काष्ठा mthca_mgm *mgm = mgm_mailbox->buf;
+static int find_mgm(struct mthca_dev *dev,
+		    u8 *gid, struct mthca_mailbox *mgm_mailbox,
+		    u16 *hash, int *prev, int *index)
+{
+	struct mthca_mailbox *mailbox;
+	struct mthca_mgm *mgm = mgm_mailbox->buf;
 	u8 *mgid;
-	पूर्णांक err;
+	int err;
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस -ENOMEM;
+	if (IS_ERR(mailbox))
+		return -ENOMEM;
 	mgid = mailbox->buf;
 
-	स_नकल(mgid, gid, 16);
+	memcpy(mgid, gid, 16);
 
 	err = mthca_MGID_HASH(dev, mailbox, hash);
-	अगर (err) अणु
+	if (err) {
 		mthca_err(dev, "MGID_HASH failed (%d)\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (0)
+	if (0)
 		mthca_dbg(dev, "Hash for %pI6 is %04x\n", gid, *hash);
 
 	*index = *hash;
 	*prev  = -1;
 
-	करो अणु
+	do {
 		err = mthca_READ_MGM(dev, *index, mgm_mailbox);
-		अगर (err) अणु
+		if (err) {
 			mthca_err(dev, "READ_MGM failed (%d)\n", err);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!स_भेद(mgm->gid, zero_gid, 16)) अणु
-			अगर (*index != *hash) अणु
+		if (!memcmp(mgm->gid, zero_gid, 16)) {
+			if (*index != *hash) {
 				mthca_err(dev, "Found zero MGID in AMGM.\n");
 				err = -EINVAL;
-			पूर्ण
-			जाओ out;
-		पूर्ण
+			}
+			goto out;
+		}
 
-		अगर (!स_भेद(mgm->gid, gid, 16))
-			जाओ out;
+		if (!memcmp(mgm->gid, gid, 16))
+			goto out;
 
 		*prev = *index;
 		*index = be32_to_cpu(mgm->next_gid_index) >> 6;
-	पूर्ण जबतक (*index);
+	} while (*index);
 
 	*index = -1;
 
  out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_multicast_attach(काष्ठा ib_qp *ibqp, जोड़ ib_gid *gid, u16 lid)
-अणु
-	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
-	काष्ठा mthca_mailbox *mailbox;
-	काष्ठा mthca_mgm *mgm;
+int mthca_multicast_attach(struct ib_qp *ibqp, union ib_gid *gid, u16 lid)
+{
+	struct mthca_dev *dev = to_mdev(ibqp->device);
+	struct mthca_mailbox *mailbox;
+	struct mthca_mgm *mgm;
 	u16 hash;
-	पूर्णांक index, prev;
-	पूर्णांक link = 0;
-	पूर्णांक i;
-	पूर्णांक err;
+	int index, prev;
+	int link = 0;
+	int i;
+	int err;
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	mgm = mailbox->buf;
 
 	mutex_lock(&dev->mcg_table.mutex);
 
 	err = find_mgm(dev, gid->raw, mailbox, &hash, &prev, &index);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (index != -1) अणु
-		अगर (!स_भेद(mgm->gid, zero_gid, 16))
-			स_नकल(mgm->gid, gid->raw, 16);
-	पूर्ण अन्यथा अणु
+	if (index != -1) {
+		if (!memcmp(mgm->gid, zero_gid, 16))
+			memcpy(mgm->gid, gid->raw, 16);
+	} else {
 		link = 1;
 
 		index = mthca_alloc(&dev->mcg_table.alloc);
-		अगर (index == -1) अणु
+		if (index == -1) {
 			mthca_err(dev, "No AMGM entries left\n");
 			err = -ENOMEM;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		err = mthca_READ_MGM(dev, index, mailbox);
-		अगर (err) अणु
+		if (err) {
 			mthca_err(dev, "READ_MGM failed (%d)\n", err);
-			जाओ out;
-		पूर्ण
-		स_रखो(mgm, 0, माप *mgm);
-		स_नकल(mgm->gid, gid->raw, 16);
-	पूर्ण
+			goto out;
+		}
+		memset(mgm, 0, sizeof *mgm);
+		memcpy(mgm->gid, gid->raw, 16);
+	}
 
-	क्रम (i = 0; i < MTHCA_QP_PER_MGM; ++i)
-		अगर (mgm->qp[i] == cpu_to_be32(ibqp->qp_num | (1 << 31))) अणु
+	for (i = 0; i < MTHCA_QP_PER_MGM; ++i)
+		if (mgm->qp[i] == cpu_to_be32(ibqp->qp_num | (1 << 31))) {
 			mthca_dbg(dev, "QP %06x already a member of MGM\n",
 				  ibqp->qp_num);
 			err = 0;
-			जाओ out;
-		पूर्ण अन्यथा अगर (!(mgm->qp[i] & cpu_to_be32(1 << 31))) अणु
+			goto out;
+		} else if (!(mgm->qp[i] & cpu_to_be32(1 << 31))) {
 			mgm->qp[i] = cpu_to_be32(ibqp->qp_num | (1 << 31));
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-	अगर (i == MTHCA_QP_PER_MGM) अणु
+	if (i == MTHCA_QP_PER_MGM) {
 		mthca_err(dev, "MGM at index %x is full.\n", index);
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = mthca_WRITE_MGM(dev, index, mailbox);
-	अगर (err) अणु
+	if (err) {
 		mthca_err(dev, "WRITE_MGM failed %d\n", err);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!link)
-		जाओ out;
+	if (!link)
+		goto out;
 
 	err = mthca_READ_MGM(dev, prev, mailbox);
-	अगर (err) अणु
+	if (err) {
 		mthca_err(dev, "READ_MGM failed %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mgm->next_gid_index = cpu_to_be32(index << 6);
 
 	err = mthca_WRITE_MGM(dev, prev, mailbox);
-	अगर (err)
+	if (err)
 		mthca_err(dev, "WRITE_MGM returned %d\n", err);
 
  out:
-	अगर (err && link && index != -1) अणु
+	if (err && link && index != -1) {
 		BUG_ON(index < dev->limits.num_mgms);
-		mthca_मुक्त(&dev->mcg_table.alloc, index);
-	पूर्ण
+		mthca_free(&dev->mcg_table.alloc, index);
+	}
 	mutex_unlock(&dev->mcg_table.mutex);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_multicast_detach(काष्ठा ib_qp *ibqp, जोड़ ib_gid *gid, u16 lid)
-अणु
-	काष्ठा mthca_dev *dev = to_mdev(ibqp->device);
-	काष्ठा mthca_mailbox *mailbox;
-	काष्ठा mthca_mgm *mgm;
+int mthca_multicast_detach(struct ib_qp *ibqp, union ib_gid *gid, u16 lid)
+{
+	struct mthca_dev *dev = to_mdev(ibqp->device);
+	struct mthca_mailbox *mailbox;
+	struct mthca_mgm *mgm;
 	u16 hash;
-	पूर्णांक prev, index;
-	पूर्णांक i, loc;
-	पूर्णांक err;
+	int prev, index;
+	int i, loc;
+	int err;
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	mgm = mailbox->buf;
 
 	mutex_lock(&dev->mcg_table.mutex);
 
 	err = find_mgm(dev, gid->raw, mailbox, &hash, &prev, &index);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (index == -1) अणु
+	if (index == -1) {
 		mthca_err(dev, "MGID %pI6 not found\n", gid->raw);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (loc = -1, i = 0; i < MTHCA_QP_PER_MGM; ++i) अणु
-		अगर (mgm->qp[i] == cpu_to_be32(ibqp->qp_num | (1 << 31)))
+	for (loc = -1, i = 0; i < MTHCA_QP_PER_MGM; ++i) {
+		if (mgm->qp[i] == cpu_to_be32(ibqp->qp_num | (1 << 31)))
 			loc = i;
-		अगर (!(mgm->qp[i] & cpu_to_be32(1 << 31)))
-			अवरोध;
-	पूर्ण
+		if (!(mgm->qp[i] & cpu_to_be32(1 << 31)))
+			break;
+	}
 
-	अगर (loc == -1) अणु
+	if (loc == -1) {
 		mthca_err(dev, "QP %06x not found in MGM\n", ibqp->qp_num);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	mgm->qp[loc]   = mgm->qp[i - 1];
 	mgm->qp[i - 1] = 0;
 
 	err = mthca_WRITE_MGM(dev, index, mailbox);
-	अगर (err) अणु
+	if (err) {
 		mthca_err(dev, "WRITE_MGM returned %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (i != 1)
-		जाओ out;
+	if (i != 1)
+		goto out;
 
-	अगर (prev == -1) अणु
+	if (prev == -1) {
 		/* Remove entry from MGM */
-		पूर्णांक amgm_index_to_मुक्त = be32_to_cpu(mgm->next_gid_index) >> 6;
-		अगर (amgm_index_to_मुक्त) अणु
-			err = mthca_READ_MGM(dev, amgm_index_to_मुक्त,
+		int amgm_index_to_free = be32_to_cpu(mgm->next_gid_index) >> 6;
+		if (amgm_index_to_free) {
+			err = mthca_READ_MGM(dev, amgm_index_to_free,
 					     mailbox);
-			अगर (err) अणु
+			if (err) {
 				mthca_err(dev, "READ_MGM returned %d\n", err);
-				जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा
-			स_रखो(mgm->gid, 0, 16);
+				goto out;
+			}
+		} else
+			memset(mgm->gid, 0, 16);
 
 		err = mthca_WRITE_MGM(dev, index, mailbox);
-		अगर (err) अणु
+		if (err) {
 			mthca_err(dev, "WRITE_MGM returned %d\n", err);
-			जाओ out;
-		पूर्ण
-		अगर (amgm_index_to_मुक्त) अणु
-			BUG_ON(amgm_index_to_मुक्त < dev->limits.num_mgms);
-			mthca_मुक्त(&dev->mcg_table.alloc, amgm_index_to_मुक्त);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto out;
+		}
+		if (amgm_index_to_free) {
+			BUG_ON(amgm_index_to_free < dev->limits.num_mgms);
+			mthca_free(&dev->mcg_table.alloc, amgm_index_to_free);
+		}
+	} else {
 		/* Remove entry from AMGM */
-		पूर्णांक curr_next_index = be32_to_cpu(mgm->next_gid_index) >> 6;
+		int curr_next_index = be32_to_cpu(mgm->next_gid_index) >> 6;
 		err = mthca_READ_MGM(dev, prev, mailbox);
-		अगर (err) अणु
+		if (err) {
 			mthca_err(dev, "READ_MGM returned %d\n", err);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		mgm->next_gid_index = cpu_to_be32(curr_next_index << 6);
 
 		err = mthca_WRITE_MGM(dev, prev, mailbox);
-		अगर (err) अणु
+		if (err) {
 			mthca_err(dev, "WRITE_MGM returned %d\n", err);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		BUG_ON(index < dev->limits.num_mgms);
-		mthca_मुक्त(&dev->mcg_table.alloc, index);
-	पूर्ण
+		mthca_free(&dev->mcg_table.alloc, index);
+	}
 
  out:
 	mutex_unlock(&dev->mcg_table.mutex);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_init_mcg_table(काष्ठा mthca_dev *dev)
-अणु
-	पूर्णांक err;
-	पूर्णांक table_size = dev->limits.num_mgms + dev->limits.num_amgms;
+int mthca_init_mcg_table(struct mthca_dev *dev)
+{
+	int err;
+	int table_size = dev->limits.num_mgms + dev->limits.num_amgms;
 
 	err = mthca_alloc_init(&dev->mcg_table.alloc,
 			       table_size,
 			       table_size - 1,
 			       dev->limits.num_mgms);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	mutex_init(&dev->mcg_table.mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mthca_cleanup_mcg_table(काष्ठा mthca_dev *dev)
-अणु
+void mthca_cleanup_mcg_table(struct mthca_dev *dev)
+{
 	mthca_alloc_cleanup(&dev->mcg_table.alloc);
-पूर्ण
+}

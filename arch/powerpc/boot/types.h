@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TYPES_H_
-#घोषणा _TYPES_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TYPES_H_
+#define _TYPES_H_
 
-#समावेश <stdbool.h>
+#include <stdbool.h>
 
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-प्रकार अचिन्हित अक्षर		u8;
-प्रकार अचिन्हित लघु		u16;
-प्रकार अचिन्हित पूर्णांक		u32;
-प्रकार अचिन्हित दीर्घ दीर्घ	u64;
-प्रकार चिन्हित अक्षर		s8;
-प्रकार लघु			s16;
-प्रकार पूर्णांक			s32;
-प्रकार दीर्घ दीर्घ		s64;
+typedef unsigned char		u8;
+typedef unsigned short		u16;
+typedef unsigned int		u32;
+typedef unsigned long long	u64;
+typedef signed char		s8;
+typedef short			s16;
+typedef int			s32;
+typedef long long		s64;
 
-/* required क्रम opal-api.h */
-प्रकार u8  uपूर्णांक8_t;
-प्रकार u16 uपूर्णांक16_t;
-प्रकार u32 uपूर्णांक32_t;
-प्रकार u64 uपूर्णांक64_t;
-प्रकार s8  पूर्णांक8_t;
-प्रकार s16 पूर्णांक16_t;
-प्रकार s32 पूर्णांक32_t;
-प्रकार s64 पूर्णांक64_t;
+/* required for opal-api.h */
+typedef u8  uint8_t;
+typedef u16 uint16_t;
+typedef u32 uint32_t;
+typedef u64 uint64_t;
+typedef s8  int8_t;
+typedef s16 int16_t;
+typedef s32 int32_t;
+typedef s64 int64_t;
 
-#घोषणा min(x,y) (अणु \
+#define min(x,y) ({ \
 	typeof(x) _x = (x);	\
 	typeof(y) _y = (y);	\
-	(व्योम) (&_x == &_y);	\
-	_x < _y ? _x : _y; पूर्ण)
+	(void) (&_x == &_y);	\
+	_x < _y ? _x : _y; })
 
-#घोषणा max(x,y) (अणु \
+#define max(x,y) ({ \
 	typeof(x) _x = (x);	\
 	typeof(y) _y = (y);	\
-	(व्योम) (&_x == &_y);	\
-	_x > _y ? _x : _y; पूर्ण)
+	(void) (&_x == &_y);	\
+	_x > _y ? _x : _y; })
 
-#घोषणा min_t(type, a, b) min(((type) a), ((type) b))
-#घोषणा max_t(type, a, b) max(((type) a), ((type) b))
+#define min_t(type, a, b) min(((type) a), ((type) b))
+#define max_t(type, a, b) max(((type) a), ((type) b))
 
-प्रकार पूर्णांक bool;
+typedef int bool;
 
-#अगर_अघोषित true
-#घोषणा true 1
-#पूर्ण_अगर
+#ifndef true
+#define true 1
+#endif
 
-#अगर_अघोषित false
-#घोषणा false 0
-#पूर्ण_अगर
-#पूर्ण_अगर /* _TYPES_H_ */
+#ifndef false
+#define false 0
+#endif
+#endif /* _TYPES_H_ */

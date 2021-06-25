@@ -1,1104 +1,1103 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2017 Arm Ltd.
-#घोषणा pr_fmt(fmt) "sdei: " fmt
+#define pr_fmt(fmt) "sdei: " fmt
 
-#समावेश <acpi/ghes.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/arm_sdei.h>
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/cpuhotplug.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpu_pm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/spinlock.h>
+#include <acpi/ghes.h>
+#include <linux/acpi.h>
+#include <linux/arm_sdei.h>
+#include <linux/arm-smccc.h>
+#include <linux/atomic.h>
+#include <linux/bitops.h>
+#include <linux/compiler.h>
+#include <linux/cpuhotplug.h>
+#include <linux/cpu.h>
+#include <linux/cpu_pm.h>
+#include <linux/errno.h>
+#include <linux/hardirq.h>
+#include <linux/kernel.h>
+#include <linux/kprobes.h>
+#include <linux/kvm_host.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/notifier.h>
+#include <linux/of.h>
+#include <linux/of_platform.h>
+#include <linux/percpu.h>
+#include <linux/platform_device.h>
+#include <linux/pm.h>
+#include <linux/ptrace.h>
+#include <linux/preempt.h>
+#include <linux/reboot.h>
+#include <linux/slab.h>
+#include <linux/smp.h>
+#include <linux/spinlock.h>
 
 /*
  * The call to use to reach the firmware.
  */
-अटल यंत्रlinkage व्योम (*sdei_firmware_call)(अचिन्हित दीर्घ function_id,
-		      अचिन्हित दीर्घ arg0, अचिन्हित दीर्घ arg1,
-		      अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ arg3,
-		      अचिन्हित दीर्घ arg4, काष्ठा arm_smccc_res *res);
+static asmlinkage void (*sdei_firmware_call)(unsigned long function_id,
+		      unsigned long arg0, unsigned long arg1,
+		      unsigned long arg2, unsigned long arg3,
+		      unsigned long arg4, struct arm_smccc_res *res);
 
-/* entry poपूर्णांक from firmware to arch यंत्र code */
-अटल अचिन्हित दीर्घ sdei_entry_poपूर्णांक;
+/* entry point from firmware to arch asm code */
+static unsigned long sdei_entry_point;
 
-काष्ठा sdei_event अणु
-	/* These three are रक्षित by the sdei_list_lock */
-	काष्ठा list_head	list;
-	bool			reरेजिस्टर;
+struct sdei_event {
+	/* These three are protected by the sdei_list_lock */
+	struct list_head	list;
+	bool			reregister;
 	bool			reenable;
 
 	u32			event_num;
 	u8			type;
 	u8			priority;
 
-	/* This poपूर्णांकer is handed to firmware as the event argument. */
-	जोड़ अणु
+	/* This pointer is handed to firmware as the event argument. */
+	union {
 		/* Shared events */
-		काष्ठा sdei_रेजिस्टरed_event *रेजिस्टरed;
+		struct sdei_registered_event *registered;
 
-		/* CPU निजी events */
-		काष्ठा sdei_रेजिस्टरed_event __percpu *निजी_रेजिस्टरed;
-	पूर्ण;
-पूर्ण;
+		/* CPU private events */
+		struct sdei_registered_event __percpu *private_registered;
+	};
+};
 
-/* Take the mutex क्रम any API call or modअगरication. Take the mutex first. */
-अटल DEFINE_MUTEX(sdei_events_lock);
+/* Take the mutex for any API call or modification. Take the mutex first. */
+static DEFINE_MUTEX(sdei_events_lock);
 
-/* and then hold this when modअगरying the list */
-अटल DEFINE_SPINLOCK(sdei_list_lock);
-अटल LIST_HEAD(sdei_list);
+/* and then hold this when modifying the list */
+static DEFINE_SPINLOCK(sdei_list_lock);
+static LIST_HEAD(sdei_list);
 
-/* Private events are रेजिस्टरed/enabled via IPI passing one of these */
-काष्ठा sdei_crosscall_args अणु
-	काष्ठा sdei_event *event;
+/* Private events are registered/enabled via IPI passing one of these */
+struct sdei_crosscall_args {
+	struct sdei_event *event;
 	atomic_t errors;
-	पूर्णांक first_error;
-पूर्ण;
+	int first_error;
+};
 
-#घोषणा CROSSCALL_INIT(arg, event)		\
-	करो अणु					\
+#define CROSSCALL_INIT(arg, event)		\
+	do {					\
 		arg.event = event;		\
 		arg.first_error = 0;		\
 		atomic_set(&arg.errors, 0);	\
-	पूर्ण जबतक (0)
+	} while (0)
 
-अटल अंतरभूत पूर्णांक sdei_करो_local_call(smp_call_func_t fn,
-				     काष्ठा sdei_event *event)
-अणु
-	काष्ठा sdei_crosscall_args arg;
+static inline int sdei_do_local_call(smp_call_func_t fn,
+				     struct sdei_event *event)
+{
+	struct sdei_crosscall_args arg;
 
 	CROSSCALL_INIT(arg, event);
 	fn(&arg);
 
-	वापस arg.first_error;
-पूर्ण
+	return arg.first_error;
+}
 
-अटल अंतरभूत पूर्णांक sdei_करो_cross_call(smp_call_func_t fn,
-				     काष्ठा sdei_event *event)
-अणु
-	काष्ठा sdei_crosscall_args arg;
+static inline int sdei_do_cross_call(smp_call_func_t fn,
+				     struct sdei_event *event)
+{
+	struct sdei_crosscall_args arg;
 
 	CROSSCALL_INIT(arg, event);
 	on_each_cpu(fn, &arg, true);
 
-	वापस arg.first_error;
-पूर्ण
+	return arg.first_error;
+}
 
-अटल अंतरभूत व्योम
-sdei_cross_call_वापस(काष्ठा sdei_crosscall_args *arg, पूर्णांक err)
-अणु
-	अगर (err && (atomic_inc_वापस(&arg->errors) == 1))
+static inline void
+sdei_cross_call_return(struct sdei_crosscall_args *arg, int err)
+{
+	if (err && (atomic_inc_return(&arg->errors) == 1))
 		arg->first_error = err;
-पूर्ण
+}
 
-अटल पूर्णांक sdei_to_linux_त्रुटि_सं(अचिन्हित दीर्घ sdei_err)
-अणु
-	चयन (sdei_err) अणु
-	हाल SDEI_NOT_SUPPORTED:
-		वापस -EOPNOTSUPP;
-	हाल SDEI_INVALID_PARAMETERS:
-		वापस -EINVAL;
-	हाल SDEI_DENIED:
-		वापस -EPERM;
-	हाल SDEI_PENDING:
-		वापस -EINPROGRESS;
-	हाल SDEI_OUT_OF_RESOURCE:
-		वापस -ENOMEM;
-	पूर्ण
+static int sdei_to_linux_errno(unsigned long sdei_err)
+{
+	switch (sdei_err) {
+	case SDEI_NOT_SUPPORTED:
+		return -EOPNOTSUPP;
+	case SDEI_INVALID_PARAMETERS:
+		return -EINVAL;
+	case SDEI_DENIED:
+		return -EPERM;
+	case SDEI_PENDING:
+		return -EINPROGRESS;
+	case SDEI_OUT_OF_RESOURCE:
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक invoke_sdei_fn(अचिन्हित दीर्घ function_id, अचिन्हित दीर्घ arg0,
-			  अचिन्हित दीर्घ arg1, अचिन्हित दीर्घ arg2,
-			  अचिन्हित दीर्घ arg3, अचिन्हित दीर्घ arg4,
+static int invoke_sdei_fn(unsigned long function_id, unsigned long arg0,
+			  unsigned long arg1, unsigned long arg2,
+			  unsigned long arg3, unsigned long arg4,
 			  u64 *result)
-अणु
-	पूर्णांक err;
-	काष्ठा arm_smccc_res res;
+{
+	int err;
+	struct arm_smccc_res res;
 
-	अगर (sdei_firmware_call) अणु
+	if (sdei_firmware_call) {
 		sdei_firmware_call(function_id, arg0, arg1, arg2, arg3, arg4,
 				   &res);
-		err = sdei_to_linux_त्रुटि_सं(res.a0);
-	पूर्ण अन्यथा अणु
+		err = sdei_to_linux_errno(res.a0);
+	} else {
 		/*
 		 * !sdei_firmware_call means we failed to probe or called
-		 * sdei_mark_पूर्णांकerface_broken(). -EIO is not an error वापसed
-		 * by sdei_to_linux_त्रुटि_सं() and is used to suppress messages
+		 * sdei_mark_interface_broken(). -EIO is not an error returned
+		 * by sdei_to_linux_errno() and is used to suppress messages
 		 * from this driver.
 		 */
 		err = -EIO;
 		res.a0 = SDEI_NOT_SUPPORTED;
-	पूर्ण
+	}
 
-	अगर (result)
+	if (result)
 		*result = res.a0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 NOKPROBE_SYMBOL(invoke_sdei_fn);
 
-अटल काष्ठा sdei_event *sdei_event_find(u32 event_num)
-अणु
-	काष्ठा sdei_event *e, *found = शून्य;
+static struct sdei_event *sdei_event_find(u32 event_num)
+{
+	struct sdei_event *e, *found = NULL;
 
-	lockdep_निश्चित_held(&sdei_events_lock);
+	lockdep_assert_held(&sdei_events_lock);
 
 	spin_lock(&sdei_list_lock);
-	list_क्रम_each_entry(e, &sdei_list, list) अणु
-		अगर (e->event_num == event_num) अणु
+	list_for_each_entry(e, &sdei_list, list) {
+		if (e->event_num == event_num) {
 			found = e;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&sdei_list_lock);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-पूर्णांक sdei_api_event_context(u32 query, u64 *result)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_CONTEXT, query, 0, 0, 0, 0,
+int sdei_api_event_context(u32 query, u64 *result)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_CONTEXT, query, 0, 0, 0, 0,
 			      result);
-पूर्ण
+}
 NOKPROBE_SYMBOL(sdei_api_event_context);
 
-अटल पूर्णांक sdei_api_event_get_info(u32 event, u32 info, u64 *result)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_GET_INFO, event, info, 0,
+static int sdei_api_event_get_info(u32 event, u32 info, u64 *result)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_GET_INFO, event, info, 0,
 			      0, 0, result);
-पूर्ण
+}
 
-अटल काष्ठा sdei_event *sdei_event_create(u32 event_num,
+static struct sdei_event *sdei_event_create(u32 event_num,
 					    sdei_event_callback *cb,
-					    व्योम *cb_arg)
-अणु
-	पूर्णांक err;
+					    void *cb_arg)
+{
+	int err;
 	u64 result;
-	काष्ठा sdei_event *event;
-	काष्ठा sdei_रेजिस्टरed_event *reg;
+	struct sdei_event *event;
+	struct sdei_registered_event *reg;
 
-	lockdep_निश्चित_held(&sdei_events_lock);
+	lockdep_assert_held(&sdei_events_lock);
 
-	event = kzalloc(माप(*event), GFP_KERNEL);
-	अगर (!event) अणु
+	event = kzalloc(sizeof(*event), GFP_KERNEL);
+	if (!event) {
 		err = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	INIT_LIST_HEAD(&event->list);
 	event->event_num = event_num;
 
 	err = sdei_api_event_get_info(event_num, SDEI_EVENT_INFO_EV_PRIORITY,
 				      &result);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 	event->priority = result;
 
 	err = sdei_api_event_get_info(event_num, SDEI_EVENT_INFO_EV_TYPE,
 				      &result);
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 	event->type = result;
 
-	अगर (event->type == SDEI_EVENT_TYPE_SHARED) अणु
-		reg = kzalloc(माप(*reg), GFP_KERNEL);
-		अगर (!reg) अणु
+	if (event->type == SDEI_EVENT_TYPE_SHARED) {
+		reg = kzalloc(sizeof(*reg), GFP_KERNEL);
+		if (!reg) {
 			err = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		reg->event_num = event->event_num;
 		reg->priority = event->priority;
 
 		reg->callback = cb;
 		reg->callback_arg = cb_arg;
-		event->रेजिस्टरed = reg;
-	पूर्ण अन्यथा अणु
-		पूर्णांक cpu;
-		काष्ठा sdei_रेजिस्टरed_event __percpu *regs;
+		event->registered = reg;
+	} else {
+		int cpu;
+		struct sdei_registered_event __percpu *regs;
 
-		regs = alloc_percpu(काष्ठा sdei_रेजिस्टरed_event);
-		अगर (!regs) अणु
+		regs = alloc_percpu(struct sdei_registered_event);
+		if (!regs) {
 			err = -ENOMEM;
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
-		क्रम_each_possible_cpu(cpu) अणु
+		for_each_possible_cpu(cpu) {
 			reg = per_cpu_ptr(regs, cpu);
 
 			reg->event_num = event->event_num;
 			reg->priority = event->priority;
 			reg->callback = cb;
 			reg->callback_arg = cb_arg;
-		पूर्ण
+		}
 
-		event->निजी_रेजिस्टरed = regs;
-	पूर्ण
+		event->private_registered = regs;
+	}
 
 	spin_lock(&sdei_list_lock);
 	list_add(&event->list, &sdei_list);
 	spin_unlock(&sdei_list_lock);
 
-	वापस event;
+	return event;
 
 fail:
-	kमुक्त(event);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(event);
+	return ERR_PTR(err);
+}
 
-अटल व्योम sdei_event_destroy_llocked(काष्ठा sdei_event *event)
-अणु
-	lockdep_निश्चित_held(&sdei_events_lock);
-	lockdep_निश्चित_held(&sdei_list_lock);
+static void sdei_event_destroy_llocked(struct sdei_event *event)
+{
+	lockdep_assert_held(&sdei_events_lock);
+	lockdep_assert_held(&sdei_list_lock);
 
 	list_del(&event->list);
 
-	अगर (event->type == SDEI_EVENT_TYPE_SHARED)
-		kमुक्त(event->रेजिस्टरed);
-	अन्यथा
-		मुक्त_percpu(event->निजी_रेजिस्टरed);
+	if (event->type == SDEI_EVENT_TYPE_SHARED)
+		kfree(event->registered);
+	else
+		free_percpu(event->private_registered);
 
-	kमुक्त(event);
-पूर्ण
+	kfree(event);
+}
 
-अटल व्योम sdei_event_destroy(काष्ठा sdei_event *event)
-अणु
+static void sdei_event_destroy(struct sdei_event *event)
+{
 	spin_lock(&sdei_list_lock);
 	sdei_event_destroy_llocked(event);
 	spin_unlock(&sdei_list_lock);
-पूर्ण
+}
 
-अटल पूर्णांक sdei_api_get_version(u64 *version)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_VERSION, 0, 0, 0, 0, 0, version);
-पूर्ण
+static int sdei_api_get_version(u64 *version)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_VERSION, 0, 0, 0, 0, 0, version);
+}
 
-पूर्णांक sdei_mask_local_cpu(व्योम)
-अणु
-	पूर्णांक err;
+int sdei_mask_local_cpu(void)
+{
+	int err;
 
 	WARN_ON_ONCE(preemptible());
 
-	err = invoke_sdei_fn(SDEI_1_0_FN_SDEI_PE_MASK, 0, 0, 0, 0, 0, शून्य);
-	अगर (err && err != -EIO) अणु
+	err = invoke_sdei_fn(SDEI_1_0_FN_SDEI_PE_MASK, 0, 0, 0, 0, 0, NULL);
+	if (err && err != -EIO) {
 		pr_warn_once("failed to mask CPU[%u]: %d\n",
 			      smp_processor_id(), err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम _ipi_mask_cpu(व्योम *ignored)
-अणु
+static void _ipi_mask_cpu(void *ignored)
+{
 	sdei_mask_local_cpu();
-पूर्ण
+}
 
-पूर्णांक sdei_unmask_local_cpu(व्योम)
-अणु
-	पूर्णांक err;
+int sdei_unmask_local_cpu(void)
+{
+	int err;
 
 	WARN_ON_ONCE(preemptible());
 
-	err = invoke_sdei_fn(SDEI_1_0_FN_SDEI_PE_UNMASK, 0, 0, 0, 0, 0, शून्य);
-	अगर (err && err != -EIO) अणु
+	err = invoke_sdei_fn(SDEI_1_0_FN_SDEI_PE_UNMASK, 0, 0, 0, 0, 0, NULL);
+	if (err && err != -EIO) {
 		pr_warn_once("failed to unmask CPU[%u]: %d\n",
 			     smp_processor_id(), err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम _ipi_unmask_cpu(व्योम *ignored)
-अणु
+static void _ipi_unmask_cpu(void *ignored)
+{
 	sdei_unmask_local_cpu();
-पूर्ण
+}
 
-अटल व्योम _ipi_निजी_reset(व्योम *ignored)
-अणु
-	पूर्णांक err;
+static void _ipi_private_reset(void *ignored)
+{
+	int err;
 
 	err = invoke_sdei_fn(SDEI_1_0_FN_SDEI_PRIVATE_RESET, 0, 0, 0, 0, 0,
-			     शून्य);
-	अगर (err && err != -EIO)
+			     NULL);
+	if (err && err != -EIO)
 		pr_warn_once("failed to reset CPU[%u]: %d\n",
 			     smp_processor_id(), err);
-पूर्ण
+}
 
-अटल पूर्णांक sdei_api_shared_reset(व्योम)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_SHARED_RESET, 0, 0, 0, 0, 0,
-			      शून्य);
-पूर्ण
+static int sdei_api_shared_reset(void)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_SHARED_RESET, 0, 0, 0, 0, 0,
+			      NULL);
+}
 
-अटल व्योम sdei_mark_पूर्णांकerface_broken(व्योम)
-अणु
+static void sdei_mark_interface_broken(void)
+{
 	pr_err("disabling SDEI firmware interface\n");
-	on_each_cpu(&_ipi_mask_cpu, शून्य, true);
-	sdei_firmware_call = शून्य;
-पूर्ण
+	on_each_cpu(&_ipi_mask_cpu, NULL, true);
+	sdei_firmware_call = NULL;
+}
 
-अटल पूर्णांक sdei_platक्रमm_reset(व्योम)
-अणु
-	पूर्णांक err;
+static int sdei_platform_reset(void)
+{
+	int err;
 
-	on_each_cpu(&_ipi_निजी_reset, शून्य, true);
+	on_each_cpu(&_ipi_private_reset, NULL, true);
 	err = sdei_api_shared_reset();
-	अगर (err) अणु
+	if (err) {
 		pr_err("Failed to reset platform: %d\n", err);
-		sdei_mark_पूर्णांकerface_broken();
-	पूर्ण
+		sdei_mark_interface_broken();
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_api_event_enable(u32 event_num)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_ENABLE, event_num, 0, 0, 0,
-			      0, शून्य);
-पूर्ण
+static int sdei_api_event_enable(u32 event_num)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_ENABLE, event_num, 0, 0, 0,
+			      0, NULL);
+}
 
 /* Called directly by the hotplug callbacks */
-अटल व्योम _local_event_enable(व्योम *data)
-अणु
-	पूर्णांक err;
-	काष्ठा sdei_crosscall_args *arg = data;
+static void _local_event_enable(void *data)
+{
+	int err;
+	struct sdei_crosscall_args *arg = data;
 
 	WARN_ON_ONCE(preemptible());
 
 	err = sdei_api_event_enable(arg->event->event_num);
 
-	sdei_cross_call_वापस(arg, err);
-पूर्ण
+	sdei_cross_call_return(arg, err);
+}
 
-पूर्णांक sdei_event_enable(u32 event_num)
-अणु
-	पूर्णांक err = -EINVAL;
-	काष्ठा sdei_event *event;
+int sdei_event_enable(u32 event_num)
+{
+	int err = -EINVAL;
+	struct sdei_event *event;
 
 	mutex_lock(&sdei_events_lock);
 	event = sdei_event_find(event_num);
-	अगर (!event) अणु
+	if (!event) {
 		mutex_unlock(&sdei_events_lock);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 
-	cpus_पढ़ो_lock();
-	अगर (event->type == SDEI_EVENT_TYPE_SHARED)
+	cpus_read_lock();
+	if (event->type == SDEI_EVENT_TYPE_SHARED)
 		err = sdei_api_event_enable(event->event_num);
-	अन्यथा
-		err = sdei_करो_cross_call(_local_event_enable, event);
+	else
+		err = sdei_do_cross_call(_local_event_enable, event);
 
-	अगर (!err) अणु
+	if (!err) {
 		spin_lock(&sdei_list_lock);
 		event->reenable = true;
 		spin_unlock(&sdei_list_lock);
-	पूर्ण
-	cpus_पढ़ो_unlock();
+	}
+	cpus_read_unlock();
 	mutex_unlock(&sdei_events_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_api_event_disable(u32 event_num)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_DISABLE, event_num, 0, 0,
-			      0, 0, शून्य);
-पूर्ण
+static int sdei_api_event_disable(u32 event_num)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_DISABLE, event_num, 0, 0,
+			      0, 0, NULL);
+}
 
-अटल व्योम _ipi_event_disable(व्योम *data)
-अणु
-	पूर्णांक err;
-	काष्ठा sdei_crosscall_args *arg = data;
+static void _ipi_event_disable(void *data)
+{
+	int err;
+	struct sdei_crosscall_args *arg = data;
 
 	err = sdei_api_event_disable(arg->event->event_num);
 
-	sdei_cross_call_वापस(arg, err);
-पूर्ण
+	sdei_cross_call_return(arg, err);
+}
 
-पूर्णांक sdei_event_disable(u32 event_num)
-अणु
-	पूर्णांक err = -EINVAL;
-	काष्ठा sdei_event *event;
+int sdei_event_disable(u32 event_num)
+{
+	int err = -EINVAL;
+	struct sdei_event *event;
 
 	mutex_lock(&sdei_events_lock);
 	event = sdei_event_find(event_num);
-	अगर (!event) अणु
+	if (!event) {
 		mutex_unlock(&sdei_events_lock);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	spin_lock(&sdei_list_lock);
 	event->reenable = false;
 	spin_unlock(&sdei_list_lock);
 
-	अगर (event->type == SDEI_EVENT_TYPE_SHARED)
+	if (event->type == SDEI_EVENT_TYPE_SHARED)
 		err = sdei_api_event_disable(event->event_num);
-	अन्यथा
-		err = sdei_करो_cross_call(_ipi_event_disable, event);
+	else
+		err = sdei_do_cross_call(_ipi_event_disable, event);
 	mutex_unlock(&sdei_events_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_api_event_unरेजिस्टर(u32 event_num)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_UNREGISTER, event_num, 0,
-			      0, 0, 0, शून्य);
-पूर्ण
+static int sdei_api_event_unregister(u32 event_num)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_UNREGISTER, event_num, 0,
+			      0, 0, 0, NULL);
+}
 
 /* Called directly by the hotplug callbacks */
-अटल व्योम _local_event_unरेजिस्टर(व्योम *data)
-अणु
-	पूर्णांक err;
-	काष्ठा sdei_crosscall_args *arg = data;
+static void _local_event_unregister(void *data)
+{
+	int err;
+	struct sdei_crosscall_args *arg = data;
 
 	WARN_ON_ONCE(preemptible());
 
-	err = sdei_api_event_unरेजिस्टर(arg->event->event_num);
+	err = sdei_api_event_unregister(arg->event->event_num);
 
-	sdei_cross_call_वापस(arg, err);
-पूर्ण
+	sdei_cross_call_return(arg, err);
+}
 
-पूर्णांक sdei_event_unरेजिस्टर(u32 event_num)
-अणु
-	पूर्णांक err;
-	काष्ठा sdei_event *event;
+int sdei_event_unregister(u32 event_num)
+{
+	int err;
+	struct sdei_event *event;
 
 	WARN_ON(in_nmi());
 
 	mutex_lock(&sdei_events_lock);
 	event = sdei_event_find(event_num);
-	अगर (!event) अणु
+	if (!event) {
 		pr_warn("Event %u not registered\n", event_num);
 		err = -ENOENT;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	spin_lock(&sdei_list_lock);
-	event->reरेजिस्टर = false;
+	event->reregister = false;
 	event->reenable = false;
 	spin_unlock(&sdei_list_lock);
 
-	अगर (event->type == SDEI_EVENT_TYPE_SHARED)
-		err = sdei_api_event_unरेजिस्टर(event->event_num);
-	अन्यथा
-		err = sdei_करो_cross_call(_local_event_unरेजिस्टर, event);
+	if (event->type == SDEI_EVENT_TYPE_SHARED)
+		err = sdei_api_event_unregister(event->event_num);
+	else
+		err = sdei_do_cross_call(_local_event_unregister, event);
 
-	अगर (err)
-		जाओ unlock;
+	if (err)
+		goto unlock;
 
 	sdei_event_destroy(event);
 unlock:
 	mutex_unlock(&sdei_events_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * unरेजिस्टर events, but करोn't destroy them as they are re-रेजिस्टरed by
- * sdei_reरेजिस्टर_shared().
+ * unregister events, but don't destroy them as they are re-registered by
+ * sdei_reregister_shared().
  */
-अटल पूर्णांक sdei_unरेजिस्टर_shared(व्योम)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा sdei_event *event;
+static int sdei_unregister_shared(void)
+{
+	int err = 0;
+	struct sdei_event *event;
 
 	mutex_lock(&sdei_events_lock);
 	spin_lock(&sdei_list_lock);
-	list_क्रम_each_entry(event, &sdei_list, list) अणु
-		अगर (event->type != SDEI_EVENT_TYPE_SHARED)
-			जारी;
+	list_for_each_entry(event, &sdei_list, list) {
+		if (event->type != SDEI_EVENT_TYPE_SHARED)
+			continue;
 
-		err = sdei_api_event_unरेजिस्टर(event->event_num);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		err = sdei_api_event_unregister(event->event_num);
+		if (err)
+			break;
+	}
 	spin_unlock(&sdei_list_lock);
 	mutex_unlock(&sdei_events_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_api_event_रेजिस्टर(u32 event_num, अचिन्हित दीर्घ entry_poपूर्णांक,
-				   व्योम *arg, u64 flags, u64 affinity)
-अणु
-	वापस invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_REGISTER, event_num,
-			      (अचिन्हित दीर्घ)entry_poपूर्णांक, (अचिन्हित दीर्घ)arg,
-			      flags, affinity, शून्य);
-पूर्ण
+static int sdei_api_event_register(u32 event_num, unsigned long entry_point,
+				   void *arg, u64 flags, u64 affinity)
+{
+	return invoke_sdei_fn(SDEI_1_0_FN_SDEI_EVENT_REGISTER, event_num,
+			      (unsigned long)entry_point, (unsigned long)arg,
+			      flags, affinity, NULL);
+}
 
 /* Called directly by the hotplug callbacks */
-अटल व्योम _local_event_रेजिस्टर(व्योम *data)
-अणु
-	पूर्णांक err;
-	काष्ठा sdei_रेजिस्टरed_event *reg;
-	काष्ठा sdei_crosscall_args *arg = data;
+static void _local_event_register(void *data)
+{
+	int err;
+	struct sdei_registered_event *reg;
+	struct sdei_crosscall_args *arg = data;
 
 	WARN_ON(preemptible());
 
-	reg = per_cpu_ptr(arg->event->निजी_रेजिस्टरed, smp_processor_id());
-	err = sdei_api_event_रेजिस्टर(arg->event->event_num, sdei_entry_poपूर्णांक,
+	reg = per_cpu_ptr(arg->event->private_registered, smp_processor_id());
+	err = sdei_api_event_register(arg->event->event_num, sdei_entry_point,
 				      reg, 0, 0);
 
-	sdei_cross_call_वापस(arg, err);
-पूर्ण
+	sdei_cross_call_return(arg, err);
+}
 
-पूर्णांक sdei_event_रेजिस्टर(u32 event_num, sdei_event_callback *cb, व्योम *arg)
-अणु
-	पूर्णांक err;
-	काष्ठा sdei_event *event;
+int sdei_event_register(u32 event_num, sdei_event_callback *cb, void *arg)
+{
+	int err;
+	struct sdei_event *event;
 
 	WARN_ON(in_nmi());
 
 	mutex_lock(&sdei_events_lock);
-	अगर (sdei_event_find(event_num)) अणु
+	if (sdei_event_find(event_num)) {
 		pr_warn("Event %u already registered\n", event_num);
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	event = sdei_event_create(event_num, cb, arg);
-	अगर (IS_ERR(event)) अणु
+	if (IS_ERR(event)) {
 		err = PTR_ERR(event);
 		pr_warn("Failed to create event %u: %d\n", event_num, err);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	cpus_पढ़ो_lock();
-	अगर (event->type == SDEI_EVENT_TYPE_SHARED) अणु
-		err = sdei_api_event_रेजिस्टर(event->event_num,
-					      sdei_entry_poपूर्णांक,
-					      event->रेजिस्टरed,
+	cpus_read_lock();
+	if (event->type == SDEI_EVENT_TYPE_SHARED) {
+		err = sdei_api_event_register(event->event_num,
+					      sdei_entry_point,
+					      event->registered,
 					      SDEI_EVENT_REGISTER_RM_ANY, 0);
-	पूर्ण अन्यथा अणु
-		err = sdei_करो_cross_call(_local_event_रेजिस्टर, event);
-		अगर (err)
-			sdei_करो_cross_call(_local_event_unरेजिस्टर, event);
-	पूर्ण
+	} else {
+		err = sdei_do_cross_call(_local_event_register, event);
+		if (err)
+			sdei_do_cross_call(_local_event_unregister, event);
+	}
 
-	अगर (err) अणु
+	if (err) {
 		sdei_event_destroy(event);
 		pr_warn("Failed to register event %u: %d\n", event_num, err);
-		जाओ cpu_unlock;
-	पूर्ण
+		goto cpu_unlock;
+	}
 
 	spin_lock(&sdei_list_lock);
-	event->reरेजिस्टर = true;
+	event->reregister = true;
 	spin_unlock(&sdei_list_lock);
 cpu_unlock:
-	cpus_पढ़ो_unlock();
+	cpus_read_unlock();
 unlock:
 	mutex_unlock(&sdei_events_lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_reरेजिस्टर_shared(व्योम)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा sdei_event *event;
+static int sdei_reregister_shared(void)
+{
+	int err = 0;
+	struct sdei_event *event;
 
 	mutex_lock(&sdei_events_lock);
 	spin_lock(&sdei_list_lock);
-	list_क्रम_each_entry(event, &sdei_list, list) अणु
-		अगर (event->type != SDEI_EVENT_TYPE_SHARED)
-			जारी;
+	list_for_each_entry(event, &sdei_list, list) {
+		if (event->type != SDEI_EVENT_TYPE_SHARED)
+			continue;
 
-		अगर (event->reरेजिस्टर) अणु
-			err = sdei_api_event_रेजिस्टर(event->event_num,
-					sdei_entry_poपूर्णांक, event->रेजिस्टरed,
+		if (event->reregister) {
+			err = sdei_api_event_register(event->event_num,
+					sdei_entry_point, event->registered,
 					SDEI_EVENT_REGISTER_RM_ANY, 0);
-			अगर (err) अणु
+			if (err) {
 				pr_err("Failed to re-register event %u\n",
 				       event->event_num);
 				sdei_event_destroy_llocked(event);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (event->reenable) अणु
+		if (event->reenable) {
 			err = sdei_api_event_enable(event->event_num);
-			अगर (err) अणु
+			if (err) {
 				pr_err("Failed to re-enable event %u\n",
 				       event->event_num);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 	spin_unlock(&sdei_list_lock);
 	mutex_unlock(&sdei_events_lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_cpuhp_करोwn(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा sdei_event *event;
-	पूर्णांक err;
+static int sdei_cpuhp_down(unsigned int cpu)
+{
+	struct sdei_event *event;
+	int err;
 
-	/* un-रेजिस्टर निजी events */
+	/* un-register private events */
 	spin_lock(&sdei_list_lock);
-	list_क्रम_each_entry(event, &sdei_list, list) अणु
-		अगर (event->type == SDEI_EVENT_TYPE_SHARED)
-			जारी;
+	list_for_each_entry(event, &sdei_list, list) {
+		if (event->type == SDEI_EVENT_TYPE_SHARED)
+			continue;
 
-		err = sdei_करो_local_call(_local_event_unरेजिस्टर, event);
-		अगर (err) अणु
+		err = sdei_do_local_call(_local_event_unregister, event);
+		if (err) {
 			pr_err("Failed to unregister event %u: %d\n",
 			       event->event_num, err);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&sdei_list_lock);
 
-	वापस sdei_mask_local_cpu();
-पूर्ण
+	return sdei_mask_local_cpu();
+}
 
-अटल पूर्णांक sdei_cpuhp_up(अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा sdei_event *event;
-	पूर्णांक err;
+static int sdei_cpuhp_up(unsigned int cpu)
+{
+	struct sdei_event *event;
+	int err;
 
-	/* re-रेजिस्टर/enable निजी events */
+	/* re-register/enable private events */
 	spin_lock(&sdei_list_lock);
-	list_क्रम_each_entry(event, &sdei_list, list) अणु
-		अगर (event->type == SDEI_EVENT_TYPE_SHARED)
-			जारी;
+	list_for_each_entry(event, &sdei_list, list) {
+		if (event->type == SDEI_EVENT_TYPE_SHARED)
+			continue;
 
-		अगर (event->reरेजिस्टर) अणु
-			err = sdei_करो_local_call(_local_event_रेजिस्टर, event);
-			अगर (err) अणु
+		if (event->reregister) {
+			err = sdei_do_local_call(_local_event_register, event);
+			if (err) {
 				pr_err("Failed to re-register event %u: %d\n",
 				       event->event_num, err);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (event->reenable) अणु
-			err = sdei_करो_local_call(_local_event_enable, event);
-			अगर (err) अणु
+		if (event->reenable) {
+			err = sdei_do_local_call(_local_event_enable, event);
+			if (err) {
 				pr_err("Failed to re-enable event %u: %d\n",
 				       event->event_num, err);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	spin_unlock(&sdei_list_lock);
 
-	वापस sdei_unmask_local_cpu();
-पूर्ण
+	return sdei_unmask_local_cpu();
+}
 
-/* When entering idle, mask/unmask events क्रम this cpu */
-अटल पूर्णांक sdei_pm_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-			    व्योम *data)
-अणु
-	पूर्णांक rv;
+/* When entering idle, mask/unmask events for this cpu */
+static int sdei_pm_notifier(struct notifier_block *nb, unsigned long action,
+			    void *data)
+{
+	int rv;
 
-	चयन (action) अणु
-	हाल CPU_PM_ENTER:
+	switch (action) {
+	case CPU_PM_ENTER:
 		rv = sdei_mask_local_cpu();
-		अवरोध;
-	हाल CPU_PM_EXIT:
-	हाल CPU_PM_ENTER_FAILED:
+		break;
+	case CPU_PM_EXIT:
+	case CPU_PM_ENTER_FAILED:
 		rv = sdei_unmask_local_cpu();
-		अवरोध;
-	शेष:
-		वापस NOTIFY_DONE;
-	पूर्ण
+		break;
+	default:
+		return NOTIFY_DONE;
+	}
 
-	अगर (rv)
-		वापस notअगरier_from_त्रुटि_सं(rv);
+	if (rv)
+		return notifier_from_errno(rv);
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block sdei_pm_nb = अणु
-	.notअगरier_call = sdei_pm_notअगरier,
-पूर्ण;
+static struct notifier_block sdei_pm_nb = {
+	.notifier_call = sdei_pm_notifier,
+};
 
-अटल पूर्णांक sdei_device_suspend(काष्ठा device *dev)
-अणु
-	on_each_cpu(_ipi_mask_cpu, शून्य, true);
+static int sdei_device_suspend(struct device *dev)
+{
+	on_each_cpu(_ipi_mask_cpu, NULL, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdei_device_resume(काष्ठा device *dev)
-अणु
-	on_each_cpu(_ipi_unmask_cpu, शून्य, true);
+static int sdei_device_resume(struct device *dev)
+{
+	on_each_cpu(_ipi_unmask_cpu, NULL, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * We need all events to be reरेजिस्टरed when we resume from hibernate.
+ * We need all events to be reregistered when we resume from hibernate.
  *
- * The sequence is मुक्तze->thaw. Reboot. मुक्तze->restore. We unरेजिस्टर
- * events during मुक्तze, then re-रेजिस्टर and re-enable them during thaw
+ * The sequence is freeze->thaw. Reboot. freeze->restore. We unregister
+ * events during freeze, then re-register and re-enable them during thaw
  * and restore.
  */
-अटल पूर्णांक sdei_device_मुक्तze(काष्ठा device *dev)
-अणु
-	पूर्णांक err;
+static int sdei_device_freeze(struct device *dev)
+{
+	int err;
 
-	/* unरेजिस्टर निजी events */
-	cpuhp_हटाओ_state(CPUHP_AP_ARM_SDEI_STARTING);
+	/* unregister private events */
+	cpuhp_remove_state(CPUHP_AP_ARM_SDEI_STARTING);
 
-	err = sdei_unरेजिस्टर_shared();
-	अगर (err)
-		वापस err;
+	err = sdei_unregister_shared();
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sdei_device_thaw(काष्ठा device *dev)
-अणु
-	पूर्णांक err;
+static int sdei_device_thaw(struct device *dev)
+{
+	int err;
 
-	/* re-रेजिस्टर shared events */
-	err = sdei_reरेजिस्टर_shared();
-	अगर (err) अणु
+	/* re-register shared events */
+	err = sdei_reregister_shared();
+	if (err) {
 		pr_warn("Failed to re-register shared events...\n");
-		sdei_mark_पूर्णांकerface_broken();
-		वापस err;
-	पूर्ण
+		sdei_mark_interface_broken();
+		return err;
+	}
 
 	err = cpuhp_setup_state(CPUHP_AP_ARM_SDEI_STARTING, "SDEI",
-				&sdei_cpuhp_up, &sdei_cpuhp_करोwn);
-	अगर (err)
+				&sdei_cpuhp_up, &sdei_cpuhp_down);
+	if (err)
 		pr_warn("Failed to re-register CPU hotplug notifier...\n");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_device_restore(काष्ठा device *dev)
-अणु
-	पूर्णांक err;
+static int sdei_device_restore(struct device *dev)
+{
+	int err;
 
-	err = sdei_platक्रमm_reset();
-	अगर (err)
-		वापस err;
+	err = sdei_platform_reset();
+	if (err)
+		return err;
 
-	वापस sdei_device_thaw(dev);
-पूर्ण
+	return sdei_device_thaw(dev);
+}
 
-अटल स्थिर काष्ठा dev_pm_ops sdei_pm_ops = अणु
+static const struct dev_pm_ops sdei_pm_ops = {
 	.suspend = sdei_device_suspend,
 	.resume = sdei_device_resume,
-	.मुक्तze = sdei_device_मुक्तze,
+	.freeze = sdei_device_freeze,
 	.thaw = sdei_device_thaw,
 	.restore = sdei_device_restore,
-पूर्ण;
+};
 
 /*
- * Mask all CPUs and unरेजिस्टर all events on panic, reboot or kexec.
+ * Mask all CPUs and unregister all events on panic, reboot or kexec.
  */
-अटल पूर्णांक sdei_reboot_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
-				व्योम *data)
-अणु
+static int sdei_reboot_notifier(struct notifier_block *nb, unsigned long action,
+				void *data)
+{
 	/*
-	 * We are going to reset the पूर्णांकerface, after this there is no poपूर्णांक
-	 * करोing work when we take CPUs offline.
+	 * We are going to reset the interface, after this there is no point
+	 * doing work when we take CPUs offline.
 	 */
-	cpuhp_हटाओ_state(CPUHP_AP_ARM_SDEI_STARTING);
+	cpuhp_remove_state(CPUHP_AP_ARM_SDEI_STARTING);
 
-	sdei_platक्रमm_reset();
+	sdei_platform_reset();
 
-	वापस NOTIFY_OK;
-पूर्ण
+	return NOTIFY_OK;
+}
 
-अटल काष्ठा notअगरier_block sdei_reboot_nb = अणु
-	.notअगरier_call = sdei_reboot_notअगरier,
-पूर्ण;
+static struct notifier_block sdei_reboot_nb = {
+	.notifier_call = sdei_reboot_notifier,
+};
 
-अटल व्योम sdei_smccc_smc(अचिन्हित दीर्घ function_id,
-			   अचिन्हित दीर्घ arg0, अचिन्हित दीर्घ arg1,
-			   अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ arg3,
-			   अचिन्हित दीर्घ arg4, काष्ठा arm_smccc_res *res)
-अणु
+static void sdei_smccc_smc(unsigned long function_id,
+			   unsigned long arg0, unsigned long arg1,
+			   unsigned long arg2, unsigned long arg3,
+			   unsigned long arg4, struct arm_smccc_res *res)
+{
 	arm_smccc_smc(function_id, arg0, arg1, arg2, arg3, arg4, 0, 0, res);
-पूर्ण
+}
 NOKPROBE_SYMBOL(sdei_smccc_smc);
 
-अटल व्योम sdei_smccc_hvc(अचिन्हित दीर्घ function_id,
-			   अचिन्हित दीर्घ arg0, अचिन्हित दीर्घ arg1,
-			   अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ arg3,
-			   अचिन्हित दीर्घ arg4, काष्ठा arm_smccc_res *res)
-अणु
+static void sdei_smccc_hvc(unsigned long function_id,
+			   unsigned long arg0, unsigned long arg1,
+			   unsigned long arg2, unsigned long arg3,
+			   unsigned long arg4, struct arm_smccc_res *res)
+{
 	arm_smccc_hvc(function_id, arg0, arg1, arg2, arg3, arg4, 0, 0, res);
-पूर्ण
+}
 NOKPROBE_SYMBOL(sdei_smccc_hvc);
 
-पूर्णांक sdei_रेजिस्टर_ghes(काष्ठा ghes *ghes, sdei_event_callback *normal_cb,
+int sdei_register_ghes(struct ghes *ghes, sdei_event_callback *normal_cb,
 		       sdei_event_callback *critical_cb)
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u64 result;
 	u32 event_num;
 	sdei_event_callback *cb;
 
-	अगर (!IS_ENABLED(CONFIG_ACPI_APEI_GHES))
-		वापस -EOPNOTSUPP;
+	if (!IS_ENABLED(CONFIG_ACPI_APEI_GHES))
+		return -EOPNOTSUPP;
 
-	event_num = ghes->generic->notअगरy.vector;
-	अगर (event_num == 0) अणु
+	event_num = ghes->generic->notify.vector;
+	if (event_num == 0) {
 		/*
-		 * Event 0 is reserved by the specअगरication क्रम
+		 * Event 0 is reserved by the specification for
 		 * SDEI_EVENT_SIGNAL.
 		 */
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = sdei_api_event_get_info(event_num, SDEI_EVENT_INFO_EV_PRIORITY,
 				      &result);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (result == SDEI_EVENT_PRIORITY_CRITICAL)
+	if (result == SDEI_EVENT_PRIORITY_CRITICAL)
 		cb = critical_cb;
-	अन्यथा
+	else
 		cb = normal_cb;
 
-	err = sdei_event_रेजिस्टर(event_num, cb, ghes);
-	अगर (!err)
+	err = sdei_event_register(event_num, cb, ghes);
+	if (!err)
 		err = sdei_event_enable(event_num);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक sdei_unरेजिस्टर_ghes(काष्ठा ghes *ghes)
-अणु
-	पूर्णांक i;
-	पूर्णांक err;
-	u32 event_num = ghes->generic->notअगरy.vector;
+int sdei_unregister_ghes(struct ghes *ghes)
+{
+	int i;
+	int err;
+	u32 event_num = ghes->generic->notify.vector;
 
 	might_sleep();
 
-	अगर (!IS_ENABLED(CONFIG_ACPI_APEI_GHES))
-		वापस -EOPNOTSUPP;
+	if (!IS_ENABLED(CONFIG_ACPI_APEI_GHES))
+		return -EOPNOTSUPP;
 
 	/*
 	 * The event may be running on another CPU. Disable it
-	 * to stop new events, then try to unरेजिस्टर a few बार.
+	 * to stop new events, then try to unregister a few times.
 	 */
 	err = sdei_event_disable(event_num);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 0; i < 3; i++) अणु
-		err = sdei_event_unरेजिस्टर(event_num);
-		अगर (err != -EINPROGRESS)
-			अवरोध;
+	for (i = 0; i < 3; i++) {
+		err = sdei_event_unregister(event_num);
+		if (err != -EINPROGRESS)
+			break;
 
 		schedule();
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sdei_get_conduit(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर अक्षर *method;
-	काष्ठा device_node *np = pdev->dev.of_node;
+static int sdei_get_conduit(struct platform_device *pdev)
+{
+	const char *method;
+	struct device_node *np = pdev->dev.of_node;
 
-	sdei_firmware_call = शून्य;
-	अगर (np) अणु
-		अगर (of_property_पढ़ो_string(np, "method", &method)) अणु
+	sdei_firmware_call = NULL;
+	if (np) {
+		if (of_property_read_string(np, "method", &method)) {
 			pr_warn("missing \"method\" property\n");
-			वापस SMCCC_CONDUIT_NONE;
-		पूर्ण
+			return SMCCC_CONDUIT_NONE;
+		}
 
-		अगर (!म_भेद("hvc", method)) अणु
+		if (!strcmp("hvc", method)) {
 			sdei_firmware_call = &sdei_smccc_hvc;
-			वापस SMCCC_CONDUIT_HVC;
-		पूर्ण अन्यथा अगर (!म_भेद("smc", method)) अणु
+			return SMCCC_CONDUIT_HVC;
+		} else if (!strcmp("smc", method)) {
 			sdei_firmware_call = &sdei_smccc_smc;
-			वापस SMCCC_CONDUIT_SMC;
-		पूर्ण
+			return SMCCC_CONDUIT_SMC;
+		}
 
 		pr_warn("invalid \"method\" property: %s\n", method);
-	पूर्ण अन्यथा अगर (!acpi_disabled) अणु
-		अगर (acpi_psci_use_hvc()) अणु
+	} else if (!acpi_disabled) {
+		if (acpi_psci_use_hvc()) {
 			sdei_firmware_call = &sdei_smccc_hvc;
-			वापस SMCCC_CONDUIT_HVC;
-		पूर्ण अन्यथा अणु
+			return SMCCC_CONDUIT_HVC;
+		} else {
 			sdei_firmware_call = &sdei_smccc_smc;
-			वापस SMCCC_CONDUIT_SMC;
-		पूर्ण
-	पूर्ण
+			return SMCCC_CONDUIT_SMC;
+		}
+	}
 
-	वापस SMCCC_CONDUIT_NONE;
-पूर्ण
+	return SMCCC_CONDUIT_NONE;
+}
 
-अटल पूर्णांक sdei_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक err;
+static int sdei_probe(struct platform_device *pdev)
+{
+	int err;
 	u64 ver = 0;
-	पूर्णांक conduit;
+	int conduit;
 
 	conduit = sdei_get_conduit(pdev);
-	अगर (!sdei_firmware_call)
-		वापस 0;
+	if (!sdei_firmware_call)
+		return 0;
 
 	err = sdei_api_get_version(&ver);
-	अगर (err) अणु
+	if (err) {
 		pr_err("Failed to get SDEI version: %d\n", err);
-		sdei_mark_पूर्णांकerface_broken();
-		वापस err;
-	पूर्ण
+		sdei_mark_interface_broken();
+		return err;
+	}
 
 	pr_info("SDEIv%d.%d (0x%x) detected in firmware.\n",
-		(पूर्णांक)SDEI_VERSION_MAJOR(ver), (पूर्णांक)SDEI_VERSION_MINOR(ver),
-		(पूर्णांक)SDEI_VERSION_VENDOR(ver));
+		(int)SDEI_VERSION_MAJOR(ver), (int)SDEI_VERSION_MINOR(ver),
+		(int)SDEI_VERSION_VENDOR(ver));
 
-	अगर (SDEI_VERSION_MAJOR(ver) != 1) अणु
+	if (SDEI_VERSION_MAJOR(ver) != 1) {
 		pr_warn("Conflicting SDEI version detected.\n");
-		sdei_mark_पूर्णांकerface_broken();
-		वापस -EINVAL;
-	पूर्ण
+		sdei_mark_interface_broken();
+		return -EINVAL;
+	}
 
-	err = sdei_platक्रमm_reset();
-	अगर (err)
-		वापस err;
+	err = sdei_platform_reset();
+	if (err)
+		return err;
 
-	sdei_entry_poपूर्णांक = sdei_arch_get_entry_poपूर्णांक(conduit);
-	अगर (!sdei_entry_poपूर्णांक) अणु
+	sdei_entry_point = sdei_arch_get_entry_point(conduit);
+	if (!sdei_entry_point) {
 		/* Not supported due to hardware or boot configuration */
-		sdei_mark_पूर्णांकerface_broken();
-		वापस 0;
-	पूर्ण
+		sdei_mark_interface_broken();
+		return 0;
+	}
 
-	err = cpu_pm_रेजिस्टर_notअगरier(&sdei_pm_nb);
-	अगर (err) अणु
+	err = cpu_pm_register_notifier(&sdei_pm_nb);
+	if (err) {
 		pr_warn("Failed to register CPU PM notifier...\n");
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	err = रेजिस्टर_reboot_notअगरier(&sdei_reboot_nb);
-	अगर (err) अणु
+	err = register_reboot_notifier(&sdei_reboot_nb);
+	if (err) {
 		pr_warn("Failed to register reboot notifier...\n");
-		जाओ हटाओ_cpupm;
-	पूर्ण
+		goto remove_cpupm;
+	}
 
 	err = cpuhp_setup_state(CPUHP_AP_ARM_SDEI_STARTING, "SDEI",
-				&sdei_cpuhp_up, &sdei_cpuhp_करोwn);
-	अगर (err) अणु
+				&sdei_cpuhp_up, &sdei_cpuhp_down);
+	if (err) {
 		pr_warn("Failed to register CPU hotplug notifier...\n");
-		जाओ हटाओ_reboot;
-	पूर्ण
+		goto remove_reboot;
+	}
 
-	वापस 0;
+	return 0;
 
-हटाओ_reboot:
-	unरेजिस्टर_reboot_notअगरier(&sdei_reboot_nb);
+remove_reboot:
+	unregister_reboot_notifier(&sdei_reboot_nb);
 
-हटाओ_cpupm:
-	cpu_pm_unरेजिस्टर_notअगरier(&sdei_pm_nb);
+remove_cpupm:
+	cpu_pm_unregister_notifier(&sdei_pm_nb);
 
 error:
-	sdei_mark_पूर्णांकerface_broken();
-	वापस err;
-पूर्ण
+	sdei_mark_interface_broken();
+	return err;
+}
 
-अटल स्थिर काष्ठा of_device_id sdei_of_match[] = अणु
-	अणु .compatible = "arm,sdei-1.0" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id sdei_of_match[] = {
+	{ .compatible = "arm,sdei-1.0" },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver sdei_driver = अणु
-	.driver		= अणु
+static struct platform_driver sdei_driver = {
+	.driver		= {
 		.name			= "sdei",
 		.pm			= &sdei_pm_ops,
 		.of_match_table		= sdei_of_match,
-	पूर्ण,
+	},
 	.probe		= sdei_probe,
-पूर्ण;
+};
 
-अटल bool __init sdei_present_acpi(व्योम)
-अणु
+static bool __init sdei_present_acpi(void)
+{
 	acpi_status status;
-	काष्ठा acpi_table_header *sdei_table_header;
+	struct acpi_table_header *sdei_table_header;
 
-	अगर (acpi_disabled)
-		वापस false;
+	if (acpi_disabled)
+		return false;
 
 	status = acpi_get_table(ACPI_SIG_SDEI, 0, &sdei_table_header);
-	अगर (ACPI_FAILURE(status) && status != AE_NOT_FOUND) अणु
-		स्थिर अक्षर *msg = acpi_क्रमmat_exception(status);
+	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
+		const char *msg = acpi_format_exception(status);
 
 		pr_info("Failed to get ACPI:SDEI table, %s\n", msg);
-	पूर्ण
-	अगर (ACPI_FAILURE(status))
-		वापस false;
+	}
+	if (ACPI_FAILURE(status))
+		return false;
 
 	acpi_put_table(sdei_table_header);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक __init sdei_init(व्योम)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक ret;
+static int __init sdei_init(void)
+{
+	struct platform_device *pdev;
+	int ret;
 
-	ret = platक्रमm_driver_रेजिस्टर(&sdei_driver);
-	अगर (ret || !sdei_present_acpi())
-		वापस ret;
+	ret = platform_driver_register(&sdei_driver);
+	if (ret || !sdei_present_acpi())
+		return ret;
 
-	pdev = platक्रमm_device_रेजिस्टर_simple(sdei_driver.driver.name,
-					       0, शून्य, 0);
-	अगर (IS_ERR(pdev)) अणु
+	pdev = platform_device_register_simple(sdei_driver.driver.name,
+					       0, NULL, 0);
+	if (IS_ERR(pdev)) {
 		ret = PTR_ERR(pdev);
-		platक्रमm_driver_unरेजिस्टर(&sdei_driver);
+		platform_driver_unregister(&sdei_driver);
 		pr_info("Failed to register ACPI:SDEI platform device %d\n",
 			ret);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * On an ACPI प्रणाली SDEI needs to be पढ़ोy beक्रमe HEST:GHES tries to रेजिस्टर
+ * On an ACPI system SDEI needs to be ready before HEST:GHES tries to register
  * its events. ACPI is initialised from a subsys_initcall(), GHES is initialised
  * by device_initcall(). We want to be called in the middle.
  */
 subsys_initcall_sync(sdei_init);
 
-पूर्णांक sdei_event_handler(काष्ठा pt_regs *regs,
-		       काष्ठा sdei_रेजिस्टरed_event *arg)
-अणु
-	पूर्णांक err;
+int sdei_event_handler(struct pt_regs *regs,
+		       struct sdei_registered_event *arg)
+{
+	int err;
 	u32 event_num = arg->event_num;
 
 	err = arg->callback(event_num, regs, arg->callback_arg);
-	अगर (err)
+	if (err)
 		pr_err_ratelimited("event %u on CPU %u failed with error: %d\n",
 				   event_num, smp_processor_id(), err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 NOKPROBE_SYMBOL(sdei_event_handler);

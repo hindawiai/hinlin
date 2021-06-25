@@ -1,45 +1,44 @@
-<शैली गुरु>
-#अगर_अघोषित _LINUX_TIME32_H
-#घोषणा _LINUX_TIME32_H
+#ifndef _LINUX_TIME32_H
+#define _LINUX_TIME32_H
 /*
- * These are all पूर्णांकerfaces based on the old समय_प्रकार definition
+ * These are all interfaces based on the old time_t definition
  * that overflows in 2038 on 32-bit architectures. New code
- * should use the replacements based on समय64_t and बारpec64.
+ * should use the replacements based on time64_t and timespec64.
  *
- * Any पूर्णांकerfaces in here that become unused as we migrate
- * code to समय64_t should get हटाओd.
+ * Any interfaces in here that become unused as we migrate
+ * code to time64_t should get removed.
  */
 
-#समावेश <linux/समय64.h>
-#समावेश <linux/समयx.h>
+#include <linux/time64.h>
+#include <linux/timex.h>
 
-#समावेश <vdso/समय32.h>
+#include <vdso/time32.h>
 
-काष्ठा old_iसमयrspec32 अणु
-	काष्ठा old_बारpec32 it_पूर्णांकerval;
-	काष्ठा old_बारpec32 it_value;
-पूर्ण;
+struct old_itimerspec32 {
+	struct old_timespec32 it_interval;
+	struct old_timespec32 it_value;
+};
 
-काष्ठा old_utimbuf32 अणु
-	old_समय32_t	aस_समय;
-	old_समय32_t	modसमय;
-पूर्ण;
+struct old_utimbuf32 {
+	old_time32_t	actime;
+	old_time32_t	modtime;
+};
 
-काष्ठा old_समयx32 अणु
+struct old_timex32 {
 	u32 modes;
 	s32 offset;
 	s32 freq;
 	s32 maxerror;
 	s32 esterror;
 	s32 status;
-	s32 स्थिरant;
+	s32 constant;
 	s32 precision;
 	s32 tolerance;
-	काष्ठा old_समयval32 समय;
+	struct old_timeval32 time;
 	s32 tick;
 	s32 ppsfreq;
 	s32 jitter;
-	s32 shअगरt;
+	s32 shift;
 	s32 stabil;
 	s32 jitcnt;
 	s32 calcnt;
@@ -50,24 +49,24 @@
 	s32:32; s32:32; s32:32; s32:32;
 	s32:32; s32:32; s32:32; s32:32;
 	s32:32; s32:32; s32:32;
-पूर्ण;
+};
 
-बाह्य पूर्णांक get_old_बारpec32(काष्ठा बारpec64 *, स्थिर व्योम __user *);
-बाह्य पूर्णांक put_old_बारpec32(स्थिर काष्ठा बारpec64 *, व्योम __user *);
-बाह्य पूर्णांक get_old_iसमयrspec32(काष्ठा iसमयrspec64 *its,
-			स्थिर काष्ठा old_iसमयrspec32 __user *uits);
-बाह्य पूर्णांक put_old_iसमयrspec32(स्थिर काष्ठा iसमयrspec64 *its,
-			काष्ठा old_iसमयrspec32 __user *uits);
-काष्ठा __kernel_समयx;
-पूर्णांक get_old_समयx32(काष्ठा __kernel_समयx *, स्थिर काष्ठा old_समयx32 __user *);
-पूर्णांक put_old_समयx32(काष्ठा old_समयx32 __user *, स्थिर काष्ठा __kernel_समयx *);
+extern int get_old_timespec32(struct timespec64 *, const void __user *);
+extern int put_old_timespec32(const struct timespec64 *, void __user *);
+extern int get_old_itimerspec32(struct itimerspec64 *its,
+			const struct old_itimerspec32 __user *uits);
+extern int put_old_itimerspec32(const struct itimerspec64 *its,
+			struct old_itimerspec32 __user *uits);
+struct __kernel_timex;
+int get_old_timex32(struct __kernel_timex *, const struct old_timex32 __user *);
+int put_old_timex32(struct old_timex32 __user *, const struct __kernel_timex *);
 
 /**
- * ns_to_kernel_old_समयval - Convert nanoseconds to समयval
+ * ns_to_kernel_old_timeval - Convert nanoseconds to timeval
  * @nsec:	the nanoseconds value to be converted
  *
- * Returns the समयval representation of the nsec parameter.
+ * Returns the timeval representation of the nsec parameter.
  */
-बाह्य काष्ठा __kernel_old_समयval ns_to_kernel_old_समयval(s64 nsec);
+extern struct __kernel_old_timeval ns_to_kernel_old_timeval(s64 nsec);
 
-#पूर्ण_अगर
+#endif

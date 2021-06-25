@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Universal Interface क्रम Intel High Definition Audio Codec
+ * Universal Interface for Intel High Definition Audio Codec
  *
- * HD audio पूर्णांकerface patch क्रम Realtek ALC codecs
+ * HD audio interface patch for Realtek ALC codecs
  *
  * Copyright (c) 2004 Kailang Yang <kailang@realtek.com.tw>
  *                    PeiSen Hou <pshou@realtek.com.tw>
@@ -11,662 +10,662 @@
  *                    Jonathan Woithe <jwoithe@just42.net>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/leds.h>
-#समावेश <sound/core.h>
-#समावेश <sound/jack.h>
-#समावेश <sound/hda_codec.h>
-#समावेश "hda_local.h"
-#समावेश "hda_auto_parser.h"
-#समावेश "hda_jack.h"
-#समावेश "hda_generic.h"
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/dmi.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/leds.h>
+#include <sound/core.h>
+#include <sound/jack.h>
+#include <sound/hda_codec.h>
+#include "hda_local.h"
+#include "hda_auto_parser.h"
+#include "hda_jack.h"
+#include "hda_generic.h"
 
-/* keep halting ALC5505 DSP, क्रम घातer saving */
-#घोषणा HALT_REALTEK_ALC5505
+/* keep halting ALC5505 DSP, for power saving */
+#define HALT_REALTEK_ALC5505
 
 /* extra amp-initialization sequence types */
-क्रमागत अणु
+enum {
 	ALC_INIT_UNDEFINED,
 	ALC_INIT_NONE,
 	ALC_INIT_DEFAULT,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ALC_HEADSET_MODE_UNKNOWN,
 	ALC_HEADSET_MODE_UNPLUGGED,
 	ALC_HEADSET_MODE_HEADSET,
 	ALC_HEADSET_MODE_MIC,
 	ALC_HEADSET_MODE_HEADPHONE,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ALC_HEADSET_TYPE_UNKNOWN,
 	ALC_HEADSET_TYPE_CTIA,
 	ALC_HEADSET_TYPE_OMTP,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ALC_KEY_MICMUTE_INDEX,
-पूर्ण;
+};
 
-काष्ठा alc_customize_define अणु
-	अचिन्हित पूर्णांक  sku_cfg;
-	अचिन्हित अक्षर port_connectivity;
-	अचिन्हित अक्षर check_sum;
-	अचिन्हित अक्षर customization;
-	अचिन्हित अक्षर बाह्यal_amp;
-	अचिन्हित पूर्णांक  enable_pcbeep:1;
-	अचिन्हित पूर्णांक  platक्रमm_type:1;
-	अचिन्हित पूर्णांक  swap:1;
-	अचिन्हित पूर्णांक  override:1;
-	अचिन्हित पूर्णांक  fixup:1; /* Means that this sku is set by driver, not पढ़ो from hw */
-पूर्ण;
+struct alc_customize_define {
+	unsigned int  sku_cfg;
+	unsigned char port_connectivity;
+	unsigned char check_sum;
+	unsigned char customization;
+	unsigned char external_amp;
+	unsigned int  enable_pcbeep:1;
+	unsigned int  platform_type:1;
+	unsigned int  swap:1;
+	unsigned int  override:1;
+	unsigned int  fixup:1; /* Means that this sku is set by driver, not read from hw */
+};
 
-काष्ठा alc_coef_led अणु
-	अचिन्हित पूर्णांक idx;
-	अचिन्हित पूर्णांक mask;
-	अचिन्हित पूर्णांक on;
-	अचिन्हित पूर्णांक off;
-पूर्ण;
+struct alc_coef_led {
+	unsigned int idx;
+	unsigned int mask;
+	unsigned int on;
+	unsigned int off;
+};
 
-काष्ठा alc_spec अणु
-	काष्ठा hda_gen_spec gen; /* must be at head */
+struct alc_spec {
+	struct hda_gen_spec gen; /* must be at head */
 
 	/* codec parameterization */
-	काष्ठा alc_customize_define cdefine;
-	अचिन्हित पूर्णांक parse_flags; /* flag क्रम snd_hda_parse_pin_defcfg() */
+	struct alc_customize_define cdefine;
+	unsigned int parse_flags; /* flag for snd_hda_parse_pin_defcfg() */
 
 	/* GPIO bits */
-	अचिन्हित पूर्णांक gpio_mask;
-	अचिन्हित पूर्णांक gpio_dir;
-	अचिन्हित पूर्णांक gpio_data;
-	bool gpio_ग_लिखो_delay;	/* add a delay beक्रमe writing gpio_data */
+	unsigned int gpio_mask;
+	unsigned int gpio_dir;
+	unsigned int gpio_data;
+	bool gpio_write_delay;	/* add a delay before writing gpio_data */
 
-	/* mute LED क्रम HP laptops, see vref_mute_led_set() */
-	पूर्णांक mute_led_polarity;
-	पूर्णांक micmute_led_polarity;
+	/* mute LED for HP laptops, see vref_mute_led_set() */
+	int mute_led_polarity;
+	int micmute_led_polarity;
 	hda_nid_t mute_led_nid;
 	hda_nid_t cap_mute_led_nid;
 
-	अचिन्हित पूर्णांक gpio_mute_led_mask;
-	अचिन्हित पूर्णांक gpio_mic_led_mask;
-	काष्ठा alc_coef_led mute_led_coef;
-	काष्ठा alc_coef_led mic_led_coef;
+	unsigned int gpio_mute_led_mask;
+	unsigned int gpio_mic_led_mask;
+	struct alc_coef_led mute_led_coef;
+	struct alc_coef_led mic_led_coef;
 
 	hda_nid_t headset_mic_pin;
 	hda_nid_t headphone_mic_pin;
-	पूर्णांक current_headset_mode;
-	पूर्णांक current_headset_type;
+	int current_headset_mode;
+	int current_headset_type;
 
 	/* hooks */
-	व्योम (*init_hook)(काष्ठा hda_codec *codec);
-#अगर_घोषित CONFIG_PM
-	व्योम (*घातer_hook)(काष्ठा hda_codec *codec);
-#पूर्ण_अगर
-	व्योम (*shutup)(काष्ठा hda_codec *codec);
-	व्योम (*reboot_notअगरy)(काष्ठा hda_codec *codec);
+	void (*init_hook)(struct hda_codec *codec);
+#ifdef CONFIG_PM
+	void (*power_hook)(struct hda_codec *codec);
+#endif
+	void (*shutup)(struct hda_codec *codec);
+	void (*reboot_notify)(struct hda_codec *codec);
 
-	पूर्णांक init_amp;
-	पूर्णांक codec_variant;	/* flag क्रम other variants */
-	अचिन्हित पूर्णांक has_alc5505_dsp:1;
-	अचिन्हित पूर्णांक no_depop_delay:1;
-	अचिन्हित पूर्णांक करोne_hp_init:1;
-	अचिन्हित पूर्णांक no_shutup_pins:1;
-	अचिन्हित पूर्णांक ultra_low_घातer:1;
-	अचिन्हित पूर्णांक has_hs_key:1;
-	अचिन्हित पूर्णांक no_पूर्णांकernal_mic_pin:1;
+	int init_amp;
+	int codec_variant;	/* flag for other variants */
+	unsigned int has_alc5505_dsp:1;
+	unsigned int no_depop_delay:1;
+	unsigned int done_hp_init:1;
+	unsigned int no_shutup_pins:1;
+	unsigned int ultra_low_power:1;
+	unsigned int has_hs_key:1;
+	unsigned int no_internal_mic_pin:1;
 
-	/* क्रम PLL fix */
+	/* for PLL fix */
 	hda_nid_t pll_nid;
-	अचिन्हित पूर्णांक pll_coef_idx, pll_coef_bit;
-	अचिन्हित पूर्णांक coef0;
-	काष्ठा input_dev *kb_dev;
+	unsigned int pll_coef_idx, pll_coef_bit;
+	unsigned int coef0;
+	struct input_dev *kb_dev;
 	u8 alc_mute_keycode_map[1];
-पूर्ण;
+};
 
 /*
  * COEF access helper functions
  */
 
-अटल पूर्णांक alc_पढ़ो_coefex_idx(काष्ठा hda_codec *codec, hda_nid_t nid,
-			       अचिन्हित पूर्णांक coef_idx)
-अणु
-	अचिन्हित पूर्णांक val;
+static int alc_read_coefex_idx(struct hda_codec *codec, hda_nid_t nid,
+			       unsigned int coef_idx)
+{
+	unsigned int val;
 
-	snd_hda_codec_ग_लिखो(codec, nid, 0, AC_VERB_SET_COEF_INDEX, coef_idx);
-	val = snd_hda_codec_पढ़ो(codec, nid, 0, AC_VERB_GET_PROC_COEF, 0);
-	वापस val;
-पूर्ण
+	snd_hda_codec_write(codec, nid, 0, AC_VERB_SET_COEF_INDEX, coef_idx);
+	val = snd_hda_codec_read(codec, nid, 0, AC_VERB_GET_PROC_COEF, 0);
+	return val;
+}
 
-#घोषणा alc_पढ़ो_coef_idx(codec, coef_idx) \
-	alc_पढ़ो_coefex_idx(codec, 0x20, coef_idx)
+#define alc_read_coef_idx(codec, coef_idx) \
+	alc_read_coefex_idx(codec, 0x20, coef_idx)
 
-अटल व्योम alc_ग_लिखो_coefex_idx(काष्ठा hda_codec *codec, hda_nid_t nid,
-				 अचिन्हित पूर्णांक coef_idx, अचिन्हित पूर्णांक coef_val)
-अणु
-	snd_hda_codec_ग_लिखो(codec, nid, 0, AC_VERB_SET_COEF_INDEX, coef_idx);
-	snd_hda_codec_ग_लिखो(codec, nid, 0, AC_VERB_SET_PROC_COEF, coef_val);
-पूर्ण
+static void alc_write_coefex_idx(struct hda_codec *codec, hda_nid_t nid,
+				 unsigned int coef_idx, unsigned int coef_val)
+{
+	snd_hda_codec_write(codec, nid, 0, AC_VERB_SET_COEF_INDEX, coef_idx);
+	snd_hda_codec_write(codec, nid, 0, AC_VERB_SET_PROC_COEF, coef_val);
+}
 
-#घोषणा alc_ग_लिखो_coef_idx(codec, coef_idx, coef_val) \
-	alc_ग_लिखो_coefex_idx(codec, 0x20, coef_idx, coef_val)
+#define alc_write_coef_idx(codec, coef_idx, coef_val) \
+	alc_write_coefex_idx(codec, 0x20, coef_idx, coef_val)
 
-अटल व्योम alc_update_coefex_idx(काष्ठा hda_codec *codec, hda_nid_t nid,
-				  अचिन्हित पूर्णांक coef_idx, अचिन्हित पूर्णांक mask,
-				  अचिन्हित पूर्णांक bits_set)
-अणु
-	अचिन्हित पूर्णांक val = alc_पढ़ो_coefex_idx(codec, nid, coef_idx);
+static void alc_update_coefex_idx(struct hda_codec *codec, hda_nid_t nid,
+				  unsigned int coef_idx, unsigned int mask,
+				  unsigned int bits_set)
+{
+	unsigned int val = alc_read_coefex_idx(codec, nid, coef_idx);
 
-	अगर (val != -1)
-		alc_ग_लिखो_coefex_idx(codec, nid, coef_idx,
+	if (val != -1)
+		alc_write_coefex_idx(codec, nid, coef_idx,
 				     (val & ~mask) | bits_set);
-पूर्ण
+}
 
-#घोषणा alc_update_coef_idx(codec, coef_idx, mask, bits_set)	\
+#define alc_update_coef_idx(codec, coef_idx, mask, bits_set)	\
 	alc_update_coefex_idx(codec, 0x20, coef_idx, mask, bits_set)
 
-/* a special bypass क्रम COEF 0; पढ़ो the cached value at the second समय */
-अटल अचिन्हित पूर्णांक alc_get_coef0(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+/* a special bypass for COEF 0; read the cached value at the second time */
+static unsigned int alc_get_coef0(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (!spec->coef0)
-		spec->coef0 = alc_पढ़ो_coef_idx(codec, 0);
-	वापस spec->coef0;
-पूर्ण
+	if (!spec->coef0)
+		spec->coef0 = alc_read_coef_idx(codec, 0);
+	return spec->coef0;
+}
 
-/* coef ग_लिखोs/updates batch */
-काष्ठा coef_fw अणु
-	अचिन्हित अक्षर nid;
-	अचिन्हित अक्षर idx;
-	अचिन्हित लघु mask;
-	अचिन्हित लघु val;
-पूर्ण;
+/* coef writes/updates batch */
+struct coef_fw {
+	unsigned char nid;
+	unsigned char idx;
+	unsigned short mask;
+	unsigned short val;
+};
 
-#घोषणा UPDATE_COEFEX(_nid, _idx, _mask, _val) \
-	अणु .nid = (_nid), .idx = (_idx), .mask = (_mask), .val = (_val) पूर्ण
-#घोषणा WRITE_COEFEX(_nid, _idx, _val) UPDATE_COEFEX(_nid, _idx, -1, _val)
-#घोषणा WRITE_COEF(_idx, _val) WRITE_COEFEX(0x20, _idx, _val)
-#घोषणा UPDATE_COEF(_idx, _mask, _val) UPDATE_COEFEX(0x20, _idx, _mask, _val)
+#define UPDATE_COEFEX(_nid, _idx, _mask, _val) \
+	{ .nid = (_nid), .idx = (_idx), .mask = (_mask), .val = (_val) }
+#define WRITE_COEFEX(_nid, _idx, _val) UPDATE_COEFEX(_nid, _idx, -1, _val)
+#define WRITE_COEF(_idx, _val) WRITE_COEFEX(0x20, _idx, _val)
+#define UPDATE_COEF(_idx, _mask, _val) UPDATE_COEFEX(0x20, _idx, _mask, _val)
 
-अटल व्योम alc_process_coef_fw(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा coef_fw *fw)
-अणु
-	क्रम (; fw->nid; fw++) अणु
-		अगर (fw->mask == (अचिन्हित लघु)-1)
-			alc_ग_लिखो_coefex_idx(codec, fw->nid, fw->idx, fw->val);
-		अन्यथा
+static void alc_process_coef_fw(struct hda_codec *codec,
+				const struct coef_fw *fw)
+{
+	for (; fw->nid; fw++) {
+		if (fw->mask == (unsigned short)-1)
+			alc_write_coefex_idx(codec, fw->nid, fw->idx, fw->val);
+		else
 			alc_update_coefex_idx(codec, fw->nid, fw->idx,
 					      fw->mask, fw->val);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * GPIO setup tables, used in initialization
  */
 
 /* Enable GPIO mask and set output */
-अटल व्योम alc_setup_gpio(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक mask)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_setup_gpio(struct hda_codec *codec, unsigned int mask)
+{
+	struct alc_spec *spec = codec->spec;
 
 	spec->gpio_mask |= mask;
 	spec->gpio_dir |= mask;
 	spec->gpio_data |= mask;
-पूर्ण
+}
 
-अटल व्योम alc_ग_लिखो_gpio_data(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_write_gpio_data(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	snd_hda_codec_ग_लिखो(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA,
+	snd_hda_codec_write(codec, 0x01, 0, AC_VERB_SET_GPIO_DATA,
 			    spec->gpio_data);
-पूर्ण
+}
 
-अटल व्योम alc_update_gpio_data(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक mask,
+static void alc_update_gpio_data(struct hda_codec *codec, unsigned int mask,
 				 bool on)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक oldval = spec->gpio_data;
+{
+	struct alc_spec *spec = codec->spec;
+	unsigned int oldval = spec->gpio_data;
 
-	अगर (on)
+	if (on)
 		spec->gpio_data |= mask;
-	अन्यथा
+	else
 		spec->gpio_data &= ~mask;
-	अगर (oldval != spec->gpio_data)
-		alc_ग_लिखो_gpio_data(codec);
-पूर्ण
+	if (oldval != spec->gpio_data)
+		alc_write_gpio_data(codec);
+}
 
-अटल व्योम alc_ग_लिखो_gpio(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_write_gpio(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (!spec->gpio_mask)
-		वापस;
+	if (!spec->gpio_mask)
+		return;
 
-	snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
+	snd_hda_codec_write(codec, codec->core.afg, 0,
 			    AC_VERB_SET_GPIO_MASK, spec->gpio_mask);
-	snd_hda_codec_ग_लिखो(codec, codec->core.afg, 0,
-			    AC_VERB_SET_GPIO_सूचीECTION, spec->gpio_dir);
-	अगर (spec->gpio_ग_लिखो_delay)
+	snd_hda_codec_write(codec, codec->core.afg, 0,
+			    AC_VERB_SET_GPIO_DIRECTION, spec->gpio_dir);
+	if (spec->gpio_write_delay)
 		msleep(1);
-	alc_ग_लिखो_gpio_data(codec);
-पूर्ण
+	alc_write_gpio_data(codec);
+}
 
-अटल व्योम alc_fixup_gpio(काष्ठा hda_codec *codec, पूर्णांक action,
-			   अचिन्हित पूर्णांक mask)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+static void alc_fixup_gpio(struct hda_codec *codec, int action,
+			   unsigned int mask)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		alc_setup_gpio(codec, mask);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_gpio1(काष्ठा hda_codec *codec,
-			    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_gpio1(struct hda_codec *codec,
+			    const struct hda_fixup *fix, int action)
+{
 	alc_fixup_gpio(codec, action, 0x01);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_gpio2(काष्ठा hda_codec *codec,
-			    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_gpio2(struct hda_codec *codec,
+			    const struct hda_fixup *fix, int action)
+{
 	alc_fixup_gpio(codec, action, 0x02);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_gpio3(काष्ठा hda_codec *codec,
-			    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_gpio3(struct hda_codec *codec,
+			    const struct hda_fixup *fix, int action)
+{
 	alc_fixup_gpio(codec, action, 0x03);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_gpio4(काष्ठा hda_codec *codec,
-			    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_gpio4(struct hda_codec *codec,
+			    const struct hda_fixup *fix, int action)
+{
 	alc_fixup_gpio(codec, action, 0x04);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_micmute_led(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
-		snd_hda_gen_add_micmute_led_cdev(codec, शून्य);
-पूर्ण
+static void alc_fixup_micmute_led(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
+		snd_hda_gen_add_micmute_led_cdev(codec, NULL);
+}
 
 /*
  * Fix hardware PLL issue
- * On some codecs, the analog PLL gating control must be off जबतक
- * the शेष value is 1.
+ * On some codecs, the analog PLL gating control must be off while
+ * the default value is 1.
  */
-अटल व्योम alc_fix_pll(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fix_pll(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (spec->pll_nid)
+	if (spec->pll_nid)
 		alc_update_coefex_idx(codec, spec->pll_nid, spec->pll_coef_idx,
 				      1 << spec->pll_coef_bit, 0);
-पूर्ण
+}
 
-अटल व्योम alc_fix_pll_init(काष्ठा hda_codec *codec, hda_nid_t nid,
-			     अचिन्हित पूर्णांक coef_idx, अचिन्हित पूर्णांक coef_bit)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fix_pll_init(struct hda_codec *codec, hda_nid_t nid,
+			     unsigned int coef_idx, unsigned int coef_bit)
+{
+	struct alc_spec *spec = codec->spec;
 	spec->pll_nid = nid;
 	spec->pll_coef_idx = coef_idx;
 	spec->pll_coef_bit = coef_bit;
 	alc_fix_pll(codec);
-पूर्ण
+}
 
 /* update the master volume per volume-knob's unsol event */
-अटल व्योम alc_update_knob_master(काष्ठा hda_codec *codec,
-				   काष्ठा hda_jack_callback *jack)
-अणु
-	अचिन्हित पूर्णांक val;
-	काष्ठा snd_kcontrol *kctl;
-	काष्ठा snd_ctl_elem_value *uctl;
+static void alc_update_knob_master(struct hda_codec *codec,
+				   struct hda_jack_callback *jack)
+{
+	unsigned int val;
+	struct snd_kcontrol *kctl;
+	struct snd_ctl_elem_value *uctl;
 
 	kctl = snd_hda_find_mixer_ctl(codec, "Master Playback Volume");
-	अगर (!kctl)
-		वापस;
-	uctl = kzalloc(माप(*uctl), GFP_KERNEL);
-	अगर (!uctl)
-		वापस;
-	val = snd_hda_codec_पढ़ो(codec, jack->nid, 0,
+	if (!kctl)
+		return;
+	uctl = kzalloc(sizeof(*uctl), GFP_KERNEL);
+	if (!uctl)
+		return;
+	val = snd_hda_codec_read(codec, jack->nid, 0,
 				 AC_VERB_GET_VOLUME_KNOB_CONTROL, 0);
 	val &= HDA_AMP_VOLMASK;
-	uctl->value.पूर्णांकeger.value[0] = val;
-	uctl->value.पूर्णांकeger.value[1] = val;
+	uctl->value.integer.value[0] = val;
+	uctl->value.integer.value[1] = val;
 	kctl->put(kctl, uctl);
-	kमुक्त(uctl);
-पूर्ण
+	kfree(uctl);
+}
 
-अटल व्योम alc880_unsol_event(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक res)
-अणु
+static void alc880_unsol_event(struct hda_codec *codec, unsigned int res)
+{
 	/* For some reason, the res given from ALC880 is broken.
 	   Here we adjust it properly. */
 	snd_hda_jack_unsol_event(codec, res >> 2);
-पूर्ण
+}
 
 /* Change EAPD to verb control */
-अटल व्योम alc_fill_eapd_coef(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक coef;
+static void alc_fill_eapd_coef(struct hda_codec *codec)
+{
+	int coef;
 
 	coef = alc_get_coef0(codec);
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0262:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0262:
 		alc_update_coef_idx(codec, 0x7, 0, 1<<5);
-		अवरोध;
-	हाल 0x10ec0267:
-	हाल 0x10ec0268:
+		break;
+	case 0x10ec0267:
+	case 0x10ec0268:
 		alc_update_coef_idx(codec, 0x7, 0, 1<<13);
-		अवरोध;
-	हाल 0x10ec0269:
-		अगर ((coef & 0x00f0) == 0x0010)
+		break;
+	case 0x10ec0269:
+		if ((coef & 0x00f0) == 0x0010)
 			alc_update_coef_idx(codec, 0xd, 0, 1<<14);
-		अगर ((coef & 0x00f0) == 0x0020)
+		if ((coef & 0x00f0) == 0x0020)
 			alc_update_coef_idx(codec, 0x4, 1<<15, 0);
-		अगर ((coef & 0x00f0) == 0x0030)
+		if ((coef & 0x00f0) == 0x0030)
 			alc_update_coef_idx(codec, 0x10, 1<<9, 0);
-		अवरोध;
-	हाल 0x10ec0280:
-	हाल 0x10ec0284:
-	हाल 0x10ec0290:
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0280:
+	case 0x10ec0284:
+	case 0x10ec0290:
+	case 0x10ec0292:
 		alc_update_coef_idx(codec, 0x4, 1<<15, 0);
-		अवरोध;
-	हाल 0x10ec0225:
-	हाल 0x10ec0295:
-	हाल 0x10ec0299:
+		break;
+	case 0x10ec0225:
+	case 0x10ec0295:
+	case 0x10ec0299:
 		alc_update_coef_idx(codec, 0x67, 0xf000, 0x3000);
 		fallthrough;
-	हाल 0x10ec0215:
-	हाल 0x10ec0233:
-	हाल 0x10ec0235:
-	हाल 0x10ec0236:
-	हाल 0x10ec0245:
-	हाल 0x10ec0255:
-	हाल 0x10ec0256:
-	हाल 0x10ec0257:
-	हाल 0x10ec0282:
-	हाल 0x10ec0283:
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
-	हाल 0x10ec0285:
-	हाल 0x10ec0298:
-	हाल 0x10ec0289:
-	हाल 0x10ec0300:
+	case 0x10ec0215:
+	case 0x10ec0233:
+	case 0x10ec0235:
+	case 0x10ec0236:
+	case 0x10ec0245:
+	case 0x10ec0255:
+	case 0x10ec0256:
+	case 0x10ec0257:
+	case 0x10ec0282:
+	case 0x10ec0283:
+	case 0x10ec0286:
+	case 0x10ec0288:
+	case 0x10ec0285:
+	case 0x10ec0298:
+	case 0x10ec0289:
+	case 0x10ec0300:
 		alc_update_coef_idx(codec, 0x10, 1<<9, 0);
-		अवरोध;
-	हाल 0x10ec0275:
+		break;
+	case 0x10ec0275:
 		alc_update_coef_idx(codec, 0xe, 0, 1<<0);
-		अवरोध;
-	हाल 0x10ec0287:
+		break;
+	case 0x10ec0287:
 		alc_update_coef_idx(codec, 0x10, 1<<9, 0);
-		alc_ग_लिखो_coef_idx(codec, 0x8, 0x4ab7);
-		अवरोध;
-	हाल 0x10ec0293:
+		alc_write_coef_idx(codec, 0x8, 0x4ab7);
+		break;
+	case 0x10ec0293:
 		alc_update_coef_idx(codec, 0xa, 1<<13, 0);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
-	हाल 0x10ec0700:
-	हाल 0x10ec0701:
-	हाल 0x10ec0703:
-	हाल 0x10ec0711:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
+	case 0x10ec0700:
+	case 0x10ec0701:
+	case 0x10ec0703:
+	case 0x10ec0711:
 		alc_update_coef_idx(codec, 0x10, 1<<15, 0);
-		अवरोध;
-	हाल 0x10ec0662:
-		अगर ((coef & 0x00f0) == 0x0030)
+		break;
+	case 0x10ec0662:
+		if ((coef & 0x00f0) == 0x0030)
 			alc_update_coef_idx(codec, 0x4, 1<<10, 0); /* EAPD Ctrl */
-		अवरोध;
-	हाल 0x10ec0272:
-	हाल 0x10ec0273:
-	हाल 0x10ec0663:
-	हाल 0x10ec0665:
-	हाल 0x10ec0670:
-	हाल 0x10ec0671:
-	हाल 0x10ec0672:
+		break;
+	case 0x10ec0272:
+	case 0x10ec0273:
+	case 0x10ec0663:
+	case 0x10ec0665:
+	case 0x10ec0670:
+	case 0x10ec0671:
+	case 0x10ec0672:
 		alc_update_coef_idx(codec, 0xd, 0, 1<<14); /* EAPD Ctrl */
-		अवरोध;
-	हाल 0x10ec0222:
-	हाल 0x10ec0623:
+		break;
+	case 0x10ec0222:
+	case 0x10ec0623:
 		alc_update_coef_idx(codec, 0x19, 1<<13, 0);
-		अवरोध;
-	हाल 0x10ec0668:
+		break;
+	case 0x10ec0668:
 		alc_update_coef_idx(codec, 0x7, 3<<13, 0);
-		अवरोध;
-	हाल 0x10ec0867:
+		break;
+	case 0x10ec0867:
 		alc_update_coef_idx(codec, 0x4, 1<<10, 0);
-		अवरोध;
-	हाल 0x10ec0888:
-		अगर ((coef & 0x00f0) == 0x0020 || (coef & 0x00f0) == 0x0030)
+		break;
+	case 0x10ec0888:
+		if ((coef & 0x00f0) == 0x0020 || (coef & 0x00f0) == 0x0030)
 			alc_update_coef_idx(codec, 0x7, 1<<5, 0);
-		अवरोध;
-	हाल 0x10ec0892:
-	हाल 0x10ec0897:
+		break;
+	case 0x10ec0892:
+	case 0x10ec0897:
 		alc_update_coef_idx(codec, 0x7, 1<<5, 0);
-		अवरोध;
-	हाल 0x10ec0899:
-	हाल 0x10ec0900:
-	हाल 0x10ec0b00:
-	हाल 0x10ec1168:
-	हाल 0x10ec1220:
+		break;
+	case 0x10ec0899:
+	case 0x10ec0900:
+	case 0x10ec0b00:
+	case 0x10ec1168:
+	case 0x10ec1220:
 		alc_update_coef_idx(codec, 0x7, 1<<1, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* additional initialization क्रम ALC888 variants */
-अटल व्योम alc888_coef_init(काष्ठा hda_codec *codec)
-अणु
-	चयन (alc_get_coef0(codec) & 0x00f0) अणु
+/* additional initialization for ALC888 variants */
+static void alc888_coef_init(struct hda_codec *codec)
+{
+	switch (alc_get_coef0(codec) & 0x00f0) {
 	/* alc888-VA */
-	हाल 0x00:
+	case 0x00:
 	/* alc888-VB */
-	हाल 0x10:
+	case 0x10:
 		alc_update_coef_idx(codec, 7, 0, 0x2030); /* Turn EAPD to High */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* turn on/off EAPD control (only अगर available) */
-अटल व्योम set_eapd(काष्ठा hda_codec *codec, hda_nid_t nid, पूर्णांक on)
-अणु
-	अगर (get_wcaps_type(get_wcaps(codec, nid)) != AC_WID_PIN)
-		वापस;
-	अगर (snd_hda_query_pin_caps(codec, nid) & AC_PINCAP_EAPD)
-		snd_hda_codec_ग_लिखो(codec, nid, 0, AC_VERB_SET_EAPD_BTLENABLE,
+/* turn on/off EAPD control (only if available) */
+static void set_eapd(struct hda_codec *codec, hda_nid_t nid, int on)
+{
+	if (get_wcaps_type(get_wcaps(codec, nid)) != AC_WID_PIN)
+		return;
+	if (snd_hda_query_pin_caps(codec, nid) & AC_PINCAP_EAPD)
+		snd_hda_codec_write(codec, nid, 0, AC_VERB_SET_EAPD_BTLENABLE,
 				    on ? 2 : 0);
-पूर्ण
+}
 
 /* turn on/off EAPD controls of the codec */
-अटल व्योम alc_स्वतः_setup_eapd(काष्ठा hda_codec *codec, bool on)
-अणु
+static void alc_auto_setup_eapd(struct hda_codec *codec, bool on)
+{
 	/* We currently only handle front, HP */
-	अटल स्थिर hda_nid_t pins[] = अणु
+	static const hda_nid_t pins[] = {
 		0x0f, 0x10, 0x14, 0x15, 0x17, 0
-	पूर्ण;
-	स्थिर hda_nid_t *p;
-	क्रम (p = pins; *p; p++)
+	};
+	const hda_nid_t *p;
+	for (p = pins; *p; p++)
 		set_eapd(codec, *p, on);
-पूर्ण
+}
 
-अटल पूर्णांक find_ext_mic_pin(काष्ठा hda_codec *codec);
+static int find_ext_mic_pin(struct hda_codec *codec);
 
-अटल व्योम alc_headset_mic_no_shutup(काष्ठा hda_codec *codec)
-अणु
-	स्थिर काष्ठा hda_pincfg *pin;
-	पूर्णांक mic_pin = find_ext_mic_pin(codec);
-	पूर्णांक i;
+static void alc_headset_mic_no_shutup(struct hda_codec *codec)
+{
+	const struct hda_pincfg *pin;
+	int mic_pin = find_ext_mic_pin(codec);
+	int i;
 
-	/* करोn't shut up pins when unloading the driver; otherwise it अवरोधs
-	 * the शेष pin setup at the next load of the driver
+	/* don't shut up pins when unloading the driver; otherwise it breaks
+	 * the default pin setup at the next load of the driver
 	 */
-	अगर (codec->bus->shutकरोwn)
-		वापस;
+	if (codec->bus->shutdown)
+		return;
 
-	snd_array_क्रम_each(&codec->init_pins, i, pin) अणु
-		/* use पढ़ो here क्रम syncing after issuing each verb */
-		अगर (pin->nid != mic_pin)
-			snd_hda_codec_पढ़ो(codec, pin->nid, 0,
+	snd_array_for_each(&codec->init_pins, i, pin) {
+		/* use read here for syncing after issuing each verb */
+		if (pin->nid != mic_pin)
+			snd_hda_codec_read(codec, pin->nid, 0,
 					AC_VERB_SET_PIN_WIDGET_CONTROL, 0);
-	पूर्ण
+	}
 
 	codec->pins_shutup = 1;
-पूर्ण
+}
 
-अटल व्योम alc_shutup_pins(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_shutup_pins(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0283:
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
-	हाल 0x10ec0298:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0283:
+	case 0x10ec0286:
+	case 0x10ec0288:
+	case 0x10ec0298:
 		alc_headset_mic_no_shutup(codec);
-		अवरोध;
-	शेष:
-		अगर (!spec->no_shutup_pins)
+		break;
+	default:
+		if (!spec->no_shutup_pins)
 			snd_hda_shutup_pins(codec);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /* generic shutup callback;
- * just turning off EAPD and a little छोड़ो क्रम aव्योमing pop-noise
+ * just turning off EAPD and a little pause for avoiding pop-noise
  */
-अटल व्योम alc_eapd_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_eapd_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	alc_स्वतः_setup_eapd(codec, false);
-	अगर (!spec->no_depop_delay)
+	alc_auto_setup_eapd(codec, false);
+	if (!spec->no_depop_delay)
 		msleep(200);
 	alc_shutup_pins(codec);
-पूर्ण
+}
 
 /* generic EAPD initialization */
-अटल व्योम alc_स्वतः_init_amp(काष्ठा hda_codec *codec, पूर्णांक type)
-अणु
-	alc_स्वतः_setup_eapd(codec, true);
-	alc_ग_लिखो_gpio(codec);
-	चयन (type) अणु
-	हाल ALC_INIT_DEFAULT:
-		चयन (codec->core.venकरोr_id) अणु
-		हाल 0x10ec0260:
+static void alc_auto_init_amp(struct hda_codec *codec, int type)
+{
+	alc_auto_setup_eapd(codec, true);
+	alc_write_gpio(codec);
+	switch (type) {
+	case ALC_INIT_DEFAULT:
+		switch (codec->core.vendor_id) {
+		case 0x10ec0260:
 			alc_update_coefex_idx(codec, 0x1a, 7, 0, 0x2010);
-			अवरोध;
-		हाल 0x10ec0880:
-		हाल 0x10ec0882:
-		हाल 0x10ec0883:
-		हाल 0x10ec0885:
+			break;
+		case 0x10ec0880:
+		case 0x10ec0882:
+		case 0x10ec0883:
+		case 0x10ec0885:
 			alc_update_coef_idx(codec, 7, 0, 0x2030);
-			अवरोध;
-		हाल 0x10ec0888:
+			break;
+		case 0x10ec0888:
 			alc888_coef_init(codec);
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+			break;
+		}
+		break;
+	}
+}
 
-/* get a primary headphone pin अगर available */
-अटल hda_nid_t alc_get_hp_pin(काष्ठा alc_spec *spec)
-अणु
-	अगर (spec->gen.स्वतःcfg.hp_pins[0])
-		वापस spec->gen.स्वतःcfg.hp_pins[0];
-	अगर (spec->gen.स्वतःcfg.line_out_type == AC_JACK_HP_OUT)
-		वापस spec->gen.स्वतःcfg.line_out_pins[0];
-	वापस 0;
-पूर्ण
+/* get a primary headphone pin if available */
+static hda_nid_t alc_get_hp_pin(struct alc_spec *spec)
+{
+	if (spec->gen.autocfg.hp_pins[0])
+		return spec->gen.autocfg.hp_pins[0];
+	if (spec->gen.autocfg.line_out_type == AC_JACK_HP_OUT)
+		return spec->gen.autocfg.line_out_pins[0];
+	return 0;
+}
 
 /*
- * Realtek SSID verअगरication
+ * Realtek SSID verification
  */
 
 /* Could be any non-zero and even value. When used as fixup, tells
  * the driver to ignore any present sku defines.
  */
-#घोषणा ALC_FIXUP_SKU_IGNORE (2)
+#define ALC_FIXUP_SKU_IGNORE (2)
 
-अटल व्योम alc_fixup_sku_ignore(काष्ठा hda_codec *codec,
-				 स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc_fixup_sku_ignore(struct hda_codec *codec,
+				 const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->cdefine.fixup = 1;
 		spec->cdefine.sku_cfg = ALC_FIXUP_SKU_IGNORE;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc_fixup_no_depop_delay(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_no_depop_delay(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PROBE) {
 		spec->no_depop_delay = 1;
 		codec->depop_delay = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक alc_स्वतः_parse_customize_define(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक ass, पंचांगp, i;
-	अचिन्हित nid = 0;
-	काष्ठा alc_spec *spec = codec->spec;
+static int alc_auto_parse_customize_define(struct hda_codec *codec)
+{
+	unsigned int ass, tmp, i;
+	unsigned nid = 0;
+	struct alc_spec *spec = codec->spec;
 
 	spec->cdefine.enable_pcbeep = 1; /* assume always enabled */
 
-	अगर (spec->cdefine.fixup) अणु
+	if (spec->cdefine.fixup) {
 		ass = spec->cdefine.sku_cfg;
-		अगर (ass == ALC_FIXUP_SKU_IGNORE)
-			वापस -1;
-		जाओ करो_sku;
-	पूर्ण
+		if (ass == ALC_FIXUP_SKU_IGNORE)
+			return -1;
+		goto do_sku;
+	}
 
-	अगर (!codec->bus->pci)
-		वापस -1;
-	ass = codec->core.subप्रणाली_id & 0xffff;
-	अगर (ass != codec->bus->pci->subप्रणाली_device && (ass & 1))
-		जाओ करो_sku;
+	if (!codec->bus->pci)
+		return -1;
+	ass = codec->core.subsystem_id & 0xffff;
+	if (ass != codec->bus->pci->subsystem_device && (ass & 1))
+		goto do_sku;
 
 	nid = 0x1d;
-	अगर (codec->core.venकरोr_id == 0x10ec0260)
+	if (codec->core.vendor_id == 0x10ec0260)
 		nid = 0x17;
 	ass = snd_hda_codec_get_pincfg(codec, nid);
 
-	अगर (!(ass & 1)) अणु
+	if (!(ass & 1)) {
 		codec_info(codec, "%s: SKU not ready 0x%08x\n",
 			   codec->core.chip_name, ass);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	/* check sum */
-	पंचांगp = 0;
-	क्रम (i = 1; i < 16; i++) अणु
-		अगर ((ass >> i) & 1)
-			पंचांगp++;
-	पूर्ण
-	अगर (((ass >> 16) & 0xf) != पंचांगp)
-		वापस -1;
+	tmp = 0;
+	for (i = 1; i < 16; i++) {
+		if ((ass >> i) & 1)
+			tmp++;
+	}
+	if (((ass >> 16) & 0xf) != tmp)
+		return -1;
 
 	spec->cdefine.port_connectivity = ass >> 30;
 	spec->cdefine.enable_pcbeep = (ass & 0x100000) >> 20;
 	spec->cdefine.check_sum = (ass >> 16) & 0xf;
 	spec->cdefine.customization = ass >> 8;
-करो_sku:
+do_sku:
 	spec->cdefine.sku_cfg = ass;
-	spec->cdefine.बाह्यal_amp = (ass & 0x38) >> 3;
-	spec->cdefine.platक्रमm_type = (ass & 0x4) >> 2;
+	spec->cdefine.external_amp = (ass & 0x38) >> 3;
+	spec->cdefine.platform_type = (ass & 0x4) >> 2;
 	spec->cdefine.swap = (ass & 0x2) >> 1;
 	spec->cdefine.override = ass & 0x1;
 
@@ -677,55 +676,55 @@
 	codec_dbg(codec, "SKU: enable_pcbeep=0x%x\n", spec->cdefine.enable_pcbeep);
 	codec_dbg(codec, "SKU: check_sum=0x%08x\n", spec->cdefine.check_sum);
 	codec_dbg(codec, "SKU: customization=0x%08x\n", spec->cdefine.customization);
-	codec_dbg(codec, "SKU: external_amp=0x%x\n", spec->cdefine.बाह्यal_amp);
-	codec_dbg(codec, "SKU: platform_type=0x%x\n", spec->cdefine.platक्रमm_type);
+	codec_dbg(codec, "SKU: external_amp=0x%x\n", spec->cdefine.external_amp);
+	codec_dbg(codec, "SKU: platform_type=0x%x\n", spec->cdefine.platform_type);
 	codec_dbg(codec, "SKU: swap=0x%x\n", spec->cdefine.swap);
 	codec_dbg(codec, "SKU: override=0x%x\n", spec->cdefine.override);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* वापस the position of NID in the list, or -1 अगर not found */
-अटल पूर्णांक find_idx_in_nid_list(hda_nid_t nid, स्थिर hda_nid_t *list, पूर्णांक nums)
-अणु
-	पूर्णांक i;
-	क्रम (i = 0; i < nums; i++)
-		अगर (list[i] == nid)
-			वापस i;
-	वापस -1;
-पूर्ण
-/* वापस true अगर the given NID is found in the list */
-अटल bool found_in_nid_list(hda_nid_t nid, स्थिर hda_nid_t *list, पूर्णांक nums)
-अणु
-	वापस find_idx_in_nid_list(nid, list, nums) >= 0;
-पूर्ण
+/* return the position of NID in the list, or -1 if not found */
+static int find_idx_in_nid_list(hda_nid_t nid, const hda_nid_t *list, int nums)
+{
+	int i;
+	for (i = 0; i < nums; i++)
+		if (list[i] == nid)
+			return i;
+	return -1;
+}
+/* return true if the given NID is found in the list */
+static bool found_in_nid_list(hda_nid_t nid, const hda_nid_t *list, int nums)
+{
+	return find_idx_in_nid_list(nid, list, nums) >= 0;
+}
 
-/* check subप्रणाली ID and set up device-specअगरic initialization;
- * वापस 1 अगर initialized, 0 अगर invalid SSID
+/* check subsystem ID and set up device-specific initialization;
+ * return 1 if initialized, 0 if invalid SSID
  */
-/* 32-bit subप्रणाली ID क्रम BIOS loading in HD Audio codec.
+/* 32-bit subsystem ID for BIOS loading in HD Audio codec.
  *	31 ~ 16 :	Manufacture ID
  *	15 ~ 8	:	SKU ID
  *	7  ~ 0	:	Assembly ID
  *	port-A --> pin 39/41, port-E --> pin 14/15, port-D --> pin 35/36
  */
-अटल पूर्णांक alc_subप्रणाली_id(काष्ठा hda_codec *codec, स्थिर hda_nid_t *ports)
-अणु
-	अचिन्हित पूर्णांक ass, पंचांगp, i;
-	अचिन्हित nid;
-	काष्ठा alc_spec *spec = codec->spec;
+static int alc_subsystem_id(struct hda_codec *codec, const hda_nid_t *ports)
+{
+	unsigned int ass, tmp, i;
+	unsigned nid;
+	struct alc_spec *spec = codec->spec;
 
-	अगर (spec->cdefine.fixup) अणु
+	if (spec->cdefine.fixup) {
 		ass = spec->cdefine.sku_cfg;
-		अगर (ass == ALC_FIXUP_SKU_IGNORE)
-			वापस 0;
-		जाओ करो_sku;
-	पूर्ण
+		if (ass == ALC_FIXUP_SKU_IGNORE)
+			return 0;
+		goto do_sku;
+	}
 
-	ass = codec->core.subप्रणाली_id & 0xffff;
-	अगर (codec->bus->pci &&
-	    ass != codec->bus->pci->subप्रणाली_device && (ass & 1))
-		जाओ करो_sku;
+	ass = codec->core.subsystem_id & 0xffff;
+	if (codec->bus->pci &&
+	    ass != codec->bus->pci->subsystem_device && (ass & 1))
+		goto do_sku;
 
 	/* invalid SSID, check the special NID pin defcfg instead */
 	/*
@@ -737,354 +736,354 @@
 	 * 0		: override
 	*/
 	nid = 0x1d;
-	अगर (codec->core.venकरोr_id == 0x10ec0260)
+	if (codec->core.vendor_id == 0x10ec0260)
 		nid = 0x17;
 	ass = snd_hda_codec_get_pincfg(codec, nid);
 	codec_dbg(codec,
 		  "realtek: No valid SSID, checking pincfg 0x%08x for NID 0x%x\n",
 		   ass, nid);
-	अगर (!(ass & 1))
-		वापस 0;
-	अगर ((ass >> 30) != 1)	/* no physical connection */
-		वापस 0;
+	if (!(ass & 1))
+		return 0;
+	if ((ass >> 30) != 1)	/* no physical connection */
+		return 0;
 
 	/* check sum */
-	पंचांगp = 0;
-	क्रम (i = 1; i < 16; i++) अणु
-		अगर ((ass >> i) & 1)
-			पंचांगp++;
-	पूर्ण
-	अगर (((ass >> 16) & 0xf) != पंचांगp)
-		वापस 0;
-करो_sku:
+	tmp = 0;
+	for (i = 1; i < 16; i++) {
+		if ((ass >> i) & 1)
+			tmp++;
+	}
+	if (((ass >> 16) & 0xf) != tmp)
+		return 0;
+do_sku:
 	codec_dbg(codec, "realtek: Enabling init ASM_ID=0x%04x CODEC_ID=%08x\n",
-		   ass & 0xffff, codec->core.venकरोr_id);
+		   ass & 0xffff, codec->core.vendor_id);
 	/*
 	 * 0 : override
 	 * 1 :	Swap Jack
 	 * 2 : 0 --> Desktop, 1 --> Laptop
-	 * 3~5 : External Amplअगरier control
+	 * 3~5 : External Amplifier control
 	 * 7~6 : Reserved
 	*/
-	पंचांगp = (ass & 0x38) >> 3;	/* बाह्यal Amp control */
-	अगर (spec->init_amp == ALC_INIT_UNDEFINED) अणु
-		चयन (पंचांगp) अणु
-		हाल 1:
+	tmp = (ass & 0x38) >> 3;	/* external Amp control */
+	if (spec->init_amp == ALC_INIT_UNDEFINED) {
+		switch (tmp) {
+		case 1:
 			alc_setup_gpio(codec, 0x01);
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			alc_setup_gpio(codec, 0x02);
-			अवरोध;
-		हाल 7:
+			break;
+		case 7:
 			alc_setup_gpio(codec, 0x03);
-			अवरोध;
-		हाल 5:
-		शेष:
+			break;
+		case 5:
+		default:
 			spec->init_amp = ALC_INIT_DEFAULT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* is laptop or Desktop and enable the function "Mute पूर्णांकernal speaker
-	 * when the बाह्यal headphone out jack is plugged"
+	/* is laptop or Desktop and enable the function "Mute internal speaker
+	 * when the external headphone out jack is plugged"
 	 */
-	अगर (!(ass & 0x8000))
-		वापस 1;
+	if (!(ass & 0x8000))
+		return 1;
 	/*
 	 * 10~8 : Jack location
 	 * 12~11: Headphone out -> 00: PortA, 01: PortE, 02: PortD, 03: Resvered
 	 * 14~13: Resvered
-	 * 15   : 1 --> enable the function "Mute पूर्णांकernal speaker
-	 *	        when the बाह्यal headphone out jack is plugged"
+	 * 15   : 1 --> enable the function "Mute internal speaker
+	 *	        when the external headphone out jack is plugged"
 	 */
-	अगर (!alc_get_hp_pin(spec)) अणु
+	if (!alc_get_hp_pin(spec)) {
 		hda_nid_t nid;
-		पंचांगp = (ass >> 11) & 0x3;	/* HP to chassis */
-		nid = ports[पंचांगp];
-		अगर (found_in_nid_list(nid, spec->gen.स्वतःcfg.line_out_pins,
-				      spec->gen.स्वतःcfg.line_outs))
-			वापस 1;
-		spec->gen.स्वतःcfg.hp_pins[0] = nid;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		tmp = (ass >> 11) & 0x3;	/* HP to chassis */
+		nid = ports[tmp];
+		if (found_in_nid_list(nid, spec->gen.autocfg.line_out_pins,
+				      spec->gen.autocfg.line_outs))
+			return 1;
+		spec->gen.autocfg.hp_pins[0] = nid;
+	}
+	return 1;
+}
 
-/* Check the validity of ALC subप्रणाली-id
- * ports contains an array of 4 pin NIDs क्रम port-A, E, D and I */
-अटल व्योम alc_ssid_check(काष्ठा hda_codec *codec, स्थिर hda_nid_t *ports)
-अणु
-	अगर (!alc_subप्रणाली_id(codec, ports)) अणु
-		काष्ठा alc_spec *spec = codec->spec;
-		अगर (spec->init_amp == ALC_INIT_UNDEFINED) अणु
+/* Check the validity of ALC subsystem-id
+ * ports contains an array of 4 pin NIDs for port-A, E, D and I */
+static void alc_ssid_check(struct hda_codec *codec, const hda_nid_t *ports)
+{
+	if (!alc_subsystem_id(codec, ports)) {
+		struct alc_spec *spec = codec->spec;
+		if (spec->init_amp == ALC_INIT_UNDEFINED) {
 			codec_dbg(codec,
 				  "realtek: Enable default setup for auto mode as fallback\n");
 			spec->init_amp = ALC_INIT_DEFAULT;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  */
 
-अटल व्योम alc_fixup_inv_dmic(काष्ठा hda_codec *codec,
-			       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_inv_dmic(struct hda_codec *codec,
+			       const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	spec->gen.inv_dmic_split = 1;
-पूर्ण
+}
 
 
-अटल पूर्णांक alc_build_controls(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक err;
+static int alc_build_controls(struct hda_codec *codec)
+{
+	int err;
 
 	err = snd_hda_gen_build_controls(codec);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_BUILD);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * Common callbacks
  */
 
-अटल व्योम alc_pre_init(काष्ठा hda_codec *codec)
-अणु
+static void alc_pre_init(struct hda_codec *codec)
+{
 	alc_fill_eapd_coef(codec);
-पूर्ण
+}
 
-#घोषणा is_s3_resume(codec) \
-	((codec)->core.dev.घातer.घातer_state.event == PM_EVENT_RESUME)
-#घोषणा is_s4_resume(codec) \
-	((codec)->core.dev.घातer.घातer_state.event == PM_EVENT_RESTORE)
+#define is_s3_resume(codec) \
+	((codec)->core.dev.power.power_state.event == PM_EVENT_RESUME)
+#define is_s4_resume(codec) \
+	((codec)->core.dev.power.power_state.event == PM_EVENT_RESTORE)
 
-अटल पूर्णांक alc_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static int alc_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
 	/* hibernation resume needs the full chip initialization */
-	अगर (is_s4_resume(codec))
+	if (is_s4_resume(codec))
 		alc_pre_init(codec);
 
-	अगर (spec->init_hook)
+	if (spec->init_hook)
 		spec->init_hook(codec);
 
 	spec->gen.skip_verbs = 1; /* applied in below */
 	snd_hda_gen_init(codec);
 	alc_fix_pll(codec);
-	alc_स्वतः_init_amp(codec, spec->init_amp);
+	alc_auto_init_amp(codec, spec->init_amp);
 	snd_hda_apply_verbs(codec); /* apply verbs here after own init */
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_INIT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम alc_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static inline void alc_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (!snd_hda_get_bool_hपूर्णांक(codec, "shutup"))
-		वापस; /* disabled explicitly by hपूर्णांकs */
+	if (!snd_hda_get_bool_hint(codec, "shutup"))
+		return; /* disabled explicitly by hints */
 
-	अगर (spec && spec->shutup)
+	if (spec && spec->shutup)
 		spec->shutup(codec);
-	अन्यथा
+	else
 		alc_shutup_pins(codec);
-पूर्ण
+}
 
-अटल व्योम alc_reboot_notअगरy(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_reboot_notify(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (spec && spec->reboot_notअगरy)
-		spec->reboot_notअगरy(codec);
-	अन्यथा
+	if (spec && spec->reboot_notify)
+		spec->reboot_notify(codec);
+	else
 		alc_shutup(codec);
-पूर्ण
+}
 
-#घोषणा alc_मुक्त	snd_hda_gen_मुक्त
+#define alc_free	snd_hda_gen_free
 
-#अगर_घोषित CONFIG_PM
-अटल व्योम alc_घातer_eapd(काष्ठा hda_codec *codec)
-अणु
-	alc_स्वतः_setup_eapd(codec, false);
-पूर्ण
+#ifdef CONFIG_PM
+static void alc_power_eapd(struct hda_codec *codec)
+{
+	alc_auto_setup_eapd(codec, false);
+}
 
-अटल पूर्णांक alc_suspend(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static int alc_suspend(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	alc_shutup(codec);
-	अगर (spec && spec->घातer_hook)
-		spec->घातer_hook(codec);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	if (spec && spec->power_hook)
+		spec->power_hook(codec);
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक alc_resume(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+#ifdef CONFIG_PM
+static int alc_resume(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (!spec->no_depop_delay)
-		msleep(150); /* to aव्योम pop noise */
+	if (!spec->no_depop_delay)
+		msleep(150); /* to avoid pop noise */
 	codec->patch_ops.init(codec);
 	snd_hda_regmap_sync(codec);
-	hda_call_check_घातer_status(codec, 0x01);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	hda_call_check_power_status(codec, 0x01);
+	return 0;
+}
+#endif
 
 /*
  */
-अटल स्थिर काष्ठा hda_codec_ops alc_patch_ops = अणु
+static const struct hda_codec_ops alc_patch_ops = {
 	.build_controls = alc_build_controls,
 	.build_pcms = snd_hda_gen_build_pcms,
 	.init = alc_init,
-	.मुक्त = alc_मुक्त,
+	.free = alc_free,
 	.unsol_event = snd_hda_jack_unsol_event,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.resume = alc_resume,
 	.suspend = alc_suspend,
-	.check_घातer_status = snd_hda_gen_check_घातer_status,
-#पूर्ण_अगर
-	.reboot_notअगरy = alc_reboot_notअगरy,
-पूर्ण;
+	.check_power_status = snd_hda_gen_check_power_status,
+#endif
+	.reboot_notify = alc_reboot_notify,
+};
 
 
-#घोषणा alc_codec_नाम(codec, name) snd_hda_codec_set_name(codec, name)
+#define alc_codec_rename(codec, name) snd_hda_codec_set_name(codec, name)
 
 /*
- * Rename codecs appropriately from COEF value or subvenकरोr id
+ * Rename codecs appropriately from COEF value or subvendor id
  */
-काष्ठा alc_codec_नाम_table अणु
-	अचिन्हित पूर्णांक venकरोr_id;
-	अचिन्हित लघु coef_mask;
-	अचिन्हित लघु coef_bits;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct alc_codec_rename_table {
+	unsigned int vendor_id;
+	unsigned short coef_mask;
+	unsigned short coef_bits;
+	const char *name;
+};
 
-काष्ठा alc_codec_नाम_pci_table अणु
-	अचिन्हित पूर्णांक codec_venकरोr_id;
-	अचिन्हित लघु pci_subvenकरोr;
-	अचिन्हित लघु pci_subdevice;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct alc_codec_rename_pci_table {
+	unsigned int codec_vendor_id;
+	unsigned short pci_subvendor;
+	unsigned short pci_subdevice;
+	const char *name;
+};
 
-अटल स्थिर काष्ठा alc_codec_नाम_table नाम_tbl[] = अणु
-	अणु 0x10ec0221, 0xf00f, 0x1003, "ALC231" पूर्ण,
-	अणु 0x10ec0269, 0xfff0, 0x3010, "ALC277" पूर्ण,
-	अणु 0x10ec0269, 0xf0f0, 0x2010, "ALC259" पूर्ण,
-	अणु 0x10ec0269, 0xf0f0, 0x3010, "ALC258" पूर्ण,
-	अणु 0x10ec0269, 0x00f0, 0x0010, "ALC269VB" पूर्ण,
-	अणु 0x10ec0269, 0xffff, 0xa023, "ALC259" पूर्ण,
-	अणु 0x10ec0269, 0xffff, 0x6023, "ALC281X" पूर्ण,
-	अणु 0x10ec0269, 0x00f0, 0x0020, "ALC269VC" पूर्ण,
-	अणु 0x10ec0269, 0x00f0, 0x0030, "ALC269VD" पूर्ण,
-	अणु 0x10ec0662, 0xffff, 0x4020, "ALC656" पूर्ण,
-	अणु 0x10ec0887, 0x00f0, 0x0030, "ALC887-VD" पूर्ण,
-	अणु 0x10ec0888, 0x00f0, 0x0030, "ALC888-VD" पूर्ण,
-	अणु 0x10ec0888, 0xf0f0, 0x3020, "ALC886" पूर्ण,
-	अणु 0x10ec0899, 0x2000, 0x2000, "ALC899" पूर्ण,
-	अणु 0x10ec0892, 0xffff, 0x8020, "ALC661" पूर्ण,
-	अणु 0x10ec0892, 0xffff, 0x8011, "ALC661" पूर्ण,
-	अणु 0x10ec0892, 0xffff, 0x4011, "ALC656" पूर्ण,
-	अणु पूर्ण /* terminator */
-पूर्ण;
+static const struct alc_codec_rename_table rename_tbl[] = {
+	{ 0x10ec0221, 0xf00f, 0x1003, "ALC231" },
+	{ 0x10ec0269, 0xfff0, 0x3010, "ALC277" },
+	{ 0x10ec0269, 0xf0f0, 0x2010, "ALC259" },
+	{ 0x10ec0269, 0xf0f0, 0x3010, "ALC258" },
+	{ 0x10ec0269, 0x00f0, 0x0010, "ALC269VB" },
+	{ 0x10ec0269, 0xffff, 0xa023, "ALC259" },
+	{ 0x10ec0269, 0xffff, 0x6023, "ALC281X" },
+	{ 0x10ec0269, 0x00f0, 0x0020, "ALC269VC" },
+	{ 0x10ec0269, 0x00f0, 0x0030, "ALC269VD" },
+	{ 0x10ec0662, 0xffff, 0x4020, "ALC656" },
+	{ 0x10ec0887, 0x00f0, 0x0030, "ALC887-VD" },
+	{ 0x10ec0888, 0x00f0, 0x0030, "ALC888-VD" },
+	{ 0x10ec0888, 0xf0f0, 0x3020, "ALC886" },
+	{ 0x10ec0899, 0x2000, 0x2000, "ALC899" },
+	{ 0x10ec0892, 0xffff, 0x8020, "ALC661" },
+	{ 0x10ec0892, 0xffff, 0x8011, "ALC661" },
+	{ 0x10ec0892, 0xffff, 0x4011, "ALC656" },
+	{ } /* terminator */
+};
 
-अटल स्थिर काष्ठा alc_codec_नाम_pci_table नाम_pci_tbl[] = अणु
-	अणु 0x10ec0280, 0x1028, 0, "ALC3220" पूर्ण,
-	अणु 0x10ec0282, 0x1028, 0, "ALC3221" पूर्ण,
-	अणु 0x10ec0283, 0x1028, 0, "ALC3223" पूर्ण,
-	अणु 0x10ec0288, 0x1028, 0, "ALC3263" पूर्ण,
-	अणु 0x10ec0292, 0x1028, 0, "ALC3226" पूर्ण,
-	अणु 0x10ec0293, 0x1028, 0, "ALC3235" पूर्ण,
-	अणु 0x10ec0255, 0x1028, 0, "ALC3234" पूर्ण,
-	अणु 0x10ec0668, 0x1028, 0, "ALC3661" पूर्ण,
-	अणु 0x10ec0275, 0x1028, 0, "ALC3260" पूर्ण,
-	अणु 0x10ec0899, 0x1028, 0, "ALC3861" पूर्ण,
-	अणु 0x10ec0298, 0x1028, 0, "ALC3266" पूर्ण,
-	अणु 0x10ec0236, 0x1028, 0, "ALC3204" पूर्ण,
-	अणु 0x10ec0256, 0x1028, 0, "ALC3246" पूर्ण,
-	अणु 0x10ec0225, 0x1028, 0, "ALC3253" पूर्ण,
-	अणु 0x10ec0295, 0x1028, 0, "ALC3254" पूर्ण,
-	अणु 0x10ec0299, 0x1028, 0, "ALC3271" पूर्ण,
-	अणु 0x10ec0670, 0x1025, 0, "ALC669X" पूर्ण,
-	अणु 0x10ec0676, 0x1025, 0, "ALC679X" पूर्ण,
-	अणु 0x10ec0282, 0x1043, 0, "ALC3229" पूर्ण,
-	अणु 0x10ec0233, 0x1043, 0, "ALC3236" पूर्ण,
-	अणु 0x10ec0280, 0x103c, 0, "ALC3228" पूर्ण,
-	अणु 0x10ec0282, 0x103c, 0, "ALC3227" पूर्ण,
-	अणु 0x10ec0286, 0x103c, 0, "ALC3242" पूर्ण,
-	अणु 0x10ec0290, 0x103c, 0, "ALC3241" पूर्ण,
-	अणु 0x10ec0668, 0x103c, 0, "ALC3662" पूर्ण,
-	अणु 0x10ec0283, 0x17aa, 0, "ALC3239" पूर्ण,
-	अणु 0x10ec0292, 0x17aa, 0, "ALC3232" पूर्ण,
-	अणु पूर्ण /* terminator */
-पूर्ण;
+static const struct alc_codec_rename_pci_table rename_pci_tbl[] = {
+	{ 0x10ec0280, 0x1028, 0, "ALC3220" },
+	{ 0x10ec0282, 0x1028, 0, "ALC3221" },
+	{ 0x10ec0283, 0x1028, 0, "ALC3223" },
+	{ 0x10ec0288, 0x1028, 0, "ALC3263" },
+	{ 0x10ec0292, 0x1028, 0, "ALC3226" },
+	{ 0x10ec0293, 0x1028, 0, "ALC3235" },
+	{ 0x10ec0255, 0x1028, 0, "ALC3234" },
+	{ 0x10ec0668, 0x1028, 0, "ALC3661" },
+	{ 0x10ec0275, 0x1028, 0, "ALC3260" },
+	{ 0x10ec0899, 0x1028, 0, "ALC3861" },
+	{ 0x10ec0298, 0x1028, 0, "ALC3266" },
+	{ 0x10ec0236, 0x1028, 0, "ALC3204" },
+	{ 0x10ec0256, 0x1028, 0, "ALC3246" },
+	{ 0x10ec0225, 0x1028, 0, "ALC3253" },
+	{ 0x10ec0295, 0x1028, 0, "ALC3254" },
+	{ 0x10ec0299, 0x1028, 0, "ALC3271" },
+	{ 0x10ec0670, 0x1025, 0, "ALC669X" },
+	{ 0x10ec0676, 0x1025, 0, "ALC679X" },
+	{ 0x10ec0282, 0x1043, 0, "ALC3229" },
+	{ 0x10ec0233, 0x1043, 0, "ALC3236" },
+	{ 0x10ec0280, 0x103c, 0, "ALC3228" },
+	{ 0x10ec0282, 0x103c, 0, "ALC3227" },
+	{ 0x10ec0286, 0x103c, 0, "ALC3242" },
+	{ 0x10ec0290, 0x103c, 0, "ALC3241" },
+	{ 0x10ec0668, 0x103c, 0, "ALC3662" },
+	{ 0x10ec0283, 0x17aa, 0, "ALC3239" },
+	{ 0x10ec0292, 0x17aa, 0, "ALC3232" },
+	{ } /* terminator */
+};
 
-अटल पूर्णांक alc_codec_नाम_from_preset(काष्ठा hda_codec *codec)
-अणु
-	स्थिर काष्ठा alc_codec_नाम_table *p;
-	स्थिर काष्ठा alc_codec_नाम_pci_table *q;
+static int alc_codec_rename_from_preset(struct hda_codec *codec)
+{
+	const struct alc_codec_rename_table *p;
+	const struct alc_codec_rename_pci_table *q;
 
-	क्रम (p = नाम_tbl; p->venकरोr_id; p++) अणु
-		अगर (p->venकरोr_id != codec->core.venकरोr_id)
-			जारी;
-		अगर ((alc_get_coef0(codec) & p->coef_mask) == p->coef_bits)
-			वापस alc_codec_नाम(codec, p->name);
-	पूर्ण
+	for (p = rename_tbl; p->vendor_id; p++) {
+		if (p->vendor_id != codec->core.vendor_id)
+			continue;
+		if ((alc_get_coef0(codec) & p->coef_mask) == p->coef_bits)
+			return alc_codec_rename(codec, p->name);
+	}
 
-	अगर (!codec->bus->pci)
-		वापस 0;
-	क्रम (q = नाम_pci_tbl; q->codec_venकरोr_id; q++) अणु
-		अगर (q->codec_venकरोr_id != codec->core.venकरोr_id)
-			जारी;
-		अगर (q->pci_subvenकरोr != codec->bus->pci->subप्रणाली_venकरोr)
-			जारी;
-		अगर (!q->pci_subdevice ||
-		    q->pci_subdevice == codec->bus->pci->subप्रणाली_device)
-			वापस alc_codec_नाम(codec, q->name);
-	पूर्ण
+	if (!codec->bus->pci)
+		return 0;
+	for (q = rename_pci_tbl; q->codec_vendor_id; q++) {
+		if (q->codec_vendor_id != codec->core.vendor_id)
+			continue;
+		if (q->pci_subvendor != codec->bus->pci->subsystem_vendor)
+			continue;
+		if (!q->pci_subdevice ||
+		    q->pci_subdevice == codec->bus->pci->subsystem_device)
+			return alc_codec_rename(codec, q->name);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * Digital-beep handlers
  */
-#अगर_घोषित CONFIG_SND_HDA_INPUT_BEEP
+#ifdef CONFIG_SND_HDA_INPUT_BEEP
 
-/* additional beep mixers; निजी_value will be overwritten */
-अटल स्थिर काष्ठा snd_kcontrol_new alc_beep_mixer[] = अणु
+/* additional beep mixers; private_value will be overwritten */
+static const struct snd_kcontrol_new alc_beep_mixer[] = {
 	HDA_CODEC_VOLUME("Beep Playback Volume", 0, 0, HDA_INPUT),
 	HDA_CODEC_MUTE_BEEP("Beep Playback Switch", 0, 0, HDA_INPUT),
-पूर्ण;
+};
 
 /* set up and create beep controls */
-अटल पूर्णांक set_beep_amp(काष्ठा alc_spec *spec, hda_nid_t nid,
-			पूर्णांक idx, पूर्णांक dir)
-अणु
-	काष्ठा snd_kcontrol_new *knew;
-	अचिन्हित पूर्णांक beep_amp = HDA_COMPOSE_AMP_VAL(nid, 3, idx, dir);
-	पूर्णांक i;
+static int set_beep_amp(struct alc_spec *spec, hda_nid_t nid,
+			int idx, int dir)
+{
+	struct snd_kcontrol_new *knew;
+	unsigned int beep_amp = HDA_COMPOSE_AMP_VAL(nid, 3, idx, dir);
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(alc_beep_mixer); i++) अणु
-		knew = snd_hda_gen_add_kctl(&spec->gen, शून्य,
+	for (i = 0; i < ARRAY_SIZE(alc_beep_mixer); i++) {
+		knew = snd_hda_gen_add_kctl(&spec->gen, NULL,
 					    &alc_beep_mixer[i]);
-		अगर (!knew)
-			वापस -ENOMEM;
-		knew->निजी_value = beep_amp;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!knew)
+			return -ENOMEM;
+		knew->private_value = beep_amp;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_pci_quirk beep_allow_list[] = अणु
+static const struct snd_pci_quirk beep_allow_list[] = {
 	SND_PCI_QUIRK(0x1043, 0x103c, "ASUS", 1),
 	SND_PCI_QUIRK(0x1043, 0x115d, "ASUS", 1),
 	SND_PCI_QUIRK(0x1043, 0x829f, "ASUS", 1),
@@ -1097,87 +1096,87 @@
 	/* denylist -- no beep available */
 	SND_PCI_QUIRK(0x17aa, 0x309e, "Lenovo ThinkCentre M73", 0),
 	SND_PCI_QUIRK(0x17aa, 0x30a3, "Lenovo ThinkCentre M93", 0),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल अंतरभूत पूर्णांक has_cdefine_beep(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	स्थिर काष्ठा snd_pci_quirk *q;
+static inline int has_cdefine_beep(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	const struct snd_pci_quirk *q;
 	q = snd_pci_quirk_lookup(codec->bus->pci, beep_allow_list);
-	अगर (q)
-		वापस q->value;
-	वापस spec->cdefine.enable_pcbeep;
-पूर्ण
-#अन्यथा
-#घोषणा set_beep_amp(spec, nid, idx, dir)	0
-#घोषणा has_cdefine_beep(codec)		0
-#पूर्ण_अगर
+	if (q)
+		return q->value;
+	return spec->cdefine.enable_pcbeep;
+}
+#else
+#define set_beep_amp(spec, nid, idx, dir)	0
+#define has_cdefine_beep(codec)		0
+#endif
 
 /* parse the BIOS configuration and set up the alc_spec */
-/* वापस 1 अगर successful, 0 अगर the proper config is not found,
+/* return 1 if successful, 0 if the proper config is not found,
  * or a negative error code
  */
-अटल पूर्णांक alc_parse_स्वतः_config(काष्ठा hda_codec *codec,
-				 स्थिर hda_nid_t *ignore_nids,
-				 स्थिर hda_nid_t *ssid_nids)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	काष्ठा स्वतः_pin_cfg *cfg = &spec->gen.स्वतःcfg;
-	पूर्णांक err;
+static int alc_parse_auto_config(struct hda_codec *codec,
+				 const hda_nid_t *ignore_nids,
+				 const hda_nid_t *ssid_nids)
+{
+	struct alc_spec *spec = codec->spec;
+	struct auto_pin_cfg *cfg = &spec->gen.autocfg;
+	int err;
 
 	err = snd_hda_parse_pin_defcfg(codec, cfg, ignore_nids,
 				       spec->parse_flags);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (ssid_nids)
+	if (ssid_nids)
 		alc_ssid_check(codec, ssid_nids);
 
-	err = snd_hda_gen_parse_स्वतः_config(codec, cfg);
-	अगर (err < 0)
-		वापस err;
+	err = snd_hda_gen_parse_auto_config(codec, cfg);
+	if (err < 0)
+		return err;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* common preparation job क्रम alc_spec */
-अटल पूर्णांक alc_alloc_spec(काष्ठा hda_codec *codec, hda_nid_t mixer_nid)
-अणु
-	काष्ठा alc_spec *spec = kzalloc(माप(*spec), GFP_KERNEL);
-	पूर्णांक err;
+/* common preparation job for alc_spec */
+static int alc_alloc_spec(struct hda_codec *codec, hda_nid_t mixer_nid)
+{
+	struct alc_spec *spec = kzalloc(sizeof(*spec), GFP_KERNEL);
+	int err;
 
-	अगर (!spec)
-		वापस -ENOMEM;
+	if (!spec)
+		return -ENOMEM;
 	codec->spec = spec;
 	snd_hda_gen_spec_init(&spec->gen);
 	spec->gen.mixer_nid = mixer_nid;
 	spec->gen.own_eapd_ctl = 1;
 	codec->single_adc_amp = 1;
-	/* FIXME: करो we need this क्रम all Realtek codec models? */
-	codec->spdअगर_status_reset = 1;
-	codec->क्रमced_resume = 1;
+	/* FIXME: do we need this for all Realtek codec models? */
+	codec->spdif_status_reset = 1;
+	codec->forced_resume = 1;
 	codec->patch_ops = alc_patch_ops;
 
-	err = alc_codec_नाम_from_preset(codec);
-	अगर (err < 0) अणु
-		kमुक्त(spec);
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	err = alc_codec_rename_from_preset(codec);
+	if (err < 0) {
+		kfree(spec);
+		return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक alc880_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc880_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc880_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, alc880_ignore, alc880_ssids);
-पूर्ण
+static int alc880_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc880_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc880_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	return alc_parse_auto_config(codec, alc880_ignore, alc880_ssids);
+}
 
 /*
  * ALC880 fix-ups
  */
-क्रमागत अणु
+enum {
 	ALC880_FIXUP_GPIO1,
 	ALC880_FIXUP_GPIO2,
 	ALC880_FIXUP_MEDION_RIM,
@@ -1203,307 +1202,307 @@
 	ALC880_FIXUP_6ST,
 	ALC880_FIXUP_6ST_DIG,
 	ALC880_FIXUP_6ST_AUTOMUTE,
-पूर्ण;
+};
 
 /* enable the volume-knob widget support on NID 0x21 */
-अटल व्योम alc880_fixup_vol_knob(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PROBE)
+static void alc880_fixup_vol_knob(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PROBE)
 		snd_hda_jack_detect_enable_callback(codec, 0x21,
 						    alc_update_knob_master);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hda_fixup alc880_fixups[] = अणु
-	[ALC880_FIXUP_GPIO1] = अणु
+static const struct hda_fixup alc880_fixups[] = {
+	[ALC880_FIXUP_GPIO1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio1,
-	पूर्ण,
-	[ALC880_FIXUP_GPIO2] = अणु
+	},
+	[ALC880_FIXUP_GPIO2] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio2,
-	पूर्ण,
-	[ALC880_FIXUP_MEDION_RIM] = अणु
+	},
+	[ALC880_FIXUP_MEDION_RIM] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF,  0x3060 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF,  0x3060 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_GPIO2,
-	पूर्ण,
-	[ALC880_FIXUP_LG] = अणु
+	},
+	[ALC880_FIXUP_LG] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* disable bogus unused pins */
-			अणु 0x16, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x411111f0 पूर्ण,
-			अणु 0x1a, 0x411111f0 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_LG_LW25] = अणु
+			{ 0x16, 0x411111f0 },
+			{ 0x18, 0x411111f0 },
+			{ 0x1a, 0x411111f0 },
+			{ }
+		}
+	},
+	[ALC880_FIXUP_LG_LW25] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1a, 0x0181344f पूर्ण, /* line-in */
-			अणु 0x1b, 0x0321403f पूर्ण, /* headphone */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_W810] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x0181344f }, /* line-in */
+			{ 0x1b, 0x0321403f }, /* headphone */
+			{ }
+		}
+	},
+	[ALC880_FIXUP_W810] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* disable bogus unused pins */
-			अणु 0x17, 0x411111f0 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x17, 0x411111f0 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_GPIO2,
-	पूर्ण,
-	[ALC880_FIXUP_EAPD_COEF] = अणु
+	},
+	[ALC880_FIXUP_EAPD_COEF] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* change to EAPD mode */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF,  0x3060 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC880_FIXUP_TCL_S700] = अणु
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF,  0x3060 },
+			{}
+		},
+	},
+	[ALC880_FIXUP_TCL_S700] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* change to EAPD mode */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF,  0x3070 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF,  0x3070 },
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_GPIO2,
-	पूर्ण,
-	[ALC880_FIXUP_VOL_KNOB] = अणु
+	},
+	[ALC880_FIXUP_VOL_KNOB] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc880_fixup_vol_knob,
-	पूर्ण,
-	[ALC880_FIXUP_FUJITSU] = अणु
+	},
+	[ALC880_FIXUP_FUJITSU] = {
 		/* override all pins as BIOS on old Amilo is broken */
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x0121401f पूर्ण, /* HP */
-			अणु 0x15, 0x99030120 पूर्ण, /* speaker */
-			अणु 0x16, 0x99030130 पूर्ण, /* bass speaker */
-			अणु 0x17, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x18, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x19, 0x01a19950 पूर्ण, /* mic-in */
-			अणु 0x1a, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1b, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1e, 0x01454140 पूर्ण, /* SPDIF out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x0121401f }, /* HP */
+			{ 0x15, 0x99030120 }, /* speaker */
+			{ 0x16, 0x99030130 }, /* bass speaker */
+			{ 0x17, 0x411111f0 }, /* N/A */
+			{ 0x18, 0x411111f0 }, /* N/A */
+			{ 0x19, 0x01a19950 }, /* mic-in */
+			{ 0x1a, 0x411111f0 }, /* N/A */
+			{ 0x1b, 0x411111f0 }, /* N/A */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
+			{ 0x1e, 0x01454140 }, /* SPDIF out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_VOL_KNOB,
-	पूर्ण,
-	[ALC880_FIXUP_F1734] = अणु
+	},
+	[ALC880_FIXUP_F1734] = {
 		/* almost compatible with FUJITSU, but no bass and SPDIF */
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x0121401f पूर्ण, /* HP */
-			अणु 0x15, 0x99030120 पूर्ण, /* speaker */
-			अणु 0x16, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x17, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x18, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x19, 0x01a19950 पूर्ण, /* mic-in */
-			अणु 0x1a, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1b, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1e, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x0121401f }, /* HP */
+			{ 0x15, 0x99030120 }, /* speaker */
+			{ 0x16, 0x411111f0 }, /* N/A */
+			{ 0x17, 0x411111f0 }, /* N/A */
+			{ 0x18, 0x411111f0 }, /* N/A */
+			{ 0x19, 0x01a19950 }, /* mic-in */
+			{ 0x1a, 0x411111f0 }, /* N/A */
+			{ 0x1b, 0x411111f0 }, /* N/A */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
+			{ 0x1e, 0x411111f0 }, /* N/A */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_VOL_KNOB,
-	पूर्ण,
-	[ALC880_FIXUP_UNIWILL] = अणु
+	},
+	[ALC880_FIXUP_UNIWILL] = {
 		/* need to fix HP and speaker pins to be parsed correctly */
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x0121411f पूर्ण, /* HP */
-			अणु 0x15, 0x99030120 पूर्ण, /* speaker */
-			अणु 0x16, 0x99030130 पूर्ण, /* bass speaker */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC880_FIXUP_UNIWILL_DIG] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x0121411f }, /* HP */
+			{ 0x15, 0x99030120 }, /* speaker */
+			{ 0x16, 0x99030130 }, /* bass speaker */
+			{ }
+		},
+	},
+	[ALC880_FIXUP_UNIWILL_DIG] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* disable bogus unused pins */
-			अणु 0x17, 0x411111f0 पूर्ण,
-			अणु 0x19, 0x411111f0 पूर्ण,
-			अणु 0x1b, 0x411111f0 पूर्ण,
-			अणु 0x1f, 0x411111f0 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_Z71V] = अणु
+			{ 0x17, 0x411111f0 },
+			{ 0x19, 0x411111f0 },
+			{ 0x1b, 0x411111f0 },
+			{ 0x1f, 0x411111f0 },
+			{ }
+		}
+	},
+	[ALC880_FIXUP_Z71V] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* set up the whole pins as BIOS is utterly broken */
-			अणु 0x14, 0x99030120 पूर्ण, /* speaker */
-			अणु 0x15, 0x0121411f पूर्ण, /* HP */
-			अणु 0x16, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x17, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x18, 0x01a19950 पूर्ण, /* mic-in */
-			अणु 0x19, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1a, 0x01813031 पूर्ण, /* line-in */
-			अणु 0x1b, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1e, 0x0144111e पूर्ण, /* SPDIF */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_ASUS_W5A] = अणु
+			{ 0x14, 0x99030120 }, /* speaker */
+			{ 0x15, 0x0121411f }, /* HP */
+			{ 0x16, 0x411111f0 }, /* N/A */
+			{ 0x17, 0x411111f0 }, /* N/A */
+			{ 0x18, 0x01a19950 }, /* mic-in */
+			{ 0x19, 0x411111f0 }, /* N/A */
+			{ 0x1a, 0x01813031 }, /* line-in */
+			{ 0x1b, 0x411111f0 }, /* N/A */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
+			{ 0x1e, 0x0144111e }, /* SPDIF */
+			{ }
+		}
+	},
+	[ALC880_FIXUP_ASUS_W5A] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* set up the whole pins as BIOS is utterly broken */
-			अणु 0x14, 0x0121411f पूर्ण, /* HP */
-			अणु 0x15, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x16, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x17, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x18, 0x90a60160 पूर्ण, /* mic */
-			अणु 0x19, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1a, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1b, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1e, 0xb743111e पूर्ण, /* SPDIF out */
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x14, 0x0121411f }, /* HP */
+			{ 0x15, 0x411111f0 }, /* N/A */
+			{ 0x16, 0x411111f0 }, /* N/A */
+			{ 0x17, 0x411111f0 }, /* N/A */
+			{ 0x18, 0x90a60160 }, /* mic */
+			{ 0x19, 0x411111f0 }, /* N/A */
+			{ 0x1a, 0x411111f0 }, /* N/A */
+			{ 0x1b, 0x411111f0 }, /* N/A */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
+			{ 0x1e, 0xb743111e }, /* SPDIF out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_GPIO1,
-	पूर्ण,
-	[ALC880_FIXUP_3ST_BASE] = अणु
+	},
+	[ALC880_FIXUP_3ST_BASE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x01014010 पूर्ण, /* line-out */
-			अणु 0x15, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x16, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x17, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x18, 0x01a19c30 पूर्ण, /* mic-in */
-			अणु 0x19, 0x0121411f पूर्ण, /* HP */
-			अणु 0x1a, 0x01813031 पूर्ण, /* line-in */
-			अणु 0x1b, 0x02a19c40 पूर्ण, /* front-mic */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x01014010 }, /* line-out */
+			{ 0x15, 0x411111f0 }, /* N/A */
+			{ 0x16, 0x411111f0 }, /* N/A */
+			{ 0x17, 0x411111f0 }, /* N/A */
+			{ 0x18, 0x01a19c30 }, /* mic-in */
+			{ 0x19, 0x0121411f }, /* HP */
+			{ 0x1a, 0x01813031 }, /* line-in */
+			{ 0x1b, 0x02a19c40 }, /* front-mic */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
 			/* 0x1e is filled in below */
-			अणु 0x1f, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_3ST] = अणु
+			{ 0x1f, 0x411111f0 }, /* N/A */
+			{ }
+		}
+	},
+	[ALC880_FIXUP_3ST] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x411111f0 }, /* N/A */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_3ST_BASE,
-	पूर्ण,
-	[ALC880_FIXUP_3ST_DIG] = अणु
+	},
+	[ALC880_FIXUP_3ST_DIG] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x0144111e पूर्ण, /* SPDIF */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x0144111e }, /* SPDIF */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_3ST_BASE,
-	पूर्ण,
-	[ALC880_FIXUP_5ST_BASE] = अणु
+	},
+	[ALC880_FIXUP_5ST_BASE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x01014010 पूर्ण, /* front */
-			अणु 0x15, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x16, 0x01011411 पूर्ण, /* CLFE */
-			अणु 0x17, 0x01016412 पूर्ण, /* surr */
-			अणु 0x18, 0x01a19c30 पूर्ण, /* mic-in */
-			अणु 0x19, 0x0121411f पूर्ण, /* HP */
-			अणु 0x1a, 0x01813031 पूर्ण, /* line-in */
-			अणु 0x1b, 0x02a19c40 पूर्ण, /* front-mic */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x01014010 }, /* front */
+			{ 0x15, 0x411111f0 }, /* N/A */
+			{ 0x16, 0x01011411 }, /* CLFE */
+			{ 0x17, 0x01016412 }, /* surr */
+			{ 0x18, 0x01a19c30 }, /* mic-in */
+			{ 0x19, 0x0121411f }, /* HP */
+			{ 0x1a, 0x01813031 }, /* line-in */
+			{ 0x1b, 0x02a19c40 }, /* front-mic */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
 			/* 0x1e is filled in below */
-			अणु 0x1f, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_5ST] = अणु
+			{ 0x1f, 0x411111f0 }, /* N/A */
+			{ }
+		}
+	},
+	[ALC880_FIXUP_5ST] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x411111f0 }, /* N/A */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_5ST_BASE,
-	पूर्ण,
-	[ALC880_FIXUP_5ST_DIG] = अणु
+	},
+	[ALC880_FIXUP_5ST_DIG] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x0144111e पूर्ण, /* SPDIF */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x0144111e }, /* SPDIF */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_5ST_BASE,
-	पूर्ण,
-	[ALC880_FIXUP_6ST_BASE] = अणु
+	},
+	[ALC880_FIXUP_6ST_BASE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x01014010 पूर्ण, /* front */
-			अणु 0x15, 0x01016412 पूर्ण, /* surr */
-			अणु 0x16, 0x01011411 पूर्ण, /* CLFE */
-			अणु 0x17, 0x01012414 पूर्ण, /* side */
-			अणु 0x18, 0x01a19c30 पूर्ण, /* mic-in */
-			अणु 0x19, 0x02a19c40 पूर्ण, /* front-mic */
-			अणु 0x1a, 0x01813031 पूर्ण, /* line-in */
-			अणु 0x1b, 0x0121411f पूर्ण, /* HP */
-			अणु 0x1c, 0x411111f0 पूर्ण, /* N/A */
-			अणु 0x1d, 0x411111f0 पूर्ण, /* N/A */
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x01014010 }, /* front */
+			{ 0x15, 0x01016412 }, /* surr */
+			{ 0x16, 0x01011411 }, /* CLFE */
+			{ 0x17, 0x01012414 }, /* side */
+			{ 0x18, 0x01a19c30 }, /* mic-in */
+			{ 0x19, 0x02a19c40 }, /* front-mic */
+			{ 0x1a, 0x01813031 }, /* line-in */
+			{ 0x1b, 0x0121411f }, /* HP */
+			{ 0x1c, 0x411111f0 }, /* N/A */
+			{ 0x1d, 0x411111f0 }, /* N/A */
 			/* 0x1e is filled in below */
-			अणु 0x1f, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC880_FIXUP_6ST] = अणु
+			{ 0x1f, 0x411111f0 }, /* N/A */
+			{ }
+		}
+	},
+	[ALC880_FIXUP_6ST] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x411111f0 पूर्ण, /* N/A */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x411111f0 }, /* N/A */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_6ST_BASE,
-	पूर्ण,
-	[ALC880_FIXUP_6ST_DIG] = अणु
+	},
+	[ALC880_FIXUP_6ST_DIG] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x0144111e पूर्ण, /* SPDIF */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x0144111e }, /* SPDIF */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC880_FIXUP_6ST_BASE,
-	पूर्ण,
-	[ALC880_FIXUP_6ST_AUTOMUTE] = अणु
+	},
+	[ALC880_FIXUP_6ST_AUTOMUTE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x0121401f पूर्ण, /* HP with jack detect */
-			अणु पूर्ण
-		पूर्ण,
-		.chained_beक्रमe = true,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x0121401f }, /* HP with jack detect */
+			{ }
+		},
+		.chained_before = true,
 		.chain_id = ALC880_FIXUP_6ST_BASE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc880_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc880_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1019, 0x0f69, "Coeus G610P", ALC880_FIXUP_W810),
 	SND_PCI_QUIRK(0x1043, 0x10c3, "ASUS W5A", ALC880_FIXUP_ASUS_W5A),
 	SND_PCI_QUIRK(0x1043, 0x1964, "ASUS Z71V", ALC880_FIXUP_Z71V),
@@ -1531,8 +1530,8 @@
 	/* Below is the copied entries from alc880_quirks.c.
 	 * It's not quite sure whether BIOS sets the correct pin-config table
 	 * on these machines, thus they are kept to be compatible with
-	 * the old अटल quirks.  Once when it's confirmed to work without
-	 * these overrides, it'd be better to हटाओ.
+	 * the old static quirks.  Once when it's confirmed to work without
+	 * these overrides, it'd be better to remove.
 	 */
 	SND_PCI_QUIRK(0x1019, 0xa880, "ECS", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x1019, 0xa884, "Acer APFV", ALC880_FIXUP_6ST),
@@ -1542,7 +1541,7 @@
 	SND_PCI_QUIRK(0x1025, 0x0087, "ULI", ALC880_FIXUP_6ST_DIG),
 	SND_PCI_QUIRK(0x1025, 0xe309, "ULI", ALC880_FIXUP_3ST_DIG),
 	SND_PCI_QUIRK(0x1025, 0xe310, "ULI", ALC880_FIXUP_3ST),
-	SND_PCI_QUIRK(0x1039, 0x1234, शून्य, ALC880_FIXUP_6ST_DIG),
+	SND_PCI_QUIRK(0x1039, 0x1234, NULL, ALC880_FIXUP_6ST_DIG),
 	SND_PCI_QUIRK(0x104d, 0x81a0, "Sony", ALC880_FIXUP_3ST),
 	SND_PCI_QUIRK(0x104d, 0x81d6, "Sony", ALC880_FIXUP_3ST),
 	SND_PCI_QUIRK(0x107b, 0x3032, "Gateway", ALC880_FIXUP_5ST),
@@ -1555,8 +1554,8 @@
 	SND_PCI_QUIRK(0x1565, 0x8202, "Biostar", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x1695, 0x400d, "EPoX", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x1695, 0x4012, "EPox EP-5LDA", ALC880_FIXUP_5ST_DIG),
-	SND_PCI_QUIRK(0x2668, 0x8086, शून्य, ALC880_FIXUP_6ST_DIG), /* broken BIOS */
-	SND_PCI_QUIRK(0x8086, 0x2668, शून्य, ALC880_FIXUP_6ST_DIG),
+	SND_PCI_QUIRK(0x2668, 0x8086, NULL, ALC880_FIXUP_6ST_DIG), /* broken BIOS */
+	SND_PCI_QUIRK(0x8086, 0x2668, NULL, ALC880_FIXUP_6ST_DIG),
 	SND_PCI_QUIRK(0x8086, 0xa100, "Intel mobo", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x8086, 0xd400, "Intel mobo", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x8086, 0xd401, "Intel mobo", ALC880_FIXUP_5ST_DIG),
@@ -1567,36 +1566,36 @@
 	SND_PCI_QUIRK(0x8086, 0xe400, "Intel mobo", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x8086, 0xe401, "Intel mobo", ALC880_FIXUP_5ST_DIG),
 	SND_PCI_QUIRK(0x8086, 0xe402, "Intel mobo", ALC880_FIXUP_5ST_DIG),
-	/* शेष Intel */
+	/* default Intel */
 	SND_PCI_QUIRK_VENDOR(0x8086, "Intel mobo", ALC880_FIXUP_3ST),
 	SND_PCI_QUIRK(0xa0a0, 0x0560, "AOpen i915GMm-HFS", ALC880_FIXUP_5ST_DIG),
-	SND_PCI_QUIRK(0xe803, 0x1019, शून्य, ALC880_FIXUP_6ST_DIG),
-	अणुपूर्ण
-पूर्ण;
+	SND_PCI_QUIRK(0xe803, 0x1019, NULL, ALC880_FIXUP_6ST_DIG),
+	{}
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc880_fixup_models[] = अणु
-	अणु.id = ALC880_FIXUP_3ST, .name = "3stack"पूर्ण,
-	अणु.id = ALC880_FIXUP_3ST_DIG, .name = "3stack-digout"पूर्ण,
-	अणु.id = ALC880_FIXUP_5ST, .name = "5stack"पूर्ण,
-	अणु.id = ALC880_FIXUP_5ST_DIG, .name = "5stack-digout"पूर्ण,
-	अणु.id = ALC880_FIXUP_6ST, .name = "6stack"पूर्ण,
-	अणु.id = ALC880_FIXUP_6ST_DIG, .name = "6stack-digout"पूर्ण,
-	अणु.id = ALC880_FIXUP_6ST_AUTOMUTE, .name = "6stack-automute"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_model_fixup alc880_fixup_models[] = {
+	{.id = ALC880_FIXUP_3ST, .name = "3stack"},
+	{.id = ALC880_FIXUP_3ST_DIG, .name = "3stack-digout"},
+	{.id = ALC880_FIXUP_5ST, .name = "5stack"},
+	{.id = ALC880_FIXUP_5ST_DIG, .name = "5stack-digout"},
+	{.id = ALC880_FIXUP_6ST, .name = "6stack"},
+	{.id = ALC880_FIXUP_6ST_DIG, .name = "6stack-digout"},
+	{.id = ALC880_FIXUP_6ST_AUTOMUTE, .name = "6stack-automute"},
+	{}
+};
 
 
 /*
- * OK, here we have finally the patch क्रम ALC880
+ * OK, here we have finally the patch for ALC880
  */
-अटल पूर्णांक patch_alc880(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc880(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x0b);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
 	spec->gen.need_dac_fix = 1;
@@ -1610,41 +1609,41 @@
 		       alc880_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc880_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc880_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog) अणु
+	if (!spec->gen.no_analog) {
 		err = set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 
 /*
  * ALC260 support
  */
-अटल पूर्णांक alc260_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc260_ignore[] = अणु 0x17, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc260_ssids[] = अणु 0x10, 0x15, 0x0f, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, alc260_ignore, alc260_ssids);
-पूर्ण
+static int alc260_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc260_ignore[] = { 0x17, 0 };
+	static const hda_nid_t alc260_ssids[] = { 0x10, 0x15, 0x0f, 0 };
+	return alc_parse_auto_config(codec, alc260_ignore, alc260_ssids);
+}
 
 /*
  * Pin config fixes
  */
-क्रमागत अणु
+enum {
 	ALC260_FIXUP_HP_DC5750,
 	ALC260_FIXUP_HP_PIN_0F,
 	ALC260_FIXUP_COEF,
@@ -1656,163 +1655,163 @@
 	ALC260_FIXUP_FSC_S7020,
 	ALC260_FIXUP_FSC_S7020_JWSE,
 	ALC260_FIXUP_VAIO_PINS,
-पूर्ण;
+};
 
-अटल व्योम alc260_gpio1_स्वतःmute(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc260_gpio1_automute(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_gpio_data(codec, 0x01, spec->gen.hp_jack_present);
-पूर्ण
+}
 
-अटल व्योम alc260_fixup_gpio1_toggle(काष्ठा hda_codec *codec,
-				      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PROBE) अणु
+static void alc260_fixup_gpio1_toggle(struct hda_codec *codec,
+				      const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PROBE) {
 		/* although the machine has only one output pin, we need to
 		 * toggle GPIO1 according to the jack state
 		 */
-		spec->gen.स्वतःmute_hook = alc260_gpio1_स्वतःmute;
+		spec->gen.automute_hook = alc260_gpio1_automute;
 		spec->gen.detect_hp = 1;
-		spec->gen.स्वतःmute_speaker = 1;
-		spec->gen.स्वतःcfg.hp_pins[0] = 0x0f; /* copy it क्रम स्वतःmute */
+		spec->gen.automute_speaker = 1;
+		spec->gen.autocfg.hp_pins[0] = 0x0f; /* copy it for automute */
 		snd_hda_jack_detect_enable_callback(codec, 0x0f,
-						    snd_hda_gen_hp_स्वतःmute);
+						    snd_hda_gen_hp_automute);
 		alc_setup_gpio(codec, 0x01);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc260_fixup_kn1(काष्ठा hda_codec *codec,
-			     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अटल स्थिर काष्ठा hda_pपूर्णांकbl pincfgs[] = अणु
-		अणु 0x0f, 0x02214000 पूर्ण, /* HP/speaker */
-		अणु 0x12, 0x90a60160 पूर्ण, /* पूर्णांक mic */
-		अणु 0x13, 0x02a19000 पूर्ण, /* ext mic */
-		अणु 0x18, 0x01446000 पूर्ण, /* SPDIF out */
+static void alc260_fixup_kn1(struct hda_codec *codec,
+			     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	static const struct hda_pintbl pincfgs[] = {
+		{ 0x0f, 0x02214000 }, /* HP/speaker */
+		{ 0x12, 0x90a60160 }, /* int mic */
+		{ 0x13, 0x02a19000 }, /* ext mic */
+		{ 0x18, 0x01446000 }, /* SPDIF out */
 		/* disable bogus I/O pins */
-		अणु 0x10, 0x411111f0 पूर्ण,
-		अणु 0x11, 0x411111f0 पूर्ण,
-		अणु 0x14, 0x411111f0 पूर्ण,
-		अणु 0x15, 0x411111f0 पूर्ण,
-		अणु 0x16, 0x411111f0 पूर्ण,
-		अणु 0x17, 0x411111f0 पूर्ण,
-		अणु 0x19, 0x411111f0 पूर्ण,
-		अणु पूर्ण
-	पूर्ण;
+		{ 0x10, 0x411111f0 },
+		{ 0x11, 0x411111f0 },
+		{ 0x14, 0x411111f0 },
+		{ 0x15, 0x411111f0 },
+		{ 0x16, 0x411111f0 },
+		{ 0x17, 0x411111f0 },
+		{ 0x19, 0x411111f0 },
+		{ }
+	};
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_apply_pincfgs(codec, pincfgs);
 		spec->init_amp = ALC_INIT_NONE;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc260_fixup_fsc_s7020(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+static void alc260_fixup_fsc_s7020(struct hda_codec *codec,
+				   const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->init_amp = ALC_INIT_NONE;
-पूर्ण
+}
 
-अटल व्योम alc260_fixup_fsc_s7020_jwse(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc260_fixup_fsc_s7020_jwse(struct hda_codec *codec,
+				   const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->gen.add_jack_modes = 1;
 		spec->gen.hp_mic = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा hda_fixup alc260_fixups[] = अणु
-	[ALC260_FIXUP_HP_DC5750] = अणु
+static const struct hda_fixup alc260_fixups[] = {
+	[ALC260_FIXUP_HP_DC5750] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x11, 0x90130110 पूर्ण, /* speaker */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC260_FIXUP_HP_PIN_0F] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x11, 0x90130110 }, /* speaker */
+			{ }
+		}
+	},
+	[ALC260_FIXUP_HP_PIN_0F] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x0f, 0x01214000 पूर्ण, /* HP */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC260_FIXUP_COEF] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x0f, 0x01214000 }, /* HP */
+			{ }
+		}
+	},
+	[ALC260_FIXUP_COEF] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x1a, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x1a, AC_VERB_SET_PROC_COEF,  0x3040 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC260_FIXUP_GPIO1] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x1a, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x1a, AC_VERB_SET_PROC_COEF,  0x3040 },
+			{ }
+		},
+	},
+	[ALC260_FIXUP_GPIO1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio1,
-	पूर्ण,
-	[ALC260_FIXUP_GPIO1_TOGGLE] = अणु
+	},
+	[ALC260_FIXUP_GPIO1_TOGGLE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc260_fixup_gpio1_toggle,
 		.chained = true,
 		.chain_id = ALC260_FIXUP_HP_PIN_0F,
-	पूर्ण,
-	[ALC260_FIXUP_REPLACER] = अणु
+	},
+	[ALC260_FIXUP_REPLACER] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x1a, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x1a, AC_VERB_SET_PROC_COEF,  0x3050 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x1a, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x1a, AC_VERB_SET_PROC_COEF,  0x3050 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC260_FIXUP_GPIO1_TOGGLE,
-	पूर्ण,
-	[ALC260_FIXUP_HP_B1900] = अणु
+	},
+	[ALC260_FIXUP_HP_B1900] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc260_fixup_gpio1_toggle,
 		.chained = true,
 		.chain_id = ALC260_FIXUP_COEF,
-	पूर्ण,
-	[ALC260_FIXUP_KN1] = अणु
+	},
+	[ALC260_FIXUP_KN1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc260_fixup_kn1,
-	पूर्ण,
-	[ALC260_FIXUP_FSC_S7020] = अणु
+	},
+	[ALC260_FIXUP_FSC_S7020] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc260_fixup_fsc_s7020,
-	पूर्ण,
-	[ALC260_FIXUP_FSC_S7020_JWSE] = अणु
+	},
+	[ALC260_FIXUP_FSC_S7020_JWSE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc260_fixup_fsc_s7020_jwse,
 		.chained = true,
 		.chain_id = ALC260_FIXUP_FSC_S7020,
-	पूर्ण,
-	[ALC260_FIXUP_VAIO_PINS] = अणु
+	},
+	[ALC260_FIXUP_VAIO_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* Pin configs are missing completely on some VAIOs */
-			अणु 0x0f, 0x01211020 पूर्ण,
-			अणु 0x10, 0x0001003f पूर्ण,
-			अणु 0x11, 0x411111f0 पूर्ण,
-			अणु 0x12, 0x01a15930 पूर्ण,
-			अणु 0x13, 0x411111f0 पूर्ण,
-			अणु 0x14, 0x411111f0 पूर्ण,
-			अणु 0x15, 0x411111f0 पूर्ण,
-			अणु 0x16, 0x411111f0 पूर्ण,
-			अणु 0x17, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x411111f0 पूर्ण,
-			अणु 0x19, 0x411111f0 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+			{ 0x0f, 0x01211020 },
+			{ 0x10, 0x0001003f },
+			{ 0x11, 0x411111f0 },
+			{ 0x12, 0x01a15930 },
+			{ 0x13, 0x411111f0 },
+			{ 0x14, 0x411111f0 },
+			{ 0x15, 0x411111f0 },
+			{ 0x16, 0x411111f0 },
+			{ 0x17, 0x411111f0 },
+			{ 0x18, 0x411111f0 },
+			{ 0x19, 0x411111f0 },
+			{ }
+		}
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc260_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc260_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1025, 0x007b, "Acer C20x", ALC260_FIXUP_GPIO1),
 	SND_PCI_QUIRK(0x1025, 0x007f, "Acer Aspire 9500", ALC260_FIXUP_COEF),
 	SND_PCI_QUIRK(0x1025, 0x008f, "Acer", ALC260_FIXUP_GPIO1),
@@ -1825,30 +1824,30 @@
 	SND_PCI_QUIRK(0x152d, 0x0729, "Quanta KN1", ALC260_FIXUP_KN1),
 	SND_PCI_QUIRK(0x161f, 0x2057, "Replacer 672V", ALC260_FIXUP_REPLACER),
 	SND_PCI_QUIRK(0x1631, 0xc017, "PB V7900", ALC260_FIXUP_COEF),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc260_fixup_models[] = अणु
-	अणु.id = ALC260_FIXUP_GPIO1, .name = "gpio1"पूर्ण,
-	अणु.id = ALC260_FIXUP_COEF, .name = "coef"पूर्ण,
-	अणु.id = ALC260_FIXUP_FSC_S7020, .name = "fujitsu"पूर्ण,
-	अणु.id = ALC260_FIXUP_FSC_S7020_JWSE, .name = "fujitsu-jwse"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_model_fixup alc260_fixup_models[] = {
+	{.id = ALC260_FIXUP_GPIO1, .name = "gpio1"},
+	{.id = ALC260_FIXUP_COEF, .name = "coef"},
+	{.id = ALC260_FIXUP_FSC_S7020, .name = "fujitsu"},
+	{.id = ALC260_FIXUP_FSC_S7020_JWSE, .name = "fujitsu-jwse"},
+	{}
+};
 
 /*
  */
-अटल पूर्णांक patch_alc260(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc260(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x07);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
-	/* as quite a few machines require HP amp क्रम speaker outमाला_दो,
+	/* as quite a few machines require HP amp for speaker outputs,
 	 * it's easier to enable it unconditionally; even if it's unneeded,
 	 * it's almost harmless.
 	 */
@@ -1863,25 +1862,25 @@
 			   alc260_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc260_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc260_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog) अणु
+	if (!spec->gen.no_analog) {
 		err = set_beep_amp(spec, 0x07, 0x05, HDA_INPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 
 /*
@@ -1889,17 +1888,17 @@
  *
  * ALC882 is almost identical with ALC880 but has cleaner and more flexible
  * configuration.  Each pin widget can choose any input DACs and a mixer.
- * Each ADC is connected from a mixer of all inमाला_दो.  This makes possible
+ * Each ADC is connected from a mixer of all inputs.  This makes possible
  * 6-channel independent captures.
  *
- * In addition, an independent DAC क्रम the multi-playback (not used in this
+ * In addition, an independent DAC for the multi-playback (not used in this
  * driver yet).
  */
 
 /*
  * Pin config fixes
  */
-क्रमागत अणु
+enum {
 	ALC882_FIXUP_ABIT_AW9D_MAX,
 	ALC882_FIXUP_LENOVO_Y530,
 	ALC882_FIXUP_PB_M5210,
@@ -1939,526 +1938,526 @@
 	ALC1220_FIXUP_CLEVO_PB51ED_PINS,
 	ALC887_FIXUP_ASUS_AUDIO,
 	ALC887_FIXUP_ASUS_HMIC,
-पूर्ण;
+};
 
-अटल व्योम alc889_fixup_coef(काष्ठा hda_codec *codec,
-			      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action != HDA_FIXUP_ACT_INIT)
-		वापस;
+static void alc889_fixup_coef(struct hda_codec *codec,
+			      const struct hda_fixup *fix, int action)
+{
+	if (action != HDA_FIXUP_ACT_INIT)
+		return;
 	alc_update_coef_idx(codec, 7, 0, 0x2030);
-पूर्ण
+}
 
 /* set up GPIO at initialization */
-अटल व्योम alc885_fixup_macpro_gpio(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc885_fixup_macpro_gpio(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	spec->gpio_ग_लिखो_delay = true;
+	spec->gpio_write_delay = true;
 	alc_fixup_gpio3(codec, fix, action);
-पूर्ण
+}
 
-/* Fix the connection of some pins क्रम ALC889:
- * At least, Acer Aspire 5935 shows the connections to DAC3/4 करोn't
+/* Fix the connection of some pins for ALC889:
+ * At least, Acer Aspire 5935 shows the connections to DAC3/4 don't
  * work correctly (bko#42740)
  */
-अटल व्योम alc889_fixup_dac_route(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc889_fixup_dac_route(struct hda_codec *codec,
+				   const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		/* fake the connections during parsing the tree */
-		अटल स्थिर hda_nid_t conn1[] = अणु 0x0c, 0x0d पूर्ण;
-		अटल स्थिर hda_nid_t conn2[] = अणु 0x0e, 0x0f पूर्ण;
+		static const hda_nid_t conn1[] = { 0x0c, 0x0d };
+		static const hda_nid_t conn2[] = { 0x0e, 0x0f };
 		snd_hda_override_conn_list(codec, 0x14, ARRAY_SIZE(conn1), conn1);
 		snd_hda_override_conn_list(codec, 0x15, ARRAY_SIZE(conn1), conn1);
 		snd_hda_override_conn_list(codec, 0x18, ARRAY_SIZE(conn2), conn2);
 		snd_hda_override_conn_list(codec, 0x1a, ARRAY_SIZE(conn2), conn2);
-	पूर्ण अन्यथा अगर (action == HDA_FIXUP_ACT_PROBE) अणु
+	} else if (action == HDA_FIXUP_ACT_PROBE) {
 		/* restore the connections */
-		अटल स्थिर hda_nid_t conn[] = अणु 0x0c, 0x0d, 0x0e, 0x0f, 0x26 पूर्ण;
+		static const hda_nid_t conn[] = { 0x0c, 0x0d, 0x0e, 0x0f, 0x26 };
 		snd_hda_override_conn_list(codec, 0x14, ARRAY_SIZE(conn), conn);
 		snd_hda_override_conn_list(codec, 0x15, ARRAY_SIZE(conn), conn);
 		snd_hda_override_conn_list(codec, 0x18, ARRAY_SIZE(conn), conn);
 		snd_hda_override_conn_list(codec, 0x1a, ARRAY_SIZE(conn), conn);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Set VREF on HP pin */
-अटल व्योम alc889_fixup_mbp_vref(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t nids[] = अणु 0x14, 0x15, 0x19 पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक i;
+static void alc889_fixup_mbp_vref(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t nids[] = { 0x14, 0x15, 0x19 };
+	struct alc_spec *spec = codec->spec;
+	int i;
 
-	अगर (action != HDA_FIXUP_ACT_INIT)
-		वापस;
-	क्रम (i = 0; i < ARRAY_SIZE(nids); i++) अणु
-		अचिन्हित पूर्णांक val = snd_hda_codec_get_pincfg(codec, nids[i]);
-		अगर (get_defcfg_device(val) != AC_JACK_HP_OUT)
-			जारी;
+	if (action != HDA_FIXUP_ACT_INIT)
+		return;
+	for (i = 0; i < ARRAY_SIZE(nids); i++) {
+		unsigned int val = snd_hda_codec_get_pincfg(codec, nids[i]);
+		if (get_defcfg_device(val) != AC_JACK_HP_OUT)
+			continue;
 		val = snd_hda_codec_get_pin_target(codec, nids[i]);
 		val |= AC_PINCTL_VREF_80;
 		snd_hda_set_pin_ctl(codec, nids[i], val);
-		spec->gen.keep_vref_in_स्वतःmute = 1;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		spec->gen.keep_vref_in_automute = 1;
+		break;
+	}
+}
 
-अटल व्योम alc889_fixup_mac_pins(काष्ठा hda_codec *codec,
-				  स्थिर hda_nid_t *nids, पूर्णांक num_nids)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक i;
+static void alc889_fixup_mac_pins(struct hda_codec *codec,
+				  const hda_nid_t *nids, int num_nids)
+{
+	struct alc_spec *spec = codec->spec;
+	int i;
 
-	क्रम (i = 0; i < num_nids; i++) अणु
-		अचिन्हित पूर्णांक val;
+	for (i = 0; i < num_nids; i++) {
+		unsigned int val;
 		val = snd_hda_codec_get_pin_target(codec, nids[i]);
 		val |= AC_PINCTL_VREF_50;
 		snd_hda_set_pin_ctl(codec, nids[i], val);
-	पूर्ण
-	spec->gen.keep_vref_in_स्वतःmute = 1;
-पूर्ण
+	}
+	spec->gen.keep_vref_in_automute = 1;
+}
 
 /* Set VREF on speaker pins on imac91 */
-अटल व्योम alc889_fixup_imac91_vref(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t nids[] = अणु 0x18, 0x1a पूर्ण;
+static void alc889_fixup_imac91_vref(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t nids[] = { 0x18, 0x1a };
 
-	अगर (action == HDA_FIXUP_ACT_INIT)
+	if (action == HDA_FIXUP_ACT_INIT)
 		alc889_fixup_mac_pins(codec, nids, ARRAY_SIZE(nids));
-पूर्ण
+}
 
 /* Set VREF on speaker pins on mba11 */
-अटल व्योम alc889_fixup_mba11_vref(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t nids[] = अणु 0x18 पूर्ण;
+static void alc889_fixup_mba11_vref(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t nids[] = { 0x18 };
 
-	अगर (action == HDA_FIXUP_ACT_INIT)
+	if (action == HDA_FIXUP_ACT_INIT)
 		alc889_fixup_mac_pins(codec, nids, ARRAY_SIZE(nids));
-पूर्ण
+}
 
 /* Set VREF on speaker pins on mba21 */
-अटल व्योम alc889_fixup_mba21_vref(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t nids[] = अणु 0x18, 0x19 पूर्ण;
+static void alc889_fixup_mba21_vref(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t nids[] = { 0x18, 0x19 };
 
-	अगर (action == HDA_FIXUP_ACT_INIT)
+	if (action == HDA_FIXUP_ACT_INIT)
 		alc889_fixup_mac_pins(codec, nids, ARRAY_SIZE(nids));
-पूर्ण
+}
 
 /* Don't take HP output as primary
- * Strangely, the speaker output करोesn't work on Vaio Z and some Vaio
- * all-in-one desktop PCs (क्रम example VGC-LN51JGB) through DAC 0x05
+ * Strangely, the speaker output doesn't work on Vaio Z and some Vaio
+ * all-in-one desktop PCs (for example VGC-LN51JGB) through DAC 0x05
  */
-अटल व्योम alc882_fixup_no_primary_hp(काष्ठा hda_codec *codec,
-				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc882_fixup_no_primary_hp(struct hda_codec *codec,
+				       const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->gen.no_primary_hp = 1;
 		spec->gen.no_multi_io = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc_fixup_bass_chmap(काष्ठा hda_codec *codec,
-				 स्थिर काष्ठा hda_fixup *fix, पूर्णांक action);
+static void alc_fixup_bass_chmap(struct hda_codec *codec,
+				 const struct hda_fixup *fix, int action);
 
-/* For dual-codec configuration, we need to disable some features to aव्योम
+/* For dual-codec configuration, we need to disable some features to avoid
  * conflicts of kctls and PCM streams
  */
-अटल व्योम alc_fixup_dual_codecs(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_dual_codecs(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
 	/* disable vmaster */
 	spec->gen.suppress_vmaster = 1;
-	/* स्वतः-mute and स्वतः-mic चयन करोn't work with multiple codecs */
-	spec->gen.suppress_स्वतः_mute = 1;
-	spec->gen.suppress_स्वतः_mic = 1;
+	/* auto-mute and auto-mic switch don't work with multiple codecs */
+	spec->gen.suppress_auto_mute = 1;
+	spec->gen.suppress_auto_mic = 1;
 	/* disable aamix as well */
 	spec->gen.mixer_nid = 0;
-	/* add location prefix to aव्योम conflicts */
-	codec->क्रमce_pin_prefix = 1;
-पूर्ण
+	/* add location prefix to avoid conflicts */
+	codec->force_pin_prefix = 1;
+}
 
-अटल व्योम नाम_ctl(काष्ठा hda_codec *codec, स्थिर अक्षर *oldname,
-		       स्थिर अक्षर *newname)
-अणु
-	काष्ठा snd_kcontrol *kctl;
+static void rename_ctl(struct hda_codec *codec, const char *oldname,
+		       const char *newname)
+{
+	struct snd_kcontrol *kctl;
 
 	kctl = snd_hda_find_mixer_ctl(codec, oldname);
-	अगर (kctl)
-		म_नकल(kctl->id.name, newname);
-पूर्ण
+	if (kctl)
+		strcpy(kctl->id.name, newname);
+}
 
-अटल व्योम alc1220_fixup_gb_dual_codecs(काष्ठा hda_codec *codec,
-					 स्थिर काष्ठा hda_fixup *fix,
-					 पूर्णांक action)
-अणु
+static void alc1220_fixup_gb_dual_codecs(struct hda_codec *codec,
+					 const struct hda_fixup *fix,
+					 int action)
+{
 	alc_fixup_dual_codecs(codec, fix, action);
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
-		/* override card दीर्घname to provide a unique UCM profile */
-		म_नकल(codec->card->दीर्घname, "HDAudio-Gigabyte-ALC1220DualCodecs");
-		अवरोध;
-	हाल HDA_FIXUP_ACT_BUILD:
-		/* नाम Capture controls depending on the codec */
-		नाम_ctl(codec, "Capture Volume",
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
+		/* override card longname to provide a unique UCM profile */
+		strcpy(codec->card->longname, "HDAudio-Gigabyte-ALC1220DualCodecs");
+		break;
+	case HDA_FIXUP_ACT_BUILD:
+		/* rename Capture controls depending on the codec */
+		rename_ctl(codec, "Capture Volume",
 			   codec->addr == 0 ?
 			   "Rear-Panel Capture Volume" :
 			   "Front-Panel Capture Volume");
-		नाम_ctl(codec, "Capture Switch",
+		rename_ctl(codec, "Capture Switch",
 			   codec->addr == 0 ?
 			   "Rear-Panel Capture Switch" :
 			   "Front-Panel Capture Switch");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc1220_fixup_clevo_p950(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix,
-				     पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t conn1[] = अणु 0x0c पूर्ण;
+static void alc1220_fixup_clevo_p950(struct hda_codec *codec,
+				     const struct hda_fixup *fix,
+				     int action)
+{
+	static const hda_nid_t conn1[] = { 0x0c };
 
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
 
 	alc_update_coef_idx(codec, 0x7, 0, 0x3c3);
-	/* We thereक्रमe want to make sure 0x14 (front headphone) and
+	/* We therefore want to make sure 0x14 (front headphone) and
 	 * 0x1b (speakers) use the stereo DAC 0x02
 	 */
 	snd_hda_override_conn_list(codec, 0x14, ARRAY_SIZE(conn1), conn1);
 	snd_hda_override_conn_list(codec, 0x1b, ARRAY_SIZE(conn1), conn1);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_headset_mode_no_hp_mic(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action);
+static void alc_fixup_headset_mode_no_hp_mic(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action);
 
-अटल व्योम alc1220_fixup_clevo_pb51ed(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix,
-				     पूर्णांक action)
-अणु
+static void alc1220_fixup_clevo_pb51ed(struct hda_codec *codec,
+				     const struct hda_fixup *fix,
+				     int action)
+{
 	alc1220_fixup_clevo_p950(codec, fix, action);
 	alc_fixup_headset_mode_no_hp_mic(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc887_asus_hp_स्वतःmute_hook(काष्ठा hda_codec *codec,
-					 काष्ठा hda_jack_callback *jack)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक vref;
+static void alc887_asus_hp_automute_hook(struct hda_codec *codec,
+					 struct hda_jack_callback *jack)
+{
+	struct alc_spec *spec = codec->spec;
+	unsigned int vref;
 
-	snd_hda_gen_hp_स्वतःmute(codec, jack);
+	snd_hda_gen_hp_automute(codec, jack);
 
-	अगर (spec->gen.hp_jack_present)
+	if (spec->gen.hp_jack_present)
 		vref = AC_PINCTL_VREF_80;
-	अन्यथा
+	else
 		vref = AC_PINCTL_VREF_HIZ;
 	snd_hda_set_pin_ctl(codec, 0x19, PIN_HP | vref);
-पूर्ण
+}
 
-अटल व्योम alc887_fixup_asus_jack(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action != HDA_FIXUP_ACT_PROBE)
-		वापस;
+static void alc887_fixup_asus_jack(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action != HDA_FIXUP_ACT_PROBE)
+		return;
 	snd_hda_set_pin_ctl_cache(codec, 0x1b, PIN_HP);
-	spec->gen.hp_स्वतःmute_hook = alc887_asus_hp_स्वतःmute_hook;
-पूर्ण
+	spec->gen.hp_automute_hook = alc887_asus_hp_automute_hook;
+}
 
-अटल स्थिर काष्ठा hda_fixup alc882_fixups[] = अणु
-	[ALC882_FIXUP_ABIT_AW9D_MAX] = अणु
+static const struct hda_fixup alc882_fixups[] = {
+	[ALC882_FIXUP_ABIT_AW9D_MAX] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x01080104 पूर्ण, /* side */
-			अणु 0x16, 0x01011012 पूर्ण, /* rear */
-			अणु 0x17, 0x01016011 पूर्ण, /* clfe */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC882_FIXUP_LENOVO_Y530] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x01080104 }, /* side */
+			{ 0x16, 0x01011012 }, /* rear */
+			{ 0x17, 0x01016011 }, /* clfe */
+			{ }
+		}
+	},
+	[ALC882_FIXUP_LENOVO_Y530] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x99130112 पूर्ण, /* rear पूर्णांक speakers */
-			अणु 0x16, 0x99130111 पूर्ण, /* subwoofer */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC882_FIXUP_PB_M5210] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x99130112 }, /* rear int speakers */
+			{ 0x16, 0x99130111 }, /* subwoofer */
+			{ }
+		}
+	},
+	[ALC882_FIXUP_PB_M5210] = {
 		.type = HDA_FIXUP_PINCTLS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, PIN_VREF50 पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC882_FIXUP_ACER_ASPIRE_7736] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, PIN_VREF50 },
+			{}
+		}
+	},
+	[ALC882_FIXUP_ACER_ASPIRE_7736] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_sku_ignore,
-	पूर्ण,
-	[ALC882_FIXUP_ASUS_W90V] = अणु
+	},
+	[ALC882_FIXUP_ASUS_W90V] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x99130110 पूर्ण, /* fix sequence क्रम CLFE */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC889_FIXUP_CD] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x99130110 }, /* fix sequence for CLFE */
+			{ }
+		}
+	},
+	[ALC889_FIXUP_CD] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1c, 0x993301f0 पूर्ण, /* CD */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC889_FIXUP_FRONT_HP_NO_PRESENCE] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1c, 0x993301f0 }, /* CD */
+			{ }
+		}
+	},
+	[ALC889_FIXUP_FRONT_HP_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x02214120 पूर्ण, /* Front HP jack is flaky, disable jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x02214120 }, /* Front HP jack is flaky, disable jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC889_FIXUP_CD,
-	पूर्ण,
-	[ALC889_FIXUP_VAIO_TT] = अणु
+	},
+	[ALC889_FIXUP_VAIO_TT] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x17, 0x90170111 पूर्ण, /* hidden surround speaker */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC888_FIXUP_EEE1601] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x17, 0x90170111 }, /* hidden surround speaker */
+			{ }
+		}
+	},
+	[ALC888_FIXUP_EEE1601] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x0b पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF,  0x0838 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC886_FIXUP_EAPD] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x0b },
+			{ 0x20, AC_VERB_SET_PROC_COEF,  0x0838 },
+			{ }
+		}
+	},
+	[ALC886_FIXUP_EAPD] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* change to EAPD mode */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x0068 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC882_FIXUP_EAPD] = अणु
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0068 },
+			{ }
+		}
+	},
+	[ALC882_FIXUP_EAPD] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* change to EAPD mode */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x3060 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC883_FIXUP_EAPD] = अणु
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3060 },
+			{ }
+		}
+	},
+	[ALC883_FIXUP_EAPD] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* change to EAPD mode */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x3070 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC883_FIXUP_ACER_EAPD] = अणु
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3070 },
+			{ }
+		}
+	},
+	[ALC883_FIXUP_ACER_EAPD] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* eanable EAPD on Acer laptops */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x3050 पूर्ण,
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC882_FIXUP_GPIO1] = अणु
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3050 },
+			{ }
+		}
+	},
+	[ALC882_FIXUP_GPIO1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio1,
-	पूर्ण,
-	[ALC882_FIXUP_GPIO2] = अणु
+	},
+	[ALC882_FIXUP_GPIO2] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio2,
-	पूर्ण,
-	[ALC882_FIXUP_GPIO3] = अणु
+	},
+	[ALC882_FIXUP_GPIO3] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio3,
-	पूर्ण,
-	[ALC882_FIXUP_ASUS_W2JC] = अणु
+	},
+	[ALC882_FIXUP_ASUS_W2JC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio1,
 		.chained = true,
 		.chain_id = ALC882_FIXUP_EAPD,
-	पूर्ण,
-	[ALC889_FIXUP_COEF] = अणु
+	},
+	[ALC889_FIXUP_COEF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_coef,
-	पूर्ण,
-	[ALC882_FIXUP_ACER_ASPIRE_4930G] = अणु
+	},
+	[ALC882_FIXUP_ACER_ASPIRE_4930G] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x99130111 पूर्ण, /* CLFE speaker */
-			अणु 0x17, 0x99130112 पूर्ण, /* surround speaker */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x99130111 }, /* CLFE speaker */
+			{ 0x17, 0x99130112 }, /* surround speaker */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC882_FIXUP_GPIO1,
-	पूर्ण,
-	[ALC882_FIXUP_ACER_ASPIRE_8930G] = अणु
+	},
+	[ALC882_FIXUP_ACER_ASPIRE_8930G] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x99130111 पूर्ण, /* CLFE speaker */
-			अणु 0x1b, 0x99130112 पूर्ण, /* surround speaker */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x99130111 }, /* CLFE speaker */
+			{ 0x1b, 0x99130112 }, /* surround speaker */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC882_FIXUP_ASPIRE_8930G_VERBS,
-	पूर्ण,
-	[ALC882_FIXUP_ASPIRE_8930G_VERBS] = अणु
-		/* additional init verbs क्रम Acer Aspire 8930G */
+	},
+	[ALC882_FIXUP_ASPIRE_8930G_VERBS] = {
+		/* additional init verbs for Acer Aspire 8930G */
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* Enable all DACs */
 			/* DAC DISABLE/MUTE 1? */
 			/*  setting bits 1-5 disables DAC nids 0x02-0x06
 			 *  apparently. Init=0x38 */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x03 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x0000 पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x03 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0000 },
 			/* DAC DISABLE/MUTE 2? */
 			/*  some bit here disables the other DACs.
 			 *  Init=0x4900 */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x08 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x0000 पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x08 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0000 },
 			/* DMIC fix
 			 * This laptop has a stereo digital microphone.
 			 * The mics are only 1cm apart which makes the stereo
 			 * useless. However, either the mic or the ALC889
-			 * makes the संकेत become a dअगरference/sum संकेत
+			 * makes the signal become a difference/sum signal
 			 * instead of standard stereo, which is annoying.
 			 * So instead we flip this bit which makes the
-			 * codec replicate the sum संकेत to both channels,
-			 * turning it पूर्णांकo a normal mono mic.
+			 * codec replicate the sum signal to both channels,
+			 * turning it into a normal mono mic.
 			 */
 			/* DMIC_CONTROL? Init value = 0x0001 */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x0b पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x0003 पूर्ण,
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x3050 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x0b },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x0003 },
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3050 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC882_FIXUP_GPIO1,
-	पूर्ण,
-	[ALC885_FIXUP_MACPRO_GPIO] = अणु
+	},
+	[ALC885_FIXUP_MACPRO_GPIO] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc885_fixup_macpro_gpio,
-	पूर्ण,
-	[ALC889_FIXUP_DAC_ROUTE] = अणु
+	},
+	[ALC889_FIXUP_DAC_ROUTE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_dac_route,
-	पूर्ण,
-	[ALC889_FIXUP_MBP_VREF] = अणु
+	},
+	[ALC889_FIXUP_MBP_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_mbp_vref,
 		.chained = true,
 		.chain_id = ALC882_FIXUP_GPIO1,
-	पूर्ण,
-	[ALC889_FIXUP_IMAC91_VREF] = अणु
+	},
+	[ALC889_FIXUP_IMAC91_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_imac91_vref,
 		.chained = true,
 		.chain_id = ALC882_FIXUP_GPIO1,
-	पूर्ण,
-	[ALC889_FIXUP_MBA11_VREF] = अणु
+	},
+	[ALC889_FIXUP_MBA11_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_mba11_vref,
 		.chained = true,
 		.chain_id = ALC889_FIXUP_MBP_VREF,
-	पूर्ण,
-	[ALC889_FIXUP_MBA21_VREF] = अणु
+	},
+	[ALC889_FIXUP_MBA21_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_mba21_vref,
 		.chained = true,
 		.chain_id = ALC889_FIXUP_MBP_VREF,
-	पूर्ण,
-	[ALC889_FIXUP_MP11_VREF] = अणु
+	},
+	[ALC889_FIXUP_MP11_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_mba11_vref,
 		.chained = true,
 		.chain_id = ALC885_FIXUP_MACPRO_GPIO,
-	पूर्ण,
-	[ALC889_FIXUP_MP41_VREF] = अणु
+	},
+	[ALC889_FIXUP_MP41_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc889_fixup_mbp_vref,
 		.chained = true,
 		.chain_id = ALC885_FIXUP_MACPRO_GPIO,
-	पूर्ण,
-	[ALC882_FIXUP_INV_DMIC] = अणु
+	},
+	[ALC882_FIXUP_INV_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
-	पूर्ण,
-	[ALC882_FIXUP_NO_PRIMARY_HP] = अणु
+	},
+	[ALC882_FIXUP_NO_PRIMARY_HP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc882_fixup_no_primary_hp,
-	पूर्ण,
-	[ALC887_FIXUP_ASUS_BASS] = अणु
+	},
+	[ALC887_FIXUP_ASUS_BASS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु0x16, 0x99130130पूर्ण, /* bass speaker */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{0x16, 0x99130130}, /* bass speaker */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC887_FIXUP_BASS_CHMAP,
-	पूर्ण,
-	[ALC887_FIXUP_BASS_CHMAP] = अणु
+	},
+	[ALC887_FIXUP_BASS_CHMAP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_bass_chmap,
-	पूर्ण,
-	[ALC1220_FIXUP_GB_DUAL_CODECS] = अणु
+	},
+	[ALC1220_FIXUP_GB_DUAL_CODECS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc1220_fixup_gb_dual_codecs,
-	पूर्ण,
-	[ALC1220_FIXUP_CLEVO_P950] = अणु
+	},
+	[ALC1220_FIXUP_CLEVO_P950] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc1220_fixup_clevo_p950,
-	पूर्ण,
-	[ALC1220_FIXUP_CLEVO_PB51ED] = अणु
+	},
+	[ALC1220_FIXUP_CLEVO_PB51ED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc1220_fixup_clevo_pb51ed,
-	पूर्ण,
-	[ALC1220_FIXUP_CLEVO_PB51ED_PINS] = अणु
+	},
+	[ALC1220_FIXUP_CLEVO_PB51ED_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC1220_FIXUP_CLEVO_PB51ED,
-	पूर्ण,
-	[ALC887_FIXUP_ASUS_AUDIO] = अणु
+	},
+	[ALC887_FIXUP_ASUS_AUDIO] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x02a14150 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x19, 0x22219420 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC887_FIXUP_ASUS_HMIC] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x02a14150 }, /* use as headset mic, without its own jack detect */
+			{ 0x19, 0x22219420 },
+			{}
+		},
+	},
+	[ALC887_FIXUP_ASUS_HMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc887_fixup_asus_jack,
 		.chained = true,
 		.chain_id = ALC887_FIXUP_ASUS_AUDIO,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc882_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc882_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1025, 0x006c, "Acer Aspire 9810", ALC883_FIXUP_ACER_EAPD),
 	SND_PCI_QUIRK(0x1025, 0x0090, "Acer Aspire", ALC883_FIXUP_ACER_EAPD),
 	SND_PCI_QUIRK(0x1025, 0x0107, "Acer Aspire", ALC883_FIXUP_ACER_EAPD),
@@ -2566,102 +2565,102 @@
 	SND_PCI_QUIRK(0x161f, 0x2054, "Medion laptop", ALC883_FIXUP_EAPD),
 	SND_PCI_QUIRK(0x17aa, 0x3a0d, "Lenovo Y530", ALC882_FIXUP_LENOVO_Y530),
 	SND_PCI_QUIRK(0x8086, 0x0022, "DX58SO", ALC889_FIXUP_COEF),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc882_fixup_models[] = अणु
-	अणु.id = ALC882_FIXUP_ABIT_AW9D_MAX, .name = "abit-aw9d"पूर्ण,
-	अणु.id = ALC882_FIXUP_LENOVO_Y530, .name = "lenovo-y530"पूर्ण,
-	अणु.id = ALC882_FIXUP_ACER_ASPIRE_7736, .name = "acer-aspire-7736"पूर्ण,
-	अणु.id = ALC882_FIXUP_ASUS_W90V, .name = "asus-w90v"पूर्ण,
-	अणु.id = ALC889_FIXUP_CD, .name = "cd"पूर्ण,
-	अणु.id = ALC889_FIXUP_FRONT_HP_NO_PRESENCE, .name = "no-front-hp"पूर्ण,
-	अणु.id = ALC889_FIXUP_VAIO_TT, .name = "vaio-tt"पूर्ण,
-	अणु.id = ALC888_FIXUP_EEE1601, .name = "eee1601"पूर्ण,
-	अणु.id = ALC882_FIXUP_EAPD, .name = "alc882-eapd"पूर्ण,
-	अणु.id = ALC883_FIXUP_EAPD, .name = "alc883-eapd"पूर्ण,
-	अणु.id = ALC882_FIXUP_GPIO1, .name = "gpio1"पूर्ण,
-	अणु.id = ALC882_FIXUP_GPIO2, .name = "gpio2"पूर्ण,
-	अणु.id = ALC882_FIXUP_GPIO3, .name = "gpio3"पूर्ण,
-	अणु.id = ALC889_FIXUP_COEF, .name = "alc889-coef"पूर्ण,
-	अणु.id = ALC882_FIXUP_ASUS_W2JC, .name = "asus-w2jc"पूर्ण,
-	अणु.id = ALC882_FIXUP_ACER_ASPIRE_4930G, .name = "acer-aspire-4930g"पूर्ण,
-	अणु.id = ALC882_FIXUP_ACER_ASPIRE_8930G, .name = "acer-aspire-8930g"पूर्ण,
-	अणु.id = ALC883_FIXUP_ACER_EAPD, .name = "acer-aspire"पूर्ण,
-	अणु.id = ALC885_FIXUP_MACPRO_GPIO, .name = "macpro-gpio"पूर्ण,
-	अणु.id = ALC889_FIXUP_DAC_ROUTE, .name = "dac-route"पूर्ण,
-	अणु.id = ALC889_FIXUP_MBP_VREF, .name = "mbp-vref"पूर्ण,
-	अणु.id = ALC889_FIXUP_IMAC91_VREF, .name = "imac91-vref"पूर्ण,
-	अणु.id = ALC889_FIXUP_MBA11_VREF, .name = "mba11-vref"पूर्ण,
-	अणु.id = ALC889_FIXUP_MBA21_VREF, .name = "mba21-vref"पूर्ण,
-	अणु.id = ALC889_FIXUP_MP11_VREF, .name = "mp11-vref"पूर्ण,
-	अणु.id = ALC889_FIXUP_MP41_VREF, .name = "mp41-vref"पूर्ण,
-	अणु.id = ALC882_FIXUP_INV_DMIC, .name = "inv-dmic"पूर्ण,
-	अणु.id = ALC882_FIXUP_NO_PRIMARY_HP, .name = "no-primary-hp"पूर्ण,
-	अणु.id = ALC887_FIXUP_ASUS_BASS, .name = "asus-bass"पूर्ण,
-	अणु.id = ALC1220_FIXUP_GB_DUAL_CODECS, .name = "dual-codecs"पूर्ण,
-	अणु.id = ALC1220_FIXUP_CLEVO_P950, .name = "clevo-p950"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_model_fixup alc882_fixup_models[] = {
+	{.id = ALC882_FIXUP_ABIT_AW9D_MAX, .name = "abit-aw9d"},
+	{.id = ALC882_FIXUP_LENOVO_Y530, .name = "lenovo-y530"},
+	{.id = ALC882_FIXUP_ACER_ASPIRE_7736, .name = "acer-aspire-7736"},
+	{.id = ALC882_FIXUP_ASUS_W90V, .name = "asus-w90v"},
+	{.id = ALC889_FIXUP_CD, .name = "cd"},
+	{.id = ALC889_FIXUP_FRONT_HP_NO_PRESENCE, .name = "no-front-hp"},
+	{.id = ALC889_FIXUP_VAIO_TT, .name = "vaio-tt"},
+	{.id = ALC888_FIXUP_EEE1601, .name = "eee1601"},
+	{.id = ALC882_FIXUP_EAPD, .name = "alc882-eapd"},
+	{.id = ALC883_FIXUP_EAPD, .name = "alc883-eapd"},
+	{.id = ALC882_FIXUP_GPIO1, .name = "gpio1"},
+	{.id = ALC882_FIXUP_GPIO2, .name = "gpio2"},
+	{.id = ALC882_FIXUP_GPIO3, .name = "gpio3"},
+	{.id = ALC889_FIXUP_COEF, .name = "alc889-coef"},
+	{.id = ALC882_FIXUP_ASUS_W2JC, .name = "asus-w2jc"},
+	{.id = ALC882_FIXUP_ACER_ASPIRE_4930G, .name = "acer-aspire-4930g"},
+	{.id = ALC882_FIXUP_ACER_ASPIRE_8930G, .name = "acer-aspire-8930g"},
+	{.id = ALC883_FIXUP_ACER_EAPD, .name = "acer-aspire"},
+	{.id = ALC885_FIXUP_MACPRO_GPIO, .name = "macpro-gpio"},
+	{.id = ALC889_FIXUP_DAC_ROUTE, .name = "dac-route"},
+	{.id = ALC889_FIXUP_MBP_VREF, .name = "mbp-vref"},
+	{.id = ALC889_FIXUP_IMAC91_VREF, .name = "imac91-vref"},
+	{.id = ALC889_FIXUP_MBA11_VREF, .name = "mba11-vref"},
+	{.id = ALC889_FIXUP_MBA21_VREF, .name = "mba21-vref"},
+	{.id = ALC889_FIXUP_MP11_VREF, .name = "mp11-vref"},
+	{.id = ALC889_FIXUP_MP41_VREF, .name = "mp41-vref"},
+	{.id = ALC882_FIXUP_INV_DMIC, .name = "inv-dmic"},
+	{.id = ALC882_FIXUP_NO_PRIMARY_HP, .name = "no-primary-hp"},
+	{.id = ALC887_FIXUP_ASUS_BASS, .name = "asus-bass"},
+	{.id = ALC1220_FIXUP_GB_DUAL_CODECS, .name = "dual-codecs"},
+	{.id = ALC1220_FIXUP_CLEVO_P950, .name = "clevo-p950"},
+	{}
+};
 
-अटल स्थिर काष्ठा snd_hda_pin_quirk alc882_pin_fixup_tbl[] = अणु
+static const struct snd_hda_pin_quirk alc882_pin_fixup_tbl[] = {
 	SND_HDA_PIN_QUIRK(0x10ec1220, 0x1043, "ASUS", ALC1220_FIXUP_CLEVO_P950,
-		अणु0x14, 0x01014010पूर्ण,
-		अणु0x15, 0x01011012पूर्ण,
-		अणु0x16, 0x01016011पूर्ण,
-		अणु0x18, 0x01a19040पूर्ण,
-		अणु0x19, 0x02a19050पूर्ण,
-		अणु0x1a, 0x0181304fपूर्ण,
-		अणु0x1b, 0x0221401fपूर्ण,
-		अणु0x1e, 0x01456130पूर्ण),
+		{0x14, 0x01014010},
+		{0x15, 0x01011012},
+		{0x16, 0x01016011},
+		{0x18, 0x01a19040},
+		{0x19, 0x02a19050},
+		{0x1a, 0x0181304f},
+		{0x1b, 0x0221401f},
+		{0x1e, 0x01456130}),
 	SND_HDA_PIN_QUIRK(0x10ec1220, 0x1462, "MS-7C35", ALC1220_FIXUP_CLEVO_P950,
-		अणु0x14, 0x01015010पूर्ण,
-		अणु0x15, 0x01011012पूर्ण,
-		अणु0x16, 0x01011011पूर्ण,
-		अणु0x18, 0x01a11040पूर्ण,
-		अणु0x19, 0x02a19050पूर्ण,
-		अणु0x1a, 0x0181104fपूर्ण,
-		अणु0x1b, 0x0221401fपूर्ण,
-		अणु0x1e, 0x01451130पूर्ण),
-	अणुपूर्ण
-पूर्ण;
+		{0x14, 0x01015010},
+		{0x15, 0x01011012},
+		{0x16, 0x01011011},
+		{0x18, 0x01a11040},
+		{0x19, 0x02a19050},
+		{0x1a, 0x0181104f},
+		{0x1b, 0x0221401f},
+		{0x1e, 0x01451130}),
+	{}
+};
 
 /*
- * BIOS स्वतः configuration
+ * BIOS auto configuration
  */
 /* almost identical with ALC880 parser... */
-अटल पूर्णांक alc882_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc882_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc882_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, alc882_ignore, alc882_ssids);
-पूर्ण
+static int alc882_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc882_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc882_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	return alc_parse_auto_config(codec, alc882_ignore, alc882_ssids);
+}
 
 /*
  */
-अटल पूर्णांक patch_alc882(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc882(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x0b);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0882:
-	हाल 0x10ec0885:
-	हाल 0x10ec0900:
-	हाल 0x10ec0b00:
-	हाल 0x10ec1220:
-		अवरोध;
-	शेष:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0882:
+	case 0x10ec0885:
+	case 0x10ec0900:
+	case 0x10ec0b00:
+	case 0x10ec1220:
+		break;
+	default:
 		/* ALC883 and variants */
 		alc_fix_pll_init(codec, 0x20, 0x0a, 10);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	alc_pre_init(codec);
 
@@ -2670,46 +2669,46 @@
 	snd_hda_pick_pin_fixup(codec, alc882_pin_fixup_tbl, alc882_fixups, true);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	alc_स्वतः_parse_customize_define(codec);
+	alc_auto_parse_customize_define(codec);
 
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x01;
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc882_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc882_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog && spec->gen.beep_nid) अणु
+	if (!spec->gen.no_analog && spec->gen.beep_nid) {
 		err = set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 
 /*
  * ALC262 support
  */
-अटल पूर्णांक alc262_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc262_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc262_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, alc262_ignore, alc262_ssids);
-पूर्ण
+static int alc262_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc262_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc262_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	return alc_parse_auto_config(codec, alc262_ignore, alc262_ssids);
+}
 
 /*
  * Pin config fixes
  */
-क्रमागत अणु
+enum {
 	ALC262_FIXUP_FSC_H270,
 	ALC262_FIXUP_FSC_S7110,
 	ALC262_FIXUP_HP_Z200,
@@ -2719,77 +2718,77 @@
 	ALC262_FIXUP_BENQ_T31,
 	ALC262_FIXUP_INV_DMIC,
 	ALC262_FIXUP_INTEL_BAYLEYBAY,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hda_fixup alc262_fixups[] = अणु
-	[ALC262_FIXUP_FSC_H270] = अणु
+static const struct hda_fixup alc262_fixups[] = {
+	[ALC262_FIXUP_FSC_H270] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0221142f पूर्ण, /* front HP */
-			अणु 0x1b, 0x0121141f पूर्ण, /* rear HP */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC262_FIXUP_FSC_S7110] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0221142f }, /* front HP */
+			{ 0x1b, 0x0121141f }, /* rear HP */
+			{ }
+		}
+	},
+	[ALC262_FIXUP_FSC_S7110] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x90170110 पूर्ण, /* speaker */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x90170110 }, /* speaker */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC262_FIXUP_BENQ,
-	पूर्ण,
-	[ALC262_FIXUP_HP_Z200] = अणु
+	},
+	[ALC262_FIXUP_HP_Z200] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x99130120 पूर्ण, /* पूर्णांकernal speaker */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC262_FIXUP_TYAN] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x99130120 }, /* internal speaker */
+			{ }
+		}
+	},
+	[ALC262_FIXUP_TYAN] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x1993e1f0 पूर्ण, /* पूर्णांक AUX */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC262_FIXUP_LENOVO_3000] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x1993e1f0 }, /* int AUX */
+			{ }
+		}
+	},
+	[ALC262_FIXUP_LENOVO_3000] = {
 		.type = HDA_FIXUP_PINCTLS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, PIN_VREF50 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, PIN_VREF50 },
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC262_FIXUP_BENQ,
-	पूर्ण,
-	[ALC262_FIXUP_BENQ] = अणु
+	},
+	[ALC262_FIXUP_BENQ] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x3070 पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC262_FIXUP_BENQ_T31] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3070 },
+			{}
+		}
+	},
+	[ALC262_FIXUP_BENQ_T31] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x07 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x3050 पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC262_FIXUP_INV_DMIC] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x07 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x3050 },
+			{}
+		}
+	},
+	[ALC262_FIXUP_INV_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
-	पूर्ण,
-	[ALC262_FIXUP_INTEL_BAYLEYBAY] = अणु
+	},
+	[ALC262_FIXUP_INTEL_BAYLEYBAY] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_no_depop_delay,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc262_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc262_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x103c, 0x170b, "HP Z200", ALC262_FIXUP_HP_Z200),
 	SND_PCI_QUIRK(0x10cf, 0x1397, "Fujitsu Lifebook S7110", ALC262_FIXUP_FSC_S7110),
 	SND_PCI_QUIRK(0x10cf, 0x142d, "Fujitsu Lifebook E8410", ALC262_FIXUP_BENQ),
@@ -2800,44 +2799,44 @@
 	SND_PCI_QUIRK(0x17ff, 0x0560, "Benq ED8", ALC262_FIXUP_BENQ),
 	SND_PCI_QUIRK(0x17ff, 0x058d, "Benq T31-16", ALC262_FIXUP_BENQ_T31),
 	SND_PCI_QUIRK(0x8086, 0x7270, "BayleyBay", ALC262_FIXUP_INTEL_BAYLEYBAY),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc262_fixup_models[] = अणु
-	अणु.id = ALC262_FIXUP_INV_DMIC, .name = "inv-dmic"पूर्ण,
-	अणु.id = ALC262_FIXUP_FSC_H270, .name = "fsc-h270"पूर्ण,
-	अणु.id = ALC262_FIXUP_FSC_S7110, .name = "fsc-s7110"पूर्ण,
-	अणु.id = ALC262_FIXUP_HP_Z200, .name = "hp-z200"पूर्ण,
-	अणु.id = ALC262_FIXUP_TYAN, .name = "tyan"पूर्ण,
-	अणु.id = ALC262_FIXUP_LENOVO_3000, .name = "lenovo-3000"पूर्ण,
-	अणु.id = ALC262_FIXUP_BENQ, .name = "benq"पूर्ण,
-	अणु.id = ALC262_FIXUP_BENQ_T31, .name = "benq-t31"पूर्ण,
-	अणु.id = ALC262_FIXUP_INTEL_BAYLEYBAY, .name = "bayleybay"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_model_fixup alc262_fixup_models[] = {
+	{.id = ALC262_FIXUP_INV_DMIC, .name = "inv-dmic"},
+	{.id = ALC262_FIXUP_FSC_H270, .name = "fsc-h270"},
+	{.id = ALC262_FIXUP_FSC_S7110, .name = "fsc-s7110"},
+	{.id = ALC262_FIXUP_HP_Z200, .name = "hp-z200"},
+	{.id = ALC262_FIXUP_TYAN, .name = "tyan"},
+	{.id = ALC262_FIXUP_LENOVO_3000, .name = "lenovo-3000"},
+	{.id = ALC262_FIXUP_BENQ, .name = "benq"},
+	{.id = ALC262_FIXUP_BENQ_T31, .name = "benq-t31"},
+	{.id = ALC262_FIXUP_INTEL_BAYLEYBAY, .name = "bayleybay"},
+	{}
+};
 
 /*
  */
-अटल पूर्णांक patch_alc262(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc262(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x0b);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
 	spec->gen.shared_mic_vref_pin = 0x18;
 
 	spec->shutup = alc_eapd_shutup;
 
-#अगर 0
+#if 0
 	/* pshou 07/11/05  set a zero PCM sample to DAC when FIFO is
 	 * under-run
 	 */
 	alc_update_coefex_idx(codec, 0x1a, 7, 0, 0x80);
-#पूर्ण_अगर
+#endif
 	alc_fix_pll_init(codec, 0x20, 0x0a, 10);
 
 	alc_pre_init(codec);
@@ -2846,143 +2845,143 @@
 		       alc262_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	alc_स्वतः_parse_customize_define(codec);
+	alc_auto_parse_customize_define(codec);
 
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x01;
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc262_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc262_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog && spec->gen.beep_nid) अणु
+	if (!spec->gen.no_analog && spec->gen.beep_nid) {
 		err = set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 /*
  *  ALC268
  */
-/* bind Beep चयनes of both NID 0x0f and 0x10 */
-अटल पूर्णांक alc268_beep_चयन_put(काष्ठा snd_kcontrol *kcontrol,
-				  काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा hda_codec *codec = snd_kcontrol_chip(kcontrol);
-	अचिन्हित दीर्घ pval;
-	पूर्णांक err;
+/* bind Beep switches of both NID 0x0f and 0x10 */
+static int alc268_beep_switch_put(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	struct hda_codec *codec = snd_kcontrol_chip(kcontrol);
+	unsigned long pval;
+	int err;
 
 	mutex_lock(&codec->control_mutex);
-	pval = kcontrol->निजी_value;
-	kcontrol->निजी_value = (pval & ~0xff) | 0x0f;
-	err = snd_hda_mixer_amp_चयन_put(kcontrol, ucontrol);
-	अगर (err >= 0) अणु
-		kcontrol->निजी_value = (pval & ~0xff) | 0x10;
-		err = snd_hda_mixer_amp_चयन_put(kcontrol, ucontrol);
-	पूर्ण
-	kcontrol->निजी_value = pval;
+	pval = kcontrol->private_value;
+	kcontrol->private_value = (pval & ~0xff) | 0x0f;
+	err = snd_hda_mixer_amp_switch_put(kcontrol, ucontrol);
+	if (err >= 0) {
+		kcontrol->private_value = (pval & ~0xff) | 0x10;
+		err = snd_hda_mixer_amp_switch_put(kcontrol, ucontrol);
+	}
+	kcontrol->private_value = pval;
 	mutex_unlock(&codec->control_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new alc268_beep_mixer[] = अणु
+static const struct snd_kcontrol_new alc268_beep_mixer[] = {
 	HDA_CODEC_VOLUME("Beep Playback Volume", 0x1d, 0x0, HDA_INPUT),
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Beep Playback Switch",
 		.subdevice = HDA_SUBDEV_AMP_FLAG,
-		.info = snd_hda_mixer_amp_चयन_info,
-		.get = snd_hda_mixer_amp_चयन_get,
-		.put = alc268_beep_चयन_put,
-		.निजी_value = HDA_COMPOSE_AMP_VAL(0x0f, 3, 1, HDA_INPUT)
-	पूर्ण,
-पूर्ण;
+		.info = snd_hda_mixer_amp_switch_info,
+		.get = snd_hda_mixer_amp_switch_get,
+		.put = alc268_beep_switch_put,
+		.private_value = HDA_COMPOSE_AMP_VAL(0x0f, 3, 1, HDA_INPUT)
+	},
+};
 
 /* set PCBEEP vol = 0, mute connections */
-अटल स्थिर काष्ठा hda_verb alc268_beep_init_verbs[] = अणु
-	अणु0x1d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_UNMUTE(0)पूर्ण,
-	अणु0x0f, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)पूर्ण,
-	अणु0x10, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hda_verb alc268_beep_init_verbs[] = {
+	{0x1d, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_UNMUTE(0)},
+	{0x0f, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
+	{0x10, AC_VERB_SET_AMP_GAIN_MUTE, AMP_IN_MUTE(1)},
+	{ }
+};
 
-क्रमागत अणु
+enum {
 	ALC268_FIXUP_INV_DMIC,
 	ALC268_FIXUP_HP_EAPD,
 	ALC268_FIXUP_SPDIF,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hda_fixup alc268_fixups[] = अणु
-	[ALC268_FIXUP_INV_DMIC] = अणु
+static const struct hda_fixup alc268_fixups[] = {
+	[ALC268_FIXUP_INV_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
-	पूर्ण,
-	[ALC268_FIXUP_HP_EAPD] = अणु
+	},
+	[ALC268_FIXUP_HP_EAPD] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु0x15, AC_VERB_SET_EAPD_BTLENABLE, 0पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC268_FIXUP_SPDIF] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{0x15, AC_VERB_SET_EAPD_BTLENABLE, 0},
+			{}
+		}
+	},
+	[ALC268_FIXUP_SPDIF] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1e, 0x014b1180 पूर्ण, /* enable SPDIF out */
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-पूर्ण;
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1e, 0x014b1180 }, /* enable SPDIF out */
+			{}
+		}
+	},
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc268_fixup_models[] = अणु
-	अणु.id = ALC268_FIXUP_INV_DMIC, .name = "inv-dmic"पूर्ण,
-	अणु.id = ALC268_FIXUP_HP_EAPD, .name = "hp-eapd"पूर्ण,
-	अणु.id = ALC268_FIXUP_SPDIF, .name = "spdif"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_model_fixup alc268_fixup_models[] = {
+	{.id = ALC268_FIXUP_INV_DMIC, .name = "inv-dmic"},
+	{.id = ALC268_FIXUP_HP_EAPD, .name = "hp-eapd"},
+	{.id = ALC268_FIXUP_SPDIF, .name = "spdif"},
+	{}
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc268_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc268_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1025, 0x0139, "Acer TravelMate 6293", ALC268_FIXUP_SPDIF),
 	SND_PCI_QUIRK(0x1025, 0x015b, "Acer AOA 150 (ZG5)", ALC268_FIXUP_INV_DMIC),
 	/* below is codec SSID since multiple Toshiba laptops have the
 	 * same PCI SSID 1179:ff00
 	 */
 	SND_PCI_QUIRK(0x1179, 0xff06, "Toshiba P200", ALC268_FIXUP_HP_EAPD),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 /*
- * BIOS स्वतः configuration
+ * BIOS auto configuration
  */
-अटल पूर्णांक alc268_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc268_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, शून्य, alc268_ssids);
-पूर्ण
+static int alc268_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc268_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	return alc_parse_auto_config(codec, NULL, alc268_ssids);
+}
 
 /*
  */
-अटल पूर्णांक patch_alc268(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक i, err;
+static int patch_alc268(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int i, err;
 
 	/* ALC268 has no aa-loopback mixer */
 	err = alc_alloc_spec(codec, 0);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x01;
 
 	spec->shutup = alc_eapd_shutup;
@@ -2992,53 +2991,53 @@
 	snd_hda_pick_fixup(codec, alc268_fixup_models, alc268_fixup_tbl, alc268_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc268_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc268_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (err > 0 && !spec->gen.no_analog &&
-	    spec->gen.स्वतःcfg.speaker_pins[0] != 0x1d) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(alc268_beep_mixer); i++) अणु
-			अगर (!snd_hda_gen_add_kctl(&spec->gen, शून्य,
-						  &alc268_beep_mixer[i])) अणु
+	if (err > 0 && !spec->gen.no_analog &&
+	    spec->gen.autocfg.speaker_pins[0] != 0x1d) {
+		for (i = 0; i < ARRAY_SIZE(alc268_beep_mixer); i++) {
+			if (!snd_hda_gen_add_kctl(&spec->gen, NULL,
+						  &alc268_beep_mixer[i])) {
 				err = -ENOMEM;
-				जाओ error;
-			पूर्ण
-		पूर्ण
+				goto error;
+			}
+		}
 		snd_hda_add_verbs(codec, alc268_beep_init_verbs);
-		अगर (!query_amp_caps(codec, 0x1d, HDA_INPUT))
-			/* override the amp caps क्रम beep generator */
+		if (!query_amp_caps(codec, 0x1d, HDA_INPUT))
+			/* override the amp caps for beep generator */
 			snd_hda_override_amp_caps(codec, 0x1d, HDA_INPUT,
 					  (0x0c << AC_AMPCAP_OFFSET_SHIFT) |
 					  (0x0c << AC_AMPCAP_NUM_STEPS_SHIFT) |
 					  (0x07 << AC_AMPCAP_STEP_SIZE_SHIFT) |
 					  (0 << AC_AMPCAP_MUTE_SHIFT));
-	पूर्ण
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 /*
  * ALC269
  */
 
-अटल स्थिर काष्ठा hda_pcm_stream alc269_44k_pcm_analog_playback = अणु
+static const struct hda_pcm_stream alc269_44k_pcm_analog_playback = {
 	.rates = SNDRV_PCM_RATE_44100, /* fixed rate */
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hda_pcm_stream alc269_44k_pcm_analog_capture = अणु
+static const struct hda_pcm_stream alc269_44k_pcm_analog_capture = {
 	.rates = SNDRV_PCM_RATE_44100, /* fixed rate */
-पूर्ण;
+};
 
-/* dअगरferent alc269-variants */
-क्रमागत अणु
+/* different alc269-variants */
+enum {
 	ALC269_TYPE_ALC269VA,
 	ALC269_TYPE_ALC269VB,
 	ALC269_TYPE_ALC269VC,
@@ -3059,151 +3058,151 @@
 	ALC269_TYPE_ALC300,
 	ALC269_TYPE_ALC623,
 	ALC269_TYPE_ALC700,
-पूर्ण;
+};
 
 /*
- * BIOS स्वतः configuration
+ * BIOS auto configuration
  */
-अटल पूर्णांक alc269_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc269_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc269_ssids[] = अणु 0, 0x1b, 0x14, 0x21 पूर्ण;
-	अटल स्थिर hda_nid_t alc269va_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
-	स्थिर hda_nid_t *ssids;
+static int alc269_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc269_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc269_ssids[] = { 0, 0x1b, 0x14, 0x21 };
+	static const hda_nid_t alc269va_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	struct alc_spec *spec = codec->spec;
+	const hda_nid_t *ssids;
 
-	चयन (spec->codec_variant) अणु
-	हाल ALC269_TYPE_ALC269VA:
-	हाल ALC269_TYPE_ALC269VC:
-	हाल ALC269_TYPE_ALC280:
-	हाल ALC269_TYPE_ALC284:
-	हाल ALC269_TYPE_ALC293:
+	switch (spec->codec_variant) {
+	case ALC269_TYPE_ALC269VA:
+	case ALC269_TYPE_ALC269VC:
+	case ALC269_TYPE_ALC280:
+	case ALC269_TYPE_ALC284:
+	case ALC269_TYPE_ALC293:
 		ssids = alc269va_ssids;
-		अवरोध;
-	हाल ALC269_TYPE_ALC269VB:
-	हाल ALC269_TYPE_ALC269VD:
-	हाल ALC269_TYPE_ALC282:
-	हाल ALC269_TYPE_ALC283:
-	हाल ALC269_TYPE_ALC286:
-	हाल ALC269_TYPE_ALC298:
-	हाल ALC269_TYPE_ALC255:
-	हाल ALC269_TYPE_ALC256:
-	हाल ALC269_TYPE_ALC257:
-	हाल ALC269_TYPE_ALC215:
-	हाल ALC269_TYPE_ALC225:
-	हाल ALC269_TYPE_ALC294:
-	हाल ALC269_TYPE_ALC300:
-	हाल ALC269_TYPE_ALC623:
-	हाल ALC269_TYPE_ALC700:
+		break;
+	case ALC269_TYPE_ALC269VB:
+	case ALC269_TYPE_ALC269VD:
+	case ALC269_TYPE_ALC282:
+	case ALC269_TYPE_ALC283:
+	case ALC269_TYPE_ALC286:
+	case ALC269_TYPE_ALC298:
+	case ALC269_TYPE_ALC255:
+	case ALC269_TYPE_ALC256:
+	case ALC269_TYPE_ALC257:
+	case ALC269_TYPE_ALC215:
+	case ALC269_TYPE_ALC225:
+	case ALC269_TYPE_ALC294:
+	case ALC269_TYPE_ALC300:
+	case ALC269_TYPE_ALC623:
+	case ALC269_TYPE_ALC700:
 		ssids = alc269_ssids;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ssids = alc269_ssids;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस alc_parse_स्वतः_config(codec, alc269_ignore, ssids);
-पूर्ण
+	return alc_parse_auto_config(codec, alc269_ignore, ssids);
+}
 
-अटल स्थिर काष्ठा hda_jack_keymap alc_headset_btn_keymap[] = अणु
-	अणु SND_JACK_BTN_0, KEY_PLAYPAUSE पूर्ण,
-	अणु SND_JACK_BTN_1, KEY_VOICECOMMAND पूर्ण,
-	अणु SND_JACK_BTN_2, KEY_VOLUMEUP पूर्ण,
-	अणु SND_JACK_BTN_3, KEY_VOLUMEDOWN पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_jack_keymap alc_headset_btn_keymap[] = {
+	{ SND_JACK_BTN_0, KEY_PLAYPAUSE },
+	{ SND_JACK_BTN_1, KEY_VOICECOMMAND },
+	{ SND_JACK_BTN_2, KEY_VOLUMEUP },
+	{ SND_JACK_BTN_3, KEY_VOLUMEDOWN },
+	{}
+};
 
-अटल व्योम alc_headset_btn_callback(काष्ठा hda_codec *codec,
-				     काष्ठा hda_jack_callback *jack)
-अणु
-	पूर्णांक report = 0;
+static void alc_headset_btn_callback(struct hda_codec *codec,
+				     struct hda_jack_callback *jack)
+{
+	int report = 0;
 
-	अगर (jack->unsol_res & (7 << 13))
+	if (jack->unsol_res & (7 << 13))
 		report |= SND_JACK_BTN_0;
 
-	अगर (jack->unsol_res  & (1 << 16 | 3 << 8))
+	if (jack->unsol_res  & (1 << 16 | 3 << 8))
 		report |= SND_JACK_BTN_1;
 
 	/* Volume up key */
-	अगर (jack->unsol_res & (7 << 23))
+	if (jack->unsol_res & (7 << 23))
 		report |= SND_JACK_BTN_2;
 
-	/* Volume करोwn key */
-	अगर (jack->unsol_res & (7 << 10))
+	/* Volume down key */
+	if (jack->unsol_res & (7 << 10))
 		report |= SND_JACK_BTN_3;
 
 	snd_hda_jack_set_button_state(codec, jack->nid, report);
-पूर्ण
+}
 
-अटल व्योम alc_disable_headset_jack_key(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_disable_headset_jack_key(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (!spec->has_hs_key)
-		वापस;
+	if (!spec->has_hs_key)
+		return;
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0287:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
-		alc_ग_लिखो_coef_idx(codec, 0x48, 0x0);
+	switch (codec->core.vendor_id) {
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0287:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
+		alc_write_coef_idx(codec, 0x48, 0x0);
 		alc_update_coef_idx(codec, 0x49, 0x0045, 0x0);
 		alc_update_coef_idx(codec, 0x44, 0x0045 << 8, 0x0);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
-		alc_ग_लिखो_coef_idx(codec, 0x48, 0x0);
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
+		alc_write_coef_idx(codec, 0x48, 0x0);
 		alc_update_coef_idx(codec, 0x49, 0x0045, 0x0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc_enable_headset_jack_key(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_enable_headset_jack_key(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (!spec->has_hs_key)
-		वापस;
+	if (!spec->has_hs_key)
+		return;
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0287:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
-		alc_ग_लिखो_coef_idx(codec, 0x48, 0xd011);
+	switch (codec->core.vendor_id) {
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0287:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
+		alc_write_coef_idx(codec, 0x48, 0xd011);
 		alc_update_coef_idx(codec, 0x49, 0x007f, 0x0045);
 		alc_update_coef_idx(codec, 0x44, 0x007f << 8, 0x0045 << 8);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
-		alc_ग_लिखो_coef_idx(codec, 0x48, 0xd011);
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
+		alc_write_coef_idx(codec, 0x48, 0xd011);
 		alc_update_coef_idx(codec, 0x49, 0x007f, 0x0045);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc_fixup_headset_jack(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_headset_jack(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		spec->has_hs_key = 1;
 		snd_hda_jack_detect_enable_callback(codec, 0x55,
 						    alc_headset_btn_callback);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_BUILD:
+		break;
+	case HDA_FIXUP_ACT_BUILD:
 		hp_pin = alc_get_hp_pin(spec);
-		अगर (!hp_pin || snd_hda_jack_bind_keymap(codec, 0x55,
+		if (!hp_pin || snd_hda_jack_bind_keymap(codec, 0x55,
 							alc_headset_btn_keymap,
 							hp_pin))
 			snd_hda_jack_add_kctl(codec, 0x55, "Headset Jack",
@@ -3211,33 +3210,33 @@
 					      alc_headset_btn_keymap);
 
 		alc_enable_headset_jack_key(codec);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc269vb_toggle_घातer_output(काष्ठा hda_codec *codec, पूर्णांक घातer_up)
-अणु
-	alc_update_coef_idx(codec, 0x04, 1 << 11, घातer_up ? (1 << 11) : 0);
-पूर्ण
+static void alc269vb_toggle_power_output(struct hda_codec *codec, int power_up)
+{
+	alc_update_coef_idx(codec, 0x04, 1 << 11, power_up ? (1 << 11) : 0);
+}
 
-अटल व्योम alc269_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (spec->codec_variant == ALC269_TYPE_ALC269VB)
-		alc269vb_toggle_घातer_output(codec, 0);
-	अगर (spec->codec_variant == ALC269_TYPE_ALC269VB &&
-			(alc_get_coef0(codec) & 0x00ff) == 0x018) अणु
+	if (spec->codec_variant == ALC269_TYPE_ALC269VB)
+		alc269vb_toggle_power_output(codec, 0);
+	if (spec->codec_variant == ALC269_TYPE_ALC269VB &&
+			(alc_get_coef0(codec) & 0x00ff) == 0x018) {
 		msleep(150);
-	पूर्ण
+	}
 	alc_shutup_pins(codec);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा coef_fw alc282_coefs[] = अणु
+static const struct coef_fw alc282_coefs[] = {
 	WRITE_COEF(0x03, 0x0002), /* Power Down Control */
-	UPDATE_COEF(0x05, 0xff3f, 0x0700), /* FIFO and filter घड़ी */
+	UPDATE_COEF(0x05, 0xff3f, 0x0700), /* FIFO and filter clock */
 	WRITE_COEF(0x07, 0x0200), /* DMIC control */
-	UPDATE_COEF(0x06, 0x00f0, 0), /* Analog घड़ी */
+	UPDATE_COEF(0x06, 0x00f0, 0), /* Analog clock */
 	UPDATE_COEF(0x08, 0xfffc, 0x0c2c), /* JD */
 	WRITE_COEF(0x0a, 0xcccc), /* JD offset1 */
 	WRITE_COEF(0x0b, 0xcccc), /* JD offset2 */
@@ -3245,7 +3244,7 @@
 	UPDATE_COEF(0x0f, 0xf800, 0x1000), /* JD */
 	UPDATE_COEF(0x10, 0xfc00, 0x0c00), /* Capless */
 	WRITE_COEF(0x6f, 0x0), /* Class D test 4 */
-	UPDATE_COEF(0x0c, 0xfe00, 0), /* IO घातer करोwn directly */
+	UPDATE_COEF(0x0c, 0xfe00, 0), /* IO power down directly */
 	WRITE_COEF(0x34, 0xa0c0), /* ANC */
 	UPDATE_COEF(0x16, 0x0008, 0), /* AGC MUX */
 	UPDATE_COEF(0x1d, 0x00e0, 0), /* DAC simple content protection */
@@ -3263,93 +3262,93 @@
 	WRITE_COEF(0x72, 0xc2ba), /* classD OCP */
 	UPDATE_COEF(0x77, 0x0f80, 0), /* classD pure DC test */
 	WRITE_COEF(0x6c, 0xfc06), /* Class D amp control */
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल व्योम alc282_restore_शेष_value(काष्ठा hda_codec *codec)
-अणु
+static void alc282_restore_default_value(struct hda_codec *codec)
+{
 	alc_process_coef_fw(codec, alc282_coefs);
-पूर्ण
+}
 
-अटल व्योम alc282_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc282_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
-	पूर्णांक coef78;
+	int coef78;
 
-	alc282_restore_शेष_value(codec);
+	alc282_restore_default_value(codec);
 
-	अगर (!hp_pin)
-		वापस;
+	if (!hp_pin)
+		return;
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
-	coef78 = alc_पढ़ो_coef_idx(codec, 0x78);
+	coef78 = alc_read_coef_idx(codec, 0x78);
 
 	/* Index 0x78 Direct Drive HP AMP LPM Control 1 */
-	/* Headphone capless set to high घातer mode */
-	alc_ग_लिखो_coef_idx(codec, 0x78, 0x9004);
+	/* Headphone capless set to high power mode */
+	alc_write_coef_idx(codec, 0x78, 0x9004);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(2);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(85);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(100);
 
 	/* Headphone capless set to normal mode */
-	alc_ग_लिखो_coef_idx(codec, 0x78, coef78);
-पूर्ण
+	alc_write_coef_idx(codec, 0x78, coef78);
+}
 
-अटल व्योम alc282_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc282_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
-	पूर्णांक coef78;
+	int coef78;
 
-	अगर (!hp_pin) अणु
+	if (!hp_pin) {
 		alc269_shutup(codec);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
-	coef78 = alc_पढ़ो_coef_idx(codec, 0x78);
-	alc_ग_लिखो_coef_idx(codec, 0x78, 0x9004);
+	coef78 = alc_read_coef_idx(codec, 0x78);
+	alc_write_coef_idx(codec, 0x78, 0x9004);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(2);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(85);
 
-	अगर (!spec->no_shutup_pins)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (!spec->no_shutup_pins)
+		snd_hda_codec_write(codec, hp_pin, 0,
 				    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(100);
 
-	alc_स्वतः_setup_eapd(codec, false);
+	alc_auto_setup_eapd(codec, false);
 	alc_shutup_pins(codec);
-	alc_ग_लिखो_coef_idx(codec, 0x78, coef78);
-पूर्ण
+	alc_write_coef_idx(codec, 0x78, coef78);
+}
 
-अटल स्थिर काष्ठा coef_fw alc283_coefs[] = अणु
+static const struct coef_fw alc283_coefs[] = {
 	WRITE_COEF(0x03, 0x0002), /* Power Down Control */
-	UPDATE_COEF(0x05, 0xff3f, 0x0700), /* FIFO and filter घड़ी */
+	UPDATE_COEF(0x05, 0xff3f, 0x0700), /* FIFO and filter clock */
 	WRITE_COEF(0x07, 0x0200), /* DMIC control */
-	UPDATE_COEF(0x06, 0x00f0, 0), /* Analog घड़ी */
+	UPDATE_COEF(0x06, 0x00f0, 0), /* Analog clock */
 	UPDATE_COEF(0x08, 0xfffc, 0x0c2c), /* JD */
 	WRITE_COEF(0x0a, 0xcccc), /* JD offset1 */
 	WRITE_COEF(0x0b, 0xcccc), /* JD offset2 */
@@ -3357,7 +3356,7 @@
 	UPDATE_COEF(0x0f, 0xf800, 0x1000), /* JD */
 	UPDATE_COEF(0x10, 0xfc00, 0x0c00), /* Capless */
 	WRITE_COEF(0x3a, 0x0), /* Class D test 4 */
-	UPDATE_COEF(0x0c, 0xfe00, 0x0), /* IO घातer करोwn directly */
+	UPDATE_COEF(0x0c, 0xfe00, 0x0), /* IO power down directly */
 	WRITE_COEF(0x22, 0xa0c0), /* ANC */
 	UPDATE_COEFEX(0x53, 0x01, 0x000f, 0x0008), /* AGC MUX */
 	UPDATE_COEF(0x1d, 0x00e0, 0), /* DAC simple content protection */
@@ -3379,176 +3378,176 @@
 	UPDATE_COEF(0x42, 0xf000, 0x2000), /* DC offset */
 	WRITE_COEF(0x37, 0xfc06), /* Class D amp control */
 	UPDATE_COEF(0x1b, 0x8000, 0), /* HP JD control */
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल व्योम alc283_restore_शेष_value(काष्ठा hda_codec *codec)
-अणु
+static void alc283_restore_default_value(struct hda_codec *codec)
+{
 	alc_process_coef_fw(codec, alc283_coefs);
-पूर्ण
+}
 
-अटल व्योम alc283_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc283_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
 
-	alc283_restore_शेष_value(codec);
+	alc283_restore_default_value(codec);
 
-	अगर (!hp_pin)
-		वापस;
+	if (!hp_pin)
+		return;
 
 	msleep(30);
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 
 	/* Index 0x43 Direct Drive HP AMP LPM Control 1 */
-	/* Headphone capless set to high घातer mode */
-	alc_ग_लिखो_coef_idx(codec, 0x43, 0x9004);
+	/* Headphone capless set to high power mode */
+	alc_write_coef_idx(codec, 0x43, 0x9004);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(85);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(85);
-	/* Index 0x46 Combo jack स्वतः चयन control 2 */
-	/* 3k pull low control क्रम Headset jack. */
+	/* Index 0x46 Combo jack auto switch control 2 */
+	/* 3k pull low control for Headset jack. */
 	alc_update_coef_idx(codec, 0x46, 3 << 12, 0);
 	/* Headphone capless set to normal mode */
-	alc_ग_लिखो_coef_idx(codec, 0x43, 0x9614);
-पूर्ण
+	alc_write_coef_idx(codec, 0x43, 0x9614);
+}
 
-अटल व्योम alc283_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc283_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
 
-	अगर (!hp_pin) अणु
+	if (!hp_pin) {
 		alc269_shutup(codec);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 
-	alc_ग_लिखो_coef_idx(codec, 0x43, 0x9004);
+	alc_write_coef_idx(codec, 0x43, 0x9004);
 
 	/*depop hp during suspend*/
-	alc_ग_लिखो_coef_idx(codec, 0x06, 0x2100);
+	alc_write_coef_idx(codec, 0x06, 0x2100);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(100);
 
-	अगर (!spec->no_shutup_pins)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (!spec->no_shutup_pins)
+		snd_hda_codec_write(codec, hp_pin, 0,
 				    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
 	alc_update_coef_idx(codec, 0x46, 0, 3 << 12);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(100);
-	alc_स्वतः_setup_eapd(codec, false);
+	alc_auto_setup_eapd(codec, false);
 	alc_shutup_pins(codec);
-	alc_ग_लिखो_coef_idx(codec, 0x43, 0x9614);
-पूर्ण
+	alc_write_coef_idx(codec, 0x43, 0x9614);
+}
 
-अटल व्योम alc256_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc256_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
 
-	अगर (!hp_pin)
+	if (!hp_pin)
 		hp_pin = 0x21;
 
 	msleep(30);
 
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(2);
 
-	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x1); /* Low घातer */
-	अगर (spec->ultra_low_घातer) अणु
+	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x1); /* Low power */
+	if (spec->ultra_low_power) {
 		alc_update_coef_idx(codec, 0x03, 1<<1, 1<<1);
 		alc_update_coef_idx(codec, 0x08, 3<<2, 3<<2);
 		alc_update_coef_idx(codec, 0x08, 7<<4, 0);
 		alc_update_coef_idx(codec, 0x3b, 1<<15, 0);
 		alc_update_coef_idx(codec, 0x0e, 7<<6, 7<<6);
 		msleep(30);
-	पूर्ण
+	}
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense || spec->ultra_low_घातer)
+	if (hp_pin_sense || spec->ultra_low_power)
 		msleep(85);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 
-	अगर (hp_pin_sense || spec->ultra_low_घातer)
+	if (hp_pin_sense || spec->ultra_low_power)
 		msleep(100);
 
 	alc_update_coef_idx(codec, 0x46, 3 << 12, 0);
-	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x4); /* Hight घातer */
+	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x4); /* Hight power */
 	alc_update_coefex_idx(codec, 0x53, 0x02, 0x8000, 1 << 15); /* Clear bit */
 	alc_update_coefex_idx(codec, 0x53, 0x02, 0x8000, 0 << 15);
 	/*
 	 * Expose headphone mic (or possibly Line In on some machines) instead
-	 * of PC Beep on 1Ah, and disable 1Ah loopback क्रम all outमाला_दो. See
-	 * Documentation/sound/hd-audio/realtek-pc-beep.rst क्रम details of
-	 * this रेजिस्टर.
+	 * of PC Beep on 1Ah, and disable 1Ah loopback for all outputs. See
+	 * Documentation/sound/hd-audio/realtek-pc-beep.rst for details of
+	 * this register.
 	 */
-	alc_ग_लिखो_coef_idx(codec, 0x36, 0x5757);
-पूर्ण
+	alc_write_coef_idx(codec, 0x36, 0x5757);
+}
 
-अटल व्योम alc256_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc256_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
 
-	अगर (!hp_pin)
+	if (!hp_pin)
 		hp_pin = 0x21;
 
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(2);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense || spec->ultra_low_घातer)
+	if (hp_pin_sense || spec->ultra_low_power)
 		msleep(85);
 
-	/* 3k pull low control क्रम Headset jack. */
-	/* NOTE: call this beक्रमe clearing the pin, otherwise codec stalls */
-	/* If disable 3k pullकरोwn control क्रम alc257, the Mic detection will not work correctly
-	 * when booting with headset plugged. So skip setting it क्रम the codec alc257
+	/* 3k pull low control for Headset jack. */
+	/* NOTE: call this before clearing the pin, otherwise codec stalls */
+	/* If disable 3k pulldown control for alc257, the Mic detection will not work correctly
+	 * when booting with headset plugged. So skip setting it for the codec alc257
 	 */
-	अगर (codec->core.venकरोr_id != 0x10ec0257)
+	if (codec->core.vendor_id != 0x10ec0257)
 		alc_update_coef_idx(codec, 0x46, 0, 3 << 12);
 
-	अगर (!spec->no_shutup_pins)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (!spec->no_shutup_pins)
+		snd_hda_codec_write(codec, hp_pin, 0,
 				    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
-	अगर (hp_pin_sense || spec->ultra_low_घातer)
+	if (hp_pin_sense || spec->ultra_low_power)
 		msleep(100);
 
-	alc_स्वतः_setup_eapd(codec, false);
+	alc_auto_setup_eapd(codec, false);
 	alc_shutup_pins(codec);
-	अगर (spec->ultra_low_घातer) अणु
+	if (spec->ultra_low_power) {
 		msleep(50);
 		alc_update_coef_idx(codec, 0x03, 1<<1, 0);
 		alc_update_coef_idx(codec, 0x08, 7<<4, 7<<4);
@@ -3556,266 +3555,266 @@
 		alc_update_coef_idx(codec, 0x3b, 1<<15, 1<<15);
 		alc_update_coef_idx(codec, 0x0e, 7<<6, 0);
 		msleep(30);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc225_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc225_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp1_pin_sense, hp2_pin_sense;
 
-	अगर (!hp_pin)
+	if (!hp_pin)
 		hp_pin = 0x21;
 	msleep(30);
 
 	hp1_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 	hp2_pin_sense = snd_hda_jack_detect(codec, 0x16);
 
-	अगर (hp1_pin_sense || hp2_pin_sense)
+	if (hp1_pin_sense || hp2_pin_sense)
 		msleep(2);
 
-	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x1); /* Low घातer */
-	अगर (spec->ultra_low_घातer) अणु
+	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x1); /* Low power */
+	if (spec->ultra_low_power) {
 		alc_update_coef_idx(codec, 0x08, 0x0f << 2, 3<<2);
 		alc_update_coef_idx(codec, 0x0e, 7<<6, 7<<6);
 		alc_update_coef_idx(codec, 0x33, 1<<11, 0);
 		msleep(30);
-	पूर्ण
+	}
 
-	अगर (hp1_pin_sense || spec->ultra_low_घातer)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (hp1_pin_sense || spec->ultra_low_power)
+		snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
-	अगर (hp2_pin_sense)
-		snd_hda_codec_ग_लिखो(codec, 0x16, 0,
+	if (hp2_pin_sense)
+		snd_hda_codec_write(codec, 0x16, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_घातer)
+	if (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_power)
 		msleep(85);
 
-	अगर (hp1_pin_sense || spec->ultra_low_घातer)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (hp1_pin_sense || spec->ultra_low_power)
+		snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
-	अगर (hp2_pin_sense)
-		snd_hda_codec_ग_लिखो(codec, 0x16, 0,
+	if (hp2_pin_sense)
+		snd_hda_codec_write(codec, 0x16, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 
-	अगर (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_घातer)
+	if (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_power)
 		msleep(100);
 
 	alc_update_coef_idx(codec, 0x4a, 3 << 10, 0);
-	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x4); /* Hight घातer */
-पूर्ण
+	alc_update_coefex_idx(codec, 0x57, 0x04, 0x0007, 0x4); /* Hight power */
+}
 
-अटल व्योम alc225_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc225_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp1_pin_sense, hp2_pin_sense;
 
-	अगर (!hp_pin)
+	if (!hp_pin)
 		hp_pin = 0x21;
 
 	alc_disable_headset_jack_key(codec);
-	/* 3k pull low control क्रम Headset jack. */
+	/* 3k pull low control for Headset jack. */
 	alc_update_coef_idx(codec, 0x4a, 0, 3 << 10);
 
 	hp1_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 	hp2_pin_sense = snd_hda_jack_detect(codec, 0x16);
 
-	अगर (hp1_pin_sense || hp2_pin_sense)
+	if (hp1_pin_sense || hp2_pin_sense)
 		msleep(2);
 
-	अगर (hp1_pin_sense || spec->ultra_low_घातer)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (hp1_pin_sense || spec->ultra_low_power)
+		snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
-	अगर (hp2_pin_sense)
-		snd_hda_codec_ग_लिखो(codec, 0x16, 0,
+	if (hp2_pin_sense)
+		snd_hda_codec_write(codec, 0x16, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_घातer)
+	if (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_power)
 		msleep(85);
 
-	अगर (hp1_pin_sense || spec->ultra_low_घातer)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (hp1_pin_sense || spec->ultra_low_power)
+		snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
-	अगर (hp2_pin_sense)
-		snd_hda_codec_ग_लिखो(codec, 0x16, 0,
+	if (hp2_pin_sense)
+		snd_hda_codec_write(codec, 0x16, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
-	अगर (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_घातer)
+	if (hp1_pin_sense || hp2_pin_sense || spec->ultra_low_power)
 		msleep(100);
 
-	alc_स्वतः_setup_eapd(codec, false);
+	alc_auto_setup_eapd(codec, false);
 	alc_shutup_pins(codec);
-	अगर (spec->ultra_low_घातer) अणु
+	if (spec->ultra_low_power) {
 		msleep(50);
 		alc_update_coef_idx(codec, 0x08, 0x0f << 2, 0x0c << 2);
 		alc_update_coef_idx(codec, 0x0e, 7<<6, 0);
 		alc_update_coef_idx(codec, 0x33, 1<<11, 1<<11);
 		alc_update_coef_idx(codec, 0x4a, 3<<4, 2<<4);
 		msleep(30);
-	पूर्ण
+	}
 
 	alc_update_coef_idx(codec, 0x4a, 3 << 10, 0);
 	alc_enable_headset_jack_key(codec);
-पूर्ण
+}
 
-अटल व्योम alc_शेष_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_default_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
 
-	अगर (!hp_pin)
-		वापस;
+	if (!hp_pin)
+		return;
 
 	msleep(30);
 
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(2);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(85);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(100);
-पूर्ण
+}
 
-अटल व्योम alc_शेष_shutup(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_default_shutup(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 	bool hp_pin_sense;
 
-	अगर (!hp_pin) अणु
+	if (!hp_pin) {
 		alc269_shutup(codec);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	hp_pin_sense = snd_hda_jack_detect(codec, hp_pin);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(2);
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(85);
 
-	अगर (!spec->no_shutup_pins)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (!spec->no_shutup_pins)
+		snd_hda_codec_write(codec, hp_pin, 0,
 				    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
-	अगर (hp_pin_sense)
+	if (hp_pin_sense)
 		msleep(100);
 
-	alc_स्वतः_setup_eapd(codec, false);
+	alc_auto_setup_eapd(codec, false);
 	alc_shutup_pins(codec);
-पूर्ण
+}
 
-अटल व्योम alc294_hp_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc294_hp_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
-	पूर्णांक i, val;
+	int i, val;
 
-	अगर (!hp_pin)
-		वापस;
+	if (!hp_pin)
+		return;
 
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 
 	msleep(100);
 
-	अगर (!spec->no_shutup_pins)
-		snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	if (!spec->no_shutup_pins)
+		snd_hda_codec_write(codec, hp_pin, 0,
 				    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
 	alc_update_coef_idx(codec, 0x6f, 0x000f, 0);/* Set HP depop to manual mode */
 	alc_update_coefex_idx(codec, 0x58, 0x00, 0x8000, 0x8000); /* HP depop procedure start */
 
-	/* Wait क्रम depop procedure finish  */
-	val = alc_पढ़ो_coefex_idx(codec, 0x58, 0x01);
-	क्रम (i = 0; i < 20 && val & 0x0080; i++) अणु
+	/* Wait for depop procedure finish  */
+	val = alc_read_coefex_idx(codec, 0x58, 0x01);
+	for (i = 0; i < 20 && val & 0x0080; i++) {
 		msleep(50);
-		val = alc_पढ़ो_coefex_idx(codec, 0x58, 0x01);
-	पूर्ण
-	/* Set HP depop to स्वतः mode */
+		val = alc_read_coefex_idx(codec, 0x58, 0x01);
+	}
+	/* Set HP depop to auto mode */
 	alc_update_coef_idx(codec, 0x6f, 0x000f, 0x000b);
 	msleep(50);
-पूर्ण
+}
 
-अटल व्योम alc294_init(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc294_init(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	/* required only at boot or S4 resume समय */
-	अगर (!spec->करोne_hp_init ||
-	    codec->core.dev.घातer.घातer_state.event == PM_EVENT_RESTORE) अणु
+	/* required only at boot or S4 resume time */
+	if (!spec->done_hp_init ||
+	    codec->core.dev.power.power_state.event == PM_EVENT_RESTORE) {
 		alc294_hp_init(codec);
-		spec->करोne_hp_init = true;
-	पूर्ण
-	alc_शेष_init(codec);
-पूर्ण
+		spec->done_hp_init = true;
+	}
+	alc_default_init(codec);
+}
 
-अटल व्योम alc5505_coef_set(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक index_reg,
-			     अचिन्हित पूर्णांक val)
-अणु
-	snd_hda_codec_ग_लिखो(codec, 0x51, 0, AC_VERB_SET_COEF_INDEX, index_reg >> 1);
-	snd_hda_codec_ग_लिखो(codec, 0x51, 0, AC_VERB_SET_PROC_COEF, val & 0xffff); /* LSB */
-	snd_hda_codec_ग_लिखो(codec, 0x51, 0, AC_VERB_SET_PROC_COEF, val >> 16); /* MSB */
-पूर्ण
+static void alc5505_coef_set(struct hda_codec *codec, unsigned int index_reg,
+			     unsigned int val)
+{
+	snd_hda_codec_write(codec, 0x51, 0, AC_VERB_SET_COEF_INDEX, index_reg >> 1);
+	snd_hda_codec_write(codec, 0x51, 0, AC_VERB_SET_PROC_COEF, val & 0xffff); /* LSB */
+	snd_hda_codec_write(codec, 0x51, 0, AC_VERB_SET_PROC_COEF, val >> 16); /* MSB */
+}
 
-अटल पूर्णांक alc5505_coef_get(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक index_reg)
-अणु
-	अचिन्हित पूर्णांक val;
+static int alc5505_coef_get(struct hda_codec *codec, unsigned int index_reg)
+{
+	unsigned int val;
 
-	snd_hda_codec_ग_लिखो(codec, 0x51, 0, AC_VERB_SET_COEF_INDEX, index_reg >> 1);
-	val = snd_hda_codec_पढ़ो(codec, 0x51, 0, AC_VERB_GET_PROC_COEF, 0)
+	snd_hda_codec_write(codec, 0x51, 0, AC_VERB_SET_COEF_INDEX, index_reg >> 1);
+	val = snd_hda_codec_read(codec, 0x51, 0, AC_VERB_GET_PROC_COEF, 0)
 		& 0xffff;
-	val |= snd_hda_codec_पढ़ो(codec, 0x51, 0, AC_VERB_GET_PROC_COEF, 0)
+	val |= snd_hda_codec_read(codec, 0x51, 0, AC_VERB_GET_PROC_COEF, 0)
 		<< 16;
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम alc5505_dsp_halt(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक val;
+static void alc5505_dsp_halt(struct hda_codec *codec)
+{
+	unsigned int val;
 
 	alc5505_coef_set(codec, 0x3000, 0x000c); /* DSP CPU stop */
 	alc5505_coef_set(codec, 0x880c, 0x0008); /* DDR enter self refresh */
-	alc5505_coef_set(codec, 0x61c0, 0x11110080); /* Clock control क्रम PLL and CPU */
+	alc5505_coef_set(codec, 0x61c0, 0x11110080); /* Clock control for PLL and CPU */
 	alc5505_coef_set(codec, 0x6230, 0xfc0d4011); /* Disable Input OP */
 	alc5505_coef_set(codec, 0x61b4, 0x040a2b03); /* Stop PLL2 */
 	alc5505_coef_set(codec, 0x61b0, 0x00005b17); /* Stop PLL1 */
 	alc5505_coef_set(codec, 0x61b8, 0x04133303); /* Stop PLL3 */
 	val = alc5505_coef_get(codec, 0x6220);
-	alc5505_coef_set(codec, 0x6220, (val | 0x3000)); /* चयन Ringbuffer घड़ी to DBUS घड़ी */
-पूर्ण
+	alc5505_coef_set(codec, 0x6220, (val | 0x3000)); /* switch Ringbuffer clock to DBUS clock */
+}
 
-अटल व्योम alc5505_dsp_back_from_halt(काष्ठा hda_codec *codec)
-अणु
+static void alc5505_dsp_back_from_halt(struct hda_codec *codec)
+{
 	alc5505_coef_set(codec, 0x61b8, 0x04133302);
 	alc5505_coef_set(codec, 0x61b0, 0x00005b16);
 	alc5505_coef_set(codec, 0x61b4, 0x040a2b02);
 	alc5505_coef_set(codec, 0x6230, 0xf80d4011);
 	alc5505_coef_set(codec, 0x6220, 0x2002010f);
 	alc5505_coef_set(codec, 0x880c, 0x00000004);
-पूर्ण
+}
 
-अटल व्योम alc5505_dsp_init(काष्ठा hda_codec *codec)
-अणु
-	अचिन्हित पूर्णांक val;
+static void alc5505_dsp_init(struct hda_codec *codec)
+{
+	unsigned int val;
 
 	alc5505_dsp_halt(codec);
 	alc5505_dsp_back_from_halt(codec);
@@ -3825,7 +3824,7 @@
 	alc5505_coef_set(codec, 0x61b4, 0x04132b02);
 	alc5505_coef_set(codec, 0x61b8, 0x041f3300); /* PLL3 control*/
 	alc5505_coef_set(codec, 0x61b8, 0x041f3302);
-	snd_hda_codec_ग_लिखो(codec, 0x51, 0, AC_VERB_SET_CODEC_RESET, 0); /* Function reset */
+	snd_hda_codec_write(codec, 0x51, 0, AC_VERB_SET_CODEC_RESET, 0); /* Function reset */
 	alc5505_coef_set(codec, 0x61b8, 0x041b3302);
 	alc5505_coef_set(codec, 0x61b8, 0x04173302);
 	alc5505_coef_set(codec, 0x61b8, 0x04163302);
@@ -3834,9 +3833,9 @@
 	alc5505_coef_set(codec, 0x8818, 0x00000400); /* DRAM control */
 
 	val = alc5505_coef_get(codec, 0x6200) >> 16; /* Read revision ID */
-	अगर (val <= 3)
+	if (val <= 3)
 		alc5505_coef_set(codec, 0x6220, 0x2002010f); /* I/O PAD Configuration */
-	अन्यथा
+	else
 		alc5505_coef_set(codec, 0x6220, 0x6002018f);
 
 	alc5505_coef_set(codec, 0x61ac, 0x055525f0); /**/
@@ -3847,478 +3846,478 @@
 	alc5505_coef_set(codec, 0x880c, 0x00000003);
 	alc5505_coef_set(codec, 0x880c, 0x00000010);
 
-#अगर_घोषित HALT_REALTEK_ALC5505
+#ifdef HALT_REALTEK_ALC5505
 	alc5505_dsp_halt(codec);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-#अगर_घोषित HALT_REALTEK_ALC5505
-#घोषणा alc5505_dsp_suspend(codec)	करो अणु पूर्ण जबतक (0) /* NOP */
-#घोषणा alc5505_dsp_resume(codec)	करो अणु पूर्ण जबतक (0) /* NOP */
-#अन्यथा
-#घोषणा alc5505_dsp_suspend(codec)	alc5505_dsp_halt(codec)
-#घोषणा alc5505_dsp_resume(codec)	alc5505_dsp_back_from_halt(codec)
-#पूर्ण_अगर
+#ifdef HALT_REALTEK_ALC5505
+#define alc5505_dsp_suspend(codec)	do { } while (0) /* NOP */
+#define alc5505_dsp_resume(codec)	do { } while (0) /* NOP */
+#else
+#define alc5505_dsp_suspend(codec)	alc5505_dsp_halt(codec)
+#define alc5505_dsp_resume(codec)	alc5505_dsp_back_from_halt(codec)
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक alc269_suspend(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+#ifdef CONFIG_PM
+static int alc269_suspend(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (spec->has_alc5505_dsp)
+	if (spec->has_alc5505_dsp)
 		alc5505_dsp_suspend(codec);
-	वापस alc_suspend(codec);
-पूर्ण
+	return alc_suspend(codec);
+}
 
-अटल पूर्णांक alc269_resume(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static int alc269_resume(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (spec->codec_variant == ALC269_TYPE_ALC269VB)
-		alc269vb_toggle_घातer_output(codec, 0);
-	अगर (spec->codec_variant == ALC269_TYPE_ALC269VB &&
-			(alc_get_coef0(codec) & 0x00ff) == 0x018) अणु
+	if (spec->codec_variant == ALC269_TYPE_ALC269VB)
+		alc269vb_toggle_power_output(codec, 0);
+	if (spec->codec_variant == ALC269_TYPE_ALC269VB &&
+			(alc_get_coef0(codec) & 0x00ff) == 0x018) {
 		msleep(150);
-	पूर्ण
+	}
 
 	codec->patch_ops.init(codec);
 
-	अगर (spec->codec_variant == ALC269_TYPE_ALC269VB)
-		alc269vb_toggle_घातer_output(codec, 1);
-	अगर (spec->codec_variant == ALC269_TYPE_ALC269VB &&
-			(alc_get_coef0(codec) & 0x00ff) == 0x017) अणु
+	if (spec->codec_variant == ALC269_TYPE_ALC269VB)
+		alc269vb_toggle_power_output(codec, 1);
+	if (spec->codec_variant == ALC269_TYPE_ALC269VB &&
+			(alc_get_coef0(codec) & 0x00ff) == 0x017) {
 		msleep(200);
-	पूर्ण
+	}
 
 	snd_hda_regmap_sync(codec);
-	hda_call_check_घातer_status(codec, 0x01);
+	hda_call_check_power_status(codec, 0x01);
 
 	/* on some machine, the BIOS will clear the codec gpio data when enter
 	 * suspend, and won't restore the data after resume, so we restore it
 	 * in the driver.
 	 */
-	अगर (spec->gpio_data)
-		alc_ग_लिखो_gpio_data(codec);
+	if (spec->gpio_data)
+		alc_write_gpio_data(codec);
 
-	अगर (spec->has_alc5505_dsp)
+	if (spec->has_alc5505_dsp)
 		alc5505_dsp_resume(codec);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#endif /* CONFIG_PM */
 
-अटल व्योम alc269_fixup_pincfg_no_hp_to_lineout(काष्ठा hda_codec *codec,
-						 स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_fixup_pincfg_no_hp_to_lineout(struct hda_codec *codec,
+						 const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->parse_flags = HDA_PINCFG_NO_HP_FIXUP;
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_pincfg_U7x7_headset_mic(काष्ठा hda_codec *codec,
-						 स्थिर काष्ठा hda_fixup *fix,
-						 पूर्णांक action)
-अणु
-	अचिन्हित पूर्णांक cfg_headphone = snd_hda_codec_get_pincfg(codec, 0x21);
-	अचिन्हित पूर्णांक cfg_headset_mic = snd_hda_codec_get_pincfg(codec, 0x19);
+static void alc269_fixup_pincfg_U7x7_headset_mic(struct hda_codec *codec,
+						 const struct hda_fixup *fix,
+						 int action)
+{
+	unsigned int cfg_headphone = snd_hda_codec_get_pincfg(codec, 0x21);
+	unsigned int cfg_headset_mic = snd_hda_codec_get_pincfg(codec, 0x19);
 
-	अगर (cfg_headphone && cfg_headset_mic == 0x411111f0)
+	if (cfg_headphone && cfg_headset_mic == 0x411111f0)
 		snd_hda_codec_set_pincfg(codec, 0x19,
 			(cfg_headphone & ~AC_DEFCFG_DEVICE) |
 			(AC_JACK_MIC_IN << AC_DEFCFG_DEVICE_SHIFT));
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_hweq(काष्ठा hda_codec *codec,
-			       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_INIT)
+static void alc269_fixup_hweq(struct hda_codec *codec,
+			       const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_INIT)
 		alc_update_coef_idx(codec, 0x1e, 0, 0x80);
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_headset_mic(काष्ठा hda_codec *codec,
-				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_fixup_headset_mic(struct hda_codec *codec,
+				       const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
-पूर्ण
+}
 
-अटल व्योम alc271_fixup_dmic(काष्ठा hda_codec *codec,
-			      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर काष्ठा hda_verb verbs[] = अणु
-		अणु0x20, AC_VERB_SET_COEF_INDEX, 0x0dपूर्ण,
-		अणु0x20, AC_VERB_SET_PROC_COEF, 0x4000पूर्ण,
-		अणुपूर्ण
-	पूर्ण;
-	अचिन्हित पूर्णांक cfg;
+static void alc271_fixup_dmic(struct hda_codec *codec,
+			      const struct hda_fixup *fix, int action)
+{
+	static const struct hda_verb verbs[] = {
+		{0x20, AC_VERB_SET_COEF_INDEX, 0x0d},
+		{0x20, AC_VERB_SET_PROC_COEF, 0x4000},
+		{}
+	};
+	unsigned int cfg;
 
-	अगर (म_भेद(codec->core.chip_name, "ALC271X") &&
-	    म_भेद(codec->core.chip_name, "ALC269VB"))
-		वापस;
+	if (strcmp(codec->core.chip_name, "ALC271X") &&
+	    strcmp(codec->core.chip_name, "ALC269VB"))
+		return;
 	cfg = snd_hda_codec_get_pincfg(codec, 0x12);
-	अगर (get_defcfg_connect(cfg) == AC_JACK_PORT_FIXED)
-		snd_hda_sequence_ग_लिखो(codec, verbs);
-पूर्ण
+	if (get_defcfg_connect(cfg) == AC_JACK_PORT_FIXED)
+		snd_hda_sequence_write(codec, verbs);
+}
 
 /* Fix the speaker amp after resume, etc */
-अटल व्योम alc269vb_fixup_aspire_e1_coef(काष्ठा hda_codec *codec,
-					  स्थिर काष्ठा hda_fixup *fix,
-					  पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_INIT)
+static void alc269vb_fixup_aspire_e1_coef(struct hda_codec *codec,
+					  const struct hda_fixup *fix,
+					  int action)
+{
+	if (action == HDA_FIXUP_ACT_INIT)
 		alc_update_coef_idx(codec, 0x0d, 0x6000, 0x6000);
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_pcm_44k(काष्ठा hda_codec *codec,
-				 स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_fixup_pcm_44k(struct hda_codec *codec,
+				 const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action != HDA_FIXUP_ACT_PROBE)
-		वापस;
+	if (action != HDA_FIXUP_ACT_PROBE)
+		return;
 
 	/* Due to a hardware problem on Lenovo Ideadpad, we need to
 	 * fix the sample rate of analog I/O to 44.1kHz
 	 */
 	spec->gen.stream_analog_playback = &alc269_44k_pcm_analog_playback;
 	spec->gen.stream_analog_capture = &alc269_44k_pcm_analog_capture;
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_stereo_dmic(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	/* The digital-mic unit sends PDM (dअगरferential संकेत) instead of
+static void alc269_fixup_stereo_dmic(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	/* The digital-mic unit sends PDM (differential signal) instead of
 	 * the standard PCM, thus you can't record a valid mono stream as is.
-	 * Below is a workaround specअगरic to ALC269 to control the dmic
-	 * संकेत source as mono.
+	 * Below is a workaround specific to ALC269 to control the dmic
+	 * signal source as mono.
 	 */
-	अगर (action == HDA_FIXUP_ACT_INIT)
+	if (action == HDA_FIXUP_ACT_INIT)
 		alc_update_coef_idx(codec, 0x07, 0, 0x80);
-पूर्ण
+}
 
-अटल व्योम alc269_quanta_स्वतःmute(काष्ठा hda_codec *codec)
-अणु
-	snd_hda_gen_update_outमाला_दो(codec);
+static void alc269_quanta_automute(struct hda_codec *codec)
+{
+	snd_hda_gen_update_outputs(codec);
 
-	alc_ग_लिखो_coef_idx(codec, 0x0c, 0x680);
-	alc_ग_लिखो_coef_idx(codec, 0x0c, 0x480);
-पूर्ण
+	alc_write_coef_idx(codec, 0x0c, 0x680);
+	alc_write_coef_idx(codec, 0x0c, 0x480);
+}
 
-अटल व्योम alc269_fixup_quanta_mute(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action != HDA_FIXUP_ACT_PROBE)
-		वापस;
-	spec->gen.स्वतःmute_hook = alc269_quanta_स्वतःmute;
-पूर्ण
+static void alc269_fixup_quanta_mute(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action != HDA_FIXUP_ACT_PROBE)
+		return;
+	spec->gen.automute_hook = alc269_quanta_automute;
+}
 
-अटल व्योम alc269_x101_hp_स्वतःmute_hook(काष्ठा hda_codec *codec,
-					 काष्ठा hda_jack_callback *jack)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक vref;
+static void alc269_x101_hp_automute_hook(struct hda_codec *codec,
+					 struct hda_jack_callback *jack)
+{
+	struct alc_spec *spec = codec->spec;
+	int vref;
 	msleep(200);
-	snd_hda_gen_hp_स्वतःmute(codec, jack);
+	snd_hda_gen_hp_automute(codec, jack);
 
 	vref = spec->gen.hp_jack_present ? PIN_VREF80 : 0;
 	msleep(100);
-	snd_hda_codec_ग_लिखो(codec, 0x18, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
+	snd_hda_codec_write(codec, 0x18, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
 			    vref);
 	msleep(500);
-	snd_hda_codec_ग_लिखो(codec, 0x18, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
+	snd_hda_codec_write(codec, 0x18, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
 			    vref);
-पूर्ण
+}
 
 /*
  * Magic sequence to make Huawei Matebook X right speaker working (bko#197801)
  */
-काष्ठा hda_alc298_mbxinit अणु
-	अचिन्हित अक्षर value_0x23;
-	अचिन्हित अक्षर value_0x25;
-पूर्ण;
+struct hda_alc298_mbxinit {
+	unsigned char value_0x23;
+	unsigned char value_0x25;
+};
 
-अटल व्योम alc298_huawei_mbx_stereo_seq(काष्ठा hda_codec *codec,
-					 स्थिर काष्ठा hda_alc298_mbxinit *initval,
+static void alc298_huawei_mbx_stereo_seq(struct hda_codec *codec,
+					 const struct hda_alc298_mbxinit *initval,
 					 bool first)
-अणु
-	snd_hda_codec_ग_लिखो(codec, 0x06, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x0);
-	alc_ग_लिखो_coef_idx(codec, 0x26, 0xb000);
+{
+	snd_hda_codec_write(codec, 0x06, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x0);
+	alc_write_coef_idx(codec, 0x26, 0xb000);
 
-	अगर (first)
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0, AC_VERB_GET_PIN_SENSE, 0x0);
+	if (first)
+		snd_hda_codec_write(codec, 0x21, 0, AC_VERB_GET_PIN_SENSE, 0x0);
 
-	snd_hda_codec_ग_लिखो(codec, 0x6, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x80);
-	alc_ग_लिखो_coef_idx(codec, 0x26, 0xf000);
-	alc_ग_लिखो_coef_idx(codec, 0x23, initval->value_0x23);
+	snd_hda_codec_write(codec, 0x6, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x80);
+	alc_write_coef_idx(codec, 0x26, 0xf000);
+	alc_write_coef_idx(codec, 0x23, initval->value_0x23);
 
-	अगर (initval->value_0x23 != 0x1e)
-		alc_ग_लिखो_coef_idx(codec, 0x25, initval->value_0x25);
+	if (initval->value_0x23 != 0x1e)
+		alc_write_coef_idx(codec, 0x25, initval->value_0x25);
 
-	snd_hda_codec_ग_लिखो(codec, 0x20, 0, AC_VERB_SET_COEF_INDEX, 0x26);
-	snd_hda_codec_ग_लिखो(codec, 0x20, 0, AC_VERB_SET_PROC_COEF, 0xb010);
-पूर्ण
+	snd_hda_codec_write(codec, 0x20, 0, AC_VERB_SET_COEF_INDEX, 0x26);
+	snd_hda_codec_write(codec, 0x20, 0, AC_VERB_SET_PROC_COEF, 0xb010);
+}
 
-अटल व्योम alc298_fixup_huawei_mbx_stereo(काष्ठा hda_codec *codec,
-					   स्थिर काष्ठा hda_fixup *fix,
-					   पूर्णांक action)
-अणु
+static void alc298_fixup_huawei_mbx_stereo(struct hda_codec *codec,
+					   const struct hda_fixup *fix,
+					   int action)
+{
 	/* Initialization magic */
-	अटल स्थिर काष्ठा hda_alc298_mbxinit dac_init[] = अणु
-		अणु0x0c, 0x00पूर्ण, अणु0x0d, 0x00पूर्ण, अणु0x0e, 0x00पूर्ण, अणु0x0f, 0x00पूर्ण,
-		अणु0x10, 0x00पूर्ण, अणु0x1a, 0x40पूर्ण, अणु0x1b, 0x82पूर्ण, अणु0x1c, 0x00पूर्ण,
-		अणु0x1d, 0x00पूर्ण, अणु0x1e, 0x00पूर्ण, अणु0x1f, 0x00पूर्ण,
-		अणु0x20, 0xc2पूर्ण, अणु0x21, 0xc8पूर्ण, अणु0x22, 0x26पूर्ण, अणु0x23, 0x24पूर्ण,
-		अणु0x27, 0xffपूर्ण, अणु0x28, 0xffपूर्ण, अणु0x29, 0xffपूर्ण, अणु0x2a, 0x8fपूर्ण,
-		अणु0x2b, 0x02पूर्ण, अणु0x2c, 0x48पूर्ण, अणु0x2d, 0x34पूर्ण, अणु0x2e, 0x00पूर्ण,
-		अणु0x2f, 0x00पूर्ण,
-		अणु0x30, 0x00पूर्ण, अणु0x31, 0x00पूर्ण, अणु0x32, 0x00पूर्ण, अणु0x33, 0x00पूर्ण,
-		अणु0x34, 0x00पूर्ण, अणु0x35, 0x01पूर्ण, अणु0x36, 0x93पूर्ण, अणु0x37, 0x0cपूर्ण,
-		अणु0x38, 0x00पूर्ण, अणु0x39, 0x00पूर्ण, अणु0x3a, 0xf8पूर्ण, अणु0x38, 0x80पूर्ण,
-		अणुपूर्ण
-	पूर्ण;
-	स्थिर काष्ठा hda_alc298_mbxinit *seq;
+	static const struct hda_alc298_mbxinit dac_init[] = {
+		{0x0c, 0x00}, {0x0d, 0x00}, {0x0e, 0x00}, {0x0f, 0x00},
+		{0x10, 0x00}, {0x1a, 0x40}, {0x1b, 0x82}, {0x1c, 0x00},
+		{0x1d, 0x00}, {0x1e, 0x00}, {0x1f, 0x00},
+		{0x20, 0xc2}, {0x21, 0xc8}, {0x22, 0x26}, {0x23, 0x24},
+		{0x27, 0xff}, {0x28, 0xff}, {0x29, 0xff}, {0x2a, 0x8f},
+		{0x2b, 0x02}, {0x2c, 0x48}, {0x2d, 0x34}, {0x2e, 0x00},
+		{0x2f, 0x00},
+		{0x30, 0x00}, {0x31, 0x00}, {0x32, 0x00}, {0x33, 0x00},
+		{0x34, 0x00}, {0x35, 0x01}, {0x36, 0x93}, {0x37, 0x0c},
+		{0x38, 0x00}, {0x39, 0x00}, {0x3a, 0xf8}, {0x38, 0x80},
+		{}
+	};
+	const struct hda_alc298_mbxinit *seq;
 
-	अगर (action != HDA_FIXUP_ACT_INIT)
-		वापस;
+	if (action != HDA_FIXUP_ACT_INIT)
+		return;
 
 	/* Start */
-	snd_hda_codec_ग_लिखो(codec, 0x06, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x06, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x80);
-	alc_ग_लिखो_coef_idx(codec, 0x26, 0xf000);
-	alc_ग_लिखो_coef_idx(codec, 0x22, 0x31);
-	alc_ग_लिखो_coef_idx(codec, 0x23, 0x0b);
-	alc_ग_लिखो_coef_idx(codec, 0x25, 0x00);
-	snd_hda_codec_ग_लिखो(codec, 0x20, 0, AC_VERB_SET_COEF_INDEX, 0x26);
-	snd_hda_codec_ग_लिखो(codec, 0x20, 0, AC_VERB_SET_PROC_COEF, 0xb010);
+	snd_hda_codec_write(codec, 0x06, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x00);
+	snd_hda_codec_write(codec, 0x06, 0, AC_VERB_SET_DIGI_CONVERT_3, 0x80);
+	alc_write_coef_idx(codec, 0x26, 0xf000);
+	alc_write_coef_idx(codec, 0x22, 0x31);
+	alc_write_coef_idx(codec, 0x23, 0x0b);
+	alc_write_coef_idx(codec, 0x25, 0x00);
+	snd_hda_codec_write(codec, 0x20, 0, AC_VERB_SET_COEF_INDEX, 0x26);
+	snd_hda_codec_write(codec, 0x20, 0, AC_VERB_SET_PROC_COEF, 0xb010);
 
-	क्रम (seq = dac_init; seq->value_0x23; seq++)
+	for (seq = dac_init; seq->value_0x23; seq++)
 		alc298_huawei_mbx_stereo_seq(codec, seq, seq == dac_init);
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_x101_headset_mic(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc269_fixup_x101_headset_mic(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
-		spec->gen.hp_स्वतःmute_hook = alc269_x101_hp_स्वतःmute_hook;
-	पूर्ण
-पूर्ण
+		spec->gen.hp_automute_hook = alc269_x101_hp_automute_hook;
+	}
+}
 
-अटल व्योम alc_update_vref_led(काष्ठा hda_codec *codec, hda_nid_t pin,
+static void alc_update_vref_led(struct hda_codec *codec, hda_nid_t pin,
 				bool polarity, bool on)
-अणु
-	अचिन्हित पूर्णांक pinval;
+{
+	unsigned int pinval;
 
-	अगर (!pin)
-		वापस;
-	अगर (polarity)
+	if (!pin)
+		return;
+	if (polarity)
 		on = !on;
 	pinval = snd_hda_codec_get_pin_target(codec, pin);
 	pinval &= ~AC_PINCTL_VREFEN;
 	pinval |= on ? AC_PINCTL_VREF_80 : AC_PINCTL_VREF_HIZ;
-	/* temporarily घातer up/करोwn क्रम setting VREF */
-	snd_hda_घातer_up_pm(codec);
+	/* temporarily power up/down for setting VREF */
+	snd_hda_power_up_pm(codec);
 	snd_hda_set_pin_ctl_cache(codec, pin, pinval);
-	snd_hda_घातer_करोwn_pm(codec);
-पूर्ण
+	snd_hda_power_down_pm(codec);
+}
 
 /* update mute-LED according to the speaker mute state via mic VREF pin */
-अटल पूर्णांक vref_mute_led_set(काष्ठा led_classdev *led_cdev,
-			     क्रमागत led_brightness brightness)
-अणु
-	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	काष्ठा alc_spec *spec = codec->spec;
+static int vref_mute_led_set(struct led_classdev *led_cdev,
+			     enum led_brightness brightness)
+{
+	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_vref_led(codec, spec->mute_led_nid,
 			    spec->mute_led_polarity, brightness);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Make sure the led works even in runसमय suspend */
-अटल अचिन्हित पूर्णांक led_घातer_filter(काष्ठा hda_codec *codec,
+/* Make sure the led works even in runtime suspend */
+static unsigned int led_power_filter(struct hda_codec *codec,
 						  hda_nid_t nid,
-						  अचिन्हित पूर्णांक घातer_state)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+						  unsigned int power_state)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (घातer_state != AC_PWRST_D3 || nid == 0 ||
+	if (power_state != AC_PWRST_D3 || nid == 0 ||
 	    (nid != spec->mute_led_nid && nid != spec->cap_mute_led_nid))
-		वापस घातer_state;
+		return power_state;
 
 	/* Set pin ctl again, it might have just been set to 0 */
 	snd_hda_set_pin_ctl(codec, nid,
 			    snd_hda_codec_get_pin_target(codec, nid));
 
-	वापस snd_hda_gen_path_घातer_filter(codec, nid, घातer_state);
-पूर्ण
+	return snd_hda_gen_path_power_filter(codec, nid, power_state);
+}
 
-अटल व्योम alc269_fixup_hp_mute_led(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	स्थिर काष्ठा dmi_device *dev = शून्य;
+static void alc269_fixup_hp_mute_led(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	const struct dmi_device *dev = NULL;
 
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
 
-	जबतक ((dev = dmi_find_device(DMI_DEV_TYPE_OEM_STRING, शून्य, dev))) अणु
-		पूर्णांक pol, pin;
-		अगर (माला_पूछो(dev->name, "HP_Mute_LED_%d_%x", &pol, &pin) != 2)
-			जारी;
-		अगर (pin < 0x0a || pin >= 0x10)
-			अवरोध;
+	while ((dev = dmi_find_device(DMI_DEV_TYPE_OEM_STRING, NULL, dev))) {
+		int pol, pin;
+		if (sscanf(dev->name, "HP_Mute_LED_%d_%x", &pol, &pin) != 2)
+			continue;
+		if (pin < 0x0a || pin >= 0x10)
+			break;
 		spec->mute_led_polarity = pol;
 		spec->mute_led_nid = pin - 0x0a + 0x18;
 		snd_hda_gen_add_mute_led_cdev(codec, vref_mute_led_set);
-		codec->घातer_filter = led_घातer_filter;
+		codec->power_filter = led_power_filter;
 		codec_dbg(codec,
 			  "Detected mute LED for %x:%d\n", spec->mute_led_nid,
 			   spec->mute_led_polarity);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc269_fixup_hp_mute_led_micx(काष्ठा hda_codec *codec,
-					  स्थिर काष्ठा hda_fixup *fix,
-					  पूर्णांक action, hda_nid_t pin)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_fixup_hp_mute_led_micx(struct hda_codec *codec,
+					  const struct hda_fixup *fix,
+					  int action, hda_nid_t pin)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->mute_led_polarity = 0;
 		spec->mute_led_nid = pin;
 		snd_hda_gen_add_mute_led_cdev(codec, vref_mute_led_set);
-		codec->घातer_filter = led_घातer_filter;
-	पूर्ण
-पूर्ण
+		codec->power_filter = led_power_filter;
+	}
+}
 
-अटल व्योम alc269_fixup_hp_mute_led_mic1(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc269_fixup_hp_mute_led_mic1(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc269_fixup_hp_mute_led_micx(codec, fix, action, 0x18);
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_hp_mute_led_mic2(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc269_fixup_hp_mute_led_mic2(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc269_fixup_hp_mute_led_micx(codec, fix, action, 0x19);
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_hp_mute_led_mic3(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc269_fixup_hp_mute_led_mic3(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc269_fixup_hp_mute_led_micx(codec, fix, action, 0x1b);
-पूर्ण
+}
 
 /* update LED status via GPIO */
-अटल व्योम alc_update_gpio_led(काष्ठा hda_codec *codec, अचिन्हित पूर्णांक mask,
-				पूर्णांक polarity, bool enabled)
-अणु
-	अगर (polarity)
+static void alc_update_gpio_led(struct hda_codec *codec, unsigned int mask,
+				int polarity, bool enabled)
+{
+	if (polarity)
 		enabled = !enabled;
 	alc_update_gpio_data(codec, mask, !enabled); /* muted -> LED on */
-पूर्ण
+}
 
 /* turn on/off mute LED via GPIO per vmaster hook */
-अटल पूर्णांक gpio_mute_led_set(काष्ठा led_classdev *led_cdev,
-			     क्रमागत led_brightness brightness)
-अणु
-	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	काष्ठा alc_spec *spec = codec->spec;
+static int gpio_mute_led_set(struct led_classdev *led_cdev,
+			     enum led_brightness brightness)
+{
+	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_gpio_led(codec, spec->gpio_mute_led_mask,
 			    spec->mute_led_polarity, !brightness);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* turn on/off mic-mute LED via GPIO per capture hook */
-अटल पूर्णांक micmute_led_set(काष्ठा led_classdev *led_cdev,
-			   क्रमागत led_brightness brightness)
-अणु
-	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	काष्ठा alc_spec *spec = codec->spec;
+static int micmute_led_set(struct led_classdev *led_cdev,
+			   enum led_brightness brightness)
+{
+	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_gpio_led(codec, spec->gpio_mic_led_mask,
 			    spec->micmute_led_polarity, !brightness);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* setup mute and mic-mute GPIO bits, add hooks appropriately */
-अटल व्योम alc_fixup_hp_gpio_led(काष्ठा hda_codec *codec,
-				  पूर्णांक action,
-				  अचिन्हित पूर्णांक mute_mask,
-				  अचिन्हित पूर्णांक micmute_mask)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_hp_gpio_led(struct hda_codec *codec,
+				  int action,
+				  unsigned int mute_mask,
+				  unsigned int micmute_mask)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_gpio(codec, action, mute_mask | micmute_mask);
 
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
-	अगर (mute_mask) अणु
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
+	if (mute_mask) {
 		spec->gpio_mute_led_mask = mute_mask;
 		snd_hda_gen_add_mute_led_cdev(codec, gpio_mute_led_set);
-	पूर्ण
-	अगर (micmute_mask) अणु
+	}
+	if (micmute_mask) {
 		spec->gpio_mic_led_mask = micmute_mask;
 		snd_hda_gen_add_micmute_led_cdev(codec, micmute_led_set);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc236_fixup_hp_gpio_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc236_fixup_hp_gpio_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc_fixup_hp_gpio_led(codec, action, 0x02, 0x01);
-पूर्ण
+}
 
-अटल व्योम alc269_fixup_hp_gpio_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc269_fixup_hp_gpio_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc_fixup_hp_gpio_led(codec, action, 0x08, 0x10);
-पूर्ण
+}
 
-अटल व्योम alc285_fixup_hp_gpio_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc285_fixup_hp_gpio_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc_fixup_hp_gpio_led(codec, action, 0x04, 0x01);
-पूर्ण
+}
 
-अटल व्योम alc286_fixup_hp_gpio_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc286_fixup_hp_gpio_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc_fixup_hp_gpio_led(codec, action, 0x02, 0x20);
-पूर्ण
+}
 
-अटल व्योम alc287_fixup_hp_gpio_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc287_fixup_hp_gpio_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc_fixup_hp_gpio_led(codec, action, 0x10, 0);
-पूर्ण
+}
 
 /* turn on/off mic-mute LED per capture hook via VREF change */
-अटल पूर्णांक vref_micmute_led_set(काष्ठा led_classdev *led_cdev,
-				क्रमागत led_brightness brightness)
-अणु
-	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	काष्ठा alc_spec *spec = codec->spec;
+static int vref_micmute_led_set(struct led_classdev *led_cdev,
+				enum led_brightness brightness)
+{
+	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_vref_led(codec, spec->cap_mute_led_nid,
 			    spec->micmute_led_polarity, brightness);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम alc269_fixup_hp_gpio_mic1_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_fixup_hp_gpio_mic1_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_hp_gpio_led(codec, action, 0x08, 0);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		/* Like hp_gpio_mic1_led, but also needs GPIO4 low to
 		 * enable headphone amp
 		 */
@@ -4326,329 +4325,329 @@
 		spec->gpio_dir |= 0x10;
 		spec->cap_mute_led_nid = 0x18;
 		snd_hda_gen_add_micmute_led_cdev(codec, vref_micmute_led_set);
-		codec->घातer_filter = led_घातer_filter;
-	पूर्ण
-पूर्ण
+		codec->power_filter = led_power_filter;
+	}
+}
 
-अटल व्योम alc280_fixup_hp_gpio4(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc280_fixup_hp_gpio4(struct hda_codec *codec,
+				   const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_hp_gpio_led(codec, action, 0x08, 0);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->cap_mute_led_nid = 0x18;
 		snd_hda_gen_add_micmute_led_cdev(codec, vref_micmute_led_set);
-		codec->घातer_filter = led_घातer_filter;
-	पूर्ण
-पूर्ण
+		codec->power_filter = led_power_filter;
+	}
+}
 
-/* HP Spectre x360 14 model needs a unique workaround क्रम enabling the amp;
- * it needs to toggle the GPIO0 once on and off at each समय (bko#210633)
+/* HP Spectre x360 14 model needs a unique workaround for enabling the amp;
+ * it needs to toggle the GPIO0 once on and off at each time (bko#210633)
  */
-अटल व्योम alc245_fixup_hp_x360_amp(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc245_fixup_hp_x360_amp(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		spec->gpio_mask |= 0x01;
 		spec->gpio_dir |= 0x01;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
+		break;
+	case HDA_FIXUP_ACT_INIT:
 		/* need to toggle GPIO to enable the amp */
 		alc_update_gpio_data(codec, 0x01, true);
 		msleep(100);
 		alc_update_gpio_data(codec, 0x01, false);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* toggle GPIO2 at each समय stream is started; we use PREPARE state instead */
-अटल व्योम alc274_hp_envy_pcm_hook(काष्ठा hda_pcm_stream *hinfo,
-				    काष्ठा hda_codec *codec,
-				    काष्ठा snd_pcm_substream *substream,
-				    पूर्णांक action)
-अणु
-	चयन (action) अणु
-	हाल HDA_GEN_PCM_ACT_PREPARE:
+/* toggle GPIO2 at each time stream is started; we use PREPARE state instead */
+static void alc274_hp_envy_pcm_hook(struct hda_pcm_stream *hinfo,
+				    struct hda_codec *codec,
+				    struct snd_pcm_substream *substream,
+				    int action)
+{
+	switch (action) {
+	case HDA_GEN_PCM_ACT_PREPARE:
 		alc_update_gpio_data(codec, 0x04, true);
-		अवरोध;
-	हाल HDA_GEN_PCM_ACT_CLEANUP:
+		break;
+	case HDA_GEN_PCM_ACT_CLEANUP:
 		alc_update_gpio_data(codec, 0x04, false);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc274_fixup_hp_envy_gpio(काष्ठा hda_codec *codec,
-				      स्थिर काष्ठा hda_fixup *fix,
-				      पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc274_fixup_hp_envy_gpio(struct hda_codec *codec,
+				      const struct hda_fixup *fix,
+				      int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PROBE) {
 		spec->gpio_mask |= 0x04;
 		spec->gpio_dir |= 0x04;
 		spec->gen.pcm_playback_hook = alc274_hp_envy_pcm_hook;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc_update_coef_led(काष्ठा hda_codec *codec,
-				काष्ठा alc_coef_led *led,
+static void alc_update_coef_led(struct hda_codec *codec,
+				struct alc_coef_led *led,
 				bool polarity, bool on)
-अणु
-	अगर (polarity)
+{
+	if (polarity)
 		on = !on;
-	/* temporarily घातer up/करोwn क्रम setting COEF bit */
+	/* temporarily power up/down for setting COEF bit */
 	alc_update_coef_idx(codec, led->idx, led->mask,
 			    on ? led->on : led->off);
-पूर्ण
+}
 
 /* update mute-LED according to the speaker mute state via COEF bit */
-अटल पूर्णांक coef_mute_led_set(काष्ठा led_classdev *led_cdev,
-			     क्रमागत led_brightness brightness)
-अणु
-	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	काष्ठा alc_spec *spec = codec->spec;
+static int coef_mute_led_set(struct led_classdev *led_cdev,
+			     enum led_brightness brightness)
+{
+	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_coef_led(codec, &spec->mute_led_coef,
 			    spec->mute_led_polarity, brightness);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम alc285_fixup_hp_mute_led_coefbit(काष्ठा hda_codec *codec,
-					  स्थिर काष्ठा hda_fixup *fix,
-					  पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc285_fixup_hp_mute_led_coefbit(struct hda_codec *codec,
+					  const struct hda_fixup *fix,
+					  int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->mute_led_polarity = 0;
 		spec->mute_led_coef.idx = 0x0b;
 		spec->mute_led_coef.mask = 1 << 3;
 		spec->mute_led_coef.on = 1 << 3;
 		spec->mute_led_coef.off = 0;
 		snd_hda_gen_add_mute_led_cdev(codec, coef_mute_led_set);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc236_fixup_hp_mute_led_coefbit(काष्ठा hda_codec *codec,
-					  स्थिर काष्ठा hda_fixup *fix,
-					  पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc236_fixup_hp_mute_led_coefbit(struct hda_codec *codec,
+					  const struct hda_fixup *fix,
+					  int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->mute_led_polarity = 0;
 		spec->mute_led_coef.idx = 0x34;
 		spec->mute_led_coef.mask = 1 << 5;
 		spec->mute_led_coef.on = 0;
 		spec->mute_led_coef.off = 1 << 5;
 		snd_hda_gen_add_mute_led_cdev(codec, coef_mute_led_set);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* turn on/off mic-mute LED per capture hook by coef bit */
-अटल पूर्णांक coef_micmute_led_set(काष्ठा led_classdev *led_cdev,
-				क्रमागत led_brightness brightness)
-अणु
-	काष्ठा hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
-	काष्ठा alc_spec *spec = codec->spec;
+static int coef_micmute_led_set(struct led_classdev *led_cdev,
+				enum led_brightness brightness)
+{
+	struct hda_codec *codec = dev_to_hda_codec(led_cdev->dev->parent);
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_coef_led(codec, &spec->mic_led_coef,
 			    spec->micmute_led_polarity, brightness);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम alc285_fixup_hp_coef_micmute_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc285_fixup_hp_coef_micmute_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->mic_led_coef.idx = 0x19;
 		spec->mic_led_coef.mask = 1 << 13;
 		spec->mic_led_coef.on = 1 << 13;
 		spec->mic_led_coef.off = 0;
 		snd_hda_gen_add_micmute_led_cdev(codec, coef_micmute_led_set);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc236_fixup_hp_coef_micmute_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc236_fixup_hp_coef_micmute_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->mic_led_coef.idx = 0x35;
 		spec->mic_led_coef.mask = 3 << 2;
 		spec->mic_led_coef.on = 2 << 2;
 		spec->mic_led_coef.off = 1 << 2;
 		snd_hda_gen_add_micmute_led_cdev(codec, coef_micmute_led_set);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc285_fixup_hp_mute_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc285_fixup_hp_mute_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc285_fixup_hp_mute_led_coefbit(codec, fix, action);
 	alc285_fixup_hp_coef_micmute_led(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc236_fixup_hp_mute_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc236_fixup_hp_mute_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc236_fixup_hp_mute_led_coefbit(codec, fix, action);
 	alc236_fixup_hp_coef_micmute_led(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc236_fixup_hp_micmute_led_vref(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc236_fixup_hp_micmute_led_vref(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->cap_mute_led_nid = 0x1a;
 		snd_hda_gen_add_micmute_led_cdev(codec, vref_micmute_led_set);
-		codec->घातer_filter = led_घातer_filter;
-	पूर्ण
-पूर्ण
+		codec->power_filter = led_power_filter;
+	}
+}
 
-अटल व्योम alc236_fixup_hp_mute_led_micmute_vref(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc236_fixup_hp_mute_led_micmute_vref(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc236_fixup_hp_mute_led_coefbit(codec, fix, action);
 	alc236_fixup_hp_micmute_led_vref(codec, fix, action);
-पूर्ण
+}
 
-#अगर IS_REACHABLE(CONFIG_INPUT)
-अटल व्योम gpio2_mic_hotkey_event(काष्ठा hda_codec *codec,
-				   काष्ठा hda_jack_callback *event)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+#if IS_REACHABLE(CONFIG_INPUT)
+static void gpio2_mic_hotkey_event(struct hda_codec *codec,
+				   struct hda_jack_callback *event)
+{
+	struct alc_spec *spec = codec->spec;
 
-	/* GPIO2 just toggles on a keypress/keyrelease cycle. Thereक्रमe
-	   send both key on and key off event क्रम every पूर्णांकerrupt. */
+	/* GPIO2 just toggles on a keypress/keyrelease cycle. Therefore
+	   send both key on and key off event for every interrupt. */
 	input_report_key(spec->kb_dev, spec->alc_mute_keycode_map[ALC_KEY_MICMUTE_INDEX], 1);
 	input_sync(spec->kb_dev);
 	input_report_key(spec->kb_dev, spec->alc_mute_keycode_map[ALC_KEY_MICMUTE_INDEX], 0);
 	input_sync(spec->kb_dev);
-पूर्ण
+}
 
-अटल पूर्णांक alc_रेजिस्टर_micmute_input_device(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक i;
+static int alc_register_micmute_input_device(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	int i;
 
 	spec->kb_dev = input_allocate_device();
-	अगर (!spec->kb_dev) अणु
+	if (!spec->kb_dev) {
 		codec_err(codec, "Out of memory (input_allocate_device)\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spec->alc_mute_keycode_map[ALC_KEY_MICMUTE_INDEX] = KEY_MICMUTE;
 
 	spec->kb_dev->name = "Microphone Mute Button";
 	spec->kb_dev->evbit[0] = BIT_MASK(EV_KEY);
-	spec->kb_dev->keycodesize = माप(spec->alc_mute_keycode_map[0]);
+	spec->kb_dev->keycodesize = sizeof(spec->alc_mute_keycode_map[0]);
 	spec->kb_dev->keycodemax = ARRAY_SIZE(spec->alc_mute_keycode_map);
 	spec->kb_dev->keycode = spec->alc_mute_keycode_map;
-	क्रम (i = 0; i < ARRAY_SIZE(spec->alc_mute_keycode_map); i++)
+	for (i = 0; i < ARRAY_SIZE(spec->alc_mute_keycode_map); i++)
 		set_bit(spec->alc_mute_keycode_map[i], spec->kb_dev->keybit);
 
-	अगर (input_रेजिस्टर_device(spec->kb_dev)) अणु
+	if (input_register_device(spec->kb_dev)) {
 		codec_err(codec, "input_register_device failed\n");
-		input_मुक्त_device(spec->kb_dev);
-		spec->kb_dev = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+		input_free_device(spec->kb_dev);
+		spec->kb_dev = NULL;
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* GPIO1 = set according to SKU बाह्यal amp
+/* GPIO1 = set according to SKU external amp
  * GPIO2 = mic mute hotkey
  * GPIO3 = mute LED
  * GPIO4 = mic mute LED
  */
-अटल व्योम alc280_fixup_hp_gpio2_mic_hotkey(काष्ठा hda_codec *codec,
-					     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc280_fixup_hp_gpio2_mic_hotkey(struct hda_codec *codec,
+					     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_hp_gpio_led(codec, action, 0x08, 0x10);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->init_amp = ALC_INIT_DEFAULT;
-		अगर (alc_रेजिस्टर_micmute_input_device(codec) != 0)
-			वापस;
+		if (alc_register_micmute_input_device(codec) != 0)
+			return;
 
 		spec->gpio_mask |= 0x06;
 		spec->gpio_dir |= 0x02;
 		spec->gpio_data |= 0x02;
-		snd_hda_codec_ग_लिखो_cache(codec, codec->core.afg, 0,
+		snd_hda_codec_write_cache(codec, codec->core.afg, 0,
 					  AC_VERB_SET_GPIO_UNSOLICITED_RSP_MASK, 0x04);
 		snd_hda_jack_detect_enable_callback(codec, codec->core.afg,
 						    gpio2_mic_hotkey_event);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!spec->kb_dev)
-		वापस;
+	if (!spec->kb_dev)
+		return;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_FREE:
-		input_unरेजिस्टर_device(spec->kb_dev);
-		spec->kb_dev = शून्य;
-	पूर्ण
-पूर्ण
+	switch (action) {
+	case HDA_FIXUP_ACT_FREE:
+		input_unregister_device(spec->kb_dev);
+		spec->kb_dev = NULL;
+	}
+}
 
 /* Line2 = mic mute hotkey
  * GPIO2 = mic mute LED
  */
-अटल व्योम alc233_fixup_lenovo_line2_mic_hotkey(काष्ठा hda_codec *codec,
-					     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc233_fixup_lenovo_line2_mic_hotkey(struct hda_codec *codec,
+					     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_hp_gpio_led(codec, action, 0, 0x04);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->init_amp = ALC_INIT_DEFAULT;
-		अगर (alc_रेजिस्टर_micmute_input_device(codec) != 0)
-			वापस;
+		if (alc_register_micmute_input_device(codec) != 0)
+			return;
 
 		snd_hda_jack_detect_enable_callback(codec, 0x1b,
 						    gpio2_mic_hotkey_event);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!spec->kb_dev)
-		वापस;
+	if (!spec->kb_dev)
+		return;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_FREE:
-		input_unरेजिस्टर_device(spec->kb_dev);
-		spec->kb_dev = शून्य;
-	पूर्ण
-पूर्ण
-#अन्यथा /* INPUT */
-#घोषणा alc280_fixup_hp_gpio2_mic_hotkey	शून्य
-#घोषणा alc233_fixup_lenovo_line2_mic_hotkey	शून्य
-#पूर्ण_अगर /* INPUT */
+	switch (action) {
+	case HDA_FIXUP_ACT_FREE:
+		input_unregister_device(spec->kb_dev);
+		spec->kb_dev = NULL;
+	}
+}
+#else /* INPUT */
+#define alc280_fixup_hp_gpio2_mic_hotkey	NULL
+#define alc233_fixup_lenovo_line2_mic_hotkey	NULL
+#endif /* INPUT */
 
-अटल व्योम alc269_fixup_hp_line1_mic1_led(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc269_fixup_hp_line1_mic1_led(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc269_fixup_hp_mute_led_micx(codec, fix, action, 0x1a);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->cap_mute_led_nid = 0x18;
 		snd_hda_gen_add_micmute_led_cdev(codec, vref_micmute_led_set);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा coef_fw alc225_pre_hsmode[] = अणु
+static const struct coef_fw alc225_pre_hsmode[] = {
 	UPDATE_COEF(0x4a, 1<<8, 0),
 	UPDATE_COEFEX(0x57, 0x05, 1<<14, 0),
 	UPDATE_COEF(0x63, 3<<14, 3<<14),
@@ -4656,29 +4655,29 @@
 	UPDATE_COEF(0x4a, 3<<10, 3<<10),
 	UPDATE_COEF(0x45, 0x3f<<10, 0x34<<10),
 	UPDATE_COEF(0x4a, 3<<10, 0),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल व्योम alc_headset_mode_unplugged(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अटल स्थिर काष्ठा coef_fw coef0255[] = अणु
+static void alc_headset_mode_unplugged(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	static const struct coef_fw coef0255[] = {
 		WRITE_COEF(0x1b, 0x0c0b), /* LDO and MISC control */
 		WRITE_COEF(0x45, 0xd089), /* UAJ function set to menual mode */
 		UPDATE_COEFEX(0x57, 0x05, 1<<14, 0), /* Direct Drive HP Amp control(Set to verb control)*/
 		WRITE_COEF(0x06, 0x6104), /* Set MIC2 Vref gate with HP */
 		WRITE_COEFEX(0x57, 0x03, 0x8aa6), /* Direct Drive HP Amp control */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0256[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0256[] = {
 		WRITE_COEF(0x1b, 0x0c4b), /* LDO and MISC control */
 		WRITE_COEF(0x45, 0xd089), /* UAJ function set to menual mode */
 		WRITE_COEF(0x06, 0x6104), /* Set MIC2 Vref gate with HP */
 		WRITE_COEFEX(0x57, 0x03, 0x09a3), /* Direct Drive HP Amp control */
 		UPDATE_COEFEX(0x57, 0x05, 1<<14, 0), /* Direct Drive HP Amp control(Set to verb control)*/
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0233[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0233[] = {
 		WRITE_COEF(0x1b, 0x0c0b),
 		WRITE_COEF(0x45, 0xc429),
 		UPDATE_COEF(0x35, 0x4000, 0),
@@ -4686,46 +4685,46 @@
 		WRITE_COEF(0x1a, 0x0001),
 		WRITE_COEF(0x26, 0x0004),
 		WRITE_COEF(0x32, 0x42a3),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0288[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0288[] = {
 		UPDATE_COEF(0x4f, 0xfcc0, 0xc400),
 		UPDATE_COEF(0x50, 0x2000, 0x2000),
 		UPDATE_COEF(0x56, 0x0006, 0x0006),
 		UPDATE_COEF(0x66, 0x0008, 0),
 		UPDATE_COEF(0x67, 0x2000, 0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0298[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0298[] = {
 		UPDATE_COEF(0x19, 0x1300, 0x0300),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0292[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0292[] = {
 		WRITE_COEF(0x76, 0x000e),
 		WRITE_COEF(0x6c, 0x2400),
 		WRITE_COEF(0x18, 0x7308),
 		WRITE_COEF(0x6b, 0xc429),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0293[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0293[] = {
 		UPDATE_COEF(0x10, 7<<8, 6<<8), /* SET Line1 JD to 0 */
-		UPDATE_COEFEX(0x57, 0x05, 1<<15|1<<13, 0x0), /* SET अक्षरge pump by verb */
+		UPDATE_COEFEX(0x57, 0x05, 1<<15|1<<13, 0x0), /* SET charge pump by verb */
 		UPDATE_COEFEX(0x57, 0x03, 1<<10, 1<<10), /* SET EN_OSW to 1 */
 		UPDATE_COEF(0x1a, 1<<3, 1<<3), /* Combo JD gating with LINE1-VREFO */
 		WRITE_COEF(0x45, 0xc429), /* Set to TRS type */
-		UPDATE_COEF(0x4a, 0x000f, 0x000e), /* Combo Jack स्वतः detect */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0668[] = अणु
+		UPDATE_COEF(0x4a, 0x000f, 0x000e), /* Combo Jack auto detect */
+		{}
+	};
+	static const struct coef_fw coef0668[] = {
 		WRITE_COEF(0x15, 0x0d40),
 		WRITE_COEF(0xb7, 0x802b),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0225[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0225[] = {
 		UPDATE_COEF(0x63, 3<<14, 0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0274[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0274[] = {
 		UPDATE_COEF(0x4a, 0x0100, 0),
 		UPDATE_COEFEX(0x57, 0x05, 0x4000, 0),
 		UPDATE_COEF(0x6b, 0xf000, 0x5000),
@@ -4733,1634 +4732,1634 @@
 		UPDATE_COEF(0x4a, 0x0c00, 0x0c00),
 		WRITE_COEF(0x45, 0x5289),
 		UPDATE_COEF(0x4a, 0x0c00, 0),
-		अणुपूर्ण
-	पूर्ण;
+		{}
+	};
 
-	अगर (spec->no_पूर्णांकernal_mic_pin) अणु
+	if (spec->no_internal_mic_pin) {
 		alc_update_coef_idx(codec, 0x45, 0xf<<12 | 1<<10, 5<<12);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0255:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0255:
 		alc_process_coef_fw(codec, coef0255);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
 		alc_process_coef_fw(codec, coef0256);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
 		alc_process_coef_fw(codec, coef0274);
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
 		alc_process_coef_fw(codec, coef0233);
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
 		alc_process_coef_fw(codec, coef0288);
-		अवरोध;
-	हाल 0x10ec0298:
+		break;
+	case 0x10ec0298:
 		alc_process_coef_fw(codec, coef0298);
 		alc_process_coef_fw(codec, coef0288);
-		अवरोध;
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0292:
 		alc_process_coef_fw(codec, coef0292);
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		alc_process_coef_fw(codec, coef0293);
-		अवरोध;
-	हाल 0x10ec0668:
+		break;
+	case 0x10ec0668:
 		alc_process_coef_fw(codec, coef0668);
-		अवरोध;
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
+		break;
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
 		alc_process_coef_fw(codec, alc225_pre_hsmode);
 		alc_process_coef_fw(codec, coef0225);
-		अवरोध;
-	हाल 0x10ec0867:
+		break;
+	case 0x10ec0867:
 		alc_update_coefex_idx(codec, 0x57, 0x5, 1<<14, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	codec_dbg(codec, "Headset jack set to unplugged mode.\n");
-पूर्ण
+}
 
 
-अटल व्योम alc_headset_mode_mic_in(काष्ठा hda_codec *codec, hda_nid_t hp_pin,
+static void alc_headset_mode_mic_in(struct hda_codec *codec, hda_nid_t hp_pin,
 				    hda_nid_t mic_pin)
-अणु
-	अटल स्थिर काष्ठा coef_fw coef0255[] = अणु
+{
+	static const struct coef_fw coef0255[] = {
 		WRITE_COEFEX(0x57, 0x03, 0x8aa6),
 		WRITE_COEF(0x06, 0x6100), /* Set MIC2 Vref gate to normal */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0256[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0256[] = {
 		UPDATE_COEFEX(0x57, 0x05, 1<<14, 1<<14), /* Direct Drive HP Amp control(Set to verb control)*/
 		WRITE_COEFEX(0x57, 0x03, 0x09a3),
 		WRITE_COEF(0x06, 0x6100), /* Set MIC2 Vref gate to normal */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0233[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0233[] = {
 		UPDATE_COEF(0x35, 0, 1<<14),
 		WRITE_COEF(0x06, 0x2100),
 		WRITE_COEF(0x1a, 0x0021),
 		WRITE_COEF(0x26, 0x008c),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0288[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0288[] = {
 		UPDATE_COEF(0x4f, 0x00c0, 0),
 		UPDATE_COEF(0x50, 0x2000, 0),
 		UPDATE_COEF(0x56, 0x0006, 0),
 		UPDATE_COEF(0x4f, 0xfcc0, 0xc400),
 		UPDATE_COEF(0x66, 0x0008, 0x0008),
 		UPDATE_COEF(0x67, 0x2000, 0x2000),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0292[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0292[] = {
 		WRITE_COEF(0x19, 0xa208),
 		WRITE_COEF(0x2e, 0xacf0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0293[] = अणु
-		UPDATE_COEFEX(0x57, 0x05, 0, 1<<15|1<<13), /* SET अक्षरge pump by verb */
+		{}
+	};
+	static const struct coef_fw coef0293[] = {
+		UPDATE_COEFEX(0x57, 0x05, 0, 1<<15|1<<13), /* SET charge pump by verb */
 		UPDATE_COEFEX(0x57, 0x03, 1<<10, 0), /* SET EN_OSW to 0 */
 		UPDATE_COEF(0x1a, 1<<3, 0), /* Combo JD gating without LINE1-VREFO */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0688[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0688[] = {
 		WRITE_COEF(0xb7, 0x802b),
 		WRITE_COEF(0xb5, 0x1040),
 		UPDATE_COEF(0xc3, 0, 1<<12),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0225[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0225[] = {
 		UPDATE_COEFEX(0x57, 0x05, 1<<14, 1<<14),
 		UPDATE_COEF(0x4a, 3<<4, 2<<4),
 		UPDATE_COEF(0x63, 3<<14, 0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0274[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0274[] = {
 		UPDATE_COEFEX(0x57, 0x05, 0x4000, 0x4000),
 		UPDATE_COEF(0x4a, 0x0010, 0),
 		UPDATE_COEF(0x6b, 0xf000, 0),
-		अणुपूर्ण
-	पूर्ण;
+		{}
+	};
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0255:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xc489);
+	switch (codec->core.vendor_id) {
+	case 0x10ec0255:
+		alc_write_coef_idx(codec, 0x45, 0xc489);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0255);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xc489);
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
+		alc_write_coef_idx(codec, 0x45, 0xc489);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0256);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0x4689);
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
+		alc_write_coef_idx(codec, 0x45, 0x4689);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0274);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xc429);
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
+		alc_write_coef_idx(codec, 0x45, 0xc429);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0233);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
-	हाल 0x10ec0298:
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
+	case 0x10ec0298:
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0288);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0292:
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0292);
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		/* Set to TRS mode */
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xc429);
+		alc_write_coef_idx(codec, 0x45, 0xc429);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0293);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0867:
+		break;
+	case 0x10ec0867:
 		alc_update_coefex_idx(codec, 0x57, 0x5, 0, 1<<14);
 		fallthrough;
-	हाल 0x10ec0221:
-	हाल 0x10ec0662:
+	case 0x10ec0221:
+	case 0x10ec0662:
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0668:
-		alc_ग_लिखो_coef_idx(codec, 0x11, 0x0001);
+		break;
+	case 0x10ec0668:
+		alc_write_coef_idx(codec, 0x11, 0x0001);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0688);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
+		break;
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
 		alc_process_coef_fw(codec, alc225_pre_hsmode);
 		alc_update_coef_idx(codec, 0x45, 0x3f<<10, 0x31<<10);
 		snd_hda_set_pin_ctl_cache(codec, hp_pin, 0);
 		alc_process_coef_fw(codec, coef0225);
 		snd_hda_set_pin_ctl_cache(codec, mic_pin, PIN_VREF50);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	codec_dbg(codec, "Headset jack set to mic-in mode.\n");
-पूर्ण
+}
 
-अटल व्योम alc_headset_mode_शेष(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर काष्ठा coef_fw coef0225[] = अणु
+static void alc_headset_mode_default(struct hda_codec *codec)
+{
+	static const struct coef_fw coef0225[] = {
 		UPDATE_COEF(0x45, 0x3f<<10, 0x30<<10),
 		UPDATE_COEF(0x45, 0x3f<<10, 0x31<<10),
 		UPDATE_COEF(0x49, 3<<8, 0<<8),
 		UPDATE_COEF(0x4a, 3<<4, 3<<4),
 		UPDATE_COEF(0x63, 3<<14, 0),
 		UPDATE_COEF(0x67, 0xf000, 0x3000),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0255[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0255[] = {
 		WRITE_COEF(0x45, 0xc089),
 		WRITE_COEF(0x45, 0xc489),
 		WRITE_COEFEX(0x57, 0x03, 0x8ea6),
 		WRITE_COEF(0x49, 0x0049),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0256[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0256[] = {
 		WRITE_COEF(0x45, 0xc489),
 		WRITE_COEFEX(0x57, 0x03, 0x0da3),
 		WRITE_COEF(0x49, 0x0049),
 		UPDATE_COEFEX(0x57, 0x05, 1<<14, 0), /* Direct Drive HP Amp control(Set to verb control)*/
 		WRITE_COEF(0x06, 0x6100),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0233[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0233[] = {
 		WRITE_COEF(0x06, 0x2100),
 		WRITE_COEF(0x32, 0x4ea3),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0288[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0288[] = {
 		UPDATE_COEF(0x4f, 0xfcc0, 0xc400), /* Set to TRS type */
 		UPDATE_COEF(0x50, 0x2000, 0x2000),
 		UPDATE_COEF(0x56, 0x0006, 0x0006),
 		UPDATE_COEF(0x66, 0x0008, 0),
 		UPDATE_COEF(0x67, 0x2000, 0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0292[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0292[] = {
 		WRITE_COEF(0x76, 0x000e),
 		WRITE_COEF(0x6c, 0x2400),
 		WRITE_COEF(0x6b, 0xc429),
 		WRITE_COEF(0x18, 0x7308),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0293[] = अणु
-		UPDATE_COEF(0x4a, 0x000f, 0x000e), /* Combo Jack स्वतः detect */
+		{}
+	};
+	static const struct coef_fw coef0293[] = {
+		UPDATE_COEF(0x4a, 0x000f, 0x000e), /* Combo Jack auto detect */
 		WRITE_COEF(0x45, 0xC429), /* Set to TRS type */
 		UPDATE_COEF(0x1a, 1<<3, 0), /* Combo JD gating without LINE1-VREFO */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0688[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0688[] = {
 		WRITE_COEF(0x11, 0x0041),
 		WRITE_COEF(0x15, 0x0d40),
 		WRITE_COEF(0xb7, 0x802b),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0274[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0274[] = {
 		WRITE_COEF(0x45, 0x4289),
 		UPDATE_COEF(0x4a, 0x0010, 0x0010),
 		UPDATE_COEF(0x6b, 0x0f00, 0),
 		UPDATE_COEF(0x49, 0x0300, 0x0300),
-		अणुपूर्ण
-	पूर्ण;
+		{}
+	};
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
 		alc_process_coef_fw(codec, alc225_pre_hsmode);
 		alc_process_coef_fw(codec, coef0225);
-		अवरोध;
-	हाल 0x10ec0255:
+		break;
+	case 0x10ec0255:
 		alc_process_coef_fw(codec, coef0255);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
-		alc_ग_लिखो_coef_idx(codec, 0x1b, 0x0e4b);
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xc089);
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
+		alc_write_coef_idx(codec, 0x1b, 0x0e4b);
+		alc_write_coef_idx(codec, 0x45, 0xc089);
 		msleep(50);
 		alc_process_coef_fw(codec, coef0256);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
 		alc_process_coef_fw(codec, coef0274);
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
 		alc_process_coef_fw(codec, coef0233);
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
-	हाल 0x10ec0298:
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
+	case 0x10ec0298:
 		alc_process_coef_fw(codec, coef0288);
-		अवरोध;
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0292:
 		alc_process_coef_fw(codec, coef0292);
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		alc_process_coef_fw(codec, coef0293);
-		अवरोध;
-	हाल 0x10ec0668:
+		break;
+	case 0x10ec0668:
 		alc_process_coef_fw(codec, coef0688);
-		अवरोध;
-	हाल 0x10ec0867:
+		break;
+	case 0x10ec0867:
 		alc_update_coefex_idx(codec, 0x57, 0x5, 1<<14, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	codec_dbg(codec, "Headset jack set to headphone (default) mode.\n");
-पूर्ण
+}
 
 /* Iphone type */
-अटल व्योम alc_headset_mode_ctia(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक val;
+static void alc_headset_mode_ctia(struct hda_codec *codec)
+{
+	int val;
 
-	अटल स्थिर काष्ठा coef_fw coef0255[] = अणु
+	static const struct coef_fw coef0255[] = {
 		WRITE_COEF(0x45, 0xd489), /* Set to CTIA type */
 		WRITE_COEF(0x1b, 0x0c2b),
 		WRITE_COEFEX(0x57, 0x03, 0x8ea6),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0256[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0256[] = {
 		WRITE_COEF(0x45, 0xd489), /* Set to CTIA type */
 		WRITE_COEF(0x1b, 0x0e6b),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0233[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0233[] = {
 		WRITE_COEF(0x45, 0xd429),
 		WRITE_COEF(0x1b, 0x0c2b),
 		WRITE_COEF(0x32, 0x4ea3),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0288[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0288[] = {
 		UPDATE_COEF(0x50, 0x2000, 0x2000),
 		UPDATE_COEF(0x56, 0x0006, 0x0006),
 		UPDATE_COEF(0x66, 0x0008, 0),
 		UPDATE_COEF(0x67, 0x2000, 0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0292[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0292[] = {
 		WRITE_COEF(0x6b, 0xd429),
 		WRITE_COEF(0x76, 0x0008),
 		WRITE_COEF(0x18, 0x7388),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0293[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0293[] = {
 		WRITE_COEF(0x45, 0xd429), /* Set to ctia type */
 		UPDATE_COEF(0x10, 7<<8, 7<<8), /* SET Line1 JD to 1 */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0688[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0688[] = {
 		WRITE_COEF(0x11, 0x0001),
 		WRITE_COEF(0x15, 0x0d60),
 		WRITE_COEF(0xc3, 0x0000),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0225_1[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0225_1[] = {
 		UPDATE_COEF(0x45, 0x3f<<10, 0x35<<10),
 		UPDATE_COEF(0x63, 3<<14, 2<<14),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0225_2[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0225_2[] = {
 		UPDATE_COEF(0x45, 0x3f<<10, 0x35<<10),
 		UPDATE_COEF(0x63, 3<<14, 1<<14),
-		अणुपूर्ण
-	पूर्ण;
+		{}
+	};
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0255:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0255:
 		alc_process_coef_fw(codec, coef0255);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
 		alc_process_coef_fw(codec, coef0256);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xd689);
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
+		alc_write_coef_idx(codec, 0x45, 0xd689);
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
 		alc_process_coef_fw(codec, coef0233);
-		अवरोध;
-	हाल 0x10ec0298:
-		val = alc_पढ़ो_coef_idx(codec, 0x50);
-		अगर (val & (1 << 12)) अणु
+		break;
+	case 0x10ec0298:
+		val = alc_read_coef_idx(codec, 0x50);
+		if (val & (1 << 12)) {
 			alc_update_coef_idx(codec, 0x8e, 0x0070, 0x0020);
 			alc_update_coef_idx(codec, 0x4f, 0xfcc0, 0xd400);
 			msleep(300);
-		पूर्ण अन्यथा अणु
+		} else {
 			alc_update_coef_idx(codec, 0x8e, 0x0070, 0x0010);
 			alc_update_coef_idx(codec, 0x4f, 0xfcc0, 0xd400);
 			msleep(300);
-		पूर्ण
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
+		}
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
 		alc_update_coef_idx(codec, 0x4f, 0xfcc0, 0xd400);
 		msleep(300);
 		alc_process_coef_fw(codec, coef0288);
-		अवरोध;
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0292:
 		alc_process_coef_fw(codec, coef0292);
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		alc_process_coef_fw(codec, coef0293);
-		अवरोध;
-	हाल 0x10ec0668:
+		break;
+	case 0x10ec0668:
 		alc_process_coef_fw(codec, coef0688);
-		अवरोध;
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
-		val = alc_पढ़ो_coef_idx(codec, 0x45);
-		अगर (val & (1 << 9))
+		break;
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
+		val = alc_read_coef_idx(codec, 0x45);
+		if (val & (1 << 9))
 			alc_process_coef_fw(codec, coef0225_2);
-		अन्यथा
+		else
 			alc_process_coef_fw(codec, coef0225_1);
-		अवरोध;
-	हाल 0x10ec0867:
+		break;
+	case 0x10ec0867:
 		alc_update_coefex_idx(codec, 0x57, 0x5, 1<<14, 0);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	codec_dbg(codec, "Headset jack set to iPhone-style headset mode.\n");
-पूर्ण
+}
 
 /* Nokia type */
-अटल व्योम alc_headset_mode_omtp(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर काष्ठा coef_fw coef0255[] = अणु
+static void alc_headset_mode_omtp(struct hda_codec *codec)
+{
+	static const struct coef_fw coef0255[] = {
 		WRITE_COEF(0x45, 0xe489), /* Set to OMTP Type */
 		WRITE_COEF(0x1b, 0x0c2b),
 		WRITE_COEFEX(0x57, 0x03, 0x8ea6),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0256[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0256[] = {
 		WRITE_COEF(0x45, 0xe489), /* Set to OMTP Type */
 		WRITE_COEF(0x1b, 0x0e6b),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0233[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0233[] = {
 		WRITE_COEF(0x45, 0xe429),
 		WRITE_COEF(0x1b, 0x0c2b),
 		WRITE_COEF(0x32, 0x4ea3),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0288[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0288[] = {
 		UPDATE_COEF(0x50, 0x2000, 0x2000),
 		UPDATE_COEF(0x56, 0x0006, 0x0006),
 		UPDATE_COEF(0x66, 0x0008, 0),
 		UPDATE_COEF(0x67, 0x2000, 0),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0292[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0292[] = {
 		WRITE_COEF(0x6b, 0xe429),
 		WRITE_COEF(0x76, 0x0008),
 		WRITE_COEF(0x18, 0x7388),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0293[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0293[] = {
 		WRITE_COEF(0x45, 0xe429), /* Set to omtp type */
 		UPDATE_COEF(0x10, 7<<8, 7<<8), /* SET Line1 JD to 1 */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0688[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0688[] = {
 		WRITE_COEF(0x11, 0x0001),
 		WRITE_COEF(0x15, 0x0d50),
 		WRITE_COEF(0xc3, 0x0000),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0225[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0225[] = {
 		UPDATE_COEF(0x45, 0x3f<<10, 0x39<<10),
 		UPDATE_COEF(0x63, 3<<14, 2<<14),
-		अणुपूर्ण
-	पूर्ण;
+		{}
+	};
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0255:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0255:
 		alc_process_coef_fw(codec, coef0255);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
 		alc_process_coef_fw(codec, coef0256);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xe689);
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
+		alc_write_coef_idx(codec, 0x45, 0xe689);
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
 		alc_process_coef_fw(codec, coef0233);
-		अवरोध;
-	हाल 0x10ec0298:
+		break;
+	case 0x10ec0298:
 		alc_update_coef_idx(codec, 0x8e, 0x0070, 0x0010);/* Headset output enable */
 		alc_update_coef_idx(codec, 0x4f, 0xfcc0, 0xe400);
 		msleep(300);
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
 		alc_update_coef_idx(codec, 0x4f, 0xfcc0, 0xe400);
 		msleep(300);
 		alc_process_coef_fw(codec, coef0288);
-		अवरोध;
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0292:
 		alc_process_coef_fw(codec, coef0292);
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		alc_process_coef_fw(codec, coef0293);
-		अवरोध;
-	हाल 0x10ec0668:
+		break;
+	case 0x10ec0668:
 		alc_process_coef_fw(codec, coef0688);
-		अवरोध;
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
+		break;
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
 		alc_process_coef_fw(codec, coef0225);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	codec_dbg(codec, "Headset jack set to Nokia-style headset mode.\n");
-पूर्ण
+}
 
-अटल व्योम alc_determine_headset_type(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक val;
+static void alc_determine_headset_type(struct hda_codec *codec)
+{
+	int val;
 	bool is_ctia = false;
-	काष्ठा alc_spec *spec = codec->spec;
-	अटल स्थिर काष्ठा coef_fw coef0255[] = अणु
-		WRITE_COEF(0x45, 0xd089), /* combo jack स्वतः चयन control(Check type)*/
-		WRITE_COEF(0x49, 0x0149), /* combo jack स्वतः चयन control(Vref
+	struct alc_spec *spec = codec->spec;
+	static const struct coef_fw coef0255[] = {
+		WRITE_COEF(0x45, 0xd089), /* combo jack auto switch control(Check type)*/
+		WRITE_COEF(0x49, 0x0149), /* combo jack auto switch control(Vref
  conteol) */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0288[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0288[] = {
 		UPDATE_COEF(0x4f, 0xfcc0, 0xd400), /* Check Type */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0298[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0298[] = {
 		UPDATE_COEF(0x50, 0x2000, 0x2000),
 		UPDATE_COEF(0x56, 0x0006, 0x0006),
 		UPDATE_COEF(0x66, 0x0008, 0),
 		UPDATE_COEF(0x67, 0x2000, 0),
 		UPDATE_COEF(0x19, 0x1300, 0x1300),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0293[] = अणु
-		UPDATE_COEF(0x4a, 0x000f, 0x0008), /* Combo Jack स्वतः detect */
+		{}
+	};
+	static const struct coef_fw coef0293[] = {
+		UPDATE_COEF(0x4a, 0x000f, 0x0008), /* Combo Jack auto detect */
 		WRITE_COEF(0x45, 0xD429), /* Set to ctia type */
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0688[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0688[] = {
 		WRITE_COEF(0x11, 0x0001),
 		WRITE_COEF(0xb7, 0x802b),
 		WRITE_COEF(0x15, 0x0d60),
 		WRITE_COEF(0xc3, 0x0c00),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw coef0274[] = अणु
+		{}
+	};
+	static const struct coef_fw coef0274[] = {
 		UPDATE_COEF(0x4a, 0x0010, 0),
 		UPDATE_COEF(0x4a, 0x8000, 0),
 		WRITE_COEF(0x45, 0xd289),
 		UPDATE_COEF(0x49, 0x0300, 0x0300),
-		अणुपूर्ण
-	पूर्ण;
+		{}
+	};
 
-	अगर (spec->no_पूर्णांकernal_mic_pin) अणु
+	if (spec->no_internal_mic_pin) {
 		alc_update_coef_idx(codec, 0x45, 0xf<<12 | 1<<10, 5<<12);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0255:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0255:
 		alc_process_coef_fw(codec, coef0255);
 		msleep(300);
-		val = alc_पढ़ो_coef_idx(codec, 0x46);
+		val = alc_read_coef_idx(codec, 0x46);
 		is_ctia = (val & 0x0070) == 0x0070;
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
-		alc_ग_लिखो_coef_idx(codec, 0x1b, 0x0e4b);
-		alc_ग_लिखो_coef_idx(codec, 0x06, 0x6104);
-		alc_ग_लिखो_coefex_idx(codec, 0x57, 0x3, 0x09a3);
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
+		alc_write_coef_idx(codec, 0x1b, 0x0e4b);
+		alc_write_coef_idx(codec, 0x06, 0x6104);
+		alc_write_coefex_idx(codec, 0x57, 0x3, 0x09a3);
 
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 		msleep(80);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
 		alc_process_coef_fw(codec, coef0255);
 		msleep(300);
-		val = alc_पढ़ो_coef_idx(codec, 0x46);
+		val = alc_read_coef_idx(codec, 0x46);
 		is_ctia = (val & 0x0070) == 0x0070;
 
-		alc_ग_लिखो_coefex_idx(codec, 0x57, 0x3, 0x0da3);
+		alc_write_coefex_idx(codec, 0x57, 0x3, 0x0da3);
 		alc_update_coefex_idx(codec, 0x57, 0x5, 1<<14, 0);
 
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 		msleep(80);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE);
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
 		alc_process_coef_fw(codec, coef0274);
 		msleep(850);
-		val = alc_पढ़ो_coef_idx(codec, 0x46);
+		val = alc_read_coef_idx(codec, 0x46);
 		is_ctia = (val & 0x00f0) == 0x00f0;
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
-		alc_ग_लिखो_coef_idx(codec, 0x45, 0xd029);
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
+		alc_write_coef_idx(codec, 0x45, 0xd029);
 		msleep(300);
-		val = alc_पढ़ो_coef_idx(codec, 0x46);
+		val = alc_read_coef_idx(codec, 0x46);
 		is_ctia = (val & 0x0070) == 0x0070;
-		अवरोध;
-	हाल 0x10ec0298:
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		break;
+	case 0x10ec0298:
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 		msleep(100);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 		msleep(200);
 
-		val = alc_पढ़ो_coef_idx(codec, 0x50);
-		अगर (val & (1 << 12)) अणु
+		val = alc_read_coef_idx(codec, 0x50);
+		if (val & (1 << 12)) {
 			alc_update_coef_idx(codec, 0x8e, 0x0070, 0x0020);
 			alc_process_coef_fw(codec, coef0288);
 			msleep(350);
-			val = alc_पढ़ो_coef_idx(codec, 0x50);
+			val = alc_read_coef_idx(codec, 0x50);
 			is_ctia = (val & 0x0070) == 0x0070;
-		पूर्ण अन्यथा अणु
+		} else {
 			alc_update_coef_idx(codec, 0x8e, 0x0070, 0x0010);
 			alc_process_coef_fw(codec, coef0288);
 			msleep(350);
-			val = alc_पढ़ो_coef_idx(codec, 0x50);
+			val = alc_read_coef_idx(codec, 0x50);
 			is_ctia = (val & 0x0070) == 0x0070;
-		पूर्ण
+		}
 		alc_process_coef_fw(codec, coef0298);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_HP);
 		msleep(75);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE);
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
 		alc_process_coef_fw(codec, coef0288);
 		msleep(350);
-		val = alc_पढ़ो_coef_idx(codec, 0x50);
+		val = alc_read_coef_idx(codec, 0x50);
 		is_ctia = (val & 0x0070) == 0x0070;
-		अवरोध;
-	हाल 0x10ec0292:
-		alc_ग_लिखो_coef_idx(codec, 0x6b, 0xd429);
+		break;
+	case 0x10ec0292:
+		alc_write_coef_idx(codec, 0x6b, 0xd429);
 		msleep(300);
-		val = alc_पढ़ो_coef_idx(codec, 0x6c);
+		val = alc_read_coef_idx(codec, 0x6c);
 		is_ctia = (val & 0x001c) == 0x001c;
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		alc_process_coef_fw(codec, coef0293);
 		msleep(300);
-		val = alc_पढ़ो_coef_idx(codec, 0x46);
+		val = alc_read_coef_idx(codec, 0x46);
 		is_ctia = (val & 0x0070) == 0x0070;
-		अवरोध;
-	हाल 0x10ec0668:
+		break;
+	case 0x10ec0668:
 		alc_process_coef_fw(codec, coef0688);
 		msleep(300);
-		val = alc_पढ़ो_coef_idx(codec, 0xbe);
+		val = alc_read_coef_idx(codec, 0xbe);
 		is_ctia = (val & 0x1c02) == 0x1c02;
-		अवरोध;
-	हाल 0x10ec0215:
-	हाल 0x10ec0225:
-	हाल 0x10ec0285:
-	हाल 0x10ec0295:
-	हाल 0x10ec0289:
-	हाल 0x10ec0299:
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		break;
+	case 0x10ec0215:
+	case 0x10ec0225:
+	case 0x10ec0285:
+	case 0x10ec0295:
+	case 0x10ec0289:
+	case 0x10ec0299:
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 		msleep(80);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, 0x0);
 
 		alc_process_coef_fw(codec, alc225_pre_hsmode);
 		alc_update_coef_idx(codec, 0x67, 0xf000, 0x1000);
-		val = alc_पढ़ो_coef_idx(codec, 0x45);
-		अगर (val & (1 << 9)) अणु
+		val = alc_read_coef_idx(codec, 0x45);
+		if (val & (1 << 9)) {
 			alc_update_coef_idx(codec, 0x45, 0x3f<<10, 0x34<<10);
 			alc_update_coef_idx(codec, 0x49, 3<<8, 2<<8);
 			msleep(800);
-			val = alc_पढ़ो_coef_idx(codec, 0x46);
+			val = alc_read_coef_idx(codec, 0x46);
 			is_ctia = (val & 0x00f0) == 0x00f0;
-		पूर्ण अन्यथा अणु
+		} else {
 			alc_update_coef_idx(codec, 0x45, 0x3f<<10, 0x34<<10);
 			alc_update_coef_idx(codec, 0x49, 3<<8, 1<<8);
 			msleep(800);
-			val = alc_पढ़ो_coef_idx(codec, 0x46);
+			val = alc_read_coef_idx(codec, 0x46);
 			is_ctia = (val & 0x00f0) == 0x00f0;
-		पूर्ण
+		}
 		alc_update_coef_idx(codec, 0x4a, 7<<6, 7<<6);
 		alc_update_coef_idx(codec, 0x4a, 3<<4, 3<<4);
 		alc_update_coef_idx(codec, 0x67, 0xf000, 0x3000);
 
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_PIN_WIDGET_CONTROL, PIN_OUT);
 		msleep(80);
-		snd_hda_codec_ग_लिखो(codec, 0x21, 0,
+		snd_hda_codec_write(codec, 0x21, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_UNMUTE);
-		अवरोध;
-	हाल 0x10ec0867:
+		break;
+	case 0x10ec0867:
 		is_ctia = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	codec_dbg(codec, "Headset jack detected iPhone-style headset: %s\n",
 		    is_ctia ? "yes" : "no");
 	spec->current_headset_type = is_ctia ? ALC_HEADSET_TYPE_CTIA : ALC_HEADSET_TYPE_OMTP;
-पूर्ण
+}
 
-अटल व्योम alc_update_headset_mode(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_update_headset_mode(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
 
 	hda_nid_t mux_pin = spec->gen.imux_pins[spec->gen.cur_mux[0]];
 	hda_nid_t hp_pin = alc_get_hp_pin(spec);
 
-	पूर्णांक new_headset_mode;
+	int new_headset_mode;
 
-	अगर (!snd_hda_jack_detect(codec, hp_pin))
+	if (!snd_hda_jack_detect(codec, hp_pin))
 		new_headset_mode = ALC_HEADSET_MODE_UNPLUGGED;
-	अन्यथा अगर (mux_pin == spec->headset_mic_pin)
+	else if (mux_pin == spec->headset_mic_pin)
 		new_headset_mode = ALC_HEADSET_MODE_HEADSET;
-	अन्यथा अगर (mux_pin == spec->headphone_mic_pin)
+	else if (mux_pin == spec->headphone_mic_pin)
 		new_headset_mode = ALC_HEADSET_MODE_MIC;
-	अन्यथा
+	else
 		new_headset_mode = ALC_HEADSET_MODE_HEADPHONE;
 
-	अगर (new_headset_mode == spec->current_headset_mode) अणु
-		snd_hda_gen_update_outमाला_दो(codec);
-		वापस;
-	पूर्ण
+	if (new_headset_mode == spec->current_headset_mode) {
+		snd_hda_gen_update_outputs(codec);
+		return;
+	}
 
-	चयन (new_headset_mode) अणु
-	हाल ALC_HEADSET_MODE_UNPLUGGED:
+	switch (new_headset_mode) {
+	case ALC_HEADSET_MODE_UNPLUGGED:
 		alc_headset_mode_unplugged(codec);
 		spec->current_headset_mode = ALC_HEADSET_MODE_UNKNOWN;
 		spec->current_headset_type = ALC_HEADSET_TYPE_UNKNOWN;
 		spec->gen.hp_jack_present = false;
-		अवरोध;
-	हाल ALC_HEADSET_MODE_HEADSET:
-		अगर (spec->current_headset_type == ALC_HEADSET_TYPE_UNKNOWN)
+		break;
+	case ALC_HEADSET_MODE_HEADSET:
+		if (spec->current_headset_type == ALC_HEADSET_TYPE_UNKNOWN)
 			alc_determine_headset_type(codec);
-		अगर (spec->current_headset_type == ALC_HEADSET_TYPE_CTIA)
+		if (spec->current_headset_type == ALC_HEADSET_TYPE_CTIA)
 			alc_headset_mode_ctia(codec);
-		अन्यथा अगर (spec->current_headset_type == ALC_HEADSET_TYPE_OMTP)
+		else if (spec->current_headset_type == ALC_HEADSET_TYPE_OMTP)
 			alc_headset_mode_omtp(codec);
 		spec->gen.hp_jack_present = true;
-		अवरोध;
-	हाल ALC_HEADSET_MODE_MIC:
+		break;
+	case ALC_HEADSET_MODE_MIC:
 		alc_headset_mode_mic_in(codec, hp_pin, spec->headphone_mic_pin);
 		spec->gen.hp_jack_present = false;
-		अवरोध;
-	हाल ALC_HEADSET_MODE_HEADPHONE:
-		alc_headset_mode_शेष(codec);
+		break;
+	case ALC_HEADSET_MODE_HEADPHONE:
+		alc_headset_mode_default(codec);
 		spec->gen.hp_jack_present = true;
-		अवरोध;
-	पूर्ण
-	अगर (new_headset_mode != ALC_HEADSET_MODE_MIC) अणु
+		break;
+	}
+	if (new_headset_mode != ALC_HEADSET_MODE_MIC) {
 		snd_hda_set_pin_ctl_cache(codec, hp_pin,
 					  AC_PINCTL_OUT_EN | AC_PINCTL_HP_EN);
-		अगर (spec->headphone_mic_pin && spec->headphone_mic_pin != hp_pin)
+		if (spec->headphone_mic_pin && spec->headphone_mic_pin != hp_pin)
 			snd_hda_set_pin_ctl_cache(codec, spec->headphone_mic_pin,
 						  PIN_VREFHIZ);
-	पूर्ण
+	}
 	spec->current_headset_mode = new_headset_mode;
 
-	snd_hda_gen_update_outमाला_दो(codec);
-पूर्ण
+	snd_hda_gen_update_outputs(codec);
+}
 
-अटल व्योम alc_update_headset_mode_hook(काष्ठा hda_codec *codec,
-					 काष्ठा snd_kcontrol *kcontrol,
-					 काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
+static void alc_update_headset_mode_hook(struct hda_codec *codec,
+					 struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
 	alc_update_headset_mode(codec);
-पूर्ण
+}
 
-अटल व्योम alc_update_headset_jack_cb(काष्ठा hda_codec *codec,
-				       काष्ठा hda_jack_callback *jack)
-अणु
-	snd_hda_gen_hp_स्वतःmute(codec, jack);
+static void alc_update_headset_jack_cb(struct hda_codec *codec,
+				       struct hda_jack_callback *jack)
+{
+	snd_hda_gen_hp_automute(codec, jack);
 	alc_update_headset_mode(codec);
-पूर्ण
+}
 
-अटल व्योम alc_probe_headset_mode(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक i;
-	काष्ठा alc_spec *spec = codec->spec;
-	काष्ठा स्वतः_pin_cfg *cfg = &spec->gen.स्वतःcfg;
+static void alc_probe_headset_mode(struct hda_codec *codec)
+{
+	int i;
+	struct alc_spec *spec = codec->spec;
+	struct auto_pin_cfg *cfg = &spec->gen.autocfg;
 
 	/* Find mic pins */
-	क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
-		अगर (cfg->inमाला_दो[i].is_headset_mic && !spec->headset_mic_pin)
-			spec->headset_mic_pin = cfg->inमाला_दो[i].pin;
-		अगर (cfg->inमाला_दो[i].is_headphone_mic && !spec->headphone_mic_pin)
-			spec->headphone_mic_pin = cfg->inमाला_दो[i].pin;
-	पूर्ण
+	for (i = 0; i < cfg->num_inputs; i++) {
+		if (cfg->inputs[i].is_headset_mic && !spec->headset_mic_pin)
+			spec->headset_mic_pin = cfg->inputs[i].pin;
+		if (cfg->inputs[i].is_headphone_mic && !spec->headphone_mic_pin)
+			spec->headphone_mic_pin = cfg->inputs[i].pin;
+	}
 
 	WARN_ON(spec->gen.cap_sync_hook);
 	spec->gen.cap_sync_hook = alc_update_headset_mode_hook;
-	spec->gen.स्वतःmute_hook = alc_update_headset_mode;
-	spec->gen.hp_स्वतःmute_hook = alc_update_headset_jack_cb;
-पूर्ण
+	spec->gen.automute_hook = alc_update_headset_mode;
+	spec->gen.hp_automute_hook = alc_update_headset_jack_cb;
+}
 
-अटल व्योम alc_fixup_headset_mode(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_headset_mode(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC | HDA_PINCFG_HEADPHONE_MIC;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_PROBE:
+		break;
+	case HDA_FIXUP_ACT_PROBE:
 		alc_probe_headset_mode(codec);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
-		अगर (is_s3_resume(codec) || is_s4_resume(codec)) अणु
+		break;
+	case HDA_FIXUP_ACT_INIT:
+		if (is_s3_resume(codec) || is_s4_resume(codec)) {
 			spec->current_headset_mode = ALC_HEADSET_MODE_UNKNOWN;
 			spec->current_headset_type = ALC_HEADSET_TYPE_UNKNOWN;
-		पूर्ण
+		}
 		alc_update_headset_mode(codec);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc_fixup_headset_mode_no_hp_mic(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_headset_mode_no_hp_mic(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		struct alc_spec *spec = codec->spec;
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
-	पूर्ण
-	अन्यथा
+	}
+	else
 		alc_fixup_headset_mode(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc255_set_शेष_jack_type(काष्ठा hda_codec *codec)
-अणु
+static void alc255_set_default_jack_type(struct hda_codec *codec)
+{
 	/* Set to iphone type */
-	अटल स्थिर काष्ठा coef_fw alc255fw[] = अणु
+	static const struct coef_fw alc255fw[] = {
 		WRITE_COEF(0x1b, 0x880b),
 		WRITE_COEF(0x45, 0xd089),
 		WRITE_COEF(0x1b, 0x080b),
 		WRITE_COEF(0x46, 0x0004),
 		WRITE_COEF(0x1b, 0x0c0b),
-		अणुपूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा coef_fw alc256fw[] = अणु
+		{}
+	};
+	static const struct coef_fw alc256fw[] = {
 		WRITE_COEF(0x1b, 0x884b),
 		WRITE_COEF(0x45, 0xd089),
 		WRITE_COEF(0x1b, 0x084b),
 		WRITE_COEF(0x46, 0x0004),
 		WRITE_COEF(0x1b, 0x0c4b),
-		अणुपूर्ण
-	पूर्ण;
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0255:
+		{}
+	};
+	switch (codec->core.vendor_id) {
+	case 0x10ec0255:
 		alc_process_coef_fw(codec, alc255fw);
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
 		alc_process_coef_fw(codec, alc256fw);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	msleep(30);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_headset_mode_alc255(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		alc255_set_शेष_jack_type(codec);
-	पूर्ण
+static void alc_fixup_headset_mode_alc255(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		alc255_set_default_jack_type(codec);
+	}
 	alc_fixup_headset_mode(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_headset_mode_alc255_no_hp_mic(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_headset_mode_alc255_no_hp_mic(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		struct alc_spec *spec = codec->spec;
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
-		alc255_set_शेष_jack_type(codec);
-	पूर्ण 
-	अन्यथा
+		alc255_set_default_jack_type(codec);
+	} 
+	else
 		alc_fixup_headset_mode(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc288_update_headset_jack_cb(काष्ठा hda_codec *codec,
-				       काष्ठा hda_jack_callback *jack)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc288_update_headset_jack_cb(struct hda_codec *codec,
+				       struct hda_jack_callback *jack)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_update_headset_jack_cb(codec, jack);
-	/* Headset Mic enable or disable, only क्रम Dell Dino */
+	/* Headset Mic enable or disable, only for Dell Dino */
 	alc_update_gpio_data(codec, 0x40, spec->gen.hp_jack_present);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_headset_mode_dell_alc288(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_headset_mode_dell_alc288(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
 	alc_fixup_headset_mode(codec, fix, action);
-	अगर (action == HDA_FIXUP_ACT_PROBE) अणु
-		काष्ठा alc_spec *spec = codec->spec;
-		/* toggled via hp_स्वतःmute_hook */
+	if (action == HDA_FIXUP_ACT_PROBE) {
+		struct alc_spec *spec = codec->spec;
+		/* toggled via hp_automute_hook */
 		spec->gpio_mask |= 0x40;
 		spec->gpio_dir |= 0x40;
-		spec->gen.hp_स्वतःmute_hook = alc288_update_headset_jack_cb;
-	पूर्ण
-पूर्ण
+		spec->gen.hp_automute_hook = alc288_update_headset_jack_cb;
+	}
+}
 
-अटल व्योम alc_fixup_स्वतः_mute_via_amp(काष्ठा hda_codec *codec,
-					स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		काष्ठा alc_spec *spec = codec->spec;
-		spec->gen.स्वतः_mute_via_amp = 1;
-	पूर्ण
-पूर्ण
+static void alc_fixup_auto_mute_via_amp(struct hda_codec *codec,
+					const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		struct alc_spec *spec = codec->spec;
+		spec->gen.auto_mute_via_amp = 1;
+	}
+}
 
-अटल व्योम alc_fixup_no_shutup(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_no_shutup(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		struct alc_spec *spec = codec->spec;
 		spec->no_shutup_pins = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc_fixup_disable_aamix(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_disable_aamix(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		struct alc_spec *spec = codec->spec;
 		/* Disable AA-loopback as it causes white noise */
 		spec->gen.mixer_nid = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* fixup क्रम Thinkpad करोcks: add करोck pins, aव्योम HP parser fixup */
-अटल व्योम alc_fixup_tpt440_करोck(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर काष्ठा hda_pपूर्णांकbl pincfgs[] = अणु
-		अणु 0x16, 0x21211010 पूर्ण, /* करोck headphone */
-		अणु 0x19, 0x21a11010 पूर्ण, /* करोck mic */
-		अणु पूर्ण
-	पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
+/* fixup for Thinkpad docks: add dock pins, avoid HP parser fixup */
+static void alc_fixup_tpt440_dock(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	static const struct hda_pintbl pincfgs[] = {
+		{ 0x16, 0x21211010 }, /* dock headphone */
+		{ 0x19, 0x21a11010 }, /* dock mic */
+		{ }
+	};
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		spec->reboot_notअगरy = snd_hda_gen_reboot_notअगरy; /* reduce noise */
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		spec->reboot_notify = snd_hda_gen_reboot_notify; /* reduce noise */
 		spec->parse_flags = HDA_PINCFG_NO_HP_FIXUP;
-		codec->घातer_save_node = 0; /* aव्योम click noises */
+		codec->power_save_node = 0; /* avoid click noises */
 		snd_hda_apply_pincfgs(codec, pincfgs);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc_fixup_tpt470_करोck(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर काष्ठा hda_pपूर्णांकbl pincfgs[] = अणु
-		अणु 0x17, 0x21211010 पूर्ण, /* करोck headphone */
-		अणु 0x19, 0x21a11010 पूर्ण, /* करोck mic */
-		अणु पूर्ण
-	पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_tpt470_dock(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	static const struct hda_pintbl pincfgs[] = {
+		{ 0x17, 0x21211010 }, /* dock headphone */
+		{ 0x19, 0x21a11010 }, /* dock mic */
+		{ }
+	};
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->parse_flags = HDA_PINCFG_NO_HP_FIXUP;
 		snd_hda_apply_pincfgs(codec, pincfgs);
-	पूर्ण अन्यथा अगर (action == HDA_FIXUP_ACT_INIT) अणु
+	} else if (action == HDA_FIXUP_ACT_INIT) {
 		/* Enable DOCK device */
-		snd_hda_codec_ग_लिखो(codec, 0x17, 0,
+		snd_hda_codec_write(codec, 0x17, 0,
 			    AC_VERB_SET_CONFIG_DEFAULT_BYTES_3, 0);
 		/* Enable DOCK device */
-		snd_hda_codec_ग_लिखो(codec, 0x19, 0,
+		snd_hda_codec_write(codec, 0x19, 0,
 			    AC_VERB_SET_CONFIG_DEFAULT_BYTES_3, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc_fixup_tpt470_dacs(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_tpt470_dacs(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
 	/* Assure the speaker pin to be coupled with DAC NID 0x03; otherwise
 	 * the speaker output becomes too low by some reason on Thinkpads with
 	 * ALC298 codec
 	 */
-	अटल स्थिर hda_nid_t preferred_pairs[] = अणु
+	static const hda_nid_t preferred_pairs[] = {
 		0x14, 0x03, 0x17, 0x02, 0x21, 0x02,
 		0
-	पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
+	};
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->gen.preferred_dacs = preferred_pairs;
-पूर्ण
+}
 
-अटल व्योम alc295_fixup_asus_dacs(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t preferred_pairs[] = अणु
+static void alc295_fixup_asus_dacs(struct hda_codec *codec,
+				   const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t preferred_pairs[] = {
 		0x17, 0x02, 0x21, 0x03, 0
-	पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
+	};
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->gen.preferred_dacs = preferred_pairs;
-पूर्ण
+}
 
-अटल व्योम alc_shutup_dell_xps13(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक hp_pin = alc_get_hp_pin(spec);
+static void alc_shutup_dell_xps13(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	int hp_pin = alc_get_hp_pin(spec);
 
 	/* Prevent pop noises when headphones are plugged in */
-	snd_hda_codec_ग_लिखो(codec, hp_pin, 0,
+	snd_hda_codec_write(codec, hp_pin, 0,
 			    AC_VERB_SET_AMP_GAIN_MUTE, AMP_OUT_MUTE);
 	msleep(20);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_dell_xps13(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	काष्ठा hda_input_mux *imux = &spec->gen.input_mux;
-	पूर्णांक i;
+static void alc_fixup_dell_xps13(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	struct hda_input_mux *imux = &spec->gen.input_mux;
+	int i;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		/* mic pin 0x19 must be initialized with Vref Hi-Z, otherwise
 		 * it causes a click noise at start up
 		 */
 		snd_hda_codec_set_pin_target(codec, 0x19, PIN_VREFHIZ);
 		spec->shutup = alc_shutup_dell_xps13;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_PROBE:
-		/* Make the पूर्णांकernal mic the शेष input source. */
-		क्रम (i = 0; i < imux->num_items; i++) अणु
-			अगर (spec->gen.imux_pins[i] == 0x12) अणु
+		break;
+	case HDA_FIXUP_ACT_PROBE:
+		/* Make the internal mic the default input source. */
+		for (i = 0; i < imux->num_items; i++) {
+			if (spec->gen.imux_pins[i] == 0x12) {
 				spec->gen.cur_mux[0] = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+				break;
+			}
+		}
+		break;
+	}
+}
 
-अटल व्योम alc_fixup_headset_mode_alc662(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_headset_mode_alc662(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
 		spec->gen.hp_mic = 1; /* Mic-in is same pin as headphone */
 
-		/* Disable boost क्रम mic-in permanently. (This code is only called
+		/* Disable boost for mic-in permanently. (This code is only called
 		   from quirks that guarantee that the headphone is at NID 0x1b.) */
-		snd_hda_codec_ग_लिखो(codec, 0x1b, 0, AC_VERB_SET_AMP_GAIN_MUTE, 0x7000);
+		snd_hda_codec_write(codec, 0x1b, 0, AC_VERB_SET_AMP_GAIN_MUTE, 0x7000);
 		snd_hda_override_wcaps(codec, 0x1b, get_wcaps(codec, 0x1b) & ~AC_WCAP_IN_AMP);
-	पूर्ण अन्यथा
+	} else
 		alc_fixup_headset_mode(codec, fix, action);
-पूर्ण
+}
 
-अटल व्योम alc_fixup_headset_mode_alc668(काष्ठा hda_codec *codec,
-				स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		alc_ग_लिखो_coef_idx(codec, 0xc4, 0x8000);
+static void alc_fixup_headset_mode_alc668(struct hda_codec *codec,
+				const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		alc_write_coef_idx(codec, 0xc4, 0x8000);
 		alc_update_coef_idx(codec, 0xc2, ~0xfe, 0);
 		snd_hda_set_pin_ctl_cache(codec, 0x18, 0);
-	पूर्ण
+	}
 	alc_fixup_headset_mode(codec, fix, action);
-पूर्ण
+}
 
-/* Returns the nid of the बाह्यal mic input pin, or 0 अगर it cannot be found. */
-अटल पूर्णांक find_ext_mic_pin(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	काष्ठा स्वतः_pin_cfg *cfg = &spec->gen.स्वतःcfg;
+/* Returns the nid of the external mic input pin, or 0 if it cannot be found. */
+static int find_ext_mic_pin(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	struct auto_pin_cfg *cfg = &spec->gen.autocfg;
 	hda_nid_t nid;
-	अचिन्हित पूर्णांक defcfg;
-	पूर्णांक i;
+	unsigned int defcfg;
+	int i;
 
-	क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
-		अगर (cfg->inमाला_दो[i].type != AUTO_PIN_MIC)
-			जारी;
-		nid = cfg->inमाला_दो[i].pin;
+	for (i = 0; i < cfg->num_inputs; i++) {
+		if (cfg->inputs[i].type != AUTO_PIN_MIC)
+			continue;
+		nid = cfg->inputs[i].pin;
 		defcfg = snd_hda_codec_get_pincfg(codec, nid);
-		अगर (snd_hda_get_input_pin_attr(defcfg) == INPUT_PIN_ATTR_INT)
-			जारी;
-		वापस nid;
-	पूर्ण
+		if (snd_hda_get_input_pin_attr(defcfg) == INPUT_PIN_ATTR_INT)
+			continue;
+		return nid;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम alc271_hp_gate_mic_jack(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix,
-				    पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc271_hp_gate_mic_jack(struct hda_codec *codec,
+				    const struct hda_fixup *fix,
+				    int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PROBE) अणु
-		पूर्णांक mic_pin = find_ext_mic_pin(codec);
-		पूर्णांक hp_pin = alc_get_hp_pin(spec);
+	if (action == HDA_FIXUP_ACT_PROBE) {
+		int mic_pin = find_ext_mic_pin(codec);
+		int hp_pin = alc_get_hp_pin(spec);
 
-		अगर (snd_BUG_ON(!mic_pin || !hp_pin))
-			वापस;
+		if (snd_BUG_ON(!mic_pin || !hp_pin))
+			return;
 		snd_hda_jack_set_gating_jack(codec, mic_pin, hp_pin);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc269_fixup_limit_पूर्णांक_mic_boost(काष्ठा hda_codec *codec,
-					     स्थिर काष्ठा hda_fixup *fix,
-					     पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	काष्ठा स्वतः_pin_cfg *cfg = &spec->gen.स्वतःcfg;
-	पूर्णांक i;
+static void alc269_fixup_limit_int_mic_boost(struct hda_codec *codec,
+					     const struct hda_fixup *fix,
+					     int action)
+{
+	struct alc_spec *spec = codec->spec;
+	struct auto_pin_cfg *cfg = &spec->gen.autocfg;
+	int i;
 
 	/* The mic boosts on level 2 and 3 are too noisy
-	   on the पूर्णांकernal mic input.
-	   Thereक्रमe limit the boost to 0 or 1. */
+	   on the internal mic input.
+	   Therefore limit the boost to 0 or 1. */
 
-	अगर (action != HDA_FIXUP_ACT_PROBE)
-		वापस;
+	if (action != HDA_FIXUP_ACT_PROBE)
+		return;
 
-	क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
-		hda_nid_t nid = cfg->inमाला_दो[i].pin;
-		अचिन्हित पूर्णांक defcfg;
-		अगर (cfg->inमाला_दो[i].type != AUTO_PIN_MIC)
-			जारी;
+	for (i = 0; i < cfg->num_inputs; i++) {
+		hda_nid_t nid = cfg->inputs[i].pin;
+		unsigned int defcfg;
+		if (cfg->inputs[i].type != AUTO_PIN_MIC)
+			continue;
 		defcfg = snd_hda_codec_get_pincfg(codec, nid);
-		अगर (snd_hda_get_input_pin_attr(defcfg) != INPUT_PIN_ATTR_INT)
-			जारी;
+		if (snd_hda_get_input_pin_attr(defcfg) != INPUT_PIN_ATTR_INT)
+			continue;
 
 		snd_hda_override_amp_caps(codec, nid, HDA_INPUT,
 					  (0x00 << AC_AMPCAP_OFFSET_SHIFT) |
 					  (0x01 << AC_AMPCAP_NUM_STEPS_SHIFT) |
 					  (0x2f << AC_AMPCAP_STEP_SIZE_SHIFT) |
 					  (0 << AC_AMPCAP_MUTE_SHIFT));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc283_hp_स्वतःmute_hook(काष्ठा hda_codec *codec,
-				    काष्ठा hda_jack_callback *jack)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक vref;
+static void alc283_hp_automute_hook(struct hda_codec *codec,
+				    struct hda_jack_callback *jack)
+{
+	struct alc_spec *spec = codec->spec;
+	int vref;
 
 	msleep(200);
-	snd_hda_gen_hp_स्वतःmute(codec, jack);
+	snd_hda_gen_hp_automute(codec, jack);
 
 	vref = spec->gen.hp_jack_present ? PIN_VREF80 : 0;
 
 	msleep(600);
-	snd_hda_codec_ग_लिखो(codec, 0x19, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
+	snd_hda_codec_write(codec, 0x19, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
 			    vref);
-पूर्ण
+}
 
-अटल व्योम alc283_fixup_chromebook(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc283_fixup_chromebook(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_override_wcaps(codec, 0x03, 0);
 		/* Disable AA-loopback as it causes white noise */
 		spec->gen.mixer_nid = 0;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
+		break;
+	case HDA_FIXUP_ACT_INIT:
 		/* MIC2-VREF control */
 		/* Set to manual mode */
 		alc_update_coef_idx(codec, 0x06, 0x000c, 0);
 		/* Enable Line1 input control by verb */
 		alc_update_coef_idx(codec, 0x1a, 0, 1 << 4);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc283_fixup_sense_combo_jack(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc283_fixup_sense_combo_jack(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
-		spec->gen.hp_स्वतःmute_hook = alc283_hp_स्वतःmute_hook;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
+		spec->gen.hp_automute_hook = alc283_hp_automute_hook;
+		break;
+	case HDA_FIXUP_ACT_INIT:
 		/* MIC2-VREF control */
 		/* Set to manual mode */
 		alc_update_coef_idx(codec, 0x06, 0x000c, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* mute tablet speaker pin (0x14) via करोck plugging in addition */
-अटल व्योम asus_tx300_स्वतःmute(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	snd_hda_gen_update_outमाला_दो(codec);
-	अगर (snd_hda_jack_detect(codec, 0x1b))
+/* mute tablet speaker pin (0x14) via dock plugging in addition */
+static void asus_tx300_automute(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	snd_hda_gen_update_outputs(codec);
+	if (snd_hda_jack_detect(codec, 0x1b))
 		spec->gen.mute_bits |= (1ULL << 0x14);
-पूर्ण
+}
 
-अटल व्योम alc282_fixup_asus_tx300(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अटल स्थिर काष्ठा hda_pपूर्णांकbl करोck_pins[] = अणु
-		अणु 0x1b, 0x21114000 पूर्ण, /* करोck speaker pin */
-		अणुपूर्ण
-	पूर्ण;
+static void alc282_fixup_asus_tx300(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	static const struct hda_pintbl dock_pins[] = {
+		{ 0x1b, 0x21114000 }, /* dock speaker pin */
+		{}
+	};
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		spec->init_amp = ALC_INIT_DEFAULT;
-		/* TX300 needs to set up GPIO2 क्रम the speaker amp */
+		/* TX300 needs to set up GPIO2 for the speaker amp */
 		alc_setup_gpio(codec, 0x04);
-		snd_hda_apply_pincfgs(codec, करोck_pins);
-		spec->gen.स्वतः_mute_via_amp = 1;
-		spec->gen.स्वतःmute_hook = asus_tx300_स्वतःmute;
+		snd_hda_apply_pincfgs(codec, dock_pins);
+		spec->gen.auto_mute_via_amp = 1;
+		spec->gen.automute_hook = asus_tx300_automute;
 		snd_hda_jack_detect_enable_callback(codec, 0x1b,
-						    snd_hda_gen_hp_स्वतःmute);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_PROBE:
+						    snd_hda_gen_hp_automute);
+		break;
+	case HDA_FIXUP_ACT_PROBE:
 		spec->init_amp = ALC_INIT_DEFAULT;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_BUILD:
-		/* this is a bit tricky; give more sane names क्रम the मुख्य
-		 * (tablet) speaker and the करोck speaker, respectively
+		break;
+	case HDA_FIXUP_ACT_BUILD:
+		/* this is a bit tricky; give more sane names for the main
+		 * (tablet) speaker and the dock speaker, respectively
 		 */
-		नाम_ctl(codec, "Speaker Playback Switch",
+		rename_ctl(codec, "Speaker Playback Switch",
 			   "Dock Speaker Playback Switch");
-		नाम_ctl(codec, "Bass Speaker Playback Switch",
+		rename_ctl(codec, "Bass Speaker Playback Switch",
 			   "Speaker Playback Switch");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc290_fixup_mono_speakers(काष्ठा hda_codec *codec,
-				       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		/* DAC node 0x03 is giving mono output. We thereक्रमe want to
+static void alc290_fixup_mono_speakers(struct hda_codec *codec,
+				       const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		/* DAC node 0x03 is giving mono output. We therefore want to
 		   make sure 0x14 (front speaker) and 0x15 (headphones) use the
-		   stereo DAC, जबतक leaving 0x17 (bass speaker) क्रम node 0x03. */
-		अटल स्थिर hda_nid_t conn1[] = अणु 0x0c पूर्ण;
+		   stereo DAC, while leaving 0x17 (bass speaker) for node 0x03. */
+		static const hda_nid_t conn1[] = { 0x0c };
 		snd_hda_override_conn_list(codec, 0x14, ARRAY_SIZE(conn1), conn1);
 		snd_hda_override_conn_list(codec, 0x15, ARRAY_SIZE(conn1), conn1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc298_fixup_speaker_volume(काष्ठा hda_codec *codec,
-					स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc298_fixup_speaker_volume(struct hda_codec *codec,
+					const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		/* The speaker is routed to the Node 0x06 by a mistake, as a result
-		   we can't adjust the speaker's volume since this node करोes not has
+		   we can't adjust the speaker's volume since this node does not has
 		   Amp-out capability. we change the speaker's route to:
 		   Node 0x02 (Audio Output) -> Node 0x0c (Audio Mixer) -> Node 0x17 (
 		   Pin Complex), since Node 0x02 has Amp-out caps, we can adjust
 		   speaker's volume now. */
 
-		अटल स्थिर hda_nid_t conn1[] = अणु 0x0c पूर्ण;
+		static const hda_nid_t conn1[] = { 0x0c };
 		snd_hda_override_conn_list(codec, 0x17, ARRAY_SIZE(conn1), conn1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* disable DAC3 (0x06) selection on NID 0x17 as it has no volume amp control */
-अटल व्योम alc295_fixup_disable_dac3(काष्ठा hda_codec *codec,
-				      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		अटल स्थिर hda_nid_t conn[] = अणु 0x02, 0x03 पूर्ण;
+static void alc295_fixup_disable_dac3(struct hda_codec *codec,
+				      const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		static const hda_nid_t conn[] = { 0x02, 0x03 };
 		snd_hda_override_conn_list(codec, 0x17, ARRAY_SIZE(conn), conn);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* क्रमce NID 0x17 (Bass Speaker) to DAC1 to share it with the मुख्य speaker */
-अटल व्योम alc285_fixup_speaker2_to_dac1(काष्ठा hda_codec *codec,
-					  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		अटल स्थिर hda_nid_t conn[] = अणु 0x02 पूर्ण;
+/* force NID 0x17 (Bass Speaker) to DAC1 to share it with the main speaker */
+static void alc285_fixup_speaker2_to_dac1(struct hda_codec *codec,
+					  const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		static const hda_nid_t conn[] = { 0x02 };
 		snd_hda_override_conn_list(codec, 0x17, ARRAY_SIZE(conn), conn);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Hook to update amp GPIO4 क्रम स्वतःmute */
-अटल व्योम alc280_hp_gpio4_स्वतःmute_hook(काष्ठा hda_codec *codec,
-					  काष्ठा hda_jack_callback *jack)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+/* Hook to update amp GPIO4 for automute */
+static void alc280_hp_gpio4_automute_hook(struct hda_codec *codec,
+					  struct hda_jack_callback *jack)
+{
+	struct alc_spec *spec = codec->spec;
 
-	snd_hda_gen_hp_स्वतःmute(codec, jack);
+	snd_hda_gen_hp_automute(codec, jack);
 	/* mute_led_polarity is set to 0, so we pass inverted value here */
 	alc_update_gpio_led(codec, 0x10, spec->mute_led_polarity,
 			    !spec->gen.hp_jack_present);
-पूर्ण
+}
 
-/* Manage GPIOs क्रम HP EliteBook Folio 9480m.
+/* Manage GPIOs for HP EliteBook Folio 9480m.
  *
- * GPIO4 is the headphone amplअगरier घातer control
+ * GPIO4 is the headphone amplifier power control
  * GPIO3 is the audio output mute indicator LED
  */
 
-अटल व्योम alc280_fixup_hp_9480m(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix,
-				  पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc280_fixup_hp_9480m(struct hda_codec *codec,
+				  const struct hda_fixup *fix,
+				  int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_hp_gpio_led(codec, action, 0x08, 0);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
-		/* amp at GPIO4; toggled via alc280_hp_gpio4_स्वतःmute_hook() */
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
+		/* amp at GPIO4; toggled via alc280_hp_gpio4_automute_hook() */
 		spec->gpio_mask |= 0x10;
 		spec->gpio_dir |= 0x10;
-		spec->gen.hp_स्वतःmute_hook = alc280_hp_gpio4_स्वतःmute_hook;
-	पूर्ण
-पूर्ण
+		spec->gen.hp_automute_hook = alc280_hp_gpio4_automute_hook;
+	}
+}
 
-अटल व्योम alc275_fixup_gpio4_off(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix,
-				   पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc275_fixup_gpio4_off(struct hda_codec *codec,
+				   const struct hda_fixup *fix,
+				   int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->gpio_mask |= 0x04;
 		spec->gpio_dir |= 0x04;
 		/* set data bit low */
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Quirk क्रम Thinkpad X1 7th and 8th Gen
+/* Quirk for Thinkpad X1 7th and 8th Gen
  * The following fixed routing needed
  * DAC1 (NID 0x02) -> Speaker (NID 0x14); some eq applied secretly
  * DAC2 (NID 0x03) -> Bass (NID 0x17) & Headphone (NID 0x21); sharing a DAC
  * DAC3 (NID 0x06) -> Unused, due to the lack of volume amp
  */
-अटल व्योम alc285_fixup_thinkpad_x1_gen7(काष्ठा hda_codec *codec,
-					  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t conn[] = अणु 0x02, 0x03 पूर्ण; /* exclude 0x06 */
-	अटल स्थिर hda_nid_t preferred_pairs[] = अणु
+static void alc285_fixup_thinkpad_x1_gen7(struct hda_codec *codec,
+					  const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t conn[] = { 0x02, 0x03 }; /* exclude 0x06 */
+	static const hda_nid_t preferred_pairs[] = {
 		0x14, 0x02, 0x17, 0x03, 0x21, 0x03, 0
-	पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
+	};
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_override_conn_list(codec, 0x17, ARRAY_SIZE(conn), conn);
 		spec->gen.preferred_dacs = preferred_pairs;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_BUILD:
-		/* The generic parser creates somewhat unपूर्णांकuitive volume ctls
+		break;
+	case HDA_FIXUP_ACT_BUILD:
+		/* The generic parser creates somewhat unintuitive volume ctls
 		 * with the fixed routing above, and the shared DAC2 may be
-		 * confusing क्रम PA.
-		 * Rename those to unique names so that PA करोesn't touch them
+		 * confusing for PA.
+		 * Rename those to unique names so that PA doesn't touch them
 		 * and use only Master volume.
 		 */
-		नाम_ctl(codec, "Front Playback Volume", "DAC1 Playback Volume");
-		नाम_ctl(codec, "Bass Speaker Playback Volume", "DAC2 Playback Volume");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		rename_ctl(codec, "Front Playback Volume", "DAC1 Playback Volume");
+		rename_ctl(codec, "Bass Speaker Playback Volume", "DAC2 Playback Volume");
+		break;
+	}
+}
 
-अटल व्योम alc233_alc662_fixup_lenovo_dual_codecs(काष्ठा hda_codec *codec,
-					 स्थिर काष्ठा hda_fixup *fix,
-					 पूर्णांक action)
-अणु
+static void alc233_alc662_fixup_lenovo_dual_codecs(struct hda_codec *codec,
+					 const struct hda_fixup *fix,
+					 int action)
+{
 	alc_fixup_dual_codecs(codec, fix, action);
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
-		/* override card दीर्घname to provide a unique UCM profile */
-		म_नकल(codec->card->दीर्घname, "HDAudio-Lenovo-DualCodecs");
-		अवरोध;
-	हाल HDA_FIXUP_ACT_BUILD:
-		/* नाम Capture controls depending on the codec */
-		नाम_ctl(codec, "Capture Volume",
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
+		/* override card longname to provide a unique UCM profile */
+		strcpy(codec->card->longname, "HDAudio-Lenovo-DualCodecs");
+		break;
+	case HDA_FIXUP_ACT_BUILD:
+		/* rename Capture controls depending on the codec */
+		rename_ctl(codec, "Capture Volume",
 			   codec->addr == 0 ?
 			   "Rear-Panel Capture Volume" :
 			   "Front-Panel Capture Volume");
-		नाम_ctl(codec, "Capture Switch",
+		rename_ctl(codec, "Capture Switch",
 			   codec->addr == 0 ?
 			   "Rear-Panel Capture Switch" :
 			   "Front-Panel Capture Switch");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc225_fixup_s3_pop_noise(काष्ठा hda_codec *codec,
-				      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
+static void alc225_fixup_s3_pop_noise(struct hda_codec *codec,
+				      const struct hda_fixup *fix, int action)
+{
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
 
-	codec->घातer_save_node = 1;
-पूर्ण
+	codec->power_save_node = 1;
+}
 
-/* Forcibly assign NID 0x03 to HP/LO जबतक NID 0x02 to SPK क्रम EQ */
-अटल व्योम alc274_fixup_bind_dacs(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अटल स्थिर hda_nid_t preferred_pairs[] = अणु
+/* Forcibly assign NID 0x03 to HP/LO while NID 0x02 to SPK for EQ */
+static void alc274_fixup_bind_dacs(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	static const hda_nid_t preferred_pairs[] = {
 		0x21, 0x03, 0x1b, 0x03, 0x16, 0x02,
 		0
-	पूर्ण;
+	};
 
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
 
 	spec->gen.preferred_dacs = preferred_pairs;
-	spec->gen.स्वतः_mute_via_amp = 1;
-	codec->घातer_save_node = 0;
-पूर्ण
+	spec->gen.auto_mute_via_amp = 1;
+	codec->power_save_node = 0;
+}
 
-/* aव्योम DAC 0x06 क्रम bass speaker 0x17; it has no volume control */
-अटल व्योम alc289_fixup_asus_ga401(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अटल स्थिर hda_nid_t preferred_pairs[] = अणु
+/* avoid DAC 0x06 for bass speaker 0x17; it has no volume control */
+static void alc289_fixup_asus_ga401(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	static const hda_nid_t preferred_pairs[] = {
 		0x14, 0x02, 0x17, 0x02, 0x21, 0x03, 0
-	पूर्ण;
-	काष्ठा alc_spec *spec = codec->spec;
+	};
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->gen.preferred_dacs = preferred_pairs;
 		spec->gen.obey_preferred_dacs = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* The DAC of NID 0x3 will पूर्णांकroduce click/pop noise on headphones, so invalidate it */
-अटल व्योम alc285_fixup_invalidate_dacs(काष्ठा hda_codec *codec,
-			      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
+/* The DAC of NID 0x3 will introduce click/pop noise on headphones, so invalidate it */
+static void alc285_fixup_invalidate_dacs(struct hda_codec *codec,
+			      const struct hda_fixup *fix, int action)
+{
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
 
 	snd_hda_override_wcaps(codec, 0x03, 0);
-पूर्ण
+}
 
-अटल व्योम alc_combo_jack_hp_jd_restart(काष्ठा hda_codec *codec)
-अणु
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
-	हाल 0x10ec0225:
-	हाल 0x10ec0295:
-	हाल 0x10ec0299:
+static void alc_combo_jack_hp_jd_restart(struct hda_codec *codec)
+{
+	switch (codec->core.vendor_id) {
+	case 0x10ec0274:
+	case 0x10ec0294:
+	case 0x10ec0225:
+	case 0x10ec0295:
+	case 0x10ec0299:
 		alc_update_coef_idx(codec, 0x4a, 0x8000, 1 << 15); /* Reset HP JD */
 		alc_update_coef_idx(codec, 0x4a, 0x8000, 0 << 15);
-		अवरोध;
-	हाल 0x10ec0235:
-	हाल 0x10ec0236:
-	हाल 0x10ec0255:
-	हाल 0x10ec0256:
+		break;
+	case 0x10ec0235:
+	case 0x10ec0236:
+	case 0x10ec0255:
+	case 0x10ec0256:
 		alc_update_coef_idx(codec, 0x1b, 0x8000, 1 << 15); /* Reset HP JD */
 		alc_update_coef_idx(codec, 0x1b, 0x8000, 0 << 15);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc295_fixup_chromebook(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc295_fixup_chromebook(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
-		spec->ultra_low_घातer = true;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
+		spec->ultra_low_power = true;
+		break;
+	case HDA_FIXUP_ACT_INIT:
 		alc_combo_jack_hp_jd_restart(codec);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc_fixup_disable_mic_vref(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+static void alc_fixup_disable_mic_vref(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		snd_hda_codec_set_pin_target(codec, 0x19, PIN_VREFHIZ);
-पूर्ण
+}
 
 
-अटल व्योम alc294_gx502_toggle_output(काष्ठा hda_codec *codec,
-					काष्ठा hda_jack_callback *cb)
-अणु
-	/* The Winकरोws driver sets the codec up in a very dअगरferent way where
+static void alc294_gx502_toggle_output(struct hda_codec *codec,
+					struct hda_jack_callback *cb)
+{
+	/* The Windows driver sets the codec up in a very different way where
 	 * it appears to leave 0x10 = 0x8a20 set. For Linux we need to toggle it
 	 */
-	अगर (snd_hda_jack_detect_state(codec, 0x21) == HDA_JACK_PRESENT)
-		alc_ग_लिखो_coef_idx(codec, 0x10, 0x8a20);
-	अन्यथा
-		alc_ग_लिखो_coef_idx(codec, 0x10, 0x0a20);
-पूर्ण
+	if (snd_hda_jack_detect_state(codec, 0x21) == HDA_JACK_PRESENT)
+		alc_write_coef_idx(codec, 0x10, 0x8a20);
+	else
+		alc_write_coef_idx(codec, 0x10, 0x0a20);
+}
 
-अटल व्योम alc294_fixup_gx502_hp(काष्ठा hda_codec *codec,
-					स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc294_fixup_gx502_hp(struct hda_codec *codec,
+					const struct hda_fixup *fix, int action)
+{
 	/* Pin 0x21: headphones/headset mic */
-	अगर (!is_jack_detectable(codec, 0x21))
-		वापस;
+	if (!is_jack_detectable(codec, 0x21))
+		return;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_jack_detect_enable_callback(codec, 0x21,
 				alc294_gx502_toggle_output);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
-		/* Make sure to start in a correct state, i.e. अगर
-		 * headphones have been plugged in beक्रमe घातering up the प्रणाली
+		break;
+	case HDA_FIXUP_ACT_INIT:
+		/* Make sure to start in a correct state, i.e. if
+		 * headphones have been plugged in before powering up the system
 		 */
-		alc294_gx502_toggle_output(codec, शून्य);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		alc294_gx502_toggle_output(codec, NULL);
+		break;
+	}
+}
 
-अटल व्योम alc294_gu502_toggle_output(काष्ठा hda_codec *codec,
-				       काष्ठा hda_jack_callback *cb)
-अणु
-	/* Winकरोws sets 0x10 to 0x8420 क्रम Node 0x20 which is
+static void alc294_gu502_toggle_output(struct hda_codec *codec,
+				       struct hda_jack_callback *cb)
+{
+	/* Windows sets 0x10 to 0x8420 for Node 0x20 which is
 	 * responsible from changes between speakers and headphones
 	 */
-	अगर (snd_hda_jack_detect_state(codec, 0x21) == HDA_JACK_PRESENT)
-		alc_ग_लिखो_coef_idx(codec, 0x10, 0x8420);
-	अन्यथा
-		alc_ग_लिखो_coef_idx(codec, 0x10, 0x0a20);
-पूर्ण
+	if (snd_hda_jack_detect_state(codec, 0x21) == HDA_JACK_PRESENT)
+		alc_write_coef_idx(codec, 0x10, 0x8420);
+	else
+		alc_write_coef_idx(codec, 0x10, 0x0a20);
+}
 
-अटल व्योम alc294_fixup_gu502_hp(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (!is_jack_detectable(codec, 0x21))
-		वापस;
+static void alc294_fixup_gu502_hp(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	if (!is_jack_detectable(codec, 0x21))
+		return;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_jack_detect_enable_callback(codec, 0x21,
 				alc294_gu502_toggle_output);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
-		alc294_gu502_toggle_output(codec, शून्य);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case HDA_FIXUP_ACT_INIT:
+		alc294_gu502_toggle_output(codec, NULL);
+		break;
+	}
+}
 
-अटल व्योम  alc285_fixup_hp_gpio_amp_init(काष्ठा hda_codec *codec,
-			      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action != HDA_FIXUP_ACT_INIT)
-		वापस;
+static void  alc285_fixup_hp_gpio_amp_init(struct hda_codec *codec,
+			      const struct hda_fixup *fix, int action)
+{
+	if (action != HDA_FIXUP_ACT_INIT)
+		return;
 
 	msleep(100);
-	alc_ग_लिखो_coef_idx(codec, 0x65, 0x0);
-पूर्ण
+	alc_write_coef_idx(codec, 0x65, 0x0);
+}
 
-अटल व्योम alc274_fixup_hp_headset_mic(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_INIT:
+static void alc274_fixup_hp_headset_mic(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	switch (action) {
+	case HDA_FIXUP_ACT_INIT:
 		alc_combo_jack_hp_jd_restart(codec);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम alc_fixup_no_पूर्णांक_mic(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_no_int_mic(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
-		/* Mic RING SLEEVE swap क्रम combo jack */
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
+		/* Mic RING SLEEVE swap for combo jack */
 		alc_update_coef_idx(codec, 0x45, 0xf<<12 | 1<<10, 5<<12);
-		spec->no_पूर्णांकernal_mic_pin = true;
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
+		spec->no_internal_mic_pin = true;
+		break;
+	case HDA_FIXUP_ACT_INIT:
 		alc_combo_jack_hp_jd_restart(codec);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* क्रम hda_fixup_thinkpad_acpi() */
-#समावेश "thinkpad_helper.c"
+/* for hda_fixup_thinkpad_acpi() */
+#include "thinkpad_helper.c"
 
-अटल व्योम alc_fixup_thinkpad_acpi(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc_fixup_thinkpad_acpi(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
 	alc_fixup_no_shutup(codec, fix, action); /* reduce click noise */
 	hda_fixup_thinkpad_acpi(codec, fix, action);
-पूर्ण
+}
 
-/* क्रम alc295_fixup_hp_top_speakers */
-#समावेश "hp_x360_helper.c"
+/* for alc295_fixup_hp_top_speakers */
+#include "hp_x360_helper.c"
 
-/* क्रम alc285_fixup_ideapad_s740_coef() */
-#समावेश "ideapad_s740_helper.c"
+/* for alc285_fixup_ideapad_s740_coef() */
+#include "ideapad_s740_helper.c"
 
-क्रमागत अणु
+enum {
 	ALC269_FIXUP_GPIO2,
 	ALC269_FIXUP_SONY_VAIO,
 	ALC275_FIXUP_SONY_VAIO_GPIO2,
@@ -6570,1596 +6569,1596 @@
 	ALC287_FIXUP_IDEAPAD_BASS_SPK_AMP,
 	ALC623_FIXUP_LENOVO_THINKSTATION_P340,
 	ALC255_FIXUP_ACER_HEADPHONE_AND_MIC,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hda_fixup alc269_fixups[] = अणु
-	[ALC269_FIXUP_GPIO2] = अणु
+static const struct hda_fixup alc269_fixups[] = {
+	[ALC269_FIXUP_GPIO2] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_gpio2,
-	पूर्ण,
-	[ALC269_FIXUP_SONY_VAIO] = अणु
+	},
+	[ALC269_FIXUP_SONY_VAIO] = {
 		.type = HDA_FIXUP_PINCTLS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु0x19, PIN_VREFGRDपूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC275_FIXUP_SONY_VAIO_GPIO2] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{0x19, PIN_VREFGRD},
+			{}
+		}
+	},
+	[ALC275_FIXUP_SONY_VAIO_GPIO2] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc275_fixup_gpio4_off,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_SONY_VAIO
-	पूर्ण,
-	[ALC269_FIXUP_DELL_M101Z] = अणु
+	},
+	[ALC269_FIXUP_DELL_M101Z] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			/* Enables पूर्णांकernal speaker */
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 13पूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x4040पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC269_FIXUP_SKU_IGNORE] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			/* Enables internal speaker */
+			{0x20, AC_VERB_SET_COEF_INDEX, 13},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x4040},
+			{}
+		}
+	},
+	[ALC269_FIXUP_SKU_IGNORE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_sku_ignore,
-	पूर्ण,
-	[ALC269_FIXUP_ASUS_G73JW] = अणु
+	},
+	[ALC269_FIXUP_ASUS_G73JW] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x17, 0x99130111 पूर्ण, /* subwoofer */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC269_FIXUP_LENOVO_EAPD] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x17, 0x99130111 }, /* subwoofer */
+			{ }
+		}
+	},
+	[ALC269_FIXUP_LENOVO_EAPD] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु0x14, AC_VERB_SET_EAPD_BTLENABLE, 0पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC275_FIXUP_SONY_HWEQ] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{0x14, AC_VERB_SET_EAPD_BTLENABLE, 0},
+			{}
+		}
+	},
+	[ALC275_FIXUP_SONY_HWEQ] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hweq,
 		.chained = true,
 		.chain_id = ALC275_FIXUP_SONY_VAIO_GPIO2
-	पूर्ण,
-	[ALC275_FIXUP_SONY_DISABLE_AAMIX] = अणु
+	},
+	[ALC275_FIXUP_SONY_DISABLE_AAMIX] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_SONY_VAIO
-	पूर्ण,
-	[ALC271_FIXUP_DMIC] = अणु
+	},
+	[ALC271_FIXUP_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc271_fixup_dmic,
-	पूर्ण,
-	[ALC269_FIXUP_PCM_44K] = अणु
+	},
+	[ALC269_FIXUP_PCM_44K] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_pcm_44k,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_QUANTA_MUTE
-	पूर्ण,
-	[ALC269_FIXUP_STEREO_DMIC] = अणु
+	},
+	[ALC269_FIXUP_STEREO_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_stereo_dmic,
-	पूर्ण,
-	[ALC269_FIXUP_HEADSET_MIC] = अणु
+	},
+	[ALC269_FIXUP_HEADSET_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_headset_mic,
-	पूर्ण,
-	[ALC269_FIXUP_QUANTA_MUTE] = अणु
+	},
+	[ALC269_FIXUP_QUANTA_MUTE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_quanta_mute,
-	पूर्ण,
-	[ALC269_FIXUP_LIFEBOOK] = अणु
+	},
+	[ALC269_FIXUP_LIFEBOOK] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1a, 0x2101103f पूर्ण, /* करोck line-out */
-			अणु 0x1b, 0x23a11040 पूर्ण, /* करोck mic-in */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x2101103f }, /* dock line-out */
+			{ 0x1b, 0x23a11040 }, /* dock mic-in */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_QUANTA_MUTE
-	पूर्ण,
-	[ALC269_FIXUP_LIFEBOOK_EXTMIC] = अणु
+	},
+	[ALC269_FIXUP_LIFEBOOK_EXTMIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1903c पूर्ण, /* headset mic, with jack detect */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC269_FIXUP_LIFEBOOK_HP_PIN] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1903c }, /* headset mic, with jack detect */
+			{ }
+		},
+	},
+	[ALC269_FIXUP_LIFEBOOK_HP_PIN] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x21, 0x0221102f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC269_FIXUP_LIFEBOOK_NO_HP_TO_LINEOUT] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x21, 0x0221102f }, /* HP out */
+			{ }
+		},
+	},
+	[ALC269_FIXUP_LIFEBOOK_NO_HP_TO_LINEOUT] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_pincfg_no_hp_to_lineout,
-	पूर्ण,
-	[ALC255_FIXUP_LIFEBOOK_U7x7_HEADSET_MIC] = अणु
+	},
+	[ALC255_FIXUP_LIFEBOOK_U7x7_HEADSET_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_pincfg_U7x7_headset_mic,
-	पूर्ण,
-	[ALC269_FIXUP_AMIC] = अणु
+	},
+	[ALC269_FIXUP_AMIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0121401f पूर्ण, /* HP out */
-			अणु 0x18, 0x01a19c20 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC269_FIXUP_DMIC] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121401f }, /* HP out */
+			{ 0x18, 0x01a19c20 }, /* mic */
+			{ 0x19, 0x99a3092f }, /* int-mic */
+			{ }
+		},
+	},
+	[ALC269_FIXUP_DMIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0121401f पूर्ण, /* HP out */
-			अणु 0x18, 0x01a19c20 पूर्ण, /* mic */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC269VB_FIXUP_AMIC] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x99a3092f }, /* int-mic */
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121401f }, /* HP out */
+			{ 0x18, 0x01a19c20 }, /* mic */
+			{ }
+		},
+	},
+	[ALC269VB_FIXUP_AMIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19c20 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x21, 0x0121401f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC269VB_FIXUP_DMIC] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x18, 0x01a19c20 }, /* mic */
+			{ 0x19, 0x99a3092f }, /* int-mic */
+			{ 0x21, 0x0121401f }, /* HP out */
+			{ }
+		},
+	},
+	[ALC269VB_FIXUP_DMIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19c20 पूर्ण, /* mic */
-			अणु 0x21, 0x0121401f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC269_FIXUP_HP_MUTE_LED] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x99a3092f }, /* int-mic */
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x18, 0x01a19c20 }, /* mic */
+			{ 0x21, 0x0121401f }, /* HP out */
+			{ }
+		},
+	},
+	[ALC269_FIXUP_HP_MUTE_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_mute_led,
-	पूर्ण,
-	[ALC269_FIXUP_HP_MUTE_LED_MIC1] = अणु
+	},
+	[ALC269_FIXUP_HP_MUTE_LED_MIC1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_mute_led_mic1,
-	पूर्ण,
-	[ALC269_FIXUP_HP_MUTE_LED_MIC2] = अणु
+	},
+	[ALC269_FIXUP_HP_MUTE_LED_MIC2] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_mute_led_mic2,
-	पूर्ण,
-	[ALC269_FIXUP_HP_MUTE_LED_MIC3] = अणु
+	},
+	[ALC269_FIXUP_HP_MUTE_LED_MIC3] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_mute_led_mic3,
 		.chained = true,
 		.chain_id = ALC295_FIXUP_HP_AUTO_MUTE
-	पूर्ण,
-	[ALC269_FIXUP_HP_GPIO_LED] = अणु
+	},
+	[ALC269_FIXUP_HP_GPIO_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_gpio_led,
-	पूर्ण,
-	[ALC269_FIXUP_HP_GPIO_MIC1_LED] = अणु
+	},
+	[ALC269_FIXUP_HP_GPIO_MIC1_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_gpio_mic1_led,
-	पूर्ण,
-	[ALC269_FIXUP_HP_LINE1_MIC1_LED] = अणु
+	},
+	[ALC269_FIXUP_HP_LINE1_MIC1_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_hp_line1_mic1_led,
-	पूर्ण,
-	[ALC269_FIXUP_INV_DMIC] = अणु
+	},
+	[ALC269_FIXUP_INV_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
-	पूर्ण,
-	[ALC269_FIXUP_NO_SHUTUP] = अणु
+	},
+	[ALC269_FIXUP_NO_SHUTUP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_no_shutup,
-	पूर्ण,
-	[ALC269_FIXUP_LENOVO_DOCK] = अणु
+	},
+	[ALC269_FIXUP_LENOVO_DOCK] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x23a11040 पूर्ण, /* करोck mic */
-			अणु 0x1b, 0x2121103f पूर्ण, /* करोck headphone */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x23a11040 }, /* dock mic */
+			{ 0x1b, 0x2121103f }, /* dock headphone */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_PINCFG_NO_HP_TO_LINEOUT
-	पूर्ण,
-	[ALC269_FIXUP_LENOVO_DOCK_LIMIT_BOOST] = अणु
+	},
+	[ALC269_FIXUP_LENOVO_DOCK_LIMIT_BOOST] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_LENOVO_DOCK,
-	पूर्ण,
-	[ALC269_FIXUP_PINCFG_NO_HP_TO_LINEOUT] = अणु
+	},
+	[ALC269_FIXUP_PINCFG_NO_HP_TO_LINEOUT] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_pincfg_no_hp_to_lineout,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI,
-	पूर्ण,
-	[ALC269_FIXUP_DELL1_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC269_FIXUP_DELL1_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC269_FIXUP_DELL2_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC269_FIXUP_DELL2_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x21014020 पूर्ण, /* करोck line out */
-			अणु 0x19, 0x21a19030 पूर्ण, /* करोck mic */
-			अणु 0x1a, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x21014020 }, /* dock line out */
+			{ 0x19, 0x21a19030 }, /* dock mic */
+			{ 0x1a, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC269_FIXUP_DELL3_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC269_FIXUP_DELL3_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1a, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC269_FIXUP_DELL4_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC269_FIXUP_DELL4_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1b, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x1b, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC269_FIXUP_HEADSET_MODE] = अणु
+	},
+	[ALC269_FIXUP_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_MIC_MUTE_LED
-	पूर्ण,
-	[ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC] = अणु
+	},
+	[ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_no_hp_mic,
-	पूर्ण,
-	[ALC269_FIXUP_ASPIRE_HEADSET_MIC] = अणु
+	},
+	[ALC269_FIXUP_ASPIRE_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* headset mic w/o jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* headset mic w/o jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE,
-	पूर्ण,
-	[ALC286_FIXUP_SONY_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC286_FIXUP_SONY_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC256_FIXUP_HUAWEI_MACH_WX9_PINS] = अणु
+	},
+	[ALC256_FIXUP_HUAWEI_MACH_WX9_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु0x12, 0x90a60130पूर्ण,
-			अणु0x13, 0x40000000पूर्ण,
-			अणु0x14, 0x90170110पूर्ण,
-			अणु0x18, 0x411111f0पूर्ण,
-			अणु0x19, 0x04a11040पूर्ण,
-			अणु0x1a, 0x411111f0पूर्ण,
-			अणु0x1b, 0x90170112पूर्ण,
-			अणु0x1d, 0x40759a05पूर्ण,
-			अणु0x1e, 0x411111f0पूर्ण,
-			अणु0x21, 0x04211020पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{0x12, 0x90a60130},
+			{0x13, 0x40000000},
+			{0x14, 0x90170110},
+			{0x18, 0x411111f0},
+			{0x19, 0x04a11040},
+			{0x1a, 0x411111f0},
+			{0x1b, 0x90170112},
+			{0x1d, 0x40759a05},
+			{0x1e, 0x411111f0},
+			{0x21, 0x04211020},
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_MIC_MUTE_LED
-	पूर्ण,
-	[ALC298_FIXUP_HUAWEI_MBX_STEREO] = अणु
+	},
+	[ALC298_FIXUP_HUAWEI_MBX_STEREO] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc298_fixup_huawei_mbx_stereo,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_MIC_MUTE_LED
-	पूर्ण,
-	[ALC269_FIXUP_ASUS_X101_FUNC] = अणु
+	},
+	[ALC269_FIXUP_ASUS_X101_FUNC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269_fixup_x101_headset_mic,
-	पूर्ण,
-	[ALC269_FIXUP_ASUS_X101_VERB] = अणु
+	},
+	[ALC269_FIXUP_ASUS_X101_VERB] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु0x18, AC_VERB_SET_PIN_WIDGET_CONTROL, 0पूर्ण,
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x08पूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF,  0x0310पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{0x18, AC_VERB_SET_PIN_WIDGET_CONTROL, 0},
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x08},
+			{0x20, AC_VERB_SET_PROC_COEF,  0x0310},
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_ASUS_X101_FUNC
-	पूर्ण,
-	[ALC269_FIXUP_ASUS_X101] = अणु
+	},
+	[ALC269_FIXUP_ASUS_X101] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x04a1182c पूर्ण, /* Headset mic */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x04a1182c }, /* Headset mic */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_ASUS_X101_VERB
-	पूर्ण,
-	[ALC271_FIXUP_AMIC_MIC2] = अणु
+	},
+	[ALC271_FIXUP_AMIC_MIC2] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x19, 0x01a19c20 पूर्ण, /* mic */
-			अणु 0x1b, 0x99a7012f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x21, 0x0121401f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC271_FIXUP_HP_GATE_MIC_JACK] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x19, 0x01a19c20 }, /* mic */
+			{ 0x1b, 0x99a7012f }, /* int-mic */
+			{ 0x21, 0x0121401f }, /* HP out */
+			{ }
+		},
+	},
+	[ALC271_FIXUP_HP_GATE_MIC_JACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc271_hp_gate_mic_jack,
 		.chained = true,
 		.chain_id = ALC271_FIXUP_AMIC_MIC2,
-	पूर्ण,
-	[ALC271_FIXUP_HP_GATE_MIC_JACK_E1_572] = अणु
+	},
+	[ALC271_FIXUP_HP_GATE_MIC_JACK_E1_572] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC271_FIXUP_HP_GATE_MIC_JACK,
-	पूर्ण,
-	[ALC269_FIXUP_ACER_AC700] = अणु
+	},
+	[ALC269_FIXUP_ACER_AC700] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x18, 0x03a11c20 पूर्ण, /* mic */
-			अणु 0x1e, 0x0346101e पूर्ण, /* SPDIF1 */
-			अणु 0x21, 0x0321101f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x99a3092f }, /* int-mic */
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x18, 0x03a11c20 }, /* mic */
+			{ 0x1e, 0x0346101e }, /* SPDIF1 */
+			{ 0x21, 0x0321101f }, /* HP out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC271_FIXUP_DMIC,
-	पूर्ण,
-	[ALC269_FIXUP_LIMIT_INT_MIC_BOOST] = अणु
+	},
+	[ALC269_FIXUP_LIMIT_INT_MIC_BOOST] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI,
-	पूर्ण,
-	[ALC269VB_FIXUP_ASUS_ZENBOOK] = अणु
+	},
+	[ALC269VB_FIXUP_ASUS_ZENBOOK] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC269VB_FIXUP_DMIC,
-	पूर्ण,
-	[ALC269VB_FIXUP_ASUS_ZENBOOK_UX31A] = अणु
+	},
+	[ALC269VB_FIXUP_ASUS_ZENBOOK_UX31A] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* class-D output amp +5dB */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x12 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x2800 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x12 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x2800 },
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC269VB_FIXUP_ASUS_ZENBOOK,
-	पूर्ण,
-	[ALC269_FIXUP_LIMIT_INT_MIC_BOOST_MUTE_LED] = अणु
+	},
+	[ALC269_FIXUP_LIMIT_INT_MIC_BOOST_MUTE_LED] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HP_MUTE_LED_MIC1,
-	पूर्ण,
-	[ALC269VB_FIXUP_ORDISSIMO_EVE2] = अणु
+	},
+	[ALC269VB_FIXUP_ORDISSIMO_EVE2] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x18, 0x03a11d20 पूर्ण, /* mic */
-			अणु 0x19, 0x411111f0 पूर्ण, /* Unused bogus pin */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC283_FIXUP_CHROME_BOOK] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x99a3092f }, /* int-mic */
+			{ 0x18, 0x03a11d20 }, /* mic */
+			{ 0x19, 0x411111f0 }, /* Unused bogus pin */
+			{ }
+		},
+	},
+	[ALC283_FIXUP_CHROME_BOOK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc283_fixup_chromebook,
-	पूर्ण,
-	[ALC283_FIXUP_SENSE_COMBO_JACK] = अणु
+	},
+	[ALC283_FIXUP_SENSE_COMBO_JACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc283_fixup_sense_combo_jack,
 		.chained = true,
 		.chain_id = ALC283_FIXUP_CHROME_BOOK,
-	पूर्ण,
-	[ALC282_FIXUP_ASUS_TX300] = अणु
+	},
+	[ALC282_FIXUP_ASUS_TX300] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc282_fixup_asus_tx300,
-	पूर्ण,
-	[ALC283_FIXUP_INT_MIC] = अणु
+	},
+	[ALC283_FIXUP_INT_MIC] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x1aपूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x0011पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x1a},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x0011},
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_LIMIT_INT_MIC_BOOST
-	पूर्ण,
-	[ALC290_FIXUP_SUBWOOFER_HSJACK] = अणु
+	},
+	[ALC290_FIXUP_SUBWOOFER_HSJACK] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x17, 0x90170112 पूर्ण, /* subwoofer */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x17, 0x90170112 }, /* subwoofer */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC290_FIXUP_MONO_SPEAKERS_HSJACK,
-	पूर्ण,
-	[ALC290_FIXUP_SUBWOOFER] = अणु
+	},
+	[ALC290_FIXUP_SUBWOOFER] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x17, 0x90170112 पूर्ण, /* subwoofer */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x17, 0x90170112 }, /* subwoofer */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC290_FIXUP_MONO_SPEAKERS,
-	पूर्ण,
-	[ALC290_FIXUP_MONO_SPEAKERS] = अणु
+	},
+	[ALC290_FIXUP_MONO_SPEAKERS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc290_fixup_mono_speakers,
-	पूर्ण,
-	[ALC290_FIXUP_MONO_SPEAKERS_HSJACK] = अणु
+	},
+	[ALC290_FIXUP_MONO_SPEAKERS_HSJACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc290_fixup_mono_speakers,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_DELL3_MIC_NO_PRESENCE,
-	पूर्ण,
-	[ALC269_FIXUP_THINKPAD_ACPI] = अणु
+	},
+	[ALC269_FIXUP_THINKPAD_ACPI] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_thinkpad_acpi,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_SKU_IGNORE,
-	पूर्ण,
-	[ALC269_FIXUP_DMIC_THINKPAD_ACPI] = अणु
+	},
+	[ALC269_FIXUP_DMIC_THINKPAD_ACPI] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI,
-	पूर्ण,
-	[ALC255_FIXUP_ACER_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC255_FIXUP_ACER_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC255_FIXUP_ASUS_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC255_FIXUP_ASUS_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC255_FIXUP_DELL1_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC255_FIXUP_DELL1_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC255_FIXUP_DELL2_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC255_FIXUP_DELL2_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC255_FIXUP_HEADSET_MODE] = अणु
+	},
+	[ALC255_FIXUP_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_alc255,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_MIC_MUTE_LED
-	पूर्ण,
-	[ALC255_FIXUP_HEADSET_MODE_NO_HP_MIC] = अणु
+	},
+	[ALC255_FIXUP_HEADSET_MODE_NO_HP_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_alc255_no_hp_mic,
-	पूर्ण,
-	[ALC293_FIXUP_DELL1_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC293_FIXUP_DELL1_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु 0x1a, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ 0x1a, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC292_FIXUP_TPT440_DOCK] = अणु
+	},
+	[ALC292_FIXUP_TPT440_DOCK] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_tpt440_करोck,
+		.v.func = alc_fixup_tpt440_dock,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_LIMIT_INT_MIC_BOOST
-	पूर्ण,
-	[ALC292_FIXUP_TPT440] = अणु
+	},
+	[ALC292_FIXUP_TPT440] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC292_FIXUP_TPT440_DOCK,
-	पूर्ण,
-	[ALC283_FIXUP_HEADSET_MIC] = अणु
+	},
+	[ALC283_FIXUP_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x04a110f0 पूर्ण,
-			अणु पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	[ALC255_FIXUP_MIC_MUTE_LED] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x04a110f0 },
+			{ },
+		},
+	},
+	[ALC255_FIXUP_MIC_MUTE_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_micmute_led,
-	पूर्ण,
-	[ALC282_FIXUP_ASPIRE_V5_PINS] = अणु
+	},
+	[ALC282_FIXUP_ASPIRE_V5_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x90a60130 पूर्ण,
-			अणु 0x14, 0x90170110 पूर्ण,
-			अणु 0x17, 0x40000008 पूर्ण,
-			अणु 0x18, 0x411111f0 पूर्ण,
-			अणु 0x19, 0x01a1913c पूर्ण,
-			अणु 0x1a, 0x411111f0 पूर्ण,
-			अणु 0x1b, 0x411111f0 पूर्ण,
-			अणु 0x1d, 0x40f89b2d पूर्ण,
-			अणु 0x1e, 0x411111f0 पूर्ण,
-			अणु 0x21, 0x0321101f पूर्ण,
-			अणु पूर्ण,
-		पूर्ण,
-	पूर्ण,
-	[ALC269VB_FIXUP_ASPIRE_E1_COEF] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x90a60130 },
+			{ 0x14, 0x90170110 },
+			{ 0x17, 0x40000008 },
+			{ 0x18, 0x411111f0 },
+			{ 0x19, 0x01a1913c },
+			{ 0x1a, 0x411111f0 },
+			{ 0x1b, 0x411111f0 },
+			{ 0x1d, 0x40f89b2d },
+			{ 0x1e, 0x411111f0 },
+			{ 0x21, 0x0321101f },
+			{ },
+		},
+	},
+	[ALC269VB_FIXUP_ASPIRE_E1_COEF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc269vb_fixup_aspire_e1_coef,
-	पूर्ण,
-	[ALC280_FIXUP_HP_GPIO4] = अणु
+	},
+	[ALC280_FIXUP_HP_GPIO4] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc280_fixup_hp_gpio4,
-	पूर्ण,
-	[ALC286_FIXUP_HP_GPIO_LED] = अणु
+	},
+	[ALC286_FIXUP_HP_GPIO_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc286_fixup_hp_gpio_led,
-	पूर्ण,
-	[ALC280_FIXUP_HP_GPIO2_MIC_HOTKEY] = अणु
+	},
+	[ALC280_FIXUP_HP_GPIO2_MIC_HOTKEY] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc280_fixup_hp_gpio2_mic_hotkey,
-	पूर्ण,
-	[ALC280_FIXUP_HP_DOCK_PINS] = अणु
+	},
+	[ALC280_FIXUP_HP_DOCK_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x21011020 पूर्ण, /* line-out */
-			अणु 0x1a, 0x01a1903c पूर्ण, /* headset mic */
-			अणु 0x18, 0x2181103f पूर्ण, /* line-in */
-			अणु पूर्ण,
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x21011020 }, /* line-out */
+			{ 0x1a, 0x01a1903c }, /* headset mic */
+			{ 0x18, 0x2181103f }, /* line-in */
+			{ },
+		},
 		.chained = true,
 		.chain_id = ALC280_FIXUP_HP_GPIO4
-	पूर्ण,
-	[ALC269_FIXUP_HP_DOCK_GPIO_MIC1_LED] = अणु
+	},
+	[ALC269_FIXUP_HP_DOCK_GPIO_MIC1_LED] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x21011020 पूर्ण, /* line-out */
-			अणु 0x18, 0x2181103f पूर्ण, /* line-in */
-			अणु पूर्ण,
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x21011020 }, /* line-out */
+			{ 0x18, 0x2181103f }, /* line-in */
+			{ },
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HP_GPIO_MIC1_LED
-	पूर्ण,
-	[ALC280_FIXUP_HP_9480M] = अणु
+	},
+	[ALC280_FIXUP_HP_9480M] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc280_fixup_hp_9480m,
-	पूर्ण,
-	[ALC245_FIXUP_HP_X360_AMP] = अणु
+	},
+	[ALC245_FIXUP_HP_X360_AMP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc245_fixup_hp_x360_amp,
-	पूर्ण,
-	[ALC288_FIXUP_DELL_HEADSET_MODE] = अणु
+	},
+	[ALC288_FIXUP_DELL_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_dell_alc288,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_MIC_MUTE_LED
-	पूर्ण,
-	[ALC288_FIXUP_DELL1_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC288_FIXUP_DELL1_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC288_FIXUP_DELL_HEADSET_MODE
-	पूर्ण,
-	[ALC288_FIXUP_DISABLE_AAMIX] = अणु
+	},
+	[ALC288_FIXUP_DISABLE_AAMIX] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC288_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC288_FIXUP_DELL_XPS_13] = अणु
+	},
+	[ALC288_FIXUP_DELL_XPS_13] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_dell_xps13,
 		.chained = true,
 		.chain_id = ALC288_FIXUP_DISABLE_AAMIX
-	पूर्ण,
-	[ALC292_FIXUP_DISABLE_AAMIX] = अणु
+	},
+	[ALC292_FIXUP_DISABLE_AAMIX] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_DELL2_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC293_FIXUP_DISABLE_AAMIX_MULTIJACK] = अणु
+	},
+	[ALC293_FIXUP_DISABLE_AAMIX_MULTIJACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC293_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC292_FIXUP_DELL_E7X_AAMIX] = अणु
+	},
+	[ALC292_FIXUP_DELL_E7X_AAMIX] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_dell_xps13,
 		.chained = true,
 		.chain_id = ALC292_FIXUP_DISABLE_AAMIX
-	पूर्ण,
-	[ALC292_FIXUP_DELL_E7X] = अणु
+	},
+	[ALC292_FIXUP_DELL_E7X] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_micmute_led,
 		/* micmute fixup must be applied at last */
-		.chained_beक्रमe = true,
+		.chained_before = true,
 		.chain_id = ALC292_FIXUP_DELL_E7X_AAMIX,
-	पूर्ण,
-	[ALC298_FIXUP_ALIENWARE_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC298_FIXUP_ALIENWARE_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* headset mic w/o jack detect */
-			अणु पूर्ण
-		पूर्ण,
-		.chained_beक्रमe = true,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* headset mic w/o jack detect */
+			{ }
+		},
+		.chained_before = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE,
-	पूर्ण,
-	[ALC298_FIXUP_DELL1_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC298_FIXUP_DELL1_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC298_FIXUP_DELL_AIO_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC298_FIXUP_DELL_AIO_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC275_FIXUP_DELL_XPS] = अणु
+	},
+	[ALC275_FIXUP_DELL_XPS] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			/* Enables पूर्णांकernal speaker */
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x1fपूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x00c0पूर्ण,
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x30पूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x00b1पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC293_FIXUP_LENOVO_SPK_NOISE] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			/* Enables internal speaker */
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x1f},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x00c0},
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x30},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x00b1},
+			{}
+		}
+	},
+	[ALC293_FIXUP_LENOVO_SPK_NOISE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI
-	पूर्ण,
-	[ALC233_FIXUP_LENOVO_LINE2_MIC_HOTKEY] = अणु
+	},
+	[ALC233_FIXUP_LENOVO_LINE2_MIC_HOTKEY] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc233_fixup_lenovo_line2_mic_hotkey,
-	पूर्ण,
-	[ALC233_FIXUP_INTEL_NUC8_DMIC] = अणु
+	},
+	[ALC233_FIXUP_INTEL_NUC8_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
 		.chained = true,
 		.chain_id = ALC233_FIXUP_INTEL_NUC8_BOOST,
-	पूर्ण,
-	[ALC233_FIXUP_INTEL_NUC8_BOOST] = अणु
+	},
+	[ALC233_FIXUP_INTEL_NUC8_BOOST] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost
-	पूर्ण,
-	[ALC255_FIXUP_DELL_SPK_NOISE] = अणु
+		.v.func = alc269_fixup_limit_int_mic_boost
+	},
+	[ALC255_FIXUP_DELL_SPK_NOISE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC225_FIXUP_DISABLE_MIC_VREF] = अणु
+	},
+	[ALC225_FIXUP_DISABLE_MIC_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_mic_vref,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC225_FIXUP_DELL1_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC225_FIXUP_DELL1_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			/* Disable pass-through path क्रम FRONT 14h */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x36 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x57d7 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			/* Disable pass-through path for FRONT 14h */
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x36 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x57d7 },
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC225_FIXUP_DISABLE_MIC_VREF
-	पूर्ण,
-	[ALC280_FIXUP_HP_HEADSET_MIC] = अणु
+	},
+	[ALC280_FIXUP_HP_HEADSET_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC,
-	पूर्ण,
-	[ALC221_FIXUP_HP_FRONT_MIC] = अणु
+	},
+	[ALC221_FIXUP_HP_FRONT_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x02a19020 पूर्ण, /* Front Mic */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC292_FIXUP_TPT460] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x02a19020 }, /* Front Mic */
+			{ }
+		},
+	},
+	[ALC292_FIXUP_TPT460] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_tpt440_करोck,
+		.v.func = alc_fixup_tpt440_dock,
 		.chained = true,
 		.chain_id = ALC293_FIXUP_LENOVO_SPK_NOISE,
-	पूर्ण,
-	[ALC298_FIXUP_SPK_VOLUME] = अणु
+	},
+	[ALC298_FIXUP_SPK_VOLUME] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc298_fixup_speaker_volume,
 		.chained = true,
 		.chain_id = ALC298_FIXUP_DELL_AIO_MIC_NO_PRESENCE,
-	पूर्ण,
-	[ALC298_FIXUP_LENOVO_SPK_VOLUME] = अणु
+	},
+	[ALC298_FIXUP_LENOVO_SPK_VOLUME] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc298_fixup_speaker_volume,
-	पूर्ण,
-	[ALC295_FIXUP_DISABLE_DAC3] = अणु
+	},
+	[ALC295_FIXUP_DISABLE_DAC3] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc295_fixup_disable_dac3,
-	पूर्ण,
-	[ALC285_FIXUP_SPEAKER2_TO_DAC1] = अणु
+	},
+	[ALC285_FIXUP_SPEAKER2_TO_DAC1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_speaker2_to_dac1,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI
-	पूर्ण,
-	[ALC256_FIXUP_DELL_INSPIRON_7559_SUBWOOFER] = अणु
+	},
+	[ALC256_FIXUP_DELL_INSPIRON_7559_SUBWOOFER] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x90170151 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x90170151 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC269_FIXUP_ATIV_BOOK_8] = अणु
+	},
+	[ALC269_FIXUP_ATIV_BOOK_8] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_स्वतः_mute_via_amp,
+		.v.func = alc_fixup_auto_mute_via_amp,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_NO_SHUTUP
-	पूर्ण,
-	[ALC221_FIXUP_HP_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC221_FIXUP_HP_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x01a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x01a1913d }, /* use as headphone mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC256_FIXUP_ASUS_HEADSET_MODE] = अणु
+	},
+	[ALC256_FIXUP_ASUS_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode,
-	पूर्ण,
-	[ALC256_FIXUP_ASUS_MIC] = अणु
+	},
+	[ALC256_FIXUP_ASUS_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x13, 0x90a60160 पूर्ण, /* use as पूर्णांकernal mic */
-			अणु 0x19, 0x04a11120 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x13, 0x90a60160 }, /* use as internal mic */
+			{ 0x19, 0x04a11120 }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC256_FIXUP_ASUS_HEADSET_MODE
-	पूर्ण,
-	[ALC256_FIXUP_ASUS_AIO_GPIO2] = अणु
+	},
+	[ALC256_FIXUP_ASUS_AIO_GPIO2] = {
 		.type = HDA_FIXUP_FUNC,
-		/* Set up GPIO2 क्रम the speaker amp */
+		/* Set up GPIO2 for the speaker amp */
 		.v.func = alc_fixup_gpio4,
-	पूर्ण,
-	[ALC233_FIXUP_ASUS_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC233_FIXUP_ASUS_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC233_FIXUP_EAPD_COEF_AND_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC233_FIXUP_EAPD_COEF_AND_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			/* Enables पूर्णांकernal speaker */
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x40पूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x8800पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			/* Enables internal speaker */
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x40},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x8800},
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC233_FIXUP_ASUS_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC233_FIXUP_LENOVO_MULTI_CODECS] = अणु
+	},
+	[ALC233_FIXUP_LENOVO_MULTI_CODECS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc233_alc662_fixup_lenovo_dual_codecs,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_GPIO2
-	पूर्ण,
-	[ALC233_FIXUP_ACER_HEADSET_MIC] = अणु
+	},
+	[ALC233_FIXUP_ACER_HEADSET_MIC] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x45 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x5089 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x45 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x5089 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC233_FIXUP_ASUS_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC294_FIXUP_LENOVO_MIC_LOCATION] = अणु
+	},
+	[ALC294_FIXUP_LENOVO_MIC_LOCATION] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
+		.v.pins = (const struct hda_pintbl[]) {
 			/* Change the mic location from front to right, otherwise there are
 			   two front mics with the same name, pulseaudio can't handle them.
 			   This is just a temporary workaround, after applying this fixup,
 			   there will be one "Front Mic" and one "Mic" in this machine.
 			 */
-			अणु 0x1a, 0x04a19040 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC225_FIXUP_DELL_WYSE_MIC_NO_PRESENCE] = अणु
+			{ 0x1a, 0x04a19040 },
+			{ }
+		},
+	},
+	[ALC225_FIXUP_DELL_WYSE_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x0101102f पूर्ण, /* Rear Headset HP */
-			अणु 0x19, 0x02a1913c पूर्ण, /* use as Front headset mic, without its own jack detect */
-			अणु 0x1a, 0x01a19030 पूर्ण, /* Rear Headset MIC */
-			अणु 0x1b, 0x02011020 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x0101102f }, /* Rear Headset HP */
+			{ 0x19, 0x02a1913c }, /* use as Front headset mic, without its own jack detect */
+			{ 0x1a, 0x01a19030 }, /* Rear Headset MIC */
+			{ 0x1b, 0x02011020 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC225_FIXUP_S3_POP_NOISE
-	पूर्ण,
-	[ALC225_FIXUP_S3_POP_NOISE] = अणु
+	},
+	[ALC225_FIXUP_S3_POP_NOISE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc225_fixup_s3_pop_noise,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC700_FIXUP_INTEL_REFERENCE] = अणु
+	},
+	[ALC700_FIXUP_INTEL_REFERENCE] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			/* Enables पूर्णांकernal speaker */
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x45पूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x5289पूर्ण,
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x4Aपूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x001bपूर्ण,
-			अणु0x58, AC_VERB_SET_COEF_INDEX, 0x00पूर्ण,
-			अणु0x58, AC_VERB_SET_PROC_COEF, 0x3888पूर्ण,
-			अणु0x20, AC_VERB_SET_COEF_INDEX, 0x6fपूर्ण,
-			अणु0x20, AC_VERB_SET_PROC_COEF, 0x2c0bपूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC274_FIXUP_DELL_BIND_DACS] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			/* Enables internal speaker */
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x45},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x5289},
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x4A},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x001b},
+			{0x58, AC_VERB_SET_COEF_INDEX, 0x00},
+			{0x58, AC_VERB_SET_PROC_COEF, 0x3888},
+			{0x20, AC_VERB_SET_COEF_INDEX, 0x6f},
+			{0x20, AC_VERB_SET_PROC_COEF, 0x2c0b},
+			{}
+		}
+	},
+	[ALC274_FIXUP_DELL_BIND_DACS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc274_fixup_bind_dacs,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC274_FIXUP_DELL_AIO_LINEOUT_VERB] = अणु
+	},
+	[ALC274_FIXUP_DELL_AIO_LINEOUT_VERB] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x0401102f पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x0401102f },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC274_FIXUP_DELL_BIND_DACS
-	पूर्ण,
-	[ALC298_FIXUP_TPT470_DOCK_FIX] = अणु
+	},
+	[ALC298_FIXUP_TPT470_DOCK_FIX] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_tpt470_करोck,
+		.v.func = alc_fixup_tpt470_dock,
 		.chained = true,
 		.chain_id = ALC293_FIXUP_LENOVO_SPK_NOISE
-	पूर्ण,
-	[ALC298_FIXUP_TPT470_DOCK] = अणु
+	},
+	[ALC298_FIXUP_TPT470_DOCK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_tpt470_dacs,
 		.chained = true,
 		.chain_id = ALC298_FIXUP_TPT470_DOCK_FIX
-	पूर्ण,
-	[ALC255_FIXUP_DUMMY_LINEOUT_VERB] = अणु
+	},
+	[ALC255_FIXUP_DUMMY_LINEOUT_VERB] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x0201101f पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x0201101f },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC255_FIXUP_DELL_HEADSET_MIC] = अणु
+	},
+	[ALC255_FIXUP_DELL_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC295_FIXUP_HP_X360] = अणु
+	},
+	[ALC295_FIXUP_HP_X360] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc295_fixup_hp_top_speakers,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HP_MUTE_LED_MIC3
-	पूर्ण,
-	[ALC221_FIXUP_HP_HEADSET_MIC] = अणु
+	},
+	[ALC221_FIXUP_HP_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x0181313fपूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x0181313f},
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC285_FIXUP_LENOVO_HEADPHONE_NOISE] = अणु
+	},
+	[ALC285_FIXUP_LENOVO_HEADPHONE_NOISE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_invalidate_dacs,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI
-	पूर्ण,
-	[ALC295_FIXUP_HP_AUTO_MUTE] = अणु
+	},
+	[ALC295_FIXUP_HP_AUTO_MUTE] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_स्वतः_mute_via_amp,
-	पूर्ण,
-	[ALC286_FIXUP_ACER_AIO_MIC_NO_PRESENCE] = अणु
+		.v.func = alc_fixup_auto_mute_via_amp,
+	},
+	[ALC286_FIXUP_ACER_AIO_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_MIC] = अणु
+	},
+	[ALC294_FIXUP_ASUS_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x13, 0x90a60160 पूर्ण, /* use as पूर्णांकernal mic */
-			अणु 0x19, 0x04a11120 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x13, 0x90a60160 }, /* use as internal mic */
+			{ 0x19, 0x04a11120 }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_HEADSET_MIC] = अणु
+	},
+	[ALC294_FIXUP_ASUS_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1103c पूर्ण, /* use as headset mic */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1103c }, /* use as headset mic */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_SPK] = अणु
+	},
+	[ALC294_FIXUP_ASUS_SPK] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* Set EAPD high */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x40 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x8800 पूर्ण,
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x0f पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x7774 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x40 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x8800 },
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x0f },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x7774 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_HEADSET_MIC
-	पूर्ण,
-	[ALC295_FIXUP_CHROME_BOOK] = अणु
+	},
+	[ALC295_FIXUP_CHROME_BOOK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc295_fixup_chromebook,
 		.chained = true,
 		.chain_id = ALC225_FIXUP_HEADSET_JACK
-	पूर्ण,
-	[ALC225_FIXUP_HEADSET_JACK] = अणु
+	},
+	[ALC225_FIXUP_HEADSET_JACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_jack,
-	पूर्ण,
-	[ALC293_FIXUP_SYSTEM76_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC293_FIXUP_SYSTEM76_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1a, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC285_FIXUP_LENOVO_PC_BEEP_IN_NOISE] = अणु
+	},
+	[ALC285_FIXUP_LENOVO_PC_BEEP_IN_NOISE] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* Disable PCBEEP-IN passthrough */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x36 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x57d7 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x36 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x57d7 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC285_FIXUP_LENOVO_HEADPHONE_NOISE
-	पूर्ण,
-	[ALC255_FIXUP_ACER_HEADSET_MIC] = अणु
+	},
+	[ALC255_FIXUP_ACER_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a11130 पूर्ण,
-			अणु 0x1a, 0x90a60140 पूर्ण, /* use as पूर्णांकernal mic */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a11130 },
+			{ 0x1a, 0x90a60140 }, /* use as internal mic */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC225_FIXUP_DELL_WYSE_AIO_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC225_FIXUP_DELL_WYSE_AIO_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x01011020 पूर्ण, /* Rear Line out */
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as Front headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x01011020 }, /* Rear Line out */
+			{ 0x19, 0x01a1913c }, /* use as Front headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC225_FIXUP_WYSE_AUTO_MUTE
-	पूर्ण,
-	[ALC225_FIXUP_WYSE_AUTO_MUTE] = अणु
+	},
+	[ALC225_FIXUP_WYSE_AUTO_MUTE] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_स्वतः_mute_via_amp,
+		.v.func = alc_fixup_auto_mute_via_amp,
 		.chained = true,
 		.chain_id = ALC225_FIXUP_WYSE_DISABLE_MIC_VREF
-	पूर्ण,
-	[ALC225_FIXUP_WYSE_DISABLE_MIC_VREF] = अणु
+	},
+	[ALC225_FIXUP_WYSE_DISABLE_MIC_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_mic_vref,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC286_FIXUP_ACER_AIO_HEADSET_MIC] = अणु
+	},
+	[ALC286_FIXUP_ACER_AIO_HEADSET_MIC] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x4f पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x5029 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x4f },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x5029 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC286_FIXUP_ACER_AIO_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC256_FIXUP_ASUS_HEADSET_MIC] = अणु
+	},
+	[ALC256_FIXUP_ASUS_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a11020 पूर्ण, /* headset mic with jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a11020 }, /* headset mic with jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC256_FIXUP_ASUS_HEADSET_MODE
-	पूर्ण,
-	[ALC256_FIXUP_ASUS_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC256_FIXUP_ASUS_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x04a11120 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x04a11120 }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC256_FIXUP_ASUS_HEADSET_MODE
-	पूर्ण,
-	[ALC299_FIXUP_PREDATOR_SPK] = अणु
+	},
+	[ALC299_FIXUP_PREDATOR_SPK] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x21, 0x90170150 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC256_FIXUP_MEDION_HEADSET_NO_PRESENCE] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x21, 0x90170150 }, /* use as headset mic, without its own jack detect */
+			{ }
+		}
+	},
+	[ALC256_FIXUP_MEDION_HEADSET_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x04a11040 पूर्ण,
-			अणु 0x21, 0x04211020 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x04a11040 },
+			{ 0x21, 0x04211020 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC256_FIXUP_ASUS_HEADSET_MODE
-	पूर्ण,
-	[ALC289_FIXUP_DELL_SPK2] = अणु
+	},
+	[ALC289_FIXUP_DELL_SPK2] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x17, 0x90170130 पूर्ण, /* bass spk */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x17, 0x90170130 }, /* bass spk */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_DELL4_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC289_FIXUP_DUAL_SPK] = अणु
+	},
+	[ALC289_FIXUP_DUAL_SPK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_speaker2_to_dac1,
 		.chained = true,
 		.chain_id = ALC289_FIXUP_DELL_SPK2
-	पूर्ण,
-	[ALC294_FIXUP_SPK2_TO_DAC1] = अणु
+	},
+	[ALC294_FIXUP_SPK2_TO_DAC1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_speaker2_to_dac1,
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_HEADSET_MIC
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_DUAL_SPK] = अणु
+	},
+	[ALC294_FIXUP_ASUS_DUAL_SPK] = {
 		.type = HDA_FIXUP_FUNC,
 		/* The GPIO must be pulled to initialize the AMP */
 		.v.func = alc_fixup_gpio4,
 		.chained = true,
 		.chain_id = ALC294_FIXUP_SPK2_TO_DAC1
-	पूर्ण,
-	[ALC285_FIXUP_THINKPAD_X1_GEN7] = अणु
+	},
+	[ALC285_FIXUP_THINKPAD_X1_GEN7] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_thinkpad_x1_gen7,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI
-	पूर्ण,
-	[ALC285_FIXUP_THINKPAD_HEADSET_JACK] = अणु
+	},
+	[ALC285_FIXUP_THINKPAD_HEADSET_JACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_jack,
 		.chained = true,
 		.chain_id = ALC285_FIXUP_THINKPAD_X1_GEN7
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_HPE] = अणु
+	},
+	[ALC294_FIXUP_ASUS_HPE] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* Set EAPD high */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x0f पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x7774 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x0f },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x7774 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_HEADSET_MIC
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_GX502_PINS] = अणु
+	},
+	[ALC294_FIXUP_ASUS_GX502_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a11050 पूर्ण, /* front HP mic */
-			अणु 0x1a, 0x01a11830 पूर्ण, /* rear बाह्यal mic */
-			अणु 0x21, 0x03211020 पूर्ण, /* front HP out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a11050 }, /* front HP mic */
+			{ 0x1a, 0x01a11830 }, /* rear external mic */
+			{ 0x21, 0x03211020 }, /* front HP out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_GX502_VERBS
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_GX502_VERBS] = अणु
+	},
+	[ALC294_FIXUP_ASUS_GX502_VERBS] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* set 0x15 to HP-OUT ctrl */
-			अणु 0x15, AC_VERB_SET_PIN_WIDGET_CONTROL, 0xc0 पूर्ण,
+			{ 0x15, AC_VERB_SET_PIN_WIDGET_CONTROL, 0xc0 },
 			/* unmute the 0x15 amp */
-			अणु 0x15, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x15, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_GX502_HP
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_GX502_HP] = अणु
+	},
+	[ALC294_FIXUP_ASUS_GX502_HP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc294_fixup_gx502_hp,
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_GU502_PINS] = अणु
+	},
+	[ALC294_FIXUP_ASUS_GU502_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a11050 पूर्ण, /* rear HP mic */
-			अणु 0x1a, 0x01a11830 पूर्ण, /* rear बाह्यal mic */
-			अणु 0x21, 0x012110f0 पूर्ण, /* rear HP out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a11050 }, /* rear HP mic */
+			{ 0x1a, 0x01a11830 }, /* rear external mic */
+			{ 0x21, 0x012110f0 }, /* rear HP out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_GU502_VERBS
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_GU502_VERBS] = अणु
+	},
+	[ALC294_FIXUP_ASUS_GU502_VERBS] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* set 0x15 to HP-OUT ctrl */
-			अणु 0x15, AC_VERB_SET_PIN_WIDGET_CONTROL, 0xc0 पूर्ण,
+			{ 0x15, AC_VERB_SET_PIN_WIDGET_CONTROL, 0xc0 },
 			/* unmute the 0x15 amp */
-			अणु 0x15, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000 पूर्ण,
+			{ 0x15, AC_VERB_SET_AMP_GAIN_MUTE, 0xb000 },
 			/* set 0x1b to HP-OUT */
-			अणु 0x1b, AC_VERB_SET_PIN_WIDGET_CONTROL, 0x24 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x1b, AC_VERB_SET_PIN_WIDGET_CONTROL, 0x24 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_GU502_HP
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_GU502_HP] = अणु
+	},
+	[ALC294_FIXUP_ASUS_GU502_HP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc294_fixup_gu502_hp,
-	पूर्ण,
-	[ALC294_FIXUP_ASUS_COEF_1B] = अणु
+	},
+	[ALC294_FIXUP_ASUS_COEF_1B] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* Set bit 10 to correct noisy output after reboot from
-			 * Winकरोws 10 (due to pop noise reduction?)
+			 * Windows 10 (due to pop noise reduction?)
 			 */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x1b पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x4e4b पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC285_FIXUP_HP_GPIO_LED] = अणु
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x1b },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x4e4b },
+			{ }
+		},
+	},
+	[ALC285_FIXUP_HP_GPIO_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_hp_gpio_led,
-	पूर्ण,
-	[ALC285_FIXUP_HP_MUTE_LED] = अणु
+	},
+	[ALC285_FIXUP_HP_MUTE_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_hp_mute_led,
-	पूर्ण,
-	[ALC236_FIXUP_HP_GPIO_LED] = अणु
+	},
+	[ALC236_FIXUP_HP_GPIO_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc236_fixup_hp_gpio_led,
-	पूर्ण,
-	[ALC236_FIXUP_HP_MUTE_LED] = अणु
+	},
+	[ALC236_FIXUP_HP_MUTE_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc236_fixup_hp_mute_led,
-	पूर्ण,
-	[ALC236_FIXUP_HP_MUTE_LED_MICMUTE_VREF] = अणु
+	},
+	[ALC236_FIXUP_HP_MUTE_LED_MICMUTE_VREF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc236_fixup_hp_mute_led_micmute_vref,
-	पूर्ण,
-	[ALC298_FIXUP_SAMSUNG_HEADPHONE_VERY_QUIET] = अणु
+	},
+	[ALC298_FIXUP_SAMSUNG_HEADPHONE_VERY_QUIET] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x1a, AC_VERB_SET_PIN_WIDGET_CONTROL, 0xc5 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC295_FIXUP_ASUS_MIC_NO_PRESENCE] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x1a, AC_VERB_SET_PIN_WIDGET_CONTROL, 0xc5 },
+			{ }
+		},
+	},
+	[ALC295_FIXUP_ASUS_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC269VC_FIXUP_ACER_VCOPPERBOX_PINS] = अणु
+	},
+	[ALC269VC_FIXUP_ACER_VCOPPERBOX_PINS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x90100120 पूर्ण, /* use as पूर्णांकernal speaker */
-			अणु 0x18, 0x02a111f0 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x01011020 पूर्ण, /* use as line out */
-			अणु पूर्ण,
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x90100120 }, /* use as internal speaker */
+			{ 0x18, 0x02a111f0 }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x01011020 }, /* use as line out */
+			{ },
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC269VC_FIXUP_ACER_HEADSET_MIC] = अणु
+	},
+	[ALC269VC_FIXUP_ACER_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x02a11030 पूर्ण, /* use as headset mic */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x02a11030 }, /* use as headset mic */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC269VC_FIXUP_ACER_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC269VC_FIXUP_ACER_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x18, 0x01a11130 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x18, 0x01a11130 }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MIC
-	पूर्ण,
-	[ALC289_FIXUP_ASUS_GA401] = अणु
+	},
+	[ALC289_FIXUP_ASUS_GA401] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc289_fixup_asus_ga401,
 		.chained = true,
 		.chain_id = ALC289_FIXUP_ASUS_GA502,
-	पूर्ण,
-	[ALC289_FIXUP_ASUS_GA502] = अणु
+	},
+	[ALC289_FIXUP_ASUS_GA502] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a11020 पूर्ण, /* headset mic with jack detect */
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC256_FIXUP_ACER_MIC_NO_PRESENCE] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a11020 }, /* headset mic with jack detect */
+			{ }
+		},
+	},
+	[ALC256_FIXUP_ACER_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x02a11120 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x02a11120 }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC256_FIXUP_ASUS_HEADSET_MODE
-	पूर्ण,
-	[ALC285_FIXUP_HP_GPIO_AMP_INIT] = अणु
+	},
+	[ALC285_FIXUP_HP_GPIO_AMP_INIT] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_hp_gpio_amp_init,
 		.chained = true,
 		.chain_id = ALC285_FIXUP_HP_GPIO_LED
-	पूर्ण,
-	[ALC269_FIXUP_CZC_B20] = अणु
+	},
+	[ALC269_FIXUP_CZC_B20] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x411111f0 पूर्ण,
-			अणु 0x14, 0x90170110 पूर्ण, /* speaker */
-			अणु 0x15, 0x032f1020 पूर्ण, /* HP out */
-			अणु 0x17, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x03ab1040 पूर्ण, /* mic */
-			अणु 0x19, 0xb7a7013f पूर्ण,
-			अणु 0x1a, 0x0181305f पूर्ण,
-			अणु 0x1b, 0x411111f0 पूर्ण,
-			अणु 0x1d, 0x411111f0 पूर्ण,
-			अणु 0x1e, 0x411111f0 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x411111f0 },
+			{ 0x14, 0x90170110 }, /* speaker */
+			{ 0x15, 0x032f1020 }, /* HP out */
+			{ 0x17, 0x411111f0 },
+			{ 0x18, 0x03ab1040 }, /* mic */
+			{ 0x19, 0xb7a7013f },
+			{ 0x1a, 0x0181305f },
+			{ 0x1b, 0x411111f0 },
+			{ 0x1d, 0x411111f0 },
+			{ 0x1e, 0x411111f0 },
+			{ }
+		},
 		.chain_id = ALC269_FIXUP_DMIC,
-	पूर्ण,
-	[ALC269_FIXUP_CZC_TMI] = अणु
+	},
+	[ALC269_FIXUP_CZC_TMI] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x4000c000 पूर्ण,
-			अणु 0x14, 0x90170110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0421401f पूर्ण, /* HP out */
-			अणु 0x17, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x04a19020 पूर्ण, /* mic */
-			अणु 0x19, 0x411111f0 पूर्ण,
-			अणु 0x1a, 0x411111f0 पूर्ण,
-			अणु 0x1b, 0x411111f0 पूर्ण,
-			अणु 0x1d, 0x40448505 पूर्ण,
-			अणु 0x1e, 0x411111f0 पूर्ण,
-			अणु 0x20, 0x8000ffff पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x4000c000 },
+			{ 0x14, 0x90170110 }, /* speaker */
+			{ 0x15, 0x0421401f }, /* HP out */
+			{ 0x17, 0x411111f0 },
+			{ 0x18, 0x04a19020 }, /* mic */
+			{ 0x19, 0x411111f0 },
+			{ 0x1a, 0x411111f0 },
+			{ 0x1b, 0x411111f0 },
+			{ 0x1d, 0x40448505 },
+			{ 0x1e, 0x411111f0 },
+			{ 0x20, 0x8000ffff },
+			{ }
+		},
 		.chain_id = ALC269_FIXUP_DMIC,
-	पूर्ण,
-	[ALC269_FIXUP_CZC_L101] = अणु
+	},
+	[ALC269_FIXUP_CZC_L101] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x40000000 पूर्ण,
-			अणु 0x14, 0x01014010 पूर्ण, /* speaker */
-			अणु 0x15, 0x411111f0 पूर्ण, /* HP out */
-			अणु 0x16, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x01a19020 पूर्ण, /* mic */
-			अणु 0x19, 0x02a19021 पूर्ण,
-			अणु 0x1a, 0x0181302f पूर्ण,
-			अणु 0x1b, 0x0221401f पूर्ण,
-			अणु 0x1c, 0x411111f0 पूर्ण,
-			अणु 0x1d, 0x4044c601 पूर्ण,
-			अणु 0x1e, 0x411111f0 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x40000000 },
+			{ 0x14, 0x01014010 }, /* speaker */
+			{ 0x15, 0x411111f0 }, /* HP out */
+			{ 0x16, 0x411111f0 },
+			{ 0x18, 0x01a19020 }, /* mic */
+			{ 0x19, 0x02a19021 },
+			{ 0x1a, 0x0181302f },
+			{ 0x1b, 0x0221401f },
+			{ 0x1c, 0x411111f0 },
+			{ 0x1d, 0x4044c601 },
+			{ 0x1e, 0x411111f0 },
+			{ }
+		},
 		.chain_id = ALC269_FIXUP_DMIC,
-	पूर्ण,
-	[ALC269_FIXUP_LEMOTE_A1802] = अणु
+	},
+	[ALC269_FIXUP_LEMOTE_A1802] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0x40000000 पूर्ण,
-			अणु 0x14, 0x90170110 पूर्ण, /* speaker */
-			अणु 0x17, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x03a19040 पूर्ण, /* mic1 */
-			अणु 0x19, 0x90a70130 पूर्ण, /* mic2 */
-			अणु 0x1a, 0x411111f0 पूर्ण,
-			अणु 0x1b, 0x411111f0 पूर्ण,
-			अणु 0x1d, 0x40489d2d पूर्ण,
-			अणु 0x1e, 0x411111f0 पूर्ण,
-			अणु 0x20, 0x0003ffff पूर्ण,
-			अणु 0x21, 0x03214020 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0x40000000 },
+			{ 0x14, 0x90170110 }, /* speaker */
+			{ 0x17, 0x411111f0 },
+			{ 0x18, 0x03a19040 }, /* mic1 */
+			{ 0x19, 0x90a70130 }, /* mic2 */
+			{ 0x1a, 0x411111f0 },
+			{ 0x1b, 0x411111f0 },
+			{ 0x1d, 0x40489d2d },
+			{ 0x1e, 0x411111f0 },
+			{ 0x20, 0x0003ffff },
+			{ 0x21, 0x03214020 },
+			{ }
+		},
 		.chain_id = ALC269_FIXUP_DMIC,
-	पूर्ण,
-	[ALC269_FIXUP_LEMOTE_A190X] = अणु
+	},
+	[ALC269_FIXUP_LEMOTE_A190X] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0121401f पूर्ण, /* HP out */
-			अणु 0x18, 0x01a19c20 पूर्ण, /* rear  mic */
-			अणु 0x19, 0x99a3092f पूर्ण, /* front mic */
-			अणु 0x1b, 0x0201401f पूर्ण, /* front lineout */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121401f }, /* HP out */
+			{ 0x18, 0x01a19c20 }, /* rear  mic */
+			{ 0x19, 0x99a3092f }, /* front mic */
+			{ 0x1b, 0x0201401f }, /* front lineout */
+			{ }
+		},
 		.chain_id = ALC269_FIXUP_DMIC,
-	पूर्ण,
-	[ALC256_FIXUP_INTEL_NUC8_RUGGED] = अणु
+	},
+	[ALC256_FIXUP_INTEL_NUC8_RUGGED] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC256_FIXUP_INTEL_NUC10] = अणु
+	},
+	[ALC256_FIXUP_INTEL_NUC10] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC255_FIXUP_XIAOMI_HEADSET_MIC] = अणु
+	},
+	[ALC255_FIXUP_XIAOMI_HEADSET_MIC] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x45 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x5089 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x45 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x5089 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC289_FIXUP_ASUS_GA502
-	पूर्ण,
-	[ALC274_FIXUP_HP_MIC] = अणु
+	},
+	[ALC274_FIXUP_HP_MIC] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x45 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x5089 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC274_FIXUP_HP_HEADSET_MIC] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x45 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x5089 },
+			{ }
+		},
+	},
+	[ALC274_FIXUP_HP_HEADSET_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc274_fixup_hp_headset_mic,
 		.chained = true,
 		.chain_id = ALC274_FIXUP_HP_MIC
-	पूर्ण,
-	[ALC274_FIXUP_HP_ENVY_GPIO] = अणु
+	},
+	[ALC274_FIXUP_HP_ENVY_GPIO] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc274_fixup_hp_envy_gpio,
-	पूर्ण,
-	[ALC256_FIXUP_ASUS_HPE] = अणु
+	},
+	[ALC256_FIXUP_ASUS_HPE] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* Set EAPD high */
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0x0f पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x7778 पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0x0f },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x7778 },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC294_FIXUP_ASUS_HEADSET_MIC
-	पूर्ण,
-	[ALC285_FIXUP_THINKPAD_NO_BASS_SPK_HEADSET_JACK] = अणु
+	},
+	[ALC285_FIXUP_THINKPAD_NO_BASS_SPK_HEADSET_JACK] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_jack,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI
-	पूर्ण,
-	[ALC287_FIXUP_HP_GPIO_LED] = अणु
+	},
+	[ALC287_FIXUP_HP_GPIO_LED] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc287_fixup_hp_gpio_led,
-	पूर्ण,
-	[ALC256_FIXUP_HP_HEADSET_MIC] = अणु
+	},
+	[ALC256_FIXUP_HP_HEADSET_MIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc274_fixup_hp_headset_mic,
-	पूर्ण,
-	[ALC236_FIXUP_DELL_AIO_HEADSET_MIC] = अणु
+	},
+	[ALC236_FIXUP_DELL_AIO_HEADSET_MIC] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_no_पूर्णांक_mic,
+		.v.func = alc_fixup_no_int_mic,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_DELL1_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC282_FIXUP_ACER_DISABLE_LINEOUT] = अणु
+	},
+	[ALC282_FIXUP_ACER_DISABLE_LINEOUT] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x411111f0 पूर्ण,
-			अणु 0x18, 0x01a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण,
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x411111f0 },
+			{ 0x18, 0x01a1913c }, /* use as headset mic, without its own jack detect */
+			{ },
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC255_FIXUP_ACER_LIMIT_INT_MIC_BOOST] = अणु
+	},
+	[ALC255_FIXUP_ACER_LIMIT_INT_MIC_BOOST] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC255_FIXUP_ACER_MIC_NO_PRESENCE,
-	पूर्ण,
-	[ALC256_FIXUP_ACER_HEADSET_MIC] = अणु
+	},
+	[ALC256_FIXUP_ACER_HEADSET_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x02a1113c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1a, 0x90a1092f पूर्ण, /* use as पूर्णांकernal mic */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x02a1113c }, /* use as headset mic, without its own jack detect */
+			{ 0x1a, 0x90a1092f }, /* use as internal mic */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC
-	पूर्ण,
-	[ALC285_FIXUP_IDEAPAD_S740_COEF] = अणु
+	},
+	[ALC285_FIXUP_IDEAPAD_S740_COEF] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_ideapad_s740_coef,
 		.chained = true,
 		.chain_id = ALC269_FIXUP_THINKPAD_ACPI,
-	पूर्ण,
-	[ALC285_FIXUP_HP_LIMIT_INT_MIC_BOOST] = अणु
+	},
+	[ALC285_FIXUP_HP_LIMIT_INT_MIC_BOOST] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc269_fixup_limit_पूर्णांक_mic_boost,
+		.v.func = alc269_fixup_limit_int_mic_boost,
 		.chained = true,
 		.chain_id = ALC285_FIXUP_HP_MUTE_LED,
-	पूर्ण,
-	[ALC295_FIXUP_ASUS_DACS] = अणु
+	},
+	[ALC295_FIXUP_ASUS_DACS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc295_fixup_asus_dacs,
-	पूर्ण,
-	[ALC295_FIXUP_HP_OMEN] = अणु
+	},
+	[ALC295_FIXUP_HP_OMEN] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x12, 0xb7a60130 पूर्ण,
-			अणु 0x13, 0x40000000 पूर्ण,
-			अणु 0x14, 0x411111f0 पूर्ण,
-			अणु 0x16, 0x411111f0 पूर्ण,
-			अणु 0x17, 0x90170110 पूर्ण,
-			अणु 0x18, 0x411111f0 पूर्ण,
-			अणु 0x19, 0x02a11030 पूर्ण,
-			अणु 0x1a, 0x411111f0 पूर्ण,
-			अणु 0x1b, 0x04a19030 पूर्ण,
-			अणु 0x1d, 0x40600001 पूर्ण,
-			अणु 0x1e, 0x411111f0 पूर्ण,
-			अणु 0x21, 0x03211020 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x12, 0xb7a60130 },
+			{ 0x13, 0x40000000 },
+			{ 0x14, 0x411111f0 },
+			{ 0x16, 0x411111f0 },
+			{ 0x17, 0x90170110 },
+			{ 0x18, 0x411111f0 },
+			{ 0x19, 0x02a11030 },
+			{ 0x1a, 0x411111f0 },
+			{ 0x1b, 0x04a19030 },
+			{ 0x1d, 0x40600001 },
+			{ 0x1e, 0x411111f0 },
+			{ 0x21, 0x03211020 },
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC269_FIXUP_HP_LINE1_MIC1_LED,
-	पूर्ण,
-	[ALC285_FIXUP_HP_SPECTRE_X360] = अणु
+	},
+	[ALC285_FIXUP_HP_SPECTRE_X360] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x90170110 पूर्ण, /* enable top speaker */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x90170110 }, /* enable top speaker */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC285_FIXUP_SPEAKER2_TO_DAC1,
-	पूर्ण,
-	[ALC287_FIXUP_IDEAPAD_BASS_SPK_AMP] = अणु
+	},
+	[ALC287_FIXUP_IDEAPAD_BASS_SPK_AMP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc285_fixup_ideapad_s740_coef,
 		.chained = true,
 		.chain_id = ALC285_FIXUP_THINKPAD_HEADSET_JACK,
-	पूर्ण,
-	[ALC623_FIXUP_LENOVO_THINKSTATION_P340] = अणु
+	},
+	[ALC623_FIXUP_LENOVO_THINKSTATION_P340] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_no_shutup,
 		.chained = true,
 		.chain_id = ALC283_FIXUP_HEADSET_MIC,
-	पूर्ण,
-	[ALC255_FIXUP_ACER_HEADPHONE_AND_MIC] = अणु
+	},
+	[ALC255_FIXUP_ACER_HEADPHONE_AND_MIC] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x21, 0x03211030 पूर्ण, /* Change the Headphone location to Left */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x21, 0x03211030 }, /* Change the Headphone location to Left */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC255_FIXUP_XIAOMI_HEADSET_MIC
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc269_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc269_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1025, 0x0283, "Acer TravelMate 8371", ALC269_FIXUP_INV_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x029b, "Acer 1810TZ", ALC269_FIXUP_INV_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x0349, "Acer AOD260", ALC269_FIXUP_INV_DMIC),
@@ -8574,10 +8573,10 @@
 	SND_PCI_QUIRK(0x8086, 0x2080, "Intel NUC 8 Rugged", ALC256_FIXUP_INTEL_NUC8_RUGGED),
 	SND_PCI_QUIRK(0x8086, 0x2081, "Intel NUC 10", ALC256_FIXUP_INTEL_NUC10),
 
-#अगर 0
+#if 0
 	/* Below is a quirk table taken from the old code.
 	 * Basically the device should work as is without the fixup table.
-	 * If BIOS करोesn't give a proper info, enable the corresponding
+	 * If BIOS doesn't give a proper info, enable the corresponding
 	 * fixup entry.
 	 */
 	SND_PCI_QUIRK(0x1043, 0x8330, "ASUS Eeepc P703 P900A",
@@ -8621,789 +8620,789 @@
 	SND_PCI_QUIRK(0x17aa, 0x3bf8, "Quanta FL1", ALC269_FIXUP_AMIC),
 	SND_PCI_QUIRK(0x17ff, 0x059a, "Quanta EL3", ALC269_FIXUP_DMIC),
 	SND_PCI_QUIRK(0x17ff, 0x059b, "Quanta JR1", ALC269_FIXUP_DMIC),
-#पूर्ण_अगर
-	अणुपूर्ण
-पूर्ण;
+#endif
+	{}
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc269_fixup_venकरोr_tbl[] = अणु
+static const struct snd_pci_quirk alc269_fixup_vendor_tbl[] = {
 	SND_PCI_QUIRK_VENDOR(0x1025, "Acer Aspire", ALC271_FIXUP_DMIC),
 	SND_PCI_QUIRK_VENDOR(0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED),
 	SND_PCI_QUIRK_VENDOR(0x104d, "Sony VAIO", ALC269_FIXUP_SONY_VAIO),
 	SND_PCI_QUIRK_VENDOR(0x17aa, "Thinkpad", ALC269_FIXUP_THINKPAD_ACPI),
 	SND_PCI_QUIRK_VENDOR(0x19e5, "Huawei Matebook", ALC255_FIXUP_MIC_MUTE_LED),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc269_fixup_models[] = अणु
-	अणु.id = ALC269_FIXUP_AMIC, .name = "laptop-amic"पूर्ण,
-	अणु.id = ALC269_FIXUP_DMIC, .name = "laptop-dmic"पूर्ण,
-	अणु.id = ALC269_FIXUP_STEREO_DMIC, .name = "alc269-dmic"पूर्ण,
-	अणु.id = ALC271_FIXUP_DMIC, .name = "alc271-dmic"पूर्ण,
-	अणु.id = ALC269_FIXUP_INV_DMIC, .name = "inv-dmic"पूर्ण,
-	अणु.id = ALC269_FIXUP_HEADSET_MIC, .name = "headset-mic"पूर्ण,
-	अणु.id = ALC269_FIXUP_HEADSET_MODE, .name = "headset-mode"पूर्ण,
-	अणु.id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC, .name = "headset-mode-no-hp-mic"पूर्ण,
-	अणु.id = ALC269_FIXUP_LENOVO_DOCK, .name = "lenovo-dock"पूर्ण,
-	अणु.id = ALC269_FIXUP_LENOVO_DOCK_LIMIT_BOOST, .name = "lenovo-dock-limit-boost"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_GPIO_LED, .name = "hp-gpio-led"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_DOCK_GPIO_MIC1_LED, .name = "hp-dock-gpio-mic1-led"पूर्ण,
-	अणु.id = ALC269_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "dell-headset-multi"पूर्ण,
-	अणु.id = ALC269_FIXUP_DELL2_MIC_NO_PRESENCE, .name = "dell-headset-dock"पूर्ण,
-	अणु.id = ALC269_FIXUP_DELL3_MIC_NO_PRESENCE, .name = "dell-headset3"पूर्ण,
-	अणु.id = ALC269_FIXUP_DELL4_MIC_NO_PRESENCE, .name = "dell-headset4"पूर्ण,
-	अणु.id = ALC283_FIXUP_CHROME_BOOK, .name = "alc283-dac-wcaps"पूर्ण,
-	अणु.id = ALC283_FIXUP_SENSE_COMBO_JACK, .name = "alc283-sense-combo"पूर्ण,
-	अणु.id = ALC292_FIXUP_TPT440_DOCK, .name = "tpt440-dock"पूर्ण,
-	अणु.id = ALC292_FIXUP_TPT440, .name = "tpt440"पूर्ण,
-	अणु.id = ALC292_FIXUP_TPT460, .name = "tpt460"पूर्ण,
-	अणु.id = ALC298_FIXUP_TPT470_DOCK_FIX, .name = "tpt470-dock-fix"पूर्ण,
-	अणु.id = ALC298_FIXUP_TPT470_DOCK, .name = "tpt470-dock"पूर्ण,
-	अणु.id = ALC233_FIXUP_LENOVO_MULTI_CODECS, .name = "dual-codecs"पूर्ण,
-	अणु.id = ALC700_FIXUP_INTEL_REFERENCE, .name = "alc700-ref"पूर्ण,
-	अणु.id = ALC269_FIXUP_SONY_VAIO, .name = "vaio"पूर्ण,
-	अणु.id = ALC269_FIXUP_DELL_M101Z, .name = "dell-m101z"पूर्ण,
-	अणु.id = ALC269_FIXUP_ASUS_G73JW, .name = "asus-g73jw"पूर्ण,
-	अणु.id = ALC269_FIXUP_LENOVO_EAPD, .name = "lenovo-eapd"पूर्ण,
-	अणु.id = ALC275_FIXUP_SONY_HWEQ, .name = "sony-hweq"पूर्ण,
-	अणु.id = ALC269_FIXUP_PCM_44K, .name = "pcm44k"पूर्ण,
-	अणु.id = ALC269_FIXUP_LIFEBOOK, .name = "lifebook"पूर्ण,
-	अणु.id = ALC269_FIXUP_LIFEBOOK_EXTMIC, .name = "lifebook-extmic"पूर्ण,
-	अणु.id = ALC269_FIXUP_LIFEBOOK_HP_PIN, .name = "lifebook-hp-pin"पूर्ण,
-	अणु.id = ALC255_FIXUP_LIFEBOOK_U7x7_HEADSET_MIC, .name = "lifebook-u7x7"पूर्ण,
-	अणु.id = ALC269VB_FIXUP_AMIC, .name = "alc269vb-amic"पूर्ण,
-	अणु.id = ALC269VB_FIXUP_DMIC, .name = "alc269vb-dmic"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_MUTE_LED_MIC1, .name = "hp-mute-led-mic1"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_MUTE_LED_MIC2, .name = "hp-mute-led-mic2"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_MUTE_LED_MIC3, .name = "hp-mute-led-mic3"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_GPIO_MIC1_LED, .name = "hp-gpio-mic1"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_LINE1_MIC1_LED, .name = "hp-line1-mic1"पूर्ण,
-	अणु.id = ALC269_FIXUP_NO_SHUTUP, .name = "noshutup"पूर्ण,
-	अणु.id = ALC286_FIXUP_SONY_MIC_NO_PRESENCE, .name = "sony-nomic"पूर्ण,
-	अणु.id = ALC269_FIXUP_ASPIRE_HEADSET_MIC, .name = "aspire-headset-mic"पूर्ण,
-	अणु.id = ALC269_FIXUP_ASUS_X101, .name = "asus-x101"पूर्ण,
-	अणु.id = ALC271_FIXUP_HP_GATE_MIC_JACK, .name = "acer-ao7xx"पूर्ण,
-	अणु.id = ALC271_FIXUP_HP_GATE_MIC_JACK_E1_572, .name = "acer-aspire-e1"पूर्ण,
-	अणु.id = ALC269_FIXUP_ACER_AC700, .name = "acer-ac700"पूर्ण,
-	अणु.id = ALC269_FIXUP_LIMIT_INT_MIC_BOOST, .name = "limit-mic-boost"पूर्ण,
-	अणु.id = ALC269VB_FIXUP_ASUS_ZENBOOK, .name = "asus-zenbook"पूर्ण,
-	अणु.id = ALC269VB_FIXUP_ASUS_ZENBOOK_UX31A, .name = "asus-zenbook-ux31a"पूर्ण,
-	अणु.id = ALC269VB_FIXUP_ORDISSIMO_EVE2, .name = "ordissimo"पूर्ण,
-	अणु.id = ALC282_FIXUP_ASUS_TX300, .name = "asus-tx300"पूर्ण,
-	अणु.id = ALC283_FIXUP_INT_MIC, .name = "alc283-int-mic"पूर्ण,
-	अणु.id = ALC290_FIXUP_MONO_SPEAKERS_HSJACK, .name = "mono-speakers"पूर्ण,
-	अणु.id = ALC290_FIXUP_SUBWOOFER_HSJACK, .name = "alc290-subwoofer"पूर्ण,
-	अणु.id = ALC269_FIXUP_THINKPAD_ACPI, .name = "thinkpad"पूर्ण,
-	अणु.id = ALC269_FIXUP_DMIC_THINKPAD_ACPI, .name = "dmic-thinkpad"पूर्ण,
-	अणु.id = ALC255_FIXUP_ACER_MIC_NO_PRESENCE, .name = "alc255-acer"पूर्ण,
-	अणु.id = ALC255_FIXUP_ASUS_MIC_NO_PRESENCE, .name = "alc255-asus"पूर्ण,
-	अणु.id = ALC255_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc255-dell1"पूर्ण,
-	अणु.id = ALC255_FIXUP_DELL2_MIC_NO_PRESENCE, .name = "alc255-dell2"पूर्ण,
-	अणु.id = ALC293_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc293-dell1"पूर्ण,
-	अणु.id = ALC283_FIXUP_HEADSET_MIC, .name = "alc283-headset"पूर्ण,
-	अणु.id = ALC255_FIXUP_MIC_MUTE_LED, .name = "alc255-dell-mute"पूर्ण,
-	अणु.id = ALC282_FIXUP_ASPIRE_V5_PINS, .name = "aspire-v5"पूर्ण,
-	अणु.id = ALC269VB_FIXUP_ASPIRE_E1_COEF, .name = "aspire-e1-coef"पूर्ण,
-	अणु.id = ALC280_FIXUP_HP_GPIO4, .name = "hp-gpio4"पूर्ण,
-	अणु.id = ALC286_FIXUP_HP_GPIO_LED, .name = "hp-gpio-led"पूर्ण,
-	अणु.id = ALC280_FIXUP_HP_GPIO2_MIC_HOTKEY, .name = "hp-gpio2-hotkey"पूर्ण,
-	अणु.id = ALC280_FIXUP_HP_DOCK_PINS, .name = "hp-dock-pins"पूर्ण,
-	अणु.id = ALC269_FIXUP_HP_DOCK_GPIO_MIC1_LED, .name = "hp-dock-gpio-mic"पूर्ण,
-	अणु.id = ALC280_FIXUP_HP_9480M, .name = "hp-9480m"पूर्ण,
-	अणु.id = ALC288_FIXUP_DELL_HEADSET_MODE, .name = "alc288-dell-headset"पूर्ण,
-	अणु.id = ALC288_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc288-dell1"पूर्ण,
-	अणु.id = ALC288_FIXUP_DELL_XPS_13, .name = "alc288-dell-xps13"पूर्ण,
-	अणु.id = ALC292_FIXUP_DELL_E7X, .name = "dell-e7x"पूर्ण,
-	अणु.id = ALC293_FIXUP_DISABLE_AAMIX_MULTIJACK, .name = "alc293-dell"पूर्ण,
-	अणु.id = ALC298_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc298-dell1"पूर्ण,
-	अणु.id = ALC298_FIXUP_DELL_AIO_MIC_NO_PRESENCE, .name = "alc298-dell-aio"पूर्ण,
-	अणु.id = ALC275_FIXUP_DELL_XPS, .name = "alc275-dell-xps"पूर्ण,
-	अणु.id = ALC293_FIXUP_LENOVO_SPK_NOISE, .name = "lenovo-spk-noise"पूर्ण,
-	अणु.id = ALC233_FIXUP_LENOVO_LINE2_MIC_HOTKEY, .name = "lenovo-hotkey"पूर्ण,
-	अणु.id = ALC255_FIXUP_DELL_SPK_NOISE, .name = "dell-spk-noise"पूर्ण,
-	अणु.id = ALC225_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc225-dell1"पूर्ण,
-	अणु.id = ALC295_FIXUP_DISABLE_DAC3, .name = "alc295-disable-dac3"पूर्ण,
-	अणु.id = ALC285_FIXUP_SPEAKER2_TO_DAC1, .name = "alc285-speaker2-to-dac1"पूर्ण,
-	अणु.id = ALC280_FIXUP_HP_HEADSET_MIC, .name = "alc280-hp-headset"पूर्ण,
-	अणु.id = ALC221_FIXUP_HP_FRONT_MIC, .name = "alc221-hp-mic"पूर्ण,
-	अणु.id = ALC298_FIXUP_SPK_VOLUME, .name = "alc298-spk-volume"पूर्ण,
-	अणु.id = ALC256_FIXUP_DELL_INSPIRON_7559_SUBWOOFER, .name = "dell-inspiron-7559"पूर्ण,
-	अणु.id = ALC269_FIXUP_ATIV_BOOK_8, .name = "ativ-book"पूर्ण,
-	अणु.id = ALC221_FIXUP_HP_MIC_NO_PRESENCE, .name = "alc221-hp-mic"पूर्ण,
-	अणु.id = ALC256_FIXUP_ASUS_HEADSET_MODE, .name = "alc256-asus-headset"पूर्ण,
-	अणु.id = ALC256_FIXUP_ASUS_MIC, .name = "alc256-asus-mic"पूर्ण,
-	अणु.id = ALC256_FIXUP_ASUS_AIO_GPIO2, .name = "alc256-asus-aio"पूर्ण,
-	अणु.id = ALC233_FIXUP_ASUS_MIC_NO_PRESENCE, .name = "alc233-asus"पूर्ण,
-	अणु.id = ALC233_FIXUP_EAPD_COEF_AND_MIC_NO_PRESENCE, .name = "alc233-eapd"पूर्ण,
-	अणु.id = ALC294_FIXUP_LENOVO_MIC_LOCATION, .name = "alc294-lenovo-mic"पूर्ण,
-	अणु.id = ALC225_FIXUP_DELL_WYSE_MIC_NO_PRESENCE, .name = "alc225-wyse"पूर्ण,
-	अणु.id = ALC274_FIXUP_DELL_AIO_LINEOUT_VERB, .name = "alc274-dell-aio"पूर्ण,
-	अणु.id = ALC255_FIXUP_DUMMY_LINEOUT_VERB, .name = "alc255-dummy-lineout"पूर्ण,
-	अणु.id = ALC255_FIXUP_DELL_HEADSET_MIC, .name = "alc255-dell-headset"पूर्ण,
-	अणु.id = ALC295_FIXUP_HP_X360, .name = "alc295-hp-x360"पूर्ण,
-	अणु.id = ALC225_FIXUP_HEADSET_JACK, .name = "alc-headset-jack"पूर्ण,
-	अणु.id = ALC295_FIXUP_CHROME_BOOK, .name = "alc-chrome-book"पूर्ण,
-	अणु.id = ALC299_FIXUP_PREDATOR_SPK, .name = "predator-spk"पूर्ण,
-	अणु.id = ALC298_FIXUP_HUAWEI_MBX_STEREO, .name = "huawei-mbx-stereo"पूर्ण,
-	अणु.id = ALC256_FIXUP_MEDION_HEADSET_NO_PRESENCE, .name = "alc256-medion-headset"पूर्ण,
-	अणु.id = ALC298_FIXUP_SAMSUNG_HEADPHONE_VERY_QUIET, .name = "alc298-samsung-headphone"पूर्ण,
-	अणु.id = ALC255_FIXUP_XIAOMI_HEADSET_MIC, .name = "alc255-xiaomi-headset"पूर्ण,
-	अणु.id = ALC274_FIXUP_HP_MIC, .name = "alc274-hp-mic-detect"पूर्ण,
-	अणु.id = ALC245_FIXUP_HP_X360_AMP, .name = "alc245-hp-x360-amp"पूर्ण,
-	अणु.id = ALC295_FIXUP_HP_OMEN, .name = "alc295-hp-omen"पूर्ण,
-	अणु.id = ALC285_FIXUP_HP_SPECTRE_X360, .name = "alc285-hp-spectre-x360"पूर्ण,
-	अणु.id = ALC287_FIXUP_IDEAPAD_BASS_SPK_AMP, .name = "alc287-ideapad-bass-spk-amp"पूर्ण,
-	अणु.id = ALC623_FIXUP_LENOVO_THINKSTATION_P340, .name = "alc623-lenovo-thinkstation-p340"पूर्ण,
-	अणु.id = ALC255_FIXUP_ACER_HEADPHONE_AND_MIC, .name = "alc255-acer-headphone-and-mic"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
-#घोषणा ALC225_STANDARD_PINS \
-	अणु0x21, 0x04211020पूर्ण
+static const struct hda_model_fixup alc269_fixup_models[] = {
+	{.id = ALC269_FIXUP_AMIC, .name = "laptop-amic"},
+	{.id = ALC269_FIXUP_DMIC, .name = "laptop-dmic"},
+	{.id = ALC269_FIXUP_STEREO_DMIC, .name = "alc269-dmic"},
+	{.id = ALC271_FIXUP_DMIC, .name = "alc271-dmic"},
+	{.id = ALC269_FIXUP_INV_DMIC, .name = "inv-dmic"},
+	{.id = ALC269_FIXUP_HEADSET_MIC, .name = "headset-mic"},
+	{.id = ALC269_FIXUP_HEADSET_MODE, .name = "headset-mode"},
+	{.id = ALC269_FIXUP_HEADSET_MODE_NO_HP_MIC, .name = "headset-mode-no-hp-mic"},
+	{.id = ALC269_FIXUP_LENOVO_DOCK, .name = "lenovo-dock"},
+	{.id = ALC269_FIXUP_LENOVO_DOCK_LIMIT_BOOST, .name = "lenovo-dock-limit-boost"},
+	{.id = ALC269_FIXUP_HP_GPIO_LED, .name = "hp-gpio-led"},
+	{.id = ALC269_FIXUP_HP_DOCK_GPIO_MIC1_LED, .name = "hp-dock-gpio-mic1-led"},
+	{.id = ALC269_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "dell-headset-multi"},
+	{.id = ALC269_FIXUP_DELL2_MIC_NO_PRESENCE, .name = "dell-headset-dock"},
+	{.id = ALC269_FIXUP_DELL3_MIC_NO_PRESENCE, .name = "dell-headset3"},
+	{.id = ALC269_FIXUP_DELL4_MIC_NO_PRESENCE, .name = "dell-headset4"},
+	{.id = ALC283_FIXUP_CHROME_BOOK, .name = "alc283-dac-wcaps"},
+	{.id = ALC283_FIXUP_SENSE_COMBO_JACK, .name = "alc283-sense-combo"},
+	{.id = ALC292_FIXUP_TPT440_DOCK, .name = "tpt440-dock"},
+	{.id = ALC292_FIXUP_TPT440, .name = "tpt440"},
+	{.id = ALC292_FIXUP_TPT460, .name = "tpt460"},
+	{.id = ALC298_FIXUP_TPT470_DOCK_FIX, .name = "tpt470-dock-fix"},
+	{.id = ALC298_FIXUP_TPT470_DOCK, .name = "tpt470-dock"},
+	{.id = ALC233_FIXUP_LENOVO_MULTI_CODECS, .name = "dual-codecs"},
+	{.id = ALC700_FIXUP_INTEL_REFERENCE, .name = "alc700-ref"},
+	{.id = ALC269_FIXUP_SONY_VAIO, .name = "vaio"},
+	{.id = ALC269_FIXUP_DELL_M101Z, .name = "dell-m101z"},
+	{.id = ALC269_FIXUP_ASUS_G73JW, .name = "asus-g73jw"},
+	{.id = ALC269_FIXUP_LENOVO_EAPD, .name = "lenovo-eapd"},
+	{.id = ALC275_FIXUP_SONY_HWEQ, .name = "sony-hweq"},
+	{.id = ALC269_FIXUP_PCM_44K, .name = "pcm44k"},
+	{.id = ALC269_FIXUP_LIFEBOOK, .name = "lifebook"},
+	{.id = ALC269_FIXUP_LIFEBOOK_EXTMIC, .name = "lifebook-extmic"},
+	{.id = ALC269_FIXUP_LIFEBOOK_HP_PIN, .name = "lifebook-hp-pin"},
+	{.id = ALC255_FIXUP_LIFEBOOK_U7x7_HEADSET_MIC, .name = "lifebook-u7x7"},
+	{.id = ALC269VB_FIXUP_AMIC, .name = "alc269vb-amic"},
+	{.id = ALC269VB_FIXUP_DMIC, .name = "alc269vb-dmic"},
+	{.id = ALC269_FIXUP_HP_MUTE_LED_MIC1, .name = "hp-mute-led-mic1"},
+	{.id = ALC269_FIXUP_HP_MUTE_LED_MIC2, .name = "hp-mute-led-mic2"},
+	{.id = ALC269_FIXUP_HP_MUTE_LED_MIC3, .name = "hp-mute-led-mic3"},
+	{.id = ALC269_FIXUP_HP_GPIO_MIC1_LED, .name = "hp-gpio-mic1"},
+	{.id = ALC269_FIXUP_HP_LINE1_MIC1_LED, .name = "hp-line1-mic1"},
+	{.id = ALC269_FIXUP_NO_SHUTUP, .name = "noshutup"},
+	{.id = ALC286_FIXUP_SONY_MIC_NO_PRESENCE, .name = "sony-nomic"},
+	{.id = ALC269_FIXUP_ASPIRE_HEADSET_MIC, .name = "aspire-headset-mic"},
+	{.id = ALC269_FIXUP_ASUS_X101, .name = "asus-x101"},
+	{.id = ALC271_FIXUP_HP_GATE_MIC_JACK, .name = "acer-ao7xx"},
+	{.id = ALC271_FIXUP_HP_GATE_MIC_JACK_E1_572, .name = "acer-aspire-e1"},
+	{.id = ALC269_FIXUP_ACER_AC700, .name = "acer-ac700"},
+	{.id = ALC269_FIXUP_LIMIT_INT_MIC_BOOST, .name = "limit-mic-boost"},
+	{.id = ALC269VB_FIXUP_ASUS_ZENBOOK, .name = "asus-zenbook"},
+	{.id = ALC269VB_FIXUP_ASUS_ZENBOOK_UX31A, .name = "asus-zenbook-ux31a"},
+	{.id = ALC269VB_FIXUP_ORDISSIMO_EVE2, .name = "ordissimo"},
+	{.id = ALC282_FIXUP_ASUS_TX300, .name = "asus-tx300"},
+	{.id = ALC283_FIXUP_INT_MIC, .name = "alc283-int-mic"},
+	{.id = ALC290_FIXUP_MONO_SPEAKERS_HSJACK, .name = "mono-speakers"},
+	{.id = ALC290_FIXUP_SUBWOOFER_HSJACK, .name = "alc290-subwoofer"},
+	{.id = ALC269_FIXUP_THINKPAD_ACPI, .name = "thinkpad"},
+	{.id = ALC269_FIXUP_DMIC_THINKPAD_ACPI, .name = "dmic-thinkpad"},
+	{.id = ALC255_FIXUP_ACER_MIC_NO_PRESENCE, .name = "alc255-acer"},
+	{.id = ALC255_FIXUP_ASUS_MIC_NO_PRESENCE, .name = "alc255-asus"},
+	{.id = ALC255_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc255-dell1"},
+	{.id = ALC255_FIXUP_DELL2_MIC_NO_PRESENCE, .name = "alc255-dell2"},
+	{.id = ALC293_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc293-dell1"},
+	{.id = ALC283_FIXUP_HEADSET_MIC, .name = "alc283-headset"},
+	{.id = ALC255_FIXUP_MIC_MUTE_LED, .name = "alc255-dell-mute"},
+	{.id = ALC282_FIXUP_ASPIRE_V5_PINS, .name = "aspire-v5"},
+	{.id = ALC269VB_FIXUP_ASPIRE_E1_COEF, .name = "aspire-e1-coef"},
+	{.id = ALC280_FIXUP_HP_GPIO4, .name = "hp-gpio4"},
+	{.id = ALC286_FIXUP_HP_GPIO_LED, .name = "hp-gpio-led"},
+	{.id = ALC280_FIXUP_HP_GPIO2_MIC_HOTKEY, .name = "hp-gpio2-hotkey"},
+	{.id = ALC280_FIXUP_HP_DOCK_PINS, .name = "hp-dock-pins"},
+	{.id = ALC269_FIXUP_HP_DOCK_GPIO_MIC1_LED, .name = "hp-dock-gpio-mic"},
+	{.id = ALC280_FIXUP_HP_9480M, .name = "hp-9480m"},
+	{.id = ALC288_FIXUP_DELL_HEADSET_MODE, .name = "alc288-dell-headset"},
+	{.id = ALC288_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc288-dell1"},
+	{.id = ALC288_FIXUP_DELL_XPS_13, .name = "alc288-dell-xps13"},
+	{.id = ALC292_FIXUP_DELL_E7X, .name = "dell-e7x"},
+	{.id = ALC293_FIXUP_DISABLE_AAMIX_MULTIJACK, .name = "alc293-dell"},
+	{.id = ALC298_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc298-dell1"},
+	{.id = ALC298_FIXUP_DELL_AIO_MIC_NO_PRESENCE, .name = "alc298-dell-aio"},
+	{.id = ALC275_FIXUP_DELL_XPS, .name = "alc275-dell-xps"},
+	{.id = ALC293_FIXUP_LENOVO_SPK_NOISE, .name = "lenovo-spk-noise"},
+	{.id = ALC233_FIXUP_LENOVO_LINE2_MIC_HOTKEY, .name = "lenovo-hotkey"},
+	{.id = ALC255_FIXUP_DELL_SPK_NOISE, .name = "dell-spk-noise"},
+	{.id = ALC225_FIXUP_DELL1_MIC_NO_PRESENCE, .name = "alc225-dell1"},
+	{.id = ALC295_FIXUP_DISABLE_DAC3, .name = "alc295-disable-dac3"},
+	{.id = ALC285_FIXUP_SPEAKER2_TO_DAC1, .name = "alc285-speaker2-to-dac1"},
+	{.id = ALC280_FIXUP_HP_HEADSET_MIC, .name = "alc280-hp-headset"},
+	{.id = ALC221_FIXUP_HP_FRONT_MIC, .name = "alc221-hp-mic"},
+	{.id = ALC298_FIXUP_SPK_VOLUME, .name = "alc298-spk-volume"},
+	{.id = ALC256_FIXUP_DELL_INSPIRON_7559_SUBWOOFER, .name = "dell-inspiron-7559"},
+	{.id = ALC269_FIXUP_ATIV_BOOK_8, .name = "ativ-book"},
+	{.id = ALC221_FIXUP_HP_MIC_NO_PRESENCE, .name = "alc221-hp-mic"},
+	{.id = ALC256_FIXUP_ASUS_HEADSET_MODE, .name = "alc256-asus-headset"},
+	{.id = ALC256_FIXUP_ASUS_MIC, .name = "alc256-asus-mic"},
+	{.id = ALC256_FIXUP_ASUS_AIO_GPIO2, .name = "alc256-asus-aio"},
+	{.id = ALC233_FIXUP_ASUS_MIC_NO_PRESENCE, .name = "alc233-asus"},
+	{.id = ALC233_FIXUP_EAPD_COEF_AND_MIC_NO_PRESENCE, .name = "alc233-eapd"},
+	{.id = ALC294_FIXUP_LENOVO_MIC_LOCATION, .name = "alc294-lenovo-mic"},
+	{.id = ALC225_FIXUP_DELL_WYSE_MIC_NO_PRESENCE, .name = "alc225-wyse"},
+	{.id = ALC274_FIXUP_DELL_AIO_LINEOUT_VERB, .name = "alc274-dell-aio"},
+	{.id = ALC255_FIXUP_DUMMY_LINEOUT_VERB, .name = "alc255-dummy-lineout"},
+	{.id = ALC255_FIXUP_DELL_HEADSET_MIC, .name = "alc255-dell-headset"},
+	{.id = ALC295_FIXUP_HP_X360, .name = "alc295-hp-x360"},
+	{.id = ALC225_FIXUP_HEADSET_JACK, .name = "alc-headset-jack"},
+	{.id = ALC295_FIXUP_CHROME_BOOK, .name = "alc-chrome-book"},
+	{.id = ALC299_FIXUP_PREDATOR_SPK, .name = "predator-spk"},
+	{.id = ALC298_FIXUP_HUAWEI_MBX_STEREO, .name = "huawei-mbx-stereo"},
+	{.id = ALC256_FIXUP_MEDION_HEADSET_NO_PRESENCE, .name = "alc256-medion-headset"},
+	{.id = ALC298_FIXUP_SAMSUNG_HEADPHONE_VERY_QUIET, .name = "alc298-samsung-headphone"},
+	{.id = ALC255_FIXUP_XIAOMI_HEADSET_MIC, .name = "alc255-xiaomi-headset"},
+	{.id = ALC274_FIXUP_HP_MIC, .name = "alc274-hp-mic-detect"},
+	{.id = ALC245_FIXUP_HP_X360_AMP, .name = "alc245-hp-x360-amp"},
+	{.id = ALC295_FIXUP_HP_OMEN, .name = "alc295-hp-omen"},
+	{.id = ALC285_FIXUP_HP_SPECTRE_X360, .name = "alc285-hp-spectre-x360"},
+	{.id = ALC287_FIXUP_IDEAPAD_BASS_SPK_AMP, .name = "alc287-ideapad-bass-spk-amp"},
+	{.id = ALC623_FIXUP_LENOVO_THINKSTATION_P340, .name = "alc623-lenovo-thinkstation-p340"},
+	{.id = ALC255_FIXUP_ACER_HEADPHONE_AND_MIC, .name = "alc255-acer-headphone-and-mic"},
+	{}
+};
+#define ALC225_STANDARD_PINS \
+	{0x21, 0x04211020}
 
-#घोषणा ALC256_STANDARD_PINS \
-	अणु0x12, 0x90a60140पूर्ण, \
-	अणु0x14, 0x90170110पूर्ण, \
-	अणु0x21, 0x02211020पूर्ण
+#define ALC256_STANDARD_PINS \
+	{0x12, 0x90a60140}, \
+	{0x14, 0x90170110}, \
+	{0x21, 0x02211020}
 
-#घोषणा ALC282_STANDARD_PINS \
-	अणु0x14, 0x90170110पूर्ण
+#define ALC282_STANDARD_PINS \
+	{0x14, 0x90170110}
 
-#घोषणा ALC290_STANDARD_PINS \
-	अणु0x12, 0x99a30130पूर्ण
+#define ALC290_STANDARD_PINS \
+	{0x12, 0x99a30130}
 
-#घोषणा ALC292_STANDARD_PINS \
-	अणु0x14, 0x90170110पूर्ण, \
-	अणु0x15, 0x0221401fपूर्ण
+#define ALC292_STANDARD_PINS \
+	{0x14, 0x90170110}, \
+	{0x15, 0x0221401f}
 
-#घोषणा ALC295_STANDARD_PINS \
-	अणु0x12, 0xb7a60130पूर्ण, \
-	अणु0x14, 0x90170110पूर्ण, \
-	अणु0x21, 0x04211020पूर्ण
+#define ALC295_STANDARD_PINS \
+	{0x12, 0xb7a60130}, \
+	{0x14, 0x90170110}, \
+	{0x21, 0x04211020}
 
-#घोषणा ALC298_STANDARD_PINS \
-	अणु0x12, 0x90a60130पूर्ण, \
-	अणु0x21, 0x03211020पूर्ण
+#define ALC298_STANDARD_PINS \
+	{0x12, 0x90a60130}, \
+	{0x21, 0x03211020}
 
-अटल स्थिर काष्ठा snd_hda_pin_quirk alc269_pin_fixup_tbl[] = अणु
+static const struct snd_hda_pin_quirk alc269_pin_fixup_tbl[] = {
 	SND_HDA_PIN_QUIRK(0x10ec0221, 0x103c, "HP Workstation", ALC221_FIXUP_HP_HEADSET_MIC,
-		अणु0x14, 0x01014020पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x18, 0x02a11030पूर्ण,
-		अणु0x19, 0x0181303Fपूर्ण,
-		अणु0x21, 0x0221102fपूर्ण),
+		{0x14, 0x01014020},
+		{0x17, 0x90170110},
+		{0x18, 0x02a11030},
+		{0x19, 0x0181303F},
+		{0x21, 0x0221102f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1025, "Acer", ALC255_FIXUP_ACER_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a601c0पूर्ण,
-		अणु0x14, 0x90171120पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
+		{0x12, 0x90a601c0},
+		{0x14, 0x90171120},
+		{0x21, 0x02211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1043, "ASUS", ALC255_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x90a70130पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x90a70130},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1043, "ASUS", ALC255_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x1a, 0x90a70130पूर्ण,
-		अणु0x1b, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x1a, 0x90a70130},
+		{0x1b, 0x90170110},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0225, 0x1028, "Dell", ALC225_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC225_STANDARD_PINS,
-		अणु0x12, 0xb7a60130पूर्ण,
-		अणु0x14, 0x901701a0पूर्ण),
+		{0x12, 0xb7a60130},
+		{0x14, 0x901701a0}),
 	SND_HDA_PIN_QUIRK(0x10ec0225, 0x1028, "Dell", ALC225_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC225_STANDARD_PINS,
-		अणु0x12, 0xb7a60130पूर्ण,
-		अणु0x14, 0x901701b0पूर्ण),
+		{0x12, 0xb7a60130},
+		{0x14, 0x901701b0}),
 	SND_HDA_PIN_QUIRK(0x10ec0225, 0x1028, "Dell", ALC225_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC225_STANDARD_PINS,
-		अणु0x12, 0xb7a60150पूर्ण,
-		अणु0x14, 0x901701a0पूर्ण),
+		{0x12, 0xb7a60150},
+		{0x14, 0x901701a0}),
 	SND_HDA_PIN_QUIRK(0x10ec0225, 0x1028, "Dell", ALC225_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC225_STANDARD_PINS,
-		अणु0x12, 0xb7a60150पूर्ण,
-		अणु0x14, 0x901701b0पूर्ण),
+		{0x12, 0xb7a60150},
+		{0x14, 0x901701b0}),
 	SND_HDA_PIN_QUIRK(0x10ec0225, 0x1028, "Dell", ALC225_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC225_STANDARD_PINS,
-		अणु0x12, 0xb7a60130पूर्ण,
-		अणु0x1b, 0x90170110पूर्ण),
+		{0x12, 0xb7a60130},
+		{0x1b, 0x90170110}),
 	SND_HDA_PIN_QUIRK(0x10ec0233, 0x8086, "Intel NUC Skull Canyon", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x1b, 0x01111010पूर्ण,
-		अणु0x1e, 0x01451130पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x1b, 0x01111010},
+		{0x1e, 0x01451130},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0235, 0x17aa, "Lenovo", ALC233_FIXUP_LENOVO_LINE2_MIC_HOTKEY,
-		अणु0x12, 0x90a60140पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x02a11030पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x12, 0x90a60140},
+		{0x14, 0x90170110},
+		{0x19, 0x02a11030},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0235, 0x17aa, "Lenovo", ALC294_FIXUP_LENOVO_MIC_LOCATION,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x02a11030पूर्ण,
-		अणु0x1a, 0x02a11040पूर्ण,
-		अणु0x1b, 0x01014020पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x02a11030},
+		{0x1a, 0x02a11040},
+		{0x1b, 0x01014020},
+		{0x21, 0x0221101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0235, 0x17aa, "Lenovo", ALC294_FIXUP_LENOVO_MIC_LOCATION,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x02a11030पूर्ण,
-		अणु0x1a, 0x02a11040पूर्ण,
-		अणु0x1b, 0x01011020पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x02a11030},
+		{0x1a, 0x02a11040},
+		{0x1b, 0x01011020},
+		{0x21, 0x0221101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0235, 0x17aa, "Lenovo", ALC294_FIXUP_LENOVO_MIC_LOCATION,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x02a11020पूर्ण,
-		अणु0x1a, 0x02a11030पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x02a11020},
+		{0x1a, 0x02a11030},
+		{0x21, 0x0221101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0236, 0x1028, "Dell", ALC236_FIXUP_DELL_AIO_HEADSET_MIC,
-		अणु0x21, 0x02211010पूर्ण),
+		{0x21, 0x02211010}),
 	SND_HDA_PIN_QUIRK(0x10ec0236, 0x103c, "HP", ALC256_FIXUP_HP_HEADSET_MIC,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x02a11020पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x02a11020},
+		{0x21, 0x02211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL2_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x21, 0x02211040पूर्ण),
+		{0x14, 0x90170130},
+		{0x21, 0x02211040}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60140पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x12, 0x90a60140},
+		{0x14, 0x90170110},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60160पूर्ण,
-		अणु0x14, 0x90170120पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
+		{0x12, 0x90a60160},
+		{0x14, 0x90170120},
+		{0x21, 0x02211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x02011020पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x02011020},
+		{0x21, 0x0221101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x01011020पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x01011020},
+		{0x21, 0x0221101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x1b, 0x01014020पूर्ण,
-		अणु0x21, 0x0221103fपूर्ण),
+		{0x14, 0x90170130},
+		{0x1b, 0x01014020},
+		{0x21, 0x0221103f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x1b, 0x01011020पूर्ण,
-		अणु0x21, 0x0221103fपूर्ण),
+		{0x14, 0x90170130},
+		{0x1b, 0x01011020},
+		{0x21, 0x0221103f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x1b, 0x02011020पूर्ण,
-		अणु0x21, 0x0221103fपूर्ण),
+		{0x14, 0x90170130},
+		{0x1b, 0x02011020},
+		{0x21, 0x0221103f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170150पूर्ण,
-		अणु0x1b, 0x02011020पूर्ण,
-		अणु0x21, 0x0221105fपूर्ण),
+		{0x14, 0x90170150},
+		{0x1b, 0x02011020},
+		{0x21, 0x0221105f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x01014020पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x01014020},
+		{0x21, 0x0221101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60160पूर्ण,
-		अणु0x14, 0x90170120पूर्ण,
-		अणु0x17, 0x90170140पूर्ण,
-		अणु0x21, 0x0321102fपूर्ण),
+		{0x12, 0x90a60160},
+		{0x14, 0x90170120},
+		{0x17, 0x90170140},
+		{0x21, 0x0321102f}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60160पूर्ण,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x21, 0x02211040पूर्ण),
+		{0x12, 0x90a60160},
+		{0x14, 0x90170130},
+		{0x21, 0x02211040}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60160पूर्ण,
-		अणु0x14, 0x90170140पूर्ण,
-		अणु0x21, 0x02211050पूर्ण),
+		{0x12, 0x90a60160},
+		{0x14, 0x90170140},
+		{0x21, 0x02211050}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60170पूर्ण,
-		अणु0x14, 0x90170120पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
+		{0x12, 0x90a60170},
+		{0x14, 0x90170120},
+		{0x21, 0x02211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60170पूर्ण,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x21, 0x02211040पूर्ण),
+		{0x12, 0x90a60170},
+		{0x14, 0x90170130},
+		{0x21, 0x02211040}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60170पूर्ण,
-		अणु0x14, 0x90171130पूर्ण,
-		अणु0x21, 0x02211040पूर्ण),
+		{0x12, 0x90a60170},
+		{0x14, 0x90171130},
+		{0x21, 0x02211040}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60170पूर्ण,
-		अणु0x14, 0x90170140पूर्ण,
-		अणु0x21, 0x02211050पूर्ण),
+		{0x12, 0x90a60170},
+		{0x14, 0x90170140},
+		{0x21, 0x02211050}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell Inspiron 5548", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60180पूर्ण,
-		अणु0x14, 0x90170130पूर्ण,
-		अणु0x21, 0x02211040पूर्ण),
+		{0x12, 0x90a60180},
+		{0x14, 0x90170130},
+		{0x21, 0x02211040}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell Inspiron 5565", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60180पूर्ण,
-		अणु0x14, 0x90170120पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
+		{0x12, 0x90a60180},
+		{0x14, 0x90170120},
+		{0x21, 0x02211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0255, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x1b, 0x01011020पूर्ण,
-		अणु0x21, 0x02211010पूर्ण),
+		{0x1b, 0x01011020},
+		{0x21, 0x02211010}),
 	SND_HDA_PIN_QUIRK(0x10ec0256, 0x1043, "ASUS", ALC256_FIXUP_ASUS_MIC,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x90a70130पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x90a70130},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0256, 0x1043, "ASUS", ALC256_FIXUP_ASUS_MIC,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x90a70130पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x90a70130},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0256, 0x1043, "ASUS", ALC256_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x14, 0x90170110},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0256, 0x1043, "ASUS", ALC256_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x14, 0x90170110},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0256, 0x1043, "ASUS", ALC256_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x1a, 0x90a70130पूर्ण,
-		अणु0x1b, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x1a, 0x90a70130},
+		{0x1b, 0x90170110},
+		{0x21, 0x03211020}),
        SND_HDA_PIN_QUIRK(0x10ec0256, 0x103c, "HP", ALC256_FIXUP_HP_HEADSET_MIC,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x02a11020पूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x02a11020},
+		{0x21, 0x0221101f}),
        SND_HDA_PIN_QUIRK(0x10ec0274, 0x103c, "HP", ALC274_FIXUP_HP_HEADSET_MIC,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x19, 0x03a11030पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x17, 0x90170110},
+		{0x19, 0x03a11030},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0280, 0x103c, "HP", ALC280_FIXUP_HP_GPIO4,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0421101fपूर्ण,
-		अणु0x1a, 0x04a11020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x14, 0x90170110},
+		{0x15, 0x0421101f},
+		{0x1a, 0x04a11020}),
 	SND_HDA_PIN_QUIRK(0x10ec0280, 0x103c, "HP", ALC269_FIXUP_HP_GPIO_MIC1_LED,
-		अणु0x12, 0x90a60140पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0421101fपूर्ण,
-		अणु0x18, 0x02811030पूर्ण,
-		अणु0x1a, 0x04a1103fपूर्ण,
-		अणु0x1b, 0x02011020पूर्ण),
+		{0x12, 0x90a60140},
+		{0x14, 0x90170110},
+		{0x15, 0x0421101f},
+		{0x18, 0x02811030},
+		{0x1a, 0x04a1103f},
+		{0x1b, 0x02011020}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x103c, "HP 15 Touchsmart", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x99a30130पूर्ण,
-		अणु0x19, 0x03a11020पूर्ण,
-		अणु0x21, 0x0321101fपूर्ण),
+		{0x12, 0x99a30130},
+		{0x19, 0x03a11020},
+		{0x21, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x99a30130पूर्ण,
-		अणु0x19, 0x03a11020पूर्ण,
-		अणु0x21, 0x03211040पूर्ण),
+		{0x12, 0x99a30130},
+		{0x19, 0x03a11020},
+		{0x21, 0x03211040}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x99a30130पूर्ण,
-		अणु0x19, 0x03a11030पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0x99a30130},
+		{0x19, 0x03a11030},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x99a30130पूर्ण,
-		अणु0x19, 0x04a11020पूर्ण,
-		अणु0x21, 0x0421101fपूर्ण),
+		{0x12, 0x99a30130},
+		{0x19, 0x04a11020},
+		{0x21, 0x0421101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x103c, "HP", ALC269_FIXUP_HP_LINE1_MIC1_LED,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x90a60140पूर्ण,
-		अणु0x19, 0x04a11030पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x12, 0x90a60140},
+		{0x19, 0x04a11030},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x1025, "Acer", ALC282_FIXUP_ACER_DISABLE_LINEOUT,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x90a609c0पूर्ण,
-		अणु0x18, 0x03a11830पूर्ण,
-		अणु0x19, 0x04a19831पूर्ण,
-		अणु0x1a, 0x0481303fपूर्ण,
-		अणु0x1b, 0x04211020पूर्ण,
-		अणु0x21, 0x0321101fपूर्ण),
+		{0x12, 0x90a609c0},
+		{0x18, 0x03a11830},
+		{0x19, 0x04a19831},
+		{0x1a, 0x0481303f},
+		{0x1b, 0x04211020},
+		{0x21, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0282, 0x1025, "Acer", ALC282_FIXUP_ACER_DISABLE_LINEOUT,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x90a60940पूर्ण,
-		अणु0x18, 0x03a11830पूर्ण,
-		अणु0x19, 0x04a19831पूर्ण,
-		अणु0x1a, 0x0481303fपूर्ण,
-		अणु0x1b, 0x04211020पूर्ण,
-		अणु0x21, 0x0321101fपूर्ण),
+		{0x12, 0x90a60940},
+		{0x18, 0x03a11830},
+		{0x19, 0x04a19831},
+		{0x1a, 0x0481303f},
+		{0x1b, 0x04211020},
+		{0x21, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0283, 0x1028, "Dell", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x21, 0x0321101fपूर्ण),
+		{0x12, 0x90a60130},
+		{0x21, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0283, 0x1028, "Dell", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60160पूर्ण,
-		अणु0x14, 0x90170120पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
+		{0x12, 0x90a60160},
+		{0x14, 0x90170120},
+		{0x21, 0x02211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0283, 0x1028, "Dell", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC282_STANDARD_PINS,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x19, 0x03a11020पूर्ण,
-		अणु0x21, 0x0321101fपूर्ण),
+		{0x12, 0x90a60130},
+		{0x19, 0x03a11020},
+		{0x21, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0285, 0x17aa, "Lenovo", ALC285_FIXUP_LENOVO_PC_BEEP_IN_NOISE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x04a11040पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x14, 0x90170110},
+		{0x19, 0x04a11040},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0285, 0x17aa, "Lenovo", ALC285_FIXUP_LENOVO_PC_BEEP_IN_NOISE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x04a11040पूर्ण,
-		अणु0x1d, 0x40600001पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x04a11040},
+		{0x1d, 0x40600001},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0285, 0x17aa, "Lenovo", ALC285_FIXUP_THINKPAD_NO_BASS_SPK_HEADSET_JACK,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x19, 0x04a11040पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x19, 0x04a11040},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0287, 0x17aa, "Lenovo", ALC285_FIXUP_THINKPAD_HEADSET_JACK,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x17, 0x90170111पूर्ण,
-		अणु0x19, 0x03a11030पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x17, 0x90170111},
+		{0x19, 0x03a11030},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0286, 0x1025, "Acer", ALC286_FIXUP_ACER_AIO_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x17, 0x90170110},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0288, 0x1028, "Dell", ALC288_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60120पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x0321101fपूर्ण),
+		{0x12, 0x90a60120},
+		{0x14, 0x90170110},
+		{0x21, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x15, 0x04211040पूर्ण,
-		अणु0x18, 0x90170112पूर्ण,
-		अणु0x1a, 0x04a11020पूर्ण),
+		{0x15, 0x04211040},
+		{0x18, 0x90170112},
+		{0x1a, 0x04a11020}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x15, 0x04211040पूर्ण,
-		अणु0x18, 0x90170110पूर्ण,
-		अणु0x1a, 0x04a11020पूर्ण),
+		{0x15, 0x04211040},
+		{0x18, 0x90170110},
+		{0x1a, 0x04a11020}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x15, 0x0421101fपूर्ण,
-		अणु0x1a, 0x04a11020पूर्ण),
+		{0x15, 0x0421101f},
+		{0x1a, 0x04a11020}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x15, 0x04211020पूर्ण,
-		अणु0x1a, 0x04a11040पूर्ण),
+		{0x15, 0x04211020},
+		{0x1a, 0x04a11040}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x04211020पूर्ण,
-		अणु0x1a, 0x04a11040पूर्ण),
+		{0x14, 0x90170110},
+		{0x15, 0x04211020},
+		{0x1a, 0x04a11040}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x04211020पूर्ण,
-		अणु0x1a, 0x04a11020पूर्ण),
+		{0x14, 0x90170110},
+		{0x15, 0x04211020},
+		{0x1a, 0x04a11020}),
 	SND_HDA_PIN_QUIRK(0x10ec0290, 0x103c, "HP", ALC269_FIXUP_HP_MUTE_LED_MIC1,
 		ALC290_STANDARD_PINS,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0421101fपूर्ण,
-		अणु0x1a, 0x04a11020पूर्ण),
+		{0x14, 0x90170110},
+		{0x15, 0x0421101f},
+		{0x1a, 0x04a11020}),
 	SND_HDA_PIN_QUIRK(0x10ec0292, 0x1028, "Dell", ALC269_FIXUP_DELL2_MIC_NO_PRESENCE,
 		ALC292_STANDARD_PINS,
-		अणु0x12, 0x90a60140पूर्ण,
-		अणु0x16, 0x01014020पूर्ण,
-		अणु0x19, 0x01a19030पूर्ण),
+		{0x12, 0x90a60140},
+		{0x16, 0x01014020},
+		{0x19, 0x01a19030}),
 	SND_HDA_PIN_QUIRK(0x10ec0292, 0x1028, "Dell", ALC269_FIXUP_DELL2_MIC_NO_PRESENCE,
 		ALC292_STANDARD_PINS,
-		अणु0x12, 0x90a60140पूर्ण,
-		अणु0x16, 0x01014020पूर्ण,
-		अणु0x18, 0x02a19031पूर्ण,
-		अणु0x19, 0x01a1903eपूर्ण),
+		{0x12, 0x90a60140},
+		{0x16, 0x01014020},
+		{0x18, 0x02a19031},
+		{0x19, 0x01a1903e}),
 	SND_HDA_PIN_QUIRK(0x10ec0292, 0x1028, "Dell", ALC269_FIXUP_DELL3_MIC_NO_PRESENCE,
 		ALC292_STANDARD_PINS,
-		अणु0x12, 0x90a60140पूर्ण),
+		{0x12, 0x90a60140}),
 	SND_HDA_PIN_QUIRK(0x10ec0293, 0x1028, "Dell", ALC293_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC292_STANDARD_PINS,
-		अणु0x13, 0x90a60140पूर्ण,
-		अणु0x16, 0x21014020पूर्ण,
-		अणु0x19, 0x21a19030पूर्ण),
+		{0x13, 0x90a60140},
+		{0x16, 0x21014020},
+		{0x19, 0x21a19030}),
 	SND_HDA_PIN_QUIRK(0x10ec0293, 0x1028, "Dell", ALC293_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC292_STANDARD_PINS,
-		अणु0x13, 0x90a60140पूर्ण),
+		{0x13, 0x90a60140}),
 	SND_HDA_PIN_QUIRK(0x10ec0294, 0x1043, "ASUS", ALC294_FIXUP_ASUS_HPE,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x17, 0x90170110},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0294, 0x1043, "ASUS", ALC294_FIXUP_ASUS_MIC,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x1b, 0x90a70130पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x1b, 0x90a70130},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0294, 0x1043, "ASUS", ALC294_FIXUP_ASUS_SPK,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x17, 0x90170110},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0294, 0x1043, "ASUS", ALC294_FIXUP_ASUS_SPK,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x17, 0x90170110},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1043, "ASUS", ALC294_FIXUP_ASUS_SPK,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x17, 0x90170110},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1043, "ASUS", ALC295_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60120पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x04211030पूर्ण),
+		{0x12, 0x90a60120},
+		{0x17, 0x90170110},
+		{0x21, 0x04211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1043, "ASUS", ALC295_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x17, 0x90170110},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1043, "ASUS", ALC295_FIXUP_ASUS_MIC_NO_PRESENCE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0x90a60130},
+		{0x17, 0x90170110},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1028, "Dell", ALC269_FIXUP_DELL4_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x04211020पूर्ण),
+		{0x14, 0x90170110},
+		{0x21, 0x04211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1028, "Dell", ALC269_FIXUP_DELL4_MIC_NO_PRESENCE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x21, 0x04211030पूर्ण),
+		{0x14, 0x90170110},
+		{0x21, 0x04211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1028, "Dell", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC295_STANDARD_PINS,
-		अणु0x17, 0x21014020पूर्ण,
-		अणु0x18, 0x21a19030पूर्ण),
+		{0x17, 0x21014020},
+		{0x18, 0x21a19030}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1028, "Dell", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC295_STANDARD_PINS,
-		अणु0x17, 0x21014040पूर्ण,
-		अणु0x18, 0x21a19050पूर्ण),
+		{0x17, 0x21014040},
+		{0x18, 0x21a19050}),
 	SND_HDA_PIN_QUIRK(0x10ec0295, 0x1028, "Dell", ALC269_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC295_STANDARD_PINS),
 	SND_HDA_PIN_QUIRK(0x10ec0298, 0x1028, "Dell", ALC298_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC298_STANDARD_PINS,
-		अणु0x17, 0x90170110पूर्ण),
+		{0x17, 0x90170110}),
 	SND_HDA_PIN_QUIRK(0x10ec0298, 0x1028, "Dell", ALC298_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC298_STANDARD_PINS,
-		अणु0x17, 0x90170140पूर्ण),
+		{0x17, 0x90170140}),
 	SND_HDA_PIN_QUIRK(0x10ec0298, 0x1028, "Dell", ALC298_FIXUP_DELL1_MIC_NO_PRESENCE,
 		ALC298_STANDARD_PINS,
-		अणु0x17, 0x90170150पूर्ण),
+		{0x17, 0x90170150}),
 	SND_HDA_PIN_QUIRK(0x10ec0298, 0x1028, "Dell", ALC298_FIXUP_SPK_VOLUME,
-		अणु0x12, 0xb7a60140पूर्ण,
-		अणु0x13, 0xb7a60150पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x1a, 0x03011020पूर्ण,
-		अणु0x21, 0x03211030पूर्ण),
+		{0x12, 0xb7a60140},
+		{0x13, 0xb7a60150},
+		{0x17, 0x90170110},
+		{0x1a, 0x03011020},
+		{0x21, 0x03211030}),
 	SND_HDA_PIN_QUIRK(0x10ec0298, 0x1028, "Dell", ALC298_FIXUP_ALIENWARE_MIC_NO_PRESENCE,
-		अणु0x12, 0xb7a60140पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x1a, 0x03a11030पूर्ण,
-		अणु0x21, 0x03211020पूर्ण),
+		{0x12, 0xb7a60140},
+		{0x17, 0x90170110},
+		{0x1a, 0x03a11030},
+		{0x21, 0x03211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0299, 0x1028, "Dell", ALC269_FIXUP_DELL4_MIC_NO_PRESENCE,
 		ALC225_STANDARD_PINS,
-		अणु0x12, 0xb7a60130पूर्ण,
-		अणु0x17, 0x90170110पूर्ण),
+		{0x12, 0xb7a60130},
+		{0x17, 0x90170110}),
 	SND_HDA_PIN_QUIRK(0x10ec0623, 0x17aa, "Lenovo", ALC283_FIXUP_HEADSET_MIC,
-		अणु0x14, 0x01014010पूर्ण,
-		अणु0x17, 0x90170120पूर्ण,
-		अणु0x18, 0x02a11030पूर्ण,
-		अणु0x19, 0x02a1103fपूर्ण,
-		अणु0x21, 0x0221101fपूर्ण),
-	अणुपूर्ण
-पूर्ण;
+		{0x14, 0x01014010},
+		{0x17, 0x90170120},
+		{0x18, 0x02a11030},
+		{0x19, 0x02a1103f},
+		{0x21, 0x0221101f}),
+	{}
+};
 
-/* This is the fallback pin_fixup_tbl क्रम alc269 family, to make the tbl match
- * more machines, करोn't need to match all valid pins, just need to match
+/* This is the fallback pin_fixup_tbl for alc269 family, to make the tbl match
+ * more machines, don't need to match all valid pins, just need to match
  * all the pins defined in the tbl. Just because of this reason, it is possible
  * that a single machine matches multiple tbls, so there is one limitation:
- *   at most one tbl is allowed to define क्रम the same venकरोr and same codec
+ *   at most one tbl is allowed to define for the same vendor and same codec
  */
-अटल स्थिर काष्ठा snd_hda_pin_quirk alc269_fallback_pin_fixup_tbl[] = अणु
+static const struct snd_hda_pin_quirk alc269_fallback_pin_fixup_tbl[] = {
 	SND_HDA_PIN_QUIRK(0x10ec0289, 0x1028, "Dell", ALC269_FIXUP_DELL4_MIC_NO_PRESENCE,
-		अणु0x19, 0x40000000पूर्ण,
-		अणु0x1b, 0x40000000पूर्ण),
+		{0x19, 0x40000000},
+		{0x1b, 0x40000000}),
 	SND_HDA_PIN_QUIRK(0x10ec0256, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x19, 0x40000000पूर्ण,
-		अणु0x1a, 0x40000000पूर्ण),
+		{0x19, 0x40000000},
+		{0x1a, 0x40000000}),
 	SND_HDA_PIN_QUIRK(0x10ec0236, 0x1028, "Dell", ALC255_FIXUP_DELL1_MIC_NO_PRESENCE,
-		अणु0x19, 0x40000000पूर्ण,
-		अणु0x1a, 0x40000000पूर्ण),
+		{0x19, 0x40000000},
+		{0x1a, 0x40000000}),
 	SND_HDA_PIN_QUIRK(0x10ec0274, 0x1028, "Dell", ALC274_FIXUP_DELL_AIO_LINEOUT_VERB,
-		अणु0x19, 0x40000000पूर्ण,
-		अणु0x1a, 0x40000000पूर्ण),
-	अणुपूर्ण
-पूर्ण;
+		{0x19, 0x40000000},
+		{0x1a, 0x40000000}),
+	{}
+};
 
-अटल व्योम alc269_fill_coef(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक val;
+static void alc269_fill_coef(struct hda_codec *codec)
+{
+	struct alc_spec *spec = codec->spec;
+	int val;
 
-	अगर (spec->codec_variant != ALC269_TYPE_ALC269VB)
-		वापस;
+	if (spec->codec_variant != ALC269_TYPE_ALC269VB)
+		return;
 
-	अगर ((alc_get_coef0(codec) & 0x00ff) < 0x015) अणु
-		alc_ग_लिखो_coef_idx(codec, 0xf, 0x960b);
-		alc_ग_लिखो_coef_idx(codec, 0xe, 0x8817);
-	पूर्ण
+	if ((alc_get_coef0(codec) & 0x00ff) < 0x015) {
+		alc_write_coef_idx(codec, 0xf, 0x960b);
+		alc_write_coef_idx(codec, 0xe, 0x8817);
+	}
 
-	अगर ((alc_get_coef0(codec) & 0x00ff) == 0x016) अणु
-		alc_ग_लिखो_coef_idx(codec, 0xf, 0x960b);
-		alc_ग_लिखो_coef_idx(codec, 0xe, 0x8814);
-	पूर्ण
+	if ((alc_get_coef0(codec) & 0x00ff) == 0x016) {
+		alc_write_coef_idx(codec, 0xf, 0x960b);
+		alc_write_coef_idx(codec, 0xe, 0x8814);
+	}
 
-	अगर ((alc_get_coef0(codec) & 0x00ff) == 0x017) अणु
+	if ((alc_get_coef0(codec) & 0x00ff) == 0x017) {
 		/* Power up output pin */
 		alc_update_coef_idx(codec, 0x04, 0, 1<<11);
-	पूर्ण
+	}
 
-	अगर ((alc_get_coef0(codec) & 0x00ff) == 0x018) अणु
-		val = alc_पढ़ो_coef_idx(codec, 0xd);
-		अगर (val != -1 && (val & 0x0c00) >> 10 != 0x1) अणु
-			/* Capless ramp up घड़ी control */
-			alc_ग_लिखो_coef_idx(codec, 0xd, val | (1<<10));
-		पूर्ण
-		val = alc_पढ़ो_coef_idx(codec, 0x17);
-		अगर (val != -1 && (val & 0x01c0) >> 6 != 0x4) अणु
-			/* Class D घातer on reset */
-			alc_ग_लिखो_coef_idx(codec, 0x17, val | (1<<7));
-		पूर्ण
-	पूर्ण
+	if ((alc_get_coef0(codec) & 0x00ff) == 0x018) {
+		val = alc_read_coef_idx(codec, 0xd);
+		if (val != -1 && (val & 0x0c00) >> 10 != 0x1) {
+			/* Capless ramp up clock control */
+			alc_write_coef_idx(codec, 0xd, val | (1<<10));
+		}
+		val = alc_read_coef_idx(codec, 0x17);
+		if (val != -1 && (val & 0x01c0) >> 6 != 0x4) {
+			/* Class D power on reset */
+			alc_write_coef_idx(codec, 0x17, val | (1<<7));
+		}
+	}
 
 	/* HP */
 	alc_update_coef_idx(codec, 0x4, 0, 1<<11);
-पूर्ण
+}
 
 /*
  */
-अटल पूर्णांक patch_alc269(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc269(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x0b);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
 	spec->gen.shared_mic_vref_pin = 0x18;
-	codec->घातer_save_node = 0;
+	codec->power_save_node = 0;
 
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	codec->patch_ops.suspend = alc269_suspend;
 	codec->patch_ops.resume = alc269_resume;
-#पूर्ण_अगर
-	spec->shutup = alc_शेष_shutup;
-	spec->init_hook = alc_शेष_init;
+#endif
+	spec->shutup = alc_default_shutup;
+	spec->init_hook = alc_default_init;
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0269:
+	switch (codec->core.vendor_id) {
+	case 0x10ec0269:
 		spec->codec_variant = ALC269_TYPE_ALC269VA;
-		चयन (alc_get_coef0(codec) & 0x00f0) अणु
-		हाल 0x0010:
-			अगर (codec->bus->pci &&
-			    codec->bus->pci->subप्रणाली_venकरोr == 0x1025 &&
-			    spec->cdefine.platक्रमm_type == 1)
-				err = alc_codec_नाम(codec, "ALC271X");
+		switch (alc_get_coef0(codec) & 0x00f0) {
+		case 0x0010:
+			if (codec->bus->pci &&
+			    codec->bus->pci->subsystem_vendor == 0x1025 &&
+			    spec->cdefine.platform_type == 1)
+				err = alc_codec_rename(codec, "ALC271X");
 			spec->codec_variant = ALC269_TYPE_ALC269VB;
-			अवरोध;
-		हाल 0x0020:
-			अगर (codec->bus->pci &&
-			    codec->bus->pci->subप्रणाली_venकरोr == 0x17aa &&
-			    codec->bus->pci->subप्रणाली_device == 0x21f3)
-				err = alc_codec_नाम(codec, "ALC3202");
+			break;
+		case 0x0020:
+			if (codec->bus->pci &&
+			    codec->bus->pci->subsystem_vendor == 0x17aa &&
+			    codec->bus->pci->subsystem_device == 0x21f3)
+				err = alc_codec_rename(codec, "ALC3202");
 			spec->codec_variant = ALC269_TYPE_ALC269VC;
-			अवरोध;
-		हाल 0x0030:
+			break;
+		case 0x0030:
 			spec->codec_variant = ALC269_TYPE_ALC269VD;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			alc_fix_pll_init(codec, 0x20, 0x04, 15);
-		पूर्ण
-		अगर (err < 0)
-			जाओ error;
+		}
+		if (err < 0)
+			goto error;
 		spec->shutup = alc269_shutup;
 		spec->init_hook = alc269_fill_coef;
 		alc269_fill_coef(codec);
-		अवरोध;
+		break;
 
-	हाल 0x10ec0280:
-	हाल 0x10ec0290:
+	case 0x10ec0280:
+	case 0x10ec0290:
 		spec->codec_variant = ALC269_TYPE_ALC280;
-		अवरोध;
-	हाल 0x10ec0282:
+		break;
+	case 0x10ec0282:
 		spec->codec_variant = ALC269_TYPE_ALC282;
 		spec->shutup = alc282_shutup;
 		spec->init_hook = alc282_init;
-		अवरोध;
-	हाल 0x10ec0233:
-	हाल 0x10ec0283:
+		break;
+	case 0x10ec0233:
+	case 0x10ec0283:
 		spec->codec_variant = ALC269_TYPE_ALC283;
 		spec->shutup = alc283_shutup;
 		spec->init_hook = alc283_init;
-		अवरोध;
-	हाल 0x10ec0284:
-	हाल 0x10ec0292:
+		break;
+	case 0x10ec0284:
+	case 0x10ec0292:
 		spec->codec_variant = ALC269_TYPE_ALC284;
-		अवरोध;
-	हाल 0x10ec0293:
+		break;
+	case 0x10ec0293:
 		spec->codec_variant = ALC269_TYPE_ALC293;
-		अवरोध;
-	हाल 0x10ec0286:
-	हाल 0x10ec0288:
+		break;
+	case 0x10ec0286:
+	case 0x10ec0288:
 		spec->codec_variant = ALC269_TYPE_ALC286;
-		अवरोध;
-	हाल 0x10ec0298:
+		break;
+	case 0x10ec0298:
 		spec->codec_variant = ALC269_TYPE_ALC298;
-		अवरोध;
-	हाल 0x10ec0235:
-	हाल 0x10ec0255:
+		break;
+	case 0x10ec0235:
+	case 0x10ec0255:
 		spec->codec_variant = ALC269_TYPE_ALC255;
 		spec->shutup = alc256_shutup;
 		spec->init_hook = alc256_init;
-		अवरोध;
-	हाल 0x10ec0236:
-	हाल 0x10ec0256:
+		break;
+	case 0x10ec0236:
+	case 0x10ec0256:
 		spec->codec_variant = ALC269_TYPE_ALC256;
 		spec->shutup = alc256_shutup;
 		spec->init_hook = alc256_init;
-		spec->gen.mixer_nid = 0; /* ALC256 करोes not have any loopback mixer path */
-		अवरोध;
-	हाल 0x10ec0257:
+		spec->gen.mixer_nid = 0; /* ALC256 does not have any loopback mixer path */
+		break;
+	case 0x10ec0257:
 		spec->codec_variant = ALC269_TYPE_ALC257;
 		spec->shutup = alc256_shutup;
 		spec->init_hook = alc256_init;
 		spec->gen.mixer_nid = 0;
-		अवरोध;
-	हाल 0x10ec0215:
-	हाल 0x10ec0245:
-	हाल 0x10ec0285:
-	हाल 0x10ec0287:
-	हाल 0x10ec0289:
+		break;
+	case 0x10ec0215:
+	case 0x10ec0245:
+	case 0x10ec0285:
+	case 0x10ec0287:
+	case 0x10ec0289:
 		spec->codec_variant = ALC269_TYPE_ALC215;
 		spec->shutup = alc225_shutup;
 		spec->init_hook = alc225_init;
 		spec->gen.mixer_nid = 0;
-		अवरोध;
-	हाल 0x10ec0225:
-	हाल 0x10ec0295:
-	हाल 0x10ec0299:
+		break;
+	case 0x10ec0225:
+	case 0x10ec0295:
+	case 0x10ec0299:
 		spec->codec_variant = ALC269_TYPE_ALC225;
 		spec->shutup = alc225_shutup;
 		spec->init_hook = alc225_init;
 		spec->gen.mixer_nid = 0; /* no loopback on ALC225, ALC295 and ALC299 */
-		अवरोध;
-	हाल 0x10ec0234:
-	हाल 0x10ec0274:
-	हाल 0x10ec0294:
+		break;
+	case 0x10ec0234:
+	case 0x10ec0274:
+	case 0x10ec0294:
 		spec->codec_variant = ALC269_TYPE_ALC294;
-		spec->gen.mixer_nid = 0; /* ALC2x4 करोes not have any loopback mixer path */
+		spec->gen.mixer_nid = 0; /* ALC2x4 does not have any loopback mixer path */
 		alc_update_coef_idx(codec, 0x6b, 0x0018, (1<<4) | (1<<3)); /* UAJ MIC Vref control by verb */
 		spec->init_hook = alc294_init;
-		अवरोध;
-	हाल 0x10ec0300:
+		break;
+	case 0x10ec0300:
 		spec->codec_variant = ALC269_TYPE_ALC300;
 		spec->gen.mixer_nid = 0; /* no loopback on ALC300 */
-		अवरोध;
-	हाल 0x10ec0623:
+		break;
+	case 0x10ec0623:
 		spec->codec_variant = ALC269_TYPE_ALC623;
-		अवरोध;
-	हाल 0x10ec0700:
-	हाल 0x10ec0701:
-	हाल 0x10ec0703:
-	हाल 0x10ec0711:
+		break;
+	case 0x10ec0700:
+	case 0x10ec0701:
+	case 0x10ec0703:
+	case 0x10ec0711:
 		spec->codec_variant = ALC269_TYPE_ALC700;
-		spec->gen.mixer_nid = 0; /* ALC700 करोes not have any loopback mixer path */
-		alc_update_coef_idx(codec, 0x4a, 1 << 15, 0); /* Combo jack स्वतः trigger control */
+		spec->gen.mixer_nid = 0; /* ALC700 does not have any loopback mixer path */
+		alc_update_coef_idx(codec, 0x4a, 1 << 15, 0); /* Combo jack auto trigger control */
 		spec->init_hook = alc294_init;
-		अवरोध;
+		break;
 
-	पूर्ण
+	}
 
-	अगर (snd_hda_codec_पढ़ो(codec, 0x51, 0, AC_VERB_PARAMETERS, 0) == 0x10ec5505) अणु
+	if (snd_hda_codec_read(codec, 0x51, 0, AC_VERB_PARAMETERS, 0) == 0x10ec5505) {
 		spec->has_alc5505_dsp = 1;
 		spec->init_hook = alc5505_dsp_init;
-	पूर्ण
+	}
 
 	alc_pre_init(codec);
 
@@ -9411,116 +9410,116 @@
 		       alc269_fixup_tbl, alc269_fixups);
 	snd_hda_pick_pin_fixup(codec, alc269_pin_fixup_tbl, alc269_fixups, true);
 	snd_hda_pick_pin_fixup(codec, alc269_fallback_pin_fixup_tbl, alc269_fixups, false);
-	snd_hda_pick_fixup(codec, शून्य,	alc269_fixup_venकरोr_tbl,
+	snd_hda_pick_fixup(codec, NULL,	alc269_fixup_vendor_tbl,
 			   alc269_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	alc_स्वतः_parse_customize_define(codec);
+	alc_auto_parse_customize_define(codec);
 
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x01;
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc269_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc269_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog && spec->gen.beep_nid && spec->gen.mixer_nid) अणु
+	if (!spec->gen.no_analog && spec->gen.beep_nid && spec->gen.mixer_nid) {
 		err = set_beep_amp(spec, spec->gen.mixer_nid, 0x04, HDA_INPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 /*
  * ALC861
  */
 
-अटल पूर्णांक alc861_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc861_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc861_ssids[] = अणु 0x0e, 0x0f, 0x0b, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, alc861_ignore, alc861_ssids);
-पूर्ण
+static int alc861_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc861_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc861_ssids[] = { 0x0e, 0x0f, 0x0b, 0 };
+	return alc_parse_auto_config(codec, alc861_ignore, alc861_ssids);
+}
 
 /* Pin config fixes */
-क्रमागत अणु
+enum {
 	ALC861_FIXUP_FSC_AMILO_PI1505,
 	ALC861_FIXUP_AMP_VREF_0F,
 	ALC861_FIXUP_NO_JACK_DETECT,
 	ALC861_FIXUP_ASUS_A6RP,
 	ALC660_FIXUP_ASUS_W7J,
-पूर्ण;
+};
 
-/* On some laptops, VREF of pin 0x0f is abused क्रम controlling the मुख्य amp */
-अटल व्योम alc861_fixup_asus_amp_vref_0f(काष्ठा hda_codec *codec,
-			स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अचिन्हित पूर्णांक val;
+/* On some laptops, VREF of pin 0x0f is abused for controlling the main amp */
+static void alc861_fixup_asus_amp_vref_0f(struct hda_codec *codec,
+			const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	unsigned int val;
 
-	अगर (action != HDA_FIXUP_ACT_INIT)
-		वापस;
+	if (action != HDA_FIXUP_ACT_INIT)
+		return;
 	val = snd_hda_codec_get_pin_target(codec, 0x0f);
-	अगर (!(val & (AC_PINCTL_IN_EN | AC_PINCTL_OUT_EN)))
+	if (!(val & (AC_PINCTL_IN_EN | AC_PINCTL_OUT_EN)))
 		val |= AC_PINCTL_IN_EN;
 	val |= AC_PINCTL_VREF_50;
 	snd_hda_set_pin_ctl(codec, 0x0f, val);
-	spec->gen.keep_vref_in_स्वतःmute = 1;
-पूर्ण
+	spec->gen.keep_vref_in_automute = 1;
+}
 
 /* suppress the jack-detection */
-अटल व्योम alc_fixup_no_jack_detect(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+static void alc_fixup_no_jack_detect(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		codec->no_jack_detect = 1;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hda_fixup alc861_fixups[] = अणु
-	[ALC861_FIXUP_FSC_AMILO_PI1505] = अणु
+static const struct hda_fixup alc861_fixups[] = {
+	[ALC861_FIXUP_FSC_AMILO_PI1505] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x0b, 0x0221101f पूर्ण, /* HP */
-			अणु 0x0f, 0x90170310 पूर्ण, /* speaker */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC861_FIXUP_AMP_VREF_0F] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x0b, 0x0221101f }, /* HP */
+			{ 0x0f, 0x90170310 }, /* speaker */
+			{ }
+		}
+	},
+	[ALC861_FIXUP_AMP_VREF_0F] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc861_fixup_asus_amp_vref_0f,
-	पूर्ण,
-	[ALC861_FIXUP_NO_JACK_DETECT] = अणु
+	},
+	[ALC861_FIXUP_NO_JACK_DETECT] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_no_jack_detect,
-	पूर्ण,
-	[ALC861_FIXUP_ASUS_A6RP] = अणु
+	},
+	[ALC861_FIXUP_ASUS_A6RP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc861_fixup_asus_amp_vref_0f,
 		.chained = true,
 		.chain_id = ALC861_FIXUP_NO_JACK_DETECT,
-	पूर्ण,
-	[ALC660_FIXUP_ASUS_W7J] = अणु
+	},
+	[ALC660_FIXUP_ASUS_W7J] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
+		.v.verbs = (const struct hda_verb[]) {
 			/* ASUS W7J needs a magic pin setup on unused NID 0x10
-			 * क्रम enabling outमाला_दो
+			 * for enabling outputs
 			 */
-			अणु0x10, AC_VERB_SET_PIN_WIDGET_CONTROL, 0x24पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
-	पूर्ण
-पूर्ण;
+			{0x10, AC_VERB_SET_PIN_WIDGET_CONTROL, 0x24},
+			{ }
+		},
+	}
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc861_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc861_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1043, 0x1253, "ASUS W7J", ALC660_FIXUP_ASUS_W7J),
 	SND_PCI_QUIRK(0x1043, 0x1263, "ASUS Z35HL", ALC660_FIXUP_ASUS_W7J),
 	SND_PCI_QUIRK(0x1043, 0x1393, "ASUS A6Rp", ALC861_FIXUP_ASUS_A6RP),
@@ -9528,52 +9527,52 @@
 	SND_PCI_QUIRK(0x1462, 0x7254, "HP DX2200", ALC861_FIXUP_NO_JACK_DETECT),
 	SND_PCI_QUIRK_VENDOR(0x1584, "Haier/Uniwill", ALC861_FIXUP_AMP_VREF_0F),
 	SND_PCI_QUIRK(0x1734, 0x10c7, "FSC Amilo Pi1505", ALC861_FIXUP_FSC_AMILO_PI1505),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 /*
  */
-अटल पूर्णांक patch_alc861(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc861(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x15);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x23;
 
-#अगर_घोषित CONFIG_PM
-	spec->घातer_hook = alc_घातer_eapd;
-#पूर्ण_अगर
+#ifdef CONFIG_PM
+	spec->power_hook = alc_power_eapd;
+#endif
 
 	alc_pre_init(codec);
 
-	snd_hda_pick_fixup(codec, शून्य, alc861_fixup_tbl, alc861_fixups);
+	snd_hda_pick_fixup(codec, NULL, alc861_fixup_tbl, alc861_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc861_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc861_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog) अणु
+	if (!spec->gen.no_analog) {
 		err = set_beep_amp(spec, 0x23, 0, HDA_OUTPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 /*
  * ALC861-VD support
@@ -9582,275 +9581,275 @@
  *
  * In addition, an independent DAC
  */
-अटल पूर्णांक alc861vd_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc861vd_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc861vd_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	वापस alc_parse_स्वतः_config(codec, alc861vd_ignore, alc861vd_ssids);
-पूर्ण
+static int alc861vd_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc861vd_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc861vd_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	return alc_parse_auto_config(codec, alc861vd_ignore, alc861vd_ssids);
+}
 
-क्रमागत अणु
+enum {
 	ALC660VD_FIX_ASUS_GPIO1,
 	ALC861VD_FIX_DALLAS,
-पूर्ण;
+};
 
 /* exclude VREF80 */
-अटल व्योम alc861vd_fixup_dallas(काष्ठा hda_codec *codec,
-				  स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc861vd_fixup_dallas(struct hda_codec *codec,
+				  const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		snd_hda_override_pin_caps(codec, 0x18, 0x00000734);
 		snd_hda_override_pin_caps(codec, 0x19, 0x0000073c);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* reset GPIO1 */
-अटल व्योम alc660vd_fixup_asus_gpio1(काष्ठा hda_codec *codec,
-				      स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc660vd_fixup_asus_gpio1(struct hda_codec *codec,
+				      const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE)
+	if (action == HDA_FIXUP_ACT_PRE_PROBE)
 		spec->gpio_mask |= 0x02;
 	alc_fixup_gpio(codec, action, 0x01);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा hda_fixup alc861vd_fixups[] = अणु
-	[ALC660VD_FIX_ASUS_GPIO1] = अणु
+static const struct hda_fixup alc861vd_fixups[] = {
+	[ALC660VD_FIX_ASUS_GPIO1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc660vd_fixup_asus_gpio1,
-	पूर्ण,
-	[ALC861VD_FIX_DALLAS] = अणु
+	},
+	[ALC861VD_FIX_DALLAS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc861vd_fixup_dallas,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc861vd_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc861vd_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x103c, 0x30bf, "HP TX1000", ALC861VD_FIX_DALLAS),
 	SND_PCI_QUIRK(0x1043, 0x1339, "ASUS A7-K", ALC660VD_FIX_ASUS_GPIO1),
 	SND_PCI_QUIRK(0x1179, 0xff31, "Toshiba L30-149", ALC861VD_FIX_DALLAS),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
 /*
  */
-अटल पूर्णांक patch_alc861vd(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc861vd(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x0b);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x23;
 
 	spec->shutup = alc_eapd_shutup;
 
 	alc_pre_init(codec);
 
-	snd_hda_pick_fixup(codec, शून्य, alc861vd_fixup_tbl, alc861vd_fixups);
+	snd_hda_pick_fixup(codec, NULL, alc861vd_fixup_tbl, alc861vd_fixups);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc861vd_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc861vd_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog) अणु
+	if (!spec->gen.no_analog) {
 		err = set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 /*
  * ALC662 support
  *
  * ALC662 is almost identical with ALC880 but has cleaner and more flexible
  * configuration.  Each pin widget can choose any input DACs and a mixer.
- * Each ADC is connected from a mixer of all inमाला_दो.  This makes possible
+ * Each ADC is connected from a mixer of all inputs.  This makes possible
  * 6-channel independent captures.
  *
- * In addition, an independent DAC क्रम the multi-playback (not used in this
+ * In addition, an independent DAC for the multi-playback (not used in this
  * driver yet).
  */
 
 /*
- * BIOS स्वतः configuration
+ * BIOS auto configuration
  */
 
-अटल पूर्णांक alc662_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	अटल स्थिर hda_nid_t alc662_ignore[] = अणु 0x1d, 0 पूर्ण;
-	अटल स्थिर hda_nid_t alc663_ssids[] = अणु 0x15, 0x1b, 0x14, 0x21 पूर्ण;
-	अटल स्थिर hda_nid_t alc662_ssids[] = अणु 0x15, 0x1b, 0x14, 0 पूर्ण;
-	स्थिर hda_nid_t *ssids;
+static int alc662_parse_auto_config(struct hda_codec *codec)
+{
+	static const hda_nid_t alc662_ignore[] = { 0x1d, 0 };
+	static const hda_nid_t alc663_ssids[] = { 0x15, 0x1b, 0x14, 0x21 };
+	static const hda_nid_t alc662_ssids[] = { 0x15, 0x1b, 0x14, 0 };
+	const hda_nid_t *ssids;
 
-	अगर (codec->core.venकरोr_id == 0x10ec0272 || codec->core.venकरोr_id == 0x10ec0663 ||
-	    codec->core.venकरोr_id == 0x10ec0665 || codec->core.venकरोr_id == 0x10ec0670 ||
-	    codec->core.venकरोr_id == 0x10ec0671)
+	if (codec->core.vendor_id == 0x10ec0272 || codec->core.vendor_id == 0x10ec0663 ||
+	    codec->core.vendor_id == 0x10ec0665 || codec->core.vendor_id == 0x10ec0670 ||
+	    codec->core.vendor_id == 0x10ec0671)
 		ssids = alc663_ssids;
-	अन्यथा
+	else
 		ssids = alc662_ssids;
-	वापस alc_parse_स्वतः_config(codec, alc662_ignore, ssids);
-पूर्ण
+	return alc_parse_auto_config(codec, alc662_ignore, ssids);
+}
 
-अटल व्योम alc272_fixup_mario(काष्ठा hda_codec *codec,
-			       स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action != HDA_FIXUP_ACT_PRE_PROBE)
-		वापस;
-	अगर (snd_hda_override_amp_caps(codec, 0x2, HDA_OUTPUT,
+static void alc272_fixup_mario(struct hda_codec *codec,
+			       const struct hda_fixup *fix, int action)
+{
+	if (action != HDA_FIXUP_ACT_PRE_PROBE)
+		return;
+	if (snd_hda_override_amp_caps(codec, 0x2, HDA_OUTPUT,
 				      (0x3b << AC_AMPCAP_OFFSET_SHIFT) |
 				      (0x3b << AC_AMPCAP_NUM_STEPS_SHIFT) |
 				      (0x03 << AC_AMPCAP_STEP_SIZE_SHIFT) |
 				      (0 << AC_AMPCAP_MUTE_SHIFT)))
 		codec_warn(codec, "failed to override amp caps for NID 0x2\n");
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_pcm_chmap_elem asus_pcm_2_1_chmaps[] = अणु
-	अणु .channels = 2,
-	  .map = अणु SNDRV_CHMAP_FL, SNDRV_CHMAP_FR पूर्ण पूर्ण,
-	अणु .channels = 4,
-	  .map = अणु SNDRV_CHMAP_FL, SNDRV_CHMAP_FR,
-		   SNDRV_CHMAP_NA, SNDRV_CHMAP_LFE पूर्ण पूर्ण, /* LFE only on right */
-	अणु पूर्ण
-पूर्ण;
+static const struct snd_pcm_chmap_elem asus_pcm_2_1_chmaps[] = {
+	{ .channels = 2,
+	  .map = { SNDRV_CHMAP_FL, SNDRV_CHMAP_FR } },
+	{ .channels = 4,
+	  .map = { SNDRV_CHMAP_FL, SNDRV_CHMAP_FR,
+		   SNDRV_CHMAP_NA, SNDRV_CHMAP_LFE } }, /* LFE only on right */
+	{ }
+};
 
 /* override the 2.1 chmap */
-अटल व्योम alc_fixup_bass_chmap(काष्ठा hda_codec *codec,
-				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	अगर (action == HDA_FIXUP_ACT_BUILD) अणु
-		काष्ठा alc_spec *spec = codec->spec;
+static void alc_fixup_bass_chmap(struct hda_codec *codec,
+				    const struct hda_fixup *fix, int action)
+{
+	if (action == HDA_FIXUP_ACT_BUILD) {
+		struct alc_spec *spec = codec->spec;
 		spec->gen.pcm_rec[0]->stream[0].chmap = asus_pcm_2_1_chmaps;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* aव्योम D3 क्रम keeping GPIO up */
-अटल अचिन्हित पूर्णांक gpio_led_घातer_filter(काष्ठा hda_codec *codec,
+/* avoid D3 for keeping GPIO up */
+static unsigned int gpio_led_power_filter(struct hda_codec *codec,
 					  hda_nid_t nid,
-					  अचिन्हित पूर्णांक घातer_state)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (nid == codec->core.afg && घातer_state == AC_PWRST_D3 && spec->gpio_data)
-		वापस AC_PWRST_D0;
-	वापस घातer_state;
-पूर्ण
+					  unsigned int power_state)
+{
+	struct alc_spec *spec = codec->spec;
+	if (nid == codec->core.afg && power_state == AC_PWRST_D3 && spec->gpio_data)
+		return AC_PWRST_D0;
+	return power_state;
+}
 
-अटल व्योम alc662_fixup_led_gpio1(काष्ठा hda_codec *codec,
-				   स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc662_fixup_led_gpio1(struct hda_codec *codec,
+				   const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
 	alc_fixup_hp_gpio_led(codec, action, 0x01, 0);
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->mute_led_polarity = 1;
-		codec->घातer_filter = gpio_led_घातer_filter;
-	पूर्ण
-पूर्ण
+		codec->power_filter = gpio_led_power_filter;
+	}
+}
 
-अटल व्योम alc662_usi_स्वतःmute_hook(काष्ठा hda_codec *codec,
-					 काष्ठा hda_jack_callback *jack)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	पूर्णांक vref;
+static void alc662_usi_automute_hook(struct hda_codec *codec,
+					 struct hda_jack_callback *jack)
+{
+	struct alc_spec *spec = codec->spec;
+	int vref;
 	msleep(200);
-	snd_hda_gen_hp_स्वतःmute(codec, jack);
+	snd_hda_gen_hp_automute(codec, jack);
 
 	vref = spec->gen.hp_jack_present ? PIN_VREF80 : 0;
 	msleep(100);
-	snd_hda_codec_ग_लिखो(codec, 0x19, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
+	snd_hda_codec_write(codec, 0x19, 0, AC_VERB_SET_PIN_WIDGET_CONTROL,
 			    vref);
-पूर्ण
+}
 
-अटल व्योम alc662_fixup_usi_headset_mic(काष्ठा hda_codec *codec,
-				     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
-	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+static void alc662_fixup_usi_headset_mic(struct hda_codec *codec,
+				     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
+	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
-		spec->gen.hp_स्वतःmute_hook = alc662_usi_स्वतःmute_hook;
-	पूर्ण
-पूर्ण
+		spec->gen.hp_automute_hook = alc662_usi_automute_hook;
+	}
+}
 
-अटल व्योम alc662_aspire_ethos_mute_speakers(काष्ठा hda_codec *codec,
-					काष्ठा hda_jack_callback *cb)
-अणु
-	/* surround speakers at 0x1b alपढ़ोy get muted स्वतःmatically when
-	 * headphones are plugged in, but we have to mute/unmute the reमुख्यing
+static void alc662_aspire_ethos_mute_speakers(struct hda_codec *codec,
+					struct hda_jack_callback *cb)
+{
+	/* surround speakers at 0x1b already get muted automatically when
+	 * headphones are plugged in, but we have to mute/unmute the remaining
 	 * channels manually:
 	 * 0x15 - front left/front right
 	 * 0x18 - front center/ LFE
 	 */
-	अगर (snd_hda_jack_detect_state(codec, 0x1b) == HDA_JACK_PRESENT) अणु
+	if (snd_hda_jack_detect_state(codec, 0x1b) == HDA_JACK_PRESENT) {
 		snd_hda_set_pin_ctl_cache(codec, 0x15, 0);
 		snd_hda_set_pin_ctl_cache(codec, 0x18, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		snd_hda_set_pin_ctl_cache(codec, 0x15, PIN_OUT);
 		snd_hda_set_pin_ctl_cache(codec, 0x18, PIN_OUT);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alc662_fixup_aspire_ethos_hp(काष्ठा hda_codec *codec,
-					स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
+static void alc662_fixup_aspire_ethos_hp(struct hda_codec *codec,
+					const struct hda_fixup *fix, int action)
+{
     /* Pin 0x1b: shared headphones jack and surround speakers */
-	अगर (!is_jack_detectable(codec, 0x1b))
-		वापस;
+	if (!is_jack_detectable(codec, 0x1b))
+		return;
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		snd_hda_jack_detect_enable_callback(codec, 0x1b,
 				alc662_aspire_ethos_mute_speakers);
 		/* subwoofer needs an extra GPIO setting to become audible */
 		alc_setup_gpio(codec, 0x02);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
-		/* Make sure to start in a correct state, i.e. अगर
-		 * headphones have been plugged in beक्रमe घातering up the प्रणाली
+		break;
+	case HDA_FIXUP_ACT_INIT:
+		/* Make sure to start in a correct state, i.e. if
+		 * headphones have been plugged in before powering up the system
 		 */
-		alc662_aspire_ethos_mute_speakers(codec, शून्य);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		alc662_aspire_ethos_mute_speakers(codec, NULL);
+		break;
+	}
+}
 
-अटल व्योम alc671_fixup_hp_headset_mic2(काष्ठा hda_codec *codec,
-					     स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
-अणु
-	काष्ठा alc_spec *spec = codec->spec;
+static void alc671_fixup_hp_headset_mic2(struct hda_codec *codec,
+					     const struct hda_fixup *fix, int action)
+{
+	struct alc_spec *spec = codec->spec;
 
-	अटल स्थिर काष्ठा hda_pपूर्णांकbl pincfgs[] = अणु
-		अणु 0x19, 0x02a11040 पूर्ण, /* use as headset mic, with its own jack detect */
-		अणु 0x1b, 0x0181304f पूर्ण,
-		अणु पूर्ण
-	पूर्ण;
+	static const struct hda_pintbl pincfgs[] = {
+		{ 0x19, 0x02a11040 }, /* use as headset mic, with its own jack detect */
+		{ 0x1b, 0x0181304f },
+		{ }
+	};
 
-	चयन (action) अणु
-	हाल HDA_FIXUP_ACT_PRE_PROBE:
+	switch (action) {
+	case HDA_FIXUP_ACT_PRE_PROBE:
 		spec->gen.mixer_nid = 0;
 		spec->parse_flags |= HDA_PINCFG_HEADSET_MIC;
 		snd_hda_apply_pincfgs(codec, pincfgs);
-		अवरोध;
-	हाल HDA_FIXUP_ACT_INIT:
-		alc_ग_लिखो_coef_idx(codec, 0x19, 0xa054);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case HDA_FIXUP_ACT_INIT:
+		alc_write_coef_idx(codec, 0x19, 0xa054);
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा coef_fw alc668_coefs[] = अणु
+static const struct coef_fw alc668_coefs[] = {
 	WRITE_COEF(0x01, 0xbebe), WRITE_COEF(0x02, 0xaaaa), WRITE_COEF(0x03,    0x0),
 	WRITE_COEF(0x04, 0x0180), WRITE_COEF(0x06,    0x0), WRITE_COEF(0x07, 0x0f80),
 	WRITE_COEF(0x08, 0x0031), WRITE_COEF(0x0a, 0x0060), WRITE_COEF(0x0b,    0x0),
@@ -9871,15 +9870,15 @@
 	WRITE_COEF(0xb9, 0x902b), WRITE_COEF(0xba, 0xb8ba), WRITE_COEF(0xbb, 0xaaab),
 	WRITE_COEF(0xbc, 0xaaaf), WRITE_COEF(0xbd, 0x6aaa), WRITE_COEF(0xbe, 0x1c02),
 	WRITE_COEF(0xc0, 0x00ff), WRITE_COEF(0xc1, 0x0fa6),
-	अणुपूर्ण
-पूर्ण;
+	{}
+};
 
-अटल व्योम alc668_restore_शेष_value(काष्ठा hda_codec *codec)
-अणु
+static void alc668_restore_default_value(struct hda_codec *codec)
+{
 	alc_process_coef_fw(codec, alc668_coefs);
-पूर्ण
+}
 
-क्रमागत अणु
+enum {
 	ALC662_FIXUP_ASPIRE,
 	ALC662_FIXUP_LED_GPIO1,
 	ALC662_FIXUP_IDEAPAD,
@@ -9927,392 +9926,392 @@
 	ALC671_FIXUP_HP_HEADSET_MIC2,
 	ALC662_FIXUP_ACER_X2660G_HEADSET_MODE,
 	ALC662_FIXUP_ACER_NITRO_HEADSET_MODE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hda_fixup alc662_fixups[] = अणु
-	[ALC662_FIXUP_ASPIRE] = अणु
+static const struct hda_fixup alc662_fixups[] = {
+	[ALC662_FIXUP_ASPIRE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x99130112 पूर्ण, /* subwoofer */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC662_FIXUP_LED_GPIO1] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x99130112 }, /* subwoofer */
+			{ }
+		}
+	},
+	[ALC662_FIXUP_LED_GPIO1] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc662_fixup_led_gpio1,
-	पूर्ण,
-	[ALC662_FIXUP_IDEAPAD] = अणु
+	},
+	[ALC662_FIXUP_IDEAPAD] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x17, 0x99130112 पूर्ण, /* subwoofer */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x17, 0x99130112 }, /* subwoofer */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_LED_GPIO1,
-	पूर्ण,
-	[ALC272_FIXUP_MARIO] = अणु
+	},
+	[ALC272_FIXUP_MARIO] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc272_fixup_mario,
-	पूर्ण,
-	[ALC662_FIXUP_CZC_ET26] = अणु
+	},
+	[ALC662_FIXUP_CZC_ET26] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु0x12, 0x403cc000पूर्ण,
-			अणु0x14, 0x90170110पूर्ण, /* speaker */
-			अणु0x15, 0x411111f0पूर्ण,
-			अणु0x16, 0x411111f0पूर्ण,
-			अणु0x18, 0x01a19030पूर्ण, /* mic */
-			अणु0x19, 0x90a7013fपूर्ण, /* पूर्णांक-mic */
-			अणु0x1a, 0x01014020पूर्ण,
-			अणु0x1b, 0x0121401fपूर्ण,
-			अणु0x1c, 0x411111f0पूर्ण,
-			अणु0x1d, 0x411111f0पूर्ण,
-			अणु0x1e, 0x40478e35पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{0x12, 0x403cc000},
+			{0x14, 0x90170110}, /* speaker */
+			{0x15, 0x411111f0},
+			{0x16, 0x411111f0},
+			{0x18, 0x01a19030}, /* mic */
+			{0x19, 0x90a7013f}, /* int-mic */
+			{0x1a, 0x01014020},
+			{0x1b, 0x0121401f},
+			{0x1c, 0x411111f0},
+			{0x1d, 0x411111f0},
+			{0x1e, 0x40478e35},
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_CZC_P10T] = अणु
+	},
+	[ALC662_FIXUP_CZC_P10T] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु0x14, AC_VERB_SET_EAPD_BTLENABLE, 0पूर्ण,
-			अणुपूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC662_FIXUP_SKU_IGNORE] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{0x14, AC_VERB_SET_EAPD_BTLENABLE, 0},
+			{}
+		}
+	},
+	[ALC662_FIXUP_SKU_IGNORE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_sku_ignore,
-	पूर्ण,
-	[ALC662_FIXUP_HP_RP5800] = अणु
+	},
+	[ALC662_FIXUP_HP_RP5800] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x0221201f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x0221201f }, /* HP out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE1] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE1] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19c20 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x21, 0x0121401f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x18, 0x01a19c20 }, /* mic */
+			{ 0x19, 0x99a3092f }, /* int-mic */
+			{ 0x21, 0x0121401f }, /* HP out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE2] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE2] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19820 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3092f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x1b, 0x0121401f पूर्ण, /* HP out */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x18, 0x01a19820 }, /* mic */
+			{ 0x19, 0x99a3092f }, /* int-mic */
+			{ 0x1b, 0x0121401f }, /* HP out */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE3] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE3] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0121441f पूर्ण, /* HP */
-			अणु 0x18, 0x01a19840 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3094f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x21, 0x01211420 पूर्ण, /* HP2 */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121441f }, /* HP */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x21, 0x01211420 }, /* HP2 */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE4] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE4] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x16, 0x99130111 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19840 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3094f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x21, 0x0121441f पूर्ण, /* HP */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x16, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x21, 0x0121441f }, /* HP */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE5] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE5] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x0121441f पूर्ण, /* HP */
-			अणु 0x16, 0x99130111 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19840 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3094f पूर्ण, /* पूर्णांक-mic */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x0121441f }, /* HP */
+			{ 0x16, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE6] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE6] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x15, 0x01211420 पूर्ण, /* HP2 */
-			अणु 0x18, 0x01a19840 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3094f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x1b, 0x0121441f पूर्ण, /* HP */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x15, 0x01211420 }, /* HP2 */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x1b, 0x0121441f }, /* HP */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE7] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE7] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x17, 0x99130111 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19840 पूर्ण, /* mic */
-			अणु 0x19, 0x99a3094f पूर्ण, /* पूर्णांक-mic */
-			अणु 0x1b, 0x01214020 पूर्ण, /* HP */
-			अणु 0x21, 0x0121401f पूर्ण, /* HP */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x17, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x19, 0x99a3094f }, /* int-mic */
+			{ 0x1b, 0x01214020 }, /* HP */
+			{ 0x21, 0x0121401f }, /* HP */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_MODE8] = अणु
+	},
+	[ALC662_FIXUP_ASUS_MODE8] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x14, 0x99130110 पूर्ण, /* speaker */
-			अणु 0x12, 0x99a30970 पूर्ण, /* पूर्णांक-mic */
-			अणु 0x15, 0x01214020 पूर्ण, /* HP */
-			अणु 0x17, 0x99130111 पूर्ण, /* speaker */
-			अणु 0x18, 0x01a19840 पूर्ण, /* mic */
-			अणु 0x21, 0x0121401f पूर्ण, /* HP */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x14, 0x99130110 }, /* speaker */
+			{ 0x12, 0x99a30970 }, /* int-mic */
+			{ 0x15, 0x01214020 }, /* HP */
+			{ 0x17, 0x99130111 }, /* speaker */
+			{ 0x18, 0x01a19840 }, /* mic */
+			{ 0x21, 0x0121401f }, /* HP */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_SKU_IGNORE
-	पूर्ण,
-	[ALC662_FIXUP_NO_JACK_DETECT] = अणु
+	},
+	[ALC662_FIXUP_NO_JACK_DETECT] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_no_jack_detect,
-	पूर्ण,
-	[ALC662_FIXUP_ZOTAC_Z68] = अणु
+	},
+	[ALC662_FIXUP_ZOTAC_Z68] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1b, 0x02214020 पूर्ण, /* Front HP */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC662_FIXUP_INV_DMIC] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1b, 0x02214020 }, /* Front HP */
+			{ }
+		}
+	},
+	[ALC662_FIXUP_INV_DMIC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_inv_dmic,
-	पूर्ण,
-	[ALC668_FIXUP_DELL_XPS13] = अणु
+	},
+	[ALC668_FIXUP_DELL_XPS13] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_dell_xps13,
 		.chained = true,
 		.chain_id = ALC668_FIXUP_DELL_DISABLE_AAMIX
-	पूर्ण,
-	[ALC668_FIXUP_DELL_DISABLE_AAMIX] = अणु
+	},
+	[ALC668_FIXUP_DELL_DISABLE_AAMIX] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_disable_aamix,
 		.chained = true,
 		.chain_id = ALC668_FIXUP_DELL_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC668_FIXUP_AUTO_MUTE] = अणु
+	},
+	[ALC668_FIXUP_AUTO_MUTE] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_स्वतः_mute_via_amp,
+		.v.func = alc_fixup_auto_mute_via_amp,
 		.chained = true,
 		.chain_id = ALC668_FIXUP_DELL_MIC_NO_PRESENCE
-	पूर्ण,
-	[ALC662_FIXUP_DELL_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC662_FIXUP_DELL_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a1113c पूर्ण, /* use as headset mic, without its own jack detect */
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a1113c }, /* use as headset mic, without its own jack detect */
 			/* headphone mic by setting pin control of 0x1b (headphone out) to in + vref_50 */
-			अणु पूर्ण
-		पूर्ण,
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC662_FIXUP_HEADSET_MODE] = अणु
+	},
+	[ALC662_FIXUP_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_alc662,
-	पूर्ण,
-	[ALC668_FIXUP_DELL_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC668_FIXUP_DELL_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु 0x1b, 0x03a1113c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a1913d }, /* use as headphone mic, without its own jack detect */
+			{ 0x1b, 0x03a1113c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC668_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC668_FIXUP_HEADSET_MODE] = अणु
+	},
+	[ALC668_FIXUP_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_alc668,
-	पूर्ण,
-	[ALC662_FIXUP_BASS_MODE4_CHMAP] = अणु
+	},
+	[ALC662_FIXUP_BASS_MODE4_CHMAP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_bass_chmap,
 		.chained = true,
 		.chain_id = ALC662_FIXUP_ASUS_MODE4
-	पूर्ण,
-	[ALC662_FIXUP_BASS_16] = अणु
+	},
+	[ALC662_FIXUP_BASS_16] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु0x16, 0x80106111पूर्ण, /* bass speaker */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{0x16, 0x80106111}, /* bass speaker */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_BASS_CHMAP,
-	पूर्ण,
-	[ALC662_FIXUP_BASS_1A] = अणु
+	},
+	[ALC662_FIXUP_BASS_1A] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु0x1a, 0x80106111पूर्ण, /* bass speaker */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{0x1a, 0x80106111}, /* bass speaker */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_BASS_CHMAP,
-	पूर्ण,
-	[ALC662_FIXUP_BASS_CHMAP] = अणु
+	},
+	[ALC662_FIXUP_BASS_CHMAP] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_bass_chmap,
-	पूर्ण,
-	[ALC662_FIXUP_ASUS_Nx50] = अणु
+	},
+	[ALC662_FIXUP_ASUS_Nx50] = {
 		.type = HDA_FIXUP_FUNC,
-		.v.func = alc_fixup_स्वतः_mute_via_amp,
+		.v.func = alc_fixup_auto_mute_via_amp,
 		.chained = true,
 		.chain_id = ALC662_FIXUP_BASS_1A
-	पूर्ण,
-	[ALC668_FIXUP_ASUS_Nx51_HEADSET_MODE] = अणु
+	},
+	[ALC668_FIXUP_ASUS_Nx51_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode_alc668,
 		.chain_id = ALC662_FIXUP_BASS_CHMAP
-	पूर्ण,
-	[ALC668_FIXUP_ASUS_Nx51] = अणु
+	},
+	[ALC668_FIXUP_ASUS_Nx51] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु 0x1a, 0x90170151 पूर्ण, /* bass speaker */
-			अणु 0x1b, 0x03a1113c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a1913d }, /* use as headphone mic, without its own jack detect */
+			{ 0x1a, 0x90170151 }, /* bass speaker */
+			{ 0x1b, 0x03a1113c }, /* use as headset mic, without its own jack detect */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC668_FIXUP_ASUS_Nx51_HEADSET_MODE,
-	पूर्ण,
-	[ALC668_FIXUP_MIC_COEF] = अणु
+	},
+	[ALC668_FIXUP_MIC_COEF] = {
 		.type = HDA_FIXUP_VERBS,
-		.v.verbs = (स्थिर काष्ठा hda_verb[]) अणु
-			अणु 0x20, AC_VERB_SET_COEF_INDEX, 0xc3 पूर्ण,
-			अणु 0x20, AC_VERB_SET_PROC_COEF, 0x4000 पूर्ण,
-			अणुपूर्ण
-		पूर्ण,
-	पूर्ण,
-	[ALC668_FIXUP_ASUS_G751] = अणु
+		.v.verbs = (const struct hda_verb[]) {
+			{ 0x20, AC_VERB_SET_COEF_INDEX, 0xc3 },
+			{ 0x20, AC_VERB_SET_PROC_COEF, 0x4000 },
+			{}
+		},
+	},
+	[ALC668_FIXUP_ASUS_G751] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x16, 0x0421101f पूर्ण, /* HP */
-			अणुपूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x16, 0x0421101f }, /* HP */
+			{}
+		},
 		.chained = true,
 		.chain_id = ALC668_FIXUP_MIC_COEF
-	पूर्ण,
-	[ALC891_FIXUP_HEADSET_MODE] = अणु
+	},
+	[ALC891_FIXUP_HEADSET_MODE] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc_fixup_headset_mode,
-	पूर्ण,
-	[ALC891_FIXUP_DELL_MIC_NO_PRESENCE] = अणु
+	},
+	[ALC891_FIXUP_DELL_MIC_NO_PRESENCE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x03a1913d पूर्ण, /* use as headphone mic, without its own jack detect */
-			अणु 0x1b, 0x03a1113c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x03a1913d }, /* use as headphone mic, without its own jack detect */
+			{ 0x1b, 0x03a1113c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC891_FIXUP_HEADSET_MODE
-	पूर्ण,
-	[ALC662_FIXUP_ACER_VERITON] = अणु
+	},
+	[ALC662_FIXUP_ACER_VERITON] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x50170120 पूर्ण, /* no पूर्णांकernal speaker */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC892_FIXUP_ASROCK_MOBO] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x50170120 }, /* no internal speaker */
+			{ }
+		}
+	},
+	[ALC892_FIXUP_ASROCK_MOBO] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x40f000f0 पूर्ण, /* disabled */
-			अणु 0x16, 0x40f000f0 पूर्ण, /* disabled */
-			अणु पूर्ण
-		पूर्ण
-	पूर्ण,
-	[ALC662_FIXUP_USI_FUNC] = अणु
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x40f000f0 }, /* disabled */
+			{ 0x16, 0x40f000f0 }, /* disabled */
+			{ }
+		}
+	},
+	[ALC662_FIXUP_USI_FUNC] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc662_fixup_usi_headset_mic,
-	पूर्ण,
-	[ALC662_FIXUP_USI_HEADSET_MODE] = अणु
+	},
+	[ALC662_FIXUP_USI_HEADSET_MODE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x19, 0x02a1913c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x18, 0x01a1903d पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x19, 0x02a1913c }, /* use as headset mic, without its own jack detect */
+			{ 0x18, 0x01a1903d },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_USI_FUNC
-	पूर्ण,
-	[ALC662_FIXUP_LENOVO_MULTI_CODECS] = अणु
+	},
+	[ALC662_FIXUP_LENOVO_MULTI_CODECS] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc233_alc662_fixup_lenovo_dual_codecs,
-	पूर्ण,
-	[ALC669_FIXUP_ACER_ASPIRE_ETHOS_HEADSET] = अणु
+	},
+	[ALC669_FIXUP_ACER_ASPIRE_ETHOS_HEADSET] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc662_fixup_aspire_ethos_hp,
-	पूर्ण,
-	[ALC669_FIXUP_ACER_ASPIRE_ETHOS] = अणु
+	},
+	[ALC669_FIXUP_ACER_ASPIRE_ETHOS] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x15, 0x92130110 पूर्ण, /* front speakers */
-			अणु 0x18, 0x99130111 पूर्ण, /* center/subwoofer */
-			अणु 0x1b, 0x11130012 पूर्ण, /* surround plus jack क्रम HP */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x15, 0x92130110 }, /* front speakers */
+			{ 0x18, 0x99130111 }, /* center/subwoofer */
+			{ 0x1b, 0x11130012 }, /* surround plus jack for HP */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC669_FIXUP_ACER_ASPIRE_ETHOS_HEADSET
-	पूर्ण,
-	[ALC671_FIXUP_HP_HEADSET_MIC2] = अणु
+	},
+	[ALC671_FIXUP_HP_HEADSET_MIC2] = {
 		.type = HDA_FIXUP_FUNC,
 		.v.func = alc671_fixup_hp_headset_mic2,
-	पूर्ण,
-	[ALC662_FIXUP_ACER_X2660G_HEADSET_MODE] = अणु
+	},
+	[ALC662_FIXUP_ACER_X2660G_HEADSET_MODE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1a, 0x02a1113c पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x02a1113c }, /* use as headset mic, without its own jack detect */
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_USI_FUNC
-	पूर्ण,
-	[ALC662_FIXUP_ACER_NITRO_HEADSET_MODE] = अणु
+	},
+	[ALC662_FIXUP_ACER_NITRO_HEADSET_MODE] = {
 		.type = HDA_FIXUP_PINS,
-		.v.pins = (स्थिर काष्ठा hda_pपूर्णांकbl[]) अणु
-			अणु 0x1a, 0x01a11140 पूर्ण, /* use as headset mic, without its own jack detect */
-			अणु 0x1b, 0x0221144f पूर्ण,
-			अणु पूर्ण
-		पूर्ण,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x01a11140 }, /* use as headset mic, without its own jack detect */
+			{ 0x1b, 0x0221144f },
+			{ }
+		},
 		.chained = true,
 		.chain_id = ALC662_FIXUP_USI_FUNC
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा snd_pci_quirk alc662_fixup_tbl[] = अणु
+static const struct snd_pci_quirk alc662_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1019, 0x9087, "ECS", ALC662_FIXUP_ASUS_MODE2),
 	SND_PCI_QUIRK(0x1025, 0x022f, "Acer Aspire One", ALC662_FIXUP_INV_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x0241, "Packard Bell DOTS", ALC662_FIXUP_INV_DMIC),
@@ -10361,10 +10360,10 @@
 	SND_PCI_QUIRK(0x1b35, 0x1234, "CZC ET26", ALC662_FIXUP_CZC_ET26),
 	SND_PCI_QUIRK(0x1b35, 0x2206, "CZC P10T", ALC662_FIXUP_CZC_P10T),
 
-#अगर 0
+#if 0
 	/* Below is a quirk table taken from the old code.
 	 * Basically the device should work as is without the fixup table.
-	 * If BIOS करोesn't give a proper info, enable the corresponding
+	 * If BIOS doesn't give a proper info, enable the corresponding
 	 * fixup entry.
 	 */
 	SND_PCI_QUIRK(0x1043, 0x1000, "ASUS N50Vm", ALC662_FIXUP_ASUS_MODE1),
@@ -10417,115 +10416,115 @@
 	SND_PCI_QUIRK(0x1043, 0x19c3, "ASUS F5Z/F6x", ALC662_FIXUP_ASUS_MODE2),
 	SND_PCI_QUIRK(0x1043, 0x19e3, "ASUS NB", ALC662_FIXUP_ASUS_MODE1),
 	SND_PCI_QUIRK(0x1043, 0x19f3, "ASUS NB", ALC662_FIXUP_ASUS_MODE4),
-#पूर्ण_अगर
-	अणुपूर्ण
-पूर्ण;
+#endif
+	{}
+};
 
-अटल स्थिर काष्ठा hda_model_fixup alc662_fixup_models[] = अणु
-	अणु.id = ALC662_FIXUP_ASPIRE, .name = "aspire"पूर्ण,
-	अणु.id = ALC662_FIXUP_IDEAPAD, .name = "ideapad"पूर्ण,
-	अणु.id = ALC272_FIXUP_MARIO, .name = "mario"पूर्ण,
-	अणु.id = ALC662_FIXUP_HP_RP5800, .name = "hp-rp5800"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE1, .name = "asus-mode1"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE2, .name = "asus-mode2"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE3, .name = "asus-mode3"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE4, .name = "asus-mode4"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE5, .name = "asus-mode5"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE6, .name = "asus-mode6"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE7, .name = "asus-mode7"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_MODE8, .name = "asus-mode8"पूर्ण,
-	अणु.id = ALC662_FIXUP_ZOTAC_Z68, .name = "zotac-z68"पूर्ण,
-	अणु.id = ALC662_FIXUP_INV_DMIC, .name = "inv-dmic"पूर्ण,
-	अणु.id = ALC662_FIXUP_DELL_MIC_NO_PRESENCE, .name = "alc662-headset-multi"पूर्ण,
-	अणु.id = ALC668_FIXUP_DELL_MIC_NO_PRESENCE, .name = "dell-headset-multi"पूर्ण,
-	अणु.id = ALC662_FIXUP_HEADSET_MODE, .name = "alc662-headset"पूर्ण,
-	अणु.id = ALC668_FIXUP_HEADSET_MODE, .name = "alc668-headset"पूर्ण,
-	अणु.id = ALC662_FIXUP_BASS_16, .name = "bass16"पूर्ण,
-	अणु.id = ALC662_FIXUP_BASS_1A, .name = "bass1a"पूर्ण,
-	अणु.id = ALC668_FIXUP_AUTO_MUTE, .name = "automute"पूर्ण,
-	अणु.id = ALC668_FIXUP_DELL_XPS13, .name = "dell-xps13"पूर्ण,
-	अणु.id = ALC662_FIXUP_ASUS_Nx50, .name = "asus-nx50"पूर्ण,
-	अणु.id = ALC668_FIXUP_ASUS_Nx51, .name = "asus-nx51"पूर्ण,
-	अणु.id = ALC668_FIXUP_ASUS_G751, .name = "asus-g751"पूर्ण,
-	अणु.id = ALC891_FIXUP_HEADSET_MODE, .name = "alc891-headset"पूर्ण,
-	अणु.id = ALC891_FIXUP_DELL_MIC_NO_PRESENCE, .name = "alc891-headset-multi"पूर्ण,
-	अणु.id = ALC662_FIXUP_ACER_VERITON, .name = "acer-veriton"पूर्ण,
-	अणु.id = ALC892_FIXUP_ASROCK_MOBO, .name = "asrock-mobo"पूर्ण,
-	अणु.id = ALC662_FIXUP_USI_HEADSET_MODE, .name = "usi-headset"पूर्ण,
-	अणु.id = ALC662_FIXUP_LENOVO_MULTI_CODECS, .name = "dual-codecs"पूर्ण,
-	अणु.id = ALC669_FIXUP_ACER_ASPIRE_ETHOS, .name = "aspire-ethos"पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct hda_model_fixup alc662_fixup_models[] = {
+	{.id = ALC662_FIXUP_ASPIRE, .name = "aspire"},
+	{.id = ALC662_FIXUP_IDEAPAD, .name = "ideapad"},
+	{.id = ALC272_FIXUP_MARIO, .name = "mario"},
+	{.id = ALC662_FIXUP_HP_RP5800, .name = "hp-rp5800"},
+	{.id = ALC662_FIXUP_ASUS_MODE1, .name = "asus-mode1"},
+	{.id = ALC662_FIXUP_ASUS_MODE2, .name = "asus-mode2"},
+	{.id = ALC662_FIXUP_ASUS_MODE3, .name = "asus-mode3"},
+	{.id = ALC662_FIXUP_ASUS_MODE4, .name = "asus-mode4"},
+	{.id = ALC662_FIXUP_ASUS_MODE5, .name = "asus-mode5"},
+	{.id = ALC662_FIXUP_ASUS_MODE6, .name = "asus-mode6"},
+	{.id = ALC662_FIXUP_ASUS_MODE7, .name = "asus-mode7"},
+	{.id = ALC662_FIXUP_ASUS_MODE8, .name = "asus-mode8"},
+	{.id = ALC662_FIXUP_ZOTAC_Z68, .name = "zotac-z68"},
+	{.id = ALC662_FIXUP_INV_DMIC, .name = "inv-dmic"},
+	{.id = ALC662_FIXUP_DELL_MIC_NO_PRESENCE, .name = "alc662-headset-multi"},
+	{.id = ALC668_FIXUP_DELL_MIC_NO_PRESENCE, .name = "dell-headset-multi"},
+	{.id = ALC662_FIXUP_HEADSET_MODE, .name = "alc662-headset"},
+	{.id = ALC668_FIXUP_HEADSET_MODE, .name = "alc668-headset"},
+	{.id = ALC662_FIXUP_BASS_16, .name = "bass16"},
+	{.id = ALC662_FIXUP_BASS_1A, .name = "bass1a"},
+	{.id = ALC668_FIXUP_AUTO_MUTE, .name = "automute"},
+	{.id = ALC668_FIXUP_DELL_XPS13, .name = "dell-xps13"},
+	{.id = ALC662_FIXUP_ASUS_Nx50, .name = "asus-nx50"},
+	{.id = ALC668_FIXUP_ASUS_Nx51, .name = "asus-nx51"},
+	{.id = ALC668_FIXUP_ASUS_G751, .name = "asus-g751"},
+	{.id = ALC891_FIXUP_HEADSET_MODE, .name = "alc891-headset"},
+	{.id = ALC891_FIXUP_DELL_MIC_NO_PRESENCE, .name = "alc891-headset-multi"},
+	{.id = ALC662_FIXUP_ACER_VERITON, .name = "acer-veriton"},
+	{.id = ALC892_FIXUP_ASROCK_MOBO, .name = "asrock-mobo"},
+	{.id = ALC662_FIXUP_USI_HEADSET_MODE, .name = "usi-headset"},
+	{.id = ALC662_FIXUP_LENOVO_MULTI_CODECS, .name = "dual-codecs"},
+	{.id = ALC669_FIXUP_ACER_ASPIRE_ETHOS, .name = "aspire-ethos"},
+	{}
+};
 
-अटल स्थिर काष्ठा snd_hda_pin_quirk alc662_pin_fixup_tbl[] = अणु
+static const struct snd_hda_pin_quirk alc662_pin_fixup_tbl[] = {
 	SND_HDA_PIN_QUIRK(0x10ec0867, 0x1028, "Dell", ALC891_FIXUP_DELL_MIC_NO_PRESENCE,
-		अणु0x17, 0x02211010पूर्ण,
-		अणु0x18, 0x01a19030पूर्ण,
-		अणु0x1a, 0x01813040पूर्ण,
-		अणु0x21, 0x01014020पूर्ण),
+		{0x17, 0x02211010},
+		{0x18, 0x01a19030},
+		{0x1a, 0x01813040},
+		{0x21, 0x01014020}),
 	SND_HDA_PIN_QUIRK(0x10ec0867, 0x1028, "Dell", ALC891_FIXUP_DELL_MIC_NO_PRESENCE,
-		अणु0x16, 0x01813030पूर्ण,
-		अणु0x17, 0x02211010पूर्ण,
-		अणु0x18, 0x01a19040पूर्ण,
-		अणु0x21, 0x01014020पूर्ण),
+		{0x16, 0x01813030},
+		{0x17, 0x02211010},
+		{0x18, 0x01a19040},
+		{0x21, 0x01014020}),
 	SND_HDA_PIN_QUIRK(0x10ec0662, 0x1028, "Dell", ALC662_FIXUP_DELL_MIC_NO_PRESENCE,
-		अणु0x14, 0x01014010पूर्ण,
-		अणु0x18, 0x01a19020पूर्ण,
-		अणु0x1a, 0x0181302fपूर्ण,
-		अणु0x1b, 0x0221401fपूर्ण),
+		{0x14, 0x01014010},
+		{0x18, 0x01a19020},
+		{0x1a, 0x0181302f},
+		{0x1b, 0x0221401f}),
 	SND_HDA_PIN_QUIRK(0x10ec0668, 0x1028, "Dell", ALC668_FIXUP_AUTO_MUTE,
-		अणु0x12, 0x99a30130पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0321101fपूर्ण,
-		अणु0x16, 0x03011020पूर्ण),
+		{0x12, 0x99a30130},
+		{0x14, 0x90170110},
+		{0x15, 0x0321101f},
+		{0x16, 0x03011020}),
 	SND_HDA_PIN_QUIRK(0x10ec0668, 0x1028, "Dell", ALC668_FIXUP_AUTO_MUTE,
-		अणु0x12, 0x99a30140पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0321101fपूर्ण,
-		अणु0x16, 0x03011020पूर्ण),
+		{0x12, 0x99a30140},
+		{0x14, 0x90170110},
+		{0x15, 0x0321101f},
+		{0x16, 0x03011020}),
 	SND_HDA_PIN_QUIRK(0x10ec0668, 0x1028, "Dell", ALC668_FIXUP_AUTO_MUTE,
-		अणु0x12, 0x99a30150पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0321101fपूर्ण,
-		अणु0x16, 0x03011020पूर्ण),
+		{0x12, 0x99a30150},
+		{0x14, 0x90170110},
+		{0x15, 0x0321101f},
+		{0x16, 0x03011020}),
 	SND_HDA_PIN_QUIRK(0x10ec0668, 0x1028, "Dell", ALC668_FIXUP_AUTO_MUTE,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0321101fपूर्ण,
-		अणु0x16, 0x03011020पूर्ण),
+		{0x14, 0x90170110},
+		{0x15, 0x0321101f},
+		{0x16, 0x03011020}),
 	SND_HDA_PIN_QUIRK(0x10ec0668, 0x1028, "Dell XPS 15", ALC668_FIXUP_AUTO_MUTE,
-		अणु0x12, 0x90a60130पूर्ण,
-		अणु0x14, 0x90170110पूर्ण,
-		अणु0x15, 0x0321101fपूर्ण),
+		{0x12, 0x90a60130},
+		{0x14, 0x90170110},
+		{0x15, 0x0321101f}),
 	SND_HDA_PIN_QUIRK(0x10ec0671, 0x103c, "HP cPC", ALC671_FIXUP_HP_HEADSET_MIC2,
-		अणु0x14, 0x01014010पूर्ण,
-		अणु0x17, 0x90170150पूर्ण,
-		अणु0x19, 0x02a11060पूर्ण,
-		अणु0x1b, 0x01813030पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x14, 0x01014010},
+		{0x17, 0x90170150},
+		{0x19, 0x02a11060},
+		{0x1b, 0x01813030},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0671, 0x103c, "HP cPC", ALC671_FIXUP_HP_HEADSET_MIC2,
-		अणु0x14, 0x01014010पूर्ण,
-		अणु0x18, 0x01a19040पूर्ण,
-		अणु0x1b, 0x01813030पूर्ण,
-		अणु0x21, 0x02211020पूर्ण),
+		{0x14, 0x01014010},
+		{0x18, 0x01a19040},
+		{0x1b, 0x01813030},
+		{0x21, 0x02211020}),
 	SND_HDA_PIN_QUIRK(0x10ec0671, 0x103c, "HP cPC", ALC671_FIXUP_HP_HEADSET_MIC2,
-		अणु0x14, 0x01014020पूर्ण,
-		अणु0x17, 0x90170110पूर्ण,
-		अणु0x18, 0x01a19050पूर्ण,
-		अणु0x1b, 0x01813040पूर्ण,
-		अणु0x21, 0x02211030पूर्ण),
-	अणुपूर्ण
-पूर्ण;
+		{0x14, 0x01014020},
+		{0x17, 0x90170110},
+		{0x18, 0x01a19050},
+		{0x1b, 0x01813040},
+		{0x21, 0x02211030}),
+	{}
+};
 
 /*
  */
-अटल पूर्णांक patch_alc662(काष्ठा hda_codec *codec)
-अणु
-	काष्ठा alc_spec *spec;
-	पूर्णांक err;
+static int patch_alc662(struct hda_codec *codec)
+{
+	struct alc_spec *spec;
+	int err;
 
 	err = alc_alloc_spec(codec, 0x0b);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	spec = codec->spec;
 
@@ -10536,11 +10535,11 @@
 
 	alc_fix_pll_init(codec, 0x20, 0x04, 15);
 
-	चयन (codec->core.venकरोr_id) अणु
-	हाल 0x10ec0668:
-		spec->init_hook = alc668_restore_शेष_value;
-		अवरोध;
-	पूर्ण
+	switch (codec->core.vendor_id) {
+	case 0x10ec0668:
+		spec->init_hook = alc668_restore_default_value;
+		break;
+	}
 
 	alc_pre_init(codec);
 
@@ -10549,86 +10548,86 @@
 	snd_hda_pick_pin_fixup(codec, alc662_pin_fixup_tbl, alc662_fixups, true);
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PRE_PROBE);
 
-	alc_स्वतः_parse_customize_define(codec);
+	alc_auto_parse_customize_define(codec);
 
-	अगर (has_cdefine_beep(codec))
+	if (has_cdefine_beep(codec))
 		spec->gen.beep_nid = 0x01;
 
-	अगर ((alc_get_coef0(codec) & (1 << 14)) &&
-	    codec->bus->pci && codec->bus->pci->subप्रणाली_venकरोr == 0x1025 &&
-	    spec->cdefine.platक्रमm_type == 1) अणु
-		err = alc_codec_नाम(codec, "ALC272X");
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+	if ((alc_get_coef0(codec) & (1 << 14)) &&
+	    codec->bus->pci && codec->bus->pci->subsystem_vendor == 0x1025 &&
+	    spec->cdefine.platform_type == 1) {
+		err = alc_codec_rename(codec, "ALC272X");
+		if (err < 0)
+			goto error;
+	}
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc662_parse_स्वतः_config(codec);
-	अगर (err < 0)
-		जाओ error;
+	/* automatic parse from the BIOS config */
+	err = alc662_parse_auto_config(codec);
+	if (err < 0)
+		goto error;
 
-	अगर (!spec->gen.no_analog && spec->gen.beep_nid) अणु
-		चयन (codec->core.venकरोr_id) अणु
-		हाल 0x10ec0662:
+	if (!spec->gen.no_analog && spec->gen.beep_nid) {
+		switch (codec->core.vendor_id) {
+		case 0x10ec0662:
 			err = set_beep_amp(spec, 0x0b, 0x05, HDA_INPUT);
-			अवरोध;
-		हाल 0x10ec0272:
-		हाल 0x10ec0663:
-		हाल 0x10ec0665:
-		हाल 0x10ec0668:
+			break;
+		case 0x10ec0272:
+		case 0x10ec0663:
+		case 0x10ec0665:
+		case 0x10ec0668:
 			err = set_beep_amp(spec, 0x0b, 0x04, HDA_INPUT);
-			अवरोध;
-		हाल 0x10ec0273:
+			break;
+		case 0x10ec0273:
 			err = set_beep_amp(spec, 0x0b, 0x03, HDA_INPUT);
-			अवरोध;
-		पूर्ण
-		अगर (err < 0)
-			जाओ error;
-	पूर्ण
+			break;
+		}
+		if (err < 0)
+			goto error;
+	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);
 
-	वापस 0;
+	return 0;
 
  error:
-	alc_मुक्त(codec);
-	वापस err;
-पूर्ण
+	alc_free(codec);
+	return err;
+}
 
 /*
  * ALC680 support
  */
 
-अटल पूर्णांक alc680_parse_स्वतः_config(काष्ठा hda_codec *codec)
-अणु
-	वापस alc_parse_स्वतः_config(codec, शून्य, शून्य);
-पूर्ण
+static int alc680_parse_auto_config(struct hda_codec *codec)
+{
+	return alc_parse_auto_config(codec, NULL, NULL);
+}
 
 /*
  */
-अटल पूर्णांक patch_alc680(काष्ठा hda_codec *codec)
-अणु
-	पूर्णांक err;
+static int patch_alc680(struct hda_codec *codec)
+{
+	int err;
 
 	/* ALC680 has no aa-loopback mixer */
 	err = alc_alloc_spec(codec, 0);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* स्वतःmatic parse from the BIOS config */
-	err = alc680_parse_स्वतः_config(codec);
-	अगर (err < 0) अणु
-		alc_मुक्त(codec);
-		वापस err;
-	पूर्ण
+	/* automatic parse from the BIOS config */
+	err = alc680_parse_auto_config(codec);
+	if (err < 0) {
+		alc_free(codec);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * patch entries
  */
-अटल स्थिर काष्ठा hda_device_id snd_hda_id_realtek[] = अणु
+static const struct hda_device_id snd_hda_id_realtek[] = {
 	HDA_CODEC_ENTRY(0x10ec0215, "ALC215", patch_alc269),
 	HDA_CODEC_ENTRY(0x10ec0221, "ALC221", patch_alc269),
 	HDA_CODEC_ENTRY(0x10ec0222, "ALC222", patch_alc269),
@@ -10706,15 +10705,15 @@
 	HDA_CODEC_ENTRY(0x10ec0b00, "ALCS1200A", patch_alc882),
 	HDA_CODEC_ENTRY(0x10ec1168, "ALC1220", patch_alc882),
 	HDA_CODEC_ENTRY(0x10ec1220, "ALC1220", patch_alc882),
-	अणुपूर्ण /* terminator */
-पूर्ण;
+	{} /* terminator */
+};
 MODULE_DEVICE_TABLE(hdaudio, snd_hda_id_realtek);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Realtek HD-audio codec");
 
-अटल काष्ठा hda_codec_driver realtek_driver = अणु
+static struct hda_codec_driver realtek_driver = {
 	.id = snd_hda_id_realtek,
-पूर्ण;
+};
 
 module_hda_codec_driver(realtek_driver);

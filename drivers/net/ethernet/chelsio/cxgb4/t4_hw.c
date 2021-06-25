@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
+ * This file is part of the Chelsio T4 Ethernet driver for Linux.
  *
  * Copyright (c) 2003-2016 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,157 +32,157 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/delay.h>
-#समावेश "cxgb4.h"
-#समावेश "t4_regs.h"
-#समावेश "t4_values.h"
-#समावेश "t4fw_api.h"
-#समावेश "t4fw_version.h"
+#include <linux/delay.h>
+#include "cxgb4.h"
+#include "t4_regs.h"
+#include "t4_values.h"
+#include "t4fw_api.h"
+#include "t4fw_version.h"
 
 /**
- *	t4_रुको_op_करोne_val - रुको until an operation is completed
- *	@adapter: the adapter perक्रमming the operation
- *	@reg: the रेजिस्टर to check क्रम completion
+ *	t4_wait_op_done_val - wait until an operation is completed
+ *	@adapter: the adapter performing the operation
+ *	@reg: the register to check for completion
  *	@mask: a single-bit field within @reg that indicates completion
  *	@polarity: the value of the field when the operation is completed
  *	@attempts: number of check iterations
  *	@delay: delay in usecs between iterations
- *	@valp: where to store the value of the रेजिस्टर at completion समय
+ *	@valp: where to store the value of the register at completion time
  *
- *	Wait until an operation is completed by checking a bit in a रेजिस्टर
- *	up to @attempts बार.  If @valp is not शून्य the value of the रेजिस्टर
- *	at the समय it indicated completion is stored there.  Returns 0 अगर the
+ *	Wait until an operation is completed by checking a bit in a register
+ *	up to @attempts times.  If @valp is not NULL the value of the register
+ *	at the time it indicated completion is stored there.  Returns 0 if the
  *	operation completes and	-EAGAIN	otherwise.
  */
-अटल पूर्णांक t4_रुको_op_करोne_val(काष्ठा adapter *adapter, पूर्णांक reg, u32 mask,
-			       पूर्णांक polarity, पूर्णांक attempts, पूर्णांक delay, u32 *valp)
-अणु
-	जबतक (1) अणु
-		u32 val = t4_पढ़ो_reg(adapter, reg);
+static int t4_wait_op_done_val(struct adapter *adapter, int reg, u32 mask,
+			       int polarity, int attempts, int delay, u32 *valp)
+{
+	while (1) {
+		u32 val = t4_read_reg(adapter, reg);
 
-		अगर (!!(val & mask) == polarity) अणु
-			अगर (valp)
+		if (!!(val & mask) == polarity) {
+			if (valp)
 				*valp = val;
-			वापस 0;
-		पूर्ण
-		अगर (--attempts == 0)
-			वापस -EAGAIN;
-		अगर (delay)
+			return 0;
+		}
+		if (--attempts == 0)
+			return -EAGAIN;
+		if (delay)
 			udelay(delay);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत पूर्णांक t4_रुको_op_करोne(काष्ठा adapter *adapter, पूर्णांक reg, u32 mask,
-				  पूर्णांक polarity, पूर्णांक attempts, पूर्णांक delay)
-अणु
-	वापस t4_रुको_op_करोne_val(adapter, reg, mask, polarity, attempts,
-				   delay, शून्य);
-पूर्ण
+static inline int t4_wait_op_done(struct adapter *adapter, int reg, u32 mask,
+				  int polarity, int attempts, int delay)
+{
+	return t4_wait_op_done_val(adapter, reg, mask, polarity, attempts,
+				   delay, NULL);
+}
 
 /**
- *	t4_set_reg_field - set a रेजिस्टर field to a value
+ *	t4_set_reg_field - set a register field to a value
  *	@adapter: the adapter to program
- *	@addr: the रेजिस्टर address
- *	@mask: specअगरies the portion of the रेजिस्टर to modअगरy
- *	@val: the new value क्रम the रेजिस्टर field
+ *	@addr: the register address
+ *	@mask: specifies the portion of the register to modify
+ *	@val: the new value for the register field
  *
- *	Sets a रेजिस्टर field specअगरied by the supplied mask to the
+ *	Sets a register field specified by the supplied mask to the
  *	given value.
  */
-व्योम t4_set_reg_field(काष्ठा adapter *adapter, अचिन्हित पूर्णांक addr, u32 mask,
+void t4_set_reg_field(struct adapter *adapter, unsigned int addr, u32 mask,
 		      u32 val)
-अणु
-	u32 v = t4_पढ़ो_reg(adapter, addr) & ~mask;
+{
+	u32 v = t4_read_reg(adapter, addr) & ~mask;
 
-	t4_ग_लिखो_reg(adapter, addr, v | val);
-	(व्योम) t4_पढ़ो_reg(adapter, addr);      /* flush */
-पूर्ण
+	t4_write_reg(adapter, addr, v | val);
+	(void) t4_read_reg(adapter, addr);      /* flush */
+}
 
 /**
- *	t4_पढ़ो_indirect - पढ़ो indirectly addressed रेजिस्टरs
+ *	t4_read_indirect - read indirectly addressed registers
  *	@adap: the adapter
- *	@addr_reg: रेजिस्टर holding the indirect address
- *	@data_reg: रेजिस्टर holding the value of the indirect रेजिस्टर
- *	@vals: where the पढ़ो रेजिस्टर values are stored
- *	@nregs: how many indirect रेजिस्टरs to पढ़ो
- *	@start_idx: index of first indirect रेजिस्टर to पढ़ो
+ *	@addr_reg: register holding the indirect address
+ *	@data_reg: register holding the value of the indirect register
+ *	@vals: where the read register values are stored
+ *	@nregs: how many indirect registers to read
+ *	@start_idx: index of first indirect register to read
  *
- *	Reads रेजिस्टरs that are accessed indirectly through an address/data
- *	रेजिस्टर pair.
+ *	Reads registers that are accessed indirectly through an address/data
+ *	register pair.
  */
-व्योम t4_पढ़ो_indirect(काष्ठा adapter *adap, अचिन्हित पूर्णांक addr_reg,
-			     अचिन्हित पूर्णांक data_reg, u32 *vals,
-			     अचिन्हित पूर्णांक nregs, अचिन्हित पूर्णांक start_idx)
-अणु
-	जबतक (nregs--) अणु
-		t4_ग_लिखो_reg(adap, addr_reg, start_idx);
-		*vals++ = t4_पढ़ो_reg(adap, data_reg);
+void t4_read_indirect(struct adapter *adap, unsigned int addr_reg,
+			     unsigned int data_reg, u32 *vals,
+			     unsigned int nregs, unsigned int start_idx)
+{
+	while (nregs--) {
+		t4_write_reg(adap, addr_reg, start_idx);
+		*vals++ = t4_read_reg(adap, data_reg);
 		start_idx++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	t4_ग_लिखो_indirect - ग_लिखो indirectly addressed रेजिस्टरs
+ *	t4_write_indirect - write indirectly addressed registers
  *	@adap: the adapter
- *	@addr_reg: रेजिस्टर holding the indirect addresses
- *	@data_reg: रेजिस्टर holding the value क्रम the indirect रेजिस्टरs
- *	@vals: values to ग_लिखो
- *	@nregs: how many indirect रेजिस्टरs to ग_लिखो
- *	@start_idx: address of first indirect रेजिस्टर to ग_लिखो
+ *	@addr_reg: register holding the indirect addresses
+ *	@data_reg: register holding the value for the indirect registers
+ *	@vals: values to write
+ *	@nregs: how many indirect registers to write
+ *	@start_idx: address of first indirect register to write
  *
- *	Writes a sequential block of रेजिस्टरs that are accessed indirectly
- *	through an address/data रेजिस्टर pair.
+ *	Writes a sequential block of registers that are accessed indirectly
+ *	through an address/data register pair.
  */
-व्योम t4_ग_लिखो_indirect(काष्ठा adapter *adap, अचिन्हित पूर्णांक addr_reg,
-		       अचिन्हित पूर्णांक data_reg, स्थिर u32 *vals,
-		       अचिन्हित पूर्णांक nregs, अचिन्हित पूर्णांक start_idx)
-अणु
-	जबतक (nregs--) अणु
-		t4_ग_लिखो_reg(adap, addr_reg, start_idx++);
-		t4_ग_लिखो_reg(adap, data_reg, *vals++);
-	पूर्ण
-पूर्ण
+void t4_write_indirect(struct adapter *adap, unsigned int addr_reg,
+		       unsigned int data_reg, const u32 *vals,
+		       unsigned int nregs, unsigned int start_idx)
+{
+	while (nregs--) {
+		t4_write_reg(adap, addr_reg, start_idx++);
+		t4_write_reg(adap, data_reg, *vals++);
+	}
+}
 
 /*
- * Read a 32-bit PCI Configuration Space रेजिस्टर via the PCI-E backकरोor
- * mechanism.  This guarantees that we get the real value even अगर we're
+ * Read a 32-bit PCI Configuration Space register via the PCI-E backdoor
+ * mechanism.  This guarantees that we get the real value even if we're
  * operating within a Virtual Machine and the Hypervisor is trapping our
  * Configuration Space accesses.
  */
-व्योम t4_hw_pci_पढ़ो_cfg4(काष्ठा adapter *adap, पूर्णांक reg, u32 *val)
-अणु
+void t4_hw_pci_read_cfg4(struct adapter *adap, int reg, u32 *val)
+{
 	u32 req = FUNCTION_V(adap->pf) | REGISTER_V(reg);
 
-	अगर (CHELSIO_CHIP_VERSION(adap->params.chip) <= CHELSIO_T5)
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) <= CHELSIO_T5)
 		req |= ENABLE_F;
-	अन्यथा
+	else
 		req |= T6_ENABLE_F;
 
-	अगर (is_t4(adap->params.chip))
+	if (is_t4(adap->params.chip))
 		req |= LOCALCFG_F;
 
-	t4_ग_लिखो_reg(adap, PCIE_CFG_SPACE_REQ_A, req);
-	*val = t4_पढ़ो_reg(adap, PCIE_CFG_SPACE_DATA_A);
+	t4_write_reg(adap, PCIE_CFG_SPACE_REQ_A, req);
+	*val = t4_read_reg(adap, PCIE_CFG_SPACE_DATA_A);
 
-	/* Reset ENABLE to 0 so पढ़ोs of PCIE_CFG_SPACE_DATA won't cause a
-	 * Configuration Space पढ़ो.  (None of the other fields matter when
-	 * ENABLE is 0 so a simple रेजिस्टर ग_लिखो is easier than a
-	 * पढ़ो-modअगरy-ग_लिखो via t4_set_reg_field().)
+	/* Reset ENABLE to 0 so reads of PCIE_CFG_SPACE_DATA won't cause a
+	 * Configuration Space read.  (None of the other fields matter when
+	 * ENABLE is 0 so a simple register write is easier than a
+	 * read-modify-write via t4_set_reg_field().)
 	 */
-	t4_ग_लिखो_reg(adap, PCIE_CFG_SPACE_REQ_A, 0);
-पूर्ण
+	t4_write_reg(adap, PCIE_CFG_SPACE_REQ_A, 0);
+}
 
 /*
  * t4_report_fw_error - report firmware error
  * @adap: the adapter
  *
  * The adapter firmware can indicate error conditions to the host.
- * If the firmware has indicated an error, prपूर्णांक out the reason क्रम
+ * If the firmware has indicated an error, print out the reason for
  * the firmware error.
  */
-अटल व्योम t4_report_fw_error(काष्ठा adapter *adap)
-अणु
-	अटल स्थिर अक्षर *स्थिर reason[] = अणु
+static void t4_report_fw_error(struct adapter *adap)
+{
+	static const char *const reason[] = {
 		"Crash",                        /* PCIE_FW_EVAL_CRASH */
 		"During Device Preparation",    /* PCIE_FW_EVAL_PREP */
 		"During Device Configuration",  /* PCIE_FW_EVAL_CONF */
@@ -192,132 +191,132 @@
 		"Insufficient Airflow",         /* PCIE_FW_EVAL_OVERHEAT */
 		"Device Shutdown",              /* PCIE_FW_EVAL_DEVICESHUTDOWN */
 		"Reserved",                     /* reserved */
-	पूर्ण;
+	};
 	u32 pcie_fw;
 
-	pcie_fw = t4_पढ़ो_reg(adap, PCIE_FW_A);
-	अगर (pcie_fw & PCIE_FW_ERR_F) अणु
+	pcie_fw = t4_read_reg(adap, PCIE_FW_A);
+	if (pcie_fw & PCIE_FW_ERR_F) {
 		dev_err(adap->pdev_dev, "Firmware reports adapter error: %s\n",
 			reason[PCIE_FW_EVAL_G(pcie_fw)]);
 		adap->flags &= ~CXGB4_FW_OK;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Get the reply to a mailbox command and store it in @rpl in big-endian order.
  */
-अटल व्योम get_mbox_rpl(काष्ठा adapter *adap, __be64 *rpl, पूर्णांक nflit,
+static void get_mbox_rpl(struct adapter *adap, __be64 *rpl, int nflit,
 			 u32 mbox_addr)
-अणु
-	क्रम ( ; nflit; nflit--, mbox_addr += 8)
-		*rpl++ = cpu_to_be64(t4_पढ़ो_reg64(adap, mbox_addr));
-पूर्ण
+{
+	for ( ; nflit; nflit--, mbox_addr += 8)
+		*rpl++ = cpu_to_be64(t4_read_reg64(adap, mbox_addr));
+}
 
 /*
- * Handle a FW निश्चितion reported in a mailbox.
+ * Handle a FW assertion reported in a mailbox.
  */
-अटल व्योम fw_asrt(काष्ठा adapter *adap, u32 mbox_addr)
-अणु
-	काष्ठा fw_debug_cmd asrt;
+static void fw_asrt(struct adapter *adap, u32 mbox_addr)
+{
+	struct fw_debug_cmd asrt;
 
-	get_mbox_rpl(adap, (__be64 *)&asrt, माप(asrt) / 8, mbox_addr);
+	get_mbox_rpl(adap, (__be64 *)&asrt, sizeof(asrt) / 8, mbox_addr);
 	dev_alert(adap->pdev_dev,
 		  "FW assertion at %.16s:%u, val0 %#x, val1 %#x\n",
-		  asrt.u.निश्चित.filename_0_7, be32_to_cpu(asrt.u.निश्चित.line),
-		  be32_to_cpu(asrt.u.निश्चित.x), be32_to_cpu(asrt.u.निश्चित.y));
-पूर्ण
+		  asrt.u.assert.filename_0_7, be32_to_cpu(asrt.u.assert.line),
+		  be32_to_cpu(asrt.u.assert.x), be32_to_cpu(asrt.u.assert.y));
+}
 
 /**
  *	t4_record_mbox - record a Firmware Mailbox Command/Reply in the log
  *	@adapter: the adapter
  *	@cmd: the Firmware Mailbox Command or Reply
  *	@size: command length in bytes
- *	@access: the समय (ms) needed to access the Firmware Mailbox
- *	@execute: the समय (ms) the command spent being executed
+ *	@access: the time (ms) needed to access the Firmware Mailbox
+ *	@execute: the time (ms) the command spent being executed
  */
-अटल व्योम t4_record_mbox(काष्ठा adapter *adapter,
-			   स्थिर __be64 *cmd, अचिन्हित पूर्णांक size,
-			   पूर्णांक access, पूर्णांक execute)
-अणु
-	काष्ठा mbox_cmd_log *log = adapter->mbox_log;
-	काष्ठा mbox_cmd *entry;
-	पूर्णांक i;
+static void t4_record_mbox(struct adapter *adapter,
+			   const __be64 *cmd, unsigned int size,
+			   int access, int execute)
+{
+	struct mbox_cmd_log *log = adapter->mbox_log;
+	struct mbox_cmd *entry;
+	int i;
 
 	entry = mbox_cmd_log_entry(log, log->cursor++);
-	अगर (log->cursor == log->size)
+	if (log->cursor == log->size)
 		log->cursor = 0;
 
-	क्रम (i = 0; i < size / 8; i++)
+	for (i = 0; i < size / 8; i++)
 		entry->cmd[i] = be64_to_cpu(cmd[i]);
-	जबतक (i < MBOX_LEN / 8)
+	while (i < MBOX_LEN / 8)
 		entry->cmd[i++] = 0;
-	entry->बारtamp = jअगरfies;
+	entry->timestamp = jiffies;
 	entry->seqno = log->seqno++;
 	entry->access = access;
 	entry->execute = execute;
-पूर्ण
+}
 
 /**
- *	t4_wr_mbox_meat_समयout - send a command to FW through the given mailbox
+ *	t4_wr_mbox_meat_timeout - send a command to FW through the given mailbox
  *	@adap: the adapter
  *	@mbox: index of the mailbox to use
- *	@cmd: the command to ग_लिखो
+ *	@cmd: the command to write
  *	@size: command length in bytes
  *	@rpl: where to optionally store the reply
- *	@sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
- *	@समयout: समय to रुको क्रम command to finish beक्रमe timing out
+ *	@sleep_ok: if true we may sleep while awaiting command completion
+ *	@timeout: time to wait for command to finish before timing out
  *
- *	Sends the given command to FW through the selected mailbox and रुकोs
- *	क्रम the FW to execute the command.  If @rpl is not %शून्य it is used to
+ *	Sends the given command to FW through the selected mailbox and waits
+ *	for the FW to execute the command.  If @rpl is not %NULL it is used to
  *	store the FW's reply to the command.  The command and its optional
  *	reply are of the same length.  FW can take up to %FW_CMD_MAX_TIMEOUT ms
- *	to respond.  @sleep_ok determines whether we may sleep जबतक aरुकोing
+ *	to respond.  @sleep_ok determines whether we may sleep while awaiting
  *	the response.  If sleeping is allowed we use progressive backoff
  *	otherwise we spin.
  *
- *	The वापस value is 0 on success or a negative त्रुटि_सं on failure.  A
+ *	The return value is 0 on success or a negative errno on failure.  A
  *	failure can happen either because we are not able to execute the
- *	command or FW executes it but संकेतs an error.  In the latter हाल
- *	the वापस value is the error code indicated by FW (negated).
+ *	command or FW executes it but signals an error.  In the latter case
+ *	the return value is the error code indicated by FW (negated).
  */
-पूर्णांक t4_wr_mbox_meat_समयout(काष्ठा adapter *adap, पूर्णांक mbox, स्थिर व्योम *cmd,
-			    पूर्णांक size, व्योम *rpl, bool sleep_ok, पूर्णांक समयout)
-अणु
-	अटल स्थिर पूर्णांक delay[] = अणु
+int t4_wr_mbox_meat_timeout(struct adapter *adap, int mbox, const void *cmd,
+			    int size, void *rpl, bool sleep_ok, int timeout)
+{
+	static const int delay[] = {
 		1, 1, 3, 5, 10, 10, 20, 50, 100, 200
-	पूर्ण;
+	};
 
-	काष्ठा mbox_list entry;
+	struct mbox_list entry;
 	u16 access = 0;
 	u16 execute = 0;
 	u32 v;
 	u64 res;
-	पूर्णांक i, ms, delay_idx, ret;
-	स्थिर __be64 *p = cmd;
+	int i, ms, delay_idx, ret;
+	const __be64 *p = cmd;
 	u32 data_reg = PF_REG(mbox, CIM_PF_MAILBOX_DATA_A);
 	u32 ctl_reg = PF_REG(mbox, CIM_PF_MAILBOX_CTRL_A);
 	__be64 cmd_rpl[MBOX_LEN / 8];
 	u32 pcie_fw;
 
-	अगर ((size & 15) || size > MBOX_LEN)
-		वापस -EINVAL;
+	if ((size & 15) || size > MBOX_LEN)
+		return -EINVAL;
 
 	/*
-	 * If the device is off-line, as in EEH, commands will समय out.
-	 * Fail them early so we करोn't waste समय रुकोing.
+	 * If the device is off-line, as in EEH, commands will time out.
+	 * Fail them early so we don't waste time waiting.
 	 */
-	अगर (adap->pdev->error_state != pci_channel_io_normal)
-		वापस -EIO;
+	if (adap->pdev->error_state != pci_channel_io_normal)
+		return -EIO;
 
-	/* If we have a negative समयout, that implies that we can't sleep. */
-	अगर (समयout < 0) अणु
+	/* If we have a negative timeout, that implies that we can't sleep. */
+	if (timeout < 0) {
 		sleep_ok = false;
-		समयout = -समयout;
-	पूर्ण
+		timeout = -timeout;
+	}
 
 	/* Queue ourselves onto the mailbox access list.  When our entry is at
 	 * the front of the list, we have rights to access the mailbox.  So we
-	 * रुको [क्रम a जबतक] till we're at the front [or bail out with an
+	 * wait [for a while] till we're at the front [or bail out with an
 	 * EBUSY] ...
 	 */
 	spin_lock_bh(&adap->mbox_lock);
@@ -327,96 +326,96 @@
 	delay_idx = 0;
 	ms = delay[0];
 
-	क्रम (i = 0; ; i += ms) अणु
-		/* If we've रुकोed too दीर्घ, वापस a busy indication.  This
+	for (i = 0; ; i += ms) {
+		/* If we've waited too long, return a busy indication.  This
 		 * really ought to be based on our initial position in the
 		 * mailbox access list but this is a start.  We very rarely
 		 * contend on access to the mailbox ...
 		 */
-		pcie_fw = t4_पढ़ो_reg(adap, PCIE_FW_A);
-		अगर (i > FW_CMD_MAX_TIMEOUT || (pcie_fw & PCIE_FW_ERR_F)) अणु
+		pcie_fw = t4_read_reg(adap, PCIE_FW_A);
+		if (i > FW_CMD_MAX_TIMEOUT || (pcie_fw & PCIE_FW_ERR_F)) {
 			spin_lock_bh(&adap->mbox_lock);
 			list_del(&entry.list);
 			spin_unlock_bh(&adap->mbox_lock);
 			ret = (pcie_fw & PCIE_FW_ERR_F) ? -ENXIO : -EBUSY;
 			t4_record_mbox(adap, cmd, size, access, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* If we're at the head, अवरोध out and start the mailbox
+		/* If we're at the head, break out and start the mailbox
 		 * protocol.
 		 */
-		अगर (list_first_entry(&adap->mlist.list, काष्ठा mbox_list,
+		if (list_first_entry(&adap->mlist.list, struct mbox_list,
 				     list) == &entry)
-			अवरोध;
+			break;
 
-		/* Delay क्रम a bit beक्रमe checking again ... */
-		अगर (sleep_ok) अणु
+		/* Delay for a bit before checking again ... */
+		if (sleep_ok) {
 			ms = delay[delay_idx];  /* last element may repeat */
-			अगर (delay_idx < ARRAY_SIZE(delay) - 1)
+			if (delay_idx < ARRAY_SIZE(delay) - 1)
 				delay_idx++;
 			msleep(ms);
-		पूर्ण अन्यथा अणु
+		} else {
 			mdelay(ms);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Loop trying to get ownership of the mailbox.  Return an error
-	 * अगर we can't gain ownership.
+	 * if we can't gain ownership.
 	 */
-	v = MBOWNER_G(t4_पढ़ो_reg(adap, ctl_reg));
-	क्रम (i = 0; v == MBOX_OWNER_NONE && i < 3; i++)
-		v = MBOWNER_G(t4_पढ़ो_reg(adap, ctl_reg));
-	अगर (v != MBOX_OWNER_DRV) अणु
+	v = MBOWNER_G(t4_read_reg(adap, ctl_reg));
+	for (i = 0; v == MBOX_OWNER_NONE && i < 3; i++)
+		v = MBOWNER_G(t4_read_reg(adap, ctl_reg));
+	if (v != MBOX_OWNER_DRV) {
 		spin_lock_bh(&adap->mbox_lock);
 		list_del(&entry.list);
 		spin_unlock_bh(&adap->mbox_lock);
 		ret = (v == MBOX_OWNER_FW) ? -EBUSY : -ETIMEDOUT;
 		t4_record_mbox(adap, cmd, size, access, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Copy in the new mailbox command and send it on its way ... */
 	t4_record_mbox(adap, cmd, size, access, 0);
-	क्रम (i = 0; i < size; i += 8)
-		t4_ग_लिखो_reg64(adap, data_reg + i, be64_to_cpu(*p++));
+	for (i = 0; i < size; i += 8)
+		t4_write_reg64(adap, data_reg + i, be64_to_cpu(*p++));
 
-	t4_ग_लिखो_reg(adap, ctl_reg, MBMSGVALID_F | MBOWNER_V(MBOX_OWNER_FW));
-	t4_पढ़ो_reg(adap, ctl_reg);          /* flush ग_लिखो */
+	t4_write_reg(adap, ctl_reg, MBMSGVALID_F | MBOWNER_V(MBOX_OWNER_FW));
+	t4_read_reg(adap, ctl_reg);          /* flush write */
 
 	delay_idx = 0;
 	ms = delay[0];
 
-	क्रम (i = 0;
-	     !((pcie_fw = t4_पढ़ो_reg(adap, PCIE_FW_A)) & PCIE_FW_ERR_F) &&
-	     i < समयout;
-	     i += ms) अणु
-		अगर (sleep_ok) अणु
+	for (i = 0;
+	     !((pcie_fw = t4_read_reg(adap, PCIE_FW_A)) & PCIE_FW_ERR_F) &&
+	     i < timeout;
+	     i += ms) {
+		if (sleep_ok) {
 			ms = delay[delay_idx];  /* last element may repeat */
-			अगर (delay_idx < ARRAY_SIZE(delay) - 1)
+			if (delay_idx < ARRAY_SIZE(delay) - 1)
 				delay_idx++;
 			msleep(ms);
-		पूर्ण अन्यथा
+		} else
 			mdelay(ms);
 
-		v = t4_पढ़ो_reg(adap, ctl_reg);
-		अगर (MBOWNER_G(v) == MBOX_OWNER_DRV) अणु
-			अगर (!(v & MBMSGVALID_F)) अणु
-				t4_ग_लिखो_reg(adap, ctl_reg, 0);
-				जारी;
-			पूर्ण
+		v = t4_read_reg(adap, ctl_reg);
+		if (MBOWNER_G(v) == MBOX_OWNER_DRV) {
+			if (!(v & MBMSGVALID_F)) {
+				t4_write_reg(adap, ctl_reg, 0);
+				continue;
+			}
 
 			get_mbox_rpl(adap, cmd_rpl, MBOX_LEN / 8, data_reg);
 			res = be64_to_cpu(cmd_rpl[0]);
 
-			अगर (FW_CMD_OP_G(res >> 32) == FW_DEBUG_CMD) अणु
+			if (FW_CMD_OP_G(res >> 32) == FW_DEBUG_CMD) {
 				fw_asrt(adap, data_reg);
 				res = FW_CMD_RETVAL_V(EIO);
-			पूर्ण अन्यथा अगर (rpl) अणु
-				स_नकल(rpl, cmd_rpl, size);
-			पूर्ण
+			} else if (rpl) {
+				memcpy(rpl, cmd_rpl, size);
+			}
 
-			t4_ग_लिखो_reg(adap, ctl_reg, 0);
+			t4_write_reg(adap, ctl_reg, 0);
 
 			execute = i + ms;
 			t4_record_mbox(adap, cmd_rpl,
@@ -424,42 +423,42 @@
 			spin_lock_bh(&adap->mbox_lock);
 			list_del(&entry.list);
 			spin_unlock_bh(&adap->mbox_lock);
-			वापस -FW_CMD_RETVAL_G((पूर्णांक)res);
-		पूर्ण
-	पूर्ण
+			return -FW_CMD_RETVAL_G((int)res);
+		}
+	}
 
 	ret = (pcie_fw & PCIE_FW_ERR_F) ? -ENXIO : -ETIMEDOUT;
 	t4_record_mbox(adap, cmd, size, access, ret);
 	dev_err(adap->pdev_dev, "command %#x in mailbox %d timed out\n",
-		*(स्थिर u8 *)cmd, mbox);
+		*(const u8 *)cmd, mbox);
 	t4_report_fw_error(adap);
 	spin_lock_bh(&adap->mbox_lock);
 	list_del(&entry.list);
 	spin_unlock_bh(&adap->mbox_lock);
 	t4_fatal_err(adap);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक t4_wr_mbox_meat(काष्ठा adapter *adap, पूर्णांक mbox, स्थिर व्योम *cmd, पूर्णांक size,
-		    व्योम *rpl, bool sleep_ok)
-अणु
-	वापस t4_wr_mbox_meat_समयout(adap, mbox, cmd, size, rpl, sleep_ok,
+int t4_wr_mbox_meat(struct adapter *adap, int mbox, const void *cmd, int size,
+		    void *rpl, bool sleep_ok)
+{
+	return t4_wr_mbox_meat_timeout(adap, mbox, cmd, size, rpl, sleep_ok,
 				       FW_CMD_MAX_TIMEOUT);
-पूर्ण
+}
 
-अटल पूर्णांक t4_edc_err_पढ़ो(काष्ठा adapter *adap, पूर्णांक idx)
-अणु
+static int t4_edc_err_read(struct adapter *adap, int idx)
+{
 	u32 edc_ecc_err_addr_reg;
 	u32 rdata_reg;
 
-	अगर (is_t4(adap->params.chip)) अणु
+	if (is_t4(adap->params.chip)) {
 		CH_WARN(adap, "%s: T4 NOT supported.\n", __func__);
-		वापस 0;
-	पूर्ण
-	अगर (idx != 0 && idx != 1) अणु
+		return 0;
+	}
+	if (idx != 0 && idx != 1) {
 		CH_WARN(adap, "%s: idx %d NOT supported.\n", __func__, idx);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	edc_ecc_err_addr_reg = EDC_T5_REG(EDC_H_ECC_ERR_ADDR_A, idx);
 	rdata_reg = EDC_T5_REG(EDC_H_BIST_STATUS_RDATA_A, idx);
@@ -467,163 +466,163 @@
 	CH_WARN(adap,
 		"edc%d err addr 0x%x: 0x%x.\n",
 		idx, edc_ecc_err_addr_reg,
-		t4_पढ़ो_reg(adap, edc_ecc_err_addr_reg));
+		t4_read_reg(adap, edc_ecc_err_addr_reg));
 	CH_WARN(adap,
 		"bist: 0x%x, status %llx %llx %llx %llx %llx %llx %llx %llx %llx.\n",
 		rdata_reg,
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 8),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 16),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 24),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 32),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 40),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 48),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 56),
-		(अचिन्हित दीर्घ दीर्घ)t4_पढ़ो_reg64(adap, rdata_reg + 64));
+		(unsigned long long)t4_read_reg64(adap, rdata_reg),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 8),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 16),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 24),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 32),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 40),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 48),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 56),
+		(unsigned long long)t4_read_reg64(adap, rdata_reg + 64));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * t4_memory_rw_init - Get memory winकरोw relative offset, base, and size.
+ * t4_memory_rw_init - Get memory window relative offset, base, and size.
  * @adap: the adapter
- * @win: PCI-E Memory Winकरोw to use
+ * @win: PCI-E Memory Window to use
  * @mtype: memory type: MEM_EDC0, MEM_EDC1, MEM_HMA or MEM_MC
  * @mem_off: memory relative offset with respect to @mtype.
  * @mem_base: configured memory base address.
- * @mem_aperture: configured memory winकरोw aperture.
+ * @mem_aperture: configured memory window aperture.
  *
- * Get the configured memory winकरोw's relative offset, base, and size.
+ * Get the configured memory window's relative offset, base, and size.
  */
-पूर्णांक t4_memory_rw_init(काष्ठा adapter *adap, पूर्णांक win, पूर्णांक mtype, u32 *mem_off,
+int t4_memory_rw_init(struct adapter *adap, int win, int mtype, u32 *mem_off,
 		      u32 *mem_base, u32 *mem_aperture)
-अणु
+{
 	u32 edc_size, mc_size, mem_reg;
 
-	/* Offset पूर्णांकo the region of memory which is being accessed
+	/* Offset into the region of memory which is being accessed
 	 * MEM_EDC0 = 0
 	 * MEM_EDC1 = 1
-	 * MEM_MC   = 2 -- MEM_MC क्रम chips with only 1 memory controller
-	 * MEM_MC1  = 3 -- क्रम chips with 2 memory controllers (e.g. T5)
+	 * MEM_MC   = 2 -- MEM_MC for chips with only 1 memory controller
+	 * MEM_MC1  = 3 -- for chips with 2 memory controllers (e.g. T5)
 	 * MEM_HMA  = 4
 	 */
-	edc_size  = EDRAM0_SIZE_G(t4_पढ़ो_reg(adap, MA_EDRAM0_BAR_A));
-	अगर (mtype == MEM_HMA) अणु
+	edc_size  = EDRAM0_SIZE_G(t4_read_reg(adap, MA_EDRAM0_BAR_A));
+	if (mtype == MEM_HMA) {
 		*mem_off = 2 * (edc_size * 1024 * 1024);
-	पूर्ण अन्यथा अगर (mtype != MEM_MC1) अणु
+	} else if (mtype != MEM_MC1) {
 		*mem_off = (mtype * (edc_size * 1024 * 1024));
-	पूर्ण अन्यथा अणु
-		mc_size = EXT_MEM0_SIZE_G(t4_पढ़ो_reg(adap,
+	} else {
+		mc_size = EXT_MEM0_SIZE_G(t4_read_reg(adap,
 						      MA_EXT_MEMORY0_BAR_A));
 		*mem_off = (MEM_MC0 * edc_size + mc_size) * 1024 * 1024;
-	पूर्ण
+	}
 
-	/* Each PCI-E Memory Winकरोw is programmed with a winकरोw size -- or
+	/* Each PCI-E Memory Window is programmed with a window size -- or
 	 * "aperture" -- which controls the granularity of its mapping onto
 	 * adapter memory.  We need to grab that aperture in order to know
-	 * how to use the specअगरied winकरोw.  The winकरोw is also programmed
-	 * with the base address of the Memory Winकरोw in BAR0's address
-	 * space.  For T4 this is an असलolute PCI-E Bus Address.  For T5
+	 * how to use the specified window.  The window is also programmed
+	 * with the base address of the Memory Window in BAR0's address
+	 * space.  For T4 this is an absolute PCI-E Bus Address.  For T5
 	 * the address is relative to BAR0.
 	 */
-	mem_reg = t4_पढ़ो_reg(adap,
+	mem_reg = t4_read_reg(adap,
 			      PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_BASE_WIN_A,
 						  win));
-	/* a dead adapter will वापस 0xffffffff क्रम PIO पढ़ोs */
-	अगर (mem_reg == 0xffffffff)
-		वापस -ENXIO;
+	/* a dead adapter will return 0xffffffff for PIO reads */
+	if (mem_reg == 0xffffffff)
+		return -ENXIO;
 
 	*mem_aperture = 1 << (WINDOW_G(mem_reg) + WINDOW_SHIFT_X);
-	*mem_base = PCIखातापूर्णST_G(mem_reg) << PCIखातापूर्णST_SHIFT_X;
-	अगर (is_t4(adap->params.chip))
+	*mem_base = PCIEOFST_G(mem_reg) << PCIEOFST_SHIFT_X;
+	if (is_t4(adap->params.chip))
 		*mem_base -= adap->t4_bar0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * t4_memory_update_win - Move memory winकरोw to specअगरied address.
+ * t4_memory_update_win - Move memory window to specified address.
  * @adap: the adapter
- * @win: PCI-E Memory Winकरोw to use
+ * @win: PCI-E Memory Window to use
  * @addr: location to move.
  *
- * Move memory winकरोw to specअगरied address.
+ * Move memory window to specified address.
  */
-व्योम t4_memory_update_win(काष्ठा adapter *adap, पूर्णांक win, u32 addr)
-अणु
-	t4_ग_लिखो_reg(adap,
+void t4_memory_update_win(struct adapter *adap, int win, u32 addr)
+{
+	t4_write_reg(adap,
 		     PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_OFFSET_A, win),
 		     addr);
-	/* Read it back to ensure that changes propagate beक्रमe we
+	/* Read it back to ensure that changes propagate before we
 	 * attempt to use the new value.
 	 */
-	t4_पढ़ो_reg(adap,
+	t4_read_reg(adap,
 		    PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_OFFSET_A, win));
-पूर्ण
+}
 
 /**
  * t4_memory_rw_residual - Read/Write residual data.
  * @adap: the adapter
- * @off: relative offset within residual to start पढ़ो/ग_लिखो.
+ * @off: relative offset within residual to start read/write.
  * @addr: address within indicated memory type.
  * @buf: host memory buffer
  * @dir: direction of transfer T4_MEMORY_READ (1) or T4_MEMORY_WRITE (0)
  *
  * Read/Write residual data less than 32-bits.
  */
-व्योम t4_memory_rw_residual(काष्ठा adapter *adap, u32 off, u32 addr, u8 *buf,
-			   पूर्णांक dir)
-अणु
-	जोड़ अणु
+void t4_memory_rw_residual(struct adapter *adap, u32 off, u32 addr, u8 *buf,
+			   int dir)
+{
+	union {
 		u32 word;
-		अक्षर byte[4];
-	पूर्ण last;
-	अचिन्हित अक्षर *bp;
-	पूर्णांक i;
+		char byte[4];
+	} last;
+	unsigned char *bp;
+	int i;
 
-	अगर (dir == T4_MEMORY_READ) अणु
-		last.word = le32_to_cpu((__क्रमce __le32)
-					t4_पढ़ो_reg(adap, addr));
-		क्रम (bp = (अचिन्हित अक्षर *)buf, i = off; i < 4; i++)
+	if (dir == T4_MEMORY_READ) {
+		last.word = le32_to_cpu((__force __le32)
+					t4_read_reg(adap, addr));
+		for (bp = (unsigned char *)buf, i = off; i < 4; i++)
 			bp[i] = last.byte[i];
-	पूर्ण अन्यथा अणु
+	} else {
 		last.word = *buf;
-		क्रम (i = off; i < 4; i++)
+		for (i = off; i < 4; i++)
 			last.byte[i] = 0;
-		t4_ग_लिखो_reg(adap, addr,
-			     (__क्रमce u32)cpu_to_le32(last.word));
-	पूर्ण
-पूर्ण
+		t4_write_reg(adap, addr,
+			     (__force u32)cpu_to_le32(last.word));
+	}
+}
 
 /**
- *	t4_memory_rw - पढ़ो/ग_लिखो EDC 0, EDC 1 or MC via PCIE memory winकरोw
+ *	t4_memory_rw - read/write EDC 0, EDC 1 or MC via PCIE memory window
  *	@adap: the adapter
- *	@win: PCI-E Memory Winकरोw to use
+ *	@win: PCI-E Memory Window to use
  *	@mtype: memory type: MEM_EDC0, MEM_EDC1 or MEM_MC
  *	@addr: address within indicated memory type
  *	@len: amount of memory to transfer
  *	@hbuf: host memory buffer
  *	@dir: direction of transfer T4_MEMORY_READ (1) or T4_MEMORY_WRITE (0)
  *
- *	Reads/ग_लिखोs an [almost] arbitrary memory region in the firmware: the
+ *	Reads/writes an [almost] arbitrary memory region in the firmware: the
  *	firmware memory address and host buffer must be aligned on 32-bit
  *	boundaries; the length may be arbitrary.  The memory is transferred as
  *	a raw byte sequence from/to the firmware's memory.  If this memory
- *	contains data काष्ठाures which contain multi-byte पूर्णांकegers, it's the
- *	caller's responsibility to perक्रमm appropriate byte order conversions.
+ *	contains data structures which contain multi-byte integers, it's the
+ *	caller's responsibility to perform appropriate byte order conversions.
  */
-पूर्णांक t4_memory_rw(काष्ठा adapter *adap, पूर्णांक win, पूर्णांक mtype, u32 addr,
-		 u32 len, व्योम *hbuf, पूर्णांक dir)
-अणु
+int t4_memory_rw(struct adapter *adap, int win, int mtype, u32 addr,
+		 u32 len, void *hbuf, int dir)
+{
 	u32 pos, offset, resid, memoffset;
 	u32 win_pf, mem_aperture, mem_base;
 	u32 *buf;
-	पूर्णांक ret;
+	int ret;
 
 	/* Argument sanity checks ...
 	 */
-	अगर (addr & 0x3 || (uपूर्णांकptr_t)hbuf & 0x3)
-		वापस -EINVAL;
+	if (addr & 0x3 || (uintptr_t)hbuf & 0x3)
+		return -EINVAL;
 	buf = (u32 *)hbuf;
 
 	/* It's convenient to be able to handle lengths which aren't a
@@ -636,110 +635,110 @@
 
 	ret = t4_memory_rw_init(adap, win, mtype, &memoffset, &mem_base,
 				&mem_aperture);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Determine the PCIE_MEM_ACCESS_OFFSET */
 	addr = addr + memoffset;
 
 	win_pf = is_t4(adap->params.chip) ? 0 : PFNUM_V(adap->pf);
 
-	/* Calculate our initial PCI-E Memory Winकरोw Position and Offset पूर्णांकo
-	 * that Winकरोw.
+	/* Calculate our initial PCI-E Memory Window Position and Offset into
+	 * that Window.
 	 */
 	pos = addr & ~(mem_aperture - 1);
 	offset = addr - pos;
 
-	/* Set up initial PCI-E Memory Winकरोw to cover the start of our
+	/* Set up initial PCI-E Memory Window to cover the start of our
 	 * transfer.
 	 */
 	t4_memory_update_win(adap, win, pos | win_pf);
 
-	/* Transfer data to/from the adapter as दीर्घ as there's an पूर्णांकegral
+	/* Transfer data to/from the adapter as long as there's an integral
 	 * number of 32-bit transfers to complete.
 	 *
 	 * A note on Endianness issues:
 	 *
-	 * The "register" पढ़ोs and ग_लिखोs below from/to the PCI-E Memory
-	 * Winकरोw invoke the standard adapter Big-Endian to PCI-E Link
-	 * Little-Endian "swizzel."  As a result, अगर we have the following
+	 * The "register" reads and writes below from/to the PCI-E Memory
+	 * Window invoke the standard adapter Big-Endian to PCI-E Link
+	 * Little-Endian "swizzel."  As a result, if we have the following
 	 * data in adapter memory:
 	 *
 	 *     Memory:  ... | b0 | b1 | b2 | b3 | ...
 	 *     Address:      i+0  i+1  i+2  i+3
 	 *
-	 * Then a पढ़ो of the adapter memory via the PCI-E Memory Winकरोw
+	 * Then a read of the adapter memory via the PCI-E Memory Window
 	 * will yield:
 	 *
-	 *     x = पढ़ोl(i)
+	 *     x = readl(i)
 	 *         31                  0
 	 *         [ b3 | b2 | b1 | b0 ]
 	 *
-	 * If this value is stored पूर्णांकo local memory on a Little-Endian प्रणाली
+	 * If this value is stored into local memory on a Little-Endian system
 	 * it will show up correctly in local memory as:
 	 *
 	 *     ( ..., b0, b1, b2, b3, ... )
 	 *
-	 * But on a Big-Endian प्रणाली, the store will show up in memory
+	 * But on a Big-Endian system, the store will show up in memory
 	 * incorrectly swizzled as:
 	 *
 	 *     ( ..., b3, b2, b1, b0, ... )
 	 *
-	 * So we need to account क्रम this in the पढ़ोs and ग_लिखोs to the
-	 * PCI-E Memory Winकरोw below by unकरोing the रेजिस्टर पढ़ो/ग_लिखो
+	 * So we need to account for this in the reads and writes to the
+	 * PCI-E Memory Window below by undoing the register read/write
 	 * swizzels.
 	 */
-	जबतक (len > 0) अणु
-		अगर (dir == T4_MEMORY_READ)
-			*buf++ = le32_to_cpu((__क्रमce __le32)t4_पढ़ो_reg(adap,
+	while (len > 0) {
+		if (dir == T4_MEMORY_READ)
+			*buf++ = le32_to_cpu((__force __le32)t4_read_reg(adap,
 						mem_base + offset));
-		अन्यथा
-			t4_ग_लिखो_reg(adap, mem_base + offset,
-				     (__क्रमce u32)cpu_to_le32(*buf++));
-		offset += माप(__be32);
-		len -= माप(__be32);
+		else
+			t4_write_reg(adap, mem_base + offset,
+				     (__force u32)cpu_to_le32(*buf++));
+		offset += sizeof(__be32);
+		len -= sizeof(__be32);
 
-		/* If we've reached the end of our current winकरोw aperture,
-		 * move the PCI-E Memory Winकरोw on to the next.  Note that
-		 * करोing this here after "len" may be 0 allows us to set up
-		 * the PCI-E Memory Winकरोw क्रम a possible final residual
+		/* If we've reached the end of our current window aperture,
+		 * move the PCI-E Memory Window on to the next.  Note that
+		 * doing this here after "len" may be 0 allows us to set up
+		 * the PCI-E Memory Window for a possible final residual
 		 * transfer below ...
 		 */
-		अगर (offset == mem_aperture) अणु
+		if (offset == mem_aperture) {
 			pos += mem_aperture;
 			offset = 0;
 			t4_memory_update_win(adap, win, pos | win_pf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* If the original transfer had a length which wasn't a multiple of
 	 * 32-bits, now's where we need to finish off the transfer of the
-	 * residual amount.  The PCI-E Memory Winकरोw has alपढ़ोy been moved
-	 * above (अगर necessary) to cover this final transfer.
+	 * residual amount.  The PCI-E Memory Window has already been moved
+	 * above (if necessary) to cover this final transfer.
 	 */
-	अगर (resid)
+	if (resid)
 		t4_memory_rw_residual(adap, resid, mem_base + offset,
 				      (u8 *)buf, dir);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Return the specअगरied PCI-E Configuration Space रेजिस्टर from our Physical
+/* Return the specified PCI-E Configuration Space register from our Physical
  * Function.  We try first via a Firmware LDST Command since we prefer to let
- * the firmware own all of these रेजिस्टरs, but अगर that fails we go क्रम it
+ * the firmware own all of these registers, but if that fails we go for it
  * directly ourselves.
  */
-u32 t4_पढ़ो_pcie_cfg4(काष्ठा adapter *adap, पूर्णांक reg)
-अणु
+u32 t4_read_pcie_cfg4(struct adapter *adap, int reg)
+{
 	u32 val, ldst_addrspace;
 
-	/* If fw_attach != 0, स्थिरruct and send the Firmware LDST Command to
-	 * retrieve the specअगरied PCI-E Configuration Space रेजिस्टर.
+	/* If fw_attach != 0, construct and send the Firmware LDST Command to
+	 * retrieve the specified PCI-E Configuration Space register.
 	 */
-	काष्ठा fw_ldst_cmd ldst_cmd;
-	पूर्णांक ret;
+	struct fw_ldst_cmd ldst_cmd;
+	int ret;
 
-	स_रखो(&ldst_cmd, 0, माप(ldst_cmd));
+	memset(&ldst_cmd, 0, sizeof(ldst_cmd));
 	ldst_addrspace = FW_LDST_CMD_ADDRSPACE_V(FW_LDST_ADDRSPC_FUNC_PCIE);
 	ldst_cmd.op_to_addrspace = cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 					       FW_CMD_REQUEST_F |
@@ -751,112 +750,112 @@ u32 t4_पढ़ो_pcie_cfg4(काष्ठा adapter *adap, पूर्ण�
 		(FW_LDST_CMD_LC_F | FW_LDST_CMD_FN_V(adap->pf));
 	ldst_cmd.u.pcie.r = reg;
 
-	/* If the LDST Command succeeds, वापस the result, otherwise
-	 * fall through to पढ़ोing it directly ourselves ...
+	/* If the LDST Command succeeds, return the result, otherwise
+	 * fall through to reading it directly ourselves ...
 	 */
-	ret = t4_wr_mbox(adap, adap->mbox, &ldst_cmd, माप(ldst_cmd),
+	ret = t4_wr_mbox(adap, adap->mbox, &ldst_cmd, sizeof(ldst_cmd),
 			 &ldst_cmd);
-	अगर (ret == 0)
+	if (ret == 0)
 		val = be32_to_cpu(ldst_cmd.u.pcie.data[0]);
-	अन्यथा
-		/* Read the desired Configuration Space रेजिस्टर via the PCI-E
-		 * Backकरोor mechanism.
+	else
+		/* Read the desired Configuration Space register via the PCI-E
+		 * Backdoor mechanism.
 		 */
-		t4_hw_pci_पढ़ो_cfg4(adap, reg, &val);
-	वापस val;
-पूर्ण
+		t4_hw_pci_read_cfg4(adap, reg, &val);
+	return val;
+}
 
-/* Get the winकरोw based on base passed to it.
- * Winकरोw aperture is currently unhandled, but there is no use हाल क्रम it
+/* Get the window based on base passed to it.
+ * Window aperture is currently unhandled, but there is no use case for it
  * right now
  */
-अटल u32 t4_get_winकरोw(काष्ठा adapter *adap, u32 pci_base, u64 pci_mask,
+static u32 t4_get_window(struct adapter *adap, u32 pci_base, u64 pci_mask,
 			 u32 memwin_base)
-अणु
+{
 	u32 ret;
 
-	अगर (is_t4(adap->params.chip)) अणु
+	if (is_t4(adap->params.chip)) {
 		u32 bar0;
 
-		/* Truncation पूर्णांकentional: we only पढ़ो the bottom 32-bits of
-		 * the 64-bit BAR0/BAR1 ...  We use the hardware backकरोor
-		 * mechanism to पढ़ो BAR0 instead of using
+		/* Truncation intentional: we only read the bottom 32-bits of
+		 * the 64-bit BAR0/BAR1 ...  We use the hardware backdoor
+		 * mechanism to read BAR0 instead of using
 		 * pci_resource_start() because we could be operating from
 		 * within a Virtual Machine which is trapping our accesses to
 		 * our Configuration Space and we need to set up the PCI-E
-		 * Memory Winकरोw decoders with the actual addresses which will
+		 * Memory Window decoders with the actual addresses which will
 		 * be coming across the PCI-E link.
 		 */
-		bar0 = t4_पढ़ो_pcie_cfg4(adap, pci_base);
+		bar0 = t4_read_pcie_cfg4(adap, pci_base);
 		bar0 &= pci_mask;
 		adap->t4_bar0 = bar0;
 
 		ret = bar0 + memwin_base;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* For T5, only relative offset inside the PCIe BAR is passed */
 		ret = memwin_base;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-/* Get the शेष utility winकरोw (win0) used by everyone */
-u32 t4_get_util_winकरोw(काष्ठा adapter *adap)
-अणु
-	वापस t4_get_winकरोw(adap, PCI_BASE_ADDRESS_0,
+/* Get the default utility window (win0) used by everyone */
+u32 t4_get_util_window(struct adapter *adap)
+{
+	return t4_get_window(adap, PCI_BASE_ADDRESS_0,
 			     PCI_BASE_ADDRESS_MEM_MASK, MEMWIN0_BASE);
-पूर्ण
+}
 
-/* Set up memory winकरोw क्रम accessing adapter memory ranges.  (Read
- * back MA रेजिस्टर to ensure that changes propagate beक्रमe we attempt
+/* Set up memory window for accessing adapter memory ranges.  (Read
+ * back MA register to ensure that changes propagate before we attempt
  * to use the new values.)
  */
-व्योम t4_setup_memwin(काष्ठा adapter *adap, u32 memwin_base, u32 winकरोw)
-अणु
-	t4_ग_लिखो_reg(adap,
-		     PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_BASE_WIN_A, winकरोw),
+void t4_setup_memwin(struct adapter *adap, u32 memwin_base, u32 window)
+{
+	t4_write_reg(adap,
+		     PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_BASE_WIN_A, window),
 		     memwin_base | BIR_V(0) |
 		     WINDOW_V(ilog2(MEMWIN0_APERTURE) - WINDOW_SHIFT_X));
-	t4_पढ़ो_reg(adap,
-		    PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_BASE_WIN_A, winकरोw));
-पूर्ण
+	t4_read_reg(adap,
+		    PCIE_MEM_ACCESS_REG(PCIE_MEM_ACCESS_BASE_WIN_A, window));
+}
 
 /**
- *	t4_get_regs_len - वापस the size of the chips रेजिस्टर set
+ *	t4_get_regs_len - return the size of the chips register set
  *	@adapter: the adapter
  *
- *	Returns the size of the chip's BAR0 रेजिस्टर space.
+ *	Returns the size of the chip's BAR0 register space.
  */
-अचिन्हित पूर्णांक t4_get_regs_len(काष्ठा adapter *adapter)
-अणु
-	अचिन्हित पूर्णांक chip_version = CHELSIO_CHIP_VERSION(adapter->params.chip);
+unsigned int t4_get_regs_len(struct adapter *adapter)
+{
+	unsigned int chip_version = CHELSIO_CHIP_VERSION(adapter->params.chip);
 
-	चयन (chip_version) अणु
-	हाल CHELSIO_T4:
-		वापस T4_REGMAP_SIZE;
+	switch (chip_version) {
+	case CHELSIO_T4:
+		return T4_REGMAP_SIZE;
 
-	हाल CHELSIO_T5:
-	हाल CHELSIO_T6:
-		वापस T5_REGMAP_SIZE;
-	पूर्ण
+	case CHELSIO_T5:
+	case CHELSIO_T6:
+		return T5_REGMAP_SIZE;
+	}
 
 	dev_err(adapter->pdev_dev,
 		"Unsupported chip version %d\n", chip_version);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_get_regs - पढ़ो chip रेजिस्टरs पूर्णांकo provided buffer
+ *	t4_get_regs - read chip registers into provided buffer
  *	@adap: the adapter
- *	@buf: रेजिस्टर buffer
- *	@buf_size: size (in bytes) of रेजिस्टर buffer
+ *	@buf: register buffer
+ *	@buf_size: size (in bytes) of register buffer
  *
- *	If the provided रेजिस्टर buffer isn't large enough for the chip's
- *	full रेजिस्टर range, the रेजिस्टर dump will be truncated to the
- *	रेजिस्टर buffer's size.
+ *	If the provided register buffer isn't large enough for the chip's
+ *	full register range, the register dump will be truncated to the
+ *	register buffer's size.
  */
-व्योम t4_get_regs(काष्ठा adapter *adap, व्योम *buf, माप_प्रकार buf_size)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक t4_reg_ranges[] = अणु
+void t4_get_regs(struct adapter *adap, void *buf, size_t buf_size)
+{
+	static const unsigned int t4_reg_ranges[] = {
 		0x1008, 0x1108,
 		0x1180, 0x1184,
 		0x1190, 0x1194,
@@ -1313,9 +1312,9 @@ u32 t4_get_util_winकरोw(काष्ठा adapter *adap)
 		0x27cf0, 0x27cf0,
 		0x27cf8, 0x27d7c,
 		0x27e00, 0x27e04,
-	पूर्ण;
+	};
 
-	अटल स्थिर अचिन्हित पूर्णांक t5_reg_ranges[] = अणु
+	static const unsigned int t5_reg_ranges[] = {
 		0x1008, 0x10c0,
 		0x10cc, 0x10f8,
 		0x1100, 0x1100,
@@ -2077,9 +2076,9 @@ u32 t4_get_util_winकरोw(काष्ठा adapter *adap)
 		0x50c00, 0x50c00,
 		0x51000, 0x5101c,
 		0x51300, 0x51308,
-	पूर्ण;
+	};
 
-	अटल स्थिर अचिन्हित पूर्णांक t6_reg_ranges[] = अणु
+	static const unsigned int t6_reg_ranges[] = {
 		0x1008, 0x101c,
 		0x1024, 0x10a8,
 		0x10b4, 0x10f8,
@@ -2636,71 +2635,71 @@ u32 t4_get_util_winकरोw(काष्ठा adapter *adap)
 		0x51000, 0x51020,
 		0x51028, 0x510b0,
 		0x51300, 0x51324,
-	पूर्ण;
+	};
 
-	u32 *buf_end = (u32 *)((अक्षर *)buf + buf_size);
-	स्थिर अचिन्हित पूर्णांक *reg_ranges;
-	पूर्णांक reg_ranges_size, range;
-	अचिन्हित पूर्णांक chip_version = CHELSIO_CHIP_VERSION(adap->params.chip);
+	u32 *buf_end = (u32 *)((char *)buf + buf_size);
+	const unsigned int *reg_ranges;
+	int reg_ranges_size, range;
+	unsigned int chip_version = CHELSIO_CHIP_VERSION(adap->params.chip);
 
-	/* Select the right set of रेजिस्टर ranges to dump depending on the
+	/* Select the right set of register ranges to dump depending on the
 	 * adapter chip type.
 	 */
-	चयन (chip_version) अणु
-	हाल CHELSIO_T4:
+	switch (chip_version) {
+	case CHELSIO_T4:
 		reg_ranges = t4_reg_ranges;
 		reg_ranges_size = ARRAY_SIZE(t4_reg_ranges);
-		अवरोध;
+		break;
 
-	हाल CHELSIO_T5:
+	case CHELSIO_T5:
 		reg_ranges = t5_reg_ranges;
 		reg_ranges_size = ARRAY_SIZE(t5_reg_ranges);
-		अवरोध;
+		break;
 
-	हाल CHELSIO_T6:
+	case CHELSIO_T6:
 		reg_ranges = t6_reg_ranges;
 		reg_ranges_size = ARRAY_SIZE(t6_reg_ranges);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(adap->pdev_dev,
 			"Unsupported chip version %d\n", chip_version);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Clear the रेजिस्टर buffer and insert the appropriate रेजिस्टर
-	 * values selected by the above रेजिस्टर ranges.
+	/* Clear the register buffer and insert the appropriate register
+	 * values selected by the above register ranges.
 	 */
-	स_रखो(buf, 0, buf_size);
-	क्रम (range = 0; range < reg_ranges_size; range += 2) अणु
-		अचिन्हित पूर्णांक reg = reg_ranges[range];
-		अचिन्हित पूर्णांक last_reg = reg_ranges[range + 1];
-		u32 *bufp = (u32 *)((अक्षर *)buf + reg);
+	memset(buf, 0, buf_size);
+	for (range = 0; range < reg_ranges_size; range += 2) {
+		unsigned int reg = reg_ranges[range];
+		unsigned int last_reg = reg_ranges[range + 1];
+		u32 *bufp = (u32 *)((char *)buf + reg);
 
-		/* Iterate across the रेजिस्टर range filling in the रेजिस्टर
-		 * buffer but करोn't ग_लिखो past the end of the रेजिस्टर buffer.
+		/* Iterate across the register range filling in the register
+		 * buffer but don't write past the end of the register buffer.
 		 */
-		जबतक (reg <= last_reg && bufp < buf_end) अणु
-			*bufp++ = t4_पढ़ो_reg(adap, reg);
-			reg += माप(u32);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		while (reg <= last_reg && bufp < buf_end) {
+			*bufp++ = t4_read_reg(adap, reg);
+			reg += sizeof(u32);
+		}
+	}
+}
 
-#घोषणा EEPROM_STAT_ADDR   0x7bfc
-#घोषणा VPD_BASE           0x400
-#घोषणा VPD_BASE_OLD       0
-#घोषणा VPD_LEN            1024
+#define EEPROM_STAT_ADDR   0x7bfc
+#define VPD_BASE           0x400
+#define VPD_BASE_OLD       0
+#define VPD_LEN            1024
 
 /**
- * t4_eeprom_ptov - translate a physical EEPROM address to भव
+ * t4_eeprom_ptov - translate a physical EEPROM address to virtual
  * @phys_addr: the physical EEPROM address
  * @fn: the PCI function number
- * @sz: size of function-specअगरic area
+ * @sz: size of function-specific area
  *
- * Translate a physical EEPROM address to भव.  The first 1K is
- * accessed through भव addresses starting at 31K, the rest is
- * accessed through भव addresses starting at 0.
+ * Translate a physical EEPROM address to virtual.  The first 1K is
+ * accessed through virtual addresses starting at 31K, the rest is
+ * accessed through virtual addresses starting at 0.
  *
  * The mapping is as follows:
  * [0..1K) -> [31K..32K)
@@ -2709,200 +2708,200 @@ u32 t4_get_util_winकरोw(काष्ठा adapter *adap)
  *
  * where A = @fn * @sz, and ES = EEPROM size.
  */
-पूर्णांक t4_eeprom_ptov(अचिन्हित पूर्णांक phys_addr, अचिन्हित पूर्णांक fn, अचिन्हित पूर्णांक sz)
-अणु
+int t4_eeprom_ptov(unsigned int phys_addr, unsigned int fn, unsigned int sz)
+{
 	fn *= sz;
-	अगर (phys_addr < 1024)
-		वापस phys_addr + (31 << 10);
-	अगर (phys_addr < 1024 + fn)
-		वापस 31744 - fn + phys_addr - 1024;
-	अगर (phys_addr < EEPROMSIZE)
-		वापस phys_addr - 1024 - fn;
-	वापस -EINVAL;
-पूर्ण
+	if (phys_addr < 1024)
+		return phys_addr + (31 << 10);
+	if (phys_addr < 1024 + fn)
+		return 31744 - fn + phys_addr - 1024;
+	if (phys_addr < EEPROMSIZE)
+		return phys_addr - 1024 - fn;
+	return -EINVAL;
+}
 
 /**
- *	t4_seeprom_wp - enable/disable EEPROM ग_लिखो protection
+ *	t4_seeprom_wp - enable/disable EEPROM write protection
  *	@adapter: the adapter
- *	@enable: whether to enable or disable ग_लिखो protection
+ *	@enable: whether to enable or disable write protection
  *
- *	Enables or disables ग_लिखो protection on the serial EEPROM.
+ *	Enables or disables write protection on the serial EEPROM.
  */
-पूर्णांक t4_seeprom_wp(काष्ठा adapter *adapter, bool enable)
-अणु
-	अचिन्हित पूर्णांक v = enable ? 0xc : 0;
-	पूर्णांक ret = pci_ग_लिखो_vpd(adapter->pdev, EEPROM_STAT_ADDR, 4, &v);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+int t4_seeprom_wp(struct adapter *adapter, bool enable)
+{
+	unsigned int v = enable ? 0xc : 0;
+	int ret = pci_write_vpd(adapter->pdev, EEPROM_STAT_ADDR, 4, &v);
+	return ret < 0 ? ret : 0;
+}
 
 /**
- *	t4_get_raw_vpd_params - पढ़ो VPD parameters from VPD EEPROM
- *	@adapter: adapter to पढ़ो
+ *	t4_get_raw_vpd_params - read VPD parameters from VPD EEPROM
+ *	@adapter: adapter to read
  *	@p: where to store the parameters
  *
  *	Reads card parameters stored in VPD EEPROM.
  */
-पूर्णांक t4_get_raw_vpd_params(काष्ठा adapter *adapter, काष्ठा vpd_params *p)
-अणु
-	पूर्णांक i, ret = 0, addr;
-	पूर्णांक ec, sn, pn, na;
+int t4_get_raw_vpd_params(struct adapter *adapter, struct vpd_params *p)
+{
+	int i, ret = 0, addr;
+	int ec, sn, pn, na;
 	u8 *vpd, csum, base_val = 0;
-	अचिन्हित पूर्णांक vpdr_len, kw_offset, id_len;
+	unsigned int vpdr_len, kw_offset, id_len;
 
-	vpd = vदो_स्मृति(VPD_LEN);
-	अगर (!vpd)
-		वापस -ENOMEM;
+	vpd = vmalloc(VPD_LEN);
+	if (!vpd)
+		return -ENOMEM;
 
-	/* Card inक्रमmation normally starts at VPD_BASE but early cards had
+	/* Card information normally starts at VPD_BASE but early cards had
 	 * it at 0.
 	 */
-	ret = pci_पढ़ो_vpd(adapter->pdev, VPD_BASE, 1, &base_val);
-	अगर (ret < 0)
-		जाओ out;
+	ret = pci_read_vpd(adapter->pdev, VPD_BASE, 1, &base_val);
+	if (ret < 0)
+		goto out;
 
 	addr = base_val == PCI_VPD_LRDT_ID_STRING ? VPD_BASE : VPD_BASE_OLD;
 
-	ret = pci_पढ़ो_vpd(adapter->pdev, addr, VPD_LEN, vpd);
-	अगर (ret < 0)
-		जाओ out;
+	ret = pci_read_vpd(adapter->pdev, addr, VPD_LEN, vpd);
+	if (ret < 0)
+		goto out;
 
-	अगर (vpd[0] != PCI_VPD_LRDT_ID_STRING) अणु
+	if (vpd[0] != PCI_VPD_LRDT_ID_STRING) {
 		dev_err(adapter->pdev_dev, "missing VPD ID string\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	id_len = pci_vpd_lrdt_size(vpd);
-	अगर (id_len > ID_LEN)
+	if (id_len > ID_LEN)
 		id_len = ID_LEN;
 
 	i = pci_vpd_find_tag(vpd, VPD_LEN, PCI_VPD_LRDT_RO_DATA);
-	अगर (i < 0) अणु
+	if (i < 0) {
 		dev_err(adapter->pdev_dev, "missing VPD-R section\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	vpdr_len = pci_vpd_lrdt_size(&vpd[i]);
 	kw_offset = i + PCI_VPD_LRDT_TAG_SIZE;
-	अगर (vpdr_len + kw_offset > VPD_LEN) अणु
+	if (vpdr_len + kw_offset > VPD_LEN) {
 		dev_err(adapter->pdev_dev, "bad VPD-R length %u\n", vpdr_len);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-#घोषणा FIND_VPD_KW(var, name) करो अणु \
+#define FIND_VPD_KW(var, name) do { \
 	var = pci_vpd_find_info_keyword(vpd, kw_offset, vpdr_len, name); \
-	अगर (var < 0) अणु \
+	if (var < 0) { \
 		dev_err(adapter->pdev_dev, "missing VPD keyword " name "\n"); \
 		ret = -EINVAL; \
-		जाओ out; \
-	पूर्ण \
+		goto out; \
+	} \
 	var += PCI_VPD_INFO_FLD_HDR_SIZE; \
-पूर्ण जबतक (0)
+} while (0)
 
 	FIND_VPD_KW(i, "RV");
-	क्रम (csum = 0; i >= 0; i--)
+	for (csum = 0; i >= 0; i--)
 		csum += vpd[i];
 
-	अगर (csum) अणु
+	if (csum) {
 		dev_err(adapter->pdev_dev,
 			"corrupted VPD EEPROM, actual csum %u\n", csum);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	FIND_VPD_KW(ec, "EC");
 	FIND_VPD_KW(sn, "SN");
 	FIND_VPD_KW(pn, "PN");
 	FIND_VPD_KW(na, "NA");
-#अघोषित FIND_VPD_KW
+#undef FIND_VPD_KW
 
-	स_नकल(p->id, vpd + PCI_VPD_LRDT_TAG_SIZE, id_len);
+	memcpy(p->id, vpd + PCI_VPD_LRDT_TAG_SIZE, id_len);
 	strim(p->id);
-	स_नकल(p->ec, vpd + ec, EC_LEN);
+	memcpy(p->ec, vpd + ec, EC_LEN);
 	strim(p->ec);
 	i = pci_vpd_info_field_size(vpd + sn - PCI_VPD_INFO_FLD_HDR_SIZE);
-	स_नकल(p->sn, vpd + sn, min(i, SERNUM_LEN));
+	memcpy(p->sn, vpd + sn, min(i, SERNUM_LEN));
 	strim(p->sn);
 	i = pci_vpd_info_field_size(vpd + pn - PCI_VPD_INFO_FLD_HDR_SIZE);
-	स_नकल(p->pn, vpd + pn, min(i, PN_LEN));
+	memcpy(p->pn, vpd + pn, min(i, PN_LEN));
 	strim(p->pn);
-	स_नकल(p->na, vpd + na, min(i, MACADDR_LEN));
-	strim((अक्षर *)p->na);
+	memcpy(p->na, vpd + na, min(i, MACADDR_LEN));
+	strim((char *)p->na);
 
 out:
-	vमुक्त(vpd);
-	वापस ret < 0 ? ret : 0;
-पूर्ण
+	vfree(vpd);
+	return ret < 0 ? ret : 0;
+}
 
 /**
- *	t4_get_vpd_params - पढ़ो VPD parameters & retrieve Core Clock
- *	@adapter: adapter to पढ़ो
+ *	t4_get_vpd_params - read VPD parameters & retrieve Core Clock
+ *	@adapter: adapter to read
  *	@p: where to store the parameters
  *
  *	Reads card parameters stored in VPD EEPROM and retrieves the Core
  *	Clock.  This can only be called after a connection to the firmware
  *	is established.
  */
-पूर्णांक t4_get_vpd_params(काष्ठा adapter *adapter, काष्ठा vpd_params *p)
-अणु
+int t4_get_vpd_params(struct adapter *adapter, struct vpd_params *p)
+{
 	u32 cclk_param, cclk_val;
-	पूर्णांक ret;
+	int ret;
 
 	/* Grab the raw VPD parameters.
 	 */
 	ret = t4_get_raw_vpd_params(adapter, p);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Ask firmware क्रम the Core Clock since it knows how to translate the
-	 * Reference Clock ('V2') VPD field पूर्णांकo a Core Clock value ...
+	/* Ask firmware for the Core Clock since it knows how to translate the
+	 * Reference Clock ('V2') VPD field into a Core Clock value ...
 	 */
 	cclk_param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 		      FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_CCLK));
 	ret = t4_query_params(adapter, adapter->mbox, adapter->pf, 0,
 			      1, &cclk_param, &cclk_val);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	p->cclk = cclk_val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	t4_get_pfres - retrieve VF resource limits
  *	@adapter: the adapter
  *
- *	Retrieves configured resource limits and capabilities क्रम a physical
+ *	Retrieves configured resource limits and capabilities for a physical
  *	function.  The results are stored in @adapter->pfres.
  */
-पूर्णांक t4_get_pfres(काष्ठा adapter *adapter)
-अणु
-	काष्ठा pf_resources *pfres = &adapter->params.pfres;
-	काष्ठा fw_pfvf_cmd cmd, rpl;
-	पूर्णांक v;
+int t4_get_pfres(struct adapter *adapter)
+{
+	struct pf_resources *pfres = &adapter->params.pfres;
+	struct fw_pfvf_cmd cmd, rpl;
+	int v;
 	u32 word;
 
 	/* Execute PFVF Read command to get VF resource limits; bail out early
 	 * with error on command failure.
 	 */
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_PFVF_CMD) |
 				    FW_CMD_REQUEST_F |
 				    FW_CMD_READ_F |
 				    FW_PFVF_CMD_PFN_V(adapter->pf) |
 				    FW_PFVF_CMD_VFN_V(0));
 	cmd.retval_len16 = cpu_to_be32(FW_LEN16(cmd));
-	v = t4_wr_mbox(adapter, adapter->mbox, &cmd, माप(cmd), &rpl);
-	अगर (v != FW_SUCCESS)
-		वापस v;
+	v = t4_wr_mbox(adapter, adapter->mbox, &cmd, sizeof(cmd), &rpl);
+	if (v != FW_SUCCESS)
+		return v;
 
-	/* Extract PF resource limits and वापस success.
+	/* Extract PF resource limits and return success.
 	 */
-	word = be32_to_cpu(rpl.niqflपूर्णांक_niq);
-	pfres->niqflपूर्णांक = FW_PFVF_CMD_NIQFLINT_G(word);
+	word = be32_to_cpu(rpl.niqflint_niq);
+	pfres->niqflint = FW_PFVF_CMD_NIQFLINT_G(word);
 	pfres->niq = FW_PFVF_CMD_NIQ_G(word);
 
 	word = be32_to_cpu(rpl.type_to_neq);
@@ -2919,379 +2918,379 @@ out:
 	pfres->wx_caps = FW_PFVF_CMD_WX_CAPS_G(word);
 	pfres->nethctrl = FW_PFVF_CMD_NETHCTRL_G(word);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* serial flash and firmware स्थिरants */
-क्रमागत अणु
-	SF_ATTEMPTS = 10,             /* max retries क्रम SF operations */
+/* serial flash and firmware constants */
+enum {
+	SF_ATTEMPTS = 10,             /* max retries for SF operations */
 
 	/* flash command opcodes */
 	SF_PROG_PAGE    = 2,          /* program page */
-	SF_WR_DISABLE   = 4,          /* disable ग_लिखोs */
-	SF_RD_STATUS    = 5,          /* पढ़ो status रेजिस्टर */
-	SF_WR_ENABLE    = 6,          /* enable ग_लिखोs */
-	SF_RD_DATA_FAST = 0xb,        /* पढ़ो flash */
-	SF_RD_ID        = 0x9f,       /* पढ़ो ID */
+	SF_WR_DISABLE   = 4,          /* disable writes */
+	SF_RD_STATUS    = 5,          /* read status register */
+	SF_WR_ENABLE    = 6,          /* enable writes */
+	SF_RD_DATA_FAST = 0xb,        /* read flash */
+	SF_RD_ID        = 0x9f,       /* read ID */
 	SF_ERASE_SECTOR = 0xd8,       /* erase sector */
-पूर्ण;
+};
 
 /**
- *	sf1_पढ़ो - पढ़ो data from the serial flash
+ *	sf1_read - read data from the serial flash
  *	@adapter: the adapter
- *	@byte_cnt: number of bytes to पढ़ो
+ *	@byte_cnt: number of bytes to read
  *	@cont: whether another operation will be chained
- *	@lock: whether to lock SF क्रम PL access only
- *	@valp: where to store the पढ़ो data
+ *	@lock: whether to lock SF for PL access only
+ *	@valp: where to store the read data
  *
  *	Reads up to 4 bytes of data from the serial flash.  The location of
- *	the पढ़ो needs to be specअगरied prior to calling this by issuing the
+ *	the read needs to be specified prior to calling this by issuing the
  *	appropriate commands to the serial flash.
  */
-अटल पूर्णांक sf1_पढ़ो(काष्ठा adapter *adapter, अचिन्हित पूर्णांक byte_cnt, पूर्णांक cont,
-		    पूर्णांक lock, u32 *valp)
-अणु
-	पूर्णांक ret;
+static int sf1_read(struct adapter *adapter, unsigned int byte_cnt, int cont,
+		    int lock, u32 *valp)
+{
+	int ret;
 
-	अगर (!byte_cnt || byte_cnt > 4)
-		वापस -EINVAL;
-	अगर (t4_पढ़ो_reg(adapter, SF_OP_A) & SF_BUSY_F)
-		वापस -EBUSY;
-	t4_ग_लिखो_reg(adapter, SF_OP_A, SF_LOCK_V(lock) |
+	if (!byte_cnt || byte_cnt > 4)
+		return -EINVAL;
+	if (t4_read_reg(adapter, SF_OP_A) & SF_BUSY_F)
+		return -EBUSY;
+	t4_write_reg(adapter, SF_OP_A, SF_LOCK_V(lock) |
 		     SF_CONT_V(cont) | BYTECNT_V(byte_cnt - 1));
-	ret = t4_रुको_op_करोne(adapter, SF_OP_A, SF_BUSY_F, 0, SF_ATTEMPTS, 5);
-	अगर (!ret)
-		*valp = t4_पढ़ो_reg(adapter, SF_DATA_A);
-	वापस ret;
-पूर्ण
+	ret = t4_wait_op_done(adapter, SF_OP_A, SF_BUSY_F, 0, SF_ATTEMPTS, 5);
+	if (!ret)
+		*valp = t4_read_reg(adapter, SF_DATA_A);
+	return ret;
+}
 
 /**
- *	sf1_ग_लिखो - ग_लिखो data to the serial flash
+ *	sf1_write - write data to the serial flash
  *	@adapter: the adapter
- *	@byte_cnt: number of bytes to ग_लिखो
+ *	@byte_cnt: number of bytes to write
  *	@cont: whether another operation will be chained
- *	@lock: whether to lock SF क्रम PL access only
- *	@val: value to ग_लिखो
+ *	@lock: whether to lock SF for PL access only
+ *	@val: value to write
  *
  *	Writes up to 4 bytes of data to the serial flash.  The location of
- *	the ग_लिखो needs to be specअगरied prior to calling this by issuing the
+ *	the write needs to be specified prior to calling this by issuing the
  *	appropriate commands to the serial flash.
  */
-अटल पूर्णांक sf1_ग_लिखो(काष्ठा adapter *adapter, अचिन्हित पूर्णांक byte_cnt, पूर्णांक cont,
-		     पूर्णांक lock, u32 val)
-अणु
-	अगर (!byte_cnt || byte_cnt > 4)
-		वापस -EINVAL;
-	अगर (t4_पढ़ो_reg(adapter, SF_OP_A) & SF_BUSY_F)
-		वापस -EBUSY;
-	t4_ग_लिखो_reg(adapter, SF_DATA_A, val);
-	t4_ग_लिखो_reg(adapter, SF_OP_A, SF_LOCK_V(lock) |
+static int sf1_write(struct adapter *adapter, unsigned int byte_cnt, int cont,
+		     int lock, u32 val)
+{
+	if (!byte_cnt || byte_cnt > 4)
+		return -EINVAL;
+	if (t4_read_reg(adapter, SF_OP_A) & SF_BUSY_F)
+		return -EBUSY;
+	t4_write_reg(adapter, SF_DATA_A, val);
+	t4_write_reg(adapter, SF_OP_A, SF_LOCK_V(lock) |
 		     SF_CONT_V(cont) | BYTECNT_V(byte_cnt - 1) | OP_V(1));
-	वापस t4_रुको_op_करोne(adapter, SF_OP_A, SF_BUSY_F, 0, SF_ATTEMPTS, 5);
-पूर्ण
+	return t4_wait_op_done(adapter, SF_OP_A, SF_BUSY_F, 0, SF_ATTEMPTS, 5);
+}
 
 /**
- *	flash_रुको_op - रुको क्रम a flash operation to complete
+ *	flash_wait_op - wait for a flash operation to complete
  *	@adapter: the adapter
- *	@attempts: max number of polls of the status रेजिस्टर
+ *	@attempts: max number of polls of the status register
  *	@delay: delay between polls in ms
  *
- *	Wait क्रम a flash operation to complete by polling the status रेजिस्टर.
+ *	Wait for a flash operation to complete by polling the status register.
  */
-अटल पूर्णांक flash_रुको_op(काष्ठा adapter *adapter, पूर्णांक attempts, पूर्णांक delay)
-अणु
-	पूर्णांक ret;
+static int flash_wait_op(struct adapter *adapter, int attempts, int delay)
+{
+	int ret;
 	u32 status;
 
-	जबतक (1) अणु
-		अगर ((ret = sf1_ग_लिखो(adapter, 1, 1, 1, SF_RD_STATUS)) != 0 ||
-		    (ret = sf1_पढ़ो(adapter, 1, 0, 1, &status)) != 0)
-			वापस ret;
-		अगर (!(status & 1))
-			वापस 0;
-		अगर (--attempts == 0)
-			वापस -EAGAIN;
-		अगर (delay)
+	while (1) {
+		if ((ret = sf1_write(adapter, 1, 1, 1, SF_RD_STATUS)) != 0 ||
+		    (ret = sf1_read(adapter, 1, 0, 1, &status)) != 0)
+			return ret;
+		if (!(status & 1))
+			return 0;
+		if (--attempts == 0)
+			return -EAGAIN;
+		if (delay)
 			msleep(delay);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	t4_पढ़ो_flash - पढ़ो words from serial flash
+ *	t4_read_flash - read words from serial flash
  *	@adapter: the adapter
- *	@addr: the start address क्रम the पढ़ो
- *	@nwords: how many 32-bit words to पढ़ो
- *	@data: where to store the पढ़ो data
+ *	@addr: the start address for the read
+ *	@nwords: how many 32-bit words to read
+ *	@data: where to store the read data
  *	@byte_oriented: whether to store data as bytes or as words
  *
- *	Read the specअगरied number of 32-bit words from the serial flash.
- *	If @byte_oriented is set the पढ़ो data is stored as a byte array
- *	(i.e., big-endian), otherwise as 32-bit words in the platक्रमm's
+ *	Read the specified number of 32-bit words from the serial flash.
+ *	If @byte_oriented is set the read data is stored as a byte array
+ *	(i.e., big-endian), otherwise as 32-bit words in the platform's
  *	natural endianness.
  */
-पूर्णांक t4_पढ़ो_flash(काष्ठा adapter *adapter, अचिन्हित पूर्णांक addr,
-		  अचिन्हित पूर्णांक nwords, u32 *data, पूर्णांक byte_oriented)
-अणु
-	पूर्णांक ret;
+int t4_read_flash(struct adapter *adapter, unsigned int addr,
+		  unsigned int nwords, u32 *data, int byte_oriented)
+{
+	int ret;
 
-	अगर (addr + nwords * माप(u32) > adapter->params.sf_size || (addr & 3))
-		वापस -EINVAL;
+	if (addr + nwords * sizeof(u32) > adapter->params.sf_size || (addr & 3))
+		return -EINVAL;
 
 	addr = swab32(addr) | SF_RD_DATA_FAST;
 
-	अगर ((ret = sf1_ग_लिखो(adapter, 4, 1, 0, addr)) != 0 ||
-	    (ret = sf1_पढ़ो(adapter, 1, 1, 0, data)) != 0)
-		वापस ret;
+	if ((ret = sf1_write(adapter, 4, 1, 0, addr)) != 0 ||
+	    (ret = sf1_read(adapter, 1, 1, 0, data)) != 0)
+		return ret;
 
-	क्रम ( ; nwords; nwords--, data++) अणु
-		ret = sf1_पढ़ो(adapter, 4, nwords > 1, nwords == 1, data);
-		अगर (nwords == 1)
-			t4_ग_लिखो_reg(adapter, SF_OP_A, 0);    /* unlock SF */
-		अगर (ret)
-			वापस ret;
-		अगर (byte_oriented)
-			*data = (__क्रमce __u32)(cpu_to_be32(*data));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for ( ; nwords; nwords--, data++) {
+		ret = sf1_read(adapter, 4, nwords > 1, nwords == 1, data);
+		if (nwords == 1)
+			t4_write_reg(adapter, SF_OP_A, 0);    /* unlock SF */
+		if (ret)
+			return ret;
+		if (byte_oriented)
+			*data = (__force __u32)(cpu_to_be32(*data));
+	}
+	return 0;
+}
 
 /**
- *	t4_ग_लिखो_flash - ग_लिखो up to a page of data to the serial flash
+ *	t4_write_flash - write up to a page of data to the serial flash
  *	@adapter: the adapter
- *	@addr: the start address to ग_लिखो
- *	@n: length of data to ग_लिखो in bytes
- *	@data: the data to ग_लिखो
+ *	@addr: the start address to write
+ *	@n: length of data to write in bytes
+ *	@data: the data to write
  *	@byte_oriented: whether to store data as bytes or as words
  *
  *	Writes up to a page of data (256 bytes) to the serial flash starting
  *	at the given address.  All the data must be written to the same page.
- *	If @byte_oriented is set the ग_लिखो data is stored as byte stream
+ *	If @byte_oriented is set the write data is stored as byte stream
  *	(i.e. matches what on disk), otherwise in big-endian.
  */
-अटल पूर्णांक t4_ग_लिखो_flash(काष्ठा adapter *adapter, अचिन्हित पूर्णांक addr,
-			  अचिन्हित पूर्णांक n, स्थिर u8 *data, bool byte_oriented)
-अणु
-	अचिन्हित पूर्णांक i, c, left, val, offset = addr & 0xff;
+static int t4_write_flash(struct adapter *adapter, unsigned int addr,
+			  unsigned int n, const u8 *data, bool byte_oriented)
+{
+	unsigned int i, c, left, val, offset = addr & 0xff;
 	u32 buf[64];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (addr >= adapter->params.sf_size || offset + n > SF_PAGE_SIZE)
-		वापस -EINVAL;
+	if (addr >= adapter->params.sf_size || offset + n > SF_PAGE_SIZE)
+		return -EINVAL;
 
 	val = swab32(addr) | SF_PROG_PAGE;
 
-	अगर ((ret = sf1_ग_लिखो(adapter, 1, 0, 1, SF_WR_ENABLE)) != 0 ||
-	    (ret = sf1_ग_लिखो(adapter, 4, 1, 1, val)) != 0)
-		जाओ unlock;
+	if ((ret = sf1_write(adapter, 1, 0, 1, SF_WR_ENABLE)) != 0 ||
+	    (ret = sf1_write(adapter, 4, 1, 1, val)) != 0)
+		goto unlock;
 
-	क्रम (left = n; left; left -= c, data += c) अणु
+	for (left = n; left; left -= c, data += c) {
 		c = min(left, 4U);
-		क्रम (val = 0, i = 0; i < c; ++i) अणु
-			अगर (byte_oriented)
+		for (val = 0, i = 0; i < c; ++i) {
+			if (byte_oriented)
 				val = (val << 8) + data[i];
-			अन्यथा
+			else
 				val = (val << 8) + data[c - i - 1];
-		पूर्ण
+		}
 
-		ret = sf1_ग_लिखो(adapter, c, c != left, 1, val);
-		अगर (ret)
-			जाओ unlock;
-	पूर्ण
-	ret = flash_रुको_op(adapter, 8, 1);
-	अगर (ret)
-		जाओ unlock;
+		ret = sf1_write(adapter, c, c != left, 1, val);
+		if (ret)
+			goto unlock;
+	}
+	ret = flash_wait_op(adapter, 8, 1);
+	if (ret)
+		goto unlock;
 
-	t4_ग_लिखो_reg(adapter, SF_OP_A, 0);    /* unlock SF */
+	t4_write_reg(adapter, SF_OP_A, 0);    /* unlock SF */
 
-	/* Read the page to verअगरy the ग_लिखो succeeded */
-	ret = t4_पढ़ो_flash(adapter, addr & ~0xff, ARRAY_SIZE(buf), buf,
+	/* Read the page to verify the write succeeded */
+	ret = t4_read_flash(adapter, addr & ~0xff, ARRAY_SIZE(buf), buf,
 			    byte_oriented);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (स_भेद(data - n, (u8 *)buf + offset, n)) अणु
+	if (memcmp(data - n, (u8 *)buf + offset, n)) {
 		dev_err(adapter->pdev_dev,
 			"failed to correctly write the flash page at %#x\n",
 			addr);
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
+		return -EIO;
+	}
+	return 0;
 
 unlock:
-	t4_ग_लिखो_reg(adapter, SF_OP_A, 0);    /* unlock SF */
-	वापस ret;
-पूर्ण
+	t4_write_reg(adapter, SF_OP_A, 0);    /* unlock SF */
+	return ret;
+}
 
 /**
- *	t4_get_fw_version - पढ़ो the firmware version
+ *	t4_get_fw_version - read the firmware version
  *	@adapter: the adapter
  *	@vers: where to place the version
  *
  *	Reads the FW version from flash.
  */
-पूर्णांक t4_get_fw_version(काष्ठा adapter *adapter, u32 *vers)
-अणु
-	वापस t4_पढ़ो_flash(adapter, FLASH_FW_START +
-			     दुरत्व(काष्ठा fw_hdr, fw_ver), 1,
+int t4_get_fw_version(struct adapter *adapter, u32 *vers)
+{
+	return t4_read_flash(adapter, FLASH_FW_START +
+			     offsetof(struct fw_hdr, fw_ver), 1,
 			     vers, 0);
-पूर्ण
+}
 
 /**
- *	t4_get_bs_version - पढ़ो the firmware bootstrap version
+ *	t4_get_bs_version - read the firmware bootstrap version
  *	@adapter: the adapter
  *	@vers: where to place the version
  *
  *	Reads the FW Bootstrap version from flash.
  */
-पूर्णांक t4_get_bs_version(काष्ठा adapter *adapter, u32 *vers)
-अणु
-	वापस t4_पढ़ो_flash(adapter, FLASH_FWBOOTSTRAP_START +
-			     दुरत्व(काष्ठा fw_hdr, fw_ver), 1,
+int t4_get_bs_version(struct adapter *adapter, u32 *vers)
+{
+	return t4_read_flash(adapter, FLASH_FWBOOTSTRAP_START +
+			     offsetof(struct fw_hdr, fw_ver), 1,
 			     vers, 0);
-पूर्ण
+}
 
 /**
- *	t4_get_tp_version - पढ़ो the TP microcode version
+ *	t4_get_tp_version - read the TP microcode version
  *	@adapter: the adapter
  *	@vers: where to place the version
  *
  *	Reads the TP microcode version from flash.
  */
-पूर्णांक t4_get_tp_version(काष्ठा adapter *adapter, u32 *vers)
-अणु
-	वापस t4_पढ़ो_flash(adapter, FLASH_FW_START +
-			     दुरत्व(काष्ठा fw_hdr, tp_microcode_ver),
+int t4_get_tp_version(struct adapter *adapter, u32 *vers)
+{
+	return t4_read_flash(adapter, FLASH_FW_START +
+			     offsetof(struct fw_hdr, tp_microcode_ver),
 			     1, vers, 0);
-पूर्ण
+}
 
 /**
- *	t4_get_exprom_version - वापस the Expansion ROM version (अगर any)
+ *	t4_get_exprom_version - return the Expansion ROM version (if any)
  *	@adap: the adapter
  *	@vers: where to place the version
  *
- *	Reads the Expansion ROM header from FLASH and वापसs the version
- *	number (अगर present) through the @vers वापस value poपूर्णांकer.  We वापस
+ *	Reads the Expansion ROM header from FLASH and returns the version
+ *	number (if present) through the @vers return value pointer.  We return
  *	this in the Firmware Version Format since it's convenient.  Return
- *	0 on success, -ENOENT अगर no Expansion ROM is present.
+ *	0 on success, -ENOENT if no Expansion ROM is present.
  */
-पूर्णांक t4_get_exprom_version(काष्ठा adapter *adap, u32 *vers)
-अणु
-	काष्ठा exprom_header अणु
-		अचिन्हित अक्षर hdr_arr[16];	/* must start with 0x55aa */
-		अचिन्हित अक्षर hdr_ver[4];	/* Expansion ROM version */
-	पूर्ण *hdr;
-	u32 exprom_header_buf[DIV_ROUND_UP(माप(काष्ठा exprom_header),
-					   माप(u32))];
-	पूर्णांक ret;
+int t4_get_exprom_version(struct adapter *adap, u32 *vers)
+{
+	struct exprom_header {
+		unsigned char hdr_arr[16];	/* must start with 0x55aa */
+		unsigned char hdr_ver[4];	/* Expansion ROM version */
+	} *hdr;
+	u32 exprom_header_buf[DIV_ROUND_UP(sizeof(struct exprom_header),
+					   sizeof(u32))];
+	int ret;
 
-	ret = t4_पढ़ो_flash(adap, FLASH_EXP_ROM_START,
+	ret = t4_read_flash(adap, FLASH_EXP_ROM_START,
 			    ARRAY_SIZE(exprom_header_buf), exprom_header_buf,
 			    0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	hdr = (काष्ठा exprom_header *)exprom_header_buf;
-	अगर (hdr->hdr_arr[0] != 0x55 || hdr->hdr_arr[1] != 0xaa)
-		वापस -ENOENT;
+	hdr = (struct exprom_header *)exprom_header_buf;
+	if (hdr->hdr_arr[0] != 0x55 || hdr->hdr_arr[1] != 0xaa)
+		return -ENOENT;
 
 	*vers = (FW_HDR_FW_VER_MAJOR_V(hdr->hdr_ver[0]) |
 		 FW_HDR_FW_VER_MINOR_V(hdr->hdr_ver[1]) |
 		 FW_HDR_FW_VER_MICRO_V(hdr->hdr_ver[2]) |
 		 FW_HDR_FW_VER_BUILD_V(hdr->hdr_ver[3]));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *      t4_get_vpd_version - वापस the VPD version
+ *      t4_get_vpd_version - return the VPD version
  *      @adapter: the adapter
  *      @vers: where to place the version
  *
- *      Reads the VPD via the Firmware पूर्णांकerface (thus this can only be called
- *      once we're पढ़ोy to issue Firmware commands).  The क्रमmat of the
- *      VPD version is adapter specअगरic.  Returns 0 on success, an error on
+ *      Reads the VPD via the Firmware interface (thus this can only be called
+ *      once we're ready to issue Firmware commands).  The format of the
+ *      VPD version is adapter specific.  Returns 0 on success, an error on
  *      failure.
  *
  *      Note that early versions of the Firmware didn't include the ability
- *      to retrieve the VPD version, so we zero-out the वापस-value parameter
- *      in that हाल to aव्योम leaving it with garbage in it.
+ *      to retrieve the VPD version, so we zero-out the return-value parameter
+ *      in that case to avoid leaving it with garbage in it.
  *
- *      Also note that the Firmware will वापस its cached copy of the VPD
+ *      Also note that the Firmware will return its cached copy of the VPD
  *      Revision ID, not the actual Revision ID as written in the Serial
- *      EEPROM.  This is only an issue अगर a new VPD has been written and the
+ *      EEPROM.  This is only an issue if a new VPD has been written and the
  *      Firmware/Chip haven't yet gone through a RESET sequence.  So it's best
  *      to defer calling this routine till after a FW_RESET_CMD has been issued
- *      अगर the Host Driver will be perक्रमming a full adapter initialization.
+ *      if the Host Driver will be performing a full adapter initialization.
  */
-पूर्णांक t4_get_vpd_version(काष्ठा adapter *adapter, u32 *vers)
-अणु
+int t4_get_vpd_version(struct adapter *adapter, u32 *vers)
+{
 	u32 vpdrev_param;
-	पूर्णांक ret;
+	int ret;
 
 	vpdrev_param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 			FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_VPDREV));
 	ret = t4_query_params(adapter, adapter->mbox, adapter->pf, 0,
 			      1, &vpdrev_param, vers);
-	अगर (ret)
+	if (ret)
 		*vers = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *      t4_get_scfg_version - वापस the Serial Configuration version
+ *      t4_get_scfg_version - return the Serial Configuration version
  *      @adapter: the adapter
  *      @vers: where to place the version
  *
- *      Reads the Serial Configuration Version via the Firmware पूर्णांकerface
- *      (thus this can only be called once we're पढ़ोy to issue Firmware
- *      commands).  The क्रमmat of the Serial Configuration version is
- *      adapter specअगरic.  Returns 0 on success, an error on failure.
+ *      Reads the Serial Configuration Version via the Firmware interface
+ *      (thus this can only be called once we're ready to issue Firmware
+ *      commands).  The format of the Serial Configuration version is
+ *      adapter specific.  Returns 0 on success, an error on failure.
  *
  *      Note that early versions of the Firmware didn't include the ability
  *      to retrieve the Serial Configuration version, so we zero-out the
- *      वापस-value parameter in that हाल to aव्योम leaving it with
+ *      return-value parameter in that case to avoid leaving it with
  *      garbage in it.
  *
- *      Also note that the Firmware will वापस its cached copy of the Serial
+ *      Also note that the Firmware will return its cached copy of the Serial
  *      Initialization Revision ID, not the actual Revision ID as written in
- *      the Serial EEPROM.  This is only an issue अगर a new VPD has been written
+ *      the Serial EEPROM.  This is only an issue if a new VPD has been written
  *      and the Firmware/Chip haven't yet gone through a RESET sequence.  So
  *      it's best to defer calling this routine till after a FW_RESET_CMD has
- *      been issued अगर the Host Driver will be perक्रमming a full adapter
+ *      been issued if the Host Driver will be performing a full adapter
  *      initialization.
  */
-पूर्णांक t4_get_scfg_version(काष्ठा adapter *adapter, u32 *vers)
-अणु
+int t4_get_scfg_version(struct adapter *adapter, u32 *vers)
+{
 	u32 scfgrev_param;
-	पूर्णांक ret;
+	int ret;
 
 	scfgrev_param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 			 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_SCFGREV));
 	ret = t4_query_params(adapter, adapter->mbox, adapter->pf, 0,
 			      1, &scfgrev_param, vers);
-	अगर (ret)
+	if (ret)
 		*vers = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *      t4_get_version_info - extract various chip/firmware version inक्रमmation
+ *      t4_get_version_info - extract various chip/firmware version information
  *      @adapter: the adapter
  *
- *      Reads various chip/firmware version numbers and stores them पूर्णांकo the
- *      adapter Adapter Parameters काष्ठाure.  If any of the efक्रमts fails
- *      the first failure will be वापसed, but all of the version numbers
- *      will be पढ़ो.
+ *      Reads various chip/firmware version numbers and stores them into the
+ *      adapter Adapter Parameters structure.  If any of the efforts fails
+ *      the first failure will be returned, but all of the version numbers
+ *      will be read.
  */
-पूर्णांक t4_get_version_info(काष्ठा adapter *adapter)
-अणु
-	पूर्णांक ret = 0;
+int t4_get_version_info(struct adapter *adapter)
+{
+	int ret = 0;
 
-	#घोषणा FIRST_RET(__getvinfo) \
-	करो अणु \
-		पूर्णांक __ret = __getvinfo; \
-		अगर (__ret && !ret) \
+	#define FIRST_RET(__getvinfo) \
+	do { \
+		int __ret = __getvinfo; \
+		if (__ret && !ret) \
 			ret = __ret; \
-	पूर्ण जबतक (0)
+	} while (0)
 
 	FIRST_RET(t4_get_fw_version(adapter, &adapter->params.fw_vers));
 	FIRST_RET(t4_get_bs_version(adapter, &adapter->params.bs_vers));
@@ -3300,21 +3299,21 @@ unlock:
 	FIRST_RET(t4_get_scfg_version(adapter, &adapter->params.scfg_vers));
 	FIRST_RET(t4_get_vpd_version(adapter, &adapter->params.vpd_vers));
 
-	#अघोषित FIRST_RET
-	वापस ret;
-पूर्ण
+	#undef FIRST_RET
+	return ret;
+}
 
 /**
  *      t4_dump_version_info - dump all of the adapter configuration IDs
  *      @adapter: the adapter
  *
  *      Dumps all of the various bits of adapter configuration version/revision
- *      IDs inक्रमmation.  This is typically called at some poपूर्णांक after
+ *      IDs information.  This is typically called at some point after
  *      t4_get_version_info() has been called.
  */
-व्योम t4_dump_version_info(काष्ठा adapter *adapter)
-अणु
-	/* Device inक्रमmation */
+void t4_dump_version_info(struct adapter *adapter)
+{
+	/* Device information */
 	dev_info(adapter->pdev_dev, "Chelsio %s rev %d\n",
 		 adapter->params.vpd.id,
 		 CHELSIO_CHIP_RELEASE(adapter->params.chip));
@@ -3322,21 +3321,21 @@ unlock:
 		 adapter->params.vpd.sn, adapter->params.vpd.pn);
 
 	/* Firmware Version */
-	अगर (!adapter->params.fw_vers)
+	if (!adapter->params.fw_vers)
 		dev_warn(adapter->pdev_dev, "No firmware loaded\n");
-	अन्यथा
+	else
 		dev_info(adapter->pdev_dev, "Firmware version: %u.%u.%u.%u\n",
 			 FW_HDR_FW_VER_MAJOR_G(adapter->params.fw_vers),
 			 FW_HDR_FW_VER_MINOR_G(adapter->params.fw_vers),
 			 FW_HDR_FW_VER_MICRO_G(adapter->params.fw_vers),
 			 FW_HDR_FW_VER_BUILD_G(adapter->params.fw_vers));
 
-	/* Bootstrap Firmware Version. (Some adapters करोn't have Bootstrap
+	/* Bootstrap Firmware Version. (Some adapters don't have Bootstrap
 	 * Firmware, so dev_info() is more appropriate here.)
 	 */
-	अगर (!adapter->params.bs_vers)
+	if (!adapter->params.bs_vers)
 		dev_info(adapter->pdev_dev, "No bootstrap loaded\n");
-	अन्यथा
+	else
 		dev_info(adapter->pdev_dev, "Bootstrap version: %u.%u.%u.%u\n",
 			 FW_HDR_FW_VER_MAJOR_G(adapter->params.bs_vers),
 			 FW_HDR_FW_VER_MINOR_G(adapter->params.bs_vers),
@@ -3344,9 +3343,9 @@ unlock:
 			 FW_HDR_FW_VER_BUILD_G(adapter->params.bs_vers));
 
 	/* TP Microcode Version */
-	अगर (!adapter->params.tp_vers)
+	if (!adapter->params.tp_vers)
 		dev_warn(adapter->pdev_dev, "No TP Microcode loaded\n");
-	अन्यथा
+	else
 		dev_info(adapter->pdev_dev,
 			 "TP Microcode version: %u.%u.%u.%u\n",
 			 FW_HDR_FW_VER_MAJOR_G(adapter->params.tp_vers),
@@ -3355,9 +3354,9 @@ unlock:
 			 FW_HDR_FW_VER_BUILD_G(adapter->params.tp_vers));
 
 	/* Expansion ROM version */
-	अगर (!adapter->params.er_vers)
+	if (!adapter->params.er_vers)
 		dev_info(adapter->pdev_dev, "No Expansion ROM loaded\n");
-	अन्यथा
+	else
 		dev_info(adapter->pdev_dev,
 			 "Expansion ROM version: %u.%u.%u.%u\n",
 			 FW_HDR_FW_VER_MAJOR_G(adapter->params.er_vers),
@@ -3372,106 +3371,106 @@ unlock:
 	/* VPD Version */
 	dev_info(adapter->pdev_dev, "VPD version: %#x\n",
 		 adapter->params.vpd_vers);
-पूर्ण
+}
 
 /**
- *	t4_check_fw_version - check अगर the FW is supported with this driver
+ *	t4_check_fw_version - check if the FW is supported with this driver
  *	@adap: the adapter
  *
- *	Checks अगर an adapter's FW is compatible with the driver.  Returns 0
- *	अगर there's exact match, a negative error अगर the version could not be
- *	पढ़ो or there's a major version mismatch
+ *	Checks if an adapter's FW is compatible with the driver.  Returns 0
+ *	if there's exact match, a negative error if the version could not be
+ *	read or there's a major version mismatch
  */
-पूर्णांक t4_check_fw_version(काष्ठा adapter *adap)
-अणु
-	पूर्णांक i, ret, major, minor, micro;
-	पूर्णांक exp_major, exp_minor, exp_micro;
-	अचिन्हित पूर्णांक chip_version = CHELSIO_CHIP_VERSION(adap->params.chip);
+int t4_check_fw_version(struct adapter *adap)
+{
+	int i, ret, major, minor, micro;
+	int exp_major, exp_minor, exp_micro;
+	unsigned int chip_version = CHELSIO_CHIP_VERSION(adap->params.chip);
 
 	ret = t4_get_fw_version(adap, &adap->params.fw_vers);
-	/* Try multiple बार beक्रमe वापसing error */
-	क्रम (i = 0; (ret == -EBUSY || ret == -EAGAIN) && i < 3; i++)
+	/* Try multiple times before returning error */
+	for (i = 0; (ret == -EBUSY || ret == -EAGAIN) && i < 3; i++)
 		ret = t4_get_fw_version(adap, &adap->params.fw_vers);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	major = FW_HDR_FW_VER_MAJOR_G(adap->params.fw_vers);
 	minor = FW_HDR_FW_VER_MINOR_G(adap->params.fw_vers);
 	micro = FW_HDR_FW_VER_MICRO_G(adap->params.fw_vers);
 
-	चयन (chip_version) अणु
-	हाल CHELSIO_T4:
+	switch (chip_version) {
+	case CHELSIO_T4:
 		exp_major = T4FW_MIN_VERSION_MAJOR;
 		exp_minor = T4FW_MIN_VERSION_MINOR;
 		exp_micro = T4FW_MIN_VERSION_MICRO;
-		अवरोध;
-	हाल CHELSIO_T5:
+		break;
+	case CHELSIO_T5:
 		exp_major = T5FW_MIN_VERSION_MAJOR;
 		exp_minor = T5FW_MIN_VERSION_MINOR;
 		exp_micro = T5FW_MIN_VERSION_MICRO;
-		अवरोध;
-	हाल CHELSIO_T6:
+		break;
+	case CHELSIO_T6:
 		exp_major = T6FW_MIN_VERSION_MAJOR;
 		exp_minor = T6FW_MIN_VERSION_MINOR;
 		exp_micro = T6FW_MIN_VERSION_MICRO;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(adap->pdev_dev, "Unsupported chip type, %x\n",
 			adap->chip);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (major < exp_major || (major == exp_major && minor < exp_minor) ||
-	    (major == exp_major && minor == exp_minor && micro < exp_micro)) अणु
+	if (major < exp_major || (major == exp_major && minor < exp_minor) ||
+	    (major == exp_major && minor == exp_minor && micro < exp_micro)) {
 		dev_err(adap->pdev_dev,
 			"Card has firmware version %u.%u.%u, minimum "
 			"supported firmware is %u.%u.%u.\n", major, minor,
 			micro, exp_major, exp_minor, exp_micro);
-		वापस -EFAULT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EFAULT;
+	}
+	return 0;
+}
 
 /* Is the given firmware API compatible with the one the driver was compiled
  * with?
  */
-अटल पूर्णांक fw_compatible(स्थिर काष्ठा fw_hdr *hdr1, स्थिर काष्ठा fw_hdr *hdr2)
-अणु
+static int fw_compatible(const struct fw_hdr *hdr1, const struct fw_hdr *hdr2)
+{
 
-	/* लघु circuit अगर it's the exact same firmware version */
-	अगर (hdr1->chip == hdr2->chip && hdr1->fw_ver == hdr2->fw_ver)
-		वापस 1;
+	/* short circuit if it's the exact same firmware version */
+	if (hdr1->chip == hdr2->chip && hdr1->fw_ver == hdr2->fw_ver)
+		return 1;
 
-#घोषणा SAME_INTF(x) (hdr1->पूर्णांकfver_##x == hdr2->पूर्णांकfver_##x)
-	अगर (hdr1->chip == hdr2->chip && SAME_INTF(nic) && SAME_INTF(vnic) &&
+#define SAME_INTF(x) (hdr1->intfver_##x == hdr2->intfver_##x)
+	if (hdr1->chip == hdr2->chip && SAME_INTF(nic) && SAME_INTF(vnic) &&
 	    SAME_INTF(ri) && SAME_INTF(iscsi) && SAME_INTF(fcoe))
-		वापस 1;
-#अघोषित SAME_INTF
+		return 1;
+#undef SAME_INTF
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* The firmware in the fileप्रणाली is usable, but should it be installed?
- * This routine explains itself in detail अगर it indicates the fileप्रणाली
+/* The firmware in the filesystem is usable, but should it be installed?
+ * This routine explains itself in detail if it indicates the filesystem
  * firmware should be installed.
  */
-अटल पूर्णांक should_install_fs_fw(काष्ठा adapter *adap, पूर्णांक card_fw_usable,
-				पूर्णांक k, पूर्णांक c)
-अणु
-	स्थिर अक्षर *reason;
+static int should_install_fs_fw(struct adapter *adap, int card_fw_usable,
+				int k, int c)
+{
+	const char *reason;
 
-	अगर (!card_fw_usable) अणु
+	if (!card_fw_usable) {
 		reason = "incompatible or unusable";
-		जाओ install;
-	पूर्ण
+		goto install;
+	}
 
-	अगर (k > c) अणु
+	if (k > c) {
 		reason = "older than the version supported with this driver";
-		जाओ install;
-	पूर्ण
+		goto install;
+	}
 
-	वापस 0;
+	return 0;
 
 install:
 	dev_err(adap->pdev_dev, "firmware on card (%u.%u.%u.%u) is %s, "
@@ -3481,66 +3480,66 @@ install:
 		FW_HDR_FW_VER_MAJOR_G(k), FW_HDR_FW_VER_MINOR_G(k),
 		FW_HDR_FW_VER_MICRO_G(k), FW_HDR_FW_VER_BUILD_G(k));
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-पूर्णांक t4_prep_fw(काष्ठा adapter *adap, काष्ठा fw_info *fw_info,
-	       स्थिर u8 *fw_data, अचिन्हित पूर्णांक fw_size,
-	       काष्ठा fw_hdr *card_fw, क्रमागत dev_state state,
-	       पूर्णांक *reset)
-अणु
-	पूर्णांक ret, card_fw_usable, fs_fw_usable;
-	स्थिर काष्ठा fw_hdr *fs_fw;
-	स्थिर काष्ठा fw_hdr *drv_fw;
+int t4_prep_fw(struct adapter *adap, struct fw_info *fw_info,
+	       const u8 *fw_data, unsigned int fw_size,
+	       struct fw_hdr *card_fw, enum dev_state state,
+	       int *reset)
+{
+	int ret, card_fw_usable, fs_fw_usable;
+	const struct fw_hdr *fs_fw;
+	const struct fw_hdr *drv_fw;
 
 	drv_fw = &fw_info->fw_hdr;
 
 	/* Read the header of the firmware on the card */
-	ret = t4_पढ़ो_flash(adap, FLASH_FW_START,
-			    माप(*card_fw) / माप(uपूर्णांक32_t),
-			    (uपूर्णांक32_t *)card_fw, 1);
-	अगर (ret == 0) अणु
-		card_fw_usable = fw_compatible(drv_fw, (स्थिर व्योम *)card_fw);
-	पूर्ण अन्यथा अणु
+	ret = t4_read_flash(adap, FLASH_FW_START,
+			    sizeof(*card_fw) / sizeof(uint32_t),
+			    (uint32_t *)card_fw, 1);
+	if (ret == 0) {
+		card_fw_usable = fw_compatible(drv_fw, (const void *)card_fw);
+	} else {
 		dev_err(adap->pdev_dev,
 			"Unable to read card's firmware header: %d\n", ret);
 		card_fw_usable = 0;
-	पूर्ण
+	}
 
-	अगर (fw_data != शून्य) अणु
-		fs_fw = (स्थिर व्योम *)fw_data;
+	if (fw_data != NULL) {
+		fs_fw = (const void *)fw_data;
 		fs_fw_usable = fw_compatible(drv_fw, fs_fw);
-	पूर्ण अन्यथा अणु
-		fs_fw = शून्य;
+	} else {
+		fs_fw = NULL;
 		fs_fw_usable = 0;
-	पूर्ण
+	}
 
-	अगर (card_fw_usable && card_fw->fw_ver == drv_fw->fw_ver &&
-	    (!fs_fw_usable || fs_fw->fw_ver == drv_fw->fw_ver)) अणु
-		/* Common हाल: the firmware on the card is an exact match and
-		 * the fileप्रणाली one is an exact match too, or the fileप्रणाली
-		 * one is असलent/incompatible.
+	if (card_fw_usable && card_fw->fw_ver == drv_fw->fw_ver &&
+	    (!fs_fw_usable || fs_fw->fw_ver == drv_fw->fw_ver)) {
+		/* Common case: the firmware on the card is an exact match and
+		 * the filesystem one is an exact match too, or the filesystem
+		 * one is absent/incompatible.
 		 */
-	पूर्ण अन्यथा अगर (fs_fw_usable && state == DEV_STATE_UNINIT &&
+	} else if (fs_fw_usable && state == DEV_STATE_UNINIT &&
 		   should_install_fs_fw(adap, card_fw_usable,
 					be32_to_cpu(fs_fw->fw_ver),
-					be32_to_cpu(card_fw->fw_ver))) अणु
+					be32_to_cpu(card_fw->fw_ver))) {
 		ret = t4_fw_upgrade(adap, adap->mbox, fw_data,
 				    fw_size, 0);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(adap->pdev_dev,
 				"failed to install firmware: %d\n", ret);
-			जाओ bye;
-		पूर्ण
+			goto bye;
+		}
 
 		/* Installed successfully, update the cached header too. */
 		*card_fw = *fs_fw;
 		card_fw_usable = 1;
-		*reset = 0;	/* alपढ़ोy reset as part of load_fw */
-	पूर्ण
+		*reset = 0;	/* already reset as part of load_fw */
+	}
 
-	अगर (!card_fw_usable) अणु
-		uपूर्णांक32_t d, c, k;
+	if (!card_fw_usable) {
+		uint32_t d, c, k;
 
 		d = be32_to_cpu(drv_fw->fw_ver);
 		c = be32_to_cpu(card_fw->fw_ver);
@@ -3558,16 +3557,16 @@ install:
 			FW_HDR_FW_VER_MAJOR_G(k), FW_HDR_FW_VER_MINOR_G(k),
 			FW_HDR_FW_VER_MICRO_G(k), FW_HDR_FW_VER_BUILD_G(k));
 		ret = -EINVAL;
-		जाओ bye;
-	पूर्ण
+		goto bye;
+	}
 
 	/* We're using whatever's on the card and it's known to be good. */
 	adap->params.fw_vers = be32_to_cpu(card_fw->fw_ver);
 	adap->params.tp_vers = be32_to_cpu(card_fw->tp_microcode_ver);
 
 bye:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	t4_flash_erase_sectors - erase a range of flash sectors
@@ -3577,167 +3576,167 @@ bye:
  *
  *	Erases the sectors in the given inclusive range.
  */
-अटल पूर्णांक t4_flash_erase_sectors(काष्ठा adapter *adapter, पूर्णांक start, पूर्णांक end)
-अणु
-	पूर्णांक ret = 0;
+static int t4_flash_erase_sectors(struct adapter *adapter, int start, int end)
+{
+	int ret = 0;
 
-	अगर (end >= adapter->params.sf_nsec)
-		वापस -EINVAL;
+	if (end >= adapter->params.sf_nsec)
+		return -EINVAL;
 
-	जबतक (start <= end) अणु
-		अगर ((ret = sf1_ग_लिखो(adapter, 1, 0, 1, SF_WR_ENABLE)) != 0 ||
-		    (ret = sf1_ग_लिखो(adapter, 4, 0, 1,
+	while (start <= end) {
+		if ((ret = sf1_write(adapter, 1, 0, 1, SF_WR_ENABLE)) != 0 ||
+		    (ret = sf1_write(adapter, 4, 0, 1,
 				     SF_ERASE_SECTOR | (start << 8))) != 0 ||
-		    (ret = flash_रुको_op(adapter, 14, 500)) != 0) अणु
+		    (ret = flash_wait_op(adapter, 14, 500)) != 0) {
 			dev_err(adapter->pdev_dev,
 				"erase of flash sector %d failed, error %d\n",
 				start, ret);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		start++;
-	पूर्ण
-	t4_ग_लिखो_reg(adapter, SF_OP_A, 0);    /* unlock SF */
-	वापस ret;
-पूर्ण
+	}
+	t4_write_reg(adapter, SF_OP_A, 0);    /* unlock SF */
+	return ret;
+}
 
 /**
- *	t4_flash_cfg_addr - वापस the address of the flash configuration file
+ *	t4_flash_cfg_addr - return the address of the flash configuration file
  *	@adapter: the adapter
  *
  *	Return the address within the flash where the Firmware Configuration
  *	File is stored.
  */
-अचिन्हित पूर्णांक t4_flash_cfg_addr(काष्ठा adapter *adapter)
-अणु
-	अगर (adapter->params.sf_size == 0x100000)
-		वापस FLASH_FPGA_CFG_START;
-	अन्यथा
-		वापस FLASH_CFG_START;
-पूर्ण
+unsigned int t4_flash_cfg_addr(struct adapter *adapter)
+{
+	if (adapter->params.sf_size == 0x100000)
+		return FLASH_FPGA_CFG_START;
+	else
+		return FLASH_CFG_START;
+}
 
-/* Return TRUE अगर the specअगरied firmware matches the adapter.  I.e. T4
- * firmware क्रम T4 adapters, T5 firmware क्रम T5 adapters, etc.  We go ahead
- * and emit an error message क्रम mismatched firmware to save our caller the
- * efक्रमt ...
+/* Return TRUE if the specified firmware matches the adapter.  I.e. T4
+ * firmware for T4 adapters, T5 firmware for T5 adapters, etc.  We go ahead
+ * and emit an error message for mismatched firmware to save our caller the
+ * effort ...
  */
-अटल bool t4_fw_matches_chip(स्थिर काष्ठा adapter *adap,
-			       स्थिर काष्ठा fw_hdr *hdr)
-अणु
-	/* The expression below will वापस FALSE क्रम any unsupported adapter
+static bool t4_fw_matches_chip(const struct adapter *adap,
+			       const struct fw_hdr *hdr)
+{
+	/* The expression below will return FALSE for any unsupported adapter
 	 * which will keep us "honest" in the future ...
 	 */
-	अगर ((is_t4(adap->params.chip) && hdr->chip == FW_HDR_CHIP_T4) ||
+	if ((is_t4(adap->params.chip) && hdr->chip == FW_HDR_CHIP_T4) ||
 	    (is_t5(adap->params.chip) && hdr->chip == FW_HDR_CHIP_T5) ||
 	    (is_t6(adap->params.chip) && hdr->chip == FW_HDR_CHIP_T6))
-		वापस true;
+		return true;
 
 	dev_err(adap->pdev_dev,
 		"FW image (%d) is not suitable for this adapter (%d)\n",
 		hdr->chip, CHELSIO_CHIP_VERSION(adap->params.chip));
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- *	t4_load_fw - करोwnload firmware
+ *	t4_load_fw - download firmware
  *	@adap: the adapter
- *	@fw_data: the firmware image to ग_लिखो
+ *	@fw_data: the firmware image to write
  *	@size: image size
  *
  *	Write the supplied firmware image to the card's serial flash.
  */
-पूर्णांक t4_load_fw(काष्ठा adapter *adap, स्थिर u8 *fw_data, अचिन्हित पूर्णांक size)
-अणु
+int t4_load_fw(struct adapter *adap, const u8 *fw_data, unsigned int size)
+{
 	u32 csum;
-	पूर्णांक ret, addr;
-	अचिन्हित पूर्णांक i;
+	int ret, addr;
+	unsigned int i;
 	u8 first_page[SF_PAGE_SIZE];
-	स्थिर __be32 *p = (स्थिर __be32 *)fw_data;
-	स्थिर काष्ठा fw_hdr *hdr = (स्थिर काष्ठा fw_hdr *)fw_data;
-	अचिन्हित पूर्णांक sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
-	अचिन्हित पूर्णांक fw_start_sec = FLASH_FW_START_SEC;
-	अचिन्हित पूर्णांक fw_size = FLASH_FW_MAX_SIZE;
-	अचिन्हित पूर्णांक fw_start = FLASH_FW_START;
+	const __be32 *p = (const __be32 *)fw_data;
+	const struct fw_hdr *hdr = (const struct fw_hdr *)fw_data;
+	unsigned int sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
+	unsigned int fw_start_sec = FLASH_FW_START_SEC;
+	unsigned int fw_size = FLASH_FW_MAX_SIZE;
+	unsigned int fw_start = FLASH_FW_START;
 
-	अगर (!size) अणु
+	if (!size) {
 		dev_err(adap->pdev_dev, "FW image has no data\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (size & 511) अणु
+		return -EINVAL;
+	}
+	if (size & 511) {
 		dev_err(adap->pdev_dev,
 			"FW image size not multiple of 512 bytes\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((अचिन्हित पूर्णांक)be16_to_cpu(hdr->len512) * 512 != size) अणु
+		return -EINVAL;
+	}
+	if ((unsigned int)be16_to_cpu(hdr->len512) * 512 != size) {
 		dev_err(adap->pdev_dev,
 			"FW image size differs from size in FW header\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (size > fw_size) अणु
+		return -EINVAL;
+	}
+	if (size > fw_size) {
 		dev_err(adap->pdev_dev, "FW image too large, max is %u bytes\n",
 			fw_size);
-		वापस -EFBIG;
-	पूर्ण
-	अगर (!t4_fw_matches_chip(adap, hdr))
-		वापस -EINVAL;
+		return -EFBIG;
+	}
+	if (!t4_fw_matches_chip(adap, hdr))
+		return -EINVAL;
 
-	क्रम (csum = 0, i = 0; i < size / माप(csum); i++)
+	for (csum = 0, i = 0; i < size / sizeof(csum); i++)
 		csum += be32_to_cpu(p[i]);
 
-	अगर (csum != 0xffffffff) अणु
+	if (csum != 0xffffffff) {
 		dev_err(adap->pdev_dev,
 			"corrupted firmware image, checksum %#x\n", csum);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	i = DIV_ROUND_UP(size, sf_sec_size);        /* # of sectors spanned */
 	ret = t4_flash_erase_sectors(adap, fw_start_sec, fw_start_sec + i - 1);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	/*
-	 * We ग_लिखो the correct version at the end so the driver can see a bad
-	 * version अगर the FW ग_लिखो fails.  Start by writing a copy of the
+	 * We write the correct version at the end so the driver can see a bad
+	 * version if the FW write fails.  Start by writing a copy of the
 	 * first page with a bad version.
 	 */
-	स_नकल(first_page, fw_data, SF_PAGE_SIZE);
-	((काष्ठा fw_hdr *)first_page)->fw_ver = cpu_to_be32(0xffffffff);
-	ret = t4_ग_लिखो_flash(adap, fw_start, SF_PAGE_SIZE, first_page, true);
-	अगर (ret)
-		जाओ out;
+	memcpy(first_page, fw_data, SF_PAGE_SIZE);
+	((struct fw_hdr *)first_page)->fw_ver = cpu_to_be32(0xffffffff);
+	ret = t4_write_flash(adap, fw_start, SF_PAGE_SIZE, first_page, true);
+	if (ret)
+		goto out;
 
 	addr = fw_start;
-	क्रम (size -= SF_PAGE_SIZE; size; size -= SF_PAGE_SIZE) अणु
+	for (size -= SF_PAGE_SIZE; size; size -= SF_PAGE_SIZE) {
 		addr += SF_PAGE_SIZE;
 		fw_data += SF_PAGE_SIZE;
-		ret = t4_ग_लिखो_flash(adap, addr, SF_PAGE_SIZE, fw_data, true);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		ret = t4_write_flash(adap, addr, SF_PAGE_SIZE, fw_data, true);
+		if (ret)
+			goto out;
+	}
 
-	ret = t4_ग_लिखो_flash(adap, fw_start + दुरत्व(काष्ठा fw_hdr, fw_ver),
-			     माप(hdr->fw_ver), (स्थिर u8 *)&hdr->fw_ver,
+	ret = t4_write_flash(adap, fw_start + offsetof(struct fw_hdr, fw_ver),
+			     sizeof(hdr->fw_ver), (const u8 *)&hdr->fw_ver,
 			     true);
 out:
-	अगर (ret)
+	if (ret)
 		dev_err(adap->pdev_dev, "firmware download failed, error %d\n",
 			ret);
-	अन्यथा
+	else
 		ret = t4_get_fw_version(adap, &adap->params.fw_vers);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_phy_fw_ver - वापस current PHY firmware version
+ *	t4_phy_fw_ver - return current PHY firmware version
  *	@adap: the adapter
- *	@phy_fw_ver: वापस value buffer क्रम PHY firmware version
+ *	@phy_fw_ver: return value buffer for PHY firmware version
  *
- *	Returns the current version of बाह्यal PHY firmware on the
+ *	Returns the current version of external PHY firmware on the
  *	adapter.
  */
-पूर्णांक t4_phy_fw_ver(काष्ठा adapter *adap, पूर्णांक *phy_fw_ver)
-अणु
+int t4_phy_fw_ver(struct adapter *adap, int *phy_fw_ver)
+{
 	u32 param, val;
-	पूर्णांक ret;
+	int ret;
 
 	param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 		 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_PHYFW) |
@@ -3745,65 +3744,65 @@ out:
 		 FW_PARAMS_PARAM_Z_V(FW_PARAMS_PARAM_DEV_PHYFW_VERSION));
 	ret = t4_query_params(adap, adap->mbox, adap->pf, 0, 1,
 			      &param, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	*phy_fw_ver = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_load_phy_fw - करोwnload port PHY firmware
+ *	t4_load_phy_fw - download port PHY firmware
  *	@adap: the adapter
- *	@win: the PCI-E Memory Winकरोw index to use क्रम t4_memory_rw()
+ *	@win: the PCI-E Memory Window index to use for t4_memory_rw()
  *	@phy_fw_version: function to check PHY firmware versions
- *	@phy_fw_data: the PHY firmware image to ग_लिखो
+ *	@phy_fw_data: the PHY firmware image to write
  *	@phy_fw_size: image size
  *
- *	Transfer the specअगरied PHY firmware to the adapter.  If a non-शून्य
- *	@phy_fw_version is supplied, then it will be used to determine अगर
- *	it's necessary to perक्रमm the transfer by comparing the version
+ *	Transfer the specified PHY firmware to the adapter.  If a non-NULL
+ *	@phy_fw_version is supplied, then it will be used to determine if
+ *	it's necessary to perform the transfer by comparing the version
  *	of any existing adapter PHY firmware with that of the passed in
  *	PHY firmware image.
  *
- *	A negative error number will be वापसed अगर an error occurs.  If
+ *	A negative error number will be returned if an error occurs.  If
  *	version number support is available and there's no need to upgrade
- *	the firmware, 0 will be वापसed.  If firmware is successfully
- *	transferred to the adapter, 1 will be वापसed.
+ *	the firmware, 0 will be returned.  If firmware is successfully
+ *	transferred to the adapter, 1 will be returned.
  *
  *	NOTE: some adapters only have local RAM to store the PHY firmware.  As
  *	a result, a RESET of the adapter would cause that RAM to lose its
  *	contents.  Thus, loading PHY firmware on such adapters must happen
  *	after any FW_RESET_CMDs ...
  */
-पूर्णांक t4_load_phy_fw(काष्ठा adapter *adap, पूर्णांक win,
-		   पूर्णांक (*phy_fw_version)(स्थिर u8 *, माप_प्रकार),
-		   स्थिर u8 *phy_fw_data, माप_प्रकार phy_fw_size)
-अणु
-	पूर्णांक cur_phy_fw_ver = 0, new_phy_fw_vers = 0;
-	अचिन्हित दीर्घ mtype = 0, maddr = 0;
+int t4_load_phy_fw(struct adapter *adap, int win,
+		   int (*phy_fw_version)(const u8 *, size_t),
+		   const u8 *phy_fw_data, size_t phy_fw_size)
+{
+	int cur_phy_fw_ver = 0, new_phy_fw_vers = 0;
+	unsigned long mtype = 0, maddr = 0;
 	u32 param, val;
-	पूर्णांक ret;
+	int ret;
 
-	/* If we have version number support, then check to see अगर the adapter
-	 * alपढ़ोy has up-to-date PHY firmware loaded.
+	/* If we have version number support, then check to see if the adapter
+	 * already has up-to-date PHY firmware loaded.
 	 */
-	अगर (phy_fw_version) अणु
+	if (phy_fw_version) {
 		new_phy_fw_vers = phy_fw_version(phy_fw_data, phy_fw_size);
 		ret = t4_phy_fw_ver(adap, &cur_phy_fw_ver);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (cur_phy_fw_ver >= new_phy_fw_vers) अणु
+		if (cur_phy_fw_ver >= new_phy_fw_vers) {
 			CH_WARN(adap, "PHY Firmware already up-to-date, "
 				"version %#x\n", cur_phy_fw_ver);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	/* Ask the firmware where it wants us to copy the PHY firmware image.
 	 * The size of the file requires a special version of the READ command
 	 * which will pass the file size via the values field in PARAMS_CMD and
-	 * retrieve the वापस value from firmware and place it in the same
+	 * retrieve the return value from firmware and place it in the same
 	 * buffer values
 	 */
 	param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
@@ -3813,8 +3812,8 @@ out:
 	val = phy_fw_size;
 	ret = t4_query_params_rw(adap, adap->mbox, adap->pf, 0, 1,
 				 &param, &val, 1, true);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	mtype = val >> 8;
 	maddr = (val & 0xff) << 16;
 
@@ -3826,8 +3825,8 @@ out:
 			   phy_fw_size, (__be32 *)phy_fw_data,
 			   T4_MEMORY_WRITE);
 	spin_unlock_bh(&adap->win0_lock);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Tell the firmware that the PHY firmware image has been written to
 	 * RAM and it can now start copying it over to the PHYs.  The chip
@@ -3838,39 +3837,39 @@ out:
 		 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_PHYFW) |
 		 FW_PARAMS_PARAM_Y_V(adap->params.portvec) |
 		 FW_PARAMS_PARAM_Z_V(FW_PARAMS_PARAM_DEV_PHYFW_DOWNLOAD));
-	ret = t4_set_params_समयout(adap, adap->mbox, adap->pf, 0, 1,
+	ret = t4_set_params_timeout(adap, adap->mbox, adap->pf, 0, 1,
 				    &param, &val, 30000);
 
 	/* If we have version number support, then check to see that the new
 	 * firmware got loaded properly.
 	 */
-	अगर (phy_fw_version) अणु
+	if (phy_fw_version) {
 		ret = t4_phy_fw_ver(adap, &cur_phy_fw_ver);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (cur_phy_fw_ver != new_phy_fw_vers) अणु
+		if (cur_phy_fw_ver != new_phy_fw_vers) {
 			CH_WARN(adap, "PHY Firmware did not update: "
 				"version on adapter %#x, "
 				"version flashed %#x\n",
 				cur_phy_fw_ver, new_phy_fw_vers);
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण
+			return -ENXIO;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
  *	t4_fwcache - firmware cache operation
  *	@adap: the adapter
  *	@op  : the operation (flush or flush and invalidate)
  */
-पूर्णांक t4_fwcache(काष्ठा adapter *adap, क्रमागत fw_params_param_dev_fwcache op)
-अणु
-	काष्ठा fw_params_cmd c;
+int t4_fwcache(struct adapter *adap, enum fw_params_param_dev_fwcache op)
+{
+	struct fw_params_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn =
 		cpu_to_be32(FW_CMD_OP_V(FW_PARAMS_CMD) |
 			    FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
@@ -3882,88 +3881,88 @@ out:
 			    FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_FWCACHE));
 	c.param[0].val = cpu_to_be32(op);
 
-	वापस t4_wr_mbox(adap, adap->mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, adap->mbox, &c, sizeof(c), NULL);
+}
 
-व्योम t4_cim_पढ़ो_pअगर_la(काष्ठा adapter *adap, u32 *pअगर_req, u32 *pअगर_rsp,
-			अचिन्हित पूर्णांक *pअगर_req_wrptr,
-			अचिन्हित पूर्णांक *pअगर_rsp_wrptr)
-अणु
-	पूर्णांक i, j;
+void t4_cim_read_pif_la(struct adapter *adap, u32 *pif_req, u32 *pif_rsp,
+			unsigned int *pif_req_wrptr,
+			unsigned int *pif_rsp_wrptr)
+{
+	int i, j;
 	u32 cfg, val, req, rsp;
 
-	cfg = t4_पढ़ो_reg(adap, CIM_DEBUGCFG_A);
-	अगर (cfg & LADBGEN_F)
-		t4_ग_लिखो_reg(adap, CIM_DEBUGCFG_A, cfg ^ LADBGEN_F);
+	cfg = t4_read_reg(adap, CIM_DEBUGCFG_A);
+	if (cfg & LADBGEN_F)
+		t4_write_reg(adap, CIM_DEBUGCFG_A, cfg ^ LADBGEN_F);
 
-	val = t4_पढ़ो_reg(adap, CIM_DEBUGSTS_A);
+	val = t4_read_reg(adap, CIM_DEBUGSTS_A);
 	req = POLADBGWRPTR_G(val);
 	rsp = PILADBGWRPTR_G(val);
-	अगर (pअगर_req_wrptr)
-		*pअगर_req_wrptr = req;
-	अगर (pअगर_rsp_wrptr)
-		*pअगर_rsp_wrptr = rsp;
+	if (pif_req_wrptr)
+		*pif_req_wrptr = req;
+	if (pif_rsp_wrptr)
+		*pif_rsp_wrptr = rsp;
 
-	क्रम (i = 0; i < CIM_PIFLA_SIZE; i++) अणु
-		क्रम (j = 0; j < 6; j++) अणु
-			t4_ग_लिखो_reg(adap, CIM_DEBUGCFG_A, POLADBGRDPTR_V(req) |
+	for (i = 0; i < CIM_PIFLA_SIZE; i++) {
+		for (j = 0; j < 6; j++) {
+			t4_write_reg(adap, CIM_DEBUGCFG_A, POLADBGRDPTR_V(req) |
 				     PILADBGRDPTR_V(rsp));
-			*pअगर_req++ = t4_पढ़ो_reg(adap, CIM_PO_LA_DEBUGDATA_A);
-			*pअगर_rsp++ = t4_पढ़ो_reg(adap, CIM_PI_LA_DEBUGDATA_A);
+			*pif_req++ = t4_read_reg(adap, CIM_PO_LA_DEBUGDATA_A);
+			*pif_rsp++ = t4_read_reg(adap, CIM_PI_LA_DEBUGDATA_A);
 			req++;
 			rsp++;
-		पूर्ण
+		}
 		req = (req + 2) & POLADBGRDPTR_M;
 		rsp = (rsp + 2) & PILADBGRDPTR_M;
-	पूर्ण
-	t4_ग_लिखो_reg(adap, CIM_DEBUGCFG_A, cfg);
-पूर्ण
+	}
+	t4_write_reg(adap, CIM_DEBUGCFG_A, cfg);
+}
 
-व्योम t4_cim_पढ़ो_ma_la(काष्ठा adapter *adap, u32 *ma_req, u32 *ma_rsp)
-अणु
+void t4_cim_read_ma_la(struct adapter *adap, u32 *ma_req, u32 *ma_rsp)
+{
 	u32 cfg;
-	पूर्णांक i, j, idx;
+	int i, j, idx;
 
-	cfg = t4_पढ़ो_reg(adap, CIM_DEBUGCFG_A);
-	अगर (cfg & LADBGEN_F)
-		t4_ग_लिखो_reg(adap, CIM_DEBUGCFG_A, cfg ^ LADBGEN_F);
+	cfg = t4_read_reg(adap, CIM_DEBUGCFG_A);
+	if (cfg & LADBGEN_F)
+		t4_write_reg(adap, CIM_DEBUGCFG_A, cfg ^ LADBGEN_F);
 
-	क्रम (i = 0; i < CIM_MALA_SIZE; i++) अणु
-		क्रम (j = 0; j < 5; j++) अणु
+	for (i = 0; i < CIM_MALA_SIZE; i++) {
+		for (j = 0; j < 5; j++) {
 			idx = 8 * i + j;
-			t4_ग_लिखो_reg(adap, CIM_DEBUGCFG_A, POLADBGRDPTR_V(idx) |
+			t4_write_reg(adap, CIM_DEBUGCFG_A, POLADBGRDPTR_V(idx) |
 				     PILADBGRDPTR_V(idx));
-			*ma_req++ = t4_पढ़ो_reg(adap, CIM_PO_LA_MADEBUGDATA_A);
-			*ma_rsp++ = t4_पढ़ो_reg(adap, CIM_PI_LA_MADEBUGDATA_A);
-		पूर्ण
-	पूर्ण
-	t4_ग_लिखो_reg(adap, CIM_DEBUGCFG_A, cfg);
-पूर्ण
+			*ma_req++ = t4_read_reg(adap, CIM_PO_LA_MADEBUGDATA_A);
+			*ma_rsp++ = t4_read_reg(adap, CIM_PI_LA_MADEBUGDATA_A);
+		}
+	}
+	t4_write_reg(adap, CIM_DEBUGCFG_A, cfg);
+}
 
-व्योम t4_ulprx_पढ़ो_la(काष्ठा adapter *adap, u32 *la_buf)
-अणु
-	अचिन्हित पूर्णांक i, j;
+void t4_ulprx_read_la(struct adapter *adap, u32 *la_buf)
+{
+	unsigned int i, j;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		u32 *p = la_buf + i;
 
-		t4_ग_लिखो_reg(adap, ULP_RX_LA_CTL_A, i);
-		j = t4_पढ़ो_reg(adap, ULP_RX_LA_WRPTR_A);
-		t4_ग_लिखो_reg(adap, ULP_RX_LA_RDPTR_A, j);
-		क्रम (j = 0; j < ULPRX_LA_SIZE; j++, p += 8)
-			*p = t4_पढ़ो_reg(adap, ULP_RX_LA_RDDATA_A);
-	पूर्ण
-पूर्ण
+		t4_write_reg(adap, ULP_RX_LA_CTL_A, i);
+		j = t4_read_reg(adap, ULP_RX_LA_WRPTR_A);
+		t4_write_reg(adap, ULP_RX_LA_RDPTR_A, j);
+		for (j = 0; j < ULPRX_LA_SIZE; j++, p += 8)
+			*p = t4_read_reg(adap, ULP_RX_LA_RDDATA_A);
+	}
+}
 
 /* The ADVERT_MASK is used to mask out all of the Advertised Firmware Port
- * Capabilities which we control with separate controls -- see, क्रम instance,
+ * Capabilities which we control with separate controls -- see, for instance,
  * Pause Frames and Forward Error Correction.  In order to determine what the
  * full set of Advertised Port Capabilities are, the base Advertised Port
  * Capabilities (masked by ADVERT_MASK) must be combined with the Advertised
  * Port Capabilities associated with those other controls.  See
- * t4_link_acaps() क्रम how this is करोne.
+ * t4_link_acaps() for how this is done.
  */
-#घोषणा ADVERT_MASK (FW_PORT_CAP32_SPEED_V(FW_PORT_CAP32_SPEED_M) | \
+#define ADVERT_MASK (FW_PORT_CAP32_SPEED_V(FW_PORT_CAP32_SPEED_M) | \
 		     FW_PORT_CAP32_ANEG)
 
 /**
@@ -3972,15 +3971,15 @@ out:
  *
  *	Returns the equivalent 32-bit Port Capabilities value.
  */
-अटल fw_port_cap32_t fwcaps16_to_caps32(fw_port_cap16_t caps16)
-अणु
+static fw_port_cap32_t fwcaps16_to_caps32(fw_port_cap16_t caps16)
+{
 	fw_port_cap32_t caps32 = 0;
 
-	#घोषणा CAP16_TO_CAP32(__cap) \
-		करो अणु \
-			अगर (caps16 & FW_PORT_CAP_##__cap) \
+	#define CAP16_TO_CAP32(__cap) \
+		do { \
+			if (caps16 & FW_PORT_CAP_##__cap) \
 				caps32 |= FW_PORT_CAP32_##__cap; \
-		पूर्ण जबतक (0)
+		} while (0)
 
 	CAP16_TO_CAP32(SPEED_100M);
 	CAP16_TO_CAP32(SPEED_1G);
@@ -3997,12 +3996,12 @@ out:
 	CAP16_TO_CAP32(FEC_RS);
 	CAP16_TO_CAP32(FEC_BASER_RS);
 	CAP16_TO_CAP32(802_3_PAUSE);
-	CAP16_TO_CAP32(802_3_ASM_सूची);
+	CAP16_TO_CAP32(802_3_ASM_DIR);
 
-	#अघोषित CAP16_TO_CAP32
+	#undef CAP16_TO_CAP32
 
-	वापस caps32;
-पूर्ण
+	return caps32;
+}
 
 /**
  *	fwcaps32_to_caps16 - convert 32-bit Port Capabilities to 16-bits
@@ -4012,15 +4011,15 @@ out:
  *	not all 32-bit Port Capabilities can be represented in the 16-bit
  *	Port Capabilities and some fields/values may not make it.
  */
-अटल fw_port_cap16_t fwcaps32_to_caps16(fw_port_cap32_t caps32)
-अणु
+static fw_port_cap16_t fwcaps32_to_caps16(fw_port_cap32_t caps32)
+{
 	fw_port_cap16_t caps16 = 0;
 
-	#घोषणा CAP32_TO_CAP16(__cap) \
-		करो अणु \
-			अगर (caps32 & FW_PORT_CAP32_##__cap) \
+	#define CAP32_TO_CAP16(__cap) \
+		do { \
+			if (caps32 & FW_PORT_CAP32_##__cap) \
 				caps16 |= FW_PORT_CAP_##__cap; \
-		पूर्ण जबतक (0)
+		} while (0)
 
 	CAP32_TO_CAP16(SPEED_100M);
 	CAP32_TO_CAP16(SPEED_1G);
@@ -4031,7 +4030,7 @@ out:
 	CAP32_TO_CAP16(FC_RX);
 	CAP32_TO_CAP16(FC_TX);
 	CAP32_TO_CAP16(802_3_PAUSE);
-	CAP32_TO_CAP16(802_3_ASM_सूची);
+	CAP32_TO_CAP16(802_3_ASM_DIR);
 	CAP32_TO_CAP16(ANEG);
 	CAP32_TO_CAP16(FORCE_PAUSE);
 	CAP32_TO_CAP16(MDIAUTO);
@@ -4039,81 +4038,81 @@ out:
 	CAP32_TO_CAP16(FEC_RS);
 	CAP32_TO_CAP16(FEC_BASER_RS);
 
-	#अघोषित CAP32_TO_CAP16
+	#undef CAP32_TO_CAP16
 
-	वापस caps16;
-पूर्ण
+	return caps16;
+}
 
-/* Translate Firmware Port Capabilities Pause specअगरication to Common Code */
-अटल अंतरभूत क्रमागत cc_छोड़ो fwcap_to_cc_छोड़ो(fw_port_cap32_t fw_छोड़ो)
-अणु
-	क्रमागत cc_छोड़ो cc_छोड़ो = 0;
+/* Translate Firmware Port Capabilities Pause specification to Common Code */
+static inline enum cc_pause fwcap_to_cc_pause(fw_port_cap32_t fw_pause)
+{
+	enum cc_pause cc_pause = 0;
 
-	अगर (fw_छोड़ो & FW_PORT_CAP32_FC_RX)
-		cc_छोड़ो |= PAUSE_RX;
-	अगर (fw_छोड़ो & FW_PORT_CAP32_FC_TX)
-		cc_छोड़ो |= PAUSE_TX;
+	if (fw_pause & FW_PORT_CAP32_FC_RX)
+		cc_pause |= PAUSE_RX;
+	if (fw_pause & FW_PORT_CAP32_FC_TX)
+		cc_pause |= PAUSE_TX;
 
-	वापस cc_छोड़ो;
-पूर्ण
+	return cc_pause;
+}
 
-/* Translate Common Code Pause specअगरication पूर्णांकo Firmware Port Capabilities */
-अटल अंतरभूत fw_port_cap32_t cc_to_fwcap_छोड़ो(क्रमागत cc_छोड़ो cc_छोड़ो)
-अणु
-	/* Translate orthogonal RX/TX Pause Controls क्रम L1 Configure
+/* Translate Common Code Pause specification into Firmware Port Capabilities */
+static inline fw_port_cap32_t cc_to_fwcap_pause(enum cc_pause cc_pause)
+{
+	/* Translate orthogonal RX/TX Pause Controls for L1 Configure
 	 * commands, etc.
 	 */
-	fw_port_cap32_t fw_छोड़ो = 0;
+	fw_port_cap32_t fw_pause = 0;
 
-	अगर (cc_छोड़ो & PAUSE_RX)
-		fw_छोड़ो |= FW_PORT_CAP32_FC_RX;
-	अगर (cc_छोड़ो & PAUSE_TX)
-		fw_छोड़ो |= FW_PORT_CAP32_FC_TX;
-	अगर (!(cc_छोड़ो & PAUSE_AUTONEG))
-		fw_छोड़ो |= FW_PORT_CAP32_FORCE_PAUSE;
+	if (cc_pause & PAUSE_RX)
+		fw_pause |= FW_PORT_CAP32_FC_RX;
+	if (cc_pause & PAUSE_TX)
+		fw_pause |= FW_PORT_CAP32_FC_TX;
+	if (!(cc_pause & PAUSE_AUTONEG))
+		fw_pause |= FW_PORT_CAP32_FORCE_PAUSE;
 
-	/* Translate orthogonal Pause controls पूर्णांकo IEEE 802.3 Pause,
-	 * Asymmetrical Pause क्रम use in reporting to upper layer OS code, etc.
+	/* Translate orthogonal Pause controls into IEEE 802.3 Pause,
+	 * Asymmetrical Pause for use in reporting to upper layer OS code, etc.
 	 * Note that these bits are ignored in L1 Configure commands.
 	 */
-	अगर (cc_छोड़ो & PAUSE_RX) अणु
-		अगर (cc_छोड़ो & PAUSE_TX)
-			fw_छोड़ो |= FW_PORT_CAP32_802_3_PAUSE;
-		अन्यथा
-			fw_छोड़ो |= FW_PORT_CAP32_802_3_ASM_सूची |
+	if (cc_pause & PAUSE_RX) {
+		if (cc_pause & PAUSE_TX)
+			fw_pause |= FW_PORT_CAP32_802_3_PAUSE;
+		else
+			fw_pause |= FW_PORT_CAP32_802_3_ASM_DIR |
 				    FW_PORT_CAP32_802_3_PAUSE;
-	पूर्ण अन्यथा अगर (cc_छोड़ो & PAUSE_TX) अणु
-		fw_छोड़ो |= FW_PORT_CAP32_802_3_ASM_सूची;
-	पूर्ण
+	} else if (cc_pause & PAUSE_TX) {
+		fw_pause |= FW_PORT_CAP32_802_3_ASM_DIR;
+	}
 
-	वापस fw_छोड़ो;
-पूर्ण
+	return fw_pause;
+}
 
-/* Translate Firmware Forward Error Correction specअगरication to Common Code */
-अटल अंतरभूत क्रमागत cc_fec fwcap_to_cc_fec(fw_port_cap32_t fw_fec)
-अणु
-	क्रमागत cc_fec cc_fec = 0;
+/* Translate Firmware Forward Error Correction specification to Common Code */
+static inline enum cc_fec fwcap_to_cc_fec(fw_port_cap32_t fw_fec)
+{
+	enum cc_fec cc_fec = 0;
 
-	अगर (fw_fec & FW_PORT_CAP32_FEC_RS)
+	if (fw_fec & FW_PORT_CAP32_FEC_RS)
 		cc_fec |= FEC_RS;
-	अगर (fw_fec & FW_PORT_CAP32_FEC_BASER_RS)
+	if (fw_fec & FW_PORT_CAP32_FEC_BASER_RS)
 		cc_fec |= FEC_BASER_RS;
 
-	वापस cc_fec;
-पूर्ण
+	return cc_fec;
+}
 
-/* Translate Common Code Forward Error Correction specअगरication to Firmware */
-अटल अंतरभूत fw_port_cap32_t cc_to_fwcap_fec(क्रमागत cc_fec cc_fec)
-अणु
+/* Translate Common Code Forward Error Correction specification to Firmware */
+static inline fw_port_cap32_t cc_to_fwcap_fec(enum cc_fec cc_fec)
+{
 	fw_port_cap32_t fw_fec = 0;
 
-	अगर (cc_fec & FEC_RS)
+	if (cc_fec & FEC_RS)
 		fw_fec |= FW_PORT_CAP32_FEC_RS;
-	अगर (cc_fec & FEC_BASER_RS)
+	if (cc_fec & FEC_BASER_RS)
 		fw_fec |= FW_PORT_CAP32_FEC_BASER_RS;
 
-	वापस fw_fec;
-पूर्ण
+	return fw_fec;
+}
 
 /**
  *	t4_link_acaps - compute Link Advertised Port Capabilities
@@ -4123,68 +4122,68 @@ out:
  *
  *	Synthesize the Advertised Port Capabilities we'll be using based on
  *	the base Advertised Port Capabilities (which have been filtered by
- *	ADVERT_MASK) plus the inभागidual controls क्रम things like Pause
+ *	ADVERT_MASK) plus the individual controls for things like Pause
  *	Frames, Forward Error Correction, MDI, etc.
  */
-fw_port_cap32_t t4_link_acaps(काष्ठा adapter *adapter, अचिन्हित पूर्णांक port,
-			      काष्ठा link_config *lc)
-अणु
+fw_port_cap32_t t4_link_acaps(struct adapter *adapter, unsigned int port,
+			      struct link_config *lc)
+{
 	fw_port_cap32_t fw_fc, fw_fec, acaps;
-	अचिन्हित पूर्णांक fw_mdi;
-	अक्षर cc_fec;
+	unsigned int fw_mdi;
+	char cc_fec;
 
 	fw_mdi = (FW_PORT_CAP32_MDI_V(FW_PORT_CAP32_MDI_AUTO) & lc->pcaps);
 
-	/* Convert driver coding of Pause Frame Flow Control settings पूर्णांकo the
+	/* Convert driver coding of Pause Frame Flow Control settings into the
 	 * Firmware's API.
 	 */
-	fw_fc = cc_to_fwcap_छोड़ो(lc->requested_fc);
+	fw_fc = cc_to_fwcap_pause(lc->requested_fc);
 
-	/* Convert Common Code Forward Error Control settings पूर्णांकo the
+	/* Convert Common Code Forward Error Control settings into the
 	 * Firmware's API.  If the current Requested FEC has "Automatic"
-	 * (IEEE 802.3) specअगरied, then we use whatever the Firmware
-	 * sent us as part of its IEEE 802.3-based पूर्णांकerpretation of
+	 * (IEEE 802.3) specified, then we use whatever the Firmware
+	 * sent us as part of its IEEE 802.3-based interpretation of
 	 * the Transceiver Module EPROM FEC parameters.  Otherwise we
 	 * use whatever is in the current Requested FEC settings.
 	 */
-	अगर (lc->requested_fec & FEC_AUTO)
+	if (lc->requested_fec & FEC_AUTO)
 		cc_fec = fwcap_to_cc_fec(lc->def_acaps);
-	अन्यथा
+	else
 		cc_fec = lc->requested_fec;
 	fw_fec = cc_to_fwcap_fec(cc_fec);
 
 	/* Figure out what our Requested Port Capabilities are going to be.
-	 * Note parallel काष्ठाure in t4_handle_get_port_info() and
+	 * Note parallel structure in t4_handle_get_port_info() and
 	 * init_link_config().
 	 */
-	अगर (!(lc->pcaps & FW_PORT_CAP32_ANEG)) अणु
+	if (!(lc->pcaps & FW_PORT_CAP32_ANEG)) {
 		acaps = lc->acaps | fw_fc | fw_fec;
 		lc->fc = lc->requested_fc & ~PAUSE_AUTONEG;
 		lc->fec = cc_fec;
-	पूर्ण अन्यथा अगर (lc->स्वतःneg == AUTONEG_DISABLE) अणु
+	} else if (lc->autoneg == AUTONEG_DISABLE) {
 		acaps = lc->speed_caps | fw_fc | fw_fec | fw_mdi;
 		lc->fc = lc->requested_fc & ~PAUSE_AUTONEG;
 		lc->fec = cc_fec;
-	पूर्ण अन्यथा अणु
+	} else {
 		acaps = lc->acaps | fw_fc | fw_fec | fw_mdi;
-	पूर्ण
+	}
 
-	/* Some Requested Port Capabilities are trivially wrong अगर they exceed
+	/* Some Requested Port Capabilities are trivially wrong if they exceed
 	 * the Physical Port Capabilities.  We can check that here and provide
-	 * moderately useful feedback in the प्रणाली log.
+	 * moderately useful feedback in the system log.
 	 *
-	 * Note that older Firmware करोesn't have FW_PORT_CAP32_FORCE_PAUSE, so
-	 * we need to exclude this from this check in order to मुख्यtain
+	 * Note that older Firmware doesn't have FW_PORT_CAP32_FORCE_PAUSE, so
+	 * we need to exclude this from this check in order to maintain
 	 * compatibility ...
 	 */
-	अगर ((acaps & ~lc->pcaps) & ~FW_PORT_CAP32_FORCE_PAUSE) अणु
+	if ((acaps & ~lc->pcaps) & ~FW_PORT_CAP32_FORCE_PAUSE) {
 		dev_err(adapter->pdev_dev, "Requested Port Capabilities %#x exceed Physical Port Capabilities %#x\n",
 			acaps, lc->pcaps);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस acaps;
-पूर्ण
+	return acaps;
+}
 
 /**
  *	t4_link_l1cfg_core - apply link configuration to MAC/PHY
@@ -4192,36 +4191,36 @@ fw_port_cap32_t t4_link_acaps(काष्ठा adapter *adapter, अचिन�
  *	@mbox: the Firmware Mailbox to use
  *	@port: the Port ID
  *	@lc: the Port's Link Configuration
- *	@sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
- *	@समयout: समय to रुको क्रम command to finish beक्रमe timing out
+ *	@sleep_ok: if true we may sleep while awaiting command completion
+ *	@timeout: time to wait for command to finish before timing out
  *		(negative implies @sleep_ok=false)
  *
  *	Set up a port's MAC and PHY according to a desired link configuration.
- *	- If the PHY can स्वतः-negotiate first decide what to advertise, then
- *	  enable/disable स्वतः-negotiation as desired, and reset.
- *	- If the PHY करोes not स्वतः-negotiate just reset it.
- *	- If स्वतः-negotiation is off set the MAC to the proper speed/duplex/FC,
- *	  otherwise करो it later based on the outcome of स्वतः-negotiation.
+ *	- If the PHY can auto-negotiate first decide what to advertise, then
+ *	  enable/disable auto-negotiation as desired, and reset.
+ *	- If the PHY does not auto-negotiate just reset it.
+ *	- If auto-negotiation is off set the MAC to the proper speed/duplex/FC,
+ *	  otherwise do it later based on the outcome of auto-negotiation.
  */
-पूर्णांक t4_link_l1cfg_core(काष्ठा adapter *adapter, अचिन्हित पूर्णांक mbox,
-		       अचिन्हित पूर्णांक port, काष्ठा link_config *lc,
-		       u8 sleep_ok, पूर्णांक समयout)
-अणु
-	अचिन्हित पूर्णांक fw_caps = adapter->params.fw_caps_support;
-	काष्ठा fw_port_cmd cmd;
+int t4_link_l1cfg_core(struct adapter *adapter, unsigned int mbox,
+		       unsigned int port, struct link_config *lc,
+		       u8 sleep_ok, int timeout)
+{
+	unsigned int fw_caps = adapter->params.fw_caps_support;
+	struct fw_port_cmd cmd;
 	fw_port_cap32_t rcap;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!(lc->pcaps & FW_PORT_CAP32_ANEG) &&
-	    lc->स्वतःneg == AUTONEG_ENABLE) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (!(lc->pcaps & FW_PORT_CAP32_ANEG) &&
+	    lc->autoneg == AUTONEG_ENABLE) {
+		return -EINVAL;
+	}
 
 	/* Compute our Requested Port Capabilities and send that on to the
 	 * Firmware.
 	 */
 	rcap = t4_link_acaps(adapter, port, lc);
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PORT_CMD) |
 				       FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				       FW_PORT_CMD_PORTID_V(port));
@@ -4230,43 +4229,43 @@ fw_port_cap32_t t4_link_acaps(काष्ठा adapter *adapter, अचिन�
 						 ? FW_PORT_ACTION_L1_CFG
 						 : FW_PORT_ACTION_L1_CFG32) |
 						 FW_LEN16(cmd));
-	अगर (fw_caps == FW_CAPS16)
+	if (fw_caps == FW_CAPS16)
 		cmd.u.l1cfg.rcap = cpu_to_be32(fwcaps32_to_caps16(rcap));
-	अन्यथा
+	else
 		cmd.u.l1cfg32.rcap32 = cpu_to_be32(rcap);
 
-	ret = t4_wr_mbox_meat_समयout(adapter, mbox, &cmd, माप(cmd), शून्य,
-				      sleep_ok, समयout);
+	ret = t4_wr_mbox_meat_timeout(adapter, mbox, &cmd, sizeof(cmd), NULL,
+				      sleep_ok, timeout);
 
-	/* Unक्रमtunately, even अगर the Requested Port Capabilities "fit" within
+	/* Unfortunately, even if the Requested Port Capabilities "fit" within
 	 * the Physical Port Capabilities, some combinations of features may
 	 * still not be legal.  For example, 40Gb/s and Reed-Solomon Forward
-	 * Error Correction.  So अगर the Firmware rejects the L1 Configure
+	 * Error Correction.  So if the Firmware rejects the L1 Configure
 	 * request, flag that here.
 	 */
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(adapter->pdev_dev,
 			"Requested Port Capabilities %#x rejected, error %d\n",
 			rcap, -ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
 /**
- *	t4_restart_aneg - restart स्वतःnegotiation
+ *	t4_restart_aneg - restart autonegotiation
  *	@adap: the adapter
- *	@mbox: mbox to use क्रम the FW command
+ *	@mbox: mbox to use for the FW command
  *	@port: the port id
  *
- *	Restarts स्वतःnegotiation क्रम the selected port.
+ *	Restarts autonegotiation for the selected port.
  */
-पूर्णांक t4_restart_aneg(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक port)
-अणु
-	अचिन्हित पूर्णांक fw_caps = adap->params.fw_caps_support;
-	काष्ठा fw_port_cmd c;
+int t4_restart_aneg(struct adapter *adap, unsigned int mbox, unsigned int port)
+{
+	unsigned int fw_caps = adap->params.fw_caps_support;
+	struct fw_port_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PORT_CMD) |
 				     FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				     FW_PORT_CMD_PORTID_V(port));
@@ -4275,911 +4274,911 @@ fw_port_cap32_t t4_link_acaps(काष्ठा adapter *adapter, अचिन�
 						 ? FW_PORT_ACTION_L1_CFG
 						 : FW_PORT_ACTION_L1_CFG32) |
 			    FW_LEN16(c));
-	अगर (fw_caps == FW_CAPS16)
+	if (fw_caps == FW_CAPS16)
 		c.u.l1cfg.rcap = cpu_to_be32(FW_PORT_CAP_ANEG);
-	अन्यथा
+	else
 		c.u.l1cfg32.rcap32 = cpu_to_be32(FW_PORT_CAP32_ANEG);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
-प्रकार व्योम (*पूर्णांक_handler_t)(काष्ठा adapter *adap);
+typedef void (*int_handler_t)(struct adapter *adap);
 
-काष्ठा पूर्णांकr_info अणु
-	अचिन्हित पूर्णांक mask;       /* bits to check in पूर्णांकerrupt status */
-	स्थिर अक्षर *msg;         /* message to prपूर्णांक or शून्य */
-	लघु stat_idx;          /* stat counter to increment or -1 */
-	अचिन्हित लघु fatal;    /* whether the condition reported is fatal */
-	पूर्णांक_handler_t पूर्णांक_handler; /* platक्रमm-specअगरic पूर्णांक handler */
-पूर्ण;
+struct intr_info {
+	unsigned int mask;       /* bits to check in interrupt status */
+	const char *msg;         /* message to print or NULL */
+	short stat_idx;          /* stat counter to increment or -1 */
+	unsigned short fatal;    /* whether the condition reported is fatal */
+	int_handler_t int_handler; /* platform-specific int handler */
+};
 
 /**
- *	t4_handle_पूर्णांकr_status - table driven पूर्णांकerrupt handler
- *	@adapter: the adapter that generated the पूर्णांकerrupt
- *	@reg: the पूर्णांकerrupt status रेजिस्टर to process
- *	@acts: table of पूर्णांकerrupt actions
+ *	t4_handle_intr_status - table driven interrupt handler
+ *	@adapter: the adapter that generated the interrupt
+ *	@reg: the interrupt status register to process
+ *	@acts: table of interrupt actions
  *
- *	A table driven पूर्णांकerrupt handler that applies a set of masks to an
- *	पूर्णांकerrupt status word and perक्रमms the corresponding actions अगर the
- *	पूर्णांकerrupts described by the mask have occurred.  The actions include
+ *	A table driven interrupt handler that applies a set of masks to an
+ *	interrupt status word and performs the corresponding actions if the
+ *	interrupts described by the mask have occurred.  The actions include
  *	optionally emitting a warning or alert message.  The table is terminated
- *	by an entry specअगरying mask 0.  Returns the number of fatal पूर्णांकerrupt
+ *	by an entry specifying mask 0.  Returns the number of fatal interrupt
  *	conditions.
  */
-अटल पूर्णांक t4_handle_पूर्णांकr_status(काष्ठा adapter *adapter, अचिन्हित पूर्णांक reg,
-				 स्थिर काष्ठा पूर्णांकr_info *acts)
-अणु
-	पूर्णांक fatal = 0;
-	अचिन्हित पूर्णांक mask = 0;
-	अचिन्हित पूर्णांक status = t4_पढ़ो_reg(adapter, reg);
+static int t4_handle_intr_status(struct adapter *adapter, unsigned int reg,
+				 const struct intr_info *acts)
+{
+	int fatal = 0;
+	unsigned int mask = 0;
+	unsigned int status = t4_read_reg(adapter, reg);
 
-	क्रम ( ; acts->mask; ++acts) अणु
-		अगर (!(status & acts->mask))
-			जारी;
-		अगर (acts->fatal) अणु
+	for ( ; acts->mask; ++acts) {
+		if (!(status & acts->mask))
+			continue;
+		if (acts->fatal) {
 			fatal++;
 			dev_alert(adapter->pdev_dev, "%s (0x%x)\n", acts->msg,
 				  status & acts->mask);
-		पूर्ण अन्यथा अगर (acts->msg && prपूर्णांकk_ratelimit())
+		} else if (acts->msg && printk_ratelimit())
 			dev_warn(adapter->pdev_dev, "%s (0x%x)\n", acts->msg,
 				 status & acts->mask);
-		अगर (acts->पूर्णांक_handler)
-			acts->पूर्णांक_handler(adapter);
+		if (acts->int_handler)
+			acts->int_handler(adapter);
 		mask |= acts->mask;
-	पूर्ण
+	}
 	status &= mask;
-	अगर (status)                           /* clear processed पूर्णांकerrupts */
-		t4_ग_लिखो_reg(adapter, reg, status);
-	वापस fatal;
-पूर्ण
+	if (status)                           /* clear processed interrupts */
+		t4_write_reg(adapter, reg, status);
+	return fatal;
+}
 
 /*
- * Interrupt handler क्रम the PCIE module.
+ * Interrupt handler for the PCIE module.
  */
-अटल व्योम pcie_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info sysbus_पूर्णांकr_info[] = अणु
-		अणु RNPP_F, "RXNP array parity error", -1, 1 पूर्ण,
-		अणु RPCP_F, "RXPC array parity error", -1, 1 पूर्ण,
-		अणु RCIP_F, "RXCIF array parity error", -1, 1 पूर्ण,
-		अणु RCCP_F, "Rx completions control array parity error", -1, 1 पूर्ण,
-		अणु RFTP_F, "RXFT array parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info pcie_port_पूर्णांकr_info[] = अणु
-		अणु TPCP_F, "TXPC array parity error", -1, 1 पूर्ण,
-		अणु TNPP_F, "TXNP array parity error", -1, 1 पूर्ण,
-		अणु TFTP_F, "TXFT array parity error", -1, 1 पूर्ण,
-		अणु TCAP_F, "TXCA array parity error", -1, 1 पूर्ण,
-		अणु TCIP_F, "TXCIF array parity error", -1, 1 पूर्ण,
-		अणु RCAP_F, "RXCA array parity error", -1, 1 पूर्ण,
-		अणु OTDD_F, "outbound request TLP discarded", -1, 1 पूर्ण,
-		अणु RDPE_F, "Rx data parity error", -1, 1 पूर्ण,
-		अणु TDUE_F, "Tx uncorrectable data error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info pcie_पूर्णांकr_info[] = अणु
-		अणु MSIADDRLPERR_F, "MSI AddrL parity error", -1, 1 पूर्ण,
-		अणु MSIADDRHPERR_F, "MSI AddrH parity error", -1, 1 पूर्ण,
-		अणु MSIDATAPERR_F, "MSI data parity error", -1, 1 पूर्ण,
-		अणु MSIXADDRLPERR_F, "MSI-X AddrL parity error", -1, 1 पूर्ण,
-		अणु MSIXADDRHPERR_F, "MSI-X AddrH parity error", -1, 1 पूर्ण,
-		अणु MSIXDATAPERR_F, "MSI-X data parity error", -1, 1 पूर्ण,
-		अणु MSIXDIPERR_F, "MSI-X DI parity error", -1, 1 पूर्ण,
-		अणु PIOCPLPERR_F, "PCI PIO completion FIFO parity error", -1, 1 पूर्ण,
-		अणु PIOREQPERR_F, "PCI PIO request FIFO parity error", -1, 1 पूर्ण,
-		अणु TARTAGPERR_F, "PCI PCI target tag FIFO parity error", -1, 1 पूर्ण,
-		अणु CCNTPERR_F, "PCI CMD channel count parity error", -1, 1 पूर्ण,
-		अणु CREQPERR_F, "PCI CMD channel request parity error", -1, 1 पूर्ण,
-		अणु CRSPPERR_F, "PCI CMD channel response parity error", -1, 1 पूर्ण,
-		अणु DCNTPERR_F, "PCI DMA channel count parity error", -1, 1 पूर्ण,
-		अणु DREQPERR_F, "PCI DMA channel request parity error", -1, 1 पूर्ण,
-		अणु DRSPPERR_F, "PCI DMA channel response parity error", -1, 1 पूर्ण,
-		अणु HCNTPERR_F, "PCI HMA channel count parity error", -1, 1 पूर्ण,
-		अणु HREQPERR_F, "PCI HMA channel request parity error", -1, 1 पूर्ण,
-		अणु HRSPPERR_F, "PCI HMA channel response parity error", -1, 1 पूर्ण,
-		अणु CFGSNPPERR_F, "PCI config snoop FIFO parity error", -1, 1 पूर्ण,
-		अणु FIDPERR_F, "PCI FID parity error", -1, 1 पूर्ण,
-		अणु INTXCLRPERR_F, "PCI INTx clear parity error", -1, 1 पूर्ण,
-		अणु MATAGPERR_F, "PCI MA tag parity error", -1, 1 पूर्ण,
-		अणु PIOTAGPERR_F, "PCI PIO tag parity error", -1, 1 पूर्ण,
-		अणु RXCPLPERR_F, "PCI Rx completion parity error", -1, 1 पूर्ण,
-		अणु RXWRPERR_F, "PCI Rx write parity error", -1, 1 पूर्ण,
-		अणु RPLPERR_F, "PCI replay buffer parity error", -1, 1 पूर्ण,
-		अणु PCIESINT_F, "PCI core secondary fault", -1, 1 पूर्ण,
-		अणु PCIEPINT_F, "PCI core primary fault", -1, 1 पूर्ण,
-		अणु UNXSPLCPLERR_F, "PCI unexpected split completion error",
-		  -1, 0 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void pcie_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info sysbus_intr_info[] = {
+		{ RNPP_F, "RXNP array parity error", -1, 1 },
+		{ RPCP_F, "RXPC array parity error", -1, 1 },
+		{ RCIP_F, "RXCIF array parity error", -1, 1 },
+		{ RCCP_F, "Rx completions control array parity error", -1, 1 },
+		{ RFTP_F, "RXFT array parity error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info pcie_port_intr_info[] = {
+		{ TPCP_F, "TXPC array parity error", -1, 1 },
+		{ TNPP_F, "TXNP array parity error", -1, 1 },
+		{ TFTP_F, "TXFT array parity error", -1, 1 },
+		{ TCAP_F, "TXCA array parity error", -1, 1 },
+		{ TCIP_F, "TXCIF array parity error", -1, 1 },
+		{ RCAP_F, "RXCA array parity error", -1, 1 },
+		{ OTDD_F, "outbound request TLP discarded", -1, 1 },
+		{ RDPE_F, "Rx data parity error", -1, 1 },
+		{ TDUE_F, "Tx uncorrectable data error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info pcie_intr_info[] = {
+		{ MSIADDRLPERR_F, "MSI AddrL parity error", -1, 1 },
+		{ MSIADDRHPERR_F, "MSI AddrH parity error", -1, 1 },
+		{ MSIDATAPERR_F, "MSI data parity error", -1, 1 },
+		{ MSIXADDRLPERR_F, "MSI-X AddrL parity error", -1, 1 },
+		{ MSIXADDRHPERR_F, "MSI-X AddrH parity error", -1, 1 },
+		{ MSIXDATAPERR_F, "MSI-X data parity error", -1, 1 },
+		{ MSIXDIPERR_F, "MSI-X DI parity error", -1, 1 },
+		{ PIOCPLPERR_F, "PCI PIO completion FIFO parity error", -1, 1 },
+		{ PIOREQPERR_F, "PCI PIO request FIFO parity error", -1, 1 },
+		{ TARTAGPERR_F, "PCI PCI target tag FIFO parity error", -1, 1 },
+		{ CCNTPERR_F, "PCI CMD channel count parity error", -1, 1 },
+		{ CREQPERR_F, "PCI CMD channel request parity error", -1, 1 },
+		{ CRSPPERR_F, "PCI CMD channel response parity error", -1, 1 },
+		{ DCNTPERR_F, "PCI DMA channel count parity error", -1, 1 },
+		{ DREQPERR_F, "PCI DMA channel request parity error", -1, 1 },
+		{ DRSPPERR_F, "PCI DMA channel response parity error", -1, 1 },
+		{ HCNTPERR_F, "PCI HMA channel count parity error", -1, 1 },
+		{ HREQPERR_F, "PCI HMA channel request parity error", -1, 1 },
+		{ HRSPPERR_F, "PCI HMA channel response parity error", -1, 1 },
+		{ CFGSNPPERR_F, "PCI config snoop FIFO parity error", -1, 1 },
+		{ FIDPERR_F, "PCI FID parity error", -1, 1 },
+		{ INTXCLRPERR_F, "PCI INTx clear parity error", -1, 1 },
+		{ MATAGPERR_F, "PCI MA tag parity error", -1, 1 },
+		{ PIOTAGPERR_F, "PCI PIO tag parity error", -1, 1 },
+		{ RXCPLPERR_F, "PCI Rx completion parity error", -1, 1 },
+		{ RXWRPERR_F, "PCI Rx write parity error", -1, 1 },
+		{ RPLPERR_F, "PCI replay buffer parity error", -1, 1 },
+		{ PCIESINT_F, "PCI core secondary fault", -1, 1 },
+		{ PCIEPINT_F, "PCI core primary fault", -1, 1 },
+		{ UNXSPLCPLERR_F, "PCI unexpected split completion error",
+		  -1, 0 },
+		{ 0 }
+	};
 
-	अटल काष्ठा पूर्णांकr_info t5_pcie_पूर्णांकr_info[] = अणु
-		अणु MSTGRPPERR_F, "Master Response Read Queue parity error",
-		  -1, 1 पूर्ण,
-		अणु MSTTIMEOUTPERR_F, "Master Timeout FIFO parity error", -1, 1 पूर्ण,
-		अणु MSIXSTIPERR_F, "MSI-X STI SRAM parity error", -1, 1 पूर्ण,
-		अणु MSIXADDRLPERR_F, "MSI-X AddrL parity error", -1, 1 पूर्ण,
-		अणु MSIXADDRHPERR_F, "MSI-X AddrH parity error", -1, 1 पूर्ण,
-		अणु MSIXDATAPERR_F, "MSI-X data parity error", -1, 1 पूर्ण,
-		अणु MSIXDIPERR_F, "MSI-X DI parity error", -1, 1 पूर्ण,
-		अणु PIOCPLGRPPERR_F, "PCI PIO completion Group FIFO parity error",
-		  -1, 1 पूर्ण,
-		अणु PIOREQGRPPERR_F, "PCI PIO request Group FIFO parity error",
-		  -1, 1 पूर्ण,
-		अणु TARTAGPERR_F, "PCI PCI target tag FIFO parity error", -1, 1 पूर्ण,
-		अणु MSTTAGQPERR_F, "PCI master tag queue parity error", -1, 1 पूर्ण,
-		अणु CREQPERR_F, "PCI CMD channel request parity error", -1, 1 पूर्ण,
-		अणु CRSPPERR_F, "PCI CMD channel response parity error", -1, 1 पूर्ण,
-		अणु DREQWRPERR_F, "PCI DMA channel write request parity error",
-		  -1, 1 पूर्ण,
-		अणु DREQPERR_F, "PCI DMA channel request parity error", -1, 1 पूर्ण,
-		अणु DRSPPERR_F, "PCI DMA channel response parity error", -1, 1 पूर्ण,
-		अणु HREQWRPERR_F, "PCI HMA channel count parity error", -1, 1 पूर्ण,
-		अणु HREQPERR_F, "PCI HMA channel request parity error", -1, 1 पूर्ण,
-		अणु HRSPPERR_F, "PCI HMA channel response parity error", -1, 1 पूर्ण,
-		अणु CFGSNPPERR_F, "PCI config snoop FIFO parity error", -1, 1 पूर्ण,
-		अणु FIDPERR_F, "PCI FID parity error", -1, 1 पूर्ण,
-		अणु VFIDPERR_F, "PCI INTx clear parity error", -1, 1 पूर्ण,
-		अणु MAGRPPERR_F, "PCI MA group FIFO parity error", -1, 1 पूर्ण,
-		अणु PIOTAGPERR_F, "PCI PIO tag parity error", -1, 1 पूर्ण,
-		अणु IPRXHDRGRPPERR_F, "PCI IP Rx header group parity error",
-		  -1, 1 पूर्ण,
-		अणु IPRXDATAGRPPERR_F, "PCI IP Rx data group parity error",
-		  -1, 1 पूर्ण,
-		अणु RPLPERR_F, "PCI IP replay buffer parity error", -1, 1 पूर्ण,
-		अणु IPSOTPERR_F, "PCI IP SOT buffer parity error", -1, 1 पूर्ण,
-		अणु TRGT1GRPPERR_F, "PCI TRGT1 group FIFOs parity error", -1, 1 पूर्ण,
-		अणु READRSPERR_F, "Outbound read error", -1, 0 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+	static struct intr_info t5_pcie_intr_info[] = {
+		{ MSTGRPPERR_F, "Master Response Read Queue parity error",
+		  -1, 1 },
+		{ MSTTIMEOUTPERR_F, "Master Timeout FIFO parity error", -1, 1 },
+		{ MSIXSTIPERR_F, "MSI-X STI SRAM parity error", -1, 1 },
+		{ MSIXADDRLPERR_F, "MSI-X AddrL parity error", -1, 1 },
+		{ MSIXADDRHPERR_F, "MSI-X AddrH parity error", -1, 1 },
+		{ MSIXDATAPERR_F, "MSI-X data parity error", -1, 1 },
+		{ MSIXDIPERR_F, "MSI-X DI parity error", -1, 1 },
+		{ PIOCPLGRPPERR_F, "PCI PIO completion Group FIFO parity error",
+		  -1, 1 },
+		{ PIOREQGRPPERR_F, "PCI PIO request Group FIFO parity error",
+		  -1, 1 },
+		{ TARTAGPERR_F, "PCI PCI target tag FIFO parity error", -1, 1 },
+		{ MSTTAGQPERR_F, "PCI master tag queue parity error", -1, 1 },
+		{ CREQPERR_F, "PCI CMD channel request parity error", -1, 1 },
+		{ CRSPPERR_F, "PCI CMD channel response parity error", -1, 1 },
+		{ DREQWRPERR_F, "PCI DMA channel write request parity error",
+		  -1, 1 },
+		{ DREQPERR_F, "PCI DMA channel request parity error", -1, 1 },
+		{ DRSPPERR_F, "PCI DMA channel response parity error", -1, 1 },
+		{ HREQWRPERR_F, "PCI HMA channel count parity error", -1, 1 },
+		{ HREQPERR_F, "PCI HMA channel request parity error", -1, 1 },
+		{ HRSPPERR_F, "PCI HMA channel response parity error", -1, 1 },
+		{ CFGSNPPERR_F, "PCI config snoop FIFO parity error", -1, 1 },
+		{ FIDPERR_F, "PCI FID parity error", -1, 1 },
+		{ VFIDPERR_F, "PCI INTx clear parity error", -1, 1 },
+		{ MAGRPPERR_F, "PCI MA group FIFO parity error", -1, 1 },
+		{ PIOTAGPERR_F, "PCI PIO tag parity error", -1, 1 },
+		{ IPRXHDRGRPPERR_F, "PCI IP Rx header group parity error",
+		  -1, 1 },
+		{ IPRXDATAGRPPERR_F, "PCI IP Rx data group parity error",
+		  -1, 1 },
+		{ RPLPERR_F, "PCI IP replay buffer parity error", -1, 1 },
+		{ IPSOTPERR_F, "PCI IP SOT buffer parity error", -1, 1 },
+		{ TRGT1GRPPERR_F, "PCI TRGT1 group FIFOs parity error", -1, 1 },
+		{ READRSPERR_F, "Outbound read error", -1, 0 },
+		{ 0 }
+	};
 
-	पूर्णांक fat;
+	int fat;
 
-	अगर (is_t4(adapter->params.chip))
-		fat = t4_handle_पूर्णांकr_status(adapter,
+	if (is_t4(adapter->params.chip))
+		fat = t4_handle_intr_status(adapter,
 				PCIE_CORE_UTL_SYSTEM_BUS_AGENT_STATUS_A,
-				sysbus_पूर्णांकr_info) +
-			t4_handle_पूर्णांकr_status(adapter,
+				sysbus_intr_info) +
+			t4_handle_intr_status(adapter,
 					PCIE_CORE_UTL_PCI_EXPRESS_PORT_STATUS_A,
-					pcie_port_पूर्णांकr_info) +
-			t4_handle_पूर्णांकr_status(adapter, PCIE_INT_CAUSE_A,
-					      pcie_पूर्णांकr_info);
-	अन्यथा
-		fat = t4_handle_पूर्णांकr_status(adapter, PCIE_INT_CAUSE_A,
-					    t5_pcie_पूर्णांकr_info);
+					pcie_port_intr_info) +
+			t4_handle_intr_status(adapter, PCIE_INT_CAUSE_A,
+					      pcie_intr_info);
+	else
+		fat = t4_handle_intr_status(adapter, PCIE_INT_CAUSE_A,
+					    t5_pcie_intr_info);
 
-	अगर (fat)
+	if (fat)
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * TP पूर्णांकerrupt handler.
+ * TP interrupt handler.
  */
-अटल व्योम tp_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info tp_पूर्णांकr_info[] = अणु
-		अणु 0x3fffffff, "TP parity error", -1, 1 पूर्ण,
-		अणु FLMTXFLSTEMPTY_F, "TP out of Tx pages", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void tp_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info tp_intr_info[] = {
+		{ 0x3fffffff, "TP parity error", -1, 1 },
+		{ FLMTXFLSTEMPTY_F, "TP out of Tx pages", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adapter, TP_INT_CAUSE_A, tp_पूर्णांकr_info))
+	if (t4_handle_intr_status(adapter, TP_INT_CAUSE_A, tp_intr_info))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * SGE पूर्णांकerrupt handler.
+ * SGE interrupt handler.
  */
-अटल व्योम sge_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
+static void sge_intr_handler(struct adapter *adapter)
+{
 	u32 v = 0, perr;
 	u32 err;
 
-	अटल स्थिर काष्ठा पूर्णांकr_info sge_पूर्णांकr_info[] = अणु
-		अणु ERR_CPL_EXCEED_IQE_SIZE_F,
-		  "SGE received CPL exceeding IQE size", -1, 1 पूर्ण,
-		अणु ERR_INVALID_CIDX_INC_F,
-		  "SGE GTS CIDX increment too large", -1, 0 पूर्ण,
-		अणु ERR_CPL_OPCODE_0_F, "SGE received 0-length CPL", -1, 0 पूर्ण,
-		अणु DBFIFO_LP_INT_F, शून्य, -1, 0, t4_db_full पूर्ण,
-		अणु ERR_DATA_CPL_ON_HIGH_QID1_F | ERR_DATA_CPL_ON_HIGH_QID0_F,
-		  "SGE IQID > 1023 received CPL for FL", -1, 0 पूर्ण,
-		अणु ERR_BAD_DB_PIDX3_F, "SGE DBP 3 pidx increment too large", -1,
-		  0 पूर्ण,
-		अणु ERR_BAD_DB_PIDX2_F, "SGE DBP 2 pidx increment too large", -1,
-		  0 पूर्ण,
-		अणु ERR_BAD_DB_PIDX1_F, "SGE DBP 1 pidx increment too large", -1,
-		  0 पूर्ण,
-		अणु ERR_BAD_DB_PIDX0_F, "SGE DBP 0 pidx increment too large", -1,
-		  0 पूर्ण,
-		अणु ERR_ING_CTXT_PRIO_F,
-		  "SGE too many priority ingress contexts", -1, 0 पूर्ण,
-		अणु INGRESS_SIZE_ERR_F, "SGE illegal ingress QID", -1, 0 पूर्ण,
-		अणु EGRESS_SIZE_ERR_F, "SGE illegal egress QID", -1, 0 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+	static const struct intr_info sge_intr_info[] = {
+		{ ERR_CPL_EXCEED_IQE_SIZE_F,
+		  "SGE received CPL exceeding IQE size", -1, 1 },
+		{ ERR_INVALID_CIDX_INC_F,
+		  "SGE GTS CIDX increment too large", -1, 0 },
+		{ ERR_CPL_OPCODE_0_F, "SGE received 0-length CPL", -1, 0 },
+		{ DBFIFO_LP_INT_F, NULL, -1, 0, t4_db_full },
+		{ ERR_DATA_CPL_ON_HIGH_QID1_F | ERR_DATA_CPL_ON_HIGH_QID0_F,
+		  "SGE IQID > 1023 received CPL for FL", -1, 0 },
+		{ ERR_BAD_DB_PIDX3_F, "SGE DBP 3 pidx increment too large", -1,
+		  0 },
+		{ ERR_BAD_DB_PIDX2_F, "SGE DBP 2 pidx increment too large", -1,
+		  0 },
+		{ ERR_BAD_DB_PIDX1_F, "SGE DBP 1 pidx increment too large", -1,
+		  0 },
+		{ ERR_BAD_DB_PIDX0_F, "SGE DBP 0 pidx increment too large", -1,
+		  0 },
+		{ ERR_ING_CTXT_PRIO_F,
+		  "SGE too many priority ingress contexts", -1, 0 },
+		{ INGRESS_SIZE_ERR_F, "SGE illegal ingress QID", -1, 0 },
+		{ EGRESS_SIZE_ERR_F, "SGE illegal egress QID", -1, 0 },
+		{ 0 }
+	};
 
-	अटल काष्ठा पूर्णांकr_info t4t5_sge_पूर्णांकr_info[] = अणु
-		अणु ERR_DROPPED_DB_F, शून्य, -1, 0, t4_db_dropped पूर्ण,
-		अणु DBFIFO_HP_INT_F, शून्य, -1, 0, t4_db_full पूर्ण,
-		अणु ERR_EGR_CTXT_PRIO_F,
-		  "SGE too many priority egress contexts", -1, 0 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+	static struct intr_info t4t5_sge_intr_info[] = {
+		{ ERR_DROPPED_DB_F, NULL, -1, 0, t4_db_dropped },
+		{ DBFIFO_HP_INT_F, NULL, -1, 0, t4_db_full },
+		{ ERR_EGR_CTXT_PRIO_F,
+		  "SGE too many priority egress contexts", -1, 0 },
+		{ 0 }
+	};
 
-	perr = t4_पढ़ो_reg(adapter, SGE_INT_CAUSE1_A);
-	अगर (perr) अणु
+	perr = t4_read_reg(adapter, SGE_INT_CAUSE1_A);
+	if (perr) {
 		v |= perr;
 		dev_alert(adapter->pdev_dev, "SGE Cause1 Parity Error %#x\n",
 			  perr);
-	पूर्ण
+	}
 
-	perr = t4_पढ़ो_reg(adapter, SGE_INT_CAUSE2_A);
-	अगर (perr) अणु
+	perr = t4_read_reg(adapter, SGE_INT_CAUSE2_A);
+	if (perr) {
 		v |= perr;
 		dev_alert(adapter->pdev_dev, "SGE Cause2 Parity Error %#x\n",
 			  perr);
-	पूर्ण
+	}
 
-	अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) >= CHELSIO_T5) अणु
-		perr = t4_पढ़ो_reg(adapter, SGE_INT_CAUSE5_A);
-		/* Parity error (CRC) क्रम err_T_RxCRC is trivial, ignore it */
+	if (CHELSIO_CHIP_VERSION(adapter->params.chip) >= CHELSIO_T5) {
+		perr = t4_read_reg(adapter, SGE_INT_CAUSE5_A);
+		/* Parity error (CRC) for err_T_RxCRC is trivial, ignore it */
 		perr &= ~ERR_T_RXCRC_F;
-		अगर (perr) अणु
+		if (perr) {
 			v |= perr;
 			dev_alert(adapter->pdev_dev,
 				  "SGE Cause5 Parity Error %#x\n", perr);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	v |= t4_handle_पूर्णांकr_status(adapter, SGE_INT_CAUSE3_A, sge_पूर्णांकr_info);
-	अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5)
-		v |= t4_handle_पूर्णांकr_status(adapter, SGE_INT_CAUSE3_A,
-					   t4t5_sge_पूर्णांकr_info);
+	v |= t4_handle_intr_status(adapter, SGE_INT_CAUSE3_A, sge_intr_info);
+	if (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5)
+		v |= t4_handle_intr_status(adapter, SGE_INT_CAUSE3_A,
+					   t4t5_sge_intr_info);
 
-	err = t4_पढ़ो_reg(adapter, SGE_ERROR_STATS_A);
-	अगर (err & ERROR_QID_VALID_F) अणु
+	err = t4_read_reg(adapter, SGE_ERROR_STATS_A);
+	if (err & ERROR_QID_VALID_F) {
 		dev_err(adapter->pdev_dev, "SGE error for queue %u\n",
 			ERROR_QID_G(err));
-		अगर (err & UNCAPTURED_ERROR_F)
+		if (err & UNCAPTURED_ERROR_F)
 			dev_err(adapter->pdev_dev,
 				"SGE UNCAPTURED_ERROR set (clearing)\n");
-		t4_ग_लिखो_reg(adapter, SGE_ERROR_STATS_A, ERROR_QID_VALID_F |
+		t4_write_reg(adapter, SGE_ERROR_STATS_A, ERROR_QID_VALID_F |
 			     UNCAPTURED_ERROR_F);
-	पूर्ण
+	}
 
-	अगर (v != 0)
+	if (v != 0)
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
-#घोषणा CIM_OBQ_INTR (OBQULP0PARERR_F | OBQULP1PARERR_F | OBQULP2PARERR_F |\
+#define CIM_OBQ_INTR (OBQULP0PARERR_F | OBQULP1PARERR_F | OBQULP2PARERR_F |\
 		      OBQULP3PARERR_F | OBQSGEPARERR_F | OBQNCSIPARERR_F)
-#घोषणा CIM_IBQ_INTR (IBQTP0PARERR_F | IBQTP1PARERR_F | IBQULPPARERR_F |\
+#define CIM_IBQ_INTR (IBQTP0PARERR_F | IBQTP1PARERR_F | IBQULPPARERR_F |\
 		      IBQSGEHIPARERR_F | IBQSGELOPARERR_F | IBQNCSIPARERR_F)
 
 /*
- * CIM पूर्णांकerrupt handler.
+ * CIM interrupt handler.
  */
-अटल व्योम cim_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info cim_पूर्णांकr_info[] = अणु
-		अणु PREFDROPINT_F, "CIM control register prefetch drop", -1, 1 पूर्ण,
-		अणु CIM_OBQ_INTR, "CIM OBQ parity error", -1, 1 पूर्ण,
-		अणु CIM_IBQ_INTR, "CIM IBQ parity error", -1, 1 पूर्ण,
-		अणु MBUPPARERR_F, "CIM mailbox uP parity error", -1, 1 पूर्ण,
-		अणु MBHOSTPARERR_F, "CIM mailbox host parity error", -1, 1 पूर्ण,
-		अणु TIEQINPARERRINT_F, "CIM TIEQ outgoing parity error", -1, 1 पूर्ण,
-		अणु TIEQOUTPARERRINT_F, "CIM TIEQ incoming parity error", -1, 1 पूर्ण,
-		अणु TIMER0INT_F, "CIM TIMER0 interrupt", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info cim_upपूर्णांकr_info[] = अणु
-		अणु RSVDSPACEINT_F, "CIM reserved space access", -1, 1 पूर्ण,
-		अणु ILLTRANSINT_F, "CIM illegal transaction", -1, 1 पूर्ण,
-		अणु ILLWRINT_F, "CIM illegal write", -1, 1 पूर्ण,
-		अणु ILLRDINT_F, "CIM illegal read", -1, 1 पूर्ण,
-		अणु ILLRDBEINT_F, "CIM illegal read BE", -1, 1 पूर्ण,
-		अणु ILLWRBEINT_F, "CIM illegal write BE", -1, 1 पूर्ण,
-		अणु SGLRDBOOTINT_F, "CIM single read from boot space", -1, 1 पूर्ण,
-		अणु SGLWRBOOTINT_F, "CIM single write to boot space", -1, 1 पूर्ण,
-		अणु BLKWRBOOTINT_F, "CIM block write to boot space", -1, 1 पूर्ण,
-		अणु SGLRDFLASHINT_F, "CIM single read from flash space", -1, 1 पूर्ण,
-		अणु SGLWRFLASHINT_F, "CIM single write to flash space", -1, 1 पूर्ण,
-		अणु BLKWRFLASHINT_F, "CIM block write to flash space", -1, 1 पूर्ण,
-		अणु SGLRDEEPROMINT_F, "CIM single EEPROM read", -1, 1 पूर्ण,
-		अणु SGLWREEPROMINT_F, "CIM single EEPROM write", -1, 1 पूर्ण,
-		अणु BLKRDEEPROMINT_F, "CIM block EEPROM read", -1, 1 पूर्ण,
-		अणु BLKWREEPROMINT_F, "CIM block EEPROM write", -1, 1 पूर्ण,
-		अणु SGLRDCTLINT_F, "CIM single read from CTL space", -1, 1 पूर्ण,
-		अणु SGLWRCTLINT_F, "CIM single write to CTL space", -1, 1 पूर्ण,
-		अणु BLKRDCTLINT_F, "CIM block read from CTL space", -1, 1 पूर्ण,
-		अणु BLKWRCTLINT_F, "CIM block write to CTL space", -1, 1 पूर्ण,
-		अणु SGLRDPLINT_F, "CIM single read from PL space", -1, 1 पूर्ण,
-		अणु SGLWRPLINT_F, "CIM single write to PL space", -1, 1 पूर्ण,
-		अणु BLKRDPLINT_F, "CIM block read from PL space", -1, 1 पूर्ण,
-		अणु BLKWRPLINT_F, "CIM block write to PL space", -1, 1 पूर्ण,
-		अणु REQOVRLOOKUPINT_F, "CIM request FIFO overwrite", -1, 1 पूर्ण,
-		अणु RSPOVRLOOKUPINT_F, "CIM response FIFO overwrite", -1, 1 पूर्ण,
-		अणु TIMEOUTINT_F, "CIM PIF timeout", -1, 1 पूर्ण,
-		अणु TIMEOUTMAINT_F, "CIM PIF MA timeout", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void cim_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info cim_intr_info[] = {
+		{ PREFDROPINT_F, "CIM control register prefetch drop", -1, 1 },
+		{ CIM_OBQ_INTR, "CIM OBQ parity error", -1, 1 },
+		{ CIM_IBQ_INTR, "CIM IBQ parity error", -1, 1 },
+		{ MBUPPARERR_F, "CIM mailbox uP parity error", -1, 1 },
+		{ MBHOSTPARERR_F, "CIM mailbox host parity error", -1, 1 },
+		{ TIEQINPARERRINT_F, "CIM TIEQ outgoing parity error", -1, 1 },
+		{ TIEQOUTPARERRINT_F, "CIM TIEQ incoming parity error", -1, 1 },
+		{ TIMER0INT_F, "CIM TIMER0 interrupt", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info cim_upintr_info[] = {
+		{ RSVDSPACEINT_F, "CIM reserved space access", -1, 1 },
+		{ ILLTRANSINT_F, "CIM illegal transaction", -1, 1 },
+		{ ILLWRINT_F, "CIM illegal write", -1, 1 },
+		{ ILLRDINT_F, "CIM illegal read", -1, 1 },
+		{ ILLRDBEINT_F, "CIM illegal read BE", -1, 1 },
+		{ ILLWRBEINT_F, "CIM illegal write BE", -1, 1 },
+		{ SGLRDBOOTINT_F, "CIM single read from boot space", -1, 1 },
+		{ SGLWRBOOTINT_F, "CIM single write to boot space", -1, 1 },
+		{ BLKWRBOOTINT_F, "CIM block write to boot space", -1, 1 },
+		{ SGLRDFLASHINT_F, "CIM single read from flash space", -1, 1 },
+		{ SGLWRFLASHINT_F, "CIM single write to flash space", -1, 1 },
+		{ BLKWRFLASHINT_F, "CIM block write to flash space", -1, 1 },
+		{ SGLRDEEPROMINT_F, "CIM single EEPROM read", -1, 1 },
+		{ SGLWREEPROMINT_F, "CIM single EEPROM write", -1, 1 },
+		{ BLKRDEEPROMINT_F, "CIM block EEPROM read", -1, 1 },
+		{ BLKWREEPROMINT_F, "CIM block EEPROM write", -1, 1 },
+		{ SGLRDCTLINT_F, "CIM single read from CTL space", -1, 1 },
+		{ SGLWRCTLINT_F, "CIM single write to CTL space", -1, 1 },
+		{ BLKRDCTLINT_F, "CIM block read from CTL space", -1, 1 },
+		{ BLKWRCTLINT_F, "CIM block write to CTL space", -1, 1 },
+		{ SGLRDPLINT_F, "CIM single read from PL space", -1, 1 },
+		{ SGLWRPLINT_F, "CIM single write to PL space", -1, 1 },
+		{ BLKRDPLINT_F, "CIM block read from PL space", -1, 1 },
+		{ BLKWRPLINT_F, "CIM block write to PL space", -1, 1 },
+		{ REQOVRLOOKUPINT_F, "CIM request FIFO overwrite", -1, 1 },
+		{ RSPOVRLOOKUPINT_F, "CIM response FIFO overwrite", -1, 1 },
+		{ TIMEOUTINT_F, "CIM PIF timeout", -1, 1 },
+		{ TIMEOUTMAINT_F, "CIM PIF MA timeout", -1, 1 },
+		{ 0 }
+	};
 
 	u32 val, fw_err;
-	पूर्णांक fat;
+	int fat;
 
-	fw_err = t4_पढ़ो_reg(adapter, PCIE_FW_A);
-	अगर (fw_err & PCIE_FW_ERR_F)
+	fw_err = t4_read_reg(adapter, PCIE_FW_A);
+	if (fw_err & PCIE_FW_ERR_F)
 		t4_report_fw_error(adapter);
 
-	/* When the Firmware detects an पूर्णांकernal error which normally
-	 * wouldn't उठाओ a Host Interrupt, it क्रमces a CIM Timer0 पूर्णांकerrupt
+	/* When the Firmware detects an internal error which normally
+	 * wouldn't raise a Host Interrupt, it forces a CIM Timer0 interrupt
 	 * in order to make sure the Host sees the Firmware Crash.  So
-	 * अगर we have a Timer0 पूर्णांकerrupt and करोn't see a Firmware Crash,
-	 * ignore the Timer0 पूर्णांकerrupt.
+	 * if we have a Timer0 interrupt and don't see a Firmware Crash,
+	 * ignore the Timer0 interrupt.
 	 */
 
-	val = t4_पढ़ो_reg(adapter, CIM_HOST_INT_CAUSE_A);
-	अगर (val & TIMER0INT_F)
-		अगर (!(fw_err & PCIE_FW_ERR_F) ||
+	val = t4_read_reg(adapter, CIM_HOST_INT_CAUSE_A);
+	if (val & TIMER0INT_F)
+		if (!(fw_err & PCIE_FW_ERR_F) ||
 		    (PCIE_FW_EVAL_G(fw_err) != PCIE_FW_EVAL_CRASH))
-			t4_ग_लिखो_reg(adapter, CIM_HOST_INT_CAUSE_A,
+			t4_write_reg(adapter, CIM_HOST_INT_CAUSE_A,
 				     TIMER0INT_F);
 
-	fat = t4_handle_पूर्णांकr_status(adapter, CIM_HOST_INT_CAUSE_A,
-				    cim_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, CIM_HOST_UPACC_INT_CAUSE_A,
-				    cim_upपूर्णांकr_info);
-	अगर (fat)
+	fat = t4_handle_intr_status(adapter, CIM_HOST_INT_CAUSE_A,
+				    cim_intr_info) +
+	      t4_handle_intr_status(adapter, CIM_HOST_UPACC_INT_CAUSE_A,
+				    cim_upintr_info);
+	if (fat)
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * ULP RX पूर्णांकerrupt handler.
+ * ULP RX interrupt handler.
  */
-अटल व्योम ulprx_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info ulprx_पूर्णांकr_info[] = अणु
-		अणु 0x1800000, "ULPRX context error", -1, 1 पूर्ण,
-		अणु 0x7fffff, "ULPRX parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void ulprx_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info ulprx_intr_info[] = {
+		{ 0x1800000, "ULPRX context error", -1, 1 },
+		{ 0x7fffff, "ULPRX parity error", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adapter, ULP_RX_INT_CAUSE_A, ulprx_पूर्णांकr_info))
+	if (t4_handle_intr_status(adapter, ULP_RX_INT_CAUSE_A, ulprx_intr_info))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * ULP TX पूर्णांकerrupt handler.
+ * ULP TX interrupt handler.
  */
-अटल व्योम ulptx_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info ulptx_पूर्णांकr_info[] = अणु
-		अणु PBL_BOUND_ERR_CH3_F, "ULPTX channel 3 PBL out of bounds", -1,
-		  0 पूर्ण,
-		अणु PBL_BOUND_ERR_CH2_F, "ULPTX channel 2 PBL out of bounds", -1,
-		  0 पूर्ण,
-		अणु PBL_BOUND_ERR_CH1_F, "ULPTX channel 1 PBL out of bounds", -1,
-		  0 पूर्ण,
-		अणु PBL_BOUND_ERR_CH0_F, "ULPTX channel 0 PBL out of bounds", -1,
-		  0 पूर्ण,
-		अणु 0xfffffff, "ULPTX parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void ulptx_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info ulptx_intr_info[] = {
+		{ PBL_BOUND_ERR_CH3_F, "ULPTX channel 3 PBL out of bounds", -1,
+		  0 },
+		{ PBL_BOUND_ERR_CH2_F, "ULPTX channel 2 PBL out of bounds", -1,
+		  0 },
+		{ PBL_BOUND_ERR_CH1_F, "ULPTX channel 1 PBL out of bounds", -1,
+		  0 },
+		{ PBL_BOUND_ERR_CH0_F, "ULPTX channel 0 PBL out of bounds", -1,
+		  0 },
+		{ 0xfffffff, "ULPTX parity error", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adapter, ULP_TX_INT_CAUSE_A, ulptx_पूर्णांकr_info))
+	if (t4_handle_intr_status(adapter, ULP_TX_INT_CAUSE_A, ulptx_intr_info))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * PM TX पूर्णांकerrupt handler.
+ * PM TX interrupt handler.
  */
-अटल व्योम pmtx_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info pmtx_पूर्णांकr_info[] = अणु
-		अणु PCMD_LEN_OVFL0_F, "PMTX channel 0 pcmd too large", -1, 1 पूर्ण,
-		अणु PCMD_LEN_OVFL1_F, "PMTX channel 1 pcmd too large", -1, 1 पूर्ण,
-		अणु PCMD_LEN_OVFL2_F, "PMTX channel 2 pcmd too large", -1, 1 पूर्ण,
-		अणु ZERO_C_CMD_ERROR_F, "PMTX 0-length pcmd", -1, 1 पूर्ण,
-		अणु PMTX_FRAMING_ERROR_F, "PMTX framing error", -1, 1 पूर्ण,
-		अणु OESPI_PAR_ERROR_F, "PMTX oespi parity error", -1, 1 पूर्ण,
-		अणु DB_OPTIONS_PAR_ERROR_F, "PMTX db_options parity error",
-		  -1, 1 पूर्ण,
-		अणु ICSPI_PAR_ERROR_F, "PMTX icspi parity error", -1, 1 पूर्ण,
-		अणु PMTX_C_PCMD_PAR_ERROR_F, "PMTX c_pcmd parity error", -1, 1पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void pmtx_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info pmtx_intr_info[] = {
+		{ PCMD_LEN_OVFL0_F, "PMTX channel 0 pcmd too large", -1, 1 },
+		{ PCMD_LEN_OVFL1_F, "PMTX channel 1 pcmd too large", -1, 1 },
+		{ PCMD_LEN_OVFL2_F, "PMTX channel 2 pcmd too large", -1, 1 },
+		{ ZERO_C_CMD_ERROR_F, "PMTX 0-length pcmd", -1, 1 },
+		{ PMTX_FRAMING_ERROR_F, "PMTX framing error", -1, 1 },
+		{ OESPI_PAR_ERROR_F, "PMTX oespi parity error", -1, 1 },
+		{ DB_OPTIONS_PAR_ERROR_F, "PMTX db_options parity error",
+		  -1, 1 },
+		{ ICSPI_PAR_ERROR_F, "PMTX icspi parity error", -1, 1 },
+		{ PMTX_C_PCMD_PAR_ERROR_F, "PMTX c_pcmd parity error", -1, 1},
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adapter, PM_TX_INT_CAUSE_A, pmtx_पूर्णांकr_info))
+	if (t4_handle_intr_status(adapter, PM_TX_INT_CAUSE_A, pmtx_intr_info))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * PM RX पूर्णांकerrupt handler.
+ * PM RX interrupt handler.
  */
-अटल व्योम pmrx_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info pmrx_पूर्णांकr_info[] = अणु
-		अणु ZERO_E_CMD_ERROR_F, "PMRX 0-length pcmd", -1, 1 पूर्ण,
-		अणु PMRX_FRAMING_ERROR_F, "PMRX framing error", -1, 1 पूर्ण,
-		अणु OCSPI_PAR_ERROR_F, "PMRX ocspi parity error", -1, 1 पूर्ण,
-		अणु DB_OPTIONS_PAR_ERROR_F, "PMRX db_options parity error",
-		  -1, 1 पूर्ण,
-		अणु IESPI_PAR_ERROR_F, "PMRX iespi parity error", -1, 1 पूर्ण,
-		अणु PMRX_E_PCMD_PAR_ERROR_F, "PMRX e_pcmd parity error", -1, 1पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void pmrx_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info pmrx_intr_info[] = {
+		{ ZERO_E_CMD_ERROR_F, "PMRX 0-length pcmd", -1, 1 },
+		{ PMRX_FRAMING_ERROR_F, "PMRX framing error", -1, 1 },
+		{ OCSPI_PAR_ERROR_F, "PMRX ocspi parity error", -1, 1 },
+		{ DB_OPTIONS_PAR_ERROR_F, "PMRX db_options parity error",
+		  -1, 1 },
+		{ IESPI_PAR_ERROR_F, "PMRX iespi parity error", -1, 1 },
+		{ PMRX_E_PCMD_PAR_ERROR_F, "PMRX e_pcmd parity error", -1, 1},
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adapter, PM_RX_INT_CAUSE_A, pmrx_पूर्णांकr_info))
+	if (t4_handle_intr_status(adapter, PM_RX_INT_CAUSE_A, pmrx_intr_info))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * CPL चयन पूर्णांकerrupt handler.
+ * CPL switch interrupt handler.
  */
-अटल व्योम cplsw_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info cplsw_पूर्णांकr_info[] = अणु
-		अणु CIM_OP_MAP_PERR_F, "CPLSW CIM op_map parity error", -1, 1 पूर्ण,
-		अणु CIM_OVFL_ERROR_F, "CPLSW CIM overflow", -1, 1 पूर्ण,
-		अणु TP_FRAMING_ERROR_F, "CPLSW TP framing error", -1, 1 पूर्ण,
-		अणु SGE_FRAMING_ERROR_F, "CPLSW SGE framing error", -1, 1 पूर्ण,
-		अणु CIM_FRAMING_ERROR_F, "CPLSW CIM framing error", -1, 1 पूर्ण,
-		अणु ZERO_SWITCH_ERROR_F, "CPLSW no-switch error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void cplsw_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info cplsw_intr_info[] = {
+		{ CIM_OP_MAP_PERR_F, "CPLSW CIM op_map parity error", -1, 1 },
+		{ CIM_OVFL_ERROR_F, "CPLSW CIM overflow", -1, 1 },
+		{ TP_FRAMING_ERROR_F, "CPLSW TP framing error", -1, 1 },
+		{ SGE_FRAMING_ERROR_F, "CPLSW SGE framing error", -1, 1 },
+		{ CIM_FRAMING_ERROR_F, "CPLSW CIM framing error", -1, 1 },
+		{ ZERO_SWITCH_ERROR_F, "CPLSW no-switch error", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adapter, CPL_INTR_CAUSE_A, cplsw_पूर्णांकr_info))
+	if (t4_handle_intr_status(adapter, CPL_INTR_CAUSE_A, cplsw_intr_info))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * LE पूर्णांकerrupt handler.
+ * LE interrupt handler.
  */
-अटल व्योम le_पूर्णांकr_handler(काष्ठा adapter *adap)
-अणु
-	क्रमागत chip_type chip = CHELSIO_CHIP_VERSION(adap->params.chip);
-	अटल स्थिर काष्ठा पूर्णांकr_info le_पूर्णांकr_info[] = अणु
-		अणु LIPMISS_F, "LE LIP miss", -1, 0 पूर्ण,
-		अणु LIP0_F, "LE 0 LIP error", -1, 0 पूर्ण,
-		अणु PARITYERR_F, "LE parity error", -1, 1 पूर्ण,
-		अणु UNKNOWNCMD_F, "LE unknown command", -1, 1 पूर्ण,
-		अणु REQQPARERR_F, "LE request queue parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void le_intr_handler(struct adapter *adap)
+{
+	enum chip_type chip = CHELSIO_CHIP_VERSION(adap->params.chip);
+	static const struct intr_info le_intr_info[] = {
+		{ LIPMISS_F, "LE LIP miss", -1, 0 },
+		{ LIP0_F, "LE 0 LIP error", -1, 0 },
+		{ PARITYERR_F, "LE parity error", -1, 1 },
+		{ UNKNOWNCMD_F, "LE unknown command", -1, 1 },
+		{ REQQPARERR_F, "LE request queue parity error", -1, 1 },
+		{ 0 }
+	};
 
-	अटल काष्ठा पूर्णांकr_info t6_le_पूर्णांकr_info[] = अणु
-		अणु T6_LIPMISS_F, "LE LIP miss", -1, 0 पूर्ण,
-		अणु T6_LIP0_F, "LE 0 LIP error", -1, 0 पूर्ण,
-		अणु CMDTIDERR_F, "LE cmd tid error", -1, 1 पूर्ण,
-		अणु TCAMINTPERR_F, "LE parity error", -1, 1 पूर्ण,
-		अणु T6_UNKNOWNCMD_F, "LE unknown command", -1, 1 पूर्ण,
-		अणु SSRAMINTPERR_F, "LE request queue parity error", -1, 1 पूर्ण,
-		अणु HASHTBLMEMCRCERR_F, "LE hash table mem crc error", -1, 0 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+	static struct intr_info t6_le_intr_info[] = {
+		{ T6_LIPMISS_F, "LE LIP miss", -1, 0 },
+		{ T6_LIP0_F, "LE 0 LIP error", -1, 0 },
+		{ CMDTIDERR_F, "LE cmd tid error", -1, 1 },
+		{ TCAMINTPERR_F, "LE parity error", -1, 1 },
+		{ T6_UNKNOWNCMD_F, "LE unknown command", -1, 1 },
+		{ SSRAMINTPERR_F, "LE request queue parity error", -1, 1 },
+		{ HASHTBLMEMCRCERR_F, "LE hash table mem crc error", -1, 0 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adap, LE_DB_INT_CAUSE_A,
+	if (t4_handle_intr_status(adap, LE_DB_INT_CAUSE_A,
 				  (chip <= CHELSIO_T5) ?
-				  le_पूर्णांकr_info : t6_le_पूर्णांकr_info))
+				  le_intr_info : t6_le_intr_info))
 		t4_fatal_err(adap);
-पूर्ण
+}
 
 /*
- * MPS पूर्णांकerrupt handler.
+ * MPS interrupt handler.
  */
-अटल व्योम mps_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_rx_पूर्णांकr_info[] = अणु
-		अणु 0xffffff, "MPS Rx parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_tx_पूर्णांकr_info[] = अणु
-		अणु TPFIFO_V(TPFIFO_M), "MPS Tx TP FIFO parity error", -1, 1 पूर्ण,
-		अणु NCSIFIFO_F, "MPS Tx NC-SI FIFO parity error", -1, 1 पूर्ण,
-		अणु TXDATAFIFO_V(TXDATAFIFO_M), "MPS Tx data FIFO parity error",
-		  -1, 1 पूर्ण,
-		अणु TXDESCFIFO_V(TXDESCFIFO_M), "MPS Tx desc FIFO parity error",
-		  -1, 1 पूर्ण,
-		अणु BUBBLE_F, "MPS Tx underflow", -1, 1 पूर्ण,
-		अणु SECNTERR_F, "MPS Tx SOP/EOP error", -1, 1 पूर्ण,
-		अणु FRMERR_F, "MPS Tx framing error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info t6_mps_tx_पूर्णांकr_info[] = अणु
-		अणु TPFIFO_V(TPFIFO_M), "MPS Tx TP FIFO parity error", -1, 1 पूर्ण,
-		अणु NCSIFIFO_F, "MPS Tx NC-SI FIFO parity error", -1, 1 पूर्ण,
-		अणु TXDATAFIFO_V(TXDATAFIFO_M), "MPS Tx data FIFO parity error",
-		  -1, 1 पूर्ण,
-		अणु TXDESCFIFO_V(TXDESCFIFO_M), "MPS Tx desc FIFO parity error",
-		  -1, 1 पूर्ण,
-		/* MPS Tx Bubble is normal क्रम T6 */
-		अणु SECNTERR_F, "MPS Tx SOP/EOP error", -1, 1 पूर्ण,
-		अणु FRMERR_F, "MPS Tx framing error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_trc_पूर्णांकr_info[] = अणु
-		अणु FILTMEM_V(FILTMEM_M), "MPS TRC filter parity error", -1, 1 पूर्ण,
-		अणु PKTFIFO_V(PKTFIFO_M), "MPS TRC packet FIFO parity error",
-		  -1, 1 पूर्ण,
-		अणु MISCPERR_F, "MPS TRC misc parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_stat_sram_पूर्णांकr_info[] = अणु
-		अणु 0x1fffff, "MPS statistics SRAM parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_stat_tx_पूर्णांकr_info[] = अणु
-		अणु 0xfffff, "MPS statistics Tx FIFO parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_stat_rx_पूर्णांकr_info[] = अणु
-		अणु 0xffffff, "MPS statistics Rx FIFO parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
-	अटल स्थिर काष्ठा पूर्णांकr_info mps_cls_पूर्णांकr_info[] = अणु
-		अणु MATCHSRAM_F, "MPS match SRAM parity error", -1, 1 पूर्ण,
-		अणु MATCHTCAM_F, "MPS match TCAM parity error", -1, 1 पूर्ण,
-		अणु HASHSRAM_F, "MPS hash SRAM parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void mps_intr_handler(struct adapter *adapter)
+{
+	static const struct intr_info mps_rx_intr_info[] = {
+		{ 0xffffff, "MPS Rx parity error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info mps_tx_intr_info[] = {
+		{ TPFIFO_V(TPFIFO_M), "MPS Tx TP FIFO parity error", -1, 1 },
+		{ NCSIFIFO_F, "MPS Tx NC-SI FIFO parity error", -1, 1 },
+		{ TXDATAFIFO_V(TXDATAFIFO_M), "MPS Tx data FIFO parity error",
+		  -1, 1 },
+		{ TXDESCFIFO_V(TXDESCFIFO_M), "MPS Tx desc FIFO parity error",
+		  -1, 1 },
+		{ BUBBLE_F, "MPS Tx underflow", -1, 1 },
+		{ SECNTERR_F, "MPS Tx SOP/EOP error", -1, 1 },
+		{ FRMERR_F, "MPS Tx framing error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info t6_mps_tx_intr_info[] = {
+		{ TPFIFO_V(TPFIFO_M), "MPS Tx TP FIFO parity error", -1, 1 },
+		{ NCSIFIFO_F, "MPS Tx NC-SI FIFO parity error", -1, 1 },
+		{ TXDATAFIFO_V(TXDATAFIFO_M), "MPS Tx data FIFO parity error",
+		  -1, 1 },
+		{ TXDESCFIFO_V(TXDESCFIFO_M), "MPS Tx desc FIFO parity error",
+		  -1, 1 },
+		/* MPS Tx Bubble is normal for T6 */
+		{ SECNTERR_F, "MPS Tx SOP/EOP error", -1, 1 },
+		{ FRMERR_F, "MPS Tx framing error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info mps_trc_intr_info[] = {
+		{ FILTMEM_V(FILTMEM_M), "MPS TRC filter parity error", -1, 1 },
+		{ PKTFIFO_V(PKTFIFO_M), "MPS TRC packet FIFO parity error",
+		  -1, 1 },
+		{ MISCPERR_F, "MPS TRC misc parity error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info mps_stat_sram_intr_info[] = {
+		{ 0x1fffff, "MPS statistics SRAM parity error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info mps_stat_tx_intr_info[] = {
+		{ 0xfffff, "MPS statistics Tx FIFO parity error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info mps_stat_rx_intr_info[] = {
+		{ 0xffffff, "MPS statistics Rx FIFO parity error", -1, 1 },
+		{ 0 }
+	};
+	static const struct intr_info mps_cls_intr_info[] = {
+		{ MATCHSRAM_F, "MPS match SRAM parity error", -1, 1 },
+		{ MATCHTCAM_F, "MPS match TCAM parity error", -1, 1 },
+		{ HASHSRAM_F, "MPS hash SRAM parity error", -1, 1 },
+		{ 0 }
+	};
 
-	पूर्णांक fat;
+	int fat;
 
-	fat = t4_handle_पूर्णांकr_status(adapter, MPS_RX_PERR_INT_CAUSE_A,
-				    mps_rx_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, MPS_TX_INT_CAUSE_A,
+	fat = t4_handle_intr_status(adapter, MPS_RX_PERR_INT_CAUSE_A,
+				    mps_rx_intr_info) +
+	      t4_handle_intr_status(adapter, MPS_TX_INT_CAUSE_A,
 				    is_t6(adapter->params.chip)
-				    ? t6_mps_tx_पूर्णांकr_info
-				    : mps_tx_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, MPS_TRC_INT_CAUSE_A,
-				    mps_trc_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, MPS_STAT_PERR_INT_CAUSE_SRAM_A,
-				    mps_stat_sram_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, MPS_STAT_PERR_INT_CAUSE_TX_FIFO_A,
-				    mps_stat_tx_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, MPS_STAT_PERR_INT_CAUSE_RX_FIFO_A,
-				    mps_stat_rx_पूर्णांकr_info) +
-	      t4_handle_पूर्णांकr_status(adapter, MPS_CLS_INT_CAUSE_A,
-				    mps_cls_पूर्णांकr_info);
+				    ? t6_mps_tx_intr_info
+				    : mps_tx_intr_info) +
+	      t4_handle_intr_status(adapter, MPS_TRC_INT_CAUSE_A,
+				    mps_trc_intr_info) +
+	      t4_handle_intr_status(adapter, MPS_STAT_PERR_INT_CAUSE_SRAM_A,
+				    mps_stat_sram_intr_info) +
+	      t4_handle_intr_status(adapter, MPS_STAT_PERR_INT_CAUSE_TX_FIFO_A,
+				    mps_stat_tx_intr_info) +
+	      t4_handle_intr_status(adapter, MPS_STAT_PERR_INT_CAUSE_RX_FIFO_A,
+				    mps_stat_rx_intr_info) +
+	      t4_handle_intr_status(adapter, MPS_CLS_INT_CAUSE_A,
+				    mps_cls_intr_info);
 
-	t4_ग_लिखो_reg(adapter, MPS_INT_CAUSE_A, 0);
-	t4_पढ़ो_reg(adapter, MPS_INT_CAUSE_A);                    /* flush */
-	अगर (fat)
+	t4_write_reg(adapter, MPS_INT_CAUSE_A, 0);
+	t4_read_reg(adapter, MPS_INT_CAUSE_A);                    /* flush */
+	if (fat)
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
-#घोषणा MEM_INT_MASK (PERR_INT_CAUSE_F | ECC_CE_INT_CAUSE_F | \
+#define MEM_INT_MASK (PERR_INT_CAUSE_F | ECC_CE_INT_CAUSE_F | \
 		      ECC_UE_INT_CAUSE_F)
 
 /*
- * EDC/MC पूर्णांकerrupt handler.
+ * EDC/MC interrupt handler.
  */
-अटल व्योम mem_पूर्णांकr_handler(काष्ठा adapter *adapter, पूर्णांक idx)
-अणु
-	अटल स्थिर अक्षर name[4][7] = अणु "EDC0", "EDC1", "MC/MC0", "MC1" पूर्ण;
+static void mem_intr_handler(struct adapter *adapter, int idx)
+{
+	static const char name[4][7] = { "EDC0", "EDC1", "MC/MC0", "MC1" };
 
-	अचिन्हित पूर्णांक addr, cnt_addr, v;
+	unsigned int addr, cnt_addr, v;
 
-	अगर (idx <= MEM_EDC1) अणु
+	if (idx <= MEM_EDC1) {
 		addr = EDC_REG(EDC_INT_CAUSE_A, idx);
 		cnt_addr = EDC_REG(EDC_ECC_STATUS_A, idx);
-	पूर्ण अन्यथा अगर (idx == MEM_MC) अणु
-		अगर (is_t4(adapter->params.chip)) अणु
+	} else if (idx == MEM_MC) {
+		if (is_t4(adapter->params.chip)) {
 			addr = MC_INT_CAUSE_A;
 			cnt_addr = MC_ECC_STATUS_A;
-		पूर्ण अन्यथा अणु
+		} else {
 			addr = MC_P_INT_CAUSE_A;
 			cnt_addr = MC_P_ECC_STATUS_A;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		addr = MC_REG(MC_P_INT_CAUSE_A, 1);
 		cnt_addr = MC_REG(MC_P_ECC_STATUS_A, 1);
-	पूर्ण
+	}
 
-	v = t4_पढ़ो_reg(adapter, addr) & MEM_INT_MASK;
-	अगर (v & PERR_INT_CAUSE_F)
+	v = t4_read_reg(adapter, addr) & MEM_INT_MASK;
+	if (v & PERR_INT_CAUSE_F)
 		dev_alert(adapter->pdev_dev, "%s FIFO parity error\n",
 			  name[idx]);
-	अगर (v & ECC_CE_INT_CAUSE_F) अणु
-		u32 cnt = ECC_CECNT_G(t4_पढ़ो_reg(adapter, cnt_addr));
+	if (v & ECC_CE_INT_CAUSE_F) {
+		u32 cnt = ECC_CECNT_G(t4_read_reg(adapter, cnt_addr));
 
-		t4_edc_err_पढ़ो(adapter, idx);
+		t4_edc_err_read(adapter, idx);
 
-		t4_ग_लिखो_reg(adapter, cnt_addr, ECC_CECNT_V(ECC_CECNT_M));
-		अगर (prपूर्णांकk_ratelimit())
+		t4_write_reg(adapter, cnt_addr, ECC_CECNT_V(ECC_CECNT_M));
+		if (printk_ratelimit())
 			dev_warn(adapter->pdev_dev,
 				 "%u %s correctable ECC data error%s\n",
 				 cnt, name[idx], cnt > 1 ? "s" : "");
-	पूर्ण
-	अगर (v & ECC_UE_INT_CAUSE_F)
+	}
+	if (v & ECC_UE_INT_CAUSE_F)
 		dev_alert(adapter->pdev_dev,
 			  "%s uncorrectable ECC data error\n", name[idx]);
 
-	t4_ग_लिखो_reg(adapter, addr, v);
-	अगर (v & (PERR_INT_CAUSE_F | ECC_UE_INT_CAUSE_F))
+	t4_write_reg(adapter, addr, v);
+	if (v & (PERR_INT_CAUSE_F | ECC_UE_INT_CAUSE_F))
 		t4_fatal_err(adapter);
-पूर्ण
+}
 
 /*
- * MA पूर्णांकerrupt handler.
+ * MA interrupt handler.
  */
-अटल व्योम ma_पूर्णांकr_handler(काष्ठा adapter *adap)
-अणु
-	u32 v, status = t4_पढ़ो_reg(adap, MA_INT_CAUSE_A);
+static void ma_intr_handler(struct adapter *adap)
+{
+	u32 v, status = t4_read_reg(adap, MA_INT_CAUSE_A);
 
-	अगर (status & MEM_PERR_INT_CAUSE_F) अणु
+	if (status & MEM_PERR_INT_CAUSE_F) {
 		dev_alert(adap->pdev_dev,
 			  "MA parity error, parity status %#x\n",
-			  t4_पढ़ो_reg(adap, MA_PARITY_ERROR_STATUS1_A));
-		अगर (is_t5(adap->params.chip))
+			  t4_read_reg(adap, MA_PARITY_ERROR_STATUS1_A));
+		if (is_t5(adap->params.chip))
 			dev_alert(adap->pdev_dev,
 				  "MA parity error, parity status %#x\n",
-				  t4_पढ़ो_reg(adap,
+				  t4_read_reg(adap,
 					      MA_PARITY_ERROR_STATUS2_A));
-	पूर्ण
-	अगर (status & MEM_WRAP_INT_CAUSE_F) अणु
-		v = t4_पढ़ो_reg(adap, MA_INT_WRAP_STATUS_A);
+	}
+	if (status & MEM_WRAP_INT_CAUSE_F) {
+		v = t4_read_reg(adap, MA_INT_WRAP_STATUS_A);
 		dev_alert(adap->pdev_dev, "MA address wrap-around error by "
 			  "client %u to address %#x\n",
 			  MEM_WRAP_CLIENT_NUM_G(v),
 			  MEM_WRAP_ADDRESS_G(v) << 4);
-	पूर्ण
-	t4_ग_लिखो_reg(adap, MA_INT_CAUSE_A, status);
+	}
+	t4_write_reg(adap, MA_INT_CAUSE_A, status);
 	t4_fatal_err(adap);
-पूर्ण
+}
 
 /*
- * SMB पूर्णांकerrupt handler.
+ * SMB interrupt handler.
  */
-अटल व्योम smb_पूर्णांकr_handler(काष्ठा adapter *adap)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info smb_पूर्णांकr_info[] = अणु
-		अणु MSTTXFIFOPARINT_F, "SMB master Tx FIFO parity error", -1, 1 पूर्ण,
-		अणु MSTRXFIFOPARINT_F, "SMB master Rx FIFO parity error", -1, 1 पूर्ण,
-		अणु SLVFIFOPARINT_F, "SMB slave FIFO parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void smb_intr_handler(struct adapter *adap)
+{
+	static const struct intr_info smb_intr_info[] = {
+		{ MSTTXFIFOPARINT_F, "SMB master Tx FIFO parity error", -1, 1 },
+		{ MSTRXFIFOPARINT_F, "SMB master Rx FIFO parity error", -1, 1 },
+		{ SLVFIFOPARINT_F, "SMB slave FIFO parity error", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adap, SMB_INT_CAUSE_A, smb_पूर्णांकr_info))
+	if (t4_handle_intr_status(adap, SMB_INT_CAUSE_A, smb_intr_info))
 		t4_fatal_err(adap);
-पूर्ण
+}
 
 /*
- * NC-SI पूर्णांकerrupt handler.
+ * NC-SI interrupt handler.
  */
-अटल व्योम ncsi_पूर्णांकr_handler(काष्ठा adapter *adap)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info ncsi_पूर्णांकr_info[] = अणु
-		अणु CIM_DM_PRTY_ERR_F, "NC-SI CIM parity error", -1, 1 पूर्ण,
-		अणु MPS_DM_PRTY_ERR_F, "NC-SI MPS parity error", -1, 1 पूर्ण,
-		अणु TXFIFO_PRTY_ERR_F, "NC-SI Tx FIFO parity error", -1, 1 पूर्ण,
-		अणु RXFIFO_PRTY_ERR_F, "NC-SI Rx FIFO parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void ncsi_intr_handler(struct adapter *adap)
+{
+	static const struct intr_info ncsi_intr_info[] = {
+		{ CIM_DM_PRTY_ERR_F, "NC-SI CIM parity error", -1, 1 },
+		{ MPS_DM_PRTY_ERR_F, "NC-SI MPS parity error", -1, 1 },
+		{ TXFIFO_PRTY_ERR_F, "NC-SI Tx FIFO parity error", -1, 1 },
+		{ RXFIFO_PRTY_ERR_F, "NC-SI Rx FIFO parity error", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adap, NCSI_INT_CAUSE_A, ncsi_पूर्णांकr_info))
+	if (t4_handle_intr_status(adap, NCSI_INT_CAUSE_A, ncsi_intr_info))
 		t4_fatal_err(adap);
-पूर्ण
+}
 
 /*
- * XGMAC पूर्णांकerrupt handler.
+ * XGMAC interrupt handler.
  */
-अटल व्योम xgmac_पूर्णांकr_handler(काष्ठा adapter *adap, पूर्णांक port)
-अणु
-	u32 v, पूर्णांक_cause_reg;
+static void xgmac_intr_handler(struct adapter *adap, int port)
+{
+	u32 v, int_cause_reg;
 
-	अगर (is_t4(adap->params.chip))
-		पूर्णांक_cause_reg = PORT_REG(port, XGMAC_PORT_INT_CAUSE_A);
-	अन्यथा
-		पूर्णांक_cause_reg = T5_PORT_REG(port, MAC_PORT_INT_CAUSE_A);
+	if (is_t4(adap->params.chip))
+		int_cause_reg = PORT_REG(port, XGMAC_PORT_INT_CAUSE_A);
+	else
+		int_cause_reg = T5_PORT_REG(port, MAC_PORT_INT_CAUSE_A);
 
-	v = t4_पढ़ो_reg(adap, पूर्णांक_cause_reg);
+	v = t4_read_reg(adap, int_cause_reg);
 
 	v &= TXFIFO_PRTY_ERR_F | RXFIFO_PRTY_ERR_F;
-	अगर (!v)
-		वापस;
+	if (!v)
+		return;
 
-	अगर (v & TXFIFO_PRTY_ERR_F)
+	if (v & TXFIFO_PRTY_ERR_F)
 		dev_alert(adap->pdev_dev, "XGMAC %d Tx FIFO parity error\n",
 			  port);
-	अगर (v & RXFIFO_PRTY_ERR_F)
+	if (v & RXFIFO_PRTY_ERR_F)
 		dev_alert(adap->pdev_dev, "XGMAC %d Rx FIFO parity error\n",
 			  port);
-	t4_ग_लिखो_reg(adap, PORT_REG(port, XGMAC_PORT_INT_CAUSE_A), v);
+	t4_write_reg(adap, PORT_REG(port, XGMAC_PORT_INT_CAUSE_A), v);
 	t4_fatal_err(adap);
-पूर्ण
+}
 
 /*
- * PL पूर्णांकerrupt handler.
+ * PL interrupt handler.
  */
-अटल व्योम pl_पूर्णांकr_handler(काष्ठा adapter *adap)
-अणु
-	अटल स्थिर काष्ठा पूर्णांकr_info pl_पूर्णांकr_info[] = अणु
-		अणु FATALPERR_F, "T4 fatal parity error", -1, 1 पूर्ण,
-		अणु PERRVFID_F, "PL VFID_MAP parity error", -1, 1 पूर्ण,
-		अणु 0 पूर्ण
-	पूर्ण;
+static void pl_intr_handler(struct adapter *adap)
+{
+	static const struct intr_info pl_intr_info[] = {
+		{ FATALPERR_F, "T4 fatal parity error", -1, 1 },
+		{ PERRVFID_F, "PL VFID_MAP parity error", -1, 1 },
+		{ 0 }
+	};
 
-	अगर (t4_handle_पूर्णांकr_status(adap, PL_PL_INT_CAUSE_A, pl_पूर्णांकr_info))
+	if (t4_handle_intr_status(adap, PL_PL_INT_CAUSE_A, pl_intr_info))
 		t4_fatal_err(adap);
-पूर्ण
+}
 
-#घोषणा PF_INTR_MASK (PFSW_F)
-#घोषणा GLBL_INTR_MASK (CIM_F | MPS_F | PL_F | PCIE_F | MC_F | EDC0_F | \
+#define PF_INTR_MASK (PFSW_F)
+#define GLBL_INTR_MASK (CIM_F | MPS_F | PL_F | PCIE_F | MC_F | EDC0_F | \
 		EDC1_F | LE_F | TP_F | MA_F | PM_TX_F | PM_RX_F | ULP_RX_F | \
 		CPL_SWITCH_F | SGE_F | ULP_TX_F | SF_F)
 
 /**
- *	t4_slow_पूर्णांकr_handler - control path पूर्णांकerrupt handler
+ *	t4_slow_intr_handler - control path interrupt handler
  *	@adapter: the adapter
  *
- *	T4 पूर्णांकerrupt handler क्रम non-data global पूर्णांकerrupt events, e.g., errors.
- *	The designation 'slow' is because it involves रेजिस्टर पढ़ोs, जबतक
- *	data पूर्णांकerrupts typically करोn't involve any MMIOs.
+ *	T4 interrupt handler for non-data global interrupt events, e.g., errors.
+ *	The designation 'slow' is because it involves register reads, while
+ *	data interrupts typically don't involve any MMIOs.
  */
-पूर्णांक t4_slow_पूर्णांकr_handler(काष्ठा adapter *adapter)
-अणु
-	/* There are rare हालs where a PL_INT_CAUSE bit may end up getting
+int t4_slow_intr_handler(struct adapter *adapter)
+{
+	/* There are rare cases where a PL_INT_CAUSE bit may end up getting
 	 * set when the corresponding PL_INT_ENABLE bit isn't set.  It's
-	 * easiest just to mask that हाल here.
+	 * easiest just to mask that case here.
 	 */
-	u32 raw_cause = t4_पढ़ो_reg(adapter, PL_INT_CAUSE_A);
-	u32 enable = t4_पढ़ो_reg(adapter, PL_INT_ENABLE_A);
+	u32 raw_cause = t4_read_reg(adapter, PL_INT_CAUSE_A);
+	u32 enable = t4_read_reg(adapter, PL_INT_ENABLE_A);
 	u32 cause = raw_cause & enable;
 
-	अगर (!(cause & GLBL_INTR_MASK))
-		वापस 0;
-	अगर (cause & CIM_F)
-		cim_पूर्णांकr_handler(adapter);
-	अगर (cause & MPS_F)
-		mps_पूर्णांकr_handler(adapter);
-	अगर (cause & NCSI_F)
-		ncsi_पूर्णांकr_handler(adapter);
-	अगर (cause & PL_F)
-		pl_पूर्णांकr_handler(adapter);
-	अगर (cause & SMB_F)
-		smb_पूर्णांकr_handler(adapter);
-	अगर (cause & XGMAC0_F)
-		xgmac_पूर्णांकr_handler(adapter, 0);
-	अगर (cause & XGMAC1_F)
-		xgmac_पूर्णांकr_handler(adapter, 1);
-	अगर (cause & XGMAC_KR0_F)
-		xgmac_पूर्णांकr_handler(adapter, 2);
-	अगर (cause & XGMAC_KR1_F)
-		xgmac_पूर्णांकr_handler(adapter, 3);
-	अगर (cause & PCIE_F)
-		pcie_पूर्णांकr_handler(adapter);
-	अगर (cause & MC_F)
-		mem_पूर्णांकr_handler(adapter, MEM_MC);
-	अगर (is_t5(adapter->params.chip) && (cause & MC1_F))
-		mem_पूर्णांकr_handler(adapter, MEM_MC1);
-	अगर (cause & EDC0_F)
-		mem_पूर्णांकr_handler(adapter, MEM_EDC0);
-	अगर (cause & EDC1_F)
-		mem_पूर्णांकr_handler(adapter, MEM_EDC1);
-	अगर (cause & LE_F)
-		le_पूर्णांकr_handler(adapter);
-	अगर (cause & TP_F)
-		tp_पूर्णांकr_handler(adapter);
-	अगर (cause & MA_F)
-		ma_पूर्णांकr_handler(adapter);
-	अगर (cause & PM_TX_F)
-		pmtx_पूर्णांकr_handler(adapter);
-	अगर (cause & PM_RX_F)
-		pmrx_पूर्णांकr_handler(adapter);
-	अगर (cause & ULP_RX_F)
-		ulprx_पूर्णांकr_handler(adapter);
-	अगर (cause & CPL_SWITCH_F)
-		cplsw_पूर्णांकr_handler(adapter);
-	अगर (cause & SGE_F)
-		sge_पूर्णांकr_handler(adapter);
-	अगर (cause & ULP_TX_F)
-		ulptx_पूर्णांकr_handler(adapter);
+	if (!(cause & GLBL_INTR_MASK))
+		return 0;
+	if (cause & CIM_F)
+		cim_intr_handler(adapter);
+	if (cause & MPS_F)
+		mps_intr_handler(adapter);
+	if (cause & NCSI_F)
+		ncsi_intr_handler(adapter);
+	if (cause & PL_F)
+		pl_intr_handler(adapter);
+	if (cause & SMB_F)
+		smb_intr_handler(adapter);
+	if (cause & XGMAC0_F)
+		xgmac_intr_handler(adapter, 0);
+	if (cause & XGMAC1_F)
+		xgmac_intr_handler(adapter, 1);
+	if (cause & XGMAC_KR0_F)
+		xgmac_intr_handler(adapter, 2);
+	if (cause & XGMAC_KR1_F)
+		xgmac_intr_handler(adapter, 3);
+	if (cause & PCIE_F)
+		pcie_intr_handler(adapter);
+	if (cause & MC_F)
+		mem_intr_handler(adapter, MEM_MC);
+	if (is_t5(adapter->params.chip) && (cause & MC1_F))
+		mem_intr_handler(adapter, MEM_MC1);
+	if (cause & EDC0_F)
+		mem_intr_handler(adapter, MEM_EDC0);
+	if (cause & EDC1_F)
+		mem_intr_handler(adapter, MEM_EDC1);
+	if (cause & LE_F)
+		le_intr_handler(adapter);
+	if (cause & TP_F)
+		tp_intr_handler(adapter);
+	if (cause & MA_F)
+		ma_intr_handler(adapter);
+	if (cause & PM_TX_F)
+		pmtx_intr_handler(adapter);
+	if (cause & PM_RX_F)
+		pmrx_intr_handler(adapter);
+	if (cause & ULP_RX_F)
+		ulprx_intr_handler(adapter);
+	if (cause & CPL_SWITCH_F)
+		cplsw_intr_handler(adapter);
+	if (cause & SGE_F)
+		sge_intr_handler(adapter);
+	if (cause & ULP_TX_F)
+		ulptx_intr_handler(adapter);
 
-	/* Clear the पूर्णांकerrupts just processed क्रम which we are the master. */
-	t4_ग_लिखो_reg(adapter, PL_INT_CAUSE_A, raw_cause & GLBL_INTR_MASK);
-	(व्योम)t4_पढ़ो_reg(adapter, PL_INT_CAUSE_A); /* flush */
-	वापस 1;
-पूर्ण
+	/* Clear the interrupts just processed for which we are the master. */
+	t4_write_reg(adapter, PL_INT_CAUSE_A, raw_cause & GLBL_INTR_MASK);
+	(void)t4_read_reg(adapter, PL_INT_CAUSE_A); /* flush */
+	return 1;
+}
 
 /**
- *	t4_पूर्णांकr_enable - enable पूर्णांकerrupts
- *	@adapter: the adapter whose पूर्णांकerrupts should be enabled
+ *	t4_intr_enable - enable interrupts
+ *	@adapter: the adapter whose interrupts should be enabled
  *
- *	Enable PF-specअगरic पूर्णांकerrupts क्रम the calling function and the top-level
- *	पूर्णांकerrupt concentrator क्रम global पूर्णांकerrupts.  Interrupts are alपढ़ोy
- *	enabled at each module,	here we just enable the roots of the पूर्णांकerrupt
+ *	Enable PF-specific interrupts for the calling function and the top-level
+ *	interrupt concentrator for global interrupts.  Interrupts are already
+ *	enabled at each module,	here we just enable the roots of the interrupt
  *	hierarchies.
  *
  *	Note: this function should be called only when the driver manages
- *	non PF-specअगरic पूर्णांकerrupts from the various HW modules.  Only one PCI
- *	function at a समय should be करोing this.
+ *	non PF-specific interrupts from the various HW modules.  Only one PCI
+ *	function at a time should be doing this.
  */
-व्योम t4_पूर्णांकr_enable(काष्ठा adapter *adapter)
-अणु
+void t4_intr_enable(struct adapter *adapter)
+{
 	u32 val = 0;
-	u32 whoami = t4_पढ़ो_reg(adapter, PL_WHOAMI_A);
+	u32 whoami = t4_read_reg(adapter, PL_WHOAMI_A);
 	u32 pf = CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5 ?
 			SOURCEPF_G(whoami) : T6_SOURCEPF_G(whoami);
 
-	अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5)
+	if (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5)
 		val = ERR_DROPPED_DB_F | ERR_EGR_CTXT_PRIO_F | DBFIFO_HP_INT_F;
-	t4_ग_लिखो_reg(adapter, SGE_INT_ENABLE3_A, ERR_CPL_EXCEED_IQE_SIZE_F |
+	t4_write_reg(adapter, SGE_INT_ENABLE3_A, ERR_CPL_EXCEED_IQE_SIZE_F |
 		     ERR_INVALID_CIDX_INC_F | ERR_CPL_OPCODE_0_F |
 		     ERR_DATA_CPL_ON_HIGH_QID1_F | INGRESS_SIZE_ERR_F |
 		     ERR_DATA_CPL_ON_HIGH_QID0_F | ERR_BAD_DB_PIDX3_F |
 		     ERR_BAD_DB_PIDX2_F | ERR_BAD_DB_PIDX1_F |
 		     ERR_BAD_DB_PIDX0_F | ERR_ING_CTXT_PRIO_F |
 		     DBFIFO_LP_INT_F | EGRESS_SIZE_ERR_F | val);
-	t4_ग_लिखो_reg(adapter, MYPF_REG(PL_PF_INT_ENABLE_A), PF_INTR_MASK);
+	t4_write_reg(adapter, MYPF_REG(PL_PF_INT_ENABLE_A), PF_INTR_MASK);
 	t4_set_reg_field(adapter, PL_INT_MAP0_A, 0, 1 << pf);
-पूर्ण
+}
 
 /**
- *	t4_पूर्णांकr_disable - disable पूर्णांकerrupts
- *	@adapter: the adapter whose पूर्णांकerrupts should be disabled
+ *	t4_intr_disable - disable interrupts
+ *	@adapter: the adapter whose interrupts should be disabled
  *
- *	Disable पूर्णांकerrupts.  We only disable the top-level पूर्णांकerrupt
+ *	Disable interrupts.  We only disable the top-level interrupt
  *	concentrators.  The caller must be a PCI function managing global
- *	पूर्णांकerrupts.
+ *	interrupts.
  */
-व्योम t4_पूर्णांकr_disable(काष्ठा adapter *adapter)
-अणु
+void t4_intr_disable(struct adapter *adapter)
+{
 	u32 whoami, pf;
 
-	अगर (pci_channel_offline(adapter->pdev))
-		वापस;
+	if (pci_channel_offline(adapter->pdev))
+		return;
 
-	whoami = t4_पढ़ो_reg(adapter, PL_WHOAMI_A);
+	whoami = t4_read_reg(adapter, PL_WHOAMI_A);
 	pf = CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5 ?
 			SOURCEPF_G(whoami) : T6_SOURCEPF_G(whoami);
 
-	t4_ग_लिखो_reg(adapter, MYPF_REG(PL_PF_INT_ENABLE_A), 0);
+	t4_write_reg(adapter, MYPF_REG(PL_PF_INT_ENABLE_A), 0);
 	t4_set_reg_field(adapter, PL_INT_MAP0_A, 1 << pf, 0);
-पूर्ण
+}
 
-अचिन्हित पूर्णांक t4_chip_rss_size(काष्ठा adapter *adap)
-अणु
-	अगर (CHELSIO_CHIP_VERSION(adap->params.chip) <= CHELSIO_T5)
-		वापस RSS_NENTRIES;
-	अन्यथा
-		वापस T6_RSS_NENTRIES;
-पूर्ण
+unsigned int t4_chip_rss_size(struct adapter *adap)
+{
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) <= CHELSIO_T5)
+		return RSS_NENTRIES;
+	else
+		return T6_RSS_NENTRIES;
+}
 
 /**
  *	t4_config_rss_range - configure a portion of the RSS mapping table
  *	@adapter: the adapter
- *	@mbox: mbox to use क्रम the FW command
- *	@viid: भव पूर्णांकerface whose RSS subtable is to be written
- *	@start: start entry in the table to ग_लिखो
- *	@n: how many table entries to ग_लिखो
- *	@rspq: values क्रम the response queue lookup table
+ *	@mbox: mbox to use for the FW command
+ *	@viid: virtual interface whose RSS subtable is to be written
+ *	@start: start entry in the table to write
+ *	@n: how many table entries to write
+ *	@rspq: values for the response queue lookup table
  *	@nrspq: number of values in @rspq
  *
  *	Programs the selected part of the VI's RSS mapping table with the
  *	provided values.  If @nrspq < @n the supplied values are used repeatedly
  *	until the full table range is populated.
  *
- *	The caller must ensure the values in @rspq are in the range allowed क्रम
+ *	The caller must ensure the values in @rspq are in the range allowed for
  *	@viid.
  */
-पूर्णांक t4_config_rss_range(काष्ठा adapter *adapter, पूर्णांक mbox, अचिन्हित पूर्णांक viid,
-			पूर्णांक start, पूर्णांक n, स्थिर u16 *rspq, अचिन्हित पूर्णांक nrspq)
-अणु
-	पूर्णांक ret;
-	स्थिर u16 *rsp = rspq;
-	स्थिर u16 *rsp_end = rspq + nrspq;
-	काष्ठा fw_rss_ind_tbl_cmd cmd;
+int t4_config_rss_range(struct adapter *adapter, int mbox, unsigned int viid,
+			int start, int n, const u16 *rspq, unsigned int nrspq)
+{
+	int ret;
+	const u16 *rsp = rspq;
+	const u16 *rsp_end = rspq + nrspq;
+	struct fw_rss_ind_tbl_cmd cmd;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_RSS_IND_TBL_CMD) |
 			       FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 			       FW_RSS_IND_TBL_CMD_VIID_V(viid));
 	cmd.retval_len16 = cpu_to_be32(FW_LEN16(cmd));
 
 	/* each fw_rss_ind_tbl_cmd takes up to 32 entries */
-	जबतक (n > 0) अणु
-		पूर्णांक nq = min(n, 32);
+	while (n > 0) {
+		int nq = min(n, 32);
 		__be32 *qp = &cmd.iq0_to_iq2;
 
 		cmd.niqid = cpu_to_be16(nq);
@@ -5188,143 +5187,143 @@ fw_port_cap32_t t4_link_acaps(काष्ठा adapter *adapter, अचिन�
 		start += nq;
 		n -= nq;
 
-		जबतक (nq > 0) अणु
-			अचिन्हित पूर्णांक v;
+		while (nq > 0) {
+			unsigned int v;
 
 			v = FW_RSS_IND_TBL_CMD_IQ0_V(*rsp);
-			अगर (++rsp >= rsp_end)
+			if (++rsp >= rsp_end)
 				rsp = rspq;
 			v |= FW_RSS_IND_TBL_CMD_IQ1_V(*rsp);
-			अगर (++rsp >= rsp_end)
+			if (++rsp >= rsp_end)
 				rsp = rspq;
 			v |= FW_RSS_IND_TBL_CMD_IQ2_V(*rsp);
-			अगर (++rsp >= rsp_end)
+			if (++rsp >= rsp_end)
 				rsp = rspq;
 
 			*qp++ = cpu_to_be32(v);
 			nq -= 3;
-		पूर्ण
+		}
 
-		ret = t4_wr_mbox(adapter, mbox, &cmd, माप(cmd), शून्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		ret = t4_wr_mbox(adapter, mbox, &cmd, sizeof(cmd), NULL);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
 /**
  *	t4_config_glbl_rss - configure the global RSS mode
  *	@adapter: the adapter
- *	@mbox: mbox to use क्रम the FW command
+ *	@mbox: mbox to use for the FW command
  *	@mode: global RSS mode
- *	@flags: mode-specअगरic flags
+ *	@flags: mode-specific flags
  *
  *	Sets the global RSS mode.
  */
-पूर्णांक t4_config_glbl_rss(काष्ठा adapter *adapter, पूर्णांक mbox, अचिन्हित पूर्णांक mode,
-		       अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा fw_rss_glb_config_cmd c;
+int t4_config_glbl_rss(struct adapter *adapter, int mbox, unsigned int mode,
+		       unsigned int flags)
+{
+	struct fw_rss_glb_config_cmd c;
 
-	स_रखो(&c, 0, माप(c));
-	c.op_to_ग_लिखो = cpu_to_be32(FW_CMD_OP_V(FW_RSS_GLB_CONFIG_CMD) |
+	memset(&c, 0, sizeof(c));
+	c.op_to_write = cpu_to_be32(FW_CMD_OP_V(FW_RSS_GLB_CONFIG_CMD) |
 				    FW_CMD_REQUEST_F | FW_CMD_WRITE_F);
 	c.retval_len16 = cpu_to_be32(FW_LEN16(c));
-	अगर (mode == FW_RSS_GLB_CONFIG_CMD_MODE_MANUAL) अणु
+	if (mode == FW_RSS_GLB_CONFIG_CMD_MODE_MANUAL) {
 		c.u.manual.mode_pkd =
 			cpu_to_be32(FW_RSS_GLB_CONFIG_CMD_MODE_V(mode));
-	पूर्ण अन्यथा अगर (mode == FW_RSS_GLB_CONFIG_CMD_MODE_BASICVIRTUAL) अणु
-		c.u.basicभव.mode_pkd =
+	} else if (mode == FW_RSS_GLB_CONFIG_CMD_MODE_BASICVIRTUAL) {
+		c.u.basicvirtual.mode_pkd =
 			cpu_to_be32(FW_RSS_GLB_CONFIG_CMD_MODE_V(mode));
-		c.u.basicभव.synmapen_to_hashtoeplitz = cpu_to_be32(flags);
-	पूर्ण अन्यथा
-		वापस -EINVAL;
-	वापस t4_wr_mbox(adapter, mbox, &c, माप(c), शून्य);
-पूर्ण
+		c.u.basicvirtual.synmapen_to_hashtoeplitz = cpu_to_be32(flags);
+	} else
+		return -EINVAL;
+	return t4_wr_mbox(adapter, mbox, &c, sizeof(c), NULL);
+}
 
 /**
  *	t4_config_vi_rss - configure per VI RSS settings
  *	@adapter: the adapter
- *	@mbox: mbox to use क्रम the FW command
+ *	@mbox: mbox to use for the FW command
  *	@viid: the VI id
  *	@flags: RSS flags
- *	@defq: id of the शेष RSS queue क्रम the VI.
+ *	@defq: id of the default RSS queue for the VI.
  *
- *	Configures VI-specअगरic RSS properties.
+ *	Configures VI-specific RSS properties.
  */
-पूर्णांक t4_config_vi_rss(काष्ठा adapter *adapter, पूर्णांक mbox, अचिन्हित पूर्णांक viid,
-		     अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक defq)
-अणु
-	काष्ठा fw_rss_vi_config_cmd c;
+int t4_config_vi_rss(struct adapter *adapter, int mbox, unsigned int viid,
+		     unsigned int flags, unsigned int defq)
+{
+	struct fw_rss_vi_config_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_RSS_VI_CONFIG_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_RSS_VI_CONFIG_CMD_VIID_V(viid));
 	c.retval_len16 = cpu_to_be32(FW_LEN16(c));
-	c.u.basicभव.शेषq_to_udpen = cpu_to_be32(flags |
+	c.u.basicvirtual.defaultq_to_udpen = cpu_to_be32(flags |
 					FW_RSS_VI_CONFIG_CMD_DEFAULTQ_V(defq));
-	वापस t4_wr_mbox(adapter, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adapter, mbox, &c, sizeof(c), NULL);
+}
 
 /* Read an RSS table row */
-अटल पूर्णांक rd_rss_row(काष्ठा adapter *adap, पूर्णांक row, u32 *val)
-अणु
-	t4_ग_लिखो_reg(adap, TP_RSS_LKP_TABLE_A, 0xfff00000 | row);
-	वापस t4_रुको_op_करोne_val(adap, TP_RSS_LKP_TABLE_A, LKPTBLROWVLD_F, 1,
+static int rd_rss_row(struct adapter *adap, int row, u32 *val)
+{
+	t4_write_reg(adap, TP_RSS_LKP_TABLE_A, 0xfff00000 | row);
+	return t4_wait_op_done_val(adap, TP_RSS_LKP_TABLE_A, LKPTBLROWVLD_F, 1,
 				   5, 0, val);
-पूर्ण
+}
 
 /**
- *	t4_पढ़ो_rss - पढ़ो the contents of the RSS mapping table
+ *	t4_read_rss - read the contents of the RSS mapping table
  *	@adapter: the adapter
  *	@map: holds the contents of the RSS mapping table
  *
  *	Reads the contents of the RSS hash->queue mapping table.
  */
-पूर्णांक t4_पढ़ो_rss(काष्ठा adapter *adapter, u16 *map)
-अणु
-	पूर्णांक i, ret, nentries;
+int t4_read_rss(struct adapter *adapter, u16 *map)
+{
+	int i, ret, nentries;
 	u32 val;
 
 	nentries = t4_chip_rss_size(adapter);
-	क्रम (i = 0; i < nentries / 2; ++i) अणु
+	for (i = 0; i < nentries / 2; ++i) {
 		ret = rd_rss_row(adapter, i, &val);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		*map++ = LKPTBLQUEUE0_G(val);
 		*map++ = LKPTBLQUEUE1_G(val);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक t4_use_ldst(काष्ठा adapter *adap)
-अणु
-	वापस (adap->flags & CXGB4_FW_OK) && !adap->use_bd;
-पूर्ण
+static unsigned int t4_use_ldst(struct adapter *adap)
+{
+	return (adap->flags & CXGB4_FW_OK) && !adap->use_bd;
+}
 
 /**
- * t4_tp_fw_ldst_rw - Access TP indirect रेजिस्टर through LDST
+ * t4_tp_fw_ldst_rw - Access TP indirect register through LDST
  * @adap: the adapter
  * @cmd: TP fw ldst address space type
- * @vals: where the indirect रेजिस्टर values are stored/written
- * @nregs: how many indirect रेजिस्टरs to पढ़ो/ग_लिखो
- * @start_index: index of first indirect रेजिस्टर to पढ़ो/ग_लिखो
+ * @vals: where the indirect register values are stored/written
+ * @nregs: how many indirect registers to read/write
+ * @start_index: index of first indirect register to read/write
  * @rw: Read (1) or Write (0)
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
- * Access TP indirect रेजिस्टरs through LDST
+ * Access TP indirect registers through LDST
  */
-अटल पूर्णांक t4_tp_fw_ldst_rw(काष्ठा adapter *adap, पूर्णांक cmd, u32 *vals,
-			    अचिन्हित पूर्णांक nregs, अचिन्हित पूर्णांक start_index,
-			    अचिन्हित पूर्णांक rw, bool sleep_ok)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक i;
-	काष्ठा fw_ldst_cmd c;
+static int t4_tp_fw_ldst_rw(struct adapter *adap, int cmd, u32 *vals,
+			    unsigned int nregs, unsigned int start_index,
+			    unsigned int rw, bool sleep_ok)
+{
+	int ret = 0;
+	unsigned int i;
+	struct fw_ldst_cmd c;
 
-	क्रम (i = 0; i < nregs; i++) अणु
-		स_रखो(&c, 0, माप(c));
+	for (i = 0; i < nregs; i++) {
+		memset(&c, 0, sizeof(c));
 		c.op_to_addrspace = cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 						FW_CMD_REQUEST_F |
 						(rw ? FW_CMD_READ_F :
@@ -5334,491 +5333,491 @@ fw_port_cap32_t t4_link_acaps(काष्ठा adapter *adapter, अचिन�
 
 		c.u.addrval.addr = cpu_to_be32(start_index + i);
 		c.u.addrval.val  = rw ? 0 : cpu_to_be32(vals[i]);
-		ret = t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c,
+		ret = t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c,
 				      sleep_ok);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		अगर (rw)
+		if (rw)
 			vals[i] = be32_to_cpu(c.u.addrval.val);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * t4_tp_indirect_rw - Read/Write TP indirect रेजिस्टर through LDST or backकरोor
+ * t4_tp_indirect_rw - Read/Write TP indirect register through LDST or backdoor
  * @adap: the adapter
  * @reg_addr: Address Register
- * @reg_data: Data रेजिस्टर
- * @buff: where the indirect रेजिस्टर values are stored/written
- * @nregs: how many indirect रेजिस्टरs to पढ़ो/ग_लिखो
- * @start_index: index of first indirect रेजिस्टर to पढ़ो/ग_लिखो
+ * @reg_data: Data register
+ * @buff: where the indirect register values are stored/written
+ * @nregs: how many indirect registers to read/write
+ * @start_index: index of first indirect register to read/write
  * @rw: READ(1) or WRITE(0)
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
- * Read/Write TP indirect रेजिस्टरs through LDST अगर possible.
- * Else, use backकरोor access
+ * Read/Write TP indirect registers through LDST if possible.
+ * Else, use backdoor access
  **/
-अटल व्योम t4_tp_indirect_rw(काष्ठा adapter *adap, u32 reg_addr, u32 reg_data,
-			      u32 *buff, u32 nregs, u32 start_index, पूर्णांक rw,
+static void t4_tp_indirect_rw(struct adapter *adap, u32 reg_addr, u32 reg_data,
+			      u32 *buff, u32 nregs, u32 start_index, int rw,
 			      bool sleep_ok)
-अणु
-	पूर्णांक rc = -EINVAL;
-	पूर्णांक cmd;
+{
+	int rc = -EINVAL;
+	int cmd;
 
-	चयन (reg_addr) अणु
-	हाल TP_PIO_ADDR_A:
+	switch (reg_addr) {
+	case TP_PIO_ADDR_A:
 		cmd = FW_LDST_ADDRSPC_TP_PIO;
-		अवरोध;
-	हाल TP_TM_PIO_ADDR_A:
+		break;
+	case TP_TM_PIO_ADDR_A:
 		cmd = FW_LDST_ADDRSPC_TP_TM_PIO;
-		अवरोध;
-	हाल TP_MIB_INDEX_A:
+		break;
+	case TP_MIB_INDEX_A:
 		cmd = FW_LDST_ADDRSPC_TP_MIB;
-		अवरोध;
-	शेष:
-		जाओ indirect_access;
-	पूर्ण
+		break;
+	default:
+		goto indirect_access;
+	}
 
-	अगर (t4_use_ldst(adap))
+	if (t4_use_ldst(adap))
 		rc = t4_tp_fw_ldst_rw(adap, cmd, buff, nregs, start_index, rw,
 				      sleep_ok);
 
 indirect_access:
 
-	अगर (rc) अणु
-		अगर (rw)
-			t4_पढ़ो_indirect(adap, reg_addr, reg_data, buff, nregs,
+	if (rc) {
+		if (rw)
+			t4_read_indirect(adap, reg_addr, reg_data, buff, nregs,
 					 start_index);
-		अन्यथा
-			t4_ग_लिखो_indirect(adap, reg_addr, reg_data, buff, nregs,
+		else
+			t4_write_indirect(adap, reg_addr, reg_data, buff, nregs,
 					  start_index);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * t4_tp_pio_पढ़ो - Read TP PIO रेजिस्टरs
+ * t4_tp_pio_read - Read TP PIO registers
  * @adap: the adapter
- * @buff: where the indirect रेजिस्टर values are written
- * @nregs: how many indirect रेजिस्टरs to पढ़ो
- * @start_index: index of first indirect रेजिस्टर to पढ़ो
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @buff: where the indirect register values are written
+ * @nregs: how many indirect registers to read
+ * @start_index: index of first indirect register to read
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
  * Read TP PIO Registers
  **/
-व्योम t4_tp_pio_पढ़ो(काष्ठा adapter *adap, u32 *buff, u32 nregs,
+void t4_tp_pio_read(struct adapter *adap, u32 *buff, u32 nregs,
 		    u32 start_index, bool sleep_ok)
-अणु
+{
 	t4_tp_indirect_rw(adap, TP_PIO_ADDR_A, TP_PIO_DATA_A, buff, nregs,
 			  start_index, 1, sleep_ok);
-पूर्ण
+}
 
 /**
- * t4_tp_pio_ग_लिखो - Write TP PIO रेजिस्टरs
+ * t4_tp_pio_write - Write TP PIO registers
  * @adap: the adapter
- * @buff: where the indirect रेजिस्टर values are stored
- * @nregs: how many indirect रेजिस्टरs to ग_लिखो
- * @start_index: index of first indirect रेजिस्टर to ग_लिखो
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @buff: where the indirect register values are stored
+ * @nregs: how many indirect registers to write
+ * @start_index: index of first indirect register to write
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
  * Write TP PIO Registers
  **/
-अटल व्योम t4_tp_pio_ग_लिखो(काष्ठा adapter *adap, u32 *buff, u32 nregs,
+static void t4_tp_pio_write(struct adapter *adap, u32 *buff, u32 nregs,
 			    u32 start_index, bool sleep_ok)
-अणु
+{
 	t4_tp_indirect_rw(adap, TP_PIO_ADDR_A, TP_PIO_DATA_A, buff, nregs,
 			  start_index, 0, sleep_ok);
-पूर्ण
+}
 
 /**
- * t4_tp_पंचांग_pio_पढ़ो - Read TP TM PIO रेजिस्टरs
+ * t4_tp_tm_pio_read - Read TP TM PIO registers
  * @adap: the adapter
- * @buff: where the indirect रेजिस्टर values are written
- * @nregs: how many indirect रेजिस्टरs to पढ़ो
- * @start_index: index of first indirect रेजिस्टर to पढ़ो
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @buff: where the indirect register values are written
+ * @nregs: how many indirect registers to read
+ * @start_index: index of first indirect register to read
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
  * Read TP TM PIO Registers
  **/
-व्योम t4_tp_पंचांग_pio_पढ़ो(काष्ठा adapter *adap, u32 *buff, u32 nregs,
+void t4_tp_tm_pio_read(struct adapter *adap, u32 *buff, u32 nregs,
 		       u32 start_index, bool sleep_ok)
-अणु
+{
 	t4_tp_indirect_rw(adap, TP_TM_PIO_ADDR_A, TP_TM_PIO_DATA_A, buff,
 			  nregs, start_index, 1, sleep_ok);
-पूर्ण
+}
 
 /**
- * t4_tp_mib_पढ़ो - Read TP MIB रेजिस्टरs
+ * t4_tp_mib_read - Read TP MIB registers
  * @adap: the adapter
- * @buff: where the indirect रेजिस्टर values are written
- * @nregs: how many indirect रेजिस्टरs to पढ़ो
- * @start_index: index of first indirect रेजिस्टर to पढ़ो
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @buff: where the indirect register values are written
+ * @nregs: how many indirect registers to read
+ * @start_index: index of first indirect register to read
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
  * Read TP MIB Registers
  **/
-व्योम t4_tp_mib_पढ़ो(काष्ठा adapter *adap, u32 *buff, u32 nregs, u32 start_index,
+void t4_tp_mib_read(struct adapter *adap, u32 *buff, u32 nregs, u32 start_index,
 		    bool sleep_ok)
-अणु
+{
 	t4_tp_indirect_rw(adap, TP_MIB_INDEX_A, TP_MIB_DATA_A, buff, nregs,
 			  start_index, 1, sleep_ok);
-पूर्ण
+}
 
 /**
- *	t4_पढ़ो_rss_key - पढ़ो the global RSS key
+ *	t4_read_rss_key - read the global RSS key
  *	@adap: the adapter
  *	@key: 10-entry array holding the 320-bit RSS key
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
  *	Reads the global 320-bit RSS key.
  */
-व्योम t4_पढ़ो_rss_key(काष्ठा adapter *adap, u32 *key, bool sleep_ok)
-अणु
-	t4_tp_pio_पढ़ो(adap, key, 10, TP_RSS_SECRET_KEY0_A, sleep_ok);
-पूर्ण
+void t4_read_rss_key(struct adapter *adap, u32 *key, bool sleep_ok)
+{
+	t4_tp_pio_read(adap, key, 10, TP_RSS_SECRET_KEY0_A, sleep_ok);
+}
 
 /**
- *	t4_ग_लिखो_rss_key - program one of the RSS keys
+ *	t4_write_rss_key - program one of the RSS keys
  *	@adap: the adapter
  *	@key: 10-entry array holding the 320-bit RSS key
- *	@idx: which RSS key to ग_लिखो
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *	@idx: which RSS key to write
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
  *	Writes one of the RSS keys with the given 320-bit value.  If @idx is
  *	0..15 the corresponding entry in the RSS key table is written,
  *	otherwise the global RSS key is written.
  */
-व्योम t4_ग_लिखो_rss_key(काष्ठा adapter *adap, स्थिर u32 *key, पूर्णांक idx,
+void t4_write_rss_key(struct adapter *adap, const u32 *key, int idx,
 		      bool sleep_ok)
-अणु
+{
 	u8 rss_key_addr_cnt = 16;
-	u32 vrt = t4_पढ़ो_reg(adap, TP_RSS_CONFIG_VRT_A);
+	u32 vrt = t4_read_reg(adap, TP_RSS_CONFIG_VRT_A);
 
-	/* T6 and later: क्रम KeyMode 3 (per-vf and per-vf scramble),
+	/* T6 and later: for KeyMode 3 (per-vf and per-vf scramble),
 	 * allows access to key addresses 16-63 by using KeyWrAddrX
-	 * as index[5:4](upper 2) पूर्णांकo key table
+	 * as index[5:4](upper 2) into key table
 	 */
-	अगर ((CHELSIO_CHIP_VERSION(adap->params.chip) > CHELSIO_T5) &&
+	if ((CHELSIO_CHIP_VERSION(adap->params.chip) > CHELSIO_T5) &&
 	    (vrt & KEYEXTEND_F) && (KEYMODE_G(vrt) == 3))
 		rss_key_addr_cnt = 32;
 
-	t4_tp_pio_ग_लिखो(adap, (व्योम *)key, 10, TP_RSS_SECRET_KEY0_A, sleep_ok);
+	t4_tp_pio_write(adap, (void *)key, 10, TP_RSS_SECRET_KEY0_A, sleep_ok);
 
-	अगर (idx >= 0 && idx < rss_key_addr_cnt) अणु
-		अगर (rss_key_addr_cnt > 16)
-			t4_ग_लिखो_reg(adap, TP_RSS_CONFIG_VRT_A,
+	if (idx >= 0 && idx < rss_key_addr_cnt) {
+		if (rss_key_addr_cnt > 16)
+			t4_write_reg(adap, TP_RSS_CONFIG_VRT_A,
 				     KEYWRADDRX_V(idx >> 4) |
 				     T6_VFWRADDR_V(idx) | KEYWREN_F);
-		अन्यथा
-			t4_ग_लिखो_reg(adap, TP_RSS_CONFIG_VRT_A,
+		else
+			t4_write_reg(adap, TP_RSS_CONFIG_VRT_A,
 				     KEYWRADDR_V(idx) | KEYWREN_F);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	t4_पढ़ो_rss_pf_config - पढ़ो PF RSS Configuration Table
+ *	t4_read_rss_pf_config - read PF RSS Configuration Table
  *	@adapter: the adapter
- *	@index: the entry in the PF RSS table to पढ़ो
- *	@valp: where to store the वापसed value
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *	@index: the entry in the PF RSS table to read
+ *	@valp: where to store the returned value
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Reads the PF RSS Configuration Table at the specअगरied index and वापसs
+ *	Reads the PF RSS Configuration Table at the specified index and returns
  *	the value found there.
  */
-व्योम t4_पढ़ो_rss_pf_config(काष्ठा adapter *adapter, अचिन्हित पूर्णांक index,
+void t4_read_rss_pf_config(struct adapter *adapter, unsigned int index,
 			   u32 *valp, bool sleep_ok)
-अणु
-	t4_tp_pio_पढ़ो(adapter, valp, 1, TP_RSS_PF0_CONFIG_A + index, sleep_ok);
-पूर्ण
+{
+	t4_tp_pio_read(adapter, valp, 1, TP_RSS_PF0_CONFIG_A + index, sleep_ok);
+}
 
 /**
- *	t4_पढ़ो_rss_vf_config - पढ़ो VF RSS Configuration Table
+ *	t4_read_rss_vf_config - read VF RSS Configuration Table
  *	@adapter: the adapter
- *	@index: the entry in the VF RSS table to पढ़ो
- *	@vfl: where to store the वापसed VFL
- *	@vfh: where to store the वापसed VFH
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *	@index: the entry in the VF RSS table to read
+ *	@vfl: where to store the returned VFL
+ *	@vfh: where to store the returned VFH
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Reads the VF RSS Configuration Table at the specअगरied index and वापसs
+ *	Reads the VF RSS Configuration Table at the specified index and returns
  *	the (VFL, VFH) values found there.
  */
-व्योम t4_पढ़ो_rss_vf_config(काष्ठा adapter *adapter, अचिन्हित पूर्णांक index,
+void t4_read_rss_vf_config(struct adapter *adapter, unsigned int index,
 			   u32 *vfl, u32 *vfh, bool sleep_ok)
-अणु
+{
 	u32 vrt, mask, data;
 
-	अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5) अणु
+	if (CHELSIO_CHIP_VERSION(adapter->params.chip) <= CHELSIO_T5) {
 		mask = VFWRADDR_V(VFWRADDR_M);
 		data = VFWRADDR_V(index);
-	पूर्ण अन्यथा अणु
+	} else {
 		 mask =  T6_VFWRADDR_V(T6_VFWRADDR_M);
 		 data = T6_VFWRADDR_V(index);
-	पूर्ण
+	}
 
-	/* Request that the index'th VF Table values be पढ़ो पूर्णांकo VFL/VFH.
+	/* Request that the index'th VF Table values be read into VFL/VFH.
 	 */
-	vrt = t4_पढ़ो_reg(adapter, TP_RSS_CONFIG_VRT_A);
+	vrt = t4_read_reg(adapter, TP_RSS_CONFIG_VRT_A);
 	vrt &= ~(VFRDRG_F | VFWREN_F | KEYWREN_F | mask);
 	vrt |= data | VFRDEN_F;
-	t4_ग_लिखो_reg(adapter, TP_RSS_CONFIG_VRT_A, vrt);
+	t4_write_reg(adapter, TP_RSS_CONFIG_VRT_A, vrt);
 
 	/* Grab the VFL/VFH values ...
 	 */
-	t4_tp_pio_पढ़ो(adapter, vfl, 1, TP_RSS_VFL_CONFIG_A, sleep_ok);
-	t4_tp_pio_पढ़ो(adapter, vfh, 1, TP_RSS_VFH_CONFIG_A, sleep_ok);
-पूर्ण
+	t4_tp_pio_read(adapter, vfl, 1, TP_RSS_VFL_CONFIG_A, sleep_ok);
+	t4_tp_pio_read(adapter, vfh, 1, TP_RSS_VFH_CONFIG_A, sleep_ok);
+}
 
 /**
- *	t4_पढ़ो_rss_pf_map - पढ़ो PF RSS Map
+ *	t4_read_rss_pf_map - read PF RSS Map
  *	@adapter: the adapter
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Reads the PF RSS Map रेजिस्टर and वापसs its value.
+ *	Reads the PF RSS Map register and returns its value.
  */
-u32 t4_पढ़ो_rss_pf_map(काष्ठा adapter *adapter, bool sleep_ok)
-अणु
+u32 t4_read_rss_pf_map(struct adapter *adapter, bool sleep_ok)
+{
 	u32 pfmap;
 
-	t4_tp_pio_पढ़ो(adapter, &pfmap, 1, TP_RSS_PF_MAP_A, sleep_ok);
-	वापस pfmap;
-पूर्ण
+	t4_tp_pio_read(adapter, &pfmap, 1, TP_RSS_PF_MAP_A, sleep_ok);
+	return pfmap;
+}
 
 /**
- *	t4_पढ़ो_rss_pf_mask - पढ़ो PF RSS Mask
+ *	t4_read_rss_pf_mask - read PF RSS Mask
  *	@adapter: the adapter
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Reads the PF RSS Mask रेजिस्टर and वापसs its value.
+ *	Reads the PF RSS Mask register and returns its value.
  */
-u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_ok)
-अणु
+u32 t4_read_rss_pf_mask(struct adapter *adapter, bool sleep_ok)
+{
 	u32 pfmask;
 
-	t4_tp_pio_पढ़ो(adapter, &pfmask, 1, TP_RSS_PF_MSK_A, sleep_ok);
-	वापस pfmask;
-पूर्ण
+	t4_tp_pio_read(adapter, &pfmask, 1, TP_RSS_PF_MSK_A, sleep_ok);
+	return pfmask;
+}
 
 /**
- *	t4_tp_get_tcp_stats - पढ़ो TP's TCP MIB counters
+ *	t4_tp_get_tcp_stats - read TP's TCP MIB counters
  *	@adap: the adapter
  *	@v4: holds the TCP/IP counter values
  *	@v6: holds the TCP/IPv6 counter values
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
  *	Returns the values of TP's TCP/IP and TCP/IPv6 MIB counters.
- *	Either @v4 or @v6 may be %शून्य to skip the corresponding stats.
+ *	Either @v4 or @v6 may be %NULL to skip the corresponding stats.
  */
-व्योम t4_tp_get_tcp_stats(काष्ठा adapter *adap, काष्ठा tp_tcp_stats *v4,
-			 काष्ठा tp_tcp_stats *v6, bool sleep_ok)
-अणु
+void t4_tp_get_tcp_stats(struct adapter *adap, struct tp_tcp_stats *v4,
+			 struct tp_tcp_stats *v6, bool sleep_ok)
+{
 	u32 val[TP_MIB_TCP_RXT_SEG_LO_A - TP_MIB_TCP_OUT_RST_A + 1];
 
-#घोषणा STAT_IDX(x) ((TP_MIB_TCP_##x##_A) - TP_MIB_TCP_OUT_RST_A)
-#घोषणा STAT(x)     val[STAT_IDX(x)]
-#घोषणा STAT64(x)   (((u64)STAT(x##_HI) << 32) | STAT(x##_LO))
+#define STAT_IDX(x) ((TP_MIB_TCP_##x##_A) - TP_MIB_TCP_OUT_RST_A)
+#define STAT(x)     val[STAT_IDX(x)]
+#define STAT64(x)   (((u64)STAT(x##_HI) << 32) | STAT(x##_LO))
 
-	अगर (v4) अणु
-		t4_tp_mib_पढ़ो(adap, val, ARRAY_SIZE(val),
+	if (v4) {
+		t4_tp_mib_read(adap, val, ARRAY_SIZE(val),
 			       TP_MIB_TCP_OUT_RST_A, sleep_ok);
 		v4->tcp_out_rsts = STAT(OUT_RST);
 		v4->tcp_in_segs  = STAT64(IN_SEG);
 		v4->tcp_out_segs = STAT64(OUT_SEG);
 		v4->tcp_retrans_segs = STAT64(RXT_SEG);
-	पूर्ण
-	अगर (v6) अणु
-		t4_tp_mib_पढ़ो(adap, val, ARRAY_SIZE(val),
+	}
+	if (v6) {
+		t4_tp_mib_read(adap, val, ARRAY_SIZE(val),
 			       TP_MIB_TCP_V6OUT_RST_A, sleep_ok);
 		v6->tcp_out_rsts = STAT(OUT_RST);
 		v6->tcp_in_segs  = STAT64(IN_SEG);
 		v6->tcp_out_segs = STAT64(OUT_SEG);
 		v6->tcp_retrans_segs = STAT64(RXT_SEG);
-	पूर्ण
-#अघोषित STAT64
-#अघोषित STAT
-#अघोषित STAT_IDX
-पूर्ण
+	}
+#undef STAT64
+#undef STAT
+#undef STAT_IDX
+}
 
 /**
- *	t4_tp_get_err_stats - पढ़ो TP's error MIB counters
+ *	t4_tp_get_err_stats - read TP's error MIB counters
  *	@adap: the adapter
  *	@st: holds the counter values
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
  *	Returns the values of TP's error counters.
  */
-व्योम t4_tp_get_err_stats(काष्ठा adapter *adap, काष्ठा tp_err_stats *st,
+void t4_tp_get_err_stats(struct adapter *adap, struct tp_err_stats *st,
 			 bool sleep_ok)
-अणु
-	पूर्णांक nchan = adap->params.arch.nchan;
+{
+	int nchan = adap->params.arch.nchan;
 
-	t4_tp_mib_पढ़ो(adap, st->mac_in_errs, nchan, TP_MIB_MAC_IN_ERR_0_A,
+	t4_tp_mib_read(adap, st->mac_in_errs, nchan, TP_MIB_MAC_IN_ERR_0_A,
 		       sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->hdr_in_errs, nchan, TP_MIB_HDR_IN_ERR_0_A,
+	t4_tp_mib_read(adap, st->hdr_in_errs, nchan, TP_MIB_HDR_IN_ERR_0_A,
 		       sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->tcp_in_errs, nchan, TP_MIB_TCP_IN_ERR_0_A,
+	t4_tp_mib_read(adap, st->tcp_in_errs, nchan, TP_MIB_TCP_IN_ERR_0_A,
 		       sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->tnl_cong_drops, nchan,
+	t4_tp_mib_read(adap, st->tnl_cong_drops, nchan,
 		       TP_MIB_TNL_CNG_DROP_0_A, sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->ofld_chan_drops, nchan,
+	t4_tp_mib_read(adap, st->ofld_chan_drops, nchan,
 		       TP_MIB_OFD_CHN_DROP_0_A, sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->tnl_tx_drops, nchan, TP_MIB_TNL_DROP_0_A,
+	t4_tp_mib_read(adap, st->tnl_tx_drops, nchan, TP_MIB_TNL_DROP_0_A,
 		       sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->ofld_vlan_drops, nchan,
+	t4_tp_mib_read(adap, st->ofld_vlan_drops, nchan,
 		       TP_MIB_OFD_VLN_DROP_0_A, sleep_ok);
-	t4_tp_mib_पढ़ो(adap, st->tcp6_in_errs, nchan,
+	t4_tp_mib_read(adap, st->tcp6_in_errs, nchan,
 		       TP_MIB_TCP_V6IN_ERR_0_A, sleep_ok);
-	t4_tp_mib_पढ़ो(adap, &st->ofld_no_neigh, 2, TP_MIB_OFD_ARP_DROP_A,
+	t4_tp_mib_read(adap, &st->ofld_no_neigh, 2, TP_MIB_OFD_ARP_DROP_A,
 		       sleep_ok);
-पूर्ण
+}
 
 /**
- *	t4_tp_get_cpl_stats - पढ़ो TP's CPL MIB counters
+ *	t4_tp_get_cpl_stats - read TP's CPL MIB counters
  *	@adap: the adapter
  *	@st: holds the counter values
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
  *	Returns the values of TP's CPL counters.
  */
-व्योम t4_tp_get_cpl_stats(काष्ठा adapter *adap, काष्ठा tp_cpl_stats *st,
+void t4_tp_get_cpl_stats(struct adapter *adap, struct tp_cpl_stats *st,
 			 bool sleep_ok)
-अणु
-	पूर्णांक nchan = adap->params.arch.nchan;
+{
+	int nchan = adap->params.arch.nchan;
 
-	t4_tp_mib_पढ़ो(adap, st->req, nchan, TP_MIB_CPL_IN_REQ_0_A, sleep_ok);
+	t4_tp_mib_read(adap, st->req, nchan, TP_MIB_CPL_IN_REQ_0_A, sleep_ok);
 
-	t4_tp_mib_पढ़ो(adap, st->rsp, nchan, TP_MIB_CPL_OUT_RSP_0_A, sleep_ok);
-पूर्ण
+	t4_tp_mib_read(adap, st->rsp, nchan, TP_MIB_CPL_OUT_RSP_0_A, sleep_ok);
+}
 
 /**
- *	t4_tp_get_rdma_stats - पढ़ो TP's RDMA MIB counters
+ *	t4_tp_get_rdma_stats - read TP's RDMA MIB counters
  *	@adap: the adapter
  *	@st: holds the counter values
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
  *	Returns the values of TP's RDMA counters.
  */
-व्योम t4_tp_get_rdma_stats(काष्ठा adapter *adap, काष्ठा tp_rdma_stats *st,
+void t4_tp_get_rdma_stats(struct adapter *adap, struct tp_rdma_stats *st,
 			  bool sleep_ok)
-अणु
-	t4_tp_mib_पढ़ो(adap, &st->rqe_dfr_pkt, 2, TP_MIB_RQE_DFR_PKT_A,
+{
+	t4_tp_mib_read(adap, &st->rqe_dfr_pkt, 2, TP_MIB_RQE_DFR_PKT_A,
 		       sleep_ok);
-पूर्ण
+}
 
 /**
- *	t4_get_fcoe_stats - पढ़ो TP's FCoE MIB counters क्रम a port
+ *	t4_get_fcoe_stats - read TP's FCoE MIB counters for a port
  *	@adap: the adapter
  *	@idx: the port index
  *	@st: holds the counter values
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Returns the values of TP's FCoE counters क्रम the selected port.
+ *	Returns the values of TP's FCoE counters for the selected port.
  */
-व्योम t4_get_fcoe_stats(काष्ठा adapter *adap, अचिन्हित पूर्णांक idx,
-		       काष्ठा tp_fcoe_stats *st, bool sleep_ok)
-अणु
+void t4_get_fcoe_stats(struct adapter *adap, unsigned int idx,
+		       struct tp_fcoe_stats *st, bool sleep_ok)
+{
 	u32 val[2];
 
-	t4_tp_mib_पढ़ो(adap, &st->frames_ddp, 1, TP_MIB_FCOE_DDP_0_A + idx,
+	t4_tp_mib_read(adap, &st->frames_ddp, 1, TP_MIB_FCOE_DDP_0_A + idx,
 		       sleep_ok);
 
-	t4_tp_mib_पढ़ो(adap, &st->frames_drop, 1,
+	t4_tp_mib_read(adap, &st->frames_drop, 1,
 		       TP_MIB_FCOE_DROP_0_A + idx, sleep_ok);
 
-	t4_tp_mib_पढ़ो(adap, val, 2, TP_MIB_FCOE_BYTE_0_HI_A + 2 * idx,
+	t4_tp_mib_read(adap, val, 2, TP_MIB_FCOE_BYTE_0_HI_A + 2 * idx,
 		       sleep_ok);
 
 	st->octets_ddp = ((u64)val[0] << 32) | val[1];
-पूर्ण
+}
 
 /**
- *	t4_get_usm_stats - पढ़ो TP's non-TCP DDP MIB counters
+ *	t4_get_usm_stats - read TP's non-TCP DDP MIB counters
  *	@adap: the adapter
  *	@st: holds the counter values
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Returns the values of TP's counters क्रम non-TCP directly-placed packets.
+ *	Returns the values of TP's counters for non-TCP directly-placed packets.
  */
-व्योम t4_get_usm_stats(काष्ठा adapter *adap, काष्ठा tp_usm_stats *st,
+void t4_get_usm_stats(struct adapter *adap, struct tp_usm_stats *st,
 		      bool sleep_ok)
-अणु
+{
 	u32 val[4];
 
-	t4_tp_mib_पढ़ो(adap, val, 4, TP_MIB_USM_PKTS_A, sleep_ok);
+	t4_tp_mib_read(adap, val, 4, TP_MIB_USM_PKTS_A, sleep_ok);
 	st->frames = val[0];
 	st->drops = val[1];
 	st->octets = ((u64)val[2] << 32) | val[3];
-पूर्ण
+}
 
 /**
- *	t4_पढ़ो_mtu_tbl - वापसs the values in the HW path MTU table
+ *	t4_read_mtu_tbl - returns the values in the HW path MTU table
  *	@adap: the adapter
  *	@mtus: where to store the MTU values
- *	@mtu_log: where to store the MTU base-2 log (may be %शून्य)
+ *	@mtu_log: where to store the MTU base-2 log (may be %NULL)
  *
  *	Reads the HW path MTU table.
  */
-व्योम t4_पढ़ो_mtu_tbl(काष्ठा adapter *adap, u16 *mtus, u8 *mtu_log)
-अणु
+void t4_read_mtu_tbl(struct adapter *adap, u16 *mtus, u8 *mtu_log)
+{
 	u32 v;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < NMTUS; ++i) अणु
-		t4_ग_लिखो_reg(adap, TP_MTU_TABLE_A,
+	for (i = 0; i < NMTUS; ++i) {
+		t4_write_reg(adap, TP_MTU_TABLE_A,
 			     MTUINDEX_V(0xff) | MTUVALUE_V(i));
-		v = t4_पढ़ो_reg(adap, TP_MTU_TABLE_A);
+		v = t4_read_reg(adap, TP_MTU_TABLE_A);
 		mtus[i] = MTUVALUE_G(v);
-		अगर (mtu_log)
+		if (mtu_log)
 			mtu_log[i] = MTUWIDTH_G(v);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	t4_पढ़ो_cong_tbl - पढ़ोs the congestion control table
+ *	t4_read_cong_tbl - reads the congestion control table
  *	@adap: the adapter
  *	@incr: where to store the alpha values
  *
- *	Reads the additive increments programmed पूर्णांकo the HW congestion
+ *	Reads the additive increments programmed into the HW congestion
  *	control table.
  */
-व्योम t4_पढ़ो_cong_tbl(काष्ठा adapter *adap, u16 incr[NMTUS][NCCTRL_WIN])
-अणु
-	अचिन्हित पूर्णांक mtu, w;
+void t4_read_cong_tbl(struct adapter *adap, u16 incr[NMTUS][NCCTRL_WIN])
+{
+	unsigned int mtu, w;
 
-	क्रम (mtu = 0; mtu < NMTUS; ++mtu)
-		क्रम (w = 0; w < NCCTRL_WIN; ++w) अणु
-			t4_ग_लिखो_reg(adap, TP_CCTRL_TABLE_A,
+	for (mtu = 0; mtu < NMTUS; ++mtu)
+		for (w = 0; w < NCCTRL_WIN; ++w) {
+			t4_write_reg(adap, TP_CCTRL_TABLE_A,
 				     ROWINDEX_V(0xffff) | (mtu << 5) | w);
-			incr[mtu][w] = (u16)t4_पढ़ो_reg(adap,
+			incr[mtu][w] = (u16)t4_read_reg(adap,
 						TP_CCTRL_TABLE_A) & 0x1fff;
-		पूर्ण
-पूर्ण
+		}
+}
 
 /**
- *	t4_tp_wr_bits_indirect - set/clear bits in an indirect TP रेजिस्टर
+ *	t4_tp_wr_bits_indirect - set/clear bits in an indirect TP register
  *	@adap: the adapter
- *	@addr: the indirect TP रेजिस्टर address
- *	@mask: specअगरies the field within the रेजिस्टर to modअगरy
- *	@val: new value क्रम the field
+ *	@addr: the indirect TP register address
+ *	@mask: specifies the field within the register to modify
+ *	@val: new value for the field
  *
- *	Sets a field of an indirect TP रेजिस्टर to the given value.
+ *	Sets a field of an indirect TP register to the given value.
  */
-व्योम t4_tp_wr_bits_indirect(काष्ठा adapter *adap, अचिन्हित पूर्णांक addr,
-			    अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val)
-अणु
-	t4_ग_लिखो_reg(adap, TP_PIO_ADDR_A, addr);
-	val |= t4_पढ़ो_reg(adap, TP_PIO_DATA_A) & ~mask;
-	t4_ग_लिखो_reg(adap, TP_PIO_DATA_A, val);
-पूर्ण
+void t4_tp_wr_bits_indirect(struct adapter *adap, unsigned int addr,
+			    unsigned int mask, unsigned int val)
+{
+	t4_write_reg(adap, TP_PIO_ADDR_A, addr);
+	val |= t4_read_reg(adap, TP_PIO_DATA_A) & ~mask;
+	t4_write_reg(adap, TP_PIO_DATA_A, val);
+}
 
 /**
  *	init_cong_ctrl - initialize congestion control parameters
- *	@a: the alpha values क्रम congestion control
- *	@b: the beta values क्रम congestion control
+ *	@a: the alpha values for congestion control
+ *	@b: the beta values for congestion control
  *
  *	Initialize the congestion control parameters.
  */
-अटल व्योम init_cong_ctrl(अचिन्हित लघु *a, अचिन्हित लघु *b)
-अणु
+static void init_cong_ctrl(unsigned short *a, unsigned short *b)
+{
 	a[0] = a[1] = a[2] = a[3] = a[4] = a[5] = a[6] = a[7] = a[8] = 1;
 	a[9] = 2;
 	a[10] = 3;
@@ -5852,57 +5851,57 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	b[22] = b[23] = b[24] = b[25] = b[26] = b[27] = 5;
 	b[28] = b[29] = 6;
 	b[30] = b[31] = 7;
-पूर्ण
+}
 
-/* The minimum additive increment value क्रम the congestion control table */
-#घोषणा CC_MIN_INCR 2U
+/* The minimum additive increment value for the congestion control table */
+#define CC_MIN_INCR 2U
 
 /**
- *	t4_load_mtus - ग_लिखो the MTU and congestion control HW tables
+ *	t4_load_mtus - write the MTU and congestion control HW tables
  *	@adap: the adapter
- *	@mtus: the values क्रम the MTU table
- *	@alpha: the values क्रम the congestion control alpha parameter
- *	@beta: the values क्रम the congestion control beta parameter
+ *	@mtus: the values for the MTU table
+ *	@alpha: the values for the congestion control alpha parameter
+ *	@beta: the values for the congestion control beta parameter
  *
  *	Write the HW MTU table with the supplied MTUs and the high-speed
  *	congestion control table with the supplied alpha, beta, and MTUs.
- *	We ग_लिखो the two tables together because the additive increments
+ *	We write the two tables together because the additive increments
  *	depend on the MTUs.
  */
-व्योम t4_load_mtus(काष्ठा adapter *adap, स्थिर अचिन्हित लघु *mtus,
-		  स्थिर अचिन्हित लघु *alpha, स्थिर अचिन्हित लघु *beta)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक avg_pkts[NCCTRL_WIN] = अणु
+void t4_load_mtus(struct adapter *adap, const unsigned short *mtus,
+		  const unsigned short *alpha, const unsigned short *beta)
+{
+	static const unsigned int avg_pkts[NCCTRL_WIN] = {
 		2, 6, 10, 14, 20, 28, 40, 56, 80, 112, 160, 224, 320, 448, 640,
 		896, 1281, 1792, 2560, 3584, 5120, 7168, 10240, 14336, 20480,
 		28672, 40960, 57344, 81920, 114688, 163840, 229376
-	पूर्ण;
+	};
 
-	अचिन्हित पूर्णांक i, w;
+	unsigned int i, w;
 
-	क्रम (i = 0; i < NMTUS; ++i) अणु
-		अचिन्हित पूर्णांक mtu = mtus[i];
-		अचिन्हित पूर्णांक log2 = fls(mtu);
+	for (i = 0; i < NMTUS; ++i) {
+		unsigned int mtu = mtus[i];
+		unsigned int log2 = fls(mtu);
 
-		अगर (!(mtu & ((1 << log2) >> 2)))     /* round */
+		if (!(mtu & ((1 << log2) >> 2)))     /* round */
 			log2--;
-		t4_ग_लिखो_reg(adap, TP_MTU_TABLE_A, MTUINDEX_V(i) |
+		t4_write_reg(adap, TP_MTU_TABLE_A, MTUINDEX_V(i) |
 			     MTUWIDTH_V(log2) | MTUVALUE_V(mtu));
 
-		क्रम (w = 0; w < NCCTRL_WIN; ++w) अणु
-			अचिन्हित पूर्णांक inc;
+		for (w = 0; w < NCCTRL_WIN; ++w) {
+			unsigned int inc;
 
 			inc = max(((mtu - 40) * alpha[w]) / avg_pkts[w],
 				  CC_MIN_INCR);
 
-			t4_ग_लिखो_reg(adap, TP_CCTRL_TABLE_A, (i << 21) |
+			t4_write_reg(adap, TP_CCTRL_TABLE_A, (i << 21) |
 				     (w << 16) | (beta[w] << 13) | inc);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Calculates a rate in bytes/s given the number of 256-byte units per 4K core
- * घड़ीs.  The क्रमmula is
+ * clocks.  The formula is
  *
  * bytes/s = bytes256 * 256 * ClkFreq / 4096
  *
@@ -5910,42 +5909,42 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
  *
  * bytes/s = 62.5 * bytes256 * ClkFreq_ms
  */
-अटल u64 chan_rate(काष्ठा adapter *adap, अचिन्हित पूर्णांक bytes256)
-अणु
+static u64 chan_rate(struct adapter *adap, unsigned int bytes256)
+{
 	u64 v = bytes256 * adap->params.vpd.cclk;
 
-	वापस v * 62 + v / 2;
-पूर्ण
+	return v * 62 + v / 2;
+}
 
 /**
  *	t4_get_chan_txrate - get the current per channel Tx rates
  *	@adap: the adapter
- *	@nic_rate: rates क्रम NIC traffic
- *	@ofld_rate: rates क्रम offloaded traffic
+ *	@nic_rate: rates for NIC traffic
+ *	@ofld_rate: rates for offloaded traffic
  *
- *	Return the current Tx rates in bytes/s क्रम NIC and offloaded traffic
- *	क्रम each channel.
+ *	Return the current Tx rates in bytes/s for NIC and offloaded traffic
+ *	for each channel.
  */
-व्योम t4_get_chan_txrate(काष्ठा adapter *adap, u64 *nic_rate, u64 *ofld_rate)
-अणु
+void t4_get_chan_txrate(struct adapter *adap, u64 *nic_rate, u64 *ofld_rate)
+{
 	u32 v;
 
-	v = t4_पढ़ो_reg(adap, TP_TX_TRATE_A);
+	v = t4_read_reg(adap, TP_TX_TRATE_A);
 	nic_rate[0] = chan_rate(adap, TNLRATE0_G(v));
 	nic_rate[1] = chan_rate(adap, TNLRATE1_G(v));
-	अगर (adap->params.arch.nchan == NCHAN) अणु
+	if (adap->params.arch.nchan == NCHAN) {
 		nic_rate[2] = chan_rate(adap, TNLRATE2_G(v));
 		nic_rate[3] = chan_rate(adap, TNLRATE3_G(v));
-	पूर्ण
+	}
 
-	v = t4_पढ़ो_reg(adap, TP_TX_ORATE_A);
+	v = t4_read_reg(adap, TP_TX_ORATE_A);
 	ofld_rate[0] = chan_rate(adap, OFDRATE0_G(v));
 	ofld_rate[1] = chan_rate(adap, OFDRATE1_G(v));
-	अगर (adap->params.arch.nchan == NCHAN) अणु
+	if (adap->params.arch.nchan == NCHAN) {
 		ofld_rate[2] = chan_rate(adap, OFDRATE2_G(v));
 		ofld_rate[3] = chan_rate(adap, OFDRATE3_G(v));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	t4_set_trace_filter - configure one of the tracing filters
@@ -5955,94 +5954,94 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
  *	@enable: whether to enable or disable the filter
  *
  *	Configures one of the tracing filters available in HW.  If @enable is
- *	%0 @tp is not examined and may be %शून्य. The user is responsible to
- *	set the single/multiple trace mode by writing to MPS_TRC_CFG_A रेजिस्टर
+ *	%0 @tp is not examined and may be %NULL. The user is responsible to
+ *	set the single/multiple trace mode by writing to MPS_TRC_CFG_A register
  */
-पूर्णांक t4_set_trace_filter(काष्ठा adapter *adap, स्थिर काष्ठा trace_params *tp,
-			पूर्णांक idx, पूर्णांक enable)
-अणु
-	पूर्णांक i, ofst = idx * 4;
+int t4_set_trace_filter(struct adapter *adap, const struct trace_params *tp,
+			int idx, int enable)
+{
+	int i, ofst = idx * 4;
 	u32 data_reg, mask_reg, cfg;
 
-	अगर (!enable) अणु
-		t4_ग_लिखो_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst, 0);
-		वापस 0;
-	पूर्ण
+	if (!enable) {
+		t4_write_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst, 0);
+		return 0;
+	}
 
-	cfg = t4_पढ़ो_reg(adap, MPS_TRC_CFG_A);
-	अगर (cfg & TRCMULTIFILTER_F) अणु
+	cfg = t4_read_reg(adap, MPS_TRC_CFG_A);
+	if (cfg & TRCMULTIFILTER_F) {
 		/* If multiple tracers are enabled, then maximum
 		 * capture size is 2.5KB (FIFO size of a single channel)
-		 * minus 2 flits क्रम CPL_TRACE_PKT header.
+		 * minus 2 flits for CPL_TRACE_PKT header.
 		 */
-		अगर (tp->snap_len > ((10 * 1024 / 4) - (2 * 8)))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		/* If multiple tracers are disabled, to aव्योम deadlocks
+		if (tp->snap_len > ((10 * 1024 / 4) - (2 * 8)))
+			return -EINVAL;
+	} else {
+		/* If multiple tracers are disabled, to avoid deadlocks
 		 * maximum packet capture size of 9600 bytes is recommended.
 		 * Also in this mode, only trace0 can be enabled and running.
 		 */
-		अगर (tp->snap_len > 9600 || idx)
-			वापस -EINVAL;
-	पूर्ण
+		if (tp->snap_len > 9600 || idx)
+			return -EINVAL;
+	}
 
-	अगर (tp->port > (is_t4(adap->params.chip) ? 11 : 19) || tp->invert > 1 ||
+	if (tp->port > (is_t4(adap->params.chip) ? 11 : 19) || tp->invert > 1 ||
 	    tp->skip_len > TFLENGTH_M || tp->skip_ofst > TFOFFSET_M ||
 	    tp->min_len > TFMINPKTSIZE_M)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* stop the tracer we'll be changing */
-	t4_ग_लिखो_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst, 0);
+	t4_write_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst, 0);
 
 	idx *= (MPS_TRC_FILTER1_MATCH_A - MPS_TRC_FILTER0_MATCH_A);
 	data_reg = MPS_TRC_FILTER0_MATCH_A + idx;
 	mask_reg = MPS_TRC_FILTER0_DONT_CARE_A + idx;
 
-	क्रम (i = 0; i < TRACE_LEN / 4; i++, data_reg += 4, mask_reg += 4) अणु
-		t4_ग_लिखो_reg(adap, data_reg, tp->data[i]);
-		t4_ग_लिखो_reg(adap, mask_reg, ~tp->mask[i]);
-	पूर्ण
-	t4_ग_लिखो_reg(adap, MPS_TRC_FILTER_MATCH_CTL_B_A + ofst,
+	for (i = 0; i < TRACE_LEN / 4; i++, data_reg += 4, mask_reg += 4) {
+		t4_write_reg(adap, data_reg, tp->data[i]);
+		t4_write_reg(adap, mask_reg, ~tp->mask[i]);
+	}
+	t4_write_reg(adap, MPS_TRC_FILTER_MATCH_CTL_B_A + ofst,
 		     TFCAPTUREMAX_V(tp->snap_len) |
 		     TFMINPKTSIZE_V(tp->min_len));
-	t4_ग_लिखो_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst,
+	t4_write_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst,
 		     TFOFFSET_V(tp->skip_ofst) | TFLENGTH_V(tp->skip_len) |
 		     (is_t4(adap->params.chip) ?
 		     TFPORT_V(tp->port) | TFEN_F | TFINVERTMATCH_V(tp->invert) :
 		     T5_TFPORT_V(tp->port) | T5_TFEN_F |
 		     T5_TFINVERTMATCH_V(tp->invert)));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	t4_get_trace_filter - query one of the tracing filters
  *	@adap: the adapter
  *	@tp: the current trace filter parameters
  *	@idx: which trace filter to query
- *	@enabled: non-zero अगर the filter is enabled
+ *	@enabled: non-zero if the filter is enabled
  *
  *	Returns the current settings of one of the HW tracing filters.
  */
-व्योम t4_get_trace_filter(काष्ठा adapter *adap, काष्ठा trace_params *tp, पूर्णांक idx,
-			 पूर्णांक *enabled)
-अणु
+void t4_get_trace_filter(struct adapter *adap, struct trace_params *tp, int idx,
+			 int *enabled)
+{
 	u32 ctla, ctlb;
-	पूर्णांक i, ofst = idx * 4;
+	int i, ofst = idx * 4;
 	u32 data_reg, mask_reg;
 
-	ctla = t4_पढ़ो_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst);
-	ctlb = t4_पढ़ो_reg(adap, MPS_TRC_FILTER_MATCH_CTL_B_A + ofst);
+	ctla = t4_read_reg(adap, MPS_TRC_FILTER_MATCH_CTL_A_A + ofst);
+	ctlb = t4_read_reg(adap, MPS_TRC_FILTER_MATCH_CTL_B_A + ofst);
 
-	अगर (is_t4(adap->params.chip)) अणु
+	if (is_t4(adap->params.chip)) {
 		*enabled = !!(ctla & TFEN_F);
 		tp->port =  TFPORT_G(ctla);
 		tp->invert = !!(ctla & TFINVERTMATCH_F);
-	पूर्ण अन्यथा अणु
+	} else {
 		*enabled = !!(ctla & T5_TFEN_F);
 		tp->port = T5_TFPORT_G(ctla);
 		tp->invert = !!(ctla & T5_TFINVERTMATCH_F);
-	पूर्ण
+	}
 	tp->snap_len = TFCAPTUREMAX_G(ctlb);
 	tp->min_len = TFMINPKTSIZE_G(ctlb);
 	tp->skip_ofst = TFOFFSET_G(ctla);
@@ -6052,189 +6051,189 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	data_reg = MPS_TRC_FILTER0_MATCH_A + ofst;
 	mask_reg = MPS_TRC_FILTER0_DONT_CARE_A + ofst;
 
-	क्रम (i = 0; i < TRACE_LEN / 4; i++, data_reg += 4, mask_reg += 4) अणु
-		tp->mask[i] = ~t4_पढ़ो_reg(adap, mask_reg);
-		tp->data[i] = t4_पढ़ो_reg(adap, data_reg) & tp->mask[i];
-	पूर्ण
-पूर्ण
+	for (i = 0; i < TRACE_LEN / 4; i++, data_reg += 4, mask_reg += 4) {
+		tp->mask[i] = ~t4_read_reg(adap, mask_reg);
+		tp->data[i] = t4_read_reg(adap, data_reg) & tp->mask[i];
+	}
+}
 
 /**
- *	t4_pmtx_get_stats - वापसs the HW stats from PMTX
+ *	t4_pmtx_get_stats - returns the HW stats from PMTX
  *	@adap: the adapter
  *	@cnt: where to store the count statistics
  *	@cycles: where to store the cycle statistics
  *
- *	Returns perक्रमmance statistics from PMTX.
+ *	Returns performance statistics from PMTX.
  */
-व्योम t4_pmtx_get_stats(काष्ठा adapter *adap, u32 cnt[], u64 cycles[])
-अणु
-	पूर्णांक i;
+void t4_pmtx_get_stats(struct adapter *adap, u32 cnt[], u64 cycles[])
+{
+	int i;
 	u32 data[2];
 
-	क्रम (i = 0; i < adap->params.arch.pm_stats_cnt; i++) अणु
-		t4_ग_लिखो_reg(adap, PM_TX_STAT_CONFIG_A, i + 1);
-		cnt[i] = t4_पढ़ो_reg(adap, PM_TX_STAT_COUNT_A);
-		अगर (is_t4(adap->params.chip)) अणु
-			cycles[i] = t4_पढ़ो_reg64(adap, PM_TX_STAT_LSB_A);
-		पूर्ण अन्यथा अणु
-			t4_पढ़ो_indirect(adap, PM_TX_DBG_CTRL_A,
+	for (i = 0; i < adap->params.arch.pm_stats_cnt; i++) {
+		t4_write_reg(adap, PM_TX_STAT_CONFIG_A, i + 1);
+		cnt[i] = t4_read_reg(adap, PM_TX_STAT_COUNT_A);
+		if (is_t4(adap->params.chip)) {
+			cycles[i] = t4_read_reg64(adap, PM_TX_STAT_LSB_A);
+		} else {
+			t4_read_indirect(adap, PM_TX_DBG_CTRL_A,
 					 PM_TX_DBG_DATA_A, data, 2,
 					 PM_TX_DBG_STAT_MSB_A);
 			cycles[i] = (((u64)data[0] << 32) | data[1]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- *	t4_pmrx_get_stats - वापसs the HW stats from PMRX
+ *	t4_pmrx_get_stats - returns the HW stats from PMRX
  *	@adap: the adapter
  *	@cnt: where to store the count statistics
  *	@cycles: where to store the cycle statistics
  *
- *	Returns perक्रमmance statistics from PMRX.
+ *	Returns performance statistics from PMRX.
  */
-व्योम t4_pmrx_get_stats(काष्ठा adapter *adap, u32 cnt[], u64 cycles[])
-अणु
-	पूर्णांक i;
+void t4_pmrx_get_stats(struct adapter *adap, u32 cnt[], u64 cycles[])
+{
+	int i;
 	u32 data[2];
 
-	क्रम (i = 0; i < adap->params.arch.pm_stats_cnt; i++) अणु
-		t4_ग_लिखो_reg(adap, PM_RX_STAT_CONFIG_A, i + 1);
-		cnt[i] = t4_पढ़ो_reg(adap, PM_RX_STAT_COUNT_A);
-		अगर (is_t4(adap->params.chip)) अणु
-			cycles[i] = t4_पढ़ो_reg64(adap, PM_RX_STAT_LSB_A);
-		पूर्ण अन्यथा अणु
-			t4_पढ़ो_indirect(adap, PM_RX_DBG_CTRL_A,
+	for (i = 0; i < adap->params.arch.pm_stats_cnt; i++) {
+		t4_write_reg(adap, PM_RX_STAT_CONFIG_A, i + 1);
+		cnt[i] = t4_read_reg(adap, PM_RX_STAT_COUNT_A);
+		if (is_t4(adap->params.chip)) {
+			cycles[i] = t4_read_reg64(adap, PM_RX_STAT_LSB_A);
+		} else {
+			t4_read_indirect(adap, PM_RX_DBG_CTRL_A,
 					 PM_RX_DBG_DATA_A, data, 2,
 					 PM_RX_DBG_STAT_MSB_A);
 			cycles[i] = (((u64)data[0] << 32) | data[1]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /**
- *	compute_mps_bg_map - compute the MPS Buffer Group Map क्रम a Port
+ *	compute_mps_bg_map - compute the MPS Buffer Group Map for a Port
  *	@adapter: the adapter
  *	@pidx: the port index
  *
- *	Computes and वापसs a biपंचांगap indicating which MPS buffer groups are
- *	associated with the given Port.  Bit i is set अगर buffer group i is
+ *	Computes and returns a bitmap indicating which MPS buffer groups are
+ *	associated with the given Port.  Bit i is set if buffer group i is
  *	used by the Port.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक compute_mps_bg_map(काष्ठा adapter *adapter,
-					      पूर्णांक pidx)
-अणु
-	अचिन्हित पूर्णांक chip_version, nports;
+static inline unsigned int compute_mps_bg_map(struct adapter *adapter,
+					      int pidx)
+{
+	unsigned int chip_version, nports;
 
 	chip_version = CHELSIO_CHIP_VERSION(adapter->params.chip);
-	nports = 1 << NUMPORTS_G(t4_पढ़ो_reg(adapter, MPS_CMN_CTL_A));
+	nports = 1 << NUMPORTS_G(t4_read_reg(adapter, MPS_CMN_CTL_A));
 
-	चयन (chip_version) अणु
-	हाल CHELSIO_T4:
-	हाल CHELSIO_T5:
-		चयन (nports) अणु
-		हाल 1: वापस 0xf;
-		हाल 2: वापस 3 << (2 * pidx);
-		हाल 4: वापस 1 << pidx;
-		पूर्ण
-		अवरोध;
+	switch (chip_version) {
+	case CHELSIO_T4:
+	case CHELSIO_T5:
+		switch (nports) {
+		case 1: return 0xf;
+		case 2: return 3 << (2 * pidx);
+		case 4: return 1 << pidx;
+		}
+		break;
 
-	हाल CHELSIO_T6:
-		चयन (nports) अणु
-		हाल 2: वापस 1 << (2 * pidx);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	case CHELSIO_T6:
+		switch (nports) {
+		case 2: return 1 << (2 * pidx);
+		}
+		break;
+	}
 
 	dev_err(adapter->pdev_dev, "Need MPS Buffer Group Map for Chip %0x, Nports %d\n",
 		chip_version, nports);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_get_mps_bg_map - वापस the buffer groups associated with a port
+ *	t4_get_mps_bg_map - return the buffer groups associated with a port
  *	@adapter: the adapter
  *	@pidx: the port index
  *
- *	Returns a biपंचांगap indicating which MPS buffer groups are associated
- *	with the given Port.  Bit i is set अगर buffer group i is used by the
+ *	Returns a bitmap indicating which MPS buffer groups are associated
+ *	with the given Port.  Bit i is set if buffer group i is used by the
  *	Port.
  */
-अचिन्हित पूर्णांक t4_get_mps_bg_map(काष्ठा adapter *adapter, पूर्णांक pidx)
-अणु
+unsigned int t4_get_mps_bg_map(struct adapter *adapter, int pidx)
+{
 	u8 *mps_bg_map;
-	अचिन्हित पूर्णांक nports;
+	unsigned int nports;
 
-	nports = 1 << NUMPORTS_G(t4_पढ़ो_reg(adapter, MPS_CMN_CTL_A));
-	अगर (pidx >= nports) अणु
+	nports = 1 << NUMPORTS_G(t4_read_reg(adapter, MPS_CMN_CTL_A));
+	if (pidx >= nports) {
 		CH_WARN(adapter, "MPS Port Index %d >= Nports %d\n",
 			pidx, nports);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* If we've alपढ़ोy retrieved/computed this, just वापस the result.
+	/* If we've already retrieved/computed this, just return the result.
 	 */
 	mps_bg_map = adapter->params.mps_bg_map;
-	अगर (mps_bg_map[pidx])
-		वापस mps_bg_map[pidx];
+	if (mps_bg_map[pidx])
+		return mps_bg_map[pidx];
 
 	/* Newer Firmware can tell us what the MPS Buffer Group Map is.
 	 * If we're talking to such Firmware, let it tell us.  If the new
 	 * API isn't supported, revert back to old hardcoded way.  The value
-	 * obtained from Firmware is encoded in below क्रमmat:
+	 * obtained from Firmware is encoded in below format:
 	 *
 	 * val = (( MPSBGMAP[Port 3] << 24 ) |
 	 *        ( MPSBGMAP[Port 2] << 16 ) |
 	 *        ( MPSBGMAP[Port 1] <<  8 ) |
 	 *        ( MPSBGMAP[Port 0] <<  0 ))
 	 */
-	अगर (adapter->flags & CXGB4_FW_OK) अणु
+	if (adapter->flags & CXGB4_FW_OK) {
 		u32 param, val;
-		पूर्णांक ret;
+		int ret;
 
 		param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 			 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_MPSBGMAP));
 		ret = t4_query_params_ns(adapter, adapter->mbox, adapter->pf,
 					 0, 1, &param, &val);
-		अगर (!ret) अणु
-			पूर्णांक p;
+		if (!ret) {
+			int p;
 
-			/* Store the BG Map क्रम all of the Ports in order to
-			 * aव्योम more calls to the Firmware in the future.
+			/* Store the BG Map for all of the Ports in order to
+			 * avoid more calls to the Firmware in the future.
 			 */
-			क्रम (p = 0; p < MAX_NPORTS; p++, val >>= 8)
+			for (p = 0; p < MAX_NPORTS; p++, val >>= 8)
 				mps_bg_map[p] = val & 0xff;
 
-			वापस mps_bg_map[pidx];
-		पूर्ण
-	पूर्ण
+			return mps_bg_map[pidx];
+		}
+	}
 
 	/* Either we're not talking to the Firmware or we're dealing with
-	 * older Firmware which करोesn't support the new API to get the MPS
+	 * older Firmware which doesn't support the new API to get the MPS
 	 * Buffer Group Map.  Fall back to computing it ourselves.
 	 */
 	mps_bg_map[pidx] = compute_mps_bg_map(adapter, pidx);
-	वापस mps_bg_map[pidx];
-पूर्ण
+	return mps_bg_map[pidx];
+}
 
 /**
- *      t4_get_tp_e2c_map - वापस the E2C channel map associated with a port
+ *      t4_get_tp_e2c_map - return the E2C channel map associated with a port
  *      @adapter: the adapter
  *      @pidx: the port index
  */
-अटल अचिन्हित पूर्णांक t4_get_tp_e2c_map(काष्ठा adapter *adapter, पूर्णांक pidx)
-अणु
-	अचिन्हित पूर्णांक nports;
+static unsigned int t4_get_tp_e2c_map(struct adapter *adapter, int pidx)
+{
+	unsigned int nports;
 	u32 param, val = 0;
-	पूर्णांक ret;
+	int ret;
 
-	nports = 1 << NUMPORTS_G(t4_पढ़ो_reg(adapter, MPS_CMN_CTL_A));
-	अगर (pidx >= nports) अणु
+	nports = 1 << NUMPORTS_G(t4_read_reg(adapter, MPS_CMN_CTL_A));
+	if (pidx >= nports) {
 		CH_WARN(adapter, "TP E2C Channel Port Index %d >= Nports %d\n",
 			pidx, nports);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* FW version >= 1.16.44.0 can determine E2C channel map using
 	 * FW_PARAMS_PARAM_DEV_TPCHMAP API.
@@ -6243,66 +6242,66 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 		 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_TPCHMAP));
 	ret = t4_query_params_ns(adapter, adapter->mbox, adapter->pf,
 				 0, 1, &param, &val);
-	अगर (!ret)
-		वापस (val >> (8 * pidx)) & 0xff;
+	if (!ret)
+		return (val >> (8 * pidx)) & 0xff;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_get_tp_ch_map - वापस TP ingress channels associated with a port
+ *	t4_get_tp_ch_map - return TP ingress channels associated with a port
  *	@adap: the adapter
  *	@pidx: the port index
  *
- *	Returns a biपंचांगap indicating which TP Ingress Channels are associated
- *	with a given Port.  Bit i is set अगर TP Ingress Channel i is used by
+ *	Returns a bitmap indicating which TP Ingress Channels are associated
+ *	with a given Port.  Bit i is set if TP Ingress Channel i is used by
  *	the Port.
  */
-अचिन्हित पूर्णांक t4_get_tp_ch_map(काष्ठा adapter *adap, पूर्णांक pidx)
-अणु
-	अचिन्हित पूर्णांक chip_version = CHELSIO_CHIP_VERSION(adap->params.chip);
-	अचिन्हित पूर्णांक nports = 1 << NUMPORTS_G(t4_पढ़ो_reg(adap, MPS_CMN_CTL_A));
+unsigned int t4_get_tp_ch_map(struct adapter *adap, int pidx)
+{
+	unsigned int chip_version = CHELSIO_CHIP_VERSION(adap->params.chip);
+	unsigned int nports = 1 << NUMPORTS_G(t4_read_reg(adap, MPS_CMN_CTL_A));
 
-	अगर (pidx >= nports) अणु
+	if (pidx >= nports) {
 		dev_warn(adap->pdev_dev, "TP Port Index %d >= Nports %d\n",
 			 pidx, nports);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (chip_version) अणु
-	हाल CHELSIO_T4:
-	हाल CHELSIO_T5:
+	switch (chip_version) {
+	case CHELSIO_T4:
+	case CHELSIO_T5:
 		/* Note that this happens to be the same values as the MPS
-		 * Buffer Group Map क्रम these Chips.  But we replicate the code
+		 * Buffer Group Map for these Chips.  But we replicate the code
 		 * here because they're really separate concepts.
 		 */
-		चयन (nports) अणु
-		हाल 1: वापस 0xf;
-		हाल 2: वापस 3 << (2 * pidx);
-		हाल 4: वापस 1 << pidx;
-		पूर्ण
-		अवरोध;
+		switch (nports) {
+		case 1: return 0xf;
+		case 2: return 3 << (2 * pidx);
+		case 4: return 1 << pidx;
+		}
+		break;
 
-	हाल CHELSIO_T6:
-		चयन (nports) अणु
-		हाल 1:
-		हाल 2: वापस 1 << pidx;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+	case CHELSIO_T6:
+		switch (nports) {
+		case 1:
+		case 2: return 1 << pidx;
+		}
+		break;
+	}
 
 	dev_err(adap->pdev_dev, "Need TP Channel Map for Chip %0x, Nports %d\n",
 		chip_version, nports);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *      t4_get_port_type_description - वापस Port Type string description
- *      @port_type: firmware Port Type क्रमागतeration
+ *      t4_get_port_type_description - return Port Type string description
+ *      @port_type: firmware Port Type enumeration
  */
-स्थिर अक्षर *t4_get_port_type_description(क्रमागत fw_port_type port_type)
-अणु
-	अटल स्थिर अक्षर *स्थिर port_type_description[] = अणु
+const char *t4_get_port_type_description(enum fw_port_type port_type)
+{
+	static const char *const port_type_description[] = {
 		"Fiber_XFI",
 		"Fiber_XAUI",
 		"BT_SGMII",
@@ -6326,12 +6325,12 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 		"SFP28",
 		"KR_SFP28",
 		"KR_XLAUI"
-	पूर्ण;
+	};
 
-	अगर (port_type < ARRAY_SIZE(port_type_description))
-		वापस port_type_description[port_type];
-	वापस "UNKNOWN";
-पूर्ण
+	if (port_type < ARRAY_SIZE(port_type_description))
+		return port_type_description[port_type];
+	return "UNKNOWN";
+}
 
 /**
  *      t4_get_port_stats_offset - collect port stats relative to a previous
@@ -6341,38 +6340,38 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
  *      @stats: Current stats to fill
  *      @offset: Previous stats snapshot
  */
-व्योम t4_get_port_stats_offset(काष्ठा adapter *adap, पूर्णांक idx,
-			      काष्ठा port_stats *stats,
-			      काष्ठा port_stats *offset)
-अणु
+void t4_get_port_stats_offset(struct adapter *adap, int idx,
+			      struct port_stats *stats,
+			      struct port_stats *offset)
+{
 	u64 *s, *o;
-	पूर्णांक i;
+	int i;
 
 	t4_get_port_stats(adap, idx, stats);
-	क्रम (i = 0, s = (u64 *)stats, o = (u64 *)offset;
-			i < (माप(काष्ठा port_stats) / माप(u64));
+	for (i = 0, s = (u64 *)stats, o = (u64 *)offset;
+			i < (sizeof(struct port_stats) / sizeof(u64));
 			i++, s++, o++)
 		*s -= *o;
-पूर्ण
+}
 
 /**
  *	t4_get_port_stats - collect port statistics
  *	@adap: the adapter
  *	@idx: the port index
- *	@p: the stats काष्ठाure to fill
+ *	@p: the stats structure to fill
  *
  *	Collect statistics related to the given port from HW.
  */
-व्योम t4_get_port_stats(काष्ठा adapter *adap, पूर्णांक idx, काष्ठा port_stats *p)
-अणु
+void t4_get_port_stats(struct adapter *adap, int idx, struct port_stats *p)
+{
 	u32 bgmap = t4_get_mps_bg_map(adap, idx);
-	u32 stat_ctl = t4_पढ़ो_reg(adap, MPS_STAT_CTL_A);
+	u32 stat_ctl = t4_read_reg(adap, MPS_STAT_CTL_A);
 
-#घोषणा GET_STAT(name) \
-	t4_पढ़ो_reg64(adap, \
+#define GET_STAT(name) \
+	t4_read_reg64(adap, \
 	(is_t4(adap->params.chip) ? PORT_REG(idx, MPS_PORT_STAT_##name##_L) : \
 	T5_PORT_REG(idx, MPS_PORT_STAT_##name##_L)))
-#घोषणा GET_STAT_COM(name) t4_पढ़ो_reg64(adap, MPS_STAT_##name##_L)
+#define GET_STAT_COM(name) t4_read_reg64(adap, MPS_STAT_##name##_L)
 
 	p->tx_octets           = GET_STAT(TX_PORT_BYTES);
 	p->tx_frames           = GET_STAT(TX_PORT_FRAMES);
@@ -6388,7 +6387,7 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	p->tx_frames_1024_1518 = GET_STAT(TX_PORT_1024B_1518B);
 	p->tx_frames_1519_max  = GET_STAT(TX_PORT_1519B_MAX);
 	p->tx_drop             = GET_STAT(TX_PORT_DROP);
-	p->tx_छोड़ो            = GET_STAT(TX_PORT_PAUSE);
+	p->tx_pause            = GET_STAT(TX_PORT_PAUSE);
 	p->tx_ppp0             = GET_STAT(TX_PORT_PPP0);
 	p->tx_ppp1             = GET_STAT(TX_PORT_PPP1);
 	p->tx_ppp2             = GET_STAT(TX_PORT_PPP2);
@@ -6398,18 +6397,18 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	p->tx_ppp6             = GET_STAT(TX_PORT_PPP6);
 	p->tx_ppp7             = GET_STAT(TX_PORT_PPP7);
 
-	अगर (CHELSIO_CHIP_VERSION(adap->params.chip) >= CHELSIO_T5) अणु
-		अगर (stat_ctl & COUNTPAUSESTATTX_F)
-			p->tx_frames_64 -= p->tx_छोड़ो;
-		अगर (stat_ctl & COUNTPAUSEMCTX_F)
-			p->tx_mcast_frames -= p->tx_छोड़ो;
-	पूर्ण
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) >= CHELSIO_T5) {
+		if (stat_ctl & COUNTPAUSESTATTX_F)
+			p->tx_frames_64 -= p->tx_pause;
+		if (stat_ctl & COUNTPAUSEMCTX_F)
+			p->tx_mcast_frames -= p->tx_pause;
+	}
 	p->rx_octets           = GET_STAT(RX_PORT_BYTES);
 	p->rx_frames           = GET_STAT(RX_PORT_FRAMES);
 	p->rx_bcast_frames     = GET_STAT(RX_PORT_BCAST);
 	p->rx_mcast_frames     = GET_STAT(RX_PORT_MCAST);
 	p->rx_ucast_frames     = GET_STAT(RX_PORT_UCAST);
-	p->rx_too_दीर्घ         = GET_STAT(RX_PORT_MTU_ERROR);
+	p->rx_too_long         = GET_STAT(RX_PORT_MTU_ERROR);
 	p->rx_jabber           = GET_STAT(RX_PORT_MTU_CRC_ERROR);
 	p->rx_fcs_err          = GET_STAT(RX_PORT_CRC_ERROR);
 	p->rx_len_err          = GET_STAT(RX_PORT_LEN_ERROR);
@@ -6422,7 +6421,7 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	p->rx_frames_512_1023  = GET_STAT(RX_PORT_512B_1023B);
 	p->rx_frames_1024_1518 = GET_STAT(RX_PORT_1024B_1518B);
 	p->rx_frames_1519_max  = GET_STAT(RX_PORT_1519B_MAX);
-	p->rx_छोड़ो            = GET_STAT(RX_PORT_PAUSE);
+	p->rx_pause            = GET_STAT(RX_PORT_PAUSE);
 	p->rx_ppp0             = GET_STAT(RX_PORT_PPP0);
 	p->rx_ppp1             = GET_STAT(RX_PORT_PPP1);
 	p->rx_ppp2             = GET_STAT(RX_PORT_PPP2);
@@ -6432,12 +6431,12 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	p->rx_ppp6             = GET_STAT(RX_PORT_PPP6);
 	p->rx_ppp7             = GET_STAT(RX_PORT_PPP7);
 
-	अगर (CHELSIO_CHIP_VERSION(adap->params.chip) >= CHELSIO_T5) अणु
-		अगर (stat_ctl & COUNTPAUSESTATRX_F)
-			p->rx_frames_64 -= p->rx_छोड़ो;
-		अगर (stat_ctl & COUNTPAUSEMCRX_F)
-			p->rx_mcast_frames -= p->rx_छोड़ो;
-	पूर्ण
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) >= CHELSIO_T5) {
+		if (stat_ctl & COUNTPAUSESTATRX_F)
+			p->rx_frames_64 -= p->rx_pause;
+		if (stat_ctl & COUNTPAUSEMCRX_F)
+			p->rx_mcast_frames -= p->rx_pause;
+	}
 
 	p->rx_ovflow0 = (bgmap & 1) ? GET_STAT_COM(RX_BG_0_MAC_DROP_FRAME) : 0;
 	p->rx_ovflow1 = (bgmap & 2) ? GET_STAT_COM(RX_BG_1_MAC_DROP_FRAME) : 0;
@@ -6448,28 +6447,28 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	p->rx_trunc2 = (bgmap & 4) ? GET_STAT_COM(RX_BG_2_MAC_TRUNC_FRAME) : 0;
 	p->rx_trunc3 = (bgmap & 8) ? GET_STAT_COM(RX_BG_3_MAC_TRUNC_FRAME) : 0;
 
-#अघोषित GET_STAT
-#अघोषित GET_STAT_COM
-पूर्ण
+#undef GET_STAT
+#undef GET_STAT_COM
+}
 
 /**
  *	t4_get_lb_stats - collect loopback port statistics
  *	@adap: the adapter
  *	@idx: the loopback port index
- *	@p: the stats काष्ठाure to fill
+ *	@p: the stats structure to fill
  *
- *	Return HW statistics क्रम the given loopback port.
+ *	Return HW statistics for the given loopback port.
  */
-व्योम t4_get_lb_stats(काष्ठा adapter *adap, पूर्णांक idx, काष्ठा lb_port_stats *p)
-अणु
+void t4_get_lb_stats(struct adapter *adap, int idx, struct lb_port_stats *p)
+{
 	u32 bgmap = t4_get_mps_bg_map(adap, idx);
 
-#घोषणा GET_STAT(name) \
-	t4_पढ़ो_reg64(adap, \
+#define GET_STAT(name) \
+	t4_read_reg64(adap, \
 	(is_t4(adap->params.chip) ? \
 	PORT_REG(idx, MPS_PORT_STAT_LB_PORT_##name##_L) : \
 	T5_PORT_REG(idx, MPS_PORT_STAT_LB_PORT_##name##_L)))
-#घोषणा GET_STAT_COM(name) t4_पढ़ो_reg64(adap, MPS_STAT_##name##_L)
+#define GET_STAT_COM(name) t4_read_reg64(adap, MPS_STAT_##name##_L)
 
 	p->octets           = GET_STAT(BYTES);
 	p->frames           = GET_STAT(FRAMES);
@@ -6496,45 +6495,45 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	p->trunc2 = (bgmap & 4) ? GET_STAT_COM(RX_BG_2_LB_TRUNC_FRAME) : 0;
 	p->trunc3 = (bgmap & 8) ? GET_STAT_COM(RX_BG_3_LB_TRUNC_FRAME) : 0;
 
-#अघोषित GET_STAT
-#अघोषित GET_STAT_COM
-पूर्ण
+#undef GET_STAT
+#undef GET_STAT_COM
+}
 
 /*     t4_mk_filtdelwr - create a delete filter WR
  *     @ftid: the filter ID
  *     @wr: the filter work request to populate
- *     @qid: ingress queue to receive the delete notअगरication
+ *     @qid: ingress queue to receive the delete notification
  *
  *     Creates a filter work request to delete the supplied filter.  If @qid is
- *     negative the delete notअगरication is suppressed.
+ *     negative the delete notification is suppressed.
  */
-व्योम t4_mk_filtdelwr(अचिन्हित पूर्णांक ftid, काष्ठा fw_filter_wr *wr, पूर्णांक qid)
-अणु
-	स_रखो(wr, 0, माप(*wr));
+void t4_mk_filtdelwr(unsigned int ftid, struct fw_filter_wr *wr, int qid)
+{
+	memset(wr, 0, sizeof(*wr));
 	wr->op_pkd = cpu_to_be32(FW_WR_OP_V(FW_FILTER_WR));
-	wr->len16_pkd = cpu_to_be32(FW_WR_LEN16_V(माप(*wr) / 16));
+	wr->len16_pkd = cpu_to_be32(FW_WR_LEN16_V(sizeof(*wr) / 16));
 	wr->tid_to_iq = cpu_to_be32(FW_FILTER_WR_TID_V(ftid) |
 				    FW_FILTER_WR_NOREPLY_V(qid < 0));
 	wr->del_filter_to_l2tix = cpu_to_be32(FW_FILTER_WR_DEL_FILTER_F);
-	अगर (qid >= 0)
+	if (qid >= 0)
 		wr->rx_chan_rx_rpl_iq =
 			cpu_to_be16(FW_FILTER_WR_RX_RPL_IQ_V(qid));
-पूर्ण
+}
 
-#घोषणा INIT_CMD(var, cmd, rd_wr) करो अणु \
-	(var).op_to_ग_लिखो = cpu_to_be32(FW_CMD_OP_V(FW_##cmd##_CMD) | \
+#define INIT_CMD(var, cmd, rd_wr) do { \
+	(var).op_to_write = cpu_to_be32(FW_CMD_OP_V(FW_##cmd##_CMD) | \
 					FW_CMD_REQUEST_F | \
 					FW_CMD_##rd_wr##_F); \
 	(var).retval_len16 = cpu_to_be32(FW_LEN16(var)); \
-पूर्ण जबतक (0)
+} while (0)
 
-पूर्णांक t4_fwaddrspace_ग_लिखो(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
+int t4_fwaddrspace_write(struct adapter *adap, unsigned int mbox,
 			  u32 addr, u32 val)
-अणु
+{
 	u32 ldst_addrspace;
-	काष्ठा fw_ldst_cmd c;
+	struct fw_ldst_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	ldst_addrspace = FW_LDST_CMD_ADDRSPACE_V(FW_LDST_ADDRSPC_FIRMWARE);
 	c.op_to_addrspace = cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 					FW_CMD_REQUEST_F |
@@ -6544,28 +6543,28 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	c.u.addrval.addr = cpu_to_be32(addr);
 	c.u.addrval.val = cpu_to_be32(val);
 
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_mdio_rd - पढ़ो a PHY रेजिस्टर through MDIO
+ *	t4_mdio_rd - read a PHY register through MDIO
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@phy_addr: the PHY address
- *	@mmd: the PHY MMD to access (0 क्रम clause 22 PHYs)
- *	@reg: the रेजिस्टर to पढ़ो
+ *	@mmd: the PHY MMD to access (0 for clause 22 PHYs)
+ *	@reg: the register to read
  *	@valp: where to store the value
  *
- *	Issues a FW command through the given mailbox to पढ़ो a PHY रेजिस्टर.
+ *	Issues a FW command through the given mailbox to read a PHY register.
  */
-पूर्णांक t4_mdio_rd(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक phy_addr,
-	       अचिन्हित पूर्णांक mmd, अचिन्हित पूर्णांक reg, u16 *valp)
-अणु
-	पूर्णांक ret;
+int t4_mdio_rd(struct adapter *adap, unsigned int mbox, unsigned int phy_addr,
+	       unsigned int mmd, unsigned int reg, u16 *valp)
+{
+	int ret;
 	u32 ldst_addrspace;
-	काष्ठा fw_ldst_cmd c;
+	struct fw_ldst_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	ldst_addrspace = FW_LDST_CMD_ADDRSPACE_V(FW_LDST_ADDRSPC_MDIO);
 	c.op_to_addrspace = cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 					FW_CMD_REQUEST_F | FW_CMD_READ_F |
@@ -6575,30 +6574,30 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 					 FW_LDST_CMD_MMD_V(mmd));
 	c.u.mdio.raddr = cpu_to_be16(reg);
 
-	ret = t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-	अगर (ret == 0)
+	ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+	if (ret == 0)
 		*valp = be16_to_cpu(c.u.mdio.rval);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_mdio_wr - ग_लिखो a PHY रेजिस्टर through MDIO
+ *	t4_mdio_wr - write a PHY register through MDIO
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@phy_addr: the PHY address
- *	@mmd: the PHY MMD to access (0 क्रम clause 22 PHYs)
- *	@reg: the रेजिस्टर to ग_लिखो
- *	@val: value to ग_लिखो
+ *	@mmd: the PHY MMD to access (0 for clause 22 PHYs)
+ *	@reg: the register to write
+ *	@val: value to write
  *
- *	Issues a FW command through the given mailbox to ग_लिखो a PHY रेजिस्टर.
+ *	Issues a FW command through the given mailbox to write a PHY register.
  */
-पूर्णांक t4_mdio_wr(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक phy_addr,
-	       अचिन्हित पूर्णांक mmd, अचिन्हित पूर्णांक reg, u16 val)
-अणु
+int t4_mdio_wr(struct adapter *adap, unsigned int mbox, unsigned int phy_addr,
+	       unsigned int mmd, unsigned int reg, u16 val)
+{
 	u32 ldst_addrspace;
-	काष्ठा fw_ldst_cmd c;
+	struct fw_ldst_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	ldst_addrspace = FW_LDST_CMD_ADDRSPACE_V(FW_LDST_ADDRSPC_MDIO);
 	c.op_to_addrspace = cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 					FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
@@ -6609,17 +6608,17 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	c.u.mdio.raddr = cpu_to_be16(reg);
 	c.u.mdio.rval = cpu_to_be16(val);
 
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
  *	t4_sge_decode_idma_state - decode the idma state
  *	@adapter: the adapter
  *	@state: the state idma is stuck in
  */
-व्योम t4_sge_decode_idma_state(काष्ठा adapter *adapter, पूर्णांक state)
-अणु
-	अटल स्थिर अक्षर * स्थिर t4_decode[] = अणु
+void t4_sge_decode_idma_state(struct adapter *adapter, int state)
+{
+	static const char * const t4_decode[] = {
 		"IDMA_IDLE",
 		"IDMA_PUSH_MORE_CPL_FIFO",
 		"IDMA_PUSH_CPL_MSG_HEADER_TO_FIFO",
@@ -6655,8 +6654,8 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 		"IDMA_FL_SEND_FIFO_TO_IMSG",
 		"IDMA_FL_REQ_DATAFL_DONE",
 		"IDMA_FL_REQ_HEADERFL_DONE",
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर t5_decode[] = अणु
+	};
+	static const char * const t5_decode[] = {
 		"IDMA_IDLE",
 		"IDMA_ALMOST_IDLE",
 		"IDMA_PUSH_MORE_CPL_FIFO",
@@ -6690,8 +6689,8 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 		"IDMA_FL_SEND_NEXT_PCIEHDR",
 		"IDMA_FL_SEND_PADDING",
 		"IDMA_FL_SEND_COMPLETION_TO_IMSG",
-	पूर्ण;
-	अटल स्थिर अक्षर * स्थिर t6_decode[] = अणु
+	};
+	static const char * const t6_decode[] = {
 		"IDMA_IDLE",
 		"IDMA_PUSH_MORE_CPL_FIFO",
 		"IDMA_PUSH_CPL_MSG_HEADER_TO_FIFO",
@@ -6723,76 +6722,76 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 		"IDMA_FL_SEND_NEXT_PCIEHDR",
 		"IDMA_FL_SEND_PADDING",
 		"IDMA_FL_SEND_COMPLETION_TO_IMSG",
-	पूर्ण;
-	अटल स्थिर u32 sge_regs[] = अणु
+	};
+	static const u32 sge_regs[] = {
 		SGE_DEBUG_DATA_LOW_INDEX_2_A,
 		SGE_DEBUG_DATA_LOW_INDEX_3_A,
 		SGE_DEBUG_DATA_HIGH_INDEX_10_A,
-	पूर्ण;
-	स्थिर अक्षर **sge_idma_decode;
-	पूर्णांक sge_idma_decode_nstates;
-	पूर्णांक i;
-	अचिन्हित पूर्णांक chip_version = CHELSIO_CHIP_VERSION(adapter->params.chip);
+	};
+	const char **sge_idma_decode;
+	int sge_idma_decode_nstates;
+	int i;
+	unsigned int chip_version = CHELSIO_CHIP_VERSION(adapter->params.chip);
 
 	/* Select the right set of decode strings to dump depending on the
 	 * adapter chip type.
 	 */
-	चयन (chip_version) अणु
-	हाल CHELSIO_T4:
-		sge_idma_decode = (स्थिर अक्षर **)t4_decode;
+	switch (chip_version) {
+	case CHELSIO_T4:
+		sge_idma_decode = (const char **)t4_decode;
 		sge_idma_decode_nstates = ARRAY_SIZE(t4_decode);
-		अवरोध;
+		break;
 
-	हाल CHELSIO_T5:
-		sge_idma_decode = (स्थिर अक्षर **)t5_decode;
+	case CHELSIO_T5:
+		sge_idma_decode = (const char **)t5_decode;
 		sge_idma_decode_nstates = ARRAY_SIZE(t5_decode);
-		अवरोध;
+		break;
 
-	हाल CHELSIO_T6:
-		sge_idma_decode = (स्थिर अक्षर **)t6_decode;
+	case CHELSIO_T6:
+		sge_idma_decode = (const char **)t6_decode;
 		sge_idma_decode_nstates = ARRAY_SIZE(t6_decode);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(adapter->pdev_dev,
 			"Unsupported chip version %d\n", chip_version);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (is_t4(adapter->params.chip)) अणु
-		sge_idma_decode = (स्थिर अक्षर **)t4_decode;
+	if (is_t4(adapter->params.chip)) {
+		sge_idma_decode = (const char **)t4_decode;
 		sge_idma_decode_nstates = ARRAY_SIZE(t4_decode);
-	पूर्ण अन्यथा अणु
-		sge_idma_decode = (स्थिर अक्षर **)t5_decode;
+	} else {
+		sge_idma_decode = (const char **)t5_decode;
 		sge_idma_decode_nstates = ARRAY_SIZE(t5_decode);
-	पूर्ण
+	}
 
-	अगर (state < sge_idma_decode_nstates)
+	if (state < sge_idma_decode_nstates)
 		CH_WARN(adapter, "idma state %s\n", sge_idma_decode[state]);
-	अन्यथा
+	else
 		CH_WARN(adapter, "idma state %d unknown\n", state);
 
-	क्रम (i = 0; i < ARRAY_SIZE(sge_regs); i++)
+	for (i = 0; i < ARRAY_SIZE(sge_regs); i++)
 		CH_WARN(adapter, "SGE register %#x value %#x\n",
-			sge_regs[i], t4_पढ़ो_reg(adapter, sge_regs[i]));
-पूर्ण
+			sge_regs[i], t4_read_reg(adapter, sge_regs[i]));
+}
 
 /**
  *      t4_sge_ctxt_flush - flush the SGE context cache
  *      @adap: the adapter
- *      @mbox: mailbox to use क्रम the FW command
+ *      @mbox: mailbox to use for the FW command
  *      @ctxt_type: Egress or Ingress
  *
  *      Issues a FW command through the given mailbox to flush the
  *      SGE context cache.
  */
-पूर्णांक t4_sge_ctxt_flush(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, पूर्णांक ctxt_type)
-अणु
-	पूर्णांक ret;
+int t4_sge_ctxt_flush(struct adapter *adap, unsigned int mbox, int ctxt_type)
+{
+	int ret;
 	u32 ldst_addrspace;
-	काष्ठा fw_ldst_cmd c;
+	struct fw_ldst_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	ldst_addrspace = FW_LDST_CMD_ADDRSPACE_V(ctxt_type == CTXT_EGRESS ?
 						 FW_LDST_ADDRSPC_SGE_EGRC :
 						 FW_LDST_ADDRSPC_SGE_INGC);
@@ -6802,73 +6801,73 @@ u32 t4_पढ़ो_rss_pf_mask(काष्ठा adapter *adapter, bool sleep_
 	c.cycles_to_len16 = cpu_to_be32(FW_LEN16(c));
 	c.u.idctxt.msg_ctxtflush = cpu_to_be32(FW_LDST_CMD_CTXTFLUSH_F);
 
-	ret = t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-	वापस ret;
-पूर्ण
+	ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+	return ret;
+}
 
 /**
- *	t4_पढ़ो_sge_dbqसमयrs - पढ़ो SGE Doorbell Queue Timer values
+ *	t4_read_sge_dbqtimers - read SGE Doorbell Queue Timer values
  *	@adap: the adapter
- *	@ndbqसमयrs: size of the provided SGE Doorbell Queue Timer table
- *	@dbqसमयrs: SGE Doorbell Queue Timer table
+ *	@ndbqtimers: size of the provided SGE Doorbell Queue Timer table
+ *	@dbqtimers: SGE Doorbell Queue Timer table
  *
- *	Reads the SGE Doorbell Queue Timer values पूर्णांकo the provided table.
+ *	Reads the SGE Doorbell Queue Timer values into the provided table.
  *	Returns 0 on success (Firmware and Hardware support this feature),
  *	an error on failure.
  */
-पूर्णांक t4_पढ़ो_sge_dbqसमयrs(काष्ठा adapter *adap, अचिन्हित पूर्णांक ndbqसमयrs,
-			  u16 *dbqसमयrs)
-अणु
-	पूर्णांक ret, dbqसमयrix;
+int t4_read_sge_dbqtimers(struct adapter *adap, unsigned int ndbqtimers,
+			  u16 *dbqtimers)
+{
+	int ret, dbqtimerix;
 
 	ret = 0;
-	dbqसमयrix = 0;
-	जबतक (dbqसमयrix < ndbqसमयrs) अणु
-		पूर्णांक nparams, param;
+	dbqtimerix = 0;
+	while (dbqtimerix < ndbqtimers) {
+		int nparams, param;
 		u32 params[7], vals[7];
 
-		nparams = ndbqसमयrs - dbqसमयrix;
-		अगर (nparams > ARRAY_SIZE(params))
+		nparams = ndbqtimers - dbqtimerix;
+		if (nparams > ARRAY_SIZE(params))
 			nparams = ARRAY_SIZE(params);
 
-		क्रम (param = 0; param < nparams; param++)
+		for (param = 0; param < nparams; param++)
 			params[param] =
 			  (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 			   FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_DBQ_TIMER) |
-			   FW_PARAMS_PARAM_Y_V(dbqसमयrix + param));
+			   FW_PARAMS_PARAM_Y_V(dbqtimerix + param));
 		ret = t4_query_params(adap, adap->mbox, adap->pf, 0,
 				      nparams, params, vals);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		क्रम (param = 0; param < nparams; param++)
-			dbqसमयrs[dbqसमयrix++] = vals[param];
-	पूर्ण
-	वापस ret;
-पूर्ण
+		for (param = 0; param < nparams; param++)
+			dbqtimers[dbqtimerix++] = vals[param];
+	}
+	return ret;
+}
 
 /**
  *      t4_fw_hello - establish communication with FW
  *      @adap: the adapter
- *      @mbox: mailbox to use क्रम the FW command
+ *      @mbox: mailbox to use for the FW command
  *      @evt_mbox: mailbox to receive async FW events
- *      @master: specअगरies the caller's willingness to be the device master
- *	@state: वापसs the current device state (अगर non-शून्य)
+ *      @master: specifies the caller's willingness to be the device master
+ *	@state: returns the current device state (if non-NULL)
  *
  *	Issues a command to establish communication with FW.  Returns either
- *	an error (negative पूर्णांकeger) or the mailbox of the Master PF.
+ *	an error (negative integer) or the mailbox of the Master PF.
  */
-पूर्णांक t4_fw_hello(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक evt_mbox,
-		क्रमागत dev_master master, क्रमागत dev_state *state)
-अणु
-	पूर्णांक ret;
-	काष्ठा fw_hello_cmd c;
+int t4_fw_hello(struct adapter *adap, unsigned int mbox, unsigned int evt_mbox,
+		enum dev_master master, enum dev_state *state)
+{
+	int ret;
+	struct fw_hello_cmd c;
 	u32 v;
-	अचिन्हित पूर्णांक master_mbox;
-	पूर्णांक retries = FW_CMD_HELLO_RETRIES;
+	unsigned int master_mbox;
+	int retries = FW_CMD_HELLO_RETRIES;
 
 retry:
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	INIT_CMD(c, HELLO, WRITE);
 	c.err_to_clearinit = cpu_to_be32(
 		FW_HELLO_CMD_MASTERDIS_V(master == MASTER_CANT) |
@@ -6882,404 +6881,404 @@ retry:
 	/*
 	 * Issue the HELLO command to the firmware.  If it's not successful
 	 * but indicates that we got a "busy" or "timeout" condition, retry
-	 * the HELLO until we exhaust our retry limit.  If we करो exceed our
-	 * retry limit, check to see अगर the firmware left us any error
-	 * inक्रमmation and report that अगर so.
+	 * the HELLO until we exhaust our retry limit.  If we do exceed our
+	 * retry limit, check to see if the firmware left us any error
+	 * information and report that if so.
 	 */
-	ret = t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-	अगर (ret < 0) अणु
-		अगर ((ret == -EBUSY || ret == -ETIMEDOUT) && retries-- > 0)
-			जाओ retry;
-		अगर (t4_पढ़ो_reg(adap, PCIE_FW_A) & PCIE_FW_ERR_F)
+	ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+	if (ret < 0) {
+		if ((ret == -EBUSY || ret == -ETIMEDOUT) && retries-- > 0)
+			goto retry;
+		if (t4_read_reg(adap, PCIE_FW_A) & PCIE_FW_ERR_F)
 			t4_report_fw_error(adap);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	v = be32_to_cpu(c.err_to_clearinit);
 	master_mbox = FW_HELLO_CMD_MBMASTER_G(v);
-	अगर (state) अणु
-		अगर (v & FW_HELLO_CMD_ERR_F)
+	if (state) {
+		if (v & FW_HELLO_CMD_ERR_F)
 			*state = DEV_STATE_ERR;
-		अन्यथा अगर (v & FW_HELLO_CMD_INIT_F)
+		else if (v & FW_HELLO_CMD_INIT_F)
 			*state = DEV_STATE_INIT;
-		अन्यथा
+		else
 			*state = DEV_STATE_UNINIT;
-	पूर्ण
+	}
 
 	/*
-	 * If we're not the Master PF then we need to रुको around क्रम the
+	 * If we're not the Master PF then we need to wait around for the
 	 * Master PF Driver to finish setting up the adapter.
 	 *
-	 * Note that we also करो this रुको अगर we're a non-Master-capable PF and
+	 * Note that we also do this wait if we're a non-Master-capable PF and
 	 * there is no current Master PF; a Master PF may show up momentarily
-	 * and we wouldn't want to fail poपूर्णांकlessly.  (This can happen when an
-	 * OS loads lots of dअगरferent drivers rapidly at the same समय).  In
-	 * this हाल, the Master PF वापसed by the firmware will be
+	 * and we wouldn't want to fail pointlessly.  (This can happen when an
+	 * OS loads lots of different drivers rapidly at the same time).  In
+	 * this case, the Master PF returned by the firmware will be
 	 * PCIE_FW_MASTER_M so the test below will work ...
 	 */
-	अगर ((v & (FW_HELLO_CMD_ERR_F|FW_HELLO_CMD_INIT_F)) == 0 &&
-	    master_mbox != mbox) अणु
-		पूर्णांक रुकोing = FW_CMD_HELLO_TIMEOUT;
+	if ((v & (FW_HELLO_CMD_ERR_F|FW_HELLO_CMD_INIT_F)) == 0 &&
+	    master_mbox != mbox) {
+		int waiting = FW_CMD_HELLO_TIMEOUT;
 
 		/*
-		 * Wait क्रम the firmware to either indicate an error or
+		 * Wait for the firmware to either indicate an error or
 		 * initialized state.  If we see either of these we bail out
 		 * and report the issue to the caller.  If we exhaust the
 		 * "hello timeout" and we haven't exhausted our retries, try
-		 * again.  Otherwise bail with a समयout error.
+		 * again.  Otherwise bail with a timeout error.
 		 */
-		क्रम (;;) अणु
+		for (;;) {
 			u32 pcie_fw;
 
 			msleep(50);
-			रुकोing -= 50;
+			waiting -= 50;
 
 			/*
 			 * If neither Error nor Initialized are indicated
-			 * by the firmware keep रुकोing till we exhaust our
-			 * समयout ... and then retry अगर we haven't exhausted
+			 * by the firmware keep waiting till we exhaust our
+			 * timeout ... and then retry if we haven't exhausted
 			 * our retries ...
 			 */
-			pcie_fw = t4_पढ़ो_reg(adap, PCIE_FW_A);
-			अगर (!(pcie_fw & (PCIE_FW_ERR_F|PCIE_FW_INIT_F))) अणु
-				अगर (रुकोing <= 0) अणु
-					अगर (retries-- > 0)
-						जाओ retry;
+			pcie_fw = t4_read_reg(adap, PCIE_FW_A);
+			if (!(pcie_fw & (PCIE_FW_ERR_F|PCIE_FW_INIT_F))) {
+				if (waiting <= 0) {
+					if (retries-- > 0)
+						goto retry;
 
-					वापस -ETIMEDOUT;
-				पूर्ण
-				जारी;
-			पूर्ण
+					return -ETIMEDOUT;
+				}
+				continue;
+			}
 
 			/*
 			 * We either have an Error or Initialized condition
 			 * report errors preferentially.
 			 */
-			अगर (state) अणु
-				अगर (pcie_fw & PCIE_FW_ERR_F)
+			if (state) {
+				if (pcie_fw & PCIE_FW_ERR_F)
 					*state = DEV_STATE_ERR;
-				अन्यथा अगर (pcie_fw & PCIE_FW_INIT_F)
+				else if (pcie_fw & PCIE_FW_INIT_F)
 					*state = DEV_STATE_INIT;
-			पूर्ण
+			}
 
 			/*
-			 * If we arrived beक्रमe a Master PF was selected and
+			 * If we arrived before a Master PF was selected and
 			 * there's not a valid Master PF, grab its identity
-			 * क्रम our caller.
+			 * for our caller.
 			 */
-			अगर (master_mbox == PCIE_FW_MASTER_M &&
+			if (master_mbox == PCIE_FW_MASTER_M &&
 			    (pcie_fw & PCIE_FW_MASTER_VLD_F))
 				master_mbox = PCIE_FW_MASTER_G(pcie_fw);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस master_mbox;
-पूर्ण
+	return master_mbox;
+}
 
 /**
  *	t4_fw_bye - end communication with FW
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *
  *	Issues a command to terminate communication with FW.
  */
-पूर्णांक t4_fw_bye(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox)
-अणु
-	काष्ठा fw_bye_cmd c;
+int t4_fw_bye(struct adapter *adap, unsigned int mbox)
+{
+	struct fw_bye_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	INIT_CMD(c, BYE, WRITE);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
  *	t4_init_cmd - ask FW to initialize the device
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *
  *	Issues a command to FW to partially initialize the device.  This
- *	perक्रमms initialization that generally करोesn't depend on user input.
+ *	performs initialization that generally doesn't depend on user input.
  */
-पूर्णांक t4_early_init(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox)
-अणु
-	काष्ठा fw_initialize_cmd c;
+int t4_early_init(struct adapter *adap, unsigned int mbox)
+{
+	struct fw_initialize_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	INIT_CMD(c, INITIALIZE, WRITE);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
  *	t4_fw_reset - issue a reset to FW
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
- *	@reset: specअगरies the type of reset to perक्रमm
+ *	@mbox: mailbox to use for the FW command
+ *	@reset: specifies the type of reset to perform
  *
- *	Issues a reset command of the specअगरied type to FW.
+ *	Issues a reset command of the specified type to FW.
  */
-पूर्णांक t4_fw_reset(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, पूर्णांक reset)
-अणु
-	काष्ठा fw_reset_cmd c;
+int t4_fw_reset(struct adapter *adap, unsigned int mbox, int reset)
+{
+	struct fw_reset_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	INIT_CMD(c, RESET, WRITE);
 	c.val = cpu_to_be32(reset);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_fw_halt - issue a reset/halt to FW and put uP पूर्णांकo RESET
+ *	t4_fw_halt - issue a reset/halt to FW and put uP into RESET
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW RESET command (अगर desired)
- *	@क्रमce: क्रमce uP पूर्णांकo RESET even अगर FW RESET command fails
+ *	@mbox: mailbox to use for the FW RESET command (if desired)
+ *	@force: force uP into RESET even if FW RESET command fails
  *
- *	Issues a RESET command to firmware (अगर desired) with a HALT indication
- *	and then माला_दो the microprocessor पूर्णांकo RESET state.  The RESET command
- *	will only be issued अगर a legitimate mailbox is provided (mbox <=
+ *	Issues a RESET command to firmware (if desired) with a HALT indication
+ *	and then puts the microprocessor into RESET state.  The RESET command
+ *	will only be issued if a legitimate mailbox is provided (mbox <=
  *	PCIE_FW_MASTER_M).
  *
- *	This is generally used in order क्रम the host to safely manipulate the
+ *	This is generally used in order for the host to safely manipulate the
  *	adapter without fear of conflicting with whatever the firmware might
- *	be करोing.  The only way out of this state is to RESTART the firmware
+ *	be doing.  The only way out of this state is to RESTART the firmware
  *	...
  */
-अटल पूर्णांक t4_fw_halt(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, पूर्णांक क्रमce)
-अणु
-	पूर्णांक ret = 0;
+static int t4_fw_halt(struct adapter *adap, unsigned int mbox, int force)
+{
+	int ret = 0;
 
 	/*
 	 * If a legitimate mailbox is provided, issue a RESET command
 	 * with a HALT indication.
 	 */
-	अगर (mbox <= PCIE_FW_MASTER_M) अणु
-		काष्ठा fw_reset_cmd c;
+	if (mbox <= PCIE_FW_MASTER_M) {
+		struct fw_reset_cmd c;
 
-		स_रखो(&c, 0, माप(c));
+		memset(&c, 0, sizeof(c));
 		INIT_CMD(c, RESET, WRITE);
 		c.val = cpu_to_be32(PIORST_F | PIORSTMODE_F);
 		c.halt_pkd = cpu_to_be32(FW_RESET_CMD_HALT_F);
-		ret = t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-	पूर्ण
+		ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+	}
 
 	/*
-	 * Normally we won't complete the operation अगर the firmware RESET
-	 * command fails but अगर our caller insists we'll go ahead and put the
-	 * uP पूर्णांकo RESET.  This can be useful अगर the firmware is hung or even
-	 * missing ...  We'll have to take the risk of putting the uP पूर्णांकo
-	 * RESET without the cooperation of firmware in that हाल.
+	 * Normally we won't complete the operation if the firmware RESET
+	 * command fails but if our caller insists we'll go ahead and put the
+	 * uP into RESET.  This can be useful if the firmware is hung or even
+	 * missing ...  We'll have to take the risk of putting the uP into
+	 * RESET without the cooperation of firmware in that case.
 	 *
-	 * We also क्रमce the firmware's HALT flag to be on in हाल we bypassed
+	 * We also force the firmware's HALT flag to be on in case we bypassed
 	 * the firmware RESET command above or we're dealing with old firmware
-	 * which करोesn't have the HALT capability.  This will serve as a flag
-	 * क्रम the incoming firmware to know that it's coming out of a HALT
-	 * rather than a RESET ... अगर it's new enough to understand that ...
+	 * which doesn't have the HALT capability.  This will serve as a flag
+	 * for the incoming firmware to know that it's coming out of a HALT
+	 * rather than a RESET ... if it's new enough to understand that ...
 	 */
-	अगर (ret == 0 || क्रमce) अणु
+	if (ret == 0 || force) {
 		t4_set_reg_field(adap, CIM_BOOT_CFG_A, UPCRST_F, UPCRST_F);
 		t4_set_reg_field(adap, PCIE_FW_A, PCIE_FW_HALT_F,
 				 PCIE_FW_HALT_F);
-	पूर्ण
+	}
 
 	/*
-	 * And we always वापस the result of the firmware RESET command
-	 * even when we क्रमce the uP पूर्णांकo RESET ...
+	 * And we always return the result of the firmware RESET command
+	 * even when we force the uP into RESET ...
 	 */
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	t4_fw_restart - restart the firmware by taking the uP out of RESET
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
- *	@reset: अगर we want to करो a RESET to restart things
+ *	@mbox: mailbox to use for the FW command
+ *	@reset: if we want to do a RESET to restart things
  *
  *	Restart firmware previously halted by t4_fw_halt().  On successful
- *	वापस the previous PF Master reमुख्यs as the new PF Master and there
+ *	return the previous PF Master remains as the new PF Master and there
  *	is no need to issue a new HELLO command, etc.
  *
- *	We करो this in two ways:
+ *	We do this in two ways:
  *
  *	 1. If we're dealing with newer firmware we'll simply want to take
  *	    the chip's microprocessor out of RESET.  This will cause the
  *	    firmware to start up from its start vector.  And then we'll loop
  *	    until the firmware indicates it's started again (PCIE_FW.HALT
- *	    reset to 0) or we समयout.
+ *	    reset to 0) or we timeout.
  *
  *	 2. If we're dealing with older firmware then we'll need to RESET
  *	    the chip since older firmware won't recognize the PCIE_FW.HALT
- *	    flag and स्वतःmatically RESET itself on startup.
+ *	    flag and automatically RESET itself on startup.
  */
-अटल पूर्णांक t4_fw_restart(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, पूर्णांक reset)
-अणु
-	अगर (reset) अणु
+static int t4_fw_restart(struct adapter *adap, unsigned int mbox, int reset)
+{
+	if (reset) {
 		/*
 		 * Since we're directing the RESET instead of the firmware
-		 * करोing it स्वतःmatically, we need to clear the PCIE_FW.HALT
+		 * doing it automatically, we need to clear the PCIE_FW.HALT
 		 * bit.
 		 */
 		t4_set_reg_field(adap, PCIE_FW_A, PCIE_FW_HALT_F, 0);
 
 		/*
 		 * If we've been given a valid mailbox, first try to get the
-		 * firmware to करो the RESET.  If that works, great and we can
-		 * वापस success.  Otherwise, अगर we haven't been given a
+		 * firmware to do the RESET.  If that works, great and we can
+		 * return success.  Otherwise, if we haven't been given a
 		 * valid mailbox or the RESET command failed, fall back to
 		 * hitting the chip with a hammer.
 		 */
-		अगर (mbox <= PCIE_FW_MASTER_M) अणु
+		if (mbox <= PCIE_FW_MASTER_M) {
 			t4_set_reg_field(adap, CIM_BOOT_CFG_A, UPCRST_F, 0);
 			msleep(100);
-			अगर (t4_fw_reset(adap, mbox,
+			if (t4_fw_reset(adap, mbox,
 					PIORST_F | PIORSTMODE_F) == 0)
-				वापस 0;
-		पूर्ण
+				return 0;
+		}
 
-		t4_ग_लिखो_reg(adap, PL_RST_A, PIORST_F | PIORSTMODE_F);
+		t4_write_reg(adap, PL_RST_A, PIORST_F | PIORSTMODE_F);
 		msleep(2000);
-	पूर्ण अन्यथा अणु
-		पूर्णांक ms;
+	} else {
+		int ms;
 
 		t4_set_reg_field(adap, CIM_BOOT_CFG_A, UPCRST_F, 0);
-		क्रम (ms = 0; ms < FW_CMD_MAX_TIMEOUT; ) अणु
-			अगर (!(t4_पढ़ो_reg(adap, PCIE_FW_A) & PCIE_FW_HALT_F))
-				वापस 0;
+		for (ms = 0; ms < FW_CMD_MAX_TIMEOUT; ) {
+			if (!(t4_read_reg(adap, PCIE_FW_A) & PCIE_FW_HALT_F))
+				return 0;
 			msleep(100);
 			ms += 100;
-		पूर्ण
-		वापस -ETIMEDOUT;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return -ETIMEDOUT;
+	}
+	return 0;
+}
 
 /**
- *	t4_fw_upgrade - perक्रमm all of the steps necessary to upgrade FW
+ *	t4_fw_upgrade - perform all of the steps necessary to upgrade FW
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW RESET command (अगर desired)
- *	@fw_data: the firmware image to ग_लिखो
+ *	@mbox: mailbox to use for the FW RESET command (if desired)
+ *	@fw_data: the firmware image to write
  *	@size: image size
- *	@क्रमce: क्रमce upgrade even अगर firmware करोesn't cooperate
+ *	@force: force upgrade even if firmware doesn't cooperate
  *
- *	Perक्रमm all of the steps necessary क्रम upgrading an adapter's
+ *	Perform all of the steps necessary for upgrading an adapter's
  *	firmware image.  Normally this requires the cooperation of the
  *	existing firmware in order to halt all existing activities
- *	but अगर an invalid mailbox token is passed in we skip that step
- *	(though we'll still put the adapter microprocessor पूर्णांकo RESET in
- *	that हाल).
+ *	but if an invalid mailbox token is passed in we skip that step
+ *	(though we'll still put the adapter microprocessor into RESET in
+ *	that case).
  *
- *	On successful वापस the new firmware will have been loaded and
+ *	On successful return the new firmware will have been loaded and
  *	the adapter will have been fully RESET losing all previous setup
- *	state.  On unsuccessful वापस the adapter may be completely hosed ...
- *	positive त्रुटि_सं indicates that the adapter is ~probably~ पूर्णांकact, a
- *	negative त्रुटि_सं indicates that things are looking bad ...
+ *	state.  On unsuccessful return the adapter may be completely hosed ...
+ *	positive errno indicates that the adapter is ~probably~ intact, a
+ *	negative errno indicates that things are looking bad ...
  */
-पूर्णांक t4_fw_upgrade(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
-		  स्थिर u8 *fw_data, अचिन्हित पूर्णांक size, पूर्णांक क्रमce)
-अणु
-	स्थिर काष्ठा fw_hdr *fw_hdr = (स्थिर काष्ठा fw_hdr *)fw_data;
-	पूर्णांक reset, ret;
+int t4_fw_upgrade(struct adapter *adap, unsigned int mbox,
+		  const u8 *fw_data, unsigned int size, int force)
+{
+	const struct fw_hdr *fw_hdr = (const struct fw_hdr *)fw_data;
+	int reset, ret;
 
-	अगर (!t4_fw_matches_chip(adap, fw_hdr))
-		वापस -EINVAL;
+	if (!t4_fw_matches_chip(adap, fw_hdr))
+		return -EINVAL;
 
 	/* Disable CXGB4_FW_OK flag so that mbox commands with CXGB4_FW_OK flag
 	 * set wont be sent when we are flashing FW.
 	 */
 	adap->flags &= ~CXGB4_FW_OK;
 
-	ret = t4_fw_halt(adap, mbox, क्रमce);
-	अगर (ret < 0 && !क्रमce)
-		जाओ out;
+	ret = t4_fw_halt(adap, mbox, force);
+	if (ret < 0 && !force)
+		goto out;
 
 	ret = t4_load_fw(adap, fw_data, size);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	/*
 	 * If there was a Firmware Configuration File stored in FLASH,
 	 * there's a good chance that it won't be compatible with the new
-	 * Firmware.  In order to prevent dअगरficult to diagnose adapter
+	 * Firmware.  In order to prevent difficult to diagnose adapter
 	 * initialization issues, we clear out the Firmware Configuration File
 	 * portion of the FLASH .  The user will need to re-FLASH a new
 	 * Firmware Configuration File which is compatible with the new
-	 * Firmware अगर that's desired.
+	 * Firmware if that's desired.
 	 */
-	(व्योम)t4_load_cfg(adap, शून्य, 0);
+	(void)t4_load_cfg(adap, NULL, 0);
 
 	/*
-	 * Older versions of the firmware करोn't understand the new
-	 * PCIE_FW.HALT flag and so won't know to perक्रमm a RESET when they
-	 * restart.  So क्रम newly loaded older firmware we'll have to करो the
-	 * RESET क्रम it so it starts up on a clean slate.  We can tell अगर
+	 * Older versions of the firmware don't understand the new
+	 * PCIE_FW.HALT flag and so won't know to perform a RESET when they
+	 * restart.  So for newly loaded older firmware we'll have to do the
+	 * RESET for it so it starts up on a clean slate.  We can tell if
 	 * the newly loaded firmware will handle this right by checking
-	 * its header flags to see अगर it advertises the capability.
+	 * its header flags to see if it advertises the capability.
 	 */
 	reset = ((be32_to_cpu(fw_hdr->flags) & FW_HDR_FLAGS_RESET_HALT) == 0);
 	ret = t4_fw_restart(adap, mbox, reset);
 
 	/* Grab potentially new Firmware Device Log parameters so we can see
 	 * how healthy the new Firmware is.  It's okay to contact the new
-	 * Firmware क्रम these parameters even though, as far as it's
+	 * Firmware for these parameters even though, as far as it's
 	 * concerned, we've never said "HELLO" to it ...
 	 */
-	(व्योम)t4_init_devlog_params(adap);
+	(void)t4_init_devlog_params(adap);
 out:
 	adap->flags |= CXGB4_FW_OK;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_fl_pkt_align - वापस the fl packet alignment
+ *	t4_fl_pkt_align - return the fl packet alignment
  *	@adap: the adapter
  *
- *	T4 has a single field to specअगरy the packing and padding boundary.
- *	T5 onwards has separate fields क्रम this and hence the alignment क्रम
+ *	T4 has a single field to specify the packing and padding boundary.
+ *	T5 onwards has separate fields for this and hence the alignment for
  *	next packet offset is maximum of these two.
  *
  */
-पूर्णांक t4_fl_pkt_align(काष्ठा adapter *adap)
-अणु
+int t4_fl_pkt_align(struct adapter *adap)
+{
 	u32 sge_control, sge_control2;
-	अचिन्हित पूर्णांक ingpadboundary, ingpackboundary, fl_align, ingpad_shअगरt;
+	unsigned int ingpadboundary, ingpackboundary, fl_align, ingpad_shift;
 
-	sge_control = t4_पढ़ो_reg(adap, SGE_CONTROL_A);
+	sge_control = t4_read_reg(adap, SGE_CONTROL_A);
 
-	/* T4 uses a single control field to specअगरy both the PCIe Padding and
-	 * Packing Boundary.  T5 पूर्णांकroduced the ability to specअगरy these
+	/* T4 uses a single control field to specify both the PCIe Padding and
+	 * Packing Boundary.  T5 introduced the ability to specify these
 	 * separately.  The actual Ingress Packet Data alignment boundary
 	 * within Packed Buffer Mode is the maximum of these two
-	 * specअगरications.  (Note that it makes no real practical sense to
+	 * specifications.  (Note that it makes no real practical sense to
 	 * have the Padding Boundary be larger than the Packing Boundary but you
 	 * could set the chip up that way and, in fact, legacy T4 code would
-	 * end करोing this because it would initialize the Padding Boundary and
+	 * end doing this because it would initialize the Padding Boundary and
 	 * leave the Packing Boundary initialized to 0 (16 bytes).)
 	 * Padding Boundary values in T6 starts from 8B,
-	 * where as it is 32B क्रम T4 and T5.
+	 * where as it is 32B for T4 and T5.
 	 */
-	अगर (CHELSIO_CHIP_VERSION(adap->params.chip) <= CHELSIO_T5)
-		ingpad_shअगरt = INGPADBOUNDARY_SHIFT_X;
-	अन्यथा
-		ingpad_shअगरt = T6_INGPADBOUNDARY_SHIFT_X;
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) <= CHELSIO_T5)
+		ingpad_shift = INGPADBOUNDARY_SHIFT_X;
+	else
+		ingpad_shift = T6_INGPADBOUNDARY_SHIFT_X;
 
-	ingpadboundary = 1 << (INGPADBOUNDARY_G(sge_control) + ingpad_shअगरt);
+	ingpadboundary = 1 << (INGPADBOUNDARY_G(sge_control) + ingpad_shift);
 
 	fl_align = ingpadboundary;
-	अगर (!is_t4(adap->params.chip)) अणु
-		/* T5 has a weird पूर्णांकerpretation of one of the PCIe Packing
+	if (!is_t4(adap->params.chip)) {
+		/* T5 has a weird interpretation of one of the PCIe Packing
 		 * Boundary values.  No idea why ...
 		 */
-		sge_control2 = t4_पढ़ो_reg(adap, SGE_CONTROL2_A);
+		sge_control2 = t4_read_reg(adap, SGE_CONTROL2_A);
 		ingpackboundary = INGPACKBOUNDARY_G(sge_control2);
-		अगर (ingpackboundary == INGPACKBOUNDARY_16B_X)
+		if (ingpackboundary == INGPACKBOUNDARY_16B_X)
 			ingpackboundary = 16;
-		अन्यथा
+		else
 			ingpackboundary = 1 << (ingpackboundary +
 						INGPACKBOUNDARY_SHIFT_X);
 
 		fl_align = max(ingpadboundary, ingpackboundary);
-	पूर्ण
-	वापस fl_align;
-पूर्ण
+	}
+	return fl_align;
+}
 
 /**
  *	t4_fixup_host_params - fix up host-dependent parameters
@@ -7287,20 +7286,20 @@ out:
  *	@page_size: the host's Base Page Size
  *	@cache_line_size: the host's Cache Line Size
  *
- *	Various रेजिस्टरs in T4 contain values which are dependent on the
+ *	Various registers in T4 contain values which are dependent on the
  *	host's Base Page and Cache Line Sizes.  This function will fix all of
- *	those रेजिस्टरs with the appropriate values as passed in ...
+ *	those registers with the appropriate values as passed in ...
  */
-पूर्णांक t4_fixup_host_params(काष्ठा adapter *adap, अचिन्हित पूर्णांक page_size,
-			 अचिन्हित पूर्णांक cache_line_size)
-अणु
-	अचिन्हित पूर्णांक page_shअगरt = fls(page_size) - 1;
-	अचिन्हित पूर्णांक sge_hps = page_shअगरt - 10;
-	अचिन्हित पूर्णांक stat_len = cache_line_size > 64 ? 128 : 64;
-	अचिन्हित पूर्णांक fl_align = cache_line_size < 32 ? 32 : cache_line_size;
-	अचिन्हित पूर्णांक fl_align_log = fls(fl_align) - 1;
+int t4_fixup_host_params(struct adapter *adap, unsigned int page_size,
+			 unsigned int cache_line_size)
+{
+	unsigned int page_shift = fls(page_size) - 1;
+	unsigned int sge_hps = page_shift - 10;
+	unsigned int stat_len = cache_line_size > 64 ? 128 : 64;
+	unsigned int fl_align = cache_line_size < 32 ? 32 : cache_line_size;
+	unsigned int fl_align_log = fls(fl_align) - 1;
 
-	t4_ग_लिखो_reg(adap, SGE_HOST_PAGE_SIZE_A,
+	t4_write_reg(adap, SGE_HOST_PAGE_SIZE_A,
 		     HOSTPAGESIZEPF0_V(sge_hps) |
 		     HOSTPAGESIZEPF1_V(sge_hps) |
 		     HOSTPAGESIZEPF2_V(sge_hps) |
@@ -7310,82 +7309,82 @@ out:
 		     HOSTPAGESIZEPF6_V(sge_hps) |
 		     HOSTPAGESIZEPF7_V(sge_hps));
 
-	अगर (is_t4(adap->params.chip)) अणु
+	if (is_t4(adap->params.chip)) {
 		t4_set_reg_field(adap, SGE_CONTROL_A,
 				 INGPADBOUNDARY_V(INGPADBOUNDARY_M) |
 				 EGRSTATUSPAGESIZE_F,
 				 INGPADBOUNDARY_V(fl_align_log -
 						  INGPADBOUNDARY_SHIFT_X) |
 				 EGRSTATUSPAGESIZE_V(stat_len != 64));
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक pack_align;
-		अचिन्हित पूर्णांक ingpad, ingpack;
+	} else {
+		unsigned int pack_align;
+		unsigned int ingpad, ingpack;
 
-		/* T5 पूर्णांकroduced the separation of the Free List Padding and
+		/* T5 introduced the separation of the Free List Padding and
 		 * Packing Boundaries.  Thus, we can select a smaller Padding
-		 * Boundary to aव्योम uselessly chewing up PCIe Link and Memory
+		 * Boundary to avoid uselessly chewing up PCIe Link and Memory
 		 * Bandwidth, and use a Packing Boundary which is large enough
-		 * to aव्योम false sharing between CPUs, etc.
+		 * to avoid false sharing between CPUs, etc.
 		 *
 		 * For the PCI Link, the smaller the Padding Boundary the
 		 * better.  For the Memory Controller, a smaller Padding
 		 * Boundary is better until we cross under the Memory Line
 		 * Size (the minimum unit of transfer to/from Memory).  If we
 		 * have a Padding Boundary which is smaller than the Memory
-		 * Line Size, that'll involve a Read-Modअगरy-Write cycle on the
+		 * Line Size, that'll involve a Read-Modify-Write cycle on the
 		 * Memory Controller which is never good.
 		 */
 
 		/* We want the Packing Boundary to be based on the Cache Line
-		 * Size in order to help aव्योम False Sharing perक्रमmance
+		 * Size in order to help avoid False Sharing performance
 		 * issues between CPUs, etc.  We also want the Packing
 		 * Boundary to incorporate the PCI-E Maximum Payload Size.  We
-		 * get best perक्रमmance when the Packing Boundary is a
+		 * get best performance when the Packing Boundary is a
 		 * multiple of the Maximum Payload Size.
 		 */
 		pack_align = fl_align;
-		अगर (pci_is_pcie(adap->pdev)) अणु
-			अचिन्हित पूर्णांक mps, mps_log;
+		if (pci_is_pcie(adap->pdev)) {
+			unsigned int mps, mps_log;
 			u16 devctl;
 
 			/* The PCIe Device Control Maximum Payload Size field
-			 * [bits 7:5] encodes sizes as घातers of 2 starting at
+			 * [bits 7:5] encodes sizes as powers of 2 starting at
 			 * 128 bytes.
 			 */
-			pcie_capability_पढ़ो_word(adap->pdev, PCI_EXP_DEVCTL,
+			pcie_capability_read_word(adap->pdev, PCI_EXP_DEVCTL,
 						  &devctl);
 			mps_log = ((devctl & PCI_EXP_DEVCTL_PAYLOAD) >> 5) + 7;
 			mps = 1 << mps_log;
-			अगर (mps > pack_align)
+			if (mps > pack_align)
 				pack_align = mps;
-		पूर्ण
+		}
 
-		/* N.B. T5/T6 have a crazy special पूर्णांकerpretation of the "0"
-		 * value क्रम the Packing Boundary.  This corresponds to 16
-		 * bytes instead of the expected 32 bytes.  So अगर we want 32
-		 * bytes, the best we can really करो is 64 bytes ...
+		/* N.B. T5/T6 have a crazy special interpretation of the "0"
+		 * value for the Packing Boundary.  This corresponds to 16
+		 * bytes instead of the expected 32 bytes.  So if we want 32
+		 * bytes, the best we can really do is 64 bytes ...
 		 */
-		अगर (pack_align <= 16) अणु
+		if (pack_align <= 16) {
 			ingpack = INGPACKBOUNDARY_16B_X;
 			fl_align = 16;
-		पूर्ण अन्यथा अगर (pack_align == 32) अणु
+		} else if (pack_align == 32) {
 			ingpack = INGPACKBOUNDARY_64B_X;
 			fl_align = 64;
-		पूर्ण अन्यथा अणु
-			अचिन्हित पूर्णांक pack_align_log = fls(pack_align) - 1;
+		} else {
+			unsigned int pack_align_log = fls(pack_align) - 1;
 
 			ingpack = pack_align_log - INGPACKBOUNDARY_SHIFT_X;
 			fl_align = pack_align;
-		पूर्ण
+		}
 
 		/* Use the smallest Ingress Padding which isn't smaller than
 		 * the Memory Controller Read/Write Size.  We'll take that as
-		 * being 8 bytes since we करोn't know of any प्रणाली with a
+		 * being 8 bytes since we don't know of any system with a
 		 * wider Memory Controller Bus Width.
 		 */
-		अगर (is_t5(adap->params.chip))
+		if (is_t5(adap->params.chip))
 			ingpad = INGPADBOUNDARY_32B_X;
-		अन्यथा
+		else
 			ingpad = T6_INGPADBOUNDARY_8B_X;
 
 		t4_set_reg_field(adap, SGE_CONTROL_A,
@@ -7396,11 +7395,11 @@ out:
 		t4_set_reg_field(adap, SGE_CONTROL2_A,
 				 INGPACKBOUNDARY_V(INGPACKBOUNDARY_M),
 				 INGPACKBOUNDARY_V(ingpack));
-	पूर्ण
+	}
 	/*
 	 * Adjust various SGE Free List Host Buffer Sizes.
 	 *
-	 * This is something of a crock since we're using fixed indices पूर्णांकo
+	 * This is something of a crock since we're using fixed indices into
 	 * the array which are also known by the sge.c code and the T4
 	 * Firmware Configuration File.  We need to come up with a much better
 	 * approach to managing this array.  For now, the first four entries
@@ -7412,149 +7411,149 @@ out:
 	 *   3: Buffer size corresponding to 9000 byte MTU (unpacked mode)
 	 *
 	 * For the single-MTU buffers in unpacked mode we need to include
-	 * space क्रम the SGE Control Packet Shअगरt, 14 byte Ethernet header,
+	 * space for the SGE Control Packet Shift, 14 byte Ethernet header,
 	 * possible 4 byte VLAN tag, all rounded up to the next Ingress Packet
 	 * Padding boundary.  All of these are accommodated in the Factory
-	 * Default Firmware Configuration File but we need to adjust it क्रम
+	 * Default Firmware Configuration File but we need to adjust it for
 	 * this host's cache line size.
 	 */
-	t4_ग_लिखो_reg(adap, SGE_FL_BUFFER_SIZE0_A, page_size);
-	t4_ग_लिखो_reg(adap, SGE_FL_BUFFER_SIZE2_A,
-		     (t4_पढ़ो_reg(adap, SGE_FL_BUFFER_SIZE2_A) + fl_align-1)
+	t4_write_reg(adap, SGE_FL_BUFFER_SIZE0_A, page_size);
+	t4_write_reg(adap, SGE_FL_BUFFER_SIZE2_A,
+		     (t4_read_reg(adap, SGE_FL_BUFFER_SIZE2_A) + fl_align-1)
 		     & ~(fl_align-1));
-	t4_ग_लिखो_reg(adap, SGE_FL_BUFFER_SIZE3_A,
-		     (t4_पढ़ो_reg(adap, SGE_FL_BUFFER_SIZE3_A) + fl_align-1)
+	t4_write_reg(adap, SGE_FL_BUFFER_SIZE3_A,
+		     (t4_read_reg(adap, SGE_FL_BUFFER_SIZE3_A) + fl_align-1)
 		     & ~(fl_align-1));
 
-	t4_ग_लिखो_reg(adap, ULP_RX_TDDP_PSZ_A, HPZ0_V(page_shअगरt - 12));
+	t4_write_reg(adap, ULP_RX_TDDP_PSZ_A, HPZ0_V(page_shift - 12));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	t4_fw_initialize - ask FW to initialize the device
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *
  *	Issues a command to FW to partially initialize the device.  This
- *	perक्रमms initialization that generally करोesn't depend on user input.
+ *	performs initialization that generally doesn't depend on user input.
  */
-पूर्णांक t4_fw_initialize(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox)
-अणु
-	काष्ठा fw_initialize_cmd c;
+int t4_fw_initialize(struct adapter *adap, unsigned int mbox)
+{
+	struct fw_initialize_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	INIT_CMD(c, INITIALIZE, WRITE);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
  *	t4_query_params_rw - query FW or device parameters
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF
  *	@vf: the VF
  *	@nparams: the number of parameters
  *	@params: the parameter names
  *	@val: the parameter values
- *	@rw: Write and पढ़ो flag
- *	@sleep_ok: अगर true, we may sleep aरुकोing mbox cmd completion
+ *	@rw: Write and read flag
+ *	@sleep_ok: if true, we may sleep awaiting mbox cmd completion
  *
  *	Reads the value of FW or device parameters.  Up to 7 parameters can be
  *	queried at once.
  */
-पूर्णांक t4_query_params_rw(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		       अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक nparams, स्थिर u32 *params,
-		       u32 *val, पूर्णांक rw, bool sleep_ok)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा fw_params_cmd c;
+int t4_query_params_rw(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		       unsigned int vf, unsigned int nparams, const u32 *params,
+		       u32 *val, int rw, bool sleep_ok)
+{
+	int i, ret;
+	struct fw_params_cmd c;
 	__be32 *p = &c.param[0].mnem;
 
-	अगर (nparams > 7)
-		वापस -EINVAL;
+	if (nparams > 7)
+		return -EINVAL;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_PARAMS_CMD) |
 				  FW_CMD_REQUEST_F | FW_CMD_READ_F |
 				  FW_PARAMS_CMD_PFN_V(pf) |
 				  FW_PARAMS_CMD_VFN_V(vf));
 	c.retval_len16 = cpu_to_be32(FW_LEN16(c));
 
-	क्रम (i = 0; i < nparams; i++) अणु
+	for (i = 0; i < nparams; i++) {
 		*p++ = cpu_to_be32(*params++);
-		अगर (rw)
+		if (rw)
 			*p = cpu_to_be32(*(val + i));
 		p++;
-	पूर्ण
+	}
 
-	ret = t4_wr_mbox_meat(adap, mbox, &c, माप(c), &c, sleep_ok);
-	अगर (ret == 0)
-		क्रम (i = 0, p = &c.param[0].val; i < nparams; i++, p += 2)
+	ret = t4_wr_mbox_meat(adap, mbox, &c, sizeof(c), &c, sleep_ok);
+	if (ret == 0)
+		for (i = 0, p = &c.param[0].val; i < nparams; i++, p += 2)
 			*val++ = be32_to_cpu(*p);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक t4_query_params(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		    अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक nparams, स्थिर u32 *params,
+int t4_query_params(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		    unsigned int vf, unsigned int nparams, const u32 *params,
 		    u32 *val)
-अणु
-	वापस t4_query_params_rw(adap, mbox, pf, vf, nparams, params, val, 0,
+{
+	return t4_query_params_rw(adap, mbox, pf, vf, nparams, params, val, 0,
 				  true);
-पूर्ण
+}
 
-पूर्णांक t4_query_params_ns(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		       अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक nparams, स्थिर u32 *params,
+int t4_query_params_ns(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		       unsigned int vf, unsigned int nparams, const u32 *params,
 		       u32 *val)
-अणु
-	वापस t4_query_params_rw(adap, mbox, pf, vf, nparams, params, val, 0,
+{
+	return t4_query_params_rw(adap, mbox, pf, vf, nparams, params, val, 0,
 				  false);
-पूर्ण
+}
 
 /**
- *      t4_set_params_समयout - sets FW or device parameters
+ *      t4_set_params_timeout - sets FW or device parameters
  *      @adap: the adapter
- *      @mbox: mailbox to use क्रम the FW command
+ *      @mbox: mailbox to use for the FW command
  *      @pf: the PF
  *      @vf: the VF
  *      @nparams: the number of parameters
  *      @params: the parameter names
  *      @val: the parameter values
- *      @समयout: the समयout समय
+ *      @timeout: the timeout time
  *
  *      Sets the value of FW or device parameters.  Up to 7 parameters can be
- *      specअगरied at once.
+ *      specified at once.
  */
-पूर्णांक t4_set_params_समयout(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
-			  अचिन्हित पूर्णांक pf, अचिन्हित पूर्णांक vf,
-			  अचिन्हित पूर्णांक nparams, स्थिर u32 *params,
-			  स्थिर u32 *val, पूर्णांक समयout)
-अणु
-	काष्ठा fw_params_cmd c;
+int t4_set_params_timeout(struct adapter *adap, unsigned int mbox,
+			  unsigned int pf, unsigned int vf,
+			  unsigned int nparams, const u32 *params,
+			  const u32 *val, int timeout)
+{
+	struct fw_params_cmd c;
 	__be32 *p = &c.param[0].mnem;
 
-	अगर (nparams > 7)
-		वापस -EINVAL;
+	if (nparams > 7)
+		return -EINVAL;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_PARAMS_CMD) |
 				  FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				  FW_PARAMS_CMD_PFN_V(pf) |
 				  FW_PARAMS_CMD_VFN_V(vf));
 	c.retval_len16 = cpu_to_be32(FW_LEN16(c));
 
-	जबतक (nparams--) अणु
+	while (nparams--) {
 		*p++ = cpu_to_be32(*params++);
 		*p++ = cpu_to_be32(*val++);
-	पूर्ण
+	}
 
-	वापस t4_wr_mbox_समयout(adap, mbox, &c, माप(c), शून्य, समयout);
-पूर्ण
+	return t4_wr_mbox_timeout(adap, mbox, &c, sizeof(c), NULL, timeout);
+}
 
 /**
  *	t4_set_params - sets FW or device parameters
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF
  *	@vf: the VF
  *	@nparams: the number of parameters
@@ -7562,51 +7561,51 @@ out:
  *	@val: the parameter values
  *
  *	Sets the value of FW or device parameters.  Up to 7 parameters can be
- *	specअगरied at once.
+ *	specified at once.
  */
-पूर्णांक t4_set_params(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		  अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक nparams, स्थिर u32 *params,
-		  स्थिर u32 *val)
-अणु
-	वापस t4_set_params_समयout(adap, mbox, pf, vf, nparams, params, val,
+int t4_set_params(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		  unsigned int vf, unsigned int nparams, const u32 *params,
+		  const u32 *val)
+{
+	return t4_set_params_timeout(adap, mbox, pf, vf, nparams, params, val,
 				     FW_CMD_MAX_TIMEOUT);
-पूर्ण
+}
 
 /**
  *	t4_cfg_pfvf - configure PF/VF resource limits
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF being configured
  *	@vf: the VF being configured
  *	@txq: the max number of egress queues
  *	@txq_eth_ctrl: the max number of egress Ethernet or control queues
- *	@rxqi: the max number of पूर्णांकerrupt-capable ingress queues
- *	@rxq: the max number of पूर्णांकerruptless ingress queues
+ *	@rxqi: the max number of interrupt-capable ingress queues
+ *	@rxq: the max number of interruptless ingress queues
  *	@tc: the PCI traffic class
- *	@vi: the max number of भव पूर्णांकerfaces
- *	@cmask: the channel access rights mask क्रम the PF/VF
- *	@pmask: the port access rights mask क्रम the PF/VF
+ *	@vi: the max number of virtual interfaces
+ *	@cmask: the channel access rights mask for the PF/VF
+ *	@pmask: the port access rights mask for the PF/VF
  *	@nexact: the maximum number of exact MPS filters
- *	@rcaps: पढ़ो capabilities
- *	@wxcaps: ग_लिखो/execute capabilities
+ *	@rcaps: read capabilities
+ *	@wxcaps: write/execute capabilities
  *
- *	Configures resource limits and capabilities क्रम a physical or भव
+ *	Configures resource limits and capabilities for a physical or virtual
  *	function.
  */
-पूर्णांक t4_cfg_pfvf(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक txq, अचिन्हित पूर्णांक txq_eth_ctrl,
-		अचिन्हित पूर्णांक rxqi, अचिन्हित पूर्णांक rxq, अचिन्हित पूर्णांक tc,
-		अचिन्हित पूर्णांक vi, अचिन्हित पूर्णांक cmask, अचिन्हित पूर्णांक pmask,
-		अचिन्हित पूर्णांक nexact, अचिन्हित पूर्णांक rcaps, अचिन्हित पूर्णांक wxcaps)
-अणु
-	काष्ठा fw_pfvf_cmd c;
+int t4_cfg_pfvf(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		unsigned int vf, unsigned int txq, unsigned int txq_eth_ctrl,
+		unsigned int rxqi, unsigned int rxq, unsigned int tc,
+		unsigned int vi, unsigned int cmask, unsigned int pmask,
+		unsigned int nexact, unsigned int rcaps, unsigned int wxcaps)
+{
+	struct fw_pfvf_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_PFVF_CMD) | FW_CMD_REQUEST_F |
 				  FW_CMD_WRITE_F | FW_PFVF_CMD_PFN_V(pf) |
 				  FW_PFVF_CMD_VFN_V(vf));
 	c.retval_len16 = cpu_to_be32(FW_LEN16(c));
-	c.niqflपूर्णांक_niq = cpu_to_be32(FW_PFVF_CMD_NIQFLINT_V(rxqi) |
+	c.niqflint_niq = cpu_to_be32(FW_PFVF_CMD_NIQFLINT_V(rxqi) |
 				     FW_PFVF_CMD_NIQ_V(rxq));
 	c.type_to_neq = cpu_to_be32(FW_PFVF_CMD_CMASK_V(cmask) |
 				    FW_PFVF_CMD_PMASK_V(pmask) |
@@ -7617,13 +7616,13 @@ out:
 	c.r_caps_to_nethctrl = cpu_to_be32(FW_PFVF_CMD_R_CAPS_V(rcaps) |
 					FW_PFVF_CMD_WX_CAPS_V(wxcaps) |
 					FW_PFVF_CMD_NETHCTRL_V(txq_eth_ctrl));
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_alloc_vi - allocate a भव पूर्णांकerface
+ *	t4_alloc_vi - allocate a virtual interface
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@port: physical port associated with the VI
  *	@pf: the PF owning the VI
  *	@vf: the VF owning the VI
@@ -7633,20 +7632,20 @@ out:
  *	@vivld: the destination to store the VI Valid value.
  *	@vin: the destination to store the VIN value.
  *
- *	Allocates a भव पूर्णांकerface क्रम the given physical port.  If @mac is
- *	not %शून्य it contains the MAC addresses of the VI as asचिन्हित by FW.
+ *	Allocates a virtual interface for the given physical port.  If @mac is
+ *	not %NULL it contains the MAC addresses of the VI as assigned by FW.
  *	@mac should be large enough to hold @nmac Ethernet addresses, they are
  *	stored consecutively so the space needed is @nmac * 6 bytes.
  *	Returns a negative error number or the non-negative VI id.
  */
-पूर्णांक t4_alloc_vi(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक port,
-		अचिन्हित पूर्णांक pf, अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक nmac, u8 *mac,
-		अचिन्हित पूर्णांक *rss_size, u8 *vivld, u8 *vin)
-अणु
-	पूर्णांक ret;
-	काष्ठा fw_vi_cmd c;
+int t4_alloc_vi(struct adapter *adap, unsigned int mbox, unsigned int port,
+		unsigned int pf, unsigned int vf, unsigned int nmac, u8 *mac,
+		unsigned int *rss_size, u8 *vivld, u8 *vin)
+{
+	int ret;
+	struct fw_vi_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_VI_CMD) | FW_CMD_REQUEST_F |
 				  FW_CMD_WRITE_F | FW_CMD_EXEC_F |
 				  FW_VI_CMD_PFN_V(pf) | FW_VI_CMD_VFN_V(vf));
@@ -7654,54 +7653,54 @@ out:
 	c.portid_pkd = FW_VI_CMD_PORTID_V(port);
 	c.nmac = nmac - 1;
 
-	ret = t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-	अगर (ret)
-		वापस ret;
+	ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+	if (ret)
+		return ret;
 
-	अगर (mac) अणु
-		स_नकल(mac, c.mac, माप(c.mac));
-		चयन (nmac) अणु
-		हाल 5:
-			स_नकल(mac + 24, c.nmac3, माप(c.nmac3));
+	if (mac) {
+		memcpy(mac, c.mac, sizeof(c.mac));
+		switch (nmac) {
+		case 5:
+			memcpy(mac + 24, c.nmac3, sizeof(c.nmac3));
 			fallthrough;
-		हाल 4:
-			स_नकल(mac + 18, c.nmac2, माप(c.nmac2));
+		case 4:
+			memcpy(mac + 18, c.nmac2, sizeof(c.nmac2));
 			fallthrough;
-		हाल 3:
-			स_नकल(mac + 12, c.nmac1, माप(c.nmac1));
+		case 3:
+			memcpy(mac + 12, c.nmac1, sizeof(c.nmac1));
 			fallthrough;
-		हाल 2:
-			स_नकल(mac + 6,  c.nmac0, माप(c.nmac0));
-		पूर्ण
-	पूर्ण
-	अगर (rss_size)
+		case 2:
+			memcpy(mac + 6,  c.nmac0, sizeof(c.nmac0));
+		}
+	}
+	if (rss_size)
 		*rss_size = FW_VI_CMD_RSSSIZE_G(be16_to_cpu(c.rsssize_pkd));
 
-	अगर (vivld)
+	if (vivld)
 		*vivld = FW_VI_CMD_VFVLD_G(be32_to_cpu(c.alloc_to_len16));
 
-	अगर (vin)
+	if (vin)
 		*vin = FW_VI_CMD_VIN_G(be32_to_cpu(c.alloc_to_len16));
 
-	वापस FW_VI_CMD_VIID_G(be16_to_cpu(c.type_viid));
-पूर्ण
+	return FW_VI_CMD_VIID_G(be16_to_cpu(c.type_viid));
+}
 
 /**
- *	t4_मुक्त_vi - मुक्त a भव पूर्णांकerface
+ *	t4_free_vi - free a virtual interface
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF owning the VI
  *	@vf: the VF owning the VI
- *	@viid: भव पूर्णांकerface identअगरiler
+ *	@viid: virtual interface identifiler
  *
- *	Free a previously allocated भव पूर्णांकerface.
+ *	Free a previously allocated virtual interface.
  */
-पूर्णांक t4_मुक्त_vi(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-	       अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक viid)
-अणु
-	काष्ठा fw_vi_cmd c;
+int t4_free_vi(struct adapter *adap, unsigned int mbox, unsigned int pf,
+	       unsigned int vf, unsigned int viid)
+{
+	struct fw_vi_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_VI_CMD) |
 				  FW_CMD_REQUEST_F |
 				  FW_CMD_EXEC_F |
@@ -7710,13 +7709,13 @@ out:
 	c.alloc_to_len16 = cpu_to_be32(FW_VI_CMD_FREE_F | FW_LEN16(c));
 	c.type_viid = cpu_to_be16(FW_VI_CMD_VIID_V(viid));
 
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+}
 
 /**
- *	t4_set_rxmode - set Rx properties of a भव पूर्णांकerface
+ *	t4_set_rxmode - set Rx properties of a virtual interface
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
  *	@viid_mirror: the mirror VI id
  *	@mtu: the new MTU or -1
@@ -7724,30 +7723,30 @@ out:
  *	@all_multi: 1 to enable all-multi mode, 0 to disable it, -1 no change
  *	@bcast: 1 to enable broadcast Rx, 0 to disable it, -1 no change
  *	@vlanex: 1 to enable HW VLAN extraction, 0 to disable it, -1 no change
- *	@sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *	@sleep_ok: if true we may sleep while awaiting command completion
  *
- *	Sets Rx properties of a भव पूर्णांकerface.
+ *	Sets Rx properties of a virtual interface.
  */
-पूर्णांक t4_set_rxmode(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक viid,
-		  अचिन्हित पूर्णांक viid_mirror, पूर्णांक mtu, पूर्णांक promisc, पूर्णांक all_multi,
-		  पूर्णांक bcast, पूर्णांक vlanex, bool sleep_ok)
-अणु
-	काष्ठा fw_vi_rxmode_cmd c, c_mirror;
-	पूर्णांक ret;
+int t4_set_rxmode(struct adapter *adap, unsigned int mbox, unsigned int viid,
+		  unsigned int viid_mirror, int mtu, int promisc, int all_multi,
+		  int bcast, int vlanex, bool sleep_ok)
+{
+	struct fw_vi_rxmode_cmd c, c_mirror;
+	int ret;
 
 	/* convert to FW values */
-	अगर (mtu < 0)
+	if (mtu < 0)
 		mtu = FW_RXMODE_MTU_NO_CHG;
-	अगर (promisc < 0)
+	if (promisc < 0)
 		promisc = FW_VI_RXMODE_CMD_PROMISCEN_M;
-	अगर (all_multi < 0)
+	if (all_multi < 0)
 		all_multi = FW_VI_RXMODE_CMD_ALLMULTIEN_M;
-	अगर (bcast < 0)
+	if (bcast < 0)
 		bcast = FW_VI_RXMODE_CMD_BROADCASTEN_M;
-	अगर (vlanex < 0)
+	if (vlanex < 0)
 		vlanex = FW_VI_RXMODE_CMD_VLANEXEN_M;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_RXMODE_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_VI_RXMODE_CMD_VIID_V(viid));
@@ -7759,93 +7758,93 @@ out:
 			    FW_VI_RXMODE_CMD_BROADCASTEN_V(bcast) |
 			    FW_VI_RXMODE_CMD_VLANEXEN_V(vlanex));
 
-	अगर (viid_mirror) अणु
-		स_नकल(&c_mirror, &c, माप(c_mirror));
+	if (viid_mirror) {
+		memcpy(&c_mirror, &c, sizeof(c_mirror));
 		c_mirror.op_to_viid =
 			cpu_to_be32(FW_CMD_OP_V(FW_VI_RXMODE_CMD) |
 				    FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				    FW_VI_RXMODE_CMD_VIID_V(viid_mirror));
-	पूर्ण
+	}
 
-	ret = t4_wr_mbox_meat(adap, mbox, &c, माप(c), शून्य, sleep_ok);
-	अगर (ret)
-		वापस ret;
+	ret = t4_wr_mbox_meat(adap, mbox, &c, sizeof(c), NULL, sleep_ok);
+	if (ret)
+		return ret;
 
-	अगर (viid_mirror)
-		ret = t4_wr_mbox_meat(adap, mbox, &c_mirror, माप(c_mirror),
-				      शून्य, sleep_ok);
+	if (viid_mirror)
+		ret = t4_wr_mbox_meat(adap, mbox, &c_mirror, sizeof(c_mirror),
+				      NULL, sleep_ok);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *      t4_मुक्त_encap_mac_filt - मुक्तs MPS entry at given index
+ *      t4_free_encap_mac_filt - frees MPS entry at given index
  *      @adap: the adapter
  *      @viid: the VI id
- *      @idx: index of MPS entry to be मुक्तd
+ *      @idx: index of MPS entry to be freed
  *      @sleep_ok: call is allowed to sleep
  *
  *      Frees the MPS entry at supplied index
  *
  *      Returns a negative error number or zero on success
  */
-पूर्णांक t4_मुक्त_encap_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
-			   पूर्णांक idx, bool sleep_ok)
-अणु
-	काष्ठा fw_vi_mac_exact *p;
-	u8 addr[] = अणु0, 0, 0, 0, 0, 0पूर्ण;
-	काष्ठा fw_vi_mac_cmd c;
-	पूर्णांक ret = 0;
+int t4_free_encap_mac_filt(struct adapter *adap, unsigned int viid,
+			   int idx, bool sleep_ok)
+{
+	struct fw_vi_mac_exact *p;
+	u8 addr[] = {0, 0, 0, 0, 0, 0};
+	struct fw_vi_mac_cmd c;
+	int ret = 0;
 	u32 exact;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_CMD_EXEC_V(0) |
 				   FW_VI_MAC_CMD_VIID_V(viid));
 	exact = FW_VI_MAC_CMD_ENTRY_TYPE_V(FW_VI_MAC_TYPE_EXACTMAC);
-	c.मुक्तmacs_to_len16 = cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(0) |
+	c.freemacs_to_len16 = cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(0) |
 					  exact |
 					  FW_CMD_LEN16_V(1));
 	p = c.u.exact;
 	p->valid_to_idx = cpu_to_be16(FW_VI_MAC_CMD_VALID_F |
 				      FW_VI_MAC_CMD_IDX_V(idx));
-	स_नकल(p->macaddr, addr, माप(p->macaddr));
-	ret = t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c, sleep_ok);
-	वापस ret;
-पूर्ण
+	memcpy(p->macaddr, addr, sizeof(p->macaddr));
+	ret = t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c, sleep_ok);
+	return ret;
+}
 
 /**
- *	t4_मुक्त_raw_mac_filt - Frees a raw mac entry in mps tcam
+ *	t4_free_raw_mac_filt - Frees a raw mac entry in mps tcam
  *	@adap: the adapter
  *	@viid: the VI id
  *	@addr: the MAC address
  *	@mask: the mask
  *	@idx: index of the entry in mps tcam
- *	@lookup_type: MAC address क्रम inner (1) or outer (0) header
+ *	@lookup_type: MAC address for inner (1) or outer (0) header
  *	@port_id: the port index
  *	@sleep_ok: call is allowed to sleep
  *
- *	Removes the mac entry at the specअगरied index using raw mac पूर्णांकerface.
+ *	Removes the mac entry at the specified index using raw mac interface.
  *
  *	Returns a negative error number on failure.
  */
-पूर्णांक t4_मुक्त_raw_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
-			 स्थिर u8 *addr, स्थिर u8 *mask, अचिन्हित पूर्णांक idx,
+int t4_free_raw_mac_filt(struct adapter *adap, unsigned int viid,
+			 const u8 *addr, const u8 *mask, unsigned int idx,
 			 u8 lookup_type, u8 port_id, bool sleep_ok)
-अणु
-	काष्ठा fw_vi_mac_cmd c;
-	काष्ठा fw_vi_mac_raw *p = &c.u.raw;
+{
+	struct fw_vi_mac_cmd c;
+	struct fw_vi_mac_raw *p = &c.u.raw;
 	u32 val;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_CMD_EXEC_V(0) |
 				   FW_VI_MAC_CMD_VIID_V(viid));
 	val = FW_CMD_LEN16_V(1) |
 	      FW_VI_MAC_CMD_ENTRY_TYPE_V(FW_VI_MAC_TYPE_RAW);
-	c.मुक्तmacs_to_len16 = cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(0) |
+	c.freemacs_to_len16 = cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(0) |
 					  FW_CMD_LEN16_V(val));
 
 	p->raw_idx_pkd = cpu_to_be32(FW_VI_MAC_CMD_RAW_IDX_V(idx) |
@@ -7859,11 +7858,11 @@ out:
 				    DATAPORTNUM_V(DATAPORTNUM_M));
 
 	/* Copy the address and the mask */
-	स_नकल((u8 *)&p->data1[0] + 2, addr, ETH_ALEN);
-	स_नकल((u8 *)&p->data1m[0] + 2, mask, ETH_ALEN);
+	memcpy((u8 *)&p->data1[0] + 2, addr, ETH_ALEN);
+	memcpy((u8 *)&p->data1m[0] + 2, mask, ETH_ALEN);
 
-	वापस t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c, sleep_ok);
-पूर्ण
+	return t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c, sleep_ok);
+}
 
 /**
  *      t4_alloc_encap_mac_filt - Adds a mac entry in mps tcam with VNI support
@@ -7871,48 +7870,48 @@ out:
  *      @viid: the VI id
  *      @addr: the MAC address
  *      @mask: the mask
- *      @vni: the VNI id क्रम the tunnel protocol
- *      @vni_mask: mask क्रम the VNI id
- *      @dip_hit: to enable DIP match क्रम the MPS entry
- *      @lookup_type: MAC address क्रम inner (1) or outer (0) header
+ *      @vni: the VNI id for the tunnel protocol
+ *      @vni_mask: mask for the VNI id
+ *      @dip_hit: to enable DIP match for the MPS entry
+ *      @lookup_type: MAC address for inner (1) or outer (0) header
  *      @sleep_ok: call is allowed to sleep
  *
- *      Allocates an MPS entry with specअगरied MAC address and VNI value.
+ *      Allocates an MPS entry with specified MAC address and VNI value.
  *
- *      Returns a negative error number or the allocated index क्रम this mac.
+ *      Returns a negative error number or the allocated index for this mac.
  */
-पूर्णांक t4_alloc_encap_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
-			    स्थिर u8 *addr, स्थिर u8 *mask, अचिन्हित पूर्णांक vni,
-			    अचिन्हित पूर्णांक vni_mask, u8 dip_hit, u8 lookup_type,
+int t4_alloc_encap_mac_filt(struct adapter *adap, unsigned int viid,
+			    const u8 *addr, const u8 *mask, unsigned int vni,
+			    unsigned int vni_mask, u8 dip_hit, u8 lookup_type,
 			    bool sleep_ok)
-अणु
-	काष्ठा fw_vi_mac_cmd c;
-	काष्ठा fw_vi_mac_vni *p = c.u.exact_vni;
-	पूर्णांक ret = 0;
+{
+	struct fw_vi_mac_cmd c;
+	struct fw_vi_mac_vni *p = c.u.exact_vni;
+	int ret = 0;
 	u32 val;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_VI_MAC_CMD_VIID_V(viid));
 	val = FW_CMD_LEN16_V(1) |
 	      FW_VI_MAC_CMD_ENTRY_TYPE_V(FW_VI_MAC_TYPE_EXACTMAC_VNI);
-	c.मुक्तmacs_to_len16 = cpu_to_be32(val);
+	c.freemacs_to_len16 = cpu_to_be32(val);
 	p->valid_to_idx = cpu_to_be16(FW_VI_MAC_CMD_VALID_F |
 				      FW_VI_MAC_CMD_IDX_V(FW_VI_MAC_ADD_MAC));
-	स_नकल(p->macaddr, addr, माप(p->macaddr));
-	स_नकल(p->macaddr_mask, mask, माप(p->macaddr_mask));
+	memcpy(p->macaddr, addr, sizeof(p->macaddr));
+	memcpy(p->macaddr_mask, mask, sizeof(p->macaddr_mask));
 
 	p->lookup_type_to_vni =
 		cpu_to_be32(FW_VI_MAC_CMD_VNI_V(vni) |
 			    FW_VI_MAC_CMD_DIP_HIT_V(dip_hit) |
 			    FW_VI_MAC_CMD_LOOKUP_TYPE_V(lookup_type));
 	p->vni_mask_pkd = cpu_to_be32(FW_VI_MAC_CMD_VNI_MASK_V(vni_mask));
-	ret = t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c, sleep_ok);
-	अगर (ret == 0)
+	ret = t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c, sleep_ok);
+	if (ret == 0)
 		ret = FW_VI_MAC_CMD_IDX_G(be16_to_cpu(p->valid_to_idx));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  *	t4_alloc_raw_mac_filt - Adds a mac entry in mps tcam
@@ -7921,32 +7920,32 @@ out:
  *	@addr: the MAC address
  *	@mask: the mask
  *	@idx: index at which to add this entry
- *	@lookup_type: MAC address क्रम inner (1) or outer (0) header
+ *	@lookup_type: MAC address for inner (1) or outer (0) header
  *	@port_id: the port index
  *	@sleep_ok: call is allowed to sleep
  *
- *	Adds the mac entry at the specअगरied index using raw mac पूर्णांकerface.
+ *	Adds the mac entry at the specified index using raw mac interface.
  *
- *	Returns a negative error number or the allocated index क्रम this mac.
+ *	Returns a negative error number or the allocated index for this mac.
  */
-पूर्णांक t4_alloc_raw_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक viid,
-			  स्थिर u8 *addr, स्थिर u8 *mask, अचिन्हित पूर्णांक idx,
+int t4_alloc_raw_mac_filt(struct adapter *adap, unsigned int viid,
+			  const u8 *addr, const u8 *mask, unsigned int idx,
 			  u8 lookup_type, u8 port_id, bool sleep_ok)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा fw_vi_mac_cmd c;
-	काष्ठा fw_vi_mac_raw *p = &c.u.raw;
+{
+	int ret = 0;
+	struct fw_vi_mac_cmd c;
+	struct fw_vi_mac_raw *p = &c.u.raw;
 	u32 val;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_VI_MAC_CMD_VIID_V(viid));
 	val = FW_CMD_LEN16_V(1) |
 	      FW_VI_MAC_CMD_ENTRY_TYPE_V(FW_VI_MAC_TYPE_RAW);
-	c.मुक्तmacs_to_len16 = cpu_to_be32(val);
+	c.freemacs_to_len16 = cpu_to_be32(val);
 
-	/* Specअगरy that this is an inner mac address */
+	/* Specify that this is an inner mac address */
 	p->raw_idx_pkd = cpu_to_be32(FW_VI_MAC_CMD_RAW_IDX_V(idx));
 
 	/* Lookup Type. Outer header: 0, Inner header: 1 */
@@ -7957,300 +7956,300 @@ out:
 				    DATAPORTNUM_V(DATAPORTNUM_M));
 
 	/* Copy the address and the mask */
-	स_नकल((u8 *)&p->data1[0] + 2, addr, ETH_ALEN);
-	स_नकल((u8 *)&p->data1m[0] + 2, mask, ETH_ALEN);
+	memcpy((u8 *)&p->data1[0] + 2, addr, ETH_ALEN);
+	memcpy((u8 *)&p->data1m[0] + 2, mask, ETH_ALEN);
 
-	ret = t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c, sleep_ok);
-	अगर (ret == 0) अणु
+	ret = t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c, sleep_ok);
+	if (ret == 0) {
 		ret = FW_VI_MAC_CMD_RAW_IDX_G(be32_to_cpu(p->raw_idx_pkd));
-		अगर (ret != idx)
+		if (ret != idx)
 			ret = -ENOMEM;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_alloc_mac_filt - allocates exact-match filters क्रम MAC addresses
+ *	t4_alloc_mac_filt - allocates exact-match filters for MAC addresses
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
- *	@मुक्त: अगर true any existing filters क्रम this VI id are first हटाओd
- *	@naddr: the number of MAC addresses to allocate filters क्रम (up to 7)
+ *	@free: if true any existing filters for this VI id are first removed
+ *	@naddr: the number of MAC addresses to allocate filters for (up to 7)
  *	@addr: the MAC address(es)
  *	@idx: where to store the index of each allocated filter
- *	@hash: poपूर्णांकer to hash address filter biपंचांगap
+ *	@hash: pointer to hash address filter bitmap
  *	@sleep_ok: call is allowed to sleep
  *
- *	Allocates an exact-match filter क्रम each of the supplied addresses and
- *	sets it to the corresponding address.  If @idx is not %शून्य it should
+ *	Allocates an exact-match filter for each of the supplied addresses and
+ *	sets it to the corresponding address.  If @idx is not %NULL it should
  *	have at least @naddr entries, each of which will be set to the index of
- *	the filter allocated क्रम the corresponding MAC address.  If a filter
- *	could not be allocated क्रम an address its index is set to 0xffff.
- *	If @hash is not %शून्य addresses that fail to allocate an exact filter
- *	are hashed and update the hash filter biपंचांगap poपूर्णांकed at by @hash.
+ *	the filter allocated for the corresponding MAC address.  If a filter
+ *	could not be allocated for an address its index is set to 0xffff.
+ *	If @hash is not %NULL addresses that fail to allocate an exact filter
+ *	are hashed and update the hash filter bitmap pointed at by @hash.
  *
  *	Returns a negative error number or the number of filters allocated.
  */
-पूर्णांक t4_alloc_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
-		      अचिन्हित पूर्णांक viid, bool मुक्त, अचिन्हित पूर्णांक naddr,
-		      स्थिर u8 **addr, u16 *idx, u64 *hash, bool sleep_ok)
-अणु
-	पूर्णांक offset, ret = 0;
-	काष्ठा fw_vi_mac_cmd c;
-	अचिन्हित पूर्णांक nfilters = 0;
-	अचिन्हित पूर्णांक max_naddr = adap->params.arch.mps_tcam_size;
-	अचिन्हित पूर्णांक rem = naddr;
+int t4_alloc_mac_filt(struct adapter *adap, unsigned int mbox,
+		      unsigned int viid, bool free, unsigned int naddr,
+		      const u8 **addr, u16 *idx, u64 *hash, bool sleep_ok)
+{
+	int offset, ret = 0;
+	struct fw_vi_mac_cmd c;
+	unsigned int nfilters = 0;
+	unsigned int max_naddr = adap->params.arch.mps_tcam_size;
+	unsigned int rem = naddr;
 
-	अगर (naddr > max_naddr)
-		वापस -EINVAL;
+	if (naddr > max_naddr)
+		return -EINVAL;
 
-	क्रम (offset = 0; offset < naddr ; /**/) अणु
-		अचिन्हित पूर्णांक fw_naddr = (rem < ARRAY_SIZE(c.u.exact) ?
+	for (offset = 0; offset < naddr ; /**/) {
+		unsigned int fw_naddr = (rem < ARRAY_SIZE(c.u.exact) ?
 					 rem : ARRAY_SIZE(c.u.exact));
-		माप_प्रकार len16 = DIV_ROUND_UP(दुरत्व(काष्ठा fw_vi_mac_cmd,
+		size_t len16 = DIV_ROUND_UP(offsetof(struct fw_vi_mac_cmd,
 						     u.exact[fw_naddr]), 16);
-		काष्ठा fw_vi_mac_exact *p;
-		पूर्णांक i;
+		struct fw_vi_mac_exact *p;
+		int i;
 
-		स_रखो(&c, 0, माप(c));
+		memset(&c, 0, sizeof(c));
 		c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 					   FW_CMD_REQUEST_F |
 					   FW_CMD_WRITE_F |
-					   FW_CMD_EXEC_V(मुक्त) |
+					   FW_CMD_EXEC_V(free) |
 					   FW_VI_MAC_CMD_VIID_V(viid));
-		c.मुक्तmacs_to_len16 =
-			cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(मुक्त) |
+		c.freemacs_to_len16 =
+			cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(free) |
 				    FW_CMD_LEN16_V(len16));
 
-		क्रम (i = 0, p = c.u.exact; i < fw_naddr; i++, p++) अणु
+		for (i = 0, p = c.u.exact; i < fw_naddr; i++, p++) {
 			p->valid_to_idx =
 				cpu_to_be16(FW_VI_MAC_CMD_VALID_F |
 					    FW_VI_MAC_CMD_IDX_V(
 						    FW_VI_MAC_ADD_MAC));
-			स_नकल(p->macaddr, addr[offset + i],
-			       माप(p->macaddr));
-		पूर्ण
+			memcpy(p->macaddr, addr[offset + i],
+			       sizeof(p->macaddr));
+		}
 
-		/* It's okay अगर we run out of space in our MAC address arena.
+		/* It's okay if we run out of space in our MAC address arena.
 		 * Some of the addresses we submit may get stored so we need
 		 * to run through the reply to see what the results were ...
 		 */
-		ret = t4_wr_mbox_meat(adap, mbox, &c, माप(c), &c, sleep_ok);
-		अगर (ret && ret != -FW_ENOMEM)
-			अवरोध;
+		ret = t4_wr_mbox_meat(adap, mbox, &c, sizeof(c), &c, sleep_ok);
+		if (ret && ret != -FW_ENOMEM)
+			break;
 
-		क्रम (i = 0, p = c.u.exact; i < fw_naddr; i++, p++) अणु
+		for (i = 0, p = c.u.exact; i < fw_naddr; i++, p++) {
 			u16 index = FW_VI_MAC_CMD_IDX_G(
 					be16_to_cpu(p->valid_to_idx));
 
-			अगर (idx)
+			if (idx)
 				idx[offset + i] = (index >= max_naddr ?
 						   0xffff : index);
-			अगर (index < max_naddr)
+			if (index < max_naddr)
 				nfilters++;
-			अन्यथा अगर (hash)
+			else if (hash)
 				*hash |= (1ULL <<
 					  hash_mac_addr(addr[offset + i]));
-		पूर्ण
+		}
 
-		मुक्त = false;
+		free = false;
 		offset += fw_naddr;
 		rem -= fw_naddr;
-	पूर्ण
+	}
 
-	अगर (ret == 0 || ret == -FW_ENOMEM)
+	if (ret == 0 || ret == -FW_ENOMEM)
 		ret = nfilters;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_मुक्त_mac_filt - मुक्तs exact-match filters of given MAC addresses
+ *	t4_free_mac_filt - frees exact-match filters of given MAC addresses
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
- *	@naddr: the number of MAC addresses to allocate filters क्रम (up to 7)
+ *	@naddr: the number of MAC addresses to allocate filters for (up to 7)
  *	@addr: the MAC address(es)
  *	@sleep_ok: call is allowed to sleep
  *
- *	Frees the exact-match filter क्रम each of the supplied addresses
+ *	Frees the exact-match filter for each of the supplied addresses
  *
- *	Returns a negative error number or the number of filters मुक्तd.
+ *	Returns a negative error number or the number of filters freed.
  */
-पूर्णांक t4_मुक्त_mac_filt(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
-		     अचिन्हित पूर्णांक viid, अचिन्हित पूर्णांक naddr,
-		     स्थिर u8 **addr, bool sleep_ok)
-अणु
-	पूर्णांक offset, ret = 0;
-	काष्ठा fw_vi_mac_cmd c;
-	अचिन्हित पूर्णांक nfilters = 0;
-	अचिन्हित पूर्णांक max_naddr = is_t4(adap->params.chip) ?
+int t4_free_mac_filt(struct adapter *adap, unsigned int mbox,
+		     unsigned int viid, unsigned int naddr,
+		     const u8 **addr, bool sleep_ok)
+{
+	int offset, ret = 0;
+	struct fw_vi_mac_cmd c;
+	unsigned int nfilters = 0;
+	unsigned int max_naddr = is_t4(adap->params.chip) ?
 				       NUM_MPS_CLS_SRAM_L_INSTANCES :
 				       NUM_MPS_T5_CLS_SRAM_L_INSTANCES;
-	अचिन्हित पूर्णांक rem = naddr;
+	unsigned int rem = naddr;
 
-	अगर (naddr > max_naddr)
-		वापस -EINVAL;
+	if (naddr > max_naddr)
+		return -EINVAL;
 
-	क्रम (offset = 0; offset < (पूर्णांक)naddr ; /**/) अणु
-		अचिन्हित पूर्णांक fw_naddr = (rem < ARRAY_SIZE(c.u.exact)
+	for (offset = 0; offset < (int)naddr ; /**/) {
+		unsigned int fw_naddr = (rem < ARRAY_SIZE(c.u.exact)
 					 ? rem
 					 : ARRAY_SIZE(c.u.exact));
-		माप_प्रकार len16 = DIV_ROUND_UP(दुरत्व(काष्ठा fw_vi_mac_cmd,
+		size_t len16 = DIV_ROUND_UP(offsetof(struct fw_vi_mac_cmd,
 						     u.exact[fw_naddr]), 16);
-		काष्ठा fw_vi_mac_exact *p;
-		पूर्णांक i;
+		struct fw_vi_mac_exact *p;
+		int i;
 
-		स_रखो(&c, 0, माप(c));
+		memset(&c, 0, sizeof(c));
 		c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				     FW_CMD_REQUEST_F |
 				     FW_CMD_WRITE_F |
 				     FW_CMD_EXEC_V(0) |
 				     FW_VI_MAC_CMD_VIID_V(viid));
-		c.मुक्तmacs_to_len16 =
+		c.freemacs_to_len16 =
 				cpu_to_be32(FW_VI_MAC_CMD_FREEMACS_V(0) |
 					    FW_CMD_LEN16_V(len16));
 
-		क्रम (i = 0, p = c.u.exact; i < (पूर्णांक)fw_naddr; i++, p++) अणु
+		for (i = 0, p = c.u.exact; i < (int)fw_naddr; i++, p++) {
 			p->valid_to_idx = cpu_to_be16(
 				FW_VI_MAC_CMD_VALID_F |
 				FW_VI_MAC_CMD_IDX_V(FW_VI_MAC_MAC_BASED_FREE));
-			स_नकल(p->macaddr, addr[offset+i], माप(p->macaddr));
-		पूर्ण
+			memcpy(p->macaddr, addr[offset+i], sizeof(p->macaddr));
+		}
 
-		ret = t4_wr_mbox_meat(adap, mbox, &c, माप(c), &c, sleep_ok);
-		अगर (ret)
-			अवरोध;
+		ret = t4_wr_mbox_meat(adap, mbox, &c, sizeof(c), &c, sleep_ok);
+		if (ret)
+			break;
 
-		क्रम (i = 0, p = c.u.exact; i < fw_naddr; i++, p++) अणु
+		for (i = 0, p = c.u.exact; i < fw_naddr; i++, p++) {
 			u16 index = FW_VI_MAC_CMD_IDX_G(
 						be16_to_cpu(p->valid_to_idx));
 
-			अगर (index < max_naddr)
+			if (index < max_naddr)
 				nfilters++;
-		पूर्ण
+		}
 
 		offset += fw_naddr;
 		rem -= fw_naddr;
-	पूर्ण
+	}
 
-	अगर (ret == 0)
+	if (ret == 0)
 		ret = nfilters;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_change_mac - modअगरies the exact-match filter क्रम a MAC address
+ *	t4_change_mac - modifies the exact-match filter for a MAC address
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
- *	@idx: index of existing filter क्रम old value of MAC address, or -1
+ *	@idx: index of existing filter for old value of MAC address, or -1
  *	@addr: the new MAC address value
  *	@persist: whether a new MAC allocation should be persistent
  *	@smt_idx: the destination to store the new SMT index.
  *
- *	Modअगरies an exact-match filter and sets it to the new MAC address.
- *	Note that in general it is not possible to modअगरy the value of a given
- *	filter so the generic way to modअगरy an address filter is to मुक्त the one
- *	being used by the old address value and allocate a new filter क्रम the
- *	new address value.  @idx can be -1 अगर the address is a new addition.
+ *	Modifies an exact-match filter and sets it to the new MAC address.
+ *	Note that in general it is not possible to modify the value of a given
+ *	filter so the generic way to modify an address filter is to free the one
+ *	being used by the old address value and allocate a new filter for the
+ *	new address value.  @idx can be -1 if the address is a new addition.
  *
  *	Returns a negative error number or the index of the filter with the new
  *	MAC value.
  */
-पूर्णांक t4_change_mac(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक viid,
-		  पूर्णांक idx, स्थिर u8 *addr, bool persist, u8 *smt_idx)
-अणु
-	पूर्णांक ret, mode;
-	काष्ठा fw_vi_mac_cmd c;
-	काष्ठा fw_vi_mac_exact *p = c.u.exact;
-	अचिन्हित पूर्णांक max_mac_addr = adap->params.arch.mps_tcam_size;
+int t4_change_mac(struct adapter *adap, unsigned int mbox, unsigned int viid,
+		  int idx, const u8 *addr, bool persist, u8 *smt_idx)
+{
+	int ret, mode;
+	struct fw_vi_mac_cmd c;
+	struct fw_vi_mac_exact *p = c.u.exact;
+	unsigned int max_mac_addr = adap->params.arch.mps_tcam_size;
 
-	अगर (idx < 0)                             /* new allocation */
+	if (idx < 0)                             /* new allocation */
 		idx = persist ? FW_VI_MAC_ADD_PERSIST_MAC : FW_VI_MAC_ADD_MAC;
 	mode = smt_idx ? FW_VI_MAC_SMT_AND_MPSTCAM : FW_VI_MAC_MPS_TCAM_ENTRY;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_VI_MAC_CMD_VIID_V(viid));
-	c.मुक्तmacs_to_len16 = cpu_to_be32(FW_CMD_LEN16_V(1));
+	c.freemacs_to_len16 = cpu_to_be32(FW_CMD_LEN16_V(1));
 	p->valid_to_idx = cpu_to_be16(FW_VI_MAC_CMD_VALID_F |
 				      FW_VI_MAC_CMD_SMAC_RESULT_V(mode) |
 				      FW_VI_MAC_CMD_IDX_V(idx));
-	स_नकल(p->macaddr, addr, माप(p->macaddr));
+	memcpy(p->macaddr, addr, sizeof(p->macaddr));
 
-	ret = t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-	अगर (ret == 0) अणु
+	ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+	if (ret == 0) {
 		ret = FW_VI_MAC_CMD_IDX_G(be16_to_cpu(p->valid_to_idx));
-		अगर (ret >= max_mac_addr)
+		if (ret >= max_mac_addr)
 			ret = -ENOMEM;
-		अगर (smt_idx) अणु
-			अगर (adap->params.viid_smt_extn_support) अणु
+		if (smt_idx) {
+			if (adap->params.viid_smt_extn_support) {
 				*smt_idx = FW_VI_MAC_CMD_SMTID_G
 						    (be32_to_cpu(c.op_to_viid));
-			पूर्ण अन्यथा अणु
+			} else {
 				/* In T4/T5, SMT contains 256 SMAC entries
 				 * organized in 128 rows of 2 entries each.
 				 * In T6, SMT contains 256 SMAC entries in
 				 * 256 rows.
 				 */
-				अगर (CHELSIO_CHIP_VERSION(adap->params.chip) <=
+				if (CHELSIO_CHIP_VERSION(adap->params.chip) <=
 								     CHELSIO_T5)
 					*smt_idx = (viid & FW_VIID_VIN_M) << 1;
-				अन्यथा
+				else
 					*smt_idx = (viid & FW_VIID_VIN_M);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			}
+		}
+	}
+	return ret;
+}
 
 /**
  *	t4_set_addr_hash - program the MAC inexact-match hash filter
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
  *	@ucast: whether the hash filter should also match unicast addresses
  *	@vec: the value to be written to the hash filter
  *	@sleep_ok: call is allowed to sleep
  *
- *	Sets the 64-bit inexact-match hash filter क्रम a भव पूर्णांकerface.
+ *	Sets the 64-bit inexact-match hash filter for a virtual interface.
  */
-पूर्णांक t4_set_addr_hash(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक viid,
+int t4_set_addr_hash(struct adapter *adap, unsigned int mbox, unsigned int viid,
 		     bool ucast, u64 vec, bool sleep_ok)
-अणु
-	काष्ठा fw_vi_mac_cmd c;
+{
+	struct fw_vi_mac_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_MAC_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_WRITE_F |
 				   FW_VI_ENABLE_CMD_VIID_V(viid));
-	c.मुक्तmacs_to_len16 = cpu_to_be32(FW_VI_MAC_CMD_HASHVECEN_F |
+	c.freemacs_to_len16 = cpu_to_be32(FW_VI_MAC_CMD_HASHVECEN_F |
 					  FW_VI_MAC_CMD_HASHUNIEN_V(ucast) |
 					  FW_CMD_LEN16_V(1));
 	c.u.hash.hashvec = cpu_to_be64(vec);
-	वापस t4_wr_mbox_meat(adap, mbox, &c, माप(c), शून्य, sleep_ok);
-पूर्ण
+	return t4_wr_mbox_meat(adap, mbox, &c, sizeof(c), NULL, sleep_ok);
+}
 
 /**
- *      t4_enable_vi_params - enable/disable a भव पूर्णांकerface
+ *      t4_enable_vi_params - enable/disable a virtual interface
  *      @adap: the adapter
- *      @mbox: mailbox to use क्रम the FW command
+ *      @mbox: mailbox to use for the FW command
  *      @viid: the VI id
  *      @rx_en: 1=enable Rx, 0=disable Rx
  *      @tx_en: 1=enable Tx, 0=disable Tx
  *      @dcb_en: 1=enable delivery of Data Center Bridging messages.
  *
- *      Enables/disables a भव पूर्णांकerface.  Note that setting DCB Enable
+ *      Enables/disables a virtual interface.  Note that setting DCB Enable
  *      only makes sense when enabling a Virtual Interface ...
  */
-पूर्णांक t4_enable_vi_params(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
-			अचिन्हित पूर्णांक viid, bool rx_en, bool tx_en, bool dcb_en)
-अणु
-	काष्ठा fw_vi_enable_cmd c;
+int t4_enable_vi_params(struct adapter *adap, unsigned int mbox,
+			unsigned int viid, bool rx_en, bool tx_en, bool dcb_en)
+{
+	struct fw_vi_enable_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_ENABLE_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				   FW_VI_ENABLE_CMD_VIID_V(viid));
@@ -8258,30 +8257,30 @@ out:
 				     FW_VI_ENABLE_CMD_EEN_V(tx_en) |
 				     FW_VI_ENABLE_CMD_DCB_INFO_V(dcb_en) |
 				     FW_LEN16(c));
-	वापस t4_wr_mbox_ns(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox_ns(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_enable_vi - enable/disable a भव पूर्णांकerface
+ *	t4_enable_vi - enable/disable a virtual interface
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
  *	@rx_en: 1=enable Rx, 0=disable Rx
  *	@tx_en: 1=enable Tx, 0=disable Tx
  *
- *	Enables/disables a भव पूर्णांकerface.
+ *	Enables/disables a virtual interface.
  */
-पूर्णांक t4_enable_vi(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक viid,
+int t4_enable_vi(struct adapter *adap, unsigned int mbox, unsigned int viid,
 		 bool rx_en, bool tx_en)
-अणु
-	वापस t4_enable_vi_params(adap, mbox, viid, rx_en, tx_en, 0);
-पूर्ण
+{
+	return t4_enable_vi_params(adap, mbox, viid, rx_en, tx_en, 0);
+}
 
 /**
  *	t4_enable_pi_params - enable/disable a Port's Virtual Interface
  *      @adap: the adapter
- *      @mbox: mailbox to use क्रम the FW command
- *      @pi: the Port Inक्रमmation काष्ठाure
+ *      @mbox: mailbox to use for the FW command
+ *      @pi: the Port Information structure
  *      @rx_en: 1=enable Rx, 0=disable Rx
  *      @tx_en: 1=enable Tx, 0=disable Tx
  *      @dcb_en: 1=enable delivery of Data Center Bridging messages.
@@ -8289,67 +8288,67 @@ out:
  *      Enables/disables a Port's Virtual Interface.  Note that setting DCB
  *	Enable only makes sense when enabling a Virtual Interface ...
  *	If the Virtual Interface enable/disable operation is successful,
- *	we notअगरy the OS-specअगरic code of a potential Link Status change
+ *	we notify the OS-specific code of a potential Link Status change
  *	via the OS Contract API t4_os_link_changed().
  */
-पूर्णांक t4_enable_pi_params(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox,
-			काष्ठा port_info *pi,
+int t4_enable_pi_params(struct adapter *adap, unsigned int mbox,
+			struct port_info *pi,
 			bool rx_en, bool tx_en, bool dcb_en)
-अणु
-	पूर्णांक ret = t4_enable_vi_params(adap, mbox, pi->viid,
+{
+	int ret = t4_enable_vi_params(adap, mbox, pi->viid,
 				      rx_en, tx_en, dcb_en);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	t4_os_link_changed(adap, pi->port_id,
 			   rx_en && tx_en && pi->link_cfg.link_ok);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_identअगरy_port - identअगरy a VI's port by blinking its LED
+ *	t4_identify_port - identify a VI's port by blinking its LED
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@viid: the VI id
- *	@nblinks: how many बार to blink LED at 2.5 Hz
+ *	@nblinks: how many times to blink LED at 2.5 Hz
  *
- *	Identअगरies a VI's port by blinking its LED.
+ *	Identifies a VI's port by blinking its LED.
  */
-पूर्णांक t4_identअगरy_port(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक viid,
-		     अचिन्हित पूर्णांक nblinks)
-अणु
-	काष्ठा fw_vi_enable_cmd c;
+int t4_identify_port(struct adapter *adap, unsigned int mbox, unsigned int viid,
+		     unsigned int nblinks)
+{
+	struct fw_vi_enable_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_viid = cpu_to_be32(FW_CMD_OP_V(FW_VI_ENABLE_CMD) |
 				   FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				   FW_VI_ENABLE_CMD_VIID_V(viid));
 	c.ien_to_len16 = cpu_to_be32(FW_VI_ENABLE_CMD_LED_F | FW_LEN16(c));
 	c.blinkdur = cpu_to_be16(nblinks);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
  *	t4_iq_stop - stop an ingress queue and its FLs
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF owning the queues
  *	@vf: the VF owning the queues
  *	@iqtype: the ingress queue type (FW_IQ_TYPE_FL_INT_CAP, etc.)
  *	@iqid: ingress queue id
- *	@fl0id: FL0 queue id or 0xffff अगर no attached FL0
- *	@fl1id: FL1 queue id or 0xffff अगर no attached FL1
+ *	@fl0id: FL0 queue id or 0xffff if no attached FL0
+ *	@fl1id: FL1 queue id or 0xffff if no attached FL1
  *
- *	Stops an ingress queue and its associated FLs, अगर any.  This causes
- *	any current or future data/messages destined क्रम these queues to be
+ *	Stops an ingress queue and its associated FLs, if any.  This causes
+ *	any current or future data/messages destined for these queues to be
  *	tossed.
  */
-पूर्णांक t4_iq_stop(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-	       अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक iqtype, अचिन्हित पूर्णांक iqid,
-	       अचिन्हित पूर्णांक fl0id, अचिन्हित पूर्णांक fl1id)
-अणु
-	काष्ठा fw_iq_cmd c;
+int t4_iq_stop(struct adapter *adap, unsigned int mbox, unsigned int pf,
+	       unsigned int vf, unsigned int iqtype, unsigned int iqid,
+	       unsigned int fl0id, unsigned int fl1id)
+{
+	struct fw_iq_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_IQ_CMD) | FW_CMD_REQUEST_F |
 				  FW_CMD_EXEC_F | FW_IQ_CMD_PFN_V(pf) |
 				  FW_IQ_CMD_VFN_V(vf));
@@ -8358,29 +8357,29 @@ out:
 	c.iqid = cpu_to_be16(iqid);
 	c.fl0id = cpu_to_be16(fl0id);
 	c.fl1id = cpu_to_be16(fl1id);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_iq_मुक्त - मुक्त an ingress queue and its FLs
+ *	t4_iq_free - free an ingress queue and its FLs
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF owning the queues
  *	@vf: the VF owning the queues
  *	@iqtype: the ingress queue type
  *	@iqid: ingress queue id
- *	@fl0id: FL0 queue id or 0xffff अगर no attached FL0
- *	@fl1id: FL1 queue id or 0xffff अगर no attached FL1
+ *	@fl0id: FL0 queue id or 0xffff if no attached FL0
+ *	@fl1id: FL1 queue id or 0xffff if no attached FL1
  *
- *	Frees an ingress queue and its associated FLs, अगर any.
+ *	Frees an ingress queue and its associated FLs, if any.
  */
-पूर्णांक t4_iq_मुक्त(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-	       अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक iqtype, अचिन्हित पूर्णांक iqid,
-	       अचिन्हित पूर्णांक fl0id, अचिन्हित पूर्णांक fl1id)
-अणु
-	काष्ठा fw_iq_cmd c;
+int t4_iq_free(struct adapter *adap, unsigned int mbox, unsigned int pf,
+	       unsigned int vf, unsigned int iqtype, unsigned int iqid,
+	       unsigned int fl0id, unsigned int fl1id)
+{
+	struct fw_iq_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_IQ_CMD) | FW_CMD_REQUEST_F |
 				  FW_CMD_EXEC_F | FW_IQ_CMD_PFN_V(pf) |
 				  FW_IQ_CMD_VFN_V(vf));
@@ -8389,93 +8388,93 @@ out:
 	c.iqid = cpu_to_be16(iqid);
 	c.fl0id = cpu_to_be16(fl0id);
 	c.fl1id = cpu_to_be16(fl1id);
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_eth_eq_मुक्त - मुक्त an Ethernet egress queue
+ *	t4_eth_eq_free - free an Ethernet egress queue
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF owning the queue
  *	@vf: the VF owning the queue
  *	@eqid: egress queue id
  *
  *	Frees an Ethernet egress queue.
  */
-पूर्णांक t4_eth_eq_मुक्त(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		   अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक eqid)
-अणु
-	काष्ठा fw_eq_eth_cmd c;
+int t4_eth_eq_free(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		   unsigned int vf, unsigned int eqid)
+{
+	struct fw_eq_eth_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_EQ_ETH_CMD) |
 				  FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				  FW_EQ_ETH_CMD_PFN_V(pf) |
 				  FW_EQ_ETH_CMD_VFN_V(vf));
 	c.alloc_to_len16 = cpu_to_be32(FW_EQ_ETH_CMD_FREE_F | FW_LEN16(c));
 	c.eqid_pkd = cpu_to_be32(FW_EQ_ETH_CMD_EQID_V(eqid));
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_ctrl_eq_मुक्त - मुक्त a control egress queue
+ *	t4_ctrl_eq_free - free a control egress queue
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF owning the queue
  *	@vf: the VF owning the queue
  *	@eqid: egress queue id
  *
  *	Frees a control egress queue.
  */
-पूर्णांक t4_ctrl_eq_मुक्त(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		    अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक eqid)
-अणु
-	काष्ठा fw_eq_ctrl_cmd c;
+int t4_ctrl_eq_free(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		    unsigned int vf, unsigned int eqid)
+{
+	struct fw_eq_ctrl_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_EQ_CTRL_CMD) |
 				  FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				  FW_EQ_CTRL_CMD_PFN_V(pf) |
 				  FW_EQ_CTRL_CMD_VFN_V(vf));
 	c.alloc_to_len16 = cpu_to_be32(FW_EQ_CTRL_CMD_FREE_F | FW_LEN16(c));
 	c.cmpliqid_eqid = cpu_to_be32(FW_EQ_CTRL_CMD_EQID_V(eqid));
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_ofld_eq_मुक्त - मुक्त an offload egress queue
+ *	t4_ofld_eq_free - free an offload egress queue
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@pf: the PF owning the queue
  *	@vf: the VF owning the queue
  *	@eqid: egress queue id
  *
  *	Frees a control egress queue.
  */
-पूर्णांक t4_ofld_eq_मुक्त(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक pf,
-		    अचिन्हित पूर्णांक vf, अचिन्हित पूर्णांक eqid)
-अणु
-	काष्ठा fw_eq_ofld_cmd c;
+int t4_ofld_eq_free(struct adapter *adap, unsigned int mbox, unsigned int pf,
+		    unsigned int vf, unsigned int eqid)
+{
+	struct fw_eq_ofld_cmd c;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_EQ_OFLD_CMD) |
 				  FW_CMD_REQUEST_F | FW_CMD_EXEC_F |
 				  FW_EQ_OFLD_CMD_PFN_V(pf) |
 				  FW_EQ_OFLD_CMD_VFN_V(vf));
 	c.alloc_to_len16 = cpu_to_be32(FW_EQ_OFLD_CMD_FREE_F | FW_LEN16(c));
 	c.eqid_pkd = cpu_to_be32(FW_EQ_OFLD_CMD_EQID_V(eqid));
-	वापस t4_wr_mbox(adap, mbox, &c, माप(c), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, mbox, &c, sizeof(c), NULL);
+}
 
 /**
- *	t4_link_करोwn_rc_str - वापस a string क्रम a Link Down Reason Code
- *	@link_करोwn_rc: Link Down Reason Code
+ *	t4_link_down_rc_str - return a string for a Link Down Reason Code
+ *	@link_down_rc: Link Down Reason Code
  *
  *	Returns a string representation of the Link Down Reason Code.
  */
-अटल स्थिर अक्षर *t4_link_करोwn_rc_str(अचिन्हित अक्षर link_करोwn_rc)
-अणु
-	अटल स्थिर अक्षर * स्थिर reason[] = अणु
+static const char *t4_link_down_rc_str(unsigned char link_down_rc)
+{
+	static const char * const reason[] = {
 		"Link Down",
 		"Remote Fault",
 		"Auto-negotiation Failure",
@@ -8484,22 +8483,22 @@ out:
 		"Unable To Determine Reason",
 		"No RX Signal Detected",
 		"Reserved",
-	पूर्ण;
+	};
 
-	अगर (link_करोwn_rc >= ARRAY_SIZE(reason))
-		वापस "Bad Reason Code";
+	if (link_down_rc >= ARRAY_SIZE(reason))
+		return "Bad Reason Code";
 
-	वापस reason[link_करोwn_rc];
-पूर्ण
+	return reason[link_down_rc];
+}
 
 /* Return the highest speed set in the port capabilities, in Mb/s. */
-अटल अचिन्हित पूर्णांक fwcap_to_speed(fw_port_cap32_t caps)
-अणु
-	#घोषणा TEST_SPEED_RETURN(__caps_speed, __speed) \
-		करो अणु \
-			अगर (caps & FW_PORT_CAP32_SPEED_##__caps_speed) \
-				वापस __speed; \
-		पूर्ण जबतक (0)
+static unsigned int fwcap_to_speed(fw_port_cap32_t caps)
+{
+	#define TEST_SPEED_RETURN(__caps_speed, __speed) \
+		do { \
+			if (caps & FW_PORT_CAP32_SPEED_##__caps_speed) \
+				return __speed; \
+		} while (0)
 
 	TEST_SPEED_RETURN(400G, 400000);
 	TEST_SPEED_RETURN(200G, 200000);
@@ -8511,26 +8510,26 @@ out:
 	TEST_SPEED_RETURN(1G,     1000);
 	TEST_SPEED_RETURN(100M,    100);
 
-	#अघोषित TEST_SPEED_RETURN
+	#undef TEST_SPEED_RETURN
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	fwcap_to_fwspeed - वापस highest speed in Port Capabilities
+ *	fwcap_to_fwspeed - return highest speed in Port Capabilities
  *	@acaps: advertised Port Capabilities
  *
- *	Get the highest speed क्रम the port from the advertised Port
+ *	Get the highest speed for the port from the advertised Port
  *	Capabilities.  It will be either the highest speed from the list of
  *	speeds or whatever user has set using ethtool.
  */
-अटल fw_port_cap32_t fwcap_to_fwspeed(fw_port_cap32_t acaps)
-अणु
-	#घोषणा TEST_SPEED_RETURN(__caps_speed) \
-		करो अणु \
-			अगर (acaps & FW_PORT_CAP32_SPEED_##__caps_speed) \
-				वापस FW_PORT_CAP32_SPEED_##__caps_speed; \
-		पूर्ण जबतक (0)
+static fw_port_cap32_t fwcap_to_fwspeed(fw_port_cap32_t acaps)
+{
+	#define TEST_SPEED_RETURN(__caps_speed) \
+		do { \
+			if (acaps & FW_PORT_CAP32_SPEED_##__caps_speed) \
+				return FW_PORT_CAP32_SPEED_##__caps_speed; \
+		} while (0)
 
 	TEST_SPEED_RETURN(400G);
 	TEST_SPEED_RETURN(200G);
@@ -8542,45 +8541,45 @@ out:
 	TEST_SPEED_RETURN(1G);
 	TEST_SPEED_RETURN(100M);
 
-	#अघोषित TEST_SPEED_RETURN
+	#undef TEST_SPEED_RETURN
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	lstatus_to_fwcap - translate old lstatus to 32-bit Port Capabilities
  *	@lstatus: old FW_PORT_ACTION_GET_PORT_INFO lstatus value
  *
- *	Translates old FW_PORT_ACTION_GET_PORT_INFO lstatus field पूर्णांकo new
+ *	Translates old FW_PORT_ACTION_GET_PORT_INFO lstatus field into new
  *	32-bit Port Capabilities value.
  */
-अटल fw_port_cap32_t lstatus_to_fwcap(u32 lstatus)
-अणु
+static fw_port_cap32_t lstatus_to_fwcap(u32 lstatus)
+{
 	fw_port_cap32_t linkattr = 0;
 
-	/* Unक्रमtunately the क्रमmat of the Link Status in the old
-	 * 16-bit Port Inक्रमmation message isn't the same as the
-	 * 16-bit Port Capabilities bitfield used everywhere अन्यथा ...
+	/* Unfortunately the format of the Link Status in the old
+	 * 16-bit Port Information message isn't the same as the
+	 * 16-bit Port Capabilities bitfield used everywhere else ...
 	 */
-	अगर (lstatus & FW_PORT_CMD_RXPAUSE_F)
+	if (lstatus & FW_PORT_CMD_RXPAUSE_F)
 		linkattr |= FW_PORT_CAP32_FC_RX;
-	अगर (lstatus & FW_PORT_CMD_TXPAUSE_F)
+	if (lstatus & FW_PORT_CMD_TXPAUSE_F)
 		linkattr |= FW_PORT_CAP32_FC_TX;
-	अगर (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_100M))
+	if (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_100M))
 		linkattr |= FW_PORT_CAP32_SPEED_100M;
-	अगर (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_1G))
+	if (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_1G))
 		linkattr |= FW_PORT_CAP32_SPEED_1G;
-	अगर (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_10G))
+	if (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_10G))
 		linkattr |= FW_PORT_CAP32_SPEED_10G;
-	अगर (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_25G))
+	if (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_25G))
 		linkattr |= FW_PORT_CAP32_SPEED_25G;
-	अगर (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_40G))
+	if (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_40G))
 		linkattr |= FW_PORT_CAP32_SPEED_40G;
-	अगर (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_100G))
+	if (lstatus & FW_PORT_CMD_LSPEED_V(FW_PORT_CAP_SPEED_100G))
 		linkattr |= FW_PORT_CAP32_SPEED_100G;
 
-	वापस linkattr;
-पूर्ण
+	return linkattr;
+}
 
 /**
  *	t4_handle_get_port_info - process a FW reply message
@@ -8589,22 +8588,22 @@ out:
  *
  *	Processes a GET_PORT_INFO FW reply message.
  */
-व्योम t4_handle_get_port_info(काष्ठा port_info *pi, स्थिर __be64 *rpl)
-अणु
-	स्थिर काष्ठा fw_port_cmd *cmd = (स्थिर व्योम *)rpl;
+void t4_handle_get_port_info(struct port_info *pi, const __be64 *rpl)
+{
+	const struct fw_port_cmd *cmd = (const void *)rpl;
 	fw_port_cap32_t pcaps, acaps, lpacaps, linkattr;
-	काष्ठा link_config *lc = &pi->link_cfg;
-	काष्ठा adapter *adapter = pi->adapter;
-	अचिन्हित पूर्णांक speed, fc, fec, adv_fc;
-	क्रमागत fw_port_module_type mod_type;
-	पूर्णांक action, link_ok, linkdnrc;
-	क्रमागत fw_port_type port_type;
+	struct link_config *lc = &pi->link_cfg;
+	struct adapter *adapter = pi->adapter;
+	unsigned int speed, fc, fec, adv_fc;
+	enum fw_port_module_type mod_type;
+	int action, link_ok, linkdnrc;
+	enum fw_port_type port_type;
 
-	/* Extract the various fields from the Port Inक्रमmation message.
+	/* Extract the various fields from the Port Information message.
 	 */
 	action = FW_PORT_CMD_ACTION_G(be32_to_cpu(cmd->action_to_len16));
-	चयन (action) अणु
-	हाल FW_PORT_ACTION_GET_PORT_INFO: अणु
+	switch (action) {
+	case FW_PORT_ACTION_GET_PORT_INFO: {
 		u32 lstatus = be32_to_cpu(cmd->u.info.lstatus_to_modtype);
 
 		link_ok = (lstatus & FW_PORT_CMD_LSTATUS_F) != 0;
@@ -8615,10 +8614,10 @@ out:
 		acaps = fwcaps16_to_caps32(be16_to_cpu(cmd->u.info.acap));
 		lpacaps = fwcaps16_to_caps32(be16_to_cpu(cmd->u.info.lpacap));
 		linkattr = lstatus_to_fwcap(lstatus);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल FW_PORT_ACTION_GET_PORT_INFO32: अणु
+	case FW_PORT_ACTION_GET_PORT_INFO32: {
 		u32 lstatus32;
 
 		lstatus32 = be32_to_cpu(cmd->u.info32.lstatus32_to_cbllen32);
@@ -8630,28 +8629,28 @@ out:
 		acaps = be32_to_cpu(cmd->u.info32.acaps32);
 		lpacaps = be32_to_cpu(cmd->u.info32.lpacaps32);
 		linkattr = be32_to_cpu(cmd->u.info32.linkattr32);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
+	default:
 		dev_err(adapter->pdev_dev, "Handle Port Information: Bad Command/Action %#x\n",
 			be32_to_cpu(cmd->action_to_len16));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	fec = fwcap_to_cc_fec(acaps);
-	adv_fc = fwcap_to_cc_छोड़ो(acaps);
-	fc = fwcap_to_cc_छोड़ो(linkattr);
+	adv_fc = fwcap_to_cc_pause(acaps);
+	fc = fwcap_to_cc_pause(linkattr);
 	speed = fwcap_to_speed(linkattr);
 
-	/* Reset state क्रम communicating new Transceiver Module status and
-	 * whether the OS-dependent layer wants us to reकरो the current
+	/* Reset state for communicating new Transceiver Module status and
+	 * whether the OS-dependent layer wants us to redo the current
 	 * "sticky" L1 Configure Link Parameters.
 	 */
 	lc->new_module = false;
-	lc->reकरो_l1cfg = false;
+	lc->redo_l1cfg = false;
 
-	अगर (mod_type != pi->mod_type) अणु
+	if (mod_type != pi->mod_type) {
 		/* With the newer SFP28 and QSFP28 Transceiver Module Types,
 		 * various fundamental Port Capabilities which used to be
 		 * immutable can now change radically.  We can now have
@@ -8666,47 +8665,47 @@ out:
 		 * will examine its i2c EPROM to determine its type and
 		 * general operating parameters including things like Forward
 		 * Error Control, etc.  Various IEEE 802.3 standards dictate
-		 * how to पूर्णांकerpret these i2c values to determine शेष
-		 * "sutomatic" settings.  We record these क्रम future use when
+		 * how to interpret these i2c values to determine default
+		 * "sutomatic" settings.  We record these for future use when
 		 * the user explicitly requests these standards-based values.
 		 */
 		lc->def_acaps = acaps;
 
 		/* Some versions of the early T6 Firmware "cheated" when
-		 * handling dअगरferent Transceiver Modules by changing the
+		 * handling different Transceiver Modules by changing the
 		 * underlaying Port Type reported to the Host Drivers.  As
 		 * such we need to capture whatever Port Type the Firmware
-		 * sends us and record it in हाल it's dअगरferent from what we
-		 * were told earlier.  Unक्रमtunately, since Firmware is
-		 * क्रमever, we'll need to keep this code here क्रमever, but in
+		 * sends us and record it in case it's different from what we
+		 * were told earlier.  Unfortunately, since Firmware is
+		 * forever, we'll need to keep this code here forever, but in
 		 * later T6 Firmware it should just be an assignment of the
-		 * same value alपढ़ोy recorded.
+		 * same value already recorded.
 		 */
 		pi->port_type = port_type;
 
-		/* Record new Module Type inक्रमmation.
+		/* Record new Module Type information.
 		 */
 		pi->mod_type = mod_type;
 
-		/* Let the OS-dependent layer know अगर we have a new
+		/* Let the OS-dependent layer know if we have a new
 		 * Transceiver Module inserted.
 		 */
 		lc->new_module = t4_is_inserted_mod_type(mod_type);
 
-		t4_os_porपंचांगod_changed(adapter, pi->port_id);
-	पूर्ण
+		t4_os_portmod_changed(adapter, pi->port_id);
+	}
 
-	अगर (link_ok != lc->link_ok || speed != lc->speed ||
+	if (link_ok != lc->link_ok || speed != lc->speed ||
 	    fc != lc->fc || adv_fc != lc->advertised_fc ||
-	    fec != lc->fec) अणु
+	    fec != lc->fec) {
 		/* something changed */
-		अगर (!link_ok && lc->link_ok) अणु
-			lc->link_करोwn_rc = linkdnrc;
+		if (!link_ok && lc->link_ok) {
+			lc->link_down_rc = linkdnrc;
 			dev_warn_ratelimited(adapter->pdev_dev,
 					     "Port %d link down, reason: %s\n",
 					     pi->tx_chan,
-					     t4_link_करोwn_rc_str(linkdnrc));
-		पूर्ण
+					     t4_link_down_rc_str(linkdnrc));
+		}
 		lc->link_ok = link_ok;
 		lc->speed = speed;
 		lc->advertised_fc = adv_fc;
@@ -8719,65 +8718,65 @@ out:
 		/* If we're not physically capable of Auto-Negotiation, note
 		 * this as Auto-Negotiation disabled.  Otherwise, we track
 		 * what Auto-Negotiation settings we have.  Note parallel
-		 * काष्ठाure in t4_link_l1cfg_core() and init_link_config().
+		 * structure in t4_link_l1cfg_core() and init_link_config().
 		 */
-		अगर (!(lc->acaps & FW_PORT_CAP32_ANEG)) अणु
-			lc->स्वतःneg = AUTONEG_DISABLE;
-		पूर्ण अन्यथा अगर (lc->acaps & FW_PORT_CAP32_ANEG) अणु
-			lc->स्वतःneg = AUTONEG_ENABLE;
-		पूर्ण अन्यथा अणु
+		if (!(lc->acaps & FW_PORT_CAP32_ANEG)) {
+			lc->autoneg = AUTONEG_DISABLE;
+		} else if (lc->acaps & FW_PORT_CAP32_ANEG) {
+			lc->autoneg = AUTONEG_ENABLE;
+		} else {
 			/* When Autoneg is disabled, user needs to set
 			 * single speed.
 			 * Similar to cxgb4_ethtool.c: set_link_ksettings
 			 */
 			lc->acaps = 0;
 			lc->speed_caps = fwcap_to_fwspeed(acaps);
-			lc->स्वतःneg = AUTONEG_DISABLE;
-		पूर्ण
+			lc->autoneg = AUTONEG_DISABLE;
+		}
 
 		t4_os_link_changed(adapter, pi->port_id, link_ok);
-	पूर्ण
+	}
 
 	/* If we have a new Transceiver Module and the OS-dependent code has
-	 * told us that it wants us to reकरो whatever "sticky" L1 Configuration
-	 * Link Parameters are set, करो that now.
+	 * told us that it wants us to redo whatever "sticky" L1 Configuration
+	 * Link Parameters are set, do that now.
 	 */
-	अगर (lc->new_module && lc->reकरो_l1cfg) अणु
-		काष्ठा link_config old_lc;
-		पूर्णांक ret;
+	if (lc->new_module && lc->redo_l1cfg) {
+		struct link_config old_lc;
+		int ret;
 
-		/* Save the current L1 Configuration and restore it अगर an
+		/* Save the current L1 Configuration and restore it if an
 		 * error occurs.  We probably should fix the l1_cfg*()
 		 * routines not to change the link_config when an error
 		 * occurs ...
 		 */
 		old_lc = *lc;
 		ret = t4_link_l1cfg_ns(adapter, adapter->mbox, pi->lport, lc);
-		अगर (ret) अणु
+		if (ret) {
 			*lc = old_lc;
 			dev_warn(adapter->pdev_dev,
 				 "Attempt to update new Transceiver Module settings failed\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 	lc->new_module = false;
-	lc->reकरो_l1cfg = false;
-पूर्ण
+	lc->redo_l1cfg = false;
+}
 
 /**
- *	t4_update_port_info - retrieve and update port inक्रमmation अगर changed
+ *	t4_update_port_info - retrieve and update port information if changed
  *	@pi: the port_info
  *
- *	We issue a Get Port Inक्रमmation Command to the Firmware and, अगर
- *	successful, we check to see अगर anything is dअगरferent from what we
+ *	We issue a Get Port Information Command to the Firmware and, if
+ *	successful, we check to see if anything is different from what we
  *	last recorded and update things accordingly.
  */
-पूर्णांक t4_update_port_info(काष्ठा port_info *pi)
-अणु
-	अचिन्हित पूर्णांक fw_caps = pi->adapter->params.fw_caps_support;
-	काष्ठा fw_port_cmd port_cmd;
-	पूर्णांक ret;
+int t4_update_port_info(struct port_info *pi)
+{
+	unsigned int fw_caps = pi->adapter->params.fw_caps_support;
+	struct fw_port_cmd port_cmd;
+	int ret;
 
-	स_रखो(&port_cmd, 0, माप(port_cmd));
+	memset(&port_cmd, 0, sizeof(port_cmd));
 	port_cmd.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PORT_CMD) |
 					    FW_CMD_REQUEST_F | FW_CMD_READ_F |
 					    FW_PORT_CMD_PORTID_V(pi->tx_chan));
@@ -8787,35 +8786,35 @@ out:
 				     : FW_PORT_ACTION_GET_PORT_INFO32) |
 		FW_LEN16(port_cmd));
 	ret = t4_wr_mbox(pi->adapter, pi->adapter->mbox,
-			 &port_cmd, माप(port_cmd), &port_cmd);
-	अगर (ret)
-		वापस ret;
+			 &port_cmd, sizeof(port_cmd), &port_cmd);
+	if (ret)
+		return ret;
 
 	t4_handle_get_port_info(pi, (__be64 *)&port_cmd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_get_link_params - retrieve basic link parameters क्रम given port
+ *	t4_get_link_params - retrieve basic link parameters for given port
  *	@pi: the port
- *	@link_okp: value वापस poपूर्णांकer क्रम link up/करोwn
- *	@speedp: value वापस poपूर्णांकer क्रम speed (Mb/s)
- *	@mtup: value वापस poपूर्णांकer क्रम mtu
+ *	@link_okp: value return pointer for link up/down
+ *	@speedp: value return pointer for speed (Mb/s)
+ *	@mtup: value return pointer for mtu
  *
- *	Retrieves basic link parameters क्रम a port: link up/करोwn, speed (Mb/s),
- *	and MTU क्रम a specअगरied port.  A negative error is वापसed on
+ *	Retrieves basic link parameters for a port: link up/down, speed (Mb/s),
+ *	and MTU for a specified port.  A negative error is returned on
  *	failure; 0 on success.
  */
-पूर्णांक t4_get_link_params(काष्ठा port_info *pi, अचिन्हित पूर्णांक *link_okp,
-		       अचिन्हित पूर्णांक *speedp, अचिन्हित पूर्णांक *mtup)
-अणु
-	अचिन्हित पूर्णांक fw_caps = pi->adapter->params.fw_caps_support;
-	अचिन्हित पूर्णांक action, link_ok, mtu;
-	काष्ठा fw_port_cmd port_cmd;
+int t4_get_link_params(struct port_info *pi, unsigned int *link_okp,
+		       unsigned int *speedp, unsigned int *mtup)
+{
+	unsigned int fw_caps = pi->adapter->params.fw_caps_support;
+	unsigned int action, link_ok, mtu;
+	struct fw_port_cmd port_cmd;
 	fw_port_cap32_t linkattr;
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(&port_cmd, 0, माप(port_cmd));
+	memset(&port_cmd, 0, sizeof(port_cmd));
 	port_cmd.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PORT_CMD) |
 					    FW_CMD_REQUEST_F | FW_CMD_READ_F |
 					    FW_PORT_CMD_PORTID_V(pi->tx_chan));
@@ -8826,17 +8825,17 @@ out:
 		FW_PORT_CMD_ACTION_V(action) |
 		FW_LEN16(port_cmd));
 	ret = t4_wr_mbox(pi->adapter, pi->adapter->mbox,
-			 &port_cmd, माप(port_cmd), &port_cmd);
-	अगर (ret)
-		वापस ret;
+			 &port_cmd, sizeof(port_cmd), &port_cmd);
+	if (ret)
+		return ret;
 
-	अगर (action == FW_PORT_ACTION_GET_PORT_INFO) अणु
+	if (action == FW_PORT_ACTION_GET_PORT_INFO) {
 		u32 lstatus = be32_to_cpu(port_cmd.u.info.lstatus_to_modtype);
 
 		link_ok = !!(lstatus & FW_PORT_CMD_LSTATUS_F);
 		linkattr = lstatus_to_fwcap(lstatus);
 		mtu = be16_to_cpu(port_cmd.u.info.mtu);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 lstatus32 =
 			   be32_to_cpu(port_cmd.u.info32.lstatus32_to_cbllen32);
 
@@ -8844,17 +8843,17 @@ out:
 		linkattr = be32_to_cpu(port_cmd.u.info32.linkattr32);
 		mtu = FW_PORT_CMD_MTU32_G(
 			be32_to_cpu(port_cmd.u.info32.auxlinfo32_mtu32));
-	पूर्ण
+	}
 
-	अगर (link_okp)
+	if (link_okp)
 		*link_okp = link_ok;
-	अगर (speedp)
+	if (speedp)
 		*speedp = fwcap_to_speed(linkattr);
-	अगर (mtup)
+	if (mtup)
 		*mtup = mtu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *      t4_handle_fw_rpl - process a FW reply message
@@ -8863,64 +8862,64 @@ out:
  *
  *      Processes a FW message, such as link state change messages.
  */
-पूर्णांक t4_handle_fw_rpl(काष्ठा adapter *adap, स्थिर __be64 *rpl)
-अणु
-	u8 opcode = *(स्थिर u8 *)rpl;
+int t4_handle_fw_rpl(struct adapter *adap, const __be64 *rpl)
+{
+	u8 opcode = *(const u8 *)rpl;
 
-	/* This might be a port command ... this simplअगरies the following
+	/* This might be a port command ... this simplifies the following
 	 * conditionals ...  We can get away with pre-dereferencing
 	 * action_to_len16 because it's in the first 16 bytes and all messages
-	 * will be at least that दीर्घ.
+	 * will be at least that long.
 	 */
-	स्थिर काष्ठा fw_port_cmd *p = (स्थिर व्योम *)rpl;
-	अचिन्हित पूर्णांक action =
+	const struct fw_port_cmd *p = (const void *)rpl;
+	unsigned int action =
 		FW_PORT_CMD_ACTION_G(be32_to_cpu(p->action_to_len16));
 
-	अगर (opcode == FW_PORT_CMD &&
+	if (opcode == FW_PORT_CMD &&
 	    (action == FW_PORT_ACTION_GET_PORT_INFO ||
-	     action == FW_PORT_ACTION_GET_PORT_INFO32)) अणु
-		पूर्णांक i;
-		पूर्णांक chan = FW_PORT_CMD_PORTID_G(be32_to_cpu(p->op_to_portid));
-		काष्ठा port_info *pi = शून्य;
+	     action == FW_PORT_ACTION_GET_PORT_INFO32)) {
+		int i;
+		int chan = FW_PORT_CMD_PORTID_G(be32_to_cpu(p->op_to_portid));
+		struct port_info *pi = NULL;
 
-		क्रम_each_port(adap, i) अणु
+		for_each_port(adap, i) {
 			pi = adap2pinfo(adap, i);
-			अगर (pi->tx_chan == chan)
-				अवरोध;
-		पूर्ण
+			if (pi->tx_chan == chan)
+				break;
+		}
 
 		t4_handle_get_port_info(pi, rpl);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_warn(adap->pdev_dev, "Unknown firmware reply %d\n",
 			 opcode);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल व्योम get_pci_mode(काष्ठा adapter *adapter, काष्ठा pci_params *p)
-अणु
+static void get_pci_mode(struct adapter *adapter, struct pci_params *p)
+{
 	u16 val;
 
-	अगर (pci_is_pcie(adapter->pdev)) अणु
-		pcie_capability_पढ़ो_word(adapter->pdev, PCI_EXP_LNKSTA, &val);
+	if (pci_is_pcie(adapter->pdev)) {
+		pcie_capability_read_word(adapter->pdev, PCI_EXP_LNKSTA, &val);
 		p->speed = val & PCI_EXP_LNKSTA_CLS;
 		p->width = (val & PCI_EXP_LNKSTA_NLW) >> 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  *	init_link_config - initialize a link's SW state
- *	@lc: poपूर्णांकer to काष्ठाure holding the link state
+ *	@lc: pointer to structure holding the link state
  *	@pcaps: link Port Capabilities
  *	@acaps: link current Advertised Port Capabilities
  *
- *	Initializes the SW state मुख्यtained क्रम each link, including the link's
- *	capabilities and शेष speed/flow-control/स्वतःnegotiation settings.
+ *	Initializes the SW state maintained for each link, including the link's
+ *	capabilities and default speed/flow-control/autonegotiation settings.
  */
-अटल व्योम init_link_config(काष्ठा link_config *lc, fw_port_cap32_t pcaps,
+static void init_link_config(struct link_config *lc, fw_port_cap32_t pcaps,
 			     fw_port_cap32_t acaps)
-अणु
+{
 	lc->pcaps = pcaps;
 	lc->def_acaps = acaps;
 	lc->lpacaps = 0;
@@ -8928,7 +8927,7 @@ out:
 	lc->speed = 0;
 	lc->requested_fc = lc->fc = PAUSE_RX | PAUSE_TX;
 
-	/* For Forward Error Control, we शेष to whatever the Firmware
+	/* For Forward Error Control, we default to whatever the Firmware
 	 * tells us the Link is currently advertising.
 	 */
 	lc->requested_fec = FEC_AUTO;
@@ -8938,169 +8937,169 @@ out:
 	 * "enabled" and copy over all of the Physical Port Capabilities
 	 * to the Advertised Port Capabilities.  Otherwise mark it as
 	 * Auto-Negotiate disabled and select the highest supported speed
-	 * क्रम the link.  Note parallel काष्ठाure in t4_link_l1cfg_core()
+	 * for the link.  Note parallel structure in t4_link_l1cfg_core()
 	 * and t4_handle_get_port_info().
 	 */
-	अगर (lc->pcaps & FW_PORT_CAP32_ANEG) अणु
+	if (lc->pcaps & FW_PORT_CAP32_ANEG) {
 		lc->acaps = lc->pcaps & ADVERT_MASK;
-		lc->स्वतःneg = AUTONEG_ENABLE;
+		lc->autoneg = AUTONEG_ENABLE;
 		lc->requested_fc |= PAUSE_AUTONEG;
-	पूर्ण अन्यथा अणु
+	} else {
 		lc->acaps = 0;
-		lc->स्वतःneg = AUTONEG_DISABLE;
+		lc->autoneg = AUTONEG_DISABLE;
 		lc->speed_caps = fwcap_to_fwspeed(acaps);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा CIM_PF_NOACCESS 0xeeeeeeee
+#define CIM_PF_NOACCESS 0xeeeeeeee
 
-पूर्णांक t4_रुको_dev_पढ़ोy(व्योम __iomem *regs)
-अणु
+int t4_wait_dev_ready(void __iomem *regs)
+{
 	u32 whoami;
 
-	whoami = पढ़ोl(regs + PL_WHOAMI_A);
-	अगर (whoami != 0xffffffff && whoami != CIM_PF_NOACCESS)
-		वापस 0;
+	whoami = readl(regs + PL_WHOAMI_A);
+	if (whoami != 0xffffffff && whoami != CIM_PF_NOACCESS)
+		return 0;
 
 	msleep(500);
-	whoami = पढ़ोl(regs + PL_WHOAMI_A);
-	वापस (whoami != 0xffffffff && whoami != CIM_PF_NOACCESS ? 0 : -EIO);
-पूर्ण
+	whoami = readl(regs + PL_WHOAMI_A);
+	return (whoami != 0xffffffff && whoami != CIM_PF_NOACCESS ? 0 : -EIO);
+}
 
-काष्ठा flash_desc अणु
-	u32 venकरोr_and_model_id;
+struct flash_desc {
+	u32 vendor_and_model_id;
 	u32 size_mb;
-पूर्ण;
+};
 
-अटल पूर्णांक t4_get_flash_params(काष्ठा adapter *adap)
-अणु
-	/* Table क्रम non-Numonix supported flash parts.  Numonix parts are left
+static int t4_get_flash_params(struct adapter *adap)
+{
+	/* Table for non-Numonix supported flash parts.  Numonix parts are left
 	 * to the preexisting code.  All flash parts have 64KB sectors.
 	 */
-	अटल काष्ठा flash_desc supported_flash[] = अणु
-		अणु 0x150201, 4 << 20 पूर्ण,       /* Spansion 4MB S25FL032P */
-	पूर्ण;
+	static struct flash_desc supported_flash[] = {
+		{ 0x150201, 4 << 20 },       /* Spansion 4MB S25FL032P */
+	};
 
-	अचिन्हित पूर्णांक part, manufacturer;
-	अचिन्हित पूर्णांक density, size = 0;
+	unsigned int part, manufacturer;
+	unsigned int density, size = 0;
 	u32 flashid = 0;
-	पूर्णांक ret;
+	int ret;
 
 	/* Issue a Read ID Command to the Flash part.  We decode supported
 	 * Flash parts and their sizes from this.  There's a newer Query
-	 * Command which can retrieve detailed geometry inक्रमmation but many
-	 * Flash parts करोn't support it.
+	 * Command which can retrieve detailed geometry information but many
+	 * Flash parts don't support it.
 	 */
 
-	ret = sf1_ग_लिखो(adap, 1, 1, 0, SF_RD_ID);
-	अगर (!ret)
-		ret = sf1_पढ़ो(adap, 3, 0, 1, &flashid);
-	t4_ग_लिखो_reg(adap, SF_OP_A, 0);                    /* unlock SF */
-	अगर (ret)
-		वापस ret;
+	ret = sf1_write(adap, 1, 1, 0, SF_RD_ID);
+	if (!ret)
+		ret = sf1_read(adap, 3, 0, 1, &flashid);
+	t4_write_reg(adap, SF_OP_A, 0);                    /* unlock SF */
+	if (ret)
+		return ret;
 
-	/* Check to see अगर it's one of our non-standard supported Flash parts.
+	/* Check to see if it's one of our non-standard supported Flash parts.
 	 */
-	क्रम (part = 0; part < ARRAY_SIZE(supported_flash); part++)
-		अगर (supported_flash[part].venकरोr_and_model_id == flashid) अणु
+	for (part = 0; part < ARRAY_SIZE(supported_flash); part++)
+		if (supported_flash[part].vendor_and_model_id == flashid) {
 			adap->params.sf_size = supported_flash[part].size_mb;
 			adap->params.sf_nsec =
 				adap->params.sf_size / SF_SEC_SIZE;
-			जाओ found;
-		पूर्ण
+			goto found;
+		}
 
 	/* Decode Flash part size.  The code below looks repetitive with
 	 * common encodings, but that's not guaranteed in the JEDEC
-	 * specअगरication क्रम the Read JEDEC ID command.  The only thing that
-	 * we're guaranteed by the JEDEC specअगरication is where the
-	 * Manufacturer ID is in the वापसed result.  After that each
-	 * Manufacturer ~could~ encode things completely dअगरferently.
+	 * specification for the Read JEDEC ID command.  The only thing that
+	 * we're guaranteed by the JEDEC specification is where the
+	 * Manufacturer ID is in the returned result.  After that each
+	 * Manufacturer ~could~ encode things completely differently.
 	 * Note, all Flash parts must have 64KB sectors.
 	 */
 	manufacturer = flashid & 0xff;
-	चयन (manufacturer) अणु
-	हाल 0x20: अणु /* Micron/Numonix */
+	switch (manufacturer) {
+	case 0x20: { /* Micron/Numonix */
 		/* This Density -> Size decoding table is taken from Micron
 		 * Data Sheets.
 		 */
 		density = (flashid >> 16) & 0xff;
-		चयन (density) अणु
-		हाल 0x14: /* 1MB */
+		switch (density) {
+		case 0x14: /* 1MB */
 			size = 1 << 20;
-			अवरोध;
-		हाल 0x15: /* 2MB */
+			break;
+		case 0x15: /* 2MB */
 			size = 1 << 21;
-			अवरोध;
-		हाल 0x16: /* 4MB */
+			break;
+		case 0x16: /* 4MB */
 			size = 1 << 22;
-			अवरोध;
-		हाल 0x17: /* 8MB */
+			break;
+		case 0x17: /* 8MB */
 			size = 1 << 23;
-			अवरोध;
-		हाल 0x18: /* 16MB */
+			break;
+		case 0x18: /* 16MB */
 			size = 1 << 24;
-			अवरोध;
-		हाल 0x19: /* 32MB */
+			break;
+		case 0x19: /* 32MB */
 			size = 1 << 25;
-			अवरोध;
-		हाल 0x20: /* 64MB */
+			break;
+		case 0x20: /* 64MB */
 			size = 1 << 26;
-			अवरोध;
-		हाल 0x21: /* 128MB */
+			break;
+		case 0x21: /* 128MB */
 			size = 1 << 27;
-			अवरोध;
-		हाल 0x22: /* 256MB */
+			break;
+		case 0x22: /* 256MB */
 			size = 1 << 28;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल 0x9d: अणु /* ISSI -- Integrated Silicon Solution, Inc. */
+			break;
+		}
+		break;
+	}
+	case 0x9d: { /* ISSI -- Integrated Silicon Solution, Inc. */
 		/* This Density -> Size decoding table is taken from ISSI
 		 * Data Sheets.
 		 */
 		density = (flashid >> 16) & 0xff;
-		चयन (density) अणु
-		हाल 0x16: /* 32 MB */
+		switch (density) {
+		case 0x16: /* 32 MB */
 			size = 1 << 25;
-			अवरोध;
-		हाल 0x17: /* 64MB */
+			break;
+		case 0x17: /* 64MB */
 			size = 1 << 26;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल 0xc2: अणु /* Macronix */
+			break;
+		}
+		break;
+	}
+	case 0xc2: { /* Macronix */
 		/* This Density -> Size decoding table is taken from Macronix
 		 * Data Sheets.
 		 */
 		density = (flashid >> 16) & 0xff;
-		चयन (density) अणु
-		हाल 0x17: /* 8MB */
+		switch (density) {
+		case 0x17: /* 8MB */
 			size = 1 << 23;
-			अवरोध;
-		हाल 0x18: /* 16MB */
+			break;
+		case 0x18: /* 16MB */
 			size = 1 << 24;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल 0xef: अणु /* Winbond */
+			break;
+		}
+		break;
+	}
+	case 0xef: { /* Winbond */
 		/* This Density -> Size decoding table is taken from Winbond
 		 * Data Sheets.
 		 */
 		density = (flashid >> 16) & 0xff;
-		चयन (density) अणु
-		हाल 0x17: /* 8MB */
+		switch (density) {
+		case 0x17: /* 8MB */
 			size = 1 << 23;
-			अवरोध;
-		हाल 0x18: /* 16MB */
+			break;
+		case 0x18: /* 16MB */
 			size = 1 << 24;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	पूर्ण
+			break;
+		}
+		break;
+	}
+	}
 
 	/* If we didn't recognize the FLASH part, that's no real issue: the
 	 * Hardware/Software contract says that Hardware will _*ALWAYS*_
@@ -9108,53 +9107,53 @@ out:
 	 * sectors.  The unrecognized FLASH part is likely to be much larger
 	 * than 4MB, but that's all we really need.
 	 */
-	अगर (size == 0) अणु
+	if (size == 0) {
 		dev_warn(adap->pdev_dev, "Unknown Flash Part, ID = %#x, assuming 4MB\n",
 			 flashid);
 		size = 1 << 22;
-	पूर्ण
+	}
 
-	/* Store decoded Flash size and fall through पूर्णांकo vetting code. */
+	/* Store decoded Flash size and fall through into vetting code. */
 	adap->params.sf_size = size;
 	adap->params.sf_nsec = size / SF_SEC_SIZE;
 
 found:
-	अगर (adap->params.sf_size < FLASH_MIN_SIZE)
+	if (adap->params.sf_size < FLASH_MIN_SIZE)
 		dev_warn(adap->pdev_dev, "WARNING: Flash Part ID %#x, size %#x < %#x\n",
 			 flashid, adap->params.sf_size, FLASH_MIN_SIZE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_prep_adapter - prepare SW and HW क्रम operation
+ *	t4_prep_adapter - prepare SW and HW for operation
  *	@adapter: the adapter
  *
- *	Initialize adapter SW state क्रम the various HW modules, set initial
- *	values क्रम some adapter tunables, take PHYs out of reset, and
- *	initialize the MDIO पूर्णांकerface.
+ *	Initialize adapter SW state for the various HW modules, set initial
+ *	values for some adapter tunables, take PHYs out of reset, and
+ *	initialize the MDIO interface.
  */
-पूर्णांक t4_prep_adapter(काष्ठा adapter *adapter)
-अणु
-	पूर्णांक ret, ver;
-	uपूर्णांक16_t device_id;
+int t4_prep_adapter(struct adapter *adapter)
+{
+	int ret, ver;
+	uint16_t device_id;
 	u32 pl_rev;
 
 	get_pci_mode(adapter, &adapter->params.pci);
-	pl_rev = REV_G(t4_पढ़ो_reg(adapter, PL_REV_A));
+	pl_rev = REV_G(t4_read_reg(adapter, PL_REV_A));
 
 	ret = t4_get_flash_params(adapter);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(adapter->pdev_dev, "error %d identifying flash\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Retrieve adapter's device ID
 	 */
-	pci_पढ़ो_config_word(adapter->pdev, PCI_DEVICE_ID, &device_id);
+	pci_read_config_word(adapter->pdev, PCI_DEVICE_ID, &device_id);
 	ver = device_id >> 12;
 	adapter->params.chip = 0;
-	चयन (ver) अणु
-	हाल CHELSIO_T4:
+	switch (ver) {
+	case CHELSIO_T4:
 		adapter->params.chip |= CHELSIO_CHIP_CODE(CHELSIO_T4, pl_rev);
 		adapter->params.arch.sge_fl_db = DBPRIO_F;
 		adapter->params.arch.mps_tcam_size =
@@ -9163,12 +9162,12 @@ found:
 		adapter->params.arch.nchan = NCHAN;
 		adapter->params.arch.pm_stats_cnt = PM_NSTATS;
 		adapter->params.arch.vfcount = 128;
-		/* Congestion map is क्रम 4 channels so that
+		/* Congestion map is for 4 channels so that
 		 * MPS can have 4 priority per port.
 		 */
 		adapter->params.arch.cng_ch_bits_log = 2;
-		अवरोध;
-	हाल CHELSIO_T5:
+		break;
+	case CHELSIO_T5:
 		adapter->params.chip |= CHELSIO_CHIP_CODE(CHELSIO_T5, pl_rev);
 		adapter->params.arch.sge_fl_db = DBPRIO_F | DBTYPE_F;
 		adapter->params.arch.mps_tcam_size =
@@ -9178,8 +9177,8 @@ found:
 		adapter->params.arch.pm_stats_cnt = PM_NSTATS;
 		adapter->params.arch.vfcount = 128;
 		adapter->params.arch.cng_ch_bits_log = 2;
-		अवरोध;
-	हाल CHELSIO_T6:
+		break;
+	case CHELSIO_T6:
 		adapter->params.chip |= CHELSIO_CHIP_CODE(CHELSIO_T6, pl_rev);
 		adapter->params.arch.sge_fl_db = 0;
 		adapter->params.arch.mps_tcam_size =
@@ -9188,199 +9187,199 @@ found:
 		adapter->params.arch.nchan = 2;
 		adapter->params.arch.pm_stats_cnt = T6_PM_NSTATS;
 		adapter->params.arch.vfcount = 256;
-		/* Congestion map will be क्रम 2 channels so that
+		/* Congestion map will be for 2 channels so that
 		 * MPS can have 8 priority per port.
 		 */
 		adapter->params.arch.cng_ch_bits_log = 3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(adapter->pdev_dev, "Device %d is not supported\n",
 			device_id);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	adapter->params.cim_la_size = CIMLA_SIZE;
 	init_cong_ctrl(adapter->params.a_wnd, adapter->params.b_wnd);
 
 	/*
-	 * Default port क्रम debugging in हाल we can't reach FW.
+	 * Default port for debugging in case we can't reach FW.
 	 */
 	adapter->params.nports = 1;
 	adapter->params.portvec = 1;
 	adapter->params.vpd.cclk = 50000;
 
-	/* Set PCIe completion समयout to 4 seconds. */
+	/* Set PCIe completion timeout to 4 seconds. */
 	pcie_capability_clear_and_set_word(adapter->pdev, PCI_EXP_DEVCTL2,
 					   PCI_EXP_DEVCTL2_COMP_TIMEOUT, 0xd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_shutकरोwn_adapter - shut करोwn adapter, host & wire
+ *	t4_shutdown_adapter - shut down adapter, host & wire
  *	@adapter: the adapter
  *
- *	Perक्रमm an emergency shutकरोwn of the adapter and stop it from
+ *	Perform an emergency shutdown of the adapter and stop it from
  *	continuing any further communication on the ports or DMA to the
  *	host.  This is typically used when the adapter and/or firmware
  *	have crashed and we want to prevent any further accidental
- *	communication with the rest of the world.  This will also क्रमce
- *	the port Link Status to go करोwn -- अगर रेजिस्टर ग_लिखोs work --
- *	which should help our peers figure out that we're करोwn.
+ *	communication with the rest of the world.  This will also force
+ *	the port Link Status to go down -- if register writes work --
+ *	which should help our peers figure out that we're down.
  */
-पूर्णांक t4_shutकरोwn_adapter(काष्ठा adapter *adapter)
-अणु
-	पूर्णांक port;
+int t4_shutdown_adapter(struct adapter *adapter)
+{
+	int port;
 
-	t4_पूर्णांकr_disable(adapter);
-	t4_ग_लिखो_reg(adapter, DBG_GPIO_EN_A, 0);
-	क्रम_each_port(adapter, port) अणु
+	t4_intr_disable(adapter);
+	t4_write_reg(adapter, DBG_GPIO_EN_A, 0);
+	for_each_port(adapter, port) {
 		u32 a_port_cfg = is_t4(adapter->params.chip) ?
 				       PORT_REG(port, XGMAC_PORT_CFG_A) :
 				       T5_PORT_REG(port, MAC_PORT_CFG_A);
 
-		t4_ग_लिखो_reg(adapter, a_port_cfg,
-			     t4_पढ़ो_reg(adapter, a_port_cfg)
+		t4_write_reg(adapter, a_port_cfg,
+			     t4_read_reg(adapter, a_port_cfg)
 			     & ~SIGNAL_DET_V(1));
-	पूर्ण
+	}
 	t4_set_reg_field(adapter, SGE_CONTROL_A, GLOBALENABLE_F, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_bar2_sge_qregs - वापस BAR2 SGE Queue रेजिस्टर inक्रमmation
+ *	t4_bar2_sge_qregs - return BAR2 SGE Queue register information
  *	@adapter: the adapter
  *	@qid: the Queue ID
- *	@qtype: the Ingress or Egress type क्रम @qid
- *	@user: true अगर this request is क्रम a user mode queue
+ *	@qtype: the Ingress or Egress type for @qid
+ *	@user: true if this request is for a user mode queue
  *	@pbar2_qoffset: BAR2 Queue Offset
- *	@pbar2_qid: BAR2 Queue ID or 0 क्रम Queue ID inferred SGE Queues
+ *	@pbar2_qid: BAR2 Queue ID or 0 for Queue ID inferred SGE Queues
  *
- *	Returns the BAR2 SGE Queue Registers inक्रमmation associated with the
- *	indicated Absolute Queue ID.  These are passed back in वापस value
- *	poपूर्णांकers.  @qtype should be T4_BAR2_QTYPE_EGRESS क्रम Egress Queue
- *	and T4_BAR2_QTYPE_INGRESS क्रम Ingress Queues.
+ *	Returns the BAR2 SGE Queue Registers information associated with the
+ *	indicated Absolute Queue ID.  These are passed back in return value
+ *	pointers.  @qtype should be T4_BAR2_QTYPE_EGRESS for Egress Queue
+ *	and T4_BAR2_QTYPE_INGRESS for Ingress Queues.
  *
- *	This may वापस an error which indicates that BAR2 SGE Queue
- *	रेजिस्टरs aren't available.  If an error is not वापसed, then the
- *	following values are वापसed:
+ *	This may return an error which indicates that BAR2 SGE Queue
+ *	registers aren't available.  If an error is not returned, then the
+ *	following values are returned:
  *
  *	  *@pbar2_qoffset: the BAR2 Offset of the @qid Registers
  *	  *@pbar2_qid: the BAR2 SGE Queue ID or 0 of @qid
  *
- *	If the वापसed BAR2 Queue ID is 0, then BAR2 SGE रेजिस्टरs which
+ *	If the returned BAR2 Queue ID is 0, then BAR2 SGE registers which
  *	require the "Inferred Queue ID" ability may be used.  E.g. the
  *	Write Combining Doorbell Buffer. If the BAR2 Queue ID is not 0,
- *	then these "Inferred Queue ID" रेजिस्टर may not be used.
+ *	then these "Inferred Queue ID" register may not be used.
  */
-पूर्णांक t4_bar2_sge_qregs(काष्ठा adapter *adapter,
-		      अचिन्हित पूर्णांक qid,
-		      क्रमागत t4_bar2_qtype qtype,
-		      पूर्णांक user,
+int t4_bar2_sge_qregs(struct adapter *adapter,
+		      unsigned int qid,
+		      enum t4_bar2_qtype qtype,
+		      int user,
 		      u64 *pbar2_qoffset,
-		      अचिन्हित पूर्णांक *pbar2_qid)
-अणु
-	अचिन्हित पूर्णांक page_shअगरt, page_size, qpp_shअगरt, qpp_mask;
+		      unsigned int *pbar2_qid)
+{
+	unsigned int page_shift, page_size, qpp_shift, qpp_mask;
 	u64 bar2_page_offset, bar2_qoffset;
-	अचिन्हित पूर्णांक bar2_qid, bar2_qid_offset, bar2_qinferred;
+	unsigned int bar2_qid, bar2_qid_offset, bar2_qinferred;
 
-	/* T4 करोesn't support BAR2 SGE Queue रेजिस्टरs क्रम kernel mode queues */
-	अगर (!user && is_t4(adapter->params.chip))
-		वापस -EINVAL;
+	/* T4 doesn't support BAR2 SGE Queue registers for kernel mode queues */
+	if (!user && is_t4(adapter->params.chip))
+		return -EINVAL;
 
 	/* Get our SGE Page Size parameters.
 	 */
-	page_shअगरt = adapter->params.sge.hps + 10;
-	page_size = 1 << page_shअगरt;
+	page_shift = adapter->params.sge.hps + 10;
+	page_size = 1 << page_shift;
 
-	/* Get the right Queues per Page parameters क्रम our Queue.
+	/* Get the right Queues per Page parameters for our Queue.
 	 */
-	qpp_shअगरt = (qtype == T4_BAR2_QTYPE_EGRESS
+	qpp_shift = (qtype == T4_BAR2_QTYPE_EGRESS
 		     ? adapter->params.sge.eq_qpp
 		     : adapter->params.sge.iq_qpp);
-	qpp_mask = (1 << qpp_shअगरt) - 1;
+	qpp_mask = (1 << qpp_shift) - 1;
 
-	/*  Calculate the basics of the BAR2 SGE Queue रेजिस्टर area:
-	 *  o The BAR2 page the Queue रेजिस्टरs will be in.
+	/*  Calculate the basics of the BAR2 SGE Queue register area:
+	 *  o The BAR2 page the Queue registers will be in.
 	 *  o The BAR2 Queue ID.
-	 *  o The BAR2 Queue ID Offset पूर्णांकo the BAR2 page.
+	 *  o The BAR2 Queue ID Offset into the BAR2 page.
 	 */
-	bar2_page_offset = ((u64)(qid >> qpp_shअगरt) << page_shअगरt);
+	bar2_page_offset = ((u64)(qid >> qpp_shift) << page_shift);
 	bar2_qid = qid & qpp_mask;
 	bar2_qid_offset = bar2_qid * SGE_UDB_SIZE;
 
 	/* If the BAR2 Queue ID Offset is less than the Page Size, then the
-	 * hardware will infer the Absolute Queue ID simply from the ग_लिखोs to
+	 * hardware will infer the Absolute Queue ID simply from the writes to
 	 * the BAR2 Queue ID Offset within the BAR2 Page (and we need to use a
-	 * BAR2 Queue ID of 0 क्रम those ग_लिखोs).  Otherwise, we'll simply
-	 * ग_लिखो to the first BAR2 SGE Queue Area within the BAR2 Page with
+	 * BAR2 Queue ID of 0 for those writes).  Otherwise, we'll simply
+	 * write to the first BAR2 SGE Queue Area within the BAR2 Page with
 	 * the BAR2 Queue ID and the hardware will infer the Absolute Queue ID
 	 * from the BAR2 Page and BAR2 Queue ID.
 	 *
-	 * One important censequence of this is that some BAR2 SGE रेजिस्टरs
-	 * have a "Queue ID" field and we can ग_लिखो the BAR2 SGE Queue ID
-	 * there.  But other रेजिस्टरs synthesize the SGE Queue ID purely
-	 * from the ग_लिखोs to the रेजिस्टरs -- the Write Combined Doorbell
+	 * One important censequence of this is that some BAR2 SGE registers
+	 * have a "Queue ID" field and we can write the BAR2 SGE Queue ID
+	 * there.  But other registers synthesize the SGE Queue ID purely
+	 * from the writes to the registers -- the Write Combined Doorbell
 	 * Buffer is a good example.  These BAR2 SGE Registers are only
-	 * available क्रम those BAR2 SGE Register areas where the SGE Absolute
-	 * Queue ID can be inferred from simple ग_लिखोs.
+	 * available for those BAR2 SGE Register areas where the SGE Absolute
+	 * Queue ID can be inferred from simple writes.
 	 */
 	bar2_qoffset = bar2_page_offset;
 	bar2_qinferred = (bar2_qid_offset < page_size);
-	अगर (bar2_qinferred) अणु
+	if (bar2_qinferred) {
 		bar2_qoffset += bar2_qid_offset;
 		bar2_qid = 0;
-	पूर्ण
+	}
 
 	*pbar2_qoffset = bar2_qoffset;
 	*pbar2_qid = bar2_qid;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	t4_init_devlog_params - initialize adapter->params.devlog
  *	@adap: the adapter
  *
  *	Initialize various fields of the adapter's Firmware Device Log
- *	Parameters काष्ठाure.
+ *	Parameters structure.
  */
-पूर्णांक t4_init_devlog_params(काष्ठा adapter *adap)
-अणु
-	काष्ठा devlog_params *dparams = &adap->params.devlog;
+int t4_init_devlog_params(struct adapter *adap)
+{
+	struct devlog_params *dparams = &adap->params.devlog;
 	u32 pf_dparams;
-	अचिन्हित पूर्णांक devlog_meminfo;
-	काष्ठा fw_devlog_cmd devlog_cmd;
-	पूर्णांक ret;
+	unsigned int devlog_meminfo;
+	struct fw_devlog_cmd devlog_cmd;
+	int ret;
 
 	/* If we're dealing with newer firmware, the Device Log Parameters
-	 * are stored in a designated रेजिस्टर which allows us to access the
-	 * Device Log even अगर we can't talk to the firmware.
+	 * are stored in a designated register which allows us to access the
+	 * Device Log even if we can't talk to the firmware.
 	 */
 	pf_dparams =
-		t4_पढ़ो_reg(adap, PCIE_FW_REG(PCIE_FW_PF_A, PCIE_FW_PF_DEVLOG));
-	अगर (pf_dparams) अणु
-		अचिन्हित पूर्णांक nentries, nentries128;
+		t4_read_reg(adap, PCIE_FW_REG(PCIE_FW_PF_A, PCIE_FW_PF_DEVLOG));
+	if (pf_dparams) {
+		unsigned int nentries, nentries128;
 
 		dparams->memtype = PCIE_FW_PF_DEVLOG_MEMTYPE_G(pf_dparams);
 		dparams->start = PCIE_FW_PF_DEVLOG_ADDR16_G(pf_dparams) << 4;
 
 		nentries128 = PCIE_FW_PF_DEVLOG_NENTRIES128_G(pf_dparams);
 		nentries = (nentries128 + 1) * 128;
-		dparams->size = nentries * माप(काष्ठा fw_devlog_e);
+		dparams->size = nentries * sizeof(struct fw_devlog_e);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Otherwise, ask the firmware क्रम it's Device Log Parameters.
+	/* Otherwise, ask the firmware for it's Device Log Parameters.
 	 */
-	स_रखो(&devlog_cmd, 0, माप(devlog_cmd));
-	devlog_cmd.op_to_ग_लिखो = cpu_to_be32(FW_CMD_OP_V(FW_DEVLOG_CMD) |
+	memset(&devlog_cmd, 0, sizeof(devlog_cmd));
+	devlog_cmd.op_to_write = cpu_to_be32(FW_CMD_OP_V(FW_DEVLOG_CMD) |
 					     FW_CMD_REQUEST_F | FW_CMD_READ_F);
 	devlog_cmd.retval_len16 = cpu_to_be32(FW_LEN16(devlog_cmd));
-	ret = t4_wr_mbox(adap, adap->mbox, &devlog_cmd, माप(devlog_cmd),
+	ret = t4_wr_mbox(adap, adap->mbox, &devlog_cmd, sizeof(devlog_cmd),
 			 &devlog_cmd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	devlog_meminfo =
 		be32_to_cpu(devlog_cmd.memtype_devlog_memaddr16_devlog);
@@ -9388,59 +9387,59 @@ found:
 	dparams->start = FW_DEVLOG_CMD_MEMADDR16_DEVLOG_G(devlog_meminfo) << 4;
 	dparams->size = be32_to_cpu(devlog_cmd.memsize_devlog);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *	t4_init_sge_params - initialize adap->params.sge
  *	@adapter: the adapter
  *
- *	Initialize various fields of the adapter's SGE Parameters काष्ठाure.
+ *	Initialize various fields of the adapter's SGE Parameters structure.
  */
-पूर्णांक t4_init_sge_params(काष्ठा adapter *adapter)
-अणु
-	काष्ठा sge_params *sge_params = &adapter->params.sge;
+int t4_init_sge_params(struct adapter *adapter)
+{
+	struct sge_params *sge_params = &adapter->params.sge;
 	u32 hps, qpp;
-	अचिन्हित पूर्णांक s_hps, s_qpp;
+	unsigned int s_hps, s_qpp;
 
-	/* Extract the SGE Page Size क्रम our PF.
+	/* Extract the SGE Page Size for our PF.
 	 */
-	hps = t4_पढ़ो_reg(adapter, SGE_HOST_PAGE_SIZE_A);
+	hps = t4_read_reg(adapter, SGE_HOST_PAGE_SIZE_A);
 	s_hps = (HOSTPAGESIZEPF0_S +
 		 (HOSTPAGESIZEPF1_S - HOSTPAGESIZEPF0_S) * adapter->pf);
 	sge_params->hps = ((hps >> s_hps) & HOSTPAGESIZEPF0_M);
 
-	/* Extract the SGE Egress and Ingess Queues Per Page क्रम our PF.
+	/* Extract the SGE Egress and Ingess Queues Per Page for our PF.
 	 */
 	s_qpp = (QUEUESPERPAGEPF0_S +
 		(QUEUESPERPAGEPF1_S - QUEUESPERPAGEPF0_S) * adapter->pf);
-	qpp = t4_पढ़ो_reg(adapter, SGE_EGRESS_QUEUES_PER_PAGE_PF_A);
+	qpp = t4_read_reg(adapter, SGE_EGRESS_QUEUES_PER_PAGE_PF_A);
 	sge_params->eq_qpp = ((qpp >> s_qpp) & QUEUESPERPAGEPF0_M);
-	qpp = t4_पढ़ो_reg(adapter, SGE_INGRESS_QUEUES_PER_PAGE_PF_A);
+	qpp = t4_read_reg(adapter, SGE_INGRESS_QUEUES_PER_PAGE_PF_A);
 	sge_params->iq_qpp = ((qpp >> s_qpp) & QUEUESPERPAGEPF0_M);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *      t4_init_tp_params - initialize adap->params.tp
  *      @adap: the adapter
- *      @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ *      @sleep_ok: if true we may sleep while awaiting command completion
  *
- *      Initialize various fields of the adapter's TP Parameters काष्ठाure.
+ *      Initialize various fields of the adapter's TP Parameters structure.
  */
-पूर्णांक t4_init_tp_params(काष्ठा adapter *adap, bool sleep_ok)
-अणु
+int t4_init_tp_params(struct adapter *adap, bool sleep_ok)
+{
 	u32 param, val, v;
-	पूर्णांक chan, ret;
+	int chan, ret;
 
 
-	v = t4_पढ़ो_reg(adap, TP_TIMER_RESOLUTION_A);
+	v = t4_read_reg(adap, TP_TIMER_RESOLUTION_A);
 	adap->params.tp.tre = TIMERRESOLUTION_G(v);
 	adap->params.tp.dack_re = DELAYEDACKRESOLUTION_G(v);
 
-	/* MODQ_REQ_MAP शेषs to setting queues 0-3 to chan 0-3 */
-	क्रम (chan = 0; chan < NCHAN; chan++)
+	/* MODQ_REQ_MAP defaults to setting queues 0-3 to chan 0-3 */
+	for (chan = 0; chan < NCHAN; chan++)
 		adap->params.tp.tx_modq[chan] = chan;
 
 	/* Cache the adapter's Compressed Filter Mode/Mask and global Ingress
@@ -9453,7 +9452,7 @@ found:
 	/* Read current value */
 	ret = t4_query_params(adap, adap->mbox, adap->pf, 0, 1,
 			      &param, &val);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		dev_info(adap->pdev_dev,
 			 "Current filter mode/mask 0x%x:0x%x\n",
 			 FW_PARAMS_PARAM_FILTER_MODE_G(val),
@@ -9462,184 +9461,184 @@ found:
 			FW_PARAMS_PARAM_FILTER_MODE_G(val);
 		adap->params.tp.filter_mask =
 			FW_PARAMS_PARAM_FILTER_MASK_G(val);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(adap->pdev_dev,
 			 "Failed to read filter mode/mask via fw api, using indirect-reg-read\n");
 
-		/* Inहाल of older-fw (which करोesn't expose the api
+		/* Incase of older-fw (which doesn't expose the api
 		 * FW_PARAM_DEV_FILTER_MODE_MASK) and newer-driver (which uses
-		 * the fw api) combination, fall-back to older method of पढ़ोing
-		 * the filter mode from indirect-रेजिस्टर
+		 * the fw api) combination, fall-back to older method of reading
+		 * the filter mode from indirect-register
 		 */
-		t4_tp_pio_पढ़ो(adap, &adap->params.tp.vlan_pri_map, 1,
+		t4_tp_pio_read(adap, &adap->params.tp.vlan_pri_map, 1,
 			       TP_VLAN_PRI_MAP_A, sleep_ok);
 
 		/* With the older-fw and newer-driver combination we might run
-		 * पूर्णांकo an issue when user wants to use hash filter region but
-		 * the filter_mask is zero, in this हाल filter_mask validation
-		 * is tough. To aव्योम that we set the filter_mask same as filter
+		 * into an issue when user wants to use hash filter region but
+		 * the filter_mask is zero, in this case filter_mask validation
+		 * is tough. To avoid that we set the filter_mask same as filter
 		 * mode, which will behave exactly as the older way of ignoring
 		 * the filter mask validation.
 		 */
 		adap->params.tp.filter_mask = adap->params.tp.vlan_pri_map;
-	पूर्ण
+	}
 
-	t4_tp_pio_पढ़ो(adap, &adap->params.tp.ingress_config, 1,
+	t4_tp_pio_read(adap, &adap->params.tp.ingress_config, 1,
 		       TP_INGRESS_CONFIG_A, sleep_ok);
 
 	/* For T6, cache the adapter's compressed error vector
-	 * and passing outer header info क्रम encapsulated packets.
+	 * and passing outer header info for encapsulated packets.
 	 */
-	अगर (CHELSIO_CHIP_VERSION(adap->params.chip) > CHELSIO_T5) अणु
-		v = t4_पढ़ो_reg(adap, TP_OUT_CONFIG_A);
+	if (CHELSIO_CHIP_VERSION(adap->params.chip) > CHELSIO_T5) {
+		v = t4_read_reg(adap, TP_OUT_CONFIG_A);
 		adap->params.tp.rx_pkt_encap = (v & CRXPKTENC_F) ? 1 : 0;
-	पूर्ण
+	}
 
 	/* Now that we have TP_VLAN_PRI_MAP cached, we can calculate the field
-	 * shअगरt positions of several elements of the Compressed Filter Tuple
-	 * क्रम this adapter which we need frequently ...
+	 * shift positions of several elements of the Compressed Filter Tuple
+	 * for this adapter which we need frequently ...
 	 */
-	adap->params.tp.fcoe_shअगरt = t4_filter_field_shअगरt(adap, FCOE_F);
-	adap->params.tp.port_shअगरt = t4_filter_field_shअगरt(adap, PORT_F);
-	adap->params.tp.vnic_shअगरt = t4_filter_field_shअगरt(adap, VNIC_ID_F);
-	adap->params.tp.vlan_shअगरt = t4_filter_field_shअगरt(adap, VLAN_F);
-	adap->params.tp.tos_shअगरt = t4_filter_field_shअगरt(adap, TOS_F);
-	adap->params.tp.protocol_shअगरt = t4_filter_field_shअगरt(adap,
+	adap->params.tp.fcoe_shift = t4_filter_field_shift(adap, FCOE_F);
+	adap->params.tp.port_shift = t4_filter_field_shift(adap, PORT_F);
+	adap->params.tp.vnic_shift = t4_filter_field_shift(adap, VNIC_ID_F);
+	adap->params.tp.vlan_shift = t4_filter_field_shift(adap, VLAN_F);
+	adap->params.tp.tos_shift = t4_filter_field_shift(adap, TOS_F);
+	adap->params.tp.protocol_shift = t4_filter_field_shift(adap,
 							       PROTOCOL_F);
-	adap->params.tp.ethertype_shअगरt = t4_filter_field_shअगरt(adap,
+	adap->params.tp.ethertype_shift = t4_filter_field_shift(adap,
 								ETHERTYPE_F);
-	adap->params.tp.macmatch_shअगरt = t4_filter_field_shअगरt(adap,
+	adap->params.tp.macmatch_shift = t4_filter_field_shift(adap,
 							       MACMATCH_F);
-	adap->params.tp.matchtype_shअगरt = t4_filter_field_shअगरt(adap,
+	adap->params.tp.matchtype_shift = t4_filter_field_shift(adap,
 								MPSHITTYPE_F);
-	adap->params.tp.frag_shअगरt = t4_filter_field_shअगरt(adap,
+	adap->params.tp.frag_shift = t4_filter_field_shift(adap,
 							   FRAGMENTATION_F);
 
 	/* If TP_INGRESS_CONFIG.VNID == 0, then TP_VLAN_PRI_MAP.VNIC_ID
 	 * represents the presence of an Outer VLAN instead of a VNIC ID.
 	 */
-	अगर ((adap->params.tp.ingress_config & VNIC_F) == 0)
-		adap->params.tp.vnic_shअगरt = -1;
+	if ((adap->params.tp.ingress_config & VNIC_F) == 0)
+		adap->params.tp.vnic_shift = -1;
 
-	v = t4_पढ़ो_reg(adap, LE_3_DB_HASH_MASK_GEN_IPV4_T6_A);
+	v = t4_read_reg(adap, LE_3_DB_HASH_MASK_GEN_IPV4_T6_A);
 	adap->params.tp.hash_filter_mask = v;
-	v = t4_पढ़ो_reg(adap, LE_4_DB_HASH_MASK_GEN_IPV4_T6_A);
+	v = t4_read_reg(adap, LE_4_DB_HASH_MASK_GEN_IPV4_T6_A);
 	adap->params.tp.hash_filter_mask |= ((u64)v << 32);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *      t4_filter_field_shअगरt - calculate filter field shअगरt
+ *      t4_filter_field_shift - calculate filter field shift
  *      @adap: the adapter
  *      @filter_sel: the desired field (from TP_VLAN_PRI_MAP bits)
  *
- *      Return the shअगरt position of a filter field within the Compressed
- *      Filter Tuple.  The filter field is specअगरied via its selection bit
+ *      Return the shift position of a filter field within the Compressed
+ *      Filter Tuple.  The filter field is specified via its selection bit
  *      within TP_VLAN_PRI_MAL (filter mode).  E.g. F_VLAN.
  */
-पूर्णांक t4_filter_field_shअगरt(स्थिर काष्ठा adapter *adap, पूर्णांक filter_sel)
-अणु
-	अचिन्हित पूर्णांक filter_mode = adap->params.tp.vlan_pri_map;
-	अचिन्हित पूर्णांक sel;
-	पूर्णांक field_shअगरt;
+int t4_filter_field_shift(const struct adapter *adap, int filter_sel)
+{
+	unsigned int filter_mode = adap->params.tp.vlan_pri_map;
+	unsigned int sel;
+	int field_shift;
 
-	अगर ((filter_mode & filter_sel) == 0)
-		वापस -1;
+	if ((filter_mode & filter_sel) == 0)
+		return -1;
 
-	क्रम (sel = 1, field_shअगरt = 0; sel < filter_sel; sel <<= 1) अणु
-		चयन (filter_mode & sel) अणु
-		हाल FCOE_F:
-			field_shअगरt += FT_FCOE_W;
-			अवरोध;
-		हाल PORT_F:
-			field_shअगरt += FT_PORT_W;
-			अवरोध;
-		हाल VNIC_ID_F:
-			field_shअगरt += FT_VNIC_ID_W;
-			अवरोध;
-		हाल VLAN_F:
-			field_shअगरt += FT_VLAN_W;
-			अवरोध;
-		हाल TOS_F:
-			field_shअगरt += FT_TOS_W;
-			अवरोध;
-		हाल PROTOCOL_F:
-			field_shअगरt += FT_PROTOCOL_W;
-			अवरोध;
-		हाल ETHERTYPE_F:
-			field_shअगरt += FT_ETHERTYPE_W;
-			अवरोध;
-		हाल MACMATCH_F:
-			field_shअगरt += FT_MACMATCH_W;
-			अवरोध;
-		हाल MPSHITTYPE_F:
-			field_shअगरt += FT_MPSHITTYPE_W;
-			अवरोध;
-		हाल FRAGMENTATION_F:
-			field_shअगरt += FT_FRAGMENTATION_W;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस field_shअगरt;
-पूर्ण
+	for (sel = 1, field_shift = 0; sel < filter_sel; sel <<= 1) {
+		switch (filter_mode & sel) {
+		case FCOE_F:
+			field_shift += FT_FCOE_W;
+			break;
+		case PORT_F:
+			field_shift += FT_PORT_W;
+			break;
+		case VNIC_ID_F:
+			field_shift += FT_VNIC_ID_W;
+			break;
+		case VLAN_F:
+			field_shift += FT_VLAN_W;
+			break;
+		case TOS_F:
+			field_shift += FT_TOS_W;
+			break;
+		case PROTOCOL_F:
+			field_shift += FT_PROTOCOL_W;
+			break;
+		case ETHERTYPE_F:
+			field_shift += FT_ETHERTYPE_W;
+			break;
+		case MACMATCH_F:
+			field_shift += FT_MACMATCH_W;
+			break;
+		case MPSHITTYPE_F:
+			field_shift += FT_MPSHITTYPE_W;
+			break;
+		case FRAGMENTATION_F:
+			field_shift += FT_FRAGMENTATION_W;
+			break;
+		}
+	}
+	return field_shift;
+}
 
-पूर्णांक t4_init_rss_mode(काष्ठा adapter *adap, पूर्णांक mbox)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा fw_rss_vi_config_cmd rvc;
+int t4_init_rss_mode(struct adapter *adap, int mbox)
+{
+	int i, ret;
+	struct fw_rss_vi_config_cmd rvc;
 
-	स_रखो(&rvc, 0, माप(rvc));
+	memset(&rvc, 0, sizeof(rvc));
 
-	क्रम_each_port(adap, i) अणु
-		काष्ठा port_info *p = adap2pinfo(adap, i);
+	for_each_port(adap, i) {
+		struct port_info *p = adap2pinfo(adap, i);
 
 		rvc.op_to_viid =
 			cpu_to_be32(FW_CMD_OP_V(FW_RSS_VI_CONFIG_CMD) |
 				    FW_CMD_REQUEST_F | FW_CMD_READ_F |
 				    FW_RSS_VI_CONFIG_CMD_VIID_V(p->viid));
 		rvc.retval_len16 = cpu_to_be32(FW_LEN16(rvc));
-		ret = t4_wr_mbox(adap, mbox, &rvc, माप(rvc), &rvc);
-		अगर (ret)
-			वापस ret;
-		p->rss_mode = be32_to_cpu(rvc.u.basicभव.शेषq_to_udpen);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		ret = t4_wr_mbox(adap, mbox, &rvc, sizeof(rvc), &rvc);
+		if (ret)
+			return ret;
+		p->rss_mode = be32_to_cpu(rvc.u.basicvirtual.defaultq_to_udpen);
+	}
+	return 0;
+}
 
 /**
- *	t4_init_portinfo - allocate a भव पूर्णांकerface and initialize port_info
+ *	t4_init_portinfo - allocate a virtual interface and initialize port_info
  *	@pi: the port_info
- *	@mbox: mailbox to use क्रम the FW command
+ *	@mbox: mailbox to use for the FW command
  *	@port: physical port associated with the VI
  *	@pf: the PF owning the VI
  *	@vf: the VF owning the VI
  *	@mac: the MAC address of the VI
  *
- *	Allocates a भव पूर्णांकerface क्रम the given physical port.  If @mac is
- *	not %शून्य it contains the MAC address of the VI as asचिन्हित by FW.
+ *	Allocates a virtual interface for the given physical port.  If @mac is
+ *	not %NULL it contains the MAC address of the VI as assigned by FW.
  *	@mac should be large enough to hold an Ethernet address.
  *	Returns < 0 on error.
  */
-पूर्णांक t4_init_portinfo(काष्ठा port_info *pi, पूर्णांक mbox,
-		     पूर्णांक port, पूर्णांक pf, पूर्णांक vf, u8 mac[])
-अणु
-	काष्ठा adapter *adapter = pi->adapter;
-	अचिन्हित पूर्णांक fw_caps = adapter->params.fw_caps_support;
-	काष्ठा fw_port_cmd cmd;
-	अचिन्हित पूर्णांक rss_size;
-	क्रमागत fw_port_type port_type;
-	पूर्णांक mdio_addr;
+int t4_init_portinfo(struct port_info *pi, int mbox,
+		     int port, int pf, int vf, u8 mac[])
+{
+	struct adapter *adapter = pi->adapter;
+	unsigned int fw_caps = adapter->params.fw_caps_support;
+	struct fw_port_cmd cmd;
+	unsigned int rss_size;
+	enum fw_port_type port_type;
+	int mdio_addr;
 	fw_port_cap32_t pcaps, acaps;
 	u8 vivld = 0, vin = 0;
-	पूर्णांक ret;
+	int ret;
 
 	/* If we haven't yet determined whether we're talking to Firmware
-	 * which knows the new 32-bit Port Capabilities, it's समय to find
+	 * which knows the new 32-bit Port Capabilities, it's time to find
 	 * out now.  This will also tell new Firmware to send us Port Status
 	 * Updates using the new 32-bit Port Capabilities version of the
-	 * Port Inक्रमmation message.
+	 * Port Information message.
 	 */
-	अगर (fw_caps == FW_CAPS_UNKNOWN) अणु
+	if (fw_caps == FW_CAPS_UNKNOWN) {
 		u32 param, val;
 
 		param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_PFVF) |
@@ -9648,9 +9647,9 @@ found:
 		ret = t4_set_params(adapter, mbox, pf, vf, 1, &param, &val);
 		fw_caps = (ret == 0 ? FW_CAPS32 : FW_CAPS16);
 		adapter->params.fw_caps_support = fw_caps;
-	पूर्ण
+	}
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_portid = cpu_to_be32(FW_CMD_OP_V(FW_PORT_CMD) |
 				       FW_CMD_REQUEST_F | FW_CMD_READ_F |
 				       FW_PORT_CMD_PORTID_V(port));
@@ -9659,13 +9658,13 @@ found:
 				     ? FW_PORT_ACTION_GET_PORT_INFO
 				     : FW_PORT_ACTION_GET_PORT_INFO32) |
 		FW_LEN16(cmd));
-	ret = t4_wr_mbox(pi->adapter, mbox, &cmd, माप(cmd), &cmd);
-	अगर (ret)
-		वापस ret;
+	ret = t4_wr_mbox(pi->adapter, mbox, &cmd, sizeof(cmd), &cmd);
+	if (ret)
+		return ret;
 
-	/* Extract the various fields from the Port Inक्रमmation message.
+	/* Extract the various fields from the Port Information message.
 	 */
-	अगर (fw_caps == FW_CAPS16) अणु
+	if (fw_caps == FW_CAPS16) {
 		u32 lstatus = be32_to_cpu(cmd.u.info.lstatus_to_modtype);
 
 		port_type = FW_PORT_CMD_PTYPE_G(lstatus);
@@ -9674,7 +9673,7 @@ found:
 			     : -1);
 		pcaps = fwcaps16_to_caps32(be16_to_cpu(cmd.u.info.pcap));
 		acaps = fwcaps16_to_caps32(be16_to_cpu(cmd.u.info.acap));
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 lstatus32 = be32_to_cpu(cmd.u.info32.lstatus32_to_cbllen32);
 
 		port_type = FW_PORT_CMD_PORTTYPE32_G(lstatus32);
@@ -9683,12 +9682,12 @@ found:
 			     : -1);
 		pcaps = be32_to_cpu(cmd.u.info32.pcaps32);
 		acaps = be32_to_cpu(cmd.u.info32.acaps32);
-	पूर्ण
+	}
 
 	ret = t4_alloc_vi(pi->adapter, mbox, port, pf, vf, 1, mac, &rss_size,
 			  &vivld, &vin);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	pi->viid = ret;
 	pi->tx_chan = port;
@@ -9696,65 +9695,65 @@ found:
 	pi->rss_size = rss_size;
 	pi->rx_cchan = t4_get_tp_e2c_map(pi->adapter, port);
 
-	/* If fw supports वापसing the VIN as part of FW_VI_CMD,
-	 * save the वापसed values.
+	/* If fw supports returning the VIN as part of FW_VI_CMD,
+	 * save the returned values.
 	 */
-	अगर (adapter->params.viid_smt_extn_support) अणु
+	if (adapter->params.viid_smt_extn_support) {
 		pi->vivld = vivld;
 		pi->vin = vin;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Retrieve the values from VIID */
 		pi->vivld = FW_VIID_VIVLD_G(pi->viid);
 		pi->vin =  FW_VIID_VIN_G(pi->viid);
-	पूर्ण
+	}
 
 	pi->port_type = port_type;
 	pi->mdio_addr = mdio_addr;
 	pi->mod_type = FW_PORT_MOD_TYPE_NA;
 
 	init_link_config(&pi->link_cfg, pcaps, acaps);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक t4_port_init(काष्ठा adapter *adap, पूर्णांक mbox, पूर्णांक pf, पूर्णांक vf)
-अणु
+int t4_port_init(struct adapter *adap, int mbox, int pf, int vf)
+{
 	u8 addr[6];
-	पूर्णांक ret, i, j = 0;
+	int ret, i, j = 0;
 
-	क्रम_each_port(adap, i) अणु
-		काष्ठा port_info *pi = adap2pinfo(adap, i);
+	for_each_port(adap, i) {
+		struct port_info *pi = adap2pinfo(adap, i);
 
-		जबतक ((adap->params.portvec & (1 << j)) == 0)
+		while ((adap->params.portvec & (1 << j)) == 0)
 			j++;
 
 		ret = t4_init_portinfo(pi, mbox, j, pf, vf, addr);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		स_नकल(adap->port[i]->dev_addr, addr, ETH_ALEN);
+		memcpy(adap->port[i]->dev_addr, addr, ETH_ALEN);
 		j++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक t4_init_port_mirror(काष्ठा port_info *pi, u8 mbox, u8 port, u8 pf, u8 vf,
+int t4_init_port_mirror(struct port_info *pi, u8 mbox, u8 port, u8 pf, u8 vf,
 			u16 *mirror_viid)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	ret = t4_alloc_vi(pi->adapter, mbox, port, pf, vf, 1, शून्य, शून्य,
-			  शून्य, शून्य);
-	अगर (ret < 0)
-		वापस ret;
+	ret = t4_alloc_vi(pi->adapter, mbox, port, pf, vf, 1, NULL, NULL,
+			  NULL, NULL);
+	if (ret < 0)
+		return ret;
 
-	अगर (mirror_viid)
+	if (mirror_viid)
 		*mirror_viid = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *	t4_पढ़ो_cimq_cfg - पढ़ो CIM queue configuration
+ *	t4_read_cimq_cfg - read CIM queue configuration
  *	@adap: the adapter
  *	@base: holds the queue base addresses in bytes
  *	@size: holds the queue sizes in bytes
@@ -9763,33 +9762,33 @@ found:
  *	Returns the current configuration of the CIM queues, starting with
  *	the IBQs, then the OBQs.
  */
-व्योम t4_पढ़ो_cimq_cfg(काष्ठा adapter *adap, u16 *base, u16 *size, u16 *thres)
-अणु
-	अचिन्हित पूर्णांक i, v;
-	पूर्णांक cim_num_obq = is_t4(adap->params.chip) ?
+void t4_read_cimq_cfg(struct adapter *adap, u16 *base, u16 *size, u16 *thres)
+{
+	unsigned int i, v;
+	int cim_num_obq = is_t4(adap->params.chip) ?
 				CIM_NUM_OBQ : CIM_NUM_OBQ_T5;
 
-	क्रम (i = 0; i < CIM_NUM_IBQ; i++) अणु
-		t4_ग_लिखो_reg(adap, CIM_QUEUE_CONFIG_REF_A, IBQSELECT_F |
+	for (i = 0; i < CIM_NUM_IBQ; i++) {
+		t4_write_reg(adap, CIM_QUEUE_CONFIG_REF_A, IBQSELECT_F |
 			     QUENUMSELECT_V(i));
-		v = t4_पढ़ो_reg(adap, CIM_QUEUE_CONFIG_CTRL_A);
+		v = t4_read_reg(adap, CIM_QUEUE_CONFIG_CTRL_A);
 		/* value is in 256-byte units */
 		*base++ = CIMQBASE_G(v) * 256;
 		*size++ = CIMQSIZE_G(v) * 256;
 		*thres++ = QUEFULLTHRSH_G(v) * 8; /* 8-byte unit */
-	पूर्ण
-	क्रम (i = 0; i < cim_num_obq; i++) अणु
-		t4_ग_लिखो_reg(adap, CIM_QUEUE_CONFIG_REF_A, OBQSELECT_F |
+	}
+	for (i = 0; i < cim_num_obq; i++) {
+		t4_write_reg(adap, CIM_QUEUE_CONFIG_REF_A, OBQSELECT_F |
 			     QUENUMSELECT_V(i));
-		v = t4_पढ़ो_reg(adap, CIM_QUEUE_CONFIG_CTRL_A);
+		v = t4_read_reg(adap, CIM_QUEUE_CONFIG_CTRL_A);
 		/* value is in 256-byte units */
 		*base++ = CIMQBASE_G(v) * 256;
 		*size++ = CIMQSIZE_G(v) * 256;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	t4_पढ़ो_cim_ibq - पढ़ो the contents of a CIM inbound queue
+ *	t4_read_cim_ibq - read the contents of a CIM inbound queue
  *	@adap: the adapter
  *	@qid: the queue index
  *	@data: where to store the queue contents
@@ -9797,41 +9796,41 @@ found:
  *
  *	Reads the contents of the selected CIM queue starting at address 0 up
  *	to the capacity of @data.  @n must be a multiple of 4.  Returns < 0 on
- *	error and the number of 32-bit words actually पढ़ो on success.
+ *	error and the number of 32-bit words actually read on success.
  */
-पूर्णांक t4_पढ़ो_cim_ibq(काष्ठा adapter *adap, अचिन्हित पूर्णांक qid, u32 *data, माप_प्रकार n)
-अणु
-	पूर्णांक i, err, attempts;
-	अचिन्हित पूर्णांक addr;
-	स्थिर अचिन्हित पूर्णांक nwords = CIM_IBQ_SIZE * 4;
+int t4_read_cim_ibq(struct adapter *adap, unsigned int qid, u32 *data, size_t n)
+{
+	int i, err, attempts;
+	unsigned int addr;
+	const unsigned int nwords = CIM_IBQ_SIZE * 4;
 
-	अगर (qid > 5 || (n & 3))
-		वापस -EINVAL;
+	if (qid > 5 || (n & 3))
+		return -EINVAL;
 
 	addr = qid * nwords;
-	अगर (n > nwords)
+	if (n > nwords)
 		n = nwords;
 
-	/* It might take 3-10ms beक्रमe the IBQ debug पढ़ो access is allowed.
-	 * Wait क्रम 1 Sec with a delay of 1 usec.
+	/* It might take 3-10ms before the IBQ debug read access is allowed.
+	 * Wait for 1 Sec with a delay of 1 usec.
 	 */
 	attempts = 1000000;
 
-	क्रम (i = 0; i < n; i++, addr++) अणु
-		t4_ग_लिखो_reg(adap, CIM_IBQ_DBG_CFG_A, IBQDBGADDR_V(addr) |
+	for (i = 0; i < n; i++, addr++) {
+		t4_write_reg(adap, CIM_IBQ_DBG_CFG_A, IBQDBGADDR_V(addr) |
 			     IBQDBGEN_F);
-		err = t4_रुको_op_करोne(adap, CIM_IBQ_DBG_CFG_A, IBQDBGBUSY_F, 0,
+		err = t4_wait_op_done(adap, CIM_IBQ_DBG_CFG_A, IBQDBGBUSY_F, 0,
 				      attempts, 1);
-		अगर (err)
-			वापस err;
-		*data++ = t4_पढ़ो_reg(adap, CIM_IBQ_DBG_DATA_A);
-	पूर्ण
-	t4_ग_लिखो_reg(adap, CIM_IBQ_DBG_CFG_A, 0);
-	वापस i;
-पूर्ण
+		if (err)
+			return err;
+		*data++ = t4_read_reg(adap, CIM_IBQ_DBG_DATA_A);
+	}
+	t4_write_reg(adap, CIM_IBQ_DBG_CFG_A, 0);
+	return i;
+}
 
 /**
- *	t4_पढ़ो_cim_obq - पढ़ो the contents of a CIM outbound queue
+ *	t4_read_cim_obq - read the contents of a CIM outbound queue
  *	@adap: the adapter
  *	@qid: the queue index
  *	@data: where to store the queue contents
@@ -9839,224 +9838,224 @@ found:
  *
  *	Reads the contents of the selected CIM queue starting at address 0 up
  *	to the capacity of @data.  @n must be a multiple of 4.  Returns < 0 on
- *	error and the number of 32-bit words actually पढ़ो on success.
+ *	error and the number of 32-bit words actually read on success.
  */
-पूर्णांक t4_पढ़ो_cim_obq(काष्ठा adapter *adap, अचिन्हित पूर्णांक qid, u32 *data, माप_प्रकार n)
-अणु
-	पूर्णांक i, err;
-	अचिन्हित पूर्णांक addr, v, nwords;
-	पूर्णांक cim_num_obq = is_t4(adap->params.chip) ?
+int t4_read_cim_obq(struct adapter *adap, unsigned int qid, u32 *data, size_t n)
+{
+	int i, err;
+	unsigned int addr, v, nwords;
+	int cim_num_obq = is_t4(adap->params.chip) ?
 				CIM_NUM_OBQ : CIM_NUM_OBQ_T5;
 
-	अगर ((qid > (cim_num_obq - 1)) || (n & 3))
-		वापस -EINVAL;
+	if ((qid > (cim_num_obq - 1)) || (n & 3))
+		return -EINVAL;
 
-	t4_ग_लिखो_reg(adap, CIM_QUEUE_CONFIG_REF_A, OBQSELECT_F |
+	t4_write_reg(adap, CIM_QUEUE_CONFIG_REF_A, OBQSELECT_F |
 		     QUENUMSELECT_V(qid));
-	v = t4_पढ़ो_reg(adap, CIM_QUEUE_CONFIG_CTRL_A);
+	v = t4_read_reg(adap, CIM_QUEUE_CONFIG_CTRL_A);
 
 	addr = CIMQBASE_G(v) * 64;    /* muliple of 256 -> muliple of 4 */
 	nwords = CIMQSIZE_G(v) * 64;  /* same */
-	अगर (n > nwords)
+	if (n > nwords)
 		n = nwords;
 
-	क्रम (i = 0; i < n; i++, addr++) अणु
-		t4_ग_लिखो_reg(adap, CIM_OBQ_DBG_CFG_A, OBQDBGADDR_V(addr) |
+	for (i = 0; i < n; i++, addr++) {
+		t4_write_reg(adap, CIM_OBQ_DBG_CFG_A, OBQDBGADDR_V(addr) |
 			     OBQDBGEN_F);
-		err = t4_रुको_op_करोne(adap, CIM_OBQ_DBG_CFG_A, OBQDBGBUSY_F, 0,
+		err = t4_wait_op_done(adap, CIM_OBQ_DBG_CFG_A, OBQDBGBUSY_F, 0,
 				      2, 1);
-		अगर (err)
-			वापस err;
-		*data++ = t4_पढ़ो_reg(adap, CIM_OBQ_DBG_DATA_A);
-	पूर्ण
-	t4_ग_लिखो_reg(adap, CIM_OBQ_DBG_CFG_A, 0);
-	वापस i;
-पूर्ण
+		if (err)
+			return err;
+		*data++ = t4_read_reg(adap, CIM_OBQ_DBG_DATA_A);
+	}
+	t4_write_reg(adap, CIM_OBQ_DBG_CFG_A, 0);
+	return i;
+}
 
 /**
- *	t4_cim_पढ़ो - पढ़ो a block from CIM पूर्णांकernal address space
+ *	t4_cim_read - read a block from CIM internal address space
  *	@adap: the adapter
  *	@addr: the start address within the CIM address space
- *	@n: number of words to पढ़ो
+ *	@n: number of words to read
  *	@valp: where to store the result
  *
- *	Reads a block of 4-byte words from the CIM पूर्णांकenal address space.
+ *	Reads a block of 4-byte words from the CIM intenal address space.
  */
-पूर्णांक t4_cim_पढ़ो(काष्ठा adapter *adap, अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक n,
-		अचिन्हित पूर्णांक *valp)
-अणु
-	पूर्णांक ret = 0;
+int t4_cim_read(struct adapter *adap, unsigned int addr, unsigned int n,
+		unsigned int *valp)
+{
+	int ret = 0;
 
-	अगर (t4_पढ़ो_reg(adap, CIM_HOST_ACC_CTRL_A) & HOSTBUSY_F)
-		वापस -EBUSY;
+	if (t4_read_reg(adap, CIM_HOST_ACC_CTRL_A) & HOSTBUSY_F)
+		return -EBUSY;
 
-	क्रम ( ; !ret && n--; addr += 4) अणु
-		t4_ग_लिखो_reg(adap, CIM_HOST_ACC_CTRL_A, addr);
-		ret = t4_रुको_op_करोne(adap, CIM_HOST_ACC_CTRL_A, HOSTBUSY_F,
+	for ( ; !ret && n--; addr += 4) {
+		t4_write_reg(adap, CIM_HOST_ACC_CTRL_A, addr);
+		ret = t4_wait_op_done(adap, CIM_HOST_ACC_CTRL_A, HOSTBUSY_F,
 				      0, 5, 2);
-		अगर (!ret)
-			*valp++ = t4_पढ़ो_reg(adap, CIM_HOST_ACC_DATA_A);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (!ret)
+			*valp++ = t4_read_reg(adap, CIM_HOST_ACC_DATA_A);
+	}
+	return ret;
+}
 
 /**
- *	t4_cim_ग_लिखो - ग_लिखो a block पूर्णांकo CIM पूर्णांकernal address space
+ *	t4_cim_write - write a block into CIM internal address space
  *	@adap: the adapter
  *	@addr: the start address within the CIM address space
- *	@n: number of words to ग_लिखो
- *	@valp: set of values to ग_लिखो
+ *	@n: number of words to write
+ *	@valp: set of values to write
  *
- *	Writes a block of 4-byte words पूर्णांकo the CIM पूर्णांकenal address space.
+ *	Writes a block of 4-byte words into the CIM intenal address space.
  */
-पूर्णांक t4_cim_ग_लिखो(काष्ठा adapter *adap, अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक n,
-		 स्थिर अचिन्हित पूर्णांक *valp)
-अणु
-	पूर्णांक ret = 0;
+int t4_cim_write(struct adapter *adap, unsigned int addr, unsigned int n,
+		 const unsigned int *valp)
+{
+	int ret = 0;
 
-	अगर (t4_पढ़ो_reg(adap, CIM_HOST_ACC_CTRL_A) & HOSTBUSY_F)
-		वापस -EBUSY;
+	if (t4_read_reg(adap, CIM_HOST_ACC_CTRL_A) & HOSTBUSY_F)
+		return -EBUSY;
 
-	क्रम ( ; !ret && n--; addr += 4) अणु
-		t4_ग_लिखो_reg(adap, CIM_HOST_ACC_DATA_A, *valp++);
-		t4_ग_लिखो_reg(adap, CIM_HOST_ACC_CTRL_A, addr | HOSTWRITE_F);
-		ret = t4_रुको_op_करोne(adap, CIM_HOST_ACC_CTRL_A, HOSTBUSY_F,
+	for ( ; !ret && n--; addr += 4) {
+		t4_write_reg(adap, CIM_HOST_ACC_DATA_A, *valp++);
+		t4_write_reg(adap, CIM_HOST_ACC_CTRL_A, addr | HOSTWRITE_F);
+		ret = t4_wait_op_done(adap, CIM_HOST_ACC_CTRL_A, HOSTBUSY_F,
 				      0, 5, 2);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक t4_cim_ग_लिखो1(काष्ठा adapter *adap, अचिन्हित पूर्णांक addr,
-			 अचिन्हित पूर्णांक val)
-अणु
-	वापस t4_cim_ग_लिखो(adap, addr, 1, &val);
-पूर्ण
+static int t4_cim_write1(struct adapter *adap, unsigned int addr,
+			 unsigned int val)
+{
+	return t4_cim_write(adap, addr, 1, &val);
+}
 
 /**
- *	t4_cim_पढ़ो_la - पढ़ो CIM LA capture buffer
+ *	t4_cim_read_la - read CIM LA capture buffer
  *	@adap: the adapter
  *	@la_buf: where to store the LA data
- *	@wrptr: the HW ग_लिखो poपूर्णांकer within the capture buffer
+ *	@wrptr: the HW write pointer within the capture buffer
  *
  *	Reads the contents of the CIM LA buffer with the most recent entry at
- *	the end	of the वापसed data and with the entry at @wrptr first.
+ *	the end	of the returned data and with the entry at @wrptr first.
  *	We try to leave the LA in the running state we find it in.
  */
-पूर्णांक t4_cim_पढ़ो_la(काष्ठा adapter *adap, u32 *la_buf, अचिन्हित पूर्णांक *wrptr)
-अणु
-	पूर्णांक i, ret;
-	अचिन्हित पूर्णांक cfg, val, idx;
+int t4_cim_read_la(struct adapter *adap, u32 *la_buf, unsigned int *wrptr)
+{
+	int i, ret;
+	unsigned int cfg, val, idx;
 
-	ret = t4_cim_पढ़ो(adap, UP_UP_DBG_LA_CFG_A, 1, &cfg);
-	अगर (ret)
-		वापस ret;
+	ret = t4_cim_read(adap, UP_UP_DBG_LA_CFG_A, 1, &cfg);
+	if (ret)
+		return ret;
 
-	अगर (cfg & UPDBGLAEN_F) अणु	/* LA is running, मुक्तze it */
-		ret = t4_cim_ग_लिखो1(adap, UP_UP_DBG_LA_CFG_A, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (cfg & UPDBGLAEN_F) {	/* LA is running, freeze it */
+		ret = t4_cim_write1(adap, UP_UP_DBG_LA_CFG_A, 0);
+		if (ret)
+			return ret;
+	}
 
-	ret = t4_cim_पढ़ो(adap, UP_UP_DBG_LA_CFG_A, 1, &val);
-	अगर (ret)
-		जाओ restart;
+	ret = t4_cim_read(adap, UP_UP_DBG_LA_CFG_A, 1, &val);
+	if (ret)
+		goto restart;
 
 	idx = UPDBGLAWRPTR_G(val);
-	अगर (wrptr)
+	if (wrptr)
 		*wrptr = idx;
 
-	क्रम (i = 0; i < adap->params.cim_la_size; i++) अणु
-		ret = t4_cim_ग_लिखो1(adap, UP_UP_DBG_LA_CFG_A,
+	for (i = 0; i < adap->params.cim_la_size; i++) {
+		ret = t4_cim_write1(adap, UP_UP_DBG_LA_CFG_A,
 				    UPDBGLARDPTR_V(idx) | UPDBGLARDEN_F);
-		अगर (ret)
-			अवरोध;
-		ret = t4_cim_पढ़ो(adap, UP_UP_DBG_LA_CFG_A, 1, &val);
-		अगर (ret)
-			अवरोध;
-		अगर (val & UPDBGLARDEN_F) अणु
+		if (ret)
+			break;
+		ret = t4_cim_read(adap, UP_UP_DBG_LA_CFG_A, 1, &val);
+		if (ret)
+			break;
+		if (val & UPDBGLARDEN_F) {
 			ret = -ETIMEDOUT;
-			अवरोध;
-		पूर्ण
-		ret = t4_cim_पढ़ो(adap, UP_UP_DBG_LA_DATA_A, 1, &la_buf[i]);
-		अगर (ret)
-			अवरोध;
+			break;
+		}
+		ret = t4_cim_read(adap, UP_UP_DBG_LA_DATA_A, 1, &la_buf[i]);
+		if (ret)
+			break;
 
 		/* Bits 0-3 of UpDbgLaRdPtr can be between 0000 to 1001 to
-		 * identअगरy the 32-bit portion of the full 312-bit data
+		 * identify the 32-bit portion of the full 312-bit data
 		 */
-		अगर (is_t6(adap->params.chip) && (idx & 0xf) >= 9)
+		if (is_t6(adap->params.chip) && (idx & 0xf) >= 9)
 			idx = (idx & 0xff0) + 0x10;
-		अन्यथा
+		else
 			idx++;
 		/* address can't exceed 0xfff */
 		idx &= UPDBGLARDPTR_M;
-	पूर्ण
+	}
 restart:
-	अगर (cfg & UPDBGLAEN_F) अणु
-		पूर्णांक r = t4_cim_ग_लिखो1(adap, UP_UP_DBG_LA_CFG_A,
+	if (cfg & UPDBGLAEN_F) {
+		int r = t4_cim_write1(adap, UP_UP_DBG_LA_CFG_A,
 				      cfg & ~UPDBGLARDEN_F);
-		अगर (!ret)
+		if (!ret)
 			ret = r;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
- *	t4_tp_पढ़ो_la - पढ़ो TP LA capture buffer
+ *	t4_tp_read_la - read TP LA capture buffer
  *	@adap: the adapter
  *	@la_buf: where to store the LA data
- *	@wrptr: the HW ग_लिखो poपूर्णांकer within the capture buffer
+ *	@wrptr: the HW write pointer within the capture buffer
  *
  *	Reads the contents of the TP LA buffer with the most recent entry at
- *	the end	of the वापसed data and with the entry at @wrptr first.
+ *	the end	of the returned data and with the entry at @wrptr first.
  *	We leave the LA in the running state we find it in.
  */
-व्योम t4_tp_पढ़ो_la(काष्ठा adapter *adap, u64 *la_buf, अचिन्हित पूर्णांक *wrptr)
-अणु
+void t4_tp_read_la(struct adapter *adap, u64 *la_buf, unsigned int *wrptr)
+{
 	bool last_incomplete;
-	अचिन्हित पूर्णांक i, cfg, val, idx;
+	unsigned int i, cfg, val, idx;
 
-	cfg = t4_पढ़ो_reg(adap, TP_DBG_LA_CONFIG_A) & 0xffff;
-	अगर (cfg & DBGLAENABLE_F)			/* मुक्तze LA */
-		t4_ग_लिखो_reg(adap, TP_DBG_LA_CONFIG_A,
+	cfg = t4_read_reg(adap, TP_DBG_LA_CONFIG_A) & 0xffff;
+	if (cfg & DBGLAENABLE_F)			/* freeze LA */
+		t4_write_reg(adap, TP_DBG_LA_CONFIG_A,
 			     adap->params.tp.la_mask | (cfg ^ DBGLAENABLE_F));
 
-	val = t4_पढ़ो_reg(adap, TP_DBG_LA_CONFIG_A);
+	val = t4_read_reg(adap, TP_DBG_LA_CONFIG_A);
 	idx = DBGLAWPTR_G(val);
 	last_incomplete = DBGLAMODE_G(val) >= 2 && (val & DBGLAWHLF_F) == 0;
-	अगर (last_incomplete)
+	if (last_incomplete)
 		idx = (idx + 1) & DBGLARPTR_M;
-	अगर (wrptr)
+	if (wrptr)
 		*wrptr = idx;
 
 	val &= 0xffff;
 	val &= ~DBGLARPTR_V(DBGLARPTR_M);
 	val |= adap->params.tp.la_mask;
 
-	क्रम (i = 0; i < TPLA_SIZE; i++) अणु
-		t4_ग_लिखो_reg(adap, TP_DBG_LA_CONFIG_A, DBGLARPTR_V(idx) | val);
-		la_buf[i] = t4_पढ़ो_reg64(adap, TP_DBG_LA_DATAL_A);
+	for (i = 0; i < TPLA_SIZE; i++) {
+		t4_write_reg(adap, TP_DBG_LA_CONFIG_A, DBGLARPTR_V(idx) | val);
+		la_buf[i] = t4_read_reg64(adap, TP_DBG_LA_DATAL_A);
 		idx = (idx + 1) & DBGLARPTR_M;
-	पूर्ण
+	}
 
-	/* Wipe out last entry अगर it isn't valid */
-	अगर (last_incomplete)
+	/* Wipe out last entry if it isn't valid */
+	if (last_incomplete)
 		la_buf[TPLA_SIZE - 1] = ~0ULL;
 
-	अगर (cfg & DBGLAENABLE_F)                    /* restore running state */
-		t4_ग_लिखो_reg(adap, TP_DBG_LA_CONFIG_A,
+	if (cfg & DBGLAENABLE_F)                    /* restore running state */
+		t4_write_reg(adap, TP_DBG_LA_CONFIG_A,
 			     cfg | adap->params.tp.la_mask);
-पूर्ण
+}
 
-/* SGE Hung Ingress DMA Warning Threshold समय and Warning Repeat Rate (in
+/* SGE Hung Ingress DMA Warning Threshold time and Warning Repeat Rate (in
  * seconds).  If we find one of the SGE Ingress DMA State Machines in the same
- * state क्रम more than the Warning Threshold then we'll issue a warning about
+ * state for more than the Warning Threshold then we'll issue a warning about
  * a potential hang.  We'll repeat the warning as the SGE Ingress DMA Channel
  * appears to be hung every Warning Repeat second till the situation clears.
  * If the situation clears, we'll note that as well.
  */
-#घोषणा SGE_IDMA_WARN_THRESH 1
-#घोषणा SGE_IDMA_WARN_REPEAT 300
+#define SGE_IDMA_WARN_THRESH 1
+#define SGE_IDMA_WARN_REPEAT 300
 
 /**
  *	t4_idma_monitor_init - initialize SGE Ingress DMA Monitor
@@ -10065,25 +10064,25 @@ restart:
  *
  *	Initialize the state of an SGE Ingress DMA Monitor.
  */
-व्योम t4_idma_monitor_init(काष्ठा adapter *adapter,
-			  काष्ठा sge_idma_monitor_state *idma)
-अणु
-	/* Initialize the state variables क्रम detecting an SGE Ingress DMA
-	 * hang.  The SGE has पूर्णांकernal counters which count up on each घड़ी
+void t4_idma_monitor_init(struct adapter *adapter,
+			  struct sge_idma_monitor_state *idma)
+{
+	/* Initialize the state variables for detecting an SGE Ingress DMA
+	 * hang.  The SGE has internal counters which count up on each clock
 	 * tick whenever the SGE finds its Ingress DMA State Engines in the
-	 * same state they were on the previous घड़ी tick.  The घड़ी used is
+	 * same state they were on the previous clock tick.  The clock used is
 	 * the Core Clock so we have a limit on the maximum "time" they can
 	 * record; typically a very small number of seconds.  For instance,
 	 * with a 600MHz Core Clock, we can only count up to a bit more than
 	 * 7s.  So we'll synthesize a larger counter in order to not run the
 	 * risk of having the "timers" overflow and give us the flexibility to
-	 * मुख्यtain a Hung SGE State Machine of our own which operates across
-	 * a दीर्घer समय frame.
+	 * maintain a Hung SGE State Machine of our own which operates across
+	 * a longer time frame.
 	 */
 	idma->idma_1s_thresh = core_ticks_per_usec(adapter) * 1000000; /* 1s */
 	idma->idma_stalled[0] = 0;
 	idma->idma_stalled[1] = 0;
-पूर्ण
+}
 
 /**
  *	t4_idma_monitor - monitor SGE Ingress DMA state
@@ -10092,78 +10091,78 @@ restart:
  *	@hz: number of ticks/second
  *	@ticks: number of ticks since the last IDMA Monitor call
  */
-व्योम t4_idma_monitor(काष्ठा adapter *adapter,
-		     काष्ठा sge_idma_monitor_state *idma,
-		     पूर्णांक hz, पूर्णांक ticks)
-अणु
-	पूर्णांक i, idma_same_state_cnt[2];
+void t4_idma_monitor(struct adapter *adapter,
+		     struct sge_idma_monitor_state *idma,
+		     int hz, int ticks)
+{
+	int i, idma_same_state_cnt[2];
 
-	 /* Read the SGE Debug Ingress DMA Same State Count रेजिस्टरs.  These
-	  * are counters inside the SGE which count up on each घड़ी when the
+	 /* Read the SGE Debug Ingress DMA Same State Count registers.  These
+	  * are counters inside the SGE which count up on each clock when the
 	  * SGE finds its Ingress DMA State Engines in the same states they
-	  * were in the previous घड़ी.  The counters will peg out at
+	  * were in the previous clock.  The counters will peg out at
 	  * 0xffffffff without wrapping around so once they pass the 1s
 	  * threshold they'll stay above that till the IDMA state changes.
 	  */
-	t4_ग_लिखो_reg(adapter, SGE_DEBUG_INDEX_A, 13);
-	idma_same_state_cnt[0] = t4_पढ़ो_reg(adapter, SGE_DEBUG_DATA_HIGH_A);
-	idma_same_state_cnt[1] = t4_पढ़ो_reg(adapter, SGE_DEBUG_DATA_LOW_A);
+	t4_write_reg(adapter, SGE_DEBUG_INDEX_A, 13);
+	idma_same_state_cnt[0] = t4_read_reg(adapter, SGE_DEBUG_DATA_HIGH_A);
+	idma_same_state_cnt[1] = t4_read_reg(adapter, SGE_DEBUG_DATA_LOW_A);
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		u32 debug0, debug11;
 
 		/* If the Ingress DMA Same State Counter ("timer") is less
 		 * than 1s, then we can reset our synthesized Stall Timer and
-		 * जारी.  If we have previously emitted warnings about a
+		 * continue.  If we have previously emitted warnings about a
 		 * potential stalled Ingress Queue, issue a note indicating
-		 * that the Ingress Queue has resumed क्रमward progress.
+		 * that the Ingress Queue has resumed forward progress.
 		 */
-		अगर (idma_same_state_cnt[i] < idma->idma_1s_thresh) अणु
-			अगर (idma->idma_stalled[i] >= SGE_IDMA_WARN_THRESH * hz)
+		if (idma_same_state_cnt[i] < idma->idma_1s_thresh) {
+			if (idma->idma_stalled[i] >= SGE_IDMA_WARN_THRESH * hz)
 				dev_warn(adapter->pdev_dev, "SGE idma%d, queue %u, "
 					 "resumed after %d seconds\n",
 					 i, idma->idma_qid[i],
 					 idma->idma_stalled[i] / hz);
 			idma->idma_stalled[i] = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Synthesize an SGE Ingress DMA Same State Timer in the Hz
-		 * करोमुख्य.  The first समय we get here it'll be because we
-		 * passed the 1s Threshold; each additional समय it'll be
+		 * domain.  The first time we get here it'll be because we
+		 * passed the 1s Threshold; each additional time it'll be
 		 * because the RX Timer Callback is being fired on its regular
 		 * schedule.
 		 *
 		 * If the stall is below our Potential Hung Ingress Queue
-		 * Warning Threshold, जारी.
+		 * Warning Threshold, continue.
 		 */
-		अगर (idma->idma_stalled[i] == 0) अणु
+		if (idma->idma_stalled[i] == 0) {
 			idma->idma_stalled[i] = hz;
 			idma->idma_warn[i] = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			idma->idma_stalled[i] += ticks;
 			idma->idma_warn[i] -= ticks;
-		पूर्ण
+		}
 
-		अगर (idma->idma_stalled[i] < SGE_IDMA_WARN_THRESH * hz)
-			जारी;
+		if (idma->idma_stalled[i] < SGE_IDMA_WARN_THRESH * hz)
+			continue;
 
 		/* We'll issue a warning every SGE_IDMA_WARN_REPEAT seconds.
 		 */
-		अगर (idma->idma_warn[i] > 0)
-			जारी;
+		if (idma->idma_warn[i] > 0)
+			continue;
 		idma->idma_warn[i] = SGE_IDMA_WARN_REPEAT * hz;
 
-		/* Read and save the SGE IDMA State and Queue ID inक्रमmation.
-		 * We करो this every समय in हाल it changes across समय ...
+		/* Read and save the SGE IDMA State and Queue ID information.
+		 * We do this every time in case it changes across time ...
 		 * can't be too careful ...
 		 */
-		t4_ग_लिखो_reg(adapter, SGE_DEBUG_INDEX_A, 0);
-		debug0 = t4_पढ़ो_reg(adapter, SGE_DEBUG_DATA_LOW_A);
+		t4_write_reg(adapter, SGE_DEBUG_INDEX_A, 0);
+		debug0 = t4_read_reg(adapter, SGE_DEBUG_DATA_LOW_A);
 		idma->idma_state[i] = (debug0 >> (i * 9)) & 0x3f;
 
-		t4_ग_लिखो_reg(adapter, SGE_DEBUG_INDEX_A, 11);
-		debug11 = t4_पढ़ो_reg(adapter, SGE_DEBUG_DATA_LOW_A);
+		t4_write_reg(adapter, SGE_DEBUG_INDEX_A, 11);
+		debug11 = t4_read_reg(adapter, SGE_DEBUG_DATA_LOW_A);
 		idma->idma_qid[i] = (debug11 >> (i * 16)) & 0xffff;
 
 		dev_warn(adapter->pdev_dev, "SGE idma%u, queue %u, potentially stuck in "
@@ -10172,36 +10171,36 @@ restart:
 			 idma->idma_stalled[i] / hz,
 			 debug0, debug11);
 		t4_sge_decode_idma_state(adapter, idma->idma_state[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- *	t4_load_cfg - करोwnload config file
+ *	t4_load_cfg - download config file
  *	@adap: the adapter
- *	@cfg_data: the cfg text file to ग_लिखो
+ *	@cfg_data: the cfg text file to write
  *	@size: text file size
  *
  *	Write the supplied config text file to the card's serial flash.
  */
-पूर्णांक t4_load_cfg(काष्ठा adapter *adap, स्थिर u8 *cfg_data, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक ret, i, n, cfg_addr;
-	अचिन्हित पूर्णांक addr;
-	अचिन्हित पूर्णांक flash_cfg_start_sec;
-	अचिन्हित पूर्णांक sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
+int t4_load_cfg(struct adapter *adap, const u8 *cfg_data, unsigned int size)
+{
+	int ret, i, n, cfg_addr;
+	unsigned int addr;
+	unsigned int flash_cfg_start_sec;
+	unsigned int sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
 
 	cfg_addr = t4_flash_cfg_addr(adap);
-	अगर (cfg_addr < 0)
-		वापस cfg_addr;
+	if (cfg_addr < 0)
+		return cfg_addr;
 
 	addr = cfg_addr;
 	flash_cfg_start_sec = addr / SF_SEC_SIZE;
 
-	अगर (size > FLASH_CFG_MAX_SIZE) अणु
+	if (size > FLASH_CFG_MAX_SIZE) {
 		dev_err(adap->pdev_dev, "cfg file too large, max is %u bytes\n",
 			FLASH_CFG_MAX_SIZE);
-		वापस -EFBIG;
-	पूर्ण
+		return -EFBIG;
+	}
 
 	i = DIV_ROUND_UP(FLASH_CFG_MAX_SIZE,	/* # of sectors spanned */
 			 sf_sec_size);
@@ -10210,43 +10209,43 @@ restart:
 	/* If size == 0 then we're simply erasing the FLASH sectors associated
 	 * with the on-adapter Firmware Configuration File.
 	 */
-	अगर (ret || size == 0)
-		जाओ out;
+	if (ret || size == 0)
+		goto out;
 
-	/* this will ग_लिखो to the flash up to SF_PAGE_SIZE at a समय */
-	क्रम (i = 0; i < size; i += SF_PAGE_SIZE) अणु
-		अगर ((size - i) <  SF_PAGE_SIZE)
+	/* this will write to the flash up to SF_PAGE_SIZE at a time */
+	for (i = 0; i < size; i += SF_PAGE_SIZE) {
+		if ((size - i) <  SF_PAGE_SIZE)
 			n = size - i;
-		अन्यथा
+		else
 			n = SF_PAGE_SIZE;
-		ret = t4_ग_लिखो_flash(adap, addr, n, cfg_data, true);
-		अगर (ret)
-			जाओ out;
+		ret = t4_write_flash(adap, addr, n, cfg_data, true);
+		if (ret)
+			goto out;
 
 		addr += SF_PAGE_SIZE;
 		cfg_data += SF_PAGE_SIZE;
-	पूर्ण
+	}
 
 out:
-	अगर (ret)
+	if (ret)
 		dev_err(adap->pdev_dev, "config file %s failed %d\n",
 			(size == 0 ? "clear" : "download"), ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_set_vf_mac - Set MAC address क्रम the specअगरied VF
+ *	t4_set_vf_mac - Set MAC address for the specified VF
  *	@adapter: The adapter
- *	@vf: one of the VFs instantiated by the specअगरied PF
+ *	@vf: one of the VFs instantiated by the specified PF
  *	@naddr: the number of MAC addresses
- *	@addr: the MAC address(es) to be set to the specअगरied VF
+ *	@addr: the MAC address(es) to be set to the specified VF
  */
-पूर्णांक t4_set_vf_mac_acl(काष्ठा adapter *adapter, अचिन्हित पूर्णांक vf,
-		      अचिन्हित पूर्णांक naddr, u8 *addr)
-अणु
-	काष्ठा fw_acl_mac_cmd cmd;
+int t4_set_vf_mac_acl(struct adapter *adapter, unsigned int vf,
+		      unsigned int naddr, u8 *addr)
+{
+	struct fw_acl_mac_cmd cmd;
 
-	स_रखो(&cmd, 0, माप(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_ACL_MAC_CMD) |
 				    FW_CMD_REQUEST_F |
 				    FW_CMD_WRITE_F |
@@ -10254,155 +10253,155 @@ out:
 				    FW_ACL_MAC_CMD_VFN_V(vf));
 
 	/* Note: Do not enable the ACL */
-	cmd.en_to_len16 = cpu_to_be32((अचिन्हित पूर्णांक)FW_LEN16(cmd));
+	cmd.en_to_len16 = cpu_to_be32((unsigned int)FW_LEN16(cmd));
 	cmd.nmac = naddr;
 
-	चयन (adapter->pf) अणु
-	हाल 3:
-		स_नकल(cmd.macaddr3, addr, माप(cmd.macaddr3));
-		अवरोध;
-	हाल 2:
-		स_नकल(cmd.macaddr2, addr, माप(cmd.macaddr2));
-		अवरोध;
-	हाल 1:
-		स_नकल(cmd.macaddr1, addr, माप(cmd.macaddr1));
-		अवरोध;
-	हाल 0:
-		स_नकल(cmd.macaddr0, addr, माप(cmd.macaddr0));
-		अवरोध;
-	पूर्ण
+	switch (adapter->pf) {
+	case 3:
+		memcpy(cmd.macaddr3, addr, sizeof(cmd.macaddr3));
+		break;
+	case 2:
+		memcpy(cmd.macaddr2, addr, sizeof(cmd.macaddr2));
+		break;
+	case 1:
+		memcpy(cmd.macaddr1, addr, sizeof(cmd.macaddr1));
+		break;
+	case 0:
+		memcpy(cmd.macaddr0, addr, sizeof(cmd.macaddr0));
+		break;
+	}
 
-	वापस t4_wr_mbox(adapter, adapter->mbox, &cmd, माप(cmd), &cmd);
-पूर्ण
+	return t4_wr_mbox(adapter, adapter->mbox, &cmd, sizeof(cmd), &cmd);
+}
 
 /**
- * t4_पढ़ो_pace_tbl - पढ़ो the pace table
+ * t4_read_pace_tbl - read the pace table
  * @adap: the adapter
- * @pace_vals: holds the वापसed values
+ * @pace_vals: holds the returned values
  *
  * Returns the values of TP's pace table in microseconds.
  */
-व्योम t4_पढ़ो_pace_tbl(काष्ठा adapter *adap, अचिन्हित पूर्णांक pace_vals[NTX_SCHED])
-अणु
-	अचिन्हित पूर्णांक i, v;
+void t4_read_pace_tbl(struct adapter *adap, unsigned int pace_vals[NTX_SCHED])
+{
+	unsigned int i, v;
 
-	क्रम (i = 0; i < NTX_SCHED; i++) अणु
-		t4_ग_लिखो_reg(adap, TP_PACE_TABLE_A, 0xffff0000 + i);
-		v = t4_पढ़ो_reg(adap, TP_PACE_TABLE_A);
+	for (i = 0; i < NTX_SCHED; i++) {
+		t4_write_reg(adap, TP_PACE_TABLE_A, 0xffff0000 + i);
+		v = t4_read_reg(adap, TP_PACE_TABLE_A);
 		pace_vals[i] = dack_ticks_to_usec(adap, v);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * t4_get_tx_sched - get the configuration of a Tx HW traffic scheduler
  * @adap: the adapter
  * @sched: the scheduler index
  * @kbps: the byte rate in Kbps
- * @ipg: the पूर्णांकerpacket delay in tenths of nanoseconds
- * @sleep_ok: अगर true we may sleep जबतक aरुकोing command completion
+ * @ipg: the interpacket delay in tenths of nanoseconds
+ * @sleep_ok: if true we may sleep while awaiting command completion
  *
  * Return the current configuration of a HW Tx scheduler.
  */
-व्योम t4_get_tx_sched(काष्ठा adapter *adap, अचिन्हित पूर्णांक sched,
-		     अचिन्हित पूर्णांक *kbps, अचिन्हित पूर्णांक *ipg, bool sleep_ok)
-अणु
-	अचिन्हित पूर्णांक v, addr, bpt, cpt;
+void t4_get_tx_sched(struct adapter *adap, unsigned int sched,
+		     unsigned int *kbps, unsigned int *ipg, bool sleep_ok)
+{
+	unsigned int v, addr, bpt, cpt;
 
-	अगर (kbps) अणु
+	if (kbps) {
 		addr = TP_TX_MOD_Q1_Q0_RATE_LIMIT_A - sched / 2;
-		t4_tp_पंचांग_pio_पढ़ो(adap, &v, 1, addr, sleep_ok);
-		अगर (sched & 1)
+		t4_tp_tm_pio_read(adap, &v, 1, addr, sleep_ok);
+		if (sched & 1)
 			v >>= 16;
 		bpt = (v >> 8) & 0xff;
 		cpt = v & 0xff;
-		अगर (!cpt) अणु
+		if (!cpt) {
 			*kbps = 0;	/* scheduler disabled */
-		पूर्ण अन्यथा अणु
+		} else {
 			v = (adap->params.vpd.cclk * 1000) / cpt; /* ticks/s */
 			*kbps = (v * bpt) / 125;
-		पूर्ण
-	पूर्ण
-	अगर (ipg) अणु
+		}
+	}
+	if (ipg) {
 		addr = TP_TX_MOD_Q1_Q0_TIMER_SEPARATOR_A - sched / 2;
-		t4_tp_पंचांग_pio_पढ़ो(adap, &v, 1, addr, sleep_ok);
-		अगर (sched & 1)
+		t4_tp_tm_pio_read(adap, &v, 1, addr, sleep_ok);
+		if (sched & 1)
 			v >>= 16;
 		v &= 0xffff;
 		*ipg = (10000 * v) / core_ticks_per_usec(adap);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* t4_sge_ctxt_rd - पढ़ो an SGE context through FW
+/* t4_sge_ctxt_rd - read an SGE context through FW
  * @adap: the adapter
- * @mbox: mailbox to use क्रम the FW command
+ * @mbox: mailbox to use for the FW command
  * @cid: the context id
  * @ctype: the context type
  * @data: where to store the context data
  *
- * Issues a FW command through the given mailbox to पढ़ो an SGE context.
+ * Issues a FW command through the given mailbox to read an SGE context.
  */
-पूर्णांक t4_sge_ctxt_rd(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक cid,
-		   क्रमागत ctxt_type ctype, u32 *data)
-अणु
-	काष्ठा fw_ldst_cmd c;
-	पूर्णांक ret;
+int t4_sge_ctxt_rd(struct adapter *adap, unsigned int mbox, unsigned int cid,
+		   enum ctxt_type ctype, u32 *data)
+{
+	struct fw_ldst_cmd c;
+	int ret;
 
-	अगर (ctype == CTXT_FLM)
+	if (ctype == CTXT_FLM)
 		ret = FW_LDST_ADDRSPC_SGE_FLMC;
-	अन्यथा
+	else
 		ret = FW_LDST_ADDRSPC_SGE_CONMC;
 
-	स_रखो(&c, 0, माप(c));
+	memset(&c, 0, sizeof(c));
 	c.op_to_addrspace = cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 					FW_CMD_REQUEST_F | FW_CMD_READ_F |
 					FW_LDST_CMD_ADDRSPACE_V(ret));
 	c.cycles_to_len16 = cpu_to_be32(FW_LEN16(c));
 	c.u.idctxt.physid = cpu_to_be32(cid);
 
-	ret = t4_wr_mbox(adap, mbox, &c, माप(c), &c);
-	अगर (ret == 0) अणु
+	ret = t4_wr_mbox(adap, mbox, &c, sizeof(c), &c);
+	if (ret == 0) {
 		data[0] = be32_to_cpu(c.u.idctxt.ctxt_data0);
 		data[1] = be32_to_cpu(c.u.idctxt.ctxt_data1);
 		data[2] = be32_to_cpu(c.u.idctxt.ctxt_data2);
 		data[3] = be32_to_cpu(c.u.idctxt.ctxt_data3);
 		data[4] = be32_to_cpu(c.u.idctxt.ctxt_data4);
 		data[5] = be32_to_cpu(c.u.idctxt.ctxt_data5);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
- * t4_sge_ctxt_rd_bd - पढ़ो an SGE context bypassing FW
+ * t4_sge_ctxt_rd_bd - read an SGE context bypassing FW
  * @adap: the adapter
  * @cid: the context id
  * @ctype: the context type
  * @data: where to store the context data
  *
- * Reads an SGE context directly, bypassing FW.  This is only क्रम
+ * Reads an SGE context directly, bypassing FW.  This is only for
  * debugging when FW is unavailable.
  */
-पूर्णांक t4_sge_ctxt_rd_bd(काष्ठा adapter *adap, अचिन्हित पूर्णांक cid,
-		      क्रमागत ctxt_type ctype, u32 *data)
-अणु
-	पूर्णांक i, ret;
+int t4_sge_ctxt_rd_bd(struct adapter *adap, unsigned int cid,
+		      enum ctxt_type ctype, u32 *data)
+{
+	int i, ret;
 
-	t4_ग_लिखो_reg(adap, SGE_CTXT_CMD_A, CTXTQID_V(cid) | CTXTTYPE_V(ctype));
-	ret = t4_रुको_op_करोne(adap, SGE_CTXT_CMD_A, BUSY_F, 0, 3, 1);
-	अगर (!ret)
-		क्रम (i = SGE_CTXT_DATA0_A; i <= SGE_CTXT_DATA5_A; i += 4)
-			*data++ = t4_पढ़ो_reg(adap, i);
-	वापस ret;
-पूर्ण
+	t4_write_reg(adap, SGE_CTXT_CMD_A, CTXTQID_V(cid) | CTXTTYPE_V(ctype));
+	ret = t4_wait_op_done(adap, SGE_CTXT_CMD_A, BUSY_F, 0, 3, 1);
+	if (!ret)
+		for (i = SGE_CTXT_DATA0_A; i <= SGE_CTXT_DATA5_A; i += 4)
+			*data++ = t4_read_reg(adap, i);
+	return ret;
+}
 
-पूर्णांक t4_sched_params(काष्ठा adapter *adapter, u8 type, u8 level, u8 mode,
+int t4_sched_params(struct adapter *adapter, u8 type, u8 level, u8 mode,
 		    u8 rateunit, u8 ratemode, u8 channel, u8 class,
 		    u32 minrate, u32 maxrate, u16 weight, u16 pktsize,
 		    u16 burstsize)
-अणु
-	काष्ठा fw_sched_cmd cmd;
+{
+	struct fw_sched_cmd cmd;
 
-	स_रखो(&cmd, 0, माप(cmd));
-	cmd.op_to_ग_लिखो = cpu_to_be32(FW_CMD_OP_V(FW_SCHED_CMD) |
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.op_to_write = cpu_to_be32(FW_CMD_OP_V(FW_SCHED_CMD) |
 				      FW_CMD_REQUEST_F |
 				      FW_CMD_WRITE_F);
 	cmd.retval_len16 = cpu_to_be32(FW_LEN16(cmd));
@@ -10421,38 +10420,38 @@ out:
 	cmd.u.params.pktsize = cpu_to_be16(pktsize);
 	cmd.u.params.burstsize = cpu_to_be16(burstsize);
 
-	वापस t4_wr_mbox_meat(adapter, adapter->mbox, &cmd, माप(cmd),
-			       शून्य, 1);
-पूर्ण
+	return t4_wr_mbox_meat(adapter, adapter->mbox, &cmd, sizeof(cmd),
+			       NULL, 1);
+}
 
 /**
- *	t4_i2c_rd - पढ़ो I2C data from adapter
+ *	t4_i2c_rd - read I2C data from adapter
  *	@adap: the adapter
- *	@mbox: mailbox to use क्रम the FW command
- *	@port: Port number अगर per-port device; <0 अगर not
- *	@devid: per-port device ID or असलolute device ID
- *	@offset: byte offset पूर्णांकo device I2C space
+ *	@mbox: mailbox to use for the FW command
+ *	@port: Port number if per-port device; <0 if not
+ *	@devid: per-port device ID or absolute device ID
+ *	@offset: byte offset into device I2C space
  *	@len: byte length of I2C space data
- *	@buf: buffer in which to वापस I2C data
+ *	@buf: buffer in which to return I2C data
  *
  *	Reads the I2C data from the indicated device and location.
  */
-पूर्णांक t4_i2c_rd(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, पूर्णांक port,
-	      अचिन्हित पूर्णांक devid, अचिन्हित पूर्णांक offset,
-	      अचिन्हित पूर्णांक len, u8 *buf)
-अणु
-	काष्ठा fw_ldst_cmd ldst_cmd, ldst_rpl;
-	अचिन्हित पूर्णांक i2c_max = माप(ldst_cmd.u.i2c.data);
-	पूर्णांक ret = 0;
+int t4_i2c_rd(struct adapter *adap, unsigned int mbox, int port,
+	      unsigned int devid, unsigned int offset,
+	      unsigned int len, u8 *buf)
+{
+	struct fw_ldst_cmd ldst_cmd, ldst_rpl;
+	unsigned int i2c_max = sizeof(ldst_cmd.u.i2c.data);
+	int ret = 0;
 
-	अगर (len > I2C_PAGE_SIZE)
-		वापस -EINVAL;
+	if (len > I2C_PAGE_SIZE)
+		return -EINVAL;
 
-	/* Dont allow पढ़ोs that spans multiple pages */
-	अगर (offset < I2C_PAGE_SIZE && offset + len > I2C_PAGE_SIZE)
-		वापस -EINVAL;
+	/* Dont allow reads that spans multiple pages */
+	if (offset < I2C_PAGE_SIZE && offset + len > I2C_PAGE_SIZE)
+		return -EINVAL;
 
-	स_रखो(&ldst_cmd, 0, माप(ldst_cmd));
+	memset(&ldst_cmd, 0, sizeof(ldst_cmd));
 	ldst_cmd.op_to_addrspace =
 		cpu_to_be32(FW_CMD_OP_V(FW_LDST_CMD) |
 			    FW_CMD_REQUEST_F |
@@ -10462,41 +10461,41 @@ out:
 	ldst_cmd.u.i2c.pid = (port < 0 ? 0xff : port);
 	ldst_cmd.u.i2c.did = devid;
 
-	जबतक (len > 0) अणु
-		अचिन्हित पूर्णांक i2c_len = (len < i2c_max) ? len : i2c_max;
+	while (len > 0) {
+		unsigned int i2c_len = (len < i2c_max) ? len : i2c_max;
 
 		ldst_cmd.u.i2c.boffset = offset;
 		ldst_cmd.u.i2c.blen = i2c_len;
 
-		ret = t4_wr_mbox(adap, mbox, &ldst_cmd, माप(ldst_cmd),
+		ret = t4_wr_mbox(adap, mbox, &ldst_cmd, sizeof(ldst_cmd),
 				 &ldst_rpl);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		स_नकल(buf, ldst_rpl.u.i2c.data, i2c_len);
+		memcpy(buf, ldst_rpl.u.i2c.data, i2c_len);
 		offset += i2c_len;
 		buf += i2c_len;
 		len -= i2c_len;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *      t4_set_vlan_acl - Set a VLAN id क्रम the specअगरied VF
+ *      t4_set_vlan_acl - Set a VLAN id for the specified VF
  *      @adap: the adapter
- *      @mbox: mailbox to use क्रम the FW command
- *      @vf: one of the VFs instantiated by the specअगरied PF
+ *      @mbox: mailbox to use for the FW command
+ *      @vf: one of the VFs instantiated by the specified PF
  *      @vlan: The vlanid to be set
  */
-पूर्णांक t4_set_vlan_acl(काष्ठा adapter *adap, अचिन्हित पूर्णांक mbox, अचिन्हित पूर्णांक vf,
+int t4_set_vlan_acl(struct adapter *adap, unsigned int mbox, unsigned int vf,
 		    u16 vlan)
-अणु
-	काष्ठा fw_acl_vlan_cmd vlan_cmd;
-	अचिन्हित पूर्णांक enable;
+{
+	struct fw_acl_vlan_cmd vlan_cmd;
+	unsigned int enable;
 
 	enable = (vlan ? FW_ACL_VLAN_CMD_EN_F : 0);
-	स_रखो(&vlan_cmd, 0, माप(vlan_cmd));
+	memset(&vlan_cmd, 0, sizeof(vlan_cmd));
 	vlan_cmd.op_to_vfn = cpu_to_be32(FW_CMD_OP_V(FW_ACL_VLAN_CMD) |
 					 FW_CMD_REQUEST_F |
 					 FW_CMD_WRITE_F |
@@ -10504,52 +10503,52 @@ out:
 					 FW_ACL_VLAN_CMD_PFN_V(adap->pf) |
 					 FW_ACL_VLAN_CMD_VFN_V(vf));
 	vlan_cmd.en_to_len16 = cpu_to_be32(enable | FW_LEN16(vlan_cmd));
-	/* Drop all packets that करोnot match vlan id */
+	/* Drop all packets that donot match vlan id */
 	vlan_cmd.dropnovlan_fm = (enable
 				  ? (FW_ACL_VLAN_CMD_DROPNOVLAN_F |
 				     FW_ACL_VLAN_CMD_FM_F) : 0);
-	अगर (enable != 0) अणु
+	if (enable != 0) {
 		vlan_cmd.nvlan = 1;
 		vlan_cmd.vlanid[0] = cpu_to_be16(vlan);
-	पूर्ण
+	}
 
-	वापस t4_wr_mbox(adap, adap->mbox, &vlan_cmd, माप(vlan_cmd), शून्य);
-पूर्ण
+	return t4_wr_mbox(adap, adap->mbox, &vlan_cmd, sizeof(vlan_cmd), NULL);
+}
 
 /**
- *	modअगरy_device_id - Modअगरies the device ID of the Boot BIOS image
- *	@device_id: the device ID to ग_लिखो.
- *	@boot_data: the boot image to modअगरy.
+ *	modify_device_id - Modifies the device ID of the Boot BIOS image
+ *	@device_id: the device ID to write.
+ *	@boot_data: the boot image to modify.
  *
  *	Write the supplied device ID to the boot BIOS image.
  */
-अटल व्योम modअगरy_device_id(पूर्णांक device_id, u8 *boot_data)
-अणु
-	काष्ठा cxgb4_pcir_data *pcir_header;
-	काष्ठा legacy_pci_rom_hdr *header;
+static void modify_device_id(int device_id, u8 *boot_data)
+{
+	struct cxgb4_pcir_data *pcir_header;
+	struct legacy_pci_rom_hdr *header;
 	u8 *cur_header = boot_data;
 	u16 pcir_offset;
 
 	 /* Loop through all chained images and change the device ID's */
-	करो अणु
-		header = (काष्ठा legacy_pci_rom_hdr *)cur_header;
+	do {
+		header = (struct legacy_pci_rom_hdr *)cur_header;
 		pcir_offset = le16_to_cpu(header->pcir_offset);
-		pcir_header = (काष्ठा cxgb4_pcir_data *)(cur_header +
+		pcir_header = (struct cxgb4_pcir_data *)(cur_header +
 			      pcir_offset);
 
 		/**
-		 * Only modअगरy the Device ID अगर code type is Legacy or HP.
-		 * 0x00: Okay to modअगरy
-		 * 0x01: FCODE. Do not modअगरy
-		 * 0x03: Okay to modअगरy
-		 * 0x04-0xFF: Do not modअगरy
+		 * Only modify the Device ID if code type is Legacy or HP.
+		 * 0x00: Okay to modify
+		 * 0x01: FCODE. Do not modify
+		 * 0x03: Okay to modify
+		 * 0x04-0xFF: Do not modify
 		 */
-		अगर (pcir_header->code_type == CXGB4_HDR_CODE1) अणु
+		if (pcir_header->code_type == CXGB4_HDR_CODE1) {
 			u8 csum = 0;
-			पूर्णांक i;
+			int i;
 
 			/**
-			 * Modअगरy Device ID to match current adatper
+			 * Modify Device ID to match current adatper
 			 */
 			pcir_header->device_id = cpu_to_le16(device_id);
 
@@ -10562,7 +10561,7 @@ out:
 			/**
 			 * Calculate and update checksum
 			 */
-			क्रम (i = 0; i < (header->size512 * 512); i++)
+			for (i = 0; i < (header->size512 * 512); i++)
 				csum += cur_header[i];
 
 			/**
@@ -10571,88 +10570,88 @@ out:
 			 */
 			cur_header[7] = -csum;
 
-		पूर्ण अन्यथा अगर (pcir_header->code_type == CXGB4_HDR_CODE2) अणु
+		} else if (pcir_header->code_type == CXGB4_HDR_CODE2) {
 			/**
-			 * Modअगरy Device ID to match current adatper
+			 * Modify Device ID to match current adatper
 			 */
 			pcir_header->device_id = cpu_to_le16(device_id);
-		पूर्ण
+		}
 
 		/**
-		 * Move header poपूर्णांकer up to the next image in the ROM.
+		 * Move header pointer up to the next image in the ROM.
 		 */
 		cur_header += header->size512 * 512;
-	पूर्ण जबतक (!(pcir_header->indicator & CXGB4_HDR_INDI));
-पूर्ण
+	} while (!(pcir_header->indicator & CXGB4_HDR_INDI));
+}
 
 /**
- *	t4_load_boot - करोwnload boot flash
+ *	t4_load_boot - download boot flash
  *	@adap: the adapter
- *	@boot_data: the boot image to ग_लिखो
- *	@boot_addr: offset in flash to ग_लिखो boot_data
+ *	@boot_data: the boot image to write
+ *	@boot_addr: offset in flash to write boot_data
  *	@size: image size
  *
  *	Write the supplied boot image to the card's serial flash.
  *	The boot image has the following sections: a 28-byte header and the
  *	boot image.
  */
-पूर्णांक t4_load_boot(काष्ठा adapter *adap, u8 *boot_data,
-		 अचिन्हित पूर्णांक boot_addr, अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
-	अचिन्हित पूर्णांक boot_sector = (boot_addr * 1024);
-	काष्ठा cxgb4_pci_exp_rom_header *header;
-	काष्ठा cxgb4_pcir_data *pcir_header;
-	पूर्णांक pcir_offset;
-	अचिन्हित पूर्णांक i;
+int t4_load_boot(struct adapter *adap, u8 *boot_data,
+		 unsigned int boot_addr, unsigned int size)
+{
+	unsigned int sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
+	unsigned int boot_sector = (boot_addr * 1024);
+	struct cxgb4_pci_exp_rom_header *header;
+	struct cxgb4_pcir_data *pcir_header;
+	int pcir_offset;
+	unsigned int i;
 	u16 device_id;
-	पूर्णांक ret, addr;
+	int ret, addr;
 
 	/**
-	 * Make sure the boot image करोes not encroach on the firmware region
+	 * Make sure the boot image does not encroach on the firmware region
 	 */
-	अगर ((boot_sector + size) >> 16 > FLASH_FW_START_SEC) अणु
+	if ((boot_sector + size) >> 16 > FLASH_FW_START_SEC) {
 		dev_err(adap->pdev_dev, "boot image encroaching on firmware region\n");
-		वापस -EFBIG;
-	पूर्ण
+		return -EFBIG;
+	}
 
 	/* Get boot header */
-	header = (काष्ठा cxgb4_pci_exp_rom_header *)boot_data;
+	header = (struct cxgb4_pci_exp_rom_header *)boot_data;
 	pcir_offset = le16_to_cpu(header->pcir_offset);
 	/* PCIR Data Structure */
-	pcir_header = (काष्ठा cxgb4_pcir_data *)&boot_data[pcir_offset];
+	pcir_header = (struct cxgb4_pcir_data *)&boot_data[pcir_offset];
 
 	/**
-	 * Perक्रमm some primitive sanity testing to aव्योम accidentally
-	 * writing garbage over the boot sectors.  We ought to check क्रम
-	 * more but it's not worth it क्रम now ...
+	 * Perform some primitive sanity testing to avoid accidentally
+	 * writing garbage over the boot sectors.  We ought to check for
+	 * more but it's not worth it for now ...
 	 */
-	अगर (size < BOOT_MIN_SIZE || size > BOOT_MAX_SIZE) अणु
+	if (size < BOOT_MIN_SIZE || size > BOOT_MAX_SIZE) {
 		dev_err(adap->pdev_dev, "boot image too small/large\n");
-		वापस -EFBIG;
-	पूर्ण
+		return -EFBIG;
+	}
 
-	अगर (le16_to_cpu(header->signature) != BOOT_SIGNATURE) अणु
+	if (le16_to_cpu(header->signature) != BOOT_SIGNATURE) {
 		dev_err(adap->pdev_dev, "Boot image missing signature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check PCI header signature */
-	अगर (le32_to_cpu(pcir_header->signature) != PCIR_SIGNATURE) अणु
+	if (le32_to_cpu(pcir_header->signature) != PCIR_SIGNATURE) {
 		dev_err(adap->pdev_dev, "PCI header missing signature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Check Venकरोr ID matches Chelsio ID*/
-	अगर (le16_to_cpu(pcir_header->venकरोr_id) != PCI_VENDOR_ID_CHELSIO) अणु
+	/* Check Vendor ID matches Chelsio ID*/
+	if (le16_to_cpu(pcir_header->vendor_id) != PCI_VENDOR_ID_CHELSIO) {
 		dev_err(adap->pdev_dev, "Vendor ID missing signature\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/**
 	 * The boot sector is comprised of the Expansion-ROM boot, iSCSI boot,
 	 * and Boot configuration data sections. These 3 boot sections span
-	 * sectors 0 to 7 in flash and live right beक्रमe the FW image location.
+	 * sectors 0 to 7 in flash and live right before the FW image location.
 	 */
 	i = DIV_ROUND_UP(size ? size : FLASH_FW_START,  sf_sec_size);
 	ret = t4_flash_erase_sectors(adap, boot_sector >> 16,
@@ -10662,97 +10661,97 @@ out:
 	 * If size == 0 then we're simply erasing the FLASH sectors associated
 	 * with the on-adapter option ROM file
 	 */
-	अगर (ret || size == 0)
-		जाओ out;
+	if (ret || size == 0)
+		goto out;
 	/* Retrieve adapter's device ID */
-	pci_पढ़ो_config_word(adap->pdev, PCI_DEVICE_ID, &device_id);
+	pci_read_config_word(adap->pdev, PCI_DEVICE_ID, &device_id);
        /* Want to deal with PF 0 so I strip off PF 4 indicator */
 	device_id = device_id & 0xf0ff;
 
 	 /* Check PCIE Device ID */
-	अगर (le16_to_cpu(pcir_header->device_id) != device_id) अणु
+	if (le16_to_cpu(pcir_header->device_id) != device_id) {
 		/**
 		 * Change the device ID in the Boot BIOS image to match
 		 * the Device ID of the current adapter.
 		 */
-		modअगरy_device_id(device_id, boot_data);
-	पूर्ण
+		modify_device_id(device_id, boot_data);
+	}
 
 	/**
-	 * Skip over the first SF_PAGE_SIZE worth of data and ग_लिखो it after
+	 * Skip over the first SF_PAGE_SIZE worth of data and write it after
 	 * we finish copying the rest of the boot image. This will ensure
-	 * that the BIOS boot header will only be written अगर the boot image
+	 * that the BIOS boot header will only be written if the boot image
 	 * was written in full.
 	 */
 	addr = boot_sector;
-	क्रम (size -= SF_PAGE_SIZE; size; size -= SF_PAGE_SIZE) अणु
+	for (size -= SF_PAGE_SIZE; size; size -= SF_PAGE_SIZE) {
 		addr += SF_PAGE_SIZE;
 		boot_data += SF_PAGE_SIZE;
-		ret = t4_ग_लिखो_flash(adap, addr, SF_PAGE_SIZE, boot_data,
+		ret = t4_write_flash(adap, addr, SF_PAGE_SIZE, boot_data,
 				     false);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
-	ret = t4_ग_लिखो_flash(adap, boot_sector, SF_PAGE_SIZE,
-			     (स्थिर u8 *)header, false);
+	ret = t4_write_flash(adap, boot_sector, SF_PAGE_SIZE,
+			     (const u8 *)header, false);
 
 out:
-	अगर (ret)
+	if (ret)
 		dev_err(adap->pdev_dev, "boot image load failed, error %d\n",
 			ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- *	t4_flash_bootcfg_addr - वापस the address of the flash
+ *	t4_flash_bootcfg_addr - return the address of the flash
  *	optionrom configuration
  *	@adapter: the adapter
  *
  *	Return the address within the flash where the OptionROM Configuration
- *	is stored, or an error अगर the device FLASH is too small to contain
+ *	is stored, or an error if the device FLASH is too small to contain
  *	a OptionROM Configuration.
  */
-अटल पूर्णांक t4_flash_bootcfg_addr(काष्ठा adapter *adapter)
-अणु
+static int t4_flash_bootcfg_addr(struct adapter *adapter)
+{
 	/**
 	 * If the device FLASH isn't large enough to hold a Firmware
-	 * Configuration File, वापस an error.
+	 * Configuration File, return an error.
 	 */
-	अगर (adapter->params.sf_size <
+	if (adapter->params.sf_size <
 	    FLASH_BOOTCFG_START + FLASH_BOOTCFG_MAX_SIZE)
-		वापस -ENOSPC;
+		return -ENOSPC;
 
-	वापस FLASH_BOOTCFG_START;
-पूर्ण
+	return FLASH_BOOTCFG_START;
+}
 
-पूर्णांक t4_load_bootcfg(काष्ठा adapter *adap, स्थिर u8 *cfg_data, अचिन्हित पूर्णांक size)
-अणु
-	अचिन्हित पूर्णांक sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
-	काष्ठा cxgb4_bootcfg_data *header;
-	अचिन्हित पूर्णांक flash_cfg_start_sec;
-	अचिन्हित पूर्णांक addr, npad;
-	पूर्णांक ret, i, n, cfg_addr;
+int t4_load_bootcfg(struct adapter *adap, const u8 *cfg_data, unsigned int size)
+{
+	unsigned int sf_sec_size = adap->params.sf_size / adap->params.sf_nsec;
+	struct cxgb4_bootcfg_data *header;
+	unsigned int flash_cfg_start_sec;
+	unsigned int addr, npad;
+	int ret, i, n, cfg_addr;
 
 	cfg_addr = t4_flash_bootcfg_addr(adap);
-	अगर (cfg_addr < 0)
-		वापस cfg_addr;
+	if (cfg_addr < 0)
+		return cfg_addr;
 
 	addr = cfg_addr;
 	flash_cfg_start_sec = addr / SF_SEC_SIZE;
 
-	अगर (size > FLASH_BOOTCFG_MAX_SIZE) अणु
+	if (size > FLASH_BOOTCFG_MAX_SIZE) {
 		dev_err(adap->pdev_dev, "bootcfg file too large, max is %u bytes\n",
 			FLASH_BOOTCFG_MAX_SIZE);
-		वापस -EFBIG;
-	पूर्ण
+		return -EFBIG;
+	}
 
-	header = (काष्ठा cxgb4_bootcfg_data *)cfg_data;
-	अगर (le16_to_cpu(header->signature) != BOOT_CFG_SIG) अणु
+	header = (struct cxgb4_bootcfg_data *)cfg_data;
+	if (le16_to_cpu(header->signature) != BOOT_CFG_SIG) {
 		dev_err(adap->pdev_dev, "Wrong bootcfg signature\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	i = DIV_ROUND_UP(FLASH_BOOTCFG_MAX_SIZE,
 			 sf_sec_size);
@@ -10763,34 +10762,34 @@ out:
 	 * If size == 0 then we're simply erasing the FLASH sectors associated
 	 * with the on-adapter OptionROM Configuration File.
 	 */
-	अगर (ret || size == 0)
-		जाओ out;
+	if (ret || size == 0)
+		goto out;
 
-	/* this will ग_लिखो to the flash up to SF_PAGE_SIZE at a समय */
-	क्रम (i = 0; i < size; i += SF_PAGE_SIZE) अणु
+	/* this will write to the flash up to SF_PAGE_SIZE at a time */
+	for (i = 0; i < size; i += SF_PAGE_SIZE) {
 		n = min_t(u32, size - i, SF_PAGE_SIZE);
 
-		ret = t4_ग_लिखो_flash(adap, addr, n, cfg_data, false);
-		अगर (ret)
-			जाओ out;
+		ret = t4_write_flash(adap, addr, n, cfg_data, false);
+		if (ret)
+			goto out;
 
 		addr += SF_PAGE_SIZE;
 		cfg_data += SF_PAGE_SIZE;
-	पूर्ण
+	}
 
 	npad = ((size + 4 - 1) & ~3) - size;
-	क्रम (i = 0; i < npad; i++) अणु
+	for (i = 0; i < npad; i++) {
 		u8 data = 0;
 
-		ret = t4_ग_लिखो_flash(adap, cfg_addr + size + i, 1, &data,
+		ret = t4_write_flash(adap, cfg_addr + size + i, 1, &data,
 				     false);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 out:
-	अगर (ret)
+	if (ret)
 		dev_err(adap->pdev_dev, "boot config data %s failed %d\n",
 			(size == 0 ? "clear" : "download"), ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}

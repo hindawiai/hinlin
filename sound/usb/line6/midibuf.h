@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Line 6 Linux USB driver
  *
  * Copyright (C) 2004-2010 Markus Grabner (grabner@icg.tugraz.at)
  */
 
-#अगर_अघोषित MIDIBUF_H
-#घोषणा MIDIBUF_H
+#ifndef MIDIBUF_H
+#define MIDIBUF_H
 
-काष्ठा midi_buffer अणु
-	अचिन्हित अक्षर *buf;
-	पूर्णांक size;
-	पूर्णांक split;
-	पूर्णांक pos_पढ़ो, pos_ग_लिखो;
-	पूर्णांक full;
-	पूर्णांक command_prev;
-पूर्ण;
+struct midi_buffer {
+	unsigned char *buf;
+	int size;
+	int split;
+	int pos_read, pos_write;
+	int full;
+	int command_prev;
+};
 
-बाह्य पूर्णांक line6_midibuf_bytes_used(काष्ठा midi_buffer *mb);
-बाह्य पूर्णांक line6_midibuf_bytes_मुक्त(काष्ठा midi_buffer *mb);
-बाह्य व्योम line6_midibuf_destroy(काष्ठा midi_buffer *mb);
-बाह्य पूर्णांक line6_midibuf_ignore(काष्ठा midi_buffer *mb, पूर्णांक length);
-बाह्य पूर्णांक line6_midibuf_init(काष्ठा midi_buffer *mb, पूर्णांक size, पूर्णांक split);
-बाह्य पूर्णांक line6_midibuf_पढ़ो(काष्ठा midi_buffer *mb, अचिन्हित अक्षर *data,
-			      पूर्णांक length);
-बाह्य व्योम line6_midibuf_reset(काष्ठा midi_buffer *mb);
-बाह्य पूर्णांक line6_midibuf_ग_लिखो(काष्ठा midi_buffer *mb, अचिन्हित अक्षर *data,
-			       पूर्णांक length);
+extern int line6_midibuf_bytes_used(struct midi_buffer *mb);
+extern int line6_midibuf_bytes_free(struct midi_buffer *mb);
+extern void line6_midibuf_destroy(struct midi_buffer *mb);
+extern int line6_midibuf_ignore(struct midi_buffer *mb, int length);
+extern int line6_midibuf_init(struct midi_buffer *mb, int size, int split);
+extern int line6_midibuf_read(struct midi_buffer *mb, unsigned char *data,
+			      int length);
+extern void line6_midibuf_reset(struct midi_buffer *mb);
+extern int line6_midibuf_write(struct midi_buffer *mb, unsigned char *data,
+			       int length);
 
-#पूर्ण_अगर
+#endif

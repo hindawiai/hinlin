@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * HID over I2C protocol implementation
  *
@@ -10,65 +9,65 @@
  *
  *  Copyright (c) 1999 Andreas Gal
  *  Copyright (c) 2000-2005 Vojtech Pavlik <vojtech@suse.cz>
- *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> क्रम Concept2, Inc
+ *  Copyright (c) 2005 Michael Haboustak <mike-@cinci.rr.com> for Concept2, Inc
  *  Copyright (c) 2007-2008 Oliver Neukum
  *  Copyright (c) 2006-2010 Jiri Kosina
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive क्रम
+ * License.  See the file COPYING in the main directory of this archive for
  * more details.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/input.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/device.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/list.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/hid.h>
-#समावेश <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/input.h>
+#include <linux/irq.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/pm.h>
+#include <linux/device.h>
+#include <linux/wait.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <linux/list.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/hid.h>
+#include <linux/mutex.h>
 
-#समावेश "../hid-ids.h"
-#समावेश "i2c-hid.h"
+#include "../hid-ids.h"
+#include "i2c-hid.h"
 
 /* quirks to control the device */
-#घोषणा I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV	BIT(0)
-#घोषणा I2C_HID_QUIRK_NO_IRQ_AFTER_RESET	BIT(1)
-#घोषणा I2C_HID_QUIRK_BOGUS_IRQ			BIT(4)
-#घोषणा I2C_HID_QUIRK_RESET_ON_RESUME		BIT(5)
-#घोषणा I2C_HID_QUIRK_BAD_INPUT_SIZE		BIT(6)
-#घोषणा I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET	BIT(7)
+#define I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV	BIT(0)
+#define I2C_HID_QUIRK_NO_IRQ_AFTER_RESET	BIT(1)
+#define I2C_HID_QUIRK_BOGUS_IRQ			BIT(4)
+#define I2C_HID_QUIRK_RESET_ON_RESUME		BIT(5)
+#define I2C_HID_QUIRK_BAD_INPUT_SIZE		BIT(6)
+#define I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET	BIT(7)
 
 
 /* flags */
-#घोषणा I2C_HID_STARTED		0
-#घोषणा I2C_HID_RESET_PENDING	1
-#घोषणा I2C_HID_READ_PENDING	2
+#define I2C_HID_STARTED		0
+#define I2C_HID_RESET_PENDING	1
+#define I2C_HID_READ_PENDING	2
 
-#घोषणा I2C_HID_PWR_ON		0x00
-#घोषणा I2C_HID_PWR_SLEEP	0x01
+#define I2C_HID_PWR_ON		0x00
+#define I2C_HID_PWR_SLEEP	0x01
 
 /* debug option */
-अटल bool debug;
+static bool debug;
 module_param(debug, bool, 0444);
 MODULE_PARM_DESC(debug, "print a lot of debug information");
 
-#घोषणा i2c_hid_dbg(ihid, fmt, arg...)					  \
-करो अणु									  \
-	अगर (debug)							  \
-		dev_prपूर्णांकk(KERN_DEBUG, &(ihid)->client->dev, fmt, ##arg); \
-पूर्ण जबतक (0)
+#define i2c_hid_dbg(ihid, fmt, arg...)					  \
+do {									  \
+	if (debug)							  \
+		dev_printk(KERN_DEBUG, &(ihid)->client->dev, fmt, ##arg); \
+} while (0)
 
-काष्ठा i2c_hid_desc अणु
+struct i2c_hid_desc {
 	__le16 wHIDDescLength;
 	__le16 bcdVersion;
 	__le16 wReportDescLength;
@@ -79,165 +78,165 @@ MODULE_PARM_DESC(debug, "print a lot of debug information");
 	__le16 wMaxOutputLength;
 	__le16 wCommandRegister;
 	__le16 wDataRegister;
-	__le16 wVenकरोrID;
+	__le16 wVendorID;
 	__le16 wProductID;
 	__le16 wVersionID;
 	__le32 reserved;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा i2c_hid_cmd अणु
-	अचिन्हित पूर्णांक रेजिस्टरIndex;
+struct i2c_hid_cmd {
+	unsigned int registerIndex;
 	__u8 opcode;
-	अचिन्हित पूर्णांक length;
-	bool रुको;
-पूर्ण;
+	unsigned int length;
+	bool wait;
+};
 
-जोड़ command अणु
+union command {
 	u8 data[0];
-	काष्ठा cmd अणु
+	struct cmd {
 		__le16 reg;
 		__u8 reportTypeID;
 		__u8 opcode;
-	पूर्ण __packed c;
-पूर्ण;
+	} __packed c;
+};
 
-#घोषणा I2C_HID_CMD(opcode_) \
+#define I2C_HID_CMD(opcode_) \
 	.opcode = opcode_, .length = 4, \
-	.रेजिस्टरIndex = दुरत्व(काष्ठा i2c_hid_desc, wCommandRegister)
+	.registerIndex = offsetof(struct i2c_hid_desc, wCommandRegister)
 
 /* fetch HID descriptor */
-अटल स्थिर काष्ठा i2c_hid_cmd hid_descr_cmd = अणु .length = 2 पूर्ण;
+static const struct i2c_hid_cmd hid_descr_cmd = { .length = 2 };
 /* fetch report descriptors */
-अटल स्थिर काष्ठा i2c_hid_cmd hid_report_descr_cmd = अणु
-		.रेजिस्टरIndex = दुरत्व(काष्ठा i2c_hid_desc,
+static const struct i2c_hid_cmd hid_report_descr_cmd = {
+		.registerIndex = offsetof(struct i2c_hid_desc,
 			wReportDescRegister),
 		.opcode = 0x00,
-		.length = 2 पूर्ण;
+		.length = 2 };
 /* commands */
-अटल स्थिर काष्ठा i2c_hid_cmd hid_reset_cmd =		अणु I2C_HID_CMD(0x01),
-							  .रुको = true पूर्ण;
-अटल स्थिर काष्ठा i2c_hid_cmd hid_get_report_cmd =	अणु I2C_HID_CMD(0x02) पूर्ण;
-अटल स्थिर काष्ठा i2c_hid_cmd hid_set_report_cmd =	अणु I2C_HID_CMD(0x03) पूर्ण;
-अटल स्थिर काष्ठा i2c_hid_cmd hid_set_घातer_cmd =	अणु I2C_HID_CMD(0x08) पूर्ण;
-अटल स्थिर काष्ठा i2c_hid_cmd hid_no_cmd =		अणु .length = 0 पूर्ण;
+static const struct i2c_hid_cmd hid_reset_cmd =		{ I2C_HID_CMD(0x01),
+							  .wait = true };
+static const struct i2c_hid_cmd hid_get_report_cmd =	{ I2C_HID_CMD(0x02) };
+static const struct i2c_hid_cmd hid_set_report_cmd =	{ I2C_HID_CMD(0x03) };
+static const struct i2c_hid_cmd hid_set_power_cmd =	{ I2C_HID_CMD(0x08) };
+static const struct i2c_hid_cmd hid_no_cmd =		{ .length = 0 };
 
 /*
  * These definitions are not used here, but are defined by the spec.
- * Keeping them here क्रम करोcumentation purposes.
+ * Keeping them here for documentation purposes.
  *
- * अटल स्थिर काष्ठा i2c_hid_cmd hid_get_idle_cmd = अणु I2C_HID_CMD(0x04) पूर्ण;
- * अटल स्थिर काष्ठा i2c_hid_cmd hid_set_idle_cmd = अणु I2C_HID_CMD(0x05) पूर्ण;
- * अटल स्थिर काष्ठा i2c_hid_cmd hid_get_protocol_cmd = अणु I2C_HID_CMD(0x06) पूर्ण;
- * अटल स्थिर काष्ठा i2c_hid_cmd hid_set_protocol_cmd = अणु I2C_HID_CMD(0x07) पूर्ण;
+ * static const struct i2c_hid_cmd hid_get_idle_cmd = { I2C_HID_CMD(0x04) };
+ * static const struct i2c_hid_cmd hid_set_idle_cmd = { I2C_HID_CMD(0x05) };
+ * static const struct i2c_hid_cmd hid_get_protocol_cmd = { I2C_HID_CMD(0x06) };
+ * static const struct i2c_hid_cmd hid_set_protocol_cmd = { I2C_HID_CMD(0x07) };
  */
 
-/* The मुख्य device काष्ठाure */
-काष्ठा i2c_hid अणु
-	काष्ठा i2c_client	*client;	/* i2c client */
-	काष्ठा hid_device	*hid;	/* poपूर्णांकer to corresponding HID dev */
-	जोड़ अणु
-		__u8 hdesc_buffer[माप(काष्ठा i2c_hid_desc)];
-		काष्ठा i2c_hid_desc hdesc;	/* the HID Descriptor */
-	पूर्ण;
+/* The main device structure */
+struct i2c_hid {
+	struct i2c_client	*client;	/* i2c client */
+	struct hid_device	*hid;	/* pointer to corresponding HID dev */
+	union {
+		__u8 hdesc_buffer[sizeof(struct i2c_hid_desc)];
+		struct i2c_hid_desc hdesc;	/* the HID Descriptor */
+	};
 	__le16			wHIDDescRegister; /* location of the i2c
-						   * रेजिस्टर of the HID
+						   * register of the HID
 						   * descriptor. */
-	अचिन्हित पूर्णांक		bufsize;	/* i2c buffer size */
+	unsigned int		bufsize;	/* i2c buffer size */
 	u8			*inbuf;		/* Input buffer */
 	u8			*rawbuf;	/* Raw Input buffer */
 	u8			*cmdbuf;	/* Command buffer */
 	u8			*argsbuf;	/* Command arguments buffer */
 
-	अचिन्हित दीर्घ		flags;		/* device flags */
-	अचिन्हित दीर्घ		quirks;		/* Various quirks */
+	unsigned long		flags;		/* device flags */
+	unsigned long		quirks;		/* Various quirks */
 
-	रुको_queue_head_t	रुको;		/* For रुकोing the पूर्णांकerrupt */
+	wait_queue_head_t	wait;		/* For waiting the interrupt */
 
 	bool			irq_wake_enabled;
-	काष्ठा mutex		reset_lock;
+	struct mutex		reset_lock;
 
-	काष्ठा i2chid_ops	*ops;
-पूर्ण;
+	struct i2chid_ops	*ops;
+};
 
-अटल स्थिर काष्ठा i2c_hid_quirks अणु
-	__u16 idVenकरोr;
+static const struct i2c_hid_quirks {
+	__u16 idVendor;
 	__u16 idProduct;
 	__u32 quirks;
-पूर्ण i2c_hid_quirks[] = अणु
-	अणु USB_VENDOR_ID_WEIDA, HID_ANY_ID,
-		I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV पूर्ण,
-	अणु I2C_VENDOR_ID_HANTICK, I2C_PRODUCT_ID_HANTICK_5288,
-		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET पूर्ण,
-	अणु I2C_VENDOR_ID_ITE, I2C_DEVICE_ID_ITE_VOYO_WINPAD_A15,
-		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET पूर्ण,
-	अणु I2C_VENDOR_ID_RAYDIUM, I2C_PRODUCT_ID_RAYDIUM_3118,
-		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET पूर्ण,
-	अणु USB_VENDOR_ID_ELAN, HID_ANY_ID,
-		 I2C_HID_QUIRK_BOGUS_IRQ पूर्ण,
-	अणु USB_VENDOR_ID_ALPS_JP, HID_ANY_ID,
-		 I2C_HID_QUIRK_RESET_ON_RESUME पूर्ण,
-	अणु I2C_VENDOR_ID_SYNAPTICS, I2C_PRODUCT_ID_SYNAPTICS_SYNA2393,
-		 I2C_HID_QUIRK_RESET_ON_RESUME पूर्ण,
-	अणु USB_VENDOR_ID_ITE, I2C_DEVICE_ID_ITE_LENOVO_LEGION_Y720,
-		I2C_HID_QUIRK_BAD_INPUT_SIZE पूर्ण,
+} i2c_hid_quirks[] = {
+	{ USB_VENDOR_ID_WEIDA, HID_ANY_ID,
+		I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV },
+	{ I2C_VENDOR_ID_HANTICK, I2C_PRODUCT_ID_HANTICK_5288,
+		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET },
+	{ I2C_VENDOR_ID_ITE, I2C_DEVICE_ID_ITE_VOYO_WINPAD_A15,
+		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET },
+	{ I2C_VENDOR_ID_RAYDIUM, I2C_PRODUCT_ID_RAYDIUM_3118,
+		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET },
+	{ USB_VENDOR_ID_ELAN, HID_ANY_ID,
+		 I2C_HID_QUIRK_BOGUS_IRQ },
+	{ USB_VENDOR_ID_ALPS_JP, HID_ANY_ID,
+		 I2C_HID_QUIRK_RESET_ON_RESUME },
+	{ I2C_VENDOR_ID_SYNAPTICS, I2C_PRODUCT_ID_SYNAPTICS_SYNA2393,
+		 I2C_HID_QUIRK_RESET_ON_RESUME },
+	{ USB_VENDOR_ID_ITE, I2C_DEVICE_ID_ITE_LENOVO_LEGION_Y720,
+		I2C_HID_QUIRK_BAD_INPUT_SIZE },
 	/*
-	 * Sending the wakeup after reset actually अवरोध ELAN touchscreen controller
+	 * Sending the wakeup after reset actually break ELAN touchscreen controller
 	 */
-	अणु USB_VENDOR_ID_ELAN, HID_ANY_ID,
-		 I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET पूर्ण,
-	अणु 0, 0 पूर्ण
-पूर्ण;
+	{ USB_VENDOR_ID_ELAN, HID_ANY_ID,
+		 I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET },
+	{ 0, 0 }
+};
 
 /*
- * i2c_hid_lookup_quirk: वापस any quirks associated with a I2C HID device
- * @idVenकरोr: the 16-bit venकरोr ID
+ * i2c_hid_lookup_quirk: return any quirks associated with a I2C HID device
+ * @idVendor: the 16-bit vendor ID
  * @idProduct: the 16-bit product ID
  *
  * Returns: a u32 quirks value.
  */
-अटल u32 i2c_hid_lookup_quirk(स्थिर u16 idVenकरोr, स्थिर u16 idProduct)
-अणु
+static u32 i2c_hid_lookup_quirk(const u16 idVendor, const u16 idProduct)
+{
 	u32 quirks = 0;
-	पूर्णांक n;
+	int n;
 
-	क्रम (n = 0; i2c_hid_quirks[n].idVenकरोr; n++)
-		अगर (i2c_hid_quirks[n].idVenकरोr == idVenकरोr &&
+	for (n = 0; i2c_hid_quirks[n].idVendor; n++)
+		if (i2c_hid_quirks[n].idVendor == idVendor &&
 		    (i2c_hid_quirks[n].idProduct == (__u16)HID_ANY_ID ||
 		     i2c_hid_quirks[n].idProduct == idProduct))
 			quirks = i2c_hid_quirks[n].quirks;
 
-	वापस quirks;
-पूर्ण
+	return quirks;
+}
 
-अटल पूर्णांक __i2c_hid_command(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_hid_cmd *command, u8 reportID,
-		u8 reportType, u8 *args, पूर्णांक args_len,
-		अचिन्हित अक्षर *buf_recv, पूर्णांक data_len)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	जोड़ command *cmd = (जोड़ command *)ihid->cmdbuf;
-	पूर्णांक ret;
-	काष्ठा i2c_msg msg[2];
-	पूर्णांक msg_num = 1;
+static int __i2c_hid_command(struct i2c_client *client,
+		const struct i2c_hid_cmd *command, u8 reportID,
+		u8 reportType, u8 *args, int args_len,
+		unsigned char *buf_recv, int data_len)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	union command *cmd = (union command *)ihid->cmdbuf;
+	int ret;
+	struct i2c_msg msg[2];
+	int msg_num = 1;
 
-	पूर्णांक length = command->length;
-	bool रुको = command->रुको;
-	अचिन्हित पूर्णांक रेजिस्टरIndex = command->रेजिस्टरIndex;
+	int length = command->length;
+	bool wait = command->wait;
+	unsigned int registerIndex = command->registerIndex;
 
-	/* special हाल क्रम hid_descr_cmd */
-	अगर (command == &hid_descr_cmd) अणु
+	/* special case for hid_descr_cmd */
+	if (command == &hid_descr_cmd) {
 		cmd->c.reg = ihid->wHIDDescRegister;
-	पूर्ण अन्यथा अणु
-		cmd->data[0] = ihid->hdesc_buffer[रेजिस्टरIndex];
-		cmd->data[1] = ihid->hdesc_buffer[रेजिस्टरIndex + 1];
-	पूर्ण
+	} else {
+		cmd->data[0] = ihid->hdesc_buffer[registerIndex];
+		cmd->data[1] = ihid->hdesc_buffer[registerIndex + 1];
+	}
 
-	अगर (length > 2) अणु
+	if (length > 2) {
 		cmd->c.opcode = command->opcode;
 		cmd->c.reportTypeID = reportID | reportType << 4;
-	पूर्ण
+	}
 
-	स_नकल(cmd->data + length, args, args_len);
+	memcpy(cmd->data + length, args, args_len);
 	length += args_len;
 
 	i2c_hid_dbg(ihid, "%s: cmd=%*ph\n", __func__, length, cmd->data);
@@ -246,7 +245,7 @@ MODULE_PARM_DESC(debug, "print a lot of debug information");
 	msg[0].flags = client->flags & I2C_M_TEN;
 	msg[0].len = length;
 	msg[0].buf = cmd->data;
-	अगर (data_len > 0) अणु
+	if (data_len > 0) {
 		msg[1].addr = client->addr;
 		msg[1].flags = client->flags & I2C_M_TEN;
 		msg[1].flags |= I2C_M_RD;
@@ -254,100 +253,100 @@ MODULE_PARM_DESC(debug, "print a lot of debug information");
 		msg[1].buf = buf_recv;
 		msg_num = 2;
 		set_bit(I2C_HID_READ_PENDING, &ihid->flags);
-	पूर्ण
+	}
 
-	अगर (रुको)
+	if (wait)
 		set_bit(I2C_HID_RESET_PENDING, &ihid->flags);
 
 	ret = i2c_transfer(client->adapter, msg, msg_num);
 
-	अगर (data_len > 0)
+	if (data_len > 0)
 		clear_bit(I2C_HID_READ_PENDING, &ihid->flags);
 
-	अगर (ret != msg_num)
-		वापस ret < 0 ? ret : -EIO;
+	if (ret != msg_num)
+		return ret < 0 ? ret : -EIO;
 
 	ret = 0;
 
-	अगर (रुको && (ihid->quirks & I2C_HID_QUIRK_NO_IRQ_AFTER_RESET)) अणु
+	if (wait && (ihid->quirks & I2C_HID_QUIRK_NO_IRQ_AFTER_RESET)) {
 		msleep(100);
-	पूर्ण अन्यथा अगर (रुको) अणु
+	} else if (wait) {
 		i2c_hid_dbg(ihid, "%s: waiting...\n", __func__);
-		अगर (!रुको_event_समयout(ihid->रुको,
+		if (!wait_event_timeout(ihid->wait,
 				!test_bit(I2C_HID_RESET_PENDING, &ihid->flags),
-				msecs_to_jअगरfies(5000)))
+				msecs_to_jiffies(5000)))
 			ret = -ENODATA;
 		i2c_hid_dbg(ihid, "%s: finished.\n", __func__);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2c_hid_command(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_hid_cmd *command,
-		अचिन्हित अक्षर *buf_recv, पूर्णांक data_len)
-अणु
-	वापस __i2c_hid_command(client, command, 0, 0, शून्य, 0,
+static int i2c_hid_command(struct i2c_client *client,
+		const struct i2c_hid_cmd *command,
+		unsigned char *buf_recv, int data_len)
+{
+	return __i2c_hid_command(client, command, 0, 0, NULL, 0,
 				buf_recv, data_len);
-पूर्ण
+}
 
-अटल पूर्णांक i2c_hid_get_report(काष्ठा i2c_client *client, u8 reportType,
-		u8 reportID, अचिन्हित अक्षर *buf_recv, पूर्णांक data_len)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
+static int i2c_hid_get_report(struct i2c_client *client, u8 reportType,
+		u8 reportID, unsigned char *buf_recv, int data_len)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
 	u8 args[3];
-	पूर्णांक ret;
-	पूर्णांक args_len = 0;
-	u16 पढ़ोRegister = le16_to_cpu(ihid->hdesc.wDataRegister);
+	int ret;
+	int args_len = 0;
+	u16 readRegister = le16_to_cpu(ihid->hdesc.wDataRegister);
 
 	i2c_hid_dbg(ihid, "%s\n", __func__);
 
-	अगर (reportID >= 0x0F) अणु
+	if (reportID >= 0x0F) {
 		args[args_len++] = reportID;
 		reportID = 0x0F;
-	पूर्ण
+	}
 
-	args[args_len++] = पढ़ोRegister & 0xFF;
-	args[args_len++] = पढ़ोRegister >> 8;
+	args[args_len++] = readRegister & 0xFF;
+	args[args_len++] = readRegister >> 8;
 
 	ret = __i2c_hid_command(client, &hid_get_report_cmd, reportID,
 		reportType, args, args_len, buf_recv, data_len);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev,
 			"failed to retrieve report from device.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * i2c_hid_set_or_send_report: क्रमward an incoming report to the device
+ * i2c_hid_set_or_send_report: forward an incoming report to the device
  * @client: the i2c_client of the device
- * @reportType: 0x03 क्रम HID_FEATURE_REPORT ; 0x02 क्रम HID_OUTPUT_REPORT
+ * @reportType: 0x03 for HID_FEATURE_REPORT ; 0x02 for HID_OUTPUT_REPORT
  * @reportID: the report ID
  * @buf: the actual data to transfer, without the report ID
  * @data_len: size of buf
  * @use_data: true: use SET_REPORT HID command, false: send plain OUTPUT report
  */
-अटल पूर्णांक i2c_hid_set_or_send_report(काष्ठा i2c_client *client, u8 reportType,
-		u8 reportID, अचिन्हित अक्षर *buf, माप_प्रकार data_len, bool use_data)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
+static int i2c_hid_set_or_send_report(struct i2c_client *client, u8 reportType,
+		u8 reportID, unsigned char *buf, size_t data_len, bool use_data)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
 	u8 *args = ihid->argsbuf;
-	स्थिर काष्ठा i2c_hid_cmd *hidcmd;
-	पूर्णांक ret;
+	const struct i2c_hid_cmd *hidcmd;
+	int ret;
 	u16 dataRegister = le16_to_cpu(ihid->hdesc.wDataRegister);
 	u16 outputRegister = le16_to_cpu(ihid->hdesc.wOutputRegister);
 	u16 maxOutputLength = le16_to_cpu(ihid->hdesc.wMaxOutputLength);
 	u16 size;
-	पूर्णांक args_len;
-	पूर्णांक index = 0;
+	int args_len;
+	int index = 0;
 
 	i2c_hid_dbg(ihid, "%s\n", __func__);
 
-	अगर (data_len > ihid->bufsize)
-		वापस -EINVAL;
+	if (data_len > ihid->bufsize)
+		return -EINVAL;
 
 	size =		2			/* size */ +
 			(reportID ? 1 : 0)	/* reportID */ +
@@ -356,594 +355,594 @@ MODULE_PARM_DESC(debug, "print a lot of debug information");
 			2			/* dataRegister */ +
 			size			/* args */;
 
-	अगर (!use_data && maxOutputLength == 0)
-		वापस -ENOSYS;
+	if (!use_data && maxOutputLength == 0)
+		return -ENOSYS;
 
-	अगर (reportID >= 0x0F) अणु
+	if (reportID >= 0x0F) {
 		args[index++] = reportID;
 		reportID = 0x0F;
-	पूर्ण
+	}
 
 	/*
-	 * use the data रेजिस्टर क्रम feature reports or अगर the device करोes not
-	 * support the output रेजिस्टर
+	 * use the data register for feature reports or if the device does not
+	 * support the output register
 	 */
-	अगर (use_data) अणु
+	if (use_data) {
 		args[index++] = dataRegister & 0xFF;
 		args[index++] = dataRegister >> 8;
 		hidcmd = &hid_set_report_cmd;
-	पूर्ण अन्यथा अणु
+	} else {
 		args[index++] = outputRegister & 0xFF;
 		args[index++] = outputRegister >> 8;
 		hidcmd = &hid_no_cmd;
-	पूर्ण
+	}
 
 	args[index++] = size & 0xFF;
 	args[index++] = size >> 8;
 
-	अगर (reportID)
+	if (reportID)
 		args[index++] = reportID;
 
-	स_नकल(&args[index], buf, data_len);
+	memcpy(&args[index], buf, data_len);
 
 	ret = __i2c_hid_command(client, hidcmd, reportID,
-		reportType, args, args_len, शून्य, 0);
-	अगर (ret) अणु
+		reportType, args, args_len, NULL, 0);
+	if (ret) {
 		dev_err(&client->dev, "failed to set a report to device.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस data_len;
-पूर्ण
+	return data_len;
+}
 
-अटल पूर्णांक i2c_hid_set_घातer(काष्ठा i2c_client *client, पूर्णांक घातer_state)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int i2c_hid_set_power(struct i2c_client *client, int power_state)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	int ret;
 
 	i2c_hid_dbg(ihid, "%s\n", __func__);
 
 	/*
-	 * Some devices require to send a command to wakeup beक्रमe घातer on.
-	 * The call will get a वापस value (EREMOTEIO) but device will be
+	 * Some devices require to send a command to wakeup before power on.
+	 * The call will get a return value (EREMOTEIO) but device will be
 	 * triggered and activated. After that, it goes like a normal device.
 	 */
-	अगर (घातer_state == I2C_HID_PWR_ON &&
-	    ihid->quirks & I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV) अणु
-		ret = i2c_hid_command(client, &hid_set_घातer_cmd, शून्य, 0);
+	if (power_state == I2C_HID_PWR_ON &&
+	    ihid->quirks & I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV) {
+		ret = i2c_hid_command(client, &hid_set_power_cmd, NULL, 0);
 
-		/* Device was alपढ़ोy activated */
-		अगर (!ret)
-			जाओ set_pwr_निकास;
-	पूर्ण
+		/* Device was already activated */
+		if (!ret)
+			goto set_pwr_exit;
+	}
 
-	ret = __i2c_hid_command(client, &hid_set_घातer_cmd, घातer_state,
-		0, शून्य, 0, शून्य, 0);
+	ret = __i2c_hid_command(client, &hid_set_power_cmd, power_state,
+		0, NULL, 0, NULL, 0);
 
-	अगर (ret)
+	if (ret)
 		dev_err(&client->dev, "failed to change power setting.\n");
 
-set_pwr_निकास:
+set_pwr_exit:
 
 	/*
-	 * The HID over I2C specअगरication states that अगर a DEVICE needs समय
+	 * The HID over I2C specification states that if a DEVICE needs time
 	 * after the PWR_ON request, it should utilise CLOCK stretching.
-	 * However, it has been observered that the Winकरोws driver provides a
+	 * However, it has been observered that the Windows driver provides a
 	 * 1ms sleep between the PWR_ON and RESET requests.
-	 * According to Goodix Winकरोws even रुकोs 60 ms after (other?)
+	 * According to Goodix Windows even waits 60 ms after (other?)
 	 * PWR_ON requests. Testing has confirmed that several devices
 	 * will not work properly without a delay after a PWR_ON request.
 	 */
-	अगर (!ret && घातer_state == I2C_HID_PWR_ON)
+	if (!ret && power_state == I2C_HID_PWR_ON)
 		msleep(60);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2c_hid_hwreset(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	पूर्णांक ret;
+static int i2c_hid_hwreset(struct i2c_client *client)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	int ret;
 
 	i2c_hid_dbg(ihid, "%s\n", __func__);
 
 	/*
-	 * This prevents sending feature reports जबतक the device is
+	 * This prevents sending feature reports while the device is
 	 * being reset. Otherwise we may lose the reset complete
-	 * पूर्णांकerrupt.
+	 * interrupt.
 	 */
 	mutex_lock(&ihid->reset_lock);
 
-	ret = i2c_hid_set_घातer(client, I2C_HID_PWR_ON);
-	अगर (ret)
-		जाओ out_unlock;
+	ret = i2c_hid_set_power(client, I2C_HID_PWR_ON);
+	if (ret)
+		goto out_unlock;
 
 	i2c_hid_dbg(ihid, "resetting...\n");
 
-	ret = i2c_hid_command(client, &hid_reset_cmd, शून्य, 0);
-	अगर (ret) अणु
+	ret = i2c_hid_command(client, &hid_reset_cmd, NULL, 0);
+	if (ret) {
 		dev_err(&client->dev, "failed to reset device.\n");
-		i2c_hid_set_घातer(client, I2C_HID_PWR_SLEEP);
-		जाओ out_unlock;
-	पूर्ण
+		i2c_hid_set_power(client, I2C_HID_PWR_SLEEP);
+		goto out_unlock;
+	}
 
 	/* At least some SIS devices need this after reset */
-	अगर (!(ihid->quirks & I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET))
-		ret = i2c_hid_set_घातer(client, I2C_HID_PWR_ON);
+	if (!(ihid->quirks & I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET))
+		ret = i2c_hid_set_power(client, I2C_HID_PWR_ON);
 
 out_unlock:
 	mutex_unlock(&ihid->reset_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम i2c_hid_get_input(काष्ठा i2c_hid *ihid)
-अणु
-	पूर्णांक ret;
+static void i2c_hid_get_input(struct i2c_hid *ihid)
+{
+	int ret;
 	u32 ret_size;
-	पूर्णांक size = le16_to_cpu(ihid->hdesc.wMaxInputLength);
+	int size = le16_to_cpu(ihid->hdesc.wMaxInputLength);
 
-	अगर (size > ihid->bufsize)
+	if (size > ihid->bufsize)
 		size = ihid->bufsize;
 
 	ret = i2c_master_recv(ihid->client, ihid->inbuf, size);
-	अगर (ret != size) अणु
-		अगर (ret < 0)
-			वापस;
+	if (ret != size) {
+		if (ret < 0)
+			return;
 
 		dev_err(&ihid->client->dev, "%s: got %d data instead of %d\n",
 			__func__, ret, size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret_size = ihid->inbuf[0] | ihid->inbuf[1] << 8;
 
-	अगर (!ret_size) अणु
+	if (!ret_size) {
 		/* host or device initiated RESET completed */
-		अगर (test_and_clear_bit(I2C_HID_RESET_PENDING, &ihid->flags))
-			wake_up(&ihid->रुको);
-		वापस;
-	पूर्ण
+		if (test_and_clear_bit(I2C_HID_RESET_PENDING, &ihid->flags))
+			wake_up(&ihid->wait);
+		return;
+	}
 
-	अगर (ihid->quirks & I2C_HID_QUIRK_BOGUS_IRQ && ret_size == 0xffff) अणु
+	if (ihid->quirks & I2C_HID_QUIRK_BOGUS_IRQ && ret_size == 0xffff) {
 		dev_warn_once(&ihid->client->dev, "%s: IRQ triggered but "
 			      "there's no data\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((ret_size > size) || (ret_size < 2)) अणु
-		अगर (ihid->quirks & I2C_HID_QUIRK_BAD_INPUT_SIZE) अणु
+	if ((ret_size > size) || (ret_size < 2)) {
+		if (ihid->quirks & I2C_HID_QUIRK_BAD_INPUT_SIZE) {
 			ihid->inbuf[0] = size & 0xff;
 			ihid->inbuf[1] = size >> 8;
 			ret_size = size;
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(&ihid->client->dev, "%s: incomplete report (%d/%d)\n",
 				__func__, size, ret_size);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	i2c_hid_dbg(ihid, "input: %*ph\n", ret_size, ihid->inbuf);
 
-	अगर (test_bit(I2C_HID_STARTED, &ihid->flags))
+	if (test_bit(I2C_HID_STARTED, &ihid->flags))
 		hid_input_report(ihid->hid, HID_INPUT_REPORT, ihid->inbuf + 2,
 				ret_size - 2, 1);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल irqवापस_t i2c_hid_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा i2c_hid *ihid = dev_id;
+static irqreturn_t i2c_hid_irq(int irq, void *dev_id)
+{
+	struct i2c_hid *ihid = dev_id;
 
-	अगर (test_bit(I2C_HID_READ_PENDING, &ihid->flags))
-		वापस IRQ_HANDLED;
+	if (test_bit(I2C_HID_READ_PENDING, &ihid->flags))
+		return IRQ_HANDLED;
 
 	i2c_hid_get_input(ihid);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक i2c_hid_get_report_length(काष्ठा hid_report *report)
-अणु
-	वापस ((report->size - 1) >> 3) + 1 +
-		report->device->report_क्रमागत[report->type].numbered + 2;
-पूर्ण
+static int i2c_hid_get_report_length(struct hid_report *report)
+{
+	return ((report->size - 1) >> 3) + 1 +
+		report->device->report_enum[report->type].numbered + 2;
+}
 
 /*
- * Traverse the supplied list of reports and find the दीर्घest
+ * Traverse the supplied list of reports and find the longest
  */
-अटल व्योम i2c_hid_find_max_report(काष्ठा hid_device *hid, अचिन्हित पूर्णांक type,
-		अचिन्हित पूर्णांक *max)
-अणु
-	काष्ठा hid_report *report;
-	अचिन्हित पूर्णांक size;
+static void i2c_hid_find_max_report(struct hid_device *hid, unsigned int type,
+		unsigned int *max)
+{
+	struct hid_report *report;
+	unsigned int size;
 
 	/* We should not rely on wMaxInputLength, as some devices may set it to
 	 * a wrong length. */
-	list_क्रम_each_entry(report, &hid->report_क्रमागत[type].report_list, list) अणु
+	list_for_each_entry(report, &hid->report_enum[type].report_list, list) {
 		size = i2c_hid_get_report_length(report);
-		अगर (*max < size)
+		if (*max < size)
 			*max = size;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम i2c_hid_मुक्त_buffers(काष्ठा i2c_hid *ihid)
-अणु
-	kमुक्त(ihid->inbuf);
-	kमुक्त(ihid->rawbuf);
-	kमुक्त(ihid->argsbuf);
-	kमुक्त(ihid->cmdbuf);
-	ihid->inbuf = शून्य;
-	ihid->rawbuf = शून्य;
-	ihid->cmdbuf = शून्य;
-	ihid->argsbuf = शून्य;
+static void i2c_hid_free_buffers(struct i2c_hid *ihid)
+{
+	kfree(ihid->inbuf);
+	kfree(ihid->rawbuf);
+	kfree(ihid->argsbuf);
+	kfree(ihid->cmdbuf);
+	ihid->inbuf = NULL;
+	ihid->rawbuf = NULL;
+	ihid->cmdbuf = NULL;
+	ihid->argsbuf = NULL;
 	ihid->bufsize = 0;
-पूर्ण
+}
 
-अटल पूर्णांक i2c_hid_alloc_buffers(काष्ठा i2c_hid *ihid, माप_प्रकार report_size)
-अणु
-	/* the worst हाल is computed from the set_report command with a
+static int i2c_hid_alloc_buffers(struct i2c_hid *ihid, size_t report_size)
+{
+	/* the worst case is computed from the set_report command with a
 	 * reportID > 15 and the maximum report length */
-	पूर्णांक args_len = माप(__u8) + /* ReportID */
-		       माप(__u8) + /* optional ReportID byte */
-		       माप(__u16) + /* data रेजिस्टर */
-		       माप(__u16) + /* size of the report */
+	int args_len = sizeof(__u8) + /* ReportID */
+		       sizeof(__u8) + /* optional ReportID byte */
+		       sizeof(__u16) + /* data register */
+		       sizeof(__u16) + /* size of the report */
 		       report_size; /* report */
 
 	ihid->inbuf = kzalloc(report_size, GFP_KERNEL);
 	ihid->rawbuf = kzalloc(report_size, GFP_KERNEL);
 	ihid->argsbuf = kzalloc(args_len, GFP_KERNEL);
-	ihid->cmdbuf = kzalloc(माप(जोड़ command) + args_len, GFP_KERNEL);
+	ihid->cmdbuf = kzalloc(sizeof(union command) + args_len, GFP_KERNEL);
 
-	अगर (!ihid->inbuf || !ihid->rawbuf || !ihid->argsbuf || !ihid->cmdbuf) अणु
-		i2c_hid_मुक्त_buffers(ihid);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!ihid->inbuf || !ihid->rawbuf || !ihid->argsbuf || !ihid->cmdbuf) {
+		i2c_hid_free_buffers(ihid);
+		return -ENOMEM;
+	}
 
 	ihid->bufsize = report_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2c_hid_get_raw_report(काष्ठा hid_device *hid,
-		अचिन्हित अक्षर report_number, __u8 *buf, माप_प्रकार count,
-		अचिन्हित अक्षर report_type)
-अणु
-	काष्ठा i2c_client *client = hid->driver_data;
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	माप_प्रकार ret_count, ask_count;
-	पूर्णांक ret;
+static int i2c_hid_get_raw_report(struct hid_device *hid,
+		unsigned char report_number, __u8 *buf, size_t count,
+		unsigned char report_type)
+{
+	struct i2c_client *client = hid->driver_data;
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	size_t ret_count, ask_count;
+	int ret;
 
-	अगर (report_type == HID_OUTPUT_REPORT)
-		वापस -EINVAL;
+	if (report_type == HID_OUTPUT_REPORT)
+		return -EINVAL;
 
 	/* +2 bytes to include the size of the reply in the query buffer */
-	ask_count = min(count + 2, (माप_प्रकार)ihid->bufsize);
+	ask_count = min(count + 2, (size_t)ihid->bufsize);
 
 	ret = i2c_hid_get_report(client,
 			report_type == HID_FEATURE_REPORT ? 0x03 : 0x01,
 			report_number, ihid->rawbuf, ask_count);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret_count = ihid->rawbuf[0] | (ihid->rawbuf[1] << 8);
 
-	अगर (ret_count <= 2)
-		वापस 0;
+	if (ret_count <= 2)
+		return 0;
 
 	ret_count = min(ret_count, ask_count);
 
 	/* The query buffer contains the size, dropping it in the reply */
 	count = min(count, ret_count - 2);
-	स_नकल(buf, ihid->rawbuf + 2, count);
+	memcpy(buf, ihid->rawbuf + 2, count);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक i2c_hid_output_raw_report(काष्ठा hid_device *hid, __u8 *buf,
-		माप_प्रकार count, अचिन्हित अक्षर report_type, bool use_data)
-अणु
-	काष्ठा i2c_client *client = hid->driver_data;
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	पूर्णांक report_id = buf[0];
-	पूर्णांक ret;
+static int i2c_hid_output_raw_report(struct hid_device *hid, __u8 *buf,
+		size_t count, unsigned char report_type, bool use_data)
+{
+	struct i2c_client *client = hid->driver_data;
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	int report_id = buf[0];
+	int ret;
 
-	अगर (report_type == HID_INPUT_REPORT)
-		वापस -EINVAL;
+	if (report_type == HID_INPUT_REPORT)
+		return -EINVAL;
 
 	mutex_lock(&ihid->reset_lock);
 
-	अगर (report_id) अणु
+	if (report_id) {
 		buf++;
 		count--;
-	पूर्ण
+	}
 
 	ret = i2c_hid_set_or_send_report(client,
 				report_type == HID_FEATURE_REPORT ? 0x03 : 0x02,
 				report_id, buf, count, use_data);
 
-	अगर (report_id && ret >= 0)
+	if (report_id && ret >= 0)
 		ret++; /* add report_id to the number of transfered bytes */
 
 	mutex_unlock(&ihid->reset_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2c_hid_output_report(काष्ठा hid_device *hid, __u8 *buf,
-		माप_प्रकार count)
-अणु
-	वापस i2c_hid_output_raw_report(hid, buf, count, HID_OUTPUT_REPORT,
+static int i2c_hid_output_report(struct hid_device *hid, __u8 *buf,
+		size_t count)
+{
+	return i2c_hid_output_raw_report(hid, buf, count, HID_OUTPUT_REPORT,
 			false);
-पूर्ण
+}
 
-अटल पूर्णांक i2c_hid_raw_request(काष्ठा hid_device *hid, अचिन्हित अक्षर reportnum,
-			       __u8 *buf, माप_प्रकार len, अचिन्हित अक्षर rtype,
-			       पूर्णांक reqtype)
-अणु
-	चयन (reqtype) अणु
-	हाल HID_REQ_GET_REPORT:
-		वापस i2c_hid_get_raw_report(hid, reportnum, buf, len, rtype);
-	हाल HID_REQ_SET_REPORT:
-		अगर (buf[0] != reportnum)
-			वापस -EINVAL;
-		वापस i2c_hid_output_raw_report(hid, buf, len, rtype, true);
-	शेष:
-		वापस -EIO;
-	पूर्ण
-पूर्ण
+static int i2c_hid_raw_request(struct hid_device *hid, unsigned char reportnum,
+			       __u8 *buf, size_t len, unsigned char rtype,
+			       int reqtype)
+{
+	switch (reqtype) {
+	case HID_REQ_GET_REPORT:
+		return i2c_hid_get_raw_report(hid, reportnum, buf, len, rtype);
+	case HID_REQ_SET_REPORT:
+		if (buf[0] != reportnum)
+			return -EINVAL;
+		return i2c_hid_output_raw_report(hid, buf, len, rtype, true);
+	default:
+		return -EIO;
+	}
+}
 
-अटल पूर्णांक i2c_hid_parse(काष्ठा hid_device *hid)
-अणु
-	काष्ठा i2c_client *client = hid->driver_data;
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	काष्ठा i2c_hid_desc *hdesc = &ihid->hdesc;
-	अचिन्हित पूर्णांक rsize;
-	अक्षर *rdesc;
-	पूर्णांक ret;
-	पूर्णांक tries = 3;
-	अक्षर *use_override;
+static int i2c_hid_parse(struct hid_device *hid)
+{
+	struct i2c_client *client = hid->driver_data;
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	struct i2c_hid_desc *hdesc = &ihid->hdesc;
+	unsigned int rsize;
+	char *rdesc;
+	int ret;
+	int tries = 3;
+	char *use_override;
 
 	i2c_hid_dbg(ihid, "entering %s\n", __func__);
 
 	rsize = le16_to_cpu(hdesc->wReportDescLength);
-	अगर (!rsize || rsize > HID_MAX_DESCRIPTOR_SIZE) अणु
+	if (!rsize || rsize > HID_MAX_DESCRIPTOR_SIZE) {
 		dbg_hid("weird size of report descriptor (%u)\n", rsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	करो अणु
+	do {
 		ret = i2c_hid_hwreset(client);
-		अगर (ret)
+		if (ret)
 			msleep(1000);
-	पूर्ण जबतक (tries-- > 0 && ret);
+	} while (tries-- > 0 && ret);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	use_override = i2c_hid_get_dmi_hid_report_desc_override(client->name,
 								&rsize);
 
-	अगर (use_override) अणु
+	if (use_override) {
 		rdesc = use_override;
 		i2c_hid_dbg(ihid, "Using a HID report descriptor override\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		rdesc = kzalloc(rsize, GFP_KERNEL);
 
-		अगर (!rdesc) अणु
+		if (!rdesc) {
 			dbg_hid("couldn't allocate rdesc memory\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		i2c_hid_dbg(ihid, "asking HID report descriptor\n");
 
 		ret = i2c_hid_command(client, &hid_report_descr_cmd,
 				      rdesc, rsize);
-		अगर (ret) अणु
+		if (ret) {
 			hid_err(hid, "reading report descriptor failed\n");
-			kमुक्त(rdesc);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			kfree(rdesc);
+			return -EIO;
+		}
+	}
 
 	i2c_hid_dbg(ihid, "Report Descriptor: %*ph\n", rsize, rdesc);
 
 	ret = hid_parse_report(hid, rdesc, rsize);
-	अगर (!use_override)
-		kमुक्त(rdesc);
+	if (!use_override)
+		kfree(rdesc);
 
-	अगर (ret) अणु
+	if (ret) {
 		dbg_hid("parsing report descriptor failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2c_hid_start(काष्ठा hid_device *hid)
-अणु
-	काष्ठा i2c_client *client = hid->driver_data;
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक bufsize = HID_MIN_BUFFER_SIZE;
+static int i2c_hid_start(struct hid_device *hid)
+{
+	struct i2c_client *client = hid->driver_data;
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	int ret;
+	unsigned int bufsize = HID_MIN_BUFFER_SIZE;
 
 	i2c_hid_find_max_report(hid, HID_INPUT_REPORT, &bufsize);
 	i2c_hid_find_max_report(hid, HID_OUTPUT_REPORT, &bufsize);
 	i2c_hid_find_max_report(hid, HID_FEATURE_REPORT, &bufsize);
 
-	अगर (bufsize > ihid->bufsize) अणु
+	if (bufsize > ihid->bufsize) {
 		disable_irq(client->irq);
-		i2c_hid_मुक्त_buffers(ihid);
+		i2c_hid_free_buffers(ihid);
 
 		ret = i2c_hid_alloc_buffers(ihid, bufsize);
 		enable_irq(client->irq);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम i2c_hid_stop(काष्ठा hid_device *hid)
-अणु
+static void i2c_hid_stop(struct hid_device *hid)
+{
 	hid->claimed = 0;
-पूर्ण
+}
 
-अटल पूर्णांक i2c_hid_खोलो(काष्ठा hid_device *hid)
-अणु
-	काष्ठा i2c_client *client = hid->driver_data;
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
+static int i2c_hid_open(struct hid_device *hid)
+{
+	struct i2c_client *client = hid->driver_data;
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
 
 	set_bit(I2C_HID_STARTED, &ihid->flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम i2c_hid_बंद(काष्ठा hid_device *hid)
-अणु
-	काष्ठा i2c_client *client = hid->driver_data;
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
+static void i2c_hid_close(struct hid_device *hid)
+{
+	struct i2c_client *client = hid->driver_data;
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
 
 	clear_bit(I2C_HID_STARTED, &ihid->flags);
-पूर्ण
+}
 
-काष्ठा hid_ll_driver i2c_hid_ll_driver = अणु
+struct hid_ll_driver i2c_hid_ll_driver = {
 	.parse = i2c_hid_parse,
 	.start = i2c_hid_start,
 	.stop = i2c_hid_stop,
-	.खोलो = i2c_hid_खोलो,
-	.बंद = i2c_hid_बंद,
+	.open = i2c_hid_open,
+	.close = i2c_hid_close,
 	.output_report = i2c_hid_output_report,
 	.raw_request = i2c_hid_raw_request,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(i2c_hid_ll_driver);
 
-अटल पूर्णांक i2c_hid_init_irq(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	अचिन्हित दीर्घ irqflags = 0;
-	पूर्णांक ret;
+static int i2c_hid_init_irq(struct i2c_client *client)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	unsigned long irqflags = 0;
+	int ret;
 
 	dev_dbg(&client->dev, "Requesting IRQ: %d\n", client->irq);
 
-	अगर (!irq_get_trigger_type(client->irq))
+	if (!irq_get_trigger_type(client->irq))
 		irqflags = IRQF_TRIGGER_LOW;
 
-	ret = request_thपढ़ोed_irq(client->irq, शून्य, i2c_hid_irq,
+	ret = request_threaded_irq(client->irq, NULL, i2c_hid_irq,
 				   irqflags | IRQF_ONESHOT, client->name, ihid);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_warn(&client->dev,
 			"Could not register for %s interrupt, irq = %d,"
 			" ret = %d\n",
 			client->name, client->irq, ret);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2c_hid_fetch_hid_descriptor(काष्ठा i2c_hid *ihid)
-अणु
-	काष्ठा i2c_client *client = ihid->client;
-	काष्ठा i2c_hid_desc *hdesc = &ihid->hdesc;
-	अचिन्हित पूर्णांक dsize;
-	पूर्णांक ret;
+static int i2c_hid_fetch_hid_descriptor(struct i2c_hid *ihid)
+{
+	struct i2c_client *client = ihid->client;
+	struct i2c_hid_desc *hdesc = &ihid->hdesc;
+	unsigned int dsize;
+	int ret;
 
 	/* i2c hid fetch using a fixed descriptor size (30 bytes) */
-	अगर (i2c_hid_get_dmi_i2c_hid_desc_override(client->name)) अणु
+	if (i2c_hid_get_dmi_i2c_hid_desc_override(client->name)) {
 		i2c_hid_dbg(ihid, "Using a HID descriptor override\n");
 		ihid->hdesc =
 			*i2c_hid_get_dmi_i2c_hid_desc_override(client->name);
-	पूर्ण अन्यथा अणु
+	} else {
 		i2c_hid_dbg(ihid, "Fetching the HID descriptor\n");
 		ret = i2c_hid_command(client, &hid_descr_cmd,
 				      ihid->hdesc_buffer,
-				      माप(काष्ठा i2c_hid_desc));
-		अगर (ret) अणु
+				      sizeof(struct i2c_hid_desc));
+		if (ret) {
 			dev_err(&client->dev, "hid_descr_cmd failed\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 
 	/* Validate the length of HID descriptor, the 4 first bytes:
 	 * bytes 0-1 -> length
 	 * bytes 2-3 -> bcdVersion (has to be 1.00) */
 	/* check bcdVersion == 1.0 */
-	अगर (le16_to_cpu(hdesc->bcdVersion) != 0x0100) अणु
+	if (le16_to_cpu(hdesc->bcdVersion) != 0x0100) {
 		dev_err(&client->dev,
 			"unexpected HID descriptor bcdVersion (0x%04hx)\n",
 			le16_to_cpu(hdesc->bcdVersion));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	/* Descriptor length should be 30 bytes as per the specअगरication */
+	/* Descriptor length should be 30 bytes as per the specification */
 	dsize = le16_to_cpu(hdesc->wHIDDescLength);
-	अगर (dsize != माप(काष्ठा i2c_hid_desc)) अणु
+	if (dsize != sizeof(struct i2c_hid_desc)) {
 		dev_err(&client->dev, "weird size of HID descriptor (%u)\n",
 			dsize);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	i2c_hid_dbg(ihid, "HID Descriptor: %*ph\n", dsize, ihid->hdesc_buffer);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2c_hid_core_घातer_up(काष्ठा i2c_hid *ihid)
-अणु
-	अगर (!ihid->ops->घातer_up)
-		वापस 0;
+static int i2c_hid_core_power_up(struct i2c_hid *ihid)
+{
+	if (!ihid->ops->power_up)
+		return 0;
 
-	वापस ihid->ops->घातer_up(ihid->ops);
-पूर्ण
+	return ihid->ops->power_up(ihid->ops);
+}
 
-अटल व्योम i2c_hid_core_घातer_करोwn(काष्ठा i2c_hid *ihid)
-अणु
-	अगर (!ihid->ops->घातer_करोwn)
-		वापस;
+static void i2c_hid_core_power_down(struct i2c_hid *ihid)
+{
+	if (!ihid->ops->power_down)
+		return;
 
-	ihid->ops->घातer_करोwn(ihid->ops);
-पूर्ण
+	ihid->ops->power_down(ihid->ops);
+}
 
-अटल व्योम i2c_hid_core_shutकरोwn_tail(काष्ठा i2c_hid *ihid)
-अणु
-	अगर (!ihid->ops->shutकरोwn_tail)
-		वापस;
+static void i2c_hid_core_shutdown_tail(struct i2c_hid *ihid)
+{
+	if (!ihid->ops->shutdown_tail)
+		return;
 
-	ihid->ops->shutकरोwn_tail(ihid->ops);
-पूर्ण
+	ihid->ops->shutdown_tail(ihid->ops);
+}
 
-पूर्णांक i2c_hid_core_probe(काष्ठा i2c_client *client, काष्ठा i2chid_ops *ops,
+int i2c_hid_core_probe(struct i2c_client *client, struct i2chid_ops *ops,
 		       u16 hid_descriptor_address)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_hid *ihid;
-	काष्ठा hid_device *hid;
+{
+	int ret;
+	struct i2c_hid *ihid;
+	struct hid_device *hid;
 
 	dbg_hid("HID probe called for i2c 0x%02x\n", client->addr);
 
-	अगर (!client->irq) अणु
+	if (!client->irq) {
 		dev_err(&client->dev,
 			"HID over i2c has not been provided an Int IRQ\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (client->irq < 0) अणु
-		अगर (client->irq != -EPROBE_DEFER)
+	if (client->irq < 0) {
+		if (client->irq != -EPROBE_DEFER)
 			dev_err(&client->dev,
 				"HID over i2c doesn't have a valid IRQ\n");
-		वापस client->irq;
-	पूर्ण
+		return client->irq;
+	}
 
-	ihid = devm_kzalloc(&client->dev, माप(*ihid), GFP_KERNEL);
-	अगर (!ihid)
-		वापस -ENOMEM;
+	ihid = devm_kzalloc(&client->dev, sizeof(*ihid), GFP_KERNEL);
+	if (!ihid)
+		return -ENOMEM;
 
 	ihid->ops = ops;
 
-	ret = i2c_hid_core_घातer_up(ihid);
-	अगर (ret)
-		वापस ret;
+	ret = i2c_hid_core_power_up(ihid);
+	if (ret)
+		return ret;
 
 	i2c_set_clientdata(client, ihid);
 
@@ -951,42 +950,42 @@ EXPORT_SYMBOL_GPL(i2c_hid_ll_driver);
 
 	ihid->wHIDDescRegister = cpu_to_le16(hid_descriptor_address);
 
-	init_रुकोqueue_head(&ihid->रुको);
+	init_waitqueue_head(&ihid->wait);
 	mutex_init(&ihid->reset_lock);
 
 	/* we need to allocate the command buffer without knowing the maximum
-	 * size of the reports. Let's use HID_MIN_BUFFER_SIZE, then we करो the
+	 * size of the reports. Let's use HID_MIN_BUFFER_SIZE, then we do the
 	 * real computation later. */
 	ret = i2c_hid_alloc_buffers(ihid, HID_MIN_BUFFER_SIZE);
-	अगर (ret < 0)
-		जाओ err_घातered;
+	if (ret < 0)
+		goto err_powered;
 
 	device_enable_async_suspend(&client->dev);
 
 	/* Make sure there is something at this address */
-	ret = i2c_smbus_पढ़ो_byte(client);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte(client);
+	if (ret < 0) {
 		dev_dbg(&client->dev, "nothing at this address: %d\n", ret);
 		ret = -ENXIO;
-		जाओ err_घातered;
-	पूर्ण
+		goto err_powered;
+	}
 
 	ret = i2c_hid_fetch_hid_descriptor(ihid);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev,
 			"Failed to fetch the HID Descriptor\n");
-		जाओ err_घातered;
-	पूर्ण
+		goto err_powered;
+	}
 
 	ret = i2c_hid_init_irq(client);
-	अगर (ret < 0)
-		जाओ err_घातered;
+	if (ret < 0)
+		goto err_powered;
 
 	hid = hid_allocate_device();
-	अगर (IS_ERR(hid)) अणु
+	if (IS_ERR(hid)) {
 		ret = PTR_ERR(hid);
-		जाओ err_irq;
-	पूर्ण
+		goto err_irq;
+	}
 
 	ihid->hid = hid;
 
@@ -995,150 +994,150 @@ EXPORT_SYMBOL_GPL(i2c_hid_ll_driver);
 	hid->dev.parent = &client->dev;
 	hid->bus = BUS_I2C;
 	hid->version = le16_to_cpu(ihid->hdesc.bcdVersion);
-	hid->venकरोr = le16_to_cpu(ihid->hdesc.wVenकरोrID);
+	hid->vendor = le16_to_cpu(ihid->hdesc.wVendorID);
 	hid->product = le16_to_cpu(ihid->hdesc.wProductID);
 
-	snम_लिखो(hid->name, माप(hid->name), "%s %04X:%04X",
-		 client->name, (u16)hid->venकरोr, (u16)hid->product);
-	strlcpy(hid->phys, dev_name(&client->dev), माप(hid->phys));
+	snprintf(hid->name, sizeof(hid->name), "%s %04X:%04X",
+		 client->name, (u16)hid->vendor, (u16)hid->product);
+	strlcpy(hid->phys, dev_name(&client->dev), sizeof(hid->phys));
 
-	ihid->quirks = i2c_hid_lookup_quirk(hid->venकरोr, hid->product);
+	ihid->quirks = i2c_hid_lookup_quirk(hid->vendor, hid->product);
 
 	ret = hid_add_device(hid);
-	अगर (ret) अणु
-		अगर (ret != -ENODEV)
+	if (ret) {
+		if (ret != -ENODEV)
 			hid_err(client, "can't add hid device: %d\n", ret);
-		जाओ err_mem_मुक्त;
-	पूर्ण
+		goto err_mem_free;
+	}
 
-	वापस 0;
+	return 0;
 
-err_mem_मुक्त:
+err_mem_free:
 	hid_destroy_device(hid);
 
 err_irq:
-	मुक्त_irq(client->irq, ihid);
+	free_irq(client->irq, ihid);
 
-err_घातered:
-	i2c_hid_core_घातer_करोwn(ihid);
-	i2c_hid_मुक्त_buffers(ihid);
-	वापस ret;
-पूर्ण
+err_powered:
+	i2c_hid_core_power_down(ihid);
+	i2c_hid_free_buffers(ihid);
+	return ret;
+}
 EXPORT_SYMBOL_GPL(i2c_hid_core_probe);
 
-पूर्णांक i2c_hid_core_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	काष्ठा hid_device *hid;
+int i2c_hid_core_remove(struct i2c_client *client)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	struct hid_device *hid;
 
 	hid = ihid->hid;
 	hid_destroy_device(hid);
 
-	मुक्त_irq(client->irq, ihid);
+	free_irq(client->irq, ihid);
 
-	अगर (ihid->bufsize)
-		i2c_hid_मुक्त_buffers(ihid);
+	if (ihid->bufsize)
+		i2c_hid_free_buffers(ihid);
 
-	i2c_hid_core_घातer_करोwn(ihid);
+	i2c_hid_core_power_down(ihid);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(i2c_hid_core_हटाओ);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(i2c_hid_core_remove);
 
-व्योम i2c_hid_core_shutकरोwn(काष्ठा i2c_client *client)
-अणु
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
+void i2c_hid_core_shutdown(struct i2c_client *client)
+{
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
 
-	i2c_hid_set_घातer(client, I2C_HID_PWR_SLEEP);
-	मुक्त_irq(client->irq, ihid);
+	i2c_hid_set_power(client, I2C_HID_PWR_SLEEP);
+	free_irq(client->irq, ihid);
 
-	i2c_hid_core_shutकरोwn_tail(ihid);
-पूर्ण
-EXPORT_SYMBOL_GPL(i2c_hid_core_shutकरोwn);
+	i2c_hid_core_shutdown_tail(ihid);
+}
+EXPORT_SYMBOL_GPL(i2c_hid_core_shutdown);
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक i2c_hid_core_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	काष्ठा hid_device *hid = ihid->hid;
-	पूर्णांक ret;
-	पूर्णांक wake_status;
+#ifdef CONFIG_PM_SLEEP
+static int i2c_hid_core_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	struct hid_device *hid = ihid->hid;
+	int ret;
+	int wake_status;
 
-	अगर (hid->driver && hid->driver->suspend) अणु
+	if (hid->driver && hid->driver->suspend) {
 		ret = hid->driver->suspend(hid, PMSG_SUSPEND);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	/* Save some घातer */
-	i2c_hid_set_घातer(client, I2C_HID_PWR_SLEEP);
+	/* Save some power */
+	i2c_hid_set_power(client, I2C_HID_PWR_SLEEP);
 
 	disable_irq(client->irq);
 
-	अगर (device_may_wakeup(&client->dev)) अणु
+	if (device_may_wakeup(&client->dev)) {
 		wake_status = enable_irq_wake(client->irq);
-		अगर (!wake_status)
+		if (!wake_status)
 			ihid->irq_wake_enabled = true;
-		अन्यथा
+		else
 			hid_warn(hid, "Failed to enable irq wake: %d\n",
 				wake_status);
-	पूर्ण अन्यथा अणु
-		i2c_hid_core_घातer_करोwn(ihid);
-	पूर्ण
+	} else {
+		i2c_hid_core_power_down(ihid);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक i2c_hid_core_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा i2c_hid *ihid = i2c_get_clientdata(client);
-	काष्ठा hid_device *hid = ihid->hid;
-	पूर्णांक wake_status;
+static int i2c_hid_core_resume(struct device *dev)
+{
+	int ret;
+	struct i2c_client *client = to_i2c_client(dev);
+	struct i2c_hid *ihid = i2c_get_clientdata(client);
+	struct hid_device *hid = ihid->hid;
+	int wake_status;
 
-	अगर (!device_may_wakeup(&client->dev)) अणु
-		i2c_hid_core_घातer_up(ihid);
-	पूर्ण अन्यथा अगर (ihid->irq_wake_enabled) अणु
+	if (!device_may_wakeup(&client->dev)) {
+		i2c_hid_core_power_up(ihid);
+	} else if (ihid->irq_wake_enabled) {
 		wake_status = disable_irq_wake(client->irq);
-		अगर (!wake_status)
+		if (!wake_status)
 			ihid->irq_wake_enabled = false;
-		अन्यथा
+		else
 			hid_warn(hid, "Failed to disable irq wake: %d\n",
 				wake_status);
-	पूर्ण
+	}
 
 	enable_irq(client->irq);
 
-	/* Instead of resetting device, simply घातers the device on. This
+	/* Instead of resetting device, simply powers the device on. This
 	 * solves "incomplete reports" on Raydium devices 2386:3118 and
-	 * 2386:4B33 and fixes various SIS touchscreens no दीर्घer sending
+	 * 2386:4B33 and fixes various SIS touchscreens no longer sending
 	 * data after a suspend/resume.
 	 *
 	 * However some ALPS touchpads generate IRQ storm without reset, so
 	 * let's still reset them here.
 	 */
-	अगर (ihid->quirks & I2C_HID_QUIRK_RESET_ON_RESUME)
+	if (ihid->quirks & I2C_HID_QUIRK_RESET_ON_RESUME)
 		ret = i2c_hid_hwreset(client);
-	अन्यथा
-		ret = i2c_hid_set_घातer(client, I2C_HID_PWR_ON);
+	else
+		ret = i2c_hid_set_power(client, I2C_HID_PWR_ON);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (hid->driver && hid->driver->reset_resume) अणु
+	if (hid->driver && hid->driver->reset_resume) {
 		ret = hid->driver->reset_resume(hid);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-स्थिर काष्ठा dev_pm_ops i2c_hid_core_pm = अणु
+const struct dev_pm_ops i2c_hid_core_pm = {
 	SET_SYSTEM_SLEEP_PM_OPS(i2c_hid_core_suspend, i2c_hid_core_resume)
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(i2c_hid_core_pm);
 
 MODULE_DESCRIPTION("HID over I2C core driver");

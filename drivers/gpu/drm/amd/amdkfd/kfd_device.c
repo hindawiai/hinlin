@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,47 +20,47 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/द्वा_खोज.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश "kfd_priv.h"
-#समावेश "kfd_device_queue_manager.h"
-#समावेश "kfd_pm4_headers_vi.h"
-#समावेश "cwsr_trap_handler.h"
-#समावेश "kfd_iommu.h"
-#समावेश "amdgpu_amdkfd.h"
-#समावेश "kfd_smi_events.h"
+#include <linux/bsearch.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include "kfd_priv.h"
+#include "kfd_device_queue_manager.h"
+#include "kfd_pm4_headers_vi.h"
+#include "cwsr_trap_handler.h"
+#include "kfd_iommu.h"
+#include "amdgpu_amdkfd.h"
+#include "kfd_smi_events.h"
 
-#घोषणा MQD_SIZE_ALIGNED 768
+#define MQD_SIZE_ALIGNED 768
 
 /*
  * kfd_locked is used to lock the kfd driver during suspend or reset
  * once locked, kfd driver will stop any further GPU execution.
- * create process (खोलो) will वापस -EAGAIN.
+ * create process (open) will return -EAGAIN.
  */
-अटल atomic_t kfd_locked = ATOMIC_INIT(0);
+static atomic_t kfd_locked = ATOMIC_INIT(0);
 
-#अगर_घोषित CONFIG_DRM_AMDGPU_CIK
-बाह्य स्थिर काष्ठा kfd2kgd_calls gfx_v7_kfd2kgd;
-#पूर्ण_अगर
-बाह्य स्थिर काष्ठा kfd2kgd_calls gfx_v8_kfd2kgd;
-बाह्य स्थिर काष्ठा kfd2kgd_calls gfx_v9_kfd2kgd;
-बाह्य स्थिर काष्ठा kfd2kgd_calls arcturus_kfd2kgd;
-बाह्य स्थिर काष्ठा kfd2kgd_calls aldebaran_kfd2kgd;
-बाह्य स्थिर काष्ठा kfd2kgd_calls gfx_v10_kfd2kgd;
-बाह्य स्थिर काष्ठा kfd2kgd_calls gfx_v10_3_kfd2kgd;
+#ifdef CONFIG_DRM_AMDGPU_CIK
+extern const struct kfd2kgd_calls gfx_v7_kfd2kgd;
+#endif
+extern const struct kfd2kgd_calls gfx_v8_kfd2kgd;
+extern const struct kfd2kgd_calls gfx_v9_kfd2kgd;
+extern const struct kfd2kgd_calls arcturus_kfd2kgd;
+extern const struct kfd2kgd_calls aldebaran_kfd2kgd;
+extern const struct kfd2kgd_calls gfx_v10_kfd2kgd;
+extern const struct kfd2kgd_calls gfx_v10_3_kfd2kgd;
 
-अटल स्थिर काष्ठा kfd2kgd_calls *kfd2kgd_funcs[] = अणु
-#अगर_घोषित KFD_SUPPORT_IOMMU_V2
-#अगर_घोषित CONFIG_DRM_AMDGPU_CIK
+static const struct kfd2kgd_calls *kfd2kgd_funcs[] = {
+#ifdef KFD_SUPPORT_IOMMU_V2
+#ifdef CONFIG_DRM_AMDGPU_CIK
 	[CHIP_KAVERI] = &gfx_v7_kfd2kgd,
-#पूर्ण_अगर
+#endif
 	[CHIP_CARRIZO] = &gfx_v8_kfd2kgd,
 	[CHIP_RAVEN] = &gfx_v9_kfd2kgd,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_DRM_AMDGPU_CIK
+#endif
+#ifdef CONFIG_DRM_AMDGPU_CIK
 	[CHIP_HAWAII] = &gfx_v7_kfd2kgd,
-#पूर्ण_अगर
+#endif
 	[CHIP_TONGA] = &gfx_v8_kfd2kgd,
 	[CHIP_FIJI] = &gfx_v8_kfd2kgd,
 	[CHIP_POLARIS10] = &gfx_v8_kfd2kgd,
@@ -81,19 +80,19 @@
 	[CHIP_NAVY_FLOUNDER] = &gfx_v10_3_kfd2kgd,
 	[CHIP_VANGOGH] = &gfx_v10_3_kfd2kgd,
 	[CHIP_DIMGREY_CAVEFISH] = &gfx_v10_3_kfd2kgd,
-पूर्ण;
+};
 
-#अगर_घोषित KFD_SUPPORT_IOMMU_V2
-अटल स्थिर काष्ठा kfd_device_info kaveri_device_info = अणु
+#ifdef KFD_SUPPORT_IOMMU_V2
+static const struct kfd_device_info kaveri_device_info = {
 	.asic_family = CHIP_KAVERI,
 	.asic_name = "kaveri",
 	.max_pasid_bits = 16,
-	/* max num of queues क्रम KV.TODO should be a dynamic value */
+	/* max num of queues for KV.TODO should be a dynamic value */
 	.max_no_of_hqd	= 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = false,
 	.needs_iommu_device = true,
@@ -101,18 +100,18 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info carrizo_device_info = अणु
+static const struct kfd_device_info carrizo_device_info = {
 	.asic_family = CHIP_CARRIZO,
 	.asic_name = "carrizo",
 	.max_pasid_bits = 16,
-	/* max num of queues क्रम CZ.TODO should be a dynamic value */
+	/* max num of queues for CZ.TODO should be a dynamic value */
 	.max_no_of_hqd	= 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = true,
@@ -120,18 +119,18 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा kfd_device_info raven_device_info = अणु
+static const struct kfd_device_info raven_device_info = {
 	.asic_family = CHIP_RAVEN,
 	.asic_name = "raven",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = true,
@@ -139,18 +138,18 @@
 	.num_sdma_engines = 1,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info hawaii_device_info = अणु
+static const struct kfd_device_info hawaii_device_info = {
 	.asic_family = CHIP_HAWAII,
 	.asic_name = "hawaii",
 	.max_pasid_bits = 16,
-	/* max num of queues क्रम KV.TODO should be a dynamic value */
+	/* max num of queues for KV.TODO should be a dynamic value */
 	.max_no_of_hqd	= 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = false,
 	.needs_iommu_device = false,
@@ -158,17 +157,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info tonga_device_info = अणु
+static const struct kfd_device_info tonga_device_info = {
 	.asic_family = CHIP_TONGA,
 	.asic_name = "tonga",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = false,
 	.needs_iommu_device = false,
@@ -176,17 +175,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info fiji_device_info = अणु
+static const struct kfd_device_info fiji_device_info = {
 	.asic_family = CHIP_FIJI,
 	.asic_name = "fiji",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -194,17 +193,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info fiji_vf_device_info = अणु
+static const struct kfd_device_info fiji_vf_device_info = {
 	.asic_family = CHIP_FIJI,
 	.asic_name = "fiji",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -212,18 +211,18 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
 
-अटल स्थिर काष्ठा kfd_device_info polaris10_device_info = अणु
+static const struct kfd_device_info polaris10_device_info = {
 	.asic_family = CHIP_POLARIS10,
 	.asic_name = "polaris10",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -231,17 +230,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info polaris10_vf_device_info = अणु
+static const struct kfd_device_info polaris10_vf_device_info = {
 	.asic_family = CHIP_POLARIS10,
 	.asic_name = "polaris10",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -249,17 +248,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info polaris11_device_info = अणु
+static const struct kfd_device_info polaris11_device_info = {
 	.asic_family = CHIP_POLARIS11,
 	.asic_name = "polaris11",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -267,17 +266,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info polaris12_device_info = अणु
+static const struct kfd_device_info polaris12_device_info = {
 	.asic_family = CHIP_POLARIS12,
 	.asic_name = "polaris12",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -285,17 +284,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info vegam_device_info = अणु
+static const struct kfd_device_info vegam_device_info = {
 	.asic_family = CHIP_VEGAM,
 	.asic_name = "vegam",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 4,
-	.ih_ring_entry_size = 4 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_cik,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 4,
+	.ih_ring_entry_size = 4 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_cik,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -303,17 +302,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info vega10_device_info = अणु
+static const struct kfd_device_info vega10_device_info = {
 	.asic_family = CHIP_VEGA10,
 	.asic_name = "vega10",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -321,17 +320,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info vega10_vf_device_info = अणु
+static const struct kfd_device_info vega10_vf_device_info = {
 	.asic_family = CHIP_VEGA10,
 	.asic_name = "vega10",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -339,17 +338,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info vega12_device_info = अणु
+static const struct kfd_device_info vega12_device_info = {
 	.asic_family = CHIP_VEGA12,
 	.asic_name = "vega12",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -357,17 +356,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info vega20_device_info = अणु
+static const struct kfd_device_info vega20_device_info = {
 	.asic_family = CHIP_VEGA20,
 	.asic_name = "vega20",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd	= 24,
-	.करोorbell_size	= 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size	= 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -375,17 +374,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info arcturus_device_info = अणु
+static const struct kfd_device_info arcturus_device_info = {
 	.asic_family = CHIP_ARCTURUS,
 	.asic_name = "arcturus",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd	= 24,
-	.करोorbell_size	= 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size	= 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -393,17 +392,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 6,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info aldebaran_device_info = अणु
+static const struct kfd_device_info aldebaran_device_info = {
 	.asic_family = CHIP_ALDEBARAN,
 	.asic_name = "aldebaran",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd	= 24,
-	.करोorbell_size	= 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size	= 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -411,17 +410,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 3,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info renoir_device_info = अणु
+static const struct kfd_device_info renoir_device_info = {
 	.asic_family = CHIP_RENOIR,
 	.asic_name = "renoir",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.supports_cwsr = true,
 	.needs_iommu_device = false,
@@ -429,17 +428,17 @@
 	.num_sdma_engines = 1,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info navi10_device_info = अणु
+static const struct kfd_device_info navi10_device_info = {
 	.asic_family = CHIP_NAVI10,
 	.asic_name = "navi10",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -447,17 +446,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info navi12_device_info = अणु
+static const struct kfd_device_info navi12_device_info = {
 	.asic_family = CHIP_NAVI12,
 	.asic_name = "navi12",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -465,17 +464,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info navi14_device_info = अणु
+static const struct kfd_device_info navi14_device_info = {
 	.asic_family = CHIP_NAVI14,
 	.asic_name = "navi14",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -483,17 +482,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info sienna_cichlid_device_info = अणु
+static const struct kfd_device_info sienna_cichlid_device_info = {
 	.asic_family = CHIP_SIENNA_CICHLID,
 	.asic_name = "sienna_cichlid",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -501,17 +500,17 @@
 	.num_sdma_engines = 4,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info navy_flounder_device_info = अणु
+static const struct kfd_device_info navy_flounder_device_info = {
 	.asic_family = CHIP_NAVY_FLOUNDER,
 	.asic_name = "navy_flounder",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -519,17 +518,17 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info vangogh_device_info = अणु
+static const struct kfd_device_info vangogh_device_info = {
 	.asic_family = CHIP_VANGOGH,
 	.asic_name = "vangogh",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -537,17 +536,17 @@
 	.num_sdma_engines = 1,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा kfd_device_info dimgrey_cavefish_device_info = अणु
+static const struct kfd_device_info dimgrey_cavefish_device_info = {
 	.asic_family = CHIP_DIMGREY_CAVEFISH,
 	.asic_name = "dimgrey_cavefish",
 	.max_pasid_bits = 16,
 	.max_no_of_hqd  = 24,
-	.करोorbell_size  = 8,
-	.ih_ring_entry_size = 8 * माप(uपूर्णांक32_t),
-	.event_पूर्णांकerrupt_class = &event_पूर्णांकerrupt_class_v9,
-	.num_of_watch_poपूर्णांकs = 4,
+	.doorbell_size  = 8,
+	.ih_ring_entry_size = 8 * sizeof(uint32_t),
+	.event_interrupt_class = &event_interrupt_class_v9,
+	.num_of_watch_points = 4,
 	.mqd_size_aligned = MQD_SIZE_ALIGNED,
 	.needs_iommu_device = false,
 	.supports_cwsr = true,
@@ -555,83 +554,83 @@
 	.num_sdma_engines = 2,
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 8,
-पूर्ण;
+};
 
 
-/* For each entry, [0] is regular and [1] is भवisation device. */
-अटल स्थिर काष्ठा kfd_device_info *kfd_supported_devices[][2] = अणु
-#अगर_घोषित KFD_SUPPORT_IOMMU_V2
-	[CHIP_KAVERI] = अणु&kaveri_device_info, शून्यपूर्ण,
-	[CHIP_CARRIZO] = अणु&carrizo_device_info, शून्यपूर्ण,
-#पूर्ण_अगर
-	[CHIP_RAVEN] = अणु&raven_device_info, शून्यपूर्ण,
-	[CHIP_HAWAII] = अणु&hawaii_device_info, शून्यपूर्ण,
-	[CHIP_TONGA] = अणु&tonga_device_info, शून्यपूर्ण,
-	[CHIP_FIJI] = अणु&fiji_device_info, &fiji_vf_device_infoपूर्ण,
-	[CHIP_POLARIS10] = अणु&polaris10_device_info, &polaris10_vf_device_infoपूर्ण,
-	[CHIP_POLARIS11] = अणु&polaris11_device_info, शून्यपूर्ण,
-	[CHIP_POLARIS12] = अणु&polaris12_device_info, शून्यपूर्ण,
-	[CHIP_VEGAM] = अणु&vegam_device_info, शून्यपूर्ण,
-	[CHIP_VEGA10] = अणु&vega10_device_info, &vega10_vf_device_infoपूर्ण,
-	[CHIP_VEGA12] = अणु&vega12_device_info, शून्यपूर्ण,
-	[CHIP_VEGA20] = अणु&vega20_device_info, शून्यपूर्ण,
-	[CHIP_RENOIR] = अणु&renoir_device_info, शून्यपूर्ण,
-	[CHIP_ARCTURUS] = अणु&arcturus_device_info, &arcturus_device_infoपूर्ण,
-	[CHIP_ALDEBARAN] = अणु&aldebaran_device_info, शून्यपूर्ण,
-	[CHIP_NAVI10] = अणु&navi10_device_info, शून्यपूर्ण,
-	[CHIP_NAVI12] = अणु&navi12_device_info, &navi12_device_infoपूर्ण,
-	[CHIP_NAVI14] = अणु&navi14_device_info, शून्यपूर्ण,
-	[CHIP_SIENNA_CICHLID] = अणु&sienna_cichlid_device_info, &sienna_cichlid_device_infoपूर्ण,
-	[CHIP_NAVY_FLOUNDER] = अणु&navy_flounder_device_info, &navy_flounder_device_infoपूर्ण,
-	[CHIP_VANGOGH] = अणु&vangogh_device_info, शून्यपूर्ण,
-	[CHIP_DIMGREY_CAVEFISH] = अणु&dimgrey_cavefish_device_info, &dimgrey_cavefish_device_infoपूर्ण,
-पूर्ण;
+/* For each entry, [0] is regular and [1] is virtualisation device. */
+static const struct kfd_device_info *kfd_supported_devices[][2] = {
+#ifdef KFD_SUPPORT_IOMMU_V2
+	[CHIP_KAVERI] = {&kaveri_device_info, NULL},
+	[CHIP_CARRIZO] = {&carrizo_device_info, NULL},
+#endif
+	[CHIP_RAVEN] = {&raven_device_info, NULL},
+	[CHIP_HAWAII] = {&hawaii_device_info, NULL},
+	[CHIP_TONGA] = {&tonga_device_info, NULL},
+	[CHIP_FIJI] = {&fiji_device_info, &fiji_vf_device_info},
+	[CHIP_POLARIS10] = {&polaris10_device_info, &polaris10_vf_device_info},
+	[CHIP_POLARIS11] = {&polaris11_device_info, NULL},
+	[CHIP_POLARIS12] = {&polaris12_device_info, NULL},
+	[CHIP_VEGAM] = {&vegam_device_info, NULL},
+	[CHIP_VEGA10] = {&vega10_device_info, &vega10_vf_device_info},
+	[CHIP_VEGA12] = {&vega12_device_info, NULL},
+	[CHIP_VEGA20] = {&vega20_device_info, NULL},
+	[CHIP_RENOIR] = {&renoir_device_info, NULL},
+	[CHIP_ARCTURUS] = {&arcturus_device_info, &arcturus_device_info},
+	[CHIP_ALDEBARAN] = {&aldebaran_device_info, NULL},
+	[CHIP_NAVI10] = {&navi10_device_info, NULL},
+	[CHIP_NAVI12] = {&navi12_device_info, &navi12_device_info},
+	[CHIP_NAVI14] = {&navi14_device_info, NULL},
+	[CHIP_SIENNA_CICHLID] = {&sienna_cichlid_device_info, &sienna_cichlid_device_info},
+	[CHIP_NAVY_FLOUNDER] = {&navy_flounder_device_info, &navy_flounder_device_info},
+	[CHIP_VANGOGH] = {&vangogh_device_info, NULL},
+	[CHIP_DIMGREY_CAVEFISH] = {&dimgrey_cavefish_device_info, &dimgrey_cavefish_device_info},
+};
 
-अटल पूर्णांक kfd_gtt_sa_init(काष्ठा kfd_dev *kfd, अचिन्हित पूर्णांक buf_size,
-				अचिन्हित पूर्णांक chunk_size);
-अटल व्योम kfd_gtt_sa_fini(काष्ठा kfd_dev *kfd);
+static int kfd_gtt_sa_init(struct kfd_dev *kfd, unsigned int buf_size,
+				unsigned int chunk_size);
+static void kfd_gtt_sa_fini(struct kfd_dev *kfd);
 
-अटल पूर्णांक kfd_resume(काष्ठा kfd_dev *kfd);
+static int kfd_resume(struct kfd_dev *kfd);
 
-काष्ठा kfd_dev *kgd2kfd_probe(काष्ठा kgd_dev *kgd,
-	काष्ठा pci_dev *pdev, अचिन्हित पूर्णांक asic_type, bool vf)
-अणु
-	काष्ठा kfd_dev *kfd;
-	स्थिर काष्ठा kfd_device_info *device_info;
-	स्थिर काष्ठा kfd2kgd_calls *f2g;
+struct kfd_dev *kgd2kfd_probe(struct kgd_dev *kgd,
+	struct pci_dev *pdev, unsigned int asic_type, bool vf)
+{
+	struct kfd_dev *kfd;
+	const struct kfd_device_info *device_info;
+	const struct kfd2kgd_calls *f2g;
 
-	अगर (asic_type >= माप(kfd_supported_devices) / (माप(व्योम *) * 2)
-		|| asic_type >= माप(kfd2kgd_funcs) / माप(व्योम *)) अणु
+	if (asic_type >= sizeof(kfd_supported_devices) / (sizeof(void *) * 2)
+		|| asic_type >= sizeof(kfd2kgd_funcs) / sizeof(void *)) {
 		dev_err(kfd_device, "asic_type %d out of range\n", asic_type);
-		वापस शून्य; /* asic_type out of range */
-	पूर्ण
+		return NULL; /* asic_type out of range */
+	}
 
 	device_info = kfd_supported_devices[asic_type][vf];
 	f2g = kfd2kgd_funcs[asic_type];
 
-	अगर (!device_info || !f2g) अणु
+	if (!device_info || !f2g) {
 		dev_err(kfd_device, "%s %s not supported in kfd\n",
 			amdgpu_asic_name[asic_type], vf ? "VF" : "");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	kfd = kzalloc(माप(*kfd), GFP_KERNEL);
-	अगर (!kfd)
-		वापस शून्य;
+	kfd = kzalloc(sizeof(*kfd), GFP_KERNEL);
+	if (!kfd)
+		return NULL;
 
 	/* Allow BIF to recode atomics to PCIe 3.0 AtomicOps.
 	 * 32 and 64-bit requests are possible and must be
 	 * supported.
 	 */
 	kfd->pci_atomic_requested = amdgpu_amdkfd_have_atomics_support(kgd);
-	अगर (device_info->needs_pci_atomics &&
-	    !kfd->pci_atomic_requested) अणु
+	if (device_info->needs_pci_atomics &&
+	    !kfd->pci_atomic_requested) {
 		dev_info(kfd_device,
 			 "skipped device %x:%x, PCI rejects atomics\n",
-			 pdev->venकरोr, pdev->device);
-		kमुक्त(kfd);
-		वापस शून्य;
-	पूर्ण
+			 pdev->vendor, pdev->device);
+		kfree(kfd);
+		return NULL;
+	}
 
 	kfd->kgd = kgd;
 	kfd->device_info = device_info;
@@ -640,58 +639,58 @@
 	kfd->kfd2kgd = f2g;
 	atomic_set(&kfd->compute_profile, 0);
 
-	mutex_init(&kfd->करोorbell_mutex);
-	स_रखो(&kfd->करोorbell_available_index, 0,
-		माप(kfd->करोorbell_available_index));
+	mutex_init(&kfd->doorbell_mutex);
+	memset(&kfd->doorbell_available_index, 0,
+		sizeof(kfd->doorbell_available_index));
 
 	atomic_set(&kfd->sram_ecc_flag, 0);
 
-	ida_init(&kfd->करोorbell_ida);
+	ida_init(&kfd->doorbell_ida);
 
-	वापस kfd;
-पूर्ण
+	return kfd;
+}
 
-अटल व्योम kfd_cwsr_init(काष्ठा kfd_dev *kfd)
-अणु
-	अगर (cwsr_enable && kfd->device_info->supports_cwsr) अणु
-		अगर (kfd->device_info->asic_family < CHIP_VEGA10) अणु
-			BUILD_BUG_ON(माप(cwsr_trap_gfx8_hex) > PAGE_SIZE);
+static void kfd_cwsr_init(struct kfd_dev *kfd)
+{
+	if (cwsr_enable && kfd->device_info->supports_cwsr) {
+		if (kfd->device_info->asic_family < CHIP_VEGA10) {
+			BUILD_BUG_ON(sizeof(cwsr_trap_gfx8_hex) > PAGE_SIZE);
 			kfd->cwsr_isa = cwsr_trap_gfx8_hex;
-			kfd->cwsr_isa_size = माप(cwsr_trap_gfx8_hex);
-		पूर्ण अन्यथा अगर (kfd->device_info->asic_family == CHIP_ARCTURUS) अणु
-			BUILD_BUG_ON(माप(cwsr_trap_arcturus_hex) > PAGE_SIZE);
+			kfd->cwsr_isa_size = sizeof(cwsr_trap_gfx8_hex);
+		} else if (kfd->device_info->asic_family == CHIP_ARCTURUS) {
+			BUILD_BUG_ON(sizeof(cwsr_trap_arcturus_hex) > PAGE_SIZE);
 			kfd->cwsr_isa = cwsr_trap_arcturus_hex;
-			kfd->cwsr_isa_size = माप(cwsr_trap_arcturus_hex);
-		पूर्ण अन्यथा अगर (kfd->device_info->asic_family == CHIP_ALDEBARAN) अणु
-			BUILD_BUG_ON(माप(cwsr_trap_aldebaran_hex) > PAGE_SIZE);
+			kfd->cwsr_isa_size = sizeof(cwsr_trap_arcturus_hex);
+		} else if (kfd->device_info->asic_family == CHIP_ALDEBARAN) {
+			BUILD_BUG_ON(sizeof(cwsr_trap_aldebaran_hex) > PAGE_SIZE);
 			kfd->cwsr_isa = cwsr_trap_aldebaran_hex;
-			kfd->cwsr_isa_size = माप(cwsr_trap_aldebaran_hex);
-		पूर्ण अन्यथा अगर (kfd->device_info->asic_family < CHIP_NAVI10) अणु
-			BUILD_BUG_ON(माप(cwsr_trap_gfx9_hex) > PAGE_SIZE);
+			kfd->cwsr_isa_size = sizeof(cwsr_trap_aldebaran_hex);
+		} else if (kfd->device_info->asic_family < CHIP_NAVI10) {
+			BUILD_BUG_ON(sizeof(cwsr_trap_gfx9_hex) > PAGE_SIZE);
 			kfd->cwsr_isa = cwsr_trap_gfx9_hex;
-			kfd->cwsr_isa_size = माप(cwsr_trap_gfx9_hex);
-		पूर्ण अन्यथा अगर (kfd->device_info->asic_family < CHIP_SIENNA_CICHLID) अणु
-			BUILD_BUG_ON(माप(cwsr_trap_nv1x_hex) > PAGE_SIZE);
+			kfd->cwsr_isa_size = sizeof(cwsr_trap_gfx9_hex);
+		} else if (kfd->device_info->asic_family < CHIP_SIENNA_CICHLID) {
+			BUILD_BUG_ON(sizeof(cwsr_trap_nv1x_hex) > PAGE_SIZE);
 			kfd->cwsr_isa = cwsr_trap_nv1x_hex;
-			kfd->cwsr_isa_size = माप(cwsr_trap_nv1x_hex);
-		पूर्ण अन्यथा अणु
-			BUILD_BUG_ON(माप(cwsr_trap_gfx10_hex) > PAGE_SIZE);
+			kfd->cwsr_isa_size = sizeof(cwsr_trap_nv1x_hex);
+		} else {
+			BUILD_BUG_ON(sizeof(cwsr_trap_gfx10_hex) > PAGE_SIZE);
 			kfd->cwsr_isa = cwsr_trap_gfx10_hex;
-			kfd->cwsr_isa_size = माप(cwsr_trap_gfx10_hex);
-		पूर्ण
+			kfd->cwsr_isa_size = sizeof(cwsr_trap_gfx10_hex);
+		}
 
 		kfd->cwsr_enabled = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक kfd_gws_init(काष्ठा kfd_dev *kfd)
-अणु
-	पूर्णांक ret = 0;
+static int kfd_gws_init(struct kfd_dev *kfd)
+{
+	int ret = 0;
 
-	अगर (kfd->dqm->sched_policy == KFD_SCHED_POLICY_NO_HWS)
-		वापस 0;
+	if (kfd->dqm->sched_policy == KFD_SCHED_POLICY_NO_HWS)
+		return 0;
 
-	अगर (hws_gws_support
+	if (hws_gws_support
 		|| (kfd->device_info->asic_family == CHIP_VEGA10
 			&& kfd->mec2_fw_version >= 0x81b3)
 		|| (kfd->device_info->asic_family >= CHIP_VEGA12
@@ -702,19 +701,19 @@
 		ret = amdgpu_amdkfd_alloc_gws(kfd->kgd,
 				amdgpu_amdkfd_get_num_gws(kfd->kgd), &kfd->gws);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम kfd_smi_init(काष्ठा kfd_dev *dev) अणु
+static void kfd_smi_init(struct kfd_dev *dev) {
 	INIT_LIST_HEAD(&dev->smi_clients);
 	spin_lock_init(&dev->smi_lock);
-पूर्ण
+}
 
-bool kgd2kfd_device_init(काष्ठा kfd_dev *kfd,
-			 काष्ठा drm_device *ddev,
-			 स्थिर काष्ठा kgd2kfd_shared_resources *gpu_resources)
-अणु
-	अचिन्हित पूर्णांक size;
+bool kgd2kfd_device_init(struct kfd_dev *kfd,
+			 struct drm_device *ddev,
+			 const struct kgd2kfd_shared_resources *gpu_resources)
+{
+	unsigned int size;
 
 	kfd->ddev = ddev;
 	kfd->mec_fw_version = amdgpu_amdkfd_get_fw_version(kfd->kgd,
@@ -725,23 +724,23 @@ bool kgd2kfd_device_init(काष्ठा kfd_dev *kfd,
 			KGD_ENGINE_SDMA1);
 	kfd->shared_resources = *gpu_resources;
 
-	kfd->vm_info.first_vmid_kfd = ffs(gpu_resources->compute_vmid_biपंचांगap)-1;
-	kfd->vm_info.last_vmid_kfd = fls(gpu_resources->compute_vmid_biपंचांगap)-1;
+	kfd->vm_info.first_vmid_kfd = ffs(gpu_resources->compute_vmid_bitmap)-1;
+	kfd->vm_info.last_vmid_kfd = fls(gpu_resources->compute_vmid_bitmap)-1;
 	kfd->vm_info.vmid_num_kfd = kfd->vm_info.last_vmid_kfd
 			- kfd->vm_info.first_vmid_kfd + 1;
 
-	/* Verअगरy module parameters regarding mapped process number*/
-	अगर ((hws_max_conc_proc < 0)
-			|| (hws_max_conc_proc > kfd->vm_info.vmid_num_kfd)) अणु
+	/* Verify module parameters regarding mapped process number*/
+	if ((hws_max_conc_proc < 0)
+			|| (hws_max_conc_proc > kfd->vm_info.vmid_num_kfd)) {
 		dev_err(kfd_device,
 			"hws_max_conc_proc %d must be between 0 and %d, use %d instead\n",
 			hws_max_conc_proc, kfd->vm_info.vmid_num_kfd,
 			kfd->vm_info.vmid_num_kfd);
 		kfd->max_proc_per_quantum = kfd->vm_info.vmid_num_kfd;
-	पूर्ण अन्यथा
+	} else
 		kfd->max_proc_per_quantum = hws_max_conc_proc;
 
-	/* calculate max size of mqds needed क्रम queues */
+	/* calculate max size of mqds needed for queues */
 	size = max_num_of_queues_per_device *
 			kfd->device_info->mqd_size_aligned;
 
@@ -749,92 +748,92 @@ bool kgd2kfd_device_init(काष्ठा kfd_dev *kfd,
 	 * calculate max size of runlist packet.
 	 * There can be only 2 packets at once
 	 */
-	size += (KFD_MAX_NUM_OF_PROCESSES * माप(काष्ठा pm4_mes_map_process) +
-		max_num_of_queues_per_device * माप(काष्ठा pm4_mes_map_queues)
-		+ माप(काष्ठा pm4_mes_runlist)) * 2;
+	size += (KFD_MAX_NUM_OF_PROCESSES * sizeof(struct pm4_mes_map_process) +
+		max_num_of_queues_per_device * sizeof(struct pm4_mes_map_queues)
+		+ sizeof(struct pm4_mes_runlist)) * 2;
 
 	/* Add size of HIQ & DIQ */
 	size += KFD_KERNEL_QUEUE_SIZE * 2;
 
-	/* add another 512KB क्रम all other allocations on gart (HPD, fences) */
+	/* add another 512KB for all other allocations on gart (HPD, fences) */
 	size += 512 * 1024;
 
-	अगर (amdgpu_amdkfd_alloc_gtt_mem(
+	if (amdgpu_amdkfd_alloc_gtt_mem(
 			kfd->kgd, size, &kfd->gtt_mem,
 			&kfd->gtt_start_gpu_addr, &kfd->gtt_start_cpu_ptr,
-			false)) अणु
+			false)) {
 		dev_err(kfd_device, "Could not allocate %d bytes\n", size);
-		जाओ alloc_gtt_mem_failure;
-	पूर्ण
+		goto alloc_gtt_mem_failure;
+	}
 
 	dev_info(kfd_device, "Allocated %d bytes on gart\n", size);
 
 	/* Initialize GTT sa with 512 byte chunk size */
-	अगर (kfd_gtt_sa_init(kfd, size, 512) != 0) अणु
+	if (kfd_gtt_sa_init(kfd, size, 512) != 0) {
 		dev_err(kfd_device, "Error initializing gtt sub-allocator\n");
-		जाओ kfd_gtt_sa_init_error;
-	पूर्ण
+		goto kfd_gtt_sa_init_error;
+	}
 
-	अगर (kfd_करोorbell_init(kfd)) अणु
+	if (kfd_doorbell_init(kfd)) {
 		dev_err(kfd_device,
 			"Error initializing doorbell aperture\n");
-		जाओ kfd_करोorbell_error;
-	पूर्ण
+		goto kfd_doorbell_error;
+	}
 
 	kfd->hive_id = amdgpu_amdkfd_get_hive_id(kfd->kgd);
 
 	kfd->noretry = amdgpu_amdkfd_get_noretry(kfd->kgd);
 
-	अगर (kfd_पूर्णांकerrupt_init(kfd)) अणु
+	if (kfd_interrupt_init(kfd)) {
 		dev_err(kfd_device, "Error initializing interrupts\n");
-		जाओ kfd_पूर्णांकerrupt_error;
-	पूर्ण
+		goto kfd_interrupt_error;
+	}
 
 	kfd->dqm = device_queue_manager_init(kfd);
-	अगर (!kfd->dqm) अणु
+	if (!kfd->dqm) {
 		dev_err(kfd_device, "Error initializing queue manager\n");
-		जाओ device_queue_manager_error;
-	पूर्ण
+		goto device_queue_manager_error;
+	}
 
 	/* If supported on this device, allocate global GWS that is shared
 	 * by all KFD processes
 	 */
-	अगर (kfd_gws_init(kfd)) अणु
+	if (kfd_gws_init(kfd)) {
 		dev_err(kfd_device, "Could not allocate %d gws\n",
 			amdgpu_amdkfd_get_num_gws(kfd->kgd));
-		जाओ gws_error;
-	पूर्ण
+		goto gws_error;
+	}
 
 	/* If CRAT is broken, won't set iommu enabled */
-	kfd_द्विगुन_confirm_iommu_support(kfd);
+	kfd_double_confirm_iommu_support(kfd);
 
-	अगर (kfd_iommu_device_init(kfd)) अणु
+	if (kfd_iommu_device_init(kfd)) {
 		dev_err(kfd_device, "Error initializing iommuv2\n");
-		जाओ device_iommu_error;
-	पूर्ण
+		goto device_iommu_error;
+	}
 
 	kfd_cwsr_init(kfd);
 
-	अगर (kfd_resume(kfd))
-		जाओ kfd_resume_error;
+	if (kfd_resume(kfd))
+		goto kfd_resume_error;
 
-	kfd->dbgmgr = शून्य;
+	kfd->dbgmgr = NULL;
 
-	अगर (kfd_topology_add_device(kfd)) अणु
+	if (kfd_topology_add_device(kfd)) {
 		dev_err(kfd_device, "Error adding device to topology\n");
-		जाओ kfd_topology_add_device_error;
-	पूर्ण
+		goto kfd_topology_add_device_error;
+	}
 
 	kfd_smi_init(kfd);
 
 	kfd->init_complete = true;
-	dev_info(kfd_device, "added device %x:%x\n", kfd->pdev->venकरोr,
+	dev_info(kfd_device, "added device %x:%x\n", kfd->pdev->vendor,
 		 kfd->pdev->device);
 
 	pr_debug("Starting kfd with the following scheduling policy %d\n",
 		kfd->dqm->sched_policy);
 
-	जाओ out;
+	goto out;
 
 kfd_topology_add_device_error:
 kfd_resume_error:
@@ -842,45 +841,45 @@ device_iommu_error:
 gws_error:
 	device_queue_manager_uninit(kfd->dqm);
 device_queue_manager_error:
-	kfd_पूर्णांकerrupt_निकास(kfd);
-kfd_पूर्णांकerrupt_error:
-	kfd_करोorbell_fini(kfd);
-kfd_करोorbell_error:
+	kfd_interrupt_exit(kfd);
+kfd_interrupt_error:
+	kfd_doorbell_fini(kfd);
+kfd_doorbell_error:
 	kfd_gtt_sa_fini(kfd);
 kfd_gtt_sa_init_error:
-	amdgpu_amdkfd_मुक्त_gtt_mem(kfd->kgd, kfd->gtt_mem);
+	amdgpu_amdkfd_free_gtt_mem(kfd->kgd, kfd->gtt_mem);
 alloc_gtt_mem_failure:
-	अगर (kfd->gws)
-		amdgpu_amdkfd_मुक्त_gws(kfd->kgd, kfd->gws);
+	if (kfd->gws)
+		amdgpu_amdkfd_free_gws(kfd->kgd, kfd->gws);
 	dev_err(kfd_device,
 		"device %x:%x NOT added due to errors\n",
-		kfd->pdev->venकरोr, kfd->pdev->device);
+		kfd->pdev->vendor, kfd->pdev->device);
 out:
-	वापस kfd->init_complete;
-पूर्ण
+	return kfd->init_complete;
+}
 
-व्योम kgd2kfd_device_निकास(काष्ठा kfd_dev *kfd)
-अणु
-	अगर (kfd->init_complete) अणु
+void kgd2kfd_device_exit(struct kfd_dev *kfd)
+{
+	if (kfd->init_complete) {
 		kgd2kfd_suspend(kfd, false);
 		device_queue_manager_uninit(kfd->dqm);
-		kfd_पूर्णांकerrupt_निकास(kfd);
-		kfd_topology_हटाओ_device(kfd);
-		kfd_करोorbell_fini(kfd);
-		ida_destroy(&kfd->करोorbell_ida);
+		kfd_interrupt_exit(kfd);
+		kfd_topology_remove_device(kfd);
+		kfd_doorbell_fini(kfd);
+		ida_destroy(&kfd->doorbell_ida);
 		kfd_gtt_sa_fini(kfd);
-		amdgpu_amdkfd_मुक्त_gtt_mem(kfd->kgd, kfd->gtt_mem);
-		अगर (kfd->gws)
-			amdgpu_amdkfd_मुक्त_gws(kfd->kgd, kfd->gws);
-	पूर्ण
+		amdgpu_amdkfd_free_gtt_mem(kfd->kgd, kfd->gtt_mem);
+		if (kfd->gws)
+			amdgpu_amdkfd_free_gws(kfd->kgd, kfd->gws);
+	}
 
-	kमुक्त(kfd);
-पूर्ण
+	kfree(kfd);
+}
 
-पूर्णांक kgd2kfd_pre_reset(काष्ठा kfd_dev *kfd)
-अणु
-	अगर (!kfd->init_complete)
-		वापस 0;
+int kgd2kfd_pre_reset(struct kfd_dev *kfd)
+{
+	if (!kfd->init_complete)
+		return 0;
 
 	kfd_smi_event_update_gpu_reset(kfd, false);
 
@@ -888,302 +887,302 @@ out:
 
 	kgd2kfd_suspend(kfd, false);
 
-	kfd_संकेत_reset_event(kfd);
-	वापस 0;
-पूर्ण
+	kfd_signal_reset_event(kfd);
+	return 0;
+}
 
 /*
- * Fix me. KFD won't be able to resume existing process क्रम now.
+ * Fix me. KFD won't be able to resume existing process for now.
  * We will keep all existing process in a evicted state and
- * रुको the process to be terminated.
+ * wait the process to be terminated.
  */
 
-पूर्णांक kgd2kfd_post_reset(काष्ठा kfd_dev *kfd)
-अणु
-	पूर्णांक ret;
+int kgd2kfd_post_reset(struct kfd_dev *kfd)
+{
+	int ret;
 
-	अगर (!kfd->init_complete)
-		वापस 0;
+	if (!kfd->init_complete)
+		return 0;
 
 	ret = kfd_resume(kfd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	atomic_dec(&kfd_locked);
 
 	atomic_set(&kfd->sram_ecc_flag, 0);
 
 	kfd_smi_event_update_gpu_reset(kfd, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool kfd_is_locked(व्योम)
-अणु
-	वापस  (atomic_पढ़ो(&kfd_locked) > 0);
-पूर्ण
+bool kfd_is_locked(void)
+{
+	return  (atomic_read(&kfd_locked) > 0);
+}
 
-व्योम kgd2kfd_suspend(काष्ठा kfd_dev *kfd, bool run_pm)
-अणु
-	अगर (!kfd->init_complete)
-		वापस;
+void kgd2kfd_suspend(struct kfd_dev *kfd, bool run_pm)
+{
+	if (!kfd->init_complete)
+		return;
 
-	/* क्रम runसमय suspend, skip locking kfd */
-	अगर (!run_pm) अणु
+	/* for runtime suspend, skip locking kfd */
+	if (!run_pm) {
 		/* For first KFD device suspend all the KFD processes */
-		अगर (atomic_inc_वापस(&kfd_locked) == 1)
+		if (atomic_inc_return(&kfd_locked) == 1)
 			kfd_suspend_all_processes();
-	पूर्ण
+	}
 
 	kfd->dqm->ops.stop(kfd->dqm);
 	kfd_iommu_suspend(kfd);
-पूर्ण
+}
 
-पूर्णांक kgd2kfd_resume(काष्ठा kfd_dev *kfd, bool run_pm)
-अणु
-	पूर्णांक ret, count;
+int kgd2kfd_resume(struct kfd_dev *kfd, bool run_pm)
+{
+	int ret, count;
 
-	अगर (!kfd->init_complete)
-		वापस 0;
+	if (!kfd->init_complete)
+		return 0;
 
 	ret = kfd_resume(kfd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* क्रम runसमय resume, skip unlocking kfd */
-	अगर (!run_pm) अणु
-		count = atomic_dec_वापस(&kfd_locked);
+	/* for runtime resume, skip unlocking kfd */
+	if (!run_pm) {
+		count = atomic_dec_return(&kfd_locked);
 		WARN_ONCE(count < 0, "KFD suspend / resume ref. error");
-		अगर (count == 0)
+		if (count == 0)
 			ret = kfd_resume_all_processes();
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक kfd_resume(काष्ठा kfd_dev *kfd)
-अणु
-	पूर्णांक err = 0;
+static int kfd_resume(struct kfd_dev *kfd)
+{
+	int err = 0;
 
 	err = kfd_iommu_resume(kfd);
-	अगर (err) अणु
+	if (err) {
 		dev_err(kfd_device,
 			"Failed to resume IOMMU for device %x:%x\n",
-			kfd->pdev->venकरोr, kfd->pdev->device);
-		वापस err;
-	पूर्ण
+			kfd->pdev->vendor, kfd->pdev->device);
+		return err;
+	}
 
 	err = kfd->dqm->ops.start(kfd->dqm);
-	अगर (err) अणु
+	if (err) {
 		dev_err(kfd_device,
 			"Error starting queue manager for device %x:%x\n",
-			kfd->pdev->venकरोr, kfd->pdev->device);
-		जाओ dqm_start_error;
-	पूर्ण
+			kfd->pdev->vendor, kfd->pdev->device);
+		goto dqm_start_error;
+	}
 
-	वापस err;
+	return err;
 
 dqm_start_error:
 	kfd_iommu_suspend(kfd);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत व्योम kfd_queue_work(काष्ठा workqueue_काष्ठा *wq,
-				  काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक cpu, new_cpu;
+static inline void kfd_queue_work(struct workqueue_struct *wq,
+				  struct work_struct *work)
+{
+	int cpu, new_cpu;
 
 	cpu = new_cpu = smp_processor_id();
-	करो अणु
+	do {
 		new_cpu = cpumask_next(new_cpu, cpu_online_mask) % nr_cpu_ids;
-		अगर (cpu_to_node(new_cpu) == numa_node_id())
-			अवरोध;
-	पूर्ण जबतक (cpu != new_cpu);
+		if (cpu_to_node(new_cpu) == numa_node_id())
+			break;
+	} while (cpu != new_cpu);
 
 	queue_work_on(new_cpu, wq, work);
-पूर्ण
+}
 
 /* This is called directly from KGD at ISR. */
-व्योम kgd2kfd_पूर्णांकerrupt(काष्ठा kfd_dev *kfd, स्थिर व्योम *ih_ring_entry)
-अणु
-	uपूर्णांक32_t patched_ihre[KFD_MAX_RING_ENTRY_SIZE];
+void kgd2kfd_interrupt(struct kfd_dev *kfd, const void *ih_ring_entry)
+{
+	uint32_t patched_ihre[KFD_MAX_RING_ENTRY_SIZE];
 	bool is_patched = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (!kfd->init_complete)
-		वापस;
+	if (!kfd->init_complete)
+		return;
 
-	अगर (kfd->device_info->ih_ring_entry_size > माप(patched_ihre)) अणु
+	if (kfd->device_info->ih_ring_entry_size > sizeof(patched_ihre)) {
 		dev_err_once(kfd_device, "Ring entry too small\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	spin_lock_irqsave(&kfd->पूर्णांकerrupt_lock, flags);
+	spin_lock_irqsave(&kfd->interrupt_lock, flags);
 
-	अगर (kfd->पूर्णांकerrupts_active
-	    && पूर्णांकerrupt_is_wanted(kfd, ih_ring_entry,
+	if (kfd->interrupts_active
+	    && interrupt_is_wanted(kfd, ih_ring_entry,
 				   patched_ihre, &is_patched)
 	    && enqueue_ih_ring_entry(kfd,
 				     is_patched ? patched_ihre : ih_ring_entry))
-		kfd_queue_work(kfd->ih_wq, &kfd->पूर्णांकerrupt_work);
+		kfd_queue_work(kfd->ih_wq, &kfd->interrupt_work);
 
-	spin_unlock_irqrestore(&kfd->पूर्णांकerrupt_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&kfd->interrupt_lock, flags);
+}
 
-पूर्णांक kgd2kfd_quiesce_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा kfd_process *p;
-	पूर्णांक r;
+int kgd2kfd_quiesce_mm(struct mm_struct *mm)
+{
+	struct kfd_process *p;
+	int r;
 
 	/* Because we are called from arbitrary context (workqueue) as opposed
-	 * to process context, kfd_process could attempt to निकास जबतक we are
+	 * to process context, kfd_process could attempt to exit while we are
 	 * running so the lookup function increments the process ref count.
 	 */
 	p = kfd_lookup_process_by_mm(mm);
-	अगर (!p)
-		वापस -ESRCH;
+	if (!p)
+		return -ESRCH;
 
-	WARN(debug_evictions, "Evicting pid %d", p->lead_thपढ़ो->pid);
+	WARN(debug_evictions, "Evicting pid %d", p->lead_thread->pid);
 	r = kfd_process_evict_queues(p);
 
 	kfd_unref_process(p);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक kgd2kfd_resume_mm(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा kfd_process *p;
-	पूर्णांक r;
+int kgd2kfd_resume_mm(struct mm_struct *mm)
+{
+	struct kfd_process *p;
+	int r;
 
 	/* Because we are called from arbitrary context (workqueue) as opposed
-	 * to process context, kfd_process could attempt to निकास जबतक we are
+	 * to process context, kfd_process could attempt to exit while we are
 	 * running so the lookup function increments the process ref count.
 	 */
 	p = kfd_lookup_process_by_mm(mm);
-	अगर (!p)
-		वापस -ESRCH;
+	if (!p)
+		return -ESRCH;
 
 	r = kfd_process_restore_queues(p);
 
 	kfd_unref_process(p);
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /** kgd2kfd_schedule_evict_and_restore_process - Schedules work queue that will
- *   prepare क्रम safe eviction of KFD BOs that beदीर्घ to the specअगरied
+ *   prepare for safe eviction of KFD BOs that belong to the specified
  *   process.
  *
- * @mm: mm_काष्ठा that identअगरies the specअगरied KFD process
+ * @mm: mm_struct that identifies the specified KFD process
  * @fence: eviction fence attached to KFD process BOs
  *
  */
-पूर्णांक kgd2kfd_schedule_evict_and_restore_process(काष्ठा mm_काष्ठा *mm,
-					       काष्ठा dma_fence *fence)
-अणु
-	काष्ठा kfd_process *p;
-	अचिन्हित दीर्घ active_समय;
-	अचिन्हित दीर्घ delay_jअगरfies = msecs_to_jअगरfies(PROCESS_ACTIVE_TIME_MS);
+int kgd2kfd_schedule_evict_and_restore_process(struct mm_struct *mm,
+					       struct dma_fence *fence)
+{
+	struct kfd_process *p;
+	unsigned long active_time;
+	unsigned long delay_jiffies = msecs_to_jiffies(PROCESS_ACTIVE_TIME_MS);
 
-	अगर (!fence)
-		वापस -EINVAL;
+	if (!fence)
+		return -EINVAL;
 
-	अगर (dma_fence_is_संकेतed(fence))
-		वापस 0;
+	if (dma_fence_is_signaled(fence))
+		return 0;
 
 	p = kfd_lookup_process_by_mm(mm);
-	अगर (!p)
-		वापस -ENODEV;
+	if (!p)
+		return -ENODEV;
 
-	अगर (fence->seqno == p->last_eviction_seqno)
-		जाओ out;
+	if (fence->seqno == p->last_eviction_seqno)
+		goto out;
 
 	p->last_eviction_seqno = fence->seqno;
 
-	/* Aव्योम KFD process starvation. Wait क्रम at least
-	 * PROCESS_ACTIVE_TIME_MS beक्रमe evicting the process again
+	/* Avoid KFD process starvation. Wait for at least
+	 * PROCESS_ACTIVE_TIME_MS before evicting the process again
 	 */
-	active_समय = get_jअगरfies_64() - p->last_restore_बारtamp;
-	अगर (delay_jअगरfies > active_समय)
-		delay_jअगरfies -= active_समय;
-	अन्यथा
-		delay_jअगरfies = 0;
+	active_time = get_jiffies_64() - p->last_restore_timestamp;
+	if (delay_jiffies > active_time)
+		delay_jiffies -= active_time;
+	else
+		delay_jiffies = 0;
 
 	/* During process initialization eviction_work.dwork is initialized
 	 * to kfd_evict_bo_worker
 	 */
 	WARN(debug_evictions, "Scheduling eviction of pid %d in %ld jiffies",
-	     p->lead_thपढ़ो->pid, delay_jअगरfies);
-	schedule_delayed_work(&p->eviction_work, delay_jअगरfies);
+	     p->lead_thread->pid, delay_jiffies);
+	schedule_delayed_work(&p->eviction_work, delay_jiffies);
 out:
 	kfd_unref_process(p);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक kfd_gtt_sa_init(काष्ठा kfd_dev *kfd, अचिन्हित पूर्णांक buf_size,
-				अचिन्हित पूर्णांक chunk_size)
-अणु
-	अचिन्हित पूर्णांक num_of_दीर्घs;
+static int kfd_gtt_sa_init(struct kfd_dev *kfd, unsigned int buf_size,
+				unsigned int chunk_size)
+{
+	unsigned int num_of_longs;
 
-	अगर (WARN_ON(buf_size < chunk_size))
-		वापस -EINVAL;
-	अगर (WARN_ON(buf_size == 0))
-		वापस -EINVAL;
-	अगर (WARN_ON(chunk_size == 0))
-		वापस -EINVAL;
+	if (WARN_ON(buf_size < chunk_size))
+		return -EINVAL;
+	if (WARN_ON(buf_size == 0))
+		return -EINVAL;
+	if (WARN_ON(chunk_size == 0))
+		return -EINVAL;
 
 	kfd->gtt_sa_chunk_size = chunk_size;
 	kfd->gtt_sa_num_of_chunks = buf_size / chunk_size;
 
-	num_of_दीर्घs = (kfd->gtt_sa_num_of_chunks + BITS_PER_LONG - 1) /
+	num_of_longs = (kfd->gtt_sa_num_of_chunks + BITS_PER_LONG - 1) /
 		BITS_PER_LONG;
 
-	kfd->gtt_sa_biपंचांगap = kसुस्मृति(num_of_दीर्घs, माप(दीर्घ), GFP_KERNEL);
+	kfd->gtt_sa_bitmap = kcalloc(num_of_longs, sizeof(long), GFP_KERNEL);
 
-	अगर (!kfd->gtt_sa_biपंचांगap)
-		वापस -ENOMEM;
+	if (!kfd->gtt_sa_bitmap)
+		return -ENOMEM;
 
 	pr_debug("gtt_sa_num_of_chunks = %d, gtt_sa_bitmap = %p\n",
-			kfd->gtt_sa_num_of_chunks, kfd->gtt_sa_biपंचांगap);
+			kfd->gtt_sa_num_of_chunks, kfd->gtt_sa_bitmap);
 
 	mutex_init(&kfd->gtt_sa_lock);
 
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 
-अटल व्योम kfd_gtt_sa_fini(काष्ठा kfd_dev *kfd)
-अणु
+static void kfd_gtt_sa_fini(struct kfd_dev *kfd)
+{
 	mutex_destroy(&kfd->gtt_sa_lock);
-	kमुक्त(kfd->gtt_sa_biपंचांगap);
-पूर्ण
+	kfree(kfd->gtt_sa_bitmap);
+}
 
-अटल अंतरभूत uपूर्णांक64_t kfd_gtt_sa_calc_gpu_addr(uपूर्णांक64_t start_addr,
-						अचिन्हित पूर्णांक bit_num,
-						अचिन्हित पूर्णांक chunk_size)
-अणु
-	वापस start_addr + bit_num * chunk_size;
-पूर्ण
+static inline uint64_t kfd_gtt_sa_calc_gpu_addr(uint64_t start_addr,
+						unsigned int bit_num,
+						unsigned int chunk_size)
+{
+	return start_addr + bit_num * chunk_size;
+}
 
-अटल अंतरभूत uपूर्णांक32_t *kfd_gtt_sa_calc_cpu_addr(व्योम *start_addr,
-						अचिन्हित पूर्णांक bit_num,
-						अचिन्हित पूर्णांक chunk_size)
-अणु
-	वापस (uपूर्णांक32_t *) ((uपूर्णांक64_t) start_addr + bit_num * chunk_size);
-पूर्ण
+static inline uint32_t *kfd_gtt_sa_calc_cpu_addr(void *start_addr,
+						unsigned int bit_num,
+						unsigned int chunk_size)
+{
+	return (uint32_t *) ((uint64_t) start_addr + bit_num * chunk_size);
+}
 
-पूर्णांक kfd_gtt_sa_allocate(काष्ठा kfd_dev *kfd, अचिन्हित पूर्णांक size,
-			काष्ठा kfd_mem_obj **mem_obj)
-अणु
-	अचिन्हित पूर्णांक found, start_search, cur_size;
+int kfd_gtt_sa_allocate(struct kfd_dev *kfd, unsigned int size,
+			struct kfd_mem_obj **mem_obj)
+{
+	unsigned int found, start_search, cur_size;
 
-	अगर (size == 0)
-		वापस -EINVAL;
+	if (size == 0)
+		return -EINVAL;
 
-	अगर (size > kfd->gtt_sa_num_of_chunks * kfd->gtt_sa_chunk_size)
-		वापस -ENOMEM;
+	if (size > kfd->gtt_sa_num_of_chunks * kfd->gtt_sa_chunk_size)
+		return -ENOMEM;
 
-	*mem_obj = kzalloc(माप(काष्ठा kfd_mem_obj), GFP_KERNEL);
-	अगर (!(*mem_obj))
-		वापस -ENOMEM;
+	*mem_obj = kzalloc(sizeof(struct kfd_mem_obj), GFP_KERNEL);
+	if (!(*mem_obj))
+		return -ENOMEM;
 
 	pr_debug("Allocated mem_obj = %p for size = %d\n", *mem_obj, size);
 
@@ -1192,16 +1191,16 @@ out:
 	mutex_lock(&kfd->gtt_sa_lock);
 
 kfd_gtt_restart_search:
-	/* Find the first chunk that is मुक्त */
-	found = find_next_zero_bit(kfd->gtt_sa_biपंचांगap,
+	/* Find the first chunk that is free */
+	found = find_next_zero_bit(kfd->gtt_sa_bitmap,
 					kfd->gtt_sa_num_of_chunks,
 					start_search);
 
 	pr_debug("Found = %d\n", found);
 
-	/* If there wasn't any मुक्त chunk, bail out */
-	अगर (found == kfd->gtt_sa_num_of_chunks)
-		जाओ kfd_gtt_no_मुक्त_chunk;
+	/* If there wasn't any free chunk, bail out */
+	if (found == kfd->gtt_sa_num_of_chunks)
+		goto kfd_gtt_no_free_chunk;
 
 	/* Update fields of mem_obj */
 	(*mem_obj)->range_start = found;
@@ -1216,136 +1215,136 @@ kfd_gtt_restart_search:
 					kfd->gtt_sa_chunk_size);
 
 	pr_debug("gpu_addr = %p, cpu_addr = %p\n",
-			(uपूर्णांक64_t *) (*mem_obj)->gpu_addr, (*mem_obj)->cpu_ptr);
+			(uint64_t *) (*mem_obj)->gpu_addr, (*mem_obj)->cpu_ptr);
 
 	/* If we need only one chunk, mark it as allocated and get out */
-	अगर (size <= kfd->gtt_sa_chunk_size) अणु
+	if (size <= kfd->gtt_sa_chunk_size) {
 		pr_debug("Single bit\n");
-		set_bit(found, kfd->gtt_sa_biपंचांगap);
-		जाओ kfd_gtt_out;
-	पूर्ण
+		set_bit(found, kfd->gtt_sa_bitmap);
+		goto kfd_gtt_out;
+	}
 
-	/* Otherwise, try to see अगर we have enough contiguous chunks */
+	/* Otherwise, try to see if we have enough contiguous chunks */
 	cur_size = size - kfd->gtt_sa_chunk_size;
-	करो अणु
+	do {
 		(*mem_obj)->range_end =
-			find_next_zero_bit(kfd->gtt_sa_biपंचांगap,
+			find_next_zero_bit(kfd->gtt_sa_bitmap,
 					kfd->gtt_sa_num_of_chunks, ++found);
 		/*
-		 * If next मुक्त chunk is not contiguous than we need to
-		 * restart our search from the last मुक्त chunk we found (which
+		 * If next free chunk is not contiguous than we need to
+		 * restart our search from the last free chunk we found (which
 		 * wasn't contiguous to the previous ones
 		 */
-		अगर ((*mem_obj)->range_end != found) अणु
+		if ((*mem_obj)->range_end != found) {
 			start_search = found;
-			जाओ kfd_gtt_restart_search;
-		पूर्ण
+			goto kfd_gtt_restart_search;
+		}
 
 		/*
 		 * If we reached end of buffer, bail out with error
 		 */
-		अगर (found == kfd->gtt_sa_num_of_chunks)
-			जाओ kfd_gtt_no_मुक्त_chunk;
+		if (found == kfd->gtt_sa_num_of_chunks)
+			goto kfd_gtt_no_free_chunk;
 
-		/* Check अगर we करोn't need another chunk */
-		अगर (cur_size <= kfd->gtt_sa_chunk_size)
+		/* Check if we don't need another chunk */
+		if (cur_size <= kfd->gtt_sa_chunk_size)
 			cur_size = 0;
-		अन्यथा
+		else
 			cur_size -= kfd->gtt_sa_chunk_size;
 
-	पूर्ण जबतक (cur_size > 0);
+	} while (cur_size > 0);
 
 	pr_debug("range_start = %d, range_end = %d\n",
 		(*mem_obj)->range_start, (*mem_obj)->range_end);
 
 	/* Mark the chunks as allocated */
-	क्रम (found = (*mem_obj)->range_start;
+	for (found = (*mem_obj)->range_start;
 		found <= (*mem_obj)->range_end;
 		found++)
-		set_bit(found, kfd->gtt_sa_biपंचांगap);
+		set_bit(found, kfd->gtt_sa_bitmap);
 
 kfd_gtt_out:
 	mutex_unlock(&kfd->gtt_sa_lock);
-	वापस 0;
+	return 0;
 
-kfd_gtt_no_मुक्त_chunk:
+kfd_gtt_no_free_chunk:
 	pr_debug("Allocation failed with mem_obj = %p\n", *mem_obj);
 	mutex_unlock(&kfd->gtt_sa_lock);
-	kमुक्त(*mem_obj);
-	वापस -ENOMEM;
-पूर्ण
+	kfree(*mem_obj);
+	return -ENOMEM;
+}
 
-पूर्णांक kfd_gtt_sa_मुक्त(काष्ठा kfd_dev *kfd, काष्ठा kfd_mem_obj *mem_obj)
-अणु
-	अचिन्हित पूर्णांक bit;
+int kfd_gtt_sa_free(struct kfd_dev *kfd, struct kfd_mem_obj *mem_obj)
+{
+	unsigned int bit;
 
-	/* Act like kमुक्त when trying to मुक्त a शून्य object */
-	अगर (!mem_obj)
-		वापस 0;
+	/* Act like kfree when trying to free a NULL object */
+	if (!mem_obj)
+		return 0;
 
 	pr_debug("Free mem_obj = %p, range_start = %d, range_end = %d\n",
 			mem_obj, mem_obj->range_start, mem_obj->range_end);
 
 	mutex_lock(&kfd->gtt_sa_lock);
 
-	/* Mark the chunks as मुक्त */
-	क्रम (bit = mem_obj->range_start;
+	/* Mark the chunks as free */
+	for (bit = mem_obj->range_start;
 		bit <= mem_obj->range_end;
 		bit++)
-		clear_bit(bit, kfd->gtt_sa_biपंचांगap);
+		clear_bit(bit, kfd->gtt_sa_bitmap);
 
 	mutex_unlock(&kfd->gtt_sa_lock);
 
-	kमुक्त(mem_obj);
-	वापस 0;
-पूर्ण
+	kfree(mem_obj);
+	return 0;
+}
 
-व्योम kgd2kfd_set_sram_ecc_flag(काष्ठा kfd_dev *kfd)
-अणु
-	अगर (kfd)
+void kgd2kfd_set_sram_ecc_flag(struct kfd_dev *kfd)
+{
+	if (kfd)
 		atomic_inc(&kfd->sram_ecc_flag);
-पूर्ण
+}
 
-व्योम kfd_inc_compute_active(काष्ठा kfd_dev *kfd)
-अणु
-	अगर (atomic_inc_वापस(&kfd->compute_profile) == 1)
+void kfd_inc_compute_active(struct kfd_dev *kfd)
+{
+	if (atomic_inc_return(&kfd->compute_profile) == 1)
 		amdgpu_amdkfd_set_compute_idle(kfd->kgd, false);
-पूर्ण
+}
 
-व्योम kfd_dec_compute_active(काष्ठा kfd_dev *kfd)
-अणु
-	पूर्णांक count = atomic_dec_वापस(&kfd->compute_profile);
+void kfd_dec_compute_active(struct kfd_dev *kfd)
+{
+	int count = atomic_dec_return(&kfd->compute_profile);
 
-	अगर (count == 0)
+	if (count == 0)
 		amdgpu_amdkfd_set_compute_idle(kfd->kgd, true);
 	WARN_ONCE(count < 0, "Compute profile ref. count error");
-पूर्ण
+}
 
-व्योम kgd2kfd_smi_event_throttle(काष्ठा kfd_dev *kfd, uपूर्णांक32_t throttle_biपंचांगask)
-अणु
-	अगर (kfd && kfd->init_complete)
-		kfd_smi_event_update_thermal_throttling(kfd, throttle_biपंचांगask);
-पूर्ण
+void kgd2kfd_smi_event_throttle(struct kfd_dev *kfd, uint32_t throttle_bitmask)
+{
+	if (kfd && kfd->init_complete)
+		kfd_smi_event_update_thermal_throttling(kfd, throttle_bitmask);
+}
 
-#अगर defined(CONFIG_DEBUG_FS)
+#if defined(CONFIG_DEBUG_FS)
 
 /* This function will send a package to HIQ to hang the HWS
  * which will trigger a GPU reset and bring the HWS back to normal state
  */
-पूर्णांक kfd_debugfs_hang_hws(काष्ठा kfd_dev *dev)
-अणु
-	पूर्णांक r = 0;
+int kfd_debugfs_hang_hws(struct kfd_dev *dev)
+{
+	int r = 0;
 
-	अगर (dev->dqm->sched_policy != KFD_SCHED_POLICY_HWS) अणु
+	if (dev->dqm->sched_policy != KFD_SCHED_POLICY_HWS) {
 		pr_err("HWS is not enabled");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	r = pm_debugfs_hang_hws(&dev->dqm->packets);
-	अगर (!r)
+	if (!r)
 		r = dqm_debugfs_execute_queues(dev->dqm);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-#पूर्ण_अगर
+#endif

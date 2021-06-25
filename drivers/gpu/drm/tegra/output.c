@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_of.h>
-#समावेश <drm/drm_panel.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_of.h>
+#include <drm/drm_panel.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "drm.h"
-#समावेश "dc.h"
+#include "drm.h"
+#include "dc.h"
 
-#समावेश <media/cec-notअगरier.h>
+#include <media/cec-notifier.h>
 
-पूर्णांक tegra_output_connector_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
-	काष्ठा edid *edid = शून्य;
-	पूर्णांक err = 0;
+int tegra_output_connector_get_modes(struct drm_connector *connector)
+{
+	struct tegra_output *output = connector_to_output(connector);
+	struct edid *edid = NULL;
+	int err = 0;
 
 	/*
 	 * If the panel provides one or more modes, use them exclusively and
 	 * ignore any other means of obtaining a mode.
 	 */
-	अगर (output->panel) अणु
+	if (output->panel) {
 		err = drm_panel_get_modes(output->panel, connector);
-		अगर (err > 0)
-			वापस err;
-	पूर्ण
+		if (err > 0)
+			return err;
+	}
 
-	अगर (output->edid)
-		edid = kmemdup(output->edid, माप(*edid), GFP_KERNEL);
-	अन्यथा अगर (output->ddc)
+	if (output->edid)
+		edid = kmemdup(output->edid, sizeof(*edid), GFP_KERNEL);
+	else if (output->ddc)
 		edid = drm_get_edid(connector, output->ddc);
 
-	cec_notअगरier_set_phys_addr_from_edid(output->cec, edid);
+	cec_notifier_set_phys_addr_from_edid(output->cec, edid);
 	drm_connector_update_edid_property(connector, edid);
 
-	अगर (edid) अणु
+	if (edid) {
 		err = drm_add_edid_modes(connector, edid);
-		kमुक्त(edid);
-	पूर्ण
+		kfree(edid);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-क्रमागत drm_connector_status
-tegra_output_connector_detect(काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
-	क्रमागत drm_connector_status status = connector_status_unknown;
+enum drm_connector_status
+tegra_output_connector_detect(struct drm_connector *connector, bool force)
+{
+	struct tegra_output *output = connector_to_output(connector);
+	enum drm_connector_status status = connector_status_unknown;
 
-	अगर (output->hpd_gpio) अणु
-		अगर (gpiod_get_value(output->hpd_gpio) == 0)
+	if (output->hpd_gpio) {
+		if (gpiod_get_value(output->hpd_gpio) == 0)
 			status = connector_status_disconnected;
-		अन्यथा
+		else
 			status = connector_status_connected;
-	पूर्ण अन्यथा अणु
-		अगर (!output->panel)
+	} else {
+		if (!output->panel)
 			status = connector_status_disconnected;
-		अन्यथा
+		else
 			status = connector_status_connected;
-	पूर्ण
+	}
 
-	अगर (status != connector_status_connected)
-		cec_notअगरier_phys_addr_invalidate(output->cec);
+	if (status != connector_status_connected)
+		cec_notifier_phys_addr_invalidate(output->cec);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम tegra_output_connector_destroy(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा tegra_output *output = connector_to_output(connector);
+void tegra_output_connector_destroy(struct drm_connector *connector)
+{
+	struct tegra_output *output = connector_to_output(connector);
 
-	अगर (output->cec)
-		cec_notअगरier_conn_unरेजिस्टर(output->cec);
+	if (output->cec)
+		cec_notifier_conn_unregister(output->cec);
 
-	drm_connector_unरेजिस्टर(connector);
+	drm_connector_unregister(connector);
 	drm_connector_cleanup(connector);
-पूर्ण
+}
 
-अटल irqवापस_t hpd_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा tegra_output *output = data;
+static irqreturn_t hpd_irq(int irq, void *data)
+{
+	struct tegra_output *output = data;
 
-	अगर (output->connector.dev)
+	if (output->connector.dev)
 		drm_helper_hpd_irq_event(output->connector.dev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-पूर्णांक tegra_output_probe(काष्ठा tegra_output *output)
-अणु
-	काष्ठा device_node *ddc, *panel;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err, size;
+int tegra_output_probe(struct tegra_output *output)
+{
+	struct device_node *ddc, *panel;
+	unsigned long flags;
+	int err, size;
 
-	अगर (!output->of_node)
+	if (!output->of_node)
 		output->of_node = output->dev->of_node;
 
 	err = drm_of_find_panel_or_bridge(output->of_node, -1, -1,
 					  &output->panel, &output->bridge);
-	अगर (err && err != -ENODEV)
-		वापस err;
+	if (err && err != -ENODEV)
+		return err;
 
 	panel = of_parse_phandle(output->of_node, "nvidia,panel", 0);
-	अगर (panel) अणु
+	if (panel) {
 		/*
 		 * Don't mix nvidia,panel phandle with the graph in a
 		 * device-tree.
@@ -117,150 +116,150 @@ tegra_output_connector_detect(काष्ठा drm_connector *connector, bool 
 		output->panel = of_drm_find_panel(panel);
 		of_node_put(panel);
 
-		अगर (IS_ERR(output->panel))
-			वापस PTR_ERR(output->panel);
-	पूर्ण
+		if (IS_ERR(output->panel))
+			return PTR_ERR(output->panel);
+	}
 
 	output->edid = of_get_property(output->of_node, "nvidia,edid", &size);
 
 	ddc = of_parse_phandle(output->of_node, "nvidia,ddc-i2c-bus", 0);
-	अगर (ddc) अणु
+	if (ddc) {
 		output->ddc = of_get_i2c_adapter_by_node(ddc);
 		of_node_put(ddc);
 
-		अगर (!output->ddc) अणु
+		if (!output->ddc) {
 			err = -EPROBE_DEFER;
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	output->hpd_gpio = devm_gpiod_get_from_of_node(output->dev,
 						       output->of_node,
 						       "nvidia,hpd-gpio", 0,
 						       GPIOD_IN,
 						       "HDMI hotplug detect");
-	अगर (IS_ERR(output->hpd_gpio)) अणु
-		अगर (PTR_ERR(output->hpd_gpio) != -ENOENT)
-			वापस PTR_ERR(output->hpd_gpio);
+	if (IS_ERR(output->hpd_gpio)) {
+		if (PTR_ERR(output->hpd_gpio) != -ENOENT)
+			return PTR_ERR(output->hpd_gpio);
 
-		output->hpd_gpio = शून्य;
-	पूर्ण
+		output->hpd_gpio = NULL;
+	}
 
-	अगर (output->hpd_gpio) अणु
+	if (output->hpd_gpio) {
 		err = gpiod_to_irq(output->hpd_gpio);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(output->dev, "gpiod_to_irq(): %d\n", err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		output->hpd_irq = err;
 
 		flags = IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
 			IRQF_ONESHOT;
 
-		err = request_thपढ़ोed_irq(output->hpd_irq, शून्य, hpd_irq,
+		err = request_threaded_irq(output->hpd_irq, NULL, hpd_irq,
 					   flags, "hpd", output);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(output->dev, "failed to request IRQ#%u: %d\n",
 				output->hpd_irq, err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		output->connector.polled = DRM_CONNECTOR_POLL_HPD;
 
 		/*
-		 * Disable the पूर्णांकerrupt until the connector has been
-		 * initialized to aव्योम a race in the hotplug पूर्णांकerrupt
+		 * Disable the interrupt until the connector has been
+		 * initialized to avoid a race in the hotplug interrupt
 		 * handler.
 		 */
 		disable_irq(output->hpd_irq);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम tegra_output_हटाओ(काष्ठा tegra_output *output)
-अणु
-	अगर (output->hpd_gpio)
-		मुक्त_irq(output->hpd_irq, output);
+void tegra_output_remove(struct tegra_output *output)
+{
+	if (output->hpd_gpio)
+		free_irq(output->hpd_irq, output);
 
-	अगर (output->ddc)
+	if (output->ddc)
 		i2c_put_adapter(output->ddc);
-पूर्ण
+}
 
-पूर्णांक tegra_output_init(काष्ठा drm_device *drm, काष्ठा tegra_output *output)
-अणु
-	पूर्णांक connector_type;
+int tegra_output_init(struct drm_device *drm, struct tegra_output *output)
+{
+	int connector_type;
 
 	/*
-	 * The connector is now रेजिस्टरed and पढ़ोy to receive hotplug events
-	 * so the hotplug पूर्णांकerrupt can be enabled.
+	 * The connector is now registered and ready to receive hotplug events
+	 * so the hotplug interrupt can be enabled.
 	 */
-	अगर (output->hpd_gpio)
+	if (output->hpd_gpio)
 		enable_irq(output->hpd_irq);
 
 	connector_type = output->connector.connector_type;
 	/*
-	 * Create a CEC notअगरier क्रम HDMI connector.
+	 * Create a CEC notifier for HDMI connector.
 	 */
-	अगर (connector_type == DRM_MODE_CONNECTOR_HDMIA ||
-	    connector_type == DRM_MODE_CONNECTOR_HDMIB) अणु
-		काष्ठा cec_connector_info conn_info;
+	if (connector_type == DRM_MODE_CONNECTOR_HDMIA ||
+	    connector_type == DRM_MODE_CONNECTOR_HDMIB) {
+		struct cec_connector_info conn_info;
 
 		cec_fill_conn_info_from_drm(&conn_info, &output->connector);
-		output->cec = cec_notअगरier_conn_रेजिस्टर(output->dev, शून्य,
+		output->cec = cec_notifier_conn_register(output->dev, NULL,
 							 &conn_info);
-		अगर (!output->cec)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!output->cec)
+			return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम tegra_output_निकास(काष्ठा tegra_output *output)
-अणु
+void tegra_output_exit(struct tegra_output *output)
+{
 	/*
-	 * The connector is going away, so the पूर्णांकerrupt must be disabled to
-	 * prevent the hotplug पूर्णांकerrupt handler from potentially crashing.
+	 * The connector is going away, so the interrupt must be disabled to
+	 * prevent the hotplug interrupt handler from potentially crashing.
 	 */
-	अगर (output->hpd_gpio)
+	if (output->hpd_gpio)
 		disable_irq(output->hpd_irq);
-पूर्ण
+}
 
-व्योम tegra_output_find_possible_crtcs(काष्ठा tegra_output *output,
-				      काष्ठा drm_device *drm)
-अणु
-	काष्ठा device *dev = output->dev;
-	काष्ठा drm_crtc *crtc;
-	अचिन्हित पूर्णांक mask = 0;
+void tegra_output_find_possible_crtcs(struct tegra_output *output,
+				      struct drm_device *drm)
+{
+	struct device *dev = output->dev;
+	struct drm_crtc *crtc;
+	unsigned int mask = 0;
 
-	drm_क्रम_each_crtc(crtc, drm) अणु
-		काष्ठा tegra_dc *dc = to_tegra_dc(crtc);
+	drm_for_each_crtc(crtc, drm) {
+		struct tegra_dc *dc = to_tegra_dc(crtc);
 
-		अगर (tegra_dc_has_output(dc, dev))
+		if (tegra_dc_has_output(dc, dev))
 			mask |= drm_crtc_mask(crtc);
-	पूर्ण
+	}
 
-	अगर (mask == 0) अणु
+	if (mask == 0) {
 		dev_warn(dev, "missing output definition for heads in DT\n");
 		mask = 0x3;
-	पूर्ण
+	}
 
 	output->encoder.possible_crtcs = mask;
-पूर्ण
+}
 
-पूर्णांक tegra_output_suspend(काष्ठा tegra_output *output)
-अणु
-	अगर (output->hpd_irq)
+int tegra_output_suspend(struct tegra_output *output)
+{
+	if (output->hpd_irq)
 		disable_irq(output->hpd_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_output_resume(काष्ठा tegra_output *output)
-अणु
-	अगर (output->hpd_irq)
+int tegra_output_resume(struct tegra_output *output)
+{
+	if (output->hpd_irq)
 		enable_irq(output->hpd_irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

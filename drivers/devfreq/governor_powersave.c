@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  linux/drivers/devfreq/governor_घातersave.c
+ *  linux/drivers/devfreq/governor_powersave.c
  *
  *  Copyright (C) 2011 Samsung Electronics
  *	MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#समावेश <linux/devfreq.h>
-#समावेश <linux/module.h>
-#समावेश "governor.h"
+#include <linux/devfreq.h>
+#include <linux/module.h>
+#include "governor.h"
 
-अटल पूर्णांक devfreq_घातersave_func(काष्ठा devfreq *df,
-				  अचिन्हित दीर्घ *freq)
-अणु
+static int devfreq_powersave_func(struct devfreq *df,
+				  unsigned long *freq)
+{
 	/*
-	 * target callback should be able to get उच्चमानing value as
+	 * target callback should be able to get ceiling value as
 	 * said in devfreq.h
 	 */
 	*freq = DEVFREQ_MIN_FREQ;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devfreq_घातersave_handler(काष्ठा devfreq *devfreq,
-				अचिन्हित पूर्णांक event, व्योम *data)
-अणु
-	पूर्णांक ret = 0;
+static int devfreq_powersave_handler(struct devfreq *devfreq,
+				unsigned int event, void *data)
+{
+	int ret = 0;
 
-	अगर (event == DEVFREQ_GOV_START) अणु
+	if (event == DEVFREQ_GOV_START) {
 		mutex_lock(&devfreq->lock);
 		ret = update_devfreq(devfreq);
 		mutex_unlock(&devfreq->lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा devfreq_governor devfreq_घातersave = अणु
+static struct devfreq_governor devfreq_powersave = {
 	.name = DEVFREQ_GOV_POWERSAVE,
-	.get_target_freq = devfreq_घातersave_func,
-	.event_handler = devfreq_घातersave_handler,
-पूर्ण;
+	.get_target_freq = devfreq_powersave_func,
+	.event_handler = devfreq_powersave_handler,
+};
 
-अटल पूर्णांक __init devfreq_घातersave_init(व्योम)
-अणु
-	वापस devfreq_add_governor(&devfreq_घातersave);
-पूर्ण
-subsys_initcall(devfreq_घातersave_init);
+static int __init devfreq_powersave_init(void)
+{
+	return devfreq_add_governor(&devfreq_powersave);
+}
+subsys_initcall(devfreq_powersave_init);
 
-अटल व्योम __निकास devfreq_घातersave_निकास(व्योम)
-अणु
-	पूर्णांक ret;
+static void __exit devfreq_powersave_exit(void)
+{
+	int ret;
 
-	ret = devfreq_हटाओ_governor(&devfreq_घातersave);
-	अगर (ret)
+	ret = devfreq_remove_governor(&devfreq_powersave);
+	if (ret)
 		pr_err("%s: failed remove governor %d\n", __func__, ret);
 
-	वापस;
-पूर्ण
-module_निकास(devfreq_घातersave_निकास);
+	return;
+}
+module_exit(devfreq_powersave_exit);
 MODULE_LICENSE("GPL");

@@ -1,75 +1,74 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 /*
  * Copyright (C) 2009 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  * Copyright (C) 2009 Johannes Berg <johannes@sipsolutions.net>
  */
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश "event-parse.h"
-#समावेश "trace-seq.h"
+#include "event-parse.h"
+#include "trace-seq.h"
 
-अटल पूर्णांक समयr_expire_handler(काष्ठा trace_seq *s,
-				काष्ठा tep_record *record,
-				काष्ठा tep_event *event, व्योम *context)
-अणु
-	trace_seq_म_लिखो(s, "hrtimer=");
+static int timer_expire_handler(struct trace_seq *s,
+				struct tep_record *record,
+				struct tep_event *event, void *context)
+{
+	trace_seq_printf(s, "hrtimer=");
 
-	अगर (tep_prपूर्णांक_num_field(s, "0x%llx", event, "timer",
+	if (tep_print_num_field(s, "0x%llx", event, "timer",
 				record, 0) == -1)
-		tep_prपूर्णांक_num_field(s, "0x%llx", event, "hrtimer",
+		tep_print_num_field(s, "0x%llx", event, "hrtimer",
 				    record, 1);
 
-	trace_seq_म_लिखो(s, " now=");
+	trace_seq_printf(s, " now=");
 
-	tep_prपूर्णांक_num_field(s, "%llu", event, "now", record, 1);
+	tep_print_num_field(s, "%llu", event, "now", record, 1);
 
-	tep_prपूर्णांक_func_field(s, " function=%s", event, "function",
+	tep_print_func_field(s, " function=%s", event, "function",
 				record, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक समयr_start_handler(काष्ठा trace_seq *s,
-			       काष्ठा tep_record *record,
-			       काष्ठा tep_event *event, व्योम *context)
-अणु
-	trace_seq_म_लिखो(s, "hrtimer=");
+static int timer_start_handler(struct trace_seq *s,
+			       struct tep_record *record,
+			       struct tep_event *event, void *context)
+{
+	trace_seq_printf(s, "hrtimer=");
 
-	अगर (tep_prपूर्णांक_num_field(s, "0x%llx", event, "timer",
+	if (tep_print_num_field(s, "0x%llx", event, "timer",
 				record, 0) == -1)
-		tep_prपूर्णांक_num_field(s, "0x%llx", event, "hrtimer",
+		tep_print_num_field(s, "0x%llx", event, "hrtimer",
 				    record, 1);
 
-	tep_prपूर्णांक_func_field(s, " function=%s", event, "function",
+	tep_print_func_field(s, " function=%s", event, "function",
 			     record, 0);
 
-	trace_seq_म_लिखो(s, " expires=");
-	tep_prपूर्णांक_num_field(s, "%llu", event, "expires", record, 1);
+	trace_seq_printf(s, " expires=");
+	tep_print_num_field(s, "%llu", event, "expires", record, 1);
 
-	trace_seq_म_लिखो(s, " softexpires=");
-	tep_prपूर्णांक_num_field(s, "%llu", event, "softexpires", record, 1);
-	वापस 0;
-पूर्ण
+	trace_seq_printf(s, " softexpires=");
+	tep_print_num_field(s, "%llu", event, "softexpires", record, 1);
+	return 0;
+}
 
-पूर्णांक TEP_PLUGIN_LOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_रेजिस्टर_event_handler(tep, -1,
+int TEP_PLUGIN_LOADER(struct tep_handle *tep)
+{
+	tep_register_event_handler(tep, -1,
 				   "timer", "hrtimer_expire_entry",
-				   समयr_expire_handler, शून्य);
+				   timer_expire_handler, NULL);
 
-	tep_रेजिस्टर_event_handler(tep, -1, "timer", "hrtimer_start",
-				   समयr_start_handler, शून्य);
-	वापस 0;
-पूर्ण
+	tep_register_event_handler(tep, -1, "timer", "hrtimer_start",
+				   timer_start_handler, NULL);
+	return 0;
+}
 
-व्योम TEP_PLUGIN_UNLOADER(काष्ठा tep_handle *tep)
-अणु
-	tep_unरेजिस्टर_event_handler(tep, -1,
+void TEP_PLUGIN_UNLOADER(struct tep_handle *tep)
+{
+	tep_unregister_event_handler(tep, -1,
 				     "timer", "hrtimer_expire_entry",
-				     समयr_expire_handler, शून्य);
+				     timer_expire_handler, NULL);
 
-	tep_unरेजिस्टर_event_handler(tep, -1, "timer", "hrtimer_start",
-				     समयr_start_handler, शून्य);
-पूर्ण
+	tep_unregister_event_handler(tep, -1, "timer", "hrtimer_start",
+				     timer_start_handler, NULL);
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2011 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,83 +22,83 @@
  * Authors: Dave Airlie
  */
 
-#समावेश <linux/dma-buf.h>
+#include <linux/dma-buf.h>
 
-#समावेश "nouveau_drv.h"
-#समावेश "nouveau_gem.h"
+#include "nouveau_drv.h"
+#include "nouveau_gem.h"
 
-काष्ठा sg_table *nouveau_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj)
-अणु
-	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(obj);
+struct sg_table *nouveau_gem_prime_get_sg_table(struct drm_gem_object *obj)
+{
+	struct nouveau_bo *nvbo = nouveau_gem_object(obj);
 
-	वापस drm_prime_pages_to_sg(obj->dev, nvbo->bo.tपंचांग->pages,
-				     nvbo->bo.tपंचांग->num_pages);
-पूर्ण
+	return drm_prime_pages_to_sg(obj->dev, nvbo->bo.ttm->pages,
+				     nvbo->bo.ttm->num_pages);
+}
 
-काष्ठा drm_gem_object *nouveau_gem_prime_import_sg_table(काष्ठा drm_device *dev,
-							 काष्ठा dma_buf_attachment *attach,
-							 काष्ठा sg_table *sg)
-अणु
-	काष्ठा nouveau_drm *drm = nouveau_drm(dev);
-	काष्ठा drm_gem_object *obj;
-	काष्ठा nouveau_bo *nvbo;
-	काष्ठा dma_resv *robj = attach->dmabuf->resv;
+struct drm_gem_object *nouveau_gem_prime_import_sg_table(struct drm_device *dev,
+							 struct dma_buf_attachment *attach,
+							 struct sg_table *sg)
+{
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct drm_gem_object *obj;
+	struct nouveau_bo *nvbo;
+	struct dma_resv *robj = attach->dmabuf->resv;
 	u64 size = attach->dmabuf->size;
-	पूर्णांक align = 0;
-	पूर्णांक ret;
+	int align = 0;
+	int ret;
 
-	dma_resv_lock(robj, शून्य);
+	dma_resv_lock(robj, NULL);
 	nvbo = nouveau_bo_alloc(&drm->client, &size, &align,
 				NOUVEAU_GEM_DOMAIN_GART, 0, 0);
-	अगर (IS_ERR(nvbo)) अणु
+	if (IS_ERR(nvbo)) {
 		obj = ERR_CAST(nvbo);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	nvbo->valid_करोमुख्यs = NOUVEAU_GEM_DOMAIN_GART;
+	nvbo->valid_domains = NOUVEAU_GEM_DOMAIN_GART;
 
 	nvbo->bo.base.funcs = &nouveau_gem_object_funcs;
 
-	/* Initialize the embedded gem-object. We वापस a single gem-reference
-	 * to the caller, instead of a normal nouveau_bo tपंचांग reference. */
+	/* Initialize the embedded gem-object. We return a single gem-reference
+	 * to the caller, instead of a normal nouveau_bo ttm reference. */
 	ret = drm_gem_object_init(dev, &nvbo->bo.base, size);
-	अगर (ret) अणु
-		nouveau_bo_ref(शून्य, &nvbo);
+	if (ret) {
+		nouveau_bo_ref(NULL, &nvbo);
 		obj = ERR_PTR(-ENOMEM);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	ret = nouveau_bo_init(nvbo, size, align, NOUVEAU_GEM_DOMAIN_GART,
 			      sg, robj);
-	अगर (ret) अणु
-		nouveau_bo_ref(शून्य, &nvbo);
+	if (ret) {
+		nouveau_bo_ref(NULL, &nvbo);
 		obj = ERR_PTR(ret);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	obj = &nvbo->bo.base;
 
 unlock:
 	dma_resv_unlock(robj);
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
-पूर्णांक nouveau_gem_prime_pin(काष्ठा drm_gem_object *obj)
-अणु
-	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(obj);
-	पूर्णांक ret;
+int nouveau_gem_prime_pin(struct drm_gem_object *obj)
+{
+	struct nouveau_bo *nvbo = nouveau_gem_object(obj);
+	int ret;
 
-	/* pin buffer पूर्णांकo GTT */
+	/* pin buffer into GTT */
 	ret = nouveau_bo_pin(nvbo, NOUVEAU_GEM_DOMAIN_GART, false);
-	अगर (ret)
-		वापस -EINVAL;
+	if (ret)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nouveau_gem_prime_unpin(काष्ठा drm_gem_object *obj)
-अणु
-	काष्ठा nouveau_bo *nvbo = nouveau_gem_object(obj);
+void nouveau_gem_prime_unpin(struct drm_gem_object *obj)
+{
+	struct nouveau_bo *nvbo = nouveau_gem_object(obj);
 
 	nouveau_bo_unpin(nvbo);
-पूर्ण
+}

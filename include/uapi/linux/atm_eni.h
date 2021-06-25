@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-/* aपंचांग_eni.h - Driver-specअगरic declarations of the ENI driver (क्रम use by
-	       driver-specअगरic utilities) */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+/* atm_eni.h - Driver-specific declarations of the ENI driver (for use by
+	       driver-specific utilities) */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
 
-#अगर_अघोषित LINUX_ATM_ENI_H
-#घोषणा LINUX_ATM_ENI_H
+#ifndef LINUX_ATM_ENI_H
+#define LINUX_ATM_ENI_H
 
-#समावेश <linux/aपंचांगioc.h>
-
-
-काष्ठा eni_multipliers अणु
-	पूर्णांक tx,rx;	/* values are in percent and must be > 100 */
-पूर्ण;
+#include <linux/atmioc.h>
 
 
-#घोषणा ENI_MEMDUMP     _IOW('a',ATMIOC_SARPRV,काष्ठा aपंचांगअगर_sioc)
-                                                /* prपूर्णांकk memory map */
-#घोषणा ENI_SETMULT	_IOW('a',ATMIOC_SARPRV+7,काष्ठा aपंचांगअगर_sioc)
+struct eni_multipliers {
+	int tx,rx;	/* values are in percent and must be > 100 */
+};
+
+
+#define ENI_MEMDUMP     _IOW('a',ATMIOC_SARPRV,struct atmif_sioc)
+                                                /* printk memory map */
+#define ENI_SETMULT	_IOW('a',ATMIOC_SARPRV+7,struct atmif_sioc)
 						/* set buffer multipliers */
 
-#पूर्ण_अगर
+#endif

@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * driver क्रम channel subप्रणाली
+ * driver for channel subsystem
  *
  * Copyright IBM Corp. 2002, 2010
  *
@@ -9,470 +8,470 @@
  *	      Cornelia Huck (cornelia.huck@de.ibm.com)
  */
 
-#घोषणा KMSG_COMPONENT "cio"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "cio"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/list.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/genभाग.स>
-#समावेश <linux/dma-mapping.h>
-#समावेश <यंत्र/isc.h>
-#समावेश <यंत्र/crw.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/list.h>
+#include <linux/reboot.h>
+#include <linux/proc_fs.h>
+#include <linux/genalloc.h>
+#include <linux/dma-mapping.h>
+#include <asm/isc.h>
+#include <asm/crw.h>
 
-#समावेश "css.h"
-#समावेश "cio.h"
-#समावेश "blacklist.h"
-#समावेश "cio_debug.h"
-#समावेश "ioasm.h"
-#समावेश "chsc.h"
-#समावेश "device.h"
-#समावेश "idset.h"
-#समावेश "chp.h"
+#include "css.h"
+#include "cio.h"
+#include "blacklist.h"
+#include "cio_debug.h"
+#include "ioasm.h"
+#include "chsc.h"
+#include "device.h"
+#include "idset.h"
+#include "chp.h"
 
-पूर्णांक css_init_करोne = 0;
-पूर्णांक max_ssid;
+int css_init_done = 0;
+int max_ssid;
 
-#घोषणा MAX_CSS_IDX 0
-काष्ठा channel_subप्रणाली *channel_subप्रणालीs[MAX_CSS_IDX + 1];
-अटल काष्ठा bus_type css_bus_type;
+#define MAX_CSS_IDX 0
+struct channel_subsystem *channel_subsystems[MAX_CSS_IDX + 1];
+static struct bus_type css_bus_type;
 
-पूर्णांक
-क्रम_each_subchannel(पूर्णांक(*fn)(काष्ठा subchannel_id, व्योम *), व्योम *data)
-अणु
-	काष्ठा subchannel_id schid;
-	पूर्णांक ret;
+int
+for_each_subchannel(int(*fn)(struct subchannel_id, void *), void *data)
+{
+	struct subchannel_id schid;
+	int ret;
 
 	init_subchannel_id(&schid);
-	करो अणु
-		करो अणु
+	do {
+		do {
 			ret = fn(schid, data);
-			अगर (ret)
-				अवरोध;
-		पूर्ण जबतक (schid.sch_no++ < __MAX_SUBCHANNEL);
+			if (ret)
+				break;
+		} while (schid.sch_no++ < __MAX_SUBCHANNEL);
 		schid.sch_no = 0;
-	पूर्ण जबतक (schid.ssid++ < max_ssid);
-	वापस ret;
-पूर्ण
+	} while (schid.ssid++ < max_ssid);
+	return ret;
+}
 
-काष्ठा cb_data अणु
-	व्योम *data;
-	काष्ठा idset *set;
-	पूर्णांक (*fn_known_sch)(काष्ठा subchannel *, व्योम *);
-	पूर्णांक (*fn_unknown_sch)(काष्ठा subchannel_id, व्योम *);
-पूर्ण;
+struct cb_data {
+	void *data;
+	struct idset *set;
+	int (*fn_known_sch)(struct subchannel *, void *);
+	int (*fn_unknown_sch)(struct subchannel_id, void *);
+};
 
-अटल पूर्णांक call_fn_known_sch(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	काष्ठा cb_data *cb = data;
-	पूर्णांक rc = 0;
+static int call_fn_known_sch(struct device *dev, void *data)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	struct cb_data *cb = data;
+	int rc = 0;
 
-	अगर (cb->set)
+	if (cb->set)
 		idset_sch_del(cb->set, sch->schid);
-	अगर (cb->fn_known_sch)
+	if (cb->fn_known_sch)
 		rc = cb->fn_known_sch(sch, cb->data);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक call_fn_unknown_sch(काष्ठा subchannel_id schid, व्योम *data)
-अणु
-	काष्ठा cb_data *cb = data;
-	पूर्णांक rc = 0;
+static int call_fn_unknown_sch(struct subchannel_id schid, void *data)
+{
+	struct cb_data *cb = data;
+	int rc = 0;
 
-	अगर (idset_sch_contains(cb->set, schid))
+	if (idset_sch_contains(cb->set, schid))
 		rc = cb->fn_unknown_sch(schid, cb->data);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक call_fn_all_sch(काष्ठा subchannel_id schid, व्योम *data)
-अणु
-	काष्ठा cb_data *cb = data;
-	काष्ठा subchannel *sch;
-	पूर्णांक rc = 0;
+static int call_fn_all_sch(struct subchannel_id schid, void *data)
+{
+	struct cb_data *cb = data;
+	struct subchannel *sch;
+	int rc = 0;
 
 	sch = get_subchannel_by_schid(schid);
-	अगर (sch) अणु
-		अगर (cb->fn_known_sch)
+	if (sch) {
+		if (cb->fn_known_sch)
 			rc = cb->fn_known_sch(sch, cb->data);
 		put_device(&sch->dev);
-	पूर्ण अन्यथा अणु
-		अगर (cb->fn_unknown_sch)
+	} else {
+		if (cb->fn_unknown_sch)
 			rc = cb->fn_unknown_sch(schid, cb->data);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक क्रम_each_subchannel_staged(पूर्णांक (*fn_known)(काष्ठा subchannel *, व्योम *),
-			       पूर्णांक (*fn_unknown)(काष्ठा subchannel_id,
-			       व्योम *), व्योम *data)
-अणु
-	काष्ठा cb_data cb;
-	पूर्णांक rc;
+int for_each_subchannel_staged(int (*fn_known)(struct subchannel *, void *),
+			       int (*fn_unknown)(struct subchannel_id,
+			       void *), void *data)
+{
+	struct cb_data cb;
+	int rc;
 
 	cb.data = data;
 	cb.fn_known_sch = fn_known;
 	cb.fn_unknown_sch = fn_unknown;
 
-	अगर (fn_known && !fn_unknown) अणु
-		/* Skip idset allocation in हाल of known-only loop. */
-		cb.set = शून्य;
-		वापस bus_क्रम_each_dev(&css_bus_type, शून्य, &cb,
+	if (fn_known && !fn_unknown) {
+		/* Skip idset allocation in case of known-only loop. */
+		cb.set = NULL;
+		return bus_for_each_dev(&css_bus_type, NULL, &cb,
 					call_fn_known_sch);
-	पूर्ण
+	}
 
 	cb.set = idset_sch_new();
-	अगर (!cb.set)
-		/* fall back to brute क्रमce scanning in हाल of oom */
-		वापस क्रम_each_subchannel(call_fn_all_sch, &cb);
+	if (!cb.set)
+		/* fall back to brute force scanning in case of oom */
+		return for_each_subchannel(call_fn_all_sch, &cb);
 
 	idset_fill(cb.set);
 
-	/* Process रेजिस्टरed subchannels. */
-	rc = bus_क्रम_each_dev(&css_bus_type, शून्य, &cb, call_fn_known_sch);
-	अगर (rc)
-		जाओ out;
-	/* Process unरेजिस्टरed subchannels. */
-	अगर (fn_unknown)
-		rc = क्रम_each_subchannel(call_fn_unknown_sch, &cb);
+	/* Process registered subchannels. */
+	rc = bus_for_each_dev(&css_bus_type, NULL, &cb, call_fn_known_sch);
+	if (rc)
+		goto out;
+	/* Process unregistered subchannels. */
+	if (fn_unknown)
+		rc = for_each_subchannel(call_fn_unknown_sch, &cb);
 out:
-	idset_मुक्त(cb.set);
+	idset_free(cb.set);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम css_sch_toकरो(काष्ठा work_काष्ठा *work);
+static void css_sch_todo(struct work_struct *work);
 
-अटल पूर्णांक css_sch_create_locks(काष्ठा subchannel *sch)
-अणु
-	sch->lock = kदो_स्मृति(माप(*sch->lock), GFP_KERNEL);
-	अगर (!sch->lock)
-		वापस -ENOMEM;
+static int css_sch_create_locks(struct subchannel *sch)
+{
+	sch->lock = kmalloc(sizeof(*sch->lock), GFP_KERNEL);
+	if (!sch->lock)
+		return -ENOMEM;
 
 	spin_lock_init(sch->lock);
 	mutex_init(&sch->reg_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम css_subchannel_release(काष्ठा device *dev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
+static void css_subchannel_release(struct device *dev)
+{
+	struct subchannel *sch = to_subchannel(dev);
 
-	sch->config.पूर्णांकparm = 0;
+	sch->config.intparm = 0;
 	cio_commit_config(sch);
-	kमुक्त(sch->driver_override);
-	kमुक्त(sch->lock);
-	kमुक्त(sch);
-पूर्ण
+	kfree(sch->driver_override);
+	kfree(sch->lock);
+	kfree(sch);
+}
 
-अटल पूर्णांक css_validate_subchannel(काष्ठा subchannel_id schid,
-				   काष्ठा schib *schib)
-अणु
-	पूर्णांक err;
+static int css_validate_subchannel(struct subchannel_id schid,
+				   struct schib *schib)
+{
+	int err;
 
-	चयन (schib->pmcw.st) अणु
-	हाल SUBCHANNEL_TYPE_IO:
-	हाल SUBCHANNEL_TYPE_MSG:
-		अगर (!css_sch_is_valid(schib))
+	switch (schib->pmcw.st) {
+	case SUBCHANNEL_TYPE_IO:
+	case SUBCHANNEL_TYPE_MSG:
+		if (!css_sch_is_valid(schib))
 			err = -ENODEV;
-		अन्यथा अगर (is_blacklisted(schid.ssid, schib->pmcw.dev)) अणु
+		else if (is_blacklisted(schid.ssid, schib->pmcw.dev)) {
 			CIO_MSG_EVENT(6, "Blacklisted device detected "
 				      "at devno %04X, subchannel set %x\n",
 				      schib->pmcw.dev, schid.ssid);
 			err = -ENODEV;
-		पूर्ण अन्यथा
+		} else
 			err = 0;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = 0;
-	पूर्ण
-	अगर (err)
-		जाओ out;
+	}
+	if (err)
+		goto out;
 
 	CIO_MSG_EVENT(4, "Subchannel 0.%x.%04x reports subchannel type %04X\n",
 		      schid.ssid, schid.sch_no, schib->pmcw.st);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा subchannel *css_alloc_subchannel(काष्ठा subchannel_id schid,
-					काष्ठा schib *schib)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
+struct subchannel *css_alloc_subchannel(struct subchannel_id schid,
+					struct schib *schib)
+{
+	struct subchannel *sch;
+	int ret;
 
 	ret = css_validate_subchannel(schid, schib);
-	अगर (ret < 0)
-		वापस ERR_PTR(ret);
+	if (ret < 0)
+		return ERR_PTR(ret);
 
-	sch = kzalloc(माप(*sch), GFP_KERNEL | GFP_DMA);
-	अगर (!sch)
-		वापस ERR_PTR(-ENOMEM);
+	sch = kzalloc(sizeof(*sch), GFP_KERNEL | GFP_DMA);
+	if (!sch)
+		return ERR_PTR(-ENOMEM);
 
 	sch->schid = schid;
 	sch->schib = *schib;
 	sch->st = schib->pmcw.st;
 
 	ret = css_sch_create_locks(sch);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	INIT_WORK(&sch->toकरो_work, css_sch_toकरो);
+	INIT_WORK(&sch->todo_work, css_sch_todo);
 	sch->dev.release = &css_subchannel_release;
 	sch->dev.dma_mask = &sch->dma_mask;
 	device_initialize(&sch->dev);
 	/*
-	 * The physical addresses क्रम some of the dma काष्ठाures that can
-	 * beदीर्घ to a subchannel need to fit 31 bit width (e.g. ccw).
+	 * The physical addresses for some of the dma structures that can
+	 * belong to a subchannel need to fit 31 bit width (e.g. ccw).
 	 */
 	ret = dma_set_coherent_mask(&sch->dev, DMA_BIT_MASK(31));
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 	/*
-	 * But we करोn't have such restrictions imposed on the stuff that
+	 * But we don't have such restrictions imposed on the stuff that
 	 * is handled by the streaming API.
 	 */
 	ret = dma_set_mask(&sch->dev, DMA_BIT_MASK(64));
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस sch;
+	return sch;
 
 err:
-	kमुक्त(sch);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(sch);
+	return ERR_PTR(ret);
+}
 
-अटल पूर्णांक css_sch_device_रेजिस्टर(काष्ठा subchannel *sch)
-अणु
-	पूर्णांक ret;
+static int css_sch_device_register(struct subchannel *sch)
+{
+	int ret;
 
 	mutex_lock(&sch->reg_mutex);
 	dev_set_name(&sch->dev, "0.%x.%04x", sch->schid.ssid,
 		     sch->schid.sch_no);
 	ret = device_add(&sch->dev);
 	mutex_unlock(&sch->reg_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * css_sch_device_unरेजिस्टर - unरेजिस्टर a subchannel
- * @sch: subchannel to be unरेजिस्टरed
+ * css_sch_device_unregister - unregister a subchannel
+ * @sch: subchannel to be unregistered
  */
-व्योम css_sch_device_unरेजिस्टर(काष्ठा subchannel *sch)
-अणु
+void css_sch_device_unregister(struct subchannel *sch)
+{
 	mutex_lock(&sch->reg_mutex);
-	अगर (device_is_रेजिस्टरed(&sch->dev))
-		device_unरेजिस्टर(&sch->dev);
+	if (device_is_registered(&sch->dev))
+		device_unregister(&sch->dev);
 	mutex_unlock(&sch->reg_mutex);
-पूर्ण
-EXPORT_SYMBOL_GPL(css_sch_device_unरेजिस्टर);
+}
+EXPORT_SYMBOL_GPL(css_sch_device_unregister);
 
-अटल व्योम ssd_from_pmcw(काष्ठा chsc_ssd_info *ssd, काष्ठा pmcw *pmcw)
-अणु
-	पूर्णांक i;
-	पूर्णांक mask;
+static void ssd_from_pmcw(struct chsc_ssd_info *ssd, struct pmcw *pmcw)
+{
+	int i;
+	int mask;
 
-	स_रखो(ssd, 0, माप(काष्ठा chsc_ssd_info));
+	memset(ssd, 0, sizeof(struct chsc_ssd_info));
 	ssd->path_mask = pmcw->pim;
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		mask = 0x80 >> i;
-		अगर (pmcw->pim & mask) अणु
+		if (pmcw->pim & mask) {
 			chp_id_init(&ssd->chpid[i]);
 			ssd->chpid[i].id = pmcw->chpid[i];
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम ssd_रेजिस्टर_chpids(काष्ठा chsc_ssd_info *ssd)
-अणु
-	पूर्णांक i;
-	पूर्णांक mask;
+static void ssd_register_chpids(struct chsc_ssd_info *ssd)
+{
+	int i;
+	int mask;
 
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		mask = 0x80 >> i;
-		अगर (ssd->path_mask & mask)
+		if (ssd->path_mask & mask)
 			chp_new(ssd->chpid[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम css_update_ssd_info(काष्ठा subchannel *sch)
-अणु
-	पूर्णांक ret;
+void css_update_ssd_info(struct subchannel *sch)
+{
+	int ret;
 
 	ret = chsc_get_ssd_info(sch->schid, &sch->ssd_info);
-	अगर (ret)
+	if (ret)
 		ssd_from_pmcw(&sch->ssd_info, &sch->schib.pmcw);
 
-	ssd_रेजिस्टर_chpids(&sch->ssd_info);
-पूर्ण
+	ssd_register_chpids(&sch->ssd_info);
+}
 
-अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			 अक्षर *buf)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
+static ssize_t type_show(struct device *dev, struct device_attribute *attr,
+			 char *buf)
+{
+	struct subchannel *sch = to_subchannel(dev);
 
-	वापस प्र_लिखो(buf, "%01x\n", sch->st);
-पूर्ण
+	return sprintf(buf, "%01x\n", sch->st);
+}
 
-अटल DEVICE_ATTR_RO(type);
+static DEVICE_ATTR_RO(type);
 
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct subchannel *sch = to_subchannel(dev);
 
-	वापस प्र_लिखो(buf, "css:t%01X\n", sch->st);
-पूर्ण
+	return sprintf(buf, "css:t%01X\n", sch->st);
+}
 
-अटल DEVICE_ATTR_RO(modalias);
+static DEVICE_ATTR_RO(modalias);
 
-अटल sमाप_प्रकार driver_override_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	अक्षर *driver_override, *old, *cp;
+static ssize_t driver_override_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	char *driver_override, *old, *cp;
 
-	/* We need to keep extra room क्रम a newline */
-	अगर (count >= (PAGE_SIZE - 1))
-		वापस -EINVAL;
+	/* We need to keep extra room for a newline */
+	if (count >= (PAGE_SIZE - 1))
+		return -EINVAL;
 
 	driver_override = kstrndup(buf, count, GFP_KERNEL);
-	अगर (!driver_override)
-		वापस -ENOMEM;
+	if (!driver_override)
+		return -ENOMEM;
 
-	cp = म_अक्षर(driver_override, '\n');
-	अगर (cp)
+	cp = strchr(driver_override, '\n');
+	if (cp)
 		*cp = '\0';
 
 	device_lock(dev);
 	old = sch->driver_override;
-	अगर (म_माप(driver_override)) अणु
+	if (strlen(driver_override)) {
 		sch->driver_override = driver_override;
-	पूर्ण अन्यथा अणु
-		kमुक्त(driver_override);
-		sch->driver_override = शून्य;
-	पूर्ण
+	} else {
+		kfree(driver_override);
+		sch->driver_override = NULL;
+	}
 	device_unlock(dev);
 
-	kमुक्त(old);
+	kfree(old);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार driver_override_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	sमाप_प्रकार len;
+static ssize_t driver_override_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	ssize_t len;
 
 	device_lock(dev);
-	len = snम_लिखो(buf, PAGE_SIZE, "%s\n", sch->driver_override);
+	len = snprintf(buf, PAGE_SIZE, "%s\n", sch->driver_override);
 	device_unlock(dev);
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_RW(driver_override);
+	return len;
+}
+static DEVICE_ATTR_RW(driver_override);
 
-अटल काष्ठा attribute *subch_attrs[] = अणु
+static struct attribute *subch_attrs[] = {
 	&dev_attr_type.attr,
 	&dev_attr_modalias.attr,
 	&dev_attr_driver_override.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group subch_attr_group = अणु
+static struct attribute_group subch_attr_group = {
 	.attrs = subch_attrs,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *शेष_subch_attr_groups[] = अणु
+static const struct attribute_group *default_subch_attr_groups[] = {
 	&subch_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल sमाप_प्रकार chpids_show(काष्ठा device *dev,
-			   काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	काष्ठा chsc_ssd_info *ssd = &sch->ssd_info;
-	sमाप_प्रकार ret = 0;
-	पूर्णांक mask;
-	पूर्णांक chp;
+static ssize_t chpids_show(struct device *dev,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	struct chsc_ssd_info *ssd = &sch->ssd_info;
+	ssize_t ret = 0;
+	int mask;
+	int chp;
 
-	क्रम (chp = 0; chp < 8; chp++) अणु
+	for (chp = 0; chp < 8; chp++) {
 		mask = 0x80 >> chp;
-		अगर (ssd->path_mask & mask)
-			ret += प्र_लिखो(buf + ret, "%02x ", ssd->chpid[chp].id);
-		अन्यथा
-			ret += प्र_लिखो(buf + ret, "00 ");
-	पूर्ण
-	ret += प्र_लिखो(buf + ret, "\n");
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RO(chpids);
+		if (ssd->path_mask & mask)
+			ret += sprintf(buf + ret, "%02x ", ssd->chpid[chp].id);
+		else
+			ret += sprintf(buf + ret, "00 ");
+	}
+	ret += sprintf(buf + ret, "\n");
+	return ret;
+}
+static DEVICE_ATTR_RO(chpids);
 
-अटल sमाप_प्रकार pimpampom_show(काष्ठा device *dev,
-			      काष्ठा device_attribute *attr,
-			      अक्षर *buf)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	काष्ठा pmcw *pmcw = &sch->schib.pmcw;
+static ssize_t pimpampom_show(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	struct pmcw *pmcw = &sch->schib.pmcw;
 
-	वापस प्र_लिखो(buf, "%02x %02x %02x\n",
+	return sprintf(buf, "%02x %02x %02x\n",
 		       pmcw->pim, pmcw->pam, pmcw->pom);
-पूर्ण
-अटल DEVICE_ATTR_RO(pimpampom);
+}
+static DEVICE_ATTR_RO(pimpampom);
 
-अटल काष्ठा attribute *io_subchannel_type_attrs[] = अणु
+static struct attribute *io_subchannel_type_attrs[] = {
 	&dev_attr_chpids.attr,
 	&dev_attr_pimpampom.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(io_subchannel_type);
 
-अटल स्थिर काष्ठा device_type io_subchannel_type = अणु
+static const struct device_type io_subchannel_type = {
 	.groups = io_subchannel_type_groups,
-पूर्ण;
+};
 
-पूर्णांक css_रेजिस्टर_subchannel(काष्ठा subchannel *sch)
-अणु
-	पूर्णांक ret;
+int css_register_subchannel(struct subchannel *sch)
+{
+	int ret;
 
-	/* Initialize the subchannel काष्ठाure */
-	sch->dev.parent = &channel_subप्रणालीs[0]->device;
+	/* Initialize the subchannel structure */
+	sch->dev.parent = &channel_subsystems[0]->device;
 	sch->dev.bus = &css_bus_type;
-	sch->dev.groups = शेष_subch_attr_groups;
+	sch->dev.groups = default_subch_attr_groups;
 
-	अगर (sch->st == SUBCHANNEL_TYPE_IO)
+	if (sch->st == SUBCHANNEL_TYPE_IO)
 		sch->dev.type = &io_subchannel_type;
 
 	/*
-	 * We करोn't want to generate uevents for I/O subchannels that don't
+	 * We don't want to generate uevents for I/O subchannels that don't
 	 * have a working ccw device behind them since they will be
-	 * unरेजिस्टरed beक्रमe they can be used anyway, so we delay the add
+	 * unregistered before they can be used anyway, so we delay the add
 	 * uevent until after device recognition was successful.
-	 * Note that we suppress the uevent क्रम all subchannel types;
-	 * the subchannel driver can decide itself when it wants to inक्रमm
+	 * Note that we suppress the uevent for all subchannel types;
+	 * the subchannel driver can decide itself when it wants to inform
 	 * userspace of its existence.
 	 */
 	dev_set_uevent_suppress(&sch->dev, 1);
 	css_update_ssd_info(sch);
-	/* make it known to the प्रणाली */
-	ret = css_sch_device_रेजिस्टर(sch);
-	अगर (ret) अणु
+	/* make it known to the system */
+	ret = css_sch_device_register(sch);
+	if (ret) {
 		CIO_MSG_EVENT(0, "Could not register sch 0.%x.%04x: %d\n",
 			      sch->schid.ssid, sch->schid.sch_no, ret);
-		वापस ret;
-	पूर्ण
-	अगर (!sch->driver) अणु
+		return ret;
+	}
+	if (!sch->driver) {
 		/*
 		 * No driver matched. Generate the uevent now so that
 		 * a fitting driver module may be loaded based on the
@@ -480,961 +479,961 @@ ATTRIBUTE_GROUPS(io_subchannel_type);
 		 */
 		dev_set_uevent_suppress(&sch->dev, 0);
 		kobject_uevent(&sch->dev.kobj, KOBJ_ADD);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक css_probe_device(काष्ठा subchannel_id schid, काष्ठा schib *schib)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
+static int css_probe_device(struct subchannel_id schid, struct schib *schib)
+{
+	struct subchannel *sch;
+	int ret;
 
 	sch = css_alloc_subchannel(schid, schib);
-	अगर (IS_ERR(sch))
-		वापस PTR_ERR(sch);
+	if (IS_ERR(sch))
+		return PTR_ERR(sch);
 
-	ret = css_रेजिस्टर_subchannel(sch);
-	अगर (ret)
+	ret = css_register_subchannel(sch);
+	if (ret)
 		put_device(&sch->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-check_subchannel(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा subchannel *sch;
-	काष्ठा subchannel_id *schid = (व्योम *)data;
+static int
+check_subchannel(struct device *dev, const void *data)
+{
+	struct subchannel *sch;
+	struct subchannel_id *schid = (void *)data;
 
 	sch = to_subchannel(dev);
-	वापस schid_equal(&sch->schid, schid);
-पूर्ण
+	return schid_equal(&sch->schid, schid);
+}
 
-काष्ठा subchannel *
-get_subchannel_by_schid(काष्ठा subchannel_id schid)
-अणु
-	काष्ठा device *dev;
+struct subchannel *
+get_subchannel_by_schid(struct subchannel_id schid)
+{
+	struct device *dev;
 
-	dev = bus_find_device(&css_bus_type, शून्य,
+	dev = bus_find_device(&css_bus_type, NULL,
 			      &schid, check_subchannel);
 
-	वापस dev ? to_subchannel(dev) : शून्य;
-पूर्ण
+	return dev ? to_subchannel(dev) : NULL;
+}
 
 /**
- * css_sch_is_valid() - check अगर a subchannel is valid
- * @schib: subchannel inक्रमmation block क्रम the subchannel
+ * css_sch_is_valid() - check if a subchannel is valid
+ * @schib: subchannel information block for the subchannel
  */
-पूर्णांक css_sch_is_valid(काष्ठा schib *schib)
-अणु
-	अगर ((schib->pmcw.st == SUBCHANNEL_TYPE_IO) && !schib->pmcw.dnv)
-		वापस 0;
-	अगर ((schib->pmcw.st == SUBCHANNEL_TYPE_MSG) && !schib->pmcw.w)
-		वापस 0;
-	वापस 1;
-पूर्ण
+int css_sch_is_valid(struct schib *schib)
+{
+	if ((schib->pmcw.st == SUBCHANNEL_TYPE_IO) && !schib->pmcw.dnv)
+		return 0;
+	if ((schib->pmcw.st == SUBCHANNEL_TYPE_MSG) && !schib->pmcw.w)
+		return 0;
+	return 1;
+}
 EXPORT_SYMBOL_GPL(css_sch_is_valid);
 
-अटल पूर्णांक css_evaluate_new_subchannel(काष्ठा subchannel_id schid, पूर्णांक slow)
-अणु
-	काष्ठा schib schib;
-	पूर्णांक ccode;
+static int css_evaluate_new_subchannel(struct subchannel_id schid, int slow)
+{
+	struct schib schib;
+	int ccode;
 
-	अगर (!slow) अणु
-		/* Will be करोne on the slow path. */
-		वापस -EAGAIN;
-	पूर्ण
+	if (!slow) {
+		/* Will be done on the slow path. */
+		return -EAGAIN;
+	}
 	/*
 	 * The first subchannel that is not-operational (ccode==3)
 	 * indicates that there aren't any more devices available.
-	 * If stsch माला_लो an exception, it means the current subchannel set
+	 * If stsch gets an exception, it means the current subchannel set
 	 * is not valid.
 	 */
 	ccode = stsch(schid, &schib);
-	अगर (ccode)
-		वापस (ccode == 3) ? -ENXIO : ccode;
+	if (ccode)
+		return (ccode == 3) ? -ENXIO : ccode;
 
-	वापस css_probe_device(schid, &schib);
-पूर्ण
+	return css_probe_device(schid, &schib);
+}
 
-अटल पूर्णांक css_evaluate_known_subchannel(काष्ठा subchannel *sch, पूर्णांक slow)
-अणु
-	पूर्णांक ret = 0;
+static int css_evaluate_known_subchannel(struct subchannel *sch, int slow)
+{
+	int ret = 0;
 
-	अगर (sch->driver) अणु
-		अगर (sch->driver->sch_event)
+	if (sch->driver) {
+		if (sch->driver->sch_event)
 			ret = sch->driver->sch_event(sch, slow);
-		अन्यथा
+		else
 			dev_dbg(&sch->dev,
 				"Got subchannel machine check but "
 				"no sch_event handler provided.\n");
-	पूर्ण
-	अगर (ret != 0 && ret != -EAGAIN) अणु
+	}
+	if (ret != 0 && ret != -EAGAIN) {
 		CIO_MSG_EVENT(2, "eval: sch 0.%x.%04x, rc=%d\n",
 			      sch->schid.ssid, sch->schid.sch_no, ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम css_evaluate_subchannel(काष्ठा subchannel_id schid, पूर्णांक slow)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
+static void css_evaluate_subchannel(struct subchannel_id schid, int slow)
+{
+	struct subchannel *sch;
+	int ret;
 
 	sch = get_subchannel_by_schid(schid);
-	अगर (sch) अणु
+	if (sch) {
 		ret = css_evaluate_known_subchannel(sch, slow);
 		put_device(&sch->dev);
-	पूर्ण अन्यथा
+	} else
 		ret = css_evaluate_new_subchannel(schid, slow);
-	अगर (ret == -EAGAIN)
+	if (ret == -EAGAIN)
 		css_schedule_eval(schid);
-पूर्ण
+}
 
 /**
- * css_sched_sch_toकरो - schedule a subchannel operation
+ * css_sched_sch_todo - schedule a subchannel operation
  * @sch: subchannel
- * @toकरो: toकरो
+ * @todo: todo
  *
- * Schedule the operation identअगरied by @toकरो to be perक्रमmed on the slow path
- * workqueue. Do nothing अगर another operation with higher priority is alपढ़ोy
+ * Schedule the operation identified by @todo to be performed on the slow path
+ * workqueue. Do nothing if another operation with higher priority is already
  * scheduled. Needs to be called with subchannel lock held.
  */
-व्योम css_sched_sch_toकरो(काष्ठा subchannel *sch, क्रमागत sch_toकरो toकरो)
-अणु
+void css_sched_sch_todo(struct subchannel *sch, enum sch_todo todo)
+{
 	CIO_MSG_EVENT(4, "sch_todo: sched sch=0.%x.%04x todo=%d\n",
-		      sch->schid.ssid, sch->schid.sch_no, toकरो);
-	अगर (sch->toकरो >= toकरो)
-		वापस;
+		      sch->schid.ssid, sch->schid.sch_no, todo);
+	if (sch->todo >= todo)
+		return;
 	/* Get workqueue ref. */
-	अगर (!get_device(&sch->dev))
-		वापस;
-	sch->toकरो = toकरो;
-	अगर (!queue_work(cio_work_q, &sch->toकरो_work)) अणु
-		/* Alपढ़ोy queued, release workqueue ref. */
+	if (!get_device(&sch->dev))
+		return;
+	sch->todo = todo;
+	if (!queue_work(cio_work_q, &sch->todo_work)) {
+		/* Already queued, release workqueue ref. */
 		put_device(&sch->dev);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(css_sched_sch_toकरो);
+	}
+}
+EXPORT_SYMBOL_GPL(css_sched_sch_todo);
 
-अटल व्योम css_sch_toकरो(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा subchannel *sch;
-	क्रमागत sch_toकरो toकरो;
-	पूर्णांक ret;
+static void css_sch_todo(struct work_struct *work)
+{
+	struct subchannel *sch;
+	enum sch_todo todo;
+	int ret;
 
-	sch = container_of(work, काष्ठा subchannel, toकरो_work);
-	/* Find out toकरो. */
+	sch = container_of(work, struct subchannel, todo_work);
+	/* Find out todo. */
 	spin_lock_irq(sch->lock);
-	toकरो = sch->toकरो;
+	todo = sch->todo;
 	CIO_MSG_EVENT(4, "sch_todo: sch=0.%x.%04x, todo=%d\n", sch->schid.ssid,
-		      sch->schid.sch_no, toकरो);
-	sch->toकरो = SCH_TODO_NOTHING;
+		      sch->schid.sch_no, todo);
+	sch->todo = SCH_TODO_NOTHING;
 	spin_unlock_irq(sch->lock);
-	/* Perक्रमm toकरो. */
-	चयन (toकरो) अणु
-	हाल SCH_TODO_NOTHING:
-		अवरोध;
-	हाल SCH_TODO_EVAL:
+	/* Perform todo. */
+	switch (todo) {
+	case SCH_TODO_NOTHING:
+		break;
+	case SCH_TODO_EVAL:
 		ret = css_evaluate_known_subchannel(sch, 1);
-		अगर (ret == -EAGAIN) अणु
+		if (ret == -EAGAIN) {
 			spin_lock_irq(sch->lock);
-			css_sched_sch_toकरो(sch, toकरो);
+			css_sched_sch_todo(sch, todo);
 			spin_unlock_irq(sch->lock);
-		पूर्ण
-		अवरोध;
-	हाल SCH_TODO_UNREG:
-		css_sch_device_unरेजिस्टर(sch);
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	case SCH_TODO_UNREG:
+		css_sch_device_unregister(sch);
+		break;
+	}
 	/* Release workqueue ref. */
 	put_device(&sch->dev);
-पूर्ण
+}
 
-अटल काष्ठा idset *slow_subchannel_set;
-अटल DEFINE_SPINLOCK(slow_subchannel_lock);
-अटल DECLARE_WAIT_QUEUE_HEAD(css_eval_wq);
-अटल atomic_t css_eval_scheduled;
+static struct idset *slow_subchannel_set;
+static DEFINE_SPINLOCK(slow_subchannel_lock);
+static DECLARE_WAIT_QUEUE_HEAD(css_eval_wq);
+static atomic_t css_eval_scheduled;
 
-अटल पूर्णांक __init slow_subchannel_init(व्योम)
-अणु
+static int __init slow_subchannel_init(void)
+{
 	atomic_set(&css_eval_scheduled, 0);
 	slow_subchannel_set = idset_sch_new();
-	अगर (!slow_subchannel_set) अणु
+	if (!slow_subchannel_set) {
 		CIO_MSG_EVENT(0, "could not allocate slow subchannel set\n");
-		वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENOMEM;
+	}
+	return 0;
+}
 
-अटल पूर्णांक slow_eval_known_fn(काष्ठा subchannel *sch, व्योम *data)
-अणु
-	पूर्णांक eval;
-	पूर्णांक rc;
+static int slow_eval_known_fn(struct subchannel *sch, void *data)
+{
+	int eval;
+	int rc;
 
 	spin_lock_irq(&slow_subchannel_lock);
 	eval = idset_sch_contains(slow_subchannel_set, sch->schid);
 	idset_sch_del(slow_subchannel_set, sch->schid);
 	spin_unlock_irq(&slow_subchannel_lock);
-	अगर (eval) अणु
+	if (eval) {
 		rc = css_evaluate_known_subchannel(sch, 1);
-		अगर (rc == -EAGAIN)
+		if (rc == -EAGAIN)
 			css_schedule_eval(sch->schid);
 		/*
-		 * The loop might take दीर्घ समय क्रम platक्रमms with lots of
+		 * The loop might take long time for platforms with lots of
 		 * known devices. Allow scheduling here.
 		 */
 		cond_resched();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक slow_eval_unknown_fn(काष्ठा subchannel_id schid, व्योम *data)
-अणु
-	पूर्णांक eval;
-	पूर्णांक rc = 0;
+static int slow_eval_unknown_fn(struct subchannel_id schid, void *data)
+{
+	int eval;
+	int rc = 0;
 
 	spin_lock_irq(&slow_subchannel_lock);
 	eval = idset_sch_contains(slow_subchannel_set, schid);
 	idset_sch_del(slow_subchannel_set, schid);
 	spin_unlock_irq(&slow_subchannel_lock);
-	अगर (eval) अणु
+	if (eval) {
 		rc = css_evaluate_new_subchannel(schid, 1);
-		चयन (rc) अणु
-		हाल -EAGAIN:
+		switch (rc) {
+		case -EAGAIN:
 			css_schedule_eval(schid);
 			rc = 0;
-			अवरोध;
-		हाल -ENXIO:
-		हाल -ENOMEM:
-		हाल -EIO:
-			/* These should पात looping */
+			break;
+		case -ENXIO:
+		case -ENOMEM:
+		case -EIO:
+			/* These should abort looping */
 			spin_lock_irq(&slow_subchannel_lock);
 			idset_sch_del_subseq(slow_subchannel_set, schid);
 			spin_unlock_irq(&slow_subchannel_lock);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			rc = 0;
-		पूर्ण
+		}
 		/* Allow scheduling here since the containing loop might
-		 * take a जबतक.  */
+		 * take a while.  */
 		cond_resched();
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल व्योम css_slow_path_func(काष्ठा work_काष्ठा *unused)
-अणु
-	अचिन्हित दीर्घ flags;
+static void css_slow_path_func(struct work_struct *unused)
+{
+	unsigned long flags;
 
 	CIO_TRACE_EVENT(4, "slowpath");
-	क्रम_each_subchannel_staged(slow_eval_known_fn, slow_eval_unknown_fn,
-				   शून्य);
+	for_each_subchannel_staged(slow_eval_known_fn, slow_eval_unknown_fn,
+				   NULL);
 	spin_lock_irqsave(&slow_subchannel_lock, flags);
-	अगर (idset_is_empty(slow_subchannel_set)) अणु
+	if (idset_is_empty(slow_subchannel_set)) {
 		atomic_set(&css_eval_scheduled, 0);
 		wake_up(&css_eval_wq);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&slow_subchannel_lock, flags);
-पूर्ण
+}
 
-अटल DECLARE_DELAYED_WORK(slow_path_work, css_slow_path_func);
-काष्ठा workqueue_काष्ठा *cio_work_q;
+static DECLARE_DELAYED_WORK(slow_path_work, css_slow_path_func);
+struct workqueue_struct *cio_work_q;
 
-व्योम css_schedule_eval(काष्ठा subchannel_id schid)
-अणु
-	अचिन्हित दीर्घ flags;
+void css_schedule_eval(struct subchannel_id schid)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&slow_subchannel_lock, flags);
 	idset_sch_add(slow_subchannel_set, schid);
 	atomic_set(&css_eval_scheduled, 1);
 	queue_delayed_work(cio_work_q, &slow_path_work, 0);
 	spin_unlock_irqrestore(&slow_subchannel_lock, flags);
-पूर्ण
+}
 
-व्योम css_schedule_eval_all(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
+void css_schedule_eval_all(void)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&slow_subchannel_lock, flags);
 	idset_fill(slow_subchannel_set);
 	atomic_set(&css_eval_scheduled, 1);
 	queue_delayed_work(cio_work_q, &slow_path_work, 0);
 	spin_unlock_irqrestore(&slow_subchannel_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक __unset_रेजिस्टरed(काष्ठा device *dev, व्योम *data)
-अणु
-	काष्ठा idset *set = data;
-	काष्ठा subchannel *sch = to_subchannel(dev);
+static int __unset_registered(struct device *dev, void *data)
+{
+	struct idset *set = data;
+	struct subchannel *sch = to_subchannel(dev);
 
 	idset_sch_del(set, sch->schid);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम css_schedule_eval_all_unreg(अचिन्हित दीर्घ delay)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा idset *unreg_set;
+void css_schedule_eval_all_unreg(unsigned long delay)
+{
+	unsigned long flags;
+	struct idset *unreg_set;
 
-	/* Find unरेजिस्टरed subchannels. */
+	/* Find unregistered subchannels. */
 	unreg_set = idset_sch_new();
-	अगर (!unreg_set) अणु
+	if (!unreg_set) {
 		/* Fallback. */
 		css_schedule_eval_all();
-		वापस;
-	पूर्ण
+		return;
+	}
 	idset_fill(unreg_set);
-	bus_क्रम_each_dev(&css_bus_type, शून्य, unreg_set, __unset_रेजिस्टरed);
+	bus_for_each_dev(&css_bus_type, NULL, unreg_set, __unset_registered);
 	/* Apply to slow_subchannel_set. */
 	spin_lock_irqsave(&slow_subchannel_lock, flags);
 	idset_add_set(slow_subchannel_set, unreg_set);
 	atomic_set(&css_eval_scheduled, 1);
 	queue_delayed_work(cio_work_q, &slow_path_work, delay);
 	spin_unlock_irqrestore(&slow_subchannel_lock, flags);
-	idset_मुक्त(unreg_set);
-पूर्ण
+	idset_free(unreg_set);
+}
 
-व्योम css_रुको_क्रम_slow_path(व्योम)
-अणु
+void css_wait_for_slow_path(void)
+{
 	flush_workqueue(cio_work_q);
-पूर्ण
+}
 
-/* Schedule reprobing of all unरेजिस्टरed subchannels. */
-व्योम css_schedule_reprobe(व्योम)
-अणु
+/* Schedule reprobing of all unregistered subchannels. */
+void css_schedule_reprobe(void)
+{
 	/* Schedule with a delay to allow merging of subsequent calls. */
 	css_schedule_eval_all_unreg(1 * HZ);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(css_schedule_reprobe);
 
 /*
- * Called from the machine check handler क्रम subchannel report words.
+ * Called from the machine check handler for subchannel report words.
  */
-अटल व्योम css_process_crw(काष्ठा crw *crw0, काष्ठा crw *crw1, पूर्णांक overflow)
-अणु
-	काष्ठा subchannel_id mchk_schid;
-	काष्ठा subchannel *sch;
+static void css_process_crw(struct crw *crw0, struct crw *crw1, int overflow)
+{
+	struct subchannel_id mchk_schid;
+	struct subchannel *sch;
 
-	अगर (overflow) अणु
+	if (overflow) {
 		css_schedule_eval_all();
-		वापस;
-	पूर्ण
+		return;
+	}
 	CIO_CRW_EVENT(2, "CRW0 reports slct=%d, oflw=%d, "
 		      "chn=%d, rsc=%X, anc=%d, erc=%X, rsid=%X\n",
 		      crw0->slct, crw0->oflw, crw0->chn, crw0->rsc, crw0->anc,
 		      crw0->erc, crw0->rsid);
-	अगर (crw1)
+	if (crw1)
 		CIO_CRW_EVENT(2, "CRW1 reports slct=%d, oflw=%d, "
 			      "chn=%d, rsc=%X, anc=%d, erc=%X, rsid=%X\n",
 			      crw1->slct, crw1->oflw, crw1->chn, crw1->rsc,
 			      crw1->anc, crw1->erc, crw1->rsid);
 	init_subchannel_id(&mchk_schid);
 	mchk_schid.sch_no = crw0->rsid;
-	अगर (crw1)
+	if (crw1)
 		mchk_schid.ssid = (crw1->rsid >> 4) & 3;
 
-	अगर (crw0->erc == CRW_ERC_PMOD) अणु
+	if (crw0->erc == CRW_ERC_PMOD) {
 		sch = get_subchannel_by_schid(mchk_schid);
-		अगर (sch) अणु
+		if (sch) {
 			css_update_ssd_info(sch);
 			put_device(&sch->dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*
 	 * Since we are always presented with IPI in the CRW, we have to
-	 * use stsch() to find out अगर the subchannel in question has come
+	 * use stsch() to find out if the subchannel in question has come
 	 * or gone.
 	 */
 	css_evaluate_subchannel(mchk_schid, 0);
-पूर्ण
+}
 
-अटल व्योम __init
-css_generate_pgid(काष्ठा channel_subप्रणाली *css, u32 tod_high)
-अणु
-	काष्ठा cpuid cpu_id;
+static void __init
+css_generate_pgid(struct channel_subsystem *css, u32 tod_high)
+{
+	struct cpuid cpu_id;
 
-	अगर (css_general_अक्षरacteristics.mcss) अणु
+	if (css_general_characteristics.mcss) {
 		css->global_pgid.pgid_high.ext_cssid.version = 0x80;
 		css->global_pgid.pgid_high.ext_cssid.cssid =
 			css->id_valid ? css->cssid : 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		css->global_pgid.pgid_high.cpu_addr = stap();
-	पूर्ण
+	}
 	get_cpu_id(&cpu_id);
 	css->global_pgid.cpu_id = cpu_id.ident;
 	css->global_pgid.cpu_model = cpu_id.machine;
 	css->global_pgid.tod_high = tod_high;
-पूर्ण
+}
 
-अटल व्योम channel_subप्रणाली_release(काष्ठा device *dev)
-अणु
-	काष्ठा channel_subप्रणाली *css = to_css(dev);
+static void channel_subsystem_release(struct device *dev)
+{
+	struct channel_subsystem *css = to_css(dev);
 
 	mutex_destroy(&css->mutex);
-	kमुक्त(css);
-पूर्ण
+	kfree(css);
+}
 
-अटल sमाप_प्रकार real_cssid_show(काष्ठा device *dev, काष्ठा device_attribute *a,
-			       अक्षर *buf)
-अणु
-	काष्ठा channel_subप्रणाली *css = to_css(dev);
+static ssize_t real_cssid_show(struct device *dev, struct device_attribute *a,
+			       char *buf)
+{
+	struct channel_subsystem *css = to_css(dev);
 
-	अगर (!css->id_valid)
-		वापस -EINVAL;
+	if (!css->id_valid)
+		return -EINVAL;
 
-	वापस प्र_लिखो(buf, "%x\n", css->cssid);
-पूर्ण
-अटल DEVICE_ATTR_RO(real_cssid);
+	return sprintf(buf, "%x\n", css->cssid);
+}
+static DEVICE_ATTR_RO(real_cssid);
 
-अटल sमाप_प्रकार cm_enable_show(काष्ठा device *dev, काष्ठा device_attribute *a,
-			      अक्षर *buf)
-अणु
-	काष्ठा channel_subप्रणाली *css = to_css(dev);
-	पूर्णांक ret;
+static ssize_t cm_enable_show(struct device *dev, struct device_attribute *a,
+			      char *buf)
+{
+	struct channel_subsystem *css = to_css(dev);
+	int ret;
 
 	mutex_lock(&css->mutex);
-	ret = प्र_लिखो(buf, "%x\n", css->cm_enabled);
+	ret = sprintf(buf, "%x\n", css->cm_enabled);
 	mutex_unlock(&css->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार cm_enable_store(काष्ठा device *dev, काष्ठा device_attribute *a,
-			       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा channel_subप्रणाली *css = to_css(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
+static ssize_t cm_enable_store(struct device *dev, struct device_attribute *a,
+			       const char *buf, size_t count)
+{
+	struct channel_subsystem *css = to_css(dev);
+	unsigned long val;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 16, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 16, &val);
+	if (ret)
+		return ret;
 	mutex_lock(&css->mutex);
-	चयन (val) अणु
-	हाल 0:
+	switch (val) {
+	case 0:
 		ret = css->cm_enabled ? chsc_secm(css, 0) : 0;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		ret = css->cm_enabled ? 0 : chsc_secm(css, 1);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 	mutex_unlock(&css->mutex);
-	वापस ret < 0 ? ret : count;
-पूर्ण
-अटल DEVICE_ATTR_RW(cm_enable);
+	return ret < 0 ? ret : count;
+}
+static DEVICE_ATTR_RW(cm_enable);
 
-अटल umode_t cm_enable_mode(काष्ठा kobject *kobj, काष्ठा attribute *attr,
-			      पूर्णांक index)
-अणु
-	वापस css_chsc_अक्षरacteristics.secm ? attr->mode : 0;
-पूर्ण
+static umode_t cm_enable_mode(struct kobject *kobj, struct attribute *attr,
+			      int index)
+{
+	return css_chsc_characteristics.secm ? attr->mode : 0;
+}
 
-अटल काष्ठा attribute *cssdev_attrs[] = अणु
+static struct attribute *cssdev_attrs[] = {
 	&dev_attr_real_cssid.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group cssdev_attr_group = अणु
+static struct attribute_group cssdev_attr_group = {
 	.attrs = cssdev_attrs,
-पूर्ण;
+};
 
-अटल काष्ठा attribute *cssdev_cm_attrs[] = अणु
+static struct attribute *cssdev_cm_attrs[] = {
 	&dev_attr_cm_enable.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा attribute_group cssdev_cm_attr_group = अणु
+static struct attribute_group cssdev_cm_attr_group = {
 	.attrs = cssdev_cm_attrs,
 	.is_visible = cm_enable_mode,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *cssdev_attr_groups[] = अणु
+static const struct attribute_group *cssdev_attr_groups[] = {
 	&cssdev_attr_group,
 	&cssdev_cm_attr_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल पूर्णांक __init setup_css(पूर्णांक nr)
-अणु
-	काष्ठा channel_subप्रणाली *css;
-	पूर्णांक ret;
+static int __init setup_css(int nr)
+{
+	struct channel_subsystem *css;
+	int ret;
 
-	css = kzalloc(माप(*css), GFP_KERNEL);
-	अगर (!css)
-		वापस -ENOMEM;
+	css = kzalloc(sizeof(*css), GFP_KERNEL);
+	if (!css)
+		return -ENOMEM;
 
-	channel_subप्रणालीs[nr] = css;
+	channel_subsystems[nr] = css;
 	dev_set_name(&css->device, "css%x", nr);
 	css->device.groups = cssdev_attr_groups;
-	css->device.release = channel_subप्रणाली_release;
+	css->device.release = channel_subsystem_release;
 	/*
-	 * We currently allocate notअगरier bits with this (using
+	 * We currently allocate notifier bits with this (using
 	 * css->device as the device argument with the DMA API)
 	 * and are fine with 64 bit addresses.
 	 */
 	ret = dma_coerce_mask_and_coherent(&css->device, DMA_BIT_MASK(64));
-	अगर (ret) अणु
-		kमुक्त(css);
-		जाओ out_err;
-	पूर्ण
+	if (ret) {
+		kfree(css);
+		goto out_err;
+	}
 
 	mutex_init(&css->mutex);
 	ret = chsc_get_cssid_iid(nr, &css->cssid, &css->iid);
-	अगर (!ret) अणु
+	if (!ret) {
 		css->id_valid = true;
 		pr_info("Partition identifier %01x.%01x\n", css->cssid,
 			css->iid);
-	पूर्ण
-	css_generate_pgid(css, (u32) (get_tod_घड़ी() >> 32));
+	}
+	css_generate_pgid(css, (u32) (get_tod_clock() >> 32));
 
-	ret = device_रेजिस्टर(&css->device);
-	अगर (ret) अणु
+	ret = device_register(&css->device);
+	if (ret) {
 		put_device(&css->device);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	css->pseuकरो_subchannel = kzalloc(माप(*css->pseuकरो_subchannel),
+	css->pseudo_subchannel = kzalloc(sizeof(*css->pseudo_subchannel),
 					 GFP_KERNEL);
-	अगर (!css->pseuकरो_subchannel) अणु
-		device_unरेजिस्टर(&css->device);
+	if (!css->pseudo_subchannel) {
+		device_unregister(&css->device);
 		ret = -ENOMEM;
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	css->pseuकरो_subchannel->dev.parent = &css->device;
-	css->pseuकरो_subchannel->dev.release = css_subchannel_release;
-	mutex_init(&css->pseuकरो_subchannel->reg_mutex);
-	ret = css_sch_create_locks(css->pseuकरो_subchannel);
-	अगर (ret) अणु
-		kमुक्त(css->pseuकरो_subchannel);
-		device_unरेजिस्टर(&css->device);
-		जाओ out_err;
-	पूर्ण
+	css->pseudo_subchannel->dev.parent = &css->device;
+	css->pseudo_subchannel->dev.release = css_subchannel_release;
+	mutex_init(&css->pseudo_subchannel->reg_mutex);
+	ret = css_sch_create_locks(css->pseudo_subchannel);
+	if (ret) {
+		kfree(css->pseudo_subchannel);
+		device_unregister(&css->device);
+		goto out_err;
+	}
 
-	dev_set_name(&css->pseuकरो_subchannel->dev, "defunct");
-	ret = device_रेजिस्टर(&css->pseuकरो_subchannel->dev);
-	अगर (ret) अणु
-		put_device(&css->pseuकरो_subchannel->dev);
-		device_unरेजिस्टर(&css->device);
-		जाओ out_err;
-	पूर्ण
+	dev_set_name(&css->pseudo_subchannel->dev, "defunct");
+	ret = device_register(&css->pseudo_subchannel->dev);
+	if (ret) {
+		put_device(&css->pseudo_subchannel->dev);
+		device_unregister(&css->device);
+		goto out_err;
+	}
 
-	वापस ret;
+	return ret;
 out_err:
-	channel_subप्रणालीs[nr] = शून्य;
-	वापस ret;
-पूर्ण
+	channel_subsystems[nr] = NULL;
+	return ret;
+}
 
-अटल पूर्णांक css_reboot_event(काष्ठा notअगरier_block *this,
-			    अचिन्हित दीर्घ event,
-			    व्योम *ptr)
-अणु
-	काष्ठा channel_subप्रणाली *css;
-	पूर्णांक ret;
+static int css_reboot_event(struct notifier_block *this,
+			    unsigned long event,
+			    void *ptr)
+{
+	struct channel_subsystem *css;
+	int ret;
 
 	ret = NOTIFY_DONE;
-	क्रम_each_css(css) अणु
+	for_each_css(css) {
 		mutex_lock(&css->mutex);
-		अगर (css->cm_enabled)
-			अगर (chsc_secm(css, 0))
+		if (css->cm_enabled)
+			if (chsc_secm(css, 0))
 				ret = NOTIFY_BAD;
 		mutex_unlock(&css->mutex);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा notअगरier_block css_reboot_notअगरier = अणु
-	.notअगरier_call = css_reboot_event,
-पूर्ण;
+static struct notifier_block css_reboot_notifier = {
+	.notifier_call = css_reboot_event,
+};
 
-#घोषणा  CIO_DMA_GFP (GFP_KERNEL | __GFP_ZERO)
-अटल काष्ठा gen_pool *cio_dma_pool;
+#define  CIO_DMA_GFP (GFP_KERNEL | __GFP_ZERO)
+static struct gen_pool *cio_dma_pool;
 
 /* Currently cio supports only a single css */
-काष्ठा device *cio_get_dma_css_dev(व्योम)
-अणु
-	वापस &channel_subप्रणालीs[0]->device;
-पूर्ण
+struct device *cio_get_dma_css_dev(void)
+{
+	return &channel_subsystems[0]->device;
+}
 
-काष्ठा gen_pool *cio_gp_dma_create(काष्ठा device *dma_dev, पूर्णांक nr_pages)
-अणु
-	काष्ठा gen_pool *gp_dma;
-	व्योम *cpu_addr;
+struct gen_pool *cio_gp_dma_create(struct device *dma_dev, int nr_pages)
+{
+	struct gen_pool *gp_dma;
+	void *cpu_addr;
 	dma_addr_t dma_addr;
-	पूर्णांक i;
+	int i;
 
 	gp_dma = gen_pool_create(3, -1);
-	अगर (!gp_dma)
-		वापस शून्य;
-	क्रम (i = 0; i < nr_pages; ++i) अणु
+	if (!gp_dma)
+		return NULL;
+	for (i = 0; i < nr_pages; ++i) {
 		cpu_addr = dma_alloc_coherent(dma_dev, PAGE_SIZE, &dma_addr,
 					      CIO_DMA_GFP);
-		अगर (!cpu_addr)
-			वापस gp_dma;
-		gen_pool_add_virt(gp_dma, (अचिन्हित दीर्घ) cpu_addr,
+		if (!cpu_addr)
+			return gp_dma;
+		gen_pool_add_virt(gp_dma, (unsigned long) cpu_addr,
 				  dma_addr, PAGE_SIZE, -1);
-	पूर्ण
-	वापस gp_dma;
-पूर्ण
+	}
+	return gp_dma;
+}
 
-अटल व्योम __gp_dma_मुक्त_dma(काष्ठा gen_pool *pool,
-			      काष्ठा gen_pool_chunk *chunk, व्योम *data)
-अणु
-	माप_प्रकार chunk_size = chunk->end_addr - chunk->start_addr + 1;
+static void __gp_dma_free_dma(struct gen_pool *pool,
+			      struct gen_pool_chunk *chunk, void *data)
+{
+	size_t chunk_size = chunk->end_addr - chunk->start_addr + 1;
 
-	dma_मुक्त_coherent((काष्ठा device *) data, chunk_size,
-			 (व्योम *) chunk->start_addr,
+	dma_free_coherent((struct device *) data, chunk_size,
+			 (void *) chunk->start_addr,
 			 (dma_addr_t) chunk->phys_addr);
-पूर्ण
+}
 
-व्योम cio_gp_dma_destroy(काष्ठा gen_pool *gp_dma, काष्ठा device *dma_dev)
-अणु
-	अगर (!gp_dma)
-		वापस;
+void cio_gp_dma_destroy(struct gen_pool *gp_dma, struct device *dma_dev)
+{
+	if (!gp_dma)
+		return;
 	/* this is quite ugly but no better idea */
-	gen_pool_क्रम_each_chunk(gp_dma, __gp_dma_मुक्त_dma, dma_dev);
+	gen_pool_for_each_chunk(gp_dma, __gp_dma_free_dma, dma_dev);
 	gen_pool_destroy(gp_dma);
-पूर्ण
+}
 
-अटल पूर्णांक cio_dma_pool_init(व्योम)
-अणु
-	/* No need to मुक्त up the resources: compiled in */
+static int cio_dma_pool_init(void)
+{
+	/* No need to free up the resources: compiled in */
 	cio_dma_pool = cio_gp_dma_create(cio_get_dma_css_dev(), 1);
-	अगर (!cio_dma_pool)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	if (!cio_dma_pool)
+		return -ENOMEM;
+	return 0;
+}
 
-व्योम *cio_gp_dma_zalloc(काष्ठा gen_pool *gp_dma, काष्ठा device *dma_dev,
-			माप_प्रकार size)
-अणु
+void *cio_gp_dma_zalloc(struct gen_pool *gp_dma, struct device *dma_dev,
+			size_t size)
+{
 	dma_addr_t dma_addr;
-	अचिन्हित दीर्घ addr;
-	माप_प्रकार chunk_size;
+	unsigned long addr;
+	size_t chunk_size;
 
-	अगर (!gp_dma)
-		वापस शून्य;
+	if (!gp_dma)
+		return NULL;
 	addr = gen_pool_alloc(gp_dma, size);
-	जबतक (!addr) अणु
+	while (!addr) {
 		chunk_size = round_up(size, PAGE_SIZE);
-		addr = (अचिन्हित दीर्घ) dma_alloc_coherent(dma_dev,
+		addr = (unsigned long) dma_alloc_coherent(dma_dev,
 					 chunk_size, &dma_addr, CIO_DMA_GFP);
-		अगर (!addr)
-			वापस शून्य;
+		if (!addr)
+			return NULL;
 		gen_pool_add_virt(gp_dma, addr, dma_addr, chunk_size, -1);
 		addr = gen_pool_alloc(gp_dma, size);
-	पूर्ण
-	वापस (व्योम *) addr;
-पूर्ण
+	}
+	return (void *) addr;
+}
 
-व्योम cio_gp_dma_मुक्त(काष्ठा gen_pool *gp_dma, व्योम *cpu_addr, माप_प्रकार size)
-अणु
-	अगर (!cpu_addr)
-		वापस;
-	स_रखो(cpu_addr, 0, size);
-	gen_pool_मुक्त(gp_dma, (अचिन्हित दीर्घ) cpu_addr, size);
-पूर्ण
+void cio_gp_dma_free(struct gen_pool *gp_dma, void *cpu_addr, size_t size)
+{
+	if (!cpu_addr)
+		return;
+	memset(cpu_addr, 0, size);
+	gen_pool_free(gp_dma, (unsigned long) cpu_addr, size);
+}
 
 /*
- * Allocate dma memory from the css global pool. Intended क्रम memory not
- * specअगरic to any single device within the css. The allocated memory
+ * Allocate dma memory from the css global pool. Intended for memory not
+ * specific to any single device within the css. The allocated memory
  * is not guaranteed to be 31-bit addressable.
  *
- * Caution: Not suitable क्रम early stuff like console.
+ * Caution: Not suitable for early stuff like console.
  */
-व्योम *cio_dma_zalloc(माप_प्रकार size)
-अणु
-	वापस cio_gp_dma_zalloc(cio_dma_pool, cio_get_dma_css_dev(), size);
-पूर्ण
+void *cio_dma_zalloc(size_t size)
+{
+	return cio_gp_dma_zalloc(cio_dma_pool, cio_get_dma_css_dev(), size);
+}
 
-व्योम cio_dma_मुक्त(व्योम *cpu_addr, माप_प्रकार size)
-अणु
-	cio_gp_dma_मुक्त(cio_dma_pool, cpu_addr, size);
-पूर्ण
+void cio_dma_free(void *cpu_addr, size_t size)
+{
+	cio_gp_dma_free(cio_dma_pool, cpu_addr, size);
+}
 
 /*
- * Now that the driver core is running, we can setup our channel subप्रणाली.
- * The काष्ठा subchannel's are created during probing.
+ * Now that the driver core is running, we can setup our channel subsystem.
+ * The struct subchannel's are created during probing.
  */
-अटल पूर्णांक __init css_bus_init(व्योम)
-अणु
-	पूर्णांक ret, i;
+static int __init css_bus_init(void)
+{
+	int ret, i;
 
 	ret = chsc_init();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	chsc_determine_css_अक्षरacteristics();
+	chsc_determine_css_characteristics();
 	/* Try to enable MSS. */
 	ret = chsc_enable_facility(CHSC_SDA_OC_MSS);
-	अगर (ret)
+	if (ret)
 		max_ssid = 0;
-	अन्यथा /* Success. */
+	else /* Success. */
 		max_ssid = __MAX_SSID;
 
 	ret = slow_subchannel_init();
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = crw_रेजिस्टर_handler(CRW_RSC_SCH, css_process_crw);
-	अगर (ret)
-		जाओ out;
+	ret = crw_register_handler(CRW_RSC_SCH, css_process_crw);
+	if (ret)
+		goto out;
 
-	अगर ((ret = bus_रेजिस्टर(&css_bus_type)))
-		जाओ out;
+	if ((ret = bus_register(&css_bus_type)))
+		goto out;
 
-	/* Setup css काष्ठाure. */
-	क्रम (i = 0; i <= MAX_CSS_IDX; i++) अणु
+	/* Setup css structure. */
+	for (i = 0; i <= MAX_CSS_IDX; i++) {
 		ret = setup_css(i);
-		अगर (ret)
-			जाओ out_unरेजिस्टर;
-	पूर्ण
-	ret = रेजिस्टर_reboot_notअगरier(&css_reboot_notअगरier);
-	अगर (ret)
-		जाओ out_unरेजिस्टर;
+		if (ret)
+			goto out_unregister;
+	}
+	ret = register_reboot_notifier(&css_reboot_notifier);
+	if (ret)
+		goto out_unregister;
 	ret = cio_dma_pool_init();
-	अगर (ret)
-		जाओ out_unरेजिस्टर_rn;
+	if (ret)
+		goto out_unregister_rn;
 	airq_init();
-	css_init_करोne = 1;
+	css_init_done = 1;
 
-	/* Enable शेष isc क्रम I/O subchannels. */
-	isc_रेजिस्टर(IO_SCH_ISC);
+	/* Enable default isc for I/O subchannels. */
+	isc_register(IO_SCH_ISC);
 
-	वापस 0;
-out_unरेजिस्टर_rn:
-	unरेजिस्टर_reboot_notअगरier(&css_reboot_notअगरier);
-out_unरेजिस्टर:
-	जबतक (i-- > 0) अणु
-		काष्ठा channel_subप्रणाली *css = channel_subप्रणालीs[i];
-		device_unरेजिस्टर(&css->pseuकरो_subchannel->dev);
-		device_unरेजिस्टर(&css->device);
-	पूर्ण
-	bus_unरेजिस्टर(&css_bus_type);
+	return 0;
+out_unregister_rn:
+	unregister_reboot_notifier(&css_reboot_notifier);
+out_unregister:
+	while (i-- > 0) {
+		struct channel_subsystem *css = channel_subsystems[i];
+		device_unregister(&css->pseudo_subchannel->dev);
+		device_unregister(&css->device);
+	}
+	bus_unregister(&css_bus_type);
 out:
-	crw_unरेजिस्टर_handler(CRW_RSC_SCH);
-	idset_मुक्त(slow_subchannel_set);
+	crw_unregister_handler(CRW_RSC_SCH);
+	idset_free(slow_subchannel_set);
 	chsc_init_cleanup();
 	pr_alert("The CSS device driver initialization failed with "
 		 "errno=%d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __init css_bus_cleanup(व्योम)
-अणु
-	काष्ठा channel_subप्रणाली *css;
+static void __init css_bus_cleanup(void)
+{
+	struct channel_subsystem *css;
 
-	क्रम_each_css(css) अणु
-		device_unरेजिस्टर(&css->pseuकरो_subchannel->dev);
-		device_unरेजिस्टर(&css->device);
-	पूर्ण
-	bus_unरेजिस्टर(&css_bus_type);
-	crw_unरेजिस्टर_handler(CRW_RSC_SCH);
-	idset_मुक्त(slow_subchannel_set);
+	for_each_css(css) {
+		device_unregister(&css->pseudo_subchannel->dev);
+		device_unregister(&css->device);
+	}
+	bus_unregister(&css_bus_type);
+	crw_unregister_handler(CRW_RSC_SCH);
+	idset_free(slow_subchannel_set);
 	chsc_init_cleanup();
-	isc_unरेजिस्टर(IO_SCH_ISC);
-पूर्ण
+	isc_unregister(IO_SCH_ISC);
+}
 
-अटल पूर्णांक __init channel_subप्रणाली_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init channel_subsystem_init(void)
+{
+	int ret;
 
 	ret = css_bus_init();
-	अगर (ret)
-		वापस ret;
-	cio_work_q = create_singlethपढ़ो_workqueue("cio");
-	अगर (!cio_work_q) अणु
+	if (ret)
+		return ret;
+	cio_work_q = create_singlethread_workqueue("cio");
+	if (!cio_work_q) {
 		ret = -ENOMEM;
-		जाओ out_bus;
-	पूर्ण
+		goto out_bus;
+	}
 	ret = io_subchannel_init();
-	अगर (ret)
-		जाओ out_wq;
+	if (ret)
+		goto out_wq;
 
-	/* Register subchannels which are alपढ़ोy in use. */
-	cio_रेजिस्टर_early_subchannels();
+	/* Register subchannels which are already in use. */
+	cio_register_early_subchannels();
 	/* Start initial subchannel evaluation. */
 	css_schedule_eval_all();
 
-	वापस ret;
+	return ret;
 out_wq:
 	destroy_workqueue(cio_work_q);
 out_bus:
 	css_bus_cleanup();
-	वापस ret;
-पूर्ण
-subsys_initcall(channel_subप्रणाली_init);
+	return ret;
+}
+subsys_initcall(channel_subsystem_init);
 
-अटल पूर्णांक css_settle(काष्ठा device_driver *drv, व्योम *unused)
-अणु
-	काष्ठा css_driver *cssdrv = to_cssdriver(drv);
+static int css_settle(struct device_driver *drv, void *unused)
+{
+	struct css_driver *cssdrv = to_cssdriver(drv);
 
-	अगर (cssdrv->settle)
-		वापस cssdrv->settle();
-	वापस 0;
-पूर्ण
+	if (cssdrv->settle)
+		return cssdrv->settle();
+	return 0;
+}
 
-पूर्णांक css_complete_work(व्योम)
-अणु
-	पूर्णांक ret;
+int css_complete_work(void)
+{
+	int ret;
 
-	/* Wait क्रम the evaluation of subchannels to finish. */
-	ret = रुको_event_पूर्णांकerruptible(css_eval_wq,
-				       atomic_पढ़ो(&css_eval_scheduled) == 0);
-	अगर (ret)
-		वापस -EINTR;
+	/* Wait for the evaluation of subchannels to finish. */
+	ret = wait_event_interruptible(css_eval_wq,
+				       atomic_read(&css_eval_scheduled) == 0);
+	if (ret)
+		return -EINTR;
 	flush_workqueue(cio_work_q);
-	/* Wait क्रम the subchannel type specअगरic initialization to finish */
-	वापस bus_क्रम_each_drv(&css_bus_type, शून्य, शून्य, css_settle);
-पूर्ण
+	/* Wait for the subchannel type specific initialization to finish */
+	return bus_for_each_drv(&css_bus_type, NULL, NULL, css_settle);
+}
 
 
 /*
- * Wait क्रम the initialization of devices to finish, to make sure we are
- * करोne with our setup अगर the search क्रम the root device starts.
+ * Wait for the initialization of devices to finish, to make sure we are
+ * done with our setup if the search for the root device starts.
  */
-अटल पूर्णांक __init channel_subप्रणाली_init_sync(व्योम)
-अणु
+static int __init channel_subsystem_init_sync(void)
+{
 	css_complete_work();
-	वापस 0;
-पूर्ण
-subsys_initcall_sync(channel_subप्रणाली_init_sync);
+	return 0;
+}
+subsys_initcall_sync(channel_subsystem_init_sync);
 
-#अगर_घोषित CONFIG_PROC_FS
-अटल sमाप_प्रकार cio_settle_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-				माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक ret;
+#ifdef CONFIG_PROC_FS
+static ssize_t cio_settle_write(struct file *file, const char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	int ret;
 
 	/* Handle pending CRW's. */
-	crw_रुको_क्रम_channel_report();
+	crw_wait_for_channel_report();
 	ret = css_complete_work();
 
-	वापस ret ? ret : count;
-पूर्ण
+	return ret ? ret : count;
+}
 
-अटल स्थिर काष्ठा proc_ops cio_settle_proc_ops = अणु
-	.proc_खोलो	= nonseekable_खोलो,
-	.proc_ग_लिखो	= cio_settle_ग_लिखो,
+static const struct proc_ops cio_settle_proc_ops = {
+	.proc_open	= nonseekable_open,
+	.proc_write	= cio_settle_write,
 	.proc_lseek	= no_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cio_settle_init(व्योम)
-अणु
-	काष्ठा proc_dir_entry *entry;
+static int __init cio_settle_init(void)
+{
+	struct proc_dir_entry *entry;
 
-	entry = proc_create("cio_settle", S_IWUSR, शून्य, &cio_settle_proc_ops);
-	अगर (!entry)
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+	entry = proc_create("cio_settle", S_IWUSR, NULL, &cio_settle_proc_ops);
+	if (!entry)
+		return -ENOMEM;
+	return 0;
+}
 device_initcall(cio_settle_init);
-#पूर्ण_अगर /*CONFIG_PROC_FS*/
+#endif /*CONFIG_PROC_FS*/
 
-पूर्णांक sch_is_pseuकरो_sch(काष्ठा subchannel *sch)
-अणु
-	अगर (!sch->dev.parent)
-		वापस 0;
-	वापस sch == to_css(sch->dev.parent)->pseuकरो_subchannel;
-पूर्ण
+int sch_is_pseudo_sch(struct subchannel *sch)
+{
+	if (!sch->dev.parent)
+		return 0;
+	return sch == to_css(sch->dev.parent)->pseudo_subchannel;
+}
 
-अटल पूर्णांक css_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	काष्ठा css_driver *driver = to_cssdriver(drv);
-	काष्ठा css_device_id *id;
+static int css_bus_match(struct device *dev, struct device_driver *drv)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	struct css_driver *driver = to_cssdriver(drv);
+	struct css_device_id *id;
 
 	/* When driver_override is set, only bind to the matching driver */
-	अगर (sch->driver_override && म_भेद(sch->driver_override, drv->name))
-		वापस 0;
+	if (sch->driver_override && strcmp(sch->driver_override, drv->name))
+		return 0;
 
-	क्रम (id = driver->subchannel_type; id->match_flags; id++) अणु
-		अगर (sch->st == id->type)
-			वापस 1;
-	पूर्ण
+	for (id = driver->subchannel_type; id->match_flags; id++) {
+		if (sch->st == id->type)
+			return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक css_probe(काष्ठा device *dev)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
+static int css_probe(struct device *dev)
+{
+	struct subchannel *sch;
+	int ret;
 
 	sch = to_subchannel(dev);
 	sch->driver = to_cssdriver(dev->driver);
 	ret = sch->driver->probe ? sch->driver->probe(sch) : 0;
-	अगर (ret)
-		sch->driver = शून्य;
-	वापस ret;
-पूर्ण
+	if (ret)
+		sch->driver = NULL;
+	return ret;
+}
 
-अटल पूर्णांक css_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा subchannel *sch;
-	पूर्णांक ret;
-
-	sch = to_subchannel(dev);
-	ret = sch->driver->हटाओ ? sch->driver->हटाओ(sch) : 0;
-	sch->driver = शून्य;
-	वापस ret;
-पूर्ण
-
-अटल व्योम css_shutकरोwn(काष्ठा device *dev)
-अणु
-	काष्ठा subchannel *sch;
+static int css_remove(struct device *dev)
+{
+	struct subchannel *sch;
+	int ret;
 
 	sch = to_subchannel(dev);
-	अगर (sch->driver && sch->driver->shutकरोwn)
-		sch->driver->shutकरोwn(sch);
-पूर्ण
+	ret = sch->driver->remove ? sch->driver->remove(sch) : 0;
+	sch->driver = NULL;
+	return ret;
+}
 
-अटल पूर्णांक css_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(dev);
-	पूर्णांक ret;
+static void css_shutdown(struct device *dev)
+{
+	struct subchannel *sch;
+
+	sch = to_subchannel(dev);
+	if (sch->driver && sch->driver->shutdown)
+		sch->driver->shutdown(sch);
+}
+
+static int css_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct subchannel *sch = to_subchannel(dev);
+	int ret;
 
 	ret = add_uevent_var(env, "ST=%01X", sch->st);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	ret = add_uevent_var(env, "MODALIAS=css:t%01X", sch->st);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा bus_type css_bus_type = अणु
+static struct bus_type css_bus_type = {
 	.name     = "css",
 	.match    = css_bus_match,
 	.probe    = css_probe,
-	.हटाओ   = css_हटाओ,
-	.shutकरोwn = css_shutकरोwn,
+	.remove   = css_remove,
+	.shutdown = css_shutdown,
 	.uevent   = css_uevent,
-पूर्ण;
+};
 
 /**
- * css_driver_रेजिस्टर - रेजिस्टर a css driver
- * @cdrv: css driver to रेजिस्टर
+ * css_driver_register - register a css driver
+ * @cdrv: css driver to register
  *
- * This is मुख्यly a wrapper around driver_रेजिस्टर that sets name
- * and bus_type in the embedded काष्ठा device_driver correctly.
+ * This is mainly a wrapper around driver_register that sets name
+ * and bus_type in the embedded struct device_driver correctly.
  */
-पूर्णांक css_driver_रेजिस्टर(काष्ठा css_driver *cdrv)
-अणु
+int css_driver_register(struct css_driver *cdrv)
+{
 	cdrv->drv.bus = &css_bus_type;
-	वापस driver_रेजिस्टर(&cdrv->drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(css_driver_रेजिस्टर);
+	return driver_register(&cdrv->drv);
+}
+EXPORT_SYMBOL_GPL(css_driver_register);
 
 /**
- * css_driver_unरेजिस्टर - unरेजिस्टर a css driver
- * @cdrv: css driver to unरेजिस्टर
+ * css_driver_unregister - unregister a css driver
+ * @cdrv: css driver to unregister
  *
- * This is a wrapper around driver_unरेजिस्टर.
+ * This is a wrapper around driver_unregister.
  */
-व्योम css_driver_unरेजिस्टर(काष्ठा css_driver *cdrv)
-अणु
-	driver_unरेजिस्टर(&cdrv->drv);
-पूर्ण
-EXPORT_SYMBOL_GPL(css_driver_unरेजिस्टर);
+void css_driver_unregister(struct css_driver *cdrv)
+{
+	driver_unregister(&cdrv->drv);
+}
+EXPORT_SYMBOL_GPL(css_driver_unregister);

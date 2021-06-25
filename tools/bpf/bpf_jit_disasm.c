@@ -1,330 +1,329 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Minimal BPF JIT image disassembler
  *
- * Disassembles BPF JIT compiler emitted opcodes back to यंत्र insn's क्रम
- * debugging or verअगरication purposes.
+ * Disassembles BPF JIT compiler emitted opcodes back to asm insn's for
+ * debugging or verification purposes.
  *
- * To get the disassembly of the JIT code, करो the following:
+ * To get the disassembly of the JIT code, do the following:
  *
  *  1) `echo 2 > /proc/sys/net/core/bpf_jit_enable`
  *  2) Load a BPF filter (e.g. `tcpdump -p -n -s 0 -i eth1 host 192.168.20.0/24`)
- *  3) Run e.g. `bpf_jit_disयंत्र -o` to पढ़ो out the last JIT code
+ *  3) Run e.g. `bpf_jit_disasm -o` to read out the last JIT code
  *
  * Copyright 2013 Daniel Borkmann <borkmann@redhat.com>
  */
 
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <निश्चित.स>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <bfd.h>
-#समावेश <dis-यंत्र.h>
-#समावेश <regex.h>
-#समावेश <fcntl.h>
-#समावेश <sys/klog.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <सीमा.स>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <unistd.h>
+#include <string.h>
+#include <bfd.h>
+#include <dis-asm.h>
+#include <regex.h>
+#include <fcntl.h>
+#include <sys/klog.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <limits.h>
 
-#घोषणा CMD_ACTION_SIZE_BUFFER		10
-#घोषणा CMD_ACTION_READ_ALL		3
+#define CMD_ACTION_SIZE_BUFFER		10
+#define CMD_ACTION_READ_ALL		3
 
-अटल व्योम get_exec_path(अक्षर *tpath, माप_प्रकार size)
-अणु
-	अक्षर *path;
-	sमाप_प्रकार len;
+static void get_exec_path(char *tpath, size_t size)
+{
+	char *path;
+	ssize_t len;
 
-	snम_लिखो(tpath, size, "/proc/%d/exe", (पूर्णांक) getpid());
+	snprintf(tpath, size, "/proc/%d/exe", (int) getpid());
 	tpath[size - 1] = 0;
 
 	path = strdup(tpath);
-	निश्चित(path);
+	assert(path);
 
-	len = पढ़ोlink(path, tpath, size);
+	len = readlink(path, tpath, size);
 	tpath[len] = 0;
 
-	मुक्त(path);
-पूर्ण
+	free(path);
+}
 
-अटल व्योम get_यंत्र_insns(uपूर्णांक8_t *image, माप_प्रकार len, पूर्णांक opcodes)
-अणु
-	पूर्णांक count, i, pc = 0;
-	अक्षर tpath[PATH_MAX];
-	काष्ठा disassemble_info info;
+static void get_asm_insns(uint8_t *image, size_t len, int opcodes)
+{
+	int count, i, pc = 0;
+	char tpath[PATH_MAX];
+	struct disassemble_info info;
 	disassembler_ftype disassemble;
 	bfd *bfdf;
 
-	स_रखो(tpath, 0, माप(tpath));
-	get_exec_path(tpath, माप(tpath));
+	memset(tpath, 0, sizeof(tpath));
+	get_exec_path(tpath, sizeof(tpath));
 
-	bfdf = bfd_खोलोr(tpath, शून्य);
-	निश्चित(bfdf);
-	निश्चित(bfd_check_क्रमmat(bfdf, bfd_object));
+	bfdf = bfd_openr(tpath, NULL);
+	assert(bfdf);
+	assert(bfd_check_format(bfdf, bfd_object));
 
-	init_disassemble_info(&info, मानक_निकास, (ख_लिखो_ftype) ख_लिखो);
+	init_disassemble_info(&info, stdout, (fprintf_ftype) fprintf);
 	info.arch = bfd_get_arch(bfdf);
 	info.mach = bfd_get_mach(bfdf);
 	info.buffer = image;
 	info.buffer_length = len;
 
-	disassemble_init_क्रम_target(&info);
+	disassemble_init_for_target(&info);
 
-#अगर_घोषित DISASM_FOUR_ARGS_SIGNATURE
+#ifdef DISASM_FOUR_ARGS_SIGNATURE
 	disassemble = disassembler(info.arch,
 				   bfd_big_endian(bfdf),
 				   info.mach,
 				   bfdf);
-#अन्यथा
+#else
 	disassemble = disassembler(bfdf);
-#पूर्ण_अगर
-	निश्चित(disassemble);
+#endif
+	assert(disassemble);
 
-	करो अणु
-		म_लिखो("%4x:\t", pc);
+	do {
+		printf("%4x:\t", pc);
 
 		count = disassemble(pc, &info);
 
-		अगर (opcodes) अणु
-			म_लिखो("\n\t");
-			क्रम (i = 0; i < count; ++i)
-				म_लिखो("%02x ", (uपूर्णांक8_t) image[pc + i]);
-		पूर्ण
-		म_लिखो("\n");
+		if (opcodes) {
+			printf("\n\t");
+			for (i = 0; i < count; ++i)
+				printf("%02x ", (uint8_t) image[pc + i]);
+		}
+		printf("\n");
 
 		pc += count;
-	पूर्ण जबतक(count > 0 && pc < len);
+	} while(count > 0 && pc < len);
 
-	bfd_बंद(bfdf);
-पूर्ण
+	bfd_close(bfdf);
+}
 
-अटल अक्षर *get_klog_buff(अचिन्हित पूर्णांक *klen)
-अणु
-	पूर्णांक ret, len;
-	अक्षर *buff;
+static char *get_klog_buff(unsigned int *klen)
+{
+	int ret, len;
+	char *buff;
 
-	len = klogctl(CMD_ACTION_SIZE_BUFFER, शून्य, 0);
-	अगर (len < 0)
-		वापस शून्य;
+	len = klogctl(CMD_ACTION_SIZE_BUFFER, NULL, 0);
+	if (len < 0)
+		return NULL;
 
-	buff = दो_स्मृति(len);
-	अगर (!buff)
-		वापस शून्य;
+	buff = malloc(len);
+	if (!buff)
+		return NULL;
 
 	ret = klogctl(CMD_ACTION_READ_ALL, buff, len);
-	अगर (ret < 0) अणु
-		मुक्त(buff);
-		वापस शून्य;
-	पूर्ण
+	if (ret < 0) {
+		free(buff);
+		return NULL;
+	}
 
 	*klen = ret;
-	वापस buff;
-पूर्ण
+	return buff;
+}
 
-अटल अक्षर *get_flog_buff(स्थिर अक्षर *file, अचिन्हित पूर्णांक *klen)
-अणु
-	पूर्णांक fd, ret, len;
-	काष्ठा stat fi;
-	अक्षर *buff;
+static char *get_flog_buff(const char *file, unsigned int *klen)
+{
+	int fd, ret, len;
+	struct stat fi;
+	char *buff;
 
-	fd = खोलो(file, O_RDONLY);
-	अगर (fd < 0)
-		वापस शून्य;
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return NULL;
 
-	ret = ख_स्थिति(fd, &fi);
-	अगर (ret < 0 || !S_ISREG(fi.st_mode))
-		जाओ out;
+	ret = fstat(fd, &fi);
+	if (ret < 0 || !S_ISREG(fi.st_mode))
+		goto out;
 
 	len = fi.st_size + 1;
-	buff = दो_स्मृति(len);
-	अगर (!buff)
-		जाओ out;
+	buff = malloc(len);
+	if (!buff)
+		goto out;
 
-	स_रखो(buff, 0, len);
-	ret = पढ़ो(fd, buff, len - 1);
-	अगर (ret <= 0)
-		जाओ out_मुक्त;
+	memset(buff, 0, len);
+	ret = read(fd, buff, len - 1);
+	if (ret <= 0)
+		goto out_free;
 
-	बंद(fd);
+	close(fd);
 	*klen = ret;
-	वापस buff;
-out_मुक्त:
-	मुक्त(buff);
+	return buff;
+out_free:
+	free(buff);
 out:
-	बंद(fd);
-	वापस शून्य;
-पूर्ण
+	close(fd);
+	return NULL;
+}
 
-अटल अक्षर *get_log_buff(स्थिर अक्षर *file, अचिन्हित पूर्णांक *klen)
-अणु
-	वापस file ? get_flog_buff(file, klen) : get_klog_buff(klen);
-पूर्ण
+static char *get_log_buff(const char *file, unsigned int *klen)
+{
+	return file ? get_flog_buff(file, klen) : get_klog_buff(klen);
+}
 
-अटल व्योम put_log_buff(अक्षर *buff)
-अणु
-	मुक्त(buff);
-पूर्ण
+static void put_log_buff(char *buff)
+{
+	free(buff);
+}
 
-अटल uपूर्णांक8_t *get_last_jit_image(अक्षर *haystack, माप_प्रकार hlen,
-				   अचिन्हित पूर्णांक *ilen)
-अणु
-	अक्षर *ptr, *pptr, *पंचांगp;
+static uint8_t *get_last_jit_image(char *haystack, size_t hlen,
+				   unsigned int *ilen)
+{
+	char *ptr, *pptr, *tmp;
 	off_t off = 0;
-	अचिन्हित पूर्णांक proglen;
-	पूर्णांक ret, flen, pass, ulen = 0;
+	unsigned int proglen;
+	int ret, flen, pass, ulen = 0;
 	regmatch_t pmatch[1];
-	अचिन्हित दीर्घ base;
+	unsigned long base;
 	regex_t regex;
-	uपूर्णांक8_t *image;
+	uint8_t *image;
 
-	अगर (hlen == 0)
-		वापस शून्य;
+	if (hlen == 0)
+		return NULL;
 
 	ret = regcomp(&regex, "flen=[[:alnum:]]+ proglen=[[:digit:]]+ "
 		      "pass=[[:digit:]]+ image=[[:xdigit:]]+", REG_EXTENDED);
-	निश्चित(ret == 0);
+	assert(ret == 0);
 
 	ptr = haystack;
-	स_रखो(pmatch, 0, माप(pmatch));
+	memset(pmatch, 0, sizeof(pmatch));
 
-	जबतक (1) अणु
+	while (1) {
 		ret = regexec(&regex, ptr, 1, pmatch, 0);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			ptr += pmatch[0].rm_eo;
 			off += pmatch[0].rm_eo;
-			निश्चित(off < hlen);
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+			assert(off < hlen);
+		} else
+			break;
+	}
 
 	ptr = haystack + off - (pmatch[0].rm_eo - pmatch[0].rm_so);
-	ret = माला_पूछो(ptr, "flen=%d proglen=%u pass=%d image=%lx",
+	ret = sscanf(ptr, "flen=%d proglen=%u pass=%d image=%lx",
 		     &flen, &proglen, &pass, &base);
-	अगर (ret != 4) अणु
-		regमुक्त(&regex);
-		वापस शून्य;
-	पूर्ण
-	अगर (proglen > 1000000) अणु
-		म_लिखो("proglen of %d too big, stopping\n", proglen);
-		वापस शून्य;
-	पूर्ण
+	if (ret != 4) {
+		regfree(&regex);
+		return NULL;
+	}
+	if (proglen > 1000000) {
+		printf("proglen of %d too big, stopping\n", proglen);
+		return NULL;
+	}
 
-	image = दो_स्मृति(proglen);
-	अगर (!image) अणु
-		म_लिखो("Out of memory\n");
-		वापस शून्य;
-	पूर्ण
-	स_रखो(image, 0, proglen);
+	image = malloc(proglen);
+	if (!image) {
+		printf("Out of memory\n");
+		return NULL;
+	}
+	memset(image, 0, proglen);
 
-	पंचांगp = ptr = haystack + off;
-	जबतक ((ptr = म_मोहर(पंचांगp, "\n")) != शून्य && ulen < proglen) अणु
-		पंचांगp = शून्य;
-		अगर (!म_माला(ptr, "JIT code"))
-			जारी;
+	tmp = ptr = haystack + off;
+	while ((ptr = strtok(tmp, "\n")) != NULL && ulen < proglen) {
+		tmp = NULL;
+		if (!strstr(ptr, "JIT code"))
+			continue;
 		pptr = ptr;
-		जबतक ((ptr = म_माला(pptr, ":")))
+		while ((ptr = strstr(pptr, ":")))
 			pptr = ptr + 1;
 		ptr = pptr;
-		करो अणु
-			image[ulen++] = (uपूर्णांक8_t) म_से_अदीर्घ(pptr, &pptr, 16);
-			अगर (ptr == pptr) अणु
+		do {
+			image[ulen++] = (uint8_t) strtoul(pptr, &pptr, 16);
+			if (ptr == pptr) {
 				ulen--;
-				अवरोध;
-			पूर्ण
-			अगर (ulen >= proglen)
-				अवरोध;
+				break;
+			}
+			if (ulen >= proglen)
+				break;
 			ptr = pptr;
-		पूर्ण जबतक (1);
-	पूर्ण
+		} while (1);
+	}
 
-	निश्चित(ulen == proglen);
-	म_लिखो("%u bytes emitted from JIT compiler (pass:%d, flen:%d)\n",
+	assert(ulen == proglen);
+	printf("%u bytes emitted from JIT compiler (pass:%d, flen:%d)\n",
 	       proglen, pass, flen);
-	म_लिखो("%lx + <x>:\n", base);
+	printf("%lx + <x>:\n", base);
 
-	regमुक्त(&regex);
+	regfree(&regex);
 	*ilen = ulen;
-	वापस image;
-पूर्ण
+	return image;
+}
 
-अटल व्योम usage(व्योम)
-अणु
-	म_लिखो("Usage: bpf_jit_disasm [...]\n");
-	म_लिखो("       -o          Also display related opcodes (default: off).\n");
-	म_लिखो("       -O <file>   Write binary image of code to file, don't disassemble to stdout.\n");
-	म_लिखो("       -f <file>   Read last image dump from file or stdin (default: klog).\n");
-	म_लिखो("       -h          Display this help.\n");
-पूर्ण
+static void usage(void)
+{
+	printf("Usage: bpf_jit_disasm [...]\n");
+	printf("       -o          Also display related opcodes (default: off).\n");
+	printf("       -O <file>   Write binary image of code to file, don't disassemble to stdout.\n");
+	printf("       -f <file>   Read last image dump from file or stdin (default: klog).\n");
+	printf("       -h          Display this help.\n");
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अचिन्हित पूर्णांक len, klen, opt, opcodes = 0;
-	अक्षर *kbuff, *file = शून्य;
-	अक्षर *ofile = शून्य;
-	पूर्णांक ofd;
-	sमाप_प्रकार nr;
-	uपूर्णांक8_t *pos;
-	uपूर्णांक8_t *image = शून्य;
+int main(int argc, char **argv)
+{
+	unsigned int len, klen, opt, opcodes = 0;
+	char *kbuff, *file = NULL;
+	char *ofile = NULL;
+	int ofd;
+	ssize_t nr;
+	uint8_t *pos;
+	uint8_t *image = NULL;
 
-	जबतक ((opt = getopt(argc, argv, "of:O:")) != -1) अणु
-		चयन (opt) अणु
-		हाल 'o':
+	while ((opt = getopt(argc, argv, "of:O:")) != -1) {
+		switch (opt) {
+		case 'o':
 			opcodes = 1;
-			अवरोध;
-		हाल 'O':
+			break;
+		case 'O':
 			ofile = optarg;
-			अवरोध;
-		हाल 'f':
+			break;
+		case 'f':
 			file = optarg;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			usage();
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
 	bfd_init();
 
 	kbuff = get_log_buff(file, &klen);
-	अगर (!kbuff) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not retrieve log buffer!\n");
-		वापस -1;
-	पूर्ण
+	if (!kbuff) {
+		fprintf(stderr, "Could not retrieve log buffer!\n");
+		return -1;
+	}
 
 	image = get_last_jit_image(kbuff, klen, &len);
-	अगर (!image) अणु
-		ख_लिखो(मानक_त्रुटि, "No JIT image found!\n");
-		जाओ करोne;
-	पूर्ण
-	अगर (!ofile) अणु
-		get_यंत्र_insns(image, len, opcodes);
-		जाओ करोne;
-	पूर्ण
+	if (!image) {
+		fprintf(stderr, "No JIT image found!\n");
+		goto done;
+	}
+	if (!ofile) {
+		get_asm_insns(image, len, opcodes);
+		goto done;
+	}
 
-	ofd = खोलो(ofile, O_WRONLY | O_CREAT | O_TRUNC, DEFखाताMODE);
-	अगर (ofd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not open file %s for writing: ", ofile);
-		लिखो_त्रुटि(शून्य);
-		जाओ करोne;
-	पूर्ण
+	ofd = open(ofile, O_WRONLY | O_CREAT | O_TRUNC, DEFFILEMODE);
+	if (ofd < 0) {
+		fprintf(stderr, "Could not open file %s for writing: ", ofile);
+		perror(NULL);
+		goto done;
+	}
 	pos = image;
-	करो अणु
-		nr = ग_लिखो(ofd, pos, len);
-		अगर (nr < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "Could not write data to %s: ", ofile);
-			लिखो_त्रुटि(शून्य);
-			जाओ करोne;
-		पूर्ण
+	do {
+		nr = write(ofd, pos, len);
+		if (nr < 0) {
+			fprintf(stderr, "Could not write data to %s: ", ofile);
+			perror(NULL);
+			goto done;
+		}
 		len -= nr;
 		pos += nr;
-	पूर्ण जबतक (len);
-	बंद(ofd);
+	} while (len);
+	close(ofd);
 
-करोne:
+done:
 	put_log_buff(kbuff);
-	मुक्त(image);
-	वापस 0;
-पूर्ण
+	free(image);
+	return 0;
+}

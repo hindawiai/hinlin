@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TOOLS_LINUX_ASM_GENERIC_BITOPS___FFS_H_
-#घोषणा _TOOLS_LINUX_ASM_GENERIC_BITOPS___FFS_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TOOLS_LINUX_ASM_GENERIC_BITOPS___FFS_H_
+#define _TOOLS_LINUX_ASM_GENERIC_BITOPS___FFS_H_
 
-#समावेश <यंत्र/types.h>
-#समावेश <यंत्र/bitsperदीर्घ.h>
+#include <asm/types.h>
+#include <asm/bitsperlong.h>
 
 /**
  * __ffs - find first bit in word.
  * @word: The word to search
  *
- * Undefined अगर no bit exists, so code should check against 0 first.
+ * Undefined if no bit exists, so code should check against 0 first.
  */
-अटल __always_अंतरभूत अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ word)
-अणु
-	पूर्णांक num = 0;
+static __always_inline unsigned long __ffs(unsigned long word)
+{
+	int num = 0;
 
-#अगर __BITS_PER_LONG == 64
-	अगर ((word & 0xffffffff) == 0) अणु
+#if __BITS_PER_LONG == 64
+	if ((word & 0xffffffff) == 0) {
 		num += 32;
 		word >>= 32;
-	पूर्ण
-#पूर्ण_अगर
-	अगर ((word & 0xffff) == 0) अणु
+	}
+#endif
+	if ((word & 0xffff) == 0) {
 		num += 16;
 		word >>= 16;
-	पूर्ण
-	अगर ((word & 0xff) == 0) अणु
+	}
+	if ((word & 0xff) == 0) {
 		num += 8;
 		word >>= 8;
-	पूर्ण
-	अगर ((word & 0xf) == 0) अणु
+	}
+	if ((word & 0xf) == 0) {
 		num += 4;
 		word >>= 4;
-	पूर्ण
-	अगर ((word & 0x3) == 0) अणु
+	}
+	if ((word & 0x3) == 0) {
 		num += 2;
 		word >>= 2;
-	पूर्ण
-	अगर ((word & 0x1) == 0)
+	}
+	if ((word & 0x1) == 0)
 		num += 1;
-	वापस num;
-पूर्ण
+	return num;
+}
 
-#पूर्ण_अगर /* _TOOLS_LINUX_ASM_GENERIC_BITOPS___FFS_H_ */
+#endif /* _TOOLS_LINUX_ASM_GENERIC_BITOPS___FFS_H_ */

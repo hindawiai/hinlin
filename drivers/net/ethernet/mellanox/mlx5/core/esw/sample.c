@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies. */
 
-#समावेश <linux/skbuff.h>
-#समावेश <net/psample.h>
-#समावेश "en/mapping.h"
-#समावेश "esw/sample.h"
-#समावेश "eswitch.h"
-#समावेश "en_tc.h"
-#समावेश "fs_core.h"
+#include <linux/skbuff.h>
+#include <net/psample.h>
+#include "en/mapping.h"
+#include "esw/sample.h"
+#include "eswitch.h"
+#include "en_tc.h"
+#include "fs_core.h"
 
-#घोषणा MLX5_ESW_VPORT_TBL_SIZE_SAMPLE (64 * 1024)
+#define MLX5_ESW_VPORT_TBL_SIZE_SAMPLE (64 * 1024)
 
-अटल स्थिर काष्ठा esw_vport_tbl_namespace mlx5_esw_vport_tbl_sample_ns = अणु
+static const struct esw_vport_tbl_namespace mlx5_esw_vport_tbl_sample_ns = {
 	.max_fte = MLX5_ESW_VPORT_TBL_SIZE_SAMPLE,
-	.max_num_groups = 0,    /* शेष num of groups */
+	.max_num_groups = 0,    /* default num of groups */
 	.flags = MLX5_FLOW_TABLE_TUNNEL_EN_REFORMAT | MLX5_FLOW_TABLE_TUNNEL_EN_DECAP,
-पूर्ण;
+};
 
-काष्ठा mlx5_esw_psample अणु
-	काष्ठा mlx5e_priv *priv;
-	काष्ठा mlx5_flow_table *termtbl;
-	काष्ठा mlx5_flow_handle *termtbl_rule;
+struct mlx5_esw_psample {
+	struct mlx5e_priv *priv;
+	struct mlx5_flow_table *termtbl;
+	struct mlx5_flow_handle *termtbl_rule;
 	DECLARE_HASHTABLE(hashtbl, 8);
-	काष्ठा mutex ht_lock; /* protect hashtbl */
+	struct mutex ht_lock; /* protect hashtbl */
 	DECLARE_HASHTABLE(restore_hashtbl, 8);
-	काष्ठा mutex restore_lock; /* protect restore_hashtbl */
-पूर्ण;
+	struct mutex restore_lock; /* protect restore_hashtbl */
+};
 
-काष्ठा mlx5_sampler अणु
-	काष्ठा hlist_node hlist;
+struct mlx5_sampler {
+	struct hlist_node hlist;
 	u32 sampler_id;
 	u32 sample_ratio;
 	u32 sample_table_id;
-	u32 शेष_table_id;
-	पूर्णांक count;
-पूर्ण;
+	u32 default_table_id;
+	int count;
+};
 
-काष्ठा mlx5_sample_flow अणु
-	काष्ठा mlx5_sampler *sampler;
-	काष्ठा mlx5_sample_restore *restore;
-	काष्ठा mlx5_flow_attr *pre_attr;
-	काष्ठा mlx5_flow_handle *pre_rule;
-	काष्ठा mlx5_flow_handle *rule;
-पूर्ण;
+struct mlx5_sample_flow {
+	struct mlx5_sampler *sampler;
+	struct mlx5_sample_restore *restore;
+	struct mlx5_flow_attr *pre_attr;
+	struct mlx5_flow_handle *pre_rule;
+	struct mlx5_flow_handle *rule;
+};
 
-काष्ठा mlx5_sample_restore अणु
-	काष्ठा hlist_node hlist;
-	काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr;
-	काष्ठा mlx5_flow_handle *rule;
+struct mlx5_sample_restore {
+	struct hlist_node hlist;
+	struct mlx5_modify_hdr *modify_hdr;
+	struct mlx5_flow_handle *rule;
 	u32 obj_id;
-	पूर्णांक count;
-पूर्ण;
+	int count;
+};
 
-अटल पूर्णांक
-sampler_termtbl_create(काष्ठा mlx5_esw_psample *esw_psample)
-अणु
-	काष्ठा mlx5_core_dev *dev = esw_psample->priv->mdev;
-	काष्ठा mlx5_eचयन *esw = dev->priv.eचयन;
-	काष्ठा mlx5_flow_table_attr ft_attr = अणुपूर्ण;
-	काष्ठा mlx5_flow_destination dest = अणुपूर्ण;
-	काष्ठा mlx5_flow_namespace *root_ns;
-	काष्ठा mlx5_flow_act act = अणुपूर्ण;
-	पूर्णांक err;
+static int
+sampler_termtbl_create(struct mlx5_esw_psample *esw_psample)
+{
+	struct mlx5_core_dev *dev = esw_psample->priv->mdev;
+	struct mlx5_eswitch *esw = dev->priv.eswitch;
+	struct mlx5_flow_table_attr ft_attr = {};
+	struct mlx5_flow_destination dest = {};
+	struct mlx5_flow_namespace *root_ns;
+	struct mlx5_flow_act act = {};
+	int err;
 
-	अगर (!MLX5_CAP_ESW_FLOWTABLE_FDB(dev, termination_table))  अणु
+	if (!MLX5_CAP_ESW_FLOWTABLE_FDB(dev, termination_table))  {
 		mlx5_core_warn(dev, "termination table is not supported\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	root_ns = mlx5_get_flow_namespace(dev, MLX5_FLOW_NAMESPACE_FDB);
-	अगर (!root_ns) अणु
+	if (!root_ns) {
 		mlx5_core_warn(dev, "failed to get FDB flow namespace\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	ft_attr.flags = MLX5_FLOW_TABLE_TERMINATION | MLX5_FLOW_TABLE_UNMANAGED;
-	ft_attr.स्वतःgroup.max_num_groups = 1;
+	ft_attr.autogroup.max_num_groups = 1;
 	ft_attr.prio = FDB_SLOW_PATH;
 	ft_attr.max_fte = 1;
 	ft_attr.level = 1;
-	esw_psample->termtbl = mlx5_create_स्वतः_grouped_flow_table(root_ns, &ft_attr);
-	अगर (IS_ERR(esw_psample->termtbl)) अणु
+	esw_psample->termtbl = mlx5_create_auto_grouped_flow_table(root_ns, &ft_attr);
+	if (IS_ERR(esw_psample->termtbl)) {
 		err = PTR_ERR(esw_psample->termtbl);
 		mlx5_core_warn(dev, "failed to create termtbl, err: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	act.action = MLX5_FLOW_CONTEXT_ACTION_FWD_DEST;
 	dest.vport.num = esw->manager_vport;
-	esw_psample->termtbl_rule = mlx5_add_flow_rules(esw_psample->termtbl, शून्य, &act, &dest, 1);
-	अगर (IS_ERR(esw_psample->termtbl_rule)) अणु
+	esw_psample->termtbl_rule = mlx5_add_flow_rules(esw_psample->termtbl, NULL, &act, &dest, 1);
+	if (IS_ERR(esw_psample->termtbl_rule)) {
 		err = PTR_ERR(esw_psample->termtbl_rule);
 		mlx5_core_warn(dev, "failed to create termtbl rule, err: %d\n", err);
 		mlx5_destroy_flow_table(esw_psample->termtbl);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sampler_termtbl_destroy(काष्ठा mlx5_esw_psample *esw_psample)
-अणु
+static void
+sampler_termtbl_destroy(struct mlx5_esw_psample *esw_psample)
+{
 	mlx5_del_flow_rules(esw_psample->termtbl_rule);
 	mlx5_destroy_flow_table(esw_psample->termtbl);
-पूर्ण
+}
 
-अटल पूर्णांक
-sampler_obj_create(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_sampler *sampler)
-अणु
-	u32 in[MLX5_ST_SZ_DW(create_sampler_obj_in)] = अणुपूर्ण;
+static int
+sampler_obj_create(struct mlx5_core_dev *mdev, struct mlx5_sampler *sampler)
+{
+	u32 in[MLX5_ST_SZ_DW(create_sampler_obj_in)] = {};
 	u32 out[MLX5_ST_SZ_DW(general_obj_out_cmd_hdr)];
 	u64 general_obj_types;
-	व्योम *obj;
-	पूर्णांक err;
+	void *obj;
+	int err;
 
 	general_obj_types = MLX5_CAP_GEN_64(mdev, general_obj_types);
-	अगर (!(general_obj_types & MLX5_HCA_CAP_GENERAL_OBJECT_TYPES_SAMPLER))
-		वापस -EOPNOTSUPP;
-	अगर (!MLX5_CAP_ESW_FLOWTABLE_FDB(mdev, ignore_flow_level))
-		वापस -EOPNOTSUPP;
+	if (!(general_obj_types & MLX5_HCA_CAP_GENERAL_OBJECT_TYPES_SAMPLER))
+		return -EOPNOTSUPP;
+	if (!MLX5_CAP_ESW_FLOWTABLE_FDB(mdev, ignore_flow_level))
+		return -EOPNOTSUPP;
 
 	obj = MLX5_ADDR_OF(create_sampler_obj_in, in, sampler_object);
 	MLX5_SET(sampler_obj, obj, table_type, FS_FT_FDB);
@@ -128,203 +127,203 @@ sampler_obj_create(काष्ठा mlx5_core_dev *mdev, काष्ठा ml
 	MLX5_SET(sampler_obj, obj, level, 1);
 	MLX5_SET(sampler_obj, obj, sample_ratio, sampler->sample_ratio);
 	MLX5_SET(sampler_obj, obj, sample_table_id, sampler->sample_table_id);
-	MLX5_SET(sampler_obj, obj, शेष_table_id, sampler->शेष_table_id);
+	MLX5_SET(sampler_obj, obj, default_table_id, sampler->default_table_id);
 	MLX5_SET(general_obj_in_cmd_hdr, in, opcode, MLX5_CMD_OP_CREATE_GENERAL_OBJECT);
 	MLX5_SET(general_obj_in_cmd_hdr, in, obj_type, MLX5_GENERAL_OBJECT_TYPES_SAMPLER);
 
-	err = mlx5_cmd_exec(mdev, in, माप(in), out, माप(out));
-	अगर (!err)
+	err = mlx5_cmd_exec(mdev, in, sizeof(in), out, sizeof(out));
+	if (!err)
 		sampler->sampler_id = MLX5_GET(general_obj_out_cmd_hdr, out, obj_id);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम
-sampler_obj_destroy(काष्ठा mlx5_core_dev *mdev, u32 sampler_id)
-अणु
-	u32 in[MLX5_ST_SZ_DW(general_obj_in_cmd_hdr)] = अणुपूर्ण;
+static void
+sampler_obj_destroy(struct mlx5_core_dev *mdev, u32 sampler_id)
+{
+	u32 in[MLX5_ST_SZ_DW(general_obj_in_cmd_hdr)] = {};
 	u32 out[MLX5_ST_SZ_DW(general_obj_out_cmd_hdr)];
 
 	MLX5_SET(general_obj_in_cmd_hdr, in, opcode, MLX5_CMD_OP_DESTROY_GENERAL_OBJECT);
 	MLX5_SET(general_obj_in_cmd_hdr, in, obj_type, MLX5_GENERAL_OBJECT_TYPES_SAMPLER);
 	MLX5_SET(general_obj_in_cmd_hdr, in, obj_id, sampler_id);
 
-	mlx5_cmd_exec(mdev, in, माप(in), out, माप(out));
-पूर्ण
+	mlx5_cmd_exec(mdev, in, sizeof(in), out, sizeof(out));
+}
 
-अटल u32
-sampler_hash(u32 sample_ratio, u32 शेष_table_id)
-अणु
-	वापस jhash_2words(sample_ratio, शेष_table_id, 0);
-पूर्ण
+static u32
+sampler_hash(u32 sample_ratio, u32 default_table_id)
+{
+	return jhash_2words(sample_ratio, default_table_id, 0);
+}
 
-अटल पूर्णांक
-sampler_cmp(u32 sample_ratio1, u32 शेष_table_id1, u32 sample_ratio2, u32 शेष_table_id2)
-अणु
-	वापस sample_ratio1 != sample_ratio2 || शेष_table_id1 != शेष_table_id2;
-पूर्ण
+static int
+sampler_cmp(u32 sample_ratio1, u32 default_table_id1, u32 sample_ratio2, u32 default_table_id2)
+{
+	return sample_ratio1 != sample_ratio2 || default_table_id1 != default_table_id2;
+}
 
-अटल काष्ठा mlx5_sampler *
-sampler_get(काष्ठा mlx5_esw_psample *esw_psample, u32 sample_ratio, u32 शेष_table_id)
-अणु
-	काष्ठा mlx5_sampler *sampler;
+static struct mlx5_sampler *
+sampler_get(struct mlx5_esw_psample *esw_psample, u32 sample_ratio, u32 default_table_id)
+{
+	struct mlx5_sampler *sampler;
 	u32 hash_key;
-	पूर्णांक err;
+	int err;
 
 	mutex_lock(&esw_psample->ht_lock);
-	hash_key = sampler_hash(sample_ratio, शेष_table_id);
-	hash_क्रम_each_possible(esw_psample->hashtbl, sampler, hlist, hash_key)
-		अगर (!sampler_cmp(sampler->sample_ratio, sampler->शेष_table_id,
-				 sample_ratio, शेष_table_id))
-			जाओ add_ref;
+	hash_key = sampler_hash(sample_ratio, default_table_id);
+	hash_for_each_possible(esw_psample->hashtbl, sampler, hlist, hash_key)
+		if (!sampler_cmp(sampler->sample_ratio, sampler->default_table_id,
+				 sample_ratio, default_table_id))
+			goto add_ref;
 
-	sampler = kzalloc(माप(*sampler), GFP_KERNEL);
-	अगर (!sampler) अणु
+	sampler = kzalloc(sizeof(*sampler), GFP_KERNEL);
+	if (!sampler) {
 		err = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 
 	sampler->sample_table_id = esw_psample->termtbl->id;
-	sampler->शेष_table_id = शेष_table_id;
+	sampler->default_table_id = default_table_id;
 	sampler->sample_ratio = sample_ratio;
 
 	err = sampler_obj_create(esw_psample->priv->mdev, sampler);
-	अगर (err)
-		जाओ err_create;
+	if (err)
+		goto err_create;
 
 	hash_add(esw_psample->hashtbl, &sampler->hlist, hash_key);
 
 add_ref:
 	sampler->count++;
 	mutex_unlock(&esw_psample->ht_lock);
-	वापस sampler;
+	return sampler;
 
 err_create:
-	kमुक्त(sampler);
+	kfree(sampler);
 err_alloc:
 	mutex_unlock(&esw_psample->ht_lock);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-sampler_put(काष्ठा mlx5_esw_psample *esw_psample, काष्ठा mlx5_sampler *sampler)
-अणु
+static void
+sampler_put(struct mlx5_esw_psample *esw_psample, struct mlx5_sampler *sampler)
+{
 	mutex_lock(&esw_psample->ht_lock);
-	अगर (--sampler->count == 0) अणु
+	if (--sampler->count == 0) {
 		hash_del(&sampler->hlist);
 		sampler_obj_destroy(esw_psample->priv->mdev, sampler->sampler_id);
-		kमुक्त(sampler);
-	पूर्ण
+		kfree(sampler);
+	}
 	mutex_unlock(&esw_psample->ht_lock);
-पूर्ण
+}
 
-अटल काष्ठा mlx5_modअगरy_hdr *
-sample_metadata_rule_get(काष्ठा mlx5_core_dev *mdev, u32 obj_id)
-अणु
-	काष्ठा mlx5e_tc_mod_hdr_acts mod_acts = अणुपूर्ण;
-	काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr;
-	पूर्णांक err;
+static struct mlx5_modify_hdr *
+sample_metadata_rule_get(struct mlx5_core_dev *mdev, u32 obj_id)
+{
+	struct mlx5e_tc_mod_hdr_acts mod_acts = {};
+	struct mlx5_modify_hdr *modify_hdr;
+	int err;
 
 	err = mlx5e_tc_match_to_reg_set(mdev, &mod_acts, MLX5_FLOW_NAMESPACE_FDB,
 					CHAIN_TO_REG, obj_id);
-	अगर (err)
-		जाओ err_set_regc0;
+	if (err)
+		goto err_set_regc0;
 
-	modअगरy_hdr = mlx5_modअगरy_header_alloc(mdev, MLX5_FLOW_NAMESPACE_FDB,
+	modify_hdr = mlx5_modify_header_alloc(mdev, MLX5_FLOW_NAMESPACE_FDB,
 					      mod_acts.num_actions,
 					      mod_acts.actions);
-	अगर (IS_ERR(modअगरy_hdr)) अणु
-		err = PTR_ERR(modअगरy_hdr);
-		जाओ err_modअगरy_hdr;
-	पूर्ण
+	if (IS_ERR(modify_hdr)) {
+		err = PTR_ERR(modify_hdr);
+		goto err_modify_hdr;
+	}
 
 	dealloc_mod_hdr_actions(&mod_acts);
-	वापस modअगरy_hdr;
+	return modify_hdr;
 
-err_modअगरy_hdr:
+err_modify_hdr:
 	dealloc_mod_hdr_actions(&mod_acts);
 err_set_regc0:
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा mlx5_sample_restore *
-sample_restore_get(काष्ठा mlx5_esw_psample *esw_psample, u32 obj_id)
-अणु
-	काष्ठा mlx5_core_dev *mdev = esw_psample->priv->mdev;
-	काष्ठा mlx5_eचयन *esw = mdev->priv.eचयन;
-	काष्ठा mlx5_sample_restore *restore;
-	काष्ठा mlx5_modअगरy_hdr *modअगरy_hdr;
-	पूर्णांक err;
+static struct mlx5_sample_restore *
+sample_restore_get(struct mlx5_esw_psample *esw_psample, u32 obj_id)
+{
+	struct mlx5_core_dev *mdev = esw_psample->priv->mdev;
+	struct mlx5_eswitch *esw = mdev->priv.eswitch;
+	struct mlx5_sample_restore *restore;
+	struct mlx5_modify_hdr *modify_hdr;
+	int err;
 
 	mutex_lock(&esw_psample->restore_lock);
-	hash_क्रम_each_possible(esw_psample->restore_hashtbl, restore, hlist, obj_id)
-		अगर (restore->obj_id == obj_id)
-			जाओ add_ref;
+	hash_for_each_possible(esw_psample->restore_hashtbl, restore, hlist, obj_id)
+		if (restore->obj_id == obj_id)
+			goto add_ref;
 
-	restore = kzalloc(माप(*restore), GFP_KERNEL);
-	अगर (!restore) अणु
+	restore = kzalloc(sizeof(*restore), GFP_KERNEL);
+	if (!restore) {
 		err = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 	restore->obj_id = obj_id;
 
-	modअगरy_hdr = sample_metadata_rule_get(mdev, obj_id);
-	अगर (IS_ERR(modअगरy_hdr)) अणु
-		err = PTR_ERR(modअगरy_hdr);
-		जाओ err_modअगरy_hdr;
-	पूर्ण
-	restore->modअगरy_hdr = modअगरy_hdr;
+	modify_hdr = sample_metadata_rule_get(mdev, obj_id);
+	if (IS_ERR(modify_hdr)) {
+		err = PTR_ERR(modify_hdr);
+		goto err_modify_hdr;
+	}
+	restore->modify_hdr = modify_hdr;
 
 	restore->rule = esw_add_restore_rule(esw, obj_id);
-	अगर (IS_ERR(restore->rule)) अणु
+	if (IS_ERR(restore->rule)) {
 		err = PTR_ERR(restore->rule);
-		जाओ err_restore;
-	पूर्ण
+		goto err_restore;
+	}
 
 	hash_add(esw_psample->restore_hashtbl, &restore->hlist, obj_id);
 add_ref:
 	restore->count++;
 	mutex_unlock(&esw_psample->restore_lock);
-	वापस restore;
+	return restore;
 
 err_restore:
-	mlx5_modअगरy_header_dealloc(mdev, restore->modअगरy_hdr);
-err_modअगरy_hdr:
-	kमुक्त(restore);
+	mlx5_modify_header_dealloc(mdev, restore->modify_hdr);
+err_modify_hdr:
+	kfree(restore);
 err_alloc:
 	mutex_unlock(&esw_psample->restore_lock);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल व्योम
-sample_restore_put(काष्ठा mlx5_esw_psample *esw_psample, काष्ठा mlx5_sample_restore *restore)
-अणु
+static void
+sample_restore_put(struct mlx5_esw_psample *esw_psample, struct mlx5_sample_restore *restore)
+{
 	mutex_lock(&esw_psample->restore_lock);
-	अगर (--restore->count == 0)
+	if (--restore->count == 0)
 		hash_del(&restore->hlist);
 	mutex_unlock(&esw_psample->restore_lock);
 
-	अगर (!restore->count) अणु
+	if (!restore->count) {
 		mlx5_del_flow_rules(restore->rule);
-		mlx5_modअगरy_header_dealloc(esw_psample->priv->mdev, restore->modअगरy_hdr);
-		kमुक्त(restore);
-	पूर्ण
-पूर्ण
+		mlx5_modify_header_dealloc(esw_psample->priv->mdev, restore->modify_hdr);
+		kfree(restore);
+	}
+}
 
-व्योम mlx5_esw_sample_skb(काष्ठा sk_buff *skb, काष्ठा mlx5_mapped_obj *mapped_obj)
-अणु
+void mlx5_esw_sample_skb(struct sk_buff *skb, struct mlx5_mapped_obj *mapped_obj)
+{
 	u32 trunc_size = mapped_obj->sample.trunc_size;
-	काष्ठा psample_group psample_group = अणुपूर्ण;
-	काष्ठा psample_metadata md = अणुपूर्ण;
+	struct psample_group psample_group = {};
+	struct psample_metadata md = {};
 
 	md.trunc_size = trunc_size ? min(trunc_size, skb->len) : skb->len;
-	md.in_अगरindex = skb->dev->अगरindex;
+	md.in_ifindex = skb->dev->ifindex;
 	psample_group.group_num = mapped_obj->sample.group_id;
 	psample_group.net = &init_net;
 	skb_push(skb, skb->mac_len);
 
 	psample_sample_packet(&psample_group, skb, mapped_obj->sample.rate, &md);
-पूर्ण
+}
 
 /* For the following typical flow table:
  *
@@ -350,88 +349,88 @@ sample_restore_put(काष्ठा mlx5_esw_psample *esw_psample, काष�
  * +------------------------------------------------+
  * +                    sample ratio                +
  * +------------------------------------------------+
- * +    sample table id    |    शेष table id    +
+ * +    sample table id    |    default table id    +
  * +------------------------------------------------+
  *            |                            |
  *            v                            v
  * +-----------------------------+  +----------------------------------------+
- * +        sample table         +  + शेष table per <vport, chain, prio> +
+ * +        sample table         +  + default table per <vport, chain, prio> +
  * +-----------------------------+  +----------------------------------------+
- * + क्रमward to management vport +  +            original match              +
+ * + forward to management vport +  +            original match              +
  * +-----------------------------+  +----------------------------------------+
  *                                  +            other actions               +
  *                                  +----------------------------------------+
  */
-काष्ठा mlx5_flow_handle *
-mlx5_esw_sample_offload(काष्ठा mlx5_esw_psample *esw_psample,
-			काष्ठा mlx5_flow_spec *spec,
-			काष्ठा mlx5_flow_attr *attr)
-अणु
-	काष्ठा mlx5_esw_flow_attr *esw_attr = attr->esw_attr;
-	काष्ठा mlx5_vport_tbl_attr per_vport_tbl_attr;
-	काष्ठा mlx5_esw_flow_attr *pre_esw_attr;
-	काष्ठा mlx5_mapped_obj restore_obj = अणुपूर्ण;
-	काष्ठा mlx5_sample_flow *sample_flow;
-	काष्ठा mlx5_sample_attr *sample_attr;
-	काष्ठा mlx5_flow_table *शेष_tbl;
-	काष्ठा mlx5_flow_attr *pre_attr;
-	काष्ठा mlx5_eचयन *esw;
+struct mlx5_flow_handle *
+mlx5_esw_sample_offload(struct mlx5_esw_psample *esw_psample,
+			struct mlx5_flow_spec *spec,
+			struct mlx5_flow_attr *attr)
+{
+	struct mlx5_esw_flow_attr *esw_attr = attr->esw_attr;
+	struct mlx5_vport_tbl_attr per_vport_tbl_attr;
+	struct mlx5_esw_flow_attr *pre_esw_attr;
+	struct mlx5_mapped_obj restore_obj = {};
+	struct mlx5_sample_flow *sample_flow;
+	struct mlx5_sample_attr *sample_attr;
+	struct mlx5_flow_table *default_tbl;
+	struct mlx5_flow_attr *pre_attr;
+	struct mlx5_eswitch *esw;
 	u32 obj_id;
-	पूर्णांक err;
+	int err;
 
-	अगर (IS_ERR_OR_शून्य(esw_psample))
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (IS_ERR_OR_NULL(esw_psample))
+		return ERR_PTR(-EOPNOTSUPP);
 
-	/* If slow path flag is set, eg. when the neigh is invalid क्रम encap,
-	 * करोn't offload sample action.
+	/* If slow path flag is set, eg. when the neigh is invalid for encap,
+	 * don't offload sample action.
 	 */
-	esw = esw_psample->priv->mdev->priv.eचयन;
-	अगर (attr->flags & MLX5_ESW_ATTR_FLAG_SLOW_PATH)
-		वापस mlx5_eचयन_add_offloaded_rule(esw, spec, attr);
+	esw = esw_psample->priv->mdev->priv.eswitch;
+	if (attr->flags & MLX5_ESW_ATTR_FLAG_SLOW_PATH)
+		return mlx5_eswitch_add_offloaded_rule(esw, spec, attr);
 
-	sample_flow = kzalloc(माप(*sample_flow), GFP_KERNEL);
-	अगर (!sample_flow)
-		वापस ERR_PTR(-ENOMEM);
+	sample_flow = kzalloc(sizeof(*sample_flow), GFP_KERNEL);
+	if (!sample_flow)
+		return ERR_PTR(-ENOMEM);
 	esw_attr->sample->sample_flow = sample_flow;
 
-	/* Allocate शेष table per vport, chain and prio. Otherwise, there is
-	 * only one शेष table क्रम the same sampler object. Rules with dअगरferent
-	 * prio and chain may overlap. For CT sample action, per vport शेष
+	/* Allocate default table per vport, chain and prio. Otherwise, there is
+	 * only one default table for the same sampler object. Rules with different
+	 * prio and chain may overlap. For CT sample action, per vport default
 	 * table is needed to resotre the metadata.
 	 */
 	per_vport_tbl_attr.chain = attr->chain;
 	per_vport_tbl_attr.prio = attr->prio;
 	per_vport_tbl_attr.vport = esw_attr->in_rep->vport;
 	per_vport_tbl_attr.vport_ns = &mlx5_esw_vport_tbl_sample_ns;
-	शेष_tbl = mlx5_esw_vporttbl_get(esw, &per_vport_tbl_attr);
-	अगर (IS_ERR(शेष_tbl)) अणु
-		err = PTR_ERR(शेष_tbl);
-		जाओ err_शेष_tbl;
-	पूर्ण
+	default_tbl = mlx5_esw_vporttbl_get(esw, &per_vport_tbl_attr);
+	if (IS_ERR(default_tbl)) {
+		err = PTR_ERR(default_tbl);
+		goto err_default_tbl;
+	}
 
-	/* Perक्रमm the original matches on the शेष table.
+	/* Perform the original matches on the default table.
 	 * Offload all actions except the sample action.
 	 */
-	esw_attr->sample->sample_शेष_tbl = शेष_tbl;
-	/* When offloading sample and encap action, अगर there is no valid
-	 * neigh data काष्ठा, a slow path rule is offloaded first. Source
-	 * port metadata match is set at that समय. A per vport table is
-	 * alपढ़ोy allocated. No need to match it again. So clear the source
+	esw_attr->sample->sample_default_tbl = default_tbl;
+	/* When offloading sample and encap action, if there is no valid
+	 * neigh data struct, a slow path rule is offloaded first. Source
+	 * port metadata match is set at that time. A per vport table is
+	 * already allocated. No need to match it again. So clear the source
 	 * port metadata match.
 	 */
-	mlx5_eचयन_clear_rule_source_port(esw, spec);
-	sample_flow->rule = mlx5_eचयन_add_offloaded_rule(esw, spec, attr);
-	अगर (IS_ERR(sample_flow->rule)) अणु
+	mlx5_eswitch_clear_rule_source_port(esw, spec);
+	sample_flow->rule = mlx5_eswitch_add_offloaded_rule(esw, spec, attr);
+	if (IS_ERR(sample_flow->rule)) {
 		err = PTR_ERR(sample_flow->rule);
-		जाओ err_offload_rule;
-	पूर्ण
+		goto err_offload_rule;
+	}
 
 	/* Create sampler object. */
-	sample_flow->sampler = sampler_get(esw_psample, esw_attr->sample->rate, शेष_tbl->id);
-	अगर (IS_ERR(sample_flow->sampler)) अणु
+	sample_flow->sampler = sampler_get(esw_psample, esw_attr->sample->rate, default_tbl->id);
+	if (IS_ERR(sample_flow->sampler)) {
 		err = PTR_ERR(sample_flow->sampler);
-		जाओ err_sampler;
-	पूर्ण
+		goto err_sampler;
+	}
 
 	/* Create an id mapping reg_c0 value to sample object. */
 	restore_obj.type = MLX5_MAPPED_OBJ_SAMPLE;
@@ -439,33 +438,33 @@ mlx5_esw_sample_offload(काष्ठा mlx5_esw_psample *esw_psample,
 	restore_obj.sample.rate = esw_attr->sample->rate;
 	restore_obj.sample.trunc_size = esw_attr->sample->trunc_size;
 	err = mapping_add(esw->offloads.reg_c0_obj_pool, &restore_obj, &obj_id);
-	अगर (err)
-		जाओ err_obj_id;
+	if (err)
+		goto err_obj_id;
 	esw_attr->sample->restore_obj_id = obj_id;
 
 	/* Create sample restore context. */
 	sample_flow->restore = sample_restore_get(esw_psample, obj_id);
-	अगर (IS_ERR(sample_flow->restore)) अणु
+	if (IS_ERR(sample_flow->restore)) {
 		err = PTR_ERR(sample_flow->restore);
-		जाओ err_sample_restore;
-	पूर्ण
+		goto err_sample_restore;
+	}
 
-	/* Perक्रमm the original matches on the original table. Offload the
+	/* Perform the original matches on the original table. Offload the
 	 * sample action. The destination is the sampler object.
 	 */
 	pre_attr = mlx5_alloc_flow_attr(MLX5_FLOW_NAMESPACE_FDB);
-	अगर (!pre_attr) अणु
+	if (!pre_attr) {
 		err = -ENOMEM;
-		जाओ err_alloc_flow_attr;
-	पूर्ण
-	sample_attr = kzalloc(माप(*sample_attr), GFP_KERNEL);
-	अगर (!sample_attr) अणु
+		goto err_alloc_flow_attr;
+	}
+	sample_attr = kzalloc(sizeof(*sample_attr), GFP_KERNEL);
+	if (!sample_attr) {
 		err = -ENOMEM;
-		जाओ err_alloc_sample_attr;
-	पूर्ण
+		goto err_alloc_sample_attr;
+	}
 	pre_esw_attr = pre_attr->esw_attr;
 	pre_attr->action = MLX5_FLOW_CONTEXT_ACTION_FWD_DEST | MLX5_FLOW_CONTEXT_ACTION_MOD_HDR;
-	pre_attr->modअगरy_hdr = sample_flow->restore->modअगरy_hdr;
+	pre_attr->modify_hdr = sample_flow->restore->modify_hdr;
 	pre_attr->flags = MLX5_ESW_ATTR_FLAG_SAMPLE;
 	pre_attr->chain = attr->chain;
 	pre_attr->prio = attr->prio;
@@ -473,70 +472,70 @@ mlx5_esw_sample_offload(काष्ठा mlx5_esw_psample *esw_psample,
 	pre_esw_attr->sample->sampler_id = sample_flow->sampler->sampler_id;
 	pre_esw_attr->in_mdev = esw_attr->in_mdev;
 	pre_esw_attr->in_rep = esw_attr->in_rep;
-	sample_flow->pre_rule = mlx5_eचयन_add_offloaded_rule(esw, spec, pre_attr);
-	अगर (IS_ERR(sample_flow->pre_rule)) अणु
+	sample_flow->pre_rule = mlx5_eswitch_add_offloaded_rule(esw, spec, pre_attr);
+	if (IS_ERR(sample_flow->pre_rule)) {
 		err = PTR_ERR(sample_flow->pre_rule);
-		जाओ err_pre_offload_rule;
-	पूर्ण
+		goto err_pre_offload_rule;
+	}
 	sample_flow->pre_attr = pre_attr;
 
-	वापस sample_flow->rule;
+	return sample_flow->rule;
 
 err_pre_offload_rule:
-	kमुक्त(sample_attr);
+	kfree(sample_attr);
 err_alloc_sample_attr:
-	kमुक्त(pre_attr);
+	kfree(pre_attr);
 err_alloc_flow_attr:
 	sample_restore_put(esw_psample, sample_flow->restore);
 err_sample_restore:
-	mapping_हटाओ(esw->offloads.reg_c0_obj_pool, obj_id);
+	mapping_remove(esw->offloads.reg_c0_obj_pool, obj_id);
 err_obj_id:
 	sampler_put(esw_psample, sample_flow->sampler);
 err_sampler:
-	/* For sample offload, rule is added in शेष_tbl. No need to call
+	/* For sample offload, rule is added in default_tbl. No need to call
 	 * mlx5_esw_chains_put_table()
 	 */
 	attr->prio = 0;
 	attr->chain = 0;
-	mlx5_eचयन_del_offloaded_rule(esw, sample_flow->rule, attr);
+	mlx5_eswitch_del_offloaded_rule(esw, sample_flow->rule, attr);
 err_offload_rule:
 	mlx5_esw_vporttbl_put(esw, &per_vport_tbl_attr);
-err_शेष_tbl:
-	वापस ERR_PTR(err);
-पूर्ण
+err_default_tbl:
+	return ERR_PTR(err);
+}
 
-व्योम
-mlx5_esw_sample_unoffload(काष्ठा mlx5_esw_psample *esw_psample,
-			  काष्ठा mlx5_flow_handle *rule,
-			  काष्ठा mlx5_flow_attr *attr)
-अणु
-	काष्ठा mlx5_esw_flow_attr *esw_attr = attr->esw_attr;
-	काष्ठा mlx5_sample_flow *sample_flow;
-	काष्ठा mlx5_vport_tbl_attr tbl_attr;
-	काष्ठा mlx5_flow_attr *pre_attr;
-	काष्ठा mlx5_eचयन *esw;
+void
+mlx5_esw_sample_unoffload(struct mlx5_esw_psample *esw_psample,
+			  struct mlx5_flow_handle *rule,
+			  struct mlx5_flow_attr *attr)
+{
+	struct mlx5_esw_flow_attr *esw_attr = attr->esw_attr;
+	struct mlx5_sample_flow *sample_flow;
+	struct mlx5_vport_tbl_attr tbl_attr;
+	struct mlx5_flow_attr *pre_attr;
+	struct mlx5_eswitch *esw;
 
-	अगर (IS_ERR_OR_शून्य(esw_psample))
-		वापस;
+	if (IS_ERR_OR_NULL(esw_psample))
+		return;
 
 	/* If slow path flag is set, sample action is not offloaded.
 	 * No need to delete sample rule.
 	 */
-	esw = esw_psample->priv->mdev->priv.eचयन;
-	अगर (attr->flags & MLX5_ESW_ATTR_FLAG_SLOW_PATH) अणु
-		mlx5_eचयन_del_offloaded_rule(esw, rule, attr);
-		वापस;
-	पूर्ण
+	esw = esw_psample->priv->mdev->priv.eswitch;
+	if (attr->flags & MLX5_ESW_ATTR_FLAG_SLOW_PATH) {
+		mlx5_eswitch_del_offloaded_rule(esw, rule, attr);
+		return;
+	}
 
 	sample_flow = esw_attr->sample->sample_flow;
 	pre_attr = sample_flow->pre_attr;
-	स_रखो(pre_attr, 0, माप(*pre_attr));
-	esw = esw_psample->priv->mdev->priv.eचयन;
-	mlx5_eचयन_del_offloaded_rule(esw, sample_flow->pre_rule, pre_attr);
-	mlx5_eचयन_del_offloaded_rule(esw, sample_flow->rule, attr);
+	memset(pre_attr, 0, sizeof(*pre_attr));
+	esw = esw_psample->priv->mdev->priv.eswitch;
+	mlx5_eswitch_del_offloaded_rule(esw, sample_flow->pre_rule, pre_attr);
+	mlx5_eswitch_del_offloaded_rule(esw, sample_flow->rule, attr);
 
 	sample_restore_put(esw_psample, sample_flow->restore);
-	mapping_हटाओ(esw->offloads.reg_c0_obj_pool, esw_attr->sample->restore_obj_id);
+	mapping_remove(esw->offloads.reg_c0_obj_pool, esw_attr->sample->restore_obj_id);
 	sampler_put(esw_psample, sample_flow->sampler);
 	tbl_attr.chain = attr->chain;
 	tbl_attr.prio = attr->prio;
@@ -544,43 +543,43 @@ mlx5_esw_sample_unoffload(काष्ठा mlx5_esw_psample *esw_psample,
 	tbl_attr.vport_ns = &mlx5_esw_vport_tbl_sample_ns;
 	mlx5_esw_vporttbl_put(esw, &tbl_attr);
 
-	kमुक्त(pre_attr->esw_attr->sample);
-	kमुक्त(pre_attr);
-	kमुक्त(sample_flow);
-पूर्ण
+	kfree(pre_attr->esw_attr->sample);
+	kfree(pre_attr);
+	kfree(sample_flow);
+}
 
-काष्ठा mlx5_esw_psample *
-mlx5_esw_sample_init(काष्ठा mlx5e_priv *priv)
-अणु
-	काष्ठा mlx5_esw_psample *esw_psample;
-	पूर्णांक err;
+struct mlx5_esw_psample *
+mlx5_esw_sample_init(struct mlx5e_priv *priv)
+{
+	struct mlx5_esw_psample *esw_psample;
+	int err;
 
-	esw_psample = kzalloc(माप(*esw_psample), GFP_KERNEL);
-	अगर (!esw_psample)
-		वापस ERR_PTR(-ENOMEM);
+	esw_psample = kzalloc(sizeof(*esw_psample), GFP_KERNEL);
+	if (!esw_psample)
+		return ERR_PTR(-ENOMEM);
 	esw_psample->priv = priv;
 	err = sampler_termtbl_create(esw_psample);
-	अगर (err)
-		जाओ err_termtbl;
+	if (err)
+		goto err_termtbl;
 
 	mutex_init(&esw_psample->ht_lock);
 	mutex_init(&esw_psample->restore_lock);
 
-	वापस esw_psample;
+	return esw_psample;
 
 err_termtbl:
-	kमुक्त(esw_psample);
-	वापस ERR_PTR(err);
-पूर्ण
+	kfree(esw_psample);
+	return ERR_PTR(err);
+}
 
-व्योम
-mlx5_esw_sample_cleanup(काष्ठा mlx5_esw_psample *esw_psample)
-अणु
-	अगर (IS_ERR_OR_शून्य(esw_psample))
-		वापस;
+void
+mlx5_esw_sample_cleanup(struct mlx5_esw_psample *esw_psample)
+{
+	if (IS_ERR_OR_NULL(esw_psample))
+		return;
 
 	mutex_destroy(&esw_psample->restore_lock);
 	mutex_destroy(&esw_psample->ht_lock);
 	sampler_termtbl_destroy(esw_psample);
-	kमुक्त(esw_psample);
-पूर्ण
+	kfree(esw_psample);
+}

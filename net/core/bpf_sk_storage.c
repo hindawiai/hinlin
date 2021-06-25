@@ -1,345 +1,344 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019 Facebook  */
-#समावेश <linux/rculist.h>
-#समावेश <linux/list.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/bpf.h>
-#समावेश <linux/btf.h>
-#समावेश <linux/btf_ids.h>
-#समावेश <linux/bpf_local_storage.h>
-#समावेश <net/bpf_sk_storage.h>
-#समावेश <net/sock.h>
-#समावेश <uapi/linux/sock_diag.h>
-#समावेश <uapi/linux/btf.h>
+#include <linux/rculist.h>
+#include <linux/list.h>
+#include <linux/hash.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/bpf.h>
+#include <linux/btf.h>
+#include <linux/btf_ids.h>
+#include <linux/bpf_local_storage.h>
+#include <net/bpf_sk_storage.h>
+#include <net/sock.h>
+#include <uapi/linux/sock_diag.h>
+#include <uapi/linux/btf.h>
 
 DEFINE_BPF_STORAGE_CACHE(sk_cache);
 
-अटल काष्ठा bpf_local_storage_data *
-bpf_sk_storage_lookup(काष्ठा sock *sk, काष्ठा bpf_map *map, bool cacheit_lockit)
-अणु
-	काष्ठा bpf_local_storage *sk_storage;
-	काष्ठा bpf_local_storage_map *smap;
+static struct bpf_local_storage_data *
+bpf_sk_storage_lookup(struct sock *sk, struct bpf_map *map, bool cacheit_lockit)
+{
+	struct bpf_local_storage *sk_storage;
+	struct bpf_local_storage_map *smap;
 
 	sk_storage = rcu_dereference(sk->sk_bpf_storage);
-	अगर (!sk_storage)
-		वापस शून्य;
+	if (!sk_storage)
+		return NULL;
 
-	smap = (काष्ठा bpf_local_storage_map *)map;
-	वापस bpf_local_storage_lookup(sk_storage, smap, cacheit_lockit);
-पूर्ण
+	smap = (struct bpf_local_storage_map *)map;
+	return bpf_local_storage_lookup(sk_storage, smap, cacheit_lockit);
+}
 
-अटल पूर्णांक bpf_sk_storage_del(काष्ठा sock *sk, काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
+static int bpf_sk_storage_del(struct sock *sk, struct bpf_map *map)
+{
+	struct bpf_local_storage_data *sdata;
 
 	sdata = bpf_sk_storage_lookup(sk, map, false);
-	अगर (!sdata)
-		वापस -ENOENT;
+	if (!sdata)
+		return -ENOENT;
 
 	bpf_selem_unlink(SELEM(sdata));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called by __sk_deकाष्ठा() & bpf_sk_storage_clone() */
-व्योम bpf_sk_storage_मुक्त(काष्ठा sock *sk)
-अणु
-	काष्ठा bpf_local_storage_elem *selem;
-	काष्ठा bpf_local_storage *sk_storage;
-	bool मुक्त_sk_storage = false;
-	काष्ठा hlist_node *n;
+/* Called by __sk_destruct() & bpf_sk_storage_clone() */
+void bpf_sk_storage_free(struct sock *sk)
+{
+	struct bpf_local_storage_elem *selem;
+	struct bpf_local_storage *sk_storage;
+	bool free_sk_storage = false;
+	struct hlist_node *n;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sk_storage = rcu_dereference(sk->sk_bpf_storage);
-	अगर (!sk_storage) अणु
-		rcu_पढ़ो_unlock();
-		वापस;
-	पूर्ण
+	if (!sk_storage) {
+		rcu_read_unlock();
+		return;
+	}
 
 	/* Netiher the bpf_prog nor the bpf-map's syscall
-	 * could be modअगरying the sk_storage->list now.
+	 * could be modifying the sk_storage->list now.
 	 * Thus, no elem can be added-to or deleted-from the
 	 * sk_storage->list by the bpf_prog or by the bpf-map's syscall.
 	 *
-	 * It is racing with bpf_local_storage_map_मुक्त() alone
+	 * It is racing with bpf_local_storage_map_free() alone
 	 * when unlinking elem from the sk_storage->list and
 	 * the map's bucket->list.
 	 */
 	raw_spin_lock_bh(&sk_storage->lock);
-	hlist_क्रम_each_entry_safe(selem, n, &sk_storage->list, snode) अणु
-		/* Always unlink from map beक्रमe unlinking from
+	hlist_for_each_entry_safe(selem, n, &sk_storage->list, snode) {
+		/* Always unlink from map before unlinking from
 		 * sk_storage.
 		 */
 		bpf_selem_unlink_map(selem);
-		मुक्त_sk_storage = bpf_selem_unlink_storage_nolock(sk_storage,
+		free_sk_storage = bpf_selem_unlink_storage_nolock(sk_storage,
 								  selem, true);
-	पूर्ण
+	}
 	raw_spin_unlock_bh(&sk_storage->lock);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (मुक्त_sk_storage)
-		kमुक्त_rcu(sk_storage, rcu);
-पूर्ण
+	if (free_sk_storage)
+		kfree_rcu(sk_storage, rcu);
+}
 
-अटल व्योम bpf_sk_storage_map_मुक्त(काष्ठा bpf_map *map)
-अणु
-	काष्ठा bpf_local_storage_map *smap;
+static void bpf_sk_storage_map_free(struct bpf_map *map)
+{
+	struct bpf_local_storage_map *smap;
 
-	smap = (काष्ठा bpf_local_storage_map *)map;
-	bpf_local_storage_cache_idx_मुक्त(&sk_cache, smap->cache_idx);
-	bpf_local_storage_map_मुक्त(smap, शून्य);
-पूर्ण
+	smap = (struct bpf_local_storage_map *)map;
+	bpf_local_storage_cache_idx_free(&sk_cache, smap->cache_idx);
+	bpf_local_storage_map_free(smap, NULL);
+}
 
-अटल काष्ठा bpf_map *bpf_sk_storage_map_alloc(जोड़ bpf_attr *attr)
-अणु
-	काष्ठा bpf_local_storage_map *smap;
+static struct bpf_map *bpf_sk_storage_map_alloc(union bpf_attr *attr)
+{
+	struct bpf_local_storage_map *smap;
 
 	smap = bpf_local_storage_map_alloc(attr);
-	अगर (IS_ERR(smap))
-		वापस ERR_CAST(smap);
+	if (IS_ERR(smap))
+		return ERR_CAST(smap);
 
 	smap->cache_idx = bpf_local_storage_cache_idx_get(&sk_cache);
-	वापस &smap->map;
-पूर्ण
+	return &smap->map;
+}
 
-अटल पूर्णांक notsupp_get_next_key(काष्ठा bpf_map *map, व्योम *key,
-				व्योम *next_key)
-अणु
-	वापस -ENOTSUPP;
-पूर्ण
+static int notsupp_get_next_key(struct bpf_map *map, void *key,
+				void *next_key)
+{
+	return -ENOTSUPP;
+}
 
-अटल व्योम *bpf_fd_sk_storage_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
-	काष्ठा socket *sock;
-	पूर्णांक fd, err;
+static void *bpf_fd_sk_storage_lookup_elem(struct bpf_map *map, void *key)
+{
+	struct bpf_local_storage_data *sdata;
+	struct socket *sock;
+	int fd, err;
 
-	fd = *(पूर्णांक *)key;
+	fd = *(int *)key;
 	sock = sockfd_lookup(fd, &err);
-	अगर (sock) अणु
+	if (sock) {
 		sdata = bpf_sk_storage_lookup(sock->sk, map, true);
 		sockfd_put(sock);
-		वापस sdata ? sdata->data : शून्य;
-	पूर्ण
+		return sdata ? sdata->data : NULL;
+	}
 
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक bpf_fd_sk_storage_update_elem(काष्ठा bpf_map *map, व्योम *key,
-					 व्योम *value, u64 map_flags)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
-	काष्ठा socket *sock;
-	पूर्णांक fd, err;
+static int bpf_fd_sk_storage_update_elem(struct bpf_map *map, void *key,
+					 void *value, u64 map_flags)
+{
+	struct bpf_local_storage_data *sdata;
+	struct socket *sock;
+	int fd, err;
 
-	fd = *(पूर्णांक *)key;
+	fd = *(int *)key;
 	sock = sockfd_lookup(fd, &err);
-	अगर (sock) अणु
+	if (sock) {
 		sdata = bpf_local_storage_update(
-			sock->sk, (काष्ठा bpf_local_storage_map *)map, value,
+			sock->sk, (struct bpf_local_storage_map *)map, value,
 			map_flags);
 		sockfd_put(sock);
-		वापस PTR_ERR_OR_ZERO(sdata);
-	पूर्ण
+		return PTR_ERR_OR_ZERO(sdata);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक bpf_fd_sk_storage_delete_elem(काष्ठा bpf_map *map, व्योम *key)
-अणु
-	काष्ठा socket *sock;
-	पूर्णांक fd, err;
+static int bpf_fd_sk_storage_delete_elem(struct bpf_map *map, void *key)
+{
+	struct socket *sock;
+	int fd, err;
 
-	fd = *(पूर्णांक *)key;
+	fd = *(int *)key;
 	sock = sockfd_lookup(fd, &err);
-	अगर (sock) अणु
+	if (sock) {
 		err = bpf_sk_storage_del(sock->sk, map);
 		sockfd_put(sock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा bpf_local_storage_elem *
-bpf_sk_storage_clone_elem(काष्ठा sock *newsk,
-			  काष्ठा bpf_local_storage_map *smap,
-			  काष्ठा bpf_local_storage_elem *selem)
-अणु
-	काष्ठा bpf_local_storage_elem *copy_selem;
+static struct bpf_local_storage_elem *
+bpf_sk_storage_clone_elem(struct sock *newsk,
+			  struct bpf_local_storage_map *smap,
+			  struct bpf_local_storage_elem *selem)
+{
+	struct bpf_local_storage_elem *copy_selem;
 
-	copy_selem = bpf_selem_alloc(smap, newsk, शून्य, true);
-	अगर (!copy_selem)
-		वापस शून्य;
+	copy_selem = bpf_selem_alloc(smap, newsk, NULL, true);
+	if (!copy_selem)
+		return NULL;
 
-	अगर (map_value_has_spin_lock(&smap->map))
+	if (map_value_has_spin_lock(&smap->map))
 		copy_map_value_locked(&smap->map, SDATA(copy_selem)->data,
 				      SDATA(selem)->data, true);
-	अन्यथा
+	else
 		copy_map_value(&smap->map, SDATA(copy_selem)->data,
 			       SDATA(selem)->data);
 
-	वापस copy_selem;
-पूर्ण
+	return copy_selem;
+}
 
-पूर्णांक bpf_sk_storage_clone(स्थिर काष्ठा sock *sk, काष्ठा sock *newsk)
-अणु
-	काष्ठा bpf_local_storage *new_sk_storage = शून्य;
-	काष्ठा bpf_local_storage *sk_storage;
-	काष्ठा bpf_local_storage_elem *selem;
-	पूर्णांक ret = 0;
+int bpf_sk_storage_clone(const struct sock *sk, struct sock *newsk)
+{
+	struct bpf_local_storage *new_sk_storage = NULL;
+	struct bpf_local_storage *sk_storage;
+	struct bpf_local_storage_elem *selem;
+	int ret = 0;
 
-	RCU_INIT_POINTER(newsk->sk_bpf_storage, शून्य);
+	RCU_INIT_POINTER(newsk->sk_bpf_storage, NULL);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sk_storage = rcu_dereference(sk->sk_bpf_storage);
 
-	अगर (!sk_storage || hlist_empty(&sk_storage->list))
-		जाओ out;
+	if (!sk_storage || hlist_empty(&sk_storage->list))
+		goto out;
 
-	hlist_क्रम_each_entry_rcu(selem, &sk_storage->list, snode) अणु
-		काष्ठा bpf_local_storage_elem *copy_selem;
-		काष्ठा bpf_local_storage_map *smap;
-		काष्ठा bpf_map *map;
+	hlist_for_each_entry_rcu(selem, &sk_storage->list, snode) {
+		struct bpf_local_storage_elem *copy_selem;
+		struct bpf_local_storage_map *smap;
+		struct bpf_map *map;
 
 		smap = rcu_dereference(SDATA(selem)->smap);
-		अगर (!(smap->map.map_flags & BPF_F_CLONE))
-			जारी;
+		if (!(smap->map.map_flags & BPF_F_CLONE))
+			continue;
 
-		/* Note that क्रम lockless listeners adding new element
-		 * here can race with cleanup in bpf_local_storage_map_मुक्त.
+		/* Note that for lockless listeners adding new element
+		 * here can race with cleanup in bpf_local_storage_map_free.
 		 * Try to grab map refcnt to make sure that it's still
 		 * alive and prevent concurrent removal.
 		 */
 		map = bpf_map_inc_not_zero(&smap->map);
-		अगर (IS_ERR(map))
-			जारी;
+		if (IS_ERR(map))
+			continue;
 
 		copy_selem = bpf_sk_storage_clone_elem(newsk, smap, selem);
-		अगर (!copy_selem) अणु
+		if (!copy_selem) {
 			ret = -ENOMEM;
 			bpf_map_put(map);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (new_sk_storage) अणु
+		if (new_sk_storage) {
 			bpf_selem_link_map(smap, copy_selem);
 			bpf_selem_link_storage_nolock(new_sk_storage, copy_selem);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = bpf_local_storage_alloc(newsk, smap, copy_selem);
-			अगर (ret) अणु
-				kमुक्त(copy_selem);
+			if (ret) {
+				kfree(copy_selem);
 				atomic_sub(smap->elem_size,
 					   &newsk->sk_omem_alloc);
 				bpf_map_put(map);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			new_sk_storage =
 				rcu_dereference(copy_selem->local_storage);
-		पूर्ण
+		}
 		bpf_map_put(map);
-	पूर्ण
+	}
 
 out:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	/* In हाल of an error, करोn't मुक्त anything explicitly here, the
-	 * caller is responsible to call bpf_sk_storage_मुक्त.
+	/* In case of an error, don't free anything explicitly here, the
+	 * caller is responsible to call bpf_sk_storage_free.
 	 */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-BPF_CALL_4(bpf_sk_storage_get, काष्ठा bpf_map *, map, काष्ठा sock *, sk,
-	   व्योम *, value, u64, flags)
-अणु
-	काष्ठा bpf_local_storage_data *sdata;
+BPF_CALL_4(bpf_sk_storage_get, struct bpf_map *, map, struct sock *, sk,
+	   void *, value, u64, flags)
+{
+	struct bpf_local_storage_data *sdata;
 
-	अगर (!sk || !sk_fullsock(sk) || flags > BPF_SK_STORAGE_GET_F_CREATE)
-		वापस (अचिन्हित दीर्घ)शून्य;
+	if (!sk || !sk_fullsock(sk) || flags > BPF_SK_STORAGE_GET_F_CREATE)
+		return (unsigned long)NULL;
 
 	sdata = bpf_sk_storage_lookup(sk, map, true);
-	अगर (sdata)
-		वापस (अचिन्हित दीर्घ)sdata->data;
+	if (sdata)
+		return (unsigned long)sdata->data;
 
-	अगर (flags == BPF_SK_STORAGE_GET_F_CREATE &&
+	if (flags == BPF_SK_STORAGE_GET_F_CREATE &&
 	    /* Cannot add new elem to a going away sk.
 	     * Otherwise, the new elem may become a leak
 	     * (and also other memory issues during map
-	     *  deकाष्ठाion).
+	     *  destruction).
 	     */
-	    refcount_inc_not_zero(&sk->sk_refcnt)) अणु
+	    refcount_inc_not_zero(&sk->sk_refcnt)) {
 		sdata = bpf_local_storage_update(
-			sk, (काष्ठा bpf_local_storage_map *)map, value,
+			sk, (struct bpf_local_storage_map *)map, value,
 			BPF_NOEXIST);
-		/* sk must be a fullsock (guaranteed by verअगरier),
+		/* sk must be a fullsock (guaranteed by verifier),
 		 * so sock_gen_put() is unnecessary.
 		 */
 		sock_put(sk);
-		वापस IS_ERR(sdata) ?
-			(अचिन्हित दीर्घ)शून्य : (अचिन्हित दीर्घ)sdata->data;
-	पूर्ण
+		return IS_ERR(sdata) ?
+			(unsigned long)NULL : (unsigned long)sdata->data;
+	}
 
-	वापस (अचिन्हित दीर्घ)शून्य;
-पूर्ण
+	return (unsigned long)NULL;
+}
 
-BPF_CALL_2(bpf_sk_storage_delete, काष्ठा bpf_map *, map, काष्ठा sock *, sk)
-अणु
-	अगर (!sk || !sk_fullsock(sk))
-		वापस -EINVAL;
+BPF_CALL_2(bpf_sk_storage_delete, struct bpf_map *, map, struct sock *, sk)
+{
+	if (!sk || !sk_fullsock(sk))
+		return -EINVAL;
 
-	अगर (refcount_inc_not_zero(&sk->sk_refcnt)) अणु
-		पूर्णांक err;
+	if (refcount_inc_not_zero(&sk->sk_refcnt)) {
+		int err;
 
 		err = bpf_sk_storage_del(sk, map);
 		sock_put(sk);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
-अटल पूर्णांक bpf_sk_storage_अक्षरge(काष्ठा bpf_local_storage_map *smap,
-				 व्योम *owner, u32 size)
-अणु
-	काष्ठा sock *sk = (काष्ठा sock *)owner;
+static int bpf_sk_storage_charge(struct bpf_local_storage_map *smap,
+				 void *owner, u32 size)
+{
+	struct sock *sk = (struct sock *)owner;
 
-	/* same check as in sock_kदो_स्मृति() */
-	अगर (size <= sysctl_opपंचांगem_max &&
-	    atomic_पढ़ो(&sk->sk_omem_alloc) + size < sysctl_opपंचांगem_max) अणु
+	/* same check as in sock_kmalloc() */
+	if (size <= sysctl_optmem_max &&
+	    atomic_read(&sk->sk_omem_alloc) + size < sysctl_optmem_max) {
 		atomic_add(size, &sk->sk_omem_alloc);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम bpf_sk_storage_unअक्षरge(काष्ठा bpf_local_storage_map *smap,
-				    व्योम *owner, u32 size)
-अणु
-	काष्ठा sock *sk = owner;
+static void bpf_sk_storage_uncharge(struct bpf_local_storage_map *smap,
+				    void *owner, u32 size)
+{
+	struct sock *sk = owner;
 
 	atomic_sub(size, &sk->sk_omem_alloc);
-पूर्ण
+}
 
-अटल काष्ठा bpf_local_storage __rcu **
-bpf_sk_storage_ptr(व्योम *owner)
-अणु
-	काष्ठा sock *sk = owner;
+static struct bpf_local_storage __rcu **
+bpf_sk_storage_ptr(void *owner)
+{
+	struct sock *sk = owner;
 
-	वापस &sk->sk_bpf_storage;
-पूर्ण
+	return &sk->sk_bpf_storage;
+}
 
-अटल पूर्णांक sk_storage_map_btf_id;
-स्थिर काष्ठा bpf_map_ops sk_storage_map_ops = अणु
+static int sk_storage_map_btf_id;
+const struct bpf_map_ops sk_storage_map_ops = {
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = bpf_local_storage_map_alloc_check,
 	.map_alloc = bpf_sk_storage_map_alloc,
-	.map_मुक्त = bpf_sk_storage_map_मुक्त,
+	.map_free = bpf_sk_storage_map_free,
 	.map_get_next_key = notsupp_get_next_key,
 	.map_lookup_elem = bpf_fd_sk_storage_lookup_elem,
 	.map_update_elem = bpf_fd_sk_storage_update_elem,
@@ -347,104 +346,104 @@ bpf_sk_storage_ptr(व्योम *owner)
 	.map_check_btf = bpf_local_storage_map_check_btf,
 	.map_btf_name = "bpf_local_storage_map",
 	.map_btf_id = &sk_storage_map_btf_id,
-	.map_local_storage_अक्षरge = bpf_sk_storage_अक्षरge,
-	.map_local_storage_unअक्षरge = bpf_sk_storage_unअक्षरge,
+	.map_local_storage_charge = bpf_sk_storage_charge,
+	.map_local_storage_uncharge = bpf_sk_storage_uncharge,
 	.map_owner_storage_ptr = bpf_sk_storage_ptr,
-पूर्ण;
+};
 
-स्थिर काष्ठा bpf_func_proto bpf_sk_storage_get_proto = अणु
+const struct bpf_func_proto bpf_sk_storage_get_proto = {
 	.func		= bpf_sk_storage_get,
 	.gpl_only	= false,
-	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_शून्य,
+	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_BTF_ID_SOCK_COMMON,
-	.arg3_type	= ARG_PTR_TO_MAP_VALUE_OR_शून्य,
+	.arg3_type	= ARG_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg4_type	= ARG_ANYTHING,
-पूर्ण;
+};
 
-स्थिर काष्ठा bpf_func_proto bpf_sk_storage_get_cg_sock_proto = अणु
+const struct bpf_func_proto bpf_sk_storage_get_cg_sock_proto = {
 	.func		= bpf_sk_storage_get,
 	.gpl_only	= false,
-	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_शून्य,
+	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_CTX, /* context is 'struct sock' */
-	.arg3_type	= ARG_PTR_TO_MAP_VALUE_OR_शून्य,
+	.arg3_type	= ARG_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg4_type	= ARG_ANYTHING,
-पूर्ण;
+};
 
-स्थिर काष्ठा bpf_func_proto bpf_sk_storage_delete_proto = अणु
+const struct bpf_func_proto bpf_sk_storage_delete_proto = {
 	.func		= bpf_sk_storage_delete,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_BTF_ID_SOCK_COMMON,
-पूर्ण;
+};
 
-अटल bool bpf_sk_storage_tracing_allowed(स्थिर काष्ठा bpf_prog *prog)
-अणु
-	स्थिर काष्ठा btf *btf_vmlinux;
-	स्थिर काष्ठा btf_type *t;
-	स्थिर अक्षर *tname;
+static bool bpf_sk_storage_tracing_allowed(const struct bpf_prog *prog)
+{
+	const struct btf *btf_vmlinux;
+	const struct btf_type *t;
+	const char *tname;
 	u32 btf_id;
 
-	अगर (prog->aux->dst_prog)
-		वापस false;
+	if (prog->aux->dst_prog)
+		return false;
 
 	/* Ensure the tracing program is not tracing
 	 * any bpf_sk_storage*() function and also
 	 * use the bpf_sk_storage_(get|delete) helper.
 	 */
-	चयन (prog->expected_attach_type) अणु
-	हाल BPF_TRACE_ITER:
-	हाल BPF_TRACE_RAW_TP:
-		/* bpf_sk_storage has no trace poपूर्णांक */
-		वापस true;
-	हाल BPF_TRACE_FENTRY:
-	हाल BPF_TRACE_FEXIT:
+	switch (prog->expected_attach_type) {
+	case BPF_TRACE_ITER:
+	case BPF_TRACE_RAW_TP:
+		/* bpf_sk_storage has no trace point */
+		return true;
+	case BPF_TRACE_FENTRY:
+	case BPF_TRACE_FEXIT:
 		btf_vmlinux = bpf_get_btf_vmlinux();
 		btf_id = prog->aux->attach_btf_id;
 		t = btf_type_by_id(btf_vmlinux, btf_id);
 		tname = btf_name_by_offset(btf_vmlinux, t->name_off);
-		वापस !!म_भेदन(tname, "bpf_sk_storage",
-				 म_माप("bpf_sk_storage"));
-	शेष:
-		वापस false;
-	पूर्ण
+		return !!strncmp(tname, "bpf_sk_storage",
+				 strlen("bpf_sk_storage"));
+	default:
+		return false;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-BPF_CALL_4(bpf_sk_storage_get_tracing, काष्ठा bpf_map *, map, काष्ठा sock *, sk,
-	   व्योम *, value, u64, flags)
-अणु
-	अगर (in_irq() || in_nmi())
-		वापस (अचिन्हित दीर्घ)शून्य;
+BPF_CALL_4(bpf_sk_storage_get_tracing, struct bpf_map *, map, struct sock *, sk,
+	   void *, value, u64, flags)
+{
+	if (in_irq() || in_nmi())
+		return (unsigned long)NULL;
 
-	वापस (अचिन्हित दीर्घ)____bpf_sk_storage_get(map, sk, value, flags);
-पूर्ण
+	return (unsigned long)____bpf_sk_storage_get(map, sk, value, flags);
+}
 
-BPF_CALL_2(bpf_sk_storage_delete_tracing, काष्ठा bpf_map *, map,
-	   काष्ठा sock *, sk)
-अणु
-	अगर (in_irq() || in_nmi())
-		वापस -EPERM;
+BPF_CALL_2(bpf_sk_storage_delete_tracing, struct bpf_map *, map,
+	   struct sock *, sk)
+{
+	if (in_irq() || in_nmi())
+		return -EPERM;
 
-	वापस ____bpf_sk_storage_delete(map, sk);
-पूर्ण
+	return ____bpf_sk_storage_delete(map, sk);
+}
 
-स्थिर काष्ठा bpf_func_proto bpf_sk_storage_get_tracing_proto = अणु
+const struct bpf_func_proto bpf_sk_storage_get_tracing_proto = {
 	.func		= bpf_sk_storage_get_tracing,
 	.gpl_only	= false,
-	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_शून्य,
+	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg1_type	= ARG_CONST_MAP_PTR,
 	.arg2_type	= ARG_PTR_TO_BTF_ID,
 	.arg2_btf_id	= &btf_sock_ids[BTF_SOCK_TYPE_SOCK_COMMON],
-	.arg3_type	= ARG_PTR_TO_MAP_VALUE_OR_शून्य,
+	.arg3_type	= ARG_PTR_TO_MAP_VALUE_OR_NULL,
 	.arg4_type	= ARG_ANYTHING,
 	.allowed	= bpf_sk_storage_tracing_allowed,
-पूर्ण;
+};
 
-स्थिर काष्ठा bpf_func_proto bpf_sk_storage_delete_tracing_proto = अणु
+const struct bpf_func_proto bpf_sk_storage_delete_tracing_proto = {
 	.func		= bpf_sk_storage_delete_tracing,
 	.gpl_only	= false,
 	.ret_type	= RET_INTEGER,
@@ -452,12 +451,12 @@ BPF_CALL_2(bpf_sk_storage_delete_tracing, काष्ठा bpf_map *, map,
 	.arg2_type	= ARG_PTR_TO_BTF_ID,
 	.arg2_btf_id	= &btf_sock_ids[BTF_SOCK_TYPE_SOCK_COMMON],
 	.allowed	= bpf_sk_storage_tracing_allowed,
-पूर्ण;
+};
 
-काष्ठा bpf_sk_storage_diag अणु
+struct bpf_sk_storage_diag {
 	u32 nr_maps;
-	काष्ठा bpf_map *maps[];
-पूर्ण;
+	struct bpf_map *maps[];
+};
 
 /* The reply will be like:
  * INET_DIAG_BPF_SK_STORAGES (nla_nest)
@@ -469,477 +468,477 @@ BPF_CALL_2(bpf_sk_storage_delete_tracing, काष्ठा bpf_map *, map,
  *		SK_DIAG_BPF_STORAGE_MAP_VALUE (nla_reserve_64bit)
  *	....
  */
-अटल पूर्णांक nla_value_size(u32 value_size)
-अणु
+static int nla_value_size(u32 value_size)
+{
 	/* SK_DIAG_BPF_STORAGE (nla_nest)
 	 *	SK_DIAG_BPF_STORAGE_MAP_ID (nla_put_u32)
 	 *	SK_DIAG_BPF_STORAGE_MAP_VALUE (nla_reserve_64bit)
 	 */
-	वापस nla_total_size(0) + nla_total_size(माप(u32)) +
+	return nla_total_size(0) + nla_total_size(sizeof(u32)) +
 		nla_total_size_64bit(value_size);
-पूर्ण
+}
 
-व्योम bpf_sk_storage_diag_मुक्त(काष्ठा bpf_sk_storage_diag *diag)
-अणु
+void bpf_sk_storage_diag_free(struct bpf_sk_storage_diag *diag)
+{
 	u32 i;
 
-	अगर (!diag)
-		वापस;
+	if (!diag)
+		return;
 
-	क्रम (i = 0; i < diag->nr_maps; i++)
+	for (i = 0; i < diag->nr_maps; i++)
 		bpf_map_put(diag->maps[i]);
 
-	kमुक्त(diag);
-पूर्ण
-EXPORT_SYMBOL_GPL(bpf_sk_storage_diag_मुक्त);
+	kfree(diag);
+}
+EXPORT_SYMBOL_GPL(bpf_sk_storage_diag_free);
 
-अटल bool diag_check_dup(स्थिर काष्ठा bpf_sk_storage_diag *diag,
-			   स्थिर काष्ठा bpf_map *map)
-अणु
+static bool diag_check_dup(const struct bpf_sk_storage_diag *diag,
+			   const struct bpf_map *map)
+{
 	u32 i;
 
-	क्रम (i = 0; i < diag->nr_maps; i++) अणु
-		अगर (diag->maps[i] == map)
-			वापस true;
-	पूर्ण
+	for (i = 0; i < diag->nr_maps; i++) {
+		if (diag->maps[i] == map)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-काष्ठा bpf_sk_storage_diag *
-bpf_sk_storage_diag_alloc(स्थिर काष्ठा nlattr *nla_stgs)
-अणु
-	काष्ठा bpf_sk_storage_diag *diag;
-	काष्ठा nlattr *nla;
+struct bpf_sk_storage_diag *
+bpf_sk_storage_diag_alloc(const struct nlattr *nla_stgs)
+{
+	struct bpf_sk_storage_diag *diag;
+	struct nlattr *nla;
 	u32 nr_maps = 0;
-	पूर्णांक rem, err;
+	int rem, err;
 
 	/* bpf_local_storage_map is currently limited to CAP_SYS_ADMIN as
-	 * the map_alloc_check() side also करोes.
+	 * the map_alloc_check() side also does.
 	 */
-	अगर (!bpf_capable())
-		वापस ERR_PTR(-EPERM);
+	if (!bpf_capable())
+		return ERR_PTR(-EPERM);
 
-	nla_क्रम_each_nested(nla, nla_stgs, rem) अणु
-		अगर (nla_type(nla) == SK_DIAG_BPF_STORAGE_REQ_MAP_FD)
+	nla_for_each_nested(nla, nla_stgs, rem) {
+		if (nla_type(nla) == SK_DIAG_BPF_STORAGE_REQ_MAP_FD)
 			nr_maps++;
-	पूर्ण
+	}
 
-	diag = kzalloc(माप(*diag) + माप(diag->maps[0]) * nr_maps,
+	diag = kzalloc(sizeof(*diag) + sizeof(diag->maps[0]) * nr_maps,
 		       GFP_KERNEL);
-	अगर (!diag)
-		वापस ERR_PTR(-ENOMEM);
+	if (!diag)
+		return ERR_PTR(-ENOMEM);
 
-	nla_क्रम_each_nested(nla, nla_stgs, rem) अणु
-		काष्ठा bpf_map *map;
-		पूर्णांक map_fd;
+	nla_for_each_nested(nla, nla_stgs, rem) {
+		struct bpf_map *map;
+		int map_fd;
 
-		अगर (nla_type(nla) != SK_DIAG_BPF_STORAGE_REQ_MAP_FD)
-			जारी;
+		if (nla_type(nla) != SK_DIAG_BPF_STORAGE_REQ_MAP_FD)
+			continue;
 
 		map_fd = nla_get_u32(nla);
 		map = bpf_map_get(map_fd);
-		अगर (IS_ERR(map)) अणु
+		if (IS_ERR(map)) {
 			err = PTR_ERR(map);
-			जाओ err_मुक्त;
-		पूर्ण
-		अगर (map->map_type != BPF_MAP_TYPE_SK_STORAGE) अणु
+			goto err_free;
+		}
+		if (map->map_type != BPF_MAP_TYPE_SK_STORAGE) {
 			bpf_map_put(map);
 			err = -EINVAL;
-			जाओ err_मुक्त;
-		पूर्ण
-		अगर (diag_check_dup(diag, map)) अणु
+			goto err_free;
+		}
+		if (diag_check_dup(diag, map)) {
 			bpf_map_put(map);
 			err = -EEXIST;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 		diag->maps[diag->nr_maps++] = map;
-	पूर्ण
+	}
 
-	वापस diag;
+	return diag;
 
-err_मुक्त:
-	bpf_sk_storage_diag_मुक्त(diag);
-	वापस ERR_PTR(err);
-पूर्ण
+err_free:
+	bpf_sk_storage_diag_free(diag);
+	return ERR_PTR(err);
+}
 EXPORT_SYMBOL_GPL(bpf_sk_storage_diag_alloc);
 
-अटल पूर्णांक diag_get(काष्ठा bpf_local_storage_data *sdata, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nlattr *nla_stg, *nla_value;
-	काष्ठा bpf_local_storage_map *smap;
+static int diag_get(struct bpf_local_storage_data *sdata, struct sk_buff *skb)
+{
+	struct nlattr *nla_stg, *nla_value;
+	struct bpf_local_storage_map *smap;
 
 	/* It cannot exceed max nlattr's payload */
 	BUILD_BUG_ON(U16_MAX - NLA_HDRLEN < BPF_LOCAL_STORAGE_MAX_VALUE_SIZE);
 
 	nla_stg = nla_nest_start(skb, SK_DIAG_BPF_STORAGE);
-	अगर (!nla_stg)
-		वापस -EMSGSIZE;
+	if (!nla_stg)
+		return -EMSGSIZE;
 
 	smap = rcu_dereference(sdata->smap);
-	अगर (nla_put_u32(skb, SK_DIAG_BPF_STORAGE_MAP_ID, smap->map.id))
-		जाओ errout;
+	if (nla_put_u32(skb, SK_DIAG_BPF_STORAGE_MAP_ID, smap->map.id))
+		goto errout;
 
 	nla_value = nla_reserve_64bit(skb, SK_DIAG_BPF_STORAGE_MAP_VALUE,
 				      smap->map.value_size,
 				      SK_DIAG_BPF_STORAGE_PAD);
-	अगर (!nla_value)
-		जाओ errout;
+	if (!nla_value)
+		goto errout;
 
-	अगर (map_value_has_spin_lock(&smap->map))
+	if (map_value_has_spin_lock(&smap->map))
 		copy_map_value_locked(&smap->map, nla_data(nla_value),
 				      sdata->data, true);
-	अन्यथा
+	else
 		copy_map_value(&smap->map, nla_data(nla_value), sdata->data);
 
 	nla_nest_end(skb, nla_stg);
-	वापस 0;
+	return 0;
 
 errout:
 	nla_nest_cancel(skb, nla_stg);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक bpf_sk_storage_diag_put_all(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				       पूर्णांक stg_array_type,
-				       अचिन्हित पूर्णांक *res_diag_size)
-अणु
+static int bpf_sk_storage_diag_put_all(struct sock *sk, struct sk_buff *skb,
+				       int stg_array_type,
+				       unsigned int *res_diag_size)
+{
 	/* stg_array_type (e.g. INET_DIAG_BPF_SK_STORAGES) */
-	अचिन्हित पूर्णांक diag_size = nla_total_size(0);
-	काष्ठा bpf_local_storage *sk_storage;
-	काष्ठा bpf_local_storage_elem *selem;
-	काष्ठा bpf_local_storage_map *smap;
-	काष्ठा nlattr *nla_stgs;
-	अचिन्हित पूर्णांक saved_len;
-	पूर्णांक err = 0;
+	unsigned int diag_size = nla_total_size(0);
+	struct bpf_local_storage *sk_storage;
+	struct bpf_local_storage_elem *selem;
+	struct bpf_local_storage_map *smap;
+	struct nlattr *nla_stgs;
+	unsigned int saved_len;
+	int err = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	sk_storage = rcu_dereference(sk->sk_bpf_storage);
-	अगर (!sk_storage || hlist_empty(&sk_storage->list)) अणु
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
+	if (!sk_storage || hlist_empty(&sk_storage->list)) {
+		rcu_read_unlock();
+		return 0;
+	}
 
 	nla_stgs = nla_nest_start(skb, stg_array_type);
-	अगर (!nla_stgs)
+	if (!nla_stgs)
 		/* Continue to learn diag_size */
 		err = -EMSGSIZE;
 
 	saved_len = skb->len;
-	hlist_क्रम_each_entry_rcu(selem, &sk_storage->list, snode) अणु
+	hlist_for_each_entry_rcu(selem, &sk_storage->list, snode) {
 		smap = rcu_dereference(SDATA(selem)->smap);
 		diag_size += nla_value_size(smap->map.value_size);
 
-		अगर (nla_stgs && diag_get(SDATA(selem), skb))
+		if (nla_stgs && diag_get(SDATA(selem), skb))
 			/* Continue to learn diag_size */
 			err = -EMSGSIZE;
-	पूर्ण
+	}
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (nla_stgs) अणु
-		अगर (saved_len == skb->len)
+	if (nla_stgs) {
+		if (saved_len == skb->len)
 			nla_nest_cancel(skb, nla_stgs);
-		अन्यथा
+		else
 			nla_nest_end(skb, nla_stgs);
-	पूर्ण
+	}
 
-	अगर (diag_size == nla_total_size(0)) अणु
+	if (diag_size == nla_total_size(0)) {
 		*res_diag_size = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*res_diag_size = diag_size;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक bpf_sk_storage_diag_put(काष्ठा bpf_sk_storage_diag *diag,
-			    काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			    पूर्णांक stg_array_type,
-			    अचिन्हित पूर्णांक *res_diag_size)
-अणु
+int bpf_sk_storage_diag_put(struct bpf_sk_storage_diag *diag,
+			    struct sock *sk, struct sk_buff *skb,
+			    int stg_array_type,
+			    unsigned int *res_diag_size)
+{
 	/* stg_array_type (e.g. INET_DIAG_BPF_SK_STORAGES) */
-	अचिन्हित पूर्णांक diag_size = nla_total_size(0);
-	काष्ठा bpf_local_storage *sk_storage;
-	काष्ठा bpf_local_storage_data *sdata;
-	काष्ठा nlattr *nla_stgs;
-	अचिन्हित पूर्णांक saved_len;
-	पूर्णांक err = 0;
+	unsigned int diag_size = nla_total_size(0);
+	struct bpf_local_storage *sk_storage;
+	struct bpf_local_storage_data *sdata;
+	struct nlattr *nla_stgs;
+	unsigned int saved_len;
+	int err = 0;
 	u32 i;
 
 	*res_diag_size = 0;
 
-	/* No map has been specअगरied.  Dump all. */
-	अगर (!diag->nr_maps)
-		वापस bpf_sk_storage_diag_put_all(sk, skb, stg_array_type,
+	/* No map has been specified.  Dump all. */
+	if (!diag->nr_maps)
+		return bpf_sk_storage_diag_put_all(sk, skb, stg_array_type,
 						   res_diag_size);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sk_storage = rcu_dereference(sk->sk_bpf_storage);
-	अगर (!sk_storage || hlist_empty(&sk_storage->list)) अणु
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
+	if (!sk_storage || hlist_empty(&sk_storage->list)) {
+		rcu_read_unlock();
+		return 0;
+	}
 
 	nla_stgs = nla_nest_start(skb, stg_array_type);
-	अगर (!nla_stgs)
+	if (!nla_stgs)
 		/* Continue to learn diag_size */
 		err = -EMSGSIZE;
 
 	saved_len = skb->len;
-	क्रम (i = 0; i < diag->nr_maps; i++) अणु
+	for (i = 0; i < diag->nr_maps; i++) {
 		sdata = bpf_local_storage_lookup(sk_storage,
-				(काष्ठा bpf_local_storage_map *)diag->maps[i],
+				(struct bpf_local_storage_map *)diag->maps[i],
 				false);
 
-		अगर (!sdata)
-			जारी;
+		if (!sdata)
+			continue;
 
 		diag_size += nla_value_size(diag->maps[i]->value_size);
 
-		अगर (nla_stgs && diag_get(sdata, skb))
+		if (nla_stgs && diag_get(sdata, skb))
 			/* Continue to learn diag_size */
 			err = -EMSGSIZE;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	अगर (nla_stgs) अणु
-		अगर (saved_len == skb->len)
+	if (nla_stgs) {
+		if (saved_len == skb->len)
 			nla_nest_cancel(skb, nla_stgs);
-		अन्यथा
+		else
 			nla_nest_end(skb, nla_stgs);
-	पूर्ण
+	}
 
-	अगर (diag_size == nla_total_size(0)) अणु
+	if (diag_size == nla_total_size(0)) {
 		*res_diag_size = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	*res_diag_size = diag_size;
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(bpf_sk_storage_diag_put);
 
-काष्ठा bpf_iter_seq_sk_storage_map_info अणु
-	काष्ठा bpf_map *map;
-	अचिन्हित पूर्णांक bucket_id;
-	अचिन्हित skip_elems;
-पूर्ण;
+struct bpf_iter_seq_sk_storage_map_info {
+	struct bpf_map *map;
+	unsigned int bucket_id;
+	unsigned skip_elems;
+};
 
-अटल काष्ठा bpf_local_storage_elem *
-bpf_sk_storage_map_seq_find_next(काष्ठा bpf_iter_seq_sk_storage_map_info *info,
-				 काष्ठा bpf_local_storage_elem *prev_selem)
+static struct bpf_local_storage_elem *
+bpf_sk_storage_map_seq_find_next(struct bpf_iter_seq_sk_storage_map_info *info,
+				 struct bpf_local_storage_elem *prev_selem)
 	__acquires(RCU) __releases(RCU)
-अणु
-	काष्ठा bpf_local_storage *sk_storage;
-	काष्ठा bpf_local_storage_elem *selem;
+{
+	struct bpf_local_storage *sk_storage;
+	struct bpf_local_storage_elem *selem;
 	u32 skip_elems = info->skip_elems;
-	काष्ठा bpf_local_storage_map *smap;
+	struct bpf_local_storage_map *smap;
 	u32 bucket_id = info->bucket_id;
 	u32 i, count, n_buckets;
-	काष्ठा bpf_local_storage_map_bucket *b;
+	struct bpf_local_storage_map_bucket *b;
 
-	smap = (काष्ठा bpf_local_storage_map *)info->map;
+	smap = (struct bpf_local_storage_map *)info->map;
 	n_buckets = 1U << smap->bucket_log;
-	अगर (bucket_id >= n_buckets)
-		वापस शून्य;
+	if (bucket_id >= n_buckets)
+		return NULL;
 
 	/* try to find next selem in the same bucket */
 	selem = prev_selem;
 	count = 0;
-	जबतक (selem) अणु
+	while (selem) {
 		selem = hlist_entry_safe(rcu_dereference(hlist_next_rcu(&selem->map_node)),
-					 काष्ठा bpf_local_storage_elem, map_node);
-		अगर (!selem) अणु
+					 struct bpf_local_storage_elem, map_node);
+		if (!selem) {
 			/* not found, unlock and go to the next bucket */
 			b = &smap->buckets[bucket_id++];
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 			skip_elems = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		sk_storage = rcu_dereference(selem->local_storage);
-		अगर (sk_storage) अणु
+		if (sk_storage) {
 			info->skip_elems = skip_elems + count;
-			वापस selem;
-		पूर्ण
+			return selem;
+		}
 		count++;
-	पूर्ण
+	}
 
-	क्रम (i = bucket_id; i < (1U << smap->bucket_log); i++) अणु
+	for (i = bucket_id; i < (1U << smap->bucket_log); i++) {
 		b = &smap->buckets[i];
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		count = 0;
-		hlist_क्रम_each_entry_rcu(selem, &b->list, map_node) अणु
+		hlist_for_each_entry_rcu(selem, &b->list, map_node) {
 			sk_storage = rcu_dereference(selem->local_storage);
-			अगर (sk_storage && count >= skip_elems) अणु
+			if (sk_storage && count >= skip_elems) {
 				info->bucket_id = i;
 				info->skip_elems = count;
-				वापस selem;
-			पूर्ण
+				return selem;
+			}
 			count++;
-		पूर्ण
-		rcu_पढ़ो_unlock();
+		}
+		rcu_read_unlock();
 		skip_elems = 0;
-	पूर्ण
+	}
 
 	info->bucket_id = i;
 	info->skip_elems = 0;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *bpf_sk_storage_map_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा bpf_local_storage_elem *selem;
+static void *bpf_sk_storage_map_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	struct bpf_local_storage_elem *selem;
 
-	selem = bpf_sk_storage_map_seq_find_next(seq->निजी, शून्य);
-	अगर (!selem)
-		वापस शून्य;
+	selem = bpf_sk_storage_map_seq_find_next(seq->private, NULL);
+	if (!selem)
+		return NULL;
 
-	अगर (*pos == 0)
+	if (*pos == 0)
 		++*pos;
-	वापस selem;
-पूर्ण
+	return selem;
+}
 
-अटल व्योम *bpf_sk_storage_map_seq_next(काष्ठा seq_file *seq, व्योम *v,
+static void *bpf_sk_storage_map_seq_next(struct seq_file *seq, void *v,
 					 loff_t *pos)
-अणु
-	काष्ठा bpf_iter_seq_sk_storage_map_info *info = seq->निजी;
+{
+	struct bpf_iter_seq_sk_storage_map_info *info = seq->private;
 
 	++*pos;
 	++info->skip_elems;
-	वापस bpf_sk_storage_map_seq_find_next(seq->निजी, v);
-पूर्ण
+	return bpf_sk_storage_map_seq_find_next(seq->private, v);
+}
 
-काष्ठा bpf_iter__bpf_sk_storage_map अणु
-	__bpf_md_ptr(काष्ठा bpf_iter_meta *, meta);
-	__bpf_md_ptr(काष्ठा bpf_map *, map);
-	__bpf_md_ptr(काष्ठा sock *, sk);
-	__bpf_md_ptr(व्योम *, value);
-पूर्ण;
+struct bpf_iter__bpf_sk_storage_map {
+	__bpf_md_ptr(struct bpf_iter_meta *, meta);
+	__bpf_md_ptr(struct bpf_map *, map);
+	__bpf_md_ptr(struct sock *, sk);
+	__bpf_md_ptr(void *, value);
+};
 
-DEFINE_BPF_ITER_FUNC(bpf_sk_storage_map, काष्ठा bpf_iter_meta *meta,
-		     काष्ठा bpf_map *map, काष्ठा sock *sk,
-		     व्योम *value)
+DEFINE_BPF_ITER_FUNC(bpf_sk_storage_map, struct bpf_iter_meta *meta,
+		     struct bpf_map *map, struct sock *sk,
+		     void *value)
 
-अटल पूर्णांक __bpf_sk_storage_map_seq_show(काष्ठा seq_file *seq,
-					 काष्ठा bpf_local_storage_elem *selem)
-अणु
-	काष्ठा bpf_iter_seq_sk_storage_map_info *info = seq->निजी;
-	काष्ठा bpf_iter__bpf_sk_storage_map ctx = अणुपूर्ण;
-	काष्ठा bpf_local_storage *sk_storage;
-	काष्ठा bpf_iter_meta meta;
-	काष्ठा bpf_prog *prog;
-	पूर्णांक ret = 0;
+static int __bpf_sk_storage_map_seq_show(struct seq_file *seq,
+					 struct bpf_local_storage_elem *selem)
+{
+	struct bpf_iter_seq_sk_storage_map_info *info = seq->private;
+	struct bpf_iter__bpf_sk_storage_map ctx = {};
+	struct bpf_local_storage *sk_storage;
+	struct bpf_iter_meta meta;
+	struct bpf_prog *prog;
+	int ret = 0;
 
 	meta.seq = seq;
-	prog = bpf_iter_get_info(&meta, selem == शून्य);
-	अगर (prog) अणु
+	prog = bpf_iter_get_info(&meta, selem == NULL);
+	if (prog) {
 		ctx.meta = &meta;
 		ctx.map = info->map;
-		अगर (selem) अणु
+		if (selem) {
 			sk_storage = rcu_dereference(selem->local_storage);
 			ctx.sk = sk_storage->owner;
 			ctx.value = SDATA(selem)->data;
-		पूर्ण
+		}
 		ret = bpf_iter_run_prog(prog, &ctx);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक bpf_sk_storage_map_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	वापस __bpf_sk_storage_map_seq_show(seq, v);
-पूर्ण
+static int bpf_sk_storage_map_seq_show(struct seq_file *seq, void *v)
+{
+	return __bpf_sk_storage_map_seq_show(seq, v);
+}
 
-अटल व्योम bpf_sk_storage_map_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+static void bpf_sk_storage_map_seq_stop(struct seq_file *seq, void *v)
 	__releases(RCU)
-अणु
-	अगर (!v)
-		(व्योम)__bpf_sk_storage_map_seq_show(seq, v);
-	अन्यथा
-		rcu_पढ़ो_unlock();
-पूर्ण
+{
+	if (!v)
+		(void)__bpf_sk_storage_map_seq_show(seq, v);
+	else
+		rcu_read_unlock();
+}
 
-अटल पूर्णांक bpf_iter_init_sk_storage_map(व्योम *priv_data,
-					काष्ठा bpf_iter_aux_info *aux)
-अणु
-	काष्ठा bpf_iter_seq_sk_storage_map_info *seq_info = priv_data;
+static int bpf_iter_init_sk_storage_map(void *priv_data,
+					struct bpf_iter_aux_info *aux)
+{
+	struct bpf_iter_seq_sk_storage_map_info *seq_info = priv_data;
 
 	seq_info->map = aux->map;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bpf_iter_attach_map(काष्ठा bpf_prog *prog,
-			       जोड़ bpf_iter_link_info *linfo,
-			       काष्ठा bpf_iter_aux_info *aux)
-अणु
-	काष्ठा bpf_map *map;
-	पूर्णांक err = -EINVAL;
+static int bpf_iter_attach_map(struct bpf_prog *prog,
+			       union bpf_iter_link_info *linfo,
+			       struct bpf_iter_aux_info *aux)
+{
+	struct bpf_map *map;
+	int err = -EINVAL;
 
-	अगर (!linfo->map.map_fd)
-		वापस -EBADF;
+	if (!linfo->map.map_fd)
+		return -EBADF;
 
 	map = bpf_map_get_with_uref(linfo->map.map_fd);
-	अगर (IS_ERR(map))
-		वापस PTR_ERR(map);
+	if (IS_ERR(map))
+		return PTR_ERR(map);
 
-	अगर (map->map_type != BPF_MAP_TYPE_SK_STORAGE)
-		जाओ put_map;
+	if (map->map_type != BPF_MAP_TYPE_SK_STORAGE)
+		goto put_map;
 
-	अगर (prog->aux->max_rकरोnly_access > map->value_size) अणु
+	if (prog->aux->max_rdonly_access > map->value_size) {
 		err = -EACCES;
-		जाओ put_map;
-	पूर्ण
+		goto put_map;
+	}
 
 	aux->map = map;
-	वापस 0;
+	return 0;
 
 put_map:
 	bpf_map_put_with_uref(map);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम bpf_iter_detach_map(काष्ठा bpf_iter_aux_info *aux)
-अणु
+static void bpf_iter_detach_map(struct bpf_iter_aux_info *aux)
+{
 	bpf_map_put_with_uref(aux->map);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations bpf_sk_storage_map_seq_ops = अणु
+static const struct seq_operations bpf_sk_storage_map_seq_ops = {
 	.start  = bpf_sk_storage_map_seq_start,
 	.next   = bpf_sk_storage_map_seq_next,
 	.stop   = bpf_sk_storage_map_seq_stop,
 	.show   = bpf_sk_storage_map_seq_show,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bpf_iter_seq_info iter_seq_info = अणु
+static const struct bpf_iter_seq_info iter_seq_info = {
 	.seq_ops		= &bpf_sk_storage_map_seq_ops,
-	.init_seq_निजी	= bpf_iter_init_sk_storage_map,
-	.fini_seq_निजी	= शून्य,
-	.seq_priv_size		= माप(काष्ठा bpf_iter_seq_sk_storage_map_info),
-पूर्ण;
+	.init_seq_private	= bpf_iter_init_sk_storage_map,
+	.fini_seq_private	= NULL,
+	.seq_priv_size		= sizeof(struct bpf_iter_seq_sk_storage_map_info),
+};
 
-अटल काष्ठा bpf_iter_reg bpf_sk_storage_map_reg_info = अणु
+static struct bpf_iter_reg bpf_sk_storage_map_reg_info = {
 	.target			= "bpf_sk_storage_map",
 	.attach_target		= bpf_iter_attach_map,
 	.detach_target		= bpf_iter_detach_map,
 	.show_fdinfo		= bpf_iter_map_show_fdinfo,
 	.fill_link_info		= bpf_iter_map_fill_link_info,
 	.ctx_arg_info_size	= 2,
-	.ctx_arg_info		= अणु
-		अणु दुरत्व(काष्ठा bpf_iter__bpf_sk_storage_map, sk),
-		  PTR_TO_BTF_ID_OR_शून्य पूर्ण,
-		अणु दुरत्व(काष्ठा bpf_iter__bpf_sk_storage_map, value),
-		  PTR_TO_RDWR_BUF_OR_शून्य पूर्ण,
-	पूर्ण,
+	.ctx_arg_info		= {
+		{ offsetof(struct bpf_iter__bpf_sk_storage_map, sk),
+		  PTR_TO_BTF_ID_OR_NULL },
+		{ offsetof(struct bpf_iter__bpf_sk_storage_map, value),
+		  PTR_TO_RDWR_BUF_OR_NULL },
+	},
 	.seq_info		= &iter_seq_info,
-पूर्ण;
+};
 
-अटल पूर्णांक __init bpf_sk_storage_map_iter_init(व्योम)
-अणु
+static int __init bpf_sk_storage_map_iter_init(void)
+{
 	bpf_sk_storage_map_reg_info.ctx_arg_info[0].btf_id =
 		btf_sock_ids[BTF_SOCK_TYPE_SOCK];
-	वापस bpf_iter_reg_target(&bpf_sk_storage_map_reg_info);
-पूर्ण
+	return bpf_iter_reg_target(&bpf_sk_storage_map_reg_info);
+}
 late_initcall(bpf_sk_storage_map_iter_init);

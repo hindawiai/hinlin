@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#अगर_अघोषित _ASM_MMU_H
-#घोषणा _ASM_MMU_H
+#ifndef _ASM_MMU_H
+#define _ASM_MMU_H
 
-#समावेश <यंत्र/vdso.h>
+#include <asm/vdso.h>
 
 /*
- * Architecture-specअगरic state क्रम a mm_काष्ठा.
+ * Architecture-specific state for a mm_struct.
  * For the Hexagon Virtual Machine, it can be a copy
- * of the poपूर्णांकer to the page table base.
+ * of the pointer to the page table base.
  */
-काष्ठा mm_context अणु
-	अचिन्हित दीर्घ दीर्घ generation;
-	अचिन्हित दीर्घ ptbase;
-	काष्ठा hexagon_vdso *vdso;
-पूर्ण;
+struct mm_context {
+	unsigned long long generation;
+	unsigned long ptbase;
+	struct hexagon_vdso *vdso;
+};
 
-प्रकार काष्ठा mm_context mm_context_t;
+typedef struct mm_context mm_context_t;
 
-#पूर्ण_अगर
+#endif

@@ -1,110 +1,109 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Lochnagar pin and GPIO control
  *
  * Copyright (c) 2017-2018 Cirrus Logic, Inc. and
  *                         Cirrus Logic International Semiconductor Ltd.
  *
- * Author: Charles Keepax <ckeepax@खोलोsource.cirrus.com>
+ * Author: Charles Keepax <ckeepax@opensource.cirrus.com>
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/gpio/driver.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinconf-generic.h>
 
-#समावेश <linux/mfd/lochnagar.h>
-#समावेश <linux/mfd/lochnagar1_regs.h>
-#समावेश <linux/mfd/lochnagar2_regs.h>
+#include <linux/mfd/lochnagar.h>
+#include <linux/mfd/lochnagar1_regs.h>
+#include <linux/mfd/lochnagar2_regs.h>
 
-#समावेश <dt-bindings/pinctrl/lochnagar.h>
+#include <dt-bindings/pinctrl/lochnagar.h>
 
-#समावेश "../pinctrl-utils.h"
+#include "../pinctrl-utils.h"
 
-#घोषणा LN2_NUM_GPIO_CHANNELS	16
+#define LN2_NUM_GPIO_CHANNELS	16
 
-#घोषणा LN_CDC_AIF1_STR		"codec-aif1"
-#घोषणा LN_CDC_AIF2_STR		"codec-aif2"
-#घोषणा LN_CDC_AIF3_STR		"codec-aif3"
-#घोषणा LN_DSP_AIF1_STR		"dsp-aif1"
-#घोषणा LN_DSP_AIF2_STR		"dsp-aif2"
-#घोषणा LN_PSIA1_STR		"psia1"
-#घोषणा LN_PSIA2_STR		"psia2"
-#घोषणा LN_GF_AIF1_STR		"gf-aif1"
-#घोषणा LN_GF_AIF2_STR		"gf-aif2"
-#घोषणा LN_GF_AIF3_STR		"gf-aif3"
-#घोषणा LN_GF_AIF4_STR		"gf-aif4"
-#घोषणा LN_SPDIF_AIF_STR	"spdif-aif"
-#घोषणा LN_USB_AIF1_STR		"usb-aif1"
-#घोषणा LN_USB_AIF2_STR		"usb-aif2"
-#घोषणा LN_ADAT_AIF_STR		"adat-aif"
-#घोषणा LN_SOUNDCARD_AIF_STR	"soundcard-aif"
+#define LN_CDC_AIF1_STR		"codec-aif1"
+#define LN_CDC_AIF2_STR		"codec-aif2"
+#define LN_CDC_AIF3_STR		"codec-aif3"
+#define LN_DSP_AIF1_STR		"dsp-aif1"
+#define LN_DSP_AIF2_STR		"dsp-aif2"
+#define LN_PSIA1_STR		"psia1"
+#define LN_PSIA2_STR		"psia2"
+#define LN_GF_AIF1_STR		"gf-aif1"
+#define LN_GF_AIF2_STR		"gf-aif2"
+#define LN_GF_AIF3_STR		"gf-aif3"
+#define LN_GF_AIF4_STR		"gf-aif4"
+#define LN_SPDIF_AIF_STR	"spdif-aif"
+#define LN_USB_AIF1_STR		"usb-aif1"
+#define LN_USB_AIF2_STR		"usb-aif2"
+#define LN_ADAT_AIF_STR		"adat-aif"
+#define LN_SOUNDCARD_AIF_STR	"soundcard-aif"
 
-#घोषणा LN_PIN_GPIO(REV, ID, NAME, REG, SHIFT, INVERT) \
-अटल स्थिर काष्ठा lochnagar_pin lochnagar##REV##_##ID##_pin = अणु \
+#define LN_PIN_GPIO(REV, ID, NAME, REG, SHIFT, INVERT) \
+static const struct lochnagar_pin lochnagar##REV##_##ID##_pin = { \
 	.name = NAME, .type = LN_PTYPE_GPIO, .reg = LOCHNAGAR##REV##_##REG, \
-	.shअगरt = LOCHNAGAR##REV##_##SHIFT##_SHIFT, .invert = INVERT, \
-पूर्ण
+	.shift = LOCHNAGAR##REV##_##SHIFT##_SHIFT, .invert = INVERT, \
+}
 
-#घोषणा LN_PIN_SAIF(REV, ID, NAME) \
-अटल स्थिर काष्ठा lochnagar_pin lochnagar##REV##_##ID##_pin = \
-	अणु .name = NAME, .type = LN_PTYPE_AIF, पूर्ण
+#define LN_PIN_SAIF(REV, ID, NAME) \
+static const struct lochnagar_pin lochnagar##REV##_##ID##_pin = \
+	{ .name = NAME, .type = LN_PTYPE_AIF, }
 
-#घोषणा LN_PIN_AIF(REV, ID) \
+#define LN_PIN_AIF(REV, ID) \
 	LN_PIN_SAIF(REV, ID##_BCLK,  LN_##ID##_STR"-bclk"); \
 	LN_PIN_SAIF(REV, ID##_LRCLK, LN_##ID##_STR"-lrclk"); \
 	LN_PIN_SAIF(REV, ID##_RXDAT, LN_##ID##_STR"-rxdat"); \
 	LN_PIN_SAIF(REV, ID##_TXDAT, LN_##ID##_STR"-txdat")
 
-#घोषणा LN1_PIN_GPIO(ID, NAME, REG, SHIFT, INVERT) \
+#define LN1_PIN_GPIO(ID, NAME, REG, SHIFT, INVERT) \
 	LN_PIN_GPIO(1, ID, NAME, REG, SHIFT, INVERT)
 
-#घोषणा LN1_PIN_MUX(ID, NAME) \
-अटल स्थिर काष्ठा lochnagar_pin lochnagar1_##ID##_pin = \
-	अणु .name = NAME, .type = LN_PTYPE_MUX, .reg = LOCHNAGAR1_##ID, पूर्ण
+#define LN1_PIN_MUX(ID, NAME) \
+static const struct lochnagar_pin lochnagar1_##ID##_pin = \
+	{ .name = NAME, .type = LN_PTYPE_MUX, .reg = LOCHNAGAR1_##ID, }
 
-#घोषणा LN1_PIN_AIF(ID) LN_PIN_AIF(1, ID)
+#define LN1_PIN_AIF(ID) LN_PIN_AIF(1, ID)
 
-#घोषणा LN2_PIN_GPIO(ID, NAME, REG, SHIFT, INVERT) \
+#define LN2_PIN_GPIO(ID, NAME, REG, SHIFT, INVERT) \
 	LN_PIN_GPIO(2, ID, NAME, REG, SHIFT, INVERT)
 
-#घोषणा LN2_PIN_MUX(ID, NAME) \
-अटल स्थिर काष्ठा lochnagar_pin lochnagar2_##ID##_pin = \
-	अणु .name = NAME, .type = LN_PTYPE_MUX, .reg = LOCHNAGAR2_GPIO_##ID, पूर्ण
+#define LN2_PIN_MUX(ID, NAME) \
+static const struct lochnagar_pin lochnagar2_##ID##_pin = \
+	{ .name = NAME, .type = LN_PTYPE_MUX, .reg = LOCHNAGAR2_GPIO_##ID, }
 
-#घोषणा LN2_PIN_AIF(ID) LN_PIN_AIF(2, ID)
+#define LN2_PIN_AIF(ID) LN_PIN_AIF(2, ID)
 
-#घोषणा LN2_PIN_GAI(ID) \
+#define LN2_PIN_GAI(ID) \
 	LN2_PIN_MUX(ID##_BCLK,  LN_##ID##_STR"-bclk"); \
 	LN2_PIN_MUX(ID##_LRCLK, LN_##ID##_STR"-lrclk"); \
 	LN2_PIN_MUX(ID##_RXDAT, LN_##ID##_STR"-rxdat"); \
 	LN2_PIN_MUX(ID##_TXDAT, LN_##ID##_STR"-txdat")
 
-#घोषणा LN_PIN(REV, ID) [LOCHNAGAR##REV##_PIN_##ID] = अणु \
+#define LN_PIN(REV, ID) [LOCHNAGAR##REV##_PIN_##ID] = { \
 	.number = LOCHNAGAR##REV##_PIN_##ID, \
 	.name = lochnagar##REV##_##ID##_pin.name, \
-	.drv_data = (व्योम *)&lochnagar##REV##_##ID##_pin, \
-पूर्ण
+	.drv_data = (void *)&lochnagar##REV##_##ID##_pin, \
+}
 
-#घोषणा LN1_PIN(ID) LN_PIN(1, ID)
-#घोषणा LN2_PIN(ID) LN_PIN(2, ID)
+#define LN1_PIN(ID) LN_PIN(1, ID)
+#define LN2_PIN(ID) LN_PIN(2, ID)
 
-#घोषणा LN_PINS(REV, ID) \
+#define LN_PINS(REV, ID) \
 	LN_PIN(REV, ID##_BCLK), LN_PIN(REV, ID##_LRCLK), \
 	LN_PIN(REV, ID##_RXDAT), LN_PIN(REV, ID##_TXDAT)
 
-#घोषणा LN1_PINS(ID) LN_PINS(1, ID)
-#घोषणा LN2_PINS(ID) LN_PINS(2, ID)
+#define LN1_PINS(ID) LN_PINS(1, ID)
+#define LN2_PINS(ID) LN_PINS(2, ID)
 
-क्रमागत अणु
+enum {
 	LOCHNAGAR1_PIN_GF_GPIO2 = LOCHNAGAR1_PIN_NUM_GPIOS,
 	LOCHNAGAR1_PIN_GF_GPIO3,
 	LOCHNAGAR1_PIN_GF_GPIO7,
@@ -179,24 +178,24 @@
 	LOCHNAGAR2_PIN_SOUNDCARD_AIF_LRCLK,
 	LOCHNAGAR2_PIN_SOUNDCARD_AIF_RXDAT,
 	LOCHNAGAR2_PIN_SOUNDCARD_AIF_TXDAT,
-पूर्ण;
+};
 
-क्रमागत lochnagar_pin_type अणु
+enum lochnagar_pin_type {
 	LN_PTYPE_GPIO,
 	LN_PTYPE_MUX,
 	LN_PTYPE_AIF,
 	LN_PTYPE_COUNT,
-पूर्ण;
+};
 
-काष्ठा lochnagar_pin अणु
-	स्थिर अक्षर name[20];
+struct lochnagar_pin {
+	const char name[20];
 
-	क्रमागत lochnagar_pin_type type;
+	enum lochnagar_pin_type type;
 
-	अचिन्हित पूर्णांक reg;
-	पूर्णांक shअगरt;
+	unsigned int reg;
+	int shift;
 	bool invert;
-पूर्ण;
+};
 
 LN1_PIN_GPIO(CDC_RESET,    "codec-reset",    RST,      CDC_RESET,    1);
 LN1_PIN_GPIO(DSP_RESET,    "dsp-reset",      RST,      DSP_RESET,    1);
@@ -303,7 +302,7 @@ LN2_PIN_AIF(USB_AIF2);
 LN2_PIN_AIF(ADAT_AIF);
 LN2_PIN_AIF(SOUNDCARD_AIF);
 
-अटल स्थिर काष्ठा pinctrl_pin_desc lochnagar1_pins[] = अणु
+static const struct pinctrl_pin_desc lochnagar1_pins[] = {
 	LN1_PIN(CDC_RESET),      LN1_PIN(DSP_RESET),    LN1_PIN(CDC_CIF1MODE),
 	LN1_PIN(GF_GPIO2),       LN1_PIN(GF_GPIO3),     LN1_PIN(GF_GPIO7),
 	LN1_PIN(LED1),           LN1_PIN(LED2),
@@ -313,9 +312,9 @@ LN2_PIN_AIF(SOUNDCARD_AIF);
 	LN1_PINS(SPDIF_AIF),
 	LN1_PINS(GF_AIF1),       LN1_PINS(GF_AIF2),
 	LN1_PINS(GF_AIF3),       LN1_PINS(GF_AIF4),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_pin_desc lochnagar2_pins[] = अणु
+static const struct pinctrl_pin_desc lochnagar2_pins[] = {
 	LN2_PIN(CDC_RESET),      LN2_PIN(DSP_RESET),    LN2_PIN(CDC_CIF1MODE),
 	LN2_PIN(CDC_LDOENA),
 	LN2_PIN(SPDIF_HWMODE),   LN2_PIN(SPDIF_RESET),
@@ -357,42 +356,42 @@ LN2_PIN_AIF(SOUNDCARD_AIF);
 	LN2_PINS(USB_AIF1),      LN2_PINS(USB_AIF2),
 	LN2_PINS(ADAT_AIF),
 	LN2_PINS(SOUNDCARD_AIF),
-पूर्ण;
+};
 
-#घोषणा LN_AIF_PINS(REV, ID) \
+#define LN_AIF_PINS(REV, ID) \
 	LOCHNAGAR##REV##_PIN_##ID##_BCLK, \
 	LOCHNAGAR##REV##_PIN_##ID##_LRCLK, \
 	LOCHNAGAR##REV##_PIN_##ID##_TXDAT, \
 	LOCHNAGAR##REV##_PIN_##ID##_RXDAT,
 
-#घोषणा LN1_AIF(ID, CTRL) \
-अटल स्थिर काष्ठा lochnagar_aअगर lochnagar1_##ID##_aअगर = अणु \
+#define LN1_AIF(ID, CTRL) \
+static const struct lochnagar_aif lochnagar1_##ID##_aif = { \
 	.name = LN_##ID##_STR, \
-	.pins = अणु LN_AIF_PINS(1, ID) पूर्ण, \
+	.pins = { LN_AIF_PINS(1, ID) }, \
 	.src_reg = LOCHNAGAR1_##ID##_SEL, \
 	.src_mask = LOCHNAGAR1_SRC_MASK, \
 	.ctrl_reg = LOCHNAGAR1_##CTRL, \
 	.ena_mask = LOCHNAGAR1_##ID##_ENA_MASK, \
-	.master_mask = LOCHNAGAR1_##ID##_LRCLK_सूची_MASK | \
-		       LOCHNAGAR1_##ID##_BCLK_सूची_MASK, \
-पूर्ण
+	.master_mask = LOCHNAGAR1_##ID##_LRCLK_DIR_MASK | \
+		       LOCHNAGAR1_##ID##_BCLK_DIR_MASK, \
+}
 
-#घोषणा LN2_AIF(ID) \
-अटल स्थिर काष्ठा lochnagar_aअगर lochnagar2_##ID##_aअगर = अणु \
+#define LN2_AIF(ID) \
+static const struct lochnagar_aif lochnagar2_##ID##_aif = { \
 	.name = LN_##ID##_STR, \
-	.pins = अणु LN_AIF_PINS(2, ID) पूर्ण, \
+	.pins = { LN_AIF_PINS(2, ID) }, \
 	.src_reg = LOCHNAGAR2_##ID##_CTRL,  \
 	.src_mask = LOCHNAGAR2_AIF_SRC_MASK, \
 	.ctrl_reg = LOCHNAGAR2_##ID##_CTRL, \
 	.ena_mask = LOCHNAGAR2_AIF_ENA_MASK, \
-	.master_mask = LOCHNAGAR2_AIF_LRCLK_सूची_MASK | \
-		       LOCHNAGAR2_AIF_BCLK_सूची_MASK, \
-पूर्ण
+	.master_mask = LOCHNAGAR2_AIF_LRCLK_DIR_MASK | \
+		       LOCHNAGAR2_AIF_BCLK_DIR_MASK, \
+}
 
-काष्ठा lochnagar_aअगर अणु
-	स्थिर अक्षर name[16];
+struct lochnagar_aif {
+	const char name[16];
 
-	अचिन्हित पूर्णांक pins[4];
+	unsigned int pins[4];
 
 	u16 src_reg;
 	u16 src_mask;
@@ -400,7 +399,7 @@ LN2_PIN_AIF(SOUNDCARD_AIF);
 	u16 ctrl_reg;
 	u16 ena_mask;
 	u16 master_mask;
-पूर्ण;
+};
 
 LN1_AIF(CDC_AIF1,      CDC_AIF_CTRL1);
 LN1_AIF(CDC_AIF2,      CDC_AIF_CTRL1);
@@ -432,46 +431,46 @@ LN2_AIF(USB_AIF2);
 LN2_AIF(ADAT_AIF);
 LN2_AIF(SOUNDCARD_AIF);
 
-#घोषणा LN2_OP_AIF	0x00
-#घोषणा LN2_OP_GPIO	0xFE
+#define LN2_OP_AIF	0x00
+#define LN2_OP_GPIO	0xFE
 
-#घोषणा LN_FUNC(NAME, TYPE, OP) \
-	अणु .name = NAME, .type = LN_FTYPE_##TYPE, .op = OP पूर्ण
+#define LN_FUNC(NAME, TYPE, OP) \
+	{ .name = NAME, .type = LN_FTYPE_##TYPE, .op = OP }
 
-#घोषणा LN_FUNC_PIN(REV, ID, OP) \
+#define LN_FUNC_PIN(REV, ID, OP) \
 	LN_FUNC(lochnagar##REV##_##ID##_pin.name, PIN, OP)
 
-#घोषणा LN1_FUNC_PIN(ID, OP) LN_FUNC_PIN(1, ID, OP)
-#घोषणा LN2_FUNC_PIN(ID, OP) LN_FUNC_PIN(2, ID, OP)
+#define LN1_FUNC_PIN(ID, OP) LN_FUNC_PIN(1, ID, OP)
+#define LN2_FUNC_PIN(ID, OP) LN_FUNC_PIN(2, ID, OP)
 
-#घोषणा LN_FUNC_AIF(REV, ID, OP) \
-	LN_FUNC(lochnagar##REV##_##ID##_aअगर.name, AIF, OP)
+#define LN_FUNC_AIF(REV, ID, OP) \
+	LN_FUNC(lochnagar##REV##_##ID##_aif.name, AIF, OP)
 
-#घोषणा LN1_FUNC_AIF(ID, OP) LN_FUNC_AIF(1, ID, OP)
-#घोषणा LN2_FUNC_AIF(ID, OP) LN_FUNC_AIF(2, ID, OP)
+#define LN1_FUNC_AIF(ID, OP) LN_FUNC_AIF(1, ID, OP)
+#define LN2_FUNC_AIF(ID, OP) LN_FUNC_AIF(2, ID, OP)
 
-#घोषणा LN2_FUNC_GAI(ID, OP, BOP, LROP, RXOP, TXOP) \
+#define LN2_FUNC_GAI(ID, OP, BOP, LROP, RXOP, TXOP) \
 	LN2_FUNC_AIF(ID, OP), \
 	LN_FUNC(lochnagar2_##ID##_BCLK_pin.name, PIN, BOP), \
 	LN_FUNC(lochnagar2_##ID##_LRCLK_pin.name, PIN, LROP), \
 	LN_FUNC(lochnagar2_##ID##_RXDAT_pin.name, PIN, RXOP), \
 	LN_FUNC(lochnagar2_##ID##_TXDAT_pin.name, PIN, TXOP)
 
-क्रमागत lochnagar_func_type अणु
+enum lochnagar_func_type {
 	LN_FTYPE_PIN,
 	LN_FTYPE_AIF,
 	LN_FTYPE_COUNT,
-पूर्ण;
+};
 
-काष्ठा lochnagar_func अणु
-	स्थिर अक्षर * स्थिर name;
+struct lochnagar_func {
+	const char * const name;
 
-	क्रमागत lochnagar_func_type type;
+	enum lochnagar_func_type type;
 
 	u8 op;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा lochnagar_func lochnagar1_funcs[] = अणु
+static const struct lochnagar_func lochnagar1_funcs[] = {
 	LN_FUNC("dsp-gpio1",       PIN, 0x01),
 	LN_FUNC("dsp-gpio2",       PIN, 0x02),
 	LN_FUNC("dsp-gpio3",       PIN, 0x03),
@@ -499,9 +498,9 @@ LN2_AIF(SOUNDCARD_AIF);
 	LN1_FUNC_AIF(GF_AIF4,           0x0A),
 	LN1_FUNC_AIF(GF_AIF1,           0x0B),
 	LN1_FUNC_AIF(GF_AIF2,           0x0C),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा lochnagar_func lochnagar2_funcs[] = अणु
+static const struct lochnagar_func lochnagar2_funcs[] = {
 	LN_FUNC("aif",             PIN, LN2_OP_AIF),
 	LN2_FUNC_PIN(FPGA_GPIO1,        0x01),
 	LN2_FUNC_PIN(FPGA_GPIO2,        0x02),
@@ -601,47 +600,47 @@ LN2_AIF(SOUNDCARD_AIF);
 	LN2_FUNC_AIF(USB_AIF2,          0x0E),
 	LN2_FUNC_AIF(ADAT_AIF,          0x0F),
 	LN2_FUNC_AIF(SOUNDCARD_AIF,     0x10),
-पूर्ण;
+};
 
-#घोषणा LN_GROUP_PIN(REV, ID) अणु \
+#define LN_GROUP_PIN(REV, ID) { \
 	.name = lochnagar##REV##_##ID##_pin.name, \
 	.type = LN_FTYPE_PIN, \
 	.pins = &lochnagar##REV##_pins[LOCHNAGAR##REV##_PIN_##ID].number, \
 	.npins = 1, \
 	.priv = &lochnagar##REV##_pins[LOCHNAGAR##REV##_PIN_##ID], \
-पूर्ण
+}
 
-#घोषणा LN_GROUP_AIF(REV, ID) अणु \
-	.name = lochnagar##REV##_##ID##_aअगर.name, \
+#define LN_GROUP_AIF(REV, ID) { \
+	.name = lochnagar##REV##_##ID##_aif.name, \
 	.type = LN_FTYPE_AIF, \
-	.pins = lochnagar##REV##_##ID##_aअगर.pins, \
-	.npins = ARRAY_SIZE(lochnagar##REV##_##ID##_aअगर.pins), \
-	.priv = &lochnagar##REV##_##ID##_aअगर, \
-पूर्ण
+	.pins = lochnagar##REV##_##ID##_aif.pins, \
+	.npins = ARRAY_SIZE(lochnagar##REV##_##ID##_aif.pins), \
+	.priv = &lochnagar##REV##_##ID##_aif, \
+}
 
-#घोषणा LN1_GROUP_PIN(ID) LN_GROUP_PIN(1, ID)
-#घोषणा LN2_GROUP_PIN(ID) LN_GROUP_PIN(2, ID)
+#define LN1_GROUP_PIN(ID) LN_GROUP_PIN(1, ID)
+#define LN2_GROUP_PIN(ID) LN_GROUP_PIN(2, ID)
 
-#घोषणा LN1_GROUP_AIF(ID) LN_GROUP_AIF(1, ID)
-#घोषणा LN2_GROUP_AIF(ID) LN_GROUP_AIF(2, ID)
+#define LN1_GROUP_AIF(ID) LN_GROUP_AIF(1, ID)
+#define LN2_GROUP_AIF(ID) LN_GROUP_AIF(2, ID)
 
-#घोषणा LN2_GROUP_GAI(ID) \
+#define LN2_GROUP_GAI(ID) \
 	LN2_GROUP_AIF(ID), \
 	LN2_GROUP_PIN(ID##_BCLK), LN2_GROUP_PIN(ID##_LRCLK), \
 	LN2_GROUP_PIN(ID##_RXDAT), LN2_GROUP_PIN(ID##_TXDAT)
 
-काष्ठा lochnagar_group अणु
-	स्थिर अक्षर * स्थिर name;
+struct lochnagar_group {
+	const char * const name;
 
-	क्रमागत lochnagar_func_type type;
+	enum lochnagar_func_type type;
 
-	स्थिर अचिन्हित पूर्णांक *pins;
-	अचिन्हित पूर्णांक npins;
+	const unsigned int *pins;
+	unsigned int npins;
 
-	स्थिर व्योम *priv;
-पूर्ण;
+	const void *priv;
+};
 
-अटल स्थिर काष्ठा lochnagar_group lochnagar1_groups[] = अणु
+static const struct lochnagar_group lochnagar1_groups[] = {
 	LN1_GROUP_PIN(GF_GPIO2),       LN1_GROUP_PIN(GF_GPIO3),
 	LN1_GROUP_PIN(GF_GPIO7),
 	LN1_GROUP_PIN(LED1),           LN1_GROUP_PIN(LED2),
@@ -652,9 +651,9 @@ LN2_AIF(SOUNDCARD_AIF);
 	LN1_GROUP_AIF(GF_AIF1),        LN1_GROUP_AIF(GF_AIF2),
 	LN1_GROUP_AIF(GF_AIF3),        LN1_GROUP_AIF(GF_AIF4),
 	LN1_GROUP_AIF(SPDIF_AIF),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा lochnagar_group lochnagar2_groups[] = अणु
+static const struct lochnagar_group lochnagar2_groups[] = {
 	LN2_GROUP_PIN(FPGA_GPIO1),     LN2_GROUP_PIN(FPGA_GPIO2),
 	LN2_GROUP_PIN(FPGA_GPIO3),     LN2_GROUP_PIN(FPGA_GPIO4),
 	LN2_GROUP_PIN(FPGA_GPIO5),     LN2_GROUP_PIN(FPGA_GPIO6),
@@ -698,280 +697,280 @@ LN2_AIF(SOUNDCARD_AIF);
 	LN2_GROUP_AIF(USB_AIF1),       LN2_GROUP_AIF(USB_AIF2),
 	LN2_GROUP_AIF(ADAT_AIF),
 	LN2_GROUP_AIF(SOUNDCARD_AIF),
-पूर्ण;
+};
 
-काष्ठा lochnagar_func_groups अणु
-	स्थिर अक्षर **groups;
-	अचिन्हित पूर्णांक ngroups;
-पूर्ण;
+struct lochnagar_func_groups {
+	const char **groups;
+	unsigned int ngroups;
+};
 
-काष्ठा lochnagar_pin_priv अणु
-	काष्ठा lochnagar *lochnagar;
-	काष्ठा device *dev;
+struct lochnagar_pin_priv {
+	struct lochnagar *lochnagar;
+	struct device *dev;
 
-	स्थिर काष्ठा lochnagar_func *funcs;
-	अचिन्हित पूर्णांक nfuncs;
+	const struct lochnagar_func *funcs;
+	unsigned int nfuncs;
 
-	स्थिर काष्ठा pinctrl_pin_desc *pins;
-	अचिन्हित पूर्णांक npins;
+	const struct pinctrl_pin_desc *pins;
+	unsigned int npins;
 
-	स्थिर काष्ठा lochnagar_group *groups;
-	अचिन्हित पूर्णांक ngroups;
+	const struct lochnagar_group *groups;
+	unsigned int ngroups;
 
-	काष्ठा lochnagar_func_groups func_groups[LN_FTYPE_COUNT];
+	struct lochnagar_func_groups func_groups[LN_FTYPE_COUNT];
 
-	काष्ठा gpio_chip gpio_chip;
-पूर्ण;
+	struct gpio_chip gpio_chip;
+};
 
-अटल पूर्णांक lochnagar_get_groups_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+static int lochnagar_get_groups_count(struct pinctrl_dev *pctldev)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस priv->ngroups;
-पूर्ण
+	return priv->ngroups;
+}
 
-अटल स्थिर अक्षर *lochnagar_get_group_name(काष्ठा pinctrl_dev *pctldev,
-					    अचिन्हित पूर्णांक group_idx)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+static const char *lochnagar_get_group_name(struct pinctrl_dev *pctldev,
+					    unsigned int group_idx)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस priv->groups[group_idx].name;
-पूर्ण
+	return priv->groups[group_idx].name;
+}
 
-अटल पूर्णांक lochnagar_get_group_pins(काष्ठा pinctrl_dev *pctldev,
-				    अचिन्हित पूर्णांक group_idx,
-				    स्थिर अचिन्हित पूर्णांक **pins,
-				    अचिन्हित पूर्णांक *num_pins)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+static int lochnagar_get_group_pins(struct pinctrl_dev *pctldev,
+				    unsigned int group_idx,
+				    const unsigned int **pins,
+				    unsigned int *num_pins)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = priv->groups[group_idx].pins;
 	*num_pins = priv->groups[group_idx].npins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops lochnagar_pin_group_ops = अणु
+static const struct pinctrl_ops lochnagar_pin_group_ops = {
 	.get_groups_count = lochnagar_get_groups_count,
 	.get_group_name = lochnagar_get_group_name,
 	.get_group_pins = lochnagar_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_all,
-	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
-पूर्ण;
+	.dt_free_map = pinctrl_utils_free_map,
+};
 
-अटल पूर्णांक lochnagar_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+static int lochnagar_get_funcs_count(struct pinctrl_dev *pctldev)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस priv->nfuncs;
-पूर्ण
+	return priv->nfuncs;
+}
 
-अटल स्थिर अक्षर *lochnagar_get_func_name(काष्ठा pinctrl_dev *pctldev,
-					   अचिन्हित पूर्णांक func_idx)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+static const char *lochnagar_get_func_name(struct pinctrl_dev *pctldev,
+					   unsigned int func_idx)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
 
-	वापस priv->funcs[func_idx].name;
-पूर्ण
+	return priv->funcs[func_idx].name;
+}
 
-अटल पूर्णांक lochnagar_get_func_groups(काष्ठा pinctrl_dev *pctldev,
-				     अचिन्हित पूर्णांक func_idx,
-				     स्थिर अक्षर * स्थिर **groups,
-				     अचिन्हित पूर्णांक * स्थिर num_groups)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	पूर्णांक func_type;
+static int lochnagar_get_func_groups(struct pinctrl_dev *pctldev,
+				     unsigned int func_idx,
+				     const char * const **groups,
+				     unsigned int * const num_groups)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	int func_type;
 
 	func_type = priv->funcs[func_idx].type;
 
 	*groups = priv->func_groups[func_type].groups;
 	*num_groups = priv->func_groups[func_type].ngroups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lochnagar2_get_gpio_chan(काष्ठा lochnagar_pin_priv *priv,
-				    अचिन्हित पूर्णांक op)
-अणु
-	काष्ठा regmap *regmap = priv->lochnagar->regmap;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक मुक्त = -1;
-	पूर्णांक i, ret;
+static int lochnagar2_get_gpio_chan(struct lochnagar_pin_priv *priv,
+				    unsigned int op)
+{
+	struct regmap *regmap = priv->lochnagar->regmap;
+	unsigned int val;
+	int free = -1;
+	int i, ret;
 
-	क्रम (i = 0; i < LN2_NUM_GPIO_CHANNELS; i++) अणु
-		ret = regmap_पढ़ो(regmap, LOCHNAGAR2_GPIO_CHANNEL1 + i, &val);
-		अगर (ret)
-			वापस ret;
+	for (i = 0; i < LN2_NUM_GPIO_CHANNELS; i++) {
+		ret = regmap_read(regmap, LOCHNAGAR2_GPIO_CHANNEL1 + i, &val);
+		if (ret)
+			return ret;
 
 		val &= LOCHNAGAR2_GPIO_CHANNEL_SRC_MASK;
 
-		अगर (val == op)
-			वापस i + 1;
+		if (val == op)
+			return i + 1;
 
-		अगर (मुक्त < 0 && !val)
-			मुक्त = i;
-	पूर्ण
+		if (free < 0 && !val)
+			free = i;
+	}
 
-	अगर (मुक्त >= 0) अणु
+	if (free >= 0) {
 		ret = regmap_update_bits(regmap,
-					 LOCHNAGAR2_GPIO_CHANNEL1 + मुक्त,
+					 LOCHNAGAR2_GPIO_CHANNEL1 + free,
 					 LOCHNAGAR2_GPIO_CHANNEL_SRC_MASK, op);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		मुक्त++;
+		free++;
 
-		dev_dbg(priv->dev, "Set channel %d to 0x%x\n", मुक्त, op);
+		dev_dbg(priv->dev, "Set channel %d to 0x%x\n", free, op);
 
-		वापस मुक्त;
-	पूर्ण
+		return free;
+	}
 
-	वापस -ENOSPC;
-पूर्ण
+	return -ENOSPC;
+}
 
-अटल पूर्णांक lochnagar_pin_set_mux(काष्ठा lochnagar_pin_priv *priv,
-				 स्थिर काष्ठा lochnagar_pin *pin,
-				 अचिन्हित पूर्णांक op)
-अणु
-	पूर्णांक ret;
+static int lochnagar_pin_set_mux(struct lochnagar_pin_priv *priv,
+				 const struct lochnagar_pin *pin,
+				 unsigned int op)
+{
+	int ret;
 
-	चयन (priv->lochnagar->type) अणु
-	हाल LOCHNAGAR1:
-		अवरोध;
-	शेष:
+	switch (priv->lochnagar->type) {
+	case LOCHNAGAR1:
+		break;
+	default:
 		ret = lochnagar2_get_gpio_chan(priv, op);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(priv->dev, "Failed to get channel for %s: %d\n",
 				pin->name, ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		op = ret;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	dev_dbg(priv->dev, "Set pin %s to 0x%x\n", pin->name, op);
 
-	ret = regmap_ग_लिखो(priv->lochnagar->regmap, pin->reg, op);
-	अगर (ret)
+	ret = regmap_write(priv->lochnagar->regmap, pin->reg, op);
+	if (ret)
 		dev_err(priv->dev, "Failed to set %s mux: %d\n",
 			pin->name, ret);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lochnagar_aअगर_set_mux(काष्ठा lochnagar_pin_priv *priv,
-				 स्थिर काष्ठा lochnagar_group *group,
-				 अचिन्हित पूर्णांक op)
-अणु
-	काष्ठा regmap *regmap = priv->lochnagar->regmap;
-	स्थिर काष्ठा lochnagar_aअगर *aअगर = group->priv;
-	स्थिर काष्ठा lochnagar_pin *pin;
-	पूर्णांक i, ret;
+static int lochnagar_aif_set_mux(struct lochnagar_pin_priv *priv,
+				 const struct lochnagar_group *group,
+				 unsigned int op)
+{
+	struct regmap *regmap = priv->lochnagar->regmap;
+	const struct lochnagar_aif *aif = group->priv;
+	const struct lochnagar_pin *pin;
+	int i, ret;
 
-	ret = regmap_update_bits(regmap, aअगर->src_reg, aअगर->src_mask, op);
-	अगर (ret) अणु
+	ret = regmap_update_bits(regmap, aif->src_reg, aif->src_mask, op);
+	if (ret) {
 		dev_err(priv->dev, "Failed to set %s source: %d\n",
 			group->name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = regmap_update_bits(regmap, aअगर->ctrl_reg,
-				 aअगर->ena_mask, aअगर->ena_mask);
-	अगर (ret) अणु
+	ret = regmap_update_bits(regmap, aif->ctrl_reg,
+				 aif->ena_mask, aif->ena_mask);
+	if (ret) {
 		dev_err(priv->dev, "Failed to set %s enable: %d\n",
 			group->name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < group->npins; i++) अणु
+	for (i = 0; i < group->npins; i++) {
 		pin = priv->pins[group->pins[i]].drv_data;
 
-		अगर (pin->type != LN_PTYPE_MUX)
-			जारी;
+		if (pin->type != LN_PTYPE_MUX)
+			continue;
 
 		dev_dbg(priv->dev, "Set pin %s to AIF\n", pin->name);
 
 		ret = regmap_update_bits(regmap, pin->reg,
 					 LOCHNAGAR2_GPIO_SRC_MASK,
 					 LN2_OP_AIF);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(priv->dev, "Failed to set %s to AIF: %d\n",
 				pin->name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lochnagar_set_mux(काष्ठा pinctrl_dev *pctldev,
-			     अचिन्हित पूर्णांक func_idx, अचिन्हित पूर्णांक group_idx)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	स्थिर काष्ठा lochnagar_func *func = &priv->funcs[func_idx];
-	स्थिर काष्ठा lochnagar_group *group = &priv->groups[group_idx];
-	स्थिर काष्ठा lochnagar_pin *pin;
+static int lochnagar_set_mux(struct pinctrl_dev *pctldev,
+			     unsigned int func_idx, unsigned int group_idx)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	const struct lochnagar_func *func = &priv->funcs[func_idx];
+	const struct lochnagar_group *group = &priv->groups[group_idx];
+	const struct lochnagar_pin *pin;
 
-	चयन (func->type) अणु
-	हाल LN_FTYPE_AIF:
+	switch (func->type) {
+	case LN_FTYPE_AIF:
 		dev_dbg(priv->dev, "Set group %s to %s\n",
 			group->name, func->name);
 
-		वापस lochnagar_aअगर_set_mux(priv, group, func->op);
-	हाल LN_FTYPE_PIN:
+		return lochnagar_aif_set_mux(priv, group, func->op);
+	case LN_FTYPE_PIN:
 		pin = priv->pins[*group->pins].drv_data;
 
 		dev_dbg(priv->dev, "Set pin %s to %s\n", pin->name, func->name);
 
-		वापस lochnagar_pin_set_mux(priv, pin, func->op);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return lochnagar_pin_set_mux(priv, pin, func->op);
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक lochnagar_gpio_request(काष्ठा pinctrl_dev *pctldev,
-				  काष्ठा pinctrl_gpio_range *range,
-				  अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	काष्ठा lochnagar *lochnagar = priv->lochnagar;
-	स्थिर काष्ठा lochnagar_pin *pin = priv->pins[offset].drv_data;
-	पूर्णांक ret;
+static int lochnagar_gpio_request(struct pinctrl_dev *pctldev,
+				  struct pinctrl_gpio_range *range,
+				  unsigned int offset)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	struct lochnagar *lochnagar = priv->lochnagar;
+	const struct lochnagar_pin *pin = priv->pins[offset].drv_data;
+	int ret;
 
 	dev_dbg(priv->dev, "Requesting GPIO %s\n", pin->name);
 
-	अगर (lochnagar->type == LOCHNAGAR1 || pin->type != LN_PTYPE_MUX)
-		वापस 0;
+	if (lochnagar->type == LOCHNAGAR1 || pin->type != LN_PTYPE_MUX)
+		return 0;
 
 	ret = lochnagar2_get_gpio_chan(priv, LN2_OP_GPIO);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(priv->dev, "Failed to get low channel: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = lochnagar2_get_gpio_chan(priv, LN2_OP_GPIO | 0x1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(priv->dev, "Failed to get high channel: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lochnagar_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
-					काष्ठा pinctrl_gpio_range *range,
-					अचिन्हित पूर्णांक offset,
+static int lochnagar_gpio_set_direction(struct pinctrl_dev *pctldev,
+					struct pinctrl_gpio_range *range,
+					unsigned int offset,
 					bool input)
-अणु
+{
 	/* The GPIOs only support output */
-	अगर (input)
-		वापस -EINVAL;
+	if (input)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops lochnagar_pin_mux_ops = अणु
+static const struct pinmux_ops lochnagar_pin_mux_ops = {
 	.get_functions_count = lochnagar_get_funcs_count,
 	.get_function_name = lochnagar_get_func_name,
 	.get_function_groups = lochnagar_get_func_groups,
@@ -981,193 +980,193 @@ LN2_AIF(SOUNDCARD_AIF);
 	.gpio_set_direction = lochnagar_gpio_set_direction,
 
 	.strict = true,
-पूर्ण;
+};
 
-अटल पूर्णांक lochnagar_aअगर_set_master(काष्ठा lochnagar_pin_priv *priv,
-				    अचिन्हित पूर्णांक group_idx, bool master)
-अणु
-	काष्ठा regmap *regmap = priv->lochnagar->regmap;
-	स्थिर काष्ठा lochnagar_group *group = &priv->groups[group_idx];
-	स्थिर काष्ठा lochnagar_aअगर *aअगर = group->priv;
-	अचिन्हित पूर्णांक val = 0;
-	पूर्णांक ret;
+static int lochnagar_aif_set_master(struct lochnagar_pin_priv *priv,
+				    unsigned int group_idx, bool master)
+{
+	struct regmap *regmap = priv->lochnagar->regmap;
+	const struct lochnagar_group *group = &priv->groups[group_idx];
+	const struct lochnagar_aif *aif = group->priv;
+	unsigned int val = 0;
+	int ret;
 
-	अगर (group->type != LN_FTYPE_AIF)
-		वापस -EINVAL;
+	if (group->type != LN_FTYPE_AIF)
+		return -EINVAL;
 
-	अगर (!master)
-		val = aअगर->master_mask;
+	if (!master)
+		val = aif->master_mask;
 
 	dev_dbg(priv->dev, "Set AIF %s to %s\n",
 		group->name, master ? "master" : "slave");
 
-	ret = regmap_update_bits(regmap, aअगर->ctrl_reg, aअगर->master_mask, val);
-	अगर (ret) अणु
+	ret = regmap_update_bits(regmap, aif->ctrl_reg, aif->master_mask, val);
+	if (ret) {
 		dev_err(priv->dev, "Failed to set %s mode: %d\n",
 			group->name, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lochnagar_conf_group_set(काष्ठा pinctrl_dev *pctldev,
-				    अचिन्हित पूर्णांक group_idx,
-				    अचिन्हित दीर्घ *configs,
-				    अचिन्हित पूर्णांक num_configs)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
-	पूर्णांक i, ret;
+static int lochnagar_conf_group_set(struct pinctrl_dev *pctldev,
+				    unsigned int group_idx,
+				    unsigned long *configs,
+				    unsigned int num_configs)
+{
+	struct lochnagar_pin_priv *priv = pinctrl_dev_get_drvdata(pctldev);
+	int i, ret;
 
-	क्रम (i = 0; i < num_configs; i++) अणु
-		अचिन्हित पूर्णांक param = pinconf_to_config_param(*configs);
+	for (i = 0; i < num_configs; i++) {
+		unsigned int param = pinconf_to_config_param(*configs);
 
-		चयन (param) अणु
-		हाल PIN_CONFIG_OUTPUT_ENABLE:
-			ret = lochnagar_aअगर_set_master(priv, group_idx, true);
-			अगर (ret)
-				वापस ret;
-			अवरोध;
-		हाल PIN_CONFIG_INPUT_ENABLE:
-			ret = lochnagar_aअगर_set_master(priv, group_idx, false);
-			अगर (ret)
-				वापस ret;
-			अवरोध;
-		शेष:
-			वापस -ENOTSUPP;
-		पूर्ण
+		switch (param) {
+		case PIN_CONFIG_OUTPUT_ENABLE:
+			ret = lochnagar_aif_set_master(priv, group_idx, true);
+			if (ret)
+				return ret;
+			break;
+		case PIN_CONFIG_INPUT_ENABLE:
+			ret = lochnagar_aif_set_master(priv, group_idx, false);
+			if (ret)
+				return ret;
+			break;
+		default:
+			return -ENOTSUPP;
+		}
 
 		configs++;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinconf_ops lochnagar_pin_conf_ops = अणु
+static const struct pinconf_ops lochnagar_pin_conf_ops = {
 	.pin_config_group_set = lochnagar_conf_group_set,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा pinctrl_desc lochnagar_pin_desc = अणु
+static const struct pinctrl_desc lochnagar_pin_desc = {
 	.name = "lochnagar-pinctrl",
 	.owner = THIS_MODULE,
 
 	.pctlops = &lochnagar_pin_group_ops,
 	.pmxops = &lochnagar_pin_mux_ops,
 	.confops = &lochnagar_pin_conf_ops,
-पूर्ण;
+};
 
-अटल व्योम lochnagar_gpio_set(काष्ठा gpio_chip *chip,
-			       अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
-	काष्ठा lochnagar_pin_priv *priv = gpiochip_get_data(chip);
-	काष्ठा lochnagar *lochnagar = priv->lochnagar;
-	स्थिर काष्ठा lochnagar_pin *pin = priv->pins[offset].drv_data;
-	पूर्णांक ret;
+static void lochnagar_gpio_set(struct gpio_chip *chip,
+			       unsigned int offset, int value)
+{
+	struct lochnagar_pin_priv *priv = gpiochip_get_data(chip);
+	struct lochnagar *lochnagar = priv->lochnagar;
+	const struct lochnagar_pin *pin = priv->pins[offset].drv_data;
+	int ret;
 
 	value = !!value;
 
 	dev_dbg(priv->dev, "Set GPIO %s to %s\n",
 		pin->name, value ? "high" : "low");
 
-	चयन (pin->type) अणु
-	हाल LN_PTYPE_MUX:
+	switch (pin->type) {
+	case LN_PTYPE_MUX:
 		value |= LN2_OP_GPIO;
 
 		ret = lochnagar_pin_set_mux(priv, pin, value);
-		अवरोध;
-	हाल LN_PTYPE_GPIO:
-		अगर (pin->invert)
+		break;
+	case LN_PTYPE_GPIO:
+		if (pin->invert)
 			value = !value;
 
 		ret = regmap_update_bits(lochnagar->regmap, pin->reg,
-					 BIT(pin->shअगरt), value << pin->shअगरt);
-		अवरोध;
-	शेष:
+					 BIT(pin->shift), value << pin->shift);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(chip->parent, "Failed to set %s value: %d\n",
 			pin->name, ret);
-पूर्ण
+}
 
-अटल पूर्णांक lochnagar_gpio_direction_out(काष्ठा gpio_chip *chip,
-					अचिन्हित पूर्णांक offset, पूर्णांक value)
-अणु
+static int lochnagar_gpio_direction_out(struct gpio_chip *chip,
+					unsigned int offset, int value)
+{
 	lochnagar_gpio_set(chip, offset, value);
 
-	वापस pinctrl_gpio_direction_output(chip->base + offset);
-पूर्ण
+	return pinctrl_gpio_direction_output(chip->base + offset);
+}
 
-अटल पूर्णांक lochnagar_fill_func_groups(काष्ठा lochnagar_pin_priv *priv)
-अणु
-	काष्ठा lochnagar_func_groups *funcs;
-	पूर्णांक i;
+static int lochnagar_fill_func_groups(struct lochnagar_pin_priv *priv)
+{
+	struct lochnagar_func_groups *funcs;
+	int i;
 
-	क्रम (i = 0; i < priv->ngroups; i++)
+	for (i = 0; i < priv->ngroups; i++)
 		priv->func_groups[priv->groups[i].type].ngroups++;
 
-	क्रम (i = 0; i < LN_FTYPE_COUNT; i++) अणु
+	for (i = 0; i < LN_FTYPE_COUNT; i++) {
 		funcs = &priv->func_groups[i];
 
-		अगर (!funcs->ngroups)
-			जारी;
+		if (!funcs->ngroups)
+			continue;
 
-		funcs->groups = devm_kसुस्मृति(priv->dev, funcs->ngroups,
-					     माप(*funcs->groups),
+		funcs->groups = devm_kcalloc(priv->dev, funcs->ngroups,
+					     sizeof(*funcs->groups),
 					     GFP_KERNEL);
-		अगर (!funcs->groups)
-			वापस -ENOMEM;
+		if (!funcs->groups)
+			return -ENOMEM;
 
 		funcs->ngroups = 0;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < priv->ngroups; i++) अणु
+	for (i = 0; i < priv->ngroups; i++) {
 		funcs = &priv->func_groups[priv->groups[i].type];
 
 		funcs->groups[funcs->ngroups++] = priv->groups[i].name;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lochnagar_pin_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा lochnagar *lochnagar = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा lochnagar_pin_priv *priv;
-	काष्ठा pinctrl_desc *desc;
-	काष्ठा pinctrl_dev *pctl;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int lochnagar_pin_probe(struct platform_device *pdev)
+{
+	struct lochnagar *lochnagar = dev_get_drvdata(pdev->dev.parent);
+	struct lochnagar_pin_priv *priv;
+	struct pinctrl_desc *desc;
+	struct pinctrl_dev *pctl;
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = dev;
 	priv->lochnagar = lochnagar;
 
-	desc = devm_kzalloc(dev, माप(*desc), GFP_KERNEL);
-	अगर (!desc)
-		वापस -ENOMEM;
+	desc = devm_kzalloc(dev, sizeof(*desc), GFP_KERNEL);
+	if (!desc)
+		return -ENOMEM;
 
 	*desc = lochnagar_pin_desc;
 
 	priv->gpio_chip.label = dev_name(dev);
 	priv->gpio_chip.request = gpiochip_generic_request;
-	priv->gpio_chip.मुक्त = gpiochip_generic_मुक्त;
+	priv->gpio_chip.free = gpiochip_generic_free;
 	priv->gpio_chip.direction_output = lochnagar_gpio_direction_out;
 	priv->gpio_chip.set = lochnagar_gpio_set;
 	priv->gpio_chip.can_sleep = true;
 	priv->gpio_chip.parent = dev;
 	priv->gpio_chip.base = -1;
-#अगर_घोषित CONFIG_OF_GPIO
+#ifdef CONFIG_OF_GPIO
 	priv->gpio_chip.of_node = dev->of_node;
-#पूर्ण_अगर
+#endif
 
-	चयन (lochnagar->type) अणु
-	हाल LOCHNAGAR1:
+	switch (lochnagar->type) {
+	case LOCHNAGAR1:
 		priv->funcs = lochnagar1_funcs;
 		priv->nfuncs = ARRAY_SIZE(lochnagar1_funcs);
 		priv->pins = lochnagar1_pins;
@@ -1176,8 +1175,8 @@ LN2_AIF(SOUNDCARD_AIF);
 		priv->ngroups = ARRAY_SIZE(lochnagar1_groups);
 
 		priv->gpio_chip.ngpio = LOCHNAGAR1_PIN_NUM_GPIOS;
-		अवरोध;
-	हाल LOCHNAGAR2:
+		break;
+	case LOCHNAGAR2:
 		priv->funcs = lochnagar2_funcs;
 		priv->nfuncs = ARRAY_SIZE(lochnagar2_funcs);
 		priv->pins = lochnagar2_pins;
@@ -1186,50 +1185,50 @@ LN2_AIF(SOUNDCARD_AIF);
 		priv->ngroups = ARRAY_SIZE(lochnagar2_groups);
 
 		priv->gpio_chip.ngpio = LOCHNAGAR2_PIN_NUM_GPIOS;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "Unknown Lochnagar type: %d\n", lochnagar->type);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ret = lochnagar_fill_func_groups(priv);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	desc->pins = priv->pins;
 	desc->npins = priv->npins;
 
-	pctl = devm_pinctrl_रेजिस्टर(dev, desc, priv);
-	अगर (IS_ERR(pctl)) अणु
+	pctl = devm_pinctrl_register(dev, desc, priv);
+	if (IS_ERR(pctl)) {
 		ret = PTR_ERR(pctl);
 		dev_err(priv->dev, "Failed to register pinctrl: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_gpiochip_add_data(dev, &priv->gpio_chip, priv);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to register gpiochip: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id lochnagar_of_match[] = अणु
-	अणु .compatible = "cirrus,lochnagar-pinctrl" पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id lochnagar_of_match[] = {
+	{ .compatible = "cirrus,lochnagar-pinctrl" },
+	{}
+};
 MODULE_DEVICE_TABLE(of, lochnagar_of_match);
 
-अटल काष्ठा platक्रमm_driver lochnagar_pin_driver = अणु
-	.driver = अणु
+static struct platform_driver lochnagar_pin_driver = {
+	.driver = {
 		.name = "lochnagar-pinctrl",
 		.of_match_table = of_match_ptr(lochnagar_of_match),
-	पूर्ण,
+	},
 
 	.probe = lochnagar_pin_probe,
-पूर्ण;
-module_platक्रमm_driver(lochnagar_pin_driver);
+};
+module_platform_driver(lochnagar_pin_driver);
 
 MODULE_AUTHOR("Charles Keepax <ckeepax@opensource.cirrus.com>");
 MODULE_DESCRIPTION("Pinctrl driver for Cirrus Logic Lochnagar Board");

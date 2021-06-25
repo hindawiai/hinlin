@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ARCH_S390_ENTRY_COMMON_H
-#घोषणा ARCH_S390_ENTRY_COMMON_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ARCH_S390_ENTRY_COMMON_H
+#define ARCH_S390_ENTRY_COMMON_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/अक्रमomize_kstack.h>
-#समावेश <linux/tracehook.h>
-#समावेश <linux/processor.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/समयx.h>
-#समावेश <यंत्र/fpu/api.h>
+#include <linux/sched.h>
+#include <linux/audit.h>
+#include <linux/randomize_kstack.h>
+#include <linux/tracehook.h>
+#include <linux/processor.h>
+#include <linux/uaccess.h>
+#include <asm/timex.h>
+#include <asm/fpu/api.h>
 
-#घोषणा ARCH_EXIT_TO_USER_MODE_WORK (_TIF_GUARDED_STORAGE | _TIF_PER_TRAP)
+#define ARCH_EXIT_TO_USER_MODE_WORK (_TIF_GUARDED_STORAGE | _TIF_PER_TRAP)
 
-व्योम करो_per_trap(काष्ठा pt_regs *regs);
-व्योम करो_syscall(काष्ठा pt_regs *regs);
+void do_per_trap(struct pt_regs *regs);
+void do_syscall(struct pt_regs *regs);
 
-#अगर_घोषित CONFIG_DEBUG_ENTRY
-अटल __always_अंतरभूत व्योम arch_check_user_regs(काष्ठा pt_regs *regs)
-अणु
+#ifdef CONFIG_DEBUG_ENTRY
+static __always_inline void arch_check_user_regs(struct pt_regs *regs)
+{
 	debug_user_asce(0);
-पूर्ण
+}
 
-#घोषणा arch_check_user_regs arch_check_user_regs
-#पूर्ण_अगर /* CONFIG_DEBUG_ENTRY */
+#define arch_check_user_regs arch_check_user_regs
+#endif /* CONFIG_DEBUG_ENTRY */
 
-अटल __always_अंतरभूत व्योम arch_निकास_to_user_mode_work(काष्ठा pt_regs *regs,
-							अचिन्हित दीर्घ ti_work)
-अणु
-	अगर (ti_work & _TIF_PER_TRAP) अणु
-		clear_thपढ़ो_flag(TIF_PER_TRAP);
-		करो_per_trap(regs);
-	पूर्ण
+static __always_inline void arch_exit_to_user_mode_work(struct pt_regs *regs,
+							unsigned long ti_work)
+{
+	if (ti_work & _TIF_PER_TRAP) {
+		clear_thread_flag(TIF_PER_TRAP);
+		do_per_trap(regs);
+	}
 
-	अगर (ti_work & _TIF_GUARDED_STORAGE)
+	if (ti_work & _TIF_GUARDED_STORAGE)
 		gs_load_bc_cb(regs);
-पूर्ण
+}
 
-#घोषणा arch_निकास_to_user_mode_work arch_निकास_to_user_mode_work
+#define arch_exit_to_user_mode_work arch_exit_to_user_mode_work
 
-अटल __always_अंतरभूत व्योम arch_निकास_to_user_mode(व्योम)
-अणु
-	अगर (test_cpu_flag(CIF_FPU))
+static __always_inline void arch_exit_to_user_mode(void)
+{
+	if (test_cpu_flag(CIF_FPU))
 		__load_fpu_regs();
 
-	अगर (IS_ENABLED(CONFIG_DEBUG_ENTRY))
+	if (IS_ENABLED(CONFIG_DEBUG_ENTRY))
 		debug_user_asce(1);
-पूर्ण
+}
 
-#घोषणा arch_निकास_to_user_mode arch_निकास_to_user_mode
+#define arch_exit_to_user_mode arch_exit_to_user_mode
 
-अटल अंतरभूत व्योम arch_निकास_to_user_mode_prepare(काष्ठा pt_regs *regs,
-						  अचिन्हित दीर्घ ti_work)
-अणु
-	choose_अक्रमom_kstack_offset(get_tod_घड़ी_fast() & 0xff);
-पूर्ण
+static inline void arch_exit_to_user_mode_prepare(struct pt_regs *regs,
+						  unsigned long ti_work)
+{
+	choose_random_kstack_offset(get_tod_clock_fast() & 0xff);
+}
 
-#घोषणा arch_निकास_to_user_mode_prepare arch_निकास_to_user_mode_prepare
+#define arch_exit_to_user_mode_prepare arch_exit_to_user_mode_prepare
 
-अटल अंतरभूत bool on_thपढ़ो_stack(व्योम)
-अणु
-	वापस !(((अचिन्हित दीर्घ)(current->stack) ^ current_stack_poपूर्णांकer()) & ~(THREAD_SIZE - 1));
-पूर्ण
+static inline bool on_thread_stack(void)
+{
+	return !(((unsigned long)(current->stack) ^ current_stack_pointer()) & ~(THREAD_SIZE - 1));
+}
 
-#पूर्ण_अगर
+#endif

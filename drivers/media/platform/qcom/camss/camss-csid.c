@@ -1,34 +1,33 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * camss-csid.c
  *
- * Qualcomm MSM Camera Subप्रणाली - CSID (CSI Decoder) Module
+ * Qualcomm MSM Camera Subsystem - CSID (CSI Decoder) Module
  *
  * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
-#समावेश <linux/clk.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/v4l2-subdev.h>
+#include <linux/clk.h>
+#include <linux/completion.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
+#include <media/media-entity.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-event.h>
+#include <media/v4l2-subdev.h>
 
-#समावेश "camss-csid.h"
-#समावेश "camss-csid-gen1.h"
-#समावेश "camss.h"
+#include "camss-csid.h"
+#include "camss-csid-gen1.h"
+#include "camss.h"
 
-#घोषणा MSM_CSID_NAME "msm_csid"
+#define MSM_CSID_NAME "msm_csid"
 
-स्थिर अक्षर * स्थिर csid_testgen_modes[] = अणु
+const char * const csid_testgen_modes[] = {
 	"Disabled",
 	"Incrementing",
 	"Alternating 0x55/0xAA",
@@ -39,251 +38,251 @@
 	"Complex pattern",
 	"Color box",
 	"Color bars",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-u32 csid_find_code(u32 *codes, अचिन्हित पूर्णांक ncodes,
-		   अचिन्हित पूर्णांक match_क्रमmat_idx, u32 match_code)
-अणु
-	पूर्णांक i;
+u32 csid_find_code(u32 *codes, unsigned int ncodes,
+		   unsigned int match_format_idx, u32 match_code)
+{
+	int i;
 
-	अगर (!match_code && (match_क्रमmat_idx >= ncodes))
-		वापस 0;
+	if (!match_code && (match_format_idx >= ncodes))
+		return 0;
 
-	क्रम (i = 0; i < ncodes; i++)
-		अगर (match_code) अणु
-			अगर (codes[i] == match_code)
-				वापस match_code;
-		पूर्ण अन्यथा अणु
-			अगर (i == match_क्रमmat_idx)
-				वापस codes[i];
-		पूर्ण
+	for (i = 0; i < ncodes; i++)
+		if (match_code) {
+			if (codes[i] == match_code)
+				return match_code;
+		} else {
+			if (i == match_format_idx)
+				return codes[i];
+		}
 
-	वापस codes[0];
-पूर्ण
+	return codes[0];
+}
 
-स्थिर काष्ठा csid_क्रमmat *csid_get_fmt_entry(स्थिर काष्ठा csid_क्रमmat *क्रमmats,
-					     अचिन्हित पूर्णांक nक्रमmats,
+const struct csid_format *csid_get_fmt_entry(const struct csid_format *formats,
+					     unsigned int nformats,
 					     u32 code)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nक्रमmats; i++)
-		अगर (code == क्रमmats[i].code)
-			वापस &क्रमmats[i];
+	for (i = 0; i < nformats; i++)
+		if (code == formats[i].code)
+			return &formats[i];
 
 	WARN(1, "Unknown format\n");
 
-	वापस &क्रमmats[0];
-पूर्ण
+	return &formats[0];
+}
 
 /*
- * csid_set_घड़ी_rates - Calculate and set घड़ी rates on CSID module
+ * csid_set_clock_rates - Calculate and set clock rates on CSID module
  * @csiphy: CSID device
  */
-अटल पूर्णांक csid_set_घड़ी_rates(काष्ठा csid_device *csid)
-अणु
-	काष्ठा device *dev = csid->camss->dev;
-	स्थिर काष्ठा csid_क्रमmat *fmt;
+static int csid_set_clock_rates(struct csid_device *csid)
+{
+	struct device *dev = csid->camss->dev;
+	const struct csid_format *fmt;
 	s64 link_freq;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+	int i, j;
+	int ret;
 
-	fmt = csid_get_fmt_entry(csid->क्रमmats, csid->nक्रमmats,
+	fmt = csid_get_fmt_entry(csid->formats, csid->nformats,
 				 csid->fmt[MSM_CSIPHY_PAD_SINK].code);
 	link_freq = camss_get_link_freq(&csid->subdev.entity, fmt->bpp,
 					csid->phy.lane_cnt);
-	अगर (link_freq < 0)
+	if (link_freq < 0)
 		link_freq = 0;
 
-	क्रम (i = 0; i < csid->nघड़ीs; i++) अणु
-		काष्ठा camss_घड़ी *घड़ी = &csid->घड़ी[i];
+	for (i = 0; i < csid->nclocks; i++) {
+		struct camss_clock *clock = &csid->clock[i];
 
-		अगर (!म_भेद(घड़ी->name, "csi0") ||
-		    !म_भेद(घड़ी->name, "csi1") ||
-		    !म_भेद(घड़ी->name, "csi2") ||
-		    !म_भेद(घड़ी->name, "csi3")) अणु
+		if (!strcmp(clock->name, "csi0") ||
+		    !strcmp(clock->name, "csi1") ||
+		    !strcmp(clock->name, "csi2") ||
+		    !strcmp(clock->name, "csi3")) {
 			u64 min_rate = link_freq / 4;
-			दीर्घ rate;
+			long rate;
 
-			camss_add_घड़ी_margin(&min_rate);
+			camss_add_clock_margin(&min_rate);
 
-			क्रम (j = 0; j < घड़ी->nfreqs; j++)
-				अगर (min_rate < घड़ी->freq[j])
-					अवरोध;
+			for (j = 0; j < clock->nfreqs; j++)
+				if (min_rate < clock->freq[j])
+					break;
 
-			अगर (j == घड़ी->nfreqs) अणु
+			if (j == clock->nfreqs) {
 				dev_err(dev,
 					"Pixel clock is too high for CSID\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			/* अगर sensor pixel घड़ी is not available */
-			/* set highest possible CSID घड़ी rate */
-			अगर (min_rate == 0)
-				j = घड़ी->nfreqs - 1;
+			/* if sensor pixel clock is not available */
+			/* set highest possible CSID clock rate */
+			if (min_rate == 0)
+				j = clock->nfreqs - 1;
 
-			rate = clk_round_rate(घड़ी->clk, घड़ी->freq[j]);
-			अगर (rate < 0) अणु
+			rate = clk_round_rate(clock->clk, clock->freq[j]);
+			if (rate < 0) {
 				dev_err(dev, "clk round rate failed: %ld\n",
 					rate);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			ret = clk_set_rate(घड़ी->clk, rate);
-			अगर (ret < 0) अणु
+			ret = clk_set_rate(clock->clk, rate);
+			if (ret < 0) {
 				dev_err(dev, "clk set rate failed: %d\n", ret);
-				वापस ret;
-			पूर्ण
-		पूर्ण अन्यथा अगर (घड़ी->nfreqs) अणु
-			clk_set_rate(घड़ी->clk, घड़ी->freq[0]);
-		पूर्ण
-	पूर्ण
+				return ret;
+			}
+		} else if (clock->nfreqs) {
+			clk_set_rate(clock->clk, clock->freq[0]);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csid_set_घातer - Power on/off CSID module
+ * csid_set_power - Power on/off CSID module
  * @sd: CSID V4L2 subdevice
- * @on: Requested घातer state
+ * @on: Requested power state
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csid_set_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
-अणु
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
-	काष्ठा device *dev = csid->camss->dev;
-	पूर्णांक ret;
+static int csid_set_power(struct v4l2_subdev *sd, int on)
+{
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
+	struct device *dev = csid->camss->dev;
+	int ret;
 
-	अगर (on) अणु
-		ret = pm_runसमय_get_sync(dev);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+	if (on) {
+		ret = pm_runtime_get_sync(dev);
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
 		ret = regulator_enable(csid->vdda);
-		अगर (ret < 0) अणु
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+		if (ret < 0) {
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
-		ret = csid_set_घड़ी_rates(csid);
-		अगर (ret < 0) अणु
+		ret = csid_set_clock_rates(csid);
+		if (ret < 0) {
 			regulator_disable(csid->vdda);
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
-		ret = camss_enable_घड़ीs(csid->nघड़ीs, csid->घड़ी, dev);
-		अगर (ret < 0) अणु
+		ret = camss_enable_clocks(csid->nclocks, csid->clock, dev);
+		if (ret < 0) {
 			regulator_disable(csid->vdda);
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
 		enable_irq(csid->irq);
 
 		ret = csid->ops->reset(csid);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			disable_irq(csid->irq);
-			camss_disable_घड़ीs(csid->nघड़ीs, csid->घड़ी);
+			camss_disable_clocks(csid->nclocks, csid->clock);
 			regulator_disable(csid->vdda);
-			pm_runसमय_put_sync(dev);
-			वापस ret;
-		पूर्ण
+			pm_runtime_put_sync(dev);
+			return ret;
+		}
 
 		csid->ops->hw_version(csid);
-	पूर्ण अन्यथा अणु
+	} else {
 		disable_irq(csid->irq);
-		camss_disable_घड़ीs(csid->nघड़ीs, csid->घड़ी);
+		camss_disable_clocks(csid->nclocks, csid->clock);
 		ret = regulator_disable(csid->vdda);
-		pm_runसमय_put_sync(dev);
-	पूर्ण
+		pm_runtime_put_sync(dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * csid_set_stream - Enable/disable streaming on CSID module
  * @sd: CSID V4L2 subdevice
  * @enable: Requested streaming state
  *
- * Main configuration of CSID module is also करोne here.
+ * Main configuration of CSID module is also done here.
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csid_set_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
-अणु
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
-	पूर्णांक ret;
+static int csid_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
+	int ret;
 
-	अगर (enable) अणु
+	if (enable) {
 		ret = v4l2_ctrl_handler_setup(&csid->ctrls);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(csid->camss->dev,
 				"could not sync v4l2 controls: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (!csid->testgen.enabled &&
+		if (!csid->testgen.enabled &&
 		    !media_entity_remote_pad(&csid->pads[MSM_CSID_PAD_SINK]))
-			वापस -ENOLINK;
-	पूर्ण
+			return -ENOLINK;
+	}
 
 	csid->ops->configure_stream(csid, enable);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * __csid_get_क्रमmat - Get poपूर्णांकer to क्रमmat काष्ठाure
+ * __csid_get_format - Get pointer to format structure
  * @csid: CSID device
  * @cfg: V4L2 subdev pad configuration
- * @pad: pad from which क्रमmat is requested
- * @which: TRY or ACTIVE क्रमmat
+ * @pad: pad from which format is requested
+ * @which: TRY or ACTIVE format
  *
- * Return poपूर्णांकer to TRY or ACTIVE क्रमmat काष्ठाure
+ * Return pointer to TRY or ACTIVE format structure
  */
-अटल काष्ठा v4l2_mbus_framefmt *
-__csid_get_क्रमmat(काष्ठा csid_device *csid,
-		  काष्ठा v4l2_subdev_pad_config *cfg,
-		  अचिन्हित पूर्णांक pad,
-		  क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
-		वापस v4l2_subdev_get_try_क्रमmat(&csid->subdev, cfg, pad);
+static struct v4l2_mbus_framefmt *
+__csid_get_format(struct csid_device *csid,
+		  struct v4l2_subdev_pad_config *cfg,
+		  unsigned int pad,
+		  enum v4l2_subdev_format_whence which)
+{
+	if (which == V4L2_SUBDEV_FORMAT_TRY)
+		return v4l2_subdev_get_try_format(&csid->subdev, cfg, pad);
 
-	वापस &csid->fmt[pad];
-पूर्ण
+	return &csid->fmt[pad];
+}
 
 /*
- * csid_try_क्रमmat - Handle try क्रमmat by pad subdev method
+ * csid_try_format - Handle try format by pad subdev method
  * @csid: CSID device
  * @cfg: V4L2 subdev pad configuration
- * @pad: pad on which क्रमmat is requested
- * @fmt: poपूर्णांकer to v4l2 क्रमmat काष्ठाure
- * @which: wanted subdev क्रमmat
+ * @pad: pad on which format is requested
+ * @fmt: pointer to v4l2 format structure
+ * @which: wanted subdev format
  */
-अटल व्योम csid_try_क्रमmat(काष्ठा csid_device *csid,
-			    काष्ठा v4l2_subdev_pad_config *cfg,
-			    अचिन्हित पूर्णांक pad,
-			    काष्ठा v4l2_mbus_framefmt *fmt,
-			    क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	अचिन्हित पूर्णांक i;
+static void csid_try_format(struct csid_device *csid,
+			    struct v4l2_subdev_pad_config *cfg,
+			    unsigned int pad,
+			    struct v4l2_mbus_framefmt *fmt,
+			    enum v4l2_subdev_format_whence which)
+{
+	unsigned int i;
 
-	चयन (pad) अणु
-	हाल MSM_CSID_PAD_SINK:
-		/* Set क्रमmat on sink pad */
+	switch (pad) {
+	case MSM_CSID_PAD_SINK:
+		/* Set format on sink pad */
 
-		क्रम (i = 0; i < csid->nक्रमmats; i++)
-			अगर (fmt->code == csid->क्रमmats[i].code)
-				अवरोध;
+		for (i = 0; i < csid->nformats; i++)
+			if (fmt->code == csid->formats[i].code)
+				break;
 
-		/* If not found, use UYVY as शेष */
-		अगर (i >= csid->nक्रमmats)
+		/* If not found, use UYVY as default */
+		if (i >= csid->nformats)
 			fmt->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
 		fmt->width = clamp_t(u32, fmt->width, 1, 8191);
@@ -292,201 +291,201 @@ __csid_get_क्रमmat(काष्ठा csid_device *csid,
 		fmt->field = V4L2_FIELD_NONE;
 		fmt->colorspace = V4L2_COLORSPACE_SRGB;
 
-		अवरोध;
+		break;
 
-	हाल MSM_CSID_PAD_SRC:
-		अगर (csid->testgen_mode->cur.val == 0) अणु
+	case MSM_CSID_PAD_SRC:
+		if (csid->testgen_mode->cur.val == 0) {
 			/* Test generator is disabled, */
-			/* keep pad क्रमmats in sync */
+			/* keep pad formats in sync */
 			u32 code = fmt->code;
 
-			*fmt = *__csid_get_क्रमmat(csid, cfg,
+			*fmt = *__csid_get_format(csid, cfg,
 						      MSM_CSID_PAD_SINK, which);
 			fmt->code = csid->ops->src_pad_code(csid, fmt->code, 0, code);
-		पूर्ण अन्यथा अणु
-			/* Test generator is enabled, set क्रमmat on source */
+		} else {
+			/* Test generator is enabled, set format on source */
 			/* pad to allow test generator usage */
 
-			क्रम (i = 0; i < csid->nक्रमmats; i++)
-				अगर (csid->क्रमmats[i].code == fmt->code)
-					अवरोध;
+			for (i = 0; i < csid->nformats; i++)
+				if (csid->formats[i].code == fmt->code)
+					break;
 
-			/* If not found, use UYVY as शेष */
-			अगर (i >= csid->nक्रमmats)
+			/* If not found, use UYVY as default */
+			if (i >= csid->nformats)
 				fmt->code = MEDIA_BUS_FMT_UYVY8_2X8;
 
 			fmt->width = clamp_t(u32, fmt->width, 1, 8191);
 			fmt->height = clamp_t(u32, fmt->height, 1, 8191);
 
 			fmt->field = V4L2_FIELD_NONE;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 	fmt->colorspace = V4L2_COLORSPACE_SRGB;
-पूर्ण
+}
 
 /*
- * csid_क्रमागत_mbus_code - Handle pixel क्रमmat क्रमागतeration
+ * csid_enum_mbus_code - Handle pixel format enumeration
  * @sd: CSID V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @code: poपूर्णांकer to v4l2_subdev_mbus_code_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @code: pointer to v4l2_subdev_mbus_code_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक csid_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
-			       काष्ठा v4l2_subdev_pad_config *cfg,
-			       काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
+static int csid_enum_mbus_code(struct v4l2_subdev *sd,
+			       struct v4l2_subdev_pad_config *cfg,
+			       struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
 
-	अगर (code->pad == MSM_CSID_PAD_SINK) अणु
-		अगर (code->index >= csid->nक्रमmats)
-			वापस -EINVAL;
+	if (code->pad == MSM_CSID_PAD_SINK) {
+		if (code->index >= csid->nformats)
+			return -EINVAL;
 
-		code->code = csid->क्रमmats[code->index].code;
-	पूर्ण अन्यथा अणु
-		अगर (csid->testgen_mode->cur.val == 0) अणु
-			काष्ठा v4l2_mbus_framefmt *sink_fmt;
+		code->code = csid->formats[code->index].code;
+	} else {
+		if (csid->testgen_mode->cur.val == 0) {
+			struct v4l2_mbus_framefmt *sink_fmt;
 
-			sink_fmt = __csid_get_क्रमmat(csid, cfg,
+			sink_fmt = __csid_get_format(csid, cfg,
 						     MSM_CSID_PAD_SINK,
 						     code->which);
 
 			code->code = csid->ops->src_pad_code(csid, sink_fmt->code,
 						       code->index, 0);
-			अगर (!code->code)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			अगर (code->index >= csid->nक्रमmats)
-				वापस -EINVAL;
+			if (!code->code)
+				return -EINVAL;
+		} else {
+			if (code->index >= csid->nformats)
+				return -EINVAL;
 
-			code->code = csid->क्रमmats[code->index].code;
-		पूर्ण
-	पूर्ण
+			code->code = csid->formats[code->index].code;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csid_क्रमागत_frame_size - Handle frame size क्रमागतeration
+ * csid_enum_frame_size - Handle frame size enumeration
  * @sd: CSID V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fse: poपूर्णांकer to v4l2_subdev_frame_size_क्रमागत काष्ठाure
- * वापस -EINVAL or zero on success
+ * @fse: pointer to v4l2_subdev_frame_size_enum structure
+ * return -EINVAL or zero on success
  */
-अटल पूर्णांक csid_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
-				काष्ठा v4l2_subdev_pad_config *cfg,
-				काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
+static int csid_enum_frame_size(struct v4l2_subdev *sd,
+				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt format;
 
-	अगर (fse->index != 0)
-		वापस -EINVAL;
+	if (fse->index != 0)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = 1;
-	क्रमmat.height = 1;
-	csid_try_क्रमmat(csid, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->min_width = क्रमmat.width;
-	fse->min_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = 1;
+	format.height = 1;
+	csid_try_format(csid, cfg, fse->pad, &format, fse->which);
+	fse->min_width = format.width;
+	fse->min_height = format.height;
 
-	अगर (क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (format.code != fse->code)
+		return -EINVAL;
 
-	क्रमmat.code = fse->code;
-	क्रमmat.width = -1;
-	क्रमmat.height = -1;
-	csid_try_क्रमmat(csid, cfg, fse->pad, &क्रमmat, fse->which);
-	fse->max_width = क्रमmat.width;
-	fse->max_height = क्रमmat.height;
+	format.code = fse->code;
+	format.width = -1;
+	format.height = -1;
+	csid_try_format(csid, cfg, fse->pad, &format, fse->which);
+	fse->max_width = format.width;
+	fse->max_height = format.height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csid_get_क्रमmat - Handle get क्रमmat by pads subdev method
+ * csid_get_format - Handle get format by pads subdev method
  * @sd: CSID V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: poपूर्णांकer to v4l2 subdev क्रमmat काष्ठाure
+ * @fmt: pointer to v4l2 subdev format structure
  *
  * Return -EINVAL or zero on success
  */
-अटल पूर्णांक csid_get_क्रमmat(काष्ठा v4l2_subdev *sd,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int csid_get_format(struct v4l2_subdev *sd,
+			   struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_format *fmt)
+{
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __csid_get_क्रमmat(csid, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __csid_get_format(csid, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	fmt->क्रमmat = *क्रमmat;
+	fmt->format = *format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csid_set_क्रमmat - Handle set क्रमmat by pads subdev method
+ * csid_set_format - Handle set format by pads subdev method
  * @sd: CSID V4L2 subdevice
  * @cfg: V4L2 subdev pad configuration
- * @fmt: poपूर्णांकer to v4l2 subdev क्रमmat काष्ठाure
+ * @fmt: pointer to v4l2 subdev format structure
  *
  * Return -EINVAL or zero on success
  */
-अटल पूर्णांक csid_set_क्रमmat(काष्ठा v4l2_subdev *sd,
-			   काष्ठा v4l2_subdev_pad_config *cfg,
-			   काष्ठा v4l2_subdev_क्रमmat *fmt)
-अणु
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
+static int csid_set_format(struct v4l2_subdev *sd,
+			   struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_format *fmt)
+{
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
+	struct v4l2_mbus_framefmt *format;
 
-	क्रमmat = __csid_get_क्रमmat(csid, cfg, fmt->pad, fmt->which);
-	अगर (क्रमmat == शून्य)
-		वापस -EINVAL;
+	format = __csid_get_format(csid, cfg, fmt->pad, fmt->which);
+	if (format == NULL)
+		return -EINVAL;
 
-	csid_try_क्रमmat(csid, cfg, fmt->pad, &fmt->क्रमmat, fmt->which);
-	*क्रमmat = fmt->क्रमmat;
+	csid_try_format(csid, cfg, fmt->pad, &fmt->format, fmt->which);
+	*format = fmt->format;
 
-	/* Propagate the क्रमmat from sink to source */
-	अगर (fmt->pad == MSM_CSID_PAD_SINK) अणु
-		क्रमmat = __csid_get_क्रमmat(csid, cfg, MSM_CSID_PAD_SRC,
+	/* Propagate the format from sink to source */
+	if (fmt->pad == MSM_CSID_PAD_SINK) {
+		format = __csid_get_format(csid, cfg, MSM_CSID_PAD_SRC,
 					   fmt->which);
 
-		*क्रमmat = fmt->क्रमmat;
-		csid_try_क्रमmat(csid, cfg, MSM_CSID_PAD_SRC, क्रमmat,
+		*format = fmt->format;
+		csid_try_format(csid, cfg, MSM_CSID_PAD_SRC, format,
 				fmt->which);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * csid_init_क्रमmats - Initialize क्रमmats on all pads
+ * csid_init_formats - Initialize formats on all pads
  * @sd: CSID V4L2 subdevice
  * @fh: V4L2 subdev file handle
  *
- * Initialize all pad क्रमmats with शेष values.
+ * Initialize all pad formats with default values.
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csid_init_क्रमmats(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
+static int csid_init_formats(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+{
+	struct v4l2_subdev_format format = {
 		.pad = MSM_CSID_PAD_SINK,
 		.which = fh ? V4L2_SUBDEV_FORMAT_TRY :
 			      V4L2_SUBDEV_FORMAT_ACTIVE,
-		.क्रमmat = अणु
+		.format = {
 			.code = MEDIA_BUS_FMT_UYVY8_2X8,
 			.width = 1920,
 			.height = 1080
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
-	वापस csid_set_क्रमmat(sd, fh ? fh->pad : शून्य, &क्रमmat);
-पूर्ण
+	return csid_set_format(sd, fh ? fh->pad : NULL, &format);
+}
 
 /*
  * csid_set_test_pattern - Set test generator's pattern mode
@@ -495,169 +494,169 @@ __csid_get_क्रमmat(काष्ठा csid_device *csid,
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csid_set_test_pattern(काष्ठा csid_device *csid, s32 value)
-अणु
-	काष्ठा csid_testgen_config *tg = &csid->testgen;
+static int csid_set_test_pattern(struct csid_device *csid, s32 value)
+{
+	struct csid_testgen_config *tg = &csid->testgen;
 
-	/* If CSID is linked to CSIPHY, करो not allow to enable test generator */
-	अगर (value && media_entity_remote_pad(&csid->pads[MSM_CSID_PAD_SINK]))
-		वापस -EBUSY;
+	/* If CSID is linked to CSIPHY, do not allow to enable test generator */
+	if (value && media_entity_remote_pad(&csid->pads[MSM_CSID_PAD_SINK]))
+		return -EBUSY;
 
 	tg->enabled = !!value;
 
-	वापस csid->ops->configure_testgen_pattern(csid, value);
-पूर्ण
+	return csid->ops->configure_testgen_pattern(csid, value);
+}
 
 /*
  * csid_s_ctrl - Handle set control subdev method
- * @ctrl: poपूर्णांकer to v4l2 control काष्ठाure
+ * @ctrl: pointer to v4l2 control structure
  *
  * Return 0 on success or a negative error code otherwise
  */
-अटल पूर्णांक csid_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा csid_device *csid = container_of(ctrl->handler,
-						काष्ठा csid_device, ctrls);
-	पूर्णांक ret = -EINVAL;
+static int csid_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct csid_device *csid = container_of(ctrl->handler,
+						struct csid_device, ctrls);
+	int ret = -EINVAL;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_TEST_PATTERN:
+	switch (ctrl->id) {
+	case V4L2_CID_TEST_PATTERN:
 		ret = csid_set_test_pattern(csid, ctrl->val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops csid_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops csid_ctrl_ops = {
 	.s_ctrl = csid_s_ctrl,
-पूर्ण;
+};
 
 /*
- * msm_csid_subdev_init - Initialize CSID device काष्ठाure and resources
+ * msm_csid_subdev_init - Initialize CSID device structure and resources
  * @csid: CSID device
  * @res: CSID module resources table
  * @id: CSID module id
  *
  * Return 0 on success or a negative error code otherwise
  */
-पूर्णांक msm_csid_subdev_init(काष्ठा camss *camss, काष्ठा csid_device *csid,
-			 स्थिर काष्ठा resources *res, u8 id)
-अणु
-	काष्ठा device *dev = camss->dev;
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	काष्ठा resource *r;
-	पूर्णांक i, j;
-	पूर्णांक ret;
+int msm_csid_subdev_init(struct camss *camss, struct csid_device *csid,
+			 const struct resources *res, u8 id)
+{
+	struct device *dev = camss->dev;
+	struct platform_device *pdev = to_platform_device(dev);
+	struct resource *r;
+	int i, j;
+	int ret;
 
 	csid->camss = camss;
 	csid->id = id;
 
-	अगर (camss->version == CAMSS_8x16) अणु
+	if (camss->version == CAMSS_8x16) {
 		csid->ops = &csid_ops_4_1;
-	पूर्ण अन्यथा अगर (camss->version == CAMSS_8x96 ||
-		   camss->version == CAMSS_660) अणु
+	} else if (camss->version == CAMSS_8x96 ||
+		   camss->version == CAMSS_660) {
 		csid->ops = &csid_ops_4_7;
-	पूर्ण अन्यथा अगर (camss->version == CAMSS_845) अणु
+	} else if (camss->version == CAMSS_845) {
 		csid->ops = &csid_ops_170;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 	csid->ops->subdev_init(csid);
 
 	/* Memory */
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[0]);
+	r = platform_get_resource_byname(pdev, IORESOURCE_MEM, res->reg[0]);
 	csid->base = devm_ioremap_resource(dev, r);
-	अगर (IS_ERR(csid->base))
-		वापस PTR_ERR(csid->base);
+	if (IS_ERR(csid->base))
+		return PTR_ERR(csid->base);
 
 	/* Interrupt */
 
-	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ,
-					 res->पूर्णांकerrupt[0]);
-	अगर (!r) अणु
+	r = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
+					 res->interrupt[0]);
+	if (!r) {
 		dev_err(dev, "missing IRQ\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	csid->irq = r->start;
-	snम_लिखो(csid->irq_name, माप(csid->irq_name), "%s_%s%d",
+	snprintf(csid->irq_name, sizeof(csid->irq_name), "%s_%s%d",
 		 dev_name(dev), MSM_CSID_NAME, csid->id);
 	ret = devm_request_irq(dev, csid->irq, csid->ops->isr,
 			       IRQF_TRIGGER_RISING, csid->irq_name, csid);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "request_irq failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	disable_irq(csid->irq);
 
 	/* Clocks */
 
-	csid->nघड़ीs = 0;
-	जबतक (res->घड़ी[csid->nघड़ीs])
-		csid->nघड़ीs++;
+	csid->nclocks = 0;
+	while (res->clock[csid->nclocks])
+		csid->nclocks++;
 
-	csid->घड़ी = devm_kसुस्मृति(dev, csid->nघड़ीs, माप(*csid->घड़ी),
+	csid->clock = devm_kcalloc(dev, csid->nclocks, sizeof(*csid->clock),
 				    GFP_KERNEL);
-	अगर (!csid->घड़ी)
-		वापस -ENOMEM;
+	if (!csid->clock)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < csid->nघड़ीs; i++) अणु
-		काष्ठा camss_घड़ी *घड़ी = &csid->घड़ी[i];
+	for (i = 0; i < csid->nclocks; i++) {
+		struct camss_clock *clock = &csid->clock[i];
 
-		घड़ी->clk = devm_clk_get(dev, res->घड़ी[i]);
-		अगर (IS_ERR(घड़ी->clk))
-			वापस PTR_ERR(घड़ी->clk);
+		clock->clk = devm_clk_get(dev, res->clock[i]);
+		if (IS_ERR(clock->clk))
+			return PTR_ERR(clock->clk);
 
-		घड़ी->name = res->घड़ी[i];
+		clock->name = res->clock[i];
 
-		घड़ी->nfreqs = 0;
-		जबतक (res->घड़ी_rate[i][घड़ी->nfreqs])
-			घड़ी->nfreqs++;
+		clock->nfreqs = 0;
+		while (res->clock_rate[i][clock->nfreqs])
+			clock->nfreqs++;
 
-		अगर (!घड़ी->nfreqs) अणु
-			घड़ी->freq = शून्य;
-			जारी;
-		पूर्ण
+		if (!clock->nfreqs) {
+			clock->freq = NULL;
+			continue;
+		}
 
-		घड़ी->freq = devm_kसुस्मृति(dev,
-					   घड़ी->nfreqs,
-					   माप(*घड़ी->freq),
+		clock->freq = devm_kcalloc(dev,
+					   clock->nfreqs,
+					   sizeof(*clock->freq),
 					   GFP_KERNEL);
-		अगर (!घड़ी->freq)
-			वापस -ENOMEM;
+		if (!clock->freq)
+			return -ENOMEM;
 
-		क्रम (j = 0; j < घड़ी->nfreqs; j++)
-			घड़ी->freq[j] = res->घड़ी_rate[i][j];
-	पूर्ण
+		for (j = 0; j < clock->nfreqs; j++)
+			clock->freq[j] = res->clock_rate[i][j];
+	}
 
 	/* Regulator */
 
 	csid->vdda = devm_regulator_get(dev, res->regulator[0]);
-	अगर (IS_ERR(csid->vdda)) अणु
+	if (IS_ERR(csid->vdda)) {
 		dev_err(dev, "could not get regulator\n");
-		वापस PTR_ERR(csid->vdda);
-	पूर्ण
+		return PTR_ERR(csid->vdda);
+	}
 
 	init_completion(&csid->reset_complete);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * msm_csid_get_csid_id - Get CSID HW module id
- * @entity: Poपूर्णांकer to CSID media entity काष्ठाure
+ * @entity: Pointer to CSID media entity structure
  * @id: Return CSID HW module id here
  */
-व्योम msm_csid_get_csid_id(काष्ठा media_entity *entity, u8 *id)
-अणु
-	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	काष्ठा csid_device *csid = v4l2_get_subdevdata(sd);
+void msm_csid_get_csid_id(struct media_entity *entity, u8 *id)
+{
+	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	struct csid_device *csid = v4l2_get_subdevdata(sd);
 
 	*id = csid->id;
-पूर्ण
+}
 
 /*
  * csid_get_lane_assign - Calculate CSI2 lane assign configuration parameter
@@ -665,57 +664,57 @@ __csid_get_क्रमmat(काष्ठा csid_device *csid,
  *
  * Return lane assign
  */
-अटल u32 csid_get_lane_assign(काष्ठा csiphy_lanes_cfg *lane_cfg)
-अणु
+static u32 csid_get_lane_assign(struct csiphy_lanes_cfg *lane_cfg)
+{
 	u32 lane_assign = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < lane_cfg->num_data; i++)
+	for (i = 0; i < lane_cfg->num_data; i++)
 		lane_assign |= lane_cfg->data[i].pos << (i * 4);
 
-	वापस lane_assign;
-पूर्ण
+	return lane_assign;
+}
 
 /*
  * csid_link_setup - Setup CSID connections
- * @entity: Poपूर्णांकer to media entity काष्ठाure
- * @local: Poपूर्णांकer to local pad
- * @remote: Poपूर्णांकer to remote pad
+ * @entity: Pointer to media entity structure
+ * @local: Pointer to local pad
+ * @remote: Pointer to remote pad
  * @flags: Link flags
  *
  * Return 0 on success
  */
-अटल पूर्णांक csid_link_setup(काष्ठा media_entity *entity,
-			   स्थिर काष्ठा media_pad *local,
-			   स्थिर काष्ठा media_pad *remote, u32 flags)
-अणु
-	अगर (flags & MEDIA_LNK_FL_ENABLED)
-		अगर (media_entity_remote_pad(local))
-			वापस -EBUSY;
+static int csid_link_setup(struct media_entity *entity,
+			   const struct media_pad *local,
+			   const struct media_pad *remote, u32 flags)
+{
+	if (flags & MEDIA_LNK_FL_ENABLED)
+		if (media_entity_remote_pad(local))
+			return -EBUSY;
 
-	अगर ((local->flags & MEDIA_PAD_FL_SINK) &&
-	    (flags & MEDIA_LNK_FL_ENABLED)) अणु
-		काष्ठा v4l2_subdev *sd;
-		काष्ठा csid_device *csid;
-		काष्ठा csiphy_device *csiphy;
-		काष्ठा csiphy_lanes_cfg *lane_cfg;
-		काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु 0 पूर्ण;
+	if ((local->flags & MEDIA_PAD_FL_SINK) &&
+	    (flags & MEDIA_LNK_FL_ENABLED)) {
+		struct v4l2_subdev *sd;
+		struct csid_device *csid;
+		struct csiphy_device *csiphy;
+		struct csiphy_lanes_cfg *lane_cfg;
+		struct v4l2_subdev_format format = { 0 };
 
 		sd = media_entity_to_v4l2_subdev(entity);
 		csid = v4l2_get_subdevdata(sd);
 
 		/* If test generator is enabled */
-		/* करो not allow a link from CSIPHY to CSID */
-		अगर (csid->testgen_mode->cur.val != 0)
-			वापस -EBUSY;
+		/* do not allow a link from CSIPHY to CSID */
+		if (csid->testgen_mode->cur.val != 0)
+			return -EBUSY;
 
 		sd = media_entity_to_v4l2_subdev(remote->entity);
 		csiphy = v4l2_get_subdevdata(sd);
 
 		/* If a sensor is not linked to CSIPHY */
-		/* करो no allow a link from CSIPHY to CSID */
-		अगर (!csiphy->cfg.csi2)
-			वापस -EPERM;
+		/* do no allow a link from CSIPHY to CSID */
+		if (!csiphy->cfg.csi2)
+			return -EPERM;
 
 		csid->phy.csiphy_id = csiphy->id;
 
@@ -723,94 +722,94 @@ __csid_get_क्रमmat(काष्ठा csid_device *csid,
 		csid->phy.lane_cnt = lane_cfg->num_data;
 		csid->phy.lane_assign = csid_get_lane_assign(lane_cfg);
 
-		/* Reset क्रमmat on source pad to sink pad क्रमmat */
-		क्रमmat.pad = MSM_CSID_PAD_SRC;
-		क्रमmat.which = V4L2_SUBDEV_FORMAT_ACTIVE;
-		csid_set_क्रमmat(&csid->subdev, शून्य, &क्रमmat);
-	पूर्ण
+		/* Reset format on source pad to sink pad format */
+		format.pad = MSM_CSID_PAD_SRC;
+		format.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+		csid_set_format(&csid->subdev, NULL, &format);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops csid_core_ops = अणु
-	.s_घातer = csid_set_घातer,
+static const struct v4l2_subdev_core_ops csid_core_ops = {
+	.s_power = csid_set_power,
 	.subscribe_event = v4l2_ctrl_subdev_subscribe_event,
 	.unsubscribe_event = v4l2_event_subdev_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops csid_video_ops = अणु
+static const struct v4l2_subdev_video_ops csid_video_ops = {
 	.s_stream = csid_set_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops csid_pad_ops = अणु
-	.क्रमागत_mbus_code = csid_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = csid_क्रमागत_frame_size,
-	.get_fmt = csid_get_क्रमmat,
-	.set_fmt = csid_set_क्रमmat,
-पूर्ण;
+static const struct v4l2_subdev_pad_ops csid_pad_ops = {
+	.enum_mbus_code = csid_enum_mbus_code,
+	.enum_frame_size = csid_enum_frame_size,
+	.get_fmt = csid_get_format,
+	.set_fmt = csid_set_format,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops csid_v4l2_ops = अणु
+static const struct v4l2_subdev_ops csid_v4l2_ops = {
 	.core = &csid_core_ops,
 	.video = &csid_video_ops,
 	.pad = &csid_pad_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops csid_v4l2_पूर्णांकernal_ops = अणु
-	.खोलो = csid_init_क्रमmats,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops csid_v4l2_internal_ops = {
+	.open = csid_init_formats,
+};
 
-अटल स्थिर काष्ठा media_entity_operations csid_media_ops = अणु
+static const struct media_entity_operations csid_media_ops = {
 	.link_setup = csid_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-पूर्ण;
+};
 
 /*
- * msm_csid_रेजिस्टर_entity - Register subdev node क्रम CSID module
+ * msm_csid_register_entity - Register subdev node for CSID module
  * @csid: CSID device
  * @v4l2_dev: V4L2 device
  *
  * Return 0 on success or a negative error code otherwise
  */
-पूर्णांक msm_csid_रेजिस्टर_entity(काष्ठा csid_device *csid,
-			     काष्ठा v4l2_device *v4l2_dev)
-अणु
-	काष्ठा v4l2_subdev *sd = &csid->subdev;
-	काष्ठा media_pad *pads = csid->pads;
-	काष्ठा device *dev = csid->camss->dev;
-	पूर्णांक ret;
+int msm_csid_register_entity(struct csid_device *csid,
+			     struct v4l2_device *v4l2_dev)
+{
+	struct v4l2_subdev *sd = &csid->subdev;
+	struct media_pad *pads = csid->pads;
+	struct device *dev = csid->camss->dev;
+	int ret;
 
 	v4l2_subdev_init(sd, &csid_v4l2_ops);
-	sd->पूर्णांकernal_ops = &csid_v4l2_पूर्णांकernal_ops;
+	sd->internal_ops = &csid_v4l2_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE |
 		     V4L2_SUBDEV_FL_HAS_EVENTS;
-	snम_लिखो(sd->name, ARRAY_SIZE(sd->name), "%s%d",
+	snprintf(sd->name, ARRAY_SIZE(sd->name), "%s%d",
 		 MSM_CSID_NAME, csid->id);
 	v4l2_set_subdevdata(sd, csid);
 
 	ret = v4l2_ctrl_handler_init(&csid->ctrls, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to init ctrl handler: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	csid->testgen_mode = v4l2_ctrl_new_std_menu_items(&csid->ctrls,
 				&csid_ctrl_ops, V4L2_CID_TEST_PATTERN,
 				csid->testgen.nmodes, 0, 0,
 				csid->testgen.modes);
 
-	अगर (csid->ctrls.error) अणु
+	if (csid->ctrls.error) {
 		dev_err(dev, "Failed to init ctrl: %d\n", csid->ctrls.error);
 		ret = csid->ctrls.error;
-		जाओ मुक्त_ctrl;
-	पूर्ण
+		goto free_ctrl;
+	}
 
 	csid->subdev.ctrl_handler = &csid->ctrls;
 
-	ret = csid_init_क्रमmats(sd, शून्य);
-	अगर (ret < 0) अणु
+	ret = csid_init_formats(sd, NULL);
+	if (ret < 0) {
 		dev_err(dev, "Failed to init format: %d\n", ret);
-		जाओ मुक्त_ctrl;
-	पूर्ण
+		goto free_ctrl;
+	}
 
 	pads[MSM_CSID_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
 	pads[MSM_CSID_PAD_SRC].flags = MEDIA_PAD_FL_SOURCE;
@@ -818,34 +817,34 @@ __csid_get_क्रमmat(काष्ठा csid_device *csid,
 	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
 	sd->entity.ops = &csid_media_ops;
 	ret = media_entity_pads_init(&sd->entity, MSM_CSID_PADS_NUM, pads);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "Failed to init media entity: %d\n", ret);
-		जाओ मुक्त_ctrl;
-	पूर्ण
+		goto free_ctrl;
+	}
 
-	ret = v4l2_device_रेजिस्टर_subdev(v4l2_dev, sd);
-	अगर (ret < 0) अणु
+	ret = v4l2_device_register_subdev(v4l2_dev, sd);
+	if (ret < 0) {
 		dev_err(dev, "Failed to register subdev: %d\n", ret);
-		जाओ media_cleanup;
-	पूर्ण
+		goto media_cleanup;
+	}
 
-	वापस 0;
+	return 0;
 
 media_cleanup:
 	media_entity_cleanup(&sd->entity);
-मुक्त_ctrl:
-	v4l2_ctrl_handler_मुक्त(&csid->ctrls);
+free_ctrl:
+	v4l2_ctrl_handler_free(&csid->ctrls);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * msm_csid_unरेजिस्टर_entity - Unरेजिस्टर CSID module subdev node
+ * msm_csid_unregister_entity - Unregister CSID module subdev node
  * @csid: CSID device
  */
-व्योम msm_csid_unरेजिस्टर_entity(काष्ठा csid_device *csid)
-अणु
-	v4l2_device_unरेजिस्टर_subdev(&csid->subdev);
+void msm_csid_unregister_entity(struct csid_device *csid)
+{
+	v4l2_device_unregister_subdev(&csid->subdev);
 	media_entity_cleanup(&csid->subdev.entity);
-	v4l2_ctrl_handler_मुक्त(&csid->ctrls);
-पूर्ण
+	v4l2_ctrl_handler_free(&csid->ctrls);
+}

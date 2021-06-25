@@ -1,551 +1,550 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
-// Driver क्रम Microchip S/PDIF TX Controller
+// Driver for Microchip S/PDIF TX Controller
 //
 // Copyright (C) 2020 Microchip Technology Inc. and its subsidiaries
 //
 // Author: Codrin Ciubotariu <codrin.ciubotariu@microchip.com>
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
 
-#समावेश <sound/asoundef.h>
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
+#include <sound/asoundef.h>
+#include <sound/dmaengine_pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
 
 /*
  * ---- S/PDIF Transmitter Controller Register map ----
  */
-#घोषणा SPDIFTX_CR			0x00	/* Control Register */
-#घोषणा SPDIFTX_MR			0x04	/* Mode Register */
-#घोषणा SPDIFTX_CDR			0x0C	/* Common Data Register */
+#define SPDIFTX_CR			0x00	/* Control Register */
+#define SPDIFTX_MR			0x04	/* Mode Register */
+#define SPDIFTX_CDR			0x0C	/* Common Data Register */
 
-#घोषणा SPDIFTX_IER			0x14	/* Interrupt Enable Register */
-#घोषणा SPDIFTX_IDR			0x18	/* Interrupt Disable Register */
-#घोषणा SPDIFTX_IMR			0x1C	/* Interrupt Mask Register */
-#घोषणा SPDIFTX_ISR			0x20	/* Interrupt Status Register */
+#define SPDIFTX_IER			0x14	/* Interrupt Enable Register */
+#define SPDIFTX_IDR			0x18	/* Interrupt Disable Register */
+#define SPDIFTX_IMR			0x1C	/* Interrupt Mask Register */
+#define SPDIFTX_ISR			0x20	/* Interrupt Status Register */
 
-#घोषणा SPDIFTX_CH1UD(reg)	(0x50 + (reg) * 4)	/* User Data 1 Register x */
-#घोषणा SPDIFTX_CH1S(reg)	(0x80 + (reg) * 4)	/* Channel Status 1 Register x */
+#define SPDIFTX_CH1UD(reg)	(0x50 + (reg) * 4)	/* User Data 1 Register x */
+#define SPDIFTX_CH1S(reg)	(0x80 + (reg) * 4)	/* Channel Status 1 Register x */
 
-#घोषणा SPDIFTX_VERSION			0xF0
+#define SPDIFTX_VERSION			0xF0
 
 /*
  * ---- Control Register (Write-only) ----
  */
-#घोषणा SPDIFTX_CR_SWRST		BIT(0)	/* Software Reset */
-#घोषणा SPDIFTX_CR_FCLR			BIT(1)	/* FIFO clear */
+#define SPDIFTX_CR_SWRST		BIT(0)	/* Software Reset */
+#define SPDIFTX_CR_FCLR			BIT(1)	/* FIFO clear */
 
 /*
  * ---- Mode Register (Read/Write) ----
  */
 /* Transmit Enable */
-#घोषणा SPDIFTX_MR_TXEN_MASK		GENMASK(0, 0)
-#घोषणा SPDIFTX_MR_TXEN_DISABLE		(0 << 0)
-#घोषणा SPDIFTX_MR_TXEN_ENABLE		(1 << 0)
+#define SPDIFTX_MR_TXEN_MASK		GENMASK(0, 0)
+#define SPDIFTX_MR_TXEN_DISABLE		(0 << 0)
+#define SPDIFTX_MR_TXEN_ENABLE		(1 << 0)
 
 /* Multichannel Transfer */
-#घोषणा SPDIFTX_MR_MULTICH_MASK		GENAMSK(1, 1)
-#घोषणा SPDIFTX_MR_MULTICH_MONO		(0 << 1)
-#घोषणा SPDIFTX_MR_MULTICH_DUAL		(1 << 1)
+#define SPDIFTX_MR_MULTICH_MASK		GENAMSK(1, 1)
+#define SPDIFTX_MR_MULTICH_MONO		(0 << 1)
+#define SPDIFTX_MR_MULTICH_DUAL		(1 << 1)
 
 /* Data Word Endian Mode */
-#घोषणा SPDIFTX_MR_ENDIAN_MASK		GENMASK(2, 2)
-#घोषणा SPDIFTX_MR_ENDIAN_LITTLE	(0 << 2)
-#घोषणा SPDIFTX_MR_ENDIAN_BIG		(1 << 2)
+#define SPDIFTX_MR_ENDIAN_MASK		GENMASK(2, 2)
+#define SPDIFTX_MR_ENDIAN_LITTLE	(0 << 2)
+#define SPDIFTX_MR_ENDIAN_BIG		(1 << 2)
 
-/* Data Justअगरication */
-#घोषणा SPDIFTX_MR_JUSTIFY_MASK		GENMASK(3, 3)
-#घोषणा SPDIFTX_MR_JUSTIFY_LSB		(0 << 3)
-#घोषणा SPDIFTX_MR_JUSTIFY_MSB		(1 << 3)
+/* Data Justification */
+#define SPDIFTX_MR_JUSTIFY_MASK		GENMASK(3, 3)
+#define SPDIFTX_MR_JUSTIFY_LSB		(0 << 3)
+#define SPDIFTX_MR_JUSTIFY_MSB		(1 << 3)
 
 /* Common Audio Register Transfer Mode */
-#घोषणा SPDIFTX_MR_CMODE_MASK			GENMASK(5, 4)
-#घोषणा SPDIFTX_MR_CMODE_INDEX_ACCESS		(0 << 4)
-#घोषणा SPDIFTX_MR_CMODE_TOGGLE_ACCESS		(1 << 4)
-#घोषणा SPDIFTX_MR_CMODE_INTERLVD_ACCESS	(2 << 4)
+#define SPDIFTX_MR_CMODE_MASK			GENMASK(5, 4)
+#define SPDIFTX_MR_CMODE_INDEX_ACCESS		(0 << 4)
+#define SPDIFTX_MR_CMODE_TOGGLE_ACCESS		(1 << 4)
+#define SPDIFTX_MR_CMODE_INTERLVD_ACCESS	(2 << 4)
 
 /* Valid Bits per Sample */
-#घोषणा SPDIFTX_MR_VBPS_MASK		GENMASK(13, 8)
-#घोषणा SPDIFTX_MR_VBPS(bps)		(((bps) << 8) & SPDIFTX_MR_VBPS_MASK)
+#define SPDIFTX_MR_VBPS_MASK		GENMASK(13, 8)
+#define SPDIFTX_MR_VBPS(bps)		(((bps) << 8) & SPDIFTX_MR_VBPS_MASK)
 
 /* Chunk Size */
-#घोषणा SPDIFTX_MR_CHUNK_MASK		GENMASK(19, 16)
-#घोषणा SPDIFTX_MR_CHUNK(size)		(((size) << 16) & SPDIFTX_MR_CHUNK_MASK)
+#define SPDIFTX_MR_CHUNK_MASK		GENMASK(19, 16)
+#define SPDIFTX_MR_CHUNK(size)		(((size) << 16) & SPDIFTX_MR_CHUNK_MASK)
 
-/* Validity Bits क्रम Channels 1 and 2 */
-#घोषणा SPDIFTX_MR_VALID1			BIT(24)
-#घोषणा SPDIFTX_MR_VALID2			BIT(25)
+/* Validity Bits for Channels 1 and 2 */
+#define SPDIFTX_MR_VALID1			BIT(24)
+#define SPDIFTX_MR_VALID2			BIT(25)
 
 /* Disable Null Frame on underrrun */
-#घोषणा SPDIFTX_MR_DNFR_MASK		GENMASK(27, 27)
-#घोषणा SPDIFTX_MR_DNFR_INVALID		(0 << 27)
-#घोषणा SPDIFTX_MR_DNFR_VALID		(1 << 27)
+#define SPDIFTX_MR_DNFR_MASK		GENMASK(27, 27)
+#define SPDIFTX_MR_DNFR_INVALID		(0 << 27)
+#define SPDIFTX_MR_DNFR_VALID		(1 << 27)
 
 /* Bytes per Sample */
-#घोषणा SPDIFTX_MR_BPS_MASK		GENMASK(29, 28)
-#घोषणा SPDIFTX_MR_BPS(bytes) \
+#define SPDIFTX_MR_BPS_MASK		GENMASK(29, 28)
+#define SPDIFTX_MR_BPS(bytes) \
 	((((bytes) - 1) << 28) & SPDIFTX_MR_BPS_MASK)
 
 /*
  * ---- Interrupt Enable/Disable/Mask/Status Register (Write/Read-only) ----
  */
-#घोषणा SPDIFTX_IR_TXRDY		BIT(0)
-#घोषणा SPDIFTX_IR_TXEMPTY		BIT(1)
-#घोषणा SPDIFTX_IR_TXFULL		BIT(2)
-#घोषणा SPDIFTX_IR_TXCHUNK		BIT(3)
-#घोषणा SPDIFTX_IR_TXUDR		BIT(4)
-#घोषणा SPDIFTX_IR_TXOVR		BIT(5)
-#घोषणा SPDIFTX_IR_CSRDY		BIT(6)
-#घोषणा SPDIFTX_IR_UDRDY		BIT(7)
-#घोषणा SPDIFTX_IR_TXRDYCH(ch)		BIT((ch) + 8)
-#घोषणा SPDIFTX_IR_SECE			BIT(10)
-#घोषणा SPDIFTX_IR_TXUDRCH(ch)		BIT((ch) + 11)
-#घोषणा SPDIFTX_IR_BEND			BIT(13)
+#define SPDIFTX_IR_TXRDY		BIT(0)
+#define SPDIFTX_IR_TXEMPTY		BIT(1)
+#define SPDIFTX_IR_TXFULL		BIT(2)
+#define SPDIFTX_IR_TXCHUNK		BIT(3)
+#define SPDIFTX_IR_TXUDR		BIT(4)
+#define SPDIFTX_IR_TXOVR		BIT(5)
+#define SPDIFTX_IR_CSRDY		BIT(6)
+#define SPDIFTX_IR_UDRDY		BIT(7)
+#define SPDIFTX_IR_TXRDYCH(ch)		BIT((ch) + 8)
+#define SPDIFTX_IR_SECE			BIT(10)
+#define SPDIFTX_IR_TXUDRCH(ch)		BIT((ch) + 11)
+#define SPDIFTX_IR_BEND			BIT(13)
 
-अटल bool mchp_spdअगरtx_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SPDIFTX_MR:
-	हाल SPDIFTX_IMR:
-	हाल SPDIFTX_ISR:
-	हाल SPDIFTX_CH1UD(0):
-	हाल SPDIFTX_CH1UD(1):
-	हाल SPDIFTX_CH1UD(2):
-	हाल SPDIFTX_CH1UD(3):
-	हाल SPDIFTX_CH1UD(4):
-	हाल SPDIFTX_CH1UD(5):
-	हाल SPDIFTX_CH1S(0):
-	हाल SPDIFTX_CH1S(1):
-	हाल SPDIFTX_CH1S(2):
-	हाल SPDIFTX_CH1S(3):
-	हाल SPDIFTX_CH1S(4):
-	हाल SPDIFTX_CH1S(5):
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mchp_spdiftx_readable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SPDIFTX_MR:
+	case SPDIFTX_IMR:
+	case SPDIFTX_ISR:
+	case SPDIFTX_CH1UD(0):
+	case SPDIFTX_CH1UD(1):
+	case SPDIFTX_CH1UD(2):
+	case SPDIFTX_CH1UD(3):
+	case SPDIFTX_CH1UD(4):
+	case SPDIFTX_CH1UD(5):
+	case SPDIFTX_CH1S(0):
+	case SPDIFTX_CH1S(1):
+	case SPDIFTX_CH1S(2):
+	case SPDIFTX_CH1S(3):
+	case SPDIFTX_CH1S(4):
+	case SPDIFTX_CH1S(5):
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool mchp_spdअगरtx_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SPDIFTX_CR:
-	हाल SPDIFTX_MR:
-	हाल SPDIFTX_CDR:
-	हाल SPDIFTX_IER:
-	हाल SPDIFTX_IDR:
-	हाल SPDIFTX_CH1UD(0):
-	हाल SPDIFTX_CH1UD(1):
-	हाल SPDIFTX_CH1UD(2):
-	हाल SPDIFTX_CH1UD(3):
-	हाल SPDIFTX_CH1UD(4):
-	हाल SPDIFTX_CH1UD(5):
-	हाल SPDIFTX_CH1S(0):
-	हाल SPDIFTX_CH1S(1):
-	हाल SPDIFTX_CH1S(2):
-	हाल SPDIFTX_CH1S(3):
-	हाल SPDIFTX_CH1S(4):
-	हाल SPDIFTX_CH1S(5):
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mchp_spdiftx_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SPDIFTX_CR:
+	case SPDIFTX_MR:
+	case SPDIFTX_CDR:
+	case SPDIFTX_IER:
+	case SPDIFTX_IDR:
+	case SPDIFTX_CH1UD(0):
+	case SPDIFTX_CH1UD(1):
+	case SPDIFTX_CH1UD(2):
+	case SPDIFTX_CH1UD(3):
+	case SPDIFTX_CH1UD(4):
+	case SPDIFTX_CH1UD(5):
+	case SPDIFTX_CH1S(0):
+	case SPDIFTX_CH1S(1):
+	case SPDIFTX_CH1S(2):
+	case SPDIFTX_CH1S(3):
+	case SPDIFTX_CH1S(4):
+	case SPDIFTX_CH1S(5):
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool mchp_spdअगरtx_precious_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SPDIFTX_CDR:
-	हाल SPDIFTX_ISR:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool mchp_spdiftx_precious_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SPDIFTX_CDR:
+	case SPDIFTX_ISR:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config mchp_spdअगरtx_regmap_config = अणु
+static const struct regmap_config mchp_spdiftx_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = SPDIFTX_VERSION,
-	.पढ़ोable_reg = mchp_spdअगरtx_पढ़ोable_reg,
-	.ग_लिखोable_reg = mchp_spdअगरtx_ग_लिखोable_reg,
-	.precious_reg = mchp_spdअगरtx_precious_reg,
-पूर्ण;
+	.max_register = SPDIFTX_VERSION,
+	.readable_reg = mchp_spdiftx_readable_reg,
+	.writeable_reg = mchp_spdiftx_writeable_reg,
+	.precious_reg = mchp_spdiftx_precious_reg,
+};
 
-#घोषणा SPDIFTX_GCLK_RATIO	128
+#define SPDIFTX_GCLK_RATIO	128
 
-#घोषणा SPDIFTX_CS_BITS		192
-#घोषणा SPDIFTX_UD_BITS		192
+#define SPDIFTX_CS_BITS		192
+#define SPDIFTX_UD_BITS		192
 
-काष्ठा mchp_spdअगरtx_mixer_control अणु
-	अचिन्हित अक्षर				ch_stat[SPDIFTX_CS_BITS / 8];
-	अचिन्हित अक्षर				user_data[SPDIFTX_UD_BITS / 8];
+struct mchp_spdiftx_mixer_control {
+	unsigned char				ch_stat[SPDIFTX_CS_BITS / 8];
+	unsigned char				user_data[SPDIFTX_UD_BITS / 8];
 	spinlock_t				lock; /* exclusive access to control data */
-पूर्ण;
+};
 
-काष्ठा mchp_spdअगरtx_dev अणु
-	काष्ठा mchp_spdअगरtx_mixer_control	control;
-	काष्ठा snd_dmaengine_dai_dma_data	playback;
-	काष्ठा device				*dev;
-	काष्ठा regmap				*regmap;
-	काष्ठा clk				*pclk;
-	काष्ठा clk				*gclk;
-	अचिन्हित पूर्णांक				fmt;
-	स्थिर काष्ठा mchp_i2s_caps		*caps;
-	पूर्णांक					gclk_enabled:1;
-पूर्ण;
+struct mchp_spdiftx_dev {
+	struct mchp_spdiftx_mixer_control	control;
+	struct snd_dmaengine_dai_dma_data	playback;
+	struct device				*dev;
+	struct regmap				*regmap;
+	struct clk				*pclk;
+	struct clk				*gclk;
+	unsigned int				fmt;
+	const struct mchp_i2s_caps		*caps;
+	int					gclk_enabled:1;
+};
 
-अटल अंतरभूत पूर्णांक mchp_spdअगरtx_is_running(काष्ठा mchp_spdअगरtx_dev *dev)
-अणु
+static inline int mchp_spdiftx_is_running(struct mchp_spdiftx_dev *dev)
+{
 	u32 mr;
 
-	regmap_पढ़ो(dev->regmap, SPDIFTX_MR, &mr);
-	वापस !!(mr & SPDIFTX_MR_TXEN_ENABLE);
-पूर्ण
+	regmap_read(dev->regmap, SPDIFTX_MR, &mr);
+	return !!(mr & SPDIFTX_MR_TXEN_ENABLE);
+}
 
-अटल व्योम mchp_spdअगरtx_channel_status_ग_लिखो(काष्ठा mchp_spdअगरtx_dev *dev)
-अणु
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
+static void mchp_spdiftx_channel_status_write(struct mchp_spdiftx_dev *dev)
+{
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
 	u32 val;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ctrl->ch_stat) / 4; i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ctrl->ch_stat) / 4; i++) {
 		val = (ctrl->ch_stat[(i * 4) + 0] << 0) |
 		      (ctrl->ch_stat[(i * 4) + 1] << 8) |
 		      (ctrl->ch_stat[(i * 4) + 2] << 16) |
 		      (ctrl->ch_stat[(i * 4) + 3] << 24);
 
-		regmap_ग_लिखो(dev->regmap, SPDIFTX_CH1S(i), val);
-	पूर्ण
-पूर्ण
+		regmap_write(dev->regmap, SPDIFTX_CH1S(i), val);
+	}
+}
 
-अटल व्योम mchp_spdअगरtx_user_data_ग_लिखो(काष्ठा mchp_spdअगरtx_dev *dev)
-अणु
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
+static void mchp_spdiftx_user_data_write(struct mchp_spdiftx_dev *dev)
+{
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
 	u32 val;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ctrl->user_data) / 4; i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ctrl->user_data) / 4; i++) {
 		val = (ctrl->user_data[(i * 4) + 0] << 0) |
 		      (ctrl->user_data[(i * 4) + 1] << 8) |
 		      (ctrl->user_data[(i * 4) + 2] << 16) |
 		      (ctrl->user_data[(i * 4) + 3] << 24);
 
-		regmap_ग_लिखो(dev->regmap, SPDIFTX_CH1UD(i), val);
-	पूर्ण
-पूर्ण
+		regmap_write(dev->regmap, SPDIFTX_CH1UD(i), val);
+	}
+}
 
-अटल irqवापस_t mchp_spdअगरtx_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = dev_id;
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
+static irqreturn_t mchp_spdiftx_interrupt(int irq, void *dev_id)
+{
+	struct mchp_spdiftx_dev *dev = dev_id;
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
 	u32 sr, imr, pending, idr = 0;
 
-	regmap_पढ़ो(dev->regmap, SPDIFTX_ISR, &sr);
-	regmap_पढ़ो(dev->regmap, SPDIFTX_IMR, &imr);
+	regmap_read(dev->regmap, SPDIFTX_ISR, &sr);
+	regmap_read(dev->regmap, SPDIFTX_IMR, &imr);
 	pending = sr & imr;
 
-	अगर (!pending)
-		वापस IRQ_NONE;
+	if (!pending)
+		return IRQ_NONE;
 
-	अगर (pending & SPDIFTX_IR_TXUDR) अणु
+	if (pending & SPDIFTX_IR_TXUDR) {
 		dev_warn(dev->dev, "underflow detected\n");
 		idr |= SPDIFTX_IR_TXUDR;
-	पूर्ण
+	}
 
-	अगर (pending & SPDIFTX_IR_TXOVR) अणु
+	if (pending & SPDIFTX_IR_TXOVR) {
 		dev_warn(dev->dev, "overflow detected\n");
 		idr |= SPDIFTX_IR_TXOVR;
-	पूर्ण
+	}
 
-	अगर (pending & SPDIFTX_IR_UDRDY) अणु
+	if (pending & SPDIFTX_IR_UDRDY) {
 		spin_lock(&ctrl->lock);
-		mchp_spdअगरtx_user_data_ग_लिखो(dev);
+		mchp_spdiftx_user_data_write(dev);
 		spin_unlock(&ctrl->lock);
 		idr |= SPDIFTX_IR_UDRDY;
-	पूर्ण
+	}
 
-	अगर (pending & SPDIFTX_IR_CSRDY) अणु
+	if (pending & SPDIFTX_IR_CSRDY) {
 		spin_lock(&ctrl->lock);
-		mchp_spdअगरtx_channel_status_ग_लिखो(dev);
+		mchp_spdiftx_channel_status_write(dev);
 		spin_unlock(&ctrl->lock);
 		idr |= SPDIFTX_IR_CSRDY;
-	पूर्ण
+	}
 
-	regmap_ग_लिखो(dev->regmap, SPDIFTX_IDR, idr);
+	regmap_write(dev->regmap, SPDIFTX_IDR, idr);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_dai_startup(काष्ठा snd_pcm_substream *substream,
-				    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
+static int mchp_spdiftx_dai_startup(struct snd_pcm_substream *substream,
+				    struct snd_soc_dai *dai)
+{
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
 
 	/* Software reset the IP */
-	regmap_ग_लिखो(dev->regmap, SPDIFTX_CR,
+	regmap_write(dev->regmap, SPDIFTX_CR,
 		     SPDIFTX_CR_SWRST | SPDIFTX_CR_FCLR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mchp_spdअगरtx_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-				      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
+static void mchp_spdiftx_dai_shutdown(struct snd_pcm_substream *substream,
+				      struct snd_soc_dai *dai)
+{
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
 
-	/* Disable पूर्णांकerrupts */
-	regmap_ग_लिखो(dev->regmap, SPDIFTX_IDR, 0xffffffff);
-पूर्ण
+	/* Disable interrupts */
+	regmap_write(dev->regmap, SPDIFTX_IDR, 0xffffffff);
+}
 
-अटल पूर्णांक mchp_spdअगरtx_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
+static int mchp_spdiftx_trigger(struct snd_pcm_substream *substream, int cmd,
+				struct snd_soc_dai *dai)
+{
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
 	u32 mr;
-	पूर्णांक running;
-	पूर्णांक ret;
+	int running;
+	int ret;
 
-	/* करो not start/stop जबतक channel status or user data is updated */
+	/* do not start/stop while channel status or user data is updated */
 	spin_lock(&ctrl->lock);
-	regmap_पढ़ो(dev->regmap, SPDIFTX_MR, &mr);
+	regmap_read(dev->regmap, SPDIFTX_MR, &mr);
 	running = !!(mr & SPDIFTX_MR_TXEN_ENABLE);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		अगर (!running) अणु
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		if (!running) {
 			mr &= ~SPDIFTX_MR_TXEN_MASK;
 			mr |= SPDIFTX_MR_TXEN_ENABLE;
-		पूर्ण
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		अगर (running) अणु
+		}
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		if (running) {
 			mr &= ~SPDIFTX_MR_TXEN_MASK;
 			mr |= SPDIFTX_MR_TXEN_DISABLE;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		spin_unlock(&ctrl->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = regmap_ग_लिखो(dev->regmap, SPDIFTX_MR, mr);
+	ret = regmap_write(dev->regmap, SPDIFTX_MR, mr);
 	spin_unlock(&ctrl->lock);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "unable to disable TX: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_hw_params(काष्ठा snd_pcm_substream *substream,
-				  काष्ठा snd_pcm_hw_params *params,
-				  काष्ठा snd_soc_dai *dai)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
+static int mchp_spdiftx_hw_params(struct snd_pcm_substream *substream,
+				  struct snd_pcm_hw_params *params,
+				  struct snd_soc_dai *dai)
+{
+	unsigned long flags;
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
 	u32 mr;
-	अचिन्हित पूर्णांक bps = params_physical_width(params) / 8;
-	पूर्णांक ret;
+	unsigned int bps = params_physical_width(params) / 8;
+	int ret;
 
 	dev_dbg(dev->dev, "%s() rate=%u format=%#x width=%u channels=%u\n",
-		__func__, params_rate(params), params_क्रमmat(params),
+		__func__, params_rate(params), params_format(params),
 		params_width(params), params_channels(params));
 
-	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
+	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 		dev_err(dev->dev, "Capture is not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	regmap_पढ़ो(dev->regmap, SPDIFTX_MR, &mr);
+	regmap_read(dev->regmap, SPDIFTX_MR, &mr);
 
-	अगर (mr & SPDIFTX_MR_TXEN_ENABLE) अणु
+	if (mr & SPDIFTX_MR_TXEN_ENABLE) {
 		dev_err(dev->dev, "PCM already running\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	/* Defaults: Toggle mode, justअगरy to LSB, chunksize 1 */
+	/* Defaults: Toggle mode, justify to LSB, chunksize 1 */
 	mr = SPDIFTX_MR_CMODE_TOGGLE_ACCESS | SPDIFTX_MR_JUSTIFY_LSB;
 	dev->playback.maxburst = 1;
-	चयन (params_channels(params)) अणु
-	हाल 1:
+	switch (params_channels(params)) {
+	case 1:
 		mr |= SPDIFTX_MR_MULTICH_MONO;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mr |= SPDIFTX_MR_MULTICH_DUAL;
-		अगर (bps > 2)
+		if (bps > 2)
 			dev->playback.maxburst = 2;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev->dev, "unsupported number of channels: %d\n",
 			params_channels(params));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	mr |= SPDIFTX_MR_CHUNK(dev->playback.maxburst);
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S8:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S8:
 		mr |= SPDIFTX_MR_VBPS(8);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_BE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_BE:
 		mr |= SPDIFTX_MR_ENDIAN_BIG;
 		fallthrough;
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	case SNDRV_PCM_FORMAT_S16_LE:
 		mr |= SPDIFTX_MR_VBPS(16);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S18_3BE:
+		break;
+	case SNDRV_PCM_FORMAT_S18_3BE:
 		mr |= SPDIFTX_MR_ENDIAN_BIG;
 		fallthrough;
-	हाल SNDRV_PCM_FORMAT_S18_3LE:
+	case SNDRV_PCM_FORMAT_S18_3LE:
 		mr |= SPDIFTX_MR_VBPS(18);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S20_3BE:
+		break;
+	case SNDRV_PCM_FORMAT_S20_3BE:
 		mr |= SPDIFTX_MR_ENDIAN_BIG;
 		fallthrough;
-	हाल SNDRV_PCM_FORMAT_S20_3LE:
+	case SNDRV_PCM_FORMAT_S20_3LE:
 		mr |= SPDIFTX_MR_VBPS(20);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_3BE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_3BE:
 		mr |= SPDIFTX_MR_ENDIAN_BIG;
 		fallthrough;
-	हाल SNDRV_PCM_FORMAT_S24_3LE:
+	case SNDRV_PCM_FORMAT_S24_3LE:
 		mr |= SPDIFTX_MR_VBPS(24);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_BE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_BE:
 		mr |= SPDIFTX_MR_ENDIAN_BIG;
 		fallthrough;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+	case SNDRV_PCM_FORMAT_S24_LE:
 		mr |= SPDIFTX_MR_VBPS(24);
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S32_BE:
+		break;
+	case SNDRV_PCM_FORMAT_S32_BE:
 		mr |= SPDIFTX_MR_ENDIAN_BIG;
 		fallthrough;
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+	case SNDRV_PCM_FORMAT_S32_LE:
 		mr |= SPDIFTX_MR_VBPS(32);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev->dev, "unsupported PCM format: %d\n",
-			params_क्रमmat(params));
-		वापस -EINVAL;
-	पूर्ण
+			params_format(params));
+		return -EINVAL;
+	}
 
 	mr |= SPDIFTX_MR_BPS(bps);
 
 	spin_lock_irqsave(&ctrl->lock, flags);
 	ctrl->ch_stat[3] &= ~IEC958_AES3_CON_FS;
-	चयन (params_rate(params)) अणु
-	हाल 22050:
+	switch (params_rate(params)) {
+	case 22050:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_22050;
-		अवरोध;
-	हाल 24000:
+		break;
+	case 24000:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_24000;
-		अवरोध;
-	हाल 32000:
+		break;
+	case 32000:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_32000;
-		अवरोध;
-	हाल 44100:
+		break;
+	case 44100:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_44100;
-		अवरोध;
-	हाल 48000:
+		break;
+	case 48000:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_48000;
-		अवरोध;
-	हाल 88200:
+		break;
+	case 88200:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_88200;
-		अवरोध;
-	हाल 96000:
+		break;
+	case 96000:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_96000;
-		अवरोध;
-	हाल 176400:
+		break;
+	case 176400:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_176400;
-		अवरोध;
-	हाल 192000:
+		break;
+	case 192000:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_192000;
-		अवरोध;
-	हाल 8000:
-	हाल 11025:
-	हाल 16000:
-	हाल 64000:
+		break;
+	case 8000:
+	case 11025:
+	case 16000:
+	case 64000:
 		ctrl->ch_stat[3] |= IEC958_AES3_CON_FS_NOTID;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev->dev, "unsupported sample frequency: %u\n",
 			params_rate(params));
 		spin_unlock_irqrestore(&ctrl->lock, flags);
-		वापस -EINVAL;
-	पूर्ण
-	mchp_spdअगरtx_channel_status_ग_लिखो(dev);
+		return -EINVAL;
+	}
+	mchp_spdiftx_channel_status_write(dev);
 	spin_unlock_irqrestore(&ctrl->lock, flags);
 
-	अगर (dev->gclk_enabled) अणु
+	if (dev->gclk_enabled) {
 		clk_disable_unprepare(dev->gclk);
 		dev->gclk_enabled = 0;
-	पूर्ण
+	}
 	ret = clk_set_rate(dev->gclk, params_rate(params) *
 				      SPDIFTX_GCLK_RATIO);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev,
 			"unable to change gclk rate to: rate %u * ratio %u\n",
 			params_rate(params), SPDIFTX_GCLK_RATIO);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = clk_prepare_enable(dev->gclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "unable to enable gclk: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	dev->gclk_enabled = 1;
 	dev_dbg(dev->dev, "%s(): GCLK set to %d\n", __func__,
 		params_rate(params) * SPDIFTX_GCLK_RATIO);
 
-	/* Enable पूर्णांकerrupts */
-	regmap_ग_लिखो(dev->regmap, SPDIFTX_IER,
+	/* Enable interrupts */
+	regmap_write(dev->regmap, SPDIFTX_IER,
 		     SPDIFTX_IR_TXUDR | SPDIFTX_IR_TXOVR);
 
-	regmap_ग_लिखो(dev->regmap, SPDIFTX_MR, mr);
+	regmap_write(dev->regmap, SPDIFTX_MR, mr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_hw_मुक्त(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
+static int mchp_spdiftx_hw_free(struct snd_pcm_substream *substream,
+				struct snd_soc_dai *dai)
+{
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
 
-	regmap_ग_लिखो(dev->regmap, SPDIFTX_IDR,
+	regmap_write(dev->regmap, SPDIFTX_IDR,
 		     SPDIFTX_IR_TXUDR | SPDIFTX_IR_TXOVR);
-	अगर (dev->gclk_enabled) अणु
+	if (dev->gclk_enabled) {
 		clk_disable_unprepare(dev->gclk);
 		dev->gclk_enabled = 0;
-	पूर्ण
+	}
 
-	वापस regmap_ग_लिखो(dev->regmap, SPDIFTX_CR,
+	return regmap_write(dev->regmap, SPDIFTX_CR,
 			    SPDIFTX_CR_SWRST | SPDIFTX_CR_FCLR);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops mchp_spdअगरtx_dai_ops = अणु
-	.startup	= mchp_spdअगरtx_dai_startup,
-	.shutकरोwn	= mchp_spdअगरtx_dai_shutकरोwn,
-	.trigger	= mchp_spdअगरtx_trigger,
-	.hw_params	= mchp_spdअगरtx_hw_params,
-	.hw_मुक्त	= mchp_spdअगरtx_hw_मुक्त,
-पूर्ण;
+static const struct snd_soc_dai_ops mchp_spdiftx_dai_ops = {
+	.startup	= mchp_spdiftx_dai_startup,
+	.shutdown	= mchp_spdiftx_dai_shutdown,
+	.trigger	= mchp_spdiftx_trigger,
+	.hw_params	= mchp_spdiftx_hw_params,
+	.hw_free	= mchp_spdiftx_hw_free,
+};
 
-#घोषणा MCHP_SPDIFTX_RATES	SNDRV_PCM_RATE_8000_192000
+#define MCHP_SPDIFTX_RATES	SNDRV_PCM_RATE_8000_192000
 
-#घोषणा MCHP_SPDIFTX_FORMATS	(SNDRV_PCM_FMTBIT_S8 |		\
+#define MCHP_SPDIFTX_FORMATS	(SNDRV_PCM_FMTBIT_S8 |		\
 				 SNDRV_PCM_FMTBIT_S16_LE |	\
 				 SNDRV_PCM_FMTBIT_U16_BE |	\
 				 SNDRV_PCM_FMTBIT_S18_3LE |	\
@@ -560,270 +559,270 @@
 				 SNDRV_PCM_FMTBIT_S32_BE	\
 				 )
 
-अटल पूर्णांक mchp_spdअगरtx_info(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_info *uinfo)
-अणु
+static int mchp_spdiftx_info(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_info *uinfo)
+{
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_cs_get(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *uvalue)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
+static int mchp_spdiftx_cs_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *uvalue)
+{
+	unsigned long flags;
+	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
 
 	spin_lock_irqsave(&ctrl->lock, flags);
-	स_नकल(uvalue->value.iec958.status, ctrl->ch_stat,
-	       माप(ctrl->ch_stat));
+	memcpy(uvalue->value.iec958.status, ctrl->ch_stat,
+	       sizeof(ctrl->ch_stat));
 	spin_unlock_irqrestore(&ctrl->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_cs_put(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *uvalue)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
-	पूर्णांक changed = 0;
-	पूर्णांक i;
+static int mchp_spdiftx_cs_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *uvalue)
+{
+	unsigned long flags;
+	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
+	int changed = 0;
+	int i;
 
 	spin_lock_irqsave(&ctrl->lock, flags);
-	क्रम (i = 0; i < ARRAY_SIZE(ctrl->ch_stat); i++) अणु
-		अगर (ctrl->ch_stat[i] != uvalue->value.iec958.status[i])
+	for (i = 0; i < ARRAY_SIZE(ctrl->ch_stat); i++) {
+		if (ctrl->ch_stat[i] != uvalue->value.iec958.status[i])
 			changed = 1;
 		ctrl->ch_stat[i] = uvalue->value.iec958.status[i];
-	पूर्ण
+	}
 
-	अगर (changed) अणु
-		/* करोn't enable IP जबतक we copy the channel status */
-		अगर (mchp_spdअगरtx_is_running(dev)) अणु
+	if (changed) {
+		/* don't enable IP while we copy the channel status */
+		if (mchp_spdiftx_is_running(dev)) {
 			/*
-			 * अगर SPDIF is running, रुको क्रम पूर्णांकerrupt to ग_लिखो
+			 * if SPDIF is running, wait for interrupt to write
 			 * channel status
 			 */
-			regmap_ग_लिखो(dev->regmap, SPDIFTX_IER,
+			regmap_write(dev->regmap, SPDIFTX_IER,
 				     SPDIFTX_IR_CSRDY);
-		पूर्ण अन्यथा अणु
-			mchp_spdअगरtx_channel_status_ग_लिखो(dev);
-		पूर्ण
-	पूर्ण
+		} else {
+			mchp_spdiftx_channel_status_write(dev);
+		}
+	}
 	spin_unlock_irqrestore(&ctrl->lock, flags);
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_cs_mask(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_value *uvalue)
-अणु
-	स_रखो(uvalue->value.iec958.status, 0xff,
-	       माप(uvalue->value.iec958.status));
+static int mchp_spdiftx_cs_mask(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *uvalue)
+{
+	memset(uvalue->value.iec958.status, 0xff,
+	       sizeof(uvalue->value.iec958.status));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_subcode_get(काष्ठा snd_kcontrol *kcontrol,
-				    काष्ठा snd_ctl_elem_value *uvalue)
-अणु
-	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
-	अचिन्हित दीर्घ flags;
+static int mchp_spdiftx_subcode_get(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_value *uvalue)
+{
+	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ctrl->lock, flags);
-	स_नकल(uvalue->value.iec958.subcode, ctrl->user_data,
-	       माप(ctrl->user_data));
+	memcpy(uvalue->value.iec958.subcode, ctrl->user_data,
+	       sizeof(ctrl->user_data));
 	spin_unlock_irqrestore(&ctrl->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_subcode_put(काष्ठा snd_kcontrol *kcontrol,
-				    काष्ठा snd_ctl_elem_value *uvalue)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl = &dev->control;
-	पूर्णांक changed = 0;
-	पूर्णांक i;
+static int mchp_spdiftx_subcode_put(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_value *uvalue)
+{
+	unsigned long flags;
+	struct snd_soc_dai *dai = snd_kcontrol_chip(kcontrol);
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	struct mchp_spdiftx_mixer_control *ctrl = &dev->control;
+	int changed = 0;
+	int i;
 
 	spin_lock_irqsave(&ctrl->lock, flags);
-	क्रम (i = 0; i < ARRAY_SIZE(ctrl->user_data); i++) अणु
-		अगर (ctrl->user_data[i] != uvalue->value.iec958.subcode[i])
+	for (i = 0; i < ARRAY_SIZE(ctrl->user_data); i++) {
+		if (ctrl->user_data[i] != uvalue->value.iec958.subcode[i])
 			changed = 1;
 
 		ctrl->user_data[i] = uvalue->value.iec958.subcode[i];
-	पूर्ण
-	अगर (changed) अणु
-		अगर (mchp_spdअगरtx_is_running(dev)) अणु
+	}
+	if (changed) {
+		if (mchp_spdiftx_is_running(dev)) {
 			/*
-			 * अगर SPDIF is running, रुको क्रम पूर्णांकerrupt to ग_लिखो
+			 * if SPDIF is running, wait for interrupt to write
 			 * user data
 			 */
-			regmap_ग_लिखो(dev->regmap, SPDIFTX_IER,
+			regmap_write(dev->regmap, SPDIFTX_IER,
 				     SPDIFTX_IR_UDRDY);
-		पूर्ण अन्यथा अणु
-			mchp_spdअगरtx_user_data_ग_लिखो(dev);
-		पूर्ण
-	पूर्ण
+		} else {
+			mchp_spdiftx_user_data_write(dev);
+		}
+	}
 	spin_unlock_irqrestore(&ctrl->lock, flags);
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल काष्ठा snd_kcontrol_new mchp_spdअगरtx_ctrls[] = अणु
+static struct snd_kcontrol_new mchp_spdiftx_ctrls[] = {
 	/* Channel status controller */
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE |
 			SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-		.info = mchp_spdअगरtx_info,
-		.get = mchp_spdअगरtx_cs_get,
-		.put = mchp_spdअगरtx_cs_put,
-	पूर्ण,
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+		.info = mchp_spdiftx_info,
+		.get = mchp_spdiftx_cs_get,
+		.put = mchp_spdiftx_cs_put,
+	},
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, MASK),
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
 			SNDRV_CTL_ELEM_ACCESS_VOLATILE,
-		.info = mchp_spdअगरtx_info,
-		.get = mchp_spdअगरtx_cs_mask,
-	पूर्ण,
+		.info = mchp_spdiftx_info,
+		.get = mchp_spdiftx_cs_mask,
+	},
 	/* User bits controller */
-	अणु
-		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
+	{
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = "IEC958 Subcode Playback Default",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.info = mchp_spdअगरtx_info,
-		.get = mchp_spdअगरtx_subcode_get,
-		.put = mchp_spdअगरtx_subcode_put,
-	पूर्ण,
-पूर्ण;
+		.info = mchp_spdiftx_info,
+		.get = mchp_spdiftx_subcode_get,
+		.put = mchp_spdiftx_subcode_put,
+	},
+};
 
-अटल पूर्णांक mchp_spdअगरtx_dai_probe(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
-	पूर्णांक ret;
+static int mchp_spdiftx_dai_probe(struct snd_soc_dai *dai)
+{
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
+	int ret;
 
-	snd_soc_dai_init_dma_data(dai, &dev->playback, शून्य);
+	snd_soc_dai_init_dma_data(dai, &dev->playback, NULL);
 
 	ret = clk_prepare_enable(dev->pclk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev,
 			"failed to enable the peripheral clock: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Add controls */
-	snd_soc_add_dai_controls(dai, mchp_spdअगरtx_ctrls,
-				 ARRAY_SIZE(mchp_spdअगरtx_ctrls));
+	snd_soc_add_dai_controls(dai, mchp_spdiftx_ctrls,
+				 ARRAY_SIZE(mchp_spdiftx_ctrls));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mchp_spdअगरtx_dai_हटाओ(काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा mchp_spdअगरtx_dev *dev = snd_soc_dai_get_drvdata(dai);
+static int mchp_spdiftx_dai_remove(struct snd_soc_dai *dai)
+{
+	struct mchp_spdiftx_dev *dev = snd_soc_dai_get_drvdata(dai);
 
 	clk_disable_unprepare(dev->pclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा snd_soc_dai_driver mchp_spdअगरtx_dai = अणु
+static struct snd_soc_dai_driver mchp_spdiftx_dai = {
 	.name = "mchp-spdiftx",
-	.probe	= mchp_spdअगरtx_dai_probe,
-	.हटाओ	= mchp_spdअगरtx_dai_हटाओ,
-	.playback = अणु
+	.probe	= mchp_spdiftx_dai_probe,
+	.remove	= mchp_spdiftx_dai_remove,
+	.playback = {
 		.stream_name = "S/PDIF Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = MCHP_SPDIFTX_RATES,
-		.क्रमmats = MCHP_SPDIFTX_FORMATS,
-	पूर्ण,
-	.ops = &mchp_spdअगरtx_dai_ops,
-पूर्ण;
+		.formats = MCHP_SPDIFTX_FORMATS,
+	},
+	.ops = &mchp_spdiftx_dai_ops,
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver mchp_spdअगरtx_component = अणु
+static const struct snd_soc_component_driver mchp_spdiftx_component = {
 	.name		= "mchp-spdiftx",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id mchp_spdअगरtx_dt_ids[] = अणु
-	अणु
+static const struct of_device_id mchp_spdiftx_dt_ids[] = {
+	{
 		.compatible = "microchip,sama7g5-spdiftx",
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 
-MODULE_DEVICE_TABLE(of, mchp_spdअगरtx_dt_ids);
-अटल पूर्णांक mchp_spdअगरtx_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा mchp_spdअगरtx_dev *dev;
-	काष्ठा resource *mem;
-	काष्ठा regmap *regmap;
-	व्योम __iomem *base;
-	काष्ठा mchp_spdअगरtx_mixer_control *ctrl;
-	पूर्णांक irq;
-	पूर्णांक err;
+MODULE_DEVICE_TABLE(of, mchp_spdiftx_dt_ids);
+static int mchp_spdiftx_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	const struct of_device_id *match;
+	struct mchp_spdiftx_dev *dev;
+	struct resource *mem;
+	struct regmap *regmap;
+	void __iomem *base;
+	struct mchp_spdiftx_mixer_control *ctrl;
+	int irq;
+	int err;
 
-	/* Get memory क्रम driver data. */
-	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस -ENOMEM;
+	/* Get memory for driver data. */
+	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return -ENOMEM;
 
 	/* Get hardware capabilities. */
-	match = of_match_node(mchp_spdअगरtx_dt_ids, np);
-	अगर (match)
+	match = of_match_node(mchp_spdiftx_dt_ids, np);
+	if (match)
 		dev->caps = match->data;
 
-	/* Map I/O रेजिस्टरs. */
-	base = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &mem);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	/* Map I/O registers. */
+	base = devm_platform_get_and_ioremap_resource(pdev, 0, &mem);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
 	regmap = devm_regmap_init_mmio(&pdev->dev, base,
-				       &mchp_spdअगरtx_regmap_config);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+				       &mchp_spdiftx_regmap_config);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
 	/* Request IRQ */
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
-	err = devm_request_irq(&pdev->dev, irq, mchp_spdअगरtx_पूर्णांकerrupt, 0,
+	err = devm_request_irq(&pdev->dev, irq, mchp_spdiftx_interrupt, 0,
 			       dev_name(&pdev->dev), dev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* Get the peripheral घड़ी */
+	/* Get the peripheral clock */
 	dev->pclk = devm_clk_get(&pdev->dev, "pclk");
-	अगर (IS_ERR(dev->pclk)) अणु
+	if (IS_ERR(dev->pclk)) {
 		err = PTR_ERR(dev->pclk);
 		dev_err(&pdev->dev,
 			"failed to get the peripheral clock: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	/* Get the generic घड़ी */
+	/* Get the generic clock */
 	dev->gclk = devm_clk_get(&pdev->dev, "gclk");
-	अगर (IS_ERR(dev->gclk)) अणु
+	if (IS_ERR(dev->gclk)) {
 		err = PTR_ERR(dev->gclk);
 		dev_err(&pdev->dev,
 			"failed to get the PMC generic clock: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	ctrl = &dev->control;
 	spin_lock_init(&ctrl->lock);
@@ -834,37 +833,37 @@ MODULE_DEVICE_TABLE(of, mchp_spdअगरtx_dt_ids);
 
 	dev->dev = &pdev->dev;
 	dev->regmap = regmap;
-	platक्रमm_set_drvdata(pdev, dev);
+	platform_set_drvdata(pdev, dev);
 
 	dev->playback.addr = (dma_addr_t)mem->start + SPDIFTX_CDR;
 	dev->playback.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 
-	err = devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, शून्य, 0);
-	अगर (err) अणु
+	err = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
+	if (err) {
 		dev_err(&pdev->dev, "failed to register PMC: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	err = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
-					      &mchp_spdअगरtx_component,
-					      &mchp_spdअगरtx_dai, 1);
-	अगर (err) अणु
+	err = devm_snd_soc_register_component(&pdev->dev,
+					      &mchp_spdiftx_component,
+					      &mchp_spdiftx_dai, 1);
+	if (err) {
 		dev_err(&pdev->dev, "failed to register component: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver mchp_spdअगरtx_driver = अणु
-	.probe	= mchp_spdअगरtx_probe,
-	.driver	= अणु
+static struct platform_driver mchp_spdiftx_driver = {
+	.probe	= mchp_spdiftx_probe,
+	.driver	= {
 		.name	= "mchp_spdiftx",
-		.of_match_table = of_match_ptr(mchp_spdअगरtx_dt_ids),
-	पूर्ण,
-पूर्ण;
+		.of_match_table = of_match_ptr(mchp_spdiftx_dt_ids),
+	},
+};
 
-module_platक्रमm_driver(mchp_spdअगरtx_driver);
+module_platform_driver(mchp_spdiftx_driver);
 
 MODULE_AUTHOR("Codrin Ciubotariu <codrin.ciubotariu@microchip.com>");
 MODULE_DESCRIPTION("Microchip S/PDIF TX Controller Driver");

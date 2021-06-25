@@ -1,370 +1,369 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  Copyright (C) 2013 John Crispin <blogic@खोलोwrt.org>
+ *  Copyright (C) 2013 John Crispin <blogic@openwrt.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinconf.h>
-#समावेश <linux/pinctrl/pinconf-generic.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/pinctrl/machine.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/io.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinconf.h>
+#include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/pinctrl/machine.h>
 
-#समावेश <यंत्र/mach-ralink/ralink_regs.h>
-#समावेश <यंत्र/mach-ralink/pinmux.h>
-#समावेश <यंत्र/mach-ralink/mt7620.h>
+#include <asm/mach-ralink/ralink_regs.h>
+#include <asm/mach-ralink/pinmux.h>
+#include <asm/mach-ralink/mt7620.h>
 
-#समावेश "../core.h"
-#समावेश "../pinctrl-utils.h"
+#include "../core.h"
+#include "../pinctrl-utils.h"
 
-#घोषणा SYSC_REG_GPIO_MODE	0x60
-#घोषणा SYSC_REG_GPIO_MODE2	0x64
+#define SYSC_REG_GPIO_MODE	0x60
+#define SYSC_REG_GPIO_MODE2	0x64
 
-काष्ठा rt2880_priv अणु
-	काष्ठा device *dev;
+struct rt2880_priv {
+	struct device *dev;
 
-	काष्ठा pinctrl_pin_desc *pads;
-	काष्ठा pinctrl_desc *desc;
+	struct pinctrl_pin_desc *pads;
+	struct pinctrl_desc *desc;
 
-	काष्ठा rt2880_pmx_func **func;
-	पूर्णांक func_count;
+	struct rt2880_pmx_func **func;
+	int func_count;
 
-	काष्ठा rt2880_pmx_group *groups;
-	स्थिर अक्षर **group_names;
-	पूर्णांक group_count;
+	struct rt2880_pmx_group *groups;
+	const char **group_names;
+	int group_count;
 
 	u8 *gpio;
-	पूर्णांक max_pins;
-पूर्ण;
+	int max_pins;
+};
 
-अटल पूर्णांक rt2880_get_group_count(काष्ठा pinctrl_dev *pctrldev)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static int rt2880_get_group_count(struct pinctrl_dev *pctrldev)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	वापस p->group_count;
-पूर्ण
+	return p->group_count;
+}
 
-अटल स्थिर अक्षर *rt2880_get_group_name(काष्ठा pinctrl_dev *pctrldev,
-					 अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static const char *rt2880_get_group_name(struct pinctrl_dev *pctrldev,
+					 unsigned int group)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	वापस (group >= p->group_count) ? शून्य : p->group_names[group];
-पूर्ण
+	return (group >= p->group_count) ? NULL : p->group_names[group];
+}
 
-अटल पूर्णांक rt2880_get_group_pins(काष्ठा pinctrl_dev *pctrldev,
-				 अचिन्हित पूर्णांक group,
-				 स्थिर अचिन्हित पूर्णांक **pins,
-				 अचिन्हित पूर्णांक *num_pins)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static int rt2880_get_group_pins(struct pinctrl_dev *pctrldev,
+				 unsigned int group,
+				 const unsigned int **pins,
+				 unsigned int *num_pins)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	अगर (group >= p->group_count)
-		वापस -EINVAL;
+	if (group >= p->group_count)
+		return -EINVAL;
 
 	*pins = p->groups[group].func[0].pins;
 	*num_pins = p->groups[group].func[0].pin_count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops rt2880_pctrl_ops = अणु
+static const struct pinctrl_ops rt2880_pctrl_ops = {
 	.get_groups_count	= rt2880_get_group_count,
 	.get_group_name		= rt2880_get_group_name,
 	.get_group_pins		= rt2880_get_group_pins,
 	.dt_node_to_map		= pinconf_generic_dt_node_to_map_all,
-	.dt_मुक्त_map		= pinconf_generic_dt_मुक्त_map,
-पूर्ण;
+	.dt_free_map		= pinconf_generic_dt_free_map,
+};
 
-अटल पूर्णांक rt2880_pmx_func_count(काष्ठा pinctrl_dev *pctrldev)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static int rt2880_pmx_func_count(struct pinctrl_dev *pctrldev)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	वापस p->func_count;
-पूर्ण
+	return p->func_count;
+}
 
-अटल स्थिर अक्षर *rt2880_pmx_func_name(काष्ठा pinctrl_dev *pctrldev,
-					अचिन्हित पूर्णांक func)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static const char *rt2880_pmx_func_name(struct pinctrl_dev *pctrldev,
+					unsigned int func)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	वापस p->func[func]->name;
-पूर्ण
+	return p->func[func]->name;
+}
 
-अटल पूर्णांक rt2880_pmx_group_get_groups(काष्ठा pinctrl_dev *pctrldev,
-				       अचिन्हित पूर्णांक func,
-				       स्थिर अक्षर * स्थिर **groups,
-				       अचिन्हित पूर्णांक * स्थिर num_groups)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static int rt2880_pmx_group_get_groups(struct pinctrl_dev *pctrldev,
+				       unsigned int func,
+				       const char * const **groups,
+				       unsigned int * const num_groups)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	अगर (p->func[func]->group_count == 1)
+	if (p->func[func]->group_count == 1)
 		*groups = &p->group_names[p->func[func]->groups[0]];
-	अन्यथा
+	else
 		*groups = p->group_names;
 
 	*num_groups = p->func[func]->group_count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2880_pmx_group_enable(काष्ठा pinctrl_dev *pctrldev,
-				   अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static int rt2880_pmx_group_enable(struct pinctrl_dev *pctrldev,
+				   unsigned int func, unsigned int group)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 	u32 mode = 0;
 	u32 reg = SYSC_REG_GPIO_MODE;
-	पूर्णांक i;
-	पूर्णांक shअगरt;
+	int i;
+	int shift;
 
-	/* करोnt allow द्विगुन use */
-	अगर (p->groups[group].enabled) अणु
+	/* dont allow double use */
+	if (p->groups[group].enabled) {
 		dev_err(p->dev, "%s is already enabled\n",
 			p->groups[group].name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	p->groups[group].enabled = 1;
 	p->func[func]->enabled = 1;
 
-	shअगरt = p->groups[group].shअगरt;
-	अगर (shअगरt >= 32) अणु
-		shअगरt -= 32;
+	shift = p->groups[group].shift;
+	if (shift >= 32) {
+		shift -= 32;
 		reg = SYSC_REG_GPIO_MODE2;
-	पूर्ण
+	}
 	mode = rt_sysc_r32(reg);
-	mode &= ~(p->groups[group].mask << shअगरt);
+	mode &= ~(p->groups[group].mask << shift);
 
 	/* mark the pins as gpio */
-	क्रम (i = 0; i < p->groups[group].func[0].pin_count; i++)
+	for (i = 0; i < p->groups[group].func[0].pin_count; i++)
 		p->gpio[p->groups[group].func[0].pins[i]] = 1;
 
 	/* function 0 is gpio and needs special handling */
-	अगर (func == 0) अणु
-		mode |= p->groups[group].gpio << shअगरt;
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < p->func[func]->pin_count; i++)
+	if (func == 0) {
+		mode |= p->groups[group].gpio << shift;
+	} else {
+		for (i = 0; i < p->func[func]->pin_count; i++)
 			p->gpio[p->func[func]->pins[i]] = 0;
-		mode |= p->func[func]->value << shअगरt;
-	पूर्ण
+		mode |= p->func[func]->value << shift;
+	}
 	rt_sysc_w32(mode, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2880_pmx_group_gpio_request_enable(काष्ठा pinctrl_dev *pctrldev,
-						काष्ठा pinctrl_gpio_range *range,
-						अचिन्हित पूर्णांक pin)
-अणु
-	काष्ठा rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
+static int rt2880_pmx_group_gpio_request_enable(struct pinctrl_dev *pctrldev,
+						struct pinctrl_gpio_range *range,
+						unsigned int pin)
+{
+	struct rt2880_priv *p = pinctrl_dev_get_drvdata(pctrldev);
 
-	अगर (!p->gpio[pin]) अणु
+	if (!p->gpio[pin]) {
 		dev_err(p->dev, "pin %d is not set to gpio mux\n", pin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops rt2880_pmx_group_ops = अणु
+static const struct pinmux_ops rt2880_pmx_group_ops = {
 	.get_functions_count	= rt2880_pmx_func_count,
 	.get_function_name	= rt2880_pmx_func_name,
 	.get_function_groups	= rt2880_pmx_group_get_groups,
 	.set_mux		= rt2880_pmx_group_enable,
 	.gpio_request_enable	= rt2880_pmx_group_gpio_request_enable,
-पूर्ण;
+};
 
-अटल काष्ठा pinctrl_desc rt2880_pctrl_desc = अणु
+static struct pinctrl_desc rt2880_pctrl_desc = {
 	.owner		= THIS_MODULE,
 	.name		= "rt2880-pinmux",
 	.pctlops	= &rt2880_pctrl_ops,
 	.pmxops		= &rt2880_pmx_group_ops,
-पूर्ण;
+};
 
-अटल काष्ठा rt2880_pmx_func gpio_func = अणु
+static struct rt2880_pmx_func gpio_func = {
 	.name = "gpio",
-पूर्ण;
+};
 
-अटल पूर्णांक rt2880_pinmux_index(काष्ठा rt2880_priv *p)
-अणु
-	काष्ठा rt2880_pmx_group *mux = p->groups;
-	पूर्णांक i, j, c = 0;
+static int rt2880_pinmux_index(struct rt2880_priv *p)
+{
+	struct rt2880_pmx_group *mux = p->groups;
+	int i, j, c = 0;
 
 	/* count the mux functions */
-	जबतक (mux->name) अणु
+	while (mux->name) {
 		p->group_count++;
 		mux++;
-	पूर्ण
+	}
 
 	/* allocate the group names array needed by the gpio function */
-	p->group_names = devm_kसुस्मृति(p->dev, p->group_count,
-				      माप(अक्षर *), GFP_KERNEL);
-	अगर (!p->group_names)
-		वापस -ENOMEM;
+	p->group_names = devm_kcalloc(p->dev, p->group_count,
+				      sizeof(char *), GFP_KERNEL);
+	if (!p->group_names)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < p->group_count; i++) अणु
+	for (i = 0; i < p->group_count; i++) {
 		p->group_names[i] = p->groups[i].name;
 		p->func_count += p->groups[i].func_count;
-	पूर्ण
+	}
 
-	/* we have a dummy function[0] क्रम gpio */
+	/* we have a dummy function[0] for gpio */
 	p->func_count++;
 
 	/* allocate our function and group mapping index buffers */
-	p->func = devm_kसुस्मृति(p->dev, p->func_count,
-			       माप(*p->func), GFP_KERNEL);
-	gpio_func.groups = devm_kसुस्मृति(p->dev, p->group_count, माप(पूर्णांक),
+	p->func = devm_kcalloc(p->dev, p->func_count,
+			       sizeof(*p->func), GFP_KERNEL);
+	gpio_func.groups = devm_kcalloc(p->dev, p->group_count, sizeof(int),
 					GFP_KERNEL);
-	अगर (!p->func || !gpio_func.groups)
-		वापस -ENOMEM;
+	if (!p->func || !gpio_func.groups)
+		return -ENOMEM;
 
-	/* add a backpoपूर्णांकer to the function so it knows its group */
+	/* add a backpointer to the function so it knows its group */
 	gpio_func.group_count = p->group_count;
-	क्रम (i = 0; i < gpio_func.group_count; i++)
+	for (i = 0; i < gpio_func.group_count; i++)
 		gpio_func.groups[i] = i;
 
 	p->func[c] = &gpio_func;
 	c++;
 
-	/* add reमुख्यing functions */
-	क्रम (i = 0; i < p->group_count; i++) अणु
-		क्रम (j = 0; j < p->groups[i].func_count; j++) अणु
+	/* add remaining functions */
+	for (i = 0; i < p->group_count; i++) {
+		for (j = 0; j < p->groups[i].func_count; j++) {
 			p->func[c] = &p->groups[i].func[j];
-			p->func[c]->groups = devm_kzalloc(p->dev, माप(पूर्णांक),
+			p->func[c]->groups = devm_kzalloc(p->dev, sizeof(int),
 						    GFP_KERNEL);
-			अगर (!p->func[c]->groups)
-				वापस -ENOMEM;
+			if (!p->func[c]->groups)
+				return -ENOMEM;
 			p->func[c]->groups[0] = i;
 			p->func[c]->group_count = 1;
 			c++;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक rt2880_pinmux_pins(काष्ठा rt2880_priv *p)
-अणु
-	पूर्णांक i, j;
+static int rt2880_pinmux_pins(struct rt2880_priv *p)
+{
+	int i, j;
 
 	/*
 	 * loop over the functions and initialize the pins array.
 	 * also work out the highest pin used.
 	 */
-	क्रम (i = 0; i < p->func_count; i++) अणु
-		पूर्णांक pin;
+	for (i = 0; i < p->func_count; i++) {
+		int pin;
 
-		अगर (!p->func[i]->pin_count)
-			जारी;
+		if (!p->func[i]->pin_count)
+			continue;
 
-		p->func[i]->pins = devm_kसुस्मृति(p->dev,
+		p->func[i]->pins = devm_kcalloc(p->dev,
 						p->func[i]->pin_count,
-						माप(पूर्णांक),
+						sizeof(int),
 						GFP_KERNEL);
-		क्रम (j = 0; j < p->func[i]->pin_count; j++)
+		for (j = 0; j < p->func[i]->pin_count; j++)
 			p->func[i]->pins[j] = p->func[i]->pin_first + j;
 
 		pin = p->func[i]->pin_first + p->func[i]->pin_count;
-		अगर (pin > p->max_pins)
+		if (pin > p->max_pins)
 			p->max_pins = pin;
-	पूर्ण
+	}
 
 	/* the buffer that tells us which pins are gpio */
-	p->gpio = devm_kसुस्मृति(p->dev, p->max_pins, माप(u8), GFP_KERNEL);
+	p->gpio = devm_kcalloc(p->dev, p->max_pins, sizeof(u8), GFP_KERNEL);
 	/* the pads needed to tell pinctrl about our pins */
-	p->pads = devm_kसुस्मृति(p->dev, p->max_pins,
-			       माप(काष्ठा pinctrl_pin_desc), GFP_KERNEL);
-	अगर (!p->pads || !p->gpio)
-		वापस -ENOMEM;
+	p->pads = devm_kcalloc(p->dev, p->max_pins,
+			       sizeof(struct pinctrl_pin_desc), GFP_KERNEL);
+	if (!p->pads || !p->gpio)
+		return -ENOMEM;
 
-	स_रखो(p->gpio, 1, माप(u8) * p->max_pins);
-	क्रम (i = 0; i < p->func_count; i++) अणु
-		अगर (!p->func[i]->pin_count)
-			जारी;
+	memset(p->gpio, 1, sizeof(u8) * p->max_pins);
+	for (i = 0; i < p->func_count; i++) {
+		if (!p->func[i]->pin_count)
+			continue;
 
-		क्रम (j = 0; j < p->func[i]->pin_count; j++)
+		for (j = 0; j < p->func[i]->pin_count; j++)
 			p->gpio[p->func[i]->pins[j]] = 0;
-	पूर्ण
+	}
 
 	/* pin 0 is always a gpio */
 	p->gpio[0] = 1;
 
 	/* set the pads */
-	क्रम (i = 0; i < p->max_pins; i++) अणु
-		/* म_माप("ioXY") + 1 = 5 */
-		अक्षर *name = devm_kzalloc(p->dev, 5, GFP_KERNEL);
+	for (i = 0; i < p->max_pins; i++) {
+		/* strlen("ioXY") + 1 = 5 */
+		char *name = devm_kzalloc(p->dev, 5, GFP_KERNEL);
 
-		अगर (!name)
-			वापस -ENOMEM;
-		snम_लिखो(name, 5, "io%d", i);
+		if (!name)
+			return -ENOMEM;
+		snprintf(name, 5, "io%d", i);
 		p->pads[i].number = i;
 		p->pads[i].name = name;
-	पूर्ण
+	}
 	p->desc->pins = p->pads;
 	p->desc->npins = p->max_pins;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक rt2880_pinmux_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rt2880_priv *p;
-	काष्ठा pinctrl_dev *dev;
-	पूर्णांक err;
+static int rt2880_pinmux_probe(struct platform_device *pdev)
+{
+	struct rt2880_priv *p;
+	struct pinctrl_dev *dev;
+	int err;
 
-	अगर (!rt2880_pinmux_data)
-		वापस -ENOTSUPP;
+	if (!rt2880_pinmux_data)
+		return -ENOTSUPP;
 
-	/* setup the निजी data */
-	p = devm_kzalloc(&pdev->dev, माप(काष्ठा rt2880_priv), GFP_KERNEL);
-	अगर (!p)
-		वापस -ENOMEM;
+	/* setup the private data */
+	p = devm_kzalloc(&pdev->dev, sizeof(struct rt2880_priv), GFP_KERNEL);
+	if (!p)
+		return -ENOMEM;
 
 	p->dev = &pdev->dev;
 	p->desc = &rt2880_pctrl_desc;
 	p->groups = rt2880_pinmux_data;
-	platक्रमm_set_drvdata(pdev, p);
+	platform_set_drvdata(pdev, p);
 
 	/* init the device */
 	err = rt2880_pinmux_index(p);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to load index\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = rt2880_pinmux_pins(p);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to load pins\n");
-		वापस err;
-	पूर्ण
-	dev = pinctrl_रेजिस्टर(p->desc, &pdev->dev, p);
+		return err;
+	}
+	dev = pinctrl_register(p->desc, &pdev->dev, p);
 
-	वापस PTR_ERR_OR_ZERO(dev);
-पूर्ण
+	return PTR_ERR_OR_ZERO(dev);
+}
 
-अटल स्थिर काष्ठा of_device_id rt2880_pinmux_match[] = अणु
-	अणु .compatible = "ralink,rt2880-pinmux" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id rt2880_pinmux_match[] = {
+	{ .compatible = "ralink,rt2880-pinmux" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, rt2880_pinmux_match);
 
-अटल काष्ठा platक्रमm_driver rt2880_pinmux_driver = अणु
+static struct platform_driver rt2880_pinmux_driver = {
 	.probe = rt2880_pinmux_probe,
-	.driver = अणु
+	.driver = {
 		.name = "rt2880-pinmux",
 		.of_match_table = rt2880_pinmux_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init rt2880_pinmux_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&rt2880_pinmux_driver);
-पूर्ण
+static int __init rt2880_pinmux_init(void)
+{
+	return platform_driver_register(&rt2880_pinmux_driver);
+}
 
 core_initcall_sync(rt2880_pinmux_init);

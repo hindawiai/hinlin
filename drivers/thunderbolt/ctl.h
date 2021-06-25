@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Thunderbolt driver - control channel and configuration commands
  *
@@ -7,137 +6,137 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
-#अगर_अघोषित _TB_CFG
-#घोषणा _TB_CFG
+#ifndef _TB_CFG
+#define _TB_CFG
 
-#समावेश <linux/kref.h>
-#समावेश <linux/thunderbolt.h>
+#include <linux/kref.h>
+#include <linux/thunderbolt.h>
 
-#समावेश "nhi.h"
-#समावेश "tb_msgs.h"
+#include "nhi.h"
+#include "tb_msgs.h"
 
 /* control channel */
-काष्ठा tb_ctl;
+struct tb_ctl;
 
-प्रकार bool (*event_cb)(व्योम *data, क्रमागत tb_cfg_pkg_type type,
-			 स्थिर व्योम *buf, माप_प्रकार size);
+typedef bool (*event_cb)(void *data, enum tb_cfg_pkg_type type,
+			 const void *buf, size_t size);
 
-काष्ठा tb_ctl *tb_ctl_alloc(काष्ठा tb_nhi *nhi, पूर्णांक समयout_msec, event_cb cb,
-			    व्योम *cb_data);
-व्योम tb_ctl_start(काष्ठा tb_ctl *ctl);
-व्योम tb_ctl_stop(काष्ठा tb_ctl *ctl);
-व्योम tb_ctl_मुक्त(काष्ठा tb_ctl *ctl);
+struct tb_ctl *tb_ctl_alloc(struct tb_nhi *nhi, int timeout_msec, event_cb cb,
+			    void *cb_data);
+void tb_ctl_start(struct tb_ctl *ctl);
+void tb_ctl_stop(struct tb_ctl *ctl);
+void tb_ctl_free(struct tb_ctl *ctl);
 
 /* configuration commands */
 
-काष्ठा tb_cfg_result अणु
+struct tb_cfg_result {
 	u64 response_route;
 	u32 response_port; /*
 			    * If err = 1 then this is the port that send the
 			    * error.
-			    * If err = 0 and अगर this was a cfg_पढ़ो/ग_लिखो then
+			    * If err = 0 and if this was a cfg_read/write then
 			    * this is the the upstream port of the responding
-			    * चयन.
+			    * switch.
 			    * Otherwise the field is set to zero.
 			    */
-	पूर्णांक err; /* negative errors, 0 क्रम success, 1 क्रम tb errors */
-	क्रमागत tb_cfg_error tb_error; /* valid अगर err == 1 */
-पूर्ण;
+	int err; /* negative errors, 0 for success, 1 for tb errors */
+	enum tb_cfg_error tb_error; /* valid if err == 1 */
+};
 
-काष्ठा ctl_pkg अणु
-	काष्ठा tb_ctl *ctl;
-	व्योम *buffer;
-	काष्ठा ring_frame frame;
-पूर्ण;
+struct ctl_pkg {
+	struct tb_ctl *ctl;
+	void *buffer;
+	struct ring_frame frame;
+};
 
 /**
- * काष्ठा tb_cfg_request - Control channel request
+ * struct tb_cfg_request - Control channel request
  * @kref: Reference count
- * @ctl: Poपूर्णांकer to the control channel काष्ठाure. Only set when the
+ * @ctl: Pointer to the control channel structure. Only set when the
  *	 request is queued.
  * @request_size: Size of the request packet (in bytes)
  * @request_type: Type of the request packet
  * @response: Response is stored here
  * @response_size: Maximum size of one response packet
  * @response_type: Expected type of the response packet
- * @npackets: Number of packets expected to be वापसed with this request
+ * @npackets: Number of packets expected to be returned with this request
  * @match: Function used to match the incoming packet
  * @copy: Function used to copy the incoming packet to @response
  * @callback: Callback called when the request is finished successfully
  * @callback_data: Data to be passed to @callback
- * @flags: Flags क्रम the request
+ * @flags: Flags for the request
  * @work: Work item used to complete the request
  * @result: Result after the request has been completed
  * @list: Requests are queued using this field
  *
  * An arbitrary request over Thunderbolt control channel. For standard
- * control channel message, one should use tb_cfg_पढ़ो/ग_लिखो() and
- * मित्रs अगर possible.
+ * control channel message, one should use tb_cfg_read/write() and
+ * friends if possible.
  */
-काष्ठा tb_cfg_request अणु
-	काष्ठा kref kref;
-	काष्ठा tb_ctl *ctl;
-	स्थिर व्योम *request;
-	माप_प्रकार request_size;
-	क्रमागत tb_cfg_pkg_type request_type;
-	व्योम *response;
-	माप_प्रकार response_size;
-	क्रमागत tb_cfg_pkg_type response_type;
-	माप_प्रकार npackets;
-	bool (*match)(स्थिर काष्ठा tb_cfg_request *req,
-		      स्थिर काष्ठा ctl_pkg *pkg);
-	bool (*copy)(काष्ठा tb_cfg_request *req, स्थिर काष्ठा ctl_pkg *pkg);
-	व्योम (*callback)(व्योम *callback_data);
-	व्योम *callback_data;
-	अचिन्हित दीर्घ flags;
-	काष्ठा work_काष्ठा work;
-	काष्ठा tb_cfg_result result;
-	काष्ठा list_head list;
-पूर्ण;
+struct tb_cfg_request {
+	struct kref kref;
+	struct tb_ctl *ctl;
+	const void *request;
+	size_t request_size;
+	enum tb_cfg_pkg_type request_type;
+	void *response;
+	size_t response_size;
+	enum tb_cfg_pkg_type response_type;
+	size_t npackets;
+	bool (*match)(const struct tb_cfg_request *req,
+		      const struct ctl_pkg *pkg);
+	bool (*copy)(struct tb_cfg_request *req, const struct ctl_pkg *pkg);
+	void (*callback)(void *callback_data);
+	void *callback_data;
+	unsigned long flags;
+	struct work_struct work;
+	struct tb_cfg_result result;
+	struct list_head list;
+};
 
-#घोषणा TB_CFG_REQUEST_ACTIVE		0
-#घोषणा TB_CFG_REQUEST_CANCELED		1
+#define TB_CFG_REQUEST_ACTIVE		0
+#define TB_CFG_REQUEST_CANCELED		1
 
-काष्ठा tb_cfg_request *tb_cfg_request_alloc(व्योम);
-व्योम tb_cfg_request_get(काष्ठा tb_cfg_request *req);
-व्योम tb_cfg_request_put(काष्ठा tb_cfg_request *req);
-पूर्णांक tb_cfg_request(काष्ठा tb_ctl *ctl, काष्ठा tb_cfg_request *req,
-		   व्योम (*callback)(व्योम *), व्योम *callback_data);
-व्योम tb_cfg_request_cancel(काष्ठा tb_cfg_request *req, पूर्णांक err);
-काष्ठा tb_cfg_result tb_cfg_request_sync(काष्ठा tb_ctl *ctl,
-			काष्ठा tb_cfg_request *req, पूर्णांक समयout_msec);
+struct tb_cfg_request *tb_cfg_request_alloc(void);
+void tb_cfg_request_get(struct tb_cfg_request *req);
+void tb_cfg_request_put(struct tb_cfg_request *req);
+int tb_cfg_request(struct tb_ctl *ctl, struct tb_cfg_request *req,
+		   void (*callback)(void *), void *callback_data);
+void tb_cfg_request_cancel(struct tb_cfg_request *req, int err);
+struct tb_cfg_result tb_cfg_request_sync(struct tb_ctl *ctl,
+			struct tb_cfg_request *req, int timeout_msec);
 
-अटल अंतरभूत u64 tb_cfg_get_route(स्थिर काष्ठा tb_cfg_header *header)
-अणु
-	वापस (u64) header->route_hi << 32 | header->route_lo;
-पूर्ण
+static inline u64 tb_cfg_get_route(const struct tb_cfg_header *header)
+{
+	return (u64) header->route_hi << 32 | header->route_lo;
+}
 
-अटल अंतरभूत काष्ठा tb_cfg_header tb_cfg_make_header(u64 route)
-अणु
-	काष्ठा tb_cfg_header header = अणु
+static inline struct tb_cfg_header tb_cfg_make_header(u64 route)
+{
+	struct tb_cfg_header header = {
 		.route_hi = route >> 32,
 		.route_lo = route,
-	पूर्ण;
-	/* check क्रम overflow, route_hi is not 32 bits! */
+	};
+	/* check for overflow, route_hi is not 32 bits! */
 	WARN_ON(tb_cfg_get_route(&header) != route);
-	वापस header;
-पूर्ण
+	return header;
+}
 
-पूर्णांक tb_cfg_ack_plug(काष्ठा tb_ctl *ctl, u64 route, u32 port, bool unplug);
-काष्ठा tb_cfg_result tb_cfg_reset(काष्ठा tb_ctl *ctl, u64 route);
-काष्ठा tb_cfg_result tb_cfg_पढ़ो_raw(काष्ठा tb_ctl *ctl, व्योम *buffer,
+int tb_cfg_ack_plug(struct tb_ctl *ctl, u64 route, u32 port, bool unplug);
+struct tb_cfg_result tb_cfg_reset(struct tb_ctl *ctl, u64 route);
+struct tb_cfg_result tb_cfg_read_raw(struct tb_ctl *ctl, void *buffer,
 				     u64 route, u32 port,
-				     क्रमागत tb_cfg_space space, u32 offset,
-				     u32 length, पूर्णांक समयout_msec);
-काष्ठा tb_cfg_result tb_cfg_ग_लिखो_raw(काष्ठा tb_ctl *ctl, स्थिर व्योम *buffer,
+				     enum tb_cfg_space space, u32 offset,
+				     u32 length, int timeout_msec);
+struct tb_cfg_result tb_cfg_write_raw(struct tb_ctl *ctl, const void *buffer,
 				      u64 route, u32 port,
-				      क्रमागत tb_cfg_space space, u32 offset,
-				      u32 length, पूर्णांक समयout_msec);
-पूर्णांक tb_cfg_पढ़ो(काष्ठा tb_ctl *ctl, व्योम *buffer, u64 route, u32 port,
-		क्रमागत tb_cfg_space space, u32 offset, u32 length);
-पूर्णांक tb_cfg_ग_लिखो(काष्ठा tb_ctl *ctl, स्थिर व्योम *buffer, u64 route, u32 port,
-		 क्रमागत tb_cfg_space space, u32 offset, u32 length);
-पूर्णांक tb_cfg_get_upstream_port(काष्ठा tb_ctl *ctl, u64 route);
+				      enum tb_cfg_space space, u32 offset,
+				      u32 length, int timeout_msec);
+int tb_cfg_read(struct tb_ctl *ctl, void *buffer, u64 route, u32 port,
+		enum tb_cfg_space space, u32 offset, u32 length);
+int tb_cfg_write(struct tb_ctl *ctl, const void *buffer, u64 route, u32 port,
+		 enum tb_cfg_space space, u32 offset, u32 length);
+int tb_cfg_get_upstream_port(struct tb_ctl *ctl, u64 route);
 
 
-#पूर्ण_अगर
+#endif

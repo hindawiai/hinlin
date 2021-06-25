@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,11 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#अगर_अघोषित __ATHUB_V2_0_H__
-#घोषणा __ATHUB_V2_0_H__
+#ifndef __ATHUB_V2_0_H__
+#define __ATHUB_V2_0_H__
 
-पूर्णांक athub_v2_0_set_घड़ीgating(काष्ठा amdgpu_device *adev,
-			       क्रमागत amd_घड़ीgating_state state);
-व्योम athub_v2_0_get_घड़ीgating(काष्ठा amdgpu_device *adev, u32 *flags);
+int athub_v2_0_set_clockgating(struct amdgpu_device *adev,
+			       enum amd_clockgating_state state);
+void athub_v2_0_get_clockgating(struct amdgpu_device *adev, u32 *flags);
 
-#पूर्ण_अगर
+#endif

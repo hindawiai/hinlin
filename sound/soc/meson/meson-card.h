@@ -1,56 +1,55 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2020 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#अगर_अघोषित _MESON_SND_CARD_H
-#घोषणा _MESON_SND_CARD_H
+#ifndef _MESON_SND_CARD_H
+#define _MESON_SND_CARD_H
 
-काष्ठा device_node;
-काष्ठा platक्रमm_device;
+struct device_node;
+struct platform_device;
 
-काष्ठा snd_soc_card;
-काष्ठा snd_pcm_substream;
-काष्ठा snd_pcm_hw_params;
+struct snd_soc_card;
+struct snd_pcm_substream;
+struct snd_pcm_hw_params;
 
-#घोषणा DT_PREFIX "amlogic,"
+#define DT_PREFIX "amlogic,"
 
-काष्ठा meson_card_match_data अणु
-	पूर्णांक (*add_link)(काष्ठा snd_soc_card *card,
-			काष्ठा device_node *node,
-			पूर्णांक *index);
-पूर्ण;
+struct meson_card_match_data {
+	int (*add_link)(struct snd_soc_card *card,
+			struct device_node *node,
+			int *index);
+};
 
-काष्ठा meson_card अणु
-	स्थिर काष्ठा meson_card_match_data *match_data;
-	काष्ठा snd_soc_card card;
-	व्योम **link_data;
-पूर्ण;
+struct meson_card {
+	const struct meson_card_match_data *match_data;
+	struct snd_soc_card card;
+	void **link_data;
+};
 
-अचिन्हित पूर्णांक meson_card_parse_daअगरmt(काष्ठा device_node *node,
-				     काष्ठा device_node *cpu_node);
+unsigned int meson_card_parse_daifmt(struct device_node *node,
+				     struct device_node *cpu_node);
 
-पूर्णांक meson_card_i2s_set_sysclk(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_pcm_hw_params *params,
-			      अचिन्हित पूर्णांक mclk_fs);
+int meson_card_i2s_set_sysclk(struct snd_pcm_substream *substream,
+			      struct snd_pcm_hw_params *params,
+			      unsigned int mclk_fs);
 
-पूर्णांक meson_card_पुनः_स्मृतिate_links(काष्ठा snd_soc_card *card,
-				अचिन्हित पूर्णांक num_links);
-पूर्णांक meson_card_parse_dai(काष्ठा snd_soc_card *card,
-			 काष्ठा device_node *node,
-			 काष्ठा device_node **dai_of_node,
-			 स्थिर अक्षर **dai_name);
-पूर्णांक meson_card_set_be_link(काष्ठा snd_soc_card *card,
-			   काष्ठा snd_soc_dai_link *link,
-			   काष्ठा device_node *node);
-पूर्णांक meson_card_set_fe_link(काष्ठा snd_soc_card *card,
-			   काष्ठा snd_soc_dai_link *link,
-			   काष्ठा device_node *node,
+int meson_card_reallocate_links(struct snd_soc_card *card,
+				unsigned int num_links);
+int meson_card_parse_dai(struct snd_soc_card *card,
+			 struct device_node *node,
+			 struct device_node **dai_of_node,
+			 const char **dai_name);
+int meson_card_set_be_link(struct snd_soc_card *card,
+			   struct snd_soc_dai_link *link,
+			   struct device_node *node);
+int meson_card_set_fe_link(struct snd_soc_card *card,
+			   struct snd_soc_dai_link *link,
+			   struct device_node *node,
 			   bool is_playback);
 
-पूर्णांक meson_card_probe(काष्ठा platक्रमm_device *pdev);
-पूर्णांक meson_card_हटाओ(काष्ठा platक्रमm_device *pdev);
+int meson_card_probe(struct platform_device *pdev);
+int meson_card_remove(struct platform_device *pdev);
 
-#पूर्ण_अगर /* _MESON_SND_CARD_H */
+#endif /* _MESON_SND_CARD_H */

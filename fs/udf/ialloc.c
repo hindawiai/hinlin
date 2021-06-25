@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * ialloc.c
  *
  * PURPOSE
- *	Inode allocation handling routines क्रम the OSTA-UDF(पंचांग) fileप्रणाली.
+ *	Inode allocation handling routines for the OSTA-UDF(tm) filesystem.
  *
  * COPYRIGHT
  *	This file is distributed under the terms of the GNU General Public
@@ -19,95 +18,95 @@
  *
  */
 
-#समावेश "udfdecl.h"
-#समावेश <linux/fs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
+#include "udfdecl.h"
+#include <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
 
-#समावेश "udf_i.h"
-#समावेश "udf_sb.h"
+#include "udf_i.h"
+#include "udf_sb.h"
 
-व्योम udf_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
-	काष्ठा logicalVolIntegrityDescImpUse *lvidiu = udf_sb_lvidiu(sb);
+void udf_free_inode(struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
+	struct udf_sb_info *sbi = UDF_SB(sb);
+	struct logicalVolIntegrityDescImpUse *lvidiu = udf_sb_lvidiu(sb);
 
-	अगर (lvidiu) अणु
+	if (lvidiu) {
 		mutex_lock(&sbi->s_alloc_mutex);
-		अगर (S_ISसूची(inode->i_mode))
+		if (S_ISDIR(inode->i_mode))
 			le32_add_cpu(&lvidiu->numDirs, -1);
-		अन्यथा
+		else
 			le32_add_cpu(&lvidiu->numFiles, -1);
 		udf_updated_lvid(sb);
 		mutex_unlock(&sbi->s_alloc_mutex);
-	पूर्ण
+	}
 
-	udf_मुक्त_blocks(sb, शून्य, &UDF_I(inode)->i_location, 0, 1);
-पूर्ण
+	udf_free_blocks(sb, NULL, &UDF_I(inode)->i_location, 0, 1);
+}
 
-काष्ठा inode *udf_new_inode(काष्ठा inode *dir, umode_t mode)
-अणु
-	काष्ठा super_block *sb = dir->i_sb;
-	काष्ठा udf_sb_info *sbi = UDF_SB(sb);
-	काष्ठा inode *inode;
+struct inode *udf_new_inode(struct inode *dir, umode_t mode)
+{
+	struct super_block *sb = dir->i_sb;
+	struct udf_sb_info *sbi = UDF_SB(sb);
+	struct inode *inode;
 	udf_pblk_t block;
-	uपूर्णांक32_t start = UDF_I(dir)->i_location.logicalBlockNum;
-	काष्ठा udf_inode_info *iinfo;
-	काष्ठा udf_inode_info *dinfo = UDF_I(dir);
-	काष्ठा logicalVolIntegrityDescImpUse *lvidiu;
-	पूर्णांक err;
+	uint32_t start = UDF_I(dir)->i_location.logicalBlockNum;
+	struct udf_inode_info *iinfo;
+	struct udf_inode_info *dinfo = UDF_I(dir);
+	struct logicalVolIntegrityDescImpUse *lvidiu;
+	int err;
 
 	inode = new_inode(sb);
 
-	अगर (!inode)
-		वापस ERR_PTR(-ENOMEM);
+	if (!inode)
+		return ERR_PTR(-ENOMEM);
 
 	iinfo = UDF_I(inode);
-	अगर (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_EXTENDED_FE)) अणु
+	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_EXTENDED_FE)) {
 		iinfo->i_efe = 1;
-		अगर (UDF_VERS_USE_EXTENDED_FE > sbi->s_udfrev)
+		if (UDF_VERS_USE_EXTENDED_FE > sbi->s_udfrev)
 			sbi->s_udfrev = UDF_VERS_USE_EXTENDED_FE;
 		iinfo->i_data = kzalloc(inode->i_sb->s_blocksize -
-					माप(काष्ठा extendedFileEntry),
+					sizeof(struct extendedFileEntry),
 					GFP_KERNEL);
-	पूर्ण अन्यथा अणु
+	} else {
 		iinfo->i_efe = 0;
 		iinfo->i_data = kzalloc(inode->i_sb->s_blocksize -
-					माप(काष्ठा fileEntry),
+					sizeof(struct fileEntry),
 					GFP_KERNEL);
-	पूर्ण
-	अगर (!iinfo->i_data) अणु
+	}
+	if (!iinfo->i_data) {
 		iput(inode);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	err = -ENOSPC;
-	block = udf_new_block(dir->i_sb, शून्य,
+	block = udf_new_block(dir->i_sb, NULL,
 			      dinfo->i_location.partitionReferenceNum,
 			      start, &err);
-	अगर (err) अणु
+	if (err) {
 		iput(inode);
-		वापस ERR_PTR(err);
-	पूर्ण
+		return ERR_PTR(err);
+	}
 
 	lvidiu = udf_sb_lvidiu(sb);
-	अगर (lvidiu) अणु
+	if (lvidiu) {
 		iinfo->i_unique = lvid_get_unique_id(sb);
 		inode->i_generation = iinfo->i_unique;
 		mutex_lock(&sbi->s_alloc_mutex);
-		अगर (S_ISसूची(mode))
+		if (S_ISDIR(mode))
 			le32_add_cpu(&lvidiu->numDirs, 1);
-		अन्यथा
+		else
 			le32_add_cpu(&lvidiu->numFiles, 1);
 		udf_updated_lvid(sb);
 		mutex_unlock(&sbi->s_alloc_mutex);
-	पूर्ण
+	}
 
 	inode_init_owner(&init_user_ns, inode, dir, mode);
-	अगर (UDF_QUERY_FLAG(sb, UDF_FLAG_UID_SET))
+	if (UDF_QUERY_FLAG(sb, UDF_FLAG_UID_SET))
 		inode->i_uid = sbi->s_uid;
-	अगर (UDF_QUERY_FLAG(sb, UDF_FLAG_GID_SET))
+	if (UDF_QUERY_FLAG(sb, UDF_FLAG_GID_SET))
 		inode->i_gid = sbi->s_gid;
 
 	iinfo->i_location.logicalBlockNum = block;
@@ -118,24 +117,24 @@
 	iinfo->i_lenEAttr = 0;
 	iinfo->i_lenAlloc = 0;
 	iinfo->i_use = 0;
-	iinfo->i_checkpoपूर्णांक = 1;
+	iinfo->i_checkpoint = 1;
 	iinfo->i_extraPerms = FE_PERM_U_CHATTR;
 	udf_update_extra_perms(inode, mode);
 
-	अगर (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_AD_IN_ICB))
+	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_AD_IN_ICB))
 		iinfo->i_alloc_type = ICBTAG_FLAG_AD_IN_ICB;
-	अन्यथा अगर (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
+	else if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
 		iinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;
-	अन्यथा
+	else
 		iinfo->i_alloc_type = ICBTAG_FLAG_AD_LONG;
-	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
-	iinfo->i_crसमय = inode->i_mसमय;
-	अगर (unlikely(insert_inode_locked(inode) < 0)) अणु
+	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	iinfo->i_crtime = inode->i_mtime;
+	if (unlikely(insert_inode_locked(inode) < 0)) {
 		make_bad_inode(inode);
 		iput(inode);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
+		return ERR_PTR(-EIO);
+	}
 	mark_inode_dirty(inode);
 
-	वापस inode;
-पूर्ण
+	return inode;
+}

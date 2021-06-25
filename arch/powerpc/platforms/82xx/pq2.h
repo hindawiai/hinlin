@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _PQ2_H
-#घोषणा _PQ2_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _PQ2_H
+#define _PQ2_H
 
-व्योम __noवापस pq2_restart(अक्षर *cmd);
+void __noreturn pq2_restart(char *cmd);
 
-#अगर_घोषित CONFIG_PCI
-पूर्णांक pq2ads_pci_init_irq(व्योम);
-व्योम pq2_init_pci(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक pq2ads_pci_init_irq(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_PCI
+int pq2ads_pci_init_irq(void);
+void pq2_init_pci(void);
+#else
+static inline int pq2ads_pci_init_irq(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम pq2_init_pci(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void pq2_init_pci(void)
+{
+}
+#endif
 
-#पूर्ण_अगर
+#endif

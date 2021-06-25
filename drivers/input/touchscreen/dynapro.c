@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Dynapro serial touchscreen driver
  *
  * Copyright (c) 2009 Tias Guns
- * Based on the inexio driver (c) Vojtech Pavlik and Dan Streeपंचांगan and
- * Riअक्षरd Lemon
+ * Based on the inexio driver (c) Vojtech Pavlik and Dan Streetman and
+ * Richard Lemon
  */
 
 
 /*
  * 2009/09/19 Tias Guns <tias@ulyssis.org>
- *   Copied inexio.c and edited क्रम Dynapro protocol (from retired Xorg module)
+ *   Copied inexio.c and edited for Dynapro protocol (from retired Xorg module)
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/serपन.स>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/serio.h>
 
-#घोषणा DRIVER_DESC	"Dynapro serial touchscreen driver"
+#define DRIVER_DESC	"Dynapro serial touchscreen driver"
 
 MODULE_AUTHOR("Tias Guns <tias@ulyssis.org>");
 MODULE_DESCRIPTION(DRIVER_DESC);
@@ -31,156 +30,156 @@ MODULE_LICENSE("GPL");
  * Definitions & global arrays.
  */
 
-#घोषणा DYNAPRO_FORMAT_TOUCH_BIT 0x40
-#घोषणा DYNAPRO_FORMAT_LENGTH 3
-#घोषणा DYNAPRO_RESPONSE_BEGIN_BYTE 0x80
+#define DYNAPRO_FORMAT_TOUCH_BIT 0x40
+#define DYNAPRO_FORMAT_LENGTH 3
+#define DYNAPRO_RESPONSE_BEGIN_BYTE 0x80
 
-#घोषणा DYNAPRO_MIN_XC 0
-#घोषणा DYNAPRO_MAX_XC 0x3ff
-#घोषणा DYNAPRO_MIN_YC 0
-#घोषणा DYNAPRO_MAX_YC 0x3ff
+#define DYNAPRO_MIN_XC 0
+#define DYNAPRO_MAX_XC 0x3ff
+#define DYNAPRO_MIN_YC 0
+#define DYNAPRO_MAX_YC 0x3ff
 
-#घोषणा DYNAPRO_GET_XC(data) (data[1] | ((data[0] & 0x38) << 4))
-#घोषणा DYNAPRO_GET_YC(data) (data[2] | ((data[0] & 0x07) << 7))
-#घोषणा DYNAPRO_GET_TOUCHED(data) (DYNAPRO_FORMAT_TOUCH_BIT & data[0])
+#define DYNAPRO_GET_XC(data) (data[1] | ((data[0] & 0x38) << 4))
+#define DYNAPRO_GET_YC(data) (data[2] | ((data[0] & 0x07) << 7))
+#define DYNAPRO_GET_TOUCHED(data) (DYNAPRO_FORMAT_TOUCH_BIT & data[0])
 
 /*
  * Per-touchscreen data.
  */
 
-काष्ठा dynapro अणु
-	काष्ठा input_dev *dev;
-	काष्ठा serio *serio;
-	पूर्णांक idx;
-	अचिन्हित अक्षर data[DYNAPRO_FORMAT_LENGTH];
-	अक्षर phys[32];
-पूर्ण;
+struct dynapro {
+	struct input_dev *dev;
+	struct serio *serio;
+	int idx;
+	unsigned char data[DYNAPRO_FORMAT_LENGTH];
+	char phys[32];
+};
 
-अटल व्योम dynapro_process_data(काष्ठा dynapro *pdynapro)
-अणु
-	काष्ठा input_dev *dev = pdynapro->dev;
+static void dynapro_process_data(struct dynapro *pdynapro)
+{
+	struct input_dev *dev = pdynapro->dev;
 
-	अगर (DYNAPRO_FORMAT_LENGTH == ++pdynapro->idx) अणु
-		input_report_असल(dev, ABS_X, DYNAPRO_GET_XC(pdynapro->data));
-		input_report_असल(dev, ABS_Y, DYNAPRO_GET_YC(pdynapro->data));
+	if (DYNAPRO_FORMAT_LENGTH == ++pdynapro->idx) {
+		input_report_abs(dev, ABS_X, DYNAPRO_GET_XC(pdynapro->data));
+		input_report_abs(dev, ABS_Y, DYNAPRO_GET_YC(pdynapro->data));
 		input_report_key(dev, BTN_TOUCH,
 				 DYNAPRO_GET_TOUCHED(pdynapro->data));
 		input_sync(dev);
 
 		pdynapro->idx = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t dynapro_पूर्णांकerrupt(काष्ठा serio *serio,
-		अचिन्हित अक्षर data, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा dynapro *pdynapro = serio_get_drvdata(serio);
+static irqreturn_t dynapro_interrupt(struct serio *serio,
+		unsigned char data, unsigned int flags)
+{
+	struct dynapro *pdynapro = serio_get_drvdata(serio);
 
 	pdynapro->data[pdynapro->idx] = data;
 
-	अगर (DYNAPRO_RESPONSE_BEGIN_BYTE & pdynapro->data[0])
+	if (DYNAPRO_RESPONSE_BEGIN_BYTE & pdynapro->data[0])
 		dynapro_process_data(pdynapro);
-	अन्यथा
+	else
 		dev_dbg(&serio->dev, "unknown/unsynchronized data: %x\n",
 			pdynapro->data[0]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम dynapro_disconnect(काष्ठा serio *serio)
-अणु
-	काष्ठा dynapro *pdynapro = serio_get_drvdata(serio);
+static void dynapro_disconnect(struct serio *serio)
+{
+	struct dynapro *pdynapro = serio_get_drvdata(serio);
 
 	input_get_device(pdynapro->dev);
-	input_unरेजिस्टर_device(pdynapro->dev);
-	serio_बंद(serio);
-	serio_set_drvdata(serio, शून्य);
+	input_unregister_device(pdynapro->dev);
+	serio_close(serio);
+	serio_set_drvdata(serio, NULL);
 	input_put_device(pdynapro->dev);
-	kमुक्त(pdynapro);
-पूर्ण
+	kfree(pdynapro);
+}
 
 /*
  * dynapro_connect() is the routine that is called when someone adds a
- * new serio device that supports dynapro protocol and रेजिस्टरs it as
+ * new serio device that supports dynapro protocol and registers it as
  * an input device. This is usually accomplished using inputattach.
  */
 
-अटल पूर्णांक dynapro_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
-अणु
-	काष्ठा dynapro *pdynapro;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक err;
+static int dynapro_connect(struct serio *serio, struct serio_driver *drv)
+{
+	struct dynapro *pdynapro;
+	struct input_dev *input_dev;
+	int err;
 
-	pdynapro = kzalloc(माप(काष्ठा dynapro), GFP_KERNEL);
+	pdynapro = kzalloc(sizeof(struct dynapro), GFP_KERNEL);
 	input_dev = input_allocate_device();
-	अगर (!pdynapro || !input_dev) अणु
+	if (!pdynapro || !input_dev) {
 		err = -ENOMEM;
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
 	pdynapro->serio = serio;
 	pdynapro->dev = input_dev;
-	snम_लिखो(pdynapro->phys, माप(pdynapro->phys),
+	snprintf(pdynapro->phys, sizeof(pdynapro->phys),
 		 "%s/input0", serio->phys);
 
 	input_dev->name = "Dynapro Serial TouchScreen";
 	input_dev->phys = pdynapro->phys;
 	input_dev->id.bustype = BUS_RS232;
-	input_dev->id.venकरोr = SERIO_DYNAPRO;
+	input_dev->id.vendor = SERIO_DYNAPRO;
 	input_dev->id.product = 0;
 	input_dev->id.version = 0x0001;
 	input_dev->dev.parent = &serio->dev;
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
-	input_set_असल_params(pdynapro->dev, ABS_X,
+	input_set_abs_params(pdynapro->dev, ABS_X,
 			     DYNAPRO_MIN_XC, DYNAPRO_MAX_XC, 0, 0);
-	input_set_असल_params(pdynapro->dev, ABS_Y,
+	input_set_abs_params(pdynapro->dev, ABS_Y,
 			     DYNAPRO_MIN_YC, DYNAPRO_MAX_YC, 0, 0);
 
 	serio_set_drvdata(serio, pdynapro);
 
-	err = serio_खोलो(serio, drv);
-	अगर (err)
-		जाओ fail2;
+	err = serio_open(serio, drv);
+	if (err)
+		goto fail2;
 
-	err = input_रेजिस्टर_device(pdynapro->dev);
-	अगर (err)
-		जाओ fail3;
+	err = input_register_device(pdynapro->dev);
+	if (err)
+		goto fail3;
 
-	वापस 0;
+	return 0;
 
- fail3:	serio_बंद(serio);
- fail2:	serio_set_drvdata(serio, शून्य);
- fail1:	input_मुक्त_device(input_dev);
-	kमुक्त(pdynapro);
-	वापस err;
-पूर्ण
+ fail3:	serio_close(serio);
+ fail2:	serio_set_drvdata(serio, NULL);
+ fail1:	input_free_device(input_dev);
+	kfree(pdynapro);
+	return err;
+}
 
 /*
- * The serio driver काष्ठाure.
+ * The serio driver structure.
  */
 
-अटल स्थिर काष्ठा serio_device_id dynapro_serio_ids[] = अणु
-	अणु
+static const struct serio_device_id dynapro_serio_ids[] = {
+	{
 		.type	= SERIO_RS232,
 		.proto	= SERIO_DYNAPRO,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	पूर्ण,
-	अणु 0 पूर्ण
-पूर्ण;
+	},
+	{ 0 }
+};
 
 MODULE_DEVICE_TABLE(serio, dynapro_serio_ids);
 
-अटल काष्ठा serio_driver dynapro_drv = अणु
-	.driver		= अणु
+static struct serio_driver dynapro_drv = {
+	.driver		= {
 		.name	= "dynapro",
-	पूर्ण,
+	},
 	.description	= DRIVER_DESC,
 	.id_table	= dynapro_serio_ids,
-	.पूर्णांकerrupt	= dynapro_पूर्णांकerrupt,
+	.interrupt	= dynapro_interrupt,
 	.connect	= dynapro_connect,
 	.disconnect	= dynapro_disconnect,
-पूर्ण;
+};
 
 module_serio_driver(dynapro_drv);

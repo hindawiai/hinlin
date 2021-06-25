@@ -1,415 +1,414 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Bus क्रम USB Type-C Alternate Modes
+ * Bus for USB Type-C Alternate Modes
  *
  * Copyright (C) 2018 Intel Corporation
- * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
-#समावेश <linux/usb/pd_vकरो.h>
+#include <linux/usb/pd_vdo.h>
 
-#समावेश "bus.h"
-#समावेश "class.h"
-#समावेश "mux.h"
+#include "bus.h"
+#include "class.h"
+#include "mux.h"
 
-अटल अंतरभूत पूर्णांक
-typec_alपंचांगode_set_mux(काष्ठा alपंचांगode *alt, अचिन्हित दीर्घ conf, व्योम *data)
-अणु
-	काष्ठा typec_mux_state state;
+static inline int
+typec_altmode_set_mux(struct altmode *alt, unsigned long conf, void *data)
+{
+	struct typec_mux_state state;
 
-	अगर (!alt->mux)
-		वापस 0;
+	if (!alt->mux)
+		return 0;
 
 	state.alt = &alt->adev;
 	state.mode = conf;
 	state.data = data;
 
-	वापस alt->mux->set(alt->mux, &state);
-पूर्ण
+	return alt->mux->set(alt->mux, &state);
+}
 
-अटल पूर्णांक typec_alपंचांगode_set_state(काष्ठा typec_alपंचांगode *adev,
-				   अचिन्हित दीर्घ conf, व्योम *data)
-अणु
+static int typec_altmode_set_state(struct typec_altmode *adev,
+				   unsigned long conf, void *data)
+{
 	bool is_port = is_typec_port(adev->dev.parent);
-	काष्ठा alपंचांगode *port_alपंचांगode;
+	struct altmode *port_altmode;
 
-	port_alपंचांगode = is_port ? to_alपंचांगode(adev) : to_alपंचांगode(adev)->partner;
+	port_altmode = is_port ? to_altmode(adev) : to_altmode(adev)->partner;
 
-	वापस typec_alपंचांगode_set_mux(port_alपंचांगode, conf, data);
-पूर्ण
+	return typec_altmode_set_mux(port_altmode, conf, data);
+}
 
 /* -------------------------------------------------------------------------- */
 /* Common API */
 
 /**
- * typec_alपंचांगode_notअगरy - Communication between the OS and alternate mode driver
+ * typec_altmode_notify - Communication between the OS and alternate mode driver
  * @adev: Handle to the alternate mode
- * @conf: Alternate mode specअगरic configuration value
- * @data: Alternate mode specअगरic data
+ * @conf: Alternate mode specific configuration value
+ * @data: Alternate mode specific data
  *
- * The primary purpose क्रम this function is to allow the alternate mode drivers
+ * The primary purpose for this function is to allow the alternate mode drivers
  * to tell which pin configuration has been negotiated with the partner. That
- * inक्रमmation will then be used क्रम example to configure the muxes.
+ * information will then be used for example to configure the muxes.
  * Communication to the other direction is also possible, and low level device
- * drivers can also send notअगरications to the alternate mode drivers. The actual
- * communication will be specअगरic क्रम every SVID.
+ * drivers can also send notifications to the alternate mode drivers. The actual
+ * communication will be specific for every SVID.
  */
-पूर्णांक typec_alपंचांगode_notअगरy(काष्ठा typec_alपंचांगode *adev,
-			 अचिन्हित दीर्घ conf, व्योम *data)
-अणु
+int typec_altmode_notify(struct typec_altmode *adev,
+			 unsigned long conf, void *data)
+{
 	bool is_port;
-	काष्ठा alपंचांगode *alपंचांगode;
-	काष्ठा alपंचांगode *partner;
-	पूर्णांक ret;
+	struct altmode *altmode;
+	struct altmode *partner;
+	int ret;
 
-	अगर (!adev)
-		वापस 0;
+	if (!adev)
+		return 0;
 
-	alपंचांगode = to_alपंचांगode(adev);
+	altmode = to_altmode(adev);
 
-	अगर (!alपंचांगode->partner)
-		वापस -ENODEV;
+	if (!altmode->partner)
+		return -ENODEV;
 
 	is_port = is_typec_port(adev->dev.parent);
-	partner = alपंचांगode->partner;
+	partner = altmode->partner;
 
-	ret = typec_alपंचांगode_set_mux(is_port ? alपंचांगode : partner, conf, data);
-	अगर (ret)
-		वापस ret;
+	ret = typec_altmode_set_mux(is_port ? altmode : partner, conf, data);
+	if (ret)
+		return ret;
 
-	अगर (partner->adev.ops && partner->adev.ops->notअगरy)
-		वापस partner->adev.ops->notअगरy(&partner->adev, conf, data);
+	if (partner->adev.ops && partner->adev.ops->notify)
+		return partner->adev.ops->notify(&partner->adev, conf, data);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_notअगरy);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(typec_altmode_notify);
 
 /**
- * typec_alपंचांगode_enter - Enter Mode
+ * typec_altmode_enter - Enter Mode
  * @adev: The alternate mode
- * @vकरो: VDO क्रम the Enter Mode command
+ * @vdo: VDO for the Enter Mode command
  *
  * The alternate mode drivers use this function to enter mode. The port drivers
- * use this to inक्रमm the alternate mode drivers that the partner has initiated
- * Enter Mode command. If the alternate mode करोes not require VDO, @vकरो must be
- * शून्य.
+ * use this to inform the alternate mode drivers that the partner has initiated
+ * Enter Mode command. If the alternate mode does not require VDO, @vdo must be
+ * NULL.
  */
-पूर्णांक typec_alपंचांगode_enter(काष्ठा typec_alपंचांगode *adev, u32 *vकरो)
-अणु
-	काष्ठा alपंचांगode *partner = to_alपंचांगode(adev)->partner;
-	काष्ठा typec_alपंचांगode *pdev = &partner->adev;
-	पूर्णांक ret;
+int typec_altmode_enter(struct typec_altmode *adev, u32 *vdo)
+{
+	struct altmode *partner = to_altmode(adev)->partner;
+	struct typec_altmode *pdev = &partner->adev;
+	int ret;
 
-	अगर (!adev || adev->active)
-		वापस 0;
+	if (!adev || adev->active)
+		return 0;
 
-	अगर (!pdev->ops || !pdev->ops->enter)
-		वापस -EOPNOTSUPP;
+	if (!pdev->ops || !pdev->ops->enter)
+		return -EOPNOTSUPP;
 
-	अगर (is_typec_port(pdev->dev.parent) && !pdev->active)
-		वापस -EPERM;
+	if (is_typec_port(pdev->dev.parent) && !pdev->active)
+		return -EPERM;
 
 	/* Moving to USB Safe State */
-	ret = typec_alपंचांगode_set_state(adev, TYPEC_STATE_SAFE, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = typec_altmode_set_state(adev, TYPEC_STATE_SAFE, NULL);
+	if (ret)
+		return ret;
 
 	/* Enter Mode */
-	वापस pdev->ops->enter(pdev, vकरो);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_enter);
+	return pdev->ops->enter(pdev, vdo);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_enter);
 
 /**
- * typec_alपंचांगode_निकास - Exit Mode
+ * typec_altmode_exit - Exit Mode
  * @adev: The alternate mode
  *
  * The partner of @adev has initiated Exit Mode command.
  */
-पूर्णांक typec_alपंचांगode_निकास(काष्ठा typec_alपंचांगode *adev)
-अणु
-	काष्ठा alपंचांगode *partner = to_alपंचांगode(adev)->partner;
-	काष्ठा typec_alपंचांगode *pdev = &partner->adev;
-	पूर्णांक ret;
+int typec_altmode_exit(struct typec_altmode *adev)
+{
+	struct altmode *partner = to_altmode(adev)->partner;
+	struct typec_altmode *pdev = &partner->adev;
+	int ret;
 
-	अगर (!adev || !adev->active)
-		वापस 0;
+	if (!adev || !adev->active)
+		return 0;
 
-	अगर (!pdev->ops || !pdev->ops->enter)
-		वापस -EOPNOTSUPP;
+	if (!pdev->ops || !pdev->ops->enter)
+		return -EOPNOTSUPP;
 
 	/* Moving to USB Safe State */
-	ret = typec_alपंचांगode_set_state(adev, TYPEC_STATE_SAFE, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = typec_altmode_set_state(adev, TYPEC_STATE_SAFE, NULL);
+	if (ret)
+		return ret;
 
 	/* Exit Mode command */
-	वापस pdev->ops->निकास(pdev);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_निकास);
+	return pdev->ops->exit(pdev);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_exit);
 
 /**
- * typec_alपंचांगode_attention - Attention command
+ * typec_altmode_attention - Attention command
  * @adev: The alternate mode
- * @vकरो: VDO क्रम the Attention command
+ * @vdo: VDO for the Attention command
  *
- * Notअगरies the partner of @adev about Attention command.
+ * Notifies the partner of @adev about Attention command.
  */
-व्योम typec_alपंचांगode_attention(काष्ठा typec_alपंचांगode *adev, u32 vकरो)
-अणु
-	काष्ठा typec_alपंचांगode *pdev = &to_alपंचांगode(adev)->partner->adev;
+void typec_altmode_attention(struct typec_altmode *adev, u32 vdo)
+{
+	struct typec_altmode *pdev = &to_altmode(adev)->partner->adev;
 
-	अगर (pdev->ops && pdev->ops->attention)
-		pdev->ops->attention(pdev, vकरो);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_attention);
+	if (pdev->ops && pdev->ops->attention)
+		pdev->ops->attention(pdev, vdo);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_attention);
 
 /**
- * typec_alपंचांगode_vdm - Send Venकरोr Defined Messages (VDM) to the partner
+ * typec_altmode_vdm - Send Vendor Defined Messages (VDM) to the partner
  * @adev: Alternate mode handle
  * @header: VDM Header
- * @vकरो: Array of Venकरोr Defined Data Objects
+ * @vdo: Array of Vendor Defined Data Objects
  * @count: Number of Data Objects
  *
- * The alternate mode drivers use this function क्रम SVID specअगरic communication
+ * The alternate mode drivers use this function for SVID specific communication
  * with the partner. The port drivers use it to deliver the Structured VDMs
  * received from the partners to the alternate mode drivers.
  */
-पूर्णांक typec_alपंचांगode_vdm(काष्ठा typec_alपंचांगode *adev,
-		      स्थिर u32 header, स्थिर u32 *vकरो, पूर्णांक count)
-अणु
-	काष्ठा typec_alपंचांगode *pdev;
-	काष्ठा alपंचांगode *alपंचांगode;
+int typec_altmode_vdm(struct typec_altmode *adev,
+		      const u32 header, const u32 *vdo, int count)
+{
+	struct typec_altmode *pdev;
+	struct altmode *altmode;
 
-	अगर (!adev)
-		वापस 0;
+	if (!adev)
+		return 0;
 
-	alपंचांगode = to_alपंचांगode(adev);
+	altmode = to_altmode(adev);
 
-	अगर (!alपंचांगode->partner)
-		वापस -ENODEV;
+	if (!altmode->partner)
+		return -ENODEV;
 
-	pdev = &alपंचांगode->partner->adev;
+	pdev = &altmode->partner->adev;
 
-	अगर (!pdev->ops || !pdev->ops->vdm)
-		वापस -EOPNOTSUPP;
+	if (!pdev->ops || !pdev->ops->vdm)
+		return -EOPNOTSUPP;
 
-	वापस pdev->ops->vdm(pdev, header, vकरो, count);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_vdm);
+	return pdev->ops->vdm(pdev, header, vdo, count);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_vdm);
 
-स्थिर काष्ठा typec_alपंचांगode *
-typec_alपंचांगode_get_partner(काष्ठा typec_alपंचांगode *adev)
-अणु
-	अगर (!adev || !to_alपंचांगode(adev)->partner)
-		वापस शून्य;
+const struct typec_altmode *
+typec_altmode_get_partner(struct typec_altmode *adev)
+{
+	if (!adev || !to_altmode(adev)->partner)
+		return NULL;
 
-	वापस &to_alपंचांगode(adev)->partner->adev;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_get_partner);
+	return &to_altmode(adev)->partner->adev;
+}
+EXPORT_SYMBOL_GPL(typec_altmode_get_partner);
 
 /* -------------------------------------------------------------------------- */
-/* API क्रम the alternate mode drivers */
+/* API for the alternate mode drivers */
 
 /**
- * typec_alपंचांगode_get_plug - Find cable plug alternate mode
+ * typec_altmode_get_plug - Find cable plug alternate mode
  * @adev: Handle to partner alternate mode
  * @index: Cable plug index
  *
- * Increment reference count क्रम cable plug alternate mode device. Returns
- * handle to the cable plug alternate mode, or शून्य अगर none is found.
+ * Increment reference count for cable plug alternate mode device. Returns
+ * handle to the cable plug alternate mode, or NULL if none is found.
  */
-काष्ठा typec_alपंचांगode *typec_alपंचांगode_get_plug(काष्ठा typec_alपंचांगode *adev,
-					     क्रमागत typec_plug_index index)
-अणु
-	काष्ठा alपंचांगode *port = to_alपंचांगode(adev)->partner;
+struct typec_altmode *typec_altmode_get_plug(struct typec_altmode *adev,
+					     enum typec_plug_index index)
+{
+	struct altmode *port = to_altmode(adev)->partner;
 
-	अगर (port->plug[index]) अणु
+	if (port->plug[index]) {
 		get_device(&port->plug[index]->adev.dev);
-		वापस &port->plug[index]->adev;
-	पूर्ण
+		return &port->plug[index]->adev;
+	}
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_get_plug);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(typec_altmode_get_plug);
 
 /**
- * typec_alपंचांगode_put_plug - Decrement cable plug alternate mode reference count
+ * typec_altmode_put_plug - Decrement cable plug alternate mode reference count
  * @plug: Handle to the cable plug alternate mode
  */
-व्योम typec_alपंचांगode_put_plug(काष्ठा typec_alपंचांगode *plug)
-अणु
-	अगर (plug)
+void typec_altmode_put_plug(struct typec_altmode *plug)
+{
+	if (plug)
 		put_device(&plug->dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_put_plug);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_put_plug);
 
-पूर्णांक __typec_alपंचांगode_रेजिस्टर_driver(काष्ठा typec_alपंचांगode_driver *drv,
-				    काष्ठा module *module)
-अणु
-	अगर (!drv->probe)
-		वापस -EINVAL;
+int __typec_altmode_register_driver(struct typec_altmode_driver *drv,
+				    struct module *module)
+{
+	if (!drv->probe)
+		return -EINVAL;
 
 	drv->driver.owner = module;
 	drv->driver.bus = &typec_bus;
 
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(__typec_alपंचांगode_रेजिस्टर_driver);
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(__typec_altmode_register_driver);
 
-व्योम typec_alपंचांगode_unरेजिस्टर_driver(काष्ठा typec_alपंचांगode_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_alपंचांगode_unरेजिस्टर_driver);
+void typec_altmode_unregister_driver(struct typec_altmode_driver *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(typec_altmode_unregister_driver);
 
 /* -------------------------------------------------------------------------- */
-/* API क्रम the port drivers */
+/* API for the port drivers */
 
 /**
- * typec_match_alपंचांगode - Match SVID and mode to an array of alternate modes
- * @alपंचांगodes: Array of alternate modes
- * @n: Number of elements in the array, or -1 क्रम शून्य terminated arrays
- * @svid: Standard or Venकरोr ID to match with
+ * typec_match_altmode - Match SVID and mode to an array of alternate modes
+ * @altmodes: Array of alternate modes
+ * @n: Number of elements in the array, or -1 for NULL terminated arrays
+ * @svid: Standard or Vendor ID to match with
  * @mode: Mode to match with
  *
- * Return poपूर्णांकer to an alternate mode with SVID matching @svid, or शून्य when no
+ * Return pointer to an alternate mode with SVID matching @svid, or NULL when no
  * match is found.
  */
-काष्ठा typec_alपंचांगode *typec_match_alपंचांगode(काष्ठा typec_alपंचांगode **alपंचांगodes,
-					  माप_प्रकार n, u16 svid, u8 mode)
-अणु
-	पूर्णांक i;
+struct typec_altmode *typec_match_altmode(struct typec_altmode **altmodes,
+					  size_t n, u16 svid, u8 mode)
+{
+	int i;
 
-	क्रम (i = 0; i < n; i++) अणु
-		अगर (!alपंचांगodes[i])
-			अवरोध;
-		अगर (alपंचांगodes[i]->svid == svid && alपंचांगodes[i]->mode == mode)
-			वापस alपंचांगodes[i];
-	पूर्ण
+	for (i = 0; i < n; i++) {
+		if (!altmodes[i])
+			break;
+		if (altmodes[i]->svid == svid && altmodes[i]->mode == mode)
+			return altmodes[i];
+	}
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(typec_match_alपंचांगode);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(typec_match_altmode);
 
 /* -------------------------------------------------------------------------- */
 
-अटल sमाप_प्रकार
-description_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा typec_alपंचांगode *alt = to_typec_alपंचांगode(dev);
+static ssize_t
+description_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct typec_altmode *alt = to_typec_altmode(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", alt->desc ? alt->desc : "");
-पूर्ण
-अटल DEVICE_ATTR_RO(description);
+	return sprintf(buf, "%s\n", alt->desc ? alt->desc : "");
+}
+static DEVICE_ATTR_RO(description);
 
-अटल काष्ठा attribute *typec_attrs[] = अणु
+static struct attribute *typec_attrs[] = {
 	&dev_attr_description.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(typec);
 
-अटल पूर्णांक typec_match(काष्ठा device *dev, काष्ठा device_driver *driver)
-अणु
-	काष्ठा typec_alपंचांगode_driver *drv = to_alपंचांगode_driver(driver);
-	काष्ठा typec_alपंचांगode *alपंचांगode = to_typec_alपंचांगode(dev);
-	स्थिर काष्ठा typec_device_id *id;
+static int typec_match(struct device *dev, struct device_driver *driver)
+{
+	struct typec_altmode_driver *drv = to_altmode_driver(driver);
+	struct typec_altmode *altmode = to_typec_altmode(dev);
+	const struct typec_device_id *id;
 
-	क्रम (id = drv->id_table; id->svid; id++)
-		अगर (id->svid == alपंचांगode->svid &&
-		    (id->mode == TYPEC_ANY_MODE || id->mode == alपंचांगode->mode))
-			वापस 1;
-	वापस 0;
-पूर्ण
+	for (id = drv->id_table; id->svid; id++)
+		if (id->svid == altmode->svid &&
+		    (id->mode == TYPEC_ANY_MODE || id->mode == altmode->mode))
+			return 1;
+	return 0;
+}
 
-अटल पूर्णांक typec_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा typec_alपंचांगode *alपंचांगode = to_typec_alपंचांगode(dev);
+static int typec_uevent(struct device *dev, struct kobj_uevent_env *env)
+{
+	struct typec_altmode *altmode = to_typec_altmode(dev);
 
-	अगर (add_uevent_var(env, "SVID=%04X", alपंचांगode->svid))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "SVID=%04X", altmode->svid))
+		return -ENOMEM;
 
-	अगर (add_uevent_var(env, "MODE=%u", alपंचांगode->mode))
-		वापस -ENOMEM;
+	if (add_uevent_var(env, "MODE=%u", altmode->mode))
+		return -ENOMEM;
 
-	वापस add_uevent_var(env, "MODALIAS=typec:id%04Xm%02X",
-			      alपंचांगode->svid, alपंचांगode->mode);
-पूर्ण
+	return add_uevent_var(env, "MODALIAS=typec:id%04Xm%02X",
+			      altmode->svid, altmode->mode);
+}
 
-अटल पूर्णांक typec_alपंचांगode_create_links(काष्ठा alपंचांगode *alt)
-अणु
-	काष्ठा device *port_dev = &alt->partner->adev.dev;
-	काष्ठा device *dev = &alt->adev.dev;
-	पूर्णांक err;
+static int typec_altmode_create_links(struct altmode *alt)
+{
+	struct device *port_dev = &alt->partner->adev.dev;
+	struct device *dev = &alt->adev.dev;
+	int err;
 
 	err = sysfs_create_link(&dev->kobj, &port_dev->kobj, "port");
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = sysfs_create_link(&port_dev->kobj, &dev->kobj, "partner");
-	अगर (err)
-		sysfs_हटाओ_link(&dev->kobj, "port");
+	if (err)
+		sysfs_remove_link(&dev->kobj, "port");
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम typec_alपंचांगode_हटाओ_links(काष्ठा alपंचांगode *alt)
-अणु
-	sysfs_हटाओ_link(&alt->partner->adev.dev.kobj, "partner");
-	sysfs_हटाओ_link(&alt->adev.dev.kobj, "port");
-पूर्ण
+static void typec_altmode_remove_links(struct altmode *alt)
+{
+	sysfs_remove_link(&alt->partner->adev.dev.kobj, "partner");
+	sysfs_remove_link(&alt->adev.dev.kobj, "port");
+}
 
-अटल पूर्णांक typec_probe(काष्ठा device *dev)
-अणु
-	काष्ठा typec_alपंचांगode_driver *drv = to_alपंचांगode_driver(dev->driver);
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(dev);
-	काष्ठा alपंचांगode *alपंचांगode = to_alपंचांगode(adev);
-	पूर्णांक ret;
+static int typec_probe(struct device *dev)
+{
+	struct typec_altmode_driver *drv = to_altmode_driver(dev->driver);
+	struct typec_altmode *adev = to_typec_altmode(dev);
+	struct altmode *altmode = to_altmode(adev);
+	int ret;
 
-	/* Fail अगर the port करोes not support the alternate mode */
-	अगर (!alपंचांगode->partner)
-		वापस -ENODEV;
+	/* Fail if the port does not support the alternate mode */
+	if (!altmode->partner)
+		return -ENODEV;
 
-	ret = typec_alपंचांगode_create_links(alपंचांगode);
-	अगर (ret) अणु
+	ret = typec_altmode_create_links(altmode);
+	if (ret) {
 		dev_warn(dev, "failed to create symlinks\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = drv->probe(adev);
-	अगर (ret)
-		typec_alपंचांगode_हटाओ_links(alपंचांगode);
+	if (ret)
+		typec_altmode_remove_links(altmode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक typec_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा typec_alपंचांगode_driver *drv = to_alपंचांगode_driver(dev->driver);
-	काष्ठा typec_alपंचांगode *adev = to_typec_alपंचांगode(dev);
-	काष्ठा alपंचांगode *alपंचांगode = to_alपंचांगode(adev);
+static int typec_remove(struct device *dev)
+{
+	struct typec_altmode_driver *drv = to_altmode_driver(dev->driver);
+	struct typec_altmode *adev = to_typec_altmode(dev);
+	struct altmode *altmode = to_altmode(adev);
 
-	typec_alपंचांगode_हटाओ_links(alपंचांगode);
+	typec_altmode_remove_links(altmode);
 
-	अगर (drv->हटाओ)
-		drv->हटाओ(to_typec_alपंचांगode(dev));
+	if (drv->remove)
+		drv->remove(to_typec_altmode(dev));
 
-	अगर (adev->active) अणु
-		WARN_ON(typec_alपंचांगode_set_state(adev, TYPEC_STATE_SAFE, शून्य));
-		typec_alपंचांगode_update_active(adev, false);
-	पूर्ण
+	if (adev->active) {
+		WARN_ON(typec_altmode_set_state(adev, TYPEC_STATE_SAFE, NULL));
+		typec_altmode_update_active(adev, false);
+	}
 
-	adev->desc = शून्य;
-	adev->ops = शून्य;
+	adev->desc = NULL;
+	adev->ops = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा bus_type typec_bus = अणु
+struct bus_type typec_bus = {
 	.name = "typec",
 	.dev_groups = typec_groups,
 	.match = typec_match,
 	.uevent = typec_uevent,
 	.probe = typec_probe,
-	.हटाओ = typec_हटाओ,
-पूर्ण;
+	.remove = typec_remove,
+};

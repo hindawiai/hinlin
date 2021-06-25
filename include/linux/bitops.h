@@ -1,234 +1,233 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_BITOPS_H
-#घोषणा _LINUX_BITOPS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_BITOPS_H
+#define _LINUX_BITOPS_H
 
-#समावेश <यंत्र/types.h>
-#समावेश <linux/bits.h>
+#include <asm/types.h>
+#include <linux/bits.h>
 
-#समावेश <uapi/linux/kernel.h>
+#include <uapi/linux/kernel.h>
 
 /* Set bits in the first 'n' bytes when loaded from memory */
-#अगर_घोषित __LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN
 #  define aligned_byte_mask(n) ((1UL << 8*(n))-1)
-#अन्यथा
+#else
 #  define aligned_byte_mask(n) (~0xffUL << (BITS_PER_LONG - 8 - 8*(n)))
-#पूर्ण_अगर
+#endif
 
-#घोषणा BITS_PER_TYPE(type)	(माप(type) * BITS_PER_BYTE)
-#घोषणा BITS_TO_LONGS(nr)	__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(दीर्घ))
-#घोषणा BITS_TO_U64(nr)		__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(u64))
-#घोषणा BITS_TO_U32(nr)		__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(u32))
-#घोषणा BITS_TO_BYTES(nr)	__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(अक्षर))
+#define BITS_PER_TYPE(type)	(sizeof(type) * BITS_PER_BYTE)
+#define BITS_TO_LONGS(nr)	__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(long))
+#define BITS_TO_U64(nr)		__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(u64))
+#define BITS_TO_U32(nr)		__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(u32))
+#define BITS_TO_BYTES(nr)	__KERNEL_DIV_ROUND_UP(nr, BITS_PER_TYPE(char))
 
-बाह्य अचिन्हित पूर्णांक __sw_hweight8(अचिन्हित पूर्णांक w);
-बाह्य अचिन्हित पूर्णांक __sw_hweight16(अचिन्हित पूर्णांक w);
-बाह्य अचिन्हित पूर्णांक __sw_hweight32(अचिन्हित पूर्णांक w);
-बाह्य अचिन्हित दीर्घ __sw_hweight64(__u64 w);
+extern unsigned int __sw_hweight8(unsigned int w);
+extern unsigned int __sw_hweight16(unsigned int w);
+extern unsigned int __sw_hweight32(unsigned int w);
+extern unsigned long __sw_hweight64(__u64 w);
 
 /*
  * Include this here because some architectures need generic_ffs/fls in
  * scope
  */
-#समावेश <यंत्र/bitops.h>
+#include <asm/bitops.h>
 
-#घोषणा क्रम_each_set_bit(bit, addr, size) \
-	क्रम ((bit) = find_first_bit((addr), (size));		\
+#define for_each_set_bit(bit, addr, size) \
+	for ((bit) = find_first_bit((addr), (size));		\
 	     (bit) < (size);					\
 	     (bit) = find_next_bit((addr), (size), (bit) + 1))
 
-/* same as क्रम_each_set_bit() but use bit as value to start with */
-#घोषणा क्रम_each_set_bit_from(bit, addr, size) \
-	क्रम ((bit) = find_next_bit((addr), (size), (bit));	\
+/* same as for_each_set_bit() but use bit as value to start with */
+#define for_each_set_bit_from(bit, addr, size) \
+	for ((bit) = find_next_bit((addr), (size), (bit));	\
 	     (bit) < (size);					\
 	     (bit) = find_next_bit((addr), (size), (bit) + 1))
 
-#घोषणा क्रम_each_clear_bit(bit, addr, size) \
-	क्रम ((bit) = find_first_zero_bit((addr), (size));	\
+#define for_each_clear_bit(bit, addr, size) \
+	for ((bit) = find_first_zero_bit((addr), (size));	\
 	     (bit) < (size);					\
 	     (bit) = find_next_zero_bit((addr), (size), (bit) + 1))
 
-/* same as क्रम_each_clear_bit() but use bit as value to start with */
-#घोषणा क्रम_each_clear_bit_from(bit, addr, size) \
-	क्रम ((bit) = find_next_zero_bit((addr), (size), (bit));	\
+/* same as for_each_clear_bit() but use bit as value to start with */
+#define for_each_clear_bit_from(bit, addr, size) \
+	for ((bit) = find_next_zero_bit((addr), (size), (bit));	\
 	     (bit) < (size);					\
 	     (bit) = find_next_zero_bit((addr), (size), (bit) + 1))
 
 /**
- * क्रम_each_set_clump8 - iterate over biपंचांगap क्रम each 8-bit clump with set bits
+ * for_each_set_clump8 - iterate over bitmap for each 8-bit clump with set bits
  * @start: bit offset to start search and to store the current iteration offset
  * @clump: location to store copy of current 8-bit clump
- * @bits: biपंचांगap address to base the search on
- * @size: biपंचांगap size in number of bits
+ * @bits: bitmap address to base the search on
+ * @size: bitmap size in number of bits
  */
-#घोषणा क्रम_each_set_clump8(start, clump, bits, size) \
-	क्रम ((start) = find_first_clump8(&(clump), (bits), (size)); \
+#define for_each_set_clump8(start, clump, bits, size) \
+	for ((start) = find_first_clump8(&(clump), (bits), (size)); \
 	     (start) < (size); \
 	     (start) = find_next_clump8(&(clump), (bits), (size), (start) + 8))
 
-अटल अंतरभूत पूर्णांक get_biपंचांगask_order(अचिन्हित पूर्णांक count)
-अणु
-	पूर्णांक order;
+static inline int get_bitmask_order(unsigned int count)
+{
+	int order;
 
 	order = fls(count);
-	वापस order;	/* We could be slightly more clever with -1 here... */
-पूर्ण
+	return order;	/* We could be slightly more clever with -1 here... */
+}
 
-अटल __always_अंतरभूत अचिन्हित दीर्घ hweight_दीर्घ(अचिन्हित दीर्घ w)
-अणु
-	वापस माप(w) == 4 ? hweight32(w) : hweight64((__u64)w);
-पूर्ण
+static __always_inline unsigned long hweight_long(unsigned long w)
+{
+	return sizeof(w) == 4 ? hweight32(w) : hweight64((__u64)w);
+}
 
 /**
  * rol64 - rotate a 64-bit value left
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u64 rol64(__u64 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word << (shअगरt & 63)) | (word >> ((-shअगरt) & 63));
-पूर्ण
+static inline __u64 rol64(__u64 word, unsigned int shift)
+{
+	return (word << (shift & 63)) | (word >> ((-shift) & 63));
+}
 
 /**
  * ror64 - rotate a 64-bit value right
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u64 ror64(__u64 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word >> (shअगरt & 63)) | (word << ((-shअगरt) & 63));
-पूर्ण
+static inline __u64 ror64(__u64 word, unsigned int shift)
+{
+	return (word >> (shift & 63)) | (word << ((-shift) & 63));
+}
 
 /**
  * rol32 - rotate a 32-bit value left
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u32 rol32(__u32 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word << (shअगरt & 31)) | (word >> ((-shअगरt) & 31));
-पूर्ण
+static inline __u32 rol32(__u32 word, unsigned int shift)
+{
+	return (word << (shift & 31)) | (word >> ((-shift) & 31));
+}
 
 /**
  * ror32 - rotate a 32-bit value right
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u32 ror32(__u32 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word >> (shअगरt & 31)) | (word << ((-shअगरt) & 31));
-पूर्ण
+static inline __u32 ror32(__u32 word, unsigned int shift)
+{
+	return (word >> (shift & 31)) | (word << ((-shift) & 31));
+}
 
 /**
  * rol16 - rotate a 16-bit value left
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u16 rol16(__u16 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word << (shअगरt & 15)) | (word >> ((-shअगरt) & 15));
-पूर्ण
+static inline __u16 rol16(__u16 word, unsigned int shift)
+{
+	return (word << (shift & 15)) | (word >> ((-shift) & 15));
+}
 
 /**
  * ror16 - rotate a 16-bit value right
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u16 ror16(__u16 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word >> (shअगरt & 15)) | (word << ((-shअगरt) & 15));
-पूर्ण
+static inline __u16 ror16(__u16 word, unsigned int shift)
+{
+	return (word >> (shift & 15)) | (word << ((-shift) & 15));
+}
 
 /**
  * rol8 - rotate an 8-bit value left
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u8 rol8(__u8 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word << (shअगरt & 7)) | (word >> ((-shअगरt) & 7));
-पूर्ण
+static inline __u8 rol8(__u8 word, unsigned int shift)
+{
+	return (word << (shift & 7)) | (word >> ((-shift) & 7));
+}
 
 /**
  * ror8 - rotate an 8-bit value right
  * @word: value to rotate
- * @shअगरt: bits to roll
+ * @shift: bits to roll
  */
-अटल अंतरभूत __u8 ror8(__u8 word, अचिन्हित पूर्णांक shअगरt)
-अणु
-	वापस (word >> (shअगरt & 7)) | (word << ((-shअगरt) & 7));
-पूर्ण
+static inline __u8 ror8(__u8 word, unsigned int shift)
+{
+	return (word >> (shift & 7)) | (word << ((-shift) & 7));
+}
 
 /**
- * sign_extend32 - sign extend a 32-bit value using specअगरied bit as sign-bit
+ * sign_extend32 - sign extend a 32-bit value using specified bit as sign-bit
  * @value: value to sign extend
  * @index: 0 based bit index (0<=index<32) to sign bit
  *
- * This is safe to use क्रम 16- and 8-bit types as well.
+ * This is safe to use for 16- and 8-bit types as well.
  */
-अटल __always_अंतरभूत __s32 sign_extend32(__u32 value, पूर्णांक index)
-अणु
-	__u8 shअगरt = 31 - index;
-	वापस (__s32)(value << shअगरt) >> shअगरt;
-पूर्ण
+static __always_inline __s32 sign_extend32(__u32 value, int index)
+{
+	__u8 shift = 31 - index;
+	return (__s32)(value << shift) >> shift;
+}
 
 /**
- * sign_extend64 - sign extend a 64-bit value using specअगरied bit as sign-bit
+ * sign_extend64 - sign extend a 64-bit value using specified bit as sign-bit
  * @value: value to sign extend
  * @index: 0 based bit index (0<=index<64) to sign bit
  */
-अटल __always_अंतरभूत __s64 sign_extend64(__u64 value, पूर्णांक index)
-अणु
-	__u8 shअगरt = 63 - index;
-	वापस (__s64)(value << shअगरt) >> shअगरt;
-पूर्ण
+static __always_inline __s64 sign_extend64(__u64 value, int index)
+{
+	__u8 shift = 63 - index;
+	return (__s64)(value << shift) >> shift;
+}
 
-अटल अंतरभूत अचिन्हित fls_दीर्घ(अचिन्हित दीर्घ l)
-अणु
-	अगर (माप(l) == 4)
-		वापस fls(l);
-	वापस fls64(l);
-पूर्ण
+static inline unsigned fls_long(unsigned long l)
+{
+	if (sizeof(l) == 4)
+		return fls(l);
+	return fls64(l);
+}
 
-अटल अंतरभूत पूर्णांक get_count_order(अचिन्हित पूर्णांक count)
-अणु
-	अगर (count == 0)
-		वापस -1;
+static inline int get_count_order(unsigned int count)
+{
+	if (count == 0)
+		return -1;
 
-	वापस fls(--count);
-पूर्ण
+	return fls(--count);
+}
 
 /**
- * get_count_order_दीर्घ - get order after rounding @l up to घातer of 2
+ * get_count_order_long - get order after rounding @l up to power of 2
  * @l: parameter
  *
- * it is same as get_count_order() but with दीर्घ type parameter
+ * it is same as get_count_order() but with long type parameter
  */
-अटल अंतरभूत पूर्णांक get_count_order_दीर्घ(अचिन्हित दीर्घ l)
-अणु
-	अगर (l == 0UL)
-		वापस -1;
-	वापस (पूर्णांक)fls_दीर्घ(--l);
-पूर्ण
+static inline int get_count_order_long(unsigned long l)
+{
+	if (l == 0UL)
+		return -1;
+	return (int)fls_long(--l);
+}
 
 /**
  * __ffs64 - find first set bit in a 64 bit word
  * @word: The 64 bit word
  *
- * On 64 bit arches this is a synonym क्रम __ffs
- * The result is not defined अगर no bits are set, so check that @word
- * is non-zero beक्रमe calling this.
+ * On 64 bit arches this is a synonym for __ffs
+ * The result is not defined if no bits are set, so check that @word
+ * is non-zero before calling this.
  */
-अटल अंतरभूत अचिन्हित दीर्घ __ffs64(u64 word)
-अणु
-#अगर BITS_PER_LONG == 32
-	अगर (((u32)word) == 0UL)
-		वापस __ffs((u32)(word >> 32)) + 32;
-#या_अगर BITS_PER_LONG != 64
-#त्रुटि BITS_PER_LONG not 32 or 64
-#पूर्ण_अगर
-	वापस __ffs((अचिन्हित दीर्घ)word);
-पूर्ण
+static inline unsigned long __ffs64(u64 word)
+{
+#if BITS_PER_LONG == 32
+	if (((u32)word) == 0UL)
+		return __ffs((u32)(word >> 32)) + 32;
+#elif BITS_PER_LONG != 64
+#error BITS_PER_LONG not 32 or 64
+#endif
+	return __ffs((unsigned long)word);
+}
 
 /**
  * assign_bit - Assign value to a bit in memory
@@ -236,56 +235,56 @@
  * @addr: the address to start counting from
  * @value: the value to assign
  */
-अटल __always_अंतरभूत व्योम assign_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr,
+static __always_inline void assign_bit(long nr, volatile unsigned long *addr,
 				       bool value)
-अणु
-	अगर (value)
+{
+	if (value)
 		set_bit(nr, addr);
-	अन्यथा
+	else
 		clear_bit(nr, addr);
-पूर्ण
+}
 
-अटल __always_अंतरभूत व्योम __assign_bit(दीर्घ nr, अस्थिर अचिन्हित दीर्घ *addr,
+static __always_inline void __assign_bit(long nr, volatile unsigned long *addr,
 					 bool value)
-अणु
-	अगर (value)
+{
+	if (value)
 		__set_bit(nr, addr);
-	अन्यथा
+	else
 		__clear_bit(nr, addr);
-पूर्ण
+}
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#अगर_अघोषित set_mask_bits
-#घोषणा set_mask_bits(ptr, mask, bits)	\
-(अणु								\
-	स्थिर typeof(*(ptr)) mask__ = (mask), bits__ = (bits);	\
+#ifndef set_mask_bits
+#define set_mask_bits(ptr, mask, bits)	\
+({								\
+	const typeof(*(ptr)) mask__ = (mask), bits__ = (bits);	\
 	typeof(*(ptr)) old__, new__;				\
 								\
-	करो अणु							\
+	do {							\
 		old__ = READ_ONCE(*(ptr));			\
 		new__ = (old__ & ~mask__) | bits__;		\
-	पूर्ण जबतक (cmpxchg(ptr, old__, new__) != old__);		\
+	} while (cmpxchg(ptr, old__, new__) != old__);		\
 								\
 	old__;							\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#अगर_अघोषित bit_clear_unless
-#घोषणा bit_clear_unless(ptr, clear, test)	\
-(अणु								\
-	स्थिर typeof(*(ptr)) clear__ = (clear), test__ = (test);\
+#ifndef bit_clear_unless
+#define bit_clear_unless(ptr, clear, test)	\
+({								\
+	const typeof(*(ptr)) clear__ = (clear), test__ = (test);\
 	typeof(*(ptr)) old__, new__;				\
 								\
-	करो अणु							\
+	do {							\
 		old__ = READ_ONCE(*(ptr));			\
 		new__ = old__ & ~clear__;			\
-	पूर्ण जबतक (!(old__ & test__) &&				\
+	} while (!(old__ & test__) &&				\
 		 cmpxchg(ptr, old__, new__) != old__);		\
 								\
 	!(old__ & test__);					\
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर
+#endif /* __KERNEL__ */
+#endif

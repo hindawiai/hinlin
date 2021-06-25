@@ -1,2 +1,1 @@
-<शैली गुरु>
-#समावेश "../../generic.h"
+#include "../../generic.h"

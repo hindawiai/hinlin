@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* si.h -- Private header क्रम radeon driver -*- linux-c -*-
+/* si.h -- Private header for radeon driver -*- linux-c -*-
  *
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,18 +21,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __SI_H__
-#घोषणा __SI_H__
+#ifndef __SI_H__
+#define __SI_H__
 
-काष्ठा radeon_device;
-काष्ठा radeon_mc;
+struct radeon_device;
+struct radeon_mc;
 
-पूर्णांक si_mc_load_microcode(काष्ठा radeon_device *rdev);
-u32 si_gpu_check_soft_reset(काष्ठा radeon_device *rdev);
-व्योम si_vram_gtt_location(काष्ठा radeon_device *rdev, काष्ठा radeon_mc *mc);
-व्योम si_rlc_reset(काष्ठा radeon_device *rdev);
-व्योम si_init_uvd_पूर्णांकernal_cg(काष्ठा radeon_device *rdev);
-u32 si_get_csb_size(काष्ठा radeon_device *rdev);
-व्योम si_get_csb_buffer(काष्ठा radeon_device *rdev, अस्थिर u32 *buffer);
+int si_mc_load_microcode(struct radeon_device *rdev);
+u32 si_gpu_check_soft_reset(struct radeon_device *rdev);
+void si_vram_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc);
+void si_rlc_reset(struct radeon_device *rdev);
+void si_init_uvd_internal_cg(struct radeon_device *rdev);
+u32 si_get_csb_size(struct radeon_device *rdev);
+void si_get_csb_buffer(struct radeon_device *rdev, volatile u32 *buffer);
 
-#पूर्ण_अगर                         /* __SI_H__ */
+#endif                         /* __SI_H__ */

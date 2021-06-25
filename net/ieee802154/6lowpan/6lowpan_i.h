@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __IEEE802154_6LOWPAN_I_H__
-#घोषणा __IEEE802154_6LOWPAN_I_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __IEEE802154_6LOWPAN_I_H__
+#define __IEEE802154_6LOWPAN_I_H__
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-#समावेश <net/ieee802154_netdev.h>
-#समावेश <net/inet_frag.h>
-#समावेश <net/6lowpan.h>
+#include <net/ieee802154_netdev.h>
+#include <net/inet_frag.h>
+#include <net/6lowpan.h>
 
-प्रकार अचिन्हित __bitwise lowpan_rx_result;
-#घोषणा RX_CONTINUE		((__क्रमce lowpan_rx_result) 0u)
-#घोषणा RX_DROP_UNUSABLE	((__क्रमce lowpan_rx_result) 1u)
-#घोषणा RX_DROP			((__क्रमce lowpan_rx_result) 2u)
-#घोषणा RX_QUEUED		((__क्रमce lowpan_rx_result) 3u)
+typedef unsigned __bitwise lowpan_rx_result;
+#define RX_CONTINUE		((__force lowpan_rx_result) 0u)
+#define RX_DROP_UNUSABLE	((__force lowpan_rx_result) 1u)
+#define RX_DROP			((__force lowpan_rx_result) 2u)
+#define RX_QUEUED		((__force lowpan_rx_result) 3u)
 
-#घोषणा LOWPAN_DISPATCH_FRAG1           0xc0
-#घोषणा LOWPAN_DISPATCH_FRAGN           0xe0
+#define LOWPAN_DISPATCH_FRAG1           0xc0
+#define LOWPAN_DISPATCH_FRAGN           0xe0
 
-काष्ठा frag_lowpan_compare_key अणु
+struct frag_lowpan_compare_key {
 	u16 tag;
 	u16 d_size;
-	काष्ठा ieee802154_addr src;
-	काष्ठा ieee802154_addr dst;
-पूर्ण;
+	struct ieee802154_addr src;
+	struct ieee802154_addr dst;
+};
 
-/* Equivalent of ipv4 काष्ठा ipq
+/* Equivalent of ipv4 struct ipq
  */
-काष्ठा lowpan_frag_queue अणु
-	काष्ठा inet_frag_queue	q;
-पूर्ण;
+struct lowpan_frag_queue {
+	struct inet_frag_queue	q;
+};
 
-पूर्णांक lowpan_frag_rcv(काष्ठा sk_buff *skb, स्थिर u8 frag_type);
-व्योम lowpan_net_frag_निकास(व्योम);
-पूर्णांक lowpan_net_frag_init(व्योम);
+int lowpan_frag_rcv(struct sk_buff *skb, const u8 frag_type);
+void lowpan_net_frag_exit(void);
+int lowpan_net_frag_init(void);
 
-व्योम lowpan_rx_init(व्योम);
-व्योम lowpan_rx_निकास(व्योम);
+void lowpan_rx_init(void);
+void lowpan_rx_exit(void);
 
-पूर्णांक lowpan_header_create(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
-			 अचिन्हित लघु type, स्थिर व्योम *_daddr,
-			 स्थिर व्योम *_saddr, अचिन्हित पूर्णांक len);
-netdev_tx_t lowpan_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+int lowpan_header_create(struct sk_buff *skb, struct net_device *dev,
+			 unsigned short type, const void *_daddr,
+			 const void *_saddr, unsigned int len);
+netdev_tx_t lowpan_xmit(struct sk_buff *skb, struct net_device *dev);
 
-पूर्णांक lowpan_iphc_decompress(काष्ठा sk_buff *skb);
-lowpan_rx_result lowpan_rx_h_ipv6(काष्ठा sk_buff *skb);
+int lowpan_iphc_decompress(struct sk_buff *skb);
+lowpan_rx_result lowpan_rx_h_ipv6(struct sk_buff *skb);
 
-#पूर्ण_अगर /* __IEEE802154_6LOWPAN_I_H__ */
+#endif /* __IEEE802154_6LOWPAN_I_H__ */

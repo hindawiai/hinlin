@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/pxa320.c
  *
- * Code specअगरic to PXA320
+ * Code specific to PXA320
  *
  * Copyright (C) 2007 Marvell Internation Ltd.
  *
@@ -11,17 +10,17 @@
  *             initial version
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
 
-#समावेश "pxa320.h"
+#include "pxa320.h"
 
-#समावेश "generic.h"
-#समावेश "devices.h"
+#include "generic.h"
+#include "devices.h"
 
-अटल काष्ठा mfp_addr_map pxa320_mfp_addr_map[] __initdata = अणु
+static struct mfp_addr_map pxa320_mfp_addr_map[] __initdata = {
 
 	MFP_ADDR_X(GPIO0,  GPIO4,   0x0124),
 	MFP_ADDR_X(GPIO5,  GPIO9,   0x028C),
@@ -73,16 +72,16 @@
 	MFP_ADDR(DF_IO15, 0x0288),
 
 	MFP_ADDR_END,
-पूर्ण;
+};
 
-अटल पूर्णांक __init pxa320_init(व्योम)
-अणु
-	अगर (cpu_is_pxa320()) अणु
+static int __init pxa320_init(void)
+{
+	if (cpu_is_pxa320()) {
 		mfp_init_base(io_p2v(MFPR_BASE));
 		mfp_init_addr(pxa320_mfp_addr_map);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 core_initcall(pxa320_init);

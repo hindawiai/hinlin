@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Base driver क्रम Dialog Semiconductor DA9030/DA9034
+ * Base driver for Dialog Semiconductor DA9030/DA9034
  *
  * Copyright (C) 2008 Compulab, Ltd.
  *	Mike Rapoport <mike@compulab.co.il>
@@ -10,260 +9,260 @@
  *	Eric Miao <eric.miao@marvell.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/mfd/da903x.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/i2c.h>
+#include <linux/mfd/da903x.h>
+#include <linux/slab.h>
 
-#घोषणा DA9030_CHIP_ID		0x00
-#घोषणा DA9030_EVENT_A		0x01
-#घोषणा DA9030_EVENT_B		0x02
-#घोषणा DA9030_EVENT_C		0x03
-#घोषणा DA9030_STATUS		0x04
-#घोषणा DA9030_IRQ_MASK_A	0x05
-#घोषणा DA9030_IRQ_MASK_B	0x06
-#घोषणा DA9030_IRQ_MASK_C	0x07
-#घोषणा DA9030_SYS_CTRL_A	0x08
-#घोषणा DA9030_SYS_CTRL_B	0x09
-#घोषणा DA9030_FAULT_LOG	0x0a
+#define DA9030_CHIP_ID		0x00
+#define DA9030_EVENT_A		0x01
+#define DA9030_EVENT_B		0x02
+#define DA9030_EVENT_C		0x03
+#define DA9030_STATUS		0x04
+#define DA9030_IRQ_MASK_A	0x05
+#define DA9030_IRQ_MASK_B	0x06
+#define DA9030_IRQ_MASK_C	0x07
+#define DA9030_SYS_CTRL_A	0x08
+#define DA9030_SYS_CTRL_B	0x09
+#define DA9030_FAULT_LOG	0x0a
 
-#घोषणा DA9034_CHIP_ID		0x00
-#घोषणा DA9034_EVENT_A		0x01
-#घोषणा DA9034_EVENT_B		0x02
-#घोषणा DA9034_EVENT_C		0x03
-#घोषणा DA9034_EVENT_D		0x04
-#घोषणा DA9034_STATUS_A		0x05
-#घोषणा DA9034_STATUS_B		0x06
-#घोषणा DA9034_IRQ_MASK_A	0x07
-#घोषणा DA9034_IRQ_MASK_B	0x08
-#घोषणा DA9034_IRQ_MASK_C	0x09
-#घोषणा DA9034_IRQ_MASK_D	0x0a
-#घोषणा DA9034_SYS_CTRL_A	0x0b
-#घोषणा DA9034_SYS_CTRL_B	0x0c
-#घोषणा DA9034_FAULT_LOG	0x0d
+#define DA9034_CHIP_ID		0x00
+#define DA9034_EVENT_A		0x01
+#define DA9034_EVENT_B		0x02
+#define DA9034_EVENT_C		0x03
+#define DA9034_EVENT_D		0x04
+#define DA9034_STATUS_A		0x05
+#define DA9034_STATUS_B		0x06
+#define DA9034_IRQ_MASK_A	0x07
+#define DA9034_IRQ_MASK_B	0x08
+#define DA9034_IRQ_MASK_C	0x09
+#define DA9034_IRQ_MASK_D	0x0a
+#define DA9034_SYS_CTRL_A	0x0b
+#define DA9034_SYS_CTRL_B	0x0c
+#define DA9034_FAULT_LOG	0x0d
 
-काष्ठा da903x_chip;
+struct da903x_chip;
 
-काष्ठा da903x_chip_ops अणु
-	पूर्णांक	(*init_chip)(काष्ठा da903x_chip *);
-	पूर्णांक	(*unmask_events)(काष्ठा da903x_chip *, अचिन्हित पूर्णांक events);
-	पूर्णांक	(*mask_events)(काष्ठा da903x_chip *, अचिन्हित पूर्णांक events);
-	पूर्णांक	(*पढ़ो_events)(काष्ठा da903x_chip *, अचिन्हित पूर्णांक *events);
-	पूर्णांक	(*पढ़ो_status)(काष्ठा da903x_chip *, अचिन्हित पूर्णांक *status);
-पूर्ण;
+struct da903x_chip_ops {
+	int	(*init_chip)(struct da903x_chip *);
+	int	(*unmask_events)(struct da903x_chip *, unsigned int events);
+	int	(*mask_events)(struct da903x_chip *, unsigned int events);
+	int	(*read_events)(struct da903x_chip *, unsigned int *events);
+	int	(*read_status)(struct da903x_chip *, unsigned int *status);
+};
 
-काष्ठा da903x_chip अणु
-	काष्ठा i2c_client	*client;
-	काष्ठा device		*dev;
-	स्थिर काष्ठा da903x_chip_ops *ops;
+struct da903x_chip {
+	struct i2c_client	*client;
+	struct device		*dev;
+	const struct da903x_chip_ops *ops;
 
-	पूर्णांक			type;
-	uपूर्णांक32_t		events_mask;
+	int			type;
+	uint32_t		events_mask;
 
-	काष्ठा mutex		lock;
-	काष्ठा work_काष्ठा	irq_work;
+	struct mutex		lock;
+	struct work_struct	irq_work;
 
-	काष्ठा blocking_notअगरier_head notअगरier_list;
-पूर्ण;
+	struct blocking_notifier_head notifier_list;
+};
 
-अटल अंतरभूत पूर्णांक __da903x_पढ़ो(काष्ठा i2c_client *client,
-				पूर्णांक reg, uपूर्णांक8_t *val)
-अणु
-	पूर्णांक ret;
+static inline int __da903x_read(struct i2c_client *client,
+				int reg, uint8_t *val)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(client, reg);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed reading at 0x%02x\n", reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	*val = (uपूर्णांक8_t)ret;
-	वापस 0;
-पूर्ण
+	*val = (uint8_t)ret;
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक __da903x_पढ़ोs(काष्ठा i2c_client *client, पूर्णांक reg,
-				 पूर्णांक len, uपूर्णांक8_t *val)
-अणु
-	पूर्णांक ret;
+static inline int __da903x_reads(struct i2c_client *client, int reg,
+				 int len, uint8_t *val)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_i2c_block_data(client, reg, len, val);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_i2c_block_data(client, reg, len, val);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed reading from 0x%02x\n", reg);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक __da903x_ग_लिखो(काष्ठा i2c_client *client,
-				 पूर्णांक reg, uपूर्णांक8_t val)
-अणु
-	पूर्णांक ret;
+static inline int __da903x_write(struct i2c_client *client,
+				 int reg, uint8_t val)
+{
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_byte_data(client, reg, val);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed writing 0x%02x to 0x%02x\n",
 				val, reg);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक __da903x_ग_लिखोs(काष्ठा i2c_client *client, पूर्णांक reg,
-				  पूर्णांक len, uपूर्णांक8_t *val)
-अणु
-	पूर्णांक ret;
+static inline int __da903x_writes(struct i2c_client *client, int reg,
+				  int len, uint8_t *val)
+{
+	int ret;
 
-	ret = i2c_smbus_ग_लिखो_i2c_block_data(client, reg, len, val);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_i2c_block_data(client, reg, len, val);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed writings to 0x%02x\n", reg);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-पूर्णांक da903x_रेजिस्टर_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb,
-				अचिन्हित पूर्णांक events)
-अणु
-	काष्ठा da903x_chip *chip = dev_get_drvdata(dev);
+int da903x_register_notifier(struct device *dev, struct notifier_block *nb,
+				unsigned int events)
+{
+	struct da903x_chip *chip = dev_get_drvdata(dev);
 
 	chip->ops->unmask_events(chip, events);
-	वापस blocking_notअगरier_chain_रेजिस्टर(&chip->notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(da903x_रेजिस्टर_notअगरier);
+	return blocking_notifier_chain_register(&chip->notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(da903x_register_notifier);
 
-पूर्णांक da903x_unरेजिस्टर_notअगरier(काष्ठा device *dev, काष्ठा notअगरier_block *nb,
-				अचिन्हित पूर्णांक events)
-अणु
-	काष्ठा da903x_chip *chip = dev_get_drvdata(dev);
+int da903x_unregister_notifier(struct device *dev, struct notifier_block *nb,
+				unsigned int events)
+{
+	struct da903x_chip *chip = dev_get_drvdata(dev);
 
 	chip->ops->mask_events(chip, events);
-	वापस blocking_notअगरier_chain_unरेजिस्टर(&chip->notअगरier_list, nb);
-पूर्ण
-EXPORT_SYMBOL_GPL(da903x_unरेजिस्टर_notअगरier);
+	return blocking_notifier_chain_unregister(&chip->notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(da903x_unregister_notifier);
 
-पूर्णांक da903x_ग_लिखो(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t val)
-अणु
-	वापस __da903x_ग_लिखो(to_i2c_client(dev), reg, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(da903x_ग_लिखो);
+int da903x_write(struct device *dev, int reg, uint8_t val)
+{
+	return __da903x_write(to_i2c_client(dev), reg, val);
+}
+EXPORT_SYMBOL_GPL(da903x_write);
 
-पूर्णांक da903x_ग_लिखोs(काष्ठा device *dev, पूर्णांक reg, पूर्णांक len, uपूर्णांक8_t *val)
-अणु
-	वापस __da903x_ग_लिखोs(to_i2c_client(dev), reg, len, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(da903x_ग_लिखोs);
+int da903x_writes(struct device *dev, int reg, int len, uint8_t *val)
+{
+	return __da903x_writes(to_i2c_client(dev), reg, len, val);
+}
+EXPORT_SYMBOL_GPL(da903x_writes);
 
-पूर्णांक da903x_पढ़ो(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t *val)
-अणु
-	वापस __da903x_पढ़ो(to_i2c_client(dev), reg, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(da903x_पढ़ो);
+int da903x_read(struct device *dev, int reg, uint8_t *val)
+{
+	return __da903x_read(to_i2c_client(dev), reg, val);
+}
+EXPORT_SYMBOL_GPL(da903x_read);
 
-पूर्णांक da903x_पढ़ोs(काष्ठा device *dev, पूर्णांक reg, पूर्णांक len, uपूर्णांक8_t *val)
-अणु
-	वापस __da903x_पढ़ोs(to_i2c_client(dev), reg, len, val);
-पूर्ण
-EXPORT_SYMBOL_GPL(da903x_पढ़ोs);
+int da903x_reads(struct device *dev, int reg, int len, uint8_t *val)
+{
+	return __da903x_reads(to_i2c_client(dev), reg, len, val);
+}
+EXPORT_SYMBOL_GPL(da903x_reads);
 
-पूर्णांक da903x_set_bits(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा da903x_chip *chip = dev_get_drvdata(dev);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret = 0;
+int da903x_set_bits(struct device *dev, int reg, uint8_t bit_mask)
+{
+	struct da903x_chip *chip = dev_get_drvdata(dev);
+	uint8_t reg_val;
+	int ret = 0;
 
 	mutex_lock(&chip->lock);
 
-	ret = __da903x_पढ़ो(chip->client, reg, &reg_val);
-	अगर (ret)
-		जाओ out;
+	ret = __da903x_read(chip->client, reg, &reg_val);
+	if (ret)
+		goto out;
 
-	अगर ((reg_val & bit_mask) != bit_mask) अणु
+	if ((reg_val & bit_mask) != bit_mask) {
 		reg_val |= bit_mask;
-		ret = __da903x_ग_लिखो(chip->client, reg, reg_val);
-	पूर्ण
+		ret = __da903x_write(chip->client, reg, reg_val);
+	}
 out:
 	mutex_unlock(&chip->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(da903x_set_bits);
 
-पूर्णांक da903x_clr_bits(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा da903x_chip *chip = dev_get_drvdata(dev);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret = 0;
+int da903x_clr_bits(struct device *dev, int reg, uint8_t bit_mask)
+{
+	struct da903x_chip *chip = dev_get_drvdata(dev);
+	uint8_t reg_val;
+	int ret = 0;
 
 	mutex_lock(&chip->lock);
 
-	ret = __da903x_पढ़ो(chip->client, reg, &reg_val);
-	अगर (ret)
-		जाओ out;
+	ret = __da903x_read(chip->client, reg, &reg_val);
+	if (ret)
+		goto out;
 
-	अगर (reg_val & bit_mask) अणु
+	if (reg_val & bit_mask) {
 		reg_val &= ~bit_mask;
-		ret = __da903x_ग_लिखो(chip->client, reg, reg_val);
-	पूर्ण
+		ret = __da903x_write(chip->client, reg, reg_val);
+	}
 out:
 	mutex_unlock(&chip->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(da903x_clr_bits);
 
-पूर्णांक da903x_update(काष्ठा device *dev, पूर्णांक reg, uपूर्णांक8_t val, uपूर्णांक8_t mask)
-अणु
-	काष्ठा da903x_chip *chip = dev_get_drvdata(dev);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret = 0;
+int da903x_update(struct device *dev, int reg, uint8_t val, uint8_t mask)
+{
+	struct da903x_chip *chip = dev_get_drvdata(dev);
+	uint8_t reg_val;
+	int ret = 0;
 
 	mutex_lock(&chip->lock);
 
-	ret = __da903x_पढ़ो(chip->client, reg, &reg_val);
-	अगर (ret)
-		जाओ out;
+	ret = __da903x_read(chip->client, reg, &reg_val);
+	if (ret)
+		goto out;
 
-	अगर ((reg_val & mask) != val) अणु
+	if ((reg_val & mask) != val) {
 		reg_val = (reg_val & ~mask) | val;
-		ret = __da903x_ग_लिखो(chip->client, reg, reg_val);
-	पूर्ण
+		ret = __da903x_write(chip->client, reg, reg_val);
+	}
 out:
 	mutex_unlock(&chip->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(da903x_update);
 
-पूर्णांक da903x_query_status(काष्ठा device *dev, अचिन्हित पूर्णांक sbits)
-अणु
-	काष्ठा da903x_chip *chip = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक status = 0;
+int da903x_query_status(struct device *dev, unsigned int sbits)
+{
+	struct da903x_chip *chip = dev_get_drvdata(dev);
+	unsigned int status = 0;
 
-	chip->ops->पढ़ो_status(chip, &status);
-	वापस ((status & sbits) == sbits);
-पूर्ण
+	chip->ops->read_status(chip, &status);
+	return ((status & sbits) == sbits);
+}
 EXPORT_SYMBOL(da903x_query_status);
 
-अटल पूर्णांक da9030_init_chip(काष्ठा da903x_chip *chip)
-अणु
-	uपूर्णांक8_t chip_id;
-	पूर्णांक err;
+static int da9030_init_chip(struct da903x_chip *chip)
+{
+	uint8_t chip_id;
+	int err;
 
-	err = __da903x_पढ़ो(chip->client, DA9030_CHIP_ID, &chip_id);
-	अगर (err)
-		वापस err;
+	err = __da903x_read(chip->client, DA9030_CHIP_ID, &chip_id);
+	if (err)
+		return err;
 
-	err = __da903x_ग_लिखो(chip->client, DA9030_SYS_CTRL_A, 0xE8);
-	अगर (err)
-		वापस err;
+	err = __da903x_write(chip->client, DA9030_SYS_CTRL_A, 0xE8);
+	if (err)
+		return err;
 
 	dev_info(chip->dev, "DA9030 (CHIP ID: 0x%02x) detected\n", chip_id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da9030_unmask_events(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक events)
-अणु
-	uपूर्णांक8_t v[3];
+static int da9030_unmask_events(struct da903x_chip *chip, unsigned int events)
+{
+	uint8_t v[3];
 
 	chip->events_mask &= ~events;
 
@@ -271,12 +270,12 @@ EXPORT_SYMBOL(da903x_query_status);
 	v[1] = (chip->events_mask >> 8) & 0xff;
 	v[2] = (chip->events_mask >> 16) & 0xff;
 
-	वापस __da903x_ग_लिखोs(chip->client, DA9030_IRQ_MASK_A, 3, v);
-पूर्ण
+	return __da903x_writes(chip->client, DA9030_IRQ_MASK_A, 3, v);
+}
 
-अटल पूर्णांक da9030_mask_events(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक events)
-अणु
-	uपूर्णांक8_t v[3];
+static int da9030_mask_events(struct da903x_chip *chip, unsigned int events)
+{
+	uint8_t v[3];
 
 	chip->events_mask |= events;
 
@@ -284,63 +283,63 @@ EXPORT_SYMBOL(da903x_query_status);
 	v[1] = (chip->events_mask >> 8) & 0xff;
 	v[2] = (chip->events_mask >> 16) & 0xff;
 
-	वापस __da903x_ग_लिखोs(chip->client, DA9030_IRQ_MASK_A, 3, v);
-पूर्ण
+	return __da903x_writes(chip->client, DA9030_IRQ_MASK_A, 3, v);
+}
 
-अटल पूर्णांक da9030_पढ़ो_events(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक *events)
-अणु
-	uपूर्णांक8_t v[3] = अणु0, 0, 0पूर्ण;
-	पूर्णांक ret;
+static int da9030_read_events(struct da903x_chip *chip, unsigned int *events)
+{
+	uint8_t v[3] = {0, 0, 0};
+	int ret;
 
-	ret = __da903x_पढ़ोs(chip->client, DA9030_EVENT_A, 3, v);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __da903x_reads(chip->client, DA9030_EVENT_A, 3, v);
+	if (ret < 0)
+		return ret;
 
 	*events = (v[2] << 16) | (v[1] << 8) | v[0];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da9030_पढ़ो_status(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक *status)
-अणु
-	वापस __da903x_पढ़ो(chip->client, DA9030_STATUS, (uपूर्णांक8_t *)status);
-पूर्ण
+static int da9030_read_status(struct da903x_chip *chip, unsigned int *status)
+{
+	return __da903x_read(chip->client, DA9030_STATUS, (uint8_t *)status);
+}
 
-अटल पूर्णांक da9034_init_chip(काष्ठा da903x_chip *chip)
-अणु
-	uपूर्णांक8_t chip_id;
-	पूर्णांक err;
+static int da9034_init_chip(struct da903x_chip *chip)
+{
+	uint8_t chip_id;
+	int err;
 
-	err = __da903x_पढ़ो(chip->client, DA9034_CHIP_ID, &chip_id);
-	अगर (err)
-		वापस err;
+	err = __da903x_read(chip->client, DA9034_CHIP_ID, &chip_id);
+	if (err)
+		return err;
 
-	err = __da903x_ग_लिखो(chip->client, DA9034_SYS_CTRL_A, 0xE8);
-	अगर (err)
-		वापस err;
+	err = __da903x_write(chip->client, DA9034_SYS_CTRL_A, 0xE8);
+	if (err)
+		return err;
 
-	/* aव्योम SRAM घातer off during sleep*/
-	__da903x_ग_लिखो(chip->client, 0x10, 0x07);
-	__da903x_ग_लिखो(chip->client, 0x11, 0xff);
-	__da903x_ग_लिखो(chip->client, 0x12, 0xff);
+	/* avoid SRAM power off during sleep*/
+	__da903x_write(chip->client, 0x10, 0x07);
+	__da903x_write(chip->client, 0x11, 0xff);
+	__da903x_write(chip->client, 0x12, 0xff);
 
-	/* Enable the ONKEY घातer करोwn functionality */
-	__da903x_ग_लिखो(chip->client, DA9034_SYS_CTRL_B, 0x20);
-	__da903x_ग_लिखो(chip->client, DA9034_SYS_CTRL_A, 0x60);
+	/* Enable the ONKEY power down functionality */
+	__da903x_write(chip->client, DA9034_SYS_CTRL_B, 0x20);
+	__da903x_write(chip->client, DA9034_SYS_CTRL_A, 0x60);
 
 	/* workaround to make LEDs work */
-	__da903x_ग_लिखो(chip->client, 0x90, 0x01);
-	__da903x_ग_लिखो(chip->client, 0xB0, 0x08);
+	__da903x_write(chip->client, 0x90, 0x01);
+	__da903x_write(chip->client, 0xB0, 0x08);
 
 	/* make ADTV1 and SDTV1 effective */
-	__da903x_ग_लिखो(chip->client, 0x20, 0x00);
+	__da903x_write(chip->client, 0x20, 0x00);
 
 	dev_info(chip->dev, "DA9034 (CHIP ID: 0x%02x) detected\n", chip_id);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da9034_unmask_events(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक events)
-अणु
-	uपूर्णांक8_t v[4];
+static int da9034_unmask_events(struct da903x_chip *chip, unsigned int events)
+{
+	uint8_t v[4];
 
 	chip->events_mask &= ~events;
 
@@ -349,12 +348,12 @@ EXPORT_SYMBOL(da903x_query_status);
 	v[2] = (chip->events_mask >> 16) & 0xff;
 	v[3] = (chip->events_mask >> 24) & 0xff;
 
-	वापस __da903x_ग_लिखोs(chip->client, DA9034_IRQ_MASK_A, 4, v);
-पूर्ण
+	return __da903x_writes(chip->client, DA9034_IRQ_MASK_A, 4, v);
+}
 
-अटल पूर्णांक da9034_mask_events(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक events)
-अणु
-	uपूर्णांक8_t v[4];
+static int da9034_mask_events(struct da903x_chip *chip, unsigned int events)
+{
+	uint8_t v[4];
 
 	chip->events_mask |= events;
 
@@ -363,144 +362,144 @@ EXPORT_SYMBOL(da903x_query_status);
 	v[2] = (chip->events_mask >> 16) & 0xff;
 	v[3] = (chip->events_mask >> 24) & 0xff;
 
-	वापस __da903x_ग_लिखोs(chip->client, DA9034_IRQ_MASK_A, 4, v);
-पूर्ण
+	return __da903x_writes(chip->client, DA9034_IRQ_MASK_A, 4, v);
+}
 
-अटल पूर्णांक da9034_पढ़ो_events(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक *events)
-अणु
-	uपूर्णांक8_t v[4] = अणु0, 0, 0, 0पूर्ण;
-	पूर्णांक ret;
+static int da9034_read_events(struct da903x_chip *chip, unsigned int *events)
+{
+	uint8_t v[4] = {0, 0, 0, 0};
+	int ret;
 
-	ret = __da903x_पढ़ोs(chip->client, DA9034_EVENT_A, 4, v);
-	अगर (ret < 0)
-		वापस ret;
+	ret = __da903x_reads(chip->client, DA9034_EVENT_A, 4, v);
+	if (ret < 0)
+		return ret;
 
 	*events = (v[3] << 24) | (v[2] << 16) | (v[1] << 8) | v[0];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक da9034_पढ़ो_status(काष्ठा da903x_chip *chip, अचिन्हित पूर्णांक *status)
-अणु
-	uपूर्णांक8_t v[2] = अणु0, 0पूर्ण;
-	पूर्णांक ret = 0;
+static int da9034_read_status(struct da903x_chip *chip, unsigned int *status)
+{
+	uint8_t v[2] = {0, 0};
+	int ret = 0;
 
-	ret = __da903x_पढ़ोs(chip->client, DA9034_STATUS_A, 2, v);
-	अगर (ret)
-		वापस ret;
+	ret = __da903x_reads(chip->client, DA9034_STATUS_A, 2, v);
+	if (ret)
+		return ret;
 
 	*status = (v[1] << 8) | v[0];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम da903x_irq_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा da903x_chip *chip =
-		container_of(work, काष्ठा da903x_chip, irq_work);
-	अचिन्हित पूर्णांक events = 0;
+static void da903x_irq_work(struct work_struct *work)
+{
+	struct da903x_chip *chip =
+		container_of(work, struct da903x_chip, irq_work);
+	unsigned int events = 0;
 
-	जबतक (1) अणु
-		अगर (chip->ops->पढ़ो_events(chip, &events))
-			अवरोध;
+	while (1) {
+		if (chip->ops->read_events(chip, &events))
+			break;
 
 		events &= ~chip->events_mask;
-		अगर (events == 0)
-			अवरोध;
+		if (events == 0)
+			break;
 
-		blocking_notअगरier_call_chain(
-				&chip->notअगरier_list, events, शून्य);
-	पूर्ण
+		blocking_notifier_call_chain(
+				&chip->notifier_list, events, NULL);
+	}
 	enable_irq(chip->client->irq);
-पूर्ण
+}
 
-अटल irqवापस_t da903x_irq_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा da903x_chip *chip = data;
+static irqreturn_t da903x_irq_handler(int irq, void *data)
+{
+	struct da903x_chip *chip = data;
 
 	disable_irq_nosync(irq);
-	(व्योम)schedule_work(&chip->irq_work);
+	(void)schedule_work(&chip->irq_work);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा da903x_chip_ops da903x_ops[] = अणु
-	[0] = अणु
+static const struct da903x_chip_ops da903x_ops[] = {
+	[0] = {
 		.init_chip	= da9030_init_chip,
 		.unmask_events	= da9030_unmask_events,
 		.mask_events	= da9030_mask_events,
-		.पढ़ो_events	= da9030_पढ़ो_events,
-		.पढ़ो_status	= da9030_पढ़ो_status,
-	पूर्ण,
-	[1] = अणु
+		.read_events	= da9030_read_events,
+		.read_status	= da9030_read_status,
+	},
+	[1] = {
 		.init_chip	= da9034_init_chip,
 		.unmask_events	= da9034_unmask_events,
 		.mask_events	= da9034_mask_events,
-		.पढ़ो_events	= da9034_पढ़ो_events,
-		.पढ़ो_status	= da9034_पढ़ो_status,
-	पूर्ण
-पूर्ण;
+		.read_events	= da9034_read_events,
+		.read_status	= da9034_read_status,
+	}
+};
 
-अटल स्थिर काष्ठा i2c_device_id da903x_id_table[] = अणु
-	अणु "da9030", 0 पूर्ण,
-	अणु "da9034", 1 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id da903x_id_table[] = {
+	{ "da9030", 0 },
+	{ "da9034", 1 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, da903x_id_table);
 
-अटल पूर्णांक __हटाओ_subdev(काष्ठा device *dev, व्योम *unused)
-अणु
-	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(dev));
-	वापस 0;
-पूर्ण
+static int __remove_subdev(struct device *dev, void *unused)
+{
+	platform_device_unregister(to_platform_device(dev));
+	return 0;
+}
 
-अटल पूर्णांक da903x_हटाओ_subdevs(काष्ठा da903x_chip *chip)
-अणु
-	वापस device_क्रम_each_child(chip->dev, शून्य, __हटाओ_subdev);
-पूर्ण
+static int da903x_remove_subdevs(struct da903x_chip *chip)
+{
+	return device_for_each_child(chip->dev, NULL, __remove_subdev);
+}
 
-अटल पूर्णांक da903x_add_subdevs(काष्ठा da903x_chip *chip,
-					काष्ठा da903x_platक्रमm_data *pdata)
-अणु
-	काष्ठा da903x_subdev_info *subdev;
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक i, ret = 0;
+static int da903x_add_subdevs(struct da903x_chip *chip,
+					struct da903x_platform_data *pdata)
+{
+	struct da903x_subdev_info *subdev;
+	struct platform_device *pdev;
+	int i, ret = 0;
 
-	क्रम (i = 0; i < pdata->num_subdevs; i++) अणु
+	for (i = 0; i < pdata->num_subdevs; i++) {
 		subdev = &pdata->subdevs[i];
 
-		pdev = platक्रमm_device_alloc(subdev->name, subdev->id);
-		अगर (!pdev) अणु
+		pdev = platform_device_alloc(subdev->name, subdev->id);
+		if (!pdev) {
 			ret = -ENOMEM;
-			जाओ failed;
-		पूर्ण
+			goto failed;
+		}
 
 		pdev->dev.parent = chip->dev;
-		pdev->dev.platक्रमm_data = subdev->platक्रमm_data;
+		pdev->dev.platform_data = subdev->platform_data;
 
-		ret = platक्रमm_device_add(pdev);
-		अगर (ret) अणु
-			platक्रमm_device_put(pdev);
-			जाओ failed;
-		पूर्ण
-	पूर्ण
-	वापस 0;
+		ret = platform_device_add(pdev);
+		if (ret) {
+			platform_device_put(pdev);
+			goto failed;
+		}
+	}
+	return 0;
 
 failed:
-	da903x_हटाओ_subdevs(chip);
-	वापस ret;
-पूर्ण
+	da903x_remove_subdevs(chip);
+	return ret;
+}
 
-अटल पूर्णांक da903x_probe(काष्ठा i2c_client *client,
-				  स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा da903x_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	काष्ठा da903x_chip *chip;
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक ret;
+static int da903x_probe(struct i2c_client *client,
+				  const struct i2c_device_id *id)
+{
+	struct da903x_platform_data *pdata = dev_get_platdata(&client->dev);
+	struct da903x_chip *chip;
+	unsigned int tmp;
+	int ret;
 
-	chip = devm_kzalloc(&client->dev, माप(काष्ठा da903x_chip),
+	chip = devm_kzalloc(&client->dev, sizeof(struct da903x_chip),
 				GFP_KERNEL);
-	अगर (chip == शून्य)
-		वापस -ENOMEM;
+	if (chip == NULL)
+		return -ENOMEM;
 
 	chip->client = client;
 	chip->dev = &client->dev;
@@ -508,59 +507,59 @@ failed:
 
 	mutex_init(&chip->lock);
 	INIT_WORK(&chip->irq_work, da903x_irq_work);
-	BLOCKING_INIT_NOTIFIER_HEAD(&chip->notअगरier_list);
+	BLOCKING_INIT_NOTIFIER_HEAD(&chip->notifier_list);
 
 	i2c_set_clientdata(client, chip);
 
 	ret = chip->ops->init_chip(chip);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* mask and clear all IRQs */
 	chip->events_mask = 0xffffffff;
 	chip->ops->mask_events(chip, chip->events_mask);
-	chip->ops->पढ़ो_events(chip, &पंचांगp);
+	chip->ops->read_events(chip, &tmp);
 
 	ret = devm_request_irq(&client->dev, client->irq, da903x_irq_handler,
 			IRQF_TRIGGER_FALLING,
 			"da903x", chip);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "failed to request irq %d\n",
 				client->irq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस da903x_add_subdevs(chip, pdata);
-पूर्ण
+	return da903x_add_subdevs(chip, pdata);
+}
 
-अटल पूर्णांक da903x_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा da903x_chip *chip = i2c_get_clientdata(client);
+static int da903x_remove(struct i2c_client *client)
+{
+	struct da903x_chip *chip = i2c_get_clientdata(client);
 
-	da903x_हटाओ_subdevs(chip);
-	वापस 0;
-पूर्ण
+	da903x_remove_subdevs(chip);
+	return 0;
+}
 
-अटल काष्ठा i2c_driver da903x_driver = अणु
-	.driver	= अणु
+static struct i2c_driver da903x_driver = {
+	.driver	= {
 		.name	= "da903x",
-	पूर्ण,
+	},
 	.probe		= da903x_probe,
-	.हटाओ		= da903x_हटाओ,
+	.remove		= da903x_remove,
 	.id_table	= da903x_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक __init da903x_init(व्योम)
-अणु
-	वापस i2c_add_driver(&da903x_driver);
-पूर्ण
+static int __init da903x_init(void)
+{
+	return i2c_add_driver(&da903x_driver);
+}
 subsys_initcall(da903x_init);
 
-अटल व्योम __निकास da903x_निकास(व्योम)
-अणु
+static void __exit da903x_exit(void)
+{
 	i2c_del_driver(&da903x_driver);
-पूर्ण
-module_निकास(da903x_निकास);
+}
+module_exit(da903x_exit);
 
 MODULE_DESCRIPTION("PMIC Driver for Dialog Semiconductor DA9034");
 MODULE_AUTHOR("Eric Miao <eric.miao@marvell.com>");

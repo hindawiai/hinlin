@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
  *
@@ -7,264 +6,264 @@
  * Gerald Van Baren, Custom IDEAS, vanbaren@cideas.com
  * Based on code written by:
  *   Pantelis Antoniou <pantelis.antoniou@gmail.com> and
- *   Matthew McClपूर्णांकock <msm@मुक्तscale.com>
+ *   Matthew McClintock <msm@freescale.com>
  */
 
-#समावेश <निश्चित.स>
-#समावेश <प्रकार.स>
-#समावेश <getopt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
+#include <assert.h>
+#include <ctype.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#समावेश <libfdt.h>
+#include <libfdt.h>
 
-#समावेश "util.h"
+#include "util.h"
 
-क्रमागत display_mode अणु
-	MODE_SHOW_VALUE,	/* show values क्रम node properties */
-	MODE_LIST_PROPS,	/* list the properties क्रम a node */
+enum display_mode {
+	MODE_SHOW_VALUE,	/* show values for node properties */
+	MODE_LIST_PROPS,	/* list the properties for a node */
 	MODE_LIST_SUBNODES,	/* list the subnodes of a node */
-पूर्ण;
+};
 
-/* Holds inक्रमmation which controls our output and options */
-काष्ठा display_info अणु
-	पूर्णांक type;		/* data type (s/i/u/x or 0 क्रम शेष) */
-	पूर्णांक size;		/* data size (1/2/4) */
-	क्रमागत display_mode mode;	/* display mode that we are using */
-	स्थिर अक्षर *शेष_val; /* शेष value अगर node/property not found */
-पूर्ण;
+/* Holds information which controls our output and options */
+struct display_info {
+	int type;		/* data type (s/i/u/x or 0 for default) */
+	int size;		/* data size (1/2/4) */
+	enum display_mode mode;	/* display mode that we are using */
+	const char *default_val; /* default value if node/property not found */
+};
 
-अटल व्योम report_error(स्थिर अक्षर *where, पूर्णांक err)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Error at '%s': %s\n", where, fdt_म_त्रुटि(err));
-पूर्ण
+static void report_error(const char *where, int err)
+{
+	fprintf(stderr, "Error at '%s': %s\n", where, fdt_strerror(err));
+}
 
 /**
  * Displays data of a given length according to selected options
  *
- * If a specअगरic data type is provided in disp, then this is used. Otherwise
+ * If a specific data type is provided in disp, then this is used. Otherwise
  * we try to guess the data type / size from the contents.
  *
- * @param disp		Display inक्रमmation / options
+ * @param disp		Display information / options
  * @param data		Data to display
  * @param len		Maximum length of buffer
- * @वापस 0 अगर ok, -1 अगर data करोes not match क्रमmat
+ * @return 0 if ok, -1 if data does not match format
  */
-अटल पूर्णांक show_data(काष्ठा display_info *disp, स्थिर अक्षर *data, पूर्णांक len)
-अणु
-	पूर्णांक i, size;
-	स्थिर uपूर्णांक8_t *p = (स्थिर uपूर्णांक8_t *)data;
-	स्थिर अक्षर *s;
-	पूर्णांक value;
-	पूर्णांक is_string;
-	अक्षर fmt[3];
+static int show_data(struct display_info *disp, const char *data, int len)
+{
+	int i, size;
+	const uint8_t *p = (const uint8_t *)data;
+	const char *s;
+	int value;
+	int is_string;
+	char fmt[3];
 
-	/* no data, करोn't prपूर्णांक */
-	अगर (len == 0)
-		वापस 0;
+	/* no data, don't print */
+	if (len == 0)
+		return 0;
 
 	is_string = (disp->type) == 's' ||
-		(!disp->type && util_is_prपूर्णांकable_string(data, len));
-	अगर (is_string) अणु
-		अगर (data[len - 1] != '\0') अणु
-			ख_लिखो(मानक_त्रुटि, "Unterminated string\n");
-			वापस -1;
-		पूर्ण
-		क्रम (s = data; s - data < len; s += म_माप(s) + 1) अणु
-			अगर (s != data)
-				म_लिखो(" ");
-			म_लिखो("%s", (स्थिर अक्षर *)s);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		(!disp->type && util_is_printable_string(data, len));
+	if (is_string) {
+		if (data[len - 1] != '\0') {
+			fprintf(stderr, "Unterminated string\n");
+			return -1;
+		}
+		for (s = data; s - data < len; s += strlen(s) + 1) {
+			if (s != data)
+				printf(" ");
+			printf("%s", (const char *)s);
+		}
+		return 0;
+	}
 	size = disp->size;
-	अगर (size == -1) अणु
+	if (size == -1) {
 		size = (len % 4) == 0 ? 4 : 1;
-	पूर्ण अन्यथा अगर (len % size) अणु
-		ख_लिखो(मानक_त्रुटि, "Property length must be a multiple of "
+	} else if (len % size) {
+		fprintf(stderr, "Property length must be a multiple of "
 				"selected data size\n");
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 	fmt[0] = '%';
 	fmt[1] = disp->type ? disp->type : 'd';
 	fmt[2] = '\0';
-	क्रम (i = 0; i < len; i += size, p += size) अणु
-		अगर (i)
-			म_लिखो(" ");
-		value = size == 4 ? fdt32_to_cpu(*(स्थिर uपूर्णांक32_t *)p) :
+	for (i = 0; i < len; i += size, p += size) {
+		if (i)
+			printf(" ");
+		value = size == 4 ? fdt32_to_cpu(*(const uint32_t *)p) :
 			size == 2 ? (*p << 8) | p[1] : *p;
-		म_लिखो(fmt, value);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		printf(fmt, value);
+	}
+	return 0;
+}
 
 /**
  * List all properties in a node, one per line.
  *
  * @param blob		FDT blob
  * @param node		Node to display
- * @वापस 0 अगर ok, or FDT_ERR... अगर not.
+ * @return 0 if ok, or FDT_ERR... if not.
  */
-अटल पूर्णांक list_properties(स्थिर व्योम *blob, पूर्णांक node)
-अणु
-	स्थिर काष्ठा fdt_property *data;
-	स्थिर अक्षर *name;
-	पूर्णांक prop;
+static int list_properties(const void *blob, int node)
+{
+	const struct fdt_property *data;
+	const char *name;
+	int prop;
 
 	prop = fdt_first_property_offset(blob, node);
-	करो अणु
+	do {
 		/* Stop silently when there are no more properties */
-		अगर (prop < 0)
-			वापस prop == -FDT_ERR_NOTFOUND ? 0 : prop;
-		data = fdt_get_property_by_offset(blob, prop, शून्य);
+		if (prop < 0)
+			return prop == -FDT_ERR_NOTFOUND ? 0 : prop;
+		data = fdt_get_property_by_offset(blob, prop, NULL);
 		name = fdt_string(blob, fdt32_to_cpu(data->nameoff));
-		अगर (name)
-			माला_दो(name);
+		if (name)
+			puts(name);
 		prop = fdt_next_property_offset(blob, prop);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-#घोषणा MAX_LEVEL	32		/* how deeply nested we will go */
+#define MAX_LEVEL	32		/* how deeply nested we will go */
 
 /**
  * List all subnodes in a node, one per line
  *
  * @param blob		FDT blob
  * @param node		Node to display
- * @वापस 0 अगर ok, or FDT_ERR... अगर not.
+ * @return 0 if ok, or FDT_ERR... if not.
  */
-अटल पूर्णांक list_subnodes(स्थिर व्योम *blob, पूर्णांक node)
-अणु
-	पूर्णांक nextoffset;		/* next node offset from libfdt */
-	uपूर्णांक32_t tag;		/* current tag */
-	पूर्णांक level = 0;		/* keep track of nesting level */
-	स्थिर अक्षर *pathp;
-	पूर्णांक depth = 1;		/* the assumed depth of this node */
+static int list_subnodes(const void *blob, int node)
+{
+	int nextoffset;		/* next node offset from libfdt */
+	uint32_t tag;		/* current tag */
+	int level = 0;		/* keep track of nesting level */
+	const char *pathp;
+	int depth = 1;		/* the assumed depth of this node */
 
-	जबतक (level >= 0) अणु
+	while (level >= 0) {
 		tag = fdt_next_tag(blob, node, &nextoffset);
-		चयन (tag) अणु
-		हाल FDT_BEGIN_NODE:
-			pathp = fdt_get_name(blob, node, शून्य);
-			अगर (level <= depth) अणु
-				अगर (pathp == शून्य)
+		switch (tag) {
+		case FDT_BEGIN_NODE:
+			pathp = fdt_get_name(blob, node, NULL);
+			if (level <= depth) {
+				if (pathp == NULL)
 					pathp = "/* NULL pointer error */";
-				अगर (*pathp == '\0')
+				if (*pathp == '\0')
 					pathp = "/";	/* root is nameless */
-				अगर (level == 1)
-					माला_दो(pathp);
-			पूर्ण
+				if (level == 1)
+					puts(pathp);
+			}
 			level++;
-			अगर (level >= MAX_LEVEL) अणु
-				म_लिखो("Nested too deep, aborting.\n");
-				वापस 1;
-			पूर्ण
-			अवरोध;
-		हाल FDT_END_NODE:
+			if (level >= MAX_LEVEL) {
+				printf("Nested too deep, aborting.\n");
+				return 1;
+			}
+			break;
+		case FDT_END_NODE:
 			level--;
-			अगर (level == 0)
-				level = -1;		/* निकास the loop */
-			अवरोध;
-		हाल FDT_END:
-			वापस 1;
-		हाल FDT_PROP:
-			अवरोध;
-		शेष:
-			अगर (level <= depth)
-				म_लिखो("Unknown tag 0x%08X\n", tag);
-			वापस 1;
-		पूर्ण
+			if (level == 0)
+				level = -1;		/* exit the loop */
+			break;
+		case FDT_END:
+			return 1;
+		case FDT_PROP:
+			break;
+		default:
+			if (level <= depth)
+				printf("Unknown tag 0x%08X\n", tag);
+			return 1;
+		}
 		node = nextoffset;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * Show the data क्रम a given node (and perhaps property) according to the
+ * Show the data for a given node (and perhaps property) according to the
  * display option provided.
  *
  * @param blob		FDT blob
- * @param disp		Display inक्रमmation / options
+ * @param disp		Display information / options
  * @param node		Node to display
- * @param property	Name of property to display, or शून्य अगर none
- * @वापस 0 अगर ok, -ve on error
+ * @param property	Name of property to display, or NULL if none
+ * @return 0 if ok, -ve on error
  */
-अटल पूर्णांक show_data_क्रम_item(स्थिर व्योम *blob, काष्ठा display_info *disp,
-		पूर्णांक node, स्थिर अक्षर *property)
-अणु
-	स्थिर व्योम *value = शून्य;
-	पूर्णांक len, err = 0;
+static int show_data_for_item(const void *blob, struct display_info *disp,
+		int node, const char *property)
+{
+	const void *value = NULL;
+	int len, err = 0;
 
-	चयन (disp->mode) अणु
-	हाल MODE_LIST_PROPS:
+	switch (disp->mode) {
+	case MODE_LIST_PROPS:
 		err = list_properties(blob, node);
-		अवरोध;
+		break;
 
-	हाल MODE_LIST_SUBNODES:
+	case MODE_LIST_SUBNODES:
 		err = list_subnodes(blob, node);
-		अवरोध;
+		break;
 
-	शेष:
-		निश्चित(property);
+	default:
+		assert(property);
 		value = fdt_getprop(blob, node, property, &len);
-		अगर (value) अणु
-			अगर (show_data(disp, value, len))
+		if (value) {
+			if (show_data(disp, value, len))
 				err = -1;
-			अन्यथा
-				म_लिखो("\n");
-		पूर्ण अन्यथा अगर (disp->शेष_val) अणु
-			माला_दो(disp->शेष_val);
-		पूर्ण अन्यथा अणु
+			else
+				printf("\n");
+		} else if (disp->default_val) {
+			puts(disp->default_val);
+		} else {
 			report_error(property, len);
 			err = -1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * Run the मुख्य fdtget operation, given a filename and valid arguments
+ * Run the main fdtget operation, given a filename and valid arguments
  *
- * @param disp		Display inक्रमmation / options
+ * @param disp		Display information / options
  * @param filename	Filename of blob file
  * @param arg		List of arguments to process
  * @param arg_count	Number of arguments
- * @param वापस 0 अगर ok, -ve on error
+ * @param return 0 if ok, -ve on error
  */
-अटल पूर्णांक करो_fdtget(काष्ठा display_info *disp, स्थिर अक्षर *filename,
-		     अक्षर **arg, पूर्णांक arg_count, पूर्णांक args_per_step)
-अणु
-	अक्षर *blob;
-	स्थिर अक्षर *prop;
-	पूर्णांक i, node;
+static int do_fdtget(struct display_info *disp, const char *filename,
+		     char **arg, int arg_count, int args_per_step)
+{
+	char *blob;
+	const char *prop;
+	int i, node;
 
-	blob = utilfdt_पढ़ो(filename);
-	अगर (!blob)
-		वापस -1;
+	blob = utilfdt_read(filename);
+	if (!blob)
+		return -1;
 
-	क्रम (i = 0; i + args_per_step <= arg_count; i += args_per_step) अणु
+	for (i = 0; i + args_per_step <= arg_count; i += args_per_step) {
 		node = fdt_path_offset(blob, arg[i]);
-		अगर (node < 0) अणु
-			अगर (disp->शेष_val) अणु
-				माला_दो(disp->शेष_val);
-				जारी;
-			पूर्ण अन्यथा अणु
+		if (node < 0) {
+			if (disp->default_val) {
+				puts(disp->default_val);
+				continue;
+			} else {
 				report_error(arg[i], node);
-				वापस -1;
-			पूर्ण
-		पूर्ण
-		prop = args_per_step == 1 ? शून्य : arg[i + 1];
+				return -1;
+			}
+		}
+		prop = args_per_step == 1 ? NULL : arg[i + 1];
 
-		अगर (show_data_क्रम_item(blob, disp, node, prop))
-			वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (show_data_for_item(blob, disp, node, prop))
+			return -1;
+	}
+	return 0;
+}
 
-अटल स्थिर अक्षर *usage_msg =
+static const char *usage_msg =
 	"fdtget - read values from device tree\n"
 	"\n"
 	"Each value is printed on a new line.\n\n"
@@ -280,74 +279,74 @@
 	"\t-h\t\tPrint this help\n\n"
 	USAGE_TYPE_MSG;
 
-अटल व्योम usage(स्थिर अक्षर *msg)
-अणु
-	अगर (msg)
-		ख_लिखो(मानक_त्रुटि, "Error: %s\n\n", msg);
+static void usage(const char *msg)
+{
+	if (msg)
+		fprintf(stderr, "Error: %s\n\n", msg);
 
-	ख_लिखो(मानक_त्रुटि, "%s", usage_msg);
-	निकास(2);
-पूर्ण
+	fprintf(stderr, "%s", usage_msg);
+	exit(2);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	अक्षर *filename = शून्य;
-	काष्ठा display_info disp;
-	पूर्णांक args_per_step = 2;
+int main(int argc, char *argv[])
+{
+	char *filename = NULL;
+	struct display_info disp;
+	int args_per_step = 2;
 
-	/* set शेषs */
-	स_रखो(&disp, '\0', माप(disp));
+	/* set defaults */
+	memset(&disp, '\0', sizeof(disp));
 	disp.size = -1;
 	disp.mode = MODE_SHOW_VALUE;
-	क्रम (;;) अणु
-		पूर्णांक c = getopt(argc, argv, "d:hlpt:");
-		अगर (c == -1)
-			अवरोध;
+	for (;;) {
+		int c = getopt(argc, argv, "d:hlpt:");
+		if (c == -1)
+			break;
 
-		चयन (c) अणु
-		हाल 'h':
-		हाल '?':
-			usage(शून्य);
+		switch (c) {
+		case 'h':
+		case '?':
+			usage(NULL);
 
-		हाल 't':
-			अगर (utilfdt_decode_type(optarg, &disp.type,
+		case 't':
+			if (utilfdt_decode_type(optarg, &disp.type,
 					&disp.size))
 				usage("Invalid type string");
-			अवरोध;
+			break;
 
-		हाल 'p':
+		case 'p':
 			disp.mode = MODE_LIST_PROPS;
 			args_per_step = 1;
-			अवरोध;
+			break;
 
-		हाल 'l':
+		case 'l':
 			disp.mode = MODE_LIST_SUBNODES;
 			args_per_step = 1;
-			अवरोध;
+			break;
 
-		हाल 'd':
-			disp.शेष_val = optarg;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		case 'd':
+			disp.default_val = optarg;
+			break;
+		}
+	}
 
-	अगर (optind < argc)
+	if (optind < argc)
 		filename = argv[optind++];
-	अगर (!filename)
+	if (!filename)
 		usage("Missing filename");
 
 	argv += optind;
 	argc -= optind;
 
 	/* Allow no arguments, and silently succeed */
-	अगर (!argc)
-		वापस 0;
+	if (!argc)
+		return 0;
 
-	/* Check क्रम node, property arguments */
-	अगर (args_per_step == 2 && (argc % 2))
+	/* Check for node, property arguments */
+	if (args_per_step == 2 && (argc % 2))
 		usage("Must have an even number of arguments");
 
-	अगर (करो_fdtget(&disp, filename, argv, argc, args_per_step))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (do_fdtget(&disp, filename, argv, argc, args_per_step))
+		return 1;
+	return 0;
+}

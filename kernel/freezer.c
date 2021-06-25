@@ -1,177 +1,176 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * kernel/मुक्तzer.c - Function to मुक्तze a process
+ * kernel/freezer.c - Function to freeze a process
  *
- * Originally from kernel/घातer/process.c
+ * Originally from kernel/power/process.c
  */
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/export.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/kthपढ़ो.h>
+#include <linux/interrupt.h>
+#include <linux/suspend.h>
+#include <linux/export.h>
+#include <linux/syscalls.h>
+#include <linux/freezer.h>
+#include <linux/kthread.h>
 
-/* total number of मुक्तzing conditions in effect */
-atomic_t प्रणाली_मुक्तzing_cnt = ATOMIC_INIT(0);
-EXPORT_SYMBOL(प्रणाली_मुक्तzing_cnt);
+/* total number of freezing conditions in effect */
+atomic_t system_freezing_cnt = ATOMIC_INIT(0);
+EXPORT_SYMBOL(system_freezing_cnt);
 
-/* indicate whether PM मुक्तzing is in effect, रक्षित by
- * प्रणाली_transition_mutex
+/* indicate whether PM freezing is in effect, protected by
+ * system_transition_mutex
  */
-bool pm_मुक्तzing;
-bool pm_nosig_मुक्तzing;
+bool pm_freezing;
+bool pm_nosig_freezing;
 
-/* protects मुक्तzing and frozen transitions */
-अटल DEFINE_SPINLOCK(मुक्तzer_lock);
+/* protects freezing and frozen transitions */
+static DEFINE_SPINLOCK(freezer_lock);
 
 /**
- * मुक्तzing_slow_path - slow path क्रम testing whether a task needs to be frozen
+ * freezing_slow_path - slow path for testing whether a task needs to be frozen
  * @p: task to be tested
  *
- * This function is called by मुक्तzing() अगर प्रणाली_मुक्तzing_cnt isn't zero
+ * This function is called by freezing() if system_freezing_cnt isn't zero
  * and tests whether @p needs to enter and stay in frozen state.  Can be
- * called under any context.  The मुक्तzers are responsible क्रम ensuring the
+ * called under any context.  The freezers are responsible for ensuring the
  * target tasks see the updated state.
  */
-bool मुक्तzing_slow_path(काष्ठा task_काष्ठा *p)
-अणु
-	अगर (p->flags & (PF_NOFREEZE | PF_SUSPEND_TASK))
-		वापस false;
+bool freezing_slow_path(struct task_struct *p)
+{
+	if (p->flags & (PF_NOFREEZE | PF_SUSPEND_TASK))
+		return false;
 
-	अगर (test_tsk_thपढ़ो_flag(p, TIF_MEMDIE))
-		वापस false;
+	if (test_tsk_thread_flag(p, TIF_MEMDIE))
+		return false;
 
-	अगर (pm_nosig_मुक्तzing || cgroup_मुक्तzing(p))
-		वापस true;
+	if (pm_nosig_freezing || cgroup_freezing(p))
+		return true;
 
-	अगर (pm_मुक्तzing && !(p->flags & PF_KTHREAD))
-		वापस true;
+	if (pm_freezing && !(p->flags & PF_KTHREAD))
+		return true;
 
-	वापस false;
-पूर्ण
-EXPORT_SYMBOL(मुक्तzing_slow_path);
+	return false;
+}
+EXPORT_SYMBOL(freezing_slow_path);
 
 /* Refrigerator is place where frozen processes are stored :-). */
 bool __refrigerator(bool check_kthr_stop)
-अणु
-	/* Hmm, should we be allowed to suspend when there are realसमय
+{
+	/* Hmm, should we be allowed to suspend when there are realtime
 	   processes around? */
 	bool was_frozen = false;
-	दीर्घ save = current->state;
+	long save = current->state;
 
 	pr_debug("%s entered refrigerator\n", current->comm);
 
-	क्रम (;;) अणु
+	for (;;) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
 
-		spin_lock_irq(&मुक्तzer_lock);
+		spin_lock_irq(&freezer_lock);
 		current->flags |= PF_FROZEN;
-		अगर (!मुक्तzing(current) ||
-		    (check_kthr_stop && kthपढ़ो_should_stop()))
+		if (!freezing(current) ||
+		    (check_kthr_stop && kthread_should_stop()))
 			current->flags &= ~PF_FROZEN;
-		spin_unlock_irq(&मुक्तzer_lock);
+		spin_unlock_irq(&freezer_lock);
 
-		अगर (!(current->flags & PF_FROZEN))
-			अवरोध;
+		if (!(current->flags & PF_FROZEN))
+			break;
 		was_frozen = true;
 		schedule();
-	पूर्ण
+	}
 
 	pr_debug("%s left refrigerator\n", current->comm);
 
 	/*
-	 * Restore saved task state beक्रमe वापसing.  The mb'd version
-	 * needs to be used; otherwise, it might silently अवरोध
+	 * Restore saved task state before returning.  The mb'd version
+	 * needs to be used; otherwise, it might silently break
 	 * synchronization which depends on ordered task state change.
 	 */
 	set_current_state(save);
 
-	वापस was_frozen;
-पूर्ण
+	return was_frozen;
+}
 EXPORT_SYMBOL(__refrigerator);
 
-अटल व्योम fake_संकेत_wake_up(काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ flags;
+static void fake_signal_wake_up(struct task_struct *p)
+{
+	unsigned long flags;
 
-	अगर (lock_task_sighand(p, &flags)) अणु
-		संकेत_wake_up(p, 0);
+	if (lock_task_sighand(p, &flags)) {
+		signal_wake_up(p, 0);
 		unlock_task_sighand(p, &flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * मुक्तze_task - send a मुक्तze request to given task
+ * freeze_task - send a freeze request to given task
  * @p: task to send the request to
  *
- * If @p is मुक्तzing, the मुक्तze request is sent either by sending a fake
- * संकेत (अगर it's not a kernel thread) or waking it up (if it's a kernel
- * thपढ़ो).
+ * If @p is freezing, the freeze request is sent either by sending a fake
+ * signal (if it's not a kernel thread) or waking it up (if it's a kernel
+ * thread).
  *
  * RETURNS:
- * %false, अगर @p is not मुक्तzing or alपढ़ोy frozen; %true, otherwise
+ * %false, if @p is not freezing or already frozen; %true, otherwise
  */
-bool मुक्तze_task(काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ flags;
+bool freeze_task(struct task_struct *p)
+{
+	unsigned long flags;
 
 	/*
-	 * This check can race with मुक्तzer_करो_not_count, but worst हाल that
-	 * will result in an extra wakeup being sent to the task.  It करोes not
-	 * race with मुक्तzer_count(), the barriers in मुक्तzer_count() and
-	 * मुक्तzer_should_skip() ensure that either मुक्तzer_count() sees
-	 * मुक्तzing == true in try_to_मुक्तze() and मुक्तzes, or
-	 * मुक्तzer_should_skip() sees !PF_FREEZE_SKIP and मुक्तzes the task
+	 * This check can race with freezer_do_not_count, but worst case that
+	 * will result in an extra wakeup being sent to the task.  It does not
+	 * race with freezer_count(), the barriers in freezer_count() and
+	 * freezer_should_skip() ensure that either freezer_count() sees
+	 * freezing == true in try_to_freeze() and freezes, or
+	 * freezer_should_skip() sees !PF_FREEZE_SKIP and freezes the task
 	 * normally.
 	 */
-	अगर (मुक्तzer_should_skip(p))
-		वापस false;
+	if (freezer_should_skip(p))
+		return false;
 
-	spin_lock_irqsave(&मुक्तzer_lock, flags);
-	अगर (!मुक्तzing(p) || frozen(p)) अणु
-		spin_unlock_irqrestore(&मुक्तzer_lock, flags);
-		वापस false;
-	पूर्ण
+	spin_lock_irqsave(&freezer_lock, flags);
+	if (!freezing(p) || frozen(p)) {
+		spin_unlock_irqrestore(&freezer_lock, flags);
+		return false;
+	}
 
-	अगर (!(p->flags & PF_KTHREAD))
-		fake_संकेत_wake_up(p);
-	अन्यथा
+	if (!(p->flags & PF_KTHREAD))
+		fake_signal_wake_up(p);
+	else
 		wake_up_state(p, TASK_INTERRUPTIBLE);
 
-	spin_unlock_irqrestore(&मुक्तzer_lock, flags);
-	वापस true;
-पूर्ण
+	spin_unlock_irqrestore(&freezer_lock, flags);
+	return true;
+}
 
-व्योम __thaw_task(काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ flags;
+void __thaw_task(struct task_struct *p)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&मुक्तzer_lock, flags);
-	अगर (frozen(p))
+	spin_lock_irqsave(&freezer_lock, flags);
+	if (frozen(p))
 		wake_up_process(p);
-	spin_unlock_irqrestore(&मुक्तzer_lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&freezer_lock, flags);
+}
 
 /**
- * set_मुक्तzable - make %current मुक्तzable
+ * set_freezable - make %current freezable
  *
- * Mark %current मुक्तzable and enter refrigerator अगर necessary.
+ * Mark %current freezable and enter refrigerator if necessary.
  */
-bool set_मुक्तzable(व्योम)
-अणु
+bool set_freezable(void)
+{
 	might_sleep();
 
 	/*
-	 * Modअगरy flags जबतक holding मुक्तzer_lock.  This ensures the
-	 * मुक्तzer notices that we aren't frozen yet or the मुक्तzing
-	 * condition is visible to try_to_मुक्तze() below.
+	 * Modify flags while holding freezer_lock.  This ensures the
+	 * freezer notices that we aren't frozen yet or the freezing
+	 * condition is visible to try_to_freeze() below.
 	 */
-	spin_lock_irq(&मुक्तzer_lock);
+	spin_lock_irq(&freezer_lock);
 	current->flags &= ~PF_NOFREEZE;
-	spin_unlock_irq(&मुक्तzer_lock);
+	spin_unlock_irq(&freezer_lock);
 
-	वापस try_to_मुक्तze();
-पूर्ण
-EXPORT_SYMBOL(set_मुक्तzable);
+	return try_to_freeze();
+}
+EXPORT_SYMBOL(set_freezable);

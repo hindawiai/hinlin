@@ -1,20 +1,19 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
  *		Implementation of the Transmission Control Protocol(TCP).
  *
- *		IPv4 specअगरic functions
+ *		IPv4 specific functions
  *
  *		code split from:
  *		linux/ipv4/tcp.c
  *		linux/ipv4/tcp_input.c
  *		linux/ipv4/tcp_output.c
  *
- *		See tcp.c क्रम author inक्रमmation
+ *		See tcp.c for author information
  */
 
 /*
@@ -24,14 +23,14 @@
  *		David S. Miller :	Change semantics of established hash,
  *					half is devoted to TIME_WAIT sockets
  *					and the rest go in the other half.
- *		Andi Kleen :		Add support क्रम syncookies and fixed
+ *		Andi Kleen :		Add support for syncookies and fixed
  *					some bugs: ip options weren't passed to
- *					the TCP layer, missed a check क्रम an
+ *					the TCP layer, missed a check for an
  *					ACK bit.
  *		Andi Kleen :		Implemented fast path mtu discovery.
  *	     				Fixed many serious bugs in the
  *					request_sock handling and moved
- *					most of it पूर्णांकo the af independent code.
+ *					most of it into the af independent code.
  *					Added tail drop and some other bugfixes.
  *					Added new listen semantics.
  *		Mike McLagan	:	Routing by source
@@ -43,257 +42,257 @@
  *	Andi Kleen		:	Fix accept error reporting.
  *	YOSHIFUJI Hideaki @USAGI and:	Support IPV6_V6ONLY socket option, which
  *	Alexey Kuznetsov		allow both IPv4 and IPv6 sockets to bind
- *					a single port at the same समय.
+ *					a single port at the same time.
  */
 
-#घोषणा pr_fmt(fmt) "TCP: " fmt
+#define pr_fmt(fmt) "TCP: " fmt
 
-#समावेश <linux/bottom_half.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/init.h>
-#समावेश <linux/बार.h>
-#समावेश <linux/slab.h>
+#include <linux/bottom_half.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/module.h>
+#include <linux/random.h>
+#include <linux/cache.h>
+#include <linux/jhash.h>
+#include <linux/init.h>
+#include <linux/times.h>
+#include <linux/slab.h>
 
-#समावेश <net/net_namespace.h>
-#समावेश <net/icmp.h>
-#समावेश <net/inet_hashtables.h>
-#समावेश <net/tcp.h>
-#समावेश <net/transp_v6.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/समयरुको_sock.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/secure_seq.h>
-#समावेश <net/busy_poll.h>
+#include <net/net_namespace.h>
+#include <net/icmp.h>
+#include <net/inet_hashtables.h>
+#include <net/tcp.h>
+#include <net/transp_v6.h>
+#include <net/ipv6.h>
+#include <net/inet_common.h>
+#include <net/timewait_sock.h>
+#include <net/xfrm.h>
+#include <net/secure_seq.h>
+#include <net/busy_poll.h>
 
-#समावेश <linux/inet.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/btf_ids.h>
+#include <linux/inet.h>
+#include <linux/ipv6.h>
+#include <linux/stddef.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#include <linux/inetdevice.h>
+#include <linux/btf_ids.h>
 
-#समावेश <crypto/hash.h>
-#समावेश <linux/scatterlist.h>
+#include <crypto/hash.h>
+#include <linux/scatterlist.h>
 
-#समावेश <trace/events/tcp.h>
+#include <trace/events/tcp.h>
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-अटल पूर्णांक tcp_v4_md5_hash_hdr(अक्षर *md5_hash, स्थिर काष्ठा tcp_md5sig_key *key,
-			       __be32 daddr, __be32 saddr, स्थिर काष्ठा tcphdr *th);
-#पूर्ण_अगर
+#ifdef CONFIG_TCP_MD5SIG
+static int tcp_v4_md5_hash_hdr(char *md5_hash, const struct tcp_md5sig_key *key,
+			       __be32 daddr, __be32 saddr, const struct tcphdr *th);
+#endif
 
-काष्ठा inet_hashinfo tcp_hashinfo;
+struct inet_hashinfo tcp_hashinfo;
 EXPORT_SYMBOL(tcp_hashinfo);
 
-अटल u32 tcp_v4_init_seq(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस secure_tcp_seq(ip_hdr(skb)->daddr,
+static u32 tcp_v4_init_seq(const struct sk_buff *skb)
+{
+	return secure_tcp_seq(ip_hdr(skb)->daddr,
 			      ip_hdr(skb)->saddr,
 			      tcp_hdr(skb)->dest,
 			      tcp_hdr(skb)->source);
-पूर्ण
+}
 
-अटल u32 tcp_v4_init_ts_off(स्थिर काष्ठा net *net, स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस secure_tcp_ts_off(net, ip_hdr(skb)->daddr, ip_hdr(skb)->saddr);
-पूर्ण
+static u32 tcp_v4_init_ts_off(const struct net *net, const struct sk_buff *skb)
+{
+	return secure_tcp_ts_off(net, ip_hdr(skb)->daddr, ip_hdr(skb)->saddr);
+}
 
-पूर्णांक tcp_twsk_unique(काष्ठा sock *sk, काष्ठा sock *sktw, व्योम *twp)
-अणु
-	स्थिर काष्ठा inet_समयरुको_sock *tw = inet_twsk(sktw);
-	स्थिर काष्ठा tcp_समयरुको_sock *tcptw = tcp_twsk(sktw);
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	पूर्णांक reuse = sock_net(sk)->ipv4.sysctl_tcp_tw_reuse;
+int tcp_twsk_unique(struct sock *sk, struct sock *sktw, void *twp)
+{
+	const struct inet_timewait_sock *tw = inet_twsk(sktw);
+	const struct tcp_timewait_sock *tcptw = tcp_twsk(sktw);
+	struct tcp_sock *tp = tcp_sk(sk);
+	int reuse = sock_net(sk)->ipv4.sysctl_tcp_tw_reuse;
 
-	अगर (reuse == 2) अणु
-		/* Still करोes not detect *everything* that goes through
+	if (reuse == 2) {
+		/* Still does not detect *everything* that goes through
 		 * lo, since we require a loopback src or dst address
-		 * or direct binding to 'lo' पूर्णांकerface.
+		 * or direct binding to 'lo' interface.
 		 */
 		bool loopback = false;
-		अगर (tw->tw_bound_dev_अगर == LOOPBACK_IFINDEX)
+		if (tw->tw_bound_dev_if == LOOPBACK_IFINDEX)
 			loopback = true;
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अगर (tw->tw_family == AF_INET6) अणु
-			अगर (ipv6_addr_loopback(&tw->tw_v6_daddr) ||
+#if IS_ENABLED(CONFIG_IPV6)
+		if (tw->tw_family == AF_INET6) {
+			if (ipv6_addr_loopback(&tw->tw_v6_daddr) ||
 			    ipv6_addr_v4mapped_loopback(&tw->tw_v6_daddr) ||
 			    ipv6_addr_loopback(&tw->tw_v6_rcv_saddr) ||
 			    ipv6_addr_v4mapped_loopback(&tw->tw_v6_rcv_saddr))
 				loopback = true;
-		पूर्ण अन्यथा
-#पूर्ण_अगर
-		अणु
-			अगर (ipv4_is_loopback(tw->tw_daddr) ||
+		} else
+#endif
+		{
+			if (ipv4_is_loopback(tw->tw_daddr) ||
 			    ipv4_is_loopback(tw->tw_rcv_saddr))
 				loopback = true;
-		पूर्ण
-		अगर (!loopback)
+		}
+		if (!loopback)
 			reuse = 0;
-	पूर्ण
+	}
 
-	/* With PAWS, it is safe from the viewpoपूर्णांक
-	   of data पूर्णांकegrity. Even without PAWS it is safe provided sequence
-	   spaces करो not overlap i.e. at data rates <= 80Mbit/sec.
+	/* With PAWS, it is safe from the viewpoint
+	   of data integrity. Even without PAWS it is safe provided sequence
+	   spaces do not overlap i.e. at data rates <= 80Mbit/sec.
 
-	   Actually, the idea is बंद to VJ's one, only बारtamp cache is
+	   Actually, the idea is close to VJ's one, only timestamp cache is
 	   held not per host, but per port pair and TW bucket is used as state
 	   holder.
 
-	   If TW bucket has been alपढ़ोy destroyed we fall back to VJ's scheme
-	   and use initial बारtamp retrieved from peer table.
+	   If TW bucket has been already destroyed we fall back to VJ's scheme
+	   and use initial timestamp retrieved from peer table.
 	 */
-	अगर (tcptw->tw_ts_recent_stamp &&
-	    (!twp || (reuse && समय_after32(kसमय_get_seconds(),
-					    tcptw->tw_ts_recent_stamp)))) अणु
-		/* In हाल of repair and re-using TIME-WAIT sockets we still
+	if (tcptw->tw_ts_recent_stamp &&
+	    (!twp || (reuse && time_after32(ktime_get_seconds(),
+					    tcptw->tw_ts_recent_stamp)))) {
+		/* In case of repair and re-using TIME-WAIT sockets we still
 		 * want to be sure that it is safe as above but honor the
-		 * sequence numbers and समय stamps set as part of the repair
+		 * sequence numbers and time stamps set as part of the repair
 		 * process.
 		 *
 		 * Without this check re-using a TIME-WAIT socket with TCP
-		 * repair would accumulate a -1 on the repair asचिन्हित
-		 * sequence number. The first समय it is reused the sequence
-		 * is -1, the second समय -2, etc. This fixes that issue
+		 * repair would accumulate a -1 on the repair assigned
+		 * sequence number. The first time it is reused the sequence
+		 * is -1, the second time -2, etc. This fixes that issue
 		 * without appearing to create any others.
 		 */
-		अगर (likely(!tp->repair)) अणु
+		if (likely(!tp->repair)) {
 			u32 seq = tcptw->tw_snd_nxt + 65535 + 2;
 
-			अगर (!seq)
+			if (!seq)
 				seq = 1;
-			WRITE_ONCE(tp->ग_लिखो_seq, seq);
+			WRITE_ONCE(tp->write_seq, seq);
 			tp->rx_opt.ts_recent	   = tcptw->tw_ts_recent;
 			tp->rx_opt.ts_recent_stamp = tcptw->tw_ts_recent_stamp;
-		पूर्ण
+		}
 		sock_hold(sktw);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(tcp_twsk_unique);
 
-अटल पूर्णांक tcp_v4_pre_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr,
-			      पूर्णांक addr_len)
-अणु
-	/* This check is replicated from tcp_v4_connect() and पूर्णांकended to
+static int tcp_v4_pre_connect(struct sock *sk, struct sockaddr *uaddr,
+			      int addr_len)
+{
+	/* This check is replicated from tcp_v4_connect() and intended to
 	 * prevent BPF program called below from accessing bytes that are out
-	 * of the bound specअगरied by user in addr_len.
+	 * of the bound specified by user in addr_len.
 	 */
-	अगर (addr_len < माप(काष्ठा sockaddr_in))
-		वापस -EINVAL;
+	if (addr_len < sizeof(struct sockaddr_in))
+		return -EINVAL;
 
 	sock_owned_by_me(sk);
 
-	वापस BPF_CGROUP_RUN_PROG_INET4_CONNECT(sk, uaddr);
-पूर्ण
+	return BPF_CGROUP_RUN_PROG_INET4_CONNECT(sk, uaddr);
+}
 
 /* This will initiate an outgoing connection. */
-पूर्णांक tcp_v4_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा sockaddr_in *usin = (काष्ठा sockaddr_in *)uaddr;
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
+int tcp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
+{
+	struct sockaddr_in *usin = (struct sockaddr_in *)uaddr;
+	struct inet_sock *inet = inet_sk(sk);
+	struct tcp_sock *tp = tcp_sk(sk);
 	__be16 orig_sport, orig_dport;
 	__be32 daddr, nexthop;
-	काष्ठा flowi4 *fl4;
-	काष्ठा rtable *rt;
-	पूर्णांक err;
-	काष्ठा ip_options_rcu *inet_opt;
-	काष्ठा inet_समयरुको_death_row *tcp_death_row = &sock_net(sk)->ipv4.tcp_death_row;
+	struct flowi4 *fl4;
+	struct rtable *rt;
+	int err;
+	struct ip_options_rcu *inet_opt;
+	struct inet_timewait_death_row *tcp_death_row = &sock_net(sk)->ipv4.tcp_death_row;
 
-	अगर (addr_len < माप(काष्ठा sockaddr_in))
-		वापस -EINVAL;
+	if (addr_len < sizeof(struct sockaddr_in))
+		return -EINVAL;
 
-	अगर (usin->sin_family != AF_INET)
-		वापस -EAFNOSUPPORT;
+	if (usin->sin_family != AF_INET)
+		return -EAFNOSUPPORT;
 
 	nexthop = daddr = usin->sin_addr.s_addr;
-	inet_opt = rcu_dereference_रक्षित(inet->inet_opt,
+	inet_opt = rcu_dereference_protected(inet->inet_opt,
 					     lockdep_sock_is_held(sk));
-	अगर (inet_opt && inet_opt->opt.srr) अणु
-		अगर (!daddr)
-			वापस -EINVAL;
+	if (inet_opt && inet_opt->opt.srr) {
+		if (!daddr)
+			return -EINVAL;
 		nexthop = inet_opt->opt.faddr;
-	पूर्ण
+	}
 
 	orig_sport = inet->inet_sport;
 	orig_dport = usin->sin_port;
 	fl4 = &inet->cork.fl.u.ip4;
 	rt = ip_route_connect(fl4, nexthop, inet->inet_saddr,
-			      RT_CONN_FLAGS(sk), sk->sk_bound_dev_अगर,
+			      RT_CONN_FLAGS(sk), sk->sk_bound_dev_if,
 			      IPPROTO_TCP,
 			      orig_sport, orig_dport, sk);
-	अगर (IS_ERR(rt)) अणु
+	if (IS_ERR(rt)) {
 		err = PTR_ERR(rt);
-		अगर (err == -ENETUNREACH)
+		if (err == -ENETUNREACH)
 			IP_INC_STATS(sock_net(sk), IPSTATS_MIB_OUTNOROUTES);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (rt->rt_flags & (RTCF_MULTICAST | RTCF_BROADCAST)) अणु
+	if (rt->rt_flags & (RTCF_MULTICAST | RTCF_BROADCAST)) {
 		ip_rt_put(rt);
-		वापस -ENETUNREACH;
-	पूर्ण
+		return -ENETUNREACH;
+	}
 
-	अगर (!inet_opt || !inet_opt->opt.srr)
+	if (!inet_opt || !inet_opt->opt.srr)
 		daddr = fl4->daddr;
 
-	अगर (!inet->inet_saddr)
+	if (!inet->inet_saddr)
 		inet->inet_saddr = fl4->saddr;
 	sk_rcv_saddr_set(sk, inet->inet_saddr);
 
-	अगर (tp->rx_opt.ts_recent_stamp && inet->inet_daddr != daddr) अणु
+	if (tp->rx_opt.ts_recent_stamp && inet->inet_daddr != daddr) {
 		/* Reset inherited state */
 		tp->rx_opt.ts_recent	   = 0;
 		tp->rx_opt.ts_recent_stamp = 0;
-		अगर (likely(!tp->repair))
-			WRITE_ONCE(tp->ग_लिखो_seq, 0);
-	पूर्ण
+		if (likely(!tp->repair))
+			WRITE_ONCE(tp->write_seq, 0);
+	}
 
 	inet->inet_dport = usin->sin_port;
 	sk_daddr_set(sk, daddr);
 
 	inet_csk(sk)->icsk_ext_hdr_len = 0;
-	अगर (inet_opt)
+	if (inet_opt)
 		inet_csk(sk)->icsk_ext_hdr_len = inet_opt->opt.optlen;
 
 	tp->rx_opt.mss_clamp = TCP_MSS_DEFAULT;
 
 	/* Socket identity is still unknown (sport may be zero).
 	 * However we set state to SYN-SENT and not releasing socket
-	 * lock select source port, enter ourselves पूर्णांकo the hash tables and
+	 * lock select source port, enter ourselves into the hash tables and
 	 * complete initialization after this.
 	 */
 	tcp_set_state(sk, TCP_SYN_SENT);
 	err = inet_hash_connect(tcp_death_row, sk);
-	अगर (err)
-		जाओ failure;
+	if (err)
+		goto failure;
 
 	sk_set_txhash(sk);
 
 	rt = ip_route_newports(fl4, rt, orig_sport, orig_dport,
 			       inet->inet_sport, inet->inet_dport, sk);
-	अगर (IS_ERR(rt)) अणु
+	if (IS_ERR(rt)) {
 		err = PTR_ERR(rt);
-		rt = शून्य;
-		जाओ failure;
-	पूर्ण
+		rt = NULL;
+		goto failure;
+	}
 	/* OK, now commit destination to socket.  */
 	sk->sk_gso_type = SKB_GSO_TCPV4;
 	sk_setup_caps(sk, &rt->dst);
-	rt = शून्य;
+	rt = NULL;
 
-	अगर (likely(!tp->repair)) अणु
-		अगर (!tp->ग_लिखो_seq)
-			WRITE_ONCE(tp->ग_लिखो_seq,
+	if (likely(!tp->repair)) {
+		if (!tp->write_seq)
+			WRITE_ONCE(tp->write_seq,
 				   secure_tcp_seq(inet->inet_saddr,
 						  inet->inet_daddr,
 						  inet->inet_sport,
@@ -301,64 +300,64 @@ EXPORT_SYMBOL_GPL(tcp_twsk_unique);
 		tp->tsoffset = secure_tcp_ts_off(sock_net(sk),
 						 inet->inet_saddr,
 						 inet->inet_daddr);
-	पूर्ण
+	}
 
-	inet->inet_id = pअक्रमom_u32();
+	inet->inet_id = prandom_u32();
 
-	अगर (tcp_fastखोलो_defer_connect(sk, &err))
-		वापस err;
-	अगर (err)
-		जाओ failure;
+	if (tcp_fastopen_defer_connect(sk, &err))
+		return err;
+	if (err)
+		goto failure;
 
 	err = tcp_connect(sk);
 
-	अगर (err)
-		जाओ failure;
+	if (err)
+		goto failure;
 
-	वापस 0;
+	return 0;
 
 failure:
 	/*
 	 * This unhashes the socket and releases the local port,
-	 * अगर necessary.
+	 * if necessary.
 	 */
 	tcp_set_state(sk, TCP_CLOSE);
 	ip_rt_put(rt);
 	sk->sk_route_caps = 0;
 	inet->inet_dport = 0;
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(tcp_v4_connect);
 
 /*
  * This routine reacts to ICMP_FRAG_NEEDED mtu indications as defined in RFC1191.
- * It can be called through tcp_release_cb() अगर socket was owned by user
- * at the समय tcp_v4_err() was called to handle ICMP message.
+ * It can be called through tcp_release_cb() if socket was owned by user
+ * at the time tcp_v4_err() was called to handle ICMP message.
  */
-व्योम tcp_v4_mtu_reduced(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_sock *inet = inet_sk(sk);
-	काष्ठा dst_entry *dst;
+void tcp_v4_mtu_reduced(struct sock *sk)
+{
+	struct inet_sock *inet = inet_sk(sk);
+	struct dst_entry *dst;
 	u32 mtu;
 
-	अगर ((1 << sk->sk_state) & (TCPF_LISTEN | TCPF_CLOSE))
-		वापस;
+	if ((1 << sk->sk_state) & (TCPF_LISTEN | TCPF_CLOSE))
+		return;
 	mtu = tcp_sk(sk)->mtu_info;
 	dst = inet_csk_update_pmtu(sk, mtu);
-	अगर (!dst)
-		वापस;
+	if (!dst)
+		return;
 
 	/* Something is about to be wrong... Remember soft error
-	 * क्रम the हाल, अगर this connection will not able to recover.
+	 * for the case, if this connection will not able to recover.
 	 */
-	अगर (mtu < dst_mtu(dst) && ip_करोnt_fragment(sk, dst))
+	if (mtu < dst_mtu(dst) && ip_dont_fragment(sk, dst))
 		sk->sk_err_soft = EMSGSIZE;
 
 	mtu = dst_mtu(dst);
 
-	अगर (inet->pmtudisc != IP_PMTUDISC_DONT &&
+	if (inet->pmtudisc != IP_PMTUDISC_DONT &&
 	    ip_sk_accept_pmtu(sk) &&
-	    inet_csk(sk)->icsk_pmtu_cookie > mtu) अणु
+	    inet_csk(sk)->icsk_pmtu_cookie > mtu) {
 		tcp_sync_mss(sk, mtu);
 
 		/* Resend the TCP packet because it's
@@ -367,243 +366,243 @@ EXPORT_SYMBOL(tcp_v4_connect);
 		 * discovery.
 		 */
 		tcp_simple_retransmit(sk);
-	पूर्ण /* अन्यथा let the usual retransmit समयr handle it */
-पूर्ण
+	} /* else let the usual retransmit timer handle it */
+}
 EXPORT_SYMBOL(tcp_v4_mtu_reduced);
 
-अटल व्योम करो_redirect(काष्ठा sk_buff *skb, काष्ठा sock *sk)
-अणु
-	काष्ठा dst_entry *dst = __sk_dst_check(sk, 0);
+static void do_redirect(struct sk_buff *skb, struct sock *sk)
+{
+	struct dst_entry *dst = __sk_dst_check(sk, 0);
 
-	अगर (dst)
+	if (dst)
 		dst->ops->redirect(dst, sk, skb);
-पूर्ण
+}
 
 
 /* handle ICMP messages on TCP_NEW_SYN_RECV request sockets */
-व्योम tcp_req_err(काष्ठा sock *sk, u32 seq, bool पात)
-अणु
-	काष्ठा request_sock *req = inet_reqsk(sk);
-	काष्ठा net *net = sock_net(sk);
+void tcp_req_err(struct sock *sk, u32 seq, bool abort)
+{
+	struct request_sock *req = inet_reqsk(sk);
+	struct net *net = sock_net(sk);
 
 	/* ICMPs are not backlogged, hence we cannot get
 	 * an established socket here.
 	 */
-	अगर (seq != tcp_rsk(req)->snt_isn) अणु
+	if (seq != tcp_rsk(req)->snt_isn) {
 		__NET_INC_STATS(net, LINUX_MIB_OUTOFWINDOWICMPS);
-	पूर्ण अन्यथा अगर (पात) अणु
+	} else if (abort) {
 		/*
-		 * Still in SYN_RECV, just हटाओ it silently.
+		 * Still in SYN_RECV, just remove it silently.
 		 * There is no good way to pass the error to the newly
-		 * created socket, and POSIX करोes not want network
-		 * errors वापसed from accept().
+		 * created socket, and POSIX does not want network
+		 * errors returned from accept().
 		 */
 		inet_csk_reqsk_queue_drop(req->rsk_listener, req);
 		tcp_listendrop(req->rsk_listener);
-	पूर्ण
+	}
 	reqsk_put(req);
-पूर्ण
+}
 EXPORT_SYMBOL(tcp_req_err);
 
 /* TCP-LD (RFC 6069) logic */
-व्योम tcp_ld_RTO_revert(काष्ठा sock *sk, u32 seq)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा sk_buff *skb;
-	s32 reमुख्यing;
+void tcp_ld_RTO_revert(struct sock *sk, u32 seq)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct tcp_sock *tp = tcp_sk(sk);
+	struct sk_buff *skb;
+	s32 remaining;
 	u32 delta_us;
 
-	अगर (sock_owned_by_user(sk))
-		वापस;
+	if (sock_owned_by_user(sk))
+		return;
 
-	अगर (seq != tp->snd_una  || !icsk->icsk_retransmits ||
+	if (seq != tp->snd_una  || !icsk->icsk_retransmits ||
 	    !icsk->icsk_backoff)
-		वापस;
+		return;
 
 	skb = tcp_rtx_queue_head(sk);
-	अगर (WARN_ON_ONCE(!skb))
-		वापस;
+	if (WARN_ON_ONCE(!skb))
+		return;
 
 	icsk->icsk_backoff--;
 	icsk->icsk_rto = tp->srtt_us ? __tcp_set_rto(tp) : TCP_TIMEOUT_INIT;
 	icsk->icsk_rto = inet_csk_rto_backoff(icsk, TCP_RTO_MAX);
 
 	tcp_mstamp_refresh(tp);
-	delta_us = (u32)(tp->tcp_mstamp - tcp_skb_बारtamp_us(skb));
-	reमुख्यing = icsk->icsk_rto - usecs_to_jअगरfies(delta_us);
+	delta_us = (u32)(tp->tcp_mstamp - tcp_skb_timestamp_us(skb));
+	remaining = icsk->icsk_rto - usecs_to_jiffies(delta_us);
 
-	अगर (reमुख्यing > 0) अणु
-		inet_csk_reset_xmit_समयr(sk, ICSK_TIME_RETRANS,
-					  reमुख्यing, TCP_RTO_MAX);
-	पूर्ण अन्यथा अणु
-		/* RTO revert घड़ीed out retransmission.
+	if (remaining > 0) {
+		inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
+					  remaining, TCP_RTO_MAX);
+	} else {
+		/* RTO revert clocked out retransmission.
 		 * Will retransmit now.
 		 */
-		tcp_retransmit_समयr(sk);
-	पूर्ण
-पूर्ण
+		tcp_retransmit_timer(sk);
+	}
+}
 EXPORT_SYMBOL(tcp_ld_RTO_revert);
 
 /*
- * This routine is called by the ICMP module when it माला_लो some
+ * This routine is called by the ICMP module when it gets some
  * sort of error condition.  If err < 0 then the socket should
- * be बंदd and the error वापसed to the user.  If err > 0
- * it's just the icmp type << 8 | icmp code.  After adjusपंचांगent
- * header poपूर्णांकs to the first 8 bytes of the tcp header.  We need
+ * be closed and the error returned to the user.  If err > 0
+ * it's just the icmp type << 8 | icmp code.  After adjustment
+ * header points to the first 8 bytes of the tcp header.  We need
  * to find the appropriate port.
  *
  * The locking strategy used here is very "optimistic". When
- * someone अन्यथा accesses the socket the ICMP is just dropped
- * and क्रम some paths there is no check at all.
- * A more general error queue to queue errors क्रम later handling
+ * someone else accesses the socket the ICMP is just dropped
+ * and for some paths there is no check at all.
+ * A more general error queue to queue errors for later handling
  * is probably better.
  *
  */
 
-पूर्णांक tcp_v4_err(काष्ठा sk_buff *skb, u32 info)
-अणु
-	स्थिर काष्ठा iphdr *iph = (स्थिर काष्ठा iphdr *)skb->data;
-	काष्ठा tcphdr *th = (काष्ठा tcphdr *)(skb->data + (iph->ihl << 2));
-	काष्ठा tcp_sock *tp;
-	काष्ठा inet_sock *inet;
-	स्थिर पूर्णांक type = icmp_hdr(skb)->type;
-	स्थिर पूर्णांक code = icmp_hdr(skb)->code;
-	काष्ठा sock *sk;
-	काष्ठा request_sock *fastखोलो;
+int tcp_v4_err(struct sk_buff *skb, u32 info)
+{
+	const struct iphdr *iph = (const struct iphdr *)skb->data;
+	struct tcphdr *th = (struct tcphdr *)(skb->data + (iph->ihl << 2));
+	struct tcp_sock *tp;
+	struct inet_sock *inet;
+	const int type = icmp_hdr(skb)->type;
+	const int code = icmp_hdr(skb)->code;
+	struct sock *sk;
+	struct request_sock *fastopen;
 	u32 seq, snd_una;
-	पूर्णांक err;
-	काष्ठा net *net = dev_net(skb->dev);
+	int err;
+	struct net *net = dev_net(skb->dev);
 
 	sk = __inet_lookup_established(net, &tcp_hashinfo, iph->daddr,
 				       th->dest, iph->saddr, ntohs(th->source),
-				       inet_iअगर(skb), 0);
-	अगर (!sk) अणु
+				       inet_iif(skb), 0);
+	if (!sk) {
 		__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-		वापस -ENOENT;
-	पूर्ण
-	अगर (sk->sk_state == TCP_TIME_WAIT) अणु
+		return -ENOENT;
+	}
+	if (sk->sk_state == TCP_TIME_WAIT) {
 		inet_twsk_put(inet_twsk(sk));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	seq = ntohl(th->seq);
-	अगर (sk->sk_state == TCP_NEW_SYN_RECV) अणु
+	if (sk->sk_state == TCP_NEW_SYN_RECV) {
 		tcp_req_err(sk, seq, type == ICMP_PARAMETERPROB ||
 				     type == ICMP_TIME_EXCEEDED ||
 				     (type == ICMP_DEST_UNREACH &&
 				      (code == ICMP_NET_UNREACH ||
 				       code == ICMP_HOST_UNREACH)));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	bh_lock_sock(sk);
 	/* If too many ICMPs get dropped on busy
-	 * servers this needs to be solved dअगरferently.
-	 * We करो take care of PMTU discovery (RFC1191) special हाल :
-	 * we can receive locally generated ICMP messages जबतक socket is held.
+	 * servers this needs to be solved differently.
+	 * We do take care of PMTU discovery (RFC1191) special case :
+	 * we can receive locally generated ICMP messages while socket is held.
 	 */
-	अगर (sock_owned_by_user(sk)) अणु
-		अगर (!(type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED))
+	if (sock_owned_by_user(sk)) {
+		if (!(type == ICMP_DEST_UNREACH && code == ICMP_FRAG_NEEDED))
 			__NET_INC_STATS(net, LINUX_MIB_LOCKDROPPEDICMPS);
-	पूर्ण
-	अगर (sk->sk_state == TCP_CLOSE)
-		जाओ out;
+	}
+	if (sk->sk_state == TCP_CLOSE)
+		goto out;
 
-	अगर (unlikely(iph->ttl < inet_sk(sk)->min_ttl)) अणु
+	if (unlikely(iph->ttl < inet_sk(sk)->min_ttl)) {
 		__NET_INC_STATS(net, LINUX_MIB_TCPMINTTLDROP);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	tp = tcp_sk(sk);
-	/* XXX (TFO) - tp->snd_una should be ISN (tcp_create_खोलोreq_child() */
-	fastखोलो = rcu_dereference(tp->fastखोलो_rsk);
-	snd_una = fastखोलो ? tcp_rsk(fastखोलो)->snt_isn : tp->snd_una;
-	अगर (sk->sk_state != TCP_LISTEN &&
-	    !between(seq, snd_una, tp->snd_nxt)) अणु
+	/* XXX (TFO) - tp->snd_una should be ISN (tcp_create_openreq_child() */
+	fastopen = rcu_dereference(tp->fastopen_rsk);
+	snd_una = fastopen ? tcp_rsk(fastopen)->snt_isn : tp->snd_una;
+	if (sk->sk_state != TCP_LISTEN &&
+	    !between(seq, snd_una, tp->snd_nxt)) {
 		__NET_INC_STATS(net, LINUX_MIB_OUTOFWINDOWICMPS);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (type) अणु
-	हाल ICMP_REसूचीECT:
-		अगर (!sock_owned_by_user(sk))
-			करो_redirect(skb, sk);
-		जाओ out;
-	हाल ICMP_SOURCE_QUENCH:
+	switch (type) {
+	case ICMP_REDIRECT:
+		if (!sock_owned_by_user(sk))
+			do_redirect(skb, sk);
+		goto out;
+	case ICMP_SOURCE_QUENCH:
 		/* Just silently ignore these. */
-		जाओ out;
-	हाल ICMP_PARAMETERPROB:
+		goto out;
+	case ICMP_PARAMETERPROB:
 		err = EPROTO;
-		अवरोध;
-	हाल ICMP_DEST_UNREACH:
-		अगर (code > NR_ICMP_UNREACH)
-			जाओ out;
+		break;
+	case ICMP_DEST_UNREACH:
+		if (code > NR_ICMP_UNREACH)
+			goto out;
 
-		अगर (code == ICMP_FRAG_NEEDED) अणु /* PMTU discovery (RFC1191) */
-			/* We are not पूर्णांकerested in TCP_LISTEN and खोलो_requests
+		if (code == ICMP_FRAG_NEEDED) { /* PMTU discovery (RFC1191) */
+			/* We are not interested in TCP_LISTEN and open_requests
 			 * (SYN-ACKs send out by Linux are always <576bytes so
 			 * they should go through unfragmented).
 			 */
-			अगर (sk->sk_state == TCP_LISTEN)
-				जाओ out;
+			if (sk->sk_state == TCP_LISTEN)
+				goto out;
 
 			tp->mtu_info = info;
-			अगर (!sock_owned_by_user(sk)) अणु
+			if (!sock_owned_by_user(sk)) {
 				tcp_v4_mtu_reduced(sk);
-			पूर्ण अन्यथा अणु
-				अगर (!test_and_set_bit(TCP_MTU_REDUCED_DEFERRED, &sk->sk_tsq_flags))
+			} else {
+				if (!test_and_set_bit(TCP_MTU_REDUCED_DEFERRED, &sk->sk_tsq_flags))
 					sock_hold(sk);
-			पूर्ण
-			जाओ out;
-		पूर्ण
+			}
+			goto out;
+		}
 
-		err = icmp_err_convert[code].त्रुटि_सं;
-		/* check अगर this ICMP message allows revert of backoff.
+		err = icmp_err_convert[code].errno;
+		/* check if this ICMP message allows revert of backoff.
 		 * (see RFC 6069)
 		 */
-		अगर (!fastखोलो &&
+		if (!fastopen &&
 		    (code == ICMP_NET_UNREACH || code == ICMP_HOST_UNREACH))
 			tcp_ld_RTO_revert(sk, seq);
-		अवरोध;
-	हाल ICMP_TIME_EXCEEDED:
+		break;
+	case ICMP_TIME_EXCEEDED:
 		err = EHOSTUNREACH;
-		अवरोध;
-	शेष:
-		जाओ out;
-	पूर्ण
+		break;
+	default:
+		goto out;
+	}
 
-	चयन (sk->sk_state) अणु
-	हाल TCP_SYN_SENT:
-	हाल TCP_SYN_RECV:
-		/* Only in fast or simultaneous खोलो. If a fast खोलो socket is
-		 * alपढ़ोy accepted it is treated as a connected one below.
+	switch (sk->sk_state) {
+	case TCP_SYN_SENT:
+	case TCP_SYN_RECV:
+		/* Only in fast or simultaneous open. If a fast open socket is
+		 * already accepted it is treated as a connected one below.
 		 */
-		अगर (fastखोलो && !fastखोलो->sk)
-			अवरोध;
+		if (fastopen && !fastopen->sk)
+			break;
 
 		ip_icmp_error(sk, skb, err, th->dest, info, (u8 *)th);
 
-		अगर (!sock_owned_by_user(sk)) अणु
+		if (!sock_owned_by_user(sk)) {
 			sk->sk_err = err;
 
 			sk->sk_error_report(sk);
 
-			tcp_करोne(sk);
-		पूर्ण अन्यथा अणु
+			tcp_done(sk);
+		} else {
 			sk->sk_err_soft = err;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
-	/* If we've alपढ़ोy connected we will keep trying
-	 * until we समय out, or the user gives up.
+	/* If we've already connected we will keep trying
+	 * until we time out, or the user gives up.
 	 *
 	 * rfc1122 4.2.3.9 allows to consider as hard errors
 	 * only PROTO_UNREACH and PORT_UNREACH (well, FRAG_FAILED too,
 	 * but it is obsoleted by pmtu discovery).
 	 *
-	 * Note, that in modern पूर्णांकernet, where routing is unreliable
-	 * and in each dark corner broken firewalls sit, sending अक्रमom
+	 * Note, that in modern internet, where routing is unreliable
+	 * and in each dark corner broken firewalls sit, sending random
 	 * errors ordered by their masters even this two messages finally lose
 	 * their original sense (even Linux sends invalid PORT_UNREACHs)
 	 *
@@ -612,391 +611,391 @@ EXPORT_SYMBOL(tcp_ld_RTO_revert);
 	 */
 
 	inet = inet_sk(sk);
-	अगर (!sock_owned_by_user(sk) && inet->recverr) अणु
+	if (!sock_owned_by_user(sk) && inet->recverr) {
 		sk->sk_err = err;
 		sk->sk_error_report(sk);
-	पूर्ण अन्यथा	अणु /* Only an error on समयout */
+	} else	{ /* Only an error on timeout */
 		sk->sk_err_soft = err;
-	पूर्ण
+	}
 
 out:
 	bh_unlock_sock(sk);
 	sock_put(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __tcp_v4_send_check(काष्ठा sk_buff *skb, __be32 saddr, __be32 daddr)
-अणु
-	काष्ठा tcphdr *th = tcp_hdr(skb);
+void __tcp_v4_send_check(struct sk_buff *skb, __be32 saddr, __be32 daddr)
+{
+	struct tcphdr *th = tcp_hdr(skb);
 
 	th->check = ~tcp_v4_check(skb->len, saddr, daddr, 0);
 	skb->csum_start = skb_transport_header(skb) - skb->head;
-	skb->csum_offset = दुरत्व(काष्ठा tcphdr, check);
-पूर्ण
+	skb->csum_offset = offsetof(struct tcphdr, check);
+}
 
 /* This routine computes an IPv4 TCP checksum. */
-व्योम tcp_v4_send_check(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा inet_sock *inet = inet_sk(sk);
+void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
+{
+	const struct inet_sock *inet = inet_sk(sk);
 
 	__tcp_v4_send_check(skb, inet->inet_saddr, inet->inet_daddr);
-पूर्ण
+}
 EXPORT_SYMBOL(tcp_v4_send_check);
 
 /*
  *	This routine will send an RST to the other tcp.
  *
  *	Someone asks: why I NEVER use socket parameters (TOS, TTL etc.)
- *		      क्रम reset.
- *	Answer: अगर a packet caused RST, it is not क्रम a socket
- *		existing in our प्रणाली, अगर it is matched to a socket,
+ *		      for reset.
+ *	Answer: if a packet caused RST, it is not for a socket
+ *		existing in our system, if it is matched to a socket,
  *		it is just duplicate segment or bug in other side's TCP.
  *		So that we build reply only basing on parameters
  *		arrived with segment.
- *	Exception: precedence violation. We करो not implement it in any हाल.
+ *	Exception: precedence violation. We do not implement it in any case.
  */
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-#घोषणा OPTION_BYTES TCPOLEN_MD5SIG_ALIGNED
-#अन्यथा
-#घोषणा OPTION_BYTES माप(__be32)
-#पूर्ण_अगर
+#ifdef CONFIG_TCP_MD5SIG
+#define OPTION_BYTES TCPOLEN_MD5SIG_ALIGNED
+#else
+#define OPTION_BYTES sizeof(__be32)
+#endif
 
-अटल व्योम tcp_v4_send_reset(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा tcphdr *th = tcp_hdr(skb);
-	काष्ठा अणु
-		काष्ठा tcphdr th;
-		__be32 opt[OPTION_BYTES / माप(__be32)];
-	पूर्ण rep;
-	काष्ठा ip_reply_arg arg;
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	काष्ठा tcp_md5sig_key *key = शून्य;
-	स्थिर __u8 *hash_location = शून्य;
-	अचिन्हित अक्षर newhash[16];
-	पूर्णांक genhash;
-	काष्ठा sock *sk1 = शून्य;
-#पूर्ण_अगर
-	u64 transmit_समय = 0;
-	काष्ठा sock *ctl_sk;
-	काष्ठा net *net;
+static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+{
+	const struct tcphdr *th = tcp_hdr(skb);
+	struct {
+		struct tcphdr th;
+		__be32 opt[OPTION_BYTES / sizeof(__be32)];
+	} rep;
+	struct ip_reply_arg arg;
+#ifdef CONFIG_TCP_MD5SIG
+	struct tcp_md5sig_key *key = NULL;
+	const __u8 *hash_location = NULL;
+	unsigned char newhash[16];
+	int genhash;
+	struct sock *sk1 = NULL;
+#endif
+	u64 transmit_time = 0;
+	struct sock *ctl_sk;
+	struct net *net;
 
 	/* Never send a reset in response to a reset. */
-	अगर (th->rst)
-		वापस;
+	if (th->rst)
+		return;
 
-	/* If sk not शून्य, it means we did a successful lookup and incoming
+	/* If sk not NULL, it means we did a successful lookup and incoming
 	 * route had to be correct. prequeue might have dropped our dst.
 	 */
-	अगर (!sk && skb_rtable(skb)->rt_type != RTN_LOCAL)
-		वापस;
+	if (!sk && skb_rtable(skb)->rt_type != RTN_LOCAL)
+		return;
 
 	/* Swap the send and the receive. */
-	स_रखो(&rep, 0, माप(rep));
+	memset(&rep, 0, sizeof(rep));
 	rep.th.dest   = th->source;
 	rep.th.source = th->dest;
-	rep.th.करोff   = माप(काष्ठा tcphdr) / 4;
+	rep.th.doff   = sizeof(struct tcphdr) / 4;
 	rep.th.rst    = 1;
 
-	अगर (th->ack) अणु
+	if (th->ack) {
 		rep.th.seq = th->ack_seq;
-	पूर्ण अन्यथा अणु
+	} else {
 		rep.th.ack = 1;
 		rep.th.ack_seq = htonl(ntohl(th->seq) + th->syn + th->fin +
-				       skb->len - (th->करोff << 2));
-	पूर्ण
+				       skb->len - (th->doff << 2));
+	}
 
-	स_रखो(&arg, 0, माप(arg));
-	arg.iov[0].iov_base = (अचिन्हित अक्षर *)&rep;
-	arg.iov[0].iov_len  = माप(rep.th);
+	memset(&arg, 0, sizeof(arg));
+	arg.iov[0].iov_base = (unsigned char *)&rep;
+	arg.iov[0].iov_len  = sizeof(rep.th);
 
 	net = sk ? sock_net(sk) : dev_net(skb_dst(skb)->dev);
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	rcu_पढ़ो_lock();
+#ifdef CONFIG_TCP_MD5SIG
+	rcu_read_lock();
 	hash_location = tcp_parse_md5sig_option(th);
-	अगर (sk && sk_fullsock(sk)) अणु
-		स्थिर जोड़ tcp_md5_addr *addr;
-		पूर्णांक l3index;
+	if (sk && sk_fullsock(sk)) {
+		const union tcp_md5_addr *addr;
+		int l3index;
 
-		/* sdअगर set, means packet ingressed via a device
-		 * in an L3 करोमुख्य and inet_iअगर is set to it.
+		/* sdif set, means packet ingressed via a device
+		 * in an L3 domain and inet_iif is set to it.
 		 */
-		l3index = tcp_v4_sdअगर(skb) ? inet_iअगर(skb) : 0;
-		addr = (जोड़ tcp_md5_addr *)&ip_hdr(skb)->saddr;
-		key = tcp_md5_करो_lookup(sk, l3index, addr, AF_INET);
-	पूर्ण अन्यथा अगर (hash_location) अणु
-		स्थिर जोड़ tcp_md5_addr *addr;
-		पूर्णांक sdअगर = tcp_v4_sdअगर(skb);
-		पूर्णांक dअगर = inet_iअगर(skb);
-		पूर्णांक l3index;
+		l3index = tcp_v4_sdif(skb) ? inet_iif(skb) : 0;
+		addr = (union tcp_md5_addr *)&ip_hdr(skb)->saddr;
+		key = tcp_md5_do_lookup(sk, l3index, addr, AF_INET);
+	} else if (hash_location) {
+		const union tcp_md5_addr *addr;
+		int sdif = tcp_v4_sdif(skb);
+		int dif = inet_iif(skb);
+		int l3index;
 
 		/*
 		 * active side is lost. Try to find listening socket through
 		 * source port, and then find md5 key through listening socket.
 		 * we are not loose security here:
 		 * Incoming packet is checked with md5 hash with finding key,
-		 * no RST generated अगर md5 hash करोesn't match.
+		 * no RST generated if md5 hash doesn't match.
 		 */
-		sk1 = __inet_lookup_listener(net, &tcp_hashinfo, शून्य, 0,
+		sk1 = __inet_lookup_listener(net, &tcp_hashinfo, NULL, 0,
 					     ip_hdr(skb)->saddr,
 					     th->source, ip_hdr(skb)->daddr,
-					     ntohs(th->source), dअगर, sdअगर);
-		/* करोn't send rst if it can't find key */
-		अगर (!sk1)
-			जाओ out;
+					     ntohs(th->source), dif, sdif);
+		/* don't send rst if it can't find key */
+		if (!sk1)
+			goto out;
 
-		/* sdअगर set, means packet ingressed via a device
-		 * in an L3 करोमुख्य and dअगर is set to it.
+		/* sdif set, means packet ingressed via a device
+		 * in an L3 domain and dif is set to it.
 		 */
-		l3index = sdअगर ? dअगर : 0;
-		addr = (जोड़ tcp_md5_addr *)&ip_hdr(skb)->saddr;
-		key = tcp_md5_करो_lookup(sk1, l3index, addr, AF_INET);
-		अगर (!key)
-			जाओ out;
+		l3index = sdif ? dif : 0;
+		addr = (union tcp_md5_addr *)&ip_hdr(skb)->saddr;
+		key = tcp_md5_do_lookup(sk1, l3index, addr, AF_INET);
+		if (!key)
+			goto out;
 
 
-		genhash = tcp_v4_md5_hash_skb(newhash, key, शून्य, skb);
-		अगर (genhash || स_भेद(hash_location, newhash, 16) != 0)
-			जाओ out;
+		genhash = tcp_v4_md5_hash_skb(newhash, key, NULL, skb);
+		if (genhash || memcmp(hash_location, newhash, 16) != 0)
+			goto out;
 
-	पूर्ण
+	}
 
-	अगर (key) अणु
+	if (key) {
 		rep.opt[0] = htonl((TCPOPT_NOP << 24) |
 				   (TCPOPT_NOP << 16) |
 				   (TCPOPT_MD5SIG << 8) |
 				   TCPOLEN_MD5SIG);
 		/* Update length and the length the header thinks exists */
 		arg.iov[0].iov_len += TCPOLEN_MD5SIG_ALIGNED;
-		rep.th.करोff = arg.iov[0].iov_len / 4;
+		rep.th.doff = arg.iov[0].iov_len / 4;
 
 		tcp_v4_md5_hash_hdr((__u8 *) &rep.opt[1],
 				     key, ip_hdr(skb)->saddr,
 				     ip_hdr(skb)->daddr, &rep.th);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	/* Can't co-exist with TCPMD5, hence check rep.opt[0] */
-	अगर (rep.opt[0] == 0) अणु
+	if (rep.opt[0] == 0) {
 		__be32 mrst = mptcp_reset_option(skb);
 
-		अगर (mrst) अणु
+		if (mrst) {
 			rep.opt[0] = mrst;
-			arg.iov[0].iov_len += माप(mrst);
-			rep.th.करोff = arg.iov[0].iov_len / 4;
-		पूर्ण
-	पूर्ण
+			arg.iov[0].iov_len += sizeof(mrst);
+			rep.th.doff = arg.iov[0].iov_len / 4;
+		}
+	}
 
 	arg.csum = csum_tcpudp_nofold(ip_hdr(skb)->daddr,
 				      ip_hdr(skb)->saddr, /* XXX */
 				      arg.iov[0].iov_len, IPPROTO_TCP, 0);
-	arg.csumoffset = दुरत्व(काष्ठा tcphdr, check) / 2;
+	arg.csumoffset = offsetof(struct tcphdr, check) / 2;
 	arg.flags = (sk && inet_sk_transparent(sk)) ? IP_REPLY_ARG_NOSRCCHECK : 0;
 
-	/* When socket is gone, all binding inक्रमmation is lost.
-	 * routing might fail in this हाल. No choice here, अगर we choose to क्रमce
-	 * input पूर्णांकerface, we will misroute in हाल of asymmetric route.
+	/* When socket is gone, all binding information is lost.
+	 * routing might fail in this case. No choice here, if we choose to force
+	 * input interface, we will misroute in case of asymmetric route.
 	 */
-	अगर (sk) अणु
-		arg.bound_dev_अगर = sk->sk_bound_dev_अगर;
-		अगर (sk_fullsock(sk))
+	if (sk) {
+		arg.bound_dev_if = sk->sk_bound_dev_if;
+		if (sk_fullsock(sk))
 			trace_tcp_send_reset(sk, skb);
-	पूर्ण
+	}
 
-	BUILD_BUG_ON(दुरत्व(काष्ठा sock, sk_bound_dev_अगर) !=
-		     दुरत्व(काष्ठा inet_समयरुको_sock, tw_bound_dev_अगर));
+	BUILD_BUG_ON(offsetof(struct sock, sk_bound_dev_if) !=
+		     offsetof(struct inet_timewait_sock, tw_bound_dev_if));
 
 	arg.tos = ip_hdr(skb)->tos;
-	arg.uid = sock_net_uid(net, sk && sk_fullsock(sk) ? sk : शून्य);
+	arg.uid = sock_net_uid(net, sk && sk_fullsock(sk) ? sk : NULL);
 	local_bh_disable();
-	ctl_sk = this_cpu_पढ़ो(*net->ipv4.tcp_sk);
-	अगर (sk) अणु
+	ctl_sk = this_cpu_read(*net->ipv4.tcp_sk);
+	if (sk) {
 		ctl_sk->sk_mark = (sk->sk_state == TCP_TIME_WAIT) ?
 				   inet_twsk(sk)->tw_mark : sk->sk_mark;
 		ctl_sk->sk_priority = (sk->sk_state == TCP_TIME_WAIT) ?
 				   inet_twsk(sk)->tw_priority : sk->sk_priority;
-		transmit_समय = tcp_transmit_समय(sk);
-	पूर्ण
+		transmit_time = tcp_transmit_time(sk);
+	}
 	ip_send_unicast_reply(ctl_sk,
 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
 			      &arg, arg.iov[0].iov_len,
-			      transmit_समय);
+			      transmit_time);
 
 	ctl_sk->sk_mark = 0;
 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
 	__TCP_INC_STATS(net, TCP_MIB_OUTRSTS);
 	local_bh_enable();
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
+#ifdef CONFIG_TCP_MD5SIG
 out:
-	rcu_पढ़ो_unlock();
-#पूर्ण_अगर
-पूर्ण
+	rcu_read_unlock();
+#endif
+}
 
 /* The code following below sending ACKs in SYN-RECV and TIME-WAIT states
-   outside socket context is ugly, certainly. What can I करो?
+   outside socket context is ugly, certainly. What can I do?
  */
 
-अटल व्योम tcp_v4_send_ack(स्थिर काष्ठा sock *sk,
-			    काष्ठा sk_buff *skb, u32 seq, u32 ack,
-			    u32 win, u32 tsval, u32 tsecr, पूर्णांक oअगर,
-			    काष्ठा tcp_md5sig_key *key,
-			    पूर्णांक reply_flags, u8 tos)
-अणु
-	स्थिर काष्ठा tcphdr *th = tcp_hdr(skb);
-	काष्ठा अणु
-		काष्ठा tcphdr th;
+static void tcp_v4_send_ack(const struct sock *sk,
+			    struct sk_buff *skb, u32 seq, u32 ack,
+			    u32 win, u32 tsval, u32 tsecr, int oif,
+			    struct tcp_md5sig_key *key,
+			    int reply_flags, u8 tos)
+{
+	const struct tcphdr *th = tcp_hdr(skb);
+	struct {
+		struct tcphdr th;
 		__be32 opt[(TCPOLEN_TSTAMP_ALIGNED >> 2)
-#अगर_घोषित CONFIG_TCP_MD5SIG
+#ifdef CONFIG_TCP_MD5SIG
 			   + (TCPOLEN_MD5SIG_ALIGNED >> 2)
-#पूर्ण_अगर
+#endif
 			];
-	पूर्ण rep;
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा ip_reply_arg arg;
-	काष्ठा sock *ctl_sk;
-	u64 transmit_समय;
+	} rep;
+	struct net *net = sock_net(sk);
+	struct ip_reply_arg arg;
+	struct sock *ctl_sk;
+	u64 transmit_time;
 
-	स_रखो(&rep.th, 0, माप(काष्ठा tcphdr));
-	स_रखो(&arg, 0, माप(arg));
+	memset(&rep.th, 0, sizeof(struct tcphdr));
+	memset(&arg, 0, sizeof(arg));
 
-	arg.iov[0].iov_base = (अचिन्हित अक्षर *)&rep;
-	arg.iov[0].iov_len  = माप(rep.th);
-	अगर (tsecr) अणु
+	arg.iov[0].iov_base = (unsigned char *)&rep;
+	arg.iov[0].iov_len  = sizeof(rep.th);
+	if (tsecr) {
 		rep.opt[0] = htonl((TCPOPT_NOP << 24) | (TCPOPT_NOP << 16) |
 				   (TCPOPT_TIMESTAMP << 8) |
 				   TCPOLEN_TIMESTAMP);
 		rep.opt[1] = htonl(tsval);
 		rep.opt[2] = htonl(tsecr);
 		arg.iov[0].iov_len += TCPOLEN_TSTAMP_ALIGNED;
-	पूर्ण
+	}
 
 	/* Swap the send and the receive. */
 	rep.th.dest    = th->source;
 	rep.th.source  = th->dest;
-	rep.th.करोff    = arg.iov[0].iov_len / 4;
+	rep.th.doff    = arg.iov[0].iov_len / 4;
 	rep.th.seq     = htonl(seq);
 	rep.th.ack_seq = htonl(ack);
 	rep.th.ack     = 1;
-	rep.th.winकरोw  = htons(win);
+	rep.th.window  = htons(win);
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	अगर (key) अणु
-		पूर्णांक offset = (tsecr) ? 3 : 0;
+#ifdef CONFIG_TCP_MD5SIG
+	if (key) {
+		int offset = (tsecr) ? 3 : 0;
 
 		rep.opt[offset++] = htonl((TCPOPT_NOP << 24) |
 					  (TCPOPT_NOP << 16) |
 					  (TCPOPT_MD5SIG << 8) |
 					  TCPOLEN_MD5SIG);
 		arg.iov[0].iov_len += TCPOLEN_MD5SIG_ALIGNED;
-		rep.th.करोff = arg.iov[0].iov_len/4;
+		rep.th.doff = arg.iov[0].iov_len/4;
 
 		tcp_v4_md5_hash_hdr((__u8 *) &rep.opt[offset],
 				    key, ip_hdr(skb)->saddr,
 				    ip_hdr(skb)->daddr, &rep.th);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	arg.flags = reply_flags;
 	arg.csum = csum_tcpudp_nofold(ip_hdr(skb)->daddr,
 				      ip_hdr(skb)->saddr, /* XXX */
 				      arg.iov[0].iov_len, IPPROTO_TCP, 0);
-	arg.csumoffset = दुरत्व(काष्ठा tcphdr, check) / 2;
-	अगर (oअगर)
-		arg.bound_dev_अगर = oअगर;
+	arg.csumoffset = offsetof(struct tcphdr, check) / 2;
+	if (oif)
+		arg.bound_dev_if = oif;
 	arg.tos = tos;
-	arg.uid = sock_net_uid(net, sk_fullsock(sk) ? sk : शून्य);
+	arg.uid = sock_net_uid(net, sk_fullsock(sk) ? sk : NULL);
 	local_bh_disable();
-	ctl_sk = this_cpu_पढ़ो(*net->ipv4.tcp_sk);
+	ctl_sk = this_cpu_read(*net->ipv4.tcp_sk);
 	ctl_sk->sk_mark = (sk->sk_state == TCP_TIME_WAIT) ?
 			   inet_twsk(sk)->tw_mark : sk->sk_mark;
 	ctl_sk->sk_priority = (sk->sk_state == TCP_TIME_WAIT) ?
 			   inet_twsk(sk)->tw_priority : sk->sk_priority;
-	transmit_समय = tcp_transmit_समय(sk);
+	transmit_time = tcp_transmit_time(sk);
 	ip_send_unicast_reply(ctl_sk,
 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
 			      &arg, arg.iov[0].iov_len,
-			      transmit_समय);
+			      transmit_time);
 
 	ctl_sk->sk_mark = 0;
 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
 	local_bh_enable();
-पूर्ण
+}
 
-अटल व्योम tcp_v4_समयरुको_ack(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा inet_समयरुको_sock *tw = inet_twsk(sk);
-	काष्ठा tcp_समयरुको_sock *tcptw = tcp_twsk(sk);
+static void tcp_v4_timewait_ack(struct sock *sk, struct sk_buff *skb)
+{
+	struct inet_timewait_sock *tw = inet_twsk(sk);
+	struct tcp_timewait_sock *tcptw = tcp_twsk(sk);
 
 	tcp_v4_send_ack(sk, skb,
 			tcptw->tw_snd_nxt, tcptw->tw_rcv_nxt,
 			tcptw->tw_rcv_wnd >> tw->tw_rcv_wscale,
-			tcp_समय_stamp_raw() + tcptw->tw_ts_offset,
+			tcp_time_stamp_raw() + tcptw->tw_ts_offset,
 			tcptw->tw_ts_recent,
-			tw->tw_bound_dev_अगर,
+			tw->tw_bound_dev_if,
 			tcp_twsk_md5_key(tcptw),
 			tw->tw_transparent ? IP_REPLY_ARG_NOSRCCHECK : 0,
 			tw->tw_tos
 			);
 
 	inet_twsk_put(tw);
-पूर्ण
+}
 
-अटल व्योम tcp_v4_reqsk_send_ack(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				  काष्ठा request_sock *req)
-अणु
-	स्थिर जोड़ tcp_md5_addr *addr;
-	पूर्णांक l3index;
+static void tcp_v4_reqsk_send_ack(const struct sock *sk, struct sk_buff *skb,
+				  struct request_sock *req)
+{
+	const union tcp_md5_addr *addr;
+	int l3index;
 
-	/* sk->sk_state == TCP_LISTEN -> क्रम regular TCP_SYN_RECV
-	 * sk->sk_state == TCP_SYN_RECV -> क्रम Fast Open.
+	/* sk->sk_state == TCP_LISTEN -> for regular TCP_SYN_RECV
+	 * sk->sk_state == TCP_SYN_RECV -> for Fast Open.
 	 */
 	u32 seq = (sk->sk_state == TCP_LISTEN) ? tcp_rsk(req)->snt_isn + 1 :
 					     tcp_sk(sk)->snd_nxt;
 
 	/* RFC 7323 2.3
-	 * The winकरोw field (SEG.WND) of every outgoing segment, with the
-	 * exception of <SYN> segments, MUST be right-shअगरted by
-	 * Rcv.Wind.Shअगरt bits:
+	 * The window field (SEG.WND) of every outgoing segment, with the
+	 * exception of <SYN> segments, MUST be right-shifted by
+	 * Rcv.Wind.Shift bits:
 	 */
-	addr = (जोड़ tcp_md5_addr *)&ip_hdr(skb)->saddr;
-	l3index = tcp_v4_sdअगर(skb) ? inet_iअगर(skb) : 0;
+	addr = (union tcp_md5_addr *)&ip_hdr(skb)->saddr;
+	l3index = tcp_v4_sdif(skb) ? inet_iif(skb) : 0;
 	tcp_v4_send_ack(sk, skb, seq,
 			tcp_rsk(req)->rcv_nxt,
 			req->rsk_rcv_wnd >> inet_rsk(req)->rcv_wscale,
-			tcp_समय_stamp_raw() + tcp_rsk(req)->ts_off,
+			tcp_time_stamp_raw() + tcp_rsk(req)->ts_off,
 			req->ts_recent,
 			0,
-			tcp_md5_करो_lookup(sk, l3index, addr, AF_INET),
+			tcp_md5_do_lookup(sk, l3index, addr, AF_INET),
 			inet_rsk(req)->no_srccheck ? IP_REPLY_ARG_NOSRCCHECK : 0,
 			ip_hdr(skb)->tos);
-पूर्ण
+}
 
 /*
  *	Send a SYN-ACK after having received a SYN.
  *	This still operates on a request_sock only, not on a big
  *	socket.
  */
-अटल पूर्णांक tcp_v4_send_synack(स्थिर काष्ठा sock *sk, काष्ठा dst_entry *dst,
-			      काष्ठा flowi *fl,
-			      काष्ठा request_sock *req,
-			      काष्ठा tcp_fastखोलो_cookie *foc,
-			      क्रमागत tcp_synack_type synack_type,
-			      काष्ठा sk_buff *syn_skb)
-अणु
-	स्थिर काष्ठा inet_request_sock *ireq = inet_rsk(req);
-	काष्ठा flowi4 fl4;
-	पूर्णांक err = -1;
-	काष्ठा sk_buff *skb;
+static int tcp_v4_send_synack(const struct sock *sk, struct dst_entry *dst,
+			      struct flowi *fl,
+			      struct request_sock *req,
+			      struct tcp_fastopen_cookie *foc,
+			      enum tcp_synack_type synack_type,
+			      struct sk_buff *syn_skb)
+{
+	const struct inet_request_sock *ireq = inet_rsk(req);
+	struct flowi4 fl4;
+	int err = -1;
+	struct sk_buff *skb;
 	u8 tos;
 
 	/* First, grab a route. */
-	अगर (!dst && (dst = inet_csk_route_req(sk, &fl4, req)) == शून्य)
-		वापस -1;
+	if (!dst && (dst = inet_csk_route_req(sk, &fl4, req)) == NULL)
+		return -1;
 
 	skb = tcp_make_synack(sk, dst, req, foc, synack_type, syn_skb);
 
-	अगर (skb) अणु
+	if (skb) {
 		__tcp_v4_send_check(skb, ireq->ir_loc_addr, ireq->ir_rmt_addr);
 
 		tos = sock_net(sk)->ipv4.sysctl_tcp_reflect_tos ?
@@ -1004,286 +1003,286 @@ out:
 				(inet_sk(sk)->tos & INET_ECN_MASK) :
 				inet_sk(sk)->tos;
 
-		अगर (!INET_ECN_is_capable(tos) &&
-		    tcp_bpf_ca_needs_ecn((काष्ठा sock *)req))
+		if (!INET_ECN_is_capable(tos) &&
+		    tcp_bpf_ca_needs_ecn((struct sock *)req))
 			tos |= INET_ECN_ECT_0;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		err = ip_build_and_send_pkt(skb, sk, ireq->ir_loc_addr,
 					    ireq->ir_rmt_addr,
 					    rcu_dereference(ireq->ireq_opt),
 					    tos);
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 		err = net_xmit_eval(err);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- *	IPv4 request_sock deकाष्ठाor.
+ *	IPv4 request_sock destructor.
  */
-अटल व्योम tcp_v4_reqsk_deकाष्ठाor(काष्ठा request_sock *req)
-अणु
-	kमुक्त(rcu_dereference_रक्षित(inet_rsk(req)->ireq_opt, 1));
-पूर्ण
+static void tcp_v4_reqsk_destructor(struct request_sock *req)
+{
+	kfree(rcu_dereference_protected(inet_rsk(req)->ireq_opt, 1));
+}
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
+#ifdef CONFIG_TCP_MD5SIG
 /*
  * RFC2385 MD5 checksumming requires a mapping of
  * IP address->MD5 Key.
- * We need to मुख्यtain these in the sk काष्ठाure.
+ * We need to maintain these in the sk structure.
  */
 
 DEFINE_STATIC_KEY_FALSE(tcp_md5_needed);
 EXPORT_SYMBOL(tcp_md5_needed);
 
-/* Find the Key काष्ठाure क्रम an address.  */
-काष्ठा tcp_md5sig_key *__tcp_md5_करो_lookup(स्थिर काष्ठा sock *sk, पूर्णांक l3index,
-					   स्थिर जोड़ tcp_md5_addr *addr,
-					   पूर्णांक family)
-अणु
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा tcp_md5sig_key *key;
-	स्थिर काष्ठा tcp_md5sig_info *md5sig;
+/* Find the Key structure for an address.  */
+struct tcp_md5sig_key *__tcp_md5_do_lookup(const struct sock *sk, int l3index,
+					   const union tcp_md5_addr *addr,
+					   int family)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
+	struct tcp_md5sig_key *key;
+	const struct tcp_md5sig_info *md5sig;
 	__be32 mask;
-	काष्ठा tcp_md5sig_key *best_match = शून्य;
+	struct tcp_md5sig_key *best_match = NULL;
 	bool match;
 
-	/* caller either holds rcu_पढ़ो_lock() or socket lock */
+	/* caller either holds rcu_read_lock() or socket lock */
 	md5sig = rcu_dereference_check(tp->md5sig_info,
 				       lockdep_sock_is_held(sk));
-	अगर (!md5sig)
-		वापस शून्य;
+	if (!md5sig)
+		return NULL;
 
-	hlist_क्रम_each_entry_rcu(key, &md5sig->head, node,
-				 lockdep_sock_is_held(sk)) अणु
-		अगर (key->family != family)
-			जारी;
-		अगर (key->l3index && key->l3index != l3index)
-			जारी;
-		अगर (family == AF_INET) अणु
+	hlist_for_each_entry_rcu(key, &md5sig->head, node,
+				 lockdep_sock_is_held(sk)) {
+		if (key->family != family)
+			continue;
+		if (key->l3index && key->l3index != l3index)
+			continue;
+		if (family == AF_INET) {
 			mask = inet_make_mask(key->prefixlen);
 			match = (key->addr.a4.s_addr & mask) ==
 				(addr->a4.s_addr & mask);
-#अगर IS_ENABLED(CONFIG_IPV6)
-		पूर्ण अन्यथा अगर (family == AF_INET6) अणु
+#if IS_ENABLED(CONFIG_IPV6)
+		} else if (family == AF_INET6) {
 			match = ipv6_prefix_equal(&key->addr.a6, &addr->a6,
 						  key->prefixlen);
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
+#endif
+		} else {
 			match = false;
-		पूर्ण
+		}
 
-		अगर (match && (!best_match ||
+		if (match && (!best_match ||
 			      key->prefixlen > best_match->prefixlen))
 			best_match = key;
-	पूर्ण
-	वापस best_match;
-पूर्ण
-EXPORT_SYMBOL(__tcp_md5_करो_lookup);
+	}
+	return best_match;
+}
+EXPORT_SYMBOL(__tcp_md5_do_lookup);
 
-अटल काष्ठा tcp_md5sig_key *tcp_md5_करो_lookup_exact(स्थिर काष्ठा sock *sk,
-						      स्थिर जोड़ tcp_md5_addr *addr,
-						      पूर्णांक family, u8 prefixlen,
-						      पूर्णांक l3index)
-अणु
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा tcp_md5sig_key *key;
-	अचिन्हित पूर्णांक size = माप(काष्ठा in_addr);
-	स्थिर काष्ठा tcp_md5sig_info *md5sig;
+static struct tcp_md5sig_key *tcp_md5_do_lookup_exact(const struct sock *sk,
+						      const union tcp_md5_addr *addr,
+						      int family, u8 prefixlen,
+						      int l3index)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
+	struct tcp_md5sig_key *key;
+	unsigned int size = sizeof(struct in_addr);
+	const struct tcp_md5sig_info *md5sig;
 
-	/* caller either holds rcu_पढ़ो_lock() or socket lock */
+	/* caller either holds rcu_read_lock() or socket lock */
 	md5sig = rcu_dereference_check(tp->md5sig_info,
 				       lockdep_sock_is_held(sk));
-	अगर (!md5sig)
-		वापस शून्य;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (family == AF_INET6)
-		size = माप(काष्ठा in6_addr);
-#पूर्ण_अगर
-	hlist_क्रम_each_entry_rcu(key, &md5sig->head, node,
-				 lockdep_sock_is_held(sk)) अणु
-		अगर (key->family != family)
-			जारी;
-		अगर (key->l3index && key->l3index != l3index)
-			जारी;
-		अगर (!स_भेद(&key->addr, addr, size) &&
+	if (!md5sig)
+		return NULL;
+#if IS_ENABLED(CONFIG_IPV6)
+	if (family == AF_INET6)
+		size = sizeof(struct in6_addr);
+#endif
+	hlist_for_each_entry_rcu(key, &md5sig->head, node,
+				 lockdep_sock_is_held(sk)) {
+		if (key->family != family)
+			continue;
+		if (key->l3index && key->l3index != l3index)
+			continue;
+		if (!memcmp(&key->addr, addr, size) &&
 		    key->prefixlen == prefixlen)
-			वापस key;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return key;
+	}
+	return NULL;
+}
 
-काष्ठा tcp_md5sig_key *tcp_v4_md5_lookup(स्थिर काष्ठा sock *sk,
-					 स्थिर काष्ठा sock *addr_sk)
-अणु
-	स्थिर जोड़ tcp_md5_addr *addr;
-	पूर्णांक l3index;
+struct tcp_md5sig_key *tcp_v4_md5_lookup(const struct sock *sk,
+					 const struct sock *addr_sk)
+{
+	const union tcp_md5_addr *addr;
+	int l3index;
 
-	l3index = l3mdev_master_अगरindex_by_index(sock_net(sk),
-						 addr_sk->sk_bound_dev_अगर);
-	addr = (स्थिर जोड़ tcp_md5_addr *)&addr_sk->sk_daddr;
-	वापस tcp_md5_करो_lookup(sk, l3index, addr, AF_INET);
-पूर्ण
+	l3index = l3mdev_master_ifindex_by_index(sock_net(sk),
+						 addr_sk->sk_bound_dev_if);
+	addr = (const union tcp_md5_addr *)&addr_sk->sk_daddr;
+	return tcp_md5_do_lookup(sk, l3index, addr, AF_INET);
+}
 EXPORT_SYMBOL(tcp_v4_md5_lookup);
 
 /* This can be called on a newly created socket, from other files */
-पूर्णांक tcp_md5_करो_add(काष्ठा sock *sk, स्थिर जोड़ tcp_md5_addr *addr,
-		   पूर्णांक family, u8 prefixlen, पूर्णांक l3index,
-		   स्थिर u8 *newkey, u8 newkeylen, gfp_t gfp)
-अणु
+int tcp_md5_do_add(struct sock *sk, const union tcp_md5_addr *addr,
+		   int family, u8 prefixlen, int l3index,
+		   const u8 *newkey, u8 newkeylen, gfp_t gfp)
+{
 	/* Add Key to the list */
-	काष्ठा tcp_md5sig_key *key;
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा tcp_md5sig_info *md5sig;
+	struct tcp_md5sig_key *key;
+	struct tcp_sock *tp = tcp_sk(sk);
+	struct tcp_md5sig_info *md5sig;
 
-	key = tcp_md5_करो_lookup_exact(sk, addr, family, prefixlen, l3index);
-	अगर (key) अणु
+	key = tcp_md5_do_lookup_exact(sk, addr, family, prefixlen, l3index);
+	if (key) {
 		/* Pre-existing entry - just update that one.
 		 * Note that the key might be used concurrently.
-		 * data_race() is telling kcsan that we करो not care of
+		 * data_race() is telling kcsan that we do not care of
 		 * key mismatches, since changing MD5 key on live flows
 		 * can lead to packet drops.
 		 */
-		data_race(स_नकल(key->key, newkey, newkeylen));
+		data_race(memcpy(key->key, newkey, newkeylen));
 
 		/* Pairs with READ_ONCE() in tcp_md5_hash_key().
-		 * Also note that a पढ़ोer could catch new key->keylen value
+		 * Also note that a reader could catch new key->keylen value
 		 * but old key->key[], this is the reason we use __GFP_ZERO
-		 * at sock_kदो_स्मृति() समय below these lines.
+		 * at sock_kmalloc() time below these lines.
 		 */
 		WRITE_ONCE(key->keylen, newkeylen);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	md5sig = rcu_dereference_रक्षित(tp->md5sig_info,
+	md5sig = rcu_dereference_protected(tp->md5sig_info,
 					   lockdep_sock_is_held(sk));
-	अगर (!md5sig) अणु
-		md5sig = kदो_स्मृति(माप(*md5sig), gfp);
-		अगर (!md5sig)
-			वापस -ENOMEM;
+	if (!md5sig) {
+		md5sig = kmalloc(sizeof(*md5sig), gfp);
+		if (!md5sig)
+			return -ENOMEM;
 
 		sk_nocaps_add(sk, NETIF_F_GSO_MASK);
 		INIT_HLIST_HEAD(&md5sig->head);
-		rcu_assign_poपूर्णांकer(tp->md5sig_info, md5sig);
-	पूर्ण
+		rcu_assign_pointer(tp->md5sig_info, md5sig);
+	}
 
-	key = sock_kदो_स्मृति(sk, माप(*key), gfp | __GFP_ZERO);
-	अगर (!key)
-		वापस -ENOMEM;
-	अगर (!tcp_alloc_md5sig_pool()) अणु
-		sock_kमुक्त_s(sk, key, माप(*key));
-		वापस -ENOMEM;
-	पूर्ण
+	key = sock_kmalloc(sk, sizeof(*key), gfp | __GFP_ZERO);
+	if (!key)
+		return -ENOMEM;
+	if (!tcp_alloc_md5sig_pool()) {
+		sock_kfree_s(sk, key, sizeof(*key));
+		return -ENOMEM;
+	}
 
-	स_नकल(key->key, newkey, newkeylen);
+	memcpy(key->key, newkey, newkeylen);
 	key->keylen = newkeylen;
 	key->family = family;
 	key->prefixlen = prefixlen;
 	key->l3index = l3index;
-	स_नकल(&key->addr, addr,
-	       (family == AF_INET6) ? माप(काष्ठा in6_addr) :
-				      माप(काष्ठा in_addr));
+	memcpy(&key->addr, addr,
+	       (family == AF_INET6) ? sizeof(struct in6_addr) :
+				      sizeof(struct in_addr));
 	hlist_add_head_rcu(&key->node, &md5sig->head);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tcp_md5_करो_add);
+	return 0;
+}
+EXPORT_SYMBOL(tcp_md5_do_add);
 
-पूर्णांक tcp_md5_करो_del(काष्ठा sock *sk, स्थिर जोड़ tcp_md5_addr *addr, पूर्णांक family,
-		   u8 prefixlen, पूर्णांक l3index)
-अणु
-	काष्ठा tcp_md5sig_key *key;
+int tcp_md5_do_del(struct sock *sk, const union tcp_md5_addr *addr, int family,
+		   u8 prefixlen, int l3index)
+{
+	struct tcp_md5sig_key *key;
 
-	key = tcp_md5_करो_lookup_exact(sk, addr, family, prefixlen, l3index);
-	अगर (!key)
-		वापस -ENOENT;
+	key = tcp_md5_do_lookup_exact(sk, addr, family, prefixlen, l3index);
+	if (!key)
+		return -ENOENT;
 	hlist_del_rcu(&key->node);
-	atomic_sub(माप(*key), &sk->sk_omem_alloc);
-	kमुक्त_rcu(key, rcu);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tcp_md5_करो_del);
+	atomic_sub(sizeof(*key), &sk->sk_omem_alloc);
+	kfree_rcu(key, rcu);
+	return 0;
+}
+EXPORT_SYMBOL(tcp_md5_do_del);
 
-अटल व्योम tcp_clear_md5_list(काष्ठा sock *sk)
-अणु
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
-	काष्ठा tcp_md5sig_key *key;
-	काष्ठा hlist_node *n;
-	काष्ठा tcp_md5sig_info *md5sig;
+static void tcp_clear_md5_list(struct sock *sk)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
+	struct tcp_md5sig_key *key;
+	struct hlist_node *n;
+	struct tcp_md5sig_info *md5sig;
 
-	md5sig = rcu_dereference_रक्षित(tp->md5sig_info, 1);
+	md5sig = rcu_dereference_protected(tp->md5sig_info, 1);
 
-	hlist_क्रम_each_entry_safe(key, n, &md5sig->head, node) अणु
+	hlist_for_each_entry_safe(key, n, &md5sig->head, node) {
 		hlist_del_rcu(&key->node);
-		atomic_sub(माप(*key), &sk->sk_omem_alloc);
-		kमुक्त_rcu(key, rcu);
-	पूर्ण
-पूर्ण
+		atomic_sub(sizeof(*key), &sk->sk_omem_alloc);
+		kfree_rcu(key, rcu);
+	}
+}
 
-अटल पूर्णांक tcp_v4_parse_md5_keys(काष्ठा sock *sk, पूर्णांक optname,
-				 sockptr_t optval, पूर्णांक optlen)
-अणु
-	काष्ठा tcp_md5sig cmd;
-	काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)&cmd.tcpm_addr;
-	स्थिर जोड़ tcp_md5_addr *addr;
+static int tcp_v4_parse_md5_keys(struct sock *sk, int optname,
+				 sockptr_t optval, int optlen)
+{
+	struct tcp_md5sig cmd;
+	struct sockaddr_in *sin = (struct sockaddr_in *)&cmd.tcpm_addr;
+	const union tcp_md5_addr *addr;
 	u8 prefixlen = 32;
-	पूर्णांक l3index = 0;
+	int l3index = 0;
 
-	अगर (optlen < माप(cmd))
-		वापस -EINVAL;
+	if (optlen < sizeof(cmd))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&cmd, optval, माप(cmd)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&cmd, optval, sizeof(cmd)))
+		return -EFAULT;
 
-	अगर (sin->sin_family != AF_INET)
-		वापस -EINVAL;
+	if (sin->sin_family != AF_INET)
+		return -EINVAL;
 
-	अगर (optname == TCP_MD5SIG_EXT &&
-	    cmd.tcpm_flags & TCP_MD5SIG_FLAG_PREFIX) अणु
+	if (optname == TCP_MD5SIG_EXT &&
+	    cmd.tcpm_flags & TCP_MD5SIG_FLAG_PREFIX) {
 		prefixlen = cmd.tcpm_prefixlen;
-		अगर (prefixlen > 32)
-			वापस -EINVAL;
-	पूर्ण
+		if (prefixlen > 32)
+			return -EINVAL;
+	}
 
-	अगर (optname == TCP_MD5SIG_EXT &&
-	    cmd.tcpm_flags & TCP_MD5SIG_FLAG_IFINDEX) अणु
-		काष्ठा net_device *dev;
+	if (optname == TCP_MD5SIG_EXT &&
+	    cmd.tcpm_flags & TCP_MD5SIG_FLAG_IFINDEX) {
+		struct net_device *dev;
 
-		rcu_पढ़ो_lock();
-		dev = dev_get_by_index_rcu(sock_net(sk), cmd.tcpm_अगरindex);
-		अगर (dev && netअगर_is_l3_master(dev))
-			l3index = dev->अगरindex;
+		rcu_read_lock();
+		dev = dev_get_by_index_rcu(sock_net(sk), cmd.tcpm_ifindex);
+		if (dev && netif_is_l3_master(dev))
+			l3index = dev->ifindex;
 
-		rcu_पढ़ो_unlock();
+		rcu_read_unlock();
 
 		/* ok to reference set/not set outside of rcu;
 		 * right now device MUST be an L3 master
 		 */
-		अगर (!dev || !l3index)
-			वापस -EINVAL;
-	पूर्ण
+		if (!dev || !l3index)
+			return -EINVAL;
+	}
 
-	addr = (जोड़ tcp_md5_addr *)&sin->sin_addr.s_addr;
+	addr = (union tcp_md5_addr *)&sin->sin_addr.s_addr;
 
-	अगर (!cmd.tcpm_keylen)
-		वापस tcp_md5_करो_del(sk, addr, AF_INET, prefixlen, l3index);
+	if (!cmd.tcpm_keylen)
+		return tcp_md5_do_del(sk, addr, AF_INET, prefixlen, l3index);
 
-	अगर (cmd.tcpm_keylen > TCP_MD5SIG_MAXKEYLEN)
-		वापस -EINVAL;
+	if (cmd.tcpm_keylen > TCP_MD5SIG_MAXKEYLEN)
+		return -EINVAL;
 
-	वापस tcp_md5_करो_add(sk, addr, AF_INET, prefixlen, l3index,
+	return tcp_md5_do_add(sk, addr, AF_INET, prefixlen, l3index,
 			      cmd.tcpm_key, cmd.tcpm_keylen, GFP_KERNEL);
-पूर्ण
+}
 
-अटल पूर्णांक tcp_v4_md5_hash_headers(काष्ठा tcp_md5sig_pool *hp,
+static int tcp_v4_md5_hash_headers(struct tcp_md5sig_pool *hp,
 				   __be32 daddr, __be32 saddr,
-				   स्थिर काष्ठा tcphdr *th, पूर्णांक nbytes)
-अणु
-	काष्ठा tcp4_pseuकरोhdr *bp;
-	काष्ठा scatterlist sg;
-	काष्ठा tcphdr *_th;
+				   const struct tcphdr *th, int nbytes)
+{
+	struct tcp4_pseudohdr *bp;
+	struct scatterlist sg;
+	struct tcphdr *_th;
 
 	bp = hp->scratch;
 	bp->saddr = saddr;
@@ -1292,225 +1291,225 @@ EXPORT_SYMBOL(tcp_md5_करो_del);
 	bp->protocol = IPPROTO_TCP;
 	bp->len = cpu_to_be16(nbytes);
 
-	_th = (काष्ठा tcphdr *)(bp + 1);
-	स_नकल(_th, th, माप(*th));
+	_th = (struct tcphdr *)(bp + 1);
+	memcpy(_th, th, sizeof(*th));
 	_th->check = 0;
 
-	sg_init_one(&sg, bp, माप(*bp) + माप(*th));
-	ahash_request_set_crypt(hp->md5_req, &sg, शून्य,
-				माप(*bp) + माप(*th));
-	वापस crypto_ahash_update(hp->md5_req);
-पूर्ण
+	sg_init_one(&sg, bp, sizeof(*bp) + sizeof(*th));
+	ahash_request_set_crypt(hp->md5_req, &sg, NULL,
+				sizeof(*bp) + sizeof(*th));
+	return crypto_ahash_update(hp->md5_req);
+}
 
-अटल पूर्णांक tcp_v4_md5_hash_hdr(अक्षर *md5_hash, स्थिर काष्ठा tcp_md5sig_key *key,
-			       __be32 daddr, __be32 saddr, स्थिर काष्ठा tcphdr *th)
-अणु
-	काष्ठा tcp_md5sig_pool *hp;
-	काष्ठा ahash_request *req;
+static int tcp_v4_md5_hash_hdr(char *md5_hash, const struct tcp_md5sig_key *key,
+			       __be32 daddr, __be32 saddr, const struct tcphdr *th)
+{
+	struct tcp_md5sig_pool *hp;
+	struct ahash_request *req;
 
 	hp = tcp_get_md5sig_pool();
-	अगर (!hp)
-		जाओ clear_hash_noput;
+	if (!hp)
+		goto clear_hash_noput;
 	req = hp->md5_req;
 
-	अगर (crypto_ahash_init(req))
-		जाओ clear_hash;
-	अगर (tcp_v4_md5_hash_headers(hp, daddr, saddr, th, th->करोff << 2))
-		जाओ clear_hash;
-	अगर (tcp_md5_hash_key(hp, key))
-		जाओ clear_hash;
-	ahash_request_set_crypt(req, शून्य, md5_hash, 0);
-	अगर (crypto_ahash_final(req))
-		जाओ clear_hash;
+	if (crypto_ahash_init(req))
+		goto clear_hash;
+	if (tcp_v4_md5_hash_headers(hp, daddr, saddr, th, th->doff << 2))
+		goto clear_hash;
+	if (tcp_md5_hash_key(hp, key))
+		goto clear_hash;
+	ahash_request_set_crypt(req, NULL, md5_hash, 0);
+	if (crypto_ahash_final(req))
+		goto clear_hash;
 
 	tcp_put_md5sig_pool();
-	वापस 0;
+	return 0;
 
 clear_hash:
 	tcp_put_md5sig_pool();
 clear_hash_noput:
-	स_रखो(md5_hash, 0, 16);
-	वापस 1;
-पूर्ण
+	memset(md5_hash, 0, 16);
+	return 1;
+}
 
-पूर्णांक tcp_v4_md5_hash_skb(अक्षर *md5_hash, स्थिर काष्ठा tcp_md5sig_key *key,
-			स्थिर काष्ठा sock *sk,
-			स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tcp_md5sig_pool *hp;
-	काष्ठा ahash_request *req;
-	स्थिर काष्ठा tcphdr *th = tcp_hdr(skb);
+int tcp_v4_md5_hash_skb(char *md5_hash, const struct tcp_md5sig_key *key,
+			const struct sock *sk,
+			const struct sk_buff *skb)
+{
+	struct tcp_md5sig_pool *hp;
+	struct ahash_request *req;
+	const struct tcphdr *th = tcp_hdr(skb);
 	__be32 saddr, daddr;
 
-	अगर (sk) अणु /* valid क्रम establish/request sockets */
+	if (sk) { /* valid for establish/request sockets */
 		saddr = sk->sk_rcv_saddr;
 		daddr = sk->sk_daddr;
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	} else {
+		const struct iphdr *iph = ip_hdr(skb);
 		saddr = iph->saddr;
 		daddr = iph->daddr;
-	पूर्ण
+	}
 
 	hp = tcp_get_md5sig_pool();
-	अगर (!hp)
-		जाओ clear_hash_noput;
+	if (!hp)
+		goto clear_hash_noput;
 	req = hp->md5_req;
 
-	अगर (crypto_ahash_init(req))
-		जाओ clear_hash;
+	if (crypto_ahash_init(req))
+		goto clear_hash;
 
-	अगर (tcp_v4_md5_hash_headers(hp, daddr, saddr, th, skb->len))
-		जाओ clear_hash;
-	अगर (tcp_md5_hash_skb_data(hp, skb, th->करोff << 2))
-		जाओ clear_hash;
-	अगर (tcp_md5_hash_key(hp, key))
-		जाओ clear_hash;
-	ahash_request_set_crypt(req, शून्य, md5_hash, 0);
-	अगर (crypto_ahash_final(req))
-		जाओ clear_hash;
+	if (tcp_v4_md5_hash_headers(hp, daddr, saddr, th, skb->len))
+		goto clear_hash;
+	if (tcp_md5_hash_skb_data(hp, skb, th->doff << 2))
+		goto clear_hash;
+	if (tcp_md5_hash_key(hp, key))
+		goto clear_hash;
+	ahash_request_set_crypt(req, NULL, md5_hash, 0);
+	if (crypto_ahash_final(req))
+		goto clear_hash;
 
 	tcp_put_md5sig_pool();
-	वापस 0;
+	return 0;
 
 clear_hash:
 	tcp_put_md5sig_pool();
 clear_hash_noput:
-	स_रखो(md5_hash, 0, 16);
-	वापस 1;
-पूर्ण
+	memset(md5_hash, 0, 16);
+	return 1;
+}
 EXPORT_SYMBOL(tcp_v4_md5_hash_skb);
 
-#पूर्ण_अगर
+#endif
 
-/* Called with rcu_पढ़ो_lock() */
-अटल bool tcp_v4_inbound_md5_hash(स्थिर काष्ठा sock *sk,
-				    स्थिर काष्ठा sk_buff *skb,
-				    पूर्णांक dअगर, पूर्णांक sdअगर)
-अणु
-#अगर_घोषित CONFIG_TCP_MD5SIG
+/* Called with rcu_read_lock() */
+static bool tcp_v4_inbound_md5_hash(const struct sock *sk,
+				    const struct sk_buff *skb,
+				    int dif, int sdif)
+{
+#ifdef CONFIG_TCP_MD5SIG
 	/*
-	 * This माला_लो called क्रम each TCP segment that arrives
+	 * This gets called for each TCP segment that arrives
 	 * so we want to be efficient.
-	 * We have 3 drop हालs:
+	 * We have 3 drop cases:
 	 * o No MD5 hash and one expected.
 	 * o MD5 hash and we're not expecting one.
 	 * o MD5 hash and its wrong.
 	 */
-	स्थिर __u8 *hash_location = शून्य;
-	काष्ठा tcp_md5sig_key *hash_expected;
-	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
-	स्थिर काष्ठा tcphdr *th = tcp_hdr(skb);
-	स्थिर जोड़ tcp_md5_addr *addr;
-	अचिन्हित अक्षर newhash[16];
-	पूर्णांक genhash, l3index;
+	const __u8 *hash_location = NULL;
+	struct tcp_md5sig_key *hash_expected;
+	const struct iphdr *iph = ip_hdr(skb);
+	const struct tcphdr *th = tcp_hdr(skb);
+	const union tcp_md5_addr *addr;
+	unsigned char newhash[16];
+	int genhash, l3index;
 
-	/* sdअगर set, means packet ingressed via a device
-	 * in an L3 करोमुख्य and dअगर is set to the l3mdev
+	/* sdif set, means packet ingressed via a device
+	 * in an L3 domain and dif is set to the l3mdev
 	 */
-	l3index = sdअगर ? dअगर : 0;
+	l3index = sdif ? dif : 0;
 
-	addr = (जोड़ tcp_md5_addr *)&iph->saddr;
-	hash_expected = tcp_md5_करो_lookup(sk, l3index, addr, AF_INET);
+	addr = (union tcp_md5_addr *)&iph->saddr;
+	hash_expected = tcp_md5_do_lookup(sk, l3index, addr, AF_INET);
 	hash_location = tcp_parse_md5sig_option(th);
 
-	/* We've parsed the options - करो we have a hash? */
-	अगर (!hash_expected && !hash_location)
-		वापस false;
+	/* We've parsed the options - do we have a hash? */
+	if (!hash_expected && !hash_location)
+		return false;
 
-	अगर (hash_expected && !hash_location) अणु
+	if (hash_expected && !hash_location) {
 		NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPMD5NOTFOUND);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (!hash_expected && hash_location) अणु
+	if (!hash_expected && hash_location) {
 		NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPMD5UNEXPECTED);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
 	/* Okay, so this is hash_expected and hash_location -
 	 * so we need to calculate the checksum.
 	 */
 	genhash = tcp_v4_md5_hash_skb(newhash,
 				      hash_expected,
-				      शून्य, skb);
+				      NULL, skb);
 
-	अगर (genhash || स_भेद(hash_location, newhash, 16) != 0) अणु
+	if (genhash || memcmp(hash_location, newhash, 16) != 0) {
 		NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPMD5FAILURE);
 		net_info_ratelimited("MD5 Hash failed for (%pI4, %d)->(%pI4, %d)%s L3 index %d\n",
 				     &iph->saddr, ntohs(th->source),
 				     &iph->daddr, ntohs(th->dest),
 				     genhash ? " tcp_v4_calc_md5_hash failed"
 				     : "", l3index);
-		वापस true;
-	पूर्ण
-	वापस false;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+#endif
+	return false;
+}
 
-अटल व्योम tcp_v4_init_req(काष्ठा request_sock *req,
-			    स्थिर काष्ठा sock *sk_listener,
-			    काष्ठा sk_buff *skb)
-अणु
-	काष्ठा inet_request_sock *ireq = inet_rsk(req);
-	काष्ठा net *net = sock_net(sk_listener);
+static void tcp_v4_init_req(struct request_sock *req,
+			    const struct sock *sk_listener,
+			    struct sk_buff *skb)
+{
+	struct inet_request_sock *ireq = inet_rsk(req);
+	struct net *net = sock_net(sk_listener);
 
 	sk_rcv_saddr_set(req_to_sk(req), ip_hdr(skb)->daddr);
 	sk_daddr_set(req_to_sk(req), ip_hdr(skb)->saddr);
 	RCU_INIT_POINTER(ireq->ireq_opt, tcp_v4_save_options(net, skb));
-पूर्ण
+}
 
-अटल काष्ठा dst_entry *tcp_v4_route_req(स्थिर काष्ठा sock *sk,
-					  काष्ठा sk_buff *skb,
-					  काष्ठा flowi *fl,
-					  काष्ठा request_sock *req)
-अणु
+static struct dst_entry *tcp_v4_route_req(const struct sock *sk,
+					  struct sk_buff *skb,
+					  struct flowi *fl,
+					  struct request_sock *req)
+{
 	tcp_v4_init_req(req, sk, skb);
 
-	अगर (security_inet_conn_request(sk, skb, req))
-		वापस शून्य;
+	if (security_inet_conn_request(sk, skb, req))
+		return NULL;
 
-	वापस inet_csk_route_req(sk, &fl->u.ip4, req);
-पूर्ण
+	return inet_csk_route_req(sk, &fl->u.ip4, req);
+}
 
-काष्ठा request_sock_ops tcp_request_sock_ops __पढ़ो_mostly = अणु
+struct request_sock_ops tcp_request_sock_ops __read_mostly = {
 	.family		=	PF_INET,
-	.obj_size	=	माप(काष्ठा tcp_request_sock),
+	.obj_size	=	sizeof(struct tcp_request_sock),
 	.rtx_syn_ack	=	tcp_rtx_synack,
 	.send_ack	=	tcp_v4_reqsk_send_ack,
-	.deकाष्ठाor	=	tcp_v4_reqsk_deकाष्ठाor,
+	.destructor	=	tcp_v4_reqsk_destructor,
 	.send_reset	=	tcp_v4_send_reset,
-	.syn_ack_समयout =	tcp_syn_ack_समयout,
-पूर्ण;
+	.syn_ack_timeout =	tcp_syn_ack_timeout,
+};
 
-स्थिर काष्ठा tcp_request_sock_ops tcp_request_sock_ipv4_ops = अणु
+const struct tcp_request_sock_ops tcp_request_sock_ipv4_ops = {
 	.mss_clamp	=	TCP_MSS_DEFAULT,
-#अगर_घोषित CONFIG_TCP_MD5SIG
+#ifdef CONFIG_TCP_MD5SIG
 	.req_md5_lookup	=	tcp_v4_md5_lookup,
 	.calc_md5_hash	=	tcp_v4_md5_hash_skb,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SYN_COOKIES
+#endif
+#ifdef CONFIG_SYN_COOKIES
 	.cookie_init_seq =	cookie_v4_init_sequence,
-#पूर्ण_अगर
+#endif
 	.route_req	=	tcp_v4_route_req,
 	.init_seq	=	tcp_v4_init_seq,
 	.init_ts_off	=	tcp_v4_init_ts_off,
 	.send_synack	=	tcp_v4_send_synack,
-पूर्ण;
+};
 
-पूर्णांक tcp_v4_conn_request(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
+int tcp_v4_conn_request(struct sock *sk, struct sk_buff *skb)
+{
 	/* Never answer to SYNs send to broadcast or multicast */
-	अगर (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
-		जाओ drop;
+	if (skb_rtable(skb)->rt_flags & (RTCF_BROADCAST | RTCF_MULTICAST))
+		goto drop;
 
-	वापस tcp_conn_request(&tcp_request_sock_ops,
+	return tcp_conn_request(&tcp_request_sock_ops,
 				&tcp_request_sock_ipv4_ops, sk, skb);
 
 drop:
 	tcp_listendrop(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(tcp_v4_conn_request);
 
 
@@ -1518,30 +1517,30 @@ EXPORT_SYMBOL(tcp_v4_conn_request);
  * The three way handshake has completed - we got a valid synack -
  * now create the new socket.
  */
-काष्ठा sock *tcp_v4_syn_recv_sock(स्थिर काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				  काष्ठा request_sock *req,
-				  काष्ठा dst_entry *dst,
-				  काष्ठा request_sock *req_unhash,
+struct sock *tcp_v4_syn_recv_sock(const struct sock *sk, struct sk_buff *skb,
+				  struct request_sock *req,
+				  struct dst_entry *dst,
+				  struct request_sock *req_unhash,
 				  bool *own_req)
-अणु
-	काष्ठा inet_request_sock *ireq;
+{
+	struct inet_request_sock *ireq;
 	bool found_dup_sk = false;
-	काष्ठा inet_sock *newinet;
-	काष्ठा tcp_sock *newtp;
-	काष्ठा sock *newsk;
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	स्थिर जोड़ tcp_md5_addr *addr;
-	काष्ठा tcp_md5sig_key *key;
-	पूर्णांक l3index;
-#पूर्ण_अगर
-	काष्ठा ip_options_rcu *inet_opt;
+	struct inet_sock *newinet;
+	struct tcp_sock *newtp;
+	struct sock *newsk;
+#ifdef CONFIG_TCP_MD5SIG
+	const union tcp_md5_addr *addr;
+	struct tcp_md5sig_key *key;
+	int l3index;
+#endif
+	struct ip_options_rcu *inet_opt;
 
-	अगर (sk_acceptq_is_full(sk))
-		जाओ निकास_overflow;
+	if (sk_acceptq_is_full(sk))
+		goto exit_overflow;
 
-	newsk = tcp_create_खोलोreq_child(sk, req, skb);
-	अगर (!newsk)
-		जाओ निकास_nonewsk;
+	newsk = tcp_create_openreq_child(sk, req, skb);
+	if (!newsk)
+		goto exit_nonewsk;
 
 	newsk->sk_gso_type = SKB_GSO_TCPV4;
 	inet_sk_rx_dst_set(newsk, skb);
@@ -1551,275 +1550,275 @@ EXPORT_SYMBOL(tcp_v4_conn_request);
 	ireq		      = inet_rsk(req);
 	sk_daddr_set(newsk, ireq->ir_rmt_addr);
 	sk_rcv_saddr_set(newsk, ireq->ir_loc_addr);
-	newsk->sk_bound_dev_अगर = ireq->ir_iअगर;
+	newsk->sk_bound_dev_if = ireq->ir_iif;
 	newinet->inet_saddr   = ireq->ir_loc_addr;
 	inet_opt	      = rcu_dereference(ireq->ireq_opt);
 	RCU_INIT_POINTER(newinet->inet_opt, inet_opt);
-	newinet->mc_index     = inet_iअगर(skb);
+	newinet->mc_index     = inet_iif(skb);
 	newinet->mc_ttl	      = ip_hdr(skb)->ttl;
 	newinet->rcv_tos      = ip_hdr(skb)->tos;
 	inet_csk(newsk)->icsk_ext_hdr_len = 0;
-	अगर (inet_opt)
+	if (inet_opt)
 		inet_csk(newsk)->icsk_ext_hdr_len = inet_opt->opt.optlen;
-	newinet->inet_id = pअक्रमom_u32();
+	newinet->inet_id = prandom_u32();
 
 	/* Set ToS of the new socket based upon the value of incoming SYN.
 	 * ECT bits are set later in tcp_init_transfer().
 	 */
-	अगर (sock_net(sk)->ipv4.sysctl_tcp_reflect_tos)
+	if (sock_net(sk)->ipv4.sysctl_tcp_reflect_tos)
 		newinet->tos = tcp_rsk(req)->syn_tos & ~INET_ECN_MASK;
 
-	अगर (!dst) अणु
+	if (!dst) {
 		dst = inet_csk_route_child_sock(sk, newsk, req);
-		अगर (!dst)
-			जाओ put_and_निकास;
-	पूर्ण अन्यथा अणु
-		/* syncookie हाल : see end of cookie_v4_check() */
-	पूर्ण
+		if (!dst)
+			goto put_and_exit;
+	} else {
+		/* syncookie case : see end of cookie_v4_check() */
+	}
 	sk_setup_caps(newsk, dst);
 
-	tcp_ca_खोलोreq_child(newsk, dst);
+	tcp_ca_openreq_child(newsk, dst);
 
 	tcp_sync_mss(newsk, dst_mtu(dst));
 	newtp->advmss = tcp_mss_clamp(tcp_sk(sk), dst_metric_advmss(dst));
 
 	tcp_initialize_rcv_mss(newsk);
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	l3index = l3mdev_master_अगरindex_by_index(sock_net(sk), ireq->ir_iअगर);
+#ifdef CONFIG_TCP_MD5SIG
+	l3index = l3mdev_master_ifindex_by_index(sock_net(sk), ireq->ir_iif);
 	/* Copy over the MD5 key from the original socket */
-	addr = (जोड़ tcp_md5_addr *)&newinet->inet_daddr;
-	key = tcp_md5_करो_lookup(sk, l3index, addr, AF_INET);
-	अगर (key) अणु
+	addr = (union tcp_md5_addr *)&newinet->inet_daddr;
+	key = tcp_md5_do_lookup(sk, l3index, addr, AF_INET);
+	if (key) {
 		/*
 		 * We're using one, so create a matching key
-		 * on the newsk काष्ठाure. If we fail to get
+		 * on the newsk structure. If we fail to get
 		 * memory, then we end up not copying the key
 		 * across. Shucks.
 		 */
-		tcp_md5_करो_add(newsk, addr, AF_INET, 32, l3index,
+		tcp_md5_do_add(newsk, addr, AF_INET, 32, l3index,
 			       key->key, key->keylen, GFP_ATOMIC);
 		sk_nocaps_add(newsk, NETIF_F_GSO_MASK);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (__inet_inherit_port(sk, newsk) < 0)
-		जाओ put_and_निकास;
+	if (__inet_inherit_port(sk, newsk) < 0)
+		goto put_and_exit;
 	*own_req = inet_ehash_nolisten(newsk, req_to_sk(req_unhash),
 				       &found_dup_sk);
-	अगर (likely(*own_req)) अणु
+	if (likely(*own_req)) {
 		tcp_move_syn(newtp, req);
-		ireq->ireq_opt = शून्य;
-	पूर्ण अन्यथा अणु
-		newinet->inet_opt = शून्य;
+		ireq->ireq_opt = NULL;
+	} else {
+		newinet->inet_opt = NULL;
 
-		अगर (!req_unhash && found_dup_sk) अणु
+		if (!req_unhash && found_dup_sk) {
 			/* This code path should only be executed in the
-			 * syncookie हाल only
+			 * syncookie case only
 			 */
 			bh_unlock_sock(newsk);
 			sock_put(newsk);
-			newsk = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस newsk;
+			newsk = NULL;
+		}
+	}
+	return newsk;
 
-निकास_overflow:
+exit_overflow:
 	NET_INC_STATS(sock_net(sk), LINUX_MIB_LISTENOVERFLOWS);
-निकास_nonewsk:
+exit_nonewsk:
 	dst_release(dst);
-निकास:
+exit:
 	tcp_listendrop(sk);
-	वापस शून्य;
-put_and_निकास:
-	newinet->inet_opt = शून्य;
-	inet_csk_prepare_क्रमced_बंद(newsk);
-	tcp_करोne(newsk);
-	जाओ निकास;
-पूर्ण
+	return NULL;
+put_and_exit:
+	newinet->inet_opt = NULL;
+	inet_csk_prepare_forced_close(newsk);
+	tcp_done(newsk);
+	goto exit;
+}
 EXPORT_SYMBOL(tcp_v4_syn_recv_sock);
 
-अटल काष्ठा sock *tcp_v4_cookie_check(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-#अगर_घोषित CONFIG_SYN_COOKIES
-	स्थिर काष्ठा tcphdr *th = tcp_hdr(skb);
+static struct sock *tcp_v4_cookie_check(struct sock *sk, struct sk_buff *skb)
+{
+#ifdef CONFIG_SYN_COOKIES
+	const struct tcphdr *th = tcp_hdr(skb);
 
-	अगर (!th->syn)
+	if (!th->syn)
 		sk = cookie_v4_check(sk, skb);
-#पूर्ण_अगर
-	वापस sk;
-पूर्ण
+#endif
+	return sk;
+}
 
-u16 tcp_v4_get_syncookie(काष्ठा sock *sk, काष्ठा iphdr *iph,
-			 काष्ठा tcphdr *th, u32 *cookie)
-अणु
+u16 tcp_v4_get_syncookie(struct sock *sk, struct iphdr *iph,
+			 struct tcphdr *th, u32 *cookie)
+{
 	u16 mss = 0;
-#अगर_घोषित CONFIG_SYN_COOKIES
+#ifdef CONFIG_SYN_COOKIES
 	mss = tcp_get_syncookie_mss(&tcp_request_sock_ops,
 				    &tcp_request_sock_ipv4_ops, sk, th);
-	अगर (mss) अणु
+	if (mss) {
 		*cookie = __cookie_v4_init_sequence(iph, th, &mss);
 		tcp_synq_overflow(sk);
-	पूर्ण
-#पूर्ण_अगर
-	वापस mss;
-पूर्ण
+	}
+#endif
+	return mss;
+}
 
-INसूचीECT_CALLABLE_DECLARE(काष्ठा dst_entry *ipv4_dst_check(काष्ठा dst_entry *,
+INDIRECT_CALLABLE_DECLARE(struct dst_entry *ipv4_dst_check(struct dst_entry *,
 							   u32));
 /* The socket must have it's spinlock held when we get
  * here, unless it is a TCP_LISTEN socket.
  *
- * We have a potential द्विगुन-lock हाल here, so even when
- * करोing backlog processing we use the BH locking scheme.
+ * We have a potential double-lock case here, so even when
+ * doing backlog processing we use the BH locking scheme.
  * This is because we cannot sleep with the original spinlock
  * held.
  */
-पूर्णांक tcp_v4_करो_rcv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *rsk;
+int tcp_v4_do_rcv(struct sock *sk, struct sk_buff *skb)
+{
+	struct sock *rsk;
 
-	अगर (sk->sk_state == TCP_ESTABLISHED) अणु /* Fast path */
-		काष्ठा dst_entry *dst = sk->sk_rx_dst;
+	if (sk->sk_state == TCP_ESTABLISHED) { /* Fast path */
+		struct dst_entry *dst = sk->sk_rx_dst;
 
 		sock_rps_save_rxhash(sk, skb);
 		sk_mark_napi_id(sk, skb);
-		अगर (dst) अणु
-			अगर (inet_sk(sk)->rx_dst_अगरindex != skb->skb_iअगर ||
-			    !INसूचीECT_CALL_1(dst->ops->check, ipv4_dst_check,
-					     dst, 0)) अणु
+		if (dst) {
+			if (inet_sk(sk)->rx_dst_ifindex != skb->skb_iif ||
+			    !INDIRECT_CALL_1(dst->ops->check, ipv4_dst_check,
+					     dst, 0)) {
 				dst_release(dst);
-				sk->sk_rx_dst = शून्य;
-			पूर्ण
-		पूर्ण
+				sk->sk_rx_dst = NULL;
+			}
+		}
 		tcp_rcv_established(sk, skb);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (tcp_checksum_complete(skb))
-		जाओ csum_err;
+	if (tcp_checksum_complete(skb))
+		goto csum_err;
 
-	अगर (sk->sk_state == TCP_LISTEN) अणु
-		काष्ठा sock *nsk = tcp_v4_cookie_check(sk, skb);
+	if (sk->sk_state == TCP_LISTEN) {
+		struct sock *nsk = tcp_v4_cookie_check(sk, skb);
 
-		अगर (!nsk)
-			जाओ discard;
-		अगर (nsk != sk) अणु
-			अगर (tcp_child_process(sk, nsk, skb)) अणु
+		if (!nsk)
+			goto discard;
+		if (nsk != sk) {
+			if (tcp_child_process(sk, nsk, skb)) {
 				rsk = nsk;
-				जाओ reset;
-			पूर्ण
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा
+				goto reset;
+			}
+			return 0;
+		}
+	} else
 		sock_rps_save_rxhash(sk, skb);
 
-	अगर (tcp_rcv_state_process(sk, skb)) अणु
+	if (tcp_rcv_state_process(sk, skb)) {
 		rsk = sk;
-		जाओ reset;
-	पूर्ण
-	वापस 0;
+		goto reset;
+	}
+	return 0;
 
 reset:
 	tcp_v4_send_reset(rsk, skb);
 discard:
-	kमुक्त_skb(skb);
-	/* Be careful here. If this function माला_लो more complicated and
-	 * gcc suffers from रेजिस्टर pressure on the x86, sk (in %ebx)
+	kfree_skb(skb);
+	/* Be careful here. If this function gets more complicated and
+	 * gcc suffers from register pressure on the x86, sk (in %ebx)
 	 * might be destroyed here. This current version compiles correctly,
 	 * but you have been warned.
 	 */
-	वापस 0;
+	return 0;
 
 csum_err:
 	TCP_INC_STATS(sock_net(sk), TCP_MIB_CSUMERRORS);
 	TCP_INC_STATS(sock_net(sk), TCP_MIB_INERRS);
-	जाओ discard;
-पूर्ण
-EXPORT_SYMBOL(tcp_v4_करो_rcv);
+	goto discard;
+}
+EXPORT_SYMBOL(tcp_v4_do_rcv);
 
-पूर्णांक tcp_v4_early_demux(काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा iphdr *iph;
-	स्थिर काष्ठा tcphdr *th;
-	काष्ठा sock *sk;
+int tcp_v4_early_demux(struct sk_buff *skb)
+{
+	const struct iphdr *iph;
+	const struct tcphdr *th;
+	struct sock *sk;
 
-	अगर (skb->pkt_type != PACKET_HOST)
-		वापस 0;
+	if (skb->pkt_type != PACKET_HOST)
+		return 0;
 
-	अगर (!pskb_may_pull(skb, skb_transport_offset(skb) + माप(काष्ठा tcphdr)))
-		वापस 0;
+	if (!pskb_may_pull(skb, skb_transport_offset(skb) + sizeof(struct tcphdr)))
+		return 0;
 
 	iph = ip_hdr(skb);
 	th = tcp_hdr(skb);
 
-	अगर (th->करोff < माप(काष्ठा tcphdr) / 4)
-		वापस 0;
+	if (th->doff < sizeof(struct tcphdr) / 4)
+		return 0;
 
 	sk = __inet_lookup_established(dev_net(skb->dev), &tcp_hashinfo,
 				       iph->saddr, th->source,
 				       iph->daddr, ntohs(th->dest),
-				       skb->skb_iअगर, inet_sdअगर(skb));
-	अगर (sk) अणु
+				       skb->skb_iif, inet_sdif(skb));
+	if (sk) {
 		skb->sk = sk;
-		skb->deकाष्ठाor = sock_edemux;
-		अगर (sk_fullsock(sk)) अणु
-			काष्ठा dst_entry *dst = READ_ONCE(sk->sk_rx_dst);
+		skb->destructor = sock_edemux;
+		if (sk_fullsock(sk)) {
+			struct dst_entry *dst = READ_ONCE(sk->sk_rx_dst);
 
-			अगर (dst)
+			if (dst)
 				dst = dst_check(dst, 0);
-			अगर (dst &&
-			    inet_sk(sk)->rx_dst_अगरindex == skb->skb_iअगर)
+			if (dst &&
+			    inet_sk(sk)->rx_dst_ifindex == skb->skb_iif)
 				skb_dst_set_noref(skb, dst);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
-bool tcp_add_backlog(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
+bool tcp_add_backlog(struct sock *sk, struct sk_buff *skb)
+{
 	u32 limit = READ_ONCE(sk->sk_rcvbuf) + READ_ONCE(sk->sk_sndbuf);
 	u32 tail_gso_size, tail_gso_segs;
-	काष्ठा skb_shared_info *shinfo;
-	स्थिर काष्ठा tcphdr *th;
-	काष्ठा tcphdr *thtail;
-	काष्ठा sk_buff *tail;
-	अचिन्हित पूर्णांक hdrlen;
+	struct skb_shared_info *shinfo;
+	const struct tcphdr *th;
+	struct tcphdr *thtail;
+	struct sk_buff *tail;
+	unsigned int hdrlen;
 	bool fragstolen;
 	u32 gso_segs;
 	u32 gso_size;
-	पूर्णांक delta;
+	int delta;
 
-	/* In हाल all data was pulled from skb frags (in __pskb_pull_tail()),
-	 * we can fix skb->truesize to its real value to aव्योम future drops.
-	 * This is valid because skb is not yet अक्षरged to the socket.
-	 * It has been noticed pure SACK packets were someबार dropped
-	 * (अगर cooked by drivers without copyअवरोध feature).
+	/* In case all data was pulled from skb frags (in __pskb_pull_tail()),
+	 * we can fix skb->truesize to its real value to avoid future drops.
+	 * This is valid because skb is not yet charged to the socket.
+	 * It has been noticed pure SACK packets were sometimes dropped
+	 * (if cooked by drivers without copybreak feature).
 	 */
 	skb_condense(skb);
 
 	skb_dst_drop(skb);
 
-	अगर (unlikely(tcp_checksum_complete(skb))) अणु
+	if (unlikely(tcp_checksum_complete(skb))) {
 		bh_unlock_sock(sk);
 		__TCP_INC_STATS(sock_net(sk), TCP_MIB_CSUMERRORS);
 		__TCP_INC_STATS(sock_net(sk), TCP_MIB_INERRS);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	/* Attempt coalescing to last skb in backlog, even अगर we are
+	/* Attempt coalescing to last skb in backlog, even if we are
 	 * above the limits.
 	 * This is okay because skb capacity is limited to MAX_SKB_FRAGS.
 	 */
-	th = (स्थिर काष्ठा tcphdr *)skb->data;
-	hdrlen = th->करोff * 4;
+	th = (const struct tcphdr *)skb->data;
+	hdrlen = th->doff * 4;
 
 	tail = sk->sk_backlog.tail;
-	अगर (!tail)
-		जाओ no_coalesce;
-	thtail = (काष्ठा tcphdr *)tail->data;
+	if (!tail)
+		goto no_coalesce;
+	thtail = (struct tcphdr *)tail->data;
 
-	अगर (TCP_SKB_CB(tail)->end_seq != TCP_SKB_CB(skb)->seq ||
+	if (TCP_SKB_CB(tail)->end_seq != TCP_SKB_CB(skb)->seq ||
 	    TCP_SKB_CB(tail)->ip_dsfield != TCP_SKB_CB(skb)->ip_dsfield ||
 	    ((TCP_SKB_CB(tail)->tcp_flags |
 	      TCP_SKB_CB(skb)->tcp_flags) & (TCPHDR_SYN | TCPHDR_RST | TCPHDR_URG)) ||
@@ -1827,12 +1826,12 @@ bool tcp_add_backlog(काष्ठा sock *sk, काष्ठा sk_buff *sk
 	      TCP_SKB_CB(skb)->tcp_flags) & TCPHDR_ACK) ||
 	    ((TCP_SKB_CB(tail)->tcp_flags ^
 	      TCP_SKB_CB(skb)->tcp_flags) & (TCPHDR_ECE | TCPHDR_CWR)) ||
-#अगर_घोषित CONFIG_TLS_DEVICE
+#ifdef CONFIG_TLS_DEVICE
 	    tail->decrypted != skb->decrypted ||
-#पूर्ण_अगर
-	    thtail->करोff != th->करोff ||
-	    स_भेद(thtail + 1, th + 1, hdrlen - माप(*th)))
-		जाओ no_coalesce;
+#endif
+	    thtail->doff != th->doff ||
+	    memcmp(thtail + 1, th + 1, hdrlen - sizeof(*th)))
+		goto no_coalesce;
 
 	__skb_pull(skb, hdrlen);
 
@@ -1844,30 +1843,30 @@ bool tcp_add_backlog(काष्ठा sock *sk, काष्ठा sk_buff *sk
 	tail_gso_size = shinfo->gso_size ?: (tail->len - hdrlen);
 	tail_gso_segs = shinfo->gso_segs ?: 1;
 
-	अगर (skb_try_coalesce(tail, skb, &fragstolen, &delta)) अणु
+	if (skb_try_coalesce(tail, skb, &fragstolen, &delta)) {
 		TCP_SKB_CB(tail)->end_seq = TCP_SKB_CB(skb)->end_seq;
 
-		अगर (likely(!beक्रमe(TCP_SKB_CB(skb)->ack_seq, TCP_SKB_CB(tail)->ack_seq))) अणु
+		if (likely(!before(TCP_SKB_CB(skb)->ack_seq, TCP_SKB_CB(tail)->ack_seq))) {
 			TCP_SKB_CB(tail)->ack_seq = TCP_SKB_CB(skb)->ack_seq;
-			thtail->winकरोw = th->winकरोw;
-		पूर्ण
+			thtail->window = th->window;
+		}
 
 		/* We have to update both TCP_SKB_CB(tail)->tcp_flags and
 		 * thtail->fin, so that the fast path in tcp_rcv_established()
-		 * is not entered अगर we append a packet with a FIN.
+		 * is not entered if we append a packet with a FIN.
 		 * SYN, RST, URG are not present.
 		 * ACK is set on both packets.
-		 * PSH : we करो not really care in TCP stack,
-		 *       at least क्रम 'GRO' packets.
+		 * PSH : we do not really care in TCP stack,
+		 *       at least for 'GRO' packets.
 		 */
 		thtail->fin |= th->fin;
 		TCP_SKB_CB(tail)->tcp_flags |= TCP_SKB_CB(skb)->tcp_flags;
 
-		अगर (TCP_SKB_CB(skb)->has_rxtstamp) अणु
+		if (TCP_SKB_CB(skb)->has_rxtstamp) {
 			TCP_SKB_CB(tail)->has_rxtstamp = true;
 			tail->tstamp = skb->tstamp;
 			skb_hwtstamps(tail)->hwtstamp = skb_hwtstamps(skb)->hwtstamp;
-		पूर्ण
+		}
 
 		/* Not as strict as GRO. We only need to carry mss max value */
 		shinfo->gso_size = max(gso_size, tail_gso_size);
@@ -1876,9 +1875,9 @@ bool tcp_add_backlog(काष्ठा sock *sk, काष्ठा sk_buff *sk
 		sk->sk_backlog.len += delta;
 		__NET_INC_STATS(sock_net(sk),
 				LINUX_MIB_TCPBACKLOGCOALESCE);
-		kमुक्त_skb_partial(skb, fragstolen);
-		वापस false;
-	पूर्ण
+		kfree_skb_partial(skb, fragstolen);
+		return false;
+	}
 	__skb_push(skb, hdrlen);
 
 no_coalesce:
@@ -1888,42 +1887,42 @@ no_coalesce:
 	 */
 	limit += 64*1024;
 
-	अगर (unlikely(sk_add_backlog(sk, skb, limit))) अणु
+	if (unlikely(sk_add_backlog(sk, skb, limit))) {
 		bh_unlock_sock(sk);
 		__NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPBACKLOGDROP);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		return true;
+	}
+	return false;
+}
 EXPORT_SYMBOL(tcp_add_backlog);
 
-पूर्णांक tcp_filter(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tcphdr *th = (काष्ठा tcphdr *)skb->data;
+int tcp_filter(struct sock *sk, struct sk_buff *skb)
+{
+	struct tcphdr *th = (struct tcphdr *)skb->data;
 
-	वापस sk_filter_trim_cap(sk, skb, th->करोff * 4);
-पूर्ण
+	return sk_filter_trim_cap(sk, skb, th->doff * 4);
+}
 EXPORT_SYMBOL(tcp_filter);
 
-अटल व्योम tcp_v4_restore_cb(काष्ठा sk_buff *skb)
-अणु
-	स_हटाओ(IPCB(skb), &TCP_SKB_CB(skb)->header.h4,
-		माप(काष्ठा inet_skb_parm));
-पूर्ण
+static void tcp_v4_restore_cb(struct sk_buff *skb)
+{
+	memmove(IPCB(skb), &TCP_SKB_CB(skb)->header.h4,
+		sizeof(struct inet_skb_parm));
+}
 
-अटल व्योम tcp_v4_fill_cb(काष्ठा sk_buff *skb, स्थिर काष्ठा iphdr *iph,
-			   स्थिर काष्ठा tcphdr *th)
-अणु
-	/* This is tricky : We move IPCB at its correct location पूर्णांकo TCP_SKB_CB()
+static void tcp_v4_fill_cb(struct sk_buff *skb, const struct iphdr *iph,
+			   const struct tcphdr *th)
+{
+	/* This is tricky : We move IPCB at its correct location into TCP_SKB_CB()
 	 * barrier() makes sure compiler wont play fool^Waliasing games.
 	 */
-	स_हटाओ(&TCP_SKB_CB(skb)->header.h4, IPCB(skb),
-		माप(काष्ठा inet_skb_parm));
+	memmove(&TCP_SKB_CB(skb)->header.h4, IPCB(skb),
+		sizeof(struct inet_skb_parm));
 	barrier();
 
 	TCP_SKB_CB(skb)->seq = ntohl(th->seq);
 	TCP_SKB_CB(skb)->end_seq = (TCP_SKB_CB(skb)->seq + th->syn + th->fin +
-				    skb->len - th->करोff * 4);
+				    skb->len - th->doff * 4);
 	TCP_SKB_CB(skb)->ack_seq = ntohl(th->ack_seq);
 	TCP_SKB_CB(skb)->tcp_flags = tcp_flag_byte(th);
 	TCP_SKB_CB(skb)->tcp_tw_isn = 0;
@@ -1931,94 +1930,94 @@ EXPORT_SYMBOL(tcp_filter);
 	TCP_SKB_CB(skb)->sacked	 = 0;
 	TCP_SKB_CB(skb)->has_rxtstamp =
 			skb->tstamp || skb_hwtstamps(skb)->hwtstamp;
-पूर्ण
+}
 
 /*
  *	From tcp_input.c
  */
 
-पूर्णांक tcp_v4_rcv(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा net *net = dev_net(skb->dev);
-	काष्ठा sk_buff *skb_to_मुक्त;
-	पूर्णांक sdअगर = inet_sdअगर(skb);
-	पूर्णांक dअगर = inet_iअगर(skb);
-	स्थिर काष्ठा iphdr *iph;
-	स्थिर काष्ठा tcphdr *th;
+int tcp_v4_rcv(struct sk_buff *skb)
+{
+	struct net *net = dev_net(skb->dev);
+	struct sk_buff *skb_to_free;
+	int sdif = inet_sdif(skb);
+	int dif = inet_iif(skb);
+	const struct iphdr *iph;
+	const struct tcphdr *th;
 	bool refcounted;
-	काष्ठा sock *sk;
-	पूर्णांक ret;
+	struct sock *sk;
+	int ret;
 
-	अगर (skb->pkt_type != PACKET_HOST)
-		जाओ discard_it;
+	if (skb->pkt_type != PACKET_HOST)
+		goto discard_it;
 
-	/* Count it even अगर it's bad */
+	/* Count it even if it's bad */
 	__TCP_INC_STATS(net, TCP_MIB_INSEGS);
 
-	अगर (!pskb_may_pull(skb, माप(काष्ठा tcphdr)))
-		जाओ discard_it;
+	if (!pskb_may_pull(skb, sizeof(struct tcphdr)))
+		goto discard_it;
 
-	th = (स्थिर काष्ठा tcphdr *)skb->data;
+	th = (const struct tcphdr *)skb->data;
 
-	अगर (unlikely(th->करोff < माप(काष्ठा tcphdr) / 4))
-		जाओ bad_packet;
-	अगर (!pskb_may_pull(skb, th->करोff * 4))
-		जाओ discard_it;
+	if (unlikely(th->doff < sizeof(struct tcphdr) / 4))
+		goto bad_packet;
+	if (!pskb_may_pull(skb, th->doff * 4))
+		goto discard_it;
 
 	/* An explanation is required here, I think.
-	 * Packet length and करोff are validated by header prediction,
-	 * provided हाल of th->करोff==0 is eliminated.
+	 * Packet length and doff are validated by header prediction,
+	 * provided case of th->doff==0 is eliminated.
 	 * So, we defer the checks. */
 
-	अगर (skb_checksum_init(skb, IPPROTO_TCP, inet_compute_pseuकरो))
-		जाओ csum_error;
+	if (skb_checksum_init(skb, IPPROTO_TCP, inet_compute_pseudo))
+		goto csum_error;
 
-	th = (स्थिर काष्ठा tcphdr *)skb->data;
+	th = (const struct tcphdr *)skb->data;
 	iph = ip_hdr(skb);
 lookup:
 	sk = __inet_lookup_skb(&tcp_hashinfo, skb, __tcp_hdrlen(th), th->source,
-			       th->dest, sdअगर, &refcounted);
-	अगर (!sk)
-		जाओ no_tcp_socket;
+			       th->dest, sdif, &refcounted);
+	if (!sk)
+		goto no_tcp_socket;
 
 process:
-	अगर (sk->sk_state == TCP_TIME_WAIT)
-		जाओ करो_समय_रुको;
+	if (sk->sk_state == TCP_TIME_WAIT)
+		goto do_time_wait;
 
-	अगर (sk->sk_state == TCP_NEW_SYN_RECV) अणु
-		काष्ठा request_sock *req = inet_reqsk(sk);
+	if (sk->sk_state == TCP_NEW_SYN_RECV) {
+		struct request_sock *req = inet_reqsk(sk);
 		bool req_stolen = false;
-		काष्ठा sock *nsk;
+		struct sock *nsk;
 
 		sk = req->rsk_listener;
-		अगर (unlikely(tcp_v4_inbound_md5_hash(sk, skb, dअगर, sdअगर))) अणु
+		if (unlikely(tcp_v4_inbound_md5_hash(sk, skb, dif, sdif))) {
 			sk_drops_add(sk, skb);
 			reqsk_put(req);
-			जाओ discard_it;
-		पूर्ण
-		अगर (tcp_checksum_complete(skb)) अणु
+			goto discard_it;
+		}
+		if (tcp_checksum_complete(skb)) {
 			reqsk_put(req);
-			जाओ csum_error;
-		पूर्ण
-		अगर (unlikely(sk->sk_state != TCP_LISTEN)) अणु
+			goto csum_error;
+		}
+		if (unlikely(sk->sk_state != TCP_LISTEN)) {
 			inet_csk_reqsk_queue_drop_and_put(sk, req);
-			जाओ lookup;
-		पूर्ण
+			goto lookup;
+		}
 		/* We own a reference on the listener, increase it again
 		 * as we might lose it too soon.
 		 */
 		sock_hold(sk);
 		refcounted = true;
-		nsk = शून्य;
-		अगर (!tcp_filter(sk, skb)) अणु
-			th = (स्थिर काष्ठा tcphdr *)skb->data;
+		nsk = NULL;
+		if (!tcp_filter(sk, skb)) {
+			th = (const struct tcphdr *)skb->data;
 			iph = ip_hdr(skb);
 			tcp_v4_fill_cb(skb, iph, th);
 			nsk = tcp_check_req(sk, skb, req, false, &req_stolen);
-		पूर्ण
-		अगर (!nsk) अणु
+		}
+		if (!nsk) {
 			reqsk_put(req);
-			अगर (req_stolen) अणु
+			if (req_stolen) {
 				/* Another cpu got exclusive access to req
 				 * and created a full blown socket.
 				 * Try to feed this packet to this socket
@@ -2026,368 +2025,368 @@ process:
 				 */
 				tcp_v4_restore_cb(skb);
 				sock_put(sk);
-				जाओ lookup;
-			पूर्ण
-			जाओ discard_and_rअन्यथा;
-		पूर्ण
-		अगर (nsk == sk) अणु
+				goto lookup;
+			}
+			goto discard_and_relse;
+		}
+		if (nsk == sk) {
 			reqsk_put(req);
 			tcp_v4_restore_cb(skb);
-		पूर्ण अन्यथा अगर (tcp_child_process(sk, nsk, skb)) अणु
+		} else if (tcp_child_process(sk, nsk, skb)) {
 			tcp_v4_send_reset(nsk, skb);
-			जाओ discard_and_rअन्यथा;
-		पूर्ण अन्यथा अणु
+			goto discard_and_relse;
+		} else {
 			sock_put(sk);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	अगर (unlikely(iph->ttl < inet_sk(sk)->min_ttl)) अणु
+			return 0;
+		}
+	}
+	if (unlikely(iph->ttl < inet_sk(sk)->min_ttl)) {
 		__NET_INC_STATS(net, LINUX_MIB_TCPMINTTLDROP);
-		जाओ discard_and_rअन्यथा;
-	पूर्ण
+		goto discard_and_relse;
+	}
 
-	अगर (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
-		जाओ discard_and_rअन्यथा;
+	if (!xfrm4_policy_check(sk, XFRM_POLICY_IN, skb))
+		goto discard_and_relse;
 
-	अगर (tcp_v4_inbound_md5_hash(sk, skb, dअगर, sdअगर))
-		जाओ discard_and_rअन्यथा;
+	if (tcp_v4_inbound_md5_hash(sk, skb, dif, sdif))
+		goto discard_and_relse;
 
 	nf_reset_ct(skb);
 
-	अगर (tcp_filter(sk, skb))
-		जाओ discard_and_rअन्यथा;
-	th = (स्थिर काष्ठा tcphdr *)skb->data;
+	if (tcp_filter(sk, skb))
+		goto discard_and_relse;
+	th = (const struct tcphdr *)skb->data;
 	iph = ip_hdr(skb);
 	tcp_v4_fill_cb(skb, iph, th);
 
-	skb->dev = शून्य;
+	skb->dev = NULL;
 
-	अगर (sk->sk_state == TCP_LISTEN) अणु
-		ret = tcp_v4_करो_rcv(sk, skb);
-		जाओ put_and_वापस;
-	पूर्ण
+	if (sk->sk_state == TCP_LISTEN) {
+		ret = tcp_v4_do_rcv(sk, skb);
+		goto put_and_return;
+	}
 
 	sk_incoming_cpu_update(sk);
 
 	bh_lock_sock_nested(sk);
 	tcp_segs_in(tcp_sk(sk), skb);
 	ret = 0;
-	अगर (!sock_owned_by_user(sk)) अणु
-		skb_to_मुक्त = sk->sk_rx_skb_cache;
-		sk->sk_rx_skb_cache = शून्य;
-		ret = tcp_v4_करो_rcv(sk, skb);
-	पूर्ण अन्यथा अणु
-		अगर (tcp_add_backlog(sk, skb))
-			जाओ discard_and_rअन्यथा;
-		skb_to_मुक्त = शून्य;
-	पूर्ण
+	if (!sock_owned_by_user(sk)) {
+		skb_to_free = sk->sk_rx_skb_cache;
+		sk->sk_rx_skb_cache = NULL;
+		ret = tcp_v4_do_rcv(sk, skb);
+	} else {
+		if (tcp_add_backlog(sk, skb))
+			goto discard_and_relse;
+		skb_to_free = NULL;
+	}
 	bh_unlock_sock(sk);
-	अगर (skb_to_मुक्त)
-		__kमुक्त_skb(skb_to_मुक्त);
+	if (skb_to_free)
+		__kfree_skb(skb_to_free);
 
-put_and_वापस:
-	अगर (refcounted)
+put_and_return:
+	if (refcounted)
 		sock_put(sk);
 
-	वापस ret;
+	return ret;
 
 no_tcp_socket:
-	अगर (!xfrm4_policy_check(शून्य, XFRM_POLICY_IN, skb))
-		जाओ discard_it;
+	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
+		goto discard_it;
 
 	tcp_v4_fill_cb(skb, iph, th);
 
-	अगर (tcp_checksum_complete(skb)) अणु
+	if (tcp_checksum_complete(skb)) {
 csum_error:
 		__TCP_INC_STATS(net, TCP_MIB_CSUMERRORS);
 bad_packet:
 		__TCP_INC_STATS(net, TCP_MIB_INERRS);
-	पूर्ण अन्यथा अणु
-		tcp_v4_send_reset(शून्य, skb);
-	पूर्ण
+	} else {
+		tcp_v4_send_reset(NULL, skb);
+	}
 
 discard_it:
 	/* Discard frame. */
-	kमुक्त_skb(skb);
-	वापस 0;
+	kfree_skb(skb);
+	return 0;
 
-discard_and_rअन्यथा:
+discard_and_relse:
 	sk_drops_add(sk, skb);
-	अगर (refcounted)
+	if (refcounted)
 		sock_put(sk);
-	जाओ discard_it;
+	goto discard_it;
 
-करो_समय_रुको:
-	अगर (!xfrm4_policy_check(शून्य, XFRM_POLICY_IN, skb)) अणु
+do_time_wait:
+	if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb)) {
 		inet_twsk_put(inet_twsk(sk));
-		जाओ discard_it;
-	पूर्ण
+		goto discard_it;
+	}
 
 	tcp_v4_fill_cb(skb, iph, th);
 
-	अगर (tcp_checksum_complete(skb)) अणु
+	if (tcp_checksum_complete(skb)) {
 		inet_twsk_put(inet_twsk(sk));
-		जाओ csum_error;
-	पूर्ण
-	चयन (tcp_समयरुको_state_process(inet_twsk(sk), skb, th)) अणु
-	हाल TCP_TW_SYN: अणु
-		काष्ठा sock *sk2 = inet_lookup_listener(dev_net(skb->dev),
+		goto csum_error;
+	}
+	switch (tcp_timewait_state_process(inet_twsk(sk), skb, th)) {
+	case TCP_TW_SYN: {
+		struct sock *sk2 = inet_lookup_listener(dev_net(skb->dev),
 							&tcp_hashinfo, skb,
 							__tcp_hdrlen(th),
 							iph->saddr, th->source,
 							iph->daddr, th->dest,
-							inet_iअगर(skb),
-							sdअगर);
-		अगर (sk2) अणु
+							inet_iif(skb),
+							sdif);
+		if (sk2) {
 			inet_twsk_deschedule_put(inet_twsk(sk));
 			sk = sk2;
 			tcp_v4_restore_cb(skb);
 			refcounted = false;
-			जाओ process;
-		पूर्ण
-	पूर्ण
+			goto process;
+		}
+	}
 		/* to ACK */
 		fallthrough;
-	हाल TCP_TW_ACK:
-		tcp_v4_समयरुको_ack(sk, skb);
-		अवरोध;
-	हाल TCP_TW_RST:
+	case TCP_TW_ACK:
+		tcp_v4_timewait_ack(sk, skb);
+		break;
+	case TCP_TW_RST:
 		tcp_v4_send_reset(sk, skb);
 		inet_twsk_deschedule_put(inet_twsk(sk));
-		जाओ discard_it;
-	हाल TCP_TW_SUCCESS:;
-	पूर्ण
-	जाओ discard_it;
-पूर्ण
+		goto discard_it;
+	case TCP_TW_SUCCESS:;
+	}
+	goto discard_it;
+}
 
-अटल काष्ठा समयरुको_sock_ops tcp_समयरुको_sock_ops = अणु
-	.twsk_obj_size	= माप(काष्ठा tcp_समयरुको_sock),
+static struct timewait_sock_ops tcp_timewait_sock_ops = {
+	.twsk_obj_size	= sizeof(struct tcp_timewait_sock),
 	.twsk_unique	= tcp_twsk_unique,
-	.twsk_deकाष्ठाor= tcp_twsk_deकाष्ठाor,
-पूर्ण;
+	.twsk_destructor= tcp_twsk_destructor,
+};
 
-व्योम inet_sk_rx_dst_set(काष्ठा sock *sk, स्थिर काष्ठा sk_buff *skb)
-अणु
-	काष्ठा dst_entry *dst = skb_dst(skb);
+void inet_sk_rx_dst_set(struct sock *sk, const struct sk_buff *skb)
+{
+	struct dst_entry *dst = skb_dst(skb);
 
-	अगर (dst && dst_hold_safe(dst)) अणु
+	if (dst && dst_hold_safe(dst)) {
 		sk->sk_rx_dst = dst;
-		inet_sk(sk)->rx_dst_अगरindex = skb->skb_iअगर;
-	पूर्ण
-पूर्ण
+		inet_sk(sk)->rx_dst_ifindex = skb->skb_iif;
+	}
+}
 EXPORT_SYMBOL(inet_sk_rx_dst_set);
 
-स्थिर काष्ठा inet_connection_sock_af_ops ipv4_specअगरic = अणु
+const struct inet_connection_sock_af_ops ipv4_specific = {
 	.queue_xmit	   = ip_queue_xmit,
 	.send_check	   = tcp_v4_send_check,
 	.rebuild_header	   = inet_sk_rebuild_header,
 	.sk_rx_dst_set	   = inet_sk_rx_dst_set,
 	.conn_request	   = tcp_v4_conn_request,
 	.syn_recv_sock	   = tcp_v4_syn_recv_sock,
-	.net_header_len	   = माप(काष्ठा iphdr),
+	.net_header_len	   = sizeof(struct iphdr),
 	.setsockopt	   = ip_setsockopt,
-	.माला_लोockopt	   = ip_माला_लोockopt,
+	.getsockopt	   = ip_getsockopt,
 	.addr2sockaddr	   = inet_csk_addr2sockaddr,
-	.sockaddr_len	   = माप(काष्ठा sockaddr_in),
+	.sockaddr_len	   = sizeof(struct sockaddr_in),
 	.mtu_reduced	   = tcp_v4_mtu_reduced,
-पूर्ण;
-EXPORT_SYMBOL(ipv4_specअगरic);
+};
+EXPORT_SYMBOL(ipv4_specific);
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-अटल स्थिर काष्ठा tcp_sock_af_ops tcp_sock_ipv4_specअगरic = अणु
+#ifdef CONFIG_TCP_MD5SIG
+static const struct tcp_sock_af_ops tcp_sock_ipv4_specific = {
 	.md5_lookup		= tcp_v4_md5_lookup,
 	.calc_md5_hash		= tcp_v4_md5_hash_skb,
 	.md5_parse		= tcp_v4_parse_md5_keys,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
 /* NOTE: A lot of things set to zero explicitly by call to
- *       sk_alloc() so need not be करोne here.
+ *       sk_alloc() so need not be done here.
  */
-अटल पूर्णांक tcp_v4_init_sock(काष्ठा sock *sk)
-अणु
-	काष्ठा inet_connection_sock *icsk = inet_csk(sk);
+static int tcp_v4_init_sock(struct sock *sk)
+{
+	struct inet_connection_sock *icsk = inet_csk(sk);
 
 	tcp_init_sock(sk);
 
-	icsk->icsk_af_ops = &ipv4_specअगरic;
+	icsk->icsk_af_ops = &ipv4_specific;
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	tcp_sk(sk)->af_specअगरic = &tcp_sock_ipv4_specअगरic;
-#पूर्ण_अगर
+#ifdef CONFIG_TCP_MD5SIG
+	tcp_sk(sk)->af_specific = &tcp_sock_ipv4_specific;
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम tcp_v4_destroy_sock(काष्ठा sock *sk)
-अणु
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
+void tcp_v4_destroy_sock(struct sock *sk)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
 
 	trace_tcp_destroy_sock(sk);
 
-	tcp_clear_xmit_समयrs(sk);
+	tcp_clear_xmit_timers(sk);
 
 	tcp_cleanup_congestion_control(sk);
 
 	tcp_cleanup_ulp(sk);
 
-	/* Cleanup up the ग_लिखो buffer. */
-	tcp_ग_लिखो_queue_purge(sk);
+	/* Cleanup up the write buffer. */
+	tcp_write_queue_purge(sk);
 
-	/* Check अगर we want to disable active TFO */
-	tcp_fastखोलो_active_disable_ofo_check(sk);
+	/* Check if we want to disable active TFO */
+	tcp_fastopen_active_disable_ofo_check(sk);
 
 	/* Cleans up our, hopefully empty, out_of_order_queue. */
 	skb_rbtree_purge(&tp->out_of_order_queue);
 
-#अगर_घोषित CONFIG_TCP_MD5SIG
-	/* Clean up the MD5 key list, अगर any */
-	अगर (tp->md5sig_info) अणु
+#ifdef CONFIG_TCP_MD5SIG
+	/* Clean up the MD5 key list, if any */
+	if (tp->md5sig_info) {
 		tcp_clear_md5_list(sk);
-		kमुक्त_rcu(rcu_dereference_रक्षित(tp->md5sig_info, 1), rcu);
-		tp->md5sig_info = शून्य;
-	पूर्ण
-#पूर्ण_अगर
+		kfree_rcu(rcu_dereference_protected(tp->md5sig_info, 1), rcu);
+		tp->md5sig_info = NULL;
+	}
+#endif
 
 	/* Clean up a referenced TCP bind bucket. */
-	अगर (inet_csk(sk)->icsk_bind_hash)
+	if (inet_csk(sk)->icsk_bind_hash)
 		inet_put_port(sk);
 
-	BUG_ON(rcu_access_poपूर्णांकer(tp->fastखोलो_rsk));
+	BUG_ON(rcu_access_pointer(tp->fastopen_rsk));
 
-	/* If socket is पातed during connect operation */
-	tcp_मुक्त_fastखोलो_req(tp);
-	tcp_fastखोलो_destroy_cipher(sk);
-	tcp_saved_syn_मुक्त(tp);
+	/* If socket is aborted during connect operation */
+	tcp_free_fastopen_req(tp);
+	tcp_fastopen_destroy_cipher(sk);
+	tcp_saved_syn_free(tp);
 
 	sk_sockets_allocated_dec(sk);
-पूर्ण
+}
 EXPORT_SYMBOL(tcp_v4_destroy_sock);
 
-#अगर_घोषित CONFIG_PROC_FS
-/* Proc fileप्रणाली TCP sock list dumping. */
+#ifdef CONFIG_PROC_FS
+/* Proc filesystem TCP sock list dumping. */
 
 /*
- * Get next listener socket follow cur.  If cur is शून्य, get first socket
+ * Get next listener socket follow cur.  If cur is NULL, get first socket
  * starting from bucket given in st->bucket; when st->bucket is zero the
- * very first socket in the hash table is वापसed.
+ * very first socket in the hash table is returned.
  */
-अटल व्योम *listening_get_next(काष्ठा seq_file *seq, व्योम *cur)
-अणु
-	काष्ठा tcp_seq_afinfo *afinfo;
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	काष्ठा net *net = seq_file_net(seq);
-	काष्ठा inet_listen_hashbucket *ilb;
-	काष्ठा hlist_nulls_node *node;
-	काष्ठा sock *sk = cur;
+static void *listening_get_next(struct seq_file *seq, void *cur)
+{
+	struct tcp_seq_afinfo *afinfo;
+	struct tcp_iter_state *st = seq->private;
+	struct net *net = seq_file_net(seq);
+	struct inet_listen_hashbucket *ilb;
+	struct hlist_nulls_node *node;
+	struct sock *sk = cur;
 
-	अगर (st->bpf_seq_afinfo)
+	if (st->bpf_seq_afinfo)
 		afinfo = st->bpf_seq_afinfo;
-	अन्यथा
+	else
 		afinfo = PDE_DATA(file_inode(seq->file));
 
-	अगर (!sk) अणु
+	if (!sk) {
 get_head:
 		ilb = &tcp_hashinfo.listening_hash[st->bucket];
 		spin_lock(&ilb->lock);
 		sk = sk_nulls_head(&ilb->nulls_head);
 		st->offset = 0;
-		जाओ get_sk;
-	पूर्ण
+		goto get_sk;
+	}
 	ilb = &tcp_hashinfo.listening_hash[st->bucket];
 	++st->num;
 	++st->offset;
 
 	sk = sk_nulls_next(sk);
 get_sk:
-	sk_nulls_क्रम_each_from(sk, node) अणु
-		अगर (!net_eq(sock_net(sk), net))
-			जारी;
-		अगर (afinfo->family == AF_UNSPEC ||
+	sk_nulls_for_each_from(sk, node) {
+		if (!net_eq(sock_net(sk), net))
+			continue;
+		if (afinfo->family == AF_UNSPEC ||
 		    sk->sk_family == afinfo->family)
-			वापस sk;
-	पूर्ण
+			return sk;
+	}
 	spin_unlock(&ilb->lock);
 	st->offset = 0;
-	अगर (++st->bucket < INET_LHTABLE_SIZE)
-		जाओ get_head;
-	वापस शून्य;
-पूर्ण
+	if (++st->bucket < INET_LHTABLE_SIZE)
+		goto get_head;
+	return NULL;
+}
 
-अटल व्योम *listening_get_idx(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	व्योम *rc;
+static void *listening_get_idx(struct seq_file *seq, loff_t *pos)
+{
+	struct tcp_iter_state *st = seq->private;
+	void *rc;
 
 	st->bucket = 0;
 	st->offset = 0;
-	rc = listening_get_next(seq, शून्य);
+	rc = listening_get_next(seq, NULL);
 
-	जबतक (rc && *pos) अणु
+	while (rc && *pos) {
 		rc = listening_get_next(seq, rc);
 		--*pos;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल अंतरभूत bool empty_bucket(स्थिर काष्ठा tcp_iter_state *st)
-अणु
-	वापस hlist_nulls_empty(&tcp_hashinfo.ehash[st->bucket].chain);
-पूर्ण
+static inline bool empty_bucket(const struct tcp_iter_state *st)
+{
+	return hlist_nulls_empty(&tcp_hashinfo.ehash[st->bucket].chain);
+}
 
 /*
  * Get first established socket starting from bucket given in st->bucket.
- * If st->bucket is zero, the very first socket in the hash is वापसed.
+ * If st->bucket is zero, the very first socket in the hash is returned.
  */
-अटल व्योम *established_get_first(काष्ठा seq_file *seq)
-अणु
-	काष्ठा tcp_seq_afinfo *afinfo;
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	काष्ठा net *net = seq_file_net(seq);
-	व्योम *rc = शून्य;
+static void *established_get_first(struct seq_file *seq)
+{
+	struct tcp_seq_afinfo *afinfo;
+	struct tcp_iter_state *st = seq->private;
+	struct net *net = seq_file_net(seq);
+	void *rc = NULL;
 
-	अगर (st->bpf_seq_afinfo)
+	if (st->bpf_seq_afinfo)
 		afinfo = st->bpf_seq_afinfo;
-	अन्यथा
+	else
 		afinfo = PDE_DATA(file_inode(seq->file));
 
 	st->offset = 0;
-	क्रम (; st->bucket <= tcp_hashinfo.ehash_mask; ++st->bucket) अणु
-		काष्ठा sock *sk;
-		काष्ठा hlist_nulls_node *node;
+	for (; st->bucket <= tcp_hashinfo.ehash_mask; ++st->bucket) {
+		struct sock *sk;
+		struct hlist_nulls_node *node;
 		spinlock_t *lock = inet_ehash_lockp(&tcp_hashinfo, st->bucket);
 
-		/* Lockless fast path क्रम the common हाल of empty buckets */
-		अगर (empty_bucket(st))
-			जारी;
+		/* Lockless fast path for the common case of empty buckets */
+		if (empty_bucket(st))
+			continue;
 
 		spin_lock_bh(lock);
-		sk_nulls_क्रम_each(sk, node, &tcp_hashinfo.ehash[st->bucket].chain) अणु
-			अगर ((afinfo->family != AF_UNSPEC &&
+		sk_nulls_for_each(sk, node, &tcp_hashinfo.ehash[st->bucket].chain) {
+			if ((afinfo->family != AF_UNSPEC &&
 			     sk->sk_family != afinfo->family) ||
-			    !net_eq(sock_net(sk), net)) अणु
-				जारी;
-			पूर्ण
+			    !net_eq(sock_net(sk), net)) {
+				continue;
+			}
 			rc = sk;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		spin_unlock_bh(lock);
-	पूर्ण
+	}
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम *established_get_next(काष्ठा seq_file *seq, व्योम *cur)
-अणु
-	काष्ठा tcp_seq_afinfo *afinfo;
-	काष्ठा sock *sk = cur;
-	काष्ठा hlist_nulls_node *node;
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	काष्ठा net *net = seq_file_net(seq);
+static void *established_get_next(struct seq_file *seq, void *cur)
+{
+	struct tcp_seq_afinfo *afinfo;
+	struct sock *sk = cur;
+	struct hlist_nulls_node *node;
+	struct tcp_iter_state *st = seq->private;
+	struct net *net = seq_file_net(seq);
 
-	अगर (st->bpf_seq_afinfo)
+	if (st->bpf_seq_afinfo)
 		afinfo = st->bpf_seq_afinfo;
-	अन्यथा
+	else
 		afinfo = PDE_DATA(file_inode(seq->file));
 
 	++st->num;
@@ -2395,92 +2394,92 @@ out:
 
 	sk = sk_nulls_next(sk);
 
-	sk_nulls_क्रम_each_from(sk, node) अणु
-		अगर ((afinfo->family == AF_UNSPEC ||
+	sk_nulls_for_each_from(sk, node) {
+		if ((afinfo->family == AF_UNSPEC ||
 		     sk->sk_family == afinfo->family) &&
 		    net_eq(sock_net(sk), net))
-			वापस sk;
-	पूर्ण
+			return sk;
+	}
 
 	spin_unlock_bh(inet_ehash_lockp(&tcp_hashinfo, st->bucket));
 	++st->bucket;
-	वापस established_get_first(seq);
-पूर्ण
+	return established_get_first(seq);
+}
 
-अटल व्योम *established_get_idx(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	व्योम *rc;
+static void *established_get_idx(struct seq_file *seq, loff_t pos)
+{
+	struct tcp_iter_state *st = seq->private;
+	void *rc;
 
 	st->bucket = 0;
 	rc = established_get_first(seq);
 
-	जबतक (rc && pos) अणु
+	while (rc && pos) {
 		rc = established_get_next(seq, rc);
 		--pos;
-	पूर्ण
-	वापस rc;
-पूर्ण
+	}
+	return rc;
+}
 
-अटल व्योम *tcp_get_idx(काष्ठा seq_file *seq, loff_t pos)
-अणु
-	व्योम *rc;
-	काष्ठा tcp_iter_state *st = seq->निजी;
+static void *tcp_get_idx(struct seq_file *seq, loff_t pos)
+{
+	void *rc;
+	struct tcp_iter_state *st = seq->private;
 
 	st->state = TCP_SEQ_STATE_LISTENING;
 	rc	  = listening_get_idx(seq, &pos);
 
-	अगर (!rc) अणु
+	if (!rc) {
 		st->state = TCP_SEQ_STATE_ESTABLISHED;
 		rc	  = established_get_idx(seq, pos);
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम *tcp_seek_last_pos(काष्ठा seq_file *seq)
-अणु
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	पूर्णांक offset = st->offset;
-	पूर्णांक orig_num = st->num;
-	व्योम *rc = शून्य;
+static void *tcp_seek_last_pos(struct seq_file *seq)
+{
+	struct tcp_iter_state *st = seq->private;
+	int offset = st->offset;
+	int orig_num = st->num;
+	void *rc = NULL;
 
-	चयन (st->state) अणु
-	हाल TCP_SEQ_STATE_LISTENING:
-		अगर (st->bucket >= INET_LHTABLE_SIZE)
-			अवरोध;
+	switch (st->state) {
+	case TCP_SEQ_STATE_LISTENING:
+		if (st->bucket >= INET_LHTABLE_SIZE)
+			break;
 		st->state = TCP_SEQ_STATE_LISTENING;
-		rc = listening_get_next(seq, शून्य);
-		जबतक (offset-- && rc)
+		rc = listening_get_next(seq, NULL);
+		while (offset-- && rc)
 			rc = listening_get_next(seq, rc);
-		अगर (rc)
-			अवरोध;
+		if (rc)
+			break;
 		st->bucket = 0;
 		st->state = TCP_SEQ_STATE_ESTABLISHED;
 		fallthrough;
-	हाल TCP_SEQ_STATE_ESTABLISHED:
-		अगर (st->bucket > tcp_hashinfo.ehash_mask)
-			अवरोध;
+	case TCP_SEQ_STATE_ESTABLISHED:
+		if (st->bucket > tcp_hashinfo.ehash_mask)
+			break;
 		rc = established_get_first(seq);
-		जबतक (offset-- && rc)
+		while (offset-- && rc)
 			rc = established_get_next(seq, rc);
-	पूर्ण
+	}
 
 	st->num = orig_num;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम *tcp_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	व्योम *rc;
+void *tcp_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	struct tcp_iter_state *st = seq->private;
+	void *rc;
 
-	अगर (*pos && *pos == st->last_pos) अणु
+	if (*pos && *pos == st->last_pos) {
 		rc = tcp_seek_last_pos(seq);
-		अगर (rc)
-			जाओ out;
-	पूर्ण
+		if (rc)
+			goto out;
+	}
 
 	st->state = TCP_SEQ_STATE_LISTENING;
 	st->num = 0;
@@ -2490,65 +2489,65 @@ out:
 
 out:
 	st->last_pos = *pos;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(tcp_seq_start);
 
-व्योम *tcp_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
-अणु
-	काष्ठा tcp_iter_state *st = seq->निजी;
-	व्योम *rc = शून्य;
+void *tcp_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	struct tcp_iter_state *st = seq->private;
+	void *rc = NULL;
 
-	अगर (v == SEQ_START_TOKEN) अणु
+	if (v == SEQ_START_TOKEN) {
 		rc = tcp_get_idx(seq, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (st->state) अणु
-	हाल TCP_SEQ_STATE_LISTENING:
+	switch (st->state) {
+	case TCP_SEQ_STATE_LISTENING:
 		rc = listening_get_next(seq, v);
-		अगर (!rc) अणु
+		if (!rc) {
 			st->state = TCP_SEQ_STATE_ESTABLISHED;
 			st->bucket = 0;
 			st->offset = 0;
 			rc	  = established_get_first(seq);
-		पूर्ण
-		अवरोध;
-	हाल TCP_SEQ_STATE_ESTABLISHED:
+		}
+		break;
+	case TCP_SEQ_STATE_ESTABLISHED:
 		rc = established_get_next(seq, v);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
 	++*pos;
 	st->last_pos = *pos;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(tcp_seq_next);
 
-व्योम tcp_seq_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा tcp_iter_state *st = seq->निजी;
+void tcp_seq_stop(struct seq_file *seq, void *v)
+{
+	struct tcp_iter_state *st = seq->private;
 
-	चयन (st->state) अणु
-	हाल TCP_SEQ_STATE_LISTENING:
-		अगर (v != SEQ_START_TOKEN)
+	switch (st->state) {
+	case TCP_SEQ_STATE_LISTENING:
+		if (v != SEQ_START_TOKEN)
 			spin_unlock(&tcp_hashinfo.listening_hash[st->bucket].lock);
-		अवरोध;
-	हाल TCP_SEQ_STATE_ESTABLISHED:
-		अगर (v)
+		break;
+	case TCP_SEQ_STATE_ESTABLISHED:
+		if (v)
 			spin_unlock_bh(inet_ehash_lockp(&tcp_hashinfo, st->bucket));
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 EXPORT_SYMBOL(tcp_seq_stop);
 
-अटल व्योम get_खोलोreq4(स्थिर काष्ठा request_sock *req,
-			 काष्ठा seq_file *f, पूर्णांक i)
-अणु
-	स्थिर काष्ठा inet_request_sock *ireq = inet_rsk(req);
-	दीर्घ delta = req->rsk_समयr.expires - jअगरfies;
+static void get_openreq4(const struct request_sock *req,
+			 struct seq_file *f, int i)
+{
+	const struct inet_request_sock *ireq = inet_rsk(req);
+	long delta = req->rsk_timer.expires - jiffies;
 
-	seq_म_लिखो(f, "%4d: %08X:%04X %08X:%04X"
+	seq_printf(f, "%4d: %08X:%04X %08X:%04X"
 		" %02X %08X:%08X %02X:%08lX %08X %5u %8d %u %d %pK",
 		i,
 		ireq->ir_loc_addr,
@@ -2556,84 +2555,84 @@ EXPORT_SYMBOL(tcp_seq_stop);
 		ireq->ir_rmt_addr,
 		ntohs(ireq->ir_rmt_port),
 		TCP_SYN_RECV,
-		0, 0, /* could prपूर्णांक option size, but that is af dependent. */
-		1,    /* समयrs active (only the expire समयr) */
-		jअगरfies_delta_to_घड़ी_प्रकार(delta),
-		req->num_समयout,
+		0, 0, /* could print option size, but that is af dependent. */
+		1,    /* timers active (only the expire timer) */
+		jiffies_delta_to_clock_t(delta),
+		req->num_timeout,
 		from_kuid_munged(seq_user_ns(f),
 				 sock_i_uid(req->rsk_listener)),
-		0,  /* non standard समयr */
-		0, /* खोलो_requests have no inode */
+		0,  /* non standard timer */
+		0, /* open_requests have no inode */
 		0,
 		req);
-पूर्ण
+}
 
-अटल व्योम get_tcp4_sock(काष्ठा sock *sk, काष्ठा seq_file *f, पूर्णांक i)
-अणु
-	पूर्णांक समयr_active;
-	अचिन्हित दीर्घ समयr_expires;
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	स्थिर काष्ठा inet_connection_sock *icsk = inet_csk(sk);
-	स्थिर काष्ठा inet_sock *inet = inet_sk(sk);
-	स्थिर काष्ठा fastखोलो_queue *fastखोलोq = &icsk->icsk_accept_queue.fastखोलोq;
+static void get_tcp4_sock(struct sock *sk, struct seq_file *f, int i)
+{
+	int timer_active;
+	unsigned long timer_expires;
+	const struct tcp_sock *tp = tcp_sk(sk);
+	const struct inet_connection_sock *icsk = inet_csk(sk);
+	const struct inet_sock *inet = inet_sk(sk);
+	const struct fastopen_queue *fastopenq = &icsk->icsk_accept_queue.fastopenq;
 	__be32 dest = inet->inet_daddr;
 	__be32 src = inet->inet_rcv_saddr;
 	__u16 destp = ntohs(inet->inet_dport);
 	__u16 srcp = ntohs(inet->inet_sport);
-	पूर्णांक rx_queue;
-	पूर्णांक state;
+	int rx_queue;
+	int state;
 
-	अगर (icsk->icsk_pending == ICSK_TIME_RETRANS ||
+	if (icsk->icsk_pending == ICSK_TIME_RETRANS ||
 	    icsk->icsk_pending == ICSK_TIME_REO_TIMEOUT ||
-	    icsk->icsk_pending == ICSK_TIME_LOSS_PROBE) अणु
-		समयr_active	= 1;
-		समयr_expires	= icsk->icsk_समयout;
-	पूर्ण अन्यथा अगर (icsk->icsk_pending == ICSK_TIME_PROBE0) अणु
-		समयr_active	= 4;
-		समयr_expires	= icsk->icsk_समयout;
-	पूर्ण अन्यथा अगर (समयr_pending(&sk->sk_समयr)) अणु
-		समयr_active	= 2;
-		समयr_expires	= sk->sk_समयr.expires;
-	पूर्ण अन्यथा अणु
-		समयr_active	= 0;
-		समयr_expires = jअगरfies;
-	पूर्ण
+	    icsk->icsk_pending == ICSK_TIME_LOSS_PROBE) {
+		timer_active	= 1;
+		timer_expires	= icsk->icsk_timeout;
+	} else if (icsk->icsk_pending == ICSK_TIME_PROBE0) {
+		timer_active	= 4;
+		timer_expires	= icsk->icsk_timeout;
+	} else if (timer_pending(&sk->sk_timer)) {
+		timer_active	= 2;
+		timer_expires	= sk->sk_timer.expires;
+	} else {
+		timer_active	= 0;
+		timer_expires = jiffies;
+	}
 
 	state = inet_sk_state_load(sk);
-	अगर (state == TCP_LISTEN)
+	if (state == TCP_LISTEN)
 		rx_queue = READ_ONCE(sk->sk_ack_backlog);
-	अन्यथा
-		/* Because we करोn't lock the socket,
+	else
+		/* Because we don't lock the socket,
 		 * we might find a transient negative value.
 		 */
-		rx_queue = max_t(पूर्णांक, READ_ONCE(tp->rcv_nxt) -
+		rx_queue = max_t(int, READ_ONCE(tp->rcv_nxt) -
 				      READ_ONCE(tp->copied_seq), 0);
 
-	seq_म_लिखो(f, "%4d: %08X:%04X %08X:%04X %02X %08X:%08X %02X:%08lX "
+	seq_printf(f, "%4d: %08X:%04X %08X:%04X %02X %08X:%08X %02X:%08lX "
 			"%08X %5u %8d %lu %d %pK %lu %lu %u %u %d",
 		i, src, srcp, dest, destp, state,
-		READ_ONCE(tp->ग_लिखो_seq) - tp->snd_una,
+		READ_ONCE(tp->write_seq) - tp->snd_una,
 		rx_queue,
-		समयr_active,
-		jअगरfies_delta_to_घड़ी_प्रकार(समयr_expires - jअगरfies),
+		timer_active,
+		jiffies_delta_to_clock_t(timer_expires - jiffies),
 		icsk->icsk_retransmits,
 		from_kuid_munged(seq_user_ns(f), sock_i_uid(sk)),
 		icsk->icsk_probes_out,
 		sock_i_ino(sk),
-		refcount_पढ़ो(&sk->sk_refcnt), sk,
-		jअगरfies_to_घड़ी_प्रकार(icsk->icsk_rto),
-		jअगरfies_to_घड़ी_प्रकार(icsk->icsk_ack.ato),
+		refcount_read(&sk->sk_refcnt), sk,
+		jiffies_to_clock_t(icsk->icsk_rto),
+		jiffies_to_clock_t(icsk->icsk_ack.ato),
 		(icsk->icsk_ack.quick << 1) | inet_csk_in_pingpong_mode(sk),
 		tp->snd_cwnd,
 		state == TCP_LISTEN ?
-		    fastखोलोq->max_qlen :
+		    fastopenq->max_qlen :
 		    (tcp_in_initial_slowstart(tp) ? -1 : tp->snd_ssthresh));
-पूर्ण
+}
 
-अटल व्योम get_समयरुको4_sock(स्थिर काष्ठा inet_समयरुको_sock *tw,
-			       काष्ठा seq_file *f, पूर्णांक i)
-अणु
-	दीर्घ delta = tw->tw_समयr.expires - jअगरfies;
+static void get_timewait4_sock(const struct inet_timewait_sock *tw,
+			       struct seq_file *f, int i)
+{
+	long delta = tw->tw_timer.expires - jiffies;
 	__be32 dest, src;
 	__u16 destp, srcp;
 
@@ -2642,166 +2641,166 @@ EXPORT_SYMBOL(tcp_seq_stop);
 	destp = ntohs(tw->tw_dport);
 	srcp  = ntohs(tw->tw_sport);
 
-	seq_म_लिखो(f, "%4d: %08X:%04X %08X:%04X"
+	seq_printf(f, "%4d: %08X:%04X %08X:%04X"
 		" %02X %08X:%08X %02X:%08lX %08X %5d %8d %d %d %pK",
 		i, src, srcp, dest, destp, tw->tw_substate, 0, 0,
-		3, jअगरfies_delta_to_घड़ी_प्रकार(delta), 0, 0, 0, 0,
-		refcount_पढ़ो(&tw->tw_refcnt), tw);
-पूर्ण
+		3, jiffies_delta_to_clock_t(delta), 0, 0, 0, 0,
+		refcount_read(&tw->tw_refcnt), tw);
+}
 
-#घोषणा TMPSZ 150
+#define TMPSZ 150
 
-अटल पूर्णांक tcp4_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा tcp_iter_state *st;
-	काष्ठा sock *sk = v;
+static int tcp4_seq_show(struct seq_file *seq, void *v)
+{
+	struct tcp_iter_state *st;
+	struct sock *sk = v;
 
 	seq_setwidth(seq, TMPSZ - 1);
-	अगर (v == SEQ_START_TOKEN) अणु
-		seq_माला_दो(seq, "  sl  local_address rem_address   st tx_queue "
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq, "  sl  local_address rem_address   st tx_queue "
 			   "rx_queue tr tm->when retrnsmt   uid  timeout "
 			   "inode");
-		जाओ out;
-	पूर्ण
-	st = seq->निजी;
+		goto out;
+	}
+	st = seq->private;
 
-	अगर (sk->sk_state == TCP_TIME_WAIT)
-		get_समयरुको4_sock(v, seq, st->num);
-	अन्यथा अगर (sk->sk_state == TCP_NEW_SYN_RECV)
-		get_खोलोreq4(v, seq, st->num);
-	अन्यथा
+	if (sk->sk_state == TCP_TIME_WAIT)
+		get_timewait4_sock(v, seq, st->num);
+	else if (sk->sk_state == TCP_NEW_SYN_RECV)
+		get_openreq4(v, seq, st->num);
+	else
 		get_tcp4_sock(v, seq, st->num);
 out:
 	seq_pad(seq, '\n');
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_BPF_SYSCALL
-काष्ठा bpf_iter__tcp अणु
-	__bpf_md_ptr(काष्ठा bpf_iter_meta *, meta);
-	__bpf_md_ptr(काष्ठा sock_common *, sk_common);
+#ifdef CONFIG_BPF_SYSCALL
+struct bpf_iter__tcp {
+	__bpf_md_ptr(struct bpf_iter_meta *, meta);
+	__bpf_md_ptr(struct sock_common *, sk_common);
 	uid_t uid __aligned(8);
-पूर्ण;
+};
 
-अटल पूर्णांक tcp_prog_seq_show(काष्ठा bpf_prog *prog, काष्ठा bpf_iter_meta *meta,
-			     काष्ठा sock_common *sk_common, uid_t uid)
-अणु
-	काष्ठा bpf_iter__tcp ctx;
+static int tcp_prog_seq_show(struct bpf_prog *prog, struct bpf_iter_meta *meta,
+			     struct sock_common *sk_common, uid_t uid)
+{
+	struct bpf_iter__tcp ctx;
 
 	meta->seq_num--;  /* skip SEQ_START_TOKEN */
 	ctx.meta = meta;
 	ctx.sk_common = sk_common;
 	ctx.uid = uid;
-	वापस bpf_iter_run_prog(prog, &ctx);
-पूर्ण
+	return bpf_iter_run_prog(prog, &ctx);
+}
 
-अटल पूर्णांक bpf_iter_tcp_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा bpf_iter_meta meta;
-	काष्ठा bpf_prog *prog;
-	काष्ठा sock *sk = v;
+static int bpf_iter_tcp_seq_show(struct seq_file *seq, void *v)
+{
+	struct bpf_iter_meta meta;
+	struct bpf_prog *prog;
+	struct sock *sk = v;
 	uid_t uid;
 
-	अगर (v == SEQ_START_TOKEN)
-		वापस 0;
+	if (v == SEQ_START_TOKEN)
+		return 0;
 
-	अगर (sk->sk_state == TCP_TIME_WAIT) अणु
+	if (sk->sk_state == TCP_TIME_WAIT) {
 		uid = 0;
-	पूर्ण अन्यथा अगर (sk->sk_state == TCP_NEW_SYN_RECV) अणु
-		स्थिर काष्ठा request_sock *req = v;
+	} else if (sk->sk_state == TCP_NEW_SYN_RECV) {
+		const struct request_sock *req = v;
 
 		uid = from_kuid_munged(seq_user_ns(seq),
 				       sock_i_uid(req->rsk_listener));
-	पूर्ण अन्यथा अणु
+	} else {
 		uid = from_kuid_munged(seq_user_ns(seq), sock_i_uid(sk));
-	पूर्ण
+	}
 
 	meta.seq = seq;
 	prog = bpf_iter_get_info(&meta, false);
-	वापस tcp_prog_seq_show(prog, &meta, v, uid);
-पूर्ण
+	return tcp_prog_seq_show(prog, &meta, v, uid);
+}
 
-अटल व्योम bpf_iter_tcp_seq_stop(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा bpf_iter_meta meta;
-	काष्ठा bpf_prog *prog;
+static void bpf_iter_tcp_seq_stop(struct seq_file *seq, void *v)
+{
+	struct bpf_iter_meta meta;
+	struct bpf_prog *prog;
 
-	अगर (!v) अणु
+	if (!v) {
 		meta.seq = seq;
 		prog = bpf_iter_get_info(&meta, true);
-		अगर (prog)
-			(व्योम)tcp_prog_seq_show(prog, &meta, v, 0);
-	पूर्ण
+		if (prog)
+			(void)tcp_prog_seq_show(prog, &meta, v, 0);
+	}
 
 	tcp_seq_stop(seq, v);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा seq_operations bpf_iter_tcp_seq_ops = अणु
+static const struct seq_operations bpf_iter_tcp_seq_ops = {
 	.show		= bpf_iter_tcp_seq_show,
 	.start		= tcp_seq_start,
 	.next		= tcp_seq_next,
 	.stop		= bpf_iter_tcp_seq_stop,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर काष्ठा seq_operations tcp4_seq_ops = अणु
+static const struct seq_operations tcp4_seq_ops = {
 	.show		= tcp4_seq_show,
 	.start		= tcp_seq_start,
 	.next		= tcp_seq_next,
 	.stop		= tcp_seq_stop,
-पूर्ण;
+};
 
-अटल काष्ठा tcp_seq_afinfo tcp4_seq_afinfo = अणु
+static struct tcp_seq_afinfo tcp4_seq_afinfo = {
 	.family		= AF_INET,
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init tcp4_proc_init_net(काष्ठा net *net)
-अणु
-	अगर (!proc_create_net_data("tcp", 0444, net->proc_net, &tcp4_seq_ops,
-			माप(काष्ठा tcp_iter_state), &tcp4_seq_afinfo))
-		वापस -ENOMEM;
-	वापस 0;
-पूर्ण
+static int __net_init tcp4_proc_init_net(struct net *net)
+{
+	if (!proc_create_net_data("tcp", 0444, net->proc_net, &tcp4_seq_ops,
+			sizeof(struct tcp_iter_state), &tcp4_seq_afinfo))
+		return -ENOMEM;
+	return 0;
+}
 
-अटल व्योम __net_निकास tcp4_proc_निकास_net(काष्ठा net *net)
-अणु
-	हटाओ_proc_entry("tcp", net->proc_net);
-पूर्ण
+static void __net_exit tcp4_proc_exit_net(struct net *net)
+{
+	remove_proc_entry("tcp", net->proc_net);
+}
 
-अटल काष्ठा pernet_operations tcp4_net_ops = अणु
+static struct pernet_operations tcp4_net_ops = {
 	.init = tcp4_proc_init_net,
-	.निकास = tcp4_proc_निकास_net,
-पूर्ण;
+	.exit = tcp4_proc_exit_net,
+};
 
-पूर्णांक __init tcp4_proc_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&tcp4_net_ops);
-पूर्ण
+int __init tcp4_proc_init(void)
+{
+	return register_pernet_subsys(&tcp4_net_ops);
+}
 
-व्योम tcp4_proc_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&tcp4_net_ops);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+void tcp4_proc_exit(void)
+{
+	unregister_pernet_subsys(&tcp4_net_ops);
+}
+#endif /* CONFIG_PROC_FS */
 
-/* @wake is one when sk_stream_ग_लिखो_space() calls us.
- * This sends EPOLLOUT only अगर notsent_bytes is half the limit.
- * This mimics the strategy used in sock_def_ग_लिखो_space().
+/* @wake is one when sk_stream_write_space() calls us.
+ * This sends EPOLLOUT only if notsent_bytes is half the limit.
+ * This mimics the strategy used in sock_def_write_space().
  */
-bool tcp_stream_memory_मुक्त(स्थिर काष्ठा sock *sk, पूर्णांक wake)
-अणु
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
-	u32 notsent_bytes = READ_ONCE(tp->ग_लिखो_seq) -
+bool tcp_stream_memory_free(const struct sock *sk, int wake)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
+	u32 notsent_bytes = READ_ONCE(tp->write_seq) -
 			    READ_ONCE(tp->snd_nxt);
 
-	वापस (notsent_bytes << wake) < tcp_notsent_lowat(tp);
-पूर्ण
-EXPORT_SYMBOL(tcp_stream_memory_मुक्त);
+	return (notsent_bytes << wake) < tcp_notsent_lowat(tp);
+}
+EXPORT_SYMBOL(tcp_stream_memory_free);
 
-काष्ठा proto tcp_prot = अणु
+struct proto tcp_prot = {
 	.name			= "TCP",
 	.owner			= THIS_MODULE,
-	.बंद			= tcp_बंद,
+	.close			= tcp_close,
 	.pre_connect		= tcp_v4_pre_connect,
 	.connect		= tcp_v4_connect,
 	.disconnect		= tcp_disconnect,
@@ -2809,80 +2808,80 @@ EXPORT_SYMBOL(tcp_stream_memory_मुक्त);
 	.ioctl			= tcp_ioctl,
 	.init			= tcp_v4_init_sock,
 	.destroy		= tcp_v4_destroy_sock,
-	.shutकरोwn		= tcp_shutकरोwn,
+	.shutdown		= tcp_shutdown,
 	.setsockopt		= tcp_setsockopt,
-	.माला_लोockopt		= tcp_माला_लोockopt,
-	.bpf_bypass_माला_लोockopt	= tcp_bpf_bypass_माला_लोockopt,
+	.getsockopt		= tcp_getsockopt,
+	.bpf_bypass_getsockopt	= tcp_bpf_bypass_getsockopt,
 	.keepalive		= tcp_set_keepalive,
 	.recvmsg		= tcp_recvmsg,
 	.sendmsg		= tcp_sendmsg,
 	.sendpage		= tcp_sendpage,
-	.backlog_rcv		= tcp_v4_करो_rcv,
+	.backlog_rcv		= tcp_v4_do_rcv,
 	.release_cb		= tcp_release_cb,
 	.hash			= inet_hash,
 	.unhash			= inet_unhash,
 	.get_port		= inet_csk_get_port,
-#अगर_घोषित CONFIG_BPF_SYSCALL
+#ifdef CONFIG_BPF_SYSCALL
 	.psock_update_sk_prot	= tcp_bpf_update_proto,
-#पूर्ण_अगर
+#endif
 	.enter_memory_pressure	= tcp_enter_memory_pressure,
 	.leave_memory_pressure	= tcp_leave_memory_pressure,
-	.stream_memory_मुक्त	= tcp_stream_memory_मुक्त,
+	.stream_memory_free	= tcp_stream_memory_free,
 	.sockets_allocated	= &tcp_sockets_allocated,
 	.orphan_count		= &tcp_orphan_count,
 	.memory_allocated	= &tcp_memory_allocated,
 	.memory_pressure	= &tcp_memory_pressure,
 	.sysctl_mem		= sysctl_tcp_mem,
-	.sysctl_wmem_offset	= दुरत्व(काष्ठा net, ipv4.sysctl_tcp_wmem),
-	.sysctl_rmem_offset	= दुरत्व(काष्ठा net, ipv4.sysctl_tcp_rmem),
+	.sysctl_wmem_offset	= offsetof(struct net, ipv4.sysctl_tcp_wmem),
+	.sysctl_rmem_offset	= offsetof(struct net, ipv4.sysctl_tcp_rmem),
 	.max_header		= MAX_TCP_HEADER,
-	.obj_size		= माप(काष्ठा tcp_sock),
+	.obj_size		= sizeof(struct tcp_sock),
 	.slab_flags		= SLAB_TYPESAFE_BY_RCU,
-	.twsk_prot		= &tcp_समयरुको_sock_ops,
+	.twsk_prot		= &tcp_timewait_sock_ops,
 	.rsk_prot		= &tcp_request_sock_ops,
 	.h.hashinfo		= &tcp_hashinfo,
-	.no_स्वतःbind		= true,
-	.diag_destroy		= tcp_पात,
-पूर्ण;
+	.no_autobind		= true,
+	.diag_destroy		= tcp_abort,
+};
 EXPORT_SYMBOL(tcp_prot);
 
-अटल व्योम __net_निकास tcp_sk_निकास(काष्ठा net *net)
-अणु
-	पूर्णांक cpu;
+static void __net_exit tcp_sk_exit(struct net *net)
+{
+	int cpu;
 
-	अगर (net->ipv4.tcp_congestion_control)
+	if (net->ipv4.tcp_congestion_control)
 		bpf_module_put(net->ipv4.tcp_congestion_control,
 			       net->ipv4.tcp_congestion_control->owner);
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		inet_ctl_sock_destroy(*per_cpu_ptr(net->ipv4.tcp_sk, cpu));
-	मुक्त_percpu(net->ipv4.tcp_sk);
-पूर्ण
+	free_percpu(net->ipv4.tcp_sk);
+}
 
-अटल पूर्णांक __net_init tcp_sk_init(काष्ठा net *net)
-अणु
-	पूर्णांक res, cpu, cnt;
+static int __net_init tcp_sk_init(struct net *net)
+{
+	int res, cpu, cnt;
 
-	net->ipv4.tcp_sk = alloc_percpu(काष्ठा sock *);
-	अगर (!net->ipv4.tcp_sk)
-		वापस -ENOMEM;
+	net->ipv4.tcp_sk = alloc_percpu(struct sock *);
+	if (!net->ipv4.tcp_sk)
+		return -ENOMEM;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		काष्ठा sock *sk;
+	for_each_possible_cpu(cpu) {
+		struct sock *sk;
 
 		res = inet_ctl_sock_create(&sk, PF_INET, SOCK_RAW,
 					   IPPROTO_TCP, net);
-		अगर (res)
-			जाओ fail;
+		if (res)
+			goto fail;
 		sock_set_flag(sk, SOCK_USE_WRITE_QUEUE);
 
-		/* Please enक्रमce IP_DF and IPID==0 क्रम RST and
+		/* Please enforce IP_DF and IPID==0 for RST and
 		 * ACK sent in SYN-RECV and TIME-WAIT state.
 		 */
 		inet_sk(sk)->pmtudisc = IP_PMTUDISC_DO;
 
 		*per_cpu_ptr(net->ipv4.tcp_sk, cpu) = sk;
-	पूर्ण
+	}
 
 	net->ipv4.sysctl_tcp_ecn = 2;
 	net->ipv4.sysctl_tcp_ecn_fallback = 1;
@@ -2890,12 +2889,12 @@ EXPORT_SYMBOL(tcp_prot);
 	net->ipv4.sysctl_tcp_base_mss = TCP_BASE_MSS;
 	net->ipv4.sysctl_tcp_min_snd_mss = TCP_MIN_SND_MSS;
 	net->ipv4.sysctl_tcp_probe_threshold = TCP_PROBE_THRESHOLD;
-	net->ipv4.sysctl_tcp_probe_पूर्णांकerval = TCP_PROBE_INTERVAL;
-	net->ipv4.sysctl_tcp_mtu_probe_न्यूनमान = TCP_MIN_SND_MSS;
+	net->ipv4.sysctl_tcp_probe_interval = TCP_PROBE_INTERVAL;
+	net->ipv4.sysctl_tcp_mtu_probe_floor = TCP_MIN_SND_MSS;
 
-	net->ipv4.sysctl_tcp_keepalive_समय = TCP_KEEPALIVE_TIME;
+	net->ipv4.sysctl_tcp_keepalive_time = TCP_KEEPALIVE_TIME;
 	net->ipv4.sysctl_tcp_keepalive_probes = TCP_KEEPALIVE_PROBES;
-	net->ipv4.sysctl_tcp_keepalive_पूर्णांकvl = TCP_KEEPALIVE_INTVL;
+	net->ipv4.sysctl_tcp_keepalive_intvl = TCP_KEEPALIVE_INTVL;
 
 	net->ipv4.sysctl_tcp_syn_retries = TCP_SYN_RETRIES;
 	net->ipv4.sysctl_tcp_synack_retries = TCP_SYNACK_RETRIES;
@@ -2904,8 +2903,8 @@ EXPORT_SYMBOL(tcp_prot);
 	net->ipv4.sysctl_tcp_retries1 = TCP_RETR1;
 	net->ipv4.sysctl_tcp_retries2 = TCP_RETR2;
 	net->ipv4.sysctl_tcp_orphan_retries = 0;
-	net->ipv4.sysctl_tcp_fin_समयout = TCP_FIN_TIMEOUT;
-	net->ipv4.sysctl_tcp_notsent_lowat = अच_पूर्णांक_उच्च;
+	net->ipv4.sysctl_tcp_fin_timeout = TCP_FIN_TIMEOUT;
+	net->ipv4.sysctl_tcp_notsent_lowat = UINT_MAX;
 	net->ipv4.sysctl_tcp_tw_reuse = 2;
 	net->ipv4.sysctl_tcp_no_ssthresh_metrics_save = 1;
 
@@ -2915,11 +2914,11 @@ EXPORT_SYMBOL(tcp_prot);
 
 	net->ipv4.sysctl_max_syn_backlog = max(128, cnt / 128);
 	net->ipv4.sysctl_tcp_sack = 1;
-	net->ipv4.sysctl_tcp_winकरोw_scaling = 1;
-	net->ipv4.sysctl_tcp_बारtamps = 1;
+	net->ipv4.sysctl_tcp_window_scaling = 1;
+	net->ipv4.sysctl_tcp_timestamps = 1;
 	net->ipv4.sysctl_tcp_early_retrans = 3;
 	net->ipv4.sysctl_tcp_recovery = TCP_RACK_LOSS_DETECTION;
-	net->ipv4.sysctl_tcp_slow_start_after_idle = 1; /* By शेष, RFC2861 behavior.  */
+	net->ipv4.sysctl_tcp_slow_start_after_idle = 1; /* By default, RFC2861 behavior.  */
 	net->ipv4.sysctl_tcp_retrans_collapse = 1;
 	net->ipv4.sysctl_tcp_max_reordering = 300;
 	net->ipv4.sysctl_tcp_dsack = 1;
@@ -2927,130 +2926,130 @@ EXPORT_SYMBOL(tcp_prot);
 	net->ipv4.sysctl_tcp_adv_win_scale = 1;
 	net->ipv4.sysctl_tcp_frto = 2;
 	net->ipv4.sysctl_tcp_moderate_rcvbuf = 1;
-	/* This limits the percentage of the congestion winकरोw which we
+	/* This limits the percentage of the congestion window which we
 	 * will allow a single TSO frame to consume.  Building TSO frames
 	 * which are too large can cause TCP streams to be bursty.
 	 */
-	net->ipv4.sysctl_tcp_tso_win_भागisor = 3;
+	net->ipv4.sysctl_tcp_tso_win_divisor = 3;
 	/* Default TSQ limit of 16 TSO segments */
 	net->ipv4.sysctl_tcp_limit_output_bytes = 16 * 65536;
 	/* rfc5961 challenge ack rate limiting */
 	net->ipv4.sysctl_tcp_challenge_ack_limit = 1000;
 	net->ipv4.sysctl_tcp_min_tso_segs = 2;
 	net->ipv4.sysctl_tcp_min_rtt_wlen = 300;
-	net->ipv4.sysctl_tcp_स्वतःcorking = 1;
+	net->ipv4.sysctl_tcp_autocorking = 1;
 	net->ipv4.sysctl_tcp_invalid_ratelimit = HZ/2;
 	net->ipv4.sysctl_tcp_pacing_ss_ratio = 200;
 	net->ipv4.sysctl_tcp_pacing_ca_ratio = 120;
-	अगर (net != &init_net) अणु
-		स_नकल(net->ipv4.sysctl_tcp_rmem,
+	if (net != &init_net) {
+		memcpy(net->ipv4.sysctl_tcp_rmem,
 		       init_net.ipv4.sysctl_tcp_rmem,
-		       माप(init_net.ipv4.sysctl_tcp_rmem));
-		स_नकल(net->ipv4.sysctl_tcp_wmem,
+		       sizeof(init_net.ipv4.sysctl_tcp_rmem));
+		memcpy(net->ipv4.sysctl_tcp_wmem,
 		       init_net.ipv4.sysctl_tcp_wmem,
-		       माप(init_net.ipv4.sysctl_tcp_wmem));
-	पूर्ण
+		       sizeof(init_net.ipv4.sysctl_tcp_wmem));
+	}
 	net->ipv4.sysctl_tcp_comp_sack_delay_ns = NSEC_PER_MSEC;
 	net->ipv4.sysctl_tcp_comp_sack_slack_ns = 100 * NSEC_PER_USEC;
 	net->ipv4.sysctl_tcp_comp_sack_nr = 44;
-	net->ipv4.sysctl_tcp_fastखोलो = TFO_CLIENT_ENABLE;
-	spin_lock_init(&net->ipv4.tcp_fastखोलो_ctx_lock);
-	net->ipv4.sysctl_tcp_fastखोलो_blackhole_समयout = 60 * 60;
-	atomic_set(&net->ipv4.tfo_active_disable_बार, 0);
+	net->ipv4.sysctl_tcp_fastopen = TFO_CLIENT_ENABLE;
+	spin_lock_init(&net->ipv4.tcp_fastopen_ctx_lock);
+	net->ipv4.sysctl_tcp_fastopen_blackhole_timeout = 60 * 60;
+	atomic_set(&net->ipv4.tfo_active_disable_times, 0);
 
 	/* Reno is always built in */
-	अगर (!net_eq(net, &init_net) &&
+	if (!net_eq(net, &init_net) &&
 	    bpf_try_module_get(init_net.ipv4.tcp_congestion_control,
 			       init_net.ipv4.tcp_congestion_control->owner))
 		net->ipv4.tcp_congestion_control = init_net.ipv4.tcp_congestion_control;
-	अन्यथा
+	else
 		net->ipv4.tcp_congestion_control = &tcp_reno;
 
-	वापस 0;
+	return 0;
 fail:
-	tcp_sk_निकास(net);
+	tcp_sk_exit(net);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम __net_निकास tcp_sk_निकास_batch(काष्ठा list_head *net_निकास_list)
-अणु
-	काष्ठा net *net;
+static void __net_exit tcp_sk_exit_batch(struct list_head *net_exit_list)
+{
+	struct net *net;
 
 	inet_twsk_purge(&tcp_hashinfo, AF_INET);
 
-	list_क्रम_each_entry(net, net_निकास_list, निकास_list)
-		tcp_fastखोलो_ctx_destroy(net);
-पूर्ण
+	list_for_each_entry(net, net_exit_list, exit_list)
+		tcp_fastopen_ctx_destroy(net);
+}
 
-अटल काष्ठा pernet_operations __net_initdata tcp_sk_ops = अणु
+static struct pernet_operations __net_initdata tcp_sk_ops = {
        .init	   = tcp_sk_init,
-       .निकास	   = tcp_sk_निकास,
-       .निकास_batch = tcp_sk_निकास_batch,
-पूर्ण;
+       .exit	   = tcp_sk_exit,
+       .exit_batch = tcp_sk_exit_batch,
+};
 
-#अगर defined(CONFIG_BPF_SYSCALL) && defined(CONFIG_PROC_FS)
-DEFINE_BPF_ITER_FUNC(tcp, काष्ठा bpf_iter_meta *meta,
-		     काष्ठा sock_common *sk_common, uid_t uid)
+#if defined(CONFIG_BPF_SYSCALL) && defined(CONFIG_PROC_FS)
+DEFINE_BPF_ITER_FUNC(tcp, struct bpf_iter_meta *meta,
+		     struct sock_common *sk_common, uid_t uid)
 
-अटल पूर्णांक bpf_iter_init_tcp(व्योम *priv_data, काष्ठा bpf_iter_aux_info *aux)
-अणु
-	काष्ठा tcp_iter_state *st = priv_data;
-	काष्ठा tcp_seq_afinfo *afinfo;
-	पूर्णांक ret;
+static int bpf_iter_init_tcp(void *priv_data, struct bpf_iter_aux_info *aux)
+{
+	struct tcp_iter_state *st = priv_data;
+	struct tcp_seq_afinfo *afinfo;
+	int ret;
 
-	afinfo = kदो_स्मृति(माप(*afinfo), GFP_USER | __GFP_NOWARN);
-	अगर (!afinfo)
-		वापस -ENOMEM;
+	afinfo = kmalloc(sizeof(*afinfo), GFP_USER | __GFP_NOWARN);
+	if (!afinfo)
+		return -ENOMEM;
 
 	afinfo->family = AF_UNSPEC;
 	st->bpf_seq_afinfo = afinfo;
 	ret = bpf_iter_init_seq_net(priv_data, aux);
-	अगर (ret)
-		kमुक्त(afinfo);
-	वापस ret;
-पूर्ण
+	if (ret)
+		kfree(afinfo);
+	return ret;
+}
 
-अटल व्योम bpf_iter_fini_tcp(व्योम *priv_data)
-अणु
-	काष्ठा tcp_iter_state *st = priv_data;
+static void bpf_iter_fini_tcp(void *priv_data)
+{
+	struct tcp_iter_state *st = priv_data;
 
-	kमुक्त(st->bpf_seq_afinfo);
+	kfree(st->bpf_seq_afinfo);
 	bpf_iter_fini_seq_net(priv_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा bpf_iter_seq_info tcp_seq_info = अणु
+static const struct bpf_iter_seq_info tcp_seq_info = {
 	.seq_ops		= &bpf_iter_tcp_seq_ops,
-	.init_seq_निजी	= bpf_iter_init_tcp,
-	.fini_seq_निजी	= bpf_iter_fini_tcp,
-	.seq_priv_size		= माप(काष्ठा tcp_iter_state),
-पूर्ण;
+	.init_seq_private	= bpf_iter_init_tcp,
+	.fini_seq_private	= bpf_iter_fini_tcp,
+	.seq_priv_size		= sizeof(struct tcp_iter_state),
+};
 
-अटल काष्ठा bpf_iter_reg tcp_reg_info = अणु
+static struct bpf_iter_reg tcp_reg_info = {
 	.target			= "tcp",
 	.ctx_arg_info_size	= 1,
-	.ctx_arg_info		= अणु
-		अणु दुरत्व(काष्ठा bpf_iter__tcp, sk_common),
-		  PTR_TO_BTF_ID_OR_शून्य पूर्ण,
-	पूर्ण,
+	.ctx_arg_info		= {
+		{ offsetof(struct bpf_iter__tcp, sk_common),
+		  PTR_TO_BTF_ID_OR_NULL },
+	},
 	.seq_info		= &tcp_seq_info,
-पूर्ण;
+};
 
-अटल व्योम __init bpf_iter_रेजिस्टर(व्योम)
-अणु
+static void __init bpf_iter_register(void)
+{
 	tcp_reg_info.ctx_arg_info[0].btf_id = btf_sock_ids[BTF_SOCK_TYPE_SOCK_COMMON];
-	अगर (bpf_iter_reg_target(&tcp_reg_info))
+	if (bpf_iter_reg_target(&tcp_reg_info))
 		pr_warn("Warning: could not register bpf iterator tcp\n");
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 
-व्योम __init tcp_v4_init(व्योम)
-अणु
-	अगर (रेजिस्टर_pernet_subsys(&tcp_sk_ops))
+void __init tcp_v4_init(void)
+{
+	if (register_pernet_subsys(&tcp_sk_ops))
 		panic("Failed to create the TCP control socket.\n");
 
-#अगर defined(CONFIG_BPF_SYSCALL) && defined(CONFIG_PROC_FS)
-	bpf_iter_रेजिस्टर();
-#पूर्ण_अगर
-पूर्ण
+#if defined(CONFIG_BPF_SYSCALL) && defined(CONFIG_PROC_FS)
+	bpf_iter_register();
+#endif
+}

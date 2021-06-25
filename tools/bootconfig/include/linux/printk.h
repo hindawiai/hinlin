@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _SKC_LINUX_PRINTK_H
-#घोषणा _SKC_LINUX_PRINTK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _SKC_LINUX_PRINTK_H
+#define _SKC_LINUX_PRINTK_H
 
-#समावेश <मानकपन.स>
+#include <stdio.h>
 
-#घोषणा prपूर्णांकk(fmt, ...) म_लिखो(fmt, ##__VA_ARGS__)
+#define printk(fmt, ...) printf(fmt, ##__VA_ARGS__)
 
-#घोषणा pr_err prपूर्णांकk
-#घोषणा pr_warn	prपूर्णांकk
-#घोषणा pr_info	prपूर्णांकk
-#घोषणा pr_debug prपूर्णांकk
+#define pr_err printk
+#define pr_warn	printk
+#define pr_info	printk
+#define pr_debug printk
 
-#पूर्ण_अगर
+#endif

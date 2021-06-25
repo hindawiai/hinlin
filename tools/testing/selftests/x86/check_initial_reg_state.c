@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * check_initial_reg_state.c - check that execve sets the correct state
  * Copyright (c) 2014-2016 Andrew Lutomirski
  */
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <मानकपन.स>
+#include <stdio.h>
 
-अचिन्हित दीर्घ ax, bx, cx, dx, si, di, bp, sp, flags;
-अचिन्हित दीर्घ r8, r9, r10, r11, r12, r13, r14, r15;
+unsigned long ax, bx, cx, dx, si, di, bp, sp, flags;
+unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
 
-यंत्र (
+asm (
 	".pushsection .text\n\t"
 	".type real_start, @function\n\t"
 	".global real_start\n\t"
 	"real_start:\n\t"
-#अगर_घोषित __x86_64__
+#ifdef __x86_64__
 	"mov %rax, ax\n\t"
 	"mov %rbx, bx\n\t"
 	"mov %rcx, cx\n\t"
@@ -36,7 +35,7 @@
 	"mov %r15, r15\n\t"
 	"pushfq\n\t"
 	"popq flags\n\t"
-#अन्यथा
+#else
 	"mov %eax, ax\n\t"
 	"mov %ebx, bx\n\t"
 	"mov %ecx, cx\n\t"
@@ -47,27 +46,27 @@
 	"mov %esp, sp\n\t"
 	"pushfl\n\t"
 	"popl flags\n\t"
-#पूर्ण_अगर
+#endif
 	"jmp _start\n\t"
 	".size real_start, . - real_start\n\t"
 	".popsection");
 
-पूर्णांक मुख्य()
-अणु
-	पूर्णांक nerrs = 0;
+int main()
+{
+	int nerrs = 0;
 
-	अगर (sp == 0) अणु
-		म_लिखो("[FAIL]\tTest was built incorrectly\n");
-		वापस 1;
-	पूर्ण
+	if (sp == 0) {
+		printf("[FAIL]\tTest was built incorrectly\n");
+		return 1;
+	}
 
-	अगर (ax || bx || cx || dx || si || di || bp
-#अगर_घोषित __x86_64__
+	if (ax || bx || cx || dx || si || di || bp
+#ifdef __x86_64__
 	    || r8 || r9 || r10 || r11 || r12 || r13 || r14 || r15
-#पूर्ण_अगर
-		) अणु
-		म_लिखो("[FAIL]\tAll GPRs except SP should be 0\n");
-#घोषणा SHOW(x) म_लिखो("\t" #x " = 0x%lx\n", x);
+#endif
+		) {
+		printf("[FAIL]\tAll GPRs except SP should be 0\n");
+#define SHOW(x) printf("\t" #x " = 0x%lx\n", x);
 		SHOW(ax);
 		SHOW(bx);
 		SHOW(cx);
@@ -76,7 +75,7 @@
 		SHOW(di);
 		SHOW(bp);
 		SHOW(sp);
-#अगर_घोषित __x86_64__
+#ifdef __x86_64__
 		SHOW(r8);
 		SHOW(r9);
 		SHOW(r10);
@@ -85,18 +84,18 @@
 		SHOW(r13);
 		SHOW(r14);
 		SHOW(r15);
-#पूर्ण_अगर
+#endif
 		nerrs++;
-	पूर्ण अन्यथा अणु
-		म_लिखो("[OK]\tAll GPRs except SP are 0\n");
-	पूर्ण
+	} else {
+		printf("[OK]\tAll GPRs except SP are 0\n");
+	}
 
-	अगर (flags != 0x202) अणु
-		म_लिखो("[FAIL]\tFLAGS is 0x%lx, but it should be 0x202\n", flags);
+	if (flags != 0x202) {
+		printf("[FAIL]\tFLAGS is 0x%lx, but it should be 0x202\n", flags);
 		nerrs++;
-	पूर्ण अन्यथा अणु
-		म_लिखो("[OK]\tFLAGS is 0x202\n");
-	पूर्ण
+	} else {
+		printf("[OK]\tFLAGS is 0x202\n");
+	}
 
-	वापस nerrs ? 1 : 0;
-पूर्ण
+	return nerrs ? 1 : 0;
+}

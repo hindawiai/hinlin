@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * TI ADC081C/ADC101C/ADC121C 8/10/12-bit ADC driver
  *
@@ -11,237 +10,237 @@
  *	https://www.ti.com/lit/ds/symlink/adc101c021.pdf
  *	https://www.ti.com/lit/ds/symlink/adc121c021.pdf
  *
- * The devices have a very similar पूर्णांकerface and dअगरfer mostly in the number of
- * bits handled. For the 8-bit and 10-bit models the least-signअगरicant 4 or 2
- * bits of value रेजिस्टरs are reserved.
+ * The devices have a very similar interface and differ mostly in the number of
+ * bits handled. For the 8-bit and 10-bit models the least-significant 4 or 2
+ * bits of value registers are reserved.
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/regulator/consumer.h>
 
-काष्ठा adc081c अणु
-	काष्ठा i2c_client *i2c;
-	काष्ठा regulator *ref;
+struct adc081c {
+	struct i2c_client *i2c;
+	struct regulator *ref;
 
 	/* 8, 10 or 12 */
-	पूर्णांक bits;
+	int bits;
 
 	/* Ensure natural alignment of buffer elements */
-	काष्ठा अणु
+	struct {
 		u16 channel;
 		s64 ts __aligned(8);
-	पूर्ण scan;
-पूर्ण;
+	} scan;
+};
 
-#घोषणा REG_CONV_RES 0x00
+#define REG_CONV_RES 0x00
 
-अटल पूर्णांक adc081c_पढ़ो_raw(काष्ठा iio_dev *iio,
-			    काष्ठा iio_chan_spec स्थिर *channel, पूर्णांक *value,
-			    पूर्णांक *shअगरt, दीर्घ mask)
-अणु
-	काष्ठा adc081c *adc = iio_priv(iio);
-	पूर्णांक err;
+static int adc081c_read_raw(struct iio_dev *iio,
+			    struct iio_chan_spec const *channel, int *value,
+			    int *shift, long mask)
+{
+	struct adc081c *adc = iio_priv(iio);
+	int err;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		err = i2c_smbus_पढ़ो_word_swapped(adc->i2c, REG_CONV_RES);
-		अगर (err < 0)
-			वापस err;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		err = i2c_smbus_read_word_swapped(adc->i2c, REG_CONV_RES);
+		if (err < 0)
+			return err;
 
 		*value = (err & 0xFFF) >> (12 - adc->bits);
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_SCALE:
+	case IIO_CHAN_INFO_SCALE:
 		err = regulator_get_voltage(adc->ref);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
 		*value = err / 1000;
-		*shअगरt = adc->bits;
+		*shift = adc->bits;
 
-		वापस IIO_VAL_FRACTIONAL_LOG2;
+		return IIO_VAL_FRACTIONAL_LOG2;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-#घोषणा ADCxx1C_CHAN(_bits) अणु					\
+#define ADCxx1C_CHAN(_bits) {					\
 	.type = IIO_VOLTAGE,					\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
-	.scan_type = अणु						\
+	.scan_type = {						\
 		.sign = 'u',					\
 		.realbits = (_bits),				\
 		.storagebits = 16,				\
-		.shअगरt = 12 - (_bits),				\
+		.shift = 12 - (_bits),				\
 		.endianness = IIO_CPU,				\
-	पूर्ण,							\
-पूर्ण
+	},							\
+}
 
-#घोषणा DEFINE_ADCxx1C_CHANNELS(_name, _bits)				\
-	अटल स्थिर काष्ठा iio_chan_spec _name ## _channels[] = अणु	\
+#define DEFINE_ADCxx1C_CHANNELS(_name, _bits)				\
+	static const struct iio_chan_spec _name ## _channels[] = {	\
 		ADCxx1C_CHAN((_bits)),					\
 		IIO_CHAN_SOFT_TIMESTAMP(1),				\
-	पूर्ण;								\
+	};								\
 
-#घोषणा ADC081C_NUM_CHANNELS 2
+#define ADC081C_NUM_CHANNELS 2
 
-काष्ठा adcxx1c_model अणु
-	स्थिर काष्ठा iio_chan_spec* channels;
-	पूर्णांक bits;
-पूर्ण;
+struct adcxx1c_model {
+	const struct iio_chan_spec* channels;
+	int bits;
+};
 
-#घोषणा ADCxx1C_MODEL(_name, _bits)					\
-	अणु								\
+#define ADCxx1C_MODEL(_name, _bits)					\
+	{								\
 		.channels = _name ## _channels,				\
 		.bits = (_bits),					\
-	पूर्ण
+	}
 
 DEFINE_ADCxx1C_CHANNELS(adc081c,  8);
 DEFINE_ADCxx1C_CHANNELS(adc101c, 10);
 DEFINE_ADCxx1C_CHANNELS(adc121c, 12);
 
 /* Model ids are indexes in _models array */
-क्रमागत adcxx1c_model_id अणु
+enum adcxx1c_model_id {
 	ADC081C = 0,
 	ADC101C = 1,
 	ADC121C = 2,
-पूर्ण;
+};
 
-अटल काष्ठा adcxx1c_model adcxx1c_models[] = अणु
+static struct adcxx1c_model adcxx1c_models[] = {
 	ADCxx1C_MODEL(adc081c,  8),
 	ADCxx1C_MODEL(adc101c, 10),
 	ADCxx1C_MODEL(adc121c, 12),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_info adc081c_info = अणु
-	.पढ़ो_raw = adc081c_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info adc081c_info = {
+	.read_raw = adc081c_read_raw,
+};
 
-अटल irqवापस_t adc081c_trigger_handler(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा adc081c *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static irqreturn_t adc081c_trigger_handler(int irq, void *p)
+{
+	struct iio_poll_func *pf = p;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct adc081c *data = iio_priv(indio_dev);
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_word_swapped(data->i2c, REG_CONV_RES);
-	अगर (ret < 0)
-		जाओ out;
+	ret = i2c_smbus_read_word_swapped(data->i2c, REG_CONV_RES);
+	if (ret < 0)
+		goto out;
 	data->scan.channel = ret;
-	iio_push_to_buffers_with_बारtamp(indio_dev, &data->scan,
-					   iio_get_समय_ns(indio_dev));
+	iio_push_to_buffers_with_timestamp(indio_dev, &data->scan,
+					   iio_get_time_ns(indio_dev));
 out:
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
-	वापस IRQ_HANDLED;
-पूर्ण
+	iio_trigger_notify_done(indio_dev->trig);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक adc081c_probe(काष्ठा i2c_client *client,
-			 स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा iio_dev *iio;
-	काष्ठा adc081c *adc;
-	काष्ठा adcxx1c_model *model;
-	पूर्णांक err;
+static int adc081c_probe(struct i2c_client *client,
+			 const struct i2c_device_id *id)
+{
+	struct iio_dev *iio;
+	struct adc081c *adc;
+	struct adcxx1c_model *model;
+	int err;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA))
-		वापस -EOPNOTSUPP;
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WORD_DATA))
+		return -EOPNOTSUPP;
 
 	model = &adcxx1c_models[id->driver_data];
 
-	iio = devm_iio_device_alloc(&client->dev, माप(*adc));
-	अगर (!iio)
-		वापस -ENOMEM;
+	iio = devm_iio_device_alloc(&client->dev, sizeof(*adc));
+	if (!iio)
+		return -ENOMEM;
 
 	adc = iio_priv(iio);
 	adc->i2c = client;
 	adc->bits = model->bits;
 
 	adc->ref = devm_regulator_get(&client->dev, "vref");
-	अगर (IS_ERR(adc->ref))
-		वापस PTR_ERR(adc->ref);
+	if (IS_ERR(adc->ref))
+		return PTR_ERR(adc->ref);
 
 	err = regulator_enable(adc->ref);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	iio->name = dev_name(&client->dev);
-	iio->modes = INDIO_सूचीECT_MODE;
+	iio->modes = INDIO_DIRECT_MODE;
 	iio->info = &adc081c_info;
 
 	iio->channels = model->channels;
 	iio->num_channels = ADC081C_NUM_CHANNELS;
 
-	err = iio_triggered_buffer_setup(iio, शून्य, adc081c_trigger_handler, शून्य);
-	अगर (err < 0) अणु
+	err = iio_triggered_buffer_setup(iio, NULL, adc081c_trigger_handler, NULL);
+	if (err < 0) {
 		dev_err(&client->dev, "iio triggered buffer setup failed\n");
-		जाओ err_regulator_disable;
-	पूर्ण
+		goto err_regulator_disable;
+	}
 
-	err = iio_device_रेजिस्टर(iio);
-	अगर (err < 0)
-		जाओ err_buffer_cleanup;
+	err = iio_device_register(iio);
+	if (err < 0)
+		goto err_buffer_cleanup;
 
 	i2c_set_clientdata(client, iio);
 
-	वापस 0;
+	return 0;
 
 err_buffer_cleanup:
 	iio_triggered_buffer_cleanup(iio);
 err_regulator_disable:
 	regulator_disable(adc->ref);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक adc081c_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *iio = i2c_get_clientdata(client);
-	काष्ठा adc081c *adc = iio_priv(iio);
+static int adc081c_remove(struct i2c_client *client)
+{
+	struct iio_dev *iio = i2c_get_clientdata(client);
+	struct adc081c *adc = iio_priv(iio);
 
-	iio_device_unरेजिस्टर(iio);
+	iio_device_unregister(iio);
 	iio_triggered_buffer_cleanup(iio);
 	regulator_disable(adc->ref);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id adc081c_id[] = अणु
-	अणु "adc081c", ADC081C पूर्ण,
-	अणु "adc101c", ADC101C पूर्ण,
-	अणु "adc121c", ADC121C पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adc081c_id[] = {
+	{ "adc081c", ADC081C },
+	{ "adc101c", ADC101C },
+	{ "adc121c", ADC121C },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adc081c_id);
 
-अटल स्थिर काष्ठा of_device_id adc081c_of_match[] = अणु
-	अणु .compatible = "ti,adc081c" पूर्ण,
-	अणु .compatible = "ti,adc101c" पूर्ण,
-	अणु .compatible = "ti,adc121c" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id adc081c_of_match[] = {
+	{ .compatible = "ti,adc081c" },
+	{ .compatible = "ti,adc101c" },
+	{ .compatible = "ti,adc121c" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, adc081c_of_match);
 
-अटल काष्ठा i2c_driver adc081c_driver = अणु
-	.driver = अणु
+static struct i2c_driver adc081c_driver = {
+	.driver = {
 		.name = "adc081c",
 		.of_match_table = adc081c_of_match,
-	पूर्ण,
+	},
 	.probe = adc081c_probe,
-	.हटाओ = adc081c_हटाओ,
+	.remove = adc081c_remove,
 	.id_table = adc081c_id,
-पूर्ण;
+};
 module_i2c_driver(adc081c_driver);
 
 MODULE_AUTHOR("Thierry Reding <thierry.reding@avionic-design.de>");

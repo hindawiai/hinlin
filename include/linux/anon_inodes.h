@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  include/linux/anon_inodes.h
  *
@@ -7,21 +6,21 @@
  *
  */
 
-#अगर_अघोषित _LINUX_ANON_INODES_H
-#घोषणा _LINUX_ANON_INODES_H
+#ifndef _LINUX_ANON_INODES_H
+#define _LINUX_ANON_INODES_H
 
-काष्ठा file_operations;
-काष्ठा inode;
+struct file_operations;
+struct inode;
 
-काष्ठा file *anon_inode_getfile(स्थिर अक्षर *name,
-				स्थिर काष्ठा file_operations *fops,
-				व्योम *priv, पूर्णांक flags);
-पूर्णांक anon_inode_getfd(स्थिर अक्षर *name, स्थिर काष्ठा file_operations *fops,
-		     व्योम *priv, पूर्णांक flags);
-पूर्णांक anon_inode_getfd_secure(स्थिर अक्षर *name,
-			    स्थिर काष्ठा file_operations *fops,
-			    व्योम *priv, पूर्णांक flags,
-			    स्थिर काष्ठा inode *context_inode);
+struct file *anon_inode_getfile(const char *name,
+				const struct file_operations *fops,
+				void *priv, int flags);
+int anon_inode_getfd(const char *name, const struct file_operations *fops,
+		     void *priv, int flags);
+int anon_inode_getfd_secure(const char *name,
+			    const struct file_operations *fops,
+			    void *priv, int flags,
+			    const struct inode *context_inode);
 
-#पूर्ण_अगर /* _LINUX_ANON_INODES_H */
+#endif /* _LINUX_ANON_INODES_H */
 

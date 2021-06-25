@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Chrome OS EC MEMS Sensor Hub driver.
  *
  * Copyright 2019 Google LLC
  */
 
-#अगर_अघोषित __LINUX_PLATFORM_DATA_CROS_EC_SENSORHUB_H
-#घोषणा __LINUX_PLATFORM_DATA_CROS_EC_SENSORHUB_H
+#ifndef __LINUX_PLATFORM_DATA_CROS_EC_SENSORHUB_H
+#define __LINUX_PLATFORM_DATA_CROS_EC_SENSORHUB_H
 
-#समावेश <linux/kसमय.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#include <linux/ktime.h>
+#include <linux/mutex.h>
+#include <linux/notifier.h>
+#include <linux/platform_data/cros_ec_commands.h>
 
-काष्ठा iio_dev;
+struct iio_dev;
 
 /**
- * काष्ठा cros_ec_sensor_platक्रमm - ChromeOS EC sensor platक्रमm inक्रमmation.
+ * struct cros_ec_sensor_platform - ChromeOS EC sensor platform information.
  * @sensor_num: Id of the sensor, as reported by the EC.
  */
-काष्ठा cros_ec_sensor_platक्रमm अणु
+struct cros_ec_sensor_platform {
 	u8 sensor_num;
-पूर्ण;
+};
 
 /**
- * प्रकार cros_ec_sensorhub_push_data_cb_t - Callback function to send datum
- *					      to specअगरic sensors.
+ * typedef cros_ec_sensorhub_push_data_cb_t - Callback function to send datum
+ *					      to specific sensors.
  *
  * @indio_dev: The IIO device that will process the sample.
  * @data: Vector array of the ring sample.
- * @बारtamp: Timestamp in host बारpace when the sample was acquired by
+ * @timestamp: Timestamp in host timespace when the sample was acquired by
  *             the EC.
  */
-प्रकार पूर्णांक (*cros_ec_sensorhub_push_data_cb_t)(काष्ठा iio_dev *indio_dev,
+typedef int (*cros_ec_sensorhub_push_data_cb_t)(struct iio_dev *indio_dev,
 						s16 *data,
-						s64 बारtamp);
+						s64 timestamp);
 
-काष्ठा cros_ec_sensorhub_sensor_push_data अणु
-	काष्ठा iio_dev *indio_dev;
+struct cros_ec_sensorhub_sensor_push_data {
+	struct iio_dev *indio_dev;
 	cros_ec_sensorhub_push_data_cb_t push_data_cb;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CROS_EC_SENSOR_LAST_TS,
 	CROS_EC_SENSOR_NEW_TS,
 	CROS_EC_SENSOR_ALL_TS
-पूर्ण;
+};
 
-काष्ठा cros_ec_sensors_ring_sample अणु
+struct cros_ec_sensors_ring_sample {
 	u8  sensor_id;
 	u8  flag;
 	s16 vector[3];
-	s64 बारtamp;
-पूर्ण __packed;
+	s64 timestamp;
+} __packed;
 
-/* State used क्रम cros_ec_ring_fix_overflow */
-काष्ठा cros_ec_sensors_ec_overflow_state अणु
+/* State used for cros_ec_ring_fix_overflow */
+struct cros_ec_sensors_ec_overflow_state {
 	s64 offset;
 	s64 last;
-पूर्ण;
+};
 
-/* Length of the filter, how दीर्घ to remember entries क्रम */
-#घोषणा CROS_EC_SENSORHUB_TS_HISTORY_SIZE 64
+/* Length of the filter, how long to remember entries for */
+#define CROS_EC_SENSORHUB_TS_HISTORY_SIZE 64
 
 /**
- * काष्ठा cros_ec_sensors_ts_filter_state - Timestamp filetr state.
+ * struct cros_ec_sensors_ts_filter_state - Timestamp filetr state.
  *
- * @x_offset: x is EC पूर्णांकerrupt समय. x_offset its last value.
- * @y_offset: y is the dअगरference between AP and EC समय, y_offset its last
+ * @x_offset: x is EC interrupt time. x_offset its last value.
+ * @y_offset: y is the difference between AP and EC time, y_offset its last
  *            value.
  * @x_history: The past history of x, relative to x_offset.
  * @y_history: The past history of y, relative to y_offset.
@@ -76,120 +75,120 @@
  * @history_len: Amount of valid historic data in the arrays.
  * @temp_buf: Temporary buffer used when updating the filter.
  * @median_m: median value of m_history
- * @median_error: final error to apply to AP पूर्णांकerrupt बारtamp to get the
+ * @median_error: final error to apply to AP interrupt timestamp to get the
  *                "true timestamp" the event occurred.
  */
-काष्ठा cros_ec_sensors_ts_filter_state अणु
+struct cros_ec_sensors_ts_filter_state {
 	s64 x_offset, y_offset;
 	s64 x_history[CROS_EC_SENSORHUB_TS_HISTORY_SIZE];
 	s64 y_history[CROS_EC_SENSORHUB_TS_HISTORY_SIZE];
 	s64 m_history[CROS_EC_SENSORHUB_TS_HISTORY_SIZE];
-	पूर्णांक history_len;
+	int history_len;
 
 	s64 temp_buf[CROS_EC_SENSORHUB_TS_HISTORY_SIZE];
 
 	s64 median_m;
 	s64 median_error;
-पूर्ण;
+};
 
-/* काष्ठा cros_ec_sensors_ts_batch_state - State of batch of a single sensor.
+/* struct cros_ec_sensors_ts_batch_state - State of batch of a single sensor.
  *
- * Use to store inक्रमmation to batch data using median fileter inक्रमmation.
+ * Use to store information to batch data using median fileter information.
  *
- * @penul_ts: last but one batch बारtamp (penultimate बारtamp).
- *	      Used क्रम बारtamp spपढ़ोing calculations
+ * @penul_ts: last but one batch timestamp (penultimate timestamp).
+ *	      Used for timestamp spreading calculations
  *	      when a batch shows up.
  * @penul_len: last but one batch length.
- * @last_ts: Last batch बारtam.
+ * @last_ts: Last batch timestam.
  * @last_len: Last batch length.
- * @newest_sensor_event: Last sensor बारtamp.
+ * @newest_sensor_event: Last sensor timestamp.
  */
-काष्ठा cros_ec_sensors_ts_batch_state अणु
+struct cros_ec_sensors_ts_batch_state {
 	s64 penul_ts;
-	पूर्णांक penul_len;
+	int penul_len;
 	s64 last_ts;
-	पूर्णांक last_len;
+	int last_len;
 	s64 newest_sensor_event;
-पूर्ण;
+};
 
 /*
- * काष्ठा cros_ec_sensorhub - Sensor Hub device data.
+ * struct cros_ec_sensorhub - Sensor Hub device data.
  *
- * @dev: Device object, mostly used क्रम logging.
+ * @dev: Device object, mostly used for logging.
  * @ec: Embedded Controller where the hub is located.
  * @sensor_num: Number of MEMS sensors present in the EC.
  * @msg: Structure to send FIFO requests.
- * @params: Poपूर्णांकer to parameters in msg.
- * @resp: Poपूर्णांकer to responses in msg.
- * @cmd_lock : Lock क्रम sending msg.
- * @notअगरier: Notअगरier to kick the FIFO पूर्णांकerrupt.
+ * @params: Pointer to parameters in msg.
+ * @resp: Pointer to responses in msg.
+ * @cmd_lock : Lock for sending msg.
+ * @notifier: Notifier to kick the FIFO interrupt.
  * @ring: Preprocessed ring to store events.
- * @fअगरo_बारtamp: Array क्रम event बारtamp and spपढ़ोing.
- * @fअगरo_info: Copy of FIFO inक्रमmation coming from the EC.
- * @fअगरo_size: Size of the ring.
- * @batch_state: Per sensor inक्रमmation of the last batches received.
- * @overflow_a: For handling बारtamp overflow क्रम a समय (sensor events)
- * @overflow_b: For handling बारtamp overflow क्रम b समय (ec पूर्णांकerrupts)
- * @filter: Medium fileter काष्ठाure.
- * @tight_बारtamps: Set to truen when EC support tight बारtamping:
- *		      The बारtamps reported from the EC have low jitter.
- *		      Timestamps also come beक्रमe every sample. Set either
+ * @fifo_timestamp: Array for event timestamp and spreading.
+ * @fifo_info: Copy of FIFO information coming from the EC.
+ * @fifo_size: Size of the ring.
+ * @batch_state: Per sensor information of the last batches received.
+ * @overflow_a: For handling timestamp overflow for a time (sensor events)
+ * @overflow_b: For handling timestamp overflow for b time (ec interrupts)
+ * @filter: Medium fileter structure.
+ * @tight_timestamps: Set to truen when EC support tight timestamping:
+ *		      The timestamps reported from the EC have low jitter.
+ *		      Timestamps also come before every sample. Set either
  *		      by feature bits coming from the EC or userspace.
- * @future_बारtamp_count: Statistics used to compute shaved समय.
- *			    This occurs when बारtamp पूर्णांकerpolation from EC
- *			    समय to AP समय accidentally माला_दो बारtamps in
- *			    the future. These बारtamps are clamped to
- *			    `now` and these count/total_ns मुख्यtain the
- *			    statistics क्रम how much समय was हटाओd in a
+ * @future_timestamp_count: Statistics used to compute shaved time.
+ *			    This occurs when timestamp interpolation from EC
+ *			    time to AP time accidentally puts timestamps in
+ *			    the future. These timestamps are clamped to
+ *			    `now` and these count/total_ns maintain the
+ *			    statistics for how much time was removed in a
  *			    given period.
- * @future_बारtamp_total_ns: Total amount of समय shaved.
+ * @future_timestamp_total_ns: Total amount of time shaved.
  * @push_data: Array of callback to send datums to iio sensor object.
  */
-काष्ठा cros_ec_sensorhub अणु
-	काष्ठा device *dev;
-	काष्ठा cros_ec_dev *ec;
-	पूर्णांक sensor_num;
+struct cros_ec_sensorhub {
+	struct device *dev;
+	struct cros_ec_dev *ec;
+	int sensor_num;
 
-	काष्ठा cros_ec_command *msg;
-	काष्ठा ec_params_motion_sense *params;
-	काष्ठा ec_response_motion_sense *resp;
-	काष्ठा mutex cmd_lock;  /* Lock क्रम protecting msg काष्ठाure. */
+	struct cros_ec_command *msg;
+	struct ec_params_motion_sense *params;
+	struct ec_response_motion_sense *resp;
+	struct mutex cmd_lock;  /* Lock for protecting msg structure. */
 
-	काष्ठा notअगरier_block notअगरier;
+	struct notifier_block notifier;
 
-	काष्ठा cros_ec_sensors_ring_sample *ring;
+	struct cros_ec_sensors_ring_sample *ring;
 
-	kसमय_प्रकार fअगरo_बारtamp[CROS_EC_SENSOR_ALL_TS];
-	काष्ठा ec_response_motion_sense_fअगरo_info *fअगरo_info;
-	पूर्णांक fअगरo_size;
+	ktime_t fifo_timestamp[CROS_EC_SENSOR_ALL_TS];
+	struct ec_response_motion_sense_fifo_info *fifo_info;
+	int fifo_size;
 
-	काष्ठा cros_ec_sensors_ts_batch_state *batch_state;
+	struct cros_ec_sensors_ts_batch_state *batch_state;
 
-	काष्ठा cros_ec_sensors_ec_overflow_state overflow_a;
-	काष्ठा cros_ec_sensors_ec_overflow_state overflow_b;
+	struct cros_ec_sensors_ec_overflow_state overflow_a;
+	struct cros_ec_sensors_ec_overflow_state overflow_b;
 
-	काष्ठा cros_ec_sensors_ts_filter_state filter;
+	struct cros_ec_sensors_ts_filter_state filter;
 
-	पूर्णांक tight_बारtamps;
+	int tight_timestamps;
 
-	s32 future_बारtamp_count;
-	s64 future_बारtamp_total_ns;
+	s32 future_timestamp_count;
+	s64 future_timestamp_total_ns;
 
-	काष्ठा cros_ec_sensorhub_sensor_push_data *push_data;
-पूर्ण;
+	struct cros_ec_sensorhub_sensor_push_data *push_data;
+};
 
-पूर्णांक cros_ec_sensorhub_रेजिस्टर_push_data(काष्ठा cros_ec_sensorhub *sensorhub,
+int cros_ec_sensorhub_register_push_data(struct cros_ec_sensorhub *sensorhub,
 					 u8 sensor_num,
-					 काष्ठा iio_dev *indio_dev,
+					 struct iio_dev *indio_dev,
 					 cros_ec_sensorhub_push_data_cb_t cb);
 
-व्योम cros_ec_sensorhub_unरेजिस्टर_push_data(काष्ठा cros_ec_sensorhub *sensorhub,
+void cros_ec_sensorhub_unregister_push_data(struct cros_ec_sensorhub *sensorhub,
 					    u8 sensor_num);
 
-पूर्णांक cros_ec_sensorhub_ring_allocate(काष्ठा cros_ec_sensorhub *sensorhub);
-पूर्णांक cros_ec_sensorhub_ring_add(काष्ठा cros_ec_sensorhub *sensorhub);
-व्योम cros_ec_sensorhub_ring_हटाओ(व्योम *arg);
-पूर्णांक cros_ec_sensorhub_ring_fअगरo_enable(काष्ठा cros_ec_sensorhub *sensorhub,
+int cros_ec_sensorhub_ring_allocate(struct cros_ec_sensorhub *sensorhub);
+int cros_ec_sensorhub_ring_add(struct cros_ec_sensorhub *sensorhub);
+void cros_ec_sensorhub_ring_remove(void *arg);
+int cros_ec_sensorhub_ring_fifo_enable(struct cros_ec_sensorhub *sensorhub,
 				       bool on);
 
-#पूर्ण_अगर   /* __LINUX_PLATFORM_DATA_CROS_EC_SENSORHUB_H */
+#endif   /* __LINUX_PLATFORM_DATA_CROS_EC_SENSORHUB_H */

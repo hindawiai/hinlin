@@ -1,298 +1,297 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Generic sched_घड़ी() support, to extend low level hardware समय
+ * Generic sched_clock() support, to extend low level hardware time
  * counters to full 64-bit ns values.
  */
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/syscore_ops.h>
-#समावेश <linux/hrसमयr.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/seqlock.h>
-#समावेश <linux/bitops.h>
+#include <linux/clocksource.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/ktime.h>
+#include <linux/kernel.h>
+#include <linux/moduleparam.h>
+#include <linux/sched.h>
+#include <linux/sched/clock.h>
+#include <linux/syscore_ops.h>
+#include <linux/hrtimer.h>
+#include <linux/sched_clock.h>
+#include <linux/seqlock.h>
+#include <linux/bitops.h>
 
-#समावेश "timekeeping.h"
+#include "timekeeping.h"
 
 /**
- * काष्ठा घड़ी_data - all data needed क्रम sched_घड़ी() (including
- *                     registration of a new घड़ी source)
+ * struct clock_data - all data needed for sched_clock() (including
+ *                     registration of a new clock source)
  *
- * @seq:		Sequence counter क्रम protecting updates. The lowest
- *			bit is the index क्रम @पढ़ो_data.
- * @पढ़ो_data:		Data required to पढ़ो from sched_घड़ी.
- * @wrap_kt:		Duration क्रम which घड़ी can run beक्रमe wrapping.
- * @rate:		Tick rate of the रेजिस्टरed घड़ी.
- * @actual_पढ़ो_sched_घड़ी: Registered hardware level घड़ी पढ़ो function.
+ * @seq:		Sequence counter for protecting updates. The lowest
+ *			bit is the index for @read_data.
+ * @read_data:		Data required to read from sched_clock.
+ * @wrap_kt:		Duration for which clock can run before wrapping.
+ * @rate:		Tick rate of the registered clock.
+ * @actual_read_sched_clock: Registered hardware level clock read function.
  *
- * The ordering of this काष्ठाure has been chosen to optimize cache
- * perक्रमmance. In particular 'seq' and 'read_data[0]' (combined) should fit
- * पूर्णांकo a single 64-byte cache line.
+ * The ordering of this structure has been chosen to optimize cache
+ * performance. In particular 'seq' and 'read_data[0]' (combined) should fit
+ * into a single 64-byte cache line.
  */
-काष्ठा घड़ी_data अणु
+struct clock_data {
 	seqcount_latch_t	seq;
-	काष्ठा घड़ी_पढ़ो_data	पढ़ो_data[2];
-	kसमय_प्रकार			wrap_kt;
-	अचिन्हित दीर्घ		rate;
+	struct clock_read_data	read_data[2];
+	ktime_t			wrap_kt;
+	unsigned long		rate;
 
-	u64 (*actual_पढ़ो_sched_घड़ी)(व्योम);
-पूर्ण;
+	u64 (*actual_read_sched_clock)(void);
+};
 
-अटल काष्ठा hrसमयr sched_घड़ी_प्रकारimer;
-अटल पूर्णांक irqसमय = -1;
+static struct hrtimer sched_clock_timer;
+static int irqtime = -1;
 
-core_param(irqसमय, irqसमय, पूर्णांक, 0400);
+core_param(irqtime, irqtime, int, 0400);
 
-अटल u64 notrace jअगरfy_sched_घड़ी_पढ़ो(व्योम)
-अणु
+static u64 notrace jiffy_sched_clock_read(void)
+{
 	/*
-	 * We करोn't need to use get_jअगरfies_64 on 32-bit arches here
-	 * because we रेजिस्टर with BITS_PER_LONG
+	 * We don't need to use get_jiffies_64 on 32-bit arches here
+	 * because we register with BITS_PER_LONG
 	 */
-	वापस (u64)(jअगरfies - INITIAL_JIFFIES);
-पूर्ण
+	return (u64)(jiffies - INITIAL_JIFFIES);
+}
 
-अटल काष्ठा घड़ी_data cd ____cacheline_aligned = अणु
-	.पढ़ो_data[0] = अणु .mult = NSEC_PER_SEC / HZ,
-			  .पढ़ो_sched_घड़ी = jअगरfy_sched_घड़ी_पढ़ो, पूर्ण,
-	.actual_पढ़ो_sched_घड़ी = jअगरfy_sched_घड़ी_पढ़ो,
-पूर्ण;
+static struct clock_data cd ____cacheline_aligned = {
+	.read_data[0] = { .mult = NSEC_PER_SEC / HZ,
+			  .read_sched_clock = jiffy_sched_clock_read, },
+	.actual_read_sched_clock = jiffy_sched_clock_read,
+};
 
-अटल अंतरभूत u64 notrace cyc_to_ns(u64 cyc, u32 mult, u32 shअगरt)
-अणु
-	वापस (cyc * mult) >> shअगरt;
-पूर्ण
+static inline u64 notrace cyc_to_ns(u64 cyc, u32 mult, u32 shift)
+{
+	return (cyc * mult) >> shift;
+}
 
-notrace काष्ठा घड़ी_पढ़ो_data *sched_घड़ी_पढ़ो_begin(अचिन्हित पूर्णांक *seq)
-अणु
-	*seq = raw_पढ़ो_seqcount_latch(&cd.seq);
-	वापस cd.पढ़ो_data + (*seq & 1);
-पूर्ण
+notrace struct clock_read_data *sched_clock_read_begin(unsigned int *seq)
+{
+	*seq = raw_read_seqcount_latch(&cd.seq);
+	return cd.read_data + (*seq & 1);
+}
 
-notrace पूर्णांक sched_घड़ी_पढ़ो_retry(अचिन्हित पूर्णांक seq)
-अणु
-	वापस पढ़ो_seqcount_latch_retry(&cd.seq, seq);
-पूर्ण
+notrace int sched_clock_read_retry(unsigned int seq)
+{
+	return read_seqcount_latch_retry(&cd.seq, seq);
+}
 
-अचिन्हित दीर्घ दीर्घ notrace sched_घड़ी(व्योम)
-अणु
+unsigned long long notrace sched_clock(void)
+{
 	u64 cyc, res;
-	अचिन्हित पूर्णांक seq;
-	काष्ठा घड़ी_पढ़ो_data *rd;
+	unsigned int seq;
+	struct clock_read_data *rd;
 
-	करो अणु
-		rd = sched_घड़ी_पढ़ो_begin(&seq);
+	do {
+		rd = sched_clock_read_begin(&seq);
 
-		cyc = (rd->पढ़ो_sched_घड़ी() - rd->epoch_cyc) &
-		      rd->sched_घड़ी_mask;
-		res = rd->epoch_ns + cyc_to_ns(cyc, rd->mult, rd->shअगरt);
-	पूर्ण जबतक (sched_घड़ी_पढ़ो_retry(seq));
+		cyc = (rd->read_sched_clock() - rd->epoch_cyc) &
+		      rd->sched_clock_mask;
+		res = rd->epoch_ns + cyc_to_ns(cyc, rd->mult, rd->shift);
+	} while (sched_clock_read_retry(seq));
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /*
- * Updating the data required to पढ़ो the घड़ी.
+ * Updating the data required to read the clock.
  *
- * sched_घड़ी() will never observe mis-matched data even अगर called from
- * an NMI. We करो this by मुख्यtaining an odd/even copy of the data and
- * steering sched_घड़ी() to one or the other using a sequence counter.
- * In order to preserve the data cache profile of sched_घड़ी() as much
- * as possible the प्रणाली reverts back to the even copy when the update
+ * sched_clock() will never observe mis-matched data even if called from
+ * an NMI. We do this by maintaining an odd/even copy of the data and
+ * steering sched_clock() to one or the other using a sequence counter.
+ * In order to preserve the data cache profile of sched_clock() as much
+ * as possible the system reverts back to the even copy when the update
  * completes; the odd copy is used *only* during an update.
  */
-अटल व्योम update_घड़ी_पढ़ो_data(काष्ठा घड़ी_पढ़ो_data *rd)
-अणु
+static void update_clock_read_data(struct clock_read_data *rd)
+{
 	/* update the backup (odd) copy with the new data */
-	cd.पढ़ो_data[1] = *rd;
+	cd.read_data[1] = *rd;
 
-	/* steer पढ़ोers towards the odd copy */
-	raw_ग_लिखो_seqcount_latch(&cd.seq);
+	/* steer readers towards the odd copy */
+	raw_write_seqcount_latch(&cd.seq);
 
-	/* now its safe क्रम us to update the normal (even) copy */
-	cd.पढ़ो_data[0] = *rd;
+	/* now its safe for us to update the normal (even) copy */
+	cd.read_data[0] = *rd;
 
-	/* चयन पढ़ोers back to the even copy */
-	raw_ग_लिखो_seqcount_latch(&cd.seq);
-पूर्ण
+	/* switch readers back to the even copy */
+	raw_write_seqcount_latch(&cd.seq);
+}
 
 /*
- * Atomically update the sched_घड़ी() epoch.
+ * Atomically update the sched_clock() epoch.
  */
-अटल व्योम update_sched_घड़ी(व्योम)
-अणु
+static void update_sched_clock(void)
+{
 	u64 cyc;
 	u64 ns;
-	काष्ठा घड़ी_पढ़ो_data rd;
+	struct clock_read_data rd;
 
-	rd = cd.पढ़ो_data[0];
+	rd = cd.read_data[0];
 
-	cyc = cd.actual_पढ़ो_sched_घड़ी();
-	ns = rd.epoch_ns + cyc_to_ns((cyc - rd.epoch_cyc) & rd.sched_घड़ी_mask, rd.mult, rd.shअगरt);
+	cyc = cd.actual_read_sched_clock();
+	ns = rd.epoch_ns + cyc_to_ns((cyc - rd.epoch_cyc) & rd.sched_clock_mask, rd.mult, rd.shift);
 
 	rd.epoch_ns = ns;
 	rd.epoch_cyc = cyc;
 
-	update_घड़ी_पढ़ो_data(&rd);
-पूर्ण
+	update_clock_read_data(&rd);
+}
 
-अटल क्रमागत hrसमयr_restart sched_घड़ी_poll(काष्ठा hrसमयr *hrt)
-अणु
-	update_sched_घड़ी();
-	hrसमयr_क्रमward_now(hrt, cd.wrap_kt);
+static enum hrtimer_restart sched_clock_poll(struct hrtimer *hrt)
+{
+	update_sched_clock();
+	hrtimer_forward_now(hrt, cd.wrap_kt);
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-व्योम __init
-sched_घड़ी_रेजिस्टर(u64 (*पढ़ो)(व्योम), पूर्णांक bits, अचिन्हित दीर्घ rate)
-अणु
+void __init
+sched_clock_register(u64 (*read)(void), int bits, unsigned long rate)
+{
 	u64 res, wrap, new_mask, new_epoch, cyc, ns;
-	u32 new_mult, new_shअगरt;
-	अचिन्हित दीर्घ r, flags;
-	अक्षर r_unit;
-	काष्ठा घड़ी_पढ़ो_data rd;
+	u32 new_mult, new_shift;
+	unsigned long r, flags;
+	char r_unit;
+	struct clock_read_data rd;
 
-	अगर (cd.rate > rate)
-		वापस;
+	if (cd.rate > rate)
+		return;
 
-	/* Cannot रेजिस्टर a sched_घड़ी with पूर्णांकerrupts on */
+	/* Cannot register a sched_clock with interrupts on */
 	local_irq_save(flags);
 
-	/* Calculate the mult/shअगरt to convert counter ticks to ns. */
-	घड़ीs_calc_mult_shअगरt(&new_mult, &new_shअगरt, rate, NSEC_PER_SEC, 3600);
+	/* Calculate the mult/shift to convert counter ticks to ns. */
+	clocks_calc_mult_shift(&new_mult, &new_shift, rate, NSEC_PER_SEC, 3600);
 
 	new_mask = CLOCKSOURCE_MASK(bits);
 	cd.rate = rate;
 
 	/* Calculate how many nanosecs until we risk wrapping */
-	wrap = घड़ीs_calc_max_nsecs(new_mult, new_shअगरt, 0, new_mask, शून्य);
-	cd.wrap_kt = ns_to_kसमय(wrap);
+	wrap = clocks_calc_max_nsecs(new_mult, new_shift, 0, new_mask, NULL);
+	cd.wrap_kt = ns_to_ktime(wrap);
 
-	rd = cd.पढ़ो_data[0];
+	rd = cd.read_data[0];
 
-	/* Update epoch क्रम new counter and update 'epoch_ns' from old counter*/
-	new_epoch = पढ़ो();
-	cyc = cd.actual_पढ़ो_sched_घड़ी();
-	ns = rd.epoch_ns + cyc_to_ns((cyc - rd.epoch_cyc) & rd.sched_घड़ी_mask, rd.mult, rd.shअगरt);
-	cd.actual_पढ़ो_sched_घड़ी = पढ़ो;
+	/* Update epoch for new counter and update 'epoch_ns' from old counter*/
+	new_epoch = read();
+	cyc = cd.actual_read_sched_clock();
+	ns = rd.epoch_ns + cyc_to_ns((cyc - rd.epoch_cyc) & rd.sched_clock_mask, rd.mult, rd.shift);
+	cd.actual_read_sched_clock = read;
 
-	rd.पढ़ो_sched_घड़ी	= पढ़ो;
-	rd.sched_घड़ी_mask	= new_mask;
+	rd.read_sched_clock	= read;
+	rd.sched_clock_mask	= new_mask;
 	rd.mult			= new_mult;
-	rd.shअगरt		= new_shअगरt;
+	rd.shift		= new_shift;
 	rd.epoch_cyc		= new_epoch;
 	rd.epoch_ns		= ns;
 
-	update_घड़ी_पढ़ो_data(&rd);
+	update_clock_read_data(&rd);
 
-	अगर (sched_घड़ी_प्रकारimer.function != शून्य) अणु
-		/* update समयout क्रम घड़ी wrap */
-		hrसमयr_start(&sched_घड़ी_प्रकारimer, cd.wrap_kt,
+	if (sched_clock_timer.function != NULL) {
+		/* update timeout for clock wrap */
+		hrtimer_start(&sched_clock_timer, cd.wrap_kt,
 			      HRTIMER_MODE_REL_HARD);
-	पूर्ण
+	}
 
 	r = rate;
-	अगर (r >= 4000000) अणु
+	if (r >= 4000000) {
 		r /= 1000000;
 		r_unit = 'M';
-	पूर्ण अन्यथा अणु
-		अगर (r >= 1000) अणु
+	} else {
+		if (r >= 1000) {
 			r /= 1000;
 			r_unit = 'k';
-		पूर्ण अन्यथा अणु
+		} else {
 			r_unit = ' ';
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Calculate the ns resolution of this counter */
-	res = cyc_to_ns(1ULL, new_mult, new_shअगरt);
+	res = cyc_to_ns(1ULL, new_mult, new_shift);
 
 	pr_info("sched_clock: %u bits at %lu%cHz, resolution %lluns, wraps every %lluns\n",
 		bits, r, r_unit, res, wrap);
 
-	/* Enable IRQ समय accounting अगर we have a fast enough sched_घड़ी() */
-	अगर (irqसमय > 0 || (irqसमय == -1 && rate >= 1000000))
-		enable_sched_घड़ी_irqसमय();
+	/* Enable IRQ time accounting if we have a fast enough sched_clock() */
+	if (irqtime > 0 || (irqtime == -1 && rate >= 1000000))
+		enable_sched_clock_irqtime();
 
 	local_irq_restore(flags);
 
-	pr_debug("Registered %pS as sched_clock source\n", पढ़ो);
-पूर्ण
+	pr_debug("Registered %pS as sched_clock source\n", read);
+}
 
-व्योम __init generic_sched_घड़ी_init(व्योम)
-अणु
+void __init generic_sched_clock_init(void)
+{
 	/*
-	 * If no sched_घड़ी() function has been provided at that poपूर्णांक,
+	 * If no sched_clock() function has been provided at that point,
 	 * make it the final one.
 	 */
-	अगर (cd.actual_पढ़ो_sched_घड़ी == jअगरfy_sched_घड़ी_पढ़ो)
-		sched_घड़ी_रेजिस्टर(jअगरfy_sched_घड़ी_पढ़ो, BITS_PER_LONG, HZ);
+	if (cd.actual_read_sched_clock == jiffy_sched_clock_read)
+		sched_clock_register(jiffy_sched_clock_read, BITS_PER_LONG, HZ);
 
-	update_sched_घड़ी();
+	update_sched_clock();
 
 	/*
-	 * Start the समयr to keep sched_घड़ी() properly updated and
+	 * Start the timer to keep sched_clock() properly updated and
 	 * sets the initial epoch.
 	 */
-	hrसमयr_init(&sched_घड़ी_प्रकारimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
-	sched_घड़ी_प्रकारimer.function = sched_घड़ी_poll;
-	hrसमयr_start(&sched_घड़ी_प्रकारimer, cd.wrap_kt, HRTIMER_MODE_REL_HARD);
-पूर्ण
+	hrtimer_init(&sched_clock_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+	sched_clock_timer.function = sched_clock_poll;
+	hrtimer_start(&sched_clock_timer, cd.wrap_kt, HRTIMER_MODE_REL_HARD);
+}
 
 /*
- * Clock पढ़ो function क्रम use when the घड़ी is suspended.
+ * Clock read function for use when the clock is suspended.
  *
- * This function makes it appear to sched_घड़ी() as अगर the घड़ी
+ * This function makes it appear to sched_clock() as if the clock
  * stopped counting at its last update.
  *
  * This function must only be called from the critical
- * section in sched_घड़ी(). It relies on the पढ़ो_seqcount_retry()
+ * section in sched_clock(). It relies on the read_seqcount_retry()
  * at the end of the critical section to be sure we observe the
  * correct copy of 'epoch_cyc'.
  */
-अटल u64 notrace suspended_sched_घड़ी_पढ़ो(व्योम)
-अणु
-	अचिन्हित पूर्णांक seq = raw_पढ़ो_seqcount_latch(&cd.seq);
+static u64 notrace suspended_sched_clock_read(void)
+{
+	unsigned int seq = raw_read_seqcount_latch(&cd.seq);
 
-	वापस cd.पढ़ो_data[seq & 1].epoch_cyc;
-पूर्ण
+	return cd.read_data[seq & 1].epoch_cyc;
+}
 
-पूर्णांक sched_घड़ी_suspend(व्योम)
-अणु
-	काष्ठा घड़ी_पढ़ो_data *rd = &cd.पढ़ो_data[0];
+int sched_clock_suspend(void)
+{
+	struct clock_read_data *rd = &cd.read_data[0];
 
-	update_sched_घड़ी();
-	hrसमयr_cancel(&sched_घड़ी_प्रकारimer);
-	rd->पढ़ो_sched_घड़ी = suspended_sched_घड़ी_पढ़ो;
+	update_sched_clock();
+	hrtimer_cancel(&sched_clock_timer);
+	rd->read_sched_clock = suspended_sched_clock_read;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम sched_घड़ी_resume(व्योम)
-अणु
-	काष्ठा घड़ी_पढ़ो_data *rd = &cd.पढ़ो_data[0];
+void sched_clock_resume(void)
+{
+	struct clock_read_data *rd = &cd.read_data[0];
 
-	rd->epoch_cyc = cd.actual_पढ़ो_sched_घड़ी();
-	hrसमयr_start(&sched_घड़ी_प्रकारimer, cd.wrap_kt, HRTIMER_MODE_REL_HARD);
-	rd->पढ़ो_sched_घड़ी = cd.actual_पढ़ो_sched_घड़ी;
-पूर्ण
+	rd->epoch_cyc = cd.actual_read_sched_clock();
+	hrtimer_start(&sched_clock_timer, cd.wrap_kt, HRTIMER_MODE_REL_HARD);
+	rd->read_sched_clock = cd.actual_read_sched_clock;
+}
 
-अटल काष्ठा syscore_ops sched_घड़ी_ops = अणु
-	.suspend	= sched_घड़ी_suspend,
-	.resume		= sched_घड़ी_resume,
-पूर्ण;
+static struct syscore_ops sched_clock_ops = {
+	.suspend	= sched_clock_suspend,
+	.resume		= sched_clock_resume,
+};
 
-अटल पूर्णांक __init sched_घड़ी_syscore_init(व्योम)
-अणु
-	रेजिस्टर_syscore_ops(&sched_घड़ी_ops);
+static int __init sched_clock_syscore_init(void)
+{
+	register_syscore_ops(&sched_clock_ops);
 
-	वापस 0;
-पूर्ण
-device_initcall(sched_घड़ी_syscore_init);
+	return 0;
+}
+device_initcall(sched_clock_syscore_init);

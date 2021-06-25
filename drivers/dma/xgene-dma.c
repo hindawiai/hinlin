@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Applied Micro X-Gene SoC DMA engine Driver
  *
@@ -10,210 +9,210 @@
  * NOTE: PM support is currently not available.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
+#include <linux/acpi.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/dmapool.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
 
-#समावेश "dmaengine.h"
+#include "dmaengine.h"
 
-/* X-Gene DMA ring csr रेजिस्टरs and bit definations */
-#घोषणा XGENE_DMA_RING_CONFIG			0x04
-#घोषणा XGENE_DMA_RING_ENABLE			BIT(31)
-#घोषणा XGENE_DMA_RING_ID			0x08
-#घोषणा XGENE_DMA_RING_ID_SETUP(v)		((v) | BIT(31))
-#घोषणा XGENE_DMA_RING_ID_BUF			0x0C
-#घोषणा XGENE_DMA_RING_ID_BUF_SETUP(v)		(((v) << 9) | BIT(21))
-#घोषणा XGENE_DMA_RING_THRESLD0_SET1		0x30
-#घोषणा XGENE_DMA_RING_THRESLD0_SET1_VAL	0X64
-#घोषणा XGENE_DMA_RING_THRESLD1_SET1		0x34
-#घोषणा XGENE_DMA_RING_THRESLD1_SET1_VAL	0xC8
-#घोषणा XGENE_DMA_RING_HYSTERESIS		0x68
-#घोषणा XGENE_DMA_RING_HYSTERESIS_VAL		0xFFFFFFFF
-#घोषणा XGENE_DMA_RING_STATE			0x6C
-#घोषणा XGENE_DMA_RING_STATE_WR_BASE		0x70
-#घोषणा XGENE_DMA_RING_NE_INT_MODE		0x017C
-#घोषणा XGENE_DMA_RING_NE_INT_MODE_SET(m, v)	\
+/* X-Gene DMA ring csr registers and bit definations */
+#define XGENE_DMA_RING_CONFIG			0x04
+#define XGENE_DMA_RING_ENABLE			BIT(31)
+#define XGENE_DMA_RING_ID			0x08
+#define XGENE_DMA_RING_ID_SETUP(v)		((v) | BIT(31))
+#define XGENE_DMA_RING_ID_BUF			0x0C
+#define XGENE_DMA_RING_ID_BUF_SETUP(v)		(((v) << 9) | BIT(21))
+#define XGENE_DMA_RING_THRESLD0_SET1		0x30
+#define XGENE_DMA_RING_THRESLD0_SET1_VAL	0X64
+#define XGENE_DMA_RING_THRESLD1_SET1		0x34
+#define XGENE_DMA_RING_THRESLD1_SET1_VAL	0xC8
+#define XGENE_DMA_RING_HYSTERESIS		0x68
+#define XGENE_DMA_RING_HYSTERESIS_VAL		0xFFFFFFFF
+#define XGENE_DMA_RING_STATE			0x6C
+#define XGENE_DMA_RING_STATE_WR_BASE		0x70
+#define XGENE_DMA_RING_NE_INT_MODE		0x017C
+#define XGENE_DMA_RING_NE_INT_MODE_SET(m, v)	\
 	((m) = ((m) & ~BIT(31 - (v))) | BIT(31 - (v)))
-#घोषणा XGENE_DMA_RING_NE_INT_MODE_RESET(m, v)	\
+#define XGENE_DMA_RING_NE_INT_MODE_RESET(m, v)	\
 	((m) &= (~BIT(31 - (v))))
-#घोषणा XGENE_DMA_RING_CLKEN			0xC208
-#घोषणा XGENE_DMA_RING_SRST			0xC200
-#घोषणा XGENE_DMA_RING_MEM_RAM_SHUTDOWN		0xD070
-#घोषणा XGENE_DMA_RING_BLK_MEM_RDY		0xD074
-#घोषणा XGENE_DMA_RING_BLK_MEM_RDY_VAL		0xFFFFFFFF
-#घोषणा XGENE_DMA_RING_ID_GET(owner, num)	(((owner) << 6) | (num))
-#घोषणा XGENE_DMA_RING_DST_ID(v)		((1 << 10) | (v))
-#घोषणा XGENE_DMA_RING_CMD_OFFSET		0x2C
-#घोषणा XGENE_DMA_RING_CMD_BASE_OFFSET(v)	((v) << 6)
-#घोषणा XGENE_DMA_RING_COHERENT_SET(m)		\
+#define XGENE_DMA_RING_CLKEN			0xC208
+#define XGENE_DMA_RING_SRST			0xC200
+#define XGENE_DMA_RING_MEM_RAM_SHUTDOWN		0xD070
+#define XGENE_DMA_RING_BLK_MEM_RDY		0xD074
+#define XGENE_DMA_RING_BLK_MEM_RDY_VAL		0xFFFFFFFF
+#define XGENE_DMA_RING_ID_GET(owner, num)	(((owner) << 6) | (num))
+#define XGENE_DMA_RING_DST_ID(v)		((1 << 10) | (v))
+#define XGENE_DMA_RING_CMD_OFFSET		0x2C
+#define XGENE_DMA_RING_CMD_BASE_OFFSET(v)	((v) << 6)
+#define XGENE_DMA_RING_COHERENT_SET(m)		\
 	(((u32 *)(m))[2] |= BIT(4))
-#घोषणा XGENE_DMA_RING_ADDRL_SET(m, v)		\
+#define XGENE_DMA_RING_ADDRL_SET(m, v)		\
 	(((u32 *)(m))[2] |= (((v) >> 8) << 5))
-#घोषणा XGENE_DMA_RING_ADDRH_SET(m, v)		\
+#define XGENE_DMA_RING_ADDRH_SET(m, v)		\
 	(((u32 *)(m))[3] |= ((v) >> 35))
-#घोषणा XGENE_DMA_RING_ACCEPTLERR_SET(m)	\
+#define XGENE_DMA_RING_ACCEPTLERR_SET(m)	\
 	(((u32 *)(m))[3] |= BIT(19))
-#घोषणा XGENE_DMA_RING_SIZE_SET(m, v)		\
+#define XGENE_DMA_RING_SIZE_SET(m, v)		\
 	(((u32 *)(m))[3] |= ((v) << 23))
-#घोषणा XGENE_DMA_RING_RECOMBBUF_SET(m)		\
+#define XGENE_DMA_RING_RECOMBBUF_SET(m)		\
 	(((u32 *)(m))[3] |= BIT(27))
-#घोषणा XGENE_DMA_RING_RECOMTIMEOUTL_SET(m)	\
+#define XGENE_DMA_RING_RECOMTIMEOUTL_SET(m)	\
 	(((u32 *)(m))[3] |= (0x7 << 28))
-#घोषणा XGENE_DMA_RING_RECOMTIMEOUTH_SET(m)	\
+#define XGENE_DMA_RING_RECOMTIMEOUTH_SET(m)	\
 	(((u32 *)(m))[4] |= 0x3)
-#घोषणा XGENE_DMA_RING_SELTHRSH_SET(m)		\
+#define XGENE_DMA_RING_SELTHRSH_SET(m)		\
 	(((u32 *)(m))[4] |= BIT(3))
-#घोषणा XGENE_DMA_RING_TYPE_SET(m, v)		\
+#define XGENE_DMA_RING_TYPE_SET(m, v)		\
 	(((u32 *)(m))[4] |= ((v) << 19))
 
-/* X-Gene DMA device csr रेजिस्टरs and bit definitions */
-#घोषणा XGENE_DMA_IPBRR				0x0
-#घोषणा XGENE_DMA_DEV_ID_RD(v)			((v) & 0x00000FFF)
-#घोषणा XGENE_DMA_BUS_ID_RD(v)			(((v) >> 12) & 3)
-#घोषणा XGENE_DMA_REV_NO_RD(v)			(((v) >> 14) & 3)
-#घोषणा XGENE_DMA_GCR				0x10
-#घोषणा XGENE_DMA_CH_SETUP(v)			\
+/* X-Gene DMA device csr registers and bit definitions */
+#define XGENE_DMA_IPBRR				0x0
+#define XGENE_DMA_DEV_ID_RD(v)			((v) & 0x00000FFF)
+#define XGENE_DMA_BUS_ID_RD(v)			(((v) >> 12) & 3)
+#define XGENE_DMA_REV_NO_RD(v)			(((v) >> 14) & 3)
+#define XGENE_DMA_GCR				0x10
+#define XGENE_DMA_CH_SETUP(v)			\
 	((v) = ((v) & ~0x000FFFFF) | 0x000AAFFF)
-#घोषणा XGENE_DMA_ENABLE(v)			((v) |= BIT(31))
-#घोषणा XGENE_DMA_DISABLE(v)			((v) &= ~BIT(31))
-#घोषणा XGENE_DMA_RAID6_CONT			0x14
-#घोषणा XGENE_DMA_RAID6_MULTI_CTRL(v)		((v) << 24)
-#घोषणा XGENE_DMA_INT				0x70
-#घोषणा XGENE_DMA_INT_MASK			0x74
-#घोषणा XGENE_DMA_INT_ALL_MASK			0xFFFFFFFF
-#घोषणा XGENE_DMA_INT_ALL_UNMASK		0x0
-#घोषणा XGENE_DMA_INT_MASK_SHIFT		0x14
-#घोषणा XGENE_DMA_RING_INT0_MASK		0x90A0
-#घोषणा XGENE_DMA_RING_INT1_MASK		0x90A8
-#घोषणा XGENE_DMA_RING_INT2_MASK		0x90B0
-#घोषणा XGENE_DMA_RING_INT3_MASK		0x90B8
-#घोषणा XGENE_DMA_RING_INT4_MASK		0x90C0
-#घोषणा XGENE_DMA_CFG_RING_WQ_ASSOC		0x90E0
-#घोषणा XGENE_DMA_ASSOC_RING_MNGR1		0xFFFFFFFF
-#घोषणा XGENE_DMA_MEM_RAM_SHUTDOWN		0xD070
-#घोषणा XGENE_DMA_BLK_MEM_RDY			0xD074
-#घोषणा XGENE_DMA_BLK_MEM_RDY_VAL		0xFFFFFFFF
-#घोषणा XGENE_DMA_RING_CMD_SM_OFFSET		0x8000
+#define XGENE_DMA_ENABLE(v)			((v) |= BIT(31))
+#define XGENE_DMA_DISABLE(v)			((v) &= ~BIT(31))
+#define XGENE_DMA_RAID6_CONT			0x14
+#define XGENE_DMA_RAID6_MULTI_CTRL(v)		((v) << 24)
+#define XGENE_DMA_INT				0x70
+#define XGENE_DMA_INT_MASK			0x74
+#define XGENE_DMA_INT_ALL_MASK			0xFFFFFFFF
+#define XGENE_DMA_INT_ALL_UNMASK		0x0
+#define XGENE_DMA_INT_MASK_SHIFT		0x14
+#define XGENE_DMA_RING_INT0_MASK		0x90A0
+#define XGENE_DMA_RING_INT1_MASK		0x90A8
+#define XGENE_DMA_RING_INT2_MASK		0x90B0
+#define XGENE_DMA_RING_INT3_MASK		0x90B8
+#define XGENE_DMA_RING_INT4_MASK		0x90C0
+#define XGENE_DMA_CFG_RING_WQ_ASSOC		0x90E0
+#define XGENE_DMA_ASSOC_RING_MNGR1		0xFFFFFFFF
+#define XGENE_DMA_MEM_RAM_SHUTDOWN		0xD070
+#define XGENE_DMA_BLK_MEM_RDY			0xD074
+#define XGENE_DMA_BLK_MEM_RDY_VAL		0xFFFFFFFF
+#define XGENE_DMA_RING_CMD_SM_OFFSET		0x8000
 
-/* X-Gene SoC EFUSE csr रेजिस्टर and bit defination */
-#घोषणा XGENE_SOC_JTAG1_SHADOW			0x18
-#घोषणा XGENE_DMA_PQ_DISABLE_MASK		BIT(13)
+/* X-Gene SoC EFUSE csr register and bit defination */
+#define XGENE_SOC_JTAG1_SHADOW			0x18
+#define XGENE_DMA_PQ_DISABLE_MASK		BIT(13)
 
-/* X-Gene DMA Descriptor क्रमmat */
-#घोषणा XGENE_DMA_DESC_NV_BIT			BIT_ULL(50)
-#घोषणा XGENE_DMA_DESC_IN_BIT			BIT_ULL(55)
-#घोषणा XGENE_DMA_DESC_C_BIT			BIT_ULL(63)
-#घोषणा XGENE_DMA_DESC_DR_BIT			BIT_ULL(61)
-#घोषणा XGENE_DMA_DESC_ELERR_POS		46
-#घोषणा XGENE_DMA_DESC_RTYPE_POS		56
-#घोषणा XGENE_DMA_DESC_LERR_POS			60
-#घोषणा XGENE_DMA_DESC_BUFLEN_POS		48
-#घोषणा XGENE_DMA_DESC_HOENQ_NUM_POS		48
-#घोषणा XGENE_DMA_DESC_ELERR_RD(m)		\
+/* X-Gene DMA Descriptor format */
+#define XGENE_DMA_DESC_NV_BIT			BIT_ULL(50)
+#define XGENE_DMA_DESC_IN_BIT			BIT_ULL(55)
+#define XGENE_DMA_DESC_C_BIT			BIT_ULL(63)
+#define XGENE_DMA_DESC_DR_BIT			BIT_ULL(61)
+#define XGENE_DMA_DESC_ELERR_POS		46
+#define XGENE_DMA_DESC_RTYPE_POS		56
+#define XGENE_DMA_DESC_LERR_POS			60
+#define XGENE_DMA_DESC_BUFLEN_POS		48
+#define XGENE_DMA_DESC_HOENQ_NUM_POS		48
+#define XGENE_DMA_DESC_ELERR_RD(m)		\
 	(((m) >> XGENE_DMA_DESC_ELERR_POS) & 0x3)
-#घोषणा XGENE_DMA_DESC_LERR_RD(m)		\
+#define XGENE_DMA_DESC_LERR_RD(m)		\
 	(((m) >> XGENE_DMA_DESC_LERR_POS) & 0x7)
-#घोषणा XGENE_DMA_DESC_STATUS(elerr, lerr)	\
+#define XGENE_DMA_DESC_STATUS(elerr, lerr)	\
 	(((elerr) << 4) | (lerr))
 
 /* X-Gene DMA descriptor empty s/w signature */
-#घोषणा XGENE_DMA_DESC_EMPTY_SIGNATURE		~0ULL
+#define XGENE_DMA_DESC_EMPTY_SIGNATURE		~0ULL
 
 /* X-Gene DMA configurable parameters defines */
-#घोषणा XGENE_DMA_RING_NUM		512
-#घोषणा XGENE_DMA_BUFNUM		0x0
-#घोषणा XGENE_DMA_CPU_BUFNUM		0x18
-#घोषणा XGENE_DMA_RING_OWNER_DMA	0x03
-#घोषणा XGENE_DMA_RING_OWNER_CPU	0x0F
-#घोषणा XGENE_DMA_RING_TYPE_REGULAR	0x01
-#घोषणा XGENE_DMA_RING_WQ_DESC_SIZE	32	/* 32 Bytes */
-#घोषणा XGENE_DMA_RING_NUM_CONFIG	5
-#घोषणा XGENE_DMA_MAX_CHANNEL		4
-#घोषणा XGENE_DMA_XOR_CHANNEL		0
-#घोषणा XGENE_DMA_PQ_CHANNEL		1
-#घोषणा XGENE_DMA_MAX_BYTE_CNT		0x4000	/* 16 KB */
-#घोषणा XGENE_DMA_MAX_64B_DESC_BYTE_CNT	0x14000	/* 80 KB */
-#घोषणा XGENE_DMA_MAX_XOR_SRC		5
-#घोषणा XGENE_DMA_16K_BUFFER_LEN_CODE	0x0
-#घोषणा XGENE_DMA_INVALID_LEN_CODE	0x7800000000000000ULL
+#define XGENE_DMA_RING_NUM		512
+#define XGENE_DMA_BUFNUM		0x0
+#define XGENE_DMA_CPU_BUFNUM		0x18
+#define XGENE_DMA_RING_OWNER_DMA	0x03
+#define XGENE_DMA_RING_OWNER_CPU	0x0F
+#define XGENE_DMA_RING_TYPE_REGULAR	0x01
+#define XGENE_DMA_RING_WQ_DESC_SIZE	32	/* 32 Bytes */
+#define XGENE_DMA_RING_NUM_CONFIG	5
+#define XGENE_DMA_MAX_CHANNEL		4
+#define XGENE_DMA_XOR_CHANNEL		0
+#define XGENE_DMA_PQ_CHANNEL		1
+#define XGENE_DMA_MAX_BYTE_CNT		0x4000	/* 16 KB */
+#define XGENE_DMA_MAX_64B_DESC_BYTE_CNT	0x14000	/* 80 KB */
+#define XGENE_DMA_MAX_XOR_SRC		5
+#define XGENE_DMA_16K_BUFFER_LEN_CODE	0x0
+#define XGENE_DMA_INVALID_LEN_CODE	0x7800000000000000ULL
 
 /* X-Gene DMA descriptor error codes */
-#घोषणा ERR_DESC_AXI			0x01
-#घोषणा ERR_BAD_DESC			0x02
-#घोषणा ERR_READ_DATA_AXI		0x03
-#घोषणा ERR_WRITE_DATA_AXI		0x04
-#घोषणा ERR_FBP_TIMEOUT			0x05
-#घोषणा ERR_ECC				0x06
-#घोषणा ERR_DIFF_SIZE			0x08
-#घोषणा ERR_SCT_GAT_LEN			0x09
-#घोषणा ERR_CRC_ERR			0x11
-#घोषणा ERR_CHKSUM			0x12
-#घोषणा ERR_DIF				0x13
+#define ERR_DESC_AXI			0x01
+#define ERR_BAD_DESC			0x02
+#define ERR_READ_DATA_AXI		0x03
+#define ERR_WRITE_DATA_AXI		0x04
+#define ERR_FBP_TIMEOUT			0x05
+#define ERR_ECC				0x06
+#define ERR_DIFF_SIZE			0x08
+#define ERR_SCT_GAT_LEN			0x09
+#define ERR_CRC_ERR			0x11
+#define ERR_CHKSUM			0x12
+#define ERR_DIF				0x13
 
-/* X-Gene DMA error पूर्णांकerrupt codes */
-#घोषणा ERR_DIF_SIZE_INT		0x0
-#घोषणा ERR_GS_ERR_INT			0x1
-#घोषणा ERR_FPB_TIMEO_INT		0x2
-#घोषणा ERR_WFIFO_OVF_INT		0x3
-#घोषणा ERR_RFIFO_OVF_INT		0x4
-#घोषणा ERR_WR_TIMEO_INT		0x5
-#घोषणा ERR_RD_TIMEO_INT		0x6
-#घोषणा ERR_WR_ERR_INT			0x7
-#घोषणा ERR_RD_ERR_INT			0x8
-#घोषणा ERR_BAD_DESC_INT		0x9
-#घोषणा ERR_DESC_DST_INT		0xA
-#घोषणा ERR_DESC_SRC_INT		0xB
+/* X-Gene DMA error interrupt codes */
+#define ERR_DIF_SIZE_INT		0x0
+#define ERR_GS_ERR_INT			0x1
+#define ERR_FPB_TIMEO_INT		0x2
+#define ERR_WFIFO_OVF_INT		0x3
+#define ERR_RFIFO_OVF_INT		0x4
+#define ERR_WR_TIMEO_INT		0x5
+#define ERR_RD_TIMEO_INT		0x6
+#define ERR_WR_ERR_INT			0x7
+#define ERR_RD_ERR_INT			0x8
+#define ERR_BAD_DESC_INT		0x9
+#define ERR_DESC_DST_INT		0xA
+#define ERR_DESC_SRC_INT		0xB
 
 /* X-Gene DMA flyby operation code */
-#घोषणा FLYBY_2SRC_XOR			0x80
-#घोषणा FLYBY_3SRC_XOR			0x90
-#घोषणा FLYBY_4SRC_XOR			0xA0
-#घोषणा FLYBY_5SRC_XOR			0xB0
+#define FLYBY_2SRC_XOR			0x80
+#define FLYBY_3SRC_XOR			0x90
+#define FLYBY_4SRC_XOR			0xA0
+#define FLYBY_5SRC_XOR			0xB0
 
 /* X-Gene DMA SW descriptor flags */
-#घोषणा XGENE_DMA_FLAG_64B_DESC		BIT(0)
+#define XGENE_DMA_FLAG_64B_DESC		BIT(0)
 
 /* Define to dump X-Gene DMA descriptor */
-#घोषणा XGENE_DMA_DESC_DUMP(desc, m)	\
-	prपूर्णांक_hex_dump(KERN_ERR, (m),	\
+#define XGENE_DMA_DESC_DUMP(desc, m)	\
+	print_hex_dump(KERN_ERR, (m),	\
 			DUMP_PREFIX_ADDRESS, 16, 8, (desc), 32, 0)
 
-#घोषणा to_dma_desc_sw(tx)		\
-	container_of(tx, काष्ठा xgene_dma_desc_sw, tx)
-#घोषणा to_dma_chan(dchan)		\
-	container_of(dchan, काष्ठा xgene_dma_chan, dma_chan)
+#define to_dma_desc_sw(tx)		\
+	container_of(tx, struct xgene_dma_desc_sw, tx)
+#define to_dma_chan(dchan)		\
+	container_of(dchan, struct xgene_dma_chan, dma_chan)
 
-#घोषणा chan_dbg(chan, fmt, arg...)	\
+#define chan_dbg(chan, fmt, arg...)	\
 	dev_dbg(chan->dev, "%s: " fmt, chan->name, ##arg)
-#घोषणा chan_err(chan, fmt, arg...)	\
+#define chan_err(chan, fmt, arg...)	\
 	dev_err(chan->dev, "%s: " fmt, chan->name, ##arg)
 
-काष्ठा xgene_dma_desc_hw अणु
+struct xgene_dma_desc_hw {
 	__le64 m0;
 	__le64 m1;
 	__le64 m2;
 	__le64 m3;
-पूर्ण;
+};
 
-क्रमागत xgene_dma_ring_cfgsize अणु
+enum xgene_dma_ring_cfgsize {
 	XGENE_DMA_RING_CFG_SIZE_512B,
 	XGENE_DMA_RING_CFG_SIZE_2KB,
 	XGENE_DMA_RING_CFG_SIZE_16KB,
 	XGENE_DMA_RING_CFG_SIZE_64KB,
 	XGENE_DMA_RING_CFG_SIZE_512KB,
 	XGENE_DMA_RING_CFG_SIZE_INVALID
-पूर्ण;
+};
 
-काष्ठा xgene_dma_ring अणु
-	काष्ठा xgene_dma *pdma;
+struct xgene_dma_ring {
+	struct xgene_dma *pdma;
 	u8 buf_num;
 	u16 id;
 	u16 num;
@@ -222,97 +221,97 @@
 	u16 slots;
 	u16 dst_ring_num;
 	u32 size;
-	व्योम __iomem *cmd;
-	व्योम __iomem *cmd_base;
+	void __iomem *cmd;
+	void __iomem *cmd_base;
 	dma_addr_t desc_paddr;
 	u32 state[XGENE_DMA_RING_NUM_CONFIG];
-	क्रमागत xgene_dma_ring_cfgsize cfgsize;
-	जोड़ अणु
-		व्योम *desc_vaddr;
-		काष्ठा xgene_dma_desc_hw *desc_hw;
-	पूर्ण;
-पूर्ण;
+	enum xgene_dma_ring_cfgsize cfgsize;
+	union {
+		void *desc_vaddr;
+		struct xgene_dma_desc_hw *desc_hw;
+	};
+};
 
-काष्ठा xgene_dma_desc_sw अणु
-	काष्ठा xgene_dma_desc_hw desc1;
-	काष्ठा xgene_dma_desc_hw desc2;
+struct xgene_dma_desc_sw {
+	struct xgene_dma_desc_hw desc1;
+	struct xgene_dma_desc_hw desc2;
 	u32 flags;
-	काष्ठा list_head node;
-	काष्ठा list_head tx_list;
-	काष्ठा dma_async_tx_descriptor tx;
-पूर्ण;
+	struct list_head node;
+	struct list_head tx_list;
+	struct dma_async_tx_descriptor tx;
+};
 
 /**
- * काष्ठा xgene_dma_chan - पूर्णांकernal representation of an X-Gene DMA channel
+ * struct xgene_dma_chan - internal representation of an X-Gene DMA channel
  * @dma_chan: dmaengine channel object member
- * @pdma: X-Gene DMA device काष्ठाure reference
- * @dev: काष्ठा device reference क्रम dma mapping api
+ * @pdma: X-Gene DMA device structure reference
+ * @dev: struct device reference for dma mapping api
  * @id: raw id of this channel
  * @rx_irq: channel IRQ
  * @name: name of X-Gene DMA channel
  * @lock: serializes enqueue/dequeue operations to the descriptor pool
- * @pending: number of transaction request pushed to DMA controller क्रम
- *	execution, but still रुकोing क्रम completion,
+ * @pending: number of transaction request pushed to DMA controller for
+ *	execution, but still waiting for completion,
  * @max_outstanding: max number of outstanding request we can push to channel
  * @ld_pending: descriptors which are queued to run, but have not yet been
- *	submitted to the hardware क्रम execution
+ *	submitted to the hardware for execution
  * @ld_running: descriptors which are currently being executing by the hardware
  * @ld_completed: descriptors which have finished execution by the hardware.
- *	These descriptors have alपढ़ोy had their cleanup actions run. They
- *	are रुकोing क्रम the ACK bit to be set by the async tx API.
- * @desc_pool: descriptor pool क्रम DMA operations
+ *	These descriptors have already had their cleanup actions run. They
+ *	are waiting for the ACK bit to be set by the async tx API.
+ * @desc_pool: descriptor pool for DMA operations
  * @tasklet: bottom half where all completed descriptors cleans
  * @tx_ring: transmit ring descriptor that we use to prepare actual
- *	descriptors क्रम further executions
+ *	descriptors for further executions
  * @rx_ring: receive ring descriptor that we use to get completed DMA
- *	descriptors during cleanup समय
+ *	descriptors during cleanup time
  */
-काष्ठा xgene_dma_chan अणु
-	काष्ठा dma_chan dma_chan;
-	काष्ठा xgene_dma *pdma;
-	काष्ठा device *dev;
-	पूर्णांक id;
-	पूर्णांक rx_irq;
-	अक्षर name[10];
+struct xgene_dma_chan {
+	struct dma_chan dma_chan;
+	struct xgene_dma *pdma;
+	struct device *dev;
+	int id;
+	int rx_irq;
+	char name[10];
 	spinlock_t lock;
-	पूर्णांक pending;
-	पूर्णांक max_outstanding;
-	काष्ठा list_head ld_pending;
-	काष्ठा list_head ld_running;
-	काष्ठा list_head ld_completed;
-	काष्ठा dma_pool *desc_pool;
-	काष्ठा tasklet_काष्ठा tasklet;
-	काष्ठा xgene_dma_ring tx_ring;
-	काष्ठा xgene_dma_ring rx_ring;
-पूर्ण;
+	int pending;
+	int max_outstanding;
+	struct list_head ld_pending;
+	struct list_head ld_running;
+	struct list_head ld_completed;
+	struct dma_pool *desc_pool;
+	struct tasklet_struct tasklet;
+	struct xgene_dma_ring tx_ring;
+	struct xgene_dma_ring rx_ring;
+};
 
 /**
- * काष्ठा xgene_dma - पूर्णांकernal representation of an X-Gene DMA device
- * @dev: reference to this device's काष्ठा device
- * @clk: reference to this device's घड़ी
+ * struct xgene_dma - internal representation of an X-Gene DMA device
+ * @dev: reference to this device's struct device
+ * @clk: reference to this device's clock
  * @err_irq: DMA error irq number
- * @ring_num: start id number क्रम DMA ring
- * @csr_dma: base क्रम DMA रेजिस्टर access
- * @csr_ring: base क्रम DMA ring रेजिस्टर access
- * @csr_ring_cmd: base क्रम DMA ring command रेजिस्टर access
- * @csr_efuse: base क्रम efuse रेजिस्टर access
- * @dma_dev: embedded काष्ठा dma_device
+ * @ring_num: start id number for DMA ring
+ * @csr_dma: base for DMA register access
+ * @csr_ring: base for DMA ring register access
+ * @csr_ring_cmd: base for DMA ring command register access
+ * @csr_efuse: base for efuse register access
+ * @dma_dev: embedded struct dma_device
  * @chan: reference to X-Gene DMA channels
  */
-काष्ठा xgene_dma अणु
-	काष्ठा device *dev;
-	काष्ठा clk *clk;
-	पूर्णांक err_irq;
-	पूर्णांक ring_num;
-	व्योम __iomem *csr_dma;
-	व्योम __iomem *csr_ring;
-	व्योम __iomem *csr_ring_cmd;
-	व्योम __iomem *csr_efuse;
-	काष्ठा dma_device dma_dev[XGENE_DMA_MAX_CHANNEL];
-	काष्ठा xgene_dma_chan chan[XGENE_DMA_MAX_CHANNEL];
-पूर्ण;
+struct xgene_dma {
+	struct device *dev;
+	struct clk *clk;
+	int err_irq;
+	int ring_num;
+	void __iomem *csr_dma;
+	void __iomem *csr_ring;
+	void __iomem *csr_ring_cmd;
+	void __iomem *csr_efuse;
+	struct dma_device dma_dev[XGENE_DMA_MAX_CHANNEL];
+	struct xgene_dma_chan chan[XGENE_DMA_MAX_CHANNEL];
+};
 
-अटल स्थिर अक्षर * स्थिर xgene_dma_desc_err[] = अणु
+static const char * const xgene_dma_desc_err[] = {
 	[ERR_DESC_AXI] = "AXI error when reading src/dst link list",
 	[ERR_BAD_DESC] = "ERR or El_ERR fields not set to zero in desc",
 	[ERR_READ_DATA_AXI] = "AXI error when reading data",
@@ -324,9 +323,9 @@
 	[ERR_CRC_ERR] = "CRC error",
 	[ERR_CHKSUM] = "Checksum error",
 	[ERR_DIF] = "DIF error",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर xgene_dma_err[] = अणु
+static const char * const xgene_dma_err[] = {
 	[ERR_DIF_SIZE_INT] = "DIF size error",
 	[ERR_GS_ERR_INT] = "Gather scatter not same size error",
 	[ERR_FPB_TIMEO_INT] = "Free pool time out error",
@@ -339,87 +338,87 @@
 	[ERR_BAD_DESC_INT] = "Ring descriptor HE0 not set error",
 	[ERR_DESC_DST_INT] = "HFB reading dst link address error",
 	[ERR_DESC_SRC_INT] = "HFB reading src link address error",
-पूर्ण;
+};
 
-अटल bool is_pq_enabled(काष्ठा xgene_dma *pdma)
-अणु
+static bool is_pq_enabled(struct xgene_dma *pdma)
+{
 	u32 val;
 
-	val = ioपढ़ो32(pdma->csr_efuse + XGENE_SOC_JTAG1_SHADOW);
-	वापस !(val & XGENE_DMA_PQ_DISABLE_MASK);
-पूर्ण
+	val = ioread32(pdma->csr_efuse + XGENE_SOC_JTAG1_SHADOW);
+	return !(val & XGENE_DMA_PQ_DISABLE_MASK);
+}
 
-अटल u64 xgene_dma_encode_len(माप_प्रकार len)
-अणु
-	वापस (len < XGENE_DMA_MAX_BYTE_CNT) ?
+static u64 xgene_dma_encode_len(size_t len)
+{
+	return (len < XGENE_DMA_MAX_BYTE_CNT) ?
 		((u64)len << XGENE_DMA_DESC_BUFLEN_POS) :
 		XGENE_DMA_16K_BUFFER_LEN_CODE;
-पूर्ण
+}
 
-अटल u8 xgene_dma_encode_xor_flyby(u32 src_cnt)
-अणु
-	अटल u8 flyby_type[] = अणु
+static u8 xgene_dma_encode_xor_flyby(u32 src_cnt)
+{
+	static u8 flyby_type[] = {
 		FLYBY_2SRC_XOR, /* Dummy */
 		FLYBY_2SRC_XOR, /* Dummy */
 		FLYBY_2SRC_XOR,
 		FLYBY_3SRC_XOR,
 		FLYBY_4SRC_XOR,
 		FLYBY_5SRC_XOR
-	पूर्ण;
+	};
 
-	वापस flyby_type[src_cnt];
-पूर्ण
+	return flyby_type[src_cnt];
+}
 
-अटल व्योम xgene_dma_set_src_buffer(__le64 *ext8, माप_प्रकार *len,
+static void xgene_dma_set_src_buffer(__le64 *ext8, size_t *len,
 				     dma_addr_t *paddr)
-अणु
-	माप_प्रकार nbytes = (*len < XGENE_DMA_MAX_BYTE_CNT) ?
+{
+	size_t nbytes = (*len < XGENE_DMA_MAX_BYTE_CNT) ?
 			*len : XGENE_DMA_MAX_BYTE_CNT;
 
 	*ext8 |= cpu_to_le64(*paddr);
 	*ext8 |= cpu_to_le64(xgene_dma_encode_len(nbytes));
 	*len -= nbytes;
 	*paddr += nbytes;
-पूर्ण
+}
 
-अटल __le64 *xgene_dma_lookup_ext8(काष्ठा xgene_dma_desc_hw *desc, पूर्णांक idx)
-अणु
-	चयन (idx) अणु
-	हाल 0:
-		वापस &desc->m1;
-	हाल 1:
-		वापस &desc->m0;
-	हाल 2:
-		वापस &desc->m3;
-	हाल 3:
-		वापस &desc->m2;
-	शेष:
+static __le64 *xgene_dma_lookup_ext8(struct xgene_dma_desc_hw *desc, int idx)
+{
+	switch (idx) {
+	case 0:
+		return &desc->m1;
+	case 1:
+		return &desc->m0;
+	case 2:
+		return &desc->m3;
+	case 3:
+		return &desc->m2;
+	default:
 		pr_err("Invalid dma descriptor index\n");
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम xgene_dma_init_desc(काष्ठा xgene_dma_desc_hw *desc,
+static void xgene_dma_init_desc(struct xgene_dma_desc_hw *desc,
 				u16 dst_ring_num)
-अणु
+{
 	desc->m0 |= cpu_to_le64(XGENE_DMA_DESC_IN_BIT);
 	desc->m0 |= cpu_to_le64((u64)XGENE_DMA_RING_OWNER_DMA <<
 				XGENE_DMA_DESC_RTYPE_POS);
 	desc->m1 |= cpu_to_le64(XGENE_DMA_DESC_C_BIT);
 	desc->m3 |= cpu_to_le64((u64)dst_ring_num <<
 				XGENE_DMA_DESC_HOENQ_NUM_POS);
-पूर्ण
+}
 
-अटल व्योम xgene_dma_prep_xor_desc(काष्ठा xgene_dma_chan *chan,
-				    काष्ठा xgene_dma_desc_sw *desc_sw,
+static void xgene_dma_prep_xor_desc(struct xgene_dma_chan *chan,
+				    struct xgene_dma_desc_sw *desc_sw,
 				    dma_addr_t *dst, dma_addr_t *src,
-				    u32 src_cnt, माप_प्रकार *nbytes,
-				    स्थिर u8 *scf)
-अणु
-	काष्ठा xgene_dma_desc_hw *desc1, *desc2;
-	माप_प्रकार len = *nbytes;
-	पूर्णांक i;
+				    u32 src_cnt, size_t *nbytes,
+				    const u8 *scf)
+{
+	struct xgene_dma_desc_hw *desc1, *desc2;
+	size_t len = *nbytes;
+	int i;
 
 	desc1 = &desc_sw->desc1;
 	desc2 = &desc_sw->desc2;
@@ -438,30 +437,30 @@
 	desc1->m2 |= cpu_to_le64(xgene_dma_encode_xor_flyby(src_cnt));
 
 	/* Set 1st to 5th source addresses */
-	क्रम (i = 0; i < src_cnt; i++) अणु
+	for (i = 0; i < src_cnt; i++) {
 		len = *nbytes;
 		xgene_dma_set_src_buffer((i == 0) ? &desc1->m1 :
 					 xgene_dma_lookup_ext8(desc2, i - 1),
 					 &len, &src[i]);
 		desc1->m2 |= cpu_to_le64((scf[i] << ((i + 1) * 8)));
-	पूर्ण
+	}
 
 	/* Update meta data */
 	*nbytes = len;
 	*dst += XGENE_DMA_MAX_BYTE_CNT;
 
-	/* We need always 64B descriptor to perक्रमm xor or pq operations */
+	/* We need always 64B descriptor to perform xor or pq operations */
 	desc_sw->flags |= XGENE_DMA_FLAG_64B_DESC;
-पूर्ण
+}
 
-अटल dma_cookie_t xgene_dma_tx_submit(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	काष्ठा xgene_dma_desc_sw *desc;
-	काष्ठा xgene_dma_chan *chan;
+static dma_cookie_t xgene_dma_tx_submit(struct dma_async_tx_descriptor *tx)
+{
+	struct xgene_dma_desc_sw *desc;
+	struct xgene_dma_chan *chan;
 	dma_cookie_t cookie;
 
-	अगर (unlikely(!tx))
-		वापस -EINVAL;
+	if (unlikely(!tx))
+		return -EINVAL;
 
 	chan = to_dma_chan(tx->chan);
 	desc = to_dma_desc_sw(tx);
@@ -475,28 +474,28 @@
 
 	spin_unlock_bh(&chan->lock);
 
-	वापस cookie;
-पूर्ण
+	return cookie;
+}
 
-अटल व्योम xgene_dma_clean_descriptor(काष्ठा xgene_dma_chan *chan,
-				       काष्ठा xgene_dma_desc_sw *desc)
-अणु
+static void xgene_dma_clean_descriptor(struct xgene_dma_chan *chan,
+				       struct xgene_dma_desc_sw *desc)
+{
 	list_del(&desc->node);
 	chan_dbg(chan, "LD %p free\n", desc);
-	dma_pool_मुक्त(chan->desc_pool, desc, desc->tx.phys);
-पूर्ण
+	dma_pool_free(chan->desc_pool, desc, desc->tx.phys);
+}
 
-अटल काष्ठा xgene_dma_desc_sw *xgene_dma_alloc_descriptor(
-				 काष्ठा xgene_dma_chan *chan)
-अणु
-	काष्ठा xgene_dma_desc_sw *desc;
+static struct xgene_dma_desc_sw *xgene_dma_alloc_descriptor(
+				 struct xgene_dma_chan *chan)
+{
+	struct xgene_dma_desc_sw *desc;
 	dma_addr_t phys;
 
 	desc = dma_pool_zalloc(chan->desc_pool, GFP_NOWAIT, &phys);
-	अगर (!desc) अणु
+	if (!desc) {
 		chan_err(chan, "Failed to allocate LDs\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	INIT_LIST_HEAD(&desc->tx_list);
 	desc->tx.phys = phys;
@@ -505,39 +504,39 @@
 
 	chan_dbg(chan, "LD %p allocated\n", desc);
 
-	वापस desc;
-पूर्ण
+	return desc;
+}
 
 /**
- * xgene_dma_clean_completed_descriptor - मुक्त all descriptors which
+ * xgene_dma_clean_completed_descriptor - free all descriptors which
  * has been completed and acked
  * @chan: X-Gene DMA channel
  *
  * This function is used on all completed and acked descriptors.
  */
-अटल व्योम xgene_dma_clean_completed_descriptor(काष्ठा xgene_dma_chan *chan)
-अणु
-	काष्ठा xgene_dma_desc_sw *desc, *_desc;
+static void xgene_dma_clean_completed_descriptor(struct xgene_dma_chan *chan)
+{
+	struct xgene_dma_desc_sw *desc, *_desc;
 
-	/* Run the callback क्रम each descriptor, in order */
-	list_क्रम_each_entry_safe(desc, _desc, &chan->ld_completed, node) अणु
-		अगर (async_tx_test_ack(&desc->tx))
+	/* Run the callback for each descriptor, in order */
+	list_for_each_entry_safe(desc, _desc, &chan->ld_completed, node) {
+		if (async_tx_test_ack(&desc->tx))
 			xgene_dma_clean_descriptor(chan, desc);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * xgene_dma_run_tx_complete_actions - cleanup a single link descriptor
  * @chan: X-Gene DMA channel
- * @desc: descriptor to cleanup and मुक्त
+ * @desc: descriptor to cleanup and free
  *
  * This function is used on a descriptor which has been executed by the DMA
  * controller. It will run any callbacks, submit any dependencies.
  */
-अटल व्योम xgene_dma_run_tx_complete_actions(काष्ठा xgene_dma_chan *chan,
-					      काष्ठा xgene_dma_desc_sw *desc)
-अणु
-	काष्ठा dma_async_tx_descriptor *tx = &desc->tx;
+static void xgene_dma_run_tx_complete_actions(struct xgene_dma_chan *chan,
+					      struct xgene_dma_desc_sw *desc)
+{
+	struct dma_async_tx_descriptor *tx = &desc->tx;
 
 	/*
 	 * If this is not the last transaction in the group,
@@ -546,18 +545,18 @@
 	 * of this DMA request
 	 */
 
-	अगर (tx->cookie == 0)
-		वापस;
+	if (tx->cookie == 0)
+		return;
 
 	dma_cookie_complete(tx);
 	dma_descriptor_unmap(tx);
 
 	/* Run the link descriptor callback function */
-	dmaengine_desc_get_callback_invoke(tx, शून्य);
+	dmaengine_desc_get_callback_invoke(tx, NULL);
 
 	/* Run any dependencies */
 	dma_run_dependencies(tx);
-पूर्ण
+}
 
 /**
  * xgene_dma_clean_running_descriptor - move the completed descriptor from
@@ -565,12 +564,12 @@
  * @chan: X-Gene DMA channel
  * @desc: the descriptor which is completed
  *
- * Free the descriptor directly अगर acked by async_tx api,
- * अन्यथा move it to queue ld_completed.
+ * Free the descriptor directly if acked by async_tx api,
+ * else move it to queue ld_completed.
  */
-अटल व्योम xgene_dma_clean_running_descriptor(काष्ठा xgene_dma_chan *chan,
-					       काष्ठा xgene_dma_desc_sw *desc)
-अणु
+static void xgene_dma_clean_running_descriptor(struct xgene_dma_chan *chan,
+					       struct xgene_dma_desc_sw *desc)
+{
 	/* Remove from the list of running transactions */
 	list_del(&desc->node);
 
@@ -578,59 +577,59 @@
 	 * the client is allowed to attach dependent operations
 	 * until 'ack' is set
 	 */
-	अगर (!async_tx_test_ack(&desc->tx)) अणु
+	if (!async_tx_test_ack(&desc->tx)) {
 		/*
 		 * Move this descriptor to the list of descriptors which is
-		 * completed, but still aरुकोing the 'ack' bit to be set.
+		 * completed, but still awaiting the 'ack' bit to be set.
 		 */
 		list_add_tail(&desc->node, &chan->ld_completed);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	chan_dbg(chan, "LD %p free\n", desc);
-	dma_pool_मुक्त(chan->desc_pool, desc, desc->tx.phys);
-पूर्ण
+	dma_pool_free(chan->desc_pool, desc, desc->tx.phys);
+}
 
-अटल व्योम xgene_chan_xfer_request(काष्ठा xgene_dma_chan *chan,
-				    काष्ठा xgene_dma_desc_sw *desc_sw)
-अणु
-	काष्ठा xgene_dma_ring *ring = &chan->tx_ring;
-	काष्ठा xgene_dma_desc_hw *desc_hw;
+static void xgene_chan_xfer_request(struct xgene_dma_chan *chan,
+				    struct xgene_dma_desc_sw *desc_sw)
+{
+	struct xgene_dma_ring *ring = &chan->tx_ring;
+	struct xgene_dma_desc_hw *desc_hw;
 
 	/* Get hw descriptor from DMA tx ring */
 	desc_hw = &ring->desc_hw[ring->head];
 
 	/*
-	 * Increment the head count to poपूर्णांक next
-	 * descriptor क्रम next समय
+	 * Increment the head count to point next
+	 * descriptor for next time
 	 */
-	अगर (++ring->head == ring->slots)
+	if (++ring->head == ring->slots)
 		ring->head = 0;
 
 	/* Copy prepared sw descriptor data to hw descriptor */
-	स_नकल(desc_hw, &desc_sw->desc1, माप(*desc_hw));
+	memcpy(desc_hw, &desc_sw->desc1, sizeof(*desc_hw));
 
 	/*
-	 * Check अगर we have prepared 64B descriptor,
-	 * in this हाल we need one more hw descriptor
+	 * Check if we have prepared 64B descriptor,
+	 * in this case we need one more hw descriptor
 	 */
-	अगर (desc_sw->flags & XGENE_DMA_FLAG_64B_DESC) अणु
+	if (desc_sw->flags & XGENE_DMA_FLAG_64B_DESC) {
 		desc_hw = &ring->desc_hw[ring->head];
 
-		अगर (++ring->head == ring->slots)
+		if (++ring->head == ring->slots)
 			ring->head = 0;
 
-		स_नकल(desc_hw, &desc_sw->desc2, माप(*desc_hw));
-	पूर्ण
+		memcpy(desc_hw, &desc_sw->desc2, sizeof(*desc_hw));
+	}
 
 	/* Increment the pending transaction count */
 	chan->pending += ((desc_sw->flags &
 			  XGENE_DMA_FLAG_64B_DESC) ? 2 : 1);
 
-	/* Notअगरy the hw that we have descriptor पढ़ोy क्रम execution */
-	ioग_लिखो32((desc_sw->flags & XGENE_DMA_FLAG_64B_DESC) ?
+	/* Notify the hw that we have descriptor ready for execution */
+	iowrite32((desc_sw->flags & XGENE_DMA_FLAG_64B_DESC) ?
 		  2 : 1, ring->cmd);
-पूर्ण
+}
 
 /**
  * xgene_chan_xfer_ld_pending - push any pending transactions to hw
@@ -638,32 +637,32 @@
  *
  * LOCKING: must hold chan->lock
  */
-अटल व्योम xgene_chan_xfer_ld_pending(काष्ठा xgene_dma_chan *chan)
-अणु
-	काष्ठा xgene_dma_desc_sw *desc_sw, *_desc_sw;
+static void xgene_chan_xfer_ld_pending(struct xgene_dma_chan *chan)
+{
+	struct xgene_dma_desc_sw *desc_sw, *_desc_sw;
 
 	/*
 	 * If the list of pending descriptors is empty, then we
-	 * करोn't need to करो any work at all
+	 * don't need to do any work at all
 	 */
-	अगर (list_empty(&chan->ld_pending)) अणु
+	if (list_empty(&chan->ld_pending)) {
 		chan_dbg(chan, "No pending LDs\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Move elements from the queue of pending transactions onto the list
-	 * of running transactions and push it to hw क्रम further executions
+	 * of running transactions and push it to hw for further executions
 	 */
-	list_क्रम_each_entry_safe(desc_sw, _desc_sw, &chan->ld_pending, node) अणु
+	list_for_each_entry_safe(desc_sw, _desc_sw, &chan->ld_pending, node) {
 		/*
-		 * Check अगर have pushed max number of transactions to hw
-		 * as capable, so let's stop here and will push reमुख्यing
+		 * Check if have pushed max number of transactions to hw
+		 * as capable, so let's stop here and will push remaining
 		 * elements from pening ld queue after completing some
-		 * descriptors that we have alपढ़ोy pushed
+		 * descriptors that we have already pushed
 		 */
-		अगर (chan->pending >= chan->max_outstanding)
-			वापस;
+		if (chan->pending >= chan->max_outstanding)
+			return;
 
 		xgene_chan_xfer_request(chan, desc_sw);
 
@@ -672,72 +671,72 @@
 		 * ld running queue
 		 */
 		list_move_tail(&desc_sw->node, &chan->ld_running);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * xgene_dma_cleanup_descriptors - cleanup link descriptors which are completed
- * and move them to ld_completed to मुक्त until flag 'ack' is set
+ * and move them to ld_completed to free until flag 'ack' is set
  * @chan: X-Gene DMA channel
  *
  * This function is used on descriptors which have been executed by the DMA
  * controller. It will run any callbacks, submit any dependencies, then
- * मुक्त these descriptors अगर flag 'ack' is set.
+ * free these descriptors if flag 'ack' is set.
  */
-अटल व्योम xgene_dma_cleanup_descriptors(काष्ठा xgene_dma_chan *chan)
-अणु
-	काष्ठा xgene_dma_ring *ring = &chan->rx_ring;
-	काष्ठा xgene_dma_desc_sw *desc_sw, *_desc_sw;
-	काष्ठा xgene_dma_desc_hw *desc_hw;
-	काष्ठा list_head ld_completed;
+static void xgene_dma_cleanup_descriptors(struct xgene_dma_chan *chan)
+{
+	struct xgene_dma_ring *ring = &chan->rx_ring;
+	struct xgene_dma_desc_sw *desc_sw, *_desc_sw;
+	struct xgene_dma_desc_hw *desc_hw;
+	struct list_head ld_completed;
 	u8 status;
 
 	INIT_LIST_HEAD(&ld_completed);
 
 	spin_lock(&chan->lock);
 
-	/* Clean alपढ़ोy completed and acked descriptors */
+	/* Clean already completed and acked descriptors */
 	xgene_dma_clean_completed_descriptor(chan);
 
 	/* Move all completed descriptors to ld completed queue, in order */
-	list_क्रम_each_entry_safe(desc_sw, _desc_sw, &chan->ld_running, node) अणु
+	list_for_each_entry_safe(desc_sw, _desc_sw, &chan->ld_running, node) {
 		/* Get subsequent hw descriptor from DMA rx ring */
 		desc_hw = &ring->desc_hw[ring->head];
 
-		/* Check अगर this descriptor has been completed */
-		अगर (unlikely(le64_to_cpu(desc_hw->m0) ==
+		/* Check if this descriptor has been completed */
+		if (unlikely(le64_to_cpu(desc_hw->m0) ==
 			     XGENE_DMA_DESC_EMPTY_SIGNATURE))
-			अवरोध;
+			break;
 
-		अगर (++ring->head == ring->slots)
+		if (++ring->head == ring->slots)
 			ring->head = 0;
 
-		/* Check अगर we have any error with DMA transactions */
+		/* Check if we have any error with DMA transactions */
 		status = XGENE_DMA_DESC_STATUS(
 				XGENE_DMA_DESC_ELERR_RD(le64_to_cpu(
 							desc_hw->m0)),
 				XGENE_DMA_DESC_LERR_RD(le64_to_cpu(
 						       desc_hw->m0)));
-		अगर (status) अणु
-			/* Prपूर्णांक the DMA error type */
+		if (status) {
+			/* Print the DMA error type */
 			chan_err(chan, "%s\n", xgene_dma_desc_err[status]);
 
 			/*
 			 * We have DMA transactions error here. Dump DMA Tx
-			 * and Rx descriptors क्रम this request */
+			 * and Rx descriptors for this request */
 			XGENE_DMA_DESC_DUMP(&desc_sw->desc1,
 					    "X-Gene DMA TX DESC1: ");
 
-			अगर (desc_sw->flags & XGENE_DMA_FLAG_64B_DESC)
+			if (desc_sw->flags & XGENE_DMA_FLAG_64B_DESC)
 				XGENE_DMA_DESC_DUMP(&desc_sw->desc2,
 						    "X-Gene DMA TX DESC2: ");
 
 			XGENE_DMA_DESC_DUMP(desc_hw,
 					    "X-Gene DMA RX ERR DESC: ");
-		पूर्ण
+		}
 
-		/* Notअगरy the hw about this completed descriptor */
-		ioग_लिखो32(-1, ring->cmd);
+		/* Notify the hw about this completed descriptor */
+		iowrite32(-1, ring->cmd);
 
 		/* Mark this hw descriptor as processed */
 		desc_hw->m0 = cpu_to_le64(XGENE_DMA_DESC_EMPTY_SIGNATURE);
@@ -751,72 +750,72 @@
 
 		/*
 		 * Delete this node from ld running queue and append it to
-		 * ld completed queue क्रम further processing
+		 * ld completed queue for further processing
 		 */
 		list_move_tail(&desc_sw->node, &ld_completed);
-	पूर्ण
+	}
 
 	/*
-	 * Start any pending transactions स्वतःmatically
-	 * In the ideal हाल, we keep the DMA controller busy जबतक we go
-	 * ahead and मुक्त the descriptors below.
+	 * Start any pending transactions automatically
+	 * In the ideal case, we keep the DMA controller busy while we go
+	 * ahead and free the descriptors below.
 	 */
 	xgene_chan_xfer_ld_pending(chan);
 
 	spin_unlock(&chan->lock);
 
-	/* Run the callback क्रम each descriptor, in order */
-	list_क्रम_each_entry_safe(desc_sw, _desc_sw, &ld_completed, node) अणु
+	/* Run the callback for each descriptor, in order */
+	list_for_each_entry_safe(desc_sw, _desc_sw, &ld_completed, node) {
 		xgene_dma_run_tx_complete_actions(chan, desc_sw);
 		xgene_dma_clean_running_descriptor(chan, desc_sw);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक xgene_dma_alloc_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा xgene_dma_chan *chan = to_dma_chan(dchan);
+static int xgene_dma_alloc_chan_resources(struct dma_chan *dchan)
+{
+	struct xgene_dma_chan *chan = to_dma_chan(dchan);
 
-	/* Has this channel alपढ़ोy been allocated? */
-	अगर (chan->desc_pool)
-		वापस 1;
+	/* Has this channel already been allocated? */
+	if (chan->desc_pool)
+		return 1;
 
 	chan->desc_pool = dma_pool_create(chan->name, chan->dev,
-					  माप(काष्ठा xgene_dma_desc_sw),
+					  sizeof(struct xgene_dma_desc_sw),
 					  0, 0);
-	अगर (!chan->desc_pool) अणु
+	if (!chan->desc_pool) {
 		chan_err(chan, "Failed to allocate descriptor pool\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	chan_dbg(chan, "Allocate descriptor pool\n");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * xgene_dma_मुक्त_desc_list - Free all descriptors in a queue
+ * xgene_dma_free_desc_list - Free all descriptors in a queue
  * @chan: X-Gene DMA channel
- * @list: the list to मुक्त
+ * @list: the list to free
  *
  * LOCKING: must hold chan->lock
  */
-अटल व्योम xgene_dma_मुक्त_desc_list(काष्ठा xgene_dma_chan *chan,
-				     काष्ठा list_head *list)
-अणु
-	काष्ठा xgene_dma_desc_sw *desc, *_desc;
+static void xgene_dma_free_desc_list(struct xgene_dma_chan *chan,
+				     struct list_head *list)
+{
+	struct xgene_dma_desc_sw *desc, *_desc;
 
-	list_क्रम_each_entry_safe(desc, _desc, list, node)
+	list_for_each_entry_safe(desc, _desc, list, node)
 		xgene_dma_clean_descriptor(chan, desc);
-पूर्ण
+}
 
-अटल व्योम xgene_dma_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा xgene_dma_chan *chan = to_dma_chan(dchan);
+static void xgene_dma_free_chan_resources(struct dma_chan *dchan)
+{
+	struct xgene_dma_chan *chan = to_dma_chan(dchan);
 
 	chan_dbg(chan, "Free all resources\n");
 
-	अगर (!chan->desc_pool)
-		वापस;
+	if (!chan->desc_pool)
+		return;
 
 	/* Process all running descriptor */
 	xgene_dma_cleanup_descriptors(chan);
@@ -824,42 +823,42 @@
 	spin_lock_bh(&chan->lock);
 
 	/* Clean all link descriptor queues */
-	xgene_dma_मुक्त_desc_list(chan, &chan->ld_pending);
-	xgene_dma_मुक्त_desc_list(chan, &chan->ld_running);
-	xgene_dma_मुक्त_desc_list(chan, &chan->ld_completed);
+	xgene_dma_free_desc_list(chan, &chan->ld_pending);
+	xgene_dma_free_desc_list(chan, &chan->ld_running);
+	xgene_dma_free_desc_list(chan, &chan->ld_completed);
 
 	spin_unlock_bh(&chan->lock);
 
 	/* Delete this channel DMA pool */
 	dma_pool_destroy(chan->desc_pool);
-	chan->desc_pool = शून्य;
-पूर्ण
+	chan->desc_pool = NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *xgene_dma_prep_xor(
-	काष्ठा dma_chan *dchan, dma_addr_t dst,	dma_addr_t *src,
-	u32 src_cnt, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा xgene_dma_desc_sw *first = शून्य, *new;
-	काष्ठा xgene_dma_chan *chan;
-	अटल u8 multi[XGENE_DMA_MAX_XOR_SRC] = अणु
-				0x01, 0x01, 0x01, 0x01, 0x01पूर्ण;
+static struct dma_async_tx_descriptor *xgene_dma_prep_xor(
+	struct dma_chan *dchan, dma_addr_t dst,	dma_addr_t *src,
+	u32 src_cnt, size_t len, unsigned long flags)
+{
+	struct xgene_dma_desc_sw *first = NULL, *new;
+	struct xgene_dma_chan *chan;
+	static u8 multi[XGENE_DMA_MAX_XOR_SRC] = {
+				0x01, 0x01, 0x01, 0x01, 0x01};
 
-	अगर (unlikely(!dchan || !len))
-		वापस शून्य;
+	if (unlikely(!dchan || !len))
+		return NULL;
 
 	chan = to_dma_chan(dchan);
 
-	करो अणु
+	do {
 		/* Allocate the link descriptor from DMA pool */
 		new = xgene_dma_alloc_descriptor(chan);
-		अगर (!new)
-			जाओ fail;
+		if (!new)
+			goto fail;
 
 		/* Prepare xor DMA descriptor */
 		xgene_dma_prep_xor_desc(chan, new, &dst, src,
 					src_cnt, &len, multi);
 
-		अगर (!first)
+		if (!first)
 			first = new;
 
 		new->tx.cookie = 0;
@@ -867,57 +866,57 @@
 
 		/* Insert the link descriptor to the LD ring */
 		list_add_tail(&new->node, &first->tx_list);
-	पूर्ण जबतक (len);
+	} while (len);
 
 	new->tx.flags = flags; /* client is in control of this ack */
 	new->tx.cookie = -EBUSY;
 	list_splice(&first->tx_list, &new->tx_list);
 
-	वापस &new->tx;
+	return &new->tx;
 
 fail:
-	अगर (!first)
-		वापस शून्य;
+	if (!first)
+		return NULL;
 
-	xgene_dma_मुक्त_desc_list(chan, &first->tx_list);
-	वापस शून्य;
-पूर्ण
+	xgene_dma_free_desc_list(chan, &first->tx_list);
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *xgene_dma_prep_pq(
-	काष्ठा dma_chan *dchan, dma_addr_t *dst, dma_addr_t *src,
-	u32 src_cnt, स्थिर u8 *scf, माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा xgene_dma_desc_sw *first = शून्य, *new;
-	काष्ठा xgene_dma_chan *chan;
-	माप_प्रकार _len = len;
+static struct dma_async_tx_descriptor *xgene_dma_prep_pq(
+	struct dma_chan *dchan, dma_addr_t *dst, dma_addr_t *src,
+	u32 src_cnt, const u8 *scf, size_t len, unsigned long flags)
+{
+	struct xgene_dma_desc_sw *first = NULL, *new;
+	struct xgene_dma_chan *chan;
+	size_t _len = len;
 	dma_addr_t _src[XGENE_DMA_MAX_XOR_SRC];
-	अटल u8 multi[XGENE_DMA_MAX_XOR_SRC] = अणु0x01, 0x01, 0x01, 0x01, 0x01पूर्ण;
+	static u8 multi[XGENE_DMA_MAX_XOR_SRC] = {0x01, 0x01, 0x01, 0x01, 0x01};
 
-	अगर (unlikely(!dchan || !len))
-		वापस शून्य;
+	if (unlikely(!dchan || !len))
+		return NULL;
 
 	chan = to_dma_chan(dchan);
 
 	/*
 	 * Save source addresses on local variable, may be we have to
-	 * prepare two descriptor to generate P and Q अगर both enabled
+	 * prepare two descriptor to generate P and Q if both enabled
 	 * in the flags by client
 	 */
-	स_नकल(_src, src, माप(*src) * src_cnt);
+	memcpy(_src, src, sizeof(*src) * src_cnt);
 
-	अगर (flags & DMA_PREP_PQ_DISABLE_P)
+	if (flags & DMA_PREP_PQ_DISABLE_P)
 		len = 0;
 
-	अगर (flags & DMA_PREP_PQ_DISABLE_Q)
+	if (flags & DMA_PREP_PQ_DISABLE_Q)
 		_len = 0;
 
-	करो अणु
+	do {
 		/* Allocate the link descriptor from DMA pool */
 		new = xgene_dma_alloc_descriptor(chan);
-		अगर (!new)
-			जाओ fail;
+		if (!new)
+			goto fail;
 
-		अगर (!first)
+		if (!first)
 			first = new;
 
 		new->tx.cookie = 0;
@@ -928,68 +927,68 @@ fail:
 
 		/*
 		 * Prepare DMA descriptor to generate P,
-		 * अगर DMA_PREP_PQ_DISABLE_P flag is not set
+		 * if DMA_PREP_PQ_DISABLE_P flag is not set
 		 */
-		अगर (len) अणु
+		if (len) {
 			xgene_dma_prep_xor_desc(chan, new, &dst[0], src,
 						src_cnt, &len, multi);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * Prepare DMA descriptor to generate Q,
-		 * अगर DMA_PREP_PQ_DISABLE_Q flag is not set
+		 * if DMA_PREP_PQ_DISABLE_Q flag is not set
 		 */
-		अगर (_len) अणु
+		if (_len) {
 			xgene_dma_prep_xor_desc(chan, new, &dst[1], _src,
 						src_cnt, &_len, scf);
-		पूर्ण
-	पूर्ण जबतक (len || _len);
+		}
+	} while (len || _len);
 
 	new->tx.flags = flags; /* client is in control of this ack */
 	new->tx.cookie = -EBUSY;
 	list_splice(&first->tx_list, &new->tx_list);
 
-	वापस &new->tx;
+	return &new->tx;
 
 fail:
-	अगर (!first)
-		वापस शून्य;
+	if (!first)
+		return NULL;
 
-	xgene_dma_मुक्त_desc_list(chan, &first->tx_list);
-	वापस शून्य;
-पूर्ण
+	xgene_dma_free_desc_list(chan, &first->tx_list);
+	return NULL;
+}
 
-अटल व्योम xgene_dma_issue_pending(काष्ठा dma_chan *dchan)
-अणु
-	काष्ठा xgene_dma_chan *chan = to_dma_chan(dchan);
+static void xgene_dma_issue_pending(struct dma_chan *dchan)
+{
+	struct xgene_dma_chan *chan = to_dma_chan(dchan);
 
 	spin_lock_bh(&chan->lock);
 	xgene_chan_xfer_ld_pending(chan);
 	spin_unlock_bh(&chan->lock);
-पूर्ण
+}
 
-अटल क्रमागत dma_status xgene_dma_tx_status(काष्ठा dma_chan *dchan,
+static enum dma_status xgene_dma_tx_status(struct dma_chan *dchan,
 					   dma_cookie_t cookie,
-					   काष्ठा dma_tx_state *txstate)
-अणु
-	वापस dma_cookie_status(dchan, cookie, txstate);
-पूर्ण
+					   struct dma_tx_state *txstate)
+{
+	return dma_cookie_status(dchan, cookie, txstate);
+}
 
-अटल व्योम xgene_dma_tasklet_cb(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा xgene_dma_chan *chan = from_tasklet(chan, t, tasklet);
+static void xgene_dma_tasklet_cb(struct tasklet_struct *t)
+{
+	struct xgene_dma_chan *chan = from_tasklet(chan, t, tasklet);
 
-	/* Run all cleanup क्रम descriptors which have been completed */
+	/* Run all cleanup for descriptors which have been completed */
 	xgene_dma_cleanup_descriptors(chan);
 
 	/* Re-enable DMA channel IRQ */
 	enable_irq(chan->rx_irq);
-पूर्ण
+}
 
-अटल irqवापस_t xgene_dma_chan_ring_isr(पूर्णांक irq, व्योम *id)
-अणु
-	काष्ठा xgene_dma_chan *chan = (काष्ठा xgene_dma_chan *)id;
+static irqreturn_t xgene_dma_chan_ring_isr(int irq, void *id)
+{
+	struct xgene_dma_chan *chan = (struct xgene_dma_chan *)id;
 
 	BUG_ON(!chan);
 
@@ -1001,54 +1000,54 @@ fail:
 
 	/*
 	 * Schedule the tasklet to handle all cleanup of the current
-	 * transaction. It will start a new transaction अगर there is
+	 * transaction. It will start a new transaction if there is
 	 * one pending.
 	 */
 	tasklet_schedule(&chan->tasklet);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t xgene_dma_err_isr(पूर्णांक irq, व्योम *id)
-अणु
-	काष्ठा xgene_dma *pdma = (काष्ठा xgene_dma *)id;
-	अचिन्हित दीर्घ पूर्णांक_mask;
+static irqreturn_t xgene_dma_err_isr(int irq, void *id)
+{
+	struct xgene_dma *pdma = (struct xgene_dma *)id;
+	unsigned long int_mask;
 	u32 val, i;
 
-	val = ioपढ़ो32(pdma->csr_dma + XGENE_DMA_INT);
+	val = ioread32(pdma->csr_dma + XGENE_DMA_INT);
 
-	/* Clear DMA पूर्णांकerrupts */
-	ioग_लिखो32(val, pdma->csr_dma + XGENE_DMA_INT);
+	/* Clear DMA interrupts */
+	iowrite32(val, pdma->csr_dma + XGENE_DMA_INT);
 
-	/* Prपूर्णांक DMA error info */
-	पूर्णांक_mask = val >> XGENE_DMA_INT_MASK_SHIFT;
-	क्रम_each_set_bit(i, &पूर्णांक_mask, ARRAY_SIZE(xgene_dma_err))
+	/* Print DMA error info */
+	int_mask = val >> XGENE_DMA_INT_MASK_SHIFT;
+	for_each_set_bit(i, &int_mask, ARRAY_SIZE(xgene_dma_err))
 		dev_err(pdma->dev,
 			"Interrupt status 0x%08X %s\n", val, xgene_dma_err[i]);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम xgene_dma_wr_ring_state(काष्ठा xgene_dma_ring *ring)
-अणु
-	पूर्णांक i;
+static void xgene_dma_wr_ring_state(struct xgene_dma_ring *ring)
+{
+	int i;
 
-	ioग_लिखो32(ring->num, ring->pdma->csr_ring + XGENE_DMA_RING_STATE);
+	iowrite32(ring->num, ring->pdma->csr_ring + XGENE_DMA_RING_STATE);
 
-	क्रम (i = 0; i < XGENE_DMA_RING_NUM_CONFIG; i++)
-		ioग_लिखो32(ring->state[i], ring->pdma->csr_ring +
+	for (i = 0; i < XGENE_DMA_RING_NUM_CONFIG; i++)
+		iowrite32(ring->state[i], ring->pdma->csr_ring +
 			  XGENE_DMA_RING_STATE_WR_BASE + (i * 4));
-पूर्ण
+}
 
-अटल व्योम xgene_dma_clr_ring_state(काष्ठा xgene_dma_ring *ring)
-अणु
-	स_रखो(ring->state, 0, माप(u32) * XGENE_DMA_RING_NUM_CONFIG);
+static void xgene_dma_clr_ring_state(struct xgene_dma_ring *ring)
+{
+	memset(ring->state, 0, sizeof(u32) * XGENE_DMA_RING_NUM_CONFIG);
 	xgene_dma_wr_ring_state(ring);
-पूर्ण
+}
 
-अटल व्योम xgene_dma_setup_ring(काष्ठा xgene_dma_ring *ring)
-अणु
-	व्योम *ring_cfg = ring->state;
+static void xgene_dma_setup_ring(struct xgene_dma_ring *ring)
+{
+	void *ring_cfg = ring->state;
 	u64 addr = ring->desc_paddr;
 	u32 i, val;
 
@@ -1060,12 +1059,12 @@ fail:
 	/* Set DMA ring type */
 	XGENE_DMA_RING_TYPE_SET(ring_cfg, XGENE_DMA_RING_TYPE_REGULAR);
 
-	अगर (ring->owner == XGENE_DMA_RING_OWNER_DMA) अणु
-		/* Set recombination buffer and समयout */
+	if (ring->owner == XGENE_DMA_RING_OWNER_DMA) {
+		/* Set recombination buffer and timeout */
 		XGENE_DMA_RING_RECOMBBUF_SET(ring_cfg);
 		XGENE_DMA_RING_RECOMTIMEOUTL_SET(ring_cfg);
 		XGENE_DMA_RING_RECOMTIMEOUTH_SET(ring_cfg);
-	पूर्ण
+	}
 
 	/* Initialize DMA ring state */
 	XGENE_DMA_RING_SELTHRSH_SET(ring_cfg);
@@ -1079,113 +1078,113 @@ fail:
 	xgene_dma_wr_ring_state(ring);
 
 	/* Set DMA ring id */
-	ioग_लिखो32(XGENE_DMA_RING_ID_SETUP(ring->id),
+	iowrite32(XGENE_DMA_RING_ID_SETUP(ring->id),
 		  ring->pdma->csr_ring + XGENE_DMA_RING_ID);
 
 	/* Set DMA ring buffer */
-	ioग_लिखो32(XGENE_DMA_RING_ID_BUF_SETUP(ring->num),
+	iowrite32(XGENE_DMA_RING_ID_BUF_SETUP(ring->num),
 		  ring->pdma->csr_ring + XGENE_DMA_RING_ID_BUF);
 
-	अगर (ring->owner != XGENE_DMA_RING_OWNER_CPU)
-		वापस;
+	if (ring->owner != XGENE_DMA_RING_OWNER_CPU)
+		return;
 
 	/* Set empty signature to DMA Rx ring descriptors */
-	क्रम (i = 0; i < ring->slots; i++) अणु
-		काष्ठा xgene_dma_desc_hw *desc;
+	for (i = 0; i < ring->slots; i++) {
+		struct xgene_dma_desc_hw *desc;
 
 		desc = &ring->desc_hw[i];
 		desc->m0 = cpu_to_le64(XGENE_DMA_DESC_EMPTY_SIGNATURE);
-	पूर्ण
+	}
 
-	/* Enable DMA Rx ring पूर्णांकerrupt */
-	val = ioपढ़ो32(ring->pdma->csr_ring + XGENE_DMA_RING_NE_INT_MODE);
+	/* Enable DMA Rx ring interrupt */
+	val = ioread32(ring->pdma->csr_ring + XGENE_DMA_RING_NE_INT_MODE);
 	XGENE_DMA_RING_NE_INT_MODE_SET(val, ring->buf_num);
-	ioग_लिखो32(val, ring->pdma->csr_ring + XGENE_DMA_RING_NE_INT_MODE);
-पूर्ण
+	iowrite32(val, ring->pdma->csr_ring + XGENE_DMA_RING_NE_INT_MODE);
+}
 
-अटल व्योम xgene_dma_clear_ring(काष्ठा xgene_dma_ring *ring)
-अणु
+static void xgene_dma_clear_ring(struct xgene_dma_ring *ring)
+{
 	u32 ring_id, val;
 
-	अगर (ring->owner == XGENE_DMA_RING_OWNER_CPU) अणु
-		/* Disable DMA Rx ring पूर्णांकerrupt */
-		val = ioपढ़ो32(ring->pdma->csr_ring +
+	if (ring->owner == XGENE_DMA_RING_OWNER_CPU) {
+		/* Disable DMA Rx ring interrupt */
+		val = ioread32(ring->pdma->csr_ring +
 			       XGENE_DMA_RING_NE_INT_MODE);
 		XGENE_DMA_RING_NE_INT_MODE_RESET(val, ring->buf_num);
-		ioग_लिखो32(val, ring->pdma->csr_ring +
+		iowrite32(val, ring->pdma->csr_ring +
 			  XGENE_DMA_RING_NE_INT_MODE);
-	पूर्ण
+	}
 
 	/* Clear DMA ring state */
 	ring_id = XGENE_DMA_RING_ID_SETUP(ring->id);
-	ioग_लिखो32(ring_id, ring->pdma->csr_ring + XGENE_DMA_RING_ID);
+	iowrite32(ring_id, ring->pdma->csr_ring + XGENE_DMA_RING_ID);
 
-	ioग_लिखो32(0, ring->pdma->csr_ring + XGENE_DMA_RING_ID_BUF);
+	iowrite32(0, ring->pdma->csr_ring + XGENE_DMA_RING_ID_BUF);
 	xgene_dma_clr_ring_state(ring);
-पूर्ण
+}
 
-अटल व्योम xgene_dma_set_ring_cmd(काष्ठा xgene_dma_ring *ring)
-अणु
+static void xgene_dma_set_ring_cmd(struct xgene_dma_ring *ring)
+{
 	ring->cmd_base = ring->pdma->csr_ring_cmd +
 				XGENE_DMA_RING_CMD_BASE_OFFSET((ring->num -
 							  XGENE_DMA_RING_NUM));
 
 	ring->cmd = ring->cmd_base + XGENE_DMA_RING_CMD_OFFSET;
-पूर्ण
+}
 
-अटल पूर्णांक xgene_dma_get_ring_size(काष्ठा xgene_dma_chan *chan,
-				   क्रमागत xgene_dma_ring_cfgsize cfgsize)
-अणु
-	पूर्णांक size;
+static int xgene_dma_get_ring_size(struct xgene_dma_chan *chan,
+				   enum xgene_dma_ring_cfgsize cfgsize)
+{
+	int size;
 
-	चयन (cfgsize) अणु
-	हाल XGENE_DMA_RING_CFG_SIZE_512B:
+	switch (cfgsize) {
+	case XGENE_DMA_RING_CFG_SIZE_512B:
 		size = 0x200;
-		अवरोध;
-	हाल XGENE_DMA_RING_CFG_SIZE_2KB:
+		break;
+	case XGENE_DMA_RING_CFG_SIZE_2KB:
 		size = 0x800;
-		अवरोध;
-	हाल XGENE_DMA_RING_CFG_SIZE_16KB:
+		break;
+	case XGENE_DMA_RING_CFG_SIZE_16KB:
 		size = 0x4000;
-		अवरोध;
-	हाल XGENE_DMA_RING_CFG_SIZE_64KB:
+		break;
+	case XGENE_DMA_RING_CFG_SIZE_64KB:
 		size = 0x10000;
-		अवरोध;
-	हाल XGENE_DMA_RING_CFG_SIZE_512KB:
+		break;
+	case XGENE_DMA_RING_CFG_SIZE_512KB:
 		size = 0x80000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		chan_err(chan, "Unsupported cfg ring size %d\n", cfgsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल व्योम xgene_dma_delete_ring_one(काष्ठा xgene_dma_ring *ring)
-अणु
+static void xgene_dma_delete_ring_one(struct xgene_dma_ring *ring)
+{
 	/* Clear DMA ring configurations */
 	xgene_dma_clear_ring(ring);
 
 	/* De-allocate DMA ring descriptor */
-	अगर (ring->desc_vaddr) अणु
-		dma_मुक्त_coherent(ring->pdma->dev, ring->size,
+	if (ring->desc_vaddr) {
+		dma_free_coherent(ring->pdma->dev, ring->size,
 				  ring->desc_vaddr, ring->desc_paddr);
-		ring->desc_vaddr = शून्य;
-	पूर्ण
-पूर्ण
+		ring->desc_vaddr = NULL;
+	}
+}
 
-अटल व्योम xgene_dma_delete_chan_rings(काष्ठा xgene_dma_chan *chan)
-अणु
+static void xgene_dma_delete_chan_rings(struct xgene_dma_chan *chan)
+{
 	xgene_dma_delete_ring_one(&chan->rx_ring);
 	xgene_dma_delete_ring_one(&chan->tx_ring);
-पूर्ण
+}
 
-अटल पूर्णांक xgene_dma_create_ring_one(काष्ठा xgene_dma_chan *chan,
-				     काष्ठा xgene_dma_ring *ring,
-				     क्रमागत xgene_dma_ring_cfgsize cfgsize)
-अणु
-	पूर्णांक ret;
+static int xgene_dma_create_ring_one(struct xgene_dma_chan *chan,
+				     struct xgene_dma_ring *ring,
+				     enum xgene_dma_ring_cfgsize cfgsize)
+{
+	int ret;
 
 	/* Setup DMA ring descriptor variables */
 	ring->pdma = chan->pdma;
@@ -1194,30 +1193,30 @@ fail:
 	ring->id = XGENE_DMA_RING_ID_GET(ring->owner, ring->buf_num);
 
 	ret = xgene_dma_get_ring_size(chan, cfgsize);
-	अगर (ret <= 0)
-		वापस ret;
+	if (ret <= 0)
+		return ret;
 	ring->size = ret;
 
-	/* Allocate memory क्रम DMA ring descriptor */
+	/* Allocate memory for DMA ring descriptor */
 	ring->desc_vaddr = dma_alloc_coherent(chan->dev, ring->size,
 					      &ring->desc_paddr, GFP_KERNEL);
-	अगर (!ring->desc_vaddr) अणु
+	if (!ring->desc_vaddr) {
 		chan_err(chan, "Failed to allocate ring desc\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Configure and enable DMA ring */
 	xgene_dma_set_ring_cmd(ring);
 	xgene_dma_setup_ring(ring);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_dma_create_chan_rings(काष्ठा xgene_dma_chan *chan)
-अणु
-	काष्ठा xgene_dma_ring *rx_ring = &chan->rx_ring;
-	काष्ठा xgene_dma_ring *tx_ring = &chan->tx_ring;
-	पूर्णांक ret;
+static int xgene_dma_create_chan_rings(struct xgene_dma_chan *chan)
+{
+	struct xgene_dma_ring *rx_ring = &chan->rx_ring;
+	struct xgene_dma_ring *tx_ring = &chan->tx_ring;
+	int ret;
 
 	/* Create DMA Rx ring descriptor */
 	rx_ring->owner = XGENE_DMA_RING_OWNER_CPU;
@@ -1225,8 +1224,8 @@ fail:
 
 	ret = xgene_dma_create_ring_one(chan, rx_ring,
 					XGENE_DMA_RING_CFG_SIZE_64KB);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	chan_dbg(chan, "Rx ring id 0x%X num %d desc 0x%p\n",
 		 rx_ring->id, rx_ring->num, rx_ring->desc_vaddr);
@@ -1237,10 +1236,10 @@ fail:
 
 	ret = xgene_dma_create_ring_one(chan, tx_ring,
 					XGENE_DMA_RING_CFG_SIZE_64KB);
-	अगर (ret) अणु
+	if (ret) {
 		xgene_dma_delete_ring_one(rx_ring);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	tx_ring->dst_ring_num = XGENE_DMA_RING_DST_ID(rx_ring->num);
 
@@ -1251,240 +1250,240 @@ fail:
 	/* Set the max outstanding request possible to this channel */
 	chan->max_outstanding = tx_ring->slots;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xgene_dma_init_rings(काष्ठा xgene_dma *pdma)
-अणु
-	पूर्णांक ret, i, j;
+static int xgene_dma_init_rings(struct xgene_dma *pdma)
+{
+	int ret, i, j;
 
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) अणु
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) {
 		ret = xgene_dma_create_chan_rings(&pdma->chan[i]);
-		अगर (ret) अणु
-			क्रम (j = 0; j < i; j++)
+		if (ret) {
+			for (j = 0; j < i; j++)
 				xgene_dma_delete_chan_rings(&pdma->chan[j]);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xgene_dma_enable(काष्ठा xgene_dma *pdma)
-अणु
+static void xgene_dma_enable(struct xgene_dma *pdma)
+{
 	u32 val;
 
 	/* Configure and enable DMA engine */
-	val = ioपढ़ो32(pdma->csr_dma + XGENE_DMA_GCR);
+	val = ioread32(pdma->csr_dma + XGENE_DMA_GCR);
 	XGENE_DMA_CH_SETUP(val);
 	XGENE_DMA_ENABLE(val);
-	ioग_लिखो32(val, pdma->csr_dma + XGENE_DMA_GCR);
-पूर्ण
+	iowrite32(val, pdma->csr_dma + XGENE_DMA_GCR);
+}
 
-अटल व्योम xgene_dma_disable(काष्ठा xgene_dma *pdma)
-अणु
+static void xgene_dma_disable(struct xgene_dma *pdma)
+{
 	u32 val;
 
-	val = ioपढ़ो32(pdma->csr_dma + XGENE_DMA_GCR);
+	val = ioread32(pdma->csr_dma + XGENE_DMA_GCR);
 	XGENE_DMA_DISABLE(val);
-	ioग_लिखो32(val, pdma->csr_dma + XGENE_DMA_GCR);
-पूर्ण
+	iowrite32(val, pdma->csr_dma + XGENE_DMA_GCR);
+}
 
-अटल व्योम xgene_dma_mask_पूर्णांकerrupts(काष्ठा xgene_dma *pdma)
-अणु
+static void xgene_dma_mask_interrupts(struct xgene_dma *pdma)
+{
 	/*
 	 * Mask DMA ring overflow, underflow and
-	 * AXI ग_लिखो/पढ़ो error पूर्णांकerrupts
+	 * AXI write/read error interrupts
 	 */
-	ioग_लिखो32(XGENE_DMA_INT_ALL_MASK,
+	iowrite32(XGENE_DMA_INT_ALL_MASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT0_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_MASK,
+	iowrite32(XGENE_DMA_INT_ALL_MASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT1_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_MASK,
+	iowrite32(XGENE_DMA_INT_ALL_MASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT2_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_MASK,
+	iowrite32(XGENE_DMA_INT_ALL_MASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT3_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_MASK,
+	iowrite32(XGENE_DMA_INT_ALL_MASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT4_MASK);
 
-	/* Mask DMA error पूर्णांकerrupts */
-	ioग_लिखो32(XGENE_DMA_INT_ALL_MASK, pdma->csr_dma + XGENE_DMA_INT_MASK);
-पूर्ण
+	/* Mask DMA error interrupts */
+	iowrite32(XGENE_DMA_INT_ALL_MASK, pdma->csr_dma + XGENE_DMA_INT_MASK);
+}
 
-अटल व्योम xgene_dma_unmask_पूर्णांकerrupts(काष्ठा xgene_dma *pdma)
-अणु
+static void xgene_dma_unmask_interrupts(struct xgene_dma *pdma)
+{
 	/*
 	 * Unmask DMA ring overflow, underflow and
-	 * AXI ग_लिखो/पढ़ो error पूर्णांकerrupts
+	 * AXI write/read error interrupts
 	 */
-	ioग_लिखो32(XGENE_DMA_INT_ALL_UNMASK,
+	iowrite32(XGENE_DMA_INT_ALL_UNMASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT0_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_UNMASK,
+	iowrite32(XGENE_DMA_INT_ALL_UNMASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT1_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_UNMASK,
+	iowrite32(XGENE_DMA_INT_ALL_UNMASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT2_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_UNMASK,
+	iowrite32(XGENE_DMA_INT_ALL_UNMASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT3_MASK);
-	ioग_लिखो32(XGENE_DMA_INT_ALL_UNMASK,
+	iowrite32(XGENE_DMA_INT_ALL_UNMASK,
 		  pdma->csr_dma + XGENE_DMA_RING_INT4_MASK);
 
-	/* Unmask DMA error पूर्णांकerrupts */
-	ioग_लिखो32(XGENE_DMA_INT_ALL_UNMASK,
+	/* Unmask DMA error interrupts */
+	iowrite32(XGENE_DMA_INT_ALL_UNMASK,
 		  pdma->csr_dma + XGENE_DMA_INT_MASK);
-पूर्ण
+}
 
-अटल व्योम xgene_dma_init_hw(काष्ठा xgene_dma *pdma)
-अणु
+static void xgene_dma_init_hw(struct xgene_dma *pdma)
+{
 	u32 val;
 
 	/* Associate DMA ring to corresponding ring HW */
-	ioग_लिखो32(XGENE_DMA_ASSOC_RING_MNGR1,
+	iowrite32(XGENE_DMA_ASSOC_RING_MNGR1,
 		  pdma->csr_dma + XGENE_DMA_CFG_RING_WQ_ASSOC);
 
 	/* Configure RAID6 polynomial control setting */
-	अगर (is_pq_enabled(pdma))
-		ioग_लिखो32(XGENE_DMA_RAID6_MULTI_CTRL(0x1D),
+	if (is_pq_enabled(pdma))
+		iowrite32(XGENE_DMA_RAID6_MULTI_CTRL(0x1D),
 			  pdma->csr_dma + XGENE_DMA_RAID6_CONT);
-	अन्यथा
+	else
 		dev_info(pdma->dev, "PQ is disabled in HW\n");
 
 	xgene_dma_enable(pdma);
-	xgene_dma_unmask_पूर्णांकerrupts(pdma);
+	xgene_dma_unmask_interrupts(pdma);
 
 	/* Get DMA id and version info */
-	val = ioपढ़ो32(pdma->csr_dma + XGENE_DMA_IPBRR);
+	val = ioread32(pdma->csr_dma + XGENE_DMA_IPBRR);
 
 	/* DMA device info */
 	dev_info(pdma->dev,
 		 "X-Gene DMA v%d.%02d.%02d driver registered %d channels",
 		 XGENE_DMA_REV_NO_RD(val), XGENE_DMA_BUS_ID_RD(val),
 		 XGENE_DMA_DEV_ID_RD(val), XGENE_DMA_MAX_CHANNEL);
-पूर्ण
+}
 
-अटल पूर्णांक xgene_dma_init_ring_mngr(काष्ठा xgene_dma *pdma)
-अणु
-	अगर (ioपढ़ो32(pdma->csr_ring + XGENE_DMA_RING_CLKEN) &&
-	    (!ioपढ़ो32(pdma->csr_ring + XGENE_DMA_RING_SRST)))
-		वापस 0;
+static int xgene_dma_init_ring_mngr(struct xgene_dma *pdma)
+{
+	if (ioread32(pdma->csr_ring + XGENE_DMA_RING_CLKEN) &&
+	    (!ioread32(pdma->csr_ring + XGENE_DMA_RING_SRST)))
+		return 0;
 
-	ioग_लिखो32(0x3, pdma->csr_ring + XGENE_DMA_RING_CLKEN);
-	ioग_लिखो32(0x0, pdma->csr_ring + XGENE_DMA_RING_SRST);
+	iowrite32(0x3, pdma->csr_ring + XGENE_DMA_RING_CLKEN);
+	iowrite32(0x0, pdma->csr_ring + XGENE_DMA_RING_SRST);
 
 	/* Bring up memory */
-	ioग_लिखो32(0x0, pdma->csr_ring + XGENE_DMA_RING_MEM_RAM_SHUTDOWN);
+	iowrite32(0x0, pdma->csr_ring + XGENE_DMA_RING_MEM_RAM_SHUTDOWN);
 
 	/* Force a barrier */
-	ioपढ़ो32(pdma->csr_ring + XGENE_DMA_RING_MEM_RAM_SHUTDOWN);
+	ioread32(pdma->csr_ring + XGENE_DMA_RING_MEM_RAM_SHUTDOWN);
 
 	/* reset may take up to 1ms */
 	usleep_range(1000, 1100);
 
-	अगर (ioपढ़ो32(pdma->csr_ring + XGENE_DMA_RING_BLK_MEM_RDY)
-		!= XGENE_DMA_RING_BLK_MEM_RDY_VAL) अणु
+	if (ioread32(pdma->csr_ring + XGENE_DMA_RING_BLK_MEM_RDY)
+		!= XGENE_DMA_RING_BLK_MEM_RDY_VAL) {
 		dev_err(pdma->dev,
 			"Failed to release ring mngr memory from shutdown\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* program threshold set 1 and all hysteresis */
-	ioग_लिखो32(XGENE_DMA_RING_THRESLD0_SET1_VAL,
+	iowrite32(XGENE_DMA_RING_THRESLD0_SET1_VAL,
 		  pdma->csr_ring + XGENE_DMA_RING_THRESLD0_SET1);
-	ioग_लिखो32(XGENE_DMA_RING_THRESLD1_SET1_VAL,
+	iowrite32(XGENE_DMA_RING_THRESLD1_SET1_VAL,
 		  pdma->csr_ring + XGENE_DMA_RING_THRESLD1_SET1);
-	ioग_लिखो32(XGENE_DMA_RING_HYSTERESIS_VAL,
+	iowrite32(XGENE_DMA_RING_HYSTERESIS_VAL,
 		  pdma->csr_ring + XGENE_DMA_RING_HYSTERESIS);
 
 	/* Enable QPcore and assign error queue */
-	ioग_लिखो32(XGENE_DMA_RING_ENABLE,
+	iowrite32(XGENE_DMA_RING_ENABLE,
 		  pdma->csr_ring + XGENE_DMA_RING_CONFIG);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_dma_init_mem(काष्ठा xgene_dma *pdma)
-अणु
-	पूर्णांक ret;
+static int xgene_dma_init_mem(struct xgene_dma *pdma)
+{
+	int ret;
 
 	ret = xgene_dma_init_ring_mngr(pdma);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Bring up memory */
-	ioग_लिखो32(0x0, pdma->csr_dma + XGENE_DMA_MEM_RAM_SHUTDOWN);
+	iowrite32(0x0, pdma->csr_dma + XGENE_DMA_MEM_RAM_SHUTDOWN);
 
 	/* Force a barrier */
-	ioपढ़ो32(pdma->csr_dma + XGENE_DMA_MEM_RAM_SHUTDOWN);
+	ioread32(pdma->csr_dma + XGENE_DMA_MEM_RAM_SHUTDOWN);
 
 	/* reset may take up to 1ms */
 	usleep_range(1000, 1100);
 
-	अगर (ioपढ़ो32(pdma->csr_dma + XGENE_DMA_BLK_MEM_RDY)
-		!= XGENE_DMA_BLK_MEM_RDY_VAL) अणु
+	if (ioread32(pdma->csr_dma + XGENE_DMA_BLK_MEM_RDY)
+		!= XGENE_DMA_BLK_MEM_RDY_VAL) {
 		dev_err(pdma->dev,
 			"Failed to release DMA memory from shutdown\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_dma_request_irqs(काष्ठा xgene_dma *pdma)
-अणु
-	काष्ठा xgene_dma_chan *chan;
-	पूर्णांक ret, i, j;
+static int xgene_dma_request_irqs(struct xgene_dma *pdma)
+{
+	struct xgene_dma_chan *chan;
+	int ret, i, j;
 
 	/* Register DMA error irq */
 	ret = devm_request_irq(pdma->dev, pdma->err_irq, xgene_dma_err_isr,
 			       0, "dma_error", pdma);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(pdma->dev,
 			"Failed to register error IRQ %d\n", pdma->err_irq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Register DMA channel rx irq */
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) अणु
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) {
 		chan = &pdma->chan[i];
 		irq_set_status_flags(chan->rx_irq, IRQ_DISABLE_UNLAZY);
 		ret = devm_request_irq(chan->dev, chan->rx_irq,
 				       xgene_dma_chan_ring_isr,
 				       0, chan->name, chan);
-		अगर (ret) अणु
+		if (ret) {
 			chan_err(chan, "Failed to register Rx IRQ %d\n",
 				 chan->rx_irq);
-			devm_मुक्त_irq(pdma->dev, pdma->err_irq, pdma);
+			devm_free_irq(pdma->dev, pdma->err_irq, pdma);
 
-			क्रम (j = 0; j < i; j++) अणु
+			for (j = 0; j < i; j++) {
 				chan = &pdma->chan[i];
 				irq_clear_status_flags(chan->rx_irq, IRQ_DISABLE_UNLAZY);
-				devm_मुक्त_irq(chan->dev, chan->rx_irq, chan);
-			पूर्ण
+				devm_free_irq(chan->dev, chan->rx_irq, chan);
+			}
 
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xgene_dma_मुक्त_irqs(काष्ठा xgene_dma *pdma)
-अणु
-	काष्ठा xgene_dma_chan *chan;
-	पूर्णांक i;
+static void xgene_dma_free_irqs(struct xgene_dma *pdma)
+{
+	struct xgene_dma_chan *chan;
+	int i;
 
 	/* Free DMA device error irq */
-	devm_मुक्त_irq(pdma->dev, pdma->err_irq, pdma);
+	devm_free_irq(pdma->dev, pdma->err_irq, pdma);
 
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) अणु
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) {
 		chan = &pdma->chan[i];
 		irq_clear_status_flags(chan->rx_irq, IRQ_DISABLE_UNLAZY);
-		devm_मुक्त_irq(chan->dev, chan->rx_irq, chan);
-	पूर्ण
-पूर्ण
+		devm_free_irq(chan->dev, chan->rx_irq, chan);
+	}
+}
 
-अटल व्योम xgene_dma_set_caps(काष्ठा xgene_dma_chan *chan,
-			       काष्ठा dma_device *dma_dev)
-अणु
+static void xgene_dma_set_caps(struct xgene_dma_chan *chan,
+			       struct dma_device *dma_dev)
+{
 	/* Initialize DMA device capability mask */
 	dma_cap_zero(dma_dev->cap_mask);
 
@@ -1493,46 +1492,46 @@ fail:
 	/* Basically here, the X-Gene SoC DMA engine channel 0 supports XOR
 	 * and channel 1 supports XOR, PQ both. First thing here is we have
 	 * mechanism in hw to enable/disable PQ/XOR supports on channel 1,
-	 * we can make sure this by पढ़ोing SoC Efuse रेजिस्टर.
-	 * Second thing, we have hw errata that अगर we run channel 0 and
+	 * we can make sure this by reading SoC Efuse register.
+	 * Second thing, we have hw errata that if we run channel 0 and
 	 * channel 1 simultaneously with executing XOR and PQ request,
 	 * suddenly DMA engine hangs, So here we enable XOR on channel 0 only
-	 * अगर XOR and PQ supports on channel 1 is disabled.
+	 * if XOR and PQ supports on channel 1 is disabled.
 	 */
-	अगर ((chan->id == XGENE_DMA_PQ_CHANNEL) &&
-	    is_pq_enabled(chan->pdma)) अणु
+	if ((chan->id == XGENE_DMA_PQ_CHANNEL) &&
+	    is_pq_enabled(chan->pdma)) {
 		dma_cap_set(DMA_PQ, dma_dev->cap_mask);
 		dma_cap_set(DMA_XOR, dma_dev->cap_mask);
-	पूर्ण अन्यथा अगर ((chan->id == XGENE_DMA_XOR_CHANNEL) &&
-		   !is_pq_enabled(chan->pdma)) अणु
+	} else if ((chan->id == XGENE_DMA_XOR_CHANNEL) &&
+		   !is_pq_enabled(chan->pdma)) {
 		dma_cap_set(DMA_XOR, dma_dev->cap_mask);
-	पूर्ण
+	}
 
 	/* Set base and prep routines */
 	dma_dev->dev = chan->dev;
 	dma_dev->device_alloc_chan_resources = xgene_dma_alloc_chan_resources;
-	dma_dev->device_मुक्त_chan_resources = xgene_dma_मुक्त_chan_resources;
+	dma_dev->device_free_chan_resources = xgene_dma_free_chan_resources;
 	dma_dev->device_issue_pending = xgene_dma_issue_pending;
 	dma_dev->device_tx_status = xgene_dma_tx_status;
 
-	अगर (dma_has_cap(DMA_XOR, dma_dev->cap_mask)) अणु
+	if (dma_has_cap(DMA_XOR, dma_dev->cap_mask)) {
 		dma_dev->device_prep_dma_xor = xgene_dma_prep_xor;
 		dma_dev->max_xor = XGENE_DMA_MAX_XOR_SRC;
 		dma_dev->xor_align = DMAENGINE_ALIGN_64_BYTES;
-	पूर्ण
+	}
 
-	अगर (dma_has_cap(DMA_PQ, dma_dev->cap_mask)) अणु
+	if (dma_has_cap(DMA_PQ, dma_dev->cap_mask)) {
 		dma_dev->device_prep_dma_pq = xgene_dma_prep_pq;
 		dma_dev->max_pq = XGENE_DMA_MAX_XOR_SRC;
 		dma_dev->pq_align = DMAENGINE_ALIGN_64_BYTES;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक xgene_dma_async_रेजिस्टर(काष्ठा xgene_dma *pdma, पूर्णांक id)
-अणु
-	काष्ठा xgene_dma_chan *chan = &pdma->chan[id];
-	काष्ठा dma_device *dma_dev = &pdma->dma_dev[id];
-	पूर्णांक ret;
+static int xgene_dma_async_register(struct xgene_dma *pdma, int id)
+{
+	struct xgene_dma_chan *chan = &pdma->chan[id];
+	struct dma_device *dma_dev = &pdma->dma_dev[id];
+	int ret;
 
 	chan->dma_chan.device = dma_dev;
 
@@ -1543,7 +1542,7 @@ fail:
 	tasklet_setup(&chan->tasklet, xgene_dma_tasklet_cb);
 
 	chan->pending = 0;
-	chan->desc_pool = शून्य;
+	chan->desc_pool = NULL;
 	dma_cookie_init(&chan->dma_chan);
 
 	/* Setup dma device capabilities and prep routines */
@@ -1554,13 +1553,13 @@ fail:
 	list_add_tail(&chan->dma_chan.device_node, &dma_dev->channels);
 
 	/* Register with Linux async DMA framework*/
-	ret = dma_async_device_रेजिस्टर(dma_dev);
-	अगर (ret) अणु
+	ret = dma_async_device_register(dma_dev);
+	if (ret) {
 		chan_err(chan, "Failed to register async device %d", ret);
-		tasklet_समाप्त(&chan->tasklet);
+		tasklet_kill(&chan->tasklet);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* DMA capability info */
 	dev_info(pdma->dev,
@@ -1568,264 +1567,264 @@ fail:
 		 dma_has_cap(DMA_XOR, dma_dev->cap_mask) ? "XOR " : "",
 		 dma_has_cap(DMA_PQ, dma_dev->cap_mask) ? "PQ " : "");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_dma_init_async(काष्ठा xgene_dma *pdma)
-अणु
-	पूर्णांक ret, i, j;
+static int xgene_dma_init_async(struct xgene_dma *pdma)
+{
+	int ret, i, j;
 
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL ; i++) अणु
-		ret = xgene_dma_async_रेजिस्टर(pdma, i);
-		अगर (ret) अणु
-			क्रम (j = 0; j < i; j++) अणु
-				dma_async_device_unरेजिस्टर(&pdma->dma_dev[j]);
-				tasklet_समाप्त(&pdma->chan[j].tasklet);
-			पूर्ण
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL ; i++) {
+		ret = xgene_dma_async_register(pdma, i);
+		if (ret) {
+			for (j = 0; j < i; j++) {
+				dma_async_device_unregister(&pdma->dma_dev[j]);
+				tasklet_kill(&pdma->chan[j].tasklet);
+			}
 
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम xgene_dma_async_unरेजिस्टर(काष्ठा xgene_dma *pdma)
-अणु
-	पूर्णांक i;
+static void xgene_dma_async_unregister(struct xgene_dma *pdma)
+{
+	int i;
 
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++)
-		dma_async_device_unरेजिस्टर(&pdma->dma_dev[i]);
-पूर्ण
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++)
+		dma_async_device_unregister(&pdma->dma_dev[i]);
+}
 
-अटल व्योम xgene_dma_init_channels(काष्ठा xgene_dma *pdma)
-अणु
-	काष्ठा xgene_dma_chan *chan;
-	पूर्णांक i;
+static void xgene_dma_init_channels(struct xgene_dma *pdma)
+{
+	struct xgene_dma_chan *chan;
+	int i;
 
 	pdma->ring_num = XGENE_DMA_RING_NUM;
 
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) अणु
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) {
 		chan = &pdma->chan[i];
 		chan->dev = pdma->dev;
 		chan->pdma = pdma;
 		chan->id = i;
-		snम_लिखो(chan->name, माप(chan->name), "dmachan%d", chan->id);
-	पूर्ण
-पूर्ण
+		snprintf(chan->name, sizeof(chan->name), "dmachan%d", chan->id);
+	}
+}
 
-अटल पूर्णांक xgene_dma_get_resources(काष्ठा platक्रमm_device *pdev,
-				   काष्ठा xgene_dma *pdma)
-अणु
-	काष्ठा resource *res;
-	पूर्णांक irq, i;
+static int xgene_dma_get_resources(struct platform_device *pdev,
+				   struct xgene_dma *pdma)
+{
+	struct resource *res;
+	int irq, i;
 
 	/* Get DMA csr region */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
 		dev_err(&pdev->dev, "Failed to get csr region\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pdma->csr_dma = devm_ioremap(&pdev->dev, res->start,
 				     resource_size(res));
-	अगर (!pdma->csr_dma) अणु
+	if (!pdma->csr_dma) {
 		dev_err(&pdev->dev, "Failed to ioremap csr region");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Get DMA ring csr region */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (!res) {
 		dev_err(&pdev->dev, "Failed to get ring csr region\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pdma->csr_ring =  devm_ioremap(&pdev->dev, res->start,
 				       resource_size(res));
-	अगर (!pdma->csr_ring) अणु
+	if (!pdma->csr_ring) {
 		dev_err(&pdev->dev, "Failed to ioremap ring csr region");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Get DMA ring cmd csr region */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 2);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+	if (!res) {
 		dev_err(&pdev->dev, "Failed to get ring cmd csr region\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pdma->csr_ring_cmd = devm_ioremap(&pdev->dev, res->start,
 					  resource_size(res));
-	अगर (!pdma->csr_ring_cmd) अणु
+	if (!pdma->csr_ring_cmd) {
 		dev_err(&pdev->dev, "Failed to ioremap ring cmd csr region");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	pdma->csr_ring_cmd += XGENE_DMA_RING_CMD_SM_OFFSET;
 
 	/* Get efuse csr region */
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 3);
-	अगर (!res) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 3);
+	if (!res) {
 		dev_err(&pdev->dev, "Failed to get efuse csr region\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	pdma->csr_efuse = devm_ioremap(&pdev->dev, res->start,
 				       resource_size(res));
-	अगर (!pdma->csr_efuse) अणु
+	if (!pdma->csr_efuse) {
 		dev_err(&pdev->dev, "Failed to ioremap efuse csr region");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* Get DMA error पूर्णांकerrupt */
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq <= 0)
-		वापस -ENXIO;
+	/* Get DMA error interrupt */
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0)
+		return -ENXIO;
 
 	pdma->err_irq = irq;
 
-	/* Get DMA Rx ring descriptor पूर्णांकerrupts क्रम all DMA channels */
-	क्रम (i = 1; i <= XGENE_DMA_MAX_CHANNEL; i++) अणु
-		irq = platक्रमm_get_irq(pdev, i);
-		अगर (irq <= 0)
-			वापस -ENXIO;
+	/* Get DMA Rx ring descriptor interrupts for all DMA channels */
+	for (i = 1; i <= XGENE_DMA_MAX_CHANNEL; i++) {
+		irq = platform_get_irq(pdev, i);
+		if (irq <= 0)
+			return -ENXIO;
 
 		pdma->chan[i - 1].rx_irq = irq;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xgene_dma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xgene_dma *pdma;
-	पूर्णांक ret, i;
+static int xgene_dma_probe(struct platform_device *pdev)
+{
+	struct xgene_dma *pdma;
+	int ret, i;
 
-	pdma = devm_kzalloc(&pdev->dev, माप(*pdma), GFP_KERNEL);
-	अगर (!pdma)
-		वापस -ENOMEM;
+	pdma = devm_kzalloc(&pdev->dev, sizeof(*pdma), GFP_KERNEL);
+	if (!pdma)
+		return -ENOMEM;
 
 	pdma->dev = &pdev->dev;
-	platक्रमm_set_drvdata(pdev, pdma);
+	platform_set_drvdata(pdev, pdma);
 
 	ret = xgene_dma_get_resources(pdev, pdma);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pdma->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(pdma->clk) && !ACPI_COMPANION(&pdev->dev)) अणु
+	pdma->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(pdma->clk) && !ACPI_COMPANION(&pdev->dev)) {
 		dev_err(&pdev->dev, "Failed to get clk\n");
-		वापस PTR_ERR(pdma->clk);
-	पूर्ण
+		return PTR_ERR(pdma->clk);
+	}
 
-	/* Enable clk beक्रमe accessing रेजिस्टरs */
-	अगर (!IS_ERR(pdma->clk)) अणु
+	/* Enable clk before accessing registers */
+	if (!IS_ERR(pdma->clk)) {
 		ret = clk_prepare_enable(pdma->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "Failed to enable clk %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* Remove DMA RAM out of shutकरोwn */
+	/* Remove DMA RAM out of shutdown */
 	ret = xgene_dma_init_mem(pdma);
-	अगर (ret)
-		जाओ err_clk_enable;
+	if (ret)
+		goto err_clk_enable;
 
 	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(42));
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "No usable DMA configuration\n");
-		जाओ err_dma_mask;
-	पूर्ण
+		goto err_dma_mask;
+	}
 
 	/* Initialize DMA channels software state */
 	xgene_dma_init_channels(pdma);
 
 	/* Configue DMA rings */
 	ret = xgene_dma_init_rings(pdma);
-	अगर (ret)
-		जाओ err_clk_enable;
+	if (ret)
+		goto err_clk_enable;
 
 	ret = xgene_dma_request_irqs(pdma);
-	अगर (ret)
-		जाओ err_request_irq;
+	if (ret)
+		goto err_request_irq;
 
 	/* Configure and enable DMA engine */
 	xgene_dma_init_hw(pdma);
 
 	/* Register DMA device with linux async framework */
 	ret = xgene_dma_init_async(pdma);
-	अगर (ret)
-		जाओ err_async_init;
+	if (ret)
+		goto err_async_init;
 
-	वापस 0;
+	return 0;
 
 err_async_init:
-	xgene_dma_मुक्त_irqs(pdma);
+	xgene_dma_free_irqs(pdma);
 
 err_request_irq:
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++)
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++)
 		xgene_dma_delete_chan_rings(&pdma->chan[i]);
 
 err_dma_mask:
 err_clk_enable:
-	अगर (!IS_ERR(pdma->clk))
+	if (!IS_ERR(pdma->clk))
 		clk_disable_unprepare(pdma->clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक xgene_dma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xgene_dma *pdma = platक्रमm_get_drvdata(pdev);
-	काष्ठा xgene_dma_chan *chan;
-	पूर्णांक i;
+static int xgene_dma_remove(struct platform_device *pdev)
+{
+	struct xgene_dma *pdma = platform_get_drvdata(pdev);
+	struct xgene_dma_chan *chan;
+	int i;
 
-	xgene_dma_async_unरेजिस्टर(pdma);
+	xgene_dma_async_unregister(pdma);
 
-	/* Mask पूर्णांकerrupts and disable DMA engine */
-	xgene_dma_mask_पूर्णांकerrupts(pdma);
+	/* Mask interrupts and disable DMA engine */
+	xgene_dma_mask_interrupts(pdma);
 	xgene_dma_disable(pdma);
-	xgene_dma_मुक्त_irqs(pdma);
+	xgene_dma_free_irqs(pdma);
 
-	क्रम (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) अणु
+	for (i = 0; i < XGENE_DMA_MAX_CHANNEL; i++) {
 		chan = &pdma->chan[i];
-		tasklet_समाप्त(&chan->tasklet);
+		tasklet_kill(&chan->tasklet);
 		xgene_dma_delete_chan_rings(chan);
-	पूर्ण
+	}
 
-	अगर (!IS_ERR(pdma->clk))
+	if (!IS_ERR(pdma->clk))
 		clk_disable_unprepare(pdma->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id xgene_dma_acpi_match_ptr[] = अणु
-	अणु"APMC0D43", 0पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id xgene_dma_acpi_match_ptr[] = {
+	{"APMC0D43", 0},
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, xgene_dma_acpi_match_ptr);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा of_device_id xgene_dma_of_match_ptr[] = अणु
-	अणु.compatible = "apm,xgene-storm-dma",पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id xgene_dma_of_match_ptr[] = {
+	{.compatible = "apm,xgene-storm-dma",},
+	{},
+};
 MODULE_DEVICE_TABLE(of, xgene_dma_of_match_ptr);
 
-अटल काष्ठा platक्रमm_driver xgene_dma_driver = अणु
+static struct platform_driver xgene_dma_driver = {
 	.probe = xgene_dma_probe,
-	.हटाओ = xgene_dma_हटाओ,
-	.driver = अणु
+	.remove = xgene_dma_remove,
+	.driver = {
 		.name = "X-Gene-DMA",
 		.of_match_table = xgene_dma_of_match_ptr,
 		.acpi_match_table = ACPI_PTR(xgene_dma_acpi_match_ptr),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(xgene_dma_driver);
+module_platform_driver(xgene_dma_driver);
 
 MODULE_DESCRIPTION("APM X-Gene SoC DMA driver");
 MODULE_AUTHOR("Rameshwar Prasad Sahu <rsahu@apm.com>");

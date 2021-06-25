@@ -1,235 +1,234 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#समावेश <linux/module.h>
-#समावेश <linux/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables.h>
-#समावेश <net/netfilter/nf_tables_core.h>
-#समावेश <net/netfilter/nf_socket.h>
-#समावेश <net/inet_sock.h>
-#समावेश <net/tcp.h>
+/* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/module.h>
+#include <linux/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables.h>
+#include <net/netfilter/nf_tables_core.h>
+#include <net/netfilter/nf_socket.h>
+#include <net/inet_sock.h>
+#include <net/tcp.h>
 
-काष्ठा nft_socket अणु
-	क्रमागत nft_socket_keys		key:8;
+struct nft_socket {
+	enum nft_socket_keys		key:8;
 	u8				level;
-	जोड़ अणु
+	union {
 		u8			dreg;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-अटल व्योम nft_socket_wildcard(स्थिर काष्ठा nft_pktinfo *pkt,
-				काष्ठा nft_regs *regs, काष्ठा sock *sk,
+static void nft_socket_wildcard(const struct nft_pktinfo *pkt,
+				struct nft_regs *regs, struct sock *sk,
 				u32 *dest)
-अणु
-	चयन (nft_pf(pkt)) अणु
-	हाल NFPROTO_IPV4:
+{
+	switch (nft_pf(pkt)) {
+	case NFPROTO_IPV4:
 		nft_reg_store8(dest, inet_sk(sk)->inet_rcv_saddr == 0);
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-	हाल NFPROTO_IPV6:
+		break;
+#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+	case NFPROTO_IPV6:
 		nft_reg_store8(dest, ipv6_addr_any(&sk->sk_v6_rcv_saddr));
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		regs->verdict.code = NFT_BREAK;
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}
 
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-अटल noअंतरभूत bool
-nft_sock_get_eval_cgroupv2(u32 *dest, स्थिर काष्ठा nft_pktinfo *pkt, u32 level)
-अणु
-	काष्ठा sock *sk = skb_to_full_sk(pkt->skb);
-	काष्ठा cgroup *cgrp;
+#ifdef CONFIG_SOCK_CGROUP_DATA
+static noinline bool
+nft_sock_get_eval_cgroupv2(u32 *dest, const struct nft_pktinfo *pkt, u32 level)
+{
+	struct sock *sk = skb_to_full_sk(pkt->skb);
+	struct cgroup *cgrp;
 
-	अगर (!sk || !sk_fullsock(sk) || !net_eq(nft_net(pkt), sock_net(sk)))
-		वापस false;
+	if (!sk || !sk_fullsock(sk) || !net_eq(nft_net(pkt), sock_net(sk)))
+		return false;
 
 	cgrp = sock_cgroup_ptr(&sk->sk_cgrp_data);
-	अगर (level > cgrp->level)
-		वापस false;
+	if (level > cgrp->level)
+		return false;
 
-	स_नकल(dest, &cgrp->ancestor_ids[level], माप(u64));
+	memcpy(dest, &cgrp->ancestor_ids[level], sizeof(u64));
 
-	वापस true;
-पूर्ण
-#पूर्ण_अगर
+	return true;
+}
+#endif
 
-अटल व्योम nft_socket_eval(स्थिर काष्ठा nft_expr *expr,
-			    काष्ठा nft_regs *regs,
-			    स्थिर काष्ठा nft_pktinfo *pkt)
-अणु
-	स्थिर काष्ठा nft_socket *priv = nft_expr_priv(expr);
-	काष्ठा sk_buff *skb = pkt->skb;
-	काष्ठा sock *sk = skb->sk;
+static void nft_socket_eval(const struct nft_expr *expr,
+			    struct nft_regs *regs,
+			    const struct nft_pktinfo *pkt)
+{
+	const struct nft_socket *priv = nft_expr_priv(expr);
+	struct sk_buff *skb = pkt->skb;
+	struct sock *sk = skb->sk;
 	u32 *dest = &regs->data[priv->dreg];
 
-	अगर (sk && !net_eq(nft_net(pkt), sock_net(sk)))
-		sk = शून्य;
+	if (sk && !net_eq(nft_net(pkt), sock_net(sk)))
+		sk = NULL;
 
-	अगर (!sk)
-		चयन(nft_pf(pkt)) अणु
-		हाल NFPROTO_IPV4:
+	if (!sk)
+		switch(nft_pf(pkt)) {
+		case NFPROTO_IPV4:
 			sk = nf_sk_lookup_slow_v4(nft_net(pkt), skb, nft_in(pkt));
-			अवरोध;
-#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-		हाल NFPROTO_IPV6:
+			break;
+#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+		case NFPROTO_IPV6:
 			sk = nf_sk_lookup_slow_v6(nft_net(pkt), skb, nft_in(pkt));
-			अवरोध;
-#पूर्ण_अगर
-		शेष:
+			break;
+#endif
+		default:
 			WARN_ON_ONCE(1);
 			regs->verdict.code = NFT_BREAK;
-			वापस;
-		पूर्ण
+			return;
+		}
 
-	अगर (!sk) अणु
+	if (!sk) {
 		regs->verdict.code = NFT_BREAK;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन(priv->key) अणु
-	हाल NFT_SOCKET_TRANSPARENT:
+	switch(priv->key) {
+	case NFT_SOCKET_TRANSPARENT:
 		nft_reg_store8(dest, inet_sk_transparent(sk));
-		अवरोध;
-	हाल NFT_SOCKET_MARK:
-		अगर (sk_fullsock(sk)) अणु
+		break;
+	case NFT_SOCKET_MARK:
+		if (sk_fullsock(sk)) {
 			*dest = sk->sk_mark;
-		पूर्ण अन्यथा अणु
+		} else {
 			regs->verdict.code = NFT_BREAK;
-			वापस;
-		पूर्ण
-		अवरोध;
-	हाल NFT_SOCKET_WILDCARD:
-		अगर (!sk_fullsock(sk)) अणु
+			return;
+		}
+		break;
+	case NFT_SOCKET_WILDCARD:
+		if (!sk_fullsock(sk)) {
 			regs->verdict.code = NFT_BREAK;
-			वापस;
-		पूर्ण
+			return;
+		}
 		nft_socket_wildcard(pkt, regs, sk, dest);
-		अवरोध;
-#अगर_घोषित CONFIG_SOCK_CGROUP_DATA
-	हाल NFT_SOCKET_CGROUPV2:
-		अगर (!nft_sock_get_eval_cgroupv2(dest, pkt, priv->level)) अणु
+		break;
+#ifdef CONFIG_SOCK_CGROUP_DATA
+	case NFT_SOCKET_CGROUPV2:
+		if (!nft_sock_get_eval_cgroupv2(dest, pkt, priv->level)) {
 			regs->verdict.code = NFT_BREAK;
-			वापस;
-		पूर्ण
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+			return;
+		}
+		break;
+#endif
+	default:
 		WARN_ON(1);
 		regs->verdict.code = NFT_BREAK;
-	पूर्ण
+	}
 
-	अगर (sk != skb->sk)
+	if (sk != skb->sk)
 		sock_gen_put(sk);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy nft_socket_policy[NFTA_SOCKET_MAX + 1] = अणु
-	[NFTA_SOCKET_KEY]		= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_SOCKET_DREG]		= अणु .type = NLA_U32 पूर्ण,
-	[NFTA_SOCKET_LEVEL]		= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy nft_socket_policy[NFTA_SOCKET_MAX + 1] = {
+	[NFTA_SOCKET_KEY]		= { .type = NLA_U32 },
+	[NFTA_SOCKET_DREG]		= { .type = NLA_U32 },
+	[NFTA_SOCKET_LEVEL]		= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक nft_socket_init(स्थिर काष्ठा nft_ctx *ctx,
-			   स्थिर काष्ठा nft_expr *expr,
-			   स्थिर काष्ठा nlattr * स्थिर tb[])
-अणु
-	काष्ठा nft_socket *priv = nft_expr_priv(expr);
-	अचिन्हित पूर्णांक len;
+static int nft_socket_init(const struct nft_ctx *ctx,
+			   const struct nft_expr *expr,
+			   const struct nlattr * const tb[])
+{
+	struct nft_socket *priv = nft_expr_priv(expr);
+	unsigned int len;
 
-	अगर (!tb[NFTA_SOCKET_DREG] || !tb[NFTA_SOCKET_KEY])
-		वापस -EINVAL;
+	if (!tb[NFTA_SOCKET_DREG] || !tb[NFTA_SOCKET_KEY])
+		return -EINVAL;
 
-	चयन(ctx->family) अणु
-	हाल NFPROTO_IPV4:
-#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-	हाल NFPROTO_IPV6:
-#पूर्ण_अगर
-	हाल NFPROTO_INET:
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	switch(ctx->family) {
+	case NFPROTO_IPV4:
+#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+	case NFPROTO_IPV6:
+#endif
+	case NFPROTO_INET:
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	priv->key = ntohl(nla_get_u32(tb[NFTA_SOCKET_KEY]));
-	चयन(priv->key) अणु
-	हाल NFT_SOCKET_TRANSPARENT:
-	हाल NFT_SOCKET_WILDCARD:
-		len = माप(u8);
-		अवरोध;
-	हाल NFT_SOCKET_MARK:
-		len = माप(u32);
-		अवरोध;
-#अगर_घोषित CONFIG_CGROUPS
-	हाल NFT_SOCKET_CGROUPV2: अणु
-		अचिन्हित पूर्णांक level;
+	switch(priv->key) {
+	case NFT_SOCKET_TRANSPARENT:
+	case NFT_SOCKET_WILDCARD:
+		len = sizeof(u8);
+		break;
+	case NFT_SOCKET_MARK:
+		len = sizeof(u32);
+		break;
+#ifdef CONFIG_CGROUPS
+	case NFT_SOCKET_CGROUPV2: {
+		unsigned int level;
 
-		अगर (!tb[NFTA_SOCKET_LEVEL])
-			वापस -EINVAL;
+		if (!tb[NFTA_SOCKET_LEVEL])
+			return -EINVAL;
 
 		level = ntohl(nla_get_u32(tb[NFTA_SOCKET_LEVEL]));
-		अगर (level > 255)
-			वापस -EOPNOTSUPP;
+		if (level > 255)
+			return -EOPNOTSUPP;
 
 		priv->level = level;
-		len = माप(u64);
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		len = sizeof(u64);
+		break;
+	}
+#endif
+	default:
+		return -EOPNOTSUPP;
+	}
 
-	वापस nft_parse_रेजिस्टर_store(ctx, tb[NFTA_SOCKET_DREG], &priv->dreg,
-					शून्य, NFT_DATA_VALUE, len);
-पूर्ण
+	return nft_parse_register_store(ctx, tb[NFTA_SOCKET_DREG], &priv->dreg,
+					NULL, NFT_DATA_VALUE, len);
+}
 
-अटल पूर्णांक nft_socket_dump(काष्ठा sk_buff *skb,
-			   स्थिर काष्ठा nft_expr *expr)
-अणु
-	स्थिर काष्ठा nft_socket *priv = nft_expr_priv(expr);
+static int nft_socket_dump(struct sk_buff *skb,
+			   const struct nft_expr *expr)
+{
+	const struct nft_socket *priv = nft_expr_priv(expr);
 
-	अगर (nla_put_u32(skb, NFTA_SOCKET_KEY, htonl(priv->key)))
-		वापस -1;
-	अगर (nft_dump_रेजिस्टर(skb, NFTA_SOCKET_DREG, priv->dreg))
-		वापस -1;
-	अगर (priv->key == NFT_SOCKET_CGROUPV2 &&
+	if (nla_put_u32(skb, NFTA_SOCKET_KEY, htonl(priv->key)))
+		return -1;
+	if (nft_dump_register(skb, NFTA_SOCKET_DREG, priv->dreg))
+		return -1;
+	if (priv->key == NFT_SOCKET_CGROUPV2 &&
 	    nla_put_u32(skb, NFTA_SOCKET_LEVEL, htonl(priv->level)))
-		वापस -1;
-	वापस 0;
-पूर्ण
+		return -1;
+	return 0;
+}
 
-अटल काष्ठा nft_expr_type nft_socket_type;
-अटल स्थिर काष्ठा nft_expr_ops nft_socket_ops = अणु
+static struct nft_expr_type nft_socket_type;
+static const struct nft_expr_ops nft_socket_ops = {
 	.type		= &nft_socket_type,
-	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_socket)),
+	.size		= NFT_EXPR_SIZE(sizeof(struct nft_socket)),
 	.eval		= nft_socket_eval,
 	.init		= nft_socket_init,
 	.dump		= nft_socket_dump,
-पूर्ण;
+};
 
-अटल काष्ठा nft_expr_type nft_socket_type __पढ़ो_mostly = अणु
+static struct nft_expr_type nft_socket_type __read_mostly = {
 	.name		= "socket",
 	.ops		= &nft_socket_ops,
 	.policy		= nft_socket_policy,
 	.maxattr	= NFTA_SOCKET_MAX,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nft_socket_module_init(व्योम)
-अणु
-	वापस nft_रेजिस्टर_expr(&nft_socket_type);
-पूर्ण
+static int __init nft_socket_module_init(void)
+{
+	return nft_register_expr(&nft_socket_type);
+}
 
-अटल व्योम __निकास nft_socket_module_निकास(व्योम)
-अणु
-	nft_unरेजिस्टर_expr(&nft_socket_type);
-पूर्ण
+static void __exit nft_socket_module_exit(void)
+{
+	nft_unregister_expr(&nft_socket_type);
+}
 
 module_init(nft_socket_module_init);
-module_निकास(nft_socket_module_निकास);
+module_exit(nft_socket_module_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Mथँtथऊ Eckl");
+MODULE_AUTHOR("Máté Eckl");
 MODULE_DESCRIPTION("nf_tables socket match module");
 MODULE_ALIAS_NFT_EXPR("socket");

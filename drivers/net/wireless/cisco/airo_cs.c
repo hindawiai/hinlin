@@ -1,44 +1,43 @@
-<शैली गुरु>
 /*======================================================================
 
-    Aironet driver क्रम 4500 and 4800 series cards
+    Aironet driver for 4500 and 4800 series cards
 
     This code is released under both the GPL version 2 and BSD licenses.
     Either license may be used.  The respective licenses are found at
     the end of this file.
 
-    This code was developed by Benjamin Reed <breed@users.sourceक्रमge.net>
+    This code was developed by Benjamin Reed <breed@users.sourceforge.net>
     including portions of which come from the Aironet PC4500
     Developer's Reference Manual and used with permission.  Copyright
     (C) 1999 Benjamin Reed.  All Rights Reserved.  Permission to use
-    code in the Developer's manual was granted क्रम this driver by
+    code in the Developer's manual was granted for this driver by
     Aironet.
 
     In addition this module was derived from dummy_cs.
     The initial developer of dummy_cs is David A. Hinds
-    <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
+    <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
     are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
 
 ======================================================================*/
 
-#अगर_घोषित __IN_PCMCIA_PACKAGE__
-#समावेश <pcmcia/k_compat.h>
-#पूर्ण_अगर
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/netdevice.h>
+#ifdef __IN_PCMCIA_PACKAGE__
+#include <pcmcia/k_compat.h>
+#endif
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/ptrace.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/netdevice.h>
 
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/ds.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/ds.h>
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-#समावेश "airo.h"
+#include "airo.h"
 
 
 /*====================================================================*/
@@ -51,165 +50,165 @@ MODULE_LICENSE("Dual BSD/GPL");
 
 /*====================================================================*/
 
-अटल पूर्णांक airo_config(काष्ठा pcmcia_device *link);
-अटल व्योम airo_release(काष्ठा pcmcia_device *link);
+static int airo_config(struct pcmcia_device *link);
+static void airo_release(struct pcmcia_device *link);
 
-अटल व्योम airo_detach(काष्ठा pcmcia_device *p_dev);
+static void airo_detach(struct pcmcia_device *p_dev);
 
-काष्ठा local_info अणु
-	काष्ठा net_device *eth_dev;
-पूर्ण;
+struct local_info {
+	struct net_device *eth_dev;
+};
 
-अटल पूर्णांक airo_probe(काष्ठा pcmcia_device *p_dev)
-अणु
-	काष्ठा local_info *local;
+static int airo_probe(struct pcmcia_device *p_dev)
+{
+	struct local_info *local;
 
 	dev_dbg(&p_dev->dev, "airo_attach()\n");
 
-	/* Allocate space क्रम निजी device-specअगरic data */
-	local = kzalloc(माप(*local), GFP_KERNEL);
-	अगर (!local)
-		वापस -ENOMEM;
+	/* Allocate space for private device-specific data */
+	local = kzalloc(sizeof(*local), GFP_KERNEL);
+	if (!local)
+		return -ENOMEM;
 
 	p_dev->priv = local;
 
-	वापस airo_config(p_dev);
-पूर्ण /* airo_attach */
+	return airo_config(p_dev);
+} /* airo_attach */
 
-अटल व्योम airo_detach(काष्ठा pcmcia_device *link)
-अणु
+static void airo_detach(struct pcmcia_device *link)
+{
 	dev_dbg(&link->dev, "airo_detach\n");
 
 	airo_release(link);
 
-	अगर (((काष्ठा local_info *)link->priv)->eth_dev) अणु
-		stop_airo_card(((काष्ठा local_info *)link->priv)->eth_dev,
+	if (((struct local_info *)link->priv)->eth_dev) {
+		stop_airo_card(((struct local_info *)link->priv)->eth_dev,
 			       0);
-	पूर्ण
-	((काष्ठा local_info *)link->priv)->eth_dev = शून्य;
+	}
+	((struct local_info *)link->priv)->eth_dev = NULL;
 
-	kमुक्त(link->priv);
-पूर्ण /* airo_detach */
+	kfree(link->priv);
+} /* airo_detach */
 
-अटल पूर्णांक airo_cs_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
-अणु
-	अगर (p_dev->config_index == 0)
-		वापस -EINVAL;
+static int airo_cs_config_check(struct pcmcia_device *p_dev, void *priv_data)
+{
+	if (p_dev->config_index == 0)
+		return -EINVAL;
 
-	वापस pcmcia_request_io(p_dev);
-पूर्ण
+	return pcmcia_request_io(p_dev);
+}
 
 
-अटल पूर्णांक airo_config(काष्ठा pcmcia_device *link)
-अणु
-	पूर्णांक ret;
+static int airo_config(struct pcmcia_device *link)
+{
+	int ret;
 
 	dev_dbg(&link->dev, "airo_config\n");
 
 	link->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_VPP |
 		CONF_AUTO_AUDIO | CONF_AUTO_SET_IO;
 
-	ret = pcmcia_loop_config(link, airo_cs_config_check, शून्य);
-	अगर (ret)
-		जाओ failed;
+	ret = pcmcia_loop_config(link, airo_cs_config_check, NULL);
+	if (ret)
+		goto failed;
 
-	अगर (!link->irq)
-		जाओ failed;
+	if (!link->irq)
+		goto failed;
 
 	ret = pcmcia_enable_device(link);
-	अगर (ret)
-		जाओ failed;
-	((काष्ठा local_info *)link->priv)->eth_dev =
+	if (ret)
+		goto failed;
+	((struct local_info *)link->priv)->eth_dev =
 		init_airo_card(link->irq,
 			       link->resource[0]->start, 1, &link->dev);
-	अगर (!((काष्ठा local_info *)link->priv)->eth_dev)
-		जाओ failed;
+	if (!((struct local_info *)link->priv)->eth_dev)
+		goto failed;
 
-	वापस 0;
+	return 0;
 
  failed:
 	airo_release(link);
-	वापस -ENODEV;
-पूर्ण /* airo_config */
+	return -ENODEV;
+} /* airo_config */
 
-अटल व्योम airo_release(काष्ठा pcmcia_device *link)
-अणु
+static void airo_release(struct pcmcia_device *link)
+{
 	dev_dbg(&link->dev, "airo_release\n");
 	pcmcia_disable_device(link);
-पूर्ण
+}
 
-अटल पूर्णांक airo_suspend(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा local_info *local = link->priv;
+static int airo_suspend(struct pcmcia_device *link)
+{
+	struct local_info *local = link->priv;
 
-	netअगर_device_detach(local->eth_dev);
+	netif_device_detach(local->eth_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक airo_resume(काष्ठा pcmcia_device *link)
-अणु
-	काष्ठा local_info *local = link->priv;
+static int airo_resume(struct pcmcia_device *link)
+{
+	struct local_info *local = link->priv;
 
-	अगर (link->खोलो) अणु
+	if (link->open) {
 		reset_airo_card(local->eth_dev);
-		netअगर_device_attach(local->eth_dev);
-	पूर्ण
+		netif_device_attach(local->eth_dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pcmcia_device_id airo_ids[] = अणु
+static const struct pcmcia_device_id airo_ids[] = {
 	PCMCIA_DEVICE_MANF_CARD(0x015f, 0x000a),
 	PCMCIA_DEVICE_MANF_CARD(0x015f, 0x0005),
 	PCMCIA_DEVICE_MANF_CARD(0x015f, 0x0007),
 	PCMCIA_DEVICE_MANF_CARD(0x0105, 0x0007),
-	PCMCIA_DEVICE_शून्य,
-पूर्ण;
+	PCMCIA_DEVICE_NULL,
+};
 MODULE_DEVICE_TABLE(pcmcia, airo_ids);
 
-अटल काष्ठा pcmcia_driver airo_driver = अणु
+static struct pcmcia_driver airo_driver = {
 	.owner		= THIS_MODULE,
 	.name		= "airo_cs",
 	.probe		= airo_probe,
-	.हटाओ		= airo_detach,
+	.remove		= airo_detach,
 	.id_table       = airo_ids,
 	.suspend	= airo_suspend,
 	.resume		= airo_resume,
-पूर्ण;
+};
 module_pcmcia_driver(airo_driver);
 
 /*
-    This program is मुक्त software; you can redistribute it and/or
-    modअगरy it under the terms of the GNU General Public License
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
     as published by the Free Software Foundation; either version 2
     of the License, or (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License क्रम more details.
+    GNU General Public License for more details.
 
     In addition:
 
-    Redistribution and use in source and binary क्रमms, with or without
-    modअगरication, are permitted provided that the following conditions
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
     are met:
 
     1. Redistributions of source code must retain the above copyright
        notice, this list of conditions and the following disclaimer.
-    2. Redistributions in binary क्रमm must reproduce the above copyright
+    2. Redistributions in binary form must reproduce the above copyright
        notice, this list of conditions and the following disclaimer in the
-       करोcumentation and/or other materials provided with the distribution.
-    3. The name of the author may not be used to enकरोrse or promote
-       products derived from this software without specअगरic prior written
+       documentation and/or other materials provided with the distribution.
+    3. The name of the author may not be used to endorse or promote
+       products derived from this software without specific prior written
        permission.
 
     THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
     IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-    ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT,
-    INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+    INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
     (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
     SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,

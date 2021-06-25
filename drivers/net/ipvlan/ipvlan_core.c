@@ -1,238 +1,237 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
-#समावेश "ipvlan.h"
+#include "ipvlan.h"
 
-अटल u32 ipvlan_jhash_secret __पढ़ो_mostly;
+static u32 ipvlan_jhash_secret __read_mostly;
 
-व्योम ipvlan_init_secret(व्योम)
-अणु
-	net_get_अक्रमom_once(&ipvlan_jhash_secret, माप(ipvlan_jhash_secret));
-पूर्ण
+void ipvlan_init_secret(void)
+{
+	net_get_random_once(&ipvlan_jhash_secret, sizeof(ipvlan_jhash_secret));
+}
 
-व्योम ipvlan_count_rx(स्थिर काष्ठा ipvl_dev *ipvlan,
-			    अचिन्हित पूर्णांक len, bool success, bool mcast)
-अणु
-	अगर (likely(success)) अणु
-		काष्ठा ipvl_pcpu_stats *pcptr;
+void ipvlan_count_rx(const struct ipvl_dev *ipvlan,
+			    unsigned int len, bool success, bool mcast)
+{
+	if (likely(success)) {
+		struct ipvl_pcpu_stats *pcptr;
 
 		pcptr = this_cpu_ptr(ipvlan->pcpu_stats);
 		u64_stats_update_begin(&pcptr->syncp);
 		pcptr->rx_pkts++;
 		pcptr->rx_bytes += len;
-		अगर (mcast)
+		if (mcast)
 			pcptr->rx_mcast++;
 		u64_stats_update_end(&pcptr->syncp);
-	पूर्ण अन्यथा अणु
+	} else {
 		this_cpu_inc(ipvlan->pcpu_stats->rx_errs);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(ipvlan_count_rx);
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल u8 ipvlan_get_v6_hash(स्थिर व्योम *iaddr)
-अणु
-	स्थिर काष्ठा in6_addr *ip6_addr = iaddr;
+#if IS_ENABLED(CONFIG_IPV6)
+static u8 ipvlan_get_v6_hash(const void *iaddr)
+{
+	const struct in6_addr *ip6_addr = iaddr;
 
-	वापस __ipv6_addr_jhash(ip6_addr, ipvlan_jhash_secret) &
+	return __ipv6_addr_jhash(ip6_addr, ipvlan_jhash_secret) &
 	       IPVLAN_HASH_MASK;
-पूर्ण
-#अन्यथा
-अटल u8 ipvlan_get_v6_hash(स्थिर व्योम *iaddr)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+}
+#else
+static u8 ipvlan_get_v6_hash(const void *iaddr)
+{
+	return 0;
+}
+#endif
 
-अटल u8 ipvlan_get_v4_hash(स्थिर व्योम *iaddr)
-अणु
-	स्थिर काष्ठा in_addr *ip4_addr = iaddr;
+static u8 ipvlan_get_v4_hash(const void *iaddr)
+{
+	const struct in_addr *ip4_addr = iaddr;
 
-	वापस jhash_1word(ip4_addr->s_addr, ipvlan_jhash_secret) &
+	return jhash_1word(ip4_addr->s_addr, ipvlan_jhash_secret) &
 	       IPVLAN_HASH_MASK;
-पूर्ण
+}
 
-अटल bool addr_equal(bool is_v6, काष्ठा ipvl_addr *addr, स्थिर व्योम *iaddr)
-अणु
-	अगर (!is_v6 && addr->atype == IPVL_IPV4) अणु
-		काष्ठा in_addr *i4addr = (काष्ठा in_addr *)iaddr;
+static bool addr_equal(bool is_v6, struct ipvl_addr *addr, const void *iaddr)
+{
+	if (!is_v6 && addr->atype == IPVL_IPV4) {
+		struct in_addr *i4addr = (struct in_addr *)iaddr;
 
-		वापस addr->ip4addr.s_addr == i4addr->s_addr;
-#अगर IS_ENABLED(CONFIG_IPV6)
-	पूर्ण अन्यथा अगर (is_v6 && addr->atype == IPVL_IPV6) अणु
-		काष्ठा in6_addr *i6addr = (काष्ठा in6_addr *)iaddr;
+		return addr->ip4addr.s_addr == i4addr->s_addr;
+#if IS_ENABLED(CONFIG_IPV6)
+	} else if (is_v6 && addr->atype == IPVL_IPV6) {
+		struct in6_addr *i6addr = (struct in6_addr *)iaddr;
 
-		वापस ipv6_addr_equal(&addr->ip6addr, i6addr);
-#पूर्ण_अगर
-	पूर्ण
+		return ipv6_addr_equal(&addr->ip6addr, i6addr);
+#endif
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल काष्ठा ipvl_addr *ipvlan_ht_addr_lookup(स्थिर काष्ठा ipvl_port *port,
-					       स्थिर व्योम *iaddr, bool is_v6)
-अणु
-	काष्ठा ipvl_addr *addr;
+static struct ipvl_addr *ipvlan_ht_addr_lookup(const struct ipvl_port *port,
+					       const void *iaddr, bool is_v6)
+{
+	struct ipvl_addr *addr;
 	u8 hash;
 
 	hash = is_v6 ? ipvlan_get_v6_hash(iaddr) :
 	       ipvlan_get_v4_hash(iaddr);
-	hlist_क्रम_each_entry_rcu(addr, &port->hlhead[hash], hlnode)
-		अगर (addr_equal(is_v6, addr, iaddr))
-			वापस addr;
-	वापस शून्य;
-पूर्ण
+	hlist_for_each_entry_rcu(addr, &port->hlhead[hash], hlnode)
+		if (addr_equal(is_v6, addr, iaddr))
+			return addr;
+	return NULL;
+}
 
-व्योम ipvlan_ht_addr_add(काष्ठा ipvl_dev *ipvlan, काष्ठा ipvl_addr *addr)
-अणु
-	काष्ठा ipvl_port *port = ipvlan->port;
+void ipvlan_ht_addr_add(struct ipvl_dev *ipvlan, struct ipvl_addr *addr)
+{
+	struct ipvl_port *port = ipvlan->port;
 	u8 hash;
 
 	hash = (addr->atype == IPVL_IPV6) ?
 	       ipvlan_get_v6_hash(&addr->ip6addr) :
 	       ipvlan_get_v4_hash(&addr->ip4addr);
-	अगर (hlist_unhashed(&addr->hlnode))
+	if (hlist_unhashed(&addr->hlnode))
 		hlist_add_head_rcu(&addr->hlnode, &port->hlhead[hash]);
-पूर्ण
+}
 
-व्योम ipvlan_ht_addr_del(काष्ठा ipvl_addr *addr)
-अणु
+void ipvlan_ht_addr_del(struct ipvl_addr *addr)
+{
 	hlist_del_init_rcu(&addr->hlnode);
-पूर्ण
+}
 
-काष्ठा ipvl_addr *ipvlan_find_addr(स्थिर काष्ठा ipvl_dev *ipvlan,
-				   स्थिर व्योम *iaddr, bool is_v6)
-अणु
-	काष्ठा ipvl_addr *addr, *ret = शून्य;
+struct ipvl_addr *ipvlan_find_addr(const struct ipvl_dev *ipvlan,
+				   const void *iaddr, bool is_v6)
+{
+	struct ipvl_addr *addr, *ret = NULL;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(addr, &ipvlan->addrs, anode) अणु
-		अगर (addr_equal(is_v6, addr, iaddr)) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(addr, &ipvlan->addrs, anode) {
+		if (addr_equal(is_v6, addr, iaddr)) {
 			ret = addr;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
-bool ipvlan_addr_busy(काष्ठा ipvl_port *port, व्योम *iaddr, bool is_v6)
-अणु
-	काष्ठा ipvl_dev *ipvlan;
+bool ipvlan_addr_busy(struct ipvl_port *port, void *iaddr, bool is_v6)
+{
+	struct ipvl_dev *ipvlan;
 	bool ret = false;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(ipvlan, &port->ipvlans, pnode) अणु
-		अगर (ipvlan_find_addr(ipvlan, iaddr, is_v6)) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(ipvlan, &port->ipvlans, pnode) {
+		if (ipvlan_find_addr(ipvlan, iaddr, is_v6)) {
 			ret = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
-व्योम *ipvlan_get_L3_hdr(काष्ठा ipvl_port *port, काष्ठा sk_buff *skb, पूर्णांक *type)
-अणु
-	व्योम *lyr3h = शून्य;
+void *ipvlan_get_L3_hdr(struct ipvl_port *port, struct sk_buff *skb, int *type)
+{
+	void *lyr3h = NULL;
 
-	चयन (skb->protocol) अणु
-	हाल htons(ETH_P_ARP): अणु
-		काष्ठा arphdr *arph;
+	switch (skb->protocol) {
+	case htons(ETH_P_ARP): {
+		struct arphdr *arph;
 
-		अगर (unlikely(!pskb_may_pull(skb, arp_hdr_len(port->dev))))
-			वापस शून्य;
+		if (unlikely(!pskb_may_pull(skb, arp_hdr_len(port->dev))))
+			return NULL;
 
 		arph = arp_hdr(skb);
 		*type = IPVL_ARP;
 		lyr3h = arph;
-		अवरोध;
-	पूर्ण
-	हाल htons(ETH_P_IP): अणु
+		break;
+	}
+	case htons(ETH_P_IP): {
 		u32 pktlen;
-		काष्ठा iphdr *ip4h;
+		struct iphdr *ip4h;
 
-		अगर (unlikely(!pskb_may_pull(skb, माप(*ip4h))))
-			वापस शून्य;
+		if (unlikely(!pskb_may_pull(skb, sizeof(*ip4h))))
+			return NULL;
 
 		ip4h = ip_hdr(skb);
 		pktlen = ntohs(ip4h->tot_len);
-		अगर (ip4h->ihl < 5 || ip4h->version != 4)
-			वापस शून्य;
-		अगर (skb->len < pktlen || pktlen < (ip4h->ihl * 4))
-			वापस शून्य;
+		if (ip4h->ihl < 5 || ip4h->version != 4)
+			return NULL;
+		if (skb->len < pktlen || pktlen < (ip4h->ihl * 4))
+			return NULL;
 
 		*type = IPVL_IPV4;
 		lyr3h = ip4h;
-		अवरोध;
-	पूर्ण
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल htons(ETH_P_IPV6): अणु
-		काष्ठा ipv6hdr *ip6h;
+		break;
+	}
+#if IS_ENABLED(CONFIG_IPV6)
+	case htons(ETH_P_IPV6): {
+		struct ipv6hdr *ip6h;
 
-		अगर (unlikely(!pskb_may_pull(skb, माप(*ip6h))))
-			वापस शून्य;
+		if (unlikely(!pskb_may_pull(skb, sizeof(*ip6h))))
+			return NULL;
 
 		ip6h = ipv6_hdr(skb);
-		अगर (ip6h->version != 6)
-			वापस शून्य;
+		if (ip6h->version != 6)
+			return NULL;
 
 		*type = IPVL_IPV6;
 		lyr3h = ip6h;
-		/* Only Neighbour Solicitation pkts need dअगरferent treaपंचांगent */
-		अगर (ipv6_addr_any(&ip6h->saddr) &&
-		    ip6h->nexthdr == NEXTHDR_ICMP) अणु
-			काष्ठा icmp6hdr	*icmph;
+		/* Only Neighbour Solicitation pkts need different treatment */
+		if (ipv6_addr_any(&ip6h->saddr) &&
+		    ip6h->nexthdr == NEXTHDR_ICMP) {
+			struct icmp6hdr	*icmph;
 
-			अगर (unlikely(!pskb_may_pull(skb, माप(*ip6h) + माप(*icmph))))
-				वापस शून्य;
+			if (unlikely(!pskb_may_pull(skb, sizeof(*ip6h) + sizeof(*icmph))))
+				return NULL;
 
 			ip6h = ipv6_hdr(skb);
-			icmph = (काष्ठा icmp6hdr *)(ip6h + 1);
+			icmph = (struct icmp6hdr *)(ip6h + 1);
 
-			अगर (icmph->icmp6_type == NDISC_NEIGHBOUR_SOLICITATION) अणु
+			if (icmph->icmp6_type == NDISC_NEIGHBOUR_SOLICITATION) {
 				/* Need to access the ipv6 address in body */
-				अगर (unlikely(!pskb_may_pull(skb, माप(*ip6h) + माप(*icmph)
-						+ माप(काष्ठा in6_addr))))
-					वापस शून्य;
+				if (unlikely(!pskb_may_pull(skb, sizeof(*ip6h) + sizeof(*icmph)
+						+ sizeof(struct in6_addr))))
+					return NULL;
 
 				ip6h = ipv6_hdr(skb);
-				icmph = (काष्ठा icmp6hdr *)(ip6h + 1);
-			पूर्ण
+				icmph = (struct icmp6hdr *)(ip6h + 1);
+			}
 
 			*type = IPVL_ICMPV6;
 			lyr3h = icmph;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	शेष:
-		वापस शून्य;
-	पूर्ण
+		}
+		break;
+	}
+#endif
+	default:
+		return NULL;
+	}
 
-	वापस lyr3h;
-पूर्ण
+	return lyr3h;
+}
 
-अचिन्हित पूर्णांक ipvlan_mac_hash(स्थिर अचिन्हित अक्षर *addr)
-अणु
+unsigned int ipvlan_mac_hash(const unsigned char *addr)
+{
 	u32 hash = jhash_1word(__get_unaligned_cpu32(addr+2),
 			       ipvlan_jhash_secret);
 
-	वापस hash & IPVLAN_MAC_FILTER_MASK;
-पूर्ण
+	return hash & IPVLAN_MAC_FILTER_MASK;
+}
 
-व्योम ipvlan_process_multicast(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा ipvl_port *port = container_of(work, काष्ठा ipvl_port, wq);
-	काष्ठा ethhdr *ethh;
-	काष्ठा ipvl_dev *ipvlan;
-	काष्ठा sk_buff *skb, *nskb;
-	काष्ठा sk_buff_head list;
-	अचिन्हित पूर्णांक len;
-	अचिन्हित पूर्णांक mac_hash;
-	पूर्णांक ret;
+void ipvlan_process_multicast(struct work_struct *work)
+{
+	struct ipvl_port *port = container_of(work, struct ipvl_port, wq);
+	struct ethhdr *ethh;
+	struct ipvl_dev *ipvlan;
+	struct sk_buff *skb, *nskb;
+	struct sk_buff_head list;
+	unsigned int len;
+	unsigned int mac_hash;
+	int ret;
 	u8 pkt_type;
 	bool tx_pkt;
 
@@ -242,514 +241,514 @@ bool ipvlan_addr_busy(काष्ठा ipvl_port *port, व्योम *iaddr
 	skb_queue_splice_tail_init(&port->backlog, &list);
 	spin_unlock_bh(&port->backlog.lock);
 
-	जबतक ((skb = __skb_dequeue(&list)) != शून्य) अणु
-		काष्ठा net_device *dev = skb->dev;
+	while ((skb = __skb_dequeue(&list)) != NULL) {
+		struct net_device *dev = skb->dev;
 		bool consumed = false;
 
 		ethh = eth_hdr(skb);
 		tx_pkt = IPVL_SKB_CB(skb)->tx_pkt;
 		mac_hash = ipvlan_mac_hash(ethh->h_dest);
 
-		अगर (ether_addr_equal(ethh->h_dest, port->dev->broadcast))
+		if (ether_addr_equal(ethh->h_dest, port->dev->broadcast))
 			pkt_type = PACKET_BROADCAST;
-		अन्यथा
+		else
 			pkt_type = PACKET_MULTICAST;
 
-		rcu_पढ़ो_lock();
-		list_क्रम_each_entry_rcu(ipvlan, &port->ipvlans, pnode) अणु
-			अगर (tx_pkt && (ipvlan->dev == skb->dev))
-				जारी;
-			अगर (!test_bit(mac_hash, ipvlan->mac_filters))
-				जारी;
-			अगर (!(ipvlan->dev->flags & IFF_UP))
-				जारी;
+		rcu_read_lock();
+		list_for_each_entry_rcu(ipvlan, &port->ipvlans, pnode) {
+			if (tx_pkt && (ipvlan->dev == skb->dev))
+				continue;
+			if (!test_bit(mac_hash, ipvlan->mac_filters))
+				continue;
+			if (!(ipvlan->dev->flags & IFF_UP))
+				continue;
 			ret = NET_RX_DROP;
 			len = skb->len + ETH_HLEN;
 			nskb = skb_clone(skb, GFP_ATOMIC);
 			local_bh_disable();
-			अगर (nskb) अणु
+			if (nskb) {
 				consumed = true;
 				nskb->pkt_type = pkt_type;
 				nskb->dev = ipvlan->dev;
-				अगर (tx_pkt)
-					ret = dev_क्रमward_skb(ipvlan->dev, nskb);
-				अन्यथा
-					ret = netअगर_rx(nskb);
-			पूर्ण
+				if (tx_pkt)
+					ret = dev_forward_skb(ipvlan->dev, nskb);
+				else
+					ret = netif_rx(nskb);
+			}
 			ipvlan_count_rx(ipvlan, len, ret == NET_RX_SUCCESS, true);
 			local_bh_enable();
-		पूर्ण
-		rcu_पढ़ो_unlock();
+		}
+		rcu_read_unlock();
 
-		अगर (tx_pkt) अणु
+		if (tx_pkt) {
 			/* If the packet originated here, send it out. */
 			skb->dev = port->dev;
 			skb->pkt_type = pkt_type;
 			dev_queue_xmit(skb);
-		पूर्ण अन्यथा अणु
-			अगर (consumed)
+		} else {
+			if (consumed)
 				consume_skb(skb);
-			अन्यथा
-				kमुक्त_skb(skb);
-		पूर्ण
-		अगर (dev)
+			else
+				kfree_skb(skb);
+		}
+		if (dev)
 			dev_put(dev);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ipvlan_skb_crossing_ns(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
+static void ipvlan_skb_crossing_ns(struct sk_buff *skb, struct net_device *dev)
+{
 	bool xnet = true;
 
-	अगर (dev)
+	if (dev)
 		xnet = !net_eq(dev_net(skb->dev), dev_net(dev));
 
 	skb_scrub_packet(skb, xnet);
-	अगर (dev)
+	if (dev)
 		skb->dev = dev;
-पूर्ण
+}
 
-अटल पूर्णांक ipvlan_rcv_frame(काष्ठा ipvl_addr *addr, काष्ठा sk_buff **pskb,
+static int ipvlan_rcv_frame(struct ipvl_addr *addr, struct sk_buff **pskb,
 			    bool local)
-अणु
-	काष्ठा ipvl_dev *ipvlan = addr->master;
-	काष्ठा net_device *dev = ipvlan->dev;
-	अचिन्हित पूर्णांक len;
+{
+	struct ipvl_dev *ipvlan = addr->master;
+	struct net_device *dev = ipvlan->dev;
+	unsigned int len;
 	rx_handler_result_t ret = RX_HANDLER_CONSUMED;
 	bool success = false;
-	काष्ठा sk_buff *skb = *pskb;
+	struct sk_buff *skb = *pskb;
 
 	len = skb->len + ETH_HLEN;
 	/* Only packets exchanged between two local slaves need to have
 	 * device-up check as well as skb-share check.
 	 */
-	अगर (local) अणु
-		अगर (unlikely(!(dev->flags & IFF_UP))) अणु
-			kमुक्त_skb(skb);
-			जाओ out;
-		पूर्ण
+	if (local) {
+		if (unlikely(!(dev->flags & IFF_UP))) {
+			kfree_skb(skb);
+			goto out;
+		}
 
 		skb = skb_share_check(skb, GFP_ATOMIC);
-		अगर (!skb)
-			जाओ out;
+		if (!skb)
+			goto out;
 
 		*pskb = skb;
-	पूर्ण
+	}
 
-	अगर (local) अणु
+	if (local) {
 		skb->pkt_type = PACKET_HOST;
-		अगर (dev_क्रमward_skb(ipvlan->dev, skb) == NET_RX_SUCCESS)
+		if (dev_forward_skb(ipvlan->dev, skb) == NET_RX_SUCCESS)
 			success = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		skb->dev = dev;
 		ret = RX_HANDLER_ANOTHER;
 		success = true;
-	पूर्ण
+	}
 
 out:
 	ipvlan_count_rx(ipvlan, len, success, false);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा ipvl_addr *ipvlan_addr_lookup(काष्ठा ipvl_port *port, व्योम *lyr3h,
-				     पूर्णांक addr_type, bool use_dest)
-अणु
-	काष्ठा ipvl_addr *addr = शून्य;
+struct ipvl_addr *ipvlan_addr_lookup(struct ipvl_port *port, void *lyr3h,
+				     int addr_type, bool use_dest)
+{
+	struct ipvl_addr *addr = NULL;
 
-	चयन (addr_type) अणु
-#अगर IS_ENABLED(CONFIG_IPV6)
-	हाल IPVL_IPV6: अणु
-		काष्ठा ipv6hdr *ip6h;
-		काष्ठा in6_addr *i6addr;
+	switch (addr_type) {
+#if IS_ENABLED(CONFIG_IPV6)
+	case IPVL_IPV6: {
+		struct ipv6hdr *ip6h;
+		struct in6_addr *i6addr;
 
-		ip6h = (काष्ठा ipv6hdr *)lyr3h;
+		ip6h = (struct ipv6hdr *)lyr3h;
 		i6addr = use_dest ? &ip6h->daddr : &ip6h->saddr;
 		addr = ipvlan_ht_addr_lookup(port, i6addr, true);
-		अवरोध;
-	पूर्ण
-	हाल IPVL_ICMPV6: अणु
-		काष्ठा nd_msg *ndmh;
-		काष्ठा in6_addr *i6addr;
+		break;
+	}
+	case IPVL_ICMPV6: {
+		struct nd_msg *ndmh;
+		struct in6_addr *i6addr;
 
 		/* Make sure that the NeighborSolicitation ICMPv6 packets
-		 * are handled to aव्योम DAD issue.
+		 * are handled to avoid DAD issue.
 		 */
-		ndmh = (काष्ठा nd_msg *)lyr3h;
-		अगर (ndmh->icmph.icmp6_type == NDISC_NEIGHBOUR_SOLICITATION) अणु
+		ndmh = (struct nd_msg *)lyr3h;
+		if (ndmh->icmph.icmp6_type == NDISC_NEIGHBOUR_SOLICITATION) {
 			i6addr = &ndmh->target;
 			addr = ipvlan_ht_addr_lookup(port, i6addr, true);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	हाल IPVL_IPV4: अणु
-		काष्ठा iphdr *ip4h;
+		}
+		break;
+	}
+#endif
+	case IPVL_IPV4: {
+		struct iphdr *ip4h;
 		__be32 *i4addr;
 
-		ip4h = (काष्ठा iphdr *)lyr3h;
+		ip4h = (struct iphdr *)lyr3h;
 		i4addr = use_dest ? &ip4h->daddr : &ip4h->saddr;
 		addr = ipvlan_ht_addr_lookup(port, i4addr, false);
-		अवरोध;
-	पूर्ण
-	हाल IPVL_ARP: अणु
-		काष्ठा arphdr *arph;
-		अचिन्हित अक्षर *arp_ptr;
+		break;
+	}
+	case IPVL_ARP: {
+		struct arphdr *arph;
+		unsigned char *arp_ptr;
 		__be32 dip;
 
-		arph = (काष्ठा arphdr *)lyr3h;
-		arp_ptr = (अचिन्हित अक्षर *)(arph + 1);
-		अगर (use_dest)
+		arph = (struct arphdr *)lyr3h;
+		arp_ptr = (unsigned char *)(arph + 1);
+		if (use_dest)
 			arp_ptr += (2 * port->dev->addr_len) + 4;
-		अन्यथा
+		else
 			arp_ptr += port->dev->addr_len;
 
-		स_नकल(&dip, arp_ptr, 4);
+		memcpy(&dip, arp_ptr, 4);
 		addr = ipvlan_ht_addr_lookup(port, &dip, false);
-		अवरोध;
-	पूर्ण
-	पूर्ण
+		break;
+	}
+	}
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल पूर्णांक ipvlan_process_v4_outbound(काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा iphdr *ip4h = ip_hdr(skb);
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा rtable *rt;
-	पूर्णांक err, ret = NET_XMIT_DROP;
-	काष्ठा flowi4 fl4 = अणु
-		.flowi4_oअगर = dev->अगरindex,
+static int ipvlan_process_v4_outbound(struct sk_buff *skb)
+{
+	const struct iphdr *ip4h = ip_hdr(skb);
+	struct net_device *dev = skb->dev;
+	struct net *net = dev_net(dev);
+	struct rtable *rt;
+	int err, ret = NET_XMIT_DROP;
+	struct flowi4 fl4 = {
+		.flowi4_oif = dev->ifindex,
 		.flowi4_tos = RT_TOS(ip4h->tos),
 		.flowi4_flags = FLOWI_FLAG_ANYSRC,
 		.flowi4_mark = skb->mark,
 		.daddr = ip4h->daddr,
 		.saddr = ip4h->saddr,
-	पूर्ण;
+	};
 
-	rt = ip_route_output_flow(net, &fl4, शून्य);
-	अगर (IS_ERR(rt))
-		जाओ err;
+	rt = ip_route_output_flow(net, &fl4, NULL);
+	if (IS_ERR(rt))
+		goto err;
 
-	अगर (rt->rt_type != RTN_UNICAST && rt->rt_type != RTN_LOCAL) अणु
+	if (rt->rt_type != RTN_UNICAST && rt->rt_type != RTN_LOCAL) {
 		ip_rt_put(rt);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	skb_dst_set(skb, &rt->dst);
 	err = ip_local_out(net, skb->sk, skb);
-	अगर (unlikely(net_xmit_eval(err)))
+	if (unlikely(net_xmit_eval(err)))
 		dev->stats.tx_errors++;
-	अन्यथा
+	else
 		ret = NET_XMIT_SUCCESS;
-	जाओ out;
+	goto out;
 err:
 	dev->stats.tx_errors++;
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल पूर्णांक ipvlan_process_v6_outbound(काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा ipv6hdr *ip6h = ipv6_hdr(skb);
-	काष्ठा net_device *dev = skb->dev;
-	काष्ठा net *net = dev_net(dev);
-	काष्ठा dst_entry *dst;
-	पूर्णांक err, ret = NET_XMIT_DROP;
-	काष्ठा flowi6 fl6 = अणु
-		.flowi6_oअगर = dev->अगरindex,
+#if IS_ENABLED(CONFIG_IPV6)
+static int ipvlan_process_v6_outbound(struct sk_buff *skb)
+{
+	const struct ipv6hdr *ip6h = ipv6_hdr(skb);
+	struct net_device *dev = skb->dev;
+	struct net *net = dev_net(dev);
+	struct dst_entry *dst;
+	int err, ret = NET_XMIT_DROP;
+	struct flowi6 fl6 = {
+		.flowi6_oif = dev->ifindex,
 		.daddr = ip6h->daddr,
 		.saddr = ip6h->saddr,
 		.flowi6_flags = FLOWI_FLAG_ANYSRC,
 		.flowlabel = ip6_flowinfo(ip6h),
 		.flowi6_mark = skb->mark,
 		.flowi6_proto = ip6h->nexthdr,
-	पूर्ण;
+	};
 
-	dst = ip6_route_output(net, शून्य, &fl6);
-	अगर (dst->error) अणु
+	dst = ip6_route_output(net, NULL, &fl6);
+	if (dst->error) {
 		ret = dst->error;
 		dst_release(dst);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	skb_dst_set(skb, dst);
 	err = ip6_local_out(net, skb->sk, skb);
-	अगर (unlikely(net_xmit_eval(err)))
+	if (unlikely(net_xmit_eval(err)))
 		dev->stats.tx_errors++;
-	अन्यथा
+	else
 		ret = NET_XMIT_SUCCESS;
-	जाओ out;
+	goto out;
 err:
 	dev->stats.tx_errors++;
-	kमुक्त_skb(skb);
+	kfree_skb(skb);
 out:
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक ipvlan_process_v6_outbound(काष्ठा sk_buff *skb)
-अणु
-	वापस NET_XMIT_DROP;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#else
+static int ipvlan_process_v6_outbound(struct sk_buff *skb)
+{
+	return NET_XMIT_DROP;
+}
+#endif
 
-अटल पूर्णांक ipvlan_process_outbound(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ethhdr *ethh = eth_hdr(skb);
-	पूर्णांक ret = NET_XMIT_DROP;
+static int ipvlan_process_outbound(struct sk_buff *skb)
+{
+	struct ethhdr *ethh = eth_hdr(skb);
+	int ret = NET_XMIT_DROP;
 
-	/* The ipvlan is a pseuकरो-L2 device, so the packets that we receive
+	/* The ipvlan is a pseudo-L2 device, so the packets that we receive
 	 * will have L2; which need to discarded and processed further
-	 * in the net-ns of the मुख्य-device.
+	 * in the net-ns of the main-device.
 	 */
-	अगर (skb_mac_header_was_set(skb)) अणु
-		/* In this mode we करोnt care about
+	if (skb_mac_header_was_set(skb)) {
+		/* In this mode we dont care about
 		 * multicast and broadcast traffic */
-		अगर (is_multicast_ether_addr(ethh->h_dest)) अणु
+		if (is_multicast_ether_addr(ethh->h_dest)) {
 			pr_debug_ratelimited(
 				"Dropped {multi|broad}cast of type=[%x]\n",
 				ntohs(skb->protocol));
-			kमुक्त_skb(skb);
-			जाओ out;
-		पूर्ण
+			kfree_skb(skb);
+			goto out;
+		}
 
-		skb_pull(skb, माप(*ethh));
+		skb_pull(skb, sizeof(*ethh));
 		skb->mac_header = (typeof(skb->mac_header))~0U;
 		skb_reset_network_header(skb);
-	पूर्ण
+	}
 
-	अगर (skb->protocol == htons(ETH_P_IPV6))
+	if (skb->protocol == htons(ETH_P_IPV6))
 		ret = ipvlan_process_v6_outbound(skb);
-	अन्यथा अगर (skb->protocol == htons(ETH_P_IP))
+	else if (skb->protocol == htons(ETH_P_IP))
 		ret = ipvlan_process_v4_outbound(skb);
-	अन्यथा अणु
+	else {
 		pr_warn_ratelimited("Dropped outbound packet type=%x\n",
 				    ntohs(skb->protocol));
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ipvlan_multicast_enqueue(काष्ठा ipvl_port *port,
-				     काष्ठा sk_buff *skb, bool tx_pkt)
-अणु
-	अगर (skb->protocol == htons(ETH_P_PAUSE)) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+static void ipvlan_multicast_enqueue(struct ipvl_port *port,
+				     struct sk_buff *skb, bool tx_pkt)
+{
+	if (skb->protocol == htons(ETH_P_PAUSE)) {
+		kfree_skb(skb);
+		return;
+	}
 
 	/* Record that the deferred packet is from TX or RX path. By
 	 * looking at mac-addresses on packet will lead to erronus decisions.
-	 * (This would be true क्रम a loopback-mode on master device or a
-	 * hair-pin mode of the चयन.)
+	 * (This would be true for a loopback-mode on master device or a
+	 * hair-pin mode of the switch.)
 	 */
 	IPVL_SKB_CB(skb)->tx_pkt = tx_pkt;
 
 	spin_lock(&port->backlog.lock);
-	अगर (skb_queue_len(&port->backlog) < IPVLAN_QBACKLOG_LIMIT) अणु
-		अगर (skb->dev)
+	if (skb_queue_len(&port->backlog) < IPVLAN_QBACKLOG_LIMIT) {
+		if (skb->dev)
 			dev_hold(skb->dev);
 		__skb_queue_tail(&port->backlog, skb);
 		spin_unlock(&port->backlog.lock);
 		schedule_work(&port->wq);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_unlock(&port->backlog.lock);
-		atomic_दीर्घ_inc(&skb->dev->rx_dropped);
-		kमुक्त_skb(skb);
-	पूर्ण
-पूर्ण
+		atomic_long_inc(&skb->dev->rx_dropped);
+		kfree_skb(skb);
+	}
+}
 
-अटल पूर्णांक ipvlan_xmit_mode_l3(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	स्थिर काष्ठा ipvl_dev *ipvlan = netdev_priv(dev);
-	व्योम *lyr3h;
-	काष्ठा ipvl_addr *addr;
-	पूर्णांक addr_type;
+static int ipvlan_xmit_mode_l3(struct sk_buff *skb, struct net_device *dev)
+{
+	const struct ipvl_dev *ipvlan = netdev_priv(dev);
+	void *lyr3h;
+	struct ipvl_addr *addr;
+	int addr_type;
 
 	lyr3h = ipvlan_get_L3_hdr(ipvlan->port, skb, &addr_type);
-	अगर (!lyr3h)
-		जाओ out;
+	if (!lyr3h)
+		goto out;
 
-	अगर (!ipvlan_is_vepa(ipvlan->port)) अणु
+	if (!ipvlan_is_vepa(ipvlan->port)) {
 		addr = ipvlan_addr_lookup(ipvlan->port, lyr3h, addr_type, true);
-		अगर (addr) अणु
-			अगर (ipvlan_is_निजी(ipvlan->port)) अणु
+		if (addr) {
+			if (ipvlan_is_private(ipvlan->port)) {
 				consume_skb(skb);
-				वापस NET_XMIT_DROP;
-			पूर्ण
-			वापस ipvlan_rcv_frame(addr, &skb, true);
-		पूर्ण
-	पूर्ण
+				return NET_XMIT_DROP;
+			}
+			return ipvlan_rcv_frame(addr, &skb, true);
+		}
+	}
 out:
 	ipvlan_skb_crossing_ns(skb, ipvlan->phy_dev);
-	वापस ipvlan_process_outbound(skb);
-पूर्ण
+	return ipvlan_process_outbound(skb);
+}
 
-अटल पूर्णांक ipvlan_xmit_mode_l2(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	स्थिर काष्ठा ipvl_dev *ipvlan = netdev_priv(dev);
-	काष्ठा ethhdr *eth = eth_hdr(skb);
-	काष्ठा ipvl_addr *addr;
-	व्योम *lyr3h;
-	पूर्णांक addr_type;
+static int ipvlan_xmit_mode_l2(struct sk_buff *skb, struct net_device *dev)
+{
+	const struct ipvl_dev *ipvlan = netdev_priv(dev);
+	struct ethhdr *eth = eth_hdr(skb);
+	struct ipvl_addr *addr;
+	void *lyr3h;
+	int addr_type;
 
-	अगर (!ipvlan_is_vepa(ipvlan->port) &&
-	    ether_addr_equal(eth->h_dest, eth->h_source)) अणु
+	if (!ipvlan_is_vepa(ipvlan->port) &&
+	    ether_addr_equal(eth->h_dest, eth->h_source)) {
 		lyr3h = ipvlan_get_L3_hdr(ipvlan->port, skb, &addr_type);
-		अगर (lyr3h) अणु
+		if (lyr3h) {
 			addr = ipvlan_addr_lookup(ipvlan->port, lyr3h, addr_type, true);
-			अगर (addr) अणु
-				अगर (ipvlan_is_निजी(ipvlan->port)) अणु
+			if (addr) {
+				if (ipvlan_is_private(ipvlan->port)) {
 					consume_skb(skb);
-					वापस NET_XMIT_DROP;
-				पूर्ण
-				वापस ipvlan_rcv_frame(addr, &skb, true);
-			पूर्ण
-		पूर्ण
+					return NET_XMIT_DROP;
+				}
+				return ipvlan_rcv_frame(addr, &skb, true);
+			}
+		}
 		skb = skb_share_check(skb, GFP_ATOMIC);
-		अगर (!skb)
-			वापस NET_XMIT_DROP;
+		if (!skb)
+			return NET_XMIT_DROP;
 
-		/* Packet definitely करोes not beदीर्घ to any of the
-		 * भव devices, but the dest is local. So क्रमward
-		 * the skb क्रम the मुख्य-dev. At the RX side we just वापस
-		 * RX_PASS क्रम it to be processed further on the stack.
+		/* Packet definitely does not belong to any of the
+		 * virtual devices, but the dest is local. So forward
+		 * the skb for the main-dev. At the RX side we just return
+		 * RX_PASS for it to be processed further on the stack.
 		 */
-		वापस dev_क्रमward_skb(ipvlan->phy_dev, skb);
+		return dev_forward_skb(ipvlan->phy_dev, skb);
 
-	पूर्ण अन्यथा अगर (is_multicast_ether_addr(eth->h_dest)) अणु
-		ipvlan_skb_crossing_ns(skb, शून्य);
+	} else if (is_multicast_ether_addr(eth->h_dest)) {
+		ipvlan_skb_crossing_ns(skb, NULL);
 		ipvlan_multicast_enqueue(ipvlan->port, skb, true);
-		वापस NET_XMIT_SUCCESS;
-	पूर्ण
+		return NET_XMIT_SUCCESS;
+	}
 
 	skb->dev = ipvlan->phy_dev;
-	वापस dev_queue_xmit(skb);
-पूर्ण
+	return dev_queue_xmit(skb);
+}
 
-पूर्णांक ipvlan_queue_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा ipvl_dev *ipvlan = netdev_priv(dev);
-	काष्ठा ipvl_port *port = ipvlan_port_get_rcu_bh(ipvlan->phy_dev);
+int ipvlan_queue_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct ipvl_dev *ipvlan = netdev_priv(dev);
+	struct ipvl_port *port = ipvlan_port_get_rcu_bh(ipvlan->phy_dev);
 
-	अगर (!port)
-		जाओ out;
+	if (!port)
+		goto out;
 
-	अगर (unlikely(!pskb_may_pull(skb, माप(काष्ठा ethhdr))))
-		जाओ out;
+	if (unlikely(!pskb_may_pull(skb, sizeof(struct ethhdr))))
+		goto out;
 
-	चयन(port->mode) अणु
-	हाल IPVLAN_MODE_L2:
-		वापस ipvlan_xmit_mode_l2(skb, dev);
-	हाल IPVLAN_MODE_L3:
-#अगर_घोषित CONFIG_IPVLAN_L3S
-	हाल IPVLAN_MODE_L3S:
-#पूर्ण_अगर
-		वापस ipvlan_xmit_mode_l3(skb, dev);
-	पूर्ण
+	switch(port->mode) {
+	case IPVLAN_MODE_L2:
+		return ipvlan_xmit_mode_l2(skb, dev);
+	case IPVLAN_MODE_L3:
+#ifdef CONFIG_IPVLAN_L3S
+	case IPVLAN_MODE_L3S:
+#endif
+		return ipvlan_xmit_mode_l3(skb, dev);
+	}
 
 	/* Should not reach here */
 	WARN_ONCE(true, "%s called for mode = [%x]\n", __func__, port->mode);
 out:
-	kमुक्त_skb(skb);
-	वापस NET_XMIT_DROP;
-पूर्ण
+	kfree_skb(skb);
+	return NET_XMIT_DROP;
+}
 
-अटल bool ipvlan_बाह्यal_frame(काष्ठा sk_buff *skb, काष्ठा ipvl_port *port)
-अणु
-	काष्ठा ethhdr *eth = eth_hdr(skb);
-	काष्ठा ipvl_addr *addr;
-	व्योम *lyr3h;
-	पूर्णांक addr_type;
+static bool ipvlan_external_frame(struct sk_buff *skb, struct ipvl_port *port)
+{
+	struct ethhdr *eth = eth_hdr(skb);
+	struct ipvl_addr *addr;
+	void *lyr3h;
+	int addr_type;
 
-	अगर (ether_addr_equal(eth->h_source, skb->dev->dev_addr)) अणु
+	if (ether_addr_equal(eth->h_source, skb->dev->dev_addr)) {
 		lyr3h = ipvlan_get_L3_hdr(port, skb, &addr_type);
-		अगर (!lyr3h)
-			वापस true;
+		if (!lyr3h)
+			return true;
 
 		addr = ipvlan_addr_lookup(port, lyr3h, addr_type, false);
-		अगर (addr)
-			वापस false;
-	पूर्ण
+		if (addr)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल rx_handler_result_t ipvlan_handle_mode_l3(काष्ठा sk_buff **pskb,
-						 काष्ठा ipvl_port *port)
-अणु
-	व्योम *lyr3h;
-	पूर्णांक addr_type;
-	काष्ठा ipvl_addr *addr;
-	काष्ठा sk_buff *skb = *pskb;
+static rx_handler_result_t ipvlan_handle_mode_l3(struct sk_buff **pskb,
+						 struct ipvl_port *port)
+{
+	void *lyr3h;
+	int addr_type;
+	struct ipvl_addr *addr;
+	struct sk_buff *skb = *pskb;
 	rx_handler_result_t ret = RX_HANDLER_PASS;
 
 	lyr3h = ipvlan_get_L3_hdr(port, skb, &addr_type);
-	अगर (!lyr3h)
-		जाओ out;
+	if (!lyr3h)
+		goto out;
 
 	addr = ipvlan_addr_lookup(port, lyr3h, addr_type, true);
-	अगर (addr)
+	if (addr)
 		ret = ipvlan_rcv_frame(addr, pskb, false);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल rx_handler_result_t ipvlan_handle_mode_l2(काष्ठा sk_buff **pskb,
-						 काष्ठा ipvl_port *port)
-अणु
-	काष्ठा sk_buff *skb = *pskb;
-	काष्ठा ethhdr *eth = eth_hdr(skb);
+static rx_handler_result_t ipvlan_handle_mode_l2(struct sk_buff **pskb,
+						 struct ipvl_port *port)
+{
+	struct sk_buff *skb = *pskb;
+	struct ethhdr *eth = eth_hdr(skb);
 	rx_handler_result_t ret = RX_HANDLER_PASS;
 
-	अगर (is_multicast_ether_addr(eth->h_dest)) अणु
-		अगर (ipvlan_बाह्यal_frame(skb, port)) अणु
-			काष्ठा sk_buff *nskb = skb_clone(skb, GFP_ATOMIC);
+	if (is_multicast_ether_addr(eth->h_dest)) {
+		if (ipvlan_external_frame(skb, port)) {
+			struct sk_buff *nskb = skb_clone(skb, GFP_ATOMIC);
 
-			/* External frames are queued क्रम device local
+			/* External frames are queued for device local
 			 * distribution, but a copy is given to master
-			 * straight away to aव्योम sending duplicates later
+			 * straight away to avoid sending duplicates later
 			 * when work-queue processes this frame. This is
-			 * achieved by वापसing RX_HANDLER_PASS.
+			 * achieved by returning RX_HANDLER_PASS.
 			 */
-			अगर (nskb) अणु
-				ipvlan_skb_crossing_ns(nskb, शून्य);
+			if (nskb) {
+				ipvlan_skb_crossing_ns(nskb, NULL);
 				ipvlan_multicast_enqueue(port, nskb, false);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* Perक्रमm like l3 mode क्रम non-multicast packet */
+			}
+		}
+	} else {
+		/* Perform like l3 mode for non-multicast packet */
 		ret = ipvlan_handle_mode_l3(pskb, port);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-rx_handler_result_t ipvlan_handle_frame(काष्ठा sk_buff **pskb)
-अणु
-	काष्ठा sk_buff *skb = *pskb;
-	काष्ठा ipvl_port *port = ipvlan_port_get_rcu(skb->dev);
+rx_handler_result_t ipvlan_handle_frame(struct sk_buff **pskb)
+{
+	struct sk_buff *skb = *pskb;
+	struct ipvl_port *port = ipvlan_port_get_rcu(skb->dev);
 
-	अगर (!port)
-		वापस RX_HANDLER_PASS;
+	if (!port)
+		return RX_HANDLER_PASS;
 
-	चयन (port->mode) अणु
-	हाल IPVLAN_MODE_L2:
-		वापस ipvlan_handle_mode_l2(pskb, port);
-	हाल IPVLAN_MODE_L3:
-		वापस ipvlan_handle_mode_l3(pskb, port);
-#अगर_घोषित CONFIG_IPVLAN_L3S
-	हाल IPVLAN_MODE_L3S:
-		वापस RX_HANDLER_PASS;
-#पूर्ण_अगर
-	पूर्ण
+	switch (port->mode) {
+	case IPVLAN_MODE_L2:
+		return ipvlan_handle_mode_l2(pskb, port);
+	case IPVLAN_MODE_L3:
+		return ipvlan_handle_mode_l3(pskb, port);
+#ifdef CONFIG_IPVLAN_L3S
+	case IPVLAN_MODE_L3S:
+		return RX_HANDLER_PASS;
+#endif
+	}
 
 	/* Should not reach here */
 	WARN_ONCE(true, "%s called for mode = [%x]\n", __func__, port->mode);
-	kमुक्त_skb(skb);
-	वापस RX_HANDLER_CONSUMED;
-पूर्ण
+	kfree_skb(skb);
+	return RX_HANDLER_CONSUMED;
+}

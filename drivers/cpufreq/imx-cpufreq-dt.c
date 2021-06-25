@@ -1,153 +1,152 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright 2019 NXP
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nvmem-consumer.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_opp.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/nvmem-consumer.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_opp.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
 
-#समावेश "cpufreq-dt.h"
+#include "cpufreq-dt.h"
 
-#घोषणा OCOTP_CFG3_SPEED_GRADE_SHIFT	8
-#घोषणा OCOTP_CFG3_SPEED_GRADE_MASK	(0x3 << 8)
-#घोषणा IMX8MN_OCOTP_CFG3_SPEED_GRADE_MASK	(0xf << 8)
-#घोषणा OCOTP_CFG3_MKT_SEGMENT_SHIFT    6
-#घोषणा OCOTP_CFG3_MKT_SEGMENT_MASK     (0x3 << 6)
-#घोषणा IMX8MP_OCOTP_CFG3_MKT_SEGMENT_SHIFT    5
-#घोषणा IMX8MP_OCOTP_CFG3_MKT_SEGMENT_MASK     (0x3 << 5)
+#define OCOTP_CFG3_SPEED_GRADE_SHIFT	8
+#define OCOTP_CFG3_SPEED_GRADE_MASK	(0x3 << 8)
+#define IMX8MN_OCOTP_CFG3_SPEED_GRADE_MASK	(0xf << 8)
+#define OCOTP_CFG3_MKT_SEGMENT_SHIFT    6
+#define OCOTP_CFG3_MKT_SEGMENT_MASK     (0x3 << 6)
+#define IMX8MP_OCOTP_CFG3_MKT_SEGMENT_SHIFT    5
+#define IMX8MP_OCOTP_CFG3_MKT_SEGMENT_MASK     (0x3 << 5)
 
-#घोषणा IMX7ULP_MAX_RUN_FREQ	528000
+#define IMX7ULP_MAX_RUN_FREQ	528000
 
-/* cpufreq-dt device रेजिस्टरed by imx-cpufreq-dt */
-अटल काष्ठा platक्रमm_device *cpufreq_dt_pdev;
-अटल काष्ठा opp_table *cpufreq_opp_table;
-अटल काष्ठा device *cpu_dev;
+/* cpufreq-dt device registered by imx-cpufreq-dt */
+static struct platform_device *cpufreq_dt_pdev;
+static struct opp_table *cpufreq_opp_table;
+static struct device *cpu_dev;
 
-क्रमागत IMX7ULP_CPUFREQ_CLKS अणु
+enum IMX7ULP_CPUFREQ_CLKS {
 	ARM,
 	CORE,
 	SCS_SEL,
 	HSRUN_CORE,
 	HSRUN_SCS_SEL,
 	FIRC,
-पूर्ण;
+};
 
-अटल काष्ठा clk_bulk_data imx7ulp_clks[] = अणु
-	अणु .id = "arm" पूर्ण,
-	अणु .id = "core" पूर्ण,
-	अणु .id = "scs_sel" पूर्ण,
-	अणु .id = "hsrun_core" पूर्ण,
-	अणु .id = "hsrun_scs_sel" पूर्ण,
-	अणु .id = "firc" पूर्ण,
-पूर्ण;
+static struct clk_bulk_data imx7ulp_clks[] = {
+	{ .id = "arm" },
+	{ .id = "core" },
+	{ .id = "scs_sel" },
+	{ .id = "hsrun_core" },
+	{ .id = "hsrun_scs_sel" },
+	{ .id = "firc" },
+};
 
-अटल अचिन्हित पूर्णांक imx7ulp_get_पूर्णांकermediate(काष्ठा cpufreq_policy *policy,
-					     अचिन्हित पूर्णांक index)
-अणु
-	वापस clk_get_rate(imx7ulp_clks[FIRC].clk);
-पूर्ण
+static unsigned int imx7ulp_get_intermediate(struct cpufreq_policy *policy,
+					     unsigned int index)
+{
+	return clk_get_rate(imx7ulp_clks[FIRC].clk);
+}
 
-अटल पूर्णांक imx7ulp_target_पूर्णांकermediate(काष्ठा cpufreq_policy *policy,
-					अचिन्हित पूर्णांक index)
-अणु
-	अचिन्हित पूर्णांक newfreq = policy->freq_table[index].frequency;
+static int imx7ulp_target_intermediate(struct cpufreq_policy *policy,
+					unsigned int index)
+{
+	unsigned int newfreq = policy->freq_table[index].frequency;
 
 	clk_set_parent(imx7ulp_clks[SCS_SEL].clk, imx7ulp_clks[FIRC].clk);
 	clk_set_parent(imx7ulp_clks[HSRUN_SCS_SEL].clk, imx7ulp_clks[FIRC].clk);
 
-	अगर (newfreq > IMX7ULP_MAX_RUN_FREQ)
+	if (newfreq > IMX7ULP_MAX_RUN_FREQ)
 		clk_set_parent(imx7ulp_clks[ARM].clk,
 			       imx7ulp_clks[HSRUN_CORE].clk);
-	अन्यथा
+	else
 		clk_set_parent(imx7ulp_clks[ARM].clk, imx7ulp_clks[CORE].clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cpufreq_dt_platक्रमm_data imx7ulp_data = अणु
-	.target_पूर्णांकermediate = imx7ulp_target_पूर्णांकermediate,
-	.get_पूर्णांकermediate = imx7ulp_get_पूर्णांकermediate,
-पूर्ण;
+static struct cpufreq_dt_platform_data imx7ulp_data = {
+	.target_intermediate = imx7ulp_target_intermediate,
+	.get_intermediate = imx7ulp_get_intermediate,
+};
 
-अटल पूर्णांक imx_cpufreq_dt_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा platक्रमm_device *dt_pdev;
+static int imx_cpufreq_dt_probe(struct platform_device *pdev)
+{
+	struct platform_device *dt_pdev;
 	u32 cell_value, supported_hw[2];
-	पूर्णांक speed_grade, mkt_segment;
-	पूर्णांक ret;
+	int speed_grade, mkt_segment;
+	int ret;
 
 	cpu_dev = get_cpu_device(0);
 
-	अगर (!of_find_property(cpu_dev->of_node, "cpu-supply", शून्य))
-		वापस -ENODEV;
+	if (!of_find_property(cpu_dev->of_node, "cpu-supply", NULL))
+		return -ENODEV;
 
-	अगर (of_machine_is_compatible("fsl,imx7ulp")) अणु
+	if (of_machine_is_compatible("fsl,imx7ulp")) {
 		ret = clk_bulk_get(cpu_dev, ARRAY_SIZE(imx7ulp_clks),
 				   imx7ulp_clks);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		dt_pdev = platक्रमm_device_रेजिस्टर_data(शून्य, "cpufreq-dt",
+		dt_pdev = platform_device_register_data(NULL, "cpufreq-dt",
 							-1, &imx7ulp_data,
-							माप(imx7ulp_data));
-		अगर (IS_ERR(dt_pdev)) अणु
+							sizeof(imx7ulp_data));
+		if (IS_ERR(dt_pdev)) {
 			clk_bulk_put(ARRAY_SIZE(imx7ulp_clks), imx7ulp_clks);
 			ret = PTR_ERR(dt_pdev);
 			dev_err(&pdev->dev, "Failed to register cpufreq-dt: %d\n", ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		cpufreq_dt_pdev = dt_pdev;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ret = nvmem_cell_पढ़ो_u32(cpu_dev, "speed_grade", &cell_value);
-	अगर (ret)
-		वापस ret;
+	ret = nvmem_cell_read_u32(cpu_dev, "speed_grade", &cell_value);
+	if (ret)
+		return ret;
 
-	अगर (of_machine_is_compatible("fsl,imx8mn") ||
+	if (of_machine_is_compatible("fsl,imx8mn") ||
 	    of_machine_is_compatible("fsl,imx8mp"))
 		speed_grade = (cell_value & IMX8MN_OCOTP_CFG3_SPEED_GRADE_MASK)
 			      >> OCOTP_CFG3_SPEED_GRADE_SHIFT;
-	अन्यथा
+	else
 		speed_grade = (cell_value & OCOTP_CFG3_SPEED_GRADE_MASK)
 			      >> OCOTP_CFG3_SPEED_GRADE_SHIFT;
 
-	अगर (of_machine_is_compatible("fsl,imx8mp"))
+	if (of_machine_is_compatible("fsl,imx8mp"))
 		mkt_segment = (cell_value & IMX8MP_OCOTP_CFG3_MKT_SEGMENT_MASK)
 			       >> IMX8MP_OCOTP_CFG3_MKT_SEGMENT_SHIFT;
-	अन्यथा
+	else
 		mkt_segment = (cell_value & OCOTP_CFG3_MKT_SEGMENT_MASK)
 			       >> OCOTP_CFG3_MKT_SEGMENT_SHIFT;
 
 	/*
 	 * Early samples without fuses written report "0 0" which may NOT
 	 * match any OPP defined in DT. So clamp to minimum OPP defined in
-	 * DT to aव्योम warning क्रम "no OPPs".
+	 * DT to avoid warning for "no OPPs".
 	 *
 	 * Applies to i.MX8M series SoCs.
 	 */
-	अगर (mkt_segment == 0 && speed_grade == 0) अणु
-		अगर (of_machine_is_compatible("fsl,imx8mm") ||
+	if (mkt_segment == 0 && speed_grade == 0) {
+		if (of_machine_is_compatible("fsl,imx8mm") ||
 		    of_machine_is_compatible("fsl,imx8mq"))
 			speed_grade = 1;
-		अगर (of_machine_is_compatible("fsl,imx8mn") ||
+		if (of_machine_is_compatible("fsl,imx8mn") ||
 		    of_machine_is_compatible("fsl,imx8mp"))
 			speed_grade = 0xb;
-	पूर्ण
+	}
 
 	supported_hw[0] = BIT(speed_grade);
 	supported_hw[1] = BIT(mkt_segment);
@@ -155,43 +154,43 @@
 			speed_grade, mkt_segment, supported_hw[0], supported_hw[1]);
 
 	cpufreq_opp_table = dev_pm_opp_set_supported_hw(cpu_dev, supported_hw, 2);
-	अगर (IS_ERR(cpufreq_opp_table)) अणु
+	if (IS_ERR(cpufreq_opp_table)) {
 		ret = PTR_ERR(cpufreq_opp_table);
 		dev_err(&pdev->dev, "Failed to set supported opp: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	cpufreq_dt_pdev = platक्रमm_device_रेजिस्टर_data(
-			&pdev->dev, "cpufreq-dt", -1, शून्य, 0);
-	अगर (IS_ERR(cpufreq_dt_pdev)) अणु
+	cpufreq_dt_pdev = platform_device_register_data(
+			&pdev->dev, "cpufreq-dt", -1, NULL, 0);
+	if (IS_ERR(cpufreq_dt_pdev)) {
 		dev_pm_opp_put_supported_hw(cpufreq_opp_table);
 		ret = PTR_ERR(cpufreq_dt_pdev);
 		dev_err(&pdev->dev, "Failed to register cpufreq-dt: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx_cpufreq_dt_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	platक्रमm_device_unरेजिस्टर(cpufreq_dt_pdev);
-	अगर (!of_machine_is_compatible("fsl,imx7ulp"))
+static int imx_cpufreq_dt_remove(struct platform_device *pdev)
+{
+	platform_device_unregister(cpufreq_dt_pdev);
+	if (!of_machine_is_compatible("fsl,imx7ulp"))
 		dev_pm_opp_put_supported_hw(cpufreq_opp_table);
-	अन्यथा
+	else
 		clk_bulk_put(ARRAY_SIZE(imx7ulp_clks), imx7ulp_clks);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver imx_cpufreq_dt_driver = अणु
+static struct platform_driver imx_cpufreq_dt_driver = {
 	.probe = imx_cpufreq_dt_probe,
-	.हटाओ = imx_cpufreq_dt_हटाओ,
-	.driver = अणु
+	.remove = imx_cpufreq_dt_remove,
+	.driver = {
 		.name = "imx-cpufreq-dt",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(imx_cpufreq_dt_driver);
+	},
+};
+module_platform_driver(imx_cpufreq_dt_driver);
 
 MODULE_ALIAS("platform:imx-cpufreq-dt");
 MODULE_DESCRIPTION("Freescale i.MX cpufreq speed grading driver");

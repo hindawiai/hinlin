@@ -1,48 +1,47 @@
-<शैली गुरु>
 /*
  * Poly1305 authenticator algorithm, RFC7539
  *
  * Copyright (C) 2015 Martin Willi
  *
- * Based on खुला करोमुख्य code by Andrew Moon and Daniel J. Bernstein.
+ * Based on public domain code by Andrew Moon and Daniel J. Bernstein.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/poly1305.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
+#include <crypto/algapi.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/poly1305.h>
+#include <linux/crypto.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
 
-अटल पूर्णांक crypto_poly1305_init(काष्ठा shash_desc *desc)
-अणु
-	काष्ठा poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
+static int crypto_poly1305_init(struct shash_desc *desc)
+{
+	struct poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
 
 	poly1305_core_init(&dctx->h);
 	dctx->buflen = 0;
 	dctx->rset = 0;
 	dctx->sset = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक crypto_poly1305_setdesckey(काष्ठा poly1305_desc_ctx *dctx,
-					       स्थिर u8 *src, अचिन्हित पूर्णांक srclen)
-अणु
-	अगर (!dctx->sset) अणु
-		अगर (!dctx->rset && srclen >= POLY1305_BLOCK_SIZE) अणु
+static unsigned int crypto_poly1305_setdesckey(struct poly1305_desc_ctx *dctx,
+					       const u8 *src, unsigned int srclen)
+{
+	if (!dctx->sset) {
+		if (!dctx->rset && srclen >= POLY1305_BLOCK_SIZE) {
 			poly1305_core_setkey(&dctx->core_r, src);
 			src += POLY1305_BLOCK_SIZE;
 			srclen -= POLY1305_BLOCK_SIZE;
 			dctx->rset = 2;
-		पूर्ण
-		अगर (srclen >= POLY1305_BLOCK_SIZE) अणु
+		}
+		if (srclen >= POLY1305_BLOCK_SIZE) {
 			dctx->s[0] = get_unaligned_le32(src +  0);
 			dctx->s[1] = get_unaligned_le32(src +  4);
 			dctx->s[2] = get_unaligned_le32(src +  8);
@@ -50,98 +49,98 @@
 			src += POLY1305_BLOCK_SIZE;
 			srclen -= POLY1305_BLOCK_SIZE;
 			dctx->sset = true;
-		पूर्ण
-	पूर्ण
-	वापस srclen;
-पूर्ण
+		}
+	}
+	return srclen;
+}
 
-अटल व्योम poly1305_blocks(काष्ठा poly1305_desc_ctx *dctx, स्थिर u8 *src,
-			    अचिन्हित पूर्णांक srclen)
-अणु
-	अचिन्हित पूर्णांक datalen;
+static void poly1305_blocks(struct poly1305_desc_ctx *dctx, const u8 *src,
+			    unsigned int srclen)
+{
+	unsigned int datalen;
 
-	अगर (unlikely(!dctx->sset)) अणु
+	if (unlikely(!dctx->sset)) {
 		datalen = crypto_poly1305_setdesckey(dctx, src, srclen);
 		src += srclen - datalen;
 		srclen = datalen;
-	पूर्ण
+	}
 
 	poly1305_core_blocks(&dctx->h, &dctx->core_r, src,
 			     srclen / POLY1305_BLOCK_SIZE, 1);
-पूर्ण
+}
 
-अटल पूर्णांक crypto_poly1305_update(काष्ठा shash_desc *desc,
-				  स्थिर u8 *src, अचिन्हित पूर्णांक srclen)
-अणु
-	काष्ठा poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
-	अचिन्हित पूर्णांक bytes;
+static int crypto_poly1305_update(struct shash_desc *desc,
+				  const u8 *src, unsigned int srclen)
+{
+	struct poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
+	unsigned int bytes;
 
-	अगर (unlikely(dctx->buflen)) अणु
+	if (unlikely(dctx->buflen)) {
 		bytes = min(srclen, POLY1305_BLOCK_SIZE - dctx->buflen);
-		स_नकल(dctx->buf + dctx->buflen, src, bytes);
+		memcpy(dctx->buf + dctx->buflen, src, bytes);
 		src += bytes;
 		srclen -= bytes;
 		dctx->buflen += bytes;
 
-		अगर (dctx->buflen == POLY1305_BLOCK_SIZE) अणु
+		if (dctx->buflen == POLY1305_BLOCK_SIZE) {
 			poly1305_blocks(dctx, dctx->buf,
 					POLY1305_BLOCK_SIZE);
 			dctx->buflen = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (likely(srclen >= POLY1305_BLOCK_SIZE)) अणु
+	if (likely(srclen >= POLY1305_BLOCK_SIZE)) {
 		poly1305_blocks(dctx, src, srclen);
 		src += srclen - (srclen % POLY1305_BLOCK_SIZE);
 		srclen %= POLY1305_BLOCK_SIZE;
-	पूर्ण
+	}
 
-	अगर (unlikely(srclen)) अणु
+	if (unlikely(srclen)) {
 		dctx->buflen = srclen;
-		स_नकल(dctx->buf, src, srclen);
-	पूर्ण
+		memcpy(dctx->buf, src, srclen);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_poly1305_final(काष्ठा shash_desc *desc, u8 *dst)
-अणु
-	काष्ठा poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
+static int crypto_poly1305_final(struct shash_desc *desc, u8 *dst)
+{
+	struct poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
 
-	अगर (unlikely(!dctx->sset))
-		वापस -ENOKEY;
+	if (unlikely(!dctx->sset))
+		return -ENOKEY;
 
 	poly1305_final_generic(dctx, dst);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा shash_alg poly1305_alg = अणु
+static struct shash_alg poly1305_alg = {
 	.digestsize	= POLY1305_DIGEST_SIZE,
 	.init		= crypto_poly1305_init,
 	.update		= crypto_poly1305_update,
 	.final		= crypto_poly1305_final,
-	.descsize	= माप(काष्ठा poly1305_desc_ctx),
-	.base		= अणु
+	.descsize	= sizeof(struct poly1305_desc_ctx),
+	.base		= {
 		.cra_name		= "poly1305",
 		.cra_driver_name	= "poly1305-generic",
 		.cra_priority		= 100,
 		.cra_blocksize		= POLY1305_BLOCK_SIZE,
 		.cra_module		= THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init poly1305_mod_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_shash(&poly1305_alg);
-पूर्ण
+static int __init poly1305_mod_init(void)
+{
+	return crypto_register_shash(&poly1305_alg);
+}
 
-अटल व्योम __निकास poly1305_mod_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_shash(&poly1305_alg);
-पूर्ण
+static void __exit poly1305_mod_exit(void)
+{
+	crypto_unregister_shash(&poly1305_alg);
+}
 
 subsys_initcall(poly1305_mod_init);
-module_निकास(poly1305_mod_निकास);
+module_exit(poly1305_mod_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Willi <martin@strongswan.org>");

@@ -1,112 +1,111 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Amlogic Meson6, Meson8 and Meson8b eFuse Driver
  *
  * Copyright (c) 2017 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nvmem-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
+#include <linux/bitfield.h>
+#include <linux/bitops.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/module.h>
+#include <linux/nvmem-provider.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
 
-#घोषणा MESON_MX_EFUSE_CNTL1					0x04
-#घोषणा MESON_MX_EFUSE_CNTL1_PD_ENABLE				BIT(27)
-#घोषणा MESON_MX_EFUSE_CNTL1_AUTO_RD_BUSY			BIT(26)
-#घोषणा MESON_MX_EFUSE_CNTL1_AUTO_RD_START			BIT(25)
-#घोषणा MESON_MX_EFUSE_CNTL1_AUTO_RD_ENABLE			BIT(24)
-#घोषणा MESON_MX_EFUSE_CNTL1_BYTE_WR_DATA			GENMASK(23, 16)
-#घोषणा MESON_MX_EFUSE_CNTL1_AUTO_WR_BUSY			BIT(14)
-#घोषणा MESON_MX_EFUSE_CNTL1_AUTO_WR_START			BIT(13)
-#घोषणा MESON_MX_EFUSE_CNTL1_AUTO_WR_ENABLE			BIT(12)
-#घोषणा MESON_MX_EFUSE_CNTL1_BYTE_ADDR_SET			BIT(11)
-#घोषणा MESON_MX_EFUSE_CNTL1_BYTE_ADDR_MASK			GENMASK(10, 0)
+#define MESON_MX_EFUSE_CNTL1					0x04
+#define MESON_MX_EFUSE_CNTL1_PD_ENABLE				BIT(27)
+#define MESON_MX_EFUSE_CNTL1_AUTO_RD_BUSY			BIT(26)
+#define MESON_MX_EFUSE_CNTL1_AUTO_RD_START			BIT(25)
+#define MESON_MX_EFUSE_CNTL1_AUTO_RD_ENABLE			BIT(24)
+#define MESON_MX_EFUSE_CNTL1_BYTE_WR_DATA			GENMASK(23, 16)
+#define MESON_MX_EFUSE_CNTL1_AUTO_WR_BUSY			BIT(14)
+#define MESON_MX_EFUSE_CNTL1_AUTO_WR_START			BIT(13)
+#define MESON_MX_EFUSE_CNTL1_AUTO_WR_ENABLE			BIT(12)
+#define MESON_MX_EFUSE_CNTL1_BYTE_ADDR_SET			BIT(11)
+#define MESON_MX_EFUSE_CNTL1_BYTE_ADDR_MASK			GENMASK(10, 0)
 
-#घोषणा MESON_MX_EFUSE_CNTL2					0x08
+#define MESON_MX_EFUSE_CNTL2					0x08
 
-#घोषणा MESON_MX_EFUSE_CNTL4					0x10
-#घोषणा MESON_MX_EFUSE_CNTL4_ENCRYPT_ENABLE			BIT(10)
+#define MESON_MX_EFUSE_CNTL4					0x10
+#define MESON_MX_EFUSE_CNTL4_ENCRYPT_ENABLE			BIT(10)
 
-काष्ठा meson_mx_efuse_platक्रमm_data अणु
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक word_size;
-पूर्ण;
+struct meson_mx_efuse_platform_data {
+	const char *name;
+	unsigned int word_size;
+};
 
-काष्ठा meson_mx_efuse अणु
-	व्योम __iomem *base;
-	काष्ठा clk *core_clk;
-	काष्ठा nvmem_device *nvmem;
-	काष्ठा nvmem_config config;
-पूर्ण;
+struct meson_mx_efuse {
+	void __iomem *base;
+	struct clk *core_clk;
+	struct nvmem_device *nvmem;
+	struct nvmem_config config;
+};
 
-अटल व्योम meson_mx_efuse_mask_bits(काष्ठा meson_mx_efuse *efuse, u32 reg,
+static void meson_mx_efuse_mask_bits(struct meson_mx_efuse *efuse, u32 reg,
 				     u32 mask, u32 set)
-अणु
+{
 	u32 data;
 
-	data = पढ़ोl(efuse->base + reg);
+	data = readl(efuse->base + reg);
 	data &= ~mask;
 	data |= (set & mask);
 
-	ग_लिखोl(data, efuse->base + reg);
-पूर्ण
+	writel(data, efuse->base + reg);
+}
 
-अटल पूर्णांक meson_mx_efuse_hw_enable(काष्ठा meson_mx_efuse *efuse)
-अणु
-	पूर्णांक err;
+static int meson_mx_efuse_hw_enable(struct meson_mx_efuse *efuse)
+{
+	int err;
 
 	err = clk_prepare_enable(efuse->core_clk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* घातer up the efuse */
+	/* power up the efuse */
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_PD_ENABLE, 0);
 
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL4,
 				 MESON_MX_EFUSE_CNTL4_ENCRYPT_ENABLE, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम meson_mx_efuse_hw_disable(काष्ठा meson_mx_efuse *efuse)
-अणु
+static void meson_mx_efuse_hw_disable(struct meson_mx_efuse *efuse)
+{
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_PD_ENABLE,
 				 MESON_MX_EFUSE_CNTL1_PD_ENABLE);
 
 	clk_disable_unprepare(efuse->core_clk);
-पूर्ण
+}
 
-अटल पूर्णांक meson_mx_efuse_पढ़ो_addr(काष्ठा meson_mx_efuse *efuse,
-				    अचिन्हित पूर्णांक addr, u32 *value)
-अणु
-	पूर्णांक err;
+static int meson_mx_efuse_read_addr(struct meson_mx_efuse *efuse,
+				    unsigned int addr, u32 *value)
+{
+	int err;
 	u32 regval;
 
-	/* ग_लिखो the address to पढ़ो */
+	/* write the address to read */
 	regval = FIELD_PREP(MESON_MX_EFUSE_CNTL1_BYTE_ADDR_MASK, addr);
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_BYTE_ADDR_MASK, regval);
 
-	/* inक्रमm the hardware that we changed the address */
+	/* inform the hardware that we changed the address */
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_BYTE_ADDR_SET,
 				 MESON_MX_EFUSE_CNTL1_BYTE_ADDR_SET);
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_BYTE_ADDR_SET, 0);
 
-	/* start the पढ़ो process */
+	/* start the read process */
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_AUTO_RD_START,
 				 MESON_MX_EFUSE_CNTL1_AUTO_RD_START);
@@ -114,101 +113,101 @@
 				 MESON_MX_EFUSE_CNTL1_AUTO_RD_START, 0);
 
 	/*
-	 * perक्रमm a dummy पढ़ो to ensure that the HW has the RD_BUSY bit set
-	 * when polling क्रम the status below.
+	 * perform a dummy read to ensure that the HW has the RD_BUSY bit set
+	 * when polling for the status below.
 	 */
-	पढ़ोl(efuse->base + MESON_MX_EFUSE_CNTL1);
+	readl(efuse->base + MESON_MX_EFUSE_CNTL1);
 
-	err = पढ़ोl_poll_समयout_atomic(efuse->base + MESON_MX_EFUSE_CNTL1,
+	err = readl_poll_timeout_atomic(efuse->base + MESON_MX_EFUSE_CNTL1,
 			regval,
 			(!(regval & MESON_MX_EFUSE_CNTL1_AUTO_RD_BUSY)),
 			1, 1000);
-	अगर (err) अणु
+	if (err) {
 		dev_err(efuse->config.dev,
 			"Timeout while reading efuse address %u\n", addr);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	*value = पढ़ोl(efuse->base + MESON_MX_EFUSE_CNTL2);
+	*value = readl(efuse->base + MESON_MX_EFUSE_CNTL2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक meson_mx_efuse_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
-			       व्योम *buf, माप_प्रकार bytes)
-अणु
-	काष्ठा meson_mx_efuse *efuse = context;
-	u32 पंचांगp;
-	पूर्णांक err, i, addr;
+static int meson_mx_efuse_read(void *context, unsigned int offset,
+			       void *buf, size_t bytes)
+{
+	struct meson_mx_efuse *efuse = context;
+	u32 tmp;
+	int err, i, addr;
 
 	err = meson_mx_efuse_hw_enable(efuse);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_AUTO_RD_ENABLE,
 				 MESON_MX_EFUSE_CNTL1_AUTO_RD_ENABLE);
 
-	क्रम (i = 0; i < bytes; i += efuse->config.word_size) अणु
+	for (i = 0; i < bytes; i += efuse->config.word_size) {
 		addr = (offset + i) / efuse->config.word_size;
 
-		err = meson_mx_efuse_पढ़ो_addr(efuse, addr, &पंचांगp);
-		अगर (err)
-			अवरोध;
+		err = meson_mx_efuse_read_addr(efuse, addr, &tmp);
+		if (err)
+			break;
 
-		स_नकल(buf + i, &पंचांगp,
-		       min_t(माप_प्रकार, bytes - i, efuse->config.word_size));
-	पूर्ण
+		memcpy(buf + i, &tmp,
+		       min_t(size_t, bytes - i, efuse->config.word_size));
+	}
 
 	meson_mx_efuse_mask_bits(efuse, MESON_MX_EFUSE_CNTL1,
 				 MESON_MX_EFUSE_CNTL1_AUTO_RD_ENABLE, 0);
 
 	meson_mx_efuse_hw_disable(efuse);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा meson_mx_efuse_platक्रमm_data meson6_efuse_data = अणु
+static const struct meson_mx_efuse_platform_data meson6_efuse_data = {
 	.name = "meson6-efuse",
 	.word_size = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा meson_mx_efuse_platक्रमm_data meson8_efuse_data = अणु
+static const struct meson_mx_efuse_platform_data meson8_efuse_data = {
 	.name = "meson8-efuse",
 	.word_size = 4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा meson_mx_efuse_platक्रमm_data meson8b_efuse_data = अणु
+static const struct meson_mx_efuse_platform_data meson8b_efuse_data = {
 	.name = "meson8b-efuse",
 	.word_size = 4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id meson_mx_efuse_match[] = अणु
-	अणु .compatible = "amlogic,meson6-efuse", .data = &meson6_efuse_data पूर्ण,
-	अणु .compatible = "amlogic,meson8-efuse", .data = &meson8_efuse_data पूर्ण,
-	अणु .compatible = "amlogic,meson8b-efuse", .data = &meson8b_efuse_data पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id meson_mx_efuse_match[] = {
+	{ .compatible = "amlogic,meson6-efuse", .data = &meson6_efuse_data },
+	{ .compatible = "amlogic,meson8-efuse", .data = &meson8_efuse_data },
+	{ .compatible = "amlogic,meson8b-efuse", .data = &meson8b_efuse_data },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, meson_mx_efuse_match);
 
-अटल पूर्णांक meson_mx_efuse_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा meson_mx_efuse_platक्रमm_data *drvdata;
-	काष्ठा meson_mx_efuse *efuse;
-	काष्ठा resource *res;
+static int meson_mx_efuse_probe(struct platform_device *pdev)
+{
+	const struct meson_mx_efuse_platform_data *drvdata;
+	struct meson_mx_efuse *efuse;
+	struct resource *res;
 
 	drvdata = of_device_get_match_data(&pdev->dev);
-	अगर (!drvdata)
-		वापस -EINVAL;
+	if (!drvdata)
+		return -EINVAL;
 
-	efuse = devm_kzalloc(&pdev->dev, माप(*efuse), GFP_KERNEL);
-	अगर (!efuse)
-		वापस -ENOMEM;
+	efuse = devm_kzalloc(&pdev->dev, sizeof(*efuse), GFP_KERNEL);
+	if (!efuse)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	efuse->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(efuse->base))
-		वापस PTR_ERR(efuse->base);
+	if (IS_ERR(efuse->base))
+		return PTR_ERR(efuse->base);
 
 	efuse->config.name = devm_kstrdup(&pdev->dev, drvdata->name,
 					  GFP_KERNEL);
@@ -218,29 +217,29 @@ MODULE_DEVICE_TABLE(of, meson_mx_efuse_match);
 	efuse->config.stride = drvdata->word_size;
 	efuse->config.word_size = drvdata->word_size;
 	efuse->config.size = SZ_512;
-	efuse->config.पढ़ो_only = true;
-	efuse->config.reg_पढ़ो = meson_mx_efuse_पढ़ो;
+	efuse->config.read_only = true;
+	efuse->config.reg_read = meson_mx_efuse_read;
 
 	efuse->core_clk = devm_clk_get(&pdev->dev, "core");
-	अगर (IS_ERR(efuse->core_clk)) अणु
+	if (IS_ERR(efuse->core_clk)) {
 		dev_err(&pdev->dev, "Failed to get core clock\n");
-		वापस PTR_ERR(efuse->core_clk);
-	पूर्ण
+		return PTR_ERR(efuse->core_clk);
+	}
 
-	efuse->nvmem = devm_nvmem_रेजिस्टर(&pdev->dev, &efuse->config);
+	efuse->nvmem = devm_nvmem_register(&pdev->dev, &efuse->config);
 
-	वापस PTR_ERR_OR_ZERO(efuse->nvmem);
-पूर्ण
+	return PTR_ERR_OR_ZERO(efuse->nvmem);
+}
 
-अटल काष्ठा platक्रमm_driver meson_mx_efuse_driver = अणु
+static struct platform_driver meson_mx_efuse_driver = {
 	.probe = meson_mx_efuse_probe,
-	.driver = अणु
+	.driver = {
 		.name = "meson-mx-efuse",
 		.of_match_table = meson_mx_efuse_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(meson_mx_efuse_driver);
+module_platform_driver(meson_mx_efuse_driver);
 
 MODULE_AUTHOR("Martin Blumenstingl <martin.blumenstingl@googlemail.com>");
 MODULE_DESCRIPTION("Amlogic Meson MX eFuse NVMEM driver");

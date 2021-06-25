@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __BCM47XX_BOARD_H
-#घोषणा __BCM47XX_BOARD_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __BCM47XX_BOARD_H
+#define __BCM47XX_BOARD_H
 
-क्रमागत bcm47xx_board अणु
+enum bcm47xx_board {
 	BCM47XX_BOARD_ASUS_RTAC66U,
 	BCM47XX_BOARD_ASUS_RTN10,
 	BCM47XX_BOARD_ASUS_RTN10D,
@@ -51,8 +50,8 @@
 
 	BCM47XX_BOARD_DELL_TM2300,
 
-	BCM47XX_BOARD_DLINK_सूची130,
-	BCM47XX_BOARD_DLINK_सूची330,
+	BCM47XX_BOARD_DLINK_DIR130,
+	BCM47XX_BOARD_DLINK_DIR330,
 
 	BCM47XX_BOARD_HUAWEI_E970,
 
@@ -130,12 +129,12 @@
 
 	BCM47XX_BOARD_UNKNOWN,
 	BCM47XX_BOARD_NO,
-पूर्ण;
+};
 
-#घोषणा BCM47XX_BOARD_MAX_NAME 30
+#define BCM47XX_BOARD_MAX_NAME 30
 
-व्योम bcm47xx_board_detect(व्योम);
-क्रमागत bcm47xx_board bcm47xx_board_get(व्योम);
-स्थिर अक्षर *bcm47xx_board_get_name(व्योम);
+void bcm47xx_board_detect(void);
+enum bcm47xx_board bcm47xx_board_get(void);
+const char *bcm47xx_board_get_name(void);
 
-#पूर्ण_अगर /* __BCM47XX_BOARD_H */
+#endif /* __BCM47XX_BOARD_H */

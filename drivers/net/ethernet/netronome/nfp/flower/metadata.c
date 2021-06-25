@@ -1,212 +1,211 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#समावेश <linux/hash.h>
-#समावेश <linux/hashtable.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <net/pkt_cls.h>
+#include <linux/hash.h>
+#include <linux/hashtable.h>
+#include <linux/jhash.h>
+#include <linux/math64.h>
+#include <linux/vmalloc.h>
+#include <net/pkt_cls.h>
 
-#समावेश "cmsg.h"
-#समावेश "main.h"
-#समावेश "../nfp_app.h"
+#include "cmsg.h"
+#include "main.h"
+#include "../nfp_app.h"
 
-काष्ठा nfp_mask_id_table अणु
-	काष्ठा hlist_node link;
+struct nfp_mask_id_table {
+	struct hlist_node link;
 	u32 hash_key;
 	u32 ref_cnt;
 	u8 mask_id;
-पूर्ण;
+};
 
-काष्ठा nfp_fl_flow_table_cmp_arg अणु
-	काष्ठा net_device *netdev;
-	अचिन्हित दीर्घ cookie;
-पूर्ण;
+struct nfp_fl_flow_table_cmp_arg {
+	struct net_device *netdev;
+	unsigned long cookie;
+};
 
-काष्ठा nfp_fl_stats_ctx_to_flow अणु
-	काष्ठा rhash_head ht_node;
+struct nfp_fl_stats_ctx_to_flow {
+	struct rhash_head ht_node;
 	u32 stats_cxt;
-	काष्ठा nfp_fl_payload *flow;
-पूर्ण;
+	struct nfp_fl_payload *flow;
+};
 
-अटल स्थिर काष्ठा rhashtable_params stats_ctx_table_params = अणु
-	.key_offset	= दुरत्व(काष्ठा nfp_fl_stats_ctx_to_flow, stats_cxt),
-	.head_offset	= दुरत्व(काष्ठा nfp_fl_stats_ctx_to_flow, ht_node),
-	.key_len	= माप(u32),
-पूर्ण;
+static const struct rhashtable_params stats_ctx_table_params = {
+	.key_offset	= offsetof(struct nfp_fl_stats_ctx_to_flow, stats_cxt),
+	.head_offset	= offsetof(struct nfp_fl_stats_ctx_to_flow, ht_node),
+	.key_len	= sizeof(u32),
+};
 
-अटल पूर्णांक nfp_release_stats_entry(काष्ठा nfp_app *app, u32 stats_context_id)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	काष्ठा circ_buf *ring;
+static int nfp_release_stats_entry(struct nfp_app *app, u32 stats_context_id)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	struct circ_buf *ring;
 
-	ring = &priv->stats_ids.मुक्त_list;
-	/* Check अगर buffer is full. */
-	अगर (!CIRC_SPACE(ring->head, ring->tail,
+	ring = &priv->stats_ids.free_list;
+	/* Check if buffer is full. */
+	if (!CIRC_SPACE(ring->head, ring->tail,
 			priv->stats_ring_size * NFP_FL_STATS_ELEM_RS -
 			NFP_FL_STATS_ELEM_RS + 1))
-		वापस -ENOBUFS;
+		return -ENOBUFS;
 
-	स_नकल(&ring->buf[ring->head], &stats_context_id, NFP_FL_STATS_ELEM_RS);
+	memcpy(&ring->buf[ring->head], &stats_context_id, NFP_FL_STATS_ELEM_RS);
 	ring->head = (ring->head + NFP_FL_STATS_ELEM_RS) %
 		     (priv->stats_ring_size * NFP_FL_STATS_ELEM_RS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfp_get_stats_entry(काष्ठा nfp_app *app, u32 *stats_context_id)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	u32 मुक्तd_stats_id, temp_stats_id;
-	काष्ठा circ_buf *ring;
+static int nfp_get_stats_entry(struct nfp_app *app, u32 *stats_context_id)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	u32 freed_stats_id, temp_stats_id;
+	struct circ_buf *ring;
 
-	ring = &priv->stats_ids.मुक्त_list;
-	मुक्तd_stats_id = priv->stats_ring_size;
-	/* Check क्रम unallocated entries first. */
-	अगर (priv->stats_ids.init_unalloc > 0) अणु
+	ring = &priv->stats_ids.free_list;
+	freed_stats_id = priv->stats_ring_size;
+	/* Check for unallocated entries first. */
+	if (priv->stats_ids.init_unalloc > 0) {
 		*stats_context_id =
 			FIELD_PREP(NFP_FL_STAT_ID_STAT,
 				   priv->stats_ids.init_unalloc - 1) |
 			FIELD_PREP(NFP_FL_STAT_ID_MU_NUM,
 				   priv->active_mem_unit);
 
-		अगर (++priv->active_mem_unit == priv->total_mem_units) अणु
+		if (++priv->active_mem_unit == priv->total_mem_units) {
 			priv->stats_ids.init_unalloc--;
 			priv->active_mem_unit = 0;
-		पूर्ण
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Check अगर buffer is empty. */
-	अगर (ring->head == ring->tail) अणु
-		*stats_context_id = मुक्तd_stats_id;
-		वापस -ENOENT;
-	पूर्ण
+	/* Check if buffer is empty. */
+	if (ring->head == ring->tail) {
+		*stats_context_id = freed_stats_id;
+		return -ENOENT;
+	}
 
-	स_नकल(&temp_stats_id, &ring->buf[ring->tail], NFP_FL_STATS_ELEM_RS);
+	memcpy(&temp_stats_id, &ring->buf[ring->tail], NFP_FL_STATS_ELEM_RS);
 	*stats_context_id = temp_stats_id;
-	स_नकल(&ring->buf[ring->tail], &मुक्तd_stats_id, NFP_FL_STATS_ELEM_RS);
+	memcpy(&ring->buf[ring->tail], &freed_stats_id, NFP_FL_STATS_ELEM_RS);
 	ring->tail = (ring->tail + NFP_FL_STATS_ELEM_RS) %
 		     (priv->stats_ring_size * NFP_FL_STATS_ELEM_RS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Must be called with either RTNL or rcu_पढ़ो_lock */
-काष्ठा nfp_fl_payload *
-nfp_flower_search_fl_table(काष्ठा nfp_app *app, अचिन्हित दीर्घ tc_flower_cookie,
-			   काष्ठा net_device *netdev)
-अणु
-	काष्ठा nfp_fl_flow_table_cmp_arg flower_cmp_arg;
-	काष्ठा nfp_flower_priv *priv = app->priv;
+/* Must be called with either RTNL or rcu_read_lock */
+struct nfp_fl_payload *
+nfp_flower_search_fl_table(struct nfp_app *app, unsigned long tc_flower_cookie,
+			   struct net_device *netdev)
+{
+	struct nfp_fl_flow_table_cmp_arg flower_cmp_arg;
+	struct nfp_flower_priv *priv = app->priv;
 
 	flower_cmp_arg.netdev = netdev;
 	flower_cmp_arg.cookie = tc_flower_cookie;
 
-	वापस rhashtable_lookup_fast(&priv->flow_table, &flower_cmp_arg,
+	return rhashtable_lookup_fast(&priv->flow_table, &flower_cmp_arg,
 				      nfp_flower_table_params);
-पूर्ण
+}
 
-व्योम nfp_flower_rx_flow_stats(काष्ठा nfp_app *app, काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक msg_len = nfp_flower_cmsg_get_data_len(skb);
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	काष्ठा nfp_fl_stats_frame *stats;
-	अचिन्हित अक्षर *msg;
+void nfp_flower_rx_flow_stats(struct nfp_app *app, struct sk_buff *skb)
+{
+	unsigned int msg_len = nfp_flower_cmsg_get_data_len(skb);
+	struct nfp_flower_priv *priv = app->priv;
+	struct nfp_fl_stats_frame *stats;
+	unsigned char *msg;
 	u32 ctx_id;
-	पूर्णांक i;
+	int i;
 
 	msg = nfp_flower_cmsg_get_data(skb);
 
 	spin_lock(&priv->stats_lock);
-	क्रम (i = 0; i < msg_len / माप(*stats); i++) अणु
-		stats = (काष्ठा nfp_fl_stats_frame *)msg + i;
+	for (i = 0; i < msg_len / sizeof(*stats); i++) {
+		stats = (struct nfp_fl_stats_frame *)msg + i;
 		ctx_id = be32_to_cpu(stats->stats_con_id);
 		priv->stats[ctx_id].pkts += be32_to_cpu(stats->pkt_count);
 		priv->stats[ctx_id].bytes += be64_to_cpu(stats->byte_count);
-		priv->stats[ctx_id].used = jअगरfies;
-	पूर्ण
+		priv->stats[ctx_id].used = jiffies;
+	}
 	spin_unlock(&priv->stats_lock);
-पूर्ण
+}
 
-अटल पूर्णांक nfp_release_mask_id(काष्ठा nfp_app *app, u8 mask_id)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	काष्ठा circ_buf *ring;
+static int nfp_release_mask_id(struct nfp_app *app, u8 mask_id)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	struct circ_buf *ring;
 
-	ring = &priv->mask_ids.mask_id_मुक्त_list;
-	/* Checking अगर buffer is full. */
-	अगर (CIRC_SPACE(ring->head, ring->tail, NFP_FLOWER_MASK_ENTRY_RS) == 0)
-		वापस -ENOBUFS;
+	ring = &priv->mask_ids.mask_id_free_list;
+	/* Checking if buffer is full. */
+	if (CIRC_SPACE(ring->head, ring->tail, NFP_FLOWER_MASK_ENTRY_RS) == 0)
+		return -ENOBUFS;
 
-	स_नकल(&ring->buf[ring->head], &mask_id, NFP_FLOWER_MASK_ELEMENT_RS);
+	memcpy(&ring->buf[ring->head], &mask_id, NFP_FLOWER_MASK_ELEMENT_RS);
 	ring->head = (ring->head + NFP_FLOWER_MASK_ELEMENT_RS) %
 		     (NFP_FLOWER_MASK_ENTRY_RS * NFP_FLOWER_MASK_ELEMENT_RS);
 
-	priv->mask_ids.last_used[mask_id] = kसमय_get();
+	priv->mask_ids.last_used[mask_id] = ktime_get();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nfp_mask_alloc(काष्ठा nfp_app *app, u8 *mask_id)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	kसमय_प्रकार reuse_समयout;
-	काष्ठा circ_buf *ring;
-	u8 temp_id, मुक्तd_id;
+static int nfp_mask_alloc(struct nfp_app *app, u8 *mask_id)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	ktime_t reuse_timeout;
+	struct circ_buf *ring;
+	u8 temp_id, freed_id;
 
-	ring = &priv->mask_ids.mask_id_मुक्त_list;
-	मुक्तd_id = NFP_FLOWER_MASK_ENTRY_RS - 1;
-	/* Checking क्रम unallocated entries first. */
-	अगर (priv->mask_ids.init_unallocated > 0) अणु
+	ring = &priv->mask_ids.mask_id_free_list;
+	freed_id = NFP_FLOWER_MASK_ENTRY_RS - 1;
+	/* Checking for unallocated entries first. */
+	if (priv->mask_ids.init_unallocated > 0) {
 		*mask_id = priv->mask_ids.init_unallocated;
 		priv->mask_ids.init_unallocated--;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Checking अगर buffer is empty. */
-	अगर (ring->head == ring->tail)
-		जाओ err_not_found;
+	/* Checking if buffer is empty. */
+	if (ring->head == ring->tail)
+		goto err_not_found;
 
-	स_नकल(&temp_id, &ring->buf[ring->tail], NFP_FLOWER_MASK_ELEMENT_RS);
+	memcpy(&temp_id, &ring->buf[ring->tail], NFP_FLOWER_MASK_ELEMENT_RS);
 	*mask_id = temp_id;
 
-	reuse_समयout = kसमय_add_ns(priv->mask_ids.last_used[*mask_id],
+	reuse_timeout = ktime_add_ns(priv->mask_ids.last_used[*mask_id],
 				     NFP_FL_MASK_REUSE_TIME_NS);
 
-	अगर (kसमय_beक्रमe(kसमय_get(), reuse_समयout))
-		जाओ err_not_found;
+	if (ktime_before(ktime_get(), reuse_timeout))
+		goto err_not_found;
 
-	स_नकल(&ring->buf[ring->tail], &मुक्तd_id, NFP_FLOWER_MASK_ELEMENT_RS);
+	memcpy(&ring->buf[ring->tail], &freed_id, NFP_FLOWER_MASK_ELEMENT_RS);
 	ring->tail = (ring->tail + NFP_FLOWER_MASK_ELEMENT_RS) %
 		     (NFP_FLOWER_MASK_ENTRY_RS * NFP_FLOWER_MASK_ELEMENT_RS);
 
-	वापस 0;
+	return 0;
 
 err_not_found:
-	*mask_id = मुक्तd_id;
-	वापस -ENOENT;
-पूर्ण
+	*mask_id = freed_id;
+	return -ENOENT;
+}
 
-अटल पूर्णांक
-nfp_add_mask_table(काष्ठा nfp_app *app, अक्षर *mask_data, u32 mask_len)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	काष्ठा nfp_mask_id_table *mask_entry;
-	अचिन्हित दीर्घ hash_key;
+static int
+nfp_add_mask_table(struct nfp_app *app, char *mask_data, u32 mask_len)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	struct nfp_mask_id_table *mask_entry;
+	unsigned long hash_key;
 	u8 mask_id;
 
-	अगर (nfp_mask_alloc(app, &mask_id))
-		वापस -ENOENT;
+	if (nfp_mask_alloc(app, &mask_id))
+		return -ENOENT;
 
-	mask_entry = kदो_स्मृति(माप(*mask_entry), GFP_KERNEL);
-	अगर (!mask_entry) अणु
+	mask_entry = kmalloc(sizeof(*mask_entry), GFP_KERNEL);
+	if (!mask_entry) {
 		nfp_release_mask_id(app, mask_id);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	INIT_HLIST_NODE(&mask_entry->link);
 	mask_entry->mask_id = mask_id;
@@ -215,138 +214,138 @@ nfp_add_mask_table(काष्ठा nfp_app *app, अक्षर *mask_data, 
 	mask_entry->ref_cnt = 1;
 	hash_add(priv->mask_table, &mask_entry->link, hash_key);
 
-	वापस mask_id;
-पूर्ण
+	return mask_id;
+}
 
-अटल काष्ठा nfp_mask_id_table *
-nfp_search_mask_table(काष्ठा nfp_app *app, अक्षर *mask_data, u32 mask_len)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	काष्ठा nfp_mask_id_table *mask_entry;
-	अचिन्हित दीर्घ hash_key;
+static struct nfp_mask_id_table *
+nfp_search_mask_table(struct nfp_app *app, char *mask_data, u32 mask_len)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	struct nfp_mask_id_table *mask_entry;
+	unsigned long hash_key;
 
 	hash_key = jhash(mask_data, mask_len, priv->mask_id_seed);
 
-	hash_क्रम_each_possible(priv->mask_table, mask_entry, link, hash_key)
-		अगर (mask_entry->hash_key == hash_key)
-			वापस mask_entry;
+	hash_for_each_possible(priv->mask_table, mask_entry, link, hash_key)
+		if (mask_entry->hash_key == hash_key)
+			return mask_entry;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक
-nfp_find_in_mask_table(काष्ठा nfp_app *app, अक्षर *mask_data, u32 mask_len)
-अणु
-	काष्ठा nfp_mask_id_table *mask_entry;
+static int
+nfp_find_in_mask_table(struct nfp_app *app, char *mask_data, u32 mask_len)
+{
+	struct nfp_mask_id_table *mask_entry;
 
 	mask_entry = nfp_search_mask_table(app, mask_data, mask_len);
-	अगर (!mask_entry)
-		वापस -ENOENT;
+	if (!mask_entry)
+		return -ENOENT;
 
 	mask_entry->ref_cnt++;
 
-	/* Casting u8 to पूर्णांक क्रम later use. */
-	वापस mask_entry->mask_id;
-पूर्ण
+	/* Casting u8 to int for later use. */
+	return mask_entry->mask_id;
+}
 
-अटल bool
-nfp_check_mask_add(काष्ठा nfp_app *app, अक्षर *mask_data, u32 mask_len,
+static bool
+nfp_check_mask_add(struct nfp_app *app, char *mask_data, u32 mask_len,
 		   u8 *meta_flags, u8 *mask_id)
-अणु
-	पूर्णांक id;
+{
+	int id;
 
 	id = nfp_find_in_mask_table(app, mask_data, mask_len);
-	अगर (id < 0) अणु
+	if (id < 0) {
 		id = nfp_add_mask_table(app, mask_data, mask_len);
-		अगर (id < 0)
-			वापस false;
+		if (id < 0)
+			return false;
 		*meta_flags |= NFP_FL_META_FLAG_MANAGE_MASK;
-	पूर्ण
+	}
 	*mask_id = id;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool
-nfp_check_mask_हटाओ(काष्ठा nfp_app *app, अक्षर *mask_data, u32 mask_len,
+static bool
+nfp_check_mask_remove(struct nfp_app *app, char *mask_data, u32 mask_len,
 		      u8 *meta_flags, u8 *mask_id)
-अणु
-	काष्ठा nfp_mask_id_table *mask_entry;
+{
+	struct nfp_mask_id_table *mask_entry;
 
 	mask_entry = nfp_search_mask_table(app, mask_data, mask_len);
-	अगर (!mask_entry)
-		वापस false;
+	if (!mask_entry)
+		return false;
 
 	*mask_id = mask_entry->mask_id;
 	mask_entry->ref_cnt--;
-	अगर (!mask_entry->ref_cnt) अणु
+	if (!mask_entry->ref_cnt) {
 		hash_del(&mask_entry->link);
 		nfp_release_mask_id(app, *mask_id);
-		kमुक्त(mask_entry);
-		अगर (meta_flags)
+		kfree(mask_entry);
+		if (meta_flags)
 			*meta_flags |= NFP_FL_META_FLAG_MANAGE_MASK;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक nfp_compile_flow_metadata(काष्ठा nfp_app *app,
-			      काष्ठा flow_cls_offload *flow,
-			      काष्ठा nfp_fl_payload *nfp_flow,
-			      काष्ठा net_device *netdev,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nfp_fl_stats_ctx_to_flow *ctx_entry;
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	काष्ठा nfp_fl_payload *check_entry;
+int nfp_compile_flow_metadata(struct nfp_app *app,
+			      struct flow_cls_offload *flow,
+			      struct nfp_fl_payload *nfp_flow,
+			      struct net_device *netdev,
+			      struct netlink_ext_ack *extack)
+{
+	struct nfp_fl_stats_ctx_to_flow *ctx_entry;
+	struct nfp_flower_priv *priv = app->priv;
+	struct nfp_fl_payload *check_entry;
 	u8 new_mask_id;
 	u32 stats_cxt;
-	पूर्णांक err;
+	int err;
 
 	err = nfp_get_stats_entry(app, &stats_cxt);
-	अगर (err) अणु
+	if (err) {
 		NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot allocate new stats context");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	nfp_flow->meta.host_ctx_id = cpu_to_be32(stats_cxt);
 	nfp_flow->meta.host_cookie = cpu_to_be64(flow->cookie);
 	nfp_flow->ingress_dev = netdev;
 
-	ctx_entry = kzalloc(माप(*ctx_entry), GFP_KERNEL);
-	अगर (!ctx_entry) अणु
+	ctx_entry = kzalloc(sizeof(*ctx_entry), GFP_KERNEL);
+	if (!ctx_entry) {
 		err = -ENOMEM;
-		जाओ err_release_stats;
-	पूर्ण
+		goto err_release_stats;
+	}
 
 	ctx_entry->stats_cxt = stats_cxt;
 	ctx_entry->flow = nfp_flow;
 
-	अगर (rhashtable_insert_fast(&priv->stats_ctx_table, &ctx_entry->ht_node,
-				   stats_ctx_table_params)) अणु
+	if (rhashtable_insert_fast(&priv->stats_ctx_table, &ctx_entry->ht_node,
+				   stats_ctx_table_params)) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_ctx_entry;
-	पूर्ण
+		goto err_free_ctx_entry;
+	}
 
-	/* Do net allocate a mask-id क्रम pre_tun_rules. These flows are used to
+	/* Do net allocate a mask-id for pre_tun_rules. These flows are used to
 	 * configure the pre_tun table and are never actually send to the
 	 * firmware as an add-flow message. This causes the mask-id allocation
-	 * on the firmware to get out of sync अगर allocated here.
+	 * on the firmware to get out of sync if allocated here.
 	 */
 	new_mask_id = 0;
-	अगर (!nfp_flow->pre_tun_rule.dev &&
+	if (!nfp_flow->pre_tun_rule.dev &&
 	    !nfp_check_mask_add(app, nfp_flow->mask_data,
 				nfp_flow->meta.mask_len,
-				&nfp_flow->meta.flags, &new_mask_id)) अणु
+				&nfp_flow->meta.flags, &new_mask_id)) {
 		NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot allocate a new mask id");
-		अगर (nfp_release_stats_entry(app, stats_cxt)) अणु
+		if (nfp_release_stats_entry(app, stats_cxt)) {
 			NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot release stats context");
 			err = -EINVAL;
-			जाओ err_हटाओ_rhash;
-		पूर्ण
+			goto err_remove_rhash;
+		}
 		err = -ENOENT;
-		जाओ err_हटाओ_rhash;
-	पूर्ण
+		goto err_remove_rhash;
+	}
 
 	nfp_flow->meta.flow_version = cpu_to_be64(priv->flower_version);
 	priv->flower_version++;
@@ -355,69 +354,69 @@ nfp_check_mask_हटाओ(काष्ठा nfp_app *app, अक्षर *ma
 	nfp_flow->unmasked_data[NFP_FL_MASK_ID_LOCATION] = new_mask_id;
 	priv->stats[stats_cxt].pkts = 0;
 	priv->stats[stats_cxt].bytes = 0;
-	priv->stats[stats_cxt].used = jअगरfies;
+	priv->stats[stats_cxt].used = jiffies;
 
 	check_entry = nfp_flower_search_fl_table(app, flow->cookie, netdev);
-	अगर (check_entry) अणु
+	if (check_entry) {
 		NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot offload duplicate flow entry");
-		अगर (nfp_release_stats_entry(app, stats_cxt)) अणु
+		if (nfp_release_stats_entry(app, stats_cxt)) {
 			NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot release stats context");
 			err = -EINVAL;
-			जाओ err_हटाओ_mask;
-		पूर्ण
+			goto err_remove_mask;
+		}
 
-		अगर (!nfp_flow->pre_tun_rule.dev &&
-		    !nfp_check_mask_हटाओ(app, nfp_flow->mask_data,
+		if (!nfp_flow->pre_tun_rule.dev &&
+		    !nfp_check_mask_remove(app, nfp_flow->mask_data,
 					   nfp_flow->meta.mask_len,
-					   शून्य, &new_mask_id)) अणु
+					   NULL, &new_mask_id)) {
 			NL_SET_ERR_MSG_MOD(extack, "invalid entry: cannot release mask id");
 			err = -EINVAL;
-			जाओ err_हटाओ_mask;
-		पूर्ण
+			goto err_remove_mask;
+		}
 
 		err = -EEXIST;
-		जाओ err_हटाओ_mask;
-	पूर्ण
+		goto err_remove_mask;
+	}
 
-	वापस 0;
+	return 0;
 
-err_हटाओ_mask:
-	अगर (!nfp_flow->pre_tun_rule.dev)
-		nfp_check_mask_हटाओ(app, nfp_flow->mask_data,
+err_remove_mask:
+	if (!nfp_flow->pre_tun_rule.dev)
+		nfp_check_mask_remove(app, nfp_flow->mask_data,
 				      nfp_flow->meta.mask_len,
-				      शून्य, &new_mask_id);
-err_हटाओ_rhash:
-	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->stats_ctx_table,
+				      NULL, &new_mask_id);
+err_remove_rhash:
+	WARN_ON_ONCE(rhashtable_remove_fast(&priv->stats_ctx_table,
 					    &ctx_entry->ht_node,
 					    stats_ctx_table_params));
-err_मुक्त_ctx_entry:
-	kमुक्त(ctx_entry);
+err_free_ctx_entry:
+	kfree(ctx_entry);
 err_release_stats:
 	nfp_release_stats_entry(app, stats_cxt);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम __nfp_modअगरy_flow_metadata(काष्ठा nfp_flower_priv *priv,
-				काष्ठा nfp_fl_payload *nfp_flow)
-अणु
+void __nfp_modify_flow_metadata(struct nfp_flower_priv *priv,
+				struct nfp_fl_payload *nfp_flow)
+{
 	nfp_flow->meta.flags &= ~NFP_FL_META_FLAG_MANAGE_MASK;
 	nfp_flow->meta.flow_version = cpu_to_be64(priv->flower_version);
 	priv->flower_version++;
-पूर्ण
+}
 
-पूर्णांक nfp_modअगरy_flow_metadata(काष्ठा nfp_app *app,
-			     काष्ठा nfp_fl_payload *nfp_flow)
-अणु
-	काष्ठा nfp_fl_stats_ctx_to_flow *ctx_entry;
-	काष्ठा nfp_flower_priv *priv = app->priv;
+int nfp_modify_flow_metadata(struct nfp_app *app,
+			     struct nfp_fl_payload *nfp_flow)
+{
+	struct nfp_fl_stats_ctx_to_flow *ctx_entry;
+	struct nfp_flower_priv *priv = app->priv;
 	u8 new_mask_id = 0;
 	u32 temp_ctx_id;
 
-	__nfp_modअगरy_flow_metadata(priv, nfp_flow);
+	__nfp_modify_flow_metadata(priv, nfp_flow);
 
-	अगर (!nfp_flow->pre_tun_rule.dev)
-		nfp_check_mask_हटाओ(app, nfp_flow->mask_data,
+	if (!nfp_flow->pre_tun_rule.dev)
+		nfp_check_mask_remove(app, nfp_flow->mask_data,
 				      nfp_flow->meta.mask_len, &nfp_flow->meta.flags,
 				      &new_mask_id);
 
@@ -429,162 +428,162 @@ err_release_stats:
 
 	ctx_entry = rhashtable_lookup_fast(&priv->stats_ctx_table, &temp_ctx_id,
 					   stats_ctx_table_params);
-	अगर (!ctx_entry)
-		वापस -ENOENT;
+	if (!ctx_entry)
+		return -ENOENT;
 
-	WARN_ON_ONCE(rhashtable_हटाओ_fast(&priv->stats_ctx_table,
+	WARN_ON_ONCE(rhashtable_remove_fast(&priv->stats_ctx_table,
 					    &ctx_entry->ht_node,
 					    stats_ctx_table_params));
-	kमुक्त(ctx_entry);
+	kfree(ctx_entry);
 
-	वापस nfp_release_stats_entry(app, temp_ctx_id);
-पूर्ण
+	return nfp_release_stats_entry(app, temp_ctx_id);
+}
 
-काष्ठा nfp_fl_payload *
-nfp_flower_get_fl_payload_from_ctx(काष्ठा nfp_app *app, u32 ctx_id)
-अणु
-	काष्ठा nfp_fl_stats_ctx_to_flow *ctx_entry;
-	काष्ठा nfp_flower_priv *priv = app->priv;
+struct nfp_fl_payload *
+nfp_flower_get_fl_payload_from_ctx(struct nfp_app *app, u32 ctx_id)
+{
+	struct nfp_fl_stats_ctx_to_flow *ctx_entry;
+	struct nfp_flower_priv *priv = app->priv;
 
 	ctx_entry = rhashtable_lookup_fast(&priv->stats_ctx_table, &ctx_id,
 					   stats_ctx_table_params);
-	अगर (!ctx_entry)
-		वापस शून्य;
+	if (!ctx_entry)
+		return NULL;
 
-	वापस ctx_entry->flow;
-पूर्ण
+	return ctx_entry->flow;
+}
 
-अटल पूर्णांक nfp_fl_obj_cmpfn(काष्ठा rhashtable_compare_arg *arg,
-			    स्थिर व्योम *obj)
-अणु
-	स्थिर काष्ठा nfp_fl_flow_table_cmp_arg *cmp_arg = arg->key;
-	स्थिर काष्ठा nfp_fl_payload *flow_entry = obj;
+static int nfp_fl_obj_cmpfn(struct rhashtable_compare_arg *arg,
+			    const void *obj)
+{
+	const struct nfp_fl_flow_table_cmp_arg *cmp_arg = arg->key;
+	const struct nfp_fl_payload *flow_entry = obj;
 
-	अगर (flow_entry->ingress_dev == cmp_arg->netdev)
-		वापस flow_entry->tc_flower_cookie != cmp_arg->cookie;
+	if (flow_entry->ingress_dev == cmp_arg->netdev)
+		return flow_entry->tc_flower_cookie != cmp_arg->cookie;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u32 nfp_fl_obj_hashfn(स्थिर व्योम *data, u32 len, u32 seed)
-अणु
-	स्थिर काष्ठा nfp_fl_payload *flower_entry = data;
+static u32 nfp_fl_obj_hashfn(const void *data, u32 len, u32 seed)
+{
+	const struct nfp_fl_payload *flower_entry = data;
 
-	वापस jhash2((u32 *)&flower_entry->tc_flower_cookie,
-		      माप(flower_entry->tc_flower_cookie) / माप(u32),
+	return jhash2((u32 *)&flower_entry->tc_flower_cookie,
+		      sizeof(flower_entry->tc_flower_cookie) / sizeof(u32),
 		      seed);
-पूर्ण
+}
 
-अटल u32 nfp_fl_key_hashfn(स्थिर व्योम *data, u32 len, u32 seed)
-अणु
-	स्थिर काष्ठा nfp_fl_flow_table_cmp_arg *cmp_arg = data;
+static u32 nfp_fl_key_hashfn(const void *data, u32 len, u32 seed)
+{
+	const struct nfp_fl_flow_table_cmp_arg *cmp_arg = data;
 
-	वापस jhash2((u32 *)&cmp_arg->cookie,
-		      माप(cmp_arg->cookie) / माप(u32), seed);
-पूर्ण
+	return jhash2((u32 *)&cmp_arg->cookie,
+		      sizeof(cmp_arg->cookie) / sizeof(u32), seed);
+}
 
-स्थिर काष्ठा rhashtable_params nfp_flower_table_params = अणु
-	.head_offset		= दुरत्व(काष्ठा nfp_fl_payload, fl_node),
+const struct rhashtable_params nfp_flower_table_params = {
+	.head_offset		= offsetof(struct nfp_fl_payload, fl_node),
 	.hashfn			= nfp_fl_key_hashfn,
 	.obj_cmpfn		= nfp_fl_obj_cmpfn,
 	.obj_hashfn		= nfp_fl_obj_hashfn,
-	.स्वतःmatic_shrinking	= true,
-पूर्ण;
+	.automatic_shrinking	= true,
+};
 
-स्थिर काष्ठा rhashtable_params merge_table_params = अणु
-	.key_offset	= दुरत्व(काष्ठा nfp_merge_info, parent_ctx),
-	.head_offset	= दुरत्व(काष्ठा nfp_merge_info, ht_node),
-	.key_len	= माप(u64),
-पूर्ण;
+const struct rhashtable_params merge_table_params = {
+	.key_offset	= offsetof(struct nfp_merge_info, parent_ctx),
+	.head_offset	= offsetof(struct nfp_merge_info, ht_node),
+	.key_len	= sizeof(u64),
+};
 
-पूर्णांक nfp_flower_metadata_init(काष्ठा nfp_app *app, u64 host_ctx_count,
-			     अचिन्हित पूर्णांक host_num_mems)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
-	पूर्णांक err, stats_size;
+int nfp_flower_metadata_init(struct nfp_app *app, u64 host_ctx_count,
+			     unsigned int host_num_mems)
+{
+	struct nfp_flower_priv *priv = app->priv;
+	int err, stats_size;
 
 	hash_init(priv->mask_table);
 
 	err = rhashtable_init(&priv->flow_table, &nfp_flower_table_params);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = rhashtable_init(&priv->stats_ctx_table, &stats_ctx_table_params);
-	अगर (err)
-		जाओ err_मुक्त_flow_table;
+	if (err)
+		goto err_free_flow_table;
 
 	err = rhashtable_init(&priv->merge_table, &merge_table_params);
-	अगर (err)
-		जाओ err_मुक्त_stats_ctx_table;
+	if (err)
+		goto err_free_stats_ctx_table;
 
-	get_अक्रमom_bytes(&priv->mask_id_seed, माप(priv->mask_id_seed));
+	get_random_bytes(&priv->mask_id_seed, sizeof(priv->mask_id_seed));
 
 	/* Init ring buffer and unallocated mask_ids. */
-	priv->mask_ids.mask_id_मुक्त_list.buf =
-		kदो_स्मृति_array(NFP_FLOWER_MASK_ENTRY_RS,
+	priv->mask_ids.mask_id_free_list.buf =
+		kmalloc_array(NFP_FLOWER_MASK_ENTRY_RS,
 			      NFP_FLOWER_MASK_ELEMENT_RS, GFP_KERNEL);
-	अगर (!priv->mask_ids.mask_id_मुक्त_list.buf)
-		जाओ err_मुक्त_merge_table;
+	if (!priv->mask_ids.mask_id_free_list.buf)
+		goto err_free_merge_table;
 
 	priv->mask_ids.init_unallocated = NFP_FLOWER_MASK_ENTRY_RS - 1;
 
-	/* Init बारtamps क्रम mask id*/
+	/* Init timestamps for mask id*/
 	priv->mask_ids.last_used =
-		kदो_स्मृति_array(NFP_FLOWER_MASK_ENTRY_RS,
-			      माप(*priv->mask_ids.last_used), GFP_KERNEL);
-	अगर (!priv->mask_ids.last_used)
-		जाओ err_मुक्त_mask_id;
+		kmalloc_array(NFP_FLOWER_MASK_ENTRY_RS,
+			      sizeof(*priv->mask_ids.last_used), GFP_KERNEL);
+	if (!priv->mask_ids.last_used)
+		goto err_free_mask_id;
 
 	/* Init ring buffer and unallocated stats_ids. */
-	priv->stats_ids.मुक्त_list.buf =
-		vदो_स्मृति(array_size(NFP_FL_STATS_ELEM_RS,
+	priv->stats_ids.free_list.buf =
+		vmalloc(array_size(NFP_FL_STATS_ELEM_RS,
 				   priv->stats_ring_size));
-	अगर (!priv->stats_ids.मुक्त_list.buf)
-		जाओ err_मुक्त_last_used;
+	if (!priv->stats_ids.free_list.buf)
+		goto err_free_last_used;
 
-	priv->stats_ids.init_unalloc = भाग_u64(host_ctx_count, host_num_mems);
+	priv->stats_ids.init_unalloc = div_u64(host_ctx_count, host_num_mems);
 
 	stats_size = FIELD_PREP(NFP_FL_STAT_ID_STAT, host_ctx_count) |
 		     FIELD_PREP(NFP_FL_STAT_ID_MU_NUM, host_num_mems - 1);
-	priv->stats = kvदो_स्मृति_array(stats_size, माप(काष्ठा nfp_fl_stats),
+	priv->stats = kvmalloc_array(stats_size, sizeof(struct nfp_fl_stats),
 				     GFP_KERNEL);
-	अगर (!priv->stats)
-		जाओ err_मुक्त_ring_buf;
+	if (!priv->stats)
+		goto err_free_ring_buf;
 
 	spin_lock_init(&priv->stats_lock);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_ring_buf:
-	vमुक्त(priv->stats_ids.मुक्त_list.buf);
-err_मुक्त_last_used:
-	kमुक्त(priv->mask_ids.last_used);
-err_मुक्त_mask_id:
-	kमुक्त(priv->mask_ids.mask_id_मुक्त_list.buf);
-err_मुक्त_merge_table:
+err_free_ring_buf:
+	vfree(priv->stats_ids.free_list.buf);
+err_free_last_used:
+	kfree(priv->mask_ids.last_used);
+err_free_mask_id:
+	kfree(priv->mask_ids.mask_id_free_list.buf);
+err_free_merge_table:
 	rhashtable_destroy(&priv->merge_table);
-err_मुक्त_stats_ctx_table:
+err_free_stats_ctx_table:
 	rhashtable_destroy(&priv->stats_ctx_table);
-err_मुक्त_flow_table:
+err_free_flow_table:
 	rhashtable_destroy(&priv->flow_table);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-व्योम nfp_flower_metadata_cleanup(काष्ठा nfp_app *app)
-अणु
-	काष्ठा nfp_flower_priv *priv = app->priv;
+void nfp_flower_metadata_cleanup(struct nfp_app *app)
+{
+	struct nfp_flower_priv *priv = app->priv;
 
-	अगर (!priv)
-		वापस;
+	if (!priv)
+		return;
 
-	rhashtable_मुक्त_and_destroy(&priv->flow_table,
-				    nfp_check_rhashtable_empty, शून्य);
-	rhashtable_मुक्त_and_destroy(&priv->stats_ctx_table,
-				    nfp_check_rhashtable_empty, शून्य);
-	rhashtable_मुक्त_and_destroy(&priv->merge_table,
-				    nfp_check_rhashtable_empty, शून्य);
-	kvमुक्त(priv->stats);
-	kमुक्त(priv->mask_ids.mask_id_मुक्त_list.buf);
-	kमुक्त(priv->mask_ids.last_used);
-	vमुक्त(priv->stats_ids.मुक्त_list.buf);
-पूर्ण
+	rhashtable_free_and_destroy(&priv->flow_table,
+				    nfp_check_rhashtable_empty, NULL);
+	rhashtable_free_and_destroy(&priv->stats_ctx_table,
+				    nfp_check_rhashtable_empty, NULL);
+	rhashtable_free_and_destroy(&priv->merge_table,
+				    nfp_check_rhashtable_empty, NULL);
+	kvfree(priv->stats);
+	kfree(priv->mask_ids.mask_id_free_list.buf);
+	kfree(priv->mask_ids.last_used);
+	vfree(priv->stats_ids.free_list.buf);
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,16 +24,16 @@
  */
 
 /**
- * This file defines बाह्यal dependencies of Display Core.
+ * This file defines external dependencies of Display Core.
  */
 
-#अगर_अघोषित __DM_EVENT_LOG_H__
+#ifndef __DM_EVENT_LOG_H__
 
-#घोषणा __DM_EVENT_LOG_H__
+#define __DM_EVENT_LOG_H__
 
-#घोषणा EVENT_LOG_AUX_REQ(ddc, type, action, address, len, data)
-#घोषणा EVENT_LOG_AUX_REP(ddc, type, replyStatus, len, data)
-#घोषणा EVENT_LOG_CUST_MSG(tag, a, ...)
+#define EVENT_LOG_AUX_REQ(ddc, type, action, address, len, data)
+#define EVENT_LOG_AUX_REP(ddc, type, replyStatus, len, data)
+#define EVENT_LOG_CUST_MSG(tag, a, ...)
 
-#पूर्ण_अगर
+#endif
 

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,29 +23,29 @@
  *
  */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM amdgpu_dm
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM amdgpu_dm
 
-#अगर !defined(_AMDGPU_DM_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _AMDGPU_DM_TRACE_H_
+#if !defined(_AMDGPU_DM_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#define _AMDGPU_DM_TRACE_H_
 
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_plane.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_atomic.h>
+#include <linux/tracepoint.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_plane.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_atomic.h>
 
-#समावेश "dc/inc/core_types.h"
+#include "dc/inc/core_types.h"
 
-DECLARE_EVENT_CLASS(amdgpu_dc_reg_ढाँचा,
-		    TP_PROTO(अचिन्हित दीर्घ *count, uपूर्णांक32_t reg, uपूर्णांक32_t value),
+DECLARE_EVENT_CLASS(amdgpu_dc_reg_template,
+		    TP_PROTO(unsigned long *count, uint32_t reg, uint32_t value),
 		    TP_ARGS(count, reg, value),
 
 		    TP_STRUCT__entry(
-				     __field(uपूर्णांक32_t, reg)
-				     __field(uपूर्णांक32_t, value)
+				     __field(uint32_t, reg)
+				     __field(uint32_t, value)
 		    ),
 
 		    TP_fast_assign(
@@ -55,68 +54,68 @@ DECLARE_EVENT_CLASS(amdgpu_dc_reg_ढाँचा,
 				   *count = *count + 1;
 		    ),
 
-		    TP_prपूर्णांकk("reg=0x%08lx, value=0x%08lx",
-			      (अचिन्हित दीर्घ)__entry->reg,
-			      (अचिन्हित दीर्घ)__entry->value)
+		    TP_printk("reg=0x%08lx, value=0x%08lx",
+			      (unsigned long)__entry->reg,
+			      (unsigned long)__entry->value)
 );
 
-DEFINE_EVENT(amdgpu_dc_reg_ढाँचा, amdgpu_dc_rreg,
-	     TP_PROTO(अचिन्हित दीर्घ *count, uपूर्णांक32_t reg, uपूर्णांक32_t value),
+DEFINE_EVENT(amdgpu_dc_reg_template, amdgpu_dc_rreg,
+	     TP_PROTO(unsigned long *count, uint32_t reg, uint32_t value),
 	     TP_ARGS(count, reg, value));
 
-DEFINE_EVENT(amdgpu_dc_reg_ढाँचा, amdgpu_dc_wreg,
-	     TP_PROTO(अचिन्हित दीर्घ *count, uपूर्णांक32_t reg, uपूर्णांक32_t value),
+DEFINE_EVENT(amdgpu_dc_reg_template, amdgpu_dc_wreg,
+	     TP_PROTO(unsigned long *count, uint32_t reg, uint32_t value),
 	     TP_ARGS(count, reg, value));
 
-TRACE_EVENT(amdgpu_dc_perक्रमmance,
-	TP_PROTO(अचिन्हित दीर्घ पढ़ो_count, अचिन्हित दीर्घ ग_लिखो_count,
-		अचिन्हित दीर्घ *last_पढ़ो, अचिन्हित दीर्घ *last_ग_लिखो,
-		स्थिर अक्षर *func, अचिन्हित पूर्णांक line),
-	TP_ARGS(पढ़ो_count, ग_लिखो_count, last_पढ़ो, last_ग_लिखो, func, line),
+TRACE_EVENT(amdgpu_dc_performance,
+	TP_PROTO(unsigned long read_count, unsigned long write_count,
+		unsigned long *last_read, unsigned long *last_write,
+		const char *func, unsigned int line),
+	TP_ARGS(read_count, write_count, last_read, last_write, func, line),
 	TP_STRUCT__entry(
-			__field(uपूर्णांक32_t, पढ़ोs)
-			__field(uपूर्णांक32_t, ग_लिखोs)
-			__field(uपूर्णांक32_t, पढ़ो_delta)
-			__field(uपूर्णांक32_t, ग_लिखो_delta)
+			__field(uint32_t, reads)
+			__field(uint32_t, writes)
+			__field(uint32_t, read_delta)
+			__field(uint32_t, write_delta)
 			__string(func, func)
-			__field(uपूर्णांक32_t, line)
+			__field(uint32_t, line)
 			),
 	TP_fast_assign(
-			__entry->पढ़ोs = पढ़ो_count;
-			__entry->ग_लिखोs = ग_लिखो_count;
-			__entry->पढ़ो_delta = पढ़ो_count - *last_पढ़ो;
-			__entry->ग_लिखो_delta = ग_लिखो_count - *last_ग_लिखो;
+			__entry->reads = read_count;
+			__entry->writes = write_count;
+			__entry->read_delta = read_count - *last_read;
+			__entry->write_delta = write_count - *last_write;
 			__assign_str(func, func);
 			__entry->line = line;
-			*last_पढ़ो = पढ़ो_count;
-			*last_ग_लिखो = ग_लिखो_count;
+			*last_read = read_count;
+			*last_write = write_count;
 			),
-	TP_prपूर्णांकk("%s:%d reads=%08ld (%08ld total), writes=%08ld (%08ld total)",
+	TP_printk("%s:%d reads=%08ld (%08ld total), writes=%08ld (%08ld total)",
 			__get_str(func), __entry->line,
-			(अचिन्हित दीर्घ)__entry->पढ़ो_delta,
-			(अचिन्हित दीर्घ)__entry->पढ़ोs,
-			(अचिन्हित दीर्घ)__entry->ग_लिखो_delta,
-			(अचिन्हित दीर्घ)__entry->ग_लिखोs)
+			(unsigned long)__entry->read_delta,
+			(unsigned long)__entry->reads,
+			(unsigned long)__entry->write_delta,
+			(unsigned long)__entry->writes)
 );
 
 TRACE_EVENT(amdgpu_dm_connector_atomic_check,
-	    TP_PROTO(स्थिर काष्ठा drm_connector_state *state),
+	    TP_PROTO(const struct drm_connector_state *state),
 	    TP_ARGS(state),
 
 	    TP_STRUCT__entry(
-			     __field(uपूर्णांक32_t, conn_id)
-			     __field(स्थिर काष्ठा drm_connector_state *, conn_state)
-			     __field(स्थिर काष्ठा drm_atomic_state *, state)
-			     __field(स्थिर काष्ठा drm_crtc_commit *, commit)
-			     __field(uपूर्णांक32_t, crtc_id)
-			     __field(uपूर्णांक32_t, best_encoder_id)
-			     __field(क्रमागत drm_link_status, link_status)
+			     __field(uint32_t, conn_id)
+			     __field(const struct drm_connector_state *, conn_state)
+			     __field(const struct drm_atomic_state *, state)
+			     __field(const struct drm_crtc_commit *, commit)
+			     __field(uint32_t, crtc_id)
+			     __field(uint32_t, best_encoder_id)
+			     __field(enum drm_link_status, link_status)
 			     __field(bool, self_refresh_aware)
-			     __field(क्रमागत hdmi_picture_aspect, picture_aspect_ratio)
-			     __field(अचिन्हित पूर्णांक, content_type)
-			     __field(अचिन्हित पूर्णांक, hdcp_content_type)
-			     __field(अचिन्हित पूर्णांक, content_protection)
-			     __field(अचिन्हित पूर्णांक, scaling_mode)
+			     __field(enum hdmi_picture_aspect, picture_aspect_ratio)
+			     __field(unsigned int, content_type)
+			     __field(unsigned int, hdcp_content_type)
+			     __field(unsigned int, content_protection)
+			     __field(unsigned int, scaling_mode)
 			     __field(u32, colorspace)
 			     __field(u8, max_requested_bpc)
 			     __field(u8, max_bpc)
@@ -142,7 +141,7 @@ TRACE_EVENT(amdgpu_dm_connector_atomic_check,
 			   __entry->max_bpc = state->max_bpc;
 	    ),
 
-	    TP_prपूर्णांकk("conn_id=%u conn_state=%p state=%p commit=%p crtc_id=%u "
+	    TP_printk("conn_id=%u conn_state=%p state=%p commit=%p crtc_id=%u "
 		      "best_encoder_id=%u link_status=%d self_refresh_aware=%d "
 		      "picture_aspect_ratio=%d content_type=%u "
 		      "hdcp_content_type=%u content_protection=%u scaling_mode=%u "
@@ -157,14 +156,14 @@ TRACE_EVENT(amdgpu_dm_connector_atomic_check,
 );
 
 TRACE_EVENT(amdgpu_dm_crtc_atomic_check,
-	    TP_PROTO(स्थिर काष्ठा drm_crtc_state *state),
+	    TP_PROTO(const struct drm_crtc_state *state),
 	    TP_ARGS(state),
 
 	    TP_STRUCT__entry(
-			     __field(स्थिर काष्ठा drm_atomic_state *, state)
-			     __field(स्थिर काष्ठा drm_crtc_state *, crtc_state)
-			     __field(स्थिर काष्ठा drm_crtc_commit *, commit)
-			     __field(uपूर्णांक32_t, crtc_id)
+			     __field(const struct drm_atomic_state *, state)
+			     __field(const struct drm_crtc_state *, crtc_state)
+			     __field(const struct drm_crtc_commit *, commit)
+			     __field(uint32_t, crtc_id)
 			     __field(bool, enable)
 			     __field(bool, active)
 			     __field(bool, planes_changed)
@@ -204,7 +203,7 @@ TRACE_EVENT(amdgpu_dm_crtc_atomic_check,
 			   __entry->encoder_mask = state->encoder_mask;
 	    ),
 
-	    TP_prपूर्णांकk("crtc_id=%u crtc_state=%p state=%p commit=%p changed("
+	    TP_printk("crtc_id=%u crtc_state=%p state=%p commit=%p changed("
 		      "planes=%d mode=%d active=%d conn=%d zpos=%d color_mgmt=%d) "
 		      "state(enable=%d active=%d async_flip=%d vrr_enabled=%d "
 		      "self_refresh_active=%d no_vblank=%d) mask(plane=%x conn=%x "
@@ -220,35 +219,35 @@ TRACE_EVENT(amdgpu_dm_crtc_atomic_check,
 		      __entry->encoder_mask)
 );
 
-DECLARE_EVENT_CLASS(amdgpu_dm_plane_state_ढाँचा,
-	    TP_PROTO(स्थिर काष्ठा drm_plane_state *state),
+DECLARE_EVENT_CLASS(amdgpu_dm_plane_state_template,
+	    TP_PROTO(const struct drm_plane_state *state),
 	    TP_ARGS(state),
 	    TP_STRUCT__entry(
-			     __field(uपूर्णांक32_t, plane_id)
-			     __field(क्रमागत drm_plane_type, plane_type)
-			     __field(स्थिर काष्ठा drm_plane_state *, plane_state)
-			     __field(स्थिर काष्ठा drm_atomic_state *, state)
-			     __field(uपूर्णांक32_t, crtc_id)
-			     __field(uपूर्णांक32_t, fb_id)
-			     __field(uपूर्णांक32_t, fb_क्रमmat)
-			     __field(uपूर्णांक8_t, fb_planes)
-			     __field(uपूर्णांक64_t, fb_modअगरier)
-			     __field(स्थिर काष्ठा dma_fence *, fence)
-			     __field(पूर्णांक32_t, crtc_x)
-			     __field(पूर्णांक32_t, crtc_y)
-			     __field(uपूर्णांक32_t, crtc_w)
-			     __field(uपूर्णांक32_t, crtc_h)
-			     __field(uपूर्णांक32_t, src_x)
-			     __field(uपूर्णांक32_t, src_y)
-			     __field(uपूर्णांक32_t, src_w)
-			     __field(uपूर्णांक32_t, src_h)
+			     __field(uint32_t, plane_id)
+			     __field(enum drm_plane_type, plane_type)
+			     __field(const struct drm_plane_state *, plane_state)
+			     __field(const struct drm_atomic_state *, state)
+			     __field(uint32_t, crtc_id)
+			     __field(uint32_t, fb_id)
+			     __field(uint32_t, fb_format)
+			     __field(uint8_t, fb_planes)
+			     __field(uint64_t, fb_modifier)
+			     __field(const struct dma_fence *, fence)
+			     __field(int32_t, crtc_x)
+			     __field(int32_t, crtc_y)
+			     __field(uint32_t, crtc_w)
+			     __field(uint32_t, crtc_h)
+			     __field(uint32_t, src_x)
+			     __field(uint32_t, src_y)
+			     __field(uint32_t, src_w)
+			     __field(uint32_t, src_h)
 			     __field(u32, alpha)
-			     __field(uपूर्णांक32_t, pixel_blend_mode)
-			     __field(अचिन्हित पूर्णांक, rotation)
-			     __field(अचिन्हित पूर्णांक, zpos)
-			     __field(अचिन्हित पूर्णांक, normalized_zpos)
-			     __field(क्रमागत drm_color_encoding, color_encoding)
-			     __field(क्रमागत drm_color_range, color_range)
+			     __field(uint32_t, pixel_blend_mode)
+			     __field(unsigned int, rotation)
+			     __field(unsigned int, zpos)
+			     __field(unsigned int, normalized_zpos)
+			     __field(enum drm_color_encoding, color_encoding)
+			     __field(enum drm_color_range, color_range)
 			     __field(bool, visible)
 	    ),
 
@@ -259,9 +258,9 @@ DECLARE_EVENT_CLASS(amdgpu_dm_plane_state_ढाँचा,
 			   __entry->state = state->state;
 			   __entry->crtc_id = state->crtc ? state->crtc->base.id : 0;
 			   __entry->fb_id = state->fb ? state->fb->base.id : 0;
-			   __entry->fb_क्रमmat = state->fb ? state->fb->क्रमmat->क्रमmat : 0;
-			   __entry->fb_planes = state->fb ? state->fb->क्रमmat->num_planes : 0;
-			   __entry->fb_modअगरier = state->fb ? state->fb->modअगरier : 0;
+			   __entry->fb_format = state->fb ? state->fb->format->format : 0;
+			   __entry->fb_planes = state->fb ? state->fb->format->num_planes : 0;
+			   __entry->fb_modifier = state->fb ? state->fb->modifier : 0;
 			   __entry->fence = state->fence;
 			   __entry->crtc_x = state->crtc_x;
 			   __entry->crtc_y = state->crtc_y;
@@ -281,7 +280,7 @@ DECLARE_EVENT_CLASS(amdgpu_dm_plane_state_ढाँचा,
 			   __entry->visible = state->visible;
 	    ),
 
-	    TP_prपूर्णांकk("plane_id=%u plane_type=%d plane_state=%p state=%p "
+	    TP_printk("plane_id=%u plane_type=%d plane_state=%p state=%p "
 		      "crtc_id=%u fb(id=%u fmt=%c%c%c%c planes=%u mod=%llu) "
 		      "fence=%p crtc_x=%d crtc_y=%d crtc_w=%u crtc_h=%u "
 		      "src_x=%u src_y=%u src_w=%u src_h=%u alpha=%u "
@@ -290,12 +289,12 @@ DECLARE_EVENT_CLASS(amdgpu_dm_plane_state_ढाँचा,
 		      "visible=%d",
 		      __entry->plane_id, __entry->plane_type, __entry->plane_state,
 		      __entry->state, __entry->crtc_id, __entry->fb_id,
-		      (__entry->fb_क्रमmat & 0xff) ? (__entry->fb_क्रमmat & 0xff) : 'N',
-		      ((__entry->fb_क्रमmat >> 8) & 0xff) ? ((__entry->fb_क्रमmat >> 8) & 0xff) : 'O',
-		      ((__entry->fb_क्रमmat >> 16) & 0xff) ? ((__entry->fb_क्रमmat >> 16) & 0xff) : 'N',
-		      ((__entry->fb_क्रमmat >> 24) & 0x7f) ? ((__entry->fb_क्रमmat >> 24) & 0x7f) : 'E',
+		      (__entry->fb_format & 0xff) ? (__entry->fb_format & 0xff) : 'N',
+		      ((__entry->fb_format >> 8) & 0xff) ? ((__entry->fb_format >> 8) & 0xff) : 'O',
+		      ((__entry->fb_format >> 16) & 0xff) ? ((__entry->fb_format >> 16) & 0xff) : 'N',
+		      ((__entry->fb_format >> 24) & 0x7f) ? ((__entry->fb_format >> 24) & 0x7f) : 'E',
 		      __entry->fb_planes,
-		      __entry->fb_modअगरier, __entry->fence, __entry->crtc_x,
+		      __entry->fb_modifier, __entry->fence, __entry->crtc_x,
 		      __entry->crtc_y, __entry->crtc_w, __entry->crtc_h,
 		      __entry->src_x, __entry->src_y, __entry->src_w, __entry->src_h,
 		      __entry->alpha, __entry->pixel_blend_mode, __entry->rotation,
@@ -304,26 +303,26 @@ DECLARE_EVENT_CLASS(amdgpu_dm_plane_state_ढाँचा,
 		      __entry->visible)
 );
 
-DEFINE_EVENT(amdgpu_dm_plane_state_ढाँचा, amdgpu_dm_plane_atomic_check,
-	     TP_PROTO(स्थिर काष्ठा drm_plane_state *state),
+DEFINE_EVENT(amdgpu_dm_plane_state_template, amdgpu_dm_plane_atomic_check,
+	     TP_PROTO(const struct drm_plane_state *state),
 	     TP_ARGS(state));
 
-DEFINE_EVENT(amdgpu_dm_plane_state_ढाँचा, amdgpu_dm_atomic_update_cursor,
-	     TP_PROTO(स्थिर काष्ठा drm_plane_state *state),
+DEFINE_EVENT(amdgpu_dm_plane_state_template, amdgpu_dm_atomic_update_cursor,
+	     TP_PROTO(const struct drm_plane_state *state),
 	     TP_ARGS(state));
 
-TRACE_EVENT(amdgpu_dm_atomic_state_ढाँचा,
-	    TP_PROTO(स्थिर काष्ठा drm_atomic_state *state),
+TRACE_EVENT(amdgpu_dm_atomic_state_template,
+	    TP_PROTO(const struct drm_atomic_state *state),
 	    TP_ARGS(state),
 
 	    TP_STRUCT__entry(
-			     __field(स्थिर काष्ठा drm_atomic_state *, state)
+			     __field(const struct drm_atomic_state *, state)
 			     __field(bool, allow_modeset)
 			     __field(bool, legacy_cursor_update)
 			     __field(bool, async_update)
 			     __field(bool, duplicated)
-			     __field(पूर्णांक, num_connector)
-			     __field(पूर्णांक, num_निजी_objs)
+			     __field(int, num_connector)
+			     __field(int, num_private_objs)
 	    ),
 
 	    TP_fast_assign(
@@ -333,36 +332,36 @@ TRACE_EVENT(amdgpu_dm_atomic_state_ढाँचा,
 			   __entry->async_update = state->async_update;
 			   __entry->duplicated = state->duplicated;
 			   __entry->num_connector = state->num_connector;
-			   __entry->num_निजी_objs = state->num_निजी_objs;
+			   __entry->num_private_objs = state->num_private_objs;
 	    ),
 
-	    TP_prपूर्णांकk("state=%p allow_modeset=%d legacy_cursor_update=%d "
+	    TP_printk("state=%p allow_modeset=%d legacy_cursor_update=%d "
 		      "async_update=%d duplicated=%d num_connector=%d "
 		      "num_private_objs=%d",
 		      __entry->state, __entry->allow_modeset, __entry->legacy_cursor_update,
 		      __entry->async_update, __entry->duplicated, __entry->num_connector,
-		      __entry->num_निजी_objs)
+		      __entry->num_private_objs)
 );
 
-DEFINE_EVENT(amdgpu_dm_atomic_state_ढाँचा, amdgpu_dm_atomic_commit_tail_begin,
-	     TP_PROTO(स्थिर काष्ठा drm_atomic_state *state),
+DEFINE_EVENT(amdgpu_dm_atomic_state_template, amdgpu_dm_atomic_commit_tail_begin,
+	     TP_PROTO(const struct drm_atomic_state *state),
 	     TP_ARGS(state));
 
-DEFINE_EVENT(amdgpu_dm_atomic_state_ढाँचा, amdgpu_dm_atomic_commit_tail_finish,
-	     TP_PROTO(स्थिर काष्ठा drm_atomic_state *state),
+DEFINE_EVENT(amdgpu_dm_atomic_state_template, amdgpu_dm_atomic_commit_tail_finish,
+	     TP_PROTO(const struct drm_atomic_state *state),
 	     TP_ARGS(state));
 
-DEFINE_EVENT(amdgpu_dm_atomic_state_ढाँचा, amdgpu_dm_atomic_check_begin,
-	     TP_PROTO(स्थिर काष्ठा drm_atomic_state *state),
+DEFINE_EVENT(amdgpu_dm_atomic_state_template, amdgpu_dm_atomic_check_begin,
+	     TP_PROTO(const struct drm_atomic_state *state),
 	     TP_ARGS(state));
 
 TRACE_EVENT(amdgpu_dm_atomic_check_finish,
-	    TP_PROTO(स्थिर काष्ठा drm_atomic_state *state, पूर्णांक res),
+	    TP_PROTO(const struct drm_atomic_state *state, int res),
 	    TP_ARGS(state, res),
 
 	    TP_STRUCT__entry(
-			     __field(स्थिर काष्ठा drm_atomic_state *, state)
-			     __field(पूर्णांक, res)
+			     __field(const struct drm_atomic_state *, state)
+			     __field(int, res)
 			     __field(bool, async_update)
 			     __field(bool, allow_modeset)
 	    ),
@@ -374,48 +373,48 @@ TRACE_EVENT(amdgpu_dm_atomic_check_finish,
 			   __entry->allow_modeset = state->allow_modeset;
 	    ),
 
-	    TP_prपूर्णांकk("state=%p res=%d async_update=%d allow_modeset=%d",
+	    TP_printk("state=%p res=%d async_update=%d allow_modeset=%d",
 		      __entry->state, __entry->res,
 		      __entry->async_update, __entry->allow_modeset)
 );
 
 TRACE_EVENT(amdgpu_dm_dc_pipe_state,
-	    TP_PROTO(पूर्णांक pipe_idx, स्थिर काष्ठा dc_plane_state *plane_state,
-		     स्थिर काष्ठा dc_stream_state *stream,
-		     स्थिर काष्ठा plane_resource *plane_res,
-		     पूर्णांक update_flags),
+	    TP_PROTO(int pipe_idx, const struct dc_plane_state *plane_state,
+		     const struct dc_stream_state *stream,
+		     const struct plane_resource *plane_res,
+		     int update_flags),
 	    TP_ARGS(pipe_idx, plane_state, stream, plane_res, update_flags),
 
 	    TP_STRUCT__entry(
-			     __field(पूर्णांक, pipe_idx)
-			     __field(स्थिर व्योम *, stream)
-			     __field(पूर्णांक, stream_w)
-			     __field(पूर्णांक, stream_h)
-			     __field(पूर्णांक, dst_x)
-			     __field(पूर्णांक, dst_y)
-			     __field(पूर्णांक, dst_w)
-			     __field(पूर्णांक, dst_h)
-			     __field(पूर्णांक, src_x)
-			     __field(पूर्णांक, src_y)
-			     __field(पूर्णांक, src_w)
-			     __field(पूर्णांक, src_h)
-			     __field(पूर्णांक, clip_x)
-			     __field(पूर्णांक, clip_y)
-			     __field(पूर्णांक, clip_w)
-			     __field(पूर्णांक, clip_h)
-			     __field(पूर्णांक, recout_x)
-			     __field(पूर्णांक, recout_y)
-			     __field(पूर्णांक, recout_w)
-			     __field(पूर्णांक, recout_h)
-			     __field(पूर्णांक, viewport_x)
-			     __field(पूर्णांक, viewport_y)
-			     __field(पूर्णांक, viewport_w)
-			     __field(पूर्णांक, viewport_h)
-			     __field(पूर्णांक, flip_immediate)
-			     __field(पूर्णांक, surface_pitch)
-			     __field(पूर्णांक, क्रमmat)
-			     __field(पूर्णांक, swizzle)
-			     __field(अचिन्हित पूर्णांक, update_flags)
+			     __field(int, pipe_idx)
+			     __field(const void *, stream)
+			     __field(int, stream_w)
+			     __field(int, stream_h)
+			     __field(int, dst_x)
+			     __field(int, dst_y)
+			     __field(int, dst_w)
+			     __field(int, dst_h)
+			     __field(int, src_x)
+			     __field(int, src_y)
+			     __field(int, src_w)
+			     __field(int, src_h)
+			     __field(int, clip_x)
+			     __field(int, clip_y)
+			     __field(int, clip_w)
+			     __field(int, clip_h)
+			     __field(int, recout_x)
+			     __field(int, recout_y)
+			     __field(int, recout_w)
+			     __field(int, recout_h)
+			     __field(int, viewport_x)
+			     __field(int, viewport_y)
+			     __field(int, viewport_w)
+			     __field(int, viewport_h)
+			     __field(int, flip_immediate)
+			     __field(int, surface_pitch)
+			     __field(int, format)
+			     __field(int, swizzle)
+			     __field(unsigned int, update_flags)
 	),
 
 	TP_fast_assign(
@@ -445,11 +444,11 @@ TRACE_EVENT(amdgpu_dm_dc_pipe_state,
 		       __entry->viewport_h = plane_res->scl_data.viewport.height;
 		       __entry->flip_immediate = plane_state->flip_immediate;
 		       __entry->surface_pitch = plane_state->plane_size.surface_pitch;
-		       __entry->क्रमmat = plane_state->क्रमmat;
+		       __entry->format = plane_state->format;
 		       __entry->swizzle = plane_state->tiling_info.gfx9.swizzle;
 		       __entry->update_flags = update_flags;
 	),
-	TP_prपूर्णांकk("pipe_idx=%d stream=%p rct(%d,%d) dst=(%d,%d,%d,%d) "
+	TP_printk("pipe_idx=%d stream=%p rct(%d,%d) dst=(%d,%d,%d,%d) "
 		  "src=(%d,%d,%d,%d) clip=(%d,%d,%d,%d) recout=(%d,%d,%d,%d) "
 		  "viewport=(%d,%d,%d,%d) flip_immediate=%d pitch=%d "
 		  "format=%d swizzle=%d update_flags=%x",
@@ -479,34 +478,34 @@ TRACE_EVENT(amdgpu_dm_dc_pipe_state,
 		  __entry->viewport_h,
 		  __entry->flip_immediate,
 		  __entry->surface_pitch,
-		  __entry->क्रमmat,
+		  __entry->format,
 		  __entry->swizzle,
 		  __entry->update_flags
 	)
 );
 
-TRACE_EVENT(amdgpu_dm_dc_घड़ीs_state,
-	    TP_PROTO(स्थिर काष्ठा dc_घड़ीs *clk),
+TRACE_EVENT(amdgpu_dm_dc_clocks_state,
+	    TP_PROTO(const struct dc_clocks *clk),
 	    TP_ARGS(clk),
 
 	    TP_STRUCT__entry(
-			     __field(पूर्णांक, dispclk_khz)
-			     __field(पूर्णांक, dppclk_khz)
-			     __field(पूर्णांक, disp_dpp_voltage_level_khz)
-			     __field(पूर्णांक, dcfclk_khz)
-			     __field(पूर्णांक, socclk_khz)
-			     __field(पूर्णांक, dcfclk_deep_sleep_khz)
-			     __field(पूर्णांक, fclk_khz)
-			     __field(पूर्णांक, phyclk_khz)
-			     __field(पूर्णांक, dramclk_khz)
-			     __field(पूर्णांक, p_state_change_support)
-			     __field(पूर्णांक, prev_p_state_change_support)
-			     __field(पूर्णांक, pwr_state)
-			     __field(पूर्णांक, dपंचांग_level)
-			     __field(पूर्णांक, max_supported_dppclk_khz)
-			     __field(पूर्णांक, max_supported_dispclk_khz)
-			     __field(पूर्णांक, bw_dppclk_khz)
-			     __field(पूर्णांक, bw_dispclk_khz)
+			     __field(int, dispclk_khz)
+			     __field(int, dppclk_khz)
+			     __field(int, disp_dpp_voltage_level_khz)
+			     __field(int, dcfclk_khz)
+			     __field(int, socclk_khz)
+			     __field(int, dcfclk_deep_sleep_khz)
+			     __field(int, fclk_khz)
+			     __field(int, phyclk_khz)
+			     __field(int, dramclk_khz)
+			     __field(int, p_state_change_support)
+			     __field(int, prev_p_state_change_support)
+			     __field(int, pwr_state)
+			     __field(int, dtm_level)
+			     __field(int, max_supported_dppclk_khz)
+			     __field(int, max_supported_dispclk_khz)
+			     __field(int, bw_dppclk_khz)
+			     __field(int, bw_dispclk_khz)
 	    ),
 	    TP_fast_assign(
 			   __entry->dispclk_khz = clk->dispclk_khz;
@@ -521,13 +520,13 @@ TRACE_EVENT(amdgpu_dm_dc_घड़ीs_state,
 			   __entry->prev_p_state_change_support = clk->prev_p_state_change_support;
 			   __entry->pwr_state = clk->pwr_state;
 			   __entry->prev_p_state_change_support = clk->prev_p_state_change_support;
-			   __entry->dपंचांग_level = clk->dपंचांग_level;
+			   __entry->dtm_level = clk->dtm_level;
 			   __entry->max_supported_dppclk_khz = clk->max_supported_dppclk_khz;
 			   __entry->max_supported_dispclk_khz = clk->max_supported_dispclk_khz;
 			   __entry->bw_dppclk_khz = clk->bw_dppclk_khz;
 			   __entry->bw_dispclk_khz = clk->bw_dispclk_khz;
 	    ),
-	    TP_prपूर्णांकk("dispclk_khz=%d dppclk_khz=%d disp_dpp_voltage_level_khz=%d dcfclk_khz=%d socclk_khz=%d "
+	    TP_printk("dispclk_khz=%d dppclk_khz=%d disp_dpp_voltage_level_khz=%d dcfclk_khz=%d socclk_khz=%d "
 		      "dcfclk_deep_sleep_khz=%d fclk_khz=%d phyclk_khz=%d "
 		      "dramclk_khz=%d p_state_change_support=%d "
 		      "prev_p_state_change_support=%d pwr_state=%d prev_p_state_change_support=%d "
@@ -546,7 +545,7 @@ TRACE_EVENT(amdgpu_dm_dc_घड़ीs_state,
 		      __entry->prev_p_state_change_support,
 		      __entry->pwr_state,
 		      __entry->prev_p_state_change_support,
-		      __entry->dपंचांग_level,
+		      __entry->dtm_level,
 		      __entry->max_supported_dppclk_khz,
 		      __entry->max_supported_dispclk_khz,
 		      __entry->bw_dppclk_khz,
@@ -554,8 +553,8 @@ TRACE_EVENT(amdgpu_dm_dc_घड़ीs_state,
 	    )
 );
 
-TRACE_EVENT(amdgpu_dm_dce_घड़ीs_state,
-	    TP_PROTO(स्थिर काष्ठा dce_bw_output *clk),
+TRACE_EVENT(amdgpu_dm_dce_clocks_state,
+	    TP_PROTO(const struct dce_bw_output *clk),
 	    TP_ARGS(clk),
 
 	    TP_STRUCT__entry(
@@ -564,11 +563,11 @@ TRACE_EVENT(amdgpu_dm_dce_घड़ीs_state,
 			     __field(bool, stutter_mode_enable)
 			     __field(bool, nbp_state_change_enable)
 			     __field(bool, all_displays_in_sync)
-			     __field(पूर्णांक, sclk_khz)
-			     __field(पूर्णांक, sclk_deep_sleep_khz)
-			     __field(पूर्णांक, yclk_khz)
-			     __field(पूर्णांक, dispclk_khz)
-			     __field(पूर्णांक, blackout_recovery_समय_us)
+			     __field(int, sclk_khz)
+			     __field(int, sclk_deep_sleep_khz)
+			     __field(int, yclk_khz)
+			     __field(int, dispclk_khz)
+			     __field(int, blackout_recovery_time_us)
 	    ),
 	    TP_fast_assign(
 			   __entry->cpuc_state_change_enable = clk->cpuc_state_change_enable;
@@ -580,9 +579,9 @@ TRACE_EVENT(amdgpu_dm_dce_घड़ीs_state,
 			   __entry->sclk_deep_sleep_khz = clk->sclk_deep_sleep_khz;
 			   __entry->yclk_khz = clk->yclk_khz;
 			   __entry->dispclk_khz = clk->dispclk_khz;
-			   __entry->blackout_recovery_समय_us = clk->blackout_recovery_समय_us;
+			   __entry->blackout_recovery_time_us = clk->blackout_recovery_time_us;
 	    ),
-	    TP_prपूर्णांकk("cpuc_state_change_enable=%d cpup_state_change_enable=%d stutter_mode_enable=%d "
+	    TP_printk("cpuc_state_change_enable=%d cpup_state_change_enable=%d stutter_mode_enable=%d "
 		      "nbp_state_change_enable=%d all_displays_in_sync=%d sclk_khz=%d sclk_deep_sleep_khz=%d "
 		      "yclk_khz=%d dispclk_khz=%d blackout_recovery_time_us=%d",
 		      __entry->cpuc_state_change_enable,
@@ -594,19 +593,19 @@ TRACE_EVENT(amdgpu_dm_dce_घड़ीs_state,
 		      __entry->sclk_deep_sleep_khz,
 		      __entry->yclk_khz,
 		      __entry->dispclk_khz,
-		      __entry->blackout_recovery_समय_us
+		      __entry->blackout_recovery_time_us
 	    )
 );
 
 TRACE_EVENT(amdgpu_dmub_trace_high_irq,
-	TP_PROTO(uपूर्णांक32_t trace_code, uपूर्णांक32_t tick_count, uपूर्णांक32_t param0,
-		 uपूर्णांक32_t param1),
+	TP_PROTO(uint32_t trace_code, uint32_t tick_count, uint32_t param0,
+		 uint32_t param1),
 	TP_ARGS(trace_code, tick_count, param0, param1),
 	TP_STRUCT__entry(
-		__field(uपूर्णांक32_t, trace_code)
-		__field(uपूर्णांक32_t, tick_count)
-		__field(uपूर्णांक32_t, param0)
-		__field(uपूर्णांक32_t, param1)
+		__field(uint32_t, trace_code)
+		__field(uint32_t, tick_count)
+		__field(uint32_t, param0)
+		__field(uint32_t, param1)
 		),
 	TP_fast_assign(
 		__entry->trace_code = trace_code;
@@ -614,33 +613,33 @@ TRACE_EVENT(amdgpu_dmub_trace_high_irq,
 		__entry->param0 = param0;
 		__entry->param1 = param1;
 	),
-	TP_prपूर्णांकk("trace_code=%u tick_count=%u param0=%u param1=%u",
+	TP_printk("trace_code=%u tick_count=%u param0=%u param1=%u",
 		  __entry->trace_code, __entry->tick_count,
 		  __entry->param0, __entry->param1)
 );
 
 TRACE_EVENT(amdgpu_refresh_rate_track,
-	TP_PROTO(पूर्णांक crtc_index, kसमय_प्रकार refresh_rate_ns, uपूर्णांक32_t refresh_rate_hz),
+	TP_PROTO(int crtc_index, ktime_t refresh_rate_ns, uint32_t refresh_rate_hz),
 	TP_ARGS(crtc_index, refresh_rate_ns, refresh_rate_hz),
 	TP_STRUCT__entry(
-		__field(पूर्णांक, crtc_index)
-		__field(kसमय_प्रकार, refresh_rate_ns)
-		__field(uपूर्णांक32_t, refresh_rate_hz)
+		__field(int, crtc_index)
+		__field(ktime_t, refresh_rate_ns)
+		__field(uint32_t, refresh_rate_hz)
 		),
 	TP_fast_assign(
 		__entry->crtc_index = crtc_index;
 		__entry->refresh_rate_ns = refresh_rate_ns;
 		__entry->refresh_rate_hz = refresh_rate_hz;
 	),
-	TP_prपूर्णांकk("crtc_index=%d refresh_rate=%dHz (%lld)",
+	TP_printk("crtc_index=%d refresh_rate=%dHz (%lld)",
 		  __entry->crtc_index,
 		  __entry->refresh_rate_hz,
 		  __entry->refresh_rate_ns)
 );
 
-#पूर्ण_अगर /* _AMDGPU_DM_TRACE_H_ */
+#endif /* _AMDGPU_DM_TRACE_H_ */
 
-#अघोषित TRACE_INCLUDE_PATH
-#घोषणा TRACE_INCLUDE_PATH .
-#घोषणा TRACE_INCLUDE_खाता amdgpu_dm_trace
-#समावेश <trace/define_trace.h>
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_FILE amdgpu_dm_trace
+#include <trace/define_trace.h>

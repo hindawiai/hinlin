@@ -1,43 +1,42 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2015 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
  *
- * Header क्रम Exynos PMU Driver support
+ * Header for Exynos PMU Driver support
  */
 
-#अगर_अघोषित __EXYNOS_PMU_H
-#घोषणा __EXYNOS_PMU_H
+#ifndef __EXYNOS_PMU_H
+#define __EXYNOS_PMU_H
 
-#समावेश <linux/पन.स>
+#include <linux/io.h>
 
-#घोषणा PMU_TABLE_END	(-1U)
+#define PMU_TABLE_END	(-1U)
 
-काष्ठा exynos_pmu_conf अणु
-	अचिन्हित पूर्णांक offset;
+struct exynos_pmu_conf {
+	unsigned int offset;
 	u8 val[NUM_SYS_POWERDOWN];
-पूर्ण;
+};
 
-काष्ठा exynos_pmu_data अणु
-	स्थिर काष्ठा exynos_pmu_conf *pmu_config;
+struct exynos_pmu_data {
+	const struct exynos_pmu_conf *pmu_config;
 
-	व्योम (*pmu_init)(व्योम);
-	व्योम (*घातerकरोwn_conf)(क्रमागत sys_घातerकरोwn);
-	व्योम (*घातerकरोwn_conf_extra)(क्रमागत sys_घातerकरोwn);
-पूर्ण;
+	void (*pmu_init)(void);
+	void (*powerdown_conf)(enum sys_powerdown);
+	void (*powerdown_conf_extra)(enum sys_powerdown);
+};
 
-बाह्य व्योम __iomem *pmu_base_addr;
+extern void __iomem *pmu_base_addr;
 
-#अगर_घोषित CONFIG_EXYNOS_PMU_ARM_DRIVERS
-/* list of all exported SoC specअगरic data */
-बाह्य स्थिर काष्ठा exynos_pmu_data exynos3250_pmu_data;
-बाह्य स्थिर काष्ठा exynos_pmu_data exynos4210_pmu_data;
-बाह्य स्थिर काष्ठा exynos_pmu_data exynos4412_pmu_data;
-बाह्य स्थिर काष्ठा exynos_pmu_data exynos5250_pmu_data;
-बाह्य स्थिर काष्ठा exynos_pmu_data exynos5420_pmu_data;
-#पूर्ण_अगर
+#ifdef CONFIG_EXYNOS_PMU_ARM_DRIVERS
+/* list of all exported SoC specific data */
+extern const struct exynos_pmu_data exynos3250_pmu_data;
+extern const struct exynos_pmu_data exynos4210_pmu_data;
+extern const struct exynos_pmu_data exynos4412_pmu_data;
+extern const struct exynos_pmu_data exynos5250_pmu_data;
+extern const struct exynos_pmu_data exynos5420_pmu_data;
+#endif
 
-बाह्य व्योम pmu_raw_ग_लिखोl(u32 val, u32 offset);
-बाह्य u32 pmu_raw_पढ़ोl(u32 offset);
-#पूर्ण_अगर /* __EXYNOS_PMU_H */
+extern void pmu_raw_writel(u32 val, u32 offset);
+extern u32 pmu_raw_readl(u32 offset);
+#endif /* __EXYNOS_PMU_H */

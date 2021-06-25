@@ -1,132 +1,131 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __I915_BUDDY_H__
-#घोषणा __I915_BUDDY_H__
+#ifndef __I915_BUDDY_H__
+#define __I915_BUDDY_H__
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/list.h>
+#include <linux/bitops.h>
+#include <linux/list.h>
 
-काष्ठा i915_buddy_block अणु
-#घोषणा I915_BUDDY_HEADER_OFFSET GENMASK_ULL(63, 12)
-#घोषणा I915_BUDDY_HEADER_STATE  GENMASK_ULL(11, 10)
-#घोषणा   I915_BUDDY_ALLOCATED	   (1 << 10)
-#घोषणा   I915_BUDDY_FREE	   (2 << 10)
-#घोषणा   I915_BUDDY_SPLIT	   (3 << 10)
-/* Free to be used, अगर needed in the future */
-#घोषणा I915_BUDDY_HEADER_UNUSED GENMASK_ULL(9, 6)
-#घोषणा I915_BUDDY_HEADER_ORDER  GENMASK_ULL(5, 0)
+struct i915_buddy_block {
+#define I915_BUDDY_HEADER_OFFSET GENMASK_ULL(63, 12)
+#define I915_BUDDY_HEADER_STATE  GENMASK_ULL(11, 10)
+#define   I915_BUDDY_ALLOCATED	   (1 << 10)
+#define   I915_BUDDY_FREE	   (2 << 10)
+#define   I915_BUDDY_SPLIT	   (3 << 10)
+/* Free to be used, if needed in the future */
+#define I915_BUDDY_HEADER_UNUSED GENMASK_ULL(9, 6)
+#define I915_BUDDY_HEADER_ORDER  GENMASK_ULL(5, 0)
 	u64 header;
 
-	काष्ठा i915_buddy_block *left;
-	काष्ठा i915_buddy_block *right;
-	काष्ठा i915_buddy_block *parent;
+	struct i915_buddy_block *left;
+	struct i915_buddy_block *right;
+	struct i915_buddy_block *parent;
 
-	व्योम *निजी; /* owned by creator */
+	void *private; /* owned by creator */
 
 	/*
 	 * While the block is allocated by the user through i915_buddy_alloc*,
-	 * the user has ownership of the link, क्रम example to मुख्यtain within
-	 * a list, अगर so desired. As soon as the block is मुक्तd with
-	 * i915_buddy_मुक्त* ownership is given back to the mm.
+	 * the user has ownership of the link, for example to maintain within
+	 * a list, if so desired. As soon as the block is freed with
+	 * i915_buddy_free* ownership is given back to the mm.
 	 */
-	काष्ठा list_head link;
-	काष्ठा list_head पंचांगp_link;
-पूर्ण;
+	struct list_head link;
+	struct list_head tmp_link;
+};
 
 /* Order-zero must be at least PAGE_SIZE */
-#घोषणा I915_BUDDY_MAX_ORDER (63 - PAGE_SHIFT)
+#define I915_BUDDY_MAX_ORDER (63 - PAGE_SHIFT)
 
 /*
  * Binary Buddy System.
  *
  * Locking should be handled by the user, a simple mutex around
- * i915_buddy_alloc* and i915_buddy_मुक्त* should suffice.
+ * i915_buddy_alloc* and i915_buddy_free* should suffice.
  */
-काष्ठा i915_buddy_mm अणु
-	/* Maपूर्णांकain a मुक्त list क्रम each order. */
-	काष्ठा list_head *मुक्त_list;
+struct i915_buddy_mm {
+	/* Maintain a free list for each order. */
+	struct list_head *free_list;
 
 	/*
-	 * Maपूर्णांकain explicit binary tree(s) to track the allocation of the
+	 * Maintain explicit binary tree(s) to track the allocation of the
 	 * address space. This gives us a simple way of finding a buddy block
-	 * and perक्रमming the potentially recursive merge step when मुक्तing a
-	 * block.  Nodes are either allocated or मुक्त, in which हाल they will
-	 * also exist on the respective मुक्त list.
+	 * and performing the potentially recursive merge step when freeing a
+	 * block.  Nodes are either allocated or free, in which case they will
+	 * also exist on the respective free list.
 	 */
-	काष्ठा i915_buddy_block **roots;
+	struct i915_buddy_block **roots;
 
 	/*
-	 * Anything from here is खुला, and reमुख्यs अटल क्रम the lअगरeसमय of
-	 * the mm. Everything above is considered करो-not-touch.
+	 * Anything from here is public, and remains static for the lifetime of
+	 * the mm. Everything above is considered do-not-touch.
 	 */
-	अचिन्हित पूर्णांक n_roots;
-	अचिन्हित पूर्णांक max_order;
+	unsigned int n_roots;
+	unsigned int max_order;
 
 	/* Must be at least PAGE_SIZE */
 	u64 chunk_size;
 	u64 size;
-पूर्ण;
+};
 
-अटल अंतरभूत u64
-i915_buddy_block_offset(काष्ठा i915_buddy_block *block)
-अणु
-	वापस block->header & I915_BUDDY_HEADER_OFFSET;
-पूर्ण
+static inline u64
+i915_buddy_block_offset(struct i915_buddy_block *block)
+{
+	return block->header & I915_BUDDY_HEADER_OFFSET;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-i915_buddy_block_order(काष्ठा i915_buddy_block *block)
-अणु
-	वापस block->header & I915_BUDDY_HEADER_ORDER;
-पूर्ण
+static inline unsigned int
+i915_buddy_block_order(struct i915_buddy_block *block)
+{
+	return block->header & I915_BUDDY_HEADER_ORDER;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक
-i915_buddy_block_state(काष्ठा i915_buddy_block *block)
-अणु
-	वापस block->header & I915_BUDDY_HEADER_STATE;
-पूर्ण
+static inline unsigned int
+i915_buddy_block_state(struct i915_buddy_block *block)
+{
+	return block->header & I915_BUDDY_HEADER_STATE;
+}
 
-अटल अंतरभूत bool
-i915_buddy_block_is_allocated(काष्ठा i915_buddy_block *block)
-अणु
-	वापस i915_buddy_block_state(block) == I915_BUDDY_ALLOCATED;
-पूर्ण
+static inline bool
+i915_buddy_block_is_allocated(struct i915_buddy_block *block)
+{
+	return i915_buddy_block_state(block) == I915_BUDDY_ALLOCATED;
+}
 
-अटल अंतरभूत bool
-i915_buddy_block_is_मुक्त(काष्ठा i915_buddy_block *block)
-अणु
-	वापस i915_buddy_block_state(block) == I915_BUDDY_FREE;
-पूर्ण
+static inline bool
+i915_buddy_block_is_free(struct i915_buddy_block *block)
+{
+	return i915_buddy_block_state(block) == I915_BUDDY_FREE;
+}
 
-अटल अंतरभूत bool
-i915_buddy_block_is_split(काष्ठा i915_buddy_block *block)
-अणु
-	वापस i915_buddy_block_state(block) == I915_BUDDY_SPLIT;
-पूर्ण
+static inline bool
+i915_buddy_block_is_split(struct i915_buddy_block *block)
+{
+	return i915_buddy_block_state(block) == I915_BUDDY_SPLIT;
+}
 
-अटल अंतरभूत u64
-i915_buddy_block_size(काष्ठा i915_buddy_mm *mm,
-		      काष्ठा i915_buddy_block *block)
-अणु
-	वापस mm->chunk_size << i915_buddy_block_order(block);
-पूर्ण
+static inline u64
+i915_buddy_block_size(struct i915_buddy_mm *mm,
+		      struct i915_buddy_block *block)
+{
+	return mm->chunk_size << i915_buddy_block_order(block);
+}
 
-पूर्णांक i915_buddy_init(काष्ठा i915_buddy_mm *mm, u64 size, u64 chunk_size);
+int i915_buddy_init(struct i915_buddy_mm *mm, u64 size, u64 chunk_size);
 
-व्योम i915_buddy_fini(काष्ठा i915_buddy_mm *mm);
+void i915_buddy_fini(struct i915_buddy_mm *mm);
 
-काष्ठा i915_buddy_block *
-i915_buddy_alloc(काष्ठा i915_buddy_mm *mm, अचिन्हित पूर्णांक order);
+struct i915_buddy_block *
+i915_buddy_alloc(struct i915_buddy_mm *mm, unsigned int order);
 
-पूर्णांक i915_buddy_alloc_range(काष्ठा i915_buddy_mm *mm,
-			   काष्ठा list_head *blocks,
+int i915_buddy_alloc_range(struct i915_buddy_mm *mm,
+			   struct list_head *blocks,
 			   u64 start, u64 size);
 
-व्योम i915_buddy_मुक्त(काष्ठा i915_buddy_mm *mm, काष्ठा i915_buddy_block *block);
+void i915_buddy_free(struct i915_buddy_mm *mm, struct i915_buddy_block *block);
 
-व्योम i915_buddy_मुक्त_list(काष्ठा i915_buddy_mm *mm, काष्ठा list_head *objects);
+void i915_buddy_free_list(struct i915_buddy_mm *mm, struct list_head *objects);
 
-#पूर्ण_अगर
+#endif

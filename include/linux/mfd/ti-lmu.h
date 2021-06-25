@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * TI LMU (Lighting Management Unit) Devices
  *
@@ -8,27 +7,27 @@
  * Author: Milo Kim <milo.kim@ti.com>
  */
 
-#अगर_अघोषित __MFD_TI_LMU_H__
-#घोषणा __MFD_TI_LMU_H__
+#ifndef __MFD_TI_LMU_H__
+#define __MFD_TI_LMU_H__
 
-#समावेश <linux/gpपन.स>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/gpio/consumer.h>
+#include <linux/gpio.h>
+#include <linux/notifier.h>
+#include <linux/regmap.h>
+#include <linux/gpio/consumer.h>
 
-/* Notअगरier event */
-#घोषणा LMU_EVENT_MONITOR_DONE		0x01
+/* Notifier event */
+#define LMU_EVENT_MONITOR_DONE		0x01
 
-क्रमागत ti_lmu_id अणु
+enum ti_lmu_id {
 	LM3631,
 	LM3632,
 	LM3633,
 	LM3695,
 	LM36274,
 	LMU_MAX_ID,
-पूर्ण;
+};
 
-क्रमागत ti_lmu_max_current अणु
+enum ti_lmu_max_current {
 	LMU_IMAX_5mA,
 	LMU_IMAX_6mA,
 	LMU_IMAX_7mA = 0x03,
@@ -55,9 +54,9 @@
 	LMU_IMAX_28mA,
 	LMU_IMAX_29mA,
 	LMU_IMAX_30mA,
-पूर्ण;
+};
 
-क्रमागत lm363x_regulator_id अणु
+enum lm363x_regulator_id {
 	LM3631_BOOST,		/* Boost output */
 	LM3631_LDO_CONT,	/* Display panel controller */
 	LM3631_LDO_OREF,	/* Gamma reference */
@@ -69,20 +68,20 @@
 	LM36274_BOOST,		/* Boost output */
 	LM36274_LDO_POS,	/* Positive display bias output */
 	LM36274_LDO_NEG,	/* Negative display bias output */
-पूर्ण;
+};
 
 /**
- * काष्ठा ti_lmu
+ * struct ti_lmu
  *
- * @dev:	Parent device poपूर्णांकer
- * @regmap:	Used क्रम i2c communcation on accessing रेजिस्टरs
- * @en_gpio:	GPIO क्रम HWEN pin [Optional]
- * @notअगरier:	Notअगरier क्रम reporting hwmon event
+ * @dev:	Parent device pointer
+ * @regmap:	Used for i2c communcation on accessing registers
+ * @en_gpio:	GPIO for HWEN pin [Optional]
+ * @notifier:	Notifier for reporting hwmon event
  */
-काष्ठा ti_lmu अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा gpio_desc *en_gpio;
-	काष्ठा blocking_notअगरier_head notअगरier;
-पूर्ण;
-#पूर्ण_अगर
+struct ti_lmu {
+	struct device *dev;
+	struct regmap *regmap;
+	struct gpio_desc *en_gpio;
+	struct blocking_notifier_head notifier;
+};
+#endif

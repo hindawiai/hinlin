@@ -1,147 +1,146 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/drivers/video/dummycon.c -- A dummy console driver
  *
- *  To be used अगर there's no other console driver (e.g. क्रम plain VGA text)
+ *  To be used if there's no other console driver (e.g. for plain VGA text)
  *  available, usually until fbcon takes console over.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/console.h>
-#समावेश <linux/vt_kern.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
+#include <linux/types.h>
+#include <linux/kdev_t.h>
+#include <linux/console.h>
+#include <linux/vt_kern.h>
+#include <linux/screen_info.h>
+#include <linux/init.h>
+#include <linux/module.h>
 
 /*
  *  Dummy console driver
  */
 
-#अगर defined(__arm__)
-#घोषणा DUMMY_COLUMNS	screen_info.orig_video_cols
-#घोषणा DUMMY_ROWS	screen_info.orig_video_lines
-#अन्यथा
-/* set by Kconfig. Use 80x25 क्रम 640x480 and 160x64 क्रम 1280x1024 */
-#घोषणा DUMMY_COLUMNS	CONFIG_DUMMY_CONSOLE_COLUMNS
-#घोषणा DUMMY_ROWS	CONFIG_DUMMY_CONSOLE_ROWS
-#पूर्ण_अगर
+#if defined(__arm__)
+#define DUMMY_COLUMNS	screen_info.orig_video_cols
+#define DUMMY_ROWS	screen_info.orig_video_lines
+#else
+/* set by Kconfig. Use 80x25 for 640x480 and 160x64 for 1280x1024 */
+#define DUMMY_COLUMNS	CONFIG_DUMMY_CONSOLE_COLUMNS
+#define DUMMY_ROWS	CONFIG_DUMMY_CONSOLE_ROWS
+#endif
 
-#अगर_घोषित CONFIG_FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER
-/* These are both रक्षित by the console_lock */
-अटल RAW_NOTIFIER_HEAD(dummycon_output_nh);
-अटल bool dummycon_अ_दो_called;
+#ifdef CONFIG_FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER
+/* These are both protected by the console_lock */
+static RAW_NOTIFIER_HEAD(dummycon_output_nh);
+static bool dummycon_putc_called;
 
-व्योम dummycon_रेजिस्टर_output_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
+void dummycon_register_output_notifier(struct notifier_block *nb)
+{
 	WARN_CONSOLE_UNLOCKED();
 
-	raw_notअगरier_chain_रेजिस्टर(&dummycon_output_nh, nb);
+	raw_notifier_chain_register(&dummycon_output_nh, nb);
 
-	अगर (dummycon_अ_दो_called)
-		nb->notअगरier_call(nb, 0, शून्य);
-पूर्ण
+	if (dummycon_putc_called)
+		nb->notifier_call(nb, 0, NULL);
+}
 
-व्योम dummycon_unरेजिस्टर_output_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
+void dummycon_unregister_output_notifier(struct notifier_block *nb)
+{
 	WARN_CONSOLE_UNLOCKED();
 
-	raw_notअगरier_chain_unरेजिस्टर(&dummycon_output_nh, nb);
-पूर्ण
+	raw_notifier_chain_unregister(&dummycon_output_nh, nb);
+}
 
-अटल व्योम dummycon_अ_दो(काष्ठा vc_data *vc, पूर्णांक c, पूर्णांक ypos, पूर्णांक xpos)
-अणु
+static void dummycon_putc(struct vc_data *vc, int c, int ypos, int xpos)
+{
 	WARN_CONSOLE_UNLOCKED();
 
-	dummycon_अ_दो_called = true;
-	raw_notअगरier_call_chain(&dummycon_output_nh, 0, शून्य);
-पूर्ण
+	dummycon_putc_called = true;
+	raw_notifier_call_chain(&dummycon_output_nh, 0, NULL);
+}
 
-अटल व्योम dummycon_अ_दोs(काष्ठा vc_data *vc, स्थिर अचिन्हित लघु *s,
-			   पूर्णांक count, पूर्णांक ypos, पूर्णांक xpos)
-अणु
-	पूर्णांक i;
+static void dummycon_putcs(struct vc_data *vc, const unsigned short *s,
+			   int count, int ypos, int xpos)
+{
+	int i;
 
-	अगर (!dummycon_अ_दो_called) अणु
+	if (!dummycon_putc_called) {
 		/* Ignore erases */
-		क्रम (i = 0 ; i < count; i++) अणु
-			अगर (s[i] != vc->vc_video_erase_अक्षर)
-				अवरोध;
-		पूर्ण
-		अगर (i == count)
-			वापस;
+		for (i = 0 ; i < count; i++) {
+			if (s[i] != vc->vc_video_erase_char)
+				break;
+		}
+		if (i == count)
+			return;
 
-		dummycon_अ_दो_called = true;
-	पूर्ण
+		dummycon_putc_called = true;
+	}
 
-	raw_notअगरier_call_chain(&dummycon_output_nh, 0, शून्य);
-पूर्ण
+	raw_notifier_call_chain(&dummycon_output_nh, 0, NULL);
+}
 
-अटल पूर्णांक dummycon_blank(काष्ठा vc_data *vc, पूर्णांक blank, पूर्णांक mode_चयन)
-अणु
-	/* Redraw, so that we get अ_दो(s) क्रम output करोne जबतक blanked */
-	वापस 1;
-पूर्ण
-#अन्यथा
-अटल व्योम dummycon_अ_दो(काष्ठा vc_data *vc, पूर्णांक c, पूर्णांक ypos, पूर्णांक xpos) अणु पूर्ण
-अटल व्योम dummycon_अ_दोs(काष्ठा vc_data *vc, स्थिर अचिन्हित लघु *s,
-			   पूर्णांक count, पूर्णांक ypos, पूर्णांक xpos) अणु पूर्ण
-अटल पूर्णांक dummycon_blank(काष्ठा vc_data *vc, पूर्णांक blank, पूर्णांक mode_चयन)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static int dummycon_blank(struct vc_data *vc, int blank, int mode_switch)
+{
+	/* Redraw, so that we get putc(s) for output done while blanked */
+	return 1;
+}
+#else
+static void dummycon_putc(struct vc_data *vc, int c, int ypos, int xpos) { }
+static void dummycon_putcs(struct vc_data *vc, const unsigned short *s,
+			   int count, int ypos, int xpos) { }
+static int dummycon_blank(struct vc_data *vc, int blank, int mode_switch)
+{
+	return 0;
+}
+#endif
 
-अटल स्थिर अक्षर *dummycon_startup(व्योम)
-अणु
-    वापस "dummy device";
-पूर्ण
+static const char *dummycon_startup(void)
+{
+    return "dummy device";
+}
 
-अटल व्योम dummycon_init(काष्ठा vc_data *vc, पूर्णांक init)
-अणु
-    vc->vc_can_करो_color = 1;
-    अगर (init) अणु
+static void dummycon_init(struct vc_data *vc, int init)
+{
+    vc->vc_can_do_color = 1;
+    if (init) {
 	vc->vc_cols = DUMMY_COLUMNS;
 	vc->vc_rows = DUMMY_ROWS;
-    पूर्ण अन्यथा
+    } else
 	vc_resize(vc, DUMMY_COLUMNS, DUMMY_ROWS);
-पूर्ण
+}
 
-अटल व्योम dummycon_deinit(काष्ठा vc_data *vc) अणु पूर्ण
-अटल व्योम dummycon_clear(काष्ठा vc_data *vc, पूर्णांक sy, पूर्णांक sx, पूर्णांक height,
-			   पूर्णांक width) अणु पूर्ण
-अटल व्योम dummycon_cursor(काष्ठा vc_data *vc, पूर्णांक mode) अणु पूर्ण
+static void dummycon_deinit(struct vc_data *vc) { }
+static void dummycon_clear(struct vc_data *vc, int sy, int sx, int height,
+			   int width) { }
+static void dummycon_cursor(struct vc_data *vc, int mode) { }
 
-अटल bool dummycon_scroll(काष्ठा vc_data *vc, अचिन्हित पूर्णांक top,
-			    अचिन्हित पूर्णांक bottom, क्रमागत con_scroll dir,
-			    अचिन्हित पूर्णांक lines)
-अणु
-	वापस false;
-पूर्ण
+static bool dummycon_scroll(struct vc_data *vc, unsigned int top,
+			    unsigned int bottom, enum con_scroll dir,
+			    unsigned int lines)
+{
+	return false;
+}
 
-अटल पूर्णांक dummycon_चयन(काष्ठा vc_data *vc)
-अणु
-	वापस 0;
-पूर्ण
+static int dummycon_switch(struct vc_data *vc)
+{
+	return 0;
+}
 
 /*
- *  The console `चयन' काष्ठाure क्रम the dummy console
+ *  The console `switch' structure for the dummy console
  *
  *  Most of the operations are dummies.
  */
 
-स्थिर काष्ठा consw dummy_con = अणु
+const struct consw dummy_con = {
 	.owner =		THIS_MODULE,
 	.con_startup =	dummycon_startup,
 	.con_init =		dummycon_init,
 	.con_deinit =	dummycon_deinit,
 	.con_clear =	dummycon_clear,
-	.con_अ_दो =		dummycon_अ_दो,
-	.con_अ_दोs =	dummycon_अ_दोs,
+	.con_putc =		dummycon_putc,
+	.con_putcs =	dummycon_putcs,
 	.con_cursor =	dummycon_cursor,
 	.con_scroll =	dummycon_scroll,
-	.con_चयन =	dummycon_चयन,
+	.con_switch =	dummycon_switch,
 	.con_blank =	dummycon_blank,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(dummy_con);

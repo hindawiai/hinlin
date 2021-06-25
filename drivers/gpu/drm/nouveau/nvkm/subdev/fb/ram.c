@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,106 +21,106 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#घोषणा nvkm_vram(p) container_of((p), काष्ठा nvkm_vram, memory)
-#समावेश "ram.h"
+#define nvkm_vram(p) container_of((p), struct nvkm_vram, memory)
+#include "ram.h"
 
-#समावेश <core/memory.h>
-#समावेश <subdev/mmu.h>
+#include <core/memory.h>
+#include <subdev/mmu.h>
 
-काष्ठा nvkm_vram अणु
-	काष्ठा nvkm_memory memory;
-	काष्ठा nvkm_ram *ram;
+struct nvkm_vram {
+	struct nvkm_memory memory;
+	struct nvkm_ram *ram;
 	u8 page;
-	काष्ठा nvkm_mm_node *mn;
-पूर्ण;
+	struct nvkm_mm_node *mn;
+};
 
-अटल पूर्णांक
-nvkm_vram_map(काष्ठा nvkm_memory *memory, u64 offset, काष्ठा nvkm_vmm *vmm,
-	      काष्ठा nvkm_vma *vma, व्योम *argv, u32 argc)
-अणु
-	काष्ठा nvkm_vram *vram = nvkm_vram(memory);
-	काष्ठा nvkm_vmm_map map = अणु
+static int
+nvkm_vram_map(struct nvkm_memory *memory, u64 offset, struct nvkm_vmm *vmm,
+	      struct nvkm_vma *vma, void *argv, u32 argc)
+{
+	struct nvkm_vram *vram = nvkm_vram(memory);
+	struct nvkm_vmm_map map = {
 		.memory = &vram->memory,
 		.offset = offset,
 		.mem = vram->mn,
-	पूर्ण;
+	};
 
-	वापस nvkm_vmm_map(vmm, vma, argv, argc, &map);
-पूर्ण
+	return nvkm_vmm_map(vmm, vma, argv, argc, &map);
+}
 
-अटल u64
-nvkm_vram_size(काष्ठा nvkm_memory *memory)
-अणु
-	वापस (u64)nvkm_mm_size(nvkm_vram(memory)->mn) << NVKM_RAM_MM_SHIFT;
-पूर्ण
+static u64
+nvkm_vram_size(struct nvkm_memory *memory)
+{
+	return (u64)nvkm_mm_size(nvkm_vram(memory)->mn) << NVKM_RAM_MM_SHIFT;
+}
 
-अटल u64
-nvkm_vram_addr(काष्ठा nvkm_memory *memory)
-अणु
-	काष्ठा nvkm_vram *vram = nvkm_vram(memory);
-	अगर (!nvkm_mm_contiguous(vram->mn))
-		वापस ~0ULL;
-	वापस (u64)nvkm_mm_addr(vram->mn) << NVKM_RAM_MM_SHIFT;
-पूर्ण
+static u64
+nvkm_vram_addr(struct nvkm_memory *memory)
+{
+	struct nvkm_vram *vram = nvkm_vram(memory);
+	if (!nvkm_mm_contiguous(vram->mn))
+		return ~0ULL;
+	return (u64)nvkm_mm_addr(vram->mn) << NVKM_RAM_MM_SHIFT;
+}
 
-अटल u8
-nvkm_vram_page(काष्ठा nvkm_memory *memory)
-अणु
-	वापस nvkm_vram(memory)->page;
-पूर्ण
+static u8
+nvkm_vram_page(struct nvkm_memory *memory)
+{
+	return nvkm_vram(memory)->page;
+}
 
-अटल क्रमागत nvkm_memory_target
-nvkm_vram_target(काष्ठा nvkm_memory *memory)
-अणु
-	वापस NVKM_MEM_TARGET_VRAM;
-पूर्ण
+static enum nvkm_memory_target
+nvkm_vram_target(struct nvkm_memory *memory)
+{
+	return NVKM_MEM_TARGET_VRAM;
+}
 
-अटल व्योम *
-nvkm_vram_dtor(काष्ठा nvkm_memory *memory)
-अणु
-	काष्ठा nvkm_vram *vram = nvkm_vram(memory);
-	काष्ठा nvkm_mm_node *next = vram->mn;
-	काष्ठा nvkm_mm_node *node;
+static void *
+nvkm_vram_dtor(struct nvkm_memory *memory)
+{
+	struct nvkm_vram *vram = nvkm_vram(memory);
+	struct nvkm_mm_node *next = vram->mn;
+	struct nvkm_mm_node *node;
 	mutex_lock(&vram->ram->mutex);
-	जबतक ((node = next)) अणु
+	while ((node = next)) {
 		next = node->next;
-		nvkm_mm_मुक्त(&vram->ram->vram, &node);
-	पूर्ण
+		nvkm_mm_free(&vram->ram->vram, &node);
+	}
 	mutex_unlock(&vram->ram->mutex);
-	वापस vram;
-पूर्ण
+	return vram;
+}
 
-अटल स्थिर काष्ठा nvkm_memory_func
-nvkm_vram = अणु
+static const struct nvkm_memory_func
+nvkm_vram = {
 	.dtor = nvkm_vram_dtor,
 	.target = nvkm_vram_target,
 	.page = nvkm_vram_page,
 	.addr = nvkm_vram_addr,
 	.size = nvkm_vram_size,
 	.map = nvkm_vram_map,
-पूर्ण;
+};
 
-पूर्णांक
-nvkm_ram_get(काष्ठा nvkm_device *device, u8 heap, u8 type, u8 rpage, u64 size,
-	     bool contig, bool back, काष्ठा nvkm_memory **pmemory)
-अणु
-	काष्ठा nvkm_ram *ram;
-	काष्ठा nvkm_mm *mm;
-	काष्ठा nvkm_mm_node **node, *r;
-	काष्ठा nvkm_vram *vram;
+int
+nvkm_ram_get(struct nvkm_device *device, u8 heap, u8 type, u8 rpage, u64 size,
+	     bool contig, bool back, struct nvkm_memory **pmemory)
+{
+	struct nvkm_ram *ram;
+	struct nvkm_mm *mm;
+	struct nvkm_mm_node **node, *r;
+	struct nvkm_vram *vram;
 	u8   page = max(rpage, (u8)NVKM_RAM_MM_SHIFT);
 	u32 align = (1 << page) >> NVKM_RAM_MM_SHIFT;
 	u32   max = ALIGN(size, 1 << page) >> NVKM_RAM_MM_SHIFT;
 	u32   min = contig ? max : align;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!device->fb || !(ram = device->fb->ram))
-		वापस -ENODEV;
+	if (!device->fb || !(ram = device->fb->ram))
+		return -ENODEV;
 	ram = device->fb->ram;
 	mm = &ram->vram;
 
-	अगर (!(vram = kzalloc(माप(*vram), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(vram = kzalloc(sizeof(*vram), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_memory_ctor(&nvkm_vram, &vram->memory);
 	vram->ram = ram;
 	vram->page = page;
@@ -129,52 +128,52 @@ nvkm_ram_get(काष्ठा nvkm_device *device, u8 heap, u8 type, u8 rpage,
 
 	mutex_lock(&ram->mutex);
 	node = &vram->mn;
-	करो अणु
-		अगर (back)
+	do {
+		if (back)
 			ret = nvkm_mm_tail(mm, heap, type, max, min, align, &r);
-		अन्यथा
+		else
 			ret = nvkm_mm_head(mm, heap, type, max, min, align, &r);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&ram->mutex);
 			nvkm_memory_unref(pmemory);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		*node = r;
 		node = &r->next;
 		max -= r->length;
-	पूर्ण जबतक (max);
+	} while (max);
 	mutex_unlock(&ram->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_ram_init(काष्ठा nvkm_ram *ram)
-अणु
-	अगर (ram->func->init)
-		वापस ram->func->init(ram);
-	वापस 0;
-पूर्ण
+int
+nvkm_ram_init(struct nvkm_ram *ram)
+{
+	if (ram->func->init)
+		return ram->func->init(ram);
+	return 0;
+}
 
-व्योम
-nvkm_ram_del(काष्ठा nvkm_ram **pram)
-अणु
-	काष्ठा nvkm_ram *ram = *pram;
-	अगर (ram && !WARN_ON(!ram->func)) अणु
-		अगर (ram->func->dtor)
+void
+nvkm_ram_del(struct nvkm_ram **pram)
+{
+	struct nvkm_ram *ram = *pram;
+	if (ram && !WARN_ON(!ram->func)) {
+		if (ram->func->dtor)
 			*pram = ram->func->dtor(ram);
 		nvkm_mm_fini(&ram->vram);
 		mutex_destroy(&ram->mutex);
-		kमुक्त(*pram);
-		*pram = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(*pram);
+		*pram = NULL;
+	}
+}
 
-पूर्णांक
-nvkm_ram_ctor(स्थिर काष्ठा nvkm_ram_func *func, काष्ठा nvkm_fb *fb,
-	      क्रमागत nvkm_ram_type type, u64 size, काष्ठा nvkm_ram *ram)
-अणु
-	अटल स्थिर अक्षर *name[] = अणु
+int
+nvkm_ram_ctor(const struct nvkm_ram_func *func, struct nvkm_fb *fb,
+	      enum nvkm_ram_type type, u64 size, struct nvkm_ram *ram)
+{
+	static const char *name[] = {
 		[NVKM_RAM_TYPE_UNKNOWN] = "of unknown memory type",
 		[NVKM_RAM_TYPE_STOLEN ] = "stolen system memory",
 		[NVKM_RAM_TYPE_SGRAM  ] = "SGRAM",
@@ -189,32 +188,32 @@ nvkm_ram_ctor(स्थिर काष्ठा nvkm_ram_func *func, काष�
 		[NVKM_RAM_TYPE_GDDR5X ] = "GDDR5X",
 		[NVKM_RAM_TYPE_GDDR6  ] = "GDDR6",
 		[NVKM_RAM_TYPE_HBM2   ] = "HBM2",
-	पूर्ण;
-	काष्ठा nvkm_subdev *subdev = &fb->subdev;
-	पूर्णांक ret;
+	};
+	struct nvkm_subdev *subdev = &fb->subdev;
+	int ret;
 
-	nvkm_info(subdev, "%d MiB %s\n", (पूर्णांक)(size >> 20), name[type]);
+	nvkm_info(subdev, "%d MiB %s\n", (int)(size >> 20), name[type]);
 	ram->func = func;
 	ram->fb = fb;
 	ram->type = type;
 	ram->size = size;
 	mutex_init(&ram->mutex);
 
-	अगर (!nvkm_mm_initialised(&ram->vram)) अणु
+	if (!nvkm_mm_initialised(&ram->vram)) {
 		ret = nvkm_mm_init(&ram->vram, NVKM_RAM_MM_NORMAL, 0,
 				   size >> NVKM_RAM_MM_SHIFT, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-nvkm_ram_new_(स्थिर काष्ठा nvkm_ram_func *func, काष्ठा nvkm_fb *fb,
-	      क्रमागत nvkm_ram_type type, u64 size, काष्ठा nvkm_ram **pram)
-अणु
-	अगर (!(*pram = kzalloc(माप(**pram), GFP_KERNEL)))
-		वापस -ENOMEM;
-	वापस nvkm_ram_ctor(func, fb, type, size, *pram);
-पूर्ण
+int
+nvkm_ram_new_(const struct nvkm_ram_func *func, struct nvkm_fb *fb,
+	      enum nvkm_ram_type type, u64 size, struct nvkm_ram **pram)
+{
+	if (!(*pram = kzalloc(sizeof(**pram), GFP_KERNEL)))
+		return -ENOMEM;
+	return nvkm_ram_ctor(func, fb, type, size, *pram);
+}

@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: ISC */
+/* SPDX-License-Identifier: ISC */
 
-#अगर_अघोषित __MT7603_MCU_H
-#घोषणा __MT7603_MCU_H
+#ifndef __MT7603_MCU_H
+#define __MT7603_MCU_H
 
-काष्ठा mt7603_mcu_txd अणु
+struct mt7603_mcu_txd {
 	__le16 len;
 	__le16 pq_id;
 
@@ -19,9 +18,9 @@
 	u8 ext_cid_ack;
 
 	u32 au4_d3_to_d7_rev[5];
-पूर्ण __packed __aligned(4);
+} __packed __aligned(4);
 
-काष्ठा mt7603_mcu_rxd अणु
+struct mt7603_mcu_rxd {
 	__le16 len;
 	__le16 pkt_type_id;
 
@@ -31,22 +30,22 @@
 
 	u8 ext_eid;
 	u8 __rsv1[3];
-पूर्ण;
+};
 
-#घोषणा MCU_PKT_ID		0xa0
-#घोषणा MCU_PORT_QUEUE		0x8000
-#घोषणा MCU_PORT_QUEUE_FW	0xc000
+#define MCU_PKT_ID		0xa0
+#define MCU_PORT_QUEUE		0x8000
+#define MCU_PORT_QUEUE_FW	0xc000
 
-#घोषणा MCU_FIRMWARE_ADDRESS	0x100000
+#define MCU_FIRMWARE_ADDRESS	0x100000
 
-क्रमागत अणु
+enum {
 	MCU_Q_QUERY,
 	MCU_Q_SET,
 	MCU_Q_RESERVED,
 	MCU_Q_NA
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_CMD_TARGET_ADDRESS_LEN_REQ = 0x01,
 	MCU_CMD_FW_START_REQ = 0x02,
 	MCU_CMD_INIT_ACCESS_REG = 0x3,
@@ -59,9 +58,9 @@
 	MCU_CMD_EXT_CID = 0xED,
 	MCU_CMD_FW_SCATTER = 0xEE,
 	MCU_CMD_RESTART_DL_REQ = 0xEF,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_EXT_CMD_RF_REG_ACCESS = 0x02,
 	MCU_EXT_CMD_RF_TEST = 0x04,
 	MCU_EXT_CMD_RADIO_ON_OFF_CTRL = 0x05,
@@ -89,9 +88,9 @@
 	MCU_EXT_CMD_WAKEUP_OPTION = 0x2E,
 	MCU_EXT_CMD_AC_QUEUE_CONTROL = 0x31,
 	MCU_EXT_CMD_BCN_UPDATE = 0x33
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	MCU_EXT_EVENT_CMD_RESULT = 0x0,
 	MCU_EXT_EVENT_RF_REG_ACCESS = 0x2,
 	MCU_EXT_EVENT_MULTI_CR_ACCESS = 0x0E,
@@ -99,6 +98,6 @@
 	MCU_EXT_EVENT_BEACON_LOSS = 0x1A,
 	MCU_EXT_EVENT_THERMAL_PROTECT = 0x22,
 	MCU_EXT_EVENT_BCN_UPDATE = 0x31,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

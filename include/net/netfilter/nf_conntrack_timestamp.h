@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _NF_CONNTRACK_TSTAMP_H
-#घोषणा _NF_CONNTRACK_TSTAMP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _NF_CONNTRACK_TSTAMP_H
+#define _NF_CONNTRACK_TSTAMP_H
 
-#समावेश <net/net_namespace.h>
-#समावेश <linux/netfilter/nf_conntrack_common.h>
-#समावेश <linux/netfilter/nf_conntrack_tuple_common.h>
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_extend.h>
+#include <net/net_namespace.h>
+#include <linux/netfilter/nf_conntrack_common.h>
+#include <linux/netfilter/nf_conntrack_tuple_common.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_extend.h>
 
-काष्ठा nf_conn_tstamp अणु
-	u_पूर्णांक64_t start;
-	u_पूर्णांक64_t stop;
-पूर्ण;
+struct nf_conn_tstamp {
+	u_int64_t start;
+	u_int64_t stop;
+};
 
-अटल अंतरभूत
-काष्ठा nf_conn_tstamp *nf_conn_tstamp_find(स्थिर काष्ठा nf_conn *ct)
-अणु
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
-	वापस nf_ct_ext_find(ct, NF_CT_EXT_TSTAMP);
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण
+static inline
+struct nf_conn_tstamp *nf_conn_tstamp_find(const struct nf_conn *ct)
+{
+#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
+	return nf_ct_ext_find(ct, NF_CT_EXT_TSTAMP);
+#else
+	return NULL;
+#endif
+}
 
-अटल अंतरभूत
-काष्ठा nf_conn_tstamp *nf_ct_tstamp_ext_add(काष्ठा nf_conn *ct, gfp_t gfp)
-अणु
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
-	काष्ठा net *net = nf_ct_net(ct);
+static inline
+struct nf_conn_tstamp *nf_ct_tstamp_ext_add(struct nf_conn *ct, gfp_t gfp)
+{
+#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
+	struct net *net = nf_ct_net(ct);
 
-	अगर (!net->ct.sysctl_tstamp)
-		वापस शून्य;
+	if (!net->ct.sysctl_tstamp)
+		return NULL;
 
-	वापस nf_ct_ext_add(ct, NF_CT_EXT_TSTAMP, gfp);
-#अन्यथा
-	वापस शून्य;
-#पूर्ण_अगर
-पूर्ण;
+	return nf_ct_ext_add(ct, NF_CT_EXT_TSTAMP, gfp);
+#else
+	return NULL;
+#endif
+};
 
-#अगर_घोषित CONFIG_NF_CONNTRACK_TIMESTAMP
-व्योम nf_conntrack_tstamp_pernet_init(काष्ठा net *net);
+#ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
+void nf_conntrack_tstamp_pernet_init(struct net *net);
 
-पूर्णांक nf_conntrack_tstamp_init(व्योम);
-व्योम nf_conntrack_tstamp_fini(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम nf_conntrack_tstamp_pernet_init(काष्ठा net *net) अणुपूर्ण
+int nf_conntrack_tstamp_init(void);
+void nf_conntrack_tstamp_fini(void);
+#else
+static inline void nf_conntrack_tstamp_pernet_init(struct net *net) {}
 
-अटल अंतरभूत पूर्णांक nf_conntrack_tstamp_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int nf_conntrack_tstamp_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम nf_conntrack_tstamp_fini(व्योम)
-अणु
-	वापस;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMESTAMP */
+static inline void nf_conntrack_tstamp_fini(void)
+{
+	return;
+}
+#endif /* CONFIG_NF_CONNTRACK_TIMESTAMP */
 
-#पूर्ण_अगर /* _NF_CONNTRACK_TSTAMP_H */
+#endif /* _NF_CONNTRACK_TSTAMP_H */

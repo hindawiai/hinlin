@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * xfrm6_state.c: based on xfrm4_state.c
  *
@@ -9,26 +8,26 @@
  *	Kunihiro Ishiguro <kunihiro@ipinfusion.com>
  *		IPv6 support
  *	YOSHIFUJI Hideaki @USAGI
- *		Split up af-specअगरic portion
+ *		Split up af-specific portion
  *
  */
 
-#समावेश <net/xfrm.h>
+#include <net/xfrm.h>
 
-अटल काष्ठा xfrm_state_afinfo xfrm6_state_afinfo = अणु
+static struct xfrm_state_afinfo xfrm6_state_afinfo = {
 	.family			= AF_INET6,
 	.proto			= IPPROTO_IPV6,
 	.output			= xfrm6_output,
 	.transport_finish	= xfrm6_transport_finish,
 	.local_error		= xfrm6_local_error,
-पूर्ण;
+};
 
-पूर्णांक __init xfrm6_state_init(व्योम)
-अणु
-	वापस xfrm_state_रेजिस्टर_afinfo(&xfrm6_state_afinfo);
-पूर्ण
+int __init xfrm6_state_init(void)
+{
+	return xfrm_state_register_afinfo(&xfrm6_state_afinfo);
+}
 
-व्योम xfrm6_state_fini(व्योम)
-अणु
-	xfrm_state_unरेजिस्टर_afinfo(&xfrm6_state_afinfo);
-पूर्ण
+void xfrm6_state_fini(void)
+{
+	xfrm_state_unregister_afinfo(&xfrm6_state_afinfo);
+}

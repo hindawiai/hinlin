@@ -1,253 +1,252 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_EFUSE_C_
+#define _RTW_EFUSE_C_
 
-#समावेश <osdep_service.h>
-#समावेश <drv_types.h>
-#समावेश <rtw_efuse.h>
-#समावेश <usb_ops_linux.h>
-#समावेश <rtl8188e_hal.h>
-#समावेश <rtw_iol.h>
+#include <osdep_service.h>
+#include <drv_types.h>
+#include <rtw_efuse.h>
+#include <usb_ops_linux.h>
+#include <rtl8188e_hal.h>
+#include <rtw_iol.h>
 
-#घोषणा REG_EFUSE_CTRL		0x0030
-#घोषणा EFUSE_CTRL			REG_EFUSE_CTRL		/*  E-Fuse Control. */
+#define REG_EFUSE_CTRL		0x0030
+#define EFUSE_CTRL			REG_EFUSE_CTRL		/*  E-Fuse Control. */
 
-क्रमागतअणु
+enum{
 		VOLTAGE_V25						= 0x03,
 		LDOE25_SHIFT						= 28,
-	पूर्ण;
+	};
 
 /*
- * When we want to enable ग_लिखो operation, we should change to pwr on state.
- * When we stop ग_लिखो, we should चयन to 500k mode and disable LDO 2.5V.
+ * When we want to enable write operation, we should change to pwr on state.
+ * When we stop write, we should switch to 500k mode and disable LDO 2.5V.
  */
-अटल व्योम efuse_घातer_चयन(काष्ठा adapter *pAdapter, u8 ग_लिखो, u8 pwrstate)
-अणु
+static void efuse_power_switch(struct adapter *pAdapter, u8 write, u8 pwrstate)
+{
 	u8 tempval;
-	u16 पंचांगpv16;
+	u16 tmpv16;
 
-	अगर (pwrstate) अणु
-		usb_ग_लिखो8(pAdapter, REG_EFUSE_ACCESS, EFUSE_ACCESS_ON);
+	if (pwrstate) {
+		usb_write8(pAdapter, REG_EFUSE_ACCESS, EFUSE_ACCESS_ON);
 
-		/*  1.2V Power: From VDDON with Power Cut(0x0000h[15]), शेष valid */
-		पंचांगpv16 = usb_पढ़ो16(pAdapter, REG_SYS_ISO_CTRL);
-		अगर (!(पंचांगpv16 & PWC_EV12V)) अणु
-			पंचांगpv16 |= PWC_EV12V;
-			usb_ग_लिखो16(pAdapter, REG_SYS_ISO_CTRL, पंचांगpv16);
-		पूर्ण
-		/*  Reset: 0x0000h[28], शेष valid */
-		पंचांगpv16 =  usb_पढ़ो16(pAdapter, REG_SYS_FUNC_EN);
-		अगर (!(पंचांगpv16 & FEN_ELDR)) अणु
-			पंचांगpv16 |= FEN_ELDR;
-			usb_ग_लिखो16(pAdapter, REG_SYS_FUNC_EN, पंचांगpv16);
-		पूर्ण
+		/*  1.2V Power: From VDDON with Power Cut(0x0000h[15]), default valid */
+		tmpv16 = usb_read16(pAdapter, REG_SYS_ISO_CTRL);
+		if (!(tmpv16 & PWC_EV12V)) {
+			tmpv16 |= PWC_EV12V;
+			usb_write16(pAdapter, REG_SYS_ISO_CTRL, tmpv16);
+		}
+		/*  Reset: 0x0000h[28], default valid */
+		tmpv16 =  usb_read16(pAdapter, REG_SYS_FUNC_EN);
+		if (!(tmpv16 & FEN_ELDR)) {
+			tmpv16 |= FEN_ELDR;
+			usb_write16(pAdapter, REG_SYS_FUNC_EN, tmpv16);
+		}
 
-		/*  Clock: Gated(0x0008h[5]) 8M(0x0008h[1]) घड़ी from ANA, शेष valid */
-		पंचांगpv16 = usb_पढ़ो16(pAdapter, REG_SYS_CLKR);
-		अगर ((!(पंचांगpv16 & LOADER_CLK_EN))  || (!(पंचांगpv16 & ANA8M))) अणु
-			पंचांगpv16 |= (LOADER_CLK_EN | ANA8M);
-			usb_ग_लिखो16(pAdapter, REG_SYS_CLKR, पंचांगpv16);
-		पूर्ण
+		/*  Clock: Gated(0x0008h[5]) 8M(0x0008h[1]) clock from ANA, default valid */
+		tmpv16 = usb_read16(pAdapter, REG_SYS_CLKR);
+		if ((!(tmpv16 & LOADER_CLK_EN))  || (!(tmpv16 & ANA8M))) {
+			tmpv16 |= (LOADER_CLK_EN | ANA8M);
+			usb_write16(pAdapter, REG_SYS_CLKR, tmpv16);
+		}
 
-		अगर (ग_लिखो) अणु
-			/*  Enable LDO 2.5V beक्रमe पढ़ो/ग_लिखो action */
-			tempval = usb_पढ़ो8(pAdapter, EFUSE_TEST + 3);
+		if (write) {
+			/*  Enable LDO 2.5V before read/write action */
+			tempval = usb_read8(pAdapter, EFUSE_TEST + 3);
 			tempval &= 0x0F;
 			tempval |= (VOLTAGE_V25 << 4);
-			usb_ग_लिखो8(pAdapter, EFUSE_TEST + 3, (tempval | 0x80));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		usb_ग_लिखो8(pAdapter, REG_EFUSE_ACCESS, EFUSE_ACCESS_OFF);
+			usb_write8(pAdapter, EFUSE_TEST + 3, (tempval | 0x80));
+		}
+	} else {
+		usb_write8(pAdapter, REG_EFUSE_ACCESS, EFUSE_ACCESS_OFF);
 
-		अगर (ग_लिखो) अणु
-			/*  Disable LDO 2.5V after पढ़ो/ग_लिखो action */
-			tempval = usb_पढ़ो8(pAdapter, EFUSE_TEST + 3);
-			usb_ग_लिखो8(pAdapter, EFUSE_TEST + 3, (tempval & 0x7F));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (write) {
+			/*  Disable LDO 2.5V after read/write action */
+			tempval = usb_read8(pAdapter, EFUSE_TEST + 3);
+			usb_write8(pAdapter, EFUSE_TEST + 3, (tempval & 0x7F));
+		}
+	}
+}
 
-अटल व्योम
+static void
 efuse_phymap_to_logical(u8 *phymap, u16 _offset, u16 _size_byte, u8  *pbuf)
-अणु
-	u8 *efuseTbl = शून्य;
+{
+	u8 *efuseTbl = NULL;
 	u8 rtemp8;
 	u16	eFuse_Addr = 0;
 	u8 offset, wren;
 	u16	i, j;
-	u16	**eFuseWord = शून्य;
+	u16	**eFuseWord = NULL;
 	u16	efuse_utilized = 0;
 	u8 u1temp = 0;
-	व्योम **पंचांगp = शून्य;
+	void **tmp = NULL;
 
 	efuseTbl = kzalloc(EFUSE_MAP_LEN_88E, GFP_KERNEL);
-	अगर (!efuseTbl)
-		वापस;
+	if (!efuseTbl)
+		return;
 
-	पंचांगp = kसुस्मृति(EFUSE_MAX_SECTION_88E,
-		      माप(व्योम *) + EFUSE_MAX_WORD_UNIT * माप(u16),
+	tmp = kcalloc(EFUSE_MAX_SECTION_88E,
+		      sizeof(void *) + EFUSE_MAX_WORD_UNIT * sizeof(u16),
 		      GFP_KERNEL);
-	अगर (!पंचांगp) अणु
+	if (!tmp) {
 		DBG_88E("%s: alloc eFuseWord fail!\n", __func__);
-		जाओ eFuseWord_failed;
-	पूर्ण
-	क्रम (i = 0; i < EFUSE_MAX_SECTION_88E; i++)
-		पंचांगp[i] = ((अक्षर *)(पंचांगp + EFUSE_MAX_SECTION_88E)) + i * EFUSE_MAX_WORD_UNIT * माप(u16);
-	eFuseWord = (u16 **)पंचांगp;
+		goto eFuseWord_failed;
+	}
+	for (i = 0; i < EFUSE_MAX_SECTION_88E; i++)
+		tmp[i] = ((char *)(tmp + EFUSE_MAX_SECTION_88E)) + i * EFUSE_MAX_WORD_UNIT * sizeof(u16);
+	eFuseWord = (u16 **)tmp;
 
 	/*  0. Refresh efuse init map as all oxFF. */
-	क्रम (i = 0; i < EFUSE_MAX_SECTION_88E; i++)
-		क्रम (j = 0; j < EFUSE_MAX_WORD_UNIT; j++)
+	for (i = 0; i < EFUSE_MAX_SECTION_88E; i++)
+		for (j = 0; j < EFUSE_MAX_WORD_UNIT; j++)
 			eFuseWord[i][j] = 0xFFFF;
 
 	/*  */
-	/*  1. Read the first byte to check अगर efuse is empty!!! */
+	/*  1. Read the first byte to check if efuse is empty!!! */
 	/*  */
 	/*  */
 	rtemp8 = *(phymap + eFuse_Addr);
-	अगर (rtemp8 != 0xFF) अणु
+	if (rtemp8 != 0xFF) {
 		efuse_utilized++;
 		eFuse_Addr++;
-	पूर्ण अन्यथा अणु
+	} else {
 		DBG_88E("EFUSE is empty efuse_Addr-%d efuse_data =%x\n", eFuse_Addr, rtemp8);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/*  */
 	/*  2. Read real efuse content. Filter PG header and every section data. */
 	/*  */
-	जबतक ((rtemp8 != 0xFF) && (eFuse_Addr < EFUSE_REAL_CONTENT_LEN_88E)) अणु
-		/*  Check PG header क्रम section num. */
-		अगर ((rtemp8 & 0x1F) == 0x0F) अणु		/* extended header */
+	while ((rtemp8 != 0xFF) && (eFuse_Addr < EFUSE_REAL_CONTENT_LEN_88E)) {
+		/*  Check PG header for section num. */
+		if ((rtemp8 & 0x1F) == 0x0F) {		/* extended header */
 			u1temp = (rtemp8 & 0xE0) >> 5;
 			rtemp8 = *(phymap + eFuse_Addr);
-			अगर ((rtemp8 & 0x0F) == 0x0F) अणु
+			if ((rtemp8 & 0x0F) == 0x0F) {
 				eFuse_Addr++;
 				rtemp8 = *(phymap + eFuse_Addr);
 
-				अगर (rtemp8 != 0xFF && (eFuse_Addr < EFUSE_REAL_CONTENT_LEN_88E))
+				if (rtemp8 != 0xFF && (eFuse_Addr < EFUSE_REAL_CONTENT_LEN_88E))
 					eFuse_Addr++;
-				जारी;
-			पूर्ण अन्यथा अणु
+				continue;
+			} else {
 				offset = ((rtemp8 & 0xF0) >> 1) | u1temp;
 				wren = rtemp8 & 0x0F;
 				eFuse_Addr++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			offset = (rtemp8 >> 4) & 0x0f;
 			wren = rtemp8 & 0x0f;
-		पूर्ण
+		}
 
-		अगर (offset < EFUSE_MAX_SECTION_88E) अणु
+		if (offset < EFUSE_MAX_SECTION_88E) {
 			/*  Get word enable value from PG header */
-			क्रम (i = 0; i < EFUSE_MAX_WORD_UNIT; i++) अणु
+			for (i = 0; i < EFUSE_MAX_WORD_UNIT; i++) {
 				/*  Check word enable condition in the section */
-				अगर (!(wren & 0x01)) अणु
+				if (!(wren & 0x01)) {
 					rtemp8 = *(phymap + eFuse_Addr);
 					eFuse_Addr++;
 					efuse_utilized++;
 					eFuseWord[offset][i] = (rtemp8 & 0xff);
-					अगर (eFuse_Addr >= EFUSE_REAL_CONTENT_LEN_88E)
-						अवरोध;
+					if (eFuse_Addr >= EFUSE_REAL_CONTENT_LEN_88E)
+						break;
 					rtemp8 = *(phymap + eFuse_Addr);
 					eFuse_Addr++;
 					efuse_utilized++;
 					eFuseWord[offset][i] |= (((u16)rtemp8 << 8) & 0xff00);
 
-					अगर (eFuse_Addr >= EFUSE_REAL_CONTENT_LEN_88E)
-						अवरोध;
-				पूर्ण
+					if (eFuse_Addr >= EFUSE_REAL_CONTENT_LEN_88E)
+						break;
+				}
 				wren >>= 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		/*  Read next PG header */
 		rtemp8 = *(phymap + eFuse_Addr);
 
-		अगर (rtemp8 != 0xFF && (eFuse_Addr < EFUSE_REAL_CONTENT_LEN_88E)) अणु
+		if (rtemp8 != 0xFF && (eFuse_Addr < EFUSE_REAL_CONTENT_LEN_88E)) {
 			efuse_utilized++;
 			eFuse_Addr++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*  */
-	/*  3. Collect 16 sections and 4 word unit पूर्णांकo Efuse map. */
+	/*  3. Collect 16 sections and 4 word unit into Efuse map. */
 	/*  */
-	क्रम (i = 0; i < EFUSE_MAX_SECTION_88E; i++) अणु
-		क्रम (j = 0; j < EFUSE_MAX_WORD_UNIT; j++) अणु
+	for (i = 0; i < EFUSE_MAX_SECTION_88E; i++) {
+		for (j = 0; j < EFUSE_MAX_WORD_UNIT; j++) {
 			efuseTbl[(i * 8) + (j * 2)] = (eFuseWord[i][j] & 0xff);
 			efuseTbl[(i * 8) + ((j * 2) + 1)] = ((eFuseWord[i][j] >> 8) & 0xff);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*  */
-	/*  4. Copy from Efuse map to output poपूर्णांकer memory!!! */
+	/*  4. Copy from Efuse map to output pointer memory!!! */
 	/*  */
-	क्रम (i = 0; i < _size_byte; i++)
+	for (i = 0; i < _size_byte; i++)
 		pbuf[i] = efuseTbl[_offset + i];
 
 	/*  */
 	/*  5. Calculate Efuse utilization. */
 	/*  */
 
-निकास:
-	kमुक्त(eFuseWord);
+exit:
+	kfree(eFuseWord);
 
 eFuseWord_failed:
-	kमुक्त(efuseTbl);
-पूर्ण
+	kfree(efuseTbl);
+}
 
-अटल व्योम efuse_पढ़ो_phymap_from_txpktbuf(
-	काष्ठा adapter  *adapter,
-	पूर्णांक bcnhead,	/* beacon head, where FW store len(2-byte) and efuse physical map. */
+static void efuse_read_phymap_from_txpktbuf(
+	struct adapter  *adapter,
+	int bcnhead,	/* beacon head, where FW store len(2-byte) and efuse physical map. */
 	u8 *content,	/* buffer to store efuse physical map */
-	u16 *size	/* क्रम efuse content: the max byte to पढ़ो. will update to byte पढ़ो */
+	u16 *size	/* for efuse content: the max byte to read. will update to byte read */
 	)
-अणु
+{
 	u16 dbg_addr = 0;
-	अचिन्हित दीर्घ start = 0;
+	unsigned long start = 0;
 	u8 reg_0x143 = 0;
 	u32 lo32 = 0, hi32 = 0;
 	u16 len = 0, count = 0;
-	पूर्णांक i = 0;
+	int i = 0;
 	u16 limit = *size;
 
 	u8 *pos = content;
 
-	अगर (bcnhead < 0) /* अगर not valid */
-		bcnhead = usb_पढ़ो8(adapter, REG_TDECTRL + 1);
+	if (bcnhead < 0) /* if not valid */
+		bcnhead = usb_read8(adapter, REG_TDECTRL + 1);
 
 	DBG_88E("%s bcnhead:%d\n", __func__, bcnhead);
 
-	usb_ग_लिखो8(adapter, REG_PKT_BUFF_ACCESS_CTRL, TXPKT_BUF_SELECT);
+	usb_write8(adapter, REG_PKT_BUFF_ACCESS_CTRL, TXPKT_BUF_SELECT);
 
 	dbg_addr = bcnhead * 128 / 8; /* 8-bytes addressing */
 
-	जबतक (1) अणु
-		usb_ग_लिखो16(adapter, REG_PKTBUF_DBG_ADDR, dbg_addr + i);
+	while (1) {
+		usb_write16(adapter, REG_PKTBUF_DBG_ADDR, dbg_addr + i);
 
-		usb_ग_लिखो8(adapter, REG_TXPKTBUF_DBG, 0);
-		start = jअगरfies;
-		जबतक (!(reg_0x143 = usb_पढ़ो8(adapter, REG_TXPKTBUF_DBG)) &&
-		       jअगरfies_to_msecs(jअगरfies - start) < 1000) अणु
-			DBG_88E("%s polling reg_0x143:0x%02x, reg_0x106:0x%02x\n", __func__, reg_0x143, usb_पढ़ो8(adapter, 0x106));
+		usb_write8(adapter, REG_TXPKTBUF_DBG, 0);
+		start = jiffies;
+		while (!(reg_0x143 = usb_read8(adapter, REG_TXPKTBUF_DBG)) &&
+		       jiffies_to_msecs(jiffies - start) < 1000) {
+			DBG_88E("%s polling reg_0x143:0x%02x, reg_0x106:0x%02x\n", __func__, reg_0x143, usb_read8(adapter, 0x106));
 			usleep_range(1000, 2000);
-		पूर्ण
+		}
 
-		lo32 = usb_पढ़ो32(adapter, REG_PKTBUF_DBG_DATA_L);
-		hi32 = usb_पढ़ो32(adapter, REG_PKTBUF_DBG_DATA_H);
+		lo32 = usb_read32(adapter, REG_PKTBUF_DBG_DATA_L);
+		hi32 = usb_read32(adapter, REG_PKTBUF_DBG_DATA_H);
 
-		अगर (i == 0) अणु
+		if (i == 0) {
 			u8 lenc[2];
 			u16 lenbak, aaabak;
 			u16 aaa;
 
-			lenc[0] = usb_पढ़ो8(adapter, REG_PKTBUF_DBG_DATA_L);
-			lenc[1] = usb_पढ़ो8(adapter, REG_PKTBUF_DBG_DATA_L + 1);
+			lenc[0] = usb_read8(adapter, REG_PKTBUF_DBG_DATA_L);
+			lenc[1] = usb_read8(adapter, REG_PKTBUF_DBG_DATA_L + 1);
 
 			aaabak = le16_to_cpup((__le16 *)lenc);
 			lenbak = le16_to_cpu(*((__le16 *)lenc));
@@ -258,640 +257,640 @@ eFuseWord_failed:
 
 			DBG_88E("%s len:%u, lenbak:%u, aaa:%u, aaabak:%u\n", __func__, len, lenbak, aaa, aaabak);
 
-			स_नकल(pos, ((u8 *)&lo32) + 2, (limit >= count + 2) ? 2 : limit - count);
+			memcpy(pos, ((u8 *)&lo32) + 2, (limit >= count + 2) ? 2 : limit - count);
 			count += (limit >= count + 2) ? 2 : limit - count;
 			pos = content + count;
 
-		पूर्ण अन्यथा अणु
-			स_नकल(pos, ((u8 *)&lo32), (limit >= count + 4) ? 4 : limit - count);
+		} else {
+			memcpy(pos, ((u8 *)&lo32), (limit >= count + 4) ? 4 : limit - count);
 			count += (limit >= count + 4) ? 4 : limit - count;
 			pos = content + count;
-		पूर्ण
+		}
 
-		अगर (limit > count && len - 2 > count) अणु
-			स_नकल(pos, (u8 *)&hi32, (limit >= count + 4) ? 4 : limit - count);
+		if (limit > count && len - 2 > count) {
+			memcpy(pos, (u8 *)&hi32, (limit >= count + 4) ? 4 : limit - count);
 			count += (limit >= count + 4) ? 4 : limit - count;
 			pos = content + count;
-		पूर्ण
+		}
 
-		अगर (limit <= count || len - 2 <= count)
-			अवरोध;
+		if (limit <= count || len - 2 <= count)
+			break;
 		i++;
-	पूर्ण
-	usb_ग_लिखो8(adapter, REG_PKT_BUFF_ACCESS_CTRL, DISABLE_TRXPKT_BUF_ACCESS);
+	}
+	usb_write8(adapter, REG_PKT_BUFF_ACCESS_CTRL, DISABLE_TRXPKT_BUF_ACCESS);
 	DBG_88E("%s read count:%u\n", __func__, count);
 	*size = count;
-पूर्ण
+}
 
-अटल s32 iol_पढ़ो_efuse(काष्ठा adapter *padapter, u8 txpktbuf_bndy, u16 offset, u16 size_byte, u8 *logical_map)
-अणु
+static s32 iol_read_efuse(struct adapter *padapter, u8 txpktbuf_bndy, u16 offset, u16 size_byte, u8 *logical_map)
+{
 	s32 status = _FAIL;
 	u8 physical_map[512];
 	u16 size = 512;
 
-	usb_ग_लिखो8(padapter, REG_TDECTRL + 1, txpktbuf_bndy);
-	स_रखो(physical_map, 0xFF, 512);
-	usb_ग_लिखो8(padapter, REG_PKT_BUFF_ACCESS_CTRL, TXPKT_BUF_SELECT);
+	usb_write8(padapter, REG_TDECTRL + 1, txpktbuf_bndy);
+	memset(physical_map, 0xFF, 512);
+	usb_write8(padapter, REG_PKT_BUFF_ACCESS_CTRL, TXPKT_BUF_SELECT);
 	status = iol_execute(padapter, CMD_READ_EFUSE_MAP);
-	अगर (status == _SUCCESS)
-		efuse_पढ़ो_phymap_from_txpktbuf(padapter, txpktbuf_bndy, physical_map, &size);
+	if (status == _SUCCESS)
+		efuse_read_phymap_from_txpktbuf(padapter, txpktbuf_bndy, physical_map, &size);
 	efuse_phymap_to_logical(physical_map, offset, size_byte, logical_map);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-व्योम efuse_ReadEFuse(काष्ठा adapter *Adapter, u8 efuseType, u16 _offset, u16 _size_byte, u8 *pbuf)
-अणु
-	अगर (rtw_iol_applied(Adapter)) अणु
-		rtw_hal_घातer_on(Adapter);
+void efuse_ReadEFuse(struct adapter *Adapter, u8 efuseType, u16 _offset, u16 _size_byte, u8 *pbuf)
+{
+	if (rtw_iol_applied(Adapter)) {
+		rtw_hal_power_on(Adapter);
 		iol_mode_enable(Adapter, 1);
-		iol_पढ़ो_efuse(Adapter, 0, _offset, _size_byte, pbuf);
+		iol_read_efuse(Adapter, 0, _offset, _size_byte, pbuf);
 		iol_mode_enable(Adapter, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-u8 Efuse_WordEnableDataWrite(काष्ठा adapter *pAdapter, u16 efuse_addr, u8 word_en, u8 *data)
-अणु
-	u16	पंचांगpaddr = 0;
+u8 Efuse_WordEnableDataWrite(struct adapter *pAdapter, u16 efuse_addr, u8 word_en, u8 *data)
+{
+	u16	tmpaddr = 0;
 	u16	start_addr = efuse_addr;
 	u8 badworden = 0x0F;
-	u8 पंचांगpdata[8];
+	u8 tmpdata[8];
 
-	स_रखो(पंचांगpdata, 0xff, PGPKT_DATA_SIZE);
+	memset(tmpdata, 0xff, PGPKT_DATA_SIZE);
 
-	अगर (!(word_en & BIT(0))) अणु
-		पंचांगpaddr = start_addr;
+	if (!(word_en & BIT(0))) {
+		tmpaddr = start_addr;
 		efuse_OneByteWrite(pAdapter, start_addr++, data[0]);
 		efuse_OneByteWrite(pAdapter, start_addr++, data[1]);
 
-		efuse_OneByteRead(pAdapter, पंचांगpaddr, &पंचांगpdata[0]);
-		efuse_OneByteRead(pAdapter, पंचांगpaddr + 1, &पंचांगpdata[1]);
-		अगर ((data[0] != पंचांगpdata[0]) || (data[1] != पंचांगpdata[1]))
+		efuse_OneByteRead(pAdapter, tmpaddr, &tmpdata[0]);
+		efuse_OneByteRead(pAdapter, tmpaddr + 1, &tmpdata[1]);
+		if ((data[0] != tmpdata[0]) || (data[1] != tmpdata[1]))
 			badworden &= (~BIT(0));
-	पूर्ण
-	अगर (!(word_en & BIT(1))) अणु
-		पंचांगpaddr = start_addr;
+	}
+	if (!(word_en & BIT(1))) {
+		tmpaddr = start_addr;
 		efuse_OneByteWrite(pAdapter, start_addr++, data[2]);
 		efuse_OneByteWrite(pAdapter, start_addr++, data[3]);
 
-		efuse_OneByteRead(pAdapter, पंचांगpaddr, &पंचांगpdata[2]);
-		efuse_OneByteRead(pAdapter, पंचांगpaddr + 1, &पंचांगpdata[3]);
-		अगर ((data[2] != पंचांगpdata[2]) || (data[3] != पंचांगpdata[3]))
+		efuse_OneByteRead(pAdapter, tmpaddr, &tmpdata[2]);
+		efuse_OneByteRead(pAdapter, tmpaddr + 1, &tmpdata[3]);
+		if ((data[2] != tmpdata[2]) || (data[3] != tmpdata[3]))
 			badworden &= (~BIT(1));
-	पूर्ण
-	अगर (!(word_en & BIT(2))) अणु
-		पंचांगpaddr = start_addr;
+	}
+	if (!(word_en & BIT(2))) {
+		tmpaddr = start_addr;
 		efuse_OneByteWrite(pAdapter, start_addr++, data[4]);
 		efuse_OneByteWrite(pAdapter, start_addr++, data[5]);
 
-		efuse_OneByteRead(pAdapter, पंचांगpaddr, &पंचांगpdata[4]);
-		efuse_OneByteRead(pAdapter, पंचांगpaddr + 1, &पंचांगpdata[5]);
-		अगर ((data[4] != पंचांगpdata[4]) || (data[5] != पंचांगpdata[5]))
+		efuse_OneByteRead(pAdapter, tmpaddr, &tmpdata[4]);
+		efuse_OneByteRead(pAdapter, tmpaddr + 1, &tmpdata[5]);
+		if ((data[4] != tmpdata[4]) || (data[5] != tmpdata[5]))
 			badworden &= (~BIT(2));
-	पूर्ण
-	अगर (!(word_en & BIT(3))) अणु
-		पंचांगpaddr = start_addr;
+	}
+	if (!(word_en & BIT(3))) {
+		tmpaddr = start_addr;
 		efuse_OneByteWrite(pAdapter, start_addr++, data[6]);
 		efuse_OneByteWrite(pAdapter, start_addr++, data[7]);
 
-		efuse_OneByteRead(pAdapter, पंचांगpaddr, &पंचांगpdata[6]);
-		efuse_OneByteRead(pAdapter, पंचांगpaddr + 1, &पंचांगpdata[7]);
-		अगर ((data[6] != पंचांगpdata[6]) || (data[7] != पंचांगpdata[7]))
+		efuse_OneByteRead(pAdapter, tmpaddr, &tmpdata[6]);
+		efuse_OneByteRead(pAdapter, tmpaddr + 1, &tmpdata[7]);
+		if ((data[6] != tmpdata[6]) || (data[7] != tmpdata[7]))
 			badworden &= (~BIT(3));
-	पूर्ण
-	वापस badworden;
-पूर्ण
+	}
+	return badworden;
+}
 
-अटल u16 Efuse_GetCurrentSize(काष्ठा adapter *pAdapter)
-अणु
+static u16 Efuse_GetCurrentSize(struct adapter *pAdapter)
+{
 	u16	efuse_addr = 0;
 	u8 hoffset = 0, hworden = 0;
 	u8 efuse_data, word_cnts = 0;
 
 	rtw_hal_get_hwreg(pAdapter, HW_VAR_EFUSE_BYTES, (u8 *)&efuse_addr);
 
-	जबतक (efuse_OneByteRead(pAdapter, efuse_addr, &efuse_data) &&
-	       AVAILABLE_EFUSE_ADDR(efuse_addr)) अणु
-		अगर (efuse_data == 0xFF)
-			अवरोध;
-		अगर ((efuse_data & 0x1F) == 0x0F) अणु /* extended header */
+	while (efuse_OneByteRead(pAdapter, efuse_addr, &efuse_data) &&
+	       AVAILABLE_EFUSE_ADDR(efuse_addr)) {
+		if (efuse_data == 0xFF)
+			break;
+		if ((efuse_data & 0x1F) == 0x0F) { /* extended header */
 			hoffset = efuse_data;
 			efuse_addr++;
 			efuse_OneByteRead(pAdapter, efuse_addr, &efuse_data);
-			अगर ((efuse_data & 0x0F) == 0x0F) अणु
+			if ((efuse_data & 0x0F) == 0x0F) {
 				efuse_addr++;
-				जारी;
-			पूर्ण अन्यथा अणु
+				continue;
+			} else {
 				hoffset = ((hoffset & 0xE0) >> 5) |
 					  ((efuse_data & 0xF0) >> 1);
 				hworden = efuse_data & 0x0F;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			hoffset = (efuse_data >> 4) & 0x0F;
 			hworden =  efuse_data & 0x0F;
-		पूर्ण
+		}
 		word_cnts = Efuse_CalculateWordCnts(hworden);
-		/* पढ़ो next header */
+		/* read next header */
 		efuse_addr = efuse_addr + (word_cnts * 2) + 1;
-	पूर्ण
+	}
 
 	rtw_hal_set_hwreg(pAdapter, HW_VAR_EFUSE_BYTES, (u8 *)&efuse_addr);
 
-	वापस efuse_addr;
-पूर्ण
+	return efuse_addr;
+}
 
-पूर्णांक Efuse_PgPacketRead(काष्ठा adapter *pAdapter, u8 offset, u8 *data)
-अणु
+int Efuse_PgPacketRead(struct adapter *pAdapter, u8 offset, u8 *data)
+{
 	u8 ReadState = PG_STATE_HEADER;
-	पूर्णांक	bDataEmpty = true;
+	int	bDataEmpty = true;
 	u8 efuse_data, word_cnts = 0;
 	u16	efuse_addr = 0;
 	u8 hoffset = 0, hworden = 0;
-	u8 पंचांगpidx = 0;
-	u8 पंचांगpdata[8];
-	u8 पंचांगp_header = 0;
+	u8 tmpidx = 0;
+	u8 tmpdata[8];
+	u8 tmp_header = 0;
 
-	अगर (!data)
-		वापस false;
-	अगर (offset > EFUSE_MAX_SECTION_88E)
-		वापस false;
+	if (!data)
+		return false;
+	if (offset > EFUSE_MAX_SECTION_88E)
+		return false;
 
-	स_रखो(data, 0xff, माप(u8) * PGPKT_DATA_SIZE);
-	स_रखो(पंचांगpdata, 0xff, माप(u8) * PGPKT_DATA_SIZE);
+	memset(data, 0xff, sizeof(u8) * PGPKT_DATA_SIZE);
+	memset(tmpdata, 0xff, sizeof(u8) * PGPKT_DATA_SIZE);
 
 	/*  <Roger_TODO> Efuse has been pre-programmed dummy 5Bytes at the end of Efuse by CP. */
-	/*  Skip dummy parts to prevent unexpected data पढ़ो from Efuse. */
+	/*  Skip dummy parts to prevent unexpected data read from Efuse. */
 	/*  By pass right now. 2009.02.19. */
-	जबतक (AVAILABLE_EFUSE_ADDR(efuse_addr)) अणु
+	while (AVAILABLE_EFUSE_ADDR(efuse_addr)) {
 		/*   Header Read ------------- */
-		अगर (ReadState & PG_STATE_HEADER) अणु
-			अगर (efuse_OneByteRead(pAdapter, efuse_addr, &efuse_data) && (efuse_data != 0xFF)) अणु
-				अगर (EXT_HEADER(efuse_data)) अणु
-					पंचांगp_header = efuse_data;
+		if (ReadState & PG_STATE_HEADER) {
+			if (efuse_OneByteRead(pAdapter, efuse_addr, &efuse_data) && (efuse_data != 0xFF)) {
+				if (EXT_HEADER(efuse_data)) {
+					tmp_header = efuse_data;
 					efuse_addr++;
 					efuse_OneByteRead(pAdapter, efuse_addr, &efuse_data);
-					अगर (!ALL_WORDS_DISABLED(efuse_data)) अणु
-						hoffset = ((पंचांगp_header & 0xE0) >> 5) | ((efuse_data & 0xF0) >> 1);
+					if (!ALL_WORDS_DISABLED(efuse_data)) {
+						hoffset = ((tmp_header & 0xE0) >> 5) | ((efuse_data & 0xF0) >> 1);
 						hworden = efuse_data & 0x0F;
-					पूर्ण अन्यथा अणु
+					} else {
 						DBG_88E("Error, All words disabled\n");
 						efuse_addr++;
-						जारी;
-					पूर्ण
-				पूर्ण अन्यथा अणु
+						continue;
+					}
+				} else {
 					hoffset = (efuse_data >> 4) & 0x0F;
 					hworden =  efuse_data & 0x0F;
-				पूर्ण
+				}
 				word_cnts = Efuse_CalculateWordCnts(hworden);
 				bDataEmpty = true;
 
-				अगर (hoffset == offset) अणु
-					क्रम (पंचांगpidx = 0; पंचांगpidx < word_cnts * 2; पंचांगpidx++) अणु
-						अगर (efuse_OneByteRead(pAdapter, efuse_addr + 1 + पंचांगpidx, &efuse_data)) अणु
-							पंचांगpdata[पंचांगpidx] = efuse_data;
-							अगर (efuse_data != 0xff)
+				if (hoffset == offset) {
+					for (tmpidx = 0; tmpidx < word_cnts * 2; tmpidx++) {
+						if (efuse_OneByteRead(pAdapter, efuse_addr + 1 + tmpidx, &efuse_data)) {
+							tmpdata[tmpidx] = efuse_data;
+							if (efuse_data != 0xff)
 								bDataEmpty = false;
-						पूर्ण
-					पूर्ण
-					अगर (!bDataEmpty) अणु
+						}
+					}
+					if (!bDataEmpty) {
 						ReadState = PG_STATE_DATA;
-					पूर्ण अन्यथा अणु/* पढ़ो next header */
+					} else {/* read next header */
 						efuse_addr = efuse_addr + (word_cnts * 2) + 1;
 						ReadState = PG_STATE_HEADER;
-					पूर्ण
-				पूर्ण अन्यथा अणु/* पढ़ो next header */
+					}
+				} else {/* read next header */
 					efuse_addr = efuse_addr + (word_cnts * 2) + 1;
 					ReadState = PG_STATE_HEADER;
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ReadState & PG_STATE_DATA) अणु
+				}
+			} else {
+				break;
+			}
+		} else if (ReadState & PG_STATE_DATA) {
 			/*   Data section Read ------------- */
-			efuse_WordEnableDataRead(hworden, पंचांगpdata, data);
+			efuse_WordEnableDataRead(hworden, tmpdata, data);
 			efuse_addr = efuse_addr + (word_cnts * 2) + 1;
 			ReadState = PG_STATE_HEADER;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((data[0] == 0xff) && (data[1] == 0xff) && (data[2] == 0xff)  && (data[3] == 0xff) &&
+	if ((data[0] == 0xff) && (data[1] == 0xff) && (data[2] == 0xff)  && (data[3] == 0xff) &&
 	    (data[4] == 0xff) && (data[5] == 0xff) && (data[6] == 0xff)  && (data[7] == 0xff))
-		वापस false;
-	अन्यथा
-		वापस true;
-पूर्ण
+		return false;
+	else
+		return true;
+}
 
-अटल bool hal_EfuseFixHeaderProcess(काष्ठा adapter *pAdapter, u8 efuseType, काष्ठा pgpkt *pFixPkt, u16 *pAddr)
-अणु
+static bool hal_EfuseFixHeaderProcess(struct adapter *pAdapter, u8 efuseType, struct pgpkt *pFixPkt, u16 *pAddr)
+{
 	u8 originaldata[8], badworden = 0;
 	u16	efuse_addr = *pAddr;
 	u32	PgWriteSuccess = 0;
 
-	स_रखो(originaldata, 0xff, 8);
+	memset(originaldata, 0xff, 8);
 
-	अगर (Efuse_PgPacketRead(pAdapter, pFixPkt->offset, originaldata)) अणु
-		/* check अगर data exist */
+	if (Efuse_PgPacketRead(pAdapter, pFixPkt->offset, originaldata)) {
+		/* check if data exist */
 		badworden = Efuse_WordEnableDataWrite(pAdapter, efuse_addr + 1, pFixPkt->word_en, originaldata);
 
-		अगर (badworden != 0xf) अणु	/*  ग_लिखो fail */
+		if (badworden != 0xf) {	/*  write fail */
 			PgWriteSuccess = Efuse_PgPacketWrite(pAdapter, pFixPkt->offset, badworden, originaldata);
 
-			अगर (!PgWriteSuccess)
-				वापस false;
+			if (!PgWriteSuccess)
+				return false;
 
 			efuse_addr = Efuse_GetCurrentSize(pAdapter);
-		पूर्ण अन्यथा अणु
+		} else {
 			efuse_addr = efuse_addr + (pFixPkt->word_cnts * 2) + 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		efuse_addr = efuse_addr + (pFixPkt->word_cnts * 2) + 1;
-	पूर्ण
+	}
 	*pAddr = efuse_addr;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool hal_EfusePgPacketWrite2ByteHeader(काष्ठा adapter *pAdapter, u8 efuseType, u16 *pAddr, काष्ठा pgpkt *pTargetPkt)
-अणु
+static bool hal_EfusePgPacketWrite2ByteHeader(struct adapter *pAdapter, u8 efuseType, u16 *pAddr, struct pgpkt *pTargetPkt)
+{
 	bool ret = false;
 	u16 efuse_addr = *pAddr;
 	u16 efuse_max_available_len =
 		EFUSE_REAL_CONTENT_LEN_88E - EFUSE_OOB_PROTECT_BYTES_88E;
-	u8 pg_header = 0, पंचांगp_header = 0, pg_header_temp = 0;
+	u8 pg_header = 0, tmp_header = 0, pg_header_temp = 0;
 	u8 repeatcnt = 0;
 
-	जबतक (efuse_addr < efuse_max_available_len) अणु
+	while (efuse_addr < efuse_max_available_len) {
 		pg_header = ((pTargetPkt->offset & 0x07) << 5) | 0x0F;
 		efuse_OneByteWrite(pAdapter, efuse_addr, pg_header);
-		efuse_OneByteRead(pAdapter, efuse_addr, &पंचांगp_header);
+		efuse_OneByteRead(pAdapter, efuse_addr, &tmp_header);
 
-		जबतक (पंचांगp_header == 0xFF) अणु
-			अगर (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
-				वापस false;
+		while (tmp_header == 0xFF) {
+			if (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
+				return false;
 
 			efuse_OneByteWrite(pAdapter, efuse_addr, pg_header);
-			efuse_OneByteRead(pAdapter, efuse_addr, &पंचांगp_header);
-		पूर्ण
+			efuse_OneByteRead(pAdapter, efuse_addr, &tmp_header);
+		}
 
-		/* to ग_लिखो ext_header */
-		अगर (पंचांगp_header == pg_header) अणु
+		/* to write ext_header */
+		if (tmp_header == pg_header) {
 			efuse_addr++;
 			pg_header_temp = pg_header;
 			pg_header = ((pTargetPkt->offset & 0x78) << 1) | pTargetPkt->word_en;
 
 			efuse_OneByteWrite(pAdapter, efuse_addr, pg_header);
-			efuse_OneByteRead(pAdapter, efuse_addr, &पंचांगp_header);
+			efuse_OneByteRead(pAdapter, efuse_addr, &tmp_header);
 
-			जबतक (पंचांगp_header == 0xFF) अणु
-				अगर (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
-					वापस false;
+			while (tmp_header == 0xFF) {
+				if (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
+					return false;
 
 				efuse_OneByteWrite(pAdapter, efuse_addr, pg_header);
-				efuse_OneByteRead(pAdapter, efuse_addr, &पंचांगp_header);
-			पूर्ण
+				efuse_OneByteRead(pAdapter, efuse_addr, &tmp_header);
+			}
 
-			अगर ((पंचांगp_header & 0x0F) == 0x0F) अणु	/* word_en PG fail */
-				अगर (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
-					वापस false;
+			if ((tmp_header & 0x0F) == 0x0F) {	/* word_en PG fail */
+				if (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
+					return false;
 
 				efuse_addr++;
-				जारी;
-			पूर्ण अन्यथा अगर (pg_header != पंचांगp_header) अणु	/* offset PG fail */
-				काष्ठा pgpkt	fixPkt;
+				continue;
+			} else if (pg_header != tmp_header) {	/* offset PG fail */
+				struct pgpkt	fixPkt;
 
-				fixPkt.offset = ((pg_header_temp & 0xE0) >> 5) | ((पंचांगp_header & 0xF0) >> 1);
-				fixPkt.word_en = पंचांगp_header & 0x0F;
+				fixPkt.offset = ((pg_header_temp & 0xE0) >> 5) | ((tmp_header & 0xF0) >> 1);
+				fixPkt.word_en = tmp_header & 0x0F;
 				fixPkt.word_cnts = Efuse_CalculateWordCnts(fixPkt.word_en);
-				अगर (!hal_EfuseFixHeaderProcess(pAdapter, efuseType, &fixPkt, &efuse_addr))
-					वापस false;
-			पूर्ण अन्यथा अणु
+				if (!hal_EfuseFixHeaderProcess(pAdapter, efuseType, &fixPkt, &efuse_addr))
+					return false;
+			} else {
 				ret = true;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अगर ((पंचांगp_header & 0x1F) == 0x0F) अणु		/* wrong extended header */
+				break;
+			}
+		} else if ((tmp_header & 0x1F) == 0x0F) {		/* wrong extended header */
 			efuse_addr += 2;
-			जारी;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+	}
 
 	*pAddr = efuse_addr;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool hal_EfusePgPacketWrite1ByteHeader(काष्ठा adapter *pAdapter, u8 efuseType, u16 *pAddr, काष्ठा pgpkt *pTargetPkt)
-अणु
+static bool hal_EfusePgPacketWrite1ByteHeader(struct adapter *pAdapter, u8 efuseType, u16 *pAddr, struct pgpkt *pTargetPkt)
+{
 	bool ret = false;
-	u8 pg_header = 0, पंचांगp_header = 0;
+	u8 pg_header = 0, tmp_header = 0;
 	u16	efuse_addr = *pAddr;
 	u8 repeatcnt = 0;
 
 	pg_header = ((pTargetPkt->offset << 4) & 0xf0) | pTargetPkt->word_en;
 
 	efuse_OneByteWrite(pAdapter, efuse_addr, pg_header);
-	efuse_OneByteRead(pAdapter, efuse_addr, &पंचांगp_header);
+	efuse_OneByteRead(pAdapter, efuse_addr, &tmp_header);
 
-	जबतक (पंचांगp_header == 0xFF) अणु
-		अगर (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
-			वापस false;
+	while (tmp_header == 0xFF) {
+		if (repeatcnt++ > EFUSE_REPEAT_THRESHOLD_)
+			return false;
 		efuse_OneByteWrite(pAdapter, efuse_addr, pg_header);
-		efuse_OneByteRead(pAdapter, efuse_addr, &पंचांगp_header);
-	पूर्ण
+		efuse_OneByteRead(pAdapter, efuse_addr, &tmp_header);
+	}
 
-	अगर (pg_header == पंचांगp_header) अणु
+	if (pg_header == tmp_header) {
 		ret = true;
-	पूर्ण अन्यथा अणु
-		काष्ठा pgpkt	fixPkt;
+	} else {
+		struct pgpkt	fixPkt;
 
-		fixPkt.offset = (पंचांगp_header >> 4) & 0x0F;
-		fixPkt.word_en = पंचांगp_header & 0x0F;
+		fixPkt.offset = (tmp_header >> 4) & 0x0F;
+		fixPkt.word_en = tmp_header & 0x0F;
 		fixPkt.word_cnts = Efuse_CalculateWordCnts(fixPkt.word_en);
-		अगर (!hal_EfuseFixHeaderProcess(pAdapter, efuseType, &fixPkt, &efuse_addr))
-			वापस false;
-	पूर्ण
+		if (!hal_EfuseFixHeaderProcess(pAdapter, efuseType, &fixPkt, &efuse_addr))
+			return false;
+	}
 
 	*pAddr = efuse_addr;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool hal_EfusePgPacketWriteData(काष्ठा adapter *pAdapter, u8 efuseType, u16 *pAddr, काष्ठा pgpkt *pTargetPkt)
-अणु
+static bool hal_EfusePgPacketWriteData(struct adapter *pAdapter, u8 efuseType, u16 *pAddr, struct pgpkt *pTargetPkt)
+{
 	u16	efuse_addr = *pAddr;
 	u8 badworden;
 	u32	PgWriteSuccess = 0;
 
 	badworden = Efuse_WordEnableDataWrite(pAdapter, efuse_addr + 1, pTargetPkt->word_en, pTargetPkt->data);
-	अगर (badworden == 0x0F) अणु
-		/*  ग_लिखो ok */
-		वापस true;
-	पूर्ण
+	if (badworden == 0x0F) {
+		/*  write ok */
+		return true;
+	}
 	/* reorganize other pg packet */
 	PgWriteSuccess = Efuse_PgPacketWrite(pAdapter, pTargetPkt->offset, badworden, pTargetPkt->data);
-	अगर (!PgWriteSuccess)
-		वापस false;
-	अन्यथा
-		वापस true;
-पूर्ण
+	if (!PgWriteSuccess)
+		return false;
+	else
+		return true;
+}
 
-अटल bool
+static bool
 hal_EfusePgPacketWriteHeader(
-				काष्ठा adapter *pAdapter,
+				struct adapter *pAdapter,
 				u8 efuseType,
 				u16				*pAddr,
-				काष्ठा pgpkt *pTargetPkt)
-अणु
+				struct pgpkt *pTargetPkt)
+{
 	bool ret = false;
 
-	अगर (pTargetPkt->offset >= EFUSE_MAX_SECTION_BASE)
+	if (pTargetPkt->offset >= EFUSE_MAX_SECTION_BASE)
 		ret = hal_EfusePgPacketWrite2ByteHeader(pAdapter, efuseType, pAddr, pTargetPkt);
-	अन्यथा
+	else
 		ret = hal_EfusePgPacketWrite1ByteHeader(pAdapter, efuseType, pAddr, pTargetPkt);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool wordEnMatched(काष्ठा pgpkt *pTargetPkt, काष्ठा pgpkt *pCurPkt,
+static bool wordEnMatched(struct pgpkt *pTargetPkt, struct pgpkt *pCurPkt,
 			  u8 *pWden)
-अणु
-	u8 match_word_en = 0x0F;	/*  शेष all words are disabled */
+{
+	u8 match_word_en = 0x0F;	/*  default all words are disabled */
 
-	/*  check अगर the same words are enabled both target and current PG packet */
-	अगर (((pTargetPkt->word_en & BIT(0)) == 0) &&
+	/*  check if the same words are enabled both target and current PG packet */
+	if (((pTargetPkt->word_en & BIT(0)) == 0) &&
 	    ((pCurPkt->word_en & BIT(0)) == 0))
 		match_word_en &= ~BIT(0);				/*  enable word 0 */
-	अगर (((pTargetPkt->word_en & BIT(1)) == 0) &&
+	if (((pTargetPkt->word_en & BIT(1)) == 0) &&
 	    ((pCurPkt->word_en & BIT(1)) == 0))
 		match_word_en &= ~BIT(1);				/*  enable word 1 */
-	अगर (((pTargetPkt->word_en & BIT(2)) == 0) &&
+	if (((pTargetPkt->word_en & BIT(2)) == 0) &&
 	    ((pCurPkt->word_en & BIT(2)) == 0))
 		match_word_en &= ~BIT(2);				/*  enable word 2 */
-	अगर (((pTargetPkt->word_en & BIT(3)) == 0) &&
+	if (((pTargetPkt->word_en & BIT(3)) == 0) &&
 	    ((pCurPkt->word_en & BIT(3)) == 0))
 		match_word_en &= ~BIT(3);				/*  enable word 3 */
 
 	*pWden = match_word_en;
 
-	अगर (match_word_en != 0xf)
-		वापस true;
-	अन्यथा
-		वापस false;
-पूर्ण
+	if (match_word_en != 0xf)
+		return true;
+	else
+		return false;
+}
 
-अटल bool hal_EfuseCheckIfDatafollowed(काष्ठा adapter *pAdapter, u8 word_cnts, u16 startAddr)
-अणु
+static bool hal_EfuseCheckIfDatafollowed(struct adapter *pAdapter, u8 word_cnts, u16 startAddr)
+{
 	bool ret = false;
 	u8 i, efuse_data;
 
-	क्रम (i = 0; i < (word_cnts * 2); i++) अणु
-		अगर (efuse_OneByteRead(pAdapter, (startAddr + i), &efuse_data) && (efuse_data != 0xFF))
+	for (i = 0; i < (word_cnts * 2); i++) {
+		if (efuse_OneByteRead(pAdapter, (startAddr + i), &efuse_data) && (efuse_data != 0xFF))
 			ret = true;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल bool hal_EfusePartialWriteCheck(काष्ठा adapter *pAdapter, u8 efuseType, u16 *pAddr, काष्ठा pgpkt *pTargetPkt)
-अणु
+static bool hal_EfusePartialWriteCheck(struct adapter *pAdapter, u8 efuseType, u16 *pAddr, struct pgpkt *pTargetPkt)
+{
 	bool ret = false;
 	u8 i, efuse_data = 0, cur_header = 0;
 	u8 matched_wden = 0, badworden = 0;
 	u16 startAddr = 0;
 	u16 efuse_max_available_len =
 		EFUSE_REAL_CONTENT_LEN_88E - EFUSE_OOB_PROTECT_BYTES_88E;
-	काष्ठा pgpkt curPkt;
+	struct pgpkt curPkt;
 
 	rtw_hal_get_hwreg(pAdapter, HW_VAR_EFUSE_BYTES, (u8 *)&startAddr);
 	startAddr %= EFUSE_REAL_CONTENT_LEN;
 
-	जबतक (1) अणु
-		अगर (startAddr >= efuse_max_available_len) अणु
+	while (1) {
+		if (startAddr >= efuse_max_available_len) {
 			ret = false;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (efuse_OneByteRead(pAdapter, startAddr, &efuse_data) && (efuse_data != 0xFF)) अणु
-			अगर (EXT_HEADER(efuse_data)) अणु
+		if (efuse_OneByteRead(pAdapter, startAddr, &efuse_data) && (efuse_data != 0xFF)) {
+			if (EXT_HEADER(efuse_data)) {
 				cur_header = efuse_data;
 				startAddr++;
 				efuse_OneByteRead(pAdapter, startAddr, &efuse_data);
-				अगर (ALL_WORDS_DISABLED(efuse_data)) अणु
+				if (ALL_WORDS_DISABLED(efuse_data)) {
 					ret = false;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 				curPkt.offset = ((cur_header & 0xE0) >> 5) | ((efuse_data & 0xF0) >> 1);
 				curPkt.word_en = efuse_data & 0x0F;
-			पूर्ण अन्यथा अणु
+			} else {
 				cur_header  =  efuse_data;
 				curPkt.offset = (cur_header >> 4) & 0x0F;
 				curPkt.word_en = cur_header & 0x0F;
-			पूर्ण
+			}
 
 			curPkt.word_cnts = Efuse_CalculateWordCnts(curPkt.word_en);
-			/*  अगर same header is found but no data followed */
-			/*  ग_लिखो some part of data followed by the header. */
-			अगर ((curPkt.offset == pTargetPkt->offset) &&
+			/*  if same header is found but no data followed */
+			/*  write some part of data followed by the header. */
+			if ((curPkt.offset == pTargetPkt->offset) &&
 			    (!hal_EfuseCheckIfDatafollowed(pAdapter, curPkt.word_cnts, startAddr + 1)) &&
-			    wordEnMatched(pTargetPkt, &curPkt, &matched_wden)) अणु
-				/*  Here to ग_लिखो partial data */
+			    wordEnMatched(pTargetPkt, &curPkt, &matched_wden)) {
+				/*  Here to write partial data */
 				badworden = Efuse_WordEnableDataWrite(pAdapter, startAddr + 1, matched_wden, pTargetPkt->data);
-				अगर (badworden != 0x0F) अणु
+				if (badworden != 0x0F) {
 					u32	PgWriteSuccess = 0;
-					/*  अगर ग_लिखो fail on some words, ग_लिखो these bad words again */
+					/*  if write fail on some words, write these bad words again */
 
 					PgWriteSuccess = Efuse_PgPacketWrite(pAdapter, pTargetPkt->offset, badworden, pTargetPkt->data);
 
-					अगर (!PgWriteSuccess) अणु
-						ret = false;	/*  ग_लिखो fail, वापस */
-						अवरोध;
-					पूर्ण
-				पूर्ण
-				/*  partial ग_लिखो ok, update the target packet क्रम later use */
-				क्रम (i = 0; i < 4; i++) अणु
-					अगर ((matched_wden & (0x1 << i)) == 0)	/*  this word has been written */
+					if (!PgWriteSuccess) {
+						ret = false;	/*  write fail, return */
+						break;
+					}
+				}
+				/*  partial write ok, update the target packet for later use */
+				for (i = 0; i < 4; i++) {
+					if ((matched_wden & (0x1 << i)) == 0)	/*  this word has been written */
 						pTargetPkt->word_en |= (0x1 << i);	/*  disable the word */
-				पूर्ण
+				}
 				pTargetPkt->word_cnts = Efuse_CalculateWordCnts(pTargetPkt->word_en);
-			पूर्ण
-			/*  पढ़ो from next header */
+			}
+			/*  read from next header */
 			startAddr = startAddr + (curPkt.word_cnts * 2) + 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*  not used header, 0xff */
 			*pAddr = startAddr;
 			ret = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			break;
+		}
+	}
+	return ret;
+}
 
-अटल व्योम hal_EfuseConकाष्ठाPGPkt(u8 offset, u8 word_en, u8 *pData, काष्ठा pgpkt *pTargetPkt)
-अणु
-	स_रखो((व्योम *)pTargetPkt->data, 0xFF, माप(u8) * 8);
+static void hal_EfuseConstructPGPkt(u8 offset, u8 word_en, u8 *pData, struct pgpkt *pTargetPkt)
+{
+	memset((void *)pTargetPkt->data, 0xFF, sizeof(u8) * 8);
 	pTargetPkt->offset = offset;
 	pTargetPkt->word_en = word_en;
 	efuse_WordEnableDataRead(word_en, pData, pTargetPkt->data);
 	pTargetPkt->word_cnts = Efuse_CalculateWordCnts(pTargetPkt->word_en);
-पूर्ण
+}
 
-bool Efuse_PgPacketWrite(काष्ठा adapter *pAdapter, u8 offset, u8 word_en, u8 *pData)
-अणु
-	काष्ठा pgpkt	targetPkt;
+bool Efuse_PgPacketWrite(struct adapter *pAdapter, u8 offset, u8 word_en, u8 *pData)
+{
+	struct pgpkt	targetPkt;
 	u16			startAddr = 0;
 	u8 efuseType = EFUSE_WIFI;
 
-	अगर (Efuse_GetCurrentSize(pAdapter) >= EFUSE_MAP_LEN_88E)
-		वापस false;
+	if (Efuse_GetCurrentSize(pAdapter) >= EFUSE_MAP_LEN_88E)
+		return false;
 
-	hal_EfuseConकाष्ठाPGPkt(offset, word_en, pData, &targetPkt);
+	hal_EfuseConstructPGPkt(offset, word_en, pData, &targetPkt);
 
-	अगर (!hal_EfusePartialWriteCheck(pAdapter, efuseType, &startAddr, &targetPkt))
-		वापस false;
+	if (!hal_EfusePartialWriteCheck(pAdapter, efuseType, &startAddr, &targetPkt))
+		return false;
 
-	अगर (!hal_EfusePgPacketWriteHeader(pAdapter, efuseType, &startAddr, &targetPkt))
-		वापस false;
+	if (!hal_EfusePgPacketWriteHeader(pAdapter, efuseType, &startAddr, &targetPkt))
+		return false;
 
-	अगर (!hal_EfusePgPacketWriteData(pAdapter, efuseType, &startAddr, &targetPkt))
-		वापस false;
+	if (!hal_EfusePgPacketWriteData(pAdapter, efuseType, &startAddr, &targetPkt))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 u8 Efuse_CalculateWordCnts(u8 word_en)
-अणु
+{
 	u8 word_cnts = 0;
 
-	अगर (!(word_en & BIT(0)))
-		word_cnts++; /*  0 : ग_लिखो enable */
-	अगर (!(word_en & BIT(1)))
+	if (!(word_en & BIT(0)))
+		word_cnts++; /*  0 : write enable */
+	if (!(word_en & BIT(1)))
 		word_cnts++;
-	अगर (!(word_en & BIT(2)))
+	if (!(word_en & BIT(2)))
 		word_cnts++;
-	अगर (!(word_en & BIT(3)))
+	if (!(word_en & BIT(3)))
 		word_cnts++;
-	वापस word_cnts;
-पूर्ण
+	return word_cnts;
+}
 
-u8 efuse_OneByteRead(काष्ठा adapter *pAdapter, u16 addr, u8 *data)
-अणु
-	u8 पंचांगpidx = 0;
+u8 efuse_OneByteRead(struct adapter *pAdapter, u16 addr, u8 *data)
+{
+	u8 tmpidx = 0;
 	u8 result;
 
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL + 1, (u8)(addr & 0xff));
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL + 2, ((u8)((addr >> 8) & 0x03)) |
-		   (usb_पढ़ो8(pAdapter, EFUSE_CTRL + 2) & 0xFC));
+	usb_write8(pAdapter, EFUSE_CTRL + 1, (u8)(addr & 0xff));
+	usb_write8(pAdapter, EFUSE_CTRL + 2, ((u8)((addr >> 8) & 0x03)) |
+		   (usb_read8(pAdapter, EFUSE_CTRL + 2) & 0xFC));
 
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL + 3,  0x72);/* पढ़ो cmd */
+	usb_write8(pAdapter, EFUSE_CTRL + 3,  0x72);/* read cmd */
 
-	जबतक (!(0x80 & usb_पढ़ो8(pAdapter, EFUSE_CTRL + 3)) && (पंचांगpidx < 100))
-		पंचांगpidx++;
-	अगर (पंचांगpidx < 100) अणु
-		*data = usb_पढ़ो8(pAdapter, EFUSE_CTRL);
+	while (!(0x80 & usb_read8(pAdapter, EFUSE_CTRL + 3)) && (tmpidx < 100))
+		tmpidx++;
+	if (tmpidx < 100) {
+		*data = usb_read8(pAdapter, EFUSE_CTRL);
 		result = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		*data = 0xff;
 		result = false;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
-u8 efuse_OneByteWrite(काष्ठा adapter *pAdapter, u16 addr, u8 data)
-अणु
-	u8 पंचांगpidx = 0;
+u8 efuse_OneByteWrite(struct adapter *pAdapter, u16 addr, u8 data)
+{
+	u8 tmpidx = 0;
 	u8 result;
 
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL + 1, (u8)(addr & 0xff));
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL + 2,
-		   (usb_पढ़ो8(pAdapter, EFUSE_CTRL + 2) & 0xFC) |
+	usb_write8(pAdapter, EFUSE_CTRL + 1, (u8)(addr & 0xff));
+	usb_write8(pAdapter, EFUSE_CTRL + 2,
+		   (usb_read8(pAdapter, EFUSE_CTRL + 2) & 0xFC) |
 		   (u8)((addr >> 8) & 0x03));
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL, data);/* data */
+	usb_write8(pAdapter, EFUSE_CTRL, data);/* data */
 
-	usb_ग_लिखो8(pAdapter, EFUSE_CTRL + 3, 0xF2);/* ग_लिखो cmd */
+	usb_write8(pAdapter, EFUSE_CTRL + 3, 0xF2);/* write cmd */
 
-	जबतक ((0x80 &  usb_पढ़ो8(pAdapter, EFUSE_CTRL + 3)) && (पंचांगpidx < 100))
-		पंचांगpidx++;
+	while ((0x80 &  usb_read8(pAdapter, EFUSE_CTRL + 3)) && (tmpidx < 100))
+		tmpidx++;
 
-	अगर (पंचांगpidx < 100)
+	if (tmpidx < 100)
 		result = true;
-	अन्यथा
+	else
 		result = false;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /* Read allowed word in current efuse section data. */
-व्योम efuse_WordEnableDataRead(u8 word_en, u8 *sourdata, u8 *targetdata)
-अणु
-	अगर (!(word_en & BIT(0))) अणु
+void efuse_WordEnableDataRead(u8 word_en, u8 *sourdata, u8 *targetdata)
+{
+	if (!(word_en & BIT(0))) {
 		targetdata[0] = sourdata[0];
 		targetdata[1] = sourdata[1];
-	पूर्ण
-	अगर (!(word_en & BIT(1))) अणु
+	}
+	if (!(word_en & BIT(1))) {
 		targetdata[2] = sourdata[2];
 		targetdata[3] = sourdata[3];
-	पूर्ण
-	अगर (!(word_en & BIT(2))) अणु
+	}
+	if (!(word_en & BIT(2))) {
 		targetdata[4] = sourdata[4];
 		targetdata[5] = sourdata[5];
-	पूर्ण
-	अगर (!(word_en & BIT(3))) अणु
+	}
+	if (!(word_en & BIT(3))) {
 		targetdata[6] = sourdata[6];
 		targetdata[7] = sourdata[7];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Read All Efuse content */
-अटल व्योम Efuse_ReadAllMap(काष्ठा adapter *pAdapter, u8 efuseType, u8 *Efuse)
-अणु
-	efuse_घातer_चयन(pAdapter, false, true);
+static void Efuse_ReadAllMap(struct adapter *pAdapter, u8 efuseType, u8 *Efuse)
+{
+	efuse_power_switch(pAdapter, false, true);
 
 	efuse_ReadEFuse(pAdapter, efuseType, 0, EFUSE_MAP_LEN_88E, Efuse);
 
-	efuse_घातer_चयन(pAdapter, false, false);
-पूर्ण
+	efuse_power_switch(pAdapter, false, false);
+}
 
-/* Transfer current EFUSE content to shaकरोw init and modअगरy map. */
-व्योम EFUSE_ShaकरोwMapUpdate(काष्ठा adapter *pAdapter, u8 efuseType)
-अणु
-	काष्ठा eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(pAdapter);
+/* Transfer current EFUSE content to shadow init and modify map. */
+void EFUSE_ShadowMapUpdate(struct adapter *pAdapter, u8 efuseType)
+{
+	struct eeprom_priv *pEEPROM = GET_EEPROM_EFUSE_PRIV(pAdapter);
 
-	अगर (pEEPROM->bस्वतःload_fail_flag)
-		स_रखो(pEEPROM->efuse_eeprom_data, 0xFF, EFUSE_MAP_LEN_88E);
-	अन्यथा
+	if (pEEPROM->bautoload_fail_flag)
+		memset(pEEPROM->efuse_eeprom_data, 0xFF, EFUSE_MAP_LEN_88E);
+	else
 		Efuse_ReadAllMap(pAdapter, efuseType, pEEPROM->efuse_eeprom_data);
-पूर्ण
+}

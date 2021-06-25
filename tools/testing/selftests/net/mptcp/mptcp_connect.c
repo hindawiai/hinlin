@@ -1,985 +1,984 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा _GNU_SOURCE
+#define _GNU_SOURCE
 
-#समावेश <त्रुटिसं.स>
-#समावेश <सीमा.स>
-#समावेश <fcntl.h>
-#समावेश <माला.स>
-#समावेश <stdbool.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <strings.h>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
+#include <errno.h>
+#include <limits.h>
+#include <fcntl.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <signal.h>
+#include <unistd.h>
 
-#समावेश <sys/poll.h>
-#समावेश <sys/sendfile.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/socket.h>
-#समावेश <sys/types.h>
-#समावेश <sys/mman.h>
+#include <sys/poll.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 
-#समावेश <netdb.h>
-#समावेश <netinet/in.h>
+#include <netdb.h>
+#include <netinet/in.h>
 
-#समावेश <linux/tcp.h>
+#include <linux/tcp.h>
 
-बाह्य पूर्णांक optind;
+extern int optind;
 
-#अगर_अघोषित IPPROTO_MPTCP
-#घोषणा IPPROTO_MPTCP 262
-#पूर्ण_अगर
-#अगर_अघोषित TCP_ULP
-#घोषणा TCP_ULP 31
-#पूर्ण_अगर
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+#ifndef TCP_ULP
+#define TCP_ULP 31
+#endif
 
-अटल पूर्णांक  poll_समयout = 10 * 1000;
-अटल bool listen_mode;
-अटल bool quit;
+static int  poll_timeout = 10 * 1000;
+static bool listen_mode;
+static bool quit;
 
-क्रमागत cfg_mode अणु
+enum cfg_mode {
 	CFG_MODE_POLL,
 	CFG_MODE_MMAP,
-	CFG_MODE_SENDखाता,
-पूर्ण;
+	CFG_MODE_SENDFILE,
+};
 
-क्रमागत cfg_peek अणु
+enum cfg_peek {
 	CFG_NONE_PEEK,
 	CFG_WITH_PEEK,
 	CFG_AFTER_PEEK,
-पूर्ण;
+};
 
-अटल क्रमागत cfg_mode cfg_mode = CFG_MODE_POLL;
-अटल क्रमागत cfg_peek cfg_peek = CFG_NONE_PEEK;
-अटल स्थिर अक्षर *cfg_host;
-अटल स्थिर अक्षर *cfg_port	= "12000";
-अटल पूर्णांक cfg_sock_proto	= IPPROTO_MPTCP;
-अटल bool tcpulp_audit;
-अटल पूर्णांक pf = AF_INET;
-अटल पूर्णांक cfg_sndbuf;
-अटल पूर्णांक cfg_rcvbuf;
-अटल bool cfg_join;
-अटल bool cfg_हटाओ;
-अटल अचिन्हित पूर्णांक cfg_करो_w;
-अटल पूर्णांक cfg_रुको;
-अटल uपूर्णांक32_t cfg_mark;
+static enum cfg_mode cfg_mode = CFG_MODE_POLL;
+static enum cfg_peek cfg_peek = CFG_NONE_PEEK;
+static const char *cfg_host;
+static const char *cfg_port	= "12000";
+static int cfg_sock_proto	= IPPROTO_MPTCP;
+static bool tcpulp_audit;
+static int pf = AF_INET;
+static int cfg_sndbuf;
+static int cfg_rcvbuf;
+static bool cfg_join;
+static bool cfg_remove;
+static unsigned int cfg_do_w;
+static int cfg_wait;
+static uint32_t cfg_mark;
 
-अटल व्योम die_usage(व्योम)
-अणु
-	ख_लिखो(मानक_त्रुटि, "Usage: mptcp_connect [-6] [-u] [-s MPTCP|TCP] [-p port] [-m mode]"
+static void die_usage(void)
+{
+	fprintf(stderr, "Usage: mptcp_connect [-6] [-u] [-s MPTCP|TCP] [-p port] [-m mode]"
 		"[-l] [-w sec] connect_address\n");
-	ख_लिखो(मानक_त्रुटि, "\t-6 use ipv6\n");
-	ख_लिखो(मानक_त्रुटि, "\t-t num -- set poll timeout to num\n");
-	ख_लिखो(मानक_त्रुटि, "\t-S num -- set SO_SNDBUF to num\n");
-	ख_लिखो(मानक_त्रुटि, "\t-R num -- set SO_RCVBUF to num\n");
-	ख_लिखो(मानक_त्रुटि, "\t-p num -- use port num\n");
-	ख_लिखो(मानक_त्रुटि, "\t-s [MPTCP|TCP] -- use mptcp(default) or tcp sockets\n");
-	ख_लिखो(मानक_त्रुटि, "\t-m [poll|mmap|sendfile] -- use poll(default)/mmap+write/sendfile\n");
-	ख_लिखो(मानक_त्रुटि, "\t-M mark -- set socket packet mark\n");
-	ख_लिखो(मानक_त्रुटि, "\t-u -- check mptcp ulp\n");
-	ख_लिखो(मानक_त्रुटि, "\t-w num -- wait num sec before closing the socket\n");
-	ख_लिखो(मानक_त्रुटि,
+	fprintf(stderr, "\t-6 use ipv6\n");
+	fprintf(stderr, "\t-t num -- set poll timeout to num\n");
+	fprintf(stderr, "\t-S num -- set SO_SNDBUF to num\n");
+	fprintf(stderr, "\t-R num -- set SO_RCVBUF to num\n");
+	fprintf(stderr, "\t-p num -- use port num\n");
+	fprintf(stderr, "\t-s [MPTCP|TCP] -- use mptcp(default) or tcp sockets\n");
+	fprintf(stderr, "\t-m [poll|mmap|sendfile] -- use poll(default)/mmap+write/sendfile\n");
+	fprintf(stderr, "\t-M mark -- set socket packet mark\n");
+	fprintf(stderr, "\t-u -- check mptcp ulp\n");
+	fprintf(stderr, "\t-w num -- wait num sec before closing the socket\n");
+	fprintf(stderr,
 		"\t-P [saveWithPeek|saveAfterPeek] -- save data with/after MSG_PEEK form tcp socket\n");
-	निकास(1);
-पूर्ण
+	exit(1);
+}
 
-अटल व्योम handle_संकेत(पूर्णांक nr)
-अणु
+static void handle_signal(int nr)
+{
 	quit = true;
-पूर्ण
+}
 
-अटल स्थिर अक्षर *getxinfo_strerr(पूर्णांक err)
-अणु
-	अगर (err == EAI_SYSTEM)
-		वापस म_त्रुटि(त्रुटि_सं);
+static const char *getxinfo_strerr(int err)
+{
+	if (err == EAI_SYSTEM)
+		return strerror(errno);
 
-	वापस gai_म_त्रुटि(err);
-पूर्ण
+	return gai_strerror(err);
+}
 
-अटल व्योम xgetnameinfo(स्थिर काष्ठा sockaddr *addr, socklen_t addrlen,
-			 अक्षर *host, socklen_t hostlen,
-			 अक्षर *serv, socklen_t servlen)
-अणु
-	पूर्णांक flags = NI_NUMERICHOST | NI_NUMERICSERV;
-	पूर्णांक err = getnameinfo(addr, addrlen, host, hostlen, serv, servlen,
+static void xgetnameinfo(const struct sockaddr *addr, socklen_t addrlen,
+			 char *host, socklen_t hostlen,
+			 char *serv, socklen_t servlen)
+{
+	int flags = NI_NUMERICHOST | NI_NUMERICSERV;
+	int err = getnameinfo(addr, addrlen, host, hostlen, serv, servlen,
 			      flags);
 
-	अगर (err) अणु
-		स्थिर अक्षर *errstr = getxinfo_strerr(err);
+	if (err) {
+		const char *errstr = getxinfo_strerr(err);
 
-		ख_लिखो(मानक_त्रुटि, "Fatal: getnameinfo: %s\n", errstr);
-		निकास(1);
-	पूर्ण
-पूर्ण
+		fprintf(stderr, "Fatal: getnameinfo: %s\n", errstr);
+		exit(1);
+	}
+}
 
-अटल व्योम xgetaddrinfo(स्थिर अक्षर *node, स्थिर अक्षर *service,
-			 स्थिर काष्ठा addrinfo *hपूर्णांकs,
-			 काष्ठा addrinfo **res)
-अणु
-	पूर्णांक err = getaddrinfo(node, service, hपूर्णांकs, res);
+static void xgetaddrinfo(const char *node, const char *service,
+			 const struct addrinfo *hints,
+			 struct addrinfo **res)
+{
+	int err = getaddrinfo(node, service, hints, res);
 
-	अगर (err) अणु
-		स्थिर अक्षर *errstr = getxinfo_strerr(err);
+	if (err) {
+		const char *errstr = getxinfo_strerr(err);
 
-		ख_लिखो(मानक_त्रुटि, "Fatal: getaddrinfo(%s:%s): %s\n",
+		fprintf(stderr, "Fatal: getaddrinfo(%s:%s): %s\n",
 			node ? node : "", service ? service : "", errstr);
-		निकास(1);
-	पूर्ण
-पूर्ण
+		exit(1);
+	}
+}
 
-अटल व्योम set_rcvbuf(पूर्णांक fd, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+static void set_rcvbuf(int fd, unsigned int size)
+{
+	int err;
 
-	err = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &size, माप(size));
-	अगर (err) अणु
-		लिखो_त्रुटि("set SO_RCVBUF");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	err = setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size));
+	if (err) {
+		perror("set SO_RCVBUF");
+		exit(1);
+	}
+}
 
-अटल व्योम set_sndbuf(पूर्णांक fd, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+static void set_sndbuf(int fd, unsigned int size)
+{
+	int err;
 
-	err = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &size, माप(size));
-	अगर (err) अणु
-		लिखो_त्रुटि("set SO_SNDBUF");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	err = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size));
+	if (err) {
+		perror("set SO_SNDBUF");
+		exit(1);
+	}
+}
 
-अटल व्योम set_mark(पूर्णांक fd, uपूर्णांक32_t mark)
-अणु
-	पूर्णांक err;
+static void set_mark(int fd, uint32_t mark)
+{
+	int err;
 
-	err = setsockopt(fd, SOL_SOCKET, SO_MARK, &mark, माप(mark));
-	अगर (err) अणु
-		लिखो_त्रुटि("set SO_MARK");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	err = setsockopt(fd, SOL_SOCKET, SO_MARK, &mark, sizeof(mark));
+	if (err) {
+		perror("set SO_MARK");
+		exit(1);
+	}
+}
 
-अटल पूर्णांक sock_listen_mptcp(स्थिर अक्षर * स्थिर listenaddr,
-			     स्थिर अक्षर * स्थिर port)
-अणु
-	पूर्णांक sock;
-	काष्ठा addrinfo hपूर्णांकs = अणु
+static int sock_listen_mptcp(const char * const listenaddr,
+			     const char * const port)
+{
+	int sock;
+	struct addrinfo hints = {
 		.ai_protocol = IPPROTO_TCP,
 		.ai_socktype = SOCK_STREAM,
 		.ai_flags = AI_PASSIVE | AI_NUMERICHOST
-	पूर्ण;
+	};
 
-	hपूर्णांकs.ai_family = pf;
+	hints.ai_family = pf;
 
-	काष्ठा addrinfo *a, *addr;
-	पूर्णांक one = 1;
+	struct addrinfo *a, *addr;
+	int one = 1;
 
-	xgetaddrinfo(listenaddr, port, &hपूर्णांकs, &addr);
-	hपूर्णांकs.ai_family = pf;
+	xgetaddrinfo(listenaddr, port, &hints, &addr);
+	hints.ai_family = pf;
 
-	क्रम (a = addr; a; a = a->ai_next) अणु
+	for (a = addr; a; a = a->ai_next) {
 		sock = socket(a->ai_family, a->ai_socktype, cfg_sock_proto);
-		अगर (sock < 0)
-			जारी;
+		if (sock < 0)
+			continue;
 
-		अगर (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one,
-				     माप(one)))
-			लिखो_त्रुटि("setsockopt");
+		if (-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one,
+				     sizeof(one)))
+			perror("setsockopt");
 
-		अगर (bind(sock, a->ai_addr, a->ai_addrlen) == 0)
-			अवरोध; /* success */
+		if (bind(sock, a->ai_addr, a->ai_addrlen) == 0)
+			break; /* success */
 
-		लिखो_त्रुटि("bind");
-		बंद(sock);
+		perror("bind");
+		close(sock);
 		sock = -1;
-	पूर्ण
+	}
 
-	मुक्तaddrinfo(addr);
+	freeaddrinfo(addr);
 
-	अगर (sock < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "Could not create listen socket\n");
-		वापस sock;
-	पूर्ण
+	if (sock < 0) {
+		fprintf(stderr, "Could not create listen socket\n");
+		return sock;
+	}
 
-	अगर (listen(sock, 20)) अणु
-		लिखो_त्रुटि("listen");
-		बंद(sock);
-		वापस -1;
-	पूर्ण
+	if (listen(sock, 20)) {
+		perror("listen");
+		close(sock);
+		return -1;
+	}
 
-	वापस sock;
-पूर्ण
+	return sock;
+}
 
-अटल bool sock_test_tcpulp(स्थिर अक्षर * स्थिर remoteaddr,
-			     स्थिर अक्षर * स्थिर port)
-अणु
-	काष्ठा addrinfo hपूर्णांकs = अणु
+static bool sock_test_tcpulp(const char * const remoteaddr,
+			     const char * const port)
+{
+	struct addrinfo hints = {
 		.ai_protocol = IPPROTO_TCP,
 		.ai_socktype = SOCK_STREAM,
-	पूर्ण;
-	काष्ठा addrinfo *a, *addr;
-	पूर्णांक sock = -1, ret = 0;
+	};
+	struct addrinfo *a, *addr;
+	int sock = -1, ret = 0;
 	bool test_pass = false;
 
-	hपूर्णांकs.ai_family = AF_INET;
+	hints.ai_family = AF_INET;
 
-	xgetaddrinfo(remoteaddr, port, &hपूर्णांकs, &addr);
-	क्रम (a = addr; a; a = a->ai_next) अणु
+	xgetaddrinfo(remoteaddr, port, &hints, &addr);
+	for (a = addr; a; a = a->ai_next) {
 		sock = socket(a->ai_family, a->ai_socktype, IPPROTO_TCP);
-		अगर (sock < 0) अणु
-			लिखो_त्रुटि("socket");
-			जारी;
-		पूर्ण
+		if (sock < 0) {
+			perror("socket");
+			continue;
+		}
 		ret = setsockopt(sock, IPPROTO_TCP, TCP_ULP, "mptcp",
-				 माप("mptcp"));
-		अगर (ret == -1 && त्रुटि_सं == EOPNOTSUPP)
+				 sizeof("mptcp"));
+		if (ret == -1 && errno == EOPNOTSUPP)
 			test_pass = true;
-		बंद(sock);
+		close(sock);
 
-		अगर (test_pass)
-			अवरोध;
-		अगर (!ret)
-			ख_लिखो(मानक_त्रुटि,
+		if (test_pass)
+			break;
+		if (!ret)
+			fprintf(stderr,
 				"setsockopt(TCP_ULP) returned 0\n");
-		अन्यथा
-			लिखो_त्रुटि("setsockopt(TCP_ULP)");
-	पूर्ण
-	वापस test_pass;
-पूर्ण
+		else
+			perror("setsockopt(TCP_ULP)");
+	}
+	return test_pass;
+}
 
-अटल पूर्णांक sock_connect_mptcp(स्थिर अक्षर * स्थिर remoteaddr,
-			      स्थिर अक्षर * स्थिर port, पूर्णांक proto)
-अणु
-	काष्ठा addrinfo hपूर्णांकs = अणु
+static int sock_connect_mptcp(const char * const remoteaddr,
+			      const char * const port, int proto)
+{
+	struct addrinfo hints = {
 		.ai_protocol = IPPROTO_TCP,
 		.ai_socktype = SOCK_STREAM,
-	पूर्ण;
-	काष्ठा addrinfo *a, *addr;
-	पूर्णांक sock = -1;
+	};
+	struct addrinfo *a, *addr;
+	int sock = -1;
 
-	hपूर्णांकs.ai_family = pf;
+	hints.ai_family = pf;
 
-	xgetaddrinfo(remoteaddr, port, &hपूर्णांकs, &addr);
-	क्रम (a = addr; a; a = a->ai_next) अणु
+	xgetaddrinfo(remoteaddr, port, &hints, &addr);
+	for (a = addr; a; a = a->ai_next) {
 		sock = socket(a->ai_family, a->ai_socktype, proto);
-		अगर (sock < 0) अणु
-			लिखो_त्रुटि("socket");
-			जारी;
-		पूर्ण
+		if (sock < 0) {
+			perror("socket");
+			continue;
+		}
 
-		अगर (cfg_mark)
+		if (cfg_mark)
 			set_mark(sock, cfg_mark);
 
-		अगर (connect(sock, a->ai_addr, a->ai_addrlen) == 0)
-			अवरोध; /* success */
+		if (connect(sock, a->ai_addr, a->ai_addrlen) == 0)
+			break; /* success */
 
-		लिखो_त्रुटि("connect()");
-		बंद(sock);
+		perror("connect()");
+		close(sock);
 		sock = -1;
-	पूर्ण
+	}
 
-	मुक्तaddrinfo(addr);
-	वापस sock;
-पूर्ण
+	freeaddrinfo(addr);
+	return sock;
+}
 
-अटल माप_प्रकार करो_rnd_ग_लिखो(स्थिर पूर्णांक fd, अक्षर *buf, स्थिर माप_प्रकार len)
-अणु
-	अटल bool first = true;
-	अचिन्हित पूर्णांक करो_w;
-	sमाप_प्रकार bw;
+static size_t do_rnd_write(const int fd, char *buf, const size_t len)
+{
+	static bool first = true;
+	unsigned int do_w;
+	ssize_t bw;
 
-	करो_w = अक्रम() & 0xffff;
-	अगर (करो_w == 0 || करो_w > len)
-		करो_w = len;
+	do_w = rand() & 0xffff;
+	if (do_w == 0 || do_w > len)
+		do_w = len;
 
-	अगर (cfg_join && first && करो_w > 100)
-		करो_w = 100;
+	if (cfg_join && first && do_w > 100)
+		do_w = 100;
 
-	अगर (cfg_हटाओ && करो_w > cfg_करो_w)
-		करो_w = cfg_करो_w;
+	if (cfg_remove && do_w > cfg_do_w)
+		do_w = cfg_do_w;
 
-	bw = ग_लिखो(fd, buf, करो_w);
-	अगर (bw < 0)
-		लिखो_त्रुटि("write");
+	bw = write(fd, buf, do_w);
+	if (bw < 0)
+		perror("write");
 
-	/* let the join handshake complete, beक्रमe going on */
-	अगर (cfg_join && first) अणु
+	/* let the join handshake complete, before going on */
+	if (cfg_join && first) {
 		usleep(200000);
 		first = false;
-	पूर्ण
+	}
 
-	अगर (cfg_हटाओ)
+	if (cfg_remove)
 		usleep(200000);
 
-	वापस bw;
-पूर्ण
+	return bw;
+}
 
-अटल माप_प्रकार करो_ग_लिखो(स्थिर पूर्णांक fd, अक्षर *buf, स्थिर माप_प्रकार len)
-अणु
-	माप_प्रकार offset = 0;
+static size_t do_write(const int fd, char *buf, const size_t len)
+{
+	size_t offset = 0;
 
-	जबतक (offset < len) अणु
-		माप_प्रकार written;
-		sमाप_प्रकार bw;
+	while (offset < len) {
+		size_t written;
+		ssize_t bw;
 
-		bw = ग_लिखो(fd, buf + offset, len - offset);
-		अगर (bw < 0) अणु
-			लिखो_त्रुटि("write");
-			वापस 0;
-		पूर्ण
+		bw = write(fd, buf + offset, len - offset);
+		if (bw < 0) {
+			perror("write");
+			return 0;
+		}
 
-		written = (माप_प्रकार)bw;
+		written = (size_t)bw;
 		offset += written;
-	पूर्ण
+	}
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
-अटल sमाप_प्रकार करो_rnd_पढ़ो(स्थिर पूर्णांक fd, अक्षर *buf, स्थिर माप_प्रकार len)
-अणु
-	पूर्णांक ret = 0;
-	अक्षर पंचांगp[16384];
-	माप_प्रकार cap = अक्रम();
+static ssize_t do_rnd_read(const int fd, char *buf, const size_t len)
+{
+	int ret = 0;
+	char tmp[16384];
+	size_t cap = rand();
 
 	cap &= 0xffff;
 
-	अगर (cap == 0)
+	if (cap == 0)
 		cap = 1;
-	अन्यथा अगर (cap > len)
+	else if (cap > len)
 		cap = len;
 
-	अगर (cfg_peek == CFG_WITH_PEEK) अणु
+	if (cfg_peek == CFG_WITH_PEEK) {
 		ret = recv(fd, buf, cap, MSG_PEEK);
-		ret = (ret < 0) ? ret : पढ़ो(fd, पंचांगp, ret);
-	पूर्ण अन्यथा अगर (cfg_peek == CFG_AFTER_PEEK) अणु
+		ret = (ret < 0) ? ret : read(fd, tmp, ret);
+	} else if (cfg_peek == CFG_AFTER_PEEK) {
 		ret = recv(fd, buf, cap, MSG_PEEK);
-		ret = (ret < 0) ? ret : पढ़ो(fd, buf, cap);
-	पूर्ण अन्यथा अणु
-		ret = पढ़ो(fd, buf, cap);
-	पूर्ण
+		ret = (ret < 0) ? ret : read(fd, buf, cap);
+	} else {
+		ret = read(fd, buf, cap);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम set_nonblock(पूर्णांक fd)
-अणु
-	पूर्णांक flags = fcntl(fd, F_GETFL);
+static void set_nonblock(int fd)
+{
+	int flags = fcntl(fd, F_GETFL);
 
-	अगर (flags == -1)
-		वापस;
+	if (flags == -1)
+		return;
 
 	fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-पूर्ण
+}
 
-अटल पूर्णांक copyfd_io_poll(पूर्णांक infd, पूर्णांक peerfd, पूर्णांक outfd)
-अणु
-	काष्ठा pollfd fds = अणु
+static int copyfd_io_poll(int infd, int peerfd, int outfd)
+{
+	struct pollfd fds = {
 		.fd = peerfd,
 		.events = POLLIN | POLLOUT,
-	पूर्ण;
-	अचिन्हित पूर्णांक woff = 0, wlen = 0;
-	अक्षर wbuf[8192];
+	};
+	unsigned int woff = 0, wlen = 0;
+	char wbuf[8192];
 
 	set_nonblock(peerfd);
 
-	क्रम (;;) अणु
-		अक्षर rbuf[8192];
-		sमाप_प्रकार len;
+	for (;;) {
+		char rbuf[8192];
+		ssize_t len;
 
-		अगर (fds.events == 0)
-			अवरोध;
+		if (fds.events == 0)
+			break;
 
-		चयन (poll(&fds, 1, poll_समयout)) अणु
-		हाल -1:
-			अगर (त्रुटि_सं == EINTR)
-				जारी;
-			लिखो_त्रुटि("poll");
-			वापस 1;
-		हाल 0:
-			ख_लिखो(मानक_त्रुटि, "%s: poll timed out (events: "
+		switch (poll(&fds, 1, poll_timeout)) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			perror("poll");
+			return 1;
+		case 0:
+			fprintf(stderr, "%s: poll timed out (events: "
 				"POLLIN %u, POLLOUT %u)\n", __func__,
 				fds.events & POLLIN, fds.events & POLLOUT);
-			वापस 2;
-		पूर्ण
+			return 2;
+		}
 
-		अगर (fds.revents & POLLIN) अणु
-			len = करो_rnd_पढ़ो(peerfd, rbuf, माप(rbuf));
-			अगर (len == 0) अणु
+		if (fds.revents & POLLIN) {
+			len = do_rnd_read(peerfd, rbuf, sizeof(rbuf));
+			if (len == 0) {
 				/* no more data to receive:
-				 * peer has बंदd its ग_लिखो side
+				 * peer has closed its write side
 				 */
 				fds.events &= ~POLLIN;
 
-				अगर ((fds.events & POLLOUT) == 0)
+				if ((fds.events & POLLOUT) == 0)
 					/* and nothing more to send */
-					अवरोध;
+					break;
 
 			/* Else, still have data to transmit */
-			पूर्ण अन्यथा अगर (len < 0) अणु
-				लिखो_त्रुटि("read");
-				वापस 3;
-			पूर्ण
+			} else if (len < 0) {
+				perror("read");
+				return 3;
+			}
 
-			करो_ग_लिखो(outfd, rbuf, len);
-		पूर्ण
+			do_write(outfd, rbuf, len);
+		}
 
-		अगर (fds.revents & POLLOUT) अणु
-			अगर (wlen == 0) अणु
+		if (fds.revents & POLLOUT) {
+			if (wlen == 0) {
 				woff = 0;
-				wlen = पढ़ो(infd, wbuf, माप(wbuf));
-			पूर्ण
+				wlen = read(infd, wbuf, sizeof(wbuf));
+			}
 
-			अगर (wlen > 0) अणु
-				sमाप_प्रकार bw;
+			if (wlen > 0) {
+				ssize_t bw;
 
-				bw = करो_rnd_ग_लिखो(peerfd, wbuf + woff, wlen);
-				अगर (bw < 0)
-					वापस 111;
+				bw = do_rnd_write(peerfd, wbuf + woff, wlen);
+				if (bw < 0)
+					return 111;
 
 				woff += bw;
 				wlen -= bw;
-			पूर्ण अन्यथा अगर (wlen == 0) अणु
+			} else if (wlen == 0) {
 				/* We have no more data to send. */
 				fds.events &= ~POLLOUT;
 
-				अगर ((fds.events & POLLIN) == 0)
-					/* ... and peer also बंदd alपढ़ोy */
-					अवरोध;
+				if ((fds.events & POLLIN) == 0)
+					/* ... and peer also closed already */
+					break;
 
 				/* ... but we still receive.
-				 * Close our ग_लिखो side, ev. give some समय
-				 * क्रम address notअगरication and/or checking
+				 * Close our write side, ev. give some time
+				 * for address notification and/or checking
 				 * the current status
 				 */
-				अगर (cfg_रुको)
-					usleep(cfg_रुको);
-				shutकरोwn(peerfd, SHUT_WR);
-			पूर्ण अन्यथा अणु
-				अगर (त्रुटि_सं == EINTR)
-					जारी;
-				लिखो_त्रुटि("read");
-				वापस 4;
-			पूर्ण
-		पूर्ण
+				if (cfg_wait)
+					usleep(cfg_wait);
+				shutdown(peerfd, SHUT_WR);
+			} else {
+				if (errno == EINTR)
+					continue;
+				perror("read");
+				return 4;
+			}
+		}
 
-		अगर (fds.revents & (POLLERR | POLLNVAL)) अणु
-			ख_लिखो(मानक_त्रुटि, "Unexpected revents: "
+		if (fds.revents & (POLLERR | POLLNVAL)) {
+			fprintf(stderr, "Unexpected revents: "
 				"POLLERR/POLLNVAL(%x)\n", fds.revents);
-			वापस 5;
-		पूर्ण
-	पूर्ण
+			return 5;
+		}
+	}
 
-	/* leave some समय क्रम late join/announce */
-	अगर (cfg_join || cfg_हटाओ)
-		usleep(cfg_रुको);
+	/* leave some time for late join/announce */
+	if (cfg_join || cfg_remove)
+		usleep(cfg_wait);
 
-	बंद(peerfd);
-	वापस 0;
-पूर्ण
+	close(peerfd);
+	return 0;
+}
 
-अटल पूर्णांक करो_recvfile(पूर्णांक infd, पूर्णांक outfd)
-अणु
-	sमाप_प्रकार r;
+static int do_recvfile(int infd, int outfd)
+{
+	ssize_t r;
 
-	करो अणु
-		अक्षर buf[16384];
+	do {
+		char buf[16384];
 
-		r = करो_rnd_पढ़ो(infd, buf, माप(buf));
-		अगर (r > 0) अणु
-			अगर (ग_लिखो(outfd, buf, r) != r)
-				अवरोध;
-		पूर्ण अन्यथा अगर (r < 0) अणु
-			लिखो_त्रुटि("read");
-		पूर्ण
-	पूर्ण जबतक (r > 0);
+		r = do_rnd_read(infd, buf, sizeof(buf));
+		if (r > 0) {
+			if (write(outfd, buf, r) != r)
+				break;
+		} else if (r < 0) {
+			perror("read");
+		}
+	} while (r > 0);
 
-	वापस (पूर्णांक)r;
-पूर्ण
+	return (int)r;
+}
 
-अटल पूर्णांक करो_mmap(पूर्णांक infd, पूर्णांक outfd, अचिन्हित पूर्णांक size)
-अणु
-	अक्षर *inbuf = mmap(शून्य, size, PROT_READ, MAP_SHARED, infd, 0);
-	sमाप_प्रकार ret = 0, off = 0;
-	माप_प्रकार rem;
+static int do_mmap(int infd, int outfd, unsigned int size)
+{
+	char *inbuf = mmap(NULL, size, PROT_READ, MAP_SHARED, infd, 0);
+	ssize_t ret = 0, off = 0;
+	size_t rem;
 
-	अगर (inbuf == MAP_FAILED) अणु
-		लिखो_त्रुटि("mmap");
-		वापस 1;
-	पूर्ण
+	if (inbuf == MAP_FAILED) {
+		perror("mmap");
+		return 1;
+	}
 
 	rem = size;
 
-	जबतक (rem > 0) अणु
-		ret = ग_लिखो(outfd, inbuf + off, rem);
+	while (rem > 0) {
+		ret = write(outfd, inbuf + off, rem);
 
-		अगर (ret < 0) अणु
-			लिखो_त्रुटि("write");
-			अवरोध;
-		पूर्ण
+		if (ret < 0) {
+			perror("write");
+			break;
+		}
 
 		off += ret;
 		rem -= ret;
-	पूर्ण
+	}
 
 	munmap(inbuf, size);
-	वापस rem;
-पूर्ण
+	return rem;
+}
 
-अटल पूर्णांक get_infd_size(पूर्णांक fd)
-अणु
-	काष्ठा stat sb;
-	sमाप_प्रकार count;
-	पूर्णांक err;
+static int get_infd_size(int fd)
+{
+	struct stat sb;
+	ssize_t count;
+	int err;
 
-	err = ख_स्थिति(fd, &sb);
-	अगर (err < 0) अणु
-		लिखो_त्रुटि("fstat");
-		वापस -1;
-	पूर्ण
+	err = fstat(fd, &sb);
+	if (err < 0) {
+		perror("fstat");
+		return -1;
+	}
 
-	अगर ((sb.st_mode & S_IFMT) != S_IFREG) अणु
-		ख_लिखो(मानक_त्रुटि, "%s: stdin is not a regular file\n", __func__);
-		वापस -2;
-	पूर्ण
+	if ((sb.st_mode & S_IFMT) != S_IFREG) {
+		fprintf(stderr, "%s: stdin is not a regular file\n", __func__);
+		return -2;
+	}
 
 	count = sb.st_size;
-	अगर (count > पूर्णांक_उच्च) अणु
-		ख_लिखो(मानक_त्रुटि, "File too large: %zu\n", count);
-		वापस -3;
-	पूर्ण
+	if (count > INT_MAX) {
+		fprintf(stderr, "File too large: %zu\n", count);
+		return -3;
+	}
 
-	वापस (पूर्णांक)count;
-पूर्ण
+	return (int)count;
+}
 
-अटल पूर्णांक करो_sendfile(पूर्णांक infd, पूर्णांक outfd, अचिन्हित पूर्णांक count)
-अणु
-	जबतक (count > 0) अणु
-		sमाप_प्रकार r;
+static int do_sendfile(int infd, int outfd, unsigned int count)
+{
+	while (count > 0) {
+		ssize_t r;
 
-		r = sendfile(outfd, infd, शून्य, count);
-		अगर (r < 0) अणु
-			लिखो_त्रुटि("sendfile");
-			वापस 3;
-		पूर्ण
+		r = sendfile(outfd, infd, NULL, count);
+		if (r < 0) {
+			perror("sendfile");
+			return 3;
+		}
 
 		count -= r;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक copyfd_io_mmap(पूर्णांक infd, पूर्णांक peerfd, पूर्णांक outfd,
-			  अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+static int copyfd_io_mmap(int infd, int peerfd, int outfd,
+			  unsigned int size)
+{
+	int err;
 
-	अगर (listen_mode) अणु
-		err = करो_recvfile(peerfd, outfd);
-		अगर (err)
-			वापस err;
+	if (listen_mode) {
+		err = do_recvfile(peerfd, outfd);
+		if (err)
+			return err;
 
-		err = करो_mmap(infd, peerfd, size);
-	पूर्ण अन्यथा अणु
-		err = करो_mmap(infd, peerfd, size);
-		अगर (err)
-			वापस err;
+		err = do_mmap(infd, peerfd, size);
+	} else {
+		err = do_mmap(infd, peerfd, size);
+		if (err)
+			return err;
 
-		shutकरोwn(peerfd, SHUT_WR);
+		shutdown(peerfd, SHUT_WR);
 
-		err = करो_recvfile(peerfd, outfd);
-	पूर्ण
+		err = do_recvfile(peerfd, outfd);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक copyfd_io_sendfile(पूर्णांक infd, पूर्णांक peerfd, पूर्णांक outfd,
-			      अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक err;
+static int copyfd_io_sendfile(int infd, int peerfd, int outfd,
+			      unsigned int size)
+{
+	int err;
 
-	अगर (listen_mode) अणु
-		err = करो_recvfile(peerfd, outfd);
-		अगर (err)
-			वापस err;
+	if (listen_mode) {
+		err = do_recvfile(peerfd, outfd);
+		if (err)
+			return err;
 
-		err = करो_sendfile(infd, peerfd, size);
-	पूर्ण अन्यथा अणु
-		err = करो_sendfile(infd, peerfd, size);
-		अगर (err)
-			वापस err;
-		err = करो_recvfile(peerfd, outfd);
-	पूर्ण
+		err = do_sendfile(infd, peerfd, size);
+	} else {
+		err = do_sendfile(infd, peerfd, size);
+		if (err)
+			return err;
+		err = do_recvfile(peerfd, outfd);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक copyfd_io(पूर्णांक infd, पूर्णांक peerfd, पूर्णांक outfd)
-अणु
-	पूर्णांक file_size;
+static int copyfd_io(int infd, int peerfd, int outfd)
+{
+	int file_size;
 
-	चयन (cfg_mode) अणु
-	हाल CFG_MODE_POLL:
-		वापस copyfd_io_poll(infd, peerfd, outfd);
-	हाल CFG_MODE_MMAP:
+	switch (cfg_mode) {
+	case CFG_MODE_POLL:
+		return copyfd_io_poll(infd, peerfd, outfd);
+	case CFG_MODE_MMAP:
 		file_size = get_infd_size(infd);
-		अगर (file_size < 0)
-			वापस file_size;
-		वापस copyfd_io_mmap(infd, peerfd, outfd, file_size);
-	हाल CFG_MODE_SENDखाता:
+		if (file_size < 0)
+			return file_size;
+		return copyfd_io_mmap(infd, peerfd, outfd, file_size);
+	case CFG_MODE_SENDFILE:
 		file_size = get_infd_size(infd);
-		अगर (file_size < 0)
-			वापस file_size;
-		वापस copyfd_io_sendfile(infd, peerfd, outfd, file_size);
-	पूर्ण
+		if (file_size < 0)
+			return file_size;
+		return copyfd_io_sendfile(infd, peerfd, outfd, file_size);
+	}
 
-	ख_लिखो(मानक_त्रुटि, "Invalid mode %d\n", cfg_mode);
+	fprintf(stderr, "Invalid mode %d\n", cfg_mode);
 
 	die_usage();
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम check_sockaddr(पूर्णांक pf, काष्ठा sockaddr_storage *ss,
+static void check_sockaddr(int pf, struct sockaddr_storage *ss,
 			   socklen_t salen)
-अणु
-	काष्ठा sockaddr_in6 *sin6;
-	काष्ठा sockaddr_in *sin;
+{
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
 	socklen_t wanted_size = 0;
 
-	चयन (pf) अणु
-	हाल AF_INET:
-		wanted_size = माप(*sin);
-		sin = (व्योम *)ss;
-		अगर (!sin->sin_port)
-			ख_लिखो(मानक_त्रुटि, "accept: something wrong: ip connection from port 0");
-		अवरोध;
-	हाल AF_INET6:
-		wanted_size = माप(*sin6);
-		sin6 = (व्योम *)ss;
-		अगर (!sin6->sin6_port)
-			ख_लिखो(मानक_त्रुटि, "accept: something wrong: ipv6 connection from port 0");
-		अवरोध;
-	शेष:
-		ख_लिखो(मानक_त्रुटि, "accept: Unknown pf %d, salen %u\n", pf, salen);
-		वापस;
-	पूर्ण
+	switch (pf) {
+	case AF_INET:
+		wanted_size = sizeof(*sin);
+		sin = (void *)ss;
+		if (!sin->sin_port)
+			fprintf(stderr, "accept: something wrong: ip connection from port 0");
+		break;
+	case AF_INET6:
+		wanted_size = sizeof(*sin6);
+		sin6 = (void *)ss;
+		if (!sin6->sin6_port)
+			fprintf(stderr, "accept: something wrong: ipv6 connection from port 0");
+		break;
+	default:
+		fprintf(stderr, "accept: Unknown pf %d, salen %u\n", pf, salen);
+		return;
+	}
 
-	अगर (salen != wanted_size)
-		ख_लिखो(मानक_त्रुटि, "accept: size mismatch, got %d expected %d\n",
-			(पूर्णांक)salen, wanted_size);
+	if (salen != wanted_size)
+		fprintf(stderr, "accept: size mismatch, got %d expected %d\n",
+			(int)salen, wanted_size);
 
-	अगर (ss->ss_family != pf)
-		ख_लिखो(मानक_त्रुटि, "accept: pf mismatch, expect %d, ss_family is %d\n",
-			(पूर्णांक)ss->ss_family, pf);
-पूर्ण
+	if (ss->ss_family != pf)
+		fprintf(stderr, "accept: pf mismatch, expect %d, ss_family is %d\n",
+			(int)ss->ss_family, pf);
+}
 
-अटल व्योम check_getpeername(पूर्णांक fd, काष्ठा sockaddr_storage *ss, socklen_t salen)
-अणु
-	काष्ठा sockaddr_storage peerss;
-	socklen_t peersalen = माप(peerss);
+static void check_getpeername(int fd, struct sockaddr_storage *ss, socklen_t salen)
+{
+	struct sockaddr_storage peerss;
+	socklen_t peersalen = sizeof(peerss);
 
-	अगर (getpeername(fd, (काष्ठा sockaddr *)&peerss, &peersalen) < 0) अणु
-		लिखो_त्रुटि("getpeername");
-		वापस;
-	पूर्ण
+	if (getpeername(fd, (struct sockaddr *)&peerss, &peersalen) < 0) {
+		perror("getpeername");
+		return;
+	}
 
-	अगर (peersalen != salen) अणु
-		ख_लिखो(मानक_त्रुटि, "%s: %d vs %d\n", __func__, peersalen, salen);
-		वापस;
-	पूर्ण
+	if (peersalen != salen) {
+		fprintf(stderr, "%s: %d vs %d\n", __func__, peersalen, salen);
+		return;
+	}
 
-	अगर (स_भेद(ss, &peerss, peersalen)) अणु
-		अक्षर a[INET6_ADDRSTRLEN];
-		अक्षर b[INET6_ADDRSTRLEN];
-		अक्षर c[INET6_ADDRSTRLEN];
-		अक्षर d[INET6_ADDRSTRLEN];
+	if (memcmp(ss, &peerss, peersalen)) {
+		char a[INET6_ADDRSTRLEN];
+		char b[INET6_ADDRSTRLEN];
+		char c[INET6_ADDRSTRLEN];
+		char d[INET6_ADDRSTRLEN];
 
-		xgetnameinfo((काष्ठा sockaddr *)ss, salen,
-			     a, माप(a), b, माप(b));
+		xgetnameinfo((struct sockaddr *)ss, salen,
+			     a, sizeof(a), b, sizeof(b));
 
-		xgetnameinfo((काष्ठा sockaddr *)&peerss, peersalen,
-			     c, माप(c), d, माप(d));
+		xgetnameinfo((struct sockaddr *)&peerss, peersalen,
+			     c, sizeof(c), d, sizeof(d));
 
-		ख_लिखो(मानक_त्रुटि, "%s: memcmp failure: accept %s vs peername %s, %s vs %s salen %d vs %d\n",
+		fprintf(stderr, "%s: memcmp failure: accept %s vs peername %s, %s vs %s salen %d vs %d\n",
 			__func__, a, c, b, d, peersalen, salen);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम check_getpeername_connect(पूर्णांक fd)
-अणु
-	काष्ठा sockaddr_storage ss;
-	socklen_t salen = माप(ss);
-	अक्षर a[INET6_ADDRSTRLEN];
-	अक्षर b[INET6_ADDRSTRLEN];
+static void check_getpeername_connect(int fd)
+{
+	struct sockaddr_storage ss;
+	socklen_t salen = sizeof(ss);
+	char a[INET6_ADDRSTRLEN];
+	char b[INET6_ADDRSTRLEN];
 
-	अगर (getpeername(fd, (काष्ठा sockaddr *)&ss, &salen) < 0) अणु
-		लिखो_त्रुटि("getpeername");
-		वापस;
-	पूर्ण
+	if (getpeername(fd, (struct sockaddr *)&ss, &salen) < 0) {
+		perror("getpeername");
+		return;
+	}
 
-	xgetnameinfo((काष्ठा sockaddr *)&ss, salen,
-		     a, माप(a), b, माप(b));
+	xgetnameinfo((struct sockaddr *)&ss, salen,
+		     a, sizeof(a), b, sizeof(b));
 
-	अगर (म_भेद(cfg_host, a) || म_भेद(cfg_port, b))
-		ख_लिखो(मानक_त्रुटि, "%s: %s vs %s, %s vs %s\n", __func__,
+	if (strcmp(cfg_host, a) || strcmp(cfg_port, b))
+		fprintf(stderr, "%s: %s vs %s, %s vs %s\n", __func__,
 			cfg_host, a, cfg_port, b);
-पूर्ण
+}
 
-अटल व्योम maybe_बंद(पूर्णांक fd)
-अणु
-	अचिन्हित पूर्णांक r = अक्रम();
+static void maybe_close(int fd)
+{
+	unsigned int r = rand();
 
-	अगर (!(cfg_join || cfg_हटाओ) && (r & 1))
-		बंद(fd);
-पूर्ण
+	if (!(cfg_join || cfg_remove) && (r & 1))
+		close(fd);
+}
 
-पूर्णांक मुख्य_loop_s(पूर्णांक listensock)
-अणु
-	काष्ठा sockaddr_storage ss;
-	काष्ठा pollfd polls;
+int main_loop_s(int listensock)
+{
+	struct sockaddr_storage ss;
+	struct pollfd polls;
 	socklen_t salen;
-	पूर्णांक remotesock;
+	int remotesock;
 
 	polls.fd = listensock;
 	polls.events = POLLIN;
 
-	चयन (poll(&polls, 1, poll_समयout)) अणु
-	हाल -1:
-		लिखो_त्रुटि("poll");
-		वापस 1;
-	हाल 0:
-		ख_लिखो(मानक_त्रुटि, "%s: timed out\n", __func__);
-		बंद(listensock);
-		वापस 2;
-	पूर्ण
+	switch (poll(&polls, 1, poll_timeout)) {
+	case -1:
+		perror("poll");
+		return 1;
+	case 0:
+		fprintf(stderr, "%s: timed out\n", __func__);
+		close(listensock);
+		return 2;
+	}
 
-	salen = माप(ss);
-	remotesock = accept(listensock, (काष्ठा sockaddr *)&ss, &salen);
-	अगर (remotesock >= 0) अणु
-		maybe_बंद(listensock);
+	salen = sizeof(ss);
+	remotesock = accept(listensock, (struct sockaddr *)&ss, &salen);
+	if (remotesock >= 0) {
+		maybe_close(listensock);
 		check_sockaddr(pf, &ss, salen);
 		check_getpeername(remotesock, &ss, salen);
 
-		वापस copyfd_io(0, remotesock, 1);
-	पूर्ण
+		return copyfd_io(0, remotesock, 1);
+	}
 
-	लिखो_त्रुटि("accept");
+	perror("accept");
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम init_rng(व्योम)
-अणु
-	पूर्णांक fd = खोलो("/dev/urandom", O_RDONLY);
-	अचिन्हित पूर्णांक foo;
+static void init_rng(void)
+{
+	int fd = open("/dev/urandom", O_RDONLY);
+	unsigned int foo;
 
-	अगर (fd > 0) अणु
-		पूर्णांक ret = पढ़ो(fd, &foo, माप(foo));
+	if (fd > 0) {
+		int ret = read(fd, &foo, sizeof(foo));
 
-		अगर (ret < 0)
-			बेक्रम(fd + foo);
-		बंद(fd);
-	पूर्ण
+		if (ret < 0)
+			srand(fd + foo);
+		close(fd);
+	}
 
-	बेक्रम(foo);
-पूर्ण
+	srand(foo);
+}
 
-पूर्णांक मुख्य_loop(व्योम)
-अणु
-	पूर्णांक fd;
+int main_loop(void)
+{
+	int fd;
 
-	/* listener is पढ़ोy. */
+	/* listener is ready. */
 	fd = sock_connect_mptcp(cfg_host, cfg_port, cfg_sock_proto);
-	अगर (fd < 0)
-		वापस 2;
+	if (fd < 0)
+		return 2;
 
 	check_getpeername_connect(fd);
 
-	अगर (cfg_rcvbuf)
+	if (cfg_rcvbuf)
 		set_rcvbuf(fd, cfg_rcvbuf);
-	अगर (cfg_sndbuf)
+	if (cfg_sndbuf)
 		set_sndbuf(fd, cfg_sndbuf);
 
-	वापस copyfd_io(0, fd, 1);
-पूर्ण
+	return copyfd_io(0, fd, 1);
+}
 
-पूर्णांक parse_proto(स्थिर अक्षर *proto)
-अणु
-	अगर (!strहालcmp(proto, "MPTCP"))
-		वापस IPPROTO_MPTCP;
-	अगर (!strहालcmp(proto, "TCP"))
-		वापस IPPROTO_TCP;
+int parse_proto(const char *proto)
+{
+	if (!strcasecmp(proto, "MPTCP"))
+		return IPPROTO_MPTCP;
+	if (!strcasecmp(proto, "TCP"))
+		return IPPROTO_TCP;
 
-	ख_लिखो(मानक_त्रुटि, "Unknown protocol: %s\n.", proto);
+	fprintf(stderr, "Unknown protocol: %s\n.", proto);
 	die_usage();
 
 	/* silence compiler warning */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक parse_mode(स्थिर अक्षर *mode)
-अणु
-	अगर (!strहालcmp(mode, "poll"))
-		वापस CFG_MODE_POLL;
-	अगर (!strहालcmp(mode, "mmap"))
-		वापस CFG_MODE_MMAP;
-	अगर (!strहालcmp(mode, "sendfile"))
-		वापस CFG_MODE_SENDखाता;
+int parse_mode(const char *mode)
+{
+	if (!strcasecmp(mode, "poll"))
+		return CFG_MODE_POLL;
+	if (!strcasecmp(mode, "mmap"))
+		return CFG_MODE_MMAP;
+	if (!strcasecmp(mode, "sendfile"))
+		return CFG_MODE_SENDFILE;
 
-	ख_लिखो(मानक_त्रुटि, "Unknown test mode: %s\n", mode);
-	ख_लिखो(मानक_त्रुटि, "Supported modes are:\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t\"poll\" - interleaved read/write using poll()\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t\"mmap\" - send entire input file (mmap+write), then read response (-l will read input first)\n");
-	ख_लिखो(मानक_त्रुटि, "\t\t\"sendfile\" - send entire input file (sendfile), then read response (-l will read input first)\n");
+	fprintf(stderr, "Unknown test mode: %s\n", mode);
+	fprintf(stderr, "Supported modes are:\n");
+	fprintf(stderr, "\t\t\"poll\" - interleaved read/write using poll()\n");
+	fprintf(stderr, "\t\t\"mmap\" - send entire input file (mmap+write), then read response (-l will read input first)\n");
+	fprintf(stderr, "\t\t\"sendfile\" - send entire input file (sendfile), then read response (-l will read input first)\n");
 
 	die_usage();
 
 	/* silence compiler warning */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक parse_peek(स्थिर अक्षर *mode)
-अणु
-	अगर (!strहालcmp(mode, "saveWithPeek"))
-		वापस CFG_WITH_PEEK;
-	अगर (!strहालcmp(mode, "saveAfterPeek"))
-		वापस CFG_AFTER_PEEK;
+int parse_peek(const char *mode)
+{
+	if (!strcasecmp(mode, "saveWithPeek"))
+		return CFG_WITH_PEEK;
+	if (!strcasecmp(mode, "saveAfterPeek"))
+		return CFG_AFTER_PEEK;
 
-	ख_लिखो(मानक_त्रुटि, "Unknown: %s\n", mode);
-	ख_लिखो(मानक_त्रुटि, "Supported MSG_PEEK mode are:\n");
-	ख_लिखो(मानक_त्रुटि,
+	fprintf(stderr, "Unknown: %s\n", mode);
+	fprintf(stderr, "Supported MSG_PEEK mode are:\n");
+	fprintf(stderr,
 		"\t\t\"saveWithPeek\" - recv data with flags 'MSG_PEEK' and save the peek data into file\n");
-	ख_लिखो(मानक_त्रुटि,
+	fprintf(stderr,
 		"\t\t\"saveAfterPeek\" - read and save data into file after recv with flags 'MSG_PEEK'\n");
 
 	die_usage();
 
 	/* silence compiler warning */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_पूर्णांक(स्थिर अक्षर *size)
-अणु
-	अचिन्हित दीर्घ s;
+static int parse_int(const char *size)
+{
+	unsigned long s;
 
-	त्रुटि_सं = 0;
+	errno = 0;
 
-	s = म_से_अदीर्घ(size, शून्य, 0);
+	s = strtoul(size, NULL, 0);
 
-	अगर (त्रुटि_सं) अणु
-		ख_लिखो(मानक_त्रुटि, "Invalid sndbuf size %s (%s)\n",
-			size, म_त्रुटि(त्रुटि_सं));
+	if (errno) {
+		fprintf(stderr, "Invalid sndbuf size %s (%s)\n",
+			size, strerror(errno));
 		die_usage();
-	पूर्ण
+	}
 
-	अगर (s > पूर्णांक_उच्च) अणु
-		ख_लिखो(मानक_त्रुटि, "Invalid sndbuf size %s (%s)\n",
-			size, म_त्रुटि(दुस्फल));
+	if (s > INT_MAX) {
+		fprintf(stderr, "Invalid sndbuf size %s (%s)\n",
+			size, strerror(ERANGE));
 		die_usage();
-	पूर्ण
+	}
 
-	वापस (पूर्णांक)s;
-पूर्ण
+	return (int)s;
+}
 
-अटल व्योम parse_opts(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक c;
+static void parse_opts(int argc, char **argv)
+{
+	int c;
 
-	जबतक ((c = getopt(argc, argv, "6jr:lp:s:hut:m:S:R:w:M:P:")) != -1) अणु
-		चयन (c) अणु
-		हाल 'j':
+	while ((c = getopt(argc, argv, "6jr:lp:s:hut:m:S:R:w:M:P:")) != -1) {
+		switch (c) {
+		case 'j':
 			cfg_join = true;
 			cfg_mode = CFG_MODE_POLL;
-			cfg_रुको = 400000;
-			अवरोध;
-		हाल 'r':
-			cfg_हटाओ = true;
+			cfg_wait = 400000;
+			break;
+		case 'r':
+			cfg_remove = true;
 			cfg_mode = CFG_MODE_POLL;
-			cfg_रुको = 400000;
-			cfg_करो_w = म_से_प(optarg);
-			अगर (cfg_करो_w <= 0)
-				cfg_करो_w = 50;
-			अवरोध;
-		हाल 'l':
+			cfg_wait = 400000;
+			cfg_do_w = atoi(optarg);
+			if (cfg_do_w <= 0)
+				cfg_do_w = 50;
+			break;
+		case 'l':
 			listen_mode = true;
-			अवरोध;
-		हाल 'p':
+			break;
+		case 'p':
 			cfg_port = optarg;
-			अवरोध;
-		हाल 's':
+			break;
+		case 's':
 			cfg_sock_proto = parse_proto(optarg);
-			अवरोध;
-		हाल 'h':
+			break;
+		case 'h':
 			die_usage();
-			अवरोध;
-		हाल 'u':
+			break;
+		case 'u':
 			tcpulp_audit = true;
-			अवरोध;
-		हाल '6':
+			break;
+		case '6':
 			pf = AF_INET6;
-			अवरोध;
-		हाल 't':
-			poll_समयout = म_से_प(optarg) * 1000;
-			अगर (poll_समयout <= 0)
-				poll_समयout = -1;
-			अवरोध;
-		हाल 'm':
+			break;
+		case 't':
+			poll_timeout = atoi(optarg) * 1000;
+			if (poll_timeout <= 0)
+				poll_timeout = -1;
+			break;
+		case 'm':
 			cfg_mode = parse_mode(optarg);
-			अवरोध;
-		हाल 'S':
-			cfg_sndbuf = parse_पूर्णांक(optarg);
-			अवरोध;
-		हाल 'R':
-			cfg_rcvbuf = parse_पूर्णांक(optarg);
-			अवरोध;
-		हाल 'w':
-			cfg_रुको = म_से_प(optarg)*1000000;
-			अवरोध;
-		हाल 'M':
-			cfg_mark = म_से_दीर्घ(optarg, शून्य, 0);
-			अवरोध;
-		हाल 'P':
+			break;
+		case 'S':
+			cfg_sndbuf = parse_int(optarg);
+			break;
+		case 'R':
+			cfg_rcvbuf = parse_int(optarg);
+			break;
+		case 'w':
+			cfg_wait = atoi(optarg)*1000000;
+			break;
+		case 'M':
+			cfg_mark = strtol(optarg, NULL, 0);
+			break;
+		case 'P':
 			cfg_peek = parse_peek(optarg);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (optind + 1 != argc)
+	if (optind + 1 != argc)
 		die_usage();
 	cfg_host = argv[optind];
 
-	अगर (म_अक्षर(cfg_host, ':'))
+	if (strchr(cfg_host, ':'))
 		pf = AF_INET6;
-पूर्ण
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
+int main(int argc, char *argv[])
+{
 	init_rng();
 
-	संकेत(SIGUSR1, handle_संकेत);
+	signal(SIGUSR1, handle_signal);
 	parse_opts(argc, argv);
 
-	अगर (tcpulp_audit)
-		वापस sock_test_tcpulp(cfg_host, cfg_port) ? 0 : 1;
+	if (tcpulp_audit)
+		return sock_test_tcpulp(cfg_host, cfg_port) ? 0 : 1;
 
-	अगर (listen_mode) अणु
-		पूर्णांक fd = sock_listen_mptcp(cfg_host, cfg_port);
+	if (listen_mode) {
+		int fd = sock_listen_mptcp(cfg_host, cfg_port);
 
-		अगर (fd < 0)
-			वापस 1;
+		if (fd < 0)
+			return 1;
 
-		अगर (cfg_rcvbuf)
+		if (cfg_rcvbuf)
 			set_rcvbuf(fd, cfg_rcvbuf);
-		अगर (cfg_sndbuf)
+		if (cfg_sndbuf)
 			set_sndbuf(fd, cfg_sndbuf);
-		अगर (cfg_mark)
+		if (cfg_mark)
 			set_mark(fd, cfg_mark);
 
-		वापस मुख्य_loop_s(fd);
-	पूर्ण
+		return main_loop_s(fd);
+	}
 
-	वापस मुख्य_loop();
-पूर्ण
+	return main_loop();
+}

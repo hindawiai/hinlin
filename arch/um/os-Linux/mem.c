@@ -1,211 +1,210 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानकघोष.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <माला.स>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/mman.h>
-#समावेश <sys/vfs.h>
-#समावेश <linux/magic.h>
-#समावेश <init.h>
-#समावेश <os.h>
+#include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/vfs.h>
+#include <linux/magic.h>
+#include <init.h>
+#include <os.h>
 
 /* Set by make_tempfile() during early boot. */
-अटल अक्षर *tempdir = शून्य;
+static char *tempdir = NULL;
 
-/* Check अगर dir is on पंचांगpfs. Return 0 अगर yes, -1 अगर no or error. */
-अटल पूर्णांक __init check_पंचांगpfs(स्थिर अक्षर *dir)
-अणु
-	काष्ठा statfs st;
+/* Check if dir is on tmpfs. Return 0 if yes, -1 if no or error. */
+static int __init check_tmpfs(const char *dir)
+{
+	struct statfs st;
 
 	os_info("Checking if %s is on tmpfs...", dir);
-	अगर (statfs(dir, &st) < 0) अणु
-		os_info("%s\n", म_त्रुटि(त्रुटि_सं));
-	पूर्ण अन्यथा अगर (st.f_type != TMPFS_MAGIC) अणु
+	if (statfs(dir, &st) < 0) {
+		os_info("%s\n", strerror(errno));
+	} else if (st.f_type != TMPFS_MAGIC) {
 		os_info("no\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		os_info("OK\n");
-		वापस 0;
-	पूर्ण
-	वापस -1;
-पूर्ण
+		return 0;
+	}
+	return -1;
+}
 
 /*
- * Choose the tempdir to use. We want something on पंचांगpfs so that our memory is
- * not subject to the host's vm.dirty_ratio. If a tempdir is specअगरied in the
- * environment, we use that even अगर it's not on पंचांगpfs, but we warn the user.
- * Otherwise, we try common पंचांगpfs locations, and अगर no पंचांगpfs directory is found
- * then we fall back to /पंचांगp.
+ * Choose the tempdir to use. We want something on tmpfs so that our memory is
+ * not subject to the host's vm.dirty_ratio. If a tempdir is specified in the
+ * environment, we use that even if it's not on tmpfs, but we warn the user.
+ * Otherwise, we try common tmpfs locations, and if no tmpfs directory is found
+ * then we fall back to /tmp.
  */
-अटल अक्षर * __init choose_tempdir(व्योम)
-अणु
-	अटल स्थिर अक्षर * स्थिर vars[] = अणु
+static char * __init choose_tempdir(void)
+{
+	static const char * const vars[] = {
 		"TMPDIR",
 		"TMP",
 		"TEMP",
-		शून्य
-	पूर्ण;
-	अटल स्थिर अक्षर fallback_dir[] = "/tmp";
-	अटल स्थिर अक्षर * स्थिर पंचांगpfs_dirs[] = अणु
+		NULL
+	};
+	static const char fallback_dir[] = "/tmp";
+	static const char * const tmpfs_dirs[] = {
 		"/dev/shm",
 		fallback_dir,
-		शून्य
-	पूर्ण;
-	पूर्णांक i;
-	स्थिर अक्षर *dir;
+		NULL
+	};
+	int i;
+	const char *dir;
 
 	os_info("Checking environment variables for a tempdir...");
-	क्रम (i = 0; vars[i]; i++) अणु
-		dir = दो_पर्या(vars[i]);
-		अगर ((dir != शून्य) && (*dir != '\0')) अणु
+	for (i = 0; vars[i]; i++) {
+		dir = getenv(vars[i]);
+		if ((dir != NULL) && (*dir != '\0')) {
 			os_info("%s\n", dir);
-			अगर (check_पंचांगpfs(dir) >= 0)
-				जाओ करोne;
-			अन्यथा
-				जाओ warn;
-		पूर्ण
-	पूर्ण
+			if (check_tmpfs(dir) >= 0)
+				goto done;
+			else
+				goto warn;
+		}
+	}
 	os_info("none found\n");
 
-	क्रम (i = 0; पंचांगpfs_dirs[i]; i++) अणु
-		dir = पंचांगpfs_dirs[i];
-		अगर (check_पंचांगpfs(dir) >= 0)
-			जाओ करोne;
-	पूर्ण
+	for (i = 0; tmpfs_dirs[i]; i++) {
+		dir = tmpfs_dirs[i];
+		if (check_tmpfs(dir) >= 0)
+			goto done;
+	}
 
 	dir = fallback_dir;
 warn:
 	os_warn("Warning: tempdir %s is not on tmpfs\n", dir);
-करोne:
-	/* Make a copy since दो_पर्या results may not reमुख्य valid क्रमever. */
-	वापस strdup(dir);
-पूर्ण
+done:
+	/* Make a copy since getenv results may not remain valid forever. */
+	return strdup(dir);
+}
 
 /*
- * Create an unlinked tempfile in a suitable tempdir. ढाँचा must be the
- * basename part of the ढाँचा with a leading '/'.
+ * Create an unlinked tempfile in a suitable tempdir. template must be the
+ * basename part of the template with a leading '/'.
  */
-अटल पूर्णांक __init make_tempfile(स्थिर अक्षर *ढाँचा)
-अणु
-	अक्षर *tempname;
-	पूर्णांक fd;
+static int __init make_tempfile(const char *template)
+{
+	char *tempname;
+	int fd;
 
-	अगर (tempdir == शून्य) अणु
+	if (tempdir == NULL) {
 		tempdir = choose_tempdir();
-		अगर (tempdir == शून्य) अणु
+		if (tempdir == NULL) {
 			os_warn("Failed to choose tempdir: %s\n",
-				म_त्रुटि(त्रुटि_सं));
-			वापस -1;
-		पूर्ण
-	पूर्ण
+				strerror(errno));
+			return -1;
+		}
+	}
 
-#अगर_घोषित O_TMPखाता
-	fd = खोलो(tempdir, O_CLOEXEC | O_RDWR | O_EXCL | O_TMPखाता, 0700);
+#ifdef O_TMPFILE
+	fd = open(tempdir, O_CLOEXEC | O_RDWR | O_EXCL | O_TMPFILE, 0700);
 	/*
-	 * If the running प्रणाली करोes not support O_TMPखाता flag then retry
+	 * If the running system does not support O_TMPFILE flag then retry
 	 * without it.
 	 */
-	अगर (fd != -1 || (त्रुटि_सं != EINVAL && त्रुटि_सं != EISसूची &&
-			त्रुटि_सं != EOPNOTSUPP))
-		वापस fd;
-#पूर्ण_अगर
+	if (fd != -1 || (errno != EINVAL && errno != EISDIR &&
+			errno != EOPNOTSUPP))
+		return fd;
+#endif
 
-	tempname = दो_स्मृति(म_माप(tempdir) + म_माप(ढाँचा) + 1);
-	अगर (tempname == शून्य)
-		वापस -1;
+	tempname = malloc(strlen(tempdir) + strlen(template) + 1);
+	if (tempname == NULL)
+		return -1;
 
-	म_नकल(tempname, tempdir);
-	म_जोड़ो(tempname, ढाँचा);
+	strcpy(tempname, tempdir);
+	strcat(tempname, template);
 	fd = mkstemp(tempname);
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		os_warn("open - cannot create %s: %s\n", tempname,
-			म_त्रुटि(त्रुटि_सं));
-		जाओ out;
-	पूर्ण
-	अगर (unlink(tempname) < 0) अणु
-		लिखो_त्रुटि("unlink");
-		जाओ बंद;
-	पूर्ण
-	मुक्त(tempname);
-	वापस fd;
-बंद:
-	बंद(fd);
+			strerror(errno));
+		goto out;
+	}
+	if (unlink(tempname) < 0) {
+		perror("unlink");
+		goto close;
+	}
+	free(tempname);
+	return fd;
+close:
+	close(fd);
 out:
-	मुक्त(tempname);
-	वापस -1;
-पूर्ण
+	free(tempname);
+	return -1;
+}
 
-#घोषणा TEMPNAME_TEMPLATE "/vm_file-XXXXXX"
+#define TEMPNAME_TEMPLATE "/vm_file-XXXXXX"
 
-अटल पूर्णांक __init create_पंचांगp_file(अचिन्हित दीर्घ दीर्घ len)
-अणु
-	पूर्णांक fd, err;
-	अक्षर zero;
+static int __init create_tmp_file(unsigned long long len)
+{
+	int fd, err;
+	char zero;
 
 	fd = make_tempfile(TEMPNAME_TEMPLATE);
-	अगर (fd < 0)
-		निकास(1);
+	if (fd < 0)
+		exit(1);
 
 	/*
-	 * Seek to len - 1 because writing a अक्षरacter there will
+	 * Seek to len - 1 because writing a character there will
 	 * increase the file size by one byte, to the desired length.
 	 */
-	अगर (lseek64(fd, len - 1, शुरू_से) < 0) अणु
-		लिखो_त्रुटि("lseek64");
-		निकास(1);
-	पूर्ण
+	if (lseek64(fd, len - 1, SEEK_SET) < 0) {
+		perror("lseek64");
+		exit(1);
+	}
 
 	zero = 0;
 
-	err = ग_लिखो(fd, &zero, 1);
-	अगर (err != 1) अणु
-		लिखो_त्रुटि("write");
-		निकास(1);
-	पूर्ण
+	err = write(fd, &zero, 1);
+	if (err != 1) {
+		perror("write");
+		exit(1);
+	}
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-पूर्णांक __init create_mem_file(अचिन्हित दीर्घ दीर्घ len)
-अणु
-	पूर्णांक err, fd;
+int __init create_mem_file(unsigned long long len)
+{
+	int err, fd;
 
-	fd = create_पंचांगp_file(len);
+	fd = create_tmp_file(len);
 
-	err = os_set_exec_बंद(fd);
-	अगर (err < 0) अणु
-		त्रुटि_सं = -err;
-		लिखो_त्रुटि("exec_close");
-	पूर्ण
-	वापस fd;
-पूर्ण
+	err = os_set_exec_close(fd);
+	if (err < 0) {
+		errno = -err;
+		perror("exec_close");
+	}
+	return fd;
+}
 
-व्योम __init check_पंचांगpexec(व्योम)
-अणु
-	व्योम *addr;
-	पूर्णांक err, fd = create_पंचांगp_file(UM_KERN_PAGE_SIZE);
+void __init check_tmpexec(void)
+{
+	void *addr;
+	int err, fd = create_tmp_file(UM_KERN_PAGE_SIZE);
 
-	addr = mmap(शून्य, UM_KERN_PAGE_SIZE,
+	addr = mmap(NULL, UM_KERN_PAGE_SIZE,
 		    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE, fd, 0);
 	os_info("Checking PROT_EXEC mmap in %s...", tempdir);
-	अगर (addr == MAP_FAILED) अणु
-		err = त्रुटि_सं;
-		os_warn("%s\n", म_त्रुटि(err));
-		बंद(fd);
-		अगर (err == EPERM)
+	if (addr == MAP_FAILED) {
+		err = errno;
+		os_warn("%s\n", strerror(err));
+		close(fd);
+		if (err == EPERM)
 			os_warn("%s must be not mounted noexec\n", tempdir);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 	os_info("OK\n");
 	munmap(addr, UM_KERN_PAGE_SIZE);
 
-	बंद(fd);
-पूर्ण
+	close(fd);
+}

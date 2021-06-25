@@ -1,7 +1,6 @@
-<शैली गुरु>
 /*
- * tracepoपूर्णांक definitions क्रम HD-audio core drivers
+ * tracepoint definitions for HD-audio core drivers
  */
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"

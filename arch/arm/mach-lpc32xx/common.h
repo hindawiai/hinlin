@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * arch/arm/mach-lpc32xx/common.h
  *
@@ -8,26 +7,26 @@
  * Copyright (C) 2009-2010 NXP Semiconductors
  */
 
-#अगर_अघोषित __LPC32XX_COMMON_H
-#घोषणा __LPC32XX_COMMON_H
+#ifndef __LPC32XX_COMMON_H
+#define __LPC32XX_COMMON_H
 
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
 /*
- * Other arch specअगरic काष्ठाures and functions
+ * Other arch specific structures and functions
  */
-बाह्य व्योम __init lpc32xx_map_io(व्योम);
-बाह्य व्योम __init lpc32xx_serial_init(व्योम);
+extern void __init lpc32xx_map_io(void);
+extern void __init lpc32xx_serial_init(void);
 
 /*
  * Returns the LPC32xx unique 128-bit chip ID
  */
-बाह्य व्योम lpc32xx_get_uid(u32 devid[4]);
+extern void lpc32xx_get_uid(u32 devid[4]);
 
 /*
- * Poपूर्णांकers used क्रम sizing and copying suspend function data
+ * Pointers used for sizing and copying suspend function data
  */
-बाह्य पूर्णांक lpc32xx_sys_suspend(व्योम);
-बाह्य पूर्णांक lpc32xx_sys_suspend_sz;
+extern int lpc32xx_sys_suspend(void);
+extern int lpc32xx_sys_suspend_sz;
 
-#पूर्ण_अगर
+#endif

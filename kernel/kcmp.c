@@ -1,240 +1,239 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/kernel.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/module.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/cache.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kcmp.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/list.h>
-#समावेश <linux/eventpoll.h>
-#समावेश <linux/file.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/kernel.h>
+#include <linux/syscalls.h>
+#include <linux/fdtable.h>
+#include <linux/string.h>
+#include <linux/random.h>
+#include <linux/module.h>
+#include <linux/ptrace.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/cache.h>
+#include <linux/bug.h>
+#include <linux/err.h>
+#include <linux/kcmp.h>
+#include <linux/capability.h>
+#include <linux/list.h>
+#include <linux/eventpoll.h>
+#include <linux/file.h>
 
-#समावेश <यंत्र/unistd.h>
+#include <asm/unistd.h>
 
 /*
- * We करोn't expose the real in-memory order of objects क्रम security reasons.
- * But still the comparison results should be suitable क्रम sorting. So we
- * obfuscate kernel poपूर्णांकers values and compare the production instead.
+ * We don't expose the real in-memory order of objects for security reasons.
+ * But still the comparison results should be suitable for sorting. So we
+ * obfuscate kernel pointers values and compare the production instead.
  *
- * The obfuscation is करोne in two steps. First we xor the kernel poपूर्णांकer with
- * a अक्रमom value, which माला_दो poपूर्णांकer पूर्णांकo a new position in a reordered space.
- * Secondly we multiply the xor production with a large odd अक्रमom number to
+ * The obfuscation is done in two steps. First we xor the kernel pointer with
+ * a random value, which puts pointer into a new position in a reordered space.
+ * Secondly we multiply the xor production with a large odd random number to
  * permute its bits even more (the odd multiplier guarantees that the product
  * is unique ever after the high bits are truncated, since any odd number is
  * relative prime to 2^n).
  *
- * Note also that the obfuscation itself is invisible to userspace and अगर needed
+ * Note also that the obfuscation itself is invisible to userspace and if needed
  * it can be changed to an alternate scheme.
  */
-अटल अचिन्हित दीर्घ cookies[KCMP_TYPES][2] __पढ़ो_mostly;
+static unsigned long cookies[KCMP_TYPES][2] __read_mostly;
 
-अटल दीर्घ kptr_obfuscate(दीर्घ v, पूर्णांक type)
-अणु
-	वापस (v ^ cookies[type][0]) * cookies[type][1];
-पूर्ण
+static long kptr_obfuscate(long v, int type)
+{
+	return (v ^ cookies[type][0]) * cookies[type][1];
+}
 
 /*
  * 0 - equal, i.e. v1 = v2
  * 1 - less than, i.e. v1 < v2
  * 2 - greater than, i.e. v1 > v2
- * 3 - not equal but ordering unavailable (reserved क्रम future)
+ * 3 - not equal but ordering unavailable (reserved for future)
  */
-अटल पूर्णांक kcmp_ptr(व्योम *v1, व्योम *v2, क्रमागत kcmp_type type)
-अणु
-	दीर्घ t1, t2;
+static int kcmp_ptr(void *v1, void *v2, enum kcmp_type type)
+{
+	long t1, t2;
 
-	t1 = kptr_obfuscate((दीर्घ)v1, type);
-	t2 = kptr_obfuscate((दीर्घ)v2, type);
+	t1 = kptr_obfuscate((long)v1, type);
+	t2 = kptr_obfuscate((long)v2, type);
 
-	वापस (t1 < t2) | ((t1 > t2) << 1);
-पूर्ण
+	return (t1 < t2) | ((t1 > t2) << 1);
+}
 
 /* The caller must have pinned the task */
-अटल काष्ठा file *
-get_file_raw_ptr(काष्ठा task_काष्ठा *task, अचिन्हित पूर्णांक idx)
-अणु
-	काष्ठा file *file;
+static struct file *
+get_file_raw_ptr(struct task_struct *task, unsigned int idx)
+{
+	struct file *file;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	file = task_lookup_fd_rcu(task, idx);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस file;
-पूर्ण
+	return file;
+}
 
-अटल व्योम kcmp_unlock(काष्ठा rw_semaphore *l1, काष्ठा rw_semaphore *l2)
-अणु
-	अगर (likely(l2 != l1))
-		up_पढ़ो(l2);
-	up_पढ़ो(l1);
-पूर्ण
+static void kcmp_unlock(struct rw_semaphore *l1, struct rw_semaphore *l2)
+{
+	if (likely(l2 != l1))
+		up_read(l2);
+	up_read(l1);
+}
 
-अटल पूर्णांक kcmp_lock(काष्ठा rw_semaphore *l1, काष्ठा rw_semaphore *l2)
-अणु
-	पूर्णांक err;
+static int kcmp_lock(struct rw_semaphore *l1, struct rw_semaphore *l2)
+{
+	int err;
 
-	अगर (l2 > l1)
+	if (l2 > l1)
 		swap(l1, l2);
 
-	err = करोwn_पढ़ो_समाप्तable(l1);
-	अगर (!err && likely(l1 != l2)) अणु
-		err = करोwn_पढ़ो_समाप्तable_nested(l2, SINGLE_DEPTH_NESTING);
-		अगर (err)
-			up_पढ़ो(l1);
-	पूर्ण
+	err = down_read_killable(l1);
+	if (!err && likely(l1 != l2)) {
+		err = down_read_killable_nested(l2, SINGLE_DEPTH_NESTING);
+		if (err)
+			up_read(l1);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_EPOLL
-अटल पूर्णांक kcmp_epoll_target(काष्ठा task_काष्ठा *task1,
-			     काष्ठा task_काष्ठा *task2,
-			     अचिन्हित दीर्घ idx1,
-			     काष्ठा kcmp_epoll_slot __user *uslot)
-अणु
-	काष्ठा file *filp, *filp_epoll, *filp_tgt;
-	काष्ठा kcmp_epoll_slot slot;
+#ifdef CONFIG_EPOLL
+static int kcmp_epoll_target(struct task_struct *task1,
+			     struct task_struct *task2,
+			     unsigned long idx1,
+			     struct kcmp_epoll_slot __user *uslot)
+{
+	struct file *filp, *filp_epoll, *filp_tgt;
+	struct kcmp_epoll_slot slot;
 
-	अगर (copy_from_user(&slot, uslot, माप(slot)))
-		वापस -EFAULT;
+	if (copy_from_user(&slot, uslot, sizeof(slot)))
+		return -EFAULT;
 
 	filp = get_file_raw_ptr(task1, idx1);
-	अगर (!filp)
-		वापस -EBADF;
+	if (!filp)
+		return -EBADF;
 
 	filp_epoll = fget_task(task2, slot.efd);
-	अगर (!filp_epoll)
-		वापस -EBADF;
+	if (!filp_epoll)
+		return -EBADF;
 
 	filp_tgt = get_epoll_tfile_raw_ptr(filp_epoll, slot.tfd, slot.toff);
 	fput(filp_epoll);
 
-	अगर (IS_ERR(filp_tgt))
-		वापस PTR_ERR(filp_tgt);
+	if (IS_ERR(filp_tgt))
+		return PTR_ERR(filp_tgt);
 
-	वापस kcmp_ptr(filp, filp_tgt, KCMP_खाता);
-पूर्ण
-#अन्यथा
-अटल पूर्णांक kcmp_epoll_target(काष्ठा task_काष्ठा *task1,
-			     काष्ठा task_काष्ठा *task2,
-			     अचिन्हित दीर्घ idx1,
-			     काष्ठा kcmp_epoll_slot __user *uslot)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return kcmp_ptr(filp, filp_tgt, KCMP_FILE);
+}
+#else
+static int kcmp_epoll_target(struct task_struct *task1,
+			     struct task_struct *task2,
+			     unsigned long idx1,
+			     struct kcmp_epoll_slot __user *uslot)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
-SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, पूर्णांक, type,
-		अचिन्हित दीर्घ, idx1, अचिन्हित दीर्घ, idx2)
-अणु
-	काष्ठा task_काष्ठा *task1, *task2;
-	पूर्णांक ret;
+SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
+		unsigned long, idx1, unsigned long, idx2)
+{
+	struct task_struct *task1, *task2;
+	int ret;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	/*
 	 * Tasks are looked up in caller's PID namespace only.
 	 */
 	task1 = find_task_by_vpid(pid1);
 	task2 = find_task_by_vpid(pid2);
-	अगर (!task1 || !task2)
-		जाओ err_no_task;
+	if (!task1 || !task2)
+		goto err_no_task;
 
-	get_task_काष्ठा(task1);
-	get_task_काष्ठा(task2);
+	get_task_struct(task1);
+	get_task_struct(task2);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	/*
 	 * One should have enough rights to inspect task details.
 	 */
-	ret = kcmp_lock(&task1->संकेत->exec_update_lock,
-			&task2->संकेत->exec_update_lock);
-	अगर (ret)
-		जाओ err;
-	अगर (!ptrace_may_access(task1, PTRACE_MODE_READ_REALCREDS) ||
-	    !ptrace_may_access(task2, PTRACE_MODE_READ_REALCREDS)) अणु
+	ret = kcmp_lock(&task1->signal->exec_update_lock,
+			&task2->signal->exec_update_lock);
+	if (ret)
+		goto err;
+	if (!ptrace_may_access(task1, PTRACE_MODE_READ_REALCREDS) ||
+	    !ptrace_may_access(task2, PTRACE_MODE_READ_REALCREDS)) {
 		ret = -EPERM;
-		जाओ err_unlock;
-	पूर्ण
+		goto err_unlock;
+	}
 
-	चयन (type) अणु
-	हाल KCMP_खाता: अणु
-		काष्ठा file *filp1, *filp2;
+	switch (type) {
+	case KCMP_FILE: {
+		struct file *filp1, *filp2;
 
 		filp1 = get_file_raw_ptr(task1, idx1);
 		filp2 = get_file_raw_ptr(task2, idx2);
 
-		अगर (filp1 && filp2)
-			ret = kcmp_ptr(filp1, filp2, KCMP_खाता);
-		अन्यथा
+		if (filp1 && filp2)
+			ret = kcmp_ptr(filp1, filp2, KCMP_FILE);
+		else
 			ret = -EBADF;
-		अवरोध;
-	पूर्ण
-	हाल KCMP_VM:
+		break;
+	}
+	case KCMP_VM:
 		ret = kcmp_ptr(task1->mm, task2->mm, KCMP_VM);
-		अवरोध;
-	हाल KCMP_खाताS:
-		ret = kcmp_ptr(task1->files, task2->files, KCMP_खाताS);
-		अवरोध;
-	हाल KCMP_FS:
+		break;
+	case KCMP_FILES:
+		ret = kcmp_ptr(task1->files, task2->files, KCMP_FILES);
+		break;
+	case KCMP_FS:
 		ret = kcmp_ptr(task1->fs, task2->fs, KCMP_FS);
-		अवरोध;
-	हाल KCMP_SIGHAND:
+		break;
+	case KCMP_SIGHAND:
 		ret = kcmp_ptr(task1->sighand, task2->sighand, KCMP_SIGHAND);
-		अवरोध;
-	हाल KCMP_IO:
+		break;
+	case KCMP_IO:
 		ret = kcmp_ptr(task1->io_context, task2->io_context, KCMP_IO);
-		अवरोध;
-	हाल KCMP_SYSVSEM:
-#अगर_घोषित CONFIG_SYSVIPC
-		ret = kcmp_ptr(task1->sysvsem.unकरो_list,
-			       task2->sysvsem.unकरो_list,
+		break;
+	case KCMP_SYSVSEM:
+#ifdef CONFIG_SYSVIPC
+		ret = kcmp_ptr(task1->sysvsem.undo_list,
+			       task2->sysvsem.undo_list,
 			       KCMP_SYSVSEM);
-#अन्यथा
+#else
 		ret = -EOPNOTSUPP;
-#पूर्ण_अगर
-		अवरोध;
-	हाल KCMP_EPOLL_TFD:
-		ret = kcmp_epoll_target(task1, task2, idx1, (व्योम *)idx2);
-		अवरोध;
-	शेष:
+#endif
+		break;
+	case KCMP_EPOLL_TFD:
+		ret = kcmp_epoll_target(task1, task2, idx1, (void *)idx2);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 err_unlock:
-	kcmp_unlock(&task1->संकेत->exec_update_lock,
-		    &task2->संकेत->exec_update_lock);
+	kcmp_unlock(&task1->signal->exec_update_lock,
+		    &task2->signal->exec_update_lock);
 err:
-	put_task_काष्ठा(task1);
-	put_task_काष्ठा(task2);
+	put_task_struct(task1);
+	put_task_struct(task2);
 
-	वापस ret;
+	return ret;
 
 err_no_task:
-	rcu_पढ़ो_unlock();
-	वापस -ESRCH;
-पूर्ण
+	rcu_read_unlock();
+	return -ESRCH;
+}
 
-अटल __init पूर्णांक kcmp_cookies_init(व्योम)
-अणु
-	पूर्णांक i;
+static __init int kcmp_cookies_init(void)
+{
+	int i;
 
-	get_अक्रमom_bytes(cookies, माप(cookies));
+	get_random_bytes(cookies, sizeof(cookies));
 
-	क्रम (i = 0; i < KCMP_TYPES; i++)
+	for (i = 0; i < KCMP_TYPES; i++)
 		cookies[i][1] |= (~(~0UL >>  1) | 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 arch_initcall(kcmp_cookies_init);

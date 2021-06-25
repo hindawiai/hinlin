@@ -1,400 +1,399 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/*  Xenbus code क्रम blkअगर backend
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*  Xenbus code for blkif backend
     Copyright (C) 2005 Rusty Russell <rusty@rustcorp.com.au>
     Copyright (C) 2005 XenSource Ltd
 
 
 */
 
-#घोषणा pr_fmt(fmt) "xen-blkback: " fmt
+#define pr_fmt(fmt) "xen-blkback: " fmt
 
-#समावेश <मानकतर्क.स>
-#समावेश <linux/module.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <xen/events.h>
-#समावेश <xen/grant_table.h>
-#समावेश "common.h"
+#include <stdarg.h>
+#include <linux/module.h>
+#include <linux/kthread.h>
+#include <xen/events.h>
+#include <xen/grant_table.h>
+#include "common.h"
 
 /* On the XenBus the max length of 'ring-ref%u'. */
-#घोषणा RINGREF_NAME_LEN (20)
+#define RINGREF_NAME_LEN (20)
 
-काष्ठा backend_info अणु
-	काष्ठा xenbus_device	*dev;
-	काष्ठा xen_blkअगर	*blkअगर;
-	काष्ठा xenbus_watch	backend_watch;
-	अचिन्हित		major;
-	अचिन्हित		minor;
-	अक्षर			*mode;
-पूर्ण;
+struct backend_info {
+	struct xenbus_device	*dev;
+	struct xen_blkif	*blkif;
+	struct xenbus_watch	backend_watch;
+	unsigned		major;
+	unsigned		minor;
+	char			*mode;
+};
 
-अटल काष्ठा kmem_cache *xen_blkअगर_cachep;
-अटल व्योम connect(काष्ठा backend_info *);
-अटल पूर्णांक connect_ring(काष्ठा backend_info *);
-अटल व्योम backend_changed(काष्ठा xenbus_watch *, स्थिर अक्षर *,
-			    स्थिर अक्षर *);
-अटल व्योम xen_blkअगर_मुक्त(काष्ठा xen_blkअगर *blkअगर);
-अटल व्योम xen_vbd_मुक्त(काष्ठा xen_vbd *vbd);
+static struct kmem_cache *xen_blkif_cachep;
+static void connect(struct backend_info *);
+static int connect_ring(struct backend_info *);
+static void backend_changed(struct xenbus_watch *, const char *,
+			    const char *);
+static void xen_blkif_free(struct xen_blkif *blkif);
+static void xen_vbd_free(struct xen_vbd *vbd);
 
-काष्ठा xenbus_device *xen_blkbk_xenbus(काष्ठा backend_info *be)
-अणु
-	वापस be->dev;
-पूर्ण
+struct xenbus_device *xen_blkbk_xenbus(struct backend_info *be)
+{
+	return be->dev;
+}
 
 /*
- * The last request could मुक्त the device from softirq context and
- * xen_blkअगर_मुक्त() can sleep.
+ * The last request could free the device from softirq context and
+ * xen_blkif_free() can sleep.
  */
-अटल व्योम xen_blkअगर_deferred_मुक्त(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा xen_blkअगर *blkअगर;
+static void xen_blkif_deferred_free(struct work_struct *work)
+{
+	struct xen_blkif *blkif;
 
-	blkअगर = container_of(work, काष्ठा xen_blkअगर, मुक्त_work);
-	xen_blkअगर_मुक्त(blkअगर);
-पूर्ण
+	blkif = container_of(work, struct xen_blkif, free_work);
+	xen_blkif_free(blkif);
+}
 
-अटल पूर्णांक blkback_name(काष्ठा xen_blkअगर *blkअगर, अक्षर *buf)
-अणु
-	अक्षर *devpath, *devname;
-	काष्ठा xenbus_device *dev = blkअगर->be->dev;
+static int blkback_name(struct xen_blkif *blkif, char *buf)
+{
+	char *devpath, *devname;
+	struct xenbus_device *dev = blkif->be->dev;
 
-	devpath = xenbus_पढ़ो(XBT_NIL, dev->nodename, "dev", शून्य);
-	अगर (IS_ERR(devpath))
-		वापस PTR_ERR(devpath);
+	devpath = xenbus_read(XBT_NIL, dev->nodename, "dev", NULL);
+	if (IS_ERR(devpath))
+		return PTR_ERR(devpath);
 
-	devname = म_माला(devpath, "/dev/");
-	अगर (devname != शून्य)
-		devname += म_माप("/dev/");
-	अन्यथा
+	devname = strstr(devpath, "/dev/");
+	if (devname != NULL)
+		devname += strlen("/dev/");
+	else
 		devname  = devpath;
 
-	snम_लिखो(buf, TASK_COMM_LEN, "%d.%s", blkअगर->करोmid, devname);
-	kमुक्त(devpath);
+	snprintf(buf, TASK_COMM_LEN, "%d.%s", blkif->domid, devname);
+	kfree(devpath);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xen_update_blkअगर_status(काष्ठा xen_blkअगर *blkअगर)
-अणु
-	पूर्णांक err;
-	अक्षर name[TASK_COMM_LEN];
-	काष्ठा xen_blkअगर_ring *ring;
-	पूर्णांक i;
+static void xen_update_blkif_status(struct xen_blkif *blkif)
+{
+	int err;
+	char name[TASK_COMM_LEN];
+	struct xen_blkif_ring *ring;
+	int i;
 
-	/* Not पढ़ोy to connect? */
-	अगर (!blkअगर->rings || !blkअगर->rings[0].irq || !blkअगर->vbd.bdev)
-		वापस;
+	/* Not ready to connect? */
+	if (!blkif->rings || !blkif->rings[0].irq || !blkif->vbd.bdev)
+		return;
 
-	/* Alपढ़ोy connected? */
-	अगर (blkअगर->be->dev->state == XenbusStateConnected)
-		वापस;
+	/* Already connected? */
+	if (blkif->be->dev->state == XenbusStateConnected)
+		return;
 
-	/* Attempt to connect: निकास अगर we fail to. */
-	connect(blkअगर->be);
-	अगर (blkअगर->be->dev->state != XenbusStateConnected)
-		वापस;
+	/* Attempt to connect: exit if we fail to. */
+	connect(blkif->be);
+	if (blkif->be->dev->state != XenbusStateConnected)
+		return;
 
-	err = blkback_name(blkअगर, name);
-	अगर (err) अणु
-		xenbus_dev_error(blkअगर->be->dev, err, "get blkback dev name");
-		वापस;
-	पूर्ण
+	err = blkback_name(blkif, name);
+	if (err) {
+		xenbus_dev_error(blkif->be->dev, err, "get blkback dev name");
+		return;
+	}
 
-	err = filemap_ग_लिखो_and_रुको(blkअगर->vbd.bdev->bd_inode->i_mapping);
-	अगर (err) अणु
-		xenbus_dev_error(blkअगर->be->dev, err, "block flush");
-		वापस;
-	पूर्ण
-	invalidate_inode_pages2(blkअगर->vbd.bdev->bd_inode->i_mapping);
+	err = filemap_write_and_wait(blkif->vbd.bdev->bd_inode->i_mapping);
+	if (err) {
+		xenbus_dev_error(blkif->be->dev, err, "block flush");
+		return;
+	}
+	invalidate_inode_pages2(blkif->vbd.bdev->bd_inode->i_mapping);
 
-	क्रम (i = 0; i < blkअगर->nr_rings; i++) अणु
-		ring = &blkअगर->rings[i];
-		ring->xenblkd = kthपढ़ो_run(xen_blkअगर_schedule, ring, "%s-%d", name, i);
-		अगर (IS_ERR(ring->xenblkd)) अणु
+	for (i = 0; i < blkif->nr_rings; i++) {
+		ring = &blkif->rings[i];
+		ring->xenblkd = kthread_run(xen_blkif_schedule, ring, "%s-%d", name, i);
+		if (IS_ERR(ring->xenblkd)) {
 			err = PTR_ERR(ring->xenblkd);
-			ring->xenblkd = शून्य;
-			xenbus_dev_fatal(blkअगर->be->dev, err,
+			ring->xenblkd = NULL;
+			xenbus_dev_fatal(blkif->be->dev, err,
 					"start %s-%d xenblkd", name, i);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	वापस;
+			goto out;
+		}
+	}
+	return;
 
 out:
-	जबतक (--i >= 0) अणु
-		ring = &blkअगर->rings[i];
-		kthपढ़ो_stop(ring->xenblkd);
-	पूर्ण
-	वापस;
-पूर्ण
+	while (--i >= 0) {
+		ring = &blkif->rings[i];
+		kthread_stop(ring->xenblkd);
+	}
+	return;
+}
 
-अटल पूर्णांक xen_blkअगर_alloc_rings(काष्ठा xen_blkअगर *blkअगर)
-अणु
-	अचिन्हित पूर्णांक r;
+static int xen_blkif_alloc_rings(struct xen_blkif *blkif)
+{
+	unsigned int r;
 
-	blkअगर->rings = kसुस्मृति(blkअगर->nr_rings, माप(काष्ठा xen_blkअगर_ring),
+	blkif->rings = kcalloc(blkif->nr_rings, sizeof(struct xen_blkif_ring),
 			       GFP_KERNEL);
-	अगर (!blkअगर->rings)
-		वापस -ENOMEM;
+	if (!blkif->rings)
+		return -ENOMEM;
 
-	क्रम (r = 0; r < blkअगर->nr_rings; r++) अणु
-		काष्ठा xen_blkअगर_ring *ring = &blkअगर->rings[r];
+	for (r = 0; r < blkif->nr_rings; r++) {
+		struct xen_blkif_ring *ring = &blkif->rings[r];
 
 		spin_lock_init(&ring->blk_ring_lock);
-		init_रुकोqueue_head(&ring->wq);
-		INIT_LIST_HEAD(&ring->pending_मुक्त);
+		init_waitqueue_head(&ring->wq);
+		INIT_LIST_HEAD(&ring->pending_free);
 		INIT_LIST_HEAD(&ring->persistent_purge_list);
 		INIT_WORK(&ring->persistent_purge_work, xen_blkbk_unmap_purged_grants);
-		gnttab_page_cache_init(&ring->मुक्त_pages);
+		gnttab_page_cache_init(&ring->free_pages);
 
-		spin_lock_init(&ring->pending_मुक्त_lock);
-		init_रुकोqueue_head(&ring->pending_मुक्त_wq);
-		init_रुकोqueue_head(&ring->shutकरोwn_wq);
-		ring->blkअगर = blkअगर;
-		ring->st_prपूर्णांक = jअगरfies;
+		spin_lock_init(&ring->pending_free_lock);
+		init_waitqueue_head(&ring->pending_free_wq);
+		init_waitqueue_head(&ring->shutdown_wq);
+		ring->blkif = blkif;
+		ring->st_print = jiffies;
 		ring->active = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा xen_blkअगर *xen_blkअगर_alloc(करोmid_t करोmid)
-अणु
-	काष्ठा xen_blkअगर *blkअगर;
+static struct xen_blkif *xen_blkif_alloc(domid_t domid)
+{
+	struct xen_blkif *blkif;
 
-	BUILD_BUG_ON(MAX_INसूचीECT_PAGES > BLKIF_MAX_INसूचीECT_PAGES_PER_REQUEST);
+	BUILD_BUG_ON(MAX_INDIRECT_PAGES > BLKIF_MAX_INDIRECT_PAGES_PER_REQUEST);
 
-	blkअगर = kmem_cache_zalloc(xen_blkअगर_cachep, GFP_KERNEL);
-	अगर (!blkअगर)
-		वापस ERR_PTR(-ENOMEM);
+	blkif = kmem_cache_zalloc(xen_blkif_cachep, GFP_KERNEL);
+	if (!blkif)
+		return ERR_PTR(-ENOMEM);
 
-	blkअगर->करोmid = करोmid;
-	atomic_set(&blkअगर->refcnt, 1);
-	init_completion(&blkअगर->drain_complete);
+	blkif->domid = domid;
+	atomic_set(&blkif->refcnt, 1);
+	init_completion(&blkif->drain_complete);
 
 	/*
-	 * Because मुक्तing back to the cache may be deferred, it is not
+	 * Because freeing back to the cache may be deferred, it is not
 	 * safe to unload the module (and hence destroy the cache) until
 	 * this has completed. To prevent premature unloading, take an
 	 * extra module reference here and release only when the object
-	 * has been मुक्तd back to the cache.
+	 * has been freed back to the cache.
 	 */
 	__module_get(THIS_MODULE);
-	INIT_WORK(&blkअगर->मुक्त_work, xen_blkअगर_deferred_मुक्त);
+	INIT_WORK(&blkif->free_work, xen_blkif_deferred_free);
 
-	वापस blkअगर;
-पूर्ण
+	return blkif;
+}
 
-अटल पूर्णांक xen_blkअगर_map(काष्ठा xen_blkअगर_ring *ring, grant_ref_t *gref,
-			 अचिन्हित पूर्णांक nr_grefs, अचिन्हित पूर्णांक evtchn)
-अणु
-	पूर्णांक err;
-	काष्ठा xen_blkअगर *blkअगर = ring->blkअगर;
-	स्थिर काष्ठा blkअगर_common_sring *sring_common;
+static int xen_blkif_map(struct xen_blkif_ring *ring, grant_ref_t *gref,
+			 unsigned int nr_grefs, unsigned int evtchn)
+{
+	int err;
+	struct xen_blkif *blkif = ring->blkif;
+	const struct blkif_common_sring *sring_common;
 	RING_IDX rsp_prod, req_prod;
-	अचिन्हित पूर्णांक size;
+	unsigned int size;
 
-	/* Alपढ़ोy connected through? */
-	अगर (ring->irq)
-		वापस 0;
+	/* Already connected through? */
+	if (ring->irq)
+		return 0;
 
-	err = xenbus_map_ring_valloc(blkअगर->be->dev, gref, nr_grefs,
+	err = xenbus_map_ring_valloc(blkif->be->dev, gref, nr_grefs,
 				     &ring->blk_ring);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	sring_common = (काष्ठा blkअगर_common_sring *)ring->blk_ring;
+	sring_common = (struct blkif_common_sring *)ring->blk_ring;
 	rsp_prod = READ_ONCE(sring_common->rsp_prod);
 	req_prod = READ_ONCE(sring_common->req_prod);
 
-	चयन (blkअगर->blk_protocol) अणु
-	हाल BLKIF_PROTOCOL_NATIVE:
-	अणु
-		काष्ठा blkअगर_sring *sring_native =
-			(काष्ठा blkअगर_sring *)ring->blk_ring;
+	switch (blkif->blk_protocol) {
+	case BLKIF_PROTOCOL_NATIVE:
+	{
+		struct blkif_sring *sring_native =
+			(struct blkif_sring *)ring->blk_ring;
 
 		BACK_RING_ATTACH(&ring->blk_rings.native, sring_native,
 				 rsp_prod, XEN_PAGE_SIZE * nr_grefs);
 		size = __RING_SIZE(sring_native, XEN_PAGE_SIZE * nr_grefs);
-		अवरोध;
-	पूर्ण
-	हाल BLKIF_PROTOCOL_X86_32:
-	अणु
-		काष्ठा blkअगर_x86_32_sring *sring_x86_32 =
-			(काष्ठा blkअगर_x86_32_sring *)ring->blk_ring;
+		break;
+	}
+	case BLKIF_PROTOCOL_X86_32:
+	{
+		struct blkif_x86_32_sring *sring_x86_32 =
+			(struct blkif_x86_32_sring *)ring->blk_ring;
 
 		BACK_RING_ATTACH(&ring->blk_rings.x86_32, sring_x86_32,
 				 rsp_prod, XEN_PAGE_SIZE * nr_grefs);
 		size = __RING_SIZE(sring_x86_32, XEN_PAGE_SIZE * nr_grefs);
-		अवरोध;
-	पूर्ण
-	हाल BLKIF_PROTOCOL_X86_64:
-	अणु
-		काष्ठा blkअगर_x86_64_sring *sring_x86_64 =
-			(काष्ठा blkअगर_x86_64_sring *)ring->blk_ring;
+		break;
+	}
+	case BLKIF_PROTOCOL_X86_64:
+	{
+		struct blkif_x86_64_sring *sring_x86_64 =
+			(struct blkif_x86_64_sring *)ring->blk_ring;
 
 		BACK_RING_ATTACH(&ring->blk_rings.x86_64, sring_x86_64,
 				 rsp_prod, XEN_PAGE_SIZE * nr_grefs);
 		size = __RING_SIZE(sring_x86_64, XEN_PAGE_SIZE * nr_grefs);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		BUG();
-	पूर्ण
+	}
 
 	err = -EIO;
-	अगर (req_prod - rsp_prod > size)
-		जाओ fail;
+	if (req_prod - rsp_prod > size)
+		goto fail;
 
-	err = bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(blkअगर->be->dev,
-			evtchn, xen_blkअगर_be_पूर्णांक, 0, "blkif-backend", ring);
-	अगर (err < 0)
-		जाओ fail;
+	err = bind_interdomain_evtchn_to_irqhandler_lateeoi(blkif->be->dev,
+			evtchn, xen_blkif_be_int, 0, "blkif-backend", ring);
+	if (err < 0)
+		goto fail;
 	ring->irq = err;
 
-	वापस 0;
+	return 0;
 
 fail:
-	xenbus_unmap_ring_vमुक्त(blkअगर->be->dev, ring->blk_ring);
-	ring->blk_rings.common.sring = शून्य;
-	वापस err;
-पूर्ण
+	xenbus_unmap_ring_vfree(blkif->be->dev, ring->blk_ring);
+	ring->blk_rings.common.sring = NULL;
+	return err;
+}
 
-अटल पूर्णांक xen_blkअगर_disconnect(काष्ठा xen_blkअगर *blkअगर)
-अणु
-	काष्ठा pending_req *req, *n;
-	अचिन्हित पूर्णांक j, r;
+static int xen_blkif_disconnect(struct xen_blkif *blkif)
+{
+	struct pending_req *req, *n;
+	unsigned int j, r;
 	bool busy = false;
 
-	क्रम (r = 0; r < blkअगर->nr_rings; r++) अणु
-		काष्ठा xen_blkअगर_ring *ring = &blkअगर->rings[r];
-		अचिन्हित पूर्णांक i = 0;
+	for (r = 0; r < blkif->nr_rings; r++) {
+		struct xen_blkif_ring *ring = &blkif->rings[r];
+		unsigned int i = 0;
 
-		अगर (!ring->active)
-			जारी;
+		if (!ring->active)
+			continue;
 
-		अगर (ring->xenblkd) अणु
-			kthपढ़ो_stop(ring->xenblkd);
-			ring->xenblkd = शून्य;
-			wake_up(&ring->shutकरोwn_wq);
-		पूर्ण
+		if (ring->xenblkd) {
+			kthread_stop(ring->xenblkd);
+			ring->xenblkd = NULL;
+			wake_up(&ring->shutdown_wq);
+		}
 
-		/* The above kthपढ़ो_stop() guarantees that at this poपूर्णांक we
-		 * करोn't have any discard_io or other_io requests. So, checking
-		 * क्रम inflight IO is enough.
+		/* The above kthread_stop() guarantees that at this point we
+		 * don't have any discard_io or other_io requests. So, checking
+		 * for inflight IO is enough.
 		 */
-		अगर (atomic_पढ़ो(&ring->inflight) > 0) अणु
+		if (atomic_read(&ring->inflight) > 0) {
 			busy = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (ring->irq) अणु
+		if (ring->irq) {
 			unbind_from_irqhandler(ring->irq, ring);
 			ring->irq = 0;
-		पूर्ण
+		}
 
-		अगर (ring->blk_rings.common.sring) अणु
-			xenbus_unmap_ring_vमुक्त(blkअगर->be->dev, ring->blk_ring);
-			ring->blk_rings.common.sring = शून्य;
-		पूर्ण
+		if (ring->blk_rings.common.sring) {
+			xenbus_unmap_ring_vfree(blkif->be->dev, ring->blk_ring);
+			ring->blk_rings.common.sring = NULL;
+		}
 
 		/* Remove all persistent grants and the cache of ballooned pages. */
-		xen_blkbk_मुक्त_caches(ring);
+		xen_blkbk_free_caches(ring);
 
 		/* Check that there is no request in use */
-		list_क्रम_each_entry_safe(req, n, &ring->pending_मुक्त, मुक्त_list) अणु
-			list_del(&req->मुक्त_list);
+		list_for_each_entry_safe(req, n, &ring->pending_free, free_list) {
+			list_del(&req->free_list);
 
-			क्रम (j = 0; j < MAX_INसूचीECT_SEGMENTS; j++)
-				kमुक्त(req->segments[j]);
+			for (j = 0; j < MAX_INDIRECT_SEGMENTS; j++)
+				kfree(req->segments[j]);
 
-			क्रम (j = 0; j < MAX_INसूचीECT_PAGES; j++)
-				kमुक्त(req->indirect_pages[j]);
+			for (j = 0; j < MAX_INDIRECT_PAGES; j++)
+				kfree(req->indirect_pages[j]);
 
-			kमुक्त(req);
+			kfree(req);
 			i++;
-		पूर्ण
+		}
 
-		BUG_ON(atomic_पढ़ो(&ring->persistent_gnt_in_use) != 0);
+		BUG_ON(atomic_read(&ring->persistent_gnt_in_use) != 0);
 		BUG_ON(!list_empty(&ring->persistent_purge_list));
 		BUG_ON(!RB_EMPTY_ROOT(&ring->persistent_gnts));
-		BUG_ON(ring->मुक्त_pages.num_pages != 0);
+		BUG_ON(ring->free_pages.num_pages != 0);
 		BUG_ON(ring->persistent_gnt_c != 0);
-		WARN_ON(i != (XEN_BLKIF_REQS_PER_PAGE * blkअगर->nr_ring_pages));
+		WARN_ON(i != (XEN_BLKIF_REQS_PER_PAGE * blkif->nr_ring_pages));
 		ring->active = false;
-	पूर्ण
-	अगर (busy)
-		वापस -EBUSY;
+	}
+	if (busy)
+		return -EBUSY;
 
-	blkअगर->nr_ring_pages = 0;
+	blkif->nr_ring_pages = 0;
 	/*
-	 * blkअगर->rings was allocated in connect_ring, so we should मुक्त it in
+	 * blkif->rings was allocated in connect_ring, so we should free it in
 	 * here.
 	 */
-	kमुक्त(blkअगर->rings);
-	blkअगर->rings = शून्य;
-	blkअगर->nr_rings = 0;
+	kfree(blkif->rings);
+	blkif->rings = NULL;
+	blkif->nr_rings = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xen_blkअगर_मुक्त(काष्ठा xen_blkअगर *blkअगर)
-अणु
-	WARN_ON(xen_blkअगर_disconnect(blkअगर));
-	xen_vbd_मुक्त(&blkअगर->vbd);
-	kमुक्त(blkअगर->be->mode);
-	kमुक्त(blkअगर->be);
+static void xen_blkif_free(struct xen_blkif *blkif)
+{
+	WARN_ON(xen_blkif_disconnect(blkif));
+	xen_vbd_free(&blkif->vbd);
+	kfree(blkif->be->mode);
+	kfree(blkif->be);
 
-	/* Make sure everything is drained beक्रमe shutting करोwn */
-	kmem_cache_मुक्त(xen_blkअगर_cachep, blkअगर);
+	/* Make sure everything is drained before shutting down */
+	kmem_cache_free(xen_blkif_cachep, blkif);
 	module_put(THIS_MODULE);
-पूर्ण
+}
 
-पूर्णांक __init xen_blkअगर_पूर्णांकerface_init(व्योम)
-अणु
-	xen_blkअगर_cachep = kmem_cache_create("blkif_cache",
-					     माप(काष्ठा xen_blkअगर),
-					     0, 0, शून्य);
-	अगर (!xen_blkअगर_cachep)
-		वापस -ENOMEM;
+int __init xen_blkif_interface_init(void)
+{
+	xen_blkif_cachep = kmem_cache_create("blkif_cache",
+					     sizeof(struct xen_blkif),
+					     0, 0, NULL);
+	if (!xen_blkif_cachep)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम xen_blkअगर_पूर्णांकerface_fini(व्योम)
-अणु
-	kmem_cache_destroy(xen_blkअगर_cachep);
-	xen_blkअगर_cachep = शून्य;
-पूर्ण
+void xen_blkif_interface_fini(void)
+{
+	kmem_cache_destroy(xen_blkif_cachep);
+	xen_blkif_cachep = NULL;
+}
 
 /*
- *  sysfs पूर्णांकerface क्रम VBD I/O requests
+ *  sysfs interface for VBD I/O requests
  */
 
-#घोषणा VBD_SHOW_ALLRING(name, क्रमmat)					\
-	अटल sमाप_प्रकार show_##name(काष्ठा device *_dev,			\
-				   काष्ठा device_attribute *attr,	\
-				   अक्षर *buf)				\
-	अणु								\
-		काष्ठा xenbus_device *dev = to_xenbus_device(_dev);	\
-		काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);	\
-		काष्ठा xen_blkअगर *blkअगर = be->blkअगर;			\
-		अचिन्हित पूर्णांक i;						\
-		अचिन्हित दीर्घ दीर्घ result = 0;				\
+#define VBD_SHOW_ALLRING(name, format)					\
+	static ssize_t show_##name(struct device *_dev,			\
+				   struct device_attribute *attr,	\
+				   char *buf)				\
+	{								\
+		struct xenbus_device *dev = to_xenbus_device(_dev);	\
+		struct backend_info *be = dev_get_drvdata(&dev->dev);	\
+		struct xen_blkif *blkif = be->blkif;			\
+		unsigned int i;						\
+		unsigned long long result = 0;				\
 									\
-		अगर (!blkअगर->rings)				\
-			जाओ out;					\
+		if (!blkif->rings)				\
+			goto out;					\
 									\
-		क्रम (i = 0; i < blkअगर->nr_rings; i++) अणु		\
-			काष्ठा xen_blkअगर_ring *ring = &blkअगर->rings[i];	\
+		for (i = 0; i < blkif->nr_rings; i++) {		\
+			struct xen_blkif_ring *ring = &blkif->rings[i];	\
 									\
 			result += ring->st_##name;			\
-		पूर्ण							\
+		}							\
 									\
 out:									\
-		वापस प्र_लिखो(buf, क्रमmat, result);			\
-	पूर्ण								\
-	अटल DEVICE_ATTR(name, 0444, show_##name, शून्य)
+		return sprintf(buf, format, result);			\
+	}								\
+	static DEVICE_ATTR(name, 0444, show_##name, NULL)
 
 VBD_SHOW_ALLRING(oo_req,  "%llu\n");
 VBD_SHOW_ALLRING(rd_req,  "%llu\n");
@@ -404,7 +403,7 @@ VBD_SHOW_ALLRING(ds_req,  "%llu\n");
 VBD_SHOW_ALLRING(rd_sect, "%llu\n");
 VBD_SHOW_ALLRING(wr_sect, "%llu\n");
 
-अटल काष्ठा attribute *xen_vbdstat_attrs[] = अणु
+static struct attribute *xen_vbdstat_attrs[] = {
 	&dev_attr_oo_req.attr,
 	&dev_attr_rd_req.attr,
 	&dev_attr_wr_req.attr,
@@ -412,776 +411,776 @@ VBD_SHOW_ALLRING(wr_sect, "%llu\n");
 	&dev_attr_ds_req.attr,
 	&dev_attr_rd_sect.attr,
 	&dev_attr_wr_sect.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group xen_vbdstat_group = अणु
+static const struct attribute_group xen_vbdstat_group = {
 	.name = "statistics",
 	.attrs = xen_vbdstat_attrs,
-पूर्ण;
+};
 
-#घोषणा VBD_SHOW(name, क्रमmat, args...)					\
-	अटल sमाप_प्रकार show_##name(काष्ठा device *_dev,			\
-				   काष्ठा device_attribute *attr,	\
-				   अक्षर *buf)				\
-	अणु								\
-		काष्ठा xenbus_device *dev = to_xenbus_device(_dev);	\
-		काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);	\
+#define VBD_SHOW(name, format, args...)					\
+	static ssize_t show_##name(struct device *_dev,			\
+				   struct device_attribute *attr,	\
+				   char *buf)				\
+	{								\
+		struct xenbus_device *dev = to_xenbus_device(_dev);	\
+		struct backend_info *be = dev_get_drvdata(&dev->dev);	\
 									\
-		वापस प्र_लिखो(buf, क्रमmat, ##args);			\
-	पूर्ण								\
-	अटल DEVICE_ATTR(name, 0444, show_##name, शून्य)
+		return sprintf(buf, format, ##args);			\
+	}								\
+	static DEVICE_ATTR(name, 0444, show_##name, NULL)
 
 VBD_SHOW(physical_device, "%x:%x\n", be->major, be->minor);
 VBD_SHOW(mode, "%s\n", be->mode);
 
-अटल पूर्णांक xenvbd_sysfs_addअगर(काष्ठा xenbus_device *dev)
-अणु
-	पूर्णांक error;
+static int xenvbd_sysfs_addif(struct xenbus_device *dev)
+{
+	int error;
 
 	error = device_create_file(&dev->dev, &dev_attr_physical_device);
-	अगर (error)
-		जाओ fail1;
+	if (error)
+		goto fail1;
 
 	error = device_create_file(&dev->dev, &dev_attr_mode);
-	अगर (error)
-		जाओ fail2;
+	if (error)
+		goto fail2;
 
 	error = sysfs_create_group(&dev->dev.kobj, &xen_vbdstat_group);
-	अगर (error)
-		जाओ fail3;
+	if (error)
+		goto fail3;
 
-	वापस 0;
+	return 0;
 
-fail3:	sysfs_हटाओ_group(&dev->dev.kobj, &xen_vbdstat_group);
-fail2:	device_हटाओ_file(&dev->dev, &dev_attr_mode);
-fail1:	device_हटाओ_file(&dev->dev, &dev_attr_physical_device);
-	वापस error;
-पूर्ण
+fail3:	sysfs_remove_group(&dev->dev.kobj, &xen_vbdstat_group);
+fail2:	device_remove_file(&dev->dev, &dev_attr_mode);
+fail1:	device_remove_file(&dev->dev, &dev_attr_physical_device);
+	return error;
+}
 
-अटल व्योम xenvbd_sysfs_delअगर(काष्ठा xenbus_device *dev)
-अणु
-	sysfs_हटाओ_group(&dev->dev.kobj, &xen_vbdstat_group);
-	device_हटाओ_file(&dev->dev, &dev_attr_mode);
-	device_हटाओ_file(&dev->dev, &dev_attr_physical_device);
-पूर्ण
+static void xenvbd_sysfs_delif(struct xenbus_device *dev)
+{
+	sysfs_remove_group(&dev->dev.kobj, &xen_vbdstat_group);
+	device_remove_file(&dev->dev, &dev_attr_mode);
+	device_remove_file(&dev->dev, &dev_attr_physical_device);
+}
 
-अटल व्योम xen_vbd_मुक्त(काष्ठा xen_vbd *vbd)
-अणु
-	अगर (vbd->bdev)
-		blkdev_put(vbd->bdev, vbd->पढ़ोonly ? FMODE_READ : FMODE_WRITE);
-	vbd->bdev = शून्य;
-पूर्ण
+static void xen_vbd_free(struct xen_vbd *vbd)
+{
+	if (vbd->bdev)
+		blkdev_put(vbd->bdev, vbd->readonly ? FMODE_READ : FMODE_WRITE);
+	vbd->bdev = NULL;
+}
 
 /* Enable the persistent grants feature. */
-अटल bool feature_persistent = true;
+static bool feature_persistent = true;
 module_param(feature_persistent, bool, 0644);
 MODULE_PARM_DESC(feature_persistent,
 		"Enables the persistent grants feature");
 
-अटल पूर्णांक xen_vbd_create(काष्ठा xen_blkअगर *blkअगर, blkअगर_vdev_t handle,
-			  अचिन्हित major, अचिन्हित minor, पूर्णांक पढ़ोonly,
-			  पूर्णांक cdrom)
-अणु
-	काष्ठा xen_vbd *vbd;
-	काष्ठा block_device *bdev;
-	काष्ठा request_queue *q;
+static int xen_vbd_create(struct xen_blkif *blkif, blkif_vdev_t handle,
+			  unsigned major, unsigned minor, int readonly,
+			  int cdrom)
+{
+	struct xen_vbd *vbd;
+	struct block_device *bdev;
+	struct request_queue *q;
 
-	vbd = &blkअगर->vbd;
+	vbd = &blkif->vbd;
 	vbd->handle   = handle;
-	vbd->पढ़ोonly = पढ़ोonly;
+	vbd->readonly = readonly;
 	vbd->type     = 0;
 
 	vbd->pdevice  = MKDEV(major, minor);
 
-	bdev = blkdev_get_by_dev(vbd->pdevice, vbd->पढ़ोonly ?
-				 FMODE_READ : FMODE_WRITE, शून्य);
+	bdev = blkdev_get_by_dev(vbd->pdevice, vbd->readonly ?
+				 FMODE_READ : FMODE_WRITE, NULL);
 
-	अगर (IS_ERR(bdev)) अणु
+	if (IS_ERR(bdev)) {
 		pr_warn("xen_vbd_create: device %08x could not be opened\n",
 			vbd->pdevice);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	vbd->bdev = bdev;
-	अगर (vbd->bdev->bd_disk == शून्य) अणु
+	if (vbd->bdev->bd_disk == NULL) {
 		pr_warn("xen_vbd_create: device %08x doesn't exist\n",
 			vbd->pdevice);
-		xen_vbd_मुक्त(vbd);
-		वापस -ENOENT;
-	पूर्ण
+		xen_vbd_free(vbd);
+		return -ENOENT;
+	}
 	vbd->size = vbd_sz(vbd);
 
-	अगर (vbd->bdev->bd_disk->flags & GENHD_FL_CD || cdrom)
+	if (vbd->bdev->bd_disk->flags & GENHD_FL_CD || cdrom)
 		vbd->type |= VDISK_CDROM;
-	अगर (vbd->bdev->bd_disk->flags & GENHD_FL_REMOVABLE)
+	if (vbd->bdev->bd_disk->flags & GENHD_FL_REMOVABLE)
 		vbd->type |= VDISK_REMOVABLE;
 
 	q = bdev_get_queue(bdev);
-	अगर (q && test_bit(QUEUE_FLAG_WC, &q->queue_flags))
+	if (q && test_bit(QUEUE_FLAG_WC, &q->queue_flags))
 		vbd->flush_support = true;
 
-	अगर (q && blk_queue_secure_erase(q))
+	if (q && blk_queue_secure_erase(q))
 		vbd->discard_secure = true;
 
 	vbd->feature_gnt_persistent = feature_persistent;
 
 	pr_debug("Successful creation of handle=%04x (dom=%u)\n",
-		handle, blkअगर->करोmid);
-	वापस 0;
-पूर्ण
+		handle, blkif->domid);
+	return 0;
+}
 
-अटल पूर्णांक xen_blkbk_हटाओ(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);
+static int xen_blkbk_remove(struct xenbus_device *dev)
+{
+	struct backend_info *be = dev_get_drvdata(&dev->dev);
 
 	pr_debug("%s %p %d\n", __func__, dev, dev->otherend_id);
 
-	अगर (be->major || be->minor)
-		xenvbd_sysfs_delअगर(dev);
+	if (be->major || be->minor)
+		xenvbd_sysfs_delif(dev);
 
-	अगर (be->backend_watch.node) अणु
-		unरेजिस्टर_xenbus_watch(&be->backend_watch);
-		kमुक्त(be->backend_watch.node);
-		be->backend_watch.node = शून्य;
-	पूर्ण
+	if (be->backend_watch.node) {
+		unregister_xenbus_watch(&be->backend_watch);
+		kfree(be->backend_watch.node);
+		be->backend_watch.node = NULL;
+	}
 
-	dev_set_drvdata(&dev->dev, शून्य);
+	dev_set_drvdata(&dev->dev, NULL);
 
-	अगर (be->blkअगर) अणु
-		xen_blkअगर_disconnect(be->blkअगर);
+	if (be->blkif) {
+		xen_blkif_disconnect(be->blkif);
 
-		/* Put the reference we set in xen_blkअगर_alloc(). */
-		xen_blkअगर_put(be->blkअगर);
-	पूर्ण
+		/* Put the reference we set in xen_blkif_alloc(). */
+		xen_blkif_put(be->blkif);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक xen_blkbk_flush_diskcache(काष्ठा xenbus_transaction xbt,
-			      काष्ठा backend_info *be, पूर्णांक state)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
-	पूर्णांक err;
+int xen_blkbk_flush_diskcache(struct xenbus_transaction xbt,
+			      struct backend_info *be, int state)
+{
+	struct xenbus_device *dev = be->dev;
+	int err;
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "feature-flush-cache",
+	err = xenbus_printf(xbt, dev->nodename, "feature-flush-cache",
 			    "%d", state);
-	अगर (err)
+	if (err)
 		dev_warn(&dev->dev, "writing feature-flush-cache (%d)", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम xen_blkbk_discard(काष्ठा xenbus_transaction xbt, काष्ठा backend_info *be)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
-	काष्ठा xen_blkअगर *blkअगर = be->blkअगर;
-	पूर्णांक err;
-	पूर्णांक state = 0;
-	काष्ठा block_device *bdev = be->blkअगर->vbd.bdev;
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
+static void xen_blkbk_discard(struct xenbus_transaction xbt, struct backend_info *be)
+{
+	struct xenbus_device *dev = be->dev;
+	struct xen_blkif *blkif = be->blkif;
+	int err;
+	int state = 0;
+	struct block_device *bdev = be->blkif->vbd.bdev;
+	struct request_queue *q = bdev_get_queue(bdev);
 
-	अगर (!xenbus_पढ़ो_अचिन्हित(dev->nodename, "discard-enable", 1))
-		वापस;
+	if (!xenbus_read_unsigned(dev->nodename, "discard-enable", 1))
+		return;
 
-	अगर (blk_queue_discard(q)) अणु
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+	if (blk_queue_discard(q)) {
+		err = xenbus_printf(xbt, dev->nodename,
 			"discard-granularity", "%u",
 			q->limits.discard_granularity);
-		अगर (err) अणु
+		if (err) {
 			dev_warn(&dev->dev, "writing discard-granularity (%d)", err);
-			वापस;
-		पूर्ण
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+			return;
+		}
+		err = xenbus_printf(xbt, dev->nodename,
 			"discard-alignment", "%u",
 			q->limits.discard_alignment);
-		अगर (err) अणु
+		if (err) {
 			dev_warn(&dev->dev, "writing discard-alignment (%d)", err);
-			वापस;
-		पूर्ण
+			return;
+		}
 		state = 1;
 		/* Optional. */
-		err = xenbus_म_लिखो(xbt, dev->nodename,
+		err = xenbus_printf(xbt, dev->nodename,
 				    "discard-secure", "%d",
-				    blkअगर->vbd.discard_secure);
-		अगर (err) अणु
+				    blkif->vbd.discard_secure);
+		if (err) {
 			dev_warn(&dev->dev, "writing discard-secure (%d)", err);
-			वापस;
-		पूर्ण
-	पूर्ण
-	err = xenbus_म_लिखो(xbt, dev->nodename, "feature-discard",
+			return;
+		}
+	}
+	err = xenbus_printf(xbt, dev->nodename, "feature-discard",
 			    "%d", state);
-	अगर (err)
+	if (err)
 		dev_warn(&dev->dev, "writing feature-discard (%d)", err);
-पूर्ण
+}
 
-पूर्णांक xen_blkbk_barrier(काष्ठा xenbus_transaction xbt,
-		      काष्ठा backend_info *be, पूर्णांक state)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
-	पूर्णांक err;
+int xen_blkbk_barrier(struct xenbus_transaction xbt,
+		      struct backend_info *be, int state)
+{
+	struct xenbus_device *dev = be->dev;
+	int err;
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "feature-barrier",
+	err = xenbus_printf(xbt, dev->nodename, "feature-barrier",
 			    "%d", state);
-	अगर (err)
+	if (err)
 		dev_warn(&dev->dev, "writing feature-barrier (%d)", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Entry poपूर्णांक to this code when a new device is created.  Allocate the basic
- * काष्ठाures, and watch the store रुकोing क्रम the hotplug scripts to tell us
+ * Entry point to this code when a new device is created.  Allocate the basic
+ * structures, and watch the store waiting for the hotplug scripts to tell us
  * the device's physical major and minor numbers.  Switch to InitWait.
  */
-अटल पूर्णांक xen_blkbk_probe(काष्ठा xenbus_device *dev,
-			   स्थिर काष्ठा xenbus_device_id *id)
-अणु
-	पूर्णांक err;
-	काष्ठा backend_info *be = kzalloc(माप(काष्ठा backend_info),
+static int xen_blkbk_probe(struct xenbus_device *dev,
+			   const struct xenbus_device_id *id)
+{
+	int err;
+	struct backend_info *be = kzalloc(sizeof(struct backend_info),
 					  GFP_KERNEL);
 
-	/* match the pr_debug in xen_blkbk_हटाओ */
+	/* match the pr_debug in xen_blkbk_remove */
 	pr_debug("%s %p %d\n", __func__, dev, dev->otherend_id);
 
-	अगर (!be) अणु
+	if (!be) {
 		xenbus_dev_fatal(dev, -ENOMEM,
 				 "allocating backend structure");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	be->dev = dev;
 	dev_set_drvdata(&dev->dev, be);
 
-	be->blkअगर = xen_blkअगर_alloc(dev->otherend_id);
-	अगर (IS_ERR(be->blkअगर)) अणु
-		err = PTR_ERR(be->blkअगर);
-		be->blkअगर = शून्य;
+	be->blkif = xen_blkif_alloc(dev->otherend_id);
+	if (IS_ERR(be->blkif)) {
+		err = PTR_ERR(be->blkif);
+		be->blkif = NULL;
 		xenbus_dev_fatal(dev, err, "creating block interface");
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
+	err = xenbus_printf(XBT_NIL, dev->nodename,
 			    "feature-max-indirect-segments", "%u",
-			    MAX_INसूचीECT_SEGMENTS);
-	अगर (err)
+			    MAX_INDIRECT_SEGMENTS);
+	if (err)
 		dev_warn(&dev->dev,
 			 "writing %s/feature-max-indirect-segments (%d)",
 			 dev->nodename, err);
 
 	/* Multi-queue: advertise how many queues are supported by us.*/
-	err = xenbus_म_लिखो(XBT_NIL, dev->nodename,
+	err = xenbus_printf(XBT_NIL, dev->nodename,
 			    "multi-queue-max-queues", "%u", xenblk_max_queues);
-	अगर (err)
+	if (err)
 		pr_warn("Error writing multi-queue-max-queues\n");
 
-	/* setup back poपूर्णांकer */
-	be->blkअगर->be = be;
+	/* setup back pointer */
+	be->blkif->be = be;
 
-	err = xenbus_watch_pathfmt(dev, &be->backend_watch, शून्य,
+	err = xenbus_watch_pathfmt(dev, &be->backend_watch, NULL,
 				   backend_changed,
 				   "%s/%s", dev->nodename, "physical-device");
-	अगर (err)
-		जाओ fail;
+	if (err)
+		goto fail;
 
-	err = xenbus_म_लिखो(XBT_NIL, dev->nodename, "max-ring-page-order", "%u",
-			    xen_blkअगर_max_ring_order);
-	अगर (err)
+	err = xenbus_printf(XBT_NIL, dev->nodename, "max-ring-page-order", "%u",
+			    xen_blkif_max_ring_order);
+	if (err)
 		pr_warn("%s write out 'max-ring-page-order' failed\n", __func__);
 
-	err = xenbus_चयन_state(dev, XenbusStateInitWait);
-	अगर (err)
-		जाओ fail;
+	err = xenbus_switch_state(dev, XenbusStateInitWait);
+	if (err)
+		goto fail;
 
-	वापस 0;
+	return 0;
 
 fail:
 	pr_warn("%s failed\n", __func__);
-	xen_blkbk_हटाओ(dev);
-	वापस err;
-पूर्ण
+	xen_blkbk_remove(dev);
+	return err;
+}
 
 /*
  * Callback received when the hotplug scripts have placed the physical-device
  * node.  Read it and the mode node, and create a vbd.  If the frontend is
- * पढ़ोy, connect.
+ * ready, connect.
  */
-अटल व्योम backend_changed(काष्ठा xenbus_watch *watch,
-			    स्थिर अक्षर *path, स्थिर अक्षर *token)
-अणु
-	पूर्णांक err;
-	अचिन्हित major;
-	अचिन्हित minor;
-	काष्ठा backend_info *be
-		= container_of(watch, काष्ठा backend_info, backend_watch);
-	काष्ठा xenbus_device *dev = be->dev;
-	पूर्णांक cdrom = 0;
-	अचिन्हित दीर्घ handle;
-	अक्षर *device_type;
+static void backend_changed(struct xenbus_watch *watch,
+			    const char *path, const char *token)
+{
+	int err;
+	unsigned major;
+	unsigned minor;
+	struct backend_info *be
+		= container_of(watch, struct backend_info, backend_watch);
+	struct xenbus_device *dev = be->dev;
+	int cdrom = 0;
+	unsigned long handle;
+	char *device_type;
 
 	pr_debug("%s %p %d\n", __func__, dev, dev->otherend_id);
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->nodename, "physical-device", "%x:%x",
+	err = xenbus_scanf(XBT_NIL, dev->nodename, "physical-device", "%x:%x",
 			   &major, &minor);
-	अगर (XENBUS_EXIST_ERR(err)) अणु
+	if (XENBUS_EXIST_ERR(err)) {
 		/*
 		 * Since this watch will fire once immediately after it is
-		 * रेजिस्टरed, we expect this.  Ignore it, and रुको क्रम the
+		 * registered, we expect this.  Ignore it, and wait for the
 		 * hotplug scripts.
 		 */
-		वापस;
-	पूर्ण
-	अगर (err != 2) अणु
+		return;
+	}
+	if (err != 2) {
 		xenbus_dev_fatal(dev, err, "reading physical-device");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (be->major | be->minor) अणु
-		अगर (be->major != major || be->minor != minor)
+	if (be->major | be->minor) {
+		if (be->major != major || be->minor != minor)
 			pr_warn("changing physical device (from %x:%x to %x:%x) not supported.\n",
 				be->major, be->minor, major, minor);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	be->mode = xenbus_पढ़ो(XBT_NIL, dev->nodename, "mode", शून्य);
-	अगर (IS_ERR(be->mode)) अणु
+	be->mode = xenbus_read(XBT_NIL, dev->nodename, "mode", NULL);
+	if (IS_ERR(be->mode)) {
 		err = PTR_ERR(be->mode);
-		be->mode = शून्य;
+		be->mode = NULL;
 		xenbus_dev_fatal(dev, err, "reading mode");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	device_type = xenbus_पढ़ो(XBT_NIL, dev->otherend, "device-type", शून्य);
-	अगर (!IS_ERR(device_type)) अणु
-		cdrom = म_भेद(device_type, "cdrom") == 0;
-		kमुक्त(device_type);
-	पूर्ण
+	device_type = xenbus_read(XBT_NIL, dev->otherend, "device-type", NULL);
+	if (!IS_ERR(device_type)) {
+		cdrom = strcmp(device_type, "cdrom") == 0;
+		kfree(device_type);
+	}
 
 	/* Front end dir is a number, which is used as the handle. */
-	err = kम_से_अदीर्घ(म_खोजप(dev->otherend, '/') + 1, 0, &handle);
-	अगर (err) अणु
-		kमुक्त(be->mode);
-		be->mode = शून्य;
-		वापस;
-	पूर्ण
+	err = kstrtoul(strrchr(dev->otherend, '/') + 1, 0, &handle);
+	if (err) {
+		kfree(be->mode);
+		be->mode = NULL;
+		return;
+	}
 
 	be->major = major;
 	be->minor = minor;
 
-	err = xen_vbd_create(be->blkअगर, handle, major, minor,
-			     !म_अक्षर(be->mode, 'w'), cdrom);
+	err = xen_vbd_create(be->blkif, handle, major, minor,
+			     !strchr(be->mode, 'w'), cdrom);
 
-	अगर (err)
+	if (err)
 		xenbus_dev_fatal(dev, err, "creating vbd structure");
-	अन्यथा अणु
-		err = xenvbd_sysfs_addअगर(dev);
-		अगर (err) अणु
-			xen_vbd_मुक्त(&be->blkअगर->vbd);
+	else {
+		err = xenvbd_sysfs_addif(dev);
+		if (err) {
+			xen_vbd_free(&be->blkif->vbd);
 			xenbus_dev_fatal(dev, err, "creating sysfs entries");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (err) अणु
-		kमुक्त(be->mode);
-		be->mode = शून्य;
+	if (err) {
+		kfree(be->mode);
+		be->mode = NULL;
 		be->major = 0;
 		be->minor = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* We're potentially connected now */
-		xen_update_blkअगर_status(be->blkअगर);
-	पूर्ण
-पूर्ण
+		xen_update_blkif_status(be->blkif);
+	}
+}
 
 /*
  * Callback received when the frontend's state changes.
  */
-अटल व्योम frontend_changed(काष्ठा xenbus_device *dev,
-			     क्रमागत xenbus_state frontend_state)
-अणु
-	काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);
-	पूर्णांक err;
+static void frontend_changed(struct xenbus_device *dev,
+			     enum xenbus_state frontend_state)
+{
+	struct backend_info *be = dev_get_drvdata(&dev->dev);
+	int err;
 
 	pr_debug("%s %p %s\n", __func__, dev, xenbus_strstate(frontend_state));
 
-	चयन (frontend_state) अणु
-	हाल XenbusStateInitialising:
-		अगर (dev->state == XenbusStateClosed) अणु
+	switch (frontend_state) {
+	case XenbusStateInitialising:
+		if (dev->state == XenbusStateClosed) {
 			pr_info("%s: prepare for reconnect\n", dev->nodename);
-			xenbus_चयन_state(dev, XenbusStateInitWait);
-		पूर्ण
-		अवरोध;
+			xenbus_switch_state(dev, XenbusStateInitWait);
+		}
+		break;
 
-	हाल XenbusStateInitialised:
-	हाल XenbusStateConnected:
+	case XenbusStateInitialised:
+	case XenbusStateConnected:
 		/*
 		 * Ensure we connect even when two watches fire in
-		 * बंद succession and we miss the पूर्णांकermediate value
+		 * close succession and we miss the intermediate value
 		 * of frontend_state.
 		 */
-		अगर (dev->state == XenbusStateConnected)
-			अवरोध;
+		if (dev->state == XenbusStateConnected)
+			break;
 
 		/*
-		 * Enक्रमce precondition beक्रमe potential leak poपूर्णांक.
-		 * xen_blkअगर_disconnect() is idempotent.
+		 * Enforce precondition before potential leak point.
+		 * xen_blkif_disconnect() is idempotent.
 		 */
-		err = xen_blkअगर_disconnect(be->blkअगर);
-		अगर (err) अणु
+		err = xen_blkif_disconnect(be->blkif);
+		if (err) {
 			xenbus_dev_fatal(dev, err, "pending I/O");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		err = connect_ring(be);
-		अगर (err) अणु
+		if (err) {
 			/*
 			 * Clean up so that memory resources can be used by
-			 * other devices. connect_ring reported alपढ़ोy error.
+			 * other devices. connect_ring reported already error.
 			 */
-			xen_blkअगर_disconnect(be->blkअगर);
-			अवरोध;
-		पूर्ण
-		xen_update_blkअगर_status(be->blkअगर);
-		अवरोध;
+			xen_blkif_disconnect(be->blkif);
+			break;
+		}
+		xen_update_blkif_status(be->blkif);
+		break;
 
-	हाल XenbusStateClosing:
-		xenbus_चयन_state(dev, XenbusStateClosing);
-		अवरोध;
+	case XenbusStateClosing:
+		xenbus_switch_state(dev, XenbusStateClosing);
+		break;
 
-	हाल XenbusStateClosed:
-		xen_blkअगर_disconnect(be->blkअगर);
-		xenbus_चयन_state(dev, XenbusStateClosed);
-		अगर (xenbus_dev_is_online(dev))
-			अवरोध;
+	case XenbusStateClosed:
+		xen_blkif_disconnect(be->blkif);
+		xenbus_switch_state(dev, XenbusStateClosed);
+		if (xenbus_dev_is_online(dev))
+			break;
 		fallthrough;
-		/* अगर not online */
-	हाल XenbusStateUnknown:
-		/* implies xen_blkअगर_disconnect() via xen_blkbk_हटाओ() */
-		device_unरेजिस्टर(&dev->dev);
-		अवरोध;
+		/* if not online */
+	case XenbusStateUnknown:
+		/* implies xen_blkif_disconnect() via xen_blkbk_remove() */
+		device_unregister(&dev->dev);
+		break;
 
-	शेष:
+	default:
 		xenbus_dev_fatal(dev, -EINVAL, "saw state %d at frontend",
 				 frontend_state);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* Once a memory pressure is detected, squeeze मुक्त page pools क्रम a जबतक. */
-अटल अचिन्हित पूर्णांक buffer_squeeze_duration_ms = 10;
+/* Once a memory pressure is detected, squeeze free page pools for a while. */
+static unsigned int buffer_squeeze_duration_ms = 10;
 module_param_named(buffer_squeeze_duration_ms,
-		buffer_squeeze_duration_ms, पूर्णांक, 0644);
+		buffer_squeeze_duration_ms, int, 0644);
 MODULE_PARM_DESC(buffer_squeeze_duration_ms,
 "Duration in ms to squeeze pages buffer when a memory pressure is detected");
 
 /*
  * Callback received when the memory pressure is detected.
  */
-अटल व्योम reclaim_memory(काष्ठा xenbus_device *dev)
-अणु
-	काष्ठा backend_info *be = dev_get_drvdata(&dev->dev);
+static void reclaim_memory(struct xenbus_device *dev)
+{
+	struct backend_info *be = dev_get_drvdata(&dev->dev);
 
-	अगर (!be)
-		वापस;
-	be->blkअगर->buffer_squeeze_end = jअगरfies +
-		msecs_to_jअगरfies(buffer_squeeze_duration_ms);
-पूर्ण
+	if (!be)
+		return;
+	be->blkif->buffer_squeeze_end = jiffies +
+		msecs_to_jiffies(buffer_squeeze_duration_ms);
+}
 
 /* ** Connection ** */
 
 /*
  * Write the physical details regarding the block device to the store, and
- * चयन to Connected state.
+ * switch to Connected state.
  */
-अटल व्योम connect(काष्ठा backend_info *be)
-अणु
-	काष्ठा xenbus_transaction xbt;
-	पूर्णांक err;
-	काष्ठा xenbus_device *dev = be->dev;
+static void connect(struct backend_info *be)
+{
+	struct xenbus_transaction xbt;
+	int err;
+	struct xenbus_device *dev = be->dev;
 
 	pr_debug("%s %s\n", __func__, dev->otherend);
 
-	/* Supply the inक्रमmation about the device the frontend needs */
+	/* Supply the information about the device the frontend needs */
 again:
 	err = xenbus_transaction_start(&xbt);
-	अगर (err) अणु
+	if (err) {
 		xenbus_dev_fatal(dev, err, "starting transaction");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* If we can't advertise it is OK. */
-	xen_blkbk_flush_diskcache(xbt, be, be->blkअगर->vbd.flush_support);
+	xen_blkbk_flush_diskcache(xbt, be, be->blkif->vbd.flush_support);
 
 	xen_blkbk_discard(xbt, be);
 
-	xen_blkbk_barrier(xbt, be, be->blkअगर->vbd.flush_support);
+	xen_blkbk_barrier(xbt, be, be->blkif->vbd.flush_support);
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "feature-persistent", "%u",
-			be->blkअगर->vbd.feature_gnt_persistent);
-	अगर (err) अणु
+	err = xenbus_printf(xbt, dev->nodename, "feature-persistent", "%u",
+			be->blkif->vbd.feature_gnt_persistent);
+	if (err) {
 		xenbus_dev_fatal(dev, err, "writing %s/feature-persistent",
 				 dev->nodename);
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 
-	err = xenbus_म_लिखो(xbt, dev->nodename, "sectors", "%llu",
-			    (अचिन्हित दीर्घ दीर्घ)vbd_sz(&be->blkअगर->vbd));
-	अगर (err) अणु
+	err = xenbus_printf(xbt, dev->nodename, "sectors", "%llu",
+			    (unsigned long long)vbd_sz(&be->blkif->vbd));
+	if (err) {
 		xenbus_dev_fatal(dev, err, "writing %s/sectors",
 				 dev->nodename);
-		जाओ पात;
-	पूर्ण
+		goto abort;
+	}
 
 	/* FIXME: use a typename instead */
-	err = xenbus_म_लिखो(xbt, dev->nodename, "info", "%u",
-			    be->blkअगर->vbd.type |
-			    (be->blkअगर->vbd.पढ़ोonly ? VDISK_READONLY : 0));
-	अगर (err) अणु
+	err = xenbus_printf(xbt, dev->nodename, "info", "%u",
+			    be->blkif->vbd.type |
+			    (be->blkif->vbd.readonly ? VDISK_READONLY : 0));
+	if (err) {
 		xenbus_dev_fatal(dev, err, "writing %s/info",
 				 dev->nodename);
-		जाओ पात;
-	पूर्ण
-	err = xenbus_म_लिखो(xbt, dev->nodename, "sector-size", "%lu",
-			    (अचिन्हित दीर्घ)
-			    bdev_logical_block_size(be->blkअगर->vbd.bdev));
-	अगर (err) अणु
+		goto abort;
+	}
+	err = xenbus_printf(xbt, dev->nodename, "sector-size", "%lu",
+			    (unsigned long)
+			    bdev_logical_block_size(be->blkif->vbd.bdev));
+	if (err) {
 		xenbus_dev_fatal(dev, err, "writing %s/sector-size",
 				 dev->nodename);
-		जाओ पात;
-	पूर्ण
-	err = xenbus_म_लिखो(xbt, dev->nodename, "physical-sector-size", "%u",
-			    bdev_physical_block_size(be->blkअगर->vbd.bdev));
-	अगर (err)
+		goto abort;
+	}
+	err = xenbus_printf(xbt, dev->nodename, "physical-sector-size", "%u",
+			    bdev_physical_block_size(be->blkif->vbd.bdev));
+	if (err)
 		xenbus_dev_error(dev, err, "writing %s/physical-sector-size",
 				 dev->nodename);
 
 	err = xenbus_transaction_end(xbt, 0);
-	अगर (err == -EAGAIN)
-		जाओ again;
-	अगर (err)
+	if (err == -EAGAIN)
+		goto again;
+	if (err)
 		xenbus_dev_fatal(dev, err, "ending transaction");
 
-	err = xenbus_चयन_state(dev, XenbusStateConnected);
-	अगर (err)
+	err = xenbus_switch_state(dev, XenbusStateConnected);
+	if (err)
 		xenbus_dev_fatal(dev, err, "%s: switching to Connected state",
 				 dev->nodename);
 
-	वापस;
- पात:
+	return;
+ abort:
 	xenbus_transaction_end(xbt, 1);
-पूर्ण
+}
 
 /*
  * Each ring may have multi pages, depends on "ring-page-order".
  */
-अटल पूर्णांक पढ़ो_per_ring_refs(काष्ठा xen_blkअगर_ring *ring, स्थिर अक्षर *dir)
-अणु
-	अचिन्हित पूर्णांक ring_ref[XENBUS_MAX_RING_GRANTS];
-	काष्ठा pending_req *req, *n;
-	पूर्णांक err, i, j;
-	काष्ठा xen_blkअगर *blkअगर = ring->blkअगर;
-	काष्ठा xenbus_device *dev = blkअगर->be->dev;
-	अचिन्हित पूर्णांक nr_grefs, evtchn;
+static int read_per_ring_refs(struct xen_blkif_ring *ring, const char *dir)
+{
+	unsigned int ring_ref[XENBUS_MAX_RING_GRANTS];
+	struct pending_req *req, *n;
+	int err, i, j;
+	struct xen_blkif *blkif = ring->blkif;
+	struct xenbus_device *dev = blkif->be->dev;
+	unsigned int nr_grefs, evtchn;
 
-	err = xenbus_म_पूछो(XBT_NIL, dir, "event-channel", "%u",
+	err = xenbus_scanf(XBT_NIL, dir, "event-channel", "%u",
 			  &evtchn);
-	अगर (err != 1) अणु
+	if (err != 1) {
 		err = -EINVAL;
 		xenbus_dev_fatal(dev, err, "reading %s/event-channel", dir);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	nr_grefs = blkअगर->nr_ring_pages;
+	nr_grefs = blkif->nr_ring_pages;
 
-	अगर (unlikely(!nr_grefs)) अणु
+	if (unlikely(!nr_grefs)) {
 		WARN_ON(true);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < nr_grefs; i++) अणु
-		अक्षर ring_ref_name[RINGREF_NAME_LEN];
+	for (i = 0; i < nr_grefs; i++) {
+		char ring_ref_name[RINGREF_NAME_LEN];
 
-		अगर (blkअगर->multi_ref)
-			snम_लिखो(ring_ref_name, RINGREF_NAME_LEN, "ring-ref%u", i);
-		अन्यथा अणु
+		if (blkif->multi_ref)
+			snprintf(ring_ref_name, RINGREF_NAME_LEN, "ring-ref%u", i);
+		else {
 			WARN_ON(i != 0);
-			snम_लिखो(ring_ref_name, RINGREF_NAME_LEN, "ring-ref");
-		पूर्ण
+			snprintf(ring_ref_name, RINGREF_NAME_LEN, "ring-ref");
+		}
 
-		err = xenbus_म_पूछो(XBT_NIL, dir, ring_ref_name,
+		err = xenbus_scanf(XBT_NIL, dir, ring_ref_name,
 				   "%u", &ring_ref[i]);
 
-		अगर (err != 1) अणु
+		if (err != 1) {
 			err = -EINVAL;
 			xenbus_dev_fatal(dev, err, "reading %s/%s",
 					 dir, ring_ref_name);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	err = -ENOMEM;
-	क्रम (i = 0; i < nr_grefs * XEN_BLKIF_REQS_PER_PAGE; i++) अणु
-		req = kzalloc(माप(*req), GFP_KERNEL);
-		अगर (!req)
-			जाओ fail;
-		list_add_tail(&req->मुक्त_list, &ring->pending_मुक्त);
-		क्रम (j = 0; j < MAX_INसूचीECT_SEGMENTS; j++) अणु
-			req->segments[j] = kzalloc(माप(*req->segments[0]), GFP_KERNEL);
-			अगर (!req->segments[j])
-				जाओ fail;
-		पूर्ण
-		क्रम (j = 0; j < MAX_INसूचीECT_PAGES; j++) अणु
-			req->indirect_pages[j] = kzalloc(माप(*req->indirect_pages[0]),
+	for (i = 0; i < nr_grefs * XEN_BLKIF_REQS_PER_PAGE; i++) {
+		req = kzalloc(sizeof(*req), GFP_KERNEL);
+		if (!req)
+			goto fail;
+		list_add_tail(&req->free_list, &ring->pending_free);
+		for (j = 0; j < MAX_INDIRECT_SEGMENTS; j++) {
+			req->segments[j] = kzalloc(sizeof(*req->segments[0]), GFP_KERNEL);
+			if (!req->segments[j])
+				goto fail;
+		}
+		for (j = 0; j < MAX_INDIRECT_PAGES; j++) {
+			req->indirect_pages[j] = kzalloc(sizeof(*req->indirect_pages[0]),
 							 GFP_KERNEL);
-			अगर (!req->indirect_pages[j])
-				जाओ fail;
-		पूर्ण
-	पूर्ण
+			if (!req->indirect_pages[j])
+				goto fail;
+		}
+	}
 
 	/* Map the shared frame, irq etc. */
-	err = xen_blkअगर_map(ring, ring_ref, nr_grefs, evtchn);
-	अगर (err) अणु
+	err = xen_blkif_map(ring, ring_ref, nr_grefs, evtchn);
+	if (err) {
 		xenbus_dev_fatal(dev, err, "mapping ring-ref port %u", evtchn);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	वापस 0;
+	return 0;
 
 fail:
-	list_क्रम_each_entry_safe(req, n, &ring->pending_मुक्त, मुक्त_list) अणु
-		list_del(&req->मुक्त_list);
-		क्रम (j = 0; j < MAX_INसूचीECT_SEGMENTS; j++) अणु
-			अगर (!req->segments[j])
-				अवरोध;
-			kमुक्त(req->segments[j]);
-		पूर्ण
-		क्रम (j = 0; j < MAX_INसूचीECT_PAGES; j++) अणु
-			अगर (!req->indirect_pages[j])
-				अवरोध;
-			kमुक्त(req->indirect_pages[j]);
-		पूर्ण
-		kमुक्त(req);
-	पूर्ण
-	वापस err;
-पूर्ण
+	list_for_each_entry_safe(req, n, &ring->pending_free, free_list) {
+		list_del(&req->free_list);
+		for (j = 0; j < MAX_INDIRECT_SEGMENTS; j++) {
+			if (!req->segments[j])
+				break;
+			kfree(req->segments[j]);
+		}
+		for (j = 0; j < MAX_INDIRECT_PAGES; j++) {
+			if (!req->indirect_pages[j])
+				break;
+			kfree(req->indirect_pages[j]);
+		}
+		kfree(req);
+	}
+	return err;
+}
 
-अटल पूर्णांक connect_ring(काष्ठा backend_info *be)
-अणु
-	काष्ठा xenbus_device *dev = be->dev;
-	काष्ठा xen_blkअगर *blkअगर = be->blkअगर;
-	अक्षर protocol[64] = "";
-	पूर्णांक err, i;
-	अक्षर *xspath;
-	माप_प्रकार xspathsize;
-	स्थिर माप_प्रकार xenstore_path_ext_size = 11; /* sufficient क्रम "/queue-NNN" */
-	अचिन्हित पूर्णांक requested_num_queues = 0;
-	अचिन्हित पूर्णांक ring_page_order;
+static int connect_ring(struct backend_info *be)
+{
+	struct xenbus_device *dev = be->dev;
+	struct xen_blkif *blkif = be->blkif;
+	char protocol[64] = "";
+	int err, i;
+	char *xspath;
+	size_t xspathsize;
+	const size_t xenstore_path_ext_size = 11; /* sufficient for "/queue-NNN" */
+	unsigned int requested_num_queues = 0;
+	unsigned int ring_page_order;
 
 	pr_debug("%s %s\n", __func__, dev->otherend);
 
-	blkअगर->blk_protocol = BLKIF_PROTOCOL_DEFAULT;
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend, "protocol",
+	blkif->blk_protocol = BLKIF_PROTOCOL_DEFAULT;
+	err = xenbus_scanf(XBT_NIL, dev->otherend, "protocol",
 			   "%63s", protocol);
-	अगर (err <= 0)
-		म_नकल(protocol, "unspecified, assuming default");
-	अन्यथा अगर (0 == म_भेद(protocol, XEN_IO_PROTO_ABI_NATIVE))
-		blkअगर->blk_protocol = BLKIF_PROTOCOL_NATIVE;
-	अन्यथा अगर (0 == म_भेद(protocol, XEN_IO_PROTO_ABI_X86_32))
-		blkअगर->blk_protocol = BLKIF_PROTOCOL_X86_32;
-	अन्यथा अगर (0 == म_भेद(protocol, XEN_IO_PROTO_ABI_X86_64))
-		blkअगर->blk_protocol = BLKIF_PROTOCOL_X86_64;
-	अन्यथा अणु
+	if (err <= 0)
+		strcpy(protocol, "unspecified, assuming default");
+	else if (0 == strcmp(protocol, XEN_IO_PROTO_ABI_NATIVE))
+		blkif->blk_protocol = BLKIF_PROTOCOL_NATIVE;
+	else if (0 == strcmp(protocol, XEN_IO_PROTO_ABI_X86_32))
+		blkif->blk_protocol = BLKIF_PROTOCOL_X86_32;
+	else if (0 == strcmp(protocol, XEN_IO_PROTO_ABI_X86_64))
+		blkif->blk_protocol = BLKIF_PROTOCOL_X86_64;
+	else {
 		xenbus_dev_fatal(dev, err, "unknown fe protocol %s", protocol);
-		वापस -ENOSYS;
-	पूर्ण
-	अगर (blkअगर->vbd.feature_gnt_persistent)
-		blkअगर->vbd.feature_gnt_persistent =
-			xenbus_पढ़ो_अचिन्हित(dev->otherend,
+		return -ENOSYS;
+	}
+	if (blkif->vbd.feature_gnt_persistent)
+		blkif->vbd.feature_gnt_persistent =
+			xenbus_read_unsigned(dev->otherend,
 					"feature-persistent", 0);
 
-	blkअगर->vbd.overflow_max_grants = 0;
+	blkif->vbd.overflow_max_grants = 0;
 
 	/*
 	 * Read the number of hardware queues from frontend.
 	 */
-	requested_num_queues = xenbus_पढ़ो_अचिन्हित(dev->otherend,
+	requested_num_queues = xenbus_read_unsigned(dev->otherend,
 						    "multi-queue-num-queues",
 						    1);
-	अगर (requested_num_queues > xenblk_max_queues
-	    || requested_num_queues == 0) अणु
+	if (requested_num_queues > xenblk_max_queues
+	    || requested_num_queues == 0) {
 		/* Buggy or malicious guest. */
 		xenbus_dev_fatal(dev, err,
 				"guest requested %u queues, exceeding the maximum of %u.",
 				requested_num_queues, xenblk_max_queues);
-		वापस -ENOSYS;
-	पूर्ण
-	blkअगर->nr_rings = requested_num_queues;
-	अगर (xen_blkअगर_alloc_rings(blkअगर))
-		वापस -ENOMEM;
+		return -ENOSYS;
+	}
+	blkif->nr_rings = requested_num_queues;
+	if (xen_blkif_alloc_rings(blkif))
+		return -ENOMEM;
 
 	pr_info("%s: using %d queues, protocol %d (%s) %s\n", dev->nodename,
-		 blkअगर->nr_rings, blkअगर->blk_protocol, protocol,
-		 blkअगर->vbd.feature_gnt_persistent ? "persistent grants" : "");
+		 blkif->nr_rings, blkif->blk_protocol, protocol,
+		 blkif->vbd.feature_gnt_persistent ? "persistent grants" : "");
 
-	err = xenbus_म_पूछो(XBT_NIL, dev->otherend, "ring-page-order", "%u",
+	err = xenbus_scanf(XBT_NIL, dev->otherend, "ring-page-order", "%u",
 			   &ring_page_order);
-	अगर (err != 1) अणु
-		blkअगर->nr_ring_pages = 1;
-		blkअगर->multi_ref = false;
-	पूर्ण अन्यथा अगर (ring_page_order <= xen_blkअगर_max_ring_order) अणु
-		blkअगर->nr_ring_pages = 1 << ring_page_order;
-		blkअगर->multi_ref = true;
-	पूर्ण अन्यथा अणु
+	if (err != 1) {
+		blkif->nr_ring_pages = 1;
+		blkif->multi_ref = false;
+	} else if (ring_page_order <= xen_blkif_max_ring_order) {
+		blkif->nr_ring_pages = 1 << ring_page_order;
+		blkif->multi_ref = true;
+	} else {
 		err = -EINVAL;
 		xenbus_dev_fatal(dev, err,
 				 "requested ring page order %d exceed max:%d",
 				 ring_page_order,
-				 xen_blkअगर_max_ring_order);
-		वापस err;
-	पूर्ण
+				 xen_blkif_max_ring_order);
+		return err;
+	}
 
-	अगर (blkअगर->nr_rings == 1)
-		वापस पढ़ो_per_ring_refs(&blkअगर->rings[0], dev->otherend);
-	अन्यथा अणु
-		xspathsize = म_माप(dev->otherend) + xenstore_path_ext_size;
-		xspath = kदो_स्मृति(xspathsize, GFP_KERNEL);
-		अगर (!xspath) अणु
+	if (blkif->nr_rings == 1)
+		return read_per_ring_refs(&blkif->rings[0], dev->otherend);
+	else {
+		xspathsize = strlen(dev->otherend) + xenstore_path_ext_size;
+		xspath = kmalloc(xspathsize, GFP_KERNEL);
+		if (!xspath) {
 			xenbus_dev_fatal(dev, -ENOMEM, "reading ring references");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		क्रम (i = 0; i < blkअगर->nr_rings; i++) अणु
-			स_रखो(xspath, 0, xspathsize);
-			snम_लिखो(xspath, xspathsize, "%s/queue-%u", dev->otherend, i);
-			err = पढ़ो_per_ring_refs(&blkअगर->rings[i], xspath);
-			अगर (err) अणु
-				kमुक्त(xspath);
-				वापस err;
-			पूर्ण
-		पूर्ण
-		kमुक्त(xspath);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		for (i = 0; i < blkif->nr_rings; i++) {
+			memset(xspath, 0, xspathsize);
+			snprintf(xspath, xspathsize, "%s/queue-%u", dev->otherend, i);
+			err = read_per_ring_refs(&blkif->rings[i], xspath);
+			if (err) {
+				kfree(xspath);
+				return err;
+			}
+		}
+		kfree(xspath);
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा xenbus_device_id xen_blkbk_ids[] = अणु
-	अणु "vbd" पूर्ण,
-	अणु "" पूर्ण
-पूर्ण;
+static const struct xenbus_device_id xen_blkbk_ids[] = {
+	{ "vbd" },
+	{ "" }
+};
 
-अटल काष्ठा xenbus_driver xen_blkbk_driver = अणु
+static struct xenbus_driver xen_blkbk_driver = {
 	.ids  = xen_blkbk_ids,
 	.probe = xen_blkbk_probe,
-	.हटाओ = xen_blkbk_हटाओ,
+	.remove = xen_blkbk_remove,
 	.otherend_changed = frontend_changed,
 	.allow_rebind = true,
 	.reclaim_memory = reclaim_memory,
-पूर्ण;
+};
 
-पूर्णांक xen_blkअगर_xenbus_init(व्योम)
-अणु
-	वापस xenbus_रेजिस्टर_backend(&xen_blkbk_driver);
-पूर्ण
+int xen_blkif_xenbus_init(void)
+{
+	return xenbus_register_backend(&xen_blkbk_driver);
+}
 
-व्योम xen_blkअगर_xenbus_fini(व्योम)
-अणु
-	xenbus_unरेजिस्टर_driver(&xen_blkbk_driver);
-पूर्ण
+void xen_blkif_xenbus_fini(void)
+{
+	xenbus_unregister_driver(&xen_blkbk_driver);
+}

@@ -1,247 +1,246 @@
-<शैली गुरु>
 /*
- * Common INTC2 रेजिस्टर accessors
+ * Common INTC2 register accessors
  *
  * Copyright (C) 2007, 2008 Magnus Damm
  * Copyright (C) 2009, 2010 Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
-#समावेश <linux/पन.स>
-#समावेश "internals.h"
+#include <linux/io.h>
+#include "internals.h"
 
-अचिन्हित दीर्घ पूर्णांकc_phys_to_virt(काष्ठा पूर्णांकc_desc_पूर्णांक *d, अचिन्हित दीर्घ address)
-अणु
-	काष्ठा पूर्णांकc_winकरोw *winकरोw;
-	पूर्णांक k;
+unsigned long intc_phys_to_virt(struct intc_desc_int *d, unsigned long address)
+{
+	struct intc_window *window;
+	int k;
 
-	/* scan through physical winकरोws and convert address */
-	क्रम (k = 0; k < d->nr_winकरोws; k++) अणु
-		winकरोw = d->winकरोw + k;
+	/* scan through physical windows and convert address */
+	for (k = 0; k < d->nr_windows; k++) {
+		window = d->window + k;
 
-		अगर (address < winकरोw->phys)
-			जारी;
+		if (address < window->phys)
+			continue;
 
-		अगर (address >= (winकरोw->phys + winकरोw->size))
-			जारी;
+		if (address >= (window->phys + window->size))
+			continue;
 
-		address -= winकरोw->phys;
-		address += (अचिन्हित दीर्घ)winकरोw->virt;
+		address -= window->phys;
+		address += (unsigned long)window->virt;
 
-		वापस address;
-	पूर्ण
+		return address;
+	}
 
-	/* no winकरोws defined, रेजिस्टर must be 1:1 mapped virt:phys */
-	वापस address;
-पूर्ण
+	/* no windows defined, register must be 1:1 mapped virt:phys */
+	return address;
+}
 
-अचिन्हित पूर्णांक पूर्णांकc_get_reg(काष्ठा पूर्णांकc_desc_पूर्णांक *d, अचिन्हित दीर्घ address)
-अणु
-	अचिन्हित पूर्णांक k;
+unsigned int intc_get_reg(struct intc_desc_int *d, unsigned long address)
+{
+	unsigned int k;
 
-	address = पूर्णांकc_phys_to_virt(d, address);
+	address = intc_phys_to_virt(d, address);
 
-	क्रम (k = 0; k < d->nr_reg; k++) अणु
-		अगर (d->reg[k] == address)
-			वापस k;
-	पूर्ण
+	for (k = 0; k < d->nr_reg; k++) {
+		if (d->reg[k] == address)
+			return k;
+	}
 
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित पूर्णांक पूर्णांकc_set_field_from_handle(अचिन्हित पूर्णांक value,
-					अचिन्हित पूर्णांक field_value,
-					अचिन्हित पूर्णांक handle)
-अणु
-	अचिन्हित पूर्णांक width = _INTC_WIDTH(handle);
-	अचिन्हित पूर्णांक shअगरt = _INTC_SHIFT(handle);
+unsigned int intc_set_field_from_handle(unsigned int value,
+					unsigned int field_value,
+					unsigned int handle)
+{
+	unsigned int width = _INTC_WIDTH(handle);
+	unsigned int shift = _INTC_SHIFT(handle);
 
-	value &= ~(((1 << width) - 1) << shअगरt);
-	value |= field_value << shअगरt;
-	वापस value;
-पूर्ण
+	value &= ~(((1 << width) - 1) << shift);
+	value |= field_value << shift;
+	return value;
+}
 
-अचिन्हित दीर्घ पूर्णांकc_get_field_from_handle(अचिन्हित पूर्णांक value, अचिन्हित पूर्णांक handle)
-अणु
-	अचिन्हित पूर्णांक width = _INTC_WIDTH(handle);
-	अचिन्हित पूर्णांक shअगरt = _INTC_SHIFT(handle);
-	अचिन्हित पूर्णांक mask = ((1 << width) - 1) << shअगरt;
+unsigned long intc_get_field_from_handle(unsigned int value, unsigned int handle)
+{
+	unsigned int width = _INTC_WIDTH(handle);
+	unsigned int shift = _INTC_SHIFT(handle);
+	unsigned int mask = ((1 << width) - 1) << shift;
 
-	वापस (value & mask) >> shअगरt;
-पूर्ण
+	return (value & mask) >> shift;
+}
 
-अटल अचिन्हित दीर्घ test_8(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			    अचिन्हित दीर्घ ignore)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	वापस पूर्णांकc_get_field_from_handle(__raw_पढ़ोb(ptr), h);
-पूर्ण
+static unsigned long test_8(unsigned long addr, unsigned long h,
+			    unsigned long ignore)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	return intc_get_field_from_handle(__raw_readb(ptr), h);
+}
 
-अटल अचिन्हित दीर्घ test_16(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			     अचिन्हित दीर्घ ignore)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	वापस पूर्णांकc_get_field_from_handle(__raw_पढ़ोw(ptr), h);
-पूर्ण
+static unsigned long test_16(unsigned long addr, unsigned long h,
+			     unsigned long ignore)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	return intc_get_field_from_handle(__raw_readw(ptr), h);
+}
 
-अटल अचिन्हित दीर्घ test_32(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			     अचिन्हित दीर्घ ignore)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	वापस पूर्णांकc_get_field_from_handle(__raw_पढ़ोl(ptr), h);
-पूर्ण
+static unsigned long test_32(unsigned long addr, unsigned long h,
+			     unsigned long ignore)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	return intc_get_field_from_handle(__raw_readl(ptr), h);
+}
 
-अटल अचिन्हित दीर्घ ग_लिखो_8(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			     अचिन्हित दीर्घ data)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	__raw_ग_लिखोb(पूर्णांकc_set_field_from_handle(0, data, h), ptr);
-	(व्योम)__raw_पढ़ोb(ptr);	/* Defeat ग_लिखो posting */
-	वापस 0;
-पूर्ण
+static unsigned long write_8(unsigned long addr, unsigned long h,
+			     unsigned long data)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	__raw_writeb(intc_set_field_from_handle(0, data, h), ptr);
+	(void)__raw_readb(ptr);	/* Defeat write posting */
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ ग_लिखो_16(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			      अचिन्हित दीर्घ data)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	__raw_ग_लिखोw(पूर्णांकc_set_field_from_handle(0, data, h), ptr);
-	(व्योम)__raw_पढ़ोw(ptr);	/* Defeat ग_लिखो posting */
-	वापस 0;
-पूर्ण
+static unsigned long write_16(unsigned long addr, unsigned long h,
+			      unsigned long data)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	__raw_writew(intc_set_field_from_handle(0, data, h), ptr);
+	(void)__raw_readw(ptr);	/* Defeat write posting */
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ ग_लिखो_32(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			      अचिन्हित दीर्घ data)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	__raw_ग_लिखोl(पूर्णांकc_set_field_from_handle(0, data, h), ptr);
-	(व्योम)__raw_पढ़ोl(ptr);	/* Defeat ग_लिखो posting */
-	वापस 0;
-पूर्ण
+static unsigned long write_32(unsigned long addr, unsigned long h,
+			      unsigned long data)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	__raw_writel(intc_set_field_from_handle(0, data, h), ptr);
+	(void)__raw_readl(ptr);	/* Defeat write posting */
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ modअगरy_8(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			      अचिन्हित दीर्घ data)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक value;
+static unsigned long modify_8(unsigned long addr, unsigned long h,
+			      unsigned long data)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	unsigned long flags;
+	unsigned int value;
 	local_irq_save(flags);
-	value = पूर्णांकc_set_field_from_handle(__raw_पढ़ोb(ptr), data, h);
-	__raw_ग_लिखोb(value, ptr);
-	(व्योम)__raw_पढ़ोb(ptr);	/* Defeat ग_लिखो posting */
+	value = intc_set_field_from_handle(__raw_readb(ptr), data, h);
+	__raw_writeb(value, ptr);
+	(void)__raw_readb(ptr);	/* Defeat write posting */
 	local_irq_restore(flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ modअगरy_16(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			       अचिन्हित दीर्घ data)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक value;
+static unsigned long modify_16(unsigned long addr, unsigned long h,
+			       unsigned long data)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	unsigned long flags;
+	unsigned int value;
 	local_irq_save(flags);
-	value = पूर्णांकc_set_field_from_handle(__raw_पढ़ोw(ptr), data, h);
-	__raw_ग_लिखोw(value, ptr);
-	(व्योम)__raw_पढ़ोw(ptr);	/* Defeat ग_लिखो posting */
+	value = intc_set_field_from_handle(__raw_readw(ptr), data, h);
+	__raw_writew(value, ptr);
+	(void)__raw_readw(ptr);	/* Defeat write posting */
 	local_irq_restore(flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ modअगरy_32(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ h,
-			       अचिन्हित दीर्घ data)
-अणु
-	व्योम __iomem *ptr = (व्योम __iomem *)addr;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक value;
+static unsigned long modify_32(unsigned long addr, unsigned long h,
+			       unsigned long data)
+{
+	void __iomem *ptr = (void __iomem *)addr;
+	unsigned long flags;
+	unsigned int value;
 	local_irq_save(flags);
-	value = पूर्णांकc_set_field_from_handle(__raw_पढ़ोl(ptr), data, h);
-	__raw_ग_लिखोl(value, ptr);
-	(व्योम)__raw_पढ़ोl(ptr);	/* Defeat ग_लिखो posting */
+	value = intc_set_field_from_handle(__raw_readl(ptr), data, h);
+	__raw_writel(value, ptr);
+	(void)__raw_readl(ptr);	/* Defeat write posting */
 	local_irq_restore(flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ पूर्णांकc_mode_field(अचिन्हित दीर्घ addr,
-				     अचिन्हित दीर्घ handle,
-				     अचिन्हित दीर्घ (*fn)(अचिन्हित दीर्घ,
-						अचिन्हित दीर्घ,
-						अचिन्हित दीर्घ),
-				     अचिन्हित पूर्णांक irq)
-अणु
-	वापस fn(addr, handle, ((1 << _INTC_WIDTH(handle)) - 1));
-पूर्ण
+static unsigned long intc_mode_field(unsigned long addr,
+				     unsigned long handle,
+				     unsigned long (*fn)(unsigned long,
+						unsigned long,
+						unsigned long),
+				     unsigned int irq)
+{
+	return fn(addr, handle, ((1 << _INTC_WIDTH(handle)) - 1));
+}
 
-अटल अचिन्हित दीर्घ पूर्णांकc_mode_zero(अचिन्हित दीर्घ addr,
-				    अचिन्हित दीर्घ handle,
-				    अचिन्हित दीर्घ (*fn)(अचिन्हित दीर्घ,
-					       अचिन्हित दीर्घ,
-					       अचिन्हित दीर्घ),
-				    अचिन्हित पूर्णांक irq)
-अणु
-	वापस fn(addr, handle, 0);
-पूर्ण
+static unsigned long intc_mode_zero(unsigned long addr,
+				    unsigned long handle,
+				    unsigned long (*fn)(unsigned long,
+					       unsigned long,
+					       unsigned long),
+				    unsigned int irq)
+{
+	return fn(addr, handle, 0);
+}
 
-अटल अचिन्हित दीर्घ पूर्णांकc_mode_prio(अचिन्हित दीर्घ addr,
-				    अचिन्हित दीर्घ handle,
-				    अचिन्हित दीर्घ (*fn)(अचिन्हित दीर्घ,
-					       अचिन्हित दीर्घ,
-					       अचिन्हित दीर्घ),
-				    अचिन्हित पूर्णांक irq)
-अणु
-	वापस fn(addr, handle, पूर्णांकc_get_prio_level(irq));
-पूर्ण
+static unsigned long intc_mode_prio(unsigned long addr,
+				    unsigned long handle,
+				    unsigned long (*fn)(unsigned long,
+					       unsigned long,
+					       unsigned long),
+				    unsigned int irq)
+{
+	return fn(addr, handle, intc_get_prio_level(irq));
+}
 
-अचिन्हित दीर्घ (*पूर्णांकc_reg_fns[])(अचिन्हित दीर्घ addr,
-				अचिन्हित दीर्घ h,
-				अचिन्हित दीर्घ data) = अणु
+unsigned long (*intc_reg_fns[])(unsigned long addr,
+				unsigned long h,
+				unsigned long data) = {
 	[REG_FN_TEST_BASE + 0] = test_8,
 	[REG_FN_TEST_BASE + 1] = test_16,
 	[REG_FN_TEST_BASE + 3] = test_32,
-	[REG_FN_WRITE_BASE + 0] = ग_लिखो_8,
-	[REG_FN_WRITE_BASE + 1] = ग_लिखो_16,
-	[REG_FN_WRITE_BASE + 3] = ग_लिखो_32,
-	[REG_FN_MODIFY_BASE + 0] = modअगरy_8,
-	[REG_FN_MODIFY_BASE + 1] = modअगरy_16,
-	[REG_FN_MODIFY_BASE + 3] = modअगरy_32,
-पूर्ण;
+	[REG_FN_WRITE_BASE + 0] = write_8,
+	[REG_FN_WRITE_BASE + 1] = write_16,
+	[REG_FN_WRITE_BASE + 3] = write_32,
+	[REG_FN_MODIFY_BASE + 0] = modify_8,
+	[REG_FN_MODIFY_BASE + 1] = modify_16,
+	[REG_FN_MODIFY_BASE + 3] = modify_32,
+};
 
-अचिन्हित दीर्घ (*पूर्णांकc_enable_fns[])(अचिन्हित दीर्घ addr,
-				   अचिन्हित दीर्घ handle,
-				   अचिन्हित दीर्घ (*fn)(अचिन्हित दीर्घ,
-					    अचिन्हित दीर्घ,
-					    अचिन्हित दीर्घ),
-				   अचिन्हित पूर्णांक irq) = अणु
-	[MODE_ENABLE_REG] = पूर्णांकc_mode_field,
-	[MODE_MASK_REG] = पूर्णांकc_mode_zero,
-	[MODE_DUAL_REG] = पूर्णांकc_mode_field,
-	[MODE_PRIO_REG] = पूर्णांकc_mode_prio,
-	[MODE_PCLR_REG] = पूर्णांकc_mode_prio,
-पूर्ण;
+unsigned long (*intc_enable_fns[])(unsigned long addr,
+				   unsigned long handle,
+				   unsigned long (*fn)(unsigned long,
+					    unsigned long,
+					    unsigned long),
+				   unsigned int irq) = {
+	[MODE_ENABLE_REG] = intc_mode_field,
+	[MODE_MASK_REG] = intc_mode_zero,
+	[MODE_DUAL_REG] = intc_mode_field,
+	[MODE_PRIO_REG] = intc_mode_prio,
+	[MODE_PCLR_REG] = intc_mode_prio,
+};
 
-अचिन्हित दीर्घ (*पूर्णांकc_disable_fns[])(अचिन्हित दीर्घ addr,
-				    अचिन्हित दीर्घ handle,
-				    अचिन्हित दीर्घ (*fn)(अचिन्हित दीर्घ,
-					     अचिन्हित दीर्घ,
-					     अचिन्हित दीर्घ),
-				    अचिन्हित पूर्णांक irq) = अणु
-	[MODE_ENABLE_REG] = पूर्णांकc_mode_zero,
-	[MODE_MASK_REG] = पूर्णांकc_mode_field,
-	[MODE_DUAL_REG] = पूर्णांकc_mode_field,
-	[MODE_PRIO_REG] = पूर्णांकc_mode_zero,
-	[MODE_PCLR_REG] = पूर्णांकc_mode_field,
-पूर्ण;
+unsigned long (*intc_disable_fns[])(unsigned long addr,
+				    unsigned long handle,
+				    unsigned long (*fn)(unsigned long,
+					     unsigned long,
+					     unsigned long),
+				    unsigned int irq) = {
+	[MODE_ENABLE_REG] = intc_mode_zero,
+	[MODE_MASK_REG] = intc_mode_field,
+	[MODE_DUAL_REG] = intc_mode_field,
+	[MODE_PRIO_REG] = intc_mode_zero,
+	[MODE_PCLR_REG] = intc_mode_field,
+};
 
-अचिन्हित दीर्घ (*पूर्णांकc_enable_noprio_fns[])(अचिन्हित दीर्घ addr,
-					  अचिन्हित दीर्घ handle,
-					  अचिन्हित दीर्घ (*fn)(अचिन्हित दीर्घ,
-						अचिन्हित दीर्घ,
-						अचिन्हित दीर्घ),
-					  अचिन्हित पूर्णांक irq) = अणु
-	[MODE_ENABLE_REG] = पूर्णांकc_mode_field,
-	[MODE_MASK_REG] = पूर्णांकc_mode_zero,
-	[MODE_DUAL_REG] = पूर्णांकc_mode_field,
-	[MODE_PRIO_REG] = पूर्णांकc_mode_field,
-	[MODE_PCLR_REG] = पूर्णांकc_mode_field,
-पूर्ण;
+unsigned long (*intc_enable_noprio_fns[])(unsigned long addr,
+					  unsigned long handle,
+					  unsigned long (*fn)(unsigned long,
+						unsigned long,
+						unsigned long),
+					  unsigned int irq) = {
+	[MODE_ENABLE_REG] = intc_mode_field,
+	[MODE_MASK_REG] = intc_mode_zero,
+	[MODE_DUAL_REG] = intc_mode_field,
+	[MODE_PRIO_REG] = intc_mode_field,
+	[MODE_PCLR_REG] = intc_mode_field,
+};

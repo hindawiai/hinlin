@@ -1,227 +1,226 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  Routines क्रम control of 16-bit SoundBlaster cards and clones
+ *  Routines for control of 16-bit SoundBlaster cards and clones
  *  Note: This is very ugly hardware which uses one 8-bit DMA channel and
- *        second 16-bit DMA channel. Unक्रमtunately 8-bit DMA channel can't
+ *        second 16-bit DMA channel. Unfortunately 8-bit DMA channel can't
  *        transfer 16-bit samples and 16-bit DMA channels can't transfer
  *        8-bit samples. This make full duplex more complicated than
- *        can be... People, करोn't buy these soundcards क्रम full 16-bit
+ *        can be... People, don't buy these soundcards for full 16-bit
  *        duplex!!!
- *  Note: 16-bit wide is asचिन्हित to first direction which made request.
- *        With full duplex - playback is preferred with असलtract layer.
+ *  Note: 16-bit wide is assigned to first direction which made request.
+ *        With full duplex - playback is preferred with abstract layer.
  *
  *  Note: Some chip revisions have hardware bug. Changing capture
  *        channel from full-duplex 8bit DMA to 16bit DMA will block
  *        16bit DMA transfers from DSP chip (capture) until 8bit transfer
- *        to DSP chip (playback) starts. This bug can be aव्योमed with
+ *        to DSP chip (playback) starts. This bug can be avoided with
  *        "16bit DMA Allocation" setting set to Playback or Capture.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/dma.h>
-#समावेश <linux/init.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/module.h>
-#समावेश <sound/core.h>
-#समावेश <sound/sb.h>
-#समावेश <sound/sb16_csp.h>
-#समावेश <sound/mpu401.h>
-#समावेश <sound/control.h>
-#समावेश <sound/info.h>
+#include <linux/io.h>
+#include <asm/dma.h>
+#include <linux/init.h>
+#include <linux/time.h>
+#include <linux/module.h>
+#include <sound/core.h>
+#include <sound/sb.h>
+#include <sound/sb16_csp.h>
+#include <sound/mpu401.h>
+#include <sound/control.h>
+#include <sound/info.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Routines for control of 16-bit SoundBlaster cards and clones");
 MODULE_LICENSE("GPL");
 
-#घोषणा runसमय_क्रमmat_bits(runसमय) \
-	((अचिन्हित पूर्णांक)pcm_क्रमmat_to_bits((runसमय)->क्रमmat))
+#define runtime_format_bits(runtime) \
+	((unsigned int)pcm_format_to_bits((runtime)->format))
 
-#अगर_घोषित CONFIG_SND_SB16_CSP
-अटल व्योम snd_sb16_csp_playback_prepare(काष्ठा snd_sb *chip, काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	अगर (chip->hardware == SB_HW_16CSP) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+#ifdef CONFIG_SND_SB16_CSP
+static void snd_sb16_csp_playback_prepare(struct snd_sb *chip, struct snd_pcm_runtime *runtime)
+{
+	if (chip->hardware == SB_HW_16CSP) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->running & SNDRV_SB_CSP_ST_LOADED) अणु
+		if (csp->running & SNDRV_SB_CSP_ST_LOADED) {
 			/* manually loaded codec */
-			अगर ((csp->mode & SNDRV_SB_CSP_MODE_DSP_WRITE) &&
-			    (runसमय_क्रमmat_bits(runसमय) == csp->acc_क्रमmat)) अणु
-				/* Supported runसमय PCM क्रमmat क्रम playback */
-				अगर (csp->ops.csp_use(csp) == 0) अणु
+			if ((csp->mode & SNDRV_SB_CSP_MODE_DSP_WRITE) &&
+			    (runtime_format_bits(runtime) == csp->acc_format)) {
+				/* Supported runtime PCM format for playback */
+				if (csp->ops.csp_use(csp) == 0) {
 					/* If CSP was successfully acquired */
-					जाओ __start_CSP;
-				पूर्ण
-			पूर्ण अन्यथा अगर ((csp->mode & SNDRV_SB_CSP_MODE_QSOUND) && (csp->q_enabled)) अणु
+					goto __start_CSP;
+				}
+			} else if ((csp->mode & SNDRV_SB_CSP_MODE_QSOUND) && (csp->q_enabled)) {
 				/* QSound decoder is loaded and enabled */
-				अगर (runसमय_क्रमmat_bits(runसमय) & (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U8 |
-							      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE)) अणु
-					/* Only क्रम simple PCM क्रमmats */
-					अगर (csp->ops.csp_use(csp) == 0) अणु
+				if (runtime_format_bits(runtime) & (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_U8 |
+							      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE)) {
+					/* Only for simple PCM formats */
+					if (csp->ops.csp_use(csp) == 0) {
 						/* If CSP was successfully acquired */
-						जाओ __start_CSP;
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (csp->ops.csp_use(csp) == 0) अणु
-			/* Acquire CSP and try to स्वतःload hardware codec */
-			अगर (csp->ops.csp_स्वतःload(csp, runसमय->क्रमmat, SNDRV_SB_CSP_MODE_DSP_WRITE)) अणु
-				/* Unsupported क्रमmat, release CSP */
+						goto __start_CSP;
+					}
+				}
+			}
+		} else if (csp->ops.csp_use(csp) == 0) {
+			/* Acquire CSP and try to autoload hardware codec */
+			if (csp->ops.csp_autoload(csp, runtime->format, SNDRV_SB_CSP_MODE_DSP_WRITE)) {
+				/* Unsupported format, release CSP */
 				csp->ops.csp_unuse(csp);
-			पूर्ण अन्यथा अणु
+			} else {
 		      __start_CSP:
 				/* Try to start CSP */
-				अगर (csp->ops.csp_start(csp, (chip->mode & SB_MODE_PLAYBACK_16) ?
+				if (csp->ops.csp_start(csp, (chip->mode & SB_MODE_PLAYBACK_16) ?
 						       SNDRV_SB_CSP_SAMPLE_16BIT : SNDRV_SB_CSP_SAMPLE_8BIT,
-						       (runसमय->channels > 1) ?
-						       SNDRV_SB_CSP_STEREO : SNDRV_SB_CSP_MONO)) अणु
+						       (runtime->channels > 1) ?
+						       SNDRV_SB_CSP_STEREO : SNDRV_SB_CSP_MONO)) {
 					/* Failed, release CSP */
 					csp->ops.csp_unuse(csp);
-				पूर्ण अन्यथा अणु
+				} else {
 					/* Success, CSP acquired and running */
-					chip->खोलो = SNDRV_SB_CSP_MODE_DSP_WRITE;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+					chip->open = SNDRV_SB_CSP_MODE_DSP_WRITE;
+				}
+			}
+		}
+	}
+}
 
-अटल व्योम snd_sb16_csp_capture_prepare(काष्ठा snd_sb *chip, काष्ठा snd_pcm_runसमय *runसमय)
-अणु
-	अगर (chip->hardware == SB_HW_16CSP) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+static void snd_sb16_csp_capture_prepare(struct snd_sb *chip, struct snd_pcm_runtime *runtime)
+{
+	if (chip->hardware == SB_HW_16CSP) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->running & SNDRV_SB_CSP_ST_LOADED) अणु
+		if (csp->running & SNDRV_SB_CSP_ST_LOADED) {
 			/* manually loaded codec */
-			अगर ((csp->mode & SNDRV_SB_CSP_MODE_DSP_READ) &&
-			    (runसमय_क्रमmat_bits(runसमय) == csp->acc_क्रमmat)) अणु
-				/* Supported runसमय PCM क्रमmat क्रम capture */
-				अगर (csp->ops.csp_use(csp) == 0) अणु
+			if ((csp->mode & SNDRV_SB_CSP_MODE_DSP_READ) &&
+			    (runtime_format_bits(runtime) == csp->acc_format)) {
+				/* Supported runtime PCM format for capture */
+				if (csp->ops.csp_use(csp) == 0) {
 					/* If CSP was successfully acquired */
-					जाओ __start_CSP;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (csp->ops.csp_use(csp) == 0) अणु
-			/* Acquire CSP and try to स्वतःload hardware codec */
-			अगर (csp->ops.csp_स्वतःload(csp, runसमय->क्रमmat, SNDRV_SB_CSP_MODE_DSP_READ)) अणु
-				/* Unsupported क्रमmat, release CSP */
+					goto __start_CSP;
+				}
+			}
+		} else if (csp->ops.csp_use(csp) == 0) {
+			/* Acquire CSP and try to autoload hardware codec */
+			if (csp->ops.csp_autoload(csp, runtime->format, SNDRV_SB_CSP_MODE_DSP_READ)) {
+				/* Unsupported format, release CSP */
 				csp->ops.csp_unuse(csp);
-			पूर्ण अन्यथा अणु
+			} else {
 		      __start_CSP:
 				/* Try to start CSP */
-				अगर (csp->ops.csp_start(csp, (chip->mode & SB_MODE_CAPTURE_16) ?
+				if (csp->ops.csp_start(csp, (chip->mode & SB_MODE_CAPTURE_16) ?
 						       SNDRV_SB_CSP_SAMPLE_16BIT : SNDRV_SB_CSP_SAMPLE_8BIT,
-						       (runसमय->channels > 1) ?
-						       SNDRV_SB_CSP_STEREO : SNDRV_SB_CSP_MONO)) अणु
+						       (runtime->channels > 1) ?
+						       SNDRV_SB_CSP_STEREO : SNDRV_SB_CSP_MONO)) {
 					/* Failed, release CSP */
 					csp->ops.csp_unuse(csp);
-				पूर्ण अन्यथा अणु
+				} else {
 					/* Success, CSP acquired and running */
-					chip->खोलो = SNDRV_SB_CSP_MODE_DSP_READ;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+					chip->open = SNDRV_SB_CSP_MODE_DSP_READ;
+				}
+			}
+		}
+	}
+}
 
-अटल व्योम snd_sb16_csp_update(काष्ठा snd_sb *chip)
-अणु
-	अगर (chip->hardware == SB_HW_16CSP) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+static void snd_sb16_csp_update(struct snd_sb *chip)
+{
+	if (chip->hardware == SB_HW_16CSP) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->qpos_changed) अणु
+		if (csp->qpos_changed) {
 			spin_lock(&chip->reg_lock);
 			csp->ops.csp_qsound_transfer (csp);
 			spin_unlock(&chip->reg_lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम snd_sb16_csp_playback_खोलो(काष्ठा snd_sb *chip, काष्ठा snd_pcm_runसमय *runसमय)
-अणु
+static void snd_sb16_csp_playback_open(struct snd_sb *chip, struct snd_pcm_runtime *runtime)
+{
 	/* CSP decoders (QSound excluded) support only 16bit transfers */
-	अगर (chip->hardware == SB_HW_16CSP) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+	if (chip->hardware == SB_HW_16CSP) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->running & SNDRV_SB_CSP_ST_LOADED) अणु
+		if (csp->running & SNDRV_SB_CSP_ST_LOADED) {
 			/* manually loaded codec */
-			अगर (csp->mode & SNDRV_SB_CSP_MODE_DSP_WRITE) अणु
-				runसमय->hw.क्रमmats |= csp->acc_क्रमmat;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* स्वतःloaded codecs */
-			runसमय->hw.क्रमmats |= SNDRV_PCM_FMTBIT_MU_LAW | SNDRV_PCM_FMTBIT_A_LAW |
+			if (csp->mode & SNDRV_SB_CSP_MODE_DSP_WRITE) {
+				runtime->hw.formats |= csp->acc_format;
+			}
+		} else {
+			/* autoloaded codecs */
+			runtime->hw.formats |= SNDRV_PCM_FMTBIT_MU_LAW | SNDRV_PCM_FMTBIT_A_LAW |
 					       SNDRV_PCM_FMTBIT_IMA_ADPCM;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम snd_sb16_csp_playback_बंद(काष्ठा snd_sb *chip)
-अणु
-	अगर ((chip->hardware == SB_HW_16CSP) && (chip->खोलो == SNDRV_SB_CSP_MODE_DSP_WRITE)) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+static void snd_sb16_csp_playback_close(struct snd_sb *chip)
+{
+	if ((chip->hardware == SB_HW_16CSP) && (chip->open == SNDRV_SB_CSP_MODE_DSP_WRITE)) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->ops.csp_stop(csp) == 0) अणु
+		if (csp->ops.csp_stop(csp) == 0) {
 			csp->ops.csp_unuse(csp);
-			chip->खोलो = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			chip->open = 0;
+		}
+	}
+}
 
-अटल व्योम snd_sb16_csp_capture_खोलो(काष्ठा snd_sb *chip, काष्ठा snd_pcm_runसमय *runसमय)
-अणु
+static void snd_sb16_csp_capture_open(struct snd_sb *chip, struct snd_pcm_runtime *runtime)
+{
 	/* CSP coders support only 16bit transfers */
-	अगर (chip->hardware == SB_HW_16CSP) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+	if (chip->hardware == SB_HW_16CSP) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->running & SNDRV_SB_CSP_ST_LOADED) अणु
+		if (csp->running & SNDRV_SB_CSP_ST_LOADED) {
 			/* manually loaded codec */
-			अगर (csp->mode & SNDRV_SB_CSP_MODE_DSP_READ) अणु
-				runसमय->hw.क्रमmats |= csp->acc_क्रमmat;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* स्वतःloaded codecs */
-			runसमय->hw.क्रमmats |= SNDRV_PCM_FMTBIT_MU_LAW | SNDRV_PCM_FMTBIT_A_LAW |
+			if (csp->mode & SNDRV_SB_CSP_MODE_DSP_READ) {
+				runtime->hw.formats |= csp->acc_format;
+			}
+		} else {
+			/* autoloaded codecs */
+			runtime->hw.formats |= SNDRV_PCM_FMTBIT_MU_LAW | SNDRV_PCM_FMTBIT_A_LAW |
 					       SNDRV_PCM_FMTBIT_IMA_ADPCM;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम snd_sb16_csp_capture_बंद(काष्ठा snd_sb *chip)
-अणु
-	अगर ((chip->hardware == SB_HW_16CSP) && (chip->खोलो == SNDRV_SB_CSP_MODE_DSP_READ)) अणु
-		काष्ठा snd_sb_csp *csp = chip->csp;
+static void snd_sb16_csp_capture_close(struct snd_sb *chip)
+{
+	if ((chip->hardware == SB_HW_16CSP) && (chip->open == SNDRV_SB_CSP_MODE_DSP_READ)) {
+		struct snd_sb_csp *csp = chip->csp;
 
-		अगर (csp->ops.csp_stop(csp) == 0) अणु
+		if (csp->ops.csp_stop(csp) == 0) {
 			csp->ops.csp_unuse(csp);
-			chip->खोलो = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
-#अन्यथा
-#घोषणा snd_sb16_csp_playback_prepare(chip, runसमय)	/*nop*/
-#घोषणा snd_sb16_csp_capture_prepare(chip, runसमय)	/*nop*/
-#घोषणा snd_sb16_csp_update(chip)			/*nop*/
-#घोषणा snd_sb16_csp_playback_खोलो(chip, runसमय)	/*nop*/
-#घोषणा snd_sb16_csp_playback_बंद(chip)		/*nop*/
-#घोषणा snd_sb16_csp_capture_खोलो(chip, runसमय)	/*nop*/
-#घोषणा snd_sb16_csp_capture_बंद(chip)      	 	/*nop*/
-#पूर्ण_अगर
+			chip->open = 0;
+		}
+	}
+}
+#else
+#define snd_sb16_csp_playback_prepare(chip, runtime)	/*nop*/
+#define snd_sb16_csp_capture_prepare(chip, runtime)	/*nop*/
+#define snd_sb16_csp_update(chip)			/*nop*/
+#define snd_sb16_csp_playback_open(chip, runtime)	/*nop*/
+#define snd_sb16_csp_playback_close(chip)		/*nop*/
+#define snd_sb16_csp_capture_open(chip, runtime)	/*nop*/
+#define snd_sb16_csp_capture_close(chip)      	 	/*nop*/
+#endif
 
 
-अटल व्योम snd_sb16_setup_rate(काष्ठा snd_sb *chip,
-				अचिन्हित लघु rate,
-				पूर्णांक channel)
-अणु
-	अचिन्हित दीर्घ flags;
+static void snd_sb16_setup_rate(struct snd_sb *chip,
+				unsigned short rate,
+				int channel)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&chip->reg_lock, flags);
-	अगर (chip->mode & (channel == SNDRV_PCM_STREAM_PLAYBACK ? SB_MODE_PLAYBACK_16 : SB_MODE_CAPTURE_16))
+	if (chip->mode & (channel == SNDRV_PCM_STREAM_PLAYBACK ? SB_MODE_PLAYBACK_16 : SB_MODE_CAPTURE_16))
 		snd_sb_ack_16bit(chip);
-	अन्यथा
+	else
 		snd_sb_ack_8bit(chip);
-	अगर (!(chip->mode & SB_RATE_LOCK)) अणु
+	if (!(chip->mode & SB_RATE_LOCK)) {
 		chip->locked_rate = rate;
 		snd_sbdsp_command(chip, SB_DSP_SAMPLE_RATE_IN);
 		snd_sbdsp_command(chip, rate >> 8);
@@ -229,232 +228,232 @@ MODULE_LICENSE("GPL");
 		snd_sbdsp_command(chip, SB_DSP_SAMPLE_RATE_OUT);
 		snd_sbdsp_command(chip, rate >> 8);
 		snd_sbdsp_command(chip, rate & 0xff);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक snd_sb16_playback_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	अचिन्हित अक्षर क्रमmat;
-	अचिन्हित पूर्णांक size, count, dma;
+static int snd_sb16_playback_prepare(struct snd_pcm_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned char format;
+	unsigned int size, count, dma;
 
-	snd_sb16_csp_playback_prepare(chip, runसमय);
-	अगर (snd_pcm_क्रमmat_अचिन्हित(runसमय->क्रमmat) > 0) अणु
-		क्रमmat = runसमय->channels > 1 ? SB_DSP4_MODE_UNS_STEREO : SB_DSP4_MODE_UNS_MONO;
-	पूर्ण अन्यथा अणु
-		क्रमmat = runसमय->channels > 1 ? SB_DSP4_MODE_SIGN_STEREO : SB_DSP4_MODE_SIGN_MONO;
-	पूर्ण
+	snd_sb16_csp_playback_prepare(chip, runtime);
+	if (snd_pcm_format_unsigned(runtime->format) > 0) {
+		format = runtime->channels > 1 ? SB_DSP4_MODE_UNS_STEREO : SB_DSP4_MODE_UNS_MONO;
+	} else {
+		format = runtime->channels > 1 ? SB_DSP4_MODE_SIGN_STEREO : SB_DSP4_MODE_SIGN_MONO;
+	}
 
-	snd_sb16_setup_rate(chip, runसमय->rate, SNDRV_PCM_STREAM_PLAYBACK);
+	snd_sb16_setup_rate(chip, runtime->rate, SNDRV_PCM_STREAM_PLAYBACK);
 	size = chip->p_dma_size = snd_pcm_lib_buffer_bytes(substream);
 	dma = (chip->mode & SB_MODE_PLAYBACK_8) ? chip->dma8 : chip->dma16;
-	snd_dma_program(dma, runसमय->dma_addr, size, DMA_MODE_WRITE | DMA_AUTOINIT);
+	snd_dma_program(dma, runtime->dma_addr, size, DMA_MODE_WRITE | DMA_AUTOINIT);
 
 	count = snd_pcm_lib_period_bytes(substream);
 	spin_lock_irqsave(&chip->reg_lock, flags);
-	अगर (chip->mode & SB_MODE_PLAYBACK_16) अणु
+	if (chip->mode & SB_MODE_PLAYBACK_16) {
 		count >>= 1;
 		count--;
 		snd_sbdsp_command(chip, SB_DSP4_OUT16_AI);
-		snd_sbdsp_command(chip, क्रमmat);
+		snd_sbdsp_command(chip, format);
 		snd_sbdsp_command(chip, count & 0xff);
 		snd_sbdsp_command(chip, count >> 8);
 		snd_sbdsp_command(chip, SB_DSP_DMA16_OFF);
-	पूर्ण अन्यथा अणु
+	} else {
 		count--;
 		snd_sbdsp_command(chip, SB_DSP4_OUT8_AI);
-		snd_sbdsp_command(chip, क्रमmat);
+		snd_sbdsp_command(chip, format);
 		snd_sbdsp_command(chip, count & 0xff);
 		snd_sbdsp_command(chip, count >> 8);
 		snd_sbdsp_command(chip, SB_DSP_DMA8_OFF);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_playback_trigger(काष्ठा snd_pcm_substream *substream,
-				     पूर्णांक cmd)
-अणु
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक result = 0;
+static int snd_sb16_playback_trigger(struct snd_pcm_substream *substream,
+				     int cmd)
+{
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	int result = 0;
 
 	spin_lock(&chip->reg_lock);
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		chip->mode |= SB_RATE_LOCK_PLAYBACK;
 		snd_sbdsp_command(chip, chip->mode & SB_MODE_PLAYBACK_16 ? SB_DSP_DMA16_ON : SB_DSP_DMA8_ON);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 		snd_sbdsp_command(chip, chip->mode & SB_MODE_PLAYBACK_16 ? SB_DSP_DMA16_OFF : SB_DSP_DMA8_OFF);
-		/* next two lines are needed क्रम some types of DSP4 (SB AWE 32 - 4.13) */
-		अगर (chip->mode & SB_RATE_LOCK_CAPTURE)
+		/* next two lines are needed for some types of DSP4 (SB AWE 32 - 4.13) */
+		if (chip->mode & SB_RATE_LOCK_CAPTURE)
 			snd_sbdsp_command(chip, chip->mode & SB_MODE_CAPTURE_16 ? SB_DSP_DMA16_ON : SB_DSP_DMA8_ON);
 		chip->mode &= ~SB_RATE_LOCK_PLAYBACK;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		result = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock(&chip->reg_lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक snd_sb16_capture_prepare(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	अचिन्हित अक्षर क्रमmat;
-	अचिन्हित पूर्णांक size, count, dma;
+static int snd_sb16_capture_prepare(struct snd_pcm_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned char format;
+	unsigned int size, count, dma;
 
-	snd_sb16_csp_capture_prepare(chip, runसमय);
-	अगर (snd_pcm_क्रमmat_अचिन्हित(runसमय->क्रमmat) > 0) अणु
-		क्रमmat = runसमय->channels > 1 ? SB_DSP4_MODE_UNS_STEREO : SB_DSP4_MODE_UNS_MONO;
-	पूर्ण अन्यथा अणु
-		क्रमmat = runसमय->channels > 1 ? SB_DSP4_MODE_SIGN_STEREO : SB_DSP4_MODE_SIGN_MONO;
-	पूर्ण
-	snd_sb16_setup_rate(chip, runसमय->rate, SNDRV_PCM_STREAM_CAPTURE);
+	snd_sb16_csp_capture_prepare(chip, runtime);
+	if (snd_pcm_format_unsigned(runtime->format) > 0) {
+		format = runtime->channels > 1 ? SB_DSP4_MODE_UNS_STEREO : SB_DSP4_MODE_UNS_MONO;
+	} else {
+		format = runtime->channels > 1 ? SB_DSP4_MODE_SIGN_STEREO : SB_DSP4_MODE_SIGN_MONO;
+	}
+	snd_sb16_setup_rate(chip, runtime->rate, SNDRV_PCM_STREAM_CAPTURE);
 	size = chip->c_dma_size = snd_pcm_lib_buffer_bytes(substream);
 	dma = (chip->mode & SB_MODE_CAPTURE_8) ? chip->dma8 : chip->dma16;
-	snd_dma_program(dma, runसमय->dma_addr, size, DMA_MODE_READ | DMA_AUTOINIT);
+	snd_dma_program(dma, runtime->dma_addr, size, DMA_MODE_READ | DMA_AUTOINIT);
 
 	count = snd_pcm_lib_period_bytes(substream);
 	spin_lock_irqsave(&chip->reg_lock, flags);
-	अगर (chip->mode & SB_MODE_CAPTURE_16) अणु
+	if (chip->mode & SB_MODE_CAPTURE_16) {
 		count >>= 1;
 		count--;
 		snd_sbdsp_command(chip, SB_DSP4_IN16_AI);
-		snd_sbdsp_command(chip, क्रमmat);
+		snd_sbdsp_command(chip, format);
 		snd_sbdsp_command(chip, count & 0xff);
 		snd_sbdsp_command(chip, count >> 8);
 		snd_sbdsp_command(chip, SB_DSP_DMA16_OFF);
-	पूर्ण अन्यथा अणु
+	} else {
 		count--;
 		snd_sbdsp_command(chip, SB_DSP4_IN8_AI);
-		snd_sbdsp_command(chip, क्रमmat);
+		snd_sbdsp_command(chip, format);
 		snd_sbdsp_command(chip, count & 0xff);
 		snd_sbdsp_command(chip, count >> 8);
 		snd_sbdsp_command(chip, SB_DSP_DMA8_OFF);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_capture_trigger(काष्ठा snd_pcm_substream *substream,
-				    पूर्णांक cmd)
-अणु
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	पूर्णांक result = 0;
+static int snd_sb16_capture_trigger(struct snd_pcm_substream *substream,
+				    int cmd)
+{
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	int result = 0;
 
 	spin_lock(&chip->reg_lock);
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		chip->mode |= SB_RATE_LOCK_CAPTURE;
 		snd_sbdsp_command(chip, chip->mode & SB_MODE_CAPTURE_16 ? SB_DSP_DMA16_ON : SB_DSP_DMA8_ON);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 		snd_sbdsp_command(chip, chip->mode & SB_MODE_CAPTURE_16 ? SB_DSP_DMA16_OFF : SB_DSP_DMA8_OFF);
-		/* next two lines are needed क्रम some types of DSP4 (SB AWE 32 - 4.13) */
-		अगर (chip->mode & SB_RATE_LOCK_PLAYBACK)
+		/* next two lines are needed for some types of DSP4 (SB AWE 32 - 4.13) */
+		if (chip->mode & SB_RATE_LOCK_PLAYBACK)
 			snd_sbdsp_command(chip, chip->mode & SB_MODE_PLAYBACK_16 ? SB_DSP_DMA16_ON : SB_DSP_DMA8_ON);
 		chip->mode &= ~SB_RATE_LOCK_CAPTURE;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		result = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock(&chip->reg_lock);
-	वापस result;
-पूर्ण
+	return result;
+}
 
-irqवापस_t snd_sb16dsp_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा snd_sb *chip = dev_id;
-	अचिन्हित अक्षर status;
-	पूर्णांक ok;
+irqreturn_t snd_sb16dsp_interrupt(int irq, void *dev_id)
+{
+	struct snd_sb *chip = dev_id;
+	unsigned char status;
+	int ok;
 
 	spin_lock(&chip->mixer_lock);
-	status = snd_sbmixer_पढ़ो(chip, SB_DSP4_IRQSTATUS);
+	status = snd_sbmixer_read(chip, SB_DSP4_IRQSTATUS);
 	spin_unlock(&chip->mixer_lock);
-	अगर ((status & SB_IRQTYPE_MPUIN) && chip->rmidi_callback)
-		chip->rmidi_callback(irq, chip->rmidi->निजी_data);
-	अगर (status & SB_IRQTYPE_8BIT) अणु
+	if ((status & SB_IRQTYPE_MPUIN) && chip->rmidi_callback)
+		chip->rmidi_callback(irq, chip->rmidi->private_data);
+	if (status & SB_IRQTYPE_8BIT) {
 		ok = 0;
-		अगर (chip->mode & SB_MODE_PLAYBACK_8) अणु
+		if (chip->mode & SB_MODE_PLAYBACK_8) {
 			snd_pcm_period_elapsed(chip->playback_substream);
 			snd_sb16_csp_update(chip);
 			ok++;
-		पूर्ण
-		अगर (chip->mode & SB_MODE_CAPTURE_8) अणु
+		}
+		if (chip->mode & SB_MODE_CAPTURE_8) {
 			snd_pcm_period_elapsed(chip->capture_substream);
 			ok++;
-		पूर्ण
+		}
 		spin_lock(&chip->reg_lock);
-		अगर (!ok)
+		if (!ok)
 			snd_sbdsp_command(chip, SB_DSP_DMA8_OFF);
 		snd_sb_ack_8bit(chip);
 		spin_unlock(&chip->reg_lock);
-	पूर्ण
-	अगर (status & SB_IRQTYPE_16BIT) अणु
+	}
+	if (status & SB_IRQTYPE_16BIT) {
 		ok = 0;
-		अगर (chip->mode & SB_MODE_PLAYBACK_16) अणु
+		if (chip->mode & SB_MODE_PLAYBACK_16) {
 			snd_pcm_period_elapsed(chip->playback_substream);
 			snd_sb16_csp_update(chip);
 			ok++;
-		पूर्ण
-		अगर (chip->mode & SB_MODE_CAPTURE_16) अणु
+		}
+		if (chip->mode & SB_MODE_CAPTURE_16) {
 			snd_pcm_period_elapsed(chip->capture_substream);
 			ok++;
-		पूर्ण
+		}
 		spin_lock(&chip->reg_lock);
-		अगर (!ok)
+		if (!ok)
 			snd_sbdsp_command(chip, SB_DSP_DMA16_OFF);
 		snd_sb_ack_16bit(chip);
 		spin_unlock(&chip->reg_lock);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
 /*
 
  */
 
-अटल snd_pcm_uframes_t snd_sb16_playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक dma;
-	माप_प्रकार ptr;
+static snd_pcm_uframes_t snd_sb16_playback_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	unsigned int dma;
+	size_t ptr;
 
 	dma = (chip->mode & SB_MODE_PLAYBACK_8) ? chip->dma8 : chip->dma16;
-	ptr = snd_dma_poपूर्णांकer(dma, chip->p_dma_size);
-	वापस bytes_to_frames(substream->runसमय, ptr);
-पूर्ण
+	ptr = snd_dma_pointer(dma, chip->p_dma_size);
+	return bytes_to_frames(substream->runtime, ptr);
+}
 
-अटल snd_pcm_uframes_t snd_sb16_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	अचिन्हित पूर्णांक dma;
-	माप_प्रकार ptr;
+static snd_pcm_uframes_t snd_sb16_capture_pointer(struct snd_pcm_substream *substream)
+{
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	unsigned int dma;
+	size_t ptr;
 
 	dma = (chip->mode & SB_MODE_CAPTURE_8) ? chip->dma8 : chip->dma16;
-	ptr = snd_dma_poपूर्णांकer(dma, chip->c_dma_size);
-	वापस bytes_to_frames(substream->runसमय, ptr);
-पूर्ण
+	ptr = snd_dma_pointer(dma, chip->c_dma_size);
+	return bytes_to_frames(substream->runtime, ptr);
+}
 
 /*
 
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_sb16_playback =
-अणु
+static const struct snd_pcm_hardware snd_sb16_playback =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_MMAP_VALID),
-	.क्रमmats =		0,
+	.formats =		0,
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_44100,
 	.rate_min =		4000,
 	.rate_max =		44100,
@@ -465,14 +464,14 @@ irqवापस_t snd_sb16dsp_पूर्णांकerrupt(पूर्णा�
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_sb16_capture =
-अणु
+static const struct snd_pcm_hardware snd_sb16_capture =
+{
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_MMAP_VALID),
-	.क्रमmats =		0,
+	.formats =		0,
 	.rates =		SNDRV_PCM_RATE_CONTINUOUS | SNDRV_PCM_RATE_8000_44100,
 	.rate_min =		4000,
 	.rate_max =		44100,
@@ -483,387 +482,387 @@ irqवापस_t snd_sb16dsp_पूर्णांकerrupt(पूर्णा�
 	.period_bytes_max =	(128*1024),
 	.periods_min =		1,
 	.periods_max =		1024,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
 /*
- *  खोलो/बंद
+ *  open/close
  */
 
-अटल पूर्णांक snd_sb16_playback_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_sb16_playback_open(struct snd_pcm_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	अगर (chip->mode & SB_MODE_PLAYBACK) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-		वापस -EAGAIN;
-	पूर्ण
-	runसमय->hw = snd_sb16_playback;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	if (chip->mode & SB_MODE_PLAYBACK) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+		return -EAGAIN;
+	}
+	runtime->hw = snd_sb16_playback;
 
-	/* skip अगर 16 bit DMA was reserved क्रम capture */
-	अगर (chip->क्रमce_mode16 & SB_MODE_CAPTURE_16)
-		जाओ __skip_16bit;
+	/* skip if 16 bit DMA was reserved for capture */
+	if (chip->force_mode16 & SB_MODE_CAPTURE_16)
+		goto __skip_16bit;
 
-	अगर (chip->dma16 >= 0 && !(chip->mode & SB_MODE_CAPTURE_16)) अणु
+	if (chip->dma16 >= 0 && !(chip->mode & SB_MODE_CAPTURE_16)) {
 		chip->mode |= SB_MODE_PLAYBACK_16;
-		runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
+		runtime->hw.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
 		/* Vibra16X hack */
-		अगर (chip->dma16 <= 3) अणु
-			runसमय->hw.buffer_bytes_max =
-			runसमय->hw.period_bytes_max = 64 * 1024;
-		पूर्ण अन्यथा अणु
-			snd_sb16_csp_playback_खोलो(chip, runसमय);
-		पूर्ण
-		जाओ __खोलो_ok;
-	पूर्ण
+		if (chip->dma16 <= 3) {
+			runtime->hw.buffer_bytes_max =
+			runtime->hw.period_bytes_max = 64 * 1024;
+		} else {
+			snd_sb16_csp_playback_open(chip, runtime);
+		}
+		goto __open_ok;
+	}
 
       __skip_16bit:
-	अगर (chip->dma8 >= 0 && !(chip->mode & SB_MODE_CAPTURE_8)) अणु
+	if (chip->dma8 >= 0 && !(chip->mode & SB_MODE_CAPTURE_8)) {
 		chip->mode |= SB_MODE_PLAYBACK_8;
 		/* DSP v 4.xx can transfer 16bit data through 8bit DMA channel, SBHWPG 2-7 */
-		अगर (chip->dma16 < 0) अणु
-			runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
+		if (chip->dma16 < 0) {
+			runtime->hw.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
 			chip->mode |= SB_MODE_PLAYBACK_16;
-		पूर्ण अन्यथा अणु
-			runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S8;
-		पूर्ण
-		runसमय->hw.buffer_bytes_max =
-		runसमय->hw.period_bytes_max = 64 * 1024;
-		जाओ __खोलो_ok;
-	पूर्ण
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	वापस -EAGAIN;
+		} else {
+			runtime->hw.formats = SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S8;
+		}
+		runtime->hw.buffer_bytes_max =
+		runtime->hw.period_bytes_max = 64 * 1024;
+		goto __open_ok;
+	}
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+	return -EAGAIN;
 
-      __खोलो_ok:
-	अगर (chip->hardware == SB_HW_ALS100)
-		runसमय->hw.rate_max = 48000;
-	अगर (chip->hardware == SB_HW_CS5530) अणु
-		runसमय->hw.buffer_bytes_max = 32 * 1024;
-		runसमय->hw.periods_min = 2;
-		runसमय->hw.rate_min = 44100;
-	पूर्ण
-	अगर (chip->mode & SB_RATE_LOCK)
-		runसमय->hw.rate_min = runसमय->hw.rate_max = chip->locked_rate;
+      __open_ok:
+	if (chip->hardware == SB_HW_ALS100)
+		runtime->hw.rate_max = 48000;
+	if (chip->hardware == SB_HW_CS5530) {
+		runtime->hw.buffer_bytes_max = 32 * 1024;
+		runtime->hw.periods_min = 2;
+		runtime->hw.rate_min = 44100;
+	}
+	if (chip->mode & SB_RATE_LOCK)
+		runtime->hw.rate_min = runtime->hw.rate_max = chip->locked_rate;
 	chip->playback_substream = substream;
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_playback_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
+static int snd_sb16_playback_close(struct snd_pcm_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
 
-	snd_sb16_csp_playback_बंद(chip);
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	chip->playback_substream = शून्य;
+	snd_sb16_csp_playback_close(chip);
+	spin_lock_irqsave(&chip->open_lock, flags);
+	chip->playback_substream = NULL;
 	chip->mode &= ~SB_MODE_PLAYBACK;
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_capture_खोलो(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+static int snd_sb16_capture_open(struct snd_pcm_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
+	struct snd_pcm_runtime *runtime = substream->runtime;
 
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	अगर (chip->mode & SB_MODE_CAPTURE) अणु
-		spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-		वापस -EAGAIN;
-	पूर्ण
-	runसमय->hw = snd_sb16_capture;
+	spin_lock_irqsave(&chip->open_lock, flags);
+	if (chip->mode & SB_MODE_CAPTURE) {
+		spin_unlock_irqrestore(&chip->open_lock, flags);
+		return -EAGAIN;
+	}
+	runtime->hw = snd_sb16_capture;
 
-	/* skip अगर 16 bit DMA was reserved क्रम playback */
-	अगर (chip->क्रमce_mode16 & SB_MODE_PLAYBACK_16)
-		जाओ __skip_16bit;
+	/* skip if 16 bit DMA was reserved for playback */
+	if (chip->force_mode16 & SB_MODE_PLAYBACK_16)
+		goto __skip_16bit;
 
-	अगर (chip->dma16 >= 0 && !(chip->mode & SB_MODE_PLAYBACK_16)) अणु
+	if (chip->dma16 >= 0 && !(chip->mode & SB_MODE_PLAYBACK_16)) {
 		chip->mode |= SB_MODE_CAPTURE_16;
-		runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
+		runtime->hw.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
 		/* Vibra16X hack */
-		अगर (chip->dma16 <= 3) अणु
-			runसमय->hw.buffer_bytes_max =
-			runसमय->hw.period_bytes_max = 64 * 1024;
-		पूर्ण अन्यथा अणु
-			snd_sb16_csp_capture_खोलो(chip, runसमय);
-		पूर्ण
-		जाओ __खोलो_ok;
-	पूर्ण
+		if (chip->dma16 <= 3) {
+			runtime->hw.buffer_bytes_max =
+			runtime->hw.period_bytes_max = 64 * 1024;
+		} else {
+			snd_sb16_csp_capture_open(chip, runtime);
+		}
+		goto __open_ok;
+	}
 
       __skip_16bit:
-	अगर (chip->dma8 >= 0 && !(chip->mode & SB_MODE_PLAYBACK_8)) अणु
+	if (chip->dma8 >= 0 && !(chip->mode & SB_MODE_PLAYBACK_8)) {
 		chip->mode |= SB_MODE_CAPTURE_8;
 		/* DSP v 4.xx can transfer 16bit data through 8bit DMA channel, SBHWPG 2-7 */
-		अगर (chip->dma16 < 0) अणु
-			runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
+		if (chip->dma16 < 0) {
+			runtime->hw.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_U16_LE;
 			chip->mode |= SB_MODE_CAPTURE_16;
-		पूर्ण अन्यथा अणु
-			runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S8;
-		पूर्ण
-		runसमय->hw.buffer_bytes_max =
-		runसमय->hw.period_bytes_max = 64 * 1024;
-		जाओ __खोलो_ok;
-	पूर्ण
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	वापस -EAGAIN;
+		} else {
+			runtime->hw.formats = SNDRV_PCM_FMTBIT_U8 | SNDRV_PCM_FMTBIT_S8;
+		}
+		runtime->hw.buffer_bytes_max =
+		runtime->hw.period_bytes_max = 64 * 1024;
+		goto __open_ok;
+	}
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+	return -EAGAIN;
 
-      __खोलो_ok:
-	अगर (chip->hardware == SB_HW_ALS100)
-		runसमय->hw.rate_max = 48000;
-	अगर (chip->hardware == SB_HW_CS5530) अणु
-		runसमय->hw.buffer_bytes_max = 32 * 1024;
-		runसमय->hw.periods_min = 2;
-		runसमय->hw.rate_min = 44100;
-	पूर्ण
-	अगर (chip->mode & SB_RATE_LOCK)
-		runसमय->hw.rate_min = runसमय->hw.rate_max = chip->locked_rate;
+      __open_ok:
+	if (chip->hardware == SB_HW_ALS100)
+		runtime->hw.rate_max = 48000;
+	if (chip->hardware == SB_HW_CS5530) {
+		runtime->hw.buffer_bytes_max = 32 * 1024;
+		runtime->hw.periods_min = 2;
+		runtime->hw.rate_min = 44100;
+	}
+	if (chip->mode & SB_RATE_LOCK)
+		runtime->hw.rate_min = runtime->hw.rate_max = chip->locked_rate;
 	chip->capture_substream = substream;
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_capture_बंद(काष्ठा snd_pcm_substream *substream)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_sb *chip = snd_pcm_substream_chip(substream);
+static int snd_sb16_capture_close(struct snd_pcm_substream *substream)
+{
+	unsigned long flags;
+	struct snd_sb *chip = snd_pcm_substream_chip(substream);
 
-	snd_sb16_csp_capture_बंद(chip);
-	spin_lock_irqsave(&chip->खोलो_lock, flags);
-	chip->capture_substream = शून्य;
+	snd_sb16_csp_capture_close(chip);
+	spin_lock_irqsave(&chip->open_lock, flags);
+	chip->capture_substream = NULL;
 	chip->mode &= ~SB_MODE_CAPTURE;
-	spin_unlock_irqrestore(&chip->खोलो_lock, flags);
-	वापस 0;
-पूर्ण
+	spin_unlock_irqrestore(&chip->open_lock, flags);
+	return 0;
+}
 
 /*
- *  DMA control पूर्णांकerface
+ *  DMA control interface
  */
 
-अटल पूर्णांक snd_sb16_set_dma_mode(काष्ठा snd_sb *chip, पूर्णांक what)
-अणु
-	अगर (chip->dma8 < 0 || chip->dma16 < 0) अणु
-		अगर (snd_BUG_ON(what))
-			वापस -EINVAL;
-		वापस 0;
-	पूर्ण
-	अगर (what == 0) अणु
-		chip->क्रमce_mode16 = 0;
-	पूर्ण अन्यथा अगर (what == 1) अणु
-		chip->क्रमce_mode16 = SB_MODE_PLAYBACK_16;
-	पूर्ण अन्यथा अगर (what == 2) अणु
-		chip->क्रमce_mode16 = SB_MODE_CAPTURE_16;
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static int snd_sb16_set_dma_mode(struct snd_sb *chip, int what)
+{
+	if (chip->dma8 < 0 || chip->dma16 < 0) {
+		if (snd_BUG_ON(what))
+			return -EINVAL;
+		return 0;
+	}
+	if (what == 0) {
+		chip->force_mode16 = 0;
+	} else if (what == 1) {
+		chip->force_mode16 = SB_MODE_PLAYBACK_16;
+	} else if (what == 2) {
+		chip->force_mode16 = SB_MODE_CAPTURE_16;
+	} else {
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_get_dma_mode(काष्ठा snd_sb *chip)
-अणु
-	अगर (chip->dma8 < 0 || chip->dma16 < 0)
-		वापस 0;
-	चयन (chip->क्रमce_mode16) अणु
-	हाल SB_MODE_PLAYBACK_16:
-		वापस 1;
-	हाल SB_MODE_CAPTURE_16:
-		वापस 2;
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int snd_sb16_get_dma_mode(struct snd_sb *chip)
+{
+	if (chip->dma8 < 0 || chip->dma16 < 0)
+		return 0;
+	switch (chip->force_mode16) {
+	case SB_MODE_PLAYBACK_16:
+		return 1;
+	case SB_MODE_CAPTURE_16:
+		return 2;
+	default:
+		return 0;
+	}
+}
 
-अटल पूर्णांक snd_sb16_dma_control_info(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अटल स्थिर अक्षर * स्थिर texts[3] = अणु
+static int snd_sb16_dma_control_info(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_info *uinfo)
+{
+	static const char * const texts[3] = {
 		"Auto", "Playback", "Capture"
-	पूर्ण;
+	};
 
-	वापस snd_ctl_क्रमागत_info(uinfo, 1, 3, texts);
-पूर्ण
+	return snd_ctl_enum_info(uinfo, 1, 3, texts);
+}
 
-अटल पूर्णांक snd_sb16_dma_control_get(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_sb *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित दीर्घ flags;
+static int snd_sb16_dma_control_get(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_sb *chip = snd_kcontrol_chip(kcontrol);
+	unsigned long flags;
 	
 	spin_lock_irqsave(&chip->reg_lock, flags);
-	ucontrol->value.क्रमागतerated.item[0] = snd_sb16_get_dma_mode(chip);
+	ucontrol->value.enumerated.item[0] = snd_sb16_get_dma_mode(chip);
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_sb16_dma_control_put(काष्ठा snd_kcontrol *kcontrol, काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_sb *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर nval, oval;
-	पूर्णांक change;
+static int snd_sb16_dma_control_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_sb *chip = snd_kcontrol_chip(kcontrol);
+	unsigned long flags;
+	unsigned char nval, oval;
+	int change;
 	
-	अगर ((nval = ucontrol->value.क्रमागतerated.item[0]) > 2)
-		वापस -EINVAL;
+	if ((nval = ucontrol->value.enumerated.item[0]) > 2)
+		return -EINVAL;
 	spin_lock_irqsave(&chip->reg_lock, flags);
 	oval = snd_sb16_get_dma_mode(chip);
 	change = nval != oval;
 	snd_sb16_set_dma_mode(chip, nval);
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
-	वापस change;
-पूर्ण
+	return change;
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new snd_sb16_dma_control = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_CARD,
+static const struct snd_kcontrol_new snd_sb16_dma_control = {
+	.iface = SNDRV_CTL_ELEM_IFACE_CARD,
 	.name = "16-bit DMA Allocation",
 	.info = snd_sb16_dma_control_info,
 	.get = snd_sb16_dma_control_get,
 	.put = snd_sb16_dma_control_put
-पूर्ण;
+};
 
 /*
  *  Initialization part
  */
  
-पूर्णांक snd_sb16dsp_configure(काष्ठा snd_sb * chip)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित अक्षर irqreg = 0, dmareg = 0, mpureg;
-	अचिन्हित अक्षर realirq, realdma, realmpureg;
-	/* note: mpu रेजिस्टर should be present only on SB16 Vibra soundcards */
+int snd_sb16dsp_configure(struct snd_sb * chip)
+{
+	unsigned long flags;
+	unsigned char irqreg = 0, dmareg = 0, mpureg;
+	unsigned char realirq, realdma, realmpureg;
+	/* note: mpu register should be present only on SB16 Vibra soundcards */
 
-	// prपूर्णांकk(KERN_DEBUG "codec->irq=%i, codec->dma8=%i, codec->dma16=%i\n", chip->irq, chip->dma8, chip->dma16);
+	// printk(KERN_DEBUG "codec->irq=%i, codec->dma8=%i, codec->dma16=%i\n", chip->irq, chip->dma8, chip->dma16);
 	spin_lock_irqsave(&chip->mixer_lock, flags);
-	mpureg = snd_sbmixer_पढ़ो(chip, SB_DSP4_MPUSETUP) & ~0x06;
+	mpureg = snd_sbmixer_read(chip, SB_DSP4_MPUSETUP) & ~0x06;
 	spin_unlock_irqrestore(&chip->mixer_lock, flags);
-	चयन (chip->irq) अणु
-	हाल 2:
-	हाल 9:
+	switch (chip->irq) {
+	case 2:
+	case 9:
 		irqreg |= SB_IRQSETUP_IRQ9;
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		irqreg |= SB_IRQSETUP_IRQ5;
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		irqreg |= SB_IRQSETUP_IRQ7;
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		irqreg |= SB_IRQSETUP_IRQ10;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	अगर (chip->dma8 >= 0) अणु
-		चयन (chip->dma8) अणु
-		हाल 0:
+		break;
+	default:
+		return -EINVAL;
+	}
+	if (chip->dma8 >= 0) {
+		switch (chip->dma8) {
+		case 0:
 			dmareg |= SB_DMASETUP_DMA0;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			dmareg |= SB_DMASETUP_DMA1;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			dmareg |= SB_DMASETUP_DMA3;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	अगर (chip->dma16 >= 0 && chip->dma16 != chip->dma8) अणु
-		चयन (chip->dma16) अणु
-		हाल 5:
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+	if (chip->dma16 >= 0 && chip->dma16 != chip->dma8) {
+		switch (chip->dma16) {
+		case 5:
 			dmareg |= SB_DMASETUP_DMA5;
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			dmareg |= SB_DMASETUP_DMA6;
-			अवरोध;
-		हाल 7:
+			break;
+		case 7:
 			dmareg |= SB_DMASETUP_DMA7;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
-	चयन (chip->mpu_port) अणु
-	हाल 0x300:
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
+	switch (chip->mpu_port) {
+	case 0x300:
 		mpureg |= 0x04;
-		अवरोध;
-	हाल 0x330:
+		break;
+	case 0x330:
 		mpureg |= 0x00;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		mpureg |= 0x02;	/* disable MPU */
-	पूर्ण
+	}
 	spin_lock_irqsave(&chip->mixer_lock, flags);
 
-	snd_sbmixer_ग_लिखो(chip, SB_DSP4_IRQSETUP, irqreg);
-	realirq = snd_sbmixer_पढ़ो(chip, SB_DSP4_IRQSETUP);
+	snd_sbmixer_write(chip, SB_DSP4_IRQSETUP, irqreg);
+	realirq = snd_sbmixer_read(chip, SB_DSP4_IRQSETUP);
 
-	snd_sbmixer_ग_लिखो(chip, SB_DSP4_DMASETUP, dmareg);
-	realdma = snd_sbmixer_पढ़ो(chip, SB_DSP4_DMASETUP);
+	snd_sbmixer_write(chip, SB_DSP4_DMASETUP, dmareg);
+	realdma = snd_sbmixer_read(chip, SB_DSP4_DMASETUP);
 
-	snd_sbmixer_ग_लिखो(chip, SB_DSP4_MPUSETUP, mpureg);
-	realmpureg = snd_sbmixer_पढ़ो(chip, SB_DSP4_MPUSETUP);
+	snd_sbmixer_write(chip, SB_DSP4_MPUSETUP, mpureg);
+	realmpureg = snd_sbmixer_read(chip, SB_DSP4_MPUSETUP);
 
 	spin_unlock_irqrestore(&chip->mixer_lock, flags);
-	अगर ((~realirq) & irqreg || (~realdma) & dmareg) अणु
-		snd_prपूर्णांकk(KERN_ERR "SB16 [0x%lx]: unable to set DMA & IRQ (PnP device?)\n", chip->port);
-		snd_prपूर्णांकk(KERN_ERR "SB16 [0x%lx]: wanted: irqreg=0x%x, dmareg=0x%x, mpureg = 0x%x\n", chip->port, realirq, realdma, realmpureg);
-		snd_prपूर्णांकk(KERN_ERR "SB16 [0x%lx]:    got: irqreg=0x%x, dmareg=0x%x, mpureg = 0x%x\n", chip->port, irqreg, dmareg, mpureg);
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if ((~realirq) & irqreg || (~realdma) & dmareg) {
+		snd_printk(KERN_ERR "SB16 [0x%lx]: unable to set DMA & IRQ (PnP device?)\n", chip->port);
+		snd_printk(KERN_ERR "SB16 [0x%lx]: wanted: irqreg=0x%x, dmareg=0x%x, mpureg = 0x%x\n", chip->port, realirq, realdma, realmpureg);
+		snd_printk(KERN_ERR "SB16 [0x%lx]:    got: irqreg=0x%x, dmareg=0x%x, mpureg = 0x%x\n", chip->port, irqreg, dmareg, mpureg);
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_sb16_playback_ops = अणु
-	.खोलो =		snd_sb16_playback_खोलो,
-	.बंद =	snd_sb16_playback_बंद,
+static const struct snd_pcm_ops snd_sb16_playback_ops = {
+	.open =		snd_sb16_playback_open,
+	.close =	snd_sb16_playback_close,
 	.prepare =	snd_sb16_playback_prepare,
 	.trigger =	snd_sb16_playback_trigger,
-	.poपूर्णांकer =	snd_sb16_playback_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_sb16_playback_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_sb16_capture_ops = अणु
-	.खोलो =		snd_sb16_capture_खोलो,
-	.बंद =	snd_sb16_capture_बंद,
+static const struct snd_pcm_ops snd_sb16_capture_ops = {
+	.open =		snd_sb16_capture_open,
+	.close =	snd_sb16_capture_close,
 	.prepare =	snd_sb16_capture_prepare,
 	.trigger =	snd_sb16_capture_trigger,
-	.poपूर्णांकer =	snd_sb16_capture_poपूर्णांकer,
-पूर्ण;
+	.pointer =	snd_sb16_capture_pointer,
+};
 
-पूर्णांक snd_sb16dsp_pcm(काष्ठा snd_sb *chip, पूर्णांक device)
-अणु
-	काष्ठा snd_card *card = chip->card;
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+int snd_sb16dsp_pcm(struct snd_sb *chip, int device)
+{
+	struct snd_card *card = chip->card;
+	struct snd_pcm *pcm;
+	int err;
 
-	अगर ((err = snd_pcm_new(card, "SB16 DSP", device, 1, 1, &pcm)) < 0)
-		वापस err;
-	प्र_लिखो(pcm->name, "DSP v%i.%i", chip->version >> 8, chip->version & 0xff);
+	if ((err = snd_pcm_new(card, "SB16 DSP", device, 1, 1, &pcm)) < 0)
+		return err;
+	sprintf(pcm->name, "DSP v%i.%i", chip->version >> 8, chip->version & 0xff);
 	pcm->info_flags = SNDRV_PCM_INFO_JOINT_DUPLEX;
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 	chip->pcm = pcm;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_sb16_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_sb16_capture_ops);
 
-	अगर (chip->dma16 >= 0 && chip->dma8 != chip->dma16)
+	if (chip->dma16 >= 0 && chip->dma8 != chip->dma16)
 		snd_ctl_add(card, snd_ctl_new1(&snd_sb16_dma_control, chip));
-	अन्यथा
+	else
 		pcm->info_flags = SNDRV_PCM_INFO_HALF_DUPLEX;
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       card->dev, 64*1024, 128*1024);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा snd_pcm_ops *snd_sb16dsp_get_pcm_ops(पूर्णांक direction)
-अणु
-	वापस direction == SNDRV_PCM_STREAM_PLAYBACK ?
+const struct snd_pcm_ops *snd_sb16dsp_get_pcm_ops(int direction)
+{
+	return direction == SNDRV_PCM_STREAM_PLAYBACK ?
 		&snd_sb16_playback_ops : &snd_sb16_capture_ops;
-पूर्ण
+}
 
 EXPORT_SYMBOL(snd_sb16dsp_pcm);
 EXPORT_SYMBOL(snd_sb16dsp_get_pcm_ops);
 EXPORT_SYMBOL(snd_sb16dsp_configure);
-EXPORT_SYMBOL(snd_sb16dsp_पूर्णांकerrupt);
+EXPORT_SYMBOL(snd_sb16dsp_interrupt);

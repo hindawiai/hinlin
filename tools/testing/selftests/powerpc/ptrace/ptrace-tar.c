@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Ptrace test क्रम TAR, PPR, DSCR रेजिस्टरs
+ * Ptrace test for TAR, PPR, DSCR registers
  *
  * Copyright (C) 2015 Anshuman Khandual, IBM Corporation.
  */
-#समावेश "ptrace.h"
-#समावेश "ptrace-tar.h"
+#include "ptrace.h"
+#include "ptrace-tar.h"
 
 /* Tracer and Tracee Shared Data */
-पूर्णांक shm_id;
-पूर्णांक *cptr;
-पूर्णांक *pptr;
+int shm_id;
+int *cptr;
+int *pptr;
 
-व्योम tar(व्योम)
-अणु
-	अचिन्हित दीर्घ reg[3];
-	पूर्णांक ret;
+void tar(void)
+{
+	unsigned long reg[3];
+	int ret;
 
-	cptr = (पूर्णांक *)shmat(shm_id, शून्य, 0);
-	म_लिखो("%-30s TAR: %u PPR: %lx DSCR: %u\n",
-			user_ग_लिखो, TAR_1, PPR_1, DSCR_1);
+	cptr = (int *)shmat(shm_id, NULL, 0);
+	printf("%-30s TAR: %u PPR: %lx DSCR: %u\n",
+			user_write, TAR_1, PPR_1, DSCR_1);
 
 	mtspr(SPRN_TAR, TAR_1);
 	mtspr(SPRN_PPR, PPR_1);
@@ -29,107 +28,107 @@
 	cptr[2] = 1;
 
 	/* Wait on parent */
-	जबतक (!cptr[0])
-		यंत्र अस्थिर("" : : : "memory");
+	while (!cptr[0])
+		asm volatile("" : : : "memory");
 
 	reg[0] = mfspr(SPRN_TAR);
 	reg[1] = mfspr(SPRN_PPR);
 	reg[2] = mfspr(SPRN_DSCR);
 
-	म_लिखो("%-30s TAR: %lu PPR: %lx DSCR: %lu\n",
-			user_पढ़ो, reg[0], reg[1], reg[2]);
+	printf("%-30s TAR: %lu PPR: %lx DSCR: %lu\n",
+			user_read, reg[0], reg[1], reg[2]);
 
 	/* Unblock the parent now */
 	cptr[1] = 1;
-	shmdt((पूर्णांक *)cptr);
+	shmdt((int *)cptr);
 
-	ret = validate_tar_रेजिस्टरs(reg, TAR_2, PPR_2, DSCR_2);
-	अगर (ret)
-		निकास(1);
-	निकास(0);
-पूर्ण
+	ret = validate_tar_registers(reg, TAR_2, PPR_2, DSCR_2);
+	if (ret)
+		exit(1);
+	exit(0);
+}
 
-पूर्णांक trace_tar(pid_t child)
-अणु
-	अचिन्हित दीर्घ reg[3];
+int trace_tar(pid_t child)
+{
+	unsigned long reg[3];
 
 	FAIL_IF(start_trace(child));
-	FAIL_IF(show_tar_रेजिस्टरs(child, reg));
-	म_लिखो("%-30s TAR: %lu PPR: %lx DSCR: %lu\n",
-			ptrace_पढ़ो_running, reg[0], reg[1], reg[2]);
+	FAIL_IF(show_tar_registers(child, reg));
+	printf("%-30s TAR: %lu PPR: %lx DSCR: %lu\n",
+			ptrace_read_running, reg[0], reg[1], reg[2]);
 
-	FAIL_IF(validate_tar_रेजिस्टरs(reg, TAR_1, PPR_1, DSCR_1));
+	FAIL_IF(validate_tar_registers(reg, TAR_1, PPR_1, DSCR_1));
 	FAIL_IF(stop_trace(child));
-	वापस TEST_PASS;
-पूर्ण
+	return TEST_PASS;
+}
 
-पूर्णांक trace_tar_ग_लिखो(pid_t child)
-अणु
+int trace_tar_write(pid_t child)
+{
 	FAIL_IF(start_trace(child));
-	FAIL_IF(ग_लिखो_tar_रेजिस्टरs(child, TAR_2, PPR_2, DSCR_2));
-	म_लिखो("%-30s TAR: %u PPR: %lx DSCR: %u\n",
-			ptrace_ग_लिखो_running, TAR_2, PPR_2, DSCR_2);
+	FAIL_IF(write_tar_registers(child, TAR_2, PPR_2, DSCR_2));
+	printf("%-30s TAR: %u PPR: %lx DSCR: %u\n",
+			ptrace_write_running, TAR_2, PPR_2, DSCR_2);
 
 	FAIL_IF(stop_trace(child));
-	वापस TEST_PASS;
-पूर्ण
+	return TEST_PASS;
+}
 
-पूर्णांक ptrace_tar(व्योम)
-अणु
+int ptrace_tar(void)
+{
 	pid_t pid;
-	पूर्णांक ret, status;
+	int ret, status;
 
 	// TAR was added in v2.07
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_ARCH_2_07));
 
-	shm_id = shmget(IPC_PRIVATE, माप(पूर्णांक) * 3, 0777|IPC_CREAT);
-	pid = विभाजन();
-	अगर (pid < 0) अणु
-		लिखो_त्रुटि("fork() failed");
-		वापस TEST_FAIL;
-	पूर्ण
+	shm_id = shmget(IPC_PRIVATE, sizeof(int) * 3, 0777|IPC_CREAT);
+	pid = fork();
+	if (pid < 0) {
+		perror("fork() failed");
+		return TEST_FAIL;
+	}
 
-	अगर (pid == 0)
+	if (pid == 0)
 		tar();
 
-	अगर (pid) अणु
-		pptr = (पूर्णांक *)shmat(shm_id, शून्य, 0);
+	if (pid) {
+		pptr = (int *)shmat(shm_id, NULL, 0);
 		pptr[0] = 0;
 		pptr[1] = 0;
 
-		जबतक (!pptr[2])
-			यंत्र अस्थिर("" : : : "memory");
+		while (!pptr[2])
+			asm volatile("" : : : "memory");
 		ret = trace_tar(pid);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		ret = trace_tar_ग_लिखो(pid);
-		अगर (ret)
-			वापस ret;
+		ret = trace_tar_write(pid);
+		if (ret)
+			return ret;
 
 		/* Unblock the child now */
 		pptr[0] = 1;
 
 		/* Wait on child */
-		जबतक (!pptr[1])
-			यंत्र अस्थिर("" : : : "memory");
+		while (!pptr[1])
+			asm volatile("" : : : "memory");
 
-		shmdt((पूर्णांक *)pptr);
+		shmdt((int *)pptr);
 
-		ret = रुको(&status);
-		shmctl(shm_id, IPC_RMID, शून्य);
-		अगर (ret != pid) अणु
-			म_लिखो("Child's exit status not captured\n");
-			वापस TEST_PASS;
-		पूर्ण
+		ret = wait(&status);
+		shmctl(shm_id, IPC_RMID, NULL);
+		if (ret != pid) {
+			printf("Child's exit status not captured\n");
+			return TEST_PASS;
+		}
 
-		वापस (WIFEXITED(status) && WEXITSTATUS(status)) ? TEST_FAIL :
+		return (WIFEXITED(status) && WEXITSTATUS(status)) ? TEST_FAIL :
 			TEST_PASS;
-	पूर्ण
-	वापस TEST_PASS;
-पूर्ण
+	}
+	return TEST_PASS;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	वापस test_harness(ptrace_tar, "ptrace_tar");
-पूर्ण
+int main(int argc, char *argv[])
+{
+	return test_harness(ptrace_tar, "ptrace_tar");
+}

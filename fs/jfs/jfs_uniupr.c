@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2002
  */
 
-#समावेश <linux/fs.h>
-#समावेश "jfs_unicode.h"
+#include <linux/fs.h>
+#include "jfs_unicode.h"
 
 /*
- * Latin upper हाल
+ * Latin upper case
  */
-चिन्हित अक्षर UniUpperTable[512] = अणु
+signed char UniUpperTable[512] = {
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, /* 000-00f */
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, /* 010-01f */
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, /* 020-02f */
@@ -43,32 +42,32 @@
   -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,-79,  0, -1, /* 1d0-1df */
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 1e0-1ef */
    0,  0, -1, -2,  0, -1,  0,  0,  0, -1,  0, -1,  0, -1,  0, -1, /* 1f0-1ff */
-पूर्ण;
+};
 
-/* Upper हाल range - Greek */
-अटल चिन्हित अक्षर UniCaseRangeU03a0[47] = अणु
+/* Upper case range - Greek */
+static signed char UniCaseRangeU03a0[47] = {
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,-38,-37,-37,-37, /* 3a0-3af */
    0,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32, /* 3b0-3bf */
  -32,-32,-31,-32,-32,-32,-32,-32,-32,-32,-32,-32,-64,-63,-63,
-पूर्ण;
+};
 
-/* Upper हाल range - Cyrillic */
-अटल चिन्हित अक्षर UniCaseRangeU0430[48] = अणु
+/* Upper case range - Cyrillic */
+static signed char UniCaseRangeU0430[48] = {
  -32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32, /* 430-43f */
  -32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32, /* 440-44f */
    0,-80,-80,-80,-80,-80,-80,-80,-80,-80,-80,-80,-80,  0,-80,-80, /* 450-45f */
-पूर्ण;
+};
 
-/* Upper हाल range - Extended cyrillic */
-अटल चिन्हित अक्षर UniCaseRangeU0490[61] = अणु
+/* Upper case range - Extended cyrillic */
+static signed char UniCaseRangeU0490[61] = {
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 490-49f */
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 4a0-4af */
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 4b0-4bf */
    0,  0, -1,  0, -1,  0,  0,  0, -1,  0,  0,  0, -1,
-पूर्ण;
+};
 
-/* Upper हाल range - Extended latin and greek */
-अटल चिन्हित अक्षर UniCaseRangeU1e00[509] = अणु
+/* Upper case range - Extended latin and greek */
+static signed char UniCaseRangeU1e00[509] = {
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 1e00-1e0f */
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 1e10-1e1f */
    0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1,  0, -1, /* 1e20-1e2f */
@@ -101,22 +100,22 @@
    8,  8,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, /* 1fd0-1fdf */
    8,  8,  0,  0,  0,  7,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, /* 1fe0-1fef */
    0,  0,  0,  9,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-पूर्ण;
+};
 
-/* Upper हाल range - Wide latin */
-अटल चिन्हित अक्षर UniCaseRangeUff40[27] = अणु
+/* Upper case range - Wide latin */
+static signed char UniCaseRangeUff40[27] = {
    0,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32, /* ff40-ff4f */
  -32,-32,-32,-32,-32,-32,-32,-32,-32,-32,-32,
-पूर्ण;
+};
 
 /*
  * Upper Case Range
  */
-UNICASदुस्फल UniUpperRange[] = अणु
-    अणु 0x03a0,  0x03ce,  UniCaseRangeU03a0 पूर्ण,
-    अणु 0x0430,  0x045f,  UniCaseRangeU0430 पूर्ण,
-    अणु 0x0490,  0x04cc,  UniCaseRangeU0490 पूर्ण,
-    अणु 0x1e00,  0x1ffc,  UniCaseRangeU1e00 पूर्ण,
-    अणु 0xff40,  0xff5a,  UniCaseRangeUff40 पूर्ण,
-    अणु 0 पूर्ण
-पूर्ण;
+UNICASERANGE UniUpperRange[] = {
+    { 0x03a0,  0x03ce,  UniCaseRangeU03a0 },
+    { 0x0430,  0x045f,  UniCaseRangeU0430 },
+    { 0x0490,  0x04cc,  UniCaseRangeU0490 },
+    { 0x1e00,  0x1ffc,  UniCaseRangeU1e00 },
+    { 0xff40,  0xff5a,  UniCaseRangeUff40 },
+    { 0 }
+};

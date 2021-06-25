@@ -1,75 +1,74 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright 2020, NXP Semiconductors
  */
-#अगर_अघोषित _SJA1105_VL_H
-#घोषणा _SJA1105_VL_H
+#ifndef _SJA1105_VL_H
+#define _SJA1105_VL_H
 
-#समावेश "sja1105.h"
+#include "sja1105.h"
 
-#अगर IS_ENABLED(CONFIG_NET_DSA_SJA1105_VL)
+#if IS_ENABLED(CONFIG_NET_DSA_SJA1105_VL)
 
-पूर्णांक sja1105_vl_redirect(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-			काष्ठा netlink_ext_ack *extack, अचिन्हित दीर्घ cookie,
-			काष्ठा sja1105_key *key, अचिन्हित दीर्घ destports,
+int sja1105_vl_redirect(struct sja1105_private *priv, int port,
+			struct netlink_ext_ack *extack, unsigned long cookie,
+			struct sja1105_key *key, unsigned long destports,
 			bool append);
 
-पूर्णांक sja1105_vl_delete(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-		      काष्ठा sja1105_rule *rule,
-		      काष्ठा netlink_ext_ack *extack);
+int sja1105_vl_delete(struct sja1105_private *priv, int port,
+		      struct sja1105_rule *rule,
+		      struct netlink_ext_ack *extack);
 
-पूर्णांक sja1105_vl_gate(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-		    काष्ठा netlink_ext_ack *extack, अचिन्हित दीर्घ cookie,
-		    काष्ठा sja1105_key *key, u32 index, s32 prio,
-		    u64 base_समय, u64 cycle_समय, u64 cycle_समय_ext,
-		    u32 num_entries, काष्ठा action_gate_entry *entries);
+int sja1105_vl_gate(struct sja1105_private *priv, int port,
+		    struct netlink_ext_ack *extack, unsigned long cookie,
+		    struct sja1105_key *key, u32 index, s32 prio,
+		    u64 base_time, u64 cycle_time, u64 cycle_time_ext,
+		    u32 num_entries, struct action_gate_entry *entries);
 
-पूर्णांक sja1105_vl_stats(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-		     काष्ठा sja1105_rule *rule, काष्ठा flow_stats *stats,
-		     काष्ठा netlink_ext_ack *extack);
+int sja1105_vl_stats(struct sja1105_private *priv, int port,
+		     struct sja1105_rule *rule, struct flow_stats *stats,
+		     struct netlink_ext_ack *extack);
 
-#अन्यथा
+#else
 
-अटल अंतरभूत पूर्णांक sja1105_vl_redirect(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-				      काष्ठा netlink_ext_ack *extack,
-				      अचिन्हित दीर्घ cookie,
-				      काष्ठा sja1105_key *key,
-				      अचिन्हित दीर्घ destports,
+static inline int sja1105_vl_redirect(struct sja1105_private *priv, int port,
+				      struct netlink_ext_ack *extack,
+				      unsigned long cookie,
+				      struct sja1105_key *key,
+				      unsigned long destports,
 				      bool append)
-अणु
+{
 	NL_SET_ERR_MSG_MOD(extack, "Virtual Links not compiled in");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक sja1105_vl_delete(काष्ठा sja1105_निजी *priv,
-				    पूर्णांक port, काष्ठा sja1105_rule *rule,
-				    काष्ठा netlink_ext_ack *extack)
-अणु
+static inline int sja1105_vl_delete(struct sja1105_private *priv,
+				    int port, struct sja1105_rule *rule,
+				    struct netlink_ext_ack *extack)
+{
 	NL_SET_ERR_MSG_MOD(extack, "Virtual Links not compiled in");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक sja1105_vl_gate(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-				  काष्ठा netlink_ext_ack *extack,
-				  अचिन्हित दीर्घ cookie,
-				  काष्ठा sja1105_key *key, u32 index, s32 prio,
-				  u64 base_समय, u64 cycle_समय,
-				  u64 cycle_समय_ext, u32 num_entries,
-				  काष्ठा action_gate_entry *entries)
-अणु
+static inline int sja1105_vl_gate(struct sja1105_private *priv, int port,
+				  struct netlink_ext_ack *extack,
+				  unsigned long cookie,
+				  struct sja1105_key *key, u32 index, s32 prio,
+				  u64 base_time, u64 cycle_time,
+				  u64 cycle_time_ext, u32 num_entries,
+				  struct action_gate_entry *entries)
+{
 	NL_SET_ERR_MSG_MOD(extack, "Virtual Links not compiled in");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल अंतरभूत पूर्णांक sja1105_vl_stats(काष्ठा sja1105_निजी *priv, पूर्णांक port,
-				   काष्ठा sja1105_rule *rule,
-				   काष्ठा flow_stats *stats,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
+static inline int sja1105_vl_stats(struct sja1105_private *priv, int port,
+				   struct sja1105_rule *rule,
+				   struct flow_stats *stats,
+				   struct netlink_ext_ack *extack)
+{
 	NL_SET_ERR_MSG_MOD(extack, "Virtual Links not compiled in");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-#पूर्ण_अगर /* IS_ENABLED(CONFIG_NET_DSA_SJA1105_VL) */
+#endif /* IS_ENABLED(CONFIG_NET_DSA_SJA1105_VL) */
 
-#पूर्ण_अगर /* _SJA1105_VL_H */
+#endif /* _SJA1105_VL_H */

@@ -1,147 +1,146 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
-#समावेश <linux/पन.स>
-#समावेश "ipmi_si.h"
+#include <linux/io.h>
+#include "ipmi_si.h"
 
-अटल अचिन्हित अक्षर पूर्णांकf_mem_inb(स्थिर काष्ठा si_sm_io *io,
-				  अचिन्हित पूर्णांक offset)
-अणु
-	वापस पढ़ोb((io->addr)+(offset * io->regspacing));
-पूर्ण
+static unsigned char intf_mem_inb(const struct si_sm_io *io,
+				  unsigned int offset)
+{
+	return readb((io->addr)+(offset * io->regspacing));
+}
 
-अटल व्योम पूर्णांकf_mem_outb(स्थिर काष्ठा si_sm_io *io, अचिन्हित पूर्णांक offset,
-			  अचिन्हित अक्षर b)
-अणु
-	ग_लिखोb(b, (io->addr)+(offset * io->regspacing));
-पूर्ण
+static void intf_mem_outb(const struct si_sm_io *io, unsigned int offset,
+			  unsigned char b)
+{
+	writeb(b, (io->addr)+(offset * io->regspacing));
+}
 
-अटल अचिन्हित अक्षर पूर्णांकf_mem_inw(स्थिर काष्ठा si_sm_io *io,
-				  अचिन्हित पूर्णांक offset)
-अणु
-	वापस (पढ़ोw((io->addr)+(offset * io->regspacing)) >> io->regshअगरt)
+static unsigned char intf_mem_inw(const struct si_sm_io *io,
+				  unsigned int offset)
+{
+	return (readw((io->addr)+(offset * io->regspacing)) >> io->regshift)
 		& 0xff;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकf_mem_outw(स्थिर काष्ठा si_sm_io *io, अचिन्हित पूर्णांक offset,
-			  अचिन्हित अक्षर b)
-अणु
-	ग_लिखोb(b << io->regshअगरt, (io->addr)+(offset * io->regspacing));
-पूर्ण
+static void intf_mem_outw(const struct si_sm_io *io, unsigned int offset,
+			  unsigned char b)
+{
+	writeb(b << io->regshift, (io->addr)+(offset * io->regspacing));
+}
 
-अटल अचिन्हित अक्षर पूर्णांकf_mem_inl(स्थिर काष्ठा si_sm_io *io,
-				  अचिन्हित पूर्णांक offset)
-अणु
-	वापस (पढ़ोl((io->addr)+(offset * io->regspacing)) >> io->regshअगरt)
+static unsigned char intf_mem_inl(const struct si_sm_io *io,
+				  unsigned int offset)
+{
+	return (readl((io->addr)+(offset * io->regspacing)) >> io->regshift)
 		& 0xff;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकf_mem_outl(स्थिर काष्ठा si_sm_io *io, अचिन्हित पूर्णांक offset,
-			  अचिन्हित अक्षर b)
-अणु
-	ग_लिखोl(b << io->regshअगरt, (io->addr)+(offset * io->regspacing));
-पूर्ण
+static void intf_mem_outl(const struct si_sm_io *io, unsigned int offset,
+			  unsigned char b)
+{
+	writel(b << io->regshift, (io->addr)+(offset * io->regspacing));
+}
 
-#अगर_घोषित पढ़ोq
-अटल अचिन्हित अक्षर mem_inq(स्थिर काष्ठा si_sm_io *io, अचिन्हित पूर्णांक offset)
-अणु
-	वापस (पढ़ोq((io->addr)+(offset * io->regspacing)) >> io->regshअगरt)
+#ifdef readq
+static unsigned char mem_inq(const struct si_sm_io *io, unsigned int offset)
+{
+	return (readq((io->addr)+(offset * io->regspacing)) >> io->regshift)
 		& 0xff;
-पूर्ण
+}
 
-अटल व्योम mem_outq(स्थिर काष्ठा si_sm_io *io, अचिन्हित पूर्णांक offset,
-		     अचिन्हित अक्षर b)
-अणु
-	ग_लिखोq((u64)b << io->regshअगरt, (io->addr)+(offset * io->regspacing));
-पूर्ण
-#पूर्ण_अगर
+static void mem_outq(const struct si_sm_io *io, unsigned int offset,
+		     unsigned char b)
+{
+	writeq((u64)b << io->regshift, (io->addr)+(offset * io->regspacing));
+}
+#endif
 
-अटल व्योम mem_region_cleanup(काष्ठा si_sm_io *io, पूर्णांक num)
-अणु
-	अचिन्हित दीर्घ addr = io->addr_data;
-	पूर्णांक idx;
+static void mem_region_cleanup(struct si_sm_io *io, int num)
+{
+	unsigned long addr = io->addr_data;
+	int idx;
 
-	क्रम (idx = 0; idx < num; idx++)
+	for (idx = 0; idx < num; idx++)
 		release_mem_region(addr + idx * io->regspacing,
 				   io->regsize);
-पूर्ण
+}
 
-अटल व्योम mem_cleanup(काष्ठा si_sm_io *io)
-अणु
-	अगर (io->addr) अणु
+static void mem_cleanup(struct si_sm_io *io)
+{
+	if (io->addr) {
 		iounmap(io->addr);
 		mem_region_cleanup(io, io->io_size);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ipmi_si_mem_setup(काष्ठा si_sm_io *io)
-अणु
-	अचिन्हित दीर्घ addr = io->addr_data;
-	पूर्णांक           mapsize, idx;
+int ipmi_si_mem_setup(struct si_sm_io *io)
+{
+	unsigned long addr = io->addr_data;
+	int           mapsize, idx;
 
-	अगर (!addr)
-		वापस -ENODEV;
+	if (!addr)
+		return -ENODEV;
 
 	/*
-	 * Figure out the actual पढ़ोb/पढ़ोw/पढ़ोl/etc routine to use based
-	 * upon the रेजिस्टर size.
+	 * Figure out the actual readb/readw/readl/etc routine to use based
+	 * upon the register size.
 	 */
-	चयन (io->regsize) अणु
-	हाल 1:
-		io->inputb = पूर्णांकf_mem_inb;
-		io->outputb = पूर्णांकf_mem_outb;
-		अवरोध;
-	हाल 2:
-		io->inputb = पूर्णांकf_mem_inw;
-		io->outputb = पूर्णांकf_mem_outw;
-		अवरोध;
-	हाल 4:
-		io->inputb = पूर्णांकf_mem_inl;
-		io->outputb = पूर्णांकf_mem_outl;
-		अवरोध;
-#अगर_घोषित पढ़ोq
-	हाल 8:
+	switch (io->regsize) {
+	case 1:
+		io->inputb = intf_mem_inb;
+		io->outputb = intf_mem_outb;
+		break;
+	case 2:
+		io->inputb = intf_mem_inw;
+		io->outputb = intf_mem_outw;
+		break;
+	case 4:
+		io->inputb = intf_mem_inl;
+		io->outputb = intf_mem_outl;
+		break;
+#ifdef readq
+	case 8:
 		io->inputb = mem_inq;
 		io->outputb = mem_outq;
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		dev_warn(io->dev, "Invalid register size: %d\n",
 			 io->regsize);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Some BIOSes reserve disjoपूर्णांक memory regions in their ACPI
+	 * Some BIOSes reserve disjoint memory regions in their ACPI
 	 * tables.  This causes problems when trying to request the
-	 * entire region.  Thereक्रमe we must request each रेजिस्टर
+	 * entire region.  Therefore we must request each register
 	 * separately.
 	 */
-	क्रम (idx = 0; idx < io->io_size; idx++) अणु
-		अगर (request_mem_region(addr + idx * io->regspacing,
-				       io->regsize, SI_DEVICE_NAME) == शून्य) अणु
-			/* Unकरो allocations */
+	for (idx = 0; idx < io->io_size; idx++) {
+		if (request_mem_region(addr + idx * io->regspacing,
+				       io->regsize, SI_DEVICE_NAME) == NULL) {
+			/* Undo allocations */
 			mem_region_cleanup(io, idx);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 
 	/*
 	 * Calculate the total amount of memory to claim.  This is an
-	 * unusual looking calculation, but it aव्योमs claiming any
+	 * unusual looking calculation, but it avoids claiming any
 	 * more memory than it has to.  It will claim everything
 	 * between the first address to the end of the last full
-	 * रेजिस्टर.
+	 * register.
 	 */
 	mapsize = ((io->io_size * io->regspacing)
 		   - (io->regspacing - io->regsize));
 	io->addr = ioremap(addr, mapsize);
-	अगर (io->addr == शून्य) अणु
+	if (io->addr == NULL) {
 		mem_region_cleanup(io, io->io_size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	io->io_cleanup = mem_cleanup;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

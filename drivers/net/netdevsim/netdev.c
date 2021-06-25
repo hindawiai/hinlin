@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2017 Netronome Systems, Inc.
  *
@@ -14,25 +13,25 @@
  * THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/rtnetlink.h>
-#समावेश <net/udp_tunnel.h>
+#include <linux/debugfs.h>
+#include <linux/etherdevice.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/slab.h>
+#include <net/netlink.h>
+#include <net/pkt_cls.h>
+#include <net/rtnetlink.h>
+#include <net/udp_tunnel.h>
 
-#समावेश "netdevsim.h"
+#include "netdevsim.h"
 
-अटल netdev_tx_t nsim_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static netdev_tx_t nsim_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	अगर (!nsim_ipsec_tx(ns, skb))
-		जाओ out;
+	if (!nsim_ipsec_tx(ns, skb))
+		goto out;
 
 	u64_stats_update_begin(&ns->syncp);
 	ns->tx_packets++;
@@ -40,133 +39,133 @@
 	u64_stats_update_end(&ns->syncp);
 
 out:
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम nsim_set_rx_mode(काष्ठा net_device *dev)
-अणु
-पूर्ण
+static void nsim_set_rx_mode(struct net_device *dev)
+{
+}
 
-अटल पूर्णांक nsim_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int nsim_change_mtu(struct net_device *dev, int new_mtu)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	अगर (ns->xdp.prog && new_mtu > NSIM_XDP_MAX_MTU)
-		वापस -EBUSY;
+	if (ns->xdp.prog && new_mtu > NSIM_XDP_MAX_MTU)
+		return -EBUSY;
 
 	dev->mtu = new_mtu;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-nsim_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	अचिन्हित पूर्णांक start;
+static void
+nsim_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	unsigned int start;
 
-	करो अणु
+	do {
 		start = u64_stats_fetch_begin(&ns->syncp);
 		stats->tx_bytes = ns->tx_bytes;
 		stats->tx_packets = ns->tx_packets;
-	पूर्ण जबतक (u64_stats_fetch_retry(&ns->syncp, start));
-पूर्ण
+	} while (u64_stats_fetch_retry(&ns->syncp, start));
+}
 
-अटल पूर्णांक
-nsim_setup_tc_block_cb(क्रमागत tc_setup_type type, व्योम *type_data, व्योम *cb_priv)
-अणु
-	वापस nsim_bpf_setup_tc_block_cb(type, type_data, cb_priv);
-पूर्ण
+static int
+nsim_setup_tc_block_cb(enum tc_setup_type type, void *type_data, void *cb_priv)
+{
+	return nsim_bpf_setup_tc_block_cb(type, type_data, cb_priv);
+}
 
-अटल पूर्णांक nsim_set_vf_mac(काष्ठा net_device *dev, पूर्णांक vf, u8 *mac)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int nsim_set_vf_mac(struct net_device *dev, int vf, u8 *mac)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
 	/* Only refuse multicast addresses, zero address can mean unset/any. */
-	अगर (vf >= nsim_bus_dev->num_vfs || is_multicast_ether_addr(mac))
-		वापस -EINVAL;
-	स_नकल(nsim_bus_dev->vfconfigs[vf].vf_mac, mac, ETH_ALEN);
+	if (vf >= nsim_bus_dev->num_vfs || is_multicast_ether_addr(mac))
+		return -EINVAL;
+	memcpy(nsim_bus_dev->vfconfigs[vf].vf_mac, mac, ETH_ALEN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_vf_vlan(काष्ठा net_device *dev, पूर्णांक vf,
+static int nsim_set_vf_vlan(struct net_device *dev, int vf,
 			    u16 vlan, u8 qos, __be16 vlan_proto)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs || vlan > 4095 || qos > 7)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs || vlan > 4095 || qos > 7)
+		return -EINVAL;
 
 	nsim_bus_dev->vfconfigs[vf].vlan = vlan;
 	nsim_bus_dev->vfconfigs[vf].qos = qos;
 	nsim_bus_dev->vfconfigs[vf].vlan_proto = vlan_proto;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_vf_rate(काष्ठा net_device *dev, पूर्णांक vf, पूर्णांक min, पूर्णांक max)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int nsim_set_vf_rate(struct net_device *dev, int vf, int min, int max)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs)
+		return -EINVAL;
 
 	nsim_bus_dev->vfconfigs[vf].min_tx_rate = min;
 	nsim_bus_dev->vfconfigs[vf].max_tx_rate = max;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_vf_spoofchk(काष्ठा net_device *dev, पूर्णांक vf, bool val)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int nsim_set_vf_spoofchk(struct net_device *dev, int vf, bool val)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs)
+		return -EINVAL;
 	nsim_bus_dev->vfconfigs[vf].spoofchk_enabled = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_vf_rss_query_en(काष्ठा net_device *dev, पूर्णांक vf, bool val)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int nsim_set_vf_rss_query_en(struct net_device *dev, int vf, bool val)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs)
+		return -EINVAL;
 	nsim_bus_dev->vfconfigs[vf].rss_query_enabled = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_vf_trust(काष्ठा net_device *dev, पूर्णांक vf, bool val)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int nsim_set_vf_trust(struct net_device *dev, int vf, bool val)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs)
+		return -EINVAL;
 	nsim_bus_dev->vfconfigs[vf].trusted = val;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nsim_get_vf_config(काष्ठा net_device *dev, पूर्णांक vf, काष्ठा अगरla_vf_info *ivi)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int
+nsim_get_vf_config(struct net_device *dev, int vf, struct ifla_vf_info *ivi)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs)
+		return -EINVAL;
 
 	ivi->vf = vf;
 	ivi->linkstate = nsim_bus_dev->vfconfigs[vf].link_state;
@@ -175,97 +174,97 @@ nsim_get_vf_config(काष्ठा net_device *dev, पूर्णांक 
 	ivi->vlan = nsim_bus_dev->vfconfigs[vf].vlan;
 	ivi->vlan_proto = nsim_bus_dev->vfconfigs[vf].vlan_proto;
 	ivi->qos = nsim_bus_dev->vfconfigs[vf].qos;
-	स_नकल(&ivi->mac, nsim_bus_dev->vfconfigs[vf].vf_mac, ETH_ALEN);
+	memcpy(&ivi->mac, nsim_bus_dev->vfconfigs[vf].vf_mac, ETH_ALEN);
 	ivi->spoofchk = nsim_bus_dev->vfconfigs[vf].spoofchk_enabled;
 	ivi->trusted = nsim_bus_dev->vfconfigs[vf].trusted;
 	ivi->rss_query_en = nsim_bus_dev->vfconfigs[vf].rss_query_enabled;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nsim_set_vf_link_state(काष्ठा net_device *dev, पूर्णांक vf, पूर्णांक state)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
-	काष्ठा nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
+static int nsim_set_vf_link_state(struct net_device *dev, int vf, int state)
+{
+	struct netdevsim *ns = netdev_priv(dev);
+	struct nsim_bus_dev *nsim_bus_dev = ns->nsim_bus_dev;
 
-	अगर (vf >= nsim_bus_dev->num_vfs)
-		वापस -EINVAL;
+	if (vf >= nsim_bus_dev->num_vfs)
+		return -EINVAL;
 
-	चयन (state) अणु
-	हाल IFLA_VF_LINK_STATE_AUTO:
-	हाल IFLA_VF_LINK_STATE_ENABLE:
-	हाल IFLA_VF_LINK_STATE_DISABLE:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (state) {
+	case IFLA_VF_LINK_STATE_AUTO:
+	case IFLA_VF_LINK_STATE_ENABLE:
+	case IFLA_VF_LINK_STATE_DISABLE:
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	nsim_bus_dev->vfconfigs[vf].link_state = state;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल LIST_HEAD(nsim_block_cb_list);
+static LIST_HEAD(nsim_block_cb_list);
 
-अटल पूर्णांक
-nsim_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type, व्योम *type_data)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int
+nsim_setup_tc(struct net_device *dev, enum tc_setup_type type, void *type_data)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	चयन (type) अणु
-	हाल TC_SETUP_BLOCK:
-		वापस flow_block_cb_setup_simple(type_data,
+	switch (type) {
+	case TC_SETUP_BLOCK:
+		return flow_block_cb_setup_simple(type_data,
 						  &nsim_block_cb_list,
 						  nsim_setup_tc_block_cb,
 						  ns, ns, true);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक
-nsim_set_features(काष्ठा net_device *dev, netdev_features_t features)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static int
+nsim_set_features(struct net_device *dev, netdev_features_t features)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	अगर ((dev->features & NETIF_F_HW_TC) > (features & NETIF_F_HW_TC))
-		वापस nsim_bpf_disable_tc(ns);
+	if ((dev->features & NETIF_F_HW_TC) > (features & NETIF_F_HW_TC))
+		return nsim_bpf_disable_tc(ns);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा devlink_port *nsim_get_devlink_port(काष्ठा net_device *dev)
-अणु
-	काष्ठा netdevsim *ns = netdev_priv(dev);
+static struct devlink_port *nsim_get_devlink_port(struct net_device *dev)
+{
+	struct netdevsim *ns = netdev_priv(dev);
 
-	वापस &ns->nsim_dev_port->devlink_port;
-पूर्ण
+	return &ns->nsim_dev_port->devlink_port;
+}
 
-अटल स्थिर काष्ठा net_device_ops nsim_netdev_ops = अणु
-	.nकरो_start_xmit		= nsim_start_xmit,
-	.nकरो_set_rx_mode	= nsim_set_rx_mode,
-	.nकरो_set_mac_address	= eth_mac_addr,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_change_mtu		= nsim_change_mtu,
-	.nकरो_get_stats64	= nsim_get_stats64,
-	.nकरो_set_vf_mac		= nsim_set_vf_mac,
-	.nकरो_set_vf_vlan	= nsim_set_vf_vlan,
-	.nकरो_set_vf_rate	= nsim_set_vf_rate,
-	.nकरो_set_vf_spoofchk	= nsim_set_vf_spoofchk,
-	.nकरो_set_vf_trust	= nsim_set_vf_trust,
-	.nकरो_get_vf_config	= nsim_get_vf_config,
-	.nकरो_set_vf_link_state	= nsim_set_vf_link_state,
-	.nकरो_set_vf_rss_query_en = nsim_set_vf_rss_query_en,
-	.nकरो_setup_tc		= nsim_setup_tc,
-	.nकरो_set_features	= nsim_set_features,
-	.nकरो_bpf		= nsim_bpf,
-	.nकरो_get_devlink_port	= nsim_get_devlink_port,
-पूर्ण;
+static const struct net_device_ops nsim_netdev_ops = {
+	.ndo_start_xmit		= nsim_start_xmit,
+	.ndo_set_rx_mode	= nsim_set_rx_mode,
+	.ndo_set_mac_address	= eth_mac_addr,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_change_mtu		= nsim_change_mtu,
+	.ndo_get_stats64	= nsim_get_stats64,
+	.ndo_set_vf_mac		= nsim_set_vf_mac,
+	.ndo_set_vf_vlan	= nsim_set_vf_vlan,
+	.ndo_set_vf_rate	= nsim_set_vf_rate,
+	.ndo_set_vf_spoofchk	= nsim_set_vf_spoofchk,
+	.ndo_set_vf_trust	= nsim_set_vf_trust,
+	.ndo_get_vf_config	= nsim_get_vf_config,
+	.ndo_set_vf_link_state	= nsim_set_vf_link_state,
+	.ndo_set_vf_rss_query_en = nsim_set_vf_rss_query_en,
+	.ndo_setup_tc		= nsim_setup_tc,
+	.ndo_set_features	= nsim_set_features,
+	.ndo_bpf		= nsim_bpf,
+	.ndo_get_devlink_port	= nsim_get_devlink_port,
+};
 
-अटल व्योम nsim_setup(काष्ठा net_device *dev)
-अणु
+static void nsim_setup(struct net_device *dev)
+{
 	ether_setup(dev);
-	eth_hw_addr_अक्रमom(dev);
+	eth_hw_addr_random(dev);
 
 	dev->tx_queue_len = 0;
 	dev->flags |= IFF_NOARP;
@@ -279,18 +278,18 @@ nsim_set_features(काष्ठा net_device *dev, netdev_features_t features
 			 NETIF_F_TSO;
 	dev->hw_features |= NETIF_F_HW_TC;
 	dev->max_mtu = ETH_MAX_MTU;
-पूर्ण
+}
 
-काष्ठा netdevsim *
-nsim_create(काष्ठा nsim_dev *nsim_dev, काष्ठा nsim_dev_port *nsim_dev_port)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा netdevsim *ns;
-	पूर्णांक err;
+struct netdevsim *
+nsim_create(struct nsim_dev *nsim_dev, struct nsim_dev_port *nsim_dev_port)
+{
+	struct net_device *dev;
+	struct netdevsim *ns;
+	int err;
 
-	dev = alloc_netdev(माप(*ns), "eth%d", NET_NAME_UNKNOWN, nsim_setup);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = alloc_netdev(sizeof(*ns), "eth%d", NET_NAME_UNKNOWN, nsim_setup);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	dev_net_set(dev, nsim_dev_net(nsim_dev));
 	ns = netdev_priv(dev);
@@ -304,92 +303,92 @@ nsim_create(काष्ठा nsim_dev *nsim_dev, काष्ठा nsim_dev_p
 	nsim_ethtool_init(ns);
 
 	err = nsim_udp_tunnels_info_create(nsim_dev, dev);
-	अगर (err)
-		जाओ err_मुक्त_netdev;
+	if (err)
+		goto err_free_netdev;
 
 	rtnl_lock();
 	err = nsim_bpf_init(ns);
-	अगर (err)
-		जाओ err_utn_destroy;
+	if (err)
+		goto err_utn_destroy;
 
 	nsim_ipsec_init(ns);
 
-	err = रेजिस्टर_netdevice(dev);
-	अगर (err)
-		जाओ err_ipsec_tearकरोwn;
+	err = register_netdevice(dev);
+	if (err)
+		goto err_ipsec_teardown;
 	rtnl_unlock();
 
-	वापस ns;
+	return ns;
 
-err_ipsec_tearकरोwn:
-	nsim_ipsec_tearकरोwn(ns);
+err_ipsec_teardown:
+	nsim_ipsec_teardown(ns);
 	nsim_bpf_uninit(ns);
 err_utn_destroy:
 	rtnl_unlock();
 	nsim_udp_tunnels_info_destroy(dev);
-err_मुक्त_netdev:
-	मुक्त_netdev(dev);
-	वापस ERR_PTR(err);
-पूर्ण
+err_free_netdev:
+	free_netdev(dev);
+	return ERR_PTR(err);
+}
 
-व्योम nsim_destroy(काष्ठा netdevsim *ns)
-अणु
-	काष्ठा net_device *dev = ns->netdev;
+void nsim_destroy(struct netdevsim *ns)
+{
+	struct net_device *dev = ns->netdev;
 
 	rtnl_lock();
-	unरेजिस्टर_netdevice(dev);
-	nsim_ipsec_tearकरोwn(ns);
+	unregister_netdevice(dev);
+	nsim_ipsec_teardown(ns);
 	nsim_bpf_uninit(ns);
 	rtnl_unlock();
 	nsim_udp_tunnels_info_destroy(dev);
-	मुक्त_netdev(dev);
-पूर्ण
+	free_netdev(dev);
+}
 
-अटल पूर्णांक nsim_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
-			 काष्ठा netlink_ext_ack *extack)
-अणु
+static int nsim_validate(struct nlattr *tb[], struct nlattr *data[],
+			 struct netlink_ext_ack *extack)
+{
 	NL_SET_ERR_MSG_MOD(extack, "Please use: echo \"[ID] [PORT_COUNT]\" > /sys/bus/netdevsim/new_device");
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल काष्ठा rtnl_link_ops nsim_link_ops __पढ़ो_mostly = अणु
+static struct rtnl_link_ops nsim_link_ops __read_mostly = {
 	.kind		= DRV_NAME,
 	.validate	= nsim_validate,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nsim_module_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init nsim_module_init(void)
+{
+	int err;
 
 	err = nsim_dev_init();
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = nsim_bus_init();
-	अगर (err)
-		जाओ err_dev_निकास;
+	if (err)
+		goto err_dev_exit;
 
-	err = rtnl_link_रेजिस्टर(&nsim_link_ops);
-	अगर (err)
-		जाओ err_bus_निकास;
+	err = rtnl_link_register(&nsim_link_ops);
+	if (err)
+		goto err_bus_exit;
 
-	वापस 0;
+	return 0;
 
-err_bus_निकास:
-	nsim_bus_निकास();
-err_dev_निकास:
-	nsim_dev_निकास();
-	वापस err;
-पूर्ण
+err_bus_exit:
+	nsim_bus_exit();
+err_dev_exit:
+	nsim_dev_exit();
+	return err;
+}
 
-अटल व्योम __निकास nsim_module_निकास(व्योम)
-अणु
-	rtnl_link_unरेजिस्टर(&nsim_link_ops);
-	nsim_bus_निकास();
-	nsim_dev_निकास();
-पूर्ण
+static void __exit nsim_module_exit(void)
+{
+	rtnl_link_unregister(&nsim_link_ops);
+	nsim_bus_exit();
+	nsim_dev_exit();
+}
 
 module_init(nsim_module_init);
-module_निकास(nsim_module_निकास);
+module_exit(nsim_module_exit);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK(DRV_NAME);

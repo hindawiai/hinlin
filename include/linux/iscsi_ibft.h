@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Copyright 2007 Red Hat, Inc.
  *  by Peter Jones <pjones@redhat.com>
@@ -11,29 +10,29 @@
  * This code exposes the iSCSI Boot Format Table to userland via sysfs.
  */
 
-#अगर_अघोषित ISCSI_IBFT_H
-#घोषणा ISCSI_IBFT_H
+#ifndef ISCSI_IBFT_H
+#define ISCSI_IBFT_H
 
-#समावेश <linux/acpi.h>
+#include <linux/acpi.h>
 
 /*
  * Logical location of iSCSI Boot Format Table.
- * If the value is शून्य there is no iBFT on the machine.
+ * If the value is NULL there is no iBFT on the machine.
  */
-बाह्य काष्ठा acpi_table_ibft *ibft_addr;
+extern struct acpi_table_ibft *ibft_addr;
 
 /*
  * Routine used to find and reserve the iSCSI Boot Format Table. The
  * mapped address is set in the ibft_addr variable.
  */
-#अगर_घोषित CONFIG_ISCSI_IBFT_FIND
-अचिन्हित दीर्घ find_ibft_region(अचिन्हित दीर्घ *sizep);
-#अन्यथा
-अटल अंतरभूत अचिन्हित दीर्घ find_ibft_region(अचिन्हित दीर्घ *sizep)
-अणु
+#ifdef CONFIG_ISCSI_IBFT_FIND
+unsigned long find_ibft_region(unsigned long *sizep);
+#else
+static inline unsigned long find_ibft_region(unsigned long *sizep)
+{
 	*sizep = 0;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#पूर्ण_अगर /* ISCSI_IBFT_H */
+#endif /* ISCSI_IBFT_H */

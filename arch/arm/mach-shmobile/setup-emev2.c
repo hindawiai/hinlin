@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Emma Mobile EV2 processor support
  *
  * Copyright (C) 2012  Magnus Damm
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
 
-#समावेश "common.h"
-#समावेश "emev2.h"
+#include "common.h"
+#include "emev2.h"
 
-अटल स्थिर अक्षर *स्थिर emev2_boards_compat_dt[] __initस्थिर = अणु
+static const char *const emev2_boards_compat_dt[] __initconst = {
 	"renesas,emev2",
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 DT_MACHINE_START(EMEV2_DT, "Generic Emma Mobile EV2 (Flattened Device Tree)")
 	.smp		= smp_ops(emev2_smp_ops),

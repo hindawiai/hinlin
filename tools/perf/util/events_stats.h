@@ -1,32 +1,31 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PERF_EVENTS_STATS_
-#घोषणा __PERF_EVENTS_STATS_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PERF_EVENTS_STATS_
+#define __PERF_EVENTS_STATS_
 
-#समावेश <मानकपन.स>
-#समावेश <perf/event.h>
-#समावेश <linux/types.h>
-#समावेश "auxtrace.h"
+#include <stdio.h>
+#include <perf/event.h>
+#include <linux/types.h>
+#include "auxtrace.h"
 
 /*
  * The kernel collects the number of events it couldn't send in a stretch and
  * when possible sends this number in a PERF_RECORD_LOST event. The number of
- * such "chunks" of lost events is stored in .nr_events[PERF_EVENT_LOST] जबतक
+ * such "chunks" of lost events is stored in .nr_events[PERF_EVENT_LOST] while
  * total_lost tells exactly how many events the kernel in fact lost, i.e. it is
- * the sum of all काष्ठा perf_record_lost.lost fields reported.
+ * the sum of all struct perf_record_lost.lost fields reported.
  *
  * The kernel discards mixed up samples and sends the number in a
  * PERF_RECORD_LOST_SAMPLES event. The number of lost-samples events is stored
- * in .nr_events[PERF_RECORD_LOST_SAMPLES] जबतक total_lost_samples tells
+ * in .nr_events[PERF_RECORD_LOST_SAMPLES] while total_lost_samples tells
  * exactly how many samples the kernel in fact dropped, i.e. it is the sum of
- * all काष्ठा perf_record_lost_samples.lost fields reported.
+ * all struct perf_record_lost_samples.lost fields reported.
  *
- * The total_period is needed because by शेष स्वतः-freq is used, so
+ * The total_period is needed because by default auto-freq is used, so
  * multiplying nr_events[PERF_EVENT_SAMPLE] by a frequency isn't possible to get
- * the total number of low level events, it is necessary to to sum all काष्ठा
+ * the total number of low level events, it is necessary to to sum all struct
  * perf_record_sample.period and stash the result in total_period.
  */
-काष्ठा events_stats अणु
+struct events_stats {
 	u64 total_lost;
 	u64 total_lost_samples;
 	u64 total_aux_lost;
@@ -39,19 +38,19 @@
 	u32 nr_unknown_id;
 	u32 nr_unprocessable_samples;
 	u32 nr_auxtrace_errors[PERF_AUXTRACE_ERROR_MAX];
-	u32 nr_proc_map_समयout;
-पूर्ण;
+	u32 nr_proc_map_timeout;
+};
 
-काष्ठा hists_stats अणु
+struct hists_stats {
 	u64 total_period;
 	u64 total_non_filtered_period;
 	u32 nr_samples;
 	u32 nr_non_filtered_samples;
-पूर्ण;
+};
 
-व्योम events_stats__inc(काष्ठा events_stats *stats, u32 type);
+void events_stats__inc(struct events_stats *stats, u32 type);
 
-माप_प्रकार events_stats__ख_लिखो(काष्ठा events_stats *stats, खाता *fp,
+size_t events_stats__fprintf(struct events_stats *stats, FILE *fp,
 			     bool skip_empty);
 
-#पूर्ण_अगर /* __PERF_EVENTS_STATS_ */
+#endif /* __PERF_EVENTS_STATS_ */

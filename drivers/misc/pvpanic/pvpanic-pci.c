@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  Pvpanic PCI Device Support
  *
  *  Copyright (C) 2021 Oracle.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/types.h>
+#include <linux/slab.h>
 
-#समावेश <uapi/misc/pvpanic.h>
+#include <uapi/misc/pvpanic.h>
 
-#समावेश "pvpanic.h"
+#include "pvpanic.h"
 
-#घोषणा PCI_VENDOR_ID_REDHAT             0x1b36
-#घोषणा PCI_DEVICE_ID_REDHAT_PVPANIC     0x0011
+#define PCI_VENDOR_ID_REDHAT             0x1b36
+#define PCI_DEVICE_ID_REDHAT_PVPANIC     0x0011
 
 MODULE_AUTHOR("Mihai Carabas <mihai.carabas@oracle.com>");
 MODULE_DESCRIPTION("pvpanic device driver ");
 MODULE_LICENSE("GPL");
 
-अटल स्थिर काष्ठा pci_device_id pvpanic_pci_id_tbl[]  = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_REDHAT, PCI_DEVICE_ID_REDHAT_PVPANIC)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct pci_device_id pvpanic_pci_id_tbl[]  = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_REDHAT, PCI_DEVICE_ID_REDHAT_PVPANIC)},
+	{}
+};
 
-अटल sमाप_प्रकार capability_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा pvpanic_instance *pi = dev_get_drvdata(dev);
+static ssize_t capability_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct pvpanic_instance *pi = dev_get_drvdata(dev);
 
-	वापस sysfs_emit(buf, "%x\n", pi->capability);
-पूर्ण
-अटल DEVICE_ATTR_RO(capability);
+	return sysfs_emit(buf, "%x\n", pi->capability);
+}
+static DEVICE_ATTR_RO(capability);
 
-अटल sमाप_प्रकार events_show(काष्ठा device *dev,  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा pvpanic_instance *pi = dev_get_drvdata(dev);
+static ssize_t events_show(struct device *dev,  struct device_attribute *attr, char *buf)
+{
+	struct pvpanic_instance *pi = dev_get_drvdata(dev);
 
-	वापस sysfs_emit(buf, "%x\n", pi->events);
-पूर्ण
+	return sysfs_emit(buf, "%x\n", pi->events);
+}
 
-अटल sमाप_प्रकार events_store(काष्ठा device *dev,  काष्ठा device_attribute *attr,
-			    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा pvpanic_instance *pi = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक पंचांगp;
-	पूर्णांक err;
+static ssize_t events_store(struct device *dev,  struct device_attribute *attr,
+			    const char *buf, size_t count)
+{
+	struct pvpanic_instance *pi = dev_get_drvdata(dev);
+	unsigned int tmp;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 16, &पंचांगp);
-	अगर (err)
-		वापस err;
+	err = kstrtouint(buf, 16, &tmp);
+	if (err)
+		return err;
 
-	अगर ((पंचांगp & pi->capability) != पंचांगp)
-		वापस -EINVAL;
+	if ((tmp & pi->capability) != tmp)
+		return -EINVAL;
 
-	pi->events = पंचांगp;
+	pi->events = tmp;
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR_RW(events);
+	return count;
+}
+static DEVICE_ATTR_RW(events);
 
-अटल काष्ठा attribute *pvpanic_pci_dev_attrs[] = अणु
+static struct attribute *pvpanic_pci_dev_attrs[] = {
 	&dev_attr_capability.attr,
 	&dev_attr_events.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(pvpanic_pci_dev);
 
-अटल पूर्णांक pvpanic_pci_probe(काष्ठा pci_dev *pdev,
-			     स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा pvpanic_instance *pi;
-	व्योम __iomem *base;
-	पूर्णांक ret;
+static int pvpanic_pci_probe(struct pci_dev *pdev,
+			     const struct pci_device_id *ent)
+{
+	struct device *dev = &pdev->dev;
+	struct pvpanic_instance *pi;
+	void __iomem *base;
+	int ret;
 
 	ret = pci_enable_device(pdev);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	base = pci_iomap(pdev, 0, 0);
-	अगर (!base)
-		वापस -ENOMEM;
+	if (!base)
+		return -ENOMEM;
 
-	pi = kदो_स्मृति(माप(*pi), GFP_ATOMIC);
-	अगर (!pi)
-		वापस -ENOMEM;
+	pi = kmalloc(sizeof(*pi), GFP_ATOMIC);
+	if (!pi)
+		return -ENOMEM;
 
 	pi->base = base;
 	pi->capability = PVPANIC_PANICKED | PVPANIC_CRASH_LOADED;
 
 	/* initlize capability by RDPT */
-	pi->capability &= ioपढ़ो8(base);
+	pi->capability &= ioread8(base);
 	pi->events = pi->capability;
 
 	dev_set_drvdata(dev, pi);
 
-	वापस pvpanic_probe(pi);
-पूर्ण
+	return pvpanic_probe(pi);
+}
 
-अटल व्योम pvpanic_pci_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा pvpanic_instance *pi = dev_get_drvdata(&pdev->dev);
+static void pvpanic_pci_remove(struct pci_dev *pdev)
+{
+	struct pvpanic_instance *pi = dev_get_drvdata(&pdev->dev);
 
-	pvpanic_हटाओ(pi);
+	pvpanic_remove(pi);
 	iounmap(pi->base);
-	kमुक्त(pi);
+	kfree(pi);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-अटल काष्ठा pci_driver pvpanic_pci_driver = अणु
+static struct pci_driver pvpanic_pci_driver = {
 	.name =         "pvpanic-pci",
 	.id_table =     pvpanic_pci_id_tbl,
 	.probe =        pvpanic_pci_probe,
-	.हटाओ =       pvpanic_pci_हटाओ,
-	.driver = अणु
+	.remove =       pvpanic_pci_remove,
+	.driver = {
 		.dev_groups = pvpanic_pci_dev_groups,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_pci_driver(pvpanic_pci_driver);

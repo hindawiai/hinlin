@@ -1,736 +1,735 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Driver क्रम FPGA Management Engine (FME) Global Perक्रमmance Reporting
+ * Driver for FPGA Management Engine (FME) Global Performance Reporting
  *
  * Copyright 2019 Intel Corporation, Inc.
  *
  * Authors:
- *   Kang Luwei <luwei.kang@पूर्णांकel.com>
- *   Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
- *   Wu Hao <hao.wu@पूर्णांकel.com>
- *   Xu Yilun <yilun.xu@पूर्णांकel.com>
- *   Joseph Grecco <joe.grecco@पूर्णांकel.com>
- *   Enno Luebbers <enno.luebbers@पूर्णांकel.com>
- *   Tim Whisonant <tim.whisonant@पूर्णांकel.com>
- *   Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
- *   Mitchel, Henry <henry.mitchel@पूर्णांकel.com>
+ *   Kang Luwei <luwei.kang@intel.com>
+ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+ *   Wu Hao <hao.wu@intel.com>
+ *   Xu Yilun <yilun.xu@intel.com>
+ *   Joseph Grecco <joe.grecco@intel.com>
+ *   Enno Luebbers <enno.luebbers@intel.com>
+ *   Tim Whisonant <tim.whisonant@intel.com>
+ *   Ananda Ravuri <ananda.ravuri@intel.com>
+ *   Mitchel, Henry <henry.mitchel@intel.com>
  */
 
-#समावेश <linux/perf_event.h>
-#समावेश "dfl.h"
-#समावेश "dfl-fme.h"
+#include <linux/perf_event.h>
+#include "dfl.h"
+#include "dfl-fme.h"
 
 /*
- * Perक्रमmance Counter Registers क्रम Cache.
+ * Performance Counter Registers for Cache.
  *
  * Cache Events are listed below as CACHE_EVNT_*.
  */
-#घोषणा CACHE_CTRL			0x8
-#घोषणा CACHE_RESET_CNTR		BIT_ULL(0)
-#घोषणा CACHE_FREEZE_CNTR		BIT_ULL(8)
-#घोषणा CACHE_CTRL_EVNT			GENMASK_ULL(19, 16)
-#घोषणा CACHE_EVNT_RD_HIT		0x0
-#घोषणा CACHE_EVNT_WR_HIT		0x1
-#घोषणा CACHE_EVNT_RD_MISS		0x2
-#घोषणा CACHE_EVNT_WR_MISS		0x3
-#घोषणा CACHE_EVNT_RSVD			0x4
-#घोषणा CACHE_EVNT_HOLD_REQ		0x5
-#घोषणा CACHE_EVNT_DATA_WR_PORT_CONTEN	0x6
-#घोषणा CACHE_EVNT_TAG_WR_PORT_CONTEN	0x7
-#घोषणा CACHE_EVNT_TX_REQ_STALL		0x8
-#घोषणा CACHE_EVNT_RX_REQ_STALL		0x9
-#घोषणा CACHE_EVNT_EVICTIONS		0xa
-#घोषणा CACHE_EVNT_MAX			CACHE_EVNT_EVICTIONS
-#घोषणा CACHE_CHANNEL_SEL		BIT_ULL(20)
-#घोषणा CACHE_CHANNEL_RD		0
-#घोषणा CACHE_CHANNEL_WR		1
-#घोषणा CACHE_CNTR0			0x10
-#घोषणा CACHE_CNTR1			0x18
-#घोषणा CACHE_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
-#घोषणा CACHE_CNTR_EVNT			GENMASK_ULL(63, 60)
+#define CACHE_CTRL			0x8
+#define CACHE_RESET_CNTR		BIT_ULL(0)
+#define CACHE_FREEZE_CNTR		BIT_ULL(8)
+#define CACHE_CTRL_EVNT			GENMASK_ULL(19, 16)
+#define CACHE_EVNT_RD_HIT		0x0
+#define CACHE_EVNT_WR_HIT		0x1
+#define CACHE_EVNT_RD_MISS		0x2
+#define CACHE_EVNT_WR_MISS		0x3
+#define CACHE_EVNT_RSVD			0x4
+#define CACHE_EVNT_HOLD_REQ		0x5
+#define CACHE_EVNT_DATA_WR_PORT_CONTEN	0x6
+#define CACHE_EVNT_TAG_WR_PORT_CONTEN	0x7
+#define CACHE_EVNT_TX_REQ_STALL		0x8
+#define CACHE_EVNT_RX_REQ_STALL		0x9
+#define CACHE_EVNT_EVICTIONS		0xa
+#define CACHE_EVNT_MAX			CACHE_EVNT_EVICTIONS
+#define CACHE_CHANNEL_SEL		BIT_ULL(20)
+#define CACHE_CHANNEL_RD		0
+#define CACHE_CHANNEL_WR		1
+#define CACHE_CNTR0			0x10
+#define CACHE_CNTR1			0x18
+#define CACHE_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
+#define CACHE_CNTR_EVNT			GENMASK_ULL(63, 60)
 
 /*
- * Perक्रमmance Counter Registers क्रम Fabric.
+ * Performance Counter Registers for Fabric.
  *
  * Fabric Events are listed below as FAB_EVNT_*
  */
-#घोषणा FAB_CTRL			0x20
-#घोषणा FAB_RESET_CNTR			BIT_ULL(0)
-#घोषणा FAB_FREEZE_CNTR			BIT_ULL(8)
-#घोषणा FAB_CTRL_EVNT			GENMASK_ULL(19, 16)
-#घोषणा FAB_EVNT_PCIE0_RD		0x0
-#घोषणा FAB_EVNT_PCIE0_WR		0x1
-#घोषणा FAB_EVNT_PCIE1_RD		0x2
-#घोषणा FAB_EVNT_PCIE1_WR		0x3
-#घोषणा FAB_EVNT_UPI_RD			0x4
-#घोषणा FAB_EVNT_UPI_WR			0x5
-#घोषणा FAB_EVNT_MMIO_RD		0x6
-#घोषणा FAB_EVNT_MMIO_WR		0x7
-#घोषणा FAB_EVNT_MAX			FAB_EVNT_MMIO_WR
-#घोषणा FAB_PORT_ID			GENMASK_ULL(21, 20)
-#घोषणा FAB_PORT_FILTER			BIT_ULL(23)
-#घोषणा FAB_PORT_FILTER_DISABLE		0
-#घोषणा FAB_PORT_FILTER_ENABLE		1
-#घोषणा FAB_CNTR			0x28
-#घोषणा FAB_CNTR_EVNT_CNTR		GENMASK_ULL(59, 0)
-#घोषणा FAB_CNTR_EVNT			GENMASK_ULL(63, 60)
+#define FAB_CTRL			0x20
+#define FAB_RESET_CNTR			BIT_ULL(0)
+#define FAB_FREEZE_CNTR			BIT_ULL(8)
+#define FAB_CTRL_EVNT			GENMASK_ULL(19, 16)
+#define FAB_EVNT_PCIE0_RD		0x0
+#define FAB_EVNT_PCIE0_WR		0x1
+#define FAB_EVNT_PCIE1_RD		0x2
+#define FAB_EVNT_PCIE1_WR		0x3
+#define FAB_EVNT_UPI_RD			0x4
+#define FAB_EVNT_UPI_WR			0x5
+#define FAB_EVNT_MMIO_RD		0x6
+#define FAB_EVNT_MMIO_WR		0x7
+#define FAB_EVNT_MAX			FAB_EVNT_MMIO_WR
+#define FAB_PORT_ID			GENMASK_ULL(21, 20)
+#define FAB_PORT_FILTER			BIT_ULL(23)
+#define FAB_PORT_FILTER_DISABLE		0
+#define FAB_PORT_FILTER_ENABLE		1
+#define FAB_CNTR			0x28
+#define FAB_CNTR_EVNT_CNTR		GENMASK_ULL(59, 0)
+#define FAB_CNTR_EVNT			GENMASK_ULL(63, 60)
 
 /*
- * Perक्रमmance Counter Registers क्रम Clock.
+ * Performance Counter Registers for Clock.
  *
  * Clock Counter can't be reset or frozen by SW.
  */
-#घोषणा CLK_CNTR			0x30
-#घोषणा BASIC_EVNT_CLK			0x0
-#घोषणा BASIC_EVNT_MAX			BASIC_EVNT_CLK
+#define CLK_CNTR			0x30
+#define BASIC_EVNT_CLK			0x0
+#define BASIC_EVNT_MAX			BASIC_EVNT_CLK
 
 /*
- * Perक्रमmance Counter Registers क्रम IOMMU / VT-D.
+ * Performance Counter Registers for IOMMU / VT-D.
  *
  * VT-D Events are listed below as VTD_EVNT_* and VTD_SIP_EVNT_*
  */
-#घोषणा VTD_CTRL			0x38
-#घोषणा VTD_RESET_CNTR			BIT_ULL(0)
-#घोषणा VTD_FREEZE_CNTR			BIT_ULL(8)
-#घोषणा VTD_CTRL_EVNT			GENMASK_ULL(19, 16)
-#घोषणा VTD_EVNT_AFU_MEM_RD_TRANS	0x0
-#घोषणा VTD_EVNT_AFU_MEM_WR_TRANS	0x1
-#घोषणा VTD_EVNT_AFU_DEVTLB_RD_HIT	0x2
-#घोषणा VTD_EVNT_AFU_DEVTLB_WR_HIT	0x3
-#घोषणा VTD_EVNT_DEVTLB_4K_FILL		0x4
-#घोषणा VTD_EVNT_DEVTLB_2M_FILL		0x5
-#घोषणा VTD_EVNT_DEVTLB_1G_FILL		0x6
-#घोषणा VTD_EVNT_MAX			VTD_EVNT_DEVTLB_1G_FILL
-#घोषणा VTD_CNTR			0x40
-#घोषणा VTD_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
-#घोषणा VTD_CNTR_EVNT			GENMASK_ULL(63, 60)
+#define VTD_CTRL			0x38
+#define VTD_RESET_CNTR			BIT_ULL(0)
+#define VTD_FREEZE_CNTR			BIT_ULL(8)
+#define VTD_CTRL_EVNT			GENMASK_ULL(19, 16)
+#define VTD_EVNT_AFU_MEM_RD_TRANS	0x0
+#define VTD_EVNT_AFU_MEM_WR_TRANS	0x1
+#define VTD_EVNT_AFU_DEVTLB_RD_HIT	0x2
+#define VTD_EVNT_AFU_DEVTLB_WR_HIT	0x3
+#define VTD_EVNT_DEVTLB_4K_FILL		0x4
+#define VTD_EVNT_DEVTLB_2M_FILL		0x5
+#define VTD_EVNT_DEVTLB_1G_FILL		0x6
+#define VTD_EVNT_MAX			VTD_EVNT_DEVTLB_1G_FILL
+#define VTD_CNTR			0x40
+#define VTD_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
+#define VTD_CNTR_EVNT			GENMASK_ULL(63, 60)
 
-#घोषणा VTD_SIP_CTRL			0x48
-#घोषणा VTD_SIP_RESET_CNTR		BIT_ULL(0)
-#घोषणा VTD_SIP_FREEZE_CNTR		BIT_ULL(8)
-#घोषणा VTD_SIP_CTRL_EVNT		GENMASK_ULL(19, 16)
-#घोषणा VTD_SIP_EVNT_IOTLB_4K_HIT	0x0
-#घोषणा VTD_SIP_EVNT_IOTLB_2M_HIT	0x1
-#घोषणा VTD_SIP_EVNT_IOTLB_1G_HIT	0x2
-#घोषणा VTD_SIP_EVNT_SLPWC_L3_HIT	0x3
-#घोषणा VTD_SIP_EVNT_SLPWC_L4_HIT	0x4
-#घोषणा VTD_SIP_EVNT_RCC_HIT		0x5
-#घोषणा VTD_SIP_EVNT_IOTLB_4K_MISS	0x6
-#घोषणा VTD_SIP_EVNT_IOTLB_2M_MISS	0x7
-#घोषणा VTD_SIP_EVNT_IOTLB_1G_MISS	0x8
-#घोषणा VTD_SIP_EVNT_SLPWC_L3_MISS	0x9
-#घोषणा VTD_SIP_EVNT_SLPWC_L4_MISS	0xa
-#घोषणा VTD_SIP_EVNT_RCC_MISS		0xb
-#घोषणा VTD_SIP_EVNT_MAX		VTD_SIP_EVNT_SLPWC_L4_MISS
-#घोषणा VTD_SIP_CNTR			0X50
-#घोषणा VTD_SIP_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
-#घोषणा VTD_SIP_CNTR_EVNT		GENMASK_ULL(63, 60)
+#define VTD_SIP_CTRL			0x48
+#define VTD_SIP_RESET_CNTR		BIT_ULL(0)
+#define VTD_SIP_FREEZE_CNTR		BIT_ULL(8)
+#define VTD_SIP_CTRL_EVNT		GENMASK_ULL(19, 16)
+#define VTD_SIP_EVNT_IOTLB_4K_HIT	0x0
+#define VTD_SIP_EVNT_IOTLB_2M_HIT	0x1
+#define VTD_SIP_EVNT_IOTLB_1G_HIT	0x2
+#define VTD_SIP_EVNT_SLPWC_L3_HIT	0x3
+#define VTD_SIP_EVNT_SLPWC_L4_HIT	0x4
+#define VTD_SIP_EVNT_RCC_HIT		0x5
+#define VTD_SIP_EVNT_IOTLB_4K_MISS	0x6
+#define VTD_SIP_EVNT_IOTLB_2M_MISS	0x7
+#define VTD_SIP_EVNT_IOTLB_1G_MISS	0x8
+#define VTD_SIP_EVNT_SLPWC_L3_MISS	0x9
+#define VTD_SIP_EVNT_SLPWC_L4_MISS	0xa
+#define VTD_SIP_EVNT_RCC_MISS		0xb
+#define VTD_SIP_EVNT_MAX		VTD_SIP_EVNT_SLPWC_L4_MISS
+#define VTD_SIP_CNTR			0X50
+#define VTD_SIP_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
+#define VTD_SIP_CNTR_EVNT		GENMASK_ULL(63, 60)
 
-#घोषणा PERF_TIMEOUT			30
+#define PERF_TIMEOUT			30
 
-#घोषणा PERF_MAX_PORT_NUM		1U
+#define PERF_MAX_PORT_NUM		1U
 
 /**
- * काष्ठा fme_perf_priv - priv data काष्ठाure क्रम fme perf driver
+ * struct fme_perf_priv - priv data structure for fme perf driver
  *
  * @dev: parent device.
  * @ioaddr: mapped base address of mmio region.
- * @pmu: pmu data काष्ठाure क्रम fme perf counters.
- * @id: id of this fme perक्रमmance report निजी feature.
+ * @pmu: pmu data structure for fme perf counters.
+ * @id: id of this fme performance report private feature.
  * @fab_users: current user number on fabric counters.
  * @fab_port_id: used to indicate current working mode of fabric counters.
  * @fab_lock: lock to protect fabric counters working mode.
- * @cpu: active CPU to which the PMU is bound क्रम accesses.
- * @cpuhp_node: node क्रम CPU hotplug notअगरier link.
- * @cpuhp_state: state क्रम CPU hotplug notअगरication;
+ * @cpu: active CPU to which the PMU is bound for accesses.
+ * @cpuhp_node: node for CPU hotplug notifier link.
+ * @cpuhp_state: state for CPU hotplug notification;
  */
-काष्ठा fme_perf_priv अणु
-	काष्ठा device *dev;
-	व्योम __iomem *ioaddr;
-	काष्ठा pmu pmu;
+struct fme_perf_priv {
+	struct device *dev;
+	void __iomem *ioaddr;
+	struct pmu pmu;
 	u16 id;
 
 	u32 fab_users;
 	u32 fab_port_id;
 	spinlock_t fab_lock;
 
-	अचिन्हित पूर्णांक cpu;
-	काष्ठा hlist_node node;
-	क्रमागत cpuhp_state cpuhp_state;
-पूर्ण;
+	unsigned int cpu;
+	struct hlist_node node;
+	enum cpuhp_state cpuhp_state;
+};
 
 /**
- * काष्ठा fme_perf_event_ops - callbacks क्रम fme perf events
+ * struct fme_perf_event_ops - callbacks for fme perf events
  *
  * @event_init: callback invoked during event init.
  * @event_destroy: callback invoked during event destroy.
- * @पढ़ो_counter: callback to पढ़ो hardware counters.
+ * @read_counter: callback to read hardware counters.
  */
-काष्ठा fme_perf_event_ops अणु
-	पूर्णांक (*event_init)(काष्ठा fme_perf_priv *priv, u32 event, u32 portid);
-	व्योम (*event_destroy)(काष्ठा fme_perf_priv *priv, u32 event,
+struct fme_perf_event_ops {
+	int (*event_init)(struct fme_perf_priv *priv, u32 event, u32 portid);
+	void (*event_destroy)(struct fme_perf_priv *priv, u32 event,
 			      u32 portid);
-	u64 (*पढ़ो_counter)(काष्ठा fme_perf_priv *priv, u32 event, u32 portid);
-पूर्ण;
+	u64 (*read_counter)(struct fme_perf_priv *priv, u32 event, u32 portid);
+};
 
-#घोषणा to_fme_perf_priv(_pmu)	container_of(_pmu, काष्ठा fme_perf_priv, pmu)
+#define to_fme_perf_priv(_pmu)	container_of(_pmu, struct fme_perf_priv, pmu)
 
-अटल sमाप_प्रकार cpumask_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा pmu *pmu = dev_get_drvdata(dev);
-	काष्ठा fme_perf_priv *priv;
+static ssize_t cpumask_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	struct pmu *pmu = dev_get_drvdata(dev);
+	struct fme_perf_priv *priv;
 
 	priv = to_fme_perf_priv(pmu);
 
-	वापस cpumap_prपूर्णांक_to_pagebuf(true, buf, cpumask_of(priv->cpu));
-पूर्ण
-अटल DEVICE_ATTR_RO(cpumask);
+	return cpumap_print_to_pagebuf(true, buf, cpumask_of(priv->cpu));
+}
+static DEVICE_ATTR_RO(cpumask);
 
-अटल काष्ठा attribute *fme_perf_cpumask_attrs[] = अणु
+static struct attribute *fme_perf_cpumask_attrs[] = {
 	&dev_attr_cpumask.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group fme_perf_cpumask_group = अणु
+static const struct attribute_group fme_perf_cpumask_group = {
 	.attrs = fme_perf_cpumask_attrs,
-पूर्ण;
+};
 
-#घोषणा FME_EVENT_MASK		GENMASK_ULL(11, 0)
-#घोषणा FME_EVENT_SHIFT		0
-#घोषणा FME_EVTYPE_MASK		GENMASK_ULL(15, 12)
-#घोषणा FME_EVTYPE_SHIFT	12
-#घोषणा FME_EVTYPE_BASIC	0
-#घोषणा FME_EVTYPE_CACHE	1
-#घोषणा FME_EVTYPE_FABRIC	2
-#घोषणा FME_EVTYPE_VTD		3
-#घोषणा FME_EVTYPE_VTD_SIP	4
-#घोषणा FME_EVTYPE_MAX		FME_EVTYPE_VTD_SIP
-#घोषणा FME_PORTID_MASK		GENMASK_ULL(23, 16)
-#घोषणा FME_PORTID_SHIFT	16
-#घोषणा FME_PORTID_ROOT		(0xffU)
+#define FME_EVENT_MASK		GENMASK_ULL(11, 0)
+#define FME_EVENT_SHIFT		0
+#define FME_EVTYPE_MASK		GENMASK_ULL(15, 12)
+#define FME_EVTYPE_SHIFT	12
+#define FME_EVTYPE_BASIC	0
+#define FME_EVTYPE_CACHE	1
+#define FME_EVTYPE_FABRIC	2
+#define FME_EVTYPE_VTD		3
+#define FME_EVTYPE_VTD_SIP	4
+#define FME_EVTYPE_MAX		FME_EVTYPE_VTD_SIP
+#define FME_PORTID_MASK		GENMASK_ULL(23, 16)
+#define FME_PORTID_SHIFT	16
+#define FME_PORTID_ROOT		(0xffU)
 
-#घोषणा get_event(_config)	FIELD_GET(FME_EVENT_MASK, _config)
-#घोषणा get_evtype(_config)	FIELD_GET(FME_EVTYPE_MASK, _config)
-#घोषणा get_portid(_config)	FIELD_GET(FME_PORTID_MASK, _config)
+#define get_event(_config)	FIELD_GET(FME_EVENT_MASK, _config)
+#define get_evtype(_config)	FIELD_GET(FME_EVTYPE_MASK, _config)
+#define get_portid(_config)	FIELD_GET(FME_PORTID_MASK, _config)
 
 PMU_FORMAT_ATTR(event,		"config:0-11");
 PMU_FORMAT_ATTR(evtype,		"config:12-15");
 PMU_FORMAT_ATTR(portid,		"config:16-23");
 
-अटल काष्ठा attribute *fme_perf_क्रमmat_attrs[] = अणु
-	&क्रमmat_attr_event.attr,
-	&क्रमmat_attr_evtype.attr,
-	&क्रमmat_attr_portid.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *fme_perf_format_attrs[] = {
+	&format_attr_event.attr,
+	&format_attr_evtype.attr,
+	&format_attr_portid.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group fme_perf_क्रमmat_group = अणु
+static const struct attribute_group fme_perf_format_group = {
 	.name = "format",
-	.attrs = fme_perf_क्रमmat_attrs,
-पूर्ण;
+	.attrs = fme_perf_format_attrs,
+};
 
 /*
- * There are no शेष events, but we need to create
- * "events" group (with empty attrs) beक्रमe updating
+ * There are no default events, but we need to create
+ * "events" group (with empty attrs) before updating
  * it with detected events (using pmu->attr_update).
  */
-अटल काष्ठा attribute *fme_perf_events_attrs_empty[] = अणु
-	शून्य,
-पूर्ण;
+static struct attribute *fme_perf_events_attrs_empty[] = {
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group fme_perf_events_group = अणु
+static const struct attribute_group fme_perf_events_group = {
 	.name = "events",
 	.attrs = fme_perf_events_attrs_empty,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *fme_perf_groups[] = अणु
-	&fme_perf_क्रमmat_group,
+static const struct attribute_group *fme_perf_groups[] = {
+	&fme_perf_format_group,
 	&fme_perf_cpumask_group,
 	&fme_perf_events_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल bool is_portid_root(u32 portid)
-अणु
-	वापस portid == FME_PORTID_ROOT;
-पूर्ण
+static bool is_portid_root(u32 portid)
+{
+	return portid == FME_PORTID_ROOT;
+}
 
-अटल bool is_portid_port(u32 portid)
-अणु
-	वापस portid < PERF_MAX_PORT_NUM;
-पूर्ण
+static bool is_portid_port(u32 portid)
+{
+	return portid < PERF_MAX_PORT_NUM;
+}
 
-अटल bool is_portid_root_or_port(u32 portid)
-अणु
-	वापस is_portid_root(portid) || is_portid_port(portid);
-पूर्ण
+static bool is_portid_root_or_port(u32 portid)
+{
+	return is_portid_root(portid) || is_portid_port(portid);
+}
 
-अटल u64 fme_पढ़ो_perf_cntr_reg(व्योम __iomem *addr)
-अणु
+static u64 fme_read_perf_cntr_reg(void __iomem *addr)
+{
 	u32 low;
 	u64 v;
 
 	/*
-	 * For 64bit counter रेजिस्टरs, the counter may increases and carries
-	 * out of bit [31] between 2 32bit पढ़ोs. So add extra पढ़ोs to help
-	 * to prevent this issue. This only happens in platक्रमms which करोn't
-	 * support 64bit पढ़ो - पढ़ोq is split पूर्णांकo 2 पढ़ोl.
+	 * For 64bit counter registers, the counter may increases and carries
+	 * out of bit [31] between 2 32bit reads. So add extra reads to help
+	 * to prevent this issue. This only happens in platforms which don't
+	 * support 64bit read - readq is split into 2 readl.
 	 */
-	करो अणु
-		v = पढ़ोq(addr);
-		low = पढ़ोl(addr);
-	पूर्ण जबतक (((u32)v) > low);
+	do {
+		v = readq(addr);
+		low = readl(addr);
+	} while (((u32)v) > low);
 
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल पूर्णांक basic_event_init(काष्ठा fme_perf_priv *priv, u32 event, u32 portid)
-अणु
-	अगर (event <= BASIC_EVNT_MAX && is_portid_root(portid))
-		वापस 0;
+static int basic_event_init(struct fme_perf_priv *priv, u32 event, u32 portid)
+{
+	if (event <= BASIC_EVNT_MAX && is_portid_root(portid))
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल u64 basic_पढ़ो_event_counter(काष्ठा fme_perf_priv *priv,
+static u64 basic_read_event_counter(struct fme_perf_priv *priv,
 				    u32 event, u32 portid)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
+{
+	void __iomem *base = priv->ioaddr;
 
-	वापस fme_पढ़ो_perf_cntr_reg(base + CLK_CNTR);
-पूर्ण
+	return fme_read_perf_cntr_reg(base + CLK_CNTR);
+}
 
-अटल पूर्णांक cache_event_init(काष्ठा fme_perf_priv *priv, u32 event, u32 portid)
-अणु
-	अगर (priv->id == FME_FEATURE_ID_GLOBAL_IPERF &&
+static int cache_event_init(struct fme_perf_priv *priv, u32 event, u32 portid)
+{
+	if (priv->id == FME_FEATURE_ID_GLOBAL_IPERF &&
 	    event <= CACHE_EVNT_MAX && is_portid_root(portid))
-		वापस 0;
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल u64 cache_पढ़ो_event_counter(काष्ठा fme_perf_priv *priv,
+static u64 cache_read_event_counter(struct fme_perf_priv *priv,
 				    u32 event, u32 portid)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
+{
+	void __iomem *base = priv->ioaddr;
 	u64 v, count;
 	u8 channel;
 
-	अगर (event == CACHE_EVNT_WR_HIT || event == CACHE_EVNT_WR_MISS ||
+	if (event == CACHE_EVNT_WR_HIT || event == CACHE_EVNT_WR_MISS ||
 	    event == CACHE_EVNT_DATA_WR_PORT_CONTEN ||
 	    event == CACHE_EVNT_TAG_WR_PORT_CONTEN)
 		channel = CACHE_CHANNEL_WR;
-	अन्यथा
+	else
 		channel = CACHE_CHANNEL_RD;
 
 	/* set channel access type and cache event code. */
-	v = पढ़ोq(base + CACHE_CTRL);
+	v = readq(base + CACHE_CTRL);
 	v &= ~(CACHE_CHANNEL_SEL | CACHE_CTRL_EVNT);
 	v |= FIELD_PREP(CACHE_CHANNEL_SEL, channel);
 	v |= FIELD_PREP(CACHE_CTRL_EVNT, event);
-	ग_लिखोq(v, base + CACHE_CTRL);
+	writeq(v, base + CACHE_CTRL);
 
-	अगर (पढ़ोq_poll_समयout_atomic(base + CACHE_CNTR0, v,
+	if (readq_poll_timeout_atomic(base + CACHE_CNTR0, v,
 				      FIELD_GET(CACHE_CNTR_EVNT, v) == event,
-				      1, PERF_TIMEOUT)) अणु
+				      1, PERF_TIMEOUT)) {
 		dev_err(priv->dev, "timeout, unmatched cache event code in counter register.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	v = fme_पढ़ो_perf_cntr_reg(base + CACHE_CNTR0);
+	v = fme_read_perf_cntr_reg(base + CACHE_CNTR0);
 	count = FIELD_GET(CACHE_CNTR_EVNT_CNTR, v);
-	v = fme_पढ़ो_perf_cntr_reg(base + CACHE_CNTR1);
+	v = fme_read_perf_cntr_reg(base + CACHE_CNTR1);
 	count += FIELD_GET(CACHE_CNTR_EVNT_CNTR, v);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल bool is_fabric_event_supported(काष्ठा fme_perf_priv *priv, u32 event,
+static bool is_fabric_event_supported(struct fme_perf_priv *priv, u32 event,
 				      u32 portid)
-अणु
-	अगर (event > FAB_EVNT_MAX || !is_portid_root_or_port(portid))
-		वापस false;
+{
+	if (event > FAB_EVNT_MAX || !is_portid_root_or_port(portid))
+		return false;
 
-	अगर (priv->id == FME_FEATURE_ID_GLOBAL_DPERF &&
+	if (priv->id == FME_FEATURE_ID_GLOBAL_DPERF &&
 	    (event == FAB_EVNT_PCIE1_RD || event == FAB_EVNT_UPI_RD ||
 	     event == FAB_EVNT_PCIE1_WR || event == FAB_EVNT_UPI_WR))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक fabric_event_init(काष्ठा fme_perf_priv *priv, u32 event, u32 portid)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
-	पूर्णांक ret = 0;
+static int fabric_event_init(struct fme_perf_priv *priv, u32 event, u32 portid)
+{
+	void __iomem *base = priv->ioaddr;
+	int ret = 0;
 	u64 v;
 
-	अगर (!is_fabric_event_supported(priv, event, portid))
-		वापस -EINVAL;
+	if (!is_fabric_event_supported(priv, event, portid))
+		return -EINVAL;
 
 	/*
 	 * as fabric counter set only can be in either overall or port mode.
-	 * In overall mode, it counts overall data क्रम FPGA, and in port mode,
-	 * it is configured to monitor on one inभागidual port.
+	 * In overall mode, it counts overall data for FPGA, and in port mode,
+	 * it is configured to monitor on one individual port.
 	 *
-	 * so every समय, a new event is initialized, driver checks
-	 * current working mode and अगर someone is using this counter set.
+	 * so every time, a new event is initialized, driver checks
+	 * current working mode and if someone is using this counter set.
 	 */
 	spin_lock(&priv->fab_lock);
-	अगर (priv->fab_users && priv->fab_port_id != portid) अणु
+	if (priv->fab_users && priv->fab_port_id != portid) {
 		dev_dbg(priv->dev, "conflict fabric event monitoring mode.\n");
 		ret = -EOPNOTSUPP;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	priv->fab_users++;
 
 	/*
-	 * skip अगर current working mode matches, otherwise change the working
+	 * skip if current working mode matches, otherwise change the working
 	 * mode per input port_id, to monitor overall data or another port.
 	 */
-	अगर (priv->fab_port_id == portid)
-		जाओ निकास;
+	if (priv->fab_port_id == portid)
+		goto exit;
 
 	priv->fab_port_id = portid;
 
-	v = पढ़ोq(base + FAB_CTRL);
+	v = readq(base + FAB_CTRL);
 	v &= ~(FAB_PORT_FILTER | FAB_PORT_ID);
 
-	अगर (is_portid_root(portid)) अणु
+	if (is_portid_root(portid)) {
 		v |= FIELD_PREP(FAB_PORT_FILTER, FAB_PORT_FILTER_DISABLE);
-	पूर्ण अन्यथा अणु
+	} else {
 		v |= FIELD_PREP(FAB_PORT_FILTER, FAB_PORT_FILTER_ENABLE);
 		v |= FIELD_PREP(FAB_PORT_ID, portid);
-	पूर्ण
-	ग_लिखोq(v, base + FAB_CTRL);
+	}
+	writeq(v, base + FAB_CTRL);
 
-निकास:
+exit:
 	spin_unlock(&priv->fab_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fabric_event_destroy(काष्ठा fme_perf_priv *priv, u32 event,
+static void fabric_event_destroy(struct fme_perf_priv *priv, u32 event,
 				 u32 portid)
-अणु
+{
 	spin_lock(&priv->fab_lock);
 	priv->fab_users--;
 	spin_unlock(&priv->fab_lock);
-पूर्ण
+}
 
-अटल u64 fabric_पढ़ो_event_counter(काष्ठा fme_perf_priv *priv, u32 event,
+static u64 fabric_read_event_counter(struct fme_perf_priv *priv, u32 event,
 				     u32 portid)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
+{
+	void __iomem *base = priv->ioaddr;
 	u64 v;
 
-	v = पढ़ोq(base + FAB_CTRL);
+	v = readq(base + FAB_CTRL);
 	v &= ~FAB_CTRL_EVNT;
 	v |= FIELD_PREP(FAB_CTRL_EVNT, event);
-	ग_लिखोq(v, base + FAB_CTRL);
+	writeq(v, base + FAB_CTRL);
 
-	अगर (पढ़ोq_poll_समयout_atomic(base + FAB_CNTR, v,
+	if (readq_poll_timeout_atomic(base + FAB_CNTR, v,
 				      FIELD_GET(FAB_CNTR_EVNT, v) == event,
-				      1, PERF_TIMEOUT)) अणु
+				      1, PERF_TIMEOUT)) {
 		dev_err(priv->dev, "timeout, unmatched fab event code in counter register.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	v = fme_पढ़ो_perf_cntr_reg(base + FAB_CNTR);
-	वापस FIELD_GET(FAB_CNTR_EVNT_CNTR, v);
-पूर्ण
+	v = fme_read_perf_cntr_reg(base + FAB_CNTR);
+	return FIELD_GET(FAB_CNTR_EVNT_CNTR, v);
+}
 
-अटल पूर्णांक vtd_event_init(काष्ठा fme_perf_priv *priv, u32 event, u32 portid)
-अणु
-	अगर (priv->id == FME_FEATURE_ID_GLOBAL_IPERF &&
+static int vtd_event_init(struct fme_perf_priv *priv, u32 event, u32 portid)
+{
+	if (priv->id == FME_FEATURE_ID_GLOBAL_IPERF &&
 	    event <= VTD_EVNT_MAX && is_portid_port(portid))
-		वापस 0;
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल u64 vtd_पढ़ो_event_counter(काष्ठा fme_perf_priv *priv, u32 event,
+static u64 vtd_read_event_counter(struct fme_perf_priv *priv, u32 event,
 				  u32 portid)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
+{
+	void __iomem *base = priv->ioaddr;
 	u64 v;
 
 	event += (portid * (VTD_EVNT_MAX + 1));
 
-	v = पढ़ोq(base + VTD_CTRL);
+	v = readq(base + VTD_CTRL);
 	v &= ~VTD_CTRL_EVNT;
 	v |= FIELD_PREP(VTD_CTRL_EVNT, event);
-	ग_लिखोq(v, base + VTD_CTRL);
+	writeq(v, base + VTD_CTRL);
 
-	अगर (पढ़ोq_poll_समयout_atomic(base + VTD_CNTR, v,
+	if (readq_poll_timeout_atomic(base + VTD_CNTR, v,
 				      FIELD_GET(VTD_CNTR_EVNT, v) == event,
-				      1, PERF_TIMEOUT)) अणु
+				      1, PERF_TIMEOUT)) {
 		dev_err(priv->dev, "timeout, unmatched vtd event code in counter register.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	v = fme_पढ़ो_perf_cntr_reg(base + VTD_CNTR);
-	वापस FIELD_GET(VTD_CNTR_EVNT_CNTR, v);
-पूर्ण
+	v = fme_read_perf_cntr_reg(base + VTD_CNTR);
+	return FIELD_GET(VTD_CNTR_EVNT_CNTR, v);
+}
 
-अटल पूर्णांक vtd_sip_event_init(काष्ठा fme_perf_priv *priv, u32 event, u32 portid)
-अणु
-	अगर (priv->id == FME_FEATURE_ID_GLOBAL_IPERF &&
+static int vtd_sip_event_init(struct fme_perf_priv *priv, u32 event, u32 portid)
+{
+	if (priv->id == FME_FEATURE_ID_GLOBAL_IPERF &&
 	    event <= VTD_SIP_EVNT_MAX && is_portid_root(portid))
-		वापस 0;
+		return 0;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल u64 vtd_sip_पढ़ो_event_counter(काष्ठा fme_perf_priv *priv, u32 event,
+static u64 vtd_sip_read_event_counter(struct fme_perf_priv *priv, u32 event,
 				      u32 portid)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
+{
+	void __iomem *base = priv->ioaddr;
 	u64 v;
 
-	v = पढ़ोq(base + VTD_SIP_CTRL);
+	v = readq(base + VTD_SIP_CTRL);
 	v &= ~VTD_SIP_CTRL_EVNT;
 	v |= FIELD_PREP(VTD_SIP_CTRL_EVNT, event);
-	ग_लिखोq(v, base + VTD_SIP_CTRL);
+	writeq(v, base + VTD_SIP_CTRL);
 
-	अगर (पढ़ोq_poll_समयout_atomic(base + VTD_SIP_CNTR, v,
+	if (readq_poll_timeout_atomic(base + VTD_SIP_CNTR, v,
 				      FIELD_GET(VTD_SIP_CNTR_EVNT, v) == event,
-				      1, PERF_TIMEOUT)) अणु
+				      1, PERF_TIMEOUT)) {
 		dev_err(priv->dev, "timeout, unmatched vtd sip event code in counter register\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	v = fme_पढ़ो_perf_cntr_reg(base + VTD_SIP_CNTR);
-	वापस FIELD_GET(VTD_SIP_CNTR_EVNT_CNTR, v);
-पूर्ण
+	v = fme_read_perf_cntr_reg(base + VTD_SIP_CNTR);
+	return FIELD_GET(VTD_SIP_CNTR_EVNT_CNTR, v);
+}
 
-अटल काष्ठा fme_perf_event_ops fme_perf_event_ops[] = अणु
-	[FME_EVTYPE_BASIC]	= अणु.event_init = basic_event_init,
-				   .पढ़ो_counter = basic_पढ़ो_event_counter,पूर्ण,
-	[FME_EVTYPE_CACHE]	= अणु.event_init = cache_event_init,
-				   .पढ़ो_counter = cache_पढ़ो_event_counter,पूर्ण,
-	[FME_EVTYPE_FABRIC]	= अणु.event_init = fabric_event_init,
+static struct fme_perf_event_ops fme_perf_event_ops[] = {
+	[FME_EVTYPE_BASIC]	= {.event_init = basic_event_init,
+				   .read_counter = basic_read_event_counter,},
+	[FME_EVTYPE_CACHE]	= {.event_init = cache_event_init,
+				   .read_counter = cache_read_event_counter,},
+	[FME_EVTYPE_FABRIC]	= {.event_init = fabric_event_init,
 				   .event_destroy = fabric_event_destroy,
-				   .पढ़ो_counter = fabric_पढ़ो_event_counter,पूर्ण,
-	[FME_EVTYPE_VTD]	= अणु.event_init = vtd_event_init,
-				   .पढ़ो_counter = vtd_पढ़ो_event_counter,पूर्ण,
-	[FME_EVTYPE_VTD_SIP]	= अणु.event_init = vtd_sip_event_init,
-				   .पढ़ो_counter = vtd_sip_पढ़ो_event_counter,पूर्ण,
-पूर्ण;
+				   .read_counter = fabric_read_event_counter,},
+	[FME_EVTYPE_VTD]	= {.event_init = vtd_event_init,
+				   .read_counter = vtd_read_event_counter,},
+	[FME_EVTYPE_VTD_SIP]	= {.event_init = vtd_sip_event_init,
+				   .read_counter = vtd_sip_read_event_counter,},
+};
 
-अटल sमाप_प्रकार fme_perf_event_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dev_ext_attribute *eattr;
-	अचिन्हित दीर्घ config;
-	अक्षर *ptr = buf;
+static ssize_t fme_perf_event_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct dev_ext_attribute *eattr;
+	unsigned long config;
+	char *ptr = buf;
 
-	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
-	config = (अचिन्हित दीर्घ)eattr->var;
+	eattr = container_of(attr, struct dev_ext_attribute, attr);
+	config = (unsigned long)eattr->var;
 
-	ptr += प्र_लिखो(ptr, "event=0x%02x", (अचिन्हित पूर्णांक)get_event(config));
-	ptr += प्र_लिखो(ptr, ",evtype=0x%02x", (अचिन्हित पूर्णांक)get_evtype(config));
+	ptr += sprintf(ptr, "event=0x%02x", (unsigned int)get_event(config));
+	ptr += sprintf(ptr, ",evtype=0x%02x", (unsigned int)get_evtype(config));
 
-	अगर (is_portid_root(get_portid(config)))
-		ptr += प्र_लिखो(ptr, ",portid=0x%02x\n", FME_PORTID_ROOT);
-	अन्यथा
-		ptr += प्र_लिखो(ptr, ",portid=?\n");
+	if (is_portid_root(get_portid(config)))
+		ptr += sprintf(ptr, ",portid=0x%02x\n", FME_PORTID_ROOT);
+	else
+		ptr += sprintf(ptr, ",portid=?\n");
 
-	वापस (sमाप_प्रकार)(ptr - buf);
-पूर्ण
+	return (ssize_t)(ptr - buf);
+}
 
-#घोषणा FME_EVENT_ATTR(_name) \
-	__ATTR(_name, 0444, fme_perf_event_show, शून्य)
+#define FME_EVENT_ATTR(_name) \
+	__ATTR(_name, 0444, fme_perf_event_show, NULL)
 
-#घोषणा FME_PORT_EVENT_CONFIG(_event, _type)				\
-	(व्योम *)((((_event) << FME_EVENT_SHIFT) & FME_EVENT_MASK) |	\
+#define FME_PORT_EVENT_CONFIG(_event, _type)				\
+	(void *)((((_event) << FME_EVENT_SHIFT) & FME_EVENT_MASK) |	\
 		(((_type) << FME_EVTYPE_SHIFT) & FME_EVTYPE_MASK))
 
-#घोषणा FME_EVENT_CONFIG(_event, _type)					\
-	(व्योम *)((((_event) << FME_EVENT_SHIFT) & FME_EVENT_MASK) |	\
+#define FME_EVENT_CONFIG(_event, _type)					\
+	(void *)((((_event) << FME_EVENT_SHIFT) & FME_EVENT_MASK) |	\
 		(((_type) << FME_EVTYPE_SHIFT) & FME_EVTYPE_MASK) |	\
 		(FME_PORTID_ROOT << FME_PORTID_SHIFT))
 
 /* FME Perf Basic Events */
-#घोषणा FME_EVENT_BASIC(_name, _event)					\
-अटल काष्ठा dev_ext_attribute fme_perf_event_##_name = अणु		\
+#define FME_EVENT_BASIC(_name, _event)					\
+static struct dev_ext_attribute fme_perf_event_##_name = {		\
 	.attr = FME_EVENT_ATTR(_name),					\
 	.var = FME_EVENT_CONFIG(_event, FME_EVTYPE_BASIC),		\
-पूर्ण
+}
 
-FME_EVENT_BASIC(घड़ी, BASIC_EVNT_CLK);
+FME_EVENT_BASIC(clock, BASIC_EVNT_CLK);
 
-अटल काष्ठा attribute *fme_perf_basic_events_attrs[] = अणु
-	&fme_perf_event_घड़ी.attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *fme_perf_basic_events_attrs[] = {
+	&fme_perf_event_clock.attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group fme_perf_basic_events_group = अणु
+static const struct attribute_group fme_perf_basic_events_group = {
 	.name = "events",
 	.attrs = fme_perf_basic_events_attrs,
-पूर्ण;
+};
 
 /* FME Perf Cache Events */
-#घोषणा FME_EVENT_CACHE(_name, _event)					\
-अटल काष्ठा dev_ext_attribute fme_perf_event_cache_##_name = अणु	\
+#define FME_EVENT_CACHE(_name, _event)					\
+static struct dev_ext_attribute fme_perf_event_cache_##_name = {	\
 	.attr = FME_EVENT_ATTR(cache_##_name),				\
 	.var = FME_EVENT_CONFIG(_event, FME_EVTYPE_CACHE),		\
-पूर्ण
+}
 
-FME_EVENT_CACHE(पढ़ो_hit,     CACHE_EVNT_RD_HIT);
-FME_EVENT_CACHE(पढ़ो_miss,    CACHE_EVNT_RD_MISS);
-FME_EVENT_CACHE(ग_लिखो_hit,    CACHE_EVNT_WR_HIT);
-FME_EVENT_CACHE(ग_लिखो_miss,   CACHE_EVNT_WR_MISS);
+FME_EVENT_CACHE(read_hit,     CACHE_EVNT_RD_HIT);
+FME_EVENT_CACHE(read_miss,    CACHE_EVNT_RD_MISS);
+FME_EVENT_CACHE(write_hit,    CACHE_EVNT_WR_HIT);
+FME_EVENT_CACHE(write_miss,   CACHE_EVNT_WR_MISS);
 FME_EVENT_CACHE(hold_request, CACHE_EVNT_HOLD_REQ);
 FME_EVENT_CACHE(tx_req_stall, CACHE_EVNT_TX_REQ_STALL);
 FME_EVENT_CACHE(rx_req_stall, CACHE_EVNT_RX_REQ_STALL);
 FME_EVENT_CACHE(eviction,     CACHE_EVNT_EVICTIONS);
-FME_EVENT_CACHE(data_ग_लिखो_port_contention, CACHE_EVNT_DATA_WR_PORT_CONTEN);
-FME_EVENT_CACHE(tag_ग_लिखो_port_contention,  CACHE_EVNT_TAG_WR_PORT_CONTEN);
+FME_EVENT_CACHE(data_write_port_contention, CACHE_EVNT_DATA_WR_PORT_CONTEN);
+FME_EVENT_CACHE(tag_write_port_contention,  CACHE_EVNT_TAG_WR_PORT_CONTEN);
 
-अटल काष्ठा attribute *fme_perf_cache_events_attrs[] = अणु
-	&fme_perf_event_cache_पढ़ो_hit.attr.attr,
-	&fme_perf_event_cache_पढ़ो_miss.attr.attr,
-	&fme_perf_event_cache_ग_लिखो_hit.attr.attr,
-	&fme_perf_event_cache_ग_लिखो_miss.attr.attr,
+static struct attribute *fme_perf_cache_events_attrs[] = {
+	&fme_perf_event_cache_read_hit.attr.attr,
+	&fme_perf_event_cache_read_miss.attr.attr,
+	&fme_perf_event_cache_write_hit.attr.attr,
+	&fme_perf_event_cache_write_miss.attr.attr,
 	&fme_perf_event_cache_hold_request.attr.attr,
 	&fme_perf_event_cache_tx_req_stall.attr.attr,
 	&fme_perf_event_cache_rx_req_stall.attr.attr,
 	&fme_perf_event_cache_eviction.attr.attr,
-	&fme_perf_event_cache_data_ग_लिखो_port_contention.attr.attr,
-	&fme_perf_event_cache_tag_ग_लिखो_port_contention.attr.attr,
-	शून्य,
-पूर्ण;
+	&fme_perf_event_cache_data_write_port_contention.attr.attr,
+	&fme_perf_event_cache_tag_write_port_contention.attr.attr,
+	NULL,
+};
 
-अटल umode_t fme_perf_events_visible(काष्ठा kobject *kobj,
-				       काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा pmu *pmu = dev_get_drvdata(kobj_to_dev(kobj));
-	काष्ठा fme_perf_priv *priv = to_fme_perf_priv(pmu);
+static umode_t fme_perf_events_visible(struct kobject *kobj,
+				       struct attribute *attr, int n)
+{
+	struct pmu *pmu = dev_get_drvdata(kobj_to_dev(kobj));
+	struct fme_perf_priv *priv = to_fme_perf_priv(pmu);
 
-	वापस (priv->id == FME_FEATURE_ID_GLOBAL_IPERF) ? attr->mode : 0;
-पूर्ण
+	return (priv->id == FME_FEATURE_ID_GLOBAL_IPERF) ? attr->mode : 0;
+}
 
-अटल स्थिर काष्ठा attribute_group fme_perf_cache_events_group = अणु
+static const struct attribute_group fme_perf_cache_events_group = {
 	.name = "events",
 	.attrs = fme_perf_cache_events_attrs,
 	.is_visible = fme_perf_events_visible,
-पूर्ण;
+};
 
 /* FME Perf Fabric Events */
-#घोषणा FME_EVENT_FABRIC(_name, _event)					\
-अटल काष्ठा dev_ext_attribute fme_perf_event_fab_##_name = अणु		\
+#define FME_EVENT_FABRIC(_name, _event)					\
+static struct dev_ext_attribute fme_perf_event_fab_##_name = {		\
 	.attr = FME_EVENT_ATTR(fab_##_name),				\
 	.var = FME_EVENT_CONFIG(_event, FME_EVTYPE_FABRIC),		\
-पूर्ण
+}
 
-#घोषणा FME_EVENT_FABRIC_PORT(_name, _event)				\
-अटल काष्ठा dev_ext_attribute fme_perf_event_fab_port_##_name = अणु	\
+#define FME_EVENT_FABRIC_PORT(_name, _event)				\
+static struct dev_ext_attribute fme_perf_event_fab_port_##_name = {	\
 	.attr = FME_EVENT_ATTR(fab_port_##_name),			\
 	.var = FME_PORT_EVENT_CONFIG(_event, FME_EVTYPE_FABRIC),	\
-पूर्ण
+}
 
-FME_EVENT_FABRIC(pcie0_पढ़ो,  FAB_EVNT_PCIE0_RD);
-FME_EVENT_FABRIC(pcie0_ग_लिखो, FAB_EVNT_PCIE0_WR);
-FME_EVENT_FABRIC(pcie1_पढ़ो,  FAB_EVNT_PCIE1_RD);
-FME_EVENT_FABRIC(pcie1_ग_लिखो, FAB_EVNT_PCIE1_WR);
-FME_EVENT_FABRIC(upi_पढ़ो,    FAB_EVNT_UPI_RD);
-FME_EVENT_FABRIC(upi_ग_लिखो,   FAB_EVNT_UPI_WR);
-FME_EVENT_FABRIC(mmio_पढ़ो,   FAB_EVNT_MMIO_RD);
-FME_EVENT_FABRIC(mmio_ग_लिखो,  FAB_EVNT_MMIO_WR);
+FME_EVENT_FABRIC(pcie0_read,  FAB_EVNT_PCIE0_RD);
+FME_EVENT_FABRIC(pcie0_write, FAB_EVNT_PCIE0_WR);
+FME_EVENT_FABRIC(pcie1_read,  FAB_EVNT_PCIE1_RD);
+FME_EVENT_FABRIC(pcie1_write, FAB_EVNT_PCIE1_WR);
+FME_EVENT_FABRIC(upi_read,    FAB_EVNT_UPI_RD);
+FME_EVENT_FABRIC(upi_write,   FAB_EVNT_UPI_WR);
+FME_EVENT_FABRIC(mmio_read,   FAB_EVNT_MMIO_RD);
+FME_EVENT_FABRIC(mmio_write,  FAB_EVNT_MMIO_WR);
 
-FME_EVENT_FABRIC_PORT(pcie0_पढ़ो,  FAB_EVNT_PCIE0_RD);
-FME_EVENT_FABRIC_PORT(pcie0_ग_लिखो, FAB_EVNT_PCIE0_WR);
-FME_EVENT_FABRIC_PORT(pcie1_पढ़ो,  FAB_EVNT_PCIE1_RD);
-FME_EVENT_FABRIC_PORT(pcie1_ग_लिखो, FAB_EVNT_PCIE1_WR);
-FME_EVENT_FABRIC_PORT(upi_पढ़ो,    FAB_EVNT_UPI_RD);
-FME_EVENT_FABRIC_PORT(upi_ग_लिखो,   FAB_EVNT_UPI_WR);
-FME_EVENT_FABRIC_PORT(mmio_पढ़ो,   FAB_EVNT_MMIO_RD);
-FME_EVENT_FABRIC_PORT(mmio_ग_लिखो,  FAB_EVNT_MMIO_WR);
+FME_EVENT_FABRIC_PORT(pcie0_read,  FAB_EVNT_PCIE0_RD);
+FME_EVENT_FABRIC_PORT(pcie0_write, FAB_EVNT_PCIE0_WR);
+FME_EVENT_FABRIC_PORT(pcie1_read,  FAB_EVNT_PCIE1_RD);
+FME_EVENT_FABRIC_PORT(pcie1_write, FAB_EVNT_PCIE1_WR);
+FME_EVENT_FABRIC_PORT(upi_read,    FAB_EVNT_UPI_RD);
+FME_EVENT_FABRIC_PORT(upi_write,   FAB_EVNT_UPI_WR);
+FME_EVENT_FABRIC_PORT(mmio_read,   FAB_EVNT_MMIO_RD);
+FME_EVENT_FABRIC_PORT(mmio_write,  FAB_EVNT_MMIO_WR);
 
-अटल काष्ठा attribute *fme_perf_fabric_events_attrs[] = अणु
-	&fme_perf_event_fab_pcie0_पढ़ो.attr.attr,
-	&fme_perf_event_fab_pcie0_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_pcie1_पढ़ो.attr.attr,
-	&fme_perf_event_fab_pcie1_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_upi_पढ़ो.attr.attr,
-	&fme_perf_event_fab_upi_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_mmio_पढ़ो.attr.attr,
-	&fme_perf_event_fab_mmio_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_port_pcie0_पढ़ो.attr.attr,
-	&fme_perf_event_fab_port_pcie0_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_port_pcie1_पढ़ो.attr.attr,
-	&fme_perf_event_fab_port_pcie1_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_port_upi_पढ़ो.attr.attr,
-	&fme_perf_event_fab_port_upi_ग_लिखो.attr.attr,
-	&fme_perf_event_fab_port_mmio_पढ़ो.attr.attr,
-	&fme_perf_event_fab_port_mmio_ग_लिखो.attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *fme_perf_fabric_events_attrs[] = {
+	&fme_perf_event_fab_pcie0_read.attr.attr,
+	&fme_perf_event_fab_pcie0_write.attr.attr,
+	&fme_perf_event_fab_pcie1_read.attr.attr,
+	&fme_perf_event_fab_pcie1_write.attr.attr,
+	&fme_perf_event_fab_upi_read.attr.attr,
+	&fme_perf_event_fab_upi_write.attr.attr,
+	&fme_perf_event_fab_mmio_read.attr.attr,
+	&fme_perf_event_fab_mmio_write.attr.attr,
+	&fme_perf_event_fab_port_pcie0_read.attr.attr,
+	&fme_perf_event_fab_port_pcie0_write.attr.attr,
+	&fme_perf_event_fab_port_pcie1_read.attr.attr,
+	&fme_perf_event_fab_port_pcie1_write.attr.attr,
+	&fme_perf_event_fab_port_upi_read.attr.attr,
+	&fme_perf_event_fab_port_upi_write.attr.attr,
+	&fme_perf_event_fab_port_mmio_read.attr.attr,
+	&fme_perf_event_fab_port_mmio_write.attr.attr,
+	NULL,
+};
 
-अटल umode_t fme_perf_fabric_events_visible(काष्ठा kobject *kobj,
-					      काष्ठा attribute *attr, पूर्णांक n)
-अणु
-	काष्ठा pmu *pmu = dev_get_drvdata(kobj_to_dev(kobj));
-	काष्ठा fme_perf_priv *priv = to_fme_perf_priv(pmu);
-	काष्ठा dev_ext_attribute *eattr;
-	अचिन्हित दीर्घ var;
+static umode_t fme_perf_fabric_events_visible(struct kobject *kobj,
+					      struct attribute *attr, int n)
+{
+	struct pmu *pmu = dev_get_drvdata(kobj_to_dev(kobj));
+	struct fme_perf_priv *priv = to_fme_perf_priv(pmu);
+	struct dev_ext_attribute *eattr;
+	unsigned long var;
 
-	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr.attr);
-	var = (अचिन्हित दीर्घ)eattr->var;
+	eattr = container_of(attr, struct dev_ext_attribute, attr.attr);
+	var = (unsigned long)eattr->var;
 
-	अगर (is_fabric_event_supported(priv, get_event(var), get_portid(var)))
-		वापस attr->mode;
+	if (is_fabric_event_supported(priv, get_event(var), get_portid(var)))
+		return attr->mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा attribute_group fme_perf_fabric_events_group = अणु
+static const struct attribute_group fme_perf_fabric_events_group = {
 	.name = "events",
 	.attrs = fme_perf_fabric_events_attrs,
 	.is_visible = fme_perf_fabric_events_visible,
-पूर्ण;
+};
 
 /* FME Perf VTD Events */
-#घोषणा FME_EVENT_VTD_PORT(_name, _event)				\
-अटल काष्ठा dev_ext_attribute fme_perf_event_vtd_port_##_name = अणु	\
+#define FME_EVENT_VTD_PORT(_name, _event)				\
+static struct dev_ext_attribute fme_perf_event_vtd_port_##_name = {	\
 	.attr = FME_EVENT_ATTR(vtd_port_##_name),			\
 	.var = FME_PORT_EVENT_CONFIG(_event, FME_EVTYPE_VTD),		\
-पूर्ण
+}
 
-FME_EVENT_VTD_PORT(पढ़ो_transaction,  VTD_EVNT_AFU_MEM_RD_TRANS);
-FME_EVENT_VTD_PORT(ग_लिखो_transaction, VTD_EVNT_AFU_MEM_WR_TRANS);
-FME_EVENT_VTD_PORT(devtlb_पढ़ो_hit,   VTD_EVNT_AFU_DEVTLB_RD_HIT);
-FME_EVENT_VTD_PORT(devtlb_ग_लिखो_hit,  VTD_EVNT_AFU_DEVTLB_WR_HIT);
+FME_EVENT_VTD_PORT(read_transaction,  VTD_EVNT_AFU_MEM_RD_TRANS);
+FME_EVENT_VTD_PORT(write_transaction, VTD_EVNT_AFU_MEM_WR_TRANS);
+FME_EVENT_VTD_PORT(devtlb_read_hit,   VTD_EVNT_AFU_DEVTLB_RD_HIT);
+FME_EVENT_VTD_PORT(devtlb_write_hit,  VTD_EVNT_AFU_DEVTLB_WR_HIT);
 FME_EVENT_VTD_PORT(devtlb_4k_fill,    VTD_EVNT_DEVTLB_4K_FILL);
 FME_EVENT_VTD_PORT(devtlb_2m_fill,    VTD_EVNT_DEVTLB_2M_FILL);
 FME_EVENT_VTD_PORT(devtlb_1g_fill,    VTD_EVNT_DEVTLB_1G_FILL);
 
-अटल काष्ठा attribute *fme_perf_vtd_events_attrs[] = अणु
-	&fme_perf_event_vtd_port_पढ़ो_transaction.attr.attr,
-	&fme_perf_event_vtd_port_ग_लिखो_transaction.attr.attr,
-	&fme_perf_event_vtd_port_devtlb_पढ़ो_hit.attr.attr,
-	&fme_perf_event_vtd_port_devtlb_ग_लिखो_hit.attr.attr,
+static struct attribute *fme_perf_vtd_events_attrs[] = {
+	&fme_perf_event_vtd_port_read_transaction.attr.attr,
+	&fme_perf_event_vtd_port_write_transaction.attr.attr,
+	&fme_perf_event_vtd_port_devtlb_read_hit.attr.attr,
+	&fme_perf_event_vtd_port_devtlb_write_hit.attr.attr,
 	&fme_perf_event_vtd_port_devtlb_4k_fill.attr.attr,
 	&fme_perf_event_vtd_port_devtlb_2m_fill.attr.attr,
 	&fme_perf_event_vtd_port_devtlb_1g_fill.attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group fme_perf_vtd_events_group = अणु
+static const struct attribute_group fme_perf_vtd_events_group = {
 	.name = "events",
 	.attrs = fme_perf_vtd_events_attrs,
 	.is_visible = fme_perf_events_visible,
-पूर्ण;
+};
 
 /* FME Perf VTD SIP Events */
-#घोषणा FME_EVENT_VTD_SIP(_name, _event)				\
-अटल काष्ठा dev_ext_attribute fme_perf_event_vtd_sip_##_name = अणु	\
+#define FME_EVENT_VTD_SIP(_name, _event)				\
+static struct dev_ext_attribute fme_perf_event_vtd_sip_##_name = {	\
 	.attr = FME_EVENT_ATTR(vtd_sip_##_name),			\
 	.var = FME_EVENT_CONFIG(_event, FME_EVTYPE_VTD_SIP),		\
-पूर्ण
+}
 
 FME_EVENT_VTD_SIP(iotlb_4k_hit,  VTD_SIP_EVNT_IOTLB_4K_HIT);
 FME_EVENT_VTD_SIP(iotlb_2m_hit,  VTD_SIP_EVNT_IOTLB_2M_HIT);
@@ -745,7 +744,7 @@ FME_EVENT_VTD_SIP(slpwc_l3_miss, VTD_SIP_EVNT_SLPWC_L3_MISS);
 FME_EVENT_VTD_SIP(slpwc_l4_miss, VTD_SIP_EVNT_SLPWC_L4_MISS);
 FME_EVENT_VTD_SIP(rcc_miss,      VTD_SIP_EVNT_RCC_MISS);
 
-अटल काष्ठा attribute *fme_perf_vtd_sip_events_attrs[] = अणु
+static struct attribute *fme_perf_vtd_sip_events_attrs[] = {
 	&fme_perf_event_vtd_sip_iotlb_4k_hit.attr.attr,
 	&fme_perf_event_vtd_sip_iotlb_2m_hit.attr.attr,
 	&fme_perf_event_vtd_sip_iotlb_1g_hit.attr.attr,
@@ -758,74 +757,74 @@ FME_EVENT_VTD_SIP(rcc_miss,      VTD_SIP_EVNT_RCC_MISS);
 	&fme_perf_event_vtd_sip_slpwc_l3_miss.attr.attr,
 	&fme_perf_event_vtd_sip_slpwc_l4_miss.attr.attr,
 	&fme_perf_event_vtd_sip_rcc_miss.attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group fme_perf_vtd_sip_events_group = अणु
+static const struct attribute_group fme_perf_vtd_sip_events_group = {
 	.name = "events",
 	.attrs = fme_perf_vtd_sip_events_attrs,
 	.is_visible = fme_perf_events_visible,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा attribute_group *fme_perf_events_groups[] = अणु
+static const struct attribute_group *fme_perf_events_groups[] = {
 	&fme_perf_basic_events_group,
 	&fme_perf_cache_events_group,
 	&fme_perf_fabric_events_group,
 	&fme_perf_vtd_events_group,
 	&fme_perf_vtd_sip_events_group,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल काष्ठा fme_perf_event_ops *get_event_ops(u32 evtype)
-अणु
-	अगर (evtype > FME_EVTYPE_MAX)
-		वापस शून्य;
+static struct fme_perf_event_ops *get_event_ops(u32 evtype)
+{
+	if (evtype > FME_EVTYPE_MAX)
+		return NULL;
 
-	वापस &fme_perf_event_ops[evtype];
-पूर्ण
+	return &fme_perf_event_ops[evtype];
+}
 
-अटल व्योम fme_perf_event_destroy(काष्ठा perf_event *event)
-अणु
-	काष्ठा fme_perf_event_ops *ops = get_event_ops(event->hw.event_base);
-	काष्ठा fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
+static void fme_perf_event_destroy(struct perf_event *event)
+{
+	struct fme_perf_event_ops *ops = get_event_ops(event->hw.event_base);
+	struct fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
 
-	अगर (ops->event_destroy)
+	if (ops->event_destroy)
 		ops->event_destroy(priv, event->hw.idx, event->hw.config_base);
-पूर्ण
+}
 
-अटल पूर्णांक fme_perf_event_init(काष्ठा perf_event *event)
-अणु
-	काष्ठा fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
-	काष्ठा hw_perf_event *hwc = &event->hw;
-	काष्ठा fme_perf_event_ops *ops;
+static int fme_perf_event_init(struct perf_event *event)
+{
+	struct fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
+	struct hw_perf_event *hwc = &event->hw;
+	struct fme_perf_event_ops *ops;
 	u32 eventid, evtype, portid;
 
-	/* test the event attr type check क्रम PMU क्रमागतeration */
-	अगर (event->attr.type != event->pmu->type)
-		वापस -ENOENT;
+	/* test the event attr type check for PMU enumeration */
+	if (event->attr.type != event->pmu->type)
+		return -ENOENT;
 
 	/*
 	 * fme counters are shared across all cores.
-	 * Thereक्रमe, it करोes not support per-process mode.
-	 * Also, it करोes not support event sampling mode.
+	 * Therefore, it does not support per-process mode.
+	 * Also, it does not support event sampling mode.
 	 */
-	अगर (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
-		वापस -EINVAL;
+	if (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
+		return -EINVAL;
 
-	अगर (event->cpu < 0)
-		वापस -EINVAL;
+	if (event->cpu < 0)
+		return -EINVAL;
 
-	अगर (event->cpu != priv->cpu)
-		वापस -EINVAL;
+	if (event->cpu != priv->cpu)
+		return -EINVAL;
 
 	eventid = get_event(event->attr.config);
 	portid = get_portid(event->attr.config);
 	evtype = get_evtype(event->attr.config);
-	अगर (evtype > FME_EVTYPE_MAX)
-		वापस -EINVAL;
+	if (evtype > FME_EVTYPE_MAX)
+		return -EINVAL;
 
 	hwc->event_base = evtype;
-	hwc->idx = (पूर्णांक)eventid;
+	hwc->idx = (int)eventid;
 	hwc->config_base = portid;
 
 	event->destroy = fme_perf_event_destroy;
@@ -834,80 +833,80 @@ FME_EVENT_VTD_SIP(rcc_miss,      VTD_SIP_EVNT_RCC_MISS);
 		__func__, eventid, evtype, portid);
 
 	ops = get_event_ops(evtype);
-	अगर (ops->event_init)
-		वापस ops->event_init(priv, eventid, portid);
+	if (ops->event_init)
+		return ops->event_init(priv, eventid, portid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fme_perf_event_update(काष्ठा perf_event *event)
-अणु
-	काष्ठा fme_perf_event_ops *ops = get_event_ops(event->hw.event_base);
-	काष्ठा fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void fme_perf_event_update(struct perf_event *event)
+{
+	struct fme_perf_event_ops *ops = get_event_ops(event->hw.event_base);
+	struct fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
+	struct hw_perf_event *hwc = &event->hw;
 	u64 now, prev, delta;
 
-	now = ops->पढ़ो_counter(priv, (u32)hwc->idx, hwc->config_base);
-	prev = local64_पढ़ो(&hwc->prev_count);
+	now = ops->read_counter(priv, (u32)hwc->idx, hwc->config_base);
+	prev = local64_read(&hwc->prev_count);
 	delta = now - prev;
 
 	local64_add(delta, &event->count);
-पूर्ण
+}
 
-अटल व्योम fme_perf_event_start(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	काष्ठा fme_perf_event_ops *ops = get_event_ops(event->hw.event_base);
-	काष्ठा fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
-	काष्ठा hw_perf_event *hwc = &event->hw;
+static void fme_perf_event_start(struct perf_event *event, int flags)
+{
+	struct fme_perf_event_ops *ops = get_event_ops(event->hw.event_base);
+	struct fme_perf_priv *priv = to_fme_perf_priv(event->pmu);
+	struct hw_perf_event *hwc = &event->hw;
 	u64 count;
 
-	count = ops->पढ़ो_counter(priv, (u32)hwc->idx, hwc->config_base);
+	count = ops->read_counter(priv, (u32)hwc->idx, hwc->config_base);
 	local64_set(&hwc->prev_count, count);
-पूर्ण
+}
 
-अटल व्योम fme_perf_event_stop(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
+static void fme_perf_event_stop(struct perf_event *event, int flags)
+{
 	fme_perf_event_update(event);
-पूर्ण
+}
 
-अटल पूर्णांक fme_perf_event_add(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
-	अगर (flags & PERF_EF_START)
+static int fme_perf_event_add(struct perf_event *event, int flags)
+{
+	if (flags & PERF_EF_START)
 		fme_perf_event_start(event, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fme_perf_event_del(काष्ठा perf_event *event, पूर्णांक flags)
-अणु
+static void fme_perf_event_del(struct perf_event *event, int flags)
+{
 	fme_perf_event_stop(event, PERF_EF_UPDATE);
-पूर्ण
+}
 
-अटल व्योम fme_perf_event_पढ़ो(काष्ठा perf_event *event)
-अणु
+static void fme_perf_event_read(struct perf_event *event)
+{
 	fme_perf_event_update(event);
-पूर्ण
+}
 
-अटल व्योम fme_perf_setup_hardware(काष्ठा fme_perf_priv *priv)
-अणु
-	व्योम __iomem *base = priv->ioaddr;
+static void fme_perf_setup_hardware(struct fme_perf_priv *priv)
+{
+	void __iomem *base = priv->ioaddr;
 	u64 v;
 
-	/* पढ़ो and save current working mode क्रम fabric counters */
-	v = पढ़ोq(base + FAB_CTRL);
+	/* read and save current working mode for fabric counters */
+	v = readq(base + FAB_CTRL);
 
-	अगर (FIELD_GET(FAB_PORT_FILTER, v) == FAB_PORT_FILTER_DISABLE)
+	if (FIELD_GET(FAB_PORT_FILTER, v) == FAB_PORT_FILTER_DISABLE)
 		priv->fab_port_id = FME_PORTID_ROOT;
-	अन्यथा
+	else
 		priv->fab_port_id = FIELD_GET(FAB_PORT_ID, v);
-पूर्ण
+}
 
-अटल पूर्णांक fme_perf_pmu_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
-				 काष्ठा fme_perf_priv *priv)
-अणु
-	काष्ठा pmu *pmu = &priv->pmu;
-	अक्षर *name;
-	पूर्णांक ret;
+static int fme_perf_pmu_register(struct platform_device *pdev,
+				 struct fme_perf_priv *priv)
+{
+	struct pmu *pmu = &priv->pmu;
+	char *name;
+	int ret;
 
 	spin_lock_init(&priv->fab_lock);
 
@@ -921,51 +920,51 @@ FME_EVENT_VTD_SIP(rcc_miss,      VTD_SIP_EVNT_RCC_MISS);
 	pmu->del =		fme_perf_event_del;
 	pmu->start =		fme_perf_event_start;
 	pmu->stop =		fme_perf_event_stop;
-	pmu->पढ़ो =		fme_perf_event_पढ़ो;
+	pmu->read =		fme_perf_event_read;
 	pmu->capabilities =	PERF_PMU_CAP_NO_INTERRUPT |
 				PERF_PMU_CAP_NO_EXCLUDE;
 
-	name = devm_kaप्र_लिखो(priv->dev, GFP_KERNEL, "dfl_fme%d", pdev->id);
+	name = devm_kasprintf(priv->dev, GFP_KERNEL, "dfl_fme%d", pdev->id);
 
-	ret = perf_pmu_रेजिस्टर(pmu, name, -1);
-	अगर (ret)
-		वापस ret;
+	ret = perf_pmu_register(pmu, name, -1);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम fme_perf_pmu_unरेजिस्टर(काष्ठा fme_perf_priv *priv)
-अणु
-	perf_pmu_unरेजिस्टर(&priv->pmu);
-पूर्ण
+static void fme_perf_pmu_unregister(struct fme_perf_priv *priv)
+{
+	perf_pmu_unregister(&priv->pmu);
+}
 
-अटल पूर्णांक fme_perf_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
-अणु
-	काष्ठा fme_perf_priv *priv;
-	पूर्णांक target;
+static int fme_perf_offline_cpu(unsigned int cpu, struct hlist_node *node)
+{
+	struct fme_perf_priv *priv;
+	int target;
 
-	priv = hlist_entry_safe(node, काष्ठा fme_perf_priv, node);
+	priv = hlist_entry_safe(node, struct fme_perf_priv, node);
 
-	अगर (cpu != priv->cpu)
-		वापस 0;
+	if (cpu != priv->cpu)
+		return 0;
 
 	target = cpumask_any_but(cpu_online_mask, cpu);
-	अगर (target >= nr_cpu_ids)
-		वापस 0;
+	if (target >= nr_cpu_ids)
+		return 0;
 
 	priv->cpu = target;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fme_perf_init(काष्ठा platक्रमm_device *pdev,
-			 काष्ठा dfl_feature *feature)
-अणु
-	काष्ठा fme_perf_priv *priv;
-	पूर्णांक ret;
+static int fme_perf_init(struct platform_device *pdev,
+			 struct dfl_feature *feature)
+{
+	struct fme_perf_priv *priv;
+	int ret;
 
-	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->dev = &pdev->dev;
 	priv->ioaddr = feature->ioaddr;
@@ -974,48 +973,48 @@ FME_EVENT_VTD_SIP(rcc_miss,      VTD_SIP_EVNT_RCC_MISS);
 
 	ret = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
 				      "perf/fpga/dfl_fme:online",
-				      शून्य, fme_perf_offline_cpu);
-	अगर (ret < 0)
-		वापस ret;
+				      NULL, fme_perf_offline_cpu);
+	if (ret < 0)
+		return ret;
 
 	priv->cpuhp_state = ret;
 
-	/* Register the pmu instance क्रम cpu hotplug */
+	/* Register the pmu instance for cpu hotplug */
 	ret = cpuhp_state_add_instance_nocalls(priv->cpuhp_state, &priv->node);
-	अगर (ret)
-		जाओ cpuhp_instance_err;
+	if (ret)
+		goto cpuhp_instance_err;
 
-	ret = fme_perf_pmu_रेजिस्टर(pdev, priv);
-	अगर (ret)
-		जाओ pmu_रेजिस्टर_err;
+	ret = fme_perf_pmu_register(pdev, priv);
+	if (ret)
+		goto pmu_register_err;
 
 	feature->priv = priv;
-	वापस 0;
+	return 0;
 
-pmu_रेजिस्टर_err:
-	cpuhp_state_हटाओ_instance_nocalls(priv->cpuhp_state, &priv->node);
+pmu_register_err:
+	cpuhp_state_remove_instance_nocalls(priv->cpuhp_state, &priv->node);
 cpuhp_instance_err:
-	cpuhp_हटाओ_multi_state(priv->cpuhp_state);
-	वापस ret;
-पूर्ण
+	cpuhp_remove_multi_state(priv->cpuhp_state);
+	return ret;
+}
 
-अटल व्योम fme_perf_uinit(काष्ठा platक्रमm_device *pdev,
-			   काष्ठा dfl_feature *feature)
-अणु
-	काष्ठा fme_perf_priv *priv = feature->priv;
+static void fme_perf_uinit(struct platform_device *pdev,
+			   struct dfl_feature *feature)
+{
+	struct fme_perf_priv *priv = feature->priv;
 
-	fme_perf_pmu_unरेजिस्टर(priv);
-	cpuhp_state_हटाओ_instance_nocalls(priv->cpuhp_state, &priv->node);
-	cpuhp_हटाओ_multi_state(priv->cpuhp_state);
-पूर्ण
+	fme_perf_pmu_unregister(priv);
+	cpuhp_state_remove_instance_nocalls(priv->cpuhp_state, &priv->node);
+	cpuhp_remove_multi_state(priv->cpuhp_state);
+}
 
-स्थिर काष्ठा dfl_feature_id fme_perf_id_table[] = अणु
-	अणु.id = FME_FEATURE_ID_GLOBAL_IPERF,पूर्ण,
-	अणु.id = FME_FEATURE_ID_GLOBAL_DPERF,पूर्ण,
-	अणु0,पूर्ण
-पूर्ण;
+const struct dfl_feature_id fme_perf_id_table[] = {
+	{.id = FME_FEATURE_ID_GLOBAL_IPERF,},
+	{.id = FME_FEATURE_ID_GLOBAL_DPERF,},
+	{0,}
+};
 
-स्थिर काष्ठा dfl_feature_ops fme_perf_ops = अणु
+const struct dfl_feature_ops fme_perf_ops = {
 	.init = fme_perf_init,
 	.uinit = fme_perf_uinit,
-पूर्ण;
+};

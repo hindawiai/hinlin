@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,22 +23,22 @@
  *
  */
 
-#अगर_अघोषित __DC_MCIF_WB_DCN30_H__
-#घोषणा __DC_MCIF_WB_DCN30_H__
+#ifndef __DC_MCIF_WB_DCN30_H__
+#define __DC_MCIF_WB_DCN30_H__
 
-#समावेश "dcn20/dcn20_mmhubbub.h"
+#include "dcn20/dcn20_mmhubbub.h"
 
-#घोषणा TO_DCN30_MMHUBBUB(mcअगर_wb_base) \
-	container_of(mcअगर_wb_base, काष्ठा dcn30_mmhubbub, base)
+#define TO_DCN30_MMHUBBUB(mcif_wb_base) \
+	container_of(mcif_wb_base, struct dcn30_mmhubbub, base)
 
 /* DCN */
-#घोषणा BASE_INNER(seg) \
+#define BASE_INNER(seg) \
 	DCE_BASE__INST0_SEG ## seg
 
-#घोषणा BASE(seg) \
+#define BASE(seg) \
 	BASE_INNER(seg)
 
-#घोषणा MCIF_WB_COMMON_REG_LIST_DCN3_0(inst) \
+#define MCIF_WB_COMMON_REG_LIST_DCN3_0(inst) \
 	SRI(MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB, inst),\
 	SRI(MCIF_WB_BUFMGR_STATUS, MCIF_WB, inst),\
 	SRI(MCIF_WB_BUF_PITCH, MCIF_WB, inst),\
@@ -90,7 +89,7 @@
 	SRI2(MMHUBBUB_WARMUP_P_VMID, MMHUBBUB, inst),\
 	SRI(MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI, MCIF_WB, inst)
 
-#घोषणा MCIF_WB_COMMON_REG_LIST_DCN30(inst) \
+#define MCIF_WB_COMMON_REG_LIST_DCN30(inst) \
 	SRI2(MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB, inst),\
 	SRI2(MCIF_WB_BUFMGR_STATUS, MCIF_WB, inst),\
 	SRI2(MCIF_WB_BUF_PITCH, MCIF_WB, inst),\
@@ -140,7 +139,7 @@
 	SRI2(MMHUBBUB_WARMUP_CONTROL_STATUS, MMHUBBUB, inst),\
 	SRI2(MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI, MCIF_WB, inst)
 
-#घोषणा MCIF_WB_COMMON_MASK_SH_LIST_DCN3_0(mask_sh) \
+#define MCIF_WB_COMMON_MASK_SH_LIST_DCN3_0(mask_sh) \
 	SF(MCIF_WB0_MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_ENABLE, mask_sh),\
 	SF(MCIF_WB0_MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_SW_INT_EN, mask_sh),\
 	SF(MCIF_WB0_MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_SW_INT_ACK, mask_sh),\
@@ -276,7 +275,7 @@
 	SF(MCIF_WB0_MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI, MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI, mask_sh)
 
 
-#घोषणा MCIF_WB_COMMON_MASK_SH_LIST_DCN30(mask_sh) \
+#define MCIF_WB_COMMON_MASK_SH_LIST_DCN30(mask_sh) \
 	SF(MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_ENABLE, mask_sh),\
 	SF(MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_SW_INT_EN, mask_sh),\
 	SF(MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_SW_INT_ACK, mask_sh),\
@@ -410,7 +409,7 @@
 	SF(MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI, MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI, mask_sh)
 
 
-#घोषणा MCIF_WB_REG_FIELD_LIST_DCN3_0(type) \
+#define MCIF_WB_REG_FIELD_LIST_DCN3_0(type) \
 	MCIF_WB_REG_FIELD_LIST_DCN2_0(type);\
 	type WBIF_WHOLE_BUF_MODE;\
 	type MMHUBBUB_WARMUP_ADDR_REGION;\
@@ -424,41 +423,41 @@
 	type MMHUBBUB_WARMUP_P_VMID;\
 	type MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI
 
-#घोषणा MCIF_WB_REG_VARIABLE_LIST_DCN3_0 \
+#define MCIF_WB_REG_VARIABLE_LIST_DCN3_0 \
 	MCIF_WB_REG_VARIABLE_LIST_DCN2_0; \
-	uपूर्णांक32_t MMHUBBUB_MEM_PWR_CNTL;\
-	uपूर्णांक32_t MMHUBBUB_WARMUP_ADDR_REGION;\
-	uपूर्णांक32_t MMHUBBUB_WARMUP_BASE_ADDR_HIGH;\
-	uपूर्णांक32_t MMHUBBUB_WARMUP_BASE_ADDR_LOW;\
-	uपूर्णांक32_t MMHUBBUB_WARMUP_CONTROL_STATUS;\
-	uपूर्णांक32_t MMHUBBUB_WARMUP_P_VMID;\
-	uपूर्णांक32_t MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI
+	uint32_t MMHUBBUB_MEM_PWR_CNTL;\
+	uint32_t MMHUBBUB_WARMUP_ADDR_REGION;\
+	uint32_t MMHUBBUB_WARMUP_BASE_ADDR_HIGH;\
+	uint32_t MMHUBBUB_WARMUP_BASE_ADDR_LOW;\
+	uint32_t MMHUBBUB_WARMUP_CONTROL_STATUS;\
+	uint32_t MMHUBBUB_WARMUP_P_VMID;\
+	uint32_t MCIF_WB_DRAM_SPEED_CHANGE_DURATION_VBI
 
-काष्ठा dcn30_mmhubbub_रेजिस्टरs अणु
+struct dcn30_mmhubbub_registers {
 	MCIF_WB_REG_VARIABLE_LIST_DCN3_0;
-पूर्ण;
+};
 
 
-काष्ठा dcn30_mmhubbub_mask अणु
-	MCIF_WB_REG_FIELD_LIST_DCN3_0(uपूर्णांक32_t);
-पूर्ण;
+struct dcn30_mmhubbub_mask {
+	MCIF_WB_REG_FIELD_LIST_DCN3_0(uint32_t);
+};
 
-काष्ठा dcn30_mmhubbub_shअगरt अणु
-	MCIF_WB_REG_FIELD_LIST_DCN3_0(uपूर्णांक8_t);
-पूर्ण;
+struct dcn30_mmhubbub_shift {
+	MCIF_WB_REG_FIELD_LIST_DCN3_0(uint8_t);
+};
 
-काष्ठा dcn30_mmhubbub अणु
-	काष्ठा mcअगर_wb base;
-	स्थिर काष्ठा dcn30_mmhubbub_रेजिस्टरs *mcअगर_wb_regs;
-	स्थिर काष्ठा dcn30_mmhubbub_shअगरt *mcअगर_wb_shअगरt;
-	स्थिर काष्ठा dcn30_mmhubbub_mask *mcअगर_wb_mask;
-पूर्ण;
+struct dcn30_mmhubbub {
+	struct mcif_wb base;
+	const struct dcn30_mmhubbub_registers *mcif_wb_regs;
+	const struct dcn30_mmhubbub_shift *mcif_wb_shift;
+	const struct dcn30_mmhubbub_mask *mcif_wb_mask;
+};
 
-व्योम dcn30_mmhubbub_स्थिरruct(काष्ठा dcn30_mmhubbub *mcअगर_wb30,
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dcn30_mmhubbub_रेजिस्टरs *mcअगर_wb_regs,
-	स्थिर काष्ठा dcn30_mmhubbub_shअगरt *mcअगर_wb_shअगरt,
-	स्थिर काष्ठा dcn30_mmhubbub_mask *mcअगर_wb_mask,
-	पूर्णांक inst);
+void dcn30_mmhubbub_construct(struct dcn30_mmhubbub *mcif_wb30,
+	struct dc_context *ctx,
+	const struct dcn30_mmhubbub_registers *mcif_wb_regs,
+	const struct dcn30_mmhubbub_shift *mcif_wb_shift,
+	const struct dcn30_mmhubbub_mask *mcif_wb_mask,
+	int inst);
 
-#पूर्ण_अगर
+#endif

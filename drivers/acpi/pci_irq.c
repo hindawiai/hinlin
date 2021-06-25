@@ -1,158 +1,157 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  pci_irq.c - ACPI PCI Interrupt Routing ($Revision: 11 $)
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
- *  Copyright (C) 2002       Dominik Broकरोwski <devel@broकरो.de>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+ *  Copyright (C) 2002       Dominik Brodowski <devel@brodo.de>
  *  (c) Copyright 2008 Hewlett-Packard Development Company, L.P.
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#घोषणा pr_fmt(fmt) "ACPI: PCI: " fmt
+#define pr_fmt(fmt) "ACPI: PCI: " fmt
 
-#समावेश <linux/dmi.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/dmi.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/pm.h>
+#include <linux/pci.h>
+#include <linux/acpi.h>
+#include <linux/slab.h>
+#include <linux/interrupt.h>
 
-काष्ठा acpi_prt_entry अणु
-	काष्ठा acpi_pci_id	id;
+struct acpi_prt_entry {
+	struct acpi_pci_id	id;
 	u8			pin;
 	acpi_handle		link;
 	u32			index;		/* GSI, or link _CRS index */
-पूर्ण;
+};
 
-अटल अंतरभूत अक्षर pin_name(पूर्णांक pin)
-अणु
-	वापस 'A' + pin - 1;
-पूर्ण
+static inline char pin_name(int pin)
+{
+	return 'A' + pin - 1;
+}
 
 /* --------------------------------------------------------------------------
                          PCI IRQ Routing Table (PRT) Support
    -------------------------------------------------------------------------- */
 
 /* http://bugzilla.kernel.org/show_bug.cgi?id=4773 */
-अटल स्थिर काष्ठा dmi_प्रणाली_id medion_md9580[] = अणु
-	अणु
+static const struct dmi_system_id medion_md9580[] = {
+	{
 		.ident = "Medion MD9580-F laptop",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "MEDIONNB"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "A555"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
 /* http://bugzilla.kernel.org/show_bug.cgi?id=5044 */
-अटल स्थिर काष्ठा dmi_प्रणाली_id dell_optiplex[] = अणु
-	अणु
+static const struct dmi_system_id dell_optiplex[] = {
+	{
 		.ident = "Dell Optiplex GX1",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Dell Computer Corporation"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "OptiPlex GX1 600S+"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
 /* http://bugzilla.kernel.org/show_bug.cgi?id=10138 */
-अटल स्थिर काष्ठा dmi_प्रणाली_id hp_t5710[] = अणु
-	अणु
+static const struct dmi_system_id hp_t5710[] = {
+	{
 		.ident = "HP t5710",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Hewlett-Packard"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "hp t5000 series"),
 			DMI_MATCH(DMI_BOARD_NAME, "098Ch"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 
-काष्ठा prt_quirk अणु
-	स्थिर काष्ठा dmi_प्रणाली_id *प्रणाली;
-	अचिन्हित पूर्णांक		segment;
-	अचिन्हित पूर्णांक		bus;
-	अचिन्हित पूर्णांक		device;
-	अचिन्हित अक्षर		pin;
-	स्थिर अक्षर		*source;	/* according to BIOS */
-	स्थिर अक्षर		*actual_source;
-पूर्ण;
+struct prt_quirk {
+	const struct dmi_system_id *system;
+	unsigned int		segment;
+	unsigned int		bus;
+	unsigned int		device;
+	unsigned char		pin;
+	const char		*source;	/* according to BIOS */
+	const char		*actual_source;
+};
 
-#घोषणा PCI_INTX_PIN(c)		(c - 'A' + 1)
+#define PCI_INTX_PIN(c)		(c - 'A' + 1)
 
 /*
- * These प्रणालीs have incorrect _PRT entries.  The BIOS claims the PCI
- * पूर्णांकerrupt at the listed segment/bus/device/pin is connected to the first
+ * These systems have incorrect _PRT entries.  The BIOS claims the PCI
+ * interrupt at the listed segment/bus/device/pin is connected to the first
  * link device, but it is actually connected to the second.
  */
-अटल स्थिर काष्ठा prt_quirk prt_quirks[] = अणु
-	अणु medion_md9580, 0, 0, 9, PCI_INTX_PIN('A'),
+static const struct prt_quirk prt_quirks[] = {
+	{ medion_md9580, 0, 0, 9, PCI_INTX_PIN('A'),
 		"\\_SB_.PCI0.ISA_.LNKA",
-		"\\_SB_.PCI0.ISA_.LNKB"पूर्ण,
-	अणु dell_optiplex, 0, 0, 0xd, PCI_INTX_PIN('A'),
+		"\\_SB_.PCI0.ISA_.LNKB"},
+	{ dell_optiplex, 0, 0, 0xd, PCI_INTX_PIN('A'),
 		"\\_SB_.LNKB",
-		"\\_SB_.LNKA"पूर्ण,
-	अणु hp_t5710, 0, 0, 1, PCI_INTX_PIN('A'),
+		"\\_SB_.LNKA"},
+	{ hp_t5710, 0, 0, 1, PCI_INTX_PIN('A'),
 		"\\_SB_.PCI0.LNK1",
-		"\\_SB_.PCI0.LNK3"पूर्ण,
-पूर्ण;
+		"\\_SB_.PCI0.LNK3"},
+};
 
-अटल व्योम करो_prt_fixups(काष्ठा acpi_prt_entry *entry,
-			  काष्ठा acpi_pci_routing_table *prt)
-अणु
-	पूर्णांक i;
-	स्थिर काष्ठा prt_quirk *quirk;
+static void do_prt_fixups(struct acpi_prt_entry *entry,
+			  struct acpi_pci_routing_table *prt)
+{
+	int i;
+	const struct prt_quirk *quirk;
 
-	क्रम (i = 0; i < ARRAY_SIZE(prt_quirks); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(prt_quirks); i++) {
 		quirk = &prt_quirks[i];
 
 		/* All current quirks involve link devices, not GSIs */
-		अगर (dmi_check_प्रणाली(quirk->प्रणाली) &&
+		if (dmi_check_system(quirk->system) &&
 		    entry->id.segment == quirk->segment &&
 		    entry->id.bus == quirk->bus &&
 		    entry->id.device == quirk->device &&
 		    entry->pin == quirk->pin &&
-		    !म_भेद(prt->source, quirk->source) &&
-		    म_माप(prt->source) >= म_माप(quirk->actual_source)) अणु
+		    !strcmp(prt->source, quirk->source) &&
+		    strlen(prt->source) >= strlen(quirk->actual_source)) {
 			pr_warn("Firmware reports "
 				"%04x:%02x:%02x PCI INT %c connected to %s; "
 				"changing to %s\n",
 				entry->id.segment, entry->id.bus,
 				entry->id.device, pin_name(entry->pin),
 				prt->source, quirk->actual_source);
-			म_नकल(prt->source, quirk->actual_source);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			strcpy(prt->source, quirk->actual_source);
+		}
+	}
+}
 
-अटल पूर्णांक acpi_pci_irq_check_entry(acpi_handle handle, काष्ठा pci_dev *dev,
-				  पूर्णांक pin, काष्ठा acpi_pci_routing_table *prt,
-				  काष्ठा acpi_prt_entry **entry_ptr)
-अणु
-	पूर्णांक segment = pci_करोमुख्य_nr(dev->bus);
-	पूर्णांक bus = dev->bus->number;
-	पूर्णांक device = pci_ari_enabled(dev->bus) ? 0 : PCI_SLOT(dev->devfn);
-	काष्ठा acpi_prt_entry *entry;
+static int acpi_pci_irq_check_entry(acpi_handle handle, struct pci_dev *dev,
+				  int pin, struct acpi_pci_routing_table *prt,
+				  struct acpi_prt_entry **entry_ptr)
+{
+	int segment = pci_domain_nr(dev->bus);
+	int bus = dev->bus->number;
+	int device = pci_ari_enabled(dev->bus) ? 0 : PCI_SLOT(dev->devfn);
+	struct acpi_prt_entry *entry;
 
-	अगर (((prt->address >> 16) & 0xffff) != device ||
+	if (((prt->address >> 16) & 0xffff) != device ||
 	    prt->pin + 1 != pin)
-		वापस -ENODEV;
+		return -ENODEV;
 
-	entry = kzalloc(माप(काष्ठा acpi_prt_entry), GFP_KERNEL);
-	अगर (!entry)
-		वापस -ENOMEM;
+	entry = kzalloc(sizeof(struct acpi_prt_entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
 
 	/*
-	 * Note that the _PRT uses 0=INTA, 1=INTB, etc, जबतक PCI uses
+	 * Note that the _PRT uses 0=INTA, 1=INTB, etc, while PCI uses
 	 * 1=INTA, 2=INTB.  We use the PCI encoding throughout, so convert
 	 * it here.
 	 */
@@ -161,32 +160,32 @@
 	entry->id.device = (prt->address >> 16) & 0xFFFF;
 	entry->pin = prt->pin + 1;
 
-	करो_prt_fixups(entry, prt);
+	do_prt_fixups(entry, prt);
 
 	entry->index = prt->source_index;
 
 	/*
 	 * Type 1: Dynamic
 	 * ---------------
-	 * The 'source' field specअगरies the PCI पूर्णांकerrupt link device used to
-	 * configure the IRQ asचिन्हित to this slot|dev|pin.  The 'source_index'
-	 * indicates which resource descriptor in the resource ढाँचा (of
-	 * the link device) this पूर्णांकerrupt is allocated from.
+	 * The 'source' field specifies the PCI interrupt link device used to
+	 * configure the IRQ assigned to this slot|dev|pin.  The 'source_index'
+	 * indicates which resource descriptor in the resource template (of
+	 * the link device) this interrupt is allocated from.
 	 *
-	 * NOTE: Don't query the Link Device क्रम IRQ inक्रमmation at this समय
-	 *       because Link Device क्रमागतeration may not have occurred yet
+	 * NOTE: Don't query the Link Device for IRQ information at this time
+	 *       because Link Device enumeration may not have occurred yet
 	 *       (e.g. exists somewhere 'below' this _PRT entry in the ACPI
 	 *       namespace).
 	 */
-	अगर (prt->source[0])
+	if (prt->source[0])
 		acpi_get_handle(handle, prt->source, &entry->link);
 
 	/*
 	 * Type 2: Static
 	 * --------------
-	 * The 'source' field is NULL, and the 'source_index' field specअगरies
-	 * the IRQ value, which is hardwired to specअगरic पूर्णांकerrupt inमाला_दो on
-	 * the पूर्णांकerrupt controller.
+	 * The 'source' field is NULL, and the 'source_index' field specifies
+	 * the IRQ value, which is hardwired to specific interrupt inputs on
+	 * the interrupt controller.
 	 */
 	pr_debug("%04x:%02x:%02x[%c] -> %s[%d]\n",
 		 entry->id.segment, entry->id.bus, entry->id.device,
@@ -194,84 +193,84 @@
 
 	*entry_ptr = entry;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acpi_pci_irq_find_prt_entry(काष्ठा pci_dev *dev,
-			  पूर्णांक pin, काष्ठा acpi_prt_entry **entry_ptr)
-अणु
+static int acpi_pci_irq_find_prt_entry(struct pci_dev *dev,
+			  int pin, struct acpi_prt_entry **entry_ptr)
+{
 	acpi_status status;
-	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	काष्ठा acpi_pci_routing_table *entry;
-	acpi_handle handle = शून्य;
+	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+	struct acpi_pci_routing_table *entry;
+	acpi_handle handle = NULL;
 
-	अगर (dev->bus->bridge)
+	if (dev->bus->bridge)
 		handle = ACPI_HANDLE(dev->bus->bridge);
 
-	अगर (!handle)
-		वापस -ENODEV;
+	if (!handle)
+		return -ENODEV;
 
 	/* 'handle' is the _PRT's parent (root bridge or PCI-PCI bridge) */
 	status = acpi_get_irq_routing_table(handle, &buffer);
-	अगर (ACPI_FAILURE(status)) अणु
-		kमुक्त(buffer.poपूर्णांकer);
-		वापस -ENODEV;
-	पूर्ण
+	if (ACPI_FAILURE(status)) {
+		kfree(buffer.pointer);
+		return -ENODEV;
+	}
 
-	entry = buffer.poपूर्णांकer;
-	जबतक (entry && (entry->length > 0)) अणु
-		अगर (!acpi_pci_irq_check_entry(handle, dev, pin,
+	entry = buffer.pointer;
+	while (entry && (entry->length > 0)) {
+		if (!acpi_pci_irq_check_entry(handle, dev, pin,
 						 entry, entry_ptr))
-			अवरोध;
-		entry = (काष्ठा acpi_pci_routing_table *)
-		    ((अचिन्हित दीर्घ)entry + entry->length);
-	पूर्ण
+			break;
+		entry = (struct acpi_pci_routing_table *)
+		    ((unsigned long)entry + entry->length);
+	}
 
-	kमुक्त(buffer.poपूर्णांकer);
-	वापस 0;
-पूर्ण
+	kfree(buffer.pointer);
+	return 0;
+}
 
 /* --------------------------------------------------------------------------
                           PCI Interrupt Routing Support
    -------------------------------------------------------------------------- */
-#अगर_घोषित CONFIG_X86_IO_APIC
-बाह्य पूर्णांक noioapicquirk;
-बाह्य पूर्णांक noioapicreroute;
+#ifdef CONFIG_X86_IO_APIC
+extern int noioapicquirk;
+extern int noioapicreroute;
 
-अटल पूर्णांक bridge_has_boot_पूर्णांकerrupt_variant(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_bus *bus_it;
+static int bridge_has_boot_interrupt_variant(struct pci_bus *bus)
+{
+	struct pci_bus *bus_it;
 
-	क्रम (bus_it = bus ; bus_it ; bus_it = bus_it->parent) अणु
-		अगर (!bus_it->self)
-			वापस 0;
-		अगर (bus_it->self->irq_reroute_variant)
-			वापस bus_it->self->irq_reroute_variant;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (bus_it = bus ; bus_it ; bus_it = bus_it->parent) {
+		if (!bus_it->self)
+			return 0;
+		if (bus_it->self->irq_reroute_variant)
+			return bus_it->self->irq_reroute_variant;
+	}
+	return 0;
+}
 
 /*
  * Some chipsets (e.g. Intel 6700PXH) generate a legacy INTx when the IRQ
- * entry in the chipset's IO-APIC is masked (as, e.g. the RT kernel करोes
- * during पूर्णांकerrupt handling). When this INTx generation cannot be disabled,
- * we reroute these पूर्णांकerrupts to their legacy equivalent to get rid of
- * spurious पूर्णांकerrupts.
+ * entry in the chipset's IO-APIC is masked (as, e.g. the RT kernel does
+ * during interrupt handling). When this INTx generation cannot be disabled,
+ * we reroute these interrupts to their legacy equivalent to get rid of
+ * spurious interrupts.
  */
-अटल पूर्णांक acpi_reroute_boot_पूर्णांकerrupt(काष्ठा pci_dev *dev,
-				       काष्ठा acpi_prt_entry *entry)
-अणु
-	अगर (noioapicquirk || noioapicreroute) अणु
-		वापस 0;
-	पूर्ण अन्यथा अणु
-		चयन (bridge_has_boot_पूर्णांकerrupt_variant(dev->bus)) अणु
-		हाल 0:
+static int acpi_reroute_boot_interrupt(struct pci_dev *dev,
+				       struct acpi_prt_entry *entry)
+{
+	if (noioapicquirk || noioapicreroute) {
+		return 0;
+	} else {
+		switch (bridge_has_boot_interrupt_variant(dev->bus)) {
+		case 0:
 			/* no rerouting necessary */
-			वापस 0;
-		हाल INTEL_IRQ_REROUTE_VARIANT:
+			return 0;
+		case INTEL_IRQ_REROUTE_VARIANT:
 			/*
 			 * Remap according to INTx routing table in 6700PXH
-			 * specs, पूर्णांकel order number 302628-002, section
+			 * specs, intel order number 302628-002, section
 			 * 2.15.2. Other chipsets (80332, ...) have the same
 			 * mapping and are handled here as well.
 			 */
@@ -279,189 +278,189 @@
 				 "IRQ %d\n", entry->index,
 				 (entry->index % 4) + 16);
 			entry->index = (entry->index % 4) + 16;
-			वापस 1;
-		शेष:
+			return 1;
+		default:
 			dev_warn(&dev->dev, "Cannot reroute IRQ %d to legacy "
 				 "IRQ: unknown mapping\n", entry->index);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_X86_IO_APIC */
+			return -1;
+		}
+	}
+}
+#endif /* CONFIG_X86_IO_APIC */
 
-अटल काष्ठा acpi_prt_entry *acpi_pci_irq_lookup(काष्ठा pci_dev *dev, पूर्णांक pin)
-अणु
-	काष्ठा acpi_prt_entry *entry = शून्य;
-	काष्ठा pci_dev *bridge;
+static struct acpi_prt_entry *acpi_pci_irq_lookup(struct pci_dev *dev, int pin)
+{
+	struct acpi_prt_entry *entry = NULL;
+	struct pci_dev *bridge;
 	u8 bridge_pin, orig_pin = pin;
-	पूर्णांक ret;
+	int ret;
 
 	ret = acpi_pci_irq_find_prt_entry(dev, pin, &entry);
-	अगर (!ret && entry) अणु
-#अगर_घोषित CONFIG_X86_IO_APIC
-		acpi_reroute_boot_पूर्णांकerrupt(dev, entry);
-#पूर्ण_अगर /* CONFIG_X86_IO_APIC */
+	if (!ret && entry) {
+#ifdef CONFIG_X86_IO_APIC
+		acpi_reroute_boot_interrupt(dev, entry);
+#endif /* CONFIG_X86_IO_APIC */
 		dev_dbg(&dev->dev, "Found [%c] _PRT entry\n", pin_name(pin));
-		वापस entry;
-	पूर्ण
+		return entry;
+	}
 
 	/*
-	 * Attempt to derive an IRQ क्रम this device from a parent bridge's
-	 * PCI पूर्णांकerrupt routing entry (eg. yenta bridge and add-in card bridge).
+	 * Attempt to derive an IRQ for this device from a parent bridge's
+	 * PCI interrupt routing entry (eg. yenta bridge and add-in card bridge).
 	 */
 	bridge = dev->bus->self;
-	जबतक (bridge) अणु
-		pin = pci_swizzle_पूर्णांकerrupt_pin(dev, pin);
+	while (bridge) {
+		pin = pci_swizzle_interrupt_pin(dev, pin);
 
-		अगर ((bridge->class >> 8) == PCI_CLASS_BRIDGE_CARDBUS) अणु
+		if ((bridge->class >> 8) == PCI_CLASS_BRIDGE_CARDBUS) {
 			/* PC card has the same IRQ as its cardbridge */
 			bridge_pin = bridge->pin;
-			अगर (!bridge_pin) अणु
+			if (!bridge_pin) {
 				dev_dbg(&bridge->dev, "No interrupt pin configured\n");
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 			pin = bridge_pin;
-		पूर्ण
+		}
 
 		ret = acpi_pci_irq_find_prt_entry(bridge, pin, &entry);
-		अगर (!ret && entry) अणु
+		if (!ret && entry) {
 			dev_dbg(&dev->dev, "Derived GSI INT %c from %s\n",
 				pin_name(orig_pin), pci_name(bridge));
-			वापस entry;
-		पूर्ण
+			return entry;
+		}
 
 		dev = bridge;
 		bridge = dev->bus->self;
-	पूर्ण
+	}
 
 	dev_warn(&dev->dev, "can't derive routing for PCI INT %c\n",
 		 pin_name(orig_pin));
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#अगर IS_ENABLED(CONFIG_ISA) || IS_ENABLED(CONFIG_EISA)
-अटल पूर्णांक acpi_isa_रेजिस्टर_gsi(काष्ठा pci_dev *dev)
-अणु
+#if IS_ENABLED(CONFIG_ISA) || IS_ENABLED(CONFIG_EISA)
+static int acpi_isa_register_gsi(struct pci_dev *dev)
+{
 	u32 dev_gsi;
 
-	/* Interrupt Line values above 0xF are क्रमbidden */
-	अगर (dev->irq > 0 && (dev->irq <= 0xF) &&
+	/* Interrupt Line values above 0xF are forbidden */
+	if (dev->irq > 0 && (dev->irq <= 0xF) &&
 	    acpi_isa_irq_available(dev->irq) &&
-	    (acpi_isa_irq_to_gsi(dev->irq, &dev_gsi) == 0)) अणु
+	    (acpi_isa_irq_to_gsi(dev->irq, &dev_gsi) == 0)) {
 		dev_warn(&dev->dev, "PCI INT %c: no GSI - using ISA IRQ %d\n",
 			 pin_name(dev->pin), dev->irq);
-		acpi_रेजिस्टर_gsi(&dev->dev, dev_gsi,
+		acpi_register_gsi(&dev->dev, dev_gsi,
 				  ACPI_LEVEL_SENSITIVE,
 				  ACPI_ACTIVE_LOW);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक acpi_isa_रेजिस्टर_gsi(काष्ठा pci_dev *dev)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+		return 0;
+	}
+	return -EINVAL;
+}
+#else
+static inline int acpi_isa_register_gsi(struct pci_dev *dev)
+{
+	return -ENODEV;
+}
+#endif
 
-अटल अंतरभूत bool acpi_pci_irq_valid(काष्ठा pci_dev *dev, u8 pin)
-अणु
-#अगर_घोषित CONFIG_X86
+static inline bool acpi_pci_irq_valid(struct pci_dev *dev, u8 pin)
+{
+#ifdef CONFIG_X86
 	/*
 	 * On x86 irq line 0xff means "unknown" or "no connection"
 	 * (PCI 3.0, Section 6.2.4, footnote on page 223).
 	 */
-	अगर (dev->irq == 0xff) अणु
+	if (dev->irq == 0xff) {
 		dev->irq = IRQ_NOTCONNECTED;
 		dev_warn(&dev->dev, "PCI INT %c: not connected\n",
 			 pin_name(pin));
-		वापस false;
-	पूर्ण
-#पूर्ण_अगर
-	वापस true;
-पूर्ण
+		return false;
+	}
+#endif
+	return true;
+}
 
-पूर्णांक acpi_pci_irq_enable(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा acpi_prt_entry *entry;
-	पूर्णांक gsi;
+int acpi_pci_irq_enable(struct pci_dev *dev)
+{
+	struct acpi_prt_entry *entry;
+	int gsi;
 	u8 pin;
-	पूर्णांक triggering = ACPI_LEVEL_SENSITIVE;
+	int triggering = ACPI_LEVEL_SENSITIVE;
 	/*
-	 * On ARM प्रणालीs with the GIC पूर्णांकerrupt model, level पूर्णांकerrupts
-	 * are always polarity high by specअगरication; PCI legacy
-	 * IRQs lines are inverted beक्रमe reaching the पूर्णांकerrupt
-	 * controller and must thereक्रमe be considered active high
-	 * as शेष.
+	 * On ARM systems with the GIC interrupt model, level interrupts
+	 * are always polarity high by specification; PCI legacy
+	 * IRQs lines are inverted before reaching the interrupt
+	 * controller and must therefore be considered active high
+	 * as default.
 	 */
-	पूर्णांक polarity = acpi_irq_model == ACPI_IRQ_MODEL_GIC ?
+	int polarity = acpi_irq_model == ACPI_IRQ_MODEL_GIC ?
 				      ACPI_ACTIVE_HIGH : ACPI_ACTIVE_LOW;
-	अक्षर *link = शून्य;
-	अक्षर link_desc[16];
-	पूर्णांक rc;
+	char *link = NULL;
+	char link_desc[16];
+	int rc;
 
 	pin = dev->pin;
-	अगर (!pin) अणु
+	if (!pin) {
 		dev_dbg(&dev->dev, "No interrupt pin configured\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (dev->irq_managed && dev->irq > 0)
-		वापस 0;
+	if (dev->irq_managed && dev->irq > 0)
+		return 0;
 
 	entry = acpi_pci_irq_lookup(dev, pin);
-	अगर (!entry) अणु
+	if (!entry) {
 		/*
-		 * IDE legacy mode controller IRQs are magic. Why करो compat
+		 * IDE legacy mode controller IRQs are magic. Why do compat
 		 * extensions always make such a nasty mess.
 		 */
-		अगर (dev->class >> 8 == PCI_CLASS_STORAGE_IDE &&
+		if (dev->class >> 8 == PCI_CLASS_STORAGE_IDE &&
 				(dev->class & 0x05) == 0)
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	अगर (entry) अणु
-		अगर (entry->link)
+	if (entry) {
+		if (entry->link)
 			gsi = acpi_pci_link_allocate_irq(entry->link,
 							 entry->index,
 							 &triggering, &polarity,
 							 &link);
-		अन्यथा
+		else
 			gsi = entry->index;
-	पूर्ण अन्यथा
+	} else
 		gsi = -1;
 
-	अगर (gsi < 0) अणु
+	if (gsi < 0) {
 		/*
-		 * No IRQ known to the ACPI subप्रणाली - maybe the BIOS /
-		 * driver reported one, then use it. Exit in any हाल.
+		 * No IRQ known to the ACPI subsystem - maybe the BIOS /
+		 * driver reported one, then use it. Exit in any case.
 		 */
-		अगर (!acpi_pci_irq_valid(dev, pin)) अणु
-			kमुक्त(entry);
-			वापस 0;
-		पूर्ण
+		if (!acpi_pci_irq_valid(dev, pin)) {
+			kfree(entry);
+			return 0;
+		}
 
-		अगर (acpi_isa_रेजिस्टर_gsi(dev))
+		if (acpi_isa_register_gsi(dev))
 			dev_warn(&dev->dev, "PCI INT %c: no GSI\n",
 				 pin_name(pin));
 
-		kमुक्त(entry);
-		वापस 0;
-	पूर्ण
+		kfree(entry);
+		return 0;
+	}
 
-	rc = acpi_रेजिस्टर_gsi(&dev->dev, gsi, triggering, polarity);
-	अगर (rc < 0) अणु
+	rc = acpi_register_gsi(&dev->dev, gsi, triggering, polarity);
+	if (rc < 0) {
 		dev_warn(&dev->dev, "PCI INT %c: failed to register GSI\n",
 			 pin_name(pin));
-		kमुक्त(entry);
-		वापस rc;
-	पूर्ण
+		kfree(entry);
+		return rc;
+	}
 	dev->irq = rc;
 	dev->irq_managed = 1;
 
-	अगर (link)
-		snम_लिखो(link_desc, माप(link_desc), " -> Link[%s]", link);
-	अन्यथा
+	if (link)
+		snprintf(link_desc, sizeof(link_desc), " -> Link[%s]", link);
+	else
 		link_desc[0] = '\0';
 
 	dev_dbg(&dev->dev, "PCI INT %c%s -> GSI %u (%s, %s) -> IRQ %d\n",
@@ -469,47 +468,47 @@
 		(triggering == ACPI_LEVEL_SENSITIVE) ? "level" : "edge",
 		(polarity == ACPI_ACTIVE_LOW) ? "low" : "high", dev->irq);
 
-	kमुक्त(entry);
-	वापस 0;
-पूर्ण
+	kfree(entry);
+	return 0;
+}
 
-व्योम acpi_pci_irq_disable(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा acpi_prt_entry *entry;
-	पूर्णांक gsi;
+void acpi_pci_irq_disable(struct pci_dev *dev)
+{
+	struct acpi_prt_entry *entry;
+	int gsi;
 	u8 pin;
 
 	pin = dev->pin;
-	अगर (!pin || !dev->irq_managed || dev->irq <= 0)
-		वापस;
+	if (!pin || !dev->irq_managed || dev->irq <= 0)
+		return;
 
 	/* Keep IOAPIC pin configuration when suspending */
-	अगर (dev->dev.घातer.is_prepared)
-		वापस;
-#अगर_घोषित	CONFIG_PM
-	अगर (dev->dev.घातer.runसमय_status == RPM_SUSPENDING)
-		वापस;
-#पूर्ण_अगर
+	if (dev->dev.power.is_prepared)
+		return;
+#ifdef	CONFIG_PM
+	if (dev->dev.power.runtime_status == RPM_SUSPENDING)
+		return;
+#endif
 
 	entry = acpi_pci_irq_lookup(dev, pin);
-	अगर (!entry)
-		वापस;
+	if (!entry)
+		return;
 
-	अगर (entry->link)
-		gsi = acpi_pci_link_मुक्त_irq(entry->link);
-	अन्यथा
+	if (entry->link)
+		gsi = acpi_pci_link_free_irq(entry->link);
+	else
 		gsi = entry->index;
 
-	kमुक्त(entry);
+	kfree(entry);
 
 	/*
-	 * TBD: It might be worth clearing dev->irq by magic स्थिरant
+	 * TBD: It might be worth clearing dev->irq by magic constant
 	 * (e.g. PCI_UNDEFINED_IRQ).
 	 */
 
 	dev_dbg(&dev->dev, "PCI INT %c disabled\n", pin_name(pin));
-	अगर (gsi >= 0) अणु
-		acpi_unरेजिस्टर_gsi(gsi);
+	if (gsi >= 0) {
+		acpi_unregister_gsi(gsi);
 		dev->irq_managed = 0;
-	पूर्ण
-पूर्ण
+	}
+}

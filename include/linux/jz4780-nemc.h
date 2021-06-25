@@ -1,40 +1,39 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * JZ4780 न_अंकD/बाह्यal memory controller (NEMC)
+ * JZ4780 NAND/external memory controller (NEMC)
  *
  * Copyright (c) 2015 Imagination Technologies
  * Author: Alex Smith <alex@alex-smith.me.uk>
  */
 
-#अगर_अघोषित __LINUX_JZ4780_NEMC_H__
-#घोषणा __LINUX_JZ4780_NEMC_H__
+#ifndef __LINUX_JZ4780_NEMC_H__
+#define __LINUX_JZ4780_NEMC_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा device;
+struct device;
 
 /*
  * Number of NEMC banks. Note that there are actually 6, but they are numbered
  * from 1.
  */
-#घोषणा JZ4780_NEMC_NUM_BANKS	7
+#define JZ4780_NEMC_NUM_BANKS	7
 
 /**
- * क्रमागत jz4780_nemc_bank_type - device types which can be connected to a bank
+ * enum jz4780_nemc_bank_type - device types which can be connected to a bank
  * @JZ4780_NEMC_BANK_SRAM: SRAM
- * @JZ4780_NEMC_BANK_न_अंकD: न_अंकD
+ * @JZ4780_NEMC_BANK_NAND: NAND
  */
-क्रमागत jz4780_nemc_bank_type अणु
+enum jz4780_nemc_bank_type {
 	JZ4780_NEMC_BANK_SRAM,
-	JZ4780_NEMC_BANK_न_अंकD,
-पूर्ण;
+	JZ4780_NEMC_BANK_NAND,
+};
 
-बाह्य अचिन्हित पूर्णांक jz4780_nemc_num_banks(काष्ठा device *dev);
+extern unsigned int jz4780_nemc_num_banks(struct device *dev);
 
-बाह्य व्योम jz4780_nemc_set_type(काष्ठा device *dev, अचिन्हित पूर्णांक bank,
-				 क्रमागत jz4780_nemc_bank_type type);
-बाह्य व्योम jz4780_nemc_निश्चित(काष्ठा device *dev, अचिन्हित पूर्णांक bank,
-			       bool निश्चित);
+extern void jz4780_nemc_set_type(struct device *dev, unsigned int bank,
+				 enum jz4780_nemc_bank_type type);
+extern void jz4780_nemc_assert(struct device *dev, unsigned int bank,
+			       bool assert);
 
-#पूर्ण_अगर /* __LINUX_JZ4780_NEMC_H__ */
+#endif /* __LINUX_JZ4780_NEMC_H__ */

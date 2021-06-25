@@ -1,197 +1,196 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * I2C multiplexer using pinctrl API
  *
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/i2c-mux.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/of.h>
-#समावेश "../../pinctrl/core.h"
+#include <linux/i2c.h>
+#include <linux/i2c-mux.h>
+#include <linux/module.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/of.h>
+#include "../../pinctrl/core.h"
 
-काष्ठा i2c_mux_pinctrl अणु
-	काष्ठा pinctrl *pinctrl;
-	काष्ठा pinctrl_state *states[];
-पूर्ण;
+struct i2c_mux_pinctrl {
+	struct pinctrl *pinctrl;
+	struct pinctrl_state *states[];
+};
 
-अटल पूर्णांक i2c_mux_pinctrl_select(काष्ठा i2c_mux_core *muxc, u32 chan)
-अणु
-	काष्ठा i2c_mux_pinctrl *mux = i2c_mux_priv(muxc);
+static int i2c_mux_pinctrl_select(struct i2c_mux_core *muxc, u32 chan)
+{
+	struct i2c_mux_pinctrl *mux = i2c_mux_priv(muxc);
 
-	वापस pinctrl_select_state(mux->pinctrl, mux->states[chan]);
-पूर्ण
+	return pinctrl_select_state(mux->pinctrl, mux->states[chan]);
+}
 
-अटल पूर्णांक i2c_mux_pinctrl_deselect(काष्ठा i2c_mux_core *muxc, u32 chan)
-अणु
-	वापस i2c_mux_pinctrl_select(muxc, muxc->num_adapters);
-पूर्ण
+static int i2c_mux_pinctrl_deselect(struct i2c_mux_core *muxc, u32 chan)
+{
+	return i2c_mux_pinctrl_select(muxc, muxc->num_adapters);
+}
 
-अटल काष्ठा i2c_adapter *i2c_mux_pinctrl_root_adapter(
-	काष्ठा pinctrl_state *state)
-अणु
-	काष्ठा i2c_adapter *root = शून्य;
-	काष्ठा pinctrl_setting *setting;
-	काष्ठा i2c_adapter *pin_root;
+static struct i2c_adapter *i2c_mux_pinctrl_root_adapter(
+	struct pinctrl_state *state)
+{
+	struct i2c_adapter *root = NULL;
+	struct pinctrl_setting *setting;
+	struct i2c_adapter *pin_root;
 
-	list_क्रम_each_entry(setting, &state->settings, node) अणु
+	list_for_each_entry(setting, &state->settings, node) {
 		pin_root = i2c_root_adapter(setting->pctldev->dev);
-		अगर (!pin_root)
-			वापस शून्य;
-		अगर (!root)
+		if (!pin_root)
+			return NULL;
+		if (!root)
 			root = pin_root;
-		अन्यथा अगर (root != pin_root)
-			वापस शून्य;
-	पूर्ण
+		else if (root != pin_root)
+			return NULL;
+	}
 
-	वापस root;
-पूर्ण
+	return root;
+}
 
-अटल काष्ठा i2c_adapter *i2c_mux_pinctrl_parent_adapter(काष्ठा device *dev)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *parent_np;
-	काष्ठा i2c_adapter *parent;
+static struct i2c_adapter *i2c_mux_pinctrl_parent_adapter(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct device_node *parent_np;
+	struct i2c_adapter *parent;
 
 	parent_np = of_parse_phandle(np, "i2c-parent", 0);
-	अगर (!parent_np) अणु
+	if (!parent_np) {
 		dev_err(dev, "Cannot parse i2c-parent\n");
-		वापस ERR_PTR(-ENODEV);
-	पूर्ण
+		return ERR_PTR(-ENODEV);
+	}
 	parent = of_find_i2c_adapter_by_node(parent_np);
 	of_node_put(parent_np);
-	अगर (!parent)
-		वापस ERR_PTR(-EPROBE_DEFER);
+	if (!parent)
+		return ERR_PTR(-EPROBE_DEFER);
 
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
-अटल पूर्णांक i2c_mux_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा i2c_mux_core *muxc;
-	काष्ठा i2c_mux_pinctrl *mux;
-	काष्ठा i2c_adapter *parent;
-	काष्ठा i2c_adapter *root;
-	पूर्णांक num_names, i, ret;
-	स्थिर अक्षर *name;
+static int i2c_mux_pinctrl_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct i2c_mux_core *muxc;
+	struct i2c_mux_pinctrl *mux;
+	struct i2c_adapter *parent;
+	struct i2c_adapter *root;
+	int num_names, i, ret;
+	const char *name;
 
 	num_names = of_property_count_strings(np, "pinctrl-names");
-	अगर (num_names < 0) अणु
+	if (num_names < 0) {
 		dev_err(dev, "Cannot parse pinctrl-names: %d\n",
 			num_names);
-		वापस num_names;
-	पूर्ण
+		return num_names;
+	}
 
 	parent = i2c_mux_pinctrl_parent_adapter(dev);
-	अगर (IS_ERR(parent))
-		वापस PTR_ERR(parent);
+	if (IS_ERR(parent))
+		return PTR_ERR(parent);
 
 	muxc = i2c_mux_alloc(parent, dev, num_names,
-			     काष्ठा_size(mux, states, num_names),
-			     0, i2c_mux_pinctrl_select, शून्य);
-	अगर (!muxc) अणु
+			     struct_size(mux, states, num_names),
+			     0, i2c_mux_pinctrl_select, NULL);
+	if (!muxc) {
 		ret = -ENOMEM;
-		जाओ err_put_parent;
-	पूर्ण
+		goto err_put_parent;
+	}
 	mux = i2c_mux_priv(muxc);
 
-	platक्रमm_set_drvdata(pdev, muxc);
+	platform_set_drvdata(pdev, muxc);
 
 	mux->pinctrl = devm_pinctrl_get(dev);
-	अगर (IS_ERR(mux->pinctrl)) अणु
+	if (IS_ERR(mux->pinctrl)) {
 		ret = PTR_ERR(mux->pinctrl);
 		dev_err(dev, "Cannot get pinctrl: %d\n", ret);
-		जाओ err_put_parent;
-	पूर्ण
+		goto err_put_parent;
+	}
 
-	क्रम (i = 0; i < num_names; i++) अणु
-		ret = of_property_पढ़ो_string_index(np, "pinctrl-names", i,
+	for (i = 0; i < num_names; i++) {
+		ret = of_property_read_string_index(np, "pinctrl-names", i,
 						    &name);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev, "Cannot parse pinctrl-names: %d\n", ret);
-			जाओ err_put_parent;
-		पूर्ण
+			goto err_put_parent;
+		}
 
 		mux->states[i] = pinctrl_lookup_state(mux->pinctrl, name);
-		अगर (IS_ERR(mux->states[i])) अणु
+		if (IS_ERR(mux->states[i])) {
 			ret = PTR_ERR(mux->states[i]);
 			dev_err(dev, "Cannot look up pinctrl state %s: %d\n",
 				name, ret);
-			जाओ err_put_parent;
-		पूर्ण
+			goto err_put_parent;
+		}
 
-		अगर (म_भेद(name, "idle"))
-			जारी;
+		if (strcmp(name, "idle"))
+			continue;
 
-		अगर (i != num_names - 1) अणु
+		if (i != num_names - 1) {
 			dev_err(dev, "idle state must be last\n");
 			ret = -EINVAL;
-			जाओ err_put_parent;
-		पूर्ण
+			goto err_put_parent;
+		}
 		muxc->deselect = i2c_mux_pinctrl_deselect;
-	पूर्ण
+	}
 
 	root = i2c_root_adapter(&muxc->parent->dev);
 
 	muxc->mux_locked = true;
-	क्रम (i = 0; i < num_names; i++) अणु
-		अगर (root != i2c_mux_pinctrl_root_adapter(mux->states[i])) अणु
+	for (i = 0; i < num_names; i++) {
+		if (root != i2c_mux_pinctrl_root_adapter(mux->states[i])) {
 			muxc->mux_locked = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (muxc->mux_locked)
+			break;
+		}
+	}
+	if (muxc->mux_locked)
 		dev_info(dev, "mux-locked i2c mux\n");
 
-	/* Do not add any adapter क्रम the idle state (अगर it's there at all). */
-	क्रम (i = 0; i < num_names - !!muxc->deselect; i++) अणु
+	/* Do not add any adapter for the idle state (if it's there at all). */
+	for (i = 0; i < num_names - !!muxc->deselect; i++) {
 		ret = i2c_mux_add_adapter(muxc, 0, i, 0);
-		अगर (ret)
-			जाओ err_del_adapter;
-	पूर्ण
+		if (ret)
+			goto err_del_adapter;
+	}
 
-	वापस 0;
+	return 0;
 
 err_del_adapter:
 	i2c_mux_del_adapters(muxc);
 err_put_parent:
 	i2c_put_adapter(parent);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक i2c_mux_pinctrl_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा i2c_mux_core *muxc = platक्रमm_get_drvdata(pdev);
+static int i2c_mux_pinctrl_remove(struct platform_device *pdev)
+{
+	struct i2c_mux_core *muxc = platform_get_drvdata(pdev);
 
 	i2c_mux_del_adapters(muxc);
 	i2c_put_adapter(muxc->parent);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id i2c_mux_pinctrl_of_match[] = अणु
-	अणु .compatible = "i2c-mux-pinctrl", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id i2c_mux_pinctrl_of_match[] = {
+	{ .compatible = "i2c-mux-pinctrl", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, i2c_mux_pinctrl_of_match);
 
-अटल काष्ठा platक्रमm_driver i2c_mux_pinctrl_driver = अणु
-	.driver	= अणु
+static struct platform_driver i2c_mux_pinctrl_driver = {
+	.driver	= {
 		.name	= "i2c-mux-pinctrl",
 		.of_match_table = of_match_ptr(i2c_mux_pinctrl_of_match),
-	पूर्ण,
+	},
 	.probe	= i2c_mux_pinctrl_probe,
-	.हटाओ	= i2c_mux_pinctrl_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(i2c_mux_pinctrl_driver);
+	.remove	= i2c_mux_pinctrl_remove,
+};
+module_platform_driver(i2c_mux_pinctrl_driver);
 
 MODULE_DESCRIPTION("pinctrl-based I2C multiplexer driver");
 MODULE_AUTHOR("Stephen Warren <swarren@nvidia.com>");

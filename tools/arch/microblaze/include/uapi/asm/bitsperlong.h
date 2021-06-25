@@ -1,3 +1,2 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#समावेश <यंत्र-generic/bitsperदीर्घ.h>
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#include <asm-generic/bitsperlong.h>

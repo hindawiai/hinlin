@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
-#समावेश <यंत्र/ptrace.h>
-#समावेश <linux/error-injection.h>
-#समावेश <linux/kprobes.h>
+// SPDX-License-Identifier: GPL-2.0+
+#include <asm/ptrace.h>
+#include <linux/error-injection.h>
+#include <linux/kprobes.h>
 
-व्योम override_function_with_वापस(काष्ठा pt_regs *regs)
-अणु
+void override_function_with_return(struct pt_regs *regs)
+{
 	/*
 	 * Emulate 'br 14'. 'regs' is captured by kprobes on entry to some
 	 * kernel function.
 	 */
 	regs->psw.addr = regs->gprs[14];
-पूर्ण
-NOKPROBE_SYMBOL(override_function_with_वापस);
+}
+NOKPROBE_SYMBOL(override_function_with_return);

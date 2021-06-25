@@ -1,49 +1,48 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * kernfs.h - pseuकरो fileप्रणाली decoupled from vfs locking
+ * kernfs.h - pseudo filesystem decoupled from vfs locking
  */
 
-#अगर_अघोषित __LINUX_KERNFS_H
-#घोषणा __LINUX_KERNFS_H
+#ifndef __LINUX_KERNFS_H
+#define __LINUX_KERNFS_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/err.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/uidgid.h>
-#समावेश <linux/रुको.h>
+#include <linux/kernel.h>
+#include <linux/err.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
+#include <linux/idr.h>
+#include <linux/lockdep.h>
+#include <linux/rbtree.h>
+#include <linux/atomic.h>
+#include <linux/uidgid.h>
+#include <linux/wait.h>
 
-काष्ठा file;
-काष्ठा dentry;
-काष्ठा iattr;
-काष्ठा seq_file;
-काष्ठा vm_area_काष्ठा;
-काष्ठा super_block;
-काष्ठा file_प्रणाली_type;
-काष्ठा poll_table_काष्ठा;
-काष्ठा fs_context;
+struct file;
+struct dentry;
+struct iattr;
+struct seq_file;
+struct vm_area_struct;
+struct super_block;
+struct file_system_type;
+struct poll_table_struct;
+struct fs_context;
 
-काष्ठा kernfs_fs_context;
-काष्ठा kernfs_खोलो_node;
-काष्ठा kernfs_iattrs;
+struct kernfs_fs_context;
+struct kernfs_open_node;
+struct kernfs_iattrs;
 
-क्रमागत kernfs_node_type अणु
-	KERNFS_सूची		= 0x0001,
-	KERNFS_खाता		= 0x0002,
+enum kernfs_node_type {
+	KERNFS_DIR		= 0x0001,
+	KERNFS_FILE		= 0x0002,
 	KERNFS_LINK		= 0x0004,
-पूर्ण;
+};
 
-#घोषणा KERNFS_TYPE_MASK		0x000f
-#घोषणा KERNFS_FLAG_MASK		~KERNFS_TYPE_MASK
-#घोषणा KERNFS_MAX_USER_XATTRS		128
-#घोषणा KERNFS_USER_XATTR_SIZE_LIMIT	(128 << 10)
+#define KERNFS_TYPE_MASK		0x000f
+#define KERNFS_FLAG_MASK		~KERNFS_TYPE_MASK
+#define KERNFS_MAX_USER_XATTRS		128
+#define KERNFS_USER_XATTR_SIZE_LIMIT	(128 << 10)
 
-क्रमागत kernfs_node_flag अणु
+enum kernfs_node_flag {
 	KERNFS_ACTIVATED	= 0x0010,
 	KERNFS_NS		= 0x0020,
 	KERNFS_HAS_SEQ_SHOW	= 0x0040,
@@ -51,12 +50,12 @@
 	KERNFS_LOCKDEP		= 0x0100,
 	KERNFS_SUICIDAL		= 0x0400,
 	KERNFS_SUICIDED		= 0x0800,
-	KERNFS_EMPTY_सूची	= 0x1000,
+	KERNFS_EMPTY_DIR	= 0x1000,
 	KERNFS_HAS_RELEASE	= 0x2000,
-पूर्ण;
+};
 
-/* @flags क्रम kernfs_create_root() */
-क्रमागत kernfs_root_flag अणु
+/* @flags for kernfs_create_root() */
+enum kernfs_root_flag {
 	/*
 	 * kernfs_nodes are created in the deactivated state and invisible.
 	 * They require explicit kernfs_activate() to become visible.  This
@@ -66,18 +65,18 @@
 	KERNFS_ROOT_CREATE_DEACTIVATED		= 0x0001,
 
 	/*
-	 * For regular files, अगर the खोलोer has CAP_DAC_OVERRIDE, खोलो(2)
+	 * For regular files, if the opener has CAP_DAC_OVERRIDE, open(2)
 	 * succeeds regardless of the RW permissions.  sysfs had an extra
-	 * layer of enक्रमcement where खोलो(2) fails with -EACCES regardless
-	 * of CAP_DAC_OVERRIDE अगर the permission करोesn't have the
-	 * respective पढ़ो or ग_लिखो access at all (none of S_IRUGO or
+	 * layer of enforcement where open(2) fails with -EACCES regardless
+	 * of CAP_DAC_OVERRIDE if the permission doesn't have the
+	 * respective read or write access at all (none of S_IRUGO or
 	 * S_IWUGO) or the respective operation isn't implemented.  The
 	 * following flag enables that behavior.
 	 */
 	KERNFS_ROOT_EXTRA_OPEN_PERM_CHECK	= 0x0002,
 
 	/*
-	 * The fileप्रणाली supports exportfs operation, so userspace can use
+	 * The filesystem supports exportfs operation, so userspace can use
 	 * fhandle to access nodes of the fs.
 	 */
 	KERNFS_ROOT_SUPPORT_EXPORTOP		= 0x0004,
@@ -86,67 +85,67 @@
 	 * Support user xattrs to be written to nodes rooted at this root.
 	 */
 	KERNFS_ROOT_SUPPORT_USER_XATTR		= 0x0008,
-पूर्ण;
+};
 
-/* type-specअगरic काष्ठाures क्रम kernfs_node जोड़ members */
-काष्ठा kernfs_elem_dir अणु
-	अचिन्हित दीर्घ		subdirs;
+/* type-specific structures for kernfs_node union members */
+struct kernfs_elem_dir {
+	unsigned long		subdirs;
 	/* children rbtree starts here and goes through kn->rb */
-	काष्ठा rb_root		children;
+	struct rb_root		children;
 
 	/*
-	 * The kernfs hierarchy this directory beदीर्घs to.  This fits
+	 * The kernfs hierarchy this directory belongs to.  This fits
 	 * better directly in kernfs_node but is here to save space.
 	 */
-	काष्ठा kernfs_root	*root;
-पूर्ण;
+	struct kernfs_root	*root;
+};
 
-काष्ठा kernfs_elem_symlink अणु
-	काष्ठा kernfs_node	*target_kn;
-पूर्ण;
+struct kernfs_elem_symlink {
+	struct kernfs_node	*target_kn;
+};
 
-काष्ठा kernfs_elem_attr अणु
-	स्थिर काष्ठा kernfs_ops	*ops;
-	काष्ठा kernfs_खोलो_node	*खोलो;
+struct kernfs_elem_attr {
+	const struct kernfs_ops	*ops;
+	struct kernfs_open_node	*open;
 	loff_t			size;
-	काष्ठा kernfs_node	*notअगरy_next;	/* क्रम kernfs_notअगरy() */
-पूर्ण;
+	struct kernfs_node	*notify_next;	/* for kernfs_notify() */
+};
 
 /*
  * kernfs_node - the building block of kernfs hierarchy.  Each and every
  * kernfs node is represented by single kernfs_node.  Most fields are
- * निजी to kernfs and shouldn't be accessed directly by kernfs users.
+ * private to kernfs and shouldn't be accessed directly by kernfs users.
  *
- * As दीर्घ as count reference is held, the kernfs_node itself is
+ * As long as count reference is held, the kernfs_node itself is
  * accessible.  Dereferencing elem or any other outer entity requires
  * active reference.
  */
-काष्ठा kernfs_node अणु
+struct kernfs_node {
 	atomic_t		count;
 	atomic_t		active;
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	काष्ठा lockdep_map	dep_map;
-#पूर्ण_अगर
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lockdep_map	dep_map;
+#endif
 	/*
 	 * Use kernfs_get_parent() and kernfs_name/path() instead of
 	 * accessing the following two fields directly.  If the node is
-	 * never moved to a dअगरferent parent, it is safe to access the
+	 * never moved to a different parent, it is safe to access the
 	 * parent directly.
 	 */
-	काष्ठा kernfs_node	*parent;
-	स्थिर अक्षर		*name;
+	struct kernfs_node	*parent;
+	const char		*name;
 
-	काष्ठा rb_node		rb;
+	struct rb_node		rb;
 
-	स्थिर व्योम		*ns;	/* namespace tag */
-	अचिन्हित पूर्णांक		hash;	/* ns + name hash */
-	जोड़ अणु
-		काष्ठा kernfs_elem_dir		dir;
-		काष्ठा kernfs_elem_symlink	symlink;
-		काष्ठा kernfs_elem_attr		attr;
-	पूर्ण;
+	const void		*ns;	/* namespace tag */
+	unsigned int		hash;	/* ns + name hash */
+	union {
+		struct kernfs_elem_dir		dir;
+		struct kernfs_elem_symlink	symlink;
+		struct kernfs_elem_attr		attr;
+	};
 
-	व्योम			*priv;
+	void			*priv;
 
 	/*
 	 * 64bit unique ID.  On 64bit ino setups, id is the ino.  On 32bit,
@@ -154,451 +153,451 @@
 	 */
 	u64			id;
 
-	अचिन्हित लघु		flags;
+	unsigned short		flags;
 	umode_t			mode;
-	काष्ठा kernfs_iattrs	*iattr;
-पूर्ण;
+	struct kernfs_iattrs	*iattr;
+};
 
 /*
- * kernfs_syscall_ops may be specअगरied on kernfs_create_root() to support
+ * kernfs_syscall_ops may be specified on kernfs_create_root() to support
  * syscalls.  These optional callbacks are invoked on the matching syscalls
- * and can perक्रमm any kernfs operations which करोn't necessarily have to be
- * the exact operation requested.  An active reference is held क्रम each
+ * and can perform any kernfs operations which don't necessarily have to be
+ * the exact operation requested.  An active reference is held for each
  * kernfs_node parameter.
  */
-काष्ठा kernfs_syscall_ops अणु
-	पूर्णांक (*show_options)(काष्ठा seq_file *sf, काष्ठा kernfs_root *root);
+struct kernfs_syscall_ops {
+	int (*show_options)(struct seq_file *sf, struct kernfs_root *root);
 
-	पूर्णांक (*सूची_गढ़ो)(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
+	int (*mkdir)(struct kernfs_node *parent, const char *name,
 		     umode_t mode);
-	पूर्णांक (*सूची_हटाओ)(काष्ठा kernfs_node *kn);
-	पूर्णांक (*नाम)(काष्ठा kernfs_node *kn, काष्ठा kernfs_node *new_parent,
-		      स्थिर अक्षर *new_name);
-	पूर्णांक (*show_path)(काष्ठा seq_file *sf, काष्ठा kernfs_node *kn,
-			 काष्ठा kernfs_root *root);
-पूर्ण;
+	int (*rmdir)(struct kernfs_node *kn);
+	int (*rename)(struct kernfs_node *kn, struct kernfs_node *new_parent,
+		      const char *new_name);
+	int (*show_path)(struct seq_file *sf, struct kernfs_node *kn,
+			 struct kernfs_root *root);
+};
 
-काष्ठा kernfs_root अणु
+struct kernfs_root {
 	/* published fields */
-	काष्ठा kernfs_node	*kn;
-	अचिन्हित पूर्णांक		flags;	/* KERNFS_ROOT_* flags */
+	struct kernfs_node	*kn;
+	unsigned int		flags;	/* KERNFS_ROOT_* flags */
 
-	/* निजी fields, करो not use outside kernfs proper */
-	काष्ठा idr		ino_idr;
+	/* private fields, do not use outside kernfs proper */
+	struct idr		ino_idr;
 	u32			last_id_lowbits;
 	u32			id_highbits;
-	काष्ठा kernfs_syscall_ops *syscall_ops;
+	struct kernfs_syscall_ops *syscall_ops;
 
-	/* list of kernfs_super_info of this root, रक्षित by kernfs_mutex */
-	काष्ठा list_head	supers;
+	/* list of kernfs_super_info of this root, protected by kernfs_mutex */
+	struct list_head	supers;
 
-	रुको_queue_head_t	deactivate_रुकोq;
-पूर्ण;
+	wait_queue_head_t	deactivate_waitq;
+};
 
-काष्ठा kernfs_खोलो_file अणु
+struct kernfs_open_file {
 	/* published fields */
-	काष्ठा kernfs_node	*kn;
-	काष्ठा file		*file;
-	काष्ठा seq_file		*seq_file;
-	व्योम			*priv;
+	struct kernfs_node	*kn;
+	struct file		*file;
+	struct seq_file		*seq_file;
+	void			*priv;
 
-	/* निजी fields, करो not use outside kernfs proper */
-	काष्ठा mutex		mutex;
-	काष्ठा mutex		pपुनः_स्मृति_mutex;
-	पूर्णांक			event;
-	काष्ठा list_head	list;
-	अक्षर			*pपुनः_स्मृति_buf;
+	/* private fields, do not use outside kernfs proper */
+	struct mutex		mutex;
+	struct mutex		prealloc_mutex;
+	int			event;
+	struct list_head	list;
+	char			*prealloc_buf;
 
-	माप_प्रकार			atomic_ग_लिखो_len;
+	size_t			atomic_write_len;
 	bool			mmapped:1;
 	bool			released:1;
-	स्थिर काष्ठा vm_operations_काष्ठा *vm_ops;
-पूर्ण;
+	const struct vm_operations_struct *vm_ops;
+};
 
-काष्ठा kernfs_ops अणु
+struct kernfs_ops {
 	/*
-	 * Optional खोलो/release methods.  Both are called with
+	 * Optional open/release methods.  Both are called with
 	 * @of->seq_file populated.
 	 */
-	पूर्णांक (*खोलो)(काष्ठा kernfs_खोलो_file *of);
-	व्योम (*release)(काष्ठा kernfs_खोलो_file *of);
+	int (*open)(struct kernfs_open_file *of);
+	void (*release)(struct kernfs_open_file *of);
 
 	/*
-	 * Read is handled by either seq_file or raw_पढ़ो().
+	 * Read is handled by either seq_file or raw_read().
 	 *
 	 * If seq_show() is present, seq_file path is active.  Other seq
-	 * operations are optional and अगर not implemented, the behavior is
-	 * equivalent to single_खोलो().  @sf->निजी poपूर्णांकs to the
-	 * associated kernfs_खोलो_file.
+	 * operations are optional and if not implemented, the behavior is
+	 * equivalent to single_open().  @sf->private points to the
+	 * associated kernfs_open_file.
 	 *
-	 * पढ़ो() is bounced through kernel buffer and a पढ़ो larger than
+	 * read() is bounced through kernel buffer and a read larger than
 	 * PAGE_SIZE results in partial operation of PAGE_SIZE.
 	 */
-	पूर्णांक (*seq_show)(काष्ठा seq_file *sf, व्योम *v);
+	int (*seq_show)(struct seq_file *sf, void *v);
 
-	व्योम *(*seq_start)(काष्ठा seq_file *sf, loff_t *ppos);
-	व्योम *(*seq_next)(काष्ठा seq_file *sf, व्योम *v, loff_t *ppos);
-	व्योम (*seq_stop)(काष्ठा seq_file *sf, व्योम *v);
+	void *(*seq_start)(struct seq_file *sf, loff_t *ppos);
+	void *(*seq_next)(struct seq_file *sf, void *v, loff_t *ppos);
+	void (*seq_stop)(struct seq_file *sf, void *v);
 
-	sमाप_प्रकार (*पढ़ो)(काष्ठा kernfs_खोलो_file *of, अक्षर *buf, माप_प्रकार bytes,
+	ssize_t (*read)(struct kernfs_open_file *of, char *buf, size_t bytes,
 			loff_t off);
 
 	/*
-	 * ग_लिखो() is bounced through kernel buffer.  If atomic_ग_लिखो_len
-	 * is not set, a ग_लिखो larger than PAGE_SIZE results in partial
-	 * operations of PAGE_SIZE chunks.  If atomic_ग_लिखो_len is set,
-	 * ग_लिखोs upto the specअगरied size are executed atomically but
+	 * write() is bounced through kernel buffer.  If atomic_write_len
+	 * is not set, a write larger than PAGE_SIZE results in partial
+	 * operations of PAGE_SIZE chunks.  If atomic_write_len is set,
+	 * writes upto the specified size are executed atomically but
 	 * larger ones are rejected with -E2BIG.
 	 */
-	माप_प्रकार atomic_ग_लिखो_len;
+	size_t atomic_write_len;
 	/*
-	 * "prealloc" causes a buffer to be allocated at खोलो क्रम
-	 * all पढ़ो/ग_लिखो requests.  As ->seq_show uses seq_पढ़ो()
-	 * which करोes its own allocation, it is incompatible with
-	 * ->pपुनः_स्मृति.  Provide ->पढ़ो and ->ग_लिखो with ->pपुनः_स्मृति.
+	 * "prealloc" causes a buffer to be allocated at open for
+	 * all read/write requests.  As ->seq_show uses seq_read()
+	 * which does its own allocation, it is incompatible with
+	 * ->prealloc.  Provide ->read and ->write with ->prealloc.
 	 */
-	bool pपुनः_स्मृति;
-	sमाप_प्रकार (*ग_लिखो)(काष्ठा kernfs_खोलो_file *of, अक्षर *buf, माप_प्रकार bytes,
+	bool prealloc;
+	ssize_t (*write)(struct kernfs_open_file *of, char *buf, size_t bytes,
 			 loff_t off);
 
-	__poll_t (*poll)(काष्ठा kernfs_खोलो_file *of,
-			 काष्ठा poll_table_काष्ठा *pt);
+	__poll_t (*poll)(struct kernfs_open_file *of,
+			 struct poll_table_struct *pt);
 
-	पूर्णांक (*mmap)(काष्ठा kernfs_खोलो_file *of, काष्ठा vm_area_काष्ठा *vma);
+	int (*mmap)(struct kernfs_open_file *of, struct vm_area_struct *vma);
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	काष्ठा lock_class_key	lockdep_key;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lock_class_key	lockdep_key;
+#endif
+};
 
 /*
  * The kernfs superblock creation/mount parameter context.
  */
-काष्ठा kernfs_fs_context अणु
-	काष्ठा kernfs_root	*root;		/* Root of the hierarchy being mounted */
-	व्योम			*ns_tag;	/* Namespace tag of the mount (or शून्य) */
-	अचिन्हित दीर्घ		magic;		/* File प्रणाली specअगरic magic number */
+struct kernfs_fs_context {
+	struct kernfs_root	*root;		/* Root of the hierarchy being mounted */
+	void			*ns_tag;	/* Namespace tag of the mount (or NULL) */
+	unsigned long		magic;		/* File system specific magic number */
 
 	/* The following are set/used by kernfs_mount() */
-	bool			new_sb_created;	/* Set to T अगर we allocated a new sb */
-पूर्ण;
+	bool			new_sb_created;	/* Set to T if we allocated a new sb */
+};
 
-#अगर_घोषित CONFIG_KERNFS
+#ifdef CONFIG_KERNFS
 
-अटल अंतरभूत क्रमागत kernfs_node_type kernfs_type(काष्ठा kernfs_node *kn)
-अणु
-	वापस kn->flags & KERNFS_TYPE_MASK;
-पूर्ण
+static inline enum kernfs_node_type kernfs_type(struct kernfs_node *kn)
+{
+	return kn->flags & KERNFS_TYPE_MASK;
+}
 
-अटल अंतरभूत ino_t kernfs_id_ino(u64 id)
-अणु
-	/* id is ino अगर ino_t is 64bit; otherwise, low 32bits */
-	अगर (माप(ino_t) >= माप(u64))
-		वापस id;
-	अन्यथा
-		वापस (u32)id;
-पूर्ण
+static inline ino_t kernfs_id_ino(u64 id)
+{
+	/* id is ino if ino_t is 64bit; otherwise, low 32bits */
+	if (sizeof(ino_t) >= sizeof(u64))
+		return id;
+	else
+		return (u32)id;
+}
 
-अटल अंतरभूत u32 kernfs_id_gen(u64 id)
-अणु
-	/* gen is fixed at 1 अगर ino_t is 64bit; otherwise, high 32bits */
-	अगर (माप(ino_t) >= माप(u64))
-		वापस 1;
-	अन्यथा
-		वापस id >> 32;
-पूर्ण
+static inline u32 kernfs_id_gen(u64 id)
+{
+	/* gen is fixed at 1 if ino_t is 64bit; otherwise, high 32bits */
+	if (sizeof(ino_t) >= sizeof(u64))
+		return 1;
+	else
+		return id >> 32;
+}
 
-अटल अंतरभूत ino_t kernfs_ino(काष्ठा kernfs_node *kn)
-अणु
-	वापस kernfs_id_ino(kn->id);
-पूर्ण
+static inline ino_t kernfs_ino(struct kernfs_node *kn)
+{
+	return kernfs_id_ino(kn->id);
+}
 
-अटल अंतरभूत ino_t kernfs_gen(काष्ठा kernfs_node *kn)
-अणु
-	वापस kernfs_id_gen(kn->id);
-पूर्ण
+static inline ino_t kernfs_gen(struct kernfs_node *kn)
+{
+	return kernfs_id_gen(kn->id);
+}
 
 /**
  * kernfs_enable_ns - enable namespace under a directory
- * @kn: directory of पूर्णांकerest, should be empty
+ * @kn: directory of interest, should be empty
  *
  * This is to be called right after @kn is created to enable namespace
- * under it.  All children of @kn must have non-शून्य namespace tags and
+ * under it.  All children of @kn must have non-NULL namespace tags and
  * only the ones which match the super_block's tag will be visible.
  */
-अटल अंतरभूत व्योम kernfs_enable_ns(काष्ठा kernfs_node *kn)
-अणु
-	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_सूची);
+static inline void kernfs_enable_ns(struct kernfs_node *kn)
+{
+	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
 	kn->flags |= KERNFS_NS;
-पूर्ण
+}
 
 /**
  * kernfs_ns_enabled - test whether namespace is enabled
  * @kn: the node to test
  *
- * Test whether namespace filtering is enabled क्रम the children of @ns.
+ * Test whether namespace filtering is enabled for the children of @ns.
  */
-अटल अंतरभूत bool kernfs_ns_enabled(काष्ठा kernfs_node *kn)
-अणु
-	वापस kn->flags & KERNFS_NS;
-पूर्ण
+static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
+{
+	return kn->flags & KERNFS_NS;
+}
 
-पूर्णांक kernfs_name(काष्ठा kernfs_node *kn, अक्षर *buf, माप_प्रकार buflen);
-पूर्णांक kernfs_path_from_node(काष्ठा kernfs_node *root_kn, काष्ठा kernfs_node *kn,
-			  अक्षर *buf, माप_प्रकार buflen);
-व्योम pr_cont_kernfs_name(काष्ठा kernfs_node *kn);
-व्योम pr_cont_kernfs_path(काष्ठा kernfs_node *kn);
-काष्ठा kernfs_node *kernfs_get_parent(काष्ठा kernfs_node *kn);
-काष्ठा kernfs_node *kernfs_find_and_get_ns(काष्ठा kernfs_node *parent,
-					   स्थिर अक्षर *name, स्थिर व्योम *ns);
-काष्ठा kernfs_node *kernfs_walk_and_get_ns(काष्ठा kernfs_node *parent,
-					   स्थिर अक्षर *path, स्थिर व्योम *ns);
-व्योम kernfs_get(काष्ठा kernfs_node *kn);
-व्योम kernfs_put(काष्ठा kernfs_node *kn);
+int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen);
+int kernfs_path_from_node(struct kernfs_node *root_kn, struct kernfs_node *kn,
+			  char *buf, size_t buflen);
+void pr_cont_kernfs_name(struct kernfs_node *kn);
+void pr_cont_kernfs_path(struct kernfs_node *kn);
+struct kernfs_node *kernfs_get_parent(struct kernfs_node *kn);
+struct kernfs_node *kernfs_find_and_get_ns(struct kernfs_node *parent,
+					   const char *name, const void *ns);
+struct kernfs_node *kernfs_walk_and_get_ns(struct kernfs_node *parent,
+					   const char *path, const void *ns);
+void kernfs_get(struct kernfs_node *kn);
+void kernfs_put(struct kernfs_node *kn);
 
-काष्ठा kernfs_node *kernfs_node_from_dentry(काष्ठा dentry *dentry);
-काष्ठा kernfs_root *kernfs_root_from_sb(काष्ठा super_block *sb);
-काष्ठा inode *kernfs_get_inode(काष्ठा super_block *sb, काष्ठा kernfs_node *kn);
+struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry);
+struct kernfs_root *kernfs_root_from_sb(struct super_block *sb);
+struct inode *kernfs_get_inode(struct super_block *sb, struct kernfs_node *kn);
 
-काष्ठा dentry *kernfs_node_dentry(काष्ठा kernfs_node *kn,
-				  काष्ठा super_block *sb);
-काष्ठा kernfs_root *kernfs_create_root(काष्ठा kernfs_syscall_ops *scops,
-				       अचिन्हित पूर्णांक flags, व्योम *priv);
-व्योम kernfs_destroy_root(काष्ठा kernfs_root *root);
+struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
+				  struct super_block *sb);
+struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
+				       unsigned int flags, void *priv);
+void kernfs_destroy_root(struct kernfs_root *root);
 
-काष्ठा kernfs_node *kernfs_create_dir_ns(काष्ठा kernfs_node *parent,
-					 स्थिर अक्षर *name, umode_t mode,
+struct kernfs_node *kernfs_create_dir_ns(struct kernfs_node *parent,
+					 const char *name, umode_t mode,
 					 kuid_t uid, kgid_t gid,
-					 व्योम *priv, स्थिर व्योम *ns);
-काष्ठा kernfs_node *kernfs_create_empty_dir(काष्ठा kernfs_node *parent,
-					    स्थिर अक्षर *name);
-काष्ठा kernfs_node *__kernfs_create_file(काष्ठा kernfs_node *parent,
-					 स्थिर अक्षर *name, umode_t mode,
+					 void *priv, const void *ns);
+struct kernfs_node *kernfs_create_empty_dir(struct kernfs_node *parent,
+					    const char *name);
+struct kernfs_node *__kernfs_create_file(struct kernfs_node *parent,
+					 const char *name, umode_t mode,
 					 kuid_t uid, kgid_t gid,
 					 loff_t size,
-					 स्थिर काष्ठा kernfs_ops *ops,
-					 व्योम *priv, स्थिर व्योम *ns,
-					 काष्ठा lock_class_key *key);
-काष्ठा kernfs_node *kernfs_create_link(काष्ठा kernfs_node *parent,
-				       स्थिर अक्षर *name,
-				       काष्ठा kernfs_node *target);
-व्योम kernfs_activate(काष्ठा kernfs_node *kn);
-व्योम kernfs_हटाओ(काष्ठा kernfs_node *kn);
-व्योम kernfs_अवरोध_active_protection(काष्ठा kernfs_node *kn);
-व्योम kernfs_unअवरोध_active_protection(काष्ठा kernfs_node *kn);
-bool kernfs_हटाओ_self(काष्ठा kernfs_node *kn);
-पूर्णांक kernfs_हटाओ_by_name_ns(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
-			     स्थिर व्योम *ns);
-पूर्णांक kernfs_नाम_ns(काष्ठा kernfs_node *kn, काष्ठा kernfs_node *new_parent,
-		     स्थिर अक्षर *new_name, स्थिर व्योम *new_ns);
-पूर्णांक kernfs_setattr(काष्ठा kernfs_node *kn, स्थिर काष्ठा iattr *iattr);
-__poll_t kernfs_generic_poll(काष्ठा kernfs_खोलो_file *of,
-			     काष्ठा poll_table_काष्ठा *pt);
-व्योम kernfs_notअगरy(काष्ठा kernfs_node *kn);
+					 const struct kernfs_ops *ops,
+					 void *priv, const void *ns,
+					 struct lock_class_key *key);
+struct kernfs_node *kernfs_create_link(struct kernfs_node *parent,
+				       const char *name,
+				       struct kernfs_node *target);
+void kernfs_activate(struct kernfs_node *kn);
+void kernfs_remove(struct kernfs_node *kn);
+void kernfs_break_active_protection(struct kernfs_node *kn);
+void kernfs_unbreak_active_protection(struct kernfs_node *kn);
+bool kernfs_remove_self(struct kernfs_node *kn);
+int kernfs_remove_by_name_ns(struct kernfs_node *parent, const char *name,
+			     const void *ns);
+int kernfs_rename_ns(struct kernfs_node *kn, struct kernfs_node *new_parent,
+		     const char *new_name, const void *new_ns);
+int kernfs_setattr(struct kernfs_node *kn, const struct iattr *iattr);
+__poll_t kernfs_generic_poll(struct kernfs_open_file *of,
+			     struct poll_table_struct *pt);
+void kernfs_notify(struct kernfs_node *kn);
 
-पूर्णांक kernfs_xattr_get(काष्ठा kernfs_node *kn, स्थिर अक्षर *name,
-		     व्योम *value, माप_प्रकार size);
-पूर्णांक kernfs_xattr_set(काष्ठा kernfs_node *kn, स्थिर अक्षर *name,
-		     स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags);
+int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
+		     void *value, size_t size);
+int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
+		     const void *value, size_t size, int flags);
 
-स्थिर व्योम *kernfs_super_ns(काष्ठा super_block *sb);
-पूर्णांक kernfs_get_tree(काष्ठा fs_context *fc);
-व्योम kernfs_मुक्त_fs_context(काष्ठा fs_context *fc);
-व्योम kernfs_समाप्त_sb(काष्ठा super_block *sb);
+const void *kernfs_super_ns(struct super_block *sb);
+int kernfs_get_tree(struct fs_context *fc);
+void kernfs_free_fs_context(struct fs_context *fc);
+void kernfs_kill_sb(struct super_block *sb);
 
-व्योम kernfs_init(व्योम);
+void kernfs_init(void);
 
-काष्ठा kernfs_node *kernfs_find_and_get_node_by_id(काष्ठा kernfs_root *root,
+struct kernfs_node *kernfs_find_and_get_node_by_id(struct kernfs_root *root,
 						   u64 id);
-#अन्यथा	/* CONFIG_KERNFS */
+#else	/* CONFIG_KERNFS */
 
-अटल अंतरभूत क्रमागत kernfs_node_type kernfs_type(काष्ठा kernfs_node *kn)
-अणु वापस 0; पूर्ण	/* whatever */
+static inline enum kernfs_node_type kernfs_type(struct kernfs_node *kn)
+{ return 0; }	/* whatever */
 
-अटल अंतरभूत व्योम kernfs_enable_ns(काष्ठा kernfs_node *kn) अणु पूर्ण
+static inline void kernfs_enable_ns(struct kernfs_node *kn) { }
 
-अटल अंतरभूत bool kernfs_ns_enabled(काष्ठा kernfs_node *kn)
-अणु वापस false; पूर्ण
+static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
+{ return false; }
 
-अटल अंतरभूत पूर्णांक kernfs_name(काष्ठा kernfs_node *kn, अक्षर *buf, माप_प्रकार buflen)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen)
+{ return -ENOSYS; }
 
-अटल अंतरभूत पूर्णांक kernfs_path_from_node(काष्ठा kernfs_node *root_kn,
-					काष्ठा kernfs_node *kn,
-					अक्षर *buf, माप_प्रकार buflen)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_path_from_node(struct kernfs_node *root_kn,
+					struct kernfs_node *kn,
+					char *buf, size_t buflen)
+{ return -ENOSYS; }
 
-अटल अंतरभूत व्योम pr_cont_kernfs_name(काष्ठा kernfs_node *kn) अणु पूर्ण
-अटल अंतरभूत व्योम pr_cont_kernfs_path(काष्ठा kernfs_node *kn) अणु पूर्ण
+static inline void pr_cont_kernfs_name(struct kernfs_node *kn) { }
+static inline void pr_cont_kernfs_path(struct kernfs_node *kn) { }
 
-अटल अंतरभूत काष्ठा kernfs_node *kernfs_get_parent(काष्ठा kernfs_node *kn)
-अणु वापस शून्य; पूर्ण
+static inline struct kernfs_node *kernfs_get_parent(struct kernfs_node *kn)
+{ return NULL; }
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_find_and_get_ns(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
-		       स्थिर व्योम *ns)
-अणु वापस शून्य; पूर्ण
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_walk_and_get_ns(काष्ठा kernfs_node *parent, स्थिर अक्षर *path,
-		       स्थिर व्योम *ns)
-अणु वापस शून्य; पूर्ण
+static inline struct kernfs_node *
+kernfs_find_and_get_ns(struct kernfs_node *parent, const char *name,
+		       const void *ns)
+{ return NULL; }
+static inline struct kernfs_node *
+kernfs_walk_and_get_ns(struct kernfs_node *parent, const char *path,
+		       const void *ns)
+{ return NULL; }
 
-अटल अंतरभूत व्योम kernfs_get(काष्ठा kernfs_node *kn) अणु पूर्ण
-अटल अंतरभूत व्योम kernfs_put(काष्ठा kernfs_node *kn) अणु पूर्ण
+static inline void kernfs_get(struct kernfs_node *kn) { }
+static inline void kernfs_put(struct kernfs_node *kn) { }
 
-अटल अंतरभूत काष्ठा kernfs_node *kernfs_node_from_dentry(काष्ठा dentry *dentry)
-अणु वापस शून्य; पूर्ण
+static inline struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry)
+{ return NULL; }
 
-अटल अंतरभूत काष्ठा kernfs_root *kernfs_root_from_sb(काष्ठा super_block *sb)
-अणु वापस शून्य; पूर्ण
+static inline struct kernfs_root *kernfs_root_from_sb(struct super_block *sb)
+{ return NULL; }
 
-अटल अंतरभूत काष्ठा inode *
-kernfs_get_inode(काष्ठा super_block *sb, काष्ठा kernfs_node *kn)
-अणु वापस शून्य; पूर्ण
+static inline struct inode *
+kernfs_get_inode(struct super_block *sb, struct kernfs_node *kn)
+{ return NULL; }
 
-अटल अंतरभूत काष्ठा kernfs_root *
-kernfs_create_root(काष्ठा kernfs_syscall_ops *scops, अचिन्हित पूर्णांक flags,
-		   व्योम *priv)
-अणु वापस ERR_PTR(-ENOSYS); पूर्ण
+static inline struct kernfs_root *
+kernfs_create_root(struct kernfs_syscall_ops *scops, unsigned int flags,
+		   void *priv)
+{ return ERR_PTR(-ENOSYS); }
 
-अटल अंतरभूत व्योम kernfs_destroy_root(काष्ठा kernfs_root *root) अणु पूर्ण
+static inline void kernfs_destroy_root(struct kernfs_root *root) { }
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_create_dir_ns(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
+static inline struct kernfs_node *
+kernfs_create_dir_ns(struct kernfs_node *parent, const char *name,
 		     umode_t mode, kuid_t uid, kgid_t gid,
-		     व्योम *priv, स्थिर व्योम *ns)
-अणु वापस ERR_PTR(-ENOSYS); पूर्ण
+		     void *priv, const void *ns)
+{ return ERR_PTR(-ENOSYS); }
 
-अटल अंतरभूत काष्ठा kernfs_node *
-__kernfs_create_file(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
+static inline struct kernfs_node *
+__kernfs_create_file(struct kernfs_node *parent, const char *name,
 		     umode_t mode, kuid_t uid, kgid_t gid,
-		     loff_t size, स्थिर काष्ठा kernfs_ops *ops,
-		     व्योम *priv, स्थिर व्योम *ns, काष्ठा lock_class_key *key)
-अणु वापस ERR_PTR(-ENOSYS); पूर्ण
+		     loff_t size, const struct kernfs_ops *ops,
+		     void *priv, const void *ns, struct lock_class_key *key)
+{ return ERR_PTR(-ENOSYS); }
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_create_link(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
-		   काष्ठा kernfs_node *target)
-अणु वापस ERR_PTR(-ENOSYS); पूर्ण
+static inline struct kernfs_node *
+kernfs_create_link(struct kernfs_node *parent, const char *name,
+		   struct kernfs_node *target)
+{ return ERR_PTR(-ENOSYS); }
 
-अटल अंतरभूत व्योम kernfs_activate(काष्ठा kernfs_node *kn) अणु पूर्ण
+static inline void kernfs_activate(struct kernfs_node *kn) { }
 
-अटल अंतरभूत व्योम kernfs_हटाओ(काष्ठा kernfs_node *kn) अणु पूर्ण
+static inline void kernfs_remove(struct kernfs_node *kn) { }
 
-अटल अंतरभूत bool kernfs_हटाओ_self(काष्ठा kernfs_node *kn)
-अणु वापस false; पूर्ण
+static inline bool kernfs_remove_self(struct kernfs_node *kn)
+{ return false; }
 
-अटल अंतरभूत पूर्णांक kernfs_हटाओ_by_name_ns(काष्ठा kernfs_node *kn,
-					   स्थिर अक्षर *name, स्थिर व्योम *ns)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_remove_by_name_ns(struct kernfs_node *kn,
+					   const char *name, const void *ns)
+{ return -ENOSYS; }
 
-अटल अंतरभूत पूर्णांक kernfs_नाम_ns(काष्ठा kernfs_node *kn,
-				   काष्ठा kernfs_node *new_parent,
-				   स्थिर अक्षर *new_name, स्थिर व्योम *new_ns)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_rename_ns(struct kernfs_node *kn,
+				   struct kernfs_node *new_parent,
+				   const char *new_name, const void *new_ns)
+{ return -ENOSYS; }
 
-अटल अंतरभूत पूर्णांक kernfs_setattr(काष्ठा kernfs_node *kn,
-				 स्थिर काष्ठा iattr *iattr)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_setattr(struct kernfs_node *kn,
+				 const struct iattr *iattr)
+{ return -ENOSYS; }
 
-अटल अंतरभूत व्योम kernfs_notअगरy(काष्ठा kernfs_node *kn) अणु पूर्ण
+static inline void kernfs_notify(struct kernfs_node *kn) { }
 
-अटल अंतरभूत पूर्णांक kernfs_xattr_get(काष्ठा kernfs_node *kn, स्थिर अक्षर *name,
-				   व्योम *value, माप_प्रकार size)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
+				   void *value, size_t size)
+{ return -ENOSYS; }
 
-अटल अंतरभूत पूर्णांक kernfs_xattr_set(काष्ठा kernfs_node *kn, स्थिर अक्षर *name,
-				   स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
+				   const void *value, size_t size, int flags)
+{ return -ENOSYS; }
 
-अटल अंतरभूत स्थिर व्योम *kernfs_super_ns(काष्ठा super_block *sb)
-अणु वापस शून्य; पूर्ण
+static inline const void *kernfs_super_ns(struct super_block *sb)
+{ return NULL; }
 
-अटल अंतरभूत पूर्णांक kernfs_get_tree(काष्ठा fs_context *fc)
-अणु वापस -ENOSYS; पूर्ण
+static inline int kernfs_get_tree(struct fs_context *fc)
+{ return -ENOSYS; }
 
-अटल अंतरभूत व्योम kernfs_मुक्त_fs_context(काष्ठा fs_context *fc) अणु पूर्ण
+static inline void kernfs_free_fs_context(struct fs_context *fc) { }
 
-अटल अंतरभूत व्योम kernfs_समाप्त_sb(काष्ठा super_block *sb) अणु पूर्ण
+static inline void kernfs_kill_sb(struct super_block *sb) { }
 
-अटल अंतरभूत व्योम kernfs_init(व्योम) अणु पूर्ण
+static inline void kernfs_init(void) { }
 
-#पूर्ण_अगर	/* CONFIG_KERNFS */
+#endif	/* CONFIG_KERNFS */
 
 /**
  * kernfs_path - build full path of a given node
- * @kn: kernfs_node of पूर्णांकerest
- * @buf: buffer to copy @kn's name पूर्णांकo
+ * @kn: kernfs_node of interest
+ * @buf: buffer to copy @kn's name into
  * @buflen: size of @buf
  *
- * If @kn is शून्य result will be "(null)".
+ * If @kn is NULL result will be "(null)".
  *
  * Returns the length of the full path.  If the full length is equal to or
  * greater than @buflen, @buf contains the truncated path with the trailing
- * '\0'.  On error, -त्रुटि_सं is वापसed.
+ * '\0'.  On error, -errno is returned.
  */
-अटल अंतरभूत पूर्णांक kernfs_path(काष्ठा kernfs_node *kn, अक्षर *buf, माप_प्रकार buflen)
-अणु
-	वापस kernfs_path_from_node(kn, शून्य, buf, buflen);
-पूर्ण
+static inline int kernfs_path(struct kernfs_node *kn, char *buf, size_t buflen)
+{
+	return kernfs_path_from_node(kn, NULL, buf, buflen);
+}
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_find_and_get(काष्ठा kernfs_node *kn, स्थिर अक्षर *name)
-अणु
-	वापस kernfs_find_and_get_ns(kn, name, शून्य);
-पूर्ण
+static inline struct kernfs_node *
+kernfs_find_and_get(struct kernfs_node *kn, const char *name)
+{
+	return kernfs_find_and_get_ns(kn, name, NULL);
+}
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_walk_and_get(काष्ठा kernfs_node *kn, स्थिर अक्षर *path)
-अणु
-	वापस kernfs_walk_and_get_ns(kn, path, शून्य);
-पूर्ण
+static inline struct kernfs_node *
+kernfs_walk_and_get(struct kernfs_node *kn, const char *path)
+{
+	return kernfs_walk_and_get_ns(kn, path, NULL);
+}
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_create_dir(काष्ठा kernfs_node *parent, स्थिर अक्षर *name, umode_t mode,
-		  व्योम *priv)
-अणु
-	वापस kernfs_create_dir_ns(parent, name, mode,
+static inline struct kernfs_node *
+kernfs_create_dir(struct kernfs_node *parent, const char *name, umode_t mode,
+		  void *priv)
+{
+	return kernfs_create_dir_ns(parent, name, mode,
 				    GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
-				    priv, शून्य);
-पूर्ण
+				    priv, NULL);
+}
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_create_file_ns(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
+static inline struct kernfs_node *
+kernfs_create_file_ns(struct kernfs_node *parent, const char *name,
 		      umode_t mode, kuid_t uid, kgid_t gid,
-		      loff_t size, स्थिर काष्ठा kernfs_ops *ops,
-		      व्योम *priv, स्थिर व्योम *ns)
-अणु
-	काष्ठा lock_class_key *key = शून्य;
+		      loff_t size, const struct kernfs_ops *ops,
+		      void *priv, const void *ns)
+{
+	struct lock_class_key *key = NULL;
 
-#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
-	key = (काष्ठा lock_class_key *)&ops->lockdep_key;
-#पूर्ण_अगर
-	वापस __kernfs_create_file(parent, name, mode, uid, gid,
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	key = (struct lock_class_key *)&ops->lockdep_key;
+#endif
+	return __kernfs_create_file(parent, name, mode, uid, gid,
 				    size, ops, priv, ns, key);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा kernfs_node *
-kernfs_create_file(काष्ठा kernfs_node *parent, स्थिर अक्षर *name, umode_t mode,
-		   loff_t size, स्थिर काष्ठा kernfs_ops *ops, व्योम *priv)
-अणु
-	वापस kernfs_create_file_ns(parent, name, mode,
+static inline struct kernfs_node *
+kernfs_create_file(struct kernfs_node *parent, const char *name, umode_t mode,
+		   loff_t size, const struct kernfs_ops *ops, void *priv)
+{
+	return kernfs_create_file_ns(parent, name, mode,
 				     GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
-				     size, ops, priv, शून्य);
-पूर्ण
+				     size, ops, priv, NULL);
+}
 
-अटल अंतरभूत पूर्णांक kernfs_हटाओ_by_name(काष्ठा kernfs_node *parent,
-					स्थिर अक्षर *name)
-अणु
-	वापस kernfs_हटाओ_by_name_ns(parent, name, शून्य);
-पूर्ण
+static inline int kernfs_remove_by_name(struct kernfs_node *parent,
+					const char *name)
+{
+	return kernfs_remove_by_name_ns(parent, name, NULL);
+}
 
-अटल अंतरभूत पूर्णांक kernfs_नाम(काष्ठा kernfs_node *kn,
-				काष्ठा kernfs_node *new_parent,
-				स्थिर अक्षर *new_name)
-अणु
-	वापस kernfs_नाम_ns(kn, new_parent, new_name, शून्य);
-पूर्ण
+static inline int kernfs_rename(struct kernfs_node *kn,
+				struct kernfs_node *new_parent,
+				const char *new_name)
+{
+	return kernfs_rename_ns(kn, new_parent, new_name, NULL);
+}
 
-#पूर्ण_अगर	/* __LINUX_KERNFS_H */
+#endif	/* __LINUX_KERNFS_H */

@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Suspend-to-RAM support code क्रम SH-Mobile ARM
+ * Suspend-to-RAM support code for SH-Mobile ARM
  *
  *  Copyright (C) 2011 Magnus Damm
  */
 
-#समावेश <linux/pm.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/cpu.h>
+#include <linux/pm.h>
+#include <linux/suspend.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/cpu.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/प्रणाली_misc.h>
+#include <asm/io.h>
+#include <asm/system_misc.h>
 
-#समावेश "common.h"
+#include "common.h"
 
-अटल पूर्णांक shmobile_suspend_शेष_enter(suspend_state_t suspend_state)
-अणु
-	cpu_करो_idle();
-	वापस 0;
-पूर्ण
+static int shmobile_suspend_default_enter(suspend_state_t suspend_state)
+{
+	cpu_do_idle();
+	return 0;
+}
 
-अटल पूर्णांक shmobile_suspend_begin(suspend_state_t state)
-अणु
+static int shmobile_suspend_begin(suspend_state_t state)
+{
 	cpu_idle_poll_ctrl(true);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम shmobile_suspend_end(व्योम)
-अणु
+static void shmobile_suspend_end(void)
+{
 	cpu_idle_poll_ctrl(false);
-पूर्ण
+}
 
-काष्ठा platक्रमm_suspend_ops shmobile_suspend_ops = अणु
+struct platform_suspend_ops shmobile_suspend_ops = {
 	.begin		= shmobile_suspend_begin,
 	.end		= shmobile_suspend_end,
-	.enter		= shmobile_suspend_शेष_enter,
+	.enter		= shmobile_suspend_default_enter,
 	.valid		= suspend_valid_only_mem,
-पूर्ण;
+};
 
-पूर्णांक __init shmobile_suspend_init(व्योम)
-अणु
+int __init shmobile_suspend_init(void)
+{
 	suspend_set_ops(&shmobile_suspend_ops);
-	वापस 0;
-पूर्ण
+	return 0;
+}

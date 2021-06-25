@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  * arch/xtensa/kernel/syscall.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  * Copyright (C) 2000 Silicon Graphics, Inc.
@@ -16,79 +15,79 @@
  * Kevin Chea
  *
  */
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/syscall.h>
-#समावेश <linux/linkage.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/file.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/shm.h>
+#include <linux/uaccess.h>
+#include <asm/syscall.h>
+#include <linux/linkage.h>
+#include <linux/stringify.h>
+#include <linux/errno.h>
+#include <linux/syscalls.h>
+#include <linux/file.h>
+#include <linux/fs.h>
+#include <linux/mman.h>
+#include <linux/sched/mm.h>
+#include <linux/shm.h>
 
-syscall_t sys_call_table[] /* FIXME __cacheline_aligned */= अणु
-#घोषणा __SYSCALL(nr, entry)	(syscall_t)entry,
-#समावेश <यंत्र/syscall_table.h>
-पूर्ण;
+syscall_t sys_call_table[] /* FIXME __cacheline_aligned */= {
+#define __SYSCALL(nr, entry)	(syscall_t)entry,
+#include <asm/syscall_table.h>
+};
 
-#घोषणा COLOUR_ALIGN(addr, pgoff) \
+#define COLOUR_ALIGN(addr, pgoff) \
 	((((addr) + SHMLBA - 1) & ~(SHMLBA - 1)) + \
 	 (((pgoff) << PAGE_SHIFT) & (SHMLBA - 1)))
 
-यंत्रlinkage दीर्घ xtensa_shmat(पूर्णांक shmid, अक्षर __user *shmaddr, पूर्णांक shmflg)
-अणु
-	अचिन्हित दीर्घ ret;
-	दीर्घ err;
+asmlinkage long xtensa_shmat(int shmid, char __user *shmaddr, int shmflg)
+{
+	unsigned long ret;
+	long err;
 
-	err = करो_shmat(shmid, shmaddr, shmflg, &ret, SHMLBA);
-	अगर (err)
-		वापस err;
-	वापस (दीर्घ)ret;
-पूर्ण
+	err = do_shmat(shmid, shmaddr, shmflg, &ret, SHMLBA);
+	if (err)
+		return err;
+	return (long)ret;
+}
 
-यंत्रlinkage दीर्घ xtensa_fadvise64_64(पूर्णांक fd, पूर्णांक advice,
-		अचिन्हित दीर्घ दीर्घ offset, अचिन्हित दीर्घ दीर्घ len)
-अणु
-	वापस ksys_fadvise64_64(fd, offset, len, advice);
-पूर्ण
+asmlinkage long xtensa_fadvise64_64(int fd, int advice,
+		unsigned long long offset, unsigned long long len)
+{
+	return ksys_fadvise64_64(fd, offset, len, advice);
+}
 
-#अगर_घोषित CONFIG_MMU
-अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा vm_area_काष्ठा *vmm;
+#ifdef CONFIG_MMU
+unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
+		unsigned long len, unsigned long pgoff, unsigned long flags)
+{
+	struct vm_area_struct *vmm;
 
-	अगर (flags & MAP_FIXED) अणु
-		/* We करो not accept a shared mapping अगर it would violate
-		 * cache aliasing स्थिरraपूर्णांकs.
+	if (flags & MAP_FIXED) {
+		/* We do not accept a shared mapping if it would violate
+		 * cache aliasing constraints.
 		 */
-		अगर ((flags & MAP_SHARED) &&
+		if ((flags & MAP_SHARED) &&
 				((addr - (pgoff << PAGE_SHIFT)) & (SHMLBA - 1)))
-			वापस -EINVAL;
-		वापस addr;
-	पूर्ण
+			return -EINVAL;
+		return addr;
+	}
 
-	अगर (len > TASK_SIZE)
-		वापस -ENOMEM;
-	अगर (!addr)
+	if (len > TASK_SIZE)
+		return -ENOMEM;
+	if (!addr)
 		addr = TASK_UNMAPPED_BASE;
 
-	अगर (flags & MAP_SHARED)
+	if (flags & MAP_SHARED)
 		addr = COLOUR_ALIGN(addr, pgoff);
-	अन्यथा
+	else
 		addr = PAGE_ALIGN(addr);
 
-	क्रम (vmm = find_vma(current->mm, addr); ; vmm = vmm->vm_next) अणु
-		/* At this poपूर्णांक:  (!vmm || addr < vmm->vm_end). */
-		अगर (TASK_SIZE - len < addr)
-			वापस -ENOMEM;
-		अगर (!vmm || addr + len <= vm_start_gap(vmm))
-			वापस addr;
+	for (vmm = find_vma(current->mm, addr); ; vmm = vmm->vm_next) {
+		/* At this point:  (!vmm || addr < vmm->vm_end). */
+		if (TASK_SIZE - len < addr)
+			return -ENOMEM;
+		if (!vmm || addr + len <= vm_start_gap(vmm))
+			return addr;
 		addr = vmm->vm_end;
-		अगर (flags & MAP_SHARED)
+		if (flags & MAP_SHARED)
 			addr = COLOUR_ALIGN(addr, pgoff);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif

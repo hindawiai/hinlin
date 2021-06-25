@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * For boards with physically mapped flash and using
  * drivers/mtd/maps/physmap.c mapping driver.
@@ -8,25 +7,25 @@
  * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
  */
 
-#अगर_अघोषित __LINUX_MTD_PHYSMAP__
-#घोषणा __LINUX_MTD_PHYSMAP__
+#ifndef __LINUX_MTD_PHYSMAP__
+#define __LINUX_MTD_PHYSMAP__
 
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
 
-काष्ठा map_info;
-काष्ठा platक्रमm_device;
+struct map_info;
+struct platform_device;
 
-काष्ठा physmap_flash_data अणु
-	अचिन्हित पूर्णांक		width;
-	पूर्णांक			(*init)(काष्ठा platक्रमm_device *);
-	व्योम			(*निकास)(काष्ठा platक्रमm_device *);
-	व्योम			(*set_vpp)(काष्ठा platक्रमm_device *, पूर्णांक);
-	अचिन्हित पूर्णांक		nr_parts;
-	अचिन्हित पूर्णांक		pfow_base;
-	अक्षर                    *probe_type;
-	काष्ठा mtd_partition	*parts;
-	स्थिर अक्षर * स्थिर	*part_probe_types;
-पूर्ण;
+struct physmap_flash_data {
+	unsigned int		width;
+	int			(*init)(struct platform_device *);
+	void			(*exit)(struct platform_device *);
+	void			(*set_vpp)(struct platform_device *, int);
+	unsigned int		nr_parts;
+	unsigned int		pfow_base;
+	char                    *probe_type;
+	struct mtd_partition	*parts;
+	const char * const	*part_probe_types;
+};
 
-#पूर्ण_अगर /* __LINUX_MTD_PHYSMAP__ */
+#endif /* __LINUX_MTD_PHYSMAP__ */

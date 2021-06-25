@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित ASM_IA64_CYCLONE_H
-#घोषणा ASM_IA64_CYCLONE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef ASM_IA64_CYCLONE_H
+#define ASM_IA64_CYCLONE_H
 
-#अगर_घोषित	CONFIG_IA64_CYCLONE
-बाह्य पूर्णांक use_cyclone;
-बाह्य व्योम __init cyclone_setup(व्योम);
-#अन्यथा	/* CONFIG_IA64_CYCLONE */
-#घोषणा use_cyclone 0
-अटल अंतरभूत व्योम cyclone_setup(व्योम)
-अणु
-	prपूर्णांकk(KERN_ERR "Cyclone Counter: System not configured"
+#ifdef	CONFIG_IA64_CYCLONE
+extern int use_cyclone;
+extern void __init cyclone_setup(void);
+#else	/* CONFIG_IA64_CYCLONE */
+#define use_cyclone 0
+static inline void cyclone_setup(void)
+{
+	printk(KERN_ERR "Cyclone Counter: System not configured"
 					" w/ CONFIG_IA64_CYCLONE.\n");
-पूर्ण
-#पूर्ण_अगर	/* CONFIG_IA64_CYCLONE */
-#पूर्ण_अगर	/* !ASM_IA64_CYCLONE_H */
+}
+#endif	/* CONFIG_IA64_CYCLONE */
+#endif	/* !ASM_IA64_CYCLONE_H */

@@ -1,37 +1,36 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI Express I/O Virtualization (IOV) support
  *   Single Root IOV 1.0
  *   Address Translation Service 1.0
  *
- * Copyright (C) 2009 Intel Corporation, Yu Zhao <yu.zhao@पूर्णांकel.com>
+ * Copyright (C) 2009 Intel Corporation, Yu Zhao <yu.zhao@intel.com>
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश "pci.h"
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include "pci.h"
 
-#घोषणा VIRTFN_ID_LEN	16
+#define VIRTFN_ID_LEN	16
 
-पूर्णांक pci_iov_virtfn_bus(काष्ठा pci_dev *dev, पूर्णांक vf_id)
-अणु
-	अगर (!dev->is_physfn)
-		वापस -EINVAL;
-	वापस dev->bus->number + ((dev->devfn + dev->sriov->offset +
+int pci_iov_virtfn_bus(struct pci_dev *dev, int vf_id)
+{
+	if (!dev->is_physfn)
+		return -EINVAL;
+	return dev->bus->number + ((dev->devfn + dev->sriov->offset +
 				    dev->sriov->stride * vf_id) >> 8);
-पूर्ण
+}
 
-पूर्णांक pci_iov_virtfn_devfn(काष्ठा pci_dev *dev, पूर्णांक vf_id)
-अणु
-	अगर (!dev->is_physfn)
-		वापस -EINVAL;
-	वापस (dev->devfn + dev->sriov->offset +
+int pci_iov_virtfn_devfn(struct pci_dev *dev, int vf_id)
+{
+	if (!dev->is_physfn)
+		return -EINVAL;
+	return (dev->devfn + dev->sriov->offset +
 		dev->sriov->stride * vf_id) & 0xff;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_iov_virtfn_devfn);
 
 /*
@@ -40,14 +39,14 @@ EXPORT_SYMBOL_GPL(pci_iov_virtfn_devfn);
  *
  * Update iov->offset and iov->stride when NumVFs is written.
  */
-अटल अंतरभूत व्योम pci_iov_set_numvfs(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn)
-अणु
-	काष्ठा pci_sriov *iov = dev->sriov;
+static inline void pci_iov_set_numvfs(struct pci_dev *dev, int nr_virtfn)
+{
+	struct pci_sriov *iov = dev->sriov;
 
-	pci_ग_लिखो_config_word(dev, iov->pos + PCI_SRIOV_NUM_VF, nr_virtfn);
-	pci_पढ़ो_config_word(dev, iov->pos + PCI_SRIOV_VF_OFFSET, &iov->offset);
-	pci_पढ़ो_config_word(dev, iov->pos + PCI_SRIOV_VF_STRIDE, &iov->stride);
-पूर्ण
+	pci_write_config_word(dev, iov->pos + PCI_SRIOV_NUM_VF, nr_virtfn);
+	pci_read_config_word(dev, iov->pos + PCI_SRIOV_VF_OFFSET, &iov->offset);
+	pci_read_config_word(dev, iov->pos + PCI_SRIOV_VF_STRIDE, &iov->stride);
+}
 
 /*
  * The PF consumes one bus number.  NumVFs, First VF Offset, and VF Stride
@@ -56,159 +55,159 @@ EXPORT_SYMBOL_GPL(pci_iov_virtfn_devfn);
  * Iterate over all valid NumVFs, validate offset and stride, and calculate
  * the maximum number of bus numbers that could ever be required.
  */
-अटल पूर्णांक compute_max_vf_buses(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_sriov *iov = dev->sriov;
-	पूर्णांक nr_virtfn, busnr, rc = 0;
+static int compute_max_vf_buses(struct pci_dev *dev)
+{
+	struct pci_sriov *iov = dev->sriov;
+	int nr_virtfn, busnr, rc = 0;
 
-	क्रम (nr_virtfn = iov->total_VFs; nr_virtfn; nr_virtfn--) अणु
+	for (nr_virtfn = iov->total_VFs; nr_virtfn; nr_virtfn--) {
 		pci_iov_set_numvfs(dev, nr_virtfn);
-		अगर (!iov->offset || (nr_virtfn > 1 && !iov->stride)) अणु
+		if (!iov->offset || (nr_virtfn > 1 && !iov->stride)) {
 			rc = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		busnr = pci_iov_virtfn_bus(dev, nr_virtfn - 1);
-		अगर (busnr > iov->max_VF_buses)
+		if (busnr > iov->max_VF_buses)
 			iov->max_VF_buses = busnr;
-	पूर्ण
+	}
 
 out:
 	pci_iov_set_numvfs(dev, 0);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा pci_bus *virtfn_add_bus(काष्ठा pci_bus *bus, पूर्णांक busnr)
-अणु
-	काष्ठा pci_bus *child;
+static struct pci_bus *virtfn_add_bus(struct pci_bus *bus, int busnr)
+{
+	struct pci_bus *child;
 
-	अगर (bus->number == busnr)
-		वापस bus;
+	if (bus->number == busnr)
+		return bus;
 
-	child = pci_find_bus(pci_करोमुख्य_nr(bus), busnr);
-	अगर (child)
-		वापस child;
+	child = pci_find_bus(pci_domain_nr(bus), busnr);
+	if (child)
+		return child;
 
-	child = pci_add_new_bus(bus, शून्य, busnr);
-	अगर (!child)
-		वापस शून्य;
+	child = pci_add_new_bus(bus, NULL, busnr);
+	if (!child)
+		return NULL;
 
 	pci_bus_insert_busn_res(child, busnr, busnr);
 
-	वापस child;
-पूर्ण
+	return child;
+}
 
-अटल व्योम virtfn_हटाओ_bus(काष्ठा pci_bus *physbus, काष्ठा pci_bus *virtbus)
-अणु
-	अगर (physbus != virtbus && list_empty(&virtbus->devices))
-		pci_हटाओ_bus(virtbus);
-पूर्ण
+static void virtfn_remove_bus(struct pci_bus *physbus, struct pci_bus *virtbus)
+{
+	if (physbus != virtbus && list_empty(&virtbus->devices))
+		pci_remove_bus(virtbus);
+}
 
-resource_माप_प्रकार pci_iov_resource_size(काष्ठा pci_dev *dev, पूर्णांक resno)
-अणु
-	अगर (!dev->is_physfn)
-		वापस 0;
+resource_size_t pci_iov_resource_size(struct pci_dev *dev, int resno)
+{
+	if (!dev->is_physfn)
+		return 0;
 
-	वापस dev->sriov->barsz[resno - PCI_IOV_RESOURCES];
-पूर्ण
+	return dev->sriov->barsz[resno - PCI_IOV_RESOURCES];
+}
 
-अटल व्योम pci_पढ़ो_vf_config_common(काष्ठा pci_dev *virtfn)
-अणु
-	काष्ठा pci_dev *physfn = virtfn->physfn;
+static void pci_read_vf_config_common(struct pci_dev *virtfn)
+{
+	struct pci_dev *physfn = virtfn->physfn;
 
 	/*
-	 * Some config रेजिस्टरs are the same across all associated VFs.
-	 * Read them once from VF0 so we can skip पढ़ोing them from the
+	 * Some config registers are the same across all associated VFs.
+	 * Read them once from VF0 so we can skip reading them from the
 	 * other VFs.
 	 *
-	 * PCIe r4.0, sec 9.3.4.1, technically करोesn't require all VFs to
-	 * have the same Revision ID and Subप्रणाली ID, but we assume they
-	 * करो.
+	 * PCIe r4.0, sec 9.3.4.1, technically doesn't require all VFs to
+	 * have the same Revision ID and Subsystem ID, but we assume they
+	 * do.
 	 */
-	pci_पढ़ो_config_dword(virtfn, PCI_CLASS_REVISION,
+	pci_read_config_dword(virtfn, PCI_CLASS_REVISION,
 			      &physfn->sriov->class);
-	pci_पढ़ो_config_byte(virtfn, PCI_HEADER_TYPE,
+	pci_read_config_byte(virtfn, PCI_HEADER_TYPE,
 			     &physfn->sriov->hdr_type);
-	pci_पढ़ो_config_word(virtfn, PCI_SUBSYSTEM_VENDOR_ID,
-			     &physfn->sriov->subप्रणाली_venकरोr);
-	pci_पढ़ो_config_word(virtfn, PCI_SUBSYSTEM_ID,
-			     &physfn->sriov->subप्रणाली_device);
-पूर्ण
+	pci_read_config_word(virtfn, PCI_SUBSYSTEM_VENDOR_ID,
+			     &physfn->sriov->subsystem_vendor);
+	pci_read_config_word(virtfn, PCI_SUBSYSTEM_ID,
+			     &physfn->sriov->subsystem_device);
+}
 
-पूर्णांक pci_iov_sysfs_link(काष्ठा pci_dev *dev,
-		काष्ठा pci_dev *virtfn, पूर्णांक id)
-अणु
-	अक्षर buf[VIRTFN_ID_LEN];
-	पूर्णांक rc;
+int pci_iov_sysfs_link(struct pci_dev *dev,
+		struct pci_dev *virtfn, int id)
+{
+	char buf[VIRTFN_ID_LEN];
+	int rc;
 
-	प्र_लिखो(buf, "virtfn%u", id);
+	sprintf(buf, "virtfn%u", id);
 	rc = sysfs_create_link(&dev->dev.kobj, &virtfn->dev.kobj, buf);
-	अगर (rc)
-		जाओ failed;
+	if (rc)
+		goto failed;
 	rc = sysfs_create_link(&virtfn->dev.kobj, &dev->dev.kobj, "physfn");
-	अगर (rc)
-		जाओ failed1;
+	if (rc)
+		goto failed1;
 
 	kobject_uevent(&virtfn->dev.kobj, KOBJ_CHANGE);
 
-	वापस 0;
+	return 0;
 
 failed1:
-	sysfs_हटाओ_link(&dev->dev.kobj, buf);
+	sysfs_remove_link(&dev->dev.kobj, buf);
 failed:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
-अटल sमाप_प्रकार sriov_vf_total_msix_show(काष्ठा device *dev,
-					काष्ठा device_attribute *attr,
-					अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+#ifdef CONFIG_PCI_MSI
+static ssize_t sriov_vf_total_msix_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 	u32 vf_total_msix = 0;
 
 	device_lock(dev);
-	अगर (!pdev->driver || !pdev->driver->sriov_get_vf_total_msix)
-		जाओ unlock;
+	if (!pdev->driver || !pdev->driver->sriov_get_vf_total_msix)
+		goto unlock;
 
 	vf_total_msix = pdev->driver->sriov_get_vf_total_msix(pdev);
 unlock:
 	device_unlock(dev);
-	वापस sysfs_emit(buf, "%u\n", vf_total_msix);
-पूर्ण
-अटल DEVICE_ATTR_RO(sriov_vf_total_msix);
+	return sysfs_emit(buf, "%u\n", vf_total_msix);
+}
+static DEVICE_ATTR_RO(sriov_vf_total_msix);
 
-अटल sमाप_प्रकार sriov_vf_msix_count_store(काष्ठा device *dev,
-					 काष्ठा device_attribute *attr,
-					 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा pci_dev *vf_dev = to_pci_dev(dev);
-	काष्ठा pci_dev *pdev = pci_physfn(vf_dev);
-	पूर्णांक val, ret;
+static ssize_t sriov_vf_msix_count_store(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	struct pci_dev *vf_dev = to_pci_dev(dev);
+	struct pci_dev *pdev = pci_physfn(vf_dev);
+	int val, ret;
 
-	ret = kstrtoपूर्णांक(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
 
-	अगर (val < 0)
-		वापस -EINVAL;
+	if (val < 0)
+		return -EINVAL;
 
 	device_lock(&pdev->dev);
-	अगर (!pdev->driver || !pdev->driver->sriov_set_msix_vec_count) अणु
+	if (!pdev->driver || !pdev->driver->sriov_set_msix_vec_count) {
 		ret = -EOPNOTSUPP;
-		जाओ err_pdev;
-	पूर्ण
+		goto err_pdev;
+	}
 
 	device_lock(&vf_dev->dev);
-	अगर (vf_dev->driver) अणु
+	if (vf_dev->driver) {
 		/*
-		 * A driver is alपढ़ोy attached to this VF and has configured
+		 * A driver is already attached to this VF and has configured
 		 * itself based on the current MSI-X vector count. Changing
 		 * the vector size could mess up the driver, so block it.
 		 */
 		ret = -EBUSY;
-		जाओ err_dev;
-	पूर्ण
+		goto err_dev;
+	}
 
 	ret = pdev->driver->sriov_set_msix_vec_count(vf_dev, val);
 
@@ -216,74 +215,74 @@ err_dev:
 	device_unlock(&vf_dev->dev);
 err_pdev:
 	device_unlock(&pdev->dev);
-	वापस ret ? : count;
-पूर्ण
-अटल DEVICE_ATTR_WO(sriov_vf_msix_count);
-#पूर्ण_अगर
+	return ret ? : count;
+}
+static DEVICE_ATTR_WO(sriov_vf_msix_count);
+#endif
 
-अटल काष्ठा attribute *sriov_vf_dev_attrs[] = अणु
-#अगर_घोषित CONFIG_PCI_MSI
+static struct attribute *sriov_vf_dev_attrs[] = {
+#ifdef CONFIG_PCI_MSI
 	&dev_attr_sriov_vf_msix_count.attr,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#endif
+	NULL,
+};
 
-अटल umode_t sriov_vf_attrs_are_visible(काष्ठा kobject *kobj,
-					  काष्ठा attribute *a, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static umode_t sriov_vf_attrs_are_visible(struct kobject *kobj,
+					  struct attribute *a, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	अगर (!pdev->is_virtfn)
-		वापस 0;
+	if (!pdev->is_virtfn)
+		return 0;
 
-	वापस a->mode;
-पूर्ण
+	return a->mode;
+}
 
-स्थिर काष्ठा attribute_group sriov_vf_dev_attr_group = अणु
+const struct attribute_group sriov_vf_dev_attr_group = {
 	.attrs = sriov_vf_dev_attrs,
 	.is_visible = sriov_vf_attrs_are_visible,
-पूर्ण;
+};
 
-पूर्णांक pci_iov_add_virtfn(काष्ठा pci_dev *dev, पूर्णांक id)
-अणु
-	पूर्णांक i;
-	पूर्णांक rc = -ENOMEM;
+int pci_iov_add_virtfn(struct pci_dev *dev, int id)
+{
+	int i;
+	int rc = -ENOMEM;
 	u64 size;
-	काष्ठा pci_dev *virtfn;
-	काष्ठा resource *res;
-	काष्ठा pci_sriov *iov = dev->sriov;
-	काष्ठा pci_bus *bus;
+	struct pci_dev *virtfn;
+	struct resource *res;
+	struct pci_sriov *iov = dev->sriov;
+	struct pci_bus *bus;
 
 	bus = virtfn_add_bus(dev->bus, pci_iov_virtfn_bus(dev, id));
-	अगर (!bus)
-		जाओ failed;
+	if (!bus)
+		goto failed;
 
 	virtfn = pci_alloc_dev(bus);
-	अगर (!virtfn)
-		जाओ failed0;
+	if (!virtfn)
+		goto failed0;
 
 	virtfn->devfn = pci_iov_virtfn_devfn(dev, id);
-	virtfn->venकरोr = dev->venकरोr;
+	virtfn->vendor = dev->vendor;
 	virtfn->device = iov->vf_device;
 	virtfn->is_virtfn = 1;
 	virtfn->physfn = pci_dev_get(dev);
 	virtfn->no_command_memory = 1;
 
-	अगर (id == 0)
-		pci_पढ़ो_vf_config_common(virtfn);
+	if (id == 0)
+		pci_read_vf_config_common(virtfn);
 
 	rc = pci_setup_device(virtfn);
-	अगर (rc)
-		जाओ failed1;
+	if (rc)
+		goto failed1;
 
 	virtfn->dev.parent = dev->dev.parent;
-	virtfn->multअगरunction = 0;
+	virtfn->multifunction = 0;
 
-	क्रम (i = 0; i < PCI_SRIOV_NUM_BARS; i++) अणु
+	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++) {
 		res = &dev->resource[i + PCI_IOV_RESOURCES];
-		अगर (!res->parent)
-			जारी;
+		if (!res->parent)
+			continue;
 		virtfn->resource[i].name = pci_name(virtfn);
 		virtfn->resource[i].flags = res->flags;
 		size = pci_iov_resource_size(dev, i + PCI_IOV_RESOURCES);
@@ -291,555 +290,555 @@ err_pdev:
 		virtfn->resource[i].end = virtfn->resource[i].start + size - 1;
 		rc = request_resource(res, &virtfn->resource[i]);
 		BUG_ON(rc);
-	पूर्ण
+	}
 
 	pci_device_add(virtfn, virtfn->bus);
 	rc = pci_iov_sysfs_link(dev, virtfn, id);
-	अगर (rc)
-		जाओ failed1;
+	if (rc)
+		goto failed1;
 
 	pci_bus_add_device(virtfn);
 
-	वापस 0;
+	return 0;
 
 failed1:
-	pci_stop_and_हटाओ_bus_device(virtfn);
+	pci_stop_and_remove_bus_device(virtfn);
 	pci_dev_put(dev);
 failed0:
-	virtfn_हटाओ_bus(dev->bus, bus);
+	virtfn_remove_bus(dev->bus, bus);
 failed:
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम pci_iov_हटाओ_virtfn(काष्ठा pci_dev *dev, पूर्णांक id)
-अणु
-	अक्षर buf[VIRTFN_ID_LEN];
-	काष्ठा pci_dev *virtfn;
+void pci_iov_remove_virtfn(struct pci_dev *dev, int id)
+{
+	char buf[VIRTFN_ID_LEN];
+	struct pci_dev *virtfn;
 
-	virtfn = pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr(dev->bus),
+	virtfn = pci_get_domain_bus_and_slot(pci_domain_nr(dev->bus),
 					     pci_iov_virtfn_bus(dev, id),
 					     pci_iov_virtfn_devfn(dev, id));
-	अगर (!virtfn)
-		वापस;
+	if (!virtfn)
+		return;
 
-	प्र_लिखो(buf, "virtfn%u", id);
-	sysfs_हटाओ_link(&dev->dev.kobj, buf);
+	sprintf(buf, "virtfn%u", id);
+	sysfs_remove_link(&dev->dev.kobj, buf);
 	/*
-	 * pci_stop_dev() could have been called क्रम this virtfn alपढ़ोy,
-	 * so the directory क्रम the virtfn may have been हटाओd beक्रमe.
-	 * Double check to aव्योम spurious sysfs warnings.
+	 * pci_stop_dev() could have been called for this virtfn already,
+	 * so the directory for the virtfn may have been removed before.
+	 * Double check to avoid spurious sysfs warnings.
 	 */
-	अगर (virtfn->dev.kobj.sd)
-		sysfs_हटाओ_link(&virtfn->dev.kobj, "physfn");
+	if (virtfn->dev.kobj.sd)
+		sysfs_remove_link(&virtfn->dev.kobj, "physfn");
 
-	pci_stop_and_हटाओ_bus_device(virtfn);
-	virtfn_हटाओ_bus(dev->bus, virtfn->bus);
+	pci_stop_and_remove_bus_device(virtfn);
+	virtfn_remove_bus(dev->bus, virtfn->bus);
 
-	/* balance pci_get_करोमुख्य_bus_and_slot() */
+	/* balance pci_get_domain_bus_and_slot() */
 	pci_dev_put(virtfn);
 	pci_dev_put(dev);
-पूर्ण
+}
 
-अटल sमाप_प्रकार sriov_totalvfs_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr,
-				   अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t sriov_totalvfs_show(struct device *dev,
+				   struct device_attribute *attr,
+				   char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", pci_sriov_get_totalvfs(pdev));
-पूर्ण
+	return sprintf(buf, "%u\n", pci_sriov_get_totalvfs(pdev));
+}
 
-अटल sमाप_प्रकार sriov_numvfs_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t sriov_numvfs_show(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 	u16 num_vfs;
 
-	/* Serialize vs sriov_numvfs_store() so पढ़ोers see valid num_VFs */
+	/* Serialize vs sriov_numvfs_store() so readers see valid num_VFs */
 	device_lock(&pdev->dev);
 	num_vfs = pdev->sriov->num_VFs;
 	device_unlock(&pdev->dev);
 
-	वापस प्र_लिखो(buf, "%u\n", num_vfs);
-पूर्ण
+	return sprintf(buf, "%u\n", num_vfs);
+}
 
 /*
  * num_vfs > 0; number of VFs to enable
  * num_vfs = 0; disable all VFs
  *
- * Note: SRIOV spec करोes not allow partial VF
+ * Note: SRIOV spec does not allow partial VF
  *	 disable, so it's all or none.
  */
-अटल sमाप_प्रकार sriov_numvfs_store(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	पूर्णांक ret;
+static ssize_t sriov_numvfs_store(struct device *dev,
+				  struct device_attribute *attr,
+				  const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	int ret;
 	u16 num_vfs;
 
 	ret = kstrtou16(buf, 0, &num_vfs);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (num_vfs > pci_sriov_get_totalvfs(pdev))
-		वापस -दुस्फल;
+	if (num_vfs > pci_sriov_get_totalvfs(pdev))
+		return -ERANGE;
 
 	device_lock(&pdev->dev);
 
-	अगर (num_vfs == pdev->sriov->num_VFs)
-		जाओ निकास;
+	if (num_vfs == pdev->sriov->num_VFs)
+		goto exit;
 
 	/* is PF driver loaded w/callback */
-	अगर (!pdev->driver || !pdev->driver->sriov_configure) अणु
+	if (!pdev->driver || !pdev->driver->sriov_configure) {
 		pci_info(pdev, "Driver does not support SRIOV configuration via sysfs\n");
 		ret = -ENOENT;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (num_vfs == 0) अणु
+	if (num_vfs == 0) {
 		/* disable VFs */
 		ret = pdev->driver->sriov_configure(pdev, 0);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	/* enable VFs */
-	अगर (pdev->sriov->num_VFs) अणु
+	if (pdev->sriov->num_VFs) {
 		pci_warn(pdev, "%d VFs already enabled. Disable before enabling %d VFs\n",
 			 pdev->sriov->num_VFs, num_vfs);
 		ret = -EBUSY;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	ret = pdev->driver->sriov_configure(pdev, num_vfs);
-	अगर (ret < 0)
-		जाओ निकास;
+	if (ret < 0)
+		goto exit;
 
-	अगर (ret != num_vfs)
+	if (ret != num_vfs)
 		pci_warn(pdev, "%d VFs requested; only %d enabled\n",
 			 num_vfs, ret);
 
-निकास:
+exit:
 	device_unlock(&pdev->dev);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार sriov_offset_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t sriov_offset_show(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", pdev->sriov->offset);
-पूर्ण
+	return sprintf(buf, "%u\n", pdev->sriov->offset);
+}
 
-अटल sमाप_प्रकार sriov_stride_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t sriov_stride_show(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", pdev->sriov->stride);
-पूर्ण
+	return sprintf(buf, "%u\n", pdev->sriov->stride);
+}
 
-अटल sमाप_प्रकार sriov_vf_device_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr,
-				    अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t sriov_vf_device_show(struct device *dev,
+				    struct device_attribute *attr,
+				    char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	वापस प्र_लिखो(buf, "%x\n", pdev->sriov->vf_device);
-पूर्ण
+	return sprintf(buf, "%x\n", pdev->sriov->vf_device);
+}
 
-अटल sमाप_प्रकार sriov_drivers_स्वतःprobe_show(काष्ठा device *dev,
-					    काष्ठा device_attribute *attr,
-					    अक्षर *buf)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+static ssize_t sriov_drivers_autoprobe_show(struct device *dev,
+					    struct device_attribute *attr,
+					    char *buf)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
 
-	वापस प्र_लिखो(buf, "%u\n", pdev->sriov->drivers_स्वतःprobe);
-पूर्ण
+	return sprintf(buf, "%u\n", pdev->sriov->drivers_autoprobe);
+}
 
-अटल sमाप_प्रकार sriov_drivers_स्वतःprobe_store(काष्ठा device *dev,
-					     काष्ठा device_attribute *attr,
-					     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(dev);
-	bool drivers_स्वतःprobe;
+static ssize_t sriov_drivers_autoprobe_store(struct device *dev,
+					     struct device_attribute *attr,
+					     const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	bool drivers_autoprobe;
 
-	अगर (kstrtobool(buf, &drivers_स्वतःprobe) < 0)
-		वापस -EINVAL;
+	if (kstrtobool(buf, &drivers_autoprobe) < 0)
+		return -EINVAL;
 
-	pdev->sriov->drivers_स्वतःprobe = drivers_स्वतःprobe;
+	pdev->sriov->drivers_autoprobe = drivers_autoprobe;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR_RO(sriov_totalvfs);
-अटल DEVICE_ATTR_RW(sriov_numvfs);
-अटल DEVICE_ATTR_RO(sriov_offset);
-अटल DEVICE_ATTR_RO(sriov_stride);
-अटल DEVICE_ATTR_RO(sriov_vf_device);
-अटल DEVICE_ATTR_RW(sriov_drivers_स्वतःprobe);
+static DEVICE_ATTR_RO(sriov_totalvfs);
+static DEVICE_ATTR_RW(sriov_numvfs);
+static DEVICE_ATTR_RO(sriov_offset);
+static DEVICE_ATTR_RO(sriov_stride);
+static DEVICE_ATTR_RO(sriov_vf_device);
+static DEVICE_ATTR_RW(sriov_drivers_autoprobe);
 
-अटल काष्ठा attribute *sriov_pf_dev_attrs[] = अणु
+static struct attribute *sriov_pf_dev_attrs[] = {
 	&dev_attr_sriov_totalvfs.attr,
 	&dev_attr_sriov_numvfs.attr,
 	&dev_attr_sriov_offset.attr,
 	&dev_attr_sriov_stride.attr,
 	&dev_attr_sriov_vf_device.attr,
-	&dev_attr_sriov_drivers_स्वतःprobe.attr,
-#अगर_घोषित CONFIG_PCI_MSI
+	&dev_attr_sriov_drivers_autoprobe.attr,
+#ifdef CONFIG_PCI_MSI
 	&dev_attr_sriov_vf_total_msix.attr,
-#पूर्ण_अगर
-	शून्य,
-पूर्ण;
+#endif
+	NULL,
+};
 
-अटल umode_t sriov_pf_attrs_are_visible(काष्ठा kobject *kobj,
-					  काष्ठा attribute *a, पूर्णांक n)
-अणु
-	काष्ठा device *dev = kobj_to_dev(kobj);
+static umode_t sriov_pf_attrs_are_visible(struct kobject *kobj,
+					  struct attribute *a, int n)
+{
+	struct device *dev = kobj_to_dev(kobj);
 
-	अगर (!dev_is_pf(dev))
-		वापस 0;
+	if (!dev_is_pf(dev))
+		return 0;
 
-	वापस a->mode;
-पूर्ण
+	return a->mode;
+}
 
-स्थिर काष्ठा attribute_group sriov_pf_dev_attr_group = अणु
+const struct attribute_group sriov_pf_dev_attr_group = {
 	.attrs = sriov_pf_dev_attrs,
 	.is_visible = sriov_pf_attrs_are_visible,
-पूर्ण;
+};
 
-पूर्णांक __weak pcibios_sriov_enable(काष्ठा pci_dev *pdev, u16 num_vfs)
-अणु
-	वापस 0;
-पूर्ण
+int __weak pcibios_sriov_enable(struct pci_dev *pdev, u16 num_vfs)
+{
+	return 0;
+}
 
-पूर्णांक __weak pcibios_sriov_disable(काष्ठा pci_dev *pdev)
-अणु
-	वापस 0;
-पूर्ण
+int __weak pcibios_sriov_disable(struct pci_dev *pdev)
+{
+	return 0;
+}
 
-अटल पूर्णांक sriov_add_vfs(काष्ठा pci_dev *dev, u16 num_vfs)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक rc;
+static int sriov_add_vfs(struct pci_dev *dev, u16 num_vfs)
+{
+	unsigned int i;
+	int rc;
 
-	अगर (dev->no_vf_scan)
-		वापस 0;
+	if (dev->no_vf_scan)
+		return 0;
 
-	क्रम (i = 0; i < num_vfs; i++) अणु
+	for (i = 0; i < num_vfs; i++) {
 		rc = pci_iov_add_virtfn(dev, i);
-		अगर (rc)
-			जाओ failed;
-	पूर्ण
-	वापस 0;
+		if (rc)
+			goto failed;
+	}
+	return 0;
 failed:
-	जबतक (i--)
-		pci_iov_हटाओ_virtfn(dev, i);
+	while (i--)
+		pci_iov_remove_virtfn(dev, i);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक sriov_enable(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn)
-अणु
-	पूर्णांक rc;
-	पूर्णांक i;
-	पूर्णांक nres;
+static int sriov_enable(struct pci_dev *dev, int nr_virtfn)
+{
+	int rc;
+	int i;
+	int nres;
 	u16 initial;
-	काष्ठा resource *res;
-	काष्ठा pci_dev *pdev;
-	काष्ठा pci_sriov *iov = dev->sriov;
-	पूर्णांक bars = 0;
-	पूर्णांक bus;
+	struct resource *res;
+	struct pci_dev *pdev;
+	struct pci_sriov *iov = dev->sriov;
+	int bars = 0;
+	int bus;
 
-	अगर (!nr_virtfn)
-		वापस 0;
+	if (!nr_virtfn)
+		return 0;
 
-	अगर (iov->num_VFs)
-		वापस -EINVAL;
+	if (iov->num_VFs)
+		return -EINVAL;
 
-	pci_पढ़ो_config_word(dev, iov->pos + PCI_SRIOV_INITIAL_VF, &initial);
-	अगर (initial > iov->total_VFs ||
+	pci_read_config_word(dev, iov->pos + PCI_SRIOV_INITIAL_VF, &initial);
+	if (initial > iov->total_VFs ||
 	    (!(iov->cap & PCI_SRIOV_CAP_VFM) && (initial != iov->total_VFs)))
-		वापस -EIO;
+		return -EIO;
 
-	अगर (nr_virtfn < 0 || nr_virtfn > iov->total_VFs ||
+	if (nr_virtfn < 0 || nr_virtfn > iov->total_VFs ||
 	    (!(iov->cap & PCI_SRIOV_CAP_VFM) && (nr_virtfn > initial)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	nres = 0;
-	क्रम (i = 0; i < PCI_SRIOV_NUM_BARS; i++) अणु
+	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++) {
 		bars |= (1 << (i + PCI_IOV_RESOURCES));
 		res = &dev->resource[i + PCI_IOV_RESOURCES];
-		अगर (res->parent)
+		if (res->parent)
 			nres++;
-	पूर्ण
-	अगर (nres != iov->nres) अणु
+	}
+	if (nres != iov->nres) {
 		pci_err(dev, "not enough MMIO resources for SR-IOV\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	bus = pci_iov_virtfn_bus(dev, nr_virtfn - 1);
-	अगर (bus > dev->bus->busn_res.end) अणु
+	if (bus > dev->bus->busn_res.end) {
 		pci_err(dev, "can't enable %d VFs (bus %02x out of range of %pR)\n",
 			nr_virtfn, bus, &dev->bus->busn_res);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (pci_enable_resources(dev, bars)) अणु
+	if (pci_enable_resources(dev, bars)) {
 		pci_err(dev, "SR-IOV: IOV BARS not allocated\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (iov->link != dev->devfn) अणु
+	if (iov->link != dev->devfn) {
 		pdev = pci_get_slot(dev->bus, iov->link);
-		अगर (!pdev)
-			वापस -ENODEV;
+		if (!pdev)
+			return -ENODEV;
 
-		अगर (!pdev->is_physfn) अणु
+		if (!pdev->is_physfn) {
 			pci_dev_put(pdev);
-			वापस -ENOSYS;
-		पूर्ण
+			return -ENOSYS;
+		}
 
 		rc = sysfs_create_link(&dev->dev.kobj,
 					&pdev->dev.kobj, "dep_link");
 		pci_dev_put(pdev);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
 	iov->initial_VFs = initial;
-	अगर (nr_virtfn < initial)
+	if (nr_virtfn < initial)
 		initial = nr_virtfn;
 
 	rc = pcibios_sriov_enable(dev, initial);
-	अगर (rc) अणु
+	if (rc) {
 		pci_err(dev, "failure %d from pcibios_sriov_enable()\n", rc);
-		जाओ err_pcibios;
-	पूर्ण
+		goto err_pcibios;
+	}
 
 	pci_iov_set_numvfs(dev, nr_virtfn);
 	iov->ctrl |= PCI_SRIOV_CTRL_VFE | PCI_SRIOV_CTRL_MSE;
 	pci_cfg_access_lock(dev);
-	pci_ग_लिखो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
+	pci_write_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
 	msleep(100);
 	pci_cfg_access_unlock(dev);
 
 	rc = sriov_add_vfs(dev, initial);
-	अगर (rc)
-		जाओ err_pcibios;
+	if (rc)
+		goto err_pcibios;
 
 	kobject_uevent(&dev->dev.kobj, KOBJ_CHANGE);
 	iov->num_VFs = nr_virtfn;
 
-	वापस 0;
+	return 0;
 
 err_pcibios:
 	iov->ctrl &= ~(PCI_SRIOV_CTRL_VFE | PCI_SRIOV_CTRL_MSE);
 	pci_cfg_access_lock(dev);
-	pci_ग_लिखो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
+	pci_write_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
 	ssleep(1);
 	pci_cfg_access_unlock(dev);
 
 	pcibios_sriov_disable(dev);
 
-	अगर (iov->link != dev->devfn)
-		sysfs_हटाओ_link(&dev->dev.kobj, "dep_link");
+	if (iov->link != dev->devfn)
+		sysfs_remove_link(&dev->dev.kobj, "dep_link");
 
 	pci_iov_set_numvfs(dev, 0);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम sriov_del_vfs(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_sriov *iov = dev->sriov;
-	पूर्णांक i;
+static void sriov_del_vfs(struct pci_dev *dev)
+{
+	struct pci_sriov *iov = dev->sriov;
+	int i;
 
-	क्रम (i = 0; i < iov->num_VFs; i++)
-		pci_iov_हटाओ_virtfn(dev, i);
-पूर्ण
+	for (i = 0; i < iov->num_VFs; i++)
+		pci_iov_remove_virtfn(dev, i);
+}
 
-अटल व्योम sriov_disable(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_sriov *iov = dev->sriov;
+static void sriov_disable(struct pci_dev *dev)
+{
+	struct pci_sriov *iov = dev->sriov;
 
-	अगर (!iov->num_VFs)
-		वापस;
+	if (!iov->num_VFs)
+		return;
 
 	sriov_del_vfs(dev);
 	iov->ctrl &= ~(PCI_SRIOV_CTRL_VFE | PCI_SRIOV_CTRL_MSE);
 	pci_cfg_access_lock(dev);
-	pci_ग_लिखो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
+	pci_write_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
 	ssleep(1);
 	pci_cfg_access_unlock(dev);
 
 	pcibios_sriov_disable(dev);
 
-	अगर (iov->link != dev->devfn)
-		sysfs_हटाओ_link(&dev->dev.kobj, "dep_link");
+	if (iov->link != dev->devfn)
+		sysfs_remove_link(&dev->dev.kobj, "dep_link");
 
 	iov->num_VFs = 0;
 	pci_iov_set_numvfs(dev, 0);
-पूर्ण
+}
 
-अटल पूर्णांक sriov_init(काष्ठा pci_dev *dev, पूर्णांक pos)
-अणु
-	पूर्णांक i, bar64;
-	पूर्णांक rc;
-	पूर्णांक nres;
+static int sriov_init(struct pci_dev *dev, int pos)
+{
+	int i, bar64;
+	int rc;
+	int nres;
 	u32 pgsz;
 	u16 ctrl, total;
-	काष्ठा pci_sriov *iov;
-	काष्ठा resource *res;
-	काष्ठा pci_dev *pdev;
+	struct pci_sriov *iov;
+	struct resource *res;
+	struct pci_dev *pdev;
 
-	pci_पढ़ो_config_word(dev, pos + PCI_SRIOV_CTRL, &ctrl);
-	अगर (ctrl & PCI_SRIOV_CTRL_VFE) अणु
-		pci_ग_लिखो_config_word(dev, pos + PCI_SRIOV_CTRL, 0);
+	pci_read_config_word(dev, pos + PCI_SRIOV_CTRL, &ctrl);
+	if (ctrl & PCI_SRIOV_CTRL_VFE) {
+		pci_write_config_word(dev, pos + PCI_SRIOV_CTRL, 0);
 		ssleep(1);
-	पूर्ण
+	}
 
 	ctrl = 0;
-	list_क्रम_each_entry(pdev, &dev->bus->devices, bus_list)
-		अगर (pdev->is_physfn)
-			जाओ found;
+	list_for_each_entry(pdev, &dev->bus->devices, bus_list)
+		if (pdev->is_physfn)
+			goto found;
 
-	pdev = शून्य;
-	अगर (pci_ari_enabled(dev->bus))
+	pdev = NULL;
+	if (pci_ari_enabled(dev->bus))
 		ctrl |= PCI_SRIOV_CTRL_ARI;
 
 found:
-	pci_ग_लिखो_config_word(dev, pos + PCI_SRIOV_CTRL, ctrl);
+	pci_write_config_word(dev, pos + PCI_SRIOV_CTRL, ctrl);
 
-	pci_पढ़ो_config_word(dev, pos + PCI_SRIOV_TOTAL_VF, &total);
-	अगर (!total)
-		वापस 0;
+	pci_read_config_word(dev, pos + PCI_SRIOV_TOTAL_VF, &total);
+	if (!total)
+		return 0;
 
-	pci_पढ़ो_config_dword(dev, pos + PCI_SRIOV_SUP_PGSIZE, &pgsz);
+	pci_read_config_dword(dev, pos + PCI_SRIOV_SUP_PGSIZE, &pgsz);
 	i = PAGE_SHIFT > 12 ? PAGE_SHIFT - 12 : 0;
 	pgsz &= ~((1 << i) - 1);
-	अगर (!pgsz)
-		वापस -EIO;
+	if (!pgsz)
+		return -EIO;
 
 	pgsz &= ~(pgsz - 1);
-	pci_ग_लिखो_config_dword(dev, pos + PCI_SRIOV_SYS_PGSIZE, pgsz);
+	pci_write_config_dword(dev, pos + PCI_SRIOV_SYS_PGSIZE, pgsz);
 
-	iov = kzalloc(माप(*iov), GFP_KERNEL);
-	अगर (!iov)
-		वापस -ENOMEM;
+	iov = kzalloc(sizeof(*iov), GFP_KERNEL);
+	if (!iov)
+		return -ENOMEM;
 
 	nres = 0;
-	क्रम (i = 0; i < PCI_SRIOV_NUM_BARS; i++) अणु
+	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++) {
 		res = &dev->resource[i + PCI_IOV_RESOURCES];
 		/*
-		 * If it is alपढ़ोy FIXED, करोn't change it, something
+		 * If it is already FIXED, don't change it, something
 		 * (perhaps EA or header fixups) wants it this way.
 		 */
-		अगर (res->flags & IORESOURCE_PCI_FIXED)
+		if (res->flags & IORESOURCE_PCI_FIXED)
 			bar64 = (res->flags & IORESOURCE_MEM_64) ? 1 : 0;
-		अन्यथा
-			bar64 = __pci_पढ़ो_base(dev, pci_bar_unknown, res,
+		else
+			bar64 = __pci_read_base(dev, pci_bar_unknown, res,
 						pos + PCI_SRIOV_BAR + i * 4);
-		अगर (!res->flags)
-			जारी;
-		अगर (resource_size(res) & (PAGE_SIZE - 1)) अणु
+		if (!res->flags)
+			continue;
+		if (resource_size(res) & (PAGE_SIZE - 1)) {
 			rc = -EIO;
-			जाओ failed;
-		पूर्ण
+			goto failed;
+		}
 		iov->barsz[i] = resource_size(res);
 		res->end = res->start + resource_size(res) * total - 1;
 		pci_info(dev, "VF(n) BAR%d space: %pR (contains BAR%d for %d VFs)\n",
 			 i, res, i, total);
 		i += bar64;
 		nres++;
-	पूर्ण
+	}
 
 	iov->pos = pos;
 	iov->nres = nres;
 	iov->ctrl = ctrl;
 	iov->total_VFs = total;
 	iov->driver_max_VFs = total;
-	pci_पढ़ो_config_word(dev, pos + PCI_SRIOV_VF_DID, &iov->vf_device);
+	pci_read_config_word(dev, pos + PCI_SRIOV_VF_DID, &iov->vf_device);
 	iov->pgsz = pgsz;
 	iov->self = dev;
-	iov->drivers_स्वतःprobe = true;
-	pci_पढ़ो_config_dword(dev, pos + PCI_SRIOV_CAP, &iov->cap);
-	pci_पढ़ो_config_byte(dev, pos + PCI_SRIOV_FUNC_LINK, &iov->link);
-	अगर (pci_pcie_type(dev) == PCI_EXP_TYPE_RC_END)
+	iov->drivers_autoprobe = true;
+	pci_read_config_dword(dev, pos + PCI_SRIOV_CAP, &iov->cap);
+	pci_read_config_byte(dev, pos + PCI_SRIOV_FUNC_LINK, &iov->link);
+	if (pci_pcie_type(dev) == PCI_EXP_TYPE_RC_END)
 		iov->link = PCI_DEVFN(PCI_SLOT(dev->devfn), iov->link);
 
-	अगर (pdev)
+	if (pdev)
 		iov->dev = pci_dev_get(pdev);
-	अन्यथा
+	else
 		iov->dev = dev;
 
 	dev->sriov = iov;
 	dev->is_physfn = 1;
 	rc = compute_max_vf_buses(dev);
-	अगर (rc)
-		जाओ fail_max_buses;
+	if (rc)
+		goto fail_max_buses;
 
-	वापस 0;
+	return 0;
 
 fail_max_buses:
-	dev->sriov = शून्य;
+	dev->sriov = NULL;
 	dev->is_physfn = 0;
 failed:
-	क्रम (i = 0; i < PCI_SRIOV_NUM_BARS; i++) अणु
+	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++) {
 		res = &dev->resource[i + PCI_IOV_RESOURCES];
 		res->flags = 0;
-	पूर्ण
+	}
 
-	kमुक्त(iov);
-	वापस rc;
-पूर्ण
+	kfree(iov);
+	return rc;
+}
 
-अटल व्योम sriov_release(काष्ठा pci_dev *dev)
-अणु
+static void sriov_release(struct pci_dev *dev)
+{
 	BUG_ON(dev->sriov->num_VFs);
 
-	अगर (dev != dev->sriov->dev)
+	if (dev != dev->sriov->dev)
 		pci_dev_put(dev->sriov->dev);
 
-	kमुक्त(dev->sriov);
-	dev->sriov = शून्य;
-पूर्ण
+	kfree(dev->sriov);
+	dev->sriov = NULL;
+}
 
-अटल व्योम sriov_restore_state(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक i;
+static void sriov_restore_state(struct pci_dev *dev)
+{
+	int i;
 	u16 ctrl;
-	काष्ठा pci_sriov *iov = dev->sriov;
+	struct pci_sriov *iov = dev->sriov;
 
-	pci_पढ़ो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, &ctrl);
-	अगर (ctrl & PCI_SRIOV_CTRL_VFE)
-		वापस;
+	pci_read_config_word(dev, iov->pos + PCI_SRIOV_CTRL, &ctrl);
+	if (ctrl & PCI_SRIOV_CTRL_VFE)
+		return;
 
 	/*
-	 * Restore PCI_SRIOV_CTRL_ARI beक्रमe pci_iov_set_numvfs() because
-	 * it पढ़ोs offset & stride, which depend on PCI_SRIOV_CTRL_ARI.
+	 * Restore PCI_SRIOV_CTRL_ARI before pci_iov_set_numvfs() because
+	 * it reads offset & stride, which depend on PCI_SRIOV_CTRL_ARI.
 	 */
 	ctrl &= ~PCI_SRIOV_CTRL_ARI;
 	ctrl |= iov->ctrl & PCI_SRIOV_CTRL_ARI;
-	pci_ग_लिखो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, ctrl);
+	pci_write_config_word(dev, iov->pos + PCI_SRIOV_CTRL, ctrl);
 
-	क्रम (i = 0; i < PCI_SRIOV_NUM_BARS; i++)
+	for (i = 0; i < PCI_SRIOV_NUM_BARS; i++)
 		pci_update_resource(dev, i + PCI_IOV_RESOURCES);
 
-	pci_ग_लिखो_config_dword(dev, iov->pos + PCI_SRIOV_SYS_PGSIZE, iov->pgsz);
+	pci_write_config_dword(dev, iov->pos + PCI_SRIOV_SYS_PGSIZE, iov->pgsz);
 	pci_iov_set_numvfs(dev, iov->num_VFs);
-	pci_ग_लिखो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
-	अगर (iov->ctrl & PCI_SRIOV_CTRL_VFE)
+	pci_write_config_word(dev, iov->pos + PCI_SRIOV_CTRL, iov->ctrl);
+	if (iov->ctrl & PCI_SRIOV_CTRL_VFE)
 		msleep(100);
-पूर्ण
+}
 
 /**
  * pci_iov_init - initialize the IOV capability
@@ -847,45 +846,45 @@ failed:
  *
  * Returns 0 on success, or negative on failure.
  */
-पूर्णांक pci_iov_init(काष्ठा pci_dev *dev)
-अणु
-	पूर्णांक pos;
+int pci_iov_init(struct pci_dev *dev)
+{
+	int pos;
 
-	अगर (!pci_is_pcie(dev))
-		वापस -ENODEV;
+	if (!pci_is_pcie(dev))
+		return -ENODEV;
 
 	pos = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_SRIOV);
-	अगर (pos)
-		वापस sriov_init(dev, pos);
+	if (pos)
+		return sriov_init(dev, pos);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 /**
  * pci_iov_release - release resources used by the IOV capability
  * @dev: the PCI device
  */
-व्योम pci_iov_release(काष्ठा pci_dev *dev)
-अणु
-	अगर (dev->is_physfn)
+void pci_iov_release(struct pci_dev *dev)
+{
+	if (dev->is_physfn)
 		sriov_release(dev);
-पूर्ण
+}
 
 /**
- * pci_iov_हटाओ - clean up SR-IOV state after PF driver is detached
+ * pci_iov_remove - clean up SR-IOV state after PF driver is detached
  * @dev: the PCI device
  */
-व्योम pci_iov_हटाओ(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_sriov *iov = dev->sriov;
+void pci_iov_remove(struct pci_dev *dev)
+{
+	struct pci_sriov *iov = dev->sriov;
 
-	अगर (!dev->is_physfn)
-		वापस;
+	if (!dev->is_physfn)
+		return;
 
 	iov->driver_max_VFs = iov->total_VFs;
-	अगर (iov->num_VFs)
+	if (iov->num_VFs)
 		pci_warn(dev, "driver left SR-IOV enabled after remove\n");
-पूर्ण
+}
 
 /**
  * pci_iov_update_resource - update a VF BAR
@@ -894,65 +893,65 @@ failed:
  *
  * Update a VF BAR in the SR-IOV capability of a PF.
  */
-व्योम pci_iov_update_resource(काष्ठा pci_dev *dev, पूर्णांक resno)
-अणु
-	काष्ठा pci_sriov *iov = dev->is_physfn ? dev->sriov : शून्य;
-	काष्ठा resource *res = dev->resource + resno;
-	पूर्णांक vf_bar = resno - PCI_IOV_RESOURCES;
-	काष्ठा pci_bus_region region;
+void pci_iov_update_resource(struct pci_dev *dev, int resno)
+{
+	struct pci_sriov *iov = dev->is_physfn ? dev->sriov : NULL;
+	struct resource *res = dev->resource + resno;
+	int vf_bar = resno - PCI_IOV_RESOURCES;
+	struct pci_bus_region region;
 	u16 cmd;
 	u32 new;
-	पूर्णांक reg;
+	int reg;
 
 	/*
-	 * The generic pci_restore_bars() path calls this क्रम all devices,
+	 * The generic pci_restore_bars() path calls this for all devices,
 	 * including VFs and non-SR-IOV devices.  If this is not a PF, we
-	 * have nothing to करो.
+	 * have nothing to do.
 	 */
-	अगर (!iov)
-		वापस;
+	if (!iov)
+		return;
 
-	pci_पढ़ो_config_word(dev, iov->pos + PCI_SRIOV_CTRL, &cmd);
-	अगर ((cmd & PCI_SRIOV_CTRL_VFE) && (cmd & PCI_SRIOV_CTRL_MSE)) अणु
+	pci_read_config_word(dev, iov->pos + PCI_SRIOV_CTRL, &cmd);
+	if ((cmd & PCI_SRIOV_CTRL_VFE) && (cmd & PCI_SRIOV_CTRL_MSE)) {
 		dev_WARN(&dev->dev, "can't update enabled VF BAR%d %pR\n",
 			 vf_bar, res);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * Ignore unimplemented BARs, unused resource slots क्रम 64-bit
+	 * Ignore unimplemented BARs, unused resource slots for 64-bit
 	 * BARs, and non-movable resources, e.g., those described via
 	 * Enhanced Allocation.
 	 */
-	अगर (!res->flags)
-		वापस;
+	if (!res->flags)
+		return;
 
-	अगर (res->flags & IORESOURCE_UNSET)
-		वापस;
+	if (res->flags & IORESOURCE_UNSET)
+		return;
 
-	अगर (res->flags & IORESOURCE_PCI_FIXED)
-		वापस;
+	if (res->flags & IORESOURCE_PCI_FIXED)
+		return;
 
 	pcibios_resource_to_bus(dev->bus, &region, res);
 	new = region.start;
 	new |= res->flags & ~PCI_BASE_ADDRESS_MEM_MASK;
 
 	reg = iov->pos + PCI_SRIOV_BAR + 4 * vf_bar;
-	pci_ग_लिखो_config_dword(dev, reg, new);
-	अगर (res->flags & IORESOURCE_MEM_64) अणु
+	pci_write_config_dword(dev, reg, new);
+	if (res->flags & IORESOURCE_MEM_64) {
 		new = region.start >> 16 >> 16;
-		pci_ग_लिखो_config_dword(dev, reg + 4, new);
-	पूर्ण
-पूर्ण
+		pci_write_config_dword(dev, reg + 4, new);
+	}
+}
 
-resource_माप_प्रकार __weak pcibios_iov_resource_alignment(काष्ठा pci_dev *dev,
-						      पूर्णांक resno)
-अणु
-	वापस pci_iov_resource_size(dev, resno);
-पूर्ण
+resource_size_t __weak pcibios_iov_resource_alignment(struct pci_dev *dev,
+						      int resno)
+{
+	return pci_iov_resource_size(dev, resno);
+}
 
 /**
- * pci_sriov_resource_alignment - get resource alignment क्रम VF BAR
+ * pci_sriov_resource_alignment - get resource alignment for VF BAR
  * @dev: the PCI device
  * @resno: the resource number
  *
@@ -961,31 +960,31 @@ resource_माप_प्रकार __weak pcibios_iov_resource_alignment(क�
  * the VF BAR size multiplied by the number of VFs.  The alignment
  * is just the VF BAR size.
  */
-resource_माप_प्रकार pci_sriov_resource_alignment(काष्ठा pci_dev *dev, पूर्णांक resno)
-अणु
-	वापस pcibios_iov_resource_alignment(dev, resno);
-पूर्ण
+resource_size_t pci_sriov_resource_alignment(struct pci_dev *dev, int resno)
+{
+	return pcibios_iov_resource_alignment(dev, resno);
+}
 
 /**
  * pci_restore_iov_state - restore the state of the IOV capability
  * @dev: the PCI device
  */
-व्योम pci_restore_iov_state(काष्ठा pci_dev *dev)
-अणु
-	अगर (dev->is_physfn)
+void pci_restore_iov_state(struct pci_dev *dev)
+{
+	if (dev->is_physfn)
 		sriov_restore_state(dev);
-पूर्ण
+}
 
 /**
- * pci_vf_drivers_स्वतःprobe - set PF property drivers_स्वतःprobe क्रम VFs
+ * pci_vf_drivers_autoprobe - set PF property drivers_autoprobe for VFs
  * @dev: the PCI device
- * @स्वतः_probe: set VF drivers स्वतः probe flag
+ * @auto_probe: set VF drivers auto probe flag
  */
-व्योम pci_vf_drivers_स्वतःprobe(काष्ठा pci_dev *dev, bool स्वतः_probe)
-अणु
-	अगर (dev->is_physfn)
-		dev->sriov->drivers_स्वतःprobe = स्वतः_probe;
-पूर्ण
+void pci_vf_drivers_autoprobe(struct pci_dev *dev, bool auto_probe)
+{
+	if (dev->is_physfn)
+		dev->sriov->drivers_autoprobe = auto_probe;
+}
 
 /**
  * pci_iov_bus_range - find bus range used by Virtual Function
@@ -994,189 +993,189 @@ resource_माप_प्रकार pci_sriov_resource_alignment(काष्�
  * Returns max number of buses (exclude current one) used by Virtual
  * Functions.
  */
-पूर्णांक pci_iov_bus_range(काष्ठा pci_bus *bus)
-अणु
-	पूर्णांक max = 0;
-	काष्ठा pci_dev *dev;
+int pci_iov_bus_range(struct pci_bus *bus)
+{
+	int max = 0;
+	struct pci_dev *dev;
 
-	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
-		अगर (!dev->is_physfn)
-			जारी;
-		अगर (dev->sriov->max_VF_buses > max)
+	list_for_each_entry(dev, &bus->devices, bus_list) {
+		if (!dev->is_physfn)
+			continue;
+		if (dev->sriov->max_VF_buses > max)
 			max = dev->sriov->max_VF_buses;
-	पूर्ण
+	}
 
-	वापस max ? max - bus->number : 0;
-पूर्ण
+	return max ? max - bus->number : 0;
+}
 
 /**
  * pci_enable_sriov - enable the SR-IOV capability
  * @dev: the PCI device
- * @nr_virtfn: number of भव functions to enable
+ * @nr_virtfn: number of virtual functions to enable
  *
  * Returns 0 on success, or negative on failure.
  */
-पूर्णांक pci_enable_sriov(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn)
-अणु
+int pci_enable_sriov(struct pci_dev *dev, int nr_virtfn)
+{
 	might_sleep();
 
-	अगर (!dev->is_physfn)
-		वापस -ENOSYS;
+	if (!dev->is_physfn)
+		return -ENOSYS;
 
-	वापस sriov_enable(dev, nr_virtfn);
-पूर्ण
+	return sriov_enable(dev, nr_virtfn);
+}
 EXPORT_SYMBOL_GPL(pci_enable_sriov);
 
 /**
  * pci_disable_sriov - disable the SR-IOV capability
  * @dev: the PCI device
  */
-व्योम pci_disable_sriov(काष्ठा pci_dev *dev)
-अणु
+void pci_disable_sriov(struct pci_dev *dev)
+{
 	might_sleep();
 
-	अगर (!dev->is_physfn)
-		वापस;
+	if (!dev->is_physfn)
+		return;
 
 	sriov_disable(dev);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(pci_disable_sriov);
 
 /**
- * pci_num_vf - वापस number of VFs associated with a PF device_release_driver
+ * pci_num_vf - return number of VFs associated with a PF device_release_driver
  * @dev: the PCI device
  *
- * Returns number of VFs, or 0 अगर SR-IOV is not enabled.
+ * Returns number of VFs, or 0 if SR-IOV is not enabled.
  */
-पूर्णांक pci_num_vf(काष्ठा pci_dev *dev)
-अणु
-	अगर (!dev->is_physfn)
-		वापस 0;
+int pci_num_vf(struct pci_dev *dev)
+{
+	if (!dev->is_physfn)
+		return 0;
 
-	वापस dev->sriov->num_VFs;
-पूर्ण
+	return dev->sriov->num_VFs;
+}
 EXPORT_SYMBOL_GPL(pci_num_vf);
 
 /**
- * pci_vfs_asचिन्हित - वापसs number of VFs are asचिन्हित to a guest
+ * pci_vfs_assigned - returns number of VFs are assigned to a guest
  * @dev: the PCI device
  *
- * Returns number of VFs beदीर्घing to this device that are asचिन्हित to a guest.
- * If device is not a physical function वापसs 0.
+ * Returns number of VFs belonging to this device that are assigned to a guest.
+ * If device is not a physical function returns 0.
  */
-पूर्णांक pci_vfs_asचिन्हित(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_dev *vfdev;
-	अचिन्हित पूर्णांक vfs_asचिन्हित = 0;
-	अचिन्हित लघु dev_id;
+int pci_vfs_assigned(struct pci_dev *dev)
+{
+	struct pci_dev *vfdev;
+	unsigned int vfs_assigned = 0;
+	unsigned short dev_id;
 
-	/* only search अगर we are a PF */
-	अगर (!dev->is_physfn)
-		वापस 0;
+	/* only search if we are a PF */
+	if (!dev->is_physfn)
+		return 0;
 
 	/*
-	 * determine the device ID क्रम the VFs, the venकरोr ID will be the
-	 * same as the PF so there is no need to check क्रम that one
+	 * determine the device ID for the VFs, the vendor ID will be the
+	 * same as the PF so there is no need to check for that one
 	 */
 	dev_id = dev->sriov->vf_device;
 
-	/* loop through all the VFs to see अगर we own any that are asचिन्हित */
-	vfdev = pci_get_device(dev->venकरोr, dev_id, शून्य);
-	जबतक (vfdev) अणु
+	/* loop through all the VFs to see if we own any that are assigned */
+	vfdev = pci_get_device(dev->vendor, dev_id, NULL);
+	while (vfdev) {
 		/*
-		 * It is considered asचिन्हित अगर it is a भव function with
-		 * our dev as the physical function and the asचिन्हित bit is set
+		 * It is considered assigned if it is a virtual function with
+		 * our dev as the physical function and the assigned bit is set
 		 */
-		अगर (vfdev->is_virtfn && (vfdev->physfn == dev) &&
-			pci_is_dev_asचिन्हित(vfdev))
-			vfs_asचिन्हित++;
+		if (vfdev->is_virtfn && (vfdev->physfn == dev) &&
+			pci_is_dev_assigned(vfdev))
+			vfs_assigned++;
 
-		vfdev = pci_get_device(dev->venकरोr, dev_id, vfdev);
-	पूर्ण
+		vfdev = pci_get_device(dev->vendor, dev_id, vfdev);
+	}
 
-	वापस vfs_asचिन्हित;
-पूर्ण
-EXPORT_SYMBOL_GPL(pci_vfs_asचिन्हित);
+	return vfs_assigned;
+}
+EXPORT_SYMBOL_GPL(pci_vfs_assigned);
 
 /**
  * pci_sriov_set_totalvfs -- reduce the TotalVFs available
  * @dev: the PCI PF device
- * @numvfs: number that should be used क्रम TotalVFs supported
+ * @numvfs: number that should be used for TotalVFs supported
  *
  * Should be called from PF driver's probe routine with
  * device's mutex held.
  *
- * Returns 0 अगर PF is an SRIOV-capable device and
- * value of numvfs valid. If not a PF वापस -ENOSYS;
- * अगर numvfs is invalid वापस -EINVAL;
- * अगर VFs alपढ़ोy enabled, वापस -EBUSY.
+ * Returns 0 if PF is an SRIOV-capable device and
+ * value of numvfs valid. If not a PF return -ENOSYS;
+ * if numvfs is invalid return -EINVAL;
+ * if VFs already enabled, return -EBUSY.
  */
-पूर्णांक pci_sriov_set_totalvfs(काष्ठा pci_dev *dev, u16 numvfs)
-अणु
-	अगर (!dev->is_physfn)
-		वापस -ENOSYS;
+int pci_sriov_set_totalvfs(struct pci_dev *dev, u16 numvfs)
+{
+	if (!dev->is_physfn)
+		return -ENOSYS;
 
-	अगर (numvfs > dev->sriov->total_VFs)
-		वापस -EINVAL;
+	if (numvfs > dev->sriov->total_VFs)
+		return -EINVAL;
 
-	/* Shouldn't change अगर VFs alपढ़ोy enabled */
-	अगर (dev->sriov->ctrl & PCI_SRIOV_CTRL_VFE)
-		वापस -EBUSY;
+	/* Shouldn't change if VFs already enabled */
+	if (dev->sriov->ctrl & PCI_SRIOV_CTRL_VFE)
+		return -EBUSY;
 
 	dev->sriov->driver_max_VFs = numvfs;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(pci_sriov_set_totalvfs);
 
 /**
  * pci_sriov_get_totalvfs -- get total VFs supported on this device
  * @dev: the PCI PF device
  *
- * For a PCIe device with SRIOV support, वापस the PCIe
+ * For a PCIe device with SRIOV support, return the PCIe
  * SRIOV capability value of TotalVFs or the value of driver_max_VFs
- * अगर the driver reduced it.  Otherwise 0.
+ * if the driver reduced it.  Otherwise 0.
  */
-पूर्णांक pci_sriov_get_totalvfs(काष्ठा pci_dev *dev)
-अणु
-	अगर (!dev->is_physfn)
-		वापस 0;
+int pci_sriov_get_totalvfs(struct pci_dev *dev)
+{
+	if (!dev->is_physfn)
+		return 0;
 
-	वापस dev->sriov->driver_max_VFs;
-पूर्ण
+	return dev->sriov->driver_max_VFs;
+}
 EXPORT_SYMBOL_GPL(pci_sriov_get_totalvfs);
 
 /**
  * pci_sriov_configure_simple - helper to configure SR-IOV
  * @dev: the PCI device
- * @nr_virtfn: number of भव functions to enable, 0 to disable
+ * @nr_virtfn: number of virtual functions to enable, 0 to disable
  *
- * Enable or disable SR-IOV क्रम devices that करोn't require any PF setup
- * beक्रमe enabling SR-IOV.  Return value is negative on error, or number of
+ * Enable or disable SR-IOV for devices that don't require any PF setup
+ * before enabling SR-IOV.  Return value is negative on error, or number of
  * VFs allocated on success.
  */
-पूर्णांक pci_sriov_configure_simple(काष्ठा pci_dev *dev, पूर्णांक nr_virtfn)
-अणु
-	पूर्णांक rc;
+int pci_sriov_configure_simple(struct pci_dev *dev, int nr_virtfn)
+{
+	int rc;
 
 	might_sleep();
 
-	अगर (!dev->is_physfn)
-		वापस -ENODEV;
+	if (!dev->is_physfn)
+		return -ENODEV;
 
-	अगर (pci_vfs_asचिन्हित(dev)) अणु
+	if (pci_vfs_assigned(dev)) {
 		pci_warn(dev, "Cannot modify SR-IOV while VFs are assigned\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	अगर (nr_virtfn == 0) अणु
+	if (nr_virtfn == 0) {
 		sriov_disable(dev);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rc = sriov_enable(dev, nr_virtfn);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस nr_virtfn;
-पूर्ण
+	return nr_virtfn;
+}
 EXPORT_SYMBOL_GPL(pci_sriov_configure_simple);

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,154 +22,154 @@
  * Authors: Ben Skeggs
  * 	    Martin Peres
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-क्रमागत nv40_sensor_style अणु INVALID_STYLE = -1, OLD_STYLE = 0, NEW_STYLE = 1 पूर्ण;
+enum nv40_sensor_style { INVALID_STYLE = -1, OLD_STYLE = 0, NEW_STYLE = 1 };
 
-अटल क्रमागत nv40_sensor_style
-nv40_sensor_style(काष्ठा nvkm_therm *therm)
-अणु
-	चयन (therm->subdev.device->chipset) अणु
-	हाल 0x43:
-	हाल 0x44:
-	हाल 0x4a:
-	हाल 0x47:
-		वापस OLD_STYLE;
-	हाल 0x46:
-	हाल 0x49:
-	हाल 0x4b:
-	हाल 0x4e:
-	हाल 0x4c:
-	हाल 0x67:
-	हाल 0x68:
-	हाल 0x63:
-		वापस NEW_STYLE;
-	शेष:
-		वापस INVALID_STYLE;
-	पूर्ण
-पूर्ण
+static enum nv40_sensor_style
+nv40_sensor_style(struct nvkm_therm *therm)
+{
+	switch (therm->subdev.device->chipset) {
+	case 0x43:
+	case 0x44:
+	case 0x4a:
+	case 0x47:
+		return OLD_STYLE;
+	case 0x46:
+	case 0x49:
+	case 0x4b:
+	case 0x4e:
+	case 0x4c:
+	case 0x67:
+	case 0x68:
+	case 0x63:
+		return NEW_STYLE;
+	default:
+		return INVALID_STYLE;
+	}
+}
 
-अटल पूर्णांक
-nv40_sensor_setup(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
-	क्रमागत nv40_sensor_style style = nv40_sensor_style(therm);
+static int
+nv40_sensor_setup(struct nvkm_therm *therm)
+{
+	struct nvkm_device *device = therm->subdev.device;
+	enum nv40_sensor_style style = nv40_sensor_style(therm);
 
-	/* enable ADC पढ़ोout and disable the ALARM threshold */
-	अगर (style == NEW_STYLE) अणु
+	/* enable ADC readout and disable the ALARM threshold */
+	if (style == NEW_STYLE) {
 		nvkm_mask(device, 0x15b8, 0x80000000, 0);
 		nvkm_wr32(device, 0x15b0, 0x80003fff);
-		mdelay(20); /* रुको क्रम the temperature to stabilize */
-		वापस nvkm_rd32(device, 0x15b4) & 0x3fff;
-	पूर्ण अन्यथा अगर (style == OLD_STYLE) अणु
+		mdelay(20); /* wait for the temperature to stabilize */
+		return nvkm_rd32(device, 0x15b4) & 0x3fff;
+	} else if (style == OLD_STYLE) {
 		nvkm_wr32(device, 0x15b0, 0xff);
-		mdelay(20); /* रुको क्रम the temperature to stabilize */
-		वापस nvkm_rd32(device, 0x15b4) & 0xff;
-	पूर्ण अन्यथा
-		वापस -ENODEV;
-पूर्ण
+		mdelay(20); /* wait for the temperature to stabilize */
+		return nvkm_rd32(device, 0x15b4) & 0xff;
+	} else
+		return -ENODEV;
+}
 
-अटल पूर्णांक
-nv40_temp_get(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_device *device = therm->subdev.device;
-	काष्ठा nvbios_therm_sensor *sensor = &therm->bios_sensor;
-	क्रमागत nv40_sensor_style style = nv40_sensor_style(therm);
-	पूर्णांक core_temp;
+static int
+nv40_temp_get(struct nvkm_therm *therm)
+{
+	struct nvkm_device *device = therm->subdev.device;
+	struct nvbios_therm_sensor *sensor = &therm->bios_sensor;
+	enum nv40_sensor_style style = nv40_sensor_style(therm);
+	int core_temp;
 
-	अगर (style == NEW_STYLE) अणु
+	if (style == NEW_STYLE) {
 		nvkm_wr32(device, 0x15b0, 0x80003fff);
 		core_temp = nvkm_rd32(device, 0x15b4) & 0x3fff;
-	पूर्ण अन्यथा अगर (style == OLD_STYLE) अणु
+	} else if (style == OLD_STYLE) {
 		nvkm_wr32(device, 0x15b0, 0xff);
 		core_temp = nvkm_rd32(device, 0x15b4) & 0xff;
-	पूर्ण अन्यथा
-		वापस -ENODEV;
+	} else
+		return -ENODEV;
 
-	/* अगर the slope or the offset is unset, करो no use the sensor */
-	अगर (!sensor->slope_भाग || !sensor->slope_mult ||
+	/* if the slope or the offset is unset, do no use the sensor */
+	if (!sensor->slope_div || !sensor->slope_mult ||
 	    !sensor->offset_num || !sensor->offset_den)
-	    वापस -ENODEV;
+	    return -ENODEV;
 
-	core_temp = core_temp * sensor->slope_mult / sensor->slope_भाग;
+	core_temp = core_temp * sensor->slope_mult / sensor->slope_div;
 	core_temp = core_temp + sensor->offset_num / sensor->offset_den;
-	core_temp = core_temp + sensor->offset_स्थिरant - 8;
+	core_temp = core_temp + sensor->offset_constant - 8;
 
-	/* reserve negative temperatures क्रम errors */
-	अगर (core_temp < 0)
+	/* reserve negative temperatures for errors */
+	if (core_temp < 0)
 		core_temp = 0;
 
-	वापस core_temp;
-पूर्ण
+	return core_temp;
+}
 
-अटल पूर्णांक
-nv40_fan_pwm_ctrl(काष्ठा nvkm_therm *therm, पूर्णांक line, bool enable)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
+static int
+nv40_fan_pwm_ctrl(struct nvkm_therm *therm, int line, bool enable)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_device *device = subdev->device;
 	u32 mask = enable ? 0x80000000 : 0x00000000;
-	अगर      (line == 2) nvkm_mask(device, 0x0010f0, 0x80000000, mask);
-	अन्यथा अगर (line == 9) nvkm_mask(device, 0x0015f4, 0x80000000, mask);
-	अन्यथा अणु
+	if      (line == 2) nvkm_mask(device, 0x0010f0, 0x80000000, mask);
+	else if (line == 9) nvkm_mask(device, 0x0015f4, 0x80000000, mask);
+	else {
 		nvkm_error(subdev, "unknown pwm ctrl for gpio %d\n", line);
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल पूर्णांक
-nv40_fan_pwm_get(काष्ठा nvkm_therm *therm, पूर्णांक line, u32 *भागs, u32 *duty)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	अगर (line == 2) अणु
+static int
+nv40_fan_pwm_get(struct nvkm_therm *therm, int line, u32 *divs, u32 *duty)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_device *device = subdev->device;
+	if (line == 2) {
 		u32 reg = nvkm_rd32(device, 0x0010f0);
-		अगर (reg & 0x80000000) अणु
+		if (reg & 0x80000000) {
 			*duty = (reg & 0x7fff0000) >> 16;
-			*भागs = (reg & 0x00007fff);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा
-	अगर (line == 9) अणु
+			*divs = (reg & 0x00007fff);
+			return 0;
+		}
+	} else
+	if (line == 9) {
 		u32 reg = nvkm_rd32(device, 0x0015f4);
-		अगर (reg & 0x80000000) अणु
-			*भागs = nvkm_rd32(device, 0x0015f8);
+		if (reg & 0x80000000) {
+			*divs = nvkm_rd32(device, 0x0015f8);
 			*duty = (reg & 0x7fffffff);
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return 0;
+		}
+	} else {
 		nvkm_error(subdev, "unknown pwm ctrl for gpio %d\n", line);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-nv40_fan_pwm_set(काष्ठा nvkm_therm *therm, पूर्णांक line, u32 भागs, u32 duty)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	अगर (line == 2) अणु
-		nvkm_mask(device, 0x0010f0, 0x7fff7fff, (duty << 16) | भागs);
-	पूर्ण अन्यथा
-	अगर (line == 9) अणु
-		nvkm_wr32(device, 0x0015f8, भागs);
+static int
+nv40_fan_pwm_set(struct nvkm_therm *therm, int line, u32 divs, u32 duty)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_device *device = subdev->device;
+	if (line == 2) {
+		nvkm_mask(device, 0x0010f0, 0x7fff7fff, (duty << 16) | divs);
+	} else
+	if (line == 9) {
+		nvkm_wr32(device, 0x0015f8, divs);
 		nvkm_mask(device, 0x0015f4, 0x7fffffff, duty);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvkm_error(subdev, "unknown pwm ctrl for gpio %d\n", line);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
-nv40_therm_पूर्णांकr(काष्ठा nvkm_therm *therm)
-अणु
-	काष्ठा nvkm_subdev *subdev = &therm->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	uपूर्णांक32_t stat = nvkm_rd32(device, 0x1100);
+void
+nv40_therm_intr(struct nvkm_therm *therm)
+{
+	struct nvkm_subdev *subdev = &therm->subdev;
+	struct nvkm_device *device = subdev->device;
+	uint32_t stat = nvkm_rd32(device, 0x1100);
 
 	/* traitement */
 
@@ -178,28 +177,28 @@ nv40_therm_पूर्णांकr(काष्ठा nvkm_therm *therm)
 	nvkm_wr32(device, 0x1100, 0x70000);
 
 	nvkm_error(subdev, "THERM received an IRQ: stat = %x\n", stat);
-पूर्ण
+}
 
-अटल व्योम
-nv40_therm_init(काष्ठा nvkm_therm *therm)
-अणु
+static void
+nv40_therm_init(struct nvkm_therm *therm)
+{
 	nv40_sensor_setup(therm);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_therm_func
-nv40_therm = अणु
+static const struct nvkm_therm_func
+nv40_therm = {
 	.init = nv40_therm_init,
-	.पूर्णांकr = nv40_therm_पूर्णांकr,
+	.intr = nv40_therm_intr,
 	.pwm_ctrl = nv40_fan_pwm_ctrl,
 	.pwm_get = nv40_fan_pwm_get,
 	.pwm_set = nv40_fan_pwm_set,
 	.temp_get = nv40_temp_get,
 	.program_alarms = nvkm_therm_program_alarms_polling,
-पूर्ण;
+};
 
-पूर्णांक
-nv40_therm_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
-	       काष्ठा nvkm_therm **ptherm)
-अणु
-	वापस nvkm_therm_new_(&nv40_therm, device, type, inst, ptherm);
-पूर्ण
+int
+nv40_therm_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_therm **ptherm)
+{
+	return nvkm_therm_new_(&nv40_therm, device, type, inst, ptherm);
+}

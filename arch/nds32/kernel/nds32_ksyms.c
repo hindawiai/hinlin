@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/in6.h>
+#include <linux/syscalls.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/checksum.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/ftrace.h>
-#समावेश <यंत्र/proc-fns.h>
+#include <asm/checksum.h>
+#include <asm/io.h>
+#include <asm/ftrace.h>
+#include <asm/proc-fns.h>
 
 /* mem functions */
-EXPORT_SYMBOL(स_रखो);
-EXPORT_SYMBOL(स_नकल);
-EXPORT_SYMBOL(स_हटाओ);
+EXPORT_SYMBOL(memset);
+EXPORT_SYMBOL(memcpy);
+EXPORT_SYMBOL(memmove);
 EXPORT_SYMBOL(memzero);
 
 /* user mem (segment) */

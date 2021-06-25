@@ -1,151 +1,150 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_NETFILTER_H
-#घोषणा __LINUX_NETFILTER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_NETFILTER_H
+#define __LINUX_NETFILTER_H
 
-#समावेश <linux/init.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/net.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/list.h>
-#समावेश <linux/अटल_key.h>
-#समावेश <linux/netfilter_defs.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/sockptr.h>
-#समावेश <net/net_namespace.h>
+#include <linux/init.h>
+#include <linux/skbuff.h>
+#include <linux/net.h>
+#include <linux/if.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <linux/wait.h>
+#include <linux/list.h>
+#include <linux/static_key.h>
+#include <linux/netfilter_defs.h>
+#include <linux/netdevice.h>
+#include <linux/sockptr.h>
+#include <net/net_namespace.h>
 
-अटल अंतरभूत पूर्णांक NF_DROP_GETERR(पूर्णांक verdict)
-अणु
-	वापस -(verdict >> NF_VERDICT_QBITS);
-पूर्ण
+static inline int NF_DROP_GETERR(int verdict)
+{
+	return -(verdict >> NF_VERDICT_QBITS);
+}
 
-अटल अंतरभूत पूर्णांक nf_inet_addr_cmp(स्थिर जोड़ nf_inet_addr *a1,
-				   स्थिर जोड़ nf_inet_addr *a2)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	स्थिर अचिन्हित दीर्घ *ul1 = (स्थिर अचिन्हित दीर्घ *)a1;
-	स्थिर अचिन्हित दीर्घ *ul2 = (स्थिर अचिन्हित दीर्घ *)a2;
+static inline int nf_inet_addr_cmp(const union nf_inet_addr *a1,
+				   const union nf_inet_addr *a2)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	const unsigned long *ul1 = (const unsigned long *)a1;
+	const unsigned long *ul2 = (const unsigned long *)a2;
 
-	वापस ((ul1[0] ^ ul2[0]) | (ul1[1] ^ ul2[1])) == 0UL;
-#अन्यथा
-	वापस a1->all[0] == a2->all[0] &&
+	return ((ul1[0] ^ ul2[0]) | (ul1[1] ^ ul2[1])) == 0UL;
+#else
+	return a1->all[0] == a2->all[0] &&
 	       a1->all[1] == a2->all[1] &&
 	       a1->all[2] == a2->all[2] &&
 	       a1->all[3] == a2->all[3];
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत व्योम nf_inet_addr_mask(स्थिर जोड़ nf_inet_addr *a1,
-				     जोड़ nf_inet_addr *result,
-				     स्थिर जोड़ nf_inet_addr *mask)
-अणु
-#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
-	स्थिर अचिन्हित दीर्घ *ua = (स्थिर अचिन्हित दीर्घ *)a1;
-	अचिन्हित दीर्घ *ur = (अचिन्हित दीर्घ *)result;
-	स्थिर अचिन्हित दीर्घ *um = (स्थिर अचिन्हित दीर्घ *)mask;
+static inline void nf_inet_addr_mask(const union nf_inet_addr *a1,
+				     union nf_inet_addr *result,
+				     const union nf_inet_addr *mask)
+{
+#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && BITS_PER_LONG == 64
+	const unsigned long *ua = (const unsigned long *)a1;
+	unsigned long *ur = (unsigned long *)result;
+	const unsigned long *um = (const unsigned long *)mask;
 
 	ur[0] = ua[0] & um[0];
 	ur[1] = ua[1] & um[1];
-#अन्यथा
+#else
 	result->all[0] = a1->all[0] & mask->all[0];
 	result->all[1] = a1->all[1] & mask->all[1];
 	result->all[2] = a1->all[2] & mask->all[2];
 	result->all[3] = a1->all[3] & mask->all[3];
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-पूर्णांक netfilter_init(व्योम);
+int netfilter_init(void);
 
-काष्ठा sk_buff;
+struct sk_buff;
 
-काष्ठा nf_hook_ops;
+struct nf_hook_ops;
 
-काष्ठा sock;
+struct sock;
 
-काष्ठा nf_hook_state अणु
-	अचिन्हित पूर्णांक hook;
-	u_पूर्णांक8_t pf;
-	काष्ठा net_device *in;
-	काष्ठा net_device *out;
-	काष्ठा sock *sk;
-	काष्ठा net *net;
-	पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *);
-पूर्ण;
+struct nf_hook_state {
+	unsigned int hook;
+	u_int8_t pf;
+	struct net_device *in;
+	struct net_device *out;
+	struct sock *sk;
+	struct net *net;
+	int (*okfn)(struct net *, struct sock *, struct sk_buff *);
+};
 
-प्रकार अचिन्हित पूर्णांक nf_hookfn(व्योम *priv,
-			       काष्ठा sk_buff *skb,
-			       स्थिर काष्ठा nf_hook_state *state);
-काष्ठा nf_hook_ops अणु
-	/* User fills in from here करोwn. */
+typedef unsigned int nf_hookfn(void *priv,
+			       struct sk_buff *skb,
+			       const struct nf_hook_state *state);
+struct nf_hook_ops {
+	/* User fills in from here down. */
 	nf_hookfn		*hook;
-	काष्ठा net_device	*dev;
-	व्योम			*priv;
-	u_पूर्णांक8_t		pf;
-	अचिन्हित पूर्णांक		hooknum;
+	struct net_device	*dev;
+	void			*priv;
+	u_int8_t		pf;
+	unsigned int		hooknum;
 	/* Hooks are ordered in ascending priority. */
-	पूर्णांक			priority;
-पूर्ण;
+	int			priority;
+};
 
-काष्ठा nf_hook_entry अणु
+struct nf_hook_entry {
 	nf_hookfn			*hook;
-	व्योम				*priv;
-पूर्ण;
+	void				*priv;
+};
 
-काष्ठा nf_hook_entries_rcu_head अणु
-	काष्ठा rcu_head head;
-	व्योम	*allocation;
-पूर्ण;
+struct nf_hook_entries_rcu_head {
+	struct rcu_head head;
+	void	*allocation;
+};
 
-काष्ठा nf_hook_entries अणु
+struct nf_hook_entries {
 	u16				num_hook_entries;
 	/* padding */
-	काष्ठा nf_hook_entry		hooks[];
+	struct nf_hook_entry		hooks[];
 
-	/* trailer: poपूर्णांकers to original orig_ops of each hook,
-	 * followed by rcu_head and scratch space used क्रम मुक्तing
-	 * the काष्ठाure via call_rcu.
+	/* trailer: pointers to original orig_ops of each hook,
+	 * followed by rcu_head and scratch space used for freeing
+	 * the structure via call_rcu.
 	 *
-	 *   This is not part of काष्ठा nf_hook_entry since its only
-	 *   needed in slow path (hook रेजिस्टर/unरेजिस्टर):
-	 * स्थिर काष्ठा nf_hook_ops     *orig_ops[]
+	 *   This is not part of struct nf_hook_entry since its only
+	 *   needed in slow path (hook register/unregister):
+	 * const struct nf_hook_ops     *orig_ops[]
 	 *
 	 *   For the same reason, we store this at end -- its
 	 *   only needed when a hook is deleted, not during
 	 *   packet path processing:
-	 * काष्ठा nf_hook_entries_rcu_head     head
+	 * struct nf_hook_entries_rcu_head     head
 	 */
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_NETFILTER
-अटल अंतरभूत काष्ठा nf_hook_ops **nf_hook_entries_get_hook_ops(स्थिर काष्ठा nf_hook_entries *e)
-अणु
-	अचिन्हित पूर्णांक n = e->num_hook_entries;
-	स्थिर व्योम *hook_end;
+#ifdef CONFIG_NETFILTER
+static inline struct nf_hook_ops **nf_hook_entries_get_hook_ops(const struct nf_hook_entries *e)
+{
+	unsigned int n = e->num_hook_entries;
+	const void *hook_end;
 
 	hook_end = &e->hooks[n]; /* this is *past* ->hooks[]! */
 
-	वापस (काष्ठा nf_hook_ops **)hook_end;
-पूर्ण
+	return (struct nf_hook_ops **)hook_end;
+}
 
-अटल अंतरभूत पूर्णांक
-nf_hook_entry_hookfn(स्थिर काष्ठा nf_hook_entry *entry, काष्ठा sk_buff *skb,
-		     काष्ठा nf_hook_state *state)
-अणु
-	वापस entry->hook(entry->priv, skb, state);
-पूर्ण
+static inline int
+nf_hook_entry_hookfn(const struct nf_hook_entry *entry, struct sk_buff *skb,
+		     struct nf_hook_state *state)
+{
+	return entry->hook(entry->priv, skb, state);
+}
 
-अटल अंतरभूत व्योम nf_hook_state_init(काष्ठा nf_hook_state *p,
-				      अचिन्हित पूर्णांक hook,
-				      u_पूर्णांक8_t pf,
-				      काष्ठा net_device *indev,
-				      काष्ठा net_device *outdev,
-				      काष्ठा sock *sk,
-				      काष्ठा net *net,
-				      पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
+static inline void nf_hook_state_init(struct nf_hook_state *p,
+				      unsigned int hook,
+				      u_int8_t pf,
+				      struct net_device *indev,
+				      struct net_device *outdev,
+				      struct sock *sk,
+				      struct net *net,
+				      int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
 	p->hook = hook;
 	p->pf = pf;
 	p->in = indev;
@@ -153,328 +152,328 @@ nf_hook_entry_hookfn(स्थिर काष्ठा nf_hook_entry *entry, �
 	p->sk = sk;
 	p->net = net;
 	p->okfn = okfn;
-पूर्ण
+}
 
 
 
-काष्ठा nf_sockopt_ops अणु
-	काष्ठा list_head list;
+struct nf_sockopt_ops {
+	struct list_head list;
 
-	u_पूर्णांक8_t pf;
+	u_int8_t pf;
 
-	/* Non-inclusive ranges: use 0/0/शून्य to never get called. */
-	पूर्णांक set_opपंचांगin;
-	पूर्णांक set_opपंचांगax;
-	पूर्णांक (*set)(काष्ठा sock *sk, पूर्णांक optval, sockptr_t arg,
-		   अचिन्हित पूर्णांक len);
-	पूर्णांक get_opपंचांगin;
-	पूर्णांक get_opपंचांगax;
-	पूर्णांक (*get)(काष्ठा sock *sk, पूर्णांक optval, व्योम __user *user, पूर्णांक *len);
-	/* Use the module काष्ठा to lock set/get code in place */
-	काष्ठा module *owner;
-पूर्ण;
+	/* Non-inclusive ranges: use 0/0/NULL to never get called. */
+	int set_optmin;
+	int set_optmax;
+	int (*set)(struct sock *sk, int optval, sockptr_t arg,
+		   unsigned int len);
+	int get_optmin;
+	int get_optmax;
+	int (*get)(struct sock *sk, int optval, void __user *user, int *len);
+	/* Use the module struct to lock set/get code in place */
+	struct module *owner;
+};
 
-/* Function to रेजिस्टर/unरेजिस्टर hook poपूर्णांकs. */
-पूर्णांक nf_रेजिस्टर_net_hook(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
-व्योम nf_unरेजिस्टर_net_hook(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops);
-पूर्णांक nf_रेजिस्टर_net_hooks(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *reg,
-			  अचिन्हित पूर्णांक n);
-व्योम nf_unरेजिस्टर_net_hooks(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *reg,
-			     अचिन्हित पूर्णांक n);
+/* Function to register/unregister hook points. */
+int nf_register_net_hook(struct net *net, const struct nf_hook_ops *ops);
+void nf_unregister_net_hook(struct net *net, const struct nf_hook_ops *ops);
+int nf_register_net_hooks(struct net *net, const struct nf_hook_ops *reg,
+			  unsigned int n);
+void nf_unregister_net_hooks(struct net *net, const struct nf_hook_ops *reg,
+			     unsigned int n);
 
-/* Functions to रेजिस्टर get/setsockopt ranges (non-inclusive).  You
+/* Functions to register get/setsockopt ranges (non-inclusive).  You
    need to check permissions yourself! */
-पूर्णांक nf_रेजिस्टर_sockopt(काष्ठा nf_sockopt_ops *reg);
-व्योम nf_unरेजिस्टर_sockopt(काष्ठा nf_sockopt_ops *reg);
+int nf_register_sockopt(struct nf_sockopt_ops *reg);
+void nf_unregister_sockopt(struct nf_sockopt_ops *reg);
 
-#अगर_घोषित CONFIG_JUMP_LABEL
-बाह्य काष्ठा अटल_key nf_hooks_needed[NFPROTO_NUMPROTO][NF_MAX_HOOKS];
-#पूर्ण_अगर
+#ifdef CONFIG_JUMP_LABEL
+extern struct static_key nf_hooks_needed[NFPROTO_NUMPROTO][NF_MAX_HOOKS];
+#endif
 
-पूर्णांक nf_hook_slow(काष्ठा sk_buff *skb, काष्ठा nf_hook_state *state,
-		 स्थिर काष्ठा nf_hook_entries *e, अचिन्हित पूर्णांक i);
+int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state,
+		 const struct nf_hook_entries *e, unsigned int i);
 
-व्योम nf_hook_slow_list(काष्ठा list_head *head, काष्ठा nf_hook_state *state,
-		       स्थिर काष्ठा nf_hook_entries *e);
+void nf_hook_slow_list(struct list_head *head, struct nf_hook_state *state,
+		       const struct nf_hook_entries *e);
 /**
  *	nf_hook - call a netfilter hook
  *
- *	Returns 1 अगर the hook has allowed the packet to pass.  The function
- *	okfn must be invoked by the caller in this हाल.  Any other वापस
+ *	Returns 1 if the hook has allowed the packet to pass.  The function
+ *	okfn must be invoked by the caller in this case.  Any other return
  *	value indicates the packet has been consumed by the hook.
  */
-अटल अंतरभूत पूर्णांक nf_hook(u_पूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net,
-			  काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			  काष्ठा net_device *indev, काष्ठा net_device *outdev,
-			  पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
-	काष्ठा nf_hook_entries *hook_head = शून्य;
-	पूर्णांक ret = 1;
+static inline int nf_hook(u_int8_t pf, unsigned int hook, struct net *net,
+			  struct sock *sk, struct sk_buff *skb,
+			  struct net_device *indev, struct net_device *outdev,
+			  int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
+	struct nf_hook_entries *hook_head = NULL;
+	int ret = 1;
 
-#अगर_घोषित CONFIG_JUMP_LABEL
-	अगर (__builtin_स्थिरant_p(pf) &&
-	    __builtin_स्थिरant_p(hook) &&
-	    !अटल_key_false(&nf_hooks_needed[pf][hook]))
-		वापस 1;
-#पूर्ण_अगर
+#ifdef CONFIG_JUMP_LABEL
+	if (__builtin_constant_p(pf) &&
+	    __builtin_constant_p(hook) &&
+	    !static_key_false(&nf_hooks_needed[pf][hook]))
+		return 1;
+#endif
 
-	rcu_पढ़ो_lock();
-	चयन (pf) अणु
-	हाल NFPROTO_IPV4:
+	rcu_read_lock();
+	switch (pf) {
+	case NFPROTO_IPV4:
 		hook_head = rcu_dereference(net->nf.hooks_ipv4[hook]);
-		अवरोध;
-	हाल NFPROTO_IPV6:
+		break;
+	case NFPROTO_IPV6:
 		hook_head = rcu_dereference(net->nf.hooks_ipv6[hook]);
-		अवरोध;
-	हाल NFPROTO_ARP:
-#अगर_घोषित CONFIG_NETFILTER_FAMILY_ARP
-		अगर (WARN_ON_ONCE(hook >= ARRAY_SIZE(net->nf.hooks_arp)))
-			अवरोध;
+		break;
+	case NFPROTO_ARP:
+#ifdef CONFIG_NETFILTER_FAMILY_ARP
+		if (WARN_ON_ONCE(hook >= ARRAY_SIZE(net->nf.hooks_arp)))
+			break;
 		hook_head = rcu_dereference(net->nf.hooks_arp[hook]);
-#पूर्ण_अगर
-		अवरोध;
-	हाल NFPROTO_BRIDGE:
-#अगर_घोषित CONFIG_NETFILTER_FAMILY_BRIDGE
+#endif
+		break;
+	case NFPROTO_BRIDGE:
+#ifdef CONFIG_NETFILTER_FAMILY_BRIDGE
 		hook_head = rcu_dereference(net->nf.hooks_bridge[hook]);
-#पूर्ण_अगर
-		अवरोध;
-#अगर IS_ENABLED(CONFIG_DECNET)
-	हाल NFPROTO_DECNET:
+#endif
+		break;
+#if IS_ENABLED(CONFIG_DECNET)
+	case NFPROTO_DECNET:
 		hook_head = rcu_dereference(net->nf.hooks_decnet[hook]);
-		अवरोध;
-#पूर्ण_अगर
-	शेष:
+		break;
+#endif
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (hook_head) अणु
-		काष्ठा nf_hook_state state;
+	if (hook_head) {
+		struct nf_hook_state state;
 
 		nf_hook_state_init(&state, hook, pf, indev, outdev,
 				   sk, net, okfn);
 
 		ret = nf_hook_slow(skb, &state, hook_head, 0);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Activate hook; either okfn or kमुक्त_skb called, unless a hook
-   वापसs NF_STOLEN (in which हाल, it's up to the hook to deal with
+/* Activate hook; either okfn or kfree_skb called, unless a hook
+   returns NF_STOLEN (in which case, it's up to the hook to deal with
    the consequences).
 
-   Returns -ERRNO अगर packet dropped.  Zero means queued, stolen or
+   Returns -ERRNO if packet dropped.  Zero means queued, stolen or
    accepted.
 */
 
 /* RR:
-   > I करोn't want nf_hook to वापस anything because people might क्रमget
-   > about async and trust the वापस value to mean "packet was ok".
+   > I don't want nf_hook to return anything because people might forget
+   > about async and trust the return value to mean "packet was ok".
 
    AK:
-   Just करोcument it clearly, then you can expect some sense from kernel
+   Just document it clearly, then you can expect some sense from kernel
    coders :)
 */
 
-अटल अंतरभूत पूर्णांक
-NF_HOOK_COND(uपूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net, काष्ठा sock *sk,
-	     काष्ठा sk_buff *skb, काष्ठा net_device *in, काष्ठा net_device *out,
-	     पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *),
+static inline int
+NF_HOOK_COND(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk,
+	     struct sk_buff *skb, struct net_device *in, struct net_device *out,
+	     int (*okfn)(struct net *, struct sock *, struct sk_buff *),
 	     bool cond)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (!cond ||
+	if (!cond ||
 	    ((ret = nf_hook(pf, hook, net, sk, skb, in, out, okfn)) == 1))
 		ret = okfn(net, sk, skb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
-NF_HOOK(uपूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb,
-	काष्ठा net_device *in, काष्ठा net_device *out,
-	पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
-	पूर्णांक ret = nf_hook(pf, hook, net, sk, skb, in, out, okfn);
-	अगर (ret == 1)
+static inline int
+NF_HOOK(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk, struct sk_buff *skb,
+	struct net_device *in, struct net_device *out,
+	int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
+	int ret = nf_hook(pf, hook, net, sk, skb, in, out, okfn);
+	if (ret == 1)
 		ret = okfn(net, sk, skb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम
-NF_HOOK_LIST(uपूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net, काष्ठा sock *sk,
-	     काष्ठा list_head *head, काष्ठा net_device *in, काष्ठा net_device *out,
-	     पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
-	काष्ठा nf_hook_entries *hook_head = शून्य;
+static inline void
+NF_HOOK_LIST(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk,
+	     struct list_head *head, struct net_device *in, struct net_device *out,
+	     int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
+	struct nf_hook_entries *hook_head = NULL;
 
-#अगर_घोषित CONFIG_JUMP_LABEL
-	अगर (__builtin_स्थिरant_p(pf) &&
-	    __builtin_स्थिरant_p(hook) &&
-	    !अटल_key_false(&nf_hooks_needed[pf][hook]))
-		वापस;
-#पूर्ण_अगर
+#ifdef CONFIG_JUMP_LABEL
+	if (__builtin_constant_p(pf) &&
+	    __builtin_constant_p(hook) &&
+	    !static_key_false(&nf_hooks_needed[pf][hook]))
+		return;
+#endif
 
-	rcu_पढ़ो_lock();
-	चयन (pf) अणु
-	हाल NFPROTO_IPV4:
+	rcu_read_lock();
+	switch (pf) {
+	case NFPROTO_IPV4:
 		hook_head = rcu_dereference(net->nf.hooks_ipv4[hook]);
-		अवरोध;
-	हाल NFPROTO_IPV6:
+		break;
+	case NFPROTO_IPV6:
 		hook_head = rcu_dereference(net->nf.hooks_ipv6[hook]);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (hook_head) अणु
-		काष्ठा nf_hook_state state;
+	if (hook_head) {
+		struct nf_hook_state state;
 
 		nf_hook_state_init(&state, hook, pf, in, out, sk, net, okfn);
 
 		nf_hook_slow_list(head, &state, hook_head);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
 /* Call setsockopt() */
-पूर्णांक nf_setsockopt(काष्ठा sock *sk, u_पूर्णांक8_t pf, पूर्णांक optval, sockptr_t opt,
-		  अचिन्हित पूर्णांक len);
-पूर्णांक nf_माला_लोockopt(काष्ठा sock *sk, u_पूर्णांक8_t pf, पूर्णांक optval, अक्षर __user *opt,
-		  पूर्णांक *len);
+int nf_setsockopt(struct sock *sk, u_int8_t pf, int optval, sockptr_t opt,
+		  unsigned int len);
+int nf_getsockopt(struct sock *sk, u_int8_t pf, int optval, char __user *opt,
+		  int *len);
 
-काष्ठा flowi;
-काष्ठा nf_queue_entry;
+struct flowi;
+struct nf_queue_entry;
 
-__sum16 nf_checksum(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hook,
-		    अचिन्हित पूर्णांक dataoff, u_पूर्णांक8_t protocol,
-		    अचिन्हित लघु family);
+__sum16 nf_checksum(struct sk_buff *skb, unsigned int hook,
+		    unsigned int dataoff, u_int8_t protocol,
+		    unsigned short family);
 
-__sum16 nf_checksum_partial(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hook,
-			    अचिन्हित पूर्णांक dataoff, अचिन्हित पूर्णांक len,
-			    u_पूर्णांक8_t protocol, अचिन्हित लघु family);
-पूर्णांक nf_route(काष्ठा net *net, काष्ठा dst_entry **dst, काष्ठा flowi *fl,
-	     bool strict, अचिन्हित लघु family);
-पूर्णांक nf_reroute(काष्ठा sk_buff *skb, काष्ठा nf_queue_entry *entry);
+__sum16 nf_checksum_partial(struct sk_buff *skb, unsigned int hook,
+			    unsigned int dataoff, unsigned int len,
+			    u_int8_t protocol, unsigned short family);
+int nf_route(struct net *net, struct dst_entry **dst, struct flowi *fl,
+	     bool strict, unsigned short family);
+int nf_reroute(struct sk_buff *skb, struct nf_queue_entry *entry);
 
-#समावेश <net/flow.h>
+#include <net/flow.h>
 
-काष्ठा nf_conn;
-क्रमागत nf_nat_manip_type;
-काष्ठा nlattr;
-क्रमागत ip_conntrack_dir;
+struct nf_conn;
+enum nf_nat_manip_type;
+struct nlattr;
+enum ip_conntrack_dir;
 
-काष्ठा nf_nat_hook अणु
-	पूर्णांक (*parse_nat_setup)(काष्ठा nf_conn *ct, क्रमागत nf_nat_manip_type manip,
-			       स्थिर काष्ठा nlattr *attr);
-	व्योम (*decode_session)(काष्ठा sk_buff *skb, काष्ठा flowi *fl);
-	अचिन्हित पूर्णांक (*manip_pkt)(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
-				  क्रमागत nf_nat_manip_type mtype,
-				  क्रमागत ip_conntrack_dir dir);
-पूर्ण;
+struct nf_nat_hook {
+	int (*parse_nat_setup)(struct nf_conn *ct, enum nf_nat_manip_type manip,
+			       const struct nlattr *attr);
+	void (*decode_session)(struct sk_buff *skb, struct flowi *fl);
+	unsigned int (*manip_pkt)(struct sk_buff *skb, struct nf_conn *ct,
+				  enum nf_nat_manip_type mtype,
+				  enum ip_conntrack_dir dir);
+};
 
-बाह्य काष्ठा nf_nat_hook __rcu *nf_nat_hook;
+extern struct nf_nat_hook __rcu *nf_nat_hook;
 
-अटल अंतरभूत व्योम
-nf_nat_decode_session(काष्ठा sk_buff *skb, काष्ठा flowi *fl, u_पूर्णांक8_t family)
-अणु
-#अगर IS_ENABLED(CONFIG_NF_NAT)
-	काष्ठा nf_nat_hook *nat_hook;
+static inline void
+nf_nat_decode_session(struct sk_buff *skb, struct flowi *fl, u_int8_t family)
+{
+#if IS_ENABLED(CONFIG_NF_NAT)
+	struct nf_nat_hook *nat_hook;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	nat_hook = rcu_dereference(nf_nat_hook);
-	अगर (nat_hook && nat_hook->decode_session)
+	if (nat_hook && nat_hook->decode_session)
 		nat_hook->decode_session(skb, fl);
-	rcu_पढ़ो_unlock();
-#पूर्ण_अगर
-पूर्ण
+	rcu_read_unlock();
+#endif
+}
 
-#अन्यथा /* !CONFIG_NETFILTER */
-अटल अंतरभूत पूर्णांक
-NF_HOOK_COND(uपूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net, काष्ठा sock *sk,
-	     काष्ठा sk_buff *skb, काष्ठा net_device *in, काष्ठा net_device *out,
-	     पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *),
+#else /* !CONFIG_NETFILTER */
+static inline int
+NF_HOOK_COND(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk,
+	     struct sk_buff *skb, struct net_device *in, struct net_device *out,
+	     int (*okfn)(struct net *, struct sock *, struct sk_buff *),
 	     bool cond)
-अणु
-	वापस okfn(net, sk, skb);
-पूर्ण
+{
+	return okfn(net, sk, skb);
+}
 
-अटल अंतरभूत पूर्णांक
-NF_HOOK(uपूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net, काष्ठा sock *sk,
-	काष्ठा sk_buff *skb, काष्ठा net_device *in, काष्ठा net_device *out,
-	पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
-	वापस okfn(net, sk, skb);
-पूर्ण
+static inline int
+NF_HOOK(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk,
+	struct sk_buff *skb, struct net_device *in, struct net_device *out,
+	int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
+	return okfn(net, sk, skb);
+}
 
-अटल अंतरभूत व्योम
-NF_HOOK_LIST(uपूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net, काष्ठा sock *sk,
-	     काष्ठा list_head *head, काष्ठा net_device *in, काष्ठा net_device *out,
-	     पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
-	/* nothing to करो */
-पूर्ण
+static inline void
+NF_HOOK_LIST(uint8_t pf, unsigned int hook, struct net *net, struct sock *sk,
+	     struct list_head *head, struct net_device *in, struct net_device *out,
+	     int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
+	/* nothing to do */
+}
 
-अटल अंतरभूत पूर्णांक nf_hook(u_पूर्णांक8_t pf, अचिन्हित पूर्णांक hook, काष्ठा net *net,
-			  काष्ठा sock *sk, काष्ठा sk_buff *skb,
-			  काष्ठा net_device *indev, काष्ठा net_device *outdev,
-			  पूर्णांक (*okfn)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *))
-अणु
-	वापस 1;
-पूर्ण
-काष्ठा flowi;
-अटल अंतरभूत व्योम
-nf_nat_decode_session(काष्ठा sk_buff *skb, काष्ठा flowi *fl, u_पूर्णांक8_t family)
-अणु
-पूर्ण
-#पूर्ण_अगर /*CONFIG_NETFILTER*/
+static inline int nf_hook(u_int8_t pf, unsigned int hook, struct net *net,
+			  struct sock *sk, struct sk_buff *skb,
+			  struct net_device *indev, struct net_device *outdev,
+			  int (*okfn)(struct net *, struct sock *, struct sk_buff *))
+{
+	return 1;
+}
+struct flowi;
+static inline void
+nf_nat_decode_session(struct sk_buff *skb, struct flowi *fl, u_int8_t family)
+{
+}
+#endif /*CONFIG_NETFILTER*/
 
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-#समावेश <linux/netfilter/nf_conntrack_zones_common.h>
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+#include <linux/netfilter/nf_conntrack_zones_common.h>
 
-बाह्य व्योम (*ip_ct_attach)(काष्ठा sk_buff *, स्थिर काष्ठा sk_buff *) __rcu;
-व्योम nf_ct_attach(काष्ठा sk_buff *, स्थिर काष्ठा sk_buff *);
-काष्ठा nf_conntrack_tuple;
-bool nf_ct_get_tuple_skb(काष्ठा nf_conntrack_tuple *dst_tuple,
-			 स्थिर काष्ठा sk_buff *skb);
-#अन्यथा
-अटल अंतरभूत व्योम nf_ct_attach(काष्ठा sk_buff *new, काष्ठा sk_buff *skb) अणुपूर्ण
-काष्ठा nf_conntrack_tuple;
-अटल अंतरभूत bool nf_ct_get_tuple_skb(काष्ठा nf_conntrack_tuple *dst_tuple,
-				       स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+extern void (*ip_ct_attach)(struct sk_buff *, const struct sk_buff *) __rcu;
+void nf_ct_attach(struct sk_buff *, const struct sk_buff *);
+struct nf_conntrack_tuple;
+bool nf_ct_get_tuple_skb(struct nf_conntrack_tuple *dst_tuple,
+			 const struct sk_buff *skb);
+#else
+static inline void nf_ct_attach(struct sk_buff *new, struct sk_buff *skb) {}
+struct nf_conntrack_tuple;
+static inline bool nf_ct_get_tuple_skb(struct nf_conntrack_tuple *dst_tuple,
+				       const struct sk_buff *skb)
+{
+	return false;
+}
+#endif
 
-काष्ठा nf_conn;
-क्रमागत ip_conntrack_info;
+struct nf_conn;
+enum ip_conntrack_info;
 
-काष्ठा nf_ct_hook अणु
-	पूर्णांक (*update)(काष्ठा net *net, काष्ठा sk_buff *skb);
-	व्योम (*destroy)(काष्ठा nf_conntrack *);
-	bool (*get_tuple_skb)(काष्ठा nf_conntrack_tuple *,
-			      स्थिर काष्ठा sk_buff *);
-पूर्ण;
-बाह्य काष्ठा nf_ct_hook __rcu *nf_ct_hook;
+struct nf_ct_hook {
+	int (*update)(struct net *net, struct sk_buff *skb);
+	void (*destroy)(struct nf_conntrack *);
+	bool (*get_tuple_skb)(struct nf_conntrack_tuple *,
+			      const struct sk_buff *);
+};
+extern struct nf_ct_hook __rcu *nf_ct_hook;
 
-काष्ठा nlattr;
+struct nlattr;
 
-काष्ठा nfnl_ct_hook अणु
-	माप_प्रकार (*build_size)(स्थिर काष्ठा nf_conn *ct);
-	पूर्णांक (*build)(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
-		     क्रमागत ip_conntrack_info ctinfo,
-		     u_पूर्णांक16_t ct_attr, u_पूर्णांक16_t ct_info_attr);
-	पूर्णांक (*parse)(स्थिर काष्ठा nlattr *attr, काष्ठा nf_conn *ct);
-	पूर्णांक (*attach_expect)(स्थिर काष्ठा nlattr *attr, काष्ठा nf_conn *ct,
+struct nfnl_ct_hook {
+	size_t (*build_size)(const struct nf_conn *ct);
+	int (*build)(struct sk_buff *skb, struct nf_conn *ct,
+		     enum ip_conntrack_info ctinfo,
+		     u_int16_t ct_attr, u_int16_t ct_info_attr);
+	int (*parse)(const struct nlattr *attr, struct nf_conn *ct);
+	int (*attach_expect)(const struct nlattr *attr, struct nf_conn *ct,
 			     u32 portid, u32 report);
-	व्योम (*seq_adjust)(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
-			   क्रमागत ip_conntrack_info ctinfo, s32 off);
-पूर्ण;
-बाह्य काष्ठा nfnl_ct_hook __rcu *nfnl_ct_hook;
+	void (*seq_adjust)(struct sk_buff *skb, struct nf_conn *ct,
+			   enum ip_conntrack_info ctinfo, s32 off);
+};
+extern struct nfnl_ct_hook __rcu *nfnl_ct_hook;
 
 /**
  * nf_skb_duplicated - TEE target has sent a packet
@@ -487,4 +486,4 @@ bool nf_ct_get_tuple_skb(काष्ठा nf_conntrack_tuple *dst_tuple,
  */
 DECLARE_PER_CPU(bool, nf_skb_duplicated);
 
-#पूर्ण_अगर /*__LINUX_NETFILTER_H*/
+#endif /*__LINUX_NETFILTER_H*/

@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/input/keyboard/jornada680_kbd.c
  *
- * HP Jornada 620/660/680/690 scan keyboard platक्रमm driver
+ * HP Jornada 620/660/680/690 scan keyboard platform driver
  *  Copyright (C) 2007  Kristoffer Ericson <Kristoffer.Ericson@gmail.com>
  *
  * Based on hp680_keyb.c
@@ -14,40 +13,40 @@
  *  Copyright (C) 2000 Niibe Yutaka (HP620 Keyb translation table)
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/device.h>
+#include <linux/input.h>
+#include <linux/interrupt.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/delay.h>
-#समावेश <यंत्र/पन.स>
+#include <asm/delay.h>
+#include <asm/io.h>
 
-#घोषणा PCCR 0xa4000104
-#घोषणा PDCR 0xa4000106
-#घोषणा PECR 0xa4000108
-#घोषणा PFCR 0xa400010a
-#घोषणा PCDR 0xa4000124
-#घोषणा PDDR 0xa4000126
-#घोषणा PEDR 0xa4000128
-#घोषणा PFDR 0xa400012a
-#घोषणा PGDR 0xa400012c
-#घोषणा PHDR 0xa400012e
-#घोषणा PJDR 0xa4000130
-#घोषणा PKDR 0xa4000132
-#घोषणा PLDR 0xa4000134
+#define PCCR 0xa4000104
+#define PDCR 0xa4000106
+#define PECR 0xa4000108
+#define PFCR 0xa400010a
+#define PCDR 0xa4000124
+#define PDDR 0xa4000126
+#define PEDR 0xa4000128
+#define PFDR 0xa400012a
+#define PGDR 0xa400012c
+#define PHDR 0xa400012e
+#define PJDR 0xa4000130
+#define PKDR 0xa4000132
+#define PLDR 0xa4000134
 
-अटल स्थिर अचिन्हित लघु jornada_scancodes[] = अणु
+static const unsigned short jornada_scancodes[] = {
 /* PTD1 */	KEY_CAPSLOCK, KEY_MACRO, KEY_LEFTCTRL, 0, KEY_ESC, KEY_KP5, 0, 0,			/*  1  -> 8   */
 		KEY_F1, KEY_F2, KEY_F3, KEY_F8, KEY_F7, KEY_F6, KEY_F4, KEY_F5,				/*  9  -> 16  */
 /* PTD5 */	KEY_SLASH, KEY_APOSTROPHE, KEY_ENTER, 0, KEY_Z, 0, 0, 0,				/*  17 -> 24  */
 		KEY_X, KEY_C, KEY_V, KEY_DOT, KEY_COMMA, KEY_M, KEY_B, KEY_N,				/*  25 -> 32  */
 /* PTD7 */	KEY_KP2, KEY_KP6, KEY_KP3, 0, 0, 0, 0, 0,						/*  33 -> 40  */
 		KEY_F10, KEY_RO, KEY_F9, KEY_KP4, KEY_NUMLOCK, KEY_SCROLLLOCK, KEY_LEFTALT, KEY_HANJA,	/*  41 -> 48  */
-/* PTE0 */	KEY_KATAKANA, KEY_KP0, KEY_GRAVE, 0, KEY_FIन_अंकCE, 0, 0, 0,				/*  49 -> 56  */
+/* PTE0 */	KEY_KATAKANA, KEY_KP0, KEY_GRAVE, 0, KEY_FINANCE, 0, 0, 0,				/*  49 -> 56  */
 		KEY_KPMINUS, KEY_HIRAGANA, KEY_SPACE, KEY_KPDOT, KEY_VOLUMEUP, 249, 0, 0,		/*  57 -> 64  */
 /* PTE1 */	KEY_SEMICOLON, KEY_RIGHTBRACE, KEY_BACKSLASH, 0, KEY_A, 0, 0, 0,			/*  65 -> 72  */
 		KEY_S, KEY_D, KEY_F, KEY_L, KEY_K, KEY_J, KEY_G, KEY_H,					/*  73 -> 80  */
@@ -59,56 +58,56 @@
 		KEY_2, KEY_3, KEY_4, KEY_9, KEY_8, KEY_7, KEY_5, KEY_6,					/* 121 -> 128 */
 /* **** */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0
-पूर्ण;
+};
 
-#घोषणा JORNADA_SCAN_SIZE	18
+#define JORNADA_SCAN_SIZE	18
 
-काष्ठा jornadakbd अणु
-	काष्ठा input_dev *input;
-	अचिन्हित लघु keymap[ARRAY_SIZE(jornada_scancodes)];
-	अचिन्हित अक्षर length;
-	अचिन्हित अक्षर old_scan[JORNADA_SCAN_SIZE];
-	अचिन्हित अक्षर new_scan[JORNADA_SCAN_SIZE];
-पूर्ण;
+struct jornadakbd {
+	struct input_dev *input;
+	unsigned short keymap[ARRAY_SIZE(jornada_scancodes)];
+	unsigned char length;
+	unsigned char old_scan[JORNADA_SCAN_SIZE];
+	unsigned char new_scan[JORNADA_SCAN_SIZE];
+};
 
-अटल व्योम jornada_parse_kbd(काष्ठा jornadakbd *jornadakbd)
-अणु
-	काष्ठा input_dev *input_dev = jornadakbd->input;
-	अचिन्हित लघु *keymap = jornadakbd->keymap;
-	अचिन्हित पूर्णांक sync_me = 0;
-	अचिन्हित पूर्णांक i, j;
+static void jornada_parse_kbd(struct jornadakbd *jornadakbd)
+{
+	struct input_dev *input_dev = jornadakbd->input;
+	unsigned short *keymap = jornadakbd->keymap;
+	unsigned int sync_me = 0;
+	unsigned int i, j;
 
-	क्रम (i = 0; i < JORNADA_SCAN_SIZE; i++) अणु
-		अचिन्हित अक्षर new = jornadakbd->new_scan[i];
-		अचिन्हित अक्षर old = jornadakbd->old_scan[i];
-		अचिन्हित पूर्णांक xor = new ^ old;
+	for (i = 0; i < JORNADA_SCAN_SIZE; i++) {
+		unsigned char new = jornadakbd->new_scan[i];
+		unsigned char old = jornadakbd->old_scan[i];
+		unsigned int xor = new ^ old;
 
-		अगर (xor == 0)
-			जारी;
+		if (xor == 0)
+			continue;
 
-		क्रम (j = 0; j < 8; j++) अणु
-			अचिन्हित पूर्णांक bit = 1 << j;
-			अगर (xor & bit) अणु
-				अचिन्हित पूर्णांक scancode = (i << 3) + j;
+		for (j = 0; j < 8; j++) {
+			unsigned int bit = 1 << j;
+			if (xor & bit) {
+				unsigned int scancode = (i << 3) + j;
 				input_event(input_dev,
 					    EV_MSC, MSC_SCAN, scancode);
 				input_report_key(input_dev,
 						 keymap[scancode],
 						 !(new & bit));
 				sync_me = 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (sync_me)
+	if (sync_me)
 	    input_sync(input_dev);
-पूर्ण
+}
 
-अटल व्योम jornada_scan_keyb(अचिन्हित अक्षर *s)
-अणु
-	पूर्णांक i;
-	अचिन्हित लघु ec_अटल, dc_अटल; /* = UINT16_t */
-	अचिन्हित अक्षर matrix_चयन[] = अणु
+static void jornada_scan_keyb(unsigned char *s)
+{
+	int i;
+	unsigned short ec_static, dc_static; /* = UINT16_t */
+	unsigned char matrix_switch[] = {
 		0xfd, 0xff,   /* PTD1 PD(1) */
 		0xdf, 0xff,   /* PTD5 PD(5) */
 		0x7f, 0xff,   /* PTD7 PD(7) */
@@ -117,14 +116,14 @@
 		0xff, 0xf7,   /* PTE3 PE(3) */
 		0xff, 0xbf,   /* PTE6 PE(6) */
 		0xff, 0x7f,   /* PTE7 PE(7) */
-	पूर्ण, *t = matrix_चयन;
+	}, *t = matrix_switch;
 	/* PD(x) :
 	1.   0xcc0c & (1~(1 << (2*(x)+1)))))
 	2.   (0xf0cf & 0xfffff) */
 	/* PE(x) :
 	1.   0xcc0c & 0xffff
 	2.   0xf0cf & (1~(1 << (2*(x)+1))))) */
-	अचिन्हित लघु matrix_PDE[] = अणु
+	unsigned short matrix_PDE[] = {
 		0xcc04, 0xf0cf,  /* PD(1) */
 		0xc40c, 0xf0cf,	 /* PD(5) */
 		0x4c0c, 0xf0cf,  /* PD(7) */
@@ -133,111 +132,111 @@
 		0xcc0c, 0xf04f,  /* PE(3) */
 		0xcc0c, 0xd0cf,	 /* PE(6) */
 		0xcc0c, 0x70cf,	 /* PE(7) */
-	पूर्ण, *y = matrix_PDE;
+	}, *y = matrix_PDE;
 
 	/* Save these control reg bits */
-	dc_अटल = (__raw_पढ़ोw(PDCR) & (~0xcc0c));
-	ec_अटल = (__raw_पढ़ोw(PECR) & (~0xf0cf));
+	dc_static = (__raw_readw(PDCR) & (~0xcc0c));
+	ec_static = (__raw_readw(PECR) & (~0xf0cf));
 
-	क्रम (i = 0; i < 8; i++) अणु
-		/* disable output क्रम all but the one we want to scan */
-		__raw_ग_लिखोw((dc_अटल | *y++), PDCR);
-		__raw_ग_लिखोw((ec_अटल | *y++), PECR);
+	for (i = 0; i < 8; i++) {
+		/* disable output for all but the one we want to scan */
+		__raw_writew((dc_static | *y++), PDCR);
+		__raw_writew((ec_static | *y++), PECR);
 		udelay(5);
 
 		/* Get scanline row */
-		__raw_ग_लिखोb(*t++, PDDR);
-		__raw_ग_लिखोb(*t++, PEDR);
+		__raw_writeb(*t++, PDDR);
+		__raw_writeb(*t++, PEDR);
 		udelay(50);
 
 		/* Read data */
-		*s++ = __raw_पढ़ोb(PCDR);
-		*s++ = __raw_पढ़ोb(PFDR);
-	पूर्ण
+		*s++ = __raw_readb(PCDR);
+		*s++ = __raw_readb(PFDR);
+	}
 	/* Scan no lines */
-	__raw_ग_लिखोb(0xff, PDDR);
-	__raw_ग_लिखोb(0xff, PEDR);
+	__raw_writeb(0xff, PDDR);
+	__raw_writeb(0xff, PEDR);
 
 	/* Enable all scanlines */
-	__raw_ग_लिखोw((dc_अटल | (0x5555 & 0xcc0c)),PDCR);
-	__raw_ग_लिखोw((ec_अटल | (0x5555 & 0xf0cf)),PECR);
+	__raw_writew((dc_static | (0x5555 & 0xcc0c)),PDCR);
+	__raw_writew((ec_static | (0x5555 & 0xf0cf)),PECR);
 
 	/* Ignore extra keys and events */
-	*s++ = __raw_पढ़ोb(PGDR);
-	*s++ = __raw_पढ़ोb(PHDR);
-पूर्ण
+	*s++ = __raw_readb(PGDR);
+	*s++ = __raw_readb(PHDR);
+}
 
-अटल व्योम jornadakbd680_poll(काष्ठा input_dev *input)
-अणु
-	काष्ठा jornadakbd *jornadakbd = input_get_drvdata(input);
+static void jornadakbd680_poll(struct input_dev *input)
+{
+	struct jornadakbd *jornadakbd = input_get_drvdata(input);
 
 	jornada_scan_keyb(jornadakbd->new_scan);
 	jornada_parse_kbd(jornadakbd);
-	स_नकल(jornadakbd->old_scan, jornadakbd->new_scan, JORNADA_SCAN_SIZE);
-पूर्ण
+	memcpy(jornadakbd->old_scan, jornadakbd->new_scan, JORNADA_SCAN_SIZE);
+}
 
-अटल पूर्णांक jornada680kbd_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा jornadakbd *jornadakbd;
-	काष्ठा input_dev *input_dev;
-	पूर्णांक i, error;
+static int jornada680kbd_probe(struct platform_device *pdev)
+{
+	struct jornadakbd *jornadakbd;
+	struct input_dev *input_dev;
+	int i, error;
 
-	jornadakbd = devm_kzalloc(&pdev->dev, माप(काष्ठा jornadakbd),
+	jornadakbd = devm_kzalloc(&pdev->dev, sizeof(struct jornadakbd),
 				  GFP_KERNEL);
-	अगर (!jornadakbd)
-		वापस -ENOMEM;
+	if (!jornadakbd)
+		return -ENOMEM;
 
 	input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!input_dev) अणु
+	if (!input_dev) {
 		dev_err(&pdev->dev, "failed to allocate input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	jornadakbd->input = input_dev;
 
-	स_नकल(jornadakbd->keymap, jornada_scancodes,
-		माप(jornadakbd->keymap));
+	memcpy(jornadakbd->keymap, jornada_scancodes,
+		sizeof(jornadakbd->keymap));
 
 	input_set_drvdata(input_dev, jornadakbd);
 	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REP);
 	input_dev->name = "HP Jornada 680 keyboard";
 	input_dev->phys = "jornadakbd/input0";
 	input_dev->keycode = jornadakbd->keymap;
-	input_dev->keycodesize = माप(अचिन्हित लघु);
+	input_dev->keycodesize = sizeof(unsigned short);
 	input_dev->keycodemax = ARRAY_SIZE(jornada_scancodes);
 	input_dev->id.bustype = BUS_HOST;
 
-	क्रम (i = 0; i < 128; i++)
-		अगर (jornadakbd->keymap[i])
+	for (i = 0; i < 128; i++)
+		if (jornadakbd->keymap[i])
 			__set_bit(jornadakbd->keymap[i], input_dev->keybit);
 	__clear_bit(KEY_RESERVED, input_dev->keybit);
 
 	input_set_capability(input_dev, EV_MSC, MSC_SCAN);
 
 	error = input_setup_polling(input_dev, jornadakbd680_poll);
-	अगर (error) अणु
+	if (error) {
 		dev_err(&pdev->dev, "failed to set up polling\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	input_set_poll_पूर्णांकerval(input_dev, 50 /* msec */);
+	input_set_poll_interval(input_dev, 50 /* msec */);
 
-	error = input_रेजिस्टर_device(input_dev);
-	अगर (error) अणु
+	error = input_register_device(input_dev);
+	if (error) {
 		dev_err(&pdev->dev, "failed to register input device\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver jornada680kbd_driver = अणु
-	.driver	= अणु
+static struct platform_driver jornada680kbd_driver = {
+	.driver	= {
 		.name	= "jornada680_kbd",
-	पूर्ण,
+	},
 	.probe	= jornada680kbd_probe,
-पूर्ण;
-module_platक्रमm_driver(jornada680kbd_driver);
+};
+module_platform_driver(jornada680kbd_driver);
 
 MODULE_AUTHOR("Kristoffer Ericson <kristoffer.ericson@gmail.com>");
 MODULE_DESCRIPTION("HP Jornada 620/660/680/690 Keyboard Driver");

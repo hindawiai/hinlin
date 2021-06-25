@@ -1,21 +1,20 @@
-<शैली गुरु>
-#अगर_अघोषित __NVIF_USER_H__
-#घोषणा __NVIF_USER_H__
-#समावेश <nvअगर/object.h>
-काष्ठा nvअगर_device;
+#ifndef __NVIF_USER_H__
+#define __NVIF_USER_H__
+#include <nvif/object.h>
+struct nvif_device;
 
-काष्ठा nvअगर_user अणु
-	स्थिर काष्ठा nvअगर_user_func *func;
-	काष्ठा nvअगर_object object;
-पूर्ण;
+struct nvif_user {
+	const struct nvif_user_func *func;
+	struct nvif_object object;
+};
 
-काष्ठा nvअगर_user_func अणु
-	व्योम (*करोorbell)(काष्ठा nvअगर_user *, u32 token);
-	u64 (*समय)(काष्ठा nvअगर_user *);
-पूर्ण;
+struct nvif_user_func {
+	void (*doorbell)(struct nvif_user *, u32 token);
+	u64 (*time)(struct nvif_user *);
+};
 
-पूर्णांक nvअगर_user_ctor(काष्ठा nvअगर_device *, स्थिर अक्षर *name);
-व्योम nvअगर_user_dtor(काष्ठा nvअगर_device *);
+int nvif_user_ctor(struct nvif_device *, const char *name);
+void nvif_user_dtor(struct nvif_device *);
 
-बाह्य स्थिर काष्ठा nvअगर_user_func nvअगर_userc361;
-#पूर्ण_अगर
+extern const struct nvif_user_func nvif_userc361;
+#endif

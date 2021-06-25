@@ -1,243 +1,242 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2021, Microsoft Corporation. */
 
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/ethtool.h>
+#include <linux/inetdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/ethtool.h>
 
-#समावेश "mana.h"
+#include "mana.h"
 
-अटल स्थिर काष्ठा अणु
-	अक्षर name[ETH_GSTRING_LEN];
+static const struct {
+	char name[ETH_GSTRING_LEN];
 	u16 offset;
-पूर्ण mana_eth_stats[] = अणु
-	अणु"stop_queue", दुरत्व(काष्ठा mana_ethtool_stats, stop_queue)पूर्ण,
-	अणु"wake_queue", दुरत्व(काष्ठा mana_ethtool_stats, wake_queue)पूर्ण,
-पूर्ण;
+} mana_eth_stats[] = {
+	{"stop_queue", offsetof(struct mana_ethtool_stats, stop_queue)},
+	{"wake_queue", offsetof(struct mana_ethtool_stats, wake_queue)},
+};
 
-अटल पूर्णांक mana_get_sset_count(काष्ठा net_device *ndev, पूर्णांक stringset)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
-	अचिन्हित पूर्णांक num_queues = apc->num_queues;
+static int mana_get_sset_count(struct net_device *ndev, int stringset)
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
+	unsigned int num_queues = apc->num_queues;
 
-	अगर (stringset != ETH_SS_STATS)
-		वापस -EINVAL;
+	if (stringset != ETH_SS_STATS)
+		return -EINVAL;
 
-	वापस ARRAY_SIZE(mana_eth_stats) + num_queues * 4;
-पूर्ण
+	return ARRAY_SIZE(mana_eth_stats) + num_queues * 4;
+}
 
-अटल व्योम mana_get_strings(काष्ठा net_device *ndev, u32 stringset, u8 *data)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
-	अचिन्हित पूर्णांक num_queues = apc->num_queues;
+static void mana_get_strings(struct net_device *ndev, u32 stringset, u8 *data)
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
+	unsigned int num_queues = apc->num_queues;
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	अगर (stringset != ETH_SS_STATS)
-		वापस;
+	if (stringset != ETH_SS_STATS)
+		return;
 
-	क्रम (i = 0; i < ARRAY_SIZE(mana_eth_stats); i++) अणु
-		स_नकल(p, mana_eth_stats[i].name, ETH_GSTRING_LEN);
+	for (i = 0; i < ARRAY_SIZE(mana_eth_stats); i++) {
+		memcpy(p, mana_eth_stats[i].name, ETH_GSTRING_LEN);
 		p += ETH_GSTRING_LEN;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < num_queues; i++) अणु
-		प्र_लिखो(p, "rx_%d_packets", i);
+	for (i = 0; i < num_queues; i++) {
+		sprintf(p, "rx_%d_packets", i);
 		p += ETH_GSTRING_LEN;
-		प्र_लिखो(p, "rx_%d_bytes", i);
+		sprintf(p, "rx_%d_bytes", i);
 		p += ETH_GSTRING_LEN;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < num_queues; i++) अणु
-		प्र_लिखो(p, "tx_%d_packets", i);
+	for (i = 0; i < num_queues; i++) {
+		sprintf(p, "tx_%d_packets", i);
 		p += ETH_GSTRING_LEN;
-		प्र_लिखो(p, "tx_%d_bytes", i);
+		sprintf(p, "tx_%d_bytes", i);
 		p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mana_get_ethtool_stats(काष्ठा net_device *ndev,
-				   काष्ठा ethtool_stats *e_stats, u64 *data)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
-	अचिन्हित पूर्णांक num_queues = apc->num_queues;
-	व्योम *eth_stats = &apc->eth_stats;
-	काष्ठा mana_stats *stats;
-	अचिन्हित पूर्णांक start;
+static void mana_get_ethtool_stats(struct net_device *ndev,
+				   struct ethtool_stats *e_stats, u64 *data)
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
+	unsigned int num_queues = apc->num_queues;
+	void *eth_stats = &apc->eth_stats;
+	struct mana_stats *stats;
+	unsigned int start;
 	u64 packets, bytes;
-	पूर्णांक q, i = 0;
+	int q, i = 0;
 
-	अगर (!apc->port_is_up)
-		वापस;
+	if (!apc->port_is_up)
+		return;
 
-	क्रम (q = 0; q < ARRAY_SIZE(mana_eth_stats); q++)
+	for (q = 0; q < ARRAY_SIZE(mana_eth_stats); q++)
 		data[i++] = *(u64 *)(eth_stats + mana_eth_stats[q].offset);
 
-	क्रम (q = 0; q < num_queues; q++) अणु
+	for (q = 0; q < num_queues; q++) {
 		stats = &apc->rxqs[q]->stats;
 
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			packets = stats->packets;
 			bytes = stats->bytes;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		data[i++] = packets;
 		data[i++] = bytes;
-	पूर्ण
+	}
 
-	क्रम (q = 0; q < num_queues; q++) अणु
+	for (q = 0; q < num_queues; q++) {
 		stats = &apc->tx_qp[q].txq.stats;
 
-		करो अणु
+		do {
 			start = u64_stats_fetch_begin_irq(&stats->syncp);
 			packets = stats->packets;
 			bytes = stats->bytes;
-		पूर्ण जबतक (u64_stats_fetch_retry_irq(&stats->syncp, start));
+		} while (u64_stats_fetch_retry_irq(&stats->syncp, start));
 
 		data[i++] = packets;
 		data[i++] = bytes;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mana_get_rxnfc(काष्ठा net_device *ndev, काष्ठा ethtool_rxnfc *cmd,
+static int mana_get_rxnfc(struct net_device *ndev, struct ethtool_rxnfc *cmd,
 			  u32 *rules)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_GRXRINGS:
+	switch (cmd->cmd) {
+	case ETHTOOL_GRXRINGS:
 		cmd->data = apc->num_queues;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल u32 mana_get_rxfh_key_size(काष्ठा net_device *ndev)
-अणु
-	वापस MANA_HASH_KEY_SIZE;
-पूर्ण
+static u32 mana_get_rxfh_key_size(struct net_device *ndev)
+{
+	return MANA_HASH_KEY_SIZE;
+}
 
-अटल u32 mana_rss_indir_size(काष्ठा net_device *ndev)
-अणु
-	वापस MANA_INसूचीECT_TABLE_SIZE;
-पूर्ण
+static u32 mana_rss_indir_size(struct net_device *ndev)
+{
+	return MANA_INDIRECT_TABLE_SIZE;
+}
 
-अटल पूर्णांक mana_get_rxfh(काष्ठा net_device *ndev, u32 *indir, u8 *key,
+static int mana_get_rxfh(struct net_device *ndev, u32 *indir, u8 *key,
 			 u8 *hfunc)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
-	पूर्णांक i;
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
+	int i;
 
-	अगर (hfunc)
+	if (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP; /* Toeplitz */
 
-	अगर (indir) अणु
-		क्रम (i = 0; i < MANA_INसूचीECT_TABLE_SIZE; i++)
+	if (indir) {
+		for (i = 0; i < MANA_INDIRECT_TABLE_SIZE; i++)
 			indir[i] = apc->indir_table[i];
-	पूर्ण
+	}
 
-	अगर (key)
-		स_नकल(key, apc->hashkey, MANA_HASH_KEY_SIZE);
+	if (key)
+		memcpy(key, apc->hashkey, MANA_HASH_KEY_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mana_set_rxfh(काष्ठा net_device *ndev, स्थिर u32 *indir,
-			 स्थिर u8 *key, स्थिर u8 hfunc)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
+static int mana_set_rxfh(struct net_device *ndev, const u32 *indir,
+			 const u8 *key, const u8 hfunc)
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
 	bool update_hash = false, update_table = false;
-	u32 save_table[MANA_INसूचीECT_TABLE_SIZE];
+	u32 save_table[MANA_INDIRECT_TABLE_SIZE];
 	u8 save_key[MANA_HASH_KEY_SIZE];
-	पूर्णांक i, err;
+	int i, err;
 
-	अगर (!apc->port_is_up)
-		वापस -EOPNOTSUPP;
+	if (!apc->port_is_up)
+		return -EOPNOTSUPP;
 
-	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
-		वापस -EOPNOTSUPP;
+	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
+		return -EOPNOTSUPP;
 
-	अगर (indir) अणु
-		क्रम (i = 0; i < MANA_INसूचीECT_TABLE_SIZE; i++)
-			अगर (indir[i] >= apc->num_queues)
-				वापस -EINVAL;
+	if (indir) {
+		for (i = 0; i < MANA_INDIRECT_TABLE_SIZE; i++)
+			if (indir[i] >= apc->num_queues)
+				return -EINVAL;
 
 		update_table = true;
-		क्रम (i = 0; i < MANA_INसूचीECT_TABLE_SIZE; i++) अणु
+		for (i = 0; i < MANA_INDIRECT_TABLE_SIZE; i++) {
 			save_table[i] = apc->indir_table[i];
 			apc->indir_table[i] = indir[i];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (key) अणु
+	if (key) {
 		update_hash = true;
-		स_नकल(save_key, apc->hashkey, MANA_HASH_KEY_SIZE);
-		स_नकल(apc->hashkey, key, MANA_HASH_KEY_SIZE);
-	पूर्ण
+		memcpy(save_key, apc->hashkey, MANA_HASH_KEY_SIZE);
+		memcpy(apc->hashkey, key, MANA_HASH_KEY_SIZE);
+	}
 
 	err = mana_config_rss(apc, TRI_STATE_TRUE, update_hash, update_table);
 
-	अगर (err) अणु /* recover to original values */
-		अगर (update_table) अणु
-			क्रम (i = 0; i < MANA_INसूचीECT_TABLE_SIZE; i++)
+	if (err) { /* recover to original values */
+		if (update_table) {
+			for (i = 0; i < MANA_INDIRECT_TABLE_SIZE; i++)
 				apc->indir_table[i] = save_table[i];
-		पूर्ण
+		}
 
-		अगर (update_hash)
-			स_नकल(apc->hashkey, save_key, MANA_HASH_KEY_SIZE);
+		if (update_hash)
+			memcpy(apc->hashkey, save_key, MANA_HASH_KEY_SIZE);
 
 		mana_config_rss(apc, TRI_STATE_TRUE, update_hash, update_table);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम mana_get_channels(काष्ठा net_device *ndev,
-			      काष्ठा ethtool_channels *channel)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
+static void mana_get_channels(struct net_device *ndev,
+			      struct ethtool_channels *channel)
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
 
 	channel->max_combined = apc->max_queues;
 	channel->combined_count = apc->num_queues;
-पूर्ण
+}
 
-अटल पूर्णांक mana_set_channels(काष्ठा net_device *ndev,
-			     काष्ठा ethtool_channels *channels)
-अणु
-	काष्ठा mana_port_context *apc = netdev_priv(ndev);
-	अचिन्हित पूर्णांक new_count = channels->combined_count;
-	अचिन्हित पूर्णांक old_count = apc->num_queues;
-	पूर्णांक err, err2;
+static int mana_set_channels(struct net_device *ndev,
+			     struct ethtool_channels *channels)
+{
+	struct mana_port_context *apc = netdev_priv(ndev);
+	unsigned int new_count = channels->combined_count;
+	unsigned int old_count = apc->num_queues;
+	int err, err2;
 
-	अगर (!apc->port_is_up)
-		वापस -EOPNOTSUPP;
+	if (!apc->port_is_up)
+		return -EOPNOTSUPP;
 
 	err = mana_detach(ndev, false);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(ndev, "mana_detach failed: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	apc->num_queues = new_count;
 	err = mana_attach(ndev);
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
 	netdev_err(ndev, "mana_attach failed: %d\n", err);
 
 	/* Try to roll it back to the old configuration. */
 	apc->num_queues = old_count;
 	err2 = mana_attach(ndev);
-	अगर (err2)
+	if (err2)
 		netdev_err(ndev, "mana re-attach failed: %d\n", err2);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-स्थिर काष्ठा ethtool_ops mana_ethtool_ops = अणु
+const struct ethtool_ops mana_ethtool_ops = {
 	.get_ethtool_stats	= mana_get_ethtool_stats,
 	.get_sset_count		= mana_get_sset_count,
 	.get_strings		= mana_get_strings,
@@ -248,4 +247,4 @@
 	.set_rxfh		= mana_set_rxfh,
 	.get_channels		= mana_get_channels,
 	.set_channels		= mana_set_channels,
-पूर्ण;
+};

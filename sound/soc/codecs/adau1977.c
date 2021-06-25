@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * ADAU1977/ADAU1978/ADAU1979 driver
  *
@@ -7,164 +6,164 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/tlv.h>
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/tlv.h>
 
-#समावेश <dt-bindings/sound/adi,adau1977.h>
+#include <dt-bindings/sound/adi,adau1977.h>
 
-#समावेश "adau1977.h"
+#include "adau1977.h"
 
-#घोषणा ADAU1977_REG_POWER		0x00
-#घोषणा ADAU1977_REG_PLL		0x01
-#घोषणा ADAU1977_REG_BOOST		0x02
-#घोषणा ADAU1977_REG_MICBIAS		0x03
-#घोषणा ADAU1977_REG_BLOCK_POWER_SAI	0x04
-#घोषणा ADAU1977_REG_SAI_CTRL0		0x05
-#घोषणा ADAU1977_REG_SAI_CTRL1		0x06
-#घोषणा ADAU1977_REG_CMAP12		0x07
-#घोषणा ADAU1977_REG_CMAP34		0x08
-#घोषणा ADAU1977_REG_SAI_OVERTEMP	0x09
-#घोषणा ADAU1977_REG_POST_ADC_GAIN(x)	(0x0a + (x))
-#घोषणा ADAU1977_REG_MISC_CONTROL	0x0e
-#घोषणा ADAU1977_REG_DIAG_CONTROL	0x10
-#घोषणा ADAU1977_REG_STATUS(x)		(0x11 + (x))
-#घोषणा ADAU1977_REG_DIAG_IRQ1		0x15
-#घोषणा ADAU1977_REG_DIAG_IRQ2		0x16
-#घोषणा ADAU1977_REG_ADJUST1		0x17
-#घोषणा ADAU1977_REG_ADJUST2		0x18
-#घोषणा ADAU1977_REG_ADC_CLIP		0x19
-#घोषणा ADAU1977_REG_DC_HPF_CAL		0x1a
+#define ADAU1977_REG_POWER		0x00
+#define ADAU1977_REG_PLL		0x01
+#define ADAU1977_REG_BOOST		0x02
+#define ADAU1977_REG_MICBIAS		0x03
+#define ADAU1977_REG_BLOCK_POWER_SAI	0x04
+#define ADAU1977_REG_SAI_CTRL0		0x05
+#define ADAU1977_REG_SAI_CTRL1		0x06
+#define ADAU1977_REG_CMAP12		0x07
+#define ADAU1977_REG_CMAP34		0x08
+#define ADAU1977_REG_SAI_OVERTEMP	0x09
+#define ADAU1977_REG_POST_ADC_GAIN(x)	(0x0a + (x))
+#define ADAU1977_REG_MISC_CONTROL	0x0e
+#define ADAU1977_REG_DIAG_CONTROL	0x10
+#define ADAU1977_REG_STATUS(x)		(0x11 + (x))
+#define ADAU1977_REG_DIAG_IRQ1		0x15
+#define ADAU1977_REG_DIAG_IRQ2		0x16
+#define ADAU1977_REG_ADJUST1		0x17
+#define ADAU1977_REG_ADJUST2		0x18
+#define ADAU1977_REG_ADC_CLIP		0x19
+#define ADAU1977_REG_DC_HPF_CAL		0x1a
 
-#घोषणा ADAU1977_POWER_RESET			BIT(7)
-#घोषणा ADAU1977_POWER_PWUP			BIT(0)
+#define ADAU1977_POWER_RESET			BIT(7)
+#define ADAU1977_POWER_PWUP			BIT(0)
 
-#घोषणा ADAU1977_PLL_CLK_S			BIT(4)
-#घोषणा ADAU1977_PLL_MCS_MASK			0x7
+#define ADAU1977_PLL_CLK_S			BIT(4)
+#define ADAU1977_PLL_MCS_MASK			0x7
 
-#घोषणा ADAU1977_MICBIAS_MB_VOLTS_MASK		0xf0
-#घोषणा ADAU1977_MICBIAS_MB_VOLTS_OFFSET	4
+#define ADAU1977_MICBIAS_MB_VOLTS_MASK		0xf0
+#define ADAU1977_MICBIAS_MB_VOLTS_OFFSET	4
 
-#घोषणा ADAU1977_BLOCK_POWER_SAI_LR_POL		BIT(7)
-#घोषणा ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE	BIT(6)
-#घोषणा ADAU1977_BLOCK_POWER_SAI_LDO_EN		BIT(5)
+#define ADAU1977_BLOCK_POWER_SAI_LR_POL		BIT(7)
+#define ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE	BIT(6)
+#define ADAU1977_BLOCK_POWER_SAI_LDO_EN		BIT(5)
 
-#घोषणा ADAU1977_SAI_CTRL0_FMT_MASK		(0x3 << 6)
-#घोषणा ADAU1977_SAI_CTRL0_FMT_I2S		(0x0 << 6)
-#घोषणा ADAU1977_SAI_CTRL0_FMT_LJ		(0x1 << 6)
-#घोषणा ADAU1977_SAI_CTRL0_FMT_RJ_24BIT		(0x2 << 6)
-#घोषणा ADAU1977_SAI_CTRL0_FMT_RJ_16BIT		(0x3 << 6)
+#define ADAU1977_SAI_CTRL0_FMT_MASK		(0x3 << 6)
+#define ADAU1977_SAI_CTRL0_FMT_I2S		(0x0 << 6)
+#define ADAU1977_SAI_CTRL0_FMT_LJ		(0x1 << 6)
+#define ADAU1977_SAI_CTRL0_FMT_RJ_24BIT		(0x2 << 6)
+#define ADAU1977_SAI_CTRL0_FMT_RJ_16BIT		(0x3 << 6)
 
-#घोषणा ADAU1977_SAI_CTRL0_SAI_MASK		(0x7 << 3)
-#घोषणा ADAU1977_SAI_CTRL0_SAI_I2S		(0x0 << 3)
-#घोषणा ADAU1977_SAI_CTRL0_SAI_TDM_2		(0x1 << 3)
-#घोषणा ADAU1977_SAI_CTRL0_SAI_TDM_4		(0x2 << 3)
-#घोषणा ADAU1977_SAI_CTRL0_SAI_TDM_8		(0x3 << 3)
-#घोषणा ADAU1977_SAI_CTRL0_SAI_TDM_16		(0x4 << 3)
+#define ADAU1977_SAI_CTRL0_SAI_MASK		(0x7 << 3)
+#define ADAU1977_SAI_CTRL0_SAI_I2S		(0x0 << 3)
+#define ADAU1977_SAI_CTRL0_SAI_TDM_2		(0x1 << 3)
+#define ADAU1977_SAI_CTRL0_SAI_TDM_4		(0x2 << 3)
+#define ADAU1977_SAI_CTRL0_SAI_TDM_8		(0x3 << 3)
+#define ADAU1977_SAI_CTRL0_SAI_TDM_16		(0x4 << 3)
 
-#घोषणा ADAU1977_SAI_CTRL0_FS_MASK		(0x7)
-#घोषणा ADAU1977_SAI_CTRL0_FS_8000_12000	(0x0)
-#घोषणा ADAU1977_SAI_CTRL0_FS_16000_24000	(0x1)
-#घोषणा ADAU1977_SAI_CTRL0_FS_32000_48000	(0x2)
-#घोषणा ADAU1977_SAI_CTRL0_FS_64000_96000	(0x3)
-#घोषणा ADAU1977_SAI_CTRL0_FS_128000_192000	(0x4)
+#define ADAU1977_SAI_CTRL0_FS_MASK		(0x7)
+#define ADAU1977_SAI_CTRL0_FS_8000_12000	(0x0)
+#define ADAU1977_SAI_CTRL0_FS_16000_24000	(0x1)
+#define ADAU1977_SAI_CTRL0_FS_32000_48000	(0x2)
+#define ADAU1977_SAI_CTRL0_FS_64000_96000	(0x3)
+#define ADAU1977_SAI_CTRL0_FS_128000_192000	(0x4)
 
-#घोषणा ADAU1977_SAI_CTRL1_SLOT_WIDTH_MASK	(0x3 << 5)
-#घोषणा ADAU1977_SAI_CTRL1_SLOT_WIDTH_32	(0x0 << 5)
-#घोषणा ADAU1977_SAI_CTRL1_SLOT_WIDTH_24	(0x1 << 5)
-#घोषणा ADAU1977_SAI_CTRL1_SLOT_WIDTH_16	(0x2 << 5)
-#घोषणा ADAU1977_SAI_CTRL1_DATA_WIDTH_MASK	(0x1 << 4)
-#घोषणा ADAU1977_SAI_CTRL1_DATA_WIDTH_16BIT	(0x1 << 4)
-#घोषणा ADAU1977_SAI_CTRL1_DATA_WIDTH_24BIT	(0x0 << 4)
-#घोषणा ADAU1977_SAI_CTRL1_LRCLK_PULSE		BIT(3)
-#घोषणा ADAU1977_SAI_CTRL1_MSB			BIT(2)
-#घोषणा ADAU1977_SAI_CTRL1_BCLKRATE_16		(0x1 << 1)
-#घोषणा ADAU1977_SAI_CTRL1_BCLKRATE_32		(0x0 << 1)
-#घोषणा ADAU1977_SAI_CTRL1_BCLKRATE_MASK	(0x1 << 1)
-#घोषणा ADAU1977_SAI_CTRL1_MASTER		BIT(0)
+#define ADAU1977_SAI_CTRL1_SLOT_WIDTH_MASK	(0x3 << 5)
+#define ADAU1977_SAI_CTRL1_SLOT_WIDTH_32	(0x0 << 5)
+#define ADAU1977_SAI_CTRL1_SLOT_WIDTH_24	(0x1 << 5)
+#define ADAU1977_SAI_CTRL1_SLOT_WIDTH_16	(0x2 << 5)
+#define ADAU1977_SAI_CTRL1_DATA_WIDTH_MASK	(0x1 << 4)
+#define ADAU1977_SAI_CTRL1_DATA_WIDTH_16BIT	(0x1 << 4)
+#define ADAU1977_SAI_CTRL1_DATA_WIDTH_24BIT	(0x0 << 4)
+#define ADAU1977_SAI_CTRL1_LRCLK_PULSE		BIT(3)
+#define ADAU1977_SAI_CTRL1_MSB			BIT(2)
+#define ADAU1977_SAI_CTRL1_BCLKRATE_16		(0x1 << 1)
+#define ADAU1977_SAI_CTRL1_BCLKRATE_32		(0x0 << 1)
+#define ADAU1977_SAI_CTRL1_BCLKRATE_MASK	(0x1 << 1)
+#define ADAU1977_SAI_CTRL1_MASTER		BIT(0)
 
-#घोषणा ADAU1977_SAI_OVERTEMP_DRV_C(x)		BIT(4 + (x))
-#घोषणा ADAU1977_SAI_OVERTEMP_DRV_HIZ		BIT(3)
+#define ADAU1977_SAI_OVERTEMP_DRV_C(x)		BIT(4 + (x))
+#define ADAU1977_SAI_OVERTEMP_DRV_HIZ		BIT(3)
 
-#घोषणा ADAU1977_MISC_CONTROL_SUM_MODE_MASK	(0x3 << 6)
-#घोषणा ADAU1977_MISC_CONTROL_SUM_MODE_1CH	(0x2 << 6)
-#घोषणा ADAU1977_MISC_CONTROL_SUM_MODE_2CH	(0x1 << 6)
-#घोषणा ADAU1977_MISC_CONTROL_SUM_MODE_4CH	(0x0 << 6)
-#घोषणा ADAU1977_MISC_CONTROL_MMUTE		BIT(4)
-#घोषणा ADAU1977_MISC_CONTROL_DC_CAL		BIT(0)
+#define ADAU1977_MISC_CONTROL_SUM_MODE_MASK	(0x3 << 6)
+#define ADAU1977_MISC_CONTROL_SUM_MODE_1CH	(0x2 << 6)
+#define ADAU1977_MISC_CONTROL_SUM_MODE_2CH	(0x1 << 6)
+#define ADAU1977_MISC_CONTROL_SUM_MODE_4CH	(0x0 << 6)
+#define ADAU1977_MISC_CONTROL_MMUTE		BIT(4)
+#define ADAU1977_MISC_CONTROL_DC_CAL		BIT(0)
 
-#घोषणा ADAU1977_CHAN_MAP_SECOND_SLOT_OFFSET	4
-#घोषणा ADAU1977_CHAN_MAP_FIRST_SLOT_OFFSET	0
+#define ADAU1977_CHAN_MAP_SECOND_SLOT_OFFSET	4
+#define ADAU1977_CHAN_MAP_FIRST_SLOT_OFFSET	0
 
-काष्ठा adau1977 अणु
-	काष्ठा regmap *regmap;
+struct adau1977 {
+	struct regmap *regmap;
 	bool right_j;
-	अचिन्हित पूर्णांक sysclk;
-	क्रमागत adau1977_sysclk_src sysclk_src;
-	काष्ठा gpio_desc *reset_gpio;
-	क्रमागत adau1977_type type;
+	unsigned int sysclk;
+	enum adau1977_sysclk_src sysclk_src;
+	struct gpio_desc *reset_gpio;
+	enum adau1977_type type;
 
-	काष्ठा regulator *avdd_reg;
-	काष्ठा regulator *dvdd_reg;
+	struct regulator *avdd_reg;
+	struct regulator *dvdd_reg;
 
-	काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरraपूर्णांकs;
+	struct snd_pcm_hw_constraint_list constraints;
 
-	काष्ठा device *dev;
-	व्योम (*चयन_mode)(काष्ठा device *dev);
+	struct device *dev;
+	void (*switch_mode)(struct device *dev);
 
-	अचिन्हित पूर्णांक max_master_fs;
-	अचिन्हित पूर्णांक slot_width;
+	unsigned int max_master_fs;
+	unsigned int slot_width;
 	bool enabled;
 	bool master;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा reg_शेष adau1977_reg_शेषs[] = अणु
-	अणु 0x00, 0x00 पूर्ण,
-	अणु 0x01, 0x41 पूर्ण,
-	अणु 0x02, 0x4a पूर्ण,
-	अणु 0x03, 0x7d पूर्ण,
-	अणु 0x04, 0x3d पूर्ण,
-	अणु 0x05, 0x02 पूर्ण,
-	अणु 0x06, 0x00 पूर्ण,
-	अणु 0x07, 0x10 पूर्ण,
-	अणु 0x08, 0x32 पूर्ण,
-	अणु 0x09, 0xf0 पूर्ण,
-	अणु 0x0a, 0xa0 पूर्ण,
-	अणु 0x0b, 0xa0 पूर्ण,
-	अणु 0x0c, 0xa0 पूर्ण,
-	अणु 0x0d, 0xa0 पूर्ण,
-	अणु 0x0e, 0x02 पूर्ण,
-	अणु 0x10, 0x0f पूर्ण,
-	अणु 0x15, 0x20 पूर्ण,
-	अणु 0x16, 0x00 पूर्ण,
-	अणु 0x17, 0x00 पूर्ण,
-	अणु 0x18, 0x00 पूर्ण,
-	अणु 0x1a, 0x00 पूर्ण,
-पूर्ण;
+static const struct reg_default adau1977_reg_defaults[] = {
+	{ 0x00, 0x00 },
+	{ 0x01, 0x41 },
+	{ 0x02, 0x4a },
+	{ 0x03, 0x7d },
+	{ 0x04, 0x3d },
+	{ 0x05, 0x02 },
+	{ 0x06, 0x00 },
+	{ 0x07, 0x10 },
+	{ 0x08, 0x32 },
+	{ 0x09, 0xf0 },
+	{ 0x0a, 0xa0 },
+	{ 0x0b, 0xa0 },
+	{ 0x0c, 0xa0 },
+	{ 0x0d, 0xa0 },
+	{ 0x0e, 0x02 },
+	{ 0x10, 0x0f },
+	{ 0x15, 0x20 },
+	{ 0x16, 0x00 },
+	{ 0x17, 0x00 },
+	{ 0x18, 0x00 },
+	{ 0x1a, 0x00 },
+};
 
-अटल स्थिर DECLARE_TLV_DB_MINMAX_MUTE(adau1977_adc_gain, -3562, 6000);
+static const DECLARE_TLV_DB_MINMAX_MUTE(adau1977_adc_gain, -3562, 6000);
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget adau1977_micbias_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget adau1977_micbias_dapm_widgets[] = {
 	SND_SOC_DAPM_SUPPLY("MICBIAS", ADAU1977_REG_MICBIAS,
-		3, 0, शून्य, 0)
-पूर्ण;
+		3, 0, NULL, 0)
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget adau1977_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget adau1977_dapm_widgets[] = {
 	SND_SOC_DAPM_SUPPLY("Vref", ADAU1977_REG_BLOCK_POWER_SAI,
-		4, 0, शून्य, 0),
+		4, 0, NULL, 0),
 
 	SND_SOC_DAPM_ADC("ADC1", "Capture", ADAU1977_REG_BLOCK_POWER_SAI, 0, 0),
 	SND_SOC_DAPM_ADC("ADC2", "Capture", ADAU1977_REG_BLOCK_POWER_SAI, 1, 0),
@@ -177,36 +176,36 @@
 	SND_SOC_DAPM_INPUT("AIN4"),
 
 	SND_SOC_DAPM_OUTPUT("VREF"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route adau1977_dapm_routes[] = अणु
-	अणु "ADC1", शून्य, "AIN1" पूर्ण,
-	अणु "ADC2", शून्य, "AIN2" पूर्ण,
-	अणु "ADC3", शून्य, "AIN3" पूर्ण,
-	अणु "ADC4", शून्य, "AIN4" पूर्ण,
+static const struct snd_soc_dapm_route adau1977_dapm_routes[] = {
+	{ "ADC1", NULL, "AIN1" },
+	{ "ADC2", NULL, "AIN2" },
+	{ "ADC3", NULL, "AIN3" },
+	{ "ADC4", NULL, "AIN4" },
 
-	अणु "ADC1", शून्य, "Vref" पूर्ण,
-	अणु "ADC2", शून्य, "Vref" पूर्ण,
-	अणु "ADC3", शून्य, "Vref" पूर्ण,
-	अणु "ADC4", शून्य, "Vref" पूर्ण,
+	{ "ADC1", NULL, "Vref" },
+	{ "ADC2", NULL, "Vref" },
+	{ "ADC3", NULL, "Vref" },
+	{ "ADC4", NULL, "Vref" },
 
-	अणु "VREF", शून्य, "Vref" पूर्ण,
-पूर्ण;
+	{ "VREF", NULL, "Vref" },
+};
 
-#घोषणा ADAU1977_VOLUME(x) \
+#define ADAU1977_VOLUME(x) \
 	SOC_SINGLE_TLV("ADC" #x " Capture Volume", \
 		ADAU1977_REG_POST_ADC_GAIN((x) - 1), \
 		0, 255, 1, adau1977_adc_gain)
 
-#घोषणा ADAU1977_HPF_SWITCH(x) \
+#define ADAU1977_HPF_SWITCH(x) \
 	SOC_SINGLE("ADC" #x " Highpass-Filter Capture Switch", \
 		ADAU1977_REG_DC_HPF_CAL, (x) - 1, 1, 0)
 
-#घोषणा ADAU1977_DC_SUB_SWITCH(x) \
+#define ADAU1977_DC_SUB_SWITCH(x) \
 	SOC_SINGLE("ADC" #x " DC Subtraction Capture Switch", \
 		ADAU1977_REG_DC_HPF_CAL, (x) + 3, 1, 0)
 
-अटल स्थिर काष्ठा snd_kcontrol_new adau1977_snd_controls[] = अणु
+static const struct snd_kcontrol_new adau1977_snd_controls[] = {
 	ADAU1977_VOLUME(1),
 	ADAU1977_VOLUME(2),
 	ADAU1977_VOLUME(3),
@@ -221,50 +220,50 @@
 	ADAU1977_DC_SUB_SWITCH(2),
 	ADAU1977_DC_SUB_SWITCH(3),
 	ADAU1977_DC_SUB_SWITCH(4),
-पूर्ण;
+};
 
-अटल पूर्णांक adau1977_reset(काष्ठा adau1977 *adau1977)
-अणु
-	पूर्णांक ret;
+static int adau1977_reset(struct adau1977 *adau1977)
+{
+	int ret;
 
 	/*
-	 * The reset bit is obviously अस्थिर, but we need to be able to cache
-	 * the other bits in the रेजिस्टर, so we can't just mark the whole
-	 * रेजिस्टर as अस्थिर. Since this is the only place where we'll ever
-	 * touch the reset bit just bypass the cache क्रम this operation.
+	 * The reset bit is obviously volatile, but we need to be able to cache
+	 * the other bits in the register, so we can't just mark the whole
+	 * register as volatile. Since this is the only place where we'll ever
+	 * touch the reset bit just bypass the cache for this operation.
 	 */
 	regcache_cache_bypass(adau1977->regmap, true);
-	ret = regmap_ग_लिखो(adau1977->regmap, ADAU1977_REG_POWER,
+	ret = regmap_write(adau1977->regmap, ADAU1977_REG_POWER,
 			ADAU1977_POWER_RESET);
 	regcache_cache_bypass(adau1977->regmap, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Returns the appropriate setting क्रम ths FS field in the CTRL0 रेजिस्टर
+ * Returns the appropriate setting for ths FS field in the CTRL0 register
  * depending on the rate.
  */
-अटल पूर्णांक adau1977_lookup_fs(अचिन्हित पूर्णांक rate)
-अणु
-	अगर (rate >= 8000 && rate <= 12000)
-		वापस ADAU1977_SAI_CTRL0_FS_8000_12000;
-	अन्यथा अगर (rate >= 16000 && rate <= 24000)
-		वापस ADAU1977_SAI_CTRL0_FS_16000_24000;
-	अन्यथा अगर (rate >= 32000 && rate <= 48000)
-		वापस ADAU1977_SAI_CTRL0_FS_32000_48000;
-	अन्यथा अगर (rate >= 64000 && rate <= 96000)
-		वापस ADAU1977_SAI_CTRL0_FS_64000_96000;
-	अन्यथा अगर (rate >= 128000 && rate <= 192000)
-		वापस ADAU1977_SAI_CTRL0_FS_128000_192000;
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+static int adau1977_lookup_fs(unsigned int rate)
+{
+	if (rate >= 8000 && rate <= 12000)
+		return ADAU1977_SAI_CTRL0_FS_8000_12000;
+	else if (rate >= 16000 && rate <= 24000)
+		return ADAU1977_SAI_CTRL0_FS_16000_24000;
+	else if (rate >= 32000 && rate <= 48000)
+		return ADAU1977_SAI_CTRL0_FS_32000_48000;
+	else if (rate >= 64000 && rate <= 96000)
+		return ADAU1977_SAI_CTRL0_FS_64000_96000;
+	else if (rate >= 128000 && rate <= 192000)
+		return ADAU1977_SAI_CTRL0_FS_128000_192000;
+	else
+		return -EINVAL;
+}
 
-अटल पूर्णांक adau1977_lookup_mcs(काष्ठा adau1977 *adau1977, अचिन्हित पूर्णांक rate,
-	अचिन्हित पूर्णांक fs)
-अणु
-	अचिन्हित पूर्णांक mcs;
+static int adau1977_lookup_mcs(struct adau1977 *adau1977, unsigned int rate,
+	unsigned int fs)
+{
+	unsigned int mcs;
 
 	/*
 	 * rate = sysclk / (512 * mcs_lut[mcs]) * 2**fs
@@ -274,85 +273,85 @@
 
 	rate *= 512 >> fs;
 
-	अगर (adau1977->sysclk % rate != 0)
-		वापस -EINVAL;
+	if (adau1977->sysclk % rate != 0)
+		return -EINVAL;
 
 	mcs = adau1977->sysclk / rate;
 
 	/* The factors configured by MCS are 1, 2, 3, 4, 6 */
-	अगर (mcs < 1 || mcs > 6 || mcs == 5)
-		वापस -EINVAL;
+	if (mcs < 1 || mcs > 6 || mcs == 5)
+		return -EINVAL;
 
 	mcs = mcs - 1;
-	अगर (mcs == 5)
+	if (mcs == 5)
 		mcs = 4;
 
-	वापस mcs;
-पूर्ण
+	return mcs;
+}
 
-अटल पूर्णांक adau1977_hw_params(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक rate = params_rate(params);
-	अचिन्हित पूर्णांक slot_width;
-	अचिन्हित पूर्णांक ctrl0, ctrl0_mask;
-	अचिन्हित पूर्णांक ctrl1;
-	पूर्णांक mcs, fs;
-	पूर्णांक ret;
+static int adau1977_hw_params(struct snd_pcm_substream *substream,
+	struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
+	unsigned int rate = params_rate(params);
+	unsigned int slot_width;
+	unsigned int ctrl0, ctrl0_mask;
+	unsigned int ctrl1;
+	int mcs, fs;
+	int ret;
 
 	fs = adau1977_lookup_fs(rate);
-	अगर (fs < 0)
-		वापस fs;
+	if (fs < 0)
+		return fs;
 
-	अगर (adau1977->sysclk_src == ADAU1977_SYSCLK_SRC_MCLK) अणु
+	if (adau1977->sysclk_src == ADAU1977_SYSCLK_SRC_MCLK) {
 		mcs = adau1977_lookup_mcs(adau1977, rate, fs);
-		अगर (mcs < 0)
-			वापस mcs;
-	पूर्ण अन्यथा अणु
+		if (mcs < 0)
+			return mcs;
+	} else {
 		mcs = 0;
-	पूर्ण
+	}
 
 	ctrl0_mask = ADAU1977_SAI_CTRL0_FS_MASK;
 	ctrl0 = fs;
 
-	अगर (adau1977->right_j) अणु
-		चयन (params_width(params)) अणु
-		हाल 16:
+	if (adau1977->right_j) {
+		switch (params_width(params)) {
+		case 16:
 			ctrl0 |= ADAU1977_SAI_CTRL0_FMT_RJ_16BIT;
-			अवरोध;
-		हाल 24:
+			break;
+		case 24:
 			ctrl0 |= ADAU1977_SAI_CTRL0_FMT_RJ_24BIT;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 		ctrl0_mask |= ADAU1977_SAI_CTRL0_FMT_MASK;
-	पूर्ण
+	}
 
-	अगर (adau1977->master) अणु
-		चयन (params_width(params)) अणु
-		हाल 16:
+	if (adau1977->master) {
+		switch (params_width(params)) {
+		case 16:
 			ctrl1 = ADAU1977_SAI_CTRL1_DATA_WIDTH_16BIT;
 			slot_width = 16;
-			अवरोध;
-		हाल 24:
-		हाल 32:
+			break;
+		case 24:
+		case 32:
 			ctrl1 = ADAU1977_SAI_CTRL1_DATA_WIDTH_24BIT;
 			slot_width = 32;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		/* In TDM mode there is a fixed slot width */
-		अगर (adau1977->slot_width)
+		if (adau1977->slot_width)
 			slot_width = adau1977->slot_width;
 
-		अगर (slot_width == 16)
+		if (slot_width == 16)
 			ctrl1 |= ADAU1977_SAI_CTRL1_BCLKRATE_16;
-		अन्यथा
+		else
 			ctrl1 |= ADAU1977_SAI_CTRL1_BCLKRATE_32;
 
 		ret = regmap_update_bits(adau1977->regmap,
@@ -360,30 +359,30 @@
 			ADAU1977_SAI_CTRL1_DATA_WIDTH_MASK |
 			ADAU1977_SAI_CTRL1_BCLKRATE_MASK,
 			ctrl1);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_CTRL0,
 				ctrl0_mask, ctrl0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस regmap_update_bits(adau1977->regmap, ADAU1977_REG_PLL,
+	return regmap_update_bits(adau1977->regmap, ADAU1977_REG_PLL,
 				ADAU1977_PLL_MCS_MASK, mcs);
-पूर्ण
+}
 
-अटल पूर्णांक adau1977_घातer_disable(काष्ठा adau1977 *adau1977)
-अणु
-	पूर्णांक ret = 0;
+static int adau1977_power_disable(struct adau1977 *adau1977)
+{
+	int ret = 0;
 
-	अगर (!adau1977->enabled)
-		वापस 0;
+	if (!adau1977->enabled)
+		return 0;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_POWER,
 		ADAU1977_POWER_PWUP, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	regcache_mark_dirty(adau1977->regmap);
 
@@ -392,610 +391,610 @@
 	regcache_cache_only(adau1977->regmap, true);
 
 	regulator_disable(adau1977->avdd_reg);
-	अगर (adau1977->dvdd_reg)
+	if (adau1977->dvdd_reg)
 		regulator_disable(adau1977->dvdd_reg);
 
 	adau1977->enabled = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adau1977_घातer_enable(काष्ठा adau1977 *adau1977)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret = 0;
+static int adau1977_power_enable(struct adau1977 *adau1977)
+{
+	unsigned int val;
+	int ret = 0;
 
-	अगर (adau1977->enabled)
-		वापस 0;
+	if (adau1977->enabled)
+		return 0;
 
 	ret = regulator_enable(adau1977->avdd_reg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (adau1977->dvdd_reg) अणु
+	if (adau1977->dvdd_reg) {
 		ret = regulator_enable(adau1977->dvdd_reg);
-		अगर (ret)
-			जाओ err_disable_avdd;
-	पूर्ण
+		if (ret)
+			goto err_disable_avdd;
+	}
 
 	gpiod_set_value_cansleep(adau1977->reset_gpio, 1);
 
 	regcache_cache_only(adau1977->regmap, false);
 
-	अगर (adau1977->चयन_mode)
-		adau1977->चयन_mode(adau1977->dev);
+	if (adau1977->switch_mode)
+		adau1977->switch_mode(adau1977->dev);
 
 	ret = adau1977_reset(adau1977);
-	अगर (ret)
-		जाओ err_disable_dvdd;
+	if (ret)
+		goto err_disable_dvdd;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_POWER,
 		ADAU1977_POWER_PWUP, ADAU1977_POWER_PWUP);
-	अगर (ret)
-		जाओ err_disable_dvdd;
+	if (ret)
+		goto err_disable_dvdd;
 
 	ret = regcache_sync(adau1977->regmap);
-	अगर (ret)
-		जाओ err_disable_dvdd;
+	if (ret)
+		goto err_disable_dvdd;
 
 	/*
-	 * The PLL रेजिस्टर is not affected by the software reset. It is
-	 * possible that the value of the रेजिस्टर was changed to the
-	 * शेष value जबतक we were in cache only mode. In this हाल
+	 * The PLL register is not affected by the software reset. It is
+	 * possible that the value of the register was changed to the
+	 * default value while we were in cache only mode. In this case
 	 * regcache_sync will skip over it and we have to manually sync
 	 * it.
 	 */
-	ret = regmap_पढ़ो(adau1977->regmap, ADAU1977_REG_PLL, &val);
-	अगर (ret)
-		जाओ err_disable_dvdd;
+	ret = regmap_read(adau1977->regmap, ADAU1977_REG_PLL, &val);
+	if (ret)
+		goto err_disable_dvdd;
 
-	अगर (val == 0x41) अणु
+	if (val == 0x41) {
 		regcache_cache_bypass(adau1977->regmap, true);
-		ret = regmap_ग_लिखो(adau1977->regmap, ADAU1977_REG_PLL,
+		ret = regmap_write(adau1977->regmap, ADAU1977_REG_PLL,
 			0x41);
-		अगर (ret)
-			जाओ err_disable_dvdd;
+		if (ret)
+			goto err_disable_dvdd;
 		regcache_cache_bypass(adau1977->regmap, false);
-	पूर्ण
+	}
 
 	adau1977->enabled = true;
 
-	वापस ret;
+	return ret;
 
 err_disable_dvdd:
-	अगर (adau1977->dvdd_reg)
+	if (adau1977->dvdd_reg)
 		regulator_disable(adau1977->dvdd_reg);
 err_disable_avdd:
 		regulator_disable(adau1977->avdd_reg);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adau1977_set_bias_level(काष्ठा snd_soc_component *component,
-	क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret = 0;
+static int adau1977_set_bias_level(struct snd_soc_component *component,
+	enum snd_soc_bias_level level)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
+	int ret = 0;
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
-	हाल SND_SOC_BIAS_PREPARE:
-		अवरोध;
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
-			ret = adau1977_घातer_enable(adau1977);
-		अवरोध;
-	हाल SND_SOC_BIAS_OFF:
-		ret = adau1977_घातer_disable(adau1977);
-		अवरोध;
-	पूर्ण
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
+	case SND_SOC_BIAS_PREPARE:
+		break;
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
+			ret = adau1977_power_enable(adau1977);
+		break;
+	case SND_SOC_BIAS_OFF:
+		ret = adau1977_power_disable(adau1977);
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adau1977_set_tdm_slot(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक tx_mask,
-	अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक width)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
-	अचिन्हित पूर्णांक ctrl0, ctrl1, drv;
-	अचिन्हित पूर्णांक slot[4];
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int adau1977_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
+	unsigned int rx_mask, int slots, int width)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
+	unsigned int ctrl0, ctrl1, drv;
+	unsigned int slot[4];
+	unsigned int i;
+	int ret;
 
-	अगर (slots == 0) अणु
+	if (slots == 0) {
 		/* 0 = No fixed slot width */
 		adau1977->slot_width = 0;
 		adau1977->max_master_fs = 192000;
-		वापस regmap_update_bits(adau1977->regmap,
+		return regmap_update_bits(adau1977->regmap,
 			ADAU1977_REG_SAI_CTRL0, ADAU1977_SAI_CTRL0_SAI_MASK,
 			ADAU1977_SAI_CTRL0_SAI_I2S);
-	पूर्ण
+	}
 
-	अगर (rx_mask == 0 || tx_mask != 0)
-		वापस -EINVAL;
+	if (rx_mask == 0 || tx_mask != 0)
+		return -EINVAL;
 
 	drv = 0;
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		slot[i] = __ffs(rx_mask);
 		drv |= ADAU1977_SAI_OVERTEMP_DRV_C(i);
 		rx_mask &= ~(1 << slot[i]);
-		अगर (slot[i] >= slots)
-			वापस -EINVAL;
-		अगर (rx_mask == 0)
-			अवरोध;
-	पूर्ण
+		if (slot[i] >= slots)
+			return -EINVAL;
+		if (rx_mask == 0)
+			break;
+	}
 
-	अगर (rx_mask != 0)
-		वापस -EINVAL;
+	if (rx_mask != 0)
+		return -EINVAL;
 
-	चयन (width) अणु
-	हाल 16:
+	switch (width) {
+	case 16:
 		ctrl1 = ADAU1977_SAI_CTRL1_SLOT_WIDTH_16;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		/* We can only generate 16 bit or 32 bit wide slots */
-		अगर (adau1977->master)
-			वापस -EINVAL;
+		if (adau1977->master)
+			return -EINVAL;
 		ctrl1 = ADAU1977_SAI_CTRL1_SLOT_WIDTH_24;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		ctrl1 = ADAU1977_SAI_CTRL1_SLOT_WIDTH_32;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (slots) अणु
-	हाल 2:
+	switch (slots) {
+	case 2:
 		ctrl0 = ADAU1977_SAI_CTRL0_SAI_TDM_2;
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		ctrl0 = ADAU1977_SAI_CTRL0_SAI_TDM_4;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		ctrl0 = ADAU1977_SAI_CTRL0_SAI_TDM_8;
-		अवरोध;
-	हाल 16:
+		break;
+	case 16:
 		ctrl0 = ADAU1977_SAI_CTRL0_SAI_TDM_16;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_OVERTEMP,
 		ADAU1977_SAI_OVERTEMP_DRV_C(0) |
 		ADAU1977_SAI_OVERTEMP_DRV_C(1) |
 		ADAU1977_SAI_OVERTEMP_DRV_C(2) |
 		ADAU1977_SAI_OVERTEMP_DRV_C(3), drv);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(adau1977->regmap, ADAU1977_REG_CMAP12,
+	ret = regmap_write(adau1977->regmap, ADAU1977_REG_CMAP12,
 		(slot[1] << ADAU1977_CHAN_MAP_SECOND_SLOT_OFFSET) |
 		(slot[0] << ADAU1977_CHAN_MAP_FIRST_SLOT_OFFSET));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(adau1977->regmap, ADAU1977_REG_CMAP34,
+	ret = regmap_write(adau1977->regmap, ADAU1977_REG_CMAP34,
 		(slot[3] << ADAU1977_CHAN_MAP_SECOND_SLOT_OFFSET) |
 		(slot[2] << ADAU1977_CHAN_MAP_FIRST_SLOT_OFFSET));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_CTRL0,
 		ADAU1977_SAI_CTRL0_SAI_MASK, ctrl0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_CTRL1,
 		ADAU1977_SAI_CTRL1_SLOT_WIDTH_MASK, ctrl1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	adau1977->slot_width = width;
 
-	/* In master mode the maximum bitघड़ी is 24.576 MHz */
+	/* In master mode the maximum bitclock is 24.576 MHz */
 	adau1977->max_master_fs = min(192000, 24576000 / width / slots);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adau1977_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक stream)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
-	अचिन्हित पूर्णांक val;
+static int adau1977_mute(struct snd_soc_dai *dai, int mute, int stream)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
+	unsigned int val;
 
-	अगर (mute)
+	if (mute)
 		val = ADAU1977_MISC_CONTROL_MMUTE;
-	अन्यथा
+	else
 		val = 0;
 
-	वापस regmap_update_bits(adau1977->regmap, ADAU1977_REG_MISC_CONTROL,
+	return regmap_update_bits(adau1977->regmap, ADAU1977_REG_MISC_CONTROL,
 			ADAU1977_MISC_CONTROL_MMUTE, val);
-पूर्ण
+}
 
-अटल पूर्णांक adau1977_set_dai_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
-	अचिन्हित पूर्णांक ctrl0 = 0, ctrl1 = 0, block_घातer = 0;
+static int adau1977_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
+	unsigned int ctrl0 = 0, ctrl1 = 0, block_power = 0;
 	bool invert_lrclk;
-	पूर्णांक ret;
+	int ret;
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
 		adau1977->master = false;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
 		ctrl1 |= ADAU1977_SAI_CTRL1_MASTER;
 		adau1977->master = true;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-	हाल SND_SOC_DAIFMT_NB_NF:
+	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+	case SND_SOC_DAIFMT_NB_NF:
 		invert_lrclk = false;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_NF:
-		block_घातer |= ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE;
+		break;
+	case SND_SOC_DAIFMT_IB_NF:
+		block_power |= ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE;
 		invert_lrclk = false;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_NB_IF:
+		break;
+	case SND_SOC_DAIFMT_NB_IF:
 		invert_lrclk = true;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_IB_IF:
-		block_घातer |= ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE;
+		break;
+	case SND_SOC_DAIFMT_IB_IF:
+		block_power |= ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE;
 		invert_lrclk = true;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	adau1977->right_j = false;
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_I2S:
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_I2S:
 		ctrl0 |= ADAU1977_SAI_CTRL0_FMT_I2S;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
 		ctrl0 |= ADAU1977_SAI_CTRL0_FMT_LJ;
 		invert_lrclk = !invert_lrclk;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
 		ctrl0 |= ADAU1977_SAI_CTRL0_FMT_RJ_24BIT;
 		adau1977->right_j = true;
 		invert_lrclk = !invert_lrclk;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_A:
+		break;
+	case SND_SOC_DAIFMT_DSP_A:
 		ctrl1 |= ADAU1977_SAI_CTRL1_LRCLK_PULSE;
 		ctrl0 |= ADAU1977_SAI_CTRL0_FMT_I2S;
 		invert_lrclk = false;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_DSP_B:
+		break;
+	case SND_SOC_DAIFMT_DSP_B:
 		ctrl1 |= ADAU1977_SAI_CTRL1_LRCLK_PULSE;
 		ctrl0 |= ADAU1977_SAI_CTRL0_FMT_LJ;
 		invert_lrclk = false;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (invert_lrclk)
-		block_घातer |= ADAU1977_BLOCK_POWER_SAI_LR_POL;
+	if (invert_lrclk)
+		block_power |= ADAU1977_BLOCK_POWER_SAI_LR_POL;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_BLOCK_POWER_SAI,
 		ADAU1977_BLOCK_POWER_SAI_LR_POL |
-		ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE, block_घातer);
-	अगर (ret)
-		वापस ret;
+		ADAU1977_BLOCK_POWER_SAI_BCLK_EDGE, block_power);
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_CTRL0,
 		ADAU1977_SAI_CTRL0_FMT_MASK,
 		ctrl0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_CTRL1,
+	return regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_CTRL1,
 		ADAU1977_SAI_CTRL1_MASTER | ADAU1977_SAI_CTRL1_LRCLK_PULSE,
 		ctrl1);
-पूर्ण
+}
 
-अटल पूर्णांक adau1977_startup(काष्ठा snd_pcm_substream *substream,
-	काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
-	u64 क्रमmats = 0;
+static int adau1977_startup(struct snd_pcm_substream *substream,
+	struct snd_soc_dai *dai)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
+	u64 formats = 0;
 
-	अगर (adau1977->slot_width == 16)
-		क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE;
-	अन्यथा अगर (adau1977->right_j || adau1977->slot_width == 24)
-		क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
+	if (adau1977->slot_width == 16)
+		formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE;
+	else if (adau1977->right_j || adau1977->slot_width == 24)
+		formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_BE;
 
-	snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
-		SNDRV_PCM_HW_PARAM_RATE, &adau1977->स्थिरraपूर्णांकs);
+	snd_pcm_hw_constraint_list(substream->runtime, 0,
+		SNDRV_PCM_HW_PARAM_RATE, &adau1977->constraints);
 
-	अगर (adau1977->master)
-		snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
+	if (adau1977->master)
+		snd_pcm_hw_constraint_minmax(substream->runtime,
 			SNDRV_PCM_HW_PARAM_RATE, 8000, adau1977->max_master_fs);
 
-	अगर (क्रमmats != 0)
-		snd_pcm_hw_स्थिरraपूर्णांक_mask64(substream->runसमय,
-			SNDRV_PCM_HW_PARAM_FORMAT, क्रमmats);
+	if (formats != 0)
+		snd_pcm_hw_constraint_mask64(substream->runtime,
+			SNDRV_PCM_HW_PARAM_FORMAT, formats);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adau1977_set_tristate(काष्ठा snd_soc_dai *dai, पूर्णांक tristate)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
-	अचिन्हित पूर्णांक val;
+static int adau1977_set_tristate(struct snd_soc_dai *dai, int tristate)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(dai->component);
+	unsigned int val;
 
-	अगर (tristate)
+	if (tristate)
 		val = ADAU1977_SAI_OVERTEMP_DRV_HIZ;
-	अन्यथा
+	else
 		val = 0;
 
-	वापस regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_OVERTEMP,
+	return regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_OVERTEMP,
 		ADAU1977_SAI_OVERTEMP_DRV_HIZ, val);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops adau1977_dai_ops = अणु
+static const struct snd_soc_dai_ops adau1977_dai_ops = {
 	.startup	= adau1977_startup,
 	.hw_params	= adau1977_hw_params,
 	.mute_stream	= adau1977_mute,
 	.set_fmt	= adau1977_set_dai_fmt,
 	.set_tdm_slot	= adau1977_set_tdm_slot,
 	.set_tristate	= adau1977_set_tristate,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver adau1977_dai = अणु
+static struct snd_soc_dai_driver adau1977_dai = {
 	.name = "adau1977-hifi",
-	.capture = अणु
+	.capture = {
 		.stream_name = "Capture",
 		.channels_min = 1,
 		.channels_max = 4,
 		.rates = SNDRV_PCM_RATE_KNOT,
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |
+		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |
 		    SNDRV_PCM_FMTBIT_S32_LE,
 		.sig_bits = 24,
-	पूर्ण,
+	},
 	.ops = &adau1977_dai_ops,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक adau1977_rates[] = अणु
+static const unsigned int adau1977_rates[] = {
 	8000, 16000, 32000, 64000, 128000,
 	11025, 22050, 44100, 88200, 172400,
 	12000, 24000, 48000, 96000, 192000,
-पूर्ण;
+};
 
-#घोषणा ADAU1977_RATE_CONSTRAINT_MASK_32000 0x001f
-#घोषणा ADAU1977_RATE_CONSTRAINT_MASK_44100 0x03e0
-#घोषणा ADAU1977_RATE_CONSTRAINT_MASK_48000 0x7c00
+#define ADAU1977_RATE_CONSTRAINT_MASK_32000 0x001f
+#define ADAU1977_RATE_CONSTRAINT_MASK_44100 0x03e0
+#define ADAU1977_RATE_CONSTRAINT_MASK_48000 0x7c00
 /* All rates >= 32000 */
-#घोषणा ADAU1977_RATE_CONSTRAINT_MASK_LRCLK 0x739c
+#define ADAU1977_RATE_CONSTRAINT_MASK_LRCLK 0x739c
 
-अटल bool adau1977_check_sysclk(अचिन्हित पूर्णांक mclk, अचिन्हित पूर्णांक base_freq)
-अणु
-	अचिन्हित पूर्णांक mcs;
+static bool adau1977_check_sysclk(unsigned int mclk, unsigned int base_freq)
+{
+	unsigned int mcs;
 
-	अगर (mclk % (base_freq * 128) != 0)
-		वापस false;
+	if (mclk % (base_freq * 128) != 0)
+		return false;
 
 	mcs = mclk / (128 * base_freq);
-	अगर (mcs < 1 || mcs > 6 || mcs == 5)
-		वापस false;
+	if (mcs < 1 || mcs > 6 || mcs == 5)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक adau1977_set_sysclk(काष्ठा snd_soc_component *component,
-	पूर्णांक clk_id, पूर्णांक source, अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक mask = 0;
-	अचिन्हित पूर्णांक clk_src;
-	अचिन्हित पूर्णांक ret;
+static int adau1977_set_sysclk(struct snd_soc_component *component,
+	int clk_id, int source, unsigned int freq, int dir)
+{
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
+	unsigned int mask = 0;
+	unsigned int clk_src;
+	unsigned int ret;
 
-	अगर (dir != SND_SOC_CLOCK_IN)
-		वापस -EINVAL;
+	if (dir != SND_SOC_CLOCK_IN)
+		return -EINVAL;
 
-	अगर (clk_id != ADAU1977_SYSCLK)
-		वापस -EINVAL;
+	if (clk_id != ADAU1977_SYSCLK)
+		return -EINVAL;
 
-	चयन (source) अणु
-	हाल ADAU1977_SYSCLK_SRC_MCLK:
+	switch (source) {
+	case ADAU1977_SYSCLK_SRC_MCLK:
 		clk_src = 0;
-		अवरोध;
-	हाल ADAU1977_SYSCLK_SRC_LRCLK:
+		break;
+	case ADAU1977_SYSCLK_SRC_LRCLK:
 		clk_src = ADAU1977_PLL_CLK_S;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (freq != 0 && source == ADAU1977_SYSCLK_SRC_MCLK) अणु
-		अगर (freq < 4000000 || freq > 36864000)
-			वापस -EINVAL;
+	if (freq != 0 && source == ADAU1977_SYSCLK_SRC_MCLK) {
+		if (freq < 4000000 || freq > 36864000)
+			return -EINVAL;
 
-		अगर (adau1977_check_sysclk(freq, 32000))
+		if (adau1977_check_sysclk(freq, 32000))
 			mask |= ADAU1977_RATE_CONSTRAINT_MASK_32000;
-		अगर (adau1977_check_sysclk(freq, 44100))
+		if (adau1977_check_sysclk(freq, 44100))
 			mask |= ADAU1977_RATE_CONSTRAINT_MASK_44100;
-		अगर (adau1977_check_sysclk(freq, 48000))
+		if (adau1977_check_sysclk(freq, 48000))
 			mask |= ADAU1977_RATE_CONSTRAINT_MASK_48000;
 
-		अगर (mask == 0)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अगर (source == ADAU1977_SYSCLK_SRC_LRCLK) अणु
+		if (mask == 0)
+			return -EINVAL;
+	} else if (source == ADAU1977_SYSCLK_SRC_LRCLK) {
 		mask = ADAU1977_RATE_CONSTRAINT_MASK_LRCLK;
-	पूर्ण
+	}
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_PLL,
 		ADAU1977_PLL_CLK_S, clk_src);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	adau1977->स्थिरraपूर्णांकs.mask = mask;
+	adau1977->constraints.mask = mask;
 	adau1977->sysclk_src = source;
 	adau1977->sysclk = freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adau1977_component_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
-	काष्ठा adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int adau1977_component_probe(struct snd_soc_component *component)
+{
+	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct adau1977 *adau1977 = snd_soc_component_get_drvdata(component);
+	int ret;
 
-	चयन (adau1977->type) अणु
-	हाल ADAU1977:
+	switch (adau1977->type) {
+	case ADAU1977:
 		ret = snd_soc_dapm_new_controls(dapm,
-			adau1977_micbias_dapm_widमाला_लो,
-			ARRAY_SIZE(adau1977_micbias_dapm_widमाला_लो));
-		अगर (ret < 0)
-			वापस ret;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			adau1977_micbias_dapm_widgets,
+			ARRAY_SIZE(adau1977_micbias_dapm_widgets));
+		if (ret < 0)
+			return ret;
+		break;
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver adau1977_component_driver = अणु
+static const struct snd_soc_component_driver adau1977_component_driver = {
 	.probe			= adau1977_component_probe,
 	.set_bias_level		= adau1977_set_bias_level,
 	.set_sysclk		= adau1977_set_sysclk,
 	.controls		= adau1977_snd_controls,
 	.num_controls		= ARRAY_SIZE(adau1977_snd_controls),
-	.dapm_widमाला_लो		= adau1977_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(adau1977_dapm_widमाला_लो),
+	.dapm_widgets		= adau1977_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(adau1977_dapm_widgets),
 	.dapm_routes		= adau1977_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(adau1977_dapm_routes),
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल पूर्णांक adau1977_setup_micbias(काष्ठा adau1977 *adau1977)
-अणु
-	अचिन्हित पूर्णांक micbias;
+static int adau1977_setup_micbias(struct adau1977 *adau1977)
+{
+	unsigned int micbias;
 
-	अगर (device_property_पढ़ो_u32(adau1977->dev, "adi,micbias", &micbias))
+	if (device_property_read_u32(adau1977->dev, "adi,micbias", &micbias))
 		micbias = ADAU1977_MICBIAS_8V5;
 
-	अगर (micbias > ADAU1977_MICBIAS_9V0) अणु
+	if (micbias > ADAU1977_MICBIAS_9V0) {
 		dev_err(adau1977->dev, "Invalid value for 'adi,micbias'\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस regmap_update_bits(adau1977->regmap, ADAU1977_REG_MICBIAS,
+	return regmap_update_bits(adau1977->regmap, ADAU1977_REG_MICBIAS,
 		ADAU1977_MICBIAS_MB_VOLTS_MASK,
 		micbias << ADAU1977_MICBIAS_MB_VOLTS_OFFSET);
-पूर्ण
+}
 
-पूर्णांक adau1977_probe(काष्ठा device *dev, काष्ठा regmap *regmap,
-	क्रमागत adau1977_type type, व्योम (*चयन_mode)(काष्ठा device *dev))
-अणु
-	अचिन्हित पूर्णांक घातer_off_mask;
-	काष्ठा adau1977 *adau1977;
-	पूर्णांक ret;
+int adau1977_probe(struct device *dev, struct regmap *regmap,
+	enum adau1977_type type, void (*switch_mode)(struct device *dev))
+{
+	unsigned int power_off_mask;
+	struct adau1977 *adau1977;
+	int ret;
 
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	adau1977 = devm_kzalloc(dev, माप(*adau1977), GFP_KERNEL);
-	अगर (adau1977 == शून्य)
-		वापस -ENOMEM;
+	adau1977 = devm_kzalloc(dev, sizeof(*adau1977), GFP_KERNEL);
+	if (adau1977 == NULL)
+		return -ENOMEM;
 
 	adau1977->dev = dev;
 	adau1977->type = type;
 	adau1977->regmap = regmap;
-	adau1977->चयन_mode = चयन_mode;
+	adau1977->switch_mode = switch_mode;
 	adau1977->max_master_fs = 192000;
 
-	adau1977->स्थिरraपूर्णांकs.list = adau1977_rates;
-	adau1977->स्थिरraपूर्णांकs.count = ARRAY_SIZE(adau1977_rates);
+	adau1977->constraints.list = adau1977_rates;
+	adau1977->constraints.count = ARRAY_SIZE(adau1977_rates);
 
 	adau1977->avdd_reg = devm_regulator_get(dev, "AVDD");
-	अगर (IS_ERR(adau1977->avdd_reg))
-		वापस PTR_ERR(adau1977->avdd_reg);
+	if (IS_ERR(adau1977->avdd_reg))
+		return PTR_ERR(adau1977->avdd_reg);
 
 	adau1977->dvdd_reg = devm_regulator_get_optional(dev, "DVDD");
-	अगर (IS_ERR(adau1977->dvdd_reg)) अणु
-		अगर (PTR_ERR(adau1977->dvdd_reg) != -ENODEV)
-			वापस PTR_ERR(adau1977->dvdd_reg);
-		adau1977->dvdd_reg = शून्य;
-	पूर्ण
+	if (IS_ERR(adau1977->dvdd_reg)) {
+		if (PTR_ERR(adau1977->dvdd_reg) != -ENODEV)
+			return PTR_ERR(adau1977->dvdd_reg);
+		adau1977->dvdd_reg = NULL;
+	}
 
 	adau1977->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						       GPIOD_OUT_LOW);
-	अगर (IS_ERR(adau1977->reset_gpio))
-		वापस PTR_ERR(adau1977->reset_gpio);
+	if (IS_ERR(adau1977->reset_gpio))
+		return PTR_ERR(adau1977->reset_gpio);
 
 	dev_set_drvdata(dev, adau1977);
 
-	अगर (adau1977->reset_gpio)
+	if (adau1977->reset_gpio)
 		ndelay(100);
 
-	ret = adau1977_घातer_enable(adau1977);
-	अगर (ret)
-		वापस ret;
+	ret = adau1977_power_enable(adau1977);
+	if (ret)
+		return ret;
 
-	अगर (type == ADAU1977) अणु
+	if (type == ADAU1977) {
 		ret = adau1977_setup_micbias(adau1977);
-		अगर (ret)
-			जाओ err_घातeroff;
-	पूर्ण
+		if (ret)
+			goto err_poweroff;
+	}
 
-	अगर (adau1977->dvdd_reg)
-		घातer_off_mask = ~0;
-	अन्यथा
-		घातer_off_mask = (अचिन्हित पूर्णांक)~ADAU1977_BLOCK_POWER_SAI_LDO_EN;
+	if (adau1977->dvdd_reg)
+		power_off_mask = ~0;
+	else
+		power_off_mask = (unsigned int)~ADAU1977_BLOCK_POWER_SAI_LDO_EN;
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_BLOCK_POWER_SAI,
-				घातer_off_mask, 0x00);
-	अगर (ret)
-		जाओ err_घातeroff;
+				power_off_mask, 0x00);
+	if (ret)
+		goto err_poweroff;
 
-	ret = adau1977_घातer_disable(adau1977);
-	अगर (ret)
-		वापस ret;
+	ret = adau1977_power_disable(adau1977);
+	if (ret)
+		return ret;
 
-	वापस devm_snd_soc_रेजिस्टर_component(dev, &adau1977_component_driver,
+	return devm_snd_soc_register_component(dev, &adau1977_component_driver,
 			&adau1977_dai, 1);
 
-err_घातeroff:
-	adau1977_घातer_disable(adau1977);
-	वापस ret;
+err_poweroff:
+	adau1977_power_disable(adau1977);
+	return ret;
 
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(adau1977_probe);
 
-अटल bool adau1977_रेजिस्टर_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल ADAU1977_REG_STATUS(0):
-	हाल ADAU1977_REG_STATUS(1):
-	हाल ADAU1977_REG_STATUS(2):
-	हाल ADAU1977_REG_STATUS(3):
-	हाल ADAU1977_REG_ADC_CLIP:
-		वापस true;
-	पूर्ण
+static bool adau1977_register_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case ADAU1977_REG_STATUS(0):
+	case ADAU1977_REG_STATUS(1):
+	case ADAU1977_REG_STATUS(2):
+	case ADAU1977_REG_STATUS(3):
+	case ADAU1977_REG_ADC_CLIP:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-स्थिर काष्ठा regmap_config adau1977_regmap_config = अणु
-	.max_रेजिस्टर = ADAU1977_REG_DC_HPF_CAL,
-	.अस्थिर_reg = adau1977_रेजिस्टर_अस्थिर,
+const struct regmap_config adau1977_regmap_config = {
+	.max_register = ADAU1977_REG_DC_HPF_CAL,
+	.volatile_reg = adau1977_register_volatile,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_शेषs = adau1977_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(adau1977_reg_शेषs),
-पूर्ण;
+	.reg_defaults = adau1977_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(adau1977_reg_defaults),
+};
 EXPORT_SYMBOL_GPL(adau1977_regmap_config);
 
 MODULE_DESCRIPTION("ASoC ADAU1977/ADAU1978/ADAU1979 driver");

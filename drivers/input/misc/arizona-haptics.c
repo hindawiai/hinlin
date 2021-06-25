@@ -1,214 +1,213 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Arizona haptics driver
  *
  * Copyright 2012 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/input.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/input.h>
+#include <linux/slab.h>
 
-#समावेश <sound/soc.h>
-#समावेश <sound/soc-dapm.h>
+#include <sound/soc.h>
+#include <sound/soc-dapm.h>
 
-#समावेश <linux/mfd/arizona/core.h>
-#समावेश <linux/mfd/arizona/pdata.h>
-#समावेश <linux/mfd/arizona/रेजिस्टरs.h>
+#include <linux/mfd/arizona/core.h>
+#include <linux/mfd/arizona/pdata.h>
+#include <linux/mfd/arizona/registers.h>
 
-काष्ठा arizona_haptics अणु
-	काष्ठा arizona *arizona;
-	काष्ठा input_dev *input_dev;
-	काष्ठा work_काष्ठा work;
+struct arizona_haptics {
+	struct arizona *arizona;
+	struct input_dev *input_dev;
+	struct work_struct work;
 
-	काष्ठा mutex mutex;
-	u8 पूर्णांकensity;
-पूर्ण;
+	struct mutex mutex;
+	u8 intensity;
+};
 
-अटल व्योम arizona_haptics_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा arizona_haptics *haptics = container_of(work,
-						       काष्ठा arizona_haptics,
+static void arizona_haptics_work(struct work_struct *work)
+{
+	struct arizona_haptics *haptics = container_of(work,
+						       struct arizona_haptics,
 						       work);
-	काष्ठा arizona *arizona = haptics->arizona;
-	काष्ठा snd_soc_component *component =
+	struct arizona *arizona = haptics->arizona;
+	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(arizona->dapm);
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!haptics->arizona->dapm) अणु
+	if (!haptics->arizona->dapm) {
 		dev_err(arizona->dev, "No DAPM context\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (haptics->पूर्णांकensity) अणु
+	if (haptics->intensity) {
 		ret = regmap_update_bits(arizona->regmap,
 					 ARIZONA_HAPTICS_PHASE_2_INTENSITY,
 					 ARIZONA_PHASE2_INTENSITY_MASK,
-					 haptics->पूर्णांकensity);
-		अगर (ret != 0) अणु
+					 haptics->intensity);
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to set intensity: %d\n",
 				ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		/* This enable sequence will be a noop अगर alपढ़ोy enabled */
+		/* This enable sequence will be a noop if already enabled */
 		ret = regmap_update_bits(arizona->regmap,
 					 ARIZONA_HAPTICS_CONTROL_1,
 					 ARIZONA_HAP_CTRL_MASK,
 					 1 << ARIZONA_HAP_CTRL_SHIFT);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to start haptics: %d\n",
 				ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ret = snd_soc_component_enable_pin(component, "HAPTICS");
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to start HAPTICS: %d\n",
 				ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ret = snd_soc_dapm_sync(arizona->dapm);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to sync DAPM: %d\n",
 				ret);
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* This disable sequence will be a noop अगर alपढ़ोy enabled */
+			return;
+		}
+	} else {
+		/* This disable sequence will be a noop if already enabled */
 		ret = snd_soc_component_disable_pin(component, "HAPTICS");
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to disable HAPTICS: %d\n",
 				ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ret = snd_soc_dapm_sync(arizona->dapm);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to sync DAPM: %d\n",
 				ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		ret = regmap_update_bits(arizona->regmap,
 					 ARIZONA_HAPTICS_CONTROL_1,
 					 ARIZONA_HAP_CTRL_MASK, 0);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			dev_err(arizona->dev, "Failed to stop haptics: %d\n",
 				ret);
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल पूर्णांक arizona_haptics_play(काष्ठा input_dev *input, व्योम *data,
-				काष्ठा ff_effect *effect)
-अणु
-	काष्ठा arizona_haptics *haptics = input_get_drvdata(input);
-	काष्ठा arizona *arizona = haptics->arizona;
+static int arizona_haptics_play(struct input_dev *input, void *data,
+				struct ff_effect *effect)
+{
+	struct arizona_haptics *haptics = input_get_drvdata(input);
+	struct arizona *arizona = haptics->arizona;
 
-	अगर (!arizona->dapm) अणु
+	if (!arizona->dapm) {
 		dev_err(arizona->dev, "No DAPM context\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (effect->u.rumble.strong_magnitude) अणु
-		/* Scale the magnitude पूर्णांकo the range the device supports */
-		अगर (arizona->pdata.hap_act) अणु
-			haptics->पूर्णांकensity =
+	if (effect->u.rumble.strong_magnitude) {
+		/* Scale the magnitude into the range the device supports */
+		if (arizona->pdata.hap_act) {
+			haptics->intensity =
 				effect->u.rumble.strong_magnitude >> 9;
-			अगर (effect->direction < 0x8000)
-				haptics->पूर्णांकensity += 0x7f;
-		पूर्ण अन्यथा अणु
-			haptics->पूर्णांकensity =
+			if (effect->direction < 0x8000)
+				haptics->intensity += 0x7f;
+		} else {
+			haptics->intensity =
 				effect->u.rumble.strong_magnitude >> 8;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		haptics->पूर्णांकensity = 0;
-	पूर्ण
+		}
+	} else {
+		haptics->intensity = 0;
+	}
 
 	schedule_work(&haptics->work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम arizona_haptics_बंद(काष्ठा input_dev *input)
-अणु
-	काष्ठा arizona_haptics *haptics = input_get_drvdata(input);
-	काष्ठा snd_soc_component *component;
+static void arizona_haptics_close(struct input_dev *input)
+{
+	struct arizona_haptics *haptics = input_get_drvdata(input);
+	struct snd_soc_component *component;
 
 	cancel_work_sync(&haptics->work);
 
-	अगर (haptics->arizona->dapm) अणु
+	if (haptics->arizona->dapm) {
 		component = snd_soc_dapm_to_component(haptics->arizona->dapm);
 		snd_soc_component_disable_pin(component, "HAPTICS");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक arizona_haptics_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arizona *arizona = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा arizona_haptics *haptics;
-	पूर्णांक ret;
+static int arizona_haptics_probe(struct platform_device *pdev)
+{
+	struct arizona *arizona = dev_get_drvdata(pdev->dev.parent);
+	struct arizona_haptics *haptics;
+	int ret;
 
-	haptics = devm_kzalloc(&pdev->dev, माप(*haptics), GFP_KERNEL);
-	अगर (!haptics)
-		वापस -ENOMEM;
+	haptics = devm_kzalloc(&pdev->dev, sizeof(*haptics), GFP_KERNEL);
+	if (!haptics)
+		return -ENOMEM;
 
 	haptics->arizona = arizona;
 
 	ret = regmap_update_bits(arizona->regmap, ARIZONA_HAPTICS_CONTROL_1,
 				 ARIZONA_HAP_ACT, arizona->pdata.hap_act);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(arizona->dev, "Failed to set haptics actuator: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	INIT_WORK(&haptics->work, arizona_haptics_work);
 
 	haptics->input_dev = devm_input_allocate_device(&pdev->dev);
-	अगर (!haptics->input_dev) अणु
+	if (!haptics->input_dev) {
 		dev_err(arizona->dev, "Failed to allocate input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	input_set_drvdata(haptics->input_dev, haptics);
 
 	haptics->input_dev->name = "arizona:haptics";
-	haptics->input_dev->बंद = arizona_haptics_बंद;
+	haptics->input_dev->close = arizona_haptics_close;
 	__set_bit(FF_RUMBLE, haptics->input_dev->ffbit);
 
-	ret = input_ff_create_memless(haptics->input_dev, शून्य,
+	ret = input_ff_create_memless(haptics->input_dev, NULL,
 				      arizona_haptics_play);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(arizona->dev, "input_ff_create_memless() failed: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = input_रेजिस्टर_device(haptics->input_dev);
-	अगर (ret < 0) अणु
+	ret = input_register_device(haptics->input_dev);
+	if (ret < 0) {
 		dev_err(arizona->dev, "couldn't register input device: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver arizona_haptics_driver = अणु
+static struct platform_driver arizona_haptics_driver = {
 	.probe		= arizona_haptics_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "arizona-haptics",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(arizona_haptics_driver);
+	},
+};
+module_platform_driver(arizona_haptics_driver);
 
 MODULE_ALIAS("platform:arizona-haptics");
 MODULE_DESCRIPTION("Arizona haptics driver");

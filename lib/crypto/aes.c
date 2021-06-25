@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2017-2019 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
-#समावेश <crypto/aes.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
+#include <crypto/aes.h>
+#include <linux/crypto.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
 
 /*
- * Emit the sbox as अस्थिर स्थिर to prevent the compiler from करोing
- * स्थिरant folding on sbox references involving fixed indexes.
+ * Emit the sbox as volatile const to prevent the compiler from doing
+ * constant folding on sbox references involving fixed indexes.
  */
-अटल अस्थिर स्थिर u8 __cacheline_aligned aes_sbox[] = अणु
+static volatile const u8 __cacheline_aligned aes_sbox[] = {
 	0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,
 	0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
 	0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0,
@@ -46,9 +45,9 @@
 	0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
 	0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68,
 	0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16,
-पूर्ण;
+};
 
-अटल अस्थिर स्थिर u8 __cacheline_aligned aes_inv_sbox[] = अणु
+static volatile const u8 __cacheline_aligned aes_inv_sbox[] = {
 	0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38,
 	0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
 	0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87,
@@ -81,37 +80,37 @@
 	0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
 	0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26,
 	0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d,
-पूर्ण;
+};
 
-बाह्य स्थिर u8 crypto_aes_sbox[256] __alias(aes_sbox);
-बाह्य स्थिर u8 crypto_aes_inv_sbox[256] __alias(aes_inv_sbox);
+extern const u8 crypto_aes_sbox[256] __alias(aes_sbox);
+extern const u8 crypto_aes_inv_sbox[256] __alias(aes_inv_sbox);
 
 EXPORT_SYMBOL(crypto_aes_sbox);
 EXPORT_SYMBOL(crypto_aes_inv_sbox);
 
-अटल u32 mul_by_x(u32 w)
-अणु
+static u32 mul_by_x(u32 w)
+{
 	u32 x = w & 0x7f7f7f7f;
 	u32 y = w & 0x80808080;
 
 	/* multiply by polynomial 'x' (0b10) in GF(2^8) */
-	वापस (x << 1) ^ (y >> 7) * 0x1b;
-पूर्ण
+	return (x << 1) ^ (y >> 7) * 0x1b;
+}
 
-अटल u32 mul_by_x2(u32 w)
-अणु
+static u32 mul_by_x2(u32 w)
+{
 	u32 x = w & 0x3f3f3f3f;
 	u32 y = w & 0x80808080;
 	u32 z = w & 0x40404040;
 
 	/* multiply by polynomial 'x^2' (0b100) in GF(2^8) */
-	वापस (x << 2) ^ (y >> 7) * 0x36 ^ (z >> 6) * 0x1b;
-पूर्ण
+	return (x << 2) ^ (y >> 7) * 0x36 ^ (z >> 6) * 0x1b;
+}
 
-अटल u32 mix_columns(u32 x)
-अणु
+static u32 mix_columns(u32 x)
+{
 	/*
-	 * Perक्रमm the following matrix multiplication in GF(2^8)
+	 * Perform the following matrix multiplication in GF(2^8)
 	 *
 	 * | 0x2 0x3 0x1 0x1 |   | x[0] |
 	 * | 0x1 0x2 0x3 0x1 |   | x[1] |
@@ -120,13 +119,13 @@ EXPORT_SYMBOL(crypto_aes_inv_sbox);
 	 */
 	u32 y = mul_by_x(x) ^ ror32(x, 16);
 
-	वापस y ^ ror32(x ^ y, 8);
-पूर्ण
+	return y ^ ror32(x ^ y, 8);
+}
 
-अटल u32 inv_mix_columns(u32 x)
-अणु
+static u32 inv_mix_columns(u32 x)
+{
 	/*
-	 * Perक्रमm the following matrix multiplication in GF(2^8)
+	 * Perform the following matrix multiplication in GF(2^8)
 	 *
 	 * | 0xe 0xb 0xd 0x9 |   | x[0] |
 	 * | 0x9 0xe 0xb 0xd |   | x[1] |
@@ -142,32 +141,32 @@ EXPORT_SYMBOL(crypto_aes_inv_sbox);
 	 */
 	u32 y = mul_by_x2(x);
 
-	वापस mix_columns(x ^ y ^ ror32(y, 16));
-पूर्ण
+	return mix_columns(x ^ y ^ ror32(y, 16));
+}
 
-अटल __always_अंतरभूत u32 subshअगरt(u32 in[], पूर्णांक pos)
-अणु
-	वापस (aes_sbox[in[pos] & 0xff]) ^
+static __always_inline u32 subshift(u32 in[], int pos)
+{
+	return (aes_sbox[in[pos] & 0xff]) ^
 	       (aes_sbox[(in[(pos + 1) % 4] >>  8) & 0xff] <<  8) ^
 	       (aes_sbox[(in[(pos + 2) % 4] >> 16) & 0xff] << 16) ^
 	       (aes_sbox[(in[(pos + 3) % 4] >> 24) & 0xff] << 24);
-पूर्ण
+}
 
-अटल __always_अंतरभूत u32 inv_subshअगरt(u32 in[], पूर्णांक pos)
-अणु
-	वापस (aes_inv_sbox[in[pos] & 0xff]) ^
+static __always_inline u32 inv_subshift(u32 in[], int pos)
+{
+	return (aes_inv_sbox[in[pos] & 0xff]) ^
 	       (aes_inv_sbox[(in[(pos + 3) % 4] >>  8) & 0xff] <<  8) ^
 	       (aes_inv_sbox[(in[(pos + 2) % 4] >> 16) & 0xff] << 16) ^
 	       (aes_inv_sbox[(in[(pos + 1) % 4] >> 24) & 0xff] << 24);
-पूर्ण
+}
 
-अटल u32 subw(u32 in)
-अणु
-	वापस (aes_sbox[in & 0xff]) ^
+static u32 subw(u32 in)
+{
+	return (aes_sbox[in & 0xff]) ^
 	       (aes_sbox[(in >>  8) & 0xff] <<  8) ^
 	       (aes_sbox[(in >> 16) & 0xff] << 16) ^
 	       (aes_sbox[(in >> 24) & 0xff] << 24);
-पूर्ण
+}
 
 /**
  * aes_expandkey - Expands the AES key as described in FIPS-197
@@ -175,31 +174,31 @@ EXPORT_SYMBOL(crypto_aes_inv_sbox);
  * @in_key:	The supplied key.
  * @key_len:	The length of the supplied key.
  *
- * Returns 0 on success. The function fails only अगर an invalid key size (or
- * poपूर्णांकer) is supplied.
+ * Returns 0 on success. The function fails only if an invalid key size (or
+ * pointer) is supplied.
  * The expanded key size is 240 bytes (max of 14 rounds with a unique 16 bytes
- * key schedule plus a 16 bytes key which is used beक्रमe the first round).
- * The decryption key is prepared क्रम the "Equivalent Inverse Cipher" as
+ * key schedule plus a 16 bytes key which is used before the first round).
+ * The decryption key is prepared for the "Equivalent Inverse Cipher" as
  * described in FIPS-197. The first slot (16 bytes) of each key (enc or dec) is
- * क्रम the initial combination, the second slot क्रम the first round and so on.
+ * for the initial combination, the second slot for the first round and so on.
  */
-पूर्णांक aes_expandkey(काष्ठा crypto_aes_ctx *ctx, स्थिर u8 *in_key,
-		  अचिन्हित पूर्णांक key_len)
-अणु
-	u32 kwords = key_len / माप(u32);
+int aes_expandkey(struct crypto_aes_ctx *ctx, const u8 *in_key,
+		  unsigned int key_len)
+{
+	u32 kwords = key_len / sizeof(u32);
 	u32 rc, i, j;
-	पूर्णांक err;
+	int err;
 
 	err = aes_check_keylen(key_len);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	ctx->key_length = key_len;
 
-	क्रम (i = 0; i < kwords; i++)
-		ctx->key_enc[i] = get_unaligned_le32(in_key + i * माप(u32));
+	for (i = 0; i < kwords; i++)
+		ctx->key_enc[i] = get_unaligned_le32(in_key + i * sizeof(u32));
 
-	क्रम (i = 0, rc = 1; i < 10; i++, rc = mul_by_x(rc)) अणु
+	for (i = 0, rc = 1; i < 10; i++, rc = mul_by_x(rc)) {
 		u32 *rki = ctx->key_enc + (i * kwords);
 		u32 *rko = rki + kwords;
 
@@ -208,25 +207,25 @@ EXPORT_SYMBOL(crypto_aes_inv_sbox);
 		rko[2] = rko[1] ^ rki[2];
 		rko[3] = rko[2] ^ rki[3];
 
-		अगर (key_len == AES_KEYSIZE_192) अणु
-			अगर (i >= 7)
-				अवरोध;
+		if (key_len == AES_KEYSIZE_192) {
+			if (i >= 7)
+				break;
 			rko[4] = rko[3] ^ rki[4];
 			rko[5] = rko[4] ^ rki[5];
-		पूर्ण अन्यथा अगर (key_len == AES_KEYSIZE_256) अणु
-			अगर (i >= 6)
-				अवरोध;
+		} else if (key_len == AES_KEYSIZE_256) {
+			if (i >= 6)
+				break;
 			rko[4] = subw(rko[3]) ^ rki[4];
 			rko[5] = rko[4] ^ rki[5];
 			rko[6] = rko[5] ^ rki[6];
 			rko[7] = rko[6] ^ rki[7];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Generate the decryption keys क्रम the Equivalent Inverse Cipher.
+	 * Generate the decryption keys for the Equivalent Inverse Cipher.
 	 * This involves reversing the order of the round keys, and applying
-	 * the Inverse Mix Columns transक्रमmation to all but the first and
+	 * the Inverse Mix Columns transformation to all but the first and
 	 * the last one.
 	 */
 	ctx->key_dec[0] = ctx->key_enc[key_len + 24];
@@ -234,34 +233,34 @@ EXPORT_SYMBOL(crypto_aes_inv_sbox);
 	ctx->key_dec[2] = ctx->key_enc[key_len + 26];
 	ctx->key_dec[3] = ctx->key_enc[key_len + 27];
 
-	क्रम (i = 4, j = key_len + 20; j > 0; i += 4, j -= 4) अणु
+	for (i = 4, j = key_len + 20; j > 0; i += 4, j -= 4) {
 		ctx->key_dec[i]     = inv_mix_columns(ctx->key_enc[j]);
 		ctx->key_dec[i + 1] = inv_mix_columns(ctx->key_enc[j + 1]);
 		ctx->key_dec[i + 2] = inv_mix_columns(ctx->key_enc[j + 2]);
 		ctx->key_dec[i + 3] = inv_mix_columns(ctx->key_enc[j + 3]);
-	पूर्ण
+	}
 
 	ctx->key_dec[i]     = ctx->key_enc[0];
 	ctx->key_dec[i + 1] = ctx->key_enc[1];
 	ctx->key_dec[i + 2] = ctx->key_enc[2];
 	ctx->key_dec[i + 3] = ctx->key_enc[3];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(aes_expandkey);
 
 /**
  * aes_encrypt - Encrypt a single AES block
- * @ctx:	Context काष्ठा containing the key schedule
+ * @ctx:	Context struct containing the key schedule
  * @out:	Buffer to store the ciphertext
- * @in:		Buffer containing the plaपूर्णांकext
+ * @in:		Buffer containing the plaintext
  */
-व्योम aes_encrypt(स्थिर काष्ठा crypto_aes_ctx *ctx, u8 *out, स्थिर u8 *in)
-अणु
-	स्थिर u32 *rkp = ctx->key_enc + 4;
-	पूर्णांक rounds = 6 + ctx->key_length / 4;
+void aes_encrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in)
+{
+	const u32 *rkp = ctx->key_enc + 4;
+	int rounds = 6 + ctx->key_length / 4;
 	u32 st0[4], st1[4];
-	पूर्णांक round;
+	int round;
 
 	st0[0] = ctx->key_enc[0] ^ get_unaligned_le32(in);
 	st0[1] = ctx->key_enc[1] ^ get_unaligned_le32(in + 4);
@@ -271,48 +270,48 @@ EXPORT_SYMBOL(aes_expandkey);
 	/*
 	 * Force the compiler to emit data independent Sbox references,
 	 * by xoring the input with Sbox values that are known to add up
-	 * to zero. This pulls the entire Sbox पूर्णांकo the D-cache beक्रमe any
-	 * data dependent lookups are करोne.
+	 * to zero. This pulls the entire Sbox into the D-cache before any
+	 * data dependent lookups are done.
 	 */
 	st0[0] ^= aes_sbox[ 0] ^ aes_sbox[ 64] ^ aes_sbox[134] ^ aes_sbox[195];
 	st0[1] ^= aes_sbox[16] ^ aes_sbox[ 82] ^ aes_sbox[158] ^ aes_sbox[221];
 	st0[2] ^= aes_sbox[32] ^ aes_sbox[ 96] ^ aes_sbox[160] ^ aes_sbox[234];
 	st0[3] ^= aes_sbox[48] ^ aes_sbox[112] ^ aes_sbox[186] ^ aes_sbox[241];
 
-	क्रम (round = 0;; round += 2, rkp += 8) अणु
-		st1[0] = mix_columns(subshअगरt(st0, 0)) ^ rkp[0];
-		st1[1] = mix_columns(subshअगरt(st0, 1)) ^ rkp[1];
-		st1[2] = mix_columns(subshअगरt(st0, 2)) ^ rkp[2];
-		st1[3] = mix_columns(subshअगरt(st0, 3)) ^ rkp[3];
+	for (round = 0;; round += 2, rkp += 8) {
+		st1[0] = mix_columns(subshift(st0, 0)) ^ rkp[0];
+		st1[1] = mix_columns(subshift(st0, 1)) ^ rkp[1];
+		st1[2] = mix_columns(subshift(st0, 2)) ^ rkp[2];
+		st1[3] = mix_columns(subshift(st0, 3)) ^ rkp[3];
 
-		अगर (round == rounds - 2)
-			अवरोध;
+		if (round == rounds - 2)
+			break;
 
-		st0[0] = mix_columns(subshअगरt(st1, 0)) ^ rkp[4];
-		st0[1] = mix_columns(subshअगरt(st1, 1)) ^ rkp[5];
-		st0[2] = mix_columns(subshअगरt(st1, 2)) ^ rkp[6];
-		st0[3] = mix_columns(subshअगरt(st1, 3)) ^ rkp[7];
-	पूर्ण
+		st0[0] = mix_columns(subshift(st1, 0)) ^ rkp[4];
+		st0[1] = mix_columns(subshift(st1, 1)) ^ rkp[5];
+		st0[2] = mix_columns(subshift(st1, 2)) ^ rkp[6];
+		st0[3] = mix_columns(subshift(st1, 3)) ^ rkp[7];
+	}
 
-	put_unaligned_le32(subshअगरt(st1, 0) ^ rkp[4], out);
-	put_unaligned_le32(subshअगरt(st1, 1) ^ rkp[5], out + 4);
-	put_unaligned_le32(subshअगरt(st1, 2) ^ rkp[6], out + 8);
-	put_unaligned_le32(subshअगरt(st1, 3) ^ rkp[7], out + 12);
-पूर्ण
+	put_unaligned_le32(subshift(st1, 0) ^ rkp[4], out);
+	put_unaligned_le32(subshift(st1, 1) ^ rkp[5], out + 4);
+	put_unaligned_le32(subshift(st1, 2) ^ rkp[6], out + 8);
+	put_unaligned_le32(subshift(st1, 3) ^ rkp[7], out + 12);
+}
 EXPORT_SYMBOL(aes_encrypt);
 
 /**
  * aes_decrypt - Decrypt a single AES block
- * @ctx:	Context काष्ठा containing the key schedule
- * @out:	Buffer to store the plaपूर्णांकext
+ * @ctx:	Context struct containing the key schedule
+ * @out:	Buffer to store the plaintext
  * @in:		Buffer containing the ciphertext
  */
-व्योम aes_decrypt(स्थिर काष्ठा crypto_aes_ctx *ctx, u8 *out, स्थिर u8 *in)
-अणु
-	स्थिर u32 *rkp = ctx->key_dec + 4;
-	पूर्णांक rounds = 6 + ctx->key_length / 4;
+void aes_decrypt(const struct crypto_aes_ctx *ctx, u8 *out, const u8 *in)
+{
+	const u32 *rkp = ctx->key_dec + 4;
+	int rounds = 6 + ctx->key_length / 4;
 	u32 st0[4], st1[4];
-	पूर्णांक round;
+	int round;
 
 	st0[0] = ctx->key_dec[0] ^ get_unaligned_le32(in);
 	st0[1] = ctx->key_dec[1] ^ get_unaligned_le32(in + 4);
@@ -322,34 +321,34 @@ EXPORT_SYMBOL(aes_encrypt);
 	/*
 	 * Force the compiler to emit data independent Sbox references,
 	 * by xoring the input with Sbox values that are known to add up
-	 * to zero. This pulls the entire Sbox पूर्णांकo the D-cache beक्रमe any
-	 * data dependent lookups are करोne.
+	 * to zero. This pulls the entire Sbox into the D-cache before any
+	 * data dependent lookups are done.
 	 */
 	st0[0] ^= aes_inv_sbox[ 0] ^ aes_inv_sbox[ 64] ^ aes_inv_sbox[129] ^ aes_inv_sbox[200];
 	st0[1] ^= aes_inv_sbox[16] ^ aes_inv_sbox[ 83] ^ aes_inv_sbox[150] ^ aes_inv_sbox[212];
 	st0[2] ^= aes_inv_sbox[32] ^ aes_inv_sbox[ 96] ^ aes_inv_sbox[160] ^ aes_inv_sbox[236];
 	st0[3] ^= aes_inv_sbox[48] ^ aes_inv_sbox[112] ^ aes_inv_sbox[187] ^ aes_inv_sbox[247];
 
-	क्रम (round = 0;; round += 2, rkp += 8) अणु
-		st1[0] = inv_mix_columns(inv_subshअगरt(st0, 0)) ^ rkp[0];
-		st1[1] = inv_mix_columns(inv_subshअगरt(st0, 1)) ^ rkp[1];
-		st1[2] = inv_mix_columns(inv_subshअगरt(st0, 2)) ^ rkp[2];
-		st1[3] = inv_mix_columns(inv_subshअगरt(st0, 3)) ^ rkp[3];
+	for (round = 0;; round += 2, rkp += 8) {
+		st1[0] = inv_mix_columns(inv_subshift(st0, 0)) ^ rkp[0];
+		st1[1] = inv_mix_columns(inv_subshift(st0, 1)) ^ rkp[1];
+		st1[2] = inv_mix_columns(inv_subshift(st0, 2)) ^ rkp[2];
+		st1[3] = inv_mix_columns(inv_subshift(st0, 3)) ^ rkp[3];
 
-		अगर (round == rounds - 2)
-			अवरोध;
+		if (round == rounds - 2)
+			break;
 
-		st0[0] = inv_mix_columns(inv_subshअगरt(st1, 0)) ^ rkp[4];
-		st0[1] = inv_mix_columns(inv_subshअगरt(st1, 1)) ^ rkp[5];
-		st0[2] = inv_mix_columns(inv_subshअगरt(st1, 2)) ^ rkp[6];
-		st0[3] = inv_mix_columns(inv_subshअगरt(st1, 3)) ^ rkp[7];
-	पूर्ण
+		st0[0] = inv_mix_columns(inv_subshift(st1, 0)) ^ rkp[4];
+		st0[1] = inv_mix_columns(inv_subshift(st1, 1)) ^ rkp[5];
+		st0[2] = inv_mix_columns(inv_subshift(st1, 2)) ^ rkp[6];
+		st0[3] = inv_mix_columns(inv_subshift(st1, 3)) ^ rkp[7];
+	}
 
-	put_unaligned_le32(inv_subshअगरt(st1, 0) ^ rkp[4], out);
-	put_unaligned_le32(inv_subshअगरt(st1, 1) ^ rkp[5], out + 4);
-	put_unaligned_le32(inv_subshअगरt(st1, 2) ^ rkp[6], out + 8);
-	put_unaligned_le32(inv_subshअगरt(st1, 3) ^ rkp[7], out + 12);
-पूर्ण
+	put_unaligned_le32(inv_subshift(st1, 0) ^ rkp[4], out);
+	put_unaligned_le32(inv_subshift(st1, 1) ^ rkp[5], out + 4);
+	put_unaligned_le32(inv_subshift(st1, 2) ^ rkp[6], out + 8);
+	put_unaligned_le32(inv_subshift(st1, 3) ^ rkp[7], out + 12);
+}
 EXPORT_SYMBOL(aes_decrypt);
 
 MODULE_DESCRIPTION("Generic AES library");

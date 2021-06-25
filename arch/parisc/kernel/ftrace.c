@@ -1,233 +1,232 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Code क्रम tracing calls in Linux kernel.
+ * Code for tracing calls in Linux kernel.
  * Copyright (C) 2009-2016 Helge Deller <deller@gmx.de>
  *
- * based on code क्रम x86 which is:
+ * based on code for x86 which is:
  * Copyright (C) 2007-2008 Steven Rostedt <srostedt@redhat.com>
  *
  * future possible enhancements:
  *	- add CONFIG_STACK_TRACER
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/ftrace.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/ptrace.h>
+#include <linux/init.h>
+#include <linux/ftrace.h>
+#include <linux/uaccess.h>
+#include <linux/kprobes.h>
+#include <linux/ptrace.h>
 
-#समावेश <यंत्र/assembly.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/ftrace.h>
-#समावेश <यंत्र/patch.h>
+#include <asm/assembly.h>
+#include <asm/sections.h>
+#include <asm/ftrace.h>
+#include <asm/patch.h>
 
-#घोषणा __hot __section(".text.hot")
+#define __hot __section(".text.hot")
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
 /*
- * Hook the वापस address and push it in the stack of वापस addrs
- * in current thपढ़ो info.
+ * Hook the return address and push it in the stack of return addrs
+ * in current thread info.
  */
-अटल व्योम __hot prepare_ftrace_वापस(अचिन्हित दीर्घ *parent,
-					अचिन्हित दीर्घ self_addr)
-अणु
-	अचिन्हित दीर्घ old;
-	बाह्य पूर्णांक parisc_वापस_to_handler;
+static void __hot prepare_ftrace_return(unsigned long *parent,
+					unsigned long self_addr)
+{
+	unsigned long old;
+	extern int parisc_return_to_handler;
 
-	अगर (unlikely(ftrace_graph_is_dead()))
-		वापस;
+	if (unlikely(ftrace_graph_is_dead()))
+		return;
 
-	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
-		वापस;
+	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+		return;
 
 	old = *parent;
 
-	अगर (!function_graph_enter(old, self_addr, 0, शून्य))
-		/* activate parisc_वापस_to_handler() as वापस poपूर्णांक */
-		*parent = (अचिन्हित दीर्घ) &parisc_वापस_to_handler;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_FUNCTION_GRAPH_TRACER */
+	if (!function_graph_enter(old, self_addr, 0, NULL))
+		/* activate parisc_return_to_handler() as return point */
+		*parent = (unsigned long) &parisc_return_to_handler;
+}
+#endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 
-व्योम notrace __hot ftrace_function_trampoline(अचिन्हित दीर्घ parent,
-				अचिन्हित दीर्घ self_addr,
-				अचिन्हित दीर्घ org_sp_gr3,
-				काष्ठा ftrace_regs *fregs)
-अणु
-#अगर_अघोषित CONFIG_DYNAMIC_FTRACE
-	बाह्य ftrace_func_t ftrace_trace_function;
-#पूर्ण_अगर
-	बाह्य काष्ठा ftrace_ops *function_trace_op;
+void notrace __hot ftrace_function_trampoline(unsigned long parent,
+				unsigned long self_addr,
+				unsigned long org_sp_gr3,
+				struct ftrace_regs *fregs)
+{
+#ifndef CONFIG_DYNAMIC_FTRACE
+	extern ftrace_func_t ftrace_trace_function;
+#endif
+	extern struct ftrace_ops *function_trace_op;
 
-	अगर (function_trace_op->flags & FTRACE_OPS_FL_ENABLED &&
+	if (function_trace_op->flags & FTRACE_OPS_FL_ENABLED &&
 	    ftrace_trace_function != ftrace_stub)
 		ftrace_trace_function(self_addr, parent,
 				function_trace_op, fregs);
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-	अगर (dereference_function_descriptor(ftrace_graph_वापस) !=
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+	if (dereference_function_descriptor(ftrace_graph_return) !=
 	    dereference_function_descriptor(ftrace_stub) ||
-	    ftrace_graph_entry != ftrace_graph_entry_stub) अणु
-		अचिन्हित दीर्घ *parent_rp;
+	    ftrace_graph_entry != ftrace_graph_entry_stub) {
+		unsigned long *parent_rp;
 
-		/* calculate poपूर्णांकer to %rp in stack */
-		parent_rp = (अचिन्हित दीर्घ *) (org_sp_gr3 - RP_OFFSET);
+		/* calculate pointer to %rp in stack */
+		parent_rp = (unsigned long *) (org_sp_gr3 - RP_OFFSET);
 		/* sanity check: parent_rp should hold parent */
-		अगर (*parent_rp != parent)
-			वापस;
+		if (*parent_rp != parent)
+			return;
 
-		prepare_ftrace_वापस(parent_rp, self_addr);
-		वापस;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+		prepare_ftrace_return(parent_rp, self_addr);
+		return;
+	}
+#endif
+}
 
-#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
-पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+int ftrace_enable_ftrace_graph_caller(void)
+{
+	return 0;
+}
 
-पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+int ftrace_disable_ftrace_graph_caller(void)
+{
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+#ifdef CONFIG_DYNAMIC_FTRACE
 
-पूर्णांक __init ftrace_dyn_arch_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
-पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
-अणु
-	वापस 0;
-पूर्ण
+int __init ftrace_dyn_arch_init(void)
+{
+	return 0;
+}
+int ftrace_update_ftrace_func(ftrace_func_t func)
+{
+	return 0;
+}
 
-पूर्णांक ftrace_modअगरy_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ old_addr,
-			अचिन्हित दीर्घ addr)
-अणु
-	वापस 0;
-पूर्ण
+int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
+			unsigned long addr)
+{
+	return 0;
+}
 
-अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
-अणु
-	वापस addr+(FTRACE_PATCHABLE_FUNCTION_SIZE-1)*4;
-पूर्ण
+unsigned long ftrace_call_adjust(unsigned long addr)
+{
+	return addr+(FTRACE_PATCHABLE_FUNCTION_SIZE-1)*4;
+}
 
-पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
-अणु
+int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
+{
 	u32 insn[FTRACE_PATCHABLE_FUNCTION_SIZE];
 	u32 *tramp;
-	पूर्णांक size, ret, i;
-	व्योम *ip;
+	int size, ret, i;
+	void *ip;
 
-#अगर_घोषित CONFIG_64BIT
-	अचिन्हित दीर्घ addr2 =
-		(अचिन्हित दीर्घ)dereference_function_descriptor((व्योम *)addr);
+#ifdef CONFIG_64BIT
+	unsigned long addr2 =
+		(unsigned long)dereference_function_descriptor((void *)addr);
 
-	u32 ftrace_trampoline[] = अणु
+	u32 ftrace_trampoline[] = {
 		0x73c10208, /* std,ma r1,100(sp) */
 		0x0c2110c1, /* ldd -10(r1),r1 */
 		0xe820d002, /* bve,n (r1) */
 		addr2 >> 32,
 		addr2 & 0xffffffff,
 		0xe83f1fd7, /* b,l,n .-14,r1 */
-	पूर्ण;
+	};
 
-	u32 ftrace_trampoline_unaligned[] = अणु
+	u32 ftrace_trampoline_unaligned[] = {
 		addr2 >> 32,
 		addr2 & 0xffffffff,
-		0x37de0200, /* lकरो 100(sp),sp */
+		0x37de0200, /* ldo 100(sp),sp */
 		0x73c13e01, /* std r1,-100(sp) */
-		0x34213ff9, /* lकरो -4(r1),r1 */
+		0x34213ff9, /* ldo -4(r1),r1 */
 		0x50213fc1, /* ldd -20(r1),r1 */
 		0xe820d002, /* bve,n (r1) */
 		0xe83f1fcf, /* b,l,n .-20,r1 */
-	पूर्ण;
+	};
 
 	BUILD_BUG_ON(ARRAY_SIZE(ftrace_trampoline_unaligned) >
 				FTRACE_PATCHABLE_FUNCTION_SIZE);
-#अन्यथा
-	u32 ftrace_trampoline[] = अणु
+#else
+	u32 ftrace_trampoline[] = {
 		(u32)addr,
 		0x6fc10080, /* stw,ma r1,40(sp) */
 		0x48213fd1, /* ldw -18(r1),r1 */
 		0xe820c002, /* bv,n r0(r1) */
 		0xe83f1fdf, /* b,l,n .-c,r1 */
-	पूर्ण;
-#पूर्ण_अगर
+	};
+#endif
 
 	BUILD_BUG_ON(ARRAY_SIZE(ftrace_trampoline) >
 				FTRACE_PATCHABLE_FUNCTION_SIZE);
 
-	size = माप(ftrace_trampoline);
+	size = sizeof(ftrace_trampoline);
 	tramp = ftrace_trampoline;
 
-#अगर_घोषित CONFIG_64BIT
-	अगर (rec->ip & 0x4) अणु
-		size = माप(ftrace_trampoline_unaligned);
+#ifdef CONFIG_64BIT
+	if (rec->ip & 0x4) {
+		size = sizeof(ftrace_trampoline_unaligned);
 		tramp = ftrace_trampoline_unaligned;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	ip = (व्योम *)(rec->ip + 4 - size);
+	ip = (void *)(rec->ip + 4 - size);
 
 	ret = copy_from_kernel_nofault(insn, ip, size);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < size / 4; i++) अणु
-		अगर (insn[i] != INSN_NOP)
-			वापस -EINVAL;
-	पूर्ण
+	for (i = 0; i < size / 4; i++) {
+		if (insn[i] != INSN_NOP)
+			return -EINVAL;
+	}
 
 	__patch_text_multiple(ip, tramp, size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ftrace_make_nop(काष्ठा module *mod, काष्ठा dyn_ftrace *rec,
-		    अचिन्हित दीर्घ addr)
-अणु
+int ftrace_make_nop(struct module *mod, struct dyn_ftrace *rec,
+		    unsigned long addr)
+{
 	u32 insn[FTRACE_PATCHABLE_FUNCTION_SIZE];
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(insn); i++)
+	for (i = 0; i < ARRAY_SIZE(insn); i++)
 		insn[i] = INSN_NOP;
 
-	__patch_text((व्योम *)rec->ip, INSN_NOP);
-	__patch_text_multiple((व्योम *)rec->ip + 4 - माप(insn),
-			      insn, माप(insn)-4);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	__patch_text((void *)rec->ip, INSN_NOP);
+	__patch_text_multiple((void *)rec->ip + 4 - sizeof(insn),
+			      insn, sizeof(insn)-4);
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_KPROBES_ON_FTRACE
-व्योम kprobe_ftrace_handler(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
-			   काष्ठा ftrace_ops *ops, काष्ठा ftrace_regs *fregs)
-अणु
-	काष्ठा kprobe_ctlblk *kcb;
-	काष्ठा pt_regs *regs;
-	काष्ठा kprobe *p;
-	पूर्णांक bit;
+#ifdef CONFIG_KPROBES_ON_FTRACE
+void kprobe_ftrace_handler(unsigned long ip, unsigned long parent_ip,
+			   struct ftrace_ops *ops, struct ftrace_regs *fregs)
+{
+	struct kprobe_ctlblk *kcb;
+	struct pt_regs *regs;
+	struct kprobe *p;
+	int bit;
 
 	bit = ftrace_test_recursion_trylock(ip, parent_ip);
-	अगर (bit < 0)
-		वापस;
+	if (bit < 0)
+		return;
 
 	regs = ftrace_get_regs(fregs);
 	preempt_disable_notrace();
 	p = get_kprobe((kprobe_opcode_t *)ip);
-	अगर (unlikely(!p) || kprobe_disabled(p))
-		जाओ out;
+	if (unlikely(!p) || kprobe_disabled(p))
+		goto out;
 
-	अगर (kprobe_running()) अणु
+	if (kprobe_running()) {
 		kprobes_inc_nmissed_count(p);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	__this_cpu_ग_लिखो(current_kprobe, p);
+	__this_cpu_write(current_kprobe, p);
 
 	kcb = get_kprobe_ctlblk();
 	kcb->kprobe_status = KPROBE_HIT_ACTIVE;
@@ -235,25 +234,25 @@
 	regs->iaoq[0] = ip;
 	regs->iaoq[1] = ip + 4;
 
-	अगर (!p->pre_handler || !p->pre_handler(p, regs)) अणु
+	if (!p->pre_handler || !p->pre_handler(p, regs)) {
 		regs->iaoq[0] = ip + 4;
 		regs->iaoq[1] = ip + 8;
 
-		अगर (unlikely(p->post_handler)) अणु
+		if (unlikely(p->post_handler)) {
 			kcb->kprobe_status = KPROBE_HIT_SSDONE;
 			p->post_handler(p, regs, 0);
-		पूर्ण
-	पूर्ण
-	__this_cpu_ग_लिखो(current_kprobe, शून्य);
+		}
+	}
+	__this_cpu_write(current_kprobe, NULL);
 out:
 	preempt_enable_notrace();
 	ftrace_test_recursion_unlock(bit);
-पूर्ण
+}
 NOKPROBE_SYMBOL(kprobe_ftrace_handler);
 
-पूर्णांक arch_prepare_kprobe_ftrace(काष्ठा kprobe *p)
-अणु
-	p->ainsn.insn = शून्य;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+int arch_prepare_kprobe_ftrace(struct kprobe *p)
+{
+	p->ainsn.insn = NULL;
+	return 0;
+}
+#endif

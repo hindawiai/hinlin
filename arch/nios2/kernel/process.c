@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Architecture-dependent parts of process handling.
  *
@@ -9,74 +8,74 @@
  * Copyright (C) 2004 Microtronix Datacom Ltd
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/sched/task.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/mm_types.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/uaccess.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/sched/task.h>
+#include <linux/sched/task_stack.h>
+#include <linux/mm_types.h>
+#include <linux/tick.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/cpuinfo.h>
+#include <asm/unistd.h>
+#include <asm/traps.h>
+#include <asm/cpuinfo.h>
 
-यंत्रlinkage व्योम ret_from_विभाजन(व्योम);
-यंत्रlinkage व्योम ret_from_kernel_thपढ़ो(व्योम);
+asmlinkage void ret_from_fork(void);
+asmlinkage void ret_from_kernel_thread(void);
 
-व्योम (*pm_घातer_off)(व्योम) = शून्य;
-EXPORT_SYMBOL(pm_घातer_off);
+void (*pm_power_off)(void) = NULL;
+EXPORT_SYMBOL(pm_power_off);
 
-व्योम arch_cpu_idle(व्योम)
-अणु
+void arch_cpu_idle(void)
+{
 	raw_local_irq_enable();
-पूर्ण
+}
 
 /*
  * The development boards have no way to pull a board reset. Just jump to the
  * cpu reset address and let the boot loader or the code in head.S take care of
  * resetting peripherals.
  */
-व्योम machine_restart(अक्षर *__unused)
-अणु
+void machine_restart(char *__unused)
+{
 	pr_notice("Machine restart (%08x)...\n", cpuinfo.reset_addr);
 	local_irq_disable();
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 	"jmp	%0\n\t"
 	:
 	: "r" (cpuinfo.reset_addr)
 	: "r4");
-पूर्ण
+}
 
-व्योम machine_halt(व्योम)
-अणु
+void machine_halt(void)
+{
 	pr_notice("Machine halt...\n");
 	local_irq_disable();
-	क्रम (;;)
+	for (;;)
 		;
-पूर्ण
+}
 
 /*
- * There is no way to घातer off the development boards. So just spin क्रम now. If
+ * There is no way to power off the development boards. So just spin for now. If
  * we ever have a way of resetting a board using a GPIO we should add that here.
  */
-व्योम machine_घातer_off(व्योम)
-अणु
+void machine_power_off(void)
+{
 	pr_notice("Machine power off...\n");
 	local_irq_disable();
-	क्रम (;;)
+	for (;;)
 		;
-पूर्ण
+}
 
-व्योम show_regs(काष्ठा pt_regs *regs)
-अणु
+void show_regs(struct pt_regs *regs)
+{
 	pr_notice("\n");
-	show_regs_prपूर्णांक_info(KERN_DEFAULT);
+	show_regs_print_info(KERN_DEFAULT);
 
 	pr_notice("r1: %08lx r2: %08lx r3: %08lx r4: %08lx\n",
 		regs->r1,  regs->r2,  regs->r3,  regs->r4);
@@ -95,85 +94,85 @@ EXPORT_SYMBOL(pm_घातer_off);
 
 	pr_notice("ea: %08lx estatus: %08lx\n",
 		regs->ea,  regs->estatus);
-पूर्ण
+}
 
-व्योम flush_thपढ़ो(व्योम)
-अणु
-पूर्ण
+void flush_thread(void)
+{
+}
 
-पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ usp, अचिन्हित दीर्घ arg,
-		काष्ठा task_काष्ठा *p, अचिन्हित दीर्घ tls)
-अणु
-	काष्ठा pt_regs *childregs = task_pt_regs(p);
-	काष्ठा pt_regs *regs;
-	काष्ठा चयन_stack *stack;
-	काष्ठा चयन_stack *childstack =
-		((काष्ठा चयन_stack *)childregs) - 1;
+int copy_thread(unsigned long clone_flags, unsigned long usp, unsigned long arg,
+		struct task_struct *p, unsigned long tls)
+{
+	struct pt_regs *childregs = task_pt_regs(p);
+	struct pt_regs *regs;
+	struct switch_stack *stack;
+	struct switch_stack *childstack =
+		((struct switch_stack *)childregs) - 1;
 
-	अगर (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) अणु
-		स_रखो(childstack, 0,
-			माप(काष्ठा चयन_stack) + माप(काष्ठा pt_regs));
+	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
+		memset(childstack, 0,
+			sizeof(struct switch_stack) + sizeof(struct pt_regs));
 
 		childstack->r16 = usp;		/* fn */
 		childstack->r17 = arg;
-		childstack->ra = (अचिन्हित दीर्घ) ret_from_kernel_thपढ़ो;
+		childstack->ra = (unsigned long) ret_from_kernel_thread;
 		childregs->estatus = STATUS_PIE;
-		childregs->sp = (अचिन्हित दीर्घ) childstack;
+		childregs->sp = (unsigned long) childstack;
 
-		p->thपढ़ो.ksp = (अचिन्हित दीर्घ) childstack;
-		p->thपढ़ो.kregs = childregs;
-		वापस 0;
-	पूर्ण
+		p->thread.ksp = (unsigned long) childstack;
+		p->thread.kregs = childregs;
+		return 0;
+	}
 
 	regs = current_pt_regs();
 	*childregs = *regs;
-	childregs->r2 = 0;	/* Set the वापस value क्रम the child. */
+	childregs->r2 = 0;	/* Set the return value for the child. */
 	childregs->r7 = 0;
 
-	stack = ((काष्ठा चयन_stack *) regs) - 1;
+	stack = ((struct switch_stack *) regs) - 1;
 	*childstack = *stack;
-	childstack->ra = (अचिन्हित दीर्घ)ret_from_विभाजन;
-	p->thपढ़ो.kregs = childregs;
-	p->thपढ़ो.ksp = (अचिन्हित दीर्घ) childstack;
+	childstack->ra = (unsigned long)ret_from_fork;
+	p->thread.kregs = childregs;
+	p->thread.ksp = (unsigned long) childstack;
 
-	अगर (usp)
+	if (usp)
 		childregs->sp = usp;
 
-	/* Initialize tls रेजिस्टर. */
-	अगर (clone_flags & CLONE_SETTLS)
+	/* Initialize tls register. */
+	if (clone_flags & CLONE_SETTLS)
 		childstack->r23 = tls;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *	Generic dumping code. Used क्रम panic and debug.
+ *	Generic dumping code. Used for panic and debug.
  */
-व्योम dump(काष्ठा pt_regs *fp)
-अणु
-	अचिन्हित दीर्घ	*sp;
-	अचिन्हित अक्षर	*tp;
-	पूर्णांक		i;
+void dump(struct pt_regs *fp)
+{
+	unsigned long	*sp;
+	unsigned char	*tp;
+	int		i;
 
 	pr_emerg("\nCURRENT PROCESS:\n\n");
 	pr_emerg("COMM=%s PID=%d\n", current->comm, current->pid);
 
-	अगर (current->mm) अणु
+	if (current->mm) {
 		pr_emerg("TEXT=%08x-%08x DATA=%08x-%08x BSS=%08x-%08x\n",
-			(पूर्णांक) current->mm->start_code,
-			(पूर्णांक) current->mm->end_code,
-			(पूर्णांक) current->mm->start_data,
-			(पूर्णांक) current->mm->end_data,
-			(पूर्णांक) current->mm->end_data,
-			(पूर्णांक) current->mm->brk);
+			(int) current->mm->start_code,
+			(int) current->mm->end_code,
+			(int) current->mm->start_data,
+			(int) current->mm->end_data,
+			(int) current->mm->end_data,
+			(int) current->mm->brk);
 		pr_emerg("USER-STACK=%08x  KERNEL-STACK=%08x\n\n",
-			(पूर्णांक) current->mm->start_stack,
-			(पूर्णांक)(((अचिन्हित दीर्घ) current) + THREAD_SIZE));
-	पूर्ण
+			(int) current->mm->start_stack,
+			(int)(((unsigned long) current) + THREAD_SIZE));
+	}
 
 	pr_emerg("PC: %08lx\n", fp->ea);
 	pr_emerg("SR: %08lx    SP: %08lx\n",
-		(दीर्घ) fp->estatus, (दीर्घ) fp);
+		(long) fp->estatus, (long) fp);
 
 	pr_emerg("r1: %08lx    r2: %08lx    r3: %08lx\n",
 		fp->r1, fp->r2, fp->r3);
@@ -187,85 +186,85 @@ EXPORT_SYMBOL(pm_घातer_off);
 	pr_emerg("or2: %08lx   ra: %08lx     fp: %08lx    sp: %08lx\n",
 		fp->orig_r2, fp->ra, fp->fp, fp->sp);
 	pr_emerg("\nUSP: %08x   TRAPFRAME: %08x\n",
-		(अचिन्हित पूर्णांक) fp->sp, (अचिन्हित पूर्णांक) fp);
+		(unsigned int) fp->sp, (unsigned int) fp);
 
 	pr_emerg("\nCODE:");
-	tp = ((अचिन्हित अक्षर *) fp->ea) - 0x20;
-	क्रम (sp = (अचिन्हित दीर्घ *) tp, i = 0; (i < 0x40);  i += 4) अणु
-		अगर ((i % 0x10) == 0)
-			pr_emerg("\n%08x: ", (पूर्णांक) (tp + i));
-		pr_emerg("%08x ", (पूर्णांक) *sp++);
-	पूर्ण
+	tp = ((unsigned char *) fp->ea) - 0x20;
+	for (sp = (unsigned long *) tp, i = 0; (i < 0x40);  i += 4) {
+		if ((i % 0x10) == 0)
+			pr_emerg("\n%08x: ", (int) (tp + i));
+		pr_emerg("%08x ", (int) *sp++);
+	}
 	pr_emerg("\n");
 
 	pr_emerg("\nKERNEL STACK:");
-	tp = ((अचिन्हित अक्षर *) fp) - 0x40;
-	क्रम (sp = (अचिन्हित दीर्घ *) tp, i = 0; (i < 0xc0); i += 4) अणु
-		अगर ((i % 0x10) == 0)
-			pr_emerg("\n%08x: ", (पूर्णांक) (tp + i));
-		pr_emerg("%08x ", (पूर्णांक) *sp++);
-	पूर्ण
+	tp = ((unsigned char *) fp) - 0x40;
+	for (sp = (unsigned long *) tp, i = 0; (i < 0xc0); i += 4) {
+		if ((i % 0x10) == 0)
+			pr_emerg("\n%08x: ", (int) (tp + i));
+		pr_emerg("%08x ", (int) *sp++);
+	}
 	pr_emerg("\n");
 	pr_emerg("\n");
 
 	pr_emerg("\nUSER STACK:");
-	tp = (अचिन्हित अक्षर *) (fp->sp - 0x10);
-	क्रम (sp = (अचिन्हित दीर्घ *) tp, i = 0; (i < 0x80); i += 4) अणु
-		अगर ((i % 0x10) == 0)
-			pr_emerg("\n%08x: ", (पूर्णांक) (tp + i));
-		pr_emerg("%08x ", (पूर्णांक) *sp++);
-	पूर्ण
+	tp = (unsigned char *) (fp->sp - 0x10);
+	for (sp = (unsigned long *) tp, i = 0; (i < 0x80); i += 4) {
+		if ((i % 0x10) == 0)
+			pr_emerg("\n%08x: ", (int) (tp + i));
+		pr_emerg("%08x ", (int) *sp++);
+	}
 	pr_emerg("\n\n");
-पूर्ण
+}
 
-अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p)
-अणु
-	अचिन्हित दीर्घ fp, pc;
-	अचिन्हित दीर्घ stack_page;
-	पूर्णांक count = 0;
+unsigned long get_wchan(struct task_struct *p)
+{
+	unsigned long fp, pc;
+	unsigned long stack_page;
+	int count = 0;
 
-	अगर (!p || p == current || p->state == TASK_RUNNING)
-		वापस 0;
+	if (!p || p == current || p->state == TASK_RUNNING)
+		return 0;
 
-	stack_page = (अचिन्हित दीर्घ)p;
-	fp = ((काष्ठा चयन_stack *)p->thपढ़ो.ksp)->fp;	/* ;dgt2 */
-	करो अणु
-		अगर (fp < stack_page+माप(काष्ठा task_काष्ठा) ||
-			fp >= 8184+stack_page)	/* ;dgt2;पंचांगp */
-			वापस 0;
-		pc = ((अचिन्हित दीर्घ *)fp)[1];
-		अगर (!in_sched_functions(pc))
-			वापस pc;
-		fp = *(अचिन्हित दीर्घ *) fp;
-	पूर्ण जबतक (count++ < 16);		/* ;dgt2;पंचांगp */
-	वापस 0;
-पूर्ण
+	stack_page = (unsigned long)p;
+	fp = ((struct switch_stack *)p->thread.ksp)->fp;	/* ;dgt2 */
+	do {
+		if (fp < stack_page+sizeof(struct task_struct) ||
+			fp >= 8184+stack_page)	/* ;dgt2;tmp */
+			return 0;
+		pc = ((unsigned long *)fp)[1];
+		if (!in_sched_functions(pc))
+			return pc;
+		fp = *(unsigned long *) fp;
+	} while (count++ < 16);		/* ;dgt2;tmp */
+	return 0;
+}
 
 /*
- * Do necessary setup to start up a newly executed thपढ़ो.
+ * Do necessary setup to start up a newly executed thread.
  * Will startup in user mode (status_extension = 0).
  */
-व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ sp)
-अणु
-	स_रखो((व्योम *) regs, 0, माप(काष्ठा pt_regs));
+void start_thread(struct pt_regs *regs, unsigned long pc, unsigned long sp)
+{
+	memset((void *) regs, 0, sizeof(struct pt_regs));
 	regs->estatus = ESTATUS_EPIE | ESTATUS_EU;
 	regs->ea = pc;
 	regs->sp = sp;
-पूर्ण
+}
 
-यंत्रlinkage पूर्णांक nios2_clone(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ newsp,
-			   पूर्णांक __user *parent_tidptr, पूर्णांक __user *child_tidptr,
-			   अचिन्हित दीर्घ tls)
-अणु
-	काष्ठा kernel_clone_args args = अणु
+asmlinkage int nios2_clone(unsigned long clone_flags, unsigned long newsp,
+			   int __user *parent_tidptr, int __user *child_tidptr,
+			   unsigned long tls)
+{
+	struct kernel_clone_args args = {
 		.flags		= (lower_32_bits(clone_flags) & ~CSIGNAL),
 		.pidfd		= parent_tidptr,
 		.child_tid	= child_tidptr,
 		.parent_tid	= parent_tidptr,
-		.निकास_संकेत	= (lower_32_bits(clone_flags) & CSIGNAL),
+		.exit_signal	= (lower_32_bits(clone_flags) & CSIGNAL),
 		.stack		= newsp,
 		.tls		= tls,
-	पूर्ण;
+	};
 
-	वापस kernel_clone(&args);
-पूर्ण
+	return kernel_clone(&args);
+}

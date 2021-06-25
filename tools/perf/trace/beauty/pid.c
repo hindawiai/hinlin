@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: LGPL-2.1
+// SPDX-License-Identifier: LGPL-2.1
 
-माप_प्रकार syscall_arg__scnम_लिखो_pid(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	पूर्णांक pid = arg->val;
-	काष्ठा trace *trace = arg->trace;
-	माप_प्रकार prपूर्णांकed = scnम_लिखो(bf, size, "%d", pid);
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(trace->host, pid, pid);
+size_t syscall_arg__scnprintf_pid(char *bf, size_t size, struct syscall_arg *arg)
+{
+	int pid = arg->val;
+	struct trace *trace = arg->trace;
+	size_t printed = scnprintf(bf, size, "%d", pid);
+	struct thread *thread = machine__findnew_thread(trace->host, pid, pid);
 
-	अगर (thपढ़ो != शून्य) अणु
-		अगर (!thपढ़ो->comm_set)
-			thपढ़ो__set_comm_from_proc(thपढ़ो);
+	if (thread != NULL) {
+		if (!thread->comm_set)
+			thread__set_comm_from_proc(thread);
 
-		अगर (thपढ़ो->comm_set)
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
-					     " (%s)", thपढ़ो__comm_str(thपढ़ो));
-		thपढ़ो__put(thपढ़ो);
-	पूर्ण
+		if (thread->comm_set)
+			printed += scnprintf(bf + printed, size - printed,
+					     " (%s)", thread__comm_str(thread));
+		thread__put(thread);
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}

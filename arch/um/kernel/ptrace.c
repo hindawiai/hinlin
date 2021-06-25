@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#समावेश <linux/audit.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/tracehook.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/ptrace-abi.h>
+#include <linux/audit.h>
+#include <linux/ptrace.h>
+#include <linux/sched.h>
+#include <linux/tracehook.h>
+#include <linux/uaccess.h>
+#include <asm/ptrace-abi.h>
 
-व्योम user_enable_single_step(काष्ठा task_काष्ठा *child)
-अणु
+void user_enable_single_step(struct task_struct *child)
+{
 	child->ptrace |= PT_DTRACE;
-	child->thपढ़ो.singlestep_syscall = 0;
+	child->thread.singlestep_syscall = 0;
 
-#अगर_घोषित SUBARCH_SET_SINGLESTEPPING
+#ifdef SUBARCH_SET_SINGLESTEPPING
 	SUBARCH_SET_SINGLESTEPPING(child, 1);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-व्योम user_disable_single_step(काष्ठा task_काष्ठा *child)
-अणु
+void user_disable_single_step(struct task_struct *child)
+{
 	child->ptrace &= ~PT_DTRACE;
-	child->thपढ़ो.singlestep_syscall = 0;
+	child->thread.singlestep_syscall = 0;
 
-#अगर_घोषित SUBARCH_SET_SINGLESTEPPING
+#ifdef SUBARCH_SET_SINGLESTEPPING
 	SUBARCH_SET_SINGLESTEPPING(child, 0);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
 /*
  * Called by kernel/ptrace.c when detaching..
  */
-व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
-अणु
+void ptrace_disable(struct task_struct *child)
+{
 	user_disable_single_step(child);
-पूर्ण
+}
 
-बाह्य पूर्णांक peek_user(काष्ठा task_काष्ठा * child, दीर्घ addr, दीर्घ data);
-बाह्य पूर्णांक poke_user(काष्ठा task_काष्ठा * child, दीर्घ addr, दीर्घ data);
+extern int peek_user(struct task_struct * child, long addr, long data);
+extern int poke_user(struct task_struct * child, long addr, long data);
 
-दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
-		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
-अणु
-	पूर्णांक i, ret;
-	अचिन्हित दीर्घ __user *p = (व्योम __user *)data;
-	व्योम __user *vp = p;
+long arch_ptrace(struct task_struct *child, long request,
+		 unsigned long addr, unsigned long data)
+{
+	int i, ret;
+	unsigned long __user *p = (void __user *)data;
+	void __user *vp = p;
 
-	चयन (request) अणु
-	/* पढ़ो the word at location addr in the USER area. */
-	हाल PTRACE_PEEKUSR:
+	switch (request) {
+	/* read the word at location addr in the USER area. */
+	case PTRACE_PEEKUSR:
 		ret = peek_user(child, addr, data);
-		अवरोध;
+		break;
 
-	/* ग_लिखो the word at location addr in the USER area */
-	हाल PTRACE_POKEUSR:
+	/* write the word at location addr in the USER area */
+	case PTRACE_POKEUSR:
 		ret = poke_user(child, addr, data);
-		अवरोध;
+		break;
 
-	हाल PTRACE_SYSEMU:
-	हाल PTRACE_SYSEMU_SINGLESTEP:
+	case PTRACE_SYSEMU:
+	case PTRACE_SYSEMU_SINGLESTEP:
 		ret = -EIO;
-		अवरोध;
+		break;
 
-#अगर_घोषित PTRACE_GETREGS
-	हाल PTRACE_GETREGS: अणु /* Get all gp regs from the child. */
-		अगर (!access_ok(p, MAX_REG_OFFSET)) अणु
+#ifdef PTRACE_GETREGS
+	case PTRACE_GETREGS: { /* Get all gp regs from the child. */
+		if (!access_ok(p, MAX_REG_OFFSET)) {
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
-		क्रम ( i = 0; i < MAX_REG_OFFSET; i += माप(दीर्घ) ) अणु
+			break;
+		}
+		for ( i = 0; i < MAX_REG_OFFSET; i += sizeof(long) ) {
 			__put_user(getreg(child, i), p);
 			p++;
-		पूर्ण
+		}
 		ret = 0;
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-#अगर_घोषित PTRACE_SETREGS
-	हाल PTRACE_SETREGS: अणु /* Set all gp regs in the child. */
-		अचिन्हित दीर्घ पंचांगp = 0;
-		अगर (!access_ok(p, MAX_REG_OFFSET)) अणु
+		break;
+	}
+#endif
+#ifdef PTRACE_SETREGS
+	case PTRACE_SETREGS: { /* Set all gp regs in the child. */
+		unsigned long tmp = 0;
+		if (!access_ok(p, MAX_REG_OFFSET)) {
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
-		क्रम ( i = 0; i < MAX_REG_OFFSET; i += माप(दीर्घ) ) अणु
-			__get_user(पंचांगp, p);
-			putreg(child, i, पंचांगp);
+			break;
+		}
+		for ( i = 0; i < MAX_REG_OFFSET; i += sizeof(long) ) {
+			__get_user(tmp, p);
+			putreg(child, i, tmp);
 			p++;
-		पूर्ण
+		}
 		ret = 0;
-		अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	हाल PTRACE_GET_THREAD_AREA:
-		ret = ptrace_get_thपढ़ो_area(child, addr, vp);
-		अवरोध;
+		break;
+	}
+#endif
+	case PTRACE_GET_THREAD_AREA:
+		ret = ptrace_get_thread_area(child, addr, vp);
+		break;
 
-	हाल PTRACE_SET_THREAD_AREA:
-		ret = ptrace_set_thपढ़ो_area(child, addr, vp);
-		अवरोध;
+	case PTRACE_SET_THREAD_AREA:
+		ret = ptrace_set_thread_area(child, addr, vp);
+		break;
 
-	शेष:
+	default:
 		ret = ptrace_request(child, request, addr, data);
-		अगर (ret == -EIO)
+		if (ret == -EIO)
 			ret = subarch_ptrace(child, request, addr, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम send_sigtrap(काष्ठा uml_pt_regs *regs, पूर्णांक error_code)
-अणु
+static void send_sigtrap(struct uml_pt_regs *regs, int error_code)
+{
 	/* Send us the fake SIGTRAP */
-	क्रमce_sig_fault(SIGTRAP, TRAP_BRKPT,
+	force_sig_fault(SIGTRAP, TRAP_BRKPT,
 			/* User-mode eip? */
-			UPT_IS_USER(regs) ? (व्योम __user *) UPT_IP(regs) : शून्य);
-पूर्ण
+			UPT_IS_USER(regs) ? (void __user *) UPT_IP(regs) : NULL);
+}
 
 /*
- * XXX Check PT_DTRACE vs TIF_SINGLESTEP क्रम singlestepping check and
- * PT_PTRACED vs TIF_SYSCALL_TRACE क्रम syscall tracing check
+ * XXX Check PT_DTRACE vs TIF_SINGLESTEP for singlestepping check and
+ * PT_PTRACED vs TIF_SYSCALL_TRACE for syscall tracing check
  */
-पूर्णांक syscall_trace_enter(काष्ठा pt_regs *regs)
-अणु
+int syscall_trace_enter(struct pt_regs *regs)
+{
 	audit_syscall_entry(UPT_SYSCALL_NR(&regs->regs),
 			    UPT_SYSCALL_ARG1(&regs->regs),
 			    UPT_SYSCALL_ARG2(&regs->regs),
 			    UPT_SYSCALL_ARG3(&regs->regs),
 			    UPT_SYSCALL_ARG4(&regs->regs));
 
-	अगर (!test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
-		वापस 0;
+	if (!test_thread_flag(TIF_SYSCALL_TRACE))
+		return 0;
 
-	वापस tracehook_report_syscall_entry(regs);
-पूर्ण
+	return tracehook_report_syscall_entry(regs);
+}
 
-व्योम syscall_trace_leave(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक ptraced = current->ptrace;
+void syscall_trace_leave(struct pt_regs *regs)
+{
+	int ptraced = current->ptrace;
 
-	audit_syscall_निकास(regs);
+	audit_syscall_exit(regs);
 
 	/* Fake a debug trap */
-	अगर (ptraced & PT_DTRACE)
+	if (ptraced & PT_DTRACE)
 		send_sigtrap(&regs->regs, 0);
 
-	अगर (!test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
-		वापस;
+	if (!test_thread_flag(TIF_SYSCALL_TRACE))
+		return;
 
-	tracehook_report_syscall_निकास(regs, 0);
-	/* क्रमce करो_संकेत() --> is_syscall() */
-	अगर (ptraced & PT_PTRACED)
-		set_thपढ़ो_flag(TIF_SIGPENDING);
-पूर्ण
+	tracehook_report_syscall_exit(regs, 0);
+	/* force do_signal() --> is_syscall() */
+	if (ptraced & PT_PTRACED)
+		set_thread_flag(TIF_SIGPENDING);
+}

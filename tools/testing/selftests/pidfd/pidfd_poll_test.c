@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <poll.h>
-#समावेश <संकेत.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <syscall.h>
-#समावेश <sys/रुको.h>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <linux/types.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syscall.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#समावेश "pidfd.h"
-#समावेश "../kselftest.h"
+#include "pidfd.h"
+#include "../kselftest.h"
 
-अटल bool समयout;
+static bool timeout;
 
-अटल व्योम handle_alarm(पूर्णांक sig)
-अणु
-	समयout = true;
-पूर्ण
+static void handle_alarm(int sig)
+{
+	timeout = true;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	काष्ठा pollfd fds;
-	पूर्णांक iter, nevents;
-	पूर्णांक nr_iterations = 10000;
+int main(int argc, char **argv)
+{
+	struct pollfd fds;
+	int iter, nevents;
+	int nr_iterations = 10000;
 
 	fds.events = POLLIN;
 
-	अगर (argc > 2)
-		ksft_निकास_fail_msg("Unexpected command line argument\n");
+	if (argc > 2)
+		ksft_exit_fail_msg("Unexpected command line argument\n");
 
-	अगर (argc == 2) अणु
-		nr_iterations = म_से_प(argv[1]);
-		अगर (nr_iterations <= 0)
-			ksft_निकास_fail_msg("invalid input parameter %s\n",
+	if (argc == 2) {
+		nr_iterations = atoi(argv[1]);
+		if (nr_iterations <= 0)
+			ksft_exit_fail_msg("invalid input parameter %s\n",
 					argv[1]);
-	पूर्ण
+	}
 
-	ksft_prपूर्णांक_msg("running pidfd poll test for %d iterations\n",
+	ksft_print_msg("running pidfd poll test for %d iterations\n",
 		nr_iterations);
 
-	क्रम (iter = 0; iter < nr_iterations; iter++) अणु
-		पूर्णांक pidfd;
-		पूर्णांक child_pid = विभाजन();
+	for (iter = 0; iter < nr_iterations; iter++) {
+		int pidfd;
+		int child_pid = fork();
 
-		अगर (child_pid < 0) अणु
-			अगर (त्रुटि_सं == EAGAIN) अणु
+		if (child_pid < 0) {
+			if (errno == EAGAIN) {
 				iter--;
-				जारी;
-			पूर्ण
-			ksft_निकास_fail_msg(
+				continue;
+			}
+			ksft_exit_fail_msg(
 				"%s - failed to fork a child process\n",
-				म_त्रुटि(त्रुटि_सं));
-		पूर्ण
+				strerror(errno));
+		}
 
-		अगर (child_pid == 0) अणु
-			/* Child process just sleeps क्रम a min and निकासs */
+		if (child_pid == 0) {
+			/* Child process just sleeps for a min and exits */
 			sleep(60);
-			निकास(निकास_सफल);
-		पूर्ण
+			exit(EXIT_SUCCESS);
+		}
 
-		/* Parent समाप्तs the child and रुकोs क्रम its death */
-		pidfd = sys_pidfd_खोलो(child_pid, 0);
-		अगर (pidfd < 0)
-			ksft_निकास_fail_msg("%s - pidfd_open failed\n",
-					म_त्रुटि(त्रुटि_सं));
+		/* Parent kills the child and waits for its death */
+		pidfd = sys_pidfd_open(child_pid, 0);
+		if (pidfd < 0)
+			ksft_exit_fail_msg("%s - pidfd_open failed\n",
+					strerror(errno));
 
-		/* Setup 3 sec alarm - plenty of समय */
-		अगर (संकेत(SIGALRM, handle_alarm) == संक_त्रुटि)
-			ksft_निकास_fail_msg("%s - signal failed\n",
-					म_त्रुटि(त्रुटि_सं));
+		/* Setup 3 sec alarm - plenty of time */
+		if (signal(SIGALRM, handle_alarm) == SIG_ERR)
+			ksft_exit_fail_msg("%s - signal failed\n",
+					strerror(errno));
 		alarm(3);
 
 		/* Send SIGKILL to the child */
-		अगर (sys_pidfd_send_संकेत(pidfd, SIGKILL, शून्य, 0))
-			ksft_निकास_fail_msg("%s - pidfd_send_signal failed\n",
-					म_त्रुटि(त्रुटि_सं));
+		if (sys_pidfd_send_signal(pidfd, SIGKILL, NULL, 0))
+			ksft_exit_fail_msg("%s - pidfd_send_signal failed\n",
+					strerror(errno));
 
-		/* Wait क्रम the death notअगरication */
+		/* Wait for the death notification */
 		fds.fd = pidfd;
 		nevents = poll(&fds, 1, -1);
 
-		/* Check क्रम error conditions */
-		अगर (nevents < 0)
-			ksft_निकास_fail_msg("%s - poll failed\n",
-					म_त्रुटि(त्रुटि_सं));
+		/* Check for error conditions */
+		if (nevents < 0)
+			ksft_exit_fail_msg("%s - poll failed\n",
+					strerror(errno));
 
-		अगर (nevents != 1)
-			ksft_निकास_fail_msg("unexpected poll result: %d\n",
+		if (nevents != 1)
+			ksft_exit_fail_msg("unexpected poll result: %d\n",
 					nevents);
 
-		अगर (!(fds.revents & POLLIN))
-			ksft_निकास_fail_msg(
+		if (!(fds.revents & POLLIN))
+			ksft_exit_fail_msg(
 				"unexpected event type received: 0x%x\n",
 				fds.revents);
 
-		अगर (समयout)
-			ksft_निकास_fail_msg(
+		if (timeout)
+			ksft_exit_fail_msg(
 				"death notification wait timeout\n");
 
-		बंद(pidfd);
-		/* Wait क्रम child to prevent zombies */
-		अगर (रुकोpid(child_pid, शून्य, 0) < 0)
-			ksft_निकास_fail_msg("%s - waitpid failed\n",
-					म_त्रुटि(त्रुटि_सं));
+		close(pidfd);
+		/* Wait for child to prevent zombies */
+		if (waitpid(child_pid, NULL, 0) < 0)
+			ksft_exit_fail_msg("%s - waitpid failed\n",
+					strerror(errno));
 
-	पूर्ण
+	}
 
 	ksft_test_result_pass("pidfd poll test: pass\n");
-	वापस ksft_निकास_pass();
-पूर्ण
+	return ksft_exit_pass();
+}

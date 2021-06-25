@@ -1,156 +1,155 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (C) 2012 by Pablo Neira Ayuso <pablo@netfilter.org>
  * (C) 2012 by Vyatta Inc. <http://www.vyatta.com>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/netfilter.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/err.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
+#include <linux/types.h>
+#include <linux/netfilter.h>
+#include <linux/skbuff.h>
+#include <linux/vmalloc.h>
+#include <linux/stddef.h>
+#include <linux/err.h>
+#include <linux/percpu.h>
+#include <linux/kernel.h>
+#include <linux/netdevice.h>
+#include <linux/slab.h>
+#include <linux/export.h>
 
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_core.h>
-#समावेश <net/netfilter/nf_conntrack_extend.h>
-#समावेश <net/netfilter/nf_conntrack_l4proto.h>
-#समावेश <net/netfilter/nf_conntrack_समयout.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_core.h>
+#include <net/netfilter/nf_conntrack_extend.h>
+#include <net/netfilter/nf_conntrack_l4proto.h>
+#include <net/netfilter/nf_conntrack_timeout.h>
 
-काष्ठा nf_ct_समयout *
-(*nf_ct_समयout_find_get_hook)(काष्ठा net *net, स्थिर अक्षर *name) __पढ़ो_mostly;
-EXPORT_SYMBOL_GPL(nf_ct_समयout_find_get_hook);
+struct nf_ct_timeout *
+(*nf_ct_timeout_find_get_hook)(struct net *net, const char *name) __read_mostly;
+EXPORT_SYMBOL_GPL(nf_ct_timeout_find_get_hook);
 
-व्योम (*nf_ct_समयout_put_hook)(काष्ठा nf_ct_समयout *समयout) __पढ़ो_mostly;
-EXPORT_SYMBOL_GPL(nf_ct_समयout_put_hook);
+void (*nf_ct_timeout_put_hook)(struct nf_ct_timeout *timeout) __read_mostly;
+EXPORT_SYMBOL_GPL(nf_ct_timeout_put_hook);
 
-अटल पूर्णांक unसमयout(काष्ठा nf_conn *ct, व्योम *समयout)
-अणु
-	काष्ठा nf_conn_समयout *समयout_ext = nf_ct_समयout_find(ct);
+static int untimeout(struct nf_conn *ct, void *timeout)
+{
+	struct nf_conn_timeout *timeout_ext = nf_ct_timeout_find(ct);
 
-	अगर (समयout_ext && (!समयout || समयout_ext->समयout == समयout))
-		RCU_INIT_POINTER(समयout_ext->समयout, शून्य);
+	if (timeout_ext && (!timeout || timeout_ext->timeout == timeout))
+		RCU_INIT_POINTER(timeout_ext->timeout, NULL);
 
-	/* We are not पूर्णांकended to delete this conntrack. */
-	वापस 0;
-पूर्ण
+	/* We are not intended to delete this conntrack. */
+	return 0;
+}
 
-व्योम nf_ct_unसमयout(काष्ठा net *net, काष्ठा nf_ct_समयout *समयout)
-अणु
-	nf_ct_iterate_cleanup_net(net, unसमयout, समयout, 0, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(nf_ct_unसमयout);
+void nf_ct_untimeout(struct net *net, struct nf_ct_timeout *timeout)
+{
+	nf_ct_iterate_cleanup_net(net, untimeout, timeout, 0, 0);
+}
+EXPORT_SYMBOL_GPL(nf_ct_untimeout);
 
-अटल व्योम __nf_ct_समयout_put(काष्ठा nf_ct_समयout *समयout)
-अणु
-	typeof(nf_ct_समयout_put_hook) समयout_put;
+static void __nf_ct_timeout_put(struct nf_ct_timeout *timeout)
+{
+	typeof(nf_ct_timeout_put_hook) timeout_put;
 
-	समयout_put = rcu_dereference(nf_ct_समयout_put_hook);
-	अगर (समयout_put)
-		समयout_put(समयout);
-पूर्ण
+	timeout_put = rcu_dereference(nf_ct_timeout_put_hook);
+	if (timeout_put)
+		timeout_put(timeout);
+}
 
-पूर्णांक nf_ct_set_समयout(काष्ठा net *net, काष्ठा nf_conn *ct,
-		      u8 l3num, u8 l4num, स्थिर अक्षर *समयout_name)
-अणु
-	typeof(nf_ct_समयout_find_get_hook) समयout_find_get;
-	काष्ठा nf_ct_समयout *समयout;
-	काष्ठा nf_conn_समयout *समयout_ext;
-	स्थिर अक्षर *errmsg = शून्य;
-	पूर्णांक ret = 0;
+int nf_ct_set_timeout(struct net *net, struct nf_conn *ct,
+		      u8 l3num, u8 l4num, const char *timeout_name)
+{
+	typeof(nf_ct_timeout_find_get_hook) timeout_find_get;
+	struct nf_ct_timeout *timeout;
+	struct nf_conn_timeout *timeout_ext;
+	const char *errmsg = NULL;
+	int ret = 0;
 
-	rcu_पढ़ो_lock();
-	समयout_find_get = rcu_dereference(nf_ct_समयout_find_get_hook);
-	अगर (!समयout_find_get) अणु
+	rcu_read_lock();
+	timeout_find_get = rcu_dereference(nf_ct_timeout_find_get_hook);
+	if (!timeout_find_get) {
 		ret = -ENOENT;
 		errmsg = "Timeout policy base is empty";
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	समयout = समयout_find_get(net, समयout_name);
-	अगर (!समयout) अणु
+	timeout = timeout_find_get(net, timeout_name);
+	if (!timeout) {
 		ret = -ENOENT;
 		pr_info_ratelimited("No such timeout policy \"%s\"\n",
-				    समयout_name);
-		जाओ out;
-	पूर्ण
+				    timeout_name);
+		goto out;
+	}
 
-	अगर (समयout->l3num != l3num) अणु
+	if (timeout->l3num != l3num) {
 		ret = -EINVAL;
 		pr_info_ratelimited("Timeout policy `%s' can only be used by "
 				    "L%d protocol number %d\n",
-				    समयout_name, 3, समयout->l3num);
-		जाओ err_put_समयout;
-	पूर्ण
-	/* Make sure the समयout policy matches any existing protocol tracker,
-	 * otherwise शेष to generic.
+				    timeout_name, 3, timeout->l3num);
+		goto err_put_timeout;
+	}
+	/* Make sure the timeout policy matches any existing protocol tracker,
+	 * otherwise default to generic.
 	 */
-	अगर (समयout->l4proto->l4proto != l4num) अणु
+	if (timeout->l4proto->l4proto != l4num) {
 		ret = -EINVAL;
 		pr_info_ratelimited("Timeout policy `%s' can only be used by "
 				    "L%d protocol number %d\n",
-				    समयout_name, 4, समयout->l4proto->l4proto);
-		जाओ err_put_समयout;
-	पूर्ण
-	समयout_ext = nf_ct_समयout_ext_add(ct, समयout, GFP_ATOMIC);
-	अगर (!समयout_ext) अणु
+				    timeout_name, 4, timeout->l4proto->l4proto);
+		goto err_put_timeout;
+	}
+	timeout_ext = nf_ct_timeout_ext_add(ct, timeout, GFP_ATOMIC);
+	if (!timeout_ext) {
 		ret = -ENOMEM;
-		जाओ err_put_समयout;
-	पूर्ण
+		goto err_put_timeout;
+	}
 
-	rcu_पढ़ो_unlock();
-	वापस ret;
+	rcu_read_unlock();
+	return ret;
 
-err_put_समयout:
-	__nf_ct_समयout_put(समयout);
+err_put_timeout:
+	__nf_ct_timeout_put(timeout);
 out:
-	rcu_पढ़ो_unlock();
-	अगर (errmsg)
+	rcu_read_unlock();
+	if (errmsg)
 		pr_info_ratelimited("%s\n", errmsg);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(nf_ct_set_समयout);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(nf_ct_set_timeout);
 
-व्योम nf_ct_destroy_समयout(काष्ठा nf_conn *ct)
-अणु
-	काष्ठा nf_conn_समयout *समयout_ext;
-	typeof(nf_ct_समयout_put_hook) समयout_put;
+void nf_ct_destroy_timeout(struct nf_conn *ct)
+{
+	struct nf_conn_timeout *timeout_ext;
+	typeof(nf_ct_timeout_put_hook) timeout_put;
 
-	rcu_पढ़ो_lock();
-	समयout_put = rcu_dereference(nf_ct_समयout_put_hook);
+	rcu_read_lock();
+	timeout_put = rcu_dereference(nf_ct_timeout_put_hook);
 
-	अगर (समयout_put) अणु
-		समयout_ext = nf_ct_समयout_find(ct);
-		अगर (समयout_ext) अणु
-			समयout_put(समयout_ext->समयout);
-			RCU_INIT_POINTER(समयout_ext->समयout, शून्य);
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
-EXPORT_SYMBOL_GPL(nf_ct_destroy_समयout);
+	if (timeout_put) {
+		timeout_ext = nf_ct_timeout_find(ct);
+		if (timeout_ext) {
+			timeout_put(timeout_ext->timeout);
+			RCU_INIT_POINTER(timeout_ext->timeout, NULL);
+		}
+	}
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL_GPL(nf_ct_destroy_timeout);
 
-अटल स्थिर काष्ठा nf_ct_ext_type समयout_extend = अणु
-	.len	= माप(काष्ठा nf_conn_समयout),
-	.align	= __alignof__(काष्ठा nf_conn_समयout),
+static const struct nf_ct_ext_type timeout_extend = {
+	.len	= sizeof(struct nf_conn_timeout),
+	.align	= __alignof__(struct nf_conn_timeout),
 	.id	= NF_CT_EXT_TIMEOUT,
-पूर्ण;
+};
 
-पूर्णांक nf_conntrack_समयout_init(व्योम)
-अणु
-	पूर्णांक ret = nf_ct_extend_रेजिस्टर(&समयout_extend);
-	अगर (ret < 0)
+int nf_conntrack_timeout_init(void)
+{
+	int ret = nf_ct_extend_register(&timeout_extend);
+	if (ret < 0)
 		pr_err("nf_ct_timeout: Unable to register timeout extension.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम nf_conntrack_समयout_fini(व्योम)
-अणु
-	nf_ct_extend_unरेजिस्टर(&समयout_extend);
-पूर्ण
+void nf_conntrack_timeout_fini(void)
+{
+	nf_ct_extend_unregister(&timeout_extend);
+}

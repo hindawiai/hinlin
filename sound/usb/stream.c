@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  */
 
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/audपन.स>
-#समावेश <linux/usb/audio-v2.h>
-#समावेश <linux/usb/audio-v3.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/usb/audio.h>
+#include <linux/usb/audio-v2.h>
+#include <linux/usb/audio-v3.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/control.h>
-#समावेश <sound/tlv.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/control.h>
+#include <sound/tlv.h>
 
-#समावेश "usbaudio.h"
-#समावेश "card.h"
-#समावेश "proc.h"
-#समावेश "quirks.h"
-#समावेश "endpoint.h"
-#समावेश "pcm.h"
-#समावेश "helper.h"
-#समावेश "format.h"
-#समावेश "clock.h"
-#समावेश "stream.h"
-#समावेश "power.h"
-#समावेश "media.h"
+#include "usbaudio.h"
+#include "card.h"
+#include "proc.h"
+#include "quirks.h"
+#include "endpoint.h"
+#include "pcm.h"
+#include "helper.h"
+#include "format.h"
+#include "clock.h"
+#include "stream.h"
+#include "power.h"
+#include "media.h"
 
-अटल व्योम audioक्रमmat_मुक्त(काष्ठा audioक्रमmat *fp)
-अणु
-	list_del(&fp->list); /* unlink क्रम aव्योमing द्विगुन-मुक्त */
-	kमुक्त(fp->rate_table);
-	kमुक्त(fp->chmap);
-	kमुक्त(fp);
-पूर्ण
+static void audioformat_free(struct audioformat *fp)
+{
+	list_del(&fp->list); /* unlink for avoiding double-free */
+	kfree(fp->rate_table);
+	kfree(fp->chmap);
+	kfree(fp);
+}
 
 /*
- * मुक्त a substream
+ * free a substream
  */
-अटल व्योम मुक्त_substream(काष्ठा snd_usb_substream *subs)
-अणु
-	काष्ठा audioक्रमmat *fp, *n;
+static void free_substream(struct snd_usb_substream *subs)
+{
+	struct audioformat *fp, *n;
 
-	अगर (!subs->num_क्रमmats)
-		वापस; /* not initialized */
-	list_क्रम_each_entry_safe(fp, n, &subs->fmt_list, list)
-		audioक्रमmat_मुक्त(fp);
-	kमुक्त(subs->str_pd);
+	if (!subs->num_formats)
+		return; /* not initialized */
+	list_for_each_entry_safe(fp, n, &subs->fmt_list, list)
+		audioformat_free(fp);
+	kfree(subs->str_pd);
 	snd_media_stream_delete(subs);
-पूर्ण
+}
 
 
 /*
- * मुक्त a usb stream instance
+ * free a usb stream instance
  */
-अटल व्योम snd_usb_audio_stream_मुक्त(काष्ठा snd_usb_stream *stream)
-अणु
-	मुक्त_substream(&stream->substream[0]);
-	मुक्त_substream(&stream->substream[1]);
+static void snd_usb_audio_stream_free(struct snd_usb_stream *stream)
+{
+	free_substream(&stream->substream[0]);
+	free_substream(&stream->substream[1]);
 	list_del(&stream->list);
-	kमुक्त(stream);
-पूर्ण
+	kfree(stream);
+}
 
-अटल व्योम snd_usb_audio_pcm_मुक्त(काष्ठा snd_pcm *pcm)
-अणु
-	काष्ठा snd_usb_stream *stream = pcm->निजी_data;
-	अगर (stream) अणु
-		stream->pcm = शून्य;
-		snd_usb_audio_stream_मुक्त(stream);
-	पूर्ण
-पूर्ण
+static void snd_usb_audio_pcm_free(struct snd_pcm *pcm)
+{
+	struct snd_usb_stream *stream = pcm->private_data;
+	if (stream) {
+		stream->pcm = NULL;
+		snd_usb_audio_stream_free(stream);
+	}
+}
 
 /*
  * initialize the substream instance.
  */
 
-अटल व्योम snd_usb_init_substream(काष्ठा snd_usb_stream *as,
-				   पूर्णांक stream,
-				   काष्ठा audioक्रमmat *fp,
-				   काष्ठा snd_usb_घातer_करोमुख्य *pd)
-अणु
-	काष्ठा snd_usb_substream *subs = &as->substream[stream];
+static void snd_usb_init_substream(struct snd_usb_stream *as,
+				   int stream,
+				   struct audioformat *fp,
+				   struct snd_usb_power_domain *pd)
+{
+	struct snd_usb_substream *subs = &as->substream[stream];
 
 	INIT_LIST_HEAD(&subs->fmt_list);
 	spin_lock_init(&subs->lock);
@@ -99,148 +98,148 @@
 	snd_usb_set_pcm_ops(as->pcm, stream);
 
 	list_add_tail(&fp->list, &subs->fmt_list);
-	subs->क्रमmats |= fp->क्रमmats;
-	subs->num_क्रमmats++;
+	subs->formats |= fp->formats;
+	subs->num_formats++;
 	subs->fmt_type = fp->fmt_type;
-	subs->ep_num = fp->endpoपूर्णांक;
-	अगर (fp->channels > subs->channels_max)
+	subs->ep_num = fp->endpoint;
+	if (fp->channels > subs->channels_max)
 		subs->channels_max = fp->channels;
 
-	अगर (pd) अणु
+	if (pd) {
 		subs->str_pd = pd;
-		/* Initialize Power Doमुख्य to idle status D1 */
-		snd_usb_घातer_करोमुख्य_set(subs->stream->chip, pd,
+		/* Initialize Power Domain to idle status D1 */
+		snd_usb_power_domain_set(subs->stream->chip, pd,
 					 UAC3_PD_STATE_D1);
-	पूर्ण
+	}
 
-	snd_usb_pपुनः_स्मृतिate_buffer(subs);
-पूर्ण
+	snd_usb_preallocate_buffer(subs);
+}
 
-/* kctl callbacks क्रम usb-audio channel maps */
-अटल पूर्णांक usb_chmap_ctl_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_usb_substream *subs = info->निजी_data;
+/* kctl callbacks for usb-audio channel maps */
+static int usb_chmap_ctl_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct snd_usb_substream *subs = info->private_data;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = subs->channels_max;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = SNDRV_CHMAP_LAST;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = SNDRV_CHMAP_LAST;
+	return 0;
+}
 
 /* check whether a duplicated entry exists in the audiofmt list */
-अटल bool have_dup_chmap(काष्ठा snd_usb_substream *subs,
-			   काष्ठा audioक्रमmat *fp)
-अणु
-	काष्ठा audioक्रमmat *prev = fp;
+static bool have_dup_chmap(struct snd_usb_substream *subs,
+			   struct audioformat *fp)
+{
+	struct audioformat *prev = fp;
 
-	list_क्रम_each_entry_जारी_reverse(prev, &subs->fmt_list, list) अणु
-		अगर (prev->chmap &&
-		    !स_भेद(prev->chmap, fp->chmap, माप(*fp->chmap)))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	list_for_each_entry_continue_reverse(prev, &subs->fmt_list, list) {
+		if (prev->chmap &&
+		    !memcmp(prev->chmap, fp->chmap, sizeof(*fp->chmap)))
+			return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक usb_chmap_ctl_tlv(काष्ठा snd_kcontrol *kcontrol, पूर्णांक op_flag,
-			     अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक __user *tlv)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_usb_substream *subs = info->निजी_data;
-	काष्ठा audioक्रमmat *fp;
-	अचिन्हित पूर्णांक __user *dst;
-	पूर्णांक count = 0;
+static int usb_chmap_ctl_tlv(struct snd_kcontrol *kcontrol, int op_flag,
+			     unsigned int size, unsigned int __user *tlv)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct snd_usb_substream *subs = info->private_data;
+	struct audioformat *fp;
+	unsigned int __user *dst;
+	int count = 0;
 
-	अगर (size < 8)
-		वापस -ENOMEM;
-	अगर (put_user(SNDRV_CTL_TLVT_CONTAINER, tlv))
-		वापस -EFAULT;
+	if (size < 8)
+		return -ENOMEM;
+	if (put_user(SNDRV_CTL_TLVT_CONTAINER, tlv))
+		return -EFAULT;
 	size -= 8;
 	dst = tlv + 2;
-	list_क्रम_each_entry(fp, &subs->fmt_list, list) अणु
-		पूर्णांक i, ch_bytes;
+	list_for_each_entry(fp, &subs->fmt_list, list) {
+		int i, ch_bytes;
 
-		अगर (!fp->chmap)
-			जारी;
-		अगर (have_dup_chmap(subs, fp))
-			जारी;
+		if (!fp->chmap)
+			continue;
+		if (have_dup_chmap(subs, fp))
+			continue;
 		/* copy the entry */
 		ch_bytes = fp->chmap->channels * 4;
-		अगर (size < 8 + ch_bytes)
-			वापस -ENOMEM;
-		अगर (put_user(SNDRV_CTL_TLVT_CHMAP_FIXED, dst) ||
+		if (size < 8 + ch_bytes)
+			return -ENOMEM;
+		if (put_user(SNDRV_CTL_TLVT_CHMAP_FIXED, dst) ||
 		    put_user(ch_bytes, dst + 1))
-			वापस -EFAULT;
+			return -EFAULT;
 		dst += 2;
-		क्रम (i = 0; i < fp->chmap->channels; i++, dst++) अणु
-			अगर (put_user(fp->chmap->map[i], dst))
-				वापस -EFAULT;
-		पूर्ण
+		for (i = 0; i < fp->chmap->channels; i++, dst++) {
+			if (put_user(fp->chmap->map[i], dst))
+				return -EFAULT;
+		}
 
 		count += 8 + ch_bytes;
 		size -= 8 + ch_bytes;
-	पूर्ण
-	अगर (put_user(count, tlv + 1))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	}
+	if (put_user(count, tlv + 1))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक usb_chmap_ctl_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_usb_substream *subs = info->निजी_data;
-	काष्ठा snd_pcm_chmap_elem *chmap = शून्य;
-	पूर्णांक i = 0;
+static int usb_chmap_ctl_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_pcm_chmap *info = snd_kcontrol_chip(kcontrol);
+	struct snd_usb_substream *subs = info->private_data;
+	struct snd_pcm_chmap_elem *chmap = NULL;
+	int i = 0;
 
-	अगर (subs->cur_audiofmt)
+	if (subs->cur_audiofmt)
 		chmap = subs->cur_audiofmt->chmap;
-	अगर (chmap) अणु
-		क्रम (i = 0; i < chmap->channels; i++)
-			ucontrol->value.पूर्णांकeger.value[i] = chmap->map[i];
-	पूर्ण
-	क्रम (; i < subs->channels_max; i++)
-		ucontrol->value.पूर्णांकeger.value[i] = 0;
-	वापस 0;
-पूर्ण
+	if (chmap) {
+		for (i = 0; i < chmap->channels; i++)
+			ucontrol->value.integer.value[i] = chmap->map[i];
+	}
+	for (; i < subs->channels_max; i++)
+		ucontrol->value.integer.value[i] = 0;
+	return 0;
+}
 
-/* create a chmap kctl asचिन्हित to the given USB substream */
-अटल पूर्णांक add_chmap(काष्ठा snd_pcm *pcm, पूर्णांक stream,
-		     काष्ठा snd_usb_substream *subs)
-अणु
-	काष्ठा audioक्रमmat *fp;
-	काष्ठा snd_pcm_chmap *chmap;
-	काष्ठा snd_kcontrol *kctl;
-	पूर्णांक err;
+/* create a chmap kctl assigned to the given USB substream */
+static int add_chmap(struct snd_pcm *pcm, int stream,
+		     struct snd_usb_substream *subs)
+{
+	struct audioformat *fp;
+	struct snd_pcm_chmap *chmap;
+	struct snd_kcontrol *kctl;
+	int err;
 
-	list_क्रम_each_entry(fp, &subs->fmt_list, list)
-		अगर (fp->chmap)
-			जाओ ok;
+	list_for_each_entry(fp, &subs->fmt_list, list)
+		if (fp->chmap)
+			goto ok;
 	/* no chmap is found */
-	वापस 0;
+	return 0;
 
  ok:
-	err = snd_pcm_add_chmap_ctls(pcm, stream, शून्य, 0, 0, &chmap);
-	अगर (err < 0)
-		वापस err;
+	err = snd_pcm_add_chmap_ctls(pcm, stream, NULL, 0, 0, &chmap);
+	if (err < 0)
+		return err;
 
 	/* override handlers */
-	chmap->निजी_data = subs;
+	chmap->private_data = subs;
 	kctl = chmap->kctl;
 	kctl->info = usb_chmap_ctl_info;
 	kctl->get = usb_chmap_ctl_get;
 	kctl->tlv.c = usb_chmap_ctl_tlv;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* convert from USB ChannelConfig bits to ALSA chmap element */
-अटल काष्ठा snd_pcm_chmap_elem *convert_chmap(पूर्णांक channels, अचिन्हित पूर्णांक bits,
-						पूर्णांक protocol)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक uac1_maps[] = अणु
+static struct snd_pcm_chmap_elem *convert_chmap(int channels, unsigned int bits,
+						int protocol)
+{
+	static const unsigned int uac1_maps[] = {
 		SNDRV_CHMAP_FL,		/* left front */
 		SNDRV_CHMAP_FR,		/* right front */
 		SNDRV_CHMAP_FC,		/* center front */
@@ -254,8 +253,8 @@
 		SNDRV_CHMAP_SR,		/* side right */
 		SNDRV_CHMAP_TC,		/* top */
 		0 /* terminator */
-	पूर्ण;
-	अटल स्थिर अचिन्हित पूर्णांक uac2_maps[] = अणु
+	};
+	static const unsigned int uac2_maps[] = {
 		SNDRV_CHMAP_FL,		/* front left */
 		SNDRV_CHMAP_FR,		/* front right */
 		SNDRV_CHMAP_FC,		/* front center */
@@ -284,239 +283,239 @@
 		SNDRV_CHMAP_RLC,	/* back left of center */
 		SNDRV_CHMAP_RRC,	/* back right of center */
 		0 /* terminator */
-	पूर्ण;
-	काष्ठा snd_pcm_chmap_elem *chmap;
-	स्थिर अचिन्हित पूर्णांक *maps;
-	पूर्णांक c;
+	};
+	struct snd_pcm_chmap_elem *chmap;
+	const unsigned int *maps;
+	int c;
 
-	अगर (channels > ARRAY_SIZE(chmap->map))
-		वापस शून्य;
+	if (channels > ARRAY_SIZE(chmap->map))
+		return NULL;
 
-	chmap = kzalloc(माप(*chmap), GFP_KERNEL);
-	अगर (!chmap)
-		वापस शून्य;
+	chmap = kzalloc(sizeof(*chmap), GFP_KERNEL);
+	if (!chmap)
+		return NULL;
 
 	maps = protocol == UAC_VERSION_2 ? uac2_maps : uac1_maps;
 	chmap->channels = channels;
 	c = 0;
 
-	अगर (bits) अणु
-		क्रम (; bits && *maps; maps++, bits >>= 1)
-			अगर (bits & 1)
+	if (bits) {
+		for (; bits && *maps; maps++, bits >>= 1)
+			if (bits & 1)
 				chmap->map[c++] = *maps;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* If we're missing wChannelConfig, then guess something
 		    to make sure the channel map is not skipped entirely */
-		अगर (channels == 1)
+		if (channels == 1)
 			chmap->map[c++] = SNDRV_CHMAP_MONO;
-		अन्यथा
-			क्रम (; c < channels && *maps; maps++)
+		else
+			for (; c < channels && *maps; maps++)
 				chmap->map[c++] = *maps;
-	पूर्ण
+	}
 
-	क्रम (; c < channels; c++)
+	for (; c < channels; c++)
 		chmap->map[c] = SNDRV_CHMAP_UNKNOWN;
 
-	वापस chmap;
-पूर्ण
+	return chmap;
+}
 
-/* UAC3 device stores channels inक्रमmation in Cluster Descriptors */
-अटल काष्ठा
-snd_pcm_chmap_elem *convert_chmap_v3(काष्ठा uac3_cluster_header_descriptor
+/* UAC3 device stores channels information in Cluster Descriptors */
+static struct
+snd_pcm_chmap_elem *convert_chmap_v3(struct uac3_cluster_header_descriptor
 								*cluster)
-अणु
-	अचिन्हित पूर्णांक channels = cluster->bNrChannels;
-	काष्ठा snd_pcm_chmap_elem *chmap;
-	व्योम *p = cluster;
-	पूर्णांक len, c;
+{
+	unsigned int channels = cluster->bNrChannels;
+	struct snd_pcm_chmap_elem *chmap;
+	void *p = cluster;
+	int len, c;
 
-	अगर (channels > ARRAY_SIZE(chmap->map))
-		वापस शून्य;
+	if (channels > ARRAY_SIZE(chmap->map))
+		return NULL;
 
-	chmap = kzalloc(माप(*chmap), GFP_KERNEL);
-	अगर (!chmap)
-		वापस शून्य;
+	chmap = kzalloc(sizeof(*chmap), GFP_KERNEL);
+	if (!chmap)
+		return NULL;
 
 	len = le16_to_cpu(cluster->wLength);
 	c = 0;
-	p += माप(काष्ठा uac3_cluster_header_descriptor);
+	p += sizeof(struct uac3_cluster_header_descriptor);
 
-	जबतक (((p - (व्योम *)cluster) < len) && (c < channels)) अणु
-		काष्ठा uac3_cluster_segment_descriptor *cs_desc = p;
+	while (((p - (void *)cluster) < len) && (c < channels)) {
+		struct uac3_cluster_segment_descriptor *cs_desc = p;
 		u16 cs_len;
 		u8 cs_type;
 
 		cs_len = le16_to_cpu(cs_desc->wLength);
 		cs_type = cs_desc->bSegmentType;
 
-		अगर (cs_type == UAC3_CHANNEL_INFORMATION) अणु
-			काष्ठा uac3_cluster_inक्रमmation_segment_descriptor *is = p;
-			अचिन्हित अक्षर map;
+		if (cs_type == UAC3_CHANNEL_INFORMATION) {
+			struct uac3_cluster_information_segment_descriptor *is = p;
+			unsigned char map;
 
 			/*
 			 * TODO: this conversion is not complete, update it
 			 * after adding UAC3 values to asound.h
 			 */
-			चयन (is->bChRelationship) अणु
-			हाल UAC3_CH_MONO:
+			switch (is->bChRelationship) {
+			case UAC3_CH_MONO:
 				map = SNDRV_CHMAP_MONO;
-				अवरोध;
-			हाल UAC3_CH_LEFT:
-			हाल UAC3_CH_FRONT_LEFT:
-			हाल UAC3_CH_HEADPHONE_LEFT:
+				break;
+			case UAC3_CH_LEFT:
+			case UAC3_CH_FRONT_LEFT:
+			case UAC3_CH_HEADPHONE_LEFT:
 				map = SNDRV_CHMAP_FL;
-				अवरोध;
-			हाल UAC3_CH_RIGHT:
-			हाल UAC3_CH_FRONT_RIGHT:
-			हाल UAC3_CH_HEADPHONE_RIGHT:
+				break;
+			case UAC3_CH_RIGHT:
+			case UAC3_CH_FRONT_RIGHT:
+			case UAC3_CH_HEADPHONE_RIGHT:
 				map = SNDRV_CHMAP_FR;
-				अवरोध;
-			हाल UAC3_CH_FRONT_CENTER:
+				break;
+			case UAC3_CH_FRONT_CENTER:
 				map = SNDRV_CHMAP_FC;
-				अवरोध;
-			हाल UAC3_CH_FRONT_LEFT_OF_CENTER:
+				break;
+			case UAC3_CH_FRONT_LEFT_OF_CENTER:
 				map = SNDRV_CHMAP_FLC;
-				अवरोध;
-			हाल UAC3_CH_FRONT_RIGHT_OF_CENTER:
+				break;
+			case UAC3_CH_FRONT_RIGHT_OF_CENTER:
 				map = SNDRV_CHMAP_FRC;
-				अवरोध;
-			हाल UAC3_CH_SIDE_LEFT:
+				break;
+			case UAC3_CH_SIDE_LEFT:
 				map = SNDRV_CHMAP_SL;
-				अवरोध;
-			हाल UAC3_CH_SIDE_RIGHT:
+				break;
+			case UAC3_CH_SIDE_RIGHT:
 				map = SNDRV_CHMAP_SR;
-				अवरोध;
-			हाल UAC3_CH_BACK_LEFT:
+				break;
+			case UAC3_CH_BACK_LEFT:
 				map = SNDRV_CHMAP_RL;
-				अवरोध;
-			हाल UAC3_CH_BACK_RIGHT:
+				break;
+			case UAC3_CH_BACK_RIGHT:
 				map = SNDRV_CHMAP_RR;
-				अवरोध;
-			हाल UAC3_CH_BACK_CENTER:
+				break;
+			case UAC3_CH_BACK_CENTER:
 				map = SNDRV_CHMAP_RC;
-				अवरोध;
-			हाल UAC3_CH_BACK_LEFT_OF_CENTER:
+				break;
+			case UAC3_CH_BACK_LEFT_OF_CENTER:
 				map = SNDRV_CHMAP_RLC;
-				अवरोध;
-			हाल UAC3_CH_BACK_RIGHT_OF_CENTER:
+				break;
+			case UAC3_CH_BACK_RIGHT_OF_CENTER:
 				map = SNDRV_CHMAP_RRC;
-				अवरोध;
-			हाल UAC3_CH_TOP_CENTER:
+				break;
+			case UAC3_CH_TOP_CENTER:
 				map = SNDRV_CHMAP_TC;
-				अवरोध;
-			हाल UAC3_CH_TOP_FRONT_LEFT:
+				break;
+			case UAC3_CH_TOP_FRONT_LEFT:
 				map = SNDRV_CHMAP_TFL;
-				अवरोध;
-			हाल UAC3_CH_TOP_FRONT_RIGHT:
+				break;
+			case UAC3_CH_TOP_FRONT_RIGHT:
 				map = SNDRV_CHMAP_TFR;
-				अवरोध;
-			हाल UAC3_CH_TOP_FRONT_CENTER:
+				break;
+			case UAC3_CH_TOP_FRONT_CENTER:
 				map = SNDRV_CHMAP_TFC;
-				अवरोध;
-			हाल UAC3_CH_TOP_FRONT_LOC:
+				break;
+			case UAC3_CH_TOP_FRONT_LOC:
 				map = SNDRV_CHMAP_TFLC;
-				अवरोध;
-			हाल UAC3_CH_TOP_FRONT_ROC:
+				break;
+			case UAC3_CH_TOP_FRONT_ROC:
 				map = SNDRV_CHMAP_TFRC;
-				अवरोध;
-			हाल UAC3_CH_TOP_SIDE_LEFT:
+				break;
+			case UAC3_CH_TOP_SIDE_LEFT:
 				map = SNDRV_CHMAP_TSL;
-				अवरोध;
-			हाल UAC3_CH_TOP_SIDE_RIGHT:
+				break;
+			case UAC3_CH_TOP_SIDE_RIGHT:
 				map = SNDRV_CHMAP_TSR;
-				अवरोध;
-			हाल UAC3_CH_TOP_BACK_LEFT:
+				break;
+			case UAC3_CH_TOP_BACK_LEFT:
 				map = SNDRV_CHMAP_TRL;
-				अवरोध;
-			हाल UAC3_CH_TOP_BACK_RIGHT:
+				break;
+			case UAC3_CH_TOP_BACK_RIGHT:
 				map = SNDRV_CHMAP_TRR;
-				अवरोध;
-			हाल UAC3_CH_TOP_BACK_CENTER:
+				break;
+			case UAC3_CH_TOP_BACK_CENTER:
 				map = SNDRV_CHMAP_TRC;
-				अवरोध;
-			हाल UAC3_CH_BOTTOM_CENTER:
+				break;
+			case UAC3_CH_BOTTOM_CENTER:
 				map = SNDRV_CHMAP_BC;
-				अवरोध;
-			हाल UAC3_CH_LOW_FREQUENCY_EFFECTS:
+				break;
+			case UAC3_CH_LOW_FREQUENCY_EFFECTS:
 				map = SNDRV_CHMAP_LFE;
-				अवरोध;
-			हाल UAC3_CH_LFE_LEFT:
+				break;
+			case UAC3_CH_LFE_LEFT:
 				map = SNDRV_CHMAP_LLFE;
-				अवरोध;
-			हाल UAC3_CH_LFE_RIGHT:
+				break;
+			case UAC3_CH_LFE_RIGHT:
 				map = SNDRV_CHMAP_RLFE;
-				अवरोध;
-			हाल UAC3_CH_RELATIONSHIP_UNDEFINED:
-			शेष:
+				break;
+			case UAC3_CH_RELATIONSHIP_UNDEFINED:
+			default:
 				map = SNDRV_CHMAP_UNKNOWN;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			chmap->map[c++] = map;
-		पूर्ण
+		}
 		p += cs_len;
-	पूर्ण
+	}
 
-	अगर (channels < c)
+	if (channels < c)
 		pr_err("%s: channel number mismatch\n", __func__);
 
 	chmap->channels = channels;
 
-	क्रम (; c < channels; c++)
+	for (; c < channels; c++)
 		chmap->map[c] = SNDRV_CHMAP_UNKNOWN;
 
-	वापस chmap;
-पूर्ण
+	return chmap;
+}
 
 /*
- * add this endpoपूर्णांक to the chip instance.
- * अगर a stream with the same endpoपूर्णांक alपढ़ोy exists, append to it.
- * अगर not, create a new pcm stream. note, fp is added to the substream
- * fmt_list and will be मुक्तd on the chip instance release. करो not मुक्त
- * fp or करो हटाओ it from the substream fmt_list to aव्योम द्विगुन-मुक्त.
+ * add this endpoint to the chip instance.
+ * if a stream with the same endpoint already exists, append to it.
+ * if not, create a new pcm stream. note, fp is added to the substream
+ * fmt_list and will be freed on the chip instance release. do not free
+ * fp or do remove it from the substream fmt_list to avoid double-free.
  */
-अटल पूर्णांक __snd_usb_add_audio_stream(काष्ठा snd_usb_audio *chip,
-				      पूर्णांक stream,
-				      काष्ठा audioक्रमmat *fp,
-				      काष्ठा snd_usb_घातer_करोमुख्य *pd)
+static int __snd_usb_add_audio_stream(struct snd_usb_audio *chip,
+				      int stream,
+				      struct audioformat *fp,
+				      struct snd_usb_power_domain *pd)
 
-अणु
-	काष्ठा snd_usb_stream *as;
-	काष्ठा snd_usb_substream *subs;
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+{
+	struct snd_usb_stream *as;
+	struct snd_usb_substream *subs;
+	struct snd_pcm *pcm;
+	int err;
 
-	list_क्रम_each_entry(as, &chip->pcm_list, list) अणु
-		अगर (as->fmt_type != fp->fmt_type)
-			जारी;
+	list_for_each_entry(as, &chip->pcm_list, list) {
+		if (as->fmt_type != fp->fmt_type)
+			continue;
 		subs = &as->substream[stream];
-		अगर (subs->ep_num == fp->endpoपूर्णांक) अणु
+		if (subs->ep_num == fp->endpoint) {
 			list_add_tail(&fp->list, &subs->fmt_list);
-			subs->num_क्रमmats++;
-			subs->क्रमmats |= fp->क्रमmats;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	/* look क्रम an empty stream */
-	list_क्रम_each_entry(as, &chip->pcm_list, list) अणु
-		अगर (as->fmt_type != fp->fmt_type)
-			जारी;
+			subs->num_formats++;
+			subs->formats |= fp->formats;
+			return 0;
+		}
+	}
+	/* look for an empty stream */
+	list_for_each_entry(as, &chip->pcm_list, list) {
+		if (as->fmt_type != fp->fmt_type)
+			continue;
 		subs = &as->substream[stream];
-		अगर (subs->ep_num)
-			जारी;
-		अगर (snd_device_get_state(chip->card, as->pcm) !=
+		if (subs->ep_num)
+			continue;
+		if (snd_device_get_state(chip->card, as->pcm) !=
 		    SNDRV_DEV_BUILD)
-			chip->need_delayed_रेजिस्टर = true;
+			chip->need_delayed_register = true;
 		err = snd_pcm_new_stream(as->pcm, stream, 1);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 		snd_usb_init_substream(as, stream, fp, pd);
-		वापस add_chmap(as->pcm, stream, subs);
-	पूर्ण
+		return add_chmap(as->pcm, stream, subs);
+	}
 
 	/* create a new pcm */
-	as = kzalloc(माप(*as), GFP_KERNEL);
-	अगर (!as)
-		वापस -ENOMEM;
+	as = kzalloc(sizeof(*as), GFP_KERNEL);
+	if (!as)
+		return -ENOMEM;
 	as->pcm_index = chip->pcm_devs;
 	as->chip = chip;
 	as->fmt_type = fp->fmt_type;
@@ -524,455 +523,455 @@ snd_pcm_chmap_elem *convert_chmap_v3(काष्ठा uac3_cluster_header_desc
 			  stream == SNDRV_PCM_STREAM_PLAYBACK ? 1 : 0,
 			  stream == SNDRV_PCM_STREAM_PLAYBACK ? 0 : 1,
 			  &pcm);
-	अगर (err < 0) अणु
-		kमुक्त(as);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		kfree(as);
+		return err;
+	}
 	as->pcm = pcm;
-	pcm->निजी_data = as;
-	pcm->निजी_मुक्त = snd_usb_audio_pcm_मुक्त;
+	pcm->private_data = as;
+	pcm->private_free = snd_usb_audio_pcm_free;
 	pcm->info_flags = 0;
-	अगर (chip->pcm_devs > 0)
-		प्र_लिखो(pcm->name, "USB Audio #%d", chip->pcm_devs);
-	अन्यथा
-		म_नकल(pcm->name, "USB Audio");
+	if (chip->pcm_devs > 0)
+		sprintf(pcm->name, "USB Audio #%d", chip->pcm_devs);
+	else
+		strcpy(pcm->name, "USB Audio");
 
 	snd_usb_init_substream(as, stream, fp, pd);
 
 	/*
-	 * Keep using head insertion क्रम M-Audio Audiophile USB (पंचांग) which has a
+	 * Keep using head insertion for M-Audio Audiophile USB (tm) which has a
 	 * fix to swap capture stream order in conf/cards/USB-audio.conf
 	 */
-	अगर (chip->usb_id == USB_ID(0x0763, 0x2003))
+	if (chip->usb_id == USB_ID(0x0763, 0x2003))
 		list_add(&as->list, &chip->pcm_list);
-	अन्यथा
+	else
 		list_add_tail(&as->list, &chip->pcm_list);
 
 	chip->pcm_devs++;
 
-	snd_usb_proc_pcm_क्रमmat_add(as);
+	snd_usb_proc_pcm_format_add(as);
 
-	वापस add_chmap(pcm, stream, &as->substream[stream]);
-पूर्ण
+	return add_chmap(pcm, stream, &as->substream[stream]);
+}
 
-पूर्णांक snd_usb_add_audio_stream(काष्ठा snd_usb_audio *chip,
-			     पूर्णांक stream,
-			     काष्ठा audioक्रमmat *fp)
-अणु
-	वापस __snd_usb_add_audio_stream(chip, stream, fp, शून्य);
-पूर्ण
+int snd_usb_add_audio_stream(struct snd_usb_audio *chip,
+			     int stream,
+			     struct audioformat *fp)
+{
+	return __snd_usb_add_audio_stream(chip, stream, fp, NULL);
+}
 
-अटल पूर्णांक snd_usb_add_audio_stream_v3(काष्ठा snd_usb_audio *chip,
-				       पूर्णांक stream,
-				       काष्ठा audioक्रमmat *fp,
-				       काष्ठा snd_usb_घातer_करोमुख्य *pd)
-अणु
-	वापस __snd_usb_add_audio_stream(chip, stream, fp, pd);
-पूर्ण
+static int snd_usb_add_audio_stream_v3(struct snd_usb_audio *chip,
+				       int stream,
+				       struct audioformat *fp,
+				       struct snd_usb_power_domain *pd)
+{
+	return __snd_usb_add_audio_stream(chip, stream, fp, pd);
+}
 
-अटल पूर्णांक parse_uac_endpoपूर्णांक_attributes(काष्ठा snd_usb_audio *chip,
-					 काष्ठा usb_host_पूर्णांकerface *alts,
-					 पूर्णांक protocol, पूर्णांक अगरace_no)
-अणु
+static int parse_uac_endpoint_attributes(struct snd_usb_audio *chip,
+					 struct usb_host_interface *alts,
+					 int protocol, int iface_no)
+{
 	/* parsed with a v1 header here. that's ok as we only look at the
-	 * header first which is the same क्रम both versions */
-	काष्ठा uac_iso_endpoपूर्णांक_descriptor *csep;
-	काष्ठा usb_पूर्णांकerface_descriptor *altsd = get_अगरace_desc(alts);
-	पूर्णांक attributes = 0;
+	 * header first which is the same for both versions */
+	struct uac_iso_endpoint_descriptor *csep;
+	struct usb_interface_descriptor *altsd = get_iface_desc(alts);
+	int attributes = 0;
 
-	csep = snd_usb_find_desc(alts->endpoपूर्णांक[0].extra, alts->endpoपूर्णांक[0].extralen, शून्य, USB_DT_CS_ENDPOINT);
+	csep = snd_usb_find_desc(alts->endpoint[0].extra, alts->endpoint[0].extralen, NULL, USB_DT_CS_ENDPOINT);
 
-	/* Creamware Noah has this descriptor after the 2nd endpoपूर्णांक */
-	अगर (!csep && altsd->bNumEndpoपूर्णांकs >= 2)
-		csep = snd_usb_find_desc(alts->endpoपूर्णांक[1].extra, alts->endpoपूर्णांक[1].extralen, शून्य, USB_DT_CS_ENDPOINT);
+	/* Creamware Noah has this descriptor after the 2nd endpoint */
+	if (!csep && altsd->bNumEndpoints >= 2)
+		csep = snd_usb_find_desc(alts->endpoint[1].extra, alts->endpoint[1].extralen, NULL, USB_DT_CS_ENDPOINT);
 
 	/*
 	 * If we can't locate the USB_DT_CS_ENDPOINT descriptor in the extra
-	 * bytes after the first endpoपूर्णांक, go search the entire पूर्णांकerface.
-	 * Some devices have it directly *beक्रमe* the standard endpoपूर्णांक.
+	 * bytes after the first endpoint, go search the entire interface.
+	 * Some devices have it directly *before* the standard endpoint.
 	 */
-	अगर (!csep)
-		csep = snd_usb_find_desc(alts->extra, alts->extralen, शून्य, USB_DT_CS_ENDPOINT);
+	if (!csep)
+		csep = snd_usb_find_desc(alts->extra, alts->extralen, NULL, USB_DT_CS_ENDPOINT);
 
-	अगर (!csep || csep->bLength < 7 ||
+	if (!csep || csep->bLength < 7 ||
 	    csep->bDescriptorSubtype != UAC_EP_GENERAL)
-		जाओ error;
+		goto error;
 
-	अगर (protocol == UAC_VERSION_1) अणु
+	if (protocol == UAC_VERSION_1) {
 		attributes = csep->bmAttributes;
-	पूर्ण अन्यथा अगर (protocol == UAC_VERSION_2) अणु
-		काष्ठा uac2_iso_endpoपूर्णांक_descriptor *csep2 =
-			(काष्ठा uac2_iso_endpoपूर्णांक_descriptor *) csep;
+	} else if (protocol == UAC_VERSION_2) {
+		struct uac2_iso_endpoint_descriptor *csep2 =
+			(struct uac2_iso_endpoint_descriptor *) csep;
 
-		अगर (csep2->bLength < माप(*csep2))
-			जाओ error;
+		if (csep2->bLength < sizeof(*csep2))
+			goto error;
 		attributes = csep->bmAttributes & UAC_EP_CS_ATTR_FILL_MAX;
 
-		/* emulate the endpoपूर्णांक attributes of a v1 device */
-		अगर (csep2->bmControls & UAC2_CONTROL_PITCH)
+		/* emulate the endpoint attributes of a v1 device */
+		if (csep2->bmControls & UAC2_CONTROL_PITCH)
 			attributes |= UAC_EP_CS_ATTR_PITCH_CONTROL;
-	पूर्ण अन्यथा अणु /* UAC_VERSION_3 */
-		काष्ठा uac3_iso_endpoपूर्णांक_descriptor *csep3 =
-			(काष्ठा uac3_iso_endpoपूर्णांक_descriptor *) csep;
+	} else { /* UAC_VERSION_3 */
+		struct uac3_iso_endpoint_descriptor *csep3 =
+			(struct uac3_iso_endpoint_descriptor *) csep;
 
-		अगर (csep3->bLength < माप(*csep3))
-			जाओ error;
-		/* emulate the endpoपूर्णांक attributes of a v1 device */
-		अगर (le32_to_cpu(csep3->bmControls) & UAC2_CONTROL_PITCH)
+		if (csep3->bLength < sizeof(*csep3))
+			goto error;
+		/* emulate the endpoint attributes of a v1 device */
+		if (le32_to_cpu(csep3->bmControls) & UAC2_CONTROL_PITCH)
 			attributes |= UAC_EP_CS_ATTR_PITCH_CONTROL;
-	पूर्ण
+	}
 
-	वापस attributes;
+	return attributes;
 
  error:
 	usb_audio_warn(chip,
 		       "%u:%d : no or invalid class specific endpoint descriptor\n",
-		       अगरace_no, altsd->bAlternateSetting);
-	वापस 0;
-पूर्ण
+		       iface_no, altsd->bAlternateSetting);
+	return 0;
+}
 
 /* find an input terminal descriptor (either UAC1 or UAC2) with the given
  * terminal id
  */
-अटल व्योम *
-snd_usb_find_input_terminal_descriptor(काष्ठा usb_host_पूर्णांकerface *ctrl_अगरace,
-				       पूर्णांक terminal_id, पूर्णांक protocol)
-अणु
-	काष्ठा uac2_input_terminal_descriptor *term = शून्य;
+static void *
+snd_usb_find_input_terminal_descriptor(struct usb_host_interface *ctrl_iface,
+				       int terminal_id, int protocol)
+{
+	struct uac2_input_terminal_descriptor *term = NULL;
 
-	जबतक ((term = snd_usb_find_csपूर्णांक_desc(ctrl_अगरace->extra,
-					       ctrl_अगरace->extralen,
-					       term, UAC_INPUT_TERMINAL))) अणु
-		अगर (!snd_usb_validate_audio_desc(term, protocol))
-			जारी;
-		अगर (term->bTerminalID == terminal_id)
-			वापस term;
-	पूर्ण
+	while ((term = snd_usb_find_csint_desc(ctrl_iface->extra,
+					       ctrl_iface->extralen,
+					       term, UAC_INPUT_TERMINAL))) {
+		if (!snd_usb_validate_audio_desc(term, protocol))
+			continue;
+		if (term->bTerminalID == terminal_id)
+			return term;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *
-snd_usb_find_output_terminal_descriptor(काष्ठा usb_host_पूर्णांकerface *ctrl_अगरace,
-					पूर्णांक terminal_id, पूर्णांक protocol)
-अणु
+static void *
+snd_usb_find_output_terminal_descriptor(struct usb_host_interface *ctrl_iface,
+					int terminal_id, int protocol)
+{
 	/* OK to use with both UAC2 and UAC3 */
-	काष्ठा uac2_output_terminal_descriptor *term = शून्य;
+	struct uac2_output_terminal_descriptor *term = NULL;
 
-	जबतक ((term = snd_usb_find_csपूर्णांक_desc(ctrl_अगरace->extra,
-					       ctrl_अगरace->extralen,
-					       term, UAC_OUTPUT_TERMINAL))) अणु
-		अगर (!snd_usb_validate_audio_desc(term, protocol))
-			जारी;
-		अगर (term->bTerminalID == terminal_id)
-			वापस term;
-	पूर्ण
+	while ((term = snd_usb_find_csint_desc(ctrl_iface->extra,
+					       ctrl_iface->extralen,
+					       term, UAC_OUTPUT_TERMINAL))) {
+		if (!snd_usb_validate_audio_desc(term, protocol))
+			continue;
+		if (term->bTerminalID == terminal_id)
+			return term;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा audioक्रमmat *
-audio_क्रमmat_alloc_init(काष्ठा snd_usb_audio *chip,
-		       काष्ठा usb_host_पूर्णांकerface *alts,
-		       पूर्णांक protocol, पूर्णांक अगरace_no, पूर्णांक altset_idx,
-		       पूर्णांक altno, पूर्णांक num_channels, पूर्णांक घड़ी)
-अणु
-	काष्ठा audioक्रमmat *fp;
+static struct audioformat *
+audio_format_alloc_init(struct snd_usb_audio *chip,
+		       struct usb_host_interface *alts,
+		       int protocol, int iface_no, int altset_idx,
+		       int altno, int num_channels, int clock)
+{
+	struct audioformat *fp;
 
-	fp = kzalloc(माप(*fp), GFP_KERNEL);
-	अगर (!fp)
-		वापस शून्य;
+	fp = kzalloc(sizeof(*fp), GFP_KERNEL);
+	if (!fp)
+		return NULL;
 
-	fp->अगरace = अगरace_no;
+	fp->iface = iface_no;
 	fp->altsetting = altno;
 	fp->altset_idx = altset_idx;
-	fp->endpoपूर्णांक = get_endpoपूर्णांक(alts, 0)->bEndpoपूर्णांकAddress;
-	fp->ep_attr = get_endpoपूर्णांक(alts, 0)->bmAttributes;
-	fp->dataपूर्णांकerval = snd_usb_parse_dataपूर्णांकerval(chip, alts);
+	fp->endpoint = get_endpoint(alts, 0)->bEndpointAddress;
+	fp->ep_attr = get_endpoint(alts, 0)->bmAttributes;
+	fp->datainterval = snd_usb_parse_datainterval(chip, alts);
 	fp->protocol = protocol;
-	fp->maxpacksize = le16_to_cpu(get_endpoपूर्णांक(alts, 0)->wMaxPacketSize);
+	fp->maxpacksize = le16_to_cpu(get_endpoint(alts, 0)->wMaxPacketSize);
 	fp->channels = num_channels;
-	अगर (snd_usb_get_speed(chip->dev) == USB_SPEED_HIGH)
+	if (snd_usb_get_speed(chip->dev) == USB_SPEED_HIGH)
 		fp->maxpacksize = (((fp->maxpacksize >> 11) & 3) + 1)
 				* (fp->maxpacksize & 0x7ff);
-	fp->घड़ी = घड़ी;
+	fp->clock = clock;
 	INIT_LIST_HEAD(&fp->list);
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
-अटल काष्ठा audioक्रमmat *
-snd_usb_get_audioक्रमmat_uac12(काष्ठा snd_usb_audio *chip,
-			      काष्ठा usb_host_पूर्णांकerface *alts,
-			      पूर्णांक protocol, पूर्णांक अगरace_no, पूर्णांक altset_idx,
-			      पूर्णांक altno, पूर्णांक stream, पूर्णांक bm_quirk)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	काष्ठा uac_क्रमmat_type_i_continuous_descriptor *fmt;
-	अचिन्हित पूर्णांक num_channels = 0, chconfig = 0;
-	काष्ठा audioक्रमmat *fp;
-	पूर्णांक घड़ी = 0;
-	u64 क्रमmat;
+static struct audioformat *
+snd_usb_get_audioformat_uac12(struct snd_usb_audio *chip,
+			      struct usb_host_interface *alts,
+			      int protocol, int iface_no, int altset_idx,
+			      int altno, int stream, int bm_quirk)
+{
+	struct usb_device *dev = chip->dev;
+	struct uac_format_type_i_continuous_descriptor *fmt;
+	unsigned int num_channels = 0, chconfig = 0;
+	struct audioformat *fp;
+	int clock = 0;
+	u64 format;
 
-	/* get audio क्रमmats */
-	अगर (protocol == UAC_VERSION_1) अणु
-		काष्ठा uac1_as_header_descriptor *as =
-			snd_usb_find_csपूर्णांक_desc(alts->extra, alts->extralen,
-						शून्य, UAC_AS_GENERAL);
-		काष्ठा uac_input_terminal_descriptor *iterm;
+	/* get audio formats */
+	if (protocol == UAC_VERSION_1) {
+		struct uac1_as_header_descriptor *as =
+			snd_usb_find_csint_desc(alts->extra, alts->extralen,
+						NULL, UAC_AS_GENERAL);
+		struct uac_input_terminal_descriptor *iterm;
 
-		अगर (!as) अणु
+		if (!as) {
 			dev_err(&dev->dev,
 				"%u:%d : UAC_AS_GENERAL descriptor not found\n",
-				अगरace_no, altno);
-			वापस शून्य;
-		पूर्ण
+				iface_no, altno);
+			return NULL;
+		}
 
-		अगर (as->bLength < माप(*as)) अणु
+		if (as->bLength < sizeof(*as)) {
 			dev_err(&dev->dev,
 				"%u:%d : invalid UAC_AS_GENERAL desc\n",
-				अगरace_no, altno);
-			वापस शून्य;
-		पूर्ण
+				iface_no, altno);
+			return NULL;
+		}
 
-		क्रमmat = le16_to_cpu(as->wFormatTag); /* remember the क्रमmat value */
+		format = le16_to_cpu(as->wFormatTag); /* remember the format value */
 
-		iterm = snd_usb_find_input_terminal_descriptor(chip->ctrl_पूर्णांकf,
+		iterm = snd_usb_find_input_terminal_descriptor(chip->ctrl_intf,
 							       as->bTerminalLink,
 							       protocol);
-		अगर (iterm) अणु
+		if (iterm) {
 			num_channels = iterm->bNrChannels;
 			chconfig = le16_to_cpu(iterm->wChannelConfig);
-		पूर्ण
-	पूर्ण अन्यथा अणु /* UAC_VERSION_2 */
-		काष्ठा uac2_input_terminal_descriptor *input_term;
-		काष्ठा uac2_output_terminal_descriptor *output_term;
-		काष्ठा uac2_as_header_descriptor *as =
-			snd_usb_find_csपूर्णांक_desc(alts->extra, alts->extralen,
-						शून्य, UAC_AS_GENERAL);
+		}
+	} else { /* UAC_VERSION_2 */
+		struct uac2_input_terminal_descriptor *input_term;
+		struct uac2_output_terminal_descriptor *output_term;
+		struct uac2_as_header_descriptor *as =
+			snd_usb_find_csint_desc(alts->extra, alts->extralen,
+						NULL, UAC_AS_GENERAL);
 
-		अगर (!as) अणु
+		if (!as) {
 			dev_err(&dev->dev,
 				"%u:%d : UAC_AS_GENERAL descriptor not found\n",
-				अगरace_no, altno);
-			वापस शून्य;
-		पूर्ण
+				iface_no, altno);
+			return NULL;
+		}
 
-		अगर (as->bLength < माप(*as)) अणु
+		if (as->bLength < sizeof(*as)) {
 			dev_err(&dev->dev,
 				"%u:%d : invalid UAC_AS_GENERAL desc\n",
-				अगरace_no, altno);
-			वापस शून्य;
-		पूर्ण
+				iface_no, altno);
+			return NULL;
+		}
 
 		num_channels = as->bNrChannels;
-		क्रमmat = le32_to_cpu(as->bmFormats);
+		format = le32_to_cpu(as->bmFormats);
 		chconfig = le32_to_cpu(as->bmChannelConfig);
 
 		/*
-		 * lookup the terminal associated to this पूर्णांकerface
-		 * to extract the घड़ी
+		 * lookup the terminal associated to this interface
+		 * to extract the clock
 		 */
-		input_term = snd_usb_find_input_terminal_descriptor(chip->ctrl_पूर्णांकf,
+		input_term = snd_usb_find_input_terminal_descriptor(chip->ctrl_intf,
 								    as->bTerminalLink,
 								    protocol);
-		अगर (input_term) अणु
-			घड़ी = input_term->bCSourceID;
-			अगर (!chconfig && (num_channels == input_term->bNrChannels))
+		if (input_term) {
+			clock = input_term->bCSourceID;
+			if (!chconfig && (num_channels == input_term->bNrChannels))
 				chconfig = le32_to_cpu(input_term->bmChannelConfig);
-			जाओ found_घड़ी;
-		पूर्ण
+			goto found_clock;
+		}
 
-		output_term = snd_usb_find_output_terminal_descriptor(chip->ctrl_पूर्णांकf,
+		output_term = snd_usb_find_output_terminal_descriptor(chip->ctrl_intf,
 								      as->bTerminalLink,
 								      protocol);
-		अगर (output_term) अणु
-			घड़ी = output_term->bCSourceID;
-			जाओ found_घड़ी;
-		पूर्ण
+		if (output_term) {
+			clock = output_term->bCSourceID;
+			goto found_clock;
+		}
 
 		dev_err(&dev->dev,
 			"%u:%d : bogus bTerminalLink %d\n",
-			अगरace_no, altno, as->bTerminalLink);
-		वापस शून्य;
-	पूर्ण
+			iface_no, altno, as->bTerminalLink);
+		return NULL;
+	}
 
-found_घड़ी:
-	/* get क्रमmat type */
-	fmt = snd_usb_find_csपूर्णांक_desc(alts->extra, alts->extralen,
-				      शून्य, UAC_FORMAT_TYPE);
-	अगर (!fmt) अणु
+found_clock:
+	/* get format type */
+	fmt = snd_usb_find_csint_desc(alts->extra, alts->extralen,
+				      NULL, UAC_FORMAT_TYPE);
+	if (!fmt) {
 		dev_err(&dev->dev,
 			"%u:%d : no UAC_FORMAT_TYPE desc\n",
-			अगरace_no, altno);
-		वापस शून्य;
-	पूर्ण
-	अगर (((protocol == UAC_VERSION_1) && (fmt->bLength < 8))
+			iface_no, altno);
+		return NULL;
+	}
+	if (((protocol == UAC_VERSION_1) && (fmt->bLength < 8))
 			|| ((protocol == UAC_VERSION_2) &&
-					(fmt->bLength < 6))) अणु
+					(fmt->bLength < 6))) {
 		dev_err(&dev->dev,
 			"%u:%d : invalid UAC_FORMAT_TYPE desc\n",
-			अगरace_no, altno);
-		वापस शून्य;
-	पूर्ण
+			iface_no, altno);
+		return NULL;
+	}
 
 	/*
 	 * Blue Microphones workaround: The last altsetting is
-	 * identical with the previous one, except क्रम a larger
+	 * identical with the previous one, except for a larger
 	 * packet size, but is actually a mislabeled two-channel
 	 * setting; ignore it.
 	 *
-	 * Part 2: analyze quirk flag and क्रमmat
+	 * Part 2: analyze quirk flag and format
 	 */
-	अगर (bm_quirk && fmt->bNrChannels == 1 && fmt->bSubframeSize == 2)
-		वापस शून्य;
+	if (bm_quirk && fmt->bNrChannels == 1 && fmt->bSubframeSize == 2)
+		return NULL;
 
-	fp = audio_क्रमmat_alloc_init(chip, alts, protocol, अगरace_no,
-				     altset_idx, altno, num_channels, घड़ी);
-	अगर (!fp)
-		वापस ERR_PTR(-ENOMEM);
+	fp = audio_format_alloc_init(chip, alts, protocol, iface_no,
+				     altset_idx, altno, num_channels, clock);
+	if (!fp)
+		return ERR_PTR(-ENOMEM);
 
-	fp->attributes = parse_uac_endpoपूर्णांक_attributes(chip, alts, protocol,
-						       अगरace_no);
+	fp->attributes = parse_uac_endpoint_attributes(chip, alts, protocol,
+						       iface_no);
 
-	/* some quirks क्रम attributes here */
-	snd_usb_audioक्रमmat_attributes_quirk(chip, fp, stream);
+	/* some quirks for attributes here */
+	snd_usb_audioformat_attributes_quirk(chip, fp, stream);
 
 	/* ok, let's parse further... */
-	अगर (snd_usb_parse_audio_क्रमmat(chip, fp, क्रमmat,
-					fmt, stream) < 0) अणु
-		audioक्रमmat_मुक्त(fp);
-		वापस शून्य;
-	पूर्ण
+	if (snd_usb_parse_audio_format(chip, fp, format,
+					fmt, stream) < 0) {
+		audioformat_free(fp);
+		return NULL;
+	}
 
 	/* Create chmap */
-	अगर (fp->channels != num_channels)
+	if (fp->channels != num_channels)
 		chconfig = 0;
 
 	fp->chmap = convert_chmap(fp->channels, chconfig, protocol);
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
-अटल काष्ठा audioक्रमmat *
-snd_usb_get_audioक्रमmat_uac3(काष्ठा snd_usb_audio *chip,
-			     काष्ठा usb_host_पूर्णांकerface *alts,
-			     काष्ठा snd_usb_घातer_करोमुख्य **pd_out,
-			     पूर्णांक अगरace_no, पूर्णांक altset_idx,
-			     पूर्णांक altno, पूर्णांक stream)
-अणु
-	काष्ठा usb_device *dev = chip->dev;
-	काष्ठा uac3_input_terminal_descriptor *input_term;
-	काष्ठा uac3_output_terminal_descriptor *output_term;
-	काष्ठा uac3_cluster_header_descriptor *cluster;
-	काष्ठा uac3_as_header_descriptor *as = शून्य;
-	काष्ठा uac3_hc_descriptor_header hc_header;
-	काष्ठा snd_pcm_chmap_elem *chmap;
-	काष्ठा snd_usb_घातer_करोमुख्य *pd;
-	अचिन्हित अक्षर badd_profile;
-	u64 badd_क्रमmats = 0;
-	अचिन्हित पूर्णांक num_channels;
-	काष्ठा audioक्रमmat *fp;
+static struct audioformat *
+snd_usb_get_audioformat_uac3(struct snd_usb_audio *chip,
+			     struct usb_host_interface *alts,
+			     struct snd_usb_power_domain **pd_out,
+			     int iface_no, int altset_idx,
+			     int altno, int stream)
+{
+	struct usb_device *dev = chip->dev;
+	struct uac3_input_terminal_descriptor *input_term;
+	struct uac3_output_terminal_descriptor *output_term;
+	struct uac3_cluster_header_descriptor *cluster;
+	struct uac3_as_header_descriptor *as = NULL;
+	struct uac3_hc_descriptor_header hc_header;
+	struct snd_pcm_chmap_elem *chmap;
+	struct snd_usb_power_domain *pd;
+	unsigned char badd_profile;
+	u64 badd_formats = 0;
+	unsigned int num_channels;
+	struct audioformat *fp;
 	u16 cluster_id, wLength;
-	पूर्णांक घड़ी = 0;
-	पूर्णांक err;
+	int clock = 0;
+	int err;
 
 	badd_profile = chip->badd_profile;
 
-	अगर (badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) अणु
-		अचिन्हित पूर्णांक maxpacksize =
-			le16_to_cpu(get_endpoपूर्णांक(alts, 0)->wMaxPacketSize);
+	if (badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) {
+		unsigned int maxpacksize =
+			le16_to_cpu(get_endpoint(alts, 0)->wMaxPacketSize);
 
-		चयन (maxpacksize) अणु
-		शेष:
+		switch (maxpacksize) {
+		default:
 			dev_err(&dev->dev,
 				"%u:%d : incorrect wMaxPacketSize for BADD profile\n",
-				अगरace_no, altno);
-			वापस शून्य;
-		हाल UAC3_BADD_EP_MAXPSIZE_SYNC_MONO_16:
-		हाल UAC3_BADD_EP_MAXPSIZE_ASYNC_MONO_16:
-			badd_क्रमmats = SNDRV_PCM_FMTBIT_S16_LE;
+				iface_no, altno);
+			return NULL;
+		case UAC3_BADD_EP_MAXPSIZE_SYNC_MONO_16:
+		case UAC3_BADD_EP_MAXPSIZE_ASYNC_MONO_16:
+			badd_formats = SNDRV_PCM_FMTBIT_S16_LE;
 			num_channels = 1;
-			अवरोध;
-		हाल UAC3_BADD_EP_MAXPSIZE_SYNC_MONO_24:
-		हाल UAC3_BADD_EP_MAXPSIZE_ASYNC_MONO_24:
-			badd_क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE;
+			break;
+		case UAC3_BADD_EP_MAXPSIZE_SYNC_MONO_24:
+		case UAC3_BADD_EP_MAXPSIZE_ASYNC_MONO_24:
+			badd_formats = SNDRV_PCM_FMTBIT_S24_3LE;
 			num_channels = 1;
-			अवरोध;
-		हाल UAC3_BADD_EP_MAXPSIZE_SYNC_STEREO_16:
-		हाल UAC3_BADD_EP_MAXPSIZE_ASYNC_STEREO_16:
-			badd_क्रमmats = SNDRV_PCM_FMTBIT_S16_LE;
+			break;
+		case UAC3_BADD_EP_MAXPSIZE_SYNC_STEREO_16:
+		case UAC3_BADD_EP_MAXPSIZE_ASYNC_STEREO_16:
+			badd_formats = SNDRV_PCM_FMTBIT_S16_LE;
 			num_channels = 2;
-			अवरोध;
-		हाल UAC3_BADD_EP_MAXPSIZE_SYNC_STEREO_24:
-		हाल UAC3_BADD_EP_MAXPSIZE_ASYNC_STEREO_24:
-			badd_क्रमmats = SNDRV_PCM_FMTBIT_S24_3LE;
+			break;
+		case UAC3_BADD_EP_MAXPSIZE_SYNC_STEREO_24:
+		case UAC3_BADD_EP_MAXPSIZE_ASYNC_STEREO_24:
+			badd_formats = SNDRV_PCM_FMTBIT_S24_3LE;
 			num_channels = 2;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		chmap = kzalloc(माप(*chmap), GFP_KERNEL);
-		अगर (!chmap)
-			वापस ERR_PTR(-ENOMEM);
+		chmap = kzalloc(sizeof(*chmap), GFP_KERNEL);
+		if (!chmap)
+			return ERR_PTR(-ENOMEM);
 
-		अगर (num_channels == 1) अणु
+		if (num_channels == 1) {
 			chmap->map[0] = SNDRV_CHMAP_MONO;
-		पूर्ण अन्यथा अणु
+		} else {
 			chmap->map[0] = SNDRV_CHMAP_FL;
 			chmap->map[1] = SNDRV_CHMAP_FR;
-		पूर्ण
+		}
 
 		chmap->channels = num_channels;
-		घड़ी = UAC3_BADD_CS_ID9;
-		जाओ found_घड़ी;
-	पूर्ण
+		clock = UAC3_BADD_CS_ID9;
+		goto found_clock;
+	}
 
-	as = snd_usb_find_csपूर्णांक_desc(alts->extra, alts->extralen,
-				     शून्य, UAC_AS_GENERAL);
-	अगर (!as) अणु
+	as = snd_usb_find_csint_desc(alts->extra, alts->extralen,
+				     NULL, UAC_AS_GENERAL);
+	if (!as) {
 		dev_err(&dev->dev,
 			"%u:%d : UAC_AS_GENERAL descriptor not found\n",
-			अगरace_no, altno);
-		वापस शून्य;
-	पूर्ण
+			iface_no, altno);
+		return NULL;
+	}
 
-	अगर (as->bLength < माप(*as)) अणु
+	if (as->bLength < sizeof(*as)) {
 		dev_err(&dev->dev,
 			"%u:%d : invalid UAC_AS_GENERAL desc\n",
-			अगरace_no, altno);
-		वापस शून्य;
-	पूर्ण
+			iface_no, altno);
+		return NULL;
+	}
 
 	cluster_id = le16_to_cpu(as->wClusterDescrID);
-	अगर (!cluster_id) अणु
+	if (!cluster_id) {
 		dev_err(&dev->dev,
 			"%u:%d : no cluster descriptor\n",
-			अगरace_no, altno);
-		वापस शून्य;
-	पूर्ण
+			iface_no, altno);
+		return NULL;
+	}
 
 	/*
 	 * Get number of channels and channel map through
 	 * High Capability Cluster Descriptor
 	 *
 	 * First step: get High Capability header and
-	 * पढ़ो size of Cluster Descriptor
+	 * read size of Cluster Descriptor
 	 */
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_rcvctrlpipe(chip->dev, 0),
 			UAC3_CS_REQ_HIGH_CAPABILITY_DESCRIPTOR,
-			USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_IN,
+			USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_IN,
 			cluster_id,
-			snd_usb_ctrl_पूर्णांकf(chip),
-			&hc_header, माप(hc_header));
-	अगर (err < 0)
-		वापस ERR_PTR(err);
-	अन्यथा अगर (err != माप(hc_header)) अणु
+			snd_usb_ctrl_intf(chip),
+			&hc_header, sizeof(hc_header));
+	if (err < 0)
+		return ERR_PTR(err);
+	else if (err != sizeof(hc_header)) {
 		dev_err(&dev->dev,
 			"%u:%d : can't get High Capability descriptor\n",
-			अगरace_no, altno);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
+			iface_no, altno);
+		return ERR_PTR(-EIO);
+	}
 
 	/*
 	 * Second step: allocate needed amount of memory
@@ -980,275 +979,275 @@ snd_usb_get_audioक्रमmat_uac3(काष्ठा snd_usb_audio *chip,
 	 */
 	wLength = le16_to_cpu(hc_header.wLength);
 	cluster = kzalloc(wLength, GFP_KERNEL);
-	अगर (!cluster)
-		वापस ERR_PTR(-ENOMEM);
+	if (!cluster)
+		return ERR_PTR(-ENOMEM);
 	err = snd_usb_ctl_msg(chip->dev,
 			usb_rcvctrlpipe(chip->dev, 0),
 			UAC3_CS_REQ_HIGH_CAPABILITY_DESCRIPTOR,
-			USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_IN,
+			USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_IN,
 			cluster_id,
-			snd_usb_ctrl_पूर्णांकf(chip),
+			snd_usb_ctrl_intf(chip),
 			cluster, wLength);
-	अगर (err < 0) अणु
-		kमुक्त(cluster);
-		वापस ERR_PTR(err);
-	पूर्ण अन्यथा अगर (err != wLength) अणु
+	if (err < 0) {
+		kfree(cluster);
+		return ERR_PTR(err);
+	} else if (err != wLength) {
 		dev_err(&dev->dev,
 			"%u:%d : can't get Cluster Descriptor\n",
-			अगरace_no, altno);
-		kमुक्त(cluster);
-		वापस ERR_PTR(-EIO);
-	पूर्ण
+			iface_no, altno);
+		kfree(cluster);
+		return ERR_PTR(-EIO);
+	}
 
 	num_channels = cluster->bNrChannels;
 	chmap = convert_chmap_v3(cluster);
-	kमुक्त(cluster);
+	kfree(cluster);
 
 	/*
-	 * lookup the terminal associated to this पूर्णांकerface
-	 * to extract the घड़ी
+	 * lookup the terminal associated to this interface
+	 * to extract the clock
 	 */
-	input_term = snd_usb_find_input_terminal_descriptor(chip->ctrl_पूर्णांकf,
+	input_term = snd_usb_find_input_terminal_descriptor(chip->ctrl_intf,
 							    as->bTerminalLink,
 							    UAC_VERSION_3);
-	अगर (input_term) अणु
-		घड़ी = input_term->bCSourceID;
-		जाओ found_घड़ी;
-	पूर्ण
+	if (input_term) {
+		clock = input_term->bCSourceID;
+		goto found_clock;
+	}
 
-	output_term = snd_usb_find_output_terminal_descriptor(chip->ctrl_पूर्णांकf,
+	output_term = snd_usb_find_output_terminal_descriptor(chip->ctrl_intf,
 							      as->bTerminalLink,
 							      UAC_VERSION_3);
-	अगर (output_term) अणु
-		घड़ी = output_term->bCSourceID;
-		जाओ found_घड़ी;
-	पूर्ण
+	if (output_term) {
+		clock = output_term->bCSourceID;
+		goto found_clock;
+	}
 
 	dev_err(&dev->dev, "%u:%d : bogus bTerminalLink %d\n",
-			अगरace_no, altno, as->bTerminalLink);
-	kमुक्त(chmap);
-	वापस शून्य;
+			iface_no, altno, as->bTerminalLink);
+	kfree(chmap);
+	return NULL;
 
-found_घड़ी:
-	fp = audio_क्रमmat_alloc_init(chip, alts, UAC_VERSION_3, अगरace_no,
-				     altset_idx, altno, num_channels, घड़ी);
-	अगर (!fp) अणु
-		kमुक्त(chmap);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+found_clock:
+	fp = audio_format_alloc_init(chip, alts, UAC_VERSION_3, iface_no,
+				     altset_idx, altno, num_channels, clock);
+	if (!fp) {
+		kfree(chmap);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	fp->chmap = chmap;
 
-	अगर (badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) अणु
+	if (badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) {
 		fp->attributes = 0; /* No attributes */
 
 		fp->fmt_type = UAC_FORMAT_TYPE_I;
-		fp->क्रमmats = badd_क्रमmats;
+		fp->formats = badd_formats;
 
 		fp->nr_rates = 0;	/* SNDRV_PCM_RATE_CONTINUOUS */
 		fp->rate_min = UAC3_BADD_SAMPLING_RATE;
 		fp->rate_max = UAC3_BADD_SAMPLING_RATE;
 		fp->rates = SNDRV_PCM_RATE_CONTINUOUS;
 
-		pd = kzalloc(माप(*pd), GFP_KERNEL);
-		अगर (!pd) अणु
-			audioक्रमmat_मुक्त(fp);
-			वापस शून्य;
-		पूर्ण
+		pd = kzalloc(sizeof(*pd), GFP_KERNEL);
+		if (!pd) {
+			audioformat_free(fp);
+			return NULL;
+		}
 		pd->pd_id = (stream == SNDRV_PCM_STREAM_PLAYBACK) ?
 					UAC3_BADD_PD_ID10 : UAC3_BADD_PD_ID11;
 		pd->pd_d1d0_rec = UAC3_BADD_PD_RECOVER_D1D0;
 		pd->pd_d2d0_rec = UAC3_BADD_PD_RECOVER_D2D0;
 
-	पूर्ण अन्यथा अणु
-		fp->attributes = parse_uac_endpoपूर्णांक_attributes(chip, alts,
+	} else {
+		fp->attributes = parse_uac_endpoint_attributes(chip, alts,
 							       UAC_VERSION_3,
-							       अगरace_no);
+							       iface_no);
 
-		pd = snd_usb_find_घातer_करोमुख्य(chip->ctrl_पूर्णांकf,
+		pd = snd_usb_find_power_domain(chip->ctrl_intf,
 					       as->bTerminalLink);
 
 		/* ok, let's parse further... */
-		अगर (snd_usb_parse_audio_क्रमmat_v3(chip, fp, as, stream) < 0) अणु
-			kमुक्त(pd);
-			audioक्रमmat_मुक्त(fp);
-			वापस शून्य;
-		पूर्ण
-	पूर्ण
+		if (snd_usb_parse_audio_format_v3(chip, fp, as, stream) < 0) {
+			kfree(pd);
+			audioformat_free(fp);
+			return NULL;
+		}
+	}
 
-	अगर (pd)
+	if (pd)
 		*pd_out = pd;
 
-	वापस fp;
-पूर्ण
+	return fp;
+}
 
-अटल पूर्णांक __snd_usb_parse_audio_पूर्णांकerface(काष्ठा snd_usb_audio *chip,
-					   पूर्णांक अगरace_no,
+static int __snd_usb_parse_audio_interface(struct snd_usb_audio *chip,
+					   int iface_no,
 					   bool *has_non_pcm, bool non_pcm)
-अणु
-	काष्ठा usb_device *dev;
-	काष्ठा usb_पूर्णांकerface *अगरace;
-	काष्ठा usb_host_पूर्णांकerface *alts;
-	काष्ठा usb_पूर्णांकerface_descriptor *altsd;
-	पूर्णांक i, altno, err, stream;
-	काष्ठा audioक्रमmat *fp = शून्य;
-	काष्ठा snd_usb_घातer_करोमुख्य *pd = शून्य;
-	पूर्णांक num, protocol;
+{
+	struct usb_device *dev;
+	struct usb_interface *iface;
+	struct usb_host_interface *alts;
+	struct usb_interface_descriptor *altsd;
+	int i, altno, err, stream;
+	struct audioformat *fp = NULL;
+	struct snd_usb_power_domain *pd = NULL;
+	int num, protocol;
 
 	dev = chip->dev;
 
-	/* parse the पूर्णांकerface's altsettings */
-	अगरace = usb_अगरnum_to_अगर(dev, अगरace_no);
+	/* parse the interface's altsettings */
+	iface = usb_ifnum_to_if(dev, iface_no);
 
-	num = अगरace->num_altsetting;
+	num = iface->num_altsetting;
 
 	/*
 	 * Dallas DS4201 workaround: It presents 5 altsettings, but the last
-	 * one misses syncpipe, and करोes not produce any sound.
+	 * one misses syncpipe, and does not produce any sound.
 	 */
-	अगर (chip->usb_id == USB_ID(0x04fa, 0x4201))
+	if (chip->usb_id == USB_ID(0x04fa, 0x4201))
 		num = 4;
 
-	क्रम (i = 0; i < num; i++) अणु
-		alts = &अगरace->altsetting[i];
-		altsd = get_अगरace_desc(alts);
+	for (i = 0; i < num; i++) {
+		alts = &iface->altsetting[i];
+		altsd = get_iface_desc(alts);
 		protocol = altsd->bInterfaceProtocol;
 		/* skip invalid one */
-		अगर (((altsd->bInterfaceClass != USB_CLASS_AUDIO ||
+		if (((altsd->bInterfaceClass != USB_CLASS_AUDIO ||
 		      (altsd->bInterfaceSubClass != USB_SUBCLASS_AUDIOSTREAMING &&
 		       altsd->bInterfaceSubClass != USB_SUBCLASS_VENDOR_SPEC)) &&
 		     altsd->bInterfaceClass != USB_CLASS_VENDOR_SPEC) ||
-		    altsd->bNumEndpoपूर्णांकs < 1 ||
-		    le16_to_cpu(get_endpoपूर्णांक(alts, 0)->wMaxPacketSize) == 0)
-			जारी;
+		    altsd->bNumEndpoints < 1 ||
+		    le16_to_cpu(get_endpoint(alts, 0)->wMaxPacketSize) == 0)
+			continue;
 		/* must be isochronous */
-		अगर ((get_endpoपूर्णांक(alts, 0)->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) !=
+		if ((get_endpoint(alts, 0)->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) !=
 		    USB_ENDPOINT_XFER_ISOC)
-			जारी;
+			continue;
 		/* check direction */
-		stream = (get_endpoपूर्णांक(alts, 0)->bEndpoपूर्णांकAddress & USB_सूची_IN) ?
+		stream = (get_endpoint(alts, 0)->bEndpointAddress & USB_DIR_IN) ?
 			SNDRV_PCM_STREAM_CAPTURE : SNDRV_PCM_STREAM_PLAYBACK;
 		altno = altsd->bAlternateSetting;
 
-		अगर (snd_usb_apply_पूर्णांकerface_quirk(chip, अगरace_no, altno))
-			जारी;
+		if (snd_usb_apply_interface_quirk(chip, iface_no, altno))
+			continue;
 
 		/*
-		 * Roland audio streaming पूर्णांकerfaces are marked with protocols
+		 * Roland audio streaming interfaces are marked with protocols
 		 * 0/1/2, but are UAC 1 compatible.
 		 */
-		अगर (USB_ID_VENDOR(chip->usb_id) == 0x0582 &&
+		if (USB_ID_VENDOR(chip->usb_id) == 0x0582 &&
 		    altsd->bInterfaceClass == USB_CLASS_VENDOR_SPEC &&
 		    protocol <= 2)
 			protocol = UAC_VERSION_1;
 
-		चयन (protocol) अणु
-		शेष:
+		switch (protocol) {
+		default:
 			dev_dbg(&dev->dev, "%u:%d: unknown interface protocol %#02x, assuming v1\n",
-				अगरace_no, altno, protocol);
+				iface_no, altno, protocol);
 			protocol = UAC_VERSION_1;
 			fallthrough;
-		हाल UAC_VERSION_1:
-		हाल UAC_VERSION_2: अणु
-			पूर्णांक bm_quirk = 0;
+		case UAC_VERSION_1:
+		case UAC_VERSION_2: {
+			int bm_quirk = 0;
 
 			/*
 			 * Blue Microphones workaround: The last altsetting is
-			 * identical with the previous one, except क्रम a larger
+			 * identical with the previous one, except for a larger
 			 * packet size, but is actually a mislabeled two-channel
 			 * setting; ignore it.
 			 *
 			 * Part 1: prepare quirk flag
 			 */
-			अगर (altno == 2 && num == 3 &&
+			if (altno == 2 && num == 3 &&
 			    fp && fp->altsetting == 1 && fp->channels == 1 &&
-			    fp->क्रमmats == SNDRV_PCM_FMTBIT_S16_LE &&
+			    fp->formats == SNDRV_PCM_FMTBIT_S16_LE &&
 			    protocol == UAC_VERSION_1 &&
-			    le16_to_cpu(get_endpoपूर्णांक(alts, 0)->wMaxPacketSize) ==
+			    le16_to_cpu(get_endpoint(alts, 0)->wMaxPacketSize) ==
 							fp->maxpacksize * 2)
 				bm_quirk = 1;
 
-			fp = snd_usb_get_audioक्रमmat_uac12(chip, alts, protocol,
-							   अगरace_no, i, altno,
+			fp = snd_usb_get_audioformat_uac12(chip, alts, protocol,
+							   iface_no, i, altno,
 							   stream, bm_quirk);
-			अवरोध;
-		पूर्ण
-		हाल UAC_VERSION_3:
-			fp = snd_usb_get_audioक्रमmat_uac3(chip, alts, &pd,
-						अगरace_no, i, altno, stream);
-			अवरोध;
-		पूर्ण
+			break;
+		}
+		case UAC_VERSION_3:
+			fp = snd_usb_get_audioformat_uac3(chip, alts, &pd,
+						iface_no, i, altno, stream);
+			break;
+		}
 
-		अगर (!fp)
-			जारी;
-		अन्यथा अगर (IS_ERR(fp))
-			वापस PTR_ERR(fp);
+		if (!fp)
+			continue;
+		else if (IS_ERR(fp))
+			return PTR_ERR(fp);
 
-		अगर (fp->fmt_type != UAC_FORMAT_TYPE_I)
+		if (fp->fmt_type != UAC_FORMAT_TYPE_I)
 			*has_non_pcm = true;
-		अगर ((fp->fmt_type == UAC_FORMAT_TYPE_I) == non_pcm) अणु
-			audioक्रमmat_मुक्त(fp);
-			kमुक्त(pd);
-			fp = शून्य;
-			pd = शून्य;
-			जारी;
-		पूर्ण
+		if ((fp->fmt_type == UAC_FORMAT_TYPE_I) == non_pcm) {
+			audioformat_free(fp);
+			kfree(pd);
+			fp = NULL;
+			pd = NULL;
+			continue;
+		}
 
-		snd_usb_audioक्रमmat_set_sync_ep(chip, fp);
+		snd_usb_audioformat_set_sync_ep(chip, fp);
 
-		dev_dbg(&dev->dev, "%u:%d: add audio endpoint %#x\n", अगरace_no, altno, fp->endpoपूर्णांक);
-		अगर (protocol == UAC_VERSION_3)
+		dev_dbg(&dev->dev, "%u:%d: add audio endpoint %#x\n", iface_no, altno, fp->endpoint);
+		if (protocol == UAC_VERSION_3)
 			err = snd_usb_add_audio_stream_v3(chip, stream, fp, pd);
-		अन्यथा
+		else
 			err = snd_usb_add_audio_stream(chip, stream, fp);
 
-		अगर (err < 0) अणु
-			audioक्रमmat_मुक्त(fp);
-			kमुक्त(pd);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			audioformat_free(fp);
+			kfree(pd);
+			return err;
+		}
 
-		/* add endpoपूर्णांकs */
-		err = snd_usb_add_endpoपूर्णांक(chip, fp->endpoपूर्णांक,
+		/* add endpoints */
+		err = snd_usb_add_endpoint(chip, fp->endpoint,
 					   SND_USB_ENDPOINT_TYPE_DATA);
-		अगर (err < 0)
-			वापस err;
+		if (err < 0)
+			return err;
 
-		अगर (fp->sync_ep) अणु
-			err = snd_usb_add_endpoपूर्णांक(chip, fp->sync_ep,
+		if (fp->sync_ep) {
+			err = snd_usb_add_endpoint(chip, fp->sync_ep,
 						   fp->implicit_fb ?
 						   SND_USB_ENDPOINT_TYPE_DATA :
 						   SND_USB_ENDPOINT_TYPE_SYNC);
-			अगर (err < 0)
-				वापस err;
-		पूर्ण
+			if (err < 0)
+				return err;
+		}
 
-		/* try to set the पूर्णांकerface... */
-		usb_set_पूर्णांकerface(chip->dev, अगरace_no, 0);
+		/* try to set the interface... */
+		usb_set_interface(chip->dev, iface_no, 0);
 		snd_usb_init_pitch(chip, fp);
 		snd_usb_init_sample_rate(chip, fp, fp->rate_max);
-		usb_set_पूर्णांकerface(chip->dev, अगरace_no, altno);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		usb_set_interface(chip->dev, iface_no, altno);
+	}
+	return 0;
+}
 
-पूर्णांक snd_usb_parse_audio_पूर्णांकerface(काष्ठा snd_usb_audio *chip, पूर्णांक अगरace_no)
-अणु
-	पूर्णांक err;
+int snd_usb_parse_audio_interface(struct snd_usb_audio *chip, int iface_no)
+{
+	int err;
 	bool has_non_pcm = false;
 
-	/* parse PCM क्रमmats */
-	err = __snd_usb_parse_audio_पूर्णांकerface(chip, अगरace_no, &has_non_pcm, false);
-	अगर (err < 0)
-		वापस err;
+	/* parse PCM formats */
+	err = __snd_usb_parse_audio_interface(chip, iface_no, &has_non_pcm, false);
+	if (err < 0)
+		return err;
 
-	अगर (has_non_pcm) अणु
-		/* parse non-PCM क्रमmats */
-		err = __snd_usb_parse_audio_पूर्णांकerface(chip, अगरace_no, &has_non_pcm, true);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+	if (has_non_pcm) {
+		/* parse non-PCM formats */
+		err = __snd_usb_parse_audio_interface(chip, iface_no, &has_non_pcm, true);
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

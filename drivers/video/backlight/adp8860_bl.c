@@ -1,266 +1,265 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Backlight driver क्रम Analog Devices ADP8860 Backlight Devices
+ * Backlight driver for Analog Devices ADP8860 Backlight Devices
  *
  * Copyright 2009-2010 Analog Devices Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pm.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/pm.h>
+#include <linux/platform_device.h>
+#include <linux/i2c.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/leds.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
 
-#समावेश <linux/platक्रमm_data/adp8860.h>
-#घोषणा ADP8860_EXT_FEATURES
-#घोषणा ADP8860_USE_LEDS
+#include <linux/platform_data/adp8860.h>
+#define ADP8860_EXT_FEATURES
+#define ADP8860_USE_LEDS
 
-#घोषणा ADP8860_MFDVID 0x00 /* Manufacturer and device ID */
-#घोषणा ADP8860_MDCR 0x01 /* Device mode and status */
-#घोषणा ADP8860_MDCR2 0x02 /* Device mode and Status Register 2 */
-#घोषणा ADP8860_INTR_EN 0x03 /* Interrupts enable */
-#घोषणा ADP8860_CFGR 0x04 /* Configuration रेजिस्टर */
-#घोषणा ADP8860_BLSEN 0x05 /* Sink enable backlight or independent */
-#घोषणा ADP8860_BLOFF 0x06 /* Backlight off समयout */
-#घोषणा ADP8860_BLDIM 0x07 /* Backlight dim समयout */
-#घोषणा ADP8860_BLFR 0x08 /* Backlight fade in and out rates */
-#घोषणा ADP8860_BLMX1 0x09 /* Backlight (Brightness Level 1-daylight) maximum current */
-#घोषणा ADP8860_BLDM1 0x0A /* Backlight (Brightness Level 1-daylight) dim current */
-#घोषणा ADP8860_BLMX2 0x0B /* Backlight (Brightness Level 2-office) maximum current */
-#घोषणा ADP8860_BLDM2 0x0C /* Backlight (Brightness Level 2-office) dim current */
-#घोषणा ADP8860_BLMX3 0x0D /* Backlight (Brightness Level 3-dark) maximum current */
-#घोषणा ADP8860_BLDM3 0x0E /* Backlight (Brightness Level 3-dark) dim current */
-#घोषणा ADP8860_ISCFR 0x0F /* Independent sink current fade control रेजिस्टर */
-#घोषणा ADP8860_ISCC 0x10 /* Independent sink current control रेजिस्टर */
-#घोषणा ADP8860_ISCT1 0x11 /* Independent Sink Current Timer Register LED[7:5] */
-#घोषणा ADP8860_ISCT2 0x12 /* Independent Sink Current Timer Register LED[4:1] */
-#घोषणा ADP8860_ISCF 0x13 /* Independent sink current fade रेजिस्टर */
-#घोषणा ADP8860_ISC7 0x14 /* Independent Sink Current LED7 */
-#घोषणा ADP8860_ISC6 0x15 /* Independent Sink Current LED6 */
-#घोषणा ADP8860_ISC5 0x16 /* Independent Sink Current LED5 */
-#घोषणा ADP8860_ISC4 0x17 /* Independent Sink Current LED4 */
-#घोषणा ADP8860_ISC3 0x18 /* Independent Sink Current LED3 */
-#घोषणा ADP8860_ISC2 0x19 /* Independent Sink Current LED2 */
-#घोषणा ADP8860_ISC1 0x1A /* Independent Sink Current LED1 */
-#घोषणा ADP8860_CCFG 0x1B /* Comparator configuration */
-#घोषणा ADP8860_CCFG2 0x1C /* Second comparator configuration */
-#घोषणा ADP8860_L2_TRP 0x1D /* L2 comparator reference */
-#घोषणा ADP8860_L2_HYS 0x1E /* L2 hysteresis */
-#घोषणा ADP8860_L3_TRP 0x1F /* L3 comparator reference */
-#घोषणा ADP8860_L3_HYS 0x20 /* L3 hysteresis */
-#घोषणा ADP8860_PH1LEVL 0x21 /* First phototransistor ambient light level-low byte रेजिस्टर */
-#घोषणा ADP8860_PH1LEVH 0x22 /* First phototransistor ambient light level-high byte रेजिस्टर */
-#घोषणा ADP8860_PH2LEVL 0x23 /* Second phototransistor ambient light level-low byte रेजिस्टर */
-#घोषणा ADP8860_PH2LEVH 0x24 /* Second phototransistor ambient light level-high byte रेजिस्टर */
+#define ADP8860_MFDVID 0x00 /* Manufacturer and device ID */
+#define ADP8860_MDCR 0x01 /* Device mode and status */
+#define ADP8860_MDCR2 0x02 /* Device mode and Status Register 2 */
+#define ADP8860_INTR_EN 0x03 /* Interrupts enable */
+#define ADP8860_CFGR 0x04 /* Configuration register */
+#define ADP8860_BLSEN 0x05 /* Sink enable backlight or independent */
+#define ADP8860_BLOFF 0x06 /* Backlight off timeout */
+#define ADP8860_BLDIM 0x07 /* Backlight dim timeout */
+#define ADP8860_BLFR 0x08 /* Backlight fade in and out rates */
+#define ADP8860_BLMX1 0x09 /* Backlight (Brightness Level 1-daylight) maximum current */
+#define ADP8860_BLDM1 0x0A /* Backlight (Brightness Level 1-daylight) dim current */
+#define ADP8860_BLMX2 0x0B /* Backlight (Brightness Level 2-office) maximum current */
+#define ADP8860_BLDM2 0x0C /* Backlight (Brightness Level 2-office) dim current */
+#define ADP8860_BLMX3 0x0D /* Backlight (Brightness Level 3-dark) maximum current */
+#define ADP8860_BLDM3 0x0E /* Backlight (Brightness Level 3-dark) dim current */
+#define ADP8860_ISCFR 0x0F /* Independent sink current fade control register */
+#define ADP8860_ISCC 0x10 /* Independent sink current control register */
+#define ADP8860_ISCT1 0x11 /* Independent Sink Current Timer Register LED[7:5] */
+#define ADP8860_ISCT2 0x12 /* Independent Sink Current Timer Register LED[4:1] */
+#define ADP8860_ISCF 0x13 /* Independent sink current fade register */
+#define ADP8860_ISC7 0x14 /* Independent Sink Current LED7 */
+#define ADP8860_ISC6 0x15 /* Independent Sink Current LED6 */
+#define ADP8860_ISC5 0x16 /* Independent Sink Current LED5 */
+#define ADP8860_ISC4 0x17 /* Independent Sink Current LED4 */
+#define ADP8860_ISC3 0x18 /* Independent Sink Current LED3 */
+#define ADP8860_ISC2 0x19 /* Independent Sink Current LED2 */
+#define ADP8860_ISC1 0x1A /* Independent Sink Current LED1 */
+#define ADP8860_CCFG 0x1B /* Comparator configuration */
+#define ADP8860_CCFG2 0x1C /* Second comparator configuration */
+#define ADP8860_L2_TRP 0x1D /* L2 comparator reference */
+#define ADP8860_L2_HYS 0x1E /* L2 hysteresis */
+#define ADP8860_L3_TRP 0x1F /* L3 comparator reference */
+#define ADP8860_L3_HYS 0x20 /* L3 hysteresis */
+#define ADP8860_PH1LEVL 0x21 /* First phototransistor ambient light level-low byte register */
+#define ADP8860_PH1LEVH 0x22 /* First phototransistor ambient light level-high byte register */
+#define ADP8860_PH2LEVL 0x23 /* Second phototransistor ambient light level-low byte register */
+#define ADP8860_PH2LEVH 0x24 /* Second phototransistor ambient light level-high byte register */
 
-#घोषणा ADP8860_MANUFID		0x0  /* Analog Devices ADP8860 Manufacturer ID */
-#घोषणा ADP8861_MANUFID		0x4  /* Analog Devices ADP8861 Manufacturer ID */
-#घोषणा ADP8863_MANUFID		0x2  /* Analog Devices ADP8863 Manufacturer ID */
+#define ADP8860_MANUFID		0x0  /* Analog Devices ADP8860 Manufacturer ID */
+#define ADP8861_MANUFID		0x4  /* Analog Devices ADP8861 Manufacturer ID */
+#define ADP8863_MANUFID		0x2  /* Analog Devices ADP8863 Manufacturer ID */
 
-#घोषणा ADP8860_DEVID(x)	((x) & 0xF)
-#घोषणा ADP8860_MANID(x)	((x) >> 4)
+#define ADP8860_DEVID(x)	((x) & 0xF)
+#define ADP8860_MANID(x)	((x) >> 4)
 
 /* MDCR Device mode and status */
-#घोषणा INT_CFG			(1 << 6)
-#घोषणा NSTBY			(1 << 5)
-#घोषणा DIM_EN			(1 << 4)
-#घोषणा GDWN_DIS		(1 << 3)
-#घोषणा SIS_EN			(1 << 2)
-#घोषणा CMP_AUTOEN		(1 << 1)
-#घोषणा BLEN			(1 << 0)
+#define INT_CFG			(1 << 6)
+#define NSTBY			(1 << 5)
+#define DIM_EN			(1 << 4)
+#define GDWN_DIS		(1 << 3)
+#define SIS_EN			(1 << 2)
+#define CMP_AUTOEN		(1 << 1)
+#define BLEN			(1 << 0)
 
 /* ADP8860_CCFG Main ALS comparator level enable */
-#घोषणा L3_EN			(1 << 1)
-#घोषणा L2_EN			(1 << 0)
+#define L3_EN			(1 << 1)
+#define L2_EN			(1 << 0)
 
-#घोषणा CFGR_BLV_SHIFT		3
-#घोषणा CFGR_BLV_MASK		0x3
-#घोषणा ADP8860_FLAG_LED_MASK	0xFF
+#define CFGR_BLV_SHIFT		3
+#define CFGR_BLV_MASK		0x3
+#define ADP8860_FLAG_LED_MASK	0xFF
 
-#घोषणा FADE_VAL(in, out)	((0xF & (in)) | ((0xF & (out)) << 4))
-#घोषणा BL_CFGR_VAL(law, blv)	((((blv) & CFGR_BLV_MASK) << CFGR_BLV_SHIFT) | ((0x3 & (law)) << 1))
-#घोषणा ALS_CCFG_VAL(filt)	((0x7 & filt) << 5)
+#define FADE_VAL(in, out)	((0xF & (in)) | ((0xF & (out)) << 4))
+#define BL_CFGR_VAL(law, blv)	((((blv) & CFGR_BLV_MASK) << CFGR_BLV_SHIFT) | ((0x3 & (law)) << 1))
+#define ALS_CCFG_VAL(filt)	((0x7 & filt) << 5)
 
-क्रमागत अणु
+enum {
 	adp8860,
 	adp8861,
 	adp8863
-पूर्ण;
+};
 
-काष्ठा adp8860_led अणु
-	काष्ठा led_classdev	cdev;
-	काष्ठा work_काष्ठा	work;
-	काष्ठा i2c_client	*client;
-	क्रमागत led_brightness	new_brightness;
-	पूर्णांक			id;
-	पूर्णांक			flags;
-पूर्ण;
+struct adp8860_led {
+	struct led_classdev	cdev;
+	struct work_struct	work;
+	struct i2c_client	*client;
+	enum led_brightness	new_brightness;
+	int			id;
+	int			flags;
+};
 
-काष्ठा adp8860_bl अणु
-	काष्ठा i2c_client *client;
-	काष्ठा backlight_device *bl;
-	काष्ठा adp8860_led *led;
-	काष्ठा adp8860_backlight_platक्रमm_data *pdata;
-	काष्ठा mutex lock;
-	अचिन्हित दीर्घ cached_daylight_max;
-	पूर्णांक id;
-	पूर्णांक revid;
-	पूर्णांक current_brightness;
-	अचिन्हित en_ambl_sens:1;
-	अचिन्हित gdwn_dis:1;
-पूर्ण;
+struct adp8860_bl {
+	struct i2c_client *client;
+	struct backlight_device *bl;
+	struct adp8860_led *led;
+	struct adp8860_backlight_platform_data *pdata;
+	struct mutex lock;
+	unsigned long cached_daylight_max;
+	int id;
+	int revid;
+	int current_brightness;
+	unsigned en_ambl_sens:1;
+	unsigned gdwn_dis:1;
+};
 
-अटल पूर्णांक adp8860_पढ़ो(काष्ठा i2c_client *client, पूर्णांक reg, uपूर्णांक8_t *val)
-अणु
-	पूर्णांक ret;
+static int adp8860_read(struct i2c_client *client, int reg, uint8_t *val)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, reg);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(client, reg);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed reading at 0x%02x\n", reg);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	*val = (uपूर्णांक8_t)ret;
-	वापस 0;
-पूर्ण
+	*val = (uint8_t)ret;
+	return 0;
+}
 
-अटल पूर्णांक adp8860_ग_लिखो(काष्ठा i2c_client *client, u8 reg, u8 val)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, val);
-पूर्ण
+static int adp8860_write(struct i2c_client *client, u8 reg, u8 val)
+{
+	return i2c_smbus_write_byte_data(client, reg, val);
+}
 
-अटल पूर्णांक adp8860_set_bits(काष्ठा i2c_client *client, पूर्णांक reg, uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा adp8860_bl *data = i2c_get_clientdata(client);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+static int adp8860_set_bits(struct i2c_client *client, int reg, uint8_t bit_mask)
+{
+	struct adp8860_bl *data = i2c_get_clientdata(client);
+	uint8_t reg_val;
+	int ret;
 
 	mutex_lock(&data->lock);
 
-	ret = adp8860_पढ़ो(client, reg, &reg_val);
+	ret = adp8860_read(client, reg, &reg_val);
 
-	अगर (!ret && ((reg_val & bit_mask) != bit_mask)) अणु
+	if (!ret && ((reg_val & bit_mask) != bit_mask)) {
 		reg_val |= bit_mask;
-		ret = adp8860_ग_लिखो(client, reg, reg_val);
-	पूर्ण
+		ret = adp8860_write(client, reg, reg_val);
+	}
 
 	mutex_unlock(&data->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp8860_clr_bits(काष्ठा i2c_client *client, पूर्णांक reg, uपूर्णांक8_t bit_mask)
-अणु
-	काष्ठा adp8860_bl *data = i2c_get_clientdata(client);
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+static int adp8860_clr_bits(struct i2c_client *client, int reg, uint8_t bit_mask)
+{
+	struct adp8860_bl *data = i2c_get_clientdata(client);
+	uint8_t reg_val;
+	int ret;
 
 	mutex_lock(&data->lock);
 
-	ret = adp8860_पढ़ो(client, reg, &reg_val);
+	ret = adp8860_read(client, reg, &reg_val);
 
-	अगर (!ret && (reg_val & bit_mask)) अणु
+	if (!ret && (reg_val & bit_mask)) {
 		reg_val &= ~bit_mask;
-		ret = adp8860_ग_लिखो(client, reg, reg_val);
-	पूर्ण
+		ret = adp8860_write(client, reg, reg_val);
+	}
 
 	mutex_unlock(&data->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Independent sink / LED
  */
-#अगर defined(ADP8860_USE_LEDS)
-अटल व्योम adp8860_led_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा adp8860_led *led = container_of(work, काष्ठा adp8860_led, work);
+#if defined(ADP8860_USE_LEDS)
+static void adp8860_led_work(struct work_struct *work)
+{
+	struct adp8860_led *led = container_of(work, struct adp8860_led, work);
 
-	adp8860_ग_लिखो(led->client, ADP8860_ISC1 - led->id + 1,
+	adp8860_write(led->client, ADP8860_ISC1 - led->id + 1,
 			 led->new_brightness >> 1);
-पूर्ण
+}
 
-अटल व्योम adp8860_led_set(काष्ठा led_classdev *led_cdev,
-			   क्रमागत led_brightness value)
-अणु
-	काष्ठा adp8860_led *led;
+static void adp8860_led_set(struct led_classdev *led_cdev,
+			   enum led_brightness value)
+{
+	struct adp8860_led *led;
 
-	led = container_of(led_cdev, काष्ठा adp8860_led, cdev);
+	led = container_of(led_cdev, struct adp8860_led, cdev);
 	led->new_brightness = value;
 	schedule_work(&led->work);
-पूर्ण
+}
 
-अटल पूर्णांक adp8860_led_setup(काष्ठा adp8860_led *led)
-अणु
-	काष्ठा i2c_client *client = led->client;
-	पूर्णांक ret = 0;
+static int adp8860_led_setup(struct adp8860_led *led)
+{
+	struct i2c_client *client = led->client;
+	int ret = 0;
 
-	ret = adp8860_ग_लिखो(client, ADP8860_ISC1 - led->id + 1, 0);
+	ret = adp8860_write(client, ADP8860_ISC1 - led->id + 1, 0);
 	ret |= adp8860_set_bits(client, ADP8860_ISCC, 1 << (led->id - 1));
 
-	अगर (led->id > 4)
+	if (led->id > 4)
 		ret |= adp8860_set_bits(client, ADP8860_ISCT1,
 				(led->flags & 0x3) << ((led->id - 5) * 2));
-	अन्यथा
+	else
 		ret |= adp8860_set_bits(client, ADP8860_ISCT2,
 				(led->flags & 0x3) << ((led->id - 1) * 2));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp8860_led_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा adp8860_backlight_platक्रमm_data *pdata =
+static int adp8860_led_probe(struct i2c_client *client)
+{
+	struct adp8860_backlight_platform_data *pdata =
 		dev_get_platdata(&client->dev);
-	काष्ठा adp8860_bl *data = i2c_get_clientdata(client);
-	काष्ठा adp8860_led *led, *led_dat;
-	काष्ठा led_info *cur_led;
-	पूर्णांक ret, i;
+	struct adp8860_bl *data = i2c_get_clientdata(client);
+	struct adp8860_led *led, *led_dat;
+	struct led_info *cur_led;
+	int ret, i;
 
-	led = devm_kसुस्मृति(&client->dev, pdata->num_leds, माप(*led),
+	led = devm_kcalloc(&client->dev, pdata->num_leds, sizeof(*led),
 				GFP_KERNEL);
-	अगर (led == शून्य)
-		वापस -ENOMEM;
+	if (led == NULL)
+		return -ENOMEM;
 
-	ret = adp8860_ग_लिखो(client, ADP8860_ISCFR, pdata->led_fade_law);
-	ret = adp8860_ग_लिखो(client, ADP8860_ISCT1,
-			(pdata->led_on_समय & 0x3) << 6);
-	ret |= adp8860_ग_लिखो(client, ADP8860_ISCF,
+	ret = adp8860_write(client, ADP8860_ISCFR, pdata->led_fade_law);
+	ret = adp8860_write(client, ADP8860_ISCT1,
+			(pdata->led_on_time & 0x3) << 6);
+	ret |= adp8860_write(client, ADP8860_ISCF,
 			FADE_VAL(pdata->led_fade_in, pdata->led_fade_out));
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "failed to write\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < pdata->num_leds; ++i) अणु
+	for (i = 0; i < pdata->num_leds; ++i) {
 		cur_led = &pdata->leds[i];
 		led_dat = &led[i];
 
 		led_dat->id = cur_led->flags & ADP8860_FLAG_LED_MASK;
 
-		अगर (led_dat->id > 7 || led_dat->id < 1) अणु
+		if (led_dat->id > 7 || led_dat->id < 1) {
 			dev_err(&client->dev, "Invalid LED ID %d\n",
 				led_dat->id);
 			ret = -EINVAL;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		अगर (pdata->bl_led_assign & (1 << (led_dat->id - 1))) अणु
+		if (pdata->bl_led_assign & (1 << (led_dat->id - 1))) {
 			dev_err(&client->dev, "LED %d used by Backlight\n",
 				led_dat->id);
 			ret = -EBUSY;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		led_dat->cdev.name = cur_led->name;
-		led_dat->cdev.शेष_trigger = cur_led->शेष_trigger;
+		led_dat->cdev.default_trigger = cur_led->default_trigger;
 		led_dat->cdev.brightness_set = adp8860_led_set;
 		led_dat->cdev.brightness = LED_OFF;
 		led_dat->flags = cur_led->flags >> FLAG_OFFT_SHIFT;
@@ -268,431 +267,431 @@
 		led_dat->new_brightness = LED_OFF;
 		INIT_WORK(&led_dat->work, adp8860_led_work);
 
-		ret = led_classdev_रेजिस्टर(&client->dev, &led_dat->cdev);
-		अगर (ret) अणु
+		ret = led_classdev_register(&client->dev, &led_dat->cdev);
+		if (ret) {
 			dev_err(&client->dev, "failed to register LED %d\n",
 				led_dat->id);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		ret = adp8860_led_setup(led_dat);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "failed to write\n");
 			i++;
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	data->led = led;
 
-	वापस 0;
+	return 0;
 
  err:
-	क्रम (i = i - 1; i >= 0; --i) अणु
-		led_classdev_unरेजिस्टर(&led[i].cdev);
+	for (i = i - 1; i >= 0; --i) {
+		led_classdev_unregister(&led[i].cdev);
 		cancel_work_sync(&led[i].work);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp8860_led_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा adp8860_backlight_platक्रमm_data *pdata =
+static int adp8860_led_remove(struct i2c_client *client)
+{
+	struct adp8860_backlight_platform_data *pdata =
 		dev_get_platdata(&client->dev);
-	काष्ठा adp8860_bl *data = i2c_get_clientdata(client);
-	पूर्णांक i;
+	struct adp8860_bl *data = i2c_get_clientdata(client);
+	int i;
 
-	क्रम (i = 0; i < pdata->num_leds; i++) अणु
-		led_classdev_unरेजिस्टर(&data->led[i].cdev);
+	for (i = 0; i < pdata->num_leds; i++) {
+		led_classdev_unregister(&data->led[i].cdev);
 		cancel_work_sync(&data->led[i].work);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक adp8860_led_probe(काष्ठा i2c_client *client)
-अणु
-	वापस 0;
-पूर्ण
+	return 0;
+}
+#else
+static int adp8860_led_probe(struct i2c_client *client)
+{
+	return 0;
+}
 
-अटल पूर्णांक adp8860_led_हटाओ(काष्ठा i2c_client *client)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+static int adp8860_led_remove(struct i2c_client *client)
+{
+	return 0;
+}
+#endif
 
-अटल पूर्णांक adp8860_bl_set(काष्ठा backlight_device *bl, पूर्णांक brightness)
-अणु
-	काष्ठा adp8860_bl *data = bl_get_data(bl);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret = 0;
+static int adp8860_bl_set(struct backlight_device *bl, int brightness)
+{
+	struct adp8860_bl *data = bl_get_data(bl);
+	struct i2c_client *client = data->client;
+	int ret = 0;
 
-	अगर (data->en_ambl_sens) अणु
-		अगर ((brightness > 0) && (brightness < ADP8860_MAX_BRIGHTNESS)) अणु
-			/* Disable Ambient Light स्वतः adjust */
+	if (data->en_ambl_sens) {
+		if ((brightness > 0) && (brightness < ADP8860_MAX_BRIGHTNESS)) {
+			/* Disable Ambient Light auto adjust */
 			ret |= adp8860_clr_bits(client, ADP8860_MDCR,
 					CMP_AUTOEN);
-			ret |= adp8860_ग_लिखो(client, ADP8860_BLMX1, brightness);
-		पूर्ण अन्यथा अणु
+			ret |= adp8860_write(client, ADP8860_BLMX1, brightness);
+		} else {
 			/*
-			 * MAX_BRIGHTNESS -> Enable Ambient Light स्वतः adjust
+			 * MAX_BRIGHTNESS -> Enable Ambient Light auto adjust
 			 * restore daylight l1 sysfs brightness
 			 */
-			ret |= adp8860_ग_लिखो(client, ADP8860_BLMX1,
+			ret |= adp8860_write(client, ADP8860_BLMX1,
 					 data->cached_daylight_max);
 			ret |= adp8860_set_bits(client, ADP8860_MDCR,
 					 CMP_AUTOEN);
-		पूर्ण
-	पूर्ण अन्यथा
-		ret |= adp8860_ग_लिखो(client, ADP8860_BLMX1, brightness);
+		}
+	} else
+		ret |= adp8860_write(client, ADP8860_BLMX1, brightness);
 
-	अगर (data->current_brightness && brightness == 0)
+	if (data->current_brightness && brightness == 0)
 		ret |= adp8860_set_bits(client,
 				ADP8860_MDCR, DIM_EN);
-	अन्यथा अगर (data->current_brightness == 0 && brightness)
+	else if (data->current_brightness == 0 && brightness)
 		ret |= adp8860_clr_bits(client,
 				ADP8860_MDCR, DIM_EN);
 
-	अगर (!ret)
+	if (!ret)
 		data->current_brightness = brightness;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp8860_bl_update_status(काष्ठा backlight_device *bl)
-अणु
-	वापस adp8860_bl_set(bl, backlight_get_brightness(bl));
-पूर्ण
+static int adp8860_bl_update_status(struct backlight_device *bl)
+{
+	return adp8860_bl_set(bl, backlight_get_brightness(bl));
+}
 
-अटल पूर्णांक adp8860_bl_get_brightness(काष्ठा backlight_device *bl)
-अणु
-	काष्ठा adp8860_bl *data = bl_get_data(bl);
+static int adp8860_bl_get_brightness(struct backlight_device *bl)
+{
+	struct adp8860_bl *data = bl_get_data(bl);
 
-	वापस data->current_brightness;
-पूर्ण
+	return data->current_brightness;
+}
 
-अटल स्थिर काष्ठा backlight_ops adp8860_bl_ops = अणु
+static const struct backlight_ops adp8860_bl_ops = {
 	.update_status	= adp8860_bl_update_status,
 	.get_brightness	= adp8860_bl_get_brightness,
-पूर्ण;
+};
 
-अटल पूर्णांक adp8860_bl_setup(काष्ठा backlight_device *bl)
-अणु
-	काष्ठा adp8860_bl *data = bl_get_data(bl);
-	काष्ठा i2c_client *client = data->client;
-	काष्ठा adp8860_backlight_platक्रमm_data *pdata = data->pdata;
-	पूर्णांक ret = 0;
+static int adp8860_bl_setup(struct backlight_device *bl)
+{
+	struct adp8860_bl *data = bl_get_data(bl);
+	struct i2c_client *client = data->client;
+	struct adp8860_backlight_platform_data *pdata = data->pdata;
+	int ret = 0;
 
-	ret |= adp8860_ग_लिखो(client, ADP8860_BLSEN, ~pdata->bl_led_assign);
-	ret |= adp8860_ग_लिखो(client, ADP8860_BLMX1, pdata->l1_daylight_max);
-	ret |= adp8860_ग_लिखो(client, ADP8860_BLDM1, pdata->l1_daylight_dim);
+	ret |= adp8860_write(client, ADP8860_BLSEN, ~pdata->bl_led_assign);
+	ret |= adp8860_write(client, ADP8860_BLMX1, pdata->l1_daylight_max);
+	ret |= adp8860_write(client, ADP8860_BLDM1, pdata->l1_daylight_dim);
 
-	अगर (data->en_ambl_sens) अणु
+	if (data->en_ambl_sens) {
 		data->cached_daylight_max = pdata->l1_daylight_max;
-		ret |= adp8860_ग_लिखो(client, ADP8860_BLMX2,
+		ret |= adp8860_write(client, ADP8860_BLMX2,
 						pdata->l2_office_max);
-		ret |= adp8860_ग_लिखो(client, ADP8860_BLDM2,
+		ret |= adp8860_write(client, ADP8860_BLDM2,
 						pdata->l2_office_dim);
-		ret |= adp8860_ग_लिखो(client, ADP8860_BLMX3,
+		ret |= adp8860_write(client, ADP8860_BLMX3,
 						pdata->l3_dark_max);
-		ret |= adp8860_ग_लिखो(client, ADP8860_BLDM3,
+		ret |= adp8860_write(client, ADP8860_BLDM3,
 						pdata->l3_dark_dim);
 
-		ret |= adp8860_ग_लिखो(client, ADP8860_L2_TRP, pdata->l2_trip);
-		ret |= adp8860_ग_लिखो(client, ADP8860_L2_HYS, pdata->l2_hyst);
-		ret |= adp8860_ग_लिखो(client, ADP8860_L3_TRP, pdata->l3_trip);
-		ret |= adp8860_ग_लिखो(client, ADP8860_L3_HYS, pdata->l3_hyst);
-		ret |= adp8860_ग_लिखो(client, ADP8860_CCFG, L2_EN | L3_EN |
+		ret |= adp8860_write(client, ADP8860_L2_TRP, pdata->l2_trip);
+		ret |= adp8860_write(client, ADP8860_L2_HYS, pdata->l2_hyst);
+		ret |= adp8860_write(client, ADP8860_L3_TRP, pdata->l3_trip);
+		ret |= adp8860_write(client, ADP8860_L3_HYS, pdata->l3_hyst);
+		ret |= adp8860_write(client, ADP8860_CCFG, L2_EN | L3_EN |
 						ALS_CCFG_VAL(pdata->abml_filt));
-	पूर्ण
+	}
 
-	ret |= adp8860_ग_लिखो(client, ADP8860_CFGR,
+	ret |= adp8860_write(client, ADP8860_CFGR,
 			BL_CFGR_VAL(pdata->bl_fade_law, 0));
 
-	ret |= adp8860_ग_लिखो(client, ADP8860_BLFR, FADE_VAL(pdata->bl_fade_in,
+	ret |= adp8860_write(client, ADP8860_BLFR, FADE_VAL(pdata->bl_fade_in,
 			pdata->bl_fade_out));
 
 	ret |= adp8860_set_bits(client, ADP8860_MDCR, BLEN | DIM_EN | NSTBY |
 			(data->gdwn_dis ? GDWN_DIS : 0));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार adp8860_show(काष्ठा device *dev, अक्षर *buf, पूर्णांक reg)
-अणु
-	काष्ठा adp8860_bl *data = dev_get_drvdata(dev);
-	पूर्णांक error;
-	uपूर्णांक8_t reg_val;
-
-	mutex_lock(&data->lock);
-	error = adp8860_पढ़ो(data->client, reg, &reg_val);
-	mutex_unlock(&data->lock);
-
-	अगर (error < 0)
-		वापस error;
-
-	वापस प्र_लिखो(buf, "%u\n", reg_val);
-पूर्ण
-
-अटल sमाप_प्रकार adp8860_store(काष्ठा device *dev, स्थिर अक्षर *buf,
-			 माप_प्रकार count, पूर्णांक reg)
-अणु
-	काष्ठा adp8860_bl *data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret;
-
-	ret = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
+static ssize_t adp8860_show(struct device *dev, char *buf, int reg)
+{
+	struct adp8860_bl *data = dev_get_drvdata(dev);
+	int error;
+	uint8_t reg_val;
 
 	mutex_lock(&data->lock);
-	adp8860_ग_लिखो(data->client, reg, val);
+	error = adp8860_read(data->client, reg, &reg_val);
 	mutex_unlock(&data->lock);
 
-	वापस count;
-पूर्ण
+	if (error < 0)
+		return error;
 
-अटल sमाप_प्रकार adp8860_bl_l3_dark_max_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस adp8860_show(dev, buf, ADP8860_BLMX3);
-पूर्ण
+	return sprintf(buf, "%u\n", reg_val);
+}
 
-अटल sमाप_प्रकार adp8860_bl_l3_dark_max_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस adp8860_store(dev, buf, count, ADP8860_BLMX3);
-पूर्ण
+static ssize_t adp8860_store(struct device *dev, const char *buf,
+			 size_t count, int reg)
+{
+	struct adp8860_bl *data = dev_get_drvdata(dev);
+	unsigned long val;
+	int ret;
 
-अटल DEVICE_ATTR(l3_dark_max, 0664, adp8860_bl_l3_dark_max_show,
+	ret = kstrtoul(buf, 10, &val);
+	if (ret)
+		return ret;
+
+	mutex_lock(&data->lock);
+	adp8860_write(data->client, reg, val);
+	mutex_unlock(&data->lock);
+
+	return count;
+}
+
+static ssize_t adp8860_bl_l3_dark_max_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return adp8860_show(dev, buf, ADP8860_BLMX3);
+}
+
+static ssize_t adp8860_bl_l3_dark_max_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	return adp8860_store(dev, buf, count, ADP8860_BLMX3);
+}
+
+static DEVICE_ATTR(l3_dark_max, 0664, adp8860_bl_l3_dark_max_show,
 			adp8860_bl_l3_dark_max_store);
 
-अटल sमाप_प्रकार adp8860_bl_l2_office_max_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस adp8860_show(dev, buf, ADP8860_BLMX2);
-पूर्ण
+static ssize_t adp8860_bl_l2_office_max_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return adp8860_show(dev, buf, ADP8860_BLMX2);
+}
 
-अटल sमाप_प्रकार adp8860_bl_l2_office_max_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस adp8860_store(dev, buf, count, ADP8860_BLMX2);
-पूर्ण
-अटल DEVICE_ATTR(l2_office_max, 0664, adp8860_bl_l2_office_max_show,
+static ssize_t adp8860_bl_l2_office_max_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	return adp8860_store(dev, buf, count, ADP8860_BLMX2);
+}
+static DEVICE_ATTR(l2_office_max, 0664, adp8860_bl_l2_office_max_show,
 			adp8860_bl_l2_office_max_store);
 
-अटल sमाप_प्रकार adp8860_bl_l1_daylight_max_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस adp8860_show(dev, buf, ADP8860_BLMX1);
-पूर्ण
+static ssize_t adp8860_bl_l1_daylight_max_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return adp8860_show(dev, buf, ADP8860_BLMX1);
+}
 
-अटल sमाप_प्रकार adp8860_bl_l1_daylight_max_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adp8860_bl *data = dev_get_drvdata(dev);
-	पूर्णांक ret = kम_से_अदीर्घ(buf, 10, &data->cached_daylight_max);
+static ssize_t adp8860_bl_l1_daylight_max_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct adp8860_bl *data = dev_get_drvdata(dev);
+	int ret = kstrtoul(buf, 10, &data->cached_daylight_max);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस adp8860_store(dev, buf, count, ADP8860_BLMX1);
-पूर्ण
-अटल DEVICE_ATTR(l1_daylight_max, 0664, adp8860_bl_l1_daylight_max_show,
+	return adp8860_store(dev, buf, count, ADP8860_BLMX1);
+}
+static DEVICE_ATTR(l1_daylight_max, 0664, adp8860_bl_l1_daylight_max_show,
 			adp8860_bl_l1_daylight_max_store);
 
-अटल sमाप_प्रकार adp8860_bl_l3_dark_dim_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस adp8860_show(dev, buf, ADP8860_BLDM3);
-पूर्ण
+static ssize_t adp8860_bl_l3_dark_dim_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return adp8860_show(dev, buf, ADP8860_BLDM3);
+}
 
-अटल sमाप_प्रकार adp8860_bl_l3_dark_dim_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस adp8860_store(dev, buf, count, ADP8860_BLDM3);
-पूर्ण
-अटल DEVICE_ATTR(l3_dark_dim, 0664, adp8860_bl_l3_dark_dim_show,
+static ssize_t adp8860_bl_l3_dark_dim_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	return adp8860_store(dev, buf, count, ADP8860_BLDM3);
+}
+static DEVICE_ATTR(l3_dark_dim, 0664, adp8860_bl_l3_dark_dim_show,
 			adp8860_bl_l3_dark_dim_store);
 
-अटल sमाप_प्रकार adp8860_bl_l2_office_dim_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस adp8860_show(dev, buf, ADP8860_BLDM2);
-पूर्ण
+static ssize_t adp8860_bl_l2_office_dim_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	return adp8860_show(dev, buf, ADP8860_BLDM2);
+}
 
-अटल sमाप_प्रकार adp8860_bl_l2_office_dim_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस adp8860_store(dev, buf, count, ADP8860_BLDM2);
-पूर्ण
-अटल DEVICE_ATTR(l2_office_dim, 0664, adp8860_bl_l2_office_dim_show,
+static ssize_t adp8860_bl_l2_office_dim_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	return adp8860_store(dev, buf, count, ADP8860_BLDM2);
+}
+static DEVICE_ATTR(l2_office_dim, 0664, adp8860_bl_l2_office_dim_show,
 			adp8860_bl_l2_office_dim_store);
 
-अटल sमाप_प्रकार adp8860_bl_l1_daylight_dim_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	वापस adp8860_show(dev, buf, ADP8860_BLDM1);
-पूर्ण
+static ssize_t adp8860_bl_l1_daylight_dim_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return adp8860_show(dev, buf, ADP8860_BLDM1);
+}
 
-अटल sमाप_प्रकार adp8860_bl_l1_daylight_dim_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	वापस adp8860_store(dev, buf, count, ADP8860_BLDM1);
-पूर्ण
-अटल DEVICE_ATTR(l1_daylight_dim, 0664, adp8860_bl_l1_daylight_dim_show,
+static ssize_t adp8860_bl_l1_daylight_dim_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	return adp8860_store(dev, buf, count, ADP8860_BLDM1);
+}
+static DEVICE_ATTR(l1_daylight_dim, 0664, adp8860_bl_l1_daylight_dim_show,
 			adp8860_bl_l1_daylight_dim_store);
 
-#अगर_घोषित ADP8860_EXT_FEATURES
-अटल sमाप_प्रकार adp8860_bl_ambient_light_level_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adp8860_bl *data = dev_get_drvdata(dev);
-	पूर्णांक error;
-	uपूर्णांक8_t reg_val;
-	uपूर्णांक16_t ret_val;
+#ifdef ADP8860_EXT_FEATURES
+static ssize_t adp8860_bl_ambient_light_level_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct adp8860_bl *data = dev_get_drvdata(dev);
+	int error;
+	uint8_t reg_val;
+	uint16_t ret_val;
 
 	mutex_lock(&data->lock);
-	error = adp8860_पढ़ो(data->client, ADP8860_PH1LEVL, &reg_val);
-	अगर (!error) अणु
+	error = adp8860_read(data->client, ADP8860_PH1LEVL, &reg_val);
+	if (!error) {
 		ret_val = reg_val;
-		error = adp8860_पढ़ो(data->client, ADP8860_PH1LEVH, &reg_val);
-	पूर्ण
+		error = adp8860_read(data->client, ADP8860_PH1LEVH, &reg_val);
+	}
 	mutex_unlock(&data->lock);
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	/* Return 13-bit conversion value क्रम the first light sensor */
+	/* Return 13-bit conversion value for the first light sensor */
 	ret_val += (reg_val & 0x1F) << 8;
 
-	वापस प्र_लिखो(buf, "%u\n", ret_val);
-पूर्ण
-अटल DEVICE_ATTR(ambient_light_level, 0444,
-		adp8860_bl_ambient_light_level_show, शून्य);
+	return sprintf(buf, "%u\n", ret_val);
+}
+static DEVICE_ATTR(ambient_light_level, 0444,
+		adp8860_bl_ambient_light_level_show, NULL);
 
-अटल sमाप_प्रकार adp8860_bl_ambient_light_zone_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा adp8860_bl *data = dev_get_drvdata(dev);
-	पूर्णांक error;
-	uपूर्णांक8_t reg_val;
+static ssize_t adp8860_bl_ambient_light_zone_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct adp8860_bl *data = dev_get_drvdata(dev);
+	int error;
+	uint8_t reg_val;
 
 	mutex_lock(&data->lock);
-	error = adp8860_पढ़ो(data->client, ADP8860_CFGR, &reg_val);
+	error = adp8860_read(data->client, ADP8860_CFGR, &reg_val);
 	mutex_unlock(&data->lock);
 
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
-	वापस प्र_लिखो(buf, "%u\n",
+	return sprintf(buf, "%u\n",
 		((reg_val >> CFGR_BLV_SHIFT) & CFGR_BLV_MASK) + 1);
-पूर्ण
+}
 
-अटल sमाप_प्रकार adp8860_bl_ambient_light_zone_store(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा adp8860_bl *data = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ val;
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+static ssize_t adp8860_bl_ambient_light_zone_store(struct device *dev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct adp8860_bl *data = dev_get_drvdata(dev);
+	unsigned long val;
+	uint8_t reg_val;
+	int ret;
 
-	ret = kम_से_अदीर्घ(buf, 10, &val);
-	अगर (ret)
-		वापस ret;
+	ret = kstrtoul(buf, 10, &val);
+	if (ret)
+		return ret;
 
-	अगर (val == 0) अणु
-		/* Enable स्वतःmatic ambient light sensing */
+	if (val == 0) {
+		/* Enable automatic ambient light sensing */
 		adp8860_set_bits(data->client, ADP8860_MDCR, CMP_AUTOEN);
-	पूर्ण अन्यथा अगर ((val > 0) && (val <= 3)) अणु
-		/* Disable स्वतःmatic ambient light sensing */
+	} else if ((val > 0) && (val <= 3)) {
+		/* Disable automatic ambient light sensing */
 		adp8860_clr_bits(data->client, ADP8860_MDCR, CMP_AUTOEN);
 
 		/* Set user supplied ambient light zone */
 		mutex_lock(&data->lock);
-		ret = adp8860_पढ़ो(data->client, ADP8860_CFGR, &reg_val);
-		अगर (!ret) अणु
+		ret = adp8860_read(data->client, ADP8860_CFGR, &reg_val);
+		if (!ret) {
 			reg_val &= ~(CFGR_BLV_MASK << CFGR_BLV_SHIFT);
 			reg_val |= (val - 1) << CFGR_BLV_SHIFT;
-			adp8860_ग_लिखो(data->client, ADP8860_CFGR, reg_val);
-		पूर्ण
+			adp8860_write(data->client, ADP8860_CFGR, reg_val);
+		}
 		mutex_unlock(&data->lock);
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
-अटल DEVICE_ATTR(ambient_light_zone, 0664,
+	return count;
+}
+static DEVICE_ATTR(ambient_light_zone, 0664,
 		adp8860_bl_ambient_light_zone_show,
 		adp8860_bl_ambient_light_zone_store);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा attribute *adp8860_bl_attributes[] = अणु
+static struct attribute *adp8860_bl_attributes[] = {
 	&dev_attr_l3_dark_max.attr,
 	&dev_attr_l3_dark_dim.attr,
 	&dev_attr_l2_office_max.attr,
 	&dev_attr_l2_office_dim.attr,
 	&dev_attr_l1_daylight_max.attr,
 	&dev_attr_l1_daylight_dim.attr,
-#अगर_घोषित ADP8860_EXT_FEATURES
+#ifdef ADP8860_EXT_FEATURES
 	&dev_attr_ambient_light_level.attr,
 	&dev_attr_ambient_light_zone.attr,
-#पूर्ण_अगर
-	शून्य
-पूर्ण;
+#endif
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group adp8860_bl_attr_group = अणु
+static const struct attribute_group adp8860_bl_attr_group = {
 	.attrs = adp8860_bl_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक adp8860_probe(काष्ठा i2c_client *client,
-					स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा backlight_device *bl;
-	काष्ठा adp8860_bl *data;
-	काष्ठा adp8860_backlight_platक्रमm_data *pdata =
+static int adp8860_probe(struct i2c_client *client,
+					const struct i2c_device_id *id)
+{
+	struct backlight_device *bl;
+	struct adp8860_bl *data;
+	struct adp8860_backlight_platform_data *pdata =
 		dev_get_platdata(&client->dev);
-	काष्ठा backlight_properties props;
-	uपूर्णांक8_t reg_val;
-	पूर्णांक ret;
+	struct backlight_properties props;
+	uint8_t reg_val;
+	int ret;
 
-	अगर (!i2c_check_functionality(client->adapter,
-					I2C_FUNC_SMBUS_BYTE_DATA)) अणु
+	if (!i2c_check_functionality(client->adapter,
+					I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_err(&client->dev, "no platform data?\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
-	अगर (data == शून्य)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
+	if (data == NULL)
+		return -ENOMEM;
 
-	ret = adp8860_पढ़ो(client, ADP8860_MFDVID, &reg_val);
-	अगर (ret < 0)
-		वापस ret;
+	ret = adp8860_read(client, ADP8860_MFDVID, &reg_val);
+	if (ret < 0)
+		return ret;
 
-	चयन (ADP8860_MANID(reg_val)) अणु
-	हाल ADP8863_MANUFID:
+	switch (ADP8860_MANID(reg_val)) {
+	case ADP8863_MANUFID:
 		data->gdwn_dis = !!pdata->gdwn_dis;
 		fallthrough;
-	हाल ADP8860_MANUFID:
+	case ADP8860_MANUFID:
 		data->en_ambl_sens = !!pdata->en_ambl_sens;
-		अवरोध;
-	हाल ADP8861_MANUFID:
+		break;
+	case ADP8861_MANUFID:
 		data->gdwn_dis = !!pdata->gdwn_dis;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(&client->dev, "failed to probe\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* It's confirmed that the DEVID field is actually a REVID */
 
@@ -703,113 +702,113 @@
 	data->current_brightness = 0;
 	i2c_set_clientdata(client, data);
 
-	स_रखो(&props, 0, माप(props));
+	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = ADP8860_MAX_BRIGHTNESS;
 
 	mutex_init(&data->lock);
 
-	bl = devm_backlight_device_रेजिस्टर(&client->dev,
+	bl = devm_backlight_device_register(&client->dev,
 				dev_driver_string(&client->dev),
 				&client->dev, data, &adp8860_bl_ops, &props);
-	अगर (IS_ERR(bl)) अणु
+	if (IS_ERR(bl)) {
 		dev_err(&client->dev, "failed to register backlight\n");
-		वापस PTR_ERR(bl);
-	पूर्ण
+		return PTR_ERR(bl);
+	}
 
 	bl->props.brightness = ADP8860_MAX_BRIGHTNESS;
 
 	data->bl = bl;
 
-	अगर (data->en_ambl_sens)
+	if (data->en_ambl_sens)
 		ret = sysfs_create_group(&bl->dev.kobj,
 			&adp8860_bl_attr_group);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&client->dev, "failed to register sysfs\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = adp8860_bl_setup(bl);
-	अगर (ret) अणु
+	if (ret) {
 		ret = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	backlight_update_status(bl);
 
 	dev_info(&client->dev, "%s Rev.%d Backlight\n",
 		client->name, data->revid);
 
-	अगर (pdata->num_leds)
+	if (pdata->num_leds)
 		adp8860_led_probe(client);
 
-	वापस 0;
+	return 0;
 
 out:
-	अगर (data->en_ambl_sens)
-		sysfs_हटाओ_group(&data->bl->dev.kobj,
+	if (data->en_ambl_sens)
+		sysfs_remove_group(&data->bl->dev.kobj,
 			&adp8860_bl_attr_group);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adp8860_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा adp8860_bl *data = i2c_get_clientdata(client);
+static int adp8860_remove(struct i2c_client *client)
+{
+	struct adp8860_bl *data = i2c_get_clientdata(client);
 
 	adp8860_clr_bits(client, ADP8860_MDCR, NSTBY);
 
-	अगर (data->led)
-		adp8860_led_हटाओ(client);
+	if (data->led)
+		adp8860_led_remove(client);
 
-	अगर (data->en_ambl_sens)
-		sysfs_हटाओ_group(&data->bl->dev.kobj,
+	if (data->en_ambl_sens)
+		sysfs_remove_group(&data->bl->dev.kobj,
 			&adp8860_bl_attr_group);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक adp8860_i2c_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
+#ifdef CONFIG_PM_SLEEP
+static int adp8860_i2c_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
 
 	adp8860_clr_bits(client, ADP8860_MDCR, NSTBY);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adp8860_i2c_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
+static int adp8860_i2c_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
 
 	adp8860_set_bits(client, ADP8860_MDCR, NSTBY | BLEN);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(adp8860_i2c_pm_ops, adp8860_i2c_suspend,
+static SIMPLE_DEV_PM_OPS(adp8860_i2c_pm_ops, adp8860_i2c_suspend,
 			adp8860_i2c_resume);
 
-अटल स्थिर काष्ठा i2c_device_id adp8860_id[] = अणु
-	अणु "adp8860", adp8860 पूर्ण,
-	अणु "adp8861", adp8861 पूर्ण,
-	अणु "adp8863", adp8863 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id adp8860_id[] = {
+	{ "adp8860", adp8860 },
+	{ "adp8861", adp8861 },
+	{ "adp8863", adp8863 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, adp8860_id);
 
-अटल काष्ठा i2c_driver adp8860_driver = अणु
-	.driver = अणु
+static struct i2c_driver adp8860_driver = {
+	.driver = {
 		.name	= KBUILD_MODNAME,
 		.pm	= &adp8860_i2c_pm_ops,
-	पूर्ण,
+	},
 	.probe    = adp8860_probe,
-	.हटाओ   = adp8860_हटाओ,
+	.remove   = adp8860_remove,
 	.id_table = adp8860_id,
-पूर्ण;
+};
 
 module_i2c_driver(adp8860_driver);
 

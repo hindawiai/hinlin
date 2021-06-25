@@ -1,43 +1,42 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* linux/drivers/अक्षर/scx200_gpio.c
+// SPDX-License-Identifier: GPL-2.0-only
+/* linux/drivers/char/scx200_gpio.c
 
    National Semiconductor SCx200 GPIO driver.  Allows a user space
    process to play with the GPIO pins.
 
-   Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-प्रणाली.com> */
+   Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-system.com> */
 
-#समावेश <linux/device.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/uaccess.h>
+#include <asm/io.h>
 
-#समावेश <linux/types.h>
-#समावेश <linux/cdev.h>
+#include <linux/types.h>
+#include <linux/cdev.h>
 
-#समावेश <linux/scx200_gpपन.स>
-#समावेश <linux/nsc_gpपन.स>
+#include <linux/scx200_gpio.h>
+#include <linux/nsc_gpio.h>
 
-#घोषणा DRVNAME "scx200_gpio"
+#define DRVNAME "scx200_gpio"
 
-अटल काष्ठा platक्रमm_device *pdev;
+static struct platform_device *pdev;
 
 MODULE_AUTHOR("Christer Weinigel <wingel@nano-system.com>");
 MODULE_DESCRIPTION("NatSemi/AMD SCx200 GPIO Pin Driver");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक major = 0;		/* शेष to dynamic major */
-module_param(major, पूर्णांक, 0);
+static int major = 0;		/* default to dynamic major */
+module_param(major, int, 0);
 MODULE_PARM_DESC(major, "Major device number");
 
-#घोषणा MAX_PINS 32		/* 64 later, when known ok */
+#define MAX_PINS 32		/* 64 later, when known ok */
 
-काष्ठा nsc_gpio_ops scx200_gpio_ops = अणु
+struct nsc_gpio_ops scx200_gpio_ops = {
 	.owner		= THIS_MODULE,
 	.gpio_config	= scx200_gpio_configure,
 	.gpio_dump	= nsc_gpio_dump,
@@ -45,90 +44,90 @@ MODULE_PARM_DESC(major, "Major device number");
 	.gpio_set	= scx200_gpio_set,
 	.gpio_change	= scx200_gpio_change,
 	.gpio_current	= scx200_gpio_current
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(scx200_gpio_ops);
 
-अटल पूर्णांक scx200_gpio_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	अचिन्हित m = iminor(inode);
-	file->निजी_data = &scx200_gpio_ops;
+static int scx200_gpio_open(struct inode *inode, struct file *file)
+{
+	unsigned m = iminor(inode);
+	file->private_data = &scx200_gpio_ops;
 
-	अगर (m >= MAX_PINS)
-		वापस -EINVAL;
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	if (m >= MAX_PINS)
+		return -EINVAL;
+	return nonseekable_open(inode, file);
+}
 
-अटल पूर्णांक scx200_gpio_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस 0;
-पूर्ण
+static int scx200_gpio_release(struct inode *inode, struct file *file)
+{
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations scx200_gpio_fileops = अणु
+static const struct file_operations scx200_gpio_fileops = {
 	.owner   = THIS_MODULE,
-	.ग_लिखो   = nsc_gpio_ग_लिखो,
-	.पढ़ो    = nsc_gpio_पढ़ो,
-	.खोलो    = scx200_gpio_खोलो,
+	.write   = nsc_gpio_write,
+	.read    = nsc_gpio_read,
+	.open    = scx200_gpio_open,
 	.release = scx200_gpio_release,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा cdev scx200_gpio_cdev;  /* use 1 cdev क्रम all pins */
+static struct cdev scx200_gpio_cdev;  /* use 1 cdev for all pins */
 
-अटल पूर्णांक __init scx200_gpio_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init scx200_gpio_init(void)
+{
+	int rc;
 	dev_t devid;
 
-	अगर (!scx200_gpio_present()) अणु
-		prपूर्णांकk(KERN_ERR DRVNAME ": no SCx200 gpio present\n");
-		वापस -ENODEV;
-	पूर्ण
+	if (!scx200_gpio_present()) {
+		printk(KERN_ERR DRVNAME ": no SCx200 gpio present\n");
+		return -ENODEV;
+	}
 
 	/* support dev_dbg() with pdev->dev */
-	pdev = platक्रमm_device_alloc(DRVNAME, 0);
-	अगर (!pdev)
-		वापस -ENOMEM;
+	pdev = platform_device_alloc(DRVNAME, 0);
+	if (!pdev)
+		return -ENOMEM;
 
-	rc = platक्रमm_device_add(pdev);
-	अगर (rc)
-		जाओ unकरो_दो_स्मृति;
+	rc = platform_device_add(pdev);
+	if (rc)
+		goto undo_malloc;
 
 	/* nsc_gpio uses dev_dbg(), so needs this */
 	scx200_gpio_ops.dev = &pdev->dev;
 
-	अगर (major) अणु
+	if (major) {
 		devid = MKDEV(major, 0);
-		rc = रेजिस्टर_chrdev_region(devid, MAX_PINS, "scx200_gpio");
-	पूर्ण अन्यथा अणु
+		rc = register_chrdev_region(devid, MAX_PINS, "scx200_gpio");
+	} else {
 		rc = alloc_chrdev_region(&devid, 0, MAX_PINS, "scx200_gpio");
 		major = MAJOR(devid);
-	पूर्ण
-	अगर (rc < 0) अणु
+	}
+	if (rc < 0) {
 		dev_err(&pdev->dev, "SCx200 chrdev_region err: %d\n", rc);
-		जाओ unकरो_platक्रमm_device_add;
-	पूर्ण
+		goto undo_platform_device_add;
+	}
 
 	cdev_init(&scx200_gpio_cdev, &scx200_gpio_fileops);
 	cdev_add(&scx200_gpio_cdev, devid, MAX_PINS);
 
-	वापस 0; /* succeed */
+	return 0; /* succeed */
 
-unकरो_platक्रमm_device_add:
-	platक्रमm_device_del(pdev);
-unकरो_दो_स्मृति:
-	platक्रमm_device_put(pdev);
+undo_platform_device_add:
+	platform_device_del(pdev);
+undo_malloc:
+	platform_device_put(pdev);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास scx200_gpio_cleanup(व्योम)
-अणु
+static void __exit scx200_gpio_cleanup(void)
+{
 	cdev_del(&scx200_gpio_cdev);
 	/* cdev_put(&scx200_gpio_cdev); */
 
-	unरेजिस्टर_chrdev_region(MKDEV(major, 0), MAX_PINS);
-	platक्रमm_device_unरेजिस्टर(pdev);
-पूर्ण
+	unregister_chrdev_region(MKDEV(major, 0), MAX_PINS);
+	platform_device_unregister(pdev);
+}
 
 module_init(scx200_gpio_init);
-module_निकास(scx200_gpio_cleanup);
+module_exit(scx200_gpio_cleanup);

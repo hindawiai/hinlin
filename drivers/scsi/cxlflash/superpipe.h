@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * CXL Flash Device Driver
  *
@@ -9,10 +8,10 @@
  * Copyright (C) 2015 IBM Corporation
  */
 
-#अगर_अघोषित _CXLFLASH_SUPERPIPE_H
-#घोषणा _CXLFLASH_SUPERPIPE_H
+#ifndef _CXLFLASH_SUPERPIPE_H
+#define _CXLFLASH_SUPERPIPE_H
 
-बाह्य काष्ठा cxlflash_global global;
+extern struct cxlflash_global global;
 
 /*
  * Terminology: use afu (and not adapter) to refer to the HW.
@@ -23,132 +22,132 @@
 /* Chunk size parms: note sislite minimum chunk size is
  * 0x10000 LBAs corresponding to a NMASK or 16.
  */
-#घोषणा MC_CHUNK_SIZE     (1 << MC_RHT_NMASK)	/* in LBAs */
+#define MC_CHUNK_SIZE     (1 << MC_RHT_NMASK)	/* in LBAs */
 
-#घोषणा CMD_TIMEOUT 30  /* 30 secs */
-#घोषणा CMD_RETRIES 5   /* 5 retries क्रम scsi_execute */
+#define CMD_TIMEOUT 30  /* 30 secs */
+#define CMD_RETRIES 5   /* 5 retries for scsi_execute */
 
-#घोषणा MAX_SECTOR_UNIT  512 /* max_sector is in 512 byte multiples */
+#define MAX_SECTOR_UNIT  512 /* max_sector is in 512 byte multiples */
 
-क्रमागत lun_mode अणु
+enum lun_mode {
 	MODE_NONE = 0,
 	MODE_VIRTUAL,
 	MODE_PHYSICAL
-पूर्ण;
+};
 
-/* Global (entire driver, spans adapters) lun_info काष्ठाure */
-काष्ठा glun_info अणु
-	u64 max_lba;		/* from पढ़ो cap(16) */
-	u32 blk_len;		/* from पढ़ो cap(16) */
-	क्रमागत lun_mode mode;	/* NONE, VIRTUAL, PHYSICAL */
-	पूर्णांक users;		/* Number of users w/ references to LUN */
+/* Global (entire driver, spans adapters) lun_info structure */
+struct glun_info {
+	u64 max_lba;		/* from read cap(16) */
+	u32 blk_len;		/* from read cap(16) */
+	enum lun_mode mode;	/* NONE, VIRTUAL, PHYSICAL */
+	int users;		/* Number of users w/ references to LUN */
 
 	u8 wwid[16];
 
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
-	काष्ठा blka blka;
-	काष्ठा list_head list;
-पूर्ण;
+	struct blka blka;
+	struct list_head list;
+};
 
-/* Local (per-adapter) lun_info काष्ठाure */
-काष्ठा llun_info अणु
+/* Local (per-adapter) lun_info structure */
+struct llun_info {
 	u64 lun_id[MAX_FC_PORTS]; /* from REPORT_LUNS */
 	u32 lun_index;		/* Index in the LUN table */
 	u32 host_no;		/* host_no from Scsi_host */
-	u32 port_sel;		/* What port to use क्रम this LUN */
+	u32 port_sel;		/* What port to use for this LUN */
 	bool in_table;		/* Whether a LUN table entry was created */
 
 	u8 wwid[16];		/* Keep a duplicate copy here? */
 
-	काष्ठा glun_info *parent; /* Poपूर्णांकer to entry in global LUN काष्ठाure */
-	काष्ठा scsi_device *sdev;
-	काष्ठा list_head list;
-पूर्ण;
+	struct glun_info *parent; /* Pointer to entry in global LUN structure */
+	struct scsi_device *sdev;
+	struct list_head list;
+};
 
-काष्ठा lun_access अणु
-	काष्ठा llun_info *lli;
-	काष्ठा scsi_device *sdev;
-	काष्ठा list_head list;
-पूर्ण;
+struct lun_access {
+	struct llun_info *lli;
+	struct scsi_device *sdev;
+	struct list_head list;
+};
 
-क्रमागत ctx_ctrl अणु
+enum ctx_ctrl {
 	CTX_CTRL_CLONE		= (1 << 1),
 	CTX_CTRL_ERR		= (1 << 2),
 	CTX_CTRL_ERR_FALLBACK	= (1 << 3),
 	CTX_CTRL_NOPID		= (1 << 4),
-	CTX_CTRL_खाता		= (1 << 5)
-पूर्ण;
+	CTX_CTRL_FILE		= (1 << 5)
+};
 
-#घोषणा ENCODE_CTXID(_ctx, _id)	(((((u64)_ctx) & 0xFFFFFFFF0ULL) << 28) | _id)
-#घोषणा DECODE_CTXID(_val)	(_val & 0xFFFFFFFF)
+#define ENCODE_CTXID(_ctx, _id)	(((((u64)_ctx) & 0xFFFFFFFF0ULL) << 28) | _id)
+#define DECODE_CTXID(_val)	(_val & 0xFFFFFFFF)
 
-काष्ठा ctx_info अणु
-	काष्ठा sisl_ctrl_map __iomem *ctrl_map; /* initialized at startup */
-	काष्ठा sisl_rht_entry *rht_start; /* 1 page (req'd क्रम alignment),
-					   * alloc/मुक्त on attach/detach
+struct ctx_info {
+	struct sisl_ctrl_map __iomem *ctrl_map; /* initialized at startup */
+	struct sisl_rht_entry *rht_start; /* 1 page (req'd for alignment),
+					   * alloc/free on attach/detach
 					   */
 	u32 rht_out;		/* Number of checked out RHT entries */
-	u32 rht_perms;		/* User-defined permissions क्रम RHT entries */
-	काष्ठा llun_info **rht_lun;       /* Mapping of RHT entries to LUNs */
-	u8 *rht_needs_ws;	/* User-desired ग_लिखो-same function per RHTE */
+	u32 rht_perms;		/* User-defined permissions for RHT entries */
+	struct llun_info **rht_lun;       /* Mapping of RHT entries to LUNs */
+	u8 *rht_needs_ws;	/* User-desired write-same function per RHTE */
 
 	u64 ctxid;
-	u64 irqs; /* Number of पूर्णांकerrupts requested क्रम context */
+	u64 irqs; /* Number of interrupts requested for context */
 	pid_t pid;
 	bool initialized;
 	bool unavail;
 	bool err_recovery_active;
-	काष्ठा mutex mutex; /* Context protection */
-	काष्ठा kref kref;
-	व्योम *ctx;
-	काष्ठा cxlflash_cfg *cfg;
-	काष्ठा list_head luns;	/* LUNs attached to this context */
-	स्थिर काष्ठा vm_operations_काष्ठा *cxl_mmap_vmops;
-	काष्ठा file *file;
-	काष्ठा list_head list; /* Link contexts in error recovery */
-पूर्ण;
+	struct mutex mutex; /* Context protection */
+	struct kref kref;
+	void *ctx;
+	struct cxlflash_cfg *cfg;
+	struct list_head luns;	/* LUNs attached to this context */
+	const struct vm_operations_struct *cxl_mmap_vmops;
+	struct file *file;
+	struct list_head list; /* Link contexts in error recovery */
+};
 
-काष्ठा cxlflash_global अणु
-	काष्ठा mutex mutex;
-	काष्ठा list_head gluns;/* list of glun_info काष्ठाs */
-	काष्ठा page *err_page; /* One page of all 0xF क्रम error notअगरication */
-पूर्ण;
+struct cxlflash_global {
+	struct mutex mutex;
+	struct list_head gluns;/* list of glun_info structs */
+	struct page *err_page; /* One page of all 0xF for error notification */
+};
 
-पूर्णांक cxlflash_vlun_resize(काष्ठा scsi_device *sdev,
-			 काष्ठा dk_cxlflash_resize *resize);
-पूर्णांक _cxlflash_vlun_resize(काष्ठा scsi_device *sdev, काष्ठा ctx_info *ctxi,
-			  काष्ठा dk_cxlflash_resize *resize);
+int cxlflash_vlun_resize(struct scsi_device *sdev,
+			 struct dk_cxlflash_resize *resize);
+int _cxlflash_vlun_resize(struct scsi_device *sdev, struct ctx_info *ctxi,
+			  struct dk_cxlflash_resize *resize);
 
-पूर्णांक cxlflash_disk_release(काष्ठा scsi_device *sdev,
-			  काष्ठा dk_cxlflash_release *release);
-पूर्णांक _cxlflash_disk_release(काष्ठा scsi_device *sdev, काष्ठा ctx_info *ctxi,
-			   काष्ठा dk_cxlflash_release *release);
+int cxlflash_disk_release(struct scsi_device *sdev,
+			  struct dk_cxlflash_release *release);
+int _cxlflash_disk_release(struct scsi_device *sdev, struct ctx_info *ctxi,
+			   struct dk_cxlflash_release *release);
 
-पूर्णांक cxlflash_disk_clone(काष्ठा scsi_device *sdev,
-			काष्ठा dk_cxlflash_clone *clone);
+int cxlflash_disk_clone(struct scsi_device *sdev,
+			struct dk_cxlflash_clone *clone);
 
-पूर्णांक cxlflash_disk_भव_खोलो(काष्ठा scsi_device *sdev, व्योम *arg);
+int cxlflash_disk_virtual_open(struct scsi_device *sdev, void *arg);
 
-पूर्णांक cxlflash_lun_attach(काष्ठा glun_info *gli, क्रमागत lun_mode mode, bool locked);
-व्योम cxlflash_lun_detach(काष्ठा glun_info *gli);
+int cxlflash_lun_attach(struct glun_info *gli, enum lun_mode mode, bool locked);
+void cxlflash_lun_detach(struct glun_info *gli);
 
-काष्ठा ctx_info *get_context(काष्ठा cxlflash_cfg *cfg, u64 rctxit, व्योम *arg,
-			     क्रमागत ctx_ctrl ctrl);
-व्योम put_context(काष्ठा ctx_info *ctxi);
+struct ctx_info *get_context(struct cxlflash_cfg *cfg, u64 rctxit, void *arg,
+			     enum ctx_ctrl ctrl);
+void put_context(struct ctx_info *ctxi);
 
-काष्ठा sisl_rht_entry *get_rhte(काष्ठा ctx_info *ctxi, res_hndl_t rhndl,
-				काष्ठा llun_info *lli);
+struct sisl_rht_entry *get_rhte(struct ctx_info *ctxi, res_hndl_t rhndl,
+				struct llun_info *lli);
 
-काष्ठा sisl_rht_entry *rhte_checkout(काष्ठा ctx_info *ctxi,
-				     काष्ठा llun_info *lli);
-व्योम rhte_checkin(काष्ठा ctx_info *ctxi, काष्ठा sisl_rht_entry *rhte);
+struct sisl_rht_entry *rhte_checkout(struct ctx_info *ctxi,
+				     struct llun_info *lli);
+void rhte_checkin(struct ctx_info *ctxi, struct sisl_rht_entry *rhte);
 
-व्योम cxlflash_ba_terminate(काष्ठा ba_lun *ba_lun);
+void cxlflash_ba_terminate(struct ba_lun *ba_lun);
 
-पूर्णांक cxlflash_manage_lun(काष्ठा scsi_device *sdev,
-			काष्ठा dk_cxlflash_manage_lun *manage);
+int cxlflash_manage_lun(struct scsi_device *sdev,
+			struct dk_cxlflash_manage_lun *manage);
 
-पूर्णांक check_state(काष्ठा cxlflash_cfg *cfg);
+int check_state(struct cxlflash_cfg *cfg);
 
-#पूर्ण_अगर /* अगरndef _CXLFLASH_SUPERPIPE_H */
+#endif /* ifndef _CXLFLASH_SUPERPIPE_H */

@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* 32-bit atomic xchg() and cmpxchg() definitions.
  *
  * Copyright (C) 1996 David S. Miller (davem@davemloft.net)
- * Copyright (C) 2000 Anton Blanअक्षरd (anton@linuxcare.com.au)
+ * Copyright (C) 2000 Anton Blanchard (anton@linuxcare.com.au)
  * Copyright (C) 2007 Kyle McMartin (kyle@parisc-linux.org)
  *
  * Additions by Keith M Wesolowski (wesolows@foobazco.org) based
- * on यंत्र-parisc/atomic.h Copyright (C) 2000 Philipp Rumpf <prumpf@tux.org>.
+ * on asm-parisc/atomic.h Copyright (C) 2000 Philipp Rumpf <prumpf@tux.org>.
  */
 
-#अगर_अघोषित __ARCH_SPARC_CMPXCHG__
-#घोषणा __ARCH_SPARC_CMPXCHG__
+#ifndef __ARCH_SPARC_CMPXCHG__
+#define __ARCH_SPARC_CMPXCHG__
 
-अचिन्हित दीर्घ __xchg_u32(अस्थिर u32 *m, u32 new);
-व्योम __xchg_called_with_bad_poपूर्णांकer(व्योम);
+unsigned long __xchg_u32(volatile u32 *m, u32 new);
+void __xchg_called_with_bad_pointer(void);
 
-अटल अंतरभूत अचिन्हित दीर्घ __xchg(अचिन्हित दीर्घ x, __अस्थिर__ व्योम * ptr, पूर्णांक size)
-अणु
-	चयन (size) अणु
-	हाल 4:
-		वापस __xchg_u32(ptr, x);
-	पूर्ण
-	__xchg_called_with_bad_poपूर्णांकer();
-	वापस x;
-पूर्ण
+static inline unsigned long __xchg(unsigned long x, __volatile__ void * ptr, int size)
+{
+	switch (size) {
+	case 4:
+		return __xchg_u32(ptr, x);
+	}
+	__xchg_called_with_bad_pointer();
+	return x;
+}
 
-#घोषणा xchg(ptr,x) (अणु(__typeof__(*(ptr)))__xchg((अचिन्हित दीर्घ)(x),(ptr),माप(*(ptr)));पूर्ण)
+#define xchg(ptr,x) ({(__typeof__(*(ptr)))__xchg((unsigned long)(x),(ptr),sizeof(*(ptr)));})
 
 /* Emulate cmpxchg() the same way we emulate atomics,
- * by hashing the object address and indexing पूर्णांकo an array
- * of spinlocks to get a bit of perक्रमmance...
+ * by hashing the object address and indexing into an array
+ * of spinlocks to get a bit of performance...
  *
- * See arch/sparc/lib/atomic32.c क्रम implementation.
+ * See arch/sparc/lib/atomic32.c for implementation.
  *
- * Cribbed from <यंत्र-parisc/atomic.h>
+ * Cribbed from <asm-parisc/atomic.h>
  */
 
-/* bug catcher क्रम when unsupported size is used - won't link */
-व्योम __cmpxchg_called_with_bad_poपूर्णांकer(व्योम);
+/* bug catcher for when unsupported size is used - won't link */
+void __cmpxchg_called_with_bad_pointer(void);
 /* we only need to support cmpxchg of a u32 on sparc */
-अचिन्हित दीर्घ __cmpxchg_u32(अस्थिर u32 *m, u32 old, u32 new_);
+unsigned long __cmpxchg_u32(volatile u32 *m, u32 old, u32 new_);
 
-/* करोn't worry...optimizer will get rid of most of this */
-अटल अंतरभूत अचिन्हित दीर्घ
-__cmpxchg(अस्थिर व्योम *ptr, अचिन्हित दीर्घ old, अचिन्हित दीर्घ new_, पूर्णांक size)
-अणु
-	चयन (size) अणु
-	हाल 4:
-		वापस __cmpxchg_u32((u32 *)ptr, (u32)old, (u32)new_);
-	शेष:
-		__cmpxchg_called_with_bad_poपूर्णांकer();
-		अवरोध;
-	पूर्ण
-	वापस old;
-पूर्ण
+/* don't worry...optimizer will get rid of most of this */
+static inline unsigned long
+__cmpxchg(volatile void *ptr, unsigned long old, unsigned long new_, int size)
+{
+	switch (size) {
+	case 4:
+		return __cmpxchg_u32((u32 *)ptr, (u32)old, (u32)new_);
+	default:
+		__cmpxchg_called_with_bad_pointer();
+		break;
+	}
+	return old;
+}
 
-#घोषणा cmpxchg(ptr, o, n)						\
-(अणु									\
+#define cmpxchg(ptr, o, n)						\
+({									\
 	__typeof__(*(ptr)) _o_ = (o);					\
 	__typeof__(*(ptr)) _n_ = (n);					\
-	(__typeof__(*(ptr))) __cmpxchg((ptr), (अचिन्हित दीर्घ)_o_,	\
-			(अचिन्हित दीर्घ)_n_, माप(*(ptr)));		\
-पूर्ण)
+	(__typeof__(*(ptr))) __cmpxchg((ptr), (unsigned long)_o_,	\
+			(unsigned long)_n_, sizeof(*(ptr)));		\
+})
 
 u64 __cmpxchg_u64(u64 *ptr, u64 old, u64 new);
-#घोषणा cmpxchg64(ptr, old, new)	__cmpxchg_u64(ptr, old, new)
+#define cmpxchg64(ptr, old, new)	__cmpxchg_u64(ptr, old, new)
 
-#समावेश <यंत्र-generic/cmpxchg-local.h>
+#include <asm-generic/cmpxchg-local.h>
 
 /*
  * cmpxchg_local and cmpxchg64_local are atomic wrt current CPU. Always make
  * them available.
  */
-#घोषणा cmpxchg_local(ptr, o, n)				  	       \
-	((__typeof__(*(ptr)))__cmpxchg_local_generic((ptr), (अचिन्हित दीर्घ)(o),\
-			(अचिन्हित दीर्घ)(n), माप(*(ptr))))
-#घोषणा cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
+#define cmpxchg_local(ptr, o, n)				  	       \
+	((__typeof__(*(ptr)))__cmpxchg_local_generic((ptr), (unsigned long)(o),\
+			(unsigned long)(n), sizeof(*(ptr))))
+#define cmpxchg64_local(ptr, o, n) __cmpxchg64_local_generic((ptr), (o), (n))
 
-#पूर्ण_अगर /* __ARCH_SPARC_CMPXCHG__ */
+#endif /* __ARCH_SPARC_CMPXCHG__ */

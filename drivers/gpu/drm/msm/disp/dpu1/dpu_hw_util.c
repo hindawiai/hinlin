@@ -1,240 +1,239 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
-#घोषणा pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
-#समावेश "msm_drv.h"
-#समावेश "dpu_kms.h"
-#समावेश "dpu_hw_mdss.h"
-#समावेश "dpu_hw_util.h"
+#include "msm_drv.h"
+#include "dpu_kms.h"
+#include "dpu_hw_mdss.h"
+#include "dpu_hw_util.h"
 
-/* using a file अटल variables क्रम debugfs access */
-अटल u32 dpu_hw_util_log_mask = DPU_DBG_MASK_NONE;
+/* using a file static variables for debugfs access */
+static u32 dpu_hw_util_log_mask = DPU_DBG_MASK_NONE;
 
 /* DPU_SCALER_QSEED3 */
-#घोषणा QSEED3_HW_VERSION                  0x00
-#घोषणा QSEED3_OP_MODE                     0x04
-#घोषणा QSEED3_RGB2Y_COEFF                 0x08
-#घोषणा QSEED3_PHASE_INIT                  0x0C
-#घोषणा QSEED3_PHASE_STEP_Y_H              0x10
-#घोषणा QSEED3_PHASE_STEP_Y_V              0x14
-#घोषणा QSEED3_PHASE_STEP_UV_H             0x18
-#घोषणा QSEED3_PHASE_STEP_UV_V             0x1C
-#घोषणा QSEED3_PRELOAD                     0x20
-#घोषणा QSEED3_DE_SHARPEN                  0x24
-#घोषणा QSEED3_DE_SHARPEN_CTL              0x28
-#घोषणा QSEED3_DE_SHAPE_CTL                0x2C
-#घोषणा QSEED3_DE_THRESHOLD                0x30
-#घोषणा QSEED3_DE_ADJUST_DATA_0            0x34
-#घोषणा QSEED3_DE_ADJUST_DATA_1            0x38
-#घोषणा QSEED3_DE_ADJUST_DATA_2            0x3C
-#घोषणा QSEED3_SRC_SIZE_Y_RGB_A            0x40
-#घोषणा QSEED3_SRC_SIZE_UV                 0x44
-#घोषणा QSEED3_DST_SIZE                    0x48
-#घोषणा QSEED3_COEF_LUT_CTRL               0x4C
-#घोषणा QSEED3_COEF_LUT_SWAP_BIT           0
-#घोषणा QSEED3_COEF_LUT_सूची_BIT            1
-#घोषणा QSEED3_COEF_LUT_Y_CIR_BIT          2
-#घोषणा QSEED3_COEF_LUT_UV_CIR_BIT         3
-#घोषणा QSEED3_COEF_LUT_Y_SEP_BIT          4
-#घोषणा QSEED3_COEF_LUT_UV_SEP_BIT         5
-#घोषणा QSEED3_BUFFER_CTRL                 0x50
-#घोषणा QSEED3_CLK_CTRL0                   0x54
-#घोषणा QSEED3_CLK_CTRL1                   0x58
-#घोषणा QSEED3_CLK_STATUS                  0x5C
-#घोषणा QSEED3_PHASE_INIT_Y_H              0x90
-#घोषणा QSEED3_PHASE_INIT_Y_V              0x94
-#घोषणा QSEED3_PHASE_INIT_UV_H             0x98
-#घोषणा QSEED3_PHASE_INIT_UV_V             0x9C
-#घोषणा QSEED3_COEF_LUT                    0x100
-#घोषणा QSEED3_FILTERS                     5
-#घोषणा QSEED3_LUT_REGIONS                 4
-#घोषणा QSEED3_CIRCULAR_LUTS               9
-#घोषणा QSEED3_SEPARABLE_LUTS              10
-#घोषणा QSEED3_LUT_SIZE                    60
-#घोषणा QSEED3_ENABLE                      2
-#घोषणा QSEED3_सूची_LUT_SIZE                (200 * माप(u32))
-#घोषणा QSEED3_CIR_LUT_SIZE \
-	(QSEED3_LUT_SIZE * QSEED3_CIRCULAR_LUTS * माप(u32))
-#घोषणा QSEED3_SEP_LUT_SIZE \
-	(QSEED3_LUT_SIZE * QSEED3_SEPARABLE_LUTS * माप(u32))
+#define QSEED3_HW_VERSION                  0x00
+#define QSEED3_OP_MODE                     0x04
+#define QSEED3_RGB2Y_COEFF                 0x08
+#define QSEED3_PHASE_INIT                  0x0C
+#define QSEED3_PHASE_STEP_Y_H              0x10
+#define QSEED3_PHASE_STEP_Y_V              0x14
+#define QSEED3_PHASE_STEP_UV_H             0x18
+#define QSEED3_PHASE_STEP_UV_V             0x1C
+#define QSEED3_PRELOAD                     0x20
+#define QSEED3_DE_SHARPEN                  0x24
+#define QSEED3_DE_SHARPEN_CTL              0x28
+#define QSEED3_DE_SHAPE_CTL                0x2C
+#define QSEED3_DE_THRESHOLD                0x30
+#define QSEED3_DE_ADJUST_DATA_0            0x34
+#define QSEED3_DE_ADJUST_DATA_1            0x38
+#define QSEED3_DE_ADJUST_DATA_2            0x3C
+#define QSEED3_SRC_SIZE_Y_RGB_A            0x40
+#define QSEED3_SRC_SIZE_UV                 0x44
+#define QSEED3_DST_SIZE                    0x48
+#define QSEED3_COEF_LUT_CTRL               0x4C
+#define QSEED3_COEF_LUT_SWAP_BIT           0
+#define QSEED3_COEF_LUT_DIR_BIT            1
+#define QSEED3_COEF_LUT_Y_CIR_BIT          2
+#define QSEED3_COEF_LUT_UV_CIR_BIT         3
+#define QSEED3_COEF_LUT_Y_SEP_BIT          4
+#define QSEED3_COEF_LUT_UV_SEP_BIT         5
+#define QSEED3_BUFFER_CTRL                 0x50
+#define QSEED3_CLK_CTRL0                   0x54
+#define QSEED3_CLK_CTRL1                   0x58
+#define QSEED3_CLK_STATUS                  0x5C
+#define QSEED3_PHASE_INIT_Y_H              0x90
+#define QSEED3_PHASE_INIT_Y_V              0x94
+#define QSEED3_PHASE_INIT_UV_H             0x98
+#define QSEED3_PHASE_INIT_UV_V             0x9C
+#define QSEED3_COEF_LUT                    0x100
+#define QSEED3_FILTERS                     5
+#define QSEED3_LUT_REGIONS                 4
+#define QSEED3_CIRCULAR_LUTS               9
+#define QSEED3_SEPARABLE_LUTS              10
+#define QSEED3_LUT_SIZE                    60
+#define QSEED3_ENABLE                      2
+#define QSEED3_DIR_LUT_SIZE                (200 * sizeof(u32))
+#define QSEED3_CIR_LUT_SIZE \
+	(QSEED3_LUT_SIZE * QSEED3_CIRCULAR_LUTS * sizeof(u32))
+#define QSEED3_SEP_LUT_SIZE \
+	(QSEED3_LUT_SIZE * QSEED3_SEPARABLE_LUTS * sizeof(u32))
 
 /* DPU_SCALER_QSEED3LITE */
-#घोषणा QSEED3LITE_COEF_LUT_Y_SEP_BIT         4
-#घोषणा QSEED3LITE_COEF_LUT_UV_SEP_BIT        5
-#घोषणा QSEED3LITE_COEF_LUT_CTRL              0x4C
-#घोषणा QSEED3LITE_COEF_LUT_SWAP_BIT          0
-#घोषणा QSEED3LITE_सूची_FILTER_WEIGHT          0x60
-#घोषणा QSEED3LITE_FILTERS                 2
-#घोषणा QSEED3LITE_SEPARABLE_LUTS             10
-#घोषणा QSEED3LITE_LUT_SIZE                   33
-#घोषणा QSEED3LITE_SEP_LUT_SIZE \
-	        (QSEED3LITE_LUT_SIZE * QSEED3LITE_SEPARABLE_LUTS * माप(u32))
+#define QSEED3LITE_COEF_LUT_Y_SEP_BIT         4
+#define QSEED3LITE_COEF_LUT_UV_SEP_BIT        5
+#define QSEED3LITE_COEF_LUT_CTRL              0x4C
+#define QSEED3LITE_COEF_LUT_SWAP_BIT          0
+#define QSEED3LITE_DIR_FILTER_WEIGHT          0x60
+#define QSEED3LITE_FILTERS                 2
+#define QSEED3LITE_SEPARABLE_LUTS             10
+#define QSEED3LITE_LUT_SIZE                   33
+#define QSEED3LITE_SEP_LUT_SIZE \
+	        (QSEED3LITE_LUT_SIZE * QSEED3LITE_SEPARABLE_LUTS * sizeof(u32))
 
 
-व्योम dpu_reg_ग_लिखो(काष्ठा dpu_hw_blk_reg_map *c,
+void dpu_reg_write(struct dpu_hw_blk_reg_map *c,
 		u32 reg_off,
 		u32 val,
-		स्थिर अक्षर *name)
-अणु
-	/* करोn't need to mutex protect this */
-	अगर (c->log_mask & dpu_hw_util_log_mask)
+		const char *name)
+{
+	/* don't need to mutex protect this */
+	if (c->log_mask & dpu_hw_util_log_mask)
 		DPU_DEBUG_DRIVER("[%s:0x%X] <= 0x%X\n",
 				name, c->blk_off + reg_off, val);
-	ग_लिखोl_relaxed(val, c->base_off + c->blk_off + reg_off);
-पूर्ण
+	writel_relaxed(val, c->base_off + c->blk_off + reg_off);
+}
 
-पूर्णांक dpu_reg_पढ़ो(काष्ठा dpu_hw_blk_reg_map *c, u32 reg_off)
-अणु
-	वापस पढ़ोl_relaxed(c->base_off + c->blk_off + reg_off);
-पूर्ण
+int dpu_reg_read(struct dpu_hw_blk_reg_map *c, u32 reg_off)
+{
+	return readl_relaxed(c->base_off + c->blk_off + reg_off);
+}
 
-u32 *dpu_hw_util_get_log_mask_ptr(व्योम)
-अणु
-	वापस &dpu_hw_util_log_mask;
-पूर्ण
+u32 *dpu_hw_util_get_log_mask_ptr(void)
+{
+	return &dpu_hw_util_log_mask;
+}
 
-अटल व्योम _dpu_hw_setup_scaler3_lut(काष्ठा dpu_hw_blk_reg_map *c,
-		काष्ठा dpu_hw_scaler3_cfg *scaler3_cfg, u32 offset)
-अणु
-	पूर्णांक i, j, filter;
-	पूर्णांक config_lut = 0x0;
-	अचिन्हित दीर्घ lut_flags;
+static void _dpu_hw_setup_scaler3_lut(struct dpu_hw_blk_reg_map *c,
+		struct dpu_hw_scaler3_cfg *scaler3_cfg, u32 offset)
+{
+	int i, j, filter;
+	int config_lut = 0x0;
+	unsigned long lut_flags;
 	u32 lut_addr, lut_offset, lut_len;
-	u32 *lut[QSEED3_FILTERS] = अणुशून्य, शून्य, शून्य, शून्य, शून्यपूर्ण;
-	अटल स्थिर uपूर्णांक32_t off_tbl[QSEED3_FILTERS][QSEED3_LUT_REGIONS][2] = अणु
-		अणुअणु18, 0x000पूर्ण, अणु12, 0x120पूर्ण, अणु12, 0x1E0पूर्ण, अणु8, 0x2A0पूर्ण पूर्ण,
-		अणुअणु6, 0x320पूर्ण, अणु3, 0x3E0पूर्ण, अणु3, 0x440पूर्ण, अणु3, 0x4A0पूर्ण पूर्ण,
-		अणुअणु6, 0x500पूर्ण, अणु3, 0x5c0पूर्ण, अणु3, 0x620पूर्ण, अणु3, 0x680पूर्ण पूर्ण,
-		अणुअणु6, 0x380पूर्ण, अणु3, 0x410पूर्ण, अणु3, 0x470पूर्ण, अणु3, 0x4d0पूर्ण पूर्ण,
-		अणुअणु6, 0x560पूर्ण, अणु3, 0x5f0पूर्ण, अणु3, 0x650पूर्ण, अणु3, 0x6b0पूर्ण पूर्ण,
-	पूर्ण;
+	u32 *lut[QSEED3_FILTERS] = {NULL, NULL, NULL, NULL, NULL};
+	static const uint32_t off_tbl[QSEED3_FILTERS][QSEED3_LUT_REGIONS][2] = {
+		{{18, 0x000}, {12, 0x120}, {12, 0x1E0}, {8, 0x2A0} },
+		{{6, 0x320}, {3, 0x3E0}, {3, 0x440}, {3, 0x4A0} },
+		{{6, 0x500}, {3, 0x5c0}, {3, 0x620}, {3, 0x680} },
+		{{6, 0x380}, {3, 0x410}, {3, 0x470}, {3, 0x4d0} },
+		{{6, 0x560}, {3, 0x5f0}, {3, 0x650}, {3, 0x6b0} },
+	};
 
-	lut_flags = (अचिन्हित दीर्घ) scaler3_cfg->lut_flag;
-	अगर (test_bit(QSEED3_COEF_LUT_सूची_BIT, &lut_flags) &&
-		(scaler3_cfg->dir_len == QSEED3_सूची_LUT_SIZE)) अणु
+	lut_flags = (unsigned long) scaler3_cfg->lut_flag;
+	if (test_bit(QSEED3_COEF_LUT_DIR_BIT, &lut_flags) &&
+		(scaler3_cfg->dir_len == QSEED3_DIR_LUT_SIZE)) {
 		lut[0] = scaler3_cfg->dir_lut;
 		config_lut = 1;
-	पूर्ण
-	अगर (test_bit(QSEED3_COEF_LUT_Y_CIR_BIT, &lut_flags) &&
+	}
+	if (test_bit(QSEED3_COEF_LUT_Y_CIR_BIT, &lut_flags) &&
 		(scaler3_cfg->y_rgb_cir_lut_idx < QSEED3_CIRCULAR_LUTS) &&
-		(scaler3_cfg->cir_len == QSEED3_CIR_LUT_SIZE)) अणु
+		(scaler3_cfg->cir_len == QSEED3_CIR_LUT_SIZE)) {
 		lut[1] = scaler3_cfg->cir_lut +
 			scaler3_cfg->y_rgb_cir_lut_idx * QSEED3_LUT_SIZE;
 		config_lut = 1;
-	पूर्ण
-	अगर (test_bit(QSEED3_COEF_LUT_UV_CIR_BIT, &lut_flags) &&
+	}
+	if (test_bit(QSEED3_COEF_LUT_UV_CIR_BIT, &lut_flags) &&
 		(scaler3_cfg->uv_cir_lut_idx < QSEED3_CIRCULAR_LUTS) &&
-		(scaler3_cfg->cir_len == QSEED3_CIR_LUT_SIZE)) अणु
+		(scaler3_cfg->cir_len == QSEED3_CIR_LUT_SIZE)) {
 		lut[2] = scaler3_cfg->cir_lut +
 			scaler3_cfg->uv_cir_lut_idx * QSEED3_LUT_SIZE;
 		config_lut = 1;
-	पूर्ण
-	अगर (test_bit(QSEED3_COEF_LUT_Y_SEP_BIT, &lut_flags) &&
+	}
+	if (test_bit(QSEED3_COEF_LUT_Y_SEP_BIT, &lut_flags) &&
 		(scaler3_cfg->y_rgb_sep_lut_idx < QSEED3_SEPARABLE_LUTS) &&
-		(scaler3_cfg->sep_len == QSEED3_SEP_LUT_SIZE)) अणु
+		(scaler3_cfg->sep_len == QSEED3_SEP_LUT_SIZE)) {
 		lut[3] = scaler3_cfg->sep_lut +
 			scaler3_cfg->y_rgb_sep_lut_idx * QSEED3_LUT_SIZE;
 		config_lut = 1;
-	पूर्ण
-	अगर (test_bit(QSEED3_COEF_LUT_UV_SEP_BIT, &lut_flags) &&
+	}
+	if (test_bit(QSEED3_COEF_LUT_UV_SEP_BIT, &lut_flags) &&
 		(scaler3_cfg->uv_sep_lut_idx < QSEED3_SEPARABLE_LUTS) &&
-		(scaler3_cfg->sep_len == QSEED3_SEP_LUT_SIZE)) अणु
+		(scaler3_cfg->sep_len == QSEED3_SEP_LUT_SIZE)) {
 		lut[4] = scaler3_cfg->sep_lut +
 			scaler3_cfg->uv_sep_lut_idx * QSEED3_LUT_SIZE;
 		config_lut = 1;
-	पूर्ण
+	}
 
-	अगर (config_lut) अणु
-		क्रम (filter = 0; filter < QSEED3_FILTERS; filter++) अणु
-			अगर (!lut[filter])
-				जारी;
+	if (config_lut) {
+		for (filter = 0; filter < QSEED3_FILTERS; filter++) {
+			if (!lut[filter])
+				continue;
 			lut_offset = 0;
-			क्रम (i = 0; i < QSEED3_LUT_REGIONS; i++) अणु
+			for (i = 0; i < QSEED3_LUT_REGIONS; i++) {
 				lut_addr = QSEED3_COEF_LUT + offset
 					+ off_tbl[filter][i][1];
 				lut_len = off_tbl[filter][i][0] << 2;
-				क्रम (j = 0; j < lut_len; j++) अणु
+				for (j = 0; j < lut_len; j++) {
 					DPU_REG_WRITE(c,
 						lut_addr,
 						(lut[filter])[lut_offset++]);
 					lut_addr += 4;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	अगर (test_bit(QSEED3_COEF_LUT_SWAP_BIT, &lut_flags))
+	if (test_bit(QSEED3_COEF_LUT_SWAP_BIT, &lut_flags))
 		DPU_REG_WRITE(c, QSEED3_COEF_LUT_CTRL + offset, BIT(0));
 
-पूर्ण
+}
 
-अटल व्योम _dpu_hw_setup_scaler3lite_lut(काष्ठा dpu_hw_blk_reg_map *c,
-		काष्ठा dpu_hw_scaler3_cfg *scaler3_cfg, u32 offset)
-अणु
-	पूर्णांक j, filter;
-	पूर्णांक config_lut = 0x0;
-	अचिन्हित दीर्घ lut_flags;
+static void _dpu_hw_setup_scaler3lite_lut(struct dpu_hw_blk_reg_map *c,
+		struct dpu_hw_scaler3_cfg *scaler3_cfg, u32 offset)
+{
+	int j, filter;
+	int config_lut = 0x0;
+	unsigned long lut_flags;
 	u32 lut_addr, lut_offset;
-	u32 *lut[QSEED3LITE_FILTERS] = अणुशून्य, शून्यपूर्ण;
-	अटल स्थिर uपूर्णांक32_t off_tbl[QSEED3_FILTERS] = अणु 0x000, 0x200 पूर्ण;
+	u32 *lut[QSEED3LITE_FILTERS] = {NULL, NULL};
+	static const uint32_t off_tbl[QSEED3_FILTERS] = { 0x000, 0x200 };
 
-	DPU_REG_WRITE(c, QSEED3LITE_सूची_FILTER_WEIGHT + offset, scaler3_cfg->dir_weight);
+	DPU_REG_WRITE(c, QSEED3LITE_DIR_FILTER_WEIGHT + offset, scaler3_cfg->dir_weight);
 
-	अगर (!scaler3_cfg->sep_lut)
-		वापस;
+	if (!scaler3_cfg->sep_lut)
+		return;
 
-	lut_flags = (अचिन्हित दीर्घ) scaler3_cfg->lut_flag;
-	अगर (test_bit(QSEED3_COEF_LUT_Y_SEP_BIT, &lut_flags) &&
+	lut_flags = (unsigned long) scaler3_cfg->lut_flag;
+	if (test_bit(QSEED3_COEF_LUT_Y_SEP_BIT, &lut_flags) &&
 		(scaler3_cfg->y_rgb_sep_lut_idx < QSEED3LITE_SEPARABLE_LUTS) &&
-		(scaler3_cfg->sep_len == QSEED3LITE_SEP_LUT_SIZE)) अणु
+		(scaler3_cfg->sep_len == QSEED3LITE_SEP_LUT_SIZE)) {
 		lut[0] = scaler3_cfg->sep_lut +
 			scaler3_cfg->y_rgb_sep_lut_idx * QSEED3LITE_LUT_SIZE;
 		config_lut = 1;
-	पूर्ण
-	अगर (test_bit(QSEED3_COEF_LUT_UV_SEP_BIT, &lut_flags) &&
+	}
+	if (test_bit(QSEED3_COEF_LUT_UV_SEP_BIT, &lut_flags) &&
 		(scaler3_cfg->uv_sep_lut_idx < QSEED3LITE_SEPARABLE_LUTS) &&
-		(scaler3_cfg->sep_len == QSEED3LITE_SEP_LUT_SIZE)) अणु
+		(scaler3_cfg->sep_len == QSEED3LITE_SEP_LUT_SIZE)) {
 		lut[1] = scaler3_cfg->sep_lut +
 			scaler3_cfg->uv_sep_lut_idx * QSEED3LITE_LUT_SIZE;
 		config_lut = 1;
-	पूर्ण
+	}
 
-	अगर (config_lut) अणु
-		क्रम (filter = 0; filter < QSEED3LITE_FILTERS; filter++) अणु
-			अगर (!lut[filter])
-				जारी;
+	if (config_lut) {
+		for (filter = 0; filter < QSEED3LITE_FILTERS; filter++) {
+			if (!lut[filter])
+				continue;
 			lut_offset = 0;
 			lut_addr = QSEED3_COEF_LUT + offset + off_tbl[filter];
-			क्रम (j = 0; j < QSEED3LITE_LUT_SIZE; j++) अणु
+			for (j = 0; j < QSEED3LITE_LUT_SIZE; j++) {
 				DPU_REG_WRITE(c,
 					lut_addr,
 					(lut[filter])[lut_offset++]);
 				lut_addr += 4;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (test_bit(QSEED3_COEF_LUT_SWAP_BIT, &lut_flags))
+	if (test_bit(QSEED3_COEF_LUT_SWAP_BIT, &lut_flags))
 		DPU_REG_WRITE(c, QSEED3_COEF_LUT_CTRL + offset, BIT(0));
 
-पूर्ण
+}
 
-अटल व्योम _dpu_hw_setup_scaler3_de(काष्ठा dpu_hw_blk_reg_map *c,
-		काष्ठा dpu_hw_scaler3_de_cfg *de_cfg, u32 offset)
-अणु
+static void _dpu_hw_setup_scaler3_de(struct dpu_hw_blk_reg_map *c,
+		struct dpu_hw_scaler3_de_cfg *de_cfg, u32 offset)
+{
 	u32 sharp_lvl, sharp_ctl, shape_ctl, de_thr;
 	u32 adjust_a, adjust_b, adjust_c;
 
-	अगर (!de_cfg->enable)
-		वापस;
+	if (!de_cfg->enable)
+		return;
 
 	sharp_lvl = (de_cfg->sharpen_level1 & 0x1FF) |
 		((de_cfg->sharpen_level2 & 0x1FF) << 16);
 
 	sharp_ctl = ((de_cfg->limit & 0xF) << 9) |
-		((de_cfg->prec_shअगरt & 0x7) << 13) |
+		((de_cfg->prec_shift & 0x7) << 13) |
 		((de_cfg->clip & 0x7) << 16);
 
 	shape_ctl = (de_cfg->thr_quiet & 0xFF) |
@@ -263,26 +262,26 @@ u32 *dpu_hw_util_get_log_mask_ptr(व्योम)
 	DPU_REG_WRITE(c, QSEED3_DE_ADJUST_DATA_1 + offset, adjust_b);
 	DPU_REG_WRITE(c, QSEED3_DE_ADJUST_DATA_2 + offset, adjust_c);
 
-पूर्ण
+}
 
-व्योम dpu_hw_setup_scaler3(काष्ठा dpu_hw_blk_reg_map *c,
-		काष्ठा dpu_hw_scaler3_cfg *scaler3_cfg,
+void dpu_hw_setup_scaler3(struct dpu_hw_blk_reg_map *c,
+		struct dpu_hw_scaler3_cfg *scaler3_cfg,
 		u32 scaler_offset, u32 scaler_version,
-		स्थिर काष्ठा dpu_क्रमmat *क्रमmat)
-अणु
+		const struct dpu_format *format)
+{
 	u32 op_mode = 0;
 	u32 phase_init, preload, src_y_rgb, src_uv, dst;
 
-	अगर (!scaler3_cfg->enable)
-		जाओ end;
+	if (!scaler3_cfg->enable)
+		goto end;
 
 	op_mode |= BIT(0);
 	op_mode |= (scaler3_cfg->y_rgb_filter_cfg & 0x3) << 16;
 
-	अगर (क्रमmat && DPU_FORMAT_IS_YUV(क्रमmat)) अणु
+	if (format && DPU_FORMAT_IS_YUV(format)) {
 		op_mode |= BIT(12);
 		op_mode |= (scaler3_cfg->uv_filter_cfg & 0x3) << 24;
-	पूर्ण
+	}
 
 	op_mode |= (scaler3_cfg->blend_cfg & 1) << 31;
 	op_mode |= (scaler3_cfg->dir_en) ? BIT(4) : 0;
@@ -302,26 +301,26 @@ u32 *dpu_hw_util_get_log_mask_ptr(व्योम)
 	dst = (scaler3_cfg->dst_width & 0x1FFFF) |
 		((scaler3_cfg->dst_height & 0x1FFFF) << 16);
 
-	अगर (scaler3_cfg->de.enable) अणु
+	if (scaler3_cfg->de.enable) {
 		_dpu_hw_setup_scaler3_de(c, &scaler3_cfg->de, scaler_offset);
 		op_mode |= BIT(8);
-	पूर्ण
+	}
 
-	अगर (scaler3_cfg->lut_flag) अणु
-		अगर (scaler_version < 0x2004)
+	if (scaler3_cfg->lut_flag) {
+		if (scaler_version < 0x2004)
 			_dpu_hw_setup_scaler3_lut(c, scaler3_cfg, scaler_offset);
-		अन्यथा
+		else
 			_dpu_hw_setup_scaler3lite_lut(c, scaler3_cfg, scaler_offset);
-	पूर्ण
+	}
 
-	अगर (scaler_version == 0x1002) अणु
+	if (scaler_version == 0x1002) {
 		phase_init =
 			((scaler3_cfg->init_phase_x[0] & 0x3F) << 0) |
 			((scaler3_cfg->init_phase_y[0] & 0x3F) << 8) |
 			((scaler3_cfg->init_phase_x[1] & 0x3F) << 16) |
 			((scaler3_cfg->init_phase_y[1] & 0x3F) << 24);
 		DPU_REG_WRITE(c, QSEED3_PHASE_INIT + scaler_offset, phase_init);
-	पूर्ण अन्यथा अणु
+	} else {
 		DPU_REG_WRITE(c, QSEED3_PHASE_INIT_Y_H + scaler_offset,
 			scaler3_cfg->init_phase_x[0] & 0x1FFFFF);
 		DPU_REG_WRITE(c, QSEED3_PHASE_INIT_Y_V + scaler_offset,
@@ -330,7 +329,7 @@ u32 *dpu_hw_util_get_log_mask_ptr(व्योम)
 			scaler3_cfg->init_phase_x[1] & 0x1FFFFF);
 		DPU_REG_WRITE(c, QSEED3_PHASE_INIT_UV_V + scaler_offset,
 			scaler3_cfg->init_phase_y[1] & 0x1FFFFF);
-	पूर्ण
+	}
 
 	DPU_REG_WRITE(c, QSEED3_PHASE_STEP_Y_H + scaler_offset,
 		scaler3_cfg->phase_step_x[0] & 0xFFFFFF);
@@ -353,64 +352,64 @@ u32 *dpu_hw_util_get_log_mask_ptr(व्योम)
 	DPU_REG_WRITE(c, QSEED3_DST_SIZE + scaler_offset, dst);
 
 end:
-	अगर (क्रमmat && !DPU_FORMAT_IS_DX(क्रमmat))
+	if (format && !DPU_FORMAT_IS_DX(format))
 		op_mode |= BIT(14);
 
-	अगर (क्रमmat && क्रमmat->alpha_enable) अणु
+	if (format && format->alpha_enable) {
 		op_mode |= BIT(10);
-		अगर (scaler_version == 0x1002)
+		if (scaler_version == 0x1002)
 			op_mode |= (scaler3_cfg->alpha_filter_cfg & 0x1) << 30;
-		अन्यथा
+		else
 			op_mode |= (scaler3_cfg->alpha_filter_cfg & 0x3) << 29;
-	पूर्ण
+	}
 
 	DPU_REG_WRITE(c, QSEED3_OP_MODE + scaler_offset, op_mode);
-पूर्ण
+}
 
-u32 dpu_hw_get_scaler3_ver(काष्ठा dpu_hw_blk_reg_map *c,
+u32 dpu_hw_get_scaler3_ver(struct dpu_hw_blk_reg_map *c,
 			u32 scaler_offset)
-अणु
-	वापस DPU_REG_READ(c, QSEED3_HW_VERSION + scaler_offset);
-पूर्ण
+{
+	return DPU_REG_READ(c, QSEED3_HW_VERSION + scaler_offset);
+}
 
-व्योम dpu_hw_csc_setup(काष्ठा dpu_hw_blk_reg_map *c,
+void dpu_hw_csc_setup(struct dpu_hw_blk_reg_map *c,
 		u32 csc_reg_off,
-		काष्ठा dpu_csc_cfg *data, bool csc10)
-अणु
-	अटल स्थिर u32 matrix_shअगरt = 7;
-	u32 clamp_shअगरt = csc10 ? 16 : 8;
+		struct dpu_csc_cfg *data, bool csc10)
+{
+	static const u32 matrix_shift = 7;
+	u32 clamp_shift = csc10 ? 16 : 8;
 	u32 val;
 
 	/* matrix coeff - convert S15.16 to S4.9 */
-	val = ((data->csc_mv[0] >> matrix_shअगरt) & 0x1FFF) |
-		(((data->csc_mv[1] >> matrix_shअगरt) & 0x1FFF) << 16);
+	val = ((data->csc_mv[0] >> matrix_shift) & 0x1FFF) |
+		(((data->csc_mv[1] >> matrix_shift) & 0x1FFF) << 16);
 	DPU_REG_WRITE(c, csc_reg_off, val);
-	val = ((data->csc_mv[2] >> matrix_shअगरt) & 0x1FFF) |
-		(((data->csc_mv[3] >> matrix_shअगरt) & 0x1FFF) << 16);
+	val = ((data->csc_mv[2] >> matrix_shift) & 0x1FFF) |
+		(((data->csc_mv[3] >> matrix_shift) & 0x1FFF) << 16);
 	DPU_REG_WRITE(c, csc_reg_off + 0x4, val);
-	val = ((data->csc_mv[4] >> matrix_shअगरt) & 0x1FFF) |
-		(((data->csc_mv[5] >> matrix_shअगरt) & 0x1FFF) << 16);
+	val = ((data->csc_mv[4] >> matrix_shift) & 0x1FFF) |
+		(((data->csc_mv[5] >> matrix_shift) & 0x1FFF) << 16);
 	DPU_REG_WRITE(c, csc_reg_off + 0x8, val);
-	val = ((data->csc_mv[6] >> matrix_shअगरt) & 0x1FFF) |
-		(((data->csc_mv[7] >> matrix_shअगरt) & 0x1FFF) << 16);
+	val = ((data->csc_mv[6] >> matrix_shift) & 0x1FFF) |
+		(((data->csc_mv[7] >> matrix_shift) & 0x1FFF) << 16);
 	DPU_REG_WRITE(c, csc_reg_off + 0xc, val);
-	val = (data->csc_mv[8] >> matrix_shअगरt) & 0x1FFF;
+	val = (data->csc_mv[8] >> matrix_shift) & 0x1FFF;
 	DPU_REG_WRITE(c, csc_reg_off + 0x10, val);
 
 	/* Pre clamp */
-	val = (data->csc_pre_lv[0] << clamp_shअगरt) | data->csc_pre_lv[1];
+	val = (data->csc_pre_lv[0] << clamp_shift) | data->csc_pre_lv[1];
 	DPU_REG_WRITE(c, csc_reg_off + 0x14, val);
-	val = (data->csc_pre_lv[2] << clamp_shअगरt) | data->csc_pre_lv[3];
+	val = (data->csc_pre_lv[2] << clamp_shift) | data->csc_pre_lv[3];
 	DPU_REG_WRITE(c, csc_reg_off + 0x18, val);
-	val = (data->csc_pre_lv[4] << clamp_shअगरt) | data->csc_pre_lv[5];
+	val = (data->csc_pre_lv[4] << clamp_shift) | data->csc_pre_lv[5];
 	DPU_REG_WRITE(c, csc_reg_off + 0x1c, val);
 
 	/* Post clamp */
-	val = (data->csc_post_lv[0] << clamp_shअगरt) | data->csc_post_lv[1];
+	val = (data->csc_post_lv[0] << clamp_shift) | data->csc_post_lv[1];
 	DPU_REG_WRITE(c, csc_reg_off + 0x20, val);
-	val = (data->csc_post_lv[2] << clamp_shअगरt) | data->csc_post_lv[3];
+	val = (data->csc_post_lv[2] << clamp_shift) | data->csc_post_lv[3];
 	DPU_REG_WRITE(c, csc_reg_off + 0x24, val);
-	val = (data->csc_post_lv[4] << clamp_shअगरt) | data->csc_post_lv[5];
+	val = (data->csc_post_lv[4] << clamp_shift) | data->csc_post_lv[5];
 	DPU_REG_WRITE(c, csc_reg_off + 0x28, val);
 
 	/* Pre-Bias */
@@ -422,4 +421,4 @@ u32 dpu_hw_get_scaler3_ver(काष्ठा dpu_hw_blk_reg_map *c,
 	DPU_REG_WRITE(c, csc_reg_off + 0x38, data->csc_post_bv[0]);
 	DPU_REG_WRITE(c, csc_reg_off + 0x3c, data->csc_post_bv[1]);
 	DPU_REG_WRITE(c, csc_reg_off + 0x40, data->csc_post_bv[2]);
-पूर्ण
+}

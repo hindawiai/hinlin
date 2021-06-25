@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <liblockdep/mutex.h>
-#समावेश "common.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <liblockdep/mutex.h>
+#include "common.h"
 
-व्योम मुख्य(व्योम)
-अणु
-	pthपढ़ो_mutex_t a, b;
+void main(void)
+{
+	pthread_mutex_t a, b;
 
-	pthपढ़ो_mutex_init(&a, शून्य);
-	pthपढ़ो_mutex_init(&b, शून्य);
-
-	LOCK_UNLOCK_2(a, b);
-	LOCK_UNLOCK_2(b, a);
-
-	pthपढ़ो_mutex_destroy(&b);
-	pthपढ़ो_mutex_destroy(&a);
-
-	pthपढ़ो_mutex_init(&a, शून्य);
-	pthपढ़ो_mutex_init(&b, शून्य);
+	pthread_mutex_init(&a, NULL);
+	pthread_mutex_init(&b, NULL);
 
 	LOCK_UNLOCK_2(a, b);
 	LOCK_UNLOCK_2(b, a);
 
-	pthपढ़ो_mutex_destroy(&b);
-	pthपढ़ो_mutex_destroy(&a);
-पूर्ण
+	pthread_mutex_destroy(&b);
+	pthread_mutex_destroy(&a);
+
+	pthread_mutex_init(&a, NULL);
+	pthread_mutex_init(&b, NULL);
+
+	LOCK_UNLOCK_2(a, b);
+	LOCK_UNLOCK_2(b, a);
+
+	pthread_mutex_destroy(&b);
+	pthread_mutex_destroy(&a);
+}

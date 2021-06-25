@@ -1,126 +1,125 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  mm/userfaultfd.c
  *
  *  Copyright (C) 2015  Red Hat, Inc.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/swapops.h>
-#समावेश <linux/userfaultfd_k.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/hugetlb.h>
-#समावेश <linux/shmem_fs.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश "internal.h"
+#include <linux/mm.h>
+#include <linux/sched/signal.h>
+#include <linux/pagemap.h>
+#include <linux/rmap.h>
+#include <linux/swap.h>
+#include <linux/swapops.h>
+#include <linux/userfaultfd_k.h>
+#include <linux/mmu_notifier.h>
+#include <linux/hugetlb.h>
+#include <linux/shmem_fs.h>
+#include <asm/tlbflush.h>
+#include "internal.h"
 
-अटल __always_अंतरभूत
-काष्ठा vm_area_काष्ठा *find_dst_vma(काष्ठा mm_काष्ठा *dst_mm,
-				    अचिन्हित दीर्घ dst_start,
-				    अचिन्हित दीर्घ len)
-अणु
+static __always_inline
+struct vm_area_struct *find_dst_vma(struct mm_struct *dst_mm,
+				    unsigned long dst_start,
+				    unsigned long len)
+{
 	/*
 	 * Make sure that the dst range is both valid and fully within a
 	 * single existing vma.
 	 */
-	काष्ठा vm_area_काष्ठा *dst_vma;
+	struct vm_area_struct *dst_vma;
 
 	dst_vma = find_vma(dst_mm, dst_start);
-	अगर (!dst_vma)
-		वापस शून्य;
+	if (!dst_vma)
+		return NULL;
 
-	अगर (dst_start < dst_vma->vm_start ||
+	if (dst_start < dst_vma->vm_start ||
 	    dst_start + len > dst_vma->vm_end)
-		वापस शून्य;
+		return NULL;
 
 	/*
-	 * Check the vma is रेजिस्टरed in uffd, this is required to
-	 * enक्रमce the VM_MAYWRITE check करोne at uffd registration
-	 * समय.
+	 * Check the vma is registered in uffd, this is required to
+	 * enforce the VM_MAYWRITE check done at uffd registration
+	 * time.
 	 */
-	अगर (!dst_vma->vm_userfaultfd_ctx.ctx)
-		वापस शून्य;
+	if (!dst_vma->vm_userfaultfd_ctx.ctx)
+		return NULL;
 
-	वापस dst_vma;
-पूर्ण
+	return dst_vma;
+}
 
-अटल पूर्णांक mcopy_atomic_pte(काष्ठा mm_काष्ठा *dst_mm,
+static int mcopy_atomic_pte(struct mm_struct *dst_mm,
 			    pmd_t *dst_pmd,
-			    काष्ठा vm_area_काष्ठा *dst_vma,
-			    अचिन्हित दीर्घ dst_addr,
-			    अचिन्हित दीर्घ src_addr,
-			    काष्ठा page **pagep,
+			    struct vm_area_struct *dst_vma,
+			    unsigned long dst_addr,
+			    unsigned long src_addr,
+			    struct page **pagep,
 			    bool wp_copy)
-अणु
+{
 	pte_t _dst_pte, *dst_pte;
 	spinlock_t *ptl;
-	व्योम *page_kaddr;
-	पूर्णांक ret;
-	काष्ठा page *page;
+	void *page_kaddr;
+	int ret;
+	struct page *page;
 	pgoff_t offset, max_off;
-	काष्ठा inode *inode;
+	struct inode *inode;
 
-	अगर (!*pagep) अणु
+	if (!*pagep) {
 		ret = -ENOMEM;
 		page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, dst_vma, dst_addr);
-		अगर (!page)
-			जाओ out;
+		if (!page)
+			goto out;
 
 		page_kaddr = kmap_atomic(page);
 		ret = copy_from_user(page_kaddr,
-				     (स्थिर व्योम __user *) src_addr,
+				     (const void __user *) src_addr,
 				     PAGE_SIZE);
 		kunmap_atomic(page_kaddr);
 
 		/* fallback to copy_from_user outside mmap_lock */
-		अगर (unlikely(ret)) अणु
+		if (unlikely(ret)) {
 			ret = -ENOENT;
 			*pagep = page;
-			/* करोn't मुक्त the page */
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			/* don't free the page */
+			goto out;
+		}
+	} else {
 		page = *pagep;
-		*pagep = शून्य;
-	पूर्ण
+		*pagep = NULL;
+	}
 
 	/*
 	 * The memory barrier inside __SetPageUptodate makes sure that
-	 * preceding stores to the page contents become visible beक्रमe
-	 * the set_pte_at() ग_लिखो.
+	 * preceding stores to the page contents become visible before
+	 * the set_pte_at() write.
 	 */
 	__SetPageUptodate(page);
 
 	ret = -ENOMEM;
-	अगर (mem_cgroup_अक्षरge(page, dst_mm, GFP_KERNEL))
-		जाओ out_release;
+	if (mem_cgroup_charge(page, dst_mm, GFP_KERNEL))
+		goto out_release;
 
-	_dst_pte = pte_सूची_गढ़ोty(mk_pte(page, dst_vma->vm_page_prot));
-	अगर (dst_vma->vm_flags & VM_WRITE) अणु
-		अगर (wp_copy)
+	_dst_pte = pte_mkdirty(mk_pte(page, dst_vma->vm_page_prot));
+	if (dst_vma->vm_flags & VM_WRITE) {
+		if (wp_copy)
 			_dst_pte = pte_mkuffd_wp(_dst_pte);
-		अन्यथा
-			_dst_pte = pte_mkग_लिखो(_dst_pte);
-	पूर्ण
+		else
+			_dst_pte = pte_mkwrite(_dst_pte);
+	}
 
 	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
-	अगर (dst_vma->vm_file) अणु
-		/* the shmem MAP_PRIVATE हाल requires checking the i_size */
+	if (dst_vma->vm_file) {
+		/* the shmem MAP_PRIVATE case requires checking the i_size */
 		inode = dst_vma->vm_file->f_inode;
 		offset = linear_page_index(dst_vma, dst_addr);
-		max_off = DIV_ROUND_UP(i_size_पढ़ो(inode), PAGE_SIZE);
+		max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
 		ret = -EFAULT;
-		अगर (unlikely(offset >= max_off))
-			जाओ out_release_unअक्षरge_unlock;
-	पूर्ण
+		if (unlikely(offset >= max_off))
+			goto out_release_uncharge_unlock;
+	}
 	ret = -EEXIST;
-	अगर (!pte_none(*dst_pte))
-		जाओ out_release_unअक्षरge_unlock;
+	if (!pte_none(*dst_pte))
+		goto out_release_uncharge_unlock;
 
 	inc_mm_counter(dst_mm, MM_ANONPAGES);
 	page_add_new_anon_rmap(page, dst_vma, dst_addr, false);
@@ -128,345 +127,345 @@
 
 	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
 
-	/* No need to invalidate - it was non-present beक्रमe */
+	/* No need to invalidate - it was non-present before */
 	update_mmu_cache(dst_vma, dst_addr, dst_pte);
 
 	pte_unmap_unlock(dst_pte, ptl);
 	ret = 0;
 out:
-	वापस ret;
-out_release_unअक्षरge_unlock:
+	return ret;
+out_release_uncharge_unlock:
 	pte_unmap_unlock(dst_pte, ptl);
 out_release:
 	put_page(page);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक mfill_zeropage_pte(काष्ठा mm_काष्ठा *dst_mm,
+static int mfill_zeropage_pte(struct mm_struct *dst_mm,
 			      pmd_t *dst_pmd,
-			      काष्ठा vm_area_काष्ठा *dst_vma,
-			      अचिन्हित दीर्घ dst_addr)
-अणु
+			      struct vm_area_struct *dst_vma,
+			      unsigned long dst_addr)
+{
 	pte_t _dst_pte, *dst_pte;
 	spinlock_t *ptl;
-	पूर्णांक ret;
+	int ret;
 	pgoff_t offset, max_off;
-	काष्ठा inode *inode;
+	struct inode *inode;
 
 	_dst_pte = pte_mkspecial(pfn_pte(my_zero_pfn(dst_addr),
 					 dst_vma->vm_page_prot));
 	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
-	अगर (dst_vma->vm_file) अणु
-		/* the shmem MAP_PRIVATE हाल requires checking the i_size */
+	if (dst_vma->vm_file) {
+		/* the shmem MAP_PRIVATE case requires checking the i_size */
 		inode = dst_vma->vm_file->f_inode;
 		offset = linear_page_index(dst_vma, dst_addr);
-		max_off = DIV_ROUND_UP(i_size_पढ़ो(inode), PAGE_SIZE);
+		max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
 		ret = -EFAULT;
-		अगर (unlikely(offset >= max_off))
-			जाओ out_unlock;
-	पूर्ण
+		if (unlikely(offset >= max_off))
+			goto out_unlock;
+	}
 	ret = -EEXIST;
-	अगर (!pte_none(*dst_pte))
-		जाओ out_unlock;
+	if (!pte_none(*dst_pte))
+		goto out_unlock;
 	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
-	/* No need to invalidate - it was non-present beक्रमe */
+	/* No need to invalidate - it was non-present before */
 	update_mmu_cache(dst_vma, dst_addr, dst_pte);
 	ret = 0;
 out_unlock:
 	pte_unmap_unlock(dst_pte, ptl);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल pmd_t *mm_alloc_pmd(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address)
-अणु
+static pmd_t *mm_alloc_pmd(struct mm_struct *mm, unsigned long address)
+{
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 
 	pgd = pgd_offset(mm, address);
 	p4d = p4d_alloc(mm, pgd, address);
-	अगर (!p4d)
-		वापस शून्य;
+	if (!p4d)
+		return NULL;
 	pud = pud_alloc(mm, p4d, address);
-	अगर (!pud)
-		वापस शून्य;
+	if (!pud)
+		return NULL;
 	/*
 	 * Note that we didn't run this because the pmd was
-	 * missing, the *pmd may be alपढ़ोy established and in
+	 * missing, the *pmd may be already established and in
 	 * turn it may also be a trans_huge_pmd.
 	 */
-	वापस pmd_alloc(mm, pud, address);
-पूर्ण
+	return pmd_alloc(mm, pud, address);
+}
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
+#ifdef CONFIG_HUGETLB_PAGE
 /*
- * __mcopy_atomic processing क्रम HUGETLB vmas.  Note that this routine is
- * called with mmap_lock held, it will release mmap_lock beक्रमe वापसing.
+ * __mcopy_atomic processing for HUGETLB vmas.  Note that this routine is
+ * called with mmap_lock held, it will release mmap_lock before returning.
  */
-अटल __always_अंतरभूत sमाप_प्रकार __mcopy_atomic_hugetlb(काष्ठा mm_काष्ठा *dst_mm,
-					      काष्ठा vm_area_काष्ठा *dst_vma,
-					      अचिन्हित दीर्घ dst_start,
-					      अचिन्हित दीर्घ src_start,
-					      अचिन्हित दीर्घ len,
-					      क्रमागत mcopy_atomic_mode mode)
-अणु
-	पूर्णांक vm_alloc_shared = dst_vma->vm_flags & VM_SHARED;
-	पूर्णांक vm_shared = dst_vma->vm_flags & VM_SHARED;
-	sमाप_प्रकार err;
+static __always_inline ssize_t __mcopy_atomic_hugetlb(struct mm_struct *dst_mm,
+					      struct vm_area_struct *dst_vma,
+					      unsigned long dst_start,
+					      unsigned long src_start,
+					      unsigned long len,
+					      enum mcopy_atomic_mode mode)
+{
+	int vm_alloc_shared = dst_vma->vm_flags & VM_SHARED;
+	int vm_shared = dst_vma->vm_flags & VM_SHARED;
+	ssize_t err;
 	pte_t *dst_pte;
-	अचिन्हित दीर्घ src_addr, dst_addr;
-	दीर्घ copied;
-	काष्ठा page *page;
-	अचिन्हित दीर्घ vma_hpagesize;
+	unsigned long src_addr, dst_addr;
+	long copied;
+	struct page *page;
+	unsigned long vma_hpagesize;
 	pgoff_t idx;
 	u32 hash;
-	काष्ठा address_space *mapping;
+	struct address_space *mapping;
 
 	/*
-	 * There is no शेष zero huge page क्रम all huge page sizes as
+	 * There is no default zero huge page for all huge page sizes as
 	 * supported by hugetlb.  A PMD_SIZE huge pages may exist as used
 	 * by THP.  Since we can not reliably insert a zero page, this
 	 * feature is not supported.
 	 */
-	अगर (mode == MCOPY_ATOMIC_ZEROPAGE) अणु
-		mmap_पढ़ो_unlock(dst_mm);
-		वापस -EINVAL;
-	पूर्ण
+	if (mode == MCOPY_ATOMIC_ZEROPAGE) {
+		mmap_read_unlock(dst_mm);
+		return -EINVAL;
+	}
 
 	src_addr = src_start;
 	dst_addr = dst_start;
 	copied = 0;
-	page = शून्य;
+	page = NULL;
 	vma_hpagesize = vma_kernel_pagesize(dst_vma);
 
 	/*
 	 * Validate alignment based on huge page size
 	 */
 	err = -EINVAL;
-	अगर (dst_start & (vma_hpagesize - 1) || len & (vma_hpagesize - 1))
-		जाओ out_unlock;
+	if (dst_start & (vma_hpagesize - 1) || len & (vma_hpagesize - 1))
+		goto out_unlock;
 
 retry:
 	/*
 	 * On routine entry dst_vma is set.  If we had to drop mmap_lock and
-	 * retry, dst_vma will be set to शून्य and we must lookup again.
+	 * retry, dst_vma will be set to NULL and we must lookup again.
 	 */
-	अगर (!dst_vma) अणु
+	if (!dst_vma) {
 		err = -ENOENT;
 		dst_vma = find_dst_vma(dst_mm, dst_start, len);
-		अगर (!dst_vma || !is_vm_hugetlb_page(dst_vma))
-			जाओ out_unlock;
+		if (!dst_vma || !is_vm_hugetlb_page(dst_vma))
+			goto out_unlock;
 
 		err = -EINVAL;
-		अगर (vma_hpagesize != vma_kernel_pagesize(dst_vma))
-			जाओ out_unlock;
+		if (vma_hpagesize != vma_kernel_pagesize(dst_vma))
+			goto out_unlock;
 
 		vm_shared = dst_vma->vm_flags & VM_SHARED;
-	पूर्ण
+	}
 
 	/*
 	 * If not shared, ensure the dst_vma has a anon_vma.
 	 */
 	err = -ENOMEM;
-	अगर (!vm_shared) अणु
-		अगर (unlikely(anon_vma_prepare(dst_vma)))
-			जाओ out_unlock;
-	पूर्ण
+	if (!vm_shared) {
+		if (unlikely(anon_vma_prepare(dst_vma)))
+			goto out_unlock;
+	}
 
-	जबतक (src_addr < src_start + len) अणु
+	while (src_addr < src_start + len) {
 		BUG_ON(dst_addr >= dst_start + len);
 
 		/*
 		 * Serialize via i_mmap_rwsem and hugetlb_fault_mutex.
-		 * i_mmap_rwsem ensures the dst_pte reमुख्यs valid even
-		 * in the हाल of shared pmds.  fault mutex prevents
-		 * races with other faulting thपढ़ोs.
+		 * i_mmap_rwsem ensures the dst_pte remains valid even
+		 * in the case of shared pmds.  fault mutex prevents
+		 * races with other faulting threads.
 		 */
 		mapping = dst_vma->vm_file->f_mapping;
-		i_mmap_lock_पढ़ो(mapping);
+		i_mmap_lock_read(mapping);
 		idx = linear_page_index(dst_vma, dst_addr);
 		hash = hugetlb_fault_mutex_hash(mapping, idx);
 		mutex_lock(&hugetlb_fault_mutex_table[hash]);
 
 		err = -ENOMEM;
 		dst_pte = huge_pte_alloc(dst_mm, dst_vma, dst_addr, vma_hpagesize);
-		अगर (!dst_pte) अणु
+		if (!dst_pte) {
 			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
-			i_mmap_unlock_पढ़ो(mapping);
-			जाओ out_unlock;
-		पूर्ण
+			i_mmap_unlock_read(mapping);
+			goto out_unlock;
+		}
 
-		अगर (mode != MCOPY_ATOMIC_CONTINUE &&
-		    !huge_pte_none(huge_ptep_get(dst_pte))) अणु
+		if (mode != MCOPY_ATOMIC_CONTINUE &&
+		    !huge_pte_none(huge_ptep_get(dst_pte))) {
 			err = -EEXIST;
 			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
-			i_mmap_unlock_पढ़ो(mapping);
-			जाओ out_unlock;
-		पूर्ण
+			i_mmap_unlock_read(mapping);
+			goto out_unlock;
+		}
 
 		err = hugetlb_mcopy_atomic_pte(dst_mm, dst_pte, dst_vma,
 					       dst_addr, src_addr, mode, &page);
 
 		mutex_unlock(&hugetlb_fault_mutex_table[hash]);
-		i_mmap_unlock_पढ़ो(mapping);
+		i_mmap_unlock_read(mapping);
 		vm_alloc_shared = vm_shared;
 
 		cond_resched();
 
-		अगर (unlikely(err == -ENOENT)) अणु
-			mmap_पढ़ो_unlock(dst_mm);
+		if (unlikely(err == -ENOENT)) {
+			mmap_read_unlock(dst_mm);
 			BUG_ON(!page);
 
 			err = copy_huge_page_from_user(page,
-						(स्थिर व्योम __user *)src_addr,
+						(const void __user *)src_addr,
 						vma_hpagesize / PAGE_SIZE,
 						true);
-			अगर (unlikely(err)) अणु
+			if (unlikely(err)) {
 				err = -EFAULT;
-				जाओ out;
-			पूर्ण
-			mmap_पढ़ो_lock(dst_mm);
+				goto out;
+			}
+			mmap_read_lock(dst_mm);
 
-			dst_vma = शून्य;
-			जाओ retry;
-		पूर्ण अन्यथा
+			dst_vma = NULL;
+			goto retry;
+		} else
 			BUG_ON(page);
 
-		अगर (!err) अणु
+		if (!err) {
 			dst_addr += vma_hpagesize;
 			src_addr += vma_hpagesize;
 			copied += vma_hpagesize;
 
-			अगर (fatal_संकेत_pending(current))
+			if (fatal_signal_pending(current))
 				err = -EINTR;
-		पूर्ण
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		}
+		if (err)
+			break;
+	}
 
 out_unlock:
-	mmap_पढ़ो_unlock(dst_mm);
+	mmap_read_unlock(dst_mm);
 out:
-	अगर (page) अणु
+	if (page) {
 		/*
-		 * We encountered an error and are about to मुक्त a newly
+		 * We encountered an error and are about to free a newly
 		 * allocated huge page.
 		 *
-		 * Reservation handling is very subtle, and is dअगरferent क्रम
-		 * निजी and shared mappings.  See the routine
-		 * restore_reserve_on_error क्रम details.  Unक्रमtunately, we
+		 * Reservation handling is very subtle, and is different for
+		 * private and shared mappings.  See the routine
+		 * restore_reserve_on_error for details.  Unfortunately, we
 		 * can not call restore_reserve_on_error now as it would
 		 * require holding mmap_lock.
 		 *
-		 * If a reservation क्रम the page existed in the reservation
-		 * map of a निजी mapping, the map was modअगरied to indicate
+		 * If a reservation for the page existed in the reservation
+		 * map of a private mapping, the map was modified to indicate
 		 * the reservation was consumed when the page was allocated.
 		 * We clear the HPageRestoreReserve flag now so that the global
-		 * reserve count will not be incremented in मुक्त_huge_page.
+		 * reserve count will not be incremented in free_huge_page.
 		 * The reservation map will still indicate the reservation
 		 * was consumed and possibly prevent later page allocation.
 		 * This is better than leaking a global reservation.  If no
 		 * reservation existed, it is still safe to clear
-		 * HPageRestoreReserve as no adjusपंचांगents to reservation counts
+		 * HPageRestoreReserve as no adjustments to reservation counts
 		 * were made during allocation.
 		 *
-		 * The reservation map क्रम shared mappings indicates which
+		 * The reservation map for shared mappings indicates which
 		 * pages have reservations.  When a huge page is allocated
-		 * क्रम an address with a reservation, no change is made to
-		 * the reserve map.  In this हाल HPageRestoreReserve will be
+		 * for an address with a reservation, no change is made to
+		 * the reserve map.  In this case HPageRestoreReserve will be
 		 * set to indicate that the global reservation count should be
-		 * incremented when the page is मुक्तd.  This is the desired
-		 * behavior.  However, when a huge page is allocated क्रम an
+		 * incremented when the page is freed.  This is the desired
+		 * behavior.  However, when a huge page is allocated for an
 		 * address without a reservation a reservation entry is added
 		 * to the reservation map, and HPageRestoreReserve will not be
-		 * set. When the page is मुक्तd, the global reserve count will
+		 * set. When the page is freed, the global reserve count will
 		 * NOT be incremented and it will appear as though we have
-		 * leaked reserved page.  In this हाल, set HPageRestoreReserve
+		 * leaked reserved page.  In this case, set HPageRestoreReserve
 		 * so that the global reserve count will be incremented to
 		 * match the reservation map entry which was created.
 		 *
 		 * Note that vm_alloc_shared is based on the flags of the vma
-		 * क्रम which the page was originally allocated.  dst_vma could
-		 * be dअगरferent or शून्य on error.
+		 * for which the page was originally allocated.  dst_vma could
+		 * be different or NULL on error.
 		 */
-		अगर (vm_alloc_shared)
+		if (vm_alloc_shared)
 			SetHPageRestoreReserve(page);
-		अन्यथा
+		else
 			ClearHPageRestoreReserve(page);
 		put_page(page);
-	पूर्ण
+	}
 	BUG_ON(copied < 0);
 	BUG_ON(err > 0);
 	BUG_ON(!copied && !err);
-	वापस copied ? copied : err;
-पूर्ण
-#अन्यथा /* !CONFIG_HUGETLB_PAGE */
-/* fail at build समय अगर gcc attempts to use this */
-बाह्य sमाप_प्रकार __mcopy_atomic_hugetlb(काष्ठा mm_काष्ठा *dst_mm,
-				      काष्ठा vm_area_काष्ठा *dst_vma,
-				      अचिन्हित दीर्घ dst_start,
-				      अचिन्हित दीर्घ src_start,
-				      अचिन्हित दीर्घ len,
-				      क्रमागत mcopy_atomic_mode mode);
-#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
+	return copied ? copied : err;
+}
+#else /* !CONFIG_HUGETLB_PAGE */
+/* fail at build time if gcc attempts to use this */
+extern ssize_t __mcopy_atomic_hugetlb(struct mm_struct *dst_mm,
+				      struct vm_area_struct *dst_vma,
+				      unsigned long dst_start,
+				      unsigned long src_start,
+				      unsigned long len,
+				      enum mcopy_atomic_mode mode);
+#endif /* CONFIG_HUGETLB_PAGE */
 
-अटल __always_अंतरभूत sमाप_प्रकार mfill_atomic_pte(काष्ठा mm_काष्ठा *dst_mm,
+static __always_inline ssize_t mfill_atomic_pte(struct mm_struct *dst_mm,
 						pmd_t *dst_pmd,
-						काष्ठा vm_area_काष्ठा *dst_vma,
-						अचिन्हित दीर्घ dst_addr,
-						अचिन्हित दीर्घ src_addr,
-						काष्ठा page **page,
+						struct vm_area_struct *dst_vma,
+						unsigned long dst_addr,
+						unsigned long src_addr,
+						struct page **page,
 						bool zeropage,
 						bool wp_copy)
-अणु
-	sमाप_प्रकार err;
+{
+	ssize_t err;
 
 	/*
-	 * The normal page fault path क्रम a shmem will invoke the
+	 * The normal page fault path for a shmem will invoke the
 	 * fault, fill the hole in the file and COW it right away. The
 	 * result generates plain anonymous memory. So when we are
 	 * asked to fill an hole in a MAP_PRIVATE shmem mapping, we'll
 	 * generate anonymous memory directly without actually filling
-	 * the hole. For the MAP_PRIVATE हाल the robustness check
-	 * only happens in the pagetable (to verअगरy it's still none)
+	 * the hole. For the MAP_PRIVATE case the robustness check
+	 * only happens in the pagetable (to verify it's still none)
 	 * and not in the radix tree.
 	 */
-	अगर (!(dst_vma->vm_flags & VM_SHARED)) अणु
-		अगर (!zeropage)
+	if (!(dst_vma->vm_flags & VM_SHARED)) {
+		if (!zeropage)
 			err = mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
 					       dst_addr, src_addr, page,
 					       wp_copy);
-		अन्यथा
+		else
 			err = mfill_zeropage_pte(dst_mm, dst_pmd,
 						 dst_vma, dst_addr);
-	पूर्ण अन्यथा अणु
+	} else {
 		VM_WARN_ON_ONCE(wp_copy);
-		अगर (!zeropage)
+		if (!zeropage)
 			err = shmem_mcopy_atomic_pte(dst_mm, dst_pmd,
 						     dst_vma, dst_addr,
 						     src_addr, page);
-		अन्यथा
+		else
 			err = shmem_mfill_zeropage_pte(dst_mm, dst_pmd,
 						       dst_vma, dst_addr);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल __always_अंतरभूत sमाप_प्रकार __mcopy_atomic(काष्ठा mm_काष्ठा *dst_mm,
-					      अचिन्हित दीर्घ dst_start,
-					      अचिन्हित दीर्घ src_start,
-					      अचिन्हित दीर्घ len,
-					      क्रमागत mcopy_atomic_mode mcopy_mode,
+static __always_inline ssize_t __mcopy_atomic(struct mm_struct *dst_mm,
+					      unsigned long dst_start,
+					      unsigned long src_start,
+					      unsigned long len,
+					      enum mcopy_atomic_mode mcopy_mode,
 					      bool *mmap_changing,
 					      __u64 mode)
-अणु
-	काष्ठा vm_area_काष्ठा *dst_vma;
-	sमाप_प्रकार err;
+{
+	struct vm_area_struct *dst_vma;
+	ssize_t err;
 	pmd_t *dst_pmd;
-	अचिन्हित दीर्घ src_addr, dst_addr;
-	दीर्घ copied;
-	काष्ठा page *page;
+	unsigned long src_addr, dst_addr;
+	long copied;
+	struct page *page;
 	bool wp_copy;
 	bool zeropage = (mcopy_mode == MCOPY_ATOMIC_ZEROPAGE);
 
@@ -483,9 +482,9 @@ out:
 	src_addr = src_start;
 	dst_addr = dst_start;
 	copied = 0;
-	page = शून्य;
+	page = NULL;
 retry:
-	mmap_पढ़ो_lock(dst_mm);
+	mmap_read_lock(dst_mm);
 
 	/*
 	 * If memory mappings are changing because of non-cooperative
@@ -493,8 +492,8 @@ retry:
 	 * request the user to retry later
 	 */
 	err = -EAGAIN;
-	अगर (mmap_changing && READ_ONCE(*mmap_changing))
-		जाओ out_unlock;
+	if (mmap_changing && READ_ONCE(*mmap_changing))
+		goto out_unlock;
 
 	/*
 	 * Make sure the vma is not shared, that the dst range is
@@ -502,78 +501,78 @@ retry:
 	 */
 	err = -ENOENT;
 	dst_vma = find_dst_vma(dst_mm, dst_start, len);
-	अगर (!dst_vma)
-		जाओ out_unlock;
+	if (!dst_vma)
+		goto out_unlock;
 
 	err = -EINVAL;
 	/*
-	 * shmem_zero_setup is invoked in mmap क्रम MAP_ANONYMOUS|MAP_SHARED but
-	 * it will overग_लिखो vm_ops, so vma_is_anonymous must वापस false.
+	 * shmem_zero_setup is invoked in mmap for MAP_ANONYMOUS|MAP_SHARED but
+	 * it will overwrite vm_ops, so vma_is_anonymous must return false.
 	 */
-	अगर (WARN_ON_ONCE(vma_is_anonymous(dst_vma) &&
+	if (WARN_ON_ONCE(vma_is_anonymous(dst_vma) &&
 	    dst_vma->vm_flags & VM_SHARED))
-		जाओ out_unlock;
+		goto out_unlock;
 
 	/*
 	 * validate 'mode' now that we know the dst_vma: don't allow
-	 * a wrprotect copy अगर the userfaultfd didn't रेजिस्टर as WP.
+	 * a wrprotect copy if the userfaultfd didn't register as WP.
 	 */
 	wp_copy = mode & UFFDIO_COPY_MODE_WP;
-	अगर (wp_copy && !(dst_vma->vm_flags & VM_UFFD_WP))
-		जाओ out_unlock;
+	if (wp_copy && !(dst_vma->vm_flags & VM_UFFD_WP))
+		goto out_unlock;
 
 	/*
 	 * If this is a HUGETLB vma, pass off to appropriate routine
 	 */
-	अगर (is_vm_hugetlb_page(dst_vma))
-		वापस  __mcopy_atomic_hugetlb(dst_mm, dst_vma, dst_start,
+	if (is_vm_hugetlb_page(dst_vma))
+		return  __mcopy_atomic_hugetlb(dst_mm, dst_vma, dst_start,
 						src_start, len, mcopy_mode);
 
-	अगर (!vma_is_anonymous(dst_vma) && !vma_is_shmem(dst_vma))
-		जाओ out_unlock;
-	अगर (mcopy_mode == MCOPY_ATOMIC_CONTINUE)
-		जाओ out_unlock;
+	if (!vma_is_anonymous(dst_vma) && !vma_is_shmem(dst_vma))
+		goto out_unlock;
+	if (mcopy_mode == MCOPY_ATOMIC_CONTINUE)
+		goto out_unlock;
 
 	/*
 	 * Ensure the dst_vma has a anon_vma or this page
-	 * would get a शून्य anon_vma when moved in the
+	 * would get a NULL anon_vma when moved in the
 	 * dst_vma.
 	 */
 	err = -ENOMEM;
-	अगर (!(dst_vma->vm_flags & VM_SHARED) &&
+	if (!(dst_vma->vm_flags & VM_SHARED) &&
 	    unlikely(anon_vma_prepare(dst_vma)))
-		जाओ out_unlock;
+		goto out_unlock;
 
-	जबतक (src_addr < src_start + len) अणु
+	while (src_addr < src_start + len) {
 		pmd_t dst_pmdval;
 
 		BUG_ON(dst_addr >= dst_start + len);
 
 		dst_pmd = mm_alloc_pmd(dst_mm, dst_addr);
-		अगर (unlikely(!dst_pmd)) अणु
+		if (unlikely(!dst_pmd)) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		dst_pmdval = pmd_पढ़ो_atomic(dst_pmd);
+		dst_pmdval = pmd_read_atomic(dst_pmd);
 		/*
-		 * If the dst_pmd is mapped as THP करोn't
+		 * If the dst_pmd is mapped as THP don't
 		 * override it and just be strict.
 		 */
-		अगर (unlikely(pmd_trans_huge(dst_pmdval))) अणु
+		if (unlikely(pmd_trans_huge(dst_pmdval))) {
 			err = -EEXIST;
-			अवरोध;
-		पूर्ण
-		अगर (unlikely(pmd_none(dst_pmdval)) &&
-		    unlikely(__pte_alloc(dst_mm, dst_pmd))) अणु
+			break;
+		}
+		if (unlikely(pmd_none(dst_pmdval)) &&
+		    unlikely(__pte_alloc(dst_mm, dst_pmd))) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* If an huge pmd materialized from under us fail */
-		अगर (unlikely(pmd_trans_huge(*dst_pmd))) अणु
+		if (unlikely(pmd_trans_huge(*dst_pmd))) {
 			err = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		BUG_ON(pmd_none(*dst_pmd));
 		BUG_ON(pmd_trans_huge(*dst_pmd));
@@ -582,76 +581,76 @@ retry:
 				       src_addr, &page, zeropage, wp_copy);
 		cond_resched();
 
-		अगर (unlikely(err == -ENOENT)) अणु
-			व्योम *page_kaddr;
+		if (unlikely(err == -ENOENT)) {
+			void *page_kaddr;
 
-			mmap_पढ़ो_unlock(dst_mm);
+			mmap_read_unlock(dst_mm);
 			BUG_ON(!page);
 
 			page_kaddr = kmap(page);
 			err = copy_from_user(page_kaddr,
-					     (स्थिर व्योम __user *) src_addr,
+					     (const void __user *) src_addr,
 					     PAGE_SIZE);
 			kunmap(page);
-			अगर (unlikely(err)) अणु
+			if (unlikely(err)) {
 				err = -EFAULT;
-				जाओ out;
-			पूर्ण
-			जाओ retry;
-		पूर्ण अन्यथा
+				goto out;
+			}
+			goto retry;
+		} else
 			BUG_ON(page);
 
-		अगर (!err) अणु
+		if (!err) {
 			dst_addr += PAGE_SIZE;
 			src_addr += PAGE_SIZE;
 			copied += PAGE_SIZE;
 
-			अगर (fatal_संकेत_pending(current))
+			if (fatal_signal_pending(current))
 				err = -EINTR;
-		पूर्ण
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		}
+		if (err)
+			break;
+	}
 
 out_unlock:
-	mmap_पढ़ो_unlock(dst_mm);
+	mmap_read_unlock(dst_mm);
 out:
-	अगर (page)
+	if (page)
 		put_page(page);
 	BUG_ON(copied < 0);
 	BUG_ON(err > 0);
 	BUG_ON(!copied && !err);
-	वापस copied ? copied : err;
-पूर्ण
+	return copied ? copied : err;
+}
 
-sमाप_प्रकार mcopy_atomic(काष्ठा mm_काष्ठा *dst_mm, अचिन्हित दीर्घ dst_start,
-		     अचिन्हित दीर्घ src_start, अचिन्हित दीर्घ len,
+ssize_t mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
+		     unsigned long src_start, unsigned long len,
 		     bool *mmap_changing, __u64 mode)
-अणु
-	वापस __mcopy_atomic(dst_mm, dst_start, src_start, len,
+{
+	return __mcopy_atomic(dst_mm, dst_start, src_start, len,
 			      MCOPY_ATOMIC_NORMAL, mmap_changing, mode);
-पूर्ण
+}
 
-sमाप_प्रकार mfill_zeropage(काष्ठा mm_काष्ठा *dst_mm, अचिन्हित दीर्घ start,
-		       अचिन्हित दीर्घ len, bool *mmap_changing)
-अणु
-	वापस __mcopy_atomic(dst_mm, start, 0, len, MCOPY_ATOMIC_ZEROPAGE,
+ssize_t mfill_zeropage(struct mm_struct *dst_mm, unsigned long start,
+		       unsigned long len, bool *mmap_changing)
+{
+	return __mcopy_atomic(dst_mm, start, 0, len, MCOPY_ATOMIC_ZEROPAGE,
 			      mmap_changing, 0);
-पूर्ण
+}
 
-sमाप_प्रकार mcopy_जारी(काष्ठा mm_काष्ठा *dst_mm, अचिन्हित दीर्घ start,
-		       अचिन्हित दीर्घ len, bool *mmap_changing)
-अणु
-	वापस __mcopy_atomic(dst_mm, start, 0, len, MCOPY_ATOMIC_CONTINUE,
+ssize_t mcopy_continue(struct mm_struct *dst_mm, unsigned long start,
+		       unsigned long len, bool *mmap_changing)
+{
+	return __mcopy_atomic(dst_mm, start, 0, len, MCOPY_ATOMIC_CONTINUE,
 			      mmap_changing, 0);
-पूर्ण
+}
 
-पूर्णांक mग_लिखोprotect_range(काष्ठा mm_काष्ठा *dst_mm, अचिन्हित दीर्घ start,
-			अचिन्हित दीर्घ len, bool enable_wp, bool *mmap_changing)
-अणु
-	काष्ठा vm_area_काष्ठा *dst_vma;
+int mwriteprotect_range(struct mm_struct *dst_mm, unsigned long start,
+			unsigned long len, bool enable_wp, bool *mmap_changing)
+{
+	struct vm_area_struct *dst_vma;
 	pgprot_t newprot;
-	पूर्णांक err;
+	int err;
 
 	/*
 	 * Sanitize the command parameters:
@@ -662,7 +661,7 @@ sमाप_प्रकार mcopy_जारी(काष्ठा mm_काष
 	/* Does the address range wrap, or is the span zero-sized? */
 	BUG_ON(start + len <= start);
 
-	mmap_पढ़ो_lock(dst_mm);
+	mmap_read_lock(dst_mm);
 
 	/*
 	 * If memory mappings are changing because of non-cooperative
@@ -670,8 +669,8 @@ sमाप_प्रकार mcopy_जारी(काष्ठा mm_काष
 	 * request the user to retry later
 	 */
 	err = -EAGAIN;
-	अगर (mmap_changing && READ_ONCE(*mmap_changing))
-		जाओ out_unlock;
+	if (mmap_changing && READ_ONCE(*mmap_changing))
+		goto out_unlock;
 
 	err = -ENOENT;
 	dst_vma = find_dst_vma(dst_mm, start, len);
@@ -679,16 +678,16 @@ sमाप_प्रकार mcopy_जारी(काष्ठा mm_काष
 	 * Make sure the vma is not shared, that the dst range is
 	 * both valid and fully within a single existing vma.
 	 */
-	अगर (!dst_vma || (dst_vma->vm_flags & VM_SHARED))
-		जाओ out_unlock;
-	अगर (!userfaultfd_wp(dst_vma))
-		जाओ out_unlock;
-	अगर (!vma_is_anonymous(dst_vma))
-		जाओ out_unlock;
+	if (!dst_vma || (dst_vma->vm_flags & VM_SHARED))
+		goto out_unlock;
+	if (!userfaultfd_wp(dst_vma))
+		goto out_unlock;
+	if (!vma_is_anonymous(dst_vma))
+		goto out_unlock;
 
-	अगर (enable_wp)
+	if (enable_wp)
 		newprot = vm_get_page_prot(dst_vma->vm_flags & ~(VM_WRITE));
-	अन्यथा
+	else
 		newprot = vm_get_page_prot(dst_vma->vm_flags);
 
 	change_protection(dst_vma, start, start + len, newprot,
@@ -696,6 +695,6 @@ sमाप_प्रकार mcopy_जारी(काष्ठा mm_काष
 
 	err = 0;
 out_unlock:
-	mmap_पढ़ो_unlock(dst_mm);
-	वापस err;
-पूर्ण
+	mmap_read_unlock(dst_mm);
+	return err;
+}

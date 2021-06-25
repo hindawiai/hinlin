@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/tavorevb.c
  *
- *  Support क्रम the Marvell PXA930 Evaluation Board
+ *  Support for the Marvell PXA930 Evaluation Board
  *
  *  Copyright (C) 2007-2008 Marvell International Ltd.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/smc91x.h>
-#समावेश <linux/pwm.h>
-#समावेश <linux/pwm_backlight.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/gpio.h>
+#include <linux/smc91x.h>
+#include <linux/pwm.h>
+#include <linux/pwm_backlight.h>
 
-#समावेश <यंत्र/mach-types.h>
-#समावेश <यंत्र/mach/arch.h>
+#include <asm/mach-types.h>
+#include <asm/mach/arch.h>
 
-#समावेश "pxa930.h"
-#समावेश <linux/platक्रमm_data/video-pxafb.h>
-#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#include "pxa930.h"
+#include <linux/platform_data/video-pxafb.h>
+#include <linux/platform_data/keypad-pxa27x.h>
 
-#समावेश "devices.h"
-#समावेश "generic.h"
+#include "devices.h"
+#include "generic.h"
 
 /* Tavor EVB MFP configurations */
-अटल mfp_cfg_t tavorevb_mfp_cfg[] __initdata = अणु
+static mfp_cfg_t tavorevb_mfp_cfg[] __initdata = {
 	/* Ethernet */
 	DF_nCS1_nCS3,
 	GPIO47_GPIO,
@@ -73,39 +72,39 @@
 
 	GPIO14_KP_DKIN_2,
 	GPIO15_KP_DKIN_3,
-पूर्ण;
+};
 
-#घोषणा TAVOREVB_ETH_PHYS	(0x14000000)
+#define TAVOREVB_ETH_PHYS	(0x14000000)
 
-अटल काष्ठा resource smc91x_resources[] = अणु
-	[0] = अणु
+static struct resource smc91x_resources[] = {
+	[0] = {
 		.start	= (TAVOREVB_ETH_PHYS + 0x300),
 		.end	= (TAVOREVB_ETH_PHYS + 0xfffff),
 		.flags	= IORESOURCE_MEM,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		.start	= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO47)),
 		.end	= PXA_GPIO_TO_IRQ(mfp_to_gpio(MFP_PIN_GPIO47)),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा smc91x_platdata tavorevb_smc91x_info = अणु
+static struct smc91x_platdata tavorevb_smc91x_info = {
 	.flags	= SMC91X_USE_16BIT | SMC91X_NOWAIT | SMC91X_USE_DMA,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device smc91x_device = अणु
+static struct platform_device smc91x_device = {
 	.name		= "smc91x",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-	.dev		= अणु
-		.platक्रमm_data = &tavorevb_smc91x_info,
-	पूर्ण,
-पूर्ण;
+	.dev		= {
+		.platform_data = &tavorevb_smc91x_info,
+	},
+};
 
-#अगर defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
-अटल स्थिर अचिन्हित पूर्णांक tavorevb_matrix_key_map[] = अणु
+#if defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
+static const unsigned int tavorevb_matrix_key_map[] = {
 	/* KEY(row, col, key_code) */
 	KEY(0, 4, KEY_A), KEY(0, 5, KEY_B), KEY(0, 6, KEY_C),
 	KEY(1, 4, KEY_E), KEY(1, 5, KEY_F), KEY(1, 6, KEY_G),
@@ -144,67 +143,67 @@
 
 	KEY(3, 0, KEY_F22),	/* soft1 */
 	KEY(3, 3, KEY_F23),	/* soft2 */
-पूर्ण;
+};
 
-अटल काष्ठा matrix_keymap_data tavorevb_matrix_keymap_data = अणु
+static struct matrix_keymap_data tavorevb_matrix_keymap_data = {
 	.keymap		= tavorevb_matrix_key_map,
 	.keymap_size	= ARRAY_SIZE(tavorevb_matrix_key_map),
-पूर्ण;
+};
 
-अटल काष्ठा pxa27x_keypad_platक्रमm_data tavorevb_keypad_info = अणु
+static struct pxa27x_keypad_platform_data tavorevb_keypad_info = {
 	.matrix_key_rows	= 7,
 	.matrix_key_cols	= 7,
 	.matrix_keymap_data	= &tavorevb_matrix_keymap_data,
-	.debounce_पूर्णांकerval	= 30,
-पूर्ण;
+	.debounce_interval	= 30,
+};
 
-अटल व्योम __init tavorevb_init_keypad(व्योम)
-अणु
+static void __init tavorevb_init_keypad(void)
+{
 	pxa_set_keypad_info(&tavorevb_keypad_info);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम tavorevb_init_keypad(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_KEYBOARD_PXA27x || CONFIG_KEYBOARD_PXA27x_MODULE */
+}
+#else
+static inline void tavorevb_init_keypad(void) {}
+#endif /* CONFIG_KEYBOARD_PXA27x || CONFIG_KEYBOARD_PXA27x_MODULE */
 
-#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-अटल काष्ठा pwm_lookup tavorevb_pwm_lookup[] = अणु
-	PWM_LOOKUP("pxa27x-pwm.0", 1, "pwm-backlight.0", शून्य, 100000,
+#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+static struct pwm_lookup tavorevb_pwm_lookup[] = {
+	PWM_LOOKUP("pxa27x-pwm.0", 1, "pwm-backlight.0", NULL, 100000,
 		   PWM_POLARITY_NORMAL),
-	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight.1", शून्य, 100000,
+	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight.1", NULL, 100000,
 		   PWM_POLARITY_NORMAL),
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_pwm_backlight_data tavorevb_backlight_data[] = अणु
-	[0] = अणु
+static struct platform_pwm_backlight_data tavorevb_backlight_data[] = {
+	[0] = {
 		/* primary backlight */
 		.max_brightness	= 100,
 		.dft_brightness	= 100,
-	पूर्ण,
-	[1] = अणु
+	},
+	[1] = {
 		/* secondary backlight */
 		.max_brightness	= 100,
 		.dft_brightness	= 100,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device tavorevb_backlight_devices[] = अणु
-	[0] = अणु
+static struct platform_device tavorevb_backlight_devices[] = {
+	[0] = {
 		.name		= "pwm-backlight",
 		.id		= 0,
-		.dev		= अणु
-			.platक्रमm_data = &tavorevb_backlight_data[0],
-		पूर्ण,
-	पूर्ण,
-	[1] = अणु
+		.dev		= {
+			.platform_data = &tavorevb_backlight_data[0],
+		},
+	},
+	[1] = {
 		.name		= "pwm-backlight",
 		.id		= 1,
-		.dev		= अणु
-			.platक्रमm_data = &tavorevb_backlight_data[1],
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		.dev		= {
+			.platform_data = &tavorevb_backlight_data[1],
+		},
+	},
+};
 
-अटल uपूर्णांक16_t panel_init[] = अणु
+static uint16_t panel_init[] = {
 	/* DSTB OUT */
 	SMART_CMD(0x00),
 	SMART_CMD_NOOP,
@@ -231,7 +230,7 @@
 	SMART_DAT(0x00),
 	SMART_DAT(0x01),
 	SMART_CMD(0x00),
-	SMART_CMD(0x01), /* SOURCE DRIVER SHIFT सूचीECTION and display RAM setting */
+	SMART_CMD(0x01), /* SOURCE DRIVER SHIFT DIRECTION and display RAM setting */
 	SMART_DAT(0x01),
 	SMART_DAT(0x27),
 	SMART_CMD(0x00),
@@ -240,7 +239,7 @@
 	SMART_DAT(0x00),
 	SMART_CMD(0x00),
 	SMART_CMD(0x03), /* IF mode(1) */
-	SMART_DAT(0x01), /* 8bit smart mode(8-8),high speed ग_लिखो mode */
+	SMART_DAT(0x01), /* 8bit smart mode(8-8),high speed write mode */
 	SMART_DAT(0x30),
 	SMART_CMD(0x07),
 	SMART_CMD(0x00), /* RAM Write Mode */
@@ -257,7 +256,7 @@
 	SMART_DAT(0x03),
 	SMART_DAT(0x02),
 	SMART_CMD(0x00),
-	SMART_CMD(0x0C), /* IF mode(2), using पूर्णांकernal घड़ी & MPU */
+	SMART_CMD(0x0C), /* IF mode(2), using internal clock & MPU */
 	SMART_DAT(0x00),
 	SMART_DAT(0x00),
 	SMART_CMD(0x00),
@@ -343,9 +342,9 @@
 	SMART_CMD(0x01),
 	SMART_DAT(0x00), /* y1, 22 */
 	SMART_DAT(0x00), /* y1, 23 */
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t panel_on[] = अणु
+static uint16_t panel_on[] = {
 	/* Power-IC ON */
 	SMART_CMD(0x01),
 	SMART_CMD(0x02),
@@ -379,9 +378,9 @@
 	SMART_DAT(0xFF),
 	SMART_DAT(0xFE),
 	SMART_DELAY(150),
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t panel_off[] = अणु
+static uint16_t panel_off[] = {
 	SMART_CMD(0x00),
 	SMART_CMD(0x1E),
 	SMART_DAT(0x00),
@@ -410,40 +409,40 @@
 	SMART_CMD(0x00),
 	SMART_DAT(0x00),
 	SMART_DAT(0x10),
-पूर्ण;
+};
 
-अटल uपूर्णांक16_t update_framedata[] = अणु
-	/* ग_लिखो ram */
+static uint16_t update_framedata[] = {
+	/* write ram */
 	SMART_CMD(0x02),
 	SMART_CMD(0x02),
 
-	/* ग_लिखो frame data */
+	/* write frame data */
 	SMART_CMD_WRITE_FRAME,
-पूर्ण;
+};
 
-अटल व्योम lपंचांग020d550_lcd_घातer(पूर्णांक on, काष्ठा fb_var_screeninfo *var)
-अणु
-	काष्ठा fb_info *info = container_of(var, काष्ठा fb_info, var);
+static void ltm020d550_lcd_power(int on, struct fb_var_screeninfo *var)
+{
+	struct fb_info *info = container_of(var, struct fb_info, var);
 
-	अगर (on) अणु
+	if (on) {
 		pxafb_smart_queue(info, ARRAY_AND_SIZE(panel_init));
 		pxafb_smart_queue(info, ARRAY_AND_SIZE(panel_on));
-	पूर्ण अन्यथा अणु
+	} else {
 		pxafb_smart_queue(info, ARRAY_AND_SIZE(panel_off));
-	पूर्ण
+	}
 
-	अगर (pxafb_smart_flush(info))
+	if (pxafb_smart_flush(info))
 		pr_err("%s: timed out\n", __func__);
-पूर्ण
+}
 
-अटल व्योम lपंचांग020d550_update(काष्ठा fb_info *info)
-अणु
+static void ltm020d550_update(struct fb_info *info)
+{
 	pxafb_smart_queue(info, ARRAY_AND_SIZE(update_framedata));
 	pxafb_smart_flush(info);
-पूर्ण
+}
 
-अटल काष्ठा pxafb_mode_info toshiba_lपंचांग020d550_modes[] = अणु
-	[0] = अणु
+static struct pxafb_mode_info toshiba_ltm020d550_modes[] = {
+	[0] = {
 		.xres			= 240,
 		.yres			= 320,
 		.bpp			= 16,
@@ -451,57 +450,57 @@
 		.a0cswr_set_hld		= 30,
 		.wr_pulse_width		= 30,
 		.rd_pulse_width 	= 170,
-		.op_hold_समय 		= 30,
-		.cmd_inh_समय		= 60,
+		.op_hold_time 		= 30,
+		.cmd_inh_time		= 60,
 
 		/* L_LCLK_A0 and L_LCLK_RD active low */
 		.sync			= FB_SYNC_HOR_HIGH_ACT |
 					  FB_SYNC_VERT_HIGH_ACT,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा pxafb_mach_info tavorevb_lcd_info = अणु
-	.modes			= toshiba_lपंचांग020d550_modes,
+static struct pxafb_mach_info tavorevb_lcd_info = {
+	.modes			= toshiba_ltm020d550_modes,
 	.num_modes		= 1,
 	.lcd_conn		= LCD_SMART_PANEL_8BPP | LCD_PCLK_EDGE_FALL,
-	.pxafb_lcd_घातer	= lपंचांग020d550_lcd_घातer,
-	.smart_update		= lपंचांग020d550_update,
-पूर्ण;
+	.pxafb_lcd_power	= ltm020d550_lcd_power,
+	.smart_update		= ltm020d550_update,
+};
 
-अटल व्योम __init tavorevb_init_lcd(व्योम)
-अणु
+static void __init tavorevb_init_lcd(void)
+{
 	pwm_add_table(tavorevb_pwm_lookup, ARRAY_SIZE(tavorevb_pwm_lookup));
-	platक्रमm_device_रेजिस्टर(&tavorevb_backlight_devices[0]);
-	platक्रमm_device_रेजिस्टर(&tavorevb_backlight_devices[1]);
-	pxa_set_fb_info(शून्य, &tavorevb_lcd_info);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम tavorevb_init_lcd(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_FB_PXA || CONFIG_FB_PXA_MODULE */
+	platform_device_register(&tavorevb_backlight_devices[0]);
+	platform_device_register(&tavorevb_backlight_devices[1]);
+	pxa_set_fb_info(NULL, &tavorevb_lcd_info);
+}
+#else
+static inline void tavorevb_init_lcd(void) {}
+#endif /* CONFIG_FB_PXA || CONFIG_FB_PXA_MODULE */
 
-अटल व्योम __init tavorevb_init(व्योम)
-अणु
+static void __init tavorevb_init(void)
+{
 	/* initialize MFP configurations */
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(tavorevb_mfp_cfg));
 
-	pxa_set_ffuart_info(शून्य);
-	pxa_set_btuart_info(शून्य);
-	pxa_set_stuart_info(शून्य);
+	pxa_set_ffuart_info(NULL);
+	pxa_set_btuart_info(NULL);
+	pxa_set_stuart_info(NULL);
 
-	platक्रमm_device_रेजिस्टर(&smc91x_device);
+	platform_device_register(&smc91x_device);
 
 	tavorevb_init_lcd();
 	tavorevb_init_keypad();
-पूर्ण
+}
 
 MACHINE_START(TAVOREVB, "PXA930 Evaluation Board (aka TavorEVB)")
-	/* Maपूर्णांकainer: Eric Miao <eric.miao@marvell.com> */
+	/* Maintainer: Eric Miao <eric.miao@marvell.com> */
 	.atag_offset    = 0x100,
 	.map_io         = pxa3xx_map_io,
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq       = pxa3xx_init_irq,
 	.handle_irq       = pxa3xx_handle_irq,
-	.init_समय	= pxa_समयr_init,
+	.init_time	= pxa_timer_init,
 	.init_machine   = tavorevb_init,
 	.restart	= pxa_restart,
 MACHINE_END

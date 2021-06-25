@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Zoran 364xx based USB webcam module version 0.73
  *
@@ -16,278 +15,278 @@
  */
 
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <media/v4l2-common.h>
-#समावेश <media/v4l2-ioctl.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-event.h>
-#समावेश <media/videobuf-vदो_स्मृति.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/usb.h>
+#include <linux/vmalloc.h>
+#include <linux/slab.h>
+#include <linux/highmem.h>
+#include <media/v4l2-common.h>
+#include <media/v4l2-ioctl.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-event.h>
+#include <media/videobuf-vmalloc.h>
 
 
-/* Version Inक्रमmation */
-#घोषणा DRIVER_VERSION "0.7.4"
-#घोषणा DRIVER_AUTHOR "Antoine Jacquet, http://royale.zerezo.com/"
-#घोषणा DRIVER_DESC "Zoran 364xx"
+/* Version Information */
+#define DRIVER_VERSION "0.7.4"
+#define DRIVER_AUTHOR "Antoine Jacquet, http://royale.zerezo.com/"
+#define DRIVER_DESC "Zoran 364xx"
 
 
 /* Camera */
-#घोषणा FRAMES 1
-#घोषणा MAX_FRAME_SIZE 200000
-#घोषणा BUFFER_SIZE 0x1000
-#घोषणा CTRL_TIMEOUT 500
+#define FRAMES 1
+#define MAX_FRAME_SIZE 200000
+#define BUFFER_SIZE 0x1000
+#define CTRL_TIMEOUT 500
 
-#घोषणा ZR364XX_DEF_BUFS	4
-#घोषणा ZR364XX_READ_IDLE	0
-#घोषणा ZR364XX_READ_FRAME	1
+#define ZR364XX_DEF_BUFS	4
+#define ZR364XX_READ_IDLE	0
+#define ZR364XX_READ_FRAME	1
 
 /* Debug macro */
-#घोषणा DBG(fmt, args...) \
-	करो अणु \
-		अगर (debug) अणु \
-			prपूर्णांकk(KERN_INFO KBUILD_MODNAME " " fmt, ##args); \
-		पूर्ण \
-	पूर्ण जबतक (0)
+#define DBG(fmt, args...) \
+	do { \
+		if (debug) { \
+			printk(KERN_INFO KBUILD_MODNAME " " fmt, ##args); \
+		} \
+	} while (0)
 
-/*#घोषणा FULL_DEBUG 1*/
-#अगर_घोषित FULL_DEBUG
-#घोषणा _DBG DBG
-#अन्यथा
-#घोषणा _DBG(fmt, args...)
-#पूर्ण_अगर
+/*#define FULL_DEBUG 1*/
+#ifdef FULL_DEBUG
+#define _DBG DBG
+#else
+#define _DBG(fmt, args...)
+#endif
 
-/* Init methods, need to find nicer names क्रम these
- * the exact names of the chipsets would be the best अगर someone finds it */
-#घोषणा METHOD0 0
-#घोषणा METHOD1 1
-#घोषणा METHOD2 2
-#घोषणा METHOD3 3
+/* Init methods, need to find nicer names for these
+ * the exact names of the chipsets would be the best if someone finds it */
+#define METHOD0 0
+#define METHOD1 1
+#define METHOD2 2
+#define METHOD3 3
 
 
 /* Module parameters */
-अटल पूर्णांक debug;
-अटल पूर्णांक mode;
+static int debug;
+static int mode;
 
 
-/* Module parameters पूर्णांकerface */
-module_param(debug, पूर्णांक, 0644);
+/* Module parameters interface */
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "Debug level");
-module_param(mode, पूर्णांक, 0644);
+module_param(mode, int, 0644);
 MODULE_PARM_DESC(mode, "0 = 320x240, 1 = 160x120, 2 = 640x480");
 
 
 /* Devices supported by this driver
  * .driver_info contains the init method used by the camera */
-अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
-	अणुUSB_DEVICE(0x08ca, 0x0109), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x041e, 0x4024), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0d64, 0x0108), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0546, 0x3187), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0d64, 0x3108), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0595, 0x4343), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0bb0, 0x500d), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0feb, 0x2004), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x055f, 0xb500), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x08ca, 0x2062), .driver_info = METHOD2 पूर्ण,
-	अणुUSB_DEVICE(0x052b, 0x1a18), .driver_info = METHOD1 पूर्ण,
-	अणुUSB_DEVICE(0x04c8, 0x0729), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x04f2, 0xa208), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0784, 0x0040), .driver_info = METHOD1 पूर्ण,
-	अणुUSB_DEVICE(0x06d6, 0x0034), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0a17, 0x0062), .driver_info = METHOD2 पूर्ण,
-	अणुUSB_DEVICE(0x06d6, 0x003b), .driver_info = METHOD0 पूर्ण,
-	अणुUSB_DEVICE(0x0a17, 0x004e), .driver_info = METHOD2 पूर्ण,
-	अणुUSB_DEVICE(0x041e, 0x405d), .driver_info = METHOD2 पूर्ण,
-	अणुUSB_DEVICE(0x08ca, 0x2102), .driver_info = METHOD3 पूर्ण,
-	अणुUSB_DEVICE(0x06d6, 0x003d), .driver_info = METHOD0 पूर्ण,
-	अणुपूर्ण			/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id device_table[] = {
+	{USB_DEVICE(0x08ca, 0x0109), .driver_info = METHOD0 },
+	{USB_DEVICE(0x041e, 0x4024), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0d64, 0x0108), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0546, 0x3187), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0d64, 0x3108), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0595, 0x4343), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0bb0, 0x500d), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0feb, 0x2004), .driver_info = METHOD0 },
+	{USB_DEVICE(0x055f, 0xb500), .driver_info = METHOD0 },
+	{USB_DEVICE(0x08ca, 0x2062), .driver_info = METHOD2 },
+	{USB_DEVICE(0x052b, 0x1a18), .driver_info = METHOD1 },
+	{USB_DEVICE(0x04c8, 0x0729), .driver_info = METHOD0 },
+	{USB_DEVICE(0x04f2, 0xa208), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0784, 0x0040), .driver_info = METHOD1 },
+	{USB_DEVICE(0x06d6, 0x0034), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0a17, 0x0062), .driver_info = METHOD2 },
+	{USB_DEVICE(0x06d6, 0x003b), .driver_info = METHOD0 },
+	{USB_DEVICE(0x0a17, 0x004e), .driver_info = METHOD2 },
+	{USB_DEVICE(0x041e, 0x405d), .driver_info = METHOD2 },
+	{USB_DEVICE(0x08ca, 0x2102), .driver_info = METHOD3 },
+	{USB_DEVICE(0x06d6, 0x003d), .driver_info = METHOD0 },
+	{}			/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, device_table);
 
-/* frame काष्ठाure */
-काष्ठा zr364xx_framei अणु
-	अचिन्हित दीर्घ ulState;	/* ulState:ZR364XX_READ_IDLE,
+/* frame structure */
+struct zr364xx_framei {
+	unsigned long ulState;	/* ulState:ZR364XX_READ_IDLE,
 					   ZR364XX_READ_FRAME */
-	व्योम *lpvbits;		/* image data */
-	अचिन्हित दीर्घ cur_size;	/* current data copied to it */
-पूर्ण;
+	void *lpvbits;		/* image data */
+	unsigned long cur_size;	/* current data copied to it */
+};
 
-/* image buffer काष्ठाure */
-काष्ठा zr364xx_bufferi अणु
-	अचिन्हित दीर्घ dwFrames;			/* number of frames in buffer */
-	काष्ठा zr364xx_framei frame[FRAMES];	/* array of FRAME काष्ठाures */
-पूर्ण;
+/* image buffer structure */
+struct zr364xx_bufferi {
+	unsigned long dwFrames;			/* number of frames in buffer */
+	struct zr364xx_framei frame[FRAMES];	/* array of FRAME structures */
+};
 
-काष्ठा zr364xx_dmaqueue अणु
-	काष्ठा list_head	active;
-	काष्ठा zr364xx_camera	*cam;
-पूर्ण;
+struct zr364xx_dmaqueue {
+	struct list_head	active;
+	struct zr364xx_camera	*cam;
+};
 
-काष्ठा zr364xx_pipeinfo अणु
+struct zr364xx_pipeinfo {
 	u32 transfer_size;
 	u8 *transfer_buffer;
 	u32 state;
-	व्योम *stream_urb;
-	व्योम *cam;	/* back poपूर्णांकer to zr364xx_camera काष्ठा */
+	void *stream_urb;
+	void *cam;	/* back pointer to zr364xx_camera struct */
 	u32 err_count;
 	u32 idx;
-पूर्ण;
+};
 
-काष्ठा zr364xx_fmt अणु
+struct zr364xx_fmt {
 	u32 fourcc;
-	पूर्णांक depth;
-पूर्ण;
+	int depth;
+};
 
-/* image क्रमmats.  */
-अटल स्थिर काष्ठा zr364xx_fmt क्रमmats[] = अणु
-	अणु
+/* image formats.  */
+static const struct zr364xx_fmt formats[] = {
+	{
 		.fourcc = V4L2_PIX_FMT_JPEG,
 		.depth = 24
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /* Camera stuff */
-काष्ठा zr364xx_camera अणु
-	काष्ठा usb_device *udev;	/* save off the usb device poपूर्णांकer */
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;/* the पूर्णांकerface क्रम this device */
-	काष्ठा v4l2_device v4l2_dev;
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
-	काष्ठा video_device vdev;	/* v4l video device */
-	काष्ठा v4l2_fh *owner;		/* owns the streaming */
-	पूर्णांक nb;
-	काष्ठा zr364xx_bufferi		buffer;
-	पूर्णांक skip;
-	पूर्णांक width;
-	पूर्णांक height;
-	पूर्णांक method;
-	काष्ठा mutex lock;
+struct zr364xx_camera {
+	struct usb_device *udev;	/* save off the usb device pointer */
+	struct usb_interface *interface;/* the interface for this device */
+	struct v4l2_device v4l2_dev;
+	struct v4l2_ctrl_handler ctrl_handler;
+	struct video_device vdev;	/* v4l video device */
+	struct v4l2_fh *owner;		/* owns the streaming */
+	int nb;
+	struct zr364xx_bufferi		buffer;
+	int skip;
+	int width;
+	int height;
+	int method;
+	struct mutex lock;
 
 	spinlock_t		slock;
-	काष्ठा zr364xx_dmaqueue	vidq;
-	पूर्णांक			last_frame;
-	पूर्णांक			cur_frame;
-	अचिन्हित दीर्घ		frame_count;
-	पूर्णांक			b_acquire;
-	काष्ठा zr364xx_pipeinfo	pipe[1];
+	struct zr364xx_dmaqueue	vidq;
+	int			last_frame;
+	int			cur_frame;
+	unsigned long		frame_count;
+	int			b_acquire;
+	struct zr364xx_pipeinfo	pipe[1];
 
-	u8			पढ़ो_endpoपूर्णांक;
+	u8			read_endpoint;
 
-	स्थिर काष्ठा zr364xx_fmt *fmt;
-	काष्ठा videobuf_queue	vb_vidq;
+	const struct zr364xx_fmt *fmt;
+	struct videobuf_queue	vb_vidq;
 	bool was_streaming;
-पूर्ण;
+};
 
-/* buffer क्रम one video frame */
-काष्ठा zr364xx_buffer अणु
+/* buffer for one video frame */
+struct zr364xx_buffer {
 	/* common v4l buffer stuff -- must be first */
-	काष्ठा videobuf_buffer vb;
-	स्थिर काष्ठा zr364xx_fmt *fmt;
-पूर्ण;
+	struct videobuf_buffer vb;
+	const struct zr364xx_fmt *fmt;
+};
 
 /* function used to send initialisation commands to the camera */
-अटल पूर्णांक send_control_msg(काष्ठा usb_device *udev, u8 request, u16 value,
-			    u16 index, अचिन्हित अक्षर *cp, u16 size)
-अणु
-	पूर्णांक status;
+static int send_control_msg(struct usb_device *udev, u8 request, u16 value,
+			    u16 index, unsigned char *cp, u16 size)
+{
+	int status;
 
-	अचिन्हित अक्षर *transfer_buffer = kmemdup(cp, size, GFP_KERNEL);
-	अगर (!transfer_buffer)
-		वापस -ENOMEM;
+	unsigned char *transfer_buffer = kmemdup(cp, size, GFP_KERNEL);
+	if (!transfer_buffer)
+		return -ENOMEM;
 
 	status = usb_control_msg(udev,
 				 usb_sndctrlpipe(udev, 0),
 				 request,
-				 USB_सूची_OUT | USB_TYPE_VENDOR |
+				 USB_DIR_OUT | USB_TYPE_VENDOR |
 				 USB_RECIP_DEVICE, value, index,
 				 transfer_buffer, size, CTRL_TIMEOUT);
 
-	kमुक्त(transfer_buffer);
-	वापस status;
-पूर्ण
+	kfree(transfer_buffer);
+	return status;
+}
 
 
 /* Control messages sent to the camera to initialize it
  * and launch the capture */
-प्रकार काष्ठा अणु
-	अचिन्हित पूर्णांक value;
-	अचिन्हित पूर्णांक size;
-	अचिन्हित अक्षर *bytes;
-पूर्ण message;
+typedef struct {
+	unsigned int value;
+	unsigned int size;
+	unsigned char *bytes;
+} message;
 
 /* method 0 */
-अटल अचिन्हित अक्षर m0d1[] = अणु 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर m0d2[] = अणु 0, 0, 0, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर m0d3[] = अणु 0, 0 पूर्ण;
-अटल message m0[] = अणु
-	अणु0x1f30, 0, शून्यपूर्ण,
-	अणु0xd000, 0, शून्यपूर्ण,
-	अणु0x3370, माप(m0d1), m0d1पूर्ण,
-	अणु0x2000, 0, शून्यपूर्ण,
-	अणु0x2f0f, 0, शून्यपूर्ण,
-	अणु0x2610, माप(m0d2), m0d2पूर्ण,
-	अणु0xe107, 0, शून्यपूर्ण,
-	अणु0x2502, 0, शून्यपूर्ण,
-	अणु0x1f70, 0, शून्यपूर्ण,
-	अणु0xd000, 0, शून्यपूर्ण,
-	अणु0x9a01, माप(m0d3), m0d3पूर्ण,
-	अणु-1, -1, शून्यपूर्ण
-पूर्ण;
+static unsigned char m0d1[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static unsigned char m0d2[] = { 0, 0, 0, 0, 0, 0 };
+static unsigned char m0d3[] = { 0, 0 };
+static message m0[] = {
+	{0x1f30, 0, NULL},
+	{0xd000, 0, NULL},
+	{0x3370, sizeof(m0d1), m0d1},
+	{0x2000, 0, NULL},
+	{0x2f0f, 0, NULL},
+	{0x2610, sizeof(m0d2), m0d2},
+	{0xe107, 0, NULL},
+	{0x2502, 0, NULL},
+	{0x1f70, 0, NULL},
+	{0xd000, 0, NULL},
+	{0x9a01, sizeof(m0d3), m0d3},
+	{-1, -1, NULL}
+};
 
 /* method 1 */
-अटल अचिन्हित अक्षर m1d1[] = अणु 0xff, 0xff पूर्ण;
-अटल अचिन्हित अक्षर m1d2[] = अणु 0x00, 0x00 पूर्ण;
-अटल message m1[] = अणु
-	अणु0x1f30, 0, शून्यपूर्ण,
-	अणु0xd000, 0, शून्यपूर्ण,
-	अणु0xf000, 0, शून्यपूर्ण,
-	अणु0x2000, 0, शून्यपूर्ण,
-	अणु0x2f0f, 0, शून्यपूर्ण,
-	अणु0x2650, 0, शून्यपूर्ण,
-	अणु0xe107, 0, शून्यपूर्ण,
-	अणु0x2502, माप(m1d1), m1d1पूर्ण,
-	अणु0x1f70, 0, शून्यपूर्ण,
-	अणु0xd000, 0, शून्यपूर्ण,
-	अणु0xd000, 0, शून्यपूर्ण,
-	अणु0xd000, 0, शून्यपूर्ण,
-	अणु0x9a01, माप(m1d2), m1d2पूर्ण,
-	अणु-1, -1, शून्यपूर्ण
-पूर्ण;
+static unsigned char m1d1[] = { 0xff, 0xff };
+static unsigned char m1d2[] = { 0x00, 0x00 };
+static message m1[] = {
+	{0x1f30, 0, NULL},
+	{0xd000, 0, NULL},
+	{0xf000, 0, NULL},
+	{0x2000, 0, NULL},
+	{0x2f0f, 0, NULL},
+	{0x2650, 0, NULL},
+	{0xe107, 0, NULL},
+	{0x2502, sizeof(m1d1), m1d1},
+	{0x1f70, 0, NULL},
+	{0xd000, 0, NULL},
+	{0xd000, 0, NULL},
+	{0xd000, 0, NULL},
+	{0x9a01, sizeof(m1d2), m1d2},
+	{-1, -1, NULL}
+};
 
 /* method 2 */
-अटल अचिन्हित अक्षर m2d1[] = अणु 0xff, 0xff पूर्ण;
-अटल message m2[] = अणु
-	अणु0x1f30, 0, शून्यपूर्ण,
-	अणु0xf000, 0, शून्यपूर्ण,
-	अणु0x2000, 0, शून्यपूर्ण,
-	अणु0x2f0f, 0, शून्यपूर्ण,
-	अणु0x2650, 0, शून्यपूर्ण,
-	अणु0xe107, 0, शून्यपूर्ण,
-	अणु0x2502, माप(m2d1), m2d1पूर्ण,
-	अणु0x1f70, 0, शून्यपूर्ण,
-	अणु-1, -1, शून्यपूर्ण
-पूर्ण;
+static unsigned char m2d1[] = { 0xff, 0xff };
+static message m2[] = {
+	{0x1f30, 0, NULL},
+	{0xf000, 0, NULL},
+	{0x2000, 0, NULL},
+	{0x2f0f, 0, NULL},
+	{0x2650, 0, NULL},
+	{0xe107, 0, NULL},
+	{0x2502, sizeof(m2d1), m2d1},
+	{0x1f70, 0, NULL},
+	{-1, -1, NULL}
+};
 
 /* init table */
-अटल message *init[4] = अणु m0, m1, m2, m2 पूर्ण;
+static message *init[4] = { m0, m1, m2, m2 };
 
 
-/* JPEG अटल data in header (Huffman table, etc) */
-अटल अचिन्हित अक्षर header1[] = अणु
+/* JPEG static data in header (Huffman table, etc) */
+static unsigned char header1[] = {
 	0xFF, 0xD8,
 	/*
 	0xFF, 0xE0, 0x00, 0x10, 'J', 'F', 'I', 'F',
 	0x00, 0x01, 0x01, 0x00, 0x33, 0x8A, 0x00, 0x00, 0x33, 0x88,
 	*/
 	0xFF, 0xDB, 0x00, 0x84
-पूर्ण;
-अटल अचिन्हित अक्षर header2[] = अणु
+};
+static unsigned char header2[] = {
 	0xFF, 0xC4, 0x00, 0x1F, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01,
 	0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
@@ -331,281 +330,281 @@ MODULE_DEVICE_TABLE(usb, device_table);
 	0x40, 0x03, 0x01, 0x21, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01,
 	0xFF, 0xDA, 0x00, 0x0C, 0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11,
 	0x00, 0x3F, 0x00
-पूर्ण;
-अटल अचिन्हित अक्षर header3;
+};
+static unsigned char header3;
 
 /* ------------------------------------------------------------------
    Videobuf operations
    ------------------------------------------------------------------*/
 
-अटल पूर्णांक buffer_setup(काष्ठा videobuf_queue *vq, अचिन्हित पूर्णांक *count,
-			अचिन्हित पूर्णांक *size)
-अणु
-	काष्ठा zr364xx_camera *cam = vq->priv_data;
+static int buffer_setup(struct videobuf_queue *vq, unsigned int *count,
+			unsigned int *size)
+{
+	struct zr364xx_camera *cam = vq->priv_data;
 
 	*size = cam->width * cam->height * (cam->fmt->depth >> 3);
 
-	अगर (*count == 0)
+	if (*count == 0)
 		*count = ZR364XX_DEF_BUFS;
 
-	अगर (*size * *count > ZR364XX_DEF_BUFS * 1024 * 1024)
+	if (*size * *count > ZR364XX_DEF_BUFS * 1024 * 1024)
 		*count = (ZR364XX_DEF_BUFS * 1024 * 1024) / *size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_buffer(काष्ठा videobuf_queue *vq, काष्ठा zr364xx_buffer *buf)
-अणु
+static void free_buffer(struct videobuf_queue *vq, struct zr364xx_buffer *buf)
+{
 	_DBG("%s\n", __func__);
 
-	videobuf_vदो_स्मृति_मुक्त(&buf->vb);
+	videobuf_vmalloc_free(&buf->vb);
 	buf->vb.state = VIDEOBUF_NEEDS_INIT;
-पूर्ण
+}
 
-अटल पूर्णांक buffer_prepare(काष्ठा videobuf_queue *vq, काष्ठा videobuf_buffer *vb,
-			  क्रमागत v4l2_field field)
-अणु
-	काष्ठा zr364xx_camera *cam = vq->priv_data;
-	काष्ठा zr364xx_buffer *buf = container_of(vb, काष्ठा zr364xx_buffer,
+static int buffer_prepare(struct videobuf_queue *vq, struct videobuf_buffer *vb,
+			  enum v4l2_field field)
+{
+	struct zr364xx_camera *cam = vq->priv_data;
+	struct zr364xx_buffer *buf = container_of(vb, struct zr364xx_buffer,
 						  vb);
-	पूर्णांक rc;
+	int rc;
 
 	DBG("%s, field=%d\n", __func__, field);
-	अगर (!cam->fmt)
-		वापस -EINVAL;
+	if (!cam->fmt)
+		return -EINVAL;
 
 	buf->vb.size = cam->width * cam->height * (cam->fmt->depth >> 3);
 
-	अगर (buf->vb.baddr != 0 && buf->vb.bsize < buf->vb.size) अणु
+	if (buf->vb.baddr != 0 && buf->vb.bsize < buf->vb.size) {
 		DBG("invalid buffer prepare\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	buf->fmt = cam->fmt;
 	buf->vb.width = cam->width;
 	buf->vb.height = cam->height;
 	buf->vb.field = field;
 
-	अगर (buf->vb.state == VIDEOBUF_NEEDS_INIT) अणु
-		rc = videobuf_iolock(vq, &buf->vb, शून्य);
-		अगर (rc < 0)
-			जाओ fail;
-	पूर्ण
+	if (buf->vb.state == VIDEOBUF_NEEDS_INIT) {
+		rc = videobuf_iolock(vq, &buf->vb, NULL);
+		if (rc < 0)
+			goto fail;
+	}
 
 	buf->vb.state = VIDEOBUF_PREPARED;
-	वापस 0;
+	return 0;
 fail:
-	मुक्त_buffer(vq, buf);
-	वापस rc;
-पूर्ण
+	free_buffer(vq, buf);
+	return rc;
+}
 
-अटल व्योम buffer_queue(काष्ठा videobuf_queue *vq, काष्ठा videobuf_buffer *vb)
-अणु
-	काष्ठा zr364xx_buffer *buf = container_of(vb, काष्ठा zr364xx_buffer,
+static void buffer_queue(struct videobuf_queue *vq, struct videobuf_buffer *vb)
+{
+	struct zr364xx_buffer *buf = container_of(vb, struct zr364xx_buffer,
 						  vb);
-	काष्ठा zr364xx_camera *cam = vq->priv_data;
+	struct zr364xx_camera *cam = vq->priv_data;
 
 	_DBG("%s\n", __func__);
 
 	buf->vb.state = VIDEOBUF_QUEUED;
 	list_add_tail(&buf->vb.queue, &cam->vidq.active);
-पूर्ण
+}
 
-अटल व्योम buffer_release(काष्ठा videobuf_queue *vq,
-			   काष्ठा videobuf_buffer *vb)
-अणु
-	काष्ठा zr364xx_buffer *buf = container_of(vb, काष्ठा zr364xx_buffer,
+static void buffer_release(struct videobuf_queue *vq,
+			   struct videobuf_buffer *vb)
+{
+	struct zr364xx_buffer *buf = container_of(vb, struct zr364xx_buffer,
 						  vb);
 
 	_DBG("%s\n", __func__);
-	मुक्त_buffer(vq, buf);
-पूर्ण
+	free_buffer(vq, buf);
+}
 
-अटल स्थिर काष्ठा videobuf_queue_ops zr364xx_video_qops = अणु
+static const struct videobuf_queue_ops zr364xx_video_qops = {
 	.buf_setup = buffer_setup,
 	.buf_prepare = buffer_prepare,
 	.buf_queue = buffer_queue,
 	.buf_release = buffer_release,
-पूर्ण;
+};
 
 /********************/
-/* V4L2 पूर्णांकegration */
+/* V4L2 integration */
 /********************/
-अटल पूर्णांक zr364xx_vidioc_streamon(काष्ठा file *file, व्योम *priv,
-				   क्रमागत v4l2_buf_type type);
+static int zr364xx_vidioc_streamon(struct file *file, void *priv,
+				   enum v4l2_buf_type type);
 
-अटल sमाप_प्रकार zr364xx_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+static ssize_t zr364xx_read(struct file *file, char __user *buf, size_t count,
 			    loff_t * ppos)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	पूर्णांक err = 0;
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	int err = 0;
 
 	_DBG("%s\n", __func__);
 
-	अगर (!buf)
-		वापस -EINVAL;
+	if (!buf)
+		return -EINVAL;
 
-	अगर (!count)
-		वापस -EINVAL;
+	if (!count)
+		return -EINVAL;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&cam->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&cam->lock))
+		return -ERESTARTSYS;
 
-	err = zr364xx_vidioc_streamon(file, file->निजी_data,
+	err = zr364xx_vidioc_streamon(file, file->private_data,
 				V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	अगर (err == 0) अणु
+	if (err == 0) {
 		DBG("%s: reading %d bytes at pos %d.\n", __func__,
-				(पूर्णांक) count, (पूर्णांक) *ppos);
+				(int) count, (int) *ppos);
 
 		/* NoMan Sux ! */
-		err = videobuf_पढ़ो_one(&cam->vb_vidq, buf, count, ppos,
+		err = videobuf_read_one(&cam->vb_vidq, buf, count, ppos,
 					file->f_flags & O_NONBLOCK);
-	पूर्ण
+	}
 	mutex_unlock(&cam->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* video buffer vदो_स्मृति implementation based partly on VIVI driver which is
+/* video buffer vmalloc implementation based partly on VIVI driver which is
  *          Copyright (c) 2006 by
  *                  Mauro Carvalho Chehab <mchehab--a.t--infradead.org>
- *                  Ted Walther <ted--a.t--क्रमागतera.com>
+ *                  Ted Walther <ted--a.t--enumera.com>
  *                  John Sokol <sokol--a.t--videotechnology.com>
  *                  http://v4l.videotechnology.com/
  *
  */
-अटल व्योम zr364xx_fillbuff(काष्ठा zr364xx_camera *cam,
-			     काष्ठा zr364xx_buffer *buf,
-			     पूर्णांक jpgsize)
-अणु
-	पूर्णांक pos = 0;
-	स्थिर अक्षर *पंचांगpbuf;
-	अक्षर *vbuf = videobuf_to_vदो_स्मृति(&buf->vb);
-	अचिन्हित दीर्घ last_frame;
+static void zr364xx_fillbuff(struct zr364xx_camera *cam,
+			     struct zr364xx_buffer *buf,
+			     int jpgsize)
+{
+	int pos = 0;
+	const char *tmpbuf;
+	char *vbuf = videobuf_to_vmalloc(&buf->vb);
+	unsigned long last_frame;
 
-	अगर (!vbuf)
-		वापस;
+	if (!vbuf)
+		return;
 
 	last_frame = cam->last_frame;
-	अगर (last_frame != -1) अणु
-		पंचांगpbuf = (स्थिर अक्षर *)cam->buffer.frame[last_frame].lpvbits;
-		चयन (buf->fmt->fourcc) अणु
-		हाल V4L2_PIX_FMT_JPEG:
+	if (last_frame != -1) {
+		tmpbuf = (const char *)cam->buffer.frame[last_frame].lpvbits;
+		switch (buf->fmt->fourcc) {
+		case V4L2_PIX_FMT_JPEG:
 			buf->vb.size = jpgsize;
-			स_नकल(vbuf, पंचांगpbuf, buf->vb.size);
-			अवरोध;
-		शेष:
-			prपूर्णांकk(KERN_DEBUG KBUILD_MODNAME ": unknown format?\n");
-		पूर्ण
+			memcpy(vbuf, tmpbuf, buf->vb.size);
+			break;
+		default:
+			printk(KERN_DEBUG KBUILD_MODNAME ": unknown format?\n");
+		}
 		cam->last_frame = -1;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_ERR KBUILD_MODNAME ": =======no frame\n");
-		वापस;
-	पूर्ण
+	} else {
+		printk(KERN_ERR KBUILD_MODNAME ": =======no frame\n");
+		return;
+	}
 	DBG("%s: Buffer %p size= %d\n", __func__, vbuf, pos);
 	/* tell v4l buffer was filled */
 
 	buf->vb.field_count = cam->frame_count * 2;
-	buf->vb.ts = kसमय_get_ns();
+	buf->vb.ts = ktime_get_ns();
 	buf->vb.state = VIDEOBUF_DONE;
-पूर्ण
+}
 
-अटल पूर्णांक zr364xx_got_frame(काष्ठा zr364xx_camera *cam, पूर्णांक jpgsize)
-अणु
-	काष्ठा zr364xx_dmaqueue *dma_q = &cam->vidq;
-	काष्ठा zr364xx_buffer *buf;
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक rc = 0;
+static int zr364xx_got_frame(struct zr364xx_camera *cam, int jpgsize)
+{
+	struct zr364xx_dmaqueue *dma_q = &cam->vidq;
+	struct zr364xx_buffer *buf;
+	unsigned long flags = 0;
+	int rc = 0;
 
 	DBG("wakeup: %p\n", &dma_q);
 	spin_lock_irqsave(&cam->slock, flags);
 
-	अगर (list_empty(&dma_q->active)) अणु
+	if (list_empty(&dma_q->active)) {
 		DBG("No active queue to serve\n");
 		rc = -1;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	buf = list_entry(dma_q->active.next,
-			 काष्ठा zr364xx_buffer, vb.queue);
+			 struct zr364xx_buffer, vb.queue);
 
-	अगर (!रुकोqueue_active(&buf->vb.करोne)) अणु
+	if (!waitqueue_active(&buf->vb.done)) {
 		/* no one active */
 		rc = -1;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 	list_del(&buf->vb.queue);
-	buf->vb.ts = kसमय_get_ns();
+	buf->vb.ts = ktime_get_ns();
 	DBG("[%p/%d] wakeup\n", buf, buf->vb.i);
 	zr364xx_fillbuff(cam, buf, jpgsize);
-	wake_up(&buf->vb.करोne);
+	wake_up(&buf->vb.done);
 	DBG("wakeup [buf/i] [%p/%d]\n", buf, buf->vb.i);
 unlock:
 	spin_unlock_irqrestore(&cam->slock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-/* this function moves the usb stream पढ़ो pipe data
- * पूर्णांकo the प्रणाली buffers.
- * वापसs 0 on success, EAGAIN अगर more data to process (call this
+/* this function moves the usb stream read pipe data
+ * into the system buffers.
+ * returns 0 on success, EAGAIN if more data to process (call this
  * function again).
  */
-अटल पूर्णांक zr364xx_पढ़ो_video_callback(काष्ठा zr364xx_camera *cam,
-					काष्ठा zr364xx_pipeinfo *pipe_info,
-					काष्ठा urb *purb)
-अणु
-	अचिन्हित अक्षर *pdest;
-	अचिन्हित अक्षर *psrc;
+static int zr364xx_read_video_callback(struct zr364xx_camera *cam,
+					struct zr364xx_pipeinfo *pipe_info,
+					struct urb *purb)
+{
+	unsigned char *pdest;
+	unsigned char *psrc;
 	s32 idx = cam->cur_frame;
-	काष्ठा zr364xx_framei *frm = &cam->buffer.frame[idx];
-	पूर्णांक i = 0;
-	अचिन्हित अक्षर *ptr = शून्य;
+	struct zr364xx_framei *frm = &cam->buffer.frame[idx];
+	int i = 0;
+	unsigned char *ptr = NULL;
 
 	_DBG("buffer to user\n");
 
-	/* swap bytes अगर camera needs it */
-	अगर (cam->method == METHOD0) अणु
+	/* swap bytes if camera needs it */
+	if (cam->method == METHOD0) {
 		u16 *buf = (u16 *)pipe_info->transfer_buffer;
-		क्रम (i = 0; i < purb->actual_length/2; i++)
+		for (i = 0; i < purb->actual_length/2; i++)
 			swab16s(buf + i);
-	पूर्ण
+	}
 
-	/* search करोne.  now find out अगर should be acquiring */
-	अगर (!cam->b_acquire) अणु
+	/* search done.  now find out if should be acquiring */
+	if (!cam->b_acquire) {
 		/* we found a frame, but this channel is turned off */
 		frm->ulState = ZR364XX_READ_IDLE;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	psrc = (u8 *)pipe_info->transfer_buffer;
 	ptr = pdest = frm->lpvbits;
 
-	अगर (frm->ulState == ZR364XX_READ_IDLE) अणु
-		अगर (purb->actual_length < 128) अणु
+	if (frm->ulState == ZR364XX_READ_IDLE) {
+		if (purb->actual_length < 128) {
 			/* header incomplete */
 			dev_info(&cam->udev->dev,
 				 "%s: buffer (%d bytes) too small to hold jpeg header. Discarding.\n",
 				 __func__, purb->actual_length);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		frm->ulState = ZR364XX_READ_FRAME;
 		frm->cur_size = 0;
 
 		_DBG("jpeg header, ");
-		स_नकल(ptr, header1, माप(header1));
-		ptr += माप(header1);
+		memcpy(ptr, header1, sizeof(header1));
+		ptr += sizeof(header1);
 		header3 = 0;
-		स_नकल(ptr, &header3, 1);
+		memcpy(ptr, &header3, 1);
 		ptr++;
-		स_नकल(ptr, psrc, 64);
+		memcpy(ptr, psrc, 64);
 		ptr += 64;
 		header3 = 1;
-		स_नकल(ptr, &header3, 1);
+		memcpy(ptr, &header3, 1);
 		ptr++;
-		स_नकल(ptr, psrc + 64, 64);
+		memcpy(ptr, psrc + 64, 64);
 		ptr += 64;
-		स_नकल(ptr, header2, माप(header2));
-		ptr += माप(header2);
-		स_नकल(ptr, psrc + 128,
+		memcpy(ptr, header2, sizeof(header2));
+		ptr += sizeof(header2);
+		memcpy(ptr, psrc + 128,
 		       purb->actual_length - 128);
 		ptr += purb->actual_length - 128;
 		_DBG("header : %d %d %d %d %d %d %d %d %d\n",
@@ -613,224 +612,224 @@ unlock:
 		    psrc[3], psrc[4], psrc[5],
 		    psrc[6], psrc[7], psrc[8]);
 		frm->cur_size = ptr - pdest;
-	पूर्ण अन्यथा अणु
-		अगर (frm->cur_size + purb->actual_length > MAX_FRAME_SIZE) अणु
+	} else {
+		if (frm->cur_size + purb->actual_length > MAX_FRAME_SIZE) {
 			dev_info(&cam->udev->dev,
 				 "%s: buffer (%d bytes) too small to hold frame data. Discarding frame data.\n",
 				 __func__, MAX_FRAME_SIZE);
-		पूर्ण अन्यथा अणु
+		} else {
 			pdest += frm->cur_size;
-			स_नकल(pdest, psrc, purb->actual_length);
+			memcpy(pdest, psrc, purb->actual_length);
 			frm->cur_size += purb->actual_length;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	/*_DBG("cur_size %lu urb size %d\n", frm->cur_size,
 		purb->actual_length);*/
 
-	अगर (purb->actual_length < pipe_info->transfer_size) अणु
+	if (purb->actual_length < pipe_info->transfer_size) {
 		_DBG("****************Buffer[%d]full*************\n", idx);
 		cam->last_frame = cam->cur_frame;
 		cam->cur_frame++;
-		/* end of प्रणाली frame ring buffer, start at zero */
-		अगर (cam->cur_frame == cam->buffer.dwFrames)
+		/* end of system frame ring buffer, start at zero */
+		if (cam->cur_frame == cam->buffer.dwFrames)
 			cam->cur_frame = 0;
 
-		/* frame पढ़ोy */
+		/* frame ready */
 		/* go back to find the JPEG EOI marker */
 		ptr = pdest = frm->lpvbits;
 		ptr += frm->cur_size - 2;
-		जबतक (ptr > pdest) अणु
-			अगर (*ptr == 0xFF && *(ptr + 1) == 0xD9
+		while (ptr > pdest) {
+			if (*ptr == 0xFF && *(ptr + 1) == 0xD9
 			    && *(ptr + 2) == 0xFF)
-				अवरोध;
+				break;
 			ptr--;
-		पूर्ण
-		अगर (ptr == pdest)
+		}
+		if (ptr == pdest)
 			DBG("No EOI marker\n");
 
-		/* Someबार there is junk data in the middle of the picture,
+		/* Sometimes there is junk data in the middle of the picture,
 		 * we want to skip this bogus frames */
-		जबतक (ptr > pdest) अणु
-			अगर (*ptr == 0xFF && *(ptr + 1) == 0xFF
+		while (ptr > pdest) {
+			if (*ptr == 0xFF && *(ptr + 1) == 0xFF
 			    && *(ptr + 2) == 0xFF)
-				अवरोध;
+				break;
 			ptr--;
-		पूर्ण
-		अगर (ptr != pdest) अणु
+		}
+		if (ptr != pdest) {
 			DBG("Bogus frame ? %d\n", ++(cam->nb));
-		पूर्ण अन्यथा अगर (cam->b_acquire) अणु
+		} else if (cam->b_acquire) {
 			/* we skip the 2 first frames which are usually buggy */
-			अगर (cam->skip)
+			if (cam->skip)
 				cam->skip--;
-			अन्यथा अणु
+			else {
 				_DBG("jpeg(%lu): %d %d %d %d %d %d %d %d\n",
 				    frm->cur_size,
 				    pdest[0], pdest[1], pdest[2], pdest[3],
 				    pdest[4], pdest[5], pdest[6], pdest[7]);
 
 				zr364xx_got_frame(cam, frm->cur_size);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		cam->frame_count++;
 		frm->ulState = ZR364XX_READ_IDLE;
 		frm->cur_size = 0;
-	पूर्ण
-	/* करोne successfully */
-	वापस 0;
-पूर्ण
+	}
+	/* done successfully */
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_querycap(काष्ठा file *file, व्योम *priv,
-				   काष्ठा v4l2_capability *cap)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
+static int zr364xx_vidioc_querycap(struct file *file, void *priv,
+				   struct v4l2_capability *cap)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
 
-	strscpy(cap->driver, DRIVER_DESC, माप(cap->driver));
-	अगर (cam->udev->product)
-		strscpy(cap->card, cam->udev->product, माप(cap->card));
+	strscpy(cap->driver, DRIVER_DESC, sizeof(cap->driver));
+	if (cam->udev->product)
+		strscpy(cap->card, cam->udev->product, sizeof(cap->card));
 	strscpy(cap->bus_info, dev_name(&cam->udev->dev),
-		माप(cap->bus_info));
-	वापस 0;
-पूर्ण
+		sizeof(cap->bus_info));
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_क्रमागत_input(काष्ठा file *file, व्योम *priv,
-				     काष्ठा v4l2_input *i)
-अणु
-	अगर (i->index != 0)
-		वापस -EINVAL;
-	strscpy(i->name, DRIVER_DESC " Camera", माप(i->name));
+static int zr364xx_vidioc_enum_input(struct file *file, void *priv,
+				     struct v4l2_input *i)
+{
+	if (i->index != 0)
+		return -EINVAL;
+	strscpy(i->name, DRIVER_DESC " Camera", sizeof(i->name));
 	i->type = V4L2_INPUT_TYPE_CAMERA;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_g_input(काष्ठा file *file, व्योम *priv,
-				  अचिन्हित पूर्णांक *i)
-अणु
+static int zr364xx_vidioc_g_input(struct file *file, void *priv,
+				  unsigned int *i)
+{
 	*i = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_s_input(काष्ठा file *file, व्योम *priv,
-				  अचिन्हित पूर्णांक i)
-अणु
-	अगर (i != 0)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int zr364xx_vidioc_s_input(struct file *file, void *priv,
+				  unsigned int i)
+{
+	if (i != 0)
+		return -EINVAL;
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा zr364xx_camera *cam =
-		container_of(ctrl->handler, काष्ठा zr364xx_camera, ctrl_handler);
-	पूर्णांक temp;
+static int zr364xx_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct zr364xx_camera *cam =
+		container_of(ctrl->handler, struct zr364xx_camera, ctrl_handler);
+	int temp;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_BRIGHTNESS:
+	switch (ctrl->id) {
+	case V4L2_CID_BRIGHTNESS:
 		/* hardware brightness */
-		send_control_msg(cam->udev, 1, 0x2001, 0, शून्य, 0);
+		send_control_msg(cam->udev, 1, 0x2001, 0, NULL, 0);
 		temp = (0x60 << 8) + 127 - ctrl->val;
-		send_control_msg(cam->udev, 1, temp, 0, शून्य, 0);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		send_control_msg(cam->udev, 1, temp, 0, NULL, 0);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_क्रमागत_fmt_vid_cap(काष्ठा file *file,
-				       व्योम *priv, काष्ठा v4l2_fmtdesc *f)
-अणु
-	अगर (f->index > 0)
-		वापस -EINVAL;
-	f->pixelक्रमmat = क्रमmats[0].fourcc;
-	वापस 0;
-पूर्ण
+static int zr364xx_vidioc_enum_fmt_vid_cap(struct file *file,
+				       void *priv, struct v4l2_fmtdesc *f)
+{
+	if (f->index > 0)
+		return -EINVAL;
+	f->pixelformat = formats[0].fourcc;
+	return 0;
+}
 
-अटल अक्षर *decode_fourcc(__u32 pixelक्रमmat, अक्षर *buf)
-अणु
-	buf[0] = pixelक्रमmat & 0xff;
-	buf[1] = (pixelक्रमmat >> 8) & 0xff;
-	buf[2] = (pixelक्रमmat >> 16) & 0xff;
-	buf[3] = (pixelक्रमmat >> 24) & 0xff;
+static char *decode_fourcc(__u32 pixelformat, char *buf)
+{
+	buf[0] = pixelformat & 0xff;
+	buf[1] = (pixelformat >> 8) & 0xff;
+	buf[2] = (pixelformat >> 16) & 0xff;
+	buf[3] = (pixelformat >> 24) & 0xff;
 	buf[4] = '\0';
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल पूर्णांक zr364xx_vidioc_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				      काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	अक्षर pixelक्रमmat_name[5];
+static int zr364xx_vidioc_try_fmt_vid_cap(struct file *file, void *priv,
+				      struct v4l2_format *f)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	char pixelformat_name[5];
 
-	अगर (!cam)
-		वापस -ENODEV;
+	if (!cam)
+		return -ENODEV;
 
-	अगर (f->fmt.pix.pixelक्रमmat != V4L2_PIX_FMT_JPEG) अणु
+	if (f->fmt.pix.pixelformat != V4L2_PIX_FMT_JPEG) {
 		DBG("%s: unsupported pixelformat V4L2_PIX_FMT_%s\n", __func__,
-		    decode_fourcc(f->fmt.pix.pixelक्रमmat, pixelक्रमmat_name));
-		वापस -EINVAL;
-	पूर्ण
+		    decode_fourcc(f->fmt.pix.pixelformat, pixelformat_name));
+		return -EINVAL;
+	}
 
-	अगर (!(f->fmt.pix.width == 160 && f->fmt.pix.height == 120) &&
-	    !(f->fmt.pix.width == 640 && f->fmt.pix.height == 480)) अणु
+	if (!(f->fmt.pix.width == 160 && f->fmt.pix.height == 120) &&
+	    !(f->fmt.pix.width == 640 && f->fmt.pix.height == 480)) {
 		f->fmt.pix.width = 320;
 		f->fmt.pix.height = 240;
-	पूर्ण
+	}
 
 	f->fmt.pix.field = V4L2_FIELD_NONE;
 	f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
 	f->fmt.pix.sizeimage = f->fmt.pix.height * f->fmt.pix.bytesperline;
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_JPEG;
 	DBG("%s: V4L2_PIX_FMT_%s (%d) ok!\n", __func__,
-	    decode_fourcc(f->fmt.pix.pixelक्रमmat, pixelक्रमmat_name),
+	    decode_fourcc(f->fmt.pix.pixelformat, pixelformat_name),
 	    f->fmt.pix.field);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				    काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा zr364xx_camera *cam;
+static int zr364xx_vidioc_g_fmt_vid_cap(struct file *file, void *priv,
+				    struct v4l2_format *f)
+{
+	struct zr364xx_camera *cam;
 
-	अगर (!file)
-		वापस -ENODEV;
+	if (!file)
+		return -ENODEV;
 	cam = video_drvdata(file);
 
-	f->fmt.pix.pixelक्रमmat = क्रमmats[0].fourcc;
+	f->fmt.pix.pixelformat = formats[0].fourcc;
 	f->fmt.pix.field = V4L2_FIELD_NONE;
 	f->fmt.pix.width = cam->width;
 	f->fmt.pix.height = cam->height;
 	f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
 	f->fmt.pix.sizeimage = f->fmt.pix.height * f->fmt.pix.bytesperline;
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_JPEG;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
-				    काष्ठा v4l2_क्रमmat *f)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	काष्ठा videobuf_queue *q = &cam->vb_vidq;
-	अक्षर pixelक्रमmat_name[5];
-	पूर्णांक ret = zr364xx_vidioc_try_fmt_vid_cap(file, cam, f);
-	पूर्णांक i;
+static int zr364xx_vidioc_s_fmt_vid_cap(struct file *file, void *priv,
+				    struct v4l2_format *f)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	struct videobuf_queue *q = &cam->vb_vidq;
+	char pixelformat_name[5];
+	int ret = zr364xx_vidioc_try_fmt_vid_cap(file, cam, f);
+	int i;
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	mutex_lock(&q->vb_lock);
 
-	अगर (videobuf_queue_is_busy(&cam->vb_vidq)) अणु
+	if (videobuf_queue_is_busy(&cam->vb_vidq)) {
 		DBG("%s queue busy\n", __func__);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (cam->owner) अणु
+	if (cam->owner) {
 		DBG("%s can't change format after started\n", __func__);
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	cam->width = f->fmt.pix.width;
 	cam->height = f->fmt.pix.height;
@@ -841,51 +840,51 @@ unlock:
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_JPEG;
 	cam->vb_vidq.field = f->fmt.pix.field;
 
-	अगर (f->fmt.pix.width == 160 && f->fmt.pix.height == 120)
+	if (f->fmt.pix.width == 160 && f->fmt.pix.height == 120)
 		mode = 1;
-	अन्यथा अगर (f->fmt.pix.width == 640 && f->fmt.pix.height == 480)
+	else if (f->fmt.pix.width == 640 && f->fmt.pix.height == 480)
 		mode = 2;
-	अन्यथा
+	else
 		mode = 0;
 
 	m0d1[0] = mode;
 	m1[2].value = 0xf000 + mode;
 	m2[1].value = 0xf000 + mode;
 
-	/* special हाल क्रम METHOD3, the modes are dअगरferent */
-	अगर (cam->method == METHOD3) अणु
-		चयन (mode) अणु
-		हाल 1:
+	/* special case for METHOD3, the modes are different */
+	if (cam->method == METHOD3) {
+		switch (mode) {
+		case 1:
 			m2[1].value = 0xf000 + 4;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			m2[1].value = 0xf000 + 0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			m2[1].value = 0xf000 + 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	header2[437] = cam->height / 256;
 	header2[438] = cam->height % 256;
 	header2[439] = cam->width / 256;
 	header2[440] = cam->width % 256;
 
-	क्रम (i = 0; init[cam->method][i].size != -1; i++) अणु
+	for (i = 0; init[cam->method][i].size != -1; i++) {
 		ret =
 		    send_control_msg(cam->udev, 1, init[cam->method][i].value,
 				     0, init[cam->method][i].bytes,
 				     init[cam->method][i].size);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(&cam->udev->dev,
 			   "error during resolution change sequence: %d\n", i);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	/* Added some delay here, since खोलोing/closing the camera quickly,
-	 * like Ekiga करोes during its startup, can crash the webcam
+	/* Added some delay here, since opening/closing the camera quickly,
+	 * like Ekiga does during its startup, can crash the webcam
 	 */
 	mdelay(100);
 	cam->skip = 2;
@@ -895,283 +894,283 @@ out:
 	mutex_unlock(&q->vb_lock);
 
 	DBG("%s: V4L2_PIX_FMT_%s (%d) ok!\n", __func__,
-	    decode_fourcc(f->fmt.pix.pixelक्रमmat, pixelक्रमmat_name),
+	    decode_fourcc(f->fmt.pix.pixelformat, pixelformat_name),
 	    f->fmt.pix.field);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक zr364xx_vidioc_reqbufs(काष्ठा file *file, व्योम *priv,
-			  काष्ठा v4l2_requestbuffers *p)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
+static int zr364xx_vidioc_reqbufs(struct file *file, void *priv,
+			  struct v4l2_requestbuffers *p)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
 
-	अगर (cam->owner && cam->owner != priv)
-		वापस -EBUSY;
-	वापस videobuf_reqbufs(&cam->vb_vidq, p);
-पूर्ण
+	if (cam->owner && cam->owner != priv)
+		return -EBUSY;
+	return videobuf_reqbufs(&cam->vb_vidq, p);
+}
 
-अटल पूर्णांक zr364xx_vidioc_querybuf(काष्ठा file *file,
-				व्योम *priv,
-				काष्ठा v4l2_buffer *p)
-अणु
-	पूर्णांक rc;
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
+static int zr364xx_vidioc_querybuf(struct file *file,
+				void *priv,
+				struct v4l2_buffer *p)
+{
+	int rc;
+	struct zr364xx_camera *cam = video_drvdata(file);
 	rc = videobuf_querybuf(&cam->vb_vidq, p);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक zr364xx_vidioc_qbuf(काष्ठा file *file,
-				व्योम *priv,
-				काष्ठा v4l2_buffer *p)
-अणु
-	पूर्णांक rc;
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
+static int zr364xx_vidioc_qbuf(struct file *file,
+				void *priv,
+				struct v4l2_buffer *p)
+{
+	int rc;
+	struct zr364xx_camera *cam = video_drvdata(file);
 	_DBG("%s\n", __func__);
-	अगर (cam->owner && cam->owner != priv)
-		वापस -EBUSY;
+	if (cam->owner && cam->owner != priv)
+		return -EBUSY;
 	rc = videobuf_qbuf(&cam->vb_vidq, p);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक zr364xx_vidioc_dqbuf(काष्ठा file *file,
-				व्योम *priv,
-				काष्ठा v4l2_buffer *p)
-अणु
-	पूर्णांक rc;
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
+static int zr364xx_vidioc_dqbuf(struct file *file,
+				void *priv,
+				struct v4l2_buffer *p)
+{
+	int rc;
+	struct zr364xx_camera *cam = video_drvdata(file);
 	_DBG("%s\n", __func__);
-	अगर (cam->owner && cam->owner != priv)
-		वापस -EBUSY;
+	if (cam->owner && cam->owner != priv)
+		return -EBUSY;
 	rc = videobuf_dqbuf(&cam->vb_vidq, p, file->f_flags & O_NONBLOCK);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम पढ़ो_pipe_completion(काष्ठा urb *purb)
-अणु
-	काष्ठा zr364xx_pipeinfo *pipe_info;
-	काष्ठा zr364xx_camera *cam;
-	पूर्णांक pipe;
+static void read_pipe_completion(struct urb *purb)
+{
+	struct zr364xx_pipeinfo *pipe_info;
+	struct zr364xx_camera *cam;
+	int pipe;
 
 	pipe_info = purb->context;
 	_DBG("%s %p, status %d\n", __func__, purb, purb->status);
-	अगर (!pipe_info) अणु
-		prपूर्णांकk(KERN_ERR KBUILD_MODNAME ": no context!\n");
-		वापस;
-	पूर्ण
+	if (!pipe_info) {
+		printk(KERN_ERR KBUILD_MODNAME ": no context!\n");
+		return;
+	}
 
 	cam = pipe_info->cam;
-	अगर (!cam) अणु
-		prपूर्णांकk(KERN_ERR KBUILD_MODNAME ": no context!\n");
-		वापस;
-	पूर्ण
+	if (!cam) {
+		printk(KERN_ERR KBUILD_MODNAME ": no context!\n");
+		return;
+	}
 
-	/* अगर shutting करोwn, करो not resubmit, निकास immediately */
-	अगर (purb->status == -ESHUTDOWN) अणु
+	/* if shutting down, do not resubmit, exit immediately */
+	if (purb->status == -ESHUTDOWN) {
 		DBG("%s, err shutdown\n", __func__);
 		pipe_info->err_count++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pipe_info->state == 0) अणु
+	if (pipe_info->state == 0) {
 		DBG("exiting USB pipe\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (purb->actual_length > pipe_info->transfer_size) अणु
+	if (purb->actual_length > pipe_info->transfer_size) {
 		dev_err(&cam->udev->dev, "wrong number of bytes\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (purb->status == 0)
-		zr364xx_पढ़ो_video_callback(cam, pipe_info, purb);
-	अन्यथा अणु
+	if (purb->status == 0)
+		zr364xx_read_video_callback(cam, pipe_info, purb);
+	else {
 		pipe_info->err_count++;
 		DBG("%s: failed URB %d\n", __func__, purb->status);
-	पूर्ण
+	}
 
-	pipe = usb_rcvbulkpipe(cam->udev, cam->पढ़ो_endpoपूर्णांक);
+	pipe = usb_rcvbulkpipe(cam->udev, cam->read_endpoint);
 
 	/* reuse urb */
 	usb_fill_bulk_urb(pipe_info->stream_urb, cam->udev,
 			  pipe,
 			  pipe_info->transfer_buffer,
 			  pipe_info->transfer_size,
-			  पढ़ो_pipe_completion, pipe_info);
+			  read_pipe_completion, pipe_info);
 
-	अगर (pipe_info->state != 0) अणु
+	if (pipe_info->state != 0) {
 		purb->status = usb_submit_urb(pipe_info->stream_urb,
 					      GFP_ATOMIC);
 
-		अगर (purb->status)
+		if (purb->status)
 			dev_err(&cam->udev->dev,
 				"error submitting urb (error=%i)\n",
 				purb->status);
-	पूर्ण अन्यथा
+	} else
 		DBG("read pipe complete state 0\n");
-पूर्ण
+}
 
-अटल पूर्णांक zr364xx_start_पढ़ोpipe(काष्ठा zr364xx_camera *cam)
-अणु
-	पूर्णांक pipe;
-	पूर्णांक retval;
-	काष्ठा zr364xx_pipeinfo *pipe_info = cam->pipe;
-	pipe = usb_rcvbulkpipe(cam->udev, cam->पढ़ो_endpoपूर्णांक);
-	DBG("%s: start pipe IN x%x\n", __func__, cam->पढ़ो_endpoपूर्णांक);
+static int zr364xx_start_readpipe(struct zr364xx_camera *cam)
+{
+	int pipe;
+	int retval;
+	struct zr364xx_pipeinfo *pipe_info = cam->pipe;
+	pipe = usb_rcvbulkpipe(cam->udev, cam->read_endpoint);
+	DBG("%s: start pipe IN x%x\n", __func__, cam->read_endpoint);
 
 	pipe_info->state = 1;
 	pipe_info->err_count = 0;
 	pipe_info->stream_urb = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!pipe_info->stream_urb)
-		वापस -ENOMEM;
+	if (!pipe_info->stream_urb)
+		return -ENOMEM;
 	/* transfer buffer allocated in board_init */
 	usb_fill_bulk_urb(pipe_info->stream_urb, cam->udev,
 			  pipe,
 			  pipe_info->transfer_buffer,
 			  pipe_info->transfer_size,
-			  पढ़ो_pipe_completion, pipe_info);
+			  read_pipe_completion, pipe_info);
 
 	DBG("submitting URB %p\n", pipe_info->stream_urb);
 	retval = usb_submit_urb(pipe_info->stream_urb, GFP_KERNEL);
-	अगर (retval) अणु
-		prपूर्णांकk(KERN_ERR KBUILD_MODNAME ": start read pipe failed\n");
-		वापस retval;
-	पूर्ण
+	if (retval) {
+		printk(KERN_ERR KBUILD_MODNAME ": start read pipe failed\n");
+		return retval;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम zr364xx_stop_पढ़ोpipe(काष्ठा zr364xx_camera *cam)
-अणु
-	काष्ठा zr364xx_pipeinfo *pipe_info;
+static void zr364xx_stop_readpipe(struct zr364xx_camera *cam)
+{
+	struct zr364xx_pipeinfo *pipe_info;
 
-	अगर (!cam) अणु
-		prपूर्णांकk(KERN_ERR KBUILD_MODNAME ": invalid device\n");
-		वापस;
-	पूर्ण
+	if (!cam) {
+		printk(KERN_ERR KBUILD_MODNAME ": invalid device\n");
+		return;
+	}
 	DBG("stop read pipe\n");
 	pipe_info = cam->pipe;
-	अगर (pipe_info) अणु
-		अगर (pipe_info->state != 0)
+	if (pipe_info) {
+		if (pipe_info->state != 0)
 			pipe_info->state = 0;
 
-		अगर (pipe_info->stream_urb) अणु
+		if (pipe_info->stream_urb) {
 			/* cancel urb */
-			usb_समाप्त_urb(pipe_info->stream_urb);
-			usb_मुक्त_urb(pipe_info->stream_urb);
-			pipe_info->stream_urb = शून्य;
-		पूर्ण
-	पूर्ण
-	वापस;
-पूर्ण
+			usb_kill_urb(pipe_info->stream_urb);
+			usb_free_urb(pipe_info->stream_urb);
+			pipe_info->stream_urb = NULL;
+		}
+	}
+	return;
+}
 
 /* starts acquisition process */
-अटल पूर्णांक zr364xx_start_acquire(काष्ठा zr364xx_camera *cam)
-अणु
-	पूर्णांक j;
+static int zr364xx_start_acquire(struct zr364xx_camera *cam)
+{
+	int j;
 
 	DBG("start acquire\n");
 
 	cam->last_frame = -1;
 	cam->cur_frame = 0;
-	क्रम (j = 0; j < FRAMES; j++) अणु
+	for (j = 0; j < FRAMES; j++) {
 		cam->buffer.frame[j].ulState = ZR364XX_READ_IDLE;
 		cam->buffer.frame[j].cur_size = 0;
-	पूर्ण
+	}
 	cam->b_acquire = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक zr364xx_stop_acquire(काष्ठा zr364xx_camera *cam)
-अणु
+static inline int zr364xx_stop_acquire(struct zr364xx_camera *cam)
+{
 	cam->b_acquire = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_prepare(काष्ठा zr364xx_camera *cam)
-अणु
-	पूर्णांक res;
-	पूर्णांक i, j;
+static int zr364xx_prepare(struct zr364xx_camera *cam)
+{
+	int res;
+	int i, j;
 
-	क्रम (i = 0; init[cam->method][i].size != -1; i++) अणु
+	for (i = 0; init[cam->method][i].size != -1; i++) {
 		res = send_control_msg(cam->udev, 1, init[cam->method][i].value,
 				     0, init[cam->method][i].bytes,
 				     init[cam->method][i].size);
-		अगर (res < 0) अणु
+		if (res < 0) {
 			dev_err(&cam->udev->dev,
 				"error during open sequence: %d\n", i);
-			वापस res;
-		पूर्ण
-	पूर्ण
+			return res;
+		}
+	}
 
 	cam->skip = 2;
 	cam->last_frame = -1;
 	cam->cur_frame = 0;
 	cam->frame_count = 0;
-	क्रम (j = 0; j < FRAMES; j++) अणु
+	for (j = 0; j < FRAMES; j++) {
 		cam->buffer.frame[j].ulState = ZR364XX_READ_IDLE;
 		cam->buffer.frame[j].cur_size = 0;
-	पूर्ण
+	}
 	v4l2_ctrl_handler_setup(&cam->ctrl_handler);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_vidioc_streamon(काष्ठा file *file, व्योम *priv,
-				   क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	पूर्णांक res;
+static int zr364xx_vidioc_streamon(struct file *file, void *priv,
+				   enum v4l2_buf_type type)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	int res;
 
 	DBG("%s\n", __func__);
 
-	अगर (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
+	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
 
-	अगर (cam->owner && cam->owner != priv)
-		वापस -EBUSY;
+	if (cam->owner && cam->owner != priv)
+		return -EBUSY;
 
 	res = zr364xx_prepare(cam);
-	अगर (res)
-		वापस res;
+	if (res)
+		return res;
 	res = videobuf_streamon(&cam->vb_vidq);
-	अगर (res == 0) अणु
+	if (res == 0) {
 		zr364xx_start_acquire(cam);
-		cam->owner = file->निजी_data;
-	पूर्ण
-	वापस res;
-पूर्ण
+		cam->owner = file->private_data;
+	}
+	return res;
+}
 
-अटल पूर्णांक zr364xx_vidioc_streamoff(काष्ठा file *file, व्योम *priv,
-				    क्रमागत v4l2_buf_type type)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
+static int zr364xx_vidioc_streamoff(struct file *file, void *priv,
+				    enum v4l2_buf_type type)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
 
 	DBG("%s\n", __func__);
-	अगर (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		वापस -EINVAL;
-	अगर (cam->owner && cam->owner != priv)
-		वापस -EBUSY;
+	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
+	if (cam->owner && cam->owner != priv)
+		return -EBUSY;
 	zr364xx_stop_acquire(cam);
-	वापस videobuf_streamoff(&cam->vb_vidq);
-पूर्ण
+	return videobuf_streamoff(&cam->vb_vidq);
+}
 
 
-/* खोलो the camera */
-अटल पूर्णांक zr364xx_खोलो(काष्ठा file *file)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	पूर्णांक err;
+/* open the camera */
+static int zr364xx_open(struct file *file)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	int err;
 
 	DBG("%s\n", __func__);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&cam->lock))
-		वापस -ERESTARTSYS;
+	if (mutex_lock_interruptible(&cam->lock))
+		return -ERESTARTSYS;
 
-	err = v4l2_fh_खोलो(file);
-	अगर (err)
-		जाओ out;
+	err = v4l2_fh_open(file);
+	if (err)
+		goto out;
 
-	/* Added some delay here, since खोलोing/closing the camera quickly,
-	 * like Ekiga करोes during its startup, can crash the webcam
+	/* Added some delay here, since opening/closing the camera quickly,
+	 * like Ekiga does during its startup, can crash the webcam
 	 */
 	mdelay(100);
 	err = 0;
@@ -1179,46 +1178,46 @@ out:
 out:
 	mutex_unlock(&cam->lock);
 	DBG("%s: %d\n", __func__, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम zr364xx_board_uninit(काष्ठा zr364xx_camera *cam)
-अणु
-	अचिन्हित दीर्घ i;
+static void zr364xx_board_uninit(struct zr364xx_camera *cam)
+{
+	unsigned long i;
 
-	zr364xx_stop_पढ़ोpipe(cam);
+	zr364xx_stop_readpipe(cam);
 
 	/* release sys buffers */
-	क्रम (i = 0; i < FRAMES; i++) अणु
-		अगर (cam->buffer.frame[i].lpvbits) अणु
+	for (i = 0; i < FRAMES; i++) {
+		if (cam->buffer.frame[i].lpvbits) {
 			DBG("vfree %p\n", cam->buffer.frame[i].lpvbits);
-			vमुक्त(cam->buffer.frame[i].lpvbits);
-		पूर्ण
-		cam->buffer.frame[i].lpvbits = शून्य;
-	पूर्ण
+			vfree(cam->buffer.frame[i].lpvbits);
+		}
+		cam->buffer.frame[i].lpvbits = NULL;
+	}
 
 	/* release transfer buffer */
-	kमुक्त(cam->pipe->transfer_buffer);
-पूर्ण
+	kfree(cam->pipe->transfer_buffer);
+}
 
-अटल व्योम zr364xx_release(काष्ठा v4l2_device *v4l2_dev)
-अणु
-	काष्ठा zr364xx_camera *cam =
-		container_of(v4l2_dev, काष्ठा zr364xx_camera, v4l2_dev);
+static void zr364xx_release(struct v4l2_device *v4l2_dev)
+{
+	struct zr364xx_camera *cam =
+		container_of(v4l2_dev, struct zr364xx_camera, v4l2_dev);
 
-	videobuf_mmap_मुक्त(&cam->vb_vidq);
-	v4l2_ctrl_handler_मुक्त(&cam->ctrl_handler);
+	videobuf_mmap_free(&cam->vb_vidq);
+	v4l2_ctrl_handler_free(&cam->ctrl_handler);
 	zr364xx_board_uninit(cam);
-	v4l2_device_unरेजिस्टर(&cam->v4l2_dev);
-	kमुक्त(cam);
-पूर्ण
+	v4l2_device_unregister(&cam->v4l2_dev);
+	kfree(cam);
+}
 
 /* release the camera */
-अटल पूर्णांक zr364xx_बंद(काष्ठा file *file)
-अणु
-	काष्ठा zr364xx_camera *cam;
-	काष्ठा usb_device *udev;
-	पूर्णांक i;
+static int zr364xx_close(struct file *file)
+{
+	struct zr364xx_camera *cam;
+	struct usb_device *udev;
+	int i;
 
 	DBG("%s\n", __func__);
 	cam = video_drvdata(file);
@@ -1226,81 +1225,81 @@ out:
 	mutex_lock(&cam->lock);
 	udev = cam->udev;
 
-	अगर (file->निजी_data == cam->owner) अणु
+	if (file->private_data == cam->owner) {
 		/* turn off stream */
-		अगर (cam->b_acquire)
+		if (cam->b_acquire)
 			zr364xx_stop_acquire(cam);
 		videobuf_streamoff(&cam->vb_vidq);
 
-		क्रम (i = 0; i < 2; i++) अणु
+		for (i = 0; i < 2; i++) {
 			send_control_msg(udev, 1, init[cam->method][i].value,
 					0, init[cam->method][i].bytes,
 					init[cam->method][i].size);
-		पूर्ण
-		cam->owner = शून्य;
-	पूर्ण
+		}
+		cam->owner = NULL;
+	}
 
-	/* Added some delay here, since खोलोing/closing the camera quickly,
-	 * like Ekiga करोes during its startup, can crash the webcam
+	/* Added some delay here, since opening/closing the camera quickly,
+	 * like Ekiga does during its startup, can crash the webcam
 	 */
 	mdelay(100);
 	mutex_unlock(&cam->lock);
-	वापस v4l2_fh_release(file);
-पूर्ण
+	return v4l2_fh_release(file);
+}
 
 
-अटल पूर्णांक zr364xx_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	पूर्णांक ret;
+static int zr364xx_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	int ret;
 
-	अगर (!cam) अणु
+	if (!cam) {
 		DBG("%s: cam == NULL\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	DBG("mmap called, vma=%p\n", vma);
 
 	ret = videobuf_mmap_mapper(&cam->vb_vidq, vma);
 
 	DBG("vma start=0x%08lx, size=%ld, ret=%d\n",
-		(अचिन्हित दीर्घ)vma->vm_start,
-		(अचिन्हित दीर्घ)vma->vm_end - (अचिन्हित दीर्घ)vma->vm_start, ret);
-	वापस ret;
-पूर्ण
+		(unsigned long)vma->vm_start,
+		(unsigned long)vma->vm_end - (unsigned long)vma->vm_start, ret);
+	return ret;
+}
 
-अटल __poll_t zr364xx_poll(काष्ठा file *file,
-			       काष्ठा poll_table_काष्ठा *रुको)
-अणु
-	काष्ठा zr364xx_camera *cam = video_drvdata(file);
-	काष्ठा videobuf_queue *q = &cam->vb_vidq;
-	__poll_t res = v4l2_ctrl_poll(file, रुको);
+static __poll_t zr364xx_poll(struct file *file,
+			       struct poll_table_struct *wait)
+{
+	struct zr364xx_camera *cam = video_drvdata(file);
+	struct videobuf_queue *q = &cam->vb_vidq;
+	__poll_t res = v4l2_ctrl_poll(file, wait);
 
 	_DBG("%s\n", __func__);
 
-	वापस res | videobuf_poll_stream(file, q, रुको);
-पूर्ण
+	return res | videobuf_poll_stream(file, q, wait);
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops zr364xx_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops zr364xx_ctrl_ops = {
 	.s_ctrl = zr364xx_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_file_operations zr364xx_fops = अणु
+static const struct v4l2_file_operations zr364xx_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = zr364xx_खोलो,
-	.release = zr364xx_बंद,
-	.पढ़ो = zr364xx_पढ़ो,
+	.open = zr364xx_open,
+	.release = zr364xx_close,
+	.read = zr364xx_read,
 	.mmap = zr364xx_mmap,
 	.unlocked_ioctl = video_ioctl2,
 	.poll = zr364xx_poll,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ioctl_ops zr364xx_ioctl_ops = अणु
+static const struct v4l2_ioctl_ops zr364xx_ioctl_ops = {
 	.vidioc_querycap	= zr364xx_vidioc_querycap,
-	.vidioc_क्रमागत_fmt_vid_cap = zr364xx_vidioc_क्रमागत_fmt_vid_cap,
+	.vidioc_enum_fmt_vid_cap = zr364xx_vidioc_enum_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap	= zr364xx_vidioc_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap	= zr364xx_vidioc_s_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap	= zr364xx_vidioc_g_fmt_vid_cap,
-	.vidioc_क्रमागत_input	= zr364xx_vidioc_क्रमागत_input,
+	.vidioc_enum_input	= zr364xx_vidioc_enum_input,
 	.vidioc_g_input		= zr364xx_vidioc_g_input,
 	.vidioc_s_input		= zr364xx_vidioc_s_input,
 	.vidioc_streamon	= zr364xx_vidioc_streamon,
@@ -1312,131 +1311,131 @@ out:
 	.vidioc_log_status      = v4l2_ctrl_log_status,
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा video_device zr364xx_ढाँचा = अणु
+static const struct video_device zr364xx_template = {
 	.name = DRIVER_DESC,
 	.fops = &zr364xx_fops,
 	.ioctl_ops = &zr364xx_ioctl_ops,
 	.release = video_device_release_empty,
 	.device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 		       V4L2_CAP_STREAMING,
-पूर्ण;
+};
 
 
 
 /*******************/
-/* USB पूर्णांकegration */
+/* USB integration */
 /*******************/
-अटल पूर्णांक zr364xx_board_init(काष्ठा zr364xx_camera *cam)
-अणु
-	काष्ठा zr364xx_pipeinfo *pipe = cam->pipe;
-	अचिन्हित दीर्घ i;
-	पूर्णांक err;
+static int zr364xx_board_init(struct zr364xx_camera *cam)
+{
+	struct zr364xx_pipeinfo *pipe = cam->pipe;
+	unsigned long i;
+	int err;
 
 	DBG("board init: %p\n", cam);
-	स_रखो(pipe, 0, माप(*pipe));
+	memset(pipe, 0, sizeof(*pipe));
 	pipe->cam = cam;
 	pipe->transfer_size = BUFFER_SIZE;
 
 	pipe->transfer_buffer = kzalloc(pipe->transfer_size,
 					GFP_KERNEL);
-	अगर (!pipe->transfer_buffer) अणु
+	if (!pipe->transfer_buffer) {
 		DBG("out of memory!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	cam->b_acquire = 0;
 	cam->frame_count = 0;
 
-	/*** start create प्रणाली buffers ***/
-	क्रम (i = 0; i < FRAMES; i++) अणु
-		/* always allocate maximum size क्रम प्रणाली buffers */
-		cam->buffer.frame[i].lpvbits = vदो_स्मृति(MAX_FRAME_SIZE);
+	/*** start create system buffers ***/
+	for (i = 0; i < FRAMES; i++) {
+		/* always allocate maximum size for system buffers */
+		cam->buffer.frame[i].lpvbits = vmalloc(MAX_FRAME_SIZE);
 
 		DBG("valloc %p, idx %lu, pdata %p\n",
 			&cam->buffer.frame[i], i,
 			cam->buffer.frame[i].lpvbits);
-		अगर (!cam->buffer.frame[i].lpvbits) अणु
-			prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": out of memory. Using less frames\n");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (!cam->buffer.frame[i].lpvbits) {
+			printk(KERN_INFO KBUILD_MODNAME ": out of memory. Using less frames\n");
+			break;
+		}
+	}
 
-	अगर (i == 0) अणु
-		prपूर्णांकk(KERN_INFO KBUILD_MODNAME ": out of memory. Aborting\n");
+	if (i == 0) {
+		printk(KERN_INFO KBUILD_MODNAME ": out of memory. Aborting\n");
 		err = -ENOMEM;
-		जाओ err_मुक्त;
-	पूर्ण अन्यथा
+		goto err_free;
+	} else
 		cam->buffer.dwFrames = i;
 
-	/* make sure पूर्णांकernal states are set */
-	क्रम (i = 0; i < FRAMES; i++) अणु
+	/* make sure internal states are set */
+	for (i = 0; i < FRAMES; i++) {
 		cam->buffer.frame[i].ulState = ZR364XX_READ_IDLE;
 		cam->buffer.frame[i].cur_size = 0;
-	पूर्ण
+	}
 
 	cam->cur_frame = 0;
 	cam->last_frame = -1;
-	/*** end create प्रणाली buffers ***/
+	/*** end create system buffers ***/
 
-	/* start पढ़ो pipe */
-	err = zr364xx_start_पढ़ोpipe(cam);
-	अगर (err)
-		जाओ err_मुक्त_frames;
+	/* start read pipe */
+	err = zr364xx_start_readpipe(cam);
+	if (err)
+		goto err_free_frames;
 
 	DBG(": board initialized\n");
-	वापस 0;
+	return 0;
 
-err_मुक्त_frames:
-	क्रम (i = 0; i < FRAMES; i++)
-		vमुक्त(cam->buffer.frame[i].lpvbits);
-err_मुक्त:
-	kमुक्त(cam->pipe->transfer_buffer);
-	cam->pipe->transfer_buffer = शून्य;
-	वापस err;
-पूर्ण
+err_free_frames:
+	for (i = 0; i < FRAMES; i++)
+		vfree(cam->buffer.frame[i].lpvbits);
+err_free:
+	kfree(cam->pipe->transfer_buffer);
+	cam->pipe->transfer_buffer = NULL;
+	return err;
+}
 
-अटल पूर्णांक zr364xx_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			 स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा zr364xx_camera *cam = शून्य;
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
-	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
-	काष्ठा v4l2_ctrl_handler *hdl;
-	पूर्णांक err;
-	पूर्णांक i;
+static int zr364xx_probe(struct usb_interface *intf,
+			 const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct zr364xx_camera *cam = NULL;
+	struct usb_host_interface *iface_desc;
+	struct usb_endpoint_descriptor *endpoint;
+	struct v4l2_ctrl_handler *hdl;
+	int err;
+	int i;
 
 	DBG("probing...\n");
 
-	dev_info(&पूर्णांकf->dev, DRIVER_DESC " compatible webcam plugged\n");
-	dev_info(&पूर्णांकf->dev, "model %04x:%04x detected\n",
-		 le16_to_cpu(udev->descriptor.idVenकरोr),
+	dev_info(&intf->dev, DRIVER_DESC " compatible webcam plugged\n");
+	dev_info(&intf->dev, "model %04x:%04x detected\n",
+		 le16_to_cpu(udev->descriptor.idVendor),
 		 le16_to_cpu(udev->descriptor.idProduct));
 
-	cam = kzalloc(माप(*cam), GFP_KERNEL);
-	अगर (!cam)
-		वापस -ENOMEM;
+	cam = kzalloc(sizeof(*cam), GFP_KERNEL);
+	if (!cam)
+		return -ENOMEM;
 
-	err = v4l2_device_रेजिस्टर(&पूर्णांकf->dev, &cam->v4l2_dev);
-	अगर (err < 0) अणु
+	err = v4l2_device_register(&intf->dev, &cam->v4l2_dev);
+	if (err < 0) {
 		dev_err(&udev->dev, "couldn't register v4l2_device\n");
-		जाओ मुक्त_cam;
-	पूर्ण
+		goto free_cam;
+	}
 	hdl = &cam->ctrl_handler;
 	v4l2_ctrl_handler_init(hdl, 1);
 	v4l2_ctrl_new_std(hdl, &zr364xx_ctrl_ops,
 			  V4L2_CID_BRIGHTNESS, 0, 127, 1, 64);
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		err = hdl->error;
 		dev_err(&udev->dev, "couldn't register control\n");
-		जाओ मुक्त_hdlr_and_unreg_dev;
-	पूर्ण
+		goto free_hdlr_and_unreg_dev;
+	}
 	/* save the init method used by this camera */
 	cam->method = id->driver_info;
 	mutex_init(&cam->lock);
-	cam->vdev = zr364xx_ढाँचा;
+	cam->vdev = zr364xx_template;
 	cam->vdev.lock = &cam->lock;
 	cam->vdev.v4l2_dev = &cam->v4l2_dev;
 	cam->vdev.ctrl_handler = &cam->ctrl_handler;
@@ -1444,42 +1443,42 @@ err_मुक्त:
 
 	cam->udev = udev;
 
-	चयन (mode) अणु
-	हाल 1:
+	switch (mode) {
+	case 1:
 		dev_info(&udev->dev, "160x120 mode selected\n");
 		cam->width = 160;
 		cam->height = 120;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		dev_info(&udev->dev, "640x480 mode selected\n");
 		cam->width = 640;
 		cam->height = 480;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_info(&udev->dev, "320x240 mode selected\n");
 		cam->width = 320;
 		cam->height = 240;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	m0d1[0] = mode;
 	m1[2].value = 0xf000 + mode;
 	m2[1].value = 0xf000 + mode;
 
-	/* special हाल क्रम METHOD3, the modes are dअगरferent */
-	अगर (cam->method == METHOD3) अणु
-		चयन (mode) अणु
-		हाल 1:
+	/* special case for METHOD3, the modes are different */
+	if (cam->method == METHOD3) {
+		switch (mode) {
+		case 1:
 			m2[1].value = 0xf000 + 4;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			m2[1].value = 0xf000 + 0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			m2[1].value = 0xf000 + 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	header2[437] = cam->height / 256;
 	header2[438] = cam->height % 256;
@@ -1488,144 +1487,144 @@ err_मुक्त:
 
 	cam->nb = 0;
 
-	DBG("dev: %p, udev %p interface %p\n", cam, cam->udev, पूर्णांकf);
+	DBG("dev: %p, udev %p interface %p\n", cam, cam->udev, intf);
 
-	/* set up the endpoपूर्णांक inक्रमmation  */
-	अगरace_desc = पूर्णांकf->cur_altsetting;
-	DBG("num endpoints %d\n", अगरace_desc->desc.bNumEndpoपूर्णांकs);
-	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; ++i) अणु
-		endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[i].desc;
-		अगर (!cam->पढ़ो_endpoपूर्णांक && usb_endpoपूर्णांक_is_bulk_in(endpoपूर्णांक)) अणु
-			/* we found the bulk in endpoपूर्णांक */
-			cam->पढ़ो_endpoपूर्णांक = endpoपूर्णांक->bEndpoपूर्णांकAddress;
-		पूर्ण
-	पूर्ण
+	/* set up the endpoint information  */
+	iface_desc = intf->cur_altsetting;
+	DBG("num endpoints %d\n", iface_desc->desc.bNumEndpoints);
+	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
+		endpoint = &iface_desc->endpoint[i].desc;
+		if (!cam->read_endpoint && usb_endpoint_is_bulk_in(endpoint)) {
+			/* we found the bulk in endpoint */
+			cam->read_endpoint = endpoint->bEndpointAddress;
+		}
+	}
 
-	अगर (!cam->पढ़ो_endpoपूर्णांक) अणु
+	if (!cam->read_endpoint) {
 		err = -ENOMEM;
-		dev_err(&पूर्णांकf->dev, "Could not find bulk-in endpoint\n");
-		जाओ मुक्त_hdlr_and_unreg_dev;
-	पूर्ण
+		dev_err(&intf->dev, "Could not find bulk-in endpoint\n");
+		goto free_hdlr_and_unreg_dev;
+	}
 
 	/* v4l */
 	INIT_LIST_HEAD(&cam->vidq.active);
 	cam->vidq.cam = cam;
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, cam);
+	usb_set_intfdata(intf, cam);
 
-	/* load zr364xx board specअगरic */
+	/* load zr364xx board specific */
 	err = zr364xx_board_init(cam);
-	अगर (err)
-		जाओ मुक्त_hdlr_and_unreg_dev;
+	if (err)
+		goto free_hdlr_and_unreg_dev;
 	err = v4l2_ctrl_handler_setup(hdl);
-	अगर (err)
-		जाओ board_uninit;
+	if (err)
+		goto board_uninit;
 
 	spin_lock_init(&cam->slock);
 
-	cam->fmt = क्रमmats;
+	cam->fmt = formats;
 
-	videobuf_queue_vदो_स्मृति_init(&cam->vb_vidq, &zr364xx_video_qops,
-				    शून्य, &cam->slock,
+	videobuf_queue_vmalloc_init(&cam->vb_vidq, &zr364xx_video_qops,
+				    NULL, &cam->slock,
 				    V4L2_BUF_TYPE_VIDEO_CAPTURE,
 				    V4L2_FIELD_NONE,
-				    माप(काष्ठा zr364xx_buffer), cam, &cam->lock);
+				    sizeof(struct zr364xx_buffer), cam, &cam->lock);
 
-	err = video_रेजिस्टर_device(&cam->vdev, VFL_TYPE_VIDEO, -1);
-	अगर (err) अणु
+	err = video_register_device(&cam->vdev, VFL_TYPE_VIDEO, -1);
+	if (err) {
 		dev_err(&udev->dev, "video_register_device failed\n");
-		जाओ board_uninit;
-	पूर्ण
+		goto board_uninit;
+	}
 	cam->v4l2_dev.release = zr364xx_release;
 
 	dev_info(&udev->dev, DRIVER_DESC " controlling device %s\n",
 		 video_device_node_name(&cam->vdev));
-	वापस 0;
+	return 0;
 
 board_uninit:
 	zr364xx_board_uninit(cam);
-मुक्त_hdlr_and_unreg_dev:
-	v4l2_ctrl_handler_मुक्त(hdl);
-	v4l2_device_unरेजिस्टर(&cam->v4l2_dev);
-मुक्त_cam:
-	kमुक्त(cam);
-	वापस err;
-पूर्ण
+free_hdlr_and_unreg_dev:
+	v4l2_ctrl_handler_free(hdl);
+	v4l2_device_unregister(&cam->v4l2_dev);
+free_cam:
+	kfree(cam);
+	return err;
+}
 
 
-अटल व्योम zr364xx_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा zr364xx_camera *cam = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void zr364xx_disconnect(struct usb_interface *intf)
+{
+	struct zr364xx_camera *cam = usb_get_intfdata(intf);
 
 	mutex_lock(&cam->lock);
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
-	dev_info(&पूर्णांकf->dev, DRIVER_DESC " webcam unplugged\n");
-	video_unरेजिस्टर_device(&cam->vdev);
+	usb_set_intfdata(intf, NULL);
+	dev_info(&intf->dev, DRIVER_DESC " webcam unplugged\n");
+	video_unregister_device(&cam->vdev);
 	v4l2_device_disconnect(&cam->v4l2_dev);
 
-	/* stops the पढ़ो pipe अगर it is running */
-	अगर (cam->b_acquire)
+	/* stops the read pipe if it is running */
+	if (cam->b_acquire)
 		zr364xx_stop_acquire(cam);
 
-	zr364xx_stop_पढ़ोpipe(cam);
+	zr364xx_stop_readpipe(cam);
 	mutex_unlock(&cam->lock);
 	v4l2_device_put(&cam->v4l2_dev);
-पूर्ण
+}
 
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक zr364xx_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	काष्ठा zr364xx_camera *cam = usb_get_पूर्णांकfdata(पूर्णांकf);
+#ifdef CONFIG_PM
+static int zr364xx_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	struct zr364xx_camera *cam = usb_get_intfdata(intf);
 
 	cam->was_streaming = cam->b_acquire;
-	अगर (!cam->was_streaming)
-		वापस 0;
+	if (!cam->was_streaming)
+		return 0;
 	zr364xx_stop_acquire(cam);
-	zr364xx_stop_पढ़ोpipe(cam);
-	वापस 0;
-पूर्ण
+	zr364xx_stop_readpipe(cam);
+	return 0;
+}
 
-अटल पूर्णांक zr364xx_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा zr364xx_camera *cam = usb_get_पूर्णांकfdata(पूर्णांकf);
-	पूर्णांक res;
+static int zr364xx_resume(struct usb_interface *intf)
+{
+	struct zr364xx_camera *cam = usb_get_intfdata(intf);
+	int res;
 
-	अगर (!cam->was_streaming)
-		वापस 0;
+	if (!cam->was_streaming)
+		return 0;
 
-	res = zr364xx_start_पढ़ोpipe(cam);
-	अगर (res)
-		वापस res;
+	res = zr364xx_start_readpipe(cam);
+	if (res)
+		return res;
 
 	res = zr364xx_prepare(cam);
-	अगर (res)
-		जाओ err_prepare;
+	if (res)
+		goto err_prepare;
 
 	zr364xx_start_acquire(cam);
-	वापस 0;
+	return 0;
 
 err_prepare:
-	zr364xx_stop_पढ़ोpipe(cam);
-	वापस res;
-पूर्ण
-#पूर्ण_अगर
+	zr364xx_stop_readpipe(cam);
+	return res;
+}
+#endif
 
 /**********************/
-/* Module पूर्णांकegration */
+/* Module integration */
 /**********************/
 
-अटल काष्ठा usb_driver zr364xx_driver = अणु
+static struct usb_driver zr364xx_driver = {
 	.name = "zr364xx",
 	.probe = zr364xx_probe,
 	.disconnect = zr364xx_disconnect,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = zr364xx_suspend,
 	.resume = zr364xx_resume,
 	.reset_resume = zr364xx_resume,
-#पूर्ण_अगर
+#endif
 	.id_table = device_table
-पूर्ण;
+};
 
 module_usb_driver(zr364xx_driver);
 

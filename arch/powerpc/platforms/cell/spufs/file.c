@@ -1,588 +1,587 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * SPU file प्रणाली -- file contents
+ * SPU file system -- file contents
  *
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  *
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#समावेश <linux/coredump.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/export.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
+#include <linux/coredump.h>
+#include <linux/fs.h>
+#include <linux/ioctl.h>
+#include <linux/export.h>
+#include <linux/pagemap.h>
+#include <linux/poll.h>
+#include <linux/ptrace.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/समय.स>
-#समावेश <यंत्र/spu.h>
-#समावेश <यंत्र/spu_info.h>
-#समावेश <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/time.h>
+#include <asm/spu.h>
+#include <asm/spu_info.h>
+#include <linux/uaccess.h>
 
-#समावेश "spufs.h"
-#समावेश "sputrace.h"
+#include "spufs.h"
+#include "sputrace.h"
 
-#घोषणा SPUFS_MMAP_4K (PAGE_SIZE == 0x1000)
+#define SPUFS_MMAP_4K (PAGE_SIZE == 0x1000)
 
 /* Simple attribute files */
-काष्ठा spufs_attr अणु
-	पूर्णांक (*get)(व्योम *, u64 *);
-	पूर्णांक (*set)(व्योम *, u64);
-	अक्षर get_buf[24];       /* enough to store a u64 and "\n\0" */
-	अक्षर set_buf[24];
-	व्योम *data;
-	स्थिर अक्षर *fmt;        /* क्रमmat क्रम पढ़ो operation */
-	काष्ठा mutex mutex;     /* protects access to these buffers */
-पूर्ण;
+struct spufs_attr {
+	int (*get)(void *, u64 *);
+	int (*set)(void *, u64);
+	char get_buf[24];       /* enough to store a u64 and "\n\0" */
+	char set_buf[24];
+	void *data;
+	const char *fmt;        /* format for read operation */
+	struct mutex mutex;     /* protects access to these buffers */
+};
 
-अटल पूर्णांक spufs_attr_खोलो(काष्ठा inode *inode, काष्ठा file *file,
-		पूर्णांक (*get)(व्योम *, u64 *), पूर्णांक (*set)(व्योम *, u64),
-		स्थिर अक्षर *fmt)
-अणु
-	काष्ठा spufs_attr *attr;
+static int spufs_attr_open(struct inode *inode, struct file *file,
+		int (*get)(void *, u64 *), int (*set)(void *, u64),
+		const char *fmt)
+{
+	struct spufs_attr *attr;
 
-	attr = kदो_स्मृति(माप(*attr), GFP_KERNEL);
-	अगर (!attr)
-		वापस -ENOMEM;
+	attr = kmalloc(sizeof(*attr), GFP_KERNEL);
+	if (!attr)
+		return -ENOMEM;
 
 	attr->get = get;
 	attr->set = set;
-	attr->data = inode->i_निजी;
+	attr->data = inode->i_private;
 	attr->fmt = fmt;
 	mutex_init(&attr->mutex);
-	file->निजी_data = attr;
+	file->private_data = attr;
 
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल पूर्णांक spufs_attr_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-       kमुक्त(file->निजी_data);
-	वापस 0;
-पूर्ण
+static int spufs_attr_release(struct inode *inode, struct file *file)
+{
+       kfree(file->private_data);
+	return 0;
+}
 
-अटल sमाप_प्रकार spufs_attr_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-		माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा spufs_attr *attr;
-	माप_प्रकार size;
-	sमाप_प्रकार ret;
+static ssize_t spufs_attr_read(struct file *file, char __user *buf,
+		size_t len, loff_t *ppos)
+{
+	struct spufs_attr *attr;
+	size_t size;
+	ssize_t ret;
 
-	attr = file->निजी_data;
-	अगर (!attr->get)
-		वापस -EACCES;
+	attr = file->private_data;
+	if (!attr->get)
+		return -EACCES;
 
-	ret = mutex_lock_पूर्णांकerruptible(&attr->mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&attr->mutex);
+	if (ret)
+		return ret;
 
-	अगर (*ppos) अणु		/* जारीd पढ़ो */
-		size = म_माप(attr->get_buf);
-	पूर्ण अन्यथा अणु		/* first पढ़ो */
+	if (*ppos) {		/* continued read */
+		size = strlen(attr->get_buf);
+	} else {		/* first read */
 		u64 val;
 		ret = attr->get(attr->data, &val);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 
-		size = scnम_लिखो(attr->get_buf, माप(attr->get_buf),
-				 attr->fmt, (अचिन्हित दीर्घ दीर्घ)val);
-	पूर्ण
+		size = scnprintf(attr->get_buf, sizeof(attr->get_buf),
+				 attr->fmt, (unsigned long long)val);
+	}
 
-	ret = simple_पढ़ो_from_buffer(buf, len, ppos, attr->get_buf, size);
+	ret = simple_read_from_buffer(buf, len, ppos, attr->get_buf, size);
 out:
 	mutex_unlock(&attr->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार spufs_attr_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-		माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा spufs_attr *attr;
+static ssize_t spufs_attr_write(struct file *file, const char __user *buf,
+		size_t len, loff_t *ppos)
+{
+	struct spufs_attr *attr;
 	u64 val;
-	माप_प्रकार size;
-	sमाप_प्रकार ret;
+	size_t size;
+	ssize_t ret;
 
-	attr = file->निजी_data;
-	अगर (!attr->set)
-		वापस -EACCES;
+	attr = file->private_data;
+	if (!attr->set)
+		return -EACCES;
 
-	ret = mutex_lock_पूर्णांकerruptible(&attr->mutex);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&attr->mutex);
+	if (ret)
+		return ret;
 
 	ret = -EFAULT;
-	size = min(माप(attr->set_buf) - 1, len);
-	अगर (copy_from_user(attr->set_buf, buf, size))
-		जाओ out;
+	size = min(sizeof(attr->set_buf) - 1, len);
+	if (copy_from_user(attr->set_buf, buf, size))
+		goto out;
 
 	ret = len; /* claim we got the whole input */
 	attr->set_buf[size] = '\0';
-	val = simple_म_से_दीर्घ(attr->set_buf, शून्य, 0);
+	val = simple_strtol(attr->set_buf, NULL, 0);
 	attr->set(attr->data, val);
 out:
 	mutex_unlock(&attr->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार spufs_dump_emit(काष्ठा coredump_params *cprm, व्योम *buf,
-		माप_प्रकार size)
-अणु
-	अगर (!dump_emit(cprm, buf, size))
-		वापस -EIO;
-	वापस size;
-पूर्ण
+static ssize_t spufs_dump_emit(struct coredump_params *cprm, void *buf,
+		size_t size)
+{
+	if (!dump_emit(cprm, buf, size))
+		return -EIO;
+	return size;
+}
 
-#घोषणा DEFINE_SPUFS_SIMPLE_ATTRIBUTE(__fops, __get, __set, __fmt)	\
-अटल पूर्णांक __fops ## _खोलो(काष्ठा inode *inode, काष्ठा file *file)	\
-अणु									\
-	__simple_attr_check_क्रमmat(__fmt, 0ull);			\
-	वापस spufs_attr_खोलो(inode, file, __get, __set, __fmt);	\
-पूर्ण									\
-अटल स्थिर काष्ठा file_operations __fops = अणु				\
-	.खोलो	 = __fops ## _खोलो,					\
+#define DEFINE_SPUFS_SIMPLE_ATTRIBUTE(__fops, __get, __set, __fmt)	\
+static int __fops ## _open(struct inode *inode, struct file *file)	\
+{									\
+	__simple_attr_check_format(__fmt, 0ull);			\
+	return spufs_attr_open(inode, file, __get, __set, __fmt);	\
+}									\
+static const struct file_operations __fops = {				\
+	.open	 = __fops ## _open,					\
 	.release = spufs_attr_release,					\
-	.पढ़ो	 = spufs_attr_पढ़ो,					\
-	.ग_लिखो	 = spufs_attr_ग_लिखो,					\
+	.read	 = spufs_attr_read,					\
+	.write	 = spufs_attr_write,					\
 	.llseek  = generic_file_llseek,					\
-पूर्ण;
+};
 
 
-अटल पूर्णांक
-spufs_mem_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_mem_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	file->निजी_data = ctx;
-	अगर (!i->i_खोलोers++)
+	file->private_data = ctx;
+	if (!i->i_openers++)
 		ctx->local_store = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-spufs_mem_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_mem_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->local_store = शून्य;
+	if (!--i->i_openers)
+		ctx->local_store = NULL;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार
-spufs_mem_dump(काष्ठा spu_context *ctx, काष्ठा coredump_params *cprm)
-अणु
-	वापस spufs_dump_emit(cprm, ctx->ops->get_ls(ctx), LS_SIZE);
-पूर्ण
+static ssize_t
+spufs_mem_dump(struct spu_context *ctx, struct coredump_params *cprm)
+{
+	return spufs_dump_emit(cprm, ctx->ops->get_ls(ctx), LS_SIZE);
+}
 
-अटल sमाप_प्रकार
-spufs_mem_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-				माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	sमाप_प्रकार ret;
+static ssize_t
+spufs_mem_read(struct file *file, char __user *buffer,
+				size_t size, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	ssize_t ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ret = simple_पढ़ो_from_buffer(buffer, size, pos, ctx->ops->get_ls(ctx),
+	if (ret)
+		return ret;
+	ret = simple_read_from_buffer(buffer, size, pos, ctx->ops->get_ls(ctx),
 				      LS_SIZE);
 	spu_release(ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-spufs_mem_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-					माप_प्रकार size, loff_t *ppos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	अक्षर *local_store;
+static ssize_t
+spufs_mem_write(struct file *file, const char __user *buffer,
+					size_t size, loff_t *ppos)
+{
+	struct spu_context *ctx = file->private_data;
+	char *local_store;
 	loff_t pos = *ppos;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (pos > LS_SIZE)
-		वापस -EFBIG;
+	if (pos > LS_SIZE)
+		return -EFBIG;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	local_store = ctx->ops->get_ls(ctx);
-	size = simple_ग_लिखो_to_buffer(local_store, LS_SIZE, ppos, buffer, size);
+	size = simple_write_to_buffer(local_store, LS_SIZE, ppos, buffer, size);
 	spu_release(ctx);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल vm_fault_t
-spufs_mem_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
-	काष्ठा spu_context *ctx	= vma->vm_file->निजी_data;
-	अचिन्हित दीर्घ pfn, offset;
+static vm_fault_t
+spufs_mem_mmap_fault(struct vm_fault *vmf)
+{
+	struct vm_area_struct *vma = vmf->vma;
+	struct spu_context *ctx	= vma->vm_file->private_data;
+	unsigned long pfn, offset;
 	vm_fault_t ret;
 
 	offset = vmf->pgoff << PAGE_SHIFT;
-	अगर (offset >= LS_SIZE)
-		वापस VM_FAULT_SIGBUS;
+	if (offset >= LS_SIZE)
+		return VM_FAULT_SIGBUS;
 
 	pr_debug("spufs_mem_mmap_fault address=0x%lx, offset=0x%lx\n",
 			vmf->address, offset);
 
-	अगर (spu_acquire(ctx))
-		वापस VM_FAULT_NOPAGE;
+	if (spu_acquire(ctx))
+		return VM_FAULT_NOPAGE;
 
-	अगर (ctx->state == SPU_STATE_SAVED) अणु
+	if (ctx->state == SPU_STATE_SAVED) {
 		vma->vm_page_prot = pgprot_cached(vma->vm_page_prot);
-		pfn = vदो_स्मृति_to_pfn(ctx->csa.lscsa->ls + offset);
-	पूर्ण अन्यथा अणु
+		pfn = vmalloc_to_pfn(ctx->csa.lscsa->ls + offset);
+	} else {
 		vma->vm_page_prot = pgprot_noncached_wc(vma->vm_page_prot);
 		pfn = (ctx->spu->local_store_phys + offset) >> PAGE_SHIFT;
-	पूर्ण
+	}
 	ret = vmf_insert_pfn(vma, vmf->address, pfn);
 
 	spu_release(ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spufs_mem_mmap_access(काष्ठा vm_area_काष्ठा *vma,
-				अचिन्हित दीर्घ address,
-				व्योम *buf, पूर्णांक len, पूर्णांक ग_लिखो)
-अणु
-	काष्ठा spu_context *ctx = vma->vm_file->निजी_data;
-	अचिन्हित दीर्घ offset = address - vma->vm_start;
-	अक्षर *local_store;
+static int spufs_mem_mmap_access(struct vm_area_struct *vma,
+				unsigned long address,
+				void *buf, int len, int write)
+{
+	struct spu_context *ctx = vma->vm_file->private_data;
+	unsigned long offset = address - vma->vm_start;
+	char *local_store;
 
-	अगर (ग_लिखो && !(vma->vm_flags & VM_WRITE))
-		वापस -EACCES;
-	अगर (spu_acquire(ctx))
-		वापस -EINTR;
-	अगर ((offset + len) > vma->vm_end)
+	if (write && !(vma->vm_flags & VM_WRITE))
+		return -EACCES;
+	if (spu_acquire(ctx))
+		return -EINTR;
+	if ((offset + len) > vma->vm_end)
 		len = vma->vm_end - offset;
 	local_store = ctx->ops->get_ls(ctx);
-	अगर (ग_लिखो)
-		स_नकल_toio(local_store + offset, buf, len);
-	अन्यथा
-		स_नकल_fromio(buf, local_store + offset, len);
+	if (write)
+		memcpy_toio(local_store + offset, buf, len);
+	else
+		memcpy_fromio(buf, local_store + offset, len);
 	spu_release(ctx);
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_mem_mmap_vmops = अणु
+static const struct vm_operations_struct spufs_mem_mmap_vmops = {
 	.fault = spufs_mem_mmap_fault,
 	.access = spufs_mem_mmap_access,
-पूर्ण;
+};
 
-अटल पूर्णांक spufs_mem_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_mem_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached_wc(vma->vm_page_prot);
 
 	vma->vm_ops = &spufs_mem_mmap_vmops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_mem_fops = अणु
-	.खोलो			= spufs_mem_खोलो,
+static const struct file_operations spufs_mem_fops = {
+	.open			= spufs_mem_open,
 	.release		= spufs_mem_release,
-	.पढ़ो			= spufs_mem_पढ़ो,
-	.ग_लिखो			= spufs_mem_ग_लिखो,
+	.read			= spufs_mem_read,
+	.write			= spufs_mem_write,
 	.llseek			= generic_file_llseek,
 	.mmap			= spufs_mem_mmap,
-पूर्ण;
+};
 
-अटल vm_fault_t spufs_ps_fault(काष्ठा vm_fault *vmf,
-				    अचिन्हित दीर्घ ps_offs,
-				    अचिन्हित दीर्घ ps_size)
-अणु
-	काष्ठा spu_context *ctx = vmf->vma->vm_file->निजी_data;
-	अचिन्हित दीर्घ area, offset = vmf->pgoff << PAGE_SHIFT;
-	पूर्णांक err = 0;
+static vm_fault_t spufs_ps_fault(struct vm_fault *vmf,
+				    unsigned long ps_offs,
+				    unsigned long ps_size)
+{
+	struct spu_context *ctx = vmf->vma->vm_file->private_data;
+	unsigned long area, offset = vmf->pgoff << PAGE_SHIFT;
+	int err = 0;
 	vm_fault_t ret = VM_FAULT_NOPAGE;
 
 	spu_context_nospu_trace(spufs_ps_fault__enter, ctx);
 
-	अगर (offset >= ps_size)
-		वापस VM_FAULT_SIGBUS;
+	if (offset >= ps_size)
+		return VM_FAULT_SIGBUS;
 
-	अगर (fatal_संकेत_pending(current))
-		वापस VM_FAULT_SIGBUS;
+	if (fatal_signal_pending(current))
+		return VM_FAULT_SIGBUS;
 
 	/*
-	 * Because we release the mmap_lock, the context may be destroyed जबतक
+	 * Because we release the mmap_lock, the context may be destroyed while
 	 * we're in spu_wait. Grab an extra reference so it isn't destroyed
-	 * in the meanसमय.
+	 * in the meantime.
 	 */
 	get_spu_context(ctx);
 
 	/*
-	 * We have to रुको क्रम context to be loaded beक्रमe we have
-	 * pages to hand out to the user, but we करोn't want to रुको
+	 * We have to wait for context to be loaded before we have
+	 * pages to hand out to the user, but we don't want to wait
 	 * with the mmap_lock held.
 	 * It is possible to drop the mmap_lock here, but then we need
-	 * to वापस VM_FAULT_NOPAGE because the mappings may have
+	 * to return VM_FAULT_NOPAGE because the mappings may have
 	 * hanged.
 	 */
-	अगर (spu_acquire(ctx))
-		जाओ refault;
+	if (spu_acquire(ctx))
+		goto refault;
 
-	अगर (ctx->state == SPU_STATE_SAVED) अणु
-		mmap_पढ़ो_unlock(current->mm);
+	if (ctx->state == SPU_STATE_SAVED) {
+		mmap_read_unlock(current->mm);
 		spu_context_nospu_trace(spufs_ps_fault__sleep, ctx);
-		err = spufs_रुको(ctx->run_wq, ctx->state == SPU_STATE_RUNNABLE);
+		err = spufs_wait(ctx->run_wq, ctx->state == SPU_STATE_RUNNABLE);
 		spu_context_trace(spufs_ps_fault__wake, ctx, ctx->spu);
-		mmap_पढ़ो_lock(current->mm);
-	पूर्ण अन्यथा अणु
+		mmap_read_lock(current->mm);
+	} else {
 		area = ctx->spu->problem_phys + ps_offs;
 		ret = vmf_insert_pfn(vmf->vma, vmf->address,
 				(area + offset) >> PAGE_SHIFT);
 		spu_context_trace(spufs_ps_fault__insert, ctx, ctx->spu);
-	पूर्ण
+	}
 
-	अगर (!err)
+	if (!err)
 		spu_release(ctx);
 
 refault:
 	put_spu_context(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर SPUFS_MMAP_4K
-अटल vm_fault_t spufs_cntl_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-	वापस spufs_ps_fault(vmf, 0x4000, SPUFS_CNTL_MAP_SIZE);
-पूर्ण
+#if SPUFS_MMAP_4K
+static vm_fault_t spufs_cntl_mmap_fault(struct vm_fault *vmf)
+{
+	return spufs_ps_fault(vmf, 0x4000, SPUFS_CNTL_MAP_SIZE);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_cntl_mmap_vmops = अणु
+static const struct vm_operations_struct spufs_cntl_mmap_vmops = {
 	.fault = spufs_cntl_mmap_fault,
-पूर्ण;
+};
 
 /*
- * mmap support क्रम problem state control area [0x4000 - 0x4fff].
+ * mmap support for problem state control area [0x4000 - 0x4fff].
  */
-अटल पूर्णांक spufs_cntl_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_cntl_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
 	vma->vm_ops = &spufs_cntl_mmap_vmops;
-	वापस 0;
-पूर्ण
-#अन्यथा /* SPUFS_MMAP_4K */
-#घोषणा spufs_cntl_mmap शून्य
-#पूर्ण_अगर /* !SPUFS_MMAP_4K */
+	return 0;
+}
+#else /* SPUFS_MMAP_4K */
+#define spufs_cntl_mmap NULL
+#endif /* !SPUFS_MMAP_4K */
 
-अटल पूर्णांक spufs_cntl_get(व्योम *data, u64 *val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	पूर्णांक ret;
-
-	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	*val = ctx->ops->status_पढ़ो(ctx);
-	spu_release(ctx);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक spufs_cntl_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	पूर्णांक ret;
+static int spufs_cntl_get(void *data, u64 *val)
+{
+	struct spu_context *ctx = data;
+	int ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ctx->ops->runcntl_ग_लिखो(ctx, val);
+	if (ret)
+		return ret;
+	*val = ctx->ops->status_read(ctx);
 	spu_release(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spufs_cntl_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int spufs_cntl_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	int ret;
+
+	ret = spu_acquire(ctx);
+	if (ret)
+		return ret;
+	ctx->ops->runcntl_write(ctx, val);
+	spu_release(ctx);
+
+	return 0;
+}
+
+static int spufs_cntl_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	file->निजी_data = ctx;
-	अगर (!i->i_खोलोers++)
+	file->private_data = ctx;
+	if (!i->i_openers++)
 		ctx->cntl = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस simple_attr_खोलो(inode, file, spufs_cntl_get,
+	return simple_attr_open(inode, file, spufs_cntl_get,
 					spufs_cntl_set, "0x%08lx");
-पूर्ण
+}
 
-अटल पूर्णांक
-spufs_cntl_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_cntl_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	simple_attr_release(inode, file);
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->cntl = शून्य;
+	if (!--i->i_openers)
+		ctx->cntl = NULL;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_cntl_fops = अणु
-	.खोलो = spufs_cntl_खोलो,
+static const struct file_operations spufs_cntl_fops = {
+	.open = spufs_cntl_open,
 	.release = spufs_cntl_release,
-	.पढ़ो = simple_attr_पढ़ो,
-	.ग_लिखो = simple_attr_ग_लिखो,
+	.read = simple_attr_read,
+	.write = simple_attr_write,
 	.llseek	= no_llseek,
 	.mmap = spufs_cntl_mmap,
-पूर्ण;
+};
 
-अटल पूर्णांक
-spufs_regs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	file->निजी_data = i->i_ctx;
-	वापस 0;
-पूर्ण
+static int
+spufs_regs_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	file->private_data = i->i_ctx;
+	return 0;
+}
 
-अटल sमाप_प्रकार
-spufs_regs_dump(काष्ठा spu_context *ctx, काष्ठा coredump_params *cprm)
-अणु
-	वापस spufs_dump_emit(cprm, ctx->csa.lscsa->gprs,
-			       माप(ctx->csa.lscsa->gprs));
-पूर्ण
+static ssize_t
+spufs_regs_dump(struct spu_context *ctx, struct coredump_params *cprm)
+{
+	return spufs_dump_emit(cprm, ctx->csa.lscsa->gprs,
+			       sizeof(ctx->csa.lscsa->gprs));
+}
 
-अटल sमाप_प्रकार
-spufs_regs_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-		माप_प्रकार size, loff_t *pos)
-अणु
-	पूर्णांक ret;
-	काष्ठा spu_context *ctx = file->निजी_data;
+static ssize_t
+spufs_regs_read(struct file *file, char __user *buffer,
+		size_t size, loff_t *pos)
+{
+	int ret;
+	struct spu_context *ctx = file->private_data;
 
-	/* pre-check क्रम file position: अगर we'd return EOF, there's no poपूर्णांक
+	/* pre-check for file position: if we'd return EOF, there's no point
 	 * causing a deschedule */
-	अगर (*pos >= माप(ctx->csa.lscsa->gprs))
-		वापस 0;
+	if (*pos >= sizeof(ctx->csa.lscsa->gprs))
+		return 0;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	ret = simple_पढ़ो_from_buffer(buffer, size, pos, ctx->csa.lscsa->gprs,
-				      माप(ctx->csa.lscsa->gprs));
+	if (ret)
+		return ret;
+	ret = simple_read_from_buffer(buffer, size, pos, ctx->csa.lscsa->gprs,
+				      sizeof(ctx->csa.lscsa->gprs));
 	spu_release_saved(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-spufs_regs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-		 माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	पूर्णांक ret;
+static ssize_t
+spufs_regs_write(struct file *file, const char __user *buffer,
+		 size_t size, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	int ret;
 
-	अगर (*pos >= माप(lscsa->gprs))
-		वापस -EFBIG;
+	if (*pos >= sizeof(lscsa->gprs))
+		return -EFBIG;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	size = simple_ग_लिखो_to_buffer(lscsa->gprs, माप(lscsa->gprs), pos,
+	size = simple_write_to_buffer(lscsa->gprs, sizeof(lscsa->gprs), pos,
 					buffer, size);
 
 	spu_release_saved(ctx);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_regs_fops = अणु
-	.खोलो	 = spufs_regs_खोलो,
-	.पढ़ो    = spufs_regs_पढ़ो,
-	.ग_लिखो   = spufs_regs_ग_लिखो,
+static const struct file_operations spufs_regs_fops = {
+	.open	 = spufs_regs_open,
+	.read    = spufs_regs_read,
+	.write   = spufs_regs_write,
 	.llseek  = generic_file_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार
-spufs_fpcr_dump(काष्ठा spu_context *ctx, काष्ठा coredump_params *cprm)
-अणु
-	वापस spufs_dump_emit(cprm, &ctx->csa.lscsa->fpcr,
-			       माप(ctx->csa.lscsa->fpcr));
-पूर्ण
+static ssize_t
+spufs_fpcr_dump(struct spu_context *ctx, struct coredump_params *cprm)
+{
+	return spufs_dump_emit(cprm, &ctx->csa.lscsa->fpcr,
+			       sizeof(ctx->csa.lscsa->fpcr));
+}
 
-अटल sमाप_प्रकार
-spufs_fpcr_पढ़ो(काष्ठा file *file, अक्षर __user * buffer,
-		माप_प्रकार size, loff_t * pos)
-अणु
-	पूर्णांक ret;
-	काष्ठा spu_context *ctx = file->निजी_data;
+static ssize_t
+spufs_fpcr_read(struct file *file, char __user * buffer,
+		size_t size, loff_t * pos)
+{
+	int ret;
+	struct spu_context *ctx = file->private_data;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	ret = simple_पढ़ो_from_buffer(buffer, size, pos, &ctx->csa.lscsa->fpcr,
-				      माप(ctx->csa.lscsa->fpcr));
+	if (ret)
+		return ret;
+	ret = simple_read_from_buffer(buffer, size, pos, &ctx->csa.lscsa->fpcr,
+				      sizeof(ctx->csa.lscsa->fpcr));
 	spu_release_saved(ctx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार
-spufs_fpcr_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user * buffer,
-		 माप_प्रकार size, loff_t * pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	पूर्णांक ret;
+static ssize_t
+spufs_fpcr_write(struct file *file, const char __user * buffer,
+		 size_t size, loff_t * pos)
+{
+	struct spu_context *ctx = file->private_data;
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	int ret;
 
-	अगर (*pos >= माप(lscsa->fpcr))
-		वापस -EFBIG;
+	if (*pos >= sizeof(lscsa->fpcr))
+		return -EFBIG;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	size = simple_ग_लिखो_to_buffer(&lscsa->fpcr, माप(lscsa->fpcr), pos,
+	size = simple_write_to_buffer(&lscsa->fpcr, sizeof(lscsa->fpcr), pos,
 					buffer, size);
 
 	spu_release_saved(ctx);
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_fpcr_fops = अणु
-	.खोलो = spufs_regs_खोलो,
-	.पढ़ो = spufs_fpcr_पढ़ो,
-	.ग_लिखो = spufs_fpcr_ग_लिखो,
+static const struct file_operations spufs_fpcr_fops = {
+	.open = spufs_regs_open,
+	.read = spufs_fpcr_read,
+	.write = spufs_fpcr_write,
 	.llseek = generic_file_llseek,
-पूर्ण;
+};
 
-/* generic खोलो function क्रम all pipe-like files */
-अटल पूर्णांक spufs_pipe_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	file->निजी_data = i->i_ctx;
+/* generic open function for all pipe-like files */
+static int spufs_pipe_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	file->private_data = i->i_ctx;
 
-	वापस stream_खोलो(inode, file);
-पूर्ण
+	return stream_open(inode, file);
+}
 
 /*
  * Read as many bytes from the mailbox as possible, until
@@ -592,2043 +591,2043 @@ spufs_fpcr_ग_लिखो(काष्ठा file *file, स्थिर अ�
  * - end of the user provided buffer
  * - end of the mapped area
  */
-अटल sमाप_प्रकार spufs_mbox_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	u32 mbox_data, __user *udata = (व्योम __user *)buf;
-	sमाप_प्रकार count;
+static ssize_t spufs_mbox_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	u32 mbox_data, __user *udata = (void __user *)buf;
+	ssize_t count;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
 	count = spu_acquire(ctx);
-	अगर (count)
-		वापस count;
+	if (count)
+		return count;
 
-	क्रम (count = 0; (count + 4) <= len; count += 4, udata++) अणु
-		पूर्णांक ret;
-		ret = ctx->ops->mbox_पढ़ो(ctx, &mbox_data);
-		अगर (ret == 0)
-			अवरोध;
+	for (count = 0; (count + 4) <= len; count += 4, udata++) {
+		int ret;
+		ret = ctx->ops->mbox_read(ctx, &mbox_data);
+		if (ret == 0)
+			break;
 
 		/*
 		 * at the end of the mapped area, we can fault
-		 * but still need to वापस the data we have
-		 * पढ़ो successfully so far.
+		 * but still need to return the data we have
+		 * read successfully so far.
 		 */
 		ret = put_user(mbox_data, udata);
-		अगर (ret) अणु
-			अगर (!count)
+		if (ret) {
+			if (!count)
 				count = -EFAULT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spu_release(ctx);
 
-	अगर (!count)
+	if (!count)
 		count = -EAGAIN;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_mbox_fops = अणु
-	.खोलो	= spufs_pipe_खोलो,
-	.पढ़ो	= spufs_mbox_पढ़ो,
+static const struct file_operations spufs_mbox_fops = {
+	.open	= spufs_pipe_open,
+	.read	= spufs_mbox_read,
 	.llseek	= no_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार spufs_mbox_stat_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	sमाप_प्रकार ret;
+static ssize_t spufs_mbox_stat_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	ssize_t ret;
 	u32 mbox_stat;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	mbox_stat = ctx->ops->mbox_stat_पढ़ो(ctx) & 0xff;
+	mbox_stat = ctx->ops->mbox_stat_read(ctx) & 0xff;
 
 	spu_release(ctx);
 
-	अगर (copy_to_user(buf, &mbox_stat, माप mbox_stat))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &mbox_stat, sizeof mbox_stat))
+		return -EFAULT;
 
-	वापस 4;
-पूर्ण
+	return 4;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_mbox_stat_fops = अणु
-	.खोलो	= spufs_pipe_खोलो,
-	.पढ़ो	= spufs_mbox_stat_पढ़ो,
+static const struct file_operations spufs_mbox_stat_fops = {
+	.open	= spufs_pipe_open,
+	.read	= spufs_mbox_stat_read,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
 /* low-level ibox access function */
-माप_प्रकार spu_ibox_पढ़ो(काष्ठा spu_context *ctx, u32 *data)
-अणु
-	वापस ctx->ops->ibox_पढ़ो(ctx, data);
-पूर्ण
+size_t spu_ibox_read(struct spu_context *ctx, u32 *data)
+{
+	return ctx->ops->ibox_read(ctx, data);
+}
 
-/* पूर्णांकerrupt-level ibox callback function. */
-व्योम spufs_ibox_callback(काष्ठा spu *spu)
-अणु
-	काष्ठा spu_context *ctx = spu->ctx;
+/* interrupt-level ibox callback function. */
+void spufs_ibox_callback(struct spu *spu)
+{
+	struct spu_context *ctx = spu->ctx;
 
-	अगर (ctx)
+	if (ctx)
 		wake_up_all(&ctx->ibox_wq);
-पूर्ण
+}
 
 /*
- * Read as many bytes from the पूर्णांकerrupt mailbox as possible, until
+ * Read as many bytes from the interrupt mailbox as possible, until
  * one of the conditions becomes true:
  *
  * - no more data available in the mailbox
  * - end of the user provided buffer
  * - end of the mapped area
  *
- * If the file is खोलोed without O_NONBLOCK, we रुको here until
- * any data is available, but वापस when we have been able to
- * पढ़ो something.
+ * If the file is opened without O_NONBLOCK, we wait here until
+ * any data is available, but return when we have been able to
+ * read something.
  */
-अटल sमाप_प्रकार spufs_ibox_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	u32 ibox_data, __user *udata = (व्योम __user *)buf;
-	sमाप_प्रकार count;
+static ssize_t spufs_ibox_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	u32 ibox_data, __user *udata = (void __user *)buf;
+	ssize_t count;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
 	count = spu_acquire(ctx);
-	अगर (count)
-		जाओ out;
+	if (count)
+		goto out;
 
-	/* रुको only क्रम the first element */
+	/* wait only for the first element */
 	count = 0;
-	अगर (file->f_flags & O_NONBLOCK) अणु
-		अगर (!spu_ibox_पढ़ो(ctx, &ibox_data)) अणु
+	if (file->f_flags & O_NONBLOCK) {
+		if (!spu_ibox_read(ctx, &ibox_data)) {
 			count = -EAGAIN;
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		count = spufs_रुको(ctx->ibox_wq, spu_ibox_पढ़ो(ctx, &ibox_data));
-		अगर (count)
-			जाओ out;
-	पूर्ण
+			goto out_unlock;
+		}
+	} else {
+		count = spufs_wait(ctx->ibox_wq, spu_ibox_read(ctx, &ibox_data));
+		if (count)
+			goto out;
+	}
 
-	/* अगर we can't ग_लिखो at all, वापस -EFAULT */
+	/* if we can't write at all, return -EFAULT */
 	count = put_user(ibox_data, udata);
-	अगर (count)
-		जाओ out_unlock;
+	if (count)
+		goto out_unlock;
 
-	क्रम (count = 4, udata++; (count + 4) <= len; count += 4, udata++) अणु
-		पूर्णांक ret;
-		ret = ctx->ops->ibox_पढ़ो(ctx, &ibox_data);
-		अगर (ret == 0)
-			अवरोध;
+	for (count = 4, udata++; (count + 4) <= len; count += 4, udata++) {
+		int ret;
+		ret = ctx->ops->ibox_read(ctx, &ibox_data);
+		if (ret == 0)
+			break;
 		/*
 		 * at the end of the mapped area, we can fault
-		 * but still need to वापस the data we have
-		 * पढ़ो successfully so far.
+		 * but still need to return the data we have
+		 * read successfully so far.
 		 */
 		ret = put_user(ibox_data, udata);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+		if (ret)
+			break;
+	}
 
 out_unlock:
 	spu_release(ctx);
 out:
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल __poll_t spufs_ibox_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
+static __poll_t spufs_ibox_poll(struct file *file, poll_table *wait)
+{
+	struct spu_context *ctx = file->private_data;
 	__poll_t mask;
 
-	poll_रुको(file, &ctx->ibox_wq, रुको);
+	poll_wait(file, &ctx->ibox_wq, wait);
 
 	/*
-	 * For now keep this unपूर्णांकerruptible and also ignore the rule
+	 * For now keep this uninterruptible and also ignore the rule
 	 * that poll should not sleep.  Will be fixed later.
 	 */
 	mutex_lock(&ctx->state_mutex);
 	mask = ctx->ops->mbox_stat_poll(ctx, EPOLLIN | EPOLLRDNORM);
 	spu_release(ctx);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_ibox_fops = अणु
-	.खोलो	= spufs_pipe_खोलो,
-	.पढ़ो	= spufs_ibox_पढ़ो,
+static const struct file_operations spufs_ibox_fops = {
+	.open	= spufs_pipe_open,
+	.read	= spufs_ibox_read,
 	.poll	= spufs_ibox_poll,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार spufs_ibox_stat_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	sमाप_प्रकार ret;
+static ssize_t spufs_ibox_stat_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	ssize_t ret;
 	u32 ibox_stat;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ibox_stat = (ctx->ops->mbox_stat_पढ़ो(ctx) >> 16) & 0xff;
+	if (ret)
+		return ret;
+	ibox_stat = (ctx->ops->mbox_stat_read(ctx) >> 16) & 0xff;
 	spu_release(ctx);
 
-	अगर (copy_to_user(buf, &ibox_stat, माप ibox_stat))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &ibox_stat, sizeof ibox_stat))
+		return -EFAULT;
 
-	वापस 4;
-पूर्ण
+	return 4;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_ibox_stat_fops = अणु
-	.खोलो	= spufs_pipe_खोलो,
-	.पढ़ो	= spufs_ibox_stat_पढ़ो,
+static const struct file_operations spufs_ibox_stat_fops = {
+	.open	= spufs_pipe_open,
+	.read	= spufs_ibox_stat_read,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-/* low-level mailbox ग_लिखो */
-माप_प्रकार spu_wbox_ग_लिखो(काष्ठा spu_context *ctx, u32 data)
-अणु
-	वापस ctx->ops->wbox_ग_लिखो(ctx, data);
-पूर्ण
+/* low-level mailbox write */
+size_t spu_wbox_write(struct spu_context *ctx, u32 data)
+{
+	return ctx->ops->wbox_write(ctx, data);
+}
 
-/* पूर्णांकerrupt-level wbox callback function. */
-व्योम spufs_wbox_callback(काष्ठा spu *spu)
-अणु
-	काष्ठा spu_context *ctx = spu->ctx;
+/* interrupt-level wbox callback function. */
+void spufs_wbox_callback(struct spu *spu)
+{
+	struct spu_context *ctx = spu->ctx;
 
-	अगर (ctx)
+	if (ctx)
 		wake_up_all(&ctx->wbox_wq);
-पूर्ण
+}
 
 /*
- * Write as many bytes to the पूर्णांकerrupt mailbox as possible, until
+ * Write as many bytes to the interrupt mailbox as possible, until
  * one of the conditions becomes true:
  *
  * - the mailbox is full
  * - end of the user provided buffer
  * - end of the mapped area
  *
- * If the file is खोलोed without O_NONBLOCK, we रुको here until
- * space is available, but वापस when we have been able to
- * ग_लिखो something.
+ * If the file is opened without O_NONBLOCK, we wait here until
+ * space is available, but return when we have been able to
+ * write something.
  */
-अटल sमाप_प्रकार spufs_wbox_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	u32 wbox_data, __user *udata = (व्योम __user *)buf;
-	sमाप_प्रकार count;
+static ssize_t spufs_wbox_write(struct file *file, const char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	u32 wbox_data, __user *udata = (void __user *)buf;
+	ssize_t count;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
-	अगर (get_user(wbox_data, udata))
-		वापस -EFAULT;
+	if (get_user(wbox_data, udata))
+		return -EFAULT;
 
 	count = spu_acquire(ctx);
-	अगर (count)
-		जाओ out;
+	if (count)
+		goto out;
 
 	/*
-	 * make sure we can at least ग_लिखो one element, by रुकोing
-	 * in हाल of !O_NONBLOCK
+	 * make sure we can at least write one element, by waiting
+	 * in case of !O_NONBLOCK
 	 */
 	count = 0;
-	अगर (file->f_flags & O_NONBLOCK) अणु
-		अगर (!spu_wbox_ग_लिखो(ctx, wbox_data)) अणु
+	if (file->f_flags & O_NONBLOCK) {
+		if (!spu_wbox_write(ctx, wbox_data)) {
 			count = -EAGAIN;
-			जाओ out_unlock;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		count = spufs_रुको(ctx->wbox_wq, spu_wbox_ग_लिखो(ctx, wbox_data));
-		अगर (count)
-			जाओ out;
-	पूर्ण
+			goto out_unlock;
+		}
+	} else {
+		count = spufs_wait(ctx->wbox_wq, spu_wbox_write(ctx, wbox_data));
+		if (count)
+			goto out;
+	}
 
 
-	/* ग_लिखो as much as possible */
-	क्रम (count = 4, udata++; (count + 4) <= len; count += 4, udata++) अणु
-		पूर्णांक ret;
+	/* write as much as possible */
+	for (count = 4, udata++; (count + 4) <= len; count += 4, udata++) {
+		int ret;
 		ret = get_user(wbox_data, udata);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
-		ret = spu_wbox_ग_लिखो(ctx, wbox_data);
-		अगर (ret == 0)
-			अवरोध;
-	पूर्ण
+		ret = spu_wbox_write(ctx, wbox_data);
+		if (ret == 0)
+			break;
+	}
 
 out_unlock:
 	spu_release(ctx);
 out:
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल __poll_t spufs_wbox_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
+static __poll_t spufs_wbox_poll(struct file *file, poll_table *wait)
+{
+	struct spu_context *ctx = file->private_data;
 	__poll_t mask;
 
-	poll_रुको(file, &ctx->wbox_wq, रुको);
+	poll_wait(file, &ctx->wbox_wq, wait);
 
 	/*
-	 * For now keep this unपूर्णांकerruptible and also ignore the rule
+	 * For now keep this uninterruptible and also ignore the rule
 	 * that poll should not sleep.  Will be fixed later.
 	 */
 	mutex_lock(&ctx->state_mutex);
 	mask = ctx->ops->mbox_stat_poll(ctx, EPOLLOUT | EPOLLWRNORM);
 	spu_release(ctx);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_wbox_fops = अणु
-	.खोलो	= spufs_pipe_खोलो,
-	.ग_लिखो	= spufs_wbox_ग_लिखो,
+static const struct file_operations spufs_wbox_fops = {
+	.open	= spufs_pipe_open,
+	.write	= spufs_wbox_write,
 	.poll	= spufs_wbox_poll,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार spufs_wbox_stat_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	sमाप_प्रकार ret;
+static ssize_t spufs_wbox_stat_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	ssize_t ret;
 	u32 wbox_stat;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	wbox_stat = (ctx->ops->mbox_stat_पढ़ो(ctx) >> 8) & 0xff;
+	if (ret)
+		return ret;
+	wbox_stat = (ctx->ops->mbox_stat_read(ctx) >> 8) & 0xff;
 	spu_release(ctx);
 
-	अगर (copy_to_user(buf, &wbox_stat, माप wbox_stat))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &wbox_stat, sizeof wbox_stat))
+		return -EFAULT;
 
-	वापस 4;
-पूर्ण
+	return 4;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_wbox_stat_fops = अणु
-	.खोलो	= spufs_pipe_खोलो,
-	.पढ़ो	= spufs_wbox_stat_पढ़ो,
+static const struct file_operations spufs_wbox_stat_fops = {
+	.open	= spufs_pipe_open,
+	.read	= spufs_wbox_stat_read,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक spufs_संकेत1_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
-
-	mutex_lock(&ctx->mapping_lock);
-	file->निजी_data = ctx;
-	अगर (!i->i_खोलोers++)
-		ctx->संकेत1 = inode->i_mapping;
-	mutex_unlock(&ctx->mapping_lock);
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
-
-अटल पूर्णांक
-spufs_संकेत1_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int spufs_signal1_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->संकेत1 = शून्य;
+	file->private_data = ctx;
+	if (!i->i_openers++)
+		ctx->signal1 = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल sमाप_प्रकार spufs_संकेत1_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	अगर (!ctx->csa.spu_chnlcnt_RW[3])
-		वापस 0;
-	वापस spufs_dump_emit(cprm, &ctx->csa.spu_chnldata_RW[3],
-			       माप(ctx->csa.spu_chnldata_RW[3]));
-पूर्ण
+static int
+spufs_signal1_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
-अटल sमाप_प्रकार __spufs_संकेत1_पढ़ो(काष्ठा spu_context *ctx, अक्षर __user *buf,
-			माप_प्रकार len)
-अणु
-	अगर (len < माप(ctx->csa.spu_chnldata_RW[3]))
-		वापस -EINVAL;
-	अगर (!ctx->csa.spu_chnlcnt_RW[3])
-		वापस 0;
-	अगर (copy_to_user(buf, &ctx->csa.spu_chnldata_RW[3],
-			 माप(ctx->csa.spu_chnldata_RW[3])))
-		वापस -EFAULT;
-	वापस माप(ctx->csa.spu_chnldata_RW[3]);
-पूर्ण
+	mutex_lock(&ctx->mapping_lock);
+	if (!--i->i_openers)
+		ctx->signal1 = NULL;
+	mutex_unlock(&ctx->mapping_lock);
+	return 0;
+}
 
-अटल sमाप_प्रकार spufs_संकेत1_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	पूर्णांक ret;
-	काष्ठा spu_context *ctx = file->निजी_data;
+static ssize_t spufs_signal1_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	if (!ctx->csa.spu_chnlcnt_RW[3])
+		return 0;
+	return spufs_dump_emit(cprm, &ctx->csa.spu_chnldata_RW[3],
+			       sizeof(ctx->csa.spu_chnldata_RW[3]));
+}
+
+static ssize_t __spufs_signal1_read(struct spu_context *ctx, char __user *buf,
+			size_t len)
+{
+	if (len < sizeof(ctx->csa.spu_chnldata_RW[3]))
+		return -EINVAL;
+	if (!ctx->csa.spu_chnlcnt_RW[3])
+		return 0;
+	if (copy_to_user(buf, &ctx->csa.spu_chnldata_RW[3],
+			 sizeof(ctx->csa.spu_chnldata_RW[3])))
+		return -EFAULT;
+	return sizeof(ctx->csa.spu_chnldata_RW[3]);
+}
+
+static ssize_t spufs_signal1_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	int ret;
+	struct spu_context *ctx = file->private_data;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	ret = __spufs_संकेत1_पढ़ो(ctx, buf, len);
+	if (ret)
+		return ret;
+	ret = __spufs_signal1_read(ctx, buf, len);
 	spu_release_saved(ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार spufs_संकेत1_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx;
-	sमाप_प्रकार ret;
+static ssize_t spufs_signal1_write(struct file *file, const char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx;
+	ssize_t ret;
 	u32 data;
 
-	ctx = file->निजी_data;
+	ctx = file->private_data;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
-	अगर (copy_from_user(&data, buf, 4))
-		वापस -EFAULT;
+	if (copy_from_user(&data, buf, 4))
+		return -EFAULT;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ctx->ops->संकेत1_ग_लिखो(ctx, data);
+	if (ret)
+		return ret;
+	ctx->ops->signal1_write(ctx, data);
 	spu_release(ctx);
 
-	वापस 4;
-पूर्ण
+	return 4;
+}
 
-अटल vm_fault_t
-spufs_संकेत1_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-#अगर SPUFS_SIGNAL_MAP_SIZE == 0x1000
-	वापस spufs_ps_fault(vmf, 0x14000, SPUFS_SIGNAL_MAP_SIZE);
-#या_अगर SPUFS_SIGNAL_MAP_SIZE == 0x10000
-	/* For 64k pages, both संकेत1 and संकेत2 can be used to mmap the whole
-	 * संकेत 1 and 2 area
+static vm_fault_t
+spufs_signal1_mmap_fault(struct vm_fault *vmf)
+{
+#if SPUFS_SIGNAL_MAP_SIZE == 0x1000
+	return spufs_ps_fault(vmf, 0x14000, SPUFS_SIGNAL_MAP_SIZE);
+#elif SPUFS_SIGNAL_MAP_SIZE == 0x10000
+	/* For 64k pages, both signal1 and signal2 can be used to mmap the whole
+	 * signal 1 and 2 area
 	 */
-	वापस spufs_ps_fault(vmf, 0x10000, SPUFS_SIGNAL_MAP_SIZE);
-#अन्यथा
-#त्रुटि unsupported page size
-#पूर्ण_अगर
-पूर्ण
+	return spufs_ps_fault(vmf, 0x10000, SPUFS_SIGNAL_MAP_SIZE);
+#else
+#error unsupported page size
+#endif
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_संकेत1_mmap_vmops = अणु
-	.fault = spufs_संकेत1_mmap_fault,
-पूर्ण;
+static const struct vm_operations_struct spufs_signal1_mmap_vmops = {
+	.fault = spufs_signal1_mmap_fault,
+};
 
-अटल पूर्णांक spufs_संकेत1_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_signal1_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-	vma->vm_ops = &spufs_संकेत1_mmap_vmops;
-	वापस 0;
-पूर्ण
+	vma->vm_ops = &spufs_signal1_mmap_vmops;
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_संकेत1_fops = अणु
-	.खोलो = spufs_संकेत1_खोलो,
-	.release = spufs_संकेत1_release,
-	.पढ़ो = spufs_संकेत1_पढ़ो,
-	.ग_लिखो = spufs_संकेत1_ग_लिखो,
-	.mmap = spufs_संकेत1_mmap,
+static const struct file_operations spufs_signal1_fops = {
+	.open = spufs_signal1_open,
+	.release = spufs_signal1_release,
+	.read = spufs_signal1_read,
+	.write = spufs_signal1_write,
+	.mmap = spufs_signal1_mmap,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations spufs_संकेत1_nosched_fops = अणु
-	.खोलो = spufs_संकेत1_खोलो,
-	.release = spufs_संकेत1_release,
-	.ग_लिखो = spufs_संकेत1_ग_लिखो,
-	.mmap = spufs_संकेत1_mmap,
+static const struct file_operations spufs_signal1_nosched_fops = {
+	.open = spufs_signal1_open,
+	.release = spufs_signal1_release,
+	.write = spufs_signal1_write,
+	.mmap = spufs_signal1_mmap,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक spufs_संकेत2_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int spufs_signal2_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	file->निजी_data = ctx;
-	अगर (!i->i_खोलोers++)
-		ctx->संकेत2 = inode->i_mapping;
+	file->private_data = ctx;
+	if (!i->i_openers++)
+		ctx->signal2 = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल पूर्णांक
-spufs_संकेत2_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_signal2_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->संकेत2 = शून्य;
+	if (!--i->i_openers)
+		ctx->signal2 = NULL;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार spufs_संकेत2_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	अगर (!ctx->csa.spu_chnlcnt_RW[4])
-		वापस 0;
-	वापस spufs_dump_emit(cprm, &ctx->csa.spu_chnldata_RW[4],
-			       माप(ctx->csa.spu_chnldata_RW[4]));
-पूर्ण
+static ssize_t spufs_signal2_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	if (!ctx->csa.spu_chnlcnt_RW[4])
+		return 0;
+	return spufs_dump_emit(cprm, &ctx->csa.spu_chnldata_RW[4],
+			       sizeof(ctx->csa.spu_chnldata_RW[4]));
+}
 
-अटल sमाप_प्रकार __spufs_संकेत2_पढ़ो(काष्ठा spu_context *ctx, अक्षर __user *buf,
-			माप_प्रकार len)
-अणु
-	अगर (len < माप(ctx->csa.spu_chnldata_RW[4]))
-		वापस -EINVAL;
-	अगर (!ctx->csa.spu_chnlcnt_RW[4])
-		वापस 0;
-	अगर (copy_to_user(buf, &ctx->csa.spu_chnldata_RW[4],
-			 माप(ctx->csa.spu_chnldata_RW[4])))
-		वापस -EFAULT;
-	वापस माप(ctx->csa.spu_chnldata_RW[4]);
-पूर्ण
+static ssize_t __spufs_signal2_read(struct spu_context *ctx, char __user *buf,
+			size_t len)
+{
+	if (len < sizeof(ctx->csa.spu_chnldata_RW[4]))
+		return -EINVAL;
+	if (!ctx->csa.spu_chnlcnt_RW[4])
+		return 0;
+	if (copy_to_user(buf, &ctx->csa.spu_chnldata_RW[4],
+			 sizeof(ctx->csa.spu_chnldata_RW[4])))
+		return -EFAULT;
+	return sizeof(ctx->csa.spu_chnldata_RW[4]);
+}
 
-अटल sमाप_प्रकार spufs_संकेत2_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	पूर्णांक ret;
+static ssize_t spufs_signal2_read(struct file *file, char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	ret = __spufs_संकेत2_पढ़ो(ctx, buf, len);
+	if (ret)
+		return ret;
+	ret = __spufs_signal2_read(ctx, buf, len);
 	spu_release_saved(ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार spufs_संकेत2_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
-			माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx;
-	sमाप_प्रकार ret;
+static ssize_t spufs_signal2_write(struct file *file, const char __user *buf,
+			size_t len, loff_t *pos)
+{
+	struct spu_context *ctx;
+	ssize_t ret;
 	u32 data;
 
-	ctx = file->निजी_data;
+	ctx = file->private_data;
 
-	अगर (len < 4)
-		वापस -EINVAL;
+	if (len < 4)
+		return -EINVAL;
 
-	अगर (copy_from_user(&data, buf, 4))
-		वापस -EFAULT;
+	if (copy_from_user(&data, buf, 4))
+		return -EFAULT;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ctx->ops->संकेत2_ग_लिखो(ctx, data);
+	if (ret)
+		return ret;
+	ctx->ops->signal2_write(ctx, data);
 	spu_release(ctx);
 
-	वापस 4;
-पूर्ण
+	return 4;
+}
 
-#अगर SPUFS_MMAP_4K
-अटल vm_fault_t
-spufs_संकेत2_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-#अगर SPUFS_SIGNAL_MAP_SIZE == 0x1000
-	वापस spufs_ps_fault(vmf, 0x1c000, SPUFS_SIGNAL_MAP_SIZE);
-#या_अगर SPUFS_SIGNAL_MAP_SIZE == 0x10000
-	/* For 64k pages, both संकेत1 and संकेत2 can be used to mmap the whole
-	 * संकेत 1 and 2 area
+#if SPUFS_MMAP_4K
+static vm_fault_t
+spufs_signal2_mmap_fault(struct vm_fault *vmf)
+{
+#if SPUFS_SIGNAL_MAP_SIZE == 0x1000
+	return spufs_ps_fault(vmf, 0x1c000, SPUFS_SIGNAL_MAP_SIZE);
+#elif SPUFS_SIGNAL_MAP_SIZE == 0x10000
+	/* For 64k pages, both signal1 and signal2 can be used to mmap the whole
+	 * signal 1 and 2 area
 	 */
-	वापस spufs_ps_fault(vmf, 0x10000, SPUFS_SIGNAL_MAP_SIZE);
-#अन्यथा
-#त्रुटि unsupported page size
-#पूर्ण_अगर
-पूर्ण
+	return spufs_ps_fault(vmf, 0x10000, SPUFS_SIGNAL_MAP_SIZE);
+#else
+#error unsupported page size
+#endif
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_संकेत2_mmap_vmops = अणु
-	.fault = spufs_संकेत2_mmap_fault,
-पूर्ण;
+static const struct vm_operations_struct spufs_signal2_mmap_vmops = {
+	.fault = spufs_signal2_mmap_fault,
+};
 
-अटल पूर्णांक spufs_संकेत2_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_signal2_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-	vma->vm_ops = &spufs_संकेत2_mmap_vmops;
-	वापस 0;
-पूर्ण
-#अन्यथा /* SPUFS_MMAP_4K */
-#घोषणा spufs_संकेत2_mmap शून्य
-#पूर्ण_अगर /* !SPUFS_MMAP_4K */
+	vma->vm_ops = &spufs_signal2_mmap_vmops;
+	return 0;
+}
+#else /* SPUFS_MMAP_4K */
+#define spufs_signal2_mmap NULL
+#endif /* !SPUFS_MMAP_4K */
 
-अटल स्थिर काष्ठा file_operations spufs_संकेत2_fops = अणु
-	.खोलो = spufs_संकेत2_खोलो,
-	.release = spufs_संकेत2_release,
-	.पढ़ो = spufs_संकेत2_पढ़ो,
-	.ग_लिखो = spufs_संकेत2_ग_लिखो,
-	.mmap = spufs_संकेत2_mmap,
+static const struct file_operations spufs_signal2_fops = {
+	.open = spufs_signal2_open,
+	.release = spufs_signal2_release,
+	.read = spufs_signal2_read,
+	.write = spufs_signal2_write,
+	.mmap = spufs_signal2_mmap,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations spufs_संकेत2_nosched_fops = अणु
-	.खोलो = spufs_संकेत2_खोलो,
-	.release = spufs_संकेत2_release,
-	.ग_लिखो = spufs_संकेत2_ग_लिखो,
-	.mmap = spufs_संकेत2_mmap,
+static const struct file_operations spufs_signal2_nosched_fops = {
+	.open = spufs_signal2_open,
+	.release = spufs_signal2_release,
+	.write = spufs_signal2_write,
+	.mmap = spufs_signal2_mmap,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
 /*
- * This is a wrapper around DEFINE_SIMPLE_ATTRIBUTE which करोes the
- * work of acquiring (or not) the SPU context beक्रमe calling through
+ * This is a wrapper around DEFINE_SIMPLE_ATTRIBUTE which does the
+ * work of acquiring (or not) the SPU context before calling through
  * to the actual get routine. The set routine is called directly.
  */
-#घोषणा SPU_ATTR_NOACQUIRE	0
-#घोषणा SPU_ATTR_ACQUIRE	1
-#घोषणा SPU_ATTR_ACQUIRE_SAVED	2
+#define SPU_ATTR_NOACQUIRE	0
+#define SPU_ATTR_ACQUIRE	1
+#define SPU_ATTR_ACQUIRE_SAVED	2
 
-#घोषणा DEFINE_SPUFS_ATTRIBUTE(__name, __get, __set, __fmt, __acquire)	\
-अटल पूर्णांक __##__get(व्योम *data, u64 *val)				\
-अणु									\
-	काष्ठा spu_context *ctx = data;					\
-	पूर्णांक ret = 0;							\
+#define DEFINE_SPUFS_ATTRIBUTE(__name, __get, __set, __fmt, __acquire)	\
+static int __##__get(void *data, u64 *val)				\
+{									\
+	struct spu_context *ctx = data;					\
+	int ret = 0;							\
 									\
-	अगर (__acquire == SPU_ATTR_ACQUIRE) अणु				\
+	if (__acquire == SPU_ATTR_ACQUIRE) {				\
 		ret = spu_acquire(ctx);					\
-		अगर (ret)						\
-			वापस ret;					\
+		if (ret)						\
+			return ret;					\
 		*val = __get(ctx);					\
 		spu_release(ctx);					\
-	पूर्ण अन्यथा अगर (__acquire == SPU_ATTR_ACQUIRE_SAVED)	अणु		\
+	} else if (__acquire == SPU_ATTR_ACQUIRE_SAVED)	{		\
 		ret = spu_acquire_saved(ctx);				\
-		अगर (ret)						\
-			वापस ret;					\
+		if (ret)						\
+			return ret;					\
 		*val = __get(ctx);					\
 		spu_release_saved(ctx);					\
-	पूर्ण अन्यथा								\
+	} else								\
 		*val = __get(ctx);					\
 									\
-	वापस 0;							\
-पूर्ण									\
+	return 0;							\
+}									\
 DEFINE_SPUFS_SIMPLE_ATTRIBUTE(__name, __##__get, __set, __fmt);
 
-अटल पूर्णांक spufs_संकेत1_type_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	पूर्णांक ret;
+static int spufs_signal1_type_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	int ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ctx->ops->संकेत1_type_set(ctx, val);
+	if (ret)
+		return ret;
+	ctx->ops->signal1_type_set(ctx, val);
 	spu_release(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_संकेत1_type_get(काष्ठा spu_context *ctx)
-अणु
-	वापस ctx->ops->संकेत1_type_get(ctx);
-पूर्ण
-DEFINE_SPUFS_ATTRIBUTE(spufs_संकेत1_type, spufs_संकेत1_type_get,
-		       spufs_संकेत1_type_set, "%llu\n", SPU_ATTR_ACQUIRE);
+static u64 spufs_signal1_type_get(struct spu_context *ctx)
+{
+	return ctx->ops->signal1_type_get(ctx);
+}
+DEFINE_SPUFS_ATTRIBUTE(spufs_signal1_type, spufs_signal1_type_get,
+		       spufs_signal1_type_set, "%llu\n", SPU_ATTR_ACQUIRE);
 
 
-अटल पूर्णांक spufs_संकेत2_type_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	पूर्णांक ret;
+static int spufs_signal2_type_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	int ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ctx->ops->संकेत2_type_set(ctx, val);
+	if (ret)
+		return ret;
+	ctx->ops->signal2_type_set(ctx, val);
 	spu_release(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_संकेत2_type_get(काष्ठा spu_context *ctx)
-अणु
-	वापस ctx->ops->संकेत2_type_get(ctx);
-पूर्ण
-DEFINE_SPUFS_ATTRIBUTE(spufs_संकेत2_type, spufs_संकेत2_type_get,
-		       spufs_संकेत2_type_set, "%llu\n", SPU_ATTR_ACQUIRE);
+static u64 spufs_signal2_type_get(struct spu_context *ctx)
+{
+	return ctx->ops->signal2_type_get(ctx);
+}
+DEFINE_SPUFS_ATTRIBUTE(spufs_signal2_type, spufs_signal2_type_get,
+		       spufs_signal2_type_set, "%llu\n", SPU_ATTR_ACQUIRE);
 
-#अगर SPUFS_MMAP_4K
-अटल vm_fault_t
-spufs_mss_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-	वापस spufs_ps_fault(vmf, 0x0000, SPUFS_MSS_MAP_SIZE);
-पूर्ण
+#if SPUFS_MMAP_4K
+static vm_fault_t
+spufs_mss_mmap_fault(struct vm_fault *vmf)
+{
+	return spufs_ps_fault(vmf, 0x0000, SPUFS_MSS_MAP_SIZE);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_mss_mmap_vmops = अणु
+static const struct vm_operations_struct spufs_mss_mmap_vmops = {
 	.fault = spufs_mss_mmap_fault,
-पूर्ण;
+};
 
 /*
- * mmap support क्रम problem state MFC DMA area [0x0000 - 0x0fff].
+ * mmap support for problem state MFC DMA area [0x0000 - 0x0fff].
  */
-अटल पूर्णांक spufs_mss_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_mss_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
 	vma->vm_ops = &spufs_mss_mmap_vmops;
-	वापस 0;
-पूर्ण
-#अन्यथा /* SPUFS_MMAP_4K */
-#घोषणा spufs_mss_mmap शून्य
-#पूर्ण_अगर /* !SPUFS_MMAP_4K */
+	return 0;
+}
+#else /* SPUFS_MMAP_4K */
+#define spufs_mss_mmap NULL
+#endif /* !SPUFS_MMAP_4K */
 
-अटल पूर्णांक spufs_mss_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int spufs_mss_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
-	file->निजी_data = i->i_ctx;
+	file->private_data = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!i->i_खोलोers++)
+	if (!i->i_openers++)
 		ctx->mss = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल पूर्णांक
-spufs_mss_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_mss_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->mss = शून्य;
+	if (!--i->i_openers)
+		ctx->mss = NULL;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_mss_fops = अणु
-	.खोलो	 = spufs_mss_खोलो,
+static const struct file_operations spufs_mss_fops = {
+	.open	 = spufs_mss_open,
 	.release = spufs_mss_release,
 	.mmap	 = spufs_mss_mmap,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
-अटल vm_fault_t
-spufs_psmap_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-	वापस spufs_ps_fault(vmf, 0x0000, SPUFS_PS_MAP_SIZE);
-पूर्ण
+static vm_fault_t
+spufs_psmap_mmap_fault(struct vm_fault *vmf)
+{
+	return spufs_ps_fault(vmf, 0x0000, SPUFS_PS_MAP_SIZE);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_psmap_mmap_vmops = अणु
+static const struct vm_operations_struct spufs_psmap_mmap_vmops = {
 	.fault = spufs_psmap_mmap_fault,
-पूर्ण;
+};
 
 /*
- * mmap support क्रम full problem state area [0x00000 - 0x1ffff].
+ * mmap support for full problem state area [0x00000 - 0x1ffff].
  */
-अटल पूर्णांक spufs_psmap_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_psmap_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
 	vma->vm_ops = &spufs_psmap_mmap_vmops;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spufs_psmap_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int spufs_psmap_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	file->निजी_data = i->i_ctx;
-	अगर (!i->i_खोलोers++)
+	file->private_data = i->i_ctx;
+	if (!i->i_openers++)
 		ctx->psmap = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल पूर्णांक
-spufs_psmap_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_psmap_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->psmap = शून्य;
+	if (!--i->i_openers)
+		ctx->psmap = NULL;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_psmap_fops = अणु
-	.खोलो	 = spufs_psmap_खोलो,
+static const struct file_operations spufs_psmap_fops = {
+	.open	 = spufs_psmap_open,
 	.release = spufs_psmap_release,
 	.mmap	 = spufs_psmap_mmap,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
 
-#अगर SPUFS_MMAP_4K
-अटल vm_fault_t
-spufs_mfc_mmap_fault(काष्ठा vm_fault *vmf)
-अणु
-	वापस spufs_ps_fault(vmf, 0x3000, SPUFS_MFC_MAP_SIZE);
-पूर्ण
+#if SPUFS_MMAP_4K
+static vm_fault_t
+spufs_mfc_mmap_fault(struct vm_fault *vmf)
+{
+	return spufs_ps_fault(vmf, 0x3000, SPUFS_MFC_MAP_SIZE);
+}
 
-अटल स्थिर काष्ठा vm_operations_काष्ठा spufs_mfc_mmap_vmops = अणु
+static const struct vm_operations_struct spufs_mfc_mmap_vmops = {
 	.fault = spufs_mfc_mmap_fault,
-पूर्ण;
+};
 
 /*
- * mmap support क्रम problem state MFC DMA area [0x0000 - 0x0fff].
+ * mmap support for problem state MFC DMA area [0x0000 - 0x0fff].
  */
-अटल पूर्णांक spufs_mfc_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (!(vma->vm_flags & VM_SHARED))
-		वापस -EINVAL;
+static int spufs_mfc_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	if (!(vma->vm_flags & VM_SHARED))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP;
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
 	vma->vm_ops = &spufs_mfc_mmap_vmops;
-	वापस 0;
-पूर्ण
-#अन्यथा /* SPUFS_MMAP_4K */
-#घोषणा spufs_mfc_mmap शून्य
-#पूर्ण_अगर /* !SPUFS_MMAP_4K */
+	return 0;
+}
+#else /* SPUFS_MMAP_4K */
+#define spufs_mfc_mmap NULL
+#endif /* !SPUFS_MMAP_4K */
 
-अटल पूर्णांक spufs_mfc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int spufs_mfc_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
-	/* we करोn't want to deal with DMA पूर्णांकo other processes */
-	अगर (ctx->owner != current->mm)
-		वापस -EINVAL;
+	/* we don't want to deal with DMA into other processes */
+	if (ctx->owner != current->mm)
+		return -EINVAL;
 
-	अगर (atomic_पढ़ो(&inode->i_count) != 1)
-		वापस -EBUSY;
+	if (atomic_read(&inode->i_count) != 1)
+		return -EBUSY;
 
 	mutex_lock(&ctx->mapping_lock);
-	file->निजी_data = ctx;
-	अगर (!i->i_खोलोers++)
+	file->private_data = ctx;
+	if (!i->i_openers++)
 		ctx->mfc = inode->i_mapping;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस nonseekable_खोलो(inode, file);
-पूर्ण
+	return nonseekable_open(inode, file);
+}
 
-अटल पूर्णांक
-spufs_mfc_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
+static int
+spufs_mfc_release(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
 
 	mutex_lock(&ctx->mapping_lock);
-	अगर (!--i->i_खोलोers)
-		ctx->mfc = शून्य;
+	if (!--i->i_openers)
+		ctx->mfc = NULL;
 	mutex_unlock(&ctx->mapping_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* पूर्णांकerrupt-level mfc callback function. */
-व्योम spufs_mfc_callback(काष्ठा spu *spu)
-अणु
-	काष्ठा spu_context *ctx = spu->ctx;
+/* interrupt-level mfc callback function. */
+void spufs_mfc_callback(struct spu *spu)
+{
+	struct spu_context *ctx = spu->ctx;
 
-	अगर (ctx)
+	if (ctx)
 		wake_up_all(&ctx->mfc_wq);
-पूर्ण
+}
 
-अटल पूर्णांक spufs_पढ़ो_mfc_tagstatus(काष्ठा spu_context *ctx, u32 *status)
-अणु
-	/* See अगर there is one tag group is complete */
-	/* FIXME we need locking around tagरुको */
-	*status = ctx->ops->पढ़ो_mfc_tagstatus(ctx) & ctx->tagरुको;
-	ctx->tagरुको &= ~*status;
-	अगर (*status)
-		वापस 1;
+static int spufs_read_mfc_tagstatus(struct spu_context *ctx, u32 *status)
+{
+	/* See if there is one tag group is complete */
+	/* FIXME we need locking around tagwait */
+	*status = ctx->ops->read_mfc_tagstatus(ctx) & ctx->tagwait;
+	ctx->tagwait &= ~*status;
+	if (*status)
+		return 1;
 
-	/* enable पूर्णांकerrupt रुकोing क्रम any tag group,
-	   may silently fail अगर पूर्णांकerrupts are alपढ़ोy enabled */
-	ctx->ops->set_mfc_query(ctx, ctx->tagरुको, 1);
-	वापस 0;
-पूर्ण
+	/* enable interrupt waiting for any tag group,
+	   may silently fail if interrupts are already enabled */
+	ctx->ops->set_mfc_query(ctx, ctx->tagwait, 1);
+	return 0;
+}
 
-अटल sमाप_प्रकार spufs_mfc_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-			माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	पूर्णांक ret = -EINVAL;
+static ssize_t spufs_mfc_read(struct file *file, char __user *buffer,
+			size_t size, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	int ret = -EINVAL;
 	u32 status;
 
-	अगर (size != 4)
-		जाओ out;
+	if (size != 4)
+		goto out;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = -EINVAL;
-	अगर (file->f_flags & O_NONBLOCK) अणु
-		status = ctx->ops->पढ़ो_mfc_tagstatus(ctx);
-		अगर (!(status & ctx->tagरुको))
+	if (file->f_flags & O_NONBLOCK) {
+		status = ctx->ops->read_mfc_tagstatus(ctx);
+		if (!(status & ctx->tagwait))
 			ret = -EAGAIN;
-		अन्यथा
+		else
 			/* XXX(hch): shouldn't we clear ret here? */
-			ctx->tagरुको &= ~status;
-	पूर्ण अन्यथा अणु
-		ret = spufs_रुको(ctx->mfc_wq,
-			   spufs_पढ़ो_mfc_tagstatus(ctx, &status));
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+			ctx->tagwait &= ~status;
+	} else {
+		ret = spufs_wait(ctx->mfc_wq,
+			   spufs_read_mfc_tagstatus(ctx, &status));
+		if (ret)
+			goto out;
+	}
 	spu_release(ctx);
 
 	ret = 4;
-	अगर (copy_to_user(buffer, &status, 4))
+	if (copy_to_user(buffer, &status, 4))
 		ret = -EFAULT;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spufs_check_valid_dma(काष्ठा mfc_dma_command *cmd)
-अणु
+static int spufs_check_valid_dma(struct mfc_dma_command *cmd)
+{
 	pr_debug("queueing DMA %x %llx %x %x %x\n", cmd->lsa,
 		 cmd->ea, cmd->size, cmd->tag, cmd->cmd);
 
-	चयन (cmd->cmd) अणु
-	हाल MFC_PUT_CMD:
-	हाल MFC_PUTF_CMD:
-	हाल MFC_PUTB_CMD:
-	हाल MFC_GET_CMD:
-	हाल MFC_GETF_CMD:
-	हाल MFC_GETB_CMD:
-		अवरोध;
-	शेष:
+	switch (cmd->cmd) {
+	case MFC_PUT_CMD:
+	case MFC_PUTF_CMD:
+	case MFC_PUTB_CMD:
+	case MFC_GET_CMD:
+	case MFC_GETF_CMD:
+	case MFC_GETB_CMD:
+		break;
+	default:
 		pr_debug("invalid DMA opcode %x\n", cmd->cmd);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर ((cmd->lsa & 0xf) != (cmd->ea &0xf)) अणु
+	if ((cmd->lsa & 0xf) != (cmd->ea &0xf)) {
 		pr_debug("invalid DMA alignment, ea %llx lsa %x\n",
 				cmd->ea, cmd->lsa);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	चयन (cmd->size & 0xf) अणु
-	हाल 1:
-		अवरोध;
-	हाल 2:
-		अगर (cmd->lsa & 1)
-			जाओ error;
-		अवरोध;
-	हाल 4:
-		अगर (cmd->lsa & 3)
-			जाओ error;
-		अवरोध;
-	हाल 8:
-		अगर (cmd->lsa & 7)
-			जाओ error;
-		अवरोध;
-	हाल 0:
-		अगर (cmd->lsa & 15)
-			जाओ error;
-		अवरोध;
+	switch (cmd->size & 0xf) {
+	case 1:
+		break;
+	case 2:
+		if (cmd->lsa & 1)
+			goto error;
+		break;
+	case 4:
+		if (cmd->lsa & 3)
+			goto error;
+		break;
+	case 8:
+		if (cmd->lsa & 7)
+			goto error;
+		break;
+	case 0:
+		if (cmd->lsa & 15)
+			goto error;
+		break;
 	error:
-	शेष:
+	default:
 		pr_debug("invalid DMA alignment %x for size %x\n",
 			cmd->lsa & 0xf, cmd->size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (cmd->size > 16 * 1024) अणु
+	if (cmd->size > 16 * 1024) {
 		pr_debug("invalid DMA size %x\n", cmd->size);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (cmd->tag & 0xfff0) अणु
-		/* we reserve the higher tag numbers क्रम kernel use */
+	if (cmd->tag & 0xfff0) {
+		/* we reserve the higher tag numbers for kernel use */
 		pr_debug("invalid DMA tag\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (cmd->class) अणु
+	if (cmd->class) {
 		/* not supported in this version */
 		pr_debug("invalid DMA class\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spu_send_mfc_command(काष्ठा spu_context *ctx,
-				काष्ठा mfc_dma_command cmd,
-				पूर्णांक *error)
-अणु
+static int spu_send_mfc_command(struct spu_context *ctx,
+				struct mfc_dma_command cmd,
+				int *error)
+{
 	*error = ctx->ops->send_mfc_command(ctx, &cmd);
-	अगर (*error == -EAGAIN) अणु
-		/* रुको क्रम any tag group to complete
-		   so we have space क्रम the new command */
-		ctx->ops->set_mfc_query(ctx, ctx->tagरुको, 1);
+	if (*error == -EAGAIN) {
+		/* wait for any tag group to complete
+		   so we have space for the new command */
+		ctx->ops->set_mfc_query(ctx, ctx->tagwait, 1);
 		/* try again, because the queue might be
 		   empty again */
 		*error = ctx->ops->send_mfc_command(ctx, &cmd);
-		अगर (*error == -EAGAIN)
-			वापस 0;
-	पूर्ण
-	वापस 1;
-पूर्ण
+		if (*error == -EAGAIN)
+			return 0;
+	}
+	return 1;
+}
 
-अटल sमाप_प्रकार spufs_mfc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			माप_प्रकार size, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	काष्ठा mfc_dma_command cmd;
-	पूर्णांक ret = -EINVAL;
+static ssize_t spufs_mfc_write(struct file *file, const char __user *buffer,
+			size_t size, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	struct mfc_dma_command cmd;
+	int ret = -EINVAL;
 
-	अगर (size != माप cmd)
-		जाओ out;
+	if (size != sizeof cmd)
+		goto out;
 
 	ret = -EFAULT;
-	अगर (copy_from_user(&cmd, buffer, माप cmd))
-		जाओ out;
+	if (copy_from_user(&cmd, buffer, sizeof cmd))
+		goto out;
 
 	ret = spufs_check_valid_dma(&cmd);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	ret = spufs_रुको(ctx->run_wq, ctx->state == SPU_STATE_RUNNABLE);
-	अगर (ret)
-		जाओ out;
+	ret = spufs_wait(ctx->run_wq, ctx->state == SPU_STATE_RUNNABLE);
+	if (ret)
+		goto out;
 
-	अगर (file->f_flags & O_NONBLOCK) अणु
+	if (file->f_flags & O_NONBLOCK) {
 		ret = ctx->ops->send_mfc_command(ctx, &cmd);
-	पूर्ण अन्यथा अणु
-		पूर्णांक status;
-		ret = spufs_रुको(ctx->mfc_wq,
+	} else {
+		int status;
+		ret = spufs_wait(ctx->mfc_wq,
 				 spu_send_mfc_command(ctx, cmd, &status));
-		अगर (ret)
-			जाओ out;
-		अगर (status)
+		if (ret)
+			goto out;
+		if (status)
 			ret = status;
-	पूर्ण
+	}
 
-	अगर (ret)
-		जाओ out_unlock;
+	if (ret)
+		goto out_unlock;
 
-	ctx->tagरुको |= 1 << cmd.tag;
+	ctx->tagwait |= 1 << cmd.tag;
 	ret = size;
 
 out_unlock:
 	spu_release(ctx);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल __poll_t spufs_mfc_poll(काष्ठा file *file,poll_table *रुको)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	u32 मुक्त_elements, tagstatus;
+static __poll_t spufs_mfc_poll(struct file *file,poll_table *wait)
+{
+	struct spu_context *ctx = file->private_data;
+	u32 free_elements, tagstatus;
 	__poll_t mask;
 
-	poll_रुको(file, &ctx->mfc_wq, रुको);
+	poll_wait(file, &ctx->mfc_wq, wait);
 
 	/*
-	 * For now keep this unपूर्णांकerruptible and also ignore the rule
+	 * For now keep this uninterruptible and also ignore the rule
 	 * that poll should not sleep.  Will be fixed later.
 	 */
 	mutex_lock(&ctx->state_mutex);
-	ctx->ops->set_mfc_query(ctx, ctx->tagरुको, 2);
-	मुक्त_elements = ctx->ops->get_mfc_मुक्त_elements(ctx);
-	tagstatus = ctx->ops->पढ़ो_mfc_tagstatus(ctx);
+	ctx->ops->set_mfc_query(ctx, ctx->tagwait, 2);
+	free_elements = ctx->ops->get_mfc_free_elements(ctx);
+	tagstatus = ctx->ops->read_mfc_tagstatus(ctx);
 	spu_release(ctx);
 
 	mask = 0;
-	अगर (मुक्त_elements & 0xffff)
+	if (free_elements & 0xffff)
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	अगर (tagstatus & ctx->tagरुको)
+	if (tagstatus & ctx->tagwait)
 		mask |= EPOLLIN | EPOLLRDNORM;
 
 	pr_debug("%s: free %d tagstatus %d tagwait %d\n", __func__,
-		मुक्त_elements, tagstatus, ctx->tagरुको);
+		free_elements, tagstatus, ctx->tagwait);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक spufs_mfc_flush(काष्ठा file *file, fl_owner_t id)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	पूर्णांक ret;
+static int spufs_mfc_flush(struct file *file, fl_owner_t id)
+{
+	struct spu_context *ctx = file->private_data;
+	int ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		जाओ out;
-#अगर 0
+	if (ret)
+		goto out;
+#if 0
 /* this currently hangs */
-	ret = spufs_रुको(ctx->mfc_wq,
-			 ctx->ops->set_mfc_query(ctx, ctx->tagरुको, 2));
-	अगर (ret)
-		जाओ out;
-	ret = spufs_रुको(ctx->mfc_wq,
-			 ctx->ops->पढ़ो_mfc_tagstatus(ctx) == ctx->tagरुको);
-	अगर (ret)
-		जाओ out;
-#अन्यथा
+	ret = spufs_wait(ctx->mfc_wq,
+			 ctx->ops->set_mfc_query(ctx, ctx->tagwait, 2));
+	if (ret)
+		goto out;
+	ret = spufs_wait(ctx->mfc_wq,
+			 ctx->ops->read_mfc_tagstatus(ctx) == ctx->tagwait);
+	if (ret)
+		goto out;
+#else
 	ret = 0;
-#पूर्ण_अगर
+#endif
 	spu_release(ctx);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक spufs_mfc_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	पूर्णांक err = file_ग_लिखो_and_रुको_range(file, start, end);
-	अगर (!err) अणु
+static int spufs_mfc_fsync(struct file *file, loff_t start, loff_t end, int datasync)
+{
+	struct inode *inode = file_inode(file);
+	int err = file_write_and_wait_range(file, start, end);
+	if (!err) {
 		inode_lock(inode);
-		err = spufs_mfc_flush(file, शून्य);
+		err = spufs_mfc_flush(file, NULL);
 		inode_unlock(inode);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_mfc_fops = अणु
-	.खोलो	 = spufs_mfc_खोलो,
+static const struct file_operations spufs_mfc_fops = {
+	.open	 = spufs_mfc_open,
 	.release = spufs_mfc_release,
-	.पढ़ो	 = spufs_mfc_पढ़ो,
-	.ग_लिखो	 = spufs_mfc_ग_लिखो,
+	.read	 = spufs_mfc_read,
+	.write	 = spufs_mfc_write,
 	.poll	 = spufs_mfc_poll,
 	.flush	 = spufs_mfc_flush,
 	.fsync	 = spufs_mfc_fsync,
 	.mmap	 = spufs_mfc_mmap,
 	.llseek  = no_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक spufs_npc_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	पूर्णांक ret;
+static int spufs_npc_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	int ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
-	ctx->ops->npc_ग_लिखो(ctx, val);
+	if (ret)
+		return ret;
+	ctx->ops->npc_write(ctx, val);
 	spu_release(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_npc_get(काष्ठा spu_context *ctx)
-अणु
-	वापस ctx->ops->npc_पढ़ो(ctx);
-पूर्ण
+static u64 spufs_npc_get(struct spu_context *ctx)
+{
+	return ctx->ops->npc_read(ctx);
+}
 DEFINE_SPUFS_ATTRIBUTE(spufs_npc_ops, spufs_npc_get, spufs_npc_set,
 		       "0x%llx\n", SPU_ATTR_ACQUIRE);
 
-अटल पूर्णांक spufs_decr_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	पूर्णांक ret;
+static int spufs_decr_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	lscsa->decr.slot[0] = (u32) val;
 	spu_release_saved(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_decr_get(काष्ठा spu_context *ctx)
-अणु
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	वापस lscsa->decr.slot[0];
-पूर्ण
+static u64 spufs_decr_get(struct spu_context *ctx)
+{
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	return lscsa->decr.slot[0];
+}
 DEFINE_SPUFS_ATTRIBUTE(spufs_decr_ops, spufs_decr_get, spufs_decr_set,
 		       "0x%llx\n", SPU_ATTR_ACQUIRE_SAVED);
 
-अटल पूर्णांक spufs_decr_status_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	पूर्णांक ret;
+static int spufs_decr_status_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	अगर (val)
+	if (ret)
+		return ret;
+	if (val)
 		ctx->csa.priv2.mfc_control_RW |= MFC_CNTL_DECREMENTER_RUNNING;
-	अन्यथा
+	else
 		ctx->csa.priv2.mfc_control_RW &= ~MFC_CNTL_DECREMENTER_RUNNING;
 	spu_release_saved(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_decr_status_get(काष्ठा spu_context *ctx)
-अणु
-	अगर (ctx->csa.priv2.mfc_control_RW & MFC_CNTL_DECREMENTER_RUNNING)
-		वापस SPU_DECR_STATUS_RUNNING;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static u64 spufs_decr_status_get(struct spu_context *ctx)
+{
+	if (ctx->csa.priv2.mfc_control_RW & MFC_CNTL_DECREMENTER_RUNNING)
+		return SPU_DECR_STATUS_RUNNING;
+	else
+		return 0;
+}
 DEFINE_SPUFS_ATTRIBUTE(spufs_decr_status_ops, spufs_decr_status_get,
 		       spufs_decr_status_set, "0x%llx\n",
 		       SPU_ATTR_ACQUIRE_SAVED);
 
-अटल पूर्णांक spufs_event_mask_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	पूर्णांक ret;
+static int spufs_event_mask_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	lscsa->event_mask.slot[0] = (u32) val;
 	spu_release_saved(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_event_mask_get(काष्ठा spu_context *ctx)
-अणु
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	वापस lscsa->event_mask.slot[0];
-पूर्ण
+static u64 spufs_event_mask_get(struct spu_context *ctx)
+{
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	return lscsa->event_mask.slot[0];
+}
 
 DEFINE_SPUFS_ATTRIBUTE(spufs_event_mask_ops, spufs_event_mask_get,
 		       spufs_event_mask_set, "0x%llx\n",
 		       SPU_ATTR_ACQUIRE_SAVED);
 
-अटल u64 spufs_event_status_get(काष्ठा spu_context *ctx)
-अणु
-	काष्ठा spu_state *state = &ctx->csa;
+static u64 spufs_event_status_get(struct spu_context *ctx)
+{
+	struct spu_state *state = &ctx->csa;
 	u64 stat;
 	stat = state->spu_chnlcnt_RW[0];
-	अगर (stat)
-		वापस state->spu_chnldata_RW[0];
-	वापस 0;
-पूर्ण
+	if (stat)
+		return state->spu_chnldata_RW[0];
+	return 0;
+}
 DEFINE_SPUFS_ATTRIBUTE(spufs_event_status_ops, spufs_event_status_get,
-		       शून्य, "0x%llx\n", SPU_ATTR_ACQUIRE_SAVED)
+		       NULL, "0x%llx\n", SPU_ATTR_ACQUIRE_SAVED)
 
-अटल पूर्णांक spufs_srr0_set(व्योम *data, u64 val)
-अणु
-	काष्ठा spu_context *ctx = data;
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	पूर्णांक ret;
+static int spufs_srr0_set(void *data, u64 val)
+{
+	struct spu_context *ctx = data;
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	lscsa->srr0.slot[0] = (u32) val;
 	spu_release_saved(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u64 spufs_srr0_get(काष्ठा spu_context *ctx)
-अणु
-	काष्ठा spu_lscsa *lscsa = ctx->csa.lscsa;
-	वापस lscsa->srr0.slot[0];
-पूर्ण
+static u64 spufs_srr0_get(struct spu_context *ctx)
+{
+	struct spu_lscsa *lscsa = ctx->csa.lscsa;
+	return lscsa->srr0.slot[0];
+}
 DEFINE_SPUFS_ATTRIBUTE(spufs_srr0_ops, spufs_srr0_get, spufs_srr0_set,
 		       "0x%llx\n", SPU_ATTR_ACQUIRE_SAVED)
 
-अटल u64 spufs_id_get(काष्ठा spu_context *ctx)
-अणु
+static u64 spufs_id_get(struct spu_context *ctx)
+{
 	u64 num;
 
-	अगर (ctx->state == SPU_STATE_RUNNABLE)
+	if (ctx->state == SPU_STATE_RUNNABLE)
 		num = ctx->spu->number;
-	अन्यथा
-		num = (अचिन्हित पूर्णांक)-1;
+	else
+		num = (unsigned int)-1;
 
-	वापस num;
-पूर्ण
-DEFINE_SPUFS_ATTRIBUTE(spufs_id_ops, spufs_id_get, शून्य, "0x%llx\n",
+	return num;
+}
+DEFINE_SPUFS_ATTRIBUTE(spufs_id_ops, spufs_id_get, NULL, "0x%llx\n",
 		       SPU_ATTR_ACQUIRE)
 
-अटल u64 spufs_object_id_get(काष्ठा spu_context *ctx)
-अणु
+static u64 spufs_object_id_get(struct spu_context *ctx)
+{
 	/* FIXME: Should there really be no locking here? */
-	वापस ctx->object_id;
-पूर्ण
+	return ctx->object_id;
+}
 
-अटल पूर्णांक spufs_object_id_set(व्योम *data, u64 id)
-अणु
-	काष्ठा spu_context *ctx = data;
+static int spufs_object_id_set(void *data, u64 id)
+{
+	struct spu_context *ctx = data;
 	ctx->object_id = id;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 DEFINE_SPUFS_ATTRIBUTE(spufs_object_id_ops, spufs_object_id_get,
 		       spufs_object_id_set, "0x%llx\n", SPU_ATTR_NOACQUIRE);
 
-अटल u64 spufs_lslr_get(काष्ठा spu_context *ctx)
-अणु
-	वापस ctx->csa.priv2.spu_lslr_RW;
-पूर्ण
-DEFINE_SPUFS_ATTRIBUTE(spufs_lslr_ops, spufs_lslr_get, शून्य, "0x%llx\n",
+static u64 spufs_lslr_get(struct spu_context *ctx)
+{
+	return ctx->csa.priv2.spu_lslr_RW;
+}
+DEFINE_SPUFS_ATTRIBUTE(spufs_lslr_ops, spufs_lslr_get, NULL, "0x%llx\n",
 		       SPU_ATTR_ACQUIRE_SAVED);
 
-अटल पूर्णांक spufs_info_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spufs_inode_info *i = SPUFS_I(inode);
-	काष्ठा spu_context *ctx = i->i_ctx;
-	file->निजी_data = ctx;
-	वापस 0;
-पूर्ण
+static int spufs_info_open(struct inode *inode, struct file *file)
+{
+	struct spufs_inode_info *i = SPUFS_I(inode);
+	struct spu_context *ctx = i->i_ctx;
+	file->private_data = ctx;
+	return 0;
+}
 
-अटल पूर्णांक spufs_caps_show(काष्ठा seq_file *s, व्योम *निजी)
-अणु
-	काष्ठा spu_context *ctx = s->निजी;
+static int spufs_caps_show(struct seq_file *s, void *private)
+{
+	struct spu_context *ctx = s->private;
 
-	अगर (!(ctx->flags & SPU_CREATE_NOSCHED))
-		seq_माला_दो(s, "sched\n");
-	अगर (!(ctx->flags & SPU_CREATE_ISOLATE))
-		seq_माला_दो(s, "step\n");
-	वापस 0;
-पूर्ण
+	if (!(ctx->flags & SPU_CREATE_NOSCHED))
+		seq_puts(s, "sched\n");
+	if (!(ctx->flags & SPU_CREATE_ISOLATE))
+		seq_puts(s, "step\n");
+	return 0;
+}
 
-अटल पूर्णांक spufs_caps_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, spufs_caps_show, SPUFS_I(inode)->i_ctx);
-पूर्ण
+static int spufs_caps_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, spufs_caps_show, SPUFS_I(inode)->i_ctx);
+}
 
-अटल स्थिर काष्ठा file_operations spufs_caps_fops = अणु
-	.खोलो		= spufs_caps_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations spufs_caps_fops = {
+	.open		= spufs_caps_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार spufs_mbox_info_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	अगर (!(ctx->csa.prob.mb_stat_R & 0x0000ff))
-		वापस 0;
-	वापस spufs_dump_emit(cprm, &ctx->csa.prob.pu_mb_R,
-			       माप(ctx->csa.prob.pu_mb_R));
-पूर्ण
+static ssize_t spufs_mbox_info_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	if (!(ctx->csa.prob.mb_stat_R & 0x0000ff))
+		return 0;
+	return spufs_dump_emit(cprm, &ctx->csa.prob.pu_mb_R,
+			       sizeof(ctx->csa.prob.pu_mb_R));
+}
 
-अटल sमाप_प्रकार spufs_mbox_info_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
+static ssize_t spufs_mbox_info_read(struct file *file, char __user *buf,
+				   size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
 	u32 stat, data;
-	पूर्णांक ret;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	spin_lock(&ctx->csa.रेजिस्टर_lock);
+	if (ret)
+		return ret;
+	spin_lock(&ctx->csa.register_lock);
 	stat = ctx->csa.prob.mb_stat_R;
 	data = ctx->csa.prob.pu_mb_R;
-	spin_unlock(&ctx->csa.रेजिस्टर_lock);
+	spin_unlock(&ctx->csa.register_lock);
 	spu_release_saved(ctx);
 
-	/* खातापूर्ण अगर there's no entry in the mbox */
-	अगर (!(stat & 0x0000ff))
-		वापस 0;
+	/* EOF if there's no entry in the mbox */
+	if (!(stat & 0x0000ff))
+		return 0;
 
-	वापस simple_पढ़ो_from_buffer(buf, len, pos, &data, माप(data));
-पूर्ण
+	return simple_read_from_buffer(buf, len, pos, &data, sizeof(data));
+}
 
-अटल स्थिर काष्ठा file_operations spufs_mbox_info_fops = अणु
-	.खोलो = spufs_info_खोलो,
-	.पढ़ो = spufs_mbox_info_पढ़ो,
+static const struct file_operations spufs_mbox_info_fops = {
+	.open = spufs_info_open,
+	.read = spufs_mbox_info_read,
 	.llseek  = generic_file_llseek,
-पूर्ण;
+};
 
-अटल sमाप_प्रकार spufs_ibox_info_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	अगर (!(ctx->csa.prob.mb_stat_R & 0xff0000))
-		वापस 0;
-	वापस spufs_dump_emit(cprm, &ctx->csa.priv2.puपूर्णांक_mb_R,
-			       माप(ctx->csa.priv2.puपूर्णांक_mb_R));
-पूर्ण
+static ssize_t spufs_ibox_info_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	if (!(ctx->csa.prob.mb_stat_R & 0xff0000))
+		return 0;
+	return spufs_dump_emit(cprm, &ctx->csa.priv2.puint_mb_R,
+			       sizeof(ctx->csa.priv2.puint_mb_R));
+}
 
-अटल sमाप_प्रकार spufs_ibox_info_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
+static ssize_t spufs_ibox_info_read(struct file *file, char __user *buf,
+				   size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
 	u32 stat, data;
-	पूर्णांक ret;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	spin_lock(&ctx->csa.रेजिस्टर_lock);
+	if (ret)
+		return ret;
+	spin_lock(&ctx->csa.register_lock);
 	stat = ctx->csa.prob.mb_stat_R;
-	data = ctx->csa.priv2.puपूर्णांक_mb_R;
-	spin_unlock(&ctx->csa.रेजिस्टर_lock);
+	data = ctx->csa.priv2.puint_mb_R;
+	spin_unlock(&ctx->csa.register_lock);
 	spu_release_saved(ctx);
 
-	/* खातापूर्ण अगर there's no entry in the ibox */
-	अगर (!(stat & 0xff0000))
-		वापस 0;
+	/* EOF if there's no entry in the ibox */
+	if (!(stat & 0xff0000))
+		return 0;
 
-	वापस simple_पढ़ो_from_buffer(buf, len, pos, &data, माप(data));
-पूर्ण
+	return simple_read_from_buffer(buf, len, pos, &data, sizeof(data));
+}
 
-अटल स्थिर काष्ठा file_operations spufs_ibox_info_fops = अणु
-	.खोलो = spufs_info_खोलो,
-	.पढ़ो = spufs_ibox_info_पढ़ो,
+static const struct file_operations spufs_ibox_info_fops = {
+	.open = spufs_info_open,
+	.read = spufs_ibox_info_read,
 	.llseek  = generic_file_llseek,
-पूर्ण;
+};
 
-अटल माप_प्रकार spufs_wbox_info_cnt(काष्ठा spu_context *ctx)
-अणु
-	वापस (4 - ((ctx->csa.prob.mb_stat_R & 0x00ff00) >> 8)) * माप(u32);
-पूर्ण
+static size_t spufs_wbox_info_cnt(struct spu_context *ctx)
+{
+	return (4 - ((ctx->csa.prob.mb_stat_R & 0x00ff00) >> 8)) * sizeof(u32);
+}
 
-अटल sमाप_प्रकार spufs_wbox_info_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	वापस spufs_dump_emit(cprm, &ctx->csa.spu_mailbox_data,
+static ssize_t spufs_wbox_info_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	return spufs_dump_emit(cprm, &ctx->csa.spu_mailbox_data,
 			spufs_wbox_info_cnt(ctx));
-पूर्ण
+}
 
-अटल sमाप_प्रकार spufs_wbox_info_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
+static ssize_t spufs_wbox_info_read(struct file *file, char __user *buf,
+				   size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
 	u32 data[ARRAY_SIZE(ctx->csa.spu_mailbox_data)];
-	पूर्णांक ret, count;
+	int ret, count;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	spin_lock(&ctx->csa.रेजिस्टर_lock);
+	if (ret)
+		return ret;
+	spin_lock(&ctx->csa.register_lock);
 	count = spufs_wbox_info_cnt(ctx);
-	स_नकल(&data, &ctx->csa.spu_mailbox_data, माप(data));
-	spin_unlock(&ctx->csa.रेजिस्टर_lock);
+	memcpy(&data, &ctx->csa.spu_mailbox_data, sizeof(data));
+	spin_unlock(&ctx->csa.register_lock);
 	spu_release_saved(ctx);
 
-	वापस simple_पढ़ो_from_buffer(buf, len, pos, &data,
-				count * माप(u32));
-पूर्ण
+	return simple_read_from_buffer(buf, len, pos, &data,
+				count * sizeof(u32));
+}
 
-अटल स्थिर काष्ठा file_operations spufs_wbox_info_fops = अणु
-	.खोलो = spufs_info_खोलो,
-	.पढ़ो = spufs_wbox_info_पढ़ो,
+static const struct file_operations spufs_wbox_info_fops = {
+	.open = spufs_info_open,
+	.read = spufs_wbox_info_read,
 	.llseek  = generic_file_llseek,
-पूर्ण;
+};
 
-अटल व्योम spufs_get_dma_info(काष्ठा spu_context *ctx,
-		काष्ठा spu_dma_info *info)
-अणु
-	पूर्णांक i;
+static void spufs_get_dma_info(struct spu_context *ctx,
+		struct spu_dma_info *info)
+{
+	int i;
 
 	info->dma_info_type = ctx->csa.priv2.spu_tag_status_query_RW;
 	info->dma_info_mask = ctx->csa.lscsa->tag_mask.slot[0];
 	info->dma_info_status = ctx->csa.spu_chnldata_RW[24];
-	info->dma_info_stall_and_notअगरy = ctx->csa.spu_chnldata_RW[25];
+	info->dma_info_stall_and_notify = ctx->csa.spu_chnldata_RW[25];
 	info->dma_info_atomic_command_status = ctx->csa.spu_chnldata_RW[27];
-	क्रम (i = 0; i < 16; i++) अणु
-		काष्ठा mfc_cq_sr *qp = &info->dma_info_command_data[i];
-		काष्ठा mfc_cq_sr *spuqp = &ctx->csa.priv2.spuq[i];
+	for (i = 0; i < 16; i++) {
+		struct mfc_cq_sr *qp = &info->dma_info_command_data[i];
+		struct mfc_cq_sr *spuqp = &ctx->csa.priv2.spuq[i];
 
 		qp->mfc_cq_data0_RW = spuqp->mfc_cq_data0_RW;
 		qp->mfc_cq_data1_RW = spuqp->mfc_cq_data1_RW;
 		qp->mfc_cq_data2_RW = spuqp->mfc_cq_data2_RW;
 		qp->mfc_cq_data3_RW = spuqp->mfc_cq_data3_RW;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार spufs_dma_info_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	काष्ठा spu_dma_info info;
+static ssize_t spufs_dma_info_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	struct spu_dma_info info;
 
 	spufs_get_dma_info(ctx, &info);
-	वापस spufs_dump_emit(cprm, &info, माप(info));
-पूर्ण
+	return spufs_dump_emit(cprm, &info, sizeof(info));
+}
 
-अटल sमाप_प्रकार spufs_dma_info_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			      माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	काष्ठा spu_dma_info info;
-	पूर्णांक ret;
+static ssize_t spufs_dma_info_read(struct file *file, char __user *buf,
+			      size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	struct spu_dma_info info;
+	int ret;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	spin_lock(&ctx->csa.रेजिस्टर_lock);
+	if (ret)
+		return ret;
+	spin_lock(&ctx->csa.register_lock);
 	spufs_get_dma_info(ctx, &info);
-	spin_unlock(&ctx->csa.रेजिस्टर_lock);
+	spin_unlock(&ctx->csa.register_lock);
 	spu_release_saved(ctx);
 
-	वापस simple_पढ़ो_from_buffer(buf, len, pos, &info,
-				माप(info));
-पूर्ण
+	return simple_read_from_buffer(buf, len, pos, &info,
+				sizeof(info));
+}
 
-अटल स्थिर काष्ठा file_operations spufs_dma_info_fops = अणु
-	.खोलो = spufs_info_खोलो,
-	.पढ़ो = spufs_dma_info_पढ़ो,
+static const struct file_operations spufs_dma_info_fops = {
+	.open = spufs_info_open,
+	.read = spufs_dma_info_read,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल व्योम spufs_get_proxydma_info(काष्ठा spu_context *ctx,
-		काष्ठा spu_proxydma_info *info)
-अणु
-	पूर्णांक i;
+static void spufs_get_proxydma_info(struct spu_context *ctx,
+		struct spu_proxydma_info *info)
+{
+	int i;
 
 	info->proxydma_info_type = ctx->csa.prob.dma_querytype_RW;
 	info->proxydma_info_mask = ctx->csa.prob.dma_querymask_RW;
 	info->proxydma_info_status = ctx->csa.prob.dma_tagstatus_R;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		काष्ठा mfc_cq_sr *qp = &info->proxydma_info_command_data[i];
-		काष्ठा mfc_cq_sr *puqp = &ctx->csa.priv2.puq[i];
+	for (i = 0; i < 8; i++) {
+		struct mfc_cq_sr *qp = &info->proxydma_info_command_data[i];
+		struct mfc_cq_sr *puqp = &ctx->csa.priv2.puq[i];
 
 		qp->mfc_cq_data0_RW = puqp->mfc_cq_data0_RW;
 		qp->mfc_cq_data1_RW = puqp->mfc_cq_data1_RW;
 		qp->mfc_cq_data2_RW = puqp->mfc_cq_data2_RW;
 		qp->mfc_cq_data3_RW = puqp->mfc_cq_data3_RW;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार spufs_proxydma_info_dump(काष्ठा spu_context *ctx,
-		काष्ठा coredump_params *cprm)
-अणु
-	काष्ठा spu_proxydma_info info;
+static ssize_t spufs_proxydma_info_dump(struct spu_context *ctx,
+		struct coredump_params *cprm)
+{
+	struct spu_proxydma_info info;
 
 	spufs_get_proxydma_info(ctx, &info);
-	वापस spufs_dump_emit(cprm, &info, माप(info));
-पूर्ण
+	return spufs_dump_emit(cprm, &info, sizeof(info));
+}
 
-अटल sमाप_प्रकार spufs_proxydma_info_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार len, loff_t *pos)
-अणु
-	काष्ठा spu_context *ctx = file->निजी_data;
-	काष्ठा spu_proxydma_info info;
-	पूर्णांक ret;
+static ssize_t spufs_proxydma_info_read(struct file *file, char __user *buf,
+				   size_t len, loff_t *pos)
+{
+	struct spu_context *ctx = file->private_data;
+	struct spu_proxydma_info info;
+	int ret;
 
-	अगर (len < माप(info))
-		वापस -EINVAL;
+	if (len < sizeof(info))
+		return -EINVAL;
 
 	ret = spu_acquire_saved(ctx);
-	अगर (ret)
-		वापस ret;
-	spin_lock(&ctx->csa.रेजिस्टर_lock);
+	if (ret)
+		return ret;
+	spin_lock(&ctx->csa.register_lock);
 	spufs_get_proxydma_info(ctx, &info);
-	spin_unlock(&ctx->csa.रेजिस्टर_lock);
+	spin_unlock(&ctx->csa.register_lock);
 	spu_release_saved(ctx);
 
-	वापस simple_पढ़ो_from_buffer(buf, len, pos, &info,
-				माप(info));
-पूर्ण
+	return simple_read_from_buffer(buf, len, pos, &info,
+				sizeof(info));
+}
 
-अटल स्थिर काष्ठा file_operations spufs_proxydma_info_fops = अणु
-	.खोलो = spufs_info_खोलो,
-	.पढ़ो = spufs_proxydma_info_पढ़ो,
+static const struct file_operations spufs_proxydma_info_fops = {
+	.open = spufs_info_open,
+	.read = spufs_proxydma_info_read,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
-अटल पूर्णांक spufs_show_tid(काष्ठा seq_file *s, व्योम *निजी)
-अणु
-	काष्ठा spu_context *ctx = s->निजी;
+static int spufs_show_tid(struct seq_file *s, void *private)
+{
+	struct spu_context *ctx = s->private;
 
-	seq_म_लिखो(s, "%d\n", ctx->tid);
-	वापस 0;
-पूर्ण
+	seq_printf(s, "%d\n", ctx->tid);
+	return 0;
+}
 
-अटल पूर्णांक spufs_tid_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, spufs_show_tid, SPUFS_I(inode)->i_ctx);
-पूर्ण
+static int spufs_tid_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, spufs_show_tid, SPUFS_I(inode)->i_ctx);
+}
 
-अटल स्थिर काष्ठा file_operations spufs_tid_fops = अणु
-	.खोलो		= spufs_tid_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations spufs_tid_fops = {
+	.open		= spufs_tid_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *ctx_state_names[] = अणु
+static const char *ctx_state_names[] = {
 	"user", "system", "iowait", "loaded"
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ दीर्घ spufs_acct_समय(काष्ठा spu_context *ctx,
-		क्रमागत spu_utilization_state state)
-अणु
-	अचिन्हित दीर्घ दीर्घ समय = ctx->stats.बार[state];
+static unsigned long long spufs_acct_time(struct spu_context *ctx,
+		enum spu_utilization_state state)
+{
+	unsigned long long time = ctx->stats.times[state];
 
 	/*
 	 * In general, utilization statistics are updated by the controlling
-	 * thपढ़ो as the spu context moves through various well defined
-	 * state transitions, but अगर the context is lazily loaded its
-	 * utilization statistics are not updated as the controlling thपढ़ो
+	 * thread as the spu context moves through various well defined
+	 * state transitions, but if the context is lazily loaded its
+	 * utilization statistics are not updated as the controlling thread
 	 * is not tightly coupled with the execution of the spu context.  We
-	 * calculate and apply the समय delta from the last recorded state
+	 * calculate and apply the time delta from the last recorded state
 	 * of the spu context.
 	 */
-	अगर (ctx->spu && ctx->stats.util_state == state) अणु
-		समय += kसमय_get_ns() - ctx->stats.tstamp;
-	पूर्ण
+	if (ctx->spu && ctx->stats.util_state == state) {
+		time += ktime_get_ns() - ctx->stats.tstamp;
+	}
 
-	वापस समय / NSEC_PER_MSEC;
-पूर्ण
+	return time / NSEC_PER_MSEC;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ spufs_slb_flts(काष्ठा spu_context *ctx)
-अणु
-	अचिन्हित दीर्घ दीर्घ slb_flts = ctx->stats.slb_flt;
+static unsigned long long spufs_slb_flts(struct spu_context *ctx)
+{
+	unsigned long long slb_flts = ctx->stats.slb_flt;
 
-	अगर (ctx->state == SPU_STATE_RUNNABLE) अणु
+	if (ctx->state == SPU_STATE_RUNNABLE) {
 		slb_flts += (ctx->spu->stats.slb_flt -
 			     ctx->stats.slb_flt_base);
-	पूर्ण
+	}
 
-	वापस slb_flts;
-पूर्ण
+	return slb_flts;
+}
 
-अटल अचिन्हित दीर्घ दीर्घ spufs_class2_पूर्णांकrs(काष्ठा spu_context *ctx)
-अणु
-	अचिन्हित दीर्घ दीर्घ class2_पूर्णांकrs = ctx->stats.class2_पूर्णांकr;
+static unsigned long long spufs_class2_intrs(struct spu_context *ctx)
+{
+	unsigned long long class2_intrs = ctx->stats.class2_intr;
 
-	अगर (ctx->state == SPU_STATE_RUNNABLE) अणु
-		class2_पूर्णांकrs += (ctx->spu->stats.class2_पूर्णांकr -
-				 ctx->stats.class2_पूर्णांकr_base);
-	पूर्ण
+	if (ctx->state == SPU_STATE_RUNNABLE) {
+		class2_intrs += (ctx->spu->stats.class2_intr -
+				 ctx->stats.class2_intr_base);
+	}
 
-	वापस class2_पूर्णांकrs;
-पूर्ण
+	return class2_intrs;
+}
 
 
-अटल पूर्णांक spufs_show_stat(काष्ठा seq_file *s, व्योम *निजी)
-अणु
-	काष्ठा spu_context *ctx = s->निजी;
-	पूर्णांक ret;
+static int spufs_show_stat(struct seq_file *s, void *private)
+{
+	struct spu_context *ctx = s->private;
+	int ret;
 
 	ret = spu_acquire(ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	seq_म_लिखो(s, "%s %llu %llu %llu %llu "
+	seq_printf(s, "%s %llu %llu %llu %llu "
 		      "%llu %llu %llu %llu %llu %llu %llu %llu\n",
 		ctx_state_names[ctx->stats.util_state],
-		spufs_acct_समय(ctx, SPU_UTIL_USER),
-		spufs_acct_समय(ctx, SPU_UTIL_SYSTEM),
-		spufs_acct_समय(ctx, SPU_UTIL_IOWAIT),
-		spufs_acct_समय(ctx, SPU_UTIL_IDLE_LOADED),
-		ctx->stats.vol_ctx_चयन,
-		ctx->stats.invol_ctx_चयन,
+		spufs_acct_time(ctx, SPU_UTIL_USER),
+		spufs_acct_time(ctx, SPU_UTIL_SYSTEM),
+		spufs_acct_time(ctx, SPU_UTIL_IOWAIT),
+		spufs_acct_time(ctx, SPU_UTIL_IDLE_LOADED),
+		ctx->stats.vol_ctx_switch,
+		ctx->stats.invol_ctx_switch,
 		spufs_slb_flts(ctx),
 		ctx->stats.hash_flt,
 		ctx->stats.min_flt,
 		ctx->stats.maj_flt,
-		spufs_class2_पूर्णांकrs(ctx),
+		spufs_class2_intrs(ctx),
 		ctx->stats.libassist);
 	spu_release(ctx);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spufs_stat_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, spufs_show_stat, SPUFS_I(inode)->i_ctx);
-पूर्ण
+static int spufs_stat_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, spufs_show_stat, SPUFS_I(inode)->i_ctx);
+}
 
-अटल स्थिर काष्ठा file_operations spufs_stat_fops = अणु
-	.खोलो		= spufs_stat_खोलो,
-	.पढ़ो		= seq_पढ़ो,
+static const struct file_operations spufs_stat_fops = {
+	.open		= spufs_stat_open,
+	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= single_release,
-पूर्ण;
+};
 
-अटल अंतरभूत पूर्णांक spufs_चयन_log_used(काष्ठा spu_context *ctx)
-अणु
-	वापस (ctx->चयन_log->head - ctx->चयन_log->tail) %
-		SWITCH_LOG_बफ_मानE;
-पूर्ण
+static inline int spufs_switch_log_used(struct spu_context *ctx)
+{
+	return (ctx->switch_log->head - ctx->switch_log->tail) %
+		SWITCH_LOG_BUFSIZE;
+}
 
-अटल अंतरभूत पूर्णांक spufs_चयन_log_avail(काष्ठा spu_context *ctx)
-अणु
-	वापस SWITCH_LOG_बफ_मानE - spufs_चयन_log_used(ctx);
-पूर्ण
+static inline int spufs_switch_log_avail(struct spu_context *ctx)
+{
+	return SWITCH_LOG_BUFSIZE - spufs_switch_log_used(ctx);
+}
 
-अटल पूर्णांक spufs_चयन_log_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spu_context *ctx = SPUFS_I(inode)->i_ctx;
-	पूर्णांक rc;
+static int spufs_switch_log_open(struct inode *inode, struct file *file)
+{
+	struct spu_context *ctx = SPUFS_I(inode)->i_ctx;
+	int rc;
 
 	rc = spu_acquire(ctx);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (ctx->चयन_log) अणु
+	if (ctx->switch_log) {
 		rc = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ctx->चयन_log = kदो_स्मृति(काष्ठा_size(ctx->चयन_log, log,
-				  SWITCH_LOG_बफ_मानE), GFP_KERNEL);
+	ctx->switch_log = kmalloc(struct_size(ctx->switch_log, log,
+				  SWITCH_LOG_BUFSIZE), GFP_KERNEL);
 
-	अगर (!ctx->चयन_log) अणु
+	if (!ctx->switch_log) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ctx->चयन_log->head = ctx->चयन_log->tail = 0;
-	init_रुकोqueue_head(&ctx->चयन_log->रुको);
+	ctx->switch_log->head = ctx->switch_log->tail = 0;
+	init_waitqueue_head(&ctx->switch_log->wait);
 	rc = 0;
 
 out:
 	spu_release(ctx);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक spufs_चयन_log_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा spu_context *ctx = SPUFS_I(inode)->i_ctx;
-	पूर्णांक rc;
+static int spufs_switch_log_release(struct inode *inode, struct file *file)
+{
+	struct spu_context *ctx = SPUFS_I(inode)->i_ctx;
+	int rc;
 
 	rc = spu_acquire(ctx);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	kमुक्त(ctx->चयन_log);
-	ctx->चयन_log = शून्य;
+	kfree(ctx->switch_log);
+	ctx->switch_log = NULL;
 	spu_release(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक चयन_log_sprपूर्णांक(काष्ठा spu_context *ctx, अक्षर *tbuf, पूर्णांक n)
-अणु
-	काष्ठा चयन_log_entry *p;
+static int switch_log_sprint(struct spu_context *ctx, char *tbuf, int n)
+{
+	struct switch_log_entry *p;
 
-	p = ctx->चयन_log->log + ctx->चयन_log->tail % SWITCH_LOG_बफ_मानE;
+	p = ctx->switch_log->log + ctx->switch_log->tail % SWITCH_LOG_BUFSIZE;
 
-	वापस snम_लिखो(tbuf, n, "%llu.%09u %d %u %u %llu\n",
-			(अचिन्हित दीर्घ दीर्घ) p->tstamp.tv_sec,
-			(अचिन्हित पूर्णांक) p->tstamp.tv_nsec,
+	return snprintf(tbuf, n, "%llu.%09u %d %u %u %llu\n",
+			(unsigned long long) p->tstamp.tv_sec,
+			(unsigned int) p->tstamp.tv_nsec,
 			p->spu_id,
-			(अचिन्हित पूर्णांक) p->type,
-			(अचिन्हित पूर्णांक) p->val,
-			(अचिन्हित दीर्घ दीर्घ) p->समयbase);
-पूर्ण
+			(unsigned int) p->type,
+			(unsigned int) p->val,
+			(unsigned long long) p->timebase);
+}
 
-अटल sमाप_प्रकार spufs_चयन_log_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			     माप_प्रकार len, loff_t *ppos)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा spu_context *ctx = SPUFS_I(inode)->i_ctx;
-	पूर्णांक error = 0, cnt = 0;
+static ssize_t spufs_switch_log_read(struct file *file, char __user *buf,
+			     size_t len, loff_t *ppos)
+{
+	struct inode *inode = file_inode(file);
+	struct spu_context *ctx = SPUFS_I(inode)->i_ctx;
+	int error = 0, cnt = 0;
 
-	अगर (!buf)
-		वापस -EINVAL;
+	if (!buf)
+		return -EINVAL;
 
 	error = spu_acquire(ctx);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	जबतक (cnt < len) अणु
-		अक्षर tbuf[128];
-		पूर्णांक width;
+	while (cnt < len) {
+		char tbuf[128];
+		int width;
 
-		अगर (spufs_चयन_log_used(ctx) == 0) अणु
-			अगर (cnt > 0) अणु
-				/* If there's data पढ़ोy to go, we can
-				 * just वापस straight away */
-				अवरोध;
+		if (spufs_switch_log_used(ctx) == 0) {
+			if (cnt > 0) {
+				/* If there's data ready to go, we can
+				 * just return straight away */
+				break;
 
-			पूर्ण अन्यथा अगर (file->f_flags & O_NONBLOCK) अणु
+			} else if (file->f_flags & O_NONBLOCK) {
 				error = -EAGAIN;
-				अवरोध;
+				break;
 
-			पूर्ण अन्यथा अणु
-				/* spufs_रुको will drop the mutex and
-				 * re-acquire, but since we're in पढ़ो(), the
+			} else {
+				/* spufs_wait will drop the mutex and
+				 * re-acquire, but since we're in read(), the
 				 * file cannot be _released (and so
-				 * ctx->चयन_log is stable).
+				 * ctx->switch_log is stable).
 				 */
-				error = spufs_रुको(ctx->चयन_log->रुको,
-						spufs_चयन_log_used(ctx) > 0);
+				error = spufs_wait(ctx->switch_log->wait,
+						spufs_switch_log_used(ctx) > 0);
 
-				/* On error, spufs_रुको वापसs without the
+				/* On error, spufs_wait returns without the
 				 * state mutex held */
-				अगर (error)
-					वापस error;
+				if (error)
+					return error;
 
-				/* We may have had entries पढ़ो from underneath
-				 * us जबतक we dropped the mutex in spufs_रुको,
+				/* We may have had entries read from underneath
+				 * us while we dropped the mutex in spufs_wait,
 				 * so re-check */
-				अगर (spufs_चयन_log_used(ctx) == 0)
-					जारी;
-			पूर्ण
-		पूर्ण
+				if (spufs_switch_log_used(ctx) == 0)
+					continue;
+			}
+		}
 
-		width = चयन_log_sprपूर्णांक(ctx, tbuf, माप(tbuf));
-		अगर (width < len)
-			ctx->चयन_log->tail =
-				(ctx->चयन_log->tail + 1) %
-				 SWITCH_LOG_बफ_मानE;
-		अन्यथा
-			/* If the record is greater than space available वापस
+		width = switch_log_sprint(ctx, tbuf, sizeof(tbuf));
+		if (width < len)
+			ctx->switch_log->tail =
+				(ctx->switch_log->tail + 1) %
+				 SWITCH_LOG_BUFSIZE;
+		else
+			/* If the record is greater than space available return
 			 * partial buffer (so far) */
-			अवरोध;
+			break;
 
 		error = copy_to_user(buf + cnt, tbuf, width);
-		अगर (error)
-			अवरोध;
+		if (error)
+			break;
 		cnt += width;
-	पूर्ण
+	}
 
 	spu_release(ctx);
 
-	वापस cnt == 0 ? error : cnt;
-पूर्ण
+	return cnt == 0 ? error : cnt;
+}
 
-अटल __poll_t spufs_चयन_log_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा spu_context *ctx = SPUFS_I(inode)->i_ctx;
+static __poll_t spufs_switch_log_poll(struct file *file, poll_table *wait)
+{
+	struct inode *inode = file_inode(file);
+	struct spu_context *ctx = SPUFS_I(inode)->i_ctx;
 	__poll_t mask = 0;
-	पूर्णांक rc;
+	int rc;
 
-	poll_रुको(file, &ctx->चयन_log->रुको, रुको);
+	poll_wait(file, &ctx->switch_log->wait, wait);
 
 	rc = spu_acquire(ctx);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	अगर (spufs_चयन_log_used(ctx) > 0)
+	if (spufs_switch_log_used(ctx) > 0)
 		mask |= EPOLLIN;
 
 	spu_release(ctx);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल स्थिर काष्ठा file_operations spufs_चयन_log_fops = अणु
-	.खोलो		= spufs_चयन_log_खोलो,
-	.पढ़ो		= spufs_चयन_log_पढ़ो,
-	.poll		= spufs_चयन_log_poll,
-	.release	= spufs_चयन_log_release,
+static const struct file_operations spufs_switch_log_fops = {
+	.open		= spufs_switch_log_open,
+	.read		= spufs_switch_log_read,
+	.poll		= spufs_switch_log_poll,
+	.release	= spufs_switch_log_release,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
 /**
- * Log a context चयन event to a चयन log पढ़ोer.
+ * Log a context switch event to a switch log reader.
  *
  * Must be called with ctx->state_mutex held.
  */
-व्योम spu_चयन_log_notअगरy(काष्ठा spu *spu, काष्ठा spu_context *ctx,
+void spu_switch_log_notify(struct spu *spu, struct spu_context *ctx,
 		u32 type, u32 val)
-अणु
-	अगर (!ctx->चयन_log)
-		वापस;
+{
+	if (!ctx->switch_log)
+		return;
 
-	अगर (spufs_चयन_log_avail(ctx) > 1) अणु
-		काष्ठा चयन_log_entry *p;
+	if (spufs_switch_log_avail(ctx) > 1) {
+		struct switch_log_entry *p;
 
-		p = ctx->चयन_log->log + ctx->चयन_log->head;
-		kसमय_get_ts64(&p->tstamp);
-		p->समयbase = get_tb();
+		p = ctx->switch_log->log + ctx->switch_log->head;
+		ktime_get_ts64(&p->tstamp);
+		p->timebase = get_tb();
 		p->spu_id = spu ? spu->number : -1;
 		p->type = type;
 		p->val = val;
 
-		ctx->चयन_log->head =
-			(ctx->चयन_log->head + 1) % SWITCH_LOG_बफ_मानE;
-	पूर्ण
+		ctx->switch_log->head =
+			(ctx->switch_log->head + 1) % SWITCH_LOG_BUFSIZE;
+	}
 
-	wake_up(&ctx->चयन_log->रुको);
-पूर्ण
+	wake_up(&ctx->switch_log->wait);
+}
 
-अटल पूर्णांक spufs_show_ctx(काष्ठा seq_file *s, व्योम *निजी)
-अणु
-	काष्ठा spu_context *ctx = s->निजी;
+static int spufs_show_ctx(struct seq_file *s, void *private)
+{
+	struct spu_context *ctx = s->private;
 	u64 mfc_control_RW;
 
 	mutex_lock(&ctx->state_mutex);
-	अगर (ctx->spu) अणु
-		काष्ठा spu *spu = ctx->spu;
-		काष्ठा spu_priv2 __iomem *priv2 = spu->priv2;
+	if (ctx->spu) {
+		struct spu *spu = ctx->spu;
+		struct spu_priv2 __iomem *priv2 = spu->priv2;
 
-		spin_lock_irq(&spu->रेजिस्टर_lock);
+		spin_lock_irq(&spu->register_lock);
 		mfc_control_RW = in_be64(&priv2->mfc_control_RW);
-		spin_unlock_irq(&spu->रेजिस्टर_lock);
-	पूर्ण अन्यथा अणु
-		काष्ठा spu_state *csa = &ctx->csa;
+		spin_unlock_irq(&spu->register_lock);
+	} else {
+		struct spu_state *csa = &ctx->csa;
 
 		mfc_control_RW = csa->priv2.mfc_control_RW;
-	पूर्ण
+	}
 
-	seq_म_लिखो(s, "%c flgs(%lx) sflgs(%lx) pri(%d) ts(%d) spu(%02d)"
+	seq_printf(s, "%c flgs(%lx) sflgs(%lx) pri(%d) ts(%d) spu(%02d)"
 		" %c %llx %llx %llx %llx %x %x\n",
 		ctx->state == SPU_STATE_SAVED ? 'S' : 'R',
 		ctx->flags,
 		ctx->sched_flags,
 		ctx->prio,
-		ctx->समय_slice,
+		ctx->time_slice,
 		ctx->spu ? ctx->spu->number : -1,
 		!list_empty(&ctx->rq) ? 'q' : ' ',
 		ctx->csa.class_0_pending,
 		ctx->csa.class_0_dar,
 		ctx->csa.class_1_dsisr,
 		mfc_control_RW,
-		ctx->ops->runcntl_पढ़ो(ctx),
-		ctx->ops->status_पढ़ो(ctx));
+		ctx->ops->runcntl_read(ctx),
+		ctx->ops->status_read(ctx));
 
 	mutex_unlock(&ctx->state_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक spufs_ctx_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, spufs_show_ctx, SPUFS_I(inode)->i_ctx);
-पूर्ण
+static int spufs_ctx_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, spufs_show_ctx, SPUFS_I(inode)->i_ctx);
+}
 
-अटल स्थिर काष्ठा file_operations spufs_ctx_fops = अणु
-	.खोलो           = spufs_ctx_खोलो,
-	.पढ़ो           = seq_पढ़ो,
+static const struct file_operations spufs_ctx_fops = {
+	.open           = spufs_ctx_open,
+	.read           = seq_read,
 	.llseek         = seq_lseek,
 	.release        = single_release,
-पूर्ण;
+};
 
-स्थिर काष्ठा spufs_tree_descr spufs_dir_contents[] = अणु
-	अणु "capabilities", &spufs_caps_fops, 0444, पूर्ण,
-	अणु "mem",  &spufs_mem_fops,  0666, LS_SIZE, पूर्ण,
-	अणु "regs", &spufs_regs_fops,  0666, माप(काष्ठा spu_reg128[128]), पूर्ण,
-	अणु "mbox", &spufs_mbox_fops, 0444, पूर्ण,
-	अणु "ibox", &spufs_ibox_fops, 0444, पूर्ण,
-	अणु "wbox", &spufs_wbox_fops, 0222, पूर्ण,
-	अणु "mbox_stat", &spufs_mbox_stat_fops, 0444, माप(u32), पूर्ण,
-	अणु "ibox_stat", &spufs_ibox_stat_fops, 0444, माप(u32), पूर्ण,
-	अणु "wbox_stat", &spufs_wbox_stat_fops, 0444, माप(u32), पूर्ण,
-	अणु "signal1", &spufs_संकेत1_fops, 0666, पूर्ण,
-	अणु "signal2", &spufs_संकेत2_fops, 0666, पूर्ण,
-	अणु "signal1_type", &spufs_संकेत1_type, 0666, पूर्ण,
-	अणु "signal2_type", &spufs_संकेत2_type, 0666, पूर्ण,
-	अणु "cntl", &spufs_cntl_fops,  0666, पूर्ण,
-	अणु "fpcr", &spufs_fpcr_fops, 0666, माप(काष्ठा spu_reg128), पूर्ण,
-	अणु "lslr", &spufs_lslr_ops, 0444, पूर्ण,
-	अणु "mfc", &spufs_mfc_fops, 0666, पूर्ण,
-	अणु "mss", &spufs_mss_fops, 0666, पूर्ण,
-	अणु "npc", &spufs_npc_ops, 0666, पूर्ण,
-	अणु "srr0", &spufs_srr0_ops, 0666, पूर्ण,
-	अणु "decr", &spufs_decr_ops, 0666, पूर्ण,
-	अणु "decr_status", &spufs_decr_status_ops, 0666, पूर्ण,
-	अणु "event_mask", &spufs_event_mask_ops, 0666, पूर्ण,
-	अणु "event_status", &spufs_event_status_ops, 0444, पूर्ण,
-	अणु "psmap", &spufs_psmap_fops, 0666, SPUFS_PS_MAP_SIZE, पूर्ण,
-	अणु "phys-id", &spufs_id_ops, 0666, पूर्ण,
-	अणु "object-id", &spufs_object_id_ops, 0666, पूर्ण,
-	अणु "mbox_info", &spufs_mbox_info_fops, 0444, माप(u32), पूर्ण,
-	अणु "ibox_info", &spufs_ibox_info_fops, 0444, माप(u32), पूर्ण,
-	अणु "wbox_info", &spufs_wbox_info_fops, 0444, माप(u32), पूर्ण,
-	अणु "dma_info", &spufs_dma_info_fops, 0444,
-		माप(काष्ठा spu_dma_info), पूर्ण,
-	अणु "proxydma_info", &spufs_proxydma_info_fops, 0444,
-		माप(काष्ठा spu_proxydma_info)पूर्ण,
-	अणु "tid", &spufs_tid_fops, 0444, पूर्ण,
-	अणु "stat", &spufs_stat_fops, 0444, पूर्ण,
-	अणु "switch_log", &spufs_चयन_log_fops, 0444 पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+const struct spufs_tree_descr spufs_dir_contents[] = {
+	{ "capabilities", &spufs_caps_fops, 0444, },
+	{ "mem",  &spufs_mem_fops,  0666, LS_SIZE, },
+	{ "regs", &spufs_regs_fops,  0666, sizeof(struct spu_reg128[128]), },
+	{ "mbox", &spufs_mbox_fops, 0444, },
+	{ "ibox", &spufs_ibox_fops, 0444, },
+	{ "wbox", &spufs_wbox_fops, 0222, },
+	{ "mbox_stat", &spufs_mbox_stat_fops, 0444, sizeof(u32), },
+	{ "ibox_stat", &spufs_ibox_stat_fops, 0444, sizeof(u32), },
+	{ "wbox_stat", &spufs_wbox_stat_fops, 0444, sizeof(u32), },
+	{ "signal1", &spufs_signal1_fops, 0666, },
+	{ "signal2", &spufs_signal2_fops, 0666, },
+	{ "signal1_type", &spufs_signal1_type, 0666, },
+	{ "signal2_type", &spufs_signal2_type, 0666, },
+	{ "cntl", &spufs_cntl_fops,  0666, },
+	{ "fpcr", &spufs_fpcr_fops, 0666, sizeof(struct spu_reg128), },
+	{ "lslr", &spufs_lslr_ops, 0444, },
+	{ "mfc", &spufs_mfc_fops, 0666, },
+	{ "mss", &spufs_mss_fops, 0666, },
+	{ "npc", &spufs_npc_ops, 0666, },
+	{ "srr0", &spufs_srr0_ops, 0666, },
+	{ "decr", &spufs_decr_ops, 0666, },
+	{ "decr_status", &spufs_decr_status_ops, 0666, },
+	{ "event_mask", &spufs_event_mask_ops, 0666, },
+	{ "event_status", &spufs_event_status_ops, 0444, },
+	{ "psmap", &spufs_psmap_fops, 0666, SPUFS_PS_MAP_SIZE, },
+	{ "phys-id", &spufs_id_ops, 0666, },
+	{ "object-id", &spufs_object_id_ops, 0666, },
+	{ "mbox_info", &spufs_mbox_info_fops, 0444, sizeof(u32), },
+	{ "ibox_info", &spufs_ibox_info_fops, 0444, sizeof(u32), },
+	{ "wbox_info", &spufs_wbox_info_fops, 0444, sizeof(u32), },
+	{ "dma_info", &spufs_dma_info_fops, 0444,
+		sizeof(struct spu_dma_info), },
+	{ "proxydma_info", &spufs_proxydma_info_fops, 0444,
+		sizeof(struct spu_proxydma_info)},
+	{ "tid", &spufs_tid_fops, 0444, },
+	{ "stat", &spufs_stat_fops, 0444, },
+	{ "switch_log", &spufs_switch_log_fops, 0444 },
+	{},
+};
 
-स्थिर काष्ठा spufs_tree_descr spufs_dir_nosched_contents[] = अणु
-	अणु "capabilities", &spufs_caps_fops, 0444, पूर्ण,
-	अणु "mem",  &spufs_mem_fops,  0666, LS_SIZE, पूर्ण,
-	अणु "mbox", &spufs_mbox_fops, 0444, पूर्ण,
-	अणु "ibox", &spufs_ibox_fops, 0444, पूर्ण,
-	अणु "wbox", &spufs_wbox_fops, 0222, पूर्ण,
-	अणु "mbox_stat", &spufs_mbox_stat_fops, 0444, माप(u32), पूर्ण,
-	अणु "ibox_stat", &spufs_ibox_stat_fops, 0444, माप(u32), पूर्ण,
-	अणु "wbox_stat", &spufs_wbox_stat_fops, 0444, माप(u32), पूर्ण,
-	अणु "signal1", &spufs_संकेत1_nosched_fops, 0222, पूर्ण,
-	अणु "signal2", &spufs_संकेत2_nosched_fops, 0222, पूर्ण,
-	अणु "signal1_type", &spufs_संकेत1_type, 0666, पूर्ण,
-	अणु "signal2_type", &spufs_संकेत2_type, 0666, पूर्ण,
-	अणु "mss", &spufs_mss_fops, 0666, पूर्ण,
-	अणु "mfc", &spufs_mfc_fops, 0666, पूर्ण,
-	अणु "cntl", &spufs_cntl_fops,  0666, पूर्ण,
-	अणु "npc", &spufs_npc_ops, 0666, पूर्ण,
-	अणु "psmap", &spufs_psmap_fops, 0666, SPUFS_PS_MAP_SIZE, पूर्ण,
-	अणु "phys-id", &spufs_id_ops, 0666, पूर्ण,
-	अणु "object-id", &spufs_object_id_ops, 0666, पूर्ण,
-	अणु "tid", &spufs_tid_fops, 0444, पूर्ण,
-	अणु "stat", &spufs_stat_fops, 0444, पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+const struct spufs_tree_descr spufs_dir_nosched_contents[] = {
+	{ "capabilities", &spufs_caps_fops, 0444, },
+	{ "mem",  &spufs_mem_fops,  0666, LS_SIZE, },
+	{ "mbox", &spufs_mbox_fops, 0444, },
+	{ "ibox", &spufs_ibox_fops, 0444, },
+	{ "wbox", &spufs_wbox_fops, 0222, },
+	{ "mbox_stat", &spufs_mbox_stat_fops, 0444, sizeof(u32), },
+	{ "ibox_stat", &spufs_ibox_stat_fops, 0444, sizeof(u32), },
+	{ "wbox_stat", &spufs_wbox_stat_fops, 0444, sizeof(u32), },
+	{ "signal1", &spufs_signal1_nosched_fops, 0222, },
+	{ "signal2", &spufs_signal2_nosched_fops, 0222, },
+	{ "signal1_type", &spufs_signal1_type, 0666, },
+	{ "signal2_type", &spufs_signal2_type, 0666, },
+	{ "mss", &spufs_mss_fops, 0666, },
+	{ "mfc", &spufs_mfc_fops, 0666, },
+	{ "cntl", &spufs_cntl_fops,  0666, },
+	{ "npc", &spufs_npc_ops, 0666, },
+	{ "psmap", &spufs_psmap_fops, 0666, SPUFS_PS_MAP_SIZE, },
+	{ "phys-id", &spufs_id_ops, 0666, },
+	{ "object-id", &spufs_object_id_ops, 0666, },
+	{ "tid", &spufs_tid_fops, 0444, },
+	{ "stat", &spufs_stat_fops, 0444, },
+	{},
+};
 
-स्थिर काष्ठा spufs_tree_descr spufs_dir_debug_contents[] = अणु
-	अणु ".ctx", &spufs_ctx_fops, 0444, पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+const struct spufs_tree_descr spufs_dir_debug_contents[] = {
+	{ ".ctx", &spufs_ctx_fops, 0444, },
+	{},
+};
 
-स्थिर काष्ठा spufs_coredump_पढ़ोer spufs_coredump_पढ़ो[] = अणु
-	अणु "regs", spufs_regs_dump, शून्य, माप(काष्ठा spu_reg128[128])पूर्ण,
-	अणु "fpcr", spufs_fpcr_dump, शून्य, माप(काष्ठा spu_reg128) पूर्ण,
-	अणु "lslr", शून्य, spufs_lslr_get, 19 पूर्ण,
-	अणु "decr", शून्य, spufs_decr_get, 19 पूर्ण,
-	अणु "decr_status", शून्य, spufs_decr_status_get, 19 पूर्ण,
-	अणु "mem", spufs_mem_dump, शून्य, LS_SIZE, पूर्ण,
-	अणु "signal1", spufs_संकेत1_dump, शून्य, माप(u32) पूर्ण,
-	अणु "signal1_type", शून्य, spufs_संकेत1_type_get, 19 पूर्ण,
-	अणु "signal2", spufs_संकेत2_dump, शून्य, माप(u32) पूर्ण,
-	अणु "signal2_type", शून्य, spufs_संकेत2_type_get, 19 पूर्ण,
-	अणु "event_mask", शून्य, spufs_event_mask_get, 19 पूर्ण,
-	अणु "event_status", शून्य, spufs_event_status_get, 19 पूर्ण,
-	अणु "mbox_info", spufs_mbox_info_dump, शून्य, माप(u32) पूर्ण,
-	अणु "ibox_info", spufs_ibox_info_dump, शून्य, माप(u32) पूर्ण,
-	अणु "wbox_info", spufs_wbox_info_dump, शून्य, 4 * माप(u32)पूर्ण,
-	अणु "dma_info", spufs_dma_info_dump, शून्य, माप(काष्ठा spu_dma_info)पूर्ण,
-	अणु "proxydma_info", spufs_proxydma_info_dump,
-			   शून्य, माप(काष्ठा spu_proxydma_info)पूर्ण,
-	अणु "object-id", शून्य, spufs_object_id_get, 19 पूर्ण,
-	अणु "npc", शून्य, spufs_npc_get, 19 पूर्ण,
-	अणु शून्य पूर्ण,
-पूर्ण;
+const struct spufs_coredump_reader spufs_coredump_read[] = {
+	{ "regs", spufs_regs_dump, NULL, sizeof(struct spu_reg128[128])},
+	{ "fpcr", spufs_fpcr_dump, NULL, sizeof(struct spu_reg128) },
+	{ "lslr", NULL, spufs_lslr_get, 19 },
+	{ "decr", NULL, spufs_decr_get, 19 },
+	{ "decr_status", NULL, spufs_decr_status_get, 19 },
+	{ "mem", spufs_mem_dump, NULL, LS_SIZE, },
+	{ "signal1", spufs_signal1_dump, NULL, sizeof(u32) },
+	{ "signal1_type", NULL, spufs_signal1_type_get, 19 },
+	{ "signal2", spufs_signal2_dump, NULL, sizeof(u32) },
+	{ "signal2_type", NULL, spufs_signal2_type_get, 19 },
+	{ "event_mask", NULL, spufs_event_mask_get, 19 },
+	{ "event_status", NULL, spufs_event_status_get, 19 },
+	{ "mbox_info", spufs_mbox_info_dump, NULL, sizeof(u32) },
+	{ "ibox_info", spufs_ibox_info_dump, NULL, sizeof(u32) },
+	{ "wbox_info", spufs_wbox_info_dump, NULL, 4 * sizeof(u32)},
+	{ "dma_info", spufs_dma_info_dump, NULL, sizeof(struct spu_dma_info)},
+	{ "proxydma_info", spufs_proxydma_info_dump,
+			   NULL, sizeof(struct spu_proxydma_info)},
+	{ "object-id", NULL, spufs_object_id_get, 19 },
+	{ "npc", NULL, spufs_npc_get, 19 },
+	{ NULL },
+};

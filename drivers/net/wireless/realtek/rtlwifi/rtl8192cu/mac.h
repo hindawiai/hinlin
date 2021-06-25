@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#अगर_अघोषित __RTL92C_MAC_H__
-#घोषणा __RTL92C_MAC_H__
+#ifndef __RTL92C_MAC_H__
+#define __RTL92C_MAC_H__
 
-#घोषणा LLT_LAST_ENTRY_OF_TX_PKT_BUFFER		255
-#घोषणा DRIVER_EARLY_INT_TIME					0x05
-#घोषणा BCN_DMA_ATIME_INT_TIME				0x02
+#define LLT_LAST_ENTRY_OF_TX_PKT_BUFFER		255
+#define DRIVER_EARLY_INT_TIME					0x05
+#define BCN_DMA_ATIME_INT_TIME				0x02
 
-व्योम rtl92c_पढ़ो_chip_version(काष्ठा ieee80211_hw *hw);
-bool rtl92c_llt_ग_लिखो(काष्ठा ieee80211_hw *hw, u32 address, u32 data);
-bool rtl92c_init_llt_table(काष्ठा ieee80211_hw *hw, u32 boundary);
-व्योम rtl92c_set_key(काष्ठा ieee80211_hw *hw, u32 key_index,
+void rtl92c_read_chip_version(struct ieee80211_hw *hw);
+bool rtl92c_llt_write(struct ieee80211_hw *hw, u32 address, u32 data);
+bool rtl92c_init_llt_table(struct ieee80211_hw *hw, u32 boundary);
+void rtl92c_set_key(struct ieee80211_hw *hw, u32 key_index,
 		     u8 *p_macaddr, bool is_group, u8 enc_algo,
 		     bool is_wepkey, bool clear_all);
-व्योम rtl92c_enable_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_disable_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_set_qos(काष्ठा ieee80211_hw *hw, पूर्णांक aci);
+void rtl92c_enable_interrupt(struct ieee80211_hw *hw);
+void rtl92c_disable_interrupt(struct ieee80211_hw *hw);
+void rtl92c_set_qos(struct ieee80211_hw *hw, int aci);
 
 /*---------------------------------------------------------------
  *	Hardware init functions
  *---------------------------------------------------------------*/
-व्योम rtl92c_init_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_driver_info_size(काष्ठा ieee80211_hw *hw, u8 size);
+void rtl92c_init_interrupt(struct ieee80211_hw *hw);
+void rtl92c_init_driver_info_size(struct ieee80211_hw *hw, u8 size);
 
-पूर्णांक rtl92c_set_network_type(काष्ठा ieee80211_hw *hw, क्रमागत nl80211_अगरtype type);
-व्योम rtl92c_init_network_type(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_adaptive_ctrl(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_rate_fallback(काष्ठा ieee80211_hw *hw);
+int rtl92c_set_network_type(struct ieee80211_hw *hw, enum nl80211_iftype type);
+void rtl92c_init_network_type(struct ieee80211_hw *hw);
+void rtl92c_init_adaptive_ctrl(struct ieee80211_hw *hw);
+void rtl92c_init_rate_fallback(struct ieee80211_hw *hw);
 
-व्योम rtl92c_init_edca_param(काष्ठा ieee80211_hw *hw,
+void rtl92c_init_edca_param(struct ieee80211_hw *hw,
 							u16 queue,
 							u16 txop,
 							u8 ecwmax,
 							u8 ecwmin,
-							u8 aअगरs);
+							u8 aifs);
 
-व्योम rtl92c_init_edca(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_ampdu_aggregation(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_beacon_max_error(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_rdg_setting(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_init_retry_function(काष्ठा ieee80211_hw *hw);
+void rtl92c_init_edca(struct ieee80211_hw *hw);
+void rtl92c_init_ampdu_aggregation(struct ieee80211_hw *hw);
+void rtl92c_init_beacon_max_error(struct ieee80211_hw *hw);
+void rtl92c_init_rdg_setting(struct ieee80211_hw *hw);
+void rtl92c_init_retry_function(struct ieee80211_hw *hw);
 
-व्योम rtl92c_disable_fast_edca(काष्ठा ieee80211_hw *hw);
-व्योम rtl92c_set_min_space(काष्ठा ieee80211_hw *hw, bool is2T);
+void rtl92c_disable_fast_edca(struct ieee80211_hw *hw);
+void rtl92c_set_min_space(struct ieee80211_hw *hw, bool is2T);
 
-u32 rtl92c_get_txdma_status(काष्ठा ieee80211_hw *hw);
+u32 rtl92c_get_txdma_status(struct ieee80211_hw *hw);
 
-काष्ठा rx_fwinfo_92c अणु
+struct rx_fwinfo_92c {
 	u8 gain_trsw[4];
 	u8 pwdb_all;
 	u8 cfosho[4];
@@ -60,20 +59,20 @@ u32 rtl92c_get_txdma_status(काष्ठा ieee80211_hw *hw);
 	u8 csi_target[2];
 	u8 sigevm;
 	u8 max_ex_pwr;
-	u8 ex_पूर्णांकf_flag:1;
+	u8 ex_intf_flag:1;
 	u8 sgi_en:1;
 	u8 rxsc:2;
 	u8 reserve:4;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rx_desc_92c अणु
+struct rx_desc_92c {
 	u32 length:14;
 	u32 crc32:1;
 	u32 icverror:1;
 	u32 drv_infosize:4;
 	u32 security:3;
 	u32 qos:1;
-	u32 shअगरt:2;
+	u32 shift:2;
 	u32 phystatus:1;
 	u32 swdec:1;
 	u32 lastseg:1;
@@ -115,19 +114,19 @@ u32 rtl92c_get_txdma_status(काष्ठा ieee80211_hw *hw);
 	u32 tsfl;	/* word 5 */
 	u32 bufferaddress;	/* word 6 */
 	u32 bufferaddress64;	/* word 7 */
-पूर्ण __packed;
+} __packed;
 
-क्रमागत rtl_desc_qsel rtl92c_map_hwqueue_to_fwqueue(u16 fc,
-							  अचिन्हित पूर्णांक
+enum rtl_desc_qsel rtl92c_map_hwqueue_to_fwqueue(u16 fc,
+							  unsigned int
 							  skb_queue);
-व्योम rtl92c_translate_rx_संकेत_stuff(काष्ठा ieee80211_hw *hw,
-				      काष्ठा sk_buff *skb,
-				      काष्ठा rtl_stats *pstats,
-				      काष्ठा rx_desc_92c *pdesc,
-				      काष्ठा rx_fwinfo_92c *p_drvinfo);
+void rtl92c_translate_rx_signal_stuff(struct ieee80211_hw *hw,
+				      struct sk_buff *skb,
+				      struct rtl_stats *pstats,
+				      struct rx_desc_92c *pdesc,
+				      struct rx_fwinfo_92c *p_drvinfo);
 
 /*---------------------------------------------------------------
  *	Card disable functions
  *---------------------------------------------------------------*/
 
-#पूर्ण_अगर
+#endif

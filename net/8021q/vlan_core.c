@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/netpoll.h>
-#समावेश <linux/export.h>
-#समावेश <net/gro.h>
-#समावेश "vlan.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/skbuff.h>
+#include <linux/netdevice.h>
+#include <linux/if_vlan.h>
+#include <linux/netpoll.h>
+#include <linux/export.h>
+#include <net/gro.h>
+#include "vlan.h"
 
-bool vlan_करो_receive(काष्ठा sk_buff **skbp)
-अणु
-	काष्ठा sk_buff *skb = *skbp;
+bool vlan_do_receive(struct sk_buff **skbp)
+{
+	struct sk_buff *skb = *skbp;
 	__be16 vlan_proto = skb->vlan_proto;
 	u16 vlan_id = skb_vlan_tag_get_id(skb);
-	काष्ठा net_device *vlan_dev;
-	काष्ठा vlan_pcpu_stats *rx_stats;
+	struct net_device *vlan_dev;
+	struct vlan_pcpu_stats *rx_stats;
 
 	vlan_dev = vlan_find_dev(skb->dev, vlan_proto, vlan_id);
-	अगर (!vlan_dev)
-		वापस false;
+	if (!vlan_dev)
+		return false;
 
 	skb = *skbp = skb_share_check(skb, GFP_ATOMIC);
-	अगर (unlikely(!skb))
-		वापस false;
+	if (unlikely(!skb))
+		return false;
 
-	अगर (unlikely(!(vlan_dev->flags & IFF_UP))) अणु
-		kमुक्त_skb(skb);
-		*skbp = शून्य;
-		वापस false;
-	पूर्ण
+	if (unlikely(!(vlan_dev->flags & IFF_UP))) {
+		kfree_skb(skb);
+		*skbp = NULL;
+		return false;
+	}
 
 	skb->dev = vlan_dev;
-	अगर (unlikely(skb->pkt_type == PACKET_OTHERHOST)) अणु
+	if (unlikely(skb->pkt_type == PACKET_OTHERHOST)) {
 		/* Our lower layer thinks this is not local, let's make sure.
-		 * This allows the VLAN to have a dअगरferent MAC than the
+		 * This allows the VLAN to have a different MAC than the
 		 * underlying device, and still route correctly. */
-		अगर (ether_addr_equal_64bits(eth_hdr(skb)->h_dest, vlan_dev->dev_addr))
+		if (ether_addr_equal_64bits(eth_hdr(skb)->h_dest, vlan_dev->dev_addr))
 			skb->pkt_type = PACKET_HOST;
-	पूर्ण
+	}
 
-	अगर (!(vlan_dev_priv(vlan_dev)->flags & VLAN_FLAG_REORDER_HDR) &&
-	    !netअगर_is_macvlan_port(vlan_dev) &&
-	    !netअगर_is_bridge_port(vlan_dev)) अणु
-		अचिन्हित पूर्णांक offset = skb->data - skb_mac_header(skb);
+	if (!(vlan_dev_priv(vlan_dev)->flags & VLAN_FLAG_REORDER_HDR) &&
+	    !netif_is_macvlan_port(vlan_dev) &&
+	    !netif_is_bridge_port(vlan_dev)) {
+		unsigned int offset = skb->data - skb_mac_header(skb);
 
 		/*
-		 * vlan_insert_tag expect skb->data poपूर्णांकing to mac header.
-		 * So change skb->data beक्रमe calling it and change back to
+		 * vlan_insert_tag expect skb->data pointing to mac header.
+		 * So change skb->data before calling it and change back to
 		 * original position later
 		 */
 		skb_push(skb, offset);
 		skb = *skbp = vlan_insert_inner_tag(skb, skb->vlan_proto,
 						    skb->vlan_tci, skb->mac_len);
-		अगर (!skb)
-			वापस false;
+		if (!skb)
+			return false;
 		skb_pull(skb, offset + VLAN_HLEN);
 		skb_reset_mac_len(skb);
-	पूर्ण
+	}
 
 	skb->priority = vlan_get_ingress_priority(vlan_dev, skb->vlan_tci);
 	__vlan_hwaccel_clear_tag(skb);
@@ -66,495 +65,495 @@ bool vlan_करो_receive(काष्ठा sk_buff **skbp)
 	u64_stats_update_begin(&rx_stats->syncp);
 	rx_stats->rx_packets++;
 	rx_stats->rx_bytes += skb->len;
-	अगर (skb->pkt_type == PACKET_MULTICAST)
+	if (skb->pkt_type == PACKET_MULTICAST)
 		rx_stats->rx_multicast++;
 	u64_stats_update_end(&rx_stats->syncp);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Must be invoked with rcu_पढ़ो_lock. */
-काष्ठा net_device *__vlan_find_dev_deep_rcu(काष्ठा net_device *dev,
+/* Must be invoked with rcu_read_lock. */
+struct net_device *__vlan_find_dev_deep_rcu(struct net_device *dev,
 					__be16 vlan_proto, u16 vlan_id)
-अणु
-	काष्ठा vlan_info *vlan_info = rcu_dereference(dev->vlan_info);
+{
+	struct vlan_info *vlan_info = rcu_dereference(dev->vlan_info);
 
-	अगर (vlan_info) अणु
-		वापस vlan_group_get_device(&vlan_info->grp,
+	if (vlan_info) {
+		return vlan_group_get_device(&vlan_info->grp,
 					     vlan_proto, vlan_id);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Lower devices of master uppers (bonding, team) करो not have
-		 * grp asचिन्हित to themselves. Grp is asचिन्हित to upper device
+		 * Lower devices of master uppers (bonding, team) do not have
+		 * grp assigned to themselves. Grp is assigned to upper device
 		 * instead.
 		 */
-		काष्ठा net_device *upper_dev;
+		struct net_device *upper_dev;
 
 		upper_dev = netdev_master_upper_dev_get_rcu(dev);
-		अगर (upper_dev)
-			वापस __vlan_find_dev_deep_rcu(upper_dev,
+		if (upper_dev)
+			return __vlan_find_dev_deep_rcu(upper_dev,
 						    vlan_proto, vlan_id);
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(__vlan_find_dev_deep_rcu);
 
-काष्ठा net_device *vlan_dev_real_dev(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा net_device *ret = vlan_dev_priv(dev)->real_dev;
+struct net_device *vlan_dev_real_dev(const struct net_device *dev)
+{
+	struct net_device *ret = vlan_dev_priv(dev)->real_dev;
 
-	जबतक (is_vlan_dev(ret))
+	while (is_vlan_dev(ret))
 		ret = vlan_dev_priv(ret)->real_dev;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(vlan_dev_real_dev);
 
-u16 vlan_dev_vlan_id(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस vlan_dev_priv(dev)->vlan_id;
-पूर्ण
+u16 vlan_dev_vlan_id(const struct net_device *dev)
+{
+	return vlan_dev_priv(dev)->vlan_id;
+}
 EXPORT_SYMBOL(vlan_dev_vlan_id);
 
-__be16 vlan_dev_vlan_proto(स्थिर काष्ठा net_device *dev)
-अणु
-	वापस vlan_dev_priv(dev)->vlan_proto;
-पूर्ण
+__be16 vlan_dev_vlan_proto(const struct net_device *dev)
+{
+	return vlan_dev_priv(dev)->vlan_proto;
+}
 EXPORT_SYMBOL(vlan_dev_vlan_proto);
 
 /*
  * vlan info and vid list
  */
 
-अटल व्योम vlan_group_मुक्त(काष्ठा vlan_group *grp)
-अणु
-	पूर्णांक i, j;
+static void vlan_group_free(struct vlan_group *grp)
+{
+	int i, j;
 
-	क्रम (i = 0; i < VLAN_PROTO_NUM; i++)
-		क्रम (j = 0; j < VLAN_GROUP_ARRAY_SPLIT_PARTS; j++)
-			kमुक्त(grp->vlan_devices_arrays[i][j]);
-पूर्ण
+	for (i = 0; i < VLAN_PROTO_NUM; i++)
+		for (j = 0; j < VLAN_GROUP_ARRAY_SPLIT_PARTS; j++)
+			kfree(grp->vlan_devices_arrays[i][j]);
+}
 
-अटल व्योम vlan_info_मुक्त(काष्ठा vlan_info *vlan_info)
-अणु
-	vlan_group_मुक्त(&vlan_info->grp);
-	kमुक्त(vlan_info);
-पूर्ण
+static void vlan_info_free(struct vlan_info *vlan_info)
+{
+	vlan_group_free(&vlan_info->grp);
+	kfree(vlan_info);
+}
 
-अटल व्योम vlan_info_rcu_मुक्त(काष्ठा rcu_head *rcu)
-अणु
-	vlan_info_मुक्त(container_of(rcu, काष्ठा vlan_info, rcu));
-पूर्ण
+static void vlan_info_rcu_free(struct rcu_head *rcu)
+{
+	vlan_info_free(container_of(rcu, struct vlan_info, rcu));
+}
 
-अटल काष्ठा vlan_info *vlan_info_alloc(काष्ठा net_device *dev)
-अणु
-	काष्ठा vlan_info *vlan_info;
+static struct vlan_info *vlan_info_alloc(struct net_device *dev)
+{
+	struct vlan_info *vlan_info;
 
-	vlan_info = kzalloc(माप(काष्ठा vlan_info), GFP_KERNEL);
-	अगर (!vlan_info)
-		वापस शून्य;
+	vlan_info = kzalloc(sizeof(struct vlan_info), GFP_KERNEL);
+	if (!vlan_info)
+		return NULL;
 
 	vlan_info->real_dev = dev;
 	INIT_LIST_HEAD(&vlan_info->vid_list);
-	वापस vlan_info;
-पूर्ण
+	return vlan_info;
+}
 
-काष्ठा vlan_vid_info अणु
-	काष्ठा list_head list;
+struct vlan_vid_info {
+	struct list_head list;
 	__be16 proto;
 	u16 vid;
-	पूर्णांक refcount;
-पूर्ण;
+	int refcount;
+};
 
-अटल bool vlan_hw_filter_capable(स्थिर काष्ठा net_device *dev, __be16 proto)
-अणु
-	अगर (proto == htons(ETH_P_8021Q) &&
+static bool vlan_hw_filter_capable(const struct net_device *dev, __be16 proto)
+{
+	if (proto == htons(ETH_P_8021Q) &&
 	    dev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
-		वापस true;
-	अगर (proto == htons(ETH_P_8021AD) &&
+		return true;
+	if (proto == htons(ETH_P_8021AD) &&
 	    dev->features & NETIF_F_HW_VLAN_STAG_FILTER)
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	return false;
+}
 
-अटल काष्ठा vlan_vid_info *vlan_vid_info_get(काष्ठा vlan_info *vlan_info,
+static struct vlan_vid_info *vlan_vid_info_get(struct vlan_info *vlan_info,
 					       __be16 proto, u16 vid)
-अणु
-	काष्ठा vlan_vid_info *vid_info;
+{
+	struct vlan_vid_info *vid_info;
 
-	list_क्रम_each_entry(vid_info, &vlan_info->vid_list, list) अणु
-		अगर (vid_info->proto == proto && vid_info->vid == vid)
-			वापस vid_info;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(vid_info, &vlan_info->vid_list, list) {
+		if (vid_info->proto == proto && vid_info->vid == vid)
+			return vid_info;
+	}
+	return NULL;
+}
 
-अटल काष्ठा vlan_vid_info *vlan_vid_info_alloc(__be16 proto, u16 vid)
-अणु
-	काष्ठा vlan_vid_info *vid_info;
+static struct vlan_vid_info *vlan_vid_info_alloc(__be16 proto, u16 vid)
+{
+	struct vlan_vid_info *vid_info;
 
-	vid_info = kzalloc(माप(काष्ठा vlan_vid_info), GFP_KERNEL);
-	अगर (!vid_info)
-		वापस शून्य;
+	vid_info = kzalloc(sizeof(struct vlan_vid_info), GFP_KERNEL);
+	if (!vid_info)
+		return NULL;
 	vid_info->proto = proto;
 	vid_info->vid = vid;
 
-	वापस vid_info;
-पूर्ण
+	return vid_info;
+}
 
-अटल पूर्णांक vlan_add_rx_filter_info(काष्ठा net_device *dev, __be16 proto, u16 vid)
-अणु
-	अगर (!vlan_hw_filter_capable(dev, proto))
-		वापस 0;
+static int vlan_add_rx_filter_info(struct net_device *dev, __be16 proto, u16 vid)
+{
+	if (!vlan_hw_filter_capable(dev, proto))
+		return 0;
 
-	अगर (netअगर_device_present(dev))
-		वापस dev->netdev_ops->nकरो_vlan_rx_add_vid(dev, proto, vid);
-	अन्यथा
-		वापस -ENODEV;
-पूर्ण
+	if (netif_device_present(dev))
+		return dev->netdev_ops->ndo_vlan_rx_add_vid(dev, proto, vid);
+	else
+		return -ENODEV;
+}
 
-अटल पूर्णांक vlan_समाप्त_rx_filter_info(काष्ठा net_device *dev, __be16 proto, u16 vid)
-अणु
-	अगर (!vlan_hw_filter_capable(dev, proto))
-		वापस 0;
+static int vlan_kill_rx_filter_info(struct net_device *dev, __be16 proto, u16 vid)
+{
+	if (!vlan_hw_filter_capable(dev, proto))
+		return 0;
 
-	अगर (netअगर_device_present(dev))
-		वापस dev->netdev_ops->nकरो_vlan_rx_समाप्त_vid(dev, proto, vid);
-	अन्यथा
-		वापस -ENODEV;
-पूर्ण
+	if (netif_device_present(dev))
+		return dev->netdev_ops->ndo_vlan_rx_kill_vid(dev, proto, vid);
+	else
+		return -ENODEV;
+}
 
-पूर्णांक vlan_क्रम_each(काष्ठा net_device *dev,
-		  पूर्णांक (*action)(काष्ठा net_device *dev, पूर्णांक vid, व्योम *arg),
-		  व्योम *arg)
-अणु
-	काष्ठा vlan_vid_info *vid_info;
-	काष्ठा vlan_info *vlan_info;
-	काष्ठा net_device *vdev;
-	पूर्णांक ret;
+int vlan_for_each(struct net_device *dev,
+		  int (*action)(struct net_device *dev, int vid, void *arg),
+		  void *arg)
+{
+	struct vlan_vid_info *vid_info;
+	struct vlan_info *vlan_info;
+	struct net_device *vdev;
+	int ret;
 
 	ASSERT_RTNL();
 
 	vlan_info = rtnl_dereference(dev->vlan_info);
-	अगर (!vlan_info)
-		वापस 0;
+	if (!vlan_info)
+		return 0;
 
-	list_क्रम_each_entry(vid_info, &vlan_info->vid_list, list) अणु
+	list_for_each_entry(vid_info, &vlan_info->vid_list, list) {
 		vdev = vlan_group_get_device(&vlan_info->grp, vid_info->proto,
 					     vid_info->vid);
 		ret = action(vdev, vid_info->vid, arg);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(vlan_क्रम_each);
+	return 0;
+}
+EXPORT_SYMBOL(vlan_for_each);
 
-पूर्णांक vlan_filter_push_vids(काष्ठा vlan_info *vlan_info, __be16 proto)
-अणु
-	काष्ठा net_device *real_dev = vlan_info->real_dev;
-	काष्ठा vlan_vid_info *vlan_vid_info;
-	पूर्णांक err;
+int vlan_filter_push_vids(struct vlan_info *vlan_info, __be16 proto)
+{
+	struct net_device *real_dev = vlan_info->real_dev;
+	struct vlan_vid_info *vlan_vid_info;
+	int err;
 
-	list_क्रम_each_entry(vlan_vid_info, &vlan_info->vid_list, list) अणु
-		अगर (vlan_vid_info->proto == proto) अणु
+	list_for_each_entry(vlan_vid_info, &vlan_info->vid_list, list) {
+		if (vlan_vid_info->proto == proto) {
 			err = vlan_add_rx_filter_info(real_dev, proto,
 						      vlan_vid_info->vid);
-			अगर (err)
-				जाओ unwind;
-		पूर्ण
-	पूर्ण
+			if (err)
+				goto unwind;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 unwind:
-	list_क्रम_each_entry_जारी_reverse(vlan_vid_info,
-					     &vlan_info->vid_list, list) अणु
-		अगर (vlan_vid_info->proto == proto)
-			vlan_समाप्त_rx_filter_info(real_dev, proto,
+	list_for_each_entry_continue_reverse(vlan_vid_info,
+					     &vlan_info->vid_list, list) {
+		if (vlan_vid_info->proto == proto)
+			vlan_kill_rx_filter_info(real_dev, proto,
 						 vlan_vid_info->vid);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(vlan_filter_push_vids);
 
-व्योम vlan_filter_drop_vids(काष्ठा vlan_info *vlan_info, __be16 proto)
-अणु
-	काष्ठा vlan_vid_info *vlan_vid_info;
+void vlan_filter_drop_vids(struct vlan_info *vlan_info, __be16 proto)
+{
+	struct vlan_vid_info *vlan_vid_info;
 
-	list_क्रम_each_entry(vlan_vid_info, &vlan_info->vid_list, list)
-		अगर (vlan_vid_info->proto == proto)
-			vlan_समाप्त_rx_filter_info(vlan_info->real_dev,
+	list_for_each_entry(vlan_vid_info, &vlan_info->vid_list, list)
+		if (vlan_vid_info->proto == proto)
+			vlan_kill_rx_filter_info(vlan_info->real_dev,
 						 vlan_vid_info->proto,
 						 vlan_vid_info->vid);
-पूर्ण
+}
 EXPORT_SYMBOL(vlan_filter_drop_vids);
 
-अटल पूर्णांक __vlan_vid_add(काष्ठा vlan_info *vlan_info, __be16 proto, u16 vid,
-			  काष्ठा vlan_vid_info **pvid_info)
-अणु
-	काष्ठा net_device *dev = vlan_info->real_dev;
-	काष्ठा vlan_vid_info *vid_info;
-	पूर्णांक err;
+static int __vlan_vid_add(struct vlan_info *vlan_info, __be16 proto, u16 vid,
+			  struct vlan_vid_info **pvid_info)
+{
+	struct net_device *dev = vlan_info->real_dev;
+	struct vlan_vid_info *vid_info;
+	int err;
 
 	vid_info = vlan_vid_info_alloc(proto, vid);
-	अगर (!vid_info)
-		वापस -ENOMEM;
+	if (!vid_info)
+		return -ENOMEM;
 
 	err = vlan_add_rx_filter_info(dev, proto, vid);
-	अगर (err) अणु
-		kमुक्त(vid_info);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree(vid_info);
+		return err;
+	}
 
 	list_add(&vid_info->list, &vlan_info->vid_list);
 	vlan_info->nr_vids++;
 	*pvid_info = vid_info;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vlan_vid_add(काष्ठा net_device *dev, __be16 proto, u16 vid)
-अणु
-	काष्ठा vlan_info *vlan_info;
-	काष्ठा vlan_vid_info *vid_info;
+int vlan_vid_add(struct net_device *dev, __be16 proto, u16 vid)
+{
+	struct vlan_info *vlan_info;
+	struct vlan_vid_info *vid_info;
 	bool vlan_info_created = false;
-	पूर्णांक err;
+	int err;
 
 	ASSERT_RTNL();
 
 	vlan_info = rtnl_dereference(dev->vlan_info);
-	अगर (!vlan_info) अणु
+	if (!vlan_info) {
 		vlan_info = vlan_info_alloc(dev);
-		अगर (!vlan_info)
-			वापस -ENOMEM;
+		if (!vlan_info)
+			return -ENOMEM;
 		vlan_info_created = true;
-	पूर्ण
+	}
 	vid_info = vlan_vid_info_get(vlan_info, proto, vid);
-	अगर (!vid_info) अणु
+	if (!vid_info) {
 		err = __vlan_vid_add(vlan_info, proto, vid, &vid_info);
-		अगर (err)
-			जाओ out_मुक्त_vlan_info;
-	पूर्ण
+		if (err)
+			goto out_free_vlan_info;
+	}
 	vid_info->refcount++;
 
-	अगर (vlan_info_created)
-		rcu_assign_poपूर्णांकer(dev->vlan_info, vlan_info);
+	if (vlan_info_created)
+		rcu_assign_pointer(dev->vlan_info, vlan_info);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_vlan_info:
-	अगर (vlan_info_created)
-		kमुक्त(vlan_info);
-	वापस err;
-पूर्ण
+out_free_vlan_info:
+	if (vlan_info_created)
+		kfree(vlan_info);
+	return err;
+}
 EXPORT_SYMBOL(vlan_vid_add);
 
-अटल व्योम __vlan_vid_del(काष्ठा vlan_info *vlan_info,
-			   काष्ठा vlan_vid_info *vid_info)
-अणु
-	काष्ठा net_device *dev = vlan_info->real_dev;
+static void __vlan_vid_del(struct vlan_info *vlan_info,
+			   struct vlan_vid_info *vid_info)
+{
+	struct net_device *dev = vlan_info->real_dev;
 	__be16 proto = vid_info->proto;
 	u16 vid = vid_info->vid;
-	पूर्णांक err;
+	int err;
 
-	err = vlan_समाप्त_rx_filter_info(dev, proto, vid);
-	अगर (err && dev->reg_state != NETREG_UNREGISTERING)
+	err = vlan_kill_rx_filter_info(dev, proto, vid);
+	if (err && dev->reg_state != NETREG_UNREGISTERING)
 		netdev_warn(dev, "failed to kill vid %04x/%d\n", proto, vid);
 
 	list_del(&vid_info->list);
-	kमुक्त(vid_info);
+	kfree(vid_info);
 	vlan_info->nr_vids--;
-पूर्ण
+}
 
-व्योम vlan_vid_del(काष्ठा net_device *dev, __be16 proto, u16 vid)
-अणु
-	काष्ठा vlan_info *vlan_info;
-	काष्ठा vlan_vid_info *vid_info;
+void vlan_vid_del(struct net_device *dev, __be16 proto, u16 vid)
+{
+	struct vlan_info *vlan_info;
+	struct vlan_vid_info *vid_info;
 
 	ASSERT_RTNL();
 
 	vlan_info = rtnl_dereference(dev->vlan_info);
-	अगर (!vlan_info)
-		वापस;
+	if (!vlan_info)
+		return;
 
 	vid_info = vlan_vid_info_get(vlan_info, proto, vid);
-	अगर (!vid_info)
-		वापस;
+	if (!vid_info)
+		return;
 	vid_info->refcount--;
-	अगर (vid_info->refcount == 0) अणु
+	if (vid_info->refcount == 0) {
 		__vlan_vid_del(vlan_info, vid_info);
-		अगर (vlan_info->nr_vids == 0) अणु
-			RCU_INIT_POINTER(dev->vlan_info, शून्य);
-			call_rcu(&vlan_info->rcu, vlan_info_rcu_मुक्त);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		if (vlan_info->nr_vids == 0) {
+			RCU_INIT_POINTER(dev->vlan_info, NULL);
+			call_rcu(&vlan_info->rcu, vlan_info_rcu_free);
+		}
+	}
+}
 EXPORT_SYMBOL(vlan_vid_del);
 
-पूर्णांक vlan_vids_add_by_dev(काष्ठा net_device *dev,
-			 स्थिर काष्ठा net_device *by_dev)
-अणु
-	काष्ठा vlan_vid_info *vid_info;
-	काष्ठा vlan_info *vlan_info;
-	पूर्णांक err;
+int vlan_vids_add_by_dev(struct net_device *dev,
+			 const struct net_device *by_dev)
+{
+	struct vlan_vid_info *vid_info;
+	struct vlan_info *vlan_info;
+	int err;
 
 	ASSERT_RTNL();
 
 	vlan_info = rtnl_dereference(by_dev->vlan_info);
-	अगर (!vlan_info)
-		वापस 0;
+	if (!vlan_info)
+		return 0;
 
-	list_क्रम_each_entry(vid_info, &vlan_info->vid_list, list) अणु
+	list_for_each_entry(vid_info, &vlan_info->vid_list, list) {
 		err = vlan_vid_add(dev, vid_info->proto, vid_info->vid);
-		अगर (err)
-			जाओ unwind;
-	पूर्ण
-	वापस 0;
+		if (err)
+			goto unwind;
+	}
+	return 0;
 
 unwind:
-	list_क्रम_each_entry_जारी_reverse(vid_info,
+	list_for_each_entry_continue_reverse(vid_info,
 					     &vlan_info->vid_list,
-					     list) अणु
+					     list) {
 		vlan_vid_del(dev, vid_info->proto, vid_info->vid);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(vlan_vids_add_by_dev);
 
-व्योम vlan_vids_del_by_dev(काष्ठा net_device *dev,
-			  स्थिर काष्ठा net_device *by_dev)
-अणु
-	काष्ठा vlan_vid_info *vid_info;
-	काष्ठा vlan_info *vlan_info;
+void vlan_vids_del_by_dev(struct net_device *dev,
+			  const struct net_device *by_dev)
+{
+	struct vlan_vid_info *vid_info;
+	struct vlan_info *vlan_info;
 
 	ASSERT_RTNL();
 
 	vlan_info = rtnl_dereference(by_dev->vlan_info);
-	अगर (!vlan_info)
-		वापस;
+	if (!vlan_info)
+		return;
 
-	list_क्रम_each_entry(vid_info, &vlan_info->vid_list, list)
+	list_for_each_entry(vid_info, &vlan_info->vid_list, list)
 		vlan_vid_del(dev, vid_info->proto, vid_info->vid);
-पूर्ण
+}
 EXPORT_SYMBOL(vlan_vids_del_by_dev);
 
-bool vlan_uses_dev(स्थिर काष्ठा net_device *dev)
-अणु
-	काष्ठा vlan_info *vlan_info;
+bool vlan_uses_dev(const struct net_device *dev)
+{
+	struct vlan_info *vlan_info;
 
 	ASSERT_RTNL();
 
 	vlan_info = rtnl_dereference(dev->vlan_info);
-	अगर (!vlan_info)
-		वापस false;
-	वापस vlan_info->grp.nr_vlan_devs ? true : false;
-पूर्ण
+	if (!vlan_info)
+		return false;
+	return vlan_info->grp.nr_vlan_devs ? true : false;
+}
 EXPORT_SYMBOL(vlan_uses_dev);
 
-अटल काष्ठा sk_buff *vlan_gro_receive(काष्ठा list_head *head,
-					काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा packet_offload *ptype;
-	अचिन्हित पूर्णांक hlen, off_vlan;
-	काष्ठा sk_buff *pp = शून्य;
-	काष्ठा vlan_hdr *vhdr;
-	काष्ठा sk_buff *p;
+static struct sk_buff *vlan_gro_receive(struct list_head *head,
+					struct sk_buff *skb)
+{
+	const struct packet_offload *ptype;
+	unsigned int hlen, off_vlan;
+	struct sk_buff *pp = NULL;
+	struct vlan_hdr *vhdr;
+	struct sk_buff *p;
 	__be16 type;
-	पूर्णांक flush = 1;
+	int flush = 1;
 
 	off_vlan = skb_gro_offset(skb);
-	hlen = off_vlan + माप(*vhdr);
+	hlen = off_vlan + sizeof(*vhdr);
 	vhdr = skb_gro_header_fast(skb, off_vlan);
-	अगर (skb_gro_header_hard(skb, hlen)) अणु
+	if (skb_gro_header_hard(skb, hlen)) {
 		vhdr = skb_gro_header_slow(skb, hlen, off_vlan);
-		अगर (unlikely(!vhdr))
-			जाओ out;
-	पूर्ण
+		if (unlikely(!vhdr))
+			goto out;
+	}
 
 	type = vhdr->h_vlan_encapsulated_proto;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ptype = gro_find_receive_by_type(type);
-	अगर (!ptype)
-		जाओ out_unlock;
+	if (!ptype)
+		goto out_unlock;
 
 	flush = 0;
 
-	list_क्रम_each_entry(p, head, list) अणु
-		काष्ठा vlan_hdr *vhdr2;
+	list_for_each_entry(p, head, list) {
+		struct vlan_hdr *vhdr2;
 
-		अगर (!NAPI_GRO_CB(p)->same_flow)
-			जारी;
+		if (!NAPI_GRO_CB(p)->same_flow)
+			continue;
 
-		vhdr2 = (काष्ठा vlan_hdr *)(p->data + off_vlan);
-		अगर (compare_vlan_header(vhdr, vhdr2))
+		vhdr2 = (struct vlan_hdr *)(p->data + off_vlan);
+		if (compare_vlan_header(vhdr, vhdr2))
 			NAPI_GRO_CB(p)->same_flow = 0;
-	पूर्ण
+	}
 
-	skb_gro_pull(skb, माप(*vhdr));
-	skb_gro_postpull_rcsum(skb, vhdr, माप(*vhdr));
+	skb_gro_pull(skb, sizeof(*vhdr));
+	skb_gro_postpull_rcsum(skb, vhdr, sizeof(*vhdr));
 
 	pp = indirect_call_gro_receive_inet(ptype->callbacks.gro_receive,
 					    ipv6_gro_receive, inet_gro_receive,
 					    head, skb);
 
 out_unlock:
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 out:
 	skb_gro_flush_final(skb, pp, flush);
 
-	वापस pp;
-पूर्ण
+	return pp;
+}
 
-अटल पूर्णांक vlan_gro_complete(काष्ठा sk_buff *skb, पूर्णांक nhoff)
-अणु
-	काष्ठा vlan_hdr *vhdr = (काष्ठा vlan_hdr *)(skb->data + nhoff);
+static int vlan_gro_complete(struct sk_buff *skb, int nhoff)
+{
+	struct vlan_hdr *vhdr = (struct vlan_hdr *)(skb->data + nhoff);
 	__be16 type = vhdr->h_vlan_encapsulated_proto;
-	काष्ठा packet_offload *ptype;
-	पूर्णांक err = -ENOENT;
+	struct packet_offload *ptype;
+	int err = -ENOENT;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	ptype = gro_find_complete_by_type(type);
-	अगर (ptype)
-		err = INसूचीECT_CALL_INET(ptype->callbacks.gro_complete,
+	if (ptype)
+		err = INDIRECT_CALL_INET(ptype->callbacks.gro_complete,
 					 ipv6_gro_complete, inet_gro_complete,
-					 skb, nhoff + माप(*vhdr));
+					 skb, nhoff + sizeof(*vhdr));
 
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-अटल काष्ठा packet_offload vlan_packet_offloads[] __पढ़ो_mostly = अणु
-	अणु
+static struct packet_offload vlan_packet_offloads[] __read_mostly = {
+	{
 		.type = cpu_to_be16(ETH_P_8021Q),
 		.priority = 10,
-		.callbacks = अणु
+		.callbacks = {
 			.gro_receive = vlan_gro_receive,
 			.gro_complete = vlan_gro_complete,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.type = cpu_to_be16(ETH_P_8021AD),
 		.priority = 10,
-		.callbacks = अणु
+		.callbacks = {
 			.gro_receive = vlan_gro_receive,
 			.gro_complete = vlan_gro_complete,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल पूर्णांक __init vlan_offload_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
+static int __init vlan_offload_init(void)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vlan_packet_offloads); i++)
+	for (i = 0; i < ARRAY_SIZE(vlan_packet_offloads); i++)
 		dev_add_offload(&vlan_packet_offloads[i]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 fs_initcall(vlan_offload_init);

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /******************************************************************************
  *  speedtch.c  -  Alcatel SpeedTouch USB xDSL modem driver
  *
@@ -10,71 +9,71 @@
  *  Based on "modem_run.c", copyright (C) 2001, Benoit Papillault
  ******************************************************************************/
 
-#समावेश <यंत्र/page.h>
-#समावेश <linux/device.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/firmware.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/types.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/workqueue.h>
+#include <asm/page.h>
+#include <linux/device.h>
+#include <linux/errno.h>
+#include <linux/firmware.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/timer.h>
+#include <linux/types.h>
+#include <linux/usb/ch9.h>
+#include <linux/workqueue.h>
 
-#समावेश "usbatm.h"
+#include "usbatm.h"
 
-#घोषणा DRIVER_AUTHOR	"Johan Verrept, Duncan Sands <duncan.sands@free.fr>"
-#घोषणा DRIVER_DESC	"Alcatel SpeedTouch USB driver"
+#define DRIVER_AUTHOR	"Johan Verrept, Duncan Sands <duncan.sands@free.fr>"
+#define DRIVER_DESC	"Alcatel SpeedTouch USB driver"
 
-अटल स्थिर अक्षर speedtch_driver_name[] = "speedtch";
+static const char speedtch_driver_name[] = "speedtch";
 
-#घोषणा CTRL_TIMEOUT 2000	/* milliseconds */
-#घोषणा DATA_TIMEOUT 2000	/* milliseconds */
+#define CTRL_TIMEOUT 2000	/* milliseconds */
+#define DATA_TIMEOUT 2000	/* milliseconds */
 
-#घोषणा OFFSET_7	0		/* size 1 */
-#घोषणा OFFSET_b	1		/* size 8 */
-#घोषणा OFFSET_d	9		/* size 4 */
-#घोषणा OFFSET_e	13		/* size 1 */
-#घोषणा OFFSET_f	14		/* size 1 */
+#define OFFSET_7	0		/* size 1 */
+#define OFFSET_b	1		/* size 8 */
+#define OFFSET_d	9		/* size 4 */
+#define OFFSET_e	13		/* size 1 */
+#define OFFSET_f	14		/* size 1 */
 
-#घोषणा SIZE_7		1
-#घोषणा SIZE_b		8
-#घोषणा SIZE_d		4
-#घोषणा SIZE_e		1
-#घोषणा SIZE_f		1
+#define SIZE_7		1
+#define SIZE_b		8
+#define SIZE_d		4
+#define SIZE_e		1
+#define SIZE_f		1
 
-#घोषणा MIN_POLL_DELAY		5000	/* milliseconds */
-#घोषणा MAX_POLL_DELAY		60000	/* milliseconds */
+#define MIN_POLL_DELAY		5000	/* milliseconds */
+#define MAX_POLL_DELAY		60000	/* milliseconds */
 
-#घोषणा RESUBMIT_DELAY		1000	/* milliseconds */
+#define RESUBMIT_DELAY		1000	/* milliseconds */
 
-#घोषणा DEFAULT_BULK_ALTSETTING	1
-#घोषणा DEFAULT_ISOC_ALTSETTING	3
-#घोषणा DEFAULT_DL_512_FIRST	0
-#घोषणा DEFAULT_ENABLE_ISOC	0
-#घोषणा DEFAULT_SW_BUFFERING	0
+#define DEFAULT_BULK_ALTSETTING	1
+#define DEFAULT_ISOC_ALTSETTING	3
+#define DEFAULT_DL_512_FIRST	0
+#define DEFAULT_ENABLE_ISOC	0
+#define DEFAULT_SW_BUFFERING	0
 
-अटल अचिन्हित पूर्णांक altsetting = 0; /* zero means: use the शेष */
-अटल bool dl_512_first = DEFAULT_DL_512_FIRST;
-अटल bool enable_isoc = DEFAULT_ENABLE_ISOC;
-अटल bool sw_buffering = DEFAULT_SW_BUFFERING;
+static unsigned int altsetting = 0; /* zero means: use the default */
+static bool dl_512_first = DEFAULT_DL_512_FIRST;
+static bool enable_isoc = DEFAULT_ENABLE_ISOC;
+static bool sw_buffering = DEFAULT_SW_BUFFERING;
 
-#घोषणा DEFAULT_B_MAX_DSL	8128
-#घोषणा DEFAULT_MODEM_MODE	11
-#घोषणा MODEM_OPTION_LENGTH	16
-अटल स्थिर अचिन्हित अक्षर DEFAULT_MODEM_OPTION[MODEM_OPTION_LENGTH] = अणु
+#define DEFAULT_B_MAX_DSL	8128
+#define DEFAULT_MODEM_MODE	11
+#define MODEM_OPTION_LENGTH	16
+static const unsigned char DEFAULT_MODEM_OPTION[MODEM_OPTION_LENGTH] = {
 	0x10, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
-अटल अचिन्हित पूर्णांक BMaxDSL = DEFAULT_B_MAX_DSL;
-अटल अचिन्हित अक्षर ModemMode = DEFAULT_MODEM_MODE;
-अटल अचिन्हित अक्षर ModemOption[MODEM_OPTION_LENGTH];
-अटल अचिन्हित पूर्णांक num_ModemOption;
+static unsigned int BMaxDSL = DEFAULT_B_MAX_DSL;
+static unsigned char ModemMode = DEFAULT_MODEM_MODE;
+static unsigned char ModemOption[MODEM_OPTION_LENGTH];
+static unsigned int num_ModemOption;
 
-module_param(altsetting, uपूर्णांक, S_IRUGO | S_IWUSR);
+module_param(altsetting, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(altsetting,
 		"Alternative setting for data interface (bulk_default: "
 		__MODULE_STRING(DEFAULT_BULK_ALTSETTING) "; isoc_default: "
@@ -95,7 +94,7 @@ MODULE_PARM_DESC(sw_buffering,
 		 "Enable software buffering (default: "
 		 __MODULE_STRING(DEFAULT_SW_BUFFERING) ")");
 
-module_param(BMaxDSL, uपूर्णांक, S_IRUGO | S_IWUSR);
+module_param(BMaxDSL, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(BMaxDSL,
 		"default: " __MODULE_STRING(DEFAULT_B_MAX_DSL));
 
@@ -106,80 +105,80 @@ MODULE_PARM_DESC(ModemMode,
 module_param_array(ModemOption, byte, &num_ModemOption, S_IRUGO);
 MODULE_PARM_DESC(ModemOption, "default: 0x10,0x00,0x00,0x00,0x20");
 
-#घोषणा INTERFACE_DATA		1
-#घोषणा ENDPOINT_INT		0x81
-#घोषणा ENDPOINT_BULK_DATA	0x07
-#घोषणा ENDPOINT_ISOC_DATA	0x07
-#घोषणा ENDPOINT_FIRMWARE	0x05
+#define INTERFACE_DATA		1
+#define ENDPOINT_INT		0x81
+#define ENDPOINT_BULK_DATA	0x07
+#define ENDPOINT_ISOC_DATA	0x07
+#define ENDPOINT_FIRMWARE	0x05
 
-काष्ठा speedtch_params अणु
-	अचिन्हित पूर्णांक altsetting;
-	अचिन्हित पूर्णांक BMaxDSL;
-	अचिन्हित अक्षर ModemMode;
-	अचिन्हित अक्षर ModemOption[MODEM_OPTION_LENGTH];
-पूर्ण;
+struct speedtch_params {
+	unsigned int altsetting;
+	unsigned int BMaxDSL;
+	unsigned char ModemMode;
+	unsigned char ModemOption[MODEM_OPTION_LENGTH];
+};
 
-काष्ठा speedtch_instance_data अणु
-	काष्ठा usbaपंचांग_data *usbaपंचांग;
+struct speedtch_instance_data {
+	struct usbatm_data *usbatm;
 
-	काष्ठा speedtch_params params; /* set in probe, स्थिरant afterwards */
+	struct speedtch_params params; /* set in probe, constant afterwards */
 
-	काष्ठा समयr_list status_check_समयr;
-	काष्ठा work_काष्ठा status_check_work;
+	struct timer_list status_check_timer;
+	struct work_struct status_check_work;
 
-	अचिन्हित अक्षर last_status;
+	unsigned char last_status;
 
-	पूर्णांक poll_delay; /* milliseconds */
+	int poll_delay; /* milliseconds */
 
-	काष्ठा समयr_list resubmit_समयr;
-	काष्ठा urb *पूर्णांक_urb;
-	अचिन्हित अक्षर पूर्णांक_data[16];
+	struct timer_list resubmit_timer;
+	struct urb *int_urb;
+	unsigned char int_data[16];
 
-	अचिन्हित अक्षर scratch_buffer[16];
-पूर्ण;
+	unsigned char scratch_buffer[16];
+};
 
 /***************
 **  firmware  **
 ***************/
 
-अटल व्योम speedtch_set_swbuff(काष्ठा speedtch_instance_data *instance, पूर्णांक state)
-अणु
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	काष्ठा usb_device *usb_dev = usbaपंचांग->usb_dev;
-	पूर्णांक ret;
+static void speedtch_set_swbuff(struct speedtch_instance_data *instance, int state)
+{
+	struct usbatm_data *usbatm = instance->usbatm;
+	struct usb_device *usb_dev = usbatm->usb_dev;
+	int ret;
 
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
-			      0x32, 0x40, state ? 0x01 : 0x00, 0x00, शून्य, 0, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग,
+			      0x32, 0x40, state ? 0x01 : 0x00, 0x00, NULL, 0, CTRL_TIMEOUT);
+	if (ret < 0)
+		usb_warn(usbatm,
 			 "%sabling SW buffering: usb_control_msg returned %d\n",
 			 state ? "En" : "Dis", ret);
-	अन्यथा
-		usb_dbg(usbaपंचांग, "speedtch_set_swbuff: %sbled SW buffering\n", state ? "En" : "Dis");
-पूर्ण
+	else
+		usb_dbg(usbatm, "speedtch_set_swbuff: %sbled SW buffering\n", state ? "En" : "Dis");
+}
 
-अटल व्योम speedtch_test_sequence(काष्ठा speedtch_instance_data *instance)
-अणु
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	काष्ठा usb_device *usb_dev = usbaपंचांग->usb_dev;
-	अचिन्हित अक्षर *buf = instance->scratch_buffer;
-	पूर्णांक ret;
+static void speedtch_test_sequence(struct speedtch_instance_data *instance)
+{
+	struct usbatm_data *usbatm = instance->usbatm;
+	struct usb_device *usb_dev = usbatm->usb_dev;
+	unsigned char *buf = instance->scratch_buffer;
+	int ret;
 
 	/* URB 147 */
 	buf[0] = 0x1c;
 	buf[1] = 0x50;
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x0b, 0x00, buf, 2, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URB147: %d\n", __func__, ret);
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URB147: %d\n", __func__, ret);
 
 	/* URB 148 */
 	buf[0] = 0x32;
 	buf[1] = 0x00;
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x02, 0x00, buf, 2, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URB148: %d\n", __func__, ret);
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URB148: %d\n", __func__, ret);
 
 	/* URB 149 */
 	buf[0] = 0x01;
@@ -187,8 +186,8 @@ MODULE_PARM_DESC(ModemOption, "default: 0x10,0x00,0x00,0x00,0x20");
 	buf[2] = 0x01;
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x03, 0x00, buf, 3, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URB149: %d\n", __func__, ret);
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URB149: %d\n", __func__, ret);
 
 	/* URB 150 */
 	buf[0] = 0x01;
@@ -196,8 +195,8 @@ MODULE_PARM_DESC(ModemOption, "default: 0x10,0x00,0x00,0x00,0x20");
 	buf[2] = 0x01;
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x04, 0x00, buf, 3, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URB150: %d\n", __func__, ret);
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URB150: %d\n", __func__, ret);
 
 	/* Extra initialisation in recent drivers - gives higher speeds */
 
@@ -205,80 +204,80 @@ MODULE_PARM_DESC(ModemOption, "default: 0x10,0x00,0x00,0x00,0x20");
 	buf[0] = instance->params.ModemMode;
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x11, 0x00, buf, 1, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URBext1: %d\n", __func__, ret);
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URBext1: %d\n", __func__, ret);
 
 	/* URBext2 */
 	/* This seems to be the one which actually triggers the higher sync
-	   rate -- it करोes require the new firmware too, although it works OK
+	   rate -- it does require the new firmware too, although it works OK
 	   with older firmware */
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x14, 0x00,
 			      instance->params.ModemOption,
 			      MODEM_OPTION_LENGTH, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URBext2: %d\n", __func__, ret);
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URBext2: %d\n", __func__, ret);
 
 	/* URBext3 */
 	buf[0] = instance->params.BMaxDSL & 0xff;
 	buf[1] = instance->params.BMaxDSL >> 8;
 	ret = usb_control_msg(usb_dev, usb_sndctrlpipe(usb_dev, 0),
 			      0x01, 0x40, 0x12, 0x00, buf, 2, CTRL_TIMEOUT);
-	अगर (ret < 0)
-		usb_warn(usbaपंचांग, "%s failed on URBext3: %d\n", __func__, ret);
-पूर्ण
+	if (ret < 0)
+		usb_warn(usbatm, "%s failed on URBext3: %d\n", __func__, ret);
+}
 
-अटल पूर्णांक speedtch_upload_firmware(काष्ठा speedtch_instance_data *instance,
-				     स्थिर काष्ठा firmware *fw1,
-				     स्थिर काष्ठा firmware *fw2)
-अणु
-	अचिन्हित अक्षर *buffer;
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	काष्ठा usb_device *usb_dev = usbaपंचांग->usb_dev;
-	पूर्णांक actual_length;
-	पूर्णांक ret = 0;
-	पूर्णांक offset;
+static int speedtch_upload_firmware(struct speedtch_instance_data *instance,
+				     const struct firmware *fw1,
+				     const struct firmware *fw2)
+{
+	unsigned char *buffer;
+	struct usbatm_data *usbatm = instance->usbatm;
+	struct usb_device *usb_dev = usbatm->usb_dev;
+	int actual_length;
+	int ret = 0;
+	int offset;
 
-	usb_dbg(usbaपंचांग, "%s entered\n", __func__);
+	usb_dbg(usbatm, "%s entered\n", __func__);
 
-	buffer = (अचिन्हित अक्षर *)__get_मुक्त_page(GFP_KERNEL);
-	अगर (!buffer) अणु
+	buffer = (unsigned char *)__get_free_page(GFP_KERNEL);
+	if (!buffer) {
 		ret = -ENOMEM;
-		usb_dbg(usbaपंचांग, "%s: no memory for buffer!\n", __func__);
-		जाओ out;
-	पूर्ण
+		usb_dbg(usbatm, "%s: no memory for buffer!\n", __func__);
+		goto out;
+	}
 
-	अगर (!usb_अगरnum_to_अगर(usb_dev, 2)) अणु
+	if (!usb_ifnum_to_if(usb_dev, 2)) {
 		ret = -ENODEV;
-		usb_dbg(usbaपंचांग, "%s: interface not found!\n", __func__);
-		जाओ out_मुक्त;
-	पूर्ण
+		usb_dbg(usbatm, "%s: interface not found!\n", __func__);
+		goto out_free;
+	}
 
 	/* URB 7 */
-	अगर (dl_512_first) अणु	/* some modems need a पढ़ो beक्रमe writing the firmware */
+	if (dl_512_first) {	/* some modems need a read before writing the firmware */
 		ret = usb_bulk_msg(usb_dev, usb_rcvbulkpipe(usb_dev, ENDPOINT_FIRMWARE),
 				   buffer, 0x200, &actual_length, 2000);
 
-		अगर (ret < 0 && ret != -ETIMEDOUT)
-			usb_warn(usbaपंचांग, "%s: read BLOCK0 from modem failed (%d)!\n", __func__, ret);
-		अन्यथा
-			usb_dbg(usbaपंचांग, "%s: BLOCK0 downloaded (%d bytes)\n", __func__, ret);
-	पूर्ण
+		if (ret < 0 && ret != -ETIMEDOUT)
+			usb_warn(usbatm, "%s: read BLOCK0 from modem failed (%d)!\n", __func__, ret);
+		else
+			usb_dbg(usbatm, "%s: BLOCK0 downloaded (%d bytes)\n", __func__, ret);
+	}
 
-	/* URB 8 : both leds are अटल green */
-	क्रम (offset = 0; offset < fw1->size; offset += PAGE_SIZE) अणु
-		पूर्णांक thislen = min_t(पूर्णांक, PAGE_SIZE, fw1->size - offset);
-		स_नकल(buffer, fw1->data + offset, thislen);
+	/* URB 8 : both leds are static green */
+	for (offset = 0; offset < fw1->size; offset += PAGE_SIZE) {
+		int thislen = min_t(int, PAGE_SIZE, fw1->size - offset);
+		memcpy(buffer, fw1->data + offset, thislen);
 
 		ret = usb_bulk_msg(usb_dev, usb_sndbulkpipe(usb_dev, ENDPOINT_FIRMWARE),
 				   buffer, thislen, &actual_length, DATA_TIMEOUT);
 
-		अगर (ret < 0) अणु
-			usb_err(usbaपंचांग, "%s: write BLOCK1 to modem failed (%d)!\n", __func__, ret);
-			जाओ out_मुक्त;
-		पूर्ण
-		usb_dbg(usbaपंचांग, "%s: BLOCK1 uploaded (%zu bytes)\n", __func__, fw1->size);
-	पूर्ण
+		if (ret < 0) {
+			usb_err(usbatm, "%s: write BLOCK1 to modem failed (%d)!\n", __func__, ret);
+			goto out_free;
+		}
+		usb_dbg(usbatm, "%s: BLOCK1 uploaded (%zu bytes)\n", __func__, fw1->size);
+	}
 
 	/* USB led blinking green, ADSL led off */
 
@@ -286,659 +285,659 @@ MODULE_PARM_DESC(ModemOption, "default: 0x10,0x00,0x00,0x00,0x20");
 	ret = usb_bulk_msg(usb_dev, usb_rcvbulkpipe(usb_dev, ENDPOINT_FIRMWARE),
 			   buffer, 0x200, &actual_length, DATA_TIMEOUT);
 
-	अगर (ret < 0) अणु
-		usb_err(usbaपंचांग, "%s: read BLOCK2 from modem failed (%d)!\n", __func__, ret);
-		जाओ out_मुक्त;
-	पूर्ण
-	usb_dbg(usbaपंचांग, "%s: BLOCK2 downloaded (%d bytes)\n", __func__, actual_length);
+	if (ret < 0) {
+		usb_err(usbatm, "%s: read BLOCK2 from modem failed (%d)!\n", __func__, ret);
+		goto out_free;
+	}
+	usb_dbg(usbatm, "%s: BLOCK2 downloaded (%d bytes)\n", __func__, actual_length);
 
 	/* URBs 12 to 139 - USB led blinking green, ADSL led off */
-	क्रम (offset = 0; offset < fw2->size; offset += PAGE_SIZE) अणु
-		पूर्णांक thislen = min_t(पूर्णांक, PAGE_SIZE, fw2->size - offset);
-		स_नकल(buffer, fw2->data + offset, thislen);
+	for (offset = 0; offset < fw2->size; offset += PAGE_SIZE) {
+		int thislen = min_t(int, PAGE_SIZE, fw2->size - offset);
+		memcpy(buffer, fw2->data + offset, thislen);
 
 		ret = usb_bulk_msg(usb_dev, usb_sndbulkpipe(usb_dev, ENDPOINT_FIRMWARE),
 				   buffer, thislen, &actual_length, DATA_TIMEOUT);
 
-		अगर (ret < 0) अणु
-			usb_err(usbaपंचांग, "%s: write BLOCK3 to modem failed (%d)!\n", __func__, ret);
-			जाओ out_मुक्त;
-		पूर्ण
-	पूर्ण
-	usb_dbg(usbaपंचांग, "%s: BLOCK3 uploaded (%zu bytes)\n", __func__, fw2->size);
+		if (ret < 0) {
+			usb_err(usbatm, "%s: write BLOCK3 to modem failed (%d)!\n", __func__, ret);
+			goto out_free;
+		}
+	}
+	usb_dbg(usbatm, "%s: BLOCK3 uploaded (%zu bytes)\n", __func__, fw2->size);
 
-	/* USB led अटल green, ADSL led अटल red */
+	/* USB led static green, ADSL led static red */
 
 	/* URB 142 */
 	ret = usb_bulk_msg(usb_dev, usb_rcvbulkpipe(usb_dev, ENDPOINT_FIRMWARE),
 			   buffer, 0x200, &actual_length, DATA_TIMEOUT);
 
-	अगर (ret < 0) अणु
-		usb_err(usbaपंचांग, "%s: read BLOCK4 from modem failed (%d)!\n", __func__, ret);
-		जाओ out_मुक्त;
-	पूर्ण
+	if (ret < 0) {
+		usb_err(usbatm, "%s: read BLOCK4 from modem failed (%d)!\n", __func__, ret);
+		goto out_free;
+	}
 
 	/* success */
-	usb_dbg(usbaपंचांग, "%s: BLOCK4 downloaded (%d bytes)\n", __func__, actual_length);
+	usb_dbg(usbatm, "%s: BLOCK4 downloaded (%d bytes)\n", __func__, actual_length);
 
-	/* Delay to allow firmware to start up. We can करो this here
-	   because we're in our own kernel thपढ़ो anyway. */
-	msleep_पूर्णांकerruptible(1000);
+	/* Delay to allow firmware to start up. We can do this here
+	   because we're in our own kernel thread anyway. */
+	msleep_interruptible(1000);
 
-	अगर ((ret = usb_set_पूर्णांकerface(usb_dev, INTERFACE_DATA, instance->params.altsetting)) < 0) अणु
-		usb_err(usbaपंचांग, "%s: setting interface to %d failed (%d)!\n", __func__, instance->params.altsetting, ret);
-		जाओ out_मुक्त;
-	पूर्ण
+	if ((ret = usb_set_interface(usb_dev, INTERFACE_DATA, instance->params.altsetting)) < 0) {
+		usb_err(usbatm, "%s: setting interface to %d failed (%d)!\n", __func__, instance->params.altsetting, ret);
+		goto out_free;
+	}
 
-	/* Enable software buffering, अगर requested */
-	अगर (sw_buffering)
+	/* Enable software buffering, if requested */
+	if (sw_buffering)
 		speedtch_set_swbuff(instance, 1);
 
-	/* Magic spell; करोn't ask us what this करोes */
+	/* Magic spell; don't ask us what this does */
 	speedtch_test_sequence(instance);
 
 	ret = 0;
 
-out_मुक्त:
-	मुक्त_page((अचिन्हित दीर्घ)buffer);
+out_free:
+	free_page((unsigned long)buffer);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक speedtch_find_firmware(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-				  पूर्णांक phase, स्थिर काष्ठा firmware **fw_p)
-अणु
-	काष्ठा device *dev = &पूर्णांकf->dev;
-	स्थिर u16 bcdDevice = le16_to_cpu(पूर्णांकerface_to_usbdev(पूर्णांकf)->descriptor.bcdDevice);
-	स्थिर u8 major_revision = bcdDevice >> 8;
-	स्थिर u8 minor_revision = bcdDevice & 0xff;
-	अक्षर buf[24];
+static int speedtch_find_firmware(struct usbatm_data *usbatm, struct usb_interface *intf,
+				  int phase, const struct firmware **fw_p)
+{
+	struct device *dev = &intf->dev;
+	const u16 bcdDevice = le16_to_cpu(interface_to_usbdev(intf)->descriptor.bcdDevice);
+	const u8 major_revision = bcdDevice >> 8;
+	const u8 minor_revision = bcdDevice & 0xff;
+	char buf[24];
 
-	प्र_लिखो(buf, "speedtch-%d.bin.%x.%02x", phase, major_revision, minor_revision);
-	usb_dbg(usbaपंचांग, "%s: looking for %s\n", __func__, buf);
+	sprintf(buf, "speedtch-%d.bin.%x.%02x", phase, major_revision, minor_revision);
+	usb_dbg(usbatm, "%s: looking for %s\n", __func__, buf);
 
-	अगर (request_firmware(fw_p, buf, dev)) अणु
-		प्र_लिखो(buf, "speedtch-%d.bin.%x", phase, major_revision);
-		usb_dbg(usbaपंचांग, "%s: looking for %s\n", __func__, buf);
+	if (request_firmware(fw_p, buf, dev)) {
+		sprintf(buf, "speedtch-%d.bin.%x", phase, major_revision);
+		usb_dbg(usbatm, "%s: looking for %s\n", __func__, buf);
 
-		अगर (request_firmware(fw_p, buf, dev)) अणु
-			प्र_लिखो(buf, "speedtch-%d.bin", phase);
-			usb_dbg(usbaपंचांग, "%s: looking for %s\n", __func__, buf);
+		if (request_firmware(fw_p, buf, dev)) {
+			sprintf(buf, "speedtch-%d.bin", phase);
+			usb_dbg(usbatm, "%s: looking for %s\n", __func__, buf);
 
-			अगर (request_firmware(fw_p, buf, dev)) अणु
-				usb_err(usbaपंचांग, "%s: no stage %d firmware found!\n", __func__, phase);
-				वापस -ENOENT;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (request_firmware(fw_p, buf, dev)) {
+				usb_err(usbatm, "%s: no stage %d firmware found!\n", __func__, phase);
+				return -ENOENT;
+			}
+		}
+	}
 
-	usb_info(usbaपंचांग, "found stage %d firmware %s\n", phase, buf);
+	usb_info(usbatm, "found stage %d firmware %s\n", phase, buf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक speedtch_heavy_init(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	स्थिर काष्ठा firmware *fw1, *fw2;
-	काष्ठा speedtch_instance_data *instance = usbaपंचांग->driver_data;
-	पूर्णांक ret;
+static int speedtch_heavy_init(struct usbatm_data *usbatm, struct usb_interface *intf)
+{
+	const struct firmware *fw1, *fw2;
+	struct speedtch_instance_data *instance = usbatm->driver_data;
+	int ret;
 
-	अगर ((ret = speedtch_find_firmware(usbaपंचांग, पूर्णांकf, 1, &fw1)) < 0)
-		वापस ret;
+	if ((ret = speedtch_find_firmware(usbatm, intf, 1, &fw1)) < 0)
+		return ret;
 
-	अगर ((ret = speedtch_find_firmware(usbaपंचांग, पूर्णांकf, 2, &fw2)) < 0) अणु
+	if ((ret = speedtch_find_firmware(usbatm, intf, 2, &fw2)) < 0) {
 		release_firmware(fw1);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर ((ret = speedtch_upload_firmware(instance, fw1, fw2)) < 0)
-		usb_err(usbaपंचांग, "%s: firmware upload failed (%d)!\n", __func__, ret);
+	if ((ret = speedtch_upload_firmware(instance, fw1, fw2)) < 0)
+		usb_err(usbatm, "%s: firmware upload failed (%d)!\n", __func__, ret);
 
 	release_firmware(fw2);
 	release_firmware(fw1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**********
 **  ATM  **
 **********/
 
-अटल पूर्णांक speedtch_पढ़ो_status(काष्ठा speedtch_instance_data *instance)
-अणु
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	काष्ठा usb_device *usb_dev = usbaपंचांग->usb_dev;
-	अचिन्हित अक्षर *buf = instance->scratch_buffer;
-	पूर्णांक ret;
+static int speedtch_read_status(struct speedtch_instance_data *instance)
+{
+	struct usbatm_data *usbatm = instance->usbatm;
+	struct usb_device *usb_dev = usbatm->usb_dev;
+	unsigned char *buf = instance->scratch_buffer;
+	int ret;
 
-	स_रखो(buf, 0, 16);
+	memset(buf, 0, 16);
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x12, 0xc0, 0x07, 0x00, buf + OFFSET_7, SIZE_7,
 			      CTRL_TIMEOUT);
-	अगर (ret < 0) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: MSG 7 failed\n", __func__);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		atm_dbg(usbatm, "%s: MSG 7 failed\n", __func__);
+		return ret;
+	}
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x12, 0xc0, 0x0b, 0x00, buf + OFFSET_b, SIZE_b,
 			      CTRL_TIMEOUT);
-	अगर (ret < 0) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: MSG B failed\n", __func__);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		atm_dbg(usbatm, "%s: MSG B failed\n", __func__);
+		return ret;
+	}
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x12, 0xc0, 0x0d, 0x00, buf + OFFSET_d, SIZE_d,
 			      CTRL_TIMEOUT);
-	अगर (ret < 0) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: MSG D failed\n", __func__);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		atm_dbg(usbatm, "%s: MSG D failed\n", __func__);
+		return ret;
+	}
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x01, 0xc0, 0x0e, 0x00, buf + OFFSET_e, SIZE_e,
 			      CTRL_TIMEOUT);
-	अगर (ret < 0) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: MSG E failed\n", __func__);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		atm_dbg(usbatm, "%s: MSG E failed\n", __func__);
+		return ret;
+	}
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x01, 0xc0, 0x0f, 0x00, buf + OFFSET_f, SIZE_f,
 			      CTRL_TIMEOUT);
-	अगर (ret < 0) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: MSG F failed\n", __func__);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		atm_dbg(usbatm, "%s: MSG F failed\n", __func__);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक speedtch_start_synchro(काष्ठा speedtch_instance_data *instance)
-अणु
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	काष्ठा usb_device *usb_dev = usbaपंचांग->usb_dev;
-	अचिन्हित अक्षर *buf = instance->scratch_buffer;
-	पूर्णांक ret;
+static int speedtch_start_synchro(struct speedtch_instance_data *instance)
+{
+	struct usbatm_data *usbatm = instance->usbatm;
+	struct usb_device *usb_dev = usbatm->usb_dev;
+	unsigned char *buf = instance->scratch_buffer;
+	int ret;
 
-	aपंचांग_dbg(usbaपंचांग, "%s entered\n", __func__);
+	atm_dbg(usbatm, "%s entered\n", __func__);
 
-	स_रखो(buf, 0, 2);
+	memset(buf, 0, 2);
 
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x12, 0xc0, 0x04, 0x00,
 			      buf, 2, CTRL_TIMEOUT);
 
-	अगर (ret < 0)
-		aपंचांग_warn(usbaपंचांग, "failed to start ADSL synchronisation: %d\n", ret);
-	अन्यथा
-		aपंचांग_dbg(usbaपंचांग, "%s: modem prodded. %d bytes returned: %02x %02x\n",
+	if (ret < 0)
+		atm_warn(usbatm, "failed to start ADSL synchronisation: %d\n", ret);
+	else
+		atm_dbg(usbatm, "%s: modem prodded. %d bytes returned: %02x %02x\n",
 			__func__, ret, buf[0], buf[1]);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम speedtch_check_status(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा speedtch_instance_data *instance =
-		container_of(work, काष्ठा speedtch_instance_data,
+static void speedtch_check_status(struct work_struct *work)
+{
+	struct speedtch_instance_data *instance =
+		container_of(work, struct speedtch_instance_data,
 			     status_check_work);
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	काष्ठा aपंचांग_dev *aपंचांग_dev = usbaपंचांग->aपंचांग_dev;
-	अचिन्हित अक्षर *buf = instance->scratch_buffer;
-	पूर्णांक करोwn_speed, up_speed, ret;
-	अचिन्हित अक्षर status;
+	struct usbatm_data *usbatm = instance->usbatm;
+	struct atm_dev *atm_dev = usbatm->atm_dev;
+	unsigned char *buf = instance->scratch_buffer;
+	int down_speed, up_speed, ret;
+	unsigned char status;
 
-#अगर_घोषित VERBOSE_DEBUG
-	aपंचांग_dbg(usbaपंचांग, "%s entered\n", __func__);
-#पूर्ण_अगर
+#ifdef VERBOSE_DEBUG
+	atm_dbg(usbatm, "%s entered\n", __func__);
+#endif
 
-	ret = speedtch_पढ़ो_status(instance);
-	अगर (ret < 0) अणु
-		aपंचांग_warn(usbaपंचांग, "error %d fetching device status\n", ret);
+	ret = speedtch_read_status(instance);
+	if (ret < 0) {
+		atm_warn(usbatm, "error %d fetching device status\n", ret);
 		instance->poll_delay = min(2 * instance->poll_delay, MAX_POLL_DELAY);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	instance->poll_delay = max(instance->poll_delay / 2, MIN_POLL_DELAY);
 
 	status = buf[OFFSET_7];
 
-	अगर ((status != instance->last_status) || !status) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: line state 0x%02x\n", __func__, status);
+	if ((status != instance->last_status) || !status) {
+		atm_dbg(usbatm, "%s: line state 0x%02x\n", __func__, status);
 
-		चयन (status) अणु
-		हाल 0:
-			aपंचांग_dev_संकेत_change(aपंचांग_dev, ATM_PHY_SIG_LOST);
-			अगर (instance->last_status)
-				aपंचांग_info(usbaपंचांग, "ADSL line is down\n");
+		switch (status) {
+		case 0:
+			atm_dev_signal_change(atm_dev, ATM_PHY_SIG_LOST);
+			if (instance->last_status)
+				atm_info(usbatm, "ADSL line is down\n");
 			/* It may never resync again unless we ask it to... */
 			ret = speedtch_start_synchro(instance);
-			अवरोध;
+			break;
 
-		हाल 0x08:
-			aपंचांग_dev_संकेत_change(aपंचांग_dev, ATM_PHY_SIG_UNKNOWN);
-			aपंचांग_info(usbaपंचांग, "ADSL line is blocked?\n");
-			अवरोध;
+		case 0x08:
+			atm_dev_signal_change(atm_dev, ATM_PHY_SIG_UNKNOWN);
+			atm_info(usbatm, "ADSL line is blocked?\n");
+			break;
 
-		हाल 0x10:
-			aपंचांग_dev_संकेत_change(aपंचांग_dev, ATM_PHY_SIG_LOST);
-			aपंचांग_info(usbaपंचांग, "ADSL line is synchronising\n");
-			अवरोध;
+		case 0x10:
+			atm_dev_signal_change(atm_dev, ATM_PHY_SIG_LOST);
+			atm_info(usbatm, "ADSL line is synchronising\n");
+			break;
 
-		हाल 0x20:
-			करोwn_speed = buf[OFFSET_b] | (buf[OFFSET_b + 1] << 8)
+		case 0x20:
+			down_speed = buf[OFFSET_b] | (buf[OFFSET_b + 1] << 8)
 				| (buf[OFFSET_b + 2] << 16) | (buf[OFFSET_b + 3] << 24);
 			up_speed = buf[OFFSET_b + 4] | (buf[OFFSET_b + 5] << 8)
 				| (buf[OFFSET_b + 6] << 16) | (buf[OFFSET_b + 7] << 24);
 
-			अगर (!(करोwn_speed & 0x0000ffff) && !(up_speed & 0x0000ffff)) अणु
-				करोwn_speed >>= 16;
+			if (!(down_speed & 0x0000ffff) && !(up_speed & 0x0000ffff)) {
+				down_speed >>= 16;
 				up_speed >>= 16;
-			पूर्ण
+			}
 
-			aपंचांग_dev->link_rate = करोwn_speed * 1000 / 424;
-			aपंचांग_dev_संकेत_change(aपंचांग_dev, ATM_PHY_SIG_FOUND);
+			atm_dev->link_rate = down_speed * 1000 / 424;
+			atm_dev_signal_change(atm_dev, ATM_PHY_SIG_FOUND);
 
-			aपंचांग_info(usbaपंचांग,
+			atm_info(usbatm,
 				 "ADSL line is up (%d kb/s down | %d kb/s up)\n",
-				 करोwn_speed, up_speed);
-			अवरोध;
+				 down_speed, up_speed);
+			break;
 
-		शेष:
-			aपंचांग_dev_संकेत_change(aपंचांग_dev, ATM_PHY_SIG_UNKNOWN);
-			aपंचांग_info(usbaपंचांग, "unknown line state %02x\n", status);
-			अवरोध;
-		पूर्ण
+		default:
+			atm_dev_signal_change(atm_dev, ATM_PHY_SIG_UNKNOWN);
+			atm_info(usbatm, "unknown line state %02x\n", status);
+			break;
+		}
 
 		instance->last_status = status;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम speedtch_status_poll(काष्ठा समयr_list *t)
-अणु
-	काष्ठा speedtch_instance_data *instance = from_समयr(instance, t,
-						             status_check_समयr);
+static void speedtch_status_poll(struct timer_list *t)
+{
+	struct speedtch_instance_data *instance = from_timer(instance, t,
+						             status_check_timer);
 
 	schedule_work(&instance->status_check_work);
 
 	/* The following check is racy, but the race is harmless */
-	अगर (instance->poll_delay < MAX_POLL_DELAY)
-		mod_समयr(&instance->status_check_समयr, jअगरfies + msecs_to_jअगरfies(instance->poll_delay));
-	अन्यथा
-		aपंचांग_warn(instance->usbaपंचांग, "Too many failures - disabling line status polling\n");
-पूर्ण
+	if (instance->poll_delay < MAX_POLL_DELAY)
+		mod_timer(&instance->status_check_timer, jiffies + msecs_to_jiffies(instance->poll_delay));
+	else
+		atm_warn(instance->usbatm, "Too many failures - disabling line status polling\n");
+}
 
-अटल व्योम speedtch_resubmit_पूर्णांक(काष्ठा समयr_list *t)
-अणु
-	काष्ठा speedtch_instance_data *instance = from_समयr(instance, t,
-							     resubmit_समयr);
-	काष्ठा urb *पूर्णांक_urb = instance->पूर्णांक_urb;
-	पूर्णांक ret;
+static void speedtch_resubmit_int(struct timer_list *t)
+{
+	struct speedtch_instance_data *instance = from_timer(instance, t,
+							     resubmit_timer);
+	struct urb *int_urb = instance->int_urb;
+	int ret;
 
-	aपंचांग_dbg(instance->usbaपंचांग, "%s entered\n", __func__);
+	atm_dbg(instance->usbatm, "%s entered\n", __func__);
 
-	अगर (पूर्णांक_urb) अणु
-		ret = usb_submit_urb(पूर्णांक_urb, GFP_ATOMIC);
-		अगर (!ret)
+	if (int_urb) {
+		ret = usb_submit_urb(int_urb, GFP_ATOMIC);
+		if (!ret)
 			schedule_work(&instance->status_check_work);
-		अन्यथा अणु
-			aपंचांग_dbg(instance->usbaपंचांग, "%s: usb_submit_urb failed with result %d\n", __func__, ret);
-			mod_समयr(&instance->resubmit_समयr, jअगरfies + msecs_to_jअगरfies(RESUBMIT_DELAY));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		else {
+			atm_dbg(instance->usbatm, "%s: usb_submit_urb failed with result %d\n", __func__, ret);
+			mod_timer(&instance->resubmit_timer, jiffies + msecs_to_jiffies(RESUBMIT_DELAY));
+		}
+	}
+}
 
-अटल व्योम speedtch_handle_पूर्णांक(काष्ठा urb *पूर्णांक_urb)
-अणु
-	काष्ठा speedtch_instance_data *instance = पूर्णांक_urb->context;
-	काष्ठा usbaपंचांग_data *usbaपंचांग = instance->usbaपंचांग;
-	अचिन्हित पूर्णांक count = पूर्णांक_urb->actual_length;
-	पूर्णांक status = पूर्णांक_urb->status;
-	पूर्णांक ret;
+static void speedtch_handle_int(struct urb *int_urb)
+{
+	struct speedtch_instance_data *instance = int_urb->context;
+	struct usbatm_data *usbatm = instance->usbatm;
+	unsigned int count = int_urb->actual_length;
+	int status = int_urb->status;
+	int ret;
 
-	/* The magic पूर्णांकerrupt क्रम "up state" */
-	अटल स्थिर अचिन्हित अक्षर up_पूर्णांक[6]   = अणु 0xa1, 0x00, 0x01, 0x00, 0x00, 0x00 पूर्ण;
-	/* The magic पूर्णांकerrupt क्रम "down state" */
-	अटल स्थिर अचिन्हित अक्षर करोwn_पूर्णांक[6] = अणु 0xa1, 0x00, 0x00, 0x00, 0x00, 0x00 पूर्ण;
+	/* The magic interrupt for "up state" */
+	static const unsigned char up_int[6]   = { 0xa1, 0x00, 0x01, 0x00, 0x00, 0x00 };
+	/* The magic interrupt for "down state" */
+	static const unsigned char down_int[6] = { 0xa1, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	aपंचांग_dbg(usbaपंचांग, "%s entered\n", __func__);
+	atm_dbg(usbatm, "%s entered\n", __func__);
 
-	अगर (status < 0) अणु
-		aपंचांग_dbg(usbaपंचांग, "%s: nonzero urb status %d!\n", __func__, status);
-		जाओ fail;
-	पूर्ण
+	if (status < 0) {
+		atm_dbg(usbatm, "%s: nonzero urb status %d!\n", __func__, status);
+		goto fail;
+	}
 
-	अगर ((count == 6) && !स_भेद(up_पूर्णांक, instance->पूर्णांक_data, 6)) अणु
-		del_समयr(&instance->status_check_समयr);
-		aपंचांग_info(usbaपंचांग, "DSL line goes up\n");
-	पूर्ण अन्यथा अगर ((count == 6) && !स_भेद(करोwn_पूर्णांक, instance->पूर्णांक_data, 6)) अणु
-		aपंचांग_info(usbaपंचांग, "DSL line goes down\n");
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+	if ((count == 6) && !memcmp(up_int, instance->int_data, 6)) {
+		del_timer(&instance->status_check_timer);
+		atm_info(usbatm, "DSL line goes up\n");
+	} else if ((count == 6) && !memcmp(down_int, instance->int_data, 6)) {
+		atm_info(usbatm, "DSL line goes down\n");
+	} else {
+		int i;
 
-		aपंचांग_dbg(usbaपंचांग, "%s: unknown interrupt packet of length %d:", __func__, count);
-		क्रम (i = 0; i < count; i++)
-			prपूर्णांकk(" %02x", instance->पूर्णांक_data[i]);
-		prपूर्णांकk("\n");
-		जाओ fail;
-	पूर्ण
+		atm_dbg(usbatm, "%s: unknown interrupt packet of length %d:", __func__, count);
+		for (i = 0; i < count; i++)
+			printk(" %02x", instance->int_data[i]);
+		printk("\n");
+		goto fail;
+	}
 
-	पूर्णांक_urb = instance->पूर्णांक_urb;
-	अगर (पूर्णांक_urb) अणु
-		ret = usb_submit_urb(पूर्णांक_urb, GFP_ATOMIC);
+	int_urb = instance->int_urb;
+	if (int_urb) {
+		ret = usb_submit_urb(int_urb, GFP_ATOMIC);
 		schedule_work(&instance->status_check_work);
-		अगर (ret < 0) अणु
-			aपंचांग_dbg(usbaपंचांग, "%s: usb_submit_urb failed with result %d\n", __func__, ret);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+		if (ret < 0) {
+			atm_dbg(usbatm, "%s: usb_submit_urb failed with result %d\n", __func__, ret);
+			goto fail;
+		}
+	}
 
-	वापस;
+	return;
 
 fail:
-	पूर्णांक_urb = instance->पूर्णांक_urb;
-	अगर (पूर्णांक_urb)
-		mod_समयr(&instance->resubmit_समयr, jअगरfies + msecs_to_jअगरfies(RESUBMIT_DELAY));
-पूर्ण
+	int_urb = instance->int_urb;
+	if (int_urb)
+		mod_timer(&instance->resubmit_timer, jiffies + msecs_to_jiffies(RESUBMIT_DELAY));
+}
 
-अटल पूर्णांक speedtch_aपंचांग_start(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा aपंचांग_dev *aपंचांग_dev)
-अणु
-	काष्ठा usb_device *usb_dev = usbaपंचांग->usb_dev;
-	काष्ठा speedtch_instance_data *instance = usbaपंचांग->driver_data;
-	पूर्णांक i, ret;
-	अचिन्हित अक्षर mac_str[13];
+static int speedtch_atm_start(struct usbatm_data *usbatm, struct atm_dev *atm_dev)
+{
+	struct usb_device *usb_dev = usbatm->usb_dev;
+	struct speedtch_instance_data *instance = usbatm->driver_data;
+	int i, ret;
+	unsigned char mac_str[13];
 
-	aपंचांग_dbg(usbaपंचांग, "%s entered\n", __func__);
+	atm_dbg(usbatm, "%s entered\n", __func__);
 
 	/* Set MAC address, it is stored in the serial number */
-	स_रखो(aपंचांग_dev->esi, 0, माप(aपंचांग_dev->esi));
-	अगर (usb_string(usb_dev, usb_dev->descriptor.iSerialNumber, mac_str, माप(mac_str)) == 12) अणु
-		क्रम (i = 0; i < 6; i++)
-			aपंचांग_dev->esi[i] = (hex_to_bin(mac_str[i * 2]) << 4) +
+	memset(atm_dev->esi, 0, sizeof(atm_dev->esi));
+	if (usb_string(usb_dev, usb_dev->descriptor.iSerialNumber, mac_str, sizeof(mac_str)) == 12) {
+		for (i = 0; i < 6; i++)
+			atm_dev->esi[i] = (hex_to_bin(mac_str[i * 2]) << 4) +
 				hex_to_bin(mac_str[i * 2 + 1]);
-	पूर्ण
+	}
 
 	/* Start modem synchronisation */
 	ret = speedtch_start_synchro(instance);
 
-	/* Set up पूर्णांकerrupt endpoपूर्णांक */
-	अगर (instance->पूर्णांक_urb) अणु
-		ret = usb_submit_urb(instance->पूर्णांक_urb, GFP_KERNEL);
-		अगर (ret < 0) अणु
+	/* Set up interrupt endpoint */
+	if (instance->int_urb) {
+		ret = usb_submit_urb(instance->int_urb, GFP_KERNEL);
+		if (ret < 0) {
 			/* Doesn't matter; we'll poll anyway */
-			aपंचांग_dbg(usbaपंचांग, "%s: submission of interrupt URB failed (%d)!\n", __func__, ret);
-			usb_मुक्त_urb(instance->पूर्णांक_urb);
-			instance->पूर्णांक_urb = शून्य;
-		पूर्ण
-	पूर्ण
+			atm_dbg(usbatm, "%s: submission of interrupt URB failed (%d)!\n", __func__, ret);
+			usb_free_urb(instance->int_urb);
+			instance->int_urb = NULL;
+		}
+	}
 
 	/* Start status polling */
-	mod_समयr(&instance->status_check_समयr, jअगरfies + msecs_to_jअगरfies(1000));
+	mod_timer(&instance->status_check_timer, jiffies + msecs_to_jiffies(1000));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम speedtch_aपंचांग_stop(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा aपंचांग_dev *aपंचांग_dev)
-अणु
-	काष्ठा speedtch_instance_data *instance = usbaपंचांग->driver_data;
-	काष्ठा urb *पूर्णांक_urb = instance->पूर्णांक_urb;
+static void speedtch_atm_stop(struct usbatm_data *usbatm, struct atm_dev *atm_dev)
+{
+	struct speedtch_instance_data *instance = usbatm->driver_data;
+	struct urb *int_urb = instance->int_urb;
 
-	aपंचांग_dbg(usbaपंचांग, "%s entered\n", __func__);
+	atm_dbg(usbatm, "%s entered\n", __func__);
 
-	del_समयr_sync(&instance->status_check_समयr);
+	del_timer_sync(&instance->status_check_timer);
 
 	/*
-	 * Since resubmit_समयr and पूर्णांक_urb can schedule themselves and
-	 * each other, shutting them करोwn correctly takes some care
+	 * Since resubmit_timer and int_urb can schedule themselves and
+	 * each other, shutting them down correctly takes some care
 	 */
-	instance->पूर्णांक_urb = शून्य; /* संकेत shutकरोwn */
+	instance->int_urb = NULL; /* signal shutdown */
 	mb();
-	usb_समाप्त_urb(पूर्णांक_urb);
-	del_समयr_sync(&instance->resubmit_समयr);
+	usb_kill_urb(int_urb);
+	del_timer_sync(&instance->resubmit_timer);
 	/*
-	 * At this poपूर्णांक, speedtch_handle_पूर्णांक and speedtch_resubmit_पूर्णांक
-	 * can run or be running, but instance->पूर्णांक_urb == शून्य means that
+	 * At this point, speedtch_handle_int and speedtch_resubmit_int
+	 * can run or be running, but instance->int_urb == NULL means that
 	 * they will not reschedule
 	 */
-	usb_समाप्त_urb(पूर्णांक_urb);
-	del_समयr_sync(&instance->resubmit_समयr);
-	usb_मुक्त_urb(पूर्णांक_urb);
+	usb_kill_urb(int_urb);
+	del_timer_sync(&instance->resubmit_timer);
+	usb_free_urb(int_urb);
 
 	flush_work(&instance->status_check_work);
-पूर्ण
+}
 
-अटल पूर्णांक speedtch_pre_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	वापस 0;
-पूर्ण
+static int speedtch_pre_reset(struct usb_interface *intf)
+{
+	return 0;
+}
 
-अटल पूर्णांक speedtch_post_reset(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	वापस 0;
-पूर्ण
+static int speedtch_post_reset(struct usb_interface *intf)
+{
+	return 0;
+}
 
 
 /**********
 **  USB  **
 **********/
 
-अटल स्थिर काष्ठा usb_device_id speedtch_usb_ids[] = अणु
-	अणुUSB_DEVICE(0x06b9, 0x4061)पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id speedtch_usb_ids[] = {
+	{USB_DEVICE(0x06b9, 0x4061)},
+	{}
+};
 
 MODULE_DEVICE_TABLE(usb, speedtch_usb_ids);
 
-अटल पूर्णांक speedtch_usb_probe(काष्ठा usb_पूर्णांकerface *, स्थिर काष्ठा usb_device_id *);
+static int speedtch_usb_probe(struct usb_interface *, const struct usb_device_id *);
 
-अटल काष्ठा usb_driver speedtch_usb_driver = अणु
+static struct usb_driver speedtch_usb_driver = {
 	.name		= speedtch_driver_name,
 	.probe		= speedtch_usb_probe,
-	.disconnect	= usbaपंचांग_usb_disconnect,
+	.disconnect	= usbatm_usb_disconnect,
 	.pre_reset	= speedtch_pre_reset,
 	.post_reset	= speedtch_post_reset,
 	.id_table	= speedtch_usb_ids
-पूर्ण;
+};
 
-अटल व्योम speedtch_release_पूर्णांकerfaces(काष्ठा usb_device *usb_dev,
-					पूर्णांक num_पूर्णांकerfaces)
-अणु
-	काष्ठा usb_पूर्णांकerface *cur_पूर्णांकf;
-	पूर्णांक i;
+static void speedtch_release_interfaces(struct usb_device *usb_dev,
+					int num_interfaces)
+{
+	struct usb_interface *cur_intf;
+	int i;
 
-	क्रम (i = 0; i < num_पूर्णांकerfaces; i++) अणु
-		cur_पूर्णांकf = usb_अगरnum_to_अगर(usb_dev, i);
-		अगर (cur_पूर्णांकf) अणु
-			usb_set_पूर्णांकfdata(cur_पूर्णांकf, शून्य);
-			usb_driver_release_पूर्णांकerface(&speedtch_usb_driver, cur_पूर्णांकf);
-		पूर्ण
-	पूर्ण
-पूर्ण
+	for (i = 0; i < num_interfaces; i++) {
+		cur_intf = usb_ifnum_to_if(usb_dev, i);
+		if (cur_intf) {
+			usb_set_intfdata(cur_intf, NULL);
+			usb_driver_release_interface(&speedtch_usb_driver, cur_intf);
+		}
+	}
+}
 
-अटल पूर्णांक speedtch_bind(काष्ठा usbaपंचांग_data *usbaपंचांग,
-			 काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			 स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_पूर्णांकerface *cur_पूर्णांकf, *data_पूर्णांकf;
-	काष्ठा speedtch_instance_data *instance;
-	पूर्णांक अगरnum = पूर्णांकf->altsetting->desc.bInterfaceNumber;
-	पूर्णांक num_पूर्णांकerfaces = usb_dev->actconfig->desc.bNumInterfaces;
-	पूर्णांक i, ret;
-	पूर्णांक use_isoc;
+static int speedtch_bind(struct usbatm_data *usbatm,
+			 struct usb_interface *intf,
+			 const struct usb_device_id *id)
+{
+	struct usb_device *usb_dev = interface_to_usbdev(intf);
+	struct usb_interface *cur_intf, *data_intf;
+	struct speedtch_instance_data *instance;
+	int ifnum = intf->altsetting->desc.bInterfaceNumber;
+	int num_interfaces = usb_dev->actconfig->desc.bNumInterfaces;
+	int i, ret;
+	int use_isoc;
 
-	usb_dbg(usbaपंचांग, "%s entered\n", __func__);
+	usb_dbg(usbatm, "%s entered\n", __func__);
 
 	/* sanity checks */
 
-	अगर (usb_dev->descriptor.bDeviceClass != USB_CLASS_VENDOR_SPEC) अणु
-		usb_err(usbaपंचांग, "%s: wrong device class %d\n", __func__, usb_dev->descriptor.bDeviceClass);
-		वापस -ENODEV;
-	पूर्ण
+	if (usb_dev->descriptor.bDeviceClass != USB_CLASS_VENDOR_SPEC) {
+		usb_err(usbatm, "%s: wrong device class %d\n", __func__, usb_dev->descriptor.bDeviceClass);
+		return -ENODEV;
+	}
 
-	data_पूर्णांकf = usb_अगरnum_to_अगर(usb_dev, INTERFACE_DATA);
-	अगर (!data_पूर्णांकf) अणु
-		usb_err(usbaपंचांग, "%s: data interface not found!\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+	data_intf = usb_ifnum_to_if(usb_dev, INTERFACE_DATA);
+	if (!data_intf) {
+		usb_err(usbatm, "%s: data interface not found!\n", __func__);
+		return -ENODEV;
+	}
 
-	/* claim all पूर्णांकerfaces */
+	/* claim all interfaces */
 
-	क्रम (i = 0; i < num_पूर्णांकerfaces; i++) अणु
-		cur_पूर्णांकf = usb_अगरnum_to_अगर(usb_dev, i);
+	for (i = 0; i < num_interfaces; i++) {
+		cur_intf = usb_ifnum_to_if(usb_dev, i);
 
-		अगर ((i != अगरnum) && cur_पूर्णांकf) अणु
-			ret = usb_driver_claim_पूर्णांकerface(&speedtch_usb_driver, cur_पूर्णांकf, usbaपंचांग);
+		if ((i != ifnum) && cur_intf) {
+			ret = usb_driver_claim_interface(&speedtch_usb_driver, cur_intf, usbatm);
 
-			अगर (ret < 0) अणु
-				usb_err(usbaपंचांग, "%s: failed to claim interface %2d (%d)!\n", __func__, i, ret);
-				speedtch_release_पूर्णांकerfaces(usb_dev, i);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (ret < 0) {
+				usb_err(usbatm, "%s: failed to claim interface %2d (%d)!\n", __func__, i, ret);
+				speedtch_release_interfaces(usb_dev, i);
+				return ret;
+			}
+		}
+	}
 
-	instance = kzalloc(माप(*instance), GFP_KERNEL);
+	instance = kzalloc(sizeof(*instance), GFP_KERNEL);
 
-	अगर (!instance) अणु
+	if (!instance) {
 		ret = -ENOMEM;
-		जाओ fail_release;
-	पूर्ण
+		goto fail_release;
+	}
 
-	instance->usbaपंचांग = usbaपंचांग;
+	instance->usbatm = usbatm;
 
 	/* module parameters may change at any moment, so take a snapshot */
 	instance->params.altsetting = altsetting;
 	instance->params.BMaxDSL = BMaxDSL;
 	instance->params.ModemMode = ModemMode;
-	स_नकल(instance->params.ModemOption, DEFAULT_MODEM_OPTION, MODEM_OPTION_LENGTH);
-	स_नकल(instance->params.ModemOption, ModemOption, num_ModemOption);
+	memcpy(instance->params.ModemOption, DEFAULT_MODEM_OPTION, MODEM_OPTION_LENGTH);
+	memcpy(instance->params.ModemOption, ModemOption, num_ModemOption);
 	use_isoc = enable_isoc;
 
-	अगर (instance->params.altsetting)
-		अगर ((ret = usb_set_पूर्णांकerface(usb_dev, INTERFACE_DATA, instance->params.altsetting)) < 0) अणु
-			usb_err(usbaपंचांग, "%s: setting interface to %2d failed (%d)!\n", __func__, instance->params.altsetting, ret);
-			instance->params.altsetting = 0; /* fall back to शेष */
-		पूर्ण
+	if (instance->params.altsetting)
+		if ((ret = usb_set_interface(usb_dev, INTERFACE_DATA, instance->params.altsetting)) < 0) {
+			usb_err(usbatm, "%s: setting interface to %2d failed (%d)!\n", __func__, instance->params.altsetting, ret);
+			instance->params.altsetting = 0; /* fall back to default */
+		}
 
-	अगर (!instance->params.altsetting && use_isoc)
-		अगर ((ret = usb_set_पूर्णांकerface(usb_dev, INTERFACE_DATA, DEFAULT_ISOC_ALTSETTING)) < 0) अणु
-			usb_dbg(usbaपंचांग, "%s: setting interface to %2d failed (%d)!\n", __func__, DEFAULT_ISOC_ALTSETTING, ret);
+	if (!instance->params.altsetting && use_isoc)
+		if ((ret = usb_set_interface(usb_dev, INTERFACE_DATA, DEFAULT_ISOC_ALTSETTING)) < 0) {
+			usb_dbg(usbatm, "%s: setting interface to %2d failed (%d)!\n", __func__, DEFAULT_ISOC_ALTSETTING, ret);
 			use_isoc = 0; /* fall back to bulk */
-		पूर्ण
+		}
 
-	अगर (use_isoc) अणु
-		स्थिर काष्ठा usb_host_पूर्णांकerface *desc = data_पूर्णांकf->cur_altsetting;
-		स्थिर __u8 target_address = USB_सूची_IN | usbaपंचांग->driver->isoc_in;
+	if (use_isoc) {
+		const struct usb_host_interface *desc = data_intf->cur_altsetting;
+		const __u8 target_address = USB_DIR_IN | usbatm->driver->isoc_in;
 
-		use_isoc = 0; /* fall back to bulk अगर endpoपूर्णांक not found */
+		use_isoc = 0; /* fall back to bulk if endpoint not found */
 
-		क्रम (i = 0; i < desc->desc.bNumEndpoपूर्णांकs; i++) अणु
-			स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक_desc = &desc->endpoपूर्णांक[i].desc;
+		for (i = 0; i < desc->desc.bNumEndpoints; i++) {
+			const struct usb_endpoint_descriptor *endpoint_desc = &desc->endpoint[i].desc;
 
-			अगर ((endpoपूर्णांक_desc->bEndpoपूर्णांकAddress == target_address)) अणु
+			if ((endpoint_desc->bEndpointAddress == target_address)) {
 				use_isoc =
-					usb_endpoपूर्णांक_xfer_isoc(endpoपूर्णांक_desc);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+					usb_endpoint_xfer_isoc(endpoint_desc);
+				break;
+			}
+		}
 
-		अगर (!use_isoc)
-			usb_info(usbaपंचांग, "isochronous transfer not supported - using bulk\n");
-	पूर्ण
+		if (!use_isoc)
+			usb_info(usbatm, "isochronous transfer not supported - using bulk\n");
+	}
 
-	अगर (!use_isoc && !instance->params.altsetting)
-		अगर ((ret = usb_set_पूर्णांकerface(usb_dev, INTERFACE_DATA, DEFAULT_BULK_ALTSETTING)) < 0) अणु
-			usb_err(usbaपंचांग, "%s: setting interface to %2d failed (%d)!\n", __func__, DEFAULT_BULK_ALTSETTING, ret);
-			जाओ fail_मुक्त;
-		पूर्ण
+	if (!use_isoc && !instance->params.altsetting)
+		if ((ret = usb_set_interface(usb_dev, INTERFACE_DATA, DEFAULT_BULK_ALTSETTING)) < 0) {
+			usb_err(usbatm, "%s: setting interface to %2d failed (%d)!\n", __func__, DEFAULT_BULK_ALTSETTING, ret);
+			goto fail_free;
+		}
 
-	अगर (!instance->params.altsetting)
+	if (!instance->params.altsetting)
 		instance->params.altsetting = use_isoc ? DEFAULT_ISOC_ALTSETTING : DEFAULT_BULK_ALTSETTING;
 
-	usbaपंचांग->flags |= (use_isoc ? UDSL_USE_ISOC : 0);
+	usbatm->flags |= (use_isoc ? UDSL_USE_ISOC : 0);
 
 	INIT_WORK(&instance->status_check_work, speedtch_check_status);
-	समयr_setup(&instance->status_check_समयr, speedtch_status_poll, 0);
+	timer_setup(&instance->status_check_timer, speedtch_status_poll, 0);
 	instance->last_status = 0xff;
 	instance->poll_delay = MIN_POLL_DELAY;
 
-	समयr_setup(&instance->resubmit_समयr, speedtch_resubmit_पूर्णांक, 0);
+	timer_setup(&instance->resubmit_timer, speedtch_resubmit_int, 0);
 
-	instance->पूर्णांक_urb = usb_alloc_urb(0, GFP_KERNEL);
+	instance->int_urb = usb_alloc_urb(0, GFP_KERNEL);
 
-	अगर (instance->पूर्णांक_urb)
-		usb_fill_पूर्णांक_urb(instance->पूर्णांक_urb, usb_dev,
-				 usb_rcvपूर्णांकpipe(usb_dev, ENDPOINT_INT),
-				 instance->पूर्णांक_data, माप(instance->पूर्णांक_data),
-				 speedtch_handle_पूर्णांक, instance, 16);
-	अन्यथा
-		usb_dbg(usbaपंचांग, "%s: no memory for interrupt urb!\n", __func__);
+	if (instance->int_urb)
+		usb_fill_int_urb(instance->int_urb, usb_dev,
+				 usb_rcvintpipe(usb_dev, ENDPOINT_INT),
+				 instance->int_data, sizeof(instance->int_data),
+				 speedtch_handle_int, instance, 16);
+	else
+		usb_dbg(usbatm, "%s: no memory for interrupt urb!\n", __func__);
 
-	/* check whether the modem alपढ़ोy seems to be alive */
+	/* check whether the modem already seems to be alive */
 	ret = usb_control_msg(usb_dev, usb_rcvctrlpipe(usb_dev, 0),
 			      0x12, 0xc0, 0x07, 0x00,
 			      instance->scratch_buffer + OFFSET_7, SIZE_7, 500);
 
-	usbaपंचांग->flags |= (ret == SIZE_7 ? UDSL_SKIP_HEAVY_INIT : 0);
+	usbatm->flags |= (ret == SIZE_7 ? UDSL_SKIP_HEAVY_INIT : 0);
 
-	usb_dbg(usbaपंचांग, "%s: firmware %s loaded\n", __func__, usbaपंचांग->flags & UDSL_SKIP_HEAVY_INIT ? "already" : "not");
+	usb_dbg(usbatm, "%s: firmware %s loaded\n", __func__, usbatm->flags & UDSL_SKIP_HEAVY_INIT ? "already" : "not");
 
-	अगर (!(usbaपंचांग->flags & UDSL_SKIP_HEAVY_INIT))
-		अगर ((ret = usb_reset_device(usb_dev)) < 0) अणु
-			usb_err(usbaपंचांग, "%s: device reset failed (%d)!\n", __func__, ret);
-			जाओ fail_मुक्त;
-		पूर्ण
+	if (!(usbatm->flags & UDSL_SKIP_HEAVY_INIT))
+		if ((ret = usb_reset_device(usb_dev)) < 0) {
+			usb_err(usbatm, "%s: device reset failed (%d)!\n", __func__, ret);
+			goto fail_free;
+		}
 
-        usbaपंचांग->driver_data = instance;
+        usbatm->driver_data = instance;
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त:
-	usb_मुक्त_urb(instance->पूर्णांक_urb);
-	kमुक्त(instance);
+fail_free:
+	usb_free_urb(instance->int_urb);
+	kfree(instance);
 fail_release:
-	speedtch_release_पूर्णांकerfaces(usb_dev, num_पूर्णांकerfaces);
-	वापस ret;
-पूर्ण
+	speedtch_release_interfaces(usb_dev, num_interfaces);
+	return ret;
+}
 
-अटल व्योम speedtch_unbind(काष्ठा usbaपंचांग_data *usbaपंचांग, काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_device *usb_dev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा speedtch_instance_data *instance = usbaपंचांग->driver_data;
+static void speedtch_unbind(struct usbatm_data *usbatm, struct usb_interface *intf)
+{
+	struct usb_device *usb_dev = interface_to_usbdev(intf);
+	struct speedtch_instance_data *instance = usbatm->driver_data;
 
-	usb_dbg(usbaपंचांग, "%s entered\n", __func__);
+	usb_dbg(usbatm, "%s entered\n", __func__);
 
-	speedtch_release_पूर्णांकerfaces(usb_dev, usb_dev->actconfig->desc.bNumInterfaces);
-	usb_मुक्त_urb(instance->पूर्णांक_urb);
-	kमुक्त(instance);
-पूर्ण
+	speedtch_release_interfaces(usb_dev, usb_dev->actconfig->desc.bNumInterfaces);
+	usb_free_urb(instance->int_urb);
+	kfree(instance);
+}
 
 
 /***********
 **  init  **
 ***********/
 
-अटल काष्ठा usbaपंचांग_driver speedtch_usbaपंचांग_driver = अणु
+static struct usbatm_driver speedtch_usbatm_driver = {
 	.driver_name	= speedtch_driver_name,
 	.bind		= speedtch_bind,
 	.heavy_init	= speedtch_heavy_init,
 	.unbind		= speedtch_unbind,
-	.aपंचांग_start	= speedtch_aपंचांग_start,
-	.aपंचांग_stop	= speedtch_aपंचांग_stop,
+	.atm_start	= speedtch_atm_start,
+	.atm_stop	= speedtch_atm_stop,
 	.bulk_in	= ENDPOINT_BULK_DATA,
 	.bulk_out	= ENDPOINT_BULK_DATA,
 	.isoc_in	= ENDPOINT_ISOC_DATA
-पूर्ण;
+};
 
-अटल पूर्णांक speedtch_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस usbaपंचांग_usb_probe(पूर्णांकf, id, &speedtch_usbaपंचांग_driver);
-पूर्ण
+static int speedtch_usb_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	return usbatm_usb_probe(intf, id, &speedtch_usbatm_driver);
+}
 
 module_usb_driver(speedtch_usb_driver);
 

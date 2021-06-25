@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _XT_HELPER_H
-#घोषणा _XT_HELPER_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _XT_HELPER_H
+#define _XT_HELPER_H
 
-काष्ठा xt_helper_info अणु
-	पूर्णांक invert;
-	अक्षर name[30];
-पूर्ण;
-#पूर्ण_अगर /* _XT_HELPER_H */
+struct xt_helper_info {
+	int invert;
+	char name[30];
+};
+#endif /* _XT_HELPER_H */

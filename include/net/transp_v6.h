@@ -1,69 +1,68 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _TRANSP_V6_H
-#घोषणा _TRANSP_V6_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _TRANSP_V6_H
+#define _TRANSP_V6_H
 
-#समावेश <net/checksum.h>
+#include <net/checksum.h>
 
 /* IPv6 transport protocols */
-बाह्य काष्ठा proto rawv6_prot;
-बाह्य काष्ठा proto udpv6_prot;
-बाह्य काष्ठा proto udplitev6_prot;
-बाह्य काष्ठा proto tcpv6_prot;
-बाह्य काष्ठा proto pingv6_prot;
+extern struct proto rawv6_prot;
+extern struct proto udpv6_prot;
+extern struct proto udplitev6_prot;
+extern struct proto tcpv6_prot;
+extern struct proto pingv6_prot;
 
-काष्ठा flowi6;
+struct flowi6;
 
 /* extension headers */
-पूर्णांक ipv6_exthdrs_init(व्योम);
-व्योम ipv6_exthdrs_निकास(व्योम);
-पूर्णांक ipv6_frag_init(व्योम);
-व्योम ipv6_frag_निकास(व्योम);
+int ipv6_exthdrs_init(void);
+void ipv6_exthdrs_exit(void);
+int ipv6_frag_init(void);
+void ipv6_frag_exit(void);
 
 /* transport protocols */
-पूर्णांक pingv6_init(व्योम);
-व्योम pingv6_निकास(व्योम);
-पूर्णांक rawv6_init(व्योम);
-व्योम rawv6_निकास(व्योम);
-पूर्णांक udpv6_init(व्योम);
-व्योम udpv6_निकास(व्योम);
-पूर्णांक udplitev6_init(व्योम);
-व्योम udplitev6_निकास(व्योम);
-पूर्णांक tcpv6_init(व्योम);
-व्योम tcpv6_निकास(व्योम);
+int pingv6_init(void);
+void pingv6_exit(void);
+int rawv6_init(void);
+void rawv6_exit(void);
+int udpv6_init(void);
+void udpv6_exit(void);
+int udplitev6_init(void);
+void udplitev6_exit(void);
+int tcpv6_init(void);
+void tcpv6_exit(void);
 
-पूर्णांक udpv6_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len);
+int udpv6_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
 
-/* this करोes all the common and the specअगरic ctl work */
-व्योम ip6_datagram_recv_ctl(काष्ठा sock *sk, काष्ठा msghdr *msg,
-			   काष्ठा sk_buff *skb);
-व्योम ip6_datagram_recv_common_ctl(काष्ठा sock *sk, काष्ठा msghdr *msg,
-				  काष्ठा sk_buff *skb);
-व्योम ip6_datagram_recv_specअगरic_ctl(काष्ठा sock *sk, काष्ठा msghdr *msg,
-				    काष्ठा sk_buff *skb);
+/* this does all the common and the specific ctl work */
+void ip6_datagram_recv_ctl(struct sock *sk, struct msghdr *msg,
+			   struct sk_buff *skb);
+void ip6_datagram_recv_common_ctl(struct sock *sk, struct msghdr *msg,
+				  struct sk_buff *skb);
+void ip6_datagram_recv_specific_ctl(struct sock *sk, struct msghdr *msg,
+				    struct sk_buff *skb);
 
-पूर्णांक ip6_datagram_send_ctl(काष्ठा net *net, काष्ठा sock *sk, काष्ठा msghdr *msg,
-			  काष्ठा flowi6 *fl6, काष्ठा ipcm6_cookie *ipc6);
+int ip6_datagram_send_ctl(struct net *net, struct sock *sk, struct msghdr *msg,
+			  struct flowi6 *fl6, struct ipcm6_cookie *ipc6);
 
-व्योम __ip6_dgram_sock_seq_show(काष्ठा seq_file *seq, काष्ठा sock *sp,
-			       __u16 srcp, __u16 destp, पूर्णांक rqueue, पूर्णांक bucket);
-अटल अंतरभूत व्योम
-ip6_dgram_sock_seq_show(काष्ठा seq_file *seq, काष्ठा sock *sp, __u16 srcp,
-			__u16 destp, पूर्णांक bucket)
-अणु
+void __ip6_dgram_sock_seq_show(struct seq_file *seq, struct sock *sp,
+			       __u16 srcp, __u16 destp, int rqueue, int bucket);
+static inline void
+ip6_dgram_sock_seq_show(struct seq_file *seq, struct sock *sp, __u16 srcp,
+			__u16 destp, int bucket)
+{
 	__ip6_dgram_sock_seq_show(seq, sp, srcp, destp, sk_rmem_alloc_get(sp),
 				  bucket);
-पूर्ण
+}
 
-#घोषणा LOOPBACK4_IPV6 cpu_to_be32(0x7f000006)
+#define LOOPBACK4_IPV6 cpu_to_be32(0x7f000006)
 
-व्योम inet6_destroy_sock(काष्ठा sock *sk);
+void inet6_destroy_sock(struct sock *sk);
 
-#घोषणा IPV6_SEQ_DGRAM_HEADER					       \
+#define IPV6_SEQ_DGRAM_HEADER					       \
 	"  sl  "						       \
 	"local_address                         "		       \
 	"remote_address                        "		       \
 	"st tx_queue rx_queue tr tm->when retrnsmt"		       \
 	"   uid  timeout inode ref pointer drops\n"
 
-#पूर्ण_अगर
+#endif

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * drivers/input/keyboard/tegra-nvec.c
  *
- * Keyboard class input driver क्रम keyboards connected to an NvEc compliant
+ * Keyboard class input driver for keyboards connected to an NvEc compliant
  * embedded controller
  *
  * Copyright (c) 2009, NVIDIA Corporation.
  */
 
-अटल अचिन्हित लघु code_tab_102us[] = अणु
+static unsigned short code_tab_102us[] = {
 	/* 0x00 */
 	KEY_GRAVE,
 	KEY_ESC,
@@ -147,9 +146,9 @@
 	0,
 	0,
 	KEY_KP9,
-पूर्ण;
+};
 
-अटल अचिन्हित लघु extcode_tab_us102[] = अणु
+static unsigned short extcode_tab_us102[] = {
 	0,
 	0,
 	0,
@@ -290,6 +289,6 @@
 	0,
 	/* VK_LAUNCH_MEDIA_SELECT */
 	0,
-पूर्ण;
+};
 
-अटल अचिन्हित लघु *code_tअसल[] = अणु code_tab_102us, extcode_tab_us102 पूर्ण;
+static unsigned short *code_tabs[] = { code_tab_102us, extcode_tab_us102 };

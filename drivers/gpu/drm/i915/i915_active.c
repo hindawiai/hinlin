@@ -1,20 +1,19 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/debugobjects.h>
+#include <linux/debugobjects.h>
 
-#समावेश "gt/intel_context.h"
-#समावेश "gt/intel_engine_heartbeat.h"
-#समावेश "gt/intel_engine_pm.h"
-#समावेश "gt/intel_ring.h"
+#include "gt/intel_context.h"
+#include "gt/intel_engine_heartbeat.h"
+#include "gt/intel_engine_pm.h"
+#include "gt/intel_ring.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_active.h"
-#समावेश "i915_globals.h"
+#include "i915_drv.h"
+#include "i915_active.h"
+#include "i915_globals.h"
 
 /*
  * Active refs memory management
@@ -23,313 +22,313 @@
  * they idle (when we know the active requests are inactive) and allocate the
  * nodes from a local slab cache to hopefully reduce the fragmentation.
  */
-अटल काष्ठा i915_global_active अणु
-	काष्ठा i915_global base;
-	काष्ठा kmem_cache *slab_cache;
-पूर्ण global;
+static struct i915_global_active {
+	struct i915_global base;
+	struct kmem_cache *slab_cache;
+} global;
 
-काष्ठा active_node अणु
-	काष्ठा rb_node node;
-	काष्ठा i915_active_fence base;
-	काष्ठा i915_active *ref;
-	u64 समयline;
-पूर्ण;
+struct active_node {
+	struct rb_node node;
+	struct i915_active_fence base;
+	struct i915_active *ref;
+	u64 timeline;
+};
 
-#घोषणा fetch_node(x) rb_entry(READ_ONCE(x), typeof(काष्ठा active_node), node)
+#define fetch_node(x) rb_entry(READ_ONCE(x), typeof(struct active_node), node)
 
-अटल अंतरभूत काष्ठा active_node *
-node_from_active(काष्ठा i915_active_fence *active)
-अणु
-	वापस container_of(active, काष्ठा active_node, base);
-पूर्ण
+static inline struct active_node *
+node_from_active(struct i915_active_fence *active)
+{
+	return container_of(active, struct active_node, base);
+}
 
-#घोषणा take_pपुनः_स्मृतिated_barriers(x) llist_del_all(&(x)->pपुनः_स्मृतिated_barriers)
+#define take_preallocated_barriers(x) llist_del_all(&(x)->preallocated_barriers)
 
-अटल अंतरभूत bool is_barrier(स्थिर काष्ठा i915_active_fence *active)
-अणु
-	वापस IS_ERR(rcu_access_poपूर्णांकer(active->fence));
-पूर्ण
+static inline bool is_barrier(const struct i915_active_fence *active)
+{
+	return IS_ERR(rcu_access_pointer(active->fence));
+}
 
-अटल अंतरभूत काष्ठा llist_node *barrier_to_ll(काष्ठा active_node *node)
-अणु
+static inline struct llist_node *barrier_to_ll(struct active_node *node)
+{
 	GEM_BUG_ON(!is_barrier(&node->base));
-	वापस (काष्ठा llist_node *)&node->base.cb.node;
-पूर्ण
+	return (struct llist_node *)&node->base.cb.node;
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_engine_cs *
-__barrier_to_engine(काष्ठा active_node *node)
-अणु
-	वापस (काष्ठा पूर्णांकel_engine_cs *)READ_ONCE(node->base.cb.node.prev);
-पूर्ण
+static inline struct intel_engine_cs *
+__barrier_to_engine(struct active_node *node)
+{
+	return (struct intel_engine_cs *)READ_ONCE(node->base.cb.node.prev);
+}
 
-अटल अंतरभूत काष्ठा पूर्णांकel_engine_cs *
-barrier_to_engine(काष्ठा active_node *node)
-अणु
+static inline struct intel_engine_cs *
+barrier_to_engine(struct active_node *node)
+{
 	GEM_BUG_ON(!is_barrier(&node->base));
-	वापस __barrier_to_engine(node);
-पूर्ण
+	return __barrier_to_engine(node);
+}
 
-अटल अंतरभूत काष्ठा active_node *barrier_from_ll(काष्ठा llist_node *x)
-अणु
-	वापस container_of((काष्ठा list_head *)x,
-			    काष्ठा active_node, base.cb.node);
-पूर्ण
+static inline struct active_node *barrier_from_ll(struct llist_node *x)
+{
+	return container_of((struct list_head *)x,
+			    struct active_node, base.cb.node);
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM) && IS_ENABLED(CONFIG_DEBUG_OBJECTS)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM) && IS_ENABLED(CONFIG_DEBUG_OBJECTS)
 
-अटल व्योम *active_debug_hपूर्णांक(व्योम *addr)
-अणु
-	काष्ठा i915_active *ref = addr;
+static void *active_debug_hint(void *addr)
+{
+	struct i915_active *ref = addr;
 
-	वापस (व्योम *)ref->active ?: (व्योम *)ref->retire ?: (व्योम *)ref;
-पूर्ण
+	return (void *)ref->active ?: (void *)ref->retire ?: (void *)ref;
+}
 
-अटल स्थिर काष्ठा debug_obj_descr active_debug_desc = अणु
+static const struct debug_obj_descr active_debug_desc = {
 	.name = "i915_active",
-	.debug_hपूर्णांक = active_debug_hपूर्णांक,
-पूर्ण;
+	.debug_hint = active_debug_hint,
+};
 
-अटल व्योम debug_active_init(काष्ठा i915_active *ref)
-अणु
+static void debug_active_init(struct i915_active *ref)
+{
 	debug_object_init(ref, &active_debug_desc);
-पूर्ण
+}
 
-अटल व्योम debug_active_activate(काष्ठा i915_active *ref)
-अणु
-	lockdep_निश्चित_held(&ref->tree_lock);
-	अगर (!atomic_पढ़ो(&ref->count)) /* beक्रमe the first inc */
+static void debug_active_activate(struct i915_active *ref)
+{
+	lockdep_assert_held(&ref->tree_lock);
+	if (!atomic_read(&ref->count)) /* before the first inc */
 		debug_object_activate(ref, &active_debug_desc);
-पूर्ण
+}
 
-अटल व्योम debug_active_deactivate(काष्ठा i915_active *ref)
-अणु
-	lockdep_निश्चित_held(&ref->tree_lock);
-	अगर (!atomic_पढ़ो(&ref->count)) /* after the last dec */
+static void debug_active_deactivate(struct i915_active *ref)
+{
+	lockdep_assert_held(&ref->tree_lock);
+	if (!atomic_read(&ref->count)) /* after the last dec */
 		debug_object_deactivate(ref, &active_debug_desc);
-पूर्ण
+}
 
-अटल व्योम debug_active_fini(काष्ठा i915_active *ref)
-अणु
-	debug_object_मुक्त(ref, &active_debug_desc);
-पूर्ण
+static void debug_active_fini(struct i915_active *ref)
+{
+	debug_object_free(ref, &active_debug_desc);
+}
 
-अटल व्योम debug_active_निश्चित(काष्ठा i915_active *ref)
-अणु
-	debug_object_निश्चित_init(ref, &active_debug_desc);
-पूर्ण
+static void debug_active_assert(struct i915_active *ref)
+{
+	debug_object_assert_init(ref, &active_debug_desc);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत व्योम debug_active_init(काष्ठा i915_active *ref) अणु पूर्ण
-अटल अंतरभूत व्योम debug_active_activate(काष्ठा i915_active *ref) अणु पूर्ण
-अटल अंतरभूत व्योम debug_active_deactivate(काष्ठा i915_active *ref) अणु पूर्ण
-अटल अंतरभूत व्योम debug_active_fini(काष्ठा i915_active *ref) अणु पूर्ण
-अटल अंतरभूत व्योम debug_active_निश्चित(काष्ठा i915_active *ref) अणु पूर्ण
+static inline void debug_active_init(struct i915_active *ref) { }
+static inline void debug_active_activate(struct i915_active *ref) { }
+static inline void debug_active_deactivate(struct i915_active *ref) { }
+static inline void debug_active_fini(struct i915_active *ref) { }
+static inline void debug_active_assert(struct i915_active *ref) { }
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम
-__active_retire(काष्ठा i915_active *ref)
-अणु
-	काष्ठा rb_root root = RB_ROOT;
-	काष्ठा active_node *it, *n;
-	अचिन्हित दीर्घ flags;
+static void
+__active_retire(struct i915_active *ref)
+{
+	struct rb_root root = RB_ROOT;
+	struct active_node *it, *n;
+	unsigned long flags;
 
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
-	/* वापस the unused nodes to our slabcache -- flushing the allocator */
-	अगर (!atomic_dec_and_lock_irqsave(&ref->count, &ref->tree_lock, flags))
-		वापस;
+	/* return the unused nodes to our slabcache -- flushing the allocator */
+	if (!atomic_dec_and_lock_irqsave(&ref->count, &ref->tree_lock, flags))
+		return;
 
-	GEM_BUG_ON(rcu_access_poपूर्णांकer(ref->excl.fence));
+	GEM_BUG_ON(rcu_access_pointer(ref->excl.fence));
 	debug_active_deactivate(ref);
 
-	/* Even अगर we have not used the cache, we may still have a barrier */
-	अगर (!ref->cache)
+	/* Even if we have not used the cache, we may still have a barrier */
+	if (!ref->cache)
 		ref->cache = fetch_node(ref->tree.rb_node);
 
-	/* Keep the MRU cached node क्रम reuse */
-	अगर (ref->cache) अणु
+	/* Keep the MRU cached node for reuse */
+	if (ref->cache) {
 		/* Discard all other nodes in the tree */
 		rb_erase(&ref->cache->node, &ref->tree);
 		root = ref->tree;
 
 		/* Rebuild the tree with only the cached node */
-		rb_link_node(&ref->cache->node, शून्य, &ref->tree.rb_node);
+		rb_link_node(&ref->cache->node, NULL, &ref->tree.rb_node);
 		rb_insert_color(&ref->cache->node, &ref->tree);
 		GEM_BUG_ON(ref->tree.rb_node != &ref->cache->node);
 
-		/* Make the cached node available क्रम reuse with any समयline */
-		ref->cache->समयline = 0; /* needs cmpxchg(u64) */
-	पूर्ण
+		/* Make the cached node available for reuse with any timeline */
+		ref->cache->timeline = 0; /* needs cmpxchg(u64) */
+	}
 
 	spin_unlock_irqrestore(&ref->tree_lock, flags);
 
-	/* After the final retire, the entire काष्ठा may be मुक्तd */
-	अगर (ref->retire)
+	/* After the final retire, the entire struct may be freed */
+	if (ref->retire)
 		ref->retire(ref);
 
-	/* ... except अगर you रुको on it, you must manage your own references! */
+	/* ... except if you wait on it, you must manage your own references! */
 	wake_up_var(ref);
 
-	/* Finally मुक्त the discarded समयline tree  */
-	rbtree_postorder_क्रम_each_entry_safe(it, n, &root, node) अणु
+	/* Finally free the discarded timeline tree  */
+	rbtree_postorder_for_each_entry_safe(it, n, &root, node) {
 		GEM_BUG_ON(i915_active_fence_isset(&it->base));
-		kmem_cache_मुक्त(global.slab_cache, it);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(global.slab_cache, it);
+	}
+}
 
-अटल व्योम
-active_work(काष्ठा work_काष्ठा *wrk)
-अणु
-	काष्ठा i915_active *ref = container_of(wrk, typeof(*ref), work);
+static void
+active_work(struct work_struct *wrk)
+{
+	struct i915_active *ref = container_of(wrk, typeof(*ref), work);
 
-	GEM_BUG_ON(!atomic_पढ़ो(&ref->count));
-	अगर (atomic_add_unless(&ref->count, -1, 1))
-		वापस;
-
-	__active_retire(ref);
-पूर्ण
-
-अटल व्योम
-active_retire(काष्ठा i915_active *ref)
-अणु
-	GEM_BUG_ON(!atomic_पढ़ो(&ref->count));
-	अगर (atomic_add_unless(&ref->count, -1, 1))
-		वापस;
-
-	अगर (ref->flags & I915_ACTIVE_RETIRE_SLEEPS) अणु
-		queue_work(प्रणाली_unbound_wq, &ref->work);
-		वापस;
-	पूर्ण
+	GEM_BUG_ON(!atomic_read(&ref->count));
+	if (atomic_add_unless(&ref->count, -1, 1))
+		return;
 
 	__active_retire(ref);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा dma_fence **
-__active_fence_slot(काष्ठा i915_active_fence *active)
-अणु
-	वापस (काष्ठा dma_fence ** __क्रमce)&active->fence;
-पूर्ण
+static void
+active_retire(struct i915_active *ref)
+{
+	GEM_BUG_ON(!atomic_read(&ref->count));
+	if (atomic_add_unless(&ref->count, -1, 1))
+		return;
 
-अटल अंतरभूत bool
-active_fence_cb(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
-अणु
-	काष्ठा i915_active_fence *active =
+	if (ref->flags & I915_ACTIVE_RETIRE_SLEEPS) {
+		queue_work(system_unbound_wq, &ref->work);
+		return;
+	}
+
+	__active_retire(ref);
+}
+
+static inline struct dma_fence **
+__active_fence_slot(struct i915_active_fence *active)
+{
+	return (struct dma_fence ** __force)&active->fence;
+}
+
+static inline bool
+active_fence_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	struct i915_active_fence *active =
 		container_of(cb, typeof(*active), cb);
 
-	वापस cmpxchg(__active_fence_slot(active), fence, शून्य) == fence;
-पूर्ण
+	return cmpxchg(__active_fence_slot(active), fence, NULL) == fence;
+}
 
-अटल व्योम
-node_retire(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
-अणु
-	अगर (active_fence_cb(fence, cb))
-		active_retire(container_of(cb, काष्ठा active_node, base.cb)->ref);
-पूर्ण
+static void
+node_retire(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	if (active_fence_cb(fence, cb))
+		active_retire(container_of(cb, struct active_node, base.cb)->ref);
+}
 
-अटल व्योम
-excl_retire(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
-अणु
-	अगर (active_fence_cb(fence, cb))
-		active_retire(container_of(cb, काष्ठा i915_active, excl.cb));
-पूर्ण
+static void
+excl_retire(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	if (active_fence_cb(fence, cb))
+		active_retire(container_of(cb, struct i915_active, excl.cb));
+}
 
-अटल काष्ठा active_node *__active_lookup(काष्ठा i915_active *ref, u64 idx)
-अणु
-	काष्ठा active_node *it;
+static struct active_node *__active_lookup(struct i915_active *ref, u64 idx)
+{
+	struct active_node *it;
 
-	GEM_BUG_ON(idx == 0); /* 0 is the unordered समयline, rsvd क्रम cache */
+	GEM_BUG_ON(idx == 0); /* 0 is the unordered timeline, rsvd for cache */
 
 	/*
-	 * We track the most recently used समयline to skip a rbtree search
-	 * क्रम the common हाल, under typical loads we never need the rbtree
-	 * at all. We can reuse the last slot अगर it is empty, that is
-	 * after the previous activity has been retired, or अगर it matches the
-	 * current समयline.
+	 * We track the most recently used timeline to skip a rbtree search
+	 * for the common case, under typical loads we never need the rbtree
+	 * at all. We can reuse the last slot if it is empty, that is
+	 * after the previous activity has been retired, or if it matches the
+	 * current timeline.
 	 */
 	it = READ_ONCE(ref->cache);
-	अगर (it) अणु
-		u64 cached = READ_ONCE(it->समयline);
+	if (it) {
+		u64 cached = READ_ONCE(it->timeline);
 
-		/* Once claimed, this slot will only beदीर्घ to this idx */
-		अगर (cached == idx)
-			वापस it;
+		/* Once claimed, this slot will only belong to this idx */
+		if (cached == idx)
+			return it;
 
 		/*
-		 * An unclaimed cache [.समयline=0] can only be claimed once.
+		 * An unclaimed cache [.timeline=0] can only be claimed once.
 		 *
-		 * If the value is alपढ़ोy non-zero, some other thपढ़ो has
-		 * claimed the cache and we know that is करोes not match our
-		 * idx. If, and only अगर, the समयline is currently zero is it
-		 * worth competing to claim it atomically क्रम ourselves (क्रम
-		 * only the winner of that race will cmpxchg वापस the old
+		 * If the value is already non-zero, some other thread has
+		 * claimed the cache and we know that is does not match our
+		 * idx. If, and only if, the timeline is currently zero is it
+		 * worth competing to claim it atomically for ourselves (for
+		 * only the winner of that race will cmpxchg return the old
 		 * value of 0).
 		 */
-		अगर (!cached && !cmpxchg64(&it->समयline, 0, idx))
-			वापस it;
-	पूर्ण
+		if (!cached && !cmpxchg64(&it->timeline, 0, idx))
+			return it;
+	}
 
-	BUILD_BUG_ON(दुरत्व(typeof(*it), node));
+	BUILD_BUG_ON(offsetof(typeof(*it), node));
 
 	/* While active, the tree can only be built; not destroyed */
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
 	it = fetch_node(ref->tree.rb_node);
-	जबतक (it) अणु
-		अगर (it->समयline < idx) अणु
+	while (it) {
+		if (it->timeline < idx) {
 			it = fetch_node(it->node.rb_right);
-		पूर्ण अन्यथा अगर (it->समयline > idx) अणु
+		} else if (it->timeline > idx) {
 			it = fetch_node(it->node.rb_left);
-		पूर्ण अन्यथा अणु
+		} else {
 			WRITE_ONCE(ref->cache, it);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* NB: If the tree rotated beneath us, we may miss our target. */
-	वापस it;
-पूर्ण
+	return it;
+}
 
-अटल काष्ठा i915_active_fence *
-active_instance(काष्ठा i915_active *ref, u64 idx)
-अणु
-	काष्ठा active_node *node;
-	काष्ठा rb_node **p, *parent;
+static struct i915_active_fence *
+active_instance(struct i915_active *ref, u64 idx)
+{
+	struct active_node *node;
+	struct rb_node **p, *parent;
 
 	node = __active_lookup(ref, idx);
-	अगर (likely(node))
-		वापस &node->base;
+	if (likely(node))
+		return &node->base;
 
 	spin_lock_irq(&ref->tree_lock);
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
-	parent = शून्य;
+	parent = NULL;
 	p = &ref->tree.rb_node;
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
 
-		node = rb_entry(parent, काष्ठा active_node, node);
-		अगर (node->समयline == idx)
-			जाओ out;
+		node = rb_entry(parent, struct active_node, node);
+		if (node->timeline == idx)
+			goto out;
 
-		अगर (node->समयline < idx)
+		if (node->timeline < idx)
 			p = &parent->rb_right;
-		अन्यथा
+		else
 			p = &parent->rb_left;
-	पूर्ण
+	}
 
 	/*
-	 * XXX: We should pपुनः_स्मृतिate this beक्रमe i915_active_ref() is ever
-	 *  called, but we cannot call पूर्णांकo fs_reclaim() anyway, so use GFP_ATOMIC.
+	 * XXX: We should preallocate this before i915_active_ref() is ever
+	 *  called, but we cannot call into fs_reclaim() anyway, so use GFP_ATOMIC.
 	 */
 	node = kmem_cache_alloc(global.slab_cache, GFP_ATOMIC);
-	अगर (!node)
-		जाओ out;
+	if (!node)
+		goto out;
 
-	__i915_active_fence_init(&node->base, शून्य, node_retire);
+	__i915_active_fence_init(&node->base, NULL, node_retire);
 	node->ref = ref;
-	node->समयline = idx;
+	node->timeline = idx;
 
 	rb_link_node(&node->node, parent, p);
 	rb_insert_color(&node->node, &ref->tree);
@@ -338,54 +337,54 @@ out:
 	WRITE_ONCE(ref->cache, node);
 	spin_unlock_irq(&ref->tree_lock);
 
-	वापस &node->base;
-पूर्ण
+	return &node->base;
+}
 
-व्योम __i915_active_init(काष्ठा i915_active *ref,
-			पूर्णांक (*active)(काष्ठा i915_active *ref),
-			व्योम (*retire)(काष्ठा i915_active *ref),
-			काष्ठा lock_class_key *mkey,
-			काष्ठा lock_class_key *wkey)
-अणु
-	अचिन्हित दीर्घ bits;
+void __i915_active_init(struct i915_active *ref,
+			int (*active)(struct i915_active *ref),
+			void (*retire)(struct i915_active *ref),
+			struct lock_class_key *mkey,
+			struct lock_class_key *wkey)
+{
+	unsigned long bits;
 
 	debug_active_init(ref);
 
 	ref->flags = 0;
 	ref->active = active;
 	ref->retire = ptr_unpack_bits(retire, &bits, 2);
-	अगर (bits & I915_ACTIVE_MAY_SLEEP)
+	if (bits & I915_ACTIVE_MAY_SLEEP)
 		ref->flags |= I915_ACTIVE_RETIRE_SLEEPS;
 
 	spin_lock_init(&ref->tree_lock);
 	ref->tree = RB_ROOT;
-	ref->cache = शून्य;
+	ref->cache = NULL;
 
-	init_llist_head(&ref->pपुनः_स्मृतिated_barriers);
+	init_llist_head(&ref->preallocated_barriers);
 	atomic_set(&ref->count, 0);
 	__mutex_init(&ref->mutex, "i915_active", mkey);
-	__i915_active_fence_init(&ref->excl, शून्य, excl_retire);
+	__i915_active_fence_init(&ref->excl, NULL, excl_retire);
 	INIT_WORK(&ref->work, active_work);
-#अगर IS_ENABLED(CONFIG_LOCKDEP)
+#if IS_ENABLED(CONFIG_LOCKDEP)
 	lockdep_init_map(&ref->work.lockdep_map, "i915_active.work", wkey, 0);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल bool ____active_del_barrier(काष्ठा i915_active *ref,
-				   काष्ठा active_node *node,
-				   काष्ठा पूर्णांकel_engine_cs *engine)
+static bool ____active_del_barrier(struct i915_active *ref,
+				   struct active_node *node,
+				   struct intel_engine_cs *engine)
 
-अणु
-	काष्ठा llist_node *head = शून्य, *tail = शून्य;
-	काष्ठा llist_node *pos, *next;
+{
+	struct llist_node *head = NULL, *tail = NULL;
+	struct llist_node *pos, *next;
 
-	GEM_BUG_ON(node->समयline != engine->kernel_context->समयline->fence_context);
+	GEM_BUG_ON(node->timeline != engine->kernel_context->timeline->fence_context);
 
 	/*
-	 * Rebuild the llist excluding our node. We may perक्रमm this
-	 * outside of the kernel_context समयline mutex and so someone
-	 * अन्यथा may be manipulating the engine->barrier_tasks, in
-	 * which हाल either we or they will be upset :)
+	 * Rebuild the llist excluding our node. We may perform this
+	 * outside of the kernel_context timeline mutex and so someone
+	 * else may be manipulating the engine->barrier_tasks, in
+	 * which case either we or they will be upset :)
 	 *
 	 * A second __active_del_barrier() will report failure to claim
 	 * the active_node and the caller will just shrug and know not to
@@ -396,812 +395,812 @@ out:
 	 * we are actively using the barrier, we know that there will be
 	 * at least another opportunity when we idle.
 	 */
-	llist_क्रम_each_safe(pos, next, llist_del_all(&engine->barrier_tasks)) अणु
-		अगर (node == barrier_from_ll(pos)) अणु
-			node = शून्य;
-			जारी;
-		पूर्ण
+	llist_for_each_safe(pos, next, llist_del_all(&engine->barrier_tasks)) {
+		if (node == barrier_from_ll(pos)) {
+			node = NULL;
+			continue;
+		}
 
 		pos->next = head;
 		head = pos;
-		अगर (!tail)
+		if (!tail)
 			tail = pos;
-	पूर्ण
-	अगर (head)
+	}
+	if (head)
 		llist_add_batch(head, tail, &engine->barrier_tasks);
 
-	वापस !node;
-पूर्ण
+	return !node;
+}
 
-अटल bool
-__active_del_barrier(काष्ठा i915_active *ref, काष्ठा active_node *node)
-अणु
-	वापस ____active_del_barrier(ref, node, barrier_to_engine(node));
-पूर्ण
+static bool
+__active_del_barrier(struct i915_active *ref, struct active_node *node)
+{
+	return ____active_del_barrier(ref, node, barrier_to_engine(node));
+}
 
-अटल bool
-replace_barrier(काष्ठा i915_active *ref, काष्ठा i915_active_fence *active)
-अणु
-	अगर (!is_barrier(active)) /* proto-node used by our idle barrier? */
-		वापस false;
+static bool
+replace_barrier(struct i915_active *ref, struct i915_active_fence *active)
+{
+	if (!is_barrier(active)) /* proto-node used by our idle barrier? */
+		return false;
 
 	/*
-	 * This request is on the kernel_context समयline, and so
-	 * we can use it to substitute क्रम the pending idle-barrer
+	 * This request is on the kernel_context timeline, and so
+	 * we can use it to substitute for the pending idle-barrer
 	 * request that we want to emit on the kernel_context.
 	 */
 	__active_del_barrier(ref, node_from_active(active));
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक i915_active_ref(काष्ठा i915_active *ref, u64 idx, काष्ठा dma_fence *fence)
-अणु
-	काष्ठा i915_active_fence *active;
-	पूर्णांक err;
+int i915_active_ref(struct i915_active *ref, u64 idx, struct dma_fence *fence)
+{
+	struct i915_active_fence *active;
+	int err;
 
-	/* Prevent reaping in हाल we दो_स्मृति/रुको जबतक building the tree */
+	/* Prevent reaping in case we malloc/wait while building the tree */
 	err = i915_active_acquire(ref);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	active = active_instance(ref, idx);
-	अगर (!active) अणु
+	if (!active) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (replace_barrier(ref, active)) अणु
-		RCU_INIT_POINTER(active->fence, शून्य);
+	if (replace_barrier(ref, active)) {
+		RCU_INIT_POINTER(active->fence, NULL);
 		atomic_dec(&ref->count);
-	पूर्ण
-	अगर (!__i915_active_fence_set(active, fence))
+	}
+	if (!__i915_active_fence_set(active, fence))
 		__i915_active_acquire(ref);
 
 out:
 	i915_active_release(ref);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा dma_fence *
-__i915_active_set_fence(काष्ठा i915_active *ref,
-			काष्ठा i915_active_fence *active,
-			काष्ठा dma_fence *fence)
-अणु
-	काष्ठा dma_fence *prev;
+static struct dma_fence *
+__i915_active_set_fence(struct i915_active *ref,
+			struct i915_active_fence *active,
+			struct dma_fence *fence)
+{
+	struct dma_fence *prev;
 
-	अगर (replace_barrier(ref, active)) अणु
+	if (replace_barrier(ref, active)) {
 		RCU_INIT_POINTER(active->fence, fence);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	prev = __i915_active_fence_set(active, fence);
-	अगर (prev)
+	if (prev)
 		prev = dma_fence_get_rcu(prev);
-	अन्यथा
+	else
 		__i915_active_acquire(ref);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस prev;
-पूर्ण
+	return prev;
+}
 
-अटल काष्ठा i915_active_fence *
-__active_fence(काष्ठा i915_active *ref, u64 idx)
-अणु
-	काष्ठा active_node *it;
+static struct i915_active_fence *
+__active_fence(struct i915_active *ref, u64 idx)
+{
+	struct active_node *it;
 
 	it = __active_lookup(ref, idx);
-	अगर (unlikely(!it)) अणु /* Contention with parallel tree builders! */
+	if (unlikely(!it)) { /* Contention with parallel tree builders! */
 		spin_lock_irq(&ref->tree_lock);
 		it = __active_lookup(ref, idx);
 		spin_unlock_irq(&ref->tree_lock);
-	पूर्ण
-	GEM_BUG_ON(!it); /* slot must be pपुनः_स्मृतिated */
+	}
+	GEM_BUG_ON(!it); /* slot must be preallocated */
 
-	वापस &it->base;
-पूर्ण
+	return &it->base;
+}
 
-काष्ठा dma_fence *
-__i915_active_ref(काष्ठा i915_active *ref, u64 idx, काष्ठा dma_fence *fence)
-अणु
-	/* Only valid जबतक active, see i915_active_acquire_क्रम_context() */
-	वापस __i915_active_set_fence(ref, __active_fence(ref, idx), fence);
-पूर्ण
+struct dma_fence *
+__i915_active_ref(struct i915_active *ref, u64 idx, struct dma_fence *fence)
+{
+	/* Only valid while active, see i915_active_acquire_for_context() */
+	return __i915_active_set_fence(ref, __active_fence(ref, idx), fence);
+}
 
-काष्ठा dma_fence *
-i915_active_set_exclusive(काष्ठा i915_active *ref, काष्ठा dma_fence *f)
-अणु
-	/* We expect the caller to manage the exclusive समयline ordering */
-	वापस __i915_active_set_fence(ref, &ref->excl, f);
-पूर्ण
+struct dma_fence *
+i915_active_set_exclusive(struct i915_active *ref, struct dma_fence *f)
+{
+	/* We expect the caller to manage the exclusive timeline ordering */
+	return __i915_active_set_fence(ref, &ref->excl, f);
+}
 
-bool i915_active_acquire_अगर_busy(काष्ठा i915_active *ref)
-अणु
-	debug_active_निश्चित(ref);
-	वापस atomic_add_unless(&ref->count, 1, 0);
-पूर्ण
+bool i915_active_acquire_if_busy(struct i915_active *ref)
+{
+	debug_active_assert(ref);
+	return atomic_add_unless(&ref->count, 1, 0);
+}
 
-अटल व्योम __i915_active_activate(काष्ठा i915_active *ref)
-अणु
+static void __i915_active_activate(struct i915_active *ref)
+{
 	spin_lock_irq(&ref->tree_lock); /* __active_retire() */
-	अगर (!atomic_fetch_inc(&ref->count))
+	if (!atomic_fetch_inc(&ref->count))
 		debug_active_activate(ref);
 	spin_unlock_irq(&ref->tree_lock);
-पूर्ण
+}
 
-पूर्णांक i915_active_acquire(काष्ठा i915_active *ref)
-अणु
-	पूर्णांक err;
+int i915_active_acquire(struct i915_active *ref)
+{
+	int err;
 
-	अगर (i915_active_acquire_अगर_busy(ref))
-		वापस 0;
+	if (i915_active_acquire_if_busy(ref))
+		return 0;
 
-	अगर (!ref->active) अणु
+	if (!ref->active) {
 		__i915_active_activate(ref);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	err = mutex_lock_पूर्णांकerruptible(&ref->mutex);
-	अगर (err)
-		वापस err;
+	err = mutex_lock_interruptible(&ref->mutex);
+	if (err)
+		return err;
 
-	अगर (likely(!i915_active_acquire_अगर_busy(ref))) अणु
+	if (likely(!i915_active_acquire_if_busy(ref))) {
 		err = ref->active(ref);
-		अगर (!err)
+		if (!err)
 			__i915_active_activate(ref);
-	पूर्ण
+	}
 
 	mutex_unlock(&ref->mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक i915_active_acquire_क्रम_context(काष्ठा i915_active *ref, u64 idx)
-अणु
-	काष्ठा i915_active_fence *active;
-	पूर्णांक err;
+int i915_active_acquire_for_context(struct i915_active *ref, u64 idx)
+{
+	struct i915_active_fence *active;
+	int err;
 
 	err = i915_active_acquire(ref);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	active = active_instance(ref, idx);
-	अगर (!active) अणु
+	if (!active) {
 		i915_active_release(ref);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0; /* वापस with active ref */
-पूर्ण
+	return 0; /* return with active ref */
+}
 
-व्योम i915_active_release(काष्ठा i915_active *ref)
-अणु
-	debug_active_निश्चित(ref);
+void i915_active_release(struct i915_active *ref)
+{
+	debug_active_assert(ref);
 	active_retire(ref);
-पूर्ण
+}
 
-अटल व्योम enable_संकेतing(काष्ठा i915_active_fence *active)
-अणु
-	काष्ठा dma_fence *fence;
+static void enable_signaling(struct i915_active_fence *active)
+{
+	struct dma_fence *fence;
 
-	अगर (unlikely(is_barrier(active)))
-		वापस;
+	if (unlikely(is_barrier(active)))
+		return;
 
 	fence = i915_active_fence_get(active);
-	अगर (!fence)
-		वापस;
+	if (!fence)
+		return;
 
-	dma_fence_enable_sw_संकेतing(fence);
+	dma_fence_enable_sw_signaling(fence);
 	dma_fence_put(fence);
-पूर्ण
+}
 
-अटल पूर्णांक flush_barrier(काष्ठा active_node *it)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
+static int flush_barrier(struct active_node *it)
+{
+	struct intel_engine_cs *engine;
 
-	अगर (likely(!is_barrier(&it->base)))
-		वापस 0;
+	if (likely(!is_barrier(&it->base)))
+		return 0;
 
 	engine = __barrier_to_engine(it);
 	smp_rmb(); /* serialise with add_active_barriers */
-	अगर (!is_barrier(&it->base))
-		वापस 0;
+	if (!is_barrier(&it->base))
+		return 0;
 
-	वापस पूर्णांकel_engine_flush_barriers(engine);
-पूर्ण
+	return intel_engine_flush_barriers(engine);
+}
 
-अटल पूर्णांक flush_lazy_संकेतs(काष्ठा i915_active *ref)
-अणु
-	काष्ठा active_node *it, *n;
-	पूर्णांक err = 0;
+static int flush_lazy_signals(struct i915_active *ref)
+{
+	struct active_node *it, *n;
+	int err = 0;
 
-	enable_संकेतing(&ref->excl);
-	rbtree_postorder_क्रम_each_entry_safe(it, n, &ref->tree, node) अणु
+	enable_signaling(&ref->excl);
+	rbtree_postorder_for_each_entry_safe(it, n, &ref->tree, node) {
 		err = flush_barrier(it); /* unconnected idle barrier? */
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		enable_संकेतing(&it->base);
-	पूर्ण
+		enable_signaling(&it->base);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक __i915_active_रुको(काष्ठा i915_active *ref, पूर्णांक state)
-अणु
+int __i915_active_wait(struct i915_active *ref, int state)
+{
 	might_sleep();
 
-	/* Any fence added after the रुको begins will not be स्वतः-संकेतed */
-	अगर (i915_active_acquire_अगर_busy(ref)) अणु
-		पूर्णांक err;
+	/* Any fence added after the wait begins will not be auto-signaled */
+	if (i915_active_acquire_if_busy(ref)) {
+		int err;
 
-		err = flush_lazy_संकेतs(ref);
+		err = flush_lazy_signals(ref);
 		i915_active_release(ref);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (___रुको_var_event(ref, i915_active_is_idle(ref),
+		if (___wait_var_event(ref, i915_active_is_idle(ref),
 				      state, 0, 0, schedule()))
-			वापस -EINTR;
-	पूर्ण
+			return -EINTR;
+	}
 
 	/*
-	 * After the रुको is complete, the caller may मुक्त the active.
-	 * We have to flush any concurrent retirement beक्रमe वापसing.
+	 * After the wait is complete, the caller may free the active.
+	 * We have to flush any concurrent retirement before returning.
 	 */
 	flush_work(&ref->work);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __aरुको_active(काष्ठा i915_active_fence *active,
-			  पूर्णांक (*fn)(व्योम *arg, काष्ठा dma_fence *fence),
-			  व्योम *arg)
-अणु
-	काष्ठा dma_fence *fence;
+static int __await_active(struct i915_active_fence *active,
+			  int (*fn)(void *arg, struct dma_fence *fence),
+			  void *arg)
+{
+	struct dma_fence *fence;
 
-	अगर (is_barrier(active)) /* XXX flush the barrier? */
-		वापस 0;
+	if (is_barrier(active)) /* XXX flush the barrier? */
+		return 0;
 
 	fence = i915_active_fence_get(active);
-	अगर (fence) अणु
-		पूर्णांक err;
+	if (fence) {
+		int err;
 
 		err = fn(arg, fence);
 		dma_fence_put(fence);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा रुको_barrier अणु
-	काष्ठा रुको_queue_entry base;
-	काष्ठा i915_active *ref;
-पूर्ण;
+struct wait_barrier {
+	struct wait_queue_entry base;
+	struct i915_active *ref;
+};
 
-अटल पूर्णांक
-barrier_wake(रुको_queue_entry_t *wq, अचिन्हित पूर्णांक mode, पूर्णांक flags, व्योम *key)
-अणु
-	काष्ठा रुको_barrier *wb = container_of(wq, typeof(*wb), base);
+static int
+barrier_wake(wait_queue_entry_t *wq, unsigned int mode, int flags, void *key)
+{
+	struct wait_barrier *wb = container_of(wq, typeof(*wb), base);
 
-	अगर (i915_active_is_idle(wb->ref)) अणु
+	if (i915_active_is_idle(wb->ref)) {
 		list_del(&wq->entry);
-		i915_sw_fence_complete(wq->निजी);
-		kमुक्त(wq);
-	पूर्ण
+		i915_sw_fence_complete(wq->private);
+		kfree(wq);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __aरुको_barrier(काष्ठा i915_active *ref, काष्ठा i915_sw_fence *fence)
-अणु
-	काष्ठा रुको_barrier *wb;
+static int __await_barrier(struct i915_active *ref, struct i915_sw_fence *fence)
+{
+	struct wait_barrier *wb;
 
-	wb = kदो_स्मृति(माप(*wb), GFP_KERNEL);
-	अगर (unlikely(!wb))
-		वापस -ENOMEM;
+	wb = kmalloc(sizeof(*wb), GFP_KERNEL);
+	if (unlikely(!wb))
+		return -ENOMEM;
 
 	GEM_BUG_ON(i915_active_is_idle(ref));
-	अगर (!i915_sw_fence_aरुको(fence)) अणु
-		kमुक्त(wb);
-		वापस -EINVAL;
-	पूर्ण
+	if (!i915_sw_fence_await(fence)) {
+		kfree(wb);
+		return -EINVAL;
+	}
 
 	wb->base.flags = 0;
 	wb->base.func = barrier_wake;
-	wb->base.निजी = fence;
+	wb->base.private = fence;
 	wb->ref = ref;
 
-	add_रुको_queue(__var_रुकोqueue(ref), &wb->base);
-	वापस 0;
-पूर्ण
+	add_wait_queue(__var_waitqueue(ref), &wb->base);
+	return 0;
+}
 
-अटल पूर्णांक aरुको_active(काष्ठा i915_active *ref,
-			अचिन्हित पूर्णांक flags,
-			पूर्णांक (*fn)(व्योम *arg, काष्ठा dma_fence *fence),
-			व्योम *arg, काष्ठा i915_sw_fence *barrier)
-अणु
-	पूर्णांक err = 0;
+static int await_active(struct i915_active *ref,
+			unsigned int flags,
+			int (*fn)(void *arg, struct dma_fence *fence),
+			void *arg, struct i915_sw_fence *barrier)
+{
+	int err = 0;
 
-	अगर (!i915_active_acquire_अगर_busy(ref))
-		वापस 0;
+	if (!i915_active_acquire_if_busy(ref))
+		return 0;
 
-	अगर (flags & I915_ACTIVE_AWAIT_EXCL &&
-	    rcu_access_poपूर्णांकer(ref->excl.fence)) अणु
-		err = __aरुको_active(&ref->excl, fn, arg);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+	if (flags & I915_ACTIVE_AWAIT_EXCL &&
+	    rcu_access_pointer(ref->excl.fence)) {
+		err = __await_active(&ref->excl, fn, arg);
+		if (err)
+			goto out;
+	}
 
-	अगर (flags & I915_ACTIVE_AWAIT_ACTIVE) अणु
-		काष्ठा active_node *it, *n;
+	if (flags & I915_ACTIVE_AWAIT_ACTIVE) {
+		struct active_node *it, *n;
 
-		rbtree_postorder_क्रम_each_entry_safe(it, n, &ref->tree, node) अणु
-			err = __aरुको_active(&it->base, fn, arg);
-			अगर (err)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+		rbtree_postorder_for_each_entry_safe(it, n, &ref->tree, node) {
+			err = __await_active(&it->base, fn, arg);
+			if (err)
+				goto out;
+		}
+	}
 
-	अगर (flags & I915_ACTIVE_AWAIT_BARRIER) अणु
-		err = flush_lazy_संकेतs(ref);
-		अगर (err)
-			जाओ out;
+	if (flags & I915_ACTIVE_AWAIT_BARRIER) {
+		err = flush_lazy_signals(ref);
+		if (err)
+			goto out;
 
-		err = __aरुको_barrier(ref, barrier);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		err = __await_barrier(ref, barrier);
+		if (err)
+			goto out;
+	}
 
 out:
 	i915_active_release(ref);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक rq_aरुको_fence(व्योम *arg, काष्ठा dma_fence *fence)
-अणु
-	वापस i915_request_aरुको_dma_fence(arg, fence);
-पूर्ण
+static int rq_await_fence(void *arg, struct dma_fence *fence)
+{
+	return i915_request_await_dma_fence(arg, fence);
+}
 
-पूर्णांक i915_request_aरुको_active(काष्ठा i915_request *rq,
-			      काष्ठा i915_active *ref,
-			      अचिन्हित पूर्णांक flags)
-अणु
-	वापस aरुको_active(ref, flags, rq_aरुको_fence, rq, &rq->submit);
-पूर्ण
+int i915_request_await_active(struct i915_request *rq,
+			      struct i915_active *ref,
+			      unsigned int flags)
+{
+	return await_active(ref, flags, rq_await_fence, rq, &rq->submit);
+}
 
-अटल पूर्णांक sw_aरुको_fence(व्योम *arg, काष्ठा dma_fence *fence)
-अणु
-	वापस i915_sw_fence_aरुको_dma_fence(arg, fence, 0,
+static int sw_await_fence(void *arg, struct dma_fence *fence)
+{
+	return i915_sw_fence_await_dma_fence(arg, fence, 0,
 					     GFP_NOWAIT | __GFP_NOWARN);
-पूर्ण
+}
 
-पूर्णांक i915_sw_fence_aरुको_active(काष्ठा i915_sw_fence *fence,
-			       काष्ठा i915_active *ref,
-			       अचिन्हित पूर्णांक flags)
-अणु
-	वापस aरुको_active(ref, flags, sw_aरुको_fence, fence, fence);
-पूर्ण
+int i915_sw_fence_await_active(struct i915_sw_fence *fence,
+			       struct i915_active *ref,
+			       unsigned int flags)
+{
+	return await_active(ref, flags, sw_await_fence, fence, fence);
+}
 
-व्योम i915_active_fini(काष्ठा i915_active *ref)
-अणु
+void i915_active_fini(struct i915_active *ref)
+{
 	debug_active_fini(ref);
-	GEM_BUG_ON(atomic_पढ़ो(&ref->count));
+	GEM_BUG_ON(atomic_read(&ref->count));
 	GEM_BUG_ON(work_pending(&ref->work));
 	mutex_destroy(&ref->mutex);
 
-	अगर (ref->cache)
-		kmem_cache_मुक्त(global.slab_cache, ref->cache);
-पूर्ण
+	if (ref->cache)
+		kmem_cache_free(global.slab_cache, ref->cache);
+}
 
-अटल अंतरभूत bool is_idle_barrier(काष्ठा active_node *node, u64 idx)
-अणु
-	वापस node->समयline == idx && !i915_active_fence_isset(&node->base);
-पूर्ण
+static inline bool is_idle_barrier(struct active_node *node, u64 idx)
+{
+	return node->timeline == idx && !i915_active_fence_isset(&node->base);
+}
 
-अटल काष्ठा active_node *reuse_idle_barrier(काष्ठा i915_active *ref, u64 idx)
-अणु
-	काष्ठा rb_node *prev, *p;
+static struct active_node *reuse_idle_barrier(struct i915_active *ref, u64 idx)
+{
+	struct rb_node *prev, *p;
 
-	अगर (RB_EMPTY_ROOT(&ref->tree))
-		वापस शून्य;
+	if (RB_EMPTY_ROOT(&ref->tree))
+		return NULL;
 
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
 	/*
-	 * Try to reuse any existing barrier nodes alपढ़ोy allocated क्रम this
+	 * Try to reuse any existing barrier nodes already allocated for this
 	 * i915_active, due to overlapping active phases there is likely a
-	 * node kept alive (as we reuse beक्रमe parking). We prefer to reuse
+	 * node kept alive (as we reuse before parking). We prefer to reuse
 	 * completely idle barriers (less hassle in manipulating the llists),
-	 * but otherwise any will करो.
+	 * but otherwise any will do.
 	 */
-	अगर (ref->cache && is_idle_barrier(ref->cache, idx)) अणु
+	if (ref->cache && is_idle_barrier(ref->cache, idx)) {
 		p = &ref->cache->node;
-		जाओ match;
-	पूर्ण
+		goto match;
+	}
 
-	prev = शून्य;
+	prev = NULL;
 	p = ref->tree.rb_node;
-	जबतक (p) अणु
-		काष्ठा active_node *node =
-			rb_entry(p, काष्ठा active_node, node);
+	while (p) {
+		struct active_node *node =
+			rb_entry(p, struct active_node, node);
 
-		अगर (is_idle_barrier(node, idx))
-			जाओ match;
+		if (is_idle_barrier(node, idx))
+			goto match;
 
 		prev = p;
-		अगर (node->समयline < idx)
+		if (node->timeline < idx)
 			p = READ_ONCE(p->rb_right);
-		अन्यथा
+		else
 			p = READ_ONCE(p->rb_left);
-	पूर्ण
+	}
 
 	/*
-	 * No quick match, but we did find the lefपंचांगost rb_node क्रम the
-	 * kernel_context. Walk the rb_tree in-order to see अगर there were
-	 * any idle-barriers on this समयline that we missed, or just use
+	 * No quick match, but we did find the leftmost rb_node for the
+	 * kernel_context. Walk the rb_tree in-order to see if there were
+	 * any idle-barriers on this timeline that we missed, or just use
 	 * the first pending barrier.
 	 */
-	क्रम (p = prev; p; p = rb_next(p)) अणु
-		काष्ठा active_node *node =
-			rb_entry(p, काष्ठा active_node, node);
-		काष्ठा पूर्णांकel_engine_cs *engine;
+	for (p = prev; p; p = rb_next(p)) {
+		struct active_node *node =
+			rb_entry(p, struct active_node, node);
+		struct intel_engine_cs *engine;
 
-		अगर (node->समयline > idx)
-			अवरोध;
+		if (node->timeline > idx)
+			break;
 
-		अगर (node->समयline < idx)
-			जारी;
+		if (node->timeline < idx)
+			continue;
 
-		अगर (is_idle_barrier(node, idx))
-			जाओ match;
+		if (is_idle_barrier(node, idx))
+			goto match;
 
 		/*
-		 * The list of pending barriers is रक्षित by the
-		 * kernel_context समयline, which notably we करो not hold
+		 * The list of pending barriers is protected by the
+		 * kernel_context timeline, which notably we do not hold
 		 * here. i915_request_add_active_barriers() may consume
-		 * the barrier beक्रमe we claim it, so we have to check
-		 * क्रम success.
+		 * the barrier before we claim it, so we have to check
+		 * for success.
 		 */
 		engine = __barrier_to_engine(node);
 		smp_rmb(); /* serialise with add_active_barriers */
-		अगर (is_barrier(&node->base) &&
+		if (is_barrier(&node->base) &&
 		    ____active_del_barrier(ref, node, engine))
-			जाओ match;
-	पूर्ण
+			goto match;
+	}
 
-	वापस शून्य;
+	return NULL;
 
 match:
 	spin_lock_irq(&ref->tree_lock);
-	rb_erase(p, &ref->tree); /* Hide from रुकोs and sibling allocations */
-	अगर (p == &ref->cache->node)
-		WRITE_ONCE(ref->cache, शून्य);
+	rb_erase(p, &ref->tree); /* Hide from waits and sibling allocations */
+	if (p == &ref->cache->node)
+		WRITE_ONCE(ref->cache, NULL);
 	spin_unlock_irq(&ref->tree_lock);
 
-	वापस rb_entry(p, काष्ठा active_node, node);
-पूर्ण
+	return rb_entry(p, struct active_node, node);
+}
 
-पूर्णांक i915_active_acquire_pपुनः_स्मृतिate_barrier(काष्ठा i915_active *ref,
-					    काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	पूर्णांकel_engine_mask_t पंचांगp, mask = engine->mask;
-	काष्ठा llist_node *first = शून्य, *last = शून्य;
-	काष्ठा पूर्णांकel_gt *gt = engine->gt;
+int i915_active_acquire_preallocate_barrier(struct i915_active *ref,
+					    struct intel_engine_cs *engine)
+{
+	intel_engine_mask_t tmp, mask = engine->mask;
+	struct llist_node *first = NULL, *last = NULL;
+	struct intel_gt *gt = engine->gt;
 
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
-	/* Wait until the previous pपुनः_स्मृतिation is completed */
-	जबतक (!llist_empty(&ref->pपुनः_स्मृतिated_barriers))
+	/* Wait until the previous preallocation is completed */
+	while (!llist_empty(&ref->preallocated_barriers))
 		cond_resched();
 
 	/*
-	 * Pपुनः_स्मृतिate a node क्रम each physical engine supporting the target
-	 * engine (remember भव engines have more than one sibling).
-	 * We can then use the pपुनः_स्मृतिated nodes in
+	 * Preallocate a node for each physical engine supporting the target
+	 * engine (remember virtual engines have more than one sibling).
+	 * We can then use the preallocated nodes in
 	 * i915_active_acquire_barrier()
 	 */
 	GEM_BUG_ON(!mask);
-	क्रम_each_engine_masked(engine, gt, mask, पंचांगp) अणु
-		u64 idx = engine->kernel_context->समयline->fence_context;
-		काष्ठा llist_node *prev = first;
-		काष्ठा active_node *node;
+	for_each_engine_masked(engine, gt, mask, tmp) {
+		u64 idx = engine->kernel_context->timeline->fence_context;
+		struct llist_node *prev = first;
+		struct active_node *node;
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		node = reuse_idle_barrier(ref, idx);
-		rcu_पढ़ो_unlock();
-		अगर (!node) अणु
+		rcu_read_unlock();
+		if (!node) {
 			node = kmem_cache_alloc(global.slab_cache, GFP_KERNEL);
-			अगर (!node)
-				जाओ unwind;
+			if (!node)
+				goto unwind;
 
-			RCU_INIT_POINTER(node->base.fence, शून्य);
+			RCU_INIT_POINTER(node->base.fence, NULL);
 			node->base.cb.func = node_retire;
-			node->समयline = idx;
+			node->timeline = idx;
 			node->ref = ref;
-		पूर्ण
+		}
 
-		अगर (!i915_active_fence_isset(&node->base)) अणु
+		if (!i915_active_fence_isset(&node->base)) {
 			/*
 			 * Mark this as being *our* unconnected proto-node.
 			 *
 			 * Since this node is not in any list, and we have
 			 * decoupled it from the rbtree, we can reuse the
 			 * request to indicate this is an idle-barrier node
-			 * and then we can use the rb_node and list poपूर्णांकers
-			 * क्रम our tracking of the pending barrier.
+			 * and then we can use the rb_node and list pointers
+			 * for our tracking of the pending barrier.
 			 */
 			RCU_INIT_POINTER(node->base.fence, ERR_PTR(-EAGAIN));
-			node->base.cb.node.prev = (व्योम *)engine;
+			node->base.cb.node.prev = (void *)engine;
 			__i915_active_acquire(ref);
-		पूर्ण
-		GEM_BUG_ON(rcu_access_poपूर्णांकer(node->base.fence) != ERR_PTR(-EAGAIN));
+		}
+		GEM_BUG_ON(rcu_access_pointer(node->base.fence) != ERR_PTR(-EAGAIN));
 
 		GEM_BUG_ON(barrier_to_engine(node) != engine);
 		first = barrier_to_ll(node);
 		first->next = prev;
-		अगर (!last)
+		if (!last)
 			last = first;
-		पूर्णांकel_engine_pm_get(engine);
-	पूर्ण
+		intel_engine_pm_get(engine);
+	}
 
-	GEM_BUG_ON(!llist_empty(&ref->pपुनः_स्मृतिated_barriers));
-	llist_add_batch(first, last, &ref->pपुनः_स्मृतिated_barriers);
+	GEM_BUG_ON(!llist_empty(&ref->preallocated_barriers));
+	llist_add_batch(first, last, &ref->preallocated_barriers);
 
-	वापस 0;
+	return 0;
 
 unwind:
-	जबतक (first) अणु
-		काष्ठा active_node *node = barrier_from_ll(first);
+	while (first) {
+		struct active_node *node = barrier_from_ll(first);
 
 		first = first->next;
 
 		atomic_dec(&ref->count);
-		पूर्णांकel_engine_pm_put(barrier_to_engine(node));
+		intel_engine_pm_put(barrier_to_engine(node));
 
-		kmem_cache_मुक्त(global.slab_cache, node);
-	पूर्ण
-	वापस -ENOMEM;
-पूर्ण
+		kmem_cache_free(global.slab_cache, node);
+	}
+	return -ENOMEM;
+}
 
-व्योम i915_active_acquire_barrier(काष्ठा i915_active *ref)
-अणु
-	काष्ठा llist_node *pos, *next;
-	अचिन्हित दीर्घ flags;
+void i915_active_acquire_barrier(struct i915_active *ref)
+{
+	struct llist_node *pos, *next;
+	unsigned long flags;
 
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
 	/*
-	 * Transfer the list of pपुनः_स्मृतिated barriers पूर्णांकo the
+	 * Transfer the list of preallocated barriers into the
 	 * i915_active rbtree, but only as proto-nodes. They will be
-	 * populated by i915_request_add_active_barriers() to poपूर्णांक to the
+	 * populated by i915_request_add_active_barriers() to point to the
 	 * request that will eventually release them.
 	 */
-	llist_क्रम_each_safe(pos, next, take_pपुनः_स्मृतिated_barriers(ref)) अणु
-		काष्ठा active_node *node = barrier_from_ll(pos);
-		काष्ठा पूर्णांकel_engine_cs *engine = barrier_to_engine(node);
-		काष्ठा rb_node **p, *parent;
+	llist_for_each_safe(pos, next, take_preallocated_barriers(ref)) {
+		struct active_node *node = barrier_from_ll(pos);
+		struct intel_engine_cs *engine = barrier_to_engine(node);
+		struct rb_node **p, *parent;
 
 		spin_lock_irqsave_nested(&ref->tree_lock, flags,
 					 SINGLE_DEPTH_NESTING);
-		parent = शून्य;
+		parent = NULL;
 		p = &ref->tree.rb_node;
-		जबतक (*p) अणु
-			काष्ठा active_node *it;
+		while (*p) {
+			struct active_node *it;
 
 			parent = *p;
 
-			it = rb_entry(parent, काष्ठा active_node, node);
-			अगर (it->समयline < node->समयline)
+			it = rb_entry(parent, struct active_node, node);
+			if (it->timeline < node->timeline)
 				p = &parent->rb_right;
-			अन्यथा
+			else
 				p = &parent->rb_left;
-		पूर्ण
+		}
 		rb_link_node(&node->node, parent, p);
 		rb_insert_color(&node->node, &ref->tree);
 		spin_unlock_irqrestore(&ref->tree_lock, flags);
 
-		GEM_BUG_ON(!पूर्णांकel_engine_pm_is_awake(engine));
+		GEM_BUG_ON(!intel_engine_pm_is_awake(engine));
 		llist_add(barrier_to_ll(node), &engine->barrier_tasks);
-		पूर्णांकel_engine_pm_put_delay(engine, 1);
-	पूर्ण
-पूर्ण
+		intel_engine_pm_put_delay(engine, 1);
+	}
+}
 
-अटल काष्ठा dma_fence **ll_to_fence_slot(काष्ठा llist_node *node)
-अणु
-	वापस __active_fence_slot(&barrier_from_ll(node)->base);
-पूर्ण
+static struct dma_fence **ll_to_fence_slot(struct llist_node *node)
+{
+	return __active_fence_slot(&barrier_from_ll(node)->base);
+}
 
-व्योम i915_request_add_active_barriers(काष्ठा i915_request *rq)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = rq->engine;
-	काष्ठा llist_node *node, *next;
-	अचिन्हित दीर्घ flags;
+void i915_request_add_active_barriers(struct i915_request *rq)
+{
+	struct intel_engine_cs *engine = rq->engine;
+	struct llist_node *node, *next;
+	unsigned long flags;
 
-	GEM_BUG_ON(!पूर्णांकel_context_is_barrier(rq->context));
-	GEM_BUG_ON(पूर्णांकel_engine_is_भव(engine));
-	GEM_BUG_ON(i915_request_समयline(rq) != engine->kernel_context->समयline);
+	GEM_BUG_ON(!intel_context_is_barrier(rq->context));
+	GEM_BUG_ON(intel_engine_is_virtual(engine));
+	GEM_BUG_ON(i915_request_timeline(rq) != engine->kernel_context->timeline);
 
 	node = llist_del_all(&engine->barrier_tasks);
-	अगर (!node)
-		वापस;
+	if (!node)
+		return;
 	/*
 	 * Attach the list of proto-fences to the in-flight request such
 	 * that the parent i915_active will be released when this request
 	 * is retired.
 	 */
 	spin_lock_irqsave(&rq->lock, flags);
-	llist_क्रम_each_safe(node, next, node) अणु
+	llist_for_each_safe(node, next, node) {
 		/* serialise with reuse_idle_barrier */
 		smp_store_mb(*ll_to_fence_slot(node), &rq->fence);
-		list_add_tail((काष्ठा list_head *)node, &rq->fence.cb_list);
-	पूर्ण
+		list_add_tail((struct list_head *)node, &rq->fence.cb_list);
+	}
 	spin_unlock_irqrestore(&rq->lock, flags);
-पूर्ण
+}
 
 /*
- * __i915_active_fence_set: Update the last active fence aदीर्घ its समयline
+ * __i915_active_fence_set: Update the last active fence along its timeline
  * @active: the active tracker
- * @fence: the new fence (under स्थिरruction)
+ * @fence: the new fence (under construction)
  *
- * Records the new @fence as the last active fence aदीर्घ its समयline in
+ * Records the new @fence as the last active fence along its timeline in
  * this active tracker, moving the tracking callbacks from the previous
- * fence onto this one. Returns the previous fence (अगर not alपढ़ोy completed),
- * which the caller must ensure is executed beक्रमe the new fence. To ensure
- * that the order of fences within the समयline of the i915_active_fence is
+ * fence onto this one. Returns the previous fence (if not already completed),
+ * which the caller must ensure is executed before the new fence. To ensure
+ * that the order of fences within the timeline of the i915_active_fence is
  * understood, it should be locked by the caller.
  */
-काष्ठा dma_fence *
-__i915_active_fence_set(काष्ठा i915_active_fence *active,
-			काष्ठा dma_fence *fence)
-अणु
-	काष्ठा dma_fence *prev;
-	अचिन्हित दीर्घ flags;
+struct dma_fence *
+__i915_active_fence_set(struct i915_active_fence *active,
+			struct dma_fence *fence)
+{
+	struct dma_fence *prev;
+	unsigned long flags;
 
-	अगर (fence == rcu_access_poपूर्णांकer(active->fence))
-		वापस fence;
+	if (fence == rcu_access_pointer(active->fence))
+		return fence;
 
 	GEM_BUG_ON(test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags));
 
 	/*
-	 * Consider that we have two thपढ़ोs arriving (A and B), with
-	 * C alपढ़ोy resident as the active->fence.
+	 * Consider that we have two threads arriving (A and B), with
+	 * C already resident as the active->fence.
 	 *
-	 * A करोes the xchg first, and so it sees C or शून्य depending
-	 * on the timing of the पूर्णांकerrupt handler. If it is शून्य, the
-	 * previous fence must have been संकेतed and we know that
-	 * we are first on the समयline. If it is still present,
-	 * we acquire the lock on that fence and serialise with the पूर्णांकerrupt
-	 * handler, in the process removing it from any future पूर्णांकerrupt
-	 * callback. A will then रुको on C beक्रमe executing (अगर present).
+	 * A does the xchg first, and so it sees C or NULL depending
+	 * on the timing of the interrupt handler. If it is NULL, the
+	 * previous fence must have been signaled and we know that
+	 * we are first on the timeline. If it is still present,
+	 * we acquire the lock on that fence and serialise with the interrupt
+	 * handler, in the process removing it from any future interrupt
+	 * callback. A will then wait on C before executing (if present).
 	 *
-	 * As B is second, it sees A as the previous fence and so रुकोs क्रम
-	 * it to complete its transition and takes over the occupancy क्रम
-	 * itself -- remembering that it needs to रुको on A beक्रमe executing.
+	 * As B is second, it sees A as the previous fence and so waits for
+	 * it to complete its transition and takes over the occupancy for
+	 * itself -- remembering that it needs to wait on A before executing.
 	 *
-	 * Note the strong ordering of the समयline also provides consistent
-	 * nesting rules क्रम the fence->lock; the inner lock is always the
+	 * Note the strong ordering of the timeline also provides consistent
+	 * nesting rules for the fence->lock; the inner lock is always the
 	 * older lock.
 	 */
 	spin_lock_irqsave(fence->lock, flags);
 	prev = xchg(__active_fence_slot(active), fence);
-	अगर (prev) अणु
+	if (prev) {
 		GEM_BUG_ON(prev == fence);
 		spin_lock_nested(prev->lock, SINGLE_DEPTH_NESTING);
 		__list_del_entry(&active->cb.node);
 		spin_unlock(prev->lock); /* serialise with prev->cb_list */
-	पूर्ण
+	}
 	list_add_tail(&active->cb.node, &fence->cb_list);
 	spin_unlock_irqrestore(fence->lock, flags);
 
-	वापस prev;
-पूर्ण
+	return prev;
+}
 
-पूर्णांक i915_active_fence_set(काष्ठा i915_active_fence *active,
-			  काष्ठा i915_request *rq)
-अणु
-	काष्ठा dma_fence *fence;
-	पूर्णांक err = 0;
+int i915_active_fence_set(struct i915_active_fence *active,
+			  struct i915_request *rq)
+{
+	struct dma_fence *fence;
+	int err = 0;
 
-	/* Must मुख्यtain समयline ordering wrt previous active requests */
-	rcu_पढ़ो_lock();
+	/* Must maintain timeline ordering wrt previous active requests */
+	rcu_read_lock();
 	fence = __i915_active_fence_set(active, &rq->fence);
-	अगर (fence) /* but the previous fence may not beदीर्घ to that समयline! */
+	if (fence) /* but the previous fence may not belong to that timeline! */
 		fence = dma_fence_get_rcu(fence);
-	rcu_पढ़ो_unlock();
-	अगर (fence) अणु
-		err = i915_request_aरुको_dma_fence(rq, fence);
+	rcu_read_unlock();
+	if (fence) {
+		err = i915_request_await_dma_fence(rq, fence);
 		dma_fence_put(fence);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम i915_active_noop(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
-अणु
+void i915_active_noop(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
 	active_fence_cb(fence, cb);
-पूर्ण
+}
 
-काष्ठा स्वतः_active अणु
-	काष्ठा i915_active base;
-	काष्ठा kref ref;
-पूर्ण;
+struct auto_active {
+	struct i915_active base;
+	struct kref ref;
+};
 
-काष्ठा i915_active *i915_active_get(काष्ठा i915_active *ref)
-अणु
-	काष्ठा स्वतः_active *aa = container_of(ref, typeof(*aa), base);
+struct i915_active *i915_active_get(struct i915_active *ref)
+{
+	struct auto_active *aa = container_of(ref, typeof(*aa), base);
 
 	kref_get(&aa->ref);
-	वापस &aa->base;
-पूर्ण
+	return &aa->base;
+}
 
-अटल व्योम स्वतः_release(काष्ठा kref *ref)
-अणु
-	काष्ठा स्वतः_active *aa = container_of(ref, typeof(*aa), ref);
+static void auto_release(struct kref *ref)
+{
+	struct auto_active *aa = container_of(ref, typeof(*aa), ref);
 
 	i915_active_fini(&aa->base);
-	kमुक्त(aa);
-पूर्ण
+	kfree(aa);
+}
 
-व्योम i915_active_put(काष्ठा i915_active *ref)
-अणु
-	काष्ठा स्वतः_active *aa = container_of(ref, typeof(*aa), base);
+void i915_active_put(struct i915_active *ref)
+{
+	struct auto_active *aa = container_of(ref, typeof(*aa), base);
 
-	kref_put(&aa->ref, स्वतः_release);
-पूर्ण
+	kref_put(&aa->ref, auto_release);
+}
 
-अटल पूर्णांक स्वतः_active(काष्ठा i915_active *ref)
-अणु
+static int auto_active(struct i915_active *ref)
+{
 	i915_active_get(ref);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__i915_active_call अटल व्योम
-स्वतः_retire(काष्ठा i915_active *ref)
-अणु
+__i915_active_call static void
+auto_retire(struct i915_active *ref)
+{
 	i915_active_put(ref);
-पूर्ण
+}
 
-काष्ठा i915_active *i915_active_create(व्योम)
-अणु
-	काष्ठा स्वतः_active *aa;
+struct i915_active *i915_active_create(void)
+{
+	struct auto_active *aa;
 
-	aa = kदो_स्मृति(माप(*aa), GFP_KERNEL);
-	अगर (!aa)
-		वापस शून्य;
+	aa = kmalloc(sizeof(*aa), GFP_KERNEL);
+	if (!aa)
+		return NULL;
 
 	kref_init(&aa->ref);
-	i915_active_init(&aa->base, स्वतः_active, स्वतः_retire);
+	i915_active_init(&aa->base, auto_active, auto_retire);
 
-	वापस &aa->base;
-पूर्ण
+	return &aa->base;
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "selftests/i915_active.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "selftests/i915_active.c"
+#endif
 
-अटल व्योम i915_global_active_shrink(व्योम)
-अणु
+static void i915_global_active_shrink(void)
+{
 	kmem_cache_shrink(global.slab_cache);
-पूर्ण
+}
 
-अटल व्योम i915_global_active_निकास(व्योम)
-अणु
+static void i915_global_active_exit(void)
+{
 	kmem_cache_destroy(global.slab_cache);
-पूर्ण
+}
 
-अटल काष्ठा i915_global_active global = अणु अणु
+static struct i915_global_active global = { {
 	.shrink = i915_global_active_shrink,
-	.निकास = i915_global_active_निकास,
-पूर्ण पूर्ण;
+	.exit = i915_global_active_exit,
+} };
 
-पूर्णांक __init i915_global_active_init(व्योम)
-अणु
+int __init i915_global_active_init(void)
+{
 	global.slab_cache = KMEM_CACHE(active_node, SLAB_HWCACHE_ALIGN);
-	अगर (!global.slab_cache)
-		वापस -ENOMEM;
+	if (!global.slab_cache)
+		return -ENOMEM;
 
-	i915_global_रेजिस्टर(&global.base);
-	वापस 0;
-पूर्ण
+	i915_global_register(&global.base);
+	return 0;
+}

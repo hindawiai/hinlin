@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित PERF_CPUFEATURE_H
-#घोषणा PERF_CPUFEATURE_H
+#ifndef PERF_CPUFEATURE_H
+#define PERF_CPUFEATURE_H
 
-/* cpufeature.h ... dummy header file क्रम including arch/x86/lib/स_नकल_64.S */
+/* cpufeature.h ... dummy header file for including arch/x86/lib/memcpy_64.S */
 
-#घोषणा X86_FEATURE_REP_GOOD 0
+#define X86_FEATURE_REP_GOOD 0
 
-#पूर्ण_अगर	/* PERF_CPUFEATURE_H */
+#endif	/* PERF_CPUFEATURE_H */

@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only)
+// SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश "adf_accel_devices.h"
-#समावेश "adf_common_drv.h"
-#समावेश "icp_qat_fw_init_admin.h"
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/iopoll.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include "adf_accel_devices.h"
+#include "adf_common_drv.h"
+#include "icp_qat_fw_init_admin.h"
 
-#घोषणा ADF_ADMIN_MAILBOX_STRIDE 0x1000
-#घोषणा ADF_ADMINMSG_LEN 32
-#घोषणा ADF_CONST_TABLE_SIZE 1024
-#घोषणा ADF_ADMIN_POLL_DELAY_US 20
-#घोषणा ADF_ADMIN_POLL_TIMEOUT_US (5 * USEC_PER_SEC)
+#define ADF_ADMIN_MAILBOX_STRIDE 0x1000
+#define ADF_ADMINMSG_LEN 32
+#define ADF_CONST_TABLE_SIZE 1024
+#define ADF_ADMIN_POLL_DELAY_US 20
+#define ADF_ADMIN_POLL_TIMEOUT_US (5 * USEC_PER_SEC)
 
-अटल स्थिर u8 स्थिर_tab[1024] __aligned(1024) = अणु
+static const u8 const_tab[1024] __aligned(1024) = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -96,162 +95,162 @@
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-काष्ठा adf_admin_comms अणु
+struct adf_admin_comms {
 	dma_addr_t phy_addr;
-	dma_addr_t स्थिर_tbl_addr;
-	व्योम *virt_addr;
-	व्योम *virt_tbl_addr;
-	व्योम __iomem *mailbox_addr;
-	काष्ठा mutex lock;	/* protects adf_admin_comms काष्ठा */
-पूर्ण;
+	dma_addr_t const_tbl_addr;
+	void *virt_addr;
+	void *virt_tbl_addr;
+	void __iomem *mailbox_addr;
+	struct mutex lock;	/* protects adf_admin_comms struct */
+};
 
-अटल पूर्णांक adf_put_admin_msg_sync(काष्ठा adf_accel_dev *accel_dev, u32 ae,
-				  व्योम *in, व्योम *out)
-अणु
-	पूर्णांक ret;
+static int adf_put_admin_msg_sync(struct adf_accel_dev *accel_dev, u32 ae,
+				  void *in, void *out)
+{
+	int ret;
 	u32 status;
-	काष्ठा adf_admin_comms *admin = accel_dev->admin;
-	पूर्णांक offset = ae * ADF_ADMINMSG_LEN * 2;
-	व्योम __iomem *mailbox = admin->mailbox_addr;
-	पूर्णांक mb_offset = ae * ADF_ADMIN_MAILBOX_STRIDE;
-	काष्ठा icp_qat_fw_init_admin_req *request = in;
+	struct adf_admin_comms *admin = accel_dev->admin;
+	int offset = ae * ADF_ADMINMSG_LEN * 2;
+	void __iomem *mailbox = admin->mailbox_addr;
+	int mb_offset = ae * ADF_ADMIN_MAILBOX_STRIDE;
+	struct icp_qat_fw_init_admin_req *request = in;
 
 	mutex_lock(&admin->lock);
 
-	अगर (ADF_CSR_RD(mailbox, mb_offset) == 1) अणु
+	if (ADF_CSR_RD(mailbox, mb_offset) == 1) {
 		mutex_unlock(&admin->lock);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	स_नकल(admin->virt_addr + offset, in, ADF_ADMINMSG_LEN);
+	memcpy(admin->virt_addr + offset, in, ADF_ADMINMSG_LEN);
 	ADF_CSR_WR(mailbox, mb_offset, 1);
 
-	ret = पढ़ो_poll_समयout(ADF_CSR_RD, status, status == 0,
+	ret = read_poll_timeout(ADF_CSR_RD, status, status == 0,
 				ADF_ADMIN_POLL_DELAY_US,
 				ADF_ADMIN_POLL_TIMEOUT_US, true,
 				mailbox, mb_offset);
-	अगर (ret < 0) अणु
-		/* Response समयout */
+	if (ret < 0) {
+		/* Response timeout */
 		dev_err(&GET_DEV(accel_dev),
 			"Failed to send admin msg %d to accelerator %d\n",
 			request->cmd_id, ae);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Response received from admin message, we can now
 		 * make response data available in "out" parameter.
 		 */
-		स_नकल(out, admin->virt_addr + offset +
+		memcpy(out, admin->virt_addr + offset +
 		       ADF_ADMINMSG_LEN, ADF_ADMINMSG_LEN);
-	पूर्ण
+	}
 
 	mutex_unlock(&admin->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक adf_send_admin(काष्ठा adf_accel_dev *accel_dev,
-			  काष्ठा icp_qat_fw_init_admin_req *req,
-			  काष्ठा icp_qat_fw_init_admin_resp *resp,
-			  स्थिर अचिन्हित दीर्घ ae_mask)
-अणु
+static int adf_send_admin(struct adf_accel_dev *accel_dev,
+			  struct icp_qat_fw_init_admin_req *req,
+			  struct icp_qat_fw_init_admin_resp *resp,
+			  const unsigned long ae_mask)
+{
 	u32 ae;
 
-	क्रम_each_set_bit(ae, &ae_mask, ICP_QAT_HW_AE_DELIMITER)
-		अगर (adf_put_admin_msg_sync(accel_dev, ae, req, resp) ||
+	for_each_set_bit(ae, &ae_mask, ICP_QAT_HW_AE_DELIMITER)
+		if (adf_put_admin_msg_sync(accel_dev, ae, req, resp) ||
 		    resp->status)
-			वापस -EFAULT;
+			return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adf_init_ae(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	काष्ठा icp_qat_fw_init_admin_req req;
-	काष्ठा icp_qat_fw_init_admin_resp resp;
-	काष्ठा adf_hw_device_data *hw_device = accel_dev->hw_device;
+static int adf_init_ae(struct adf_accel_dev *accel_dev)
+{
+	struct icp_qat_fw_init_admin_req req;
+	struct icp_qat_fw_init_admin_resp resp;
+	struct adf_hw_device_data *hw_device = accel_dev->hw_device;
 	u32 ae_mask = hw_device->ae_mask;
 
-	स_रखो(&req, 0, माप(req));
-	स_रखो(&resp, 0, माप(resp));
+	memset(&req, 0, sizeof(req));
+	memset(&resp, 0, sizeof(resp));
 	req.cmd_id = ICP_QAT_FW_INIT_AE;
 
-	वापस adf_send_admin(accel_dev, &req, &resp, ae_mask);
-पूर्ण
+	return adf_send_admin(accel_dev, &req, &resp, ae_mask);
+}
 
-अटल पूर्णांक adf_set_fw_स्थिरants(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	काष्ठा icp_qat_fw_init_admin_req req;
-	काष्ठा icp_qat_fw_init_admin_resp resp;
-	काष्ठा adf_hw_device_data *hw_device = accel_dev->hw_device;
+static int adf_set_fw_constants(struct adf_accel_dev *accel_dev)
+{
+	struct icp_qat_fw_init_admin_req req;
+	struct icp_qat_fw_init_admin_resp resp;
+	struct adf_hw_device_data *hw_device = accel_dev->hw_device;
 	u32 ae_mask = hw_device->admin_ae_mask ?: hw_device->ae_mask;
 
-	स_रखो(&req, 0, माप(req));
-	स_रखो(&resp, 0, माप(resp));
+	memset(&req, 0, sizeof(req));
+	memset(&resp, 0, sizeof(resp));
 	req.cmd_id = ICP_QAT_FW_CONSTANTS_CFG;
 
 	req.init_cfg_sz = ADF_CONST_TABLE_SIZE;
-	req.init_cfg_ptr = accel_dev->admin->स्थिर_tbl_addr;
+	req.init_cfg_ptr = accel_dev->admin->const_tbl_addr;
 
-	वापस adf_send_admin(accel_dev, &req, &resp, ae_mask);
-पूर्ण
+	return adf_send_admin(accel_dev, &req, &resp, ae_mask);
+}
 
 /**
  * adf_send_admin_init() - Function sends init message to FW
- * @accel_dev: Poपूर्णांकer to acceleration device.
+ * @accel_dev: Pointer to acceleration device.
  *
  * Function sends admin init message to the FW
  *
  * Return: 0 on success, error code otherwise.
  */
-पूर्णांक adf_send_admin_init(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	पूर्णांक ret;
+int adf_send_admin_init(struct adf_accel_dev *accel_dev)
+{
+	int ret;
 
-	ret = adf_set_fw_स्थिरants(accel_dev);
-	अगर (ret)
-		वापस ret;
+	ret = adf_set_fw_constants(accel_dev);
+	if (ret)
+		return ret;
 
-	वापस adf_init_ae(accel_dev);
-पूर्ण
+	return adf_init_ae(accel_dev);
+}
 EXPORT_SYMBOL_GPL(adf_send_admin_init);
 
-पूर्णांक adf_init_admin_comms(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	काष्ठा adf_admin_comms *admin;
-	काष्ठा adf_hw_device_data *hw_data = accel_dev->hw_device;
-	काष्ठा adf_bar *pmisc =
+int adf_init_admin_comms(struct adf_accel_dev *accel_dev)
+{
+	struct adf_admin_comms *admin;
+	struct adf_hw_device_data *hw_data = accel_dev->hw_device;
+	struct adf_bar *pmisc =
 		&GET_BARS(accel_dev)[hw_data->get_misc_bar_id(hw_data)];
-	व्योम __iomem *csr = pmisc->virt_addr;
-	काष्ठा admin_info admin_csrs_info;
+	void __iomem *csr = pmisc->virt_addr;
+	struct admin_info admin_csrs_info;
 	u32 mailbox_offset, adminmsg_u, adminmsg_l;
-	व्योम __iomem *mailbox;
+	void __iomem *mailbox;
 	u64 reg_val;
 
-	admin = kzalloc_node(माप(*accel_dev->admin), GFP_KERNEL,
+	admin = kzalloc_node(sizeof(*accel_dev->admin), GFP_KERNEL,
 			     dev_to_node(&GET_DEV(accel_dev)));
-	अगर (!admin)
-		वापस -ENOMEM;
+	if (!admin)
+		return -ENOMEM;
 	admin->virt_addr = dma_alloc_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
 					      &admin->phy_addr, GFP_KERNEL);
-	अगर (!admin->virt_addr) अणु
+	if (!admin->virt_addr) {
 		dev_err(&GET_DEV(accel_dev), "Failed to allocate dma buff\n");
-		kमुक्त(admin);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(admin);
+		return -ENOMEM;
+	}
 
 	admin->virt_tbl_addr = dma_alloc_coherent(&GET_DEV(accel_dev),
 						  PAGE_SIZE,
-						  &admin->स्थिर_tbl_addr,
+						  &admin->const_tbl_addr,
 						  GFP_KERNEL);
-	अगर (!admin->virt_tbl_addr) अणु
+	if (!admin->virt_tbl_addr) {
 		dev_err(&GET_DEV(accel_dev), "Failed to allocate const_tbl\n");
-		dma_मुक्त_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
+		dma_free_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
 				  admin->virt_addr, admin->phy_addr);
-		kमुक्त(admin);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(admin);
+		return -ENOMEM;
+	}
 
-	स_नकल(admin->virt_tbl_addr, स्थिर_tab, माप(स्थिर_tab));
+	memcpy(admin->virt_tbl_addr, const_tab, sizeof(const_tab));
 	hw_data->get_admin_info(&admin_csrs_info);
 
 	mailbox_offset = admin_csrs_info.mailbox_offset;
@@ -266,26 +265,26 @@ EXPORT_SYMBOL_GPL(adf_send_admin_init);
 	mutex_init(&admin->lock);
 	admin->mailbox_addr = mailbox;
 	accel_dev->admin = admin;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(adf_init_admin_comms);
 
-व्योम adf_निकास_admin_comms(काष्ठा adf_accel_dev *accel_dev)
-अणु
-	काष्ठा adf_admin_comms *admin = accel_dev->admin;
+void adf_exit_admin_comms(struct adf_accel_dev *accel_dev)
+{
+	struct adf_admin_comms *admin = accel_dev->admin;
 
-	अगर (!admin)
-		वापस;
+	if (!admin)
+		return;
 
-	अगर (admin->virt_addr)
-		dma_मुक्त_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
+	if (admin->virt_addr)
+		dma_free_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
 				  admin->virt_addr, admin->phy_addr);
-	अगर (admin->virt_tbl_addr)
-		dma_मुक्त_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
-				  admin->virt_tbl_addr, admin->स्थिर_tbl_addr);
+	if (admin->virt_tbl_addr)
+		dma_free_coherent(&GET_DEV(accel_dev), PAGE_SIZE,
+				  admin->virt_tbl_addr, admin->const_tbl_addr);
 
 	mutex_destroy(&admin->lock);
-	kमुक्त(admin);
-	accel_dev->admin = शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(adf_निकास_admin_comms);
+	kfree(admin);
+	accel_dev->admin = NULL;
+}
+EXPORT_SYMBOL_GPL(adf_exit_admin_comms);

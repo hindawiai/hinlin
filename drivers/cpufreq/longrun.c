@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * (C) 2002 - 2003  Dominik Broकरोwski <linux@broकरो.de>
+ * (C) 2002 - 2003  Dominik Brodowski <linux@brodo.de>
  *
  *  BIG FAT DISCLAIMER: Work in progress code. Possibly *dangerous*
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/समयx.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/cpufreq.h>
+#include <linux/timex.h>
 
-#समावेश <यंत्र/msr.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/cpu_device_id.h>
+#include <asm/msr.h>
+#include <asm/processor.h>
+#include <asm/cpu_device_id.h>
 
-अटल काष्ठा cpufreq_driver	दीर्घrun_driver;
+static struct cpufreq_driver	longrun_driver;
 
 /**
- * दीर्घrun_अणुlow,highपूर्ण_freq is needed क्रम the conversion of cpufreq kHz
- * values पूर्णांकo per cent values. In TMTA microcode, the following is valid:
- * perक्रमmance_pctg = (current_freq - low_freq)/(high_freq - low_freq)
+ * longrun_{low,high}_freq is needed for the conversion of cpufreq kHz
+ * values into per cent values. In TMTA microcode, the following is valid:
+ * performance_pctg = (current_freq - low_freq)/(high_freq - low_freq)
  */
-अटल अचिन्हित पूर्णांक दीर्घrun_low_freq, दीर्घrun_high_freq;
+static unsigned int longrun_low_freq, longrun_high_freq;
 
 
 /**
- * दीर्घrun_get_policy - get the current LongRun policy
- * @policy: काष्ठा cpufreq_policy where current policy is written पूर्णांकo
+ * longrun_get_policy - get the current LongRun policy
+ * @policy: struct cpufreq_policy where current policy is written into
  *
  * Reads the current LongRun policy by access to MSR_TMTA_LONGRUN_FLAGS
  * and MSR_TMTA_LONGRUN_CTRL
  */
-अटल व्योम दीर्घrun_get_policy(काष्ठा cpufreq_policy *policy)
-अणु
+static void longrun_get_policy(struct cpufreq_policy *policy)
+{
 	u32 msr_lo, msr_hi;
 
 	rdmsr(MSR_TMTA_LONGRUN_FLAGS, msr_lo, msr_hi);
 	pr_debug("longrun flags are %x - %x\n", msr_lo, msr_hi);
-	अगर (msr_lo & 0x01)
+	if (msr_lo & 0x01)
 		policy->policy = CPUFREQ_POLICY_PERFORMANCE;
-	अन्यथा
+	else
 		policy->policy = CPUFREQ_POLICY_POWERSAVE;
 
 	rdmsr(MSR_TMTA_LONGRUN_CTRL, msr_lo, msr_hi);
@@ -49,59 +48,59 @@
 	msr_lo &= 0x0000007F;
 	msr_hi &= 0x0000007F;
 
-	अगर (दीर्घrun_high_freq <= दीर्घrun_low_freq) अणु
+	if (longrun_high_freq <= longrun_low_freq) {
 		/* Assume degenerate Longrun table */
-		policy->min = policy->max = दीर्घrun_high_freq;
-	पूर्ण अन्यथा अणु
-		policy->min = दीर्घrun_low_freq + msr_lo *
-			((दीर्घrun_high_freq - दीर्घrun_low_freq) / 100);
-		policy->max = दीर्घrun_low_freq + msr_hi *
-			((दीर्घrun_high_freq - दीर्घrun_low_freq) / 100);
-	पूर्ण
+		policy->min = policy->max = longrun_high_freq;
+	} else {
+		policy->min = longrun_low_freq + msr_lo *
+			((longrun_high_freq - longrun_low_freq) / 100);
+		policy->max = longrun_low_freq + msr_hi *
+			((longrun_high_freq - longrun_low_freq) / 100);
+	}
 	policy->cpu = 0;
-पूर्ण
+}
 
 
 /**
- * दीर्घrun_set_policy - sets a new CPUFreq policy
+ * longrun_set_policy - sets a new CPUFreq policy
  * @policy: new policy
  *
  * Sets a new CPUFreq policy on LongRun-capable processors. This function
  * has to be called with cpufreq_driver locked.
  */
-अटल पूर्णांक दीर्घrun_set_policy(काष्ठा cpufreq_policy *policy)
-अणु
+static int longrun_set_policy(struct cpufreq_policy *policy)
+{
 	u32 msr_lo, msr_hi;
 	u32 pctg_lo, pctg_hi;
 
-	अगर (!policy)
-		वापस -EINVAL;
+	if (!policy)
+		return -EINVAL;
 
-	अगर (दीर्घrun_high_freq <= दीर्घrun_low_freq) अणु
+	if (longrun_high_freq <= longrun_low_freq) {
 		/* Assume degenerate Longrun table */
 		pctg_lo = pctg_hi = 100;
-	पूर्ण अन्यथा अणु
-		pctg_lo = (policy->min - दीर्घrun_low_freq) /
-			((दीर्घrun_high_freq - दीर्घrun_low_freq) / 100);
-		pctg_hi = (policy->max - दीर्घrun_low_freq) /
-			((दीर्घrun_high_freq - दीर्घrun_low_freq) / 100);
-	पूर्ण
+	} else {
+		pctg_lo = (policy->min - longrun_low_freq) /
+			((longrun_high_freq - longrun_low_freq) / 100);
+		pctg_hi = (policy->max - longrun_low_freq) /
+			((longrun_high_freq - longrun_low_freq) / 100);
+	}
 
-	अगर (pctg_hi > 100)
+	if (pctg_hi > 100)
 		pctg_hi = 100;
-	अगर (pctg_lo > pctg_hi)
+	if (pctg_lo > pctg_hi)
 		pctg_lo = pctg_hi;
 
-	/* perक्रमmance or economy mode */
+	/* performance or economy mode */
 	rdmsr(MSR_TMTA_LONGRUN_FLAGS, msr_lo, msr_hi);
 	msr_lo &= 0xFFFFFFFE;
-	चयन (policy->policy) अणु
-	हाल CPUFREQ_POLICY_PERFORMANCE:
+	switch (policy->policy) {
+	case CPUFREQ_POLICY_PERFORMANCE:
 		msr_lo |= 0x00000001;
-		अवरोध;
-	हाल CPUFREQ_POLICY_POWERSAVE:
-		अवरोध;
-	पूर्ण
+		break;
+	case CPUFREQ_POLICY_POWERSAVE:
+		break;
+	}
 	wrmsr(MSR_TMTA_LONGRUN_FLAGS, msr_lo, msr_hi);
 
 	/* lower and upper boundary */
@@ -112,70 +111,70 @@
 	msr_hi |= pctg_hi;
 	wrmsr(MSR_TMTA_LONGRUN_CTRL, msr_lo, msr_hi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
- * दीर्घrun_verअगरy_poliy - verअगरies a new CPUFreq policy
- * @policy: the policy to verअगरy
+ * longrun_verify_poliy - verifies a new CPUFreq policy
+ * @policy: the policy to verify
  *
  * Validates a new CPUFreq policy. This function has to be called with
  * cpufreq_driver locked.
  */
-अटल पूर्णांक दीर्घrun_verअगरy_policy(काष्ठा cpufreq_policy_data *policy)
-अणु
-	अगर (!policy)
-		वापस -EINVAL;
+static int longrun_verify_policy(struct cpufreq_policy_data *policy)
+{
+	if (!policy)
+		return -EINVAL;
 
 	policy->cpu = 0;
-	cpufreq_verअगरy_within_cpu_limits(policy);
+	cpufreq_verify_within_cpu_limits(policy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक दीर्घrun_get(अचिन्हित पूर्णांक cpu)
-अणु
+static unsigned int longrun_get(unsigned int cpu)
+{
 	u32 eax, ebx, ecx, edx;
 
-	अगर (cpu)
-		वापस 0;
+	if (cpu)
+		return 0;
 
 	cpuid(0x80860007, &eax, &ebx, &ecx, &edx);
 	pr_debug("cpuid eax is %u\n", eax);
 
-	वापस eax * 1000;
-पूर्ण
+	return eax * 1000;
+}
 
 /**
- * दीर्घrun_determine_freqs - determines the lowest and highest possible core frequency
- * @low_freq: an पूर्णांक to put the lowest frequency पूर्णांकo
- * @high_freq: an पूर्णांक to put the highest frequency पूर्णांकo
+ * longrun_determine_freqs - determines the lowest and highest possible core frequency
+ * @low_freq: an int to put the lowest frequency into
+ * @high_freq: an int to put the highest frequency into
  *
  * Determines the lowest and highest possible core frequencies on this CPU.
- * This is necessary to calculate the perक्रमmance percentage according to
+ * This is necessary to calculate the performance percentage according to
  * TMTA rules:
- * perक्रमmance_pctg = (target_freq - low_freq)/(high_freq - low_freq)
+ * performance_pctg = (target_freq - low_freq)/(high_freq - low_freq)
  */
-अटल पूर्णांक दीर्घrun_determine_freqs(अचिन्हित पूर्णांक *low_freq,
-						      अचिन्हित पूर्णांक *high_freq)
-अणु
+static int longrun_determine_freqs(unsigned int *low_freq,
+						      unsigned int *high_freq)
+{
 	u32 msr_lo, msr_hi;
 	u32 save_lo, save_hi;
 	u32 eax, ebx, ecx, edx;
 	u32 try_hi;
-	काष्ठा cpuinfo_x86 *c = &cpu_data(0);
+	struct cpuinfo_x86 *c = &cpu_data(0);
 
-	अगर (!low_freq || !high_freq)
-		वापस -EINVAL;
+	if (!low_freq || !high_freq)
+		return -EINVAL;
 
-	अगर (cpu_has(c, X86_FEATURE_LRTI)) अणु
-		/* अगर the LongRun Table Interface is present, the
+	if (cpu_has(c, X86_FEATURE_LRTI)) {
+		/* if the LongRun Table Interface is present, the
 		 * detection is a bit easier:
-		 * For minimum frequency, पढ़ो out the maximum
-		 * level (msr_hi), ग_लिखो that पूर्णांकo "currently
-		 * selected level", and पढ़ो out the frequency.
-		 * For maximum frequency, पढ़ो out level zero.
+		 * For minimum frequency, read out the maximum
+		 * level (msr_hi), write that into "currently
+		 * selected level", and read out the frequency.
+		 * For maximum frequency, read out level zero.
 		 */
 		/* minimum */
 		rdmsr(MSR_TMTA_LRTI_READOUT, msr_lo, msr_hi);
@@ -191,10 +190,10 @@
 		pr_debug("longrun table interface told %u - %u kHz\n",
 				*low_freq, *high_freq);
 
-		अगर (*low_freq > *high_freq)
+		if (*low_freq > *high_freq)
 			*low_freq = *high_freq;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* set the upper border to the value determined during TSC init */
 	*high_freq = (cpu_khz / 1000);
@@ -206,107 +205,107 @@
 	save_lo = msr_lo & 0x0000007F;
 	save_hi = msr_hi & 0x0000007F;
 
-	/* अगर current perf_pctg is larger than 90%, we need to decrease the
+	/* if current perf_pctg is larger than 90%, we need to decrease the
 	 * upper limit to make the calculation more accurate.
 	 */
 	cpuid(0x80860007, &eax, &ebx, &ecx, &edx);
 	/* try decreasing in 10% steps, some processors react only
 	 * on some barrier values */
-	क्रम (try_hi = 80; try_hi > 0 && ecx > 90; try_hi -= 10) अणु
+	for (try_hi = 80; try_hi > 0 && ecx > 90; try_hi -= 10) {
 		/* set to 0 to try_hi perf_pctg */
 		msr_lo &= 0xFFFFFF80;
 		msr_hi &= 0xFFFFFF80;
 		msr_hi |= try_hi;
 		wrmsr(MSR_TMTA_LONGRUN_CTRL, msr_lo, msr_hi);
 
-		/* पढ़ो out current core MHz and current perf_pctg */
+		/* read out current core MHz and current perf_pctg */
 		cpuid(0x80860007, &eax, &ebx, &ecx, &edx);
 
 		/* restore values */
 		wrmsr(MSR_TMTA_LONGRUN_CTRL, save_lo, save_hi);
-	पूर्ण
+	}
 	pr_debug("percentage is %u %%, freq is %u MHz\n", ecx, eax);
 
-	/* perक्रमmance_pctg = (current_freq - low_freq)/(high_freq - low_freq)
+	/* performance_pctg = (current_freq - low_freq)/(high_freq - low_freq)
 	 * eqals
 	 * low_freq * (1 - perf_pctg) = (cur_freq - high_freq * perf_pctg)
 	 *
-	 * high_freq * perf_pctg is stored tempoarily पूर्णांकo "ebx".
+	 * high_freq * perf_pctg is stored tempoarily into "ebx".
 	 */
 	ebx = (((cpu_khz / 1000) * ecx) / 100); /* to MHz */
 
-	अगर ((ecx > 95) || (ecx == 0) || (eax < ebx))
-		वापस -EIO;
+	if ((ecx > 95) || (ecx == 0) || (eax < ebx))
+		return -EIO;
 
 	edx = ((eax - ebx) * 100) / (100 - ecx);
 	*low_freq = edx * 1000; /* back to kHz */
 
 	pr_debug("low frequency is %u kHz\n", *low_freq);
 
-	अगर (*low_freq > *high_freq)
+	if (*low_freq > *high_freq)
 		*low_freq = *high_freq;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक दीर्घrun_cpu_init(काष्ठा cpufreq_policy *policy)
-अणु
-	पूर्णांक result = 0;
+static int longrun_cpu_init(struct cpufreq_policy *policy)
+{
+	int result = 0;
 
 	/* capability check */
-	अगर (policy->cpu != 0)
-		वापस -ENODEV;
+	if (policy->cpu != 0)
+		return -ENODEV;
 
 	/* detect low and high frequency */
-	result = दीर्घrun_determine_freqs(&दीर्घrun_low_freq, &दीर्घrun_high_freq);
-	अगर (result)
-		वापस result;
+	result = longrun_determine_freqs(&longrun_low_freq, &longrun_high_freq);
+	if (result)
+		return result;
 
-	/* cpuinfo and शेष policy values */
-	policy->cpuinfo.min_freq = दीर्घrun_low_freq;
-	policy->cpuinfo.max_freq = दीर्घrun_high_freq;
-	दीर्घrun_get_policy(policy);
+	/* cpuinfo and default policy values */
+	policy->cpuinfo.min_freq = longrun_low_freq;
+	policy->cpuinfo.max_freq = longrun_high_freq;
+	longrun_get_policy(policy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल काष्ठा cpufreq_driver दीर्घrun_driver = अणु
+static struct cpufreq_driver longrun_driver = {
 	.flags		= CPUFREQ_CONST_LOOPS,
-	.verअगरy		= दीर्घrun_verअगरy_policy,
-	.setpolicy	= दीर्घrun_set_policy,
-	.get		= दीर्घrun_get,
-	.init		= दीर्घrun_cpu_init,
+	.verify		= longrun_verify_policy,
+	.setpolicy	= longrun_set_policy,
+	.get		= longrun_get,
+	.init		= longrun_cpu_init,
 	.name		= "longrun",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा x86_cpu_id दीर्घrun_ids[] = अणु
-	X86_MATCH_VENDOR_FEATURE(TRANSMETA, X86_FEATURE_LONGRUN, शून्य),
-	अणुपूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(x86cpu, दीर्घrun_ids);
+static const struct x86_cpu_id longrun_ids[] = {
+	X86_MATCH_VENDOR_FEATURE(TRANSMETA, X86_FEATURE_LONGRUN, NULL),
+	{}
+};
+MODULE_DEVICE_TABLE(x86cpu, longrun_ids);
 
 /**
- * दीर्घrun_init - initializes the Transmeta Crusoe LongRun CPUFreq driver
+ * longrun_init - initializes the Transmeta Crusoe LongRun CPUFreq driver
  *
  * Initializes the LongRun support.
  */
-अटल पूर्णांक __init दीर्घrun_init(व्योम)
-अणु
-	अगर (!x86_match_cpu(दीर्घrun_ids))
-		वापस -ENODEV;
-	वापस cpufreq_रेजिस्टर_driver(&दीर्घrun_driver);
-पूर्ण
+static int __init longrun_init(void)
+{
+	if (!x86_match_cpu(longrun_ids))
+		return -ENODEV;
+	return cpufreq_register_driver(&longrun_driver);
+}
 
 
 /**
- * दीर्घrun_निकास - unरेजिस्टरs LongRun support
+ * longrun_exit - unregisters LongRun support
  */
-अटल व्योम __निकास दीर्घrun_निकास(व्योम)
-अणु
-	cpufreq_unरेजिस्टर_driver(&दीर्घrun_driver);
-पूर्ण
+static void __exit longrun_exit(void)
+{
+	cpufreq_unregister_driver(&longrun_driver);
+}
 
 
 MODULE_AUTHOR("Dominik Brodowski <linux@brodo.de>");
@@ -314,5 +313,5 @@ MODULE_DESCRIPTION("LongRun driver for Transmeta Crusoe and "
 		"Efficeon processors.");
 MODULE_LICENSE("GPL");
 
-module_init(दीर्घrun_init);
-module_निकास(दीर्घrun_निकास);
+module_init(longrun_init);
+module_exit(longrun_exit);

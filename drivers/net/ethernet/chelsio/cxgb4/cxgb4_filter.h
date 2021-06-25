@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
+ * This file is part of the Chelsio T4 Ethernet driver for Linux.
  *
  * Copyright (c) 2003-2016 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,27 +32,27 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित __CXGB4_FILTER_H
-#घोषणा __CXGB4_FILTER_H
+#ifndef __CXGB4_FILTER_H
+#define __CXGB4_FILTER_H
 
-#समावेश "t4_msg.h"
+#include "t4_msg.h"
 
-#घोषणा WORD_MASK	0xffffffff
+#define WORD_MASK	0xffffffff
 
-व्योम filter_rpl(काष्ठा adapter *adap, स्थिर काष्ठा cpl_set_tcb_rpl *rpl);
-व्योम hash_filter_rpl(काष्ठा adapter *adap, स्थिर काष्ठा cpl_act_खोलो_rpl *rpl);
-व्योम hash_del_filter_rpl(काष्ठा adapter *adap,
-			 स्थिर काष्ठा cpl_पात_rpl_rss *rpl);
-व्योम clear_filter(काष्ठा adapter *adap, काष्ठा filter_entry *f);
+void filter_rpl(struct adapter *adap, const struct cpl_set_tcb_rpl *rpl);
+void hash_filter_rpl(struct adapter *adap, const struct cpl_act_open_rpl *rpl);
+void hash_del_filter_rpl(struct adapter *adap,
+			 const struct cpl_abort_rpl_rss *rpl);
+void clear_filter(struct adapter *adap, struct filter_entry *f);
 
-पूर्णांक set_filter_wr(काष्ठा adapter *adapter, पूर्णांक fidx);
-पूर्णांक delete_filter(काष्ठा adapter *adapter, अचिन्हित पूर्णांक fidx);
+int set_filter_wr(struct adapter *adapter, int fidx);
+int delete_filter(struct adapter *adapter, unsigned int fidx);
 
-पूर्णांक writable_filter(काष्ठा filter_entry *f);
-व्योम clear_all_filters(काष्ठा adapter *adapter);
-व्योम init_hash_filter(काष्ठा adapter *adap);
-bool is_filter_exact_match(काष्ठा adapter *adap,
-			   काष्ठा ch_filter_specअगरication *fs);
-व्योम cxgb4_cleanup_ethtool_filters(काष्ठा adapter *adap);
-पूर्णांक cxgb4_init_ethtool_filters(काष्ठा adapter *adap);
-#पूर्ण_अगर /* __CXGB4_FILTER_H */
+int writable_filter(struct filter_entry *f);
+void clear_all_filters(struct adapter *adapter);
+void init_hash_filter(struct adapter *adap);
+bool is_filter_exact_match(struct adapter *adap,
+			   struct ch_filter_specification *fs);
+void cxgb4_cleanup_ethtool_filters(struct adapter *adap);
+int cxgb4_init_ethtool_filters(struct adapter *adap);
+#endif /* __CXGB4_FILTER_H */

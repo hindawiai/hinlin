@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * drivers/video/geode/display_gx1.h
  *   -- Geode GX1 display controller
@@ -9,39 +8,39 @@
  * Based on AMD's original 2.4 driver:
  *   Copyright (C) 2004 Advanced Micro Devices, Inc.
  */
-#अगर_अघोषित __DISPLAY_GX1_H__
-#घोषणा __DISPLAY_GX1_H__
+#ifndef __DISPLAY_GX1_H__
+#define __DISPLAY_GX1_H__
 
-अचिन्हित gx1_gx_base(व्योम);
-पूर्णांक gx1_frame_buffer_size(व्योम);
+unsigned gx1_gx_base(void);
+int gx1_frame_buffer_size(void);
 
-बाह्य स्थिर काष्ठा geode_dc_ops gx1_dc_ops;
+extern const struct geode_dc_ops gx1_dc_ops;
 
-/* GX1 configuration I/O रेजिस्टरs */
+/* GX1 configuration I/O registers */
 
-#घोषणा CONFIG_CCR3 0xc3
+#define CONFIG_CCR3 0xc3
 #  define CONFIG_CCR3_MAPEN 0x10
-#घोषणा CONFIG_GCR  0xb8
+#define CONFIG_GCR  0xb8
 
-/* Memory controller रेजिस्टरs */
+/* Memory controller registers */
 
-#घोषणा MC_BANK_CFG		0x08
+#define MC_BANK_CFG		0x08
 #  define MC_BCFG_DIMM0_SZ_MASK		0x00000700
 #  define MC_BCFG_DIMM0_PG_SZ_MASK	0x00000070
 #  define MC_BCFG_DIMM0_PG_SZ_NO_DIMM	0x00000070
 
-#घोषणा MC_GBASE_ADD		0x14
+#define MC_GBASE_ADD		0x14
 #  define MC_GADD_GBADD_MASK		0x000003ff
 
-/* Display controller रेजिस्टरs */
+/* Display controller registers */
 
-#घोषणा DC_PAL_ADDRESS		0x70
-#घोषणा DC_PAL_DATA		0x74
+#define DC_PAL_ADDRESS		0x70
+#define DC_PAL_DATA		0x74
 
-#घोषणा DC_UNLOCK		0x00
+#define DC_UNLOCK		0x00
 #  define DC_UNLOCK_CODE		0x00004758
 
-#घोषणा DC_GENERAL_CFG		0x04
+#define DC_GENERAL_CFG		0x04
 #  define DC_GCFG_DFLE			0x00000001
 #  define DC_GCFG_CURE			0x00000002
 #  define DC_GCFG_VCLK_DIV		0x00000004
@@ -71,7 +70,7 @@
 #  define DC_GCFG_DPCK			0x40000000
 #  define DC_GCFG_DDCK			0x80000000
 
-#घोषणा DC_TIMING_CFG		0x08
+#define DC_TIMING_CFG		0x08
 #  define DC_TCFG_FPPE			0x00000001
 #  define DC_TCFG_HSYE			0x00000002
 #  define DC_TCFG_VSYE			0x00000004
@@ -98,7 +97,7 @@
 #  define DC_TCFG_VNA			0x40000000
 #  define DC_TCFG_VINT			0x80000000
 
-#घोषणा DC_OUTPUT_CFG		0x0C
+#define DC_OUTPUT_CFG		0x0C
 #  define DC_OCFG_8BPP			0x00000001
 #  define DC_OCFG_555			0x00000002
 #  define DC_OCFG_PCKE			0x00000004
@@ -116,36 +115,36 @@
 #  define DC_OCFG_CFRW			0x00004000
 #  define DC_OCFG_DIAG			0x00008000
 
-#घोषणा DC_FB_ST_OFFSET		0x10
-#घोषणा DC_CB_ST_OFFSET		0x14
-#घोषणा DC_CURS_ST_OFFSET	0x18
-#घोषणा DC_ICON_ST_OFFSET	0x1C
-#घोषणा DC_VID_ST_OFFSET	0x20
-#घोषणा DC_LINE_DELTA		0x24
-#घोषणा DC_BUF_SIZE		0x28
+#define DC_FB_ST_OFFSET		0x10
+#define DC_CB_ST_OFFSET		0x14
+#define DC_CURS_ST_OFFSET	0x18
+#define DC_ICON_ST_OFFSET	0x1C
+#define DC_VID_ST_OFFSET	0x20
+#define DC_LINE_DELTA		0x24
+#define DC_BUF_SIZE		0x28
 
-#घोषणा DC_H_TIMING_1		0x30
-#घोषणा DC_H_TIMING_2		0x34
-#घोषणा DC_H_TIMING_3		0x38
-#घोषणा DC_FP_H_TIMING		0x3C
+#define DC_H_TIMING_1		0x30
+#define DC_H_TIMING_2		0x34
+#define DC_H_TIMING_3		0x38
+#define DC_FP_H_TIMING		0x3C
 
-#घोषणा DC_V_TIMING_1		0x40
-#घोषणा DC_V_TIMING_2		0x44
-#घोषणा DC_V_TIMING_3		0x48
-#घोषणा DC_FP_V_TIMING		0x4C
+#define DC_V_TIMING_1		0x40
+#define DC_V_TIMING_2		0x44
+#define DC_V_TIMING_3		0x48
+#define DC_FP_V_TIMING		0x4C
 
-#घोषणा DC_CURSOR_X		0x50
-#घोषणा DC_ICON_X		0x54
-#घोषणा DC_V_LINE_CNT		0x54
-#घोषणा DC_CURSOR_Y		0x58
-#घोषणा DC_ICON_Y		0x5C
-#घोषणा DC_SS_LINE_CMP		0x5C
-#घोषणा DC_CURSOR_COLOR		0x60
-#घोषणा DC_ICON_COLOR		0x64
-#घोषणा DC_BORDER_COLOR		0x68
-#घोषणा DC_PAL_ADDRESS		0x70
-#घोषणा DC_PAL_DATA		0x74
-#घोषणा DC_DFIFO_DIAG		0x78
-#घोषणा DC_CFIFO_DIAG		0x7C
+#define DC_CURSOR_X		0x50
+#define DC_ICON_X		0x54
+#define DC_V_LINE_CNT		0x54
+#define DC_CURSOR_Y		0x58
+#define DC_ICON_Y		0x5C
+#define DC_SS_LINE_CMP		0x5C
+#define DC_CURSOR_COLOR		0x60
+#define DC_ICON_COLOR		0x64
+#define DC_BORDER_COLOR		0x68
+#define DC_PAL_ADDRESS		0x70
+#define DC_PAL_DATA		0x74
+#define DC_DFIFO_DIAG		0x78
+#define DC_CFIFO_DIAG		0x7C
 
-#पूर्ण_अगर /* !__DISPLAY_GX1_H__ */
+#endif /* !__DISPLAY_GX1_H__ */

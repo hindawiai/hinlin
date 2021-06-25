@@ -1,1117 +1,1116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /* net/sched/sch_taprio.c	 Time Aware Priority Scheduler
  *
- * Authors:	Vinicius Costa Gomes <vinicius.gomes@पूर्णांकel.com>
+ * Authors:	Vinicius Costa Gomes <vinicius.gomes@intel.com>
  *
  */
 
-#समावेश <linux/ethtool.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/list.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/sch_generic.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp.h>
+#include <linux/ethtool.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/list.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/rcupdate.h>
+#include <net/netlink.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
+#include <net/sch_generic.h>
+#include <net/sock.h>
+#include <net/tcp.h>
 
-अटल LIST_HEAD(taprio_list);
-अटल DEFINE_SPINLOCK(taprio_list_lock);
+static LIST_HEAD(taprio_list);
+static DEFINE_SPINLOCK(taprio_list_lock);
 
-#घोषणा TAPRIO_ALL_GATES_OPEN -1
+#define TAPRIO_ALL_GATES_OPEN -1
 
-#घोषणा TXTIME_ASSIST_IS_ENABLED(flags) ((flags) & TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST)
-#घोषणा FULL_OFFLOAD_IS_ENABLED(flags) ((flags) & TCA_TAPRIO_ATTR_FLAG_FULL_OFFLOAD)
-#घोषणा TAPRIO_FLAGS_INVALID U32_MAX
+#define TXTIME_ASSIST_IS_ENABLED(flags) ((flags) & TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST)
+#define FULL_OFFLOAD_IS_ENABLED(flags) ((flags) & TCA_TAPRIO_ATTR_FLAG_FULL_OFFLOAD)
+#define TAPRIO_FLAGS_INVALID U32_MAX
 
-काष्ठा sched_entry अणु
-	काष्ठा list_head list;
+struct sched_entry {
+	struct list_head list;
 
 	/* The instant that this entry "closes" and the next one
-	 * should खोलो, the qdisc will make some efक्रमt so that no
-	 * packet leaves after this समय.
+	 * should open, the qdisc will make some effort so that no
+	 * packet leaves after this time.
 	 */
-	kसमय_प्रकार बंद_समय;
-	kसमय_प्रकार next_txसमय;
+	ktime_t close_time;
+	ktime_t next_txtime;
 	atomic_t budget;
-	पूर्णांक index;
+	int index;
 	u32 gate_mask;
-	u32 पूर्णांकerval;
+	u32 interval;
 	u8 command;
-पूर्ण;
+};
 
-काष्ठा sched_gate_list अणु
-	काष्ठा rcu_head rcu;
-	काष्ठा list_head entries;
-	माप_प्रकार num_entries;
-	kसमय_प्रकार cycle_बंद_समय;
-	s64 cycle_समय;
-	s64 cycle_समय_extension;
-	s64 base_समय;
-पूर्ण;
+struct sched_gate_list {
+	struct rcu_head rcu;
+	struct list_head entries;
+	size_t num_entries;
+	ktime_t cycle_close_time;
+	s64 cycle_time;
+	s64 cycle_time_extension;
+	s64 base_time;
+};
 
-काष्ठा taprio_sched अणु
-	काष्ठा Qdisc **qdiscs;
-	काष्ठा Qdisc *root;
+struct taprio_sched {
+	struct Qdisc **qdiscs;
+	struct Qdisc *root;
 	u32 flags;
-	क्रमागत tk_offsets tk_offset;
-	पूर्णांक घड़ीid;
-	atomic64_t picos_per_byte; /* Using picoseconds because क्रम 10Gbps+
+	enum tk_offsets tk_offset;
+	int clockid;
+	atomic64_t picos_per_byte; /* Using picoseconds because for 10Gbps+
 				    * speeds it's sub-nanoseconds per byte
 				    */
 
-	/* Protects the update side of the RCU रक्षित current_entry */
+	/* Protects the update side of the RCU protected current_entry */
 	spinlock_t current_entry_lock;
-	काष्ठा sched_entry __rcu *current_entry;
-	काष्ठा sched_gate_list __rcu *oper_sched;
-	काष्ठा sched_gate_list __rcu *admin_sched;
-	काष्ठा hrसमयr advance_समयr;
-	काष्ठा list_head taprio_list;
-	काष्ठा sk_buff *(*dequeue)(काष्ठा Qdisc *sch);
-	काष्ठा sk_buff *(*peek)(काष्ठा Qdisc *sch);
-	u32 txसमय_delay;
-पूर्ण;
+	struct sched_entry __rcu *current_entry;
+	struct sched_gate_list __rcu *oper_sched;
+	struct sched_gate_list __rcu *admin_sched;
+	struct hrtimer advance_timer;
+	struct list_head taprio_list;
+	struct sk_buff *(*dequeue)(struct Qdisc *sch);
+	struct sk_buff *(*peek)(struct Qdisc *sch);
+	u32 txtime_delay;
+};
 
-काष्ठा __tc_taprio_qopt_offload अणु
+struct __tc_taprio_qopt_offload {
 	refcount_t users;
-	काष्ठा tc_taprio_qopt_offload offload;
-पूर्ण;
+	struct tc_taprio_qopt_offload offload;
+};
 
-अटल kसमय_प्रकार sched_base_समय(स्थिर काष्ठा sched_gate_list *sched)
-अणु
-	अगर (!sched)
-		वापस KTIME_MAX;
+static ktime_t sched_base_time(const struct sched_gate_list *sched)
+{
+	if (!sched)
+		return KTIME_MAX;
 
-	वापस ns_to_kसमय(sched->base_समय);
-पूर्ण
+	return ns_to_ktime(sched->base_time);
+}
 
-अटल kसमय_प्रकार taprio_get_समय(काष्ठा taprio_sched *q)
-अणु
-	kसमय_प्रकार mono = kसमय_get();
+static ktime_t taprio_get_time(struct taprio_sched *q)
+{
+	ktime_t mono = ktime_get();
 
-	चयन (q->tk_offset) अणु
-	हाल TK_OFFS_MAX:
-		वापस mono;
-	शेष:
-		वापस kसमय_mono_to_any(mono, q->tk_offset);
-	पूर्ण
+	switch (q->tk_offset) {
+	case TK_OFFS_MAX:
+		return mono;
+	default:
+		return ktime_mono_to_any(mono, q->tk_offset);
+	}
 
-	वापस KTIME_MAX;
-पूर्ण
+	return KTIME_MAX;
+}
 
-अटल व्योम taprio_मुक्त_sched_cb(काष्ठा rcu_head *head)
-अणु
-	काष्ठा sched_gate_list *sched = container_of(head, काष्ठा sched_gate_list, rcu);
-	काष्ठा sched_entry *entry, *n;
+static void taprio_free_sched_cb(struct rcu_head *head)
+{
+	struct sched_gate_list *sched = container_of(head, struct sched_gate_list, rcu);
+	struct sched_entry *entry, *n;
 
-	अगर (!sched)
-		वापस;
+	if (!sched)
+		return;
 
-	list_क्रम_each_entry_safe(entry, n, &sched->entries, list) अणु
+	list_for_each_entry_safe(entry, n, &sched->entries, list) {
 		list_del(&entry->list);
-		kमुक्त(entry);
-	पूर्ण
+		kfree(entry);
+	}
 
-	kमुक्त(sched);
-पूर्ण
+	kfree(sched);
+}
 
-अटल व्योम चयन_schedules(काष्ठा taprio_sched *q,
-			     काष्ठा sched_gate_list **admin,
-			     काष्ठा sched_gate_list **oper)
-अणु
-	rcu_assign_poपूर्णांकer(q->oper_sched, *admin);
-	rcu_assign_poपूर्णांकer(q->admin_sched, शून्य);
+static void switch_schedules(struct taprio_sched *q,
+			     struct sched_gate_list **admin,
+			     struct sched_gate_list **oper)
+{
+	rcu_assign_pointer(q->oper_sched, *admin);
+	rcu_assign_pointer(q->admin_sched, NULL);
 
-	अगर (*oper)
-		call_rcu(&(*oper)->rcu, taprio_मुक्त_sched_cb);
+	if (*oper)
+		call_rcu(&(*oper)->rcu, taprio_free_sched_cb);
 
 	*oper = *admin;
-	*admin = शून्य;
-पूर्ण
+	*admin = NULL;
+}
 
-/* Get how much समय has been alपढ़ोy elapsed in the current cycle. */
-अटल s32 get_cycle_समय_elapsed(काष्ठा sched_gate_list *sched, kसमय_प्रकार समय)
-अणु
-	kसमय_प्रकार समय_since_sched_start;
-	s32 समय_elapsed;
+/* Get how much time has been already elapsed in the current cycle. */
+static s32 get_cycle_time_elapsed(struct sched_gate_list *sched, ktime_t time)
+{
+	ktime_t time_since_sched_start;
+	s32 time_elapsed;
 
-	समय_since_sched_start = kसमय_sub(समय, sched->base_समय);
-	भाग_s64_rem(समय_since_sched_start, sched->cycle_समय, &समय_elapsed);
+	time_since_sched_start = ktime_sub(time, sched->base_time);
+	div_s64_rem(time_since_sched_start, sched->cycle_time, &time_elapsed);
 
-	वापस समय_elapsed;
-पूर्ण
+	return time_elapsed;
+}
 
-अटल kसमय_प्रकार get_पूर्णांकerval_end_समय(काष्ठा sched_gate_list *sched,
-				     काष्ठा sched_gate_list *admin,
-				     काष्ठा sched_entry *entry,
-				     kसमय_प्रकार पूर्णांकv_start)
-अणु
-	s32 cycle_elapsed = get_cycle_समय_elapsed(sched, पूर्णांकv_start);
-	kसमय_प्रकार पूर्णांकv_end, cycle_ext_end, cycle_end;
+static ktime_t get_interval_end_time(struct sched_gate_list *sched,
+				     struct sched_gate_list *admin,
+				     struct sched_entry *entry,
+				     ktime_t intv_start)
+{
+	s32 cycle_elapsed = get_cycle_time_elapsed(sched, intv_start);
+	ktime_t intv_end, cycle_ext_end, cycle_end;
 
-	cycle_end = kसमय_add_ns(पूर्णांकv_start, sched->cycle_समय - cycle_elapsed);
-	पूर्णांकv_end = kसमय_add_ns(पूर्णांकv_start, entry->पूर्णांकerval);
-	cycle_ext_end = kसमय_add(cycle_end, sched->cycle_समय_extension);
+	cycle_end = ktime_add_ns(intv_start, sched->cycle_time - cycle_elapsed);
+	intv_end = ktime_add_ns(intv_start, entry->interval);
+	cycle_ext_end = ktime_add(cycle_end, sched->cycle_time_extension);
 
-	अगर (kसमय_beक्रमe(पूर्णांकv_end, cycle_end))
-		वापस पूर्णांकv_end;
-	अन्यथा अगर (admin && admin != sched &&
-		 kसमय_after(admin->base_समय, cycle_end) &&
-		 kसमय_beक्रमe(admin->base_समय, cycle_ext_end))
-		वापस admin->base_समय;
-	अन्यथा
-		वापस cycle_end;
-पूर्ण
+	if (ktime_before(intv_end, cycle_end))
+		return intv_end;
+	else if (admin && admin != sched &&
+		 ktime_after(admin->base_time, cycle_end) &&
+		 ktime_before(admin->base_time, cycle_ext_end))
+		return admin->base_time;
+	else
+		return cycle_end;
+}
 
-अटल पूर्णांक length_to_duration(काष्ठा taprio_sched *q, पूर्णांक len)
-अणु
-	वापस भाग_u64(len * atomic64_पढ़ो(&q->picos_per_byte), 1000);
-पूर्ण
+static int length_to_duration(struct taprio_sched *q, int len)
+{
+	return div_u64(len * atomic64_read(&q->picos_per_byte), 1000);
+}
 
-/* Returns the entry corresponding to next available पूर्णांकerval. If
- * validate_पूर्णांकerval is set, it only validates whether the बारtamp occurs
- * when the gate corresponding to the skb's traffic class is खोलो.
+/* Returns the entry corresponding to next available interval. If
+ * validate_interval is set, it only validates whether the timestamp occurs
+ * when the gate corresponding to the skb's traffic class is open.
  */
-अटल काष्ठा sched_entry *find_entry_to_transmit(काष्ठा sk_buff *skb,
-						  काष्ठा Qdisc *sch,
-						  काष्ठा sched_gate_list *sched,
-						  काष्ठा sched_gate_list *admin,
-						  kसमय_प्रकार समय,
-						  kसमय_प्रकार *पूर्णांकerval_start,
-						  kसमय_प्रकार *पूर्णांकerval_end,
-						  bool validate_पूर्णांकerval)
-अणु
-	kसमय_प्रकार curr_पूर्णांकv_start, curr_पूर्णांकv_end, cycle_end, packet_transmit_समय;
-	kसमय_प्रकार earliest_txसमय = KTIME_MAX, txसमय, cycle, transmit_end_समय;
-	काष्ठा sched_entry *entry = शून्य, *entry_found = शून्य;
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
+static struct sched_entry *find_entry_to_transmit(struct sk_buff *skb,
+						  struct Qdisc *sch,
+						  struct sched_gate_list *sched,
+						  struct sched_gate_list *admin,
+						  ktime_t time,
+						  ktime_t *interval_start,
+						  ktime_t *interval_end,
+						  bool validate_interval)
+{
+	ktime_t curr_intv_start, curr_intv_end, cycle_end, packet_transmit_time;
+	ktime_t earliest_txtime = KTIME_MAX, txtime, cycle, transmit_end_time;
+	struct sched_entry *entry = NULL, *entry_found = NULL;
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
 	bool entry_available = false;
 	s32 cycle_elapsed;
-	पूर्णांक tc, n;
+	int tc, n;
 
 	tc = netdev_get_prio_tc_map(dev, skb->priority);
-	packet_transmit_समय = length_to_duration(q, qdisc_pkt_len(skb));
+	packet_transmit_time = length_to_duration(q, qdisc_pkt_len(skb));
 
-	*पूर्णांकerval_start = 0;
-	*पूर्णांकerval_end = 0;
+	*interval_start = 0;
+	*interval_end = 0;
 
-	अगर (!sched)
-		वापस शून्य;
+	if (!sched)
+		return NULL;
 
-	cycle = sched->cycle_समय;
-	cycle_elapsed = get_cycle_समय_elapsed(sched, समय);
-	curr_पूर्णांकv_end = kसमय_sub_ns(समय, cycle_elapsed);
-	cycle_end = kसमय_add_ns(curr_पूर्णांकv_end, cycle);
+	cycle = sched->cycle_time;
+	cycle_elapsed = get_cycle_time_elapsed(sched, time);
+	curr_intv_end = ktime_sub_ns(time, cycle_elapsed);
+	cycle_end = ktime_add_ns(curr_intv_end, cycle);
 
-	list_क्रम_each_entry(entry, &sched->entries, list) अणु
-		curr_पूर्णांकv_start = curr_पूर्णांकv_end;
-		curr_पूर्णांकv_end = get_पूर्णांकerval_end_समय(sched, admin, entry,
-						      curr_पूर्णांकv_start);
+	list_for_each_entry(entry, &sched->entries, list) {
+		curr_intv_start = curr_intv_end;
+		curr_intv_end = get_interval_end_time(sched, admin, entry,
+						      curr_intv_start);
 
-		अगर (kसमय_after(curr_पूर्णांकv_start, cycle_end))
-			अवरोध;
+		if (ktime_after(curr_intv_start, cycle_end))
+			break;
 
-		अगर (!(entry->gate_mask & BIT(tc)) ||
-		    packet_transmit_समय > entry->पूर्णांकerval)
-			जारी;
+		if (!(entry->gate_mask & BIT(tc)) ||
+		    packet_transmit_time > entry->interval)
+			continue;
 
-		txसमय = entry->next_txसमय;
+		txtime = entry->next_txtime;
 
-		अगर (kसमय_beक्रमe(txसमय, समय) || validate_पूर्णांकerval) अणु
-			transmit_end_समय = kसमय_add_ns(समय, packet_transmit_समय);
-			अगर ((kसमय_beक्रमe(curr_पूर्णांकv_start, समय) &&
-			     kसमय_beक्रमe(transmit_end_समय, curr_पूर्णांकv_end)) ||
-			    (kसमय_after(curr_पूर्णांकv_start, समय) && !validate_पूर्णांकerval)) अणु
+		if (ktime_before(txtime, time) || validate_interval) {
+			transmit_end_time = ktime_add_ns(time, packet_transmit_time);
+			if ((ktime_before(curr_intv_start, time) &&
+			     ktime_before(transmit_end_time, curr_intv_end)) ||
+			    (ktime_after(curr_intv_start, time) && !validate_interval)) {
 				entry_found = entry;
-				*पूर्णांकerval_start = curr_पूर्णांकv_start;
-				*पूर्णांकerval_end = curr_पूर्णांकv_end;
-				अवरोध;
-			पूर्ण अन्यथा अगर (!entry_available && !validate_पूर्णांकerval) अणु
+				*interval_start = curr_intv_start;
+				*interval_end = curr_intv_end;
+				break;
+			} else if (!entry_available && !validate_interval) {
 				/* Here, we are just trying to find out the
-				 * first available पूर्णांकerval in the next cycle.
+				 * first available interval in the next cycle.
 				 */
 				entry_available = true;
 				entry_found = entry;
-				*पूर्णांकerval_start = kसमय_add_ns(curr_पूर्णांकv_start, cycle);
-				*पूर्णांकerval_end = kसमय_add_ns(curr_पूर्णांकv_end, cycle);
-			पूर्ण
-		पूर्ण अन्यथा अगर (kसमय_beक्रमe(txसमय, earliest_txसमय) &&
-			   !entry_available) अणु
-			earliest_txसमय = txसमय;
+				*interval_start = ktime_add_ns(curr_intv_start, cycle);
+				*interval_end = ktime_add_ns(curr_intv_end, cycle);
+			}
+		} else if (ktime_before(txtime, earliest_txtime) &&
+			   !entry_available) {
+			earliest_txtime = txtime;
 			entry_found = entry;
-			n = भाग_s64(kसमय_sub(txसमय, curr_पूर्णांकv_start), cycle);
-			*पूर्णांकerval_start = kसमय_add(curr_पूर्णांकv_start, n * cycle);
-			*पूर्णांकerval_end = kसमय_add(curr_पूर्णांकv_end, n * cycle);
-		पूर्ण
-	पूर्ण
+			n = div_s64(ktime_sub(txtime, curr_intv_start), cycle);
+			*interval_start = ktime_add(curr_intv_start, n * cycle);
+			*interval_end = ktime_add(curr_intv_end, n * cycle);
+		}
+	}
 
-	वापस entry_found;
-पूर्ण
+	return entry_found;
+}
 
-अटल bool is_valid_पूर्णांकerval(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा sched_gate_list *sched, *admin;
-	kसमय_प्रकार पूर्णांकerval_start, पूर्णांकerval_end;
-	काष्ठा sched_entry *entry;
+static bool is_valid_interval(struct sk_buff *skb, struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct sched_gate_list *sched, *admin;
+	ktime_t interval_start, interval_end;
+	struct sched_entry *entry;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	sched = rcu_dereference(q->oper_sched);
 	admin = rcu_dereference(q->admin_sched);
 
 	entry = find_entry_to_transmit(skb, sch, sched, admin, skb->tstamp,
-				       &पूर्णांकerval_start, &पूर्णांकerval_end, true);
-	rcu_पढ़ो_unlock();
+				       &interval_start, &interval_end, true);
+	rcu_read_unlock();
 
-	वापस entry;
-पूर्ण
+	return entry;
+}
 
-अटल bool taprio_flags_valid(u32 flags)
-अणु
+static bool taprio_flags_valid(u32 flags)
+{
 	/* Make sure no other flag bits are set. */
-	अगर (flags & ~(TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST |
+	if (flags & ~(TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST |
 		      TCA_TAPRIO_ATTR_FLAG_FULL_OFFLOAD))
-		वापस false;
-	/* txसमय-assist and full offload are mutually exclusive */
-	अगर ((flags & TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST) &&
+		return false;
+	/* txtime-assist and full offload are mutually exclusive */
+	if ((flags & TCA_TAPRIO_ATTR_FLAG_TXTIME_ASSIST) &&
 	    (flags & TCA_TAPRIO_ATTR_FLAG_FULL_OFFLOAD))
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-/* This वापसs the tstamp value set by TCP in terms of the set घड़ी. */
-अटल kसमय_प्रकार get_tcp_tstamp(काष्ठा taprio_sched *q, काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक offset = skb_network_offset(skb);
-	स्थिर काष्ठा ipv6hdr *ipv6h;
-	स्थिर काष्ठा iphdr *iph;
-	काष्ठा ipv6hdr _ipv6h;
+/* This returns the tstamp value set by TCP in terms of the set clock. */
+static ktime_t get_tcp_tstamp(struct taprio_sched *q, struct sk_buff *skb)
+{
+	unsigned int offset = skb_network_offset(skb);
+	const struct ipv6hdr *ipv6h;
+	const struct iphdr *iph;
+	struct ipv6hdr _ipv6h;
 
-	ipv6h = skb_header_poपूर्णांकer(skb, offset, माप(_ipv6h), &_ipv6h);
-	अगर (!ipv6h)
-		वापस 0;
+	ipv6h = skb_header_pointer(skb, offset, sizeof(_ipv6h), &_ipv6h);
+	if (!ipv6h)
+		return 0;
 
-	अगर (ipv6h->version == 4) अणु
-		iph = (काष्ठा iphdr *)ipv6h;
+	if (ipv6h->version == 4) {
+		iph = (struct iphdr *)ipv6h;
 		offset += iph->ihl * 4;
 
-		/* special-हाल 6in4 tunnelling, as that is a common way to get
+		/* special-case 6in4 tunnelling, as that is a common way to get
 		 * v6 connectivity in the home
 		 */
-		अगर (iph->protocol == IPPROTO_IPV6) अणु
-			ipv6h = skb_header_poपूर्णांकer(skb, offset,
-						   माप(_ipv6h), &_ipv6h);
+		if (iph->protocol == IPPROTO_IPV6) {
+			ipv6h = skb_header_pointer(skb, offset,
+						   sizeof(_ipv6h), &_ipv6h);
 
-			अगर (!ipv6h || ipv6h->nexthdr != IPPROTO_TCP)
-				वापस 0;
-		पूर्ण अन्यथा अगर (iph->protocol != IPPROTO_TCP) अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ipv6h->version == 6 && ipv6h->nexthdr != IPPROTO_TCP) अणु
-		वापस 0;
-	पूर्ण
+			if (!ipv6h || ipv6h->nexthdr != IPPROTO_TCP)
+				return 0;
+		} else if (iph->protocol != IPPROTO_TCP) {
+			return 0;
+		}
+	} else if (ipv6h->version == 6 && ipv6h->nexthdr != IPPROTO_TCP) {
+		return 0;
+	}
 
-	वापस kसमय_mono_to_any(skb->skb_mstamp_ns, q->tk_offset);
-पूर्ण
+	return ktime_mono_to_any(skb->skb_mstamp_ns, q->tk_offset);
+}
 
-/* There are a few scenarios where we will have to modअगरy the txसमय from
- * what is पढ़ो from next_txसमय in sched_entry. They are:
- * 1. If txसमय is in the past,
- *    a. The gate क्रम the traffic class is currently खोलो and packet can be
- *       transmitted beक्रमe it बंदs, schedule the packet right away.
- *    b. If the gate corresponding to the traffic class is going to खोलो later
- *       in the cycle, set the txसमय of packet to the पूर्णांकerval start.
- * 2. If txसमय is in the future, there are packets corresponding to the
- *    current traffic class रुकोing to be transmitted. So, the following
+/* There are a few scenarios where we will have to modify the txtime from
+ * what is read from next_txtime in sched_entry. They are:
+ * 1. If txtime is in the past,
+ *    a. The gate for the traffic class is currently open and packet can be
+ *       transmitted before it closes, schedule the packet right away.
+ *    b. If the gate corresponding to the traffic class is going to open later
+ *       in the cycle, set the txtime of packet to the interval start.
+ * 2. If txtime is in the future, there are packets corresponding to the
+ *    current traffic class waiting to be transmitted. So, the following
  *    possibilities exist:
- *    a. We can transmit the packet beक्रमe the winकरोw containing the txसमय
- *       बंदs.
- *    b. The winकरोw might बंद beक्रमe the transmission can be completed
- *       successfully. So, schedule the packet in the next खोलो winकरोw.
+ *    a. We can transmit the packet before the window containing the txtime
+ *       closes.
+ *    b. The window might close before the transmission can be completed
+ *       successfully. So, schedule the packet in the next open window.
  */
-अटल दीर्घ get_packet_txसमय(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch)
-अणु
-	kसमय_प्रकार transmit_end_समय, पूर्णांकerval_end, पूर्णांकerval_start, tcp_tstamp;
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा sched_gate_list *sched, *admin;
-	kसमय_प्रकार minimum_समय, now, txसमय;
-	पूर्णांक len, packet_transmit_समय;
-	काष्ठा sched_entry *entry;
+static long get_packet_txtime(struct sk_buff *skb, struct Qdisc *sch)
+{
+	ktime_t transmit_end_time, interval_end, interval_start, tcp_tstamp;
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct sched_gate_list *sched, *admin;
+	ktime_t minimum_time, now, txtime;
+	int len, packet_transmit_time;
+	struct sched_entry *entry;
 	bool sched_changed;
 
-	now = taprio_get_समय(q);
-	minimum_समय = kसमय_add_ns(now, q->txसमय_delay);
+	now = taprio_get_time(q);
+	minimum_time = ktime_add_ns(now, q->txtime_delay);
 
 	tcp_tstamp = get_tcp_tstamp(q, skb);
-	minimum_समय = max_t(kसमय_प्रकार, minimum_समय, tcp_tstamp);
+	minimum_time = max_t(ktime_t, minimum_time, tcp_tstamp);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	admin = rcu_dereference(q->admin_sched);
 	sched = rcu_dereference(q->oper_sched);
-	अगर (admin && kसमय_after(minimum_समय, admin->base_समय))
-		चयन_schedules(q, &admin, &sched);
+	if (admin && ktime_after(minimum_time, admin->base_time))
+		switch_schedules(q, &admin, &sched);
 
-	/* Until the schedule starts, all the queues are खोलो */
-	अगर (!sched || kसमय_beक्रमe(minimum_समय, sched->base_समय)) अणु
-		txसमय = minimum_समय;
-		जाओ करोne;
-	पूर्ण
+	/* Until the schedule starts, all the queues are open */
+	if (!sched || ktime_before(minimum_time, sched->base_time)) {
+		txtime = minimum_time;
+		goto done;
+	}
 
 	len = qdisc_pkt_len(skb);
-	packet_transmit_समय = length_to_duration(q, len);
+	packet_transmit_time = length_to_duration(q, len);
 
-	करो अणु
+	do {
 		sched_changed = false;
 
 		entry = find_entry_to_transmit(skb, sch, sched, admin,
-					       minimum_समय,
-					       &पूर्णांकerval_start, &पूर्णांकerval_end,
+					       minimum_time,
+					       &interval_start, &interval_end,
 					       false);
-		अगर (!entry) अणु
-			txसमय = 0;
-			जाओ करोne;
-		पूर्ण
+		if (!entry) {
+			txtime = 0;
+			goto done;
+		}
 
-		txसमय = entry->next_txसमय;
-		txसमय = max_t(kसमय_प्रकार, txसमय, minimum_समय);
-		txसमय = max_t(kसमय_प्रकार, txसमय, पूर्णांकerval_start);
+		txtime = entry->next_txtime;
+		txtime = max_t(ktime_t, txtime, minimum_time);
+		txtime = max_t(ktime_t, txtime, interval_start);
 
-		अगर (admin && admin != sched &&
-		    kसमय_after(txसमय, admin->base_समय)) अणु
+		if (admin && admin != sched &&
+		    ktime_after(txtime, admin->base_time)) {
 			sched = admin;
 			sched_changed = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		transmit_end_समय = kसमय_add(txसमय, packet_transmit_समय);
-		minimum_समय = transmit_end_समय;
+		transmit_end_time = ktime_add(txtime, packet_transmit_time);
+		minimum_time = transmit_end_time;
 
-		/* Update the txसमय of current entry to the next समय it's
-		 * पूर्णांकerval starts.
+		/* Update the txtime of current entry to the next time it's
+		 * interval starts.
 		 */
-		अगर (kसमय_after(transmit_end_समय, पूर्णांकerval_end))
-			entry->next_txसमय = kसमय_add(पूर्णांकerval_start, sched->cycle_समय);
-	पूर्ण जबतक (sched_changed || kसमय_after(transmit_end_समय, पूर्णांकerval_end));
+		if (ktime_after(transmit_end_time, interval_end))
+			entry->next_txtime = ktime_add(interval_start, sched->cycle_time);
+	} while (sched_changed || ktime_after(transmit_end_time, interval_end));
 
-	entry->next_txसमय = transmit_end_समय;
+	entry->next_txtime = transmit_end_time;
 
-करोne:
-	rcu_पढ़ो_unlock();
-	वापस txसमय;
-पूर्ण
+done:
+	rcu_read_unlock();
+	return txtime;
+}
 
-अटल पूर्णांक taprio_enqueue_one(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-			      काष्ठा Qdisc *child, काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
+static int taprio_enqueue_one(struct sk_buff *skb, struct Qdisc *sch,
+			      struct Qdisc *child, struct sk_buff **to_free)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
 
-	अगर (skb->sk && sock_flag(skb->sk, SOCK_TXTIME)) अणु
-		अगर (!is_valid_पूर्णांकerval(skb, sch))
-			वापस qdisc_drop(skb, sch, to_मुक्त);
-	पूर्ण अन्यथा अगर (TXTIME_ASSIST_IS_ENABLED(q->flags)) अणु
-		skb->tstamp = get_packet_txसमय(skb, sch);
-		अगर (!skb->tstamp)
-			वापस qdisc_drop(skb, sch, to_मुक्त);
-	पूर्ण
+	if (skb->sk && sock_flag(skb->sk, SOCK_TXTIME)) {
+		if (!is_valid_interval(skb, sch))
+			return qdisc_drop(skb, sch, to_free);
+	} else if (TXTIME_ASSIST_IS_ENABLED(q->flags)) {
+		skb->tstamp = get_packet_txtime(skb, sch);
+		if (!skb->tstamp)
+			return qdisc_drop(skb, sch, to_free);
+	}
 
 	qdisc_qstats_backlog_inc(sch, skb);
 	sch->q.qlen++;
 
-	वापस qdisc_enqueue(skb, child, to_मुक्त);
-पूर्ण
+	return qdisc_enqueue(skb, child, to_free);
+}
 
-अटल पूर्णांक taprio_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-			  काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा Qdisc *child;
-	पूर्णांक queue;
+static int taprio_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+			  struct sk_buff **to_free)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct Qdisc *child;
+	int queue;
 
 	queue = skb_get_queue_mapping(skb);
 
 	child = q->qdiscs[queue];
-	अगर (unlikely(!child))
-		वापस qdisc_drop(skb, sch, to_मुक्त);
+	if (unlikely(!child))
+		return qdisc_drop(skb, sch, to_free);
 
 	/* Large packets might not be transmitted when the transmission duration
-	 * exceeds any configured पूर्णांकerval. Thereक्रमe, segment the skb पूर्णांकo
-	 * smaller chunks. Skip it क्रम the full offload हाल, as the driver
+	 * exceeds any configured interval. Therefore, segment the skb into
+	 * smaller chunks. Skip it for the full offload case, as the driver
 	 * and/or the hardware is expected to handle this.
 	 */
-	अगर (skb_is_gso(skb) && !FULL_OFFLOAD_IS_ENABLED(q->flags)) अणु
-		अचिन्हित पूर्णांक slen = 0, numsegs = 0, len = qdisc_pkt_len(skb);
-		netdev_features_t features = netअगर_skb_features(skb);
-		काष्ठा sk_buff *segs, *nskb;
-		पूर्णांक ret;
+	if (skb_is_gso(skb) && !FULL_OFFLOAD_IS_ENABLED(q->flags)) {
+		unsigned int slen = 0, numsegs = 0, len = qdisc_pkt_len(skb);
+		netdev_features_t features = netif_skb_features(skb);
+		struct sk_buff *segs, *nskb;
+		int ret;
 
 		segs = skb_gso_segment(skb, features & ~NETIF_F_GSO_MASK);
-		अगर (IS_ERR_OR_शून्य(segs))
-			वापस qdisc_drop(skb, sch, to_मुक्त);
+		if (IS_ERR_OR_NULL(segs))
+			return qdisc_drop(skb, sch, to_free);
 
-		skb_list_walk_safe(segs, segs, nskb) अणु
+		skb_list_walk_safe(segs, segs, nskb) {
 			skb_mark_not_on_list(segs);
 			qdisc_skb_cb(segs)->pkt_len = segs->len;
 			slen += segs->len;
 
-			ret = taprio_enqueue_one(segs, sch, child, to_मुक्त);
-			अगर (ret != NET_XMIT_SUCCESS) अणु
-				अगर (net_xmit_drop_count(ret))
+			ret = taprio_enqueue_one(segs, sch, child, to_free);
+			if (ret != NET_XMIT_SUCCESS) {
+				if (net_xmit_drop_count(ret))
 					qdisc_qstats_drop(sch);
-			पूर्ण अन्यथा अणु
+			} else {
 				numsegs++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (numsegs > 1)
+		if (numsegs > 1)
 			qdisc_tree_reduce_backlog(sch, 1 - numsegs, len - slen);
 		consume_skb(skb);
 
-		वापस numsegs > 0 ? NET_XMIT_SUCCESS : NET_XMIT_DROP;
-	पूर्ण
+		return numsegs > 0 ? NET_XMIT_SUCCESS : NET_XMIT_DROP;
+	}
 
-	वापस taprio_enqueue_one(skb, sch, child, to_मुक्त);
-पूर्ण
+	return taprio_enqueue_one(skb, sch, child, to_free);
+}
 
-अटल काष्ठा sk_buff *taprio_peek_soft(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा sched_entry *entry;
-	काष्ठा sk_buff *skb;
+static struct sk_buff *taprio_peek_soft(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct sched_entry *entry;
+	struct sk_buff *skb;
 	u32 gate_mask;
-	पूर्णांक i;
+	int i;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	entry = rcu_dereference(q->current_entry);
 	gate_mask = entry ? entry->gate_mask : TAPRIO_ALL_GATES_OPEN;
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	अगर (!gate_mask)
-		वापस शून्य;
+	if (!gate_mask)
+		return NULL;
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-		काष्ठा Qdisc *child = q->qdiscs[i];
-		पूर्णांक prio;
+	for (i = 0; i < dev->num_tx_queues; i++) {
+		struct Qdisc *child = q->qdiscs[i];
+		int prio;
 		u8 tc;
 
-		अगर (unlikely(!child))
-			जारी;
+		if (unlikely(!child))
+			continue;
 
 		skb = child->ops->peek(child);
-		अगर (!skb)
-			जारी;
+		if (!skb)
+			continue;
 
-		अगर (TXTIME_ASSIST_IS_ENABLED(q->flags))
-			वापस skb;
+		if (TXTIME_ASSIST_IS_ENABLED(q->flags))
+			return skb;
 
 		prio = skb->priority;
 		tc = netdev_get_prio_tc_map(dev, prio);
 
-		अगर (!(gate_mask & BIT(tc)))
-			जारी;
+		if (!(gate_mask & BIT(tc)))
+			continue;
 
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा sk_buff *taprio_peek_offload(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static struct sk_buff *taprio_peek_offload(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct sk_buff *skb;
+	int i;
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-		काष्ठा Qdisc *child = q->qdiscs[i];
+	for (i = 0; i < dev->num_tx_queues; i++) {
+		struct Qdisc *child = q->qdiscs[i];
 
-		अगर (unlikely(!child))
-			जारी;
+		if (unlikely(!child))
+			continue;
 
 		skb = child->ops->peek(child);
-		अगर (!skb)
-			जारी;
+		if (!skb)
+			continue;
 
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा sk_buff *taprio_peek(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
+static struct sk_buff *taprio_peek(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
 
-	वापस q->peek(sch);
-पूर्ण
+	return q->peek(sch);
+}
 
-अटल व्योम taprio_set_budget(काष्ठा taprio_sched *q, काष्ठा sched_entry *entry)
-अणु
+static void taprio_set_budget(struct taprio_sched *q, struct sched_entry *entry)
+{
 	atomic_set(&entry->budget,
-		   भाग64_u64((u64)entry->पूर्णांकerval * 1000,
-			     atomic64_पढ़ो(&q->picos_per_byte)));
-पूर्ण
+		   div64_u64((u64)entry->interval * 1000,
+			     atomic64_read(&q->picos_per_byte)));
+}
 
-अटल काष्ठा sk_buff *taprio_dequeue_soft(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा sched_entry *entry;
+static struct sk_buff *taprio_dequeue_soft(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct sk_buff *skb = NULL;
+	struct sched_entry *entry;
 	u32 gate_mask;
-	पूर्णांक i;
+	int i;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	entry = rcu_dereference(q->current_entry);
-	/* अगर there's no entry, it means that the schedule didn't
-	 * start yet, so क्रमce all gates to be खोलो, this is in
+	/* if there's no entry, it means that the schedule didn't
+	 * start yet, so force all gates to be open, this is in
 	 * accordance to IEEE 802.1Qbv-2015 Section 8.6.9.4.5
 	 * "AdminGateSates"
 	 */
 	gate_mask = entry ? entry->gate_mask : TAPRIO_ALL_GATES_OPEN;
 
-	अगर (!gate_mask)
-		जाओ करोne;
+	if (!gate_mask)
+		goto done;
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-		काष्ठा Qdisc *child = q->qdiscs[i];
-		kसमय_प्रकार guard;
-		पूर्णांक prio;
-		पूर्णांक len;
+	for (i = 0; i < dev->num_tx_queues; i++) {
+		struct Qdisc *child = q->qdiscs[i];
+		ktime_t guard;
+		int prio;
+		int len;
 		u8 tc;
 
-		अगर (unlikely(!child))
-			जारी;
+		if (unlikely(!child))
+			continue;
 
-		अगर (TXTIME_ASSIST_IS_ENABLED(q->flags)) अणु
+		if (TXTIME_ASSIST_IS_ENABLED(q->flags)) {
 			skb = child->ops->dequeue(child);
-			अगर (!skb)
-				जारी;
-			जाओ skb_found;
-		पूर्ण
+			if (!skb)
+				continue;
+			goto skb_found;
+		}
 
 		skb = child->ops->peek(child);
-		अगर (!skb)
-			जारी;
+		if (!skb)
+			continue;
 
 		prio = skb->priority;
 		tc = netdev_get_prio_tc_map(dev, prio);
 
-		अगर (!(gate_mask & BIT(tc))) अणु
-			skb = शून्य;
-			जारी;
-		पूर्ण
+		if (!(gate_mask & BIT(tc))) {
+			skb = NULL;
+			continue;
+		}
 
 		len = qdisc_pkt_len(skb);
-		guard = kसमय_add_ns(taprio_get_समय(q),
+		guard = ktime_add_ns(taprio_get_time(q),
 				     length_to_duration(q, len));
 
-		/* In the हाल that there's no gate entry, there's no
+		/* In the case that there's no gate entry, there's no
 		 * guard band ...
 		 */
-		अगर (gate_mask != TAPRIO_ALL_GATES_OPEN &&
-		    kसमय_after(guard, entry->बंद_समय)) अणु
-			skb = शून्य;
-			जारी;
-		पूर्ण
+		if (gate_mask != TAPRIO_ALL_GATES_OPEN &&
+		    ktime_after(guard, entry->close_time)) {
+			skb = NULL;
+			continue;
+		}
 
 		/* ... and no budget. */
-		अगर (gate_mask != TAPRIO_ALL_GATES_OPEN &&
-		    atomic_sub_वापस(len, &entry->budget) < 0) अणु
-			skb = शून्य;
-			जारी;
-		पूर्ण
+		if (gate_mask != TAPRIO_ALL_GATES_OPEN &&
+		    atomic_sub_return(len, &entry->budget) < 0) {
+			skb = NULL;
+			continue;
+		}
 
 		skb = child->ops->dequeue(child);
-		अगर (unlikely(!skb))
-			जाओ करोne;
+		if (unlikely(!skb))
+			goto done;
 
 skb_found:
 		qdisc_bstats_update(sch, skb);
 		qdisc_qstats_backlog_dec(sch, skb);
 		sch->q.qlen--;
 
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
-	rcu_पढ़ो_unlock();
+done:
+	rcu_read_unlock();
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल काष्ठा sk_buff *taprio_dequeue_offload(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा sk_buff *skb;
-	पूर्णांक i;
+static struct sk_buff *taprio_dequeue_offload(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct sk_buff *skb;
+	int i;
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-		काष्ठा Qdisc *child = q->qdiscs[i];
+	for (i = 0; i < dev->num_tx_queues; i++) {
+		struct Qdisc *child = q->qdiscs[i];
 
-		अगर (unlikely(!child))
-			जारी;
+		if (unlikely(!child))
+			continue;
 
 		skb = child->ops->dequeue(child);
-		अगर (unlikely(!skb))
-			जारी;
+		if (unlikely(!skb))
+			continue;
 
 		qdisc_bstats_update(sch, skb);
 		qdisc_qstats_backlog_dec(sch, skb);
 		sch->q.qlen--;
 
-		वापस skb;
-	पूर्ण
+		return skb;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा sk_buff *taprio_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
+static struct sk_buff *taprio_dequeue(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
 
-	वापस q->dequeue(sch);
-पूर्ण
+	return q->dequeue(sch);
+}
 
-अटल bool should_restart_cycle(स्थिर काष्ठा sched_gate_list *oper,
-				 स्थिर काष्ठा sched_entry *entry)
-अणु
-	अगर (list_is_last(&entry->list, &oper->entries))
-		वापस true;
+static bool should_restart_cycle(const struct sched_gate_list *oper,
+				 const struct sched_entry *entry)
+{
+	if (list_is_last(&entry->list, &oper->entries))
+		return true;
 
-	अगर (kसमय_compare(entry->बंद_समय, oper->cycle_बंद_समय) == 0)
-		वापस true;
+	if (ktime_compare(entry->close_time, oper->cycle_close_time) == 0)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool should_change_schedules(स्थिर काष्ठा sched_gate_list *admin,
-				    स्थिर काष्ठा sched_gate_list *oper,
-				    kसमय_प्रकार बंद_समय)
-अणु
-	kसमय_प्रकार next_base_समय, extension_समय;
+static bool should_change_schedules(const struct sched_gate_list *admin,
+				    const struct sched_gate_list *oper,
+				    ktime_t close_time)
+{
+	ktime_t next_base_time, extension_time;
 
-	अगर (!admin)
-		वापस false;
+	if (!admin)
+		return false;
 
-	next_base_समय = sched_base_समय(admin);
+	next_base_time = sched_base_time(admin);
 
-	/* This is the simple हाल, the बंद_समय would fall after
-	 * the next schedule base_समय.
+	/* This is the simple case, the close_time would fall after
+	 * the next schedule base_time.
 	 */
-	अगर (kसमय_compare(next_base_समय, बंद_समय) <= 0)
-		वापस true;
+	if (ktime_compare(next_base_time, close_time) <= 0)
+		return true;
 
-	/* This is the cycle_समय_extension हाल, अगर the बंद_समय
+	/* This is the cycle_time_extension case, if the close_time
 	 * plus the amount that can be extended would fall after the
-	 * next schedule base_समय, we can extend the current schedule
-	 * क्रम that amount.
+	 * next schedule base_time, we can extend the current schedule
+	 * for that amount.
 	 */
-	extension_समय = kसमय_add_ns(बंद_समय, oper->cycle_समय_extension);
+	extension_time = ktime_add_ns(close_time, oper->cycle_time_extension);
 
-	/* FIXME: the IEEE 802.1Q-2018 Specअगरication isn't clear about
+	/* FIXME: the IEEE 802.1Q-2018 Specification isn't clear about
 	 * how precisely the extension should be made. So after
-	 * conक्रमmance testing, this logic may change.
+	 * conformance testing, this logic may change.
 	 */
-	अगर (kसमय_compare(next_base_समय, extension_समय) <= 0)
-		वापस true;
+	if (ktime_compare(next_base_time, extension_time) <= 0)
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल क्रमागत hrसमयr_restart advance_sched(काष्ठा hrसमयr *समयr)
-अणु
-	काष्ठा taprio_sched *q = container_of(समयr, काष्ठा taprio_sched,
-					      advance_समयr);
-	काष्ठा sched_gate_list *oper, *admin;
-	काष्ठा sched_entry *entry, *next;
-	काष्ठा Qdisc *sch = q->root;
-	kसमय_प्रकार बंद_समय;
+static enum hrtimer_restart advance_sched(struct hrtimer *timer)
+{
+	struct taprio_sched *q = container_of(timer, struct taprio_sched,
+					      advance_timer);
+	struct sched_gate_list *oper, *admin;
+	struct sched_entry *entry, *next;
+	struct Qdisc *sch = q->root;
+	ktime_t close_time;
 
 	spin_lock(&q->current_entry_lock);
-	entry = rcu_dereference_रक्षित(q->current_entry,
+	entry = rcu_dereference_protected(q->current_entry,
 					  lockdep_is_held(&q->current_entry_lock));
-	oper = rcu_dereference_रक्षित(q->oper_sched,
+	oper = rcu_dereference_protected(q->oper_sched,
 					 lockdep_is_held(&q->current_entry_lock));
-	admin = rcu_dereference_रक्षित(q->admin_sched,
+	admin = rcu_dereference_protected(q->admin_sched,
 					  lockdep_is_held(&q->current_entry_lock));
 
-	अगर (!oper)
-		चयन_schedules(q, &admin, &oper);
+	if (!oper)
+		switch_schedules(q, &admin, &oper);
 
-	/* This can happen in two हालs: 1. this is the very first run
+	/* This can happen in two cases: 1. this is the very first run
 	 * of this function (i.e. we weren't running any schedule
 	 * previously); 2. The previous schedule just ended. The first
 	 * entry of all schedules are pre-calculated during the
 	 * schedule initialization.
 	 */
-	अगर (unlikely(!entry || entry->बंद_समय == oper->base_समय)) अणु
-		next = list_first_entry(&oper->entries, काष्ठा sched_entry,
+	if (unlikely(!entry || entry->close_time == oper->base_time)) {
+		next = list_first_entry(&oper->entries, struct sched_entry,
 					list);
-		बंद_समय = next->बंद_समय;
-		जाओ first_run;
-	पूर्ण
+		close_time = next->close_time;
+		goto first_run;
+	}
 
-	अगर (should_restart_cycle(oper, entry)) अणु
-		next = list_first_entry(&oper->entries, काष्ठा sched_entry,
+	if (should_restart_cycle(oper, entry)) {
+		next = list_first_entry(&oper->entries, struct sched_entry,
 					list);
-		oper->cycle_बंद_समय = kसमय_add_ns(oper->cycle_बंद_समय,
-						      oper->cycle_समय);
-	पूर्ण अन्यथा अणु
+		oper->cycle_close_time = ktime_add_ns(oper->cycle_close_time,
+						      oper->cycle_time);
+	} else {
 		next = list_next_entry(entry, list);
-	पूर्ण
+	}
 
-	बंद_समय = kसमय_add_ns(entry->बंद_समय, next->पूर्णांकerval);
-	बंद_समय = min_t(kसमय_प्रकार, बंद_समय, oper->cycle_बंद_समय);
+	close_time = ktime_add_ns(entry->close_time, next->interval);
+	close_time = min_t(ktime_t, close_time, oper->cycle_close_time);
 
-	अगर (should_change_schedules(admin, oper, बंद_समय)) अणु
-		/* Set things so the next समय this runs, the new
+	if (should_change_schedules(admin, oper, close_time)) {
+		/* Set things so the next time this runs, the new
 		 * schedule runs.
 		 */
-		बंद_समय = sched_base_समय(admin);
-		चयन_schedules(q, &admin, &oper);
-	पूर्ण
+		close_time = sched_base_time(admin);
+		switch_schedules(q, &admin, &oper);
+	}
 
-	next->बंद_समय = बंद_समय;
+	next->close_time = close_time;
 	taprio_set_budget(q, next);
 
 first_run:
-	rcu_assign_poपूर्णांकer(q->current_entry, next);
+	rcu_assign_pointer(q->current_entry, next);
 	spin_unlock(&q->current_entry_lock);
 
-	hrसमयr_set_expires(&q->advance_समयr, बंद_समय);
+	hrtimer_set_expires(&q->advance_timer, close_time);
 
-	rcu_पढ़ो_lock();
-	__netअगर_schedule(sch);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	__netif_schedule(sch);
+	rcu_read_unlock();
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-अटल स्थिर काष्ठा nla_policy entry_policy[TCA_TAPRIO_SCHED_ENTRY_MAX + 1] = अणु
-	[TCA_TAPRIO_SCHED_ENTRY_INDEX]	   = अणु .type = NLA_U32 पूर्ण,
-	[TCA_TAPRIO_SCHED_ENTRY_CMD]	   = अणु .type = NLA_U8 पूर्ण,
-	[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK] = अणु .type = NLA_U32 पूर्ण,
-	[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]  = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy entry_policy[TCA_TAPRIO_SCHED_ENTRY_MAX + 1] = {
+	[TCA_TAPRIO_SCHED_ENTRY_INDEX]	   = { .type = NLA_U32 },
+	[TCA_TAPRIO_SCHED_ENTRY_CMD]	   = { .type = NLA_U8 },
+	[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK] = { .type = NLA_U32 },
+	[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]  = { .type = NLA_U32 },
+};
 
-अटल स्थिर काष्ठा nla_policy taprio_policy[TCA_TAPRIO_ATTR_MAX + 1] = अणु
-	[TCA_TAPRIO_ATTR_PRIOMAP]	       = अणु
-		.len = माप(काष्ठा tc_mqprio_qopt)
-	पूर्ण,
-	[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST]           = अणु .type = NLA_NESTED पूर्ण,
-	[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]            = अणु .type = NLA_S64 पूर्ण,
-	[TCA_TAPRIO_ATTR_SCHED_SINGLE_ENTRY]         = अणु .type = NLA_NESTED पूर्ण,
-	[TCA_TAPRIO_ATTR_SCHED_CLOCKID]              = अणु .type = NLA_S32 पूर्ण,
-	[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]           = अणु .type = NLA_S64 पूर्ण,
-	[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION] = अणु .type = NLA_S64 पूर्ण,
-	[TCA_TAPRIO_ATTR_FLAGS]                      = अणु .type = NLA_U32 पूर्ण,
-	[TCA_TAPRIO_ATTR_TXTIME_DELAY]		     = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy taprio_policy[TCA_TAPRIO_ATTR_MAX + 1] = {
+	[TCA_TAPRIO_ATTR_PRIOMAP]	       = {
+		.len = sizeof(struct tc_mqprio_qopt)
+	},
+	[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST]           = { .type = NLA_NESTED },
+	[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]            = { .type = NLA_S64 },
+	[TCA_TAPRIO_ATTR_SCHED_SINGLE_ENTRY]         = { .type = NLA_NESTED },
+	[TCA_TAPRIO_ATTR_SCHED_CLOCKID]              = { .type = NLA_S32 },
+	[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]           = { .type = NLA_S64 },
+	[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION] = { .type = NLA_S64 },
+	[TCA_TAPRIO_ATTR_FLAGS]                      = { .type = NLA_U32 },
+	[TCA_TAPRIO_ATTR_TXTIME_DELAY]		     = { .type = NLA_U32 },
+};
 
-अटल पूर्णांक fill_sched_entry(काष्ठा taprio_sched *q, काष्ठा nlattr **tb,
-			    काष्ठा sched_entry *entry,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक min_duration = length_to_duration(q, ETH_ZLEN);
-	u32 पूर्णांकerval = 0;
+static int fill_sched_entry(struct taprio_sched *q, struct nlattr **tb,
+			    struct sched_entry *entry,
+			    struct netlink_ext_ack *extack)
+{
+	int min_duration = length_to_duration(q, ETH_ZLEN);
+	u32 interval = 0;
 
-	अगर (tb[TCA_TAPRIO_SCHED_ENTRY_CMD])
+	if (tb[TCA_TAPRIO_SCHED_ENTRY_CMD])
 		entry->command = nla_get_u8(
 			tb[TCA_TAPRIO_SCHED_ENTRY_CMD]);
 
-	अगर (tb[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK])
+	if (tb[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK])
 		entry->gate_mask = nla_get_u32(
 			tb[TCA_TAPRIO_SCHED_ENTRY_GATE_MASK]);
 
-	अगर (tb[TCA_TAPRIO_SCHED_ENTRY_INTERVAL])
-		पूर्णांकerval = nla_get_u32(
+	if (tb[TCA_TAPRIO_SCHED_ENTRY_INTERVAL])
+		interval = nla_get_u32(
 			tb[TCA_TAPRIO_SCHED_ENTRY_INTERVAL]);
 
-	/* The पूर्णांकerval should allow at least the minimum ethernet
+	/* The interval should allow at least the minimum ethernet
 	 * frame to go out.
 	 */
-	अगर (पूर्णांकerval < min_duration) अणु
+	if (interval < min_duration) {
 		NL_SET_ERR_MSG(extack, "Invalid interval for schedule entry");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	entry->पूर्णांकerval = पूर्णांकerval;
+	entry->interval = interval;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_sched_entry(काष्ठा taprio_sched *q, काष्ठा nlattr *n,
-			     काष्ठा sched_entry *entry, पूर्णांक index,
-			     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[TCA_TAPRIO_SCHED_ENTRY_MAX + 1] = अणु पूर्ण;
-	पूर्णांक err;
+static int parse_sched_entry(struct taprio_sched *q, struct nlattr *n,
+			     struct sched_entry *entry, int index,
+			     struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[TCA_TAPRIO_SCHED_ENTRY_MAX + 1] = { };
+	int err;
 
 	err = nla_parse_nested_deprecated(tb, TCA_TAPRIO_SCHED_ENTRY_MAX, n,
-					  entry_policy, शून्य);
-	अगर (err < 0) अणु
+					  entry_policy, NULL);
+	if (err < 0) {
 		NL_SET_ERR_MSG(extack, "Could not parse nested entry");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	entry->index = index;
 
-	वापस fill_sched_entry(q, tb, entry, extack);
-पूर्ण
+	return fill_sched_entry(q, tb, entry, extack);
+}
 
-अटल पूर्णांक parse_sched_list(काष्ठा taprio_sched *q, काष्ठा nlattr *list,
-			    काष्ठा sched_gate_list *sched,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *n;
-	पूर्णांक err, rem;
-	पूर्णांक i = 0;
+static int parse_sched_list(struct taprio_sched *q, struct nlattr *list,
+			    struct sched_gate_list *sched,
+			    struct netlink_ext_ack *extack)
+{
+	struct nlattr *n;
+	int err, rem;
+	int i = 0;
 
-	अगर (!list)
-		वापस -EINVAL;
+	if (!list)
+		return -EINVAL;
 
-	nla_क्रम_each_nested(n, list, rem) अणु
-		काष्ठा sched_entry *entry;
+	nla_for_each_nested(n, list, rem) {
+		struct sched_entry *entry;
 
-		अगर (nla_type(n) != TCA_TAPRIO_SCHED_ENTRY) अणु
+		if (nla_type(n) != TCA_TAPRIO_SCHED_ENTRY) {
 			NL_SET_ERR_MSG(extack, "Attribute is not of type 'entry'");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		entry = kzalloc(माप(*entry), GFP_KERNEL);
-		अगर (!entry) अणु
+		entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+		if (!entry) {
 			NL_SET_ERR_MSG(extack, "Not enough memory for entry");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		err = parse_sched_entry(q, n, entry, i, extack);
-		अगर (err < 0) अणु
-			kमुक्त(entry);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			kfree(entry);
+			return err;
+		}
 
 		list_add_tail(&entry->list, &sched->entries);
 		i++;
-	पूर्ण
+	}
 
 	sched->num_entries = i;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल पूर्णांक parse_taprio_schedule(काष्ठा taprio_sched *q, काष्ठा nlattr **tb,
-				 काष्ठा sched_gate_list *new,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	पूर्णांक err = 0;
+static int parse_taprio_schedule(struct taprio_sched *q, struct nlattr **tb,
+				 struct sched_gate_list *new,
+				 struct netlink_ext_ack *extack)
+{
+	int err = 0;
 
-	अगर (tb[TCA_TAPRIO_ATTR_SCHED_SINGLE_ENTRY]) अणु
+	if (tb[TCA_TAPRIO_ATTR_SCHED_SINGLE_ENTRY]) {
 		NL_SET_ERR_MSG(extack, "Adding a single entry is not supported");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	अगर (tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME])
-		new->base_समय = nla_get_s64(tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]);
+	if (tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME])
+		new->base_time = nla_get_s64(tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME]);
 
-	अगर (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION])
-		new->cycle_समय_extension = nla_get_s64(tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION]);
+	if (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION])
+		new->cycle_time_extension = nla_get_s64(tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION]);
 
-	अगर (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME])
-		new->cycle_समय = nla_get_s64(tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]);
+	if (tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME])
+		new->cycle_time = nla_get_s64(tb[TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME]);
 
-	अगर (tb[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST])
+	if (tb[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST])
 		err = parse_sched_list(q, tb[TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST],
 				       new, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (!new->cycle_समय) अणु
-		काष्ठा sched_entry *entry;
-		kसमय_प्रकार cycle = 0;
+	if (!new->cycle_time) {
+		struct sched_entry *entry;
+		ktime_t cycle = 0;
 
-		list_क्रम_each_entry(entry, &new->entries, list)
-			cycle = kसमय_add_ns(cycle, entry->पूर्णांकerval);
+		list_for_each_entry(entry, &new->entries, list)
+			cycle = ktime_add_ns(cycle, entry->interval);
 
-		अगर (!cycle) अणु
+		if (!cycle) {
 			NL_SET_ERR_MSG(extack, "'cycle_time' can never be 0");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		new->cycle_समय = cycle;
-	पूर्ण
+		new->cycle_time = cycle;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक taprio_parse_mqprio_opt(काष्ठा net_device *dev,
-				   काष्ठा tc_mqprio_qopt *qopt,
-				   काष्ठा netlink_ext_ack *extack,
+static int taprio_parse_mqprio_opt(struct net_device *dev,
+				   struct tc_mqprio_qopt *qopt,
+				   struct netlink_ext_ack *extack,
 				   u32 taprio_flags)
-अणु
-	पूर्णांक i, j;
+{
+	int i, j;
 
-	अगर (!qopt && !dev->num_tc) अणु
+	if (!qopt && !dev->num_tc) {
 		NL_SET_ERR_MSG(extack, "'mqprio' configuration is necessary");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* If num_tc is alपढ़ोy set, it means that the user alपढ़ोy
+	/* If num_tc is already set, it means that the user already
 	 * configured the mqprio part
 	 */
-	अगर (dev->num_tc)
-		वापस 0;
+	if (dev->num_tc)
+		return 0;
 
-	/* Verअगरy num_tc is not out of max range */
-	अगर (qopt->num_tc > TC_MAX_QUEUE) अणु
+	/* Verify num_tc is not out of max range */
+	if (qopt->num_tc > TC_MAX_QUEUE) {
 		NL_SET_ERR_MSG(extack, "Number of traffic classes is outside valid range");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* taprio imposes that traffic classes map 1:n to tx queues */
-	अगर (qopt->num_tc > dev->num_tx_queues) अणु
+	if (qopt->num_tc > dev->num_tx_queues) {
 		NL_SET_ERR_MSG(extack, "Number of traffic classes is greater than number of HW queues");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* Verअगरy priority mapping uses valid tcs */
-	क्रम (i = 0; i <= TC_BITMASK; i++) अणु
-		अगर (qopt->prio_tc_map[i] >= qopt->num_tc) अणु
+	/* Verify priority mapping uses valid tcs */
+	for (i = 0; i <= TC_BITMASK; i++) {
+		if (qopt->prio_tc_map[i] >= qopt->num_tc) {
 			NL_SET_ERR_MSG(extack, "Invalid traffic class in priority to traffic class mapping");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	क्रम (i = 0; i < qopt->num_tc; i++) अणु
-		अचिन्हित पूर्णांक last = qopt->offset[i] + qopt->count[i];
+	for (i = 0; i < qopt->num_tc; i++) {
+		unsigned int last = qopt->offset[i] + qopt->count[i];
 
-		/* Verअगरy the queue count is in tx range being equal to the
+		/* Verify the queue count is in tx range being equal to the
 		 * real_num_tx_queues indicates the last queue is in use.
 		 */
-		अगर (qopt->offset[i] >= dev->num_tx_queues ||
+		if (qopt->offset[i] >= dev->num_tx_queues ||
 		    !qopt->count[i] ||
-		    last > dev->real_num_tx_queues) अणु
+		    last > dev->real_num_tx_queues) {
 			NL_SET_ERR_MSG(extack, "Invalid queue in traffic class to queue mapping");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (TXTIME_ASSIST_IS_ENABLED(taprio_flags))
-			जारी;
+		if (TXTIME_ASSIST_IS_ENABLED(taprio_flags))
+			continue;
 
-		/* Verअगरy that the offset and counts करो not overlap */
-		क्रम (j = i + 1; j < qopt->num_tc; j++) अणु
-			अगर (last > qopt->offset[j]) अणु
+		/* Verify that the offset and counts do not overlap */
+		for (j = i + 1; j < qopt->num_tc; j++) {
+			if (last > qopt->offset[j]) {
 				NL_SET_ERR_MSG(extack, "Detected overlap in the traffic class to queue mapping");
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक taprio_get_start_समय(काष्ठा Qdisc *sch,
-				 काष्ठा sched_gate_list *sched,
-				 kसमय_प्रकार *start)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	kसमय_प्रकार now, base, cycle;
+static int taprio_get_start_time(struct Qdisc *sch,
+				 struct sched_gate_list *sched,
+				 ktime_t *start)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	ktime_t now, base, cycle;
 	s64 n;
 
-	base = sched_base_समय(sched);
-	now = taprio_get_समय(q);
+	base = sched_base_time(sched);
+	now = taprio_get_time(q);
 
-	अगर (kसमय_after(base, now)) अणु
+	if (ktime_after(base, now)) {
 		*start = base;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	cycle = sched->cycle_समय;
+	cycle = sched->cycle_time;
 
 	/* The qdisc is expected to have at least one sched_entry.  Moreover,
-	 * any entry must have 'interval' > 0. Thus अगर the cycle समय is zero,
-	 * something went really wrong. In that हाल, we should warn about this
-	 * inconsistent state and वापस error.
+	 * any entry must have 'interval' > 0. Thus if the cycle time is zero,
+	 * something went really wrong. In that case, we should warn about this
+	 * inconsistent state and return error.
 	 */
-	अगर (WARN_ON(!cycle))
-		वापस -EFAULT;
+	if (WARN_ON(!cycle))
+		return -EFAULT;
 
-	/* Schedule the start समय क्रम the beginning of the next
+	/* Schedule the start time for the beginning of the next
 	 * cycle.
 	 */
-	n = भाग64_s64(kसमय_sub_ns(now, base), cycle);
-	*start = kसमय_add_ns(base, (n + 1) * cycle);
-	वापस 0;
-पूर्ण
+	n = div64_s64(ktime_sub_ns(now, base), cycle);
+	*start = ktime_add_ns(base, (n + 1) * cycle);
+	return 0;
+}
 
-अटल व्योम setup_first_बंद_समय(काष्ठा taprio_sched *q,
-				   काष्ठा sched_gate_list *sched, kसमय_प्रकार base)
-अणु
-	काष्ठा sched_entry *first;
-	kसमय_प्रकार cycle;
+static void setup_first_close_time(struct taprio_sched *q,
+				   struct sched_gate_list *sched, ktime_t base)
+{
+	struct sched_entry *first;
+	ktime_t cycle;
 
 	first = list_first_entry(&sched->entries,
-				 काष्ठा sched_entry, list);
+				 struct sched_entry, list);
 
-	cycle = sched->cycle_समय;
+	cycle = sched->cycle_time;
 
-	/* FIXME: find a better place to करो this */
-	sched->cycle_बंद_समय = kसमय_add_ns(base, cycle);
+	/* FIXME: find a better place to do this */
+	sched->cycle_close_time = ktime_add_ns(base, cycle);
 
-	first->बंद_समय = kसमय_add_ns(base, first->पूर्णांकerval);
+	first->close_time = ktime_add_ns(base, first->interval);
 	taprio_set_budget(q, first);
-	rcu_assign_poपूर्णांकer(q->current_entry, शून्य);
-पूर्ण
+	rcu_assign_pointer(q->current_entry, NULL);
+}
 
-अटल व्योम taprio_start_sched(काष्ठा Qdisc *sch,
-			       kसमय_प्रकार start, काष्ठा sched_gate_list *new)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	kसमय_प्रकार expires;
+static void taprio_start_sched(struct Qdisc *sch,
+			       ktime_t start, struct sched_gate_list *new)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	ktime_t expires;
 
-	अगर (FULL_OFFLOAD_IS_ENABLED(q->flags))
-		वापस;
+	if (FULL_OFFLOAD_IS_ENABLED(q->flags))
+		return;
 
-	expires = hrसमयr_get_expires(&q->advance_समयr);
-	अगर (expires == 0)
+	expires = hrtimer_get_expires(&q->advance_timer);
+	if (expires == 0)
 		expires = KTIME_MAX;
 
-	/* If the new schedule starts beक्रमe the next expiration, we
+	/* If the new schedule starts before the next expiration, we
 	 * reprogram it to the earliest one, so we change the admin
-	 * schedule to the operational one at the right समय.
+	 * schedule to the operational one at the right time.
 	 */
-	start = min_t(kसमय_प्रकार, start, expires);
+	start = min_t(ktime_t, start, expires);
 
-	hrसमयr_start(&q->advance_समयr, start, HRTIMER_MODE_ABS);
-पूर्ण
+	hrtimer_start(&q->advance_timer, start, HRTIMER_MODE_ABS);
+}
 
-अटल व्योम taprio_set_picos_per_byte(काष्ठा net_device *dev,
-				      काष्ठा taprio_sched *q)
-अणु
-	काष्ठा ethtool_link_ksettings ecmd;
-	पूर्णांक speed = SPEED_10;
-	पूर्णांक picos_per_byte;
-	पूर्णांक err;
+static void taprio_set_picos_per_byte(struct net_device *dev,
+				      struct taprio_sched *q)
+{
+	struct ethtool_link_ksettings ecmd;
+	int speed = SPEED_10;
+	int picos_per_byte;
+	int err;
 
 	err = __ethtool_get_link_ksettings(dev, &ecmd);
-	अगर (err < 0)
-		जाओ skip;
+	if (err < 0)
+		goto skip;
 
-	अगर (ecmd.base.speed && ecmd.base.speed != SPEED_UNKNOWN)
+	if (ecmd.base.speed && ecmd.base.speed != SPEED_UNKNOWN)
 		speed = ecmd.base.speed;
 
 skip:
@@ -1119,809 +1118,809 @@ skip:
 
 	atomic64_set(&q->picos_per_byte, picos_per_byte);
 	netdev_dbg(dev, "taprio: set %s's picos_per_byte to: %lld, linkspeed: %d\n",
-		   dev->name, (दीर्घ दीर्घ)atomic64_पढ़ो(&q->picos_per_byte),
+		   dev->name, (long long)atomic64_read(&q->picos_per_byte),
 		   ecmd.base.speed);
-पूर्ण
+}
 
-अटल पूर्णांक taprio_dev_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
-			       व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा net_device *qdev;
-	काष्ठा taprio_sched *q;
+static int taprio_dev_notifier(struct notifier_block *nb, unsigned long event,
+			       void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct net_device *qdev;
+	struct taprio_sched *q;
 	bool found = false;
 
 	ASSERT_RTNL();
 
-	अगर (event != NETDEV_UP && event != NETDEV_CHANGE)
-		वापस NOTIFY_DONE;
+	if (event != NETDEV_UP && event != NETDEV_CHANGE)
+		return NOTIFY_DONE;
 
 	spin_lock(&taprio_list_lock);
-	list_क्रम_each_entry(q, &taprio_list, taprio_list) अणु
+	list_for_each_entry(q, &taprio_list, taprio_list) {
 		qdev = qdisc_dev(q->root);
-		अगर (qdev == dev) अणु
+		if (qdev == dev) {
 			found = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&taprio_list_lock);
 
-	अगर (found)
+	if (found)
 		taprio_set_picos_per_byte(dev, q);
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल व्योम setup_txसमय(काष्ठा taprio_sched *q,
-			 काष्ठा sched_gate_list *sched, kसमय_प्रकार base)
-अणु
-	काष्ठा sched_entry *entry;
-	u32 पूर्णांकerval = 0;
+static void setup_txtime(struct taprio_sched *q,
+			 struct sched_gate_list *sched, ktime_t base)
+{
+	struct sched_entry *entry;
+	u32 interval = 0;
 
-	list_क्रम_each_entry(entry, &sched->entries, list) अणु
-		entry->next_txसमय = kसमय_add_ns(base, पूर्णांकerval);
-		पूर्णांकerval += entry->पूर्णांकerval;
-	पूर्ण
-पूर्ण
+	list_for_each_entry(entry, &sched->entries, list) {
+		entry->next_txtime = ktime_add_ns(base, interval);
+		interval += entry->interval;
+	}
+}
 
-अटल काष्ठा tc_taprio_qopt_offload *taprio_offload_alloc(पूर्णांक num_entries)
-अणु
-	काष्ठा __tc_taprio_qopt_offload *__offload;
+static struct tc_taprio_qopt_offload *taprio_offload_alloc(int num_entries)
+{
+	struct __tc_taprio_qopt_offload *__offload;
 
-	__offload = kzalloc(काष्ठा_size(__offload, offload.entries, num_entries),
+	__offload = kzalloc(struct_size(__offload, offload.entries, num_entries),
 			    GFP_KERNEL);
-	अगर (!__offload)
-		वापस शून्य;
+	if (!__offload)
+		return NULL;
 
 	refcount_set(&__offload->users, 1);
 
-	वापस &__offload->offload;
-पूर्ण
+	return &__offload->offload;
+}
 
-काष्ठा tc_taprio_qopt_offload *taprio_offload_get(काष्ठा tc_taprio_qopt_offload
+struct tc_taprio_qopt_offload *taprio_offload_get(struct tc_taprio_qopt_offload
 						  *offload)
-अणु
-	काष्ठा __tc_taprio_qopt_offload *__offload;
+{
+	struct __tc_taprio_qopt_offload *__offload;
 
-	__offload = container_of(offload, काष्ठा __tc_taprio_qopt_offload,
+	__offload = container_of(offload, struct __tc_taprio_qopt_offload,
 				 offload);
 
 	refcount_inc(&__offload->users);
 
-	वापस offload;
-पूर्ण
+	return offload;
+}
 EXPORT_SYMBOL_GPL(taprio_offload_get);
 
-व्योम taprio_offload_मुक्त(काष्ठा tc_taprio_qopt_offload *offload)
-अणु
-	काष्ठा __tc_taprio_qopt_offload *__offload;
+void taprio_offload_free(struct tc_taprio_qopt_offload *offload)
+{
+	struct __tc_taprio_qopt_offload *__offload;
 
-	__offload = container_of(offload, काष्ठा __tc_taprio_qopt_offload,
+	__offload = container_of(offload, struct __tc_taprio_qopt_offload,
 				 offload);
 
-	अगर (!refcount_dec_and_test(&__offload->users))
-		वापस;
+	if (!refcount_dec_and_test(&__offload->users))
+		return;
 
-	kमुक्त(__offload);
-पूर्ण
-EXPORT_SYMBOL_GPL(taprio_offload_मुक्त);
+	kfree(__offload);
+}
+EXPORT_SYMBOL_GPL(taprio_offload_free);
 
-/* The function will only serve to keep the poपूर्णांकers to the "oper" and "admin"
- * schedules valid in relation to their base बार, so when calling dump() the
+/* The function will only serve to keep the pointers to the "oper" and "admin"
+ * schedules valid in relation to their base times, so when calling dump() the
  * users looks at the right schedules.
  * When using full offload, the admin configuration is promoted to oper at the
- * base_समय in the PHC समय करोमुख्य.  But because the प्रणाली समय is not
- * necessarily in sync with that, we can't just trigger a hrसमयr to call
- * चयन_schedules at the right hardware समय.
+ * base_time in the PHC time domain.  But because the system time is not
+ * necessarily in sync with that, we can't just trigger a hrtimer to call
+ * switch_schedules at the right hardware time.
  * At the moment we call this by hand right away from taprio, but in the future
- * it will be useful to create a mechanism क्रम drivers to notअगरy taprio of the
+ * it will be useful to create a mechanism for drivers to notify taprio of the
  * offload state (PENDING, ACTIVE, INACTIVE) so it can be visible in dump().
  * This is left as TODO.
  */
-अटल व्योम taprio_offload_config_changed(काष्ठा taprio_sched *q)
-अणु
-	काष्ठा sched_gate_list *oper, *admin;
+static void taprio_offload_config_changed(struct taprio_sched *q)
+{
+	struct sched_gate_list *oper, *admin;
 
 	spin_lock(&q->current_entry_lock);
 
-	oper = rcu_dereference_रक्षित(q->oper_sched,
+	oper = rcu_dereference_protected(q->oper_sched,
 					 lockdep_is_held(&q->current_entry_lock));
-	admin = rcu_dereference_रक्षित(q->admin_sched,
+	admin = rcu_dereference_protected(q->admin_sched,
 					  lockdep_is_held(&q->current_entry_lock));
 
-	चयन_schedules(q, &admin, &oper);
+	switch_schedules(q, &admin, &oper);
 
 	spin_unlock(&q->current_entry_lock);
-पूर्ण
+}
 
-अटल u32 tc_map_to_queue_mask(काष्ठा net_device *dev, u32 tc_mask)
-अणु
+static u32 tc_map_to_queue_mask(struct net_device *dev, u32 tc_mask)
+{
 	u32 i, queue_mask = 0;
 
-	क्रम (i = 0; i < dev->num_tc; i++) अणु
+	for (i = 0; i < dev->num_tc; i++) {
 		u32 offset, count;
 
-		अगर (!(tc_mask & BIT(i)))
-			जारी;
+		if (!(tc_mask & BIT(i)))
+			continue;
 
 		offset = dev->tc_to_txq[i].offset;
 		count = dev->tc_to_txq[i].count;
 
 		queue_mask |= GENMASK(offset + count - 1, offset);
-	पूर्ण
+	}
 
-	वापस queue_mask;
-पूर्ण
+	return queue_mask;
+}
 
-अटल व्योम taprio_sched_to_offload(काष्ठा net_device *dev,
-				    काष्ठा sched_gate_list *sched,
-				    काष्ठा tc_taprio_qopt_offload *offload)
-अणु
-	काष्ठा sched_entry *entry;
-	पूर्णांक i = 0;
+static void taprio_sched_to_offload(struct net_device *dev,
+				    struct sched_gate_list *sched,
+				    struct tc_taprio_qopt_offload *offload)
+{
+	struct sched_entry *entry;
+	int i = 0;
 
-	offload->base_समय = sched->base_समय;
-	offload->cycle_समय = sched->cycle_समय;
-	offload->cycle_समय_extension = sched->cycle_समय_extension;
+	offload->base_time = sched->base_time;
+	offload->cycle_time = sched->cycle_time;
+	offload->cycle_time_extension = sched->cycle_time_extension;
 
-	list_क्रम_each_entry(entry, &sched->entries, list) अणु
-		काष्ठा tc_taprio_sched_entry *e = &offload->entries[i];
+	list_for_each_entry(entry, &sched->entries, list) {
+		struct tc_taprio_sched_entry *e = &offload->entries[i];
 
 		e->command = entry->command;
-		e->पूर्णांकerval = entry->पूर्णांकerval;
+		e->interval = entry->interval;
 		e->gate_mask = tc_map_to_queue_mask(dev, entry->gate_mask);
 
 		i++;
-	पूर्ण
+	}
 
 	offload->num_entries = i;
-पूर्ण
+}
 
-अटल पूर्णांक taprio_enable_offload(काष्ठा net_device *dev,
-				 काष्ठा taprio_sched *q,
-				 काष्ठा sched_gate_list *sched,
-				 काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
-	काष्ठा tc_taprio_qopt_offload *offload;
-	पूर्णांक err = 0;
+static int taprio_enable_offload(struct net_device *dev,
+				 struct taprio_sched *q,
+				 struct sched_gate_list *sched,
+				 struct netlink_ext_ack *extack)
+{
+	const struct net_device_ops *ops = dev->netdev_ops;
+	struct tc_taprio_qopt_offload *offload;
+	int err = 0;
 
-	अगर (!ops->nकरो_setup_tc) अणु
+	if (!ops->ndo_setup_tc) {
 		NL_SET_ERR_MSG(extack,
 			       "Device does not support taprio offload");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	offload = taprio_offload_alloc(sched->num_entries);
-	अगर (!offload) अणु
+	if (!offload) {
 		NL_SET_ERR_MSG(extack,
 			       "Not enough memory for enabling offload mode");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	offload->enable = 1;
 	taprio_sched_to_offload(dev, sched, offload);
 
-	err = ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_TAPRIO, offload);
-	अगर (err < 0) अणु
+	err = ops->ndo_setup_tc(dev, TC_SETUP_QDISC_TAPRIO, offload);
+	if (err < 0) {
 		NL_SET_ERR_MSG(extack,
 			       "Device failed to setup taprio offload");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-करोne:
-	taprio_offload_मुक्त(offload);
+done:
+	taprio_offload_free(offload);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक taprio_disable_offload(काष्ठा net_device *dev,
-				  काष्ठा taprio_sched *q,
-				  काष्ठा netlink_ext_ack *extack)
-अणु
-	स्थिर काष्ठा net_device_ops *ops = dev->netdev_ops;
-	काष्ठा tc_taprio_qopt_offload *offload;
-	पूर्णांक err;
+static int taprio_disable_offload(struct net_device *dev,
+				  struct taprio_sched *q,
+				  struct netlink_ext_ack *extack)
+{
+	const struct net_device_ops *ops = dev->netdev_ops;
+	struct tc_taprio_qopt_offload *offload;
+	int err;
 
-	अगर (!FULL_OFFLOAD_IS_ENABLED(q->flags))
-		वापस 0;
+	if (!FULL_OFFLOAD_IS_ENABLED(q->flags))
+		return 0;
 
-	अगर (!ops->nकरो_setup_tc)
-		वापस -EOPNOTSUPP;
+	if (!ops->ndo_setup_tc)
+		return -EOPNOTSUPP;
 
 	offload = taprio_offload_alloc(0);
-	अगर (!offload) अणु
+	if (!offload) {
 		NL_SET_ERR_MSG(extack,
 			       "Not enough memory to disable offload mode");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	offload->enable = 0;
 
-	err = ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_TAPRIO, offload);
-	अगर (err < 0) अणु
+	err = ops->ndo_setup_tc(dev, TC_SETUP_QDISC_TAPRIO, offload);
+	if (err < 0) {
 		NL_SET_ERR_MSG(extack,
 			       "Device failed to disable offload");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	taprio_offload_मुक्त(offload);
+	taprio_offload_free(offload);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* If full offload is enabled, the only possible घड़ीid is the net device's
- * PHC. For that reason, specअगरying a घड़ीid through netlink is incorrect.
- * For txसमय-assist, it is implicitly assumed that the device's PHC is kept
- * in sync with the specअगरied घड़ीid via a user space daemon such as phc2sys.
- * For both software taprio and txसमय-assist, the घड़ीid is used क्रम the
- * hrसमयr that advances the schedule and hence mandatory.
+/* If full offload is enabled, the only possible clockid is the net device's
+ * PHC. For that reason, specifying a clockid through netlink is incorrect.
+ * For txtime-assist, it is implicitly assumed that the device's PHC is kept
+ * in sync with the specified clockid via a user space daemon such as phc2sys.
+ * For both software taprio and txtime-assist, the clockid is used for the
+ * hrtimer that advances the schedule and hence mandatory.
  */
-अटल पूर्णांक taprio_parse_घड़ीid(काष्ठा Qdisc *sch, काष्ठा nlattr **tb,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	पूर्णांक err = -EINVAL;
+static int taprio_parse_clockid(struct Qdisc *sch, struct nlattr **tb,
+				struct netlink_ext_ack *extack)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	int err = -EINVAL;
 
-	अगर (FULL_OFFLOAD_IS_ENABLED(q->flags)) अणु
-		स्थिर काष्ठा ethtool_ops *ops = dev->ethtool_ops;
-		काष्ठा ethtool_ts_info info = अणु
+	if (FULL_OFFLOAD_IS_ENABLED(q->flags)) {
+		const struct ethtool_ops *ops = dev->ethtool_ops;
+		struct ethtool_ts_info info = {
 			.cmd = ETHTOOL_GET_TS_INFO,
 			.phc_index = -1,
-		पूर्ण;
+		};
 
-		अगर (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) अणु
+		if (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) {
 			NL_SET_ERR_MSG(extack,
 				       "The 'clockid' cannot be specified for full offload");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (ops && ops->get_ts_info)
+		if (ops && ops->get_ts_info)
 			err = ops->get_ts_info(dev, &info);
 
-		अगर (err || info.phc_index < 0) अणु
+		if (err || info.phc_index < 0) {
 			NL_SET_ERR_MSG(extack,
 				       "Device does not have a PTP clock");
 			err = -ENOTSUPP;
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा अगर (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) अणु
-		पूर्णांक घड़ीid = nla_get_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
+			goto out;
+		}
+	} else if (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) {
+		int clockid = nla_get_s32(tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]);
 
-		/* We only support अटल घड़ीids and we करोn't allow
-		 * क्रम it to be modअगरied after the first init.
+		/* We only support static clockids and we don't allow
+		 * for it to be modified after the first init.
 		 */
-		अगर (घड़ीid < 0 ||
-		    (q->घड़ीid != -1 && q->घड़ीid != घड़ीid)) अणु
+		if (clockid < 0 ||
+		    (q->clockid != -1 && q->clockid != clockid)) {
 			NL_SET_ERR_MSG(extack,
 				       "Changing the 'clockid' of a running schedule is not supported");
 			err = -ENOTSUPP;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		चयन (घड़ीid) अणु
-		हाल CLOCK_REALTIME:
+		switch (clockid) {
+		case CLOCK_REALTIME:
 			q->tk_offset = TK_OFFS_REAL;
-			अवरोध;
-		हाल CLOCK_MONOTONIC:
+			break;
+		case CLOCK_MONOTONIC:
 			q->tk_offset = TK_OFFS_MAX;
-			अवरोध;
-		हाल CLOCK_BOOTTIME:
+			break;
+		case CLOCK_BOOTTIME:
 			q->tk_offset = TK_OFFS_BOOT;
-			अवरोध;
-		हाल CLOCK_TAI:
+			break;
+		case CLOCK_TAI:
 			q->tk_offset = TK_OFFS_TAI;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			NL_SET_ERR_MSG(extack, "Invalid 'clockid'");
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		q->घड़ीid = घड़ीid;
-	पूर्ण अन्यथा अणु
+		q->clockid = clockid;
+	} else {
 		NL_SET_ERR_MSG(extack, "Specifying a 'clockid' is mandatory");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Everything went ok, वापस success. */
+	/* Everything went ok, return success. */
 	err = 0;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक taprio_mqprio_cmp(स्थिर काष्ठा net_device *dev,
-			     स्थिर काष्ठा tc_mqprio_qopt *mqprio)
-अणु
-	पूर्णांक i;
+static int taprio_mqprio_cmp(const struct net_device *dev,
+			     const struct tc_mqprio_qopt *mqprio)
+{
+	int i;
 
-	अगर (!mqprio || mqprio->num_tc != dev->num_tc)
-		वापस -1;
+	if (!mqprio || mqprio->num_tc != dev->num_tc)
+		return -1;
 
-	क्रम (i = 0; i < mqprio->num_tc; i++)
-		अगर (dev->tc_to_txq[i].count != mqprio->count[i] ||
+	for (i = 0; i < mqprio->num_tc; i++)
+		if (dev->tc_to_txq[i].count != mqprio->count[i] ||
 		    dev->tc_to_txq[i].offset != mqprio->offset[i])
-			वापस -1;
+			return -1;
 
-	क्रम (i = 0; i <= TC_BITMASK; i++)
-		अगर (dev->prio_tc_map[i] != mqprio->prio_tc_map[i])
-			वापस -1;
+	for (i = 0; i <= TC_BITMASK; i++)
+		if (dev->prio_tc_map[i] != mqprio->prio_tc_map[i])
+			return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* The semantics of the 'flags' argument in relation to 'change()'
- * requests, are पूर्णांकerpreted following two rules (which are applied in
- * this order): (1) an omitted 'flags' argument is पूर्णांकerpreted as
+ * requests, are interpreted following two rules (which are applied in
+ * this order): (1) an omitted 'flags' argument is interpreted as
  * zero; (2) the 'flags' of a "running" taprio instance cannot be
  * changed.
  */
-अटल पूर्णांक taprio_new_flags(स्थिर काष्ठा nlattr *attr, u32 old,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
+static int taprio_new_flags(const struct nlattr *attr, u32 old,
+			    struct netlink_ext_ack *extack)
+{
 	u32 new = 0;
 
-	अगर (attr)
+	if (attr)
 		new = nla_get_u32(attr);
 
-	अगर (old != TAPRIO_FLAGS_INVALID && old != new) अणु
+	if (old != TAPRIO_FLAGS_INVALID && old != new) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing 'flags' of a running schedule is not supported");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (!taprio_flags_valid(new)) अणु
+	if (!taprio_flags_valid(new)) {
 		NL_SET_ERR_MSG_MOD(extack, "Specified 'flags' are not valid");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल पूर्णांक taprio_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-			 काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा nlattr *tb[TCA_TAPRIO_ATTR_MAX + 1] = अणु पूर्ण;
-	काष्ठा sched_gate_list *oper, *admin, *new_admin;
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा tc_mqprio_qopt *mqprio = शून्य;
-	अचिन्हित दीर्घ flags;
-	kसमय_प्रकार start;
-	पूर्णांक i, err;
+static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
+			 struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[TCA_TAPRIO_ATTR_MAX + 1] = { };
+	struct sched_gate_list *oper, *admin, *new_admin;
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct tc_mqprio_qopt *mqprio = NULL;
+	unsigned long flags;
+	ktime_t start;
+	int i, err;
 
 	err = nla_parse_nested_deprecated(tb, TCA_TAPRIO_ATTR_MAX, opt,
 					  taprio_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_TAPRIO_ATTR_PRIOMAP])
+	if (tb[TCA_TAPRIO_ATTR_PRIOMAP])
 		mqprio = nla_data(tb[TCA_TAPRIO_ATTR_PRIOMAP]);
 
 	err = taprio_new_flags(tb[TCA_TAPRIO_ATTR_FLAGS],
 			       q->flags, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	q->flags = err;
 
 	err = taprio_parse_mqprio_opt(dev, mqprio, extack, q->flags);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	new_admin = kzalloc(माप(*new_admin), GFP_KERNEL);
-	अगर (!new_admin) अणु
+	new_admin = kzalloc(sizeof(*new_admin), GFP_KERNEL);
+	if (!new_admin) {
 		NL_SET_ERR_MSG(extack, "Not enough memory for a new schedule");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	INIT_LIST_HEAD(&new_admin->entries);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	oper = rcu_dereference(q->oper_sched);
 	admin = rcu_dereference(q->admin_sched);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 	/* no changes - no new mqprio settings */
-	अगर (!taprio_mqprio_cmp(dev, mqprio))
-		mqprio = शून्य;
+	if (!taprio_mqprio_cmp(dev, mqprio))
+		mqprio = NULL;
 
-	अगर (mqprio && (oper || admin)) अणु
+	if (mqprio && (oper || admin)) {
 		NL_SET_ERR_MSG(extack, "Changing the traffic mapping of a running schedule is not supported");
 		err = -ENOTSUPP;
-		जाओ मुक्त_sched;
-	पूर्ण
+		goto free_sched;
+	}
 
 	err = parse_taprio_schedule(q, tb, new_admin, extack);
-	अगर (err < 0)
-		जाओ मुक्त_sched;
+	if (err < 0)
+		goto free_sched;
 
-	अगर (new_admin->num_entries == 0) अणु
+	if (new_admin->num_entries == 0) {
 		NL_SET_ERR_MSG(extack, "There should be at least one entry in the schedule");
 		err = -EINVAL;
-		जाओ मुक्त_sched;
-	पूर्ण
+		goto free_sched;
+	}
 
-	err = taprio_parse_घड़ीid(sch, tb, extack);
-	अगर (err < 0)
-		जाओ मुक्त_sched;
+	err = taprio_parse_clockid(sch, tb, extack);
+	if (err < 0)
+		goto free_sched;
 
 	taprio_set_picos_per_byte(dev, q);
 
-	अगर (mqprio) अणु
+	if (mqprio) {
 		netdev_set_num_tc(dev, mqprio->num_tc);
-		क्रम (i = 0; i < mqprio->num_tc; i++)
+		for (i = 0; i < mqprio->num_tc; i++)
 			netdev_set_tc_queue(dev, i,
 					    mqprio->count[i],
 					    mqprio->offset[i]);
 
 		/* Always use supplied priority mappings */
-		क्रम (i = 0; i <= TC_BITMASK; i++)
+		for (i = 0; i <= TC_BITMASK; i++)
 			netdev_set_prio_tc_map(dev, i,
 					       mqprio->prio_tc_map[i]);
-	पूर्ण
+	}
 
-	अगर (FULL_OFFLOAD_IS_ENABLED(q->flags))
+	if (FULL_OFFLOAD_IS_ENABLED(q->flags))
 		err = taprio_enable_offload(dev, q, new_admin, extack);
-	अन्यथा
+	else
 		err = taprio_disable_offload(dev, q, extack);
-	अगर (err)
-		जाओ मुक्त_sched;
+	if (err)
+		goto free_sched;
 
 	/* Protects against enqueue()/dequeue() */
 	spin_lock_bh(qdisc_lock(sch));
 
-	अगर (tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]) अणु
-		अगर (!TXTIME_ASSIST_IS_ENABLED(q->flags)) अणु
+	if (tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]) {
+		if (!TXTIME_ASSIST_IS_ENABLED(q->flags)) {
 			NL_SET_ERR_MSG_MOD(extack, "txtime-delay can only be set when txtime-assist mode is enabled");
 			err = -EINVAL;
-			जाओ unlock;
-		पूर्ण
+			goto unlock;
+		}
 
-		q->txसमय_delay = nla_get_u32(tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]);
-	पूर्ण
+		q->txtime_delay = nla_get_u32(tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]);
+	}
 
-	अगर (!TXTIME_ASSIST_IS_ENABLED(q->flags) &&
+	if (!TXTIME_ASSIST_IS_ENABLED(q->flags) &&
 	    !FULL_OFFLOAD_IS_ENABLED(q->flags) &&
-	    !hrसमयr_active(&q->advance_समयr)) अणु
-		hrसमयr_init(&q->advance_समयr, q->घड़ीid, HRTIMER_MODE_ABS);
-		q->advance_समयr.function = advance_sched;
-	पूर्ण
+	    !hrtimer_active(&q->advance_timer)) {
+		hrtimer_init(&q->advance_timer, q->clockid, HRTIMER_MODE_ABS);
+		q->advance_timer.function = advance_sched;
+	}
 
-	अगर (FULL_OFFLOAD_IS_ENABLED(q->flags)) अणु
+	if (FULL_OFFLOAD_IS_ENABLED(q->flags)) {
 		q->dequeue = taprio_dequeue_offload;
 		q->peek = taprio_peek_offload;
-	पूर्ण अन्यथा अणु
-		/* Be sure to always keep the function poपूर्णांकers
+	} else {
+		/* Be sure to always keep the function pointers
 		 * in a consistent state.
 		 */
 		q->dequeue = taprio_dequeue_soft;
 		q->peek = taprio_peek_soft;
-	पूर्ण
+	}
 
-	err = taprio_get_start_समय(sch, new_admin, &start);
-	अगर (err < 0) अणु
+	err = taprio_get_start_time(sch, new_admin, &start);
+	if (err < 0) {
 		NL_SET_ERR_MSG(extack, "Internal error: failed get start time");
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	setup_txसमय(q, new_admin, start);
+	setup_txtime(q, new_admin, start);
 
-	अगर (TXTIME_ASSIST_IS_ENABLED(q->flags)) अणु
-		अगर (!oper) अणु
-			rcu_assign_poपूर्णांकer(q->oper_sched, new_admin);
+	if (TXTIME_ASSIST_IS_ENABLED(q->flags)) {
+		if (!oper) {
+			rcu_assign_pointer(q->oper_sched, new_admin);
 			err = 0;
-			new_admin = शून्य;
-			जाओ unlock;
-		पूर्ण
+			new_admin = NULL;
+			goto unlock;
+		}
 
-		rcu_assign_poपूर्णांकer(q->admin_sched, new_admin);
-		अगर (admin)
-			call_rcu(&admin->rcu, taprio_मुक्त_sched_cb);
-	पूर्ण अन्यथा अणु
-		setup_first_बंद_समय(q, new_admin, start);
+		rcu_assign_pointer(q->admin_sched, new_admin);
+		if (admin)
+			call_rcu(&admin->rcu, taprio_free_sched_cb);
+	} else {
+		setup_first_close_time(q, new_admin, start);
 
 		/* Protects against advance_sched() */
 		spin_lock_irqsave(&q->current_entry_lock, flags);
 
 		taprio_start_sched(sch, start, new_admin);
 
-		rcu_assign_poपूर्णांकer(q->admin_sched, new_admin);
-		अगर (admin)
-			call_rcu(&admin->rcu, taprio_मुक्त_sched_cb);
+		rcu_assign_pointer(q->admin_sched, new_admin);
+		if (admin)
+			call_rcu(&admin->rcu, taprio_free_sched_cb);
 
 		spin_unlock_irqrestore(&q->current_entry_lock, flags);
 
-		अगर (FULL_OFFLOAD_IS_ENABLED(q->flags))
+		if (FULL_OFFLOAD_IS_ENABLED(q->flags))
 			taprio_offload_config_changed(q);
-	पूर्ण
+	}
 
-	new_admin = शून्य;
+	new_admin = NULL;
 	err = 0;
 
 unlock:
 	spin_unlock_bh(qdisc_lock(sch));
 
-मुक्त_sched:
-	अगर (new_admin)
-		call_rcu(&new_admin->rcu, taprio_मुक्त_sched_cb);
+free_sched:
+	if (new_admin)
+		call_rcu(&new_admin->rcu, taprio_free_sched_cb);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम taprio_reset(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	पूर्णांक i;
+static void taprio_reset(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	int i;
 
-	hrसमयr_cancel(&q->advance_समयr);
-	अगर (q->qdiscs) अणु
-		क्रम (i = 0; i < dev->num_tx_queues; i++)
-			अगर (q->qdiscs[i])
+	hrtimer_cancel(&q->advance_timer);
+	if (q->qdiscs) {
+		for (i = 0; i < dev->num_tx_queues; i++)
+			if (q->qdiscs[i])
 				qdisc_reset(q->qdiscs[i]);
-	पूर्ण
+	}
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
-पूर्ण
+}
 
-अटल व्योम taprio_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	अचिन्हित पूर्णांक i;
+static void taprio_destroy(struct Qdisc *sch)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	unsigned int i;
 
 	spin_lock(&taprio_list_lock);
 	list_del(&q->taprio_list);
 	spin_unlock(&taprio_list_lock);
 
 
-	taprio_disable_offload(dev, q, शून्य);
+	taprio_disable_offload(dev, q, NULL);
 
-	अगर (q->qdiscs) अणु
-		क्रम (i = 0; i < dev->num_tx_queues; i++)
+	if (q->qdiscs) {
+		for (i = 0; i < dev->num_tx_queues; i++)
 			qdisc_put(q->qdiscs[i]);
 
-		kमुक्त(q->qdiscs);
-	पूर्ण
-	q->qdiscs = शून्य;
+		kfree(q->qdiscs);
+	}
+	q->qdiscs = NULL;
 
 	netdev_reset_tc(dev);
 
-	अगर (q->oper_sched)
-		call_rcu(&q->oper_sched->rcu, taprio_मुक्त_sched_cb);
+	if (q->oper_sched)
+		call_rcu(&q->oper_sched->rcu, taprio_free_sched_cb);
 
-	अगर (q->admin_sched)
-		call_rcu(&q->admin_sched->rcu, taprio_मुक्त_sched_cb);
-पूर्ण
+	if (q->admin_sched)
+		call_rcu(&q->admin_sched->rcu, taprio_free_sched_cb);
+}
 
-अटल पूर्णांक taprio_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	पूर्णांक i;
+static int taprio_init(struct Qdisc *sch, struct nlattr *opt,
+		       struct netlink_ext_ack *extack)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	int i;
 
 	spin_lock_init(&q->current_entry_lock);
 
-	hrसमयr_init(&q->advance_समयr, CLOCK_TAI, HRTIMER_MODE_ABS);
-	q->advance_समयr.function = advance_sched;
+	hrtimer_init(&q->advance_timer, CLOCK_TAI, HRTIMER_MODE_ABS);
+	q->advance_timer.function = advance_sched;
 
 	q->dequeue = taprio_dequeue_soft;
 	q->peek = taprio_peek_soft;
 
 	q->root = sch;
 
-	/* We only support अटल घड़ीids. Use an invalid value as शेष
+	/* We only support static clockids. Use an invalid value as default
 	 * and get the valid one on taprio_change().
 	 */
-	q->घड़ीid = -1;
+	q->clockid = -1;
 	q->flags = TAPRIO_FLAGS_INVALID;
 
 	spin_lock(&taprio_list_lock);
 	list_add(&q->taprio_list, &taprio_list);
 	spin_unlock(&taprio_list_lock);
 
-	अगर (sch->parent != TC_H_ROOT)
-		वापस -EOPNOTSUPP;
+	if (sch->parent != TC_H_ROOT)
+		return -EOPNOTSUPP;
 
-	अगर (!netअगर_is_multiqueue(dev))
-		वापस -EOPNOTSUPP;
+	if (!netif_is_multiqueue(dev))
+		return -EOPNOTSUPP;
 
 	/* pre-allocate qdisc, attachment can't fail */
-	q->qdiscs = kसुस्मृति(dev->num_tx_queues,
-			    माप(q->qdiscs[0]),
+	q->qdiscs = kcalloc(dev->num_tx_queues,
+			    sizeof(q->qdiscs[0]),
 			    GFP_KERNEL);
 
-	अगर (!q->qdiscs)
-		वापस -ENOMEM;
+	if (!q->qdiscs)
+		return -ENOMEM;
 
-	अगर (!opt)
-		वापस -EINVAL;
+	if (!opt)
+		return -EINVAL;
 
-	क्रम (i = 0; i < dev->num_tx_queues; i++) अणु
-		काष्ठा netdev_queue *dev_queue;
-		काष्ठा Qdisc *qdisc;
+	for (i = 0; i < dev->num_tx_queues; i++) {
+		struct netdev_queue *dev_queue;
+		struct Qdisc *qdisc;
 
 		dev_queue = netdev_get_tx_queue(dev, i);
 		qdisc = qdisc_create_dflt(dev_queue,
-					  &pfअगरo_qdisc_ops,
+					  &pfifo_qdisc_ops,
 					  TC_H_MAKE(TC_H_MAJ(sch->handle),
 						    TC_H_MIN(i + 1)),
 					  extack);
-		अगर (!qdisc)
-			वापस -ENOMEM;
+		if (!qdisc)
+			return -ENOMEM;
 
-		अगर (i < dev->real_num_tx_queues)
+		if (i < dev->real_num_tx_queues)
 			qdisc_hash_add(qdisc, false);
 
 		q->qdiscs[i] = qdisc;
-	पूर्ण
+	}
 
-	वापस taprio_change(sch, opt, extack);
-पूर्ण
+	return taprio_change(sch, opt, extack);
+}
 
-अटल काष्ठा netdev_queue *taprio_queue_get(काष्ठा Qdisc *sch,
-					     अचिन्हित दीर्घ cl)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	अचिन्हित दीर्घ ntx = cl - 1;
+static struct netdev_queue *taprio_queue_get(struct Qdisc *sch,
+					     unsigned long cl)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	unsigned long ntx = cl - 1;
 
-	अगर (ntx >= dev->num_tx_queues)
-		वापस शून्य;
+	if (ntx >= dev->num_tx_queues)
+		return NULL;
 
-	वापस netdev_get_tx_queue(dev, ntx);
-पूर्ण
+	return netdev_get_tx_queue(dev, ntx);
+}
 
-अटल पूर्णांक taprio_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-			काष्ठा Qdisc *new, काष्ठा Qdisc **old,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा netdev_queue *dev_queue = taprio_queue_get(sch, cl);
+static int taprio_graft(struct Qdisc *sch, unsigned long cl,
+			struct Qdisc *new, struct Qdisc **old,
+			struct netlink_ext_ack *extack)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct netdev_queue *dev_queue = taprio_queue_get(sch, cl);
 
-	अगर (!dev_queue)
-		वापस -EINVAL;
+	if (!dev_queue)
+		return -EINVAL;
 
-	अगर (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP)
 		dev_deactivate(dev);
 
 	*old = q->qdiscs[cl - 1];
 	q->qdiscs[cl - 1] = new;
 
-	अगर (new)
+	if (new)
 		new->flags |= TCQ_F_ONETXQUEUE | TCQ_F_NOPARENT;
 
-	अगर (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP)
 		dev_activate(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dump_entry(काष्ठा sk_buff *msg,
-		      स्थिर काष्ठा sched_entry *entry)
-अणु
-	काष्ठा nlattr *item;
+static int dump_entry(struct sk_buff *msg,
+		      const struct sched_entry *entry)
+{
+	struct nlattr *item;
 
 	item = nla_nest_start_noflag(msg, TCA_TAPRIO_SCHED_ENTRY);
-	अगर (!item)
-		वापस -ENOSPC;
+	if (!item)
+		return -ENOSPC;
 
-	अगर (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_INDEX, entry->index))
-		जाओ nla_put_failure;
+	if (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_INDEX, entry->index))
+		goto nla_put_failure;
 
-	अगर (nla_put_u8(msg, TCA_TAPRIO_SCHED_ENTRY_CMD, entry->command))
-		जाओ nla_put_failure;
+	if (nla_put_u8(msg, TCA_TAPRIO_SCHED_ENTRY_CMD, entry->command))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_GATE_MASK,
+	if (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_GATE_MASK,
 			entry->gate_mask))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_INTERVAL,
-			entry->पूर्णांकerval))
-		जाओ nla_put_failure;
+	if (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_INTERVAL,
+			entry->interval))
+		goto nla_put_failure;
 
-	वापस nla_nest_end(msg, item);
+	return nla_nest_end(msg, item);
 
 nla_put_failure:
 	nla_nest_cancel(msg, item);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक dump_schedule(काष्ठा sk_buff *msg,
-			 स्थिर काष्ठा sched_gate_list *root)
-अणु
-	काष्ठा nlattr *entry_list;
-	काष्ठा sched_entry *entry;
+static int dump_schedule(struct sk_buff *msg,
+			 const struct sched_gate_list *root)
+{
+	struct nlattr *entry_list;
+	struct sched_entry *entry;
 
-	अगर (nla_put_s64(msg, TCA_TAPRIO_ATTR_SCHED_BASE_TIME,
-			root->base_समय, TCA_TAPRIO_PAD))
-		वापस -1;
+	if (nla_put_s64(msg, TCA_TAPRIO_ATTR_SCHED_BASE_TIME,
+			root->base_time, TCA_TAPRIO_PAD))
+		return -1;
 
-	अगर (nla_put_s64(msg, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME,
-			root->cycle_समय, TCA_TAPRIO_PAD))
-		वापस -1;
+	if (nla_put_s64(msg, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME,
+			root->cycle_time, TCA_TAPRIO_PAD))
+		return -1;
 
-	अगर (nla_put_s64(msg, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION,
-			root->cycle_समय_extension, TCA_TAPRIO_PAD))
-		वापस -1;
+	if (nla_put_s64(msg, TCA_TAPRIO_ATTR_SCHED_CYCLE_TIME_EXTENSION,
+			root->cycle_time_extension, TCA_TAPRIO_PAD))
+		return -1;
 
 	entry_list = nla_nest_start_noflag(msg,
 					   TCA_TAPRIO_ATTR_SCHED_ENTRY_LIST);
-	अगर (!entry_list)
-		जाओ error_nest;
+	if (!entry_list)
+		goto error_nest;
 
-	list_क्रम_each_entry(entry, &root->entries, list) अणु
-		अगर (dump_entry(msg, entry) < 0)
-			जाओ error_nest;
-	पूर्ण
+	list_for_each_entry(entry, &root->entries, list) {
+		if (dump_entry(msg, entry) < 0)
+			goto error_nest;
+	}
 
 	nla_nest_end(msg, entry_list);
-	वापस 0;
+	return 0;
 
 error_nest:
 	nla_nest_cancel(msg, entry_list);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक taprio_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा taprio_sched *q = qdisc_priv(sch);
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा sched_gate_list *oper, *admin;
-	काष्ठा tc_mqprio_qopt opt = अणु 0 पूर्ण;
-	काष्ठा nlattr *nest, *sched_nest;
-	अचिन्हित पूर्णांक i;
+static int taprio_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct taprio_sched *q = qdisc_priv(sch);
+	struct net_device *dev = qdisc_dev(sch);
+	struct sched_gate_list *oper, *admin;
+	struct tc_mqprio_qopt opt = { 0 };
+	struct nlattr *nest, *sched_nest;
+	unsigned int i;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	oper = rcu_dereference(q->oper_sched);
 	admin = rcu_dereference(q->admin_sched);
 
 	opt.num_tc = netdev_get_num_tc(dev);
-	स_नकल(opt.prio_tc_map, dev->prio_tc_map, माप(opt.prio_tc_map));
+	memcpy(opt.prio_tc_map, dev->prio_tc_map, sizeof(opt.prio_tc_map));
 
-	क्रम (i = 0; i < netdev_get_num_tc(dev); i++) अणु
+	for (i = 0; i < netdev_get_num_tc(dev); i++) {
 		opt.count[i] = dev->tc_to_txq[i].count;
 		opt.offset[i] = dev->tc_to_txq[i].offset;
-	पूर्ण
+	}
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (!nest)
-		जाओ start_error;
+	if (!nest)
+		goto start_error;
 
-	अगर (nla_put(skb, TCA_TAPRIO_ATTR_PRIOMAP, माप(opt), &opt))
-		जाओ options_error;
+	if (nla_put(skb, TCA_TAPRIO_ATTR_PRIOMAP, sizeof(opt), &opt))
+		goto options_error;
 
-	अगर (!FULL_OFFLOAD_IS_ENABLED(q->flags) &&
-	    nla_put_s32(skb, TCA_TAPRIO_ATTR_SCHED_CLOCKID, q->घड़ीid))
-		जाओ options_error;
+	if (!FULL_OFFLOAD_IS_ENABLED(q->flags) &&
+	    nla_put_s32(skb, TCA_TAPRIO_ATTR_SCHED_CLOCKID, q->clockid))
+		goto options_error;
 
-	अगर (q->flags && nla_put_u32(skb, TCA_TAPRIO_ATTR_FLAGS, q->flags))
-		जाओ options_error;
+	if (q->flags && nla_put_u32(skb, TCA_TAPRIO_ATTR_FLAGS, q->flags))
+		goto options_error;
 
-	अगर (q->txसमय_delay &&
-	    nla_put_u32(skb, TCA_TAPRIO_ATTR_TXTIME_DELAY, q->txसमय_delay))
-		जाओ options_error;
+	if (q->txtime_delay &&
+	    nla_put_u32(skb, TCA_TAPRIO_ATTR_TXTIME_DELAY, q->txtime_delay))
+		goto options_error;
 
-	अगर (oper && dump_schedule(skb, oper))
-		जाओ options_error;
+	if (oper && dump_schedule(skb, oper))
+		goto options_error;
 
-	अगर (!admin)
-		जाओ करोne;
+	if (!admin)
+		goto done;
 
 	sched_nest = nla_nest_start_noflag(skb, TCA_TAPRIO_ATTR_ADMIN_SCHED);
-	अगर (!sched_nest)
-		जाओ options_error;
+	if (!sched_nest)
+		goto options_error;
 
-	अगर (dump_schedule(skb, admin))
-		जाओ admin_error;
+	if (dump_schedule(skb, admin))
+		goto admin_error;
 
 	nla_nest_end(skb, sched_nest);
 
-करोne:
-	rcu_पढ़ो_unlock();
+done:
+	rcu_read_unlock();
 
-	वापस nla_nest_end(skb, nest);
+	return nla_nest_end(skb, nest);
 
 admin_error:
 	nla_nest_cancel(skb, sched_nest);
@@ -1930,80 +1929,80 @@ options_error:
 	nla_nest_cancel(skb, nest);
 
 start_error:
-	rcu_पढ़ो_unlock();
-	वापस -ENOSPC;
-पूर्ण
+	rcu_read_unlock();
+	return -ENOSPC;
+}
 
-अटल काष्ठा Qdisc *taprio_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
-अणु
-	काष्ठा netdev_queue *dev_queue = taprio_queue_get(sch, cl);
+static struct Qdisc *taprio_leaf(struct Qdisc *sch, unsigned long cl)
+{
+	struct netdev_queue *dev_queue = taprio_queue_get(sch, cl);
 
-	अगर (!dev_queue)
-		वापस शून्य;
+	if (!dev_queue)
+		return NULL;
 
-	वापस dev_queue->qdisc_sleeping;
-पूर्ण
+	return dev_queue->qdisc_sleeping;
+}
 
-अटल अचिन्हित दीर्घ taprio_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	अचिन्हित पूर्णांक ntx = TC_H_MIN(classid);
+static unsigned long taprio_find(struct Qdisc *sch, u32 classid)
+{
+	unsigned int ntx = TC_H_MIN(classid);
 
-	अगर (!taprio_queue_get(sch, ntx))
-		वापस 0;
-	वापस ntx;
-पूर्ण
+	if (!taprio_queue_get(sch, ntx))
+		return 0;
+	return ntx;
+}
 
-अटल पूर्णांक taprio_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-			     काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा netdev_queue *dev_queue = taprio_queue_get(sch, cl);
+static int taprio_dump_class(struct Qdisc *sch, unsigned long cl,
+			     struct sk_buff *skb, struct tcmsg *tcm)
+{
+	struct netdev_queue *dev_queue = taprio_queue_get(sch, cl);
 
 	tcm->tcm_parent = TC_H_ROOT;
 	tcm->tcm_handle |= TC_H_MIN(cl);
 	tcm->tcm_info = dev_queue->qdisc_sleeping->handle;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक taprio_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-				   काष्ठा gnet_dump *d)
+static int taprio_dump_class_stats(struct Qdisc *sch, unsigned long cl,
+				   struct gnet_dump *d)
 	__releases(d->lock)
 	__acquires(d->lock)
-अणु
-	काष्ठा netdev_queue *dev_queue = taprio_queue_get(sch, cl);
+{
+	struct netdev_queue *dev_queue = taprio_queue_get(sch, cl);
 
 	sch = dev_queue->qdisc_sleeping;
-	अगर (gnet_stats_copy_basic(&sch->running, d, शून्य, &sch->bstats) < 0 ||
+	if (gnet_stats_copy_basic(&sch->running, d, NULL, &sch->bstats) < 0 ||
 	    qdisc_qstats_copy(d, sch) < 0)
-		वापस -1;
-	वापस 0;
-पूर्ण
+		return -1;
+	return 0;
+}
 
-अटल व्योम taprio_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	अचिन्हित दीर्घ ntx;
+static void taprio_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	unsigned long ntx;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
 	arg->count = arg->skip;
-	क्रम (ntx = arg->skip; ntx < dev->num_tx_queues; ntx++) अणु
-		अगर (arg->fn(sch, ntx + 1, arg) < 0) अणु
+	for (ntx = arg->skip; ntx < dev->num_tx_queues; ntx++) {
+		if (arg->fn(sch, ntx + 1, arg) < 0) {
 			arg->stop = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		arg->count++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा netdev_queue *taprio_select_queue(काष्ठा Qdisc *sch,
-						काष्ठा tcmsg *tcm)
-अणु
-	वापस taprio_queue_get(sch, TC_H_MIN(tcm->tcm_parent));
-पूर्ण
+static struct netdev_queue *taprio_select_queue(struct Qdisc *sch,
+						struct tcmsg *tcm)
+{
+	return taprio_queue_get(sch, TC_H_MIN(tcm->tcm_parent));
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops taprio_class_ops = अणु
+static const struct Qdisc_class_ops taprio_class_ops = {
 	.graft		= taprio_graft,
 	.leaf		= taprio_leaf,
 	.find		= taprio_find,
@@ -2011,12 +2010,12 @@ start_error:
 	.dump		= taprio_dump_class,
 	.dump_stats	= taprio_dump_class_stats,
 	.select_queue	= taprio_select_queue,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops taprio_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops taprio_qdisc_ops __read_mostly = {
 	.cl_ops		= &taprio_class_ops,
 	.id		= "taprio",
-	.priv_size	= माप(काष्ठा taprio_sched),
+	.priv_size	= sizeof(struct taprio_sched),
 	.init		= taprio_init,
 	.change		= taprio_change,
 	.destroy	= taprio_destroy,
@@ -2026,28 +2025,28 @@ start_error:
 	.enqueue	= taprio_enqueue,
 	.dump		= taprio_dump,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block taprio_device_notअगरier = अणु
-	.notअगरier_call = taprio_dev_notअगरier,
-पूर्ण;
+static struct notifier_block taprio_device_notifier = {
+	.notifier_call = taprio_dev_notifier,
+};
 
-अटल पूर्णांक __init taprio_module_init(व्योम)
-अणु
-	पूर्णांक err = रेजिस्टर_netdevice_notअगरier(&taprio_device_notअगरier);
+static int __init taprio_module_init(void)
+{
+	int err = register_netdevice_notifier(&taprio_device_notifier);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस रेजिस्टर_qdisc(&taprio_qdisc_ops);
-पूर्ण
+	return register_qdisc(&taprio_qdisc_ops);
+}
 
-अटल व्योम __निकास taprio_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&taprio_qdisc_ops);
-	unरेजिस्टर_netdevice_notअगरier(&taprio_device_notअगरier);
-पूर्ण
+static void __exit taprio_module_exit(void)
+{
+	unregister_qdisc(&taprio_qdisc_ops);
+	unregister_netdevice_notifier(&taprio_device_notifier);
+}
 
 module_init(taprio_module_init);
-module_निकास(taprio_module_निकास);
+module_exit(taprio_module_exit);
 MODULE_LICENSE("GPL");

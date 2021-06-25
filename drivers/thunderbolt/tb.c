@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Thunderbolt driver - bus logic (NHI independent)
  *
@@ -7,57 +6,57 @@
  * Copyright (C) 2019, Intel Corporation
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/delay.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "tb.h"
-#समावेश "tb_regs.h"
-#समावेश "tunnel.h"
+#include "tb.h"
+#include "tb_regs.h"
+#include "tunnel.h"
 
-#घोषणा TB_TIMEOUT	100 /* ms */
+#define TB_TIMEOUT	100 /* ms */
 
 /**
- * काष्ठा tb_cm - Simple Thunderbolt connection manager
+ * struct tb_cm - Simple Thunderbolt connection manager
  * @tunnel_list: List of active tunnels
- * @dp_resources: List of available DP resources क्रम DP tunneling
+ * @dp_resources: List of available DP resources for DP tunneling
  * @hotplug_active: tb_handle_hotplug will stop progressing plug
- *		    events and निकास अगर this is not set (it needs to
- *		    acquire the lock one more समय). Used to drain wq
- *		    after cfg has been छोड़ोd.
- * @हटाओ_work: Work used to हटाओ any unplugged routers after
- *		 runसमय resume
+ *		    events and exit if this is not set (it needs to
+ *		    acquire the lock one more time). Used to drain wq
+ *		    after cfg has been paused.
+ * @remove_work: Work used to remove any unplugged routers after
+ *		 runtime resume
  */
-काष्ठा tb_cm अणु
-	काष्ठा list_head tunnel_list;
-	काष्ठा list_head dp_resources;
+struct tb_cm {
+	struct list_head tunnel_list;
+	struct list_head dp_resources;
 	bool hotplug_active;
-	काष्ठा delayed_work हटाओ_work;
-पूर्ण;
+	struct delayed_work remove_work;
+};
 
-अटल अंतरभूत काष्ठा tb *tcm_to_tb(काष्ठा tb_cm *tcm)
-अणु
-	वापस ((व्योम *)tcm - माप(काष्ठा tb));
-पूर्ण
+static inline struct tb *tcm_to_tb(struct tb_cm *tcm)
+{
+	return ((void *)tcm - sizeof(struct tb));
+}
 
-काष्ठा tb_hotplug_event अणु
-	काष्ठा work_काष्ठा work;
-	काष्ठा tb *tb;
+struct tb_hotplug_event {
+	struct work_struct work;
+	struct tb *tb;
 	u64 route;
 	u8 port;
 	bool unplug;
-पूर्ण;
+};
 
-अटल व्योम tb_handle_hotplug(काष्ठा work_काष्ठा *work);
+static void tb_handle_hotplug(struct work_struct *work);
 
-अटल व्योम tb_queue_hotplug(काष्ठा tb *tb, u64 route, u8 port, bool unplug)
-अणु
-	काष्ठा tb_hotplug_event *ev;
+static void tb_queue_hotplug(struct tb *tb, u64 route, u8 port, bool unplug)
+{
+	struct tb_hotplug_event *ev;
 
-	ev = kदो_स्मृति(माप(*ev), GFP_KERNEL);
-	अगर (!ev)
-		वापस;
+	ev = kmalloc(sizeof(*ev), GFP_KERNEL);
+	if (!ev)
+		return;
 
 	ev->tb = tb;
 	ev->route = route;
@@ -65,289 +64,289 @@
 	ev->unplug = unplug;
 	INIT_WORK(&ev->work, tb_handle_hotplug);
 	queue_work(tb->wq, &ev->work);
-पूर्ण
+}
 
-/* क्रमागतeration & hot plug handling */
+/* enumeration & hot plug handling */
 
-अटल व्योम tb_add_dp_resources(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(sw->tb);
-	काष्ठा tb_port *port;
+static void tb_add_dp_resources(struct tb_switch *sw)
+{
+	struct tb_cm *tcm = tb_priv(sw->tb);
+	struct tb_port *port;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (!tb_port_is_dpin(port))
-			जारी;
+	tb_switch_for_each_port(sw, port) {
+		if (!tb_port_is_dpin(port))
+			continue;
 
-		अगर (!tb_चयन_query_dp_resource(sw, port))
-			जारी;
+		if (!tb_switch_query_dp_resource(sw, port))
+			continue;
 
 		list_add_tail(&port->list, &tcm->dp_resources);
 		tb_port_dbg(port, "DP IN resource available\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tb_हटाओ_dp_resources(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(sw->tb);
-	काष्ठा tb_port *port, *पंचांगp;
+static void tb_remove_dp_resources(struct tb_switch *sw)
+{
+	struct tb_cm *tcm = tb_priv(sw->tb);
+	struct tb_port *port, *tmp;
 
 	/* Clear children resources first */
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (tb_port_has_remote(port))
-			tb_हटाओ_dp_resources(port->remote->sw);
-	पूर्ण
+	tb_switch_for_each_port(sw, port) {
+		if (tb_port_has_remote(port))
+			tb_remove_dp_resources(port->remote->sw);
+	}
 
-	list_क्रम_each_entry_safe(port, पंचांगp, &tcm->dp_resources, list) अणु
-		अगर (port->sw == sw) अणु
+	list_for_each_entry_safe(port, tmp, &tcm->dp_resources, list) {
+		if (port->sw == sw) {
 			tb_port_dbg(port, "DP OUT resource unavailable\n");
 			list_del_init(&port->list);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम tb_discover_tunnels(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb *tb = sw->tb;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_port *port;
+static void tb_discover_tunnels(struct tb_switch *sw)
+{
+	struct tb *tb = sw->tb;
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_port *port;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		काष्ठा tb_tunnel *tunnel = शून्य;
+	tb_switch_for_each_port(sw, port) {
+		struct tb_tunnel *tunnel = NULL;
 
-		चयन (port->config.type) अणु
-		हाल TB_TYPE_DP_HDMI_IN:
+		switch (port->config.type) {
+		case TB_TYPE_DP_HDMI_IN:
 			tunnel = tb_tunnel_discover_dp(tb, port);
-			अवरोध;
+			break;
 
-		हाल TB_TYPE_PCIE_DOWN:
+		case TB_TYPE_PCIE_DOWN:
 			tunnel = tb_tunnel_discover_pci(tb, port);
-			अवरोध;
+			break;
 
-		हाल TB_TYPE_USB3_DOWN:
+		case TB_TYPE_USB3_DOWN:
 			tunnel = tb_tunnel_discover_usb3(tb, port);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			break;
+		}
 
-		अगर (!tunnel)
-			जारी;
+		if (!tunnel)
+			continue;
 
-		अगर (tb_tunnel_is_pci(tunnel)) अणु
-			काष्ठा tb_चयन *parent = tunnel->dst_port->sw;
+		if (tb_tunnel_is_pci(tunnel)) {
+			struct tb_switch *parent = tunnel->dst_port->sw;
 
-			जबतक (parent != tunnel->src_port->sw) अणु
+			while (parent != tunnel->src_port->sw) {
 				parent->boot = true;
-				parent = tb_चयन_parent(parent);
-			पूर्ण
-		पूर्ण अन्यथा अगर (tb_tunnel_is_dp(tunnel)) अणु
-			/* Keep the करोमुख्य from घातering करोwn */
-			pm_runसमय_get_sync(&tunnel->src_port->sw->dev);
-			pm_runसमय_get_sync(&tunnel->dst_port->sw->dev);
-		पूर्ण
+				parent = tb_switch_parent(parent);
+			}
+		} else if (tb_tunnel_is_dp(tunnel)) {
+			/* Keep the domain from powering down */
+			pm_runtime_get_sync(&tunnel->src_port->sw->dev);
+			pm_runtime_get_sync(&tunnel->dst_port->sw->dev);
+		}
 
 		list_add_tail(&tunnel->list, &tcm->tunnel_list);
-	पूर्ण
+	}
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (tb_port_has_remote(port))
+	tb_switch_for_each_port(sw, port) {
+		if (tb_port_has_remote(port))
 			tb_discover_tunnels(port->remote->sw);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tb_port_configure_xकरोमुख्य(काष्ठा tb_port *port)
-अणु
+static int tb_port_configure_xdomain(struct tb_port *port)
+{
 	/*
-	 * XDoमुख्य paths currently only support single lane so we must
+	 * XDomain paths currently only support single lane so we must
 	 * disable the other lane according to USB4 spec.
 	 */
 	tb_port_disable(port->dual_link_port);
 
-	अगर (tb_चयन_is_usb4(port->sw))
-		वापस usb4_port_configure_xकरोमुख्य(port);
-	वापस tb_lc_configure_xकरोमुख्य(port);
-पूर्ण
+	if (tb_switch_is_usb4(port->sw))
+		return usb4_port_configure_xdomain(port);
+	return tb_lc_configure_xdomain(port);
+}
 
-अटल व्योम tb_port_unconfigure_xकरोमुख्य(काष्ठा tb_port *port)
-अणु
-	अगर (tb_चयन_is_usb4(port->sw))
-		usb4_port_unconfigure_xकरोमुख्य(port);
-	अन्यथा
-		tb_lc_unconfigure_xकरोमुख्य(port);
+static void tb_port_unconfigure_xdomain(struct tb_port *port)
+{
+	if (tb_switch_is_usb4(port->sw))
+		usb4_port_unconfigure_xdomain(port);
+	else
+		tb_lc_unconfigure_xdomain(port);
 
 	tb_port_enable(port->dual_link_port);
-पूर्ण
+}
 
-अटल व्योम tb_scan_xकरोमुख्य(काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_चयन *sw = port->sw;
-	काष्ठा tb *tb = sw->tb;
-	काष्ठा tb_xकरोमुख्य *xd;
+static void tb_scan_xdomain(struct tb_port *port)
+{
+	struct tb_switch *sw = port->sw;
+	struct tb *tb = sw->tb;
+	struct tb_xdomain *xd;
 	u64 route;
 
-	अगर (!tb_is_xकरोमुख्य_enabled())
-		वापस;
+	if (!tb_is_xdomain_enabled())
+		return;
 
-	route = tb_करोwnstream_route(port);
-	xd = tb_xकरोमुख्य_find_by_route(tb, route);
-	अगर (xd) अणु
-		tb_xकरोमुख्य_put(xd);
-		वापस;
-	पूर्ण
+	route = tb_downstream_route(port);
+	xd = tb_xdomain_find_by_route(tb, route);
+	if (xd) {
+		tb_xdomain_put(xd);
+		return;
+	}
 
-	xd = tb_xकरोमुख्य_alloc(tb, &sw->dev, route, tb->root_चयन->uuid,
-			      शून्य);
-	अगर (xd) अणु
-		tb_port_at(route, sw)->xकरोमुख्य = xd;
-		tb_port_configure_xकरोमुख्य(port);
-		tb_xकरोमुख्य_add(xd);
-	पूर्ण
-पूर्ण
+	xd = tb_xdomain_alloc(tb, &sw->dev, route, tb->root_switch->uuid,
+			      NULL);
+	if (xd) {
+		tb_port_at(route, sw)->xdomain = xd;
+		tb_port_configure_xdomain(port);
+		tb_xdomain_add(xd);
+	}
+}
 
-अटल पूर्णांक tb_enable_पंचांगu(काष्ठा tb_चयन *sw)
-अणु
-	पूर्णांक ret;
+static int tb_enable_tmu(struct tb_switch *sw)
+{
+	int ret;
 
-	/* If it is alपढ़ोy enabled in correct mode, करोn't touch it */
-	अगर (tb_चयन_पंचांगu_is_enabled(sw))
-		वापस 0;
+	/* If it is already enabled in correct mode, don't touch it */
+	if (tb_switch_tmu_is_enabled(sw))
+		return 0;
 
-	ret = tb_चयन_पंचांगu_disable(sw);
-	अगर (ret)
-		वापस ret;
+	ret = tb_switch_tmu_disable(sw);
+	if (ret)
+		return ret;
 
-	ret = tb_चयन_पंचांगu_post_समय(sw);
-	अगर (ret)
-		वापस ret;
+	ret = tb_switch_tmu_post_time(sw);
+	if (ret)
+		return ret;
 
-	वापस tb_चयन_पंचांगu_enable(sw);
-पूर्ण
+	return tb_switch_tmu_enable(sw);
+}
 
 /**
- * tb_find_unused_port() - वापस the first inactive port on @sw
+ * tb_find_unused_port() - return the first inactive port on @sw
  * @sw: Switch to find the port on
- * @type: Port type to look क्रम
+ * @type: Port type to look for
  */
-अटल काष्ठा tb_port *tb_find_unused_port(काष्ठा tb_चयन *sw,
-					   क्रमागत tb_port_type type)
-अणु
-	काष्ठा tb_port *port;
+static struct tb_port *tb_find_unused_port(struct tb_switch *sw,
+					   enum tb_port_type type)
+{
+	struct tb_port *port;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (tb_is_upstream_port(port))
-			जारी;
-		अगर (port->config.type != type)
-			जारी;
-		अगर (!port->cap_adap)
-			जारी;
-		अगर (tb_port_is_enabled(port))
-			जारी;
-		वापस port;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	tb_switch_for_each_port(sw, port) {
+		if (tb_is_upstream_port(port))
+			continue;
+		if (port->config.type != type)
+			continue;
+		if (!port->cap_adap)
+			continue;
+		if (tb_port_is_enabled(port))
+			continue;
+		return port;
+	}
+	return NULL;
+}
 
-अटल काष्ठा tb_port *tb_find_usb3_करोwn(काष्ठा tb_चयन *sw,
-					 स्थिर काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_port *करोwn;
+static struct tb_port *tb_find_usb3_down(struct tb_switch *sw,
+					 const struct tb_port *port)
+{
+	struct tb_port *down;
 
-	करोwn = usb4_चयन_map_usb3_करोwn(sw, port);
-	अगर (करोwn && !tb_usb3_port_is_enabled(करोwn))
-		वापस करोwn;
-	वापस शून्य;
-पूर्ण
+	down = usb4_switch_map_usb3_down(sw, port);
+	if (down && !tb_usb3_port_is_enabled(down))
+		return down;
+	return NULL;
+}
 
-अटल काष्ठा tb_tunnel *tb_find_tunnel(काष्ठा tb *tb, क्रमागत tb_tunnel_type type,
-					काष्ठा tb_port *src_port,
-					काष्ठा tb_port *dst_port)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel;
+static struct tb_tunnel *tb_find_tunnel(struct tb *tb, enum tb_tunnel_type type,
+					struct tb_port *src_port,
+					struct tb_port *dst_port)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel;
 
-	list_क्रम_each_entry(tunnel, &tcm->tunnel_list, list) अणु
-		अगर (tunnel->type == type &&
+	list_for_each_entry(tunnel, &tcm->tunnel_list, list) {
+		if (tunnel->type == type &&
 		    ((src_port && src_port == tunnel->src_port) ||
-		     (dst_port && dst_port == tunnel->dst_port))) अणु
-			वापस tunnel;
-		पूर्ण
-	पूर्ण
+		     (dst_port && dst_port == tunnel->dst_port))) {
+			return tunnel;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा tb_tunnel *tb_find_first_usb3_tunnel(काष्ठा tb *tb,
-						   काष्ठा tb_port *src_port,
-						   काष्ठा tb_port *dst_port)
-अणु
-	काष्ठा tb_port *port, *usb3_करोwn;
-	काष्ठा tb_चयन *sw;
+static struct tb_tunnel *tb_find_first_usb3_tunnel(struct tb *tb,
+						   struct tb_port *src_port,
+						   struct tb_port *dst_port)
+{
+	struct tb_port *port, *usb3_down;
+	struct tb_switch *sw;
 
 	/* Pick the router that is deepest in the topology */
-	अगर (dst_port->sw->config.depth > src_port->sw->config.depth)
+	if (dst_port->sw->config.depth > src_port->sw->config.depth)
 		sw = dst_port->sw;
-	अन्यथा
+	else
 		sw = src_port->sw;
 
 	/* Can't be the host router */
-	अगर (sw == tb->root_चयन)
-		वापस शून्य;
+	if (sw == tb->root_switch)
+		return NULL;
 
-	/* Find the करोwnstream USB4 port that leads to this router */
-	port = tb_port_at(tb_route(sw), tb->root_चयन);
-	/* Find the corresponding host router USB3 करोwnstream port */
-	usb3_करोwn = usb4_चयन_map_usb3_करोwn(tb->root_चयन, port);
-	अगर (!usb3_करोwn)
-		वापस शून्य;
+	/* Find the downstream USB4 port that leads to this router */
+	port = tb_port_at(tb_route(sw), tb->root_switch);
+	/* Find the corresponding host router USB3 downstream port */
+	usb3_down = usb4_switch_map_usb3_down(tb->root_switch, port);
+	if (!usb3_down)
+		return NULL;
 
-	वापस tb_find_tunnel(tb, TB_TUNNEL_USB3, usb3_करोwn, शून्य);
-पूर्ण
+	return tb_find_tunnel(tb, TB_TUNNEL_USB3, usb3_down, NULL);
+}
 
-अटल पूर्णांक tb_available_bandwidth(काष्ठा tb *tb, काष्ठा tb_port *src_port,
-	काष्ठा tb_port *dst_port, पूर्णांक *available_up, पूर्णांक *available_करोwn)
-अणु
-	पूर्णांक usb3_consumed_up, usb3_consumed_करोwn, ret;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel;
-	काष्ठा tb_port *port;
+static int tb_available_bandwidth(struct tb *tb, struct tb_port *src_port,
+	struct tb_port *dst_port, int *available_up, int *available_down)
+{
+	int usb3_consumed_up, usb3_consumed_down, ret;
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel;
+	struct tb_port *port;
 
 	tb_port_dbg(dst_port, "calculating available bandwidth\n");
 
 	tunnel = tb_find_first_usb3_tunnel(tb, src_port, dst_port);
-	अगर (tunnel) अणु
+	if (tunnel) {
 		ret = tb_tunnel_consumed_bandwidth(tunnel, &usb3_consumed_up,
-						   &usb3_consumed_करोwn);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अणु
+						   &usb3_consumed_down);
+		if (ret)
+			return ret;
+	} else {
 		usb3_consumed_up = 0;
-		usb3_consumed_करोwn = 0;
-	पूर्ण
+		usb3_consumed_down = 0;
+	}
 
-	*available_up = *available_करोwn = 40000;
+	*available_up = *available_down = 40000;
 
 	/* Find the minimum available bandwidth over all links */
-	tb_क्रम_each_port_on_path(src_port, dst_port, port) अणु
-		पूर्णांक link_speed, link_width, up_bw, करोwn_bw;
+	tb_for_each_port_on_path(src_port, dst_port, port) {
+		int link_speed, link_width, up_bw, down_bw;
 
-		अगर (!tb_port_is_null(port))
-			जारी;
+		if (!tb_port_is_null(port))
+			continue;
 
-		अगर (tb_is_upstream_port(port)) अणु
+		if (tb_is_upstream_port(port)) {
 			link_speed = port->sw->link_speed;
-		पूर्ण अन्यथा अणु
+		} else {
 			link_speed = tb_port_get_link_speed(port);
-			अगर (link_speed < 0)
-				वापस link_speed;
-		पूर्ण
+			if (link_speed < 0)
+				return link_speed;
+		}
 
 		link_width = port->bonded ? 2 : 1;
 
 		up_bw = link_speed * link_width * 1000; /* Mb/s */
 		/* Leave 10% guard band */
 		up_bw -= up_bw / 10;
-		करोwn_bw = up_bw;
+		down_bw = up_bw;
 
 		tb_port_dbg(port, "link total bandwidth %d Mb/s\n", up_bw);
 
@@ -355,336 +354,336 @@
 		 * Find all DP tunnels that cross the port and reduce
 		 * their consumed bandwidth from the available.
 		 */
-		list_क्रम_each_entry(tunnel, &tcm->tunnel_list, list) अणु
-			पूर्णांक dp_consumed_up, dp_consumed_करोwn;
+		list_for_each_entry(tunnel, &tcm->tunnel_list, list) {
+			int dp_consumed_up, dp_consumed_down;
 
-			अगर (!tb_tunnel_is_dp(tunnel))
-				जारी;
+			if (!tb_tunnel_is_dp(tunnel))
+				continue;
 
-			अगर (!tb_tunnel_port_on_path(tunnel, port))
-				जारी;
+			if (!tb_tunnel_port_on_path(tunnel, port))
+				continue;
 
 			ret = tb_tunnel_consumed_bandwidth(tunnel,
 							   &dp_consumed_up,
-							   &dp_consumed_करोwn);
-			अगर (ret)
-				वापस ret;
+							   &dp_consumed_down);
+			if (ret)
+				return ret;
 
 			up_bw -= dp_consumed_up;
-			करोwn_bw -= dp_consumed_करोwn;
-		पूर्ण
+			down_bw -= dp_consumed_down;
+		}
 
 		/*
-		 * If USB3 is tunneled from the host router करोwn to the
+		 * If USB3 is tunneled from the host router down to the
 		 * branch leading to port we need to take USB3 consumed
-		 * bandwidth पूर्णांकo account regardless whether it actually
+		 * bandwidth into account regardless whether it actually
 		 * crosses the port.
 		 */
 		up_bw -= usb3_consumed_up;
-		करोwn_bw -= usb3_consumed_करोwn;
+		down_bw -= usb3_consumed_down;
 
-		अगर (up_bw < *available_up)
+		if (up_bw < *available_up)
 			*available_up = up_bw;
-		अगर (करोwn_bw < *available_करोwn)
-			*available_करोwn = करोwn_bw;
-	पूर्ण
+		if (down_bw < *available_down)
+			*available_down = down_bw;
+	}
 
-	अगर (*available_up < 0)
+	if (*available_up < 0)
 		*available_up = 0;
-	अगर (*available_करोwn < 0)
-		*available_करोwn = 0;
+	if (*available_down < 0)
+		*available_down = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_release_unused_usb3_bandwidth(काष्ठा tb *tb,
-					    काष्ठा tb_port *src_port,
-					    काष्ठा tb_port *dst_port)
-अणु
-	काष्ठा tb_tunnel *tunnel;
-
-	tunnel = tb_find_first_usb3_tunnel(tb, src_port, dst_port);
-	वापस tunnel ? tb_tunnel_release_unused_bandwidth(tunnel) : 0;
-पूर्ण
-
-अटल व्योम tb_reclaim_usb3_bandwidth(काष्ठा tb *tb, काष्ठा tb_port *src_port,
-				      काष्ठा tb_port *dst_port)
-अणु
-	पूर्णांक ret, available_up, available_करोwn;
-	काष्ठा tb_tunnel *tunnel;
+static int tb_release_unused_usb3_bandwidth(struct tb *tb,
+					    struct tb_port *src_port,
+					    struct tb_port *dst_port)
+{
+	struct tb_tunnel *tunnel;
 
 	tunnel = tb_find_first_usb3_tunnel(tb, src_port, dst_port);
-	अगर (!tunnel)
-		वापस;
+	return tunnel ? tb_tunnel_release_unused_bandwidth(tunnel) : 0;
+}
+
+static void tb_reclaim_usb3_bandwidth(struct tb *tb, struct tb_port *src_port,
+				      struct tb_port *dst_port)
+{
+	int ret, available_up, available_down;
+	struct tb_tunnel *tunnel;
+
+	tunnel = tb_find_first_usb3_tunnel(tb, src_port, dst_port);
+	if (!tunnel)
+		return;
 
 	tb_dbg(tb, "reclaiming unused bandwidth for USB3\n");
 
 	/*
-	 * Calculate available bandwidth क्रम the first hop USB3 tunnel.
-	 * That determines the whole USB3 bandwidth क्रम this branch.
+	 * Calculate available bandwidth for the first hop USB3 tunnel.
+	 * That determines the whole USB3 bandwidth for this branch.
 	 */
 	ret = tb_available_bandwidth(tb, tunnel->src_port, tunnel->dst_port,
-				     &available_up, &available_करोwn);
-	अगर (ret) अणु
+				     &available_up, &available_down);
+	if (ret) {
 		tb_warn(tb, "failed to calculate available bandwidth\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tb_dbg(tb, "available bandwidth for USB3 %d/%d Mb/s\n",
-	       available_up, available_करोwn);
+	       available_up, available_down);
 
-	tb_tunnel_reclaim_available_bandwidth(tunnel, &available_up, &available_करोwn);
-पूर्ण
+	tb_tunnel_reclaim_available_bandwidth(tunnel, &available_up, &available_down);
+}
 
-अटल पूर्णांक tb_tunnel_usb3(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_चयन *parent = tb_चयन_parent(sw);
-	पूर्णांक ret, available_up, available_करोwn;
-	काष्ठा tb_port *up, *करोwn, *port;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel;
+static int tb_tunnel_usb3(struct tb *tb, struct tb_switch *sw)
+{
+	struct tb_switch *parent = tb_switch_parent(sw);
+	int ret, available_up, available_down;
+	struct tb_port *up, *down, *port;
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel;
 
-	अगर (!tb_acpi_may_tunnel_usb3()) अणु
+	if (!tb_acpi_may_tunnel_usb3()) {
 		tb_dbg(tb, "USB3 tunneling disabled, not creating tunnel\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	up = tb_चयन_find_port(sw, TB_TYPE_USB3_UP);
-	अगर (!up)
-		वापस 0;
+	up = tb_switch_find_port(sw, TB_TYPE_USB3_UP);
+	if (!up)
+		return 0;
 
-	अगर (!sw->link_usb4)
-		वापस 0;
+	if (!sw->link_usb4)
+		return 0;
 
 	/*
-	 * Look up available करोwn port. Since we are chaining it should
-	 * be found right above this चयन.
+	 * Look up available down port. Since we are chaining it should
+	 * be found right above this switch.
 	 */
 	port = tb_port_at(tb_route(sw), parent);
-	करोwn = tb_find_usb3_करोwn(parent, port);
-	अगर (!करोwn)
-		वापस 0;
+	down = tb_find_usb3_down(parent, port);
+	if (!down)
+		return 0;
 
-	अगर (tb_route(parent)) अणु
-		काष्ठा tb_port *parent_up;
+	if (tb_route(parent)) {
+		struct tb_port *parent_up;
 		/*
-		 * Check first that the parent चयन has its upstream USB3
+		 * Check first that the parent switch has its upstream USB3
 		 * port enabled. Otherwise the chain is not complete and
-		 * there is no poपूर्णांक setting up a new tunnel.
+		 * there is no point setting up a new tunnel.
 		 */
-		parent_up = tb_चयन_find_port(parent, TB_TYPE_USB3_UP);
-		अगर (!parent_up || !tb_port_is_enabled(parent_up))
-			वापस 0;
+		parent_up = tb_switch_find_port(parent, TB_TYPE_USB3_UP);
+		if (!parent_up || !tb_port_is_enabled(parent_up))
+			return 0;
 
-		/* Make all unused bandwidth available क्रम the new tunnel */
-		ret = tb_release_unused_usb3_bandwidth(tb, करोwn, up);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		/* Make all unused bandwidth available for the new tunnel */
+		ret = tb_release_unused_usb3_bandwidth(tb, down, up);
+		if (ret)
+			return ret;
+	}
 
-	ret = tb_available_bandwidth(tb, करोwn, up, &available_up,
-				     &available_करोwn);
-	अगर (ret)
-		जाओ err_reclaim;
+	ret = tb_available_bandwidth(tb, down, up, &available_up,
+				     &available_down);
+	if (ret)
+		goto err_reclaim;
 
 	tb_port_dbg(up, "available bandwidth for new USB3 tunnel %d/%d Mb/s\n",
-		    available_up, available_करोwn);
+		    available_up, available_down);
 
-	tunnel = tb_tunnel_alloc_usb3(tb, up, करोwn, available_up,
-				      available_करोwn);
-	अगर (!tunnel) अणु
+	tunnel = tb_tunnel_alloc_usb3(tb, up, down, available_up,
+				      available_down);
+	if (!tunnel) {
 		ret = -ENOMEM;
-		जाओ err_reclaim;
-	पूर्ण
+		goto err_reclaim;
+	}
 
-	अगर (tb_tunnel_activate(tunnel)) अणु
+	if (tb_tunnel_activate(tunnel)) {
 		tb_port_info(up,
 			     "USB3 tunnel activation failed, aborting\n");
 		ret = -EIO;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	list_add_tail(&tunnel->list, &tcm->tunnel_list);
-	अगर (tb_route(parent))
-		tb_reclaim_usb3_bandwidth(tb, करोwn, up);
+	if (tb_route(parent))
+		tb_reclaim_usb3_bandwidth(tb, down, up);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	tb_tunnel_मुक्त(tunnel);
+err_free:
+	tb_tunnel_free(tunnel);
 err_reclaim:
-	अगर (tb_route(parent))
-		tb_reclaim_usb3_bandwidth(tb, करोwn, up);
+	if (tb_route(parent))
+		tb_reclaim_usb3_bandwidth(tb, down, up);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tb_create_usb3_tunnels(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
-	पूर्णांक ret;
+static int tb_create_usb3_tunnels(struct tb_switch *sw)
+{
+	struct tb_port *port;
+	int ret;
 
-	अगर (!tb_acpi_may_tunnel_usb3())
-		वापस 0;
+	if (!tb_acpi_may_tunnel_usb3())
+		return 0;
 
-	अगर (tb_route(sw)) अणु
+	if (tb_route(sw)) {
 		ret = tb_tunnel_usb3(sw->tb, sw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (!tb_port_has_remote(port))
-			जारी;
+	tb_switch_for_each_port(sw, port) {
+		if (!tb_port_has_remote(port))
+			continue;
 		ret = tb_create_usb3_tunnels(port->remote->sw);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb_scan_port(काष्ठा tb_port *port);
+static void tb_scan_port(struct tb_port *port);
 
 /*
- * tb_scan_चयन() - scan क्रम and initialize करोwnstream चयनes
+ * tb_scan_switch() - scan for and initialize downstream switches
  */
-अटल व्योम tb_scan_चयन(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
+static void tb_scan_switch(struct tb_switch *sw)
+{
+	struct tb_port *port;
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	tb_चयन_क्रम_each_port(sw, port)
+	tb_switch_for_each_port(sw, port)
 		tb_scan_port(port);
 
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
-पूर्ण
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
+}
 
 /*
- * tb_scan_port() - check क्रम and initialize चयनes below port
+ * tb_scan_port() - check for and initialize switches below port
  */
-अटल व्योम tb_scan_port(काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(port->sw->tb);
-	काष्ठा tb_port *upstream_port;
-	काष्ठा tb_चयन *sw;
+static void tb_scan_port(struct tb_port *port)
+{
+	struct tb_cm *tcm = tb_priv(port->sw->tb);
+	struct tb_port *upstream_port;
+	struct tb_switch *sw;
 
-	अगर (tb_is_upstream_port(port))
-		वापस;
+	if (tb_is_upstream_port(port))
+		return;
 
-	अगर (tb_port_is_dpout(port) && tb_dp_port_hpd_is_active(port) == 1 &&
-	    !tb_dp_port_is_enabled(port)) अणु
+	if (tb_port_is_dpout(port) && tb_dp_port_hpd_is_active(port) == 1 &&
+	    !tb_dp_port_is_enabled(port)) {
 		tb_port_dbg(port, "DP adapter HPD set, queuing hotplug\n");
 		tb_queue_hotplug(port->sw->tb, tb_route(port->sw), port->port,
 				 false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (port->config.type != TB_TYPE_PORT)
-		वापस;
-	अगर (port->dual_link_port && port->link_nr)
-		वापस; /*
-			 * Downstream चयन is reachable through two ports.
+	if (port->config.type != TB_TYPE_PORT)
+		return;
+	if (port->dual_link_port && port->link_nr)
+		return; /*
+			 * Downstream switch is reachable through two ports.
 			 * Only scan on the primary port (link_nr == 0).
 			 */
-	अगर (tb_रुको_क्रम_port(port, false) <= 0)
-		वापस;
-	अगर (port->remote) अणु
+	if (tb_wait_for_port(port, false) <= 0)
+		return;
+	if (port->remote) {
 		tb_port_dbg(port, "port already has a remote\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	tb_reसमयr_scan(port);
+	tb_retimer_scan(port);
 
-	sw = tb_चयन_alloc(port->sw->tb, &port->sw->dev,
-			     tb_करोwnstream_route(port));
-	अगर (IS_ERR(sw)) अणु
+	sw = tb_switch_alloc(port->sw->tb, &port->sw->dev,
+			     tb_downstream_route(port));
+	if (IS_ERR(sw)) {
 		/*
-		 * If there is an error accessing the connected चयन
-		 * it may be connected to another करोमुख्य. Also we allow
-		 * the other करोमुख्य to be connected to a max depth चयन.
+		 * If there is an error accessing the connected switch
+		 * it may be connected to another domain. Also we allow
+		 * the other domain to be connected to a max depth switch.
 		 */
-		अगर (PTR_ERR(sw) == -EIO || PTR_ERR(sw) == -EADDRNOTAVAIL)
-			tb_scan_xकरोमुख्य(port);
-		वापस;
-	पूर्ण
+		if (PTR_ERR(sw) == -EIO || PTR_ERR(sw) == -EADDRNOTAVAIL)
+			tb_scan_xdomain(port);
+		return;
+	}
 
-	अगर (tb_चयन_configure(sw)) अणु
-		tb_चयन_put(sw);
-		वापस;
-	पूर्ण
+	if (tb_switch_configure(sw)) {
+		tb_switch_put(sw);
+		return;
+	}
 
 	/*
-	 * If there was previously another करोमुख्य connected हटाओ it
+	 * If there was previously another domain connected remove it
 	 * first.
 	 */
-	अगर (port->xकरोमुख्य) अणु
-		tb_xकरोमुख्य_हटाओ(port->xकरोमुख्य);
-		tb_port_unconfigure_xकरोमुख्य(port);
-		port->xकरोमुख्य = शून्य;
-	पूर्ण
+	if (port->xdomain) {
+		tb_xdomain_remove(port->xdomain);
+		tb_port_unconfigure_xdomain(port);
+		port->xdomain = NULL;
+	}
 
 	/*
 	 * Do not send uevents until we have discovered all existing
-	 * tunnels and know which चयनes were authorized alपढ़ोy by
+	 * tunnels and know which switches were authorized already by
 	 * the boot firmware.
 	 */
-	अगर (!tcm->hotplug_active)
+	if (!tcm->hotplug_active)
 		dev_set_uevent_suppress(&sw->dev, true);
 
 	/*
 	 * At the moment Thunderbolt 2 and beyond (devices with LC) we
-	 * can support runसमय PM.
+	 * can support runtime PM.
 	 */
 	sw->rpm = sw->generation > 1;
 
-	अगर (tb_चयन_add(sw)) अणु
-		tb_चयन_put(sw);
-		वापस;
-	पूर्ण
+	if (tb_switch_add(sw)) {
+		tb_switch_put(sw);
+		return;
+	}
 
-	/* Link the चयनes using both links अगर available */
+	/* Link the switches using both links if available */
 	upstream_port = tb_upstream_port(sw);
 	port->remote = upstream_port;
 	upstream_port->remote = port;
-	अगर (port->dual_link_port && upstream_port->dual_link_port) अणु
+	if (port->dual_link_port && upstream_port->dual_link_port) {
 		port->dual_link_port->remote = upstream_port->dual_link_port;
 		upstream_port->dual_link_port->remote = port->dual_link_port;
-	पूर्ण
+	}
 
-	/* Enable lane bonding अगर supported */
-	tb_चयन_lane_bonding_enable(sw);
+	/* Enable lane bonding if supported */
+	tb_switch_lane_bonding_enable(sw);
 	/* Set the link configured */
-	tb_चयन_configure_link(sw);
+	tb_switch_configure_link(sw);
 
-	अगर (tb_enable_पंचांगu(sw))
+	if (tb_enable_tmu(sw))
 		tb_sw_warn(sw, "failed to enable TMU\n");
 
-	/* Scan upstream reसमयrs */
-	tb_reसमयr_scan(upstream_port);
+	/* Scan upstream retimers */
+	tb_retimer_scan(upstream_port);
 
 	/*
-	 * Create USB 3.x tunnels only when the चयन is plugged to the
-	 * करोमुख्य. This is because we scan the करोमुख्य also during discovery
-	 * and want to discover existing USB 3.x tunnels beक्रमe we create
+	 * Create USB 3.x tunnels only when the switch is plugged to the
+	 * domain. This is because we scan the domain also during discovery
+	 * and want to discover existing USB 3.x tunnels before we create
 	 * any new.
 	 */
-	अगर (tcm->hotplug_active && tb_tunnel_usb3(sw->tb, sw))
+	if (tcm->hotplug_active && tb_tunnel_usb3(sw->tb, sw))
 		tb_sw_warn(sw, "USB3 tunnel creation failed\n");
 
 	tb_add_dp_resources(sw);
-	tb_scan_चयन(sw);
-पूर्ण
+	tb_scan_switch(sw);
+}
 
-अटल व्योम tb_deactivate_and_मुक्त_tunnel(काष्ठा tb_tunnel *tunnel)
-अणु
-	काष्ठा tb_port *src_port, *dst_port;
-	काष्ठा tb *tb;
+static void tb_deactivate_and_free_tunnel(struct tb_tunnel *tunnel)
+{
+	struct tb_port *src_port, *dst_port;
+	struct tb *tb;
 
-	अगर (!tunnel)
-		वापस;
+	if (!tunnel)
+		return;
 
 	tb_tunnel_deactivate(tunnel);
 	list_del(&tunnel->list);
@@ -693,173 +692,173 @@ err_reclaim:
 	src_port = tunnel->src_port;
 	dst_port = tunnel->dst_port;
 
-	चयन (tunnel->type) अणु
-	हाल TB_TUNNEL_DP:
+	switch (tunnel->type) {
+	case TB_TUNNEL_DP:
 		/*
-		 * In हाल of DP tunnel make sure the DP IN resource is
+		 * In case of DP tunnel make sure the DP IN resource is
 		 * deallocated properly.
 		 */
-		tb_चयन_dealloc_dp_resource(src_port->sw, src_port);
-		/* Now we can allow the करोमुख्य to runसमय suspend again */
-		pm_runसमय_mark_last_busy(&dst_port->sw->dev);
-		pm_runसमय_put_स्वतःsuspend(&dst_port->sw->dev);
-		pm_runसमय_mark_last_busy(&src_port->sw->dev);
-		pm_runसमय_put_स्वतःsuspend(&src_port->sw->dev);
+		tb_switch_dealloc_dp_resource(src_port->sw, src_port);
+		/* Now we can allow the domain to runtime suspend again */
+		pm_runtime_mark_last_busy(&dst_port->sw->dev);
+		pm_runtime_put_autosuspend(&dst_port->sw->dev);
+		pm_runtime_mark_last_busy(&src_port->sw->dev);
+		pm_runtime_put_autosuspend(&src_port->sw->dev);
 		fallthrough;
 
-	हाल TB_TUNNEL_USB3:
+	case TB_TUNNEL_USB3:
 		tb_reclaim_usb3_bandwidth(tb, src_port, dst_port);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/*
-		 * PCIe and DMA tunnels करो not consume guaranteed
+		 * PCIe and DMA tunnels do not consume guaranteed
 		 * bandwidth.
 		 */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	tb_tunnel_मुक्त(tunnel);
-पूर्ण
-
-/*
- * tb_मुक्त_invalid_tunnels() - destroy tunnels of devices that have gone away
- */
-अटल व्योम tb_मुक्त_invalid_tunnels(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel;
-	काष्ठा tb_tunnel *n;
-
-	list_क्रम_each_entry_safe(tunnel, n, &tcm->tunnel_list, list) अणु
-		अगर (tb_tunnel_is_invalid(tunnel))
-			tb_deactivate_and_मुक्त_tunnel(tunnel);
-	पूर्ण
-पूर्ण
+	tb_tunnel_free(tunnel);
+}
 
 /*
- * tb_मुक्त_unplugged_children() - traverse hierarchy and मुक्त unplugged चयनes
+ * tb_free_invalid_tunnels() - destroy tunnels of devices that have gone away
  */
-अटल व्योम tb_मुक्त_unplugged_children(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
+static void tb_free_invalid_tunnels(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel;
+	struct tb_tunnel *n;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (!tb_port_has_remote(port))
-			जारी;
+	list_for_each_entry_safe(tunnel, n, &tcm->tunnel_list, list) {
+		if (tb_tunnel_is_invalid(tunnel))
+			tb_deactivate_and_free_tunnel(tunnel);
+	}
+}
 
-		अगर (port->remote->sw->is_unplugged) अणु
-			tb_reसमयr_हटाओ_all(port);
-			tb_हटाओ_dp_resources(port->remote->sw);
-			tb_चयन_unconfigure_link(port->remote->sw);
-			tb_चयन_lane_bonding_disable(port->remote->sw);
-			tb_चयन_हटाओ(port->remote->sw);
-			port->remote = शून्य;
-			अगर (port->dual_link_port)
-				port->dual_link_port->remote = शून्य;
-		पूर्ण अन्यथा अणु
-			tb_मुक्त_unplugged_children(port->remote->sw);
-		पूर्ण
-	पूर्ण
-पूर्ण
+/*
+ * tb_free_unplugged_children() - traverse hierarchy and free unplugged switches
+ */
+static void tb_free_unplugged_children(struct tb_switch *sw)
+{
+	struct tb_port *port;
 
-अटल काष्ठा tb_port *tb_find_pcie_करोwn(काष्ठा tb_चयन *sw,
-					 स्थिर काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_port *करोwn = शून्य;
+	tb_switch_for_each_port(sw, port) {
+		if (!tb_port_has_remote(port))
+			continue;
+
+		if (port->remote->sw->is_unplugged) {
+			tb_retimer_remove_all(port);
+			tb_remove_dp_resources(port->remote->sw);
+			tb_switch_unconfigure_link(port->remote->sw);
+			tb_switch_lane_bonding_disable(port->remote->sw);
+			tb_switch_remove(port->remote->sw);
+			port->remote = NULL;
+			if (port->dual_link_port)
+				port->dual_link_port->remote = NULL;
+		} else {
+			tb_free_unplugged_children(port->remote->sw);
+		}
+	}
+}
+
+static struct tb_port *tb_find_pcie_down(struct tb_switch *sw,
+					 const struct tb_port *port)
+{
+	struct tb_port *down = NULL;
 
 	/*
 	 * To keep plugging devices consistently in the same PCIe
-	 * hierarchy, करो mapping here क्रम चयन करोwnstream PCIe ports.
+	 * hierarchy, do mapping here for switch downstream PCIe ports.
 	 */
-	अगर (tb_चयन_is_usb4(sw)) अणु
-		करोwn = usb4_चयन_map_pcie_करोwn(sw, port);
-	पूर्ण अन्यथा अगर (!tb_route(sw)) अणु
-		पूर्णांक phy_port = tb_phy_port_from_link(port->port);
-		पूर्णांक index;
+	if (tb_switch_is_usb4(sw)) {
+		down = usb4_switch_map_pcie_down(sw, port);
+	} else if (!tb_route(sw)) {
+		int phy_port = tb_phy_port_from_link(port->port);
+		int index;
 
 		/*
-		 * Hard-coded Thunderbolt port to PCIe करोwn port mapping
+		 * Hard-coded Thunderbolt port to PCIe down port mapping
 		 * per controller.
 		 */
-		अगर (tb_चयन_is_cactus_ridge(sw) ||
-		    tb_चयन_is_alpine_ridge(sw))
+		if (tb_switch_is_cactus_ridge(sw) ||
+		    tb_switch_is_alpine_ridge(sw))
 			index = !phy_port ? 6 : 7;
-		अन्यथा अगर (tb_चयन_is_falcon_ridge(sw))
+		else if (tb_switch_is_falcon_ridge(sw))
 			index = !phy_port ? 6 : 8;
-		अन्यथा अगर (tb_चयन_is_titan_ridge(sw))
+		else if (tb_switch_is_titan_ridge(sw))
 			index = !phy_port ? 8 : 9;
-		अन्यथा
-			जाओ out;
+		else
+			goto out;
 
 		/* Validate the hard-coding */
-		अगर (WARN_ON(index > sw->config.max_port_number))
-			जाओ out;
+		if (WARN_ON(index > sw->config.max_port_number))
+			goto out;
 
-		करोwn = &sw->ports[index];
-	पूर्ण
+		down = &sw->ports[index];
+	}
 
-	अगर (करोwn) अणु
-		अगर (WARN_ON(!tb_port_is_pcie_करोwn(करोwn)))
-			जाओ out;
-		अगर (tb_pci_port_is_enabled(करोwn))
-			जाओ out;
+	if (down) {
+		if (WARN_ON(!tb_port_is_pcie_down(down)))
+			goto out;
+		if (tb_pci_port_is_enabled(down))
+			goto out;
 
-		वापस करोwn;
-	पूर्ण
+		return down;
+	}
 
 out:
-	वापस tb_find_unused_port(sw, TB_TYPE_PCIE_DOWN);
-पूर्ण
+	return tb_find_unused_port(sw, TB_TYPE_PCIE_DOWN);
+}
 
-अटल काष्ठा tb_port *tb_find_dp_out(काष्ठा tb *tb, काष्ठा tb_port *in)
-अणु
-	काष्ठा tb_port *host_port, *port;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
+static struct tb_port *tb_find_dp_out(struct tb *tb, struct tb_port *in)
+{
+	struct tb_port *host_port, *port;
+	struct tb_cm *tcm = tb_priv(tb);
 
 	host_port = tb_route(in->sw) ?
-		tb_port_at(tb_route(in->sw), tb->root_चयन) : शून्य;
+		tb_port_at(tb_route(in->sw), tb->root_switch) : NULL;
 
-	list_क्रम_each_entry(port, &tcm->dp_resources, list) अणु
-		अगर (!tb_port_is_dpout(port))
-			जारी;
+	list_for_each_entry(port, &tcm->dp_resources, list) {
+		if (!tb_port_is_dpout(port))
+			continue;
 
-		अगर (tb_port_is_enabled(port)) अणु
+		if (tb_port_is_enabled(port)) {
 			tb_port_dbg(port, "in use\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		tb_port_dbg(port, "DP OUT available\n");
 
 		/*
 		 * Keep the DP tunnel under the topology starting from
-		 * the same host router करोwnstream port.
+		 * the same host router downstream port.
 		 */
-		अगर (host_port && tb_route(port->sw)) अणु
-			काष्ठा tb_port *p;
+		if (host_port && tb_route(port->sw)) {
+			struct tb_port *p;
 
-			p = tb_port_at(tb_route(port->sw), tb->root_चयन);
-			अगर (p != host_port)
-				जारी;
-		पूर्ण
+			p = tb_port_at(tb_route(port->sw), tb->root_switch);
+			if (p != host_port)
+				continue;
+		}
 
-		वापस port;
-	पूर्ण
+		return port;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम tb_tunnel_dp(काष्ठा tb *tb)
-अणु
-	पूर्णांक available_up, available_करोwn, ret;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_port *port, *in, *out;
-	काष्ठा tb_tunnel *tunnel;
+static void tb_tunnel_dp(struct tb *tb)
+{
+	int available_up, available_down, ret;
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_port *port, *in, *out;
+	struct tb_tunnel *tunnel;
 
-	अगर (!tb_acpi_may_tunnel_dp()) अणु
+	if (!tb_acpi_may_tunnel_dp()) {
 		tb_dbg(tb, "DP tunneling disabled, not creating tunnel\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Find pair of inactive DP IN and DP OUT adapters and then
@@ -867,291 +866,291 @@ out:
 	 */
 	tb_dbg(tb, "looking for DP IN <-> DP OUT pairs:\n");
 
-	in = शून्य;
-	out = शून्य;
-	list_क्रम_each_entry(port, &tcm->dp_resources, list) अणु
-		अगर (!tb_port_is_dpin(port))
-			जारी;
+	in = NULL;
+	out = NULL;
+	list_for_each_entry(port, &tcm->dp_resources, list) {
+		if (!tb_port_is_dpin(port))
+			continue;
 
-		अगर (tb_port_is_enabled(port)) अणु
+		if (tb_port_is_enabled(port)) {
 			tb_port_dbg(port, "in use\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		tb_port_dbg(port, "DP IN available\n");
 
 		out = tb_find_dp_out(tb, port);
-		अगर (out) अणु
+		if (out) {
 			in = port;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!in) अणु
+	if (!in) {
 		tb_dbg(tb, "no suitable DP IN adapter available, not tunneling\n");
-		वापस;
-	पूर्ण
-	अगर (!out) अणु
+		return;
+	}
+	if (!out) {
 		tb_dbg(tb, "no suitable DP OUT adapter available, not tunneling\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * DP stream needs the करोमुख्य to be active so runसमय resume
+	 * DP stream needs the domain to be active so runtime resume
 	 * both ends of the tunnel.
 	 *
 	 * This should bring the routers in the middle active as well
-	 * and keeps the करोमुख्य from runसमय suspending जबतक the DP
+	 * and keeps the domain from runtime suspending while the DP
 	 * tunnel is active.
 	 */
-	pm_runसमय_get_sync(&in->sw->dev);
-	pm_runसमय_get_sync(&out->sw->dev);
+	pm_runtime_get_sync(&in->sw->dev);
+	pm_runtime_get_sync(&out->sw->dev);
 
-	अगर (tb_चयन_alloc_dp_resource(in->sw, in)) अणु
+	if (tb_switch_alloc_dp_resource(in->sw, in)) {
 		tb_port_dbg(in, "no resource available for DP IN, not tunneling\n");
-		जाओ err_rpm_put;
-	पूर्ण
+		goto err_rpm_put;
+	}
 
-	/* Make all unused USB3 bandwidth available क्रम the new DP tunnel */
+	/* Make all unused USB3 bandwidth available for the new DP tunnel */
 	ret = tb_release_unused_usb3_bandwidth(tb, in, out);
-	अगर (ret) अणु
+	if (ret) {
 		tb_warn(tb, "failed to release unused bandwidth\n");
-		जाओ err_dealloc_dp;
-	पूर्ण
+		goto err_dealloc_dp;
+	}
 
 	ret = tb_available_bandwidth(tb, in, out, &available_up,
-				     &available_करोwn);
-	अगर (ret)
-		जाओ err_reclaim;
+				     &available_down);
+	if (ret)
+		goto err_reclaim;
 
 	tb_dbg(tb, "available bandwidth for new DP tunnel %u/%u Mb/s\n",
-	       available_up, available_करोwn);
+	       available_up, available_down);
 
-	tunnel = tb_tunnel_alloc_dp(tb, in, out, available_up, available_करोwn);
-	अगर (!tunnel) अणु
+	tunnel = tb_tunnel_alloc_dp(tb, in, out, available_up, available_down);
+	if (!tunnel) {
 		tb_port_dbg(out, "could not allocate DP tunnel\n");
-		जाओ err_reclaim;
-	पूर्ण
+		goto err_reclaim;
+	}
 
-	अगर (tb_tunnel_activate(tunnel)) अणु
+	if (tb_tunnel_activate(tunnel)) {
 		tb_port_info(out, "DP tunnel activation failed, aborting\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	list_add_tail(&tunnel->list, &tcm->tunnel_list);
 	tb_reclaim_usb3_bandwidth(tb, in, out);
-	वापस;
+	return;
 
-err_मुक्त:
-	tb_tunnel_मुक्त(tunnel);
+err_free:
+	tb_tunnel_free(tunnel);
 err_reclaim:
 	tb_reclaim_usb3_bandwidth(tb, in, out);
 err_dealloc_dp:
-	tb_चयन_dealloc_dp_resource(in->sw, in);
+	tb_switch_dealloc_dp_resource(in->sw, in);
 err_rpm_put:
-	pm_runसमय_mark_last_busy(&out->sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&out->sw->dev);
-	pm_runसमय_mark_last_busy(&in->sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&in->sw->dev);
-पूर्ण
+	pm_runtime_mark_last_busy(&out->sw->dev);
+	pm_runtime_put_autosuspend(&out->sw->dev);
+	pm_runtime_mark_last_busy(&in->sw->dev);
+	pm_runtime_put_autosuspend(&in->sw->dev);
+}
 
-अटल व्योम tb_dp_resource_unavailable(काष्ठा tb *tb, काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_port *in, *out;
-	काष्ठा tb_tunnel *tunnel;
+static void tb_dp_resource_unavailable(struct tb *tb, struct tb_port *port)
+{
+	struct tb_port *in, *out;
+	struct tb_tunnel *tunnel;
 
-	अगर (tb_port_is_dpin(port)) अणु
+	if (tb_port_is_dpin(port)) {
 		tb_port_dbg(port, "DP IN resource unavailable\n");
 		in = port;
-		out = शून्य;
-	पूर्ण अन्यथा अणु
+		out = NULL;
+	} else {
 		tb_port_dbg(port, "DP OUT resource unavailable\n");
-		in = शून्य;
+		in = NULL;
 		out = port;
-	पूर्ण
+	}
 
 	tunnel = tb_find_tunnel(tb, TB_TUNNEL_DP, in, out);
-	tb_deactivate_and_मुक्त_tunnel(tunnel);
+	tb_deactivate_and_free_tunnel(tunnel);
 	list_del_init(&port->list);
 
 	/*
-	 * See अगर there is another DP OUT port that can be used क्रम
+	 * See if there is another DP OUT port that can be used for
 	 * to create another tunnel.
 	 */
 	tb_tunnel_dp(tb);
-पूर्ण
+}
 
-अटल व्योम tb_dp_resource_available(काष्ठा tb *tb, काष्ठा tb_port *port)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_port *p;
+static void tb_dp_resource_available(struct tb *tb, struct tb_port *port)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_port *p;
 
-	अगर (tb_port_is_enabled(port))
-		वापस;
+	if (tb_port_is_enabled(port))
+		return;
 
-	list_क्रम_each_entry(p, &tcm->dp_resources, list) अणु
-		अगर (p == port)
-			वापस;
-	पूर्ण
+	list_for_each_entry(p, &tcm->dp_resources, list) {
+		if (p == port)
+			return;
+	}
 
 	tb_port_dbg(port, "DP %s resource available\n",
 		    tb_port_is_dpin(port) ? "IN" : "OUT");
 	list_add_tail(&port->list, &tcm->dp_resources);
 
-	/* Look क्रम suitable DP IN <-> DP OUT pairs now */
+	/* Look for suitable DP IN <-> DP OUT pairs now */
 	tb_tunnel_dp(tb);
-पूर्ण
+}
 
-अटल व्योम tb_disconnect_and_release_dp(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel, *n;
+static void tb_disconnect_and_release_dp(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel, *n;
 
 	/*
-	 * Tear करोwn all DP tunnels and release their resources. They
+	 * Tear down all DP tunnels and release their resources. They
 	 * will be re-established after resume based on plug events.
 	 */
-	list_क्रम_each_entry_safe_reverse(tunnel, n, &tcm->tunnel_list, list) अणु
-		अगर (tb_tunnel_is_dp(tunnel))
-			tb_deactivate_and_मुक्त_tunnel(tunnel);
-	पूर्ण
+	list_for_each_entry_safe_reverse(tunnel, n, &tcm->tunnel_list, list) {
+		if (tb_tunnel_is_dp(tunnel))
+			tb_deactivate_and_free_tunnel(tunnel);
+	}
 
-	जबतक (!list_empty(&tcm->dp_resources)) अणु
-		काष्ठा tb_port *port;
+	while (!list_empty(&tcm->dp_resources)) {
+		struct tb_port *port;
 
 		port = list_first_entry(&tcm->dp_resources,
-					काष्ठा tb_port, list);
+					struct tb_port, list);
 		list_del_init(&port->list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tb_disconnect_pci(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_tunnel *tunnel;
-	काष्ठा tb_port *up;
+static int tb_disconnect_pci(struct tb *tb, struct tb_switch *sw)
+{
+	struct tb_tunnel *tunnel;
+	struct tb_port *up;
 
-	up = tb_चयन_find_port(sw, TB_TYPE_PCIE_UP);
-	अगर (WARN_ON(!up))
-		वापस -ENODEV;
+	up = tb_switch_find_port(sw, TB_TYPE_PCIE_UP);
+	if (WARN_ON(!up))
+		return -ENODEV;
 
-	tunnel = tb_find_tunnel(tb, TB_TUNNEL_PCI, शून्य, up);
-	अगर (WARN_ON(!tunnel))
-		वापस -ENODEV;
+	tunnel = tb_find_tunnel(tb, TB_TUNNEL_PCI, NULL, up);
+	if (WARN_ON(!tunnel))
+		return -ENODEV;
 
 	tb_tunnel_deactivate(tunnel);
 	list_del(&tunnel->list);
-	tb_tunnel_मुक्त(tunnel);
-	वापस 0;
-पूर्ण
+	tb_tunnel_free(tunnel);
+	return 0;
+}
 
-अटल पूर्णांक tb_tunnel_pci(काष्ठा tb *tb, काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *up, *करोwn, *port;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_चयन *parent_sw;
-	काष्ठा tb_tunnel *tunnel;
+static int tb_tunnel_pci(struct tb *tb, struct tb_switch *sw)
+{
+	struct tb_port *up, *down, *port;
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_switch *parent_sw;
+	struct tb_tunnel *tunnel;
 
-	up = tb_चयन_find_port(sw, TB_TYPE_PCIE_UP);
-	अगर (!up)
-		वापस 0;
+	up = tb_switch_find_port(sw, TB_TYPE_PCIE_UP);
+	if (!up)
+		return 0;
 
 	/*
-	 * Look up available करोwn port. Since we are chaining it should
-	 * be found right above this चयन.
+	 * Look up available down port. Since we are chaining it should
+	 * be found right above this switch.
 	 */
-	parent_sw = tb_to_चयन(sw->dev.parent);
+	parent_sw = tb_to_switch(sw->dev.parent);
 	port = tb_port_at(tb_route(sw), parent_sw);
-	करोwn = tb_find_pcie_करोwn(parent_sw, port);
-	अगर (!करोwn)
-		वापस 0;
+	down = tb_find_pcie_down(parent_sw, port);
+	if (!down)
+		return 0;
 
-	tunnel = tb_tunnel_alloc_pci(tb, up, करोwn);
-	अगर (!tunnel)
-		वापस -ENOMEM;
+	tunnel = tb_tunnel_alloc_pci(tb, up, down);
+	if (!tunnel)
+		return -ENOMEM;
 
-	अगर (tb_tunnel_activate(tunnel)) अणु
+	if (tb_tunnel_activate(tunnel)) {
 		tb_port_info(up,
 			     "PCIe tunnel activation failed, aborting\n");
-		tb_tunnel_मुक्त(tunnel);
-		वापस -EIO;
-	पूर्ण
+		tb_tunnel_free(tunnel);
+		return -EIO;
+	}
 
 	list_add_tail(&tunnel->list, &tcm->tunnel_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_approve_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
-				    पूर्णांक transmit_path, पूर्णांक transmit_ring,
-				    पूर्णांक receive_path, पूर्णांक receive_ring)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_port *nhi_port, *dst_port;
-	काष्ठा tb_tunnel *tunnel;
-	काष्ठा tb_चयन *sw;
+static int tb_approve_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
+				    int transmit_path, int transmit_ring,
+				    int receive_path, int receive_ring)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_port *nhi_port, *dst_port;
+	struct tb_tunnel *tunnel;
+	struct tb_switch *sw;
 
-	sw = tb_to_चयन(xd->dev.parent);
+	sw = tb_to_switch(xd->dev.parent);
 	dst_port = tb_port_at(xd->route, sw);
-	nhi_port = tb_चयन_find_port(tb->root_चयन, TB_TYPE_NHI);
+	nhi_port = tb_switch_find_port(tb->root_switch, TB_TYPE_NHI);
 
 	mutex_lock(&tb->lock);
 	tunnel = tb_tunnel_alloc_dma(tb, nhi_port, dst_port, transmit_path,
 				     transmit_ring, receive_path, receive_ring);
-	अगर (!tunnel) अणु
+	if (!tunnel) {
 		mutex_unlock(&tb->lock);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (tb_tunnel_activate(tunnel)) अणु
+	if (tb_tunnel_activate(tunnel)) {
 		tb_port_info(nhi_port,
 			     "DMA tunnel activation failed, aborting\n");
-		tb_tunnel_मुक्त(tunnel);
+		tb_tunnel_free(tunnel);
 		mutex_unlock(&tb->lock);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	list_add_tail(&tunnel->list, &tcm->tunnel_list);
 	mutex_unlock(&tb->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __tb_disconnect_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
-					  पूर्णांक transmit_path, पूर्णांक transmit_ring,
-					  पूर्णांक receive_path, पूर्णांक receive_ring)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_port *nhi_port, *dst_port;
-	काष्ठा tb_tunnel *tunnel, *n;
-	काष्ठा tb_चयन *sw;
+static void __tb_disconnect_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
+					  int transmit_path, int transmit_ring,
+					  int receive_path, int receive_ring)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_port *nhi_port, *dst_port;
+	struct tb_tunnel *tunnel, *n;
+	struct tb_switch *sw;
 
-	sw = tb_to_चयन(xd->dev.parent);
+	sw = tb_to_switch(xd->dev.parent);
 	dst_port = tb_port_at(xd->route, sw);
-	nhi_port = tb_चयन_find_port(tb->root_चयन, TB_TYPE_NHI);
+	nhi_port = tb_switch_find_port(tb->root_switch, TB_TYPE_NHI);
 
-	list_क्रम_each_entry_safe(tunnel, n, &tcm->tunnel_list, list) अणु
-		अगर (!tb_tunnel_is_dma(tunnel))
-			जारी;
-		अगर (tunnel->src_port != nhi_port || tunnel->dst_port != dst_port)
-			जारी;
+	list_for_each_entry_safe(tunnel, n, &tcm->tunnel_list, list) {
+		if (!tb_tunnel_is_dma(tunnel))
+			continue;
+		if (tunnel->src_port != nhi_port || tunnel->dst_port != dst_port)
+			continue;
 
-		अगर (tb_tunnel_match_dma(tunnel, transmit_path, transmit_ring,
+		if (tb_tunnel_match_dma(tunnel, transmit_path, transmit_ring,
 					receive_path, receive_ring))
-			tb_deactivate_and_मुक्त_tunnel(tunnel);
-	पूर्ण
-पूर्ण
+			tb_deactivate_and_free_tunnel(tunnel);
+	}
+}
 
-अटल पूर्णांक tb_disconnect_xकरोमुख्य_paths(काष्ठा tb *tb, काष्ठा tb_xकरोमुख्य *xd,
-				       पूर्णांक transmit_path, पूर्णांक transmit_ring,
-				       पूर्णांक receive_path, पूर्णांक receive_ring)
-अणु
-	अगर (!xd->is_unplugged) अणु
+static int tb_disconnect_xdomain_paths(struct tb *tb, struct tb_xdomain *xd,
+				       int transmit_path, int transmit_ring,
+				       int receive_path, int receive_ring)
+{
+	if (!xd->is_unplugged) {
 		mutex_lock(&tb->lock);
-		__tb_disconnect_xकरोमुख्य_paths(tb, xd, transmit_path,
+		__tb_disconnect_xdomain_paths(tb, xd, transmit_path,
 					      transmit_ring, receive_path,
 					      receive_ring);
 		mutex_unlock(&tb->lock);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* hotplug handling */
 
@@ -1160,430 +1159,430 @@ err_rpm_put:
  *
  * Executes on tb->wq.
  */
-अटल व्योम tb_handle_hotplug(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tb_hotplug_event *ev = container_of(work, typeof(*ev), work);
-	काष्ठा tb *tb = ev->tb;
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_चयन *sw;
-	काष्ठा tb_port *port;
+static void tb_handle_hotplug(struct work_struct *work)
+{
+	struct tb_hotplug_event *ev = container_of(work, typeof(*ev), work);
+	struct tb *tb = ev->tb;
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_switch *sw;
+	struct tb_port *port;
 
-	/* Bring the करोमुख्य back from sleep अगर it was suspended */
-	pm_runसमय_get_sync(&tb->dev);
+	/* Bring the domain back from sleep if it was suspended */
+	pm_runtime_get_sync(&tb->dev);
 
 	mutex_lock(&tb->lock);
-	अगर (!tcm->hotplug_active)
-		जाओ out; /* during init, suspend or shutकरोwn */
+	if (!tcm->hotplug_active)
+		goto out; /* during init, suspend or shutdown */
 
-	sw = tb_चयन_find_by_route(tb, ev->route);
-	अगर (!sw) अणु
+	sw = tb_switch_find_by_route(tb, ev->route);
+	if (!sw) {
 		tb_warn(tb,
 			"hotplug event from non existent switch %llx:%x (unplug: %d)\n",
 			ev->route, ev->port, ev->unplug);
-		जाओ out;
-	पूर्ण
-	अगर (ev->port > sw->config.max_port_number) अणु
+		goto out;
+	}
+	if (ev->port > sw->config.max_port_number) {
 		tb_warn(tb,
 			"hotplug event from non existent port %llx:%x (unplug: %d)\n",
 			ev->route, ev->port, ev->unplug);
-		जाओ put_sw;
-	पूर्ण
+		goto put_sw;
+	}
 	port = &sw->ports[ev->port];
-	अगर (tb_is_upstream_port(port)) अणु
+	if (tb_is_upstream_port(port)) {
 		tb_dbg(tb, "hotplug event for upstream port %llx:%x (unplug: %d)\n",
 		       ev->route, ev->port, ev->unplug);
-		जाओ put_sw;
-	पूर्ण
+		goto put_sw;
+	}
 
-	pm_runसमय_get_sync(&sw->dev);
+	pm_runtime_get_sync(&sw->dev);
 
-	अगर (ev->unplug) अणु
-		tb_reसमयr_हटाओ_all(port);
+	if (ev->unplug) {
+		tb_retimer_remove_all(port);
 
-		अगर (tb_port_has_remote(port)) अणु
+		if (tb_port_has_remote(port)) {
 			tb_port_dbg(port, "switch unplugged\n");
 			tb_sw_set_unplugged(port->remote->sw);
-			tb_मुक्त_invalid_tunnels(tb);
-			tb_हटाओ_dp_resources(port->remote->sw);
-			tb_चयन_पंचांगu_disable(port->remote->sw);
-			tb_चयन_unconfigure_link(port->remote->sw);
-			tb_चयन_lane_bonding_disable(port->remote->sw);
-			tb_चयन_हटाओ(port->remote->sw);
-			port->remote = शून्य;
-			अगर (port->dual_link_port)
-				port->dual_link_port->remote = शून्य;
+			tb_free_invalid_tunnels(tb);
+			tb_remove_dp_resources(port->remote->sw);
+			tb_switch_tmu_disable(port->remote->sw);
+			tb_switch_unconfigure_link(port->remote->sw);
+			tb_switch_lane_bonding_disable(port->remote->sw);
+			tb_switch_remove(port->remote->sw);
+			port->remote = NULL;
+			if (port->dual_link_port)
+				port->dual_link_port->remote = NULL;
 			/* Maybe we can create another DP tunnel */
 			tb_tunnel_dp(tb);
-		पूर्ण अन्यथा अगर (port->xकरोमुख्य) अणु
-			काष्ठा tb_xकरोमुख्य *xd = tb_xकरोमुख्य_get(port->xकरोमुख्य);
+		} else if (port->xdomain) {
+			struct tb_xdomain *xd = tb_xdomain_get(port->xdomain);
 
 			tb_port_dbg(port, "xdomain unplugged\n");
 			/*
 			 * Service drivers are unbound during
-			 * tb_xकरोमुख्य_हटाओ() so setting XDoमुख्य as
-			 * unplugged here prevents deadlock अगर they call
-			 * tb_xकरोमुख्य_disable_paths(). We will tear करोwn
+			 * tb_xdomain_remove() so setting XDomain as
+			 * unplugged here prevents deadlock if they call
+			 * tb_xdomain_disable_paths(). We will tear down
 			 * all the tunnels below.
 			 */
 			xd->is_unplugged = true;
-			tb_xकरोमुख्य_हटाओ(xd);
-			port->xकरोमुख्य = शून्य;
-			__tb_disconnect_xकरोमुख्य_paths(tb, xd, -1, -1, -1, -1);
-			tb_xकरोमुख्य_put(xd);
-			tb_port_unconfigure_xकरोमुख्य(port);
-		पूर्ण अन्यथा अगर (tb_port_is_dpout(port) || tb_port_is_dpin(port)) अणु
+			tb_xdomain_remove(xd);
+			port->xdomain = NULL;
+			__tb_disconnect_xdomain_paths(tb, xd, -1, -1, -1, -1);
+			tb_xdomain_put(xd);
+			tb_port_unconfigure_xdomain(port);
+		} else if (tb_port_is_dpout(port) || tb_port_is_dpin(port)) {
 			tb_dp_resource_unavailable(tb, port);
-		पूर्ण अन्यथा अणु
+		} else {
 			tb_port_dbg(port,
 				   "got unplug event for disconnected port, ignoring\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (port->remote) अणु
+		}
+	} else if (port->remote) {
 		tb_port_dbg(port, "got plug event for connected port, ignoring\n");
-	पूर्ण अन्यथा अणु
-		अगर (tb_port_is_null(port)) अणु
+	} else {
+		if (tb_port_is_null(port)) {
 			tb_port_dbg(port, "hotplug: scanning\n");
 			tb_scan_port(port);
-			अगर (!port->remote)
+			if (!port->remote)
 				tb_port_dbg(port, "hotplug: no switch found\n");
-		पूर्ण अन्यथा अगर (tb_port_is_dpout(port) || tb_port_is_dpin(port)) अणु
+		} else if (tb_port_is_dpout(port) || tb_port_is_dpin(port)) {
 			tb_dp_resource_available(tb, port);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	pm_runसमय_mark_last_busy(&sw->dev);
-	pm_runसमय_put_स्वतःsuspend(&sw->dev);
+	pm_runtime_mark_last_busy(&sw->dev);
+	pm_runtime_put_autosuspend(&sw->dev);
 
 put_sw:
-	tb_चयन_put(sw);
+	tb_switch_put(sw);
 out:
 	mutex_unlock(&tb->lock);
 
-	pm_runसमय_mark_last_busy(&tb->dev);
-	pm_runसमय_put_स्वतःsuspend(&tb->dev);
+	pm_runtime_mark_last_busy(&tb->dev);
+	pm_runtime_put_autosuspend(&tb->dev);
 
-	kमुक्त(ev);
-पूर्ण
+	kfree(ev);
+}
 
 /*
- * tb_schedule_hotplug_handler() - callback function क्रम the control channel
+ * tb_schedule_hotplug_handler() - callback function for the control channel
  *
  * Delegates to tb_handle_hotplug.
  */
-अटल व्योम tb_handle_event(काष्ठा tb *tb, क्रमागत tb_cfg_pkg_type type,
-			    स्थिर व्योम *buf, माप_प्रकार size)
-अणु
-	स्थिर काष्ठा cfg_event_pkg *pkg = buf;
+static void tb_handle_event(struct tb *tb, enum tb_cfg_pkg_type type,
+			    const void *buf, size_t size)
+{
+	const struct cfg_event_pkg *pkg = buf;
 	u64 route;
 
-	अगर (type != TB_CFG_PKG_EVENT) अणु
+	if (type != TB_CFG_PKG_EVENT) {
 		tb_warn(tb, "unexpected event %#x, ignoring\n", type);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	route = tb_cfg_get_route(&pkg->header);
 
-	अगर (tb_cfg_ack_plug(tb->ctl, route, pkg->port, pkg->unplug)) अणु
+	if (tb_cfg_ack_plug(tb->ctl, route, pkg->port, pkg->unplug)) {
 		tb_warn(tb, "could not ack plug event on %llx:%x\n", route,
 			pkg->port);
-	पूर्ण
+	}
 
 	tb_queue_hotplug(tb, route, pkg->port, pkg->unplug);
-पूर्ण
+}
 
-अटल व्योम tb_stop(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel;
-	काष्ठा tb_tunnel *n;
+static void tb_stop(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel;
+	struct tb_tunnel *n;
 
-	cancel_delayed_work(&tcm->हटाओ_work);
+	cancel_delayed_work(&tcm->remove_work);
 	/* tunnels are only present after everything has been initialized */
-	list_क्रम_each_entry_safe(tunnel, n, &tcm->tunnel_list, list) अणु
+	list_for_each_entry_safe(tunnel, n, &tcm->tunnel_list, list) {
 		/*
 		 * DMA tunnels require the driver to be functional so we
-		 * tear them करोwn. Other protocol tunnels can be left
-		 * पूर्णांकact.
+		 * tear them down. Other protocol tunnels can be left
+		 * intact.
 		 */
-		अगर (tb_tunnel_is_dma(tunnel))
+		if (tb_tunnel_is_dma(tunnel))
 			tb_tunnel_deactivate(tunnel);
-		tb_tunnel_मुक्त(tunnel);
-	पूर्ण
-	tb_चयन_हटाओ(tb->root_चयन);
-	tcm->hotplug_active = false; /* संकेत tb_handle_hotplug to quit */
-पूर्ण
+		tb_tunnel_free(tunnel);
+	}
+	tb_switch_remove(tb->root_switch);
+	tcm->hotplug_active = false; /* signal tb_handle_hotplug to quit */
+}
 
-अटल पूर्णांक tb_scan_finalize_चयन(काष्ठा device *dev, व्योम *data)
-अणु
-	अगर (tb_is_चयन(dev)) अणु
-		काष्ठा tb_चयन *sw = tb_to_चयन(dev);
+static int tb_scan_finalize_switch(struct device *dev, void *data)
+{
+	if (tb_is_switch(dev)) {
+		struct tb_switch *sw = tb_to_switch(dev);
 
 		/*
-		 * If we found that the चयन was alपढ़ोy setup by the
-		 * boot firmware, mark it as authorized now beक्रमe we
+		 * If we found that the switch was already setup by the
+		 * boot firmware, mark it as authorized now before we
 		 * send uevent to userspace.
 		 */
-		अगर (sw->boot)
+		if (sw->boot)
 			sw->authorized = 1;
 
 		dev_set_uevent_suppress(dev, false);
 		kobject_uevent(&dev->kobj, KOBJ_ADD);
-		device_क्रम_each_child(dev, शून्य, tb_scan_finalize_चयन);
-	पूर्ण
+		device_for_each_child(dev, NULL, tb_scan_finalize_switch);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_start(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	पूर्णांक ret;
+static int tb_start(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	int ret;
 
-	tb->root_चयन = tb_चयन_alloc(tb, &tb->dev, 0);
-	अगर (IS_ERR(tb->root_चयन))
-		वापस PTR_ERR(tb->root_चयन);
+	tb->root_switch = tb_switch_alloc(tb, &tb->dev, 0);
+	if (IS_ERR(tb->root_switch))
+		return PTR_ERR(tb->root_switch);
 
 	/*
 	 * ICM firmware upgrade needs running firmware and in native
 	 * mode that is not available so disable firmware upgrade of the
-	 * root चयन.
+	 * root switch.
 	 */
-	tb->root_चयन->no_nvm_upgrade = true;
-	/* All USB4 routers support runसमय PM */
-	tb->root_चयन->rpm = tb_चयन_is_usb4(tb->root_चयन);
+	tb->root_switch->no_nvm_upgrade = true;
+	/* All USB4 routers support runtime PM */
+	tb->root_switch->rpm = tb_switch_is_usb4(tb->root_switch);
 
-	ret = tb_चयन_configure(tb->root_चयन);
-	अगर (ret) अणु
-		tb_चयन_put(tb->root_चयन);
-		वापस ret;
-	पूर्ण
+	ret = tb_switch_configure(tb->root_switch);
+	if (ret) {
+		tb_switch_put(tb->root_switch);
+		return ret;
+	}
 
-	/* Announce the चयन to the world */
-	ret = tb_चयन_add(tb->root_चयन);
-	अगर (ret) अणु
-		tb_चयन_put(tb->root_चयन);
-		वापस ret;
-	पूर्ण
+	/* Announce the switch to the world */
+	ret = tb_switch_add(tb->root_switch);
+	if (ret) {
+		tb_switch_put(tb->root_switch);
+		return ret;
+	}
 
-	/* Enable TMU अगर it is off */
-	tb_चयन_पंचांगu_enable(tb->root_चयन);
-	/* Full scan to discover devices added beक्रमe the driver was loaded. */
-	tb_scan_चयन(tb->root_चयन);
+	/* Enable TMU if it is off */
+	tb_switch_tmu_enable(tb->root_switch);
+	/* Full scan to discover devices added before the driver was loaded. */
+	tb_scan_switch(tb->root_switch);
 	/* Find out tunnels created by the boot firmware */
-	tb_discover_tunnels(tb->root_चयन);
+	tb_discover_tunnels(tb->root_switch);
 	/*
 	 * If the boot firmware did not create USB 3.x tunnels create them
-	 * now क्रम the whole topology.
+	 * now for the whole topology.
 	 */
-	tb_create_usb3_tunnels(tb->root_चयन);
-	/* Add DP IN resources क्रम the root चयन */
-	tb_add_dp_resources(tb->root_चयन);
-	/* Make the discovered चयनes available to the userspace */
-	device_क्रम_each_child(&tb->root_चयन->dev, शून्य,
-			      tb_scan_finalize_चयन);
+	tb_create_usb3_tunnels(tb->root_switch);
+	/* Add DP IN resources for the root switch */
+	tb_add_dp_resources(tb->root_switch);
+	/* Make the discovered switches available to the userspace */
+	device_for_each_child(&tb->root_switch->dev, NULL,
+			      tb_scan_finalize_switch);
 
 	/* Allow tb_handle_hotplug to progress events */
 	tcm->hotplug_active = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_suspend_noirq(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
+static int tb_suspend_noirq(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
 
 	tb_dbg(tb, "suspending...\n");
 	tb_disconnect_and_release_dp(tb);
-	tb_चयन_suspend(tb->root_चयन, false);
-	tcm->hotplug_active = false; /* संकेत tb_handle_hotplug to quit */
+	tb_switch_suspend(tb->root_switch, false);
+	tcm->hotplug_active = false; /* signal tb_handle_hotplug to quit */
 	tb_dbg(tb, "suspend finished\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb_restore_children(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
+static void tb_restore_children(struct tb_switch *sw)
+{
+	struct tb_port *port;
 
-	/* No need to restore अगर the router is alपढ़ोy unplugged */
-	अगर (sw->is_unplugged)
-		वापस;
+	/* No need to restore if the router is already unplugged */
+	if (sw->is_unplugged)
+		return;
 
-	अगर (tb_enable_पंचांगu(sw))
+	if (tb_enable_tmu(sw))
 		tb_sw_warn(sw, "failed to restore TMU configuration\n");
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (!tb_port_has_remote(port) && !port->xकरोमुख्य)
-			जारी;
+	tb_switch_for_each_port(sw, port) {
+		if (!tb_port_has_remote(port) && !port->xdomain)
+			continue;
 
-		अगर (port->remote) अणु
-			tb_चयन_lane_bonding_enable(port->remote->sw);
-			tb_चयन_configure_link(port->remote->sw);
+		if (port->remote) {
+			tb_switch_lane_bonding_enable(port->remote->sw);
+			tb_switch_configure_link(port->remote->sw);
 
 			tb_restore_children(port->remote->sw);
-		पूर्ण अन्यथा अगर (port->xकरोमुख्य) अणु
-			tb_port_configure_xकरोमुख्य(port);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else if (port->xdomain) {
+			tb_port_configure_xdomain(port);
+		}
+	}
+}
 
-अटल पूर्णांक tb_resume_noirq(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel, *n;
+static int tb_resume_noirq(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel, *n;
 
 	tb_dbg(tb, "resuming...\n");
 
-	/* हटाओ any pci devices the firmware might have setup */
-	tb_चयन_reset(tb->root_चयन);
+	/* remove any pci devices the firmware might have setup */
+	tb_switch_reset(tb->root_switch);
 
-	tb_चयन_resume(tb->root_चयन);
-	tb_मुक्त_invalid_tunnels(tb);
-	tb_मुक्त_unplugged_children(tb->root_चयन);
-	tb_restore_children(tb->root_चयन);
-	list_क्रम_each_entry_safe(tunnel, n, &tcm->tunnel_list, list)
+	tb_switch_resume(tb->root_switch);
+	tb_free_invalid_tunnels(tb);
+	tb_free_unplugged_children(tb->root_switch);
+	tb_restore_children(tb->root_switch);
+	list_for_each_entry_safe(tunnel, n, &tcm->tunnel_list, list)
 		tb_tunnel_restart(tunnel);
-	अगर (!list_empty(&tcm->tunnel_list)) अणु
+	if (!list_empty(&tcm->tunnel_list)) {
 		/*
-		 * the pcie links need some समय to get going.
-		 * 100ms works क्रम me...
+		 * the pcie links need some time to get going.
+		 * 100ms works for me...
 		 */
 		tb_dbg(tb, "tunnels restarted, sleeping for 100ms\n");
 		msleep(100);
-	पूर्ण
+	}
 	 /* Allow tb_handle_hotplug to progress events */
 	tcm->hotplug_active = true;
 	tb_dbg(tb, "resume finished\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_मुक्त_unplugged_xकरोमुख्यs(काष्ठा tb_चयन *sw)
-अणु
-	काष्ठा tb_port *port;
-	पूर्णांक ret = 0;
+static int tb_free_unplugged_xdomains(struct tb_switch *sw)
+{
+	struct tb_port *port;
+	int ret = 0;
 
-	tb_चयन_क्रम_each_port(sw, port) अणु
-		अगर (tb_is_upstream_port(port))
-			जारी;
-		अगर (port->xकरोमुख्य && port->xकरोमुख्य->is_unplugged) अणु
-			tb_reसमयr_हटाओ_all(port);
-			tb_xकरोमुख्य_हटाओ(port->xकरोमुख्य);
-			tb_port_unconfigure_xकरोमुख्य(port);
-			port->xकरोमुख्य = शून्य;
+	tb_switch_for_each_port(sw, port) {
+		if (tb_is_upstream_port(port))
+			continue;
+		if (port->xdomain && port->xdomain->is_unplugged) {
+			tb_retimer_remove_all(port);
+			tb_xdomain_remove(port->xdomain);
+			tb_port_unconfigure_xdomain(port);
+			port->xdomain = NULL;
 			ret++;
-		पूर्ण अन्यथा अगर (port->remote) अणु
-			ret += tb_मुक्त_unplugged_xकरोमुख्यs(port->remote->sw);
-		पूर्ण
-	पूर्ण
+		} else if (port->remote) {
+			ret += tb_free_unplugged_xdomains(port->remote->sw);
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tb_मुक्तze_noirq(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
+static int tb_freeze_noirq(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
 
 	tcm->hotplug_active = false;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tb_thaw_noirq(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
+static int tb_thaw_noirq(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
 
 	tcm->hotplug_active = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb_complete(काष्ठा tb *tb)
-अणु
+static void tb_complete(struct tb *tb)
+{
 	/*
-	 * Release any unplugged XDoमुख्यs and अगर there is a हाल where
-	 * another करोमुख्य is swapped in place of unplugged XDoमुख्य we
+	 * Release any unplugged XDomains and if there is a case where
+	 * another domain is swapped in place of unplugged XDomain we
 	 * need to run another rescan.
 	 */
 	mutex_lock(&tb->lock);
-	अगर (tb_मुक्त_unplugged_xकरोमुख्यs(tb->root_चयन))
-		tb_scan_चयन(tb->root_चयन);
+	if (tb_free_unplugged_xdomains(tb->root_switch))
+		tb_scan_switch(tb->root_switch);
 	mutex_unlock(&tb->lock);
-पूर्ण
+}
 
-अटल पूर्णांक tb_runसमय_suspend(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
+static int tb_runtime_suspend(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
 
 	mutex_lock(&tb->lock);
-	tb_चयन_suspend(tb->root_चयन, true);
+	tb_switch_suspend(tb->root_switch, true);
 	tcm->hotplug_active = false;
 	mutex_unlock(&tb->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tb_हटाओ_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tb_cm *tcm = container_of(work, काष्ठा tb_cm, हटाओ_work.work);
-	काष्ठा tb *tb = tcm_to_tb(tcm);
+static void tb_remove_work(struct work_struct *work)
+{
+	struct tb_cm *tcm = container_of(work, struct tb_cm, remove_work.work);
+	struct tb *tb = tcm_to_tb(tcm);
 
 	mutex_lock(&tb->lock);
-	अगर (tb->root_चयन) अणु
-		tb_मुक्त_unplugged_children(tb->root_चयन);
-		tb_मुक्त_unplugged_xकरोमुख्यs(tb->root_चयन);
-	पूर्ण
+	if (tb->root_switch) {
+		tb_free_unplugged_children(tb->root_switch);
+		tb_free_unplugged_xdomains(tb->root_switch);
+	}
 	mutex_unlock(&tb->lock);
-पूर्ण
+}
 
-अटल पूर्णांक tb_runसमय_resume(काष्ठा tb *tb)
-अणु
-	काष्ठा tb_cm *tcm = tb_priv(tb);
-	काष्ठा tb_tunnel *tunnel, *n;
+static int tb_runtime_resume(struct tb *tb)
+{
+	struct tb_cm *tcm = tb_priv(tb);
+	struct tb_tunnel *tunnel, *n;
 
 	mutex_lock(&tb->lock);
-	tb_चयन_resume(tb->root_चयन);
-	tb_मुक्त_invalid_tunnels(tb);
-	tb_restore_children(tb->root_चयन);
-	list_क्रम_each_entry_safe(tunnel, n, &tcm->tunnel_list, list)
+	tb_switch_resume(tb->root_switch);
+	tb_free_invalid_tunnels(tb);
+	tb_restore_children(tb->root_switch);
+	list_for_each_entry_safe(tunnel, n, &tcm->tunnel_list, list)
 		tb_tunnel_restart(tunnel);
 	tcm->hotplug_active = true;
 	mutex_unlock(&tb->lock);
 
 	/*
 	 * Schedule cleanup of any unplugged devices. Run this in a
-	 * separate thपढ़ो to aव्योम possible deadlock अगर the device
-	 * removal runसमय resumes the unplugged device.
+	 * separate thread to avoid possible deadlock if the device
+	 * removal runtime resumes the unplugged device.
 	 */
-	queue_delayed_work(tb->wq, &tcm->हटाओ_work, msecs_to_jअगरfies(50));
-	वापस 0;
-पूर्ण
+	queue_delayed_work(tb->wq, &tcm->remove_work, msecs_to_jiffies(50));
+	return 0;
+}
 
-अटल स्थिर काष्ठा tb_cm_ops tb_cm_ops = अणु
+static const struct tb_cm_ops tb_cm_ops = {
 	.start = tb_start,
 	.stop = tb_stop,
 	.suspend_noirq = tb_suspend_noirq,
 	.resume_noirq = tb_resume_noirq,
-	.मुक्तze_noirq = tb_मुक्तze_noirq,
+	.freeze_noirq = tb_freeze_noirq,
 	.thaw_noirq = tb_thaw_noirq,
 	.complete = tb_complete,
-	.runसमय_suspend = tb_runसमय_suspend,
-	.runसमय_resume = tb_runसमय_resume,
+	.runtime_suspend = tb_runtime_suspend,
+	.runtime_resume = tb_runtime_resume,
 	.handle_event = tb_handle_event,
-	.disapprove_चयन = tb_disconnect_pci,
-	.approve_चयन = tb_tunnel_pci,
-	.approve_xकरोमुख्य_paths = tb_approve_xकरोमुख्य_paths,
-	.disconnect_xकरोमुख्य_paths = tb_disconnect_xकरोमुख्य_paths,
-पूर्ण;
+	.disapprove_switch = tb_disconnect_pci,
+	.approve_switch = tb_tunnel_pci,
+	.approve_xdomain_paths = tb_approve_xdomain_paths,
+	.disconnect_xdomain_paths = tb_disconnect_xdomain_paths,
+};
 
-काष्ठा tb *tb_probe(काष्ठा tb_nhi *nhi)
-अणु
-	काष्ठा tb_cm *tcm;
-	काष्ठा tb *tb;
+struct tb *tb_probe(struct tb_nhi *nhi)
+{
+	struct tb_cm *tcm;
+	struct tb *tb;
 
-	tb = tb_करोमुख्य_alloc(nhi, TB_TIMEOUT, माप(*tcm));
-	अगर (!tb)
-		वापस शून्य;
+	tb = tb_domain_alloc(nhi, TB_TIMEOUT, sizeof(*tcm));
+	if (!tb)
+		return NULL;
 
-	अगर (tb_acpi_may_tunnel_pcie())
+	if (tb_acpi_may_tunnel_pcie())
 		tb->security_level = TB_SECURITY_USER;
-	अन्यथा
+	else
 		tb->security_level = TB_SECURITY_NOPCIE;
 
 	tb->cm_ops = &tb_cm_ops;
@@ -1591,9 +1590,9 @@ out:
 	tcm = tb_priv(tb);
 	INIT_LIST_HEAD(&tcm->tunnel_list);
 	INIT_LIST_HEAD(&tcm->dp_resources);
-	INIT_DELAYED_WORK(&tcm->हटाओ_work, tb_हटाओ_work);
+	INIT_DELAYED_WORK(&tcm->remove_work, tb_remove_work);
 
 	tb_dbg(tb, "using software connection manager\n");
 
-	वापस tb;
-पूर्ण
+	return tb;
+}

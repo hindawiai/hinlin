@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Scan related functions.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#अगर_अघोषित WFX_SCAN_H
-#घोषणा WFX_SCAN_H
+#ifndef WFX_SCAN_H
+#define WFX_SCAN_H
 
-#समावेश <net/mac80211.h>
+#include <net/mac80211.h>
 
-काष्ठा wfx_dev;
-काष्ठा wfx_vअगर;
+struct wfx_dev;
+struct wfx_vif;
 
-व्योम wfx_hw_scan_work(काष्ठा work_काष्ठा *work);
-पूर्णांक wfx_hw_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
-		काष्ठा ieee80211_scan_request *req);
-व्योम wfx_cancel_hw_scan(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर);
-व्योम wfx_scan_complete(काष्ठा wfx_vअगर *wvअगर);
+void wfx_hw_scan_work(struct work_struct *work);
+int wfx_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		struct ieee80211_scan_request *req);
+void wfx_cancel_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif);
+void wfx_scan_complete(struct wfx_vif *wvif);
 
-#पूर्ण_अगर /* WFX_SCAN_H */
+#endif /* WFX_SCAN_H */

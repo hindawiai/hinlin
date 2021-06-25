@@ -1,441 +1,440 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * net/sched/cls_fw.c	Classअगरier mapping ipchains' fwmark to traffic class.
+ * net/sched/cls_fw.c	Classifier mapping ipchains' fwmark to traffic class.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
  * Changes:
  * Karlis Peisenieks <karlis@mt.lv> : 990415 : fw_walk off by one
- * Karlis Peisenieks <karlis@mt.lv> : 990415 : fw_delete समाप्तed all the filter (and kernel).
+ * Karlis Peisenieks <karlis@mt.lv> : 990415 : fw_delete killed all the filter (and kernel).
  * Alex <alex@pilotsoft.com> : 2004xxyy: Added Action extension
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <net/netlink.h>
-#समावेश <net/act_api.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/sch_generic.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <net/netlink.h>
+#include <net/act_api.h>
+#include <net/pkt_cls.h>
+#include <net/sch_generic.h>
 
-#घोषणा HTSIZE 256
+#define HTSIZE 256
 
-काष्ठा fw_head अणु
+struct fw_head {
 	u32			mask;
-	काष्ठा fw_filter __rcu	*ht[HTSIZE];
-	काष्ठा rcu_head		rcu;
-पूर्ण;
+	struct fw_filter __rcu	*ht[HTSIZE];
+	struct rcu_head		rcu;
+};
 
-काष्ठा fw_filter अणु
-	काष्ठा fw_filter __rcu	*next;
+struct fw_filter {
+	struct fw_filter __rcu	*next;
 	u32			id;
-	काष्ठा tcf_result	res;
-	पूर्णांक			अगरindex;
-	काष्ठा tcf_exts		exts;
-	काष्ठा tcf_proto	*tp;
-	काष्ठा rcu_work		rwork;
-पूर्ण;
+	struct tcf_result	res;
+	int			ifindex;
+	struct tcf_exts		exts;
+	struct tcf_proto	*tp;
+	struct rcu_work		rwork;
+};
 
-अटल u32 fw_hash(u32 handle)
-अणु
+static u32 fw_hash(u32 handle)
+{
 	handle ^= (handle >> 16);
 	handle ^= (handle >> 8);
-	वापस handle % HTSIZE;
-पूर्ण
+	return handle % HTSIZE;
+}
 
-अटल पूर्णांक fw_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
-		       काष्ठा tcf_result *res)
-अणु
-	काष्ठा fw_head *head = rcu_dereference_bh(tp->root);
-	काष्ठा fw_filter *f;
-	पूर्णांक r;
+static int fw_classify(struct sk_buff *skb, const struct tcf_proto *tp,
+		       struct tcf_result *res)
+{
+	struct fw_head *head = rcu_dereference_bh(tp->root);
+	struct fw_filter *f;
+	int r;
 	u32 id = skb->mark;
 
-	अगर (head != शून्य) अणु
+	if (head != NULL) {
 		id &= head->mask;
 
-		क्रम (f = rcu_dereference_bh(head->ht[fw_hash(id)]); f;
-		     f = rcu_dereference_bh(f->next)) अणु
-			अगर (f->id == id) अणु
+		for (f = rcu_dereference_bh(head->ht[fw_hash(id)]); f;
+		     f = rcu_dereference_bh(f->next)) {
+			if (f->id == id) {
 				*res = f->res;
-				अगर (!tcf_match_indev(skb, f->अगरindex))
-					जारी;
+				if (!tcf_match_indev(skb, f->ifindex))
+					continue;
 				r = tcf_exts_exec(skb, &f->exts, res);
-				अगर (r < 0)
-					जारी;
+				if (r < 0)
+					continue;
 
-				वापस r;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा Qdisc *q = tcf_block_q(tp->chain->block);
+				return r;
+			}
+		}
+	} else {
+		struct Qdisc *q = tcf_block_q(tp->chain->block);
 
-		/* Old method: classअगरy the packet using its skb mark. */
-		अगर (id && (TC_H_MAJ(id) == 0 ||
-			   !(TC_H_MAJ(id ^ q->handle)))) अणु
+		/* Old method: classify the packet using its skb mark. */
+		if (id && (TC_H_MAJ(id) == 0 ||
+			   !(TC_H_MAJ(id ^ q->handle)))) {
 			res->classid = id;
 			res->class = 0;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम *fw_get(काष्ठा tcf_proto *tp, u32 handle)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
-	काष्ठा fw_filter *f;
+static void *fw_get(struct tcf_proto *tp, u32 handle)
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
+	struct fw_filter *f;
 
-	अगर (head == शून्य)
-		वापस शून्य;
+	if (head == NULL)
+		return NULL;
 
 	f = rtnl_dereference(head->ht[fw_hash(handle)]);
-	क्रम (; f; f = rtnl_dereference(f->next)) अणु
-		अगर (f->id == handle)
-			वापस f;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (; f; f = rtnl_dereference(f->next)) {
+		if (f->id == handle)
+			return f;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक fw_init(काष्ठा tcf_proto *tp)
-अणु
-	/* We करोn't allocate fw_head here, because in the old method
-	 * we करोn't need it at all.
+static int fw_init(struct tcf_proto *tp)
+{
+	/* We don't allocate fw_head here, because in the old method
+	 * we don't need it at all.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __fw_delete_filter(काष्ठा fw_filter *f)
-अणु
+static void __fw_delete_filter(struct fw_filter *f)
+{
 	tcf_exts_destroy(&f->exts);
 	tcf_exts_put_net(&f->exts);
-	kमुक्त(f);
-पूर्ण
+	kfree(f);
+}
 
-अटल व्योम fw_delete_filter_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा fw_filter *f = container_of(to_rcu_work(work),
-					   काष्ठा fw_filter,
+static void fw_delete_filter_work(struct work_struct *work)
+{
+	struct fw_filter *f = container_of(to_rcu_work(work),
+					   struct fw_filter,
 					   rwork);
 	rtnl_lock();
 	__fw_delete_filter(f);
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल व्योम fw_destroy(काष्ठा tcf_proto *tp, bool rtnl_held,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
-	काष्ठा fw_filter *f;
-	पूर्णांक h;
+static void fw_destroy(struct tcf_proto *tp, bool rtnl_held,
+		       struct netlink_ext_ack *extack)
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
+	struct fw_filter *f;
+	int h;
 
-	अगर (head == शून्य)
-		वापस;
+	if (head == NULL)
+		return;
 
-	क्रम (h = 0; h < HTSIZE; h++) अणु
-		जबतक ((f = rtnl_dereference(head->ht[h])) != शून्य) अणु
+	for (h = 0; h < HTSIZE; h++) {
+		while ((f = rtnl_dereference(head->ht[h])) != NULL) {
 			RCU_INIT_POINTER(head->ht[h],
 					 rtnl_dereference(f->next));
 			tcf_unbind_filter(tp, &f->res);
-			अगर (tcf_exts_get_net(&f->exts))
+			if (tcf_exts_get_net(&f->exts))
 				tcf_queue_work(&f->rwork, fw_delete_filter_work);
-			अन्यथा
+			else
 				__fw_delete_filter(f);
-		पूर्ण
-	पूर्ण
-	kमुक्त_rcu(head, rcu);
-पूर्ण
+		}
+	}
+	kfree_rcu(head, rcu);
+}
 
-अटल पूर्णांक fw_delete(काष्ठा tcf_proto *tp, व्योम *arg, bool *last,
-		     bool rtnl_held, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
-	काष्ठा fw_filter *f = arg;
-	काष्ठा fw_filter __rcu **fp;
-	काष्ठा fw_filter *pfp;
-	पूर्णांक ret = -EINVAL;
-	पूर्णांक h;
+static int fw_delete(struct tcf_proto *tp, void *arg, bool *last,
+		     bool rtnl_held, struct netlink_ext_ack *extack)
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
+	struct fw_filter *f = arg;
+	struct fw_filter __rcu **fp;
+	struct fw_filter *pfp;
+	int ret = -EINVAL;
+	int h;
 
-	अगर (head == शून्य || f == शून्य)
-		जाओ out;
+	if (head == NULL || f == NULL)
+		goto out;
 
 	fp = &head->ht[fw_hash(f->id)];
 
-	क्रम (pfp = rtnl_dereference(*fp); pfp;
-	     fp = &pfp->next, pfp = rtnl_dereference(*fp)) अणु
-		अगर (pfp == f) अणु
+	for (pfp = rtnl_dereference(*fp); pfp;
+	     fp = &pfp->next, pfp = rtnl_dereference(*fp)) {
+		if (pfp == f) {
 			RCU_INIT_POINTER(*fp, rtnl_dereference(f->next));
 			tcf_unbind_filter(tp, &f->res);
 			tcf_exts_get_net(&f->exts);
 			tcf_queue_work(&f->rwork, fw_delete_filter_work);
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	*last = true;
-	क्रम (h = 0; h < HTSIZE; h++) अणु
-		अगर (rcu_access_poपूर्णांकer(head->ht[h])) अणु
+	for (h = 0; h < HTSIZE; h++) {
+		if (rcu_access_pointer(head->ht[h])) {
 			*last = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा nla_policy fw_policy[TCA_FW_MAX + 1] = अणु
-	[TCA_FW_CLASSID]	= अणु .type = NLA_U32 पूर्ण,
-	[TCA_FW_INDEV]		= अणु .type = NLA_STRING, .len = IFNAMSIZ पूर्ण,
-	[TCA_FW_MASK]		= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy fw_policy[TCA_FW_MAX + 1] = {
+	[TCA_FW_CLASSID]	= { .type = NLA_U32 },
+	[TCA_FW_INDEV]		= { .type = NLA_STRING, .len = IFNAMSIZ },
+	[TCA_FW_MASK]		= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक fw_set_parms(काष्ठा net *net, काष्ठा tcf_proto *tp,
-			काष्ठा fw_filter *f, काष्ठा nlattr **tb,
-			काष्ठा nlattr **tca, अचिन्हित दीर्घ base, bool ovr,
-			काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
+static int fw_set_parms(struct net *net, struct tcf_proto *tp,
+			struct fw_filter *f, struct nlattr **tb,
+			struct nlattr **tca, unsigned long base, bool ovr,
+			struct netlink_ext_ack *extack)
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
 	u32 mask;
-	पूर्णांक err;
+	int err;
 
 	err = tcf_exts_validate(net, tp, tb, tca[TCA_RATE], &f->exts, ovr,
 				true, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_FW_CLASSID]) अणु
+	if (tb[TCA_FW_CLASSID]) {
 		f->res.classid = nla_get_u32(tb[TCA_FW_CLASSID]);
 		tcf_bind_filter(tp, &f->res, base);
-	पूर्ण
+	}
 
-	अगर (tb[TCA_FW_INDEV]) अणु
-		पूर्णांक ret;
+	if (tb[TCA_FW_INDEV]) {
+		int ret;
 		ret = tcf_change_indev(net, tb[TCA_FW_INDEV], extack);
-		अगर (ret < 0)
-			वापस ret;
-		f->अगरindex = ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		f->ifindex = ret;
+	}
 
 	err = -EINVAL;
-	अगर (tb[TCA_FW_MASK]) अणु
+	if (tb[TCA_FW_MASK]) {
 		mask = nla_get_u32(tb[TCA_FW_MASK]);
-		अगर (mask != head->mask)
-			वापस err;
-	पूर्ण अन्यथा अगर (head->mask != 0xFFFFFFFF)
-		वापस err;
+		if (mask != head->mask)
+			return err;
+	} else if (head->mask != 0xFFFFFFFF)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fw_change(काष्ठा net *net, काष्ठा sk_buff *in_skb,
-		     काष्ठा tcf_proto *tp, अचिन्हित दीर्घ base,
-		     u32 handle, काष्ठा nlattr **tca, व्योम **arg,
+static int fw_change(struct net *net, struct sk_buff *in_skb,
+		     struct tcf_proto *tp, unsigned long base,
+		     u32 handle, struct nlattr **tca, void **arg,
 		     bool ovr, bool rtnl_held,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
-	काष्ठा fw_filter *f = *arg;
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_FW_MAX + 1];
-	पूर्णांक err;
+		     struct netlink_ext_ack *extack)
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
+	struct fw_filter *f = *arg;
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_FW_MAX + 1];
+	int err;
 
-	अगर (!opt)
-		वापस handle ? -EINVAL : 0; /* Succeed अगर it is old method. */
+	if (!opt)
+		return handle ? -EINVAL : 0; /* Succeed if it is old method. */
 
 	err = nla_parse_nested_deprecated(tb, TCA_FW_MAX, opt, fw_policy,
-					  शून्य);
-	अगर (err < 0)
-		वापस err;
+					  NULL);
+	if (err < 0)
+		return err;
 
-	अगर (f) अणु
-		काष्ठा fw_filter *pfp, *fnew;
-		काष्ठा fw_filter __rcu **fp;
+	if (f) {
+		struct fw_filter *pfp, *fnew;
+		struct fw_filter __rcu **fp;
 
-		अगर (f->id != handle && handle)
-			वापस -EINVAL;
+		if (f->id != handle && handle)
+			return -EINVAL;
 
-		fnew = kzalloc(माप(काष्ठा fw_filter), GFP_KERNEL);
-		अगर (!fnew)
-			वापस -ENOBUFS;
+		fnew = kzalloc(sizeof(struct fw_filter), GFP_KERNEL);
+		if (!fnew)
+			return -ENOBUFS;
 
 		fnew->id = f->id;
 		fnew->res = f->res;
-		fnew->अगरindex = f->अगरindex;
+		fnew->ifindex = f->ifindex;
 		fnew->tp = f->tp;
 
 		err = tcf_exts_init(&fnew->exts, net, TCA_FW_ACT,
 				    TCA_FW_POLICE);
-		अगर (err < 0) अणु
-			kमुक्त(fnew);
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			kfree(fnew);
+			return err;
+		}
 
 		err = fw_set_parms(net, tp, fnew, tb, tca, base, ovr, extack);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			tcf_exts_destroy(&fnew->exts);
-			kमुक्त(fnew);
-			वापस err;
-		पूर्ण
+			kfree(fnew);
+			return err;
+		}
 
 		fp = &head->ht[fw_hash(fnew->id)];
-		क्रम (pfp = rtnl_dereference(*fp); pfp;
+		for (pfp = rtnl_dereference(*fp); pfp;
 		     fp = &pfp->next, pfp = rtnl_dereference(*fp))
-			अगर (pfp == f)
-				अवरोध;
+			if (pfp == f)
+				break;
 
 		RCU_INIT_POINTER(fnew->next, rtnl_dereference(pfp->next));
-		rcu_assign_poपूर्णांकer(*fp, fnew);
+		rcu_assign_pointer(*fp, fnew);
 		tcf_unbind_filter(tp, &f->res);
 		tcf_exts_get_net(&f->exts);
 		tcf_queue_work(&f->rwork, fw_delete_filter_work);
 
 		*arg = fnew;
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (!handle)
-		वापस -EINVAL;
+	if (!handle)
+		return -EINVAL;
 
-	अगर (!head) अणु
+	if (!head) {
 		u32 mask = 0xFFFFFFFF;
-		अगर (tb[TCA_FW_MASK])
+		if (tb[TCA_FW_MASK])
 			mask = nla_get_u32(tb[TCA_FW_MASK]);
 
-		head = kzalloc(माप(*head), GFP_KERNEL);
-		अगर (!head)
-			वापस -ENOBUFS;
+		head = kzalloc(sizeof(*head), GFP_KERNEL);
+		if (!head)
+			return -ENOBUFS;
 		head->mask = mask;
 
-		rcu_assign_poपूर्णांकer(tp->root, head);
-	पूर्ण
+		rcu_assign_pointer(tp->root, head);
+	}
 
-	f = kzalloc(माप(काष्ठा fw_filter), GFP_KERNEL);
-	अगर (f == शून्य)
-		वापस -ENOBUFS;
+	f = kzalloc(sizeof(struct fw_filter), GFP_KERNEL);
+	if (f == NULL)
+		return -ENOBUFS;
 
 	err = tcf_exts_init(&f->exts, net, TCA_FW_ACT, TCA_FW_POLICE);
-	अगर (err < 0)
-		जाओ errout;
+	if (err < 0)
+		goto errout;
 	f->id = handle;
 	f->tp = tp;
 
 	err = fw_set_parms(net, tp, f, tb, tca, base, ovr, extack);
-	अगर (err < 0)
-		जाओ errout;
+	if (err < 0)
+		goto errout;
 
 	RCU_INIT_POINTER(f->next, head->ht[fw_hash(handle)]);
-	rcu_assign_poपूर्णांकer(head->ht[fw_hash(handle)], f);
+	rcu_assign_pointer(head->ht[fw_hash(handle)], f);
 
 	*arg = f;
-	वापस 0;
+	return 0;
 
 errout:
 	tcf_exts_destroy(&f->exts);
-	kमुक्त(f);
-	वापस err;
-पूर्ण
+	kfree(f);
+	return err;
+}
 
-अटल व्योम fw_walk(काष्ठा tcf_proto *tp, काष्ठा tcf_walker *arg,
+static void fw_walk(struct tcf_proto *tp, struct tcf_walker *arg,
 		    bool rtnl_held)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
-	पूर्णांक h;
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
+	int h;
 
-	अगर (head == शून्य)
+	if (head == NULL)
 		arg->stop = 1;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (h = 0; h < HTSIZE; h++) अणु
-		काष्ठा fw_filter *f;
+	for (h = 0; h < HTSIZE; h++) {
+		struct fw_filter *f;
 
-		क्रम (f = rtnl_dereference(head->ht[h]); f;
-		     f = rtnl_dereference(f->next)) अणु
-			अगर (arg->count < arg->skip) अणु
+		for (f = rtnl_dereference(head->ht[h]); f;
+		     f = rtnl_dereference(f->next)) {
+			if (arg->count < arg->skip) {
 				arg->count++;
-				जारी;
-			पूर्ण
-			अगर (arg->fn(tp, f, arg) < 0) अणु
+				continue;
+			}
+			if (arg->fn(tp, f, arg) < 0) {
 				arg->stop = 1;
-				वापस;
-			पूर्ण
+				return;
+			}
 			arg->count++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक fw_dump(काष्ठा net *net, काष्ठा tcf_proto *tp, व्योम *fh,
-		   काष्ठा sk_buff *skb, काष्ठा tcmsg *t, bool rtnl_held)
-अणु
-	काष्ठा fw_head *head = rtnl_dereference(tp->root);
-	काष्ठा fw_filter *f = fh;
-	काष्ठा nlattr *nest;
+static int fw_dump(struct net *net, struct tcf_proto *tp, void *fh,
+		   struct sk_buff *skb, struct tcmsg *t, bool rtnl_held)
+{
+	struct fw_head *head = rtnl_dereference(tp->root);
+	struct fw_filter *f = fh;
+	struct nlattr *nest;
 
-	अगर (f == शून्य)
-		वापस skb->len;
+	if (f == NULL)
+		return skb->len;
 
 	t->tcm_handle = f->id;
 
-	अगर (!f->res.classid && !tcf_exts_has_actions(&f->exts))
-		वापस skb->len;
+	if (!f->res.classid && !tcf_exts_has_actions(&f->exts))
+		return skb->len;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
+	if (nest == NULL)
+		goto nla_put_failure;
 
-	अगर (f->res.classid &&
+	if (f->res.classid &&
 	    nla_put_u32(skb, TCA_FW_CLASSID, f->res.classid))
-		जाओ nla_put_failure;
-	अगर (f->अगरindex) अणु
-		काष्ठा net_device *dev;
-		dev = __dev_get_by_index(net, f->अगरindex);
-		अगर (dev && nla_put_string(skb, TCA_FW_INDEV, dev->name))
-			जाओ nla_put_failure;
-	पूर्ण
-	अगर (head->mask != 0xFFFFFFFF &&
+		goto nla_put_failure;
+	if (f->ifindex) {
+		struct net_device *dev;
+		dev = __dev_get_by_index(net, f->ifindex);
+		if (dev && nla_put_string(skb, TCA_FW_INDEV, dev->name))
+			goto nla_put_failure;
+	}
+	if (head->mask != 0xFFFFFFFF &&
 	    nla_put_u32(skb, TCA_FW_MASK, head->mask))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (tcf_exts_dump(skb, &f->exts) < 0)
-		जाओ nla_put_failure;
+	if (tcf_exts_dump(skb, &f->exts) < 0)
+		goto nla_put_failure;
 
 	nla_nest_end(skb, nest);
 
-	अगर (tcf_exts_dump_stats(skb, &f->exts) < 0)
-		जाओ nla_put_failure;
+	if (tcf_exts_dump_stats(skb, &f->exts) < 0)
+		goto nla_put_failure;
 
-	वापस skb->len;
+	return skb->len;
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम fw_bind_class(व्योम *fh, u32 classid, अचिन्हित दीर्घ cl, व्योम *q,
-			  अचिन्हित दीर्घ base)
-अणु
-	काष्ठा fw_filter *f = fh;
+static void fw_bind_class(void *fh, u32 classid, unsigned long cl, void *q,
+			  unsigned long base)
+{
+	struct fw_filter *f = fh;
 
-	अगर (f && f->res.classid == classid) अणु
-		अगर (cl)
+	if (f && f->res.classid == classid) {
+		if (cl)
 			__tcf_bind_filter(q, &f->res, base);
-		अन्यथा
+		else
 			__tcf_unbind_filter(q, &f->res);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा tcf_proto_ops cls_fw_ops __पढ़ो_mostly = अणु
+static struct tcf_proto_ops cls_fw_ops __read_mostly = {
 	.kind		=	"fw",
-	.classअगरy	=	fw_classअगरy,
+	.classify	=	fw_classify,
 	.init		=	fw_init,
 	.destroy	=	fw_destroy,
 	.get		=	fw_get,
@@ -445,18 +444,18 @@ nla_put_failure:
 	.dump		=	fw_dump,
 	.bind_class	=	fw_bind_class,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_fw(व्योम)
-अणु
-	वापस रेजिस्टर_tcf_proto_ops(&cls_fw_ops);
-पूर्ण
+static int __init init_fw(void)
+{
+	return register_tcf_proto_ops(&cls_fw_ops);
+}
 
-अटल व्योम __निकास निकास_fw(व्योम)
-अणु
-	unरेजिस्टर_tcf_proto_ops(&cls_fw_ops);
-पूर्ण
+static void __exit exit_fw(void)
+{
+	unregister_tcf_proto_ops(&cls_fw_ops);
+}
 
 module_init(init_fw)
-module_निकास(निकास_fw)
+module_exit(exit_fw)
 MODULE_LICENSE("GPL");

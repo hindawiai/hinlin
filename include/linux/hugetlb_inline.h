@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_HUGETLB_INLINE_H
-#घोषणा _LINUX_HUGETLB_INLINE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_HUGETLB_INLINE_H
+#define _LINUX_HUGETLB_INLINE_H
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
+#ifdef CONFIG_HUGETLB_PAGE
 
-#समावेश <linux/mm.h>
+#include <linux/mm.h>
 
-अटल अंतरभूत bool is_vm_hugetlb_page(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस !!(vma->vm_flags & VM_HUGETLB);
-पूर्ण
+static inline bool is_vm_hugetlb_page(struct vm_area_struct *vma)
+{
+	return !!(vma->vm_flags & VM_HUGETLB);
+}
 
-#अन्यथा
+#else
 
-अटल अंतरभूत bool is_vm_hugetlb_page(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_vm_hugetlb_page(struct vm_area_struct *vma)
+{
+	return false;
+}
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर
+#endif

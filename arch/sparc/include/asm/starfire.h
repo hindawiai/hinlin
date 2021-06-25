@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * starfire.h: Group all starfire specअगरic code together.
+ * starfire.h: Group all starfire specific code together.
  *
- * Copyright (C) 2000 Anton Blanअक्षरd (anton@samba.org)
+ * Copyright (C) 2000 Anton Blanchard (anton@samba.org)
  */
 
-#अगर_अघोषित _SPARC64_STARFIRE_H
-#घोषणा _SPARC64_STARFIRE_H
+#ifndef _SPARC64_STARFIRE_H
+#define _SPARC64_STARFIRE_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-बाह्य पूर्णांक this_is_starfire;
+extern int this_is_starfire;
 
-व्योम check_अगर_starfire(व्योम);
-व्योम starfire_hookup(पूर्णांक);
-अचिन्हित पूर्णांक starfire_translate(अचिन्हित दीर्घ imap, अचिन्हित पूर्णांक upaid);
+void check_if_starfire(void);
+void starfire_hookup(int);
+unsigned int starfire_translate(unsigned long imap, unsigned int upaid);
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif

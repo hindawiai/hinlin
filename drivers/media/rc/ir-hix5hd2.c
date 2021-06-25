@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Linaro Ltd.
  * Copyright (c) 2014 HiSilicon Limited.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <media/rc-core.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/regmap.h>
+#include <media/rc-core.h>
 
-#घोषणा IR_ENABLE		0x00
-#घोषणा IR_CONFIG		0x04
-#घोषणा CNT_LEADS		0x08
-#घोषणा CNT_LEADE		0x0c
-#घोषणा CNT_SLEADE		0x10
-#घोषणा CNT0_B			0x14
-#घोषणा CNT1_B			0x18
-#घोषणा IR_BUSY			0x1c
-#घोषणा IR_DATAH		0x20
-#घोषणा IR_DATAL		0x24
-#घोषणा IR_INTM			0x28
-#घोषणा IR_INTS			0x2c
-#घोषणा IR_INTC			0x30
-#घोषणा IR_START		0x34
+#define IR_ENABLE		0x00
+#define IR_CONFIG		0x04
+#define CNT_LEADS		0x08
+#define CNT_LEADE		0x0c
+#define CNT_SLEADE		0x10
+#define CNT0_B			0x14
+#define CNT1_B			0x18
+#define IR_BUSY			0x1c
+#define IR_DATAH		0x20
+#define IR_DATAL		0x24
+#define IR_INTM			0x28
+#define IR_INTS			0x2c
+#define IR_INTC			0x30
+#define IR_START		0x34
 
-/* पूर्णांकerrupt mask */
-#घोषणा INTMS_SYMBRCV		(BIT(24) | BIT(8))
-#घोषणा INTMS_TIMEOUT		(BIT(25) | BIT(9))
-#घोषणा INTMS_OVERFLOW		(BIT(26) | BIT(10))
-#घोषणा INT_CLR_OVERFLOW	BIT(18)
-#घोषणा INT_CLR_TIMEOUT		BIT(17)
-#घोषणा INT_CLR_RCV		BIT(16)
-#घोषणा INT_CLR_RCVTIMEOUT	(BIT(16) | BIT(17))
+/* interrupt mask */
+#define INTMS_SYMBRCV		(BIT(24) | BIT(8))
+#define INTMS_TIMEOUT		(BIT(25) | BIT(9))
+#define INTMS_OVERFLOW		(BIT(26) | BIT(10))
+#define INT_CLR_OVERFLOW	BIT(18)
+#define INT_CLR_TIMEOUT		BIT(17)
+#define INT_CLR_RCV		BIT(16)
+#define INT_CLR_RCVTIMEOUT	(BIT(16) | BIT(17))
 
-#घोषणा IR_CLK_ENABLE		BIT(4)
-#घोषणा IR_CLK_RESET		BIT(5)
+#define IR_CLK_ENABLE		BIT(4)
+#define IR_CLK_RESET		BIT(5)
 
-/* IR_ENABLE रेजिस्टर bits */
-#घोषणा IR_ENABLE_EN		BIT(0)
-#घोषणा IR_ENABLE_EN_EXTRA	BIT(8)
+/* IR_ENABLE register bits */
+#define IR_ENABLE_EN		BIT(0)
+#define IR_ENABLE_EN_EXTRA	BIT(8)
 
-#घोषणा IR_CFG_WIDTH_MASK	0xffff
-#घोषणा IR_CFG_WIDTH_SHIFT	16
-#घोषणा IR_CFG_FORMAT_MASK	0x3
-#घोषणा IR_CFG_FORMAT_SHIFT	14
-#घोषणा IR_CFG_INT_LEVEL_MASK	0x3f
-#घोषणा IR_CFG_INT_LEVEL_SHIFT	8
+#define IR_CFG_WIDTH_MASK	0xffff
+#define IR_CFG_WIDTH_SHIFT	16
+#define IR_CFG_FORMAT_MASK	0x3
+#define IR_CFG_FORMAT_SHIFT	14
+#define IR_CFG_INT_LEVEL_MASK	0x3f
+#define IR_CFG_INT_LEVEL_SHIFT	8
 /* only support raw mode */
-#घोषणा IR_CFG_MODE_RAW		BIT(7)
-#घोषणा IR_CFG_FREQ_MASK	0x7f
-#घोषणा IR_CFG_FREQ_SHIFT	0
-#घोषणा IR_CFG_INT_THRESHOLD	1
+#define IR_CFG_MODE_RAW		BIT(7)
+#define IR_CFG_FREQ_MASK	0x7f
+#define IR_CFG_FREQ_SHIFT	0
+#define IR_CFG_INT_THRESHOLD	1
 /* symbol start from low to high, symbol stream end at high*/
-#घोषणा IR_CFG_SYMBOL_FMT	0
-#घोषणा IR_CFG_SYMBOL_MAXWIDTH	0x3e80
+#define IR_CFG_SYMBOL_FMT	0
+#define IR_CFG_SYMBOL_MAXWIDTH	0x3e80
 
-#घोषणा IR_HIX5HD2_NAME		"hix5hd2-ir"
+#define IR_HIX5HD2_NAME		"hix5hd2-ir"
 
-/* Need to set extra bit क्रम enabling IR */
-#घोषणा HIX5HD2_FLAG_EXTRA_ENABLE	BIT(0)
+/* Need to set extra bit for enabling IR */
+#define HIX5HD2_FLAG_EXTRA_ENABLE	BIT(0)
 
-काष्ठा hix5hd2_soc_data अणु
+struct hix5hd2_soc_data {
 	u32 clk_reg;
 	u32 flags;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hix5hd2_soc_data hix5hd2_data = अणु
+static const struct hix5hd2_soc_data hix5hd2_data = {
 	.clk_reg = 0x48,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा hix5hd2_soc_data hi3796cv300_data = अणु
+static const struct hix5hd2_soc_data hi3796cv300_data = {
 	.clk_reg = 0x60,
 	.flags = HIX5HD2_FLAG_EXTRA_ENABLE,
-पूर्ण;
+};
 
-काष्ठा hix5hd2_ir_priv अणु
-	पूर्णांक			irq;
-	व्योम __iomem		*base;
-	काष्ठा device		*dev;
-	काष्ठा rc_dev		*rdev;
-	काष्ठा regmap		*regmap;
-	काष्ठा clk		*घड़ी;
-	अचिन्हित दीर्घ		rate;
-	स्थिर काष्ठा hix5hd2_soc_data *socdata;
-पूर्ण;
+struct hix5hd2_ir_priv {
+	int			irq;
+	void __iomem		*base;
+	struct device		*dev;
+	struct rc_dev		*rdev;
+	struct regmap		*regmap;
+	struct clk		*clock;
+	unsigned long		rate;
+	const struct hix5hd2_soc_data *socdata;
+};
 
-अटल पूर्णांक hix5hd2_ir_clk_enable(काष्ठा hix5hd2_ir_priv *dev, bool on)
-अणु
+static int hix5hd2_ir_clk_enable(struct hix5hd2_ir_priv *dev, bool on)
+{
 	u32 clk_reg = dev->socdata->clk_reg;
 	u32 val;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (dev->regmap) अणु
-		regmap_पढ़ो(dev->regmap, clk_reg, &val);
-		अगर (on) अणु
+	if (dev->regmap) {
+		regmap_read(dev->regmap, clk_reg, &val);
+		if (on) {
 			val &= ~IR_CLK_RESET;
 			val |= IR_CLK_ENABLE;
-		पूर्ण अन्यथा अणु
+		} else {
 			val &= ~IR_CLK_ENABLE;
 			val |= IR_CLK_RESET;
-		पूर्ण
-		regmap_ग_लिखो(dev->regmap, clk_reg, val);
-	पूर्ण अन्यथा अणु
-		अगर (on)
-			ret = clk_prepare_enable(dev->घड़ी);
-		अन्यथा
-			clk_disable_unprepare(dev->घड़ी);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		}
+		regmap_write(dev->regmap, clk_reg, val);
+	} else {
+		if (on)
+			ret = clk_prepare_enable(dev->clock);
+		else
+			clk_disable_unprepare(dev->clock);
+	}
+	return ret;
+}
 
-अटल अंतरभूत व्योम hix5hd2_ir_enable(काष्ठा hix5hd2_ir_priv *priv)
-अणु
+static inline void hix5hd2_ir_enable(struct hix5hd2_ir_priv *priv)
+{
 	u32 val = IR_ENABLE_EN;
 
-	अगर (priv->socdata->flags & HIX5HD2_FLAG_EXTRA_ENABLE)
+	if (priv->socdata->flags & HIX5HD2_FLAG_EXTRA_ENABLE)
 		val |= IR_ENABLE_EN_EXTRA;
 
-	ग_लिखोl_relaxed(val, priv->base + IR_ENABLE);
-पूर्ण
+	writel_relaxed(val, priv->base + IR_ENABLE);
+}
 
-अटल पूर्णांक hix5hd2_ir_config(काष्ठा hix5hd2_ir_priv *priv)
-अणु
-	पूर्णांक समयout = 10000;
+static int hix5hd2_ir_config(struct hix5hd2_ir_priv *priv)
+{
+	int timeout = 10000;
 	u32 val, rate;
 
 	hix5hd2_ir_enable(priv);
 
-	जबतक (पढ़ोl_relaxed(priv->base + IR_BUSY)) अणु
-		अगर (समयout--) अणु
+	while (readl_relaxed(priv->base + IR_BUSY)) {
+		if (timeout--) {
 			udelay(1);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(priv->dev, "IR_BUSY timeout\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
-	पूर्ण
+			return -ETIMEDOUT;
+		}
+	}
 
 	/* Now only support raw mode, with symbol start from low to high */
 	rate = DIV_ROUND_CLOSEST(priv->rate, 1000000);
@@ -149,259 +148,259 @@
 	       << IR_CFG_INT_LEVEL_SHIFT;
 	val |= IR_CFG_MODE_RAW;
 	val |= (rate - 1) & IR_CFG_FREQ_MASK << IR_CFG_FREQ_SHIFT;
-	ग_लिखोl_relaxed(val, priv->base + IR_CONFIG);
+	writel_relaxed(val, priv->base + IR_CONFIG);
 
-	ग_लिखोl_relaxed(0x00, priv->base + IR_INTM);
-	/* ग_लिखो arbitrary value to start  */
-	ग_लिखोl_relaxed(0x01, priv->base + IR_START);
-	वापस 0;
-पूर्ण
+	writel_relaxed(0x00, priv->base + IR_INTM);
+	/* write arbitrary value to start  */
+	writel_relaxed(0x01, priv->base + IR_START);
+	return 0;
+}
 
-अटल पूर्णांक hix5hd2_ir_खोलो(काष्ठा rc_dev *rdev)
-अणु
-	काष्ठा hix5hd2_ir_priv *priv = rdev->priv;
-	पूर्णांक ret;
+static int hix5hd2_ir_open(struct rc_dev *rdev)
+{
+	struct hix5hd2_ir_priv *priv = rdev->priv;
+	int ret;
 
 	ret = hix5hd2_ir_clk_enable(priv, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = hix5hd2_ir_config(priv);
-	अगर (ret) अणु
+	if (ret) {
 		hix5hd2_ir_clk_enable(priv, false);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल व्योम hix5hd2_ir_बंद(काष्ठा rc_dev *rdev)
-अणु
-	काष्ठा hix5hd2_ir_priv *priv = rdev->priv;
+static void hix5hd2_ir_close(struct rc_dev *rdev)
+{
+	struct hix5hd2_ir_priv *priv = rdev->priv;
 
 	hix5hd2_ir_clk_enable(priv, false);
-पूर्ण
+}
 
-अटल irqवापस_t hix5hd2_ir_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	u32 symb_num, symb_val, symb_समय;
+static irqreturn_t hix5hd2_ir_rx_interrupt(int irq, void *data)
+{
+	u32 symb_num, symb_val, symb_time;
 	u32 data_l, data_h;
 	u32 irq_sr, i;
-	काष्ठा hix5hd2_ir_priv *priv = data;
+	struct hix5hd2_ir_priv *priv = data;
 
-	irq_sr = पढ़ोl_relaxed(priv->base + IR_INTS);
-	अगर (irq_sr & INTMS_OVERFLOW) अणु
+	irq_sr = readl_relaxed(priv->base + IR_INTS);
+	if (irq_sr & INTMS_OVERFLOW) {
 		/*
-		 * we must पढ़ो IR_DATAL first, then we can clean up
+		 * we must read IR_DATAL first, then we can clean up
 		 * IR_INTS availably since logic would not clear
-		 * fअगरo when overflow, drv करो the job
+		 * fifo when overflow, drv do the job
 		 */
 		ir_raw_event_reset(priv->rdev);
-		symb_num = पढ़ोl_relaxed(priv->base + IR_DATAH);
-		क्रम (i = 0; i < symb_num; i++)
-			पढ़ोl_relaxed(priv->base + IR_DATAL);
+		symb_num = readl_relaxed(priv->base + IR_DATAH);
+		for (i = 0; i < symb_num; i++)
+			readl_relaxed(priv->base + IR_DATAL);
 
-		ग_लिखोl_relaxed(INT_CLR_OVERFLOW, priv->base + IR_INTC);
+		writel_relaxed(INT_CLR_OVERFLOW, priv->base + IR_INTC);
 		dev_info(priv->dev, "overflow, level=%d\n",
 			 IR_CFG_INT_THRESHOLD);
-	पूर्ण
+	}
 
-	अगर ((irq_sr & INTMS_SYMBRCV) || (irq_sr & INTMS_TIMEOUT)) अणु
-		काष्ठा ir_raw_event ev = अणुपूर्ण;
+	if ((irq_sr & INTMS_SYMBRCV) || (irq_sr & INTMS_TIMEOUT)) {
+		struct ir_raw_event ev = {};
 
-		symb_num = पढ़ोl_relaxed(priv->base + IR_DATAH);
-		क्रम (i = 0; i < symb_num; i++) अणु
-			symb_val = पढ़ोl_relaxed(priv->base + IR_DATAL);
+		symb_num = readl_relaxed(priv->base + IR_DATAH);
+		for (i = 0; i < symb_num; i++) {
+			symb_val = readl_relaxed(priv->base + IR_DATAL);
 			data_l = ((symb_val & 0xffff) * 10);
 			data_h =  ((symb_val >> 16) & 0xffff) * 10;
-			symb_समय = (data_l + data_h) / 10;
+			symb_time = (data_l + data_h) / 10;
 
 			ev.duration = data_l;
 			ev.pulse = true;
 			ir_raw_event_store(priv->rdev, &ev);
 
-			अगर (symb_समय < IR_CFG_SYMBOL_MAXWIDTH) अणु
+			if (symb_time < IR_CFG_SYMBOL_MAXWIDTH) {
 				ev.duration = data_h;
 				ev.pulse = false;
 				ir_raw_event_store(priv->rdev, &ev);
-			पूर्ण अन्यथा अणु
+			} else {
 				ir_raw_event_set_idle(priv->rdev, true);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (irq_sr & INTMS_SYMBRCV)
-			ग_लिखोl_relaxed(INT_CLR_RCV, priv->base + IR_INTC);
-		अगर (irq_sr & INTMS_TIMEOUT)
-			ग_लिखोl_relaxed(INT_CLR_TIMEOUT, priv->base + IR_INTC);
-	पूर्ण
+		if (irq_sr & INTMS_SYMBRCV)
+			writel_relaxed(INT_CLR_RCV, priv->base + IR_INTC);
+		if (irq_sr & INTMS_TIMEOUT)
+			writel_relaxed(INT_CLR_TIMEOUT, priv->base + IR_INTC);
+	}
 
-	/* Empty software fअगरo */
+	/* Empty software fifo */
 	ir_raw_event_handle(priv->rdev);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा of_device_id hix5hd2_ir_table[] = अणु
-	अणु .compatible = "hisilicon,hix5hd2-ir", &hix5hd2_data, पूर्ण,
-	अणु .compatible = "hisilicon,hi3796cv300-ir", &hi3796cv300_data, पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id hix5hd2_ir_table[] = {
+	{ .compatible = "hisilicon,hix5hd2-ir", &hix5hd2_data, },
+	{ .compatible = "hisilicon,hi3796cv300-ir", &hi3796cv300_data, },
+	{},
+};
 MODULE_DEVICE_TABLE(of, hix5hd2_ir_table);
 
-अटल पूर्णांक hix5hd2_ir_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rc_dev *rdev;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	काष्ठा hix5hd2_ir_priv *priv;
-	काष्ठा device_node *node = pdev->dev.of_node;
-	स्थिर काष्ठा of_device_id *of_id;
-	स्थिर अक्षर *map_name;
-	पूर्णांक ret;
+static int hix5hd2_ir_probe(struct platform_device *pdev)
+{
+	struct rc_dev *rdev;
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	struct hix5hd2_ir_priv *priv;
+	struct device_node *node = pdev->dev.of_node;
+	const struct of_device_id *of_id;
+	const char *map_name;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	of_id = of_match_device(hix5hd2_ir_table, dev);
-	अगर (!of_id) अणु
+	if (!of_id) {
 		dev_err(dev, "Unable to initialize IR data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	priv->socdata = of_id->data;
 
 	priv->regmap = syscon_regmap_lookup_by_phandle(node,
 						       "hisilicon,power-syscon");
-	अगर (IS_ERR(priv->regmap)) अणु
+	if (IS_ERR(priv->regmap)) {
 		dev_info(dev, "no power-reg\n");
-		priv->regmap = शून्य;
-	पूर्ण
+		priv->regmap = NULL;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(priv->base))
-		वापस PTR_ERR(priv->base);
+	if (IS_ERR(priv->base))
+		return PTR_ERR(priv->base);
 
-	priv->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (priv->irq < 0)
-		वापस priv->irq;
+	priv->irq = platform_get_irq(pdev, 0);
+	if (priv->irq < 0)
+		return priv->irq;
 
 	rdev = rc_allocate_device(RC_DRIVER_IR_RAW);
-	अगर (!rdev)
-		वापस -ENOMEM;
+	if (!rdev)
+		return -ENOMEM;
 
-	priv->घड़ी = devm_clk_get(dev, शून्य);
-	अगर (IS_ERR(priv->घड़ी)) अणु
+	priv->clock = devm_clk_get(dev, NULL);
+	if (IS_ERR(priv->clock)) {
 		dev_err(dev, "clock not found\n");
-		ret = PTR_ERR(priv->घड़ी);
-		जाओ err;
-	पूर्ण
-	ret = clk_prepare_enable(priv->घड़ी);
-	अगर (ret)
-		जाओ err;
-	priv->rate = clk_get_rate(priv->घड़ी);
+		ret = PTR_ERR(priv->clock);
+		goto err;
+	}
+	ret = clk_prepare_enable(priv->clock);
+	if (ret)
+		goto err;
+	priv->rate = clk_get_rate(priv->clock);
 
 	rdev->allowed_protocols = RC_PROTO_BIT_ALL_IR_DECODER;
 	rdev->priv = priv;
-	rdev->खोलो = hix5hd2_ir_खोलो;
-	rdev->बंद = hix5hd2_ir_बंद;
+	rdev->open = hix5hd2_ir_open;
+	rdev->close = hix5hd2_ir_close;
 	rdev->driver_name = IR_HIX5HD2_NAME;
-	map_name = of_get_property(node, "linux,rc-map-name", शून्य);
+	map_name = of_get_property(node, "linux,rc-map-name", NULL);
 	rdev->map_name = map_name ?: RC_MAP_EMPTY;
 	rdev->device_name = IR_HIX5HD2_NAME;
 	rdev->input_phys = IR_HIX5HD2_NAME "/input0";
 	rdev->input_id.bustype = BUS_HOST;
-	rdev->input_id.venकरोr = 0x0001;
+	rdev->input_id.vendor = 0x0001;
 	rdev->input_id.product = 0x0001;
 	rdev->input_id.version = 0x0100;
 	rdev->rx_resolution = 10;
-	rdev->समयout = IR_CFG_SYMBOL_MAXWIDTH * 10;
+	rdev->timeout = IR_CFG_SYMBOL_MAXWIDTH * 10;
 
-	ret = rc_रेजिस्टर_device(rdev);
-	अगर (ret < 0)
-		जाओ clkerr;
+	ret = rc_register_device(rdev);
+	if (ret < 0)
+		goto clkerr;
 
-	अगर (devm_request_irq(dev, priv->irq, hix5hd2_ir_rx_पूर्णांकerrupt,
-			     0, pdev->name, priv) < 0) अणु
+	if (devm_request_irq(dev, priv->irq, hix5hd2_ir_rx_interrupt,
+			     0, pdev->name, priv) < 0) {
 		dev_err(dev, "IRQ %d register failed\n", priv->irq);
 		ret = -EINVAL;
-		जाओ regerr;
-	पूर्ण
+		goto regerr;
+	}
 
 	priv->rdev = rdev;
 	priv->dev = dev;
-	platक्रमm_set_drvdata(pdev, priv);
+	platform_set_drvdata(pdev, priv);
 
-	वापस ret;
+	return ret;
 
 regerr:
-	rc_unरेजिस्टर_device(rdev);
-	rdev = शून्य;
+	rc_unregister_device(rdev);
+	rdev = NULL;
 clkerr:
-	clk_disable_unprepare(priv->घड़ी);
+	clk_disable_unprepare(priv->clock);
 err:
-	rc_मुक्त_device(rdev);
+	rc_free_device(rdev);
 	dev_err(dev, "Unable to register device (%d)\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hix5hd2_ir_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hix5hd2_ir_priv *priv = platक्रमm_get_drvdata(pdev);
+static int hix5hd2_ir_remove(struct platform_device *pdev)
+{
+	struct hix5hd2_ir_priv *priv = platform_get_drvdata(pdev);
 
-	clk_disable_unprepare(priv->घड़ी);
-	rc_unरेजिस्टर_device(priv->rdev);
-	वापस 0;
-पूर्ण
+	clk_disable_unprepare(priv->clock);
+	rc_unregister_device(priv->rdev);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक hix5hd2_ir_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा hix5hd2_ir_priv *priv = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int hix5hd2_ir_suspend(struct device *dev)
+{
+	struct hix5hd2_ir_priv *priv = dev_get_drvdata(dev);
 
-	clk_disable_unprepare(priv->घड़ी);
+	clk_disable_unprepare(priv->clock);
 	hix5hd2_ir_clk_enable(priv, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hix5hd2_ir_resume(काष्ठा device *dev)
-अणु
-	काष्ठा hix5hd2_ir_priv *priv = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int hix5hd2_ir_resume(struct device *dev)
+{
+	struct hix5hd2_ir_priv *priv = dev_get_drvdata(dev);
+	int ret;
 
 	ret = hix5hd2_ir_clk_enable(priv, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = clk_prepare_enable(priv->घड़ी);
-	अगर (ret) अणु
+	ret = clk_prepare_enable(priv->clock);
+	if (ret) {
 		hix5hd2_ir_clk_enable(priv, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	hix5hd2_ir_enable(priv);
 
-	ग_लिखोl_relaxed(0x00, priv->base + IR_INTM);
-	ग_लिखोl_relaxed(0xff, priv->base + IR_INTC);
-	ग_लिखोl_relaxed(0x01, priv->base + IR_START);
+	writel_relaxed(0x00, priv->base + IR_INTM);
+	writel_relaxed(0xff, priv->base + IR_INTC);
+	writel_relaxed(0x01, priv->base + IR_START);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(hix5hd2_ir_pm_ops, hix5hd2_ir_suspend,
+static SIMPLE_DEV_PM_OPS(hix5hd2_ir_pm_ops, hix5hd2_ir_suspend,
 			 hix5hd2_ir_resume);
 
-अटल काष्ठा platक्रमm_driver hix5hd2_ir_driver = अणु
-	.driver = अणु
+static struct platform_driver hix5hd2_ir_driver = {
+	.driver = {
 		.name = IR_HIX5HD2_NAME,
 		.of_match_table = hix5hd2_ir_table,
 		.pm     = &hix5hd2_ir_pm_ops,
-	पूर्ण,
+	},
 	.probe = hix5hd2_ir_probe,
-	.हटाओ = hix5hd2_ir_हटाओ,
-पूर्ण;
+	.remove = hix5hd2_ir_remove,
+};
 
-module_platक्रमm_driver(hix5hd2_ir_driver);
+module_platform_driver(hix5hd2_ir_driver);
 
 MODULE_DESCRIPTION("IR controller driver for hix5hd2 platforms");
 MODULE_AUTHOR("Guoxiong Yan <yanguoxiong@huawei.com>");

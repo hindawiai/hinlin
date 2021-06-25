@@ -1,243 +1,242 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/proc/inode.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#समावेश <linux/cache.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/pid_namespace.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/completion.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/file.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/bug.h>
+#include <linux/cache.h>
+#include <linux/time.h>
+#include <linux/proc_fs.h>
+#include <linux/kernel.h>
+#include <linux/pid_namespace.h>
+#include <linux/mm.h>
+#include <linux/string.h>
+#include <linux/stat.h>
+#include <linux/completion.h>
+#include <linux/poll.h>
+#include <linux/printk.h>
+#include <linux/file.h>
+#include <linux/limits.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/sysctl.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/mount.h>
+#include <linux/bug.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-अटल व्योम proc_evict_inode(काष्ठा inode *inode)
-अणु
-	काष्ठा proc_dir_entry *de;
-	काष्ठा ctl_table_header *head;
-	काष्ठा proc_inode *ei = PROC_I(inode);
+static void proc_evict_inode(struct inode *inode)
+{
+	struct proc_dir_entry *de;
+	struct ctl_table_header *head;
+	struct proc_inode *ei = PROC_I(inode);
 
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
 
 	/* Stop tracking associated processes */
-	अगर (ei->pid) अणु
+	if (ei->pid) {
 		proc_pid_evict_inode(ei);
-		ei->pid = शून्य;
-	पूर्ण
+		ei->pid = NULL;
+	}
 
 	/* Let go of any associated proc directory entry */
 	de = ei->pde;
-	अगर (de) अणु
+	if (de) {
 		pde_put(de);
-		ei->pde = शून्य;
-	पूर्ण
+		ei->pde = NULL;
+	}
 
 	head = ei->sysctl;
-	अगर (head) अणु
-		RCU_INIT_POINTER(ei->sysctl, शून्य);
+	if (head) {
+		RCU_INIT_POINTER(ei->sysctl, NULL);
 		proc_sys_evict_inode(inode, head);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा kmem_cache *proc_inode_cachep __ro_after_init;
-अटल काष्ठा kmem_cache *pde_खोलोer_cache __ro_after_init;
+static struct kmem_cache *proc_inode_cachep __ro_after_init;
+static struct kmem_cache *pde_opener_cache __ro_after_init;
 
-अटल काष्ठा inode *proc_alloc_inode(काष्ठा super_block *sb)
-अणु
-	काष्ठा proc_inode *ei;
+static struct inode *proc_alloc_inode(struct super_block *sb)
+{
+	struct proc_inode *ei;
 
 	ei = kmem_cache_alloc(proc_inode_cachep, GFP_KERNEL);
-	अगर (!ei)
-		वापस शून्य;
-	ei->pid = शून्य;
+	if (!ei)
+		return NULL;
+	ei->pid = NULL;
 	ei->fd = 0;
-	ei->op.proc_get_link = शून्य;
-	ei->pde = शून्य;
-	ei->sysctl = शून्य;
-	ei->sysctl_entry = शून्य;
+	ei->op.proc_get_link = NULL;
+	ei->pde = NULL;
+	ei->sysctl = NULL;
+	ei->sysctl_entry = NULL;
 	INIT_HLIST_NODE(&ei->sibling_inodes);
-	ei->ns_ops = शून्य;
-	वापस &ei->vfs_inode;
-पूर्ण
+	ei->ns_ops = NULL;
+	return &ei->vfs_inode;
+}
 
-अटल व्योम proc_मुक्त_inode(काष्ठा inode *inode)
-अणु
-	kmem_cache_मुक्त(proc_inode_cachep, PROC_I(inode));
-पूर्ण
+static void proc_free_inode(struct inode *inode)
+{
+	kmem_cache_free(proc_inode_cachep, PROC_I(inode));
+}
 
-अटल व्योम init_once(व्योम *foo)
-अणु
-	काष्ठा proc_inode *ei = (काष्ठा proc_inode *) foo;
+static void init_once(void *foo)
+{
+	struct proc_inode *ei = (struct proc_inode *) foo;
 
 	inode_init_once(&ei->vfs_inode);
-पूर्ण
+}
 
-व्योम __init proc_init_kmemcache(व्योम)
-अणु
+void __init proc_init_kmemcache(void)
+{
 	proc_inode_cachep = kmem_cache_create("proc_inode_cache",
-					     माप(काष्ठा proc_inode),
+					     sizeof(struct proc_inode),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD|SLAB_ACCOUNT|
 						SLAB_PANIC),
 					     init_once);
-	pde_खोलोer_cache =
-		kmem_cache_create("pde_opener", माप(काष्ठा pde_खोलोer), 0,
-				  SLAB_ACCOUNT|SLAB_PANIC, शून्य);
+	pde_opener_cache =
+		kmem_cache_create("pde_opener", sizeof(struct pde_opener), 0,
+				  SLAB_ACCOUNT|SLAB_PANIC, NULL);
 	proc_dir_entry_cache = kmem_cache_create_usercopy(
-		"proc_dir_entry", SIZखातापूर्ण_PDE, 0, SLAB_PANIC,
-		दुरत्व(काष्ठा proc_dir_entry, अंतरभूत_name),
-		SIZखातापूर्ण_PDE_INLINE_NAME, शून्य);
-	BUILD_BUG_ON(माप(काष्ठा proc_dir_entry) >= SIZखातापूर्ण_PDE);
-पूर्ण
+		"proc_dir_entry", SIZEOF_PDE, 0, SLAB_PANIC,
+		offsetof(struct proc_dir_entry, inline_name),
+		SIZEOF_PDE_INLINE_NAME, NULL);
+	BUILD_BUG_ON(sizeof(struct proc_dir_entry) >= SIZEOF_PDE);
+}
 
-व्योम proc_invalidate_siblings_dcache(काष्ठा hlist_head *inodes, spinlock_t *lock)
-अणु
-	काष्ठा inode *inode;
-	काष्ठा proc_inode *ei;
-	काष्ठा hlist_node *node;
-	काष्ठा super_block *old_sb = शून्य;
+void proc_invalidate_siblings_dcache(struct hlist_head *inodes, spinlock_t *lock)
+{
+	struct inode *inode;
+	struct proc_inode *ei;
+	struct hlist_node *node;
+	struct super_block *old_sb = NULL;
 
-	rcu_पढ़ो_lock();
-	क्रम (;;) अणु
-		काष्ठा super_block *sb;
+	rcu_read_lock();
+	for (;;) {
+		struct super_block *sb;
 		node = hlist_first_rcu(inodes);
-		अगर (!node)
-			अवरोध;
-		ei = hlist_entry(node, काष्ठा proc_inode, sibling_inodes);
+		if (!node)
+			break;
+		ei = hlist_entry(node, struct proc_inode, sibling_inodes);
 		spin_lock(lock);
 		hlist_del_init_rcu(&ei->sibling_inodes);
 		spin_unlock(lock);
 
 		inode = &ei->vfs_inode;
 		sb = inode->i_sb;
-		अगर ((sb != old_sb) && !atomic_inc_not_zero(&sb->s_active))
-			जारी;
+		if ((sb != old_sb) && !atomic_inc_not_zero(&sb->s_active))
+			continue;
 		inode = igrab(inode);
-		rcu_पढ़ो_unlock();
-		अगर (sb != old_sb) अणु
-			अगर (old_sb)
+		rcu_read_unlock();
+		if (sb != old_sb) {
+			if (old_sb)
 				deactivate_super(old_sb);
 			old_sb = sb;
-		पूर्ण
-		अगर (unlikely(!inode)) अणु
-			rcu_पढ़ो_lock();
-			जारी;
-		पूर्ण
+		}
+		if (unlikely(!inode)) {
+			rcu_read_lock();
+			continue;
+		}
 
-		अगर (S_ISसूची(inode->i_mode)) अणु
-			काष्ठा dentry *dir = d_find_any_alias(inode);
-			अगर (dir) अणु
+		if (S_ISDIR(inode->i_mode)) {
+			struct dentry *dir = d_find_any_alias(inode);
+			if (dir) {
 				d_invalidate(dir);
 				dput(dir);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			काष्ठा dentry *dentry;
-			जबतक ((dentry = d_find_alias(inode))) अणु
+			}
+		} else {
+			struct dentry *dentry;
+			while ((dentry = d_find_alias(inode))) {
 				d_invalidate(dentry);
 				dput(dentry);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		iput(inode);
 
-		rcu_पढ़ो_lock();
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	अगर (old_sb)
+		rcu_read_lock();
+	}
+	rcu_read_unlock();
+	if (old_sb)
 		deactivate_super(old_sb);
-पूर्ण
+}
 
-अटल अंतरभूत स्थिर अक्षर *hidepid2str(क्रमागत proc_hidepid v)
-अणु
-	चयन (v) अणु
-		हाल HIDEPID_OFF: वापस "off";
-		हाल HIDEPID_NO_ACCESS: वापस "noaccess";
-		हाल HIDEPID_INVISIBLE: वापस "invisible";
-		हाल HIDEPID_NOT_PTRACEABLE: वापस "ptraceable";
-	पूर्ण
+static inline const char *hidepid2str(enum proc_hidepid v)
+{
+	switch (v) {
+		case HIDEPID_OFF: return "off";
+		case HIDEPID_NO_ACCESS: return "noaccess";
+		case HIDEPID_INVISIBLE: return "invisible";
+		case HIDEPID_NOT_PTRACEABLE: return "ptraceable";
+	}
 	WARN_ONCE(1, "bad hide_pid value: %d\n", v);
-	वापस "unknown";
-पूर्ण
+	return "unknown";
+}
 
-अटल पूर्णांक proc_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
-अणु
-	काष्ठा proc_fs_info *fs_info = proc_sb_info(root->d_sb);
+static int proc_show_options(struct seq_file *seq, struct dentry *root)
+{
+	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
 
-	अगर (!gid_eq(fs_info->pid_gid, GLOBAL_ROOT_GID))
-		seq_म_लिखो(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
-	अगर (fs_info->hide_pid != HIDEPID_OFF)
-		seq_म_लिखो(seq, ",hidepid=%s", hidepid2str(fs_info->hide_pid));
-	अगर (fs_info->piकरोnly != PROC_PIDONLY_OFF)
-		seq_म_लिखो(seq, ",subset=pid");
+	if (!gid_eq(fs_info->pid_gid, GLOBAL_ROOT_GID))
+		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, fs_info->pid_gid));
+	if (fs_info->hide_pid != HIDEPID_OFF)
+		seq_printf(seq, ",hidepid=%s", hidepid2str(fs_info->hide_pid));
+	if (fs_info->pidonly != PROC_PIDONLY_OFF)
+		seq_printf(seq, ",subset=pid");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा super_operations proc_sops = अणु
+const struct super_operations proc_sops = {
 	.alloc_inode	= proc_alloc_inode,
-	.मुक्त_inode	= proc_मुक्त_inode,
+	.free_inode	= proc_free_inode,
 	.drop_inode	= generic_delete_inode,
 	.evict_inode	= proc_evict_inode,
 	.statfs		= simple_statfs,
 	.show_options	= proc_show_options,
-पूर्ण;
+};
 
-क्रमागत अणुBIAS = -1U<<31पूर्ण;
+enum {BIAS = -1U<<31};
 
-अटल अंतरभूत पूर्णांक use_pde(काष्ठा proc_dir_entry *pde)
-अणु
-	वापस likely(atomic_inc_unless_negative(&pde->in_use));
-पूर्ण
+static inline int use_pde(struct proc_dir_entry *pde)
+{
+	return likely(atomic_inc_unless_negative(&pde->in_use));
+}
 
-अटल व्योम unuse_pde(काष्ठा proc_dir_entry *pde)
-अणु
-	अगर (unlikely(atomic_dec_वापस(&pde->in_use) == BIAS))
+static void unuse_pde(struct proc_dir_entry *pde)
+{
+	if (unlikely(atomic_dec_return(&pde->in_use) == BIAS))
 		complete(pde->pde_unload_completion);
-पूर्ण
+}
 
-/* pde is locked on entry, unlocked on निकास */
-अटल व्योम बंद_pdeo(काष्ठा proc_dir_entry *pde, काष्ठा pde_खोलोer *pdeo)
+/* pde is locked on entry, unlocked on exit */
+static void close_pdeo(struct proc_dir_entry *pde, struct pde_opener *pdeo)
 	__releases(&pde->pde_unload_lock)
-अणु
+{
 	/*
-	 * बंद() (proc_reg_release()) can't delete an entry and proceed:
+	 * close() (proc_reg_release()) can't delete an entry and proceed:
 	 * ->release hook needs to be available at the right moment.
 	 *
-	 * rmmod (हटाओ_proc_entry() et al) can't delete an entry and proceed:
+	 * rmmod (remove_proc_entry() et al) can't delete an entry and proceed:
 	 * "struct file" needs to be available at the right moment.
 	 *
-	 * Thereक्रमe, first process to enter this function करोes ->release() and
-	 * संकेतs its completion to the other process which करोes nothing.
+	 * Therefore, first process to enter this function does ->release() and
+	 * signals its completion to the other process which does nothing.
 	 */
-	अगर (pdeo->closing) अणु
-		/* somebody अन्यथा is करोing that, just रुको */
+	if (pdeo->closing) {
+		/* somebody else is doing that, just wait */
 		DECLARE_COMPLETION_ONSTACK(c);
 		pdeo->c = &c;
 		spin_unlock(&pde->pde_unload_lock);
-		रुको_क्रम_completion(&c);
-	पूर्ण अन्यथा अणु
-		काष्ठा file *file;
-		काष्ठा completion *c;
+		wait_for_completion(&c);
+	} else {
+		struct file *file;
+		struct completion *c;
 
 		pdeo->closing = true;
 		spin_unlock(&pde->pde_unload_lock);
@@ -248,449 +247,449 @@
 		list_del(&pdeo->lh);
 		c = pdeo->c;
 		spin_unlock(&pde->pde_unload_lock);
-		अगर (unlikely(c))
+		if (unlikely(c))
 			complete(c);
-		kmem_cache_मुक्त(pde_खोलोer_cache, pdeo);
-	पूर्ण
-पूर्ण
+		kmem_cache_free(pde_opener_cache, pdeo);
+	}
+}
 
-व्योम proc_entry_runकरोwn(काष्ठा proc_dir_entry *de)
-अणु
+void proc_entry_rundown(struct proc_dir_entry *de)
+{
 	DECLARE_COMPLETION_ONSTACK(c);
-	/* Wait until all existing callers पूर्णांकo module are करोne. */
+	/* Wait until all existing callers into module are done. */
 	de->pde_unload_completion = &c;
-	अगर (atomic_add_वापस(BIAS, &de->in_use) != BIAS)
-		रुको_क्रम_completion(&c);
+	if (atomic_add_return(BIAS, &de->in_use) != BIAS)
+		wait_for_completion(&c);
 
-	/* ->pde_खोलोers list can't grow from now on. */
+	/* ->pde_openers list can't grow from now on. */
 
 	spin_lock(&de->pde_unload_lock);
-	जबतक (!list_empty(&de->pde_खोलोers)) अणु
-		काष्ठा pde_खोलोer *pdeo;
-		pdeo = list_first_entry(&de->pde_खोलोers, काष्ठा pde_खोलोer, lh);
-		बंद_pdeo(de, pdeo);
+	while (!list_empty(&de->pde_openers)) {
+		struct pde_opener *pdeo;
+		pdeo = list_first_entry(&de->pde_openers, struct pde_opener, lh);
+		close_pdeo(de, pdeo);
 		spin_lock(&de->pde_unload_lock);
-	पूर्ण
+	}
 	spin_unlock(&de->pde_unload_lock);
-पूर्ण
+}
 
-अटल loff_t proc_reg_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
+static loff_t proc_reg_llseek(struct file *file, loff_t offset, int whence)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
 	loff_t rv = -EINVAL;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde->proc_ops->proc_lseek(file, offset, whence);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
+	if (pde_is_permanent(pde)) {
+		return pde->proc_ops->proc_lseek(file, offset, whence);
+	} else if (use_pde(pde)) {
 		rv = pde->proc_ops->proc_lseek(file, offset, whence);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल sमाप_प्रकार proc_reg_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(iocb->ki_filp));
-	sमाप_प्रकार ret;
+static ssize_t proc_reg_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(iocb->ki_filp));
+	ssize_t ret;
 
-	अगर (pde_is_permanent(pde))
-		वापस pde->proc_ops->proc_पढ़ो_iter(iocb, iter);
+	if (pde_is_permanent(pde))
+		return pde->proc_ops->proc_read_iter(iocb, iter);
 
-	अगर (!use_pde(pde))
-		वापस -EIO;
-	ret = pde->proc_ops->proc_पढ़ो_iter(iocb, iter);
+	if (!use_pde(pde))
+		return -EIO;
+	ret = pde->proc_ops->proc_read_iter(iocb, iter);
 	unuse_pde(pde);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार pde_पढ़ो(काष्ठा proc_dir_entry *pde, काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_पढ़ो) पढ़ो;
+static ssize_t pde_read(struct proc_dir_entry *pde, struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+	typeof_member(struct proc_ops, proc_read) read;
 
-	पढ़ो = pde->proc_ops->proc_पढ़ो;
-	अगर (पढ़ो)
-		वापस पढ़ो(file, buf, count, ppos);
-	वापस -EIO;
-पूर्ण
+	read = pde->proc_ops->proc_read;
+	if (read)
+		return read(file, buf, count, ppos);
+	return -EIO;
+}
 
-अटल sमाप_प्रकार proc_reg_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
-	sमाप_प्रकार rv = -EIO;
+static ssize_t proc_reg_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
+	ssize_t rv = -EIO;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_पढ़ो(pde, file, buf, count, ppos);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
-		rv = pde_पढ़ो(pde, file, buf, count, ppos);
+	if (pde_is_permanent(pde)) {
+		return pde_read(pde, file, buf, count, ppos);
+	} else if (use_pde(pde)) {
+		rv = pde_read(pde, file, buf, count, ppos);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल sमाप_प्रकार pde_ग_लिखो(काष्ठा proc_dir_entry *pde, काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_ग_लिखो) ग_लिखो;
+static ssize_t pde_write(struct proc_dir_entry *pde, struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	typeof_member(struct proc_ops, proc_write) write;
 
-	ग_लिखो = pde->proc_ops->proc_ग_लिखो;
-	अगर (ग_लिखो)
-		वापस ग_लिखो(file, buf, count, ppos);
-	वापस -EIO;
-पूर्ण
+	write = pde->proc_ops->proc_write;
+	if (write)
+		return write(file, buf, count, ppos);
+	return -EIO;
+}
 
-अटल sमाप_प्रकार proc_reg_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
-	sमाप_प्रकार rv = -EIO;
+static ssize_t proc_reg_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
+	ssize_t rv = -EIO;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_ग_लिखो(pde, file, buf, count, ppos);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
-		rv = pde_ग_लिखो(pde, file, buf, count, ppos);
+	if (pde_is_permanent(pde)) {
+		return pde_write(pde, file, buf, count, ppos);
+	} else if (use_pde(pde)) {
+		rv = pde_write(pde, file, buf, count, ppos);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल __poll_t pde_poll(काष्ठा proc_dir_entry *pde, काष्ठा file *file, काष्ठा poll_table_काष्ठा *pts)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_poll) poll;
+static __poll_t pde_poll(struct proc_dir_entry *pde, struct file *file, struct poll_table_struct *pts)
+{
+	typeof_member(struct proc_ops, proc_poll) poll;
 
 	poll = pde->proc_ops->proc_poll;
-	अगर (poll)
-		वापस poll(file, pts);
-	वापस DEFAULT_POLLMASK;
-पूर्ण
+	if (poll)
+		return poll(file, pts);
+	return DEFAULT_POLLMASK;
+}
 
-अटल __poll_t proc_reg_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *pts)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
+static __poll_t proc_reg_poll(struct file *file, struct poll_table_struct *pts)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
 	__poll_t rv = DEFAULT_POLLMASK;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_poll(pde, file, pts);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
+	if (pde_is_permanent(pde)) {
+		return pde_poll(pde, file, pts);
+	} else if (use_pde(pde)) {
 		rv = pde_poll(pde, file, pts);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल दीर्घ pde_ioctl(काष्ठा proc_dir_entry *pde, काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_ioctl) ioctl;
+static long pde_ioctl(struct proc_dir_entry *pde, struct file *file, unsigned int cmd, unsigned long arg)
+{
+	typeof_member(struct proc_ops, proc_ioctl) ioctl;
 
 	ioctl = pde->proc_ops->proc_ioctl;
-	अगर (ioctl)
-		वापस ioctl(file, cmd, arg);
-	वापस -ENOTTY;
-पूर्ण
+	if (ioctl)
+		return ioctl(file, cmd, arg);
+	return -ENOTTY;
+}
 
-अटल दीर्घ proc_reg_unlocked_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
-	दीर्घ rv = -ENOTTY;
+static long proc_reg_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
+	long rv = -ENOTTY;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_ioctl(pde, file, cmd, arg);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
+	if (pde_is_permanent(pde)) {
+		return pde_ioctl(pde, file, cmd, arg);
+	} else if (use_pde(pde)) {
 		rv = pde_ioctl(pde, file, cmd, arg);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ pde_compat_ioctl(काष्ठा proc_dir_entry *pde, काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_compat_ioctl) compat_ioctl;
+#ifdef CONFIG_COMPAT
+static long pde_compat_ioctl(struct proc_dir_entry *pde, struct file *file, unsigned int cmd, unsigned long arg)
+{
+	typeof_member(struct proc_ops, proc_compat_ioctl) compat_ioctl;
 
 	compat_ioctl = pde->proc_ops->proc_compat_ioctl;
-	अगर (compat_ioctl)
-		वापस compat_ioctl(file, cmd, arg);
-	वापस -ENOTTY;
-पूर्ण
+	if (compat_ioctl)
+		return compat_ioctl(file, cmd, arg);
+	return -ENOTTY;
+}
 
-अटल दीर्घ proc_reg_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
-	दीर्घ rv = -ENOTTY;
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_compat_ioctl(pde, file, cmd, arg);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
+static long proc_reg_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
+	long rv = -ENOTTY;
+	if (pde_is_permanent(pde)) {
+		return pde_compat_ioctl(pde, file, cmd, arg);
+	} else if (use_pde(pde)) {
 		rv = pde_compat_ioctl(pde, file, cmd, arg);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
-#पूर्ण_अगर
+	}
+	return rv;
+}
+#endif
 
-अटल पूर्णांक pde_mmap(काष्ठा proc_dir_entry *pde, काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_mmap) mmap;
+static int pde_mmap(struct proc_dir_entry *pde, struct file *file, struct vm_area_struct *vma)
+{
+	typeof_member(struct proc_ops, proc_mmap) mmap;
 
 	mmap = pde->proc_ops->proc_mmap;
-	अगर (mmap)
-		वापस mmap(file, vma);
-	वापस -EIO;
-पूर्ण
+	if (mmap)
+		return mmap(file, vma);
+	return -EIO;
+}
 
-अटल पूर्णांक proc_reg_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
-	पूर्णांक rv = -EIO;
+static int proc_reg_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
+	int rv = -EIO;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_mmap(pde, file, vma);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
+	if (pde_is_permanent(pde)) {
+		return pde_mmap(pde, file, vma);
+	} else if (use_pde(pde)) {
 		rv = pde_mmap(pde, file, vma);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल अचिन्हित दीर्घ
-pde_get_unmapped_area(काष्ठा proc_dir_entry *pde, काष्ठा file *file, अचिन्हित दीर्घ orig_addr,
-			   अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
-			   अचिन्हित दीर्घ flags)
-अणु
-	typeof_member(काष्ठा proc_ops, proc_get_unmapped_area) get_area;
+static unsigned long
+pde_get_unmapped_area(struct proc_dir_entry *pde, struct file *file, unsigned long orig_addr,
+			   unsigned long len, unsigned long pgoff,
+			   unsigned long flags)
+{
+	typeof_member(struct proc_ops, proc_get_unmapped_area) get_area;
 
 	get_area = pde->proc_ops->proc_get_unmapped_area;
-#अगर_घोषित CONFIG_MMU
-	अगर (!get_area)
+#ifdef CONFIG_MMU
+	if (!get_area)
 		get_area = current->mm->get_unmapped_area;
-#पूर्ण_अगर
-	अगर (get_area)
-		वापस get_area(file, orig_addr, len, pgoff, flags);
-	वापस orig_addr;
-पूर्ण
+#endif
+	if (get_area)
+		return get_area(file, orig_addr, len, pgoff, flags);
+	return orig_addr;
+}
 
-अटल अचिन्हित दीर्घ
-proc_reg_get_unmapped_area(काष्ठा file *file, अचिन्हित दीर्घ orig_addr,
-			   अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
-			   अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(file_inode(file));
-	अचिन्हित दीर्घ rv = -EIO;
+static unsigned long
+proc_reg_get_unmapped_area(struct file *file, unsigned long orig_addr,
+			   unsigned long len, unsigned long pgoff,
+			   unsigned long flags)
+{
+	struct proc_dir_entry *pde = PDE(file_inode(file));
+	unsigned long rv = -EIO;
 
-	अगर (pde_is_permanent(pde)) अणु
-		वापस pde_get_unmapped_area(pde, file, orig_addr, len, pgoff, flags);
-	पूर्ण अन्यथा अगर (use_pde(pde)) अणु
+	if (pde_is_permanent(pde)) {
+		return pde_get_unmapped_area(pde, file, orig_addr, len, pgoff, flags);
+	} else if (use_pde(pde)) {
 		rv = pde_get_unmapped_area(pde, file, orig_addr, len, pgoff, flags);
 		unuse_pde(pde);
-	पूर्ण
-	वापस rv;
-पूर्ण
+	}
+	return rv;
+}
 
-अटल पूर्णांक proc_reg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(inode);
-	पूर्णांक rv = 0;
-	typeof_member(काष्ठा proc_ops, proc_खोलो) खोलो;
-	typeof_member(काष्ठा proc_ops, proc_release) release;
-	काष्ठा pde_खोलोer *pdeo;
+static int proc_reg_open(struct inode *inode, struct file *file)
+{
+	struct proc_dir_entry *pde = PDE(inode);
+	int rv = 0;
+	typeof_member(struct proc_ops, proc_open) open;
+	typeof_member(struct proc_ops, proc_release) release;
+	struct pde_opener *pdeo;
 
-	अगर (pde_is_permanent(pde)) अणु
-		खोलो = pde->proc_ops->proc_खोलो;
-		अगर (खोलो)
-			rv = खोलो(inode, file);
-		वापस rv;
-	पूर्ण
+	if (pde_is_permanent(pde)) {
+		open = pde->proc_ops->proc_open;
+		if (open)
+			rv = open(inode, file);
+		return rv;
+	}
 
 	/*
 	 * Ensure that
 	 * 1) PDE's ->release hook will be called no matter what
-	 *    either normally by बंद()/->release, or क्रमcefully by
-	 *    rmmod/हटाओ_proc_entry.
+	 *    either normally by close()/->release, or forcefully by
+	 *    rmmod/remove_proc_entry.
 	 *
-	 * 2) rmmod isn't blocked by खोलोing file in /proc and sitting on
+	 * 2) rmmod isn't blocked by opening file in /proc and sitting on
 	 *    the descriptor (including "rmmod foo </proc/foo" scenario).
 	 *
 	 * Save every "struct file" with custom ->release hook.
 	 */
-	अगर (!use_pde(pde))
-		वापस -ENOENT;
+	if (!use_pde(pde))
+		return -ENOENT;
 
 	release = pde->proc_ops->proc_release;
-	अगर (release) अणु
-		pdeo = kmem_cache_alloc(pde_खोलोer_cache, GFP_KERNEL);
-		अगर (!pdeo) अणु
+	if (release) {
+		pdeo = kmem_cache_alloc(pde_opener_cache, GFP_KERNEL);
+		if (!pdeo) {
 			rv = -ENOMEM;
-			जाओ out_unuse;
-		पूर्ण
-	पूर्ण
+			goto out_unuse;
+		}
+	}
 
-	खोलो = pde->proc_ops->proc_खोलो;
-	अगर (खोलो)
-		rv = खोलो(inode, file);
+	open = pde->proc_ops->proc_open;
+	if (open)
+		rv = open(inode, file);
 
-	अगर (release) अणु
-		अगर (rv == 0) अणु
+	if (release) {
+		if (rv == 0) {
 			/* To know what to release. */
 			pdeo->file = file;
 			pdeo->closing = false;
-			pdeo->c = शून्य;
+			pdeo->c = NULL;
 			spin_lock(&pde->pde_unload_lock);
-			list_add(&pdeo->lh, &pde->pde_खोलोers);
+			list_add(&pdeo->lh, &pde->pde_openers);
 			spin_unlock(&pde->pde_unload_lock);
-		पूर्ण अन्यथा
-			kmem_cache_मुक्त(pde_खोलोer_cache, pdeo);
-	पूर्ण
+		} else
+			kmem_cache_free(pde_opener_cache, pdeo);
+	}
 
 out_unuse:
 	unuse_pde(pde);
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक proc_reg_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(inode);
-	काष्ठा pde_खोलोer *pdeo;
+static int proc_reg_release(struct inode *inode, struct file *file)
+{
+	struct proc_dir_entry *pde = PDE(inode);
+	struct pde_opener *pdeo;
 
-	अगर (pde_is_permanent(pde)) अणु
-		typeof_member(काष्ठा proc_ops, proc_release) release;
+	if (pde_is_permanent(pde)) {
+		typeof_member(struct proc_ops, proc_release) release;
 
 		release = pde->proc_ops->proc_release;
-		अगर (release) अणु
-			वापस release(inode, file);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		if (release) {
+			return release(inode, file);
+		}
+		return 0;
+	}
 
 	spin_lock(&pde->pde_unload_lock);
-	list_क्रम_each_entry(pdeo, &pde->pde_खोलोers, lh) अणु
-		अगर (pdeo->file == file) अणु
-			बंद_pdeo(pde, pdeo);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	list_for_each_entry(pdeo, &pde->pde_openers, lh) {
+		if (pdeo->file == file) {
+			close_pdeo(pde, pdeo);
+			return 0;
+		}
+	}
 	spin_unlock(&pde->pde_unload_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations proc_reg_file_ops = अणु
+static const struct file_operations proc_reg_file_ops = {
 	.llseek		= proc_reg_llseek,
-	.पढ़ो		= proc_reg_पढ़ो,
-	.ग_लिखो		= proc_reg_ग_लिखो,
+	.read		= proc_reg_read,
+	.write		= proc_reg_write,
 	.poll		= proc_reg_poll,
 	.unlocked_ioctl	= proc_reg_unlocked_ioctl,
 	.mmap		= proc_reg_mmap,
 	.get_unmapped_area = proc_reg_get_unmapped_area,
-	.खोलो		= proc_reg_खोलो,
+	.open		= proc_reg_open,
 	.release	= proc_reg_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations proc_iter_file_ops = अणु
+static const struct file_operations proc_iter_file_ops = {
 	.llseek		= proc_reg_llseek,
-	.पढ़ो_iter	= proc_reg_पढ़ो_iter,
-	.ग_लिखो		= proc_reg_ग_लिखो,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+	.read_iter	= proc_reg_read_iter,
+	.write		= proc_reg_write,
+	.splice_read	= generic_file_splice_read,
 	.poll		= proc_reg_poll,
 	.unlocked_ioctl	= proc_reg_unlocked_ioctl,
 	.mmap		= proc_reg_mmap,
 	.get_unmapped_area = proc_reg_get_unmapped_area,
-	.खोलो		= proc_reg_खोलो,
+	.open		= proc_reg_open,
 	.release	= proc_reg_release,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_COMPAT
-अटल स्थिर काष्ठा file_operations proc_reg_file_ops_compat = अणु
+#ifdef CONFIG_COMPAT
+static const struct file_operations proc_reg_file_ops_compat = {
 	.llseek		= proc_reg_llseek,
-	.पढ़ो		= proc_reg_पढ़ो,
-	.ग_लिखो		= proc_reg_ग_लिखो,
-	.poll		= proc_reg_poll,
-	.unlocked_ioctl	= proc_reg_unlocked_ioctl,
-	.compat_ioctl	= proc_reg_compat_ioctl,
-	.mmap		= proc_reg_mmap,
-	.get_unmapped_area = proc_reg_get_unmapped_area,
-	.खोलो		= proc_reg_खोलो,
-	.release	= proc_reg_release,
-पूर्ण;
-
-अटल स्थिर काष्ठा file_operations proc_iter_file_ops_compat = अणु
-	.llseek		= proc_reg_llseek,
-	.पढ़ो_iter	= proc_reg_पढ़ो_iter,
-	.splice_पढ़ो	= generic_file_splice_पढ़ो,
-	.ग_लिखो		= proc_reg_ग_लिखो,
+	.read		= proc_reg_read,
+	.write		= proc_reg_write,
 	.poll		= proc_reg_poll,
 	.unlocked_ioctl	= proc_reg_unlocked_ioctl,
 	.compat_ioctl	= proc_reg_compat_ioctl,
 	.mmap		= proc_reg_mmap,
 	.get_unmapped_area = proc_reg_get_unmapped_area,
-	.खोलो		= proc_reg_खोलो,
+	.open		= proc_reg_open,
 	.release	= proc_reg_release,
-पूर्ण;
-#पूर्ण_अगर
+};
 
-अटल व्योम proc_put_link(व्योम *p)
-अणु
+static const struct file_operations proc_iter_file_ops_compat = {
+	.llseek		= proc_reg_llseek,
+	.read_iter	= proc_reg_read_iter,
+	.splice_read	= generic_file_splice_read,
+	.write		= proc_reg_write,
+	.poll		= proc_reg_poll,
+	.unlocked_ioctl	= proc_reg_unlocked_ioctl,
+	.compat_ioctl	= proc_reg_compat_ioctl,
+	.mmap		= proc_reg_mmap,
+	.get_unmapped_area = proc_reg_get_unmapped_area,
+	.open		= proc_reg_open,
+	.release	= proc_reg_release,
+};
+#endif
+
+static void proc_put_link(void *p)
+{
 	unuse_pde(p);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *proc_get_link(काष्ठा dentry *dentry,
-				 काष्ठा inode *inode,
-				 काष्ठा delayed_call *करोne)
-अणु
-	काष्ठा proc_dir_entry *pde = PDE(inode);
-	अगर (!use_pde(pde))
-		वापस ERR_PTR(-EINVAL);
-	set_delayed_call(करोne, proc_put_link, pde);
-	वापस pde->data;
-पूर्ण
+static const char *proc_get_link(struct dentry *dentry,
+				 struct inode *inode,
+				 struct delayed_call *done)
+{
+	struct proc_dir_entry *pde = PDE(inode);
+	if (!use_pde(pde))
+		return ERR_PTR(-EINVAL);
+	set_delayed_call(done, proc_put_link, pde);
+	return pde->data;
+}
 
-स्थिर काष्ठा inode_operations proc_link_inode_operations = अणु
+const struct inode_operations proc_link_inode_operations = {
 	.get_link	= proc_get_link,
-पूर्ण;
+};
 
-काष्ठा inode *proc_get_inode(काष्ठा super_block *sb, काष्ठा proc_dir_entry *de)
-अणु
-	काष्ठा inode *inode = new_inode(sb);
+struct inode *proc_get_inode(struct super_block *sb, struct proc_dir_entry *de)
+{
+	struct inode *inode = new_inode(sb);
 
-	अगर (!inode) अणु
+	if (!inode) {
 		pde_put(de);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	inode->i_ino = de->low_ino;
-	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
 	PROC_I(inode)->pde = de;
-	अगर (is_empty_pde(de)) अणु
+	if (is_empty_pde(de)) {
 		make_empty_dir_inode(inode);
-		वापस inode;
-	पूर्ण
+		return inode;
+	}
 
-	अगर (de->mode) अणु
+	if (de->mode) {
 		inode->i_mode = de->mode;
 		inode->i_uid = de->uid;
 		inode->i_gid = de->gid;
-	पूर्ण
-	अगर (de->size)
+	}
+	if (de->size)
 		inode->i_size = de->size;
-	अगर (de->nlink)
+	if (de->nlink)
 		set_nlink(inode, de->nlink);
 
-	अगर (S_ISREG(inode->i_mode)) अणु
+	if (S_ISREG(inode->i_mode)) {
 		inode->i_op = de->proc_iops;
-		अगर (de->proc_ops->proc_पढ़ो_iter)
+		if (de->proc_ops->proc_read_iter)
 			inode->i_fop = &proc_iter_file_ops;
-		अन्यथा
+		else
 			inode->i_fop = &proc_reg_file_ops;
-#अगर_घोषित CONFIG_COMPAT
-		अगर (de->proc_ops->proc_compat_ioctl) अणु
-			अगर (de->proc_ops->proc_पढ़ो_iter)
+#ifdef CONFIG_COMPAT
+		if (de->proc_ops->proc_compat_ioctl) {
+			if (de->proc_ops->proc_read_iter)
 				inode->i_fop = &proc_iter_file_ops_compat;
-			अन्यथा
+			else
 				inode->i_fop = &proc_reg_file_ops_compat;
-		पूर्ण
-#पूर्ण_अगर
-	पूर्ण अन्यथा अगर (S_ISसूची(inode->i_mode)) अणु
+		}
+#endif
+	} else if (S_ISDIR(inode->i_mode)) {
 		inode->i_op = de->proc_iops;
 		inode->i_fop = de->proc_dir_ops;
-	पूर्ण अन्यथा अगर (S_ISLNK(inode->i_mode)) अणु
+	} else if (S_ISLNK(inode->i_mode)) {
 		inode->i_op = de->proc_iops;
-		inode->i_fop = शून्य;
-	पूर्ण अन्यथा अणु
+		inode->i_fop = NULL;
+	} else {
 		BUG();
-	पूर्ण
-	वापस inode;
-पूर्ण
+	}
+	return inode;
+}

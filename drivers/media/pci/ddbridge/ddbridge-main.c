@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ddbridge.c: Digital Devices PCIe bridge driver
  *
@@ -7,187 +6,187 @@
  *                         Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/pci_ids.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/swab.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+#include <linux/poll.h>
+#include <linux/io.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/timer.h>
+#include <linux/i2c.h>
+#include <linux/swab.h>
+#include <linux/vmalloc.h>
 
-#समावेश "ddbridge.h"
-#समावेश "ddbridge-i2c.h"
-#समावेश "ddbridge-regs.h"
-#समावेश "ddbridge-hw.h"
-#समावेश "ddbridge-io.h"
+#include "ddbridge.h"
+#include "ddbridge-i2c.h"
+#include "ddbridge-regs.h"
+#include "ddbridge-hw.h"
+#include "ddbridge-io.h"
 
 /****************************************************************************/
 /* module parameters */
 
-#अगर_घोषित CONFIG_PCI_MSI
-#अगर_घोषित CONFIG_DVB_DDBRIDGE_MSIENABLE
-अटल पूर्णांक msi = 1;
-#अन्यथा
-अटल पूर्णांक msi;
-#पूर्ण_अगर
-module_param(msi, पूर्णांक, 0444);
-#अगर_घोषित CONFIG_DVB_DDBRIDGE_MSIENABLE
+#ifdef CONFIG_PCI_MSI
+#ifdef CONFIG_DVB_DDBRIDGE_MSIENABLE
+static int msi = 1;
+#else
+static int msi;
+#endif
+module_param(msi, int, 0444);
+#ifdef CONFIG_DVB_DDBRIDGE_MSIENABLE
 MODULE_PARM_DESC(msi, "Control MSI interrupts: 0-disable, 1-enable (default)");
-#अन्यथा
+#else
 MODULE_PARM_DESC(msi, "Control MSI interrupts: 0-disable (default), 1-enable");
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 
-अटल व्योम ddb_irq_disable(काष्ठा ddb *dev)
-अणु
-	ddbग_लिखोl(dev, 0, INTERRUPT_ENABLE);
-	ddbग_लिखोl(dev, 0, MSI1_ENABLE);
-पूर्ण
+static void ddb_irq_disable(struct ddb *dev)
+{
+	ddbwritel(dev, 0, INTERRUPT_ENABLE);
+	ddbwritel(dev, 0, MSI1_ENABLE);
+}
 
-अटल व्योम ddb_msi_निकास(काष्ठा ddb *dev)
-अणु
-#अगर_घोषित CONFIG_PCI_MSI
-	अगर (dev->msi)
-		pci_मुक्त_irq_vectors(dev->pdev);
-#पूर्ण_अगर
-पूर्ण
+static void ddb_msi_exit(struct ddb *dev)
+{
+#ifdef CONFIG_PCI_MSI
+	if (dev->msi)
+		pci_free_irq_vectors(dev->pdev);
+#endif
+}
 
-अटल व्योम ddb_irq_निकास(काष्ठा ddb *dev)
-अणु
+static void ddb_irq_exit(struct ddb *dev)
+{
 	ddb_irq_disable(dev);
-	अगर (dev->msi == 2)
-		मुक्त_irq(pci_irq_vector(dev->pdev, 1), dev);
-	मुक्त_irq(pci_irq_vector(dev->pdev, 0), dev);
-पूर्ण
+	if (dev->msi == 2)
+		free_irq(pci_irq_vector(dev->pdev, 1), dev);
+	free_irq(pci_irq_vector(dev->pdev, 0), dev);
+}
 
-अटल व्योम ddb_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ddb *dev = (काष्ठा ddb *)pci_get_drvdata(pdev);
+static void ddb_remove(struct pci_dev *pdev)
+{
+	struct ddb *dev = (struct ddb *)pci_get_drvdata(pdev);
 
 	ddb_device_destroy(dev);
 	ddb_ports_detach(dev);
 	ddb_i2c_release(dev);
 
-	ddb_irq_निकास(dev);
-	ddb_msi_निकास(dev);
+	ddb_irq_exit(dev);
+	ddb_msi_exit(dev);
 	ddb_ports_release(dev);
-	ddb_buffers_मुक्त(dev);
+	ddb_buffers_free(dev);
 
 	ddb_unmap(dev);
-	pci_set_drvdata(pdev, शून्य);
+	pci_set_drvdata(pdev, NULL);
 	pci_disable_device(pdev);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PCI_MSI
-अटल व्योम ddb_irq_msi(काष्ठा ddb *dev, पूर्णांक nr)
-अणु
-	पूर्णांक stat;
+#ifdef CONFIG_PCI_MSI
+static void ddb_irq_msi(struct ddb *dev, int nr)
+{
+	int stat;
 
-	अगर (msi && pci_msi_enabled()) अणु
+	if (msi && pci_msi_enabled()) {
 		stat = pci_alloc_irq_vectors(dev->pdev, 1, nr,
 					     PCI_IRQ_MSI | PCI_IRQ_MSIX);
-		अगर (stat >= 1) अणु
+		if (stat >= 1) {
 			dev->msi = stat;
 			dev_info(dev->dev, "using %d MSI interrupt(s)\n",
 				 dev->msi);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_info(dev->dev, "MSI not available.\n");
-		पूर्ण
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		}
+	}
+}
+#endif
 
-अटल पूर्णांक ddb_irq_init(काष्ठा ddb *dev)
-अणु
-	पूर्णांक stat;
-	पूर्णांक irq_flag = IRQF_SHARED;
+static int ddb_irq_init(struct ddb *dev)
+{
+	int stat;
+	int irq_flag = IRQF_SHARED;
 
-	ddbग_लिखोl(dev, 0x00000000, INTERRUPT_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI1_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI2_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI3_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI4_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI5_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI6_ENABLE);
-	ddbग_लिखोl(dev, 0x00000000, MSI7_ENABLE);
+	ddbwritel(dev, 0x00000000, INTERRUPT_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI1_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI2_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI3_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI4_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI5_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI6_ENABLE);
+	ddbwritel(dev, 0x00000000, MSI7_ENABLE);
 
-#अगर_घोषित CONFIG_PCI_MSI
+#ifdef CONFIG_PCI_MSI
 	ddb_irq_msi(dev, 2);
 
-	अगर (dev->msi)
+	if (dev->msi)
 		irq_flag = 0;
-	अगर (dev->msi == 2) अणु
+	if (dev->msi == 2) {
 		stat = request_irq(pci_irq_vector(dev->pdev, 0),
 				   ddb_irq_handler0, irq_flag, "ddbridge",
-				   (व्योम *)dev);
-		अगर (stat < 0)
-			वापस stat;
+				   (void *)dev);
+		if (stat < 0)
+			return stat;
 		stat = request_irq(pci_irq_vector(dev->pdev, 1),
 				   ddb_irq_handler1, irq_flag, "ddbridge",
-				   (व्योम *)dev);
-		अगर (stat < 0) अणु
-			मुक्त_irq(pci_irq_vector(dev->pdev, 0), dev);
-			वापस stat;
-		पूर्ण
-	पूर्ण अन्यथा
-#पूर्ण_अगर
-	अणु
+				   (void *)dev);
+		if (stat < 0) {
+			free_irq(pci_irq_vector(dev->pdev, 0), dev);
+			return stat;
+		}
+	} else
+#endif
+	{
 		stat = request_irq(pci_irq_vector(dev->pdev, 0),
 				   ddb_irq_handler, irq_flag, "ddbridge",
-				   (व्योम *)dev);
-		अगर (stat < 0)
-			वापस stat;
-	पूर्ण
-	अगर (dev->msi == 2) अणु
-		ddbग_लिखोl(dev, 0x0fffff00, INTERRUPT_ENABLE);
-		ddbग_लिखोl(dev, 0x0000000f, MSI1_ENABLE);
-	पूर्ण अन्यथा अणु
-		ddbग_लिखोl(dev, 0x0fffff0f, INTERRUPT_ENABLE);
-		ddbग_लिखोl(dev, 0x00000000, MSI1_ENABLE);
-	पूर्ण
-	वापस stat;
-पूर्ण
+				   (void *)dev);
+		if (stat < 0)
+			return stat;
+	}
+	if (dev->msi == 2) {
+		ddbwritel(dev, 0x0fffff00, INTERRUPT_ENABLE);
+		ddbwritel(dev, 0x0000000f, MSI1_ENABLE);
+	} else {
+		ddbwritel(dev, 0x0fffff0f, INTERRUPT_ENABLE);
+		ddbwritel(dev, 0x00000000, MSI1_ENABLE);
+	}
+	return stat;
+}
 
-अटल पूर्णांक ddb_probe(काष्ठा pci_dev *pdev,
-		     स्थिर काष्ठा pci_device_id *id)
-अणु
-	काष्ठा ddb *dev;
-	पूर्णांक stat = 0;
+static int ddb_probe(struct pci_dev *pdev,
+		     const struct pci_device_id *id)
+{
+	struct ddb *dev;
+	int stat = 0;
 
-	अगर (pci_enable_device(pdev) < 0)
-		वापस -ENODEV;
+	if (pci_enable_device(pdev) < 0)
+		return -ENODEV;
 
 	pci_set_master(pdev);
 
-	अगर (pci_set_dma_mask(pdev, DMA_BIT_MASK(64)))
-		अगर (pci_set_dma_mask(pdev, DMA_BIT_MASK(32)))
-			वापस -ENODEV;
+	if (pci_set_dma_mask(pdev, DMA_BIT_MASK(64)))
+		if (pci_set_dma_mask(pdev, DMA_BIT_MASK(32)))
+			return -ENODEV;
 
-	dev = vzalloc(माप(*dev));
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = vzalloc(sizeof(*dev));
+	if (!dev)
+		return -ENOMEM;
 
 	mutex_init(&dev->mutex);
 	dev->has_dma = 1;
@@ -195,15 +194,15 @@ MODULE_PARM_DESC(msi, "Control MSI interrupts: 0-disable (default), 1-enable");
 	dev->dev = &pdev->dev;
 	pci_set_drvdata(pdev, dev);
 
-	dev->link[0].ids.venकरोr = id->venकरोr;
+	dev->link[0].ids.vendor = id->vendor;
 	dev->link[0].ids.device = id->device;
-	dev->link[0].ids.subvenकरोr = id->subvenकरोr;
-	dev->link[0].ids.subdevice = pdev->subप्रणाली_device;
-	dev->link[0].ids.devid = (id->device << 16) | id->venकरोr;
+	dev->link[0].ids.subvendor = id->subvendor;
+	dev->link[0].ids.subdevice = pdev->subsystem_device;
+	dev->link[0].ids.devid = (id->device << 16) | id->vendor;
 
 	dev->link[0].dev = dev;
-	dev->link[0].info = get_ddb_info(id->venकरोr, id->device,
-					 id->subvenकरोr, pdev->subप्रणाली_device);
+	dev->link[0].info = get_ddb_info(id->vendor, id->device,
+					 id->subvendor, pdev->subsystem_device);
 
 	dev_info(&pdev->dev, "detected %s\n", dev->link[0].info->name);
 
@@ -211,54 +210,54 @@ MODULE_PARM_DESC(msi, "Control MSI interrupts: 0-disable (default), 1-enable");
 	dev->regs = ioremap(pci_resource_start(dev->pdev, 0),
 			    pci_resource_len(dev->pdev, 0));
 
-	अगर (!dev->regs) अणु
+	if (!dev->regs) {
 		dev_err(&pdev->dev, "not enough memory for register map\n");
 		stat = -ENOMEM;
-		जाओ fail;
-	पूर्ण
-	अगर (ddbपढ़ोl(dev, 0) == 0xffffffff) अणु
+		goto fail;
+	}
+	if (ddbreadl(dev, 0) == 0xffffffff) {
 		dev_err(&pdev->dev, "cannot read registers\n");
 		stat = -ENODEV;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	dev->link[0].ids.hwid = ddbपढ़ोl(dev, 0);
-	dev->link[0].ids.regmapid = ddbपढ़ोl(dev, 4);
+	dev->link[0].ids.hwid = ddbreadl(dev, 0);
+	dev->link[0].ids.regmapid = ddbreadl(dev, 4);
 
 	dev_info(&pdev->dev, "HW %08x REGMAP %08x\n",
 		 dev->link[0].ids.hwid, dev->link[0].ids.regmapid);
 
-	ddbग_लिखोl(dev, 0, DMA_BASE_READ);
-	ddbग_लिखोl(dev, 0, DMA_BASE_WRITE);
+	ddbwritel(dev, 0, DMA_BASE_READ);
+	ddbwritel(dev, 0, DMA_BASE_WRITE);
 
 	stat = ddb_irq_init(dev);
-	अगर (stat < 0)
-		जाओ fail0;
+	if (stat < 0)
+		goto fail0;
 
-	अगर (ddb_init(dev) == 0)
-		वापस 0;
+	if (ddb_init(dev) == 0)
+		return 0;
 
-	ddb_irq_निकास(dev);
+	ddb_irq_exit(dev);
 fail0:
 	dev_err(&pdev->dev, "fail0\n");
-	ddb_msi_निकास(dev);
+	ddb_msi_exit(dev);
 fail:
 	dev_err(&pdev->dev, "fail\n");
 
 	ddb_unmap(dev);
-	pci_set_drvdata(pdev, शून्य);
+	pci_set_drvdata(pdev, NULL);
 	pci_disable_device(pdev);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 
-#घोषणा DDB_DEVICE_ANY(_device) \
-		अणु PCI_DEVICE_SUB(DDVID, _device, DDVID, PCI_ANY_ID) पूर्ण
+#define DDB_DEVICE_ANY(_device) \
+		{ PCI_DEVICE_SUB(DDVID, _device, DDVID, PCI_ANY_ID) }
 
-अटल स्थिर काष्ठा pci_device_id ddb_id_table[] = अणु
+static const struct pci_device_id ddb_id_table[] = {
 	DDB_DEVICE_ANY(0x0002),
 	DDB_DEVICE_ANY(0x0003),
 	DDB_DEVICE_ANY(0x0005),
@@ -279,43 +278,43 @@ fail:
 	DDB_DEVICE_ANY(0x0323),
 	DDB_DEVICE_ANY(0x0328),
 	DDB_DEVICE_ANY(0x0329),
-	अणु0पूर्ण
-पूर्ण;
+	{0}
+};
 
 MODULE_DEVICE_TABLE(pci, ddb_id_table);
 
-अटल काष्ठा pci_driver ddb_pci_driver = अणु
+static struct pci_driver ddb_pci_driver = {
 	.name        = "ddbridge",
 	.id_table    = ddb_id_table,
 	.probe       = ddb_probe,
-	.हटाओ      = ddb_हटाओ,
-पूर्ण;
+	.remove      = ddb_remove,
+};
 
-अटल __init पूर्णांक module_init_ddbridge(व्योम)
-अणु
-	पूर्णांक stat;
+static __init int module_init_ddbridge(void)
+{
+	int stat;
 
 	pr_info("Digital Devices PCIE bridge driver "
 		DDBRIDGE_VERSION
 		", Copyright (C) 2010-17 Digital Devices GmbH\n");
 	stat = ddb_init_ddbridge();
-	अगर (stat < 0)
-		वापस stat;
-	stat = pci_रेजिस्टर_driver(&ddb_pci_driver);
-	अगर (stat < 0)
-		ddb_निकास_ddbridge(0, stat);
+	if (stat < 0)
+		return stat;
+	stat = pci_register_driver(&ddb_pci_driver);
+	if (stat < 0)
+		ddb_exit_ddbridge(0, stat);
 
-	वापस stat;
-पूर्ण
+	return stat;
+}
 
-अटल __निकास व्योम module_निकास_ddbridge(व्योम)
-अणु
-	pci_unरेजिस्टर_driver(&ddb_pci_driver);
-	ddb_निकास_ddbridge(0, 0);
-पूर्ण
+static __exit void module_exit_ddbridge(void)
+{
+	pci_unregister_driver(&ddb_pci_driver);
+	ddb_exit_ddbridge(0, 0);
+}
 
 module_init(module_init_ddbridge);
-module_निकास(module_निकास_ddbridge);
+module_exit(module_exit_ddbridge);
 
 MODULE_DESCRIPTION("Digital Devices PCIe Bridge");
 MODULE_AUTHOR("Ralph and Marcus Metzler, Metzler Brothers Systementwicklung GbR");

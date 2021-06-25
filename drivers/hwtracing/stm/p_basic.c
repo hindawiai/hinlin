@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Basic framing protocol क्रम STM devices.
+ * Basic framing protocol for STM devices.
  * Copyright (c) 2018, Intel Corporation.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/sपंचांग.h>
-#समावेश "stm.h"
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/stm.h>
+#include "stm.h"
 
-अटल sमाप_प्रकार basic_ग_लिखो(काष्ठा sपंचांग_data *data, काष्ठा sपंचांग_output *output,
-			   अचिन्हित पूर्णांक chan, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक c = output->channel + chan;
-	अचिन्हित पूर्णांक m = output->master;
-	स्थिर अचिन्हित अक्षर nil = 0;
-	sमाप_प्रकार sz;
+static ssize_t basic_write(struct stm_data *data, struct stm_output *output,
+			   unsigned int chan, const char *buf, size_t count)
+{
+	unsigned int c = output->channel + chan;
+	unsigned int m = output->master;
+	const unsigned char nil = 0;
+	ssize_t sz;
 
-	sz = sपंचांग_data_ग_लिखो(data, m, c, true, buf, count);
-	अगर (sz > 0)
+	sz = stm_data_write(data, m, c, true, buf, count);
+	if (sz > 0)
 		data->packet(data, m, c, STP_PACKET_FLAG, 0, 0, &nil);
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-अटल स्थिर काष्ठा sपंचांग_protocol_driver basic_pdrv = अणु
+static const struct stm_protocol_driver basic_pdrv = {
 	.owner	= THIS_MODULE,
 	.name	= "p_basic",
-	.ग_लिखो	= basic_ग_लिखो,
-पूर्ण;
+	.write	= basic_write,
+};
 
-अटल पूर्णांक basic_sपंचांग_init(व्योम)
-अणु
-	वापस sपंचांग_रेजिस्टर_protocol(&basic_pdrv);
-पूर्ण
+static int basic_stm_init(void)
+{
+	return stm_register_protocol(&basic_pdrv);
+}
 
-अटल व्योम basic_sपंचांग_निकास(व्योम)
-अणु
-	sपंचांग_unरेजिस्टर_protocol(&basic_pdrv);
-पूर्ण
+static void basic_stm_exit(void)
+{
+	stm_unregister_protocol(&basic_pdrv);
+}
 
-module_init(basic_sपंचांग_init);
-module_निकास(basic_sपंचांग_निकास);
+module_init(basic_stm_init);
+module_exit(basic_stm_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Basic STM framing protocol driver");

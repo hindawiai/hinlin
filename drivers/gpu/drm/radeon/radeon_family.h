@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -31,12 +30,12 @@
  * its is common between kms and non-kms because duplicating it and
  * changing one place is fail.
  */
-#अगर_अघोषित RADEON_FAMILY_H
-#घोषणा RADEON_FAMILY_H
+#ifndef RADEON_FAMILY_H
+#define RADEON_FAMILY_H
 /*
  * Radeon chip families
  */
-क्रमागत radeon_family अणु
+enum radeon_family {
 	CHIP_R100 = 0,
 	CHIP_RV100,
 	CHIP_RS100,
@@ -93,19 +92,19 @@
 	CHIP_PITCAIRN,
 	CHIP_VERDE,
 	CHIP_OLAND,
-	CHIP_HAIन_अंक,
+	CHIP_HAINAN,
 	CHIP_BONAIRE,
 	CHIP_KAVERI,
 	CHIP_KABINI,
 	CHIP_HAWAII,
 	CHIP_MULLINS,
 	CHIP_LAST,
-पूर्ण;
+};
 
 /*
  * Chip flags
  */
-क्रमागत radeon_chip_flags अणु
+enum radeon_chip_flags {
 	RADEON_FAMILY_MASK = 0x0000ffffUL,
 	RADEON_FLAGS_MASK = 0xffff0000UL,
 	RADEON_IS_MOBILITY = 0x00010000UL,
@@ -118,6 +117,6 @@
 	RADEON_IS_PCI = 0x00800000UL,
 	RADEON_IS_IGPGART = 0x01000000UL,
 	RADEON_IS_PX = 0x02000000UL,
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

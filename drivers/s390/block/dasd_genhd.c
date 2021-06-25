@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *		    Horst Hummel <Horst.Hummel@de.ibm.com>
@@ -8,42 +7,42 @@
  * Bugreports.to..: <Linux390@de.ibm.com>
  * Copyright IBM Corp. 1999, 2001
  *
- * gendisk related functions क्रम the dasd driver.
+ * gendisk related functions for the dasd driver.
  *
  */
 
-#घोषणा KMSG_COMPONENT "dasd"
+#define KMSG_COMPONENT "dasd"
 
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/blkpg.h>
+#include <linux/interrupt.h>
+#include <linux/fs.h>
+#include <linux/blkpg.h>
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
 /* This is ugly... */
-#घोषणा PRINTK_HEADER "dasd_gendisk:"
+#define PRINTK_HEADER "dasd_gendisk:"
 
-#समावेश "dasd_int.h"
+#include "dasd_int.h"
 
 /*
- * Allocate and रेजिस्टर gendisk काष्ठाure क्रम device.
+ * Allocate and register gendisk structure for device.
  */
-पूर्णांक dasd_gendisk_alloc(काष्ठा dasd_block *block)
-अणु
-	काष्ठा gendisk *gdp;
-	काष्ठा dasd_device *base;
-	पूर्णांक len;
+int dasd_gendisk_alloc(struct dasd_block *block)
+{
+	struct gendisk *gdp;
+	struct dasd_device *base;
+	int len;
 
-	/* Make sure the minor क्रम this device exists. */
+	/* Make sure the minor for this device exists. */
 	base = block->base;
-	अगर (base->devindex >= DASD_PER_MAJOR)
-		वापस -EBUSY;
+	if (base->devindex >= DASD_PER_MAJOR)
+		return -EBUSY;
 
 	gdp = alloc_disk(1 << DASD_PARTN_BITS);
-	अगर (!gdp)
-		वापस -ENOMEM;
+	if (!gdp)
+		return -ENOMEM;
 
-	/* Initialize gendisk काष्ठाure. */
+	/* Initialize gendisk structure. */
 	gdp->major = DASD_MAJOR;
 	gdp->first_minor = base->devindex << DASD_PARTN_BITS;
 	gdp->fops = &dasd_device_operations;
@@ -55,96 +54,96 @@
 	 *   dasdaaa - dasdzzz : 17576 devices, added up = 18278
 	 *   dasdaaaa - dasdzzzz : 456976 devices, added up = 475252
 	 */
-	len = प्र_लिखो(gdp->disk_name, "dasd");
-	अगर (base->devindex > 25) अणु
-		अगर (base->devindex > 701) अणु
-			अगर (base->devindex > 18277)
-			        len += प्र_लिखो(gdp->disk_name + len, "%c",
+	len = sprintf(gdp->disk_name, "dasd");
+	if (base->devindex > 25) {
+		if (base->devindex > 701) {
+			if (base->devindex > 18277)
+			        len += sprintf(gdp->disk_name + len, "%c",
 					       'a'+(((base->devindex-18278)
 						     /17576)%26));
-			len += प्र_लिखो(gdp->disk_name + len, "%c",
+			len += sprintf(gdp->disk_name + len, "%c",
 				       'a'+(((base->devindex-702)/676)%26));
-		पूर्ण
-		len += प्र_लिखो(gdp->disk_name + len, "%c",
+		}
+		len += sprintf(gdp->disk_name + len, "%c",
 			       'a'+(((base->devindex-26)/26)%26));
-	पूर्ण
-	len += प्र_लिखो(gdp->disk_name + len, "%c", 'a'+(base->devindex%26));
+	}
+	len += sprintf(gdp->disk_name + len, "%c", 'a'+(base->devindex%26));
 
-	अगर (base->features & DASD_FEATURE_READONLY ||
+	if (base->features & DASD_FEATURE_READONLY ||
 	    test_bit(DASD_FLAG_DEVICE_RO, &base->flags))
 		set_disk_ro(gdp, 1);
 	dasd_add_link_to_gendisk(gdp, base);
 	gdp->queue = block->request_queue;
 	block->gdp = gdp;
 	set_capacity(block->gdp, 0);
-	device_add_disk(&base->cdev->dev, block->gdp, शून्य);
-	वापस 0;
-पूर्ण
+	device_add_disk(&base->cdev->dev, block->gdp, NULL);
+	return 0;
+}
 
 /*
- * Unरेजिस्टर and मुक्त gendisk काष्ठाure क्रम device.
+ * Unregister and free gendisk structure for device.
  */
-व्योम dasd_gendisk_मुक्त(काष्ठा dasd_block *block)
-अणु
-	अगर (block->gdp) अणु
+void dasd_gendisk_free(struct dasd_block *block)
+{
+	if (block->gdp) {
 		del_gendisk(block->gdp);
-		block->gdp->निजी_data = शून्य;
+		block->gdp->private_data = NULL;
 		put_disk(block->gdp);
-		block->gdp = शून्य;
-	पूर्ण
-पूर्ण
+		block->gdp = NULL;
+	}
+}
 
 /*
  * Trigger a partition detection.
  */
-पूर्णांक dasd_scan_partitions(काष्ठा dasd_block *block)
-अणु
-	काष्ठा block_device *bdev;
-	पूर्णांक rc;
+int dasd_scan_partitions(struct dasd_block *block)
+{
+	struct block_device *bdev;
+	int rc;
 
-	bdev = blkdev_get_by_dev(disk_devt(block->gdp), FMODE_READ, शून्य);
-	अगर (IS_ERR(bdev)) अणु
+	bdev = blkdev_get_by_dev(disk_devt(block->gdp), FMODE_READ, NULL);
+	if (IS_ERR(bdev)) {
 		DBF_DEV_EVENT(DBF_ERR, block->base,
 			      "scan partitions error, blkdev_get returned %ld",
 			      PTR_ERR(bdev));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	mutex_lock(&bdev->bd_mutex);
 	rc = bdev_disk_changed(bdev, false);
 	mutex_unlock(&bdev->bd_mutex);
-	अगर (rc)
+	if (rc)
 		DBF_DEV_EVENT(DBF_ERR, block->base,
 				"scan partitions error, rc %d", rc);
 
 	/*
 	 * Since the matching blkdev_put call to the blkdev_get in
-	 * this function is not called beक्रमe dasd_destroy_partitions
-	 * the offline खोलो_count limit needs to be increased from
-	 * 0 to 1. This is करोne by setting device->bdev (see
-	 * dasd_generic_set_offline). As दीर्घ as the partition
+	 * this function is not called before dasd_destroy_partitions
+	 * the offline open_count limit needs to be increased from
+	 * 0 to 1. This is done by setting device->bdev (see
+	 * dasd_generic_set_offline). As long as the partition
 	 * detection is running no offline should be allowed. That
-	 * is why the assignment to device->bdev is करोne AFTER
+	 * is why the assignment to device->bdev is done AFTER
 	 * the BLKRRPART ioctl.
 	 */
 	block->bdev = bdev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Remove all inodes in the प्रणाली क्रम a device, delete the
+ * Remove all inodes in the system for a device, delete the
  * partitions and make device unusable by setting its size to zero.
  */
-व्योम dasd_destroy_partitions(काष्ठा dasd_block *block)
-अणु
-	काष्ठा block_device *bdev;
+void dasd_destroy_partitions(struct dasd_block *block)
+{
+	struct block_device *bdev;
 
 	/*
-	 * Get the bdev poपूर्णांकer from the device काष्ठाure and clear
-	 * device->bdev to lower the offline खोलो_count limit again.
+	 * Get the bdev pointer from the device structure and clear
+	 * device->bdev to lower the offline open_count limit again.
 	 */
 	bdev = block->bdev;
-	block->bdev = शून्य;
+	block->bdev = NULL;
 
 	mutex_lock(&bdev->bd_mutex);
 	bdev_disk_changed(bdev, true);
@@ -152,23 +151,23 @@
 
 	/* Matching blkdev_put to the blkdev_get in dasd_scan_partitions. */
 	blkdev_put(bdev, FMODE_READ);
-पूर्ण
+}
 
-पूर्णांक dasd_gendisk_init(व्योम)
-अणु
-	पूर्णांक rc;
+int dasd_gendisk_init(void)
+{
+	int rc;
 
-	/* Register to अटल dasd major 94 */
-	rc = रेजिस्टर_blkdev(DASD_MAJOR, "dasd");
-	अगर (rc != 0) अणु
+	/* Register to static dasd major 94 */
+	rc = register_blkdev(DASD_MAJOR, "dasd");
+	if (rc != 0) {
 		pr_warn("Registering the device driver with major number %d failed\n",
 			DASD_MAJOR);
-		वापस rc;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return rc;
+	}
+	return 0;
+}
 
-व्योम dasd_gendisk_निकास(व्योम)
-अणु
-	unरेजिस्टर_blkdev(DASD_MAJOR, "dasd");
-पूर्ण
+void dasd_gendisk_exit(void)
+{
+	unregister_blkdev(DASD_MAJOR, "dasd");
+}

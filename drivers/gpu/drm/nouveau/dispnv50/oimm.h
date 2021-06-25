@@ -1,9 +1,8 @@
-<शैली गुरु>
-#अगर_अघोषित __NV50_KMS_OIMM_H__
-#घोषणा __NV50_KMS_OIMM_H__
-#समावेश "wndw.h"
+#ifndef __NV50_KMS_OIMM_H__
+#define __NV50_KMS_OIMM_H__
+#include "wndw.h"
 
-पूर्णांक oimm507b_init(काष्ठा nouveau_drm *, s32, काष्ठा nv50_wndw *);
+int oimm507b_init(struct nouveau_drm *, s32, struct nv50_wndw *);
 
-पूर्णांक nv50_oimm_init(काष्ठा nouveau_drm *, काष्ठा nv50_wndw *);
-#पूर्ण_अगर
+int nv50_oimm_init(struct nouveau_drm *, struct nv50_wndw *);
+#endif

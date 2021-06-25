@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#अगर_अघोषित __XFS_IALLOC_BTREE_H__
-#घोषणा	__XFS_IALLOC_BTREE_H__
+#ifndef __XFS_IALLOC_BTREE_H__
+#define	__XFS_IALLOC_BTREE_H__
 
 /*
- * Inode map on-disk काष्ठाures
+ * Inode map on-disk structures
  */
 
-काष्ठा xfs_buf;
-काष्ठा xfs_btree_cur;
-काष्ठा xfs_mount;
+struct xfs_buf;
+struct xfs_btree_cur;
+struct xfs_mount;
 
 /*
  * Btree block header size depends on a superblock flag.
  */
-#घोषणा XFS_INOBT_BLOCK_LEN(mp) \
+#define XFS_INOBT_BLOCK_LEN(mp) \
 	(xfs_sb_version_hascrc(&((mp)->m_sb)) ? \
 		XFS_BTREE_SBLOCK_CRC_LEN : XFS_BTREE_SBLOCK_LEN)
 
 /*
- * Record, key, and poपूर्णांकer address macros क्रम btree blocks.
+ * Record, key, and pointer address macros for btree blocks.
  *
  * (note that some of these may appear unused, but they are used in userspace)
  */
-#घोषणा XFS_INOBT_REC_ADDR(mp, block, index) \
+#define XFS_INOBT_REC_ADDR(mp, block, index) \
 	((xfs_inobt_rec_t *) \
-		((अक्षर *)(block) + \
+		((char *)(block) + \
 		 XFS_INOBT_BLOCK_LEN(mp) + \
-		 (((index) - 1) * माप(xfs_inobt_rec_t))))
+		 (((index) - 1) * sizeof(xfs_inobt_rec_t))))
 
-#घोषणा XFS_INOBT_KEY_ADDR(mp, block, index) \
+#define XFS_INOBT_KEY_ADDR(mp, block, index) \
 	((xfs_inobt_key_t *) \
-		((अक्षर *)(block) + \
+		((char *)(block) + \
 		 XFS_INOBT_BLOCK_LEN(mp) + \
-		 ((index) - 1) * माप(xfs_inobt_key_t)))
+		 ((index) - 1) * sizeof(xfs_inobt_key_t)))
 
-#घोषणा XFS_INOBT_PTR_ADDR(mp, block, index, maxrecs) \
+#define XFS_INOBT_PTR_ADDR(mp, block, index, maxrecs) \
 	((xfs_inobt_ptr_t *) \
-		((अक्षर *)(block) + \
+		((char *)(block) + \
 		 XFS_INOBT_BLOCK_LEN(mp) + \
-		 (maxrecs) * माप(xfs_inobt_key_t) + \
-		 ((index) - 1) * माप(xfs_inobt_ptr_t)))
+		 (maxrecs) * sizeof(xfs_inobt_key_t) + \
+		 ((index) - 1) * sizeof(xfs_inobt_ptr_t)))
 
-बाह्य काष्ठा xfs_btree_cur *xfs_inobt_init_cursor(काष्ठा xfs_mount *,
-		काष्ठा xfs_trans *, काष्ठा xfs_buf *, xfs_agnumber_t,
+extern struct xfs_btree_cur *xfs_inobt_init_cursor(struct xfs_mount *,
+		struct xfs_trans *, struct xfs_buf *, xfs_agnumber_t,
 		xfs_btnum_t);
-काष्ठा xfs_btree_cur *xfs_inobt_stage_cursor(काष्ठा xfs_mount *mp,
-		काष्ठा xbtree_afakeroot *afake, xfs_agnumber_t agno,
+struct xfs_btree_cur *xfs_inobt_stage_cursor(struct xfs_mount *mp,
+		struct xbtree_afakeroot *afake, xfs_agnumber_t agno,
 		xfs_btnum_t btnum);
-बाह्य पूर्णांक xfs_inobt_maxrecs(काष्ठा xfs_mount *, पूर्णांक, पूर्णांक);
+extern int xfs_inobt_maxrecs(struct xfs_mount *, int, int);
 
-/* ir_holemask to inode allocation biपंचांगap conversion */
-uपूर्णांक64_t xfs_inobt_irec_to_allocmask(काष्ठा xfs_inobt_rec_incore *);
+/* ir_holemask to inode allocation bitmap conversion */
+uint64_t xfs_inobt_irec_to_allocmask(struct xfs_inobt_rec_incore *);
 
-#अगर defined(DEBUG) || defined(XFS_WARN)
-पूर्णांक xfs_inobt_rec_check_count(काष्ठा xfs_mount *,
-			      काष्ठा xfs_inobt_rec_incore *);
-#अन्यथा
-#घोषणा xfs_inobt_rec_check_count(mp, rec)	0
-#पूर्ण_अगर	/* DEBUG */
+#if defined(DEBUG) || defined(XFS_WARN)
+int xfs_inobt_rec_check_count(struct xfs_mount *,
+			      struct xfs_inobt_rec_incore *);
+#else
+#define xfs_inobt_rec_check_count(mp, rec)	0
+#endif	/* DEBUG */
 
-पूर्णांक xfs_finobt_calc_reserves(काष्ठा xfs_mount *mp, काष्ठा xfs_trans *tp,
+int xfs_finobt_calc_reserves(struct xfs_mount *mp, struct xfs_trans *tp,
 		xfs_agnumber_t agno, xfs_extlen_t *ask, xfs_extlen_t *used);
-बाह्य xfs_extlen_t xfs_iallocbt_calc_size(काष्ठा xfs_mount *mp,
-		अचिन्हित दीर्घ दीर्घ len);
-पूर्णांक xfs_inobt_cur(काष्ठा xfs_mount *mp, काष्ठा xfs_trans *tp,
+extern xfs_extlen_t xfs_iallocbt_calc_size(struct xfs_mount *mp,
+		unsigned long long len);
+int xfs_inobt_cur(struct xfs_mount *mp, struct xfs_trans *tp,
 		xfs_agnumber_t agno, xfs_btnum_t btnum,
-		काष्ठा xfs_btree_cur **curpp, काष्ठा xfs_buf **agi_bpp);
+		struct xfs_btree_cur **curpp, struct xfs_buf **agi_bpp);
 
-व्योम xfs_inobt_commit_staged_btree(काष्ठा xfs_btree_cur *cur,
-		काष्ठा xfs_trans *tp, काष्ठा xfs_buf *agbp);
+void xfs_inobt_commit_staged_btree(struct xfs_btree_cur *cur,
+		struct xfs_trans *tp, struct xfs_buf *agbp);
 
-#पूर्ण_अगर	/* __XFS_IALLOC_BTREE_H__ */
+#endif	/* __XFS_IALLOC_BTREE_H__ */

@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+
  *
- * include/यंत्र-sh/freq.h
+ * include/asm-sh/freq.h
  *
  * Copyright (C) 2002, 2003 Paul Mundt
  */
-#अगर_अघोषित __ASM_SH_FREQ_H
-#घोषणा __ASM_SH_FREQ_H
+#ifndef __ASM_SH_FREQ_H
+#define __ASM_SH_FREQ_H
 
-#समावेश <cpu/freq.h>
+#include <cpu/freq.h>
 
-#पूर्ण_अगर /* __ASM_SH_FREQ_H */
+#endif /* __ASM_SH_FREQ_H */

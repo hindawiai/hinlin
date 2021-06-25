@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Generic DSI Command Mode panel driver
  *
@@ -7,193 +6,193 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-/* #घोषणा DEBUG */
+/* #define DEBUG */
 
-#समावेश <linux/backlight.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_gpपन.स>
+#include <linux/backlight.h>
+#include <linux/delay.h>
+#include <linux/fb.h>
+#include <linux/gpio.h>
+#include <linux/interrupt.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
 
-#समावेश <video/omapfb_dss.h>
-#समावेश <video/mipi_display.h>
+#include <video/omapfb_dss.h>
+#include <video/mipi_display.h>
 
-/* DSI Virtual channel. Hardcoded क्रम now. */
-#घोषणा TCH 0
+/* DSI Virtual channel. Hardcoded for now. */
+#define TCH 0
 
-#घोषणा DCS_READ_NUM_ERRORS	0x05
-#घोषणा DCS_BRIGHTNESS		0x51
-#घोषणा DCS_CTRL_DISPLAY	0x53
-#घोषणा DCS_GET_ID1		0xda
-#घोषणा DCS_GET_ID2		0xdb
-#घोषणा DCS_GET_ID3		0xdc
+#define DCS_READ_NUM_ERRORS	0x05
+#define DCS_BRIGHTNESS		0x51
+#define DCS_CTRL_DISPLAY	0x53
+#define DCS_GET_ID1		0xda
+#define DCS_GET_ID2		0xdb
+#define DCS_GET_ID3		0xdc
 
-काष्ठा panel_drv_data अणु
-	काष्ठा omap_dss_device dssdev;
-	काष्ठा omap_dss_device *in;
+struct panel_drv_data {
+	struct omap_dss_device dssdev;
+	struct omap_dss_device *in;
 
-	काष्ठा omap_video_timings timings;
+	struct omap_video_timings timings;
 
-	काष्ठा platक्रमm_device *pdev;
+	struct platform_device *pdev;
 
-	काष्ठा mutex lock;
+	struct mutex lock;
 
-	काष्ठा backlight_device *bldev;
+	struct backlight_device *bldev;
 
-	अचिन्हित दीर्घ	hw_guard_end;	/* next value of jअगरfies when we can
+	unsigned long	hw_guard_end;	/* next value of jiffies when we can
 					 * issue the next sleep in/out command
 					 */
-	अचिन्हित दीर्घ	hw_guard_रुको;	/* max guard समय in jअगरfies */
+	unsigned long	hw_guard_wait;	/* max guard time in jiffies */
 
-	/* panel HW configuration from DT or platक्रमm data */
-	पूर्णांक reset_gpio;
-	पूर्णांक ext_te_gpio;
+	/* panel HW configuration from DT or platform data */
+	int reset_gpio;
+	int ext_te_gpio;
 
 	bool use_dsi_backlight;
 
-	काष्ठा omap_dsi_pin_config pin_config;
+	struct omap_dsi_pin_config pin_config;
 
-	/* runसमय variables */
+	/* runtime variables */
 	bool enabled;
 
 	bool te_enabled;
 
-	atomic_t करो_update;
-	पूर्णांक channel;
+	atomic_t do_update;
+	int channel;
 
-	काष्ठा delayed_work te_समयout_work;
+	struct delayed_work te_timeout_work;
 
-	bool पूर्णांकro_prपूर्णांकed;
+	bool intro_printed;
 
 	bool ulps_enabled;
-	अचिन्हित ulps_समयout;
-	काष्ठा delayed_work ulps_work;
-पूर्ण;
+	unsigned ulps_timeout;
+	struct delayed_work ulps_work;
+};
 
-#घोषणा to_panel_data(p) container_of(p, काष्ठा panel_drv_data, dssdev)
+#define to_panel_data(p) container_of(p, struct panel_drv_data, dssdev)
 
-अटल irqवापस_t dsicm_te_isr(पूर्णांक irq, व्योम *data);
-अटल व्योम dsicm_te_समयout_work_callback(काष्ठा work_काष्ठा *work);
-अटल पूर्णांक _dsicm_enable_te(काष्ठा panel_drv_data *ddata, bool enable);
+static irqreturn_t dsicm_te_isr(int irq, void *data);
+static void dsicm_te_timeout_work_callback(struct work_struct *work);
+static int _dsicm_enable_te(struct panel_drv_data *ddata, bool enable);
 
-अटल पूर्णांक dsicm_panel_reset(काष्ठा panel_drv_data *ddata);
+static int dsicm_panel_reset(struct panel_drv_data *ddata);
 
-अटल व्योम dsicm_ulps_work(काष्ठा work_काष्ठा *work);
+static void dsicm_ulps_work(struct work_struct *work);
 
-अटल व्योम hw_guard_start(काष्ठा panel_drv_data *ddata, पूर्णांक guard_msec)
-अणु
-	ddata->hw_guard_रुको = msecs_to_jअगरfies(guard_msec);
-	ddata->hw_guard_end = jअगरfies + ddata->hw_guard_रुको;
-पूर्ण
+static void hw_guard_start(struct panel_drv_data *ddata, int guard_msec)
+{
+	ddata->hw_guard_wait = msecs_to_jiffies(guard_msec);
+	ddata->hw_guard_end = jiffies + ddata->hw_guard_wait;
+}
 
-अटल व्योम hw_guard_रुको(काष्ठा panel_drv_data *ddata)
-अणु
-	अचिन्हित दीर्घ रुको = ddata->hw_guard_end - jअगरfies;
+static void hw_guard_wait(struct panel_drv_data *ddata)
+{
+	unsigned long wait = ddata->hw_guard_end - jiffies;
 
-	अगर ((दीर्घ)रुको > 0 && समय_beक्रमe_eq(रुको, ddata->hw_guard_रुको)) अणु
+	if ((long)wait > 0 && time_before_eq(wait, ddata->hw_guard_wait)) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		schedule_समयout(रुको);
-	पूर्ण
-पूर्ण
+		schedule_timeout(wait);
+	}
+}
 
-अटल पूर्णांक dsicm_dcs_पढ़ो_1(काष्ठा panel_drv_data *ddata, u8 dcs_cmd, u8 *data)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int dsicm_dcs_read_1(struct panel_drv_data *ddata, u8 dcs_cmd, u8 *data)
+{
+	struct omap_dss_device *in = ddata->in;
+	int r;
 	u8 buf[1];
 
-	r = in->ops.dsi->dcs_पढ़ो(in, ddata->channel, dcs_cmd, buf, 1);
+	r = in->ops.dsi->dcs_read(in, ddata->channel, dcs_cmd, buf, 1);
 
-	अगर (r < 0)
-		वापस r;
+	if (r < 0)
+		return r;
 
 	*data = buf[0];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_dcs_ग_लिखो_0(काष्ठा panel_drv_data *ddata, u8 dcs_cmd)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	वापस in->ops.dsi->dcs_ग_लिखो(in, ddata->channel, &dcs_cmd, 1);
-पूर्ण
+static int dsicm_dcs_write_0(struct panel_drv_data *ddata, u8 dcs_cmd)
+{
+	struct omap_dss_device *in = ddata->in;
+	return in->ops.dsi->dcs_write(in, ddata->channel, &dcs_cmd, 1);
+}
 
-अटल पूर्णांक dsicm_dcs_ग_लिखो_1(काष्ठा panel_drv_data *ddata, u8 dcs_cmd, u8 param)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	u8 buf[2] = अणु dcs_cmd, param पूर्ण;
+static int dsicm_dcs_write_1(struct panel_drv_data *ddata, u8 dcs_cmd, u8 param)
+{
+	struct omap_dss_device *in = ddata->in;
+	u8 buf[2] = { dcs_cmd, param };
 
-	वापस in->ops.dsi->dcs_ग_लिखो(in, ddata->channel, buf, 2);
-पूर्ण
+	return in->ops.dsi->dcs_write(in, ddata->channel, buf, 2);
+}
 
-अटल पूर्णांक dsicm_sleep_in(काष्ठा panel_drv_data *ddata)
+static int dsicm_sleep_in(struct panel_drv_data *ddata)
 
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
+{
+	struct omap_dss_device *in = ddata->in;
 	u8 cmd;
-	पूर्णांक r;
+	int r;
 
-	hw_guard_रुको(ddata);
+	hw_guard_wait(ddata);
 
 	cmd = MIPI_DCS_ENTER_SLEEP_MODE;
-	r = in->ops.dsi->dcs_ग_लिखो_nosync(in, ddata->channel, &cmd, 1);
-	अगर (r)
-		वापस r;
+	r = in->ops.dsi->dcs_write_nosync(in, ddata->channel, &cmd, 1);
+	if (r)
+		return r;
 
 	hw_guard_start(ddata, 120);
 
 	usleep_range(5000, 10000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_sleep_out(काष्ठा panel_drv_data *ddata)
-अणु
-	पूर्णांक r;
+static int dsicm_sleep_out(struct panel_drv_data *ddata)
+{
+	int r;
 
-	hw_guard_रुको(ddata);
+	hw_guard_wait(ddata);
 
-	r = dsicm_dcs_ग_लिखो_0(ddata, MIPI_DCS_EXIT_SLEEP_MODE);
-	अगर (r)
-		वापस r;
+	r = dsicm_dcs_write_0(ddata, MIPI_DCS_EXIT_SLEEP_MODE);
+	if (r)
+		return r;
 
 	hw_guard_start(ddata, 120);
 
 	usleep_range(5000, 10000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_get_id(काष्ठा panel_drv_data *ddata, u8 *id1, u8 *id2, u8 *id3)
-अणु
-	पूर्णांक r;
+static int dsicm_get_id(struct panel_drv_data *ddata, u8 *id1, u8 *id2, u8 *id3)
+{
+	int r;
 
-	r = dsicm_dcs_पढ़ो_1(ddata, DCS_GET_ID1, id1);
-	अगर (r)
-		वापस r;
-	r = dsicm_dcs_पढ़ो_1(ddata, DCS_GET_ID2, id2);
-	अगर (r)
-		वापस r;
-	r = dsicm_dcs_पढ़ो_1(ddata, DCS_GET_ID3, id3);
-	अगर (r)
-		वापस r;
+	r = dsicm_dcs_read_1(ddata, DCS_GET_ID1, id1);
+	if (r)
+		return r;
+	r = dsicm_dcs_read_1(ddata, DCS_GET_ID2, id2);
+	if (r)
+		return r;
+	r = dsicm_dcs_read_1(ddata, DCS_GET_ID3, id3);
+	if (r)
+		return r;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_set_update_winकरोw(काष्ठा panel_drv_data *ddata,
+static int dsicm_set_update_window(struct panel_drv_data *ddata,
 		u16 x, u16 y, u16 w, u16 h)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+{
+	struct omap_dss_device *in = ddata->in;
+	int r;
 	u16 x1 = x;
 	u16 x2 = x + w - 1;
 	u16 y1 = y;
@@ -206,9 +205,9 @@
 	buf[3] = (x2 >> 8) & 0xff;
 	buf[4] = (x2 >> 0) & 0xff;
 
-	r = in->ops.dsi->dcs_ग_लिखो_nosync(in, ddata->channel, buf, माप(buf));
-	अगर (r)
-		वापस r;
+	r = in->ops.dsi->dcs_write_nosync(in, ddata->channel, buf, sizeof(buf));
+	if (r)
+		return r;
 
 	buf[0] = MIPI_DCS_SET_PAGE_ADDRESS;
 	buf[1] = (y1 >> 8) & 0xff;
@@ -216,49 +215,49 @@
 	buf[3] = (y2 >> 8) & 0xff;
 	buf[4] = (y2 >> 0) & 0xff;
 
-	r = in->ops.dsi->dcs_ग_लिखो_nosync(in, ddata->channel, buf, माप(buf));
-	अगर (r)
-		वापस r;
+	r = in->ops.dsi->dcs_write_nosync(in, ddata->channel, buf, sizeof(buf));
+	if (r)
+		return r;
 
 	in->ops.dsi->bta_sync(in, ddata->channel);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dsicm_queue_ulps_work(काष्ठा panel_drv_data *ddata)
-अणु
-	अगर (ddata->ulps_समयout > 0)
+static void dsicm_queue_ulps_work(struct panel_drv_data *ddata)
+{
+	if (ddata->ulps_timeout > 0)
 		schedule_delayed_work(&ddata->ulps_work,
-				msecs_to_jअगरfies(ddata->ulps_समयout));
-पूर्ण
+				msecs_to_jiffies(ddata->ulps_timeout));
+}
 
-अटल व्योम dsicm_cancel_ulps_work(काष्ठा panel_drv_data *ddata)
-अणु
+static void dsicm_cancel_ulps_work(struct panel_drv_data *ddata)
+{
 	cancel_delayed_work(&ddata->ulps_work);
-पूर्ण
+}
 
-अटल पूर्णांक dsicm_enter_ulps(काष्ठा panel_drv_data *ddata)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int dsicm_enter_ulps(struct panel_drv_data *ddata)
+{
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
-	अगर (ddata->ulps_enabled)
-		वापस 0;
+	if (ddata->ulps_enabled)
+		return 0;
 
 	dsicm_cancel_ulps_work(ddata);
 
 	r = _dsicm_enable_te(ddata, false);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	अगर (gpio_is_valid(ddata->ext_te_gpio))
+	if (gpio_is_valid(ddata->ext_te_gpio))
 		disable_irq(gpio_to_irq(ddata->ext_te_gpio));
 
 	in->ops.dsi->disable(in, false, true);
 
 	ddata->ulps_enabled = true;
 
-	वापस 0;
+	return 0;
 
 err:
 	dev_err(&ddata->pdev->dev, "enter ULPS failed");
@@ -268,394 +267,394 @@ err:
 
 	dsicm_queue_ulps_work(ddata);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_निकास_ulps(काष्ठा panel_drv_data *ddata)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int dsicm_exit_ulps(struct panel_drv_data *ddata)
+{
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
-	अगर (!ddata->ulps_enabled)
-		वापस 0;
+	if (!ddata->ulps_enabled)
+		return 0;
 
 	r = in->ops.dsi->enable(in);
-	अगर (r) अणु
+	if (r) {
 		dev_err(&ddata->pdev->dev, "failed to enable DSI\n");
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	in->ops.dsi->enable_hs(in, ddata->channel, true);
 
 	r = _dsicm_enable_te(ddata, true);
-	अगर (r) अणु
+	if (r) {
 		dev_err(&ddata->pdev->dev, "failed to re-enable TE");
-		जाओ err2;
-	पूर्ण
+		goto err2;
+	}
 
-	अगर (gpio_is_valid(ddata->ext_te_gpio))
+	if (gpio_is_valid(ddata->ext_te_gpio))
 		enable_irq(gpio_to_irq(ddata->ext_te_gpio));
 
 	dsicm_queue_ulps_work(ddata);
 
 	ddata->ulps_enabled = false;
 
-	वापस 0;
+	return 0;
 
 err2:
 	dev_err(&ddata->pdev->dev, "failed to exit ULPS");
 
 	r = dsicm_panel_reset(ddata);
-	अगर (!r) अणु
-		अगर (gpio_is_valid(ddata->ext_te_gpio))
+	if (!r) {
+		if (gpio_is_valid(ddata->ext_te_gpio))
 			enable_irq(gpio_to_irq(ddata->ext_te_gpio));
 		ddata->ulps_enabled = false;
-	पूर्ण
+	}
 err1:
 	dsicm_queue_ulps_work(ddata);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_wake_up(काष्ठा panel_drv_data *ddata)
-अणु
-	अगर (ddata->ulps_enabled)
-		वापस dsicm_निकास_ulps(ddata);
+static int dsicm_wake_up(struct panel_drv_data *ddata)
+{
+	if (ddata->ulps_enabled)
+		return dsicm_exit_ulps(ddata);
 
 	dsicm_cancel_ulps_work(ddata);
 	dsicm_queue_ulps_work(ddata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_bl_update_status(काष्ठा backlight_device *dev)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
-	पूर्णांक level;
+static int dsicm_bl_update_status(struct backlight_device *dev)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(&dev->dev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
+	int level;
 
-	अगर (dev->props.fb_blank == FB_BLANK_UNBLANK &&
-			dev->props.घातer == FB_BLANK_UNBLANK)
+	if (dev->props.fb_blank == FB_BLANK_UNBLANK &&
+			dev->props.power == FB_BLANK_UNBLANK)
 		level = dev->props.brightness;
-	अन्यथा
+	else
 		level = 0;
 
 	dev_dbg(&ddata->pdev->dev, "update brightness to %d\n", level);
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled) अणु
+	if (ddata->enabled) {
 		in->ops.dsi->bus_lock(in);
 
 		r = dsicm_wake_up(ddata);
-		अगर (!r)
-			r = dsicm_dcs_ग_लिखो_1(ddata, DCS_BRIGHTNESS, level);
+		if (!r)
+			r = dsicm_dcs_write_1(ddata, DCS_BRIGHTNESS, level);
 
 		in->ops.dsi->bus_unlock(in);
-	पूर्ण अन्यथा अणु
+	} else {
 		r = 0;
-	पूर्ण
+	}
 
 	mutex_unlock(&ddata->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_bl_get_पूर्णांकensity(काष्ठा backlight_device *dev)
-अणु
-	अगर (dev->props.fb_blank == FB_BLANK_UNBLANK &&
-			dev->props.घातer == FB_BLANK_UNBLANK)
-		वापस dev->props.brightness;
+static int dsicm_bl_get_intensity(struct backlight_device *dev)
+{
+	if (dev->props.fb_blank == FB_BLANK_UNBLANK &&
+			dev->props.power == FB_BLANK_UNBLANK)
+		return dev->props.brightness;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops dsicm_bl_ops = अणु
-	.get_brightness = dsicm_bl_get_पूर्णांकensity,
+static const struct backlight_ops dsicm_bl_ops = {
+	.get_brightness = dsicm_bl_get_intensity,
 	.update_status  = dsicm_bl_update_status,
-पूर्ण;
+};
 
-अटल व्योम dsicm_get_resolution(काष्ठा omap_dss_device *dssdev,
+static void dsicm_get_resolution(struct omap_dss_device *dssdev,
 		u16 *xres, u16 *yres)
-अणु
+{
 	*xres = dssdev->panel.timings.x_res;
 	*yres = dssdev->panel.timings.y_res;
-पूर्ण
+}
 
-अटल sमाप_प्रकार dsicm_num_errors_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static ssize_t dsicm_num_errors_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	struct omap_dss_device *in = ddata->in;
 	u8 errors = 0;
-	पूर्णांक r;
+	int r;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled) अणु
+	if (ddata->enabled) {
 		in->ops.dsi->bus_lock(in);
 
 		r = dsicm_wake_up(ddata);
-		अगर (!r)
-			r = dsicm_dcs_पढ़ो_1(ddata, DCS_READ_NUM_ERRORS,
+		if (!r)
+			r = dsicm_dcs_read_1(ddata, DCS_READ_NUM_ERRORS,
 					&errors);
 
 		in->ops.dsi->bus_unlock(in);
-	पूर्ण अन्यथा अणु
+	} else {
 		r = -ENODEV;
-	पूर्ण
+	}
 
 	mutex_unlock(&ddata->lock);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", errors);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", errors);
+}
 
-अटल sमाप_प्रकार dsicm_hw_revision_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static ssize_t dsicm_hw_revision_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	struct omap_dss_device *in = ddata->in;
 	u8 id1, id2, id3;
-	पूर्णांक r;
+	int r;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled) अणु
+	if (ddata->enabled) {
 		in->ops.dsi->bus_lock(in);
 
 		r = dsicm_wake_up(ddata);
-		अगर (!r)
+		if (!r)
 			r = dsicm_get_id(ddata, &id1, &id2, &id3);
 
 		in->ops.dsi->bus_unlock(in);
-	पूर्ण अन्यथा अणु
+	} else {
 		r = -ENODEV;
-	पूर्ण
+	}
 
 	mutex_unlock(&ddata->lock);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%02x.%02x.%02x\n", id1, id2, id3);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%02x.%02x.%02x\n", id1, id2, id3);
+}
 
-अटल sमाप_प्रकार dsicm_store_ulps(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	अचिन्हित दीर्घ t;
-	पूर्णांक r;
+static ssize_t dsicm_store_ulps(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	struct omap_dss_device *in = ddata->in;
+	unsigned long t;
+	int r;
 
-	r = kम_से_अदीर्घ(buf, 0, &t);
-	अगर (r)
-		वापस r;
+	r = kstrtoul(buf, 0, &t);
+	if (r)
+		return r;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->enabled) अणु
+	if (ddata->enabled) {
 		in->ops.dsi->bus_lock(in);
 
-		अगर (t)
+		if (t)
 			r = dsicm_enter_ulps(ddata);
-		अन्यथा
+		else
 			r = dsicm_wake_up(ddata);
 
 		in->ops.dsi->bus_unlock(in);
-	पूर्ण
+	}
 
 	mutex_unlock(&ddata->lock);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार dsicm_show_ulps(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	अचिन्हित t;
+static ssize_t dsicm_show_ulps(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	unsigned t;
 
 	mutex_lock(&ddata->lock);
 	t = ddata->ulps_enabled;
 	mutex_unlock(&ddata->lock);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", t);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", t);
+}
 
-अटल sमाप_प्रकार dsicm_store_ulps_समयout(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	अचिन्हित दीर्घ t;
-	पूर्णांक r;
+static ssize_t dsicm_store_ulps_timeout(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	struct omap_dss_device *in = ddata->in;
+	unsigned long t;
+	int r;
 
-	r = kम_से_अदीर्घ(buf, 0, &t);
-	अगर (r)
-		वापस r;
+	r = kstrtoul(buf, 0, &t);
+	if (r)
+		return r;
 
 	mutex_lock(&ddata->lock);
-	ddata->ulps_समयout = t;
+	ddata->ulps_timeout = t;
 
-	अगर (ddata->enabled) अणु
-		/* dsicm_wake_up will restart the समयr */
+	if (ddata->enabled) {
+		/* dsicm_wake_up will restart the timer */
 		in->ops.dsi->bus_lock(in);
 		r = dsicm_wake_up(ddata);
 		in->ops.dsi->bus_unlock(in);
-	पूर्ण
+	}
 
 	mutex_unlock(&ddata->lock);
 
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार dsicm_show_ulps_समयout(काष्ठा device *dev,
-		काष्ठा device_attribute *attr,
-		अक्षर *buf)
-अणु
-	काष्ठा panel_drv_data *ddata = dev_get_drvdata(dev);
-	अचिन्हित t;
+static ssize_t dsicm_show_ulps_timeout(struct device *dev,
+		struct device_attribute *attr,
+		char *buf)
+{
+	struct panel_drv_data *ddata = dev_get_drvdata(dev);
+	unsigned t;
 
 	mutex_lock(&ddata->lock);
-	t = ddata->ulps_समयout;
+	t = ddata->ulps_timeout;
 	mutex_unlock(&ddata->lock);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", t);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", t);
+}
 
-अटल DEVICE_ATTR(num_dsi_errors, S_IRUGO, dsicm_num_errors_show, शून्य);
-अटल DEVICE_ATTR(hw_revision, S_IRUGO, dsicm_hw_revision_show, शून्य);
-अटल DEVICE_ATTR(ulps, S_IRUGO | S_IWUSR,
+static DEVICE_ATTR(num_dsi_errors, S_IRUGO, dsicm_num_errors_show, NULL);
+static DEVICE_ATTR(hw_revision, S_IRUGO, dsicm_hw_revision_show, NULL);
+static DEVICE_ATTR(ulps, S_IRUGO | S_IWUSR,
 		dsicm_show_ulps, dsicm_store_ulps);
-अटल DEVICE_ATTR(ulps_समयout, S_IRUGO | S_IWUSR,
-		dsicm_show_ulps_समयout, dsicm_store_ulps_समयout);
+static DEVICE_ATTR(ulps_timeout, S_IRUGO | S_IWUSR,
+		dsicm_show_ulps_timeout, dsicm_store_ulps_timeout);
 
-अटल काष्ठा attribute *dsicm_attrs[] = अणु
+static struct attribute *dsicm_attrs[] = {
 	&dev_attr_num_dsi_errors.attr,
 	&dev_attr_hw_revision.attr,
 	&dev_attr_ulps.attr,
-	&dev_attr_ulps_समयout.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_ulps_timeout.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group dsicm_attr_group = अणु
+static const struct attribute_group dsicm_attr_group = {
 	.attrs = dsicm_attrs,
-पूर्ण;
+};
 
-अटल व्योम dsicm_hw_reset(काष्ठा panel_drv_data *ddata)
-अणु
-	अगर (!gpio_is_valid(ddata->reset_gpio))
-		वापस;
+static void dsicm_hw_reset(struct panel_drv_data *ddata)
+{
+	if (!gpio_is_valid(ddata->reset_gpio))
+		return;
 
 	gpio_set_value(ddata->reset_gpio, 1);
 	udelay(10);
 	/* reset the panel */
 	gpio_set_value(ddata->reset_gpio, 0);
-	/* निश्चित reset */
+	/* assert reset */
 	udelay(10);
 	gpio_set_value(ddata->reset_gpio, 1);
-	/* रुको after releasing reset */
+	/* wait after releasing reset */
 	usleep_range(5000, 10000);
-पूर्ण
+}
 
-अटल पूर्णांक dsicm_घातer_on(काष्ठा panel_drv_data *ddata)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
+static int dsicm_power_on(struct panel_drv_data *ddata)
+{
+	struct omap_dss_device *in = ddata->in;
 	u8 id1, id2, id3;
-	पूर्णांक r;
-	काष्ठा omap_dss_dsi_config dsi_config = अणु
+	int r;
+	struct omap_dss_dsi_config dsi_config = {
 		.mode = OMAP_DSS_DSI_CMD_MODE,
-		.pixel_क्रमmat = OMAP_DSS_DSI_FMT_RGB888,
+		.pixel_format = OMAP_DSS_DSI_FMT_RGB888,
 		.timings = &ddata->timings,
 		.hs_clk_min = 150000000,
 		.hs_clk_max = 300000000,
 		.lp_clk_min = 7000000,
 		.lp_clk_max = 10000000,
-	पूर्ण;
+	};
 
-	अगर (ddata->pin_config.num_pins > 0) अणु
+	if (ddata->pin_config.num_pins > 0) {
 		r = in->ops.dsi->configure_pins(in, &ddata->pin_config);
-		अगर (r) अणु
+		if (r) {
 			dev_err(&ddata->pdev->dev,
 				"failed to configure DSI pins\n");
-			जाओ err0;
-		पूर्ण
-	पूर्ण
+			goto err0;
+		}
+	}
 
 	r = in->ops.dsi->set_config(in, &dsi_config);
-	अगर (r) अणु
+	if (r) {
 		dev_err(&ddata->pdev->dev, "failed to configure DSI\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
 	r = in->ops.dsi->enable(in);
-	अगर (r) अणु
+	if (r) {
 		dev_err(&ddata->pdev->dev, "failed to enable DSI\n");
-		जाओ err0;
-	पूर्ण
+		goto err0;
+	}
 
 	dsicm_hw_reset(ddata);
 
 	in->ops.dsi->enable_hs(in, ddata->channel, false);
 
 	r = dsicm_sleep_out(ddata);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	r = dsicm_get_id(ddata, &id1, &id2, &id3);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	r = dsicm_dcs_ग_लिखो_1(ddata, DCS_BRIGHTNESS, 0xff);
-	अगर (r)
-		जाओ err;
+	r = dsicm_dcs_write_1(ddata, DCS_BRIGHTNESS, 0xff);
+	if (r)
+		goto err;
 
-	r = dsicm_dcs_ग_लिखो_1(ddata, DCS_CTRL_DISPLAY,
+	r = dsicm_dcs_write_1(ddata, DCS_CTRL_DISPLAY,
 			(1<<2) | (1<<5));	/* BL | BCTRL */
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	r = dsicm_dcs_ग_लिखो_1(ddata, MIPI_DCS_SET_PIXEL_FORMAT,
+	r = dsicm_dcs_write_1(ddata, MIPI_DCS_SET_PIXEL_FORMAT,
 		MIPI_DCS_PIXEL_FMT_24BIT);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	r = dsicm_dcs_ग_लिखो_0(ddata, MIPI_DCS_SET_DISPLAY_ON);
-	अगर (r)
-		जाओ err;
+	r = dsicm_dcs_write_0(ddata, MIPI_DCS_SET_DISPLAY_ON);
+	if (r)
+		goto err;
 
 	r = _dsicm_enable_te(ddata, ddata->te_enabled);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	r = in->ops.dsi->enable_video_output(in, ddata->channel);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	ddata->enabled = 1;
 
-	अगर (!ddata->पूर्णांकro_prपूर्णांकed) अणु
+	if (!ddata->intro_printed) {
 		dev_info(&ddata->pdev->dev, "panel revision %02x.%02x.%02x\n",
 			id1, id2, id3);
-		ddata->पूर्णांकro_prपूर्णांकed = true;
-	पूर्ण
+		ddata->intro_printed = true;
+	}
 
 	in->ops.dsi->enable_hs(in, ddata->channel, true);
 
-	वापस 0;
+	return 0;
 err:
 	dev_err(&ddata->pdev->dev, "error while enabling panel, issuing HW reset\n");
 
@@ -663,134 +662,134 @@ err:
 
 	in->ops.dsi->disable(in, true, false);
 err0:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dsicm_घातer_off(काष्ठा panel_drv_data *ddata)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static void dsicm_power_off(struct panel_drv_data *ddata)
+{
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	in->ops.dsi->disable_video_output(in, ddata->channel);
 
-	r = dsicm_dcs_ग_लिखो_0(ddata, MIPI_DCS_SET_DISPLAY_OFF);
-	अगर (!r)
+	r = dsicm_dcs_write_0(ddata, MIPI_DCS_SET_DISPLAY_OFF);
+	if (!r)
 		r = dsicm_sleep_in(ddata);
 
-	अगर (r) अणु
+	if (r) {
 		dev_err(&ddata->pdev->dev,
 				"error disabling panel, issuing HW reset\n");
 		dsicm_hw_reset(ddata);
-	पूर्ण
+	}
 
 	in->ops.dsi->disable(in, true, false);
 
 	ddata->enabled = 0;
-पूर्ण
+}
 
-अटल पूर्णांक dsicm_panel_reset(काष्ठा panel_drv_data *ddata)
-अणु
+static int dsicm_panel_reset(struct panel_drv_data *ddata)
+{
 	dev_err(&ddata->pdev->dev, "performing LCD reset\n");
 
-	dsicm_घातer_off(ddata);
+	dsicm_power_off(ddata);
 	dsicm_hw_reset(ddata);
-	वापस dsicm_घातer_on(ddata);
-पूर्ण
+	return dsicm_power_on(ddata);
+}
 
-अटल पूर्णांक dsicm_connect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	काष्ठा device *dev = &ddata->pdev->dev;
-	पूर्णांक r;
+static int dsicm_connect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	struct device *dev = &ddata->pdev->dev;
+	int r;
 
-	अगर (omapdss_device_is_connected(dssdev))
-		वापस 0;
+	if (omapdss_device_is_connected(dssdev))
+		return 0;
 
 	r = in->ops.dsi->connect(in, dssdev);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dev, "Failed to connect to video source\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	r = in->ops.dsi->request_vc(ddata->in, &ddata->channel);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dev, "failed to get virtual channel\n");
-		जाओ err_req_vc;
-	पूर्ण
+		goto err_req_vc;
+	}
 
 	r = in->ops.dsi->set_vc_id(ddata->in, ddata->channel, TCH);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dev, "failed to set VC_ID\n");
-		जाओ err_vc_id;
-	पूर्ण
+		goto err_vc_id;
+	}
 
-	वापस 0;
+	return 0;
 
 err_vc_id:
 	in->ops.dsi->release_vc(ddata->in, ddata->channel);
 err_req_vc:
 	in->ops.dsi->disconnect(in, dssdev);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dsicm_disconnect(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void dsicm_disconnect(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
-	अगर (!omapdss_device_is_connected(dssdev))
-		वापस;
+	if (!omapdss_device_is_connected(dssdev))
+		return;
 
 	in->ops.dsi->release_vc(in, ddata->channel);
 	in->ops.dsi->disconnect(in, dssdev);
-पूर्ण
+}
 
-अटल पूर्णांक dsicm_enable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int dsicm_enable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	dev_dbg(&ddata->pdev->dev, "enable\n");
 
 	mutex_lock(&ddata->lock);
 
-	अगर (!omapdss_device_is_connected(dssdev)) अणु
+	if (!omapdss_device_is_connected(dssdev)) {
 		r = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (omapdss_device_is_enabled(dssdev)) अणु
+	if (omapdss_device_is_enabled(dssdev)) {
 		r = 0;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	in->ops.dsi->bus_lock(in);
 
-	r = dsicm_घातer_on(ddata);
+	r = dsicm_power_on(ddata);
 
 	in->ops.dsi->bus_unlock(in);
 
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
 	mutex_unlock(&ddata->lock);
 
-	वापस 0;
+	return 0;
 err:
 	dev_dbg(&ddata->pdev->dev, "enable failed\n");
 	mutex_unlock(&ddata->lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dsicm_disable(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static void dsicm_disable(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	dev_dbg(&ddata->pdev->dev, "disable\n");
 
@@ -800,71 +799,71 @@ err:
 
 	in->ops.dsi->bus_lock(in);
 
-	अगर (omapdss_device_is_enabled(dssdev)) अणु
+	if (omapdss_device_is_enabled(dssdev)) {
 		r = dsicm_wake_up(ddata);
-		अगर (!r)
-			dsicm_घातer_off(ddata);
-	पूर्ण
+		if (!r)
+			dsicm_power_off(ddata);
+	}
 
 	in->ops.dsi->bus_unlock(in);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
 
 	mutex_unlock(&ddata->lock);
-पूर्ण
+}
 
-अटल व्योम dsicm_frameकरोne_cb(पूर्णांक err, व्योम *data)
-अणु
-	काष्ठा panel_drv_data *ddata = data;
-	काष्ठा omap_dss_device *in = ddata->in;
+static void dsicm_framedone_cb(int err, void *data)
+{
+	struct panel_drv_data *ddata = data;
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(&ddata->pdev->dev, "framedone, err %d\n", err);
 	in->ops.dsi->bus_unlock(ddata->in);
-पूर्ण
+}
 
-अटल irqवापस_t dsicm_te_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा panel_drv_data *ddata = data;
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक old;
-	पूर्णांक r;
+static irqreturn_t dsicm_te_isr(int irq, void *data)
+{
+	struct panel_drv_data *ddata = data;
+	struct omap_dss_device *in = ddata->in;
+	int old;
+	int r;
 
-	old = atomic_cmpxchg(&ddata->करो_update, 1, 0);
+	old = atomic_cmpxchg(&ddata->do_update, 1, 0);
 
-	अगर (old) अणु
-		cancel_delayed_work(&ddata->te_समयout_work);
+	if (old) {
+		cancel_delayed_work(&ddata->te_timeout_work);
 
-		r = in->ops.dsi->update(in, ddata->channel, dsicm_frameकरोne_cb,
+		r = in->ops.dsi->update(in, ddata->channel, dsicm_framedone_cb,
 				ddata);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
-	वापस IRQ_HANDLED;
+	return IRQ_HANDLED;
 err:
 	dev_err(&ddata->pdev->dev, "start update failed\n");
 	in->ops.dsi->bus_unlock(in);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम dsicm_te_समयout_work_callback(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा panel_drv_data *ddata = container_of(work, काष्ठा panel_drv_data,
-					te_समयout_work.work);
-	काष्ठा omap_dss_device *in = ddata->in;
+static void dsicm_te_timeout_work_callback(struct work_struct *work)
+{
+	struct panel_drv_data *ddata = container_of(work, struct panel_drv_data,
+					te_timeout_work.work);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_err(&ddata->pdev->dev, "TE not received for 250ms!\n");
 
-	atomic_set(&ddata->करो_update, 0);
+	atomic_set(&ddata->do_update, 0);
 	in->ops.dsi->bus_unlock(in);
-पूर्ण
+}
 
-अटल पूर्णांक dsicm_update(काष्ठा omap_dss_device *dssdev,
+static int dsicm_update(struct omap_dss_device *dssdev,
 				    u16 x, u16 y, u16 w, u16 h)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	dev_dbg(&ddata->pdev->dev, "update %d, %d, %d x %d\n", x, y, w, h);
 
@@ -872,45 +871,45 @@ err:
 	in->ops.dsi->bus_lock(in);
 
 	r = dsicm_wake_up(ddata);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	अगर (!ddata->enabled) अणु
+	if (!ddata->enabled) {
 		r = 0;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* XXX no need to send this every frame, but dsi अवरोध अगर not करोne */
-	r = dsicm_set_update_winकरोw(ddata, 0, 0,
+	/* XXX no need to send this every frame, but dsi break if not done */
+	r = dsicm_set_update_window(ddata, 0, 0,
 			dssdev->panel.timings.x_res,
 			dssdev->panel.timings.y_res);
-	अगर (r)
-		जाओ err;
+	if (r)
+		goto err;
 
-	अगर (ddata->te_enabled && gpio_is_valid(ddata->ext_te_gpio)) अणु
-		schedule_delayed_work(&ddata->te_समयout_work,
-				msecs_to_jअगरfies(250));
-		atomic_set(&ddata->करो_update, 1);
-	पूर्ण अन्यथा अणु
-		r = in->ops.dsi->update(in, ddata->channel, dsicm_frameकरोne_cb,
+	if (ddata->te_enabled && gpio_is_valid(ddata->ext_te_gpio)) {
+		schedule_delayed_work(&ddata->te_timeout_work,
+				msecs_to_jiffies(250));
+		atomic_set(&ddata->do_update, 1);
+	} else {
+		r = in->ops.dsi->update(in, ddata->channel, dsicm_framedone_cb,
 				ddata);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
-	/* note: no bus_unlock here. unlock is in frameकरोne_cb */
+	/* note: no bus_unlock here. unlock is in framedone_cb */
 	mutex_unlock(&ddata->lock);
-	वापस 0;
+	return 0;
 err:
 	in->ops.dsi->bus_unlock(in);
 	mutex_unlock(&ddata->lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_sync(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
+static int dsicm_sync(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
 
 	dev_dbg(&ddata->pdev->dev, "sync\n");
 
@@ -921,50 +920,50 @@ err:
 
 	dev_dbg(&ddata->pdev->dev, "sync done\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक _dsicm_enable_te(काष्ठा panel_drv_data *ddata, bool enable)
-अणु
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int _dsicm_enable_te(struct panel_drv_data *ddata, bool enable)
+{
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
-	अगर (enable)
-		r = dsicm_dcs_ग_लिखो_1(ddata, MIPI_DCS_SET_TEAR_ON, 0);
-	अन्यथा
-		r = dsicm_dcs_ग_लिखो_0(ddata, MIPI_DCS_SET_TEAR_OFF);
+	if (enable)
+		r = dsicm_dcs_write_1(ddata, MIPI_DCS_SET_TEAR_ON, 0);
+	else
+		r = dsicm_dcs_write_0(ddata, MIPI_DCS_SET_TEAR_OFF);
 
-	अगर (!gpio_is_valid(ddata->ext_te_gpio))
+	if (!gpio_is_valid(ddata->ext_te_gpio))
 		in->ops.dsi->enable_te(in, enable);
 
 	/* possible panel bug */
 	msleep(100);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_enable_te(काष्ठा omap_dss_device *dssdev, bool enable)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
+static int dsicm_enable_te(struct omap_dss_device *dssdev, bool enable)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (ddata->te_enabled == enable)
-		जाओ end;
+	if (ddata->te_enabled == enable)
+		goto end;
 
 	in->ops.dsi->bus_lock(in);
 
-	अगर (ddata->enabled) अणु
+	if (ddata->enabled) {
 		r = dsicm_wake_up(ddata);
-		अगर (r)
-			जाओ err;
+		if (r)
+			goto err;
 
 		r = _dsicm_enable_te(ddata, enable);
-		अगर (r)
-			जाओ err;
-	पूर्ण
+		if (r)
+			goto err;
+	}
 
 	ddata->te_enabled = enable;
 
@@ -972,46 +971,46 @@ err:
 end:
 	mutex_unlock(&ddata->lock);
 
-	वापस 0;
+	return 0;
 err:
 	in->ops.dsi->bus_unlock(in);
 	mutex_unlock(&ddata->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_get_te(काष्ठा omap_dss_device *dssdev)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	पूर्णांक r;
+static int dsicm_get_te(struct omap_dss_device *dssdev)
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	int r;
 
 	mutex_lock(&ddata->lock);
 	r = ddata->te_enabled;
 	mutex_unlock(&ddata->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक dsicm_memory_पढ़ो(काष्ठा omap_dss_device *dssdev,
-		व्योम *buf, माप_प्रकार size,
+static int dsicm_memory_read(struct omap_dss_device *dssdev,
+		void *buf, size_t size,
 		u16 x, u16 y, u16 w, u16 h)
-अणु
-	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
-	काष्ठा omap_dss_device *in = ddata->in;
-	पूर्णांक r;
-	पूर्णांक first = 1;
-	पूर्णांक plen;
-	अचिन्हित buf_used = 0;
+{
+	struct panel_drv_data *ddata = to_panel_data(dssdev);
+	struct omap_dss_device *in = ddata->in;
+	int r;
+	int first = 1;
+	int plen;
+	unsigned buf_used = 0;
 
-	अगर (size < w * h * 3)
-		वापस -ENOMEM;
+	if (size < w * h * 3)
+		return -ENOMEM;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (!ddata->enabled) अणु
+	if (!ddata->enabled) {
 		r = -ENODEV;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	size = min(w * h * 3,
 			dssdev->panel.timings.x_res *
@@ -1020,49 +1019,49 @@ err:
 	in->ops.dsi->bus_lock(in);
 
 	r = dsicm_wake_up(ddata);
-	अगर (r)
-		जाओ err2;
+	if (r)
+		goto err2;
 
-	/* plen 1 or 2 goes पूर्णांकo लघु packet. until checksum error is fixed,
-	 * use लघु packets. plen 32 works, but bigger packets seem to cause
+	/* plen 1 or 2 goes into short packet. until checksum error is fixed,
+	 * use short packets. plen 32 works, but bigger packets seem to cause
 	 * an error. */
-	अगर (size % 2)
+	if (size % 2)
 		plen = 1;
-	अन्यथा
+	else
 		plen = 2;
 
-	dsicm_set_update_winकरोw(ddata, x, y, w, h);
+	dsicm_set_update_window(ddata, x, y, w, h);
 
 	r = in->ops.dsi->set_max_rx_packet_size(in, ddata->channel, plen);
-	अगर (r)
-		जाओ err2;
+	if (r)
+		goto err2;
 
-	जबतक (buf_used < size) अणु
+	while (buf_used < size) {
 		u8 dcs_cmd = first ? 0x2e : 0x3e;
 		first = 0;
 
-		r = in->ops.dsi->dcs_पढ़ो(in, ddata->channel, dcs_cmd,
+		r = in->ops.dsi->dcs_read(in, ddata->channel, dcs_cmd,
 				buf + buf_used, size - buf_used);
 
-		अगर (r < 0) अणु
+		if (r < 0) {
 			dev_err(dssdev->dev, "read error\n");
-			जाओ err3;
-		पूर्ण
+			goto err3;
+		}
 
 		buf_used += r;
 
-		अगर (r < plen) अणु
+		if (r < plen) {
 			dev_err(&ddata->pdev->dev, "short read\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (संकेत_pending(current)) अणु
+		if (signal_pending(current)) {
 			dev_err(&ddata->pdev->dev, "signal pending, "
 					"aborting memory read\n");
 			r = -ERESTARTSYS;
-			जाओ err3;
-		पूर्ण
-	पूर्ण
+			goto err3;
+		}
+	}
 
 	r = buf_used;
 
@@ -1072,22 +1071,22 @@ err2:
 	in->ops.dsi->bus_unlock(in);
 err1:
 	mutex_unlock(&ddata->lock);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम dsicm_ulps_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा panel_drv_data *ddata = container_of(work, काष्ठा panel_drv_data,
+static void dsicm_ulps_work(struct work_struct *work)
+{
+	struct panel_drv_data *ddata = container_of(work, struct panel_drv_data,
 			ulps_work.work);
-	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
-	काष्ठा omap_dss_device *in = ddata->in;
+	struct omap_dss_device *dssdev = &ddata->dssdev;
+	struct omap_dss_device *in = ddata->in;
 
 	mutex_lock(&ddata->lock);
 
-	अगर (dssdev->state != OMAP_DSS_DISPLAY_ACTIVE || !ddata->enabled) अणु
+	if (dssdev->state != OMAP_DSS_DISPLAY_ACTIVE || !ddata->enabled) {
 		mutex_unlock(&ddata->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	in->ops.dsi->bus_lock(in);
 
@@ -1095,9 +1094,9 @@ err1:
 
 	in->ops.dsi->bus_unlock(in);
 	mutex_unlock(&ddata->lock);
-पूर्ण
+}
 
-अटल काष्ठा omap_dss_driver dsicm_ops = अणु
+static struct omap_dss_driver dsicm_ops = {
 	.connect	= dsicm_connect,
 	.disconnect	= dsicm_disconnect,
 
@@ -1108,77 +1107,77 @@ err1:
 	.sync		= dsicm_sync,
 
 	.get_resolution	= dsicm_get_resolution,
-	.get_recommended_bpp = omapdss_शेष_get_recommended_bpp,
+	.get_recommended_bpp = omapdss_default_get_recommended_bpp,
 
 	.enable_te	= dsicm_enable_te,
 	.get_te		= dsicm_get_te,
 
-	.memory_पढ़ो	= dsicm_memory_पढ़ो,
-पूर्ण;
+	.memory_read	= dsicm_memory_read,
+};
 
-अटल पूर्णांक dsicm_probe_of(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
-	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
-	काष्ठा omap_dss_device *in;
-	पूर्णांक gpio;
+static int dsicm_probe_of(struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
+	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
+	struct omap_dss_device *in;
+	int gpio;
 
 	gpio = of_get_named_gpio(node, "reset-gpios", 0);
-	अगर (!gpio_is_valid(gpio)) अणु
+	if (!gpio_is_valid(gpio)) {
 		dev_err(&pdev->dev, "failed to parse reset gpio\n");
-		वापस gpio;
-	पूर्ण
+		return gpio;
+	}
 	ddata->reset_gpio = gpio;
 
 	gpio = of_get_named_gpio(node, "te-gpios", 0);
-	अगर (gpio_is_valid(gpio) || gpio == -ENOENT) अणु
+	if (gpio_is_valid(gpio) || gpio == -ENOENT) {
 		ddata->ext_te_gpio = gpio;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_err(&pdev->dev, "failed to parse TE gpio\n");
-		वापस gpio;
-	पूर्ण
+		return gpio;
+	}
 
-	in = omapdss_of_find_source_क्रम_first_ep(node);
-	अगर (IS_ERR(in)) अणु
+	in = omapdss_of_find_source_for_first_ep(node);
+	if (IS_ERR(in)) {
 		dev_err(&pdev->dev, "failed to find video source\n");
-		वापस PTR_ERR(in);
-	पूर्ण
+		return PTR_ERR(in);
+	}
 
 	ddata->in = in;
 
 	/* TODO: ulps, backlight */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dsicm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा backlight_properties props;
-	काष्ठा panel_drv_data *ddata;
-	काष्ठा backlight_device *bldev = शून्य;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा omap_dss_device *dssdev;
-	पूर्णांक r;
+static int dsicm_probe(struct platform_device *pdev)
+{
+	struct backlight_properties props;
+	struct panel_drv_data *ddata;
+	struct backlight_device *bldev = NULL;
+	struct device *dev = &pdev->dev;
+	struct omap_dss_device *dssdev;
+	int r;
 
 	dev_dbg(dev, "probe\n");
 
-	अगर (!pdev->dev.of_node)
-		वापस -ENODEV;
+	if (!pdev->dev.of_node)
+		return -ENODEV;
 
-	ddata = devm_kzalloc(dev, माप(*ddata), GFP_KERNEL);
-	अगर (!ddata)
-		वापस -ENOMEM;
+	ddata = devm_kzalloc(dev, sizeof(*ddata), GFP_KERNEL);
+	if (!ddata)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, ddata);
+	platform_set_drvdata(pdev, ddata);
 	ddata->pdev = pdev;
 
 	r = dsicm_probe_of(pdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	ddata->timings.x_res = 864;
 	ddata->timings.y_res = 480;
-	ddata->timings.pixelघड़ी = 864 * 480 * 60;
+	ddata->timings.pixelclock = 864 * 480 * 60;
 
 	dssdev = &ddata->dssdev;
 	dssdev->dev = dev;
@@ -1191,110 +1190,110 @@ err1:
 	dssdev->caps = OMAP_DSS_DISPLAY_CAP_MANUAL_UPDATE |
 		OMAP_DSS_DISPLAY_CAP_TEAR_ELIM;
 
-	r = omapdss_रेजिस्टर_display(dssdev);
-	अगर (r) अणु
+	r = omapdss_register_display(dssdev);
+	if (r) {
 		dev_err(dev, "Failed to register panel\n");
-		जाओ err_reg;
-	पूर्ण
+		goto err_reg;
+	}
 
 	mutex_init(&ddata->lock);
 
-	atomic_set(&ddata->करो_update, 0);
+	atomic_set(&ddata->do_update, 0);
 
-	अगर (gpio_is_valid(ddata->reset_gpio)) अणु
+	if (gpio_is_valid(ddata->reset_gpio)) {
 		r = devm_gpio_request_one(dev, ddata->reset_gpio,
 				GPIOF_OUT_INIT_LOW, "taal rst");
-		अगर (r) अणु
+		if (r) {
 			dev_err(dev, "failed to request reset gpio\n");
-			वापस r;
-		पूर्ण
-	पूर्ण
+			return r;
+		}
+	}
 
-	अगर (gpio_is_valid(ddata->ext_te_gpio)) अणु
+	if (gpio_is_valid(ddata->ext_te_gpio)) {
 		r = devm_gpio_request_one(dev, ddata->ext_te_gpio,
 				GPIOF_IN, "taal irq");
-		अगर (r) अणु
+		if (r) {
 			dev_err(dev, "GPIO request failed\n");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
 		r = devm_request_irq(dev, gpio_to_irq(ddata->ext_te_gpio),
 				dsicm_te_isr,
 				IRQF_TRIGGER_RISING,
 				"taal vsync", ddata);
 
-		अगर (r) अणु
+		if (r) {
 			dev_err(dev, "IRQ request failed\n");
-			वापस r;
-		पूर्ण
+			return r;
+		}
 
-		INIT_DEFERRABLE_WORK(&ddata->te_समयout_work,
-					dsicm_te_समयout_work_callback);
+		INIT_DEFERRABLE_WORK(&ddata->te_timeout_work,
+					dsicm_te_timeout_work_callback);
 
 		dev_dbg(dev, "Using GPIO TE\n");
-	पूर्ण
+	}
 
 	INIT_DELAYED_WORK(&ddata->ulps_work, dsicm_ulps_work);
 
 	dsicm_hw_reset(ddata);
 
-	अगर (ddata->use_dsi_backlight) अणु
-		स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	if (ddata->use_dsi_backlight) {
+		memset(&props, 0, sizeof(struct backlight_properties));
 		props.max_brightness = 255;
 
 		props.type = BACKLIGHT_RAW;
-		bldev = backlight_device_रेजिस्टर(dev_name(dev),
+		bldev = backlight_device_register(dev_name(dev),
 				dev, ddata, &dsicm_bl_ops, &props);
-		अगर (IS_ERR(bldev)) अणु
+		if (IS_ERR(bldev)) {
 			r = PTR_ERR(bldev);
-			जाओ err_reg;
-		पूर्ण
+			goto err_reg;
+		}
 
 		ddata->bldev = bldev;
 
 		bldev->props.fb_blank = FB_BLANK_UNBLANK;
-		bldev->props.घातer = FB_BLANK_UNBLANK;
+		bldev->props.power = FB_BLANK_UNBLANK;
 		bldev->props.brightness = 255;
 
 		dsicm_bl_update_status(bldev);
-	पूर्ण
+	}
 
 	r = sysfs_create_group(&dev->kobj, &dsicm_attr_group);
-	अगर (r) अणु
+	if (r) {
 		dev_err(dev, "failed to create sysfs files\n");
-		जाओ err_sysfs_create;
-	पूर्ण
+		goto err_sysfs_create;
+	}
 
-	वापस 0;
+	return 0;
 
 err_sysfs_create:
-	अगर (bldev != शून्य)
-		backlight_device_unरेजिस्टर(bldev);
+	if (bldev != NULL)
+		backlight_device_unregister(bldev);
 err_reg:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक __निकास dsicm_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
-	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
-	काष्ठा backlight_device *bldev;
+static int __exit dsicm_remove(struct platform_device *pdev)
+{
+	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
+	struct omap_dss_device *dssdev = &ddata->dssdev;
+	struct backlight_device *bldev;
 
 	dev_dbg(&pdev->dev, "remove\n");
 
-	omapdss_unरेजिस्टर_display(dssdev);
+	omapdss_unregister_display(dssdev);
 
 	dsicm_disable(dssdev);
 	dsicm_disconnect(dssdev);
 
-	sysfs_हटाओ_group(&pdev->dev.kobj, &dsicm_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &dsicm_attr_group);
 
 	bldev = ddata->bldev;
-	अगर (bldev != शून्य) अणु
-		bldev->props.घातer = FB_BLANK_POWERDOWN;
+	if (bldev != NULL) {
+		bldev->props.power = FB_BLANK_POWERDOWN;
 		dsicm_bl_update_status(bldev);
-		backlight_device_unरेजिस्टर(bldev);
-	पूर्ण
+		backlight_device_unregister(bldev);
+	}
 
 	omap_dss_put_device(ddata->in);
 
@@ -1303,27 +1302,27 @@ err_reg:
 	/* reset, to be sure that the panel is in a valid state */
 	dsicm_hw_reset(ddata);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id dsicm_of_match[] = अणु
-	अणु .compatible = "omapdss,panel-dsi-cm", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id dsicm_of_match[] = {
+	{ .compatible = "omapdss,panel-dsi-cm", },
+	{},
+};
 
 MODULE_DEVICE_TABLE(of, dsicm_of_match);
 
-अटल काष्ठा platक्रमm_driver dsicm_driver = अणु
+static struct platform_driver dsicm_driver = {
 	.probe = dsicm_probe,
-	.हटाओ = __निकास_p(dsicm_हटाओ),
-	.driver = अणु
+	.remove = __exit_p(dsicm_remove),
+	.driver = {
 		.name = "panel-dsi-cm",
 		.of_match_table = dsicm_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(dsicm_driver);
+module_platform_driver(dsicm_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");
 MODULE_DESCRIPTION("Generic DSI Command Mode Panel Driver");

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * altera.c
  *
@@ -10,30 +9,30 @@
  * Copyright (C) 2010,2011 Igor M. Liplianin <liplianin@netup.ru>
  */
 
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/firmware.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <misc/altera.h>
-#समावेश "altera-exprt.h"
-#समावेश "altera-jtag.h"
+#include <asm/unaligned.h>
+#include <linux/ctype.h>
+#include <linux/string.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <misc/altera.h>
+#include "altera-exprt.h"
+#include "altera-jtag.h"
 
-अटल पूर्णांक debug = 1;
-module_param(debug, पूर्णांक, 0644);
+static int debug = 1;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "enable debugging information");
 
 MODULE_DESCRIPTION("altera FPGA kernel module");
 MODULE_AUTHOR("Igor M. Liplianin  <liplianin@netup.ru>");
 MODULE_LICENSE("GPL");
 
-#घोषणा dprपूर्णांकk(args...) \
-	अगर (debug) अणु \
-		prपूर्णांकk(KERN_DEBUG args); \
-	पूर्ण
+#define dprintk(args...) \
+	if (debug) { \
+		printk(KERN_DEBUG args); \
+	}
 
-क्रमागत altera_fpga_opcode अणु
+enum altera_fpga_opcode {
 	OP_NOP = 0,
 	OP_DUP,
 	OP_SWP,
@@ -109,110 +108,110 @@ MODULE_LICENSE("GPL");
 	OP_VS,
 	OP_CMPA = 0xc0,
 	OP_VSC,
-पूर्ण;
+};
 
-काष्ठा altera_procinfo अणु
-	अक्षर			*name;
+struct altera_procinfo {
+	char			*name;
 	u8			attrs;
-	काष्ठा altera_procinfo	*next;
-पूर्ण;
+	struct altera_procinfo	*next;
+};
 
-/* This function checks अगर enough parameters are available on the stack. */
-अटल पूर्णांक altera_check_stack(पूर्णांक stack_ptr, पूर्णांक count, पूर्णांक *status)
-अणु
-	अगर (stack_ptr < count) अणु
+/* This function checks if enough parameters are available on the stack. */
+static int altera_check_stack(int stack_ptr, int count, int *status)
+{
+	if (stack_ptr < count) {
 		*status = -EOVERFLOW;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम altera_export_पूर्णांक(अक्षर *key, s32 value)
-अणु
-	dprपूर्णांकk("Export: key = \"%s\", value = %d\n", key, value);
-पूर्ण
+static void altera_export_int(char *key, s32 value)
+{
+	dprintk("Export: key = \"%s\", value = %d\n", key, value);
+}
 
-#घोषणा HEX_LINE_CHARS 72
-#घोषणा HEX_LINE_BITS (HEX_LINE_CHARS * 4)
+#define HEX_LINE_CHARS 72
+#define HEX_LINE_BITS (HEX_LINE_CHARS * 4)
 
-अटल व्योम altera_export_bool_array(अक्षर *key, u8 *data, s32 count)
-अणु
-	अक्षर string[HEX_LINE_CHARS + 1];
+static void altera_export_bool_array(char *key, u8 *data, s32 count)
+{
+	char string[HEX_LINE_CHARS + 1];
 	s32 i, offset;
 	u32 size, line, lines, linebits, value, j, k;
 
-	अगर (count > HEX_LINE_BITS) अणु
-		dprपूर्णांकk("Export: key = \"%s\", %d bits, value = HEX\n",
+	if (count > HEX_LINE_BITS) {
+		dprintk("Export: key = \"%s\", %d bits, value = HEX\n",
 							key, count);
 		lines = (count + (HEX_LINE_BITS - 1)) / HEX_LINE_BITS;
 
-		क्रम (line = 0; line < lines; ++line) अणु
-			अगर (line < (lines - 1)) अणु
+		for (line = 0; line < lines; ++line) {
+			if (line < (lines - 1)) {
 				linebits = HEX_LINE_BITS;
 				size = HEX_LINE_CHARS;
 				offset = count - ((line + 1) * HEX_LINE_BITS);
-			पूर्ण अन्यथा अणु
+			} else {
 				linebits =
 					count - ((lines - 1) * HEX_LINE_BITS);
 				size = (linebits + 3) / 4;
 				offset = 0L;
-			पूर्ण
+			}
 
 			string[size] = '\0';
 			j = size - 1;
 			value = 0;
 
-			क्रम (k = 0; k < linebits; ++k) अणु
+			for (k = 0; k < linebits; ++k) {
 				i = k + offset;
-				अगर (data[i >> 3] & (1 << (i & 7)))
+				if (data[i >> 3] & (1 << (i & 7)))
 					value |= (1 << (i & 3));
-				अगर ((i & 3) == 3) अणु
-					प्र_लिखो(&string[j], "%1x", value);
+				if ((i & 3) == 3) {
+					sprintf(&string[j], "%1x", value);
 					value = 0;
 					--j;
-				पूर्ण
-			पूर्ण
-			अगर ((k & 3) > 0)
-				प्र_लिखो(&string[j], "%1x", value);
+				}
+			}
+			if ((k & 3) > 0)
+				sprintf(&string[j], "%1x", value);
 
-			dprपूर्णांकk("%s\n", string);
-		पूर्ण
+			dprintk("%s\n", string);
+		}
 
-	पूर्ण अन्यथा अणु
+	} else {
 		size = (count + 3) / 4;
 		string[size] = '\0';
 		j = size - 1;
 		value = 0;
 
-		क्रम (i = 0; i < count; ++i) अणु
-			अगर (data[i >> 3] & (1 << (i & 7)))
+		for (i = 0; i < count; ++i) {
+			if (data[i >> 3] & (1 << (i & 7)))
 				value |= (1 << (i & 3));
-			अगर ((i & 3) == 3) अणु
-				प्र_लिखो(&string[j], "%1x", value);
+			if ((i & 3) == 3) {
+				sprintf(&string[j], "%1x", value);
 				value = 0;
 				--j;
-			पूर्ण
-		पूर्ण
-		अगर ((i & 3) > 0)
-			प्र_लिखो(&string[j], "%1x", value);
+			}
+		}
+		if ((i & 3) > 0)
+			sprintf(&string[j], "%1x", value);
 
-		dprपूर्णांकk("Export: key = \"%s\", %d bits, value = HEX %s\n",
+		dprintk("Export: key = \"%s\", %d bits, value = HEX %s\n",
 			key, count, string);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक altera_execute(काष्ठा altera_state *astate,
+static int altera_execute(struct altera_state *astate,
 				u8 *p,
 				s32 program_size,
 				s32 *error_address,
-				पूर्णांक *निकास_code,
-				पूर्णांक *क्रमmat_version)
-अणु
-	काष्ठा altera_config *aconf = astate->config;
-	अक्षर *msg_buff = astate->msg_buff;
-	दीर्घ *stack = astate->stack;
-	पूर्णांक status = 0;
+				int *exit_code,
+				int *format_version)
+{
+	struct altera_config *aconf = astate->config;
+	char *msg_buff = astate->msg_buff;
+	long *stack = astate->stack;
+	int status = 0;
 	u32 first_word = 0L;
 	u32 action_table = 0L;
 	u32 proc_table = 0L;
@@ -224,50 +223,50 @@ MODULE_LICENSE("GPL");
 	u32 action_count = 0L;
 	u32 proc_count = 0L;
 	u32 sym_count = 0L;
-	दीर्घ *vars = शून्य;
-	s32 *var_size = शून्य;
-	अक्षर *attrs = शून्य;
-	u8 *proc_attributes = शून्य;
+	long *vars = NULL;
+	s32 *var_size = NULL;
+	char *attrs = NULL;
+	u8 *proc_attributes = NULL;
 	u32 pc;
 	u32 opcode_address;
 	u32 args[3];
 	u32 opcode;
 	u32 name_id;
-	u8 अक्षरbuf[4];
-	दीर्घ दीर्घ_पंचांगp;
+	u8 charbuf[4];
+	long long_tmp;
 	u32 variable_id;
-	u8 *अक्षरptr_पंचांगp;
-	u8 *अक्षरptr_पंचांगp2;
-	दीर्घ *दीर्घptr_पंचांगp;
-	पूर्णांक version = 0;
-	पूर्णांक delta = 0;
-	पूर्णांक stack_ptr = 0;
+	u8 *charptr_tmp;
+	u8 *charptr_tmp2;
+	long *longptr_tmp;
+	int version = 0;
+	int delta = 0;
+	int stack_ptr = 0;
 	u32 arg_count;
-	पूर्णांक करोne = 0;
-	पूर्णांक bad_opcode = 0;
+	int done = 0;
+	int bad_opcode = 0;
 	u32 count;
 	u32 index;
 	u32 index2;
-	s32 दीर्घ_count;
-	s32 दीर्घ_idx;
-	s32 दीर्घ_idx2;
+	s32 long_count;
+	s32 long_idx;
+	s32 long_idx2;
 	u32 i;
 	u32 j;
 	u32 uncomp_size;
 	u32 offset;
 	u32 value;
-	पूर्णांक current_proc = 0;
-	पूर्णांक reverse;
+	int current_proc = 0;
+	int reverse;
 
-	अक्षर *name;
+	char *name;
 
-	dprपूर्णांकk("%s\n", __func__);
+	dprintk("%s\n", __func__);
 
-	/* Read header inक्रमmation */
-	अगर (program_size > 52L) अणु
+	/* Read header information */
+	if (program_size > 52L) {
 		first_word    = get_unaligned_be32(&p[0]);
 		version = (first_word & 1L);
-		*क्रमmat_version = version + 1;
+		*format_version = version + 1;
 		delta = version * 8;
 
 		action_table  = get_unaligned_be32(&p[4]);
@@ -280,49 +279,49 @@ MODULE_LICENSE("GPL");
 		action_count  = get_unaligned_be32(&p[40 + delta]);
 		proc_count    = get_unaligned_be32(&p[44 + delta]);
 		sym_count  = get_unaligned_be32(&p[48 + (2 * delta)]);
-	पूर्ण
+	}
 
-	अगर ((first_word != 0x4A414D00L) && (first_word != 0x4A414D01L)) अणु
-		करोne = 1;
+	if ((first_word != 0x4A414D00L) && (first_word != 0x4A414D01L)) {
+		done = 1;
 		status = -EIO;
-		जाओ निकास_करोne;
-	पूर्ण
+		goto exit_done;
+	}
 
-	अगर (sym_count <= 0)
-		जाओ निकास_करोne;
+	if (sym_count <= 0)
+		goto exit_done;
 
-	vars = kसुस्मृति(sym_count, माप(दीर्घ), GFP_KERNEL);
+	vars = kcalloc(sym_count, sizeof(long), GFP_KERNEL);
 
-	अगर (vars == शून्य)
+	if (vars == NULL)
 		status = -ENOMEM;
 
-	अगर (status == 0) अणु
-		var_size = kसुस्मृति(sym_count, माप(s32), GFP_KERNEL);
+	if (status == 0) {
+		var_size = kcalloc(sym_count, sizeof(s32), GFP_KERNEL);
 
-		अगर (var_size == शून्य)
+		if (var_size == NULL)
 			status = -ENOMEM;
-	पूर्ण
+	}
 
-	अगर (status == 0) अणु
+	if (status == 0) {
 		attrs = kzalloc(sym_count, GFP_KERNEL);
 
-		अगर (attrs == शून्य)
+		if (attrs == NULL)
 			status = -ENOMEM;
-	पूर्ण
+	}
 
-	अगर ((status == 0) && (version > 0)) अणु
+	if ((status == 0) && (version > 0)) {
 		proc_attributes = kzalloc(proc_count, GFP_KERNEL);
 
-		अगर (proc_attributes == शून्य)
+		if (proc_attributes == NULL)
 			status = -ENOMEM;
-	पूर्ण
+	}
 
-	अगर (status != 0)
-		जाओ निकास_करोne;
+	if (status != 0)
+		goto exit_done;
 
 	delta = version * 2;
 
-	क्रम (i = 0; i < sym_count; ++i) अणु
+	for (i = 0; i < sym_count; ++i) {
 		offset = (sym_table + ((11 + delta) * i));
 
 		value = get_unaligned_be32(&p[offset + 3 + delta]);
@@ -332,7 +331,7 @@ MODULE_LICENSE("GPL");
 		/*
 		 * use bit 7 of attribute byte to indicate that
 		 * this buffer was dynamically allocated
-		 * and should be मुक्तd later
+		 * and should be freed later
 		 */
 		attrs[i] &= 0x7f;
 
@@ -340,85 +339,85 @@ MODULE_LICENSE("GPL");
 
 		/*
 		 * Attribute bits:
-		 * bit 0: 0 = पढ़ो-only, 1 = पढ़ो-ग_लिखो
+		 * bit 0: 0 = read-only, 1 = read-write
 		 * bit 1: 0 = not compressed, 1 = compressed
 		 * bit 2: 0 = not initialized, 1 = initialized
 		 * bit 3: 0 = scalar, 1 = array
-		 * bit 4: 0 = Boolean, 1 = पूर्णांकeger
+		 * bit 4: 0 = Boolean, 1 = integer
 		 * bit 5: 0 = declared variable,
 		 *	1 = compiler created temporary variable
 		 */
 
-		अगर ((attrs[i] & 0x0c) == 0x04)
+		if ((attrs[i] & 0x0c) == 0x04)
 			/* initialized scalar variable */
 			vars[i] = value;
-		अन्यथा अगर ((attrs[i] & 0x1e) == 0x0e) अणु
+		else if ((attrs[i] & 0x1e) == 0x0e) {
 			/* initialized compressed Boolean array */
 			uncomp_size = get_unaligned_le32(&p[data_sect + value]);
 
-			/* allocate a buffer क्रम the uncompressed data */
-			vars[i] = (दीर्घ)kzalloc(uncomp_size, GFP_KERNEL);
-			अगर (vars[i] == 0L)
+			/* allocate a buffer for the uncompressed data */
+			vars[i] = (long)kzalloc(uncomp_size, GFP_KERNEL);
+			if (vars[i] == 0L)
 				status = -ENOMEM;
-			अन्यथा अणु
-				/* set flag so buffer will be मुक्तd later */
+			else {
+				/* set flag so buffer will be freed later */
 				attrs[i] |= 0x80;
 
 				/* uncompress the data */
-				अगर (altera_shrink(&p[data_sect + value],
+				if (altera_shrink(&p[data_sect + value],
 						var_size[i],
 						(u8 *)vars[i],
 						uncomp_size,
 						version) != uncomp_size)
 					/* decompression failed */
 					status = -EIO;
-				अन्यथा
+				else
 					var_size[i] = uncomp_size * 8L;
 
-			पूर्ण
-		पूर्ण अन्यथा अगर ((attrs[i] & 0x1e) == 0x0c) अणु
+			}
+		} else if ((attrs[i] & 0x1e) == 0x0c) {
 			/* initialized Boolean array */
-			vars[i] = value + data_sect + (दीर्घ)p;
-		पूर्ण अन्यथा अगर ((attrs[i] & 0x1c) == 0x1c) अणु
-			/* initialized पूर्णांकeger array */
+			vars[i] = value + data_sect + (long)p;
+		} else if ((attrs[i] & 0x1c) == 0x1c) {
+			/* initialized integer array */
 			vars[i] = value + data_sect;
-		पूर्ण अन्यथा अगर ((attrs[i] & 0x0c) == 0x08) अणु
+		} else if ((attrs[i] & 0x0c) == 0x08) {
 			/* uninitialized array */
 
-			/* flag attrs so that memory is मुक्तd */
+			/* flag attrs so that memory is freed */
 			attrs[i] |= 0x80;
 
-			अगर (var_size[i] > 0) अणु
+			if (var_size[i] > 0) {
 				u32 size;
 
-				अगर (attrs[i] & 0x10)
-					/* पूर्णांकeger array */
-					size = (var_size[i] * माप(s32));
-				अन्यथा
+				if (attrs[i] & 0x10)
+					/* integer array */
+					size = (var_size[i] * sizeof(s32));
+				else
 					/* Boolean array */
 					size = ((var_size[i] + 7L) / 8L);
 
-				vars[i] = (दीर्घ)kzalloc(size, GFP_KERNEL);
+				vars[i] = (long)kzalloc(size, GFP_KERNEL);
 
-				अगर (vars[i] == 0) अणु
+				if (vars[i] == 0) {
 					status = -ENOMEM;
-				पूर्ण अन्यथा अणु
+				} else {
 					/* zero out memory */
-					क्रम (j = 0; j < size; ++j)
+					for (j = 0; j < size; ++j)
 						((u8 *)(vars[i]))[j] = 0;
 
-				पूर्ण
-			पूर्ण अन्यथा
+				}
+			} else
 				vars[i] = 0;
 
-		पूर्ण अन्यथा
+		} else
 			vars[i] = 0;
 
-	पूर्ण
+	}
 
-निकास_करोne:
-	अगर (status != 0)
-		करोne = 1;
+exit_done:
+	if (status != 0)
+		done = 1;
 
 	altera_jinit(astate);
 
@@ -429,37 +428,37 @@ MODULE_LICENSE("GPL");
 	 * For JBC version 2, we will execute the procedures corresponding to
 	 * the selected ACTION
 	 */
-	अगर (version > 0) अणु
-		अगर (aconf->action == शून्य) अणु
+	if (version > 0) {
+		if (aconf->action == NULL) {
 			status = -EINVAL;
-			करोne = 1;
-		पूर्ण अन्यथा अणु
-			पूर्णांक action_found = 0;
-			क्रम (i = 0; (i < action_count) && !action_found; ++i) अणु
+			done = 1;
+		} else {
+			int action_found = 0;
+			for (i = 0; (i < action_count) && !action_found; ++i) {
 				name_id = get_unaligned_be32(&p[action_table +
 								(12 * i)]);
 
 				name = &p[str_table + name_id];
 
-				अगर (strnहालcmp(aconf->action, name, म_माप(name)) == 0) अणु
+				if (strncasecmp(aconf->action, name, strlen(name)) == 0) {
 					action_found = 1;
 					current_proc =
 						get_unaligned_be32(&p[action_table +
 								(12 * i) + 8]);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			अगर (!action_found) अणु
+			if (!action_found) {
 				status = -EINVAL;
-				करोne = 1;
-			पूर्ण
-		पूर्ण
+				done = 1;
+			}
+		}
 
-		अगर (status == 0) अणु
-			पूर्णांक first_समय = 1;
+		if (status == 0) {
+			int first_time = 1;
 			i = current_proc;
-			जबतक ((i != 0) || first_समय) अणु
-				first_समय = 0;
+			while ((i != 0) || first_time) {
+				first_time = 0;
 				/* check procedure attribute byte */
 				proc_attributes[i] =
 						(p[proc_table +
@@ -475,160 +474,160 @@ MODULE_LICENSE("GPL");
 
 				i = get_unaligned_be32(&p[proc_table +
 							(13 * i) + 4]);
-			पूर्ण
+			}
 
 			/*
 			 * Set current_proc to the first procedure
 			 * to be executed
 			 */
 			i = current_proc;
-			जबतक ((i != 0) &&
+			while ((i != 0) &&
 				((proc_attributes[i] == 1) ||
-				((proc_attributes[i] & 0xc0) == 0x40))) अणु
+				((proc_attributes[i] & 0xc0) == 0x40))) {
 				i = get_unaligned_be32(&p[proc_table +
 							(13 * i) + 4]);
-			पूर्ण
+			}
 
-			अगर ((i != 0) || ((i == 0) && (current_proc == 0) &&
+			if ((i != 0) || ((i == 0) && (current_proc == 0) &&
 				((proc_attributes[0] != 1) &&
-				((proc_attributes[0] & 0xc0) != 0x40)))) अणु
+				((proc_attributes[0] & 0xc0) != 0x40)))) {
 				current_proc = i;
 				pc = code_sect +
 					get_unaligned_be32(&p[proc_table +
 								(13 * i) + 9]);
-				अगर ((pc < code_sect) || (pc >= debug_sect))
-					status = -दुस्फल;
-			पूर्ण अन्यथा
+				if ((pc < code_sect) || (pc >= debug_sect))
+					status = -ERANGE;
+			} else
 				/* there are no procedures to execute! */
-				करोne = 1;
+				done = 1;
 
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	msg_buff[0] = '\0';
 
-	जबतक (!करोne) अणु
+	while (!done) {
 		opcode = (p[pc] & 0xff);
 		opcode_address = pc;
 		++pc;
 
-		अगर (debug > 1)
-			prपूर्णांकk("opcode: %02x\n", opcode);
+		if (debug > 1)
+			printk("opcode: %02x\n", opcode);
 
 		arg_count = (opcode >> 6) & 3;
-		क्रम (i = 0; i < arg_count; ++i) अणु
+		for (i = 0; i < arg_count; ++i) {
 			args[i] = get_unaligned_be32(&p[pc]);
 			pc += 4;
-		पूर्ण
+		}
 
-		चयन (opcode) अणु
-		हाल OP_NOP:
-			अवरोध;
-		हाल OP_DUP:
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+		switch (opcode) {
+		case OP_NOP:
+			break;
+		case OP_DUP:
+			if (altera_check_stack(stack_ptr, 1, &status)) {
 				stack[stack_ptr] = stack[stack_ptr - 1];
 				++stack_ptr;
-			पूर्ण
-			अवरोध;
-		हाल OP_SWP:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - 2];
+			}
+			break;
+		case OP_SWP:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
+				long_tmp = stack[stack_ptr - 2];
 				stack[stack_ptr - 2] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
-			अवरोध;
-		हाल OP_ADD:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+				stack[stack_ptr - 1] = long_tmp;
+			}
+			break;
+		case OP_ADD:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] += stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_SUB:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_SUB:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] -= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_MULT:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_MULT:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] *= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_DIV:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_DIV:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] /= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_MOD:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_MOD:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] %= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_SHL:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_SHL:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] <<= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_SHR:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_SHR:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] >>= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_NOT:
-			अगर (altera_check_stack(stack_ptr, 1, &status))
+			}
+			break;
+		case OP_NOT:
+			if (altera_check_stack(stack_ptr, 1, &status))
 				stack[stack_ptr - 1] ^= (-1L);
 
-			अवरोध;
-		हाल OP_AND:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			break;
+		case OP_AND:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] &= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_OR:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_OR:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] |= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_XOR:
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			}
+			break;
+		case OP_XOR:
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				--stack_ptr;
 				stack[stack_ptr - 1] ^= stack[stack_ptr];
-			पूर्ण
-			अवरोध;
-		हाल OP_INV:
-			अगर (!altera_check_stack(stack_ptr, 1, &status))
-				अवरोध;
+			}
+			break;
+		case OP_INV:
+			if (!altera_check_stack(stack_ptr, 1, &status))
+				break;
 			stack[stack_ptr - 1] = stack[stack_ptr - 1] ? 0L : 1L;
-			अवरोध;
-		हाल OP_GT:
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			break;
+		case OP_GT:
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			--stack_ptr;
 			stack[stack_ptr - 1] =
 				(stack[stack_ptr - 1] > stack[stack_ptr]) ?
 									1L : 0L;
 
-			अवरोध;
-		हाल OP_LT:
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			break;
+		case OP_LT:
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			--stack_ptr;
 			stack[stack_ptr - 1] =
 				(stack[stack_ptr - 1] < stack[stack_ptr]) ?
 									1L : 0L;
 
-			अवरोध;
-		हाल OP_RET:
-			अगर ((version > 0) && (stack_ptr == 0)) अणु
+			break;
+		case OP_RET:
+			if ((version > 0) && (stack_ptr == 0)) {
 				/*
-				 * We completed one of the मुख्य procedures
+				 * We completed one of the main procedures
 				 * of an ACTION.
 				 * Find the next procedure
 				 * to be executed and jump to it.
@@ -636,269 +635,269 @@ MODULE_LICENSE("GPL");
 				 */
 				i = get_unaligned_be32(&p[proc_table +
 						(13 * current_proc) + 4]);
-				जबतक ((i != 0) &&
+				while ((i != 0) &&
 					((proc_attributes[i] == 1) ||
 					((proc_attributes[i] & 0xc0) == 0x40)))
 					i = get_unaligned_be32(&p[proc_table +
 								(13 * i) + 4]);
 
-				अगर (i == 0) अणु
+				if (i == 0) {
 					/* no procedures to execute! */
-					करोne = 1;
-					*निकास_code = 0;	/* success */
-				पूर्ण अन्यथा अणु
+					done = 1;
+					*exit_code = 0;	/* success */
+				} else {
 					current_proc = i;
 					pc = code_sect + get_unaligned_be32(
 								&p[proc_table +
 								(13 * i) + 9]);
-					अगर ((pc < code_sect) ||
+					if ((pc < code_sect) ||
 					    (pc >= debug_sect))
-						status = -दुस्फल;
-				पूर्ण
+						status = -ERANGE;
+				}
 
-			पूर्ण अन्यथा
-				अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+			} else
+				if (altera_check_stack(stack_ptr, 1, &status)) {
 					pc = stack[--stack_ptr] + code_sect;
-					अगर ((pc <= code_sect) ||
+					if ((pc <= code_sect) ||
 					    (pc >= debug_sect))
-						status = -दुस्फल;
+						status = -ERANGE;
 
-				पूर्ण
+				}
 
-			अवरोध;
-		हाल OP_CMPS:
+			break;
+		case OP_CMPS:
 			/*
-			 * Array लघु compare
+			 * Array short compare
 			 * ...stack 0 is source 1 value
 			 * ...stack 1 is source 2 value
 			 * ...stack 2 is mask value
 			 * ...stack 3 is count
 			 */
-			अगर (altera_check_stack(stack_ptr, 4, &status)) अणु
+			if (altera_check_stack(stack_ptr, 4, &status)) {
 				s32 a = stack[--stack_ptr];
 				s32 b = stack[--stack_ptr];
-				दीर्घ_पंचांगp = stack[--stack_ptr];
+				long_tmp = stack[--stack_ptr];
 				count = stack[stack_ptr - 1];
 
-				अगर ((count < 1) || (count > 32))
-					status = -दुस्फल;
-				अन्यथा अणु
-					दीर्घ_पंचांगp &= ((-1L) >> (32 - count));
+				if ((count < 1) || (count > 32))
+					status = -ERANGE;
+				else {
+					long_tmp &= ((-1L) >> (32 - count));
 
 					stack[stack_ptr - 1] =
-					((a & दीर्घ_पंचांगp) == (b & दीर्घ_पंचांगp))
+					((a & long_tmp) == (b & long_tmp))
 								? 1L : 0L;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल OP_PINT:
+				}
+			}
+			break;
+		case OP_PINT:
 			/*
-			 * PRINT add पूर्णांकeger
-			 * ...stack 0 is पूर्णांकeger value
+			 * PRINT add integer
+			 * ...stack 0 is integer value
 			 */
-			अगर (!altera_check_stack(stack_ptr, 1, &status))
-				अवरोध;
-			प्र_लिखो(&msg_buff[म_माप(msg_buff)],
+			if (!altera_check_stack(stack_ptr, 1, &status))
+				break;
+			sprintf(&msg_buff[strlen(msg_buff)],
 					"%ld", stack[--stack_ptr]);
-			अवरोध;
-		हाल OP_PRNT:
+			break;
+		case OP_PRNT:
 			/* PRINT finish */
-			अगर (debug)
-				prपूर्णांकk(msg_buff, "\n");
+			if (debug)
+				printk(msg_buff, "\n");
 
 			msg_buff[0] = '\0';
-			अवरोध;
-		हाल OP_DSS:
+			break;
+		case OP_DSS:
 			/*
-			 * DRSCAN लघु
+			 * DRSCAN short
 			 * ...stack 0 is scan data
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
+			long_tmp = stack[--stack_ptr];
 			count = stack[--stack_ptr];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
-			status = altera_drscan(astate, count, अक्षरbuf, 0);
-			अवरोध;
-		हाल OP_DSSC:
+			put_unaligned_le32(long_tmp, &charbuf[0]);
+			status = altera_drscan(astate, count, charbuf, 0);
+			break;
+		case OP_DSSC:
 			/*
-			 * DRSCAN लघु with capture
+			 * DRSCAN short with capture
 			 * ...stack 0 is scan data
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
+			long_tmp = stack[--stack_ptr];
 			count = stack[stack_ptr - 1];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
-			status = altera_swap_dr(astate, count, अक्षरbuf,
-							0, अक्षरbuf, 0);
-			stack[stack_ptr - 1] = get_unaligned_le32(&अक्षरbuf[0]);
-			अवरोध;
-		हाल OP_ISS:
+			put_unaligned_le32(long_tmp, &charbuf[0]);
+			status = altera_swap_dr(astate, count, charbuf,
+							0, charbuf, 0);
+			stack[stack_ptr - 1] = get_unaligned_le32(&charbuf[0]);
+			break;
+		case OP_ISS:
 			/*
-			 * IRSCAN लघु
+			 * IRSCAN short
 			 * ...stack 0 is scan data
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
+			long_tmp = stack[--stack_ptr];
 			count = stack[--stack_ptr];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
-			status = altera_irscan(astate, count, अक्षरbuf, 0);
-			अवरोध;
-		हाल OP_ISSC:
+			put_unaligned_le32(long_tmp, &charbuf[0]);
+			status = altera_irscan(astate, count, charbuf, 0);
+			break;
+		case OP_ISSC:
 			/*
-			 * IRSCAN लघु with capture
+			 * IRSCAN short with capture
 			 * ...stack 0 is scan data
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
+			long_tmp = stack[--stack_ptr];
 			count = stack[stack_ptr - 1];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
-			status = altera_swap_ir(astate, count, अक्षरbuf,
-							0, अक्षरbuf, 0);
-			stack[stack_ptr - 1] = get_unaligned_le32(&अक्षरbuf[0]);
-			अवरोध;
-		हाल OP_DPR:
-			अगर (!altera_check_stack(stack_ptr, 1, &status))
-				अवरोध;
+			put_unaligned_le32(long_tmp, &charbuf[0]);
+			status = altera_swap_ir(astate, count, charbuf,
+							0, charbuf, 0);
+			stack[stack_ptr - 1] = get_unaligned_le32(&charbuf[0]);
+			break;
+		case OP_DPR:
+			if (!altera_check_stack(stack_ptr, 1, &status))
+				break;
 			count = stack[--stack_ptr];
-			status = altera_set_dr_pre(&astate->js, count, 0, शून्य);
-			अवरोध;
-		हाल OP_DPRL:
+			status = altera_set_dr_pre(&astate->js, count, 0, NULL);
+			break;
+		case OP_DPRL:
 			/*
 			 * DRPRE with literal data
 			 * ...stack 0 is count
 			 * ...stack 1 is literal data
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			count = stack[--stack_ptr];
-			दीर्घ_पंचांगp = stack[--stack_ptr];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
+			long_tmp = stack[--stack_ptr];
+			put_unaligned_le32(long_tmp, &charbuf[0]);
 			status = altera_set_dr_pre(&astate->js, count, 0,
-						अक्षरbuf);
-			अवरोध;
-		हाल OP_DPO:
+						charbuf);
+			break;
+		case OP_DPO:
 			/*
 			 * DRPOST
 			 * ...stack 0 is count
 			 */
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+			if (altera_check_stack(stack_ptr, 1, &status)) {
 				count = stack[--stack_ptr];
 				status = altera_set_dr_post(&astate->js, count,
-								0, शून्य);
-			पूर्ण
-			अवरोध;
-		हाल OP_DPOL:
+								0, NULL);
+			}
+			break;
+		case OP_DPOL:
 			/*
 			 * DRPOST with literal data
 			 * ...stack 0 is count
 			 * ...stack 1 is literal data
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			count = stack[--stack_ptr];
-			दीर्घ_पंचांगp = stack[--stack_ptr];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
+			long_tmp = stack[--stack_ptr];
+			put_unaligned_le32(long_tmp, &charbuf[0]);
 			status = altera_set_dr_post(&astate->js, count, 0,
-							अक्षरbuf);
-			अवरोध;
-		हाल OP_IPR:
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+							charbuf);
+			break;
+		case OP_IPR:
+			if (altera_check_stack(stack_ptr, 1, &status)) {
 				count = stack[--stack_ptr];
 				status = altera_set_ir_pre(&astate->js, count,
-								0, शून्य);
-			पूर्ण
-			अवरोध;
-		हाल OP_IPRL:
+								0, NULL);
+			}
+			break;
+		case OP_IPRL:
 			/*
 			 * IRPRE with literal data
 			 * ...stack 0 is count
 			 * ...stack 1 is literal data
 			 */
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
+			if (altera_check_stack(stack_ptr, 2, &status)) {
 				count = stack[--stack_ptr];
-				दीर्घ_पंचांगp = stack[--stack_ptr];
-				put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
+				long_tmp = stack[--stack_ptr];
+				put_unaligned_le32(long_tmp, &charbuf[0]);
 				status = altera_set_ir_pre(&astate->js, count,
-							0, अक्षरbuf);
-			पूर्ण
-			अवरोध;
-		हाल OP_IPO:
+							0, charbuf);
+			}
+			break;
+		case OP_IPO:
 			/*
 			 * IRPOST
 			 * ...stack 0 is count
 			 */
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+			if (altera_check_stack(stack_ptr, 1, &status)) {
 				count = stack[--stack_ptr];
 				status = altera_set_ir_post(&astate->js, count,
-							0, शून्य);
-			पूर्ण
-			अवरोध;
-		हाल OP_IPOL:
+							0, NULL);
+			}
+			break;
+		case OP_IPOL:
 			/*
 			 * IRPOST with literal data
 			 * ...stack 0 is count
 			 * ...stack 1 is literal data
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			count = stack[--stack_ptr];
-			दीर्घ_पंचांगp = stack[--stack_ptr];
-			put_unaligned_le32(दीर्घ_पंचांगp, &अक्षरbuf[0]);
+			long_tmp = stack[--stack_ptr];
+			put_unaligned_le32(long_tmp, &charbuf[0]);
 			status = altera_set_ir_post(&astate->js, count, 0,
-							अक्षरbuf);
-			अवरोध;
-		हाल OP_PCHR:
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+							charbuf);
+			break;
+		case OP_PCHR:
+			if (altera_check_stack(stack_ptr, 1, &status)) {
 				u8 ch;
-				count = म_माप(msg_buff);
-				ch = (अक्षर) stack[--stack_ptr];
-				अगर ((ch < 1) || (ch > 127)) अणु
+				count = strlen(msg_buff);
+				ch = (char) stack[--stack_ptr];
+				if ((ch < 1) || (ch > 127)) {
 					/*
-					 * अक्षरacter code out of range
+					 * character code out of range
 					 * instead of flagging an error,
-					 * क्रमce the value to 127
+					 * force the value to 127
 					 */
 					ch = 127;
-				पूर्ण
+				}
 				msg_buff[count] = ch;
 				msg_buff[count + 1] = '\0';
-			पूर्ण
-			अवरोध;
-		हाल OP_EXIT:
-			अगर (altera_check_stack(stack_ptr, 1, &status))
-				*निकास_code = stack[--stack_ptr];
+			}
+			break;
+		case OP_EXIT:
+			if (altera_check_stack(stack_ptr, 1, &status))
+				*exit_code = stack[--stack_ptr];
 
-			करोne = 1;
-			अवरोध;
-		हाल OP_EQU:
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			done = 1;
+			break;
+		case OP_EQU:
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			--stack_ptr;
 			stack[stack_ptr - 1] =
 				(stack[stack_ptr - 1] == stack[stack_ptr]) ?
 									1L : 0L;
-			अवरोध;
-		हाल OP_POPT:
-			अगर (altera_check_stack(stack_ptr, 1, &status))
+			break;
+		case OP_POPT:
+			if (altera_check_stack(stack_ptr, 1, &status))
 				--stack_ptr;
 
-			अवरोध;
-		हाल OP_ABS:
-			अगर (!altera_check_stack(stack_ptr, 1, &status))
-				अवरोध;
-			अगर (stack[stack_ptr - 1] < 0)
+			break;
+		case OP_ABS:
+			if (!altera_check_stack(stack_ptr, 1, &status))
+				break;
+			if (stack[stack_ptr - 1] < 0)
 				stack[stack_ptr - 1] = 0 - stack[stack_ptr - 1];
 
-			अवरोध;
-		हाल OP_BCH0:
+			break;
+		case OP_BCH0:
 			/*
 			 * Batch operation 0
 			 * SWP
@@ -913,92 +912,92 @@ MODULE_LICENSE("GPL");
 			 */
 
 			/* SWP  */
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - 2];
+			if (altera_check_stack(stack_ptr, 2, &status)) {
+				long_tmp = stack[stack_ptr - 2];
 				stack[stack_ptr - 2] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
+				stack[stack_ptr - 1] = long_tmp;
+			}
 
 			/* SWPN 7 */
 			index = 7 + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - index];
+			if (altera_check_stack(stack_ptr, index, &status)) {
+				long_tmp = stack[stack_ptr - index];
 				stack[stack_ptr - index] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
+				stack[stack_ptr - 1] = long_tmp;
+			}
 
 			/* SWP  */
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - 2];
+			if (altera_check_stack(stack_ptr, 2, &status)) {
+				long_tmp = stack[stack_ptr - 2];
 				stack[stack_ptr - 2] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
+				stack[stack_ptr - 1] = long_tmp;
+			}
 
 			/* SWPN 6 */
 			index = 6 + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - index];
+			if (altera_check_stack(stack_ptr, index, &status)) {
+				long_tmp = stack[stack_ptr - index];
 				stack[stack_ptr - index] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
+				stack[stack_ptr - 1] = long_tmp;
+			}
 
 			/* DUPN 8 */
 			index = 8 + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
+			if (altera_check_stack(stack_ptr, index, &status)) {
 				stack[stack_ptr] = stack[stack_ptr - index];
 				++stack_ptr;
-			पूर्ण
+			}
 
 			/* SWPN 2 */
 			index = 2 + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - index];
+			if (altera_check_stack(stack_ptr, index, &status)) {
+				long_tmp = stack[stack_ptr - index];
 				stack[stack_ptr - index] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
+				stack[stack_ptr - 1] = long_tmp;
+			}
 
 			/* SWP  */
-			अगर (altera_check_stack(stack_ptr, 2, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - 2];
+			if (altera_check_stack(stack_ptr, 2, &status)) {
+				long_tmp = stack[stack_ptr - 2];
 				stack[stack_ptr - 2] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
+				stack[stack_ptr - 1] = long_tmp;
+			}
 
 			/* DUPN 6 */
 			index = 6 + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
+			if (altera_check_stack(stack_ptr, index, &status)) {
 				stack[stack_ptr] = stack[stack_ptr - index];
 				++stack_ptr;
-			पूर्ण
+			}
 
 			/* DUPN 6 */
 			index = 6 + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
+			if (altera_check_stack(stack_ptr, index, &status)) {
 				stack[stack_ptr] = stack[stack_ptr - index];
 				++stack_ptr;
-			पूर्ण
-			अवरोध;
-		हाल OP_PSH0:
+			}
+			break;
+		case OP_PSH0:
 			stack[stack_ptr++] = 0;
-			अवरोध;
-		हाल OP_PSHL:
+			break;
+		case OP_PSHL:
 			stack[stack_ptr++] = (s32) args[0];
-			अवरोध;
-		हाल OP_PSHV:
+			break;
+		case OP_PSHV:
 			stack[stack_ptr++] = vars[args[0]];
-			अवरोध;
-		हाल OP_JMP:
+			break;
+		case OP_JMP:
 			pc = args[0] + code_sect;
-			अगर ((pc < code_sect) || (pc >= debug_sect))
-				status = -दुस्फल;
-			अवरोध;
-		हाल OP_CALL:
+			if ((pc < code_sect) || (pc >= debug_sect))
+				status = -ERANGE;
+			break;
+		case OP_CALL:
 			stack[stack_ptr++] = pc;
 			pc = args[0] + code_sect;
-			अगर ((pc < code_sect) || (pc >= debug_sect))
-				status = -दुस्फल;
-			अवरोध;
-		हाल OP_NEXT:
+			if ((pc < code_sect) || (pc >= debug_sect))
+				status = -ERANGE;
+			break;
+		case OP_NEXT:
 			/*
 			 * Process FOR / NEXT loop
 			 * ...argument 0 is variable ID
@@ -1006,138 +1005,138 @@ MODULE_LICENSE("GPL");
 			 * ...stack 1 is end value
 			 * ...stack 2 is top address
 			 */
-			अगर (altera_check_stack(stack_ptr, 3, &status)) अणु
+			if (altera_check_stack(stack_ptr, 3, &status)) {
 				s32 step = stack[stack_ptr - 1];
 				s32 end = stack[stack_ptr - 2];
 				s32 top = stack[stack_ptr - 3];
 				s32 iterator = vars[args[0]];
-				पूर्णांक अवरोध_out = 0;
+				int break_out = 0;
 
-				अगर (step < 0) अणु
-					अगर (iterator <= end)
-						अवरोध_out = 1;
-				पूर्ण अन्यथा अगर (iterator >= end)
-					अवरोध_out = 1;
+				if (step < 0) {
+					if (iterator <= end)
+						break_out = 1;
+				} else if (iterator >= end)
+					break_out = 1;
 
-				अगर (अवरोध_out) अणु
+				if (break_out) {
 					stack_ptr -= 3;
-				पूर्ण अन्यथा अणु
+				} else {
 					vars[args[0]] = iterator + step;
 					pc = top + code_sect;
-					अगर ((pc < code_sect) ||
+					if ((pc < code_sect) ||
 					    (pc >= debug_sect))
-						status = -दुस्फल;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल OP_PSTR:
+						status = -ERANGE;
+				}
+			}
+			break;
+		case OP_PSTR:
 			/*
 			 * PRINT add string
 			 * ...argument 0 is string ID
 			 */
-			count = म_माप(msg_buff);
+			count = strlen(msg_buff);
 			strlcpy(&msg_buff[count],
 				&p[str_table + args[0]],
 				ALTERA_MESSAGE_LENGTH - count);
-			अवरोध;
-		हाल OP_SINT:
+			break;
+		case OP_SINT:
 			/*
-			 * STATE पूर्णांकermediate state
+			 * STATE intermediate state
 			 * ...argument 0 is state code
 			 */
-			status = altera_जाओ_jstate(astate, args[0]);
-			अवरोध;
-		हाल OP_ST:
+			status = altera_goto_jstate(astate, args[0]);
+			break;
+		case OP_ST:
 			/*
 			 * STATE final state
 			 * ...argument 0 is state code
 			 */
-			status = altera_जाओ_jstate(astate, args[0]);
-			अवरोध;
-		हाल OP_ISTP:
+			status = altera_goto_jstate(astate, args[0]);
+			break;
+		case OP_ISTP:
 			/*
 			 * IRSTOP state
 			 * ...argument 0 is state code
 			 */
 			status = altera_set_irstop(&astate->js, args[0]);
-			अवरोध;
-		हाल OP_DSTP:
+			break;
+		case OP_DSTP:
 			/*
 			 * DRSTOP state
 			 * ...argument 0 is state code
 			 */
 			status = altera_set_drstop(&astate->js, args[0]);
-			अवरोध;
+			break;
 
-		हाल OP_SWPN:
+		case OP_SWPN:
 			/*
 			 * Exchange top with Nth stack value
 			 * ...argument 0 is 0-based stack entry
 			 * to swap with top element
 			 */
 			index = (args[0]) + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
-				दीर्घ_पंचांगp = stack[stack_ptr - index];
+			if (altera_check_stack(stack_ptr, index, &status)) {
+				long_tmp = stack[stack_ptr - index];
 				stack[stack_ptr - index] = stack[stack_ptr - 1];
-				stack[stack_ptr - 1] = दीर्घ_पंचांगp;
-			पूर्ण
-			अवरोध;
-		हाल OP_DUPN:
+				stack[stack_ptr - 1] = long_tmp;
+			}
+			break;
+		case OP_DUPN:
 			/*
 			 * Duplicate Nth stack value
 			 * ...argument 0 is 0-based stack entry to duplicate
 			 */
 			index = (args[0]) + 1;
-			अगर (altera_check_stack(stack_ptr, index, &status)) अणु
+			if (altera_check_stack(stack_ptr, index, &status)) {
 				stack[stack_ptr] = stack[stack_ptr - index];
 				++stack_ptr;
-			पूर्ण
-			अवरोध;
-		हाल OP_POPV:
+			}
+			break;
+		case OP_POPV:
 			/*
-			 * Pop stack पूर्णांकo scalar variable
+			 * Pop stack into scalar variable
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is value
 			 */
-			अगर (altera_check_stack(stack_ptr, 1, &status))
+			if (altera_check_stack(stack_ptr, 1, &status))
 				vars[args[0]] = stack[--stack_ptr];
 
-			अवरोध;
-		हाल OP_POPE:
+			break;
+		case OP_POPE:
 			/*
-			 * Pop stack पूर्णांकo पूर्णांकeger array element
+			 * Pop stack into integer array element
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is array index
 			 * ...stack 1 is value
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			variable_id = args[0];
 
 			/*
-			 * If variable is पढ़ो-only,
+			 * If variable is read-only,
 			 * convert to writable array
 			 */
-			अगर ((version > 0) &&
-				((attrs[variable_id] & 0x9c) == 0x1c)) अणु
-				/* Allocate a writable buffer क्रम this array */
+			if ((version > 0) &&
+				((attrs[variable_id] & 0x9c) == 0x1c)) {
+				/* Allocate a writable buffer for this array */
 				count = var_size[variable_id];
-				दीर्घ_पंचांगp = vars[variable_id];
-				दीर्घptr_पंचांगp = kसुस्मृति(count, माप(दीर्घ),
+				long_tmp = vars[variable_id];
+				longptr_tmp = kcalloc(count, sizeof(long),
 								GFP_KERNEL);
-				vars[variable_id] = (दीर्घ)दीर्घptr_पंचांगp;
+				vars[variable_id] = (long)longptr_tmp;
 
-				अगर (vars[variable_id] == 0) अणु
+				if (vars[variable_id] == 0) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				/* copy previous contents पूर्णांकo buffer */
-				क्रम (i = 0; i < count; ++i) अणु
-					दीर्घptr_पंचांगp[i] =
-						get_unaligned_be32(&p[दीर्घ_पंचांगp]);
-					दीर्घ_पंचांगp += माप(दीर्घ);
-				पूर्ण
+				/* copy previous contents into buffer */
+				for (i = 0; i < count; ++i) {
+					longptr_tmp[i] =
+						get_unaligned_be32(&p[long_tmp]);
+					long_tmp += sizeof(long);
+				}
 
 				/*
 				 * set bit 7 - buffer was
@@ -1149,72 +1148,72 @@ MODULE_LICENSE("GPL");
 				attrs[variable_id] &= ~0x04;
 				attrs[variable_id] |= 0x01;
 
-			पूर्ण
+			}
 
-			/* check that variable is a writable पूर्णांकeger array */
-			अगर ((attrs[variable_id] & 0x1c) != 0x18)
-				status = -दुस्फल;
-			अन्यथा अणु
-				दीर्घptr_पंचांगp = (दीर्घ *)vars[variable_id];
+			/* check that variable is a writable integer array */
+			if ((attrs[variable_id] & 0x1c) != 0x18)
+				status = -ERANGE;
+			else {
+				longptr_tmp = (long *)vars[variable_id];
 
 				/* pop the array index */
 				index = stack[--stack_ptr];
 
-				/* pop the value and store it पूर्णांकo the array */
-				दीर्घptr_पंचांगp[index] = stack[--stack_ptr];
-			पूर्ण
+				/* pop the value and store it into the array */
+				longptr_tmp[index] = stack[--stack_ptr];
+			}
 
-			अवरोध;
-		हाल OP_POPA:
+			break;
+		case OP_POPA:
 			/*
-			 * Pop stack पूर्णांकo Boolean array
+			 * Pop stack into Boolean array
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is count
 			 * ...stack 1 is array index
 			 * ...stack 2 is value
 			 */
-			अगर (!altera_check_stack(stack_ptr, 3, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 3, &status))
+				break;
 			variable_id = args[0];
 
 			/*
-			 * If variable is पढ़ो-only,
+			 * If variable is read-only,
 			 * convert to writable array
 			 */
-			अगर ((version > 0) &&
-				((attrs[variable_id] & 0x9c) == 0x0c)) अणु
-				/* Allocate a writable buffer क्रम this array */
-				दीर्घ_पंचांगp =
+			if ((version > 0) &&
+				((attrs[variable_id] & 0x9c) == 0x0c)) {
+				/* Allocate a writable buffer for this array */
+				long_tmp =
 					(var_size[variable_id] + 7L) >> 3L;
-				अक्षरptr_पंचांगp2 = (u8 *)vars[variable_id];
-				अक्षरptr_पंचांगp =
-					kzalloc(दीर्घ_पंचांगp, GFP_KERNEL);
-				vars[variable_id] = (दीर्घ)अक्षरptr_पंचांगp;
+				charptr_tmp2 = (u8 *)vars[variable_id];
+				charptr_tmp =
+					kzalloc(long_tmp, GFP_KERNEL);
+				vars[variable_id] = (long)charptr_tmp;
 
-				अगर (vars[variable_id] == 0) अणु
+				if (vars[variable_id] == 0) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				/* zero the buffer */
-				क्रम (दीर्घ_idx = 0L;
-					दीर्घ_idx < दीर्घ_पंचांगp;
-					++दीर्घ_idx) अणु
-					अक्षरptr_पंचांगp[दीर्घ_idx] = 0;
-				पूर्ण
+				for (long_idx = 0L;
+					long_idx < long_tmp;
+					++long_idx) {
+					charptr_tmp[long_idx] = 0;
+				}
 
-				/* copy previous contents पूर्णांकo buffer */
-				क्रम (दीर्घ_idx = 0L;
-					दीर्घ_idx < var_size[variable_id];
-					++दीर्घ_idx) अणु
-					दीर्घ_idx2 = दीर्घ_idx;
+				/* copy previous contents into buffer */
+				for (long_idx = 0L;
+					long_idx < var_size[variable_id];
+					++long_idx) {
+					long_idx2 = long_idx;
 
-					अगर (अक्षरptr_पंचांगp2[दीर्घ_idx2 >> 3] &
-						(1 << (दीर्घ_idx2 & 7))) अणु
-						अक्षरptr_पंचांगp[दीर्घ_idx >> 3] |=
-							(1 << (दीर्घ_idx & 7));
-					पूर्ण
-				पूर्ण
+					if (charptr_tmp2[long_idx2 >> 3] &
+						(1 << (long_idx2 & 7))) {
+						charptr_tmp[long_idx >> 3] |=
+							(1 << (long_idx & 7));
+					}
+				}
 
 				/*
 				 * set bit 7 - buffer was
@@ -1226,86 +1225,86 @@ MODULE_LICENSE("GPL");
 				attrs[variable_id] &= ~0x04;
 				attrs[variable_id] |= 0x01;
 
-			पूर्ण
+			}
 
 			/*
 			 * check that variable is
 			 * a writable Boolean array
 			 */
-			अगर ((attrs[variable_id] & 0x1c) != 0x08) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if ((attrs[variable_id] & 0x1c) != 0x08) {
+				status = -ERANGE;
+				break;
+			}
 
-			अक्षरptr_पंचांगp = (u8 *)vars[variable_id];
+			charptr_tmp = (u8 *)vars[variable_id];
 
 			/* pop the count (number of bits to copy) */
-			दीर्घ_count = stack[--stack_ptr];
+			long_count = stack[--stack_ptr];
 
 			/* pop the array index */
-			दीर्घ_idx = stack[--stack_ptr];
+			long_idx = stack[--stack_ptr];
 
 			reverse = 0;
 
-			अगर (version > 0) अणु
+			if (version > 0) {
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 */
 
-				अगर (दीर्घ_idx > दीर्घ_count) अणु
+				if (long_idx > long_count) {
 					reverse = 1;
-					दीर्घ_पंचांगp = दीर्घ_count;
-					दीर्घ_count = 1 + दीर्घ_idx -
-								दीर्घ_count;
-					दीर्घ_idx = दीर्घ_पंचांगp;
+					long_tmp = long_count;
+					long_count = 1 + long_idx -
+								long_count;
+					long_idx = long_tmp;
 
 					/* reverse POPA is not supported */
-					status = -दुस्फल;
-					अवरोध;
-				पूर्ण अन्यथा
-					दीर्घ_count = 1 + दीर्घ_count -
-								दीर्घ_idx;
+					status = -ERANGE;
+					break;
+				} else
+					long_count = 1 + long_count -
+								long_idx;
 
-			पूर्ण
+			}
 
 			/* pop the data */
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			long_tmp = stack[--stack_ptr];
 
-			अगर (दीर्घ_count < 1) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if (long_count < 1) {
+				status = -ERANGE;
+				break;
+			}
 
-			क्रम (i = 0; i < दीर्घ_count; ++i) अणु
-				अगर (दीर्घ_पंचांगp & (1L << (s32) i))
-					अक्षरptr_पंचांगp[दीर्घ_idx >> 3L] |=
-						(1L << (दीर्घ_idx & 7L));
-				अन्यथा
-					अक्षरptr_पंचांगp[दीर्घ_idx >> 3L] &=
-						~(1L << (दीर्घ_idx & 7L));
+			for (i = 0; i < long_count; ++i) {
+				if (long_tmp & (1L << (s32) i))
+					charptr_tmp[long_idx >> 3L] |=
+						(1L << (long_idx & 7L));
+				else
+					charptr_tmp[long_idx >> 3L] &=
+						~(1L << (long_idx & 7L));
 
-				++दीर्घ_idx;
-			पूर्ण
+				++long_idx;
+			}
 
-			अवरोध;
-		हाल OP_JMPZ:
+			break;
+		case OP_JMPZ:
 			/*
-			 * Pop stack and branch अगर zero
+			 * Pop stack and branch if zero
 			 * ...argument 0 is address
 			 * ...stack 0 is condition value
 			 */
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
-				अगर (stack[--stack_ptr] == 0) अणु
+			if (altera_check_stack(stack_ptr, 1, &status)) {
+				if (stack[--stack_ptr] == 0) {
 					pc = args[0] + code_sect;
-					अगर ((pc < code_sect) ||
+					if ((pc < code_sect) ||
 					    (pc >= debug_sect))
-						status = -दुस्फल;
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		हाल OP_DS:
-		हाल OP_IS:
+						status = -ERANGE;
+				}
+			}
+			break;
+		case OP_DS:
+		case OP_IS:
 			/*
 			 * DRSCAN
 			 * IRSCAN
@@ -1313,218 +1312,218 @@ MODULE_LICENSE("GPL");
 			 * ...stack 0 is array index
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
-			दीर्घ_idx = stack[--stack_ptr];
-			दीर्घ_count = stack[--stack_ptr];
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
+			long_idx = stack[--stack_ptr];
+			long_count = stack[--stack_ptr];
 			reverse = 0;
-			अगर (version > 0) अणु
+			if (version > 0) {
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 * stack 2 = count
 				 */
-				दीर्घ_पंचांगp = दीर्घ_count;
-				दीर्घ_count = stack[--stack_ptr];
+				long_tmp = long_count;
+				long_count = stack[--stack_ptr];
 
-				अगर (दीर्घ_idx > दीर्घ_पंचांगp) अणु
+				if (long_idx > long_tmp) {
 					reverse = 1;
-					दीर्घ_idx = दीर्घ_पंचांगp;
-				पूर्ण
-			पूर्ण
+					long_idx = long_tmp;
+				}
+			}
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[0]];
+			charptr_tmp = (u8 *)vars[args[0]];
 
-			अगर (reverse) अणु
+			if (reverse) {
 				/*
 				 * allocate a buffer
 				 * and reverse the data order
 				 */
-				अक्षरptr_पंचांगp2 = अक्षरptr_पंचांगp;
-				अक्षरptr_पंचांगp = kzalloc((दीर्घ_count >> 3) + 1,
+				charptr_tmp2 = charptr_tmp;
+				charptr_tmp = kzalloc((long_count >> 3) + 1,
 								GFP_KERNEL);
-				अगर (अक्षरptr_पंचांगp == शून्य) अणु
+				if (charptr_tmp == NULL) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				दीर्घ_पंचांगp = दीर्घ_idx + दीर्घ_count - 1;
-				दीर्घ_idx2 = 0;
-				जबतक (दीर्घ_idx2 < दीर्घ_count) अणु
-					अगर (अक्षरptr_पंचांगp2[दीर्घ_पंचांगp >> 3] &
-							(1 << (दीर्घ_पंचांगp & 7)))
-						अक्षरptr_पंचांगp[दीर्घ_idx2 >> 3] |=
-							(1 << (दीर्घ_idx2 & 7));
-					अन्यथा
-						अक्षरptr_पंचांगp[दीर्घ_idx2 >> 3] &=
-							~(1 << (दीर्घ_idx2 & 7));
+				long_tmp = long_idx + long_count - 1;
+				long_idx2 = 0;
+				while (long_idx2 < long_count) {
+					if (charptr_tmp2[long_tmp >> 3] &
+							(1 << (long_tmp & 7)))
+						charptr_tmp[long_idx2 >> 3] |=
+							(1 << (long_idx2 & 7));
+					else
+						charptr_tmp[long_idx2 >> 3] &=
+							~(1 << (long_idx2 & 7));
 
-					--दीर्घ_पंचांगp;
-					++दीर्घ_idx2;
-				पूर्ण
-			पूर्ण
+					--long_tmp;
+					++long_idx2;
+				}
+			}
 
-			अगर (opcode == 0x51) /* DS */
-				status = altera_drscan(astate, दीर्घ_count,
-						अक्षरptr_पंचांगp, दीर्घ_idx);
-			अन्यथा /* IS */
-				status = altera_irscan(astate, दीर्घ_count,
-						अक्षरptr_पंचांगp, दीर्घ_idx);
+			if (opcode == 0x51) /* DS */
+				status = altera_drscan(astate, long_count,
+						charptr_tmp, long_idx);
+			else /* IS */
+				status = altera_irscan(astate, long_count,
+						charptr_tmp, long_idx);
 
-			अगर (reverse)
-				kमुक्त(अक्षरptr_पंचांगp);
+			if (reverse)
+				kfree(charptr_tmp);
 
-			अवरोध;
-		हाल OP_DPRA:
+			break;
+		case OP_DPRA:
 			/*
 			 * DRPRE with array data
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is array index
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			index = stack[--stack_ptr];
 			count = stack[--stack_ptr];
 
-			अगर (version > 0)
+			if (version > 0)
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 */
 				count = 1 + count - index;
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[0]];
+			charptr_tmp = (u8 *)vars[args[0]];
 			status = altera_set_dr_pre(&astate->js, count, index,
-							अक्षरptr_पंचांगp);
-			अवरोध;
-		हाल OP_DPOA:
+							charptr_tmp);
+			break;
+		case OP_DPOA:
 			/*
 			 * DRPOST with array data
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is array index
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			index = stack[--stack_ptr];
 			count = stack[--stack_ptr];
 
-			अगर (version > 0)
+			if (version > 0)
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 */
 				count = 1 + count - index;
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[0]];
+			charptr_tmp = (u8 *)vars[args[0]];
 			status = altera_set_dr_post(&astate->js, count, index,
-							अक्षरptr_पंचांगp);
-			अवरोध;
-		हाल OP_IPRA:
+							charptr_tmp);
+			break;
+		case OP_IPRA:
 			/*
 			 * IRPRE with array data
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is array index
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			index = stack[--stack_ptr];
 			count = stack[--stack_ptr];
 
-			अगर (version > 0)
+			if (version > 0)
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 */
 				count = 1 + count - index;
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[0]];
+			charptr_tmp = (u8 *)vars[args[0]];
 			status = altera_set_ir_pre(&astate->js, count, index,
-							अक्षरptr_पंचांगp);
+							charptr_tmp);
 
-			अवरोध;
-		हाल OP_IPOA:
+			break;
+		case OP_IPOA:
 			/*
 			 * IRPOST with array data
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is array index
 			 * ...stack 1 is count
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			index = stack[--stack_ptr];
 			count = stack[--stack_ptr];
 
-			अगर (version > 0)
+			if (version > 0)
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 */
 				count = 1 + count - index;
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[0]];
+			charptr_tmp = (u8 *)vars[args[0]];
 			status = altera_set_ir_post(&astate->js, count, index,
-							अक्षरptr_पंचांगp);
+							charptr_tmp);
 
-			अवरोध;
-		हाल OP_EXPT:
+			break;
+		case OP_EXPT:
 			/*
 			 * EXPORT
 			 * ...argument 0 is string ID
-			 * ...stack 0 is पूर्णांकeger expression
+			 * ...stack 0 is integer expression
 			 */
-			अगर (altera_check_stack(stack_ptr, 1, &status)) अणु
+			if (altera_check_stack(stack_ptr, 1, &status)) {
 				name = &p[str_table + args[0]];
-				दीर्घ_पंचांगp = stack[--stack_ptr];
-				altera_export_पूर्णांक(name, दीर्घ_पंचांगp);
-			पूर्ण
-			अवरोध;
-		हाल OP_PSHE:
+				long_tmp = stack[--stack_ptr];
+				altera_export_int(name, long_tmp);
+			}
+			break;
+		case OP_PSHE:
 			/*
-			 * Push पूर्णांकeger array element
+			 * Push integer array element
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is array index
 			 */
-			अगर (!altera_check_stack(stack_ptr, 1, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 1, &status))
+				break;
 			variable_id = args[0];
 			index = stack[stack_ptr - 1];
 
 			/* check variable type */
-			अगर ((attrs[variable_id] & 0x1f) == 0x19) अणु
-				/* writable पूर्णांकeger array */
-				दीर्घptr_पंचांगp = (दीर्घ *)vars[variable_id];
-				stack[stack_ptr - 1] = दीर्घptr_पंचांगp[index];
-			पूर्ण अन्यथा अगर ((attrs[variable_id] & 0x1f) == 0x1c) अणु
-				/* पढ़ो-only पूर्णांकeger array */
-				दीर्घ_पंचांगp = vars[variable_id] +
-						(index * माप(दीर्घ));
+			if ((attrs[variable_id] & 0x1f) == 0x19) {
+				/* writable integer array */
+				longptr_tmp = (long *)vars[variable_id];
+				stack[stack_ptr - 1] = longptr_tmp[index];
+			} else if ((attrs[variable_id] & 0x1f) == 0x1c) {
+				/* read-only integer array */
+				long_tmp = vars[variable_id] +
+						(index * sizeof(long));
 				stack[stack_ptr - 1] =
-					get_unaligned_be32(&p[दीर्घ_पंचांगp]);
-			पूर्ण अन्यथा
-				status = -दुस्फल;
+					get_unaligned_be32(&p[long_tmp]);
+			} else
+				status = -ERANGE;
 
-			अवरोध;
-		हाल OP_PSHA:
+			break;
+		case OP_PSHA:
 			/*
 			 * Push Boolean array
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is count
 			 * ...stack 1 is array index
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
 			variable_id = args[0];
 
 			/* check that variable is a Boolean array */
-			अगर ((attrs[variable_id] & 0x18) != 0x08) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if ((attrs[variable_id] & 0x18) != 0x08) {
+				status = -ERANGE;
+				break;
+			}
 
-			अक्षरptr_पंचांगp = (u8 *)vars[variable_id];
+			charptr_tmp = (u8 *)vars[variable_id];
 
 			/* pop the count (number of bits to copy) */
 			count = stack[--stack_ptr];
@@ -1532,88 +1531,88 @@ MODULE_LICENSE("GPL");
 			/* pop the array index */
 			index = stack[stack_ptr - 1];
 
-			अगर (version > 0)
+			if (version > 0)
 				/*
 				 * stack 0 = array right index
 				 * stack 1 = array left index
 				 */
 				count = 1 + count - index;
 
-			अगर ((count < 1) || (count > 32)) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if ((count < 1) || (count > 32)) {
+				status = -ERANGE;
+				break;
+			}
 
-			दीर्घ_पंचांगp = 0L;
+			long_tmp = 0L;
 
-			क्रम (i = 0; i < count; ++i)
-				अगर (अक्षरptr_पंचांगp[(i + index) >> 3] &
+			for (i = 0; i < count; ++i)
+				if (charptr_tmp[(i + index) >> 3] &
 						(1 << ((i + index) & 7)))
-					दीर्घ_पंचांगp |= (1L << i);
+					long_tmp |= (1L << i);
 
-			stack[stack_ptr - 1] = दीर्घ_पंचांगp;
+			stack[stack_ptr - 1] = long_tmp;
 
-			अवरोध;
-		हाल OP_DYNA:
+			break;
+		case OP_DYNA:
 			/*
 			 * Dynamically change size of array
 			 * ...argument 0 is variable ID
 			 * ...stack 0 is new size
 			 */
-			अगर (!altera_check_stack(stack_ptr, 1, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 1, &status))
+				break;
 			variable_id = args[0];
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			long_tmp = stack[--stack_ptr];
 
-			अगर (दीर्घ_पंचांगp > var_size[variable_id]) अणु
-				var_size[variable_id] = दीर्घ_पंचांगp;
+			if (long_tmp > var_size[variable_id]) {
+				var_size[variable_id] = long_tmp;
 
-				अगर (attrs[variable_id] & 0x10)
-					/* allocate पूर्णांकeger array */
-					दीर्घ_पंचांगp *= माप(दीर्घ);
-				अन्यथा
+				if (attrs[variable_id] & 0x10)
+					/* allocate integer array */
+					long_tmp *= sizeof(long);
+				else
 					/* allocate Boolean array */
-					दीर्घ_पंचांगp = (दीर्घ_पंचांगp + 7) >> 3;
+					long_tmp = (long_tmp + 7) >> 3;
 
 				/*
 				 * If the buffer was previously allocated,
-				 * मुक्त it
+				 * free it
 				 */
-				अगर (attrs[variable_id] & 0x80) अणु
-					kमुक्त((व्योम *)vars[variable_id]);
+				if (attrs[variable_id] & 0x80) {
+					kfree((void *)vars[variable_id]);
 					vars[variable_id] = 0;
-				पूर्ण
+				}
 
 				/*
 				 * Allocate a new buffer
 				 * of the requested size
 				 */
-				vars[variable_id] = (दीर्घ)
-					kzalloc(दीर्घ_पंचांगp, GFP_KERNEL);
+				vars[variable_id] = (long)
+					kzalloc(long_tmp, GFP_KERNEL);
 
-				अगर (vars[variable_id] == 0) अणु
+				if (vars[variable_id] == 0) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				/*
 				 * Set the attribute bit to indicate that
 				 * this buffer was dynamically allocated and
-				 * should be मुक्तd later
+				 * should be freed later
 				 */
 				attrs[variable_id] |= 0x80;
 
 				/* zero out memory */
 				count = ((var_size[variable_id] + 7L) /
 									8L);
-				अक्षरptr_पंचांगp = (u8 *)(vars[variable_id]);
-				क्रम (index = 0; index < count; ++index)
-					अक्षरptr_पंचांगp[index] = 0;
+				charptr_tmp = (u8 *)(vars[variable_id]);
+				for (index = 0; index < count; ++index)
+					charptr_tmp[index] = 0;
 
-			पूर्ण
+			}
 
-			अवरोध;
-		हाल OP_EXPV:
+			break;
+		case OP_EXPV:
 			/*
 			 * Export Boolean array
 			 * ...argument 0 is string ID
@@ -1621,64 +1620,64 @@ MODULE_LICENSE("GPL");
 			 * ...stack 1 is array right index
 			 * ...stack 2 is array left index
 			 */
-			अगर (!altera_check_stack(stack_ptr, 3, &status))
-				अवरोध;
-			अगर (version == 0) अणु
+			if (!altera_check_stack(stack_ptr, 3, &status))
+				break;
+			if (version == 0) {
 				/* EXPV is not supported in JBC 1.0 */
 				bad_opcode = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			name = &p[str_table + args[0]];
 			variable_id = stack[--stack_ptr];
-			दीर्घ_idx = stack[--stack_ptr];/* right indx */
-			दीर्घ_idx2 = stack[--stack_ptr];/* left indx */
+			long_idx = stack[--stack_ptr];/* right indx */
+			long_idx2 = stack[--stack_ptr];/* left indx */
 
-			अगर (दीर्घ_idx > दीर्घ_idx2) अणु
+			if (long_idx > long_idx2) {
 				/* reverse indices not supported */
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+				status = -ERANGE;
+				break;
+			}
 
-			दीर्घ_count = 1 + दीर्घ_idx2 - दीर्घ_idx;
+			long_count = 1 + long_idx2 - long_idx;
 
-			अक्षरptr_पंचांगp = (u8 *)vars[variable_id];
-			अक्षरptr_पंचांगp2 = शून्य;
+			charptr_tmp = (u8 *)vars[variable_id];
+			charptr_tmp2 = NULL;
 
-			अगर ((दीर्घ_idx & 7L) != 0) अणु
-				s32 k = दीर्घ_idx;
-				अक्षरptr_पंचांगp2 =
-					kzalloc(((दीर्घ_count + 7L) / 8L),
+			if ((long_idx & 7L) != 0) {
+				s32 k = long_idx;
+				charptr_tmp2 =
+					kzalloc(((long_count + 7L) / 8L),
 							GFP_KERNEL);
-				अगर (अक्षरptr_पंचांगp2 == शून्य) अणु
+				if (charptr_tmp2 == NULL) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
-				क्रम (i = 0; i < दीर्घ_count; ++i) अणु
-					अगर (अक्षरptr_पंचांगp[k >> 3] &
+				for (i = 0; i < long_count; ++i) {
+					if (charptr_tmp[k >> 3] &
 							(1 << (k & 7)))
-						अक्षरptr_पंचांगp2[i >> 3] |=
+						charptr_tmp2[i >> 3] |=
 								(1 << (i & 7));
-					अन्यथा
-						अक्षरptr_पंचांगp2[i >> 3] &=
+					else
+						charptr_tmp2[i >> 3] &=
 								~(1 << (i & 7));
 
 					++k;
-				पूर्ण
-				अक्षरptr_पंचांगp = अक्षरptr_पंचांगp2;
+				}
+				charptr_tmp = charptr_tmp2;
 
-			पूर्ण अन्यथा अगर (दीर्घ_idx != 0)
-				अक्षरptr_पंचांगp = &अक्षरptr_पंचांगp[दीर्घ_idx >> 3];
+			} else if (long_idx != 0)
+				charptr_tmp = &charptr_tmp[long_idx >> 3];
 
-			altera_export_bool_array(name, अक्षरptr_पंचांगp,
-							दीर्घ_count);
+			altera_export_bool_array(name, charptr_tmp,
+							long_count);
 
-			/* मुक्त allocated buffer */
-			अगर ((दीर्घ_idx & 7L) != 0)
-				kमुक्त(अक्षरptr_पंचांगp2);
+			/* free allocated buffer */
+			if ((long_idx & 7L) != 0)
+				kfree(charptr_tmp2);
 
-			अवरोध;
-		हाल OP_COPY: अणु
+			break;
+		case OP_COPY: {
 			/*
 			 * Array copy
 			 * ...argument 0 is dest ID
@@ -1693,18 +1692,18 @@ MODULE_LICENSE("GPL");
 			s32 destleft;
 			s32 src_count;
 			s32 dest_count;
-			पूर्णांक src_reverse = 0;
-			पूर्णांक dest_reverse = 0;
+			int src_reverse = 0;
+			int dest_reverse = 0;
 
-			अगर (!altera_check_stack(stack_ptr, 3, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 3, &status))
+				break;
 
 			copy_count = stack[--stack_ptr];
 			copy_index = stack[--stack_ptr];
 			copy_index2 = stack[--stack_ptr];
 			reverse = 0;
 
-			अगर (version > 0) अणु
+			if (version > 0) {
 				/*
 				 * stack 0 = source right index
 				 * stack 1 = source left index
@@ -1713,30 +1712,30 @@ MODULE_LICENSE("GPL");
 				 */
 				destleft = stack[--stack_ptr];
 
-				अगर (copy_count > copy_index) अणु
+				if (copy_count > copy_index) {
 					src_reverse = 1;
 					reverse = 1;
 					src_count = 1 + copy_count - copy_index;
 					/* copy_index = source start index */
-				पूर्ण अन्यथा अणु
+				} else {
 					src_count = 1 + copy_index - copy_count;
 					/* source start index */
 					copy_index = copy_count;
-				पूर्ण
+				}
 
-				अगर (copy_index2 > destleft) अणु
+				if (copy_index2 > destleft) {
 					dest_reverse = 1;
 					reverse = !reverse;
 					dest_count = 1 + copy_index2 - destleft;
 					/* destination start index */
 					copy_index2 = destleft;
-				पूर्ण अन्यथा
+				} else
 					dest_count = 1 + destleft - copy_index2;
 
 				copy_count = (src_count < dest_count) ?
 							src_count : dest_count;
 
-				अगर ((src_reverse || dest_reverse) &&
+				if ((src_reverse || dest_reverse) &&
 					(src_count != dest_count))
 					/*
 					 * If either the source or destination
@@ -1746,51 +1745,51 @@ MODULE_LICENSE("GPL");
 					 * This won't work correctly
 					 * with reversed arrays.
 					 */
-					status = -दुस्फल;
+					status = -ERANGE;
 
-			पूर्ण
+			}
 
 			count = copy_count;
 			index = copy_index;
 			index2 = copy_index2;
 
 			/*
-			 * If destination is a पढ़ो-only array,
+			 * If destination is a read-only array,
 			 * allocate a buffer and convert it to a writable array
 			 */
 			variable_id = args[1];
-			अगर ((version > 0) &&
-				((attrs[variable_id] & 0x9c) == 0x0c)) अणु
-				/* Allocate a writable buffer क्रम this array */
-				दीर्घ_पंचांगp =
+			if ((version > 0) &&
+				((attrs[variable_id] & 0x9c) == 0x0c)) {
+				/* Allocate a writable buffer for this array */
+				long_tmp =
 					(var_size[variable_id] + 7L) >> 3L;
-				अक्षरptr_पंचांगp2 = (u8 *)vars[variable_id];
-				अक्षरptr_पंचांगp =
-					kzalloc(दीर्घ_पंचांगp, GFP_KERNEL);
-				vars[variable_id] = (दीर्घ)अक्षरptr_पंचांगp;
+				charptr_tmp2 = (u8 *)vars[variable_id];
+				charptr_tmp =
+					kzalloc(long_tmp, GFP_KERNEL);
+				vars[variable_id] = (long)charptr_tmp;
 
-				अगर (vars[variable_id] == 0) अणु
+				if (vars[variable_id] == 0) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				/* zero the buffer */
-				क्रम (दीर्घ_idx = 0L; दीर्घ_idx < दीर्घ_पंचांगp;
-								++दीर्घ_idx)
-					अक्षरptr_पंचांगp[दीर्घ_idx] = 0;
+				for (long_idx = 0L; long_idx < long_tmp;
+								++long_idx)
+					charptr_tmp[long_idx] = 0;
 
-				/* copy previous contents पूर्णांकo buffer */
-				क्रम (दीर्घ_idx = 0L;
-					दीर्घ_idx < var_size[variable_id];
-								++दीर्घ_idx) अणु
-					दीर्घ_idx2 = दीर्घ_idx;
+				/* copy previous contents into buffer */
+				for (long_idx = 0L;
+					long_idx < var_size[variable_id];
+								++long_idx) {
+					long_idx2 = long_idx;
 
-					अगर (अक्षरptr_पंचांगp2[दीर्घ_idx2 >> 3] &
-						(1 << (दीर्घ_idx2 & 7)))
-						अक्षरptr_पंचांगp[दीर्घ_idx >> 3] |=
-							(1 << (दीर्घ_idx & 7));
+					if (charptr_tmp2[long_idx2 >> 3] &
+						(1 << (long_idx2 & 7)))
+						charptr_tmp[long_idx >> 3] |=
+							(1 << (long_idx & 7));
 
-				पूर्ण
+				}
 
 				/*
 				set bit 7 - buffer was dynamically allocated */
@@ -1799,45 +1798,45 @@ MODULE_LICENSE("GPL");
 				/* clear bit 2 - variable is writable */
 				attrs[variable_id] &= ~0x04;
 				attrs[variable_id] |= 0x01;
-			पूर्ण
+			}
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[1]];
-			अक्षरptr_पंचांगp2 = (u8 *)vars[args[0]];
+			charptr_tmp = (u8 *)vars[args[1]];
+			charptr_tmp2 = (u8 *)vars[args[0]];
 
-			/* check अगर destination is a writable Boolean array */
-			अगर ((attrs[args[1]] & 0x1c) != 0x08) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			/* check if destination is a writable Boolean array */
+			if ((attrs[args[1]] & 0x1c) != 0x08) {
+				status = -ERANGE;
+				break;
+			}
 
-			अगर (count < 1) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if (count < 1) {
+				status = -ERANGE;
+				break;
+			}
 
-			अगर (reverse)
+			if (reverse)
 				index2 += (count - 1);
 
-			क्रम (i = 0; i < count; ++i) अणु
-				अगर (अक्षरptr_पंचांगp2[index >> 3] &
+			for (i = 0; i < count; ++i) {
+				if (charptr_tmp2[index >> 3] &
 							(1 << (index & 7)))
-					अक्षरptr_पंचांगp[index2 >> 3] |=
+					charptr_tmp[index2 >> 3] |=
 							(1 << (index2 & 7));
-				अन्यथा
-					अक्षरptr_पंचांगp[index2 >> 3] &=
+				else
+					charptr_tmp[index2 >> 3] &=
 						~(1 << (index2 & 7));
 
 				++index;
-				अगर (reverse)
+				if (reverse)
 					--index2;
-				अन्यथा
+				else
 					++index2;
-			पूर्ण
+			}
 
-			अवरोध;
-		पूर्ण
-		हाल OP_DSC:
-		हाल OP_ISC: अणु
+			break;
+		}
+		case OP_DSC:
+		case OP_ISC: {
 			/*
 			 * DRSCAN with capture
 			 * IRSCAN with capture
@@ -1853,13 +1852,13 @@ MODULE_LICENSE("GPL");
 			s32 capture_index;
 			s32 scan_index;
 
-			अगर (!altera_check_stack(stack_ptr, 3, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 3, &status))
+				break;
 
 			capture_index = stack[--stack_ptr];
 			scan_index = stack[--stack_ptr];
 
-			अगर (version > 0) अणु
+			if (version > 0) {
 				/*
 				 * stack 0 = capture right index
 				 * stack 1 = capture left index
@@ -1872,46 +1871,46 @@ MODULE_LICENSE("GPL");
 				capture_count = 1 + scan_index - capture_index;
 				scan_count = 1 + scan_left - scan_right;
 				scan_index = scan_right;
-			पूर्ण
+			}
 
-			दीर्घ_count = stack[--stack_ptr];
+			long_count = stack[--stack_ptr];
 			/*
-			 * If capture array is पढ़ो-only, allocate a buffer
+			 * If capture array is read-only, allocate a buffer
 			 * and convert it to a writable array
 			 */
 			variable_id = args[1];
-			अगर ((version > 0) &&
-				((attrs[variable_id] & 0x9c) == 0x0c)) अणु
-				/* Allocate a writable buffer क्रम this array */
-				दीर्घ_पंचांगp =
+			if ((version > 0) &&
+				((attrs[variable_id] & 0x9c) == 0x0c)) {
+				/* Allocate a writable buffer for this array */
+				long_tmp =
 					(var_size[variable_id] + 7L) >> 3L;
-				अक्षरptr_पंचांगp2 = (u8 *)vars[variable_id];
-				अक्षरptr_पंचांगp =
-					kzalloc(दीर्घ_पंचांगp, GFP_KERNEL);
-				vars[variable_id] = (दीर्घ)अक्षरptr_पंचांगp;
+				charptr_tmp2 = (u8 *)vars[variable_id];
+				charptr_tmp =
+					kzalloc(long_tmp, GFP_KERNEL);
+				vars[variable_id] = (long)charptr_tmp;
 
-				अगर (vars[variable_id] == 0) अणु
+				if (vars[variable_id] == 0) {
 					status = -ENOMEM;
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				/* zero the buffer */
-				क्रम (दीर्घ_idx = 0L; दीर्घ_idx < दीर्घ_पंचांगp;
-								++दीर्घ_idx)
-					अक्षरptr_पंचांगp[दीर्घ_idx] = 0;
+				for (long_idx = 0L; long_idx < long_tmp;
+								++long_idx)
+					charptr_tmp[long_idx] = 0;
 
-				/* copy previous contents पूर्णांकo buffer */
-				क्रम (दीर्घ_idx = 0L;
-					दीर्घ_idx < var_size[variable_id];
-								++दीर्घ_idx) अणु
-					दीर्घ_idx2 = दीर्घ_idx;
+				/* copy previous contents into buffer */
+				for (long_idx = 0L;
+					long_idx < var_size[variable_id];
+								++long_idx) {
+					long_idx2 = long_idx;
 
-					अगर (अक्षरptr_पंचांगp2[दीर्घ_idx2 >> 3] &
-						(1 << (दीर्घ_idx2 & 7)))
-						अक्षरptr_पंचांगp[दीर्घ_idx >> 3] |=
-							(1 << (दीर्घ_idx & 7));
+					if (charptr_tmp2[long_idx2 >> 3] &
+						(1 << (long_idx2 & 7)))
+						charptr_tmp[long_idx >> 3] |=
+							(1 << (long_idx & 7));
 
-				पूर्ण
+				}
 
 				/*
 				 * set bit 7 - buffer was
@@ -1923,80 +1922,80 @@ MODULE_LICENSE("GPL");
 				attrs[variable_id] &= ~0x04;
 				attrs[variable_id] |= 0x01;
 
-			पूर्ण
+			}
 
-			अक्षरptr_पंचांगp = (u8 *)vars[args[0]];
-			अक्षरptr_पंचांगp2 = (u8 *)vars[args[1]];
+			charptr_tmp = (u8 *)vars[args[0]];
+			charptr_tmp2 = (u8 *)vars[args[1]];
 
-			अगर ((version > 0) &&
-					((दीर्घ_count > capture_count) ||
-					(दीर्घ_count > scan_count))) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if ((version > 0) &&
+					((long_count > capture_count) ||
+					(long_count > scan_count))) {
+				status = -ERANGE;
+				break;
+			}
 
 			/*
 			 * check that capture array
 			 * is a writable Boolean array
 			 */
-			अगर ((attrs[args[1]] & 0x1c) != 0x08) अणु
-				status = -दुस्फल;
-				अवरोध;
-			पूर्ण
+			if ((attrs[args[1]] & 0x1c) != 0x08) {
+				status = -ERANGE;
+				break;
+			}
 
-			अगर (status == 0) अणु
-				अगर (opcode == 0x82) /* DSC */
+			if (status == 0) {
+				if (opcode == 0x82) /* DSC */
 					status = altera_swap_dr(astate,
-							दीर्घ_count,
-							अक्षरptr_पंचांगp,
+							long_count,
+							charptr_tmp,
 							scan_index,
-							अक्षरptr_पंचांगp2,
+							charptr_tmp2,
 							capture_index);
-				अन्यथा /* ISC */
+				else /* ISC */
 					status = altera_swap_ir(astate,
-							दीर्घ_count,
-							अक्षरptr_पंचांगp,
+							long_count,
+							charptr_tmp,
 							scan_index,
-							अक्षरptr_पंचांगp2,
+							charptr_tmp2,
 							capture_index);
 
-			पूर्ण
+			}
 
-			अवरोध;
-		पूर्ण
-		हाल OP_WAIT:
+			break;
+		}
+		case OP_WAIT:
 			/*
 			 * WAIT
-			 * ...argument 0 is रुको state
+			 * ...argument 0 is wait state
 			 * ...argument 1 is end state
 			 * ...stack 0 is cycles
 			 * ...stack 1 is microseconds
 			 */
-			अगर (!altera_check_stack(stack_ptr, 2, &status))
-				अवरोध;
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			if (!altera_check_stack(stack_ptr, 2, &status))
+				break;
+			long_tmp = stack[--stack_ptr];
 
-			अगर (दीर्घ_पंचांगp != 0L)
-				status = altera_रुको_cycles(astate, दीर्घ_पंचांगp,
+			if (long_tmp != 0L)
+				status = altera_wait_cycles(astate, long_tmp,
 								args[0]);
 
-			दीर्घ_पंचांगp = stack[--stack_ptr];
+			long_tmp = stack[--stack_ptr];
 
-			अगर ((status == 0) && (दीर्घ_पंचांगp != 0L))
-				status = altera_रुको_msecs(astate,
-								दीर्घ_पंचांगp,
+			if ((status == 0) && (long_tmp != 0L))
+				status = altera_wait_msecs(astate,
+								long_tmp,
 								args[0]);
 
-			अगर ((status == 0) && (args[1] != args[0]))
-				status = altera_जाओ_jstate(astate,
+			if ((status == 0) && (args[1] != args[0]))
+				status = altera_goto_jstate(astate,
 								args[1]);
 
-			अगर (version > 0) अणु
+			if (version > 0) {
 				--stack_ptr; /* throw away MAX cycles */
 				--stack_ptr; /* throw away MAX microseconds */
-			पूर्ण
-			अवरोध;
-		हाल OP_CMPA: अणु
+			}
+			break;
+		case OP_CMPA: {
 			/*
 			 * Array compare
 			 * ...argument 0 is source 1 ID
@@ -2015,15 +2014,15 @@ MODULE_LICENSE("GPL");
 			u32 index2;
 			u32 mask_index;
 
-			अगर (!altera_check_stack(stack_ptr, 4, &status))
-				अवरोध;
+			if (!altera_check_stack(stack_ptr, 4, &status))
+				break;
 
 			index1 = stack[--stack_ptr];
 			index2 = stack[--stack_ptr];
 			mask_index = stack[--stack_ptr];
-			दीर्घ_count = stack[--stack_ptr];
+			long_count = stack[--stack_ptr];
 
-			अगर (version > 0) अणु
+			if (version > 0) {
 				/*
 				 * stack 0 = source 1 right index
 				 * stack 1 = source 1 left index
@@ -2037,7 +2036,7 @@ MODULE_LICENSE("GPL");
 				/* source 1 count */
 				a = 1 + index2 - index1;
 				/* source 2 count */
-				b = 1 + दीर्घ_count - mask_index;
+				b = 1 + long_count - mask_index;
 				a = (a < b) ? a : b;
 				/* mask count */
 				b = 1 + mask_left - mask_right;
@@ -2046,19 +2045,19 @@ MODULE_LICENSE("GPL");
 				index2 = mask_index;
 				/* mask start index */
 				mask_index = mask_right;
-				दीर्घ_count = a;
-			पूर्ण
+				long_count = a;
+			}
 
-			दीर्घ_पंचांगp = 1L;
+			long_tmp = 1L;
 
-			अगर (दीर्घ_count < 1)
-				status = -दुस्फल;
-			अन्यथा अणु
-				count = दीर्घ_count;
+			if (long_count < 1)
+				status = -ERANGE;
+			else {
+				count = long_count;
 
-				क्रम (i = 0; i < count; ++i) अणु
-					अगर (mask[mask_index >> 3] &
-						(1 << (mask_index & 7))) अणु
+				for (i = 0; i < count; ++i) {
+					if (mask[mask_index >> 3] &
+						(1 << (mask_index & 7))) {
 						a = source1[index1 >> 3] &
 							(1 << (index1 & 7))
 								? 1 : 0;
@@ -2066,78 +2065,78 @@ MODULE_LICENSE("GPL");
 							(1 << (index2 & 7))
 								? 1 : 0;
 
-						अगर (a != b) /* failure */
-							दीर्घ_पंचांगp = 0L;
-					पूर्ण
+						if (a != b) /* failure */
+							long_tmp = 0L;
+					}
 					++index1;
 					++index2;
 					++mask_index;
-				पूर्ण
-			पूर्ण
+				}
+			}
 
-			stack[stack_ptr++] = दीर्घ_पंचांगp;
+			stack[stack_ptr++] = long_tmp;
 
-			अवरोध;
-		पूर्ण
-		शेष:
+			break;
+		}
+		default:
 			/* Unrecognized opcode -- ERROR! */
 			bad_opcode = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (bad_opcode)
+		if (bad_opcode)
 			status = -ENOSYS;
 
-		अगर ((stack_ptr < 0) || (stack_ptr >= ALTERA_STACK_SIZE))
+		if ((stack_ptr < 0) || (stack_ptr >= ALTERA_STACK_SIZE))
 			status = -EOVERFLOW;
 
-		अगर (status != 0) अणु
-			करोne = 1;
+		if (status != 0) {
+			done = 1;
 			*error_address = (s32)(opcode_address - code_sect);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	altera_मुक्त_buffers(astate);
+	altera_free_buffers(astate);
 
 	/* Free all dynamically allocated arrays */
-	अगर ((attrs != शून्य) && (vars != शून्य))
-		क्रम (i = 0; i < sym_count; ++i)
-			अगर (attrs[i] & 0x80)
-				kमुक्त((व्योम *)vars[i]);
+	if ((attrs != NULL) && (vars != NULL))
+		for (i = 0; i < sym_count; ++i)
+			if (attrs[i] & 0x80)
+				kfree((void *)vars[i]);
 
-	kमुक्त(vars);
-	kमुक्त(var_size);
-	kमुक्त(attrs);
-	kमुक्त(proc_attributes);
+	kfree(vars);
+	kfree(var_size);
+	kfree(attrs);
+	kfree(proc_attributes);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक altera_get_note(u8 *p, s32 program_size, s32 *offset,
-			   अक्षर *key, अक्षर *value, पूर्णांक keylen, पूर्णांक vallen)
+static int altera_get_note(u8 *p, s32 program_size, s32 *offset,
+			   char *key, char *value, int keylen, int vallen)
 /*
  * Gets key and value of NOTE fields in the JBC file.
- * Can be called in two modes:  अगर offset poपूर्णांकer is शून्य,
- * then the function searches क्रम note fields which match
- * the key string provided.  If offset is not शून्य, then
+ * Can be called in two modes:  if offset pointer is NULL,
+ * then the function searches for note fields which match
+ * the key string provided.  If offset is not NULL, then
  * the function finds the next note field of any key,
- * starting at the offset specअगरied by the offset poपूर्णांकer.
- * Returns 0 क्रम success, अन्यथा appropriate error code
+ * starting at the offset specified by the offset pointer.
+ * Returns 0 for success, else appropriate error code
  */
-अणु
-	पूर्णांक status = -ENODATA;
+{
+	int status = -ENODATA;
 	u32 note_strings = 0L;
 	u32 note_table = 0L;
 	u32 note_count = 0L;
 	u32 first_word = 0L;
-	पूर्णांक version = 0;
-	पूर्णांक delta = 0;
-	अक्षर *key_ptr;
-	अक्षर *value_ptr;
-	पूर्णांक i;
+	int version = 0;
+	int delta = 0;
+	char *key_ptr;
+	char *value_ptr;
+	int i;
 
-	/* Read header inक्रमmation */
-	अगर (program_size > 52L) अणु
+	/* Read header information */
+	if (program_size > 52L) {
 		first_word    = get_unaligned_be32(&p[0]);
 		version = (first_word & 1L);
 		delta = version * 8;
@@ -2145,181 +2144,181 @@ MODULE_LICENSE("GPL");
 		note_strings  = get_unaligned_be32(&p[8 + delta]);
 		note_table    = get_unaligned_be32(&p[12 + delta]);
 		note_count    = get_unaligned_be32(&p[44 + (2 * delta)]);
-	पूर्ण
+	}
 
-	अगर ((first_word != 0x4A414D00L) && (first_word != 0x4A414D01L))
-		वापस -EIO;
+	if ((first_word != 0x4A414D00L) && (first_word != 0x4A414D01L))
+		return -EIO;
 
-	अगर (note_count <= 0L)
-		वापस status;
+	if (note_count <= 0L)
+		return status;
 
-	अगर (offset == शून्य) अणु
+	if (offset == NULL) {
 		/*
-		 * We will search क्रम the first note with a specअगरic key,
-		 * and वापस only the value
+		 * We will search for the first note with a specific key,
+		 * and return only the value
 		 */
-		क्रम (i = 0; (i < note_count) &&
-						(status != 0); ++i) अणु
+		for (i = 0; (i < note_count) &&
+						(status != 0); ++i) {
 			key_ptr = &p[note_strings +
 					get_unaligned_be32(
 					&p[note_table + (8 * i)])];
-			अगर (key && !strnहालcmp(key, key_ptr, म_माप(key_ptr))) अणु
+			if (key && !strncasecmp(key, key_ptr, strlen(key_ptr))) {
 				status = 0;
 
 				value_ptr = &p[note_strings +
 						get_unaligned_be32(
 						&p[note_table + (8 * i) + 4])];
 
-				अगर (value != शून्य)
+				if (value != NULL)
 					strlcpy(value, value_ptr, vallen);
 
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/*
-		 * We will search क्रम the next note, regardless of the key,
-		 * and वापस both the value and the key
+		 * We will search for the next note, regardless of the key,
+		 * and return both the value and the key
 		 */
 
 		i = *offset;
 
-		अगर ((i >= 0) && (i < note_count)) अणु
+		if ((i >= 0) && (i < note_count)) {
 			status = 0;
 
-			अगर (key != शून्य)
+			if (key != NULL)
 				strlcpy(key, &p[note_strings +
 						get_unaligned_be32(
 						&p[note_table + (8 * i)])],
 					keylen);
 
-			अगर (value != शून्य)
+			if (value != NULL)
 				strlcpy(value, &p[note_strings +
 						get_unaligned_be32(
 						&p[note_table + (8 * i) + 4])],
 					vallen);
 
 			*offset = i + 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक altera_check_crc(u8 *p, s32 program_size)
-अणु
-	पूर्णांक status = 0;
+static int altera_check_crc(u8 *p, s32 program_size)
+{
+	int status = 0;
 	u16 local_expected = 0,
 	    local_actual = 0,
-	    shअगरt_reg = 0xffff;
-	पूर्णांक bit, feedback;
+	    shift_reg = 0xffff;
+	int bit, feedback;
 	u8 databyte;
 	u32 i;
 	u32 crc_section = 0L;
 	u32 first_word = 0L;
-	पूर्णांक version = 0;
-	पूर्णांक delta = 0;
+	int version = 0;
+	int delta = 0;
 
-	अगर (program_size > 52L) अणु
+	if (program_size > 52L) {
 		first_word  = get_unaligned_be32(&p[0]);
 		version = (first_word & 1L);
 		delta = version * 8;
 
 		crc_section = get_unaligned_be32(&p[32 + delta]);
-	पूर्ण
+	}
 
-	अगर ((first_word != 0x4A414D00L) && (first_word != 0x4A414D01L))
+	if ((first_word != 0x4A414D00L) && (first_word != 0x4A414D01L))
 		status = -EIO;
 
-	अगर (crc_section >= program_size)
+	if (crc_section >= program_size)
 		status = -EIO;
 
-	अगर (status == 0) अणु
+	if (status == 0) {
 		local_expected = (u16)get_unaligned_be16(&p[crc_section]);
 
-		क्रम (i = 0; i < crc_section; ++i) अणु
+		for (i = 0; i < crc_section; ++i) {
 			databyte = p[i];
-			क्रम (bit = 0; bit < 8; bit++) अणु
-				feedback = (databyte ^ shअगरt_reg) & 0x01;
-				shअगरt_reg >>= 1;
-				अगर (feedback)
-					shअगरt_reg ^= 0x8408;
+			for (bit = 0; bit < 8; bit++) {
+				feedback = (databyte ^ shift_reg) & 0x01;
+				shift_reg >>= 1;
+				if (feedback)
+					shift_reg ^= 0x8408;
 
 				databyte >>= 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		local_actual = (u16)~shअगरt_reg;
+		local_actual = (u16)~shift_reg;
 
-		अगर (local_expected != local_actual)
+		if (local_expected != local_actual)
 			status = -EILSEQ;
 
-	पूर्ण
+	}
 
-	अगर (debug || status) अणु
-		चयन (status) अणु
-		हाल 0:
-			prपूर्णांकk(KERN_INFO "%s: CRC matched: %04x\n", __func__,
+	if (debug || status) {
+		switch (status) {
+		case 0:
+			printk(KERN_INFO "%s: CRC matched: %04x\n", __func__,
 				local_actual);
-			अवरोध;
-		हाल -EILSEQ:
-			prपूर्णांकk(KERN_ERR "%s: CRC mismatch: expected %04x, "
+			break;
+		case -EILSEQ:
+			printk(KERN_ERR "%s: CRC mismatch: expected %04x, "
 				"actual %04x\n", __func__, local_expected,
 				local_actual);
-			अवरोध;
-		हाल -EIO:
-			prपूर्णांकk(KERN_ERR "%s: error: format isn't "
+			break;
+		case -EIO:
+			printk(KERN_ERR "%s: error: format isn't "
 				"recognized.\n", __func__);
-			अवरोध;
-		शेष:
-			prपूर्णांकk(KERN_ERR "%s: CRC function returned error "
+			break;
+		default:
+			printk(KERN_ERR "%s: CRC function returned error "
 				"code %d\n", __func__, status);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक altera_get_file_info(u8 *p,
+static int altera_get_file_info(u8 *p,
 					s32 program_size,
-					पूर्णांक *क्रमmat_version,
-					पूर्णांक *action_count,
-					पूर्णांक *procedure_count)
-अणु
-	पूर्णांक status = -EIO;
+					int *format_version,
+					int *action_count,
+					int *procedure_count)
+{
+	int status = -EIO;
 	u32 first_word = 0;
-	पूर्णांक version = 0;
+	int version = 0;
 
-	अगर (program_size <= 52L)
-		वापस status;
+	if (program_size <= 52L)
+		return status;
 
 	first_word = get_unaligned_be32(&p[0]);
 
-	अगर ((first_word == 0x4A414D00L) || (first_word == 0x4A414D01L)) अणु
+	if ((first_word == 0x4A414D00L) || (first_word == 0x4A414D01L)) {
 		status = 0;
 
 		version = (first_word & 1L);
-		*क्रमmat_version = version + 1;
+		*format_version = version + 1;
 
-		अगर (version > 0) अणु
+		if (version > 0) {
 			*action_count = get_unaligned_be32(&p[48]);
 			*procedure_count = get_unaligned_be32(&p[52]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक altera_get_act_info(u8 *p,
+static int altera_get_act_info(u8 *p,
 					s32 program_size,
-					पूर्णांक index,
-					अक्षर **name,
-					अक्षर **description,
-					काष्ठा altera_procinfo **proc_list)
-अणु
-	पूर्णांक status = -EIO;
-	काष्ठा altera_procinfo *procptr = शून्य;
-	काष्ठा altera_procinfo *पंचांगpptr = शून्य;
+					int index,
+					char **name,
+					char **description,
+					struct altera_procinfo **proc_list)
+{
+	int status = -EIO;
+	struct altera_procinfo *procptr = NULL;
+	struct altera_procinfo *tmpptr = NULL;
 	u32 first_word = 0L;
 	u32 action_table = 0L;
 	u32 proc_table = 0L;
@@ -2333,13 +2332,13 @@ MODULE_LICENSE("GPL");
 	u32 act_proc_name = 0L;
 	u8 act_proc_attribute = 0;
 
-	अगर (program_size <= 52L)
-		वापस status;
-	/* Read header inक्रमmation */
+	if (program_size <= 52L)
+		return status;
+	/* Read header information */
 	first_word = get_unaligned_be32(&p[0]);
 
-	अगर (first_word != 0x4A414D01L)
-		वापस status;
+	if (first_word != 0x4A414D01L)
+		return status;
 
 	action_table = get_unaligned_be32(&p[4]);
 	proc_table   = get_unaligned_be32(&p[8]);
@@ -2348,8 +2347,8 @@ MODULE_LICENSE("GPL");
 	action_count = get_unaligned_be32(&p[48]);
 	proc_count   = get_unaligned_be32(&p[52]);
 
-	अगर (index >= action_count)
-		वापस status;
+	if (index >= action_count)
+		return status;
 
 	act_name_id = get_unaligned_be32(&p[action_table + (12 * index)]);
 	act_desc_id = get_unaligned_be32(&p[action_table + (12 * index) + 4]);
@@ -2357,162 +2356,162 @@ MODULE_LICENSE("GPL");
 
 	*name = &p[str_table + act_name_id];
 
-	अगर (act_desc_id < (note_strings - str_table))
+	if (act_desc_id < (note_strings - str_table))
 		*description = &p[str_table + act_desc_id];
 
-	करो अणु
+	do {
 		act_proc_name = get_unaligned_be32(
 					&p[proc_table + (13 * act_proc_id)]);
 		act_proc_attribute =
 			(p[proc_table + (13 * act_proc_id) + 8] & 0x03);
 
 		procptr =
-				kzalloc(माप(काष्ठा altera_procinfo),
+				kzalloc(sizeof(struct altera_procinfo),
 								GFP_KERNEL);
 
-		अगर (procptr == शून्य)
+		if (procptr == NULL)
 			status = -ENOMEM;
-		अन्यथा अणु
+		else {
 			procptr->name = &p[str_table + act_proc_name];
 			procptr->attrs = act_proc_attribute;
-			procptr->next = शून्य;
+			procptr->next = NULL;
 
 			/* add record to end of linked list */
-			अगर (*proc_list == शून्य)
+			if (*proc_list == NULL)
 				*proc_list = procptr;
-			अन्यथा अणु
-				पंचांगpptr = *proc_list;
-				जबतक (पंचांगpptr->next != शून्य)
-					पंचांगpptr = पंचांगpptr->next;
-				पंचांगpptr->next = procptr;
-			पूर्ण
-		पूर्ण
+			else {
+				tmpptr = *proc_list;
+				while (tmpptr->next != NULL)
+					tmpptr = tmpptr->next;
+				tmpptr->next = procptr;
+			}
+		}
 
 		act_proc_id = get_unaligned_be32(
 				&p[proc_table + (13 * act_proc_id) + 4]);
-	पूर्ण जबतक ((act_proc_id != 0) && (act_proc_id < proc_count));
+	} while ((act_proc_id != 0) && (act_proc_id < proc_count));
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-पूर्णांक altera_init(काष्ठा altera_config *config, स्थिर काष्ठा firmware *fw)
-अणु
-	काष्ठा altera_state *astate = शून्य;
-	काष्ठा altera_procinfo *proc_list = शून्य;
-	काष्ठा altera_procinfo *procptr = शून्य;
-	अक्षर *key = शून्य;
-	अक्षर *value = शून्य;
-	अक्षर *action_name = शून्य;
-	अक्षर *description = शून्य;
-	पूर्णांक exec_result = 0;
-	पूर्णांक निकास_code = 0;
-	पूर्णांक क्रमmat_version = 0;
-	पूर्णांक action_count = 0;
-	पूर्णांक procedure_count = 0;
-	पूर्णांक index = 0;
+int altera_init(struct altera_config *config, const struct firmware *fw)
+{
+	struct altera_state *astate = NULL;
+	struct altera_procinfo *proc_list = NULL;
+	struct altera_procinfo *procptr = NULL;
+	char *key = NULL;
+	char *value = NULL;
+	char *action_name = NULL;
+	char *description = NULL;
+	int exec_result = 0;
+	int exit_code = 0;
+	int format_version = 0;
+	int action_count = 0;
+	int procedure_count = 0;
+	int index = 0;
 	s32 offset = 0L;
 	s32 error_address = 0L;
-	पूर्णांक retval = 0;
+	int retval = 0;
 
 	key = kzalloc(33, GFP_KERNEL);
-	अगर (!key) अणु
+	if (!key) {
 		retval = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	value = kzalloc(257, GFP_KERNEL);
-	अगर (!value) अणु
+	if (!value) {
 		retval = -ENOMEM;
-		जाओ मुक्त_key;
-	पूर्ण
-	astate = kzalloc(माप(काष्ठा altera_state), GFP_KERNEL);
-	अगर (!astate) अणु
+		goto free_key;
+	}
+	astate = kzalloc(sizeof(struct altera_state), GFP_KERNEL);
+	if (!astate) {
 		retval = -ENOMEM;
-		जाओ मुक्त_value;
-	पूर्ण
+		goto free_value;
+	}
 
 	astate->config = config;
-	अगर (!astate->config->jtag_io) अणु
-		dprपूर्णांकk("%s: using byteblaster!\n", __func__);
+	if (!astate->config->jtag_io) {
+		dprintk("%s: using byteblaster!\n", __func__);
 		astate->config->jtag_io = netup_jtag_io_lpt;
-	पूर्ण
+	}
 
 	altera_check_crc((u8 *)fw->data, fw->size);
 
-	अगर (debug) अणु
-		altera_get_file_info((u8 *)fw->data, fw->size, &क्रमmat_version,
+	if (debug) {
+		altera_get_file_info((u8 *)fw->data, fw->size, &format_version,
 					&action_count, &procedure_count);
-		prपूर्णांकk(KERN_INFO "%s: File format is %s ByteCode format\n",
-			__func__, (क्रमmat_version == 2) ? "Jam STAPL" :
+		printk(KERN_INFO "%s: File format is %s ByteCode format\n",
+			__func__, (format_version == 2) ? "Jam STAPL" :
 						"pre-standardized Jam 1.1");
-		जबतक (altera_get_note((u8 *)fw->data, fw->size,
+		while (altera_get_note((u8 *)fw->data, fw->size,
 					&offset, key, value, 32, 256) == 0)
-			prपूर्णांकk(KERN_INFO "%s: NOTE \"%s\" = \"%s\"\n",
+			printk(KERN_INFO "%s: NOTE \"%s\" = \"%s\"\n",
 					__func__, key, value);
-	पूर्ण
+	}
 
-	अगर (debug && (क्रमmat_version == 2) && (action_count > 0)) अणु
-		prपूर्णांकk(KERN_INFO "%s: Actions available:\n", __func__);
-		क्रम (index = 0; index < action_count; ++index) अणु
+	if (debug && (format_version == 2) && (action_count > 0)) {
+		printk(KERN_INFO "%s: Actions available:\n", __func__);
+		for (index = 0; index < action_count; ++index) {
 			altera_get_act_info((u8 *)fw->data, fw->size,
 						index, &action_name,
 						&description,
 						&proc_list);
 
-			अगर (description == शून्य)
-				prपूर्णांकk(KERN_INFO "%s: %s\n",
+			if (description == NULL)
+				printk(KERN_INFO "%s: %s\n",
 						__func__,
 						action_name);
-			अन्यथा
-				prपूर्णांकk(KERN_INFO "%s: %s \"%s\"\n",
+			else
+				printk(KERN_INFO "%s: %s \"%s\"\n",
 						__func__,
 						action_name,
 						description);
 
 			procptr = proc_list;
-			जबतक (procptr != शून्य) अणु
-				अगर (procptr->attrs != 0)
-					prपूर्णांकk(KERN_INFO "%s:    %s (%s)\n",
+			while (procptr != NULL) {
+				if (procptr->attrs != 0)
+					printk(KERN_INFO "%s:    %s (%s)\n",
 						__func__,
 						procptr->name,
 						(procptr->attrs == 1) ?
 						"optional" : "recommended");
 
 				proc_list = procptr->next;
-				kमुक्त(procptr);
+				kfree(procptr);
 				procptr = proc_list;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		prपूर्णांकk(KERN_INFO "\n");
-	पूर्ण
+		printk(KERN_INFO "\n");
+	}
 
 	exec_result = altera_execute(astate, (u8 *)fw->data, fw->size,
-				&error_address, &निकास_code, &क्रमmat_version);
+				&error_address, &exit_code, &format_version);
 
-	अगर (निकास_code)
+	if (exit_code)
 		exec_result = -EREMOTEIO;
 
-	अगर ((क्रमmat_version == 2) && (exec_result == -EINVAL)) अणु
-		अगर (astate->config->action == शून्य)
-			prपूर्णांकk(KERN_ERR "%s: error: no action specified for "
+	if ((format_version == 2) && (exec_result == -EINVAL)) {
+		if (astate->config->action == NULL)
+			printk(KERN_ERR "%s: error: no action specified for "
 				"Jam STAPL file.\nprogram terminated.\n",
 				__func__);
-		अन्यथा
-			prपूर्णांकk(KERN_ERR "%s: error: action \"%s\""
+		else
+			printk(KERN_ERR "%s: error: action \"%s\""
 				" is not supported "
 				"for this Jam STAPL file.\n"
 				"Program terminated.\n", __func__,
 				astate->config->action);
 
-	पूर्ण अन्यथा अगर (exec_result)
-		prपूर्णांकk(KERN_ERR "%s: error %d\n", __func__, exec_result);
+	} else if (exec_result)
+		printk(KERN_ERR "%s: error %d\n", __func__, exec_result);
 
-	kमुक्त(astate);
-मुक्त_value:
-	kमुक्त(value);
-मुक्त_key:
-	kमुक्त(key);
+	kfree(astate);
+free_value:
+	kfree(value);
+free_key:
+	kfree(key);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 EXPORT_SYMBOL(altera_init);

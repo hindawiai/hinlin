@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Wondermedia I2C Master Mode Driver
  *
@@ -9,412 +8,412 @@
  *  - Copyright (C) 2008 WonderMedia Technologies, Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/platform_device.h>
 
-#घोषणा REG_CR		0x00
-#घोषणा REG_TCR		0x02
-#घोषणा REG_CSR		0x04
-#घोषणा REG_ISR		0x06
-#घोषणा REG_IMR		0x08
-#घोषणा REG_CDR		0x0A
-#घोषणा REG_TR		0x0C
-#घोषणा REG_MCR		0x0E
-#घोषणा REG_SLAVE_CR	0x10
-#घोषणा REG_SLAVE_SR	0x12
-#घोषणा REG_SLAVE_ISR	0x14
-#घोषणा REG_SLAVE_IMR	0x16
-#घोषणा REG_SLAVE_DR	0x18
-#घोषणा REG_SLAVE_TR	0x1A
+#define REG_CR		0x00
+#define REG_TCR		0x02
+#define REG_CSR		0x04
+#define REG_ISR		0x06
+#define REG_IMR		0x08
+#define REG_CDR		0x0A
+#define REG_TR		0x0C
+#define REG_MCR		0x0E
+#define REG_SLAVE_CR	0x10
+#define REG_SLAVE_SR	0x12
+#define REG_SLAVE_ISR	0x14
+#define REG_SLAVE_IMR	0x16
+#define REG_SLAVE_DR	0x18
+#define REG_SLAVE_TR	0x1A
 
 /* REG_CR Bit fields */
-#घोषणा CR_TX_NEXT_ACK		0x0000
-#घोषणा CR_ENABLE		0x0001
-#घोषणा CR_TX_NEXT_NO_ACK	0x0002
-#घोषणा CR_TX_END		0x0004
-#घोषणा CR_CPU_RDY		0x0008
-#घोषणा SLAV_MODE_SEL		0x8000
+#define CR_TX_NEXT_ACK		0x0000
+#define CR_ENABLE		0x0001
+#define CR_TX_NEXT_NO_ACK	0x0002
+#define CR_TX_END		0x0004
+#define CR_CPU_RDY		0x0008
+#define SLAV_MODE_SEL		0x8000
 
 /* REG_TCR Bit fields */
-#घोषणा TCR_STANDARD_MODE	0x0000
-#घोषणा TCR_MASTER_WRITE	0x0000
-#घोषणा TCR_HS_MODE		0x2000
-#घोषणा TCR_MASTER_READ		0x4000
-#घोषणा TCR_FAST_MODE		0x8000
-#घोषणा TCR_SLAVE_ADDR_MASK	0x007F
+#define TCR_STANDARD_MODE	0x0000
+#define TCR_MASTER_WRITE	0x0000
+#define TCR_HS_MODE		0x2000
+#define TCR_MASTER_READ		0x4000
+#define TCR_FAST_MODE		0x8000
+#define TCR_SLAVE_ADDR_MASK	0x007F
 
 /* REG_ISR Bit fields */
-#घोषणा ISR_NACK_ADDR		0x0001
-#घोषणा ISR_BYTE_END		0x0002
-#घोषणा ISR_SCL_TIMEOUT		0x0004
-#घोषणा ISR_WRITE_ALL		0x0007
+#define ISR_NACK_ADDR		0x0001
+#define ISR_BYTE_END		0x0002
+#define ISR_SCL_TIMEOUT		0x0004
+#define ISR_WRITE_ALL		0x0007
 
 /* REG_IMR Bit fields */
-#घोषणा IMR_ENABLE_ALL		0x0007
+#define IMR_ENABLE_ALL		0x0007
 
 /* REG_CSR Bit fields */
-#घोषणा CSR_RCV_NOT_ACK		0x0001
-#घोषणा CSR_RCV_ACK_MASK	0x0001
-#घोषणा CSR_READY_MASK		0x0002
+#define CSR_RCV_NOT_ACK		0x0001
+#define CSR_RCV_ACK_MASK	0x0001
+#define CSR_READY_MASK		0x0002
 
 /* REG_TR */
-#घोषणा SCL_TIMEOUT(x)		(((x) & 0xFF) << 8)
-#घोषणा TR_STD			0x0064
-#घोषणा TR_HS			0x0019
+#define SCL_TIMEOUT(x)		(((x) & 0xFF) << 8)
+#define TR_STD			0x0064
+#define TR_HS			0x0019
 
 /* REG_MCR */
-#घोषणा MCR_APB_96M		7
-#घोषणा MCR_APB_166M		12
+#define MCR_APB_96M		7
+#define MCR_APB_166M		12
 
-#घोषणा I2C_MODE_STANDARD	0
-#घोषणा I2C_MODE_FAST		1
+#define I2C_MODE_STANDARD	0
+#define I2C_MODE_FAST		1
 
-#घोषणा WMT_I2C_TIMEOUT		(msecs_to_jअगरfies(1000))
+#define WMT_I2C_TIMEOUT		(msecs_to_jiffies(1000))
 
-काष्ठा wmt_i2c_dev अणु
-	काष्ठा i2c_adapter	adapter;
-	काष्ठा completion	complete;
-	काष्ठा device		*dev;
-	व्योम __iomem		*base;
-	काष्ठा clk		*clk;
-	पूर्णांक			mode;
-	पूर्णांक			irq;
+struct wmt_i2c_dev {
+	struct i2c_adapter	adapter;
+	struct completion	complete;
+	struct device		*dev;
+	void __iomem		*base;
+	struct clk		*clk;
+	int			mode;
+	int			irq;
 	u16			cmd_status;
-पूर्ण;
+};
 
-अटल पूर्णांक wmt_i2c_रुको_bus_not_busy(काष्ठा wmt_i2c_dev *i2c_dev)
-अणु
-	अचिन्हित दीर्घ समयout;
+static int wmt_i2c_wait_bus_not_busy(struct wmt_i2c_dev *i2c_dev)
+{
+	unsigned long timeout;
 
-	समयout = jअगरfies + WMT_I2C_TIMEOUT;
-	जबतक (!(पढ़ोw(i2c_dev->base + REG_CSR) & CSR_READY_MASK)) अणु
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	timeout = jiffies + WMT_I2C_TIMEOUT;
+	while (!(readw(i2c_dev->base + REG_CSR) & CSR_READY_MASK)) {
+		if (time_after(jiffies, timeout)) {
 			dev_warn(i2c_dev->dev, "timeout waiting for bus ready\n");
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 		msleep(20);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wmt_check_status(काष्ठा wmt_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक ret = 0;
+static int wmt_check_status(struct wmt_i2c_dev *i2c_dev)
+{
+	int ret = 0;
 
-	अगर (i2c_dev->cmd_status & ISR_NACK_ADDR)
+	if (i2c_dev->cmd_status & ISR_NACK_ADDR)
 		ret = -EIO;
 
-	अगर (i2c_dev->cmd_status & ISR_SCL_TIMEOUT)
+	if (i2c_dev->cmd_status & ISR_SCL_TIMEOUT)
 		ret = -ETIMEDOUT;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक wmt_i2c_ग_लिखो(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *pmsg,
-			 पूर्णांक last)
-अणु
-	काष्ठा wmt_i2c_dev *i2c_dev = i2c_get_adapdata(adap);
+static int wmt_i2c_write(struct i2c_adapter *adap, struct i2c_msg *pmsg,
+			 int last)
+{
+	struct wmt_i2c_dev *i2c_dev = i2c_get_adapdata(adap);
 	u16 val, tcr_val;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ रुको_result;
-	पूर्णांक xfer_len = 0;
+	int ret;
+	unsigned long wait_result;
+	int xfer_len = 0;
 
-	अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
-		ret = wmt_i2c_रुको_bus_not_busy(i2c_dev);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (!(pmsg->flags & I2C_M_NOSTART)) {
+		ret = wmt_i2c_wait_bus_not_busy(i2c_dev);
+		if (ret < 0)
+			return ret;
+	}
 
-	अगर (pmsg->len == 0) अणु
+	if (pmsg->len == 0) {
 		/*
-		 * We still need to run through the जबतक (..) once, so
-		 * start at -1 and अवरोध out early from the loop
+		 * We still need to run through the while (..) once, so
+		 * start at -1 and break out early from the loop
 		 */
 		xfer_len = -1;
-		ग_लिखोw(0, i2c_dev->base + REG_CDR);
-	पूर्ण अन्यथा अणु
-		ग_लिखोw(pmsg->buf[0] & 0xFF, i2c_dev->base + REG_CDR);
-	पूर्ण
+		writew(0, i2c_dev->base + REG_CDR);
+	} else {
+		writew(pmsg->buf[0] & 0xFF, i2c_dev->base + REG_CDR);
+	}
 
-	अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
-		val = पढ़ोw(i2c_dev->base + REG_CR);
+	if (!(pmsg->flags & I2C_M_NOSTART)) {
+		val = readw(i2c_dev->base + REG_CR);
 		val &= ~CR_TX_END;
-		ग_लिखोw(val, i2c_dev->base + REG_CR);
+		writew(val, i2c_dev->base + REG_CR);
 
-		val = पढ़ोw(i2c_dev->base + REG_CR);
+		val = readw(i2c_dev->base + REG_CR);
 		val |= CR_CPU_RDY;
-		ग_लिखोw(val, i2c_dev->base + REG_CR);
-	पूर्ण
+		writew(val, i2c_dev->base + REG_CR);
+	}
 
 	reinit_completion(&i2c_dev->complete);
 
-	अगर (i2c_dev->mode == I2C_MODE_STANDARD)
+	if (i2c_dev->mode == I2C_MODE_STANDARD)
 		tcr_val = TCR_STANDARD_MODE;
-	अन्यथा
+	else
 		tcr_val = TCR_FAST_MODE;
 
 	tcr_val |= (TCR_MASTER_WRITE | (pmsg->addr & TCR_SLAVE_ADDR_MASK));
 
-	ग_लिखोw(tcr_val, i2c_dev->base + REG_TCR);
+	writew(tcr_val, i2c_dev->base + REG_TCR);
 
-	अगर (pmsg->flags & I2C_M_NOSTART) अणु
-		val = पढ़ोw(i2c_dev->base + REG_CR);
+	if (pmsg->flags & I2C_M_NOSTART) {
+		val = readw(i2c_dev->base + REG_CR);
 		val |= CR_CPU_RDY;
-		ग_लिखोw(val, i2c_dev->base + REG_CR);
-	पूर्ण
+		writew(val, i2c_dev->base + REG_CR);
+	}
 
-	जबतक (xfer_len < pmsg->len) अणु
-		रुको_result = रुको_क्रम_completion_समयout(&i2c_dev->complete,
-							msecs_to_jअगरfies(500));
+	while (xfer_len < pmsg->len) {
+		wait_result = wait_for_completion_timeout(&i2c_dev->complete,
+							msecs_to_jiffies(500));
 
-		अगर (रुको_result == 0)
-			वापस -ETIMEDOUT;
+		if (wait_result == 0)
+			return -ETIMEDOUT;
 
 		ret = wmt_check_status(i2c_dev);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		xfer_len++;
 
-		val = पढ़ोw(i2c_dev->base + REG_CSR);
-		अगर ((val & CSR_RCV_ACK_MASK) == CSR_RCV_NOT_ACK) अणु
+		val = readw(i2c_dev->base + REG_CSR);
+		if ((val & CSR_RCV_ACK_MASK) == CSR_RCV_NOT_ACK) {
 			dev_dbg(i2c_dev->dev, "write RCV NACK error\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		अगर (pmsg->len == 0) अणु
+		if (pmsg->len == 0) {
 			val = CR_TX_END | CR_CPU_RDY | CR_ENABLE;
-			ग_लिखोw(val, i2c_dev->base + REG_CR);
-			अवरोध;
-		पूर्ण
+			writew(val, i2c_dev->base + REG_CR);
+			break;
+		}
 
-		अगर (xfer_len == pmsg->len) अणु
-			अगर (last != 1)
-				ग_लिखोw(CR_ENABLE, i2c_dev->base + REG_CR);
-		पूर्ण अन्यथा अणु
-			ग_लिखोw(pmsg->buf[xfer_len] & 0xFF, i2c_dev->base +
+		if (xfer_len == pmsg->len) {
+			if (last != 1)
+				writew(CR_ENABLE, i2c_dev->base + REG_CR);
+		} else {
+			writew(pmsg->buf[xfer_len] & 0xFF, i2c_dev->base +
 								REG_CDR);
-			ग_लिखोw(CR_CPU_RDY | CR_ENABLE, i2c_dev->base + REG_CR);
-		पूर्ण
-	पूर्ण
+			writew(CR_CPU_RDY | CR_ENABLE, i2c_dev->base + REG_CR);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wmt_i2c_पढ़ो(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *pmsg,
-			पूर्णांक last)
-अणु
-	काष्ठा wmt_i2c_dev *i2c_dev = i2c_get_adapdata(adap);
+static int wmt_i2c_read(struct i2c_adapter *adap, struct i2c_msg *pmsg,
+			int last)
+{
+	struct wmt_i2c_dev *i2c_dev = i2c_get_adapdata(adap);
 	u16 val, tcr_val;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ रुको_result;
+	int ret;
+	unsigned long wait_result;
 	u32 xfer_len = 0;
 
-	अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
-		ret = wmt_i2c_रुको_bus_not_busy(i2c_dev);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (!(pmsg->flags & I2C_M_NOSTART)) {
+		ret = wmt_i2c_wait_bus_not_busy(i2c_dev);
+		if (ret < 0)
+			return ret;
+	}
 
-	val = पढ़ोw(i2c_dev->base + REG_CR);
+	val = readw(i2c_dev->base + REG_CR);
 	val &= ~CR_TX_END;
-	ग_लिखोw(val, i2c_dev->base + REG_CR);
+	writew(val, i2c_dev->base + REG_CR);
 
-	val = पढ़ोw(i2c_dev->base + REG_CR);
+	val = readw(i2c_dev->base + REG_CR);
 	val &= ~CR_TX_NEXT_NO_ACK;
-	ग_लिखोw(val, i2c_dev->base + REG_CR);
+	writew(val, i2c_dev->base + REG_CR);
 
-	अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
-		val = पढ़ोw(i2c_dev->base + REG_CR);
+	if (!(pmsg->flags & I2C_M_NOSTART)) {
+		val = readw(i2c_dev->base + REG_CR);
 		val |= CR_CPU_RDY;
-		ग_लिखोw(val, i2c_dev->base + REG_CR);
-	पूर्ण
+		writew(val, i2c_dev->base + REG_CR);
+	}
 
-	अगर (pmsg->len == 1) अणु
-		val = पढ़ोw(i2c_dev->base + REG_CR);
+	if (pmsg->len == 1) {
+		val = readw(i2c_dev->base + REG_CR);
 		val |= CR_TX_NEXT_NO_ACK;
-		ग_लिखोw(val, i2c_dev->base + REG_CR);
-	पूर्ण
+		writew(val, i2c_dev->base + REG_CR);
+	}
 
 	reinit_completion(&i2c_dev->complete);
 
-	अगर (i2c_dev->mode == I2C_MODE_STANDARD)
+	if (i2c_dev->mode == I2C_MODE_STANDARD)
 		tcr_val = TCR_STANDARD_MODE;
-	अन्यथा
+	else
 		tcr_val = TCR_FAST_MODE;
 
 	tcr_val |= TCR_MASTER_READ | (pmsg->addr & TCR_SLAVE_ADDR_MASK);
 
-	ग_लिखोw(tcr_val, i2c_dev->base + REG_TCR);
+	writew(tcr_val, i2c_dev->base + REG_TCR);
 
-	अगर (pmsg->flags & I2C_M_NOSTART) अणु
-		val = पढ़ोw(i2c_dev->base + REG_CR);
+	if (pmsg->flags & I2C_M_NOSTART) {
+		val = readw(i2c_dev->base + REG_CR);
 		val |= CR_CPU_RDY;
-		ग_लिखोw(val, i2c_dev->base + REG_CR);
-	पूर्ण
+		writew(val, i2c_dev->base + REG_CR);
+	}
 
-	जबतक (xfer_len < pmsg->len) अणु
-		रुको_result = रुको_क्रम_completion_समयout(&i2c_dev->complete,
-							msecs_to_jअगरfies(500));
+	while (xfer_len < pmsg->len) {
+		wait_result = wait_for_completion_timeout(&i2c_dev->complete,
+							msecs_to_jiffies(500));
 
-		अगर (!रुको_result)
-			वापस -ETIMEDOUT;
+		if (!wait_result)
+			return -ETIMEDOUT;
 
 		ret = wmt_check_status(i2c_dev);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		pmsg->buf[xfer_len] = पढ़ोw(i2c_dev->base + REG_CDR) >> 8;
+		pmsg->buf[xfer_len] = readw(i2c_dev->base + REG_CDR) >> 8;
 		xfer_len++;
 
-		अगर (xfer_len == pmsg->len - 1) अणु
-			val = पढ़ोw(i2c_dev->base + REG_CR);
+		if (xfer_len == pmsg->len - 1) {
+			val = readw(i2c_dev->base + REG_CR);
 			val |= (CR_TX_NEXT_NO_ACK | CR_CPU_RDY);
-			ग_लिखोw(val, i2c_dev->base + REG_CR);
-		पूर्ण अन्यथा अणु
-			val = पढ़ोw(i2c_dev->base + REG_CR);
+			writew(val, i2c_dev->base + REG_CR);
+		} else {
+			val = readw(i2c_dev->base + REG_CR);
 			val |= CR_CPU_RDY;
-			ग_लिखोw(val, i2c_dev->base + REG_CR);
-		पूर्ण
-	पूर्ण
+			writew(val, i2c_dev->base + REG_CR);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wmt_i2c_xfer(काष्ठा i2c_adapter *adap,
-			काष्ठा i2c_msg msgs[],
-			पूर्णांक num)
-अणु
-	काष्ठा i2c_msg *pmsg;
-	पूर्णांक i, is_last;
-	पूर्णांक ret = 0;
+static int wmt_i2c_xfer(struct i2c_adapter *adap,
+			struct i2c_msg msgs[],
+			int num)
+{
+	struct i2c_msg *pmsg;
+	int i, is_last;
+	int ret = 0;
 
-	क्रम (i = 0; ret >= 0 && i < num; i++) अणु
+	for (i = 0; ret >= 0 && i < num; i++) {
 		is_last = ((i + 1) == num);
 
 		pmsg = &msgs[i];
-		अगर (pmsg->flags & I2C_M_RD)
-			ret = wmt_i2c_पढ़ो(adap, pmsg, is_last);
-		अन्यथा
-			ret = wmt_i2c_ग_लिखो(adap, pmsg, is_last);
-	पूर्ण
+		if (pmsg->flags & I2C_M_RD)
+			ret = wmt_i2c_read(adap, pmsg, is_last);
+		else
+			ret = wmt_i2c_write(adap, pmsg, is_last);
+	}
 
-	वापस (ret < 0) ? ret : i;
-पूर्ण
+	return (ret < 0) ? ret : i;
+}
 
-अटल u32 wmt_i2c_func(काष्ठा i2c_adapter *adap)
-अणु
-	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_NOSTART;
-पूर्ण
+static u32 wmt_i2c_func(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_NOSTART;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm wmt_i2c_algo = अणु
+static const struct i2c_algorithm wmt_i2c_algo = {
 	.master_xfer	= wmt_i2c_xfer,
 	.functionality	= wmt_i2c_func,
-पूर्ण;
+};
 
-अटल irqवापस_t wmt_i2c_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा wmt_i2c_dev *i2c_dev = data;
+static irqreturn_t wmt_i2c_isr(int irq, void *data)
+{
+	struct wmt_i2c_dev *i2c_dev = data;
 
-	/* save the status and ग_लिखो-clear it */
-	i2c_dev->cmd_status = पढ़ोw(i2c_dev->base + REG_ISR);
-	ग_लिखोw(i2c_dev->cmd_status, i2c_dev->base + REG_ISR);
+	/* save the status and write-clear it */
+	i2c_dev->cmd_status = readw(i2c_dev->base + REG_ISR);
+	writew(i2c_dev->cmd_status, i2c_dev->base + REG_ISR);
 
 	complete(&i2c_dev->complete);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक wmt_i2c_reset_hardware(काष्ठा wmt_i2c_dev *i2c_dev)
-अणु
-	पूर्णांक err;
+static int wmt_i2c_reset_hardware(struct wmt_i2c_dev *i2c_dev)
+{
+	int err;
 
 	err = clk_prepare_enable(i2c_dev->clk);
-	अगर (err) अणु
+	if (err) {
 		dev_err(i2c_dev->dev, "failed to enable clock\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = clk_set_rate(i2c_dev->clk, 20000000);
-	अगर (err) अणु
+	if (err) {
 		dev_err(i2c_dev->dev, "failed to set clock = 20Mhz\n");
 		clk_disable_unprepare(i2c_dev->clk);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	ग_लिखोw(0, i2c_dev->base + REG_CR);
-	ग_लिखोw(MCR_APB_166M, i2c_dev->base + REG_MCR);
-	ग_लिखोw(ISR_WRITE_ALL, i2c_dev->base + REG_ISR);
-	ग_लिखोw(IMR_ENABLE_ALL, i2c_dev->base + REG_IMR);
-	ग_लिखोw(CR_ENABLE, i2c_dev->base + REG_CR);
-	पढ़ोw(i2c_dev->base + REG_CSR);		/* पढ़ो clear */
-	ग_लिखोw(ISR_WRITE_ALL, i2c_dev->base + REG_ISR);
+	writew(0, i2c_dev->base + REG_CR);
+	writew(MCR_APB_166M, i2c_dev->base + REG_MCR);
+	writew(ISR_WRITE_ALL, i2c_dev->base + REG_ISR);
+	writew(IMR_ENABLE_ALL, i2c_dev->base + REG_IMR);
+	writew(CR_ENABLE, i2c_dev->base + REG_CR);
+	readw(i2c_dev->base + REG_CSR);		/* read clear */
+	writew(ISR_WRITE_ALL, i2c_dev->base + REG_ISR);
 
-	अगर (i2c_dev->mode == I2C_MODE_STANDARD)
-		ग_लिखोw(SCL_TIMEOUT(128) | TR_STD, i2c_dev->base + REG_TR);
-	अन्यथा
-		ग_लिखोw(SCL_TIMEOUT(128) | TR_HS, i2c_dev->base + REG_TR);
+	if (i2c_dev->mode == I2C_MODE_STANDARD)
+		writew(SCL_TIMEOUT(128) | TR_STD, i2c_dev->base + REG_TR);
+	else
+		writew(SCL_TIMEOUT(128) | TR_HS, i2c_dev->base + REG_TR);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wmt_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा wmt_i2c_dev *i2c_dev;
-	काष्ठा i2c_adapter *adap;
-	काष्ठा resource *res;
-	पूर्णांक err;
+static int wmt_i2c_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct wmt_i2c_dev *i2c_dev;
+	struct i2c_adapter *adap;
+	struct resource *res;
+	int err;
 	u32 clk_rate;
 
-	i2c_dev = devm_kzalloc(&pdev->dev, माप(*i2c_dev), GFP_KERNEL);
-	अगर (!i2c_dev)
-		वापस -ENOMEM;
+	i2c_dev = devm_kzalloc(&pdev->dev, sizeof(*i2c_dev), GFP_KERNEL);
+	if (!i2c_dev)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	i2c_dev->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(i2c_dev->base))
-		वापस PTR_ERR(i2c_dev->base);
+	if (IS_ERR(i2c_dev->base))
+		return PTR_ERR(i2c_dev->base);
 
 	i2c_dev->irq = irq_of_parse_and_map(np, 0);
-	अगर (!i2c_dev->irq) अणु
+	if (!i2c_dev->irq) {
 		dev_err(&pdev->dev, "irq missing or invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	i2c_dev->clk = of_clk_get(np, 0);
-	अगर (IS_ERR(i2c_dev->clk)) अणु
+	if (IS_ERR(i2c_dev->clk)) {
 		dev_err(&pdev->dev, "unable to request clock\n");
-		वापस PTR_ERR(i2c_dev->clk);
-	पूर्ण
+		return PTR_ERR(i2c_dev->clk);
+	}
 
 	i2c_dev->mode = I2C_MODE_STANDARD;
-	err = of_property_पढ़ो_u32(np, "clock-frequency", &clk_rate);
-	अगर (!err && (clk_rate == I2C_MAX_FAST_MODE_FREQ))
+	err = of_property_read_u32(np, "clock-frequency", &clk_rate);
+	if (!err && (clk_rate == I2C_MAX_FAST_MODE_FREQ))
 		i2c_dev->mode = I2C_MODE_FAST;
 
 	i2c_dev->dev = &pdev->dev;
 
 	err = devm_request_irq(&pdev->dev, i2c_dev->irq, wmt_i2c_isr, 0,
 							"i2c", i2c_dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "failed to request irq %i\n", i2c_dev->irq);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	adap = &i2c_dev->adapter;
 	i2c_set_adapdata(adap, i2c_dev);
-	strlcpy(adap->name, "WMT I2C adapter", माप(adap->name));
+	strlcpy(adap->name, "WMT I2C adapter", sizeof(adap->name));
 	adap->owner = THIS_MODULE;
 	adap->algo = &wmt_i2c_algo;
 	adap->dev.parent = &pdev->dev;
@@ -423,47 +422,47 @@
 	init_completion(&i2c_dev->complete);
 
 	err = wmt_i2c_reset_hardware(i2c_dev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "error initializing hardware\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = i2c_add_adapter(adap);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	platक्रमm_set_drvdata(pdev, i2c_dev);
+	platform_set_drvdata(pdev, i2c_dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wmt_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा wmt_i2c_dev *i2c_dev = platक्रमm_get_drvdata(pdev);
+static int wmt_i2c_remove(struct platform_device *pdev)
+{
+	struct wmt_i2c_dev *i2c_dev = platform_get_drvdata(pdev);
 
-	/* Disable पूर्णांकerrupts, घड़ी and delete adapter */
-	ग_लिखोw(0, i2c_dev->base + REG_IMR);
+	/* Disable interrupts, clock and delete adapter */
+	writew(0, i2c_dev->base + REG_IMR);
 	clk_disable_unprepare(i2c_dev->clk);
 	i2c_del_adapter(&i2c_dev->adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id wmt_i2c_dt_ids[] = अणु
-	अणु .compatible = "wm,wm8505-i2c" पूर्ण,
-	अणु /* Sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id wmt_i2c_dt_ids[] = {
+	{ .compatible = "wm,wm8505-i2c" },
+	{ /* Sentinel */ },
+};
 
-अटल काष्ठा platक्रमm_driver wmt_i2c_driver = अणु
+static struct platform_driver wmt_i2c_driver = {
 	.probe		= wmt_i2c_probe,
-	.हटाओ		= wmt_i2c_हटाओ,
-	.driver		= अणु
+	.remove		= wmt_i2c_remove,
+	.driver		= {
 		.name	= "wmt-i2c",
 		.of_match_table = wmt_i2c_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(wmt_i2c_driver);
+module_platform_driver(wmt_i2c_driver);
 
 MODULE_DESCRIPTION("Wondermedia I2C master-mode bus adapter");
 MODULE_AUTHOR("Tony Prisk <linux@prisktech.co.nz>");

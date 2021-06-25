@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _M68K_PARAM_H
-#घोषणा _M68K_PARAM_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _M68K_PARAM_H
+#define _M68K_PARAM_H
 
-#अगर_घोषित __uClinux__
-#घोषणा EXEC_PAGESIZE	4096
-#अन्यथा
-#घोषणा EXEC_PAGESIZE	8192
-#पूर्ण_अगर
+#ifdef __uClinux__
+#define EXEC_PAGESIZE	4096
+#else
+#define EXEC_PAGESIZE	8192
+#endif
 
-#समावेश <यंत्र-generic/param.h>
+#include <asm-generic/param.h>
 
-#पूर्ण_अगर /* _M68K_PARAM_H */
+#endif /* _M68K_PARAM_H */

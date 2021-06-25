@@ -1,21 +1,20 @@
-<शैली गुरु>
 /*
- * Hermes करोwnload helper.
+ * Hermes download helper.
  *
  * This helper:
- *  - is capable of writing to the अस्थिर area of the hermes device
- *  - is currently not capable of writing to non-अस्थिर areas
- *  - provide helpers to identअगरy and update plugin data
- *  - is not capable of पूर्णांकerpreting a fw image directly. That is up to
- *    the मुख्य card driver.
- *  - deals with Hermes I devices. It can probably be modअगरied to deal
+ *  - is capable of writing to the volatile area of the hermes device
+ *  - is currently not capable of writing to non-volatile areas
+ *  - provide helpers to identify and update plugin data
+ *  - is not capable of interpreting a fw image directly. That is up to
+ *    the main card driver.
+ *  - deals with Hermes I devices. It can probably be modified to deal
  *    with Hermes II devices
  *
  * Copyright (C) 2007, David Kilroy
  *
- * Plug data code slightly modअगरied from spectrum_cs driver
+ * Plug data code slightly modified from spectrum_cs driver
  *    Copyright (C) 2002-2005 Pavel Roskin <proski@gnu.org>
- * Portions based on inक्रमmation in wl_lkm_718 Agere driver
+ * Portions based on information in wl_lkm_718 Agere driver
  *    COPYRIGHT (C) 2001-2004 by Agere Systems Inc. All Rights Reserved
  *
  * The contents of this file are subject to the Mozilla Public License
@@ -25,307 +24,307 @@
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
- * the License क्रम the specअगरic language governing rights and
+ * the License for the specific language governing rights and
  * limitations under the License.
  *
  * Alternatively, the contents of this file may be used under the
  * terms of the GNU General Public License version 2 (the "GPL"), in
- * which हाल the provisions of the GPL are applicable instead of the
+ * which case the provisions of the GPL are applicable instead of the
  * above.  If you wish to allow the use of your version of this file
  * only under the terms of the GPL and not to allow others to use your
  * version of this file under the MPL, indicate your decision by
  * deleting the provisions above and replace them with the notice and
- * other provisions required by the GPL.  If you करो not delete the
+ * other provisions required by the GPL.  If you do not delete the
  * provisions above, a recipient may use your version of this file
  * under either the MPL or the GPL.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश "hermes.h"
-#समावेश "hermes_dld.h"
+#include <linux/module.h>
+#include <linux/delay.h>
+#include "hermes.h"
+#include "hermes_dld.h"
 
-#घोषणा PFX "hermes_dld: "
+#define PFX "hermes_dld: "
 
 /* End markers used in dblocks */
-#घोषणा PDI_END		0x00000000	/* End of PDA */
-#घोषणा BLOCK_END	0xFFFFFFFF	/* Last image block */
-#घोषणा TEXT_END	0x1A		/* End of text header */
+#define PDI_END		0x00000000	/* End of PDA */
+#define BLOCK_END	0xFFFFFFFF	/* Last image block */
+#define TEXT_END	0x1A		/* End of text header */
 
 /*
- * The following काष्ठाures have little-endian fields denoted by
- * the leading underscore.  Don't access them directly - use अंतरभूत
+ * The following structures have little-endian fields denoted by
+ * the leading underscore.  Don't access them directly - use inline
  * functions defined below.
  */
 
 /*
- * The binary image to be करोwnloaded consists of series of data blocks.
- * Each block has the following काष्ठाure.
+ * The binary image to be downloaded consists of series of data blocks.
+ * Each block has the following structure.
  */
-काष्ठा dblock अणु
-	__le32 addr;		/* adapter address where to ग_लिखो the block */
+struct dblock {
+	__le32 addr;		/* adapter address where to write the block */
 	__le16 len;		/* length of the data only, in bytes */
-	अक्षर data[];		/* data to be written */
-पूर्ण __packed;
+	char data[];		/* data to be written */
+} __packed;
 
 /*
  * Plug Data References are located in the image after the last data
  * block.  They refer to areas in the adapter memory where the plug data
  * items with matching ID should be written.
  */
-काष्ठा pdr अणु
+struct pdr {
 	__le32 id;		/* record ID */
-	__le32 addr;		/* adapter address where to ग_लिखो the data */
+	__le32 addr;		/* adapter address where to write the data */
 	__le32 len;		/* expected length of the data, in bytes */
-	अक्षर next[];		/* next PDR starts here */
-पूर्ण __packed;
+	char next[];		/* next PDR starts here */
+} __packed;
 
 /*
- * Plug Data Items are located in the EEPROM पढ़ो from the adapter by
- * primary firmware.  They refer to the device-specअगरic data that should
- * be plugged पूर्णांकo the secondary firmware.
+ * Plug Data Items are located in the EEPROM read from the adapter by
+ * primary firmware.  They refer to the device-specific data that should
+ * be plugged into the secondary firmware.
  */
-काष्ठा pdi अणु
+struct pdi {
 	__le16 len;		/* length of ID and data, in words */
 	__le16 id;		/* record ID */
-	अक्षर data[];		/* plug data */
-पूर्ण __packed;
+	char data[];		/* plug data */
+} __packed;
 
 /*** FW data block access functions ***/
 
-अटल अंतरभूत u32
-dblock_addr(स्थिर काष्ठा dblock *blk)
-अणु
-	वापस le32_to_cpu(blk->addr);
-पूर्ण
+static inline u32
+dblock_addr(const struct dblock *blk)
+{
+	return le32_to_cpu(blk->addr);
+}
 
-अटल अंतरभूत u32
-dblock_len(स्थिर काष्ठा dblock *blk)
-अणु
-	वापस le16_to_cpu(blk->len);
-पूर्ण
+static inline u32
+dblock_len(const struct dblock *blk)
+{
+	return le16_to_cpu(blk->len);
+}
 
 /*** PDR Access functions ***/
 
-अटल अंतरभूत u32
-pdr_id(स्थिर काष्ठा pdr *pdr)
-अणु
-	वापस le32_to_cpu(pdr->id);
-पूर्ण
+static inline u32
+pdr_id(const struct pdr *pdr)
+{
+	return le32_to_cpu(pdr->id);
+}
 
-अटल अंतरभूत u32
-pdr_addr(स्थिर काष्ठा pdr *pdr)
-अणु
-	वापस le32_to_cpu(pdr->addr);
-पूर्ण
+static inline u32
+pdr_addr(const struct pdr *pdr)
+{
+	return le32_to_cpu(pdr->addr);
+}
 
-अटल अंतरभूत u32
-pdr_len(स्थिर काष्ठा pdr *pdr)
-अणु
-	वापस le32_to_cpu(pdr->len);
-पूर्ण
+static inline u32
+pdr_len(const struct pdr *pdr)
+{
+	return le32_to_cpu(pdr->len);
+}
 
 /*** PDI Access functions ***/
 
-अटल अंतरभूत u32
-pdi_id(स्थिर काष्ठा pdi *pdi)
-अणु
-	वापस le16_to_cpu(pdi->id);
-पूर्ण
+static inline u32
+pdi_id(const struct pdi *pdi)
+{
+	return le16_to_cpu(pdi->id);
+}
 
 /* Return length of the data only, in bytes */
-अटल अंतरभूत u32
-pdi_len(स्थिर काष्ठा pdi *pdi)
-अणु
-	वापस 2 * (le16_to_cpu(pdi->len) - 1);
-पूर्ण
+static inline u32
+pdi_len(const struct pdi *pdi)
+{
+	return 2 * (le16_to_cpu(pdi->len) - 1);
+}
 
 /*** Plug Data Functions ***/
 
 /*
- * Scan PDR क्रम the record with the specअगरied RECORD_ID.
- * If it's not found, वापस शून्य.
+ * Scan PDR for the record with the specified RECORD_ID.
+ * If it's not found, return NULL.
  */
-अटल स्थिर काष्ठा pdr *
-hermes_find_pdr(स्थिर काष्ठा pdr *first_pdr, u32 record_id, स्थिर व्योम *end)
-अणु
-	स्थिर काष्ठा pdr *pdr = first_pdr;
+static const struct pdr *
+hermes_find_pdr(const struct pdr *first_pdr, u32 record_id, const void *end)
+{
+	const struct pdr *pdr = first_pdr;
 
-	end -= माप(काष्ठा pdr);
+	end -= sizeof(struct pdr);
 
-	जबतक (((व्योम *) pdr <= end) &&
-	       (pdr_id(pdr) != PDI_END)) अणु
+	while (((void *) pdr <= end) &&
+	       (pdr_id(pdr) != PDI_END)) {
 		/*
 		 * PDR area is currently not terminated by PDI_END.
 		 * It's followed by CRC records, which have the type
 		 * field where PDR has length.  The type can be 0 or 1.
 		 */
-		अगर (pdr_len(pdr) < 2)
-			वापस शून्य;
+		if (pdr_len(pdr) < 2)
+			return NULL;
 
-		/* If the record ID matches, we are करोne */
-		अगर (pdr_id(pdr) == record_id)
-			वापस pdr;
+		/* If the record ID matches, we are done */
+		if (pdr_id(pdr) == record_id)
+			return pdr;
 
-		pdr = (काष्ठा pdr *) pdr->next;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		pdr = (struct pdr *) pdr->next;
+	}
+	return NULL;
+}
 
-/* Scan production data items क्रम a particular entry */
-अटल स्थिर काष्ठा pdi *
-hermes_find_pdi(स्थिर काष्ठा pdi *first_pdi, u32 record_id, स्थिर व्योम *end)
-अणु
-	स्थिर काष्ठा pdi *pdi = first_pdi;
+/* Scan production data items for a particular entry */
+static const struct pdi *
+hermes_find_pdi(const struct pdi *first_pdi, u32 record_id, const void *end)
+{
+	const struct pdi *pdi = first_pdi;
 
-	end -= माप(काष्ठा pdi);
+	end -= sizeof(struct pdi);
 
-	जबतक (((व्योम *) pdi <= end) &&
-	       (pdi_id(pdi) != PDI_END)) अणु
+	while (((void *) pdi <= end) &&
+	       (pdi_id(pdi) != PDI_END)) {
 
-		/* If the record ID matches, we are करोne */
-		अगर (pdi_id(pdi) == record_id)
-			वापस pdi;
+		/* If the record ID matches, we are done */
+		if (pdi_id(pdi) == record_id)
+			return pdi;
 
-		pdi = (काष्ठा pdi *) &pdi->data[pdi_len(pdi)];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		pdi = (struct pdi *) &pdi->data[pdi_len(pdi)];
+	}
+	return NULL;
+}
 
 /* Process one Plug Data Item - find corresponding PDR and plug it */
-अटल पूर्णांक
-hermes_plug_pdi(काष्ठा hermes *hw, स्थिर काष्ठा pdr *first_pdr,
-		स्थिर काष्ठा pdi *pdi, स्थिर व्योम *pdr_end)
-अणु
-	स्थिर काष्ठा pdr *pdr;
+static int
+hermes_plug_pdi(struct hermes *hw, const struct pdr *first_pdr,
+		const struct pdi *pdi, const void *pdr_end)
+{
+	const struct pdr *pdr;
 
 	/* Find the PDR corresponding to this PDI */
 	pdr = hermes_find_pdr(first_pdr, pdi_id(pdi), pdr_end);
 
 	/* No match is found, safe to ignore */
-	अगर (!pdr)
-		वापस 0;
+	if (!pdr)
+		return 0;
 
 	/* Lengths of the data in PDI and PDR must match */
-	अगर (pdi_len(pdi) != pdr_len(pdr))
-		वापस -EINVAL;
+	if (pdi_len(pdi) != pdr_len(pdr))
+		return -EINVAL;
 
-	/* करो the actual plugging */
+	/* do the actual plugging */
 	hw->ops->program(hw, pdi->data, pdr_addr(pdr), pdi_len(pdi));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Parse PDA and ग_लिखो the records पूर्णांकo the adapter
+/* Parse PDA and write the records into the adapter
  *
- * Attempt to ग_लिखो every records that is in the specअगरied pda
- * which also has a valid production data record क्रम the firmware.
+ * Attempt to write every records that is in the specified pda
+ * which also has a valid production data record for the firmware.
  */
-पूर्णांक hermes_apply_pda(काष्ठा hermes *hw,
-		     स्थिर अक्षर *first_pdr,
-		     स्थिर व्योम *pdr_end,
-		     स्थिर __le16 *pda,
-		     स्थिर व्योम *pda_end)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा pdi *pdi;
-	स्थिर काष्ठा pdr *pdr;
+int hermes_apply_pda(struct hermes *hw,
+		     const char *first_pdr,
+		     const void *pdr_end,
+		     const __le16 *pda,
+		     const void *pda_end)
+{
+	int ret;
+	const struct pdi *pdi;
+	const struct pdr *pdr;
 
-	pdr = (स्थिर काष्ठा pdr *) first_pdr;
-	pda_end -= माप(काष्ठा pdi);
+	pdr = (const struct pdr *) first_pdr;
+	pda_end -= sizeof(struct pdi);
 
-	/* Go through every PDI and plug them पूर्णांकo the adapter */
-	pdi = (स्थिर काष्ठा pdi *) (pda + 2);
-	जबतक (((व्योम *) pdi <= pda_end) &&
-	       (pdi_id(pdi) != PDI_END)) अणु
+	/* Go through every PDI and plug them into the adapter */
+	pdi = (const struct pdi *) (pda + 2);
+	while (((void *) pdi <= pda_end) &&
+	       (pdi_id(pdi) != PDI_END)) {
 		ret = hermes_plug_pdi(hw, pdr, pdi, pdr_end);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		/* Increment to the next PDI */
-		pdi = (स्थिर काष्ठा pdi *) &pdi->data[pdi_len(pdi)];
-	पूर्ण
-	वापस 0;
-पूर्ण
+		pdi = (const struct pdi *) &pdi->data[pdi_len(pdi)];
+	}
+	return 0;
+}
 
-/* Identअगरy the total number of bytes in all blocks
+/* Identify the total number of bytes in all blocks
  * including the header data.
  */
-माप_प्रकार
-hermes_blocks_length(स्थिर अक्षर *first_block, स्थिर व्योम *end)
-अणु
-	स्थिर काष्ठा dblock *blk = (स्थिर काष्ठा dblock *) first_block;
-	पूर्णांक total_len = 0;
-	पूर्णांक len;
+size_t
+hermes_blocks_length(const char *first_block, const void *end)
+{
+	const struct dblock *blk = (const struct dblock *) first_block;
+	int total_len = 0;
+	int len;
 
-	end -= माप(*blk);
+	end -= sizeof(*blk);
 
 	/* Skip all blocks to locate Plug Data References
 	 * (Spectrum CS) */
-	जबतक (((व्योम *) blk <= end) &&
-	       (dblock_addr(blk) != BLOCK_END)) अणु
+	while (((void *) blk <= end) &&
+	       (dblock_addr(blk) != BLOCK_END)) {
 		len = dblock_len(blk);
-		total_len += माप(*blk) + len;
-		blk = (काष्ठा dblock *) &blk->data[len];
-	पूर्ण
+		total_len += sizeof(*blk) + len;
+		blk = (struct dblock *) &blk->data[len];
+	}
 
-	वापस total_len;
-पूर्ण
+	return total_len;
+}
 
 /*** Hermes programming ***/
 
 /* Program the data blocks */
-पूर्णांक hermes_program(काष्ठा hermes *hw, स्थिर अक्षर *first_block, स्थिर व्योम *end)
-अणु
-	स्थिर काष्ठा dblock *blk;
+int hermes_program(struct hermes *hw, const char *first_block, const void *end)
+{
+	const struct dblock *blk;
 	u32 blkaddr;
 	u32 blklen;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	blk = (स्थिर काष्ठा dblock *) first_block;
+	blk = (const struct dblock *) first_block;
 
-	अगर ((व्योम *) blk > (end - माप(*blk)))
-		वापस -EIO;
+	if ((void *) blk > (end - sizeof(*blk)))
+		return -EIO;
 
 	blkaddr = dblock_addr(blk);
 	blklen = dblock_len(blk);
 
-	जबतक ((blkaddr != BLOCK_END) &&
-	       (((व्योम *) blk + blklen) <= end)) अणु
+	while ((blkaddr != BLOCK_END) &&
+	       (((void *) blk + blklen) <= end)) {
 		pr_debug(PFX "Programming block of length %d "
 			 "to address 0x%08x\n", blklen, blkaddr);
 
 		err = hw->ops->program(hw, blk->data, blkaddr, blklen);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		blk = (स्थिर काष्ठा dblock *) &blk->data[blklen];
+		blk = (const struct dblock *) &blk->data[blklen];
 
-		अगर ((व्योम *) blk > (end - माप(*blk)))
-			वापस -EIO;
+		if ((void *) blk > (end - sizeof(*blk)))
+			return -EIO;
 
 		blkaddr = dblock_addr(blk);
 		blklen = dblock_len(blk);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-/*** Default plugging data क्रम Hermes I ***/
+/*** Default plugging data for Hermes I ***/
 /* Values from wl_lkm_718/hcf/dhf.c */
 
-#घोषणा DEFINE_DEFAULT_PDR(pid, length, data)				\
-अटल स्थिर काष्ठा अणु							\
+#define DEFINE_DEFAULT_PDR(pid, length, data)				\
+static const struct {							\
 	__le16 len;							\
 	__le16 id;							\
 	u8 val[length];							\
-पूर्ण __packed शेष_pdr_data_##pid = अणु			\
-	cpu_to_le16((माप(शेष_pdr_data_##pid)/			\
-				माप(__le16)) - 1),			\
+} __packed default_pdr_data_##pid = {			\
+	cpu_to_le16((sizeof(default_pdr_data_##pid)/			\
+				sizeof(__le16)) - 1),			\
 	cpu_to_le16(pid),						\
 	data								\
-पूर्ण
+}
 
-#घोषणा DEFAULT_PDR(pid) शेष_pdr_data_##pid
+#define DEFAULT_PDR(pid) default_pdr_data_##pid
 
 /*  HWIF Compatibility */
 DEFINE_DEFAULT_PDR(0x0005, 10, "\x00\x00\x06\x00\x01\x00\x01\x00\x01\x00");
@@ -336,7 +335,7 @@ DEFINE_DEFAULT_PDR(0x0108, 4, "\x00\x00\x00\x00");
 /* PPPPProf */
 DEFINE_DEFAULT_PDR(0x0109, 10, "\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00");
 
-/* Antenna भागersity */
+/* Antenna diversity */
 DEFINE_DEFAULT_PDR(0x0150, 2, "\x00\x3F");
 
 /* Modem VCO band Set-up */
@@ -383,96 +382,96 @@ DEFINE_DEFAULT_PDR(0x0161, 256,
 
 /* Write PDA according to certain rules.
  *
- * For every production data record, look क्रम a previous setting in
+ * For every production data record, look for a previous setting in
  * the pda, and use that.
  *
- * For certain records, use शेषs अगर they are not found in pda.
+ * For certain records, use defaults if they are not found in pda.
  */
-पूर्णांक hermes_apply_pda_with_शेषs(काष्ठा hermes *hw,
-				   स्थिर अक्षर *first_pdr,
-				   स्थिर व्योम *pdr_end,
-				   स्थिर __le16 *pda,
-				   स्थिर व्योम *pda_end)
-अणु
-	स्थिर काष्ठा pdr *pdr = (स्थिर काष्ठा pdr *) first_pdr;
-	स्थिर काष्ठा pdi *first_pdi = (स्थिर काष्ठा pdi *) &pda[2];
-	स्थिर काष्ठा pdi *pdi;
-	स्थिर काष्ठा pdi *शेष_pdi = शून्य;
-	स्थिर काष्ठा pdi *outकरोor_pdi;
-	पूर्णांक record_id;
+int hermes_apply_pda_with_defaults(struct hermes *hw,
+				   const char *first_pdr,
+				   const void *pdr_end,
+				   const __le16 *pda,
+				   const void *pda_end)
+{
+	const struct pdr *pdr = (const struct pdr *) first_pdr;
+	const struct pdi *first_pdi = (const struct pdi *) &pda[2];
+	const struct pdi *pdi;
+	const struct pdi *default_pdi = NULL;
+	const struct pdi *outdoor_pdi;
+	int record_id;
 
-	pdr_end -= माप(काष्ठा pdr);
+	pdr_end -= sizeof(struct pdr);
 
-	जबतक (((व्योम *) pdr <= pdr_end) &&
-	       (pdr_id(pdr) != PDI_END)) अणु
+	while (((void *) pdr <= pdr_end) &&
+	       (pdr_id(pdr) != PDI_END)) {
 		/*
 		 * For spectrum_cs firmwares,
 		 * PDR area is currently not terminated by PDI_END.
 		 * It's followed by CRC records, which have the type
 		 * field where PDR has length.  The type can be 0 or 1.
 		 */
-		अगर (pdr_len(pdr) < 2)
-			अवरोध;
+		if (pdr_len(pdr) < 2)
+			break;
 		record_id = pdr_id(pdr);
 
 		pdi = hermes_find_pdi(first_pdi, record_id, pda_end);
-		अगर (pdi)
+		if (pdi)
 			pr_debug(PFX "Found record 0x%04x at %p\n",
 				 record_id, pdi);
 
-		चयन (record_id) अणु
-		हाल 0x110: /* Modem REFDAC values */
-		हाल 0x120: /* Modem VGDAC values */
-			outकरोor_pdi = hermes_find_pdi(first_pdi, record_id + 1,
+		switch (record_id) {
+		case 0x110: /* Modem REFDAC values */
+		case 0x120: /* Modem VGDAC values */
+			outdoor_pdi = hermes_find_pdi(first_pdi, record_id + 1,
 						      pda_end);
-			शेष_pdi = शून्य;
-			अगर (outकरोor_pdi) अणु
-				pdi = outकरोor_pdi;
+			default_pdi = NULL;
+			if (outdoor_pdi) {
+				pdi = outdoor_pdi;
 				pr_debug(PFX
 					 "Using outdoor record 0x%04x at %p\n",
 					 record_id + 1, pdi);
-			पूर्ण
-			अवरोध;
-		हाल 0x5: /*  HWIF Compatibility */
-			शेष_pdi = (काष्ठा pdi *) &DEFAULT_PDR(0x0005);
-			अवरोध;
-		हाल 0x108: /* PPPPSign */
-			शेष_pdi = (काष्ठा pdi *) &DEFAULT_PDR(0x0108);
-			अवरोध;
-		हाल 0x109: /* PPPPProf */
-			शेष_pdi = (काष्ठा pdi *) &DEFAULT_PDR(0x0109);
-			अवरोध;
-		हाल 0x150: /* Antenna भागersity */
-			शेष_pdi = (काष्ठा pdi *) &DEFAULT_PDR(0x0150);
-			अवरोध;
-		हाल 0x160: /* Modem VCO band Set-up */
-			शेष_pdi = (काष्ठा pdi *) &DEFAULT_PDR(0x0160);
-			अवरोध;
-		हाल 0x161: /* Modem Rx Gain Table Values */
-			शेष_pdi = (काष्ठा pdi *) &DEFAULT_PDR(0x0161);
-			अवरोध;
-		शेष:
-			शेष_pdi = शून्य;
-			अवरोध;
-		पूर्ण
-		अगर (!pdi && शेष_pdi) अणु
-			/* Use शेष */
-			pdi = शेष_pdi;
+			}
+			break;
+		case 0x5: /*  HWIF Compatibility */
+			default_pdi = (struct pdi *) &DEFAULT_PDR(0x0005);
+			break;
+		case 0x108: /* PPPPSign */
+			default_pdi = (struct pdi *) &DEFAULT_PDR(0x0108);
+			break;
+		case 0x109: /* PPPPProf */
+			default_pdi = (struct pdi *) &DEFAULT_PDR(0x0109);
+			break;
+		case 0x150: /* Antenna diversity */
+			default_pdi = (struct pdi *) &DEFAULT_PDR(0x0150);
+			break;
+		case 0x160: /* Modem VCO band Set-up */
+			default_pdi = (struct pdi *) &DEFAULT_PDR(0x0160);
+			break;
+		case 0x161: /* Modem Rx Gain Table Values */
+			default_pdi = (struct pdi *) &DEFAULT_PDR(0x0161);
+			break;
+		default:
+			default_pdi = NULL;
+			break;
+		}
+		if (!pdi && default_pdi) {
+			/* Use default */
+			pdi = default_pdi;
 			pr_debug(PFX "Using default record 0x%04x at %p\n",
 				 record_id, pdi);
-		पूर्ण
+		}
 
-		अगर (pdi) अणु
+		if (pdi) {
 			/* Lengths of the data in PDI and PDR must match */
-			अगर ((pdi_len(pdi) == pdr_len(pdr)) &&
-			    ((व्योम *) pdi->data + pdi_len(pdi) < pda_end)) अणु
-				/* करो the actual plugging */
+			if ((pdi_len(pdi) == pdr_len(pdr)) &&
+			    ((void *) pdi->data + pdi_len(pdi) < pda_end)) {
+				/* do the actual plugging */
 				hw->ops->program(hw, pdi->data, pdr_addr(pdr),
 						 pdi_len(pdi));
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		pdr++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

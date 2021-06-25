@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	Sound core.  This file is composed of two parts.  sound_class
  *	which is common to both OSS and ALSA and OSS sound core which
@@ -9,65 +8,65 @@
 /*
  * First, the common part.
  */
-#समावेश <linux/module.h>
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/major.h>
-#समावेश <sound/core.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/kdev_t.h>
+#include <linux/major.h>
+#include <sound/core.h>
 
-#अगर_घोषित CONFIG_SOUND_OSS_CORE
-अटल पूर्णांक __init init_oss_soundcore(व्योम);
-अटल व्योम cleanup_oss_soundcore(व्योम);
-#अन्यथा
-अटल अंतरभूत पूर्णांक init_oss_soundcore(व्योम)	अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम cleanup_oss_soundcore(व्योम)	अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_SOUND_OSS_CORE
+static int __init init_oss_soundcore(void);
+static void cleanup_oss_soundcore(void);
+#else
+static inline int init_oss_soundcore(void)	{ return 0; }
+static inline void cleanup_oss_soundcore(void)	{ }
+#endif
 
-काष्ठा class *sound_class;
+struct class *sound_class;
 EXPORT_SYMBOL(sound_class);
 
 MODULE_DESCRIPTION("Core sound module");
 MODULE_AUTHOR("Alan Cox");
 MODULE_LICENSE("GPL");
 
-अटल अक्षर *sound_devnode(काष्ठा device *dev, umode_t *mode)
-अणु
-	अगर (MAJOR(dev->devt) == SOUND_MAJOR)
-		वापस शून्य;
-	वापस kaप्र_लिखो(GFP_KERNEL, "snd/%s", dev_name(dev));
-पूर्ण
+static char *sound_devnode(struct device *dev, umode_t *mode)
+{
+	if (MAJOR(dev->devt) == SOUND_MAJOR)
+		return NULL;
+	return kasprintf(GFP_KERNEL, "snd/%s", dev_name(dev));
+}
 
-अटल पूर्णांक __init init_soundcore(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init init_soundcore(void)
+{
+	int rc;
 
 	rc = init_oss_soundcore();
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	sound_class = class_create(THIS_MODULE, "sound");
-	अगर (IS_ERR(sound_class)) अणु
+	if (IS_ERR(sound_class)) {
 		cleanup_oss_soundcore();
-		वापस PTR_ERR(sound_class);
-	पूर्ण
+		return PTR_ERR(sound_class);
+	}
 
 	sound_class->devnode = sound_devnode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास cleanup_soundcore(व्योम)
-अणु
+static void __exit cleanup_soundcore(void)
+{
 	cleanup_oss_soundcore();
 	class_destroy(sound_class);
-पूर्ण
+}
 
 subsys_initcall(init_soundcore);
-module_निकास(cleanup_soundcore);
+module_exit(cleanup_soundcore);
 
 
-#अगर_घोषित CONFIG_SOUND_OSS_CORE
+#ifdef CONFIG_SOUND_OSS_CORE
 /*
  *	OSS sound core handling. Breaks out sound functions to submodules
  *	
@@ -77,119 +76,119 @@ module_निकास(cleanup_soundcore);
  *
  *                         --------------------
  * 
- *	Top level handler क्रम the sound subप्रणाली. Various devices can
- *	plug पूर्णांकo this. The fact they करोn't all go via OSS doesn't mean 
- *	they करोn't have to implement the OSS API. There is a lot of logic
+ *	Top level handler for the sound subsystem. Various devices can
+ *	plug into this. The fact they don't all go via OSS doesn't mean 
+ *	they don't have to implement the OSS API. There is a lot of logic
  *	to keeping much of the OSS weight out of the code in a compatibility
  *	module, but it's up to the driver to rember to load it...
  *
- *	The code provides a set of functions क्रम registration of devices
- *	by type. This is करोne rather than providing a single call so that
- *	we can hide any future changes in the पूर्णांकernals (eg when we go to
- *	32bit dev_t) from the modules and their पूर्णांकerface.
+ *	The code provides a set of functions for registration of devices
+ *	by type. This is done rather than providing a single call so that
+ *	we can hide any future changes in the internals (eg when we go to
+ *	32bit dev_t) from the modules and their interface.
  *
  *	Secondly we need to allocate the dsp, dsp16 and audio devices as
- *	one. Thus we misuse the chains a bit to simplअगरy this.
+ *	one. Thus we misuse the chains a bit to simplify this.
  *
- *	Thirdly to make it more fun and क्रम 2.3.x and above we करो all
+ *	Thirdly to make it more fun and for 2.3.x and above we do all
  *	of this using fine grained locking.
  *
  *	FIXME: we have to resolve modules and fine grained load/unload
- *	locking at some poपूर्णांक in 2.3.x.
+ *	locking at some point in 2.3.x.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sound.h>
-#समावेश <linux/kmod.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sound.h>
+#include <linux/kmod.h>
 
-#घोषणा SOUND_STEP 16
+#define SOUND_STEP 16
 
-काष्ठा sound_unit
-अणु
-	पूर्णांक unit_minor;
-	स्थिर काष्ठा file_operations *unit_fops;
-	काष्ठा sound_unit *next;
-	अक्षर name[32];
-पूर्ण;
+struct sound_unit
+{
+	int unit_minor;
+	const struct file_operations *unit_fops;
+	struct sound_unit *next;
+	char name[32];
+};
 
 /*
- * By शेष, OSS sound_core claims full legacy minor range (0-255)
- * of SOUND_MAJOR to trap खोलो attempts to any sound minor and
+ * By default, OSS sound_core claims full legacy minor range (0-255)
+ * of SOUND_MAJOR to trap open attempts to any sound minor and
  * requests modules using custom sound-slot/service-* module aliases.
- * The only benefit of करोing this is allowing use of custom module
- * aliases instead of the standard अक्षर-major-* ones.  This behavior
+ * The only benefit of doing this is allowing use of custom module
+ * aliases instead of the standard char-major-* ones.  This behavior
  * prevents alternative OSS implementation and is scheduled to be
- * हटाओd.
+ * removed.
  *
  * CONFIG_SOUND_OSS_CORE_PRECLAIM and soundcore.preclaim_oss kernel
  * parameter are added to allow distros and developers to try and
- * चयन to alternative implementations without needing to rebuild
- * the kernel in the meanसमय.  If preclaim_oss is non-zero, the
- * kernel will behave the same as beक्रमe.  All SOUND_MAJOR minors are
- * preclaimed and the custom module aliases aदीर्घ with standard chrdev
- * ones are emitted अगर a missing device is खोलोed.  If preclaim_oss is
- * zero, sound_core only grअसल what's actually in use and क्रम missing
+ * switch to alternative implementations without needing to rebuild
+ * the kernel in the meantime.  If preclaim_oss is non-zero, the
+ * kernel will behave the same as before.  All SOUND_MAJOR minors are
+ * preclaimed and the custom module aliases along with standard chrdev
+ * ones are emitted if a missing device is opened.  If preclaim_oss is
+ * zero, sound_core only grabs what's actually in use and for missing
  * devices only the standard chrdev aliases are requested.
  *
- * All these clutters are scheduled to be हटाओd aदीर्घ with
+ * All these clutters are scheduled to be removed along with
  * sound-slot/service-* module aliases.
  */
-#अगर_घोषित CONFIG_SOUND_OSS_CORE_PRECLAIM
-अटल पूर्णांक preclaim_oss = 1;
-#अन्यथा
-अटल पूर्णांक preclaim_oss = 0;
-#पूर्ण_अगर
+#ifdef CONFIG_SOUND_OSS_CORE_PRECLAIM
+static int preclaim_oss = 1;
+#else
+static int preclaim_oss = 0;
+#endif
 
-module_param(preclaim_oss, पूर्णांक, 0444);
+module_param(preclaim_oss, int, 0444);
 
-अटल पूर्णांक soundcore_खोलो(काष्ठा inode *, काष्ठा file *);
+static int soundcore_open(struct inode *, struct file *);
 
-अटल स्थिर काष्ठा file_operations soundcore_fops =
-अणु
+static const struct file_operations soundcore_fops =
+{
 	/* We must have an owner or the module locking fails */
 	.owner	= THIS_MODULE,
-	.खोलो	= soundcore_खोलो,
+	.open	= soundcore_open,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
 /*
- *	Low level list चालक. Scan the ordered list, find a hole and
- *	join पूर्णांकo it. Called with the lock निश्चितed
+ *	Low level list operator. Scan the ordered list, find a hole and
+ *	join into it. Called with the lock asserted
  */
 
-अटल पूर्णांक __sound_insert_unit(काष्ठा sound_unit * s, काष्ठा sound_unit **list, स्थिर काष्ठा file_operations *fops, पूर्णांक index, पूर्णांक low, पूर्णांक top)
-अणु
-	पूर्णांक n=low;
+static int __sound_insert_unit(struct sound_unit * s, struct sound_unit **list, const struct file_operations *fops, int index, int low, int top)
+{
+	int n=low;
 
-	अगर (index < 0) अणु	/* first मुक्त */
+	if (index < 0) {	/* first free */
 
-		जबतक (*list && (*list)->unit_minor<n)
+		while (*list && (*list)->unit_minor<n)
 			list=&((*list)->next);
 
-		जबतक(n<top)
-		अणु
+		while(n<top)
+		{
 			/* Found a hole ? */
-			अगर(*list==शून्य || (*list)->unit_minor>n)
-				अवरोध;
+			if(*list==NULL || (*list)->unit_minor>n)
+				break;
 			list=&((*list)->next);
 			n+=SOUND_STEP;
-		पूर्ण
+		}
 
-		अगर(n>=top)
-			वापस -ENOENT;
-	पूर्ण अन्यथा अणु
+		if(n>=top)
+			return -ENOENT;
+	} else {
 		n = low+(index*16);
-		जबतक (*list) अणु
-			अगर ((*list)->unit_minor==n)
-				वापस -EBUSY;
-			अगर ((*list)->unit_minor>n)
-				अवरोध;
+		while (*list) {
+			if ((*list)->unit_minor==n)
+				return -EBUSY;
+			if ((*list)->unit_minor>n)
+				break;
 			list=&((*list)->next);
-		पूर्ण
-	पूर्ण	
+		}
+	}	
 		
 	/*
 	 *	Fill it in
@@ -206,111 +205,111 @@ module_param(preclaim_oss, पूर्णांक, 0444);
 	*list=s;
 	
 	
-	वापस n;
-पूर्ण
+	return n;
+}
 
 /*
- *	Remove a node from the chain. Called with the lock निश्चितed
+ *	Remove a node from the chain. Called with the lock asserted
  */
  
-अटल काष्ठा sound_unit *__sound_हटाओ_unit(काष्ठा sound_unit **list, पूर्णांक unit)
-अणु
-	जबतक(*list)
-	अणु
-		काष्ठा sound_unit *p=*list;
-		अगर(p->unit_minor==unit)
-		अणु
+static struct sound_unit *__sound_remove_unit(struct sound_unit **list, int unit)
+{
+	while(*list)
+	{
+		struct sound_unit *p=*list;
+		if(p->unit_minor==unit)
+		{
 			*list=p->next;
-			वापस p;
-		पूर्ण
+			return p;
+		}
 		list=&(p->next);
-	पूर्ण
-	prपूर्णांकk(KERN_ERR "Sound device %d went missing!\n", unit);
-	वापस शून्य;
-पूर्ण
+	}
+	printk(KERN_ERR "Sound device %d went missing!\n", unit);
+	return NULL;
+}
 
 /*
  *	This lock guards the sound loader list.
  */
 
-अटल DEFINE_SPINLOCK(sound_loader_lock);
+static DEFINE_SPINLOCK(sound_loader_lock);
 
 /*
- *	Allocate the controlling काष्ठाure and add it to the sound driver
+ *	Allocate the controlling structure and add it to the sound driver
  *	list. Acquires locks as needed
  */
 
-अटल पूर्णांक sound_insert_unit(काष्ठा sound_unit **list, स्थिर काष्ठा file_operations *fops, पूर्णांक index, पूर्णांक low, पूर्णांक top, स्थिर अक्षर *name, umode_t mode, काष्ठा device *dev)
-अणु
-	काष्ठा sound_unit *s = kदो_स्मृति(माप(*s), GFP_KERNEL);
-	पूर्णांक r;
+static int sound_insert_unit(struct sound_unit **list, const struct file_operations *fops, int index, int low, int top, const char *name, umode_t mode, struct device *dev)
+{
+	struct sound_unit *s = kmalloc(sizeof(*s), GFP_KERNEL);
+	int r;
 
-	अगर (!s)
-		वापस -ENOMEM;
+	if (!s)
+		return -ENOMEM;
 
 	spin_lock(&sound_loader_lock);
 retry:
 	r = __sound_insert_unit(s, list, fops, index, low, top);
 	spin_unlock(&sound_loader_lock);
 	
-	अगर (r < 0)
-		जाओ fail;
-	अन्यथा अगर (r < SOUND_STEP)
-		प्र_लिखो(s->name, "sound/%s", name);
-	अन्यथा
-		प्र_लिखो(s->name, "sound/%s%d", name, r / SOUND_STEP);
+	if (r < 0)
+		goto fail;
+	else if (r < SOUND_STEP)
+		sprintf(s->name, "sound/%s", name);
+	else
+		sprintf(s->name, "sound/%s%d", name, r / SOUND_STEP);
 
-	अगर (!preclaim_oss) अणु
+	if (!preclaim_oss) {
 		/*
-		 * Something अन्यथा might have grabbed the minor.  If
-		 * first मुक्त slot is requested, rescan with @low set
+		 * Something else might have grabbed the minor.  If
+		 * first free slot is requested, rescan with @low set
 		 * to the next unit; otherwise, -EBUSY.
 		 */
-		r = __रेजिस्टर_chrdev(SOUND_MAJOR, s->unit_minor, 1, s->name,
+		r = __register_chrdev(SOUND_MAJOR, s->unit_minor, 1, s->name,
 				      &soundcore_fops);
-		अगर (r < 0) अणु
+		if (r < 0) {
 			spin_lock(&sound_loader_lock);
-			__sound_हटाओ_unit(list, s->unit_minor);
-			अगर (index < 0) अणु
+			__sound_remove_unit(list, s->unit_minor);
+			if (index < 0) {
 				low = s->unit_minor + SOUND_STEP;
-				जाओ retry;
-			पूर्ण
+				goto retry;
+			}
 			spin_unlock(&sound_loader_lock);
 			r = -EBUSY;
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 	device_create(sound_class, dev, MKDEV(SOUND_MAJOR, s->unit_minor),
-		      शून्य, "%s", s->name+6);
-	वापस s->unit_minor;
+		      NULL, "%s", s->name+6);
+	return s->unit_minor;
 
 fail:
-	kमुक्त(s);
-	वापस r;
-पूर्ण
+	kfree(s);
+	return r;
+}
 
 /*
  *	Remove a unit. Acquires locks as needed. The drivers MUST have
- *	completed the removal beक्रमe their file operations become
+ *	completed the removal before their file operations become
  *	invalid.
  */
  	
-अटल व्योम sound_हटाओ_unit(काष्ठा sound_unit **list, पूर्णांक unit)
-अणु
-	काष्ठा sound_unit *p;
+static void sound_remove_unit(struct sound_unit **list, int unit)
+{
+	struct sound_unit *p;
 
 	spin_lock(&sound_loader_lock);
-	p = __sound_हटाओ_unit(list, unit);
+	p = __sound_remove_unit(list, unit);
 	spin_unlock(&sound_loader_lock);
-	अगर (p) अणु
-		अगर (!preclaim_oss)
-			__unरेजिस्टर_chrdev(SOUND_MAJOR, p->unit_minor, 1,
+	if (p) {
+		if (!preclaim_oss)
+			__unregister_chrdev(SOUND_MAJOR, p->unit_minor, 1,
 					    p->name);
 		device_destroy(sound_class, MKDEV(SOUND_MAJOR, p->unit_minor));
-		kमुक्त(p);
-	पूर्ण
-पूर्ण
+		kfree(p);
+	}
+}
 
 /*
  *	Allocations
@@ -333,234 +332,234 @@ fail:
  *	15	*16		unused
  */
 
-अटल काष्ठा sound_unit *chains[SOUND_STEP];
+static struct sound_unit *chains[SOUND_STEP];
 
 /**
- *	रेजिस्टर_sound_special_device - रेजिस्टर a special sound node
- *	@fops: File operations क्रम the driver
+ *	register_sound_special_device - register a special sound node
+ *	@fops: File operations for the driver
  *	@unit: Unit number to allocate
- *      @dev: device poपूर्णांकer
+ *      @dev: device pointer
  *
  *	Allocate a special sound device by minor number from the sound
- *	subप्रणाली.
+ *	subsystem.
  *
- *	Return: The allocated number is वापसed on success. On failure,
- *	a negative error code is वापसed.
+ *	Return: The allocated number is returned on success. On failure,
+ *	a negative error code is returned.
  */
  
-पूर्णांक रेजिस्टर_sound_special_device(स्थिर काष्ठा file_operations *fops, पूर्णांक unit,
-				  काष्ठा device *dev)
-अणु
-	स्थिर पूर्णांक chain = unit % SOUND_STEP;
-	पूर्णांक max_unit = 256;
-	स्थिर अक्षर *name;
-	अक्षर _name[16];
+int register_sound_special_device(const struct file_operations *fops, int unit,
+				  struct device *dev)
+{
+	const int chain = unit % SOUND_STEP;
+	int max_unit = 256;
+	const char *name;
+	char _name[16];
 
-	चयन (chain) अणु
-	    हाल 0:
+	switch (chain) {
+	    case 0:
 		name = "mixer";
-		अवरोध;
-	    हाल 1:
+		break;
+	    case 1:
 		name = "sequencer";
-		अगर (unit >= SOUND_STEP)
-			जाओ __unknown;
+		if (unit >= SOUND_STEP)
+			goto __unknown;
 		max_unit = unit + 1;
-		अवरोध;
-	    हाल 2:
+		break;
+	    case 2:
 		name = "midi";
-		अवरोध;
-	    हाल 3:
+		break;
+	    case 3:
 		name = "dsp";
-		अवरोध;
-	    हाल 4:
+		break;
+	    case 4:
 		name = "audio";
-		अवरोध;
-	    हाल 5:
+		break;
+	    case 5:
 		name = "dspW";
-		अवरोध;
-	    हाल 8:
+		break;
+	    case 8:
 		name = "sequencer2";
-		अगर (unit >= SOUND_STEP)
-			जाओ __unknown;
+		if (unit >= SOUND_STEP)
+			goto __unknown;
 		max_unit = unit + 1;
-		अवरोध;
-	    हाल 9:
+		break;
+	    case 9:
 		name = "dmmidi";
-		अवरोध;
-	    हाल 10:
+		break;
+	    case 10:
 		name = "dmfm";
-		अवरोध;
-	    हाल 12:
+		break;
+	    case 12:
 		name = "adsp";
-		अवरोध;
-	    हाल 13:
+		break;
+	    case 13:
 		name = "amidi";
-		अवरोध;
-	    हाल 14:
+		break;
+	    case 14:
 		name = "admmidi";
-		अवरोध;
-	    शेष:
-	    	अणु
+		break;
+	    default:
+	    	{
 		    __unknown:
-			प्र_लिखो(_name, "unknown%d", chain);
-		    	अगर (unit >= SOUND_STEP)
-		    		म_जोड़ो(_name, "-");
+			sprintf(_name, "unknown%d", chain);
+		    	if (unit >= SOUND_STEP)
+		    		strcat(_name, "-");
 		    	name = _name;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस sound_insert_unit(&chains[chain], fops, -1, unit, max_unit,
+		}
+		break;
+	}
+	return sound_insert_unit(&chains[chain], fops, -1, unit, max_unit,
 				 name, 0600, dev);
-पूर्ण
+}
  
-EXPORT_SYMBOL(रेजिस्टर_sound_special_device);
+EXPORT_SYMBOL(register_sound_special_device);
 
-पूर्णांक रेजिस्टर_sound_special(स्थिर काष्ठा file_operations *fops, पूर्णांक unit)
-अणु
-	वापस रेजिस्टर_sound_special_device(fops, unit, शून्य);
-पूर्ण
+int register_sound_special(const struct file_operations *fops, int unit)
+{
+	return register_sound_special_device(fops, unit, NULL);
+}
 
-EXPORT_SYMBOL(रेजिस्टर_sound_special);
+EXPORT_SYMBOL(register_sound_special);
 
 /**
- *	रेजिस्टर_sound_mixer - रेजिस्टर a mixer device
- *	@fops: File operations क्रम the driver
+ *	register_sound_mixer - register a mixer device
+ *	@fops: File operations for the driver
  *	@dev: Unit number to allocate
  *
  *	Allocate a mixer device. Unit is the number of the mixer requested.
- *	Pass -1 to request the next मुक्त mixer unit.
+ *	Pass -1 to request the next free mixer unit.
  *
- *	Return: On success, the allocated number is वापसed. On failure,
- *	a negative error code is वापसed.
+ *	Return: On success, the allocated number is returned. On failure,
+ *	a negative error code is returned.
  */
 
-पूर्णांक रेजिस्टर_sound_mixer(स्थिर काष्ठा file_operations *fops, पूर्णांक dev)
-अणु
-	वापस sound_insert_unit(&chains[0], fops, dev, 0, 128,
-				 "mixer", 0600, शून्य);
-पूर्ण
+int register_sound_mixer(const struct file_operations *fops, int dev)
+{
+	return sound_insert_unit(&chains[0], fops, dev, 0, 128,
+				 "mixer", 0600, NULL);
+}
 
-EXPORT_SYMBOL(रेजिस्टर_sound_mixer);
+EXPORT_SYMBOL(register_sound_mixer);
 
 /*
- *	DSP's are रेजिस्टरed as a triple. Register only one and cheat
- *	in खोलो - see below.
+ *	DSP's are registered as a triple. Register only one and cheat
+ *	in open - see below.
  */
  
 /**
- *	रेजिस्टर_sound_dsp - रेजिस्टर a DSP device
- *	@fops: File operations क्रम the driver
+ *	register_sound_dsp - register a DSP device
+ *	@fops: File operations for the driver
  *	@dev: Unit number to allocate
  *
  *	Allocate a DSP device. Unit is the number of the DSP requested.
- *	Pass -1 to request the next मुक्त DSP unit.
+ *	Pass -1 to request the next free DSP unit.
  *
  *	This function allocates both the audio and dsp device entries together
  *	and will always allocate them as a matching pair - eg dsp3/audio3
  *
- *	Return: On success, the allocated number is वापसed. On failure,
- *	a negative error code is वापसed.
+ *	Return: On success, the allocated number is returned. On failure,
+ *	a negative error code is returned.
  */
 
-पूर्णांक रेजिस्टर_sound_dsp(स्थिर काष्ठा file_operations *fops, पूर्णांक dev)
-अणु
-	वापस sound_insert_unit(&chains[3], fops, dev, 3, 131,
-				 "dsp", 0600, शून्य);
-पूर्ण
+int register_sound_dsp(const struct file_operations *fops, int dev)
+{
+	return sound_insert_unit(&chains[3], fops, dev, 3, 131,
+				 "dsp", 0600, NULL);
+}
 
-EXPORT_SYMBOL(रेजिस्टर_sound_dsp);
+EXPORT_SYMBOL(register_sound_dsp);
 
 /**
- *	unरेजिस्टर_sound_special - unरेजिस्टर a special sound device
+ *	unregister_sound_special - unregister a special sound device
  *	@unit: unit number to allocate
  *
  *	Release a sound device that was allocated with
- *	रेजिस्टर_sound_special(). The unit passed is the वापस value from
- *	the रेजिस्टर function.
+ *	register_sound_special(). The unit passed is the return value from
+ *	the register function.
  */
 
 
-व्योम unरेजिस्टर_sound_special(पूर्णांक unit)
-अणु
-	sound_हटाओ_unit(&chains[unit % SOUND_STEP], unit);
-पूर्ण
+void unregister_sound_special(int unit)
+{
+	sound_remove_unit(&chains[unit % SOUND_STEP], unit);
+}
  
-EXPORT_SYMBOL(unरेजिस्टर_sound_special);
+EXPORT_SYMBOL(unregister_sound_special);
 
 /**
- *	unरेजिस्टर_sound_mixer - unरेजिस्टर a mixer
+ *	unregister_sound_mixer - unregister a mixer
  *	@unit: unit number to allocate
  *
- *	Release a sound device that was allocated with रेजिस्टर_sound_mixer().
- *	The unit passed is the वापस value from the रेजिस्टर function.
+ *	Release a sound device that was allocated with register_sound_mixer().
+ *	The unit passed is the return value from the register function.
  */
 
-व्योम unरेजिस्टर_sound_mixer(पूर्णांक unit)
-अणु
-	sound_हटाओ_unit(&chains[0], unit);
-पूर्ण
+void unregister_sound_mixer(int unit)
+{
+	sound_remove_unit(&chains[0], unit);
+}
 
-EXPORT_SYMBOL(unरेजिस्टर_sound_mixer);
+EXPORT_SYMBOL(unregister_sound_mixer);
 
 /**
- *	unरेजिस्टर_sound_dsp - unरेजिस्टर a DSP device
+ *	unregister_sound_dsp - unregister a DSP device
  *	@unit: unit number to allocate
  *
- *	Release a sound device that was allocated with रेजिस्टर_sound_dsp().
- *	The unit passed is the वापस value from the रेजिस्टर function.
+ *	Release a sound device that was allocated with register_sound_dsp().
+ *	The unit passed is the return value from the register function.
  *
- *	Both of the allocated units are released together स्वतःmatically.
+ *	Both of the allocated units are released together automatically.
  */
 
-व्योम unरेजिस्टर_sound_dsp(पूर्णांक unit)
-अणु
-	sound_हटाओ_unit(&chains[3], unit);
-पूर्ण
+void unregister_sound_dsp(int unit)
+{
+	sound_remove_unit(&chains[3], unit);
+}
 
 
-EXPORT_SYMBOL(unरेजिस्टर_sound_dsp);
+EXPORT_SYMBOL(unregister_sound_dsp);
 
-अटल काष्ठा sound_unit *__look_क्रम_unit(पूर्णांक chain, पूर्णांक unit)
-अणु
-	काष्ठा sound_unit *s;
+static struct sound_unit *__look_for_unit(int chain, int unit)
+{
+	struct sound_unit *s;
 	
 	s=chains[chain];
-	जबतक(s && s->unit_minor <= unit)
-	अणु
-		अगर(s->unit_minor==unit)
-			वापस s;
+	while(s && s->unit_minor <= unit)
+	{
+		if(s->unit_minor==unit)
+			return s;
 		s=s->next;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-अटल पूर्णांक soundcore_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	पूर्णांक chain;
-	पूर्णांक unit = iminor(inode);
-	काष्ठा sound_unit *s;
-	स्थिर काष्ठा file_operations *new_fops = शून्य;
+static int soundcore_open(struct inode *inode, struct file *file)
+{
+	int chain;
+	int unit = iminor(inode);
+	struct sound_unit *s;
+	const struct file_operations *new_fops = NULL;
 
 	chain=unit&0x0F;
-	अगर(chain==4 || chain==5)	/* dsp/audio/dsp16 */
-	अणु
+	if(chain==4 || chain==5)	/* dsp/audio/dsp16 */
+	{
 		unit&=0xF0;
 		unit|=3;
 		chain=3;
-	पूर्ण
+	}
 	
 	spin_lock(&sound_loader_lock);
-	s = __look_क्रम_unit(chain, unit);
-	अगर (s)
+	s = __look_for_unit(chain, unit);
+	if (s)
 		new_fops = fops_get(s->unit_fops);
-	अगर (preclaim_oss && !new_fops) अणु
+	if (preclaim_oss && !new_fops) {
 		spin_unlock(&sound_loader_lock);
 
 		/*
-		 *  Please, करोn't change this order or code.
+		 *  Please, don't change this order or code.
 		 *  For ALSA slot means soundcard and OSS emulation code
 		 *  comes as add-on modules which aren't depend on
-		 *  ALSA toplevel modules क्रम soundcards, thus we need
+		 *  ALSA toplevel modules for soundcards, thus we need
 		 *  load them at first.	  [Jaroslav Kysela <perex@jcu.cz>]
 		 */
 		request_module("sound-slot-%i", unit>>4);
@@ -568,54 +567,54 @@ EXPORT_SYMBOL(unरेजिस्टर_sound_dsp);
 
 		/*
 		 * sound-slot/service-* module aliases are scheduled
-		 * क्रम removal in favor of the standard अक्षर-major-*
-		 * module aliases.  For the समय being, generate both
+		 * for removal in favor of the standard char-major-*
+		 * module aliases.  For the time being, generate both
 		 * the legacy and standard module aliases to ease
 		 * transition.
 		 */
-		अगर (request_module("char-major-%d-%d", SOUND_MAJOR, unit) > 0)
+		if (request_module("char-major-%d-%d", SOUND_MAJOR, unit) > 0)
 			request_module("char-major-%d", SOUND_MAJOR);
 
 		spin_lock(&sound_loader_lock);
-		s = __look_क्रम_unit(chain, unit);
-		अगर (s)
+		s = __look_for_unit(chain, unit);
+		if (s)
 			new_fops = fops_get(s->unit_fops);
-	पूर्ण
+	}
 	spin_unlock(&sound_loader_lock);
-	अगर (new_fops) अणु
+	if (new_fops) {
 		/*
-		 * We rely upon the fact that we can't be unloaded जबतक the
+		 * We rely upon the fact that we can't be unloaded while the
 		 * subdriver is there.
 		 */
-		पूर्णांक err = 0;
+		int err = 0;
 		replace_fops(file, new_fops);
 
-		अगर (file->f_op->खोलो)
-			err = file->f_op->खोलो(inode,file);
+		if (file->f_op->open)
+			err = file->f_op->open(inode,file);
 
-		वापस err;
-	पूर्ण
-	वापस -ENODEV;
-पूर्ण
+		return err;
+	}
+	return -ENODEV;
+}
 
 MODULE_ALIAS_CHARDEV_MAJOR(SOUND_MAJOR);
 
-अटल व्योम cleanup_oss_soundcore(व्योम)
-अणु
-	/* We have nothing to really करो here - we know the lists must be
+static void cleanup_oss_soundcore(void)
+{
+	/* We have nothing to really do here - we know the lists must be
 	   empty */
-	unरेजिस्टर_chrdev(SOUND_MAJOR, "sound");
-पूर्ण
+	unregister_chrdev(SOUND_MAJOR, "sound");
+}
 
-अटल पूर्णांक __init init_oss_soundcore(व्योम)
-अणु
-	अगर (preclaim_oss &&
-	    रेजिस्टर_chrdev(SOUND_MAJOR, "sound", &soundcore_fops) < 0) अणु
-		prपूर्णांकk(KERN_ERR "soundcore: sound device already in use.\n");
-		वापस -EBUSY;
-	पूर्ण
+static int __init init_oss_soundcore(void)
+{
+	if (preclaim_oss &&
+	    register_chrdev(SOUND_MAJOR, "sound", &soundcore_fops) < 0) {
+		printk(KERN_ERR "soundcore: sound device already in use.\n");
+		return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_SOUND_OSS_CORE */
+#endif /* CONFIG_SOUND_OSS_CORE */

@@ -1,92 +1,91 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/यंत्र/assembler.h, arch/arm/mm/proc-macros.S
+ * Based on arch/arm/include/asm/assembler.h, arch/arm/mm/proc-macros.S
  *
  * Copyright (C) 1996-2000 Russell King
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASSEMBLY__
-#त्रुटि "Only include this from assembly code"
-#पूर्ण_अगर
+#ifndef __ASSEMBLY__
+#error "Only include this from assembly code"
+#endif
 
-#अगर_अघोषित __ASM_ASSEMBLER_H
-#घोषणा __ASM_ASSEMBLER_H
+#ifndef __ASM_ASSEMBLER_H
+#define __ASM_ASSEMBLER_H
 
-#समावेश <यंत्र-generic/export.h>
+#include <asm-generic/export.h>
 
-#समावेश <यंत्र/यंत्र-offsets.h>
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/यंत्र-bug.h>
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/debug-monitors.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/pgtable-hwdef.h>
-#समावेश <यंत्र/ptrace.h>
-#समावेश <यंत्र/thपढ़ो_info.h>
+#include <asm/asm-offsets.h>
+#include <asm/alternative.h>
+#include <asm/asm-bug.h>
+#include <asm/cpufeature.h>
+#include <asm/cputype.h>
+#include <asm/debug-monitors.h>
+#include <asm/page.h>
+#include <asm/pgtable-hwdef.h>
+#include <asm/ptrace.h>
+#include <asm/thread_info.h>
 
 	/*
-	 * Provide a wxN alias क्रम each wN रेजिस्टर so what we can paste a xN
+	 * Provide a wxN alias for each wN register so what we can paste a xN
 	 * reference after a 'w' to obtain the 32-bit version.
 	 */
 	.irp	n,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
-	wx\न	.req	w\न
+	wx\n	.req	w\n
 	.endr
 
-	.macro save_and_disable_daअगर, flags
-	mrs	\पlags, daअगर
-	msr	daअगरset, #0xf
+	.macro save_and_disable_daif, flags
+	mrs	\flags, daif
+	msr	daifset, #0xf
 	.endm
 
-	.macro disable_daअगर
-	msr	daअगरset, #0xf
+	.macro disable_daif
+	msr	daifset, #0xf
 	.endm
 
-	.macro enable_daअगर
-	msr	daअगरclr, #0xf
+	.macro enable_daif
+	msr	daifclr, #0xf
 	.endm
 
-	.macro	restore_daअगर, flags:req
-	msr	daअगर, \पlags
+	.macro	restore_daif, flags:req
+	msr	daif, \flags
 	.endm
 
 	/* IRQ/FIQ are the lowest priority flags, unconditionally unmask the rest. */
 	.macro enable_da
-	msr	daअगरclr, #(8 | 4)
+	msr	daifclr, #(8 | 4)
 	.endm
 
 /*
- * Save/restore पूर्णांकerrupts.
+ * Save/restore interrupts.
  */
 	.macro	save_and_disable_irq, flags
-	mrs	\पlags, daअगर
-	msr	daअगरset, #3
+	mrs	\flags, daif
+	msr	daifset, #3
 	.endm
 
 	.macro	restore_irq, flags
-	msr	daअगर, \पlags
+	msr	daif, \flags
 	.endm
 
 	.macro	enable_dbg
-	msr	daअगरclr, #8
+	msr	daifclr, #8
 	.endm
 
-	.macro	disable_step_tsk, flgs, पंचांगp
-	tbz	\पlgs, #TIF_SINGLESTEP, 9990f
-	mrs	\टmp, mdscr_el1
-	bic	\टmp, \टmp, #DBG_MDSCR_SS
-	msr	mdscr_el1, \टmp
+	.macro	disable_step_tsk, flgs, tmp
+	tbz	\flgs, #TIF_SINGLESTEP, 9990f
+	mrs	\tmp, mdscr_el1
+	bic	\tmp, \tmp, #DBG_MDSCR_SS
+	msr	mdscr_el1, \tmp
 	isb	// Synchronise with enable_dbg
 9990:
 	.endm
 
-	/* call with daअगर masked */
-	.macro	enable_step_tsk, flgs, पंचांगp
-	tbz	\पlgs, #TIF_SINGLESTEP, 9990f
-	mrs	\टmp, mdscr_el1
-	orr	\टmp, \टmp, #DBG_MDSCR_SS
-	msr	mdscr_el1, \टmp
+	/* call with daif masked */
+	.macro	enable_step_tsk, flgs, tmp
+	tbz	\flgs, #TIF_SINGLESTEP, 9990f
+	mrs	\tmp, mdscr_el1
+	orr	\tmp, \tmp, #DBG_MDSCR_SS
+	msr	mdscr_el1, \tmp
 9990:
 	.endm
 
@@ -94,60 +93,60 @@
  * RAS Error Synchronization barrier
  */
 	.macro  esb
-#अगर_घोषित CONFIG_ARM64_RAS_EXTN
-	hपूर्णांक    #16
-#अन्यथा
+#ifdef CONFIG_ARM64_RAS_EXTN
+	hint    #16
+#else
 	nop
-#पूर्ण_अगर
+#endif
 	.endm
 
 /*
  * Value prediction barrier
  */
 	.macro	csdb
-	hपूर्णांक	#20
+	hint	#20
 	.endm
 
 /*
  * Speculation barrier
  */
 	.macro	sb
-alternative_अगर_not ARM64_HAS_SB
+alternative_if_not ARM64_HAS_SB
 	dsb	nsh
 	isb
-alternative_अन्यथा
+alternative_else
 	SB_BARRIER_INSN
 	nop
-alternative_endअगर
+alternative_endif
 	.endm
 
 /*
  * NOP sequence
  */
 	.macro	nops, num
-	.rept	\नum
+	.rept	\num
 	nop
 	.endr
 	.endm
 
 /*
- * Emit an entry पूर्णांकo the exception table
+ * Emit an entry into the exception table
  */
-	.macro		_यंत्र_extable, from, to
+	.macro		_asm_extable, from, to
 	.pushsection	__ex_table, "a"
 	.align		3
-	.दीर्घ		(\पrom - .), (\टo - .)
+	.long		(\from - .), (\to - .)
 	.popsection
 	.endm
 
-#घोषणा USER(l, x...)				\
+#define USER(l, x...)				\
 9999:	x;					\
-	_यंत्र_extable	9999b, l
+	_asm_extable	9999b, l
 
 /*
  * Register aliases.
  */
-lr	.req	x30		// link रेजिस्टर
+lr	.req	x30		// link register
 
 /*
  * Vector entry
@@ -158,42 +157,42 @@ lr	.req	x30		// link रेजिस्टर
 	.endm
 
 /*
- * Select code when configured क्रम BE.
+ * Select code when configured for BE.
  */
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-#घोषणा CPU_BE(code...) code
-#अन्यथा
-#घोषणा CPU_BE(code...)
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_BIG_ENDIAN
+#define CPU_BE(code...) code
+#else
+#define CPU_BE(code...)
+#endif
 
 /*
- * Select code when configured क्रम LE.
+ * Select code when configured for LE.
  */
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-#घोषणा CPU_LE(code...)
-#अन्यथा
-#घोषणा CPU_LE(code...) code
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_BIG_ENDIAN
+#define CPU_LE(code...)
+#else
+#define CPU_LE(code...) code
+#endif
 
 /*
- * Define a macro that स्थिरructs a 64-bit value by concatenating two
- * 32-bit रेजिस्टरs. Note that on big endian प्रणालीs the order of the
- * रेजिस्टरs is swapped.
+ * Define a macro that constructs a 64-bit value by concatenating two
+ * 32-bit registers. Note that on big endian systems the order of the
+ * registers is swapped.
  */
-#अगर_अघोषित CONFIG_CPU_BIG_ENDIAN
+#ifndef CONFIG_CPU_BIG_ENDIAN
 	.macro	regs_to_64, rd, lbits, hbits
-#अन्यथा
+#else
 	.macro	regs_to_64, rd, hbits, lbits
-#पूर्ण_अगर
-	orr	\लd, \lbits, \hbits, lsl #32
+#endif
+	orr	\rd, \lbits, \hbits, lsl #32
 	.endm
 
 /*
- * Pseuकरो-ops क्रम PC-relative adr/ldr/str <reg>, <symbol> where
+ * Pseudo-ops for PC-relative adr/ldr/str <reg>, <symbol> where
  * <symbol> is within the range +/- 4 GB of the PC.
  */
 	/*
-	 * @dst: destination रेजिस्टर (64 bit wide)
+	 * @dst: destination register (64 bit wide)
 	 * @sym: name of the symbol
 	 */
 	.macro	adr_l, dst, sym
@@ -202,427 +201,427 @@ lr	.req	x30		// link रेजिस्टर
 	.endm
 
 	/*
-	 * @dst: destination रेजिस्टर (32 or 64 bit wide)
+	 * @dst: destination register (32 or 64 bit wide)
 	 * @sym: name of the symbol
-	 * @पंचांगp: optional 64-bit scratch रेजिस्टर to be used अगर <dst> is a
-	 *       32-bit wide रेजिस्टर, in which हाल it cannot be used to hold
+	 * @tmp: optional 64-bit scratch register to be used if <dst> is a
+	 *       32-bit wide register, in which case it cannot be used to hold
 	 *       the address
 	 */
-	.macro	ldr_l, dst, sym, पंचांगp=
-	.अगरb	\टmp
+	.macro	ldr_l, dst, sym, tmp=
+	.ifb	\tmp
 	adrp	\dst, \sym
 	ldr	\dst, [\dst, :lo12:\sym]
-	.अन्यथा
-	adrp	\टmp, \sym
-	ldr	\dst, [\टmp, :lo12:\sym]
-	.endअगर
+	.else
+	adrp	\tmp, \sym
+	ldr	\dst, [\tmp, :lo12:\sym]
+	.endif
 	.endm
 
 	/*
-	 * @src: source रेजिस्टर (32 or 64 bit wide)
+	 * @src: source register (32 or 64 bit wide)
 	 * @sym: name of the symbol
-	 * @पंचांगp: mandatory 64-bit scratch रेजिस्टर to calculate the address
-	 *       जबतक <src> needs to be preserved.
+	 * @tmp: mandatory 64-bit scratch register to calculate the address
+	 *       while <src> needs to be preserved.
 	 */
-	.macro	str_l, src, sym, पंचांगp
-	adrp	\टmp, \sym
-	str	\src, [\टmp, :lo12:\sym]
+	.macro	str_l, src, sym, tmp
+	adrp	\tmp, \sym
+	str	\src, [\tmp, :lo12:\sym]
 	.endm
 
 	/*
-	 * @dst: destination रेजिस्टर
+	 * @dst: destination register
 	 */
-#अगर defined(__KVM_NVHE_HYPERVISOR__) || defined(__KVM_VHE_HYPERVISOR__)
+#if defined(__KVM_NVHE_HYPERVISOR__) || defined(__KVM_VHE_HYPERVISOR__)
 	.macro	this_cpu_offset, dst
 	mrs	\dst, tpidr_el2
 	.endm
-#अन्यथा
+#else
 	.macro	this_cpu_offset, dst
-alternative_अगर_not ARM64_HAS_VIRT_HOST_EXTN
+alternative_if_not ARM64_HAS_VIRT_HOST_EXTN
 	mrs	\dst, tpidr_el1
-alternative_अन्यथा
+alternative_else
 	mrs	\dst, tpidr_el2
-alternative_endअगर
+alternative_endif
 	.endm
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * @dst: Result of per_cpu(sym, smp_processor_id()) (can be SP)
 	 * @sym: The name of the per-cpu variable
-	 * @पंचांगp: scratch रेजिस्टर
+	 * @tmp: scratch register
 	 */
-	.macro adr_this_cpu, dst, sym, पंचांगp
-	adrp	\टmp, \sym
-	add	\dst, \टmp, #:lo12:\sym
-	this_cpu_offset \टmp
-	add	\dst, \dst, \टmp
+	.macro adr_this_cpu, dst, sym, tmp
+	adrp	\tmp, \sym
+	add	\dst, \tmp, #:lo12:\sym
+	this_cpu_offset \tmp
+	add	\dst, \dst, \tmp
 	.endm
 
 	/*
 	 * @dst: Result of READ_ONCE(per_cpu(sym, smp_processor_id()))
 	 * @sym: The name of the per-cpu variable
-	 * @पंचांगp: scratch रेजिस्टर
+	 * @tmp: scratch register
 	 */
-	.macro ldr_this_cpu dst, sym, पंचांगp
+	.macro ldr_this_cpu dst, sym, tmp
 	adr_l	\dst, \sym
-	this_cpu_offset \टmp
-	ldr	\dst, [\dst, \टmp]
+	this_cpu_offset \tmp
+	ldr	\dst, [\dst, \tmp]
 	.endm
 
 /*
- * vma_vm_mm - get mm poपूर्णांकer from vma poपूर्णांकer (vma->vm_mm)
+ * vma_vm_mm - get mm pointer from vma pointer (vma->vm_mm)
  */
 	.macro	vma_vm_mm, rd, rn
-	ldr	\लd, [\लn, #VMA_VM_MM]
+	ldr	\rd, [\rn, #VMA_VM_MM]
 	.endm
 
 /*
- * पढ़ो_ctr - पढ़ो CTR_EL0. If the प्रणाली has mismatched रेजिस्टर fields,
- * provide the प्रणाली wide safe value from arm64_ftr_reg_ctrel0.sys_val
+ * read_ctr - read CTR_EL0. If the system has mismatched register fields,
+ * provide the system wide safe value from arm64_ftr_reg_ctrel0.sys_val
  */
-	.macro	पढ़ो_ctr, reg
-#अगर_अघोषित __KVM_NVHE_HYPERVISOR__
-alternative_अगर_not ARM64_MISMATCHED_CACHE_TYPE
-	mrs	\लeg, ctr_el0			// पढ़ो CTR
+	.macro	read_ctr, reg
+#ifndef __KVM_NVHE_HYPERVISOR__
+alternative_if_not ARM64_MISMATCHED_CACHE_TYPE
+	mrs	\reg, ctr_el0			// read CTR
 	nop
-alternative_अन्यथा
-	ldr_l	\लeg, arm64_ftr_reg_ctrel0 + ARM64_FTR_SYSVAL
-alternative_endअगर
-#अन्यथा
-alternative_अगर_not ARM64_KVM_PROTECTED_MODE
+alternative_else
+	ldr_l	\reg, arm64_ftr_reg_ctrel0 + ARM64_FTR_SYSVAL
+alternative_endif
+#else
+alternative_if_not ARM64_KVM_PROTECTED_MODE
 	ASM_BUG()
-alternative_अन्यथा_nop_endअगर
+alternative_else_nop_endif
 alternative_cb kvm_compute_final_ctr_el0
-	movz	\लeg, #0
-	movk	\लeg, #0, lsl #16
-	movk	\लeg, #0, lsl #32
-	movk	\लeg, #0, lsl #48
+	movz	\reg, #0
+	movk	\reg, #0, lsl #16
+	movk	\reg, #0, lsl #32
+	movk	\reg, #0, lsl #48
 alternative_cb_end
-#पूर्ण_अगर
+#endif
 	.endm
 
 
 /*
  * raw_dcache_line_size - get the minimum D-cache line size on this CPU
- * from the CTR रेजिस्टर.
+ * from the CTR register.
  */
-	.macro	raw_dcache_line_size, reg, पंचांगp
-	mrs	\टmp, ctr_el0			// पढ़ो CTR
-	ubfm	\टmp, \टmp, #16, #19		// cache line size encoding
-	mov	\लeg, #4			// bytes per word
-	lsl	\लeg, \लeg, \टmp		// actual cache line size
+	.macro	raw_dcache_line_size, reg, tmp
+	mrs	\tmp, ctr_el0			// read CTR
+	ubfm	\tmp, \tmp, #16, #19		// cache line size encoding
+	mov	\reg, #4			// bytes per word
+	lsl	\reg, \reg, \tmp		// actual cache line size
 	.endm
 
 /*
  * dcache_line_size - get the safe D-cache line size across all CPUs
  */
-	.macro	dcache_line_size, reg, पंचांगp
-	पढ़ो_ctr	\टmp
-	ubfm		\टmp, \टmp, #16, #19	// cache line size encoding
-	mov		\लeg, #4		// bytes per word
-	lsl		\लeg, \लeg, \टmp	// actual cache line size
+	.macro	dcache_line_size, reg, tmp
+	read_ctr	\tmp
+	ubfm		\tmp, \tmp, #16, #19	// cache line size encoding
+	mov		\reg, #4		// bytes per word
+	lsl		\reg, \reg, \tmp	// actual cache line size
 	.endm
 
 /*
  * raw_icache_line_size - get the minimum I-cache line size on this CPU
- * from the CTR रेजिस्टर.
+ * from the CTR register.
  */
-	.macro	raw_icache_line_size, reg, पंचांगp
-	mrs	\टmp, ctr_el0			// पढ़ो CTR
-	and	\टmp, \टmp, #0xf		// cache line size encoding
-	mov	\लeg, #4			// bytes per word
-	lsl	\लeg, \लeg, \टmp		// actual cache line size
+	.macro	raw_icache_line_size, reg, tmp
+	mrs	\tmp, ctr_el0			// read CTR
+	and	\tmp, \tmp, #0xf		// cache line size encoding
+	mov	\reg, #4			// bytes per word
+	lsl	\reg, \reg, \tmp		// actual cache line size
 	.endm
 
 /*
  * icache_line_size - get the safe I-cache line size across all CPUs
  */
-	.macro	icache_line_size, reg, पंचांगp
-	पढ़ो_ctr	\टmp
-	and		\टmp, \टmp, #0xf	// cache line size encoding
-	mov		\लeg, #4		// bytes per word
-	lsl		\लeg, \लeg, \टmp	// actual cache line size
+	.macro	icache_line_size, reg, tmp
+	read_ctr	\tmp
+	and		\tmp, \tmp, #0xf	// cache line size encoding
+	mov		\reg, #4		// bytes per word
+	lsl		\reg, \reg, \tmp	// actual cache line size
 	.endm
 
 /*
  * tcr_set_t0sz - update TCR.T0SZ so that we can load the ID map
  */
 	.macro	tcr_set_t0sz, valreg, t0sz
-	bfi	\खalreg, \ट0sz, #TCR_T0SZ_OFFSET, #TCR_TxSZ_WIDTH
+	bfi	\valreg, \t0sz, #TCR_T0SZ_OFFSET, #TCR_TxSZ_WIDTH
 	.endm
 
 /*
  * tcr_set_t1sz - update TCR.T1SZ
  */
 	.macro	tcr_set_t1sz, valreg, t1sz
-	bfi	\खalreg, \ट1sz, #TCR_T1SZ_OFFSET, #TCR_TxSZ_WIDTH
+	bfi	\valreg, \t1sz, #TCR_T1SZ_OFFSET, #TCR_TxSZ_WIDTH
 	.endm
 
 /*
  * tcr_compute_pa_size - set TCR.(I)PS to the highest supported
  * ID_AA64MMFR0_EL1.PARange value
  *
- *	tcr:		रेजिस्टर with the TCR_ELx value to be updated
+ *	tcr:		register with the TCR_ELx value to be updated
  *	pos:		IPS or PS bitfield position
- *	पंचांगpअणु0,1पूर्ण:	temporary रेजिस्टरs
+ *	tmp{0,1}:	temporary registers
  */
-	.macro	tcr_compute_pa_size, tcr, pos, पंचांगp0, पंचांगp1
-	mrs	\टmp0, ID_AA64MMFR0_EL1
+	.macro	tcr_compute_pa_size, tcr, pos, tmp0, tmp1
+	mrs	\tmp0, ID_AA64MMFR0_EL1
 	// Narrow PARange to fit the PS field in TCR_ELx
-	ubfx	\टmp0, \टmp0, #ID_AA64MMFR0_PARANGE_SHIFT, #3
-	mov	\टmp1, #ID_AA64MMFR0_PARANGE_MAX
-	cmp	\टmp0, \टmp1
-	csel	\टmp0, \टmp1, \टmp0, hi
-	bfi	\टcr, \टmp0, \pos, #3
+	ubfx	\tmp0, \tmp0, #ID_AA64MMFR0_PARANGE_SHIFT, #3
+	mov	\tmp1, #ID_AA64MMFR0_PARANGE_MAX
+	cmp	\tmp0, \tmp1
+	csel	\tmp0, \tmp1, \tmp0, hi
+	bfi	\tcr, \tmp0, \pos, #3
 	.endm
 
 /*
- * Macro to perक्रमm a data cache मुख्यtenance क्रम the पूर्णांकerval
+ * Macro to perform a data cache maintenance for the interval
  * [kaddr, kaddr + size)
  *
- * 	op:		operation passed to dc inकाष्ठाion
- * 	करोमुख्य:		करोमुख्य used in dsb instruciton
- * 	kaddr:		starting भव address of the region
+ * 	op:		operation passed to dc instruction
+ * 	domain:		domain used in dsb instruciton
+ * 	kaddr:		starting virtual address of the region
  * 	size:		size of the region
- * 	Corrupts:	kaddr, size, पंचांगp1, पंचांगp2
+ * 	Corrupts:	kaddr, size, tmp1, tmp2
  */
 	.macro __dcache_op_workaround_clean_cache, op, kaddr
-alternative_अगर_not ARM64_WORKAROUND_CLEAN_CACHE
+alternative_if_not ARM64_WORKAROUND_CLEAN_CACHE
 	dc	\op, \kaddr
-alternative_अन्यथा
+alternative_else
 	dc	civac, \kaddr
-alternative_endअगर
+alternative_endif
 	.endm
 
-	.macro dcache_by_line_op op, करोमुख्य, kaddr, size, पंचांगp1, पंचांगp2
-	dcache_line_size \टmp1, \टmp2
+	.macro dcache_by_line_op op, domain, kaddr, size, tmp1, tmp2
+	dcache_line_size \tmp1, \tmp2
 	add	\size, \kaddr, \size
-	sub	\टmp2, \टmp1, #1
-	bic	\kaddr, \kaddr, \टmp2
+	sub	\tmp2, \tmp1, #1
+	bic	\kaddr, \kaddr, \tmp2
 9998:
-	.अगरc	\op, cvau
+	.ifc	\op, cvau
 	__dcache_op_workaround_clean_cache \op, \kaddr
-	.अन्यथा
-	.अगरc	\op, cvac
+	.else
+	.ifc	\op, cvac
 	__dcache_op_workaround_clean_cache \op, \kaddr
-	.अन्यथा
-	.अगरc	\op, cvap
+	.else
+	.ifc	\op, cvap
 	sys	3, c7, c12, 1, \kaddr	// dc cvap
-	.अन्यथा
-	.अगरc	\op, cvadp
+	.else
+	.ifc	\op, cvadp
 	sys	3, c7, c13, 1, \kaddr	// dc cvadp
-	.अन्यथा
+	.else
 	dc	\op, \kaddr
-	.endअगर
-	.endअगर
-	.endअगर
-	.endअगर
-	add	\kaddr, \kaddr, \टmp1
+	.endif
+	.endif
+	.endif
+	.endif
+	add	\kaddr, \kaddr, \tmp1
 	cmp	\kaddr, \size
 	b.lo	9998b
-	dsb	\करोमुख्य
+	dsb	\domain
 	.endm
 
 /*
- * Macro to perक्रमm an inकाष्ठाion cache मुख्यtenance क्रम the पूर्णांकerval
+ * Macro to perform an instruction cache maintenance for the interval
  * [start, end)
  *
- * 	start, end:	भव addresses describing the region
+ * 	start, end:	virtual addresses describing the region
  *	label:		A label to branch to on user fault.
- * 	Corrupts:	पंचांगp1, पंचांगp2
+ * 	Corrupts:	tmp1, tmp2
  */
-	.macro invalidate_icache_by_line start, end, पंचांगp1, पंचांगp2, label
-	icache_line_size \टmp1, \टmp2
-	sub	\टmp2, \टmp1, #1
-	bic	\टmp2, \start, \टmp2
+	.macro invalidate_icache_by_line start, end, tmp1, tmp2, label
+	icache_line_size \tmp1, \tmp2
+	sub	\tmp2, \tmp1, #1
+	bic	\tmp2, \start, \tmp2
 9997:
-USER(\label, ic	ivau, \टmp2)			// invalidate I line PoU
-	add	\टmp2, \टmp2, \टmp1
-	cmp	\टmp2, \end
+USER(\label, ic	ivau, \tmp2)			// invalidate I line PoU
+	add	\tmp2, \tmp2, \tmp1
+	cmp	\tmp2, \end
 	b.lo	9997b
 	dsb	ish
 	isb
 	.endm
 
 /*
- * reset_pmuserenr_el0 - reset PMUSERENR_EL0 अगर PMUv3 present
+ * reset_pmuserenr_el0 - reset PMUSERENR_EL0 if PMUv3 present
  */
-	.macro	reset_pmuserenr_el0, पंचांगpreg
-	mrs	\टmpreg, id_aa64dfr0_el1
-	sbfx	\टmpreg, \टmpreg, #ID_AA64DFR0_PMUVER_SHIFT, #4
-	cmp	\टmpreg, #1			// Skip अगर no PMU present
+	.macro	reset_pmuserenr_el0, tmpreg
+	mrs	\tmpreg, id_aa64dfr0_el1
+	sbfx	\tmpreg, \tmpreg, #ID_AA64DFR0_PMUVER_SHIFT, #4
+	cmp	\tmpreg, #1			// Skip if no PMU present
 	b.lt	9000f
 	msr	pmuserenr_el0, xzr		// Disable PMU access from EL0
 9000:
 	.endm
 
 /*
- * reset_amuserenr_el0 - reset AMUSERENR_EL0 अगर AMUv1 present
+ * reset_amuserenr_el0 - reset AMUSERENR_EL0 if AMUv1 present
  */
-	.macro	reset_amuserenr_el0, पंचांगpreg
-	mrs	\टmpreg, id_aa64pfr0_el1	// Check ID_AA64PFR0_EL1
-	ubfx	\टmpreg, \टmpreg, #ID_AA64PFR0_AMU_SHIFT, #4
-	cbz	\टmpreg, .Lskip_\@		// Skip अगर no AMU present
+	.macro	reset_amuserenr_el0, tmpreg
+	mrs	\tmpreg, id_aa64pfr0_el1	// Check ID_AA64PFR0_EL1
+	ubfx	\tmpreg, \tmpreg, #ID_AA64PFR0_AMU_SHIFT, #4
+	cbz	\tmpreg, .Lskip_\@		// Skip if no AMU present
 	msr_s	SYS_AMUSERENR_EL0, xzr		// Disable AMU access from EL0
 .Lskip_\@:
 	.endm
 /*
- * copy_page - copy src to dest using temp रेजिस्टरs t1-t8
+ * copy_page - copy src to dest using temp registers t1-t8
  */
 	.macro copy_page dest:req src:req t1:req t2:req t3:req t4:req t5:req t6:req t7:req t8:req
-9998:	ldp	\ट1, \ट2, [\src]
-	ldp	\ट3, \ट4, [\src, #16]
-	ldp	\ट5, \ट6, [\src, #32]
-	ldp	\ट7, \ट8, [\src, #48]
+9998:	ldp	\t1, \t2, [\src]
+	ldp	\t3, \t4, [\src, #16]
+	ldp	\t5, \t6, [\src, #32]
+	ldp	\t7, \t8, [\src, #48]
 	add	\src, \src, #64
-	stnp	\ट1, \ट2, [\dest]
-	stnp	\ट3, \ट4, [\dest, #16]
-	stnp	\ट5, \ट6, [\dest, #32]
-	stnp	\ट7, \ट8, [\dest, #48]
+	stnp	\t1, \t2, [\dest]
+	stnp	\t3, \t4, [\dest, #16]
+	stnp	\t5, \t6, [\dest, #32]
+	stnp	\t7, \t8, [\dest, #48]
 	add	\dest, \dest, #64
 	tst	\src, #(PAGE_SIZE - 1)
 	b.ne	9998b
 	.endm
 
 /*
- * Annotate a function as being unsuitable क्रम kprobes.
+ * Annotate a function as being unsuitable for kprobes.
  */
-#अगर_घोषित CONFIG_KPROBES
-#घोषणा NOKPROBE(x)				\
+#ifdef CONFIG_KPROBES
+#define NOKPROBE(x)				\
 	.pushsection "_kprobe_blacklist", "aw";	\
 	.quad	x;				\
 	.popsection;
-#अन्यथा
-#घोषणा NOKPROBE(x)
-#पूर्ण_अगर
+#else
+#define NOKPROBE(x)
+#endif
 
-#अगर defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
-#घोषणा EXPORT_SYMBOL_NOKASAN(name)
-#अन्यथा
-#घोषणा EXPORT_SYMBOL_NOKASAN(name)	EXPORT_SYMBOL(name)
-#पूर्ण_अगर
+#if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
+#define EXPORT_SYMBOL_NOKASAN(name)
+#else
+#define EXPORT_SYMBOL_NOKASAN(name)	EXPORT_SYMBOL(name)
+#endif
 
 	/*
-	 * Emit a 64-bit असलolute little endian symbol reference in a way that
-	 * ensures that it will be resolved at build समय, even when building a
+	 * Emit a 64-bit absolute little endian symbol reference in a way that
+	 * ensures that it will be resolved at build time, even when building a
 	 * PIE binary. This requires cooperation from the linker script, which
-	 * must emit the lo32/hi32 halves inभागidually.
+	 * must emit the lo32/hi32 halves individually.
 	 */
 	.macro	le64sym, sym
-	.दीर्घ	\sym\()_lo32
-	.दीर्घ	\sym\()_hi32
+	.long	\sym\()_lo32
+	.long	\sym\()_hi32
 	.endm
 
 	/*
-	 * mov_q - move an immediate स्थिरant पूर्णांकo a 64-bit रेजिस्टर using
-	 *         between 2 and 4 movz/movk inकाष्ठाions (depending on the
-	 *         magnitude and sign of the opeअक्रम)
+	 * mov_q - move an immediate constant into a 64-bit register using
+	 *         between 2 and 4 movz/movk instructions (depending on the
+	 *         magnitude and sign of the operand)
 	 */
 	.macro	mov_q, reg, val
-	.अगर (((\खal) >> 31) == 0 || ((\खal) >> 31) == 0x1ffffffff)
-	movz	\लeg, :असल_g1_s:\खal
-	.अन्यथा
-	.अगर (((\खal) >> 47) == 0 || ((\खal) >> 47) == 0x1ffff)
-	movz	\लeg, :असल_g2_s:\खal
-	.अन्यथा
-	movz	\लeg, :असल_g3:\खal
-	movk	\लeg, :असल_g2_nc:\खal
-	.endअगर
-	movk	\लeg, :असल_g1_nc:\खal
-	.endअगर
-	movk	\लeg, :असल_g0_nc:\खal
+	.if (((\val) >> 31) == 0 || ((\val) >> 31) == 0x1ffffffff)
+	movz	\reg, :abs_g1_s:\val
+	.else
+	.if (((\val) >> 47) == 0 || ((\val) >> 47) == 0x1ffff)
+	movz	\reg, :abs_g2_s:\val
+	.else
+	movz	\reg, :abs_g3:\val
+	movk	\reg, :abs_g2_nc:\val
+	.endif
+	movk	\reg, :abs_g1_nc:\val
+	.endif
+	movk	\reg, :abs_g0_nc:\val
 	.endm
 
 /*
- * Return the current task_काष्ठा.
+ * Return the current task_struct.
  */
 	.macro	get_current_task, rd
-	mrs	\लd, sp_el0
+	mrs	\rd, sp_el0
 	.endm
 
 /*
- * Offset ttbr1 to allow क्रम 48-bit kernel VAs set with 52-bit PTRS_PER_PGD.
+ * Offset ttbr1 to allow for 48-bit kernel VAs set with 52-bit PTRS_PER_PGD.
  * orr is used as it can cover the immediate value (and is idempotent).
  * In future this may be nop'ed out when dealing with 52-bit kernel VAs.
- * 	ttbr: Value of ttbr to set, modअगरied.
+ * 	ttbr: Value of ttbr to set, modified.
  */
-	.macro	offset_ttbr1, ttbr, पंचांगp
-#अगर_घोषित CONFIG_ARM64_VA_BITS_52
-	mrs_s	\टmp, SYS_ID_AA64MMFR2_EL1
-	and	\टmp, \टmp, #(0xf << ID_AA64MMFR2_LVA_SHIFT)
-	cbnz	\टmp, .Lskipoffs_\@
-	orr	\टtbr, \टtbr, #TTBR1_BADDR_4852_OFFSET
+	.macro	offset_ttbr1, ttbr, tmp
+#ifdef CONFIG_ARM64_VA_BITS_52
+	mrs_s	\tmp, SYS_ID_AA64MMFR2_EL1
+	and	\tmp, \tmp, #(0xf << ID_AA64MMFR2_LVA_SHIFT)
+	cbnz	\tmp, .Lskipoffs_\@
+	orr	\ttbr, \ttbr, #TTBR1_BADDR_4852_OFFSET
 .Lskipoffs_\@ :
-#पूर्ण_अगर
+#endif
 	.endm
 
 /*
- * Perक्रमm the reverse of offset_ttbr1.
+ * Perform the reverse of offset_ttbr1.
  * bic is used as it can cover the immediate value and, in future, won't need
  * to be nop'ed out when dealing with 52-bit kernel VAs.
  */
 	.macro	restore_ttbr1, ttbr
-#अगर_घोषित CONFIG_ARM64_VA_BITS_52
-	bic	\टtbr, \टtbr, #TTBR1_BADDR_4852_OFFSET
-#पूर्ण_अगर
+#ifdef CONFIG_ARM64_VA_BITS_52
+	bic	\ttbr, \ttbr, #TTBR1_BADDR_4852_OFFSET
+#endif
 	.endm
 
 /*
- * Arrange a physical address in a TTBR रेजिस्टर, taking care of 52-bit
+ * Arrange a physical address in a TTBR register, taking care of 52-bit
  * addresses.
  *
  * 	phys:	physical address, preserved
- * 	ttbr:	वापसs the TTBR value
+ * 	ttbr:	returns the TTBR value
  */
 	.macro	phys_to_ttbr, ttbr, phys
-#अगर_घोषित CONFIG_ARM64_PA_BITS_52
-	orr	\टtbr, \phys, \phys, lsr #46
-	and	\टtbr, \टtbr, #TTBR_BADDR_MASK_52
-#अन्यथा
-	mov	\टtbr, \phys
-#पूर्ण_अगर
+#ifdef CONFIG_ARM64_PA_BITS_52
+	orr	\ttbr, \phys, \phys, lsr #46
+	and	\ttbr, \ttbr, #TTBR_BADDR_MASK_52
+#else
+	mov	\ttbr, \phys
+#endif
 	.endm
 
 	.macro	phys_to_pte, pte, phys
-#अगर_घोषित CONFIG_ARM64_PA_BITS_52
+#ifdef CONFIG_ARM64_PA_BITS_52
 	/*
 	 * We assume \phys is 64K aligned and this is guaranteed by only
 	 * supporting this configuration with 64K pages.
 	 */
 	orr	\pte, \phys, \phys, lsr #36
 	and	\pte, \pte, #PTE_ADDR_MASK
-#अन्यथा
+#else
 	mov	\pte, \phys
-#पूर्ण_अगर
+#endif
 	.endm
 
 	.macro	pte_to_phys, phys, pte
-#अगर_घोषित CONFIG_ARM64_PA_BITS_52
+#ifdef CONFIG_ARM64_PA_BITS_52
 	ubfiz	\phys, \pte, #(48 - 16 - 12), #16
 	bfxil	\phys, \pte, #16, #32
 	lsl	\phys, \phys, #16
-#अन्यथा
+#else
 	and	\phys, \pte, #PTE_ADDR_MASK
-#पूर्ण_अगर
+#endif
 	.endm
 
 /*
  * tcr_clear_errata_bits - Clear TCR bits that trigger an errata on this CPU.
  */
-	.macro	tcr_clear_errata_bits, tcr, पंचांगp1, पंचांगp2
-#अगर_घोषित CONFIG_FUJITSU_ERRATUM_010001
-	mrs	\टmp1, midr_el1
+	.macro	tcr_clear_errata_bits, tcr, tmp1, tmp2
+#ifdef CONFIG_FUJITSU_ERRATUM_010001
+	mrs	\tmp1, midr_el1
 
-	mov_q	\टmp2, MIDR_FUJITSU_ERRATUM_010001_MASK
-	and	\टmp1, \टmp1, \टmp2
-	mov_q	\टmp2, MIDR_FUJITSU_ERRATUM_010001
-	cmp	\टmp1, \टmp2
+	mov_q	\tmp2, MIDR_FUJITSU_ERRATUM_010001_MASK
+	and	\tmp1, \tmp1, \tmp2
+	mov_q	\tmp2, MIDR_FUJITSU_ERRATUM_010001
+	cmp	\tmp1, \tmp2
 	b.ne	10f
 
-	mov_q	\टmp2, TCR_CLEAR_FUJITSU_ERRATUM_010001
-	bic	\टcr, \टcr, \टmp2
+	mov_q	\tmp2, TCR_CLEAR_FUJITSU_ERRATUM_010001
+	bic	\tcr, \tcr, \tmp2
 10:
-#पूर्ण_अगर /* CONFIG_FUJITSU_ERRATUM_010001 */
+#endif /* CONFIG_FUJITSU_ERRATUM_010001 */
 	.endm
 
 /**
@@ -630,23 +629,23 @@ USER(\label, ic	ivau, \टmp2)			// invalidate I line PoU
  * to executing the MSR that will change SCTLR_ELn[M] from a value of 1 to 0.
  */
 	.macro pre_disable_mmu_workaround
-#अगर_घोषित CONFIG_QCOM_FALKOR_ERRATUM_E1041
+#ifdef CONFIG_QCOM_FALKOR_ERRATUM_E1041
 	isb
-#पूर्ण_अगर
+#endif
 	.endm
 
 	/*
-	 * frame_push - Push @regcount callee saved रेजिस्टरs to the stack,
+	 * frame_push - Push @regcount callee saved registers to the stack,
 	 *              starting at x19, as well as x29/x30, and set x29 to
 	 *              the new value of sp. Add @extra bytes of stack space
-	 *              क्रम locals.
+	 *              for locals.
 	 */
 	.macro		frame_push, regcount:req, extra
-	__frame		st, \लegcount, \extra
+	__frame		st, \regcount, \extra
 	.endm
 
 	/*
-	 * frame_pop  - Pop the callee saved रेजिस्टरs from the stack that were
+	 * frame_pop  - Pop the callee saved registers from the stack that were
 	 *              pushed in the most recent call to frame_push, as well
 	 *              as x29/x30 and any extra stack space that may have been
 	 *              allocated.
@@ -656,32 +655,32 @@ USER(\label, ic	ivau, \टmp2)			// invalidate I line PoU
 	.endm
 
 	.macro		__frame_regs, reg1, reg2, op, num
-	.अगर		.Lframe_regcount == \नum
-	\op\()r		\लeg1, [sp, #(\नum + 1) * 8]
-	.अन्यथाअगर		.Lframe_regcount > \नum
-	\op\()p		\लeg1, \लeg2, [sp, #(\नum + 1) * 8]
-	.endअगर
+	.if		.Lframe_regcount == \num
+	\op\()r		\reg1, [sp, #(\num + 1) * 8]
+	.elseif		.Lframe_regcount > \num
+	\op\()p		\reg1, \reg2, [sp, #(\num + 1) * 8]
+	.endif
 	.endm
 
 	.macro		__frame, op, regcount, extra=0
-	.अगरc		\op, st
-	.अगर		(\लegcount) < 0 || (\लegcount) > 10
+	.ifc		\op, st
+	.if		(\regcount) < 0 || (\regcount) > 10
 	.error		"regcount should be in the range [0 ... 10]"
-	.endअगर
-	.अगर		((\extra) % 16) != 0
+	.endif
+	.if		((\extra) % 16) != 0
 	.error		"extra should be a multiple of 16 bytes"
-	.endअगर
-	.अगरdef		.Lframe_regcount
-	.अगर		.Lframe_regcount != -1
+	.endif
+	.ifdef		.Lframe_regcount
+	.if		.Lframe_regcount != -1
 	.error		"frame_push/frame_pop may not be nested"
-	.endअगर
-	.endअगर
-	.set		.Lframe_regcount, \लegcount
+	.endif
+	.endif
+	.set		.Lframe_regcount, \regcount
 	.set		.Lframe_extra, \extra
-	.set		.Lframe_local_offset, ((\लegcount + 3) / 2) * 16
+	.set		.Lframe_local_offset, ((\regcount + 3) / 2) * 16
 	stp		x29, x30, [sp, #-.Lframe_local_offset - .Lframe_extra]!
 	mov		x29, sp
-	.endअगर
+	.endif
 
 	__frame_regs	x19, x20, \op, 1
 	__frame_regs	x21, x22, \op, 3
@@ -689,13 +688,13 @@ USER(\label, ic	ivau, \टmp2)			// invalidate I line PoU
 	__frame_regs	x25, x26, \op, 7
 	__frame_regs	x27, x28, \op, 9
 
-	.अगरc		\op, ld
-	.अगर		.Lframe_regcount == -1
+	.ifc		\op, ld
+	.if		.Lframe_regcount == -1
 	.error		"frame_push/frame_pop may not be nested"
-	.endअगर
+	.endif
 	ldp		x29, x30, [sp], #.Lframe_local_offset + .Lframe_extra
 	.set		.Lframe_regcount, -1
-	.endअगर
+	.endif
 	.endm
 
 /*
@@ -703,10 +702,10 @@ USER(\label, ic	ivau, \टmp2)			// invalidate I line PoU
  * in the process. This is called when setting the MMU on.
  */
 .macro set_sctlr, sreg, reg
-	msr	\sreg, \लeg
+	msr	\sreg, \reg
 	isb
 	/*
-	 * Invalidate the local I-cache so that any inकाष्ठाions fetched
+	 * Invalidate the local I-cache so that any instructions fetched
 	 * speculatively from the PoC are discarded, since they may have
 	 * been dynamically patched at the PoU.
 	 */
@@ -716,90 +715,90 @@ USER(\label, ic	ivau, \टmp2)			// invalidate I line PoU
 .endm
 
 .macro set_sctlr_el1, reg
-	set_sctlr sctlr_el1, \लeg
+	set_sctlr sctlr_el1, \reg
 .endm
 
 .macro set_sctlr_el2, reg
-	set_sctlr sctlr_el2, \लeg
+	set_sctlr sctlr_el2, \reg
 .endm
 
 	/*
-	 * Check whether preempt/bh-disabled यंत्र code should yield as soon as
-	 * it is able. This is the हाल अगर we are currently running in task
+	 * Check whether preempt/bh-disabled asm code should yield as soon as
+	 * it is able. This is the case if we are currently running in task
 	 * context, and either a softirq is pending, or the TIF_NEED_RESCHED
-	 * flag is set and re-enabling preemption a single समय would result in
+	 * flag is set and re-enabling preemption a single time would result in
 	 * a preempt count of zero. (Note that the TIF_NEED_RESCHED flag is
-	 * stored negated in the top word of the thपढ़ो_info::preempt_count
+	 * stored negated in the top word of the thread_info::preempt_count
 	 * field)
 	 */
-	.macro		cond_yield, lbl:req, पंचांगp:req, पंचांगp2:req
-	get_current_task \टmp
-	ldr		\टmp, [\टmp, #TSK_TI_PREEMPT]
+	.macro		cond_yield, lbl:req, tmp:req, tmp2:req
+	get_current_task \tmp
+	ldr		\tmp, [\tmp, #TSK_TI_PREEMPT]
 	/*
-	 * If we are serving a softirq, there is no poपूर्णांक in yielding: the
-	 * softirq will not be preempted no matter what we करो, so we should
+	 * If we are serving a softirq, there is no point in yielding: the
+	 * softirq will not be preempted no matter what we do, so we should
 	 * run to completion as quickly as we can.
 	 */
-	tbnz		\टmp, #SOFTIRQ_SHIFT, .Lnoyield_\@
-#अगर_घोषित CONFIG_PREEMPTION
-	sub		\टmp, \टmp, #PREEMPT_DISABLE_OFFSET
-	cbz		\टmp, \lbl
-#पूर्ण_अगर
-	adr_l		\टmp, irq_stat + IRQ_CPUSTAT_SOFTIRQ_PENDING
-	this_cpu_offset	\टmp2
-	ldr		w\टmp, [\टmp, \टmp2]
-	cbnz		w\टmp, \lbl	// yield on pending softirq in task context
+	tbnz		\tmp, #SOFTIRQ_SHIFT, .Lnoyield_\@
+#ifdef CONFIG_PREEMPTION
+	sub		\tmp, \tmp, #PREEMPT_DISABLE_OFFSET
+	cbz		\tmp, \lbl
+#endif
+	adr_l		\tmp, irq_stat + IRQ_CPUSTAT_SOFTIRQ_PENDING
+	this_cpu_offset	\tmp2
+	ldr		w\tmp, [\tmp, \tmp2]
+	cbnz		w\tmp, \lbl	// yield on pending softirq in task context
 .Lnoyield_\@:
 	.endm
 
 /*
- * This macro emits a program property note section identअगरying
- * architecture features which require special handling, मुख्यly क्रम
+ * This macro emits a program property note section identifying
+ * architecture features which require special handling, mainly for
  * use in assembly files included in the VDSO.
  */
 
-#घोषणा NT_GNU_PROPERTY_TYPE_0  5
-#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_AND      0xc0000000
+#define NT_GNU_PROPERTY_TYPE_0  5
+#define GNU_PROPERTY_AARCH64_FEATURE_1_AND      0xc0000000
 
-#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_BTI      (1U << 0)
-#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_PAC      (1U << 1)
+#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI      (1U << 0)
+#define GNU_PROPERTY_AARCH64_FEATURE_1_PAC      (1U << 1)
 
-#अगर_घोषित CONFIG_ARM64_BTI_KERNEL
-#घोषणा GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT		\
+#ifdef CONFIG_ARM64_BTI_KERNEL
+#define GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT		\
 		((GNU_PROPERTY_AARCH64_FEATURE_1_BTI |	\
 		  GNU_PROPERTY_AARCH64_FEATURE_1_PAC))
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT
+#ifdef GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT
 .macro emit_aarch64_feature_1_and, feat=GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT
 	.pushsection .note.gnu.property, "a"
 	.align  3
-	.दीर्घ   2f - 1f
-	.दीर्घ   6f - 3f
-	.दीर्घ   NT_GNU_PROPERTY_TYPE_0
+	.long   2f - 1f
+	.long   6f - 3f
+	.long   NT_GNU_PROPERTY_TYPE_0
 1:      .string "GNU"
 2:
 	.align  3
-3:      .दीर्घ   GNU_PROPERTY_AARCH64_FEATURE_1_AND
-	.दीर्घ   5f - 4f
+3:      .long   GNU_PROPERTY_AARCH64_FEATURE_1_AND
+	.long   5f - 4f
 4:
 	/*
-	 * This is described with an array of अक्षर in the Linux API
+	 * This is described with an array of char in the Linux API
 	 * spec but the text and all other usage (including binutils,
 	 * clang and GCC) treat this as a 32 bit value so no swizzling
-	 * is required क्रम big endian.
+	 * is required for big endian.
 	 */
-	.दीर्घ   \पeat
+	.long   \feat
 5:
 	.align  3
 6:
 	.popsection
 .endm
 
-#अन्यथा
+#else
 .macro emit_aarch64_feature_1_and, feat=0
 .endm
 
-#पूर्ण_अगर /* GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT */
+#endif /* GNU_PROPERTY_AARCH64_FEATURE_1_DEFAULT */
 
-#पूर्ण_अगर	/* __ASM_ASSEMBLER_H */
+#endif	/* __ASM_ASSEMBLER_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Samsung's S5PC110/S5PV210 flattened device tree enabled machine.
 //
@@ -7,62 +6,62 @@
 // Mateusz Krawczuk <m.krawczuk@partner.samsung.com>
 // Tomasz Figa <t.figa@samsung.com>
 
-#समावेश <linux/of_fdt.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/of_fdt.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश <यंत्र/mach/map.h>
-#समावेश <यंत्र/प्रणाली_misc.h>
+#include <asm/mach/arch.h>
+#include <asm/mach/map.h>
+#include <asm/system_misc.h>
 
-#समावेश "common.h"
-#समावेश "regs-clock.h"
+#include "common.h"
+#include "regs-clock.h"
 
-अटल पूर्णांक __init s5pv210_fdt_map_sys(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
-					पूर्णांक depth, व्योम *data)
-अणु
-	काष्ठा map_desc iodesc;
-	स्थिर __be32 *reg;
-	पूर्णांक len;
+static int __init s5pv210_fdt_map_sys(unsigned long node, const char *uname,
+					int depth, void *data)
+{
+	struct map_desc iodesc;
+	const __be32 *reg;
+	int len;
 
-	अगर (!of_flat_dt_is_compatible(node, "samsung,s5pv210-clock"))
-		वापस 0;
+	if (!of_flat_dt_is_compatible(node, "samsung,s5pv210-clock"))
+		return 0;
 
 	reg = of_get_flat_dt_prop(node, "reg", &len);
-	अगर (reg == शून्य || len != (माप(अचिन्हित दीर्घ) * 2))
-		वापस 0;
+	if (reg == NULL || len != (sizeof(unsigned long) * 2))
+		return 0;
 
 	iodesc.pfn = __phys_to_pfn(be32_to_cpu(reg[0]));
 	iodesc.length = be32_to_cpu(reg[1]) - 1;
-	iodesc.भव = (अचिन्हित दीर्घ)S3C_VA_SYS;
+	iodesc.virtual = (unsigned long)S3C_VA_SYS;
 	iodesc.type = MT_DEVICE;
 	iotable_init(&iodesc, 1);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम __init s5pv210_dt_map_io(व्योम)
-अणु
+static void __init s5pv210_dt_map_io(void)
+{
 	debug_ll_io_init();
 
-	of_scan_flat_dt(s5pv210_fdt_map_sys, शून्य);
-पूर्ण
+	of_scan_flat_dt(s5pv210_fdt_map_sys, NULL);
+}
 
-अटल व्योम s5pv210_dt_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
-अणु
-	__raw_ग_लिखोl(0x1, S5P_SWRESET);
-पूर्ण
+static void s5pv210_dt_restart(enum reboot_mode mode, const char *cmd)
+{
+	__raw_writel(0x1, S5P_SWRESET);
+}
 
-अटल व्योम __init s5pv210_dt_init_late(व्योम)
-अणु
-	platक्रमm_device_रेजिस्टर_simple("s5pv210-cpufreq", -1, शून्य, 0);
+static void __init s5pv210_dt_init_late(void)
+{
+	platform_device_register_simple("s5pv210-cpufreq", -1, NULL, 0);
 	s5pv210_pm_init();
-पूर्ण
+}
 
-अटल अक्षर स्थिर *स्थिर s5pv210_dt_compat[] __initस्थिर = अणु
+static char const *const s5pv210_dt_compat[] __initconst = {
 	"samsung,s5pc110",
 	"samsung,s5pv210",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(S5PV210_DT, "Samsung S5PC110/S5PV210-based board")
 	.dt_compat = s5pv210_dt_compat,

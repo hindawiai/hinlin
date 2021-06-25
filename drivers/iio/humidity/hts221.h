@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * STMicroelectronics hts221 sensor driver
  *
@@ -8,51 +7,51 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
 
-#अगर_अघोषित HTS221_H
-#घोषणा HTS221_H
+#ifndef HTS221_H
+#define HTS221_H
 
-#घोषणा HTS221_DEV_NAME		"hts221"
+#define HTS221_DEV_NAME		"hts221"
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/iio/iio.h>
+#include <linux/regulator/consumer.h>
 
-क्रमागत hts221_sensor_type अणु
+enum hts221_sensor_type {
 	HTS221_SENSOR_H,
 	HTS221_SENSOR_T,
 	HTS221_SENSOR_MAX,
-पूर्ण;
+};
 
-काष्ठा hts221_sensor अणु
+struct hts221_sensor {
 	u8 cur_avg_idx;
-	पूर्णांक slope, b_gen;
-पूर्ण;
+	int slope, b_gen;
+};
 
-काष्ठा hts221_hw अणु
-	स्थिर अक्षर *name;
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-	काष्ठा regulator *vdd;
+struct hts221_hw {
+	const char *name;
+	struct device *dev;
+	struct regmap *regmap;
+	struct regulator *vdd;
 
-	काष्ठा iio_trigger *trig;
-	पूर्णांक irq;
+	struct iio_trigger *trig;
+	int irq;
 
-	काष्ठा hts221_sensor sensors[HTS221_SENSOR_MAX];
+	struct hts221_sensor sensors[HTS221_SENSOR_MAX];
 
 	bool enabled;
 	u8 odr;
-	/* Ensure natural alignment of बारtamp */
-	काष्ठा अणु
+	/* Ensure natural alignment of timestamp */
+	struct {
 		__le16 channels[2];
 		s64 ts __aligned(8);
-	पूर्ण scan;
-पूर्ण;
+	} scan;
+};
 
-बाह्य स्थिर काष्ठा dev_pm_ops hts221_pm_ops;
+extern const struct dev_pm_ops hts221_pm_ops;
 
-पूर्णांक hts221_probe(काष्ठा device *dev, पूर्णांक irq, स्थिर अक्षर *name,
-		 काष्ठा regmap *regmap);
-पूर्णांक hts221_set_enable(काष्ठा hts221_hw *hw, bool enable);
-पूर्णांक hts221_allocate_buffers(काष्ठा iio_dev *iio_dev);
-पूर्णांक hts221_allocate_trigger(काष्ठा iio_dev *iio_dev);
+int hts221_probe(struct device *dev, int irq, const char *name,
+		 struct regmap *regmap);
+int hts221_set_enable(struct hts221_hw *hw, bool enable);
+int hts221_allocate_buffers(struct iio_dev *iio_dev);
+int hts221_allocate_trigger(struct iio_dev *iio_dev);
 
-#पूर्ण_अगर /* HTS221_H */
+#endif /* HTS221_H */

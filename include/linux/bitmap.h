@@ -1,105 +1,104 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_BITMAP_H
-#घोषणा __LINUX_BITMAP_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_BITMAP_H
+#define __LINUX_BITMAP_H
 
-#अगर_अघोषित __ASSEMBLY__
+#ifndef __ASSEMBLY__
 
-#समावेश <linux/align.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
+#include <linux/align.h>
+#include <linux/bitops.h>
+#include <linux/limits.h>
+#include <linux/string.h>
+#include <linux/types.h>
 
-काष्ठा device;
+struct device;
 
 /*
- * biपंचांगaps provide bit arrays that consume one or more अचिन्हित
- * दीर्घs.  The biपंचांगap पूर्णांकerface and available operations are listed
- * here, in biपंचांगap.h
+ * bitmaps provide bit arrays that consume one or more unsigned
+ * longs.  The bitmap interface and available operations are listed
+ * here, in bitmap.h
  *
  * Function implementations generic to all architectures are in
- * lib/biपंचांगap.c.  Functions implementations that are architecture
- * specअगरic are in various include/यंत्र-<arch>/bitops.h headers
- * and other arch/<arch> specअगरic files.
+ * lib/bitmap.c.  Functions implementations that are architecture
+ * specific are in various include/asm-<arch>/bitops.h headers
+ * and other arch/<arch> specific files.
  *
- * See lib/biपंचांगap.c क्रम more details.
+ * See lib/bitmap.c for more details.
  */
 
 /**
- * DOC: biपंचांगap overview
+ * DOC: bitmap overview
  *
- * The available biपंचांगap operations and their rough meaning in the
- * हाल that the biपंचांगap is a single अचिन्हित दीर्घ are thus:
+ * The available bitmap operations and their rough meaning in the
+ * case that the bitmap is a single unsigned long are thus:
  *
  * The generated code is more efficient when nbits is known at
- * compile-समय and at most BITS_PER_LONG.
+ * compile-time and at most BITS_PER_LONG.
  *
  * ::
  *
- *  biपंचांगap_zero(dst, nbits)                     *dst = 0UL
- *  biपंचांगap_fill(dst, nbits)                     *dst = ~0UL
- *  biपंचांगap_copy(dst, src, nbits)                *dst = *src
- *  biपंचांगap_and(dst, src1, src2, nbits)          *dst = *src1 & *src2
- *  biपंचांगap_or(dst, src1, src2, nbits)           *dst = *src1 | *src2
- *  biपंचांगap_xor(dst, src1, src2, nbits)          *dst = *src1 ^ *src2
- *  biपंचांगap_andnot(dst, src1, src2, nbits)       *dst = *src1 & ~(*src2)
- *  biपंचांगap_complement(dst, src, nbits)          *dst = ~(*src)
- *  biपंचांगap_equal(src1, src2, nbits)             Are *src1 and *src2 equal?
- *  biपंचांगap_पूर्णांकersects(src1, src2, nbits)        Do *src1 and *src2 overlap?
- *  biपंचांगap_subset(src1, src2, nbits)            Is *src1 a subset of *src2?
- *  biपंचांगap_empty(src, nbits)                    Are all bits zero in *src?
- *  biपंचांगap_full(src, nbits)                     Are all bits set in *src?
- *  biपंचांगap_weight(src, nbits)                   Hamming Weight: number set bits
- *  biपंचांगap_set(dst, pos, nbits)                 Set specअगरied bit area
- *  biपंचांगap_clear(dst, pos, nbits)               Clear specअगरied bit area
- *  biपंचांगap_find_next_zero_area(buf, len, pos, n, mask)  Find bit मुक्त area
- *  biपंचांगap_find_next_zero_area_off(buf, len, pos, n, mask, mask_off)  as above
- *  biपंचांगap_next_clear_region(map, &start, &end, nbits)  Find next clear region
- *  biपंचांगap_next_set_region(map, &start, &end, nbits)  Find next set region
- *  biपंचांगap_क्रम_each_clear_region(map, rs, re, start, end)
+ *  bitmap_zero(dst, nbits)                     *dst = 0UL
+ *  bitmap_fill(dst, nbits)                     *dst = ~0UL
+ *  bitmap_copy(dst, src, nbits)                *dst = *src
+ *  bitmap_and(dst, src1, src2, nbits)          *dst = *src1 & *src2
+ *  bitmap_or(dst, src1, src2, nbits)           *dst = *src1 | *src2
+ *  bitmap_xor(dst, src1, src2, nbits)          *dst = *src1 ^ *src2
+ *  bitmap_andnot(dst, src1, src2, nbits)       *dst = *src1 & ~(*src2)
+ *  bitmap_complement(dst, src, nbits)          *dst = ~(*src)
+ *  bitmap_equal(src1, src2, nbits)             Are *src1 and *src2 equal?
+ *  bitmap_intersects(src1, src2, nbits)        Do *src1 and *src2 overlap?
+ *  bitmap_subset(src1, src2, nbits)            Is *src1 a subset of *src2?
+ *  bitmap_empty(src, nbits)                    Are all bits zero in *src?
+ *  bitmap_full(src, nbits)                     Are all bits set in *src?
+ *  bitmap_weight(src, nbits)                   Hamming Weight: number set bits
+ *  bitmap_set(dst, pos, nbits)                 Set specified bit area
+ *  bitmap_clear(dst, pos, nbits)               Clear specified bit area
+ *  bitmap_find_next_zero_area(buf, len, pos, n, mask)  Find bit free area
+ *  bitmap_find_next_zero_area_off(buf, len, pos, n, mask, mask_off)  as above
+ *  bitmap_next_clear_region(map, &start, &end, nbits)  Find next clear region
+ *  bitmap_next_set_region(map, &start, &end, nbits)  Find next set region
+ *  bitmap_for_each_clear_region(map, rs, re, start, end)
  *  						Iterate over all clear regions
- *  biपंचांगap_क्रम_each_set_region(map, rs, re, start, end)
+ *  bitmap_for_each_set_region(map, rs, re, start, end)
  *  						Iterate over all set regions
- *  biपंचांगap_shअगरt_right(dst, src, n, nbits)      *dst = *src >> n
- *  biपंचांगap_shअगरt_left(dst, src, n, nbits)       *dst = *src << n
- *  biपंचांगap_cut(dst, src, first, n, nbits)       Cut n bits from first, copy rest
- *  biपंचांगap_replace(dst, old, new, mask, nbits)  *dst = (*old & ~(*mask)) | (*new & *mask)
- *  biपंचांगap_remap(dst, src, old, new, nbits)     *dst = map(old, new)(src)
- *  biपंचांगap_bitremap(oldbit, old, new, nbits)    newbit = map(old, new)(oldbit)
- *  biपंचांगap_onto(dst, orig, relmap, nbits)       *dst = orig relative to relmap
- *  biपंचांगap_fold(dst, orig, sz, nbits)           dst bits = orig bits mod sz
- *  biपंचांगap_parse(buf, buflen, dst, nbits)       Parse biपंचांगap dst from kernel buf
- *  biपंचांगap_parse_user(ubuf, ulen, dst, nbits)   Parse biपंचांगap dst from user buf
- *  biपंचांगap_parselist(buf, dst, nbits)           Parse biपंचांगap dst from kernel buf
- *  biपंचांगap_parselist_user(buf, dst, nbits)      Parse biपंचांगap dst from user buf
- *  biपंचांगap_find_मुक्त_region(biपंचांगap, bits, order)  Find and allocate bit region
- *  biपंचांगap_release_region(biपंचांगap, pos, order)   Free specअगरied bit region
- *  biपंचांगap_allocate_region(biपंचांगap, pos, order)  Allocate specअगरied bit region
- *  biपंचांगap_from_arr32(dst, buf, nbits)          Copy nbits from u32[] buf to dst
- *  biपंचांगap_to_arr32(buf, src, nbits)            Copy nbits from buf to u32[] dst
- *  biपंचांगap_get_value8(map, start)               Get 8bit value from map at start
- *  biपंचांगap_set_value8(map, value, start)        Set 8bit value to map at start
+ *  bitmap_shift_right(dst, src, n, nbits)      *dst = *src >> n
+ *  bitmap_shift_left(dst, src, n, nbits)       *dst = *src << n
+ *  bitmap_cut(dst, src, first, n, nbits)       Cut n bits from first, copy rest
+ *  bitmap_replace(dst, old, new, mask, nbits)  *dst = (*old & ~(*mask)) | (*new & *mask)
+ *  bitmap_remap(dst, src, old, new, nbits)     *dst = map(old, new)(src)
+ *  bitmap_bitremap(oldbit, old, new, nbits)    newbit = map(old, new)(oldbit)
+ *  bitmap_onto(dst, orig, relmap, nbits)       *dst = orig relative to relmap
+ *  bitmap_fold(dst, orig, sz, nbits)           dst bits = orig bits mod sz
+ *  bitmap_parse(buf, buflen, dst, nbits)       Parse bitmap dst from kernel buf
+ *  bitmap_parse_user(ubuf, ulen, dst, nbits)   Parse bitmap dst from user buf
+ *  bitmap_parselist(buf, dst, nbits)           Parse bitmap dst from kernel buf
+ *  bitmap_parselist_user(buf, dst, nbits)      Parse bitmap dst from user buf
+ *  bitmap_find_free_region(bitmap, bits, order)  Find and allocate bit region
+ *  bitmap_release_region(bitmap, pos, order)   Free specified bit region
+ *  bitmap_allocate_region(bitmap, pos, order)  Allocate specified bit region
+ *  bitmap_from_arr32(dst, buf, nbits)          Copy nbits from u32[] buf to dst
+ *  bitmap_to_arr32(buf, src, nbits)            Copy nbits from buf to u32[] dst
+ *  bitmap_get_value8(map, start)               Get 8bit value from map at start
+ *  bitmap_set_value8(map, value, start)        Set 8bit value to map at start
  *
- * Note, biपंचांगap_zero() and biपंचांगap_fill() operate over the region of
- * अचिन्हित दीर्घs, that is, bits behind biपंचांगap till the अचिन्हित दीर्घ
+ * Note, bitmap_zero() and bitmap_fill() operate over the region of
+ * unsigned longs, that is, bits behind bitmap till the unsigned long
  * boundary will be zeroed or filled as well. Consider to use
- * biपंचांगap_clear() or biपंचांगap_set() to make explicit zeroing or filling
+ * bitmap_clear() or bitmap_set() to make explicit zeroing or filling
  * respectively.
  */
 
 /**
- * DOC: biपंचांगap bitops
+ * DOC: bitmap bitops
  *
- * Also the following operations in यंत्र/bitops.h apply to biपंचांगaps.::
+ * Also the following operations in asm/bitops.h apply to bitmaps.::
  *
  *  set_bit(bit, addr)                  *addr |= bit
  *  clear_bit(bit, addr)                *addr &= ~bit
  *  change_bit(bit, addr)               *addr ^= bit
  *  test_bit(bit, addr)                 Is bit set in *addr?
- *  test_and_set_bit(bit, addr)         Set bit and वापस old value
- *  test_and_clear_bit(bit, addr)       Clear bit and वापस old value
- *  test_and_change_bit(bit, addr)      Change bit and वापस old value
+ *  test_and_set_bit(bit, addr)         Set bit and return old value
+ *  test_and_clear_bit(bit, addr)       Clear bit and return old value
+ *  test_and_change_bit(bit, addr)      Change bit and return old value
  *  find_first_zero_bit(addr, nbits)    Position first zero bit in *addr
  *  find_first_bit(addr, nbits)         Position first set bit in *addr
  *  find_next_zero_bit(addr, nbits, bit)
@@ -112,472 +111,472 @@
  */
 
 /**
- * DOC: declare biपंचांगap
+ * DOC: declare bitmap
  * The DECLARE_BITMAP(name,bits) macro, in linux/types.h, can be used
- * to declare an array named 'name' of just enough अचिन्हित दीर्घs to
+ * to declare an array named 'name' of just enough unsigned longs to
  * contain all bit positions from 0 to 'bits' - 1.
  */
 
 /*
- * Allocation and deallocation of biपंचांगap.
- * Provided in lib/biपंचांगap.c to aव्योम circular dependency.
+ * Allocation and deallocation of bitmap.
+ * Provided in lib/bitmap.c to avoid circular dependency.
  */
-अचिन्हित दीर्घ *biपंचांगap_alloc(अचिन्हित पूर्णांक nbits, gfp_t flags);
-अचिन्हित दीर्घ *biपंचांगap_zalloc(अचिन्हित पूर्णांक nbits, gfp_t flags);
-व्योम biपंचांगap_मुक्त(स्थिर अचिन्हित दीर्घ *biपंचांगap);
+unsigned long *bitmap_alloc(unsigned int nbits, gfp_t flags);
+unsigned long *bitmap_zalloc(unsigned int nbits, gfp_t flags);
+void bitmap_free(const unsigned long *bitmap);
 
 /* Managed variants of the above. */
-अचिन्हित दीर्घ *devm_biपंचांगap_alloc(काष्ठा device *dev,
-				 अचिन्हित पूर्णांक nbits, gfp_t flags);
-अचिन्हित दीर्घ *devm_biपंचांगap_zalloc(काष्ठा device *dev,
-				  अचिन्हित पूर्णांक nbits, gfp_t flags);
+unsigned long *devm_bitmap_alloc(struct device *dev,
+				 unsigned int nbits, gfp_t flags);
+unsigned long *devm_bitmap_zalloc(struct device *dev,
+				  unsigned int nbits, gfp_t flags);
 
 /*
- * lib/biपंचांगap.c provides these functions:
+ * lib/bitmap.c provides these functions:
  */
 
-पूर्णांक __biपंचांगap_equal(स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-		   स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-bool __pure __biपंचांगap_or_equal(स्थिर अचिन्हित दीर्घ *src1,
-			      स्थिर अचिन्हित दीर्घ *src2,
-			      स्थिर अचिन्हित दीर्घ *src3,
-			      अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_complement(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-			 अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_shअगरt_right(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-			  अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_shअगरt_left(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-			 अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक nbits);
-व्योम biपंचांगap_cut(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-		अचिन्हित पूर्णांक first, अचिन्हित पूर्णांक cut, अचिन्हित पूर्णांक nbits);
-पूर्णांक __biपंचांगap_and(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-		 स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_or(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-		 स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_xor(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-		  स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-पूर्णांक __biपंचांगap_andnot(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-		    स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_replace(अचिन्हित दीर्घ *dst,
-		      स्थिर अचिन्हित दीर्घ *old, स्थिर अचिन्हित दीर्घ *new,
-		      स्थिर अचिन्हित दीर्घ *mask, अचिन्हित पूर्णांक nbits);
-पूर्णांक __biपंचांगap_पूर्णांकersects(स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-			स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-पूर्णांक __biपंचांगap_subset(स्थिर अचिन्हित दीर्घ *biपंचांगap1,
-		    स्थिर अचिन्हित दीर्घ *biपंचांगap2, अचिन्हित पूर्णांक nbits);
-पूर्णांक __biपंचांगap_weight(स्थिर अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक nbits);
-व्योम __biपंचांगap_set(अचिन्हित दीर्घ *map, अचिन्हित पूर्णांक start, पूर्णांक len);
-व्योम __biपंचांगap_clear(अचिन्हित दीर्घ *map, अचिन्हित पूर्णांक start, पूर्णांक len);
+int __bitmap_equal(const unsigned long *bitmap1,
+		   const unsigned long *bitmap2, unsigned int nbits);
+bool __pure __bitmap_or_equal(const unsigned long *src1,
+			      const unsigned long *src2,
+			      const unsigned long *src3,
+			      unsigned int nbits);
+void __bitmap_complement(unsigned long *dst, const unsigned long *src,
+			 unsigned int nbits);
+void __bitmap_shift_right(unsigned long *dst, const unsigned long *src,
+			  unsigned int shift, unsigned int nbits);
+void __bitmap_shift_left(unsigned long *dst, const unsigned long *src,
+			 unsigned int shift, unsigned int nbits);
+void bitmap_cut(unsigned long *dst, const unsigned long *src,
+		unsigned int first, unsigned int cut, unsigned int nbits);
+int __bitmap_and(unsigned long *dst, const unsigned long *bitmap1,
+		 const unsigned long *bitmap2, unsigned int nbits);
+void __bitmap_or(unsigned long *dst, const unsigned long *bitmap1,
+		 const unsigned long *bitmap2, unsigned int nbits);
+void __bitmap_xor(unsigned long *dst, const unsigned long *bitmap1,
+		  const unsigned long *bitmap2, unsigned int nbits);
+int __bitmap_andnot(unsigned long *dst, const unsigned long *bitmap1,
+		    const unsigned long *bitmap2, unsigned int nbits);
+void __bitmap_replace(unsigned long *dst,
+		      const unsigned long *old, const unsigned long *new,
+		      const unsigned long *mask, unsigned int nbits);
+int __bitmap_intersects(const unsigned long *bitmap1,
+			const unsigned long *bitmap2, unsigned int nbits);
+int __bitmap_subset(const unsigned long *bitmap1,
+		    const unsigned long *bitmap2, unsigned int nbits);
+int __bitmap_weight(const unsigned long *bitmap, unsigned int nbits);
+void __bitmap_set(unsigned long *map, unsigned int start, int len);
+void __bitmap_clear(unsigned long *map, unsigned int start, int len);
 
-अचिन्हित दीर्घ biपंचांगap_find_next_zero_area_off(अचिन्हित दीर्घ *map,
-					     अचिन्हित दीर्घ size,
-					     अचिन्हित दीर्घ start,
-					     अचिन्हित पूर्णांक nr,
-					     अचिन्हित दीर्घ align_mask,
-					     अचिन्हित दीर्घ align_offset);
+unsigned long bitmap_find_next_zero_area_off(unsigned long *map,
+					     unsigned long size,
+					     unsigned long start,
+					     unsigned int nr,
+					     unsigned long align_mask,
+					     unsigned long align_offset);
 
 /**
- * biपंचांगap_find_next_zero_area - find a contiguous aligned zero area
+ * bitmap_find_next_zero_area - find a contiguous aligned zero area
  * @map: The address to base the search on
- * @size: The biपंचांगap size in bits
+ * @size: The bitmap size in bits
  * @start: The bitnumber to start searching at
- * @nr: The number of zeroed bits we're looking क्रम
- * @align_mask: Alignment mask क्रम zero area
+ * @nr: The number of zeroed bits we're looking for
+ * @align_mask: Alignment mask for zero area
  *
- * The @align_mask should be one less than a घातer of 2; the effect is that
+ * The @align_mask should be one less than a power of 2; the effect is that
  * the bit offset of all zero areas this function finds is multiples of that
- * घातer of 2. A @align_mask of 0 means no alignment is required.
+ * power of 2. A @align_mask of 0 means no alignment is required.
  */
-अटल अंतरभूत अचिन्हित दीर्घ
-biपंचांगap_find_next_zero_area(अचिन्हित दीर्घ *map,
-			   अचिन्हित दीर्घ size,
-			   अचिन्हित दीर्घ start,
-			   अचिन्हित पूर्णांक nr,
-			   अचिन्हित दीर्घ align_mask)
-अणु
-	वापस biपंचांगap_find_next_zero_area_off(map, size, start, nr,
+static inline unsigned long
+bitmap_find_next_zero_area(unsigned long *map,
+			   unsigned long size,
+			   unsigned long start,
+			   unsigned int nr,
+			   unsigned long align_mask)
+{
+	return bitmap_find_next_zero_area_off(map, size, start, nr,
 					      align_mask, 0);
-पूर्ण
+}
 
-पूर्णांक biपंचांगap_parse(स्थिर अक्षर *buf, अचिन्हित पूर्णांक buflen,
-			अचिन्हित दीर्घ *dst, पूर्णांक nbits);
-पूर्णांक biपंचांगap_parse_user(स्थिर अक्षर __user *ubuf, अचिन्हित पूर्णांक ulen,
-			अचिन्हित दीर्घ *dst, पूर्णांक nbits);
-पूर्णांक biपंचांगap_parselist(स्थिर अक्षर *buf, अचिन्हित दीर्घ *maskp,
-			पूर्णांक nmaskbits);
-पूर्णांक biपंचांगap_parselist_user(स्थिर अक्षर __user *ubuf, अचिन्हित पूर्णांक ulen,
-			अचिन्हित दीर्घ *dst, पूर्णांक nbits);
-व्योम biपंचांगap_remap(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-		स्थिर अचिन्हित दीर्घ *old, स्थिर अचिन्हित दीर्घ *new, अचिन्हित पूर्णांक nbits);
-पूर्णांक biपंचांगap_bitremap(पूर्णांक oldbit,
-		स्थिर अचिन्हित दीर्घ *old, स्थिर अचिन्हित दीर्घ *new, पूर्णांक bits);
-व्योम biपंचांगap_onto(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *orig,
-		स्थिर अचिन्हित दीर्घ *relmap, अचिन्हित पूर्णांक bits);
-व्योम biपंचांगap_fold(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *orig,
-		अचिन्हित पूर्णांक sz, अचिन्हित पूर्णांक nbits);
-पूर्णांक biपंचांगap_find_मुक्त_region(अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक bits, पूर्णांक order);
-व्योम biपंचांगap_release_region(अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक pos, पूर्णांक order);
-पूर्णांक biपंचांगap_allocate_region(अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक pos, पूर्णांक order);
+int bitmap_parse(const char *buf, unsigned int buflen,
+			unsigned long *dst, int nbits);
+int bitmap_parse_user(const char __user *ubuf, unsigned int ulen,
+			unsigned long *dst, int nbits);
+int bitmap_parselist(const char *buf, unsigned long *maskp,
+			int nmaskbits);
+int bitmap_parselist_user(const char __user *ubuf, unsigned int ulen,
+			unsigned long *dst, int nbits);
+void bitmap_remap(unsigned long *dst, const unsigned long *src,
+		const unsigned long *old, const unsigned long *new, unsigned int nbits);
+int bitmap_bitremap(int oldbit,
+		const unsigned long *old, const unsigned long *new, int bits);
+void bitmap_onto(unsigned long *dst, const unsigned long *orig,
+		const unsigned long *relmap, unsigned int bits);
+void bitmap_fold(unsigned long *dst, const unsigned long *orig,
+		unsigned int sz, unsigned int nbits);
+int bitmap_find_free_region(unsigned long *bitmap, unsigned int bits, int order);
+void bitmap_release_region(unsigned long *bitmap, unsigned int pos, int order);
+int bitmap_allocate_region(unsigned long *bitmap, unsigned int pos, int order);
 
-#अगर_घोषित __BIG_ENDIAN
-व्योम biपंचांगap_copy_le(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src, अचिन्हित पूर्णांक nbits);
-#अन्यथा
-#घोषणा biपंचांगap_copy_le biपंचांगap_copy
-#पूर्ण_अगर
-अचिन्हित पूर्णांक biपंचांगap_ord_to_pos(स्थिर अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक ord, अचिन्हित पूर्णांक nbits);
-पूर्णांक biपंचांगap_prपूर्णांक_to_pagebuf(bool list, अक्षर *buf,
-				   स्थिर अचिन्हित दीर्घ *maskp, पूर्णांक nmaskbits);
+#ifdef __BIG_ENDIAN
+void bitmap_copy_le(unsigned long *dst, const unsigned long *src, unsigned int nbits);
+#else
+#define bitmap_copy_le bitmap_copy
+#endif
+unsigned int bitmap_ord_to_pos(const unsigned long *bitmap, unsigned int ord, unsigned int nbits);
+int bitmap_print_to_pagebuf(bool list, char *buf,
+				   const unsigned long *maskp, int nmaskbits);
 
-#घोषणा BITMAP_FIRST_WORD_MASK(start) (~0UL << ((start) & (BITS_PER_LONG - 1)))
-#घोषणा BITMAP_LAST_WORD_MASK(nbits) (~0UL >> (-(nbits) & (BITS_PER_LONG - 1)))
+#define BITMAP_FIRST_WORD_MASK(start) (~0UL << ((start) & (BITS_PER_LONG - 1)))
+#define BITMAP_LAST_WORD_MASK(nbits) (~0UL >> (-(nbits) & (BITS_PER_LONG - 1)))
 
-अटल अंतरभूत व्योम biपंचांगap_zero(अचिन्हित दीर्घ *dst, अचिन्हित पूर्णांक nbits)
-अणु
-	अचिन्हित पूर्णांक len = BITS_TO_LONGS(nbits) * माप(अचिन्हित दीर्घ);
-	स_रखो(dst, 0, len);
-पूर्ण
+static inline void bitmap_zero(unsigned long *dst, unsigned int nbits)
+{
+	unsigned int len = BITS_TO_LONGS(nbits) * sizeof(unsigned long);
+	memset(dst, 0, len);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_fill(अचिन्हित दीर्घ *dst, अचिन्हित पूर्णांक nbits)
-अणु
-	अचिन्हित पूर्णांक len = BITS_TO_LONGS(nbits) * माप(अचिन्हित दीर्घ);
-	स_रखो(dst, 0xff, len);
-पूर्ण
+static inline void bitmap_fill(unsigned long *dst, unsigned int nbits)
+{
+	unsigned int len = BITS_TO_LONGS(nbits) * sizeof(unsigned long);
+	memset(dst, 0xff, len);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_copy(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-			अचिन्हित पूर्णांक nbits)
-अणु
-	अचिन्हित पूर्णांक len = BITS_TO_LONGS(nbits) * माप(अचिन्हित दीर्घ);
-	स_नकल(dst, src, len);
-पूर्ण
+static inline void bitmap_copy(unsigned long *dst, const unsigned long *src,
+			unsigned int nbits)
+{
+	unsigned int len = BITS_TO_LONGS(nbits) * sizeof(unsigned long);
+	memcpy(dst, src, len);
+}
 
 /*
- * Copy biपंचांगap and clear tail bits in last word.
+ * Copy bitmap and clear tail bits in last word.
  */
-अटल अंतरभूत व्योम biपंचांगap_copy_clear_tail(अचिन्हित दीर्घ *dst,
-		स्थिर अचिन्हित दीर्घ *src, अचिन्हित पूर्णांक nbits)
-अणु
-	biपंचांगap_copy(dst, src, nbits);
-	अगर (nbits % BITS_PER_LONG)
+static inline void bitmap_copy_clear_tail(unsigned long *dst,
+		const unsigned long *src, unsigned int nbits)
+{
+	bitmap_copy(dst, src, nbits);
+	if (nbits % BITS_PER_LONG)
 		dst[nbits / BITS_PER_LONG] &= BITMAP_LAST_WORD_MASK(nbits);
-पूर्ण
+}
 
 /*
- * On 32-bit प्रणालीs biपंचांगaps are represented as u32 arrays पूर्णांकernally, and
- * thereक्रमe conversion is not needed when copying data from/to arrays of u32.
+ * On 32-bit systems bitmaps are represented as u32 arrays internally, and
+ * therefore conversion is not needed when copying data from/to arrays of u32.
  */
-#अगर BITS_PER_LONG == 64
-व्योम biपंचांगap_from_arr32(अचिन्हित दीर्घ *biपंचांगap, स्थिर u32 *buf,
-							अचिन्हित पूर्णांक nbits);
-व्योम biपंचांगap_to_arr32(u32 *buf, स्थिर अचिन्हित दीर्घ *biपंचांगap,
-							अचिन्हित पूर्णांक nbits);
-#अन्यथा
-#घोषणा biपंचांगap_from_arr32(biपंचांगap, buf, nbits)			\
-	biपंचांगap_copy_clear_tail((अचिन्हित दीर्घ *) (biपंचांगap),	\
-			(स्थिर अचिन्हित दीर्घ *) (buf), (nbits))
-#घोषणा biपंचांगap_to_arr32(buf, biपंचांगap, nbits)			\
-	biपंचांगap_copy_clear_tail((अचिन्हित दीर्घ *) (buf),		\
-			(स्थिर अचिन्हित दीर्घ *) (biपंचांगap), (nbits))
-#पूर्ण_अगर
+#if BITS_PER_LONG == 64
+void bitmap_from_arr32(unsigned long *bitmap, const u32 *buf,
+							unsigned int nbits);
+void bitmap_to_arr32(u32 *buf, const unsigned long *bitmap,
+							unsigned int nbits);
+#else
+#define bitmap_from_arr32(bitmap, buf, nbits)			\
+	bitmap_copy_clear_tail((unsigned long *) (bitmap),	\
+			(const unsigned long *) (buf), (nbits))
+#define bitmap_to_arr32(buf, bitmap, nbits)			\
+	bitmap_copy_clear_tail((unsigned long *) (buf),		\
+			(const unsigned long *) (bitmap), (nbits))
+#endif
 
-अटल अंतरभूत पूर्णांक biपंचांगap_and(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस (*dst = *src1 & *src2 & BITMAP_LAST_WORD_MASK(nbits)) != 0;
-	वापस __biपंचांगap_and(dst, src1, src2, nbits);
-पूर्ण
+static inline int bitmap_and(unsigned long *dst, const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return (*dst = *src1 & *src2 & BITMAP_LAST_WORD_MASK(nbits)) != 0;
+	return __bitmap_and(dst, src1, src2, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_or(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
+static inline void bitmap_or(unsigned long *dst, const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
 		*dst = *src1 | *src2;
-	अन्यथा
-		__biपंचांगap_or(dst, src1, src2, nbits);
-पूर्ण
+	else
+		__bitmap_or(dst, src1, src2, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_xor(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
+static inline void bitmap_xor(unsigned long *dst, const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
 		*dst = *src1 ^ *src2;
-	अन्यथा
-		__biपंचांगap_xor(dst, src1, src2, nbits);
-पूर्ण
+	else
+		__bitmap_xor(dst, src1, src2, nbits);
+}
 
-अटल अंतरभूत पूर्णांक biपंचांगap_andnot(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस (*dst = *src1 & ~(*src2) & BITMAP_LAST_WORD_MASK(nbits)) != 0;
-	वापस __biपंचांगap_andnot(dst, src1, src2, nbits);
-पूर्ण
+static inline int bitmap_andnot(unsigned long *dst, const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return (*dst = *src1 & ~(*src2) & BITMAP_LAST_WORD_MASK(nbits)) != 0;
+	return __bitmap_andnot(dst, src1, src2, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_complement(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-			अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
+static inline void bitmap_complement(unsigned long *dst, const unsigned long *src,
+			unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
 		*dst = ~(*src);
-	अन्यथा
-		__biपंचांगap_complement(dst, src, nbits);
-पूर्ण
+	else
+		__bitmap_complement(dst, src, nbits);
+}
 
-#अगर_घोषित __LITTLE_ENDIAN
-#घोषणा BITMAP_MEM_ALIGNMENT 8
-#अन्यथा
-#घोषणा BITMAP_MEM_ALIGNMENT (8 * माप(अचिन्हित दीर्घ))
-#पूर्ण_अगर
-#घोषणा BITMAP_MEM_MASK (BITMAP_MEM_ALIGNMENT - 1)
+#ifdef __LITTLE_ENDIAN
+#define BITMAP_MEM_ALIGNMENT 8
+#else
+#define BITMAP_MEM_ALIGNMENT (8 * sizeof(unsigned long))
+#endif
+#define BITMAP_MEM_MASK (BITMAP_MEM_ALIGNMENT - 1)
 
-अटल अंतरभूत पूर्णांक biपंचांगap_equal(स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस !((*src1 ^ *src2) & BITMAP_LAST_WORD_MASK(nbits));
-	अगर (__builtin_स्थिरant_p(nbits & BITMAP_MEM_MASK) &&
+static inline int bitmap_equal(const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return !((*src1 ^ *src2) & BITMAP_LAST_WORD_MASK(nbits));
+	if (__builtin_constant_p(nbits & BITMAP_MEM_MASK) &&
 	    IS_ALIGNED(nbits, BITMAP_MEM_ALIGNMENT))
-		वापस !स_भेद(src1, src2, nbits / 8);
-	वापस __biपंचांगap_equal(src1, src2, nbits);
-पूर्ण
+		return !memcmp(src1, src2, nbits / 8);
+	return __bitmap_equal(src1, src2, nbits);
+}
 
 /**
- * biपंचांगap_or_equal - Check whether the or of two biपंचांगaps is equal to a third
- * @src1:	Poपूर्णांकer to biपंचांगap 1
- * @src2:	Poपूर्णांकer to biपंचांगap 2 will be or'ed with biपंचांगap 1
- * @src3:	Poपूर्णांकer to biपंचांगap 3. Compare to the result of *@src1 | *@src2
- * @nbits:	number of bits in each of these biपंचांगaps
+ * bitmap_or_equal - Check whether the or of two bitmaps is equal to a third
+ * @src1:	Pointer to bitmap 1
+ * @src2:	Pointer to bitmap 2 will be or'ed with bitmap 1
+ * @src3:	Pointer to bitmap 3. Compare to the result of *@src1 | *@src2
+ * @nbits:	number of bits in each of these bitmaps
  *
- * Returns: True अगर (*@src1 | *@src2) == *@src3, false otherwise
+ * Returns: True if (*@src1 | *@src2) == *@src3, false otherwise
  */
-अटल अंतरभूत bool biपंचांगap_or_equal(स्थिर अचिन्हित दीर्घ *src1,
-				   स्थिर अचिन्हित दीर्घ *src2,
-				   स्थिर अचिन्हित दीर्घ *src3,
-				   अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (!small_स्थिर_nbits(nbits))
-		वापस __biपंचांगap_or_equal(src1, src2, src3, nbits);
+static inline bool bitmap_or_equal(const unsigned long *src1,
+				   const unsigned long *src2,
+				   const unsigned long *src3,
+				   unsigned int nbits)
+{
+	if (!small_const_nbits(nbits))
+		return __bitmap_or_equal(src1, src2, src3, nbits);
 
-	वापस !(((*src1 | *src2) ^ *src3) & BITMAP_LAST_WORD_MASK(nbits));
-पूर्ण
+	return !(((*src1 | *src2) ^ *src3) & BITMAP_LAST_WORD_MASK(nbits));
+}
 
-अटल अंतरभूत पूर्णांक biपंचांगap_पूर्णांकersects(स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस ((*src1 & *src2) & BITMAP_LAST_WORD_MASK(nbits)) != 0;
-	अन्यथा
-		वापस __biपंचांगap_पूर्णांकersects(src1, src2, nbits);
-पूर्ण
+static inline int bitmap_intersects(const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return ((*src1 & *src2) & BITMAP_LAST_WORD_MASK(nbits)) != 0;
+	else
+		return __bitmap_intersects(src1, src2, nbits);
+}
 
-अटल अंतरभूत पूर्णांक biपंचांगap_subset(स्थिर अचिन्हित दीर्घ *src1,
-			स्थिर अचिन्हित दीर्घ *src2, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस ! ((*src1 & ~(*src2)) & BITMAP_LAST_WORD_MASK(nbits));
-	अन्यथा
-		वापस __biपंचांगap_subset(src1, src2, nbits);
-पूर्ण
+static inline int bitmap_subset(const unsigned long *src1,
+			const unsigned long *src2, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return ! ((*src1 & ~(*src2)) & BITMAP_LAST_WORD_MASK(nbits));
+	else
+		return __bitmap_subset(src1, src2, nbits);
+}
 
-अटल अंतरभूत bool biपंचांगap_empty(स्थिर अचिन्हित दीर्घ *src, अचिन्हित nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस ! (*src & BITMAP_LAST_WORD_MASK(nbits));
+static inline bool bitmap_empty(const unsigned long *src, unsigned nbits)
+{
+	if (small_const_nbits(nbits))
+		return ! (*src & BITMAP_LAST_WORD_MASK(nbits));
 
-	वापस find_first_bit(src, nbits) == nbits;
-पूर्ण
+	return find_first_bit(src, nbits) == nbits;
+}
 
-अटल अंतरभूत bool biपंचांगap_full(स्थिर अचिन्हित दीर्घ *src, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस ! (~(*src) & BITMAP_LAST_WORD_MASK(nbits));
+static inline bool bitmap_full(const unsigned long *src, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return ! (~(*src) & BITMAP_LAST_WORD_MASK(nbits));
 
-	वापस find_first_zero_bit(src, nbits) == nbits;
-पूर्ण
+	return find_first_zero_bit(src, nbits) == nbits;
+}
 
-अटल __always_अंतरभूत पूर्णांक biपंचांगap_weight(स्थिर अचिन्हित दीर्घ *src, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		वापस hweight_दीर्घ(*src & BITMAP_LAST_WORD_MASK(nbits));
-	वापस __biपंचांगap_weight(src, nbits);
-पूर्ण
+static __always_inline int bitmap_weight(const unsigned long *src, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		return hweight_long(*src & BITMAP_LAST_WORD_MASK(nbits));
+	return __bitmap_weight(src, nbits);
+}
 
-अटल __always_अंतरभूत व्योम biपंचांगap_set(अचिन्हित दीर्घ *map, अचिन्हित पूर्णांक start,
-		अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (__builtin_स्थिरant_p(nbits) && nbits == 1)
+static __always_inline void bitmap_set(unsigned long *map, unsigned int start,
+		unsigned int nbits)
+{
+	if (__builtin_constant_p(nbits) && nbits == 1)
 		__set_bit(start, map);
-	अन्यथा अगर (__builtin_स्थिरant_p(start & BITMAP_MEM_MASK) &&
+	else if (__builtin_constant_p(start & BITMAP_MEM_MASK) &&
 		 IS_ALIGNED(start, BITMAP_MEM_ALIGNMENT) &&
-		 __builtin_स्थिरant_p(nbits & BITMAP_MEM_MASK) &&
+		 __builtin_constant_p(nbits & BITMAP_MEM_MASK) &&
 		 IS_ALIGNED(nbits, BITMAP_MEM_ALIGNMENT))
-		स_रखो((अक्षर *)map + start / 8, 0xff, nbits / 8);
-	अन्यथा
-		__biपंचांगap_set(map, start, nbits);
-पूर्ण
+		memset((char *)map + start / 8, 0xff, nbits / 8);
+	else
+		__bitmap_set(map, start, nbits);
+}
 
-अटल __always_अंतरभूत व्योम biपंचांगap_clear(अचिन्हित दीर्घ *map, अचिन्हित पूर्णांक start,
-		अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (__builtin_स्थिरant_p(nbits) && nbits == 1)
+static __always_inline void bitmap_clear(unsigned long *map, unsigned int start,
+		unsigned int nbits)
+{
+	if (__builtin_constant_p(nbits) && nbits == 1)
 		__clear_bit(start, map);
-	अन्यथा अगर (__builtin_स्थिरant_p(start & BITMAP_MEM_MASK) &&
+	else if (__builtin_constant_p(start & BITMAP_MEM_MASK) &&
 		 IS_ALIGNED(start, BITMAP_MEM_ALIGNMENT) &&
-		 __builtin_स्थिरant_p(nbits & BITMAP_MEM_MASK) &&
+		 __builtin_constant_p(nbits & BITMAP_MEM_MASK) &&
 		 IS_ALIGNED(nbits, BITMAP_MEM_ALIGNMENT))
-		स_रखो((अक्षर *)map + start / 8, 0, nbits / 8);
-	अन्यथा
-		__biपंचांगap_clear(map, start, nbits);
-पूर्ण
+		memset((char *)map + start / 8, 0, nbits / 8);
+	else
+		__bitmap_clear(map, start, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_shअगरt_right(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-				अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		*dst = (*src & BITMAP_LAST_WORD_MASK(nbits)) >> shअगरt;
-	अन्यथा
-		__biपंचांगap_shअगरt_right(dst, src, shअगरt, nbits);
-पूर्ण
+static inline void bitmap_shift_right(unsigned long *dst, const unsigned long *src,
+				unsigned int shift, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		*dst = (*src & BITMAP_LAST_WORD_MASK(nbits)) >> shift;
+	else
+		__bitmap_shift_right(dst, src, shift, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_shअगरt_left(अचिन्हित दीर्घ *dst, स्थिर अचिन्हित दीर्घ *src,
-				अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
-		*dst = (*src << shअगरt) & BITMAP_LAST_WORD_MASK(nbits);
-	अन्यथा
-		__biपंचांगap_shअगरt_left(dst, src, shअगरt, nbits);
-पूर्ण
+static inline void bitmap_shift_left(unsigned long *dst, const unsigned long *src,
+				unsigned int shift, unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
+		*dst = (*src << shift) & BITMAP_LAST_WORD_MASK(nbits);
+	else
+		__bitmap_shift_left(dst, src, shift, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_replace(अचिन्हित दीर्घ *dst,
-				  स्थिर अचिन्हित दीर्घ *old,
-				  स्थिर अचिन्हित दीर्घ *new,
-				  स्थिर अचिन्हित दीर्घ *mask,
-				  अचिन्हित पूर्णांक nbits)
-अणु
-	अगर (small_स्थिर_nbits(nbits))
+static inline void bitmap_replace(unsigned long *dst,
+				  const unsigned long *old,
+				  const unsigned long *new,
+				  const unsigned long *mask,
+				  unsigned int nbits)
+{
+	if (small_const_nbits(nbits))
 		*dst = (*old & ~(*mask)) | (*new & *mask);
-	अन्यथा
-		__biपंचांगap_replace(dst, old, new, mask, nbits);
-पूर्ण
+	else
+		__bitmap_replace(dst, old, new, mask, nbits);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_next_clear_region(अचिन्हित दीर्घ *biपंचांगap,
-					    अचिन्हित पूर्णांक *rs, अचिन्हित पूर्णांक *re,
-					    अचिन्हित पूर्णांक end)
-अणु
-	*rs = find_next_zero_bit(biपंचांगap, end, *rs);
-	*re = find_next_bit(biपंचांगap, end, *rs + 1);
-पूर्ण
+static inline void bitmap_next_clear_region(unsigned long *bitmap,
+					    unsigned int *rs, unsigned int *re,
+					    unsigned int end)
+{
+	*rs = find_next_zero_bit(bitmap, end, *rs);
+	*re = find_next_bit(bitmap, end, *rs + 1);
+}
 
-अटल अंतरभूत व्योम biपंचांगap_next_set_region(अचिन्हित दीर्घ *biपंचांगap,
-					  अचिन्हित पूर्णांक *rs, अचिन्हित पूर्णांक *re,
-					  अचिन्हित पूर्णांक end)
-अणु
-	*rs = find_next_bit(biपंचांगap, end, *rs);
-	*re = find_next_zero_bit(biपंचांगap, end, *rs + 1);
-पूर्ण
+static inline void bitmap_next_set_region(unsigned long *bitmap,
+					  unsigned int *rs, unsigned int *re,
+					  unsigned int end)
+{
+	*rs = find_next_bit(bitmap, end, *rs);
+	*re = find_next_zero_bit(bitmap, end, *rs + 1);
+}
 
 /*
- * Biपंचांगap region iterators.  Iterates over the biपंचांगap between [@start, @end).
- * @rs and @re should be पूर्णांकeger variables and will be set to start and end
+ * Bitmap region iterators.  Iterates over the bitmap between [@start, @end).
+ * @rs and @re should be integer variables and will be set to start and end
  * index of the current clear or set region.
  */
-#घोषणा biपंचांगap_क्रम_each_clear_region(biपंचांगap, rs, re, start, end)	     \
-	क्रम ((rs) = (start),						     \
-	     biपंचांगap_next_clear_region((biपंचांगap), &(rs), &(re), (end));	     \
+#define bitmap_for_each_clear_region(bitmap, rs, re, start, end)	     \
+	for ((rs) = (start),						     \
+	     bitmap_next_clear_region((bitmap), &(rs), &(re), (end));	     \
 	     (rs) < (re);						     \
 	     (rs) = (re) + 1,						     \
-	     biपंचांगap_next_clear_region((biपंचांगap), &(rs), &(re), (end)))
+	     bitmap_next_clear_region((bitmap), &(rs), &(re), (end)))
 
-#घोषणा biपंचांगap_क्रम_each_set_region(biपंचांगap, rs, re, start, end)		     \
-	क्रम ((rs) = (start),						     \
-	     biपंचांगap_next_set_region((biपंचांगap), &(rs), &(re), (end));	     \
+#define bitmap_for_each_set_region(bitmap, rs, re, start, end)		     \
+	for ((rs) = (start),						     \
+	     bitmap_next_set_region((bitmap), &(rs), &(re), (end));	     \
 	     (rs) < (re);						     \
 	     (rs) = (re) + 1,						     \
-	     biपंचांगap_next_set_region((biपंचांगap), &(rs), &(re), (end)))
+	     bitmap_next_set_region((bitmap), &(rs), &(re), (end)))
 
 /**
- * BITMAP_FROM_U64() - Represent u64 value in the क्रमmat suitable क्रम biपंचांगap.
+ * BITMAP_FROM_U64() - Represent u64 value in the format suitable for bitmap.
  * @n: u64 value
  *
- * Linux biपंचांगaps are पूर्णांकernally arrays of अचिन्हित दीर्घs, i.e. 32-bit
- * पूर्णांकegers in 32-bit environment, and 64-bit पूर्णांकegers in 64-bit one.
+ * Linux bitmaps are internally arrays of unsigned longs, i.e. 32-bit
+ * integers in 32-bit environment, and 64-bit integers in 64-bit one.
  *
  * There are four combinations of endianness and length of the word in linux
  * ABIs: LE64, BE64, LE32 and BE32.
  *
  * On 64-bit kernels 64-bit LE and BE numbers are naturally ordered in
- * biपंचांगaps and thereक्रमe करोn't require any special handling.
+ * bitmaps and therefore don't require any special handling.
  *
  * On 32-bit kernels 32-bit LE ABI orders lo word of 64-bit number in memory
- * prior to hi, and 32-bit BE orders hi word prior to lo. The biपंचांगap on the
+ * prior to hi, and 32-bit BE orders hi word prior to lo. The bitmap on the
  * other hand is represented as an array of 32-bit words and the position of
- * bit N may thereक्रमe be calculated as: word #(N/32) and bit #(N%32) in that
+ * bit N may therefore be calculated as: word #(N/32) and bit #(N%32) in that
  * word.  For example, bit #42 is located at 10th position of 2nd word.
  * It matches 32-bit LE ABI, and we can simply let the compiler store 64-bit
- * values in memory as it usually करोes. But क्रम BE we need to swap hi and lo
+ * values in memory as it usually does. But for BE we need to swap hi and lo
  * words manually.
  *
- * With all that, the macro BITMAP_FROM_U64() करोes explicit reordering of hi and
- * lo parts of u64.  For LE32 it करोes nothing, and क्रम BE environment it swaps
- * hi and lo words, as is expected by biपंचांगap.
+ * With all that, the macro BITMAP_FROM_U64() does explicit reordering of hi and
+ * lo parts of u64.  For LE32 it does nothing, and for BE environment it swaps
+ * hi and lo words, as is expected by bitmap.
  */
-#अगर __BITS_PER_LONG == 64
-#घोषणा BITMAP_FROM_U64(n) (n)
-#अन्यथा
-#घोषणा BITMAP_FROM_U64(n) ((अचिन्हित दीर्घ) ((u64)(n) & अच_दीर्घ_उच्च)), \
-				((अचिन्हित दीर्घ) ((u64)(n) >> 32))
-#पूर्ण_अगर
+#if __BITS_PER_LONG == 64
+#define BITMAP_FROM_U64(n) (n)
+#else
+#define BITMAP_FROM_U64(n) ((unsigned long) ((u64)(n) & ULONG_MAX)), \
+				((unsigned long) ((u64)(n) >> 32))
+#endif
 
 /**
- * biपंचांगap_from_u64 - Check and swap words within u64.
- *  @mask: source biपंचांगap
- *  @dst:  destination biपंचांगap
+ * bitmap_from_u64 - Check and swap words within u64.
+ *  @mask: source bitmap
+ *  @dst:  destination bitmap
  *
  * In 32-bit Big Endian kernel, when using ``(u32 *)(&val)[*]``
- * to पढ़ो u64 mask, we will get the wrong word.
- * That is ``(u32 *)(&val)[0]`` माला_लो the upper 32 bits,
+ * to read u64 mask, we will get the wrong word.
+ * That is ``(u32 *)(&val)[0]`` gets the upper 32 bits,
  * but we expect the lower 32-bits of u64.
  */
-अटल अंतरभूत व्योम biपंचांगap_from_u64(अचिन्हित दीर्घ *dst, u64 mask)
-अणु
-	dst[0] = mask & अच_दीर्घ_उच्च;
+static inline void bitmap_from_u64(unsigned long *dst, u64 mask)
+{
+	dst[0] = mask & ULONG_MAX;
 
-	अगर (माप(mask) > माप(अचिन्हित दीर्घ))
+	if (sizeof(mask) > sizeof(unsigned long))
 		dst[1] = mask >> 32;
-पूर्ण
+}
 
 /**
- * biपंचांगap_get_value8 - get an 8-bit value within a memory region
- * @map: address to the biपंचांगap memory region
+ * bitmap_get_value8 - get an 8-bit value within a memory region
+ * @map: address to the bitmap memory region
  * @start: bit offset of the 8-bit value; must be a multiple of 8
  *
  * Returns the 8-bit value located at the @start bit offset within the @src
  * memory region.
  */
-अटल अंतरभूत अचिन्हित दीर्घ biपंचांगap_get_value8(स्थिर अचिन्हित दीर्घ *map,
-					      अचिन्हित दीर्घ start)
-अणु
-	स्थिर माप_प्रकार index = BIT_WORD(start);
-	स्थिर अचिन्हित दीर्घ offset = start % BITS_PER_LONG;
+static inline unsigned long bitmap_get_value8(const unsigned long *map,
+					      unsigned long start)
+{
+	const size_t index = BIT_WORD(start);
+	const unsigned long offset = start % BITS_PER_LONG;
 
-	वापस (map[index] >> offset) & 0xFF;
-पूर्ण
+	return (map[index] >> offset) & 0xFF;
+}
 
 /**
- * biपंचांगap_set_value8 - set an 8-bit value within a memory region
- * @map: address to the biपंचांगap memory region
- * @value: the 8-bit value; values wider than 8 bits may clobber biपंचांगap
+ * bitmap_set_value8 - set an 8-bit value within a memory region
+ * @map: address to the bitmap memory region
+ * @value: the 8-bit value; values wider than 8 bits may clobber bitmap
  * @start: bit offset of the 8-bit value; must be a multiple of 8
  */
-अटल अंतरभूत व्योम biपंचांगap_set_value8(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ value,
-				     अचिन्हित दीर्घ start)
-अणु
-	स्थिर माप_प्रकार index = BIT_WORD(start);
-	स्थिर अचिन्हित दीर्घ offset = start % BITS_PER_LONG;
+static inline void bitmap_set_value8(unsigned long *map, unsigned long value,
+				     unsigned long start)
+{
+	const size_t index = BIT_WORD(start);
+	const unsigned long offset = start % BITS_PER_LONG;
 
 	map[index] &= ~(0xFFUL << offset);
 	map[index] |= value << offset;
-पूर्ण
+}
 
-#पूर्ण_अगर /* __ASSEMBLY__ */
+#endif /* __ASSEMBLY__ */
 
-#पूर्ण_अगर /* __LINUX_BITMAP_H */
+#endif /* __LINUX_BITMAP_H */

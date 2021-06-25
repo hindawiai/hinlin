@@ -1,559 +1,558 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// S3C24XX specअगरic support क्रम Samsung pinctrl/gpiolib driver.
+// S3C24XX specific support for Samsung pinctrl/gpiolib driver.
 //
 // Copyright (c) 2013 Heiko Stuebner <heiko@sntech.de>
 //
-// This file contains the SamsungS3C24XX specअगरic inक्रमmation required by the
+// This file contains the SamsungS3C24XX specific information required by the
 // Samsung pinctrl/gpiolib driver. It also includes the implementation of
-// बाह्यal gpio and wakeup पूर्णांकerrupt support.
+// external gpio and wakeup interrupt support.
 
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/irqchip/chained_irq.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
+#include <linux/of_irq.h>
+#include <linux/irqchip/chained_irq.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/err.h>
 
-#समावेश "pinctrl-samsung.h"
+#include "pinctrl-samsung.h"
 
-#घोषणा NUM_EINT	24
-#घोषणा NUM_EINT_IRQ	6
-#घोषणा Eपूर्णांक_उच्च_PER_GROUP	8
+#define NUM_EINT	24
+#define NUM_EINT_IRQ	6
+#define EINT_MAX_PER_GROUP	8
 
-#घोषणा EINTPEND_REG	0xa8
-#घोषणा EINTMASK_REG	0xa4
+#define EINTPEND_REG	0xa8
+#define EINTMASK_REG	0xa4
 
-#घोषणा EINT_GROUP(i)		((पूर्णांक)((i) / Eपूर्णांक_उच्च_PER_GROUP))
-#घोषणा EINT_REG(i)		((EINT_GROUP(i) * 4) + 0x88)
-#घोषणा EINT_OFFS(i)		((i) % Eपूर्णांक_उच्च_PER_GROUP * 4)
+#define EINT_GROUP(i)		((int)((i) / EINT_MAX_PER_GROUP))
+#define EINT_REG(i)		((EINT_GROUP(i) * 4) + 0x88)
+#define EINT_OFFS(i)		((i) % EINT_MAX_PER_GROUP * 4)
 
-#घोषणा EINT_LEVEL_LOW		0
-#घोषणा EINT_LEVEL_HIGH		1
-#घोषणा EINT_EDGE_FALLING	2
-#घोषणा EINT_EDGE_RISING	4
-#घोषणा EINT_EDGE_BOTH		6
-#घोषणा EINT_MASK		0xf
+#define EINT_LEVEL_LOW		0
+#define EINT_LEVEL_HIGH		1
+#define EINT_EDGE_FALLING	2
+#define EINT_EDGE_RISING	4
+#define EINT_EDGE_BOTH		6
+#define EINT_MASK		0xf
 
-अटल स्थिर काष्ठा samsung_pin_bank_type bank_type_1bit = अणु
-	.fld_width = अणु 1, 1, पूर्ण,
-	.reg_offset = अणु 0x00, 0x04, पूर्ण,
-पूर्ण;
+static const struct samsung_pin_bank_type bank_type_1bit = {
+	.fld_width = { 1, 1, },
+	.reg_offset = { 0x00, 0x04, },
+};
 
-अटल स्थिर काष्ठा samsung_pin_bank_type bank_type_2bit = अणु
-	.fld_width = अणु 2, 1, 2, पूर्ण,
-	.reg_offset = अणु 0x00, 0x04, 0x08, पूर्ण,
-पूर्ण;
+static const struct samsung_pin_bank_type bank_type_2bit = {
+	.fld_width = { 2, 1, 2, },
+	.reg_offset = { 0x00, 0x04, 0x08, },
+};
 
-#घोषणा PIN_BANK_A(pins, reg, id)		\
-	अणु						\
+#define PIN_BANK_A(pins, reg, id)		\
+	{						\
 		.type		= &bank_type_1bit,	\
 		.pctl_offset	= reg,			\
 		.nr_pins	= pins,			\
-		.eपूर्णांक_type	= EINT_TYPE_NONE,	\
+		.eint_type	= EINT_TYPE_NONE,	\
 		.name		= id			\
-	पूर्ण
+	}
 
-#घोषणा PIN_BANK_2BIT(pins, reg, id)		\
-	अणु						\
+#define PIN_BANK_2BIT(pins, reg, id)		\
+	{						\
 		.type		= &bank_type_2bit,	\
 		.pctl_offset	= reg,			\
 		.nr_pins	= pins,			\
-		.eपूर्णांक_type	= EINT_TYPE_NONE,	\
+		.eint_type	= EINT_TYPE_NONE,	\
 		.name		= id			\
-	पूर्ण
+	}
 
-#घोषणा PIN_BANK_2BIT_EINTW(pins, reg, id, eoffs, emask)\
-	अणु						\
+#define PIN_BANK_2BIT_EINTW(pins, reg, id, eoffs, emask)\
+	{						\
 		.type		= &bank_type_2bit,	\
 		.pctl_offset	= reg,			\
 		.nr_pins	= pins,			\
-		.eपूर्णांक_type	= EINT_TYPE_WKUP,	\
-		.eपूर्णांक_func	= 2,			\
-		.eपूर्णांक_mask	= emask,		\
-		.eपूर्णांक_offset	= eoffs,		\
+		.eint_type	= EINT_TYPE_WKUP,	\
+		.eint_func	= 2,			\
+		.eint_mask	= emask,		\
+		.eint_offset	= eoffs,		\
 		.name		= id			\
-	पूर्ण
+	}
 
 /**
- * काष्ठा s3c24xx_eपूर्णांक_data - EINT common data
+ * struct s3c24xx_eint_data - EINT common data
  * @drvdata: pin controller driver data
- * @करोमुख्यs: IRQ करोमुख्यs of particular EINT पूर्णांकerrupts
- * @parents: mapped parent irqs in the मुख्य पूर्णांकerrupt controller
+ * @domains: IRQ domains of particular EINT interrupts
+ * @parents: mapped parent irqs in the main interrupt controller
  */
-काष्ठा s3c24xx_eपूर्णांक_data अणु
-	काष्ठा samsung_pinctrl_drv_data *drvdata;
-	काष्ठा irq_करोमुख्य *करोमुख्यs[NUM_EINT];
-	पूर्णांक parents[NUM_EINT_IRQ];
-पूर्ण;
+struct s3c24xx_eint_data {
+	struct samsung_pinctrl_drv_data *drvdata;
+	struct irq_domain *domains[NUM_EINT];
+	int parents[NUM_EINT_IRQ];
+};
 
 /**
- * काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data - per irq-करोमुख्य data
- * @bank: pin bank related to the करोमुख्य
- * @eपूर्णांक_data: common data
- * @eपूर्णांक0_3_parent_only: live eपूर्णांकs 0-3 only in the मुख्य पूर्णांकc
+ * struct s3c24xx_eint_domain_data - per irq-domain data
+ * @bank: pin bank related to the domain
+ * @eint_data: common data
+ * @eint0_3_parent_only: live eints 0-3 only in the main intc
  */
-काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data अणु
-	काष्ठा samsung_pin_bank *bank;
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data;
-	bool eपूर्णांक0_3_parent_only;
-पूर्ण;
+struct s3c24xx_eint_domain_data {
+	struct samsung_pin_bank *bank;
+	struct s3c24xx_eint_data *eint_data;
+	bool eint0_3_parent_only;
+};
 
-अटल पूर्णांक s3c24xx_eपूर्णांक_get_trigger(अचिन्हित पूर्णांक type)
-अणु
-	चयन (type) अणु
-	हाल IRQ_TYPE_EDGE_RISING:
-		वापस EINT_EDGE_RISING;
-	हाल IRQ_TYPE_EDGE_FALLING:
-		वापस EINT_EDGE_FALLING;
-	हाल IRQ_TYPE_EDGE_BOTH:
-		वापस EINT_EDGE_BOTH;
-	हाल IRQ_TYPE_LEVEL_HIGH:
-		वापस EINT_LEVEL_HIGH;
-	हाल IRQ_TYPE_LEVEL_LOW:
-		वापस EINT_LEVEL_LOW;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static int s3c24xx_eint_get_trigger(unsigned int type)
+{
+	switch (type) {
+	case IRQ_TYPE_EDGE_RISING:
+		return EINT_EDGE_RISING;
+	case IRQ_TYPE_EDGE_FALLING:
+		return EINT_EDGE_FALLING;
+	case IRQ_TYPE_EDGE_BOTH:
+		return EINT_EDGE_BOTH;
+	case IRQ_TYPE_LEVEL_HIGH:
+		return EINT_LEVEL_HIGH;
+	case IRQ_TYPE_LEVEL_LOW:
+		return EINT_LEVEL_LOW;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल व्योम s3c24xx_eपूर्णांक_set_handler(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	/* Edge- and level-triggered पूर्णांकerrupts need dअगरferent handlers */
-	अगर (type & IRQ_TYPE_EDGE_BOTH)
+static void s3c24xx_eint_set_handler(struct irq_data *d, unsigned int type)
+{
+	/* Edge- and level-triggered interrupts need different handlers */
+	if (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
-	अन्यथा
+	else
 		irq_set_handler_locked(d, handle_level_irq);
-पूर्ण
+}
 
-अटल व्योम s3c24xx_eपूर्णांक_set_function(काष्ठा samsung_pinctrl_drv_data *d,
-					काष्ठा samsung_pin_bank *bank, पूर्णांक pin)
-अणु
-	स्थिर काष्ठा samsung_pin_bank_type *bank_type = bank->type;
-	अचिन्हित दीर्घ flags;
-	व्योम __iomem *reg;
-	u8 shअगरt;
+static void s3c24xx_eint_set_function(struct samsung_pinctrl_drv_data *d,
+					struct samsung_pin_bank *bank, int pin)
+{
+	const struct samsung_pin_bank_type *bank_type = bank->type;
+	unsigned long flags;
+	void __iomem *reg;
+	u8 shift;
 	u32 mask;
 	u32 val;
 
-	/* Make sure that pin is configured as पूर्णांकerrupt */
+	/* Make sure that pin is configured as interrupt */
 	reg = d->virt_base + bank->pctl_offset;
-	shअगरt = pin * bank_type->fld_width[PINCFG_TYPE_FUNC];
+	shift = pin * bank_type->fld_width[PINCFG_TYPE_FUNC];
 	mask = (1 << bank_type->fld_width[PINCFG_TYPE_FUNC]) - 1;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	val = पढ़ोl(reg);
-	val &= ~(mask << shअगरt);
-	val |= bank->eपूर्णांक_func << shअगरt;
-	ग_लिखोl(val, reg);
+	val = readl(reg);
+	val &= ~(mask << shift);
+	val |= bank->eint_func << shift;
+	writel(val, reg);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक s3c24xx_eपूर्णांक_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
-	पूर्णांक index = bank->eपूर्णांक_offset + data->hwirq;
-	व्योम __iomem *reg;
-	पूर्णांक trigger;
-	u8 shअगरt;
+static int s3c24xx_eint_type(struct irq_data *data, unsigned int type)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
+	int index = bank->eint_offset + data->hwirq;
+	void __iomem *reg;
+	int trigger;
+	u8 shift;
 	u32 val;
 
-	trigger = s3c24xx_eपूर्णांक_get_trigger(type);
-	अगर (trigger < 0) अणु
+	trigger = s3c24xx_eint_get_trigger(type);
+	if (trigger < 0) {
 		dev_err(d->dev, "unsupported external interrupt type\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	s3c24xx_eपूर्णांक_set_handler(data, type);
+	s3c24xx_eint_set_handler(data, type);
 
-	/* Set up पूर्णांकerrupt trigger */
+	/* Set up interrupt trigger */
 	reg = d->virt_base + EINT_REG(index);
-	shअगरt = EINT_OFFS(index);
+	shift = EINT_OFFS(index);
 
-	val = पढ़ोl(reg);
-	val &= ~(EINT_MASK << shअगरt);
-	val |= trigger << shअगरt;
-	ग_लिखोl(val, reg);
+	val = readl(reg);
+	val &= ~(EINT_MASK << shift);
+	val |= trigger << shift;
+	writel(val, reg);
 
-	s3c24xx_eपूर्णांक_set_function(d, bank, data->hwirq);
+	s3c24xx_eint_set_function(d, bank, data->hwirq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Handling of EINTs 0-3 on all except S3C2412 and S3C2413 */
 
-अटल व्योम s3c2410_eपूर्णांक0_3_ack(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data *ddata = bank->irq_करोमुख्य->host_data;
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data = ddata->eपूर्णांक_data;
-	पूर्णांक parent_irq = eपूर्णांक_data->parents[data->hwirq];
-	काष्ठा irq_chip *parent_chip = irq_get_chip(parent_irq);
+static void s3c2410_eint0_3_ack(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct s3c24xx_eint_domain_data *ddata = bank->irq_domain->host_data;
+	struct s3c24xx_eint_data *eint_data = ddata->eint_data;
+	int parent_irq = eint_data->parents[data->hwirq];
+	struct irq_chip *parent_chip = irq_get_chip(parent_irq);
 
 	parent_chip->irq_ack(irq_get_irq_data(parent_irq));
-पूर्ण
+}
 
-अटल व्योम s3c2410_eपूर्णांक0_3_mask(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data *ddata = bank->irq_करोमुख्य->host_data;
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data = ddata->eपूर्णांक_data;
-	पूर्णांक parent_irq = eपूर्णांक_data->parents[data->hwirq];
-	काष्ठा irq_chip *parent_chip = irq_get_chip(parent_irq);
+static void s3c2410_eint0_3_mask(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct s3c24xx_eint_domain_data *ddata = bank->irq_domain->host_data;
+	struct s3c24xx_eint_data *eint_data = ddata->eint_data;
+	int parent_irq = eint_data->parents[data->hwirq];
+	struct irq_chip *parent_chip = irq_get_chip(parent_irq);
 
 	parent_chip->irq_mask(irq_get_irq_data(parent_irq));
-पूर्ण
+}
 
-अटल व्योम s3c2410_eपूर्णांक0_3_unmask(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data *ddata = bank->irq_करोमुख्य->host_data;
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data = ddata->eपूर्णांक_data;
-	पूर्णांक parent_irq = eपूर्णांक_data->parents[data->hwirq];
-	काष्ठा irq_chip *parent_chip = irq_get_chip(parent_irq);
+static void s3c2410_eint0_3_unmask(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct s3c24xx_eint_domain_data *ddata = bank->irq_domain->host_data;
+	struct s3c24xx_eint_data *eint_data = ddata->eint_data;
+	int parent_irq = eint_data->parents[data->hwirq];
+	struct irq_chip *parent_chip = irq_get_chip(parent_irq);
 
 	parent_chip->irq_unmask(irq_get_irq_data(parent_irq));
-पूर्ण
+}
 
-अटल काष्ठा irq_chip s3c2410_eपूर्णांक0_3_chip = अणु
+static struct irq_chip s3c2410_eint0_3_chip = {
 	.name		= "s3c2410-eint0_3",
-	.irq_ack	= s3c2410_eपूर्णांक0_3_ack,
-	.irq_mask	= s3c2410_eपूर्णांक0_3_mask,
-	.irq_unmask	= s3c2410_eपूर्णांक0_3_unmask,
-	.irq_set_type	= s3c24xx_eपूर्णांक_type,
-पूर्ण;
+	.irq_ack	= s3c2410_eint0_3_ack,
+	.irq_mask	= s3c2410_eint0_3_mask,
+	.irq_unmask	= s3c2410_eint0_3_unmask,
+	.irq_set_type	= s3c24xx_eint_type,
+};
 
-अटल व्योम s3c2410_demux_eपूर्णांक0_3(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data = irq_desc_get_handler_data(desc);
-	अचिन्हित पूर्णांक virq;
+static void s3c2410_demux_eint0_3(struct irq_desc *desc)
+{
+	struct irq_data *data = irq_desc_get_irq_data(desc);
+	struct s3c24xx_eint_data *eint_data = irq_desc_get_handler_data(desc);
+	unsigned int virq;
 
-	/* the first 4 eपूर्णांकs have a simple 1 to 1 mapping */
-	virq = irq_linear_revmap(eपूर्णांक_data->करोमुख्यs[data->hwirq], data->hwirq);
-	/* Something must be really wrong अगर an unmapped EINT is unmasked */
+	/* the first 4 eints have a simple 1 to 1 mapping */
+	virq = irq_linear_revmap(eint_data->domains[data->hwirq], data->hwirq);
+	/* Something must be really wrong if an unmapped EINT is unmasked */
 	BUG_ON(!virq);
 
 	generic_handle_irq(virq);
-पूर्ण
+}
 
 /* Handling of EINTs 0-3 on S3C2412 and S3C2413 */
 
-अटल व्योम s3c2412_eपूर्णांक0_3_ack(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
+static void s3c2412_eint0_3_ack(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
 
-	अचिन्हित दीर्घ bitval = 1UL << data->hwirq;
-	ग_लिखोl(bitval, d->virt_base + EINTPEND_REG);
-पूर्ण
+	unsigned long bitval = 1UL << data->hwirq;
+	writel(bitval, d->virt_base + EINTPEND_REG);
+}
 
-अटल व्योम s3c2412_eपूर्णांक0_3_mask(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
-	अचिन्हित दीर्घ mask;
+static void s3c2412_eint0_3_mask(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
+	unsigned long mask;
 
-	mask = पढ़ोl(d->virt_base + EINTMASK_REG);
+	mask = readl(d->virt_base + EINTMASK_REG);
 	mask |= (1UL << data->hwirq);
-	ग_लिखोl(mask, d->virt_base + EINTMASK_REG);
-पूर्ण
+	writel(mask, d->virt_base + EINTMASK_REG);
+}
 
-अटल व्योम s3c2412_eपूर्णांक0_3_unmask(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
-	अचिन्हित दीर्घ mask;
+static void s3c2412_eint0_3_unmask(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
+	unsigned long mask;
 
-	mask = पढ़ोl(d->virt_base + EINTMASK_REG);
+	mask = readl(d->virt_base + EINTMASK_REG);
 	mask &= ~(1UL << data->hwirq);
-	ग_लिखोl(mask, d->virt_base + EINTMASK_REG);
-पूर्ण
+	writel(mask, d->virt_base + EINTMASK_REG);
+}
 
-अटल काष्ठा irq_chip s3c2412_eपूर्णांक0_3_chip = अणु
+static struct irq_chip s3c2412_eint0_3_chip = {
 	.name		= "s3c2412-eint0_3",
-	.irq_ack	= s3c2412_eपूर्णांक0_3_ack,
-	.irq_mask	= s3c2412_eपूर्णांक0_3_mask,
-	.irq_unmask	= s3c2412_eपूर्णांक0_3_unmask,
-	.irq_set_type	= s3c24xx_eपूर्णांक_type,
-पूर्ण;
+	.irq_ack	= s3c2412_eint0_3_ack,
+	.irq_mask	= s3c2412_eint0_3_mask,
+	.irq_unmask	= s3c2412_eint0_3_unmask,
+	.irq_set_type	= s3c24xx_eint_type,
+};
 
-अटल व्योम s3c2412_demux_eपूर्णांक0_3(काष्ठा irq_desc *desc)
-अणु
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data = irq_desc_get_handler_data(desc);
-	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
-	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
-	अचिन्हित पूर्णांक virq;
+static void s3c2412_demux_eint0_3(struct irq_desc *desc)
+{
+	struct s3c24xx_eint_data *eint_data = irq_desc_get_handler_data(desc);
+	struct irq_data *data = irq_desc_get_irq_data(desc);
+	struct irq_chip *chip = irq_data_get_irq_chip(data);
+	unsigned int virq;
 
 	chained_irq_enter(chip, desc);
 
-	/* the first 4 eपूर्णांकs have a simple 1 to 1 mapping */
-	virq = irq_linear_revmap(eपूर्णांक_data->करोमुख्यs[data->hwirq], data->hwirq);
-	/* Something must be really wrong अगर an unmapped EINT is unmasked */
+	/* the first 4 eints have a simple 1 to 1 mapping */
+	virq = irq_linear_revmap(eint_data->domains[data->hwirq], data->hwirq);
+	/* Something must be really wrong if an unmapped EINT is unmasked */
 	BUG_ON(!virq);
 
 	generic_handle_irq(virq);
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-/* Handling of all other eपूर्णांकs */
+/* Handling of all other eints */
 
-अटल व्योम s3c24xx_eपूर्णांक_ack(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
-	अचिन्हित अक्षर index = bank->eपूर्णांक_offset + data->hwirq;
+static void s3c24xx_eint_ack(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
+	unsigned char index = bank->eint_offset + data->hwirq;
 
-	ग_लिखोl(1UL << index, d->virt_base + EINTPEND_REG);
-पूर्ण
+	writel(1UL << index, d->virt_base + EINTPEND_REG);
+}
 
-अटल व्योम s3c24xx_eपूर्णांक_mask(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
-	अचिन्हित अक्षर index = bank->eपूर्णांक_offset + data->hwirq;
-	अचिन्हित दीर्घ mask;
+static void s3c24xx_eint_mask(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
+	unsigned char index = bank->eint_offset + data->hwirq;
+	unsigned long mask;
 
-	mask = पढ़ोl(d->virt_base + EINTMASK_REG);
+	mask = readl(d->virt_base + EINTMASK_REG);
 	mask |= (1UL << index);
-	ग_लिखोl(mask, d->virt_base + EINTMASK_REG);
-पूर्ण
+	writel(mask, d->virt_base + EINTMASK_REG);
+}
 
-अटल व्योम s3c24xx_eपूर्णांक_unmask(काष्ठा irq_data *data)
-अणु
-	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
-	काष्ठा samsung_pinctrl_drv_data *d = bank->drvdata;
-	अचिन्हित अक्षर index = bank->eपूर्णांक_offset + data->hwirq;
-	अचिन्हित दीर्घ mask;
+static void s3c24xx_eint_unmask(struct irq_data *data)
+{
+	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(data);
+	struct samsung_pinctrl_drv_data *d = bank->drvdata;
+	unsigned char index = bank->eint_offset + data->hwirq;
+	unsigned long mask;
 
-	mask = पढ़ोl(d->virt_base + EINTMASK_REG);
+	mask = readl(d->virt_base + EINTMASK_REG);
 	mask &= ~(1UL << index);
-	ग_लिखोl(mask, d->virt_base + EINTMASK_REG);
-पूर्ण
+	writel(mask, d->virt_base + EINTMASK_REG);
+}
 
-अटल काष्ठा irq_chip s3c24xx_eपूर्णांक_chip = अणु
+static struct irq_chip s3c24xx_eint_chip = {
 	.name		= "s3c-eint",
-	.irq_ack	= s3c24xx_eपूर्णांक_ack,
-	.irq_mask	= s3c24xx_eपूर्णांक_mask,
-	.irq_unmask	= s3c24xx_eपूर्णांक_unmask,
-	.irq_set_type	= s3c24xx_eपूर्णांक_type,
-पूर्ण;
+	.irq_ack	= s3c24xx_eint_ack,
+	.irq_mask	= s3c24xx_eint_mask,
+	.irq_unmask	= s3c24xx_eint_unmask,
+	.irq_set_type	= s3c24xx_eint_type,
+};
 
-अटल अंतरभूत व्योम s3c24xx_demux_eपूर्णांक(काष्ठा irq_desc *desc,
+static inline void s3c24xx_demux_eint(struct irq_desc *desc,
 				      u32 offset, u32 range)
-अणु
-	काष्ठा s3c24xx_eपूर्णांक_data *data = irq_desc_get_handler_data(desc);
-	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
-	काष्ठा samsung_pinctrl_drv_data *d = data->drvdata;
-	अचिन्हित पूर्णांक pend, mask;
+{
+	struct s3c24xx_eint_data *data = irq_desc_get_handler_data(desc);
+	struct irq_chip *chip = irq_desc_get_chip(desc);
+	struct samsung_pinctrl_drv_data *d = data->drvdata;
+	unsigned int pend, mask;
 
 	chained_irq_enter(chip, desc);
 
-	pend = पढ़ोl(d->virt_base + EINTPEND_REG);
-	mask = पढ़ोl(d->virt_base + EINTMASK_REG);
+	pend = readl(d->virt_base + EINTPEND_REG);
+	mask = readl(d->virt_base + EINTMASK_REG);
 
 	pend &= ~mask;
 	pend &= range;
 
-	जबतक (pend) अणु
-		अचिन्हित पूर्णांक virq, irq;
+	while (pend) {
+		unsigned int virq, irq;
 
 		irq = __ffs(pend);
 		pend &= ~(1 << irq);
-		virq = irq_linear_revmap(data->करोमुख्यs[irq], irq - offset);
-		/* Something is really wrong अगर an unmapped EINT is unmasked */
+		virq = irq_linear_revmap(data->domains[irq], irq - offset);
+		/* Something is really wrong if an unmapped EINT is unmasked */
 		BUG_ON(!virq);
 
 		generic_handle_irq(virq);
-	पूर्ण
+	}
 
-	chained_irq_निकास(chip, desc);
-पूर्ण
+	chained_irq_exit(chip, desc);
+}
 
-अटल व्योम s3c24xx_demux_eपूर्णांक4_7(काष्ठा irq_desc *desc)
-अणु
-	s3c24xx_demux_eपूर्णांक(desc, 0, 0xf0);
-पूर्ण
+static void s3c24xx_demux_eint4_7(struct irq_desc *desc)
+{
+	s3c24xx_demux_eint(desc, 0, 0xf0);
+}
 
-अटल व्योम s3c24xx_demux_eपूर्णांक8_23(काष्ठा irq_desc *desc)
-अणु
-	s3c24xx_demux_eपूर्णांक(desc, 8, 0xffff00);
-पूर्ण
+static void s3c24xx_demux_eint8_23(struct irq_desc *desc)
+{
+	s3c24xx_demux_eint(desc, 8, 0xffff00);
+}
 
-अटल irq_flow_handler_t s3c2410_eपूर्णांक_handlers[NUM_EINT_IRQ] = अणु
-	s3c2410_demux_eपूर्णांक0_3,
-	s3c2410_demux_eपूर्णांक0_3,
-	s3c2410_demux_eपूर्णांक0_3,
-	s3c2410_demux_eपूर्णांक0_3,
-	s3c24xx_demux_eपूर्णांक4_7,
-	s3c24xx_demux_eपूर्णांक8_23,
-पूर्ण;
+static irq_flow_handler_t s3c2410_eint_handlers[NUM_EINT_IRQ] = {
+	s3c2410_demux_eint0_3,
+	s3c2410_demux_eint0_3,
+	s3c2410_demux_eint0_3,
+	s3c2410_demux_eint0_3,
+	s3c24xx_demux_eint4_7,
+	s3c24xx_demux_eint8_23,
+};
 
-अटल irq_flow_handler_t s3c2412_eपूर्णांक_handlers[NUM_EINT_IRQ] = अणु
-	s3c2412_demux_eपूर्णांक0_3,
-	s3c2412_demux_eपूर्णांक0_3,
-	s3c2412_demux_eपूर्णांक0_3,
-	s3c2412_demux_eपूर्णांक0_3,
-	s3c24xx_demux_eपूर्णांक4_7,
-	s3c24xx_demux_eपूर्णांक8_23,
-पूर्ण;
+static irq_flow_handler_t s3c2412_eint_handlers[NUM_EINT_IRQ] = {
+	s3c2412_demux_eint0_3,
+	s3c2412_demux_eint0_3,
+	s3c2412_demux_eint0_3,
+	s3c2412_demux_eint0_3,
+	s3c24xx_demux_eint4_7,
+	s3c24xx_demux_eint8_23,
+};
 
-अटल पूर्णांक s3c24xx_gpf_irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+static int s3c24xx_gpf_irq_map(struct irq_domain *h, unsigned int virq,
 					irq_hw_number_t hw)
-अणु
-	काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data *ddata = h->host_data;
-	काष्ठा samsung_pin_bank *bank = ddata->bank;
+{
+	struct s3c24xx_eint_domain_data *ddata = h->host_data;
+	struct samsung_pin_bank *bank = ddata->bank;
 
-	अगर (!(bank->eपूर्णांक_mask & (1 << (bank->eपूर्णांक_offset + hw))))
-		वापस -EINVAL;
+	if (!(bank->eint_mask & (1 << (bank->eint_offset + hw))))
+		return -EINVAL;
 
-	अगर (hw <= 3) अणु
-		अगर (ddata->eपूर्णांक0_3_parent_only)
-			irq_set_chip_and_handler(virq, &s3c2410_eपूर्णांक0_3_chip,
+	if (hw <= 3) {
+		if (ddata->eint0_3_parent_only)
+			irq_set_chip_and_handler(virq, &s3c2410_eint0_3_chip,
 						 handle_edge_irq);
-		अन्यथा
-			irq_set_chip_and_handler(virq, &s3c2412_eपूर्णांक0_3_chip,
+		else
+			irq_set_chip_and_handler(virq, &s3c2412_eint0_3_chip,
 						 handle_edge_irq);
-	पूर्ण अन्यथा अणु
-		irq_set_chip_and_handler(virq, &s3c24xx_eपूर्णांक_chip,
+	} else {
+		irq_set_chip_and_handler(virq, &s3c24xx_eint_chip,
 					 handle_edge_irq);
-	पूर्ण
+	}
 	irq_set_chip_data(virq, bank);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops s3c24xx_gpf_irq_ops = अणु
+static const struct irq_domain_ops s3c24xx_gpf_irq_ops = {
 	.map	= s3c24xx_gpf_irq_map,
-	.xlate	= irq_करोमुख्य_xlate_twocell,
-पूर्ण;
+	.xlate	= irq_domain_xlate_twocell,
+};
 
-अटल पूर्णांक s3c24xx_gpg_irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
+static int s3c24xx_gpg_irq_map(struct irq_domain *h, unsigned int virq,
 					irq_hw_number_t hw)
-अणु
-	काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data *ddata = h->host_data;
-	काष्ठा samsung_pin_bank *bank = ddata->bank;
+{
+	struct s3c24xx_eint_domain_data *ddata = h->host_data;
+	struct samsung_pin_bank *bank = ddata->bank;
 
-	अगर (!(bank->eपूर्णांक_mask & (1 << (bank->eपूर्णांक_offset + hw))))
-		वापस -EINVAL;
+	if (!(bank->eint_mask & (1 << (bank->eint_offset + hw))))
+		return -EINVAL;
 
-	irq_set_chip_and_handler(virq, &s3c24xx_eपूर्णांक_chip, handle_edge_irq);
+	irq_set_chip_and_handler(virq, &s3c24xx_eint_chip, handle_edge_irq);
 	irq_set_chip_data(virq, bank);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा irq_करोमुख्य_ops s3c24xx_gpg_irq_ops = अणु
+static const struct irq_domain_ops s3c24xx_gpg_irq_ops = {
 	.map	= s3c24xx_gpg_irq_map,
-	.xlate	= irq_करोमुख्य_xlate_twocell,
-पूर्ण;
+	.xlate	= irq_domain_xlate_twocell,
+};
 
-अटल स्थिर काष्ठा of_device_id s3c24xx_eपूर्णांक_irq_ids[] = अणु
-	अणु .compatible = "samsung,s3c2410-wakeup-eint", .data = (व्योम *)1 पूर्ण,
-	अणु .compatible = "samsung,s3c2412-wakeup-eint", .data = (व्योम *)0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id s3c24xx_eint_irq_ids[] = {
+	{ .compatible = "samsung,s3c2410-wakeup-eint", .data = (void *)1 },
+	{ .compatible = "samsung,s3c2412-wakeup-eint", .data = (void *)0 },
+	{ }
+};
 
-अटल पूर्णांक s3c24xx_eपूर्णांक_init(काष्ठा samsung_pinctrl_drv_data *d)
-अणु
-	काष्ठा device *dev = d->dev;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा device_node *eपूर्णांक_np = शून्य;
-	काष्ठा device_node *np;
-	काष्ठा samsung_pin_bank *bank;
-	काष्ठा s3c24xx_eपूर्णांक_data *eपूर्णांक_data;
-	स्थिर काष्ठा irq_करोमुख्य_ops *ops;
-	अचिन्हित पूर्णांक i;
-	bool eपूर्णांक0_3_parent_only;
+static int s3c24xx_eint_init(struct samsung_pinctrl_drv_data *d)
+{
+	struct device *dev = d->dev;
+	const struct of_device_id *match;
+	struct device_node *eint_np = NULL;
+	struct device_node *np;
+	struct samsung_pin_bank *bank;
+	struct s3c24xx_eint_data *eint_data;
+	const struct irq_domain_ops *ops;
+	unsigned int i;
+	bool eint0_3_parent_only;
 	irq_flow_handler_t *handlers;
 
-	क्रम_each_child_of_node(dev->of_node, np) अणु
-		match = of_match_node(s3c24xx_eपूर्णांक_irq_ids, np);
-		अगर (match) अणु
-			eपूर्णांक_np = np;
-			eपूर्णांक0_3_parent_only = (bool)match->data;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!eपूर्णांक_np)
-		वापस -ENODEV;
+	for_each_child_of_node(dev->of_node, np) {
+		match = of_match_node(s3c24xx_eint_irq_ids, np);
+		if (match) {
+			eint_np = np;
+			eint0_3_parent_only = (bool)match->data;
+			break;
+		}
+	}
+	if (!eint_np)
+		return -ENODEV;
 
-	eपूर्णांक_data = devm_kzalloc(dev, माप(*eपूर्णांक_data), GFP_KERNEL);
-	अगर (!eपूर्णांक_data) अणु
-		of_node_put(eपूर्णांक_np);
-		वापस -ENOMEM;
-	पूर्ण
+	eint_data = devm_kzalloc(dev, sizeof(*eint_data), GFP_KERNEL);
+	if (!eint_data) {
+		of_node_put(eint_np);
+		return -ENOMEM;
+	}
 
-	eपूर्णांक_data->drvdata = d;
+	eint_data->drvdata = d;
 
-	handlers = eपूर्णांक0_3_parent_only ? s3c2410_eपूर्णांक_handlers
-				       : s3c2412_eपूर्णांक_handlers;
-	क्रम (i = 0; i < NUM_EINT_IRQ; ++i) अणु
-		अचिन्हित पूर्णांक irq;
+	handlers = eint0_3_parent_only ? s3c2410_eint_handlers
+				       : s3c2412_eint_handlers;
+	for (i = 0; i < NUM_EINT_IRQ; ++i) {
+		unsigned int irq;
 
-		irq = irq_of_parse_and_map(eपूर्णांक_np, i);
-		अगर (!irq) अणु
+		irq = irq_of_parse_and_map(eint_np, i);
+		if (!irq) {
 			dev_err(dev, "failed to get wakeup EINT IRQ %d\n", i);
-			of_node_put(eपूर्णांक_np);
-			वापस -ENXIO;
-		पूर्ण
+			of_node_put(eint_np);
+			return -ENXIO;
+		}
 
-		eपूर्णांक_data->parents[i] = irq;
-		irq_set_chained_handler_and_data(irq, handlers[i], eपूर्णांक_data);
-	पूर्ण
-	of_node_put(eपूर्णांक_np);
+		eint_data->parents[i] = irq;
+		irq_set_chained_handler_and_data(irq, handlers[i], eint_data);
+	}
+	of_node_put(eint_np);
 
 	bank = d->pin_banks;
-	क्रम (i = 0; i < d->nr_banks; ++i, ++bank) अणु
-		काष्ठा s3c24xx_eपूर्णांक_करोमुख्य_data *ddata;
-		अचिन्हित पूर्णांक mask;
-		अचिन्हित पूर्णांक irq;
-		अचिन्हित पूर्णांक pin;
+	for (i = 0; i < d->nr_banks; ++i, ++bank) {
+		struct s3c24xx_eint_domain_data *ddata;
+		unsigned int mask;
+		unsigned int irq;
+		unsigned int pin;
 
-		अगर (bank->eपूर्णांक_type != EINT_TYPE_WKUP)
-			जारी;
+		if (bank->eint_type != EINT_TYPE_WKUP)
+			continue;
 
-		ddata = devm_kzalloc(dev, माप(*ddata), GFP_KERNEL);
-		अगर (!ddata)
-			वापस -ENOMEM;
+		ddata = devm_kzalloc(dev, sizeof(*ddata), GFP_KERNEL);
+		if (!ddata)
+			return -ENOMEM;
 
 		ddata->bank = bank;
-		ddata->eपूर्णांक_data = eपूर्णांक_data;
-		ddata->eपूर्णांक0_3_parent_only = eपूर्णांक0_3_parent_only;
+		ddata->eint_data = eint_data;
+		ddata->eint0_3_parent_only = eint0_3_parent_only;
 
-		ops = (bank->eपूर्णांक_offset == 0) ? &s3c24xx_gpf_irq_ops
+		ops = (bank->eint_offset == 0) ? &s3c24xx_gpf_irq_ops
 					       : &s3c24xx_gpg_irq_ops;
 
-		bank->irq_करोमुख्य = irq_करोमुख्य_add_linear(bank->of_node,
+		bank->irq_domain = irq_domain_add_linear(bank->of_node,
 				bank->nr_pins, ops, ddata);
-		अगर (!bank->irq_करोमुख्य) अणु
+		if (!bank->irq_domain) {
 			dev_err(dev, "wkup irq domain add failed\n");
-			वापस -ENXIO;
-		पूर्ण
+			return -ENXIO;
+		}
 
-		irq = bank->eपूर्णांक_offset;
-		mask = bank->eपूर्णांक_mask;
-		क्रम (pin = 0; mask; ++pin, mask >>= 1) अणु
-			अगर (irq >= NUM_EINT)
-				अवरोध;
-			अगर (!(mask & 1))
-				जारी;
-			eपूर्णांक_data->करोमुख्यs[irq] = bank->irq_करोमुख्य;
+		irq = bank->eint_offset;
+		mask = bank->eint_mask;
+		for (pin = 0; mask; ++pin, mask >>= 1) {
+			if (irq >= NUM_EINT)
+				break;
+			if (!(mask & 1))
+				continue;
+			eint_data->domains[irq] = bank->irq_domain;
 			++irq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा samsung_pin_bank_data s3c2412_pin_banks[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data s3c2412_pin_banks[] __initconst = {
 	PIN_BANK_A(23, 0x000, "gpa"),
 	PIN_BANK_2BIT(11, 0x010, "gpb"),
 	PIN_BANK_2BIT(16, 0x020, "gpc"),
@@ -563,22 +562,22 @@
 	PIN_BANK_2BIT_EINTW(16, 0x060, "gpg", 8, 0xffff00),
 	PIN_BANK_2BIT(11, 0x070, "gph"),
 	PIN_BANK_2BIT(13, 0x080, "gpj"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_ctrl s3c2412_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl s3c2412_pin_ctrl[] __initconst = {
+	{
 		.pin_banks	= s3c2412_pin_banks,
 		.nr_banks	= ARRAY_SIZE(s3c2412_pin_banks),
-		.eपूर्णांक_wkup_init = s3c24xx_eपूर्णांक_init,
-	पूर्ण,
-पूर्ण;
+		.eint_wkup_init = s3c24xx_eint_init,
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2412_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data s3c2412_of_data __initconst = {
 	.ctrl		= s3c2412_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(s3c2412_pin_ctrl),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_bank_data s3c2416_pin_banks[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data s3c2416_pin_banks[] __initconst = {
 	PIN_BANK_A(27, 0x000, "gpa"),
 	PIN_BANK_2BIT(11, 0x010, "gpb"),
 	PIN_BANK_2BIT(16, 0x020, "gpc"),
@@ -590,22 +589,22 @@
 	PIN_BANK_2BIT(16, 0x0e0, "gpk"),
 	PIN_BANK_2BIT(14, 0x0f0, "gpl"),
 	PIN_BANK_2BIT(2, 0x100, "gpm"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_ctrl s3c2416_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl s3c2416_pin_ctrl[] __initconst = {
+	{
 		.pin_banks	= s3c2416_pin_banks,
 		.nr_banks	= ARRAY_SIZE(s3c2416_pin_banks),
-		.eपूर्णांक_wkup_init = s3c24xx_eपूर्णांक_init,
-	पूर्ण,
-पूर्ण;
+		.eint_wkup_init = s3c24xx_eint_init,
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2416_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data s3c2416_of_data __initconst = {
 	.ctrl		= s3c2416_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(s3c2416_pin_ctrl),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_bank_data s3c2440_pin_banks[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data s3c2440_pin_banks[] __initconst = {
 	PIN_BANK_A(25, 0x000, "gpa"),
 	PIN_BANK_2BIT(11, 0x010, "gpb"),
 	PIN_BANK_2BIT(16, 0x020, "gpc"),
@@ -615,22 +614,22 @@
 	PIN_BANK_2BIT_EINTW(16, 0x060, "gpg", 8, 0xffff00),
 	PIN_BANK_2BIT(11, 0x070, "gph"),
 	PIN_BANK_2BIT(13, 0x0d0, "gpj"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_ctrl s3c2440_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl s3c2440_pin_ctrl[] __initconst = {
+	{
 		.pin_banks	= s3c2440_pin_banks,
 		.nr_banks	= ARRAY_SIZE(s3c2440_pin_banks),
-		.eपूर्णांक_wkup_init = s3c24xx_eपूर्णांक_init,
-	पूर्ण,
-पूर्ण;
+		.eint_wkup_init = s3c24xx_eint_init,
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2440_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data s3c2440_of_data __initconst = {
 	.ctrl		= s3c2440_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(s3c2440_pin_ctrl),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_bank_data s3c2450_pin_banks[] __initस्थिर = अणु
+static const struct samsung_pin_bank_data s3c2450_pin_banks[] __initconst = {
 	PIN_BANK_A(28, 0x000, "gpa"),
 	PIN_BANK_2BIT(11, 0x010, "gpb"),
 	PIN_BANK_2BIT(16, 0x020, "gpc"),
@@ -643,17 +642,17 @@
 	PIN_BANK_2BIT(16, 0x0e0, "gpk"),
 	PIN_BANK_2BIT(15, 0x0f0, "gpl"),
 	PIN_BANK_2BIT(2, 0x100, "gpm"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा samsung_pin_ctrl s3c2450_pin_ctrl[] __initस्थिर = अणु
-	अणु
+static const struct samsung_pin_ctrl s3c2450_pin_ctrl[] __initconst = {
+	{
 		.pin_banks	= s3c2450_pin_banks,
 		.nr_banks	= ARRAY_SIZE(s3c2450_pin_banks),
-		.eपूर्णांक_wkup_init = s3c24xx_eपूर्णांक_init,
-	पूर्ण,
-पूर्ण;
+		.eint_wkup_init = s3c24xx_eint_init,
+	},
+};
 
-स्थिर काष्ठा samsung_pinctrl_of_match_data s3c2450_of_data __initस्थिर = अणु
+const struct samsung_pinctrl_of_match_data s3c2450_of_data __initconst = {
 	.ctrl		= s3c2450_pin_ctrl,
 	.num_ctrl	= ARRAY_SIZE(s3c2450_pin_ctrl),
-पूर्ण;
+};

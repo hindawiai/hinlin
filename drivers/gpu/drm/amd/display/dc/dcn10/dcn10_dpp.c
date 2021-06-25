@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,65 +23,65 @@
  *
  */
 
-#समावेश "dm_services.h"
+#include "dm_services.h"
 
-#समावेश "core_types.h"
+#include "core_types.h"
 
-#समावेश "reg_helper.h"
-#समावेश "dcn10_dpp.h"
-#समावेश "basics/conversion.h"
+#include "reg_helper.h"
+#include "dcn10_dpp.h"
+#include "basics/conversion.h"
 
-#घोषणा NUM_PHASES    64
-#घोषणा HORZ_MAX_TAPS 8
-#घोषणा VERT_MAX_TAPS 8
+#define NUM_PHASES    64
+#define HORZ_MAX_TAPS 8
+#define VERT_MAX_TAPS 8
 
-#घोषणा BLACK_OFFSET_RGB_Y 0x0
-#घोषणा BLACK_OFFSET_CBCR  0x8000
+#define BLACK_OFFSET_RGB_Y 0x0
+#define BLACK_OFFSET_CBCR  0x8000
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	dpp->tf_regs->reg
 
-#घोषणा CTX \
+#define CTX \
 	dpp->base.ctx
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	dpp->tf_shअगरt->field_name, dpp->tf_mask->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	dpp->tf_shift->field_name, dpp->tf_mask->field_name
 
-क्रमागत pixel_क्रमmat_description अणु
+enum pixel_format_description {
 	PIXEL_FORMAT_FIXED = 0,
 	PIXEL_FORMAT_FIXED16,
 	PIXEL_FORMAT_FLOAT
 
-पूर्ण;
+};
 
-क्रमागत dcn10_coef_filter_type_sel अणु
+enum dcn10_coef_filter_type_sel {
 	SCL_COEF_LUMA_VERT_FILTER = 0,
 	SCL_COEF_LUMA_HORZ_FILTER = 1,
 	SCL_COEF_CHROMA_VERT_FILTER = 2,
 	SCL_COEF_CHROMA_HORZ_FILTER = 3,
 	SCL_COEF_ALPHA_VERT_FILTER = 4,
 	SCL_COEF_ALPHA_HORZ_FILTER = 5
-पूर्ण;
+};
 
-क्रमागत dscl_स्वतःcal_mode अणु
+enum dscl_autocal_mode {
 	AUTOCAL_MODE_OFF = 0,
 
 	/* Autocal calculate the scaling ratio and initial phase and the
 	 * DSCL_MODE_SEL must be set to 1
 	 */
 	AUTOCAL_MODE_AUTOSCALE = 1,
-	/* Autocal perक्रमm स्वतः centering without replication and the
+	/* Autocal perform auto centering without replication and the
 	 * DSCL_MODE_SEL must be set to 0
 	 */
 	AUTOCAL_MODE_AUTOCENTER = 2,
-	/* Autocal perक्रमm स्वतः centering and स्वतः replication and the
+	/* Autocal perform auto centering and auto replication and the
 	 * DSCL_MODE_SEL must be set to 0
 	 */
 	AUTOCAL_MODE_AUTOREPLICATE = 3
-पूर्ण;
+};
 
-क्रमागत dscl_mode_sel अणु
+enum dscl_mode_sel {
 	DSCL_MODE_SCALING_444_BYPASS = 0,
 	DSCL_MODE_SCALING_444_RGB_ENABLE = 1,
 	DSCL_MODE_SCALING_444_YCBCR_ENABLE = 2,
@@ -90,19 +89,19 @@
 	DSCL_MODE_SCALING_420_LUMA_BYPASS = 4,
 	DSCL_MODE_SCALING_420_CHROMA_BYPASS = 5,
 	DSCL_MODE_DSCL_BYPASS = 6
-पूर्ण;
+};
 
-व्योम dpp_पढ़ो_state(काष्ठा dpp *dpp_base,
-		काष्ठा dcn_dpp_state *s)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+void dpp_read_state(struct dpp *dpp_base,
+		struct dcn_dpp_state *s)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
 	REG_GET(DPP_CONTROL,
 			DPP_CLOCK_ENABLE, &s->is_enabled);
 	REG_GET(CM_IGAM_CONTROL,
 			CM_IGAM_LUT_MODE, &s->igam_lut_mode);
 	REG_GET(CM_IGAM_CONTROL,
-			CM_IGAM_INPUT_FORMAT, &s->igam_input_क्रमmat);
+			CM_IGAM_INPUT_FORMAT, &s->igam_input_format);
 	REG_GET(CM_DGAM_CONTROL,
 			CM_DGAM_LUT_MODE, &s->dgam_lut_mode);
 	REG_GET(CM_RGAM_CONTROL,
@@ -110,412 +109,412 @@
 	REG_GET(CM_GAMUT_REMAP_CONTROL,
 			CM_GAMUT_REMAP_MODE, &s->gamut_remap_mode);
 
-	अगर (s->gamut_remap_mode) अणु
+	if (s->gamut_remap_mode) {
 		s->gamut_remap_c11_c12 = REG_READ(CM_GAMUT_REMAP_C11_C12);
 		s->gamut_remap_c13_c14 = REG_READ(CM_GAMUT_REMAP_C13_C14);
 		s->gamut_remap_c21_c22 = REG_READ(CM_GAMUT_REMAP_C21_C22);
 		s->gamut_remap_c23_c24 = REG_READ(CM_GAMUT_REMAP_C23_C24);
 		s->gamut_remap_c31_c32 = REG_READ(CM_GAMUT_REMAP_C31_C32);
 		s->gamut_remap_c33_c34 = REG_READ(CM_GAMUT_REMAP_C33_C34);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Program gamut remap in bypass mode */
-व्योम dpp_set_gamut_remap_bypass(काष्ठा dcn10_dpp *dpp)
-अणु
+void dpp_set_gamut_remap_bypass(struct dcn10_dpp *dpp)
+{
 	REG_SET(CM_GAMUT_REMAP_CONTROL, 0,
 			CM_GAMUT_REMAP_MODE, 0);
 	/* Gamut remap in bypass */
-पूर्ण
+}
 
-#घोषणा IDENTITY_RATIO(ratio) (dc_fixpt_u2d19(ratio) == (1 << 19))
+#define IDENTITY_RATIO(ratio) (dc_fixpt_u2d19(ratio) == (1 << 19))
 
 bool dpp1_get_optimal_number_of_taps(
-		काष्ठा dpp *dpp,
-		काष्ठा scaler_data *scl_data,
-		स्थिर काष्ठा scaling_taps *in_taps)
-अणु
-	/* Some ASICs करोes not support  FP16 scaling, so we reject modes require this*/
-	अगर (scl_data->क्रमmat == PIXEL_FORMAT_FP16 &&
-		dpp->caps->dscl_data_proc_क्रमmat == DSCL_DATA_PRCESSING_FIXED_FORMAT &&
+		struct dpp *dpp,
+		struct scaler_data *scl_data,
+		const struct scaling_taps *in_taps)
+{
+	/* Some ASICs does not support  FP16 scaling, so we reject modes require this*/
+	if (scl_data->format == PIXEL_FORMAT_FP16 &&
+		dpp->caps->dscl_data_proc_format == DSCL_DATA_PRCESSING_FIXED_FORMAT &&
 		scl_data->ratios.horz.value != dc_fixpt_one.value &&
 		scl_data->ratios.vert.value != dc_fixpt_one.value)
-		वापस false;
+		return false;
 
-	अगर (scl_data->viewport.width > scl_data->h_active &&
-		dpp->ctx->dc->debug.max_करोwnscale_src_width != 0 &&
-		scl_data->viewport.width > dpp->ctx->dc->debug.max_करोwnscale_src_width)
-		वापस false;
+	if (scl_data->viewport.width > scl_data->h_active &&
+		dpp->ctx->dc->debug.max_downscale_src_width != 0 &&
+		scl_data->viewport.width > dpp->ctx->dc->debug.max_downscale_src_width)
+		return false;
 
 	/* TODO: add lb check */
 
-	/* No support क्रम programming ratio of 4, drop to 3.99999.. */
-	अगर (scl_data->ratios.horz.value == (4ll << 32))
+	/* No support for programming ratio of 4, drop to 3.99999.. */
+	if (scl_data->ratios.horz.value == (4ll << 32))
 		scl_data->ratios.horz.value--;
-	अगर (scl_data->ratios.vert.value == (4ll << 32))
+	if (scl_data->ratios.vert.value == (4ll << 32))
 		scl_data->ratios.vert.value--;
-	अगर (scl_data->ratios.horz_c.value == (4ll << 32))
+	if (scl_data->ratios.horz_c.value == (4ll << 32))
 		scl_data->ratios.horz_c.value--;
-	अगर (scl_data->ratios.vert_c.value == (4ll << 32))
+	if (scl_data->ratios.vert_c.value == (4ll << 32))
 		scl_data->ratios.vert_c.value--;
 
-	/* Set शेष taps अगर none are provided */
-	अगर (in_taps->h_taps == 0)
+	/* Set default taps if none are provided */
+	if (in_taps->h_taps == 0)
 		scl_data->taps.h_taps = 4;
-	अन्यथा
+	else
 		scl_data->taps.h_taps = in_taps->h_taps;
-	अगर (in_taps->v_taps == 0)
+	if (in_taps->v_taps == 0)
 		scl_data->taps.v_taps = 4;
-	अन्यथा
+	else
 		scl_data->taps.v_taps = in_taps->v_taps;
-	अगर (in_taps->v_taps_c == 0)
+	if (in_taps->v_taps_c == 0)
 		scl_data->taps.v_taps_c = 2;
-	अन्यथा
+	else
 		scl_data->taps.v_taps_c = in_taps->v_taps_c;
-	अगर (in_taps->h_taps_c == 0)
+	if (in_taps->h_taps_c == 0)
 		scl_data->taps.h_taps_c = 2;
 	/* Only 1 and even h_taps_c are supported by hw */
-	अन्यथा अगर ((in_taps->h_taps_c % 2) != 0 && in_taps->h_taps_c != 1)
+	else if ((in_taps->h_taps_c % 2) != 0 && in_taps->h_taps_c != 1)
 		scl_data->taps.h_taps_c = in_taps->h_taps_c - 1;
-	अन्यथा
+	else
 		scl_data->taps.h_taps_c = in_taps->h_taps_c;
 
-	अगर (!dpp->ctx->dc->debug.always_scale) अणु
-		अगर (IDENTITY_RATIO(scl_data->ratios.horz))
+	if (!dpp->ctx->dc->debug.always_scale) {
+		if (IDENTITY_RATIO(scl_data->ratios.horz))
 			scl_data->taps.h_taps = 1;
-		अगर (IDENTITY_RATIO(scl_data->ratios.vert))
+		if (IDENTITY_RATIO(scl_data->ratios.vert))
 			scl_data->taps.v_taps = 1;
-		अगर (IDENTITY_RATIO(scl_data->ratios.horz_c))
+		if (IDENTITY_RATIO(scl_data->ratios.horz_c))
 			scl_data->taps.h_taps_c = 1;
-		अगर (IDENTITY_RATIO(scl_data->ratios.vert_c))
+		if (IDENTITY_RATIO(scl_data->ratios.vert_c))
 			scl_data->taps.v_taps_c = 1;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम dpp_reset(काष्ठा dpp *dpp_base)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+void dpp_reset(struct dpp *dpp_base)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
-	dpp->filter_h_c = शून्य;
-	dpp->filter_v_c = शून्य;
-	dpp->filter_h = शून्य;
-	dpp->filter_v = शून्य;
+	dpp->filter_h_c = NULL;
+	dpp->filter_v_c = NULL;
+	dpp->filter_h = NULL;
+	dpp->filter_v = NULL;
 
-	स_रखो(&dpp->scl_data, 0, माप(dpp->scl_data));
-	स_रखो(&dpp->pwl_data, 0, माप(dpp->pwl_data));
-पूर्ण
+	memset(&dpp->scl_data, 0, sizeof(dpp->scl_data));
+	memset(&dpp->pwl_data, 0, sizeof(dpp->pwl_data));
+}
 
 
 
-अटल व्योम dpp1_cm_set_regamma_pwl(
-	काष्ठा dpp *dpp_base, स्थिर काष्ठा pwl_params *params, क्रमागत opp_regamma mode)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
-	uपूर्णांक32_t re_mode = 0;
+static void dpp1_cm_set_regamma_pwl(
+	struct dpp *dpp_base, const struct pwl_params *params, enum opp_regamma mode)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+	uint32_t re_mode = 0;
 
-	चयन (mode) अणु
-	हाल OPP_REGAMMA_BYPASS:
+	switch (mode) {
+	case OPP_REGAMMA_BYPASS:
 		re_mode = 0;
-		अवरोध;
-	हाल OPP_REGAMMA_SRGB:
+		break;
+	case OPP_REGAMMA_SRGB:
 		re_mode = 1;
-		अवरोध;
-	हाल OPP_REGAMMA_XVYCC:
+		break;
+	case OPP_REGAMMA_XVYCC:
 		re_mode = 2;
-		अवरोध;
-	हाल OPP_REGAMMA_USER:
-		re_mode = dpp->is_ग_लिखो_to_ram_a_safe ? 4 : 3;
-		अगर (स_भेद(&dpp->pwl_data, params, माप(*params)) == 0)
-			अवरोध;
+		break;
+	case OPP_REGAMMA_USER:
+		re_mode = dpp->is_write_to_ram_a_safe ? 4 : 3;
+		if (memcmp(&dpp->pwl_data, params, sizeof(*params)) == 0)
+			break;
 
-		dpp1_cm_घातer_on_regamma_lut(dpp_base, true);
-		dpp1_cm_configure_regamma_lut(dpp_base, dpp->is_ग_लिखो_to_ram_a_safe);
+		dpp1_cm_power_on_regamma_lut(dpp_base, true);
+		dpp1_cm_configure_regamma_lut(dpp_base, dpp->is_write_to_ram_a_safe);
 
-		अगर (dpp->is_ग_लिखो_to_ram_a_safe)
+		if (dpp->is_write_to_ram_a_safe)
 			dpp1_cm_program_regamma_luta_settings(dpp_base, params);
-		अन्यथा
+		else
 			dpp1_cm_program_regamma_lutb_settings(dpp_base, params);
 
 		dpp1_cm_program_regamma_lut(dpp_base, params->rgb_resulted,
-					    params->hw_poपूर्णांकs_num);
+					    params->hw_points_num);
 		dpp->pwl_data = *params;
 
-		re_mode = dpp->is_ग_लिखो_to_ram_a_safe ? 3 : 4;
-		dpp->is_ग_लिखो_to_ram_a_safe = !dpp->is_ग_लिखो_to_ram_a_safe;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		re_mode = dpp->is_write_to_ram_a_safe ? 3 : 4;
+		dpp->is_write_to_ram_a_safe = !dpp->is_write_to_ram_a_safe;
+		break;
+	default:
+		break;
+	}
 	REG_SET(CM_RGAM_CONTROL, 0, CM_RGAM_LUT_MODE, re_mode);
-पूर्ण
+}
 
-अटल व्योम dpp1_setup_क्रमmat_flags(क्रमागत surface_pixel_क्रमmat input_क्रमmat,\
-						क्रमागत pixel_क्रमmat_description *fmt)
-अणु
+static void dpp1_setup_format_flags(enum surface_pixel_format input_format,\
+						enum pixel_format_description *fmt)
+{
 
-	अगर (input_क्रमmat == SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F ||
-		input_क्रमmat == SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F)
+	if (input_format == SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F ||
+		input_format == SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F)
 		*fmt = PIXEL_FORMAT_FLOAT;
-	अन्यथा अगर (input_क्रमmat == SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616)
+	else if (input_format == SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616)
 		*fmt = PIXEL_FORMAT_FIXED16;
-	अन्यथा
+	else
 		*fmt = PIXEL_FORMAT_FIXED;
-पूर्ण
+}
 
-अटल व्योम dpp1_set_degamma_क्रमmat_भग्न(
-		काष्ठा dpp *dpp_base,
-		bool is_भग्न)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+static void dpp1_set_degamma_format_float(
+		struct dpp *dpp_base,
+		bool is_float)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
-	अगर (is_भग्न) अणु
+	if (is_float) {
 		REG_UPDATE(CM_IGAM_CONTROL, CM_IGAM_INPUT_FORMAT, 3);
 		REG_UPDATE(CM_IGAM_CONTROL, CM_IGAM_LUT_MODE, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		REG_UPDATE(CM_IGAM_CONTROL, CM_IGAM_INPUT_FORMAT, 2);
 		REG_UPDATE(CM_IGAM_CONTROL, CM_IGAM_LUT_MODE, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dpp1_cnv_setup (
-		काष्ठा dpp *dpp_base,
-		क्रमागत surface_pixel_क्रमmat क्रमmat,
-		क्रमागत expansion_mode mode,
-		काष्ठा dc_csc_transक्रमm input_csc_color_matrix,
-		क्रमागत dc_color_space input_color_space,
-		काष्ठा cnv_alpha_2bit_lut *alpha_2bit_lut)
-अणु
-	uपूर्णांक32_t pixel_क्रमmat;
-	uपूर्णांक32_t alpha_en;
-	क्रमागत pixel_क्रमmat_description fmt ;
-	क्रमागत dc_color_space color_space;
-	क्रमागत dcn10_input_csc_select select;
-	bool is_भग्न;
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
-	bool क्रमce_disable_cursor = false;
-	काष्ठा out_csc_color_matrix tbl_entry;
-	पूर्णांक i = 0;
+void dpp1_cnv_setup (
+		struct dpp *dpp_base,
+		enum surface_pixel_format format,
+		enum expansion_mode mode,
+		struct dc_csc_transform input_csc_color_matrix,
+		enum dc_color_space input_color_space,
+		struct cnv_alpha_2bit_lut *alpha_2bit_lut)
+{
+	uint32_t pixel_format;
+	uint32_t alpha_en;
+	enum pixel_format_description fmt ;
+	enum dc_color_space color_space;
+	enum dcn10_input_csc_select select;
+	bool is_float;
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+	bool force_disable_cursor = false;
+	struct out_csc_color_matrix tbl_entry;
+	int i = 0;
 
-	dpp1_setup_क्रमmat_flags(क्रमmat, &fmt);
+	dpp1_setup_format_flags(format, &fmt);
 	alpha_en = 1;
-	pixel_क्रमmat = 0;
+	pixel_format = 0;
 	color_space = COLOR_SPACE_SRGB;
 	select = INPUT_CSC_SELECT_BYPASS;
-	is_भग्न = false;
+	is_float = false;
 
-	चयन (fmt) अणु
-	हाल PIXEL_FORMAT_FIXED:
-	हाल PIXEL_FORMAT_FIXED16:
-	/*when output is भग्न then FORMAT_CONTROL__OUTPUT_FP=1*/
+	switch (fmt) {
+	case PIXEL_FORMAT_FIXED:
+	case PIXEL_FORMAT_FIXED16:
+	/*when output is float then FORMAT_CONTROL__OUTPUT_FP=1*/
 		REG_SET_3(FORMAT_CONTROL, 0,
 			CNVC_BYPASS, 0,
 			FORMAT_EXPANSION_MODE, mode,
 			OUTPUT_FP, 0);
-		अवरोध;
-	हाल PIXEL_FORMAT_FLOAT:
+		break;
+	case PIXEL_FORMAT_FLOAT:
 		REG_SET_3(FORMAT_CONTROL, 0,
 			CNVC_BYPASS, 0,
 			FORMAT_EXPANSION_MODE, mode,
 			OUTPUT_FP, 1);
-		is_भग्न = true;
-		अवरोध;
-	शेष:
+		is_float = true;
+		break;
+	default:
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	dpp1_set_degamma_क्रमmat_भग्न(dpp_base, is_भग्न);
+	dpp1_set_degamma_format_float(dpp_base, is_float);
 
-	चयन (क्रमmat) अणु
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB1555:
-		pixel_क्रमmat = 1;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_GRPH_RGB565:
-		pixel_क्रमmat = 3;
+	switch (format) {
+	case SURFACE_PIXEL_FORMAT_GRPH_ARGB1555:
+		pixel_format = 1;
+		break;
+	case SURFACE_PIXEL_FORMAT_GRPH_RGB565:
+		pixel_format = 3;
 		alpha_en = 0;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
-		pixel_क्रमmat = 8;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
-		pixel_क्रमmat = 10;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
-		क्रमce_disable_cursor = false;
-		pixel_क्रमmat = 65;
+		break;
+	case SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
+	case SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
+		pixel_format = 8;
+		break;
+	case SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
+	case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
+		pixel_format = 10;
+		break;
+	case SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
+		force_disable_cursor = false;
+		pixel_format = 65;
 		color_space = COLOR_SPACE_YCBCR709;
 		select = INPUT_CSC_SELECT_ICSC;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
-		क्रमce_disable_cursor = true;
-		pixel_क्रमmat = 64;
+		break;
+	case SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
+		force_disable_cursor = true;
+		pixel_format = 64;
 		color_space = COLOR_SPACE_YCBCR709;
 		select = INPUT_CSC_SELECT_ICSC;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCbCr:
-		क्रमce_disable_cursor = true;
-		pixel_क्रमmat = 67;
+		break;
+	case SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCbCr:
+		force_disable_cursor = true;
+		pixel_format = 67;
 		color_space = COLOR_SPACE_YCBCR709;
 		select = INPUT_CSC_SELECT_ICSC;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCrCb:
-		क्रमce_disable_cursor = true;
-		pixel_क्रमmat = 66;
+		break;
+	case SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCrCb:
+		force_disable_cursor = true;
+		pixel_format = 66;
 		color_space = COLOR_SPACE_YCBCR709;
 		select = INPUT_CSC_SELECT_ICSC;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
-		pixel_क्रमmat = 22;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
-		pixel_क्रमmat = 24;
-		अवरोध;
-	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
-		pixel_क्रमmat = 25;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
+		pixel_format = 22;
+		break;
+	case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
+		pixel_format = 24;
+		break;
+	case SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
+		pixel_format = 25;
+		break;
+	default:
+		break;
+	}
 
-	/* Set शेष color space based on क्रमmat अगर none is given. */
+	/* Set default color space based on format if none is given. */
 	color_space = input_color_space ? input_color_space : color_space;
 
 	REG_SET(CNVC_SURFACE_PIXEL_FORMAT, 0,
-			CNVC_SURFACE_PIXEL_FORMAT, pixel_क्रमmat);
+			CNVC_SURFACE_PIXEL_FORMAT, pixel_format);
 	REG_UPDATE(FORMAT_CONTROL, FORMAT_CONTROL__ALPHA_EN, alpha_en);
 
-	// अगर input adjusपंचांगents exist, program icsc with those values
+	// if input adjustments exist, program icsc with those values
 
-	अगर (input_csc_color_matrix.enable_adjusपंचांगent
-				== true) अणु
-		क्रम (i = 0; i < 12; i++)
+	if (input_csc_color_matrix.enable_adjustment
+				== true) {
+		for (i = 0; i < 12; i++)
 			tbl_entry.regval[i] = input_csc_color_matrix.matrix[i];
 
 		tbl_entry.color_space = color_space;
 
-		अगर (color_space >= COLOR_SPACE_YCBCR601)
+		if (color_space >= COLOR_SPACE_YCBCR601)
 			select = INPUT_CSC_SELECT_ICSC;
-		अन्यथा
+		else
 			select = INPUT_CSC_SELECT_BYPASS;
 
 		dpp1_program_input_csc(dpp_base, color_space, select, &tbl_entry);
-	पूर्ण अन्यथा
-		dpp1_program_input_csc(dpp_base, color_space, select, शून्य);
+	} else
+		dpp1_program_input_csc(dpp_base, color_space, select, NULL);
 
-	अगर (क्रमce_disable_cursor) अणु
+	if (force_disable_cursor) {
 		REG_UPDATE(CURSOR_CONTROL,
 				CURSOR_ENABLE, 0);
 		REG_UPDATE(CURSOR0_CONTROL,
 				CUR0_ENABLE, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dpp1_set_cursor_attributes(
-		काष्ठा dpp *dpp_base,
-		काष्ठा dc_cursor_attributes *cursor_attributes)
-अणु
-	क्रमागत dc_cursor_color_क्रमmat color_क्रमmat = cursor_attributes->color_क्रमmat;
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+void dpp1_set_cursor_attributes(
+		struct dpp *dpp_base,
+		struct dc_cursor_attributes *cursor_attributes)
+{
+	enum dc_cursor_color_format color_format = cursor_attributes->color_format;
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
 	REG_UPDATE_2(CURSOR0_CONTROL,
-			CUR0_MODE, color_क्रमmat,
+			CUR0_MODE, color_format,
 			CUR0_EXPANSION_MODE, 0);
 
-	अगर (color_क्रमmat == CURSOR_MODE_MONO) अणु
-		/* toकरो: clarअगरy what to program these to */
+	if (color_format == CURSOR_MODE_MONO) {
+		/* todo: clarify what to program these to */
 		REG_UPDATE(CURSOR0_COLOR0,
 				CUR0_COLOR0, 0x00000000);
 		REG_UPDATE(CURSOR0_COLOR1,
 				CUR0_COLOR1, 0xFFFFFFFF);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-व्योम dpp1_set_cursor_position(
-		काष्ठा dpp *dpp_base,
-		स्थिर काष्ठा dc_cursor_position *pos,
-		स्थिर काष्ठा dc_cursor_mi_param *param,
-		uपूर्णांक32_t width,
-		uपूर्णांक32_t height)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
-	पूर्णांक src_x_offset = pos->x - pos->x_hotspot - param->viewport.x;
-	पूर्णांक src_y_offset = pos->y - pos->y_hotspot - param->viewport.y;
-	uपूर्णांक32_t cur_en = pos->enable ? 1 : 0;
+void dpp1_set_cursor_position(
+		struct dpp *dpp_base,
+		const struct dc_cursor_position *pos,
+		const struct dc_cursor_mi_param *param,
+		uint32_t width,
+		uint32_t height)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+	int src_x_offset = pos->x - pos->x_hotspot - param->viewport.x;
+	int src_y_offset = pos->y - pos->y_hotspot - param->viewport.y;
+	uint32_t cur_en = pos->enable ? 1 : 0;
 
-	// Cursor width/height and hotspots need to be rotated क्रम offset calculation
-	अगर (param->rotation == ROTATION_ANGLE_90 || param->rotation == ROTATION_ANGLE_270) अणु
+	// Cursor width/height and hotspots need to be rotated for offset calculation
+	if (param->rotation == ROTATION_ANGLE_90 || param->rotation == ROTATION_ANGLE_270) {
 		swap(width, height);
-		अगर (param->rotation == ROTATION_ANGLE_90) अणु
+		if (param->rotation == ROTATION_ANGLE_90) {
 			src_x_offset = pos->x - pos->y_hotspot - param->viewport.x;
 			src_y_offset = pos->y - pos->x_hotspot - param->viewport.y;
-		पूर्ण
-	पूर्ण अन्यथा अगर (param->rotation == ROTATION_ANGLE_180) अणु
+		}
+	} else if (param->rotation == ROTATION_ANGLE_180) {
 		src_x_offset = pos->x - param->viewport.x;
 		src_y_offset = pos->y - param->viewport.y;
-	पूर्ण
+	}
 
 
-	अगर (src_x_offset >= (पूर्णांक)param->viewport.width)
+	if (src_x_offset >= (int)param->viewport.width)
 		cur_en = 0;  /* not visible beyond right edge*/
 
-	अगर (src_x_offset + (पूर्णांक)width <= 0)
+	if (src_x_offset + (int)width <= 0)
 		cur_en = 0;  /* not visible beyond left edge*/
 
-	अगर (src_y_offset >= (पूर्णांक)param->viewport.height)
+	if (src_y_offset >= (int)param->viewport.height)
 		cur_en = 0;  /* not visible beyond bottom edge*/
 
-	अगर (src_y_offset + (पूर्णांक)height <= 0)
+	if (src_y_offset + (int)height <= 0)
 		cur_en = 0;  /* not visible beyond top edge*/
 
 	REG_UPDATE(CURSOR0_CONTROL,
 			CUR0_ENABLE, cur_en);
 
-पूर्ण
+}
 
-व्योम dpp1_cnv_set_optional_cursor_attributes(
-		काष्ठा dpp *dpp_base,
-		काष्ठा dpp_cursor_attributes *attr)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+void dpp1_cnv_set_optional_cursor_attributes(
+		struct dpp *dpp_base,
+		struct dpp_cursor_attributes *attr)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
-	अगर (attr) अणु
+	if (attr) {
 		REG_UPDATE(CURSOR0_FP_SCALE_BIAS,  CUR0_FP_BIAS,  attr->bias);
 		REG_UPDATE(CURSOR0_FP_SCALE_BIAS,  CUR0_FP_SCALE, attr->scale);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम dpp1_dppclk_control(
-		काष्ठा dpp *dpp_base,
-		bool dppclk_भाग,
+void dpp1_dppclk_control(
+		struct dpp *dpp_base,
+		bool dppclk_div,
 		bool enable)
-अणु
-	काष्ठा dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
 
-	अगर (enable) अणु
-		अगर (dpp->tf_mask->DPPCLK_RATE_CONTROL)
+	if (enable) {
+		if (dpp->tf_mask->DPPCLK_RATE_CONTROL)
 			REG_UPDATE_2(DPP_CONTROL,
-				DPPCLK_RATE_CONTROL, dppclk_भाग,
+				DPPCLK_RATE_CONTROL, dppclk_div,
 				DPP_CLOCK_ENABLE, 1);
-		अन्यथा
+		else
 			REG_UPDATE(DPP_CONTROL, DPP_CLOCK_ENABLE, 1);
-	पूर्ण अन्यथा
+	} else
 		REG_UPDATE(DPP_CONTROL, DPP_CLOCK_ENABLE, 0);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा dpp_funcs dcn10_dpp_funcs = अणु
-		.dpp_पढ़ो_state = dpp_पढ़ो_state,
+static const struct dpp_funcs dcn10_dpp_funcs = {
+		.dpp_read_state = dpp_read_state,
 		.dpp_reset = dpp_reset,
 		.dpp_set_scaler = dpp1_dscl_set_scaler_manual_scale,
 		.dpp_get_optimal_number_of_taps = dpp1_get_optimal_number_of_taps,
 		.dpp_set_gamut_remap = dpp1_cm_set_gamut_remap,
-		.dpp_set_csc_adjusपंचांगent = dpp1_cm_set_output_csc_adjusपंचांगent,
-		.dpp_set_csc_शेष = dpp1_cm_set_output_csc_शेष,
-		.dpp_घातer_on_regamma_lut = dpp1_cm_घातer_on_regamma_lut,
+		.dpp_set_csc_adjustment = dpp1_cm_set_output_csc_adjustment,
+		.dpp_set_csc_default = dpp1_cm_set_output_csc_default,
+		.dpp_power_on_regamma_lut = dpp1_cm_power_on_regamma_lut,
 		.dpp_program_regamma_lut = dpp1_cm_program_regamma_lut,
 		.dpp_configure_regamma_lut = dpp1_cm_configure_regamma_lut,
 		.dpp_program_regamma_lutb_settings = dpp1_cm_program_regamma_lutb_settings,
@@ -532,28 +531,28 @@ bool dpp1_get_optimal_number_of_taps(
 		.set_optional_cursor_attributes = dpp1_cnv_set_optional_cursor_attributes,
 		.dpp_dppclk_control = dpp1_dppclk_control,
 		.dpp_set_hdr_multiplier = dpp1_set_hdr_multiplier,
-		.dpp_program_blnd_lut = शून्य,
-		.dpp_program_shaper_lut = शून्य,
-		.dpp_program_3dlut = शून्य
-पूर्ण;
+		.dpp_program_blnd_lut = NULL,
+		.dpp_program_shaper_lut = NULL,
+		.dpp_program_3dlut = NULL
+};
 
-अटल काष्ठा dpp_caps dcn10_dpp_cap = अणु
-	.dscl_data_proc_क्रमmat = DSCL_DATA_PRCESSING_FIXED_FORMAT,
+static struct dpp_caps dcn10_dpp_cap = {
+	.dscl_data_proc_format = DSCL_DATA_PRCESSING_FIXED_FORMAT,
 	.dscl_calc_lb_num_partitions = dpp1_dscl_calc_lb_num_partitions,
-पूर्ण;
+};
 
 /*****************************************/
-/* Conकाष्ठाor, Deकाष्ठाor               */
+/* Constructor, Destructor               */
 /*****************************************/
 
-व्योम dpp1_स्थिरruct(
-	काष्ठा dcn10_dpp *dpp,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t inst,
-	स्थिर काष्ठा dcn_dpp_रेजिस्टरs *tf_regs,
-	स्थिर काष्ठा dcn_dpp_shअगरt *tf_shअगरt,
-	स्थिर काष्ठा dcn_dpp_mask *tf_mask)
-अणु
+void dpp1_construct(
+	struct dcn10_dpp *dpp,
+	struct dc_context *ctx,
+	uint32_t inst,
+	const struct dcn_dpp_registers *tf_regs,
+	const struct dcn_dpp_shift *tf_shift,
+	const struct dcn_dpp_mask *tf_mask)
+{
 	dpp->base.ctx = ctx;
 
 	dpp->base.inst = inst;
@@ -561,7 +560,7 @@ bool dpp1_get_optimal_number_of_taps(
 	dpp->base.caps = &dcn10_dpp_cap;
 
 	dpp->tf_regs = tf_regs;
-	dpp->tf_shअगरt = tf_shअगरt;
+	dpp->tf_shift = tf_shift;
 	dpp->tf_mask = tf_mask;
 
 	dpp->lb_pixel_depth_supported =
@@ -571,4 +570,4 @@ bool dpp1_get_optimal_number_of_taps(
 
 	dpp->lb_bits_per_entry = LB_BITS_PER_ENTRY;
 	dpp->lb_memory_size = LB_TOTAL_NUMBER_OF_ENTRIES; /*0x1404*/
-पूर्ण
+}

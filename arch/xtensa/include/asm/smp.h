@@ -1,44 +1,43 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2013 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_SMP_H
-#घोषणा _XTENSA_SMP_H
+#ifndef _XTENSA_SMP_H
+#define _XTENSA_SMP_H
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 
-#घोषणा raw_smp_processor_id()	(current_thपढ़ो_info()->cpu)
-#घोषणा cpu_logical_map(cpu)	(cpu)
+#define raw_smp_processor_id()	(current_thread_info()->cpu)
+#define cpu_logical_map(cpu)	(cpu)
 
-काष्ठा start_info अणु
-	अचिन्हित दीर्घ stack;
-पूर्ण;
-बाह्य काष्ठा start_info start_info;
+struct start_info {
+	unsigned long stack;
+};
+extern struct start_info start_info;
 
-काष्ठा cpumask;
-व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask);
-व्योम arch_send_call_function_single_ipi(पूर्णांक cpu);
+struct cpumask;
+void arch_send_call_function_ipi_mask(const struct cpumask *mask);
+void arch_send_call_function_single_ipi(int cpu);
 
-व्योम smp_init_cpus(व्योम);
-व्योम secondary_init_irq(व्योम);
-व्योम ipi_init(व्योम);
-काष्ठा seq_file;
-व्योम show_ipi_list(काष्ठा seq_file *p, पूर्णांक prec);
+void smp_init_cpus(void);
+void secondary_init_irq(void);
+void ipi_init(void);
+struct seq_file;
+void show_ipi_list(struct seq_file *p, int prec);
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 
-व्योम __cpu_die(अचिन्हित पूर्णांक cpu);
-पूर्णांक __cpu_disable(व्योम);
-व्योम cpu_die(व्योम);
-व्योम cpu_restart(व्योम);
+void __cpu_die(unsigned int cpu);
+int __cpu_disable(void);
+void cpu_die(void);
+void cpu_restart(void);
 
-#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
+#endif /* CONFIG_HOTPLUG_CPU */
 
-#पूर्ण_अगर /* CONFIG_SMP */
+#endif /* CONFIG_SMP */
 
-#पूर्ण_अगर	/* _XTENSA_SMP_H */
+#endif	/* _XTENSA_SMP_H */

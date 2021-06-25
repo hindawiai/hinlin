@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2007-2013 Nicira, Inc.
  */
 
 
-#अगर_अघोषित FLOW_NETLINK_H
-#घोषणा FLOW_NETLINK_H 1
+#ifndef FLOW_NETLINK_H
+#define FLOW_NETLINK_H 1
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/खोलोvचयन.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/समय.स>
+#include <linux/kernel.h>
+#include <linux/netlink.h>
+#include <linux/openvswitch.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/rcupdate.h>
+#include <linux/if_ether.h>
+#include <linux/in6.h>
+#include <linux/jiffies.h>
+#include <linux/time.h>
 
-#समावेश <net/inet_ecn.h>
-#समावेश <net/ip_tunnels.h>
+#include <net/inet_ecn.h>
+#include <net/ip_tunnels.h>
 
-#समावेश "flow.h"
+#include "flow.h"
 
-माप_प्रकार ovs_tun_key_attr_size(व्योम);
-माप_प्रकार ovs_key_attr_size(व्योम);
+size_t ovs_tun_key_attr_size(void);
+size_t ovs_key_attr_size(void);
 
-व्योम ovs_match_init(काष्ठा sw_flow_match *match,
-		    काष्ठा sw_flow_key *key, bool reset_key,
-		    काष्ठा sw_flow_mask *mask);
+void ovs_match_init(struct sw_flow_match *match,
+		    struct sw_flow_key *key, bool reset_key,
+		    struct sw_flow_mask *mask);
 
-पूर्णांक ovs_nla_put_key(स्थिर काष्ठा sw_flow_key *, स्थिर काष्ठा sw_flow_key *,
-		    पूर्णांक attr, bool is_mask, काष्ठा sk_buff *);
-पूर्णांक parse_flow_nlattrs(स्थिर काष्ठा nlattr *attr, स्थिर काष्ठा nlattr *a[],
+int ovs_nla_put_key(const struct sw_flow_key *, const struct sw_flow_key *,
+		    int attr, bool is_mask, struct sk_buff *);
+int parse_flow_nlattrs(const struct nlattr *attr, const struct nlattr *a[],
 		       u64 *attrsp, bool log);
-पूर्णांक ovs_nla_get_flow_metadata(काष्ठा net *net,
-			      स्थिर काष्ठा nlattr *a[OVS_KEY_ATTR_MAX + 1],
-			      u64 attrs, काष्ठा sw_flow_key *key, bool log);
+int ovs_nla_get_flow_metadata(struct net *net,
+			      const struct nlattr *a[OVS_KEY_ATTR_MAX + 1],
+			      u64 attrs, struct sw_flow_key *key, bool log);
 
-पूर्णांक ovs_nla_put_identअगरier(स्थिर काष्ठा sw_flow *flow, काष्ठा sk_buff *skb);
-पूर्णांक ovs_nla_put_masked_key(स्थिर काष्ठा sw_flow *flow, काष्ठा sk_buff *skb);
-पूर्णांक ovs_nla_put_mask(स्थिर काष्ठा sw_flow *flow, काष्ठा sk_buff *skb);
+int ovs_nla_put_identifier(const struct sw_flow *flow, struct sk_buff *skb);
+int ovs_nla_put_masked_key(const struct sw_flow *flow, struct sk_buff *skb);
+int ovs_nla_put_mask(const struct sw_flow *flow, struct sk_buff *skb);
 
-पूर्णांक ovs_nla_get_match(काष्ठा net *, काष्ठा sw_flow_match *,
-		      स्थिर काष्ठा nlattr *key, स्थिर काष्ठा nlattr *mask,
+int ovs_nla_get_match(struct net *, struct sw_flow_match *,
+		      const struct nlattr *key, const struct nlattr *mask,
 		      bool log);
 
-पूर्णांक ovs_nla_put_tunnel_info(काष्ठा sk_buff *skb,
-			    काष्ठा ip_tunnel_info *tun_info);
+int ovs_nla_put_tunnel_info(struct sk_buff *skb,
+			    struct ip_tunnel_info *tun_info);
 
-bool ovs_nla_get_ufid(काष्ठा sw_flow_id *, स्थिर काष्ठा nlattr *, bool log);
-पूर्णांक ovs_nla_get_identअगरier(काष्ठा sw_flow_id *sfid, स्थिर काष्ठा nlattr *ufid,
-			   स्थिर काष्ठा sw_flow_key *key, bool log);
-u32 ovs_nla_get_ufid_flags(स्थिर काष्ठा nlattr *attr);
+bool ovs_nla_get_ufid(struct sw_flow_id *, const struct nlattr *, bool log);
+int ovs_nla_get_identifier(struct sw_flow_id *sfid, const struct nlattr *ufid,
+			   const struct sw_flow_key *key, bool log);
+u32 ovs_nla_get_ufid_flags(const struct nlattr *attr);
 
-पूर्णांक ovs_nla_copy_actions(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
-			 स्थिर काष्ठा sw_flow_key *key,
-			 काष्ठा sw_flow_actions **sfa, bool log);
-पूर्णांक ovs_nla_add_action(काष्ठा sw_flow_actions **sfa, पूर्णांक attrtype,
-		       व्योम *data, पूर्णांक len, bool log);
-पूर्णांक ovs_nla_put_actions(स्थिर काष्ठा nlattr *attr,
-			पूर्णांक len, काष्ठा sk_buff *skb);
+int ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
+			 const struct sw_flow_key *key,
+			 struct sw_flow_actions **sfa, bool log);
+int ovs_nla_add_action(struct sw_flow_actions **sfa, int attrtype,
+		       void *data, int len, bool log);
+int ovs_nla_put_actions(const struct nlattr *attr,
+			int len, struct sk_buff *skb);
 
-व्योम ovs_nla_मुक्त_flow_actions(काष्ठा sw_flow_actions *);
-व्योम ovs_nla_मुक्त_flow_actions_rcu(काष्ठा sw_flow_actions *);
+void ovs_nla_free_flow_actions(struct sw_flow_actions *);
+void ovs_nla_free_flow_actions_rcu(struct sw_flow_actions *);
 
-पूर्णांक nsh_key_from_nlattr(स्थिर काष्ठा nlattr *attr, काष्ठा ovs_key_nsh *nsh,
-			काष्ठा ovs_key_nsh *nsh_mask);
-पूर्णांक nsh_hdr_from_nlattr(स्थिर काष्ठा nlattr *attr, काष्ठा nshhdr *nh,
-			माप_प्रकार size);
+int nsh_key_from_nlattr(const struct nlattr *attr, struct ovs_key_nsh *nsh,
+			struct ovs_key_nsh *nsh_mask);
+int nsh_hdr_from_nlattr(const struct nlattr *attr, struct nshhdr *nh,
+			size_t size);
 
-#पूर्ण_अगर /* flow_netlink.h */
+#endif /* flow_netlink.h */

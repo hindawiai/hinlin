@@ -1,130 +1,129 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * IOCTL पूर्णांकerface क्रम SCLP
+ * IOCTL interface for SCLP
  *
  * Copyright IBM Corp. 2012
  *
  * Author: Michael Holzheu <holzheu@linux.vnet.ibm.com>
  */
 
-#समावेश <linux/compat.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ioctl.h>
-#समावेश <linux/fs.h>
-#समावेश <यंत्र/sclp_ctl.h>
-#समावेश <यंत्र/sclp.h>
+#include <linux/compat.h>
+#include <linux/uaccess.h>
+#include <linux/miscdevice.h>
+#include <linux/gfp.h>
+#include <linux/init.h>
+#include <linux/ioctl.h>
+#include <linux/fs.h>
+#include <asm/sclp_ctl.h>
+#include <asm/sclp.h>
 
-#समावेश "sclp.h"
+#include "sclp.h"
 
 /*
  * Supported command words
  */
-अटल अचिन्हित पूर्णांक sclp_ctl_sccb_wlist[] = अणु
+static unsigned int sclp_ctl_sccb_wlist[] = {
 	0x00400002,
 	0x00410002,
-पूर्ण;
+};
 
 /*
- * Check अगर command word is supported
+ * Check if command word is supported
  */
-अटल पूर्णांक sclp_ctl_cmdw_supported(अचिन्हित पूर्णांक cmdw)
-अणु
-	पूर्णांक i;
+static int sclp_ctl_cmdw_supported(unsigned int cmdw)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sclp_ctl_sccb_wlist); i++) अणु
-		अगर (cmdw == sclp_ctl_sccb_wlist[i])
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(sclp_ctl_sccb_wlist); i++) {
+		if (cmdw == sclp_ctl_sccb_wlist[i])
+			return 1;
+	}
+	return 0;
+}
 
-अटल व्योम __user *u64_to_uptr(u64 value)
-अणु
-	अगर (is_compat_task())
-		वापस compat_ptr(value);
-	अन्यथा
-		वापस (व्योम __user *)(अचिन्हित दीर्घ)value;
-पूर्ण
+static void __user *u64_to_uptr(u64 value)
+{
+	if (is_compat_task())
+		return compat_ptr(value);
+	else
+		return (void __user *)(unsigned long)value;
+}
 
 /*
  * Start SCLP request
  */
-अटल पूर्णांक sclp_ctl_ioctl_sccb(व्योम __user *user_area)
-अणु
-	काष्ठा sclp_ctl_sccb ctl_sccb;
-	काष्ठा sccb_header *sccb;
-	अचिन्हित दीर्घ copied;
-	पूर्णांक rc;
+static int sclp_ctl_ioctl_sccb(void __user *user_area)
+{
+	struct sclp_ctl_sccb ctl_sccb;
+	struct sccb_header *sccb;
+	unsigned long copied;
+	int rc;
 
-	अगर (copy_from_user(&ctl_sccb, user_area, माप(ctl_sccb)))
-		वापस -EFAULT;
-	अगर (!sclp_ctl_cmdw_supported(ctl_sccb.cmdw))
-		वापस -EOPNOTSUPP;
-	sccb = (व्योम *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	अगर (!sccb)
-		वापस -ENOMEM;
+	if (copy_from_user(&ctl_sccb, user_area, sizeof(ctl_sccb)))
+		return -EFAULT;
+	if (!sclp_ctl_cmdw_supported(ctl_sccb.cmdw))
+		return -EOPNOTSUPP;
+	sccb = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	if (!sccb)
+		return -ENOMEM;
 	copied = PAGE_SIZE -
 		copy_from_user(sccb, u64_to_uptr(ctl_sccb.sccb), PAGE_SIZE);
-	अगर (दुरत्व(काष्ठा sccb_header, length) +
-	    माप(sccb->length) > copied || sccb->length > copied) अणु
+	if (offsetof(struct sccb_header, length) +
+	    sizeof(sccb->length) > copied || sccb->length > copied) {
 		rc = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (sccb->length < 8) अणु
+		goto out_free;
+	}
+	if (sccb->length < 8) {
 		rc = -EINVAL;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	rc = sclp_sync_request(ctl_sccb.cmdw, sccb);
-	अगर (rc)
-		जाओ out_मुक्त;
-	अगर (copy_to_user(u64_to_uptr(ctl_sccb.sccb), sccb, sccb->length))
+	if (rc)
+		goto out_free;
+	if (copy_to_user(u64_to_uptr(ctl_sccb.sccb), sccb, sccb->length))
 		rc = -EFAULT;
-out_मुक्त:
-	मुक्त_page((अचिन्हित दीर्घ) sccb);
-	वापस rc;
-पूर्ण
+out_free:
+	free_page((unsigned long) sccb);
+	return rc;
+}
 
 /*
  * SCLP SCCB ioctl function
  */
-अटल दीर्घ sclp_ctl_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
-			   अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp;
+static long sclp_ctl_ioctl(struct file *filp, unsigned int cmd,
+			   unsigned long arg)
+{
+	void __user *argp;
 
-	अगर (is_compat_task())
+	if (is_compat_task())
 		argp = compat_ptr(arg);
-	अन्यथा
-		argp = (व्योम __user *) arg;
-	चयन (cmd) अणु
-	हाल SCLP_CTL_SCCB:
-		वापस sclp_ctl_ioctl_sccb(argp);
-	शेष: /* unknown ioctl number */
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	else
+		argp = (void __user *) arg;
+	switch (cmd) {
+	case SCLP_CTL_SCCB:
+		return sclp_ctl_ioctl_sccb(argp);
+	default: /* unknown ioctl number */
+		return -ENOTTY;
+	}
+}
 
 /*
  * File operations
  */
-अटल स्थिर काष्ठा file_operations sclp_ctl_fops = अणु
+static const struct file_operations sclp_ctl_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = nonseekable_खोलो,
+	.open = nonseekable_open,
 	.unlocked_ioctl = sclp_ctl_ioctl,
 	.compat_ioctl = sclp_ctl_ioctl,
 	.llseek = no_llseek,
-पूर्ण;
+};
 
 /*
  * Misc device definition
  */
-अटल काष्ठा miscdevice sclp_ctl_device = अणु
+static struct miscdevice sclp_ctl_device = {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "sclp",
 	.fops = &sclp_ctl_fops,
-पूर्ण;
+};
 builtin_misc_device(sclp_ctl_device);

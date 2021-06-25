@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 or BSD-3-Clause */
+/* SPDX-License-Identifier: GPL-2.0 or BSD-3-Clause */
 
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
-/*          Greg Joyce <greg@खोलोgridcomputing.com> */
+/*          Greg Joyce <greg@opengridcomputing.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 /* Copyright (c) 2017, Open Grid Computing, Inc. */
 
-#अगर_अघोषित _SIW_CM_H
-#घोषणा _SIW_CM_H
+#ifndef _SIW_CM_H
+#define _SIW_CM_H
 
-#समावेश <net/sock.h>
-#समावेश <linux/tcp.h>
+#include <net/sock.h>
+#include <linux/tcp.h>
 
-#समावेश <rdma/iw_cm.h>
+#include <rdma/iw_cm.h>
 
-क्रमागत siw_cep_state अणु
+enum siw_cep_state {
 	SIW_EPSTATE_IDLE = 1,
 	SIW_EPSTATE_LISTENING,
 	SIW_EPSTATE_CONNECTING,
@@ -23,112 +22,112 @@
 	SIW_EPSTATE_AWAIT_MPAREP,
 	SIW_EPSTATE_RDMA_MODE,
 	SIW_EPSTATE_CLOSED
-पूर्ण;
+};
 
-काष्ठा siw_mpa_info अणु
-	काष्ठा mpa_rr hdr; /* peer mpa hdr in host byte order */
-	काष्ठा mpa_v2_data v2_ctrl;
-	काष्ठा mpa_v2_data v2_ctrl_req;
-	अक्षर *pdata;
-	पूर्णांक bytes_rcvd;
-पूर्ण;
+struct siw_mpa_info {
+	struct mpa_rr hdr; /* peer mpa hdr in host byte order */
+	struct mpa_v2_data v2_ctrl;
+	struct mpa_v2_data v2_ctrl_req;
+	char *pdata;
+	int bytes_rcvd;
+};
 
-काष्ठा siw_device;
+struct siw_device;
 
-काष्ठा siw_cep अणु
-	काष्ठा iw_cm_id *cm_id;
-	काष्ठा siw_device *sdev;
-	काष्ठा list_head devq;
+struct siw_cep {
+	struct iw_cm_id *cm_id;
+	struct siw_device *sdev;
+	struct list_head devq;
 	spinlock_t lock;
-	काष्ठा kref ref;
-	पूर्णांक in_use;
-	रुको_queue_head_t रुकोq;
-	क्रमागत siw_cep_state state;
+	struct kref ref;
+	int in_use;
+	wait_queue_head_t waitq;
+	enum siw_cep_state state;
 
-	काष्ठा list_head listenq;
-	काष्ठा siw_cep *listen_cep;
+	struct list_head listenq;
+	struct siw_cep *listen_cep;
 
-	काष्ठा siw_qp *qp;
-	काष्ठा socket *sock;
+	struct siw_qp *qp;
+	struct socket *sock;
 
-	काष्ठा siw_cm_work *mpa_समयr;
-	काष्ठा list_head work_मुक्तlist;
+	struct siw_cm_work *mpa_timer;
+	struct list_head work_freelist;
 
-	काष्ठा siw_mpa_info mpa;
-	पूर्णांक ord;
-	पूर्णांक ird;
+	struct siw_mpa_info mpa;
+	int ord;
+	int ird;
 	bool enhanced_rdma_conn_est;
 
 	/* Saved upcalls of socket */
-	व्योम (*sk_state_change)(काष्ठा sock *sk);
-	व्योम (*sk_data_पढ़ोy)(काष्ठा sock *sk);
-	व्योम (*sk_ग_लिखो_space)(काष्ठा sock *sk);
-	व्योम (*sk_error_report)(काष्ठा sock *sk);
-पूर्ण;
+	void (*sk_state_change)(struct sock *sk);
+	void (*sk_data_ready)(struct sock *sk);
+	void (*sk_write_space)(struct sock *sk);
+	void (*sk_error_report)(struct sock *sk);
+};
 
 /*
- * Connection initiator रुकोs 10 seconds to receive an
- * MPA reply after sending out MPA request. Reponder रुकोs क्रम
- * 5 seconds क्रम MPA request to arrive अगर new TCP connection
+ * Connection initiator waits 10 seconds to receive an
+ * MPA reply after sending out MPA request. Reponder waits for
+ * 5 seconds for MPA request to arrive if new TCP connection
  * was set up.
  */
-#घोषणा MPAREQ_TIMEOUT (HZ * 10)
-#घोषणा MPAREP_TIMEOUT (HZ * 5)
+#define MPAREQ_TIMEOUT (HZ * 10)
+#define MPAREP_TIMEOUT (HZ * 5)
 
-क्रमागत siw_work_type अणु
+enum siw_work_type {
 	SIW_CM_WORK_ACCEPT = 1,
 	SIW_CM_WORK_READ_MPAHDR,
-	SIW_CM_WORK_CLOSE_LLP, /* बंद socket */
-	SIW_CM_WORK_PEER_CLOSE, /* socket indicated peer बंद */
+	SIW_CM_WORK_CLOSE_LLP, /* close socket */
+	SIW_CM_WORK_PEER_CLOSE, /* socket indicated peer close */
 	SIW_CM_WORK_MPATIMEOUT
-पूर्ण;
+};
 
-काष्ठा siw_cm_work अणु
-	काष्ठा delayed_work work;
-	काष्ठा list_head list;
-	क्रमागत siw_work_type type;
-	काष्ठा siw_cep *cep;
-पूर्ण;
+struct siw_cm_work {
+	struct delayed_work work;
+	struct list_head list;
+	enum siw_work_type type;
+	struct siw_cep *cep;
+};
 
-#घोषणा to_sockaddr_in(a) (*(काष्ठा sockaddr_in *)(&(a)))
-#घोषणा to_sockaddr_in6(a) (*(काष्ठा sockaddr_in6 *)(&(a)))
+#define to_sockaddr_in(a) (*(struct sockaddr_in *)(&(a)))
+#define to_sockaddr_in6(a) (*(struct sockaddr_in6 *)(&(a)))
 
-अटल अंतरभूत पूर्णांक getname_peer(काष्ठा socket *s, काष्ठा sockaddr_storage *a)
-अणु
-	वापस s->ops->getname(s, (काष्ठा sockaddr *)a, 1);
-पूर्ण
+static inline int getname_peer(struct socket *s, struct sockaddr_storage *a)
+{
+	return s->ops->getname(s, (struct sockaddr *)a, 1);
+}
 
-अटल अंतरभूत पूर्णांक getname_local(काष्ठा socket *s, काष्ठा sockaddr_storage *a)
-अणु
-	वापस s->ops->getname(s, (काष्ठा sockaddr *)a, 0);
-पूर्ण
+static inline int getname_local(struct socket *s, struct sockaddr_storage *a)
+{
+	return s->ops->getname(s, (struct sockaddr *)a, 0);
+}
 
-अटल अंतरभूत पूर्णांक ksock_recv(काष्ठा socket *sock, अक्षर *buf, माप_प्रकार size,
-			     पूर्णांक flags)
-अणु
-	काष्ठा kvec iov = अणु buf, size पूर्ण;
-	काष्ठा msghdr msg = अणु .msg_name = शून्य, .msg_flags = flags पूर्ण;
+static inline int ksock_recv(struct socket *sock, char *buf, size_t size,
+			     int flags)
+{
+	struct kvec iov = { buf, size };
+	struct msghdr msg = { .msg_name = NULL, .msg_flags = flags };
 
-	वापस kernel_recvmsg(sock, &msg, &iov, 1, size, flags);
-पूर्ण
+	return kernel_recvmsg(sock, &msg, &iov, 1, size, flags);
+}
 
-पूर्णांक siw_connect(काष्ठा iw_cm_id *id, काष्ठा iw_cm_conn_param *parm);
-पूर्णांक siw_accept(काष्ठा iw_cm_id *id, काष्ठा iw_cm_conn_param *param);
-पूर्णांक siw_reject(काष्ठा iw_cm_id *id, स्थिर व्योम *data, u8 len);
-पूर्णांक siw_create_listen(काष्ठा iw_cm_id *id, पूर्णांक backlog);
-पूर्णांक siw_destroy_listen(काष्ठा iw_cm_id *id);
+int siw_connect(struct iw_cm_id *id, struct iw_cm_conn_param *parm);
+int siw_accept(struct iw_cm_id *id, struct iw_cm_conn_param *param);
+int siw_reject(struct iw_cm_id *id, const void *data, u8 len);
+int siw_create_listen(struct iw_cm_id *id, int backlog);
+int siw_destroy_listen(struct iw_cm_id *id);
 
-व्योम siw_cep_get(काष्ठा siw_cep *cep);
-व्योम siw_cep_put(काष्ठा siw_cep *cep);
-पूर्णांक siw_cm_queue_work(काष्ठा siw_cep *cep, क्रमागत siw_work_type type);
+void siw_cep_get(struct siw_cep *cep);
+void siw_cep_put(struct siw_cep *cep);
+int siw_cm_queue_work(struct siw_cep *cep, enum siw_work_type type);
 
-पूर्णांक siw_cm_init(व्योम);
-व्योम siw_cm_निकास(व्योम);
+int siw_cm_init(void);
+void siw_cm_exit(void);
 
 /*
- * TCP socket पूर्णांकerface
+ * TCP socket interface
  */
-#घोषणा sk_to_qp(sk) (((काष्ठा siw_cep *)((sk)->sk_user_data))->qp)
-#घोषणा sk_to_cep(sk) ((काष्ठा siw_cep *)((sk)->sk_user_data))
+#define sk_to_qp(sk) (((struct siw_cep *)((sk)->sk_user_data))->qp)
+#define sk_to_cep(sk) ((struct siw_cep *)((sk)->sk_user_data))
 
-#पूर्ण_अगर
+#endif

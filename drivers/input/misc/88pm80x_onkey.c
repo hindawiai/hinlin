@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Marvell 88PM80x ONKEY driver
  *
@@ -7,94 +6,94 @@
  * Qiao Zhou <zhouqiao@marvell.com>
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file "COPYING" in the main directory of this
+ * archive for more details.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/mfd/88pm80x.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/mfd/88pm80x.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-#घोषणा PM800_LONG_ONKEY_EN		(1 << 0)
-#घोषणा PM800_LONG_KEY_DELAY		(8)	/* 1 .. 16 seconds */
-#घोषणा PM800_LONKEY_PRESS_TIME		((PM800_LONG_KEY_DELAY-1) << 4)
-#घोषणा PM800_LONKEY_PRESS_TIME_MASK	(0xF0)
-#घोषणा PM800_SW_PDOWN			(1 << 5)
+#define PM800_LONG_ONKEY_EN		(1 << 0)
+#define PM800_LONG_KEY_DELAY		(8)	/* 1 .. 16 seconds */
+#define PM800_LONKEY_PRESS_TIME		((PM800_LONG_KEY_DELAY-1) << 4)
+#define PM800_LONKEY_PRESS_TIME_MASK	(0xF0)
+#define PM800_SW_PDOWN			(1 << 5)
 
-काष्ठा pm80x_onkey_info अणु
-	काष्ठा input_dev *idev;
-	काष्ठा pm80x_chip *pm80x;
-	काष्ठा regmap *map;
-	पूर्णांक irq;
-पूर्ण;
+struct pm80x_onkey_info {
+	struct input_dev *idev;
+	struct pm80x_chip *pm80x;
+	struct regmap *map;
+	int irq;
+};
 
-/* 88PM80x gives us an पूर्णांकerrupt when ONKEY is held */
-अटल irqवापस_t pm80x_onkey_handler(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा pm80x_onkey_info *info = data;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक val;
+/* 88PM80x gives us an interrupt when ONKEY is held */
+static irqreturn_t pm80x_onkey_handler(int irq, void *data)
+{
+	struct pm80x_onkey_info *info = data;
+	int ret = 0;
+	unsigned int val;
 
-	ret = regmap_पढ़ो(info->map, PM800_STATUS_1, &val);
-	अगर (ret < 0) अणु
+	ret = regmap_read(info->map, PM800_STATUS_1, &val);
+	if (ret < 0) {
 		dev_err(info->idev->dev.parent, "failed to read status: %d\n", ret);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 	val &= PM800_ONKEY_STS1;
 
 	input_report_key(info->idev, KEY_POWER, val);
 	input_sync(info->idev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल SIMPLE_DEV_PM_OPS(pm80x_onkey_pm_ops, pm80x_dev_suspend,
+static SIMPLE_DEV_PM_OPS(pm80x_onkey_pm_ops, pm80x_dev_suspend,
 			 pm80x_dev_resume);
 
-अटल पूर्णांक pm80x_onkey_probe(काष्ठा platक्रमm_device *pdev)
-अणु
+static int pm80x_onkey_probe(struct platform_device *pdev)
+{
 
-	काष्ठा pm80x_chip *chip = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा pm80x_onkey_info *info;
-	पूर्णांक err;
+	struct pm80x_chip *chip = dev_get_drvdata(pdev->dev.parent);
+	struct pm80x_onkey_info *info;
+	int err;
 
-	info = kzalloc(माप(काष्ठा pm80x_onkey_info), GFP_KERNEL);
-	अगर (!info)
-		वापस -ENOMEM;
+	info = kzalloc(sizeof(struct pm80x_onkey_info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
 
 	info->pm80x = chip;
 
-	info->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (info->irq < 0) अणु
+	info->irq = platform_get_irq(pdev, 0);
+	if (info->irq < 0) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	info->map = info->pm80x->regmap;
-	अगर (!info->map) अणु
+	if (!info->map) {
 		dev_err(&pdev->dev, "no regmap!\n");
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	info->idev = input_allocate_device();
-	अगर (!info->idev) अणु
+	if (!info->idev) {
 		dev_err(&pdev->dev, "Failed to allocate input dev\n");
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	info->idev->name = "88pm80x_on";
 	info->idev->phys = "88pm80x_on/input0";
@@ -105,60 +104,60 @@
 
 	err = pm80x_request_irq(info->pm80x, info->irq, pm80x_onkey_handler,
 					    IRQF_ONESHOT, "onkey", info);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "Failed to request IRQ: #%d: %d\n",
 			info->irq, err);
-		जाओ out_reg;
-	पूर्ण
+		goto out_reg;
+	}
 
-	err = input_रेजिस्टर_device(info->idev);
-	अगर (err) अणु
+	err = input_register_device(info->idev);
+	if (err) {
 		dev_err(&pdev->dev, "Can't register input device: %d\n", err);
-		जाओ out_irq;
-	पूर्ण
+		goto out_irq;
+	}
 
-	platक्रमm_set_drvdata(pdev, info);
+	platform_set_drvdata(pdev, info);
 
-	/* Enable दीर्घ onkey detection */
+	/* Enable long onkey detection */
 	regmap_update_bits(info->map, PM800_RTC_MISC4, PM800_LONG_ONKEY_EN,
 			   PM800_LONG_ONKEY_EN);
-	/* Set 8-second पूर्णांकerval */
+	/* Set 8-second interval */
 	regmap_update_bits(info->map, PM800_RTC_MISC3,
 			   PM800_LONKEY_PRESS_TIME_MASK,
 			   PM800_LONKEY_PRESS_TIME);
 
 	device_init_wakeup(&pdev->dev, 1);
-	वापस 0;
+	return 0;
 
 out_irq:
-	pm80x_मुक्त_irq(info->pm80x, info->irq, info);
+	pm80x_free_irq(info->pm80x, info->irq, info);
 out_reg:
-	input_मुक्त_device(info->idev);
+	input_free_device(info->idev);
 out:
-	kमुक्त(info);
-	वापस err;
-पूर्ण
+	kfree(info);
+	return err;
+}
 
-अटल पूर्णांक pm80x_onkey_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा pm80x_onkey_info *info = platक्रमm_get_drvdata(pdev);
+static int pm80x_onkey_remove(struct platform_device *pdev)
+{
+	struct pm80x_onkey_info *info = platform_get_drvdata(pdev);
 
-	pm80x_मुक्त_irq(info->pm80x, info->irq, info);
-	input_unरेजिस्टर_device(info->idev);
-	kमुक्त(info);
-	वापस 0;
-पूर्ण
+	pm80x_free_irq(info->pm80x, info->irq, info);
+	input_unregister_device(info->idev);
+	kfree(info);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver pm80x_onkey_driver = अणु
-	.driver = अणु
+static struct platform_driver pm80x_onkey_driver = {
+	.driver = {
 		   .name = "88pm80x-onkey",
 		   .pm = &pm80x_onkey_pm_ops,
-		   पूर्ण,
+		   },
 	.probe = pm80x_onkey_probe,
-	.हटाओ = pm80x_onkey_हटाओ,
-पूर्ण;
+	.remove = pm80x_onkey_remove,
+};
 
-module_platक्रमm_driver(pm80x_onkey_driver);
+module_platform_driver(pm80x_onkey_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Marvell 88PM80x ONKEY driver");

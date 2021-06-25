@@ -1,54 +1,53 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_EARLY_IOREMAP_H_
-#घोषणा _ASM_EARLY_IOREMAP_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_EARLY_IOREMAP_H_
+#define _ASM_EARLY_IOREMAP_H_
 
-#समावेश <linux/types.h>
-
-/*
- * early_ioremap() and early_iounmap() are क्रम temporary early boot-समय
- * mappings, beक्रमe the real ioremap() is functional.
- */
-बाह्य व्योम __iomem *early_ioremap(resource_माप_प्रकार phys_addr,
-				   अचिन्हित दीर्घ size);
-बाह्य व्योम *early_memremap(resource_माप_प्रकार phys_addr,
-			    अचिन्हित दीर्घ size);
-बाह्य व्योम *early_memremap_ro(resource_माप_प्रकार phys_addr,
-			       अचिन्हित दीर्घ size);
-बाह्य व्योम *early_memremap_prot(resource_माप_प्रकार phys_addr,
-				 अचिन्हित दीर्घ size, अचिन्हित दीर्घ prot_val);
-बाह्य व्योम early_iounmap(व्योम __iomem *addr, अचिन्हित दीर्घ size);
-बाह्य व्योम early_memunmap(व्योम *addr, अचिन्हित दीर्घ size);
+#include <linux/types.h>
 
 /*
- * Weak function called by early_ioremap_reset(). It करोes nothing, but
- * architectures may provide their own version to करो any needed cleanups.
+ * early_ioremap() and early_iounmap() are for temporary early boot-time
+ * mappings, before the real ioremap() is functional.
  */
-बाह्य व्योम early_ioremap_shutकरोwn(व्योम);
+extern void __iomem *early_ioremap(resource_size_t phys_addr,
+				   unsigned long size);
+extern void *early_memremap(resource_size_t phys_addr,
+			    unsigned long size);
+extern void *early_memremap_ro(resource_size_t phys_addr,
+			       unsigned long size);
+extern void *early_memremap_prot(resource_size_t phys_addr,
+				 unsigned long size, unsigned long prot_val);
+extern void early_iounmap(void __iomem *addr, unsigned long size);
+extern void early_memunmap(void *addr, unsigned long size);
 
-#अगर defined(CONFIG_GENERIC_EARLY_IOREMAP) && defined(CONFIG_MMU)
-/* Arch-specअगरic initialization */
-बाह्य व्योम early_ioremap_init(व्योम);
+/*
+ * Weak function called by early_ioremap_reset(). It does nothing, but
+ * architectures may provide their own version to do any needed cleanups.
+ */
+extern void early_ioremap_shutdown(void);
+
+#if defined(CONFIG_GENERIC_EARLY_IOREMAP) && defined(CONFIG_MMU)
+/* Arch-specific initialization */
+extern void early_ioremap_init(void);
 
 /* Generic initialization called by architecture code */
-बाह्य व्योम early_ioremap_setup(व्योम);
+extern void early_ioremap_setup(void);
 
 /*
  * Called as last step in paging_init() so library can act
- * accordingly क्रम subsequent map/unmap requests.
+ * accordingly for subsequent map/unmap requests.
  */
-बाह्य व्योम early_ioremap_reset(व्योम);
+extern void early_ioremap_reset(void);
 
 /*
  * Early copy from unmapped memory to kernel mapped memory.
  */
-बाह्य व्योम copy_from_early_mem(व्योम *dest, phys_addr_t src,
-				अचिन्हित दीर्घ size);
+extern void copy_from_early_mem(void *dest, phys_addr_t src,
+				unsigned long size);
 
-#अन्यथा
-अटल अंतरभूत व्योम early_ioremap_init(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम early_ioremap_setup(व्योम) अणु पूर्ण
-अटल अंतरभूत व्योम early_ioremap_reset(व्योम) अणु पूर्ण
-#पूर्ण_अगर
+#else
+static inline void early_ioremap_init(void) { }
+static inline void early_ioremap_setup(void) { }
+static inline void early_ioremap_reset(void) { }
+#endif
 
-#पूर्ण_अगर /* _ASM_EARLY_IOREMAP_H_ */
+#endif /* _ASM_EARLY_IOREMAP_H_ */

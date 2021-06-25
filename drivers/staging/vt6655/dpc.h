@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -14,11 +13,11 @@
  *
  */
 
-#अगर_अघोषित __DPC_H__
-#घोषणा __DPC_H__
+#ifndef __DPC_H__
+#define __DPC_H__
 
-#समावेश "device.h"
+#include "device.h"
 
-bool vnt_receive_frame(काष्ठा vnt_निजी *priv, काष्ठा vnt_rx_desc *curr_rd);
+bool vnt_receive_frame(struct vnt_private *priv, struct vnt_rx_desc *curr_rd);
 
-#पूर्ण_अगर /* __RXTX_H__ */
+#endif /* __RXTX_H__ */

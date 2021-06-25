@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * linux/include/linux/sunrpc/svcauth_gss.h
  *
@@ -7,22 +6,22 @@
  * Copyright (c) 2002 The Regents of the University of Michigan
  */
 
-#अगर_अघोषित _LINUX_SUNRPC_SVCAUTH_GSS_H
-#घोषणा _LINUX_SUNRPC_SVCAUTH_GSS_H
+#ifndef _LINUX_SUNRPC_SVCAUTH_GSS_H
+#define _LINUX_SUNRPC_SVCAUTH_GSS_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/sunrpc/types.h>
-#समावेश <linux/sunrpc/xdr.h>
-#समावेश <linux/sunrpc/svcauth.h>
-#समावेश <linux/sunrpc/svcsock.h>
-#समावेश <linux/sunrpc/auth_gss.h>
+#include <linux/sched.h>
+#include <linux/sunrpc/types.h>
+#include <linux/sunrpc/xdr.h>
+#include <linux/sunrpc/svcauth.h>
+#include <linux/sunrpc/svcsock.h>
+#include <linux/sunrpc/auth_gss.h>
 
-पूर्णांक gss_svc_init(व्योम);
-व्योम gss_svc_shutकरोwn(व्योम);
-पूर्णांक gss_svc_init_net(काष्ठा net *net);
-व्योम gss_svc_shutकरोwn_net(काष्ठा net *net);
-काष्ठा auth_करोमुख्य *svcauth_gss_रेजिस्टर_pseuकरोflavor(u32 pseuकरोflavor,
-						      अक्षर *name);
-u32 svcauth_gss_flavor(काष्ठा auth_करोमुख्य *करोm);
+int gss_svc_init(void);
+void gss_svc_shutdown(void);
+int gss_svc_init_net(struct net *net);
+void gss_svc_shutdown_net(struct net *net);
+struct auth_domain *svcauth_gss_register_pseudoflavor(u32 pseudoflavor,
+						      char *name);
+u32 svcauth_gss_flavor(struct auth_domain *dom);
 
-#पूर्ण_अगर /* _LINUX_SUNRPC_SVCAUTH_GSS_H */
+#endif /* _LINUX_SUNRPC_SVCAUTH_GSS_H */

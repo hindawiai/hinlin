@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  * tg3.c: Broadcom Tigon3 ethernet driver.
  *
  * Copyright (C) 2001, 2002, 2003, 2004 David S. Miller (davem@redhat.com)
  * Copyright (C) 2001, 2002, 2003 Jeff Garzik (jgarzik@pobox.com)
- * Copyright (C) 2004 Sun Microप्रणालीs Inc.
+ * Copyright (C) 2004 Sun Microsystems Inc.
  * Copyright (C) 2005-2016 Broadcom Corporation.
  * Copyright (C) 2016-2017 Broadcom Limited.
  * Copyright (C) 2018 Broadcom. All Rights Reserved. The term "Broadcom"
@@ -17,97 +16,97 @@
  *	Copyright (C) 2018 Broadcom. All Rights Reserved. The term "Broadcom"
  *	refers to Broadcom Inc. and/or its subsidiaries.
  *
- *	Permission is hereby granted क्रम the distribution of this firmware
- *	data in hexadecimal or equivalent क्रमmat, provided this copyright
+ *	Permission is hereby granted for the distribution of this firmware
+ *	data in hexadecimal or equivalent format, provided this copyright
  *	notice is accompanying it.
  */
 
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/types.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/in.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/mdपन.स>
-#समावेश <linux/mii.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/brcmphy.h>
-#समावेश <linux/अगर.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/tcp.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/firmware.h>
-#समावेश <linux/ssb/ssb_driver_gige.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/crc32poly.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/stringify.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/types.h>
+#include <linux/compiler.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/in.h>
+#include <linux/interrupt.h>
+#include <linux/ioport.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/ethtool.h>
+#include <linux/mdio.h>
+#include <linux/mii.h>
+#include <linux/phy.h>
+#include <linux/brcmphy.h>
+#include <linux/if.h>
+#include <linux/if_vlan.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/workqueue.h>
+#include <linux/prefetch.h>
+#include <linux/dma-mapping.h>
+#include <linux/firmware.h>
+#include <linux/ssb/ssb_driver_gige.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/crc32poly.h>
 
-#समावेश <net/checksum.h>
-#समावेश <net/ip.h>
+#include <net/checksum.h>
+#include <net/ip.h>
 
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/uaccess.h>
+#include <linux/io.h>
+#include <asm/byteorder.h>
+#include <linux/uaccess.h>
 
-#समावेश <uapi/linux/net_tstamp.h>
-#समावेश <linux/ptp_घड़ी_kernel.h>
+#include <uapi/linux/net_tstamp.h>
+#include <linux/ptp_clock_kernel.h>
 
-#घोषणा BAR_0	0
-#घोषणा BAR_2	2
+#define BAR_0	0
+#define BAR_2	2
 
-#समावेश "tg3.h"
+#include "tg3.h"
 
-/* Functions & macros to verअगरy TG3_FLAGS types */
+/* Functions & macros to verify TG3_FLAGS types */
 
-अटल अंतरभूत पूर्णांक _tg3_flag(क्रमागत TG3_FLAGS flag, अचिन्हित दीर्घ *bits)
-अणु
-	वापस test_bit(flag, bits);
-पूर्ण
+static inline int _tg3_flag(enum TG3_FLAGS flag, unsigned long *bits)
+{
+	return test_bit(flag, bits);
+}
 
-अटल अंतरभूत व्योम _tg3_flag_set(क्रमागत TG3_FLAGS flag, अचिन्हित दीर्घ *bits)
-अणु
+static inline void _tg3_flag_set(enum TG3_FLAGS flag, unsigned long *bits)
+{
 	set_bit(flag, bits);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम _tg3_flag_clear(क्रमागत TG3_FLAGS flag, अचिन्हित दीर्घ *bits)
-अणु
+static inline void _tg3_flag_clear(enum TG3_FLAGS flag, unsigned long *bits)
+{
 	clear_bit(flag, bits);
-पूर्ण
+}
 
-#घोषणा tg3_flag(tp, flag)				\
+#define tg3_flag(tp, flag)				\
 	_tg3_flag(TG3_FLAG_##flag, (tp)->tg3_flags)
-#घोषणा tg3_flag_set(tp, flag)				\
+#define tg3_flag_set(tp, flag)				\
 	_tg3_flag_set(TG3_FLAG_##flag, (tp)->tg3_flags)
-#घोषणा tg3_flag_clear(tp, flag)			\
+#define tg3_flag_clear(tp, flag)			\
 	_tg3_flag_clear(TG3_FLAG_##flag, (tp)->tg3_flags)
 
-#घोषणा DRV_MODULE_NAME		"tg3"
+#define DRV_MODULE_NAME		"tg3"
 /* DO NOT UPDATE TG3_*_NUM defines */
-#घोषणा TG3_MAJ_NUM			3
-#घोषणा TG3_MIN_NUM			137
+#define TG3_MAJ_NUM			3
+#define TG3_MIN_NUM			137
 
-#घोषणा RESET_KIND_SHUTDOWN	0
-#घोषणा RESET_KIND_INIT		1
-#घोषणा RESET_KIND_SUSPEND	2
+#define RESET_KIND_SHUTDOWN	0
+#define RESET_KIND_INIT		1
+#define RESET_KIND_SUSPEND	2
 
-#घोषणा TG3_DEF_RX_MODE		0
-#घोषणा TG3_DEF_TX_MODE		0
-#घोषणा TG3_DEF_MSG_ENABLE	  \
+#define TG3_DEF_RX_MODE		0
+#define TG3_DEF_TX_MODE		0
+#define TG3_DEF_MSG_ENABLE	  \
 	(NETIF_MSG_DRV		| \
 	 NETIF_MSG_PROBE	| \
 	 NETIF_MSG_LINK		| \
@@ -117,109 +116,109 @@
 	 NETIF_MSG_RX_ERR	| \
 	 NETIF_MSG_TX_ERR)
 
-#घोषणा TG3_GRC_LCLCTL_PWRSW_DELAY	100
+#define TG3_GRC_LCLCTL_PWRSW_DELAY	100
 
-/* length of समय beक्रमe we decide the hardware is borked,
- * and dev->tx_समयout() should be called to fix the problem
+/* length of time before we decide the hardware is borked,
+ * and dev->tx_timeout() should be called to fix the problem
  */
 
-#घोषणा TG3_TX_TIMEOUT			(5 * HZ)
+#define TG3_TX_TIMEOUT			(5 * HZ)
 
-/* hardware minimum and maximum क्रम a single frame's data payload */
-#घोषणा TG3_MIN_MTU			ETH_ZLEN
-#घोषणा TG3_MAX_MTU(tp)	\
+/* hardware minimum and maximum for a single frame's data payload */
+#define TG3_MIN_MTU			ETH_ZLEN
+#define TG3_MAX_MTU(tp)	\
 	(tg3_flag(tp, JUMBO_CAPABLE) ? 9000 : 1500)
 
 /* These numbers seem to be hard coded in the NIC firmware somehow.
  * You can't change the ring sizes, but you can change where you place
  * them in the NIC onboard memory.
  */
-#घोषणा TG3_RX_STD_RING_SIZE(tp) \
+#define TG3_RX_STD_RING_SIZE(tp) \
 	(tg3_flag(tp, LRG_PROD_RING_CAP) ? \
 	 TG3_RX_STD_MAX_SIZE_5717 : TG3_RX_STD_MAX_SIZE_5700)
-#घोषणा TG3_DEF_RX_RING_PENDING		200
-#घोषणा TG3_RX_JMB_RING_SIZE(tp) \
+#define TG3_DEF_RX_RING_PENDING		200
+#define TG3_RX_JMB_RING_SIZE(tp) \
 	(tg3_flag(tp, LRG_PROD_RING_CAP) ? \
 	 TG3_RX_JMB_MAX_SIZE_5717 : TG3_RX_JMB_MAX_SIZE_5700)
-#घोषणा TG3_DEF_RX_JUMBO_RING_PENDING	100
+#define TG3_DEF_RX_JUMBO_RING_PENDING	100
 
-/* Do not place this n-ring entries value पूर्णांकo the tp काष्ठा itself,
- * we really want to expose these स्थिरants to GCC so that modulo et
- * al.  operations are करोne with shअगरts and masks instead of with
- * hw multiply/modulo inकाष्ठाions.  Another solution would be to
+/* Do not place this n-ring entries value into the tp struct itself,
+ * we really want to expose these constants to GCC so that modulo et
+ * al.  operations are done with shifts and masks instead of with
+ * hw multiply/modulo instructions.  Another solution would be to
  * replace things like '% foo' with '& (foo - 1)'.
  */
 
-#घोषणा TG3_TX_RING_SIZE		512
-#घोषणा TG3_DEF_TX_RING_PENDING		(TG3_TX_RING_SIZE - 1)
+#define TG3_TX_RING_SIZE		512
+#define TG3_DEF_TX_RING_PENDING		(TG3_TX_RING_SIZE - 1)
 
-#घोषणा TG3_RX_STD_RING_BYTES(tp) \
-	(माप(काष्ठा tg3_rx_buffer_desc) * TG3_RX_STD_RING_SIZE(tp))
-#घोषणा TG3_RX_JMB_RING_BYTES(tp) \
-	(माप(काष्ठा tg3_ext_rx_buffer_desc) * TG3_RX_JMB_RING_SIZE(tp))
-#घोषणा TG3_RX_RCB_RING_BYTES(tp) \
-	(माप(काष्ठा tg3_rx_buffer_desc) * (tp->rx_ret_ring_mask + 1))
-#घोषणा TG3_TX_RING_BYTES	(माप(काष्ठा tg3_tx_buffer_desc) * \
+#define TG3_RX_STD_RING_BYTES(tp) \
+	(sizeof(struct tg3_rx_buffer_desc) * TG3_RX_STD_RING_SIZE(tp))
+#define TG3_RX_JMB_RING_BYTES(tp) \
+	(sizeof(struct tg3_ext_rx_buffer_desc) * TG3_RX_JMB_RING_SIZE(tp))
+#define TG3_RX_RCB_RING_BYTES(tp) \
+	(sizeof(struct tg3_rx_buffer_desc) * (tp->rx_ret_ring_mask + 1))
+#define TG3_TX_RING_BYTES	(sizeof(struct tg3_tx_buffer_desc) * \
 				 TG3_TX_RING_SIZE)
-#घोषणा NEXT_TX(N)		(((N) + 1) & (TG3_TX_RING_SIZE - 1))
+#define NEXT_TX(N)		(((N) + 1) & (TG3_TX_RING_SIZE - 1))
 
-#घोषणा TG3_DMA_BYTE_ENAB		64
+#define TG3_DMA_BYTE_ENAB		64
 
-#घोषणा TG3_RX_STD_DMA_SZ		1536
-#घोषणा TG3_RX_JMB_DMA_SZ		9046
+#define TG3_RX_STD_DMA_SZ		1536
+#define TG3_RX_JMB_DMA_SZ		9046
 
-#घोषणा TG3_RX_DMA_TO_MAP_SZ(x)		((x) + TG3_DMA_BYTE_ENAB)
+#define TG3_RX_DMA_TO_MAP_SZ(x)		((x) + TG3_DMA_BYTE_ENAB)
 
-#घोषणा TG3_RX_STD_MAP_SZ		TG3_RX_DMA_TO_MAP_SZ(TG3_RX_STD_DMA_SZ)
-#घोषणा TG3_RX_JMB_MAP_SZ		TG3_RX_DMA_TO_MAP_SZ(TG3_RX_JMB_DMA_SZ)
+#define TG3_RX_STD_MAP_SZ		TG3_RX_DMA_TO_MAP_SZ(TG3_RX_STD_DMA_SZ)
+#define TG3_RX_JMB_MAP_SZ		TG3_RX_DMA_TO_MAP_SZ(TG3_RX_JMB_DMA_SZ)
 
-#घोषणा TG3_RX_STD_BUFF_RING_SIZE(tp) \
-	(माप(काष्ठा ring_info) * TG3_RX_STD_RING_SIZE(tp))
+#define TG3_RX_STD_BUFF_RING_SIZE(tp) \
+	(sizeof(struct ring_info) * TG3_RX_STD_RING_SIZE(tp))
 
-#घोषणा TG3_RX_JMB_BUFF_RING_SIZE(tp) \
-	(माप(काष्ठा ring_info) * TG3_RX_JMB_RING_SIZE(tp))
+#define TG3_RX_JMB_BUFF_RING_SIZE(tp) \
+	(sizeof(struct ring_info) * TG3_RX_JMB_RING_SIZE(tp))
 
 /* Due to a hardware bug, the 5701 can only DMA to memory addresses
  * that are at least dword aligned when used in PCIX mode.  The driver
- * works around this bug by द्विगुन copying the packet.  This workaround
- * is built पूर्णांकo the normal द्विगुन copy length check क्रम efficiency.
+ * works around this bug by double copying the packet.  This workaround
+ * is built into the normal double copy length check for efficiency.
  *
- * However, the द्विगुन copy is only necessary on those architectures
+ * However, the double copy is only necessary on those architectures
  * where unaligned memory accesses are inefficient.  For those architectures
- * where unaligned memory accesses incur little penalty, we can reपूर्णांकegrate
- * the 5701 in the normal rx path.  Doing so saves a device काष्ठाure
- * dereference by hardcoding the द्विगुन copy threshold in place.
+ * where unaligned memory accesses incur little penalty, we can reintegrate
+ * the 5701 in the normal rx path.  Doing so saves a device structure
+ * dereference by hardcoding the double copy threshold in place.
  */
-#घोषणा TG3_RX_COPY_THRESHOLD		256
-#अगर NET_IP_ALIGN == 0 || defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)
-	#घोषणा TG3_RX_COPY_THRESH(tp)	TG3_RX_COPY_THRESHOLD
-#अन्यथा
-	#घोषणा TG3_RX_COPY_THRESH(tp)	((tp)->rx_copy_thresh)
-#पूर्ण_अगर
+#define TG3_RX_COPY_THRESHOLD		256
+#if NET_IP_ALIGN == 0 || defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)
+	#define TG3_RX_COPY_THRESH(tp)	TG3_RX_COPY_THRESHOLD
+#else
+	#define TG3_RX_COPY_THRESH(tp)	((tp)->rx_copy_thresh)
+#endif
 
-#अगर (NET_IP_ALIGN != 0)
-#घोषणा TG3_RX_OFFSET(tp)	((tp)->rx_offset)
-#अन्यथा
-#घोषणा TG3_RX_OFFSET(tp)	(NET_SKB_PAD)
-#पूर्ण_अगर
+#if (NET_IP_ALIGN != 0)
+#define TG3_RX_OFFSET(tp)	((tp)->rx_offset)
+#else
+#define TG3_RX_OFFSET(tp)	(NET_SKB_PAD)
+#endif
 
-/* minimum number of मुक्त TX descriptors required to wake up TX process */
-#घोषणा TG3_TX_WAKEUP_THRESH(tnapi)		((tnapi)->tx_pending / 4)
-#घोषणा TG3_TX_BD_DMA_MAX_2K		2048
-#घोषणा TG3_TX_BD_DMA_MAX_4K		4096
+/* minimum number of free TX descriptors required to wake up TX process */
+#define TG3_TX_WAKEUP_THRESH(tnapi)		((tnapi)->tx_pending / 4)
+#define TG3_TX_BD_DMA_MAX_2K		2048
+#define TG3_TX_BD_DMA_MAX_4K		4096
 
-#घोषणा TG3_RAW_IP_ALIGN 2
+#define TG3_RAW_IP_ALIGN 2
 
-#घोषणा TG3_MAX_UCAST_ADDR(tp) (tg3_flag((tp), ENABLE_ASF) ? 2 : 3)
-#घोषणा TG3_UCAST_ADDR_IDX(tp) (tg3_flag((tp), ENABLE_ASF) ? 2 : 1)
+#define TG3_MAX_UCAST_ADDR(tp) (tg3_flag((tp), ENABLE_ASF) ? 2 : 3)
+#define TG3_UCAST_ADDR_IDX(tp) (tg3_flag((tp), ENABLE_ASF) ? 2 : 1)
 
-#घोषणा TG3_FW_UPDATE_TIMEOUT_SEC	5
-#घोषणा TG3_FW_UPDATE_FREQ_SEC		(TG3_FW_UPDATE_TIMEOUT_SEC / 2)
+#define TG3_FW_UPDATE_TIMEOUT_SEC	5
+#define TG3_FW_UPDATE_FREQ_SEC		(TG3_FW_UPDATE_TIMEOUT_SEC / 2)
 
-#घोषणा FIRMWARE_TG3		"tigon/tg3.bin"
-#घोषणा FIRMWARE_TG357766	"tigon/tg357766.bin"
-#घोषणा FIRMWARE_TG3TSO		"tigon/tg3_tso.bin"
-#घोषणा FIRMWARE_TG3TSO5	"tigon/tg3_tso5.bin"
+#define FIRMWARE_TG3		"tigon/tg3.bin"
+#define FIRMWARE_TG357766	"tigon/tg357766.bin"
+#define FIRMWARE_TG3TSO		"tigon/tg3_tso.bin"
+#define FIRMWARE_TG3TSO5	"tigon/tg3_tso5.bin"
 
 MODULE_AUTHOR("David S. Miller (davem@redhat.com) and Jeff Garzik (jgarzik@pobox.com)");
 MODULE_DESCRIPTION("Broadcom Tigon3 ethernet driver");
@@ -228,784 +227,784 @@ MODULE_FIRMWARE(FIRMWARE_TG3);
 MODULE_FIRMWARE(FIRMWARE_TG3TSO);
 MODULE_FIRMWARE(FIRMWARE_TG3TSO5);
 
-अटल पूर्णांक tg3_debug = -1;	/* -1 == use TG3_DEF_MSG_ENABLE as value */
-module_param(tg3_debug, पूर्णांक, 0);
+static int tg3_debug = -1;	/* -1 == use TG3_DEF_MSG_ENABLE as value */
+module_param(tg3_debug, int, 0);
 MODULE_PARM_DESC(tg3_debug, "Tigon3 bitmapped debugging message enable value");
 
-#घोषणा TG3_DRV_DATA_FLAG_10_100_ONLY	0x0001
-#घोषणा TG3_DRV_DATA_FLAG_5705_10_100	0x0002
+#define TG3_DRV_DATA_FLAG_10_100_ONLY	0x0001
+#define TG3_DRV_DATA_FLAG_5705_10_100	0x0002
 
-अटल स्थिर काष्ठा pci_device_id tg3_pci_tbl[] = अणु
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5700)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5701)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5703)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5704)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702FE)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705_2)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705M_2)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702X)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5703X)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5704S)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702A3)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5703A3)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5782)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5788)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5789)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5901),
+static const struct pci_device_id tg3_pci_tbl[] = {
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5700)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5701)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5703)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5704)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702FE)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705_2)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705M_2)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702X)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5703X)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5704S)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5702A3)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5703A3)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5782)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5788)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5789)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5901),
 	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY |
-			TG3_DRV_DATA_FLAG_5705_10_100पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5901_2),
+			TG3_DRV_DATA_FLAG_5705_10_100},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5901_2),
 	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY |
-			TG3_DRV_DATA_FLAG_5705_10_100पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5704S_2)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705F),
+			TG3_DRV_DATA_FLAG_5705_10_100},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5704S_2)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5705F),
 	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY |
-			TG3_DRV_DATA_FLAG_5705_10_100पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5721)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5722)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5750)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5751)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5751M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5751F),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5752)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5752M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5753)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5753M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5753F),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5754)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5754M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5755)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5755M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5756)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5786)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5787)पूर्ण,
-	अणुPCI_DEVICE_SUB(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5787M,
+			TG3_DRV_DATA_FLAG_5705_10_100},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5721)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5722)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5750)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5751)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5751M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5751F),
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5752)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5752M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5753)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5753M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5753F),
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5754)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5754M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5755)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5755M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5756)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5786)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5787)},
+	{PCI_DEVICE_SUB(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5787M,
 			PCI_VENDOR_ID_LENOVO,
 			TG3PCI_SUBDEVICE_ID_LENOVO_5787M),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5787M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5787F),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5714)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5714S)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5715)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5715S)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5780)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5780S)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5781)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5906)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5906M)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5784)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5764)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5723)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5761)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5761E)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5761S)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5761SE)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5785_G)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5785_F)पूर्ण,
-	अणुPCI_DEVICE_SUB(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57780,
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5787M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5787F),
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5714)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5714S)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5715)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5715S)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5780)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5780S)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5781)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5906)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5906M)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5784)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5764)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5723)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5761)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, PCI_DEVICE_ID_TIGON3_5761E)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5761S)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5761SE)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5785_G)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5785_F)},
+	{PCI_DEVICE_SUB(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57780,
 			PCI_VENDOR_ID_AI, TG3PCI_SUBDEVICE_ID_ACER_57780_A),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE_SUB(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57780,
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE_SUB(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57780,
 			PCI_VENDOR_ID_AI, TG3PCI_SUBDEVICE_ID_ACER_57780_B),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57780)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57760)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57790),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57788)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5717)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5717_C)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5718)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57781)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57785)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57761)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57765)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57791),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57795),
-	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLYपूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5719)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5720)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57762)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57766)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5762)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5725)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5727)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57764)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57767)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57787)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57782)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57786)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, PCI_DEVICE_ID_SYSKONNECT_9DXX)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, PCI_DEVICE_ID_SYSKONNECT_9MXX)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC1000)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC1001)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC1003)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC9100)पूर्ण,
-	अणुPCI_DEVICE(PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_TIGON3)पूर्ण,
-	अणुPCI_DEVICE(0x10cf, 0x11a2)पूर्ण, /* Fujitsu 1000base-SX with BCM5703SKHB */
-	अणुपूर्ण
-पूर्ण;
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57780)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57760)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57790),
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57788)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5717)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5717_C)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5718)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57781)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57785)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57761)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57765)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57791),
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57795),
+	 .driver_data = TG3_DRV_DATA_FLAG_10_100_ONLY},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5719)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5720)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57762)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57766)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5762)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5725)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_5727)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57764)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57767)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57787)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57782)},
+	{PCI_DEVICE(PCI_VENDOR_ID_BROADCOM, TG3PCI_DEVICE_TIGON3_57786)},
+	{PCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, PCI_DEVICE_ID_SYSKONNECT_9DXX)},
+	{PCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, PCI_DEVICE_ID_SYSKONNECT_9MXX)},
+	{PCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC1000)},
+	{PCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC1001)},
+	{PCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC1003)},
+	{PCI_DEVICE(PCI_VENDOR_ID_ALTIMA, PCI_DEVICE_ID_ALTIMA_AC9100)},
+	{PCI_DEVICE(PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_TIGON3)},
+	{PCI_DEVICE(0x10cf, 0x11a2)}, /* Fujitsu 1000base-SX with BCM5703SKHB */
+	{}
+};
 
 MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर string[ETH_GSTRING_LEN];
-पूर्ण ethtool_stats_keys[] = अणु
-	अणु "rx_octets" पूर्ण,
-	अणु "rx_fragments" पूर्ण,
-	अणु "rx_ucast_packets" पूर्ण,
-	अणु "rx_mcast_packets" पूर्ण,
-	अणु "rx_bcast_packets" पूर्ण,
-	अणु "rx_fcs_errors" पूर्ण,
-	अणु "rx_align_errors" पूर्ण,
-	अणु "rx_xon_pause_rcvd" पूर्ण,
-	अणु "rx_xoff_pause_rcvd" पूर्ण,
-	अणु "rx_mac_ctrl_rcvd" पूर्ण,
-	अणु "rx_xoff_entered" पूर्ण,
-	अणु "rx_frame_too_long_errors" पूर्ण,
-	अणु "rx_jabbers" पूर्ण,
-	अणु "rx_undersize_packets" पूर्ण,
-	अणु "rx_in_length_errors" पूर्ण,
-	अणु "rx_out_length_errors" पूर्ण,
-	अणु "rx_64_or_less_octet_packets" पूर्ण,
-	अणु "rx_65_to_127_octet_packets" पूर्ण,
-	अणु "rx_128_to_255_octet_packets" पूर्ण,
-	अणु "rx_256_to_511_octet_packets" पूर्ण,
-	अणु "rx_512_to_1023_octet_packets" पूर्ण,
-	अणु "rx_1024_to_1522_octet_packets" पूर्ण,
-	अणु "rx_1523_to_2047_octet_packets" पूर्ण,
-	अणु "rx_2048_to_4095_octet_packets" पूर्ण,
-	अणु "rx_4096_to_8191_octet_packets" पूर्ण,
-	अणु "rx_8192_to_9022_octet_packets" पूर्ण,
+static const struct {
+	const char string[ETH_GSTRING_LEN];
+} ethtool_stats_keys[] = {
+	{ "rx_octets" },
+	{ "rx_fragments" },
+	{ "rx_ucast_packets" },
+	{ "rx_mcast_packets" },
+	{ "rx_bcast_packets" },
+	{ "rx_fcs_errors" },
+	{ "rx_align_errors" },
+	{ "rx_xon_pause_rcvd" },
+	{ "rx_xoff_pause_rcvd" },
+	{ "rx_mac_ctrl_rcvd" },
+	{ "rx_xoff_entered" },
+	{ "rx_frame_too_long_errors" },
+	{ "rx_jabbers" },
+	{ "rx_undersize_packets" },
+	{ "rx_in_length_errors" },
+	{ "rx_out_length_errors" },
+	{ "rx_64_or_less_octet_packets" },
+	{ "rx_65_to_127_octet_packets" },
+	{ "rx_128_to_255_octet_packets" },
+	{ "rx_256_to_511_octet_packets" },
+	{ "rx_512_to_1023_octet_packets" },
+	{ "rx_1024_to_1522_octet_packets" },
+	{ "rx_1523_to_2047_octet_packets" },
+	{ "rx_2048_to_4095_octet_packets" },
+	{ "rx_4096_to_8191_octet_packets" },
+	{ "rx_8192_to_9022_octet_packets" },
 
-	अणु "tx_octets" पूर्ण,
-	अणु "tx_collisions" पूर्ण,
+	{ "tx_octets" },
+	{ "tx_collisions" },
 
-	अणु "tx_xon_sent" पूर्ण,
-	अणु "tx_xoff_sent" पूर्ण,
-	अणु "tx_flow_control" पूर्ण,
-	अणु "tx_mac_errors" पूर्ण,
-	अणु "tx_single_collisions" पूर्ण,
-	अणु "tx_mult_collisions" पूर्ण,
-	अणु "tx_deferred" पूर्ण,
-	अणु "tx_excessive_collisions" पूर्ण,
-	अणु "tx_late_collisions" पूर्ण,
-	अणु "tx_collide_2times" पूर्ण,
-	अणु "tx_collide_3times" पूर्ण,
-	अणु "tx_collide_4times" पूर्ण,
-	अणु "tx_collide_5times" पूर्ण,
-	अणु "tx_collide_6times" पूर्ण,
-	अणु "tx_collide_7times" पूर्ण,
-	अणु "tx_collide_8times" पूर्ण,
-	अणु "tx_collide_9times" पूर्ण,
-	अणु "tx_collide_10times" पूर्ण,
-	अणु "tx_collide_11times" पूर्ण,
-	अणु "tx_collide_12times" पूर्ण,
-	अणु "tx_collide_13times" पूर्ण,
-	अणु "tx_collide_14times" पूर्ण,
-	अणु "tx_collide_15times" पूर्ण,
-	अणु "tx_ucast_packets" पूर्ण,
-	अणु "tx_mcast_packets" पूर्ण,
-	अणु "tx_bcast_packets" पूर्ण,
-	अणु "tx_carrier_sense_errors" पूर्ण,
-	अणु "tx_discards" पूर्ण,
-	अणु "tx_errors" पूर्ण,
+	{ "tx_xon_sent" },
+	{ "tx_xoff_sent" },
+	{ "tx_flow_control" },
+	{ "tx_mac_errors" },
+	{ "tx_single_collisions" },
+	{ "tx_mult_collisions" },
+	{ "tx_deferred" },
+	{ "tx_excessive_collisions" },
+	{ "tx_late_collisions" },
+	{ "tx_collide_2times" },
+	{ "tx_collide_3times" },
+	{ "tx_collide_4times" },
+	{ "tx_collide_5times" },
+	{ "tx_collide_6times" },
+	{ "tx_collide_7times" },
+	{ "tx_collide_8times" },
+	{ "tx_collide_9times" },
+	{ "tx_collide_10times" },
+	{ "tx_collide_11times" },
+	{ "tx_collide_12times" },
+	{ "tx_collide_13times" },
+	{ "tx_collide_14times" },
+	{ "tx_collide_15times" },
+	{ "tx_ucast_packets" },
+	{ "tx_mcast_packets" },
+	{ "tx_bcast_packets" },
+	{ "tx_carrier_sense_errors" },
+	{ "tx_discards" },
+	{ "tx_errors" },
 
-	अणु "dma_writeq_full" पूर्ण,
-	अणु "dma_write_prioq_full" पूर्ण,
-	अणु "rxbds_empty" पूर्ण,
-	अणु "rx_discards" पूर्ण,
-	अणु "rx_errors" पूर्ण,
-	अणु "rx_threshold_hit" पूर्ण,
+	{ "dma_writeq_full" },
+	{ "dma_write_prioq_full" },
+	{ "rxbds_empty" },
+	{ "rx_discards" },
+	{ "rx_errors" },
+	{ "rx_threshold_hit" },
 
-	अणु "dma_readq_full" पूर्ण,
-	अणु "dma_read_prioq_full" पूर्ण,
-	अणु "tx_comp_queue_full" पूर्ण,
+	{ "dma_readq_full" },
+	{ "dma_read_prioq_full" },
+	{ "tx_comp_queue_full" },
 
-	अणु "ring_set_send_prod_index" पूर्ण,
-	अणु "ring_status_update" पूर्ण,
-	अणु "nic_irqs" पूर्ण,
-	अणु "nic_avoided_irqs" पूर्ण,
-	अणु "nic_tx_threshold_hit" पूर्ण,
+	{ "ring_set_send_prod_index" },
+	{ "ring_status_update" },
+	{ "nic_irqs" },
+	{ "nic_avoided_irqs" },
+	{ "nic_tx_threshold_hit" },
 
-	अणु "mbuf_lwm_thresh_hit" पूर्ण,
-पूर्ण;
+	{ "mbuf_lwm_thresh_hit" },
+};
 
-#घोषणा TG3_NUM_STATS	ARRAY_SIZE(ethtool_stats_keys)
-#घोषणा TG3_NVRAM_TEST		0
-#घोषणा TG3_LINK_TEST		1
-#घोषणा TG3_REGISTER_TEST	2
-#घोषणा TG3_MEMORY_TEST		3
-#घोषणा TG3_MAC_LOOPB_TEST	4
-#घोषणा TG3_PHY_LOOPB_TEST	5
-#घोषणा TG3_EXT_LOOPB_TEST	6
-#घोषणा TG3_INTERRUPT_TEST	7
-
-
-अटल स्थिर काष्ठा अणु
-	स्थिर अक्षर string[ETH_GSTRING_LEN];
-पूर्ण ethtool_test_keys[] = अणु
-	[TG3_NVRAM_TEST]	= अणु "nvram test        (online) " पूर्ण,
-	[TG3_LINK_TEST]		= अणु "link test         (online) " पूर्ण,
-	[TG3_REGISTER_TEST]	= अणु "register test     (offline)" पूर्ण,
-	[TG3_MEMORY_TEST]	= अणु "memory test       (offline)" पूर्ण,
-	[TG3_MAC_LOOPB_TEST]	= अणु "mac loopback test (offline)" पूर्ण,
-	[TG3_PHY_LOOPB_TEST]	= अणु "phy loopback test (offline)" पूर्ण,
-	[TG3_EXT_LOOPB_TEST]	= अणु "ext loopback test (offline)" पूर्ण,
-	[TG3_INTERRUPT_TEST]	= अणु "interrupt test    (offline)" पूर्ण,
-पूर्ण;
-
-#घोषणा TG3_NUM_TEST	ARRAY_SIZE(ethtool_test_keys)
+#define TG3_NUM_STATS	ARRAY_SIZE(ethtool_stats_keys)
+#define TG3_NVRAM_TEST		0
+#define TG3_LINK_TEST		1
+#define TG3_REGISTER_TEST	2
+#define TG3_MEMORY_TEST		3
+#define TG3_MAC_LOOPB_TEST	4
+#define TG3_PHY_LOOPB_TEST	5
+#define TG3_EXT_LOOPB_TEST	6
+#define TG3_INTERRUPT_TEST	7
 
 
-अटल व्योम tg3_ग_लिखो32(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	ग_लिखोl(val, tp->regs + off);
-पूर्ण
+static const struct {
+	const char string[ETH_GSTRING_LEN];
+} ethtool_test_keys[] = {
+	[TG3_NVRAM_TEST]	= { "nvram test        (online) " },
+	[TG3_LINK_TEST]		= { "link test         (online) " },
+	[TG3_REGISTER_TEST]	= { "register test     (offline)" },
+	[TG3_MEMORY_TEST]	= { "memory test       (offline)" },
+	[TG3_MAC_LOOPB_TEST]	= { "mac loopback test (offline)" },
+	[TG3_PHY_LOOPB_TEST]	= { "phy loopback test (offline)" },
+	[TG3_EXT_LOOPB_TEST]	= { "ext loopback test (offline)" },
+	[TG3_INTERRUPT_TEST]	= { "interrupt test    (offline)" },
+};
 
-अटल u32 tg3_पढ़ो32(काष्ठा tg3 *tp, u32 off)
-अणु
-	वापस पढ़ोl(tp->regs + off);
-पूर्ण
+#define TG3_NUM_TEST	ARRAY_SIZE(ethtool_test_keys)
 
-अटल व्योम tg3_ape_ग_लिखो32(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	ग_लिखोl(val, tp->aperegs + off);
-पूर्ण
 
-अटल u32 tg3_ape_पढ़ो32(काष्ठा tg3 *tp, u32 off)
-अणु
-	वापस पढ़ोl(tp->aperegs + off);
-पूर्ण
+static void tg3_write32(struct tg3 *tp, u32 off, u32 val)
+{
+	writel(val, tp->regs + off);
+}
 
-अटल व्योम tg3_ग_लिखो_indirect_reg32(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
+static u32 tg3_read32(struct tg3 *tp, u32 off)
+{
+	return readl(tp->regs + off);
+}
+
+static void tg3_ape_write32(struct tg3 *tp, u32 off, u32 val)
+{
+	writel(val, tp->aperegs + off);
+}
+
+static u32 tg3_ape_read32(struct tg3 *tp, u32 off)
+{
+	return readl(tp->aperegs + off);
+}
+
+static void tg3_write_indirect_reg32(struct tg3 *tp, u32 off, u32 val)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&tp->indirect_lock, flags);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_REG_DATA, val);
+	pci_write_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off);
+	pci_write_config_dword(tp->pdev, TG3PCI_REG_DATA, val);
 	spin_unlock_irqrestore(&tp->indirect_lock, flags);
-पूर्ण
+}
 
-अटल व्योम tg3_ग_लिखो_flush_reg32(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	ग_लिखोl(val, tp->regs + off);
-	पढ़ोl(tp->regs + off);
-पूर्ण
+static void tg3_write_flush_reg32(struct tg3 *tp, u32 off, u32 val)
+{
+	writel(val, tp->regs + off);
+	readl(tp->regs + off);
+}
 
-अटल u32 tg3_पढ़ो_indirect_reg32(काष्ठा tg3 *tp, u32 off)
-अणु
-	अचिन्हित दीर्घ flags;
+static u32 tg3_read_indirect_reg32(struct tg3 *tp, u32 off)
+{
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&tp->indirect_lock, flags);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off);
-	pci_पढ़ो_config_dword(tp->pdev, TG3PCI_REG_DATA, &val);
+	pci_write_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off);
+	pci_read_config_dword(tp->pdev, TG3PCI_REG_DATA, &val);
 	spin_unlock_irqrestore(&tp->indirect_lock, flags);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम tg3_ग_लिखो_indirect_mbox(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
+static void tg3_write_indirect_mbox(struct tg3 *tp, u32 off, u32 val)
+{
+	unsigned long flags;
 
-	अगर (off == (MAILBOX_RCVRET_CON_IDX_0 + TG3_64BIT_REG_LOW)) अणु
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_RCV_RET_RING_CON_IDX +
+	if (off == (MAILBOX_RCVRET_CON_IDX_0 + TG3_64BIT_REG_LOW)) {
+		pci_write_config_dword(tp->pdev, TG3PCI_RCV_RET_RING_CON_IDX +
 				       TG3_64BIT_REG_LOW, val);
-		वापस;
-	पूर्ण
-	अगर (off == TG3_RX_STD_PROD_IDX_REG) अणु
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_STD_RING_PROD_IDX +
+		return;
+	}
+	if (off == TG3_RX_STD_PROD_IDX_REG) {
+		pci_write_config_dword(tp->pdev, TG3PCI_STD_RING_PROD_IDX +
 				       TG3_64BIT_REG_LOW, val);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&tp->indirect_lock, flags);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off + 0x5600);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_REG_DATA, val);
+	pci_write_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off + 0x5600);
+	pci_write_config_dword(tp->pdev, TG3PCI_REG_DATA, val);
 	spin_unlock_irqrestore(&tp->indirect_lock, flags);
 
-	/* In indirect mode when disabling पूर्णांकerrupts, we also need
-	 * to clear the पूर्णांकerrupt bit in the GRC local ctrl रेजिस्टर.
+	/* In indirect mode when disabling interrupts, we also need
+	 * to clear the interrupt bit in the GRC local ctrl register.
 	 */
-	अगर ((off == (MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW)) &&
-	    (val == 0x1)) अणु
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MISC_LOCAL_CTRL,
+	if ((off == (MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW)) &&
+	    (val == 0x1)) {
+		pci_write_config_dword(tp->pdev, TG3PCI_MISC_LOCAL_CTRL,
 				       tp->grc_local_ctrl|GRC_LCLCTRL_CLEARINT);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 tg3_पढ़ो_indirect_mbox(काष्ठा tg3 *tp, u32 off)
-अणु
-	अचिन्हित दीर्घ flags;
+static u32 tg3_read_indirect_mbox(struct tg3 *tp, u32 off)
+{
+	unsigned long flags;
 	u32 val;
 
 	spin_lock_irqsave(&tp->indirect_lock, flags);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off + 0x5600);
-	pci_पढ़ो_config_dword(tp->pdev, TG3PCI_REG_DATA, &val);
+	pci_write_config_dword(tp->pdev, TG3PCI_REG_BASE_ADDR, off + 0x5600);
+	pci_read_config_dword(tp->pdev, TG3PCI_REG_DATA, &val);
 	spin_unlock_irqrestore(&tp->indirect_lock, flags);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-/* usec_रुको specअगरies the रुको समय in usec when writing to certain रेजिस्टरs
- * where it is unsafe to पढ़ो back the रेजिस्टर without some delay.
- * GRC_LOCAL_CTRL is one example अगर the GPIOs are toggled to चयन घातer.
- * TG3PCI_CLOCK_CTRL is another example अगर the घड़ी frequencies are changed.
+/* usec_wait specifies the wait time in usec when writing to certain registers
+ * where it is unsafe to read back the register without some delay.
+ * GRC_LOCAL_CTRL is one example if the GPIOs are toggled to switch power.
+ * TG3PCI_CLOCK_CTRL is another example if the clock frequencies are changed.
  */
-अटल व्योम _tw32_flush(काष्ठा tg3 *tp, u32 off, u32 val, u32 usec_रुको)
-अणु
-	अगर (tg3_flag(tp, PCIX_TARGET_HWBUG) || tg3_flag(tp, ICH_WORKAROUND))
+static void _tw32_flush(struct tg3 *tp, u32 off, u32 val, u32 usec_wait)
+{
+	if (tg3_flag(tp, PCIX_TARGET_HWBUG) || tg3_flag(tp, ICH_WORKAROUND))
 		/* Non-posted methods */
-		tp->ग_लिखो32(tp, off, val);
-	अन्यथा अणु
+		tp->write32(tp, off, val);
+	else {
 		/* Posted method */
-		tg3_ग_लिखो32(tp, off, val);
-		अगर (usec_रुको)
-			udelay(usec_रुको);
-		tp->पढ़ो32(tp, off);
-	पूर्ण
-	/* Wait again after the पढ़ो क्रम the posted method to guarantee that
-	 * the रुको समय is met.
+		tg3_write32(tp, off, val);
+		if (usec_wait)
+			udelay(usec_wait);
+		tp->read32(tp, off);
+	}
+	/* Wait again after the read for the posted method to guarantee that
+	 * the wait time is met.
 	 */
-	अगर (usec_रुको)
-		udelay(usec_रुको);
-पूर्ण
+	if (usec_wait)
+		udelay(usec_wait);
+}
 
-अटल अंतरभूत व्योम tw32_mailbox_flush(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	tp->ग_लिखो32_mbox(tp, off, val);
-	अगर (tg3_flag(tp, FLUSH_POSTED_WRITES) ||
+static inline void tw32_mailbox_flush(struct tg3 *tp, u32 off, u32 val)
+{
+	tp->write32_mbox(tp, off, val);
+	if (tg3_flag(tp, FLUSH_POSTED_WRITES) ||
 	    (!tg3_flag(tp, MBOX_WRITE_REORDER) &&
 	     !tg3_flag(tp, ICH_WORKAROUND)))
-		tp->पढ़ो32_mbox(tp, off);
-पूर्ण
+		tp->read32_mbox(tp, off);
+}
 
-अटल व्योम tg3_ग_लिखो32_tx_mbox(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	व्योम __iomem *mbox = tp->regs + off;
-	ग_लिखोl(val, mbox);
-	अगर (tg3_flag(tp, TXD_MBOX_HWBUG))
-		ग_लिखोl(val, mbox);
-	अगर (tg3_flag(tp, MBOX_WRITE_REORDER) ||
+static void tg3_write32_tx_mbox(struct tg3 *tp, u32 off, u32 val)
+{
+	void __iomem *mbox = tp->regs + off;
+	writel(val, mbox);
+	if (tg3_flag(tp, TXD_MBOX_HWBUG))
+		writel(val, mbox);
+	if (tg3_flag(tp, MBOX_WRITE_REORDER) ||
 	    tg3_flag(tp, FLUSH_POSTED_WRITES))
-		पढ़ोl(mbox);
-पूर्ण
+		readl(mbox);
+}
 
-अटल u32 tg3_पढ़ो32_mbox_5906(काष्ठा tg3 *tp, u32 off)
-अणु
-	वापस पढ़ोl(tp->regs + off + GRCMBOX_BASE);
-पूर्ण
+static u32 tg3_read32_mbox_5906(struct tg3 *tp, u32 off)
+{
+	return readl(tp->regs + off + GRCMBOX_BASE);
+}
 
-अटल व्योम tg3_ग_लिखो32_mbox_5906(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	ग_लिखोl(val, tp->regs + off + GRCMBOX_BASE);
-पूर्ण
+static void tg3_write32_mbox_5906(struct tg3 *tp, u32 off, u32 val)
+{
+	writel(val, tp->regs + off + GRCMBOX_BASE);
+}
 
-#घोषणा tw32_mailbox(reg, val)		tp->ग_लिखो32_mbox(tp, reg, val)
-#घोषणा tw32_mailbox_f(reg, val)	tw32_mailbox_flush(tp, (reg), (val))
-#घोषणा tw32_rx_mbox(reg, val)		tp->ग_लिखो32_rx_mbox(tp, reg, val)
-#घोषणा tw32_tx_mbox(reg, val)		tp->ग_लिखो32_tx_mbox(tp, reg, val)
-#घोषणा tr32_mailbox(reg)		tp->पढ़ो32_mbox(tp, reg)
+#define tw32_mailbox(reg, val)		tp->write32_mbox(tp, reg, val)
+#define tw32_mailbox_f(reg, val)	tw32_mailbox_flush(tp, (reg), (val))
+#define tw32_rx_mbox(reg, val)		tp->write32_rx_mbox(tp, reg, val)
+#define tw32_tx_mbox(reg, val)		tp->write32_tx_mbox(tp, reg, val)
+#define tr32_mailbox(reg)		tp->read32_mbox(tp, reg)
 
-#घोषणा tw32(reg, val)			tp->ग_लिखो32(tp, reg, val)
-#घोषणा tw32_f(reg, val)		_tw32_flush(tp, (reg), (val), 0)
-#घोषणा tw32_रुको_f(reg, val, us)	_tw32_flush(tp, (reg), (val), (us))
-#घोषणा tr32(reg)			tp->पढ़ो32(tp, reg)
+#define tw32(reg, val)			tp->write32(tp, reg, val)
+#define tw32_f(reg, val)		_tw32_flush(tp, (reg), (val), 0)
+#define tw32_wait_f(reg, val, us)	_tw32_flush(tp, (reg), (val), (us))
+#define tr32(reg)			tp->read32(tp, reg)
 
-अटल व्योम tg3_ग_लिखो_mem(काष्ठा tg3 *tp, u32 off, u32 val)
-अणु
-	अचिन्हित दीर्घ flags;
+static void tg3_write_mem(struct tg3 *tp, u32 off, u32 val)
+{
+	unsigned long flags;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906 &&
+	if (tg3_asic_rev(tp) == ASIC_REV_5906 &&
 	    (off >= NIC_SRAM_STATS_BLK) && (off < NIC_SRAM_TX_BUFFER_DESC))
-		वापस;
+		return;
 
 	spin_lock_irqsave(&tp->indirect_lock, flags);
-	अगर (tg3_flag(tp, SRAM_USE_CONFIG)) अणु
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, off);
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_DATA, val);
+	if (tg3_flag(tp, SRAM_USE_CONFIG)) {
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, off);
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_DATA, val);
 
 		/* Always leave this as zero. */
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, 0);
-	पूर्ण अन्यथा अणु
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, 0);
+	} else {
 		tw32_f(TG3PCI_MEM_WIN_BASE_ADDR, off);
 		tw32_f(TG3PCI_MEM_WIN_DATA, val);
 
 		/* Always leave this as zero. */
 		tw32_f(TG3PCI_MEM_WIN_BASE_ADDR, 0);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&tp->indirect_lock, flags);
-पूर्ण
+}
 
-अटल व्योम tg3_पढ़ो_mem(काष्ठा tg3 *tp, u32 off, u32 *val)
-अणु
-	अचिन्हित दीर्घ flags;
+static void tg3_read_mem(struct tg3 *tp, u32 off, u32 *val)
+{
+	unsigned long flags;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906 &&
-	    (off >= NIC_SRAM_STATS_BLK) && (off < NIC_SRAM_TX_BUFFER_DESC)) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906 &&
+	    (off >= NIC_SRAM_STATS_BLK) && (off < NIC_SRAM_TX_BUFFER_DESC)) {
 		*val = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	spin_lock_irqsave(&tp->indirect_lock, flags);
-	अगर (tg3_flag(tp, SRAM_USE_CONFIG)) अणु
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, off);
-		pci_पढ़ो_config_dword(tp->pdev, TG3PCI_MEM_WIN_DATA, val);
+	if (tg3_flag(tp, SRAM_USE_CONFIG)) {
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, off);
+		pci_read_config_dword(tp->pdev, TG3PCI_MEM_WIN_DATA, val);
 
 		/* Always leave this as zero. */
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, 0);
-	पूर्ण अन्यथा अणु
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, 0);
+	} else {
 		tw32_f(TG3PCI_MEM_WIN_BASE_ADDR, off);
 		*val = tr32(TG3PCI_MEM_WIN_DATA);
 
 		/* Always leave this as zero. */
 		tw32_f(TG3PCI_MEM_WIN_BASE_ADDR, 0);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&tp->indirect_lock, flags);
-पूर्ण
+}
 
-अटल व्योम tg3_ape_lock_init(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_ape_lock_init(struct tg3 *tp)
+{
+	int i;
 	u32 regbase, bit;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5761)
+	if (tg3_asic_rev(tp) == ASIC_REV_5761)
 		regbase = TG3_APE_LOCK_GRANT;
-	अन्यथा
+	else
 		regbase = TG3_APE_PER_LOCK_GRANT;
 
 	/* Make sure the driver hasn't any stale locks. */
-	क्रम (i = TG3_APE_LOCK_PHY0; i <= TG3_APE_LOCK_GPIO; i++) अणु
-		चयन (i) अणु
-		हाल TG3_APE_LOCK_PHY0:
-		हाल TG3_APE_LOCK_PHY1:
-		हाल TG3_APE_LOCK_PHY2:
-		हाल TG3_APE_LOCK_PHY3:
+	for (i = TG3_APE_LOCK_PHY0; i <= TG3_APE_LOCK_GPIO; i++) {
+		switch (i) {
+		case TG3_APE_LOCK_PHY0:
+		case TG3_APE_LOCK_PHY1:
+		case TG3_APE_LOCK_PHY2:
+		case TG3_APE_LOCK_PHY3:
 			bit = APE_LOCK_GRANT_DRIVER;
-			अवरोध;
-		शेष:
-			अगर (!tp->pci_fn)
+			break;
+		default:
+			if (!tp->pci_fn)
 				bit = APE_LOCK_GRANT_DRIVER;
-			अन्यथा
+			else
 				bit = 1 << tp->pci_fn;
-		पूर्ण
-		tg3_ape_ग_लिखो32(tp, regbase + 4 * i, bit);
-	पूर्ण
+		}
+		tg3_ape_write32(tp, regbase + 4 * i, bit);
+	}
 
-पूर्ण
+}
 
-अटल पूर्णांक tg3_ape_lock(काष्ठा tg3 *tp, पूर्णांक locknum)
-अणु
-	पूर्णांक i, off;
-	पूर्णांक ret = 0;
+static int tg3_ape_lock(struct tg3 *tp, int locknum)
+{
+	int i, off;
+	int ret = 0;
 	u32 status, req, gnt, bit;
 
-	अगर (!tg3_flag(tp, ENABLE_APE))
-		वापस 0;
+	if (!tg3_flag(tp, ENABLE_APE))
+		return 0;
 
-	चयन (locknum) अणु
-	हाल TG3_APE_LOCK_GPIO:
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5761)
-			वापस 0;
+	switch (locknum) {
+	case TG3_APE_LOCK_GPIO:
+		if (tg3_asic_rev(tp) == ASIC_REV_5761)
+			return 0;
 		fallthrough;
-	हाल TG3_APE_LOCK_GRC:
-	हाल TG3_APE_LOCK_MEM:
-		अगर (!tp->pci_fn)
+	case TG3_APE_LOCK_GRC:
+	case TG3_APE_LOCK_MEM:
+		if (!tp->pci_fn)
 			bit = APE_LOCK_REQ_DRIVER;
-		अन्यथा
+		else
 			bit = 1 << tp->pci_fn;
-		अवरोध;
-	हाल TG3_APE_LOCK_PHY0:
-	हाल TG3_APE_LOCK_PHY1:
-	हाल TG3_APE_LOCK_PHY2:
-	हाल TG3_APE_LOCK_PHY3:
+		break;
+	case TG3_APE_LOCK_PHY0:
+	case TG3_APE_LOCK_PHY1:
+	case TG3_APE_LOCK_PHY2:
+	case TG3_APE_LOCK_PHY3:
 		bit = APE_LOCK_REQ_DRIVER;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5761) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5761) {
 		req = TG3_APE_LOCK_REQ;
 		gnt = TG3_APE_LOCK_GRANT;
-	पूर्ण अन्यथा अणु
+	} else {
 		req = TG3_APE_PER_LOCK_REQ;
 		gnt = TG3_APE_PER_LOCK_GRANT;
-	पूर्ण
+	}
 
 	off = 4 * locknum;
 
-	tg3_ape_ग_लिखो32(tp, req + off, bit);
+	tg3_ape_write32(tp, req + off, bit);
 
-	/* Wait क्रम up to 1 millisecond to acquire lock. */
-	क्रम (i = 0; i < 100; i++) अणु
-		status = tg3_ape_पढ़ो32(tp, gnt + off);
-		अगर (status == bit)
-			अवरोध;
-		अगर (pci_channel_offline(tp->pdev))
-			अवरोध;
+	/* Wait for up to 1 millisecond to acquire lock. */
+	for (i = 0; i < 100; i++) {
+		status = tg3_ape_read32(tp, gnt + off);
+		if (status == bit)
+			break;
+		if (pci_channel_offline(tp->pdev))
+			break;
 
 		udelay(10);
-	पूर्ण
+	}
 
-	अगर (status != bit) अणु
+	if (status != bit) {
 		/* Revoke the lock request. */
-		tg3_ape_ग_लिखो32(tp, gnt + off, bit);
+		tg3_ape_write32(tp, gnt + off, bit);
 		ret = -EBUSY;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tg3_ape_unlock(काष्ठा tg3 *tp, पूर्णांक locknum)
-अणु
+static void tg3_ape_unlock(struct tg3 *tp, int locknum)
+{
 	u32 gnt, bit;
 
-	अगर (!tg3_flag(tp, ENABLE_APE))
-		वापस;
+	if (!tg3_flag(tp, ENABLE_APE))
+		return;
 
-	चयन (locknum) अणु
-	हाल TG3_APE_LOCK_GPIO:
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5761)
-			वापस;
+	switch (locknum) {
+	case TG3_APE_LOCK_GPIO:
+		if (tg3_asic_rev(tp) == ASIC_REV_5761)
+			return;
 		fallthrough;
-	हाल TG3_APE_LOCK_GRC:
-	हाल TG3_APE_LOCK_MEM:
-		अगर (!tp->pci_fn)
+	case TG3_APE_LOCK_GRC:
+	case TG3_APE_LOCK_MEM:
+		if (!tp->pci_fn)
 			bit = APE_LOCK_GRANT_DRIVER;
-		अन्यथा
+		else
 			bit = 1 << tp->pci_fn;
-		अवरोध;
-	हाल TG3_APE_LOCK_PHY0:
-	हाल TG3_APE_LOCK_PHY1:
-	हाल TG3_APE_LOCK_PHY2:
-	हाल TG3_APE_LOCK_PHY3:
+		break;
+	case TG3_APE_LOCK_PHY0:
+	case TG3_APE_LOCK_PHY1:
+	case TG3_APE_LOCK_PHY2:
+	case TG3_APE_LOCK_PHY3:
 		bit = APE_LOCK_GRANT_DRIVER;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5761)
+	if (tg3_asic_rev(tp) == ASIC_REV_5761)
 		gnt = TG3_APE_LOCK_GRANT;
-	अन्यथा
+	else
 		gnt = TG3_APE_PER_LOCK_GRANT;
 
-	tg3_ape_ग_लिखो32(tp, gnt + 4 * locknum, bit);
-पूर्ण
+	tg3_ape_write32(tp, gnt + 4 * locknum, bit);
+}
 
-अटल पूर्णांक tg3_ape_event_lock(काष्ठा tg3 *tp, u32 समयout_us)
-अणु
+static int tg3_ape_event_lock(struct tg3 *tp, u32 timeout_us)
+{
 	u32 apedata;
 
-	जबतक (समयout_us) अणु
-		अगर (tg3_ape_lock(tp, TG3_APE_LOCK_MEM))
-			वापस -EBUSY;
+	while (timeout_us) {
+		if (tg3_ape_lock(tp, TG3_APE_LOCK_MEM))
+			return -EBUSY;
 
-		apedata = tg3_ape_पढ़ो32(tp, TG3_APE_EVENT_STATUS);
-		अगर (!(apedata & APE_EVENT_STATUS_EVENT_PENDING))
-			अवरोध;
+		apedata = tg3_ape_read32(tp, TG3_APE_EVENT_STATUS);
+		if (!(apedata & APE_EVENT_STATUS_EVENT_PENDING))
+			break;
 
 		tg3_ape_unlock(tp, TG3_APE_LOCK_MEM);
 
 		udelay(10);
-		समयout_us -= (समयout_us > 10) ? 10 : समयout_us;
-	पूर्ण
+		timeout_us -= (timeout_us > 10) ? 10 : timeout_us;
+	}
 
-	वापस समयout_us ? 0 : -EBUSY;
-पूर्ण
+	return timeout_us ? 0 : -EBUSY;
+}
 
-#अगर_घोषित CONFIG_TIGON3_HWMON
-अटल पूर्णांक tg3_ape_रुको_क्रम_event(काष्ठा tg3 *tp, u32 समयout_us)
-अणु
+#ifdef CONFIG_TIGON3_HWMON
+static int tg3_ape_wait_for_event(struct tg3 *tp, u32 timeout_us)
+{
 	u32 i, apedata;
 
-	क्रम (i = 0; i < समयout_us / 10; i++) अणु
-		apedata = tg3_ape_पढ़ो32(tp, TG3_APE_EVENT_STATUS);
+	for (i = 0; i < timeout_us / 10; i++) {
+		apedata = tg3_ape_read32(tp, TG3_APE_EVENT_STATUS);
 
-		अगर (!(apedata & APE_EVENT_STATUS_EVENT_PENDING))
-			अवरोध;
+		if (!(apedata & APE_EVENT_STATUS_EVENT_PENDING))
+			break;
 
 		udelay(10);
-	पूर्ण
+	}
 
-	वापस i == समयout_us / 10;
-पूर्ण
+	return i == timeout_us / 10;
+}
 
-अटल पूर्णांक tg3_ape_scratchpad_पढ़ो(काष्ठा tg3 *tp, u32 *data, u32 base_off,
+static int tg3_ape_scratchpad_read(struct tg3 *tp, u32 *data, u32 base_off,
 				   u32 len)
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u32 i, bufoff, msgoff, maxlen, apedata;
 
-	अगर (!tg3_flag(tp, APE_HAS_NCSI))
-		वापस 0;
+	if (!tg3_flag(tp, APE_HAS_NCSI))
+		return 0;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_SEG_SIG);
-	अगर (apedata != APE_SEG_SIG_MAGIC)
-		वापस -ENODEV;
+	apedata = tg3_ape_read32(tp, TG3_APE_SEG_SIG);
+	if (apedata != APE_SEG_SIG_MAGIC)
+		return -ENODEV;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_FW_STATUS);
-	अगर (!(apedata & APE_FW_STATUS_READY))
-		वापस -EAGAIN;
+	apedata = tg3_ape_read32(tp, TG3_APE_FW_STATUS);
+	if (!(apedata & APE_FW_STATUS_READY))
+		return -EAGAIN;
 
-	bufoff = tg3_ape_पढ़ो32(tp, TG3_APE_SEG_MSG_BUF_OFF) +
+	bufoff = tg3_ape_read32(tp, TG3_APE_SEG_MSG_BUF_OFF) +
 		 TG3_APE_SHMEM_BASE;
-	msgoff = bufoff + 2 * माप(u32);
-	maxlen = tg3_ape_पढ़ो32(tp, TG3_APE_SEG_MSG_BUF_LEN);
+	msgoff = bufoff + 2 * sizeof(u32);
+	maxlen = tg3_ape_read32(tp, TG3_APE_SEG_MSG_BUF_LEN);
 
-	जबतक (len) अणु
+	while (len) {
 		u32 length;
 
 		/* Cap xfer sizes to scratchpad limits. */
 		length = (len > maxlen) ? maxlen : len;
 		len -= length;
 
-		apedata = tg3_ape_पढ़ो32(tp, TG3_APE_FW_STATUS);
-		अगर (!(apedata & APE_FW_STATUS_READY))
-			वापस -EAGAIN;
+		apedata = tg3_ape_read32(tp, TG3_APE_FW_STATUS);
+		if (!(apedata & APE_FW_STATUS_READY))
+			return -EAGAIN;
 
-		/* Wait क्रम up to 1 msec क्रम APE to service previous event. */
+		/* Wait for up to 1 msec for APE to service previous event. */
 		err = tg3_ape_event_lock(tp, 1000);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		apedata = APE_EVENT_STATUS_DRIVER_EVNT |
 			  APE_EVENT_STATUS_SCRTCHPD_READ |
 			  APE_EVENT_STATUS_EVENT_PENDING;
-		tg3_ape_ग_लिखो32(tp, TG3_APE_EVENT_STATUS, apedata);
+		tg3_ape_write32(tp, TG3_APE_EVENT_STATUS, apedata);
 
-		tg3_ape_ग_लिखो32(tp, bufoff, base_off);
-		tg3_ape_ग_लिखो32(tp, bufoff + माप(u32), length);
+		tg3_ape_write32(tp, bufoff, base_off);
+		tg3_ape_write32(tp, bufoff + sizeof(u32), length);
 
 		tg3_ape_unlock(tp, TG3_APE_LOCK_MEM);
-		tg3_ape_ग_लिखो32(tp, TG3_APE_EVENT, APE_EVENT_1);
+		tg3_ape_write32(tp, TG3_APE_EVENT, APE_EVENT_1);
 
 		base_off += length;
 
-		अगर (tg3_ape_रुको_क्रम_event(tp, 30000))
-			वापस -EAGAIN;
+		if (tg3_ape_wait_for_event(tp, 30000))
+			return -EAGAIN;
 
-		क्रम (i = 0; length; i += 4, length -= 4) अणु
-			u32 val = tg3_ape_पढ़ो32(tp, msgoff + i);
-			स_नकल(data, &val, माप(u32));
+		for (i = 0; length; i += 4, length -= 4) {
+			u32 val = tg3_ape_read32(tp, msgoff + i);
+			memcpy(data, &val, sizeof(u32));
 			data++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल पूर्णांक tg3_ape_send_event(काष्ठा tg3 *tp, u32 event)
-अणु
-	पूर्णांक err;
+static int tg3_ape_send_event(struct tg3 *tp, u32 event)
+{
+	int err;
 	u32 apedata;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_SEG_SIG);
-	अगर (apedata != APE_SEG_SIG_MAGIC)
-		वापस -EAGAIN;
+	apedata = tg3_ape_read32(tp, TG3_APE_SEG_SIG);
+	if (apedata != APE_SEG_SIG_MAGIC)
+		return -EAGAIN;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_FW_STATUS);
-	अगर (!(apedata & APE_FW_STATUS_READY))
-		वापस -EAGAIN;
+	apedata = tg3_ape_read32(tp, TG3_APE_FW_STATUS);
+	if (!(apedata & APE_FW_STATUS_READY))
+		return -EAGAIN;
 
-	/* Wait क्रम up to 20 millisecond क्रम APE to service previous event. */
+	/* Wait for up to 20 millisecond for APE to service previous event. */
 	err = tg3_ape_event_lock(tp, 20000);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	tg3_ape_ग_लिखो32(tp, TG3_APE_EVENT_STATUS,
+	tg3_ape_write32(tp, TG3_APE_EVENT_STATUS,
 			event | APE_EVENT_STATUS_EVENT_PENDING);
 
 	tg3_ape_unlock(tp, TG3_APE_LOCK_MEM);
-	tg3_ape_ग_लिखो32(tp, TG3_APE_EVENT, APE_EVENT_1);
+	tg3_ape_write32(tp, TG3_APE_EVENT, APE_EVENT_1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_ape_driver_state_change(काष्ठा tg3 *tp, पूर्णांक kind)
-अणु
+static void tg3_ape_driver_state_change(struct tg3 *tp, int kind)
+{
 	u32 event;
 	u32 apedata;
 
-	अगर (!tg3_flag(tp, ENABLE_APE))
-		वापस;
+	if (!tg3_flag(tp, ENABLE_APE))
+		return;
 
-	चयन (kind) अणु
-	हाल RESET_KIND_INIT:
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_HEARTBEAT_COUNT, tp->ape_hb++);
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_SEG_SIG,
+	switch (kind) {
+	case RESET_KIND_INIT:
+		tg3_ape_write32(tp, TG3_APE_HOST_HEARTBEAT_COUNT, tp->ape_hb++);
+		tg3_ape_write32(tp, TG3_APE_HOST_SEG_SIG,
 				APE_HOST_SEG_SIG_MAGIC);
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_SEG_LEN,
+		tg3_ape_write32(tp, TG3_APE_HOST_SEG_LEN,
 				APE_HOST_SEG_LEN_MAGIC);
-		apedata = tg3_ape_पढ़ो32(tp, TG3_APE_HOST_INIT_COUNT);
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_INIT_COUNT, ++apedata);
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_DRIVER_ID,
+		apedata = tg3_ape_read32(tp, TG3_APE_HOST_INIT_COUNT);
+		tg3_ape_write32(tp, TG3_APE_HOST_INIT_COUNT, ++apedata);
+		tg3_ape_write32(tp, TG3_APE_HOST_DRIVER_ID,
 			APE_HOST_DRIVER_ID_MAGIC(TG3_MAJ_NUM, TG3_MIN_NUM));
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_BEHAVIOR,
+		tg3_ape_write32(tp, TG3_APE_HOST_BEHAVIOR,
 				APE_HOST_BEHAV_NO_PHYLOCK);
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_DRVR_STATE,
+		tg3_ape_write32(tp, TG3_APE_HOST_DRVR_STATE,
 				    TG3_APE_HOST_DRVR_STATE_START);
 
 		event = APE_EVENT_STATUS_STATE_START;
-		अवरोध;
-	हाल RESET_KIND_SHUTDOWN:
-		अगर (device_may_wakeup(&tp->pdev->dev) &&
-		    tg3_flag(tp, WOL_ENABLE)) अणु
-			tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_WOL_SPEED,
+		break;
+	case RESET_KIND_SHUTDOWN:
+		if (device_may_wakeup(&tp->pdev->dev) &&
+		    tg3_flag(tp, WOL_ENABLE)) {
+			tg3_ape_write32(tp, TG3_APE_HOST_WOL_SPEED,
 					    TG3_APE_HOST_WOL_SPEED_AUTO);
 			apedata = TG3_APE_HOST_DRVR_STATE_WOL;
-		पूर्ण अन्यथा
+		} else
 			apedata = TG3_APE_HOST_DRVR_STATE_UNLOAD;
 
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_DRVR_STATE, apedata);
+		tg3_ape_write32(tp, TG3_APE_HOST_DRVR_STATE, apedata);
 
 		event = APE_EVENT_STATUS_STATE_UNLOAD;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	event |= APE_EVENT_STATUS_DRIVER_EVNT | APE_EVENT_STATUS_STATE_CHNGE;
 
 	tg3_ape_send_event(tp, event);
-पूर्ण
+}
 
-अटल व्योम tg3_send_ape_heartbeat(काष्ठा tg3 *tp,
-				   अचिन्हित दीर्घ पूर्णांकerval)
-अणु
-	/* Check अगर hb पूर्णांकerval has exceeded */
-	अगर (!tg3_flag(tp, ENABLE_APE) ||
-	    समय_beक्रमe(jअगरfies, tp->ape_hb_jअगरfies + पूर्णांकerval))
-		वापस;
+static void tg3_send_ape_heartbeat(struct tg3 *tp,
+				   unsigned long interval)
+{
+	/* Check if hb interval has exceeded */
+	if (!tg3_flag(tp, ENABLE_APE) ||
+	    time_before(jiffies, tp->ape_hb_jiffies + interval))
+		return;
 
-	tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_HEARTBEAT_COUNT, tp->ape_hb++);
-	tp->ape_hb_jअगरfies = jअगरfies;
-पूर्ण
+	tg3_ape_write32(tp, TG3_APE_HOST_HEARTBEAT_COUNT, tp->ape_hb++);
+	tp->ape_hb_jiffies = jiffies;
+}
 
-अटल व्योम tg3_disable_पूर्णांकs(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_disable_ints(struct tg3 *tp)
+{
+	int i;
 
 	tw32(TG3PCI_MISC_HOST_CTRL,
 	     (tp->misc_host_ctrl | MISC_HOST_CTRL_MASK_PCI_INT));
-	क्रम (i = 0; i < tp->irq_max; i++)
-		tw32_mailbox_f(tp->napi[i].पूर्णांक_mbox, 0x00000001);
-पूर्ण
+	for (i = 0; i < tp->irq_max; i++)
+		tw32_mailbox_f(tp->napi[i].int_mbox, 0x00000001);
+}
 
-अटल व्योम tg3_enable_पूर्णांकs(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_enable_ints(struct tg3 *tp)
+{
+	int i;
 
 	tp->irq_sync = 0;
 	wmb();
@@ -1014,117 +1013,117 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 	     (tp->misc_host_ctrl & ~MISC_HOST_CTRL_MASK_PCI_INT));
 
 	tp->coal_now = tp->coalesce_mode | HOSTCC_MODE_ENABLE;
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		tw32_mailbox_f(tnapi->पूर्णांक_mbox, tnapi->last_tag << 24);
-		अगर (tg3_flag(tp, 1SHOT_MSI))
-			tw32_mailbox_f(tnapi->पूर्णांक_mbox, tnapi->last_tag << 24);
+		tw32_mailbox_f(tnapi->int_mbox, tnapi->last_tag << 24);
+		if (tg3_flag(tp, 1SHOT_MSI))
+			tw32_mailbox_f(tnapi->int_mbox, tnapi->last_tag << 24);
 
 		tp->coal_now |= tnapi->coal_now;
-	पूर्ण
+	}
 
-	/* Force an initial पूर्णांकerrupt */
-	अगर (!tg3_flag(tp, TAGGED_STATUS) &&
+	/* Force an initial interrupt */
+	if (!tg3_flag(tp, TAGGED_STATUS) &&
 	    (tp->napi[0].hw_status->status & SD_STATUS_UPDATED))
 		tw32(GRC_LOCAL_CTRL, tp->grc_local_ctrl | GRC_LCLCTRL_SETINT);
-	अन्यथा
+	else
 		tw32(HOSTCC_MODE, tp->coal_now);
 
 	tp->coal_now &= ~(tp->napi[0].coal_now | tp->napi[1].coal_now);
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक tg3_has_work(काष्ठा tg3_napi *tnapi)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
-	काष्ठा tg3_hw_status *sblk = tnapi->hw_status;
-	अचिन्हित पूर्णांक work_exists = 0;
+static inline unsigned int tg3_has_work(struct tg3_napi *tnapi)
+{
+	struct tg3 *tp = tnapi->tp;
+	struct tg3_hw_status *sblk = tnapi->hw_status;
+	unsigned int work_exists = 0;
 
-	/* check क्रम phy events */
-	अगर (!(tg3_flag(tp, USE_LINKCHG_REG) || tg3_flag(tp, POLL_SERDES))) अणु
-		अगर (sblk->status & SD_STATUS_LINK_CHG)
+	/* check for phy events */
+	if (!(tg3_flag(tp, USE_LINKCHG_REG) || tg3_flag(tp, POLL_SERDES))) {
+		if (sblk->status & SD_STATUS_LINK_CHG)
 			work_exists = 1;
-	पूर्ण
+	}
 
-	/* check क्रम TX work to करो */
-	अगर (sblk->idx[0].tx_consumer != tnapi->tx_cons)
+	/* check for TX work to do */
+	if (sblk->idx[0].tx_consumer != tnapi->tx_cons)
 		work_exists = 1;
 
-	/* check क्रम RX work to करो */
-	अगर (tnapi->rx_rcb_prod_idx &&
+	/* check for RX work to do */
+	if (tnapi->rx_rcb_prod_idx &&
 	    *(tnapi->rx_rcb_prod_idx) != tnapi->rx_rcb_ptr)
 		work_exists = 1;
 
-	वापस work_exists;
-पूर्ण
+	return work_exists;
+}
 
-/* tg3_पूर्णांक_reenable
- *  similar to tg3_enable_पूर्णांकs, but it accurately determines whether there
- *  is new work pending and can वापस without flushing the PIO ग_लिखो
- *  which reenables पूर्णांकerrupts
+/* tg3_int_reenable
+ *  similar to tg3_enable_ints, but it accurately determines whether there
+ *  is new work pending and can return without flushing the PIO write
+ *  which reenables interrupts
  */
-अटल व्योम tg3_पूर्णांक_reenable(काष्ठा tg3_napi *tnapi)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
+static void tg3_int_reenable(struct tg3_napi *tnapi)
+{
+	struct tg3 *tp = tnapi->tp;
 
-	tw32_mailbox(tnapi->पूर्णांक_mbox, tnapi->last_tag << 24);
+	tw32_mailbox(tnapi->int_mbox, tnapi->last_tag << 24);
 
-	/* When करोing tagged status, this work check is unnecessary.
-	 * The last_tag we ग_लिखो above tells the chip which piece of
+	/* When doing tagged status, this work check is unnecessary.
+	 * The last_tag we write above tells the chip which piece of
 	 * work we've completed.
 	 */
-	अगर (!tg3_flag(tp, TAGGED_STATUS) && tg3_has_work(tnapi))
+	if (!tg3_flag(tp, TAGGED_STATUS) && tg3_has_work(tnapi))
 		tw32(HOSTCC_MODE, tp->coalesce_mode |
 		     HOSTCC_MODE_ENABLE | tnapi->coal_now);
-पूर्ण
+}
 
-अटल व्योम tg3_चयन_घड़ीs(काष्ठा tg3 *tp)
-अणु
-	u32 घड़ी_ctrl;
-	u32 orig_घड़ी_ctrl;
+static void tg3_switch_clocks(struct tg3 *tp)
+{
+	u32 clock_ctrl;
+	u32 orig_clock_ctrl;
 
-	अगर (tg3_flag(tp, CPMU_PRESENT) || tg3_flag(tp, 5780_CLASS))
-		वापस;
+	if (tg3_flag(tp, CPMU_PRESENT) || tg3_flag(tp, 5780_CLASS))
+		return;
 
-	घड़ी_ctrl = tr32(TG3PCI_CLOCK_CTRL);
+	clock_ctrl = tr32(TG3PCI_CLOCK_CTRL);
 
-	orig_घड़ी_ctrl = घड़ी_ctrl;
-	घड़ी_ctrl &= (CLOCK_CTRL_FORCE_CLKRUN |
+	orig_clock_ctrl = clock_ctrl;
+	clock_ctrl &= (CLOCK_CTRL_FORCE_CLKRUN |
 		       CLOCK_CTRL_CLKRUN_OENABLE |
 		       0x1f);
-	tp->pci_घड़ी_ctrl = घड़ी_ctrl;
+	tp->pci_clock_ctrl = clock_ctrl;
 
-	अगर (tg3_flag(tp, 5705_PLUS)) अणु
-		अगर (orig_घड़ी_ctrl & CLOCK_CTRL_625_CORE) अणु
-			tw32_रुको_f(TG3PCI_CLOCK_CTRL,
-				    घड़ी_ctrl | CLOCK_CTRL_625_CORE, 40);
-		पूर्ण
-	पूर्ण अन्यथा अगर ((orig_घड़ी_ctrl & CLOCK_CTRL_44MHZ_CORE) != 0) अणु
-		tw32_रुको_f(TG3PCI_CLOCK_CTRL,
-			    घड़ी_ctrl |
+	if (tg3_flag(tp, 5705_PLUS)) {
+		if (orig_clock_ctrl & CLOCK_CTRL_625_CORE) {
+			tw32_wait_f(TG3PCI_CLOCK_CTRL,
+				    clock_ctrl | CLOCK_CTRL_625_CORE, 40);
+		}
+	} else if ((orig_clock_ctrl & CLOCK_CTRL_44MHZ_CORE) != 0) {
+		tw32_wait_f(TG3PCI_CLOCK_CTRL,
+			    clock_ctrl |
 			    (CLOCK_CTRL_44MHZ_CORE | CLOCK_CTRL_ALTCLK),
 			    40);
-		tw32_रुको_f(TG3PCI_CLOCK_CTRL,
-			    घड़ी_ctrl | (CLOCK_CTRL_ALTCLK),
+		tw32_wait_f(TG3PCI_CLOCK_CTRL,
+			    clock_ctrl | (CLOCK_CTRL_ALTCLK),
 			    40);
-	पूर्ण
-	tw32_रुको_f(TG3PCI_CLOCK_CTRL, घड़ी_ctrl, 40);
-पूर्ण
+	}
+	tw32_wait_f(TG3PCI_CLOCK_CTRL, clock_ctrl, 40);
+}
 
-#घोषणा PHY_BUSY_LOOPS	5000
+#define PHY_BUSY_LOOPS	5000
 
-अटल पूर्णांक __tg3_पढ़ोphy(काष्ठा tg3 *tp, अचिन्हित पूर्णांक phy_addr, पूर्णांक reg,
+static int __tg3_readphy(struct tg3 *tp, unsigned int phy_addr, int reg,
 			 u32 *val)
-अणु
+{
 	u32 frame_val;
-	अचिन्हित पूर्णांक loops;
-	पूर्णांक ret;
+	unsigned int loops;
+	int ret;
 
-	अगर ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) अणु
+	if ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) {
 		tw32_f(MAC_MI_MODE,
 		     (tp->mi_mode & ~MAC_MI_MODE_AUTO_POLL));
 		udelay(80);
-	पूर्ण
+	}
 
 	tg3_ape_lock(tp, tp->phy_ape_lock);
 
@@ -1139,55 +1138,55 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 	tw32_f(MAC_MI_COM, frame_val);
 
 	loops = PHY_BUSY_LOOPS;
-	जबतक (loops != 0) अणु
+	while (loops != 0) {
 		udelay(10);
 		frame_val = tr32(MAC_MI_COM);
 
-		अगर ((frame_val & MI_COM_BUSY) == 0) अणु
+		if ((frame_val & MI_COM_BUSY) == 0) {
 			udelay(5);
 			frame_val = tr32(MAC_MI_COM);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		loops -= 1;
-	पूर्ण
+	}
 
 	ret = -EBUSY;
-	अगर (loops != 0) अणु
+	if (loops != 0) {
 		*val = frame_val & MI_COM_DATA_MASK;
 		ret = 0;
-	पूर्ण
+	}
 
-	अगर ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) अणु
+	if ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) {
 		tw32_f(MAC_MI_MODE, tp->mi_mode);
 		udelay(80);
-	पूर्ण
+	}
 
 	tg3_ape_unlock(tp, tp->phy_ape_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tg3_पढ़ोphy(काष्ठा tg3 *tp, पूर्णांक reg, u32 *val)
-अणु
-	वापस __tg3_पढ़ोphy(tp, tp->phy_addr, reg, val);
-पूर्ण
+static int tg3_readphy(struct tg3 *tp, int reg, u32 *val)
+{
+	return __tg3_readphy(tp, tp->phy_addr, reg, val);
+}
 
-अटल पूर्णांक __tg3_ग_लिखोphy(काष्ठा tg3 *tp, अचिन्हित पूर्णांक phy_addr, पूर्णांक reg,
+static int __tg3_writephy(struct tg3 *tp, unsigned int phy_addr, int reg,
 			  u32 val)
-अणु
+{
 	u32 frame_val;
-	अचिन्हित पूर्णांक loops;
-	पूर्णांक ret;
+	unsigned int loops;
+	int ret;
 
-	अगर ((tp->phy_flags & TG3_PHYFLG_IS_FET) &&
+	if ((tp->phy_flags & TG3_PHYFLG_IS_FET) &&
 	    (reg == MII_CTRL1000 || reg == MII_TG3_AUX_CTRL))
-		वापस 0;
+		return 0;
 
-	अगर ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) अणु
+	if ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) {
 		tw32_f(MAC_MI_MODE,
 		     (tp->mi_mode & ~MAC_MI_MODE_AUTO_POLL));
 		udelay(80);
-	पूर्ण
+	}
 
 	tg3_ape_lock(tp, tp->phy_ape_lock);
 
@@ -1201,238 +1200,238 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 	tw32_f(MAC_MI_COM, frame_val);
 
 	loops = PHY_BUSY_LOOPS;
-	जबतक (loops != 0) अणु
+	while (loops != 0) {
 		udelay(10);
 		frame_val = tr32(MAC_MI_COM);
-		अगर ((frame_val & MI_COM_BUSY) == 0) अणु
+		if ((frame_val & MI_COM_BUSY) == 0) {
 			udelay(5);
 			frame_val = tr32(MAC_MI_COM);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		loops -= 1;
-	पूर्ण
+	}
 
 	ret = -EBUSY;
-	अगर (loops != 0)
+	if (loops != 0)
 		ret = 0;
 
-	अगर ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) अणु
+	if ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) {
 		tw32_f(MAC_MI_MODE, tp->mi_mode);
 		udelay(80);
-	पूर्ण
+	}
 
 	tg3_ape_unlock(tp, tp->phy_ape_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tg3_ग_लिखोphy(काष्ठा tg3 *tp, पूर्णांक reg, u32 val)
-अणु
-	वापस __tg3_ग_लिखोphy(tp, tp->phy_addr, reg, val);
-पूर्ण
+static int tg3_writephy(struct tg3 *tp, int reg, u32 val)
+{
+	return __tg3_writephy(tp, tp->phy_addr, reg, val);
+}
 
-अटल पूर्णांक tg3_phy_cl45_ग_लिखो(काष्ठा tg3 *tp, u32 devad, u32 addr, u32 val)
-अणु
-	पूर्णांक err;
+static int tg3_phy_cl45_write(struct tg3 *tp, u32 devad, u32 addr, u32 val)
+{
+	int err;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_CTRL, devad);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_writephy(tp, MII_TG3_MMD_CTRL, devad);
+	if (err)
+		goto done;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_ADDRESS, addr);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_writephy(tp, MII_TG3_MMD_ADDRESS, addr);
+	if (err)
+		goto done;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_CTRL,
+	err = tg3_writephy(tp, MII_TG3_MMD_CTRL,
 			   MII_TG3_MMD_CTRL_DATA_NOINC | devad);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_ADDRESS, val);
+	err = tg3_writephy(tp, MII_TG3_MMD_ADDRESS, val);
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल पूर्णांक tg3_phy_cl45_पढ़ो(काष्ठा tg3 *tp, u32 devad, u32 addr, u32 *val)
-अणु
-	पूर्णांक err;
+static int tg3_phy_cl45_read(struct tg3 *tp, u32 devad, u32 addr, u32 *val)
+{
+	int err;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_CTRL, devad);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_writephy(tp, MII_TG3_MMD_CTRL, devad);
+	if (err)
+		goto done;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_ADDRESS, addr);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_writephy(tp, MII_TG3_MMD_ADDRESS, addr);
+	if (err)
+		goto done;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_MMD_CTRL,
+	err = tg3_writephy(tp, MII_TG3_MMD_CTRL,
 			   MII_TG3_MMD_CTRL_DATA_NOINC | devad);
-	अगर (err)
-		जाओ करोne;
+	if (err)
+		goto done;
 
-	err = tg3_पढ़ोphy(tp, MII_TG3_MMD_ADDRESS, val);
+	err = tg3_readphy(tp, MII_TG3_MMD_ADDRESS, val);
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल पूर्णांक tg3_phydsp_पढ़ो(काष्ठा tg3 *tp, u32 reg, u32 *val)
-अणु
-	पूर्णांक err;
+static int tg3_phydsp_read(struct tg3 *tp, u32 reg, u32 *val)
+{
+	int err;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS, reg);
-	अगर (!err)
-		err = tg3_पढ़ोphy(tp, MII_TG3_DSP_RW_PORT, val);
+	err = tg3_writephy(tp, MII_TG3_DSP_ADDRESS, reg);
+	if (!err)
+		err = tg3_readphy(tp, MII_TG3_DSP_RW_PORT, val);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_phydsp_ग_लिखो(काष्ठा tg3 *tp, u32 reg, u32 val)
-अणु
-	पूर्णांक err;
+static int tg3_phydsp_write(struct tg3 *tp, u32 reg, u32 val)
+{
+	int err;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS, reg);
-	अगर (!err)
-		err = tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT, val);
+	err = tg3_writephy(tp, MII_TG3_DSP_ADDRESS, reg);
+	if (!err)
+		err = tg3_writephy(tp, MII_TG3_DSP_RW_PORT, val);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_phy_auxctl_पढ़ो(काष्ठा tg3 *tp, पूर्णांक reg, u32 *val)
-अणु
-	पूर्णांक err;
+static int tg3_phy_auxctl_read(struct tg3 *tp, int reg, u32 *val)
+{
+	int err;
 
-	err = tg3_ग_लिखोphy(tp, MII_TG3_AUX_CTRL,
+	err = tg3_writephy(tp, MII_TG3_AUX_CTRL,
 			   (reg << MII_TG3_AUXCTL_MISC_RDSEL_SHIFT) |
 			   MII_TG3_AUXCTL_SHDWSEL_MISC);
-	अगर (!err)
-		err = tg3_पढ़ोphy(tp, MII_TG3_AUX_CTRL, val);
+	if (!err)
+		err = tg3_readphy(tp, MII_TG3_AUX_CTRL, val);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_phy_auxctl_ग_लिखो(काष्ठा tg3 *tp, पूर्णांक reg, u32 set)
-अणु
-	अगर (reg == MII_TG3_AUXCTL_SHDWSEL_MISC)
+static int tg3_phy_auxctl_write(struct tg3 *tp, int reg, u32 set)
+{
+	if (reg == MII_TG3_AUXCTL_SHDWSEL_MISC)
 		set |= MII_TG3_AUXCTL_MISC_WREN;
 
-	वापस tg3_ग_लिखोphy(tp, MII_TG3_AUX_CTRL, set | reg);
-पूर्ण
+	return tg3_writephy(tp, MII_TG3_AUX_CTRL, set | reg);
+}
 
-अटल पूर्णांक tg3_phy_toggle_auxctl_smdsp(काष्ठा tg3 *tp, bool enable)
-अणु
+static int tg3_phy_toggle_auxctl_smdsp(struct tg3 *tp, bool enable)
+{
 	u32 val;
-	पूर्णांक err;
+	int err;
 
-	err = tg3_phy_auxctl_पढ़ो(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL, &val);
+	err = tg3_phy_auxctl_read(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL, &val);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (enable)
+	if (enable)
 		val |= MII_TG3_AUXCTL_ACTL_SMDSP_ENA;
-	अन्यथा
+	else
 		val &= ~MII_TG3_AUXCTL_ACTL_SMDSP_ENA;
 
-	err = tg3_phy_auxctl_ग_लिखो((tp), MII_TG3_AUXCTL_SHDWSEL_AUXCTL,
+	err = tg3_phy_auxctl_write((tp), MII_TG3_AUXCTL_SHDWSEL_AUXCTL,
 				   val | MII_TG3_AUXCTL_ACTL_TX_6DB);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_phy_shdw_ग_लिखो(काष्ठा tg3 *tp, पूर्णांक reg, u32 val)
-अणु
-	वापस tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW,
+static int tg3_phy_shdw_write(struct tg3 *tp, int reg, u32 val)
+{
+	return tg3_writephy(tp, MII_TG3_MISC_SHDW,
 			    reg | val | MII_TG3_MISC_SHDW_WREN);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_bmcr_reset(काष्ठा tg3 *tp)
-अणु
+static int tg3_bmcr_reset(struct tg3 *tp)
+{
 	u32 phy_control;
-	पूर्णांक limit, err;
+	int limit, err;
 
 	/* OK, reset it, and poll the BMCR_RESET bit until it
-	 * clears or we समय out.
+	 * clears or we time out.
 	 */
 	phy_control = BMCR_RESET;
-	err = tg3_ग_लिखोphy(tp, MII_BMCR, phy_control);
-	अगर (err != 0)
-		वापस -EBUSY;
+	err = tg3_writephy(tp, MII_BMCR, phy_control);
+	if (err != 0)
+		return -EBUSY;
 
 	limit = 5000;
-	जबतक (limit--) अणु
-		err = tg3_पढ़ोphy(tp, MII_BMCR, &phy_control);
-		अगर (err != 0)
-			वापस -EBUSY;
+	while (limit--) {
+		err = tg3_readphy(tp, MII_BMCR, &phy_control);
+		if (err != 0)
+			return -EBUSY;
 
-		अगर ((phy_control & BMCR_RESET) == 0) अणु
+		if ((phy_control & BMCR_RESET) == 0) {
 			udelay(40);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		udelay(10);
-	पूर्ण
-	अगर (limit < 0)
-		वापस -EBUSY;
+	}
+	if (limit < 0)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_mdio_पढ़ो(काष्ठा mii_bus *bp, पूर्णांक mii_id, पूर्णांक reg)
-अणु
-	काष्ठा tg3 *tp = bp->priv;
+static int tg3_mdio_read(struct mii_bus *bp, int mii_id, int reg)
+{
+	struct tg3 *tp = bp->priv;
 	u32 val;
 
 	spin_lock_bh(&tp->lock);
 
-	अगर (__tg3_पढ़ोphy(tp, mii_id, reg, &val))
+	if (__tg3_readphy(tp, mii_id, reg, &val))
 		val = -EIO;
 
 	spin_unlock_bh(&tp->lock);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक tg3_mdio_ग_लिखो(काष्ठा mii_bus *bp, पूर्णांक mii_id, पूर्णांक reg, u16 val)
-अणु
-	काष्ठा tg3 *tp = bp->priv;
+static int tg3_mdio_write(struct mii_bus *bp, int mii_id, int reg, u16 val)
+{
+	struct tg3 *tp = bp->priv;
 	u32 ret = 0;
 
 	spin_lock_bh(&tp->lock);
 
-	अगर (__tg3_ग_लिखोphy(tp, mii_id, reg, val))
+	if (__tg3_writephy(tp, mii_id, reg, val))
 		ret = -EIO;
 
 	spin_unlock_bh(&tp->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम tg3_mdio_config_5785(काष्ठा tg3 *tp)
-अणु
+static void tg3_mdio_config_5785(struct tg3 *tp)
+{
 	u32 val;
-	काष्ठा phy_device *phydev;
+	struct phy_device *phydev;
 
 	phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
-	चयन (phydev->drv->phy_id & phydev->drv->phy_id_mask) अणु
-	हाल PHY_ID_BCM50610:
-	हाल PHY_ID_BCM50610M:
+	switch (phydev->drv->phy_id & phydev->drv->phy_id_mask) {
+	case PHY_ID_BCM50610:
+	case PHY_ID_BCM50610M:
 		val = MAC_PHYCFG2_50610_LED_MODES;
-		अवरोध;
-	हाल PHY_ID_BCMAC131:
+		break;
+	case PHY_ID_BCMAC131:
 		val = MAC_PHYCFG2_AC131_LED_MODES;
-		अवरोध;
-	हाल PHY_ID_RTL8211C:
+		break;
+	case PHY_ID_RTL8211C:
 		val = MAC_PHYCFG2_RTL8211C_LED_MODES;
-		अवरोध;
-	हाल PHY_ID_RTL8201E:
+		break;
+	case PHY_ID_RTL8201E:
 		val = MAC_PHYCFG2_RTL8201E_LED_MODES;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (phydev->पूर्णांकerface != PHY_INTERFACE_MODE_RGMII) अणु
+	if (phydev->interface != PHY_INTERFACE_MODE_RGMII) {
 		tw32(MAC_PHYCFG2, val);
 
 		val = tr32(MAC_PHYCFG1);
@@ -1441,10 +1440,10 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 		val |= MAC_PHYCFG1_RXCLK_TIMEOUT | MAC_PHYCFG1_TXCLK_TIMEOUT;
 		tw32(MAC_PHYCFG1, val);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!tg3_flag(tp, RGMII_INBAND_DISABLE))
+	if (!tg3_flag(tp, RGMII_INBAND_DISABLE))
 		val |= MAC_PHYCFG2_EMODE_MASK_MASK |
 		       MAC_PHYCFG2_FMODE_MASK_MASK |
 		       MAC_PHYCFG2_GMODE_MASK_MASK |
@@ -1457,12 +1456,12 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 	val = tr32(MAC_PHYCFG1);
 	val &= ~(MAC_PHYCFG1_RXCLK_TO_MASK | MAC_PHYCFG1_TXCLK_TO_MASK |
 		 MAC_PHYCFG1_RGMII_EXT_RX_DEC | MAC_PHYCFG1_RGMII_SND_STAT_EN);
-	अगर (!tg3_flag(tp, RGMII_INBAND_DISABLE)) अणु
-		अगर (tg3_flag(tp, RGMII_EXT_IBND_RX_EN))
+	if (!tg3_flag(tp, RGMII_INBAND_DISABLE)) {
+		if (tg3_flag(tp, RGMII_EXT_IBND_RX_EN))
 			val |= MAC_PHYCFG1_RGMII_EXT_RX_DEC;
-		अगर (tg3_flag(tp, RGMII_EXT_IBND_TX_EN))
+		if (tg3_flag(tp, RGMII_EXT_IBND_TX_EN))
 			val |= MAC_PHYCFG1_RGMII_SND_STAT_EN;
-	पूर्ण
+	}
 	val |= MAC_PHYCFG1_RXCLK_TIMEOUT | MAC_PHYCFG1_TXCLK_TIMEOUT |
 	       MAC_PHYCFG1_RGMII_INT | MAC_PHYCFG1_TXC_DRV;
 	tw32(MAC_PHYCFG1, val);
@@ -1475,404 +1474,404 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 		 MAC_RGMII_MODE_TX_ENABLE |
 		 MAC_RGMII_MODE_TX_LOWPWR |
 		 MAC_RGMII_MODE_TX_RESET);
-	अगर (!tg3_flag(tp, RGMII_INBAND_DISABLE)) अणु
-		अगर (tg3_flag(tp, RGMII_EXT_IBND_RX_EN))
+	if (!tg3_flag(tp, RGMII_INBAND_DISABLE)) {
+		if (tg3_flag(tp, RGMII_EXT_IBND_RX_EN))
 			val |= MAC_RGMII_MODE_RX_INT_B |
 			       MAC_RGMII_MODE_RX_QUALITY |
 			       MAC_RGMII_MODE_RX_ACTIVITY |
 			       MAC_RGMII_MODE_RX_ENG_DET;
-		अगर (tg3_flag(tp, RGMII_EXT_IBND_TX_EN))
+		if (tg3_flag(tp, RGMII_EXT_IBND_TX_EN))
 			val |= MAC_RGMII_MODE_TX_ENABLE |
 			       MAC_RGMII_MODE_TX_LOWPWR |
 			       MAC_RGMII_MODE_TX_RESET;
-	पूर्ण
+	}
 	tw32(MAC_EXT_RGMII_MODE, val);
-पूर्ण
+}
 
-अटल व्योम tg3_mdio_start(काष्ठा tg3 *tp)
-अणु
+static void tg3_mdio_start(struct tg3 *tp)
+{
 	tp->mi_mode &= ~MAC_MI_MODE_AUTO_POLL;
 	tw32_f(MAC_MI_MODE, tp->mi_mode);
 	udelay(80);
 
-	अगर (tg3_flag(tp, MDIOBUS_INITED) &&
+	if (tg3_flag(tp, MDIOBUS_INITED) &&
 	    tg3_asic_rev(tp) == ASIC_REV_5785)
 		tg3_mdio_config_5785(tp);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_mdio_init(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static int tg3_mdio_init(struct tg3 *tp)
+{
+	int i;
 	u32 reg;
-	काष्ठा phy_device *phydev;
+	struct phy_device *phydev;
 
-	अगर (tg3_flag(tp, 5717_PLUS)) अणु
+	if (tg3_flag(tp, 5717_PLUS)) {
 		u32 is_serdes;
 
 		tp->phy_addr = tp->pci_fn + 1;
 
-		अगर (tg3_chip_rev_id(tp) != CHIPREV_ID_5717_A0)
+		if (tg3_chip_rev_id(tp) != CHIPREV_ID_5717_A0)
 			is_serdes = tr32(SG_DIG_STATUS) & SG_DIG_IS_SERDES;
-		अन्यथा
+		else
 			is_serdes = tr32(TG3_CPMU_PHY_STRAP) &
 				    TG3_CPMU_PHY_STRAP_IS_SERDES;
-		अगर (is_serdes)
+		if (is_serdes)
 			tp->phy_addr += 7;
-	पूर्ण अन्यथा अगर (tg3_flag(tp, IS_SSB_CORE) && tg3_flag(tp, ROBOSWITCH)) अणु
-		पूर्णांक addr;
+	} else if (tg3_flag(tp, IS_SSB_CORE) && tg3_flag(tp, ROBOSWITCH)) {
+		int addr;
 
 		addr = ssb_gige_get_phyaddr(tp->pdev);
-		अगर (addr < 0)
-			वापस addr;
+		if (addr < 0)
+			return addr;
 		tp->phy_addr = addr;
-	पूर्ण अन्यथा
+	} else
 		tp->phy_addr = TG3_PHY_MII_ADDR;
 
 	tg3_mdio_start(tp);
 
-	अगर (!tg3_flag(tp, USE_PHYLIB) || tg3_flag(tp, MDIOBUS_INITED))
-		वापस 0;
+	if (!tg3_flag(tp, USE_PHYLIB) || tg3_flag(tp, MDIOBUS_INITED))
+		return 0;
 
 	tp->mdio_bus = mdiobus_alloc();
-	अगर (tp->mdio_bus == शून्य)
-		वापस -ENOMEM;
+	if (tp->mdio_bus == NULL)
+		return -ENOMEM;
 
 	tp->mdio_bus->name     = "tg3 mdio bus";
-	snम_लिखो(tp->mdio_bus->id, MII_BUS_ID_SIZE, "%x",
+	snprintf(tp->mdio_bus->id, MII_BUS_ID_SIZE, "%x",
 		 (tp->pdev->bus->number << 8) | tp->pdev->devfn);
 	tp->mdio_bus->priv     = tp;
 	tp->mdio_bus->parent   = &tp->pdev->dev;
-	tp->mdio_bus->पढ़ो     = &tg3_mdio_पढ़ो;
-	tp->mdio_bus->ग_लिखो    = &tg3_mdio_ग_लिखो;
+	tp->mdio_bus->read     = &tg3_mdio_read;
+	tp->mdio_bus->write    = &tg3_mdio_write;
 	tp->mdio_bus->phy_mask = ~(1 << tp->phy_addr);
 
-	/* The bus registration will look क्रम all the PHYs on the mdio bus.
-	 * Unक्रमtunately, it करोes not ensure the PHY is घातered up beक्रमe
-	 * accessing the PHY ID रेजिस्टरs.  A chip reset is the
+	/* The bus registration will look for all the PHYs on the mdio bus.
+	 * Unfortunately, it does not ensure the PHY is powered up before
+	 * accessing the PHY ID registers.  A chip reset is the
 	 * quickest way to bring the device back to an operational state..
 	 */
-	अगर (tg3_पढ़ोphy(tp, MII_BMCR, &reg) || (reg & BMCR_PDOWN))
+	if (tg3_readphy(tp, MII_BMCR, &reg) || (reg & BMCR_PDOWN))
 		tg3_bmcr_reset(tp);
 
-	i = mdiobus_रेजिस्टर(tp->mdio_bus);
-	अगर (i) अणु
+	i = mdiobus_register(tp->mdio_bus);
+	if (i) {
 		dev_warn(&tp->pdev->dev, "mdiobus_reg failed (0x%x)\n", i);
-		mdiobus_मुक्त(tp->mdio_bus);
-		वापस i;
-	पूर्ण
+		mdiobus_free(tp->mdio_bus);
+		return i;
+	}
 
 	phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
 
-	अगर (!phydev || !phydev->drv) अणु
+	if (!phydev || !phydev->drv) {
 		dev_warn(&tp->pdev->dev, "No PHY devices\n");
-		mdiobus_unरेजिस्टर(tp->mdio_bus);
-		mdiobus_मुक्त(tp->mdio_bus);
-		वापस -ENODEV;
-	पूर्ण
+		mdiobus_unregister(tp->mdio_bus);
+		mdiobus_free(tp->mdio_bus);
+		return -ENODEV;
+	}
 
-	चयन (phydev->drv->phy_id & phydev->drv->phy_id_mask) अणु
-	हाल PHY_ID_BCM57780:
-		phydev->पूर्णांकerface = PHY_INTERFACE_MODE_GMII;
+	switch (phydev->drv->phy_id & phydev->drv->phy_id_mask) {
+	case PHY_ID_BCM57780:
+		phydev->interface = PHY_INTERFACE_MODE_GMII;
 		phydev->dev_flags |= PHY_BRCM_AUTO_PWRDWN_ENABLE;
-		अवरोध;
-	हाल PHY_ID_BCM50610:
-	हाल PHY_ID_BCM50610M:
+		break;
+	case PHY_ID_BCM50610:
+	case PHY_ID_BCM50610M:
 		phydev->dev_flags |= PHY_BRCM_CLEAR_RGMII_MODE |
 				     PHY_BRCM_RX_REFCLK_UNUSED |
 				     PHY_BRCM_DIS_TXCRXC_NOENRGY |
 				     PHY_BRCM_AUTO_PWRDWN_ENABLE;
 		fallthrough;
-	हाल PHY_ID_RTL8211C:
-		phydev->पूर्णांकerface = PHY_INTERFACE_MODE_RGMII;
-		अवरोध;
-	हाल PHY_ID_RTL8201E:
-	हाल PHY_ID_BCMAC131:
-		phydev->पूर्णांकerface = PHY_INTERFACE_MODE_MII;
+	case PHY_ID_RTL8211C:
+		phydev->interface = PHY_INTERFACE_MODE_RGMII;
+		break;
+	case PHY_ID_RTL8201E:
+	case PHY_ID_BCMAC131:
+		phydev->interface = PHY_INTERFACE_MODE_MII;
 		phydev->dev_flags |= PHY_BRCM_AUTO_PWRDWN_ENABLE;
 		tp->phy_flags |= TG3_PHYFLG_IS_FET;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	tg3_flag_set(tp, MDIOBUS_INITED);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5785)
+	if (tg3_asic_rev(tp) == ASIC_REV_5785)
 		tg3_mdio_config_5785(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_mdio_fini(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, MDIOBUS_INITED)) अणु
+static void tg3_mdio_fini(struct tg3 *tp)
+{
+	if (tg3_flag(tp, MDIOBUS_INITED)) {
 		tg3_flag_clear(tp, MDIOBUS_INITED);
-		mdiobus_unरेजिस्टर(tp->mdio_bus);
-		mdiobus_मुक्त(tp->mdio_bus);
-	पूर्ण
-पूर्ण
+		mdiobus_unregister(tp->mdio_bus);
+		mdiobus_free(tp->mdio_bus);
+	}
+}
 
 /* tp->lock is held. */
-अटल अंतरभूत व्योम tg3_generate_fw_event(काष्ठा tg3 *tp)
-अणु
+static inline void tg3_generate_fw_event(struct tg3 *tp)
+{
 	u32 val;
 
 	val = tr32(GRC_RX_CPU_EVENT);
 	val |= GRC_RX_CPU_DRIVER_EVENT;
 	tw32_f(GRC_RX_CPU_EVENT, val);
 
-	tp->last_event_jअगरfies = jअगरfies;
-पूर्ण
+	tp->last_event_jiffies = jiffies;
+}
 
-#घोषणा TG3_FW_EVENT_TIMEOUT_USEC 2500
+#define TG3_FW_EVENT_TIMEOUT_USEC 2500
 
 /* tp->lock is held. */
-अटल व्योम tg3_रुको_क्रम_event_ack(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक delay_cnt;
-	दीर्घ समय_reमुख्य;
+static void tg3_wait_for_event_ack(struct tg3 *tp)
+{
+	int i;
+	unsigned int delay_cnt;
+	long time_remain;
 
-	/* If enough समय has passed, no रुको is necessary. */
-	समय_reमुख्य = (दीर्घ)(tp->last_event_jअगरfies + 1 +
-		      usecs_to_jअगरfies(TG3_FW_EVENT_TIMEOUT_USEC)) -
-		      (दीर्घ)jअगरfies;
-	अगर (समय_reमुख्य < 0)
-		वापस;
+	/* If enough time has passed, no wait is necessary. */
+	time_remain = (long)(tp->last_event_jiffies + 1 +
+		      usecs_to_jiffies(TG3_FW_EVENT_TIMEOUT_USEC)) -
+		      (long)jiffies;
+	if (time_remain < 0)
+		return;
 
-	/* Check अगर we can लघुen the रुको समय. */
-	delay_cnt = jअगरfies_to_usecs(समय_reमुख्य);
-	अगर (delay_cnt > TG3_FW_EVENT_TIMEOUT_USEC)
+	/* Check if we can shorten the wait time. */
+	delay_cnt = jiffies_to_usecs(time_remain);
+	if (delay_cnt > TG3_FW_EVENT_TIMEOUT_USEC)
 		delay_cnt = TG3_FW_EVENT_TIMEOUT_USEC;
 	delay_cnt = (delay_cnt >> 3) + 1;
 
-	क्रम (i = 0; i < delay_cnt; i++) अणु
-		अगर (!(tr32(GRC_RX_CPU_EVENT) & GRC_RX_CPU_DRIVER_EVENT))
-			अवरोध;
-		अगर (pci_channel_offline(tp->pdev))
-			अवरोध;
+	for (i = 0; i < delay_cnt; i++) {
+		if (!(tr32(GRC_RX_CPU_EVENT) & GRC_RX_CPU_DRIVER_EVENT))
+			break;
+		if (pci_channel_offline(tp->pdev))
+			break;
 
 		udelay(8);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_phy_gather_ump_data(काष्ठा tg3 *tp, u32 *data)
-अणु
+static void tg3_phy_gather_ump_data(struct tg3 *tp, u32 *data)
+{
 	u32 reg, val;
 
 	val = 0;
-	अगर (!tg3_पढ़ोphy(tp, MII_BMCR, &reg))
+	if (!tg3_readphy(tp, MII_BMCR, &reg))
 		val = reg << 16;
-	अगर (!tg3_पढ़ोphy(tp, MII_BMSR, &reg))
+	if (!tg3_readphy(tp, MII_BMSR, &reg))
 		val |= (reg & 0xffff);
 	*data++ = val;
 
 	val = 0;
-	अगर (!tg3_पढ़ोphy(tp, MII_ADVERTISE, &reg))
+	if (!tg3_readphy(tp, MII_ADVERTISE, &reg))
 		val = reg << 16;
-	अगर (!tg3_पढ़ोphy(tp, MII_LPA, &reg))
+	if (!tg3_readphy(tp, MII_LPA, &reg))
 		val |= (reg & 0xffff);
 	*data++ = val;
 
 	val = 0;
-	अगर (!(tp->phy_flags & TG3_PHYFLG_MII_SERDES)) अणु
-		अगर (!tg3_पढ़ोphy(tp, MII_CTRL1000, &reg))
+	if (!(tp->phy_flags & TG3_PHYFLG_MII_SERDES)) {
+		if (!tg3_readphy(tp, MII_CTRL1000, &reg))
 			val = reg << 16;
-		अगर (!tg3_पढ़ोphy(tp, MII_STAT1000, &reg))
+		if (!tg3_readphy(tp, MII_STAT1000, &reg))
 			val |= (reg & 0xffff);
-	पूर्ण
+	}
 	*data++ = val;
 
-	अगर (!tg3_पढ़ोphy(tp, MII_PHYADDR, &reg))
+	if (!tg3_readphy(tp, MII_PHYADDR, &reg))
 		val = reg << 16;
-	अन्यथा
+	else
 		val = 0;
 	*data++ = val;
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_ump_link_report(काष्ठा tg3 *tp)
-अणु
+static void tg3_ump_link_report(struct tg3 *tp)
+{
 	u32 data[4];
 
-	अगर (!tg3_flag(tp, 5780_CLASS) || !tg3_flag(tp, ENABLE_ASF))
-		वापस;
+	if (!tg3_flag(tp, 5780_CLASS) || !tg3_flag(tp, ENABLE_ASF))
+		return;
 
 	tg3_phy_gather_ump_data(tp, data);
 
-	tg3_रुको_क्रम_event_ack(tp);
+	tg3_wait_for_event_ack(tp);
 
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_MBOX, FWCMD_NICDRV_LINK_UPDATE);
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_LEN_MBOX, 14);
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0x0, data[0]);
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0x4, data[1]);
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0x8, data[2]);
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0xc, data[3]);
+	tg3_write_mem(tp, NIC_SRAM_FW_CMD_MBOX, FWCMD_NICDRV_LINK_UPDATE);
+	tg3_write_mem(tp, NIC_SRAM_FW_CMD_LEN_MBOX, 14);
+	tg3_write_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0x0, data[0]);
+	tg3_write_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0x4, data[1]);
+	tg3_write_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0x8, data[2]);
+	tg3_write_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX + 0xc, data[3]);
 
 	tg3_generate_fw_event(tp);
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_stop_fw(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, ENABLE_ASF) && !tg3_flag(tp, ENABLE_APE)) अणु
-		/* Wait क्रम RX cpu to ACK the previous event. */
-		tg3_रुको_क्रम_event_ack(tp);
+static void tg3_stop_fw(struct tg3 *tp)
+{
+	if (tg3_flag(tp, ENABLE_ASF) && !tg3_flag(tp, ENABLE_APE)) {
+		/* Wait for RX cpu to ACK the previous event. */
+		tg3_wait_for_event_ack(tp);
 
-		tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_MBOX, FWCMD_NICDRV_PAUSE_FW);
+		tg3_write_mem(tp, NIC_SRAM_FW_CMD_MBOX, FWCMD_NICDRV_PAUSE_FW);
 
 		tg3_generate_fw_event(tp);
 
-		/* Wait क्रम RX cpu to ACK this event. */
-		tg3_रुको_क्रम_event_ack(tp);
-	पूर्ण
-पूर्ण
+		/* Wait for RX cpu to ACK this event. */
+		tg3_wait_for_event_ack(tp);
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_ग_लिखो_sig_pre_reset(काष्ठा tg3 *tp, पूर्णांक kind)
-अणु
-	tg3_ग_लिखो_mem(tp, NIC_SRAM_FIRMWARE_MBOX,
+static void tg3_write_sig_pre_reset(struct tg3 *tp, int kind)
+{
+	tg3_write_mem(tp, NIC_SRAM_FIRMWARE_MBOX,
 		      NIC_SRAM_FIRMWARE_MBOX_MAGIC1);
 
-	अगर (tg3_flag(tp, ASF_NEW_HANDSHAKE)) अणु
-		चयन (kind) अणु
-		हाल RESET_KIND_INIT:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+	if (tg3_flag(tp, ASF_NEW_HANDSHAKE)) {
+		switch (kind) {
+		case RESET_KIND_INIT:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_START);
-			अवरोध;
+			break;
 
-		हाल RESET_KIND_SHUTDOWN:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+		case RESET_KIND_SHUTDOWN:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_UNLOAD);
-			अवरोध;
+			break;
 
-		हाल RESET_KIND_SUSPEND:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+		case RESET_KIND_SUSPEND:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_SUSPEND);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		default:
+			break;
+		}
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_ग_लिखो_sig_post_reset(काष्ठा tg3 *tp, पूर्णांक kind)
-अणु
-	अगर (tg3_flag(tp, ASF_NEW_HANDSHAKE)) अणु
-		चयन (kind) अणु
-		हाल RESET_KIND_INIT:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+static void tg3_write_sig_post_reset(struct tg3 *tp, int kind)
+{
+	if (tg3_flag(tp, ASF_NEW_HANDSHAKE)) {
+		switch (kind) {
+		case RESET_KIND_INIT:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_START_DONE);
-			अवरोध;
+			break;
 
-		हाल RESET_KIND_SHUTDOWN:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+		case RESET_KIND_SHUTDOWN:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_UNLOAD_DONE);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		default:
+			break;
+		}
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_ग_लिखो_sig_legacy(काष्ठा tg3 *tp, पूर्णांक kind)
-अणु
-	अगर (tg3_flag(tp, ENABLE_ASF)) अणु
-		चयन (kind) अणु
-		हाल RESET_KIND_INIT:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+static void tg3_write_sig_legacy(struct tg3 *tp, int kind)
+{
+	if (tg3_flag(tp, ENABLE_ASF)) {
+		switch (kind) {
+		case RESET_KIND_INIT:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_START);
-			अवरोध;
+			break;
 
-		हाल RESET_KIND_SHUTDOWN:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+		case RESET_KIND_SHUTDOWN:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_UNLOAD);
-			अवरोध;
+			break;
 
-		हाल RESET_KIND_SUSPEND:
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
+		case RESET_KIND_SUSPEND:
+			tg3_write_mem(tp, NIC_SRAM_FW_DRV_STATE_MBOX,
 				      DRV_STATE_SUSPEND);
-			अवरोध;
+			break;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		default:
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक tg3_poll_fw(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static int tg3_poll_fw(struct tg3 *tp)
+{
+	int i;
 	u32 val;
 
-	अगर (tg3_flag(tp, NO_FWARE_REPORTED))
-		वापस 0;
+	if (tg3_flag(tp, NO_FWARE_REPORTED))
+		return 0;
 
-	अगर (tg3_flag(tp, IS_SSB_CORE)) अणु
-		/* We करोn't use firmware. */
-		वापस 0;
-	पूर्ण
+	if (tg3_flag(tp, IS_SSB_CORE)) {
+		/* We don't use firmware. */
+		return 0;
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
-		/* Wait up to 20ms क्रम init करोne. */
-		क्रम (i = 0; i < 200; i++) अणु
-			अगर (tr32(VCPU_STATUS) & VCPU_STATUS_INIT_DONE)
-				वापस 0;
-			अगर (pci_channel_offline(tp->pdev))
-				वापस -ENODEV;
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
+		/* Wait up to 20ms for init done. */
+		for (i = 0; i < 200; i++) {
+			if (tr32(VCPU_STATUS) & VCPU_STATUS_INIT_DONE)
+				return 0;
+			if (pci_channel_offline(tp->pdev))
+				return -ENODEV;
 
 			udelay(100);
-		पूर्ण
-		वापस -ENODEV;
-	पूर्ण
+		}
+		return -ENODEV;
+	}
 
-	/* Wait क्रम firmware initialization to complete. */
-	क्रम (i = 0; i < 100000; i++) अणु
-		tg3_पढ़ो_mem(tp, NIC_SRAM_FIRMWARE_MBOX, &val);
-		अगर (val == ~NIC_SRAM_FIRMWARE_MBOX_MAGIC1)
-			अवरोध;
-		अगर (pci_channel_offline(tp->pdev)) अणु
-			अगर (!tg3_flag(tp, NO_FWARE_REPORTED)) अणु
+	/* Wait for firmware initialization to complete. */
+	for (i = 0; i < 100000; i++) {
+		tg3_read_mem(tp, NIC_SRAM_FIRMWARE_MBOX, &val);
+		if (val == ~NIC_SRAM_FIRMWARE_MBOX_MAGIC1)
+			break;
+		if (pci_channel_offline(tp->pdev)) {
+			if (!tg3_flag(tp, NO_FWARE_REPORTED)) {
 				tg3_flag_set(tp, NO_FWARE_REPORTED);
 				netdev_info(tp->dev, "No firmware running\n");
-			पूर्ण
+			}
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		udelay(10);
-	पूर्ण
+	}
 
 	/* Chip might not be fitted with firmware.  Some Sun onboard
-	 * parts are configured like that.  So करोn't संकेत the समयout
-	 * of the above loop as an error, but करो report the lack of
+	 * parts are configured like that.  So don't signal the timeout
+	 * of the above loop as an error, but do report the lack of
 	 * running firmware once.
 	 */
-	अगर (i >= 100000 && !tg3_flag(tp, NO_FWARE_REPORTED)) अणु
+	if (i >= 100000 && !tg3_flag(tp, NO_FWARE_REPORTED)) {
 		tg3_flag_set(tp, NO_FWARE_REPORTED);
 
 		netdev_info(tp->dev, "No firmware running\n");
-	पूर्ण
+	}
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0) अणु
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0) {
 		/* The 57765 A0 needs a little more
-		 * समय to करो some important work.
+		 * time to do some important work.
 		 */
 		mdelay(10);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_link_report(काष्ठा tg3 *tp)
-अणु
-	अगर (!netअगर_carrier_ok(tp->dev)) अणु
-		netअगर_info(tp, link, tp->dev, "Link is down\n");
+static void tg3_link_report(struct tg3 *tp)
+{
+	if (!netif_carrier_ok(tp->dev)) {
+		netif_info(tp, link, tp->dev, "Link is down\n");
 		tg3_ump_link_report(tp);
-	पूर्ण अन्यथा अगर (netअगर_msg_link(tp)) अणु
+	} else if (netif_msg_link(tp)) {
 		netdev_info(tp->dev, "Link is up at %d Mbps, %s duplex\n",
 			    (tp->link_config.active_speed == SPEED_1000 ?
 			     1000 :
@@ -1887,121 +1886,121 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 			    (tp->link_config.active_flowctrl & FLOW_CTRL_RX) ?
 			    "on" : "off");
 
-		अगर (tp->phy_flags & TG3_PHYFLG_EEE_CAP)
+		if (tp->phy_flags & TG3_PHYFLG_EEE_CAP)
 			netdev_info(tp->dev, "EEE is %s\n",
 				    tp->setlpicnt ? "enabled" : "disabled");
 
 		tg3_ump_link_report(tp);
-	पूर्ण
+	}
 
-	tp->link_up = netअगर_carrier_ok(tp->dev);
-पूर्ण
+	tp->link_up = netif_carrier_ok(tp->dev);
+}
 
-अटल u32 tg3_decode_flowctrl_1000T(u32 adv)
-अणु
+static u32 tg3_decode_flowctrl_1000T(u32 adv)
+{
 	u32 flowctrl = 0;
 
-	अगर (adv & ADVERTISE_PAUSE_CAP) अणु
+	if (adv & ADVERTISE_PAUSE_CAP) {
 		flowctrl |= FLOW_CTRL_RX;
-		अगर (!(adv & ADVERTISE_PAUSE_ASYM))
+		if (!(adv & ADVERTISE_PAUSE_ASYM))
 			flowctrl |= FLOW_CTRL_TX;
-	पूर्ण अन्यथा अगर (adv & ADVERTISE_PAUSE_ASYM)
+	} else if (adv & ADVERTISE_PAUSE_ASYM)
 		flowctrl |= FLOW_CTRL_TX;
 
-	वापस flowctrl;
-पूर्ण
+	return flowctrl;
+}
 
-अटल u16 tg3_advert_flowctrl_1000X(u8 flow_ctrl)
-अणु
+static u16 tg3_advert_flowctrl_1000X(u8 flow_ctrl)
+{
 	u16 miireg;
 
-	अगर ((flow_ctrl & FLOW_CTRL_TX) && (flow_ctrl & FLOW_CTRL_RX))
+	if ((flow_ctrl & FLOW_CTRL_TX) && (flow_ctrl & FLOW_CTRL_RX))
 		miireg = ADVERTISE_1000XPAUSE;
-	अन्यथा अगर (flow_ctrl & FLOW_CTRL_TX)
+	else if (flow_ctrl & FLOW_CTRL_TX)
 		miireg = ADVERTISE_1000XPSE_ASYM;
-	अन्यथा अगर (flow_ctrl & FLOW_CTRL_RX)
+	else if (flow_ctrl & FLOW_CTRL_RX)
 		miireg = ADVERTISE_1000XPAUSE | ADVERTISE_1000XPSE_ASYM;
-	अन्यथा
+	else
 		miireg = 0;
 
-	वापस miireg;
-पूर्ण
+	return miireg;
+}
 
-अटल u32 tg3_decode_flowctrl_1000X(u32 adv)
-अणु
+static u32 tg3_decode_flowctrl_1000X(u32 adv)
+{
 	u32 flowctrl = 0;
 
-	अगर (adv & ADVERTISE_1000XPAUSE) अणु
+	if (adv & ADVERTISE_1000XPAUSE) {
 		flowctrl |= FLOW_CTRL_RX;
-		अगर (!(adv & ADVERTISE_1000XPSE_ASYM))
+		if (!(adv & ADVERTISE_1000XPSE_ASYM))
 			flowctrl |= FLOW_CTRL_TX;
-	पूर्ण अन्यथा अगर (adv & ADVERTISE_1000XPSE_ASYM)
+	} else if (adv & ADVERTISE_1000XPSE_ASYM)
 		flowctrl |= FLOW_CTRL_TX;
 
-	वापस flowctrl;
-पूर्ण
+	return flowctrl;
+}
 
-अटल u8 tg3_resolve_flowctrl_1000X(u16 lcladv, u16 rmtadv)
-अणु
+static u8 tg3_resolve_flowctrl_1000X(u16 lcladv, u16 rmtadv)
+{
 	u8 cap = 0;
 
-	अगर (lcladv & rmtadv & ADVERTISE_1000XPAUSE) अणु
+	if (lcladv & rmtadv & ADVERTISE_1000XPAUSE) {
 		cap = FLOW_CTRL_TX | FLOW_CTRL_RX;
-	पूर्ण अन्यथा अगर (lcladv & rmtadv & ADVERTISE_1000XPSE_ASYM) अणु
-		अगर (lcladv & ADVERTISE_1000XPAUSE)
+	} else if (lcladv & rmtadv & ADVERTISE_1000XPSE_ASYM) {
+		if (lcladv & ADVERTISE_1000XPAUSE)
 			cap = FLOW_CTRL_RX;
-		अगर (rmtadv & ADVERTISE_1000XPAUSE)
+		if (rmtadv & ADVERTISE_1000XPAUSE)
 			cap = FLOW_CTRL_TX;
-	पूर्ण
+	}
 
-	वापस cap;
-पूर्ण
+	return cap;
+}
 
-अटल व्योम tg3_setup_flow_control(काष्ठा tg3 *tp, u32 lcladv, u32 rmtadv)
-अणु
-	u8 स्वतःneg;
+static void tg3_setup_flow_control(struct tg3 *tp, u32 lcladv, u32 rmtadv)
+{
+	u8 autoneg;
 	u8 flowctrl = 0;
 	u32 old_rx_mode = tp->rx_mode;
 	u32 old_tx_mode = tp->tx_mode;
 
-	अगर (tg3_flag(tp, USE_PHYLIB))
-		स्वतःneg = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr)->स्वतःneg;
-	अन्यथा
-		स्वतःneg = tp->link_config.स्वतःneg;
+	if (tg3_flag(tp, USE_PHYLIB))
+		autoneg = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr)->autoneg;
+	else
+		autoneg = tp->link_config.autoneg;
 
-	अगर (स्वतःneg == AUTONEG_ENABLE && tg3_flag(tp, PAUSE_AUTONEG)) अणु
-		अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
+	if (autoneg == AUTONEG_ENABLE && tg3_flag(tp, PAUSE_AUTONEG)) {
+		if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
 			flowctrl = tg3_resolve_flowctrl_1000X(lcladv, rmtadv);
-		अन्यथा
+		else
 			flowctrl = mii_resolve_flowctrl_fdx(lcladv, rmtadv);
-	पूर्ण अन्यथा
+	} else
 		flowctrl = tp->link_config.flowctrl;
 
 	tp->link_config.active_flowctrl = flowctrl;
 
-	अगर (flowctrl & FLOW_CTRL_RX)
+	if (flowctrl & FLOW_CTRL_RX)
 		tp->rx_mode |= RX_MODE_FLOW_CTRL_ENABLE;
-	अन्यथा
+	else
 		tp->rx_mode &= ~RX_MODE_FLOW_CTRL_ENABLE;
 
-	अगर (old_rx_mode != tp->rx_mode)
+	if (old_rx_mode != tp->rx_mode)
 		tw32_f(MAC_RX_MODE, tp->rx_mode);
 
-	अगर (flowctrl & FLOW_CTRL_TX)
+	if (flowctrl & FLOW_CTRL_TX)
 		tp->tx_mode |= TX_MODE_FLOW_CTRL_ENABLE;
-	अन्यथा
+	else
 		tp->tx_mode &= ~TX_MODE_FLOW_CTRL_ENABLE;
 
-	अगर (old_tx_mode != tp->tx_mode)
+	if (old_tx_mode != tp->tx_mode)
 		tw32_f(MAC_TX_MODE, tp->tx_mode);
-पूर्ण
+}
 
-अटल व्योम tg3_adjust_link(काष्ठा net_device *dev)
-अणु
+static void tg3_adjust_link(struct net_device *dev)
+{
 	u8 oldflowctrl, linkmesg = 0;
 	u32 mac_mode, lcl_adv, rmt_adv;
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	काष्ठा phy_device *phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
+	struct tg3 *tp = netdev_priv(dev);
+	struct phy_device *phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
 
 	spin_lock_bh(&tp->lock);
 
@@ -2010,61 +2009,61 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 
 	oldflowctrl = tp->link_config.active_flowctrl;
 
-	अगर (phydev->link) अणु
+	if (phydev->link) {
 		lcl_adv = 0;
 		rmt_adv = 0;
 
-		अगर (phydev->speed == SPEED_100 || phydev->speed == SPEED_10)
+		if (phydev->speed == SPEED_100 || phydev->speed == SPEED_10)
 			mac_mode |= MAC_MODE_PORT_MODE_MII;
-		अन्यथा अगर (phydev->speed == SPEED_1000 ||
+		else if (phydev->speed == SPEED_1000 ||
 			 tg3_asic_rev(tp) != ASIC_REV_5785)
 			mac_mode |= MAC_MODE_PORT_MODE_GMII;
-		अन्यथा
+		else
 			mac_mode |= MAC_MODE_PORT_MODE_MII;
 
-		अगर (phydev->duplex == DUPLEX_HALF)
+		if (phydev->duplex == DUPLEX_HALF)
 			mac_mode |= MAC_MODE_HALF_DUPLEX;
-		अन्यथा अणु
+		else {
 			lcl_adv = mii_advertise_flowctrl(
 				  tp->link_config.flowctrl);
 
-			अगर (phydev->छोड़ो)
+			if (phydev->pause)
 				rmt_adv = LPA_PAUSE_CAP;
-			अगर (phydev->asym_छोड़ो)
+			if (phydev->asym_pause)
 				rmt_adv |= LPA_PAUSE_ASYM;
-		पूर्ण
+		}
 
 		tg3_setup_flow_control(tp, lcl_adv, rmt_adv);
-	पूर्ण अन्यथा
+	} else
 		mac_mode |= MAC_MODE_PORT_MODE_GMII;
 
-	अगर (mac_mode != tp->mac_mode) अणु
+	if (mac_mode != tp->mac_mode) {
 		tp->mac_mode = mac_mode;
 		tw32_f(MAC_MODE, tp->mac_mode);
 		udelay(40);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5785) अणु
-		अगर (phydev->speed == SPEED_10)
+	if (tg3_asic_rev(tp) == ASIC_REV_5785) {
+		if (phydev->speed == SPEED_10)
 			tw32(MAC_MI_STAT,
 			     MAC_MI_STAT_10MBPS_MODE |
 			     MAC_MI_STAT_LNKSTAT_ATTN_ENAB);
-		अन्यथा
+		else
 			tw32(MAC_MI_STAT, MAC_MI_STAT_LNKSTAT_ATTN_ENAB);
-	पूर्ण
+	}
 
-	अगर (phydev->speed == SPEED_1000 && phydev->duplex == DUPLEX_HALF)
+	if (phydev->speed == SPEED_1000 && phydev->duplex == DUPLEX_HALF)
 		tw32(MAC_TX_LENGTHS,
 		     ((2 << TX_LENGTHS_IPG_CRS_SHIFT) |
 		      (6 << TX_LENGTHS_IPG_SHIFT) |
 		      (0xff << TX_LENGTHS_SLOT_TIME_SHIFT)));
-	अन्यथा
+	else
 		tw32(MAC_TX_LENGTHS,
 		     ((2 << TX_LENGTHS_IPG_CRS_SHIFT) |
 		      (6 << TX_LENGTHS_IPG_SHIFT) |
 		      (32 << TX_LENGTHS_SLOT_TIME_SHIFT)));
 
-	अगर (phydev->link != tp->old_link ||
+	if (phydev->link != tp->old_link ||
 	    phydev->speed != tp->link_config.active_speed ||
 	    phydev->duplex != tp->link_config.active_duplex ||
 	    oldflowctrl != tp->link_config.active_flowctrl)
@@ -2076,16 +2075,16 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 
 	spin_unlock_bh(&tp->lock);
 
-	अगर (linkmesg)
+	if (linkmesg)
 		tg3_link_report(tp);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_phy_init(काष्ठा tg3 *tp)
-अणु
-	काष्ठा phy_device *phydev;
+static int tg3_phy_init(struct tg3 *tp)
+{
+	struct phy_device *phydev;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_CONNECTED)
-		वापस 0;
+	if (tp->phy_flags & TG3_PHYFLG_IS_CONNECTED)
+		return 0;
 
 	/* Bring the PHY back to a known state. */
 	tg3_bmcr_reset(tp);
@@ -2094,279 +2093,279 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 
 	/* Attach the MAC to the PHY. */
 	phydev = phy_connect(tp->dev, phydev_name(phydev),
-			     tg3_adjust_link, phydev->पूर्णांकerface);
-	अगर (IS_ERR(phydev)) अणु
+			     tg3_adjust_link, phydev->interface);
+	if (IS_ERR(phydev)) {
 		dev_err(&tp->pdev->dev, "Could not attach to PHY\n");
-		वापस PTR_ERR(phydev);
-	पूर्ण
+		return PTR_ERR(phydev);
+	}
 
 	/* Mask with MAC supported features. */
-	चयन (phydev->पूर्णांकerface) अणु
-	हाल PHY_INTERFACE_MODE_GMII:
-	हाल PHY_INTERFACE_MODE_RGMII:
-		अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
+	switch (phydev->interface) {
+	case PHY_INTERFACE_MODE_GMII:
+	case PHY_INTERFACE_MODE_RGMII:
+		if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
 			phy_set_max_speed(phydev, SPEED_1000);
-			phy_support_asym_छोड़ो(phydev);
-			अवरोध;
-		पूर्ण
+			phy_support_asym_pause(phydev);
+			break;
+		}
 		fallthrough;
-	हाल PHY_INTERFACE_MODE_MII:
+	case PHY_INTERFACE_MODE_MII:
 		phy_set_max_speed(phydev, SPEED_100);
-		phy_support_asym_छोड़ो(phydev);
-		अवरोध;
-	शेष:
+		phy_support_asym_pause(phydev);
+		break;
+	default:
 		phy_disconnect(mdiobus_get_phy(tp->mdio_bus, tp->phy_addr));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tp->phy_flags |= TG3_PHYFLG_IS_CONNECTED;
 
 	phy_attached_info(phydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_phy_start(काष्ठा tg3 *tp)
-अणु
-	काष्ठा phy_device *phydev;
+static void tg3_phy_start(struct tg3 *tp)
+{
+	struct phy_device *phydev;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
-		वापस;
+	if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
+		return;
 
 	phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) अणु
+	if (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) {
 		tp->phy_flags &= ~TG3_PHYFLG_IS_LOW_POWER;
 		phydev->speed = tp->link_config.speed;
 		phydev->duplex = tp->link_config.duplex;
-		phydev->स्वतःneg = tp->link_config.स्वतःneg;
+		phydev->autoneg = tp->link_config.autoneg;
 		ethtool_convert_legacy_u32_to_link_mode(
 			phydev->advertising, tp->link_config.advertising);
-	पूर्ण
+	}
 
 	phy_start(phydev);
 
 	phy_start_aneg(phydev);
-पूर्ण
+}
 
-अटल व्योम tg3_phy_stop(काष्ठा tg3 *tp)
-अणु
-	अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
-		वापस;
+static void tg3_phy_stop(struct tg3 *tp)
+{
+	if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
+		return;
 
 	phy_stop(mdiobus_get_phy(tp->mdio_bus, tp->phy_addr));
-पूर्ण
+}
 
-अटल व्योम tg3_phy_fini(काष्ठा tg3 *tp)
-अणु
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_CONNECTED) अणु
+static void tg3_phy_fini(struct tg3 *tp)
+{
+	if (tp->phy_flags & TG3_PHYFLG_IS_CONNECTED) {
 		phy_disconnect(mdiobus_get_phy(tp->mdio_bus, tp->phy_addr));
 		tp->phy_flags &= ~TG3_PHYFLG_IS_CONNECTED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tg3_phy_set_extloopbk(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक err;
+static int tg3_phy_set_extloopbk(struct tg3 *tp)
+{
+	int err;
 	u32 val;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_FET)
-		वापस 0;
+	if (tp->phy_flags & TG3_PHYFLG_IS_FET)
+		return 0;
 
-	अगर ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) अणु
-		/* Cannot करो पढ़ो-modअगरy-ग_लिखो on 5401 */
-		err = tg3_phy_auxctl_ग_लिखो(tp,
+	if ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) {
+		/* Cannot do read-modify-write on 5401 */
+		err = tg3_phy_auxctl_write(tp,
 					   MII_TG3_AUXCTL_SHDWSEL_AUXCTL,
 					   MII_TG3_AUXCTL_ACTL_EXTLOOPBK |
 					   0x4c20);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	err = tg3_phy_auxctl_पढ़ो(tp,
+	err = tg3_phy_auxctl_read(tp,
 				  MII_TG3_AUXCTL_SHDWSEL_AUXCTL, &val);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	val |= MII_TG3_AUXCTL_ACTL_EXTLOOPBK;
-	err = tg3_phy_auxctl_ग_लिखो(tp,
+	err = tg3_phy_auxctl_write(tp,
 				   MII_TG3_AUXCTL_SHDWSEL_AUXCTL, val);
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल व्योम tg3_phy_fet_toggle_apd(काष्ठा tg3 *tp, bool enable)
-अणु
+static void tg3_phy_fet_toggle_apd(struct tg3 *tp, bool enable)
+{
 	u32 phytest;
 
-	अगर (!tg3_पढ़ोphy(tp, MII_TG3_FET_TEST, &phytest)) अणु
+	if (!tg3_readphy(tp, MII_TG3_FET_TEST, &phytest)) {
 		u32 phy;
 
-		tg3_ग_लिखोphy(tp, MII_TG3_FET_TEST,
+		tg3_writephy(tp, MII_TG3_FET_TEST,
 			     phytest | MII_TG3_FET_SHADOW_EN);
-		अगर (!tg3_पढ़ोphy(tp, MII_TG3_FET_SHDW_AUXSTAT2, &phy)) अणु
-			अगर (enable)
+		if (!tg3_readphy(tp, MII_TG3_FET_SHDW_AUXSTAT2, &phy)) {
+			if (enable)
 				phy |= MII_TG3_FET_SHDW_AUXSTAT2_APD;
-			अन्यथा
+			else
 				phy &= ~MII_TG3_FET_SHDW_AUXSTAT2_APD;
-			tg3_ग_लिखोphy(tp, MII_TG3_FET_SHDW_AUXSTAT2, phy);
-		पूर्ण
-		tg3_ग_लिखोphy(tp, MII_TG3_FET_TEST, phytest);
-	पूर्ण
-पूर्ण
+			tg3_writephy(tp, MII_TG3_FET_SHDW_AUXSTAT2, phy);
+		}
+		tg3_writephy(tp, MII_TG3_FET_TEST, phytest);
+	}
+}
 
-अटल व्योम tg3_phy_toggle_apd(काष्ठा tg3 *tp, bool enable)
-अणु
+static void tg3_phy_toggle_apd(struct tg3 *tp, bool enable)
+{
 	u32 reg;
 
-	अगर (!tg3_flag(tp, 5705_PLUS) ||
+	if (!tg3_flag(tp, 5705_PLUS) ||
 	    (tg3_flag(tp, 5717_PLUS) &&
 	     (tp->phy_flags & TG3_PHYFLG_MII_SERDES)))
-		वापस;
+		return;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_FET) अणु
+	if (tp->phy_flags & TG3_PHYFLG_IS_FET) {
 		tg3_phy_fet_toggle_apd(tp, enable);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	reg = MII_TG3_MISC_SHDW_SCR5_LPED |
 	      MII_TG3_MISC_SHDW_SCR5_DLPTLM |
 	      MII_TG3_MISC_SHDW_SCR5_SDTL |
 	      MII_TG3_MISC_SHDW_SCR5_C125OE;
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5784 || !enable)
+	if (tg3_asic_rev(tp) != ASIC_REV_5784 || !enable)
 		reg |= MII_TG3_MISC_SHDW_SCR5_DLLAPD;
 
-	tg3_phy_shdw_ग_लिखो(tp, MII_TG3_MISC_SHDW_SCR5_SEL, reg);
+	tg3_phy_shdw_write(tp, MII_TG3_MISC_SHDW_SCR5_SEL, reg);
 
 
 	reg = MII_TG3_MISC_SHDW_APD_WKTM_84MS;
-	अगर (enable)
+	if (enable)
 		reg |= MII_TG3_MISC_SHDW_APD_ENABLE;
 
-	tg3_phy_shdw_ग_लिखो(tp, MII_TG3_MISC_SHDW_APD_SEL, reg);
-पूर्ण
+	tg3_phy_shdw_write(tp, MII_TG3_MISC_SHDW_APD_SEL, reg);
+}
 
-अटल व्योम tg3_phy_toggle_स्वतःmdix(काष्ठा tg3 *tp, bool enable)
-अणु
+static void tg3_phy_toggle_automdix(struct tg3 *tp, bool enable)
+{
 	u32 phy;
 
-	अगर (!tg3_flag(tp, 5705_PLUS) ||
+	if (!tg3_flag(tp, 5705_PLUS) ||
 	    (tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
-		वापस;
+		return;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_FET) अणु
+	if (tp->phy_flags & TG3_PHYFLG_IS_FET) {
 		u32 ephy;
 
-		अगर (!tg3_पढ़ोphy(tp, MII_TG3_FET_TEST, &ephy)) अणु
+		if (!tg3_readphy(tp, MII_TG3_FET_TEST, &ephy)) {
 			u32 reg = MII_TG3_FET_SHDW_MISCCTRL;
 
-			tg3_ग_लिखोphy(tp, MII_TG3_FET_TEST,
+			tg3_writephy(tp, MII_TG3_FET_TEST,
 				     ephy | MII_TG3_FET_SHADOW_EN);
-			अगर (!tg3_पढ़ोphy(tp, reg, &phy)) अणु
-				अगर (enable)
+			if (!tg3_readphy(tp, reg, &phy)) {
+				if (enable)
 					phy |= MII_TG3_FET_SHDW_MISCCTRL_MDIX;
-				अन्यथा
+				else
 					phy &= ~MII_TG3_FET_SHDW_MISCCTRL_MDIX;
-				tg3_ग_लिखोphy(tp, reg, phy);
-			पूर्ण
-			tg3_ग_लिखोphy(tp, MII_TG3_FET_TEST, ephy);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक ret;
+				tg3_writephy(tp, reg, phy);
+			}
+			tg3_writephy(tp, MII_TG3_FET_TEST, ephy);
+		}
+	} else {
+		int ret;
 
-		ret = tg3_phy_auxctl_पढ़ो(tp,
+		ret = tg3_phy_auxctl_read(tp,
 					  MII_TG3_AUXCTL_SHDWSEL_MISC, &phy);
-		अगर (!ret) अणु
-			अगर (enable)
+		if (!ret) {
+			if (enable)
 				phy |= MII_TG3_AUXCTL_MISC_FORCE_AMDIX;
-			अन्यथा
+			else
 				phy &= ~MII_TG3_AUXCTL_MISC_FORCE_AMDIX;
-			tg3_phy_auxctl_ग_लिखो(tp,
+			tg3_phy_auxctl_write(tp,
 					     MII_TG3_AUXCTL_SHDWSEL_MISC, phy);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम tg3_phy_set_wirespeed(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक ret;
+static void tg3_phy_set_wirespeed(struct tg3 *tp)
+{
+	int ret;
 	u32 val;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_NO_ETH_WIRE_SPEED)
-		वापस;
+	if (tp->phy_flags & TG3_PHYFLG_NO_ETH_WIRE_SPEED)
+		return;
 
-	ret = tg3_phy_auxctl_पढ़ो(tp, MII_TG3_AUXCTL_SHDWSEL_MISC, &val);
-	अगर (!ret)
-		tg3_phy_auxctl_ग_लिखो(tp, MII_TG3_AUXCTL_SHDWSEL_MISC,
+	ret = tg3_phy_auxctl_read(tp, MII_TG3_AUXCTL_SHDWSEL_MISC, &val);
+	if (!ret)
+		tg3_phy_auxctl_write(tp, MII_TG3_AUXCTL_SHDWSEL_MISC,
 				     val | MII_TG3_AUXCTL_MISC_WIRESPD_EN);
-पूर्ण
+}
 
-अटल व्योम tg3_phy_apply_otp(काष्ठा tg3 *tp)
-अणु
+static void tg3_phy_apply_otp(struct tg3 *tp)
+{
 	u32 otp, phy;
 
-	अगर (!tp->phy_otp)
-		वापस;
+	if (!tp->phy_otp)
+		return;
 
 	otp = tp->phy_otp;
 
-	अगर (tg3_phy_toggle_auxctl_smdsp(tp, true))
-		वापस;
+	if (tg3_phy_toggle_auxctl_smdsp(tp, true))
+		return;
 
 	phy = ((otp & TG3_OTP_AGCTGT_MASK) >> TG3_OTP_AGCTGT_SHIFT);
 	phy |= MII_TG3_DSP_TAP1_AGCTGT_DFLT;
-	tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_TAP1, phy);
+	tg3_phydsp_write(tp, MII_TG3_DSP_TAP1, phy);
 
 	phy = ((otp & TG3_OTP_HPFFLTR_MASK) >> TG3_OTP_HPFFLTR_SHIFT) |
 	      ((otp & TG3_OTP_HPFOVER_MASK) >> TG3_OTP_HPFOVER_SHIFT);
-	tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_AADJ1CH0, phy);
+	tg3_phydsp_write(tp, MII_TG3_DSP_AADJ1CH0, phy);
 
 	phy = ((otp & TG3_OTP_LPFDIS_MASK) >> TG3_OTP_LPFDIS_SHIFT);
 	phy |= MII_TG3_DSP_AADJ1CH3_ADCCKADJ;
-	tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_AADJ1CH3, phy);
+	tg3_phydsp_write(tp, MII_TG3_DSP_AADJ1CH3, phy);
 
 	phy = ((otp & TG3_OTP_VDAC_MASK) >> TG3_OTP_VDAC_SHIFT);
-	tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_EXP75, phy);
+	tg3_phydsp_write(tp, MII_TG3_DSP_EXP75, phy);
 
 	phy = ((otp & TG3_OTP_10BTAMP_MASK) >> TG3_OTP_10BTAMP_SHIFT);
-	tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_EXP96, phy);
+	tg3_phydsp_write(tp, MII_TG3_DSP_EXP96, phy);
 
 	phy = ((otp & TG3_OTP_ROFF_MASK) >> TG3_OTP_ROFF_SHIFT) |
 	      ((otp & TG3_OTP_RCOFF_MASK) >> TG3_OTP_RCOFF_SHIFT);
-	tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_EXP97, phy);
+	tg3_phydsp_write(tp, MII_TG3_DSP_EXP97, phy);
 
 	tg3_phy_toggle_auxctl_smdsp(tp, false);
-पूर्ण
+}
 
-अटल व्योम tg3_eee_pull_config(काष्ठा tg3 *tp, काष्ठा ethtool_eee *eee)
-अणु
+static void tg3_eee_pull_config(struct tg3 *tp, struct ethtool_eee *eee)
+{
 	u32 val;
-	काष्ठा ethtool_eee *dest = &tp->eee;
+	struct ethtool_eee *dest = &tp->eee;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
-		वापस;
+	if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
+		return;
 
-	अगर (eee)
+	if (eee)
 		dest = eee;
 
-	अगर (tg3_phy_cl45_पढ़ो(tp, MDIO_MMD_AN, TG3_CL45_D7_EEERES_STAT, &val))
-		वापस;
+	if (tg3_phy_cl45_read(tp, MDIO_MMD_AN, TG3_CL45_D7_EEERES_STAT, &val))
+		return;
 
 	/* Pull eee_active */
-	अगर (val == TG3_CL45_D7_EEERES_STAT_LP_1000T ||
-	    val == TG3_CL45_D7_EEERES_STAT_LP_100TX) अणु
+	if (val == TG3_CL45_D7_EEERES_STAT_LP_1000T ||
+	    val == TG3_CL45_D7_EEERES_STAT_LP_100TX) {
 		dest->eee_active = 1;
-	पूर्ण अन्यथा
+	} else
 		dest->eee_active = 0;
 
 	/* Pull lp advertised settings */
-	अगर (tg3_phy_cl45_पढ़ो(tp, MDIO_MMD_AN, MDIO_AN_EEE_LPABLE, &val))
-		वापस;
+	if (tg3_phy_cl45_read(tp, MDIO_MMD_AN, MDIO_AN_EEE_LPABLE, &val))
+		return;
 	dest->lp_advertised = mmd_eee_adv_to_ethtool_adv_t(val);
 
 	/* Pull advertised and eee_enabled settings */
-	अगर (tg3_phy_cl45_पढ़ो(tp, MDIO_MMD_AN, MDIO_AN_EEE_ADV, &val))
-		वापस;
+	if (tg3_phy_cl45_read(tp, MDIO_MMD_AN, MDIO_AN_EEE_ADV, &val))
+		return;
 	dest->eee_enabled = !!val;
 	dest->advertised = mmd_eee_adv_to_ethtool_adv_t(val);
 
@@ -2374,502 +2373,502 @@ MODULE_DEVICE_TABLE(pci, tg3_pci_tbl);
 	val = tr32(TG3_CPMU_EEE_MODE);
 	dest->tx_lpi_enabled = !!(val & TG3_CPMU_EEEMD_LPI_IN_TX);
 
-	/* Pull lpi समयr value */
-	dest->tx_lpi_समयr = tr32(TG3_CPMU_EEE_DBTMR1) & 0xffff;
-पूर्ण
+	/* Pull lpi timer value */
+	dest->tx_lpi_timer = tr32(TG3_CPMU_EEE_DBTMR1) & 0xffff;
+}
 
-अटल व्योम tg3_phy_eee_adjust(काष्ठा tg3 *tp, bool current_link_up)
-अणु
+static void tg3_phy_eee_adjust(struct tg3 *tp, bool current_link_up)
+{
 	u32 val;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
-		वापस;
+	if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
+		return;
 
 	tp->setlpicnt = 0;
 
-	अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE &&
+	if (tp->link_config.autoneg == AUTONEG_ENABLE &&
 	    current_link_up &&
 	    tp->link_config.active_duplex == DUPLEX_FULL &&
 	    (tp->link_config.active_speed == SPEED_100 ||
-	     tp->link_config.active_speed == SPEED_1000)) अणु
+	     tp->link_config.active_speed == SPEED_1000)) {
 		u32 eeectl;
 
-		अगर (tp->link_config.active_speed == SPEED_1000)
+		if (tp->link_config.active_speed == SPEED_1000)
 			eeectl = TG3_CPMU_EEE_CTRL_EXIT_16_5_US;
-		अन्यथा
+		else
 			eeectl = TG3_CPMU_EEE_CTRL_EXIT_36_US;
 
 		tw32(TG3_CPMU_EEE_CTRL, eeectl);
 
-		tg3_eee_pull_config(tp, शून्य);
-		अगर (tp->eee.eee_active)
+		tg3_eee_pull_config(tp, NULL);
+		if (tp->eee.eee_active)
 			tp->setlpicnt = 2;
-	पूर्ण
+	}
 
-	अगर (!tp->setlpicnt) अणु
-		अगर (current_link_up &&
-		   !tg3_phy_toggle_auxctl_smdsp(tp, true)) अणु
-			tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_TAP26, 0x0000);
+	if (!tp->setlpicnt) {
+		if (current_link_up &&
+		   !tg3_phy_toggle_auxctl_smdsp(tp, true)) {
+			tg3_phydsp_write(tp, MII_TG3_DSP_TAP26, 0x0000);
 			tg3_phy_toggle_auxctl_smdsp(tp, false);
-		पूर्ण
+		}
 
 		val = tr32(TG3_CPMU_EEE_MODE);
 		tw32(TG3_CPMU_EEE_MODE, val & ~TG3_CPMU_EEEMD_LPI_ENABLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_phy_eee_enable(काष्ठा tg3 *tp)
-अणु
+static void tg3_phy_eee_enable(struct tg3 *tp)
+{
 	u32 val;
 
-	अगर (tp->link_config.active_speed == SPEED_1000 &&
+	if (tp->link_config.active_speed == SPEED_1000 &&
 	    (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	     tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	     tg3_flag(tp, 57765_CLASS)) &&
-	    !tg3_phy_toggle_auxctl_smdsp(tp, true)) अणु
+	    !tg3_phy_toggle_auxctl_smdsp(tp, true)) {
 		val = MII_TG3_DSP_TAP26_ALNOKO |
 		      MII_TG3_DSP_TAP26_RMRXSTO;
-		tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_TAP26, val);
+		tg3_phydsp_write(tp, MII_TG3_DSP_TAP26, val);
 		tg3_phy_toggle_auxctl_smdsp(tp, false);
-	पूर्ण
+	}
 
 	val = tr32(TG3_CPMU_EEE_MODE);
 	tw32(TG3_CPMU_EEE_MODE, val | TG3_CPMU_EEEMD_LPI_ENABLE);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_रुको_macro_करोne(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक limit = 100;
+static int tg3_wait_macro_done(struct tg3 *tp)
+{
+	int limit = 100;
 
-	जबतक (limit--) अणु
-		u32 पंचांगp32;
+	while (limit--) {
+		u32 tmp32;
 
-		अगर (!tg3_पढ़ोphy(tp, MII_TG3_DSP_CONTROL, &पंचांगp32)) अणु
-			अगर ((पंचांगp32 & 0x1000) == 0)
-				अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (limit < 0)
-		वापस -EBUSY;
+		if (!tg3_readphy(tp, MII_TG3_DSP_CONTROL, &tmp32)) {
+			if ((tmp32 & 0x1000) == 0)
+				break;
+		}
+	}
+	if (limit < 0)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_phy_ग_लिखो_and_check_testpat(काष्ठा tg3 *tp, पूर्णांक *resetp)
-अणु
-	अटल स्थिर u32 test_pat[4][6] = अणु
-	अणु 0x00005555, 0x00000005, 0x00002aaa, 0x0000000a, 0x00003456, 0x00000003 पूर्ण,
-	अणु 0x00002aaa, 0x0000000a, 0x00003333, 0x00000003, 0x0000789a, 0x00000005 पूर्ण,
-	अणु 0x00005a5a, 0x00000005, 0x00002a6a, 0x0000000a, 0x00001bcd, 0x00000003 पूर्ण,
-	अणु 0x00002a5a, 0x0000000a, 0x000033c3, 0x00000003, 0x00002ef1, 0x00000005 पूर्ण
-	पूर्ण;
-	पूर्णांक chan;
+static int tg3_phy_write_and_check_testpat(struct tg3 *tp, int *resetp)
+{
+	static const u32 test_pat[4][6] = {
+	{ 0x00005555, 0x00000005, 0x00002aaa, 0x0000000a, 0x00003456, 0x00000003 },
+	{ 0x00002aaa, 0x0000000a, 0x00003333, 0x00000003, 0x0000789a, 0x00000005 },
+	{ 0x00005a5a, 0x00000005, 0x00002a6a, 0x0000000a, 0x00001bcd, 0x00000003 },
+	{ 0x00002a5a, 0x0000000a, 0x000033c3, 0x00000003, 0x00002ef1, 0x00000005 }
+	};
+	int chan;
 
-	क्रम (chan = 0; chan < 4; chan++) अणु
-		पूर्णांक i;
+	for (chan = 0; chan < 4; chan++) {
+		int i;
 
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS,
+		tg3_writephy(tp, MII_TG3_DSP_ADDRESS,
 			     (chan * 0x2000) | 0x0200);
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0002);
+		tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0002);
 
-		क्रम (i = 0; i < 6; i++)
-			tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT,
+		for (i = 0; i < 6; i++)
+			tg3_writephy(tp, MII_TG3_DSP_RW_PORT,
 				     test_pat[chan][i]);
 
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0202);
-		अगर (tg3_रुको_macro_करोne(tp)) अणु
+		tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0202);
+		if (tg3_wait_macro_done(tp)) {
 			*resetp = 1;
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS,
+		tg3_writephy(tp, MII_TG3_DSP_ADDRESS,
 			     (chan * 0x2000) | 0x0200);
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0082);
-		अगर (tg3_रुको_macro_करोne(tp)) अणु
+		tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0082);
+		if (tg3_wait_macro_done(tp)) {
 			*resetp = 1;
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0802);
-		अगर (tg3_रुको_macro_करोne(tp)) अणु
+		tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0802);
+		if (tg3_wait_macro_done(tp)) {
 			*resetp = 1;
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		क्रम (i = 0; i < 6; i += 2) अणु
+		for (i = 0; i < 6; i += 2) {
 			u32 low, high;
 
-			अगर (tg3_पढ़ोphy(tp, MII_TG3_DSP_RW_PORT, &low) ||
-			    tg3_पढ़ोphy(tp, MII_TG3_DSP_RW_PORT, &high) ||
-			    tg3_रुको_macro_करोne(tp)) अणु
+			if (tg3_readphy(tp, MII_TG3_DSP_RW_PORT, &low) ||
+			    tg3_readphy(tp, MII_TG3_DSP_RW_PORT, &high) ||
+			    tg3_wait_macro_done(tp)) {
 				*resetp = 1;
-				वापस -EBUSY;
-			पूर्ण
+				return -EBUSY;
+			}
 			low &= 0x7fff;
 			high &= 0x000f;
-			अगर (low != test_pat[chan][i] ||
-			    high != test_pat[chan][i+1]) अणु
-				tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS, 0x000b);
-				tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT, 0x4001);
-				tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT, 0x4005);
+			if (low != test_pat[chan][i] ||
+			    high != test_pat[chan][i+1]) {
+				tg3_writephy(tp, MII_TG3_DSP_ADDRESS, 0x000b);
+				tg3_writephy(tp, MII_TG3_DSP_RW_PORT, 0x4001);
+				tg3_writephy(tp, MII_TG3_DSP_RW_PORT, 0x4005);
 
-				वापस -EBUSY;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return -EBUSY;
+			}
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_phy_reset_chanpat(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक chan;
+static int tg3_phy_reset_chanpat(struct tg3 *tp)
+{
+	int chan;
 
-	क्रम (chan = 0; chan < 4; chan++) अणु
-		पूर्णांक i;
+	for (chan = 0; chan < 4; chan++) {
+		int i;
 
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS,
+		tg3_writephy(tp, MII_TG3_DSP_ADDRESS,
 			     (chan * 0x2000) | 0x0200);
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0002);
-		क्रम (i = 0; i < 6; i++)
-			tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT, 0x000);
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0202);
-		अगर (tg3_रुको_macro_करोne(tp))
-			वापस -EBUSY;
-	पूर्ण
+		tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0002);
+		for (i = 0; i < 6; i++)
+			tg3_writephy(tp, MII_TG3_DSP_RW_PORT, 0x000);
+		tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0202);
+		if (tg3_wait_macro_done(tp))
+			return -EBUSY;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_phy_reset_5703_4_5(काष्ठा tg3 *tp)
-अणु
+static int tg3_phy_reset_5703_4_5(struct tg3 *tp)
+{
 	u32 reg32, phy9_orig;
-	पूर्णांक retries, करो_phy_reset, err;
+	int retries, do_phy_reset, err;
 
 	retries = 10;
-	करो_phy_reset = 1;
-	करो अणु
-		अगर (करो_phy_reset) अणु
+	do_phy_reset = 1;
+	do {
+		if (do_phy_reset) {
 			err = tg3_bmcr_reset(tp);
-			अगर (err)
-				वापस err;
-			करो_phy_reset = 0;
-		पूर्ण
+			if (err)
+				return err;
+			do_phy_reset = 0;
+		}
 
-		/* Disable transmitter and पूर्णांकerrupt.  */
-		अगर (tg3_पढ़ोphy(tp, MII_TG3_EXT_CTRL, &reg32))
-			जारी;
+		/* Disable transmitter and interrupt.  */
+		if (tg3_readphy(tp, MII_TG3_EXT_CTRL, &reg32))
+			continue;
 
 		reg32 |= 0x3000;
-		tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL, reg32);
+		tg3_writephy(tp, MII_TG3_EXT_CTRL, reg32);
 
 		/* Set full-duplex, 1000 mbps.  */
-		tg3_ग_लिखोphy(tp, MII_BMCR,
+		tg3_writephy(tp, MII_BMCR,
 			     BMCR_FULLDPLX | BMCR_SPEED1000);
 
 		/* Set to master mode.  */
-		अगर (tg3_पढ़ोphy(tp, MII_CTRL1000, &phy9_orig))
-			जारी;
+		if (tg3_readphy(tp, MII_CTRL1000, &phy9_orig))
+			continue;
 
-		tg3_ग_लिखोphy(tp, MII_CTRL1000,
+		tg3_writephy(tp, MII_CTRL1000,
 			     CTL1000_AS_MASTER | CTL1000_ENABLE_MASTER);
 
 		err = tg3_phy_toggle_auxctl_smdsp(tp, true);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		/* Block the PHY control access.  */
-		tg3_phydsp_ग_लिखो(tp, 0x8005, 0x0800);
+		tg3_phydsp_write(tp, 0x8005, 0x0800);
 
-		err = tg3_phy_ग_लिखो_and_check_testpat(tp, &करो_phy_reset);
-		अगर (!err)
-			अवरोध;
-	पूर्ण जबतक (--retries);
+		err = tg3_phy_write_and_check_testpat(tp, &do_phy_reset);
+		if (!err)
+			break;
+	} while (--retries);
 
 	err = tg3_phy_reset_chanpat(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	tg3_phydsp_ग_लिखो(tp, 0x8005, 0x0000);
+	tg3_phydsp_write(tp, 0x8005, 0x0000);
 
-	tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS, 0x8200);
-	tg3_ग_लिखोphy(tp, MII_TG3_DSP_CONTROL, 0x0000);
+	tg3_writephy(tp, MII_TG3_DSP_ADDRESS, 0x8200);
+	tg3_writephy(tp, MII_TG3_DSP_CONTROL, 0x0000);
 
 	tg3_phy_toggle_auxctl_smdsp(tp, false);
 
-	tg3_ग_लिखोphy(tp, MII_CTRL1000, phy9_orig);
+	tg3_writephy(tp, MII_CTRL1000, phy9_orig);
 
-	err = tg3_पढ़ोphy(tp, MII_TG3_EXT_CTRL, &reg32);
-	अगर (err)
-		वापस err;
+	err = tg3_readphy(tp, MII_TG3_EXT_CTRL, &reg32);
+	if (err)
+		return err;
 
 	reg32 &= ~0x3000;
-	tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL, reg32);
+	tg3_writephy(tp, MII_TG3_EXT_CTRL, reg32);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_carrier_off(काष्ठा tg3 *tp)
-अणु
-	netअगर_carrier_off(tp->dev);
+static void tg3_carrier_off(struct tg3 *tp)
+{
+	netif_carrier_off(tp->dev);
 	tp->link_up = false;
-पूर्ण
+}
 
-अटल व्योम tg3_warn_mgmt_link_flap(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, ENABLE_ASF))
+static void tg3_warn_mgmt_link_flap(struct tg3 *tp)
+{
+	if (tg3_flag(tp, ENABLE_ASF))
 		netdev_warn(tp->dev,
 			    "Management side-band traffic will be interrupted during phy settings change\n");
-पूर्ण
+}
 
-/* This will reset the tigon3 PHY अगर there is no valid
+/* This will reset the tigon3 PHY if there is no valid
  * link unless the FORCE argument is non-zero.
  */
-अटल पूर्णांक tg3_phy_reset(काष्ठा tg3 *tp)
-अणु
+static int tg3_phy_reset(struct tg3 *tp)
+{
 	u32 val, cpmuctrl;
-	पूर्णांक err;
+	int err;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 		val = tr32(GRC_MISC_CFG);
 		tw32_f(GRC_MISC_CFG, val & ~GRC_MISC_CFG_EPHY_IDDQ);
 		udelay(40);
-	पूर्ण
-	err  = tg3_पढ़ोphy(tp, MII_BMSR, &val);
-	err |= tg3_पढ़ोphy(tp, MII_BMSR, &val);
-	अगर (err != 0)
-		वापस -EBUSY;
+	}
+	err  = tg3_readphy(tp, MII_BMSR, &val);
+	err |= tg3_readphy(tp, MII_BMSR, &val);
+	if (err != 0)
+		return -EBUSY;
 
-	अगर (netअगर_running(tp->dev) && tp->link_up) अणु
-		netअगर_carrier_off(tp->dev);
+	if (netif_running(tp->dev) && tp->link_up) {
+		netif_carrier_off(tp->dev);
 		tg3_link_report(tp);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5703 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5703 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5704 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5705) अणु
+	    tg3_asic_rev(tp) == ASIC_REV_5705) {
 		err = tg3_phy_reset_5703_4_5(tp);
-		अगर (err)
-			वापस err;
-		जाओ out;
-	पूर्ण
+		if (err)
+			return err;
+		goto out;
+	}
 
 	cpmuctrl = 0;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5784 &&
-	    tg3_chip_rev(tp) != CHIPREV_5784_AX) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5784 &&
+	    tg3_chip_rev(tp) != CHIPREV_5784_AX) {
 		cpmuctrl = tr32(TG3_CPMU_CTRL);
-		अगर (cpmuctrl & CPMU_CTRL_GPHY_10MB_RXONLY)
+		if (cpmuctrl & CPMU_CTRL_GPHY_10MB_RXONLY)
 			tw32(TG3_CPMU_CTRL,
 			     cpmuctrl & ~CPMU_CTRL_GPHY_10MB_RXONLY);
-	पूर्ण
+	}
 
 	err = tg3_bmcr_reset(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (cpmuctrl & CPMU_CTRL_GPHY_10MB_RXONLY) अणु
+	if (cpmuctrl & CPMU_CTRL_GPHY_10MB_RXONLY) {
 		val = MII_TG3_DSP_EXP8_AEDW | MII_TG3_DSP_EXP8_REJ2MHz;
-		tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_EXP8, val);
+		tg3_phydsp_write(tp, MII_TG3_DSP_EXP8, val);
 
 		tw32(TG3_CPMU_CTRL, cpmuctrl);
-	पूर्ण
+	}
 
-	अगर (tg3_chip_rev(tp) == CHIPREV_5784_AX ||
-	    tg3_chip_rev(tp) == CHIPREV_5761_AX) अणु
+	if (tg3_chip_rev(tp) == CHIPREV_5784_AX ||
+	    tg3_chip_rev(tp) == CHIPREV_5761_AX) {
 		val = tr32(TG3_CPMU_LSPD_1000MB_CLK);
-		अगर ((val & CPMU_LSPD_1000MB_MACCLK_MASK) ==
-		    CPMU_LSPD_1000MB_MACCLK_12_5) अणु
+		if ((val & CPMU_LSPD_1000MB_MACCLK_MASK) ==
+		    CPMU_LSPD_1000MB_MACCLK_12_5) {
 			val &= ~CPMU_LSPD_1000MB_MACCLK_MASK;
 			udelay(40);
 			tw32_f(TG3_CPMU_LSPD_1000MB_CLK, val);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_flag(tp, 5717_PLUS) &&
+	if (tg3_flag(tp, 5717_PLUS) &&
 	    (tp->phy_flags & TG3_PHYFLG_MII_SERDES))
-		वापस 0;
+		return 0;
 
 	tg3_phy_apply_otp(tp);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_ENABLE_APD)
+	if (tp->phy_flags & TG3_PHYFLG_ENABLE_APD)
 		tg3_phy_toggle_apd(tp, true);
-	अन्यथा
+	else
 		tg3_phy_toggle_apd(tp, false);
 
 out:
-	अगर ((tp->phy_flags & TG3_PHYFLG_ADC_BUG) &&
-	    !tg3_phy_toggle_auxctl_smdsp(tp, true)) अणु
-		tg3_phydsp_ग_लिखो(tp, 0x201f, 0x2aaa);
-		tg3_phydsp_ग_लिखो(tp, 0x000a, 0x0323);
+	if ((tp->phy_flags & TG3_PHYFLG_ADC_BUG) &&
+	    !tg3_phy_toggle_auxctl_smdsp(tp, true)) {
+		tg3_phydsp_write(tp, 0x201f, 0x2aaa);
+		tg3_phydsp_write(tp, 0x000a, 0x0323);
 		tg3_phy_toggle_auxctl_smdsp(tp, false);
-	पूर्ण
+	}
 
-	अगर (tp->phy_flags & TG3_PHYFLG_5704_A0_BUG) अणु
-		tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW, 0x8d68);
-		tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW, 0x8d68);
-	पूर्ण
+	if (tp->phy_flags & TG3_PHYFLG_5704_A0_BUG) {
+		tg3_writephy(tp, MII_TG3_MISC_SHDW, 0x8d68);
+		tg3_writephy(tp, MII_TG3_MISC_SHDW, 0x8d68);
+	}
 
-	अगर (tp->phy_flags & TG3_PHYFLG_BER_BUG) अणु
-		अगर (!tg3_phy_toggle_auxctl_smdsp(tp, true)) अणु
-			tg3_phydsp_ग_लिखो(tp, 0x000a, 0x310b);
-			tg3_phydsp_ग_लिखो(tp, 0x201f, 0x9506);
-			tg3_phydsp_ग_लिखो(tp, 0x401f, 0x14e2);
+	if (tp->phy_flags & TG3_PHYFLG_BER_BUG) {
+		if (!tg3_phy_toggle_auxctl_smdsp(tp, true)) {
+			tg3_phydsp_write(tp, 0x000a, 0x310b);
+			tg3_phydsp_write(tp, 0x201f, 0x9506);
+			tg3_phydsp_write(tp, 0x401f, 0x14e2);
 			tg3_phy_toggle_auxctl_smdsp(tp, false);
-		पूर्ण
-	पूर्ण अन्यथा अगर (tp->phy_flags & TG3_PHYFLG_JITTER_BUG) अणु
-		अगर (!tg3_phy_toggle_auxctl_smdsp(tp, true)) अणु
-			tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS, 0x000a);
-			अगर (tp->phy_flags & TG3_PHYFLG_ADJUST_TRIM) अणु
-				tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT, 0x110b);
-				tg3_ग_लिखोphy(tp, MII_TG3_TEST1,
+		}
+	} else if (tp->phy_flags & TG3_PHYFLG_JITTER_BUG) {
+		if (!tg3_phy_toggle_auxctl_smdsp(tp, true)) {
+			tg3_writephy(tp, MII_TG3_DSP_ADDRESS, 0x000a);
+			if (tp->phy_flags & TG3_PHYFLG_ADJUST_TRIM) {
+				tg3_writephy(tp, MII_TG3_DSP_RW_PORT, 0x110b);
+				tg3_writephy(tp, MII_TG3_TEST1,
 					     MII_TG3_TEST1_TRIM_EN | 0x4);
-			पूर्ण अन्यथा
-				tg3_ग_लिखोphy(tp, MII_TG3_DSP_RW_PORT, 0x010b);
+			} else
+				tg3_writephy(tp, MII_TG3_DSP_RW_PORT, 0x010b);
 
 			tg3_phy_toggle_auxctl_smdsp(tp, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Set Extended packet length bit (bit 14) on all chips that */
 	/* support jumbo frames */
-	अगर ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) अणु
-		/* Cannot करो पढ़ो-modअगरy-ग_लिखो on 5401 */
-		tg3_phy_auxctl_ग_लिखो(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL, 0x4c20);
-	पूर्ण अन्यथा अगर (tg3_flag(tp, JUMBO_CAPABLE)) अणु
-		/* Set bit 14 with पढ़ो-modअगरy-ग_लिखो to preserve other bits */
-		err = tg3_phy_auxctl_पढ़ो(tp,
+	if ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) {
+		/* Cannot do read-modify-write on 5401 */
+		tg3_phy_auxctl_write(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL, 0x4c20);
+	} else if (tg3_flag(tp, JUMBO_CAPABLE)) {
+		/* Set bit 14 with read-modify-write to preserve other bits */
+		err = tg3_phy_auxctl_read(tp,
 					  MII_TG3_AUXCTL_SHDWSEL_AUXCTL, &val);
-		अगर (!err)
-			tg3_phy_auxctl_ग_लिखो(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL,
+		if (!err)
+			tg3_phy_auxctl_write(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL,
 					   val | MII_TG3_AUXCTL_ACTL_EXTPKTLEN);
-	पूर्ण
+	}
 
-	/* Set phy रेजिस्टर 0x10 bit 0 to high fअगरo elasticity to support
+	/* Set phy register 0x10 bit 0 to high fifo elasticity to support
 	 * jumbo frames transmission.
 	 */
-	अगर (tg3_flag(tp, JUMBO_CAPABLE)) अणु
-		अगर (!tg3_पढ़ोphy(tp, MII_TG3_EXT_CTRL, &val))
-			tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL,
+	if (tg3_flag(tp, JUMBO_CAPABLE)) {
+		if (!tg3_readphy(tp, MII_TG3_EXT_CTRL, &val))
+			tg3_writephy(tp, MII_TG3_EXT_CTRL,
 				     val | MII_TG3_EXT_CTRL_FIFO_ELASTIC);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 		/* adjust output voltage */
-		tg3_ग_लिखोphy(tp, MII_TG3_FET_PTEST, 0x12);
-	पूर्ण
+		tg3_writephy(tp, MII_TG3_FET_PTEST, 0x12);
+	}
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5762_A0)
-		tg3_phydsp_ग_लिखो(tp, 0xffb, 0x4000);
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5762_A0)
+		tg3_phydsp_write(tp, 0xffb, 0x4000);
 
-	tg3_phy_toggle_स्वतःmdix(tp, true);
+	tg3_phy_toggle_automdix(tp, true);
 	tg3_phy_set_wirespeed(tp);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा TG3_GPIO_MSG_DRVR_PRES		 0x00000001
-#घोषणा TG3_GPIO_MSG_NEED_VAUX		 0x00000002
-#घोषणा TG3_GPIO_MSG_MASK		 (TG3_GPIO_MSG_DRVR_PRES | \
+#define TG3_GPIO_MSG_DRVR_PRES		 0x00000001
+#define TG3_GPIO_MSG_NEED_VAUX		 0x00000002
+#define TG3_GPIO_MSG_MASK		 (TG3_GPIO_MSG_DRVR_PRES | \
 					  TG3_GPIO_MSG_NEED_VAUX)
-#घोषणा TG3_GPIO_MSG_ALL_DRVR_PRES_MASK \
+#define TG3_GPIO_MSG_ALL_DRVR_PRES_MASK \
 	((TG3_GPIO_MSG_DRVR_PRES << 0) | \
 	 (TG3_GPIO_MSG_DRVR_PRES << 4) | \
 	 (TG3_GPIO_MSG_DRVR_PRES << 8) | \
 	 (TG3_GPIO_MSG_DRVR_PRES << 12))
 
-#घोषणा TG3_GPIO_MSG_ALL_NEED_VAUX_MASK \
+#define TG3_GPIO_MSG_ALL_NEED_VAUX_MASK \
 	((TG3_GPIO_MSG_NEED_VAUX << 0) | \
 	 (TG3_GPIO_MSG_NEED_VAUX << 4) | \
 	 (TG3_GPIO_MSG_NEED_VAUX << 8) | \
 	 (TG3_GPIO_MSG_NEED_VAUX << 12))
 
-अटल अंतरभूत u32 tg3_set_function_status(काष्ठा tg3 *tp, u32 newstat)
-अणु
-	u32 status, shअगरt;
+static inline u32 tg3_set_function_status(struct tg3 *tp, u32 newstat)
+{
+	u32 status, shift;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719)
-		status = tg3_ape_पढ़ो32(tp, TG3_APE_GPIO_MSG);
-	अन्यथा
+		status = tg3_ape_read32(tp, TG3_APE_GPIO_MSG);
+	else
 		status = tr32(TG3_CPMU_DRV_STATUS);
 
-	shअगरt = TG3_APE_GPIO_MSG_SHIFT + 4 * tp->pci_fn;
-	status &= ~(TG3_GPIO_MSG_MASK << shअगरt);
-	status |= (newstat << shअगरt);
+	shift = TG3_APE_GPIO_MSG_SHIFT + 4 * tp->pci_fn;
+	status &= ~(TG3_GPIO_MSG_MASK << shift);
+	status |= (newstat << shift);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719)
-		tg3_ape_ग_लिखो32(tp, TG3_APE_GPIO_MSG, status);
-	अन्यथा
+		tg3_ape_write32(tp, TG3_APE_GPIO_MSG, status);
+	else
 		tw32(TG3_CPMU_DRV_STATUS, status);
 
-	वापस status >> TG3_APE_GPIO_MSG_SHIFT;
-पूर्ण
+	return status >> TG3_APE_GPIO_MSG_SHIFT;
+}
 
-अटल अंतरभूत पूर्णांक tg3_pwrsrc_चयन_to_vमुख्य(काष्ठा tg3 *tp)
-अणु
-	अगर (!tg3_flag(tp, IS_NIC))
-		वापस 0;
+static inline int tg3_pwrsrc_switch_to_vmain(struct tg3 *tp)
+{
+	if (!tg3_flag(tp, IS_NIC))
+		return 0;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5720) अणु
-		अगर (tg3_ape_lock(tp, TG3_APE_LOCK_GPIO))
-			वापस -EIO;
+	    tg3_asic_rev(tp) == ASIC_REV_5720) {
+		if (tg3_ape_lock(tp, TG3_APE_LOCK_GPIO))
+			return -EIO;
 
 		tg3_set_function_status(tp, TG3_GPIO_MSG_DRVR_PRES);
 
-		tw32_रुको_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl,
+		tw32_wait_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
 		tg3_ape_unlock(tp, TG3_APE_LOCK_GPIO);
-	पूर्ण अन्यथा अणु
-		tw32_रुको_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl,
+	} else {
+		tw32_wait_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_pwrsrc_die_with_vमुख्य(काष्ठा tg3 *tp)
-अणु
+static void tg3_pwrsrc_die_with_vmain(struct tg3 *tp)
+{
 	u32 grc_local_ctrl;
 
-	अगर (!tg3_flag(tp, IS_NIC) ||
+	if (!tg3_flag(tp, IS_NIC) ||
 	    tg3_asic_rev(tp) == ASIC_REV_5700 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5701)
-		वापस;
+		return;
 
 	grc_local_ctrl = tp->grc_local_ctrl | GRC_LCLCTRL_GPIO_OE1;
 
-	tw32_रुको_f(GRC_LOCAL_CTRL,
+	tw32_wait_f(GRC_LOCAL_CTRL,
 		    grc_local_ctrl | GRC_LCLCTRL_GPIO_OUTPUT1,
 		    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
-	tw32_रुको_f(GRC_LOCAL_CTRL,
+	tw32_wait_f(GRC_LOCAL_CTRL,
 		    grc_local_ctrl,
 		    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
-	tw32_रुको_f(GRC_LOCAL_CTRL,
+	tw32_wait_f(GRC_LOCAL_CTRL,
 		    grc_local_ctrl | GRC_LCLCTRL_GPIO_OUTPUT1,
 		    TG3_GRC_LCLCTL_PWRSW_DELAY);
-पूर्ण
+}
 
-अटल व्योम tg3_pwrsrc_चयन_to_vaux(काष्ठा tg3 *tp)
-अणु
-	अगर (!tg3_flag(tp, IS_NIC))
-		वापस;
+static void tg3_pwrsrc_switch_to_vaux(struct tg3 *tp)
+{
+	if (!tg3_flag(tp, IS_NIC))
+		return;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5701) अणु
-		tw32_रुको_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl |
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+	    tg3_asic_rev(tp) == ASIC_REV_5701) {
+		tw32_wait_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl |
 			    (GRC_LCLCTRL_GPIO_OE0 |
 			     GRC_LCLCTRL_GPIO_OE1 |
 			     GRC_LCLCTRL_GPIO_OE2 |
 			     GRC_LCLCTRL_GPIO_OUTPUT0 |
 			     GRC_LCLCTRL_GPIO_OUTPUT1),
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
-	पूर्ण अन्यथा अगर (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761 ||
-		   tp->pdev->device == TG3PCI_DEVICE_TIGON3_5761S) अणु
+	} else if (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761 ||
+		   tp->pdev->device == TG3PCI_DEVICE_TIGON3_5761S) {
 		/* The 5761 non-e device swaps GPIO 0 and GPIO 2. */
 		u32 grc_local_ctrl = GRC_LCLCTRL_GPIO_OE0 |
 				     GRC_LCLCTRL_GPIO_OE1 |
@@ -2877,27 +2876,27 @@ out:
 				     GRC_LCLCTRL_GPIO_OUTPUT0 |
 				     GRC_LCLCTRL_GPIO_OUTPUT1 |
 				     tp->grc_local_ctrl;
-		tw32_रुको_f(GRC_LOCAL_CTRL, grc_local_ctrl,
+		tw32_wait_f(GRC_LOCAL_CTRL, grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
 		grc_local_ctrl |= GRC_LCLCTRL_GPIO_OUTPUT2;
-		tw32_रुको_f(GRC_LOCAL_CTRL, grc_local_ctrl,
+		tw32_wait_f(GRC_LOCAL_CTRL, grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
 		grc_local_ctrl &= ~GRC_LCLCTRL_GPIO_OUTPUT0;
-		tw32_रुको_f(GRC_LOCAL_CTRL, grc_local_ctrl,
+		tw32_wait_f(GRC_LOCAL_CTRL, grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 no_gpio2;
 		u32 grc_local_ctrl = 0;
 
 		/* Workaround to prevent overdrawing Amps. */
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5714) अणु
+		if (tg3_asic_rev(tp) == ASIC_REV_5714) {
 			grc_local_ctrl |= GRC_LCLCTRL_GPIO_OE3;
-			tw32_रुको_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl |
+			tw32_wait_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl |
 				    grc_local_ctrl,
 				    TG3_GRC_LCLCTL_PWRSW_DELAY);
-		पूर्ण
+		}
 
 		/* On 5753 and variants, GPIO2 cannot be used. */
 		no_gpio2 = tp->nic_sram_data_cfg &
@@ -2908,159 +2907,159 @@ out:
 				  GRC_LCLCTRL_GPIO_OE2 |
 				  GRC_LCLCTRL_GPIO_OUTPUT1 |
 				  GRC_LCLCTRL_GPIO_OUTPUT2;
-		अगर (no_gpio2) अणु
+		if (no_gpio2) {
 			grc_local_ctrl &= ~(GRC_LCLCTRL_GPIO_OE2 |
 					    GRC_LCLCTRL_GPIO_OUTPUT2);
-		पूर्ण
-		tw32_रुको_f(GRC_LOCAL_CTRL,
+		}
+		tw32_wait_f(GRC_LOCAL_CTRL,
 			    tp->grc_local_ctrl | grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
 		grc_local_ctrl |= GRC_LCLCTRL_GPIO_OUTPUT0;
 
-		tw32_रुको_f(GRC_LOCAL_CTRL,
+		tw32_wait_f(GRC_LOCAL_CTRL,
 			    tp->grc_local_ctrl | grc_local_ctrl,
 			    TG3_GRC_LCLCTL_PWRSW_DELAY);
 
-		अगर (!no_gpio2) अणु
+		if (!no_gpio2) {
 			grc_local_ctrl &= ~GRC_LCLCTRL_GPIO_OUTPUT2;
-			tw32_रुको_f(GRC_LOCAL_CTRL,
+			tw32_wait_f(GRC_LOCAL_CTRL,
 				    tp->grc_local_ctrl | grc_local_ctrl,
 				    TG3_GRC_LCLCTL_PWRSW_DELAY);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम tg3_frob_aux_घातer_5717(काष्ठा tg3 *tp, bool wol_enable)
-अणु
+static void tg3_frob_aux_power_5717(struct tg3 *tp, bool wol_enable)
+{
 	u32 msg = 0;
 
-	/* Serialize घातer state transitions */
-	अगर (tg3_ape_lock(tp, TG3_APE_LOCK_GPIO))
-		वापस;
+	/* Serialize power state transitions */
+	if (tg3_ape_lock(tp, TG3_APE_LOCK_GPIO))
+		return;
 
-	अगर (tg3_flag(tp, ENABLE_ASF) || tg3_flag(tp, ENABLE_APE) || wol_enable)
+	if (tg3_flag(tp, ENABLE_ASF) || tg3_flag(tp, ENABLE_APE) || wol_enable)
 		msg = TG3_GPIO_MSG_NEED_VAUX;
 
 	msg = tg3_set_function_status(tp, msg);
 
-	अगर (msg & TG3_GPIO_MSG_ALL_DRVR_PRES_MASK)
-		जाओ करोne;
+	if (msg & TG3_GPIO_MSG_ALL_DRVR_PRES_MASK)
+		goto done;
 
-	अगर (msg & TG3_GPIO_MSG_ALL_NEED_VAUX_MASK)
-		tg3_pwrsrc_चयन_to_vaux(tp);
-	अन्यथा
-		tg3_pwrsrc_die_with_vमुख्य(tp);
+	if (msg & TG3_GPIO_MSG_ALL_NEED_VAUX_MASK)
+		tg3_pwrsrc_switch_to_vaux(tp);
+	else
+		tg3_pwrsrc_die_with_vmain(tp);
 
-करोne:
+done:
 	tg3_ape_unlock(tp, TG3_APE_LOCK_GPIO);
-पूर्ण
+}
 
-अटल व्योम tg3_frob_aux_घातer(काष्ठा tg3 *tp, bool include_wol)
-अणु
+static void tg3_frob_aux_power(struct tg3 *tp, bool include_wol)
+{
 	bool need_vaux = false;
 
-	/* The GPIOs करो something completely dअगरferent on 57765. */
-	अगर (!tg3_flag(tp, IS_NIC) || tg3_flag(tp, 57765_CLASS))
-		वापस;
+	/* The GPIOs do something completely different on 57765. */
+	if (!tg3_flag(tp, IS_NIC) || tg3_flag(tp, 57765_CLASS))
+		return;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5720) अणु
-		tg3_frob_aux_घातer_5717(tp, include_wol ?
+	    tg3_asic_rev(tp) == ASIC_REV_5720) {
+		tg3_frob_aux_power_5717(tp, include_wol ?
 					tg3_flag(tp, WOL_ENABLE) != 0 : 0);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (tp->pdev_peer && tp->pdev_peer != tp->pdev) अणु
-		काष्ठा net_device *dev_peer;
+	if (tp->pdev_peer && tp->pdev_peer != tp->pdev) {
+		struct net_device *dev_peer;
 
 		dev_peer = pci_get_drvdata(tp->pdev_peer);
 
-		/* हटाओ_one() may have been run on the peer. */
-		अगर (dev_peer) अणु
-			काष्ठा tg3 *tp_peer = netdev_priv(dev_peer);
+		/* remove_one() may have been run on the peer. */
+		if (dev_peer) {
+			struct tg3 *tp_peer = netdev_priv(dev_peer);
 
-			अगर (tg3_flag(tp_peer, INIT_COMPLETE))
-				वापस;
+			if (tg3_flag(tp_peer, INIT_COMPLETE))
+				return;
 
-			अगर ((include_wol && tg3_flag(tp_peer, WOL_ENABLE)) ||
+			if ((include_wol && tg3_flag(tp_peer, WOL_ENABLE)) ||
 			    tg3_flag(tp_peer, ENABLE_ASF))
 				need_vaux = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर ((include_wol && tg3_flag(tp, WOL_ENABLE)) ||
+	if ((include_wol && tg3_flag(tp, WOL_ENABLE)) ||
 	    tg3_flag(tp, ENABLE_ASF))
 		need_vaux = true;
 
-	अगर (need_vaux)
-		tg3_pwrsrc_चयन_to_vaux(tp);
-	अन्यथा
-		tg3_pwrsrc_die_with_vमुख्य(tp);
-पूर्ण
+	if (need_vaux)
+		tg3_pwrsrc_switch_to_vaux(tp);
+	else
+		tg3_pwrsrc_die_with_vmain(tp);
+}
 
-अटल पूर्णांक tg3_5700_link_polarity(काष्ठा tg3 *tp, u32 speed)
-अणु
-	अगर (tp->led_ctrl == LED_CTRL_MODE_PHY_2)
-		वापस 1;
-	अन्यथा अगर ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5411) अणु
-		अगर (speed != SPEED_10)
-			वापस 1;
-	पूर्ण अन्यथा अगर (speed == SPEED_10)
-		वापस 1;
+static int tg3_5700_link_polarity(struct tg3 *tp, u32 speed)
+{
+	if (tp->led_ctrl == LED_CTRL_MODE_PHY_2)
+		return 1;
+	else if ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5411) {
+		if (speed != SPEED_10)
+			return 1;
+	} else if (speed == SPEED_10)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool tg3_phy_घातer_bug(काष्ठा tg3 *tp)
-अणु
-	चयन (tg3_asic_rev(tp)) अणु
-	हाल ASIC_REV_5700:
-	हाल ASIC_REV_5704:
-		वापस true;
-	हाल ASIC_REV_5780:
-		अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
-			वापस true;
-		वापस false;
-	हाल ASIC_REV_5717:
-		अगर (!tp->pci_fn)
-			वापस true;
-		वापस false;
-	हाल ASIC_REV_5719:
-	हाल ASIC_REV_5720:
-		अगर ((tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
+static bool tg3_phy_power_bug(struct tg3 *tp)
+{
+	switch (tg3_asic_rev(tp)) {
+	case ASIC_REV_5700:
+	case ASIC_REV_5704:
+		return true;
+	case ASIC_REV_5780:
+		if (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
+			return true;
+		return false;
+	case ASIC_REV_5717:
+		if (!tp->pci_fn)
+			return true;
+		return false;
+	case ASIC_REV_5719:
+	case ASIC_REV_5720:
+		if ((tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
 		    !tp->pci_fn)
-			वापस true;
-		वापस false;
-	पूर्ण
+			return true;
+		return false;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool tg3_phy_led_bug(काष्ठा tg3 *tp)
-अणु
-	चयन (tg3_asic_rev(tp)) अणु
-	हाल ASIC_REV_5719:
-	हाल ASIC_REV_5720:
-		अगर ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
+static bool tg3_phy_led_bug(struct tg3 *tp)
+{
+	switch (tg3_asic_rev(tp)) {
+	case ASIC_REV_5719:
+	case ASIC_REV_5720:
+		if ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
 		    !tp->pci_fn)
-			वापस true;
-		वापस false;
-	पूर्ण
+			return true;
+		return false;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम tg3_घातer_करोwn_phy(काष्ठा tg3 *tp, bool करो_low_घातer)
-अणु
+static void tg3_power_down_phy(struct tg3 *tp, bool do_low_power)
+{
 	u32 val;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN)
-		वापस;
+	if (tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN)
+		return;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) अणु
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5704) अणु
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) {
+		if (tg3_asic_rev(tp) == ASIC_REV_5704) {
 			u32 sg_dig_ctrl = tr32(SG_DIG_CTRL);
 			u32 serdes_cfg = tr32(MAC_SERDES_CFG);
 
@@ -3068,182 +3067,182 @@ out:
 				SG_DIG_USING_HW_AUTONEG | SG_DIG_SOFT_RESET;
 			tw32(SG_DIG_CTRL, sg_dig_ctrl);
 			tw32(MAC_SERDES_CFG, serdes_cfg | (1 << 15));
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 		tg3_bmcr_reset(tp);
 		val = tr32(GRC_MISC_CFG);
 		tw32_f(GRC_MISC_CFG, val | GRC_MISC_CFG_EPHY_IDDQ);
 		udelay(40);
-		वापस;
-	पूर्ण अन्यथा अगर (tp->phy_flags & TG3_PHYFLG_IS_FET) अणु
+		return;
+	} else if (tp->phy_flags & TG3_PHYFLG_IS_FET) {
 		u32 phytest;
-		अगर (!tg3_पढ़ोphy(tp, MII_TG3_FET_TEST, &phytest)) अणु
+		if (!tg3_readphy(tp, MII_TG3_FET_TEST, &phytest)) {
 			u32 phy;
 
-			tg3_ग_लिखोphy(tp, MII_ADVERTISE, 0);
-			tg3_ग_लिखोphy(tp, MII_BMCR,
+			tg3_writephy(tp, MII_ADVERTISE, 0);
+			tg3_writephy(tp, MII_BMCR,
 				     BMCR_ANENABLE | BMCR_ANRESTART);
 
-			tg3_ग_लिखोphy(tp, MII_TG3_FET_TEST,
+			tg3_writephy(tp, MII_TG3_FET_TEST,
 				     phytest | MII_TG3_FET_SHADOW_EN);
-			अगर (!tg3_पढ़ोphy(tp, MII_TG3_FET_SHDW_AUXMODE4, &phy)) अणु
+			if (!tg3_readphy(tp, MII_TG3_FET_SHDW_AUXMODE4, &phy)) {
 				phy |= MII_TG3_FET_SHDW_AUXMODE4_SBPD;
-				tg3_ग_लिखोphy(tp,
+				tg3_writephy(tp,
 					     MII_TG3_FET_SHDW_AUXMODE4,
 					     phy);
-			पूर्ण
-			tg3_ग_लिखोphy(tp, MII_TG3_FET_TEST, phytest);
-		पूर्ण
-		वापस;
-	पूर्ण अन्यथा अगर (करो_low_घातer) अणु
-		अगर (!tg3_phy_led_bug(tp))
-			tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL,
+			}
+			tg3_writephy(tp, MII_TG3_FET_TEST, phytest);
+		}
+		return;
+	} else if (do_low_power) {
+		if (!tg3_phy_led_bug(tp))
+			tg3_writephy(tp, MII_TG3_EXT_CTRL,
 				     MII_TG3_EXT_CTRL_FORCE_LED_OFF);
 
 		val = MII_TG3_AUXCTL_PCTL_100TX_LPWR |
 		      MII_TG3_AUXCTL_PCTL_SPR_ISOLATE |
 		      MII_TG3_AUXCTL_PCTL_VREG_11V;
-		tg3_phy_auxctl_ग_लिखो(tp, MII_TG3_AUXCTL_SHDWSEL_PWRCTL, val);
-	पूर्ण
+		tg3_phy_auxctl_write(tp, MII_TG3_AUXCTL_SHDWSEL_PWRCTL, val);
+	}
 
-	/* The PHY should not be घातered करोwn on some chips because
+	/* The PHY should not be powered down on some chips because
 	 * of bugs.
 	 */
-	अगर (tg3_phy_घातer_bug(tp))
-		वापस;
+	if (tg3_phy_power_bug(tp))
+		return;
 
-	अगर (tg3_chip_rev(tp) == CHIPREV_5784_AX ||
-	    tg3_chip_rev(tp) == CHIPREV_5761_AX) अणु
+	if (tg3_chip_rev(tp) == CHIPREV_5784_AX ||
+	    tg3_chip_rev(tp) == CHIPREV_5761_AX) {
 		val = tr32(TG3_CPMU_LSPD_1000MB_CLK);
 		val &= ~CPMU_LSPD_1000MB_MACCLK_MASK;
 		val |= CPMU_LSPD_1000MB_MACCLK_12_5;
 		tw32_f(TG3_CPMU_LSPD_1000MB_CLK, val);
-	पूर्ण
+	}
 
-	tg3_ग_लिखोphy(tp, MII_BMCR, BMCR_PDOWN);
-पूर्ण
+	tg3_writephy(tp, MII_BMCR, BMCR_PDOWN);
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_nvram_lock(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, NVRAM)) अणु
-		पूर्णांक i;
+static int tg3_nvram_lock(struct tg3 *tp)
+{
+	if (tg3_flag(tp, NVRAM)) {
+		int i;
 
-		अगर (tp->nvram_lock_cnt == 0) अणु
+		if (tp->nvram_lock_cnt == 0) {
 			tw32(NVRAM_SWARB, SWARB_REQ_SET1);
-			क्रम (i = 0; i < 8000; i++) अणु
-				अगर (tr32(NVRAM_SWARB) & SWARB_GNT1)
-					अवरोध;
+			for (i = 0; i < 8000; i++) {
+				if (tr32(NVRAM_SWARB) & SWARB_GNT1)
+					break;
 				udelay(20);
-			पूर्ण
-			अगर (i == 8000) अणु
+			}
+			if (i == 8000) {
 				tw32(NVRAM_SWARB, SWARB_REQ_CLR1);
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण
+				return -ENODEV;
+			}
+		}
 		tp->nvram_lock_cnt++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_nvram_unlock(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, NVRAM)) अणु
-		अगर (tp->nvram_lock_cnt > 0)
+static void tg3_nvram_unlock(struct tg3 *tp)
+{
+	if (tg3_flag(tp, NVRAM)) {
+		if (tp->nvram_lock_cnt > 0)
 			tp->nvram_lock_cnt--;
-		अगर (tp->nvram_lock_cnt == 0)
+		if (tp->nvram_lock_cnt == 0)
 			tw32_f(NVRAM_SWARB, SWARB_REQ_CLR1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_enable_nvram_access(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, 5750_PLUS) && !tg3_flag(tp, PROTECTED_NVRAM)) अणु
+static void tg3_enable_nvram_access(struct tg3 *tp)
+{
+	if (tg3_flag(tp, 5750_PLUS) && !tg3_flag(tp, PROTECTED_NVRAM)) {
 		u32 nvaccess = tr32(NVRAM_ACCESS);
 
 		tw32(NVRAM_ACCESS, nvaccess | ACCESS_ENABLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_disable_nvram_access(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, 5750_PLUS) && !tg3_flag(tp, PROTECTED_NVRAM)) अणु
+static void tg3_disable_nvram_access(struct tg3 *tp)
+{
+	if (tg3_flag(tp, 5750_PLUS) && !tg3_flag(tp, PROTECTED_NVRAM)) {
 		u32 nvaccess = tr32(NVRAM_ACCESS);
 
 		tw32(NVRAM_ACCESS, nvaccess & ~ACCESS_ENABLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tg3_nvram_पढ़ो_using_eeprom(काष्ठा tg3 *tp,
+static int tg3_nvram_read_using_eeprom(struct tg3 *tp,
 					u32 offset, u32 *val)
-अणु
-	u32 पंचांगp;
-	पूर्णांक i;
+{
+	u32 tmp;
+	int i;
 
-	अगर (offset > EEPROM_ADDR_ADDR_MASK || (offset % 4) != 0)
-		वापस -EINVAL;
+	if (offset > EEPROM_ADDR_ADDR_MASK || (offset % 4) != 0)
+		return -EINVAL;
 
-	पंचांगp = tr32(GRC_EEPROM_ADDR) & ~(EEPROM_ADDR_ADDR_MASK |
+	tmp = tr32(GRC_EEPROM_ADDR) & ~(EEPROM_ADDR_ADDR_MASK |
 					EEPROM_ADDR_DEVID_MASK |
 					EEPROM_ADDR_READ);
 	tw32(GRC_EEPROM_ADDR,
-	     पंचांगp |
+	     tmp |
 	     (0 << EEPROM_ADDR_DEVID_SHIFT) |
 	     ((offset << EEPROM_ADDR_ADDR_SHIFT) &
 	      EEPROM_ADDR_ADDR_MASK) |
 	     EEPROM_ADDR_READ | EEPROM_ADDR_START);
 
-	क्रम (i = 0; i < 1000; i++) अणु
-		पंचांगp = tr32(GRC_EEPROM_ADDR);
+	for (i = 0; i < 1000; i++) {
+		tmp = tr32(GRC_EEPROM_ADDR);
 
-		अगर (पंचांगp & EEPROM_ADDR_COMPLETE)
-			अवरोध;
+		if (tmp & EEPROM_ADDR_COMPLETE)
+			break;
 		msleep(1);
-	पूर्ण
-	अगर (!(पंचांगp & EEPROM_ADDR_COMPLETE))
-		वापस -EBUSY;
+	}
+	if (!(tmp & EEPROM_ADDR_COMPLETE))
+		return -EBUSY;
 
-	पंचांगp = tr32(GRC_EEPROM_DATA);
+	tmp = tr32(GRC_EEPROM_DATA);
 
 	/*
 	 * The data will always be opposite the native endian
-	 * क्रमmat.  Perक्रमm a blind byteswap to compensate.
+	 * format.  Perform a blind byteswap to compensate.
 	 */
-	*val = swab32(पंचांगp);
+	*val = swab32(tmp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा NVRAM_CMD_TIMEOUT 10000
+#define NVRAM_CMD_TIMEOUT 10000
 
-अटल पूर्णांक tg3_nvram_exec_cmd(काष्ठा tg3 *tp, u32 nvram_cmd)
-अणु
-	पूर्णांक i;
+static int tg3_nvram_exec_cmd(struct tg3 *tp, u32 nvram_cmd)
+{
+	int i;
 
 	tw32(NVRAM_CMD, nvram_cmd);
-	क्रम (i = 0; i < NVRAM_CMD_TIMEOUT; i++) अणु
+	for (i = 0; i < NVRAM_CMD_TIMEOUT; i++) {
 		usleep_range(10, 40);
-		अगर (tr32(NVRAM_CMD) & NVRAM_CMD_DONE) अणु
+		if (tr32(NVRAM_CMD) & NVRAM_CMD_DONE) {
 			udelay(10);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i == NVRAM_CMD_TIMEOUT)
-		वापस -EBUSY;
+	if (i == NVRAM_CMD_TIMEOUT)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 tg3_nvram_phys_addr(काष्ठा tg3 *tp, u32 addr)
-अणु
-	अगर (tg3_flag(tp, NVRAM) &&
+static u32 tg3_nvram_phys_addr(struct tg3 *tp, u32 addr)
+{
+	if (tg3_flag(tp, NVRAM) &&
 	    tg3_flag(tp, NVRAM_BUFFERED) &&
 	    tg3_flag(tp, FLASH) &&
 	    !tg3_flag(tp, NO_NVRAM_ADDR_TRANS) &&
@@ -3253,12 +3252,12 @@ out:
 			ATMEL_AT45DB0X1B_PAGE_POS) +
 		       (addr % tp->nvram_pagesize);
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल u32 tg3_nvram_logical_addr(काष्ठा tg3 *tp, u32 addr)
-अणु
-	अगर (tg3_flag(tp, NVRAM) &&
+static u32 tg3_nvram_logical_addr(struct tg3 *tp, u32 addr)
+{
+	if (tg3_flag(tp, NVRAM) &&
 	    tg3_flag(tp, NVRAM_BUFFERED) &&
 	    tg3_flag(tp, FLASH) &&
 	    !tg3_flag(tp, NO_NVRAM_ADDR_TRANS) &&
@@ -3268,30 +3267,30 @@ out:
 			tp->nvram_pagesize) +
 		       (addr & ((1 << ATMEL_AT45DB0X1B_PAGE_POS) - 1));
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-/* NOTE: Data पढ़ो in from NVRAM is byteswapped according to
- * the byteswapping settings क्रम all other रेजिस्टर accesses.
+/* NOTE: Data read in from NVRAM is byteswapped according to
+ * the byteswapping settings for all other register accesses.
  * tg3 devices are BE devices, so on a BE machine, the data
- * वापसed will be exactly as it is seen in NVRAM.  On a LE
+ * returned will be exactly as it is seen in NVRAM.  On a LE
  * machine, the 32-bit value will be byteswapped.
  */
-अटल पूर्णांक tg3_nvram_पढ़ो(काष्ठा tg3 *tp, u32 offset, u32 *val)
-अणु
-	पूर्णांक ret;
+static int tg3_nvram_read(struct tg3 *tp, u32 offset, u32 *val)
+{
+	int ret;
 
-	अगर (!tg3_flag(tp, NVRAM))
-		वापस tg3_nvram_पढ़ो_using_eeprom(tp, offset, val);
+	if (!tg3_flag(tp, NVRAM))
+		return tg3_nvram_read_using_eeprom(tp, offset, val);
 
 	offset = tg3_nvram_phys_addr(tp, offset);
 
-	अगर (offset > NVRAM_ADDR_MSK)
-		वापस -EINVAL;
+	if (offset > NVRAM_ADDR_MSK)
+		return -EINVAL;
 
 	ret = tg3_nvram_lock(tp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	tg3_enable_nvram_access(tp);
 
@@ -3299,45 +3298,45 @@ out:
 	ret = tg3_nvram_exec_cmd(tp, NVRAM_CMD_RD | NVRAM_CMD_GO |
 		NVRAM_CMD_FIRST | NVRAM_CMD_LAST | NVRAM_CMD_DONE);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		*val = tr32(NVRAM_RDDATA);
 
 	tg3_disable_nvram_access(tp);
 
 	tg3_nvram_unlock(tp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Ensures NVRAM data is in bytestream क्रमmat. */
-अटल पूर्णांक tg3_nvram_पढ़ो_be32(काष्ठा tg3 *tp, u32 offset, __be32 *val)
-अणु
+/* Ensures NVRAM data is in bytestream format. */
+static int tg3_nvram_read_be32(struct tg3 *tp, u32 offset, __be32 *val)
+{
 	u32 v;
-	पूर्णांक res = tg3_nvram_पढ़ो(tp, offset, &v);
-	अगर (!res)
+	int res = tg3_nvram_read(tp, offset, &v);
+	if (!res)
 		*val = cpu_to_be32(v);
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक tg3_nvram_ग_लिखो_block_using_eeprom(काष्ठा tg3 *tp,
+static int tg3_nvram_write_block_using_eeprom(struct tg3 *tp,
 				    u32 offset, u32 len, u8 *buf)
-अणु
-	पूर्णांक i, j, rc = 0;
+{
+	int i, j, rc = 0;
 	u32 val;
 
-	क्रम (i = 0; i < len; i += 4) अणु
+	for (i = 0; i < len; i += 4) {
 		u32 addr;
 		__be32 data;
 
 		addr = offset + i;
 
-		स_नकल(&data, buf + i, 4);
+		memcpy(&data, buf + i, 4);
 
 		/*
-		 * The SEEPROM पूर्णांकerface expects the data to always be opposite
-		 * the native endian क्रमmat.  We accomplish this by reversing
-		 * all the operations that would have been perक्रमmed on the
-		 * data from a call to tg3_nvram_पढ़ो_be32().
+		 * The SEEPROM interface expects the data to always be opposite
+		 * the native endian format.  We accomplish this by reversing
+		 * all the operations that would have been performed on the
+		 * data from a call to tg3_nvram_read_be32().
 		 */
 		tw32(GRC_EEPROM_DATA, swab32(be32_to_cpu(data)));
 
@@ -3352,72 +3351,72 @@ out:
 			EEPROM_ADDR_START |
 			EEPROM_ADDR_WRITE);
 
-		क्रम (j = 0; j < 1000; j++) अणु
+		for (j = 0; j < 1000; j++) {
 			val = tr32(GRC_EEPROM_ADDR);
 
-			अगर (val & EEPROM_ADDR_COMPLETE)
-				अवरोध;
+			if (val & EEPROM_ADDR_COMPLETE)
+				break;
 			msleep(1);
-		पूर्ण
-		अगर (!(val & EEPROM_ADDR_COMPLETE)) अणु
+		}
+		if (!(val & EEPROM_ADDR_COMPLETE)) {
 			rc = -EBUSY;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* offset and length are dword aligned */
-अटल पूर्णांक tg3_nvram_ग_लिखो_block_unbuffered(काष्ठा tg3 *tp, u32 offset, u32 len,
+static int tg3_nvram_write_block_unbuffered(struct tg3 *tp, u32 offset, u32 len,
 		u8 *buf)
-अणु
-	पूर्णांक ret = 0;
+{
+	int ret = 0;
 	u32 pagesize = tp->nvram_pagesize;
 	u32 pagemask = pagesize - 1;
 	u32 nvram_cmd;
-	u8 *पंचांगp;
+	u8 *tmp;
 
-	पंचांगp = kदो_स्मृति(pagesize, GFP_KERNEL);
-	अगर (पंचांगp == शून्य)
-		वापस -ENOMEM;
+	tmp = kmalloc(pagesize, GFP_KERNEL);
+	if (tmp == NULL)
+		return -ENOMEM;
 
-	जबतक (len) अणु
-		पूर्णांक j;
+	while (len) {
+		int j;
 		u32 phy_addr, page_off, size;
 
 		phy_addr = offset & ~pagemask;
 
-		क्रम (j = 0; j < pagesize; j += 4) अणु
-			ret = tg3_nvram_पढ़ो_be32(tp, phy_addr + j,
-						  (__be32 *) (पंचांगp + j));
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-		अगर (ret)
-			अवरोध;
+		for (j = 0; j < pagesize; j += 4) {
+			ret = tg3_nvram_read_be32(tp, phy_addr + j,
+						  (__be32 *) (tmp + j));
+			if (ret)
+				break;
+		}
+		if (ret)
+			break;
 
 		page_off = offset & pagemask;
 		size = pagesize;
-		अगर (len < size)
+		if (len < size)
 			size = len;
 
 		len -= size;
 
-		स_नकल(पंचांगp + page_off, buf, size);
+		memcpy(tmp + page_off, buf, size);
 
 		offset = offset + (pagesize - page_off);
 
 		tg3_enable_nvram_access(tp);
 
 		/*
-		 * Beक्रमe we can erase the flash page, we need
+		 * Before we can erase the flash page, we need
 		 * to issue a special "write enable" command.
 		 */
 		nvram_cmd = NVRAM_CMD_WREN | NVRAM_CMD_GO | NVRAM_CMD_DONE;
 
-		अगर (tg3_nvram_exec_cmd(tp, nvram_cmd))
-			अवरोध;
+		if (tg3_nvram_exec_cmd(tp, nvram_cmd))
+			break;
 
 		/* Erase the target page */
 		tw32(NVRAM_ADDR, phy_addr);
@@ -3425,19 +3424,19 @@ out:
 		nvram_cmd = NVRAM_CMD_GO | NVRAM_CMD_DONE | NVRAM_CMD_WR |
 			NVRAM_CMD_FIRST | NVRAM_CMD_LAST | NVRAM_CMD_ERASE;
 
-		अगर (tg3_nvram_exec_cmd(tp, nvram_cmd))
-			अवरोध;
+		if (tg3_nvram_exec_cmd(tp, nvram_cmd))
+			break;
 
-		/* Issue another ग_लिखो enable to start the ग_लिखो. */
+		/* Issue another write enable to start the write. */
 		nvram_cmd = NVRAM_CMD_WREN | NVRAM_CMD_GO | NVRAM_CMD_DONE;
 
-		अगर (tg3_nvram_exec_cmd(tp, nvram_cmd))
-			अवरोध;
+		if (tg3_nvram_exec_cmd(tp, nvram_cmd))
+			break;
 
-		क्रम (j = 0; j < pagesize; j += 4) अणु
+		for (j = 0; j < pagesize; j += 4) {
 			__be32 data;
 
-			data = *((__be32 *) (पंचांगp + j));
+			data = *((__be32 *) (tmp + j));
 
 			tw32(NVRAM_WRDATA, be32_to_cpu(data));
 
@@ -3446,38 +3445,38 @@ out:
 			nvram_cmd = NVRAM_CMD_GO | NVRAM_CMD_DONE |
 				NVRAM_CMD_WR;
 
-			अगर (j == 0)
+			if (j == 0)
 				nvram_cmd |= NVRAM_CMD_FIRST;
-			अन्यथा अगर (j == (pagesize - 4))
+			else if (j == (pagesize - 4))
 				nvram_cmd |= NVRAM_CMD_LAST;
 
 			ret = tg3_nvram_exec_cmd(tp, nvram_cmd);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-		अगर (ret)
-			अवरोध;
-	पूर्ण
+			if (ret)
+				break;
+		}
+		if (ret)
+			break;
+	}
 
 	nvram_cmd = NVRAM_CMD_WRDI | NVRAM_CMD_GO | NVRAM_CMD_DONE;
 	tg3_nvram_exec_cmd(tp, nvram_cmd);
 
-	kमुक्त(पंचांगp);
+	kfree(tmp);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* offset and length are dword aligned */
-अटल पूर्णांक tg3_nvram_ग_लिखो_block_buffered(काष्ठा tg3 *tp, u32 offset, u32 len,
+static int tg3_nvram_write_block_buffered(struct tg3 *tp, u32 offset, u32 len,
 		u8 *buf)
-अणु
-	पूर्णांक i, ret = 0;
+{
+	int i, ret = 0;
 
-	क्रम (i = 0; i < len; i += 4, offset += 4) अणु
+	for (i = 0; i < len; i += 4, offset += 4) {
 		u32 page_off, phy_addr, nvram_cmd;
 		__be32 data;
 
-		स_नकल(&data, buf + i, 4);
+		memcpy(&data, buf + i, 4);
 		tw32(NVRAM_WRDATA, be32_to_cpu(data));
 
 		page_off = offset % tp->nvram_pagesize;
@@ -3486,188 +3485,188 @@ out:
 
 		nvram_cmd = NVRAM_CMD_GO | NVRAM_CMD_DONE | NVRAM_CMD_WR;
 
-		अगर (page_off == 0 || i == 0)
+		if (page_off == 0 || i == 0)
 			nvram_cmd |= NVRAM_CMD_FIRST;
-		अगर (page_off == (tp->nvram_pagesize - 4))
+		if (page_off == (tp->nvram_pagesize - 4))
 			nvram_cmd |= NVRAM_CMD_LAST;
 
-		अगर (i == (len - 4))
+		if (i == (len - 4))
 			nvram_cmd |= NVRAM_CMD_LAST;
 
-		अगर ((nvram_cmd & NVRAM_CMD_FIRST) ||
+		if ((nvram_cmd & NVRAM_CMD_FIRST) ||
 		    !tg3_flag(tp, FLASH) ||
 		    !tg3_flag(tp, 57765_PLUS))
 			tw32(NVRAM_ADDR, phy_addr);
 
-		अगर (tg3_asic_rev(tp) != ASIC_REV_5752 &&
+		if (tg3_asic_rev(tp) != ASIC_REV_5752 &&
 		    !tg3_flag(tp, 5755_PLUS) &&
 		    (tp->nvram_jedecnum == JEDEC_ST) &&
-		    (nvram_cmd & NVRAM_CMD_FIRST)) अणु
+		    (nvram_cmd & NVRAM_CMD_FIRST)) {
 			u32 cmd;
 
 			cmd = NVRAM_CMD_WREN | NVRAM_CMD_GO | NVRAM_CMD_DONE;
 			ret = tg3_nvram_exec_cmd(tp, cmd);
-			अगर (ret)
-				अवरोध;
-		पूर्ण
-		अगर (!tg3_flag(tp, FLASH)) अणु
-			/* We always करो complete word ग_लिखोs to eeprom. */
+			if (ret)
+				break;
+		}
+		if (!tg3_flag(tp, FLASH)) {
+			/* We always do complete word writes to eeprom. */
 			nvram_cmd |= (NVRAM_CMD_FIRST | NVRAM_CMD_LAST);
-		पूर्ण
+		}
 
 		ret = tg3_nvram_exec_cmd(tp, nvram_cmd);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		if (ret)
+			break;
+	}
+	return ret;
+}
 
 /* offset and length are dword aligned */
-अटल पूर्णांक tg3_nvram_ग_लिखो_block(काष्ठा tg3 *tp, u32 offset, u32 len, u8 *buf)
-अणु
-	पूर्णांक ret;
+static int tg3_nvram_write_block(struct tg3 *tp, u32 offset, u32 len, u8 *buf)
+{
+	int ret;
 
-	अगर (tg3_flag(tp, EEPROM_WRITE_PROT)) अणु
+	if (tg3_flag(tp, EEPROM_WRITE_PROT)) {
 		tw32_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl &
 		       ~GRC_LCLCTRL_GPIO_OUTPUT1);
 		udelay(40);
-	पूर्ण
+	}
 
-	अगर (!tg3_flag(tp, NVRAM)) अणु
-		ret = tg3_nvram_ग_लिखो_block_using_eeprom(tp, offset, len, buf);
-	पूर्ण अन्यथा अणु
+	if (!tg3_flag(tp, NVRAM)) {
+		ret = tg3_nvram_write_block_using_eeprom(tp, offset, len, buf);
+	} else {
 		u32 grc_mode;
 
 		ret = tg3_nvram_lock(tp);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		tg3_enable_nvram_access(tp);
-		अगर (tg3_flag(tp, 5750_PLUS) && !tg3_flag(tp, PROTECTED_NVRAM))
+		if (tg3_flag(tp, 5750_PLUS) && !tg3_flag(tp, PROTECTED_NVRAM))
 			tw32(NVRAM_WRITE1, 0x406);
 
 		grc_mode = tr32(GRC_MODE);
 		tw32(GRC_MODE, grc_mode | GRC_MODE_NVRAM_WR_ENABLE);
 
-		अगर (tg3_flag(tp, NVRAM_BUFFERED) || !tg3_flag(tp, FLASH)) अणु
-			ret = tg3_nvram_ग_लिखो_block_buffered(tp, offset, len,
+		if (tg3_flag(tp, NVRAM_BUFFERED) || !tg3_flag(tp, FLASH)) {
+			ret = tg3_nvram_write_block_buffered(tp, offset, len,
 				buf);
-		पूर्ण अन्यथा अणु
-			ret = tg3_nvram_ग_लिखो_block_unbuffered(tp, offset, len,
+		} else {
+			ret = tg3_nvram_write_block_unbuffered(tp, offset, len,
 				buf);
-		पूर्ण
+		}
 
 		grc_mode = tr32(GRC_MODE);
 		tw32(GRC_MODE, grc_mode & ~GRC_MODE_NVRAM_WR_ENABLE);
 
 		tg3_disable_nvram_access(tp);
 		tg3_nvram_unlock(tp);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, EEPROM_WRITE_PROT)) अणु
+	if (tg3_flag(tp, EEPROM_WRITE_PROT)) {
 		tw32_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl);
 		udelay(40);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा RX_CPU_SCRATCH_BASE	0x30000
-#घोषणा RX_CPU_SCRATCH_SIZE	0x04000
-#घोषणा TX_CPU_SCRATCH_BASE	0x34000
-#घोषणा TX_CPU_SCRATCH_SIZE	0x04000
+#define RX_CPU_SCRATCH_BASE	0x30000
+#define RX_CPU_SCRATCH_SIZE	0x04000
+#define TX_CPU_SCRATCH_BASE	0x34000
+#define TX_CPU_SCRATCH_SIZE	0x04000
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_छोड़ो_cpu(काष्ठा tg3 *tp, u32 cpu_base)
-अणु
-	पूर्णांक i;
-	स्थिर पूर्णांक iters = 10000;
+static int tg3_pause_cpu(struct tg3 *tp, u32 cpu_base)
+{
+	int i;
+	const int iters = 10000;
 
-	क्रम (i = 0; i < iters; i++) अणु
+	for (i = 0; i < iters; i++) {
 		tw32(cpu_base + CPU_STATE, 0xffffffff);
 		tw32(cpu_base + CPU_MODE,  CPU_MODE_HALT);
-		अगर (tr32(cpu_base + CPU_MODE) & CPU_MODE_HALT)
-			अवरोध;
-		अगर (pci_channel_offline(tp->pdev))
-			वापस -EBUSY;
-	पूर्ण
+		if (tr32(cpu_base + CPU_MODE) & CPU_MODE_HALT)
+			break;
+		if (pci_channel_offline(tp->pdev))
+			return -EBUSY;
+	}
 
-	वापस (i == iters) ? -EBUSY : 0;
-पूर्ण
+	return (i == iters) ? -EBUSY : 0;
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_rxcpu_छोड़ो(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक rc = tg3_छोड़ो_cpu(tp, RX_CPU_BASE);
+static int tg3_rxcpu_pause(struct tg3 *tp)
+{
+	int rc = tg3_pause_cpu(tp, RX_CPU_BASE);
 
 	tw32(RX_CPU_BASE + CPU_STATE, 0xffffffff);
 	tw32_f(RX_CPU_BASE + CPU_MODE,  CPU_MODE_HALT);
 	udelay(10);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_txcpu_छोड़ो(काष्ठा tg3 *tp)
-अणु
-	वापस tg3_छोड़ो_cpu(tp, TX_CPU_BASE);
-पूर्ण
+static int tg3_txcpu_pause(struct tg3 *tp)
+{
+	return tg3_pause_cpu(tp, TX_CPU_BASE);
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_resume_cpu(काष्ठा tg3 *tp, u32 cpu_base)
-अणु
+static void tg3_resume_cpu(struct tg3 *tp, u32 cpu_base)
+{
 	tw32(cpu_base + CPU_STATE, 0xffffffff);
 	tw32_f(cpu_base + CPU_MODE,  0x00000000);
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_rxcpu_resume(काष्ठा tg3 *tp)
-अणु
+static void tg3_rxcpu_resume(struct tg3 *tp)
+{
 	tg3_resume_cpu(tp, RX_CPU_BASE);
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_halt_cpu(काष्ठा tg3 *tp, u32 cpu_base)
-अणु
-	पूर्णांक rc;
+static int tg3_halt_cpu(struct tg3 *tp, u32 cpu_base)
+{
+	int rc;
 
 	BUG_ON(cpu_base == TX_CPU_BASE && tg3_flag(tp, 5705_PLUS));
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 		u32 val = tr32(GRC_VCPU_EXT_CTRL);
 
 		tw32(GRC_VCPU_EXT_CTRL, val | GRC_VCPU_EXT_CTRL_HALT_CPU);
-		वापस 0;
-	पूर्ण
-	अगर (cpu_base == RX_CPU_BASE) अणु
-		rc = tg3_rxcpu_छोड़ो(tp);
-	पूर्ण अन्यथा अणु
+		return 0;
+	}
+	if (cpu_base == RX_CPU_BASE) {
+		rc = tg3_rxcpu_pause(tp);
+	} else {
 		/*
-		 * There is only an Rx CPU क्रम the 5750 derivative in the
+		 * There is only an Rx CPU for the 5750 derivative in the
 		 * BCM4785.
 		 */
-		अगर (tg3_flag(tp, IS_SSB_CORE))
-			वापस 0;
+		if (tg3_flag(tp, IS_SSB_CORE))
+			return 0;
 
-		rc = tg3_txcpu_छोड़ो(tp);
-	पूर्ण
+		rc = tg3_txcpu_pause(tp);
+	}
 
-	अगर (rc) अणु
+	if (rc) {
 		netdev_err(tp->dev, "%s timed out, %s CPU\n",
 			   __func__, cpu_base == RX_CPU_BASE ? "RX" : "TX");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Clear firmware's nvram arbitration. */
-	अगर (tg3_flag(tp, NVRAM))
+	if (tg3_flag(tp, NVRAM))
 		tw32(NVRAM_SWARB, SWARB_REQ_CLR0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_fw_data_len(काष्ठा tg3 *tp,
-			   स्थिर काष्ठा tg3_firmware_hdr *fw_hdr)
-अणु
-	पूर्णांक fw_len;
+static int tg3_fw_data_len(struct tg3 *tp,
+			   const struct tg3_firmware_hdr *fw_hdr)
+{
+	int fw_len;
 
 	/* Non fragmented firmware have one firmware header followed by a
 	 * contiguous chunk of data to be written. The length field in that
@@ -3675,198 +3674,198 @@ out:
 	 * length of the bss. The data length is determined based on
 	 * tp->fw->size minus headers.
 	 *
-	 * Fragmented firmware have a मुख्य header followed by multiple
+	 * Fragmented firmware have a main header followed by multiple
 	 * fragments. Each fragment is identical to non fragmented firmware
 	 * with a firmware header followed by a contiguous chunk of data. In
-	 * the मुख्य header, the length field is unused and set to 0xffffffff.
+	 * the main header, the length field is unused and set to 0xffffffff.
 	 * In each fragment header the length is the entire size of that
 	 * fragment i.e. fragment data + header length. Data length is
-	 * thereक्रमe length field in the header minus TG3_FW_HDR_LEN.
+	 * therefore length field in the header minus TG3_FW_HDR_LEN.
 	 */
-	अगर (tp->fw_len == 0xffffffff)
+	if (tp->fw_len == 0xffffffff)
 		fw_len = be32_to_cpu(fw_hdr->len);
-	अन्यथा
+	else
 		fw_len = tp->fw->size;
 
-	वापस (fw_len - TG3_FW_HDR_LEN) / माप(u32);
-पूर्ण
+	return (fw_len - TG3_FW_HDR_LEN) / sizeof(u32);
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_load_firmware_cpu(काष्ठा tg3 *tp, u32 cpu_base,
-				 u32 cpu_scratch_base, पूर्णांक cpu_scratch_size,
-				 स्थिर काष्ठा tg3_firmware_hdr *fw_hdr)
-अणु
-	पूर्णांक err, i;
-	व्योम (*ग_लिखो_op)(काष्ठा tg3 *, u32, u32);
-	पूर्णांक total_len = tp->fw->size;
+static int tg3_load_firmware_cpu(struct tg3 *tp, u32 cpu_base,
+				 u32 cpu_scratch_base, int cpu_scratch_size,
+				 const struct tg3_firmware_hdr *fw_hdr)
+{
+	int err, i;
+	void (*write_op)(struct tg3 *, u32, u32);
+	int total_len = tp->fw->size;
 
-	अगर (cpu_base == TX_CPU_BASE && tg3_flag(tp, 5705_PLUS)) अणु
+	if (cpu_base == TX_CPU_BASE && tg3_flag(tp, 5705_PLUS)) {
 		netdev_err(tp->dev,
 			   "%s: Trying to load TX cpu firmware which is 5705\n",
 			   __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (tg3_flag(tp, 5705_PLUS) && tg3_asic_rev(tp) != ASIC_REV_57766)
-		ग_लिखो_op = tg3_ग_लिखो_mem;
-	अन्यथा
-		ग_लिखो_op = tg3_ग_लिखो_indirect_reg32;
+	if (tg3_flag(tp, 5705_PLUS) && tg3_asic_rev(tp) != ASIC_REV_57766)
+		write_op = tg3_write_mem;
+	else
+		write_op = tg3_write_indirect_reg32;
 
-	अगर (tg3_asic_rev(tp) != ASIC_REV_57766) अणु
-		/* It is possible that bootcode is still loading at this poपूर्णांक.
-		 * Get the nvram lock first beक्रमe halting the cpu.
+	if (tg3_asic_rev(tp) != ASIC_REV_57766) {
+		/* It is possible that bootcode is still loading at this point.
+		 * Get the nvram lock first before halting the cpu.
 		 */
-		पूर्णांक lock_err = tg3_nvram_lock(tp);
+		int lock_err = tg3_nvram_lock(tp);
 		err = tg3_halt_cpu(tp, cpu_base);
-		अगर (!lock_err)
+		if (!lock_err)
 			tg3_nvram_unlock(tp);
-		अगर (err)
-			जाओ out;
+		if (err)
+			goto out;
 
-		क्रम (i = 0; i < cpu_scratch_size; i += माप(u32))
-			ग_लिखो_op(tp, cpu_scratch_base + i, 0);
+		for (i = 0; i < cpu_scratch_size; i += sizeof(u32))
+			write_op(tp, cpu_scratch_base + i, 0);
 		tw32(cpu_base + CPU_STATE, 0xffffffff);
 		tw32(cpu_base + CPU_MODE,
 		     tr32(cpu_base + CPU_MODE) | CPU_MODE_HALT);
-	पूर्ण अन्यथा अणु
-		/* Subtract additional मुख्य header क्रम fragmented firmware and
+	} else {
+		/* Subtract additional main header for fragmented firmware and
 		 * advance to the first fragment
 		 */
 		total_len -= TG3_FW_HDR_LEN;
 		fw_hdr++;
-	पूर्ण
+	}
 
-	करो अणु
+	do {
 		u32 *fw_data = (u32 *)(fw_hdr + 1);
-		क्रम (i = 0; i < tg3_fw_data_len(tp, fw_hdr); i++)
-			ग_लिखो_op(tp, cpu_scratch_base +
+		for (i = 0; i < tg3_fw_data_len(tp, fw_hdr); i++)
+			write_op(tp, cpu_scratch_base +
 				     (be32_to_cpu(fw_hdr->base_addr) & 0xffff) +
-				     (i * माप(u32)),
+				     (i * sizeof(u32)),
 				 be32_to_cpu(fw_data[i]));
 
 		total_len -= be32_to_cpu(fw_hdr->len);
 
 		/* Advance to next fragment */
-		fw_hdr = (काष्ठा tg3_firmware_hdr *)
-			 ((व्योम *)fw_hdr + be32_to_cpu(fw_hdr->len));
-	पूर्ण जबतक (total_len > 0);
+		fw_hdr = (struct tg3_firmware_hdr *)
+			 ((void *)fw_hdr + be32_to_cpu(fw_hdr->len));
+	} while (total_len > 0);
 
 	err = 0;
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_छोड़ो_cpu_and_set_pc(काष्ठा tg3 *tp, u32 cpu_base, u32 pc)
-अणु
-	पूर्णांक i;
-	स्थिर पूर्णांक iters = 5;
+static int tg3_pause_cpu_and_set_pc(struct tg3 *tp, u32 cpu_base, u32 pc)
+{
+	int i;
+	const int iters = 5;
 
 	tw32(cpu_base + CPU_STATE, 0xffffffff);
 	tw32_f(cpu_base + CPU_PC, pc);
 
-	क्रम (i = 0; i < iters; i++) अणु
-		अगर (tr32(cpu_base + CPU_PC) == pc)
-			अवरोध;
+	for (i = 0; i < iters; i++) {
+		if (tr32(cpu_base + CPU_PC) == pc)
+			break;
 		tw32(cpu_base + CPU_STATE, 0xffffffff);
 		tw32(cpu_base + CPU_MODE,  CPU_MODE_HALT);
 		tw32_f(cpu_base + CPU_PC, pc);
 		udelay(1000);
-	पूर्ण
+	}
 
-	वापस (i == iters) ? -EBUSY : 0;
-पूर्ण
+	return (i == iters) ? -EBUSY : 0;
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_load_5701_a0_firmware_fix(काष्ठा tg3 *tp)
-अणु
-	स्थिर काष्ठा tg3_firmware_hdr *fw_hdr;
-	पूर्णांक err;
+static int tg3_load_5701_a0_firmware_fix(struct tg3 *tp)
+{
+	const struct tg3_firmware_hdr *fw_hdr;
+	int err;
 
-	fw_hdr = (काष्ठा tg3_firmware_hdr *)tp->fw->data;
+	fw_hdr = (struct tg3_firmware_hdr *)tp->fw->data;
 
 	/* Firmware blob starts with version numbers, followed by
 	   start address and length. We are setting complete length.
 	   length = end_address_of_bss - start_address_of_text.
-	   Reमुख्यder is the blob to be loaded contiguously
+	   Remainder is the blob to be loaded contiguously
 	   from start address. */
 
 	err = tg3_load_firmware_cpu(tp, RX_CPU_BASE,
 				    RX_CPU_SCRATCH_BASE, RX_CPU_SCRATCH_SIZE,
 				    fw_hdr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	err = tg3_load_firmware_cpu(tp, TX_CPU_BASE,
 				    TX_CPU_SCRATCH_BASE, TX_CPU_SCRATCH_SIZE,
 				    fw_hdr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Now startup only the RX cpu. */
-	err = tg3_छोड़ो_cpu_and_set_pc(tp, RX_CPU_BASE,
+	err = tg3_pause_cpu_and_set_pc(tp, RX_CPU_BASE,
 				       be32_to_cpu(fw_hdr->base_addr));
-	अगर (err) अणु
+	if (err) {
 		netdev_err(tp->dev, "%s fails to set RX CPU PC, is %08x "
 			   "should be %08x\n", __func__,
 			   tr32(RX_CPU_BASE + CPU_PC),
 				be32_to_cpu(fw_hdr->base_addr));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	tg3_rxcpu_resume(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_validate_rxcpu_state(काष्ठा tg3 *tp)
-अणु
-	स्थिर पूर्णांक iters = 1000;
-	पूर्णांक i;
+static int tg3_validate_rxcpu_state(struct tg3 *tp)
+{
+	const int iters = 1000;
+	int i;
 	u32 val;
 
-	/* Wait क्रम boot code to complete initialization and enter service
-	 * loop. It is then safe to करोwnload service patches
+	/* Wait for boot code to complete initialization and enter service
+	 * loop. It is then safe to download service patches
 	 */
-	क्रम (i = 0; i < iters; i++) अणु
-		अगर (tr32(RX_CPU_HWBKPT) == TG3_SBROM_IN_SERVICE_LOOP)
-			अवरोध;
+	for (i = 0; i < iters; i++) {
+		if (tr32(RX_CPU_HWBKPT) == TG3_SBROM_IN_SERVICE_LOOP)
+			break;
 
 		udelay(10);
-	पूर्ण
+	}
 
-	अगर (i == iters) अणु
+	if (i == iters) {
 		netdev_err(tp->dev, "Boot code not ready for service patches\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	val = tg3_पढ़ो_indirect_reg32(tp, TG3_57766_FW_HANDSHAKE);
-	अगर (val & 0xff) अणु
+	val = tg3_read_indirect_reg32(tp, TG3_57766_FW_HANDSHAKE);
+	if (val & 0xff) {
 		netdev_warn(tp->dev,
 			    "Other patches exist. Not downloading EEE patch\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_load_57766_firmware(काष्ठा tg3 *tp)
-अणु
-	काष्ठा tg3_firmware_hdr *fw_hdr;
+static void tg3_load_57766_firmware(struct tg3 *tp)
+{
+	struct tg3_firmware_hdr *fw_hdr;
 
-	अगर (!tg3_flag(tp, NO_NVRAM))
-		वापस;
+	if (!tg3_flag(tp, NO_NVRAM))
+		return;
 
-	अगर (tg3_validate_rxcpu_state(tp))
-		वापस;
+	if (tg3_validate_rxcpu_state(tp))
+		return;
 
-	अगर (!tp->fw)
-		वापस;
+	if (!tp->fw)
+		return;
 
-	/* This firmware blob has a dअगरferent क्रमmat than older firmware
-	 * releases as given below. The मुख्य dअगरference is we have fragmented
+	/* This firmware blob has a different format than older firmware
+	 * releases as given below. The main difference is we have fragmented
 	 * data to be written to non-contiguous locations.
 	 *
 	 * In the beginning we have a firmware header identical to other
@@ -3874,110 +3873,110 @@ out:
 	 * here is unused and set to 0xffffffff.
 	 *
 	 * This is followed by a series of firmware fragments which are
-	 * inभागidually identical to previous firmware. i.e. they have the
-	 * firmware header and followed by data क्रम that fragment. The version
-	 * field of the inभागidual fragment header is unused.
+	 * individually identical to previous firmware. i.e. they have the
+	 * firmware header and followed by data for that fragment. The version
+	 * field of the individual fragment header is unused.
 	 */
 
-	fw_hdr = (काष्ठा tg3_firmware_hdr *)tp->fw->data;
-	अगर (be32_to_cpu(fw_hdr->base_addr) != TG3_57766_FW_BASE_ADDR)
-		वापस;
+	fw_hdr = (struct tg3_firmware_hdr *)tp->fw->data;
+	if (be32_to_cpu(fw_hdr->base_addr) != TG3_57766_FW_BASE_ADDR)
+		return;
 
-	अगर (tg3_rxcpu_छोड़ो(tp))
-		वापस;
+	if (tg3_rxcpu_pause(tp))
+		return;
 
-	/* tg3_load_firmware_cpu() will always succeed क्रम the 57766 */
+	/* tg3_load_firmware_cpu() will always succeed for the 57766 */
 	tg3_load_firmware_cpu(tp, 0, TG3_57766_FW_BASE_ADDR, 0, fw_hdr);
 
 	tg3_rxcpu_resume(tp);
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_load_tso_firmware(काष्ठा tg3 *tp)
-अणु
-	स्थिर काष्ठा tg3_firmware_hdr *fw_hdr;
-	अचिन्हित दीर्घ cpu_base, cpu_scratch_base, cpu_scratch_size;
-	पूर्णांक err;
+static int tg3_load_tso_firmware(struct tg3 *tp)
+{
+	const struct tg3_firmware_hdr *fw_hdr;
+	unsigned long cpu_base, cpu_scratch_base, cpu_scratch_size;
+	int err;
 
-	अगर (!tg3_flag(tp, FW_TSO))
-		वापस 0;
+	if (!tg3_flag(tp, FW_TSO))
+		return 0;
 
-	fw_hdr = (काष्ठा tg3_firmware_hdr *)tp->fw->data;
+	fw_hdr = (struct tg3_firmware_hdr *)tp->fw->data;
 
 	/* Firmware blob starts with version numbers, followed by
 	   start address and length. We are setting complete length.
 	   length = end_address_of_bss - start_address_of_text.
-	   Reमुख्यder is the blob to be loaded contiguously
+	   Remainder is the blob to be loaded contiguously
 	   from start address. */
 
 	cpu_scratch_size = tp->fw_len;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5705) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5705) {
 		cpu_base = RX_CPU_BASE;
 		cpu_scratch_base = NIC_SRAM_MBUF_POOL_BASE5705;
-	पूर्ण अन्यथा अणु
+	} else {
 		cpu_base = TX_CPU_BASE;
 		cpu_scratch_base = TX_CPU_SCRATCH_BASE;
 		cpu_scratch_size = TX_CPU_SCRATCH_SIZE;
-	पूर्ण
+	}
 
 	err = tg3_load_firmware_cpu(tp, cpu_base,
 				    cpu_scratch_base, cpu_scratch_size,
 				    fw_hdr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Now startup the cpu. */
-	err = tg3_छोड़ो_cpu_and_set_pc(tp, cpu_base,
+	err = tg3_pause_cpu_and_set_pc(tp, cpu_base,
 				       be32_to_cpu(fw_hdr->base_addr));
-	अगर (err) अणु
+	if (err) {
 		netdev_err(tp->dev,
 			   "%s fails to set CPU PC, is %08x should be %08x\n",
 			   __func__, tr32(cpu_base + CPU_PC),
 			   be32_to_cpu(fw_hdr->base_addr));
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	tg3_resume_cpu(tp, cpu_base);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* tp->lock is held. */
-अटल व्योम __tg3_set_one_mac_addr(काष्ठा tg3 *tp, u8 *mac_addr, पूर्णांक index)
-अणु
+static void __tg3_set_one_mac_addr(struct tg3 *tp, u8 *mac_addr, int index)
+{
 	u32 addr_high, addr_low;
 
 	addr_high = ((mac_addr[0] << 8) | mac_addr[1]);
 	addr_low = ((mac_addr[2] << 24) | (mac_addr[3] << 16) |
 		    (mac_addr[4] <<  8) | mac_addr[5]);
 
-	अगर (index < 4) अणु
+	if (index < 4) {
 		tw32(MAC_ADDR_0_HIGH + (index * 8), addr_high);
 		tw32(MAC_ADDR_0_LOW + (index * 8), addr_low);
-	पूर्ण अन्यथा अणु
+	} else {
 		index -= 4;
 		tw32(MAC_EXTADDR_0_HIGH + (index * 8), addr_high);
 		tw32(MAC_EXTADDR_0_LOW + (index * 8), addr_low);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम __tg3_set_mac_addr(काष्ठा tg3 *tp, bool skip_mac_1)
-अणु
+static void __tg3_set_mac_addr(struct tg3 *tp, bool skip_mac_1)
+{
 	u32 addr_high;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 4; i++) अणु
-		अगर (i == 1 && skip_mac_1)
-			जारी;
+	for (i = 0; i < 4; i++) {
+		if (i == 1 && skip_mac_1)
+			continue;
 		__tg3_set_one_mac_addr(tp, tp->dev->dev_addr, i);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5703 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5704) अणु
-		क्रम (i = 4; i < 16; i++)
+	if (tg3_asic_rev(tp) == ASIC_REV_5703 ||
+	    tg3_asic_rev(tp) == ASIC_REV_5704) {
+		for (i = 4; i < 16; i++)
 			__tg3_set_one_mac_addr(tp, tp->dev->dev_addr, i);
-	पूर्ण
+	}
 
 	addr_high = (tp->dev->dev_addr[0] +
 		     tp->dev->dev_addr[1] +
@@ -3987,46 +3986,46 @@ out:
 		     tp->dev->dev_addr[5]) &
 		TX_BACKOFF_SEED_MASK;
 	tw32(MAC_TX_BACKOFF_SEED, addr_high);
-पूर्ण
+}
 
-अटल व्योम tg3_enable_रेजिस्टर_access(काष्ठा tg3 *tp)
-अणु
+static void tg3_enable_register_access(struct tg3 *tp)
+{
 	/*
-	 * Make sure रेजिस्टर accesses (indirect or otherwise) will function
+	 * Make sure register accesses (indirect or otherwise) will function
 	 * correctly.
 	 */
-	pci_ग_लिखो_config_dword(tp->pdev,
+	pci_write_config_dword(tp->pdev,
 			       TG3PCI_MISC_HOST_CTRL, tp->misc_host_ctrl);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_घातer_up(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक err;
+static int tg3_power_up(struct tg3 *tp)
+{
+	int err;
 
-	tg3_enable_रेजिस्टर_access(tp);
+	tg3_enable_register_access(tp);
 
-	err = pci_set_घातer_state(tp->pdev, PCI_D0);
-	अगर (!err) अणु
-		/* Switch out of Vaux अगर it is a NIC */
-		tg3_pwrsrc_चयन_to_vमुख्य(tp);
-	पूर्ण अन्यथा अणु
+	err = pci_set_power_state(tp->pdev, PCI_D0);
+	if (!err) {
+		/* Switch out of Vaux if it is a NIC */
+		tg3_pwrsrc_switch_to_vmain(tp);
+	} else {
 		netdev_err(tp->dev, "Transition to D0 failed\n");
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_setup_phy(काष्ठा tg3 *, bool);
+static int tg3_setup_phy(struct tg3 *, bool);
 
-अटल पूर्णांक tg3_घातer_करोwn_prepare(काष्ठा tg3 *tp)
-अणु
+static int tg3_power_down_prepare(struct tg3 *tp)
+{
 	u32 misc_host_ctrl;
-	bool device_should_wake, करो_low_घातer;
+	bool device_should_wake, do_low_power;
 
-	tg3_enable_रेजिस्टर_access(tp);
+	tg3_enable_register_access(tp);
 
 	/* Restore the CLKREQ setting. */
-	अगर (tg3_flag(tp, CLKREQ_BUG))
+	if (tg3_flag(tp, CLKREQ_BUG))
 		pcie_capability_set_word(tp->pdev, PCI_EXP_LNKCTL,
 					 PCI_EXP_LNKCTL_CLKREQ_EN);
 
@@ -4037,12 +4036,12 @@ out:
 	device_should_wake = device_may_wakeup(&tp->pdev->dev) &&
 			     tg3_flag(tp, WOL_ENABLE);
 
-	अगर (tg3_flag(tp, USE_PHYLIB)) अणु
-		करो_low_घातer = false;
-		अगर ((tp->phy_flags & TG3_PHYFLG_IS_CONNECTED) &&
-		    !(tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)) अणु
-			__ETHTOOL_DECLARE_LINK_MODE_MASK(advertising) = अणु 0, पूर्ण;
-			काष्ठा phy_device *phydev;
+	if (tg3_flag(tp, USE_PHYLIB)) {
+		do_low_power = false;
+		if ((tp->phy_flags & TG3_PHYFLG_IS_CONNECTED) &&
+		    !(tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)) {
+			__ETHTOOL_DECLARE_LINK_MODE_MASK(advertising) = { 0, };
+			struct phy_device *phydev;
 			u32 phyid;
 
 			phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
@@ -4051,7 +4050,7 @@ out:
 
 			tp->link_config.speed = phydev->speed;
 			tp->link_config.duplex = phydev->duplex;
-			tp->link_config.स्वतःneg = phydev->स्वतःneg;
+			tp->link_config.autoneg = phydev->autoneg;
 			ethtool_convert_link_mode_to_legacy_u32(
 				&tp->link_config.advertising,
 				phydev->advertising);
@@ -4064,111 +4063,111 @@ out:
 			linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Half_BIT,
 					 advertising);
 
-			अगर (tg3_flag(tp, ENABLE_ASF) || device_should_wake) अणु
-				अगर (tg3_flag(tp, WOL_SPEED_100MB)) अणु
+			if (tg3_flag(tp, ENABLE_ASF) || device_should_wake) {
+				if (tg3_flag(tp, WOL_SPEED_100MB)) {
 					linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Half_BIT,
 							 advertising);
 					linkmode_set_bit(ETHTOOL_LINK_MODE_100baseT_Full_BIT,
 							 advertising);
 					linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Full_BIT,
 							 advertising);
-				पूर्ण अन्यथा अणु
+				} else {
 					linkmode_set_bit(ETHTOOL_LINK_MODE_10baseT_Full_BIT,
 							 advertising);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			linkmode_copy(phydev->advertising, advertising);
 			phy_start_aneg(phydev);
 
 			phyid = phydev->drv->phy_id & phydev->drv->phy_id_mask;
-			अगर (phyid != PHY_ID_BCMAC131) अणु
+			if (phyid != PHY_ID_BCMAC131) {
 				phyid &= PHY_BCM_OUI_MASK;
-				अगर (phyid == PHY_BCM_OUI_1 ||
+				if (phyid == PHY_BCM_OUI_1 ||
 				    phyid == PHY_BCM_OUI_2 ||
 				    phyid == PHY_BCM_OUI_3)
-					करो_low_घातer = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		करो_low_घातer = true;
+					do_low_power = true;
+			}
+		}
+	} else {
+		do_low_power = true;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER))
+		if (!(tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER))
 			tp->phy_flags |= TG3_PHYFLG_IS_LOW_POWER;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
+		if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
 			tg3_setup_phy(tp, false);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 		u32 val;
 
 		val = tr32(GRC_VCPU_EXT_CTRL);
 		tw32(GRC_VCPU_EXT_CTRL, val | GRC_VCPU_EXT_CTRL_DISABLE_WOL);
-	पूर्ण अन्यथा अगर (!tg3_flag(tp, ENABLE_ASF)) अणु
-		पूर्णांक i;
+	} else if (!tg3_flag(tp, ENABLE_ASF)) {
+		int i;
 		u32 val;
 
-		क्रम (i = 0; i < 200; i++) अणु
-			tg3_पढ़ो_mem(tp, NIC_SRAM_FW_ASF_STATUS_MBOX, &val);
-			अगर (val == ~NIC_SRAM_FIRMWARE_MBOX_MAGIC1)
-				अवरोध;
+		for (i = 0; i < 200; i++) {
+			tg3_read_mem(tp, NIC_SRAM_FW_ASF_STATUS_MBOX, &val);
+			if (val == ~NIC_SRAM_FIRMWARE_MBOX_MAGIC1)
+				break;
 			msleep(1);
-		पूर्ण
-	पूर्ण
-	अगर (tg3_flag(tp, WOL_CAP))
-		tg3_ग_लिखो_mem(tp, NIC_SRAM_WOL_MBOX, WOL_SIGNATURE |
+		}
+	}
+	if (tg3_flag(tp, WOL_CAP))
+		tg3_write_mem(tp, NIC_SRAM_WOL_MBOX, WOL_SIGNATURE |
 						     WOL_DRV_STATE_SHUTDOWN |
 						     WOL_DRV_WOL |
 						     WOL_SET_MAGIC_PKT);
 
-	अगर (device_should_wake) अणु
+	if (device_should_wake) {
 		u32 mac_mode;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES)) अणु
-			अगर (करो_low_घातer &&
-			    !(tp->phy_flags & TG3_PHYFLG_IS_FET)) अणु
-				tg3_phy_auxctl_ग_लिखो(tp,
+		if (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES)) {
+			if (do_low_power &&
+			    !(tp->phy_flags & TG3_PHYFLG_IS_FET)) {
+				tg3_phy_auxctl_write(tp,
 					       MII_TG3_AUXCTL_SHDWSEL_PWRCTL,
 					       MII_TG3_AUXCTL_PCTL_WOL_EN |
 					       MII_TG3_AUXCTL_PCTL_100TX_LPWR |
 					       MII_TG3_AUXCTL_PCTL_CL_AB_TXDAC);
 				udelay(40);
-			पूर्ण
+			}
 
-			अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
+			if (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
 				mac_mode = MAC_MODE_PORT_MODE_GMII;
-			अन्यथा अगर (tp->phy_flags &
-				 TG3_PHYFLG_KEEP_LINK_ON_PWRDN) अणु
-				अगर (tp->link_config.active_speed == SPEED_1000)
+			else if (tp->phy_flags &
+				 TG3_PHYFLG_KEEP_LINK_ON_PWRDN) {
+				if (tp->link_config.active_speed == SPEED_1000)
 					mac_mode = MAC_MODE_PORT_MODE_GMII;
-				अन्यथा
+				else
 					mac_mode = MAC_MODE_PORT_MODE_MII;
-			पूर्ण अन्यथा
+			} else
 				mac_mode = MAC_MODE_PORT_MODE_MII;
 
 			mac_mode |= tp->mac_mode & MAC_MODE_LINK_POLARITY;
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5700) अणु
+			if (tg3_asic_rev(tp) == ASIC_REV_5700) {
 				u32 speed = tg3_flag(tp, WOL_SPEED_100MB) ?
 					     SPEED_100 : SPEED_10;
-				अगर (tg3_5700_link_polarity(tp, speed))
+				if (tg3_5700_link_polarity(tp, speed))
 					mac_mode |= MAC_MODE_LINK_POLARITY;
-				अन्यथा
+				else
 					mac_mode &= ~MAC_MODE_LINK_POLARITY;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			mac_mode = MAC_MODE_PORT_MODE_TBI;
-		पूर्ण
+		}
 
-		अगर (!tg3_flag(tp, 5750_PLUS))
+		if (!tg3_flag(tp, 5750_PLUS))
 			tw32(MAC_LED_CTRL, tp->led_ctrl);
 
 		mac_mode |= MAC_MODE_MAGIC_PKT_ENABLE;
-		अगर ((tg3_flag(tp, 5705_PLUS) && !tg3_flag(tp, 5780_CLASS)) &&
+		if ((tg3_flag(tp, 5705_PLUS) && !tg3_flag(tp, 5780_CLASS)) &&
 		    (tg3_flag(tp, ENABLE_ASF) || tg3_flag(tp, ENABLE_APE)))
 			mac_mode |= MAC_MODE_KEEP_FRAME_IN_WOL;
 
-		अगर (tg3_flag(tp, ENABLE_APE))
+		if (tg3_flag(tp, ENABLE_APE))
 			mac_mode |= MAC_MODE_APE_TX_EN |
 				    MAC_MODE_APE_RX_EN |
 				    MAC_MODE_TDE_ENABLE;
@@ -4178,552 +4177,552 @@ out:
 
 		tw32_f(MAC_RX_MODE, RX_MODE_ENABLE);
 		udelay(10);
-	पूर्ण
+	}
 
-	अगर (!tg3_flag(tp, WOL_SPEED_100MB) &&
+	if (!tg3_flag(tp, WOL_SPEED_100MB) &&
 	    (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-	     tg3_asic_rev(tp) == ASIC_REV_5701)) अणु
+	     tg3_asic_rev(tp) == ASIC_REV_5701)) {
 		u32 base_val;
 
-		base_val = tp->pci_घड़ी_ctrl;
+		base_val = tp->pci_clock_ctrl;
 		base_val |= (CLOCK_CTRL_RXCLK_DISABLE |
 			     CLOCK_CTRL_TXCLK_DISABLE);
 
-		tw32_रुको_f(TG3PCI_CLOCK_CTRL, base_val | CLOCK_CTRL_ALTCLK |
+		tw32_wait_f(TG3PCI_CLOCK_CTRL, base_val | CLOCK_CTRL_ALTCLK |
 			    CLOCK_CTRL_PWRDOWN_PLL133, 40);
-	पूर्ण अन्यथा अगर (tg3_flag(tp, 5780_CLASS) ||
+	} else if (tg3_flag(tp, 5780_CLASS) ||
 		   tg3_flag(tp, CPMU_PRESENT) ||
-		   tg3_asic_rev(tp) == ASIC_REV_5906) अणु
-		/* करो nothing */
-	पूर्ण अन्यथा अगर (!(tg3_flag(tp, 5750_PLUS) && tg3_flag(tp, ENABLE_ASF))) अणु
+		   tg3_asic_rev(tp) == ASIC_REV_5906) {
+		/* do nothing */
+	} else if (!(tg3_flag(tp, 5750_PLUS) && tg3_flag(tp, ENABLE_ASF))) {
 		u32 newbits1, newbits2;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-		    tg3_asic_rev(tp) == ASIC_REV_5701) अणु
+		if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+		    tg3_asic_rev(tp) == ASIC_REV_5701) {
 			newbits1 = (CLOCK_CTRL_RXCLK_DISABLE |
 				    CLOCK_CTRL_TXCLK_DISABLE |
 				    CLOCK_CTRL_ALTCLK);
 			newbits2 = newbits1 | CLOCK_CTRL_44MHZ_CORE;
-		पूर्ण अन्यथा अगर (tg3_flag(tp, 5705_PLUS)) अणु
+		} else if (tg3_flag(tp, 5705_PLUS)) {
 			newbits1 = CLOCK_CTRL_625_CORE;
 			newbits2 = newbits1 | CLOCK_CTRL_ALTCLK;
-		पूर्ण अन्यथा अणु
+		} else {
 			newbits1 = CLOCK_CTRL_ALTCLK;
 			newbits2 = newbits1 | CLOCK_CTRL_44MHZ_CORE;
-		पूर्ण
+		}
 
-		tw32_रुको_f(TG3PCI_CLOCK_CTRL, tp->pci_घड़ी_ctrl | newbits1,
+		tw32_wait_f(TG3PCI_CLOCK_CTRL, tp->pci_clock_ctrl | newbits1,
 			    40);
 
-		tw32_रुको_f(TG3PCI_CLOCK_CTRL, tp->pci_घड़ी_ctrl | newbits2,
+		tw32_wait_f(TG3PCI_CLOCK_CTRL, tp->pci_clock_ctrl | newbits2,
 			    40);
 
-		अगर (!tg3_flag(tp, 5705_PLUS)) अणु
+		if (!tg3_flag(tp, 5705_PLUS)) {
 			u32 newbits3;
 
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-			    tg3_asic_rev(tp) == ASIC_REV_5701) अणु
+			if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+			    tg3_asic_rev(tp) == ASIC_REV_5701) {
 				newbits3 = (CLOCK_CTRL_RXCLK_DISABLE |
 					    CLOCK_CTRL_TXCLK_DISABLE |
 					    CLOCK_CTRL_44MHZ_CORE);
-			पूर्ण अन्यथा अणु
+			} else {
 				newbits3 = CLOCK_CTRL_44MHZ_CORE;
-			पूर्ण
+			}
 
-			tw32_रुको_f(TG3PCI_CLOCK_CTRL,
-				    tp->pci_घड़ी_ctrl | newbits3, 40);
-		पूर्ण
-	पूर्ण
+			tw32_wait_f(TG3PCI_CLOCK_CTRL,
+				    tp->pci_clock_ctrl | newbits3, 40);
+		}
+	}
 
-	अगर (!(device_should_wake) && !tg3_flag(tp, ENABLE_ASF))
-		tg3_घातer_करोwn_phy(tp, करो_low_घातer);
+	if (!(device_should_wake) && !tg3_flag(tp, ENABLE_ASF))
+		tg3_power_down_phy(tp, do_low_power);
 
-	tg3_frob_aux_घातer(tp, true);
+	tg3_frob_aux_power(tp, true);
 
-	/* Workaround क्रम unstable PLL घड़ी */
-	अगर ((!tg3_flag(tp, IS_SSB_CORE)) &&
+	/* Workaround for unstable PLL clock */
+	if ((!tg3_flag(tp, IS_SSB_CORE)) &&
 	    ((tg3_chip_rev(tp) == CHIPREV_5750_AX) ||
-	     (tg3_chip_rev(tp) == CHIPREV_5750_BX))) अणु
+	     (tg3_chip_rev(tp) == CHIPREV_5750_BX))) {
 		u32 val = tr32(0x7d00);
 
 		val &= ~((1 << 16) | (1 << 4) | (1 << 2) | (1 << 1) | 1);
 		tw32(0x7d00, val);
-		अगर (!tg3_flag(tp, ENABLE_ASF)) अणु
-			पूर्णांक err;
+		if (!tg3_flag(tp, ENABLE_ASF)) {
+			int err;
 
 			err = tg3_nvram_lock(tp);
 			tg3_halt_cpu(tp, RX_CPU_BASE);
-			अगर (!err)
+			if (!err)
 				tg3_nvram_unlock(tp);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	tg3_ग_लिखो_sig_post_reset(tp, RESET_KIND_SHUTDOWN);
+	tg3_write_sig_post_reset(tp, RESET_KIND_SHUTDOWN);
 
 	tg3_ape_driver_state_change(tp, RESET_KIND_SHUTDOWN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_घातer_करोwn(काष्ठा tg3 *tp)
-अणु
+static void tg3_power_down(struct tg3 *tp)
+{
 	pci_wake_from_d3(tp->pdev, tg3_flag(tp, WOL_ENABLE));
-	pci_set_घातer_state(tp->pdev, PCI_D3hot);
-पूर्ण
+	pci_set_power_state(tp->pdev, PCI_D3hot);
+}
 
-अटल व्योम tg3_aux_stat_to_speed_duplex(काष्ठा tg3 *tp, u32 val, u32 *speed, u8 *duplex)
-अणु
-	चयन (val & MII_TG3_AUX_STAT_SPDMASK) अणु
-	हाल MII_TG3_AUX_STAT_10HALF:
+static void tg3_aux_stat_to_speed_duplex(struct tg3 *tp, u32 val, u32 *speed, u8 *duplex)
+{
+	switch (val & MII_TG3_AUX_STAT_SPDMASK) {
+	case MII_TG3_AUX_STAT_10HALF:
 		*speed = SPEED_10;
 		*duplex = DUPLEX_HALF;
-		अवरोध;
+		break;
 
-	हाल MII_TG3_AUX_STAT_10FULL:
+	case MII_TG3_AUX_STAT_10FULL:
 		*speed = SPEED_10;
 		*duplex = DUPLEX_FULL;
-		अवरोध;
+		break;
 
-	हाल MII_TG3_AUX_STAT_100HALF:
+	case MII_TG3_AUX_STAT_100HALF:
 		*speed = SPEED_100;
 		*duplex = DUPLEX_HALF;
-		अवरोध;
+		break;
 
-	हाल MII_TG3_AUX_STAT_100FULL:
+	case MII_TG3_AUX_STAT_100FULL:
 		*speed = SPEED_100;
 		*duplex = DUPLEX_FULL;
-		अवरोध;
+		break;
 
-	हाल MII_TG3_AUX_STAT_1000HALF:
+	case MII_TG3_AUX_STAT_1000HALF:
 		*speed = SPEED_1000;
 		*duplex = DUPLEX_HALF;
-		अवरोध;
+		break;
 
-	हाल MII_TG3_AUX_STAT_1000FULL:
+	case MII_TG3_AUX_STAT_1000FULL:
 		*speed = SPEED_1000;
 		*duplex = DUPLEX_FULL;
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (tp->phy_flags & TG3_PHYFLG_IS_FET) अणु
+	default:
+		if (tp->phy_flags & TG3_PHYFLG_IS_FET) {
 			*speed = (val & MII_TG3_AUX_STAT_100) ? SPEED_100 :
 				 SPEED_10;
 			*duplex = (val & MII_TG3_AUX_STAT_FULL) ? DUPLEX_FULL :
 				  DUPLEX_HALF;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		*speed = SPEED_UNKNOWN;
 		*duplex = DUPLEX_UNKNOWN;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक tg3_phy_स्वतःneg_cfg(काष्ठा tg3 *tp, u32 advertise, u32 flowctrl)
-अणु
-	पूर्णांक err = 0;
+static int tg3_phy_autoneg_cfg(struct tg3 *tp, u32 advertise, u32 flowctrl)
+{
+	int err = 0;
 	u32 val, new_adv;
 
 	new_adv = ADVERTISE_CSMA;
 	new_adv |= ethtool_adv_to_mii_adv_t(advertise) & ADVERTISE_ALL;
 	new_adv |= mii_advertise_flowctrl(flowctrl);
 
-	err = tg3_ग_लिखोphy(tp, MII_ADVERTISE, new_adv);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_writephy(tp, MII_ADVERTISE, new_adv);
+	if (err)
+		goto done;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
 		new_adv = ethtool_adv_to_mii_ctrl1000_t(advertise);
 
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
 		    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0)
 			new_adv |= CTL1000_AS_MASTER | CTL1000_ENABLE_MASTER;
 
-		err = tg3_ग_लिखोphy(tp, MII_CTRL1000, new_adv);
-		अगर (err)
-			जाओ करोne;
-	पूर्ण
+		err = tg3_writephy(tp, MII_CTRL1000, new_adv);
+		if (err)
+			goto done;
+	}
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
-		जाओ करोne;
+	if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
+		goto done;
 
 	tw32(TG3_CPMU_EEE_MODE,
 	     tr32(TG3_CPMU_EEE_MODE) & ~TG3_CPMU_EEEMD_LPI_ENABLE);
 
 	err = tg3_phy_toggle_auxctl_smdsp(tp, true);
-	अगर (!err) अणु
+	if (!err) {
 		u32 err2;
 
 		val = 0;
 		/* Advertise 100-BaseTX EEE ability */
-		अगर (advertise & ADVERTISED_100baseT_Full)
+		if (advertise & ADVERTISED_100baseT_Full)
 			val |= MDIO_AN_EEE_ADV_100TX;
 		/* Advertise 1000-BaseT EEE ability */
-		अगर (advertise & ADVERTISED_1000baseT_Full)
+		if (advertise & ADVERTISED_1000baseT_Full)
 			val |= MDIO_AN_EEE_ADV_1000T;
 
-		अगर (!tp->eee.eee_enabled) अणु
+		if (!tp->eee.eee_enabled) {
 			val = 0;
 			tp->eee.advertised = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			tp->eee.advertised = advertise &
 					     (ADVERTISED_100baseT_Full |
 					      ADVERTISED_1000baseT_Full);
-		पूर्ण
+		}
 
-		err = tg3_phy_cl45_ग_लिखो(tp, MDIO_MMD_AN, MDIO_AN_EEE_ADV, val);
-		अगर (err)
+		err = tg3_phy_cl45_write(tp, MDIO_MMD_AN, MDIO_AN_EEE_ADV, val);
+		if (err)
 			val = 0;
 
-		चयन (tg3_asic_rev(tp)) अणु
-		हाल ASIC_REV_5717:
-		हाल ASIC_REV_57765:
-		हाल ASIC_REV_57766:
-		हाल ASIC_REV_5719:
+		switch (tg3_asic_rev(tp)) {
+		case ASIC_REV_5717:
+		case ASIC_REV_57765:
+		case ASIC_REV_57766:
+		case ASIC_REV_5719:
 			/* If we advertised any eee advertisements above... */
-			अगर (val)
+			if (val)
 				val = MII_TG3_DSP_TAP26_ALNOKO |
 				      MII_TG3_DSP_TAP26_RMRXSTO |
 				      MII_TG3_DSP_TAP26_OPCSINPT;
-			tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_TAP26, val);
+			tg3_phydsp_write(tp, MII_TG3_DSP_TAP26, val);
 			fallthrough;
-		हाल ASIC_REV_5720:
-		हाल ASIC_REV_5762:
-			अगर (!tg3_phydsp_पढ़ो(tp, MII_TG3_DSP_CH34TP2, &val))
-				tg3_phydsp_ग_लिखो(tp, MII_TG3_DSP_CH34TP2, val |
+		case ASIC_REV_5720:
+		case ASIC_REV_5762:
+			if (!tg3_phydsp_read(tp, MII_TG3_DSP_CH34TP2, &val))
+				tg3_phydsp_write(tp, MII_TG3_DSP_CH34TP2, val |
 						 MII_TG3_DSP_CH34TP2_HIBW01);
-		पूर्ण
+		}
 
 		err2 = tg3_phy_toggle_auxctl_smdsp(tp, false);
-		अगर (!err)
+		if (!err)
 			err = err2;
-	पूर्ण
+	}
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल व्योम tg3_phy_copper_begin(काष्ठा tg3 *tp)
-अणु
-	अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE ||
-	    (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)) अणु
+static void tg3_phy_copper_begin(struct tg3 *tp)
+{
+	if (tp->link_config.autoneg == AUTONEG_ENABLE ||
+	    (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)) {
 		u32 adv, fc;
 
-		अगर ((tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) &&
-		    !(tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN)) अणु
+		if ((tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) &&
+		    !(tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN)) {
 			adv = ADVERTISED_10baseT_Half |
 			      ADVERTISED_10baseT_Full;
-			अगर (tg3_flag(tp, WOL_SPEED_100MB))
+			if (tg3_flag(tp, WOL_SPEED_100MB))
 				adv |= ADVERTISED_100baseT_Half |
 				       ADVERTISED_100baseT_Full;
-			अगर (tp->phy_flags & TG3_PHYFLG_1G_ON_VAUX_OK) अणु
-				अगर (!(tp->phy_flags &
+			if (tp->phy_flags & TG3_PHYFLG_1G_ON_VAUX_OK) {
+				if (!(tp->phy_flags &
 				      TG3_PHYFLG_DISABLE_1G_HD_ADV))
 					adv |= ADVERTISED_1000baseT_Half;
 				adv |= ADVERTISED_1000baseT_Full;
-			पूर्ण
+			}
 
 			fc = FLOW_CTRL_TX | FLOW_CTRL_RX;
-		पूर्ण अन्यथा अणु
+		} else {
 			adv = tp->link_config.advertising;
-			अगर (tp->phy_flags & TG3_PHYFLG_10_100_ONLY)
+			if (tp->phy_flags & TG3_PHYFLG_10_100_ONLY)
 				adv &= ~(ADVERTISED_1000baseT_Half |
 					 ADVERTISED_1000baseT_Full);
 
 			fc = tp->link_config.flowctrl;
-		पूर्ण
+		}
 
-		tg3_phy_स्वतःneg_cfg(tp, adv, fc);
+		tg3_phy_autoneg_cfg(tp, adv, fc);
 
-		अगर ((tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) &&
-		    (tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN)) अणु
-			/* Normally during घातer करोwn we want to स्वतःnegotiate
-			 * the lowest possible speed क्रम WOL. However, to aव्योम
+		if ((tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) &&
+		    (tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN)) {
+			/* Normally during power down we want to autonegotiate
+			 * the lowest possible speed for WOL. However, to avoid
 			 * link flap, we leave it untouched.
 			 */
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		tg3_ग_लिखोphy(tp, MII_BMCR,
+		tg3_writephy(tp, MII_BMCR,
 			     BMCR_ANENABLE | BMCR_ANRESTART);
-	पूर्ण अन्यथा अणु
-		पूर्णांक i;
+	} else {
+		int i;
 		u32 bmcr, orig_bmcr;
 
 		tp->link_config.active_speed = tp->link_config.speed;
 		tp->link_config.active_duplex = tp->link_config.duplex;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5714) अणु
-			/* With स्वतःneg disabled, 5715 only links up when the
-			 * advertisement रेजिस्टर has the configured speed
+		if (tg3_asic_rev(tp) == ASIC_REV_5714) {
+			/* With autoneg disabled, 5715 only links up when the
+			 * advertisement register has the configured speed
 			 * enabled.
 			 */
-			tg3_ग_लिखोphy(tp, MII_ADVERTISE, ADVERTISE_ALL);
-		पूर्ण
+			tg3_writephy(tp, MII_ADVERTISE, ADVERTISE_ALL);
+		}
 
 		bmcr = 0;
-		चयन (tp->link_config.speed) अणु
-		शेष:
-		हाल SPEED_10:
-			अवरोध;
+		switch (tp->link_config.speed) {
+		default:
+		case SPEED_10:
+			break;
 
-		हाल SPEED_100:
+		case SPEED_100:
 			bmcr |= BMCR_SPEED100;
-			अवरोध;
+			break;
 
-		हाल SPEED_1000:
+		case SPEED_1000:
 			bmcr |= BMCR_SPEED1000;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (tp->link_config.duplex == DUPLEX_FULL)
+		if (tp->link_config.duplex == DUPLEX_FULL)
 			bmcr |= BMCR_FULLDPLX;
 
-		अगर (!tg3_पढ़ोphy(tp, MII_BMCR, &orig_bmcr) &&
-		    (bmcr != orig_bmcr)) अणु
-			tg3_ग_लिखोphy(tp, MII_BMCR, BMCR_LOOPBACK);
-			क्रम (i = 0; i < 1500; i++) अणु
-				u32 पंचांगp;
+		if (!tg3_readphy(tp, MII_BMCR, &orig_bmcr) &&
+		    (bmcr != orig_bmcr)) {
+			tg3_writephy(tp, MII_BMCR, BMCR_LOOPBACK);
+			for (i = 0; i < 1500; i++) {
+				u32 tmp;
 
 				udelay(10);
-				अगर (tg3_पढ़ोphy(tp, MII_BMSR, &पंचांगp) ||
-				    tg3_पढ़ोphy(tp, MII_BMSR, &पंचांगp))
-					जारी;
-				अगर (!(पंचांगp & BMSR_LSTATUS)) अणु
+				if (tg3_readphy(tp, MII_BMSR, &tmp) ||
+				    tg3_readphy(tp, MII_BMSR, &tmp))
+					continue;
+				if (!(tmp & BMSR_LSTATUS)) {
 					udelay(40);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			tg3_ग_लिखोphy(tp, MII_BMCR, bmcr);
+					break;
+				}
+			}
+			tg3_writephy(tp, MII_BMCR, bmcr);
 			udelay(40);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक tg3_phy_pull_config(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक err;
+static int tg3_phy_pull_config(struct tg3 *tp)
+{
+	int err;
 	u32 val;
 
-	err = tg3_पढ़ोphy(tp, MII_BMCR, &val);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_readphy(tp, MII_BMCR, &val);
+	if (err)
+		goto done;
 
-	अगर (!(val & BMCR_ANENABLE)) अणु
-		tp->link_config.स्वतःneg = AUTONEG_DISABLE;
+	if (!(val & BMCR_ANENABLE)) {
+		tp->link_config.autoneg = AUTONEG_DISABLE;
 		tp->link_config.advertising = 0;
 		tg3_flag_clear(tp, PAUSE_AUTONEG);
 
 		err = -EIO;
 
-		चयन (val & (BMCR_SPEED1000 | BMCR_SPEED100)) अणु
-		हाल 0:
-			अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
-				जाओ करोne;
+		switch (val & (BMCR_SPEED1000 | BMCR_SPEED100)) {
+		case 0:
+			if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
+				goto done;
 
 			tp->link_config.speed = SPEED_10;
-			अवरोध;
-		हाल BMCR_SPEED100:
-			अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
-				जाओ करोne;
+			break;
+		case BMCR_SPEED100:
+			if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
+				goto done;
 
 			tp->link_config.speed = SPEED_100;
-			अवरोध;
-		हाल BMCR_SPEED1000:
-			अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
+			break;
+		case BMCR_SPEED1000:
+			if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
 				tp->link_config.speed = SPEED_1000;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		शेष:
-			जाओ करोne;
-		पूर्ण
+		default:
+			goto done;
+		}
 
-		अगर (val & BMCR_FULLDPLX)
+		if (val & BMCR_FULLDPLX)
 			tp->link_config.duplex = DUPLEX_FULL;
-		अन्यथा
+		else
 			tp->link_config.duplex = DUPLEX_HALF;
 
 		tp->link_config.flowctrl = FLOW_CTRL_RX | FLOW_CTRL_TX;
 
 		err = 0;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	tp->link_config.स्वतःneg = AUTONEG_ENABLE;
+	tp->link_config.autoneg = AUTONEG_ENABLE;
 	tp->link_config.advertising = ADVERTISED_Autoneg;
 	tg3_flag_set(tp, PAUSE_AUTONEG);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) {
 		u32 adv;
 
-		err = tg3_पढ़ोphy(tp, MII_ADVERTISE, &val);
-		अगर (err)
-			जाओ करोne;
+		err = tg3_readphy(tp, MII_ADVERTISE, &val);
+		if (err)
+			goto done;
 
 		adv = mii_adv_to_ethtool_adv_t(val & ADVERTISE_ALL);
 		tp->link_config.advertising |= adv | ADVERTISED_TP;
 
 		tp->link_config.flowctrl = tg3_decode_flowctrl_1000T(val);
-	पूर्ण अन्यथा अणु
+	} else {
 		tp->link_config.advertising |= ADVERTISED_FIBRE;
-	पूर्ण
+	}
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
 		u32 adv;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) अणु
-			err = tg3_पढ़ोphy(tp, MII_CTRL1000, &val);
-			अगर (err)
-				जाओ करोne;
+		if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) {
+			err = tg3_readphy(tp, MII_CTRL1000, &val);
+			if (err)
+				goto done;
 
 			adv = mii_ctrl1000_to_ethtool_adv_t(val);
-		पूर्ण अन्यथा अणु
-			err = tg3_पढ़ोphy(tp, MII_ADVERTISE, &val);
-			अगर (err)
-				जाओ करोne;
+		} else {
+			err = tg3_readphy(tp, MII_ADVERTISE, &val);
+			if (err)
+				goto done;
 
 			adv = tg3_decode_flowctrl_1000X(val);
 			tp->link_config.flowctrl = adv;
 
 			val &= (ADVERTISE_1000XHALF | ADVERTISE_1000XFULL);
 			adv = mii_adv_to_ethtool_adv_x(val);
-		पूर्ण
+		}
 
 		tp->link_config.advertising |= adv;
-	पूर्ण
+	}
 
-करोne:
-	वापस err;
-पूर्ण
+done:
+	return err;
+}
 
-अटल पूर्णांक tg3_init_5401phy_dsp(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक err;
+static int tg3_init_5401phy_dsp(struct tg3 *tp)
+{
+	int err;
 
-	/* Turn off tap घातer management. */
+	/* Turn off tap power management. */
 	/* Set Extended packet length bit */
-	err = tg3_phy_auxctl_ग_लिखो(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL, 0x4c20);
+	err = tg3_phy_auxctl_write(tp, MII_TG3_AUXCTL_SHDWSEL_AUXCTL, 0x4c20);
 
-	err |= tg3_phydsp_ग_लिखो(tp, 0x0012, 0x1804);
-	err |= tg3_phydsp_ग_लिखो(tp, 0x0013, 0x1204);
-	err |= tg3_phydsp_ग_लिखो(tp, 0x8006, 0x0132);
-	err |= tg3_phydsp_ग_लिखो(tp, 0x8006, 0x0232);
-	err |= tg3_phydsp_ग_लिखो(tp, 0x201f, 0x0a20);
+	err |= tg3_phydsp_write(tp, 0x0012, 0x1804);
+	err |= tg3_phydsp_write(tp, 0x0013, 0x1204);
+	err |= tg3_phydsp_write(tp, 0x8006, 0x0132);
+	err |= tg3_phydsp_write(tp, 0x8006, 0x0232);
+	err |= tg3_phydsp_write(tp, 0x201f, 0x0a20);
 
 	udelay(40);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool tg3_phy_eee_config_ok(काष्ठा tg3 *tp)
-अणु
-	काष्ठा ethtool_eee eee;
+static bool tg3_phy_eee_config_ok(struct tg3 *tp)
+{
+	struct ethtool_eee eee;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
-		वापस true;
+	if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP))
+		return true;
 
 	tg3_eee_pull_config(tp, &eee);
 
-	अगर (tp->eee.eee_enabled) अणु
-		अगर (tp->eee.advertised != eee.advertised ||
-		    tp->eee.tx_lpi_समयr != eee.tx_lpi_समयr ||
+	if (tp->eee.eee_enabled) {
+		if (tp->eee.advertised != eee.advertised ||
+		    tp->eee.tx_lpi_timer != eee.tx_lpi_timer ||
 		    tp->eee.tx_lpi_enabled != eee.tx_lpi_enabled)
-			वापस false;
-	पूर्ण अन्यथा अणु
+			return false;
+	} else {
 		/* EEE is disabled but we're advertising */
-		अगर (eee.advertised)
-			वापस false;
-	पूर्ण
+		if (eee.advertised)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tg3_phy_copper_an_config_ok(काष्ठा tg3 *tp, u32 *lcladv)
-अणु
+static bool tg3_phy_copper_an_config_ok(struct tg3 *tp, u32 *lcladv)
+{
 	u32 advmsk, tgtadv, advertising;
 
 	advertising = tp->link_config.advertising;
 	tgtadv = ethtool_adv_to_mii_adv_t(advertising) & ADVERTISE_ALL;
 
 	advmsk = ADVERTISE_ALL;
-	अगर (tp->link_config.active_duplex == DUPLEX_FULL) अणु
+	if (tp->link_config.active_duplex == DUPLEX_FULL) {
 		tgtadv |= mii_advertise_flowctrl(tp->link_config.flowctrl);
 		advmsk |= ADVERTISE_PAUSE_CAP | ADVERTISE_PAUSE_ASYM;
-	पूर्ण
+	}
 
-	अगर (tg3_पढ़ोphy(tp, MII_ADVERTISE, lcladv))
-		वापस false;
+	if (tg3_readphy(tp, MII_ADVERTISE, lcladv))
+		return false;
 
-	अगर ((*lcladv & advmsk) != tgtadv)
-		वापस false;
+	if ((*lcladv & advmsk) != tgtadv)
+		return false;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
 		u32 tg3_ctrl;
 
 		tgtadv = ethtool_adv_to_mii_ctrl1000_t(advertising);
 
-		अगर (tg3_पढ़ोphy(tp, MII_CTRL1000, &tg3_ctrl))
-			वापस false;
+		if (tg3_readphy(tp, MII_CTRL1000, &tg3_ctrl))
+			return false;
 
-		अगर (tgtadv &&
+		if (tgtadv &&
 		    (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
-		     tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0)) अणु
+		     tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0)) {
 			tgtadv |= CTL1000_AS_MASTER | CTL1000_ENABLE_MASTER;
 			tg3_ctrl &= (ADVERTISE_1000HALF | ADVERTISE_1000FULL |
 				     CTL1000_AS_MASTER | CTL1000_ENABLE_MASTER);
-		पूर्ण अन्यथा अणु
+		} else {
 			tg3_ctrl &= (ADVERTISE_1000HALF | ADVERTISE_1000FULL);
-		पूर्ण
+		}
 
-		अगर (tg3_ctrl != tgtadv)
-			वापस false;
-	पूर्ण
+		if (tg3_ctrl != tgtadv)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tg3_phy_copper_fetch_rmtadv(काष्ठा tg3 *tp, u32 *rmtadv)
-अणु
+static bool tg3_phy_copper_fetch_rmtadv(struct tg3 *tp, u32 *rmtadv)
+{
 	u32 lpeth = 0;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
 		u32 val;
 
-		अगर (tg3_पढ़ोphy(tp, MII_STAT1000, &val))
-			वापस false;
+		if (tg3_readphy(tp, MII_STAT1000, &val))
+			return false;
 
 		lpeth = mii_stat1000_to_ethtool_lpa_t(val);
-	पूर्ण
+	}
 
-	अगर (tg3_पढ़ोphy(tp, MII_LPA, rmtadv))
-		वापस false;
+	if (tg3_readphy(tp, MII_LPA, rmtadv))
+		return false;
 
 	lpeth |= mii_lpa_to_ethtool_lpa_t(*rmtadv);
 	tp->link_config.rmt_adv = lpeth;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tg3_test_and_report_link_chg(काष्ठा tg3 *tp, bool curr_link_up)
-अणु
-	अगर (curr_link_up != tp->link_up) अणु
-		अगर (curr_link_up) अणु
-			netअगर_carrier_on(tp->dev);
-		पूर्ण अन्यथा अणु
-			netअगर_carrier_off(tp->dev);
-			अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
+static bool tg3_test_and_report_link_chg(struct tg3 *tp, bool curr_link_up)
+{
+	if (curr_link_up != tp->link_up) {
+		if (curr_link_up) {
+			netif_carrier_on(tp->dev);
+		} else {
+			netif_carrier_off(tp->dev);
+			if (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
 				tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
-		पूर्ण
+		}
 
 		tg3_link_report(tp);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम tg3_clear_mac_status(काष्ठा tg3 *tp)
-अणु
+static void tg3_clear_mac_status(struct tg3 *tp)
+{
 	tw32(MAC_EVENT, 0);
 
 	tw32_f(MAC_STATUS,
@@ -4732,15 +4731,15 @@ out:
 	       MAC_STATUS_MI_COMPLETION |
 	       MAC_STATUS_LNKSTATE_CHANGED);
 	udelay(40);
-पूर्ण
+}
 
-अटल व्योम tg3_setup_eee(काष्ठा tg3 *tp)
-अणु
+static void tg3_setup_eee(struct tg3 *tp)
+{
 	u32 val;
 
 	val = TG3_CPMU_EEE_LNKIDL_PCIE_NL0 |
 	      TG3_CPMU_EEE_LNKIDL_UART_IDL;
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0)
 		val |= TG3_CPMU_EEE_LNKIDL_APE_TX_MT;
 
 	tw32_f(TG3_CPMU_EEE_LNKIDL_CTRL, val);
@@ -4753,115 +4752,115 @@ out:
 	      TG3_CPMU_EEEMD_LPI_IN_RX |
 	      TG3_CPMU_EEEMD_EEE_ENABLE;
 
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5717)
+	if (tg3_asic_rev(tp) != ASIC_REV_5717)
 		val |= TG3_CPMU_EEEMD_SND_IDX_DET_EN;
 
-	अगर (tg3_flag(tp, ENABLE_APE))
+	if (tg3_flag(tp, ENABLE_APE))
 		val |= TG3_CPMU_EEEMD_APE_TX_DET_EN;
 
 	tw32_f(TG3_CPMU_EEE_MODE, tp->eee.eee_enabled ? val : 0);
 
 	tw32_f(TG3_CPMU_EEE_DBTMR1,
 	       TG3_CPMU_DBTMR1_PCIEXIT_2047US |
-	       (tp->eee.tx_lpi_समयr & 0xffff));
+	       (tp->eee.tx_lpi_timer & 0xffff));
 
 	tw32_f(TG3_CPMU_EEE_DBTMR2,
 	       TG3_CPMU_DBTMR2_APE_TX_2047US |
 	       TG3_CPMU_DBTMR2_TXIDXEQ_2047US);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_setup_copper_phy(काष्ठा tg3 *tp, bool क्रमce_reset)
-अणु
+static int tg3_setup_copper_phy(struct tg3 *tp, bool force_reset)
+{
 	bool current_link_up;
 	u32 bmsr, val;
 	u32 lcl_adv, rmt_adv;
 	u32 current_speed;
 	u8 current_duplex;
-	पूर्णांक i, err;
+	int i, err;
 
 	tg3_clear_mac_status(tp);
 
-	अगर ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) अणु
+	if ((tp->mi_mode & MAC_MI_MODE_AUTO_POLL) != 0) {
 		tw32_f(MAC_MI_MODE,
 		     (tp->mi_mode & ~MAC_MI_MODE_AUTO_POLL));
 		udelay(80);
-	पूर्ण
+	}
 
-	tg3_phy_auxctl_ग_लिखो(tp, MII_TG3_AUXCTL_SHDWSEL_PWRCTL, 0);
+	tg3_phy_auxctl_write(tp, MII_TG3_AUXCTL_SHDWSEL_PWRCTL, 0);
 
 	/* Some third-party PHYs need to be reset on link going
-	 * करोwn.
+	 * down.
 	 */
-	अगर ((tg3_asic_rev(tp) == ASIC_REV_5703 ||
+	if ((tg3_asic_rev(tp) == ASIC_REV_5703 ||
 	     tg3_asic_rev(tp) == ASIC_REV_5704 ||
 	     tg3_asic_rev(tp) == ASIC_REV_5705) &&
-	    tp->link_up) अणु
-		tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-		अगर (!tg3_पढ़ोphy(tp, MII_BMSR, &bmsr) &&
+	    tp->link_up) {
+		tg3_readphy(tp, MII_BMSR, &bmsr);
+		if (!tg3_readphy(tp, MII_BMSR, &bmsr) &&
 		    !(bmsr & BMSR_LSTATUS))
-			क्रमce_reset = true;
-	पूर्ण
-	अगर (क्रमce_reset)
+			force_reset = true;
+	}
+	if (force_reset)
 		tg3_phy_reset(tp);
 
-	अगर ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) अणु
-		tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-		अगर (tg3_पढ़ोphy(tp, MII_BMSR, &bmsr) ||
+	if ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) {
+		tg3_readphy(tp, MII_BMSR, &bmsr);
+		if (tg3_readphy(tp, MII_BMSR, &bmsr) ||
 		    !tg3_flag(tp, INIT_COMPLETE))
 			bmsr = 0;
 
-		अगर (!(bmsr & BMSR_LSTATUS)) अणु
+		if (!(bmsr & BMSR_LSTATUS)) {
 			err = tg3_init_5401phy_dsp(tp);
-			अगर (err)
-				वापस err;
+			if (err)
+				return err;
 
-			tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-			क्रम (i = 0; i < 1000; i++) अणु
+			tg3_readphy(tp, MII_BMSR, &bmsr);
+			for (i = 0; i < 1000; i++) {
 				udelay(10);
-				अगर (!tg3_पढ़ोphy(tp, MII_BMSR, &bmsr) &&
-				    (bmsr & BMSR_LSTATUS)) अणु
+				if (!tg3_readphy(tp, MII_BMSR, &bmsr) &&
+				    (bmsr & BMSR_LSTATUS)) {
 					udelay(40);
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
-			अगर ((tp->phy_id & TG3_PHY_ID_REV_MASK) ==
+			if ((tp->phy_id & TG3_PHY_ID_REV_MASK) ==
 			    TG3_PHY_REV_BCM5401_B0 &&
 			    !(bmsr & BMSR_LSTATUS) &&
-			    tp->link_config.active_speed == SPEED_1000) अणु
+			    tp->link_config.active_speed == SPEED_1000) {
 				err = tg3_phy_reset(tp);
-				अगर (!err)
+				if (!err)
 					err = tg3_init_5401phy_dsp(tp);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
-		   tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0) अणु
-		/* 5701 अणुA0,B0पूर्ण CRC bug workaround */
-		tg3_ग_लिखोphy(tp, 0x15, 0x0a75);
-		tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW, 0x8c68);
-		tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW, 0x8d68);
-		tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW, 0x8c68);
-	पूर्ण
+				if (err)
+					return err;
+			}
+		}
+	} else if (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
+		   tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0) {
+		/* 5701 {A0,B0} CRC bug workaround */
+		tg3_writephy(tp, 0x15, 0x0a75);
+		tg3_writephy(tp, MII_TG3_MISC_SHDW, 0x8c68);
+		tg3_writephy(tp, MII_TG3_MISC_SHDW, 0x8d68);
+		tg3_writephy(tp, MII_TG3_MISC_SHDW, 0x8c68);
+	}
 
-	/* Clear pending पूर्णांकerrupts... */
-	tg3_पढ़ोphy(tp, MII_TG3_ISTAT, &val);
-	tg3_पढ़ोphy(tp, MII_TG3_ISTAT, &val);
+	/* Clear pending interrupts... */
+	tg3_readphy(tp, MII_TG3_ISTAT, &val);
+	tg3_readphy(tp, MII_TG3_ISTAT, &val);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_USE_MI_INTERRUPT)
-		tg3_ग_लिखोphy(tp, MII_TG3_IMASK, ~MII_TG3_INT_LINKCHG);
-	अन्यथा अगर (!(tp->phy_flags & TG3_PHYFLG_IS_FET))
-		tg3_ग_लिखोphy(tp, MII_TG3_IMASK, ~0);
+	if (tp->phy_flags & TG3_PHYFLG_USE_MI_INTERRUPT)
+		tg3_writephy(tp, MII_TG3_IMASK, ~MII_TG3_INT_LINKCHG);
+	else if (!(tp->phy_flags & TG3_PHYFLG_IS_FET))
+		tg3_writephy(tp, MII_TG3_IMASK, ~0);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5701) अणु
-		अगर (tp->led_ctrl == LED_CTRL_MODE_PHY_1)
-			tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL,
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+	    tg3_asic_rev(tp) == ASIC_REV_5701) {
+		if (tp->led_ctrl == LED_CTRL_MODE_PHY_1)
+			tg3_writephy(tp, MII_TG3_EXT_CTRL,
 				     MII_TG3_EXT_CTRL_LNK3_LED_MODE);
-		अन्यथा
-			tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL, 0);
-	पूर्ण
+		else
+			tg3_writephy(tp, MII_TG3_EXT_CTRL, 0);
+	}
 
 	current_link_up = false;
 	current_speed = SPEED_UNKNOWN;
@@ -4869,51 +4868,51 @@ out:
 	tp->phy_flags &= ~TG3_PHYFLG_MDIX_STATE;
 	tp->link_config.rmt_adv = 0;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_CAPACITIVE_COUPLING) अणु
-		err = tg3_phy_auxctl_पढ़ो(tp,
+	if (tp->phy_flags & TG3_PHYFLG_CAPACITIVE_COUPLING) {
+		err = tg3_phy_auxctl_read(tp,
 					  MII_TG3_AUXCTL_SHDWSEL_MISCTEST,
 					  &val);
-		अगर (!err && !(val & (1 << 10))) अणु
-			tg3_phy_auxctl_ग_लिखो(tp,
+		if (!err && !(val & (1 << 10))) {
+			tg3_phy_auxctl_write(tp,
 					     MII_TG3_AUXCTL_SHDWSEL_MISCTEST,
 					     val | (1 << 10));
-			जाओ relink;
-		पूर्ण
-	पूर्ण
+			goto relink;
+		}
+	}
 
 	bmsr = 0;
-	क्रम (i = 0; i < 100; i++) अणु
-		tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-		अगर (!tg3_पढ़ोphy(tp, MII_BMSR, &bmsr) &&
+	for (i = 0; i < 100; i++) {
+		tg3_readphy(tp, MII_BMSR, &bmsr);
+		if (!tg3_readphy(tp, MII_BMSR, &bmsr) &&
 		    (bmsr & BMSR_LSTATUS))
-			अवरोध;
+			break;
 		udelay(40);
-	पूर्ण
+	}
 
-	अगर (bmsr & BMSR_LSTATUS) अणु
+	if (bmsr & BMSR_LSTATUS) {
 		u32 aux_stat, bmcr;
 
-		tg3_पढ़ोphy(tp, MII_TG3_AUX_STAT, &aux_stat);
-		क्रम (i = 0; i < 2000; i++) अणु
+		tg3_readphy(tp, MII_TG3_AUX_STAT, &aux_stat);
+		for (i = 0; i < 2000; i++) {
 			udelay(10);
-			अगर (!tg3_पढ़ोphy(tp, MII_TG3_AUX_STAT, &aux_stat) &&
+			if (!tg3_readphy(tp, MII_TG3_AUX_STAT, &aux_stat) &&
 			    aux_stat)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
 		tg3_aux_stat_to_speed_duplex(tp, aux_stat,
 					     &current_speed,
 					     &current_duplex);
 
 		bmcr = 0;
-		क्रम (i = 0; i < 200; i++) अणु
-			tg3_पढ़ोphy(tp, MII_BMCR, &bmcr);
-			अगर (tg3_पढ़ोphy(tp, MII_BMCR, &bmcr))
-				जारी;
-			अगर (bmcr && bmcr != 0x7fff)
-				अवरोध;
+		for (i = 0; i < 200; i++) {
+			tg3_readphy(tp, MII_BMCR, &bmcr);
+			if (tg3_readphy(tp, MII_BMCR, &bmcr))
+				continue;
+			if (bmcr && bmcr != 0x7fff)
+				break;
 			udelay(10);
-		पूर्ण
+		}
 
 		lcl_adv = 0;
 		rmt_adv = 0;
@@ -4921,10 +4920,10 @@ out:
 		tp->link_config.active_speed = current_speed;
 		tp->link_config.active_duplex = current_duplex;
 
-		अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE) अणु
+		if (tp->link_config.autoneg == AUTONEG_ENABLE) {
 			bool eee_config_ok = tg3_phy_eee_config_ok(tp);
 
-			अगर ((bmcr & BMCR_ANENABLE) &&
+			if ((bmcr & BMCR_ANENABLE) &&
 			    eee_config_ok &&
 			    tg3_phy_copper_an_config_ok(tp, &lcl_adv) &&
 			    tg3_phy_copper_fetch_rmtadv(tp, &rmt_adv))
@@ -4932,261 +4931,261 @@ out:
 
 			/* EEE settings changes take effect only after a phy
 			 * reset.  If we have skipped a reset due to Link Flap
-			 * Aव्योमance being enabled, करो it now.
+			 * Avoidance being enabled, do it now.
 			 */
-			अगर (!eee_config_ok &&
+			if (!eee_config_ok &&
 			    (tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN) &&
-			    !क्रमce_reset) अणु
+			    !force_reset) {
 				tg3_setup_eee(tp);
 				tg3_phy_reset(tp);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (!(bmcr & BMCR_ANENABLE) &&
+			}
+		} else {
+			if (!(bmcr & BMCR_ANENABLE) &&
 			    tp->link_config.speed == current_speed &&
-			    tp->link_config.duplex == current_duplex) अणु
+			    tp->link_config.duplex == current_duplex) {
 				current_link_up = true;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (current_link_up &&
-		    tp->link_config.active_duplex == DUPLEX_FULL) अणु
+		if (current_link_up &&
+		    tp->link_config.active_duplex == DUPLEX_FULL) {
 			u32 reg, bit;
 
-			अगर (tp->phy_flags & TG3_PHYFLG_IS_FET) अणु
+			if (tp->phy_flags & TG3_PHYFLG_IS_FET) {
 				reg = MII_TG3_FET_GEN_STAT;
 				bit = MII_TG3_FET_GEN_STAT_MDIXSTAT;
-			पूर्ण अन्यथा अणु
+			} else {
 				reg = MII_TG3_EXT_STAT;
 				bit = MII_TG3_EXT_STAT_MDIX;
-			पूर्ण
+			}
 
-			अगर (!tg3_पढ़ोphy(tp, reg, &val) && (val & bit))
+			if (!tg3_readphy(tp, reg, &val) && (val & bit))
 				tp->phy_flags |= TG3_PHYFLG_MDIX_STATE;
 
 			tg3_setup_flow_control(tp, lcl_adv, rmt_adv);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 relink:
-	अगर (!current_link_up || (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)) अणु
+	if (!current_link_up || (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)) {
 		tg3_phy_copper_begin(tp);
 
-		अगर (tg3_flag(tp, ROBOSWITCH)) अणु
+		if (tg3_flag(tp, ROBOSWITCH)) {
 			current_link_up = true;
-			/* FIXME: when BCM5325 चयन is used use 100 MBit/s */
+			/* FIXME: when BCM5325 switch is used use 100 MBit/s */
 			current_speed = SPEED_1000;
 			current_duplex = DUPLEX_FULL;
 			tp->link_config.active_speed = current_speed;
 			tp->link_config.active_duplex = current_duplex;
-		पूर्ण
+		}
 
-		tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-		अगर ((!tg3_पढ़ोphy(tp, MII_BMSR, &bmsr) && (bmsr & BMSR_LSTATUS)) ||
+		tg3_readphy(tp, MII_BMSR, &bmsr);
+		if ((!tg3_readphy(tp, MII_BMSR, &bmsr) && (bmsr & BMSR_LSTATUS)) ||
 		    (tp->mac_mode & MAC_MODE_PORT_INT_LPBACK))
 			current_link_up = true;
-	पूर्ण
+	}
 
 	tp->mac_mode &= ~MAC_MODE_PORT_MODE_MASK;
-	अगर (current_link_up) अणु
-		अगर (tp->link_config.active_speed == SPEED_100 ||
+	if (current_link_up) {
+		if (tp->link_config.active_speed == SPEED_100 ||
 		    tp->link_config.active_speed == SPEED_10)
 			tp->mac_mode |= MAC_MODE_PORT_MODE_MII;
-		अन्यथा
+		else
 			tp->mac_mode |= MAC_MODE_PORT_MODE_GMII;
-	पूर्ण अन्यथा अगर (tp->phy_flags & TG3_PHYFLG_IS_FET)
+	} else if (tp->phy_flags & TG3_PHYFLG_IS_FET)
 		tp->mac_mode |= MAC_MODE_PORT_MODE_MII;
-	अन्यथा
+	else
 		tp->mac_mode |= MAC_MODE_PORT_MODE_GMII;
 
-	/* In order क्रम the 5750 core in BCM4785 chip to work properly
+	/* In order for the 5750 core in BCM4785 chip to work properly
 	 * in RGMII mode, the Led Control Register must be set up.
 	 */
-	अगर (tg3_flag(tp, RGMII_MODE)) अणु
+	if (tg3_flag(tp, RGMII_MODE)) {
 		u32 led_ctrl = tr32(MAC_LED_CTRL);
 		led_ctrl &= ~(LED_CTRL_1000MBPS_ON | LED_CTRL_100MBPS_ON);
 
-		अगर (tp->link_config.active_speed == SPEED_10)
+		if (tp->link_config.active_speed == SPEED_10)
 			led_ctrl |= LED_CTRL_LNKLED_OVERRIDE;
-		अन्यथा अगर (tp->link_config.active_speed == SPEED_100)
+		else if (tp->link_config.active_speed == SPEED_100)
 			led_ctrl |= (LED_CTRL_LNKLED_OVERRIDE |
 				     LED_CTRL_100MBPS_ON);
-		अन्यथा अगर (tp->link_config.active_speed == SPEED_1000)
+		else if (tp->link_config.active_speed == SPEED_1000)
 			led_ctrl |= (LED_CTRL_LNKLED_OVERRIDE |
 				     LED_CTRL_1000MBPS_ON);
 
 		tw32(MAC_LED_CTRL, led_ctrl);
 		udelay(40);
-	पूर्ण
+	}
 
 	tp->mac_mode &= ~MAC_MODE_HALF_DUPLEX;
-	अगर (tp->link_config.active_duplex == DUPLEX_HALF)
+	if (tp->link_config.active_duplex == DUPLEX_HALF)
 		tp->mac_mode |= MAC_MODE_HALF_DUPLEX;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700) अणु
-		अगर (current_link_up &&
+	if (tg3_asic_rev(tp) == ASIC_REV_5700) {
+		if (current_link_up &&
 		    tg3_5700_link_polarity(tp, tp->link_config.active_speed))
 			tp->mac_mode |= MAC_MODE_LINK_POLARITY;
-		अन्यथा
+		else
 			tp->mac_mode &= ~MAC_MODE_LINK_POLARITY;
-	पूर्ण
+	}
 
-	/* ??? Without this setting Netgear GA302T PHY करोes not
+	/* ??? Without this setting Netgear GA302T PHY does not
 	 * ??? send/receive packets...
 	 */
-	अगर ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5411 &&
-	    tg3_chip_rev_id(tp) == CHIPREV_ID_5700_ALTIMA) अणु
+	if ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5411 &&
+	    tg3_chip_rev_id(tp) == CHIPREV_ID_5700_ALTIMA) {
 		tp->mi_mode |= MAC_MI_MODE_AUTO_POLL;
 		tw32_f(MAC_MI_MODE, tp->mi_mode);
 		udelay(80);
-	पूर्ण
+	}
 
 	tw32_f(MAC_MODE, tp->mac_mode);
 	udelay(40);
 
 	tg3_phy_eee_adjust(tp, current_link_up);
 
-	अगर (tg3_flag(tp, USE_LINKCHG_REG)) अणु
-		/* Polled via समयr. */
+	if (tg3_flag(tp, USE_LINKCHG_REG)) {
+		/* Polled via timer. */
 		tw32_f(MAC_EVENT, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		tw32_f(MAC_EVENT, MAC_EVENT_LNKSTATE_CHANGED);
-	पूर्ण
+	}
 	udelay(40);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 &&
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 &&
 	    current_link_up &&
 	    tp->link_config.active_speed == SPEED_1000 &&
-	    (tg3_flag(tp, PCIX_MODE) || tg3_flag(tp, PCI_HIGH_SPEED))) अणु
+	    (tg3_flag(tp, PCIX_MODE) || tg3_flag(tp, PCI_HIGH_SPEED))) {
 		udelay(120);
 		tw32_f(MAC_STATUS,
 		     (MAC_STATUS_SYNC_CHANGED |
 		      MAC_STATUS_CFG_CHANGED));
 		udelay(40);
-		tg3_ग_लिखो_mem(tp,
+		tg3_write_mem(tp,
 			      NIC_SRAM_FIRMWARE_MBOX,
 			      NIC_SRAM_FIRMWARE_MBOX_MAGIC2);
-	पूर्ण
+	}
 
 	/* Prevent send BD corruption. */
-	अगर (tg3_flag(tp, CLKREQ_BUG)) अणु
-		अगर (tp->link_config.active_speed == SPEED_100 ||
+	if (tg3_flag(tp, CLKREQ_BUG)) {
+		if (tp->link_config.active_speed == SPEED_100 ||
 		    tp->link_config.active_speed == SPEED_10)
 			pcie_capability_clear_word(tp->pdev, PCI_EXP_LNKCTL,
 						   PCI_EXP_LNKCTL_CLKREQ_EN);
-		अन्यथा
+		else
 			pcie_capability_set_word(tp->pdev, PCI_EXP_LNKCTL,
 						 PCI_EXP_LNKCTL_CLKREQ_EN);
-	पूर्ण
+	}
 
 	tg3_test_and_report_link_chg(tp, current_link_up);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा tg3_fiber_aneginfo अणु
-	पूर्णांक state;
-#घोषणा ANEG_STATE_UNKNOWN		0
-#घोषणा ANEG_STATE_AN_ENABLE		1
-#घोषणा ANEG_STATE_RESTART_INIT		2
-#घोषणा ANEG_STATE_RESTART		3
-#घोषणा ANEG_STATE_DISABLE_LINK_OK	4
-#घोषणा ANEG_STATE_ABILITY_DETECT_INIT	5
-#घोषणा ANEG_STATE_ABILITY_DETECT	6
-#घोषणा ANEG_STATE_ACK_DETECT_INIT	7
-#घोषणा ANEG_STATE_ACK_DETECT		8
-#घोषणा ANEG_STATE_COMPLETE_ACK_INIT	9
-#घोषणा ANEG_STATE_COMPLETE_ACK		10
-#घोषणा ANEG_STATE_IDLE_DETECT_INIT	11
-#घोषणा ANEG_STATE_IDLE_DETECT		12
-#घोषणा ANEG_STATE_LINK_OK		13
-#घोषणा ANEG_STATE_NEXT_PAGE_WAIT_INIT	14
-#घोषणा ANEG_STATE_NEXT_PAGE_WAIT	15
+struct tg3_fiber_aneginfo {
+	int state;
+#define ANEG_STATE_UNKNOWN		0
+#define ANEG_STATE_AN_ENABLE		1
+#define ANEG_STATE_RESTART_INIT		2
+#define ANEG_STATE_RESTART		3
+#define ANEG_STATE_DISABLE_LINK_OK	4
+#define ANEG_STATE_ABILITY_DETECT_INIT	5
+#define ANEG_STATE_ABILITY_DETECT	6
+#define ANEG_STATE_ACK_DETECT_INIT	7
+#define ANEG_STATE_ACK_DETECT		8
+#define ANEG_STATE_COMPLETE_ACK_INIT	9
+#define ANEG_STATE_COMPLETE_ACK		10
+#define ANEG_STATE_IDLE_DETECT_INIT	11
+#define ANEG_STATE_IDLE_DETECT		12
+#define ANEG_STATE_LINK_OK		13
+#define ANEG_STATE_NEXT_PAGE_WAIT_INIT	14
+#define ANEG_STATE_NEXT_PAGE_WAIT	15
 
 	u32 flags;
-#घोषणा MR_AN_ENABLE		0x00000001
-#घोषणा MR_RESTART_AN		0x00000002
-#घोषणा MR_AN_COMPLETE		0x00000004
-#घोषणा MR_PAGE_RX		0x00000008
-#घोषणा MR_NP_LOADED		0x00000010
-#घोषणा MR_TOGGLE_TX		0x00000020
-#घोषणा MR_LP_ADV_FULL_DUPLEX	0x00000040
-#घोषणा MR_LP_ADV_HALF_DUPLEX	0x00000080
-#घोषणा MR_LP_ADV_SYM_PAUSE	0x00000100
-#घोषणा MR_LP_ADV_ASYM_PAUSE	0x00000200
-#घोषणा MR_LP_ADV_REMOTE_FAULT1	0x00000400
-#घोषणा MR_LP_ADV_REMOTE_FAULT2	0x00000800
-#घोषणा MR_LP_ADV_NEXT_PAGE	0x00001000
-#घोषणा MR_TOGGLE_RX		0x00002000
-#घोषणा MR_NP_RX		0x00004000
+#define MR_AN_ENABLE		0x00000001
+#define MR_RESTART_AN		0x00000002
+#define MR_AN_COMPLETE		0x00000004
+#define MR_PAGE_RX		0x00000008
+#define MR_NP_LOADED		0x00000010
+#define MR_TOGGLE_TX		0x00000020
+#define MR_LP_ADV_FULL_DUPLEX	0x00000040
+#define MR_LP_ADV_HALF_DUPLEX	0x00000080
+#define MR_LP_ADV_SYM_PAUSE	0x00000100
+#define MR_LP_ADV_ASYM_PAUSE	0x00000200
+#define MR_LP_ADV_REMOTE_FAULT1	0x00000400
+#define MR_LP_ADV_REMOTE_FAULT2	0x00000800
+#define MR_LP_ADV_NEXT_PAGE	0x00001000
+#define MR_TOGGLE_RX		0x00002000
+#define MR_NP_RX		0x00004000
 
-#घोषणा MR_LINK_OK		0x80000000
+#define MR_LINK_OK		0x80000000
 
-	अचिन्हित दीर्घ link_समय, cur_समय;
+	unsigned long link_time, cur_time;
 
 	u32 ability_match_cfg;
-	पूर्णांक ability_match_count;
+	int ability_match_count;
 
-	अक्षर ability_match, idle_match, ack_match;
+	char ability_match, idle_match, ack_match;
 
 	u32 txconfig, rxconfig;
-#घोषणा ANEG_CFG_NP		0x00000080
-#घोषणा ANEG_CFG_ACK		0x00000040
-#घोषणा ANEG_CFG_RF2		0x00000020
-#घोषणा ANEG_CFG_RF1		0x00000010
-#घोषणा ANEG_CFG_PS2		0x00000001
-#घोषणा ANEG_CFG_PS1		0x00008000
-#घोषणा ANEG_CFG_HD		0x00004000
-#घोषणा ANEG_CFG_FD		0x00002000
-#घोषणा ANEG_CFG_INVAL		0x00001f06
+#define ANEG_CFG_NP		0x00000080
+#define ANEG_CFG_ACK		0x00000040
+#define ANEG_CFG_RF2		0x00000020
+#define ANEG_CFG_RF1		0x00000010
+#define ANEG_CFG_PS2		0x00000001
+#define ANEG_CFG_PS1		0x00008000
+#define ANEG_CFG_HD		0x00004000
+#define ANEG_CFG_FD		0x00002000
+#define ANEG_CFG_INVAL		0x00001f06
 
-पूर्ण;
-#घोषणा ANEG_OK		0
-#घोषणा ANEG_DONE	1
-#घोषणा ANEG_TIMER_ENAB	2
-#घोषणा ANEG_FAILED	-1
+};
+#define ANEG_OK		0
+#define ANEG_DONE	1
+#define ANEG_TIMER_ENAB	2
+#define ANEG_FAILED	-1
 
-#घोषणा ANEG_STATE_SETTLE_TIME	10000
+#define ANEG_STATE_SETTLE_TIME	10000
 
-अटल पूर्णांक tg3_fiber_aneg_smachine(काष्ठा tg3 *tp,
-				   काष्ठा tg3_fiber_aneginfo *ap)
-अणु
+static int tg3_fiber_aneg_smachine(struct tg3 *tp,
+				   struct tg3_fiber_aneginfo *ap)
+{
 	u16 flowctrl;
-	अचिन्हित दीर्घ delta;
+	unsigned long delta;
 	u32 rx_cfg_reg;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (ap->state == ANEG_STATE_UNKNOWN) अणु
+	if (ap->state == ANEG_STATE_UNKNOWN) {
 		ap->rxconfig = 0;
-		ap->link_समय = 0;
-		ap->cur_समय = 0;
+		ap->link_time = 0;
+		ap->cur_time = 0;
 		ap->ability_match_cfg = 0;
 		ap->ability_match_count = 0;
 		ap->ability_match = 0;
 		ap->idle_match = 0;
 		ap->ack_match = 0;
-	पूर्ण
-	ap->cur_समय++;
+	}
+	ap->cur_time++;
 
-	अगर (tr32(MAC_STATUS) & MAC_STATUS_RCVD_CFG) अणु
+	if (tr32(MAC_STATUS) & MAC_STATUS_RCVD_CFG) {
 		rx_cfg_reg = tr32(MAC_RX_AUTO_NEG);
 
-		अगर (rx_cfg_reg != ap->ability_match_cfg) अणु
+		if (rx_cfg_reg != ap->ability_match_cfg) {
 			ap->ability_match_cfg = rx_cfg_reg;
 			ap->ability_match = 0;
 			ap->ability_match_count = 0;
-		पूर्ण अन्यथा अणु
-			अगर (++ap->ability_match_count > 1) अणु
+		} else {
+			if (++ap->ability_match_count > 1) {
 				ap->ability_match = 1;
 				ap->ability_match_cfg = rx_cfg_reg;
-			पूर्ण
-		पूर्ण
-		अगर (rx_cfg_reg & ANEG_CFG_ACK)
+			}
+		}
+		if (rx_cfg_reg & ANEG_CFG_ACK)
 			ap->ack_match = 1;
-		अन्यथा
+		else
 			ap->ack_match = 0;
 
 		ap->idle_match = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ap->idle_match = 1;
 		ap->ability_match_cfg = 0;
 		ap->ability_match_count = 0;
@@ -5194,22 +5193,22 @@ relink:
 		ap->ack_match = 0;
 
 		rx_cfg_reg = 0;
-	पूर्ण
+	}
 
 	ap->rxconfig = rx_cfg_reg;
 	ret = ANEG_OK;
 
-	चयन (ap->state) अणु
-	हाल ANEG_STATE_UNKNOWN:
-		अगर (ap->flags & (MR_AN_ENABLE | MR_RESTART_AN))
+	switch (ap->state) {
+	case ANEG_STATE_UNKNOWN:
+		if (ap->flags & (MR_AN_ENABLE | MR_RESTART_AN))
 			ap->state = ANEG_STATE_AN_ENABLE;
 
 		fallthrough;
-	हाल ANEG_STATE_AN_ENABLE:
+	case ANEG_STATE_AN_ENABLE:
 		ap->flags &= ~(MR_AN_COMPLETE | MR_PAGE_RX);
-		अगर (ap->flags & MR_AN_ENABLE) अणु
-			ap->link_समय = 0;
-			ap->cur_समय = 0;
+		if (ap->flags & MR_AN_ENABLE) {
+			ap->link_time = 0;
+			ap->cur_time = 0;
 			ap->ability_match_cfg = 0;
 			ap->ability_match_count = 0;
 			ap->ability_match = 0;
@@ -5217,13 +5216,13 @@ relink:
 			ap->ack_match = 0;
 
 			ap->state = ANEG_STATE_RESTART_INIT;
-		पूर्ण अन्यथा अणु
+		} else {
 			ap->state = ANEG_STATE_DISABLE_LINK_OK;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ANEG_STATE_RESTART_INIT:
-		ap->link_समय = ap->cur_समय;
+	case ANEG_STATE_RESTART_INIT:
+		ap->link_time = ap->cur_time;
 		ap->flags &= ~(MR_NP_LOADED);
 		ap->txconfig = 0;
 		tw32(MAC_TX_AUTO_NEG, 0);
@@ -5235,25 +5234,25 @@ relink:
 		ap->state = ANEG_STATE_RESTART;
 
 		fallthrough;
-	हाल ANEG_STATE_RESTART:
-		delta = ap->cur_समय - ap->link_समय;
-		अगर (delta > ANEG_STATE_SETTLE_TIME)
+	case ANEG_STATE_RESTART:
+		delta = ap->cur_time - ap->link_time;
+		if (delta > ANEG_STATE_SETTLE_TIME)
 			ap->state = ANEG_STATE_ABILITY_DETECT_INIT;
-		अन्यथा
+		else
 			ret = ANEG_TIMER_ENAB;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_DISABLE_LINK_OK:
+	case ANEG_STATE_DISABLE_LINK_OK:
 		ret = ANEG_DONE;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_ABILITY_DETECT_INIT:
+	case ANEG_STATE_ABILITY_DETECT_INIT:
 		ap->flags &= ~(MR_TOGGLE_TX);
 		ap->txconfig = ANEG_CFG_FD;
 		flowctrl = tg3_advert_flowctrl_1000X(tp->link_config.flowctrl);
-		अगर (flowctrl & ADVERTISE_1000XPAUSE)
+		if (flowctrl & ADVERTISE_1000XPAUSE)
 			ap->txconfig |= ANEG_CFG_PS1;
-		अगर (flowctrl & ADVERTISE_1000XPSE_ASYM)
+		if (flowctrl & ADVERTISE_1000XPSE_ASYM)
 			ap->txconfig |= ANEG_CFG_PS2;
 		tw32(MAC_TX_AUTO_NEG, ap->txconfig);
 		tp->mac_mode |= MAC_MODE_SEND_CONFIGS;
@@ -5261,14 +5260,14 @@ relink:
 		udelay(40);
 
 		ap->state = ANEG_STATE_ABILITY_DETECT;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_ABILITY_DETECT:
-		अगर (ap->ability_match != 0 && ap->rxconfig != 0)
+	case ANEG_STATE_ABILITY_DETECT:
+		if (ap->ability_match != 0 && ap->rxconfig != 0)
 			ap->state = ANEG_STATE_ACK_DETECT_INIT;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_ACK_DETECT_INIT:
+	case ANEG_STATE_ACK_DETECT_INIT:
 		ap->txconfig |= ANEG_CFG_ACK;
 		tw32(MAC_TX_AUTO_NEG, ap->txconfig);
 		tp->mac_mode |= MAC_MODE_SEND_CONFIGS;
@@ -5278,25 +5277,25 @@ relink:
 		ap->state = ANEG_STATE_ACK_DETECT;
 
 		fallthrough;
-	हाल ANEG_STATE_ACK_DETECT:
-		अगर (ap->ack_match != 0) अणु
-			अगर ((ap->rxconfig & ~ANEG_CFG_ACK) ==
-			    (ap->ability_match_cfg & ~ANEG_CFG_ACK)) अणु
+	case ANEG_STATE_ACK_DETECT:
+		if (ap->ack_match != 0) {
+			if ((ap->rxconfig & ~ANEG_CFG_ACK) ==
+			    (ap->ability_match_cfg & ~ANEG_CFG_ACK)) {
 				ap->state = ANEG_STATE_COMPLETE_ACK_INIT;
-			पूर्ण अन्यथा अणु
+			} else {
 				ap->state = ANEG_STATE_AN_ENABLE;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ap->ability_match != 0 &&
-			   ap->rxconfig == 0) अणु
+			}
+		} else if (ap->ability_match != 0 &&
+			   ap->rxconfig == 0) {
 			ap->state = ANEG_STATE_AN_ENABLE;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ANEG_STATE_COMPLETE_ACK_INIT:
-		अगर (ap->rxconfig & ANEG_CFG_INVAL) अणु
+	case ANEG_STATE_COMPLETE_ACK_INIT:
+		if (ap->rxconfig & ANEG_CFG_INVAL) {
 			ret = ANEG_FAILED;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ap->flags &= ~(MR_LP_ADV_FULL_DUPLEX |
 			       MR_LP_ADV_HALF_DUPLEX |
 			       MR_LP_ADV_SYM_PAUSE |
@@ -5306,128 +5305,128 @@ relink:
 			       MR_LP_ADV_NEXT_PAGE |
 			       MR_TOGGLE_RX |
 			       MR_NP_RX);
-		अगर (ap->rxconfig & ANEG_CFG_FD)
+		if (ap->rxconfig & ANEG_CFG_FD)
 			ap->flags |= MR_LP_ADV_FULL_DUPLEX;
-		अगर (ap->rxconfig & ANEG_CFG_HD)
+		if (ap->rxconfig & ANEG_CFG_HD)
 			ap->flags |= MR_LP_ADV_HALF_DUPLEX;
-		अगर (ap->rxconfig & ANEG_CFG_PS1)
+		if (ap->rxconfig & ANEG_CFG_PS1)
 			ap->flags |= MR_LP_ADV_SYM_PAUSE;
-		अगर (ap->rxconfig & ANEG_CFG_PS2)
+		if (ap->rxconfig & ANEG_CFG_PS2)
 			ap->flags |= MR_LP_ADV_ASYM_PAUSE;
-		अगर (ap->rxconfig & ANEG_CFG_RF1)
+		if (ap->rxconfig & ANEG_CFG_RF1)
 			ap->flags |= MR_LP_ADV_REMOTE_FAULT1;
-		अगर (ap->rxconfig & ANEG_CFG_RF2)
+		if (ap->rxconfig & ANEG_CFG_RF2)
 			ap->flags |= MR_LP_ADV_REMOTE_FAULT2;
-		अगर (ap->rxconfig & ANEG_CFG_NP)
+		if (ap->rxconfig & ANEG_CFG_NP)
 			ap->flags |= MR_LP_ADV_NEXT_PAGE;
 
-		ap->link_समय = ap->cur_समय;
+		ap->link_time = ap->cur_time;
 
 		ap->flags ^= (MR_TOGGLE_TX);
-		अगर (ap->rxconfig & 0x0008)
+		if (ap->rxconfig & 0x0008)
 			ap->flags |= MR_TOGGLE_RX;
-		अगर (ap->rxconfig & ANEG_CFG_NP)
+		if (ap->rxconfig & ANEG_CFG_NP)
 			ap->flags |= MR_NP_RX;
 		ap->flags |= MR_PAGE_RX;
 
 		ap->state = ANEG_STATE_COMPLETE_ACK;
 		ret = ANEG_TIMER_ENAB;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_COMPLETE_ACK:
-		अगर (ap->ability_match != 0 &&
-		    ap->rxconfig == 0) अणु
+	case ANEG_STATE_COMPLETE_ACK:
+		if (ap->ability_match != 0 &&
+		    ap->rxconfig == 0) {
 			ap->state = ANEG_STATE_AN_ENABLE;
-			अवरोध;
-		पूर्ण
-		delta = ap->cur_समय - ap->link_समय;
-		अगर (delta > ANEG_STATE_SETTLE_TIME) अणु
-			अगर (!(ap->flags & (MR_LP_ADV_NEXT_PAGE))) अणु
+			break;
+		}
+		delta = ap->cur_time - ap->link_time;
+		if (delta > ANEG_STATE_SETTLE_TIME) {
+			if (!(ap->flags & (MR_LP_ADV_NEXT_PAGE))) {
 				ap->state = ANEG_STATE_IDLE_DETECT_INIT;
-			पूर्ण अन्यथा अणु
-				अगर ((ap->txconfig & ANEG_CFG_NP) == 0 &&
-				    !(ap->flags & MR_NP_RX)) अणु
+			} else {
+				if ((ap->txconfig & ANEG_CFG_NP) == 0 &&
+				    !(ap->flags & MR_NP_RX)) {
 					ap->state = ANEG_STATE_IDLE_DETECT_INIT;
-				पूर्ण अन्यथा अणु
+				} else {
 					ret = ANEG_FAILED;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अवरोध;
+				}
+			}
+		}
+		break;
 
-	हाल ANEG_STATE_IDLE_DETECT_INIT:
-		ap->link_समय = ap->cur_समय;
+	case ANEG_STATE_IDLE_DETECT_INIT:
+		ap->link_time = ap->cur_time;
 		tp->mac_mode &= ~MAC_MODE_SEND_CONFIGS;
 		tw32_f(MAC_MODE, tp->mac_mode);
 		udelay(40);
 
 		ap->state = ANEG_STATE_IDLE_DETECT;
 		ret = ANEG_TIMER_ENAB;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_IDLE_DETECT:
-		अगर (ap->ability_match != 0 &&
-		    ap->rxconfig == 0) अणु
+	case ANEG_STATE_IDLE_DETECT:
+		if (ap->ability_match != 0 &&
+		    ap->rxconfig == 0) {
 			ap->state = ANEG_STATE_AN_ENABLE;
-			अवरोध;
-		पूर्ण
-		delta = ap->cur_समय - ap->link_समय;
-		अगर (delta > ANEG_STATE_SETTLE_TIME) अणु
+			break;
+		}
+		delta = ap->cur_time - ap->link_time;
+		if (delta > ANEG_STATE_SETTLE_TIME) {
 			/* XXX another gem from the Broadcom driver :( */
 			ap->state = ANEG_STATE_LINK_OK;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल ANEG_STATE_LINK_OK:
+	case ANEG_STATE_LINK_OK:
 		ap->flags |= (MR_AN_COMPLETE | MR_LINK_OK);
 		ret = ANEG_DONE;
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_NEXT_PAGE_WAIT_INIT:
+	case ANEG_STATE_NEXT_PAGE_WAIT_INIT:
 		/* ??? unimplemented */
-		अवरोध;
+		break;
 
-	हाल ANEG_STATE_NEXT_PAGE_WAIT:
+	case ANEG_STATE_NEXT_PAGE_WAIT:
 		/* ??? unimplemented */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		ret = ANEG_FAILED;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक fiber_स्वतःneg(काष्ठा tg3 *tp, u32 *txflags, u32 *rxflags)
-अणु
-	पूर्णांक res = 0;
-	काष्ठा tg3_fiber_aneginfo aninfo;
-	पूर्णांक status = ANEG_FAILED;
-	अचिन्हित पूर्णांक tick;
-	u32 पंचांगp;
+static int fiber_autoneg(struct tg3 *tp, u32 *txflags, u32 *rxflags)
+{
+	int res = 0;
+	struct tg3_fiber_aneginfo aninfo;
+	int status = ANEG_FAILED;
+	unsigned int tick;
+	u32 tmp;
 
 	tw32_f(MAC_TX_AUTO_NEG, 0);
 
-	पंचांगp = tp->mac_mode & ~MAC_MODE_PORT_MODE_MASK;
-	tw32_f(MAC_MODE, पंचांगp | MAC_MODE_PORT_MODE_GMII);
+	tmp = tp->mac_mode & ~MAC_MODE_PORT_MODE_MASK;
+	tw32_f(MAC_MODE, tmp | MAC_MODE_PORT_MODE_GMII);
 	udelay(40);
 
 	tw32_f(MAC_MODE, tp->mac_mode | MAC_MODE_SEND_CONFIGS);
 	udelay(40);
 
-	स_रखो(&aninfo, 0, माप(aninfo));
+	memset(&aninfo, 0, sizeof(aninfo));
 	aninfo.flags |= MR_AN_ENABLE;
 	aninfo.state = ANEG_STATE_UNKNOWN;
-	aninfo.cur_समय = 0;
+	aninfo.cur_time = 0;
 	tick = 0;
-	जबतक (++tick < 195000) अणु
+	while (++tick < 195000) {
 		status = tg3_fiber_aneg_smachine(tp, &aninfo);
-		अगर (status == ANEG_DONE || status == ANEG_FAILED)
-			अवरोध;
+		if (status == ANEG_DONE || status == ANEG_FAILED)
+			break;
 
 		udelay(1);
-	पूर्ण
+	}
 
 	tp->mac_mode &= ~MAC_MODE_SEND_CONFIGS;
 	tw32_f(MAC_MODE, tp->mac_mode);
@@ -5436,71 +5435,71 @@ relink:
 	*txflags = aninfo.txconfig;
 	*rxflags = aninfo.flags;
 
-	अगर (status == ANEG_DONE &&
+	if (status == ANEG_DONE &&
 	    (aninfo.flags & (MR_AN_COMPLETE | MR_LINK_OK |
 			     MR_LP_ADV_FULL_DUPLEX)))
 		res = 1;
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम tg3_init_bcm8002(काष्ठा tg3 *tp)
-अणु
+static void tg3_init_bcm8002(struct tg3 *tp)
+{
 	u32 mac_status = tr32(MAC_STATUS);
-	पूर्णांक i;
+	int i;
 
-	/* Reset when initting first समय or we have a link. */
-	अगर (tg3_flag(tp, INIT_COMPLETE) &&
+	/* Reset when initting first time or we have a link. */
+	if (tg3_flag(tp, INIT_COMPLETE) &&
 	    !(mac_status & MAC_STATUS_PCS_SYNCED))
-		वापस;
+		return;
 
 	/* Set PLL lock range. */
-	tg3_ग_लिखोphy(tp, 0x16, 0x8007);
+	tg3_writephy(tp, 0x16, 0x8007);
 
 	/* SW reset */
-	tg3_ग_लिखोphy(tp, MII_BMCR, BMCR_RESET);
+	tg3_writephy(tp, MII_BMCR, BMCR_RESET);
 
-	/* Wait क्रम reset to complete. */
-	/* XXX schedule_समयout() ... */
-	क्रम (i = 0; i < 500; i++)
+	/* Wait for reset to complete. */
+	/* XXX schedule_timeout() ... */
+	for (i = 0; i < 500; i++)
 		udelay(10);
 
 	/* Config mode; select PMA/Ch 1 regs. */
-	tg3_ग_लिखोphy(tp, 0x10, 0x8411);
+	tg3_writephy(tp, 0x10, 0x8411);
 
-	/* Enable स्वतः-lock and comdet, select txclk क्रम tx. */
-	tg3_ग_लिखोphy(tp, 0x11, 0x0a10);
+	/* Enable auto-lock and comdet, select txclk for tx. */
+	tg3_writephy(tp, 0x11, 0x0a10);
 
-	tg3_ग_लिखोphy(tp, 0x18, 0x00a0);
-	tg3_ग_लिखोphy(tp, 0x16, 0x41ff);
+	tg3_writephy(tp, 0x18, 0x00a0);
+	tg3_writephy(tp, 0x16, 0x41ff);
 
-	/* Assert and deनिश्चित POR. */
-	tg3_ग_लिखोphy(tp, 0x13, 0x0400);
+	/* Assert and deassert POR. */
+	tg3_writephy(tp, 0x13, 0x0400);
 	udelay(40);
-	tg3_ग_लिखोphy(tp, 0x13, 0x0000);
+	tg3_writephy(tp, 0x13, 0x0000);
 
-	tg3_ग_लिखोphy(tp, 0x11, 0x0a50);
+	tg3_writephy(tp, 0x11, 0x0a50);
 	udelay(40);
-	tg3_ग_लिखोphy(tp, 0x11, 0x0a10);
+	tg3_writephy(tp, 0x11, 0x0a10);
 
-	/* Wait क्रम संकेत to stabilize */
-	/* XXX schedule_समयout() ... */
-	क्रम (i = 0; i < 15000; i++)
+	/* Wait for signal to stabilize */
+	/* XXX schedule_timeout() ... */
+	for (i = 0; i < 15000; i++)
 		udelay(10);
 
-	/* Deselect the channel रेजिस्टर so we can पढ़ो the PHYID
+	/* Deselect the channel register so we can read the PHYID
 	 * later.
 	 */
-	tg3_ग_लिखोphy(tp, 0x10, 0x8011);
-पूर्ण
+	tg3_writephy(tp, 0x10, 0x8011);
+}
 
-अटल bool tg3_setup_fiber_hw_स्वतःneg(काष्ठा tg3 *tp, u32 mac_status)
-अणु
+static bool tg3_setup_fiber_hw_autoneg(struct tg3 *tp, u32 mac_status)
+{
 	u16 flowctrl;
 	bool current_link_up;
 	u32 sg_dig_ctrl, sg_dig_status;
 	u32 serdes_cfg, expected_sg_dig_ctrl;
-	पूर्णांक workaround, port_a;
+	int workaround, port_a;
 
 	serdes_cfg = 0;
 	expected_sg_dig_ctrl = 0;
@@ -5508,61 +5507,61 @@ relink:
 	port_a = 1;
 	current_link_up = false;
 
-	अगर (tg3_chip_rev_id(tp) != CHIPREV_ID_5704_A0 &&
-	    tg3_chip_rev_id(tp) != CHIPREV_ID_5704_A1) अणु
+	if (tg3_chip_rev_id(tp) != CHIPREV_ID_5704_A0 &&
+	    tg3_chip_rev_id(tp) != CHIPREV_ID_5704_A1) {
 		workaround = 1;
-		अगर (tr32(TG3PCI_DUAL_MAC_CTRL) & DUAL_MAC_CTRL_ID)
+		if (tr32(TG3PCI_DUAL_MAC_CTRL) & DUAL_MAC_CTRL_ID)
 			port_a = 0;
 
-		/* preserve bits 0-11,13,14 क्रम संकेत pre-emphasis */
-		/* preserve bits 20-23 क्रम voltage regulator */
+		/* preserve bits 0-11,13,14 for signal pre-emphasis */
+		/* preserve bits 20-23 for voltage regulator */
 		serdes_cfg = tr32(MAC_SERDES_CFG) & 0x00f06fff;
-	पूर्ण
+	}
 
 	sg_dig_ctrl = tr32(SG_DIG_CTRL);
 
-	अगर (tp->link_config.स्वतःneg != AUTONEG_ENABLE) अणु
-		अगर (sg_dig_ctrl & SG_DIG_USING_HW_AUTONEG) अणु
-			अगर (workaround) अणु
+	if (tp->link_config.autoneg != AUTONEG_ENABLE) {
+		if (sg_dig_ctrl & SG_DIG_USING_HW_AUTONEG) {
+			if (workaround) {
 				u32 val = serdes_cfg;
 
-				अगर (port_a)
+				if (port_a)
 					val |= 0xc010000;
-				अन्यथा
+				else
 					val |= 0x4010000;
 				tw32_f(MAC_SERDES_CFG, val);
-			पूर्ण
+			}
 
 			tw32_f(SG_DIG_CTRL, SG_DIG_COMMON_SETUP);
-		पूर्ण
-		अगर (mac_status & MAC_STATUS_PCS_SYNCED) अणु
+		}
+		if (mac_status & MAC_STATUS_PCS_SYNCED) {
 			tg3_setup_flow_control(tp, 0, 0);
 			current_link_up = true;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+		}
+		goto out;
+	}
 
-	/* Want स्वतः-negotiation.  */
+	/* Want auto-negotiation.  */
 	expected_sg_dig_ctrl = SG_DIG_USING_HW_AUTONEG | SG_DIG_COMMON_SETUP;
 
 	flowctrl = tg3_advert_flowctrl_1000X(tp->link_config.flowctrl);
-	अगर (flowctrl & ADVERTISE_1000XPAUSE)
+	if (flowctrl & ADVERTISE_1000XPAUSE)
 		expected_sg_dig_ctrl |= SG_DIG_PAUSE_CAP;
-	अगर (flowctrl & ADVERTISE_1000XPSE_ASYM)
+	if (flowctrl & ADVERTISE_1000XPSE_ASYM)
 		expected_sg_dig_ctrl |= SG_DIG_ASYM_PAUSE;
 
-	अगर (sg_dig_ctrl != expected_sg_dig_ctrl) अणु
-		अगर ((tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT) &&
+	if (sg_dig_ctrl != expected_sg_dig_ctrl) {
+		if ((tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT) &&
 		    tp->serdes_counter &&
 		    ((mac_status & (MAC_STATUS_PCS_SYNCED |
 				    MAC_STATUS_RCVD_CFG)) ==
-		     MAC_STATUS_PCS_SYNCED)) अणु
+		     MAC_STATUS_PCS_SYNCED)) {
 			tp->serdes_counter--;
 			current_link_up = true;
-			जाओ out;
-		पूर्ण
-restart_स्वतःneg:
-		अगर (workaround)
+			goto out;
+		}
+restart_autoneg:
+		if (workaround)
 			tw32_f(MAC_SERDES_CFG, serdes_cfg | 0xc011000);
 		tw32_f(SG_DIG_CTRL, expected_sg_dig_ctrl | SG_DIG_SOFT_RESET);
 		udelay(5);
@@ -5570,23 +5569,23 @@ restart_स्वतःneg:
 
 		tp->serdes_counter = SERDES_AN_TIMEOUT_5704S;
 		tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
-	पूर्ण अन्यथा अगर (mac_status & (MAC_STATUS_PCS_SYNCED |
-				 MAC_STATUS_SIGNAL_DET)) अणु
+	} else if (mac_status & (MAC_STATUS_PCS_SYNCED |
+				 MAC_STATUS_SIGNAL_DET)) {
 		sg_dig_status = tr32(SG_DIG_STATUS);
 		mac_status = tr32(MAC_STATUS);
 
-		अगर ((sg_dig_status & SG_DIG_AUTONEG_COMPLETE) &&
-		    (mac_status & MAC_STATUS_PCS_SYNCED)) अणु
+		if ((sg_dig_status & SG_DIG_AUTONEG_COMPLETE) &&
+		    (mac_status & MAC_STATUS_PCS_SYNCED)) {
 			u32 local_adv = 0, remote_adv = 0;
 
-			अगर (sg_dig_ctrl & SG_DIG_PAUSE_CAP)
+			if (sg_dig_ctrl & SG_DIG_PAUSE_CAP)
 				local_adv |= ADVERTISE_1000XPAUSE;
-			अगर (sg_dig_ctrl & SG_DIG_ASYM_PAUSE)
+			if (sg_dig_ctrl & SG_DIG_ASYM_PAUSE)
 				local_adv |= ADVERTISE_1000XPSE_ASYM;
 
-			अगर (sg_dig_status & SG_DIG_PARTNER_PAUSE_CAPABLE)
+			if (sg_dig_status & SG_DIG_PARTNER_PAUSE_CAPABLE)
 				remote_adv |= LPA_1000XPAUSE;
-			अगर (sg_dig_status & SG_DIG_PARTNER_ASYM_PAUSE)
+			if (sg_dig_status & SG_DIG_PARTNER_ASYM_PAUSE)
 				remote_adv |= LPA_1000XPAUSE_ASYM;
 
 			tp->link_config.rmt_adv =
@@ -5596,71 +5595,71 @@ restart_स्वतःneg:
 			current_link_up = true;
 			tp->serdes_counter = 0;
 			tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
-		पूर्ण अन्यथा अगर (!(sg_dig_status & SG_DIG_AUTONEG_COMPLETE)) अणु
-			अगर (tp->serdes_counter)
+		} else if (!(sg_dig_status & SG_DIG_AUTONEG_COMPLETE)) {
+			if (tp->serdes_counter)
 				tp->serdes_counter--;
-			अन्यथा अणु
-				अगर (workaround) अणु
+			else {
+				if (workaround) {
 					u32 val = serdes_cfg;
 
-					अगर (port_a)
+					if (port_a)
 						val |= 0xc010000;
-					अन्यथा
+					else
 						val |= 0x4010000;
 
 					tw32_f(MAC_SERDES_CFG, val);
-				पूर्ण
+				}
 
 				tw32_f(SG_DIG_CTRL, SG_DIG_COMMON_SETUP);
 				udelay(40);
 
 				/* Link parallel detection - link is up */
-				/* only अगर we have PCS_SYNC and not */
+				/* only if we have PCS_SYNC and not */
 				/* receiving config code words */
 				mac_status = tr32(MAC_STATUS);
-				अगर ((mac_status & MAC_STATUS_PCS_SYNCED) &&
-				    !(mac_status & MAC_STATUS_RCVD_CFG)) अणु
+				if ((mac_status & MAC_STATUS_PCS_SYNCED) &&
+				    !(mac_status & MAC_STATUS_RCVD_CFG)) {
 					tg3_setup_flow_control(tp, 0, 0);
 					current_link_up = true;
 					tp->phy_flags |=
 						TG3_PHYFLG_PARALLEL_DETECT;
 					tp->serdes_counter =
 						SERDES_PARALLEL_DET_TIMEOUT;
-				पूर्ण अन्यथा
-					जाओ restart_स्वतःneg;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				} else
+					goto restart_autoneg;
+			}
+		}
+	} else {
 		tp->serdes_counter = SERDES_AN_TIMEOUT_5704S;
 		tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
-	पूर्ण
+	}
 
 out:
-	वापस current_link_up;
-पूर्ण
+	return current_link_up;
+}
 
-अटल bool tg3_setup_fiber_by_hand(काष्ठा tg3 *tp, u32 mac_status)
-अणु
+static bool tg3_setup_fiber_by_hand(struct tg3 *tp, u32 mac_status)
+{
 	bool current_link_up = false;
 
-	अगर (!(mac_status & MAC_STATUS_PCS_SYNCED))
-		जाओ out;
+	if (!(mac_status & MAC_STATUS_PCS_SYNCED))
+		goto out;
 
-	अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE) अणु
+	if (tp->link_config.autoneg == AUTONEG_ENABLE) {
 		u32 txflags, rxflags;
-		पूर्णांक i;
+		int i;
 
-		अगर (fiber_स्वतःneg(tp, &txflags, &rxflags)) अणु
+		if (fiber_autoneg(tp, &txflags, &rxflags)) {
 			u32 local_adv = 0, remote_adv = 0;
 
-			अगर (txflags & ANEG_CFG_PS1)
+			if (txflags & ANEG_CFG_PS1)
 				local_adv |= ADVERTISE_1000XPAUSE;
-			अगर (txflags & ANEG_CFG_PS2)
+			if (txflags & ANEG_CFG_PS2)
 				local_adv |= ADVERTISE_1000XPSE_ASYM;
 
-			अगर (rxflags & MR_LP_ADV_SYM_PAUSE)
+			if (rxflags & MR_LP_ADV_SYM_PAUSE)
 				remote_adv |= LPA_1000XPAUSE;
-			अगर (rxflags & MR_LP_ADV_ASYM_PAUSE)
+			if (rxflags & MR_LP_ADV_ASYM_PAUSE)
 				remote_adv |= LPA_1000XPAUSE_ASYM;
 
 			tp->link_config.rmt_adv =
@@ -5669,25 +5668,25 @@ out:
 			tg3_setup_flow_control(tp, local_adv, remote_adv);
 
 			current_link_up = true;
-		पूर्ण
-		क्रम (i = 0; i < 30; i++) अणु
+		}
+		for (i = 0; i < 30; i++) {
 			udelay(20);
 			tw32_f(MAC_STATUS,
 			       (MAC_STATUS_SYNC_CHANGED |
 				MAC_STATUS_CFG_CHANGED));
 			udelay(40);
-			अगर ((tr32(MAC_STATUS) &
+			if ((tr32(MAC_STATUS) &
 			     (MAC_STATUS_SYNC_CHANGED |
 			      MAC_STATUS_CFG_CHANGED)) == 0)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
 		mac_status = tr32(MAC_STATUS);
-		अगर (!current_link_up &&
+		if (!current_link_up &&
 		    (mac_status & MAC_STATUS_PCS_SYNCED) &&
 		    !(mac_status & MAC_STATUS_RCVD_CFG))
 			current_link_up = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		tg3_setup_flow_control(tp, 0, 0);
 
 		/* Forcing 1000FD link up. */
@@ -5698,40 +5697,40 @@ out:
 
 		tw32_f(MAC_MODE, tp->mac_mode);
 		udelay(40);
-	पूर्ण
+	}
 
 out:
-	वापस current_link_up;
-पूर्ण
+	return current_link_up;
+}
 
-अटल पूर्णांक tg3_setup_fiber_phy(काष्ठा tg3 *tp, bool क्रमce_reset)
-अणु
-	u32 orig_छोड़ो_cfg;
+static int tg3_setup_fiber_phy(struct tg3 *tp, bool force_reset)
+{
+	u32 orig_pause_cfg;
 	u32 orig_active_speed;
 	u8 orig_active_duplex;
 	u32 mac_status;
 	bool current_link_up;
-	पूर्णांक i;
+	int i;
 
-	orig_छोड़ो_cfg = tp->link_config.active_flowctrl;
+	orig_pause_cfg = tp->link_config.active_flowctrl;
 	orig_active_speed = tp->link_config.active_speed;
 	orig_active_duplex = tp->link_config.active_duplex;
 
-	अगर (!tg3_flag(tp, HW_AUTONEG) &&
+	if (!tg3_flag(tp, HW_AUTONEG) &&
 	    tp->link_up &&
-	    tg3_flag(tp, INIT_COMPLETE)) अणु
+	    tg3_flag(tp, INIT_COMPLETE)) {
 		mac_status = tr32(MAC_STATUS);
 		mac_status &= (MAC_STATUS_PCS_SYNCED |
 			       MAC_STATUS_SIGNAL_DET |
 			       MAC_STATUS_CFG_CHANGED |
 			       MAC_STATUS_RCVD_CFG);
-		अगर (mac_status == (MAC_STATUS_PCS_SYNCED |
-				   MAC_STATUS_SIGNAL_DET)) अणु
+		if (mac_status == (MAC_STATUS_PCS_SYNCED |
+				   MAC_STATUS_SIGNAL_DET)) {
 			tw32_f(MAC_STATUS, (MAC_STATUS_SYNC_CHANGED |
 					    MAC_STATUS_CFG_CHANGED));
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	tw32_f(MAC_TX_AUTO_NEG, 0);
 
@@ -5740,7 +5739,7 @@ out:
 	tw32_f(MAC_MODE, tp->mac_mode);
 	udelay(40);
 
-	अगर (tp->phy_id == TG3_PHY_ID_BCM8002)
+	if (tp->phy_id == TG3_PHY_ID_BCM8002)
 		tg3_init_bcm8002(tp);
 
 	/* Enable link change event even when serdes polling.  */
@@ -5751,109 +5750,109 @@ out:
 	tp->link_config.rmt_adv = 0;
 	mac_status = tr32(MAC_STATUS);
 
-	अगर (tg3_flag(tp, HW_AUTONEG))
-		current_link_up = tg3_setup_fiber_hw_स्वतःneg(tp, mac_status);
-	अन्यथा
+	if (tg3_flag(tp, HW_AUTONEG))
+		current_link_up = tg3_setup_fiber_hw_autoneg(tp, mac_status);
+	else
 		current_link_up = tg3_setup_fiber_by_hand(tp, mac_status);
 
 	tp->napi[0].hw_status->status =
 		(SD_STATUS_UPDATED |
 		 (tp->napi[0].hw_status->status & ~SD_STATUS_LINK_CHG));
 
-	क्रम (i = 0; i < 100; i++) अणु
+	for (i = 0; i < 100; i++) {
 		tw32_f(MAC_STATUS, (MAC_STATUS_SYNC_CHANGED |
 				    MAC_STATUS_CFG_CHANGED));
 		udelay(5);
-		अगर ((tr32(MAC_STATUS) & (MAC_STATUS_SYNC_CHANGED |
+		if ((tr32(MAC_STATUS) & (MAC_STATUS_SYNC_CHANGED |
 					 MAC_STATUS_CFG_CHANGED |
 					 MAC_STATUS_LNKSTATE_CHANGED)) == 0)
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	mac_status = tr32(MAC_STATUS);
-	अगर ((mac_status & MAC_STATUS_PCS_SYNCED) == 0) अणु
+	if ((mac_status & MAC_STATUS_PCS_SYNCED) == 0) {
 		current_link_up = false;
-		अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE &&
-		    tp->serdes_counter == 0) अणु
+		if (tp->link_config.autoneg == AUTONEG_ENABLE &&
+		    tp->serdes_counter == 0) {
 			tw32_f(MAC_MODE, (tp->mac_mode |
 					  MAC_MODE_SEND_CONFIGS));
 			udelay(1);
 			tw32_f(MAC_MODE, tp->mac_mode);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (current_link_up) अणु
+	if (current_link_up) {
 		tp->link_config.active_speed = SPEED_1000;
 		tp->link_config.active_duplex = DUPLEX_FULL;
 		tw32(MAC_LED_CTRL, (tp->led_ctrl |
 				    LED_CTRL_LNKLED_OVERRIDE |
 				    LED_CTRL_1000MBPS_ON));
-	पूर्ण अन्यथा अणु
+	} else {
 		tp->link_config.active_speed = SPEED_UNKNOWN;
 		tp->link_config.active_duplex = DUPLEX_UNKNOWN;
 		tw32(MAC_LED_CTRL, (tp->led_ctrl |
 				    LED_CTRL_LNKLED_OVERRIDE |
 				    LED_CTRL_TRAFFIC_OVERRIDE));
-	पूर्ण
+	}
 
-	अगर (!tg3_test_and_report_link_chg(tp, current_link_up)) अणु
-		u32 now_छोड़ो_cfg = tp->link_config.active_flowctrl;
-		अगर (orig_छोड़ो_cfg != now_छोड़ो_cfg ||
+	if (!tg3_test_and_report_link_chg(tp, current_link_up)) {
+		u32 now_pause_cfg = tp->link_config.active_flowctrl;
+		if (orig_pause_cfg != now_pause_cfg ||
 		    orig_active_speed != tp->link_config.active_speed ||
 		    orig_active_duplex != tp->link_config.active_duplex)
 			tg3_link_report(tp);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_setup_fiber_mii_phy(काष्ठा tg3 *tp, bool क्रमce_reset)
-अणु
-	पूर्णांक err = 0;
+static int tg3_setup_fiber_mii_phy(struct tg3 *tp, bool force_reset)
+{
+	int err = 0;
 	u32 bmsr, bmcr;
 	u32 current_speed = SPEED_UNKNOWN;
 	u8 current_duplex = DUPLEX_UNKNOWN;
 	bool current_link_up = false;
 	u32 local_adv, remote_adv, sgsr;
 
-	अगर ((tg3_asic_rev(tp) == ASIC_REV_5719 ||
+	if ((tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	     tg3_asic_rev(tp) == ASIC_REV_5720) &&
-	     !tg3_पढ़ोphy(tp, SERDES_TG3_1000X_STATUS, &sgsr) &&
-	     (sgsr & SERDES_TG3_SGMII_MODE)) अणु
+	     !tg3_readphy(tp, SERDES_TG3_1000X_STATUS, &sgsr) &&
+	     (sgsr & SERDES_TG3_SGMII_MODE)) {
 
-		अगर (क्रमce_reset)
+		if (force_reset)
 			tg3_phy_reset(tp);
 
 		tp->mac_mode &= ~MAC_MODE_PORT_MODE_MASK;
 
-		अगर (!(sgsr & SERDES_TG3_LINK_UP)) अणु
+		if (!(sgsr & SERDES_TG3_LINK_UP)) {
 			tp->mac_mode |= MAC_MODE_PORT_MODE_GMII;
-		पूर्ण अन्यथा अणु
+		} else {
 			current_link_up = true;
-			अगर (sgsr & SERDES_TG3_SPEED_1000) अणु
+			if (sgsr & SERDES_TG3_SPEED_1000) {
 				current_speed = SPEED_1000;
 				tp->mac_mode |= MAC_MODE_PORT_MODE_GMII;
-			पूर्ण अन्यथा अगर (sgsr & SERDES_TG3_SPEED_100) अणु
+			} else if (sgsr & SERDES_TG3_SPEED_100) {
 				current_speed = SPEED_100;
 				tp->mac_mode |= MAC_MODE_PORT_MODE_MII;
-			पूर्ण अन्यथा अणु
+			} else {
 				current_speed = SPEED_10;
 				tp->mac_mode |= MAC_MODE_PORT_MODE_MII;
-			पूर्ण
+			}
 
-			अगर (sgsr & SERDES_TG3_FULL_DUPLEX)
+			if (sgsr & SERDES_TG3_FULL_DUPLEX)
 				current_duplex = DUPLEX_FULL;
-			अन्यथा
+			else
 				current_duplex = DUPLEX_HALF;
-		पूर्ण
+		}
 
 		tw32_f(MAC_MODE, tp->mac_mode);
 		udelay(40);
 
 		tg3_clear_mac_status(tp);
 
-		जाओ fiber_setup_करोne;
-	पूर्ण
+		goto fiber_setup_done;
+	}
 
 	tp->mac_mode |= MAC_MODE_PORT_MODE_GMII;
 	tw32_f(MAC_MODE, tp->mac_mode);
@@ -5861,29 +5860,29 @@ out:
 
 	tg3_clear_mac_status(tp);
 
-	अगर (क्रमce_reset)
+	if (force_reset)
 		tg3_phy_reset(tp);
 
 	tp->link_config.rmt_adv = 0;
 
-	err |= tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-	err |= tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5714) अणु
-		अगर (tr32(MAC_TX_STATUS) & TX_STATUS_LINK_UP)
+	err |= tg3_readphy(tp, MII_BMSR, &bmsr);
+	err |= tg3_readphy(tp, MII_BMSR, &bmsr);
+	if (tg3_asic_rev(tp) == ASIC_REV_5714) {
+		if (tr32(MAC_TX_STATUS) & TX_STATUS_LINK_UP)
 			bmsr |= BMSR_LSTATUS;
-		अन्यथा
+		else
 			bmsr &= ~BMSR_LSTATUS;
-	पूर्ण
+	}
 
-	err |= tg3_पढ़ोphy(tp, MII_BMCR, &bmcr);
+	err |= tg3_readphy(tp, MII_BMCR, &bmcr);
 
-	अगर ((tp->link_config.स्वतःneg == AUTONEG_ENABLE) && !क्रमce_reset &&
-	    (tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT)) अणु
-		/* करो nothing, just check क्रम link up at the end */
-	पूर्ण अन्यथा अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE) अणु
+	if ((tp->link_config.autoneg == AUTONEG_ENABLE) && !force_reset &&
+	    (tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT)) {
+		/* do nothing, just check for link up at the end */
+	} else if (tp->link_config.autoneg == AUTONEG_ENABLE) {
 		u32 adv, newadv;
 
-		err |= tg3_पढ़ोphy(tp, MII_ADVERTISE, &adv);
+		err |= tg3_readphy(tp, MII_ADVERTISE, &adv);
 		newadv = adv & ~(ADVERTISE_1000XFULL | ADVERTISE_1000XHALF |
 				 ADVERTISE_1000XPAUSE |
 				 ADVERTISE_1000XPSE_ASYM |
@@ -5892,101 +5891,101 @@ out:
 		newadv |= tg3_advert_flowctrl_1000X(tp->link_config.flowctrl);
 		newadv |= ethtool_adv_to_mii_adv_x(tp->link_config.advertising);
 
-		अगर ((newadv != adv) || !(bmcr & BMCR_ANENABLE)) अणु
-			tg3_ग_लिखोphy(tp, MII_ADVERTISE, newadv);
+		if ((newadv != adv) || !(bmcr & BMCR_ANENABLE)) {
+			tg3_writephy(tp, MII_ADVERTISE, newadv);
 			bmcr |= BMCR_ANENABLE | BMCR_ANRESTART;
-			tg3_ग_लिखोphy(tp, MII_BMCR, bmcr);
+			tg3_writephy(tp, MII_BMCR, bmcr);
 
 			tw32_f(MAC_EVENT, MAC_EVENT_LNKSTATE_CHANGED);
 			tp->serdes_counter = SERDES_AN_TIMEOUT_5714S;
 			tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
 
-			वापस err;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return err;
+		}
+	} else {
 		u32 new_bmcr;
 
 		bmcr &= ~BMCR_SPEED1000;
 		new_bmcr = bmcr & ~(BMCR_ANENABLE | BMCR_FULLDPLX);
 
-		अगर (tp->link_config.duplex == DUPLEX_FULL)
+		if (tp->link_config.duplex == DUPLEX_FULL)
 			new_bmcr |= BMCR_FULLDPLX;
 
-		अगर (new_bmcr != bmcr) अणु
+		if (new_bmcr != bmcr) {
 			/* BMCR_SPEED1000 is a reserved bit that needs
-			 * to be set on ग_लिखो.
+			 * to be set on write.
 			 */
 			new_bmcr |= BMCR_SPEED1000;
 
-			/* Force a linkकरोwn */
-			अगर (tp->link_up) अणु
+			/* Force a linkdown */
+			if (tp->link_up) {
 				u32 adv;
 
-				err |= tg3_पढ़ोphy(tp, MII_ADVERTISE, &adv);
+				err |= tg3_readphy(tp, MII_ADVERTISE, &adv);
 				adv &= ~(ADVERTISE_1000XFULL |
 					 ADVERTISE_1000XHALF |
 					 ADVERTISE_SLCT);
-				tg3_ग_लिखोphy(tp, MII_ADVERTISE, adv);
-				tg3_ग_लिखोphy(tp, MII_BMCR, bmcr |
+				tg3_writephy(tp, MII_ADVERTISE, adv);
+				tg3_writephy(tp, MII_BMCR, bmcr |
 							   BMCR_ANRESTART |
 							   BMCR_ANENABLE);
 				udelay(10);
 				tg3_carrier_off(tp);
-			पूर्ण
-			tg3_ग_लिखोphy(tp, MII_BMCR, new_bmcr);
+			}
+			tg3_writephy(tp, MII_BMCR, new_bmcr);
 			bmcr = new_bmcr;
-			err |= tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-			err |= tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5714) अणु
-				अगर (tr32(MAC_TX_STATUS) & TX_STATUS_LINK_UP)
+			err |= tg3_readphy(tp, MII_BMSR, &bmsr);
+			err |= tg3_readphy(tp, MII_BMSR, &bmsr);
+			if (tg3_asic_rev(tp) == ASIC_REV_5714) {
+				if (tr32(MAC_TX_STATUS) & TX_STATUS_LINK_UP)
 					bmsr |= BMSR_LSTATUS;
-				अन्यथा
+				else
 					bmsr &= ~BMSR_LSTATUS;
-			पूर्ण
+			}
 			tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (bmsr & BMSR_LSTATUS) अणु
+	if (bmsr & BMSR_LSTATUS) {
 		current_speed = SPEED_1000;
 		current_link_up = true;
-		अगर (bmcr & BMCR_FULLDPLX)
+		if (bmcr & BMCR_FULLDPLX)
 			current_duplex = DUPLEX_FULL;
-		अन्यथा
+		else
 			current_duplex = DUPLEX_HALF;
 
 		local_adv = 0;
 		remote_adv = 0;
 
-		अगर (bmcr & BMCR_ANENABLE) अणु
+		if (bmcr & BMCR_ANENABLE) {
 			u32 common;
 
-			err |= tg3_पढ़ोphy(tp, MII_ADVERTISE, &local_adv);
-			err |= tg3_पढ़ोphy(tp, MII_LPA, &remote_adv);
+			err |= tg3_readphy(tp, MII_ADVERTISE, &local_adv);
+			err |= tg3_readphy(tp, MII_LPA, &remote_adv);
 			common = local_adv & remote_adv;
-			अगर (common & (ADVERTISE_1000XHALF |
-				      ADVERTISE_1000XFULL)) अणु
-				अगर (common & ADVERTISE_1000XFULL)
+			if (common & (ADVERTISE_1000XHALF |
+				      ADVERTISE_1000XFULL)) {
+				if (common & ADVERTISE_1000XFULL)
 					current_duplex = DUPLEX_FULL;
-				अन्यथा
+				else
 					current_duplex = DUPLEX_HALF;
 
 				tp->link_config.rmt_adv =
 					   mii_adv_to_ethtool_adv_x(remote_adv);
-			पूर्ण अन्यथा अगर (!tg3_flag(tp, 5780_CLASS)) अणु
+			} else if (!tg3_flag(tp, 5780_CLASS)) {
 				/* Link is up via parallel detect */
-			पूर्ण अन्यथा अणु
+			} else {
 				current_link_up = false;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-fiber_setup_करोne:
-	अगर (current_link_up && current_duplex == DUPLEX_FULL)
+fiber_setup_done:
+	if (current_link_up && current_duplex == DUPLEX_FULL)
 		tg3_setup_flow_control(tp, local_adv, remote_adv);
 
 	tp->mac_mode &= ~MAC_MODE_HALF_DUPLEX;
-	अगर (tp->link_config.active_duplex == DUPLEX_HALF)
+	if (tp->link_config.active_duplex == DUPLEX_HALF)
 		tp->mac_mode |= MAC_MODE_HALF_DUPLEX;
 
 	tw32_f(MAC_MODE, tp->mac_mode);
@@ -5998,178 +5997,178 @@ fiber_setup_करोne:
 	tp->link_config.active_duplex = current_duplex;
 
 	tg3_test_and_report_link_chg(tp, current_link_up);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tg3_serdes_parallel_detect(काष्ठा tg3 *tp)
-अणु
-	अगर (tp->serdes_counter) अणु
-		/* Give स्वतःneg समय to complete. */
+static void tg3_serdes_parallel_detect(struct tg3 *tp)
+{
+	if (tp->serdes_counter) {
+		/* Give autoneg time to complete. */
 		tp->serdes_counter--;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!tp->link_up &&
-	    (tp->link_config.स्वतःneg == AUTONEG_ENABLE)) अणु
+	if (!tp->link_up &&
+	    (tp->link_config.autoneg == AUTONEG_ENABLE)) {
 		u32 bmcr;
 
-		tg3_पढ़ोphy(tp, MII_BMCR, &bmcr);
-		अगर (bmcr & BMCR_ANENABLE) अणु
+		tg3_readphy(tp, MII_BMCR, &bmcr);
+		if (bmcr & BMCR_ANENABLE) {
 			u32 phy1, phy2;
 
-			/* Select shaकरोw रेजिस्टर 0x1f */
-			tg3_ग_लिखोphy(tp, MII_TG3_MISC_SHDW, 0x7c00);
-			tg3_पढ़ोphy(tp, MII_TG3_MISC_SHDW, &phy1);
+			/* Select shadow register 0x1f */
+			tg3_writephy(tp, MII_TG3_MISC_SHDW, 0x7c00);
+			tg3_readphy(tp, MII_TG3_MISC_SHDW, &phy1);
 
-			/* Select expansion पूर्णांकerrupt status रेजिस्टर */
-			tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS,
+			/* Select expansion interrupt status register */
+			tg3_writephy(tp, MII_TG3_DSP_ADDRESS,
 					 MII_TG3_DSP_EXP1_INT_STAT);
-			tg3_पढ़ोphy(tp, MII_TG3_DSP_RW_PORT, &phy2);
-			tg3_पढ़ोphy(tp, MII_TG3_DSP_RW_PORT, &phy2);
+			tg3_readphy(tp, MII_TG3_DSP_RW_PORT, &phy2);
+			tg3_readphy(tp, MII_TG3_DSP_RW_PORT, &phy2);
 
-			अगर ((phy1 & 0x10) && !(phy2 & 0x20)) अणु
-				/* We have संकेत detect and not receiving
+			if ((phy1 & 0x10) && !(phy2 & 0x20)) {
+				/* We have signal detect and not receiving
 				 * config code words, link is up by parallel
 				 * detection.
 				 */
 
 				bmcr &= ~BMCR_ANENABLE;
 				bmcr |= BMCR_SPEED1000 | BMCR_FULLDPLX;
-				tg3_ग_लिखोphy(tp, MII_BMCR, bmcr);
+				tg3_writephy(tp, MII_BMCR, bmcr);
 				tp->phy_flags |= TG3_PHYFLG_PARALLEL_DETECT;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (tp->link_up &&
-		   (tp->link_config.स्वतःneg == AUTONEG_ENABLE) &&
-		   (tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT)) अणु
+			}
+		}
+	} else if (tp->link_up &&
+		   (tp->link_config.autoneg == AUTONEG_ENABLE) &&
+		   (tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT)) {
 		u32 phy2;
 
-		/* Select expansion पूर्णांकerrupt status रेजिस्टर */
-		tg3_ग_लिखोphy(tp, MII_TG3_DSP_ADDRESS,
+		/* Select expansion interrupt status register */
+		tg3_writephy(tp, MII_TG3_DSP_ADDRESS,
 				 MII_TG3_DSP_EXP1_INT_STAT);
-		tg3_पढ़ोphy(tp, MII_TG3_DSP_RW_PORT, &phy2);
-		अगर (phy2 & 0x20) अणु
+		tg3_readphy(tp, MII_TG3_DSP_RW_PORT, &phy2);
+		if (phy2 & 0x20) {
 			u32 bmcr;
 
-			/* Config code words received, turn on स्वतःneg. */
-			tg3_पढ़ोphy(tp, MII_BMCR, &bmcr);
-			tg3_ग_लिखोphy(tp, MII_BMCR, bmcr | BMCR_ANENABLE);
+			/* Config code words received, turn on autoneg. */
+			tg3_readphy(tp, MII_BMCR, &bmcr);
+			tg3_writephy(tp, MII_BMCR, bmcr | BMCR_ANENABLE);
 
 			tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
 
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक tg3_setup_phy(काष्ठा tg3 *tp, bool क्रमce_reset)
-अणु
+static int tg3_setup_phy(struct tg3 *tp, bool force_reset)
+{
 	u32 val;
-	पूर्णांक err;
+	int err;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
-		err = tg3_setup_fiber_phy(tp, क्रमce_reset);
-	अन्यथा अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
-		err = tg3_setup_fiber_mii_phy(tp, क्रमce_reset);
-	अन्यथा
-		err = tg3_setup_copper_phy(tp, क्रमce_reset);
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
+		err = tg3_setup_fiber_phy(tp, force_reset);
+	else if (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
+		err = tg3_setup_fiber_mii_phy(tp, force_reset);
+	else
+		err = tg3_setup_copper_phy(tp, force_reset);
 
-	अगर (tg3_chip_rev(tp) == CHIPREV_5784_AX) अणु
+	if (tg3_chip_rev(tp) == CHIPREV_5784_AX) {
 		u32 scale;
 
 		val = tr32(TG3_CPMU_CLCK_STAT) & CPMU_CLCK_STAT_MAC_CLCK_MASK;
-		अगर (val == CPMU_CLCK_STAT_MAC_CLCK_62_5)
+		if (val == CPMU_CLCK_STAT_MAC_CLCK_62_5)
 			scale = 65;
-		अन्यथा अगर (val == CPMU_CLCK_STAT_MAC_CLCK_6_25)
+		else if (val == CPMU_CLCK_STAT_MAC_CLCK_6_25)
 			scale = 6;
-		अन्यथा
+		else
 			scale = 12;
 
 		val = tr32(GRC_MISC_CFG) & ~GRC_MISC_CFG_PRESCALAR_MASK;
 		val |= (scale << GRC_MISC_CFG_PRESCALAR_SHIFT);
 		tw32(GRC_MISC_CFG, val);
-	पूर्ण
+	}
 
 	val = (2 << TX_LENGTHS_IPG_CRS_SHIFT) |
 	      (6 << TX_LENGTHS_IPG_SHIFT);
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5720 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762)
 		val |= tr32(MAC_TX_LENGTHS) &
 		       (TX_LENGTHS_JMB_FRM_LEN_MSK |
 			TX_LENGTHS_CNT_DWN_VAL_MSK);
 
-	अगर (tp->link_config.active_speed == SPEED_1000 &&
+	if (tp->link_config.active_speed == SPEED_1000 &&
 	    tp->link_config.active_duplex == DUPLEX_HALF)
 		tw32(MAC_TX_LENGTHS, val |
 		     (0xff << TX_LENGTHS_SLOT_TIME_SHIFT));
-	अन्यथा
+	else
 		tw32(MAC_TX_LENGTHS, val |
 		     (32 << TX_LENGTHS_SLOT_TIME_SHIFT));
 
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
-		अगर (tp->link_up) अणु
+	if (!tg3_flag(tp, 5705_PLUS)) {
+		if (tp->link_up) {
 			tw32(HOSTCC_STAT_COAL_TICKS,
 			     tp->coal.stats_block_coalesce_usecs);
-		पूर्ण अन्यथा अणु
+		} else {
 			tw32(HOSTCC_STAT_COAL_TICKS, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_flag(tp, ASPM_WORKAROUND)) अणु
+	if (tg3_flag(tp, ASPM_WORKAROUND)) {
 		val = tr32(PCIE_PWR_MGMT_THRESH);
-		अगर (!tp->link_up)
+		if (!tp->link_up)
 			val = (val & ~PCIE_PWR_MGMT_L1_THRESH_MSK) |
 			      tp->pwrmgmt_thresh;
-		अन्यथा
+		else
 			val |= PCIE_PWR_MGMT_L1_THRESH_MSK;
 		tw32(PCIE_PWR_MGMT_THRESH, val);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* tp->lock must be held */
-अटल u64 tg3_refclk_पढ़ो(काष्ठा tg3 *tp, काष्ठा ptp_प्रणाली_बारtamp *sts)
-अणु
+static u64 tg3_refclk_read(struct tg3 *tp, struct ptp_system_timestamp *sts)
+{
 	u64 stamp;
 
-	ptp_पढ़ो_प्रणाली_prets(sts);
+	ptp_read_system_prets(sts);
 	stamp = tr32(TG3_EAV_REF_CLCK_LSB);
-	ptp_पढ़ो_प्रणाली_postts(sts);
+	ptp_read_system_postts(sts);
 	stamp |= (u64)tr32(TG3_EAV_REF_CLCK_MSB) << 32;
 
-	वापस stamp;
-पूर्ण
+	return stamp;
+}
 
 /* tp->lock must be held */
-अटल व्योम tg3_refclk_ग_लिखो(काष्ठा tg3 *tp, u64 newval)
-अणु
-	u32 घड़ी_ctl = tr32(TG3_EAV_REF_CLCK_CTL);
+static void tg3_refclk_write(struct tg3 *tp, u64 newval)
+{
+	u32 clock_ctl = tr32(TG3_EAV_REF_CLCK_CTL);
 
-	tw32(TG3_EAV_REF_CLCK_CTL, घड़ी_ctl | TG3_EAV_REF_CLCK_CTL_STOP);
+	tw32(TG3_EAV_REF_CLCK_CTL, clock_ctl | TG3_EAV_REF_CLCK_CTL_STOP);
 	tw32(TG3_EAV_REF_CLCK_LSB, newval & 0xffffffff);
 	tw32(TG3_EAV_REF_CLCK_MSB, newval >> 32);
-	tw32_f(TG3_EAV_REF_CLCK_CTL, घड़ी_ctl | TG3_EAV_REF_CLCK_CTL_RESUME);
-पूर्ण
+	tw32_f(TG3_EAV_REF_CLCK_CTL, clock_ctl | TG3_EAV_REF_CLCK_CTL_RESUME);
+}
 
-अटल अंतरभूत व्योम tg3_full_lock(काष्ठा tg3 *tp, पूर्णांक irq_sync);
-अटल अंतरभूत व्योम tg3_full_unlock(काष्ठा tg3 *tp);
-अटल पूर्णांक tg3_get_ts_info(काष्ठा net_device *dev, काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static inline void tg3_full_lock(struct tg3 *tp, int irq_sync);
+static inline void tg3_full_unlock(struct tg3 *tp);
+static int tg3_get_ts_info(struct net_device *dev, struct ethtool_ts_info *info)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	info->so_बारtamping = SOF_TIMESTAMPING_TX_SOFTWARE |
+	info->so_timestamping = SOF_TIMESTAMPING_TX_SOFTWARE |
 				SOF_TIMESTAMPING_RX_SOFTWARE |
 				SOF_TIMESTAMPING_SOFTWARE;
 
-	अगर (tg3_flag(tp, PTP_CAPABLE)) अणु
-		info->so_बारtamping |= SOF_TIMESTAMPING_TX_HARDWARE |
+	if (tg3_flag(tp, PTP_CAPABLE)) {
+		info->so_timestamping |= SOF_TIMESTAMPING_TX_HARDWARE |
 					SOF_TIMESTAMPING_RX_HARDWARE |
 					SOF_TIMESTAMPING_RAW_HARDWARE;
-	पूर्ण
+	}
 
-	अगर (tp->ptp_घड़ी)
-		info->phc_index = ptp_घड़ी_index(tp->ptp_घड़ी);
-	अन्यथा
+	if (tp->ptp_clock)
+		info->phc_index = ptp_clock_index(tp->ptp_clock);
+	else
 		info->phc_index = -1;
 
 	info->tx_types = (1 << HWTSTAMP_TX_OFF) | (1 << HWTSTAMP_TX_ON);
@@ -6178,127 +6177,127 @@ fiber_setup_करोne:
 			   (1 << HWTSTAMP_FILTER_PTP_V1_L4_EVENT) |
 			   (1 << HWTSTAMP_FILTER_PTP_V2_L2_EVENT) |
 			   (1 << HWTSTAMP_FILTER_PTP_V2_L4_EVENT);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_ptp_adjfreq(काष्ठा ptp_घड़ी_info *ptp, s32 ppb)
-अणु
-	काष्ठा tg3 *tp = container_of(ptp, काष्ठा tg3, ptp_info);
+static int tg3_ptp_adjfreq(struct ptp_clock_info *ptp, s32 ppb)
+{
+	struct tg3 *tp = container_of(ptp, struct tg3, ptp_info);
 	bool neg_adj = false;
 	u32 correction = 0;
 
-	अगर (ppb < 0) अणु
+	if (ppb < 0) {
 		neg_adj = true;
 		ppb = -ppb;
-	पूर्ण
+	}
 
-	/* Frequency adjusपंचांगent is perक्रमmed using hardware with a 24 bit
+	/* Frequency adjustment is performed using hardware with a 24 bit
 	 * accumulator and a programmable correction value. On each clk, the
-	 * correction value माला_लो added to the accumulator and when it
-	 * overflows, the समय counter is incremented/decremented.
+	 * correction value gets added to the accumulator and when it
+	 * overflows, the time counter is incremented/decremented.
 	 *
 	 * So conversion from ppb to correction value is
 	 *		ppb * (1 << 24) / 1000000000
 	 */
-	correction = भाग_u64((u64)ppb * (1 << 24), 1000000000ULL) &
+	correction = div_u64((u64)ppb * (1 << 24), 1000000000ULL) &
 		     TG3_EAV_REF_CLK_CORRECT_MASK;
 
 	tg3_full_lock(tp, 0);
 
-	अगर (correction)
+	if (correction)
 		tw32(TG3_EAV_REF_CLK_CORRECT_CTL,
 		     TG3_EAV_REF_CLK_CORRECT_EN |
 		     (neg_adj ? TG3_EAV_REF_CLK_CORRECT_NEG : 0) | correction);
-	अन्यथा
+	else
 		tw32(TG3_EAV_REF_CLK_CORRECT_CTL, 0);
 
 	tg3_full_unlock(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
-अणु
-	काष्ठा tg3 *tp = container_of(ptp, काष्ठा tg3, ptp_info);
+static int tg3_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
+{
+	struct tg3 *tp = container_of(ptp, struct tg3, ptp_info);
 
 	tg3_full_lock(tp, 0);
 	tp->ptp_adjust += delta;
 	tg3_full_unlock(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_ptp_समय_लोx(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts,
-			    काष्ठा ptp_प्रणाली_बारtamp *sts)
-अणु
+static int tg3_ptp_gettimex(struct ptp_clock_info *ptp, struct timespec64 *ts,
+			    struct ptp_system_timestamp *sts)
+{
 	u64 ns;
-	काष्ठा tg3 *tp = container_of(ptp, काष्ठा tg3, ptp_info);
+	struct tg3 *tp = container_of(ptp, struct tg3, ptp_info);
 
 	tg3_full_lock(tp, 0);
-	ns = tg3_refclk_पढ़ो(tp, sts);
+	ns = tg3_refclk_read(tp, sts);
 	ns += tp->ptp_adjust;
 	tg3_full_unlock(tp);
 
-	*ts = ns_to_बारpec64(ns);
+	*ts = ns_to_timespec64(ns);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp,
-			   स्थिर काष्ठा बारpec64 *ts)
-अणु
+static int tg3_ptp_settime(struct ptp_clock_info *ptp,
+			   const struct timespec64 *ts)
+{
 	u64 ns;
-	काष्ठा tg3 *tp = container_of(ptp, काष्ठा tg3, ptp_info);
+	struct tg3 *tp = container_of(ptp, struct tg3, ptp_info);
 
-	ns = बारpec64_to_ns(ts);
+	ns = timespec64_to_ns(ts);
 
 	tg3_full_lock(tp, 0);
-	tg3_refclk_ग_लिखो(tp, ns);
+	tg3_refclk_write(tp, ns);
 	tp->ptp_adjust = 0;
 	tg3_full_unlock(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_ptp_enable(काष्ठा ptp_घड़ी_info *ptp,
-			  काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
-अणु
-	काष्ठा tg3 *tp = container_of(ptp, काष्ठा tg3, ptp_info);
-	u32 घड़ी_ctl;
-	पूर्णांक rval = 0;
+static int tg3_ptp_enable(struct ptp_clock_info *ptp,
+			  struct ptp_clock_request *rq, int on)
+{
+	struct tg3 *tp = container_of(ptp, struct tg3, ptp_info);
+	u32 clock_ctl;
+	int rval = 0;
 
-	चयन (rq->type) अणु
-	हाल PTP_CLK_REQ_PEROUT:
+	switch (rq->type) {
+	case PTP_CLK_REQ_PEROUT:
 		/* Reject requests with unsupported flags */
-		अगर (rq->perout.flags)
-			वापस -EOPNOTSUPP;
+		if (rq->perout.flags)
+			return -EOPNOTSUPP;
 
-		अगर (rq->perout.index != 0)
-			वापस -EINVAL;
+		if (rq->perout.index != 0)
+			return -EINVAL;
 
 		tg3_full_lock(tp, 0);
-		घड़ी_ctl = tr32(TG3_EAV_REF_CLCK_CTL);
-		घड़ी_ctl &= ~TG3_EAV_CTL_TSYNC_GPIO_MASK;
+		clock_ctl = tr32(TG3_EAV_REF_CLCK_CTL);
+		clock_ctl &= ~TG3_EAV_CTL_TSYNC_GPIO_MASK;
 
-		अगर (on) अणु
+		if (on) {
 			u64 nsec;
 
 			nsec = rq->perout.start.sec * 1000000000ULL +
 			       rq->perout.start.nsec;
 
-			अगर (rq->perout.period.sec || rq->perout.period.nsec) अणु
+			if (rq->perout.period.sec || rq->perout.period.nsec) {
 				netdev_warn(tp->dev,
 					    "Device supports only a one-shot timesync output, period must be 0\n");
 				rval = -EINVAL;
-				जाओ err_out;
-			पूर्ण
+				goto err_out;
+			}
 
-			अगर (nsec & (1ULL << 63)) अणु
+			if (nsec & (1ULL << 63)) {
 				netdev_warn(tp->dev,
 					    "Start value (nsec) is over limit. Maximum size of start is only 63 bits\n");
 				rval = -EINVAL;
-				जाओ err_out;
-			पूर्ण
+				goto err_out;
+			}
 
 			tw32(TG3_EAV_WATCHDOG0_LSB, (nsec & 0xffffffff));
 			tw32(TG3_EAV_WATCHDOG0_MSB,
@@ -6306,24 +6305,24 @@ fiber_setup_करोne:
 			     ((nsec >> 32) & TG3_EAV_WATCHDOG_MSB_MASK));
 
 			tw32(TG3_EAV_REF_CLCK_CTL,
-			     घड़ी_ctl | TG3_EAV_CTL_TSYNC_WDOG0);
-		पूर्ण अन्यथा अणु
+			     clock_ctl | TG3_EAV_CTL_TSYNC_WDOG0);
+		} else {
 			tw32(TG3_EAV_WATCHDOG0_MSB, 0);
-			tw32(TG3_EAV_REF_CLCK_CTL, घड़ी_ctl);
-		पूर्ण
+			tw32(TG3_EAV_REF_CLCK_CTL, clock_ctl);
+		}
 
 err_out:
 		tg3_full_unlock(tp);
-		वापस rval;
+		return rval;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	वापस -EOPNOTSUPP;
-पूर्ण
+	return -EOPNOTSUPP;
+}
 
-अटल स्थिर काष्ठा ptp_घड़ी_info tg3_ptp_caps = अणु
+static const struct ptp_clock_info tg3_ptp_caps = {
 	.owner		= THIS_MODULE,
 	.name		= "tg3 clock",
 	.max_adj	= 250000000,
@@ -6333,68 +6332,68 @@ err_out:
 	.n_pins		= 0,
 	.pps		= 0,
 	.adjfreq	= tg3_ptp_adjfreq,
-	.adjसमय	= tg3_ptp_adjसमय,
-	.समय_लोx64	= tg3_ptp_समय_लोx,
-	.समय_रखो64	= tg3_ptp_समय_रखो,
+	.adjtime	= tg3_ptp_adjtime,
+	.gettimex64	= tg3_ptp_gettimex,
+	.settime64	= tg3_ptp_settime,
 	.enable		= tg3_ptp_enable,
-पूर्ण;
+};
 
-अटल व्योम tg3_hwघड़ी_प्रकारo_बारtamp(काष्ठा tg3 *tp, u64 hwघड़ी,
-				     काष्ठा skb_shared_hwtstamps *बारtamp)
-अणु
-	स_रखो(बारtamp, 0, माप(काष्ठा skb_shared_hwtstamps));
-	बारtamp->hwtstamp  = ns_to_kसमय((hwघड़ी & TG3_TSTAMP_MASK) +
+static void tg3_hwclock_to_timestamp(struct tg3 *tp, u64 hwclock,
+				     struct skb_shared_hwtstamps *timestamp)
+{
+	memset(timestamp, 0, sizeof(struct skb_shared_hwtstamps));
+	timestamp->hwtstamp  = ns_to_ktime((hwclock & TG3_TSTAMP_MASK) +
 					   tp->ptp_adjust);
-पूर्ण
+}
 
 /* tp->lock must be held */
-अटल व्योम tg3_ptp_init(काष्ठा tg3 *tp)
-अणु
-	अगर (!tg3_flag(tp, PTP_CAPABLE))
-		वापस;
+static void tg3_ptp_init(struct tg3 *tp)
+{
+	if (!tg3_flag(tp, PTP_CAPABLE))
+		return;
 
-	/* Initialize the hardware घड़ी to the प्रणाली समय. */
-	tg3_refclk_ग_लिखो(tp, kसमय_प्रकारo_ns(kसमय_get_real()));
+	/* Initialize the hardware clock to the system time. */
+	tg3_refclk_write(tp, ktime_to_ns(ktime_get_real()));
 	tp->ptp_adjust = 0;
 	tp->ptp_info = tg3_ptp_caps;
-पूर्ण
+}
 
 /* tp->lock must be held */
-अटल व्योम tg3_ptp_resume(काष्ठा tg3 *tp)
-अणु
-	अगर (!tg3_flag(tp, PTP_CAPABLE))
-		वापस;
+static void tg3_ptp_resume(struct tg3 *tp)
+{
+	if (!tg3_flag(tp, PTP_CAPABLE))
+		return;
 
-	tg3_refclk_ग_लिखो(tp, kसमय_प्रकारo_ns(kसमय_get_real()) + tp->ptp_adjust);
+	tg3_refclk_write(tp, ktime_to_ns(ktime_get_real()) + tp->ptp_adjust);
 	tp->ptp_adjust = 0;
-पूर्ण
+}
 
-अटल व्योम tg3_ptp_fini(काष्ठा tg3 *tp)
-अणु
-	अगर (!tg3_flag(tp, PTP_CAPABLE) || !tp->ptp_घड़ी)
-		वापस;
+static void tg3_ptp_fini(struct tg3 *tp)
+{
+	if (!tg3_flag(tp, PTP_CAPABLE) || !tp->ptp_clock)
+		return;
 
-	ptp_घड़ी_unरेजिस्टर(tp->ptp_घड़ी);
-	tp->ptp_घड़ी = शून्य;
+	ptp_clock_unregister(tp->ptp_clock);
+	tp->ptp_clock = NULL;
 	tp->ptp_adjust = 0;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक tg3_irq_sync(काष्ठा tg3 *tp)
-अणु
-	वापस tp->irq_sync;
-पूर्ण
+static inline int tg3_irq_sync(struct tg3 *tp)
+{
+	return tp->irq_sync;
+}
 
-अटल अंतरभूत व्योम tg3_rd32_loop(काष्ठा tg3 *tp, u32 *dst, u32 off, u32 len)
-अणु
-	पूर्णांक i;
+static inline void tg3_rd32_loop(struct tg3 *tp, u32 *dst, u32 off, u32 len)
+{
+	int i;
 
 	dst = (u32 *)((u8 *)dst + off);
-	क्रम (i = 0; i < len; i += माप(u32))
+	for (i = 0; i < len; i += sizeof(u32))
 		*dst++ = tr32(off + i);
-पूर्ण
+}
 
-अटल व्योम tg3_dump_legacy_regs(काष्ठा tg3 *tp, u32 *regs)
-अणु
+static void tg3_dump_legacy_regs(struct tg3 *tp, u32 *regs)
+{
 	tg3_rd32_loop(tp, regs, TG3PCI_VENDOR, 0xb0);
 	tg3_rd32_loop(tp, regs, MAILBOX_INTERRUPT_0, 0x200);
 	tg3_rd32_loop(tp, regs, MAC_MODE, 0x4f0);
@@ -6415,7 +6414,7 @@ err_out:
 	tg3_rd32_loop(tp, regs, MBFREE_MODE, 0x08);
 	tg3_rd32_loop(tp, regs, HOSTCC_MODE, 0x100);
 
-	अगर (tg3_flag(tp, SUPPORT_MSIX))
+	if (tg3_flag(tp, SUPPORT_MSIX))
 		tg3_rd32_loop(tp, regs, HOSTCC_RXCOL_TICKS_VEC1, 0x180);
 
 	tg3_rd32_loop(tp, regs, MEMARB_MODE, 0x10);
@@ -6427,11 +6426,11 @@ err_out:
 	tg3_rd32_loop(tp, regs, RX_CPU_PGMCTR, 0x04);
 	tg3_rd32_loop(tp, regs, RX_CPU_HWBKPT, 0x04);
 
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
+	if (!tg3_flag(tp, 5705_PLUS)) {
 		tg3_rd32_loop(tp, regs, TX_CPU_MODE, 0x04);
 		tg3_rd32_loop(tp, regs, TX_CPU_STATE, 0x04);
 		tg3_rd32_loop(tp, regs, TX_CPU_PGMCTR, 0x04);
-	पूर्ण
+	}
 
 	tg3_rd32_loop(tp, regs, GRCMBOX_INTERRUPT_0, 0x110);
 	tg3_rd32_loop(tp, regs, FTQ_RESET, 0x120);
@@ -6439,40 +6438,40 @@ err_out:
 	tg3_rd32_loop(tp, regs, DMAC_MODE, 0x04);
 	tg3_rd32_loop(tp, regs, GRC_MODE, 0x4c);
 
-	अगर (tg3_flag(tp, NVRAM))
+	if (tg3_flag(tp, NVRAM))
 		tg3_rd32_loop(tp, regs, NVRAM_CMD, 0x24);
-पूर्ण
+}
 
-अटल व्योम tg3_dump_state(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_dump_state(struct tg3 *tp)
+{
+	int i;
 	u32 *regs;
 
 	regs = kzalloc(TG3_REG_BLK_SIZE, GFP_ATOMIC);
-	अगर (!regs)
-		वापस;
+	if (!regs)
+		return;
 
-	अगर (tg3_flag(tp, PCI_EXPRESS)) अणु
-		/* Read up to but not including निजी PCI रेजिस्टरs */
-		क्रम (i = 0; i < TG3_PCIE_TLDLPL_PORT; i += माप(u32))
-			regs[i / माप(u32)] = tr32(i);
-	पूर्ण अन्यथा
+	if (tg3_flag(tp, PCI_EXPRESS)) {
+		/* Read up to but not including private PCI registers */
+		for (i = 0; i < TG3_PCIE_TLDLPL_PORT; i += sizeof(u32))
+			regs[i / sizeof(u32)] = tr32(i);
+	} else
 		tg3_dump_legacy_regs(tp, regs);
 
-	क्रम (i = 0; i < TG3_REG_BLK_SIZE / माप(u32); i += 4) अणु
-		अगर (!regs[i + 0] && !regs[i + 1] &&
+	for (i = 0; i < TG3_REG_BLK_SIZE / sizeof(u32); i += 4) {
+		if (!regs[i + 0] && !regs[i + 1] &&
 		    !regs[i + 2] && !regs[i + 3])
-			जारी;
+			continue;
 
 		netdev_err(tp->dev, "0x%08x: 0x%08x, 0x%08x, 0x%08x, 0x%08x\n",
 			   i * 4,
 			   regs[i + 0], regs[i + 1], regs[i + 2], regs[i + 3]);
-	पूर्ण
+	}
 
-	kमुक्त(regs);
+	kfree(regs);
 
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
 		/* SW status block */
 		netdev_err(tp->dev,
@@ -6496,19 +6495,19 @@ err_out:
 			   tnapi->prodring.rx_std_cons_idx,
 			   tnapi->prodring.rx_jmb_prod_idx,
 			   tnapi->prodring.rx_jmb_cons_idx);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* This is called whenever we suspect that the प्रणाली chipset is re-
+/* This is called whenever we suspect that the system chipset is re-
  * ordering the sequence of MMIO to the tx send mailbox. The symptom
  * is bogus tx completions. We try to recover by setting the
  * TG3_FLAG_MBOX_WRITE_REORDER flag and resetting the chip later
  * in the workqueue.
  */
-अटल व्योम tg3_tx_recover(काष्ठा tg3 *tp)
-अणु
+static void tg3_tx_recover(struct tg3 *tp)
+{
 	BUG_ON(tg3_flag(tp, MBOX_WRITE_REORDER) ||
-	       tp->ग_लिखो32_tx_mbox == tg3_ग_लिखो_indirect_mbox);
+	       tp->write32_tx_mbox == tg3_write_indirect_mbox);
 
 	netdev_warn(tp->dev,
 		    "The system may be re-ordering memory-mapped I/O "
@@ -6517,72 +6516,72 @@ err_out:
 		    "and include system chipset information.\n");
 
 	tg3_flag_set(tp, TX_RECOVERY_PENDING);
-पूर्ण
+}
 
-अटल अंतरभूत u32 tg3_tx_avail(काष्ठा tg3_napi *tnapi)
-अणु
+static inline u32 tg3_tx_avail(struct tg3_napi *tnapi)
+{
 	/* Tell compiler to fetch tx indices from memory. */
 	barrier();
-	वापस tnapi->tx_pending -
+	return tnapi->tx_pending -
 	       ((tnapi->tx_prod - tnapi->tx_cons) & (TG3_TX_RING_SIZE - 1));
-पूर्ण
+}
 
-/* Tigon3 never reports partial packet sends.  So we करो not
+/* Tigon3 never reports partial packet sends.  So we do not
  * need special logic to handle SKBs that have not had all
- * of their frags sent yet, like SunGEM करोes.
+ * of their frags sent yet, like SunGEM does.
  */
-अटल व्योम tg3_tx(काष्ठा tg3_napi *tnapi)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
+static void tg3_tx(struct tg3_napi *tnapi)
+{
+	struct tg3 *tp = tnapi->tp;
 	u32 hw_idx = tnapi->hw_status->idx[0].tx_consumer;
 	u32 sw_idx = tnapi->tx_cons;
-	काष्ठा netdev_queue *txq;
-	पूर्णांक index = tnapi - tp->napi;
-	अचिन्हित पूर्णांक pkts_compl = 0, bytes_compl = 0;
+	struct netdev_queue *txq;
+	int index = tnapi - tp->napi;
+	unsigned int pkts_compl = 0, bytes_compl = 0;
 
-	अगर (tg3_flag(tp, ENABLE_TSS))
+	if (tg3_flag(tp, ENABLE_TSS))
 		index--;
 
 	txq = netdev_get_tx_queue(tp->dev, index);
 
-	जबतक (sw_idx != hw_idx) अणु
-		काष्ठा tg3_tx_ring_info *ri = &tnapi->tx_buffers[sw_idx];
-		काष्ठा sk_buff *skb = ri->skb;
-		पूर्णांक i, tx_bug = 0;
+	while (sw_idx != hw_idx) {
+		struct tg3_tx_ring_info *ri = &tnapi->tx_buffers[sw_idx];
+		struct sk_buff *skb = ri->skb;
+		int i, tx_bug = 0;
 
-		अगर (unlikely(skb == शून्य)) अणु
+		if (unlikely(skb == NULL)) {
 			tg3_tx_recover(tp);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (tnapi->tx_ring[sw_idx].len_flags & TXD_FLAG_HWTSTAMP) अणु
-			काष्ठा skb_shared_hwtstamps बारtamp;
-			u64 hwघड़ी = tr32(TG3_TX_TSTAMP_LSB);
-			hwघड़ी |= (u64)tr32(TG3_TX_TSTAMP_MSB) << 32;
+		if (tnapi->tx_ring[sw_idx].len_flags & TXD_FLAG_HWTSTAMP) {
+			struct skb_shared_hwtstamps timestamp;
+			u64 hwclock = tr32(TG3_TX_TSTAMP_LSB);
+			hwclock |= (u64)tr32(TG3_TX_TSTAMP_MSB) << 32;
 
-			tg3_hwघड़ी_प्रकारo_बारtamp(tp, hwघड़ी, &बारtamp);
+			tg3_hwclock_to_timestamp(tp, hwclock, &timestamp);
 
-			skb_tstamp_tx(skb, &बारtamp);
-		पूर्ण
+			skb_tstamp_tx(skb, &timestamp);
+		}
 
 		pci_unmap_single(tp->pdev,
 				 dma_unmap_addr(ri, mapping),
 				 skb_headlen(skb),
 				 PCI_DMA_TODEVICE);
 
-		ri->skb = शून्य;
+		ri->skb = NULL;
 
-		जबतक (ri->fragmented) अणु
+		while (ri->fragmented) {
 			ri->fragmented = false;
 			sw_idx = NEXT_TX(sw_idx);
 			ri = &tnapi->tx_buffers[sw_idx];
-		पूर्ण
+		}
 
 		sw_idx = NEXT_TX(sw_idx);
 
-		क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+		for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
 			ri = &tnapi->tx_buffers[sw_idx];
-			अगर (unlikely(ri->skb != शून्य || sw_idx == hw_idx))
+			if (unlikely(ri->skb != NULL || sw_idx == hw_idx))
 				tx_bug = 1;
 
 			pci_unmap_page(tp->pdev,
@@ -6590,68 +6589,68 @@ err_out:
 				       skb_frag_size(&skb_shinfo(skb)->frags[i]),
 				       PCI_DMA_TODEVICE);
 
-			जबतक (ri->fragmented) अणु
+			while (ri->fragmented) {
 				ri->fragmented = false;
 				sw_idx = NEXT_TX(sw_idx);
 				ri = &tnapi->tx_buffers[sw_idx];
-			पूर्ण
+			}
 
 			sw_idx = NEXT_TX(sw_idx);
-		पूर्ण
+		}
 
 		pkts_compl++;
 		bytes_compl += skb->len;
 
 		dev_consume_skb_any(skb);
 
-		अगर (unlikely(tx_bug)) अणु
+		if (unlikely(tx_bug)) {
 			tg3_tx_recover(tp);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	netdev_tx_completed_queue(txq, pkts_compl, bytes_compl);
 
 	tnapi->tx_cons = sw_idx;
 
 	/* Need to make the tx_cons update visible to tg3_start_xmit()
-	 * beक्रमe checking क्रम netअगर_queue_stopped().  Without the
+	 * before checking for netif_queue_stopped().  Without the
 	 * memory barrier, there is a small possibility that tg3_start_xmit()
-	 * will miss it and cause the queue to be stopped क्रमever.
+	 * will miss it and cause the queue to be stopped forever.
 	 */
 	smp_mb();
 
-	अगर (unlikely(netअगर_tx_queue_stopped(txq) &&
-		     (tg3_tx_avail(tnapi) > TG3_TX_WAKEUP_THRESH(tnapi)))) अणु
-		__netअगर_tx_lock(txq, smp_processor_id());
-		अगर (netअगर_tx_queue_stopped(txq) &&
+	if (unlikely(netif_tx_queue_stopped(txq) &&
+		     (tg3_tx_avail(tnapi) > TG3_TX_WAKEUP_THRESH(tnapi)))) {
+		__netif_tx_lock(txq, smp_processor_id());
+		if (netif_tx_queue_stopped(txq) &&
 		    (tg3_tx_avail(tnapi) > TG3_TX_WAKEUP_THRESH(tnapi)))
-			netअगर_tx_wake_queue(txq);
-		__netअगर_tx_unlock(txq);
-	पूर्ण
-पूर्ण
+			netif_tx_wake_queue(txq);
+		__netif_tx_unlock(txq);
+	}
+}
 
-अटल व्योम tg3_frag_मुक्त(bool is_frag, व्योम *data)
-अणु
-	अगर (is_frag)
-		skb_मुक्त_frag(data);
-	अन्यथा
-		kमुक्त(data);
-पूर्ण
+static void tg3_frag_free(bool is_frag, void *data)
+{
+	if (is_frag)
+		skb_free_frag(data);
+	else
+		kfree(data);
+}
 
-अटल व्योम tg3_rx_data_मुक्त(काष्ठा tg3 *tp, काष्ठा ring_info *ri, u32 map_sz)
-अणु
-	अचिन्हित पूर्णांक skb_size = SKB_DATA_ALIGN(map_sz + TG3_RX_OFFSET(tp)) +
-		   SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
+static void tg3_rx_data_free(struct tg3 *tp, struct ring_info *ri, u32 map_sz)
+{
+	unsigned int skb_size = SKB_DATA_ALIGN(map_sz + TG3_RX_OFFSET(tp)) +
+		   SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
 
-	अगर (!ri->data)
-		वापस;
+	if (!ri->data)
+		return;
 
 	pci_unmap_single(tp->pdev, dma_unmap_addr(ri, mapping),
 			 map_sz, PCI_DMA_FROMDEVICE);
-	tg3_frag_मुक्त(skb_size <= PAGE_SIZE, ri->data);
-	ri->data = शून्य;
-पूर्ण
+	tg3_frag_free(skb_size <= PAGE_SIZE, ri->data);
+	ri->data = NULL;
+}
 
 
 /* Returns size of skb allocated or < 0 on error.
@@ -6661,65 +6660,65 @@ err_out:
  *
  * Note the purposeful assymetry of cpu vs. chip accesses.  For
  * posting buffers we only dirty the first cache line of the RX
- * descriptor (containing the address).  Whereas क्रम the RX status
- * buffers the cpu only पढ़ोs the last cacheline of the RX descriptor
+ * descriptor (containing the address).  Whereas for the RX status
+ * buffers the cpu only reads the last cacheline of the RX descriptor
  * (to fetch the error flags, vlan tag, checksum, and opaque cookie).
  */
-अटल पूर्णांक tg3_alloc_rx_data(काष्ठा tg3 *tp, काष्ठा tg3_rx_prodring_set *tpr,
+static int tg3_alloc_rx_data(struct tg3 *tp, struct tg3_rx_prodring_set *tpr,
 			     u32 opaque_key, u32 dest_idx_unmasked,
-			     अचिन्हित पूर्णांक *frag_size)
-अणु
-	काष्ठा tg3_rx_buffer_desc *desc;
-	काष्ठा ring_info *map;
+			     unsigned int *frag_size)
+{
+	struct tg3_rx_buffer_desc *desc;
+	struct ring_info *map;
 	u8 *data;
 	dma_addr_t mapping;
-	पूर्णांक skb_size, data_size, dest_idx;
+	int skb_size, data_size, dest_idx;
 
-	चयन (opaque_key) अणु
-	हाल RXD_OPAQUE_RING_STD:
+	switch (opaque_key) {
+	case RXD_OPAQUE_RING_STD:
 		dest_idx = dest_idx_unmasked & tp->rx_std_ring_mask;
 		desc = &tpr->rx_std[dest_idx];
 		map = &tpr->rx_std_buffers[dest_idx];
 		data_size = tp->rx_pkt_map_sz;
-		अवरोध;
+		break;
 
-	हाल RXD_OPAQUE_RING_JUMBO:
+	case RXD_OPAQUE_RING_JUMBO:
 		dest_idx = dest_idx_unmasked & tp->rx_jmb_ring_mask;
 		desc = &tpr->rx_jmb[dest_idx].std;
 		map = &tpr->rx_jmb_buffers[dest_idx];
 		data_size = TG3_RX_JMB_MAP_SZ;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	/* Do not overग_लिखो any of the map or rp inक्रमmation
+	/* Do not overwrite any of the map or rp information
 	 * until we are sure we can commit to a new buffer.
 	 *
 	 * Callers depend upon this behavior and assume that
-	 * we leave everything unchanged अगर we fail.
+	 * we leave everything unchanged if we fail.
 	 */
 	skb_size = SKB_DATA_ALIGN(data_size + TG3_RX_OFFSET(tp)) +
-		   SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info));
-	अगर (skb_size <= PAGE_SIZE) अणु
+		   SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+	if (skb_size <= PAGE_SIZE) {
 		data = napi_alloc_frag(skb_size);
 		*frag_size = skb_size;
-	पूर्ण अन्यथा अणु
-		data = kदो_स्मृति(skb_size, GFP_ATOMIC);
+	} else {
+		data = kmalloc(skb_size, GFP_ATOMIC);
 		*frag_size = 0;
-	पूर्ण
-	अगर (!data)
-		वापस -ENOMEM;
+	}
+	if (!data)
+		return -ENOMEM;
 
 	mapping = pci_map_single(tp->pdev,
 				 data + TG3_RX_OFFSET(tp),
 				 data_size,
 				 PCI_DMA_FROMDEVICE);
-	अगर (unlikely(pci_dma_mapping_error(tp->pdev, mapping))) अणु
-		tg3_frag_मुक्त(skb_size <= PAGE_SIZE, data);
-		वापस -EIO;
-	पूर्ण
+	if (unlikely(pci_dma_mapping_error(tp->pdev, mapping))) {
+		tg3_frag_free(skb_size <= PAGE_SIZE, data);
+		return -EIO;
+	}
 
 	map->data = data;
 	dma_unmap_addr_set(map, mapping, mapping);
@@ -6727,44 +6726,44 @@ err_out:
 	desc->addr_hi = ((u64)mapping >> 32);
 	desc->addr_lo = ((u64)mapping & 0xffffffff);
 
-	वापस data_size;
-पूर्ण
+	return data_size;
+}
 
 /* We only need to move over in the address because the other
  * members of the RX descriptor are invariant.  See notes above
- * tg3_alloc_rx_data क्रम full details.
+ * tg3_alloc_rx_data for full details.
  */
-अटल व्योम tg3_recycle_rx(काष्ठा tg3_napi *tnapi,
-			   काष्ठा tg3_rx_prodring_set *dpr,
-			   u32 opaque_key, पूर्णांक src_idx,
+static void tg3_recycle_rx(struct tg3_napi *tnapi,
+			   struct tg3_rx_prodring_set *dpr,
+			   u32 opaque_key, int src_idx,
 			   u32 dest_idx_unmasked)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
-	काष्ठा tg3_rx_buffer_desc *src_desc, *dest_desc;
-	काष्ठा ring_info *src_map, *dest_map;
-	काष्ठा tg3_rx_prodring_set *spr = &tp->napi[0].prodring;
-	पूर्णांक dest_idx;
+{
+	struct tg3 *tp = tnapi->tp;
+	struct tg3_rx_buffer_desc *src_desc, *dest_desc;
+	struct ring_info *src_map, *dest_map;
+	struct tg3_rx_prodring_set *spr = &tp->napi[0].prodring;
+	int dest_idx;
 
-	चयन (opaque_key) अणु
-	हाल RXD_OPAQUE_RING_STD:
+	switch (opaque_key) {
+	case RXD_OPAQUE_RING_STD:
 		dest_idx = dest_idx_unmasked & tp->rx_std_ring_mask;
 		dest_desc = &dpr->rx_std[dest_idx];
 		dest_map = &dpr->rx_std_buffers[dest_idx];
 		src_desc = &spr->rx_std[src_idx];
 		src_map = &spr->rx_std_buffers[src_idx];
-		अवरोध;
+		break;
 
-	हाल RXD_OPAQUE_RING_JUMBO:
+	case RXD_OPAQUE_RING_JUMBO:
 		dest_idx = dest_idx_unmasked & tp->rx_jmb_ring_mask;
 		dest_desc = &dpr->rx_jmb[dest_idx].std;
 		dest_map = &dpr->rx_jmb_buffers[dest_idx];
 		src_desc = &spr->rx_jmb[src_idx].std;
 		src_map = &spr->rx_jmb_buffers[src_idx];
-		अवरोध;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
 	dest_map->data = src_map->data;
 	dma_unmap_addr_set(dest_map, mapping,
@@ -6777,46 +6776,46 @@ err_out:
 	 */
 	smp_wmb();
 
-	src_map->data = शून्य;
-पूर्ण
+	src_map->data = NULL;
+}
 
 /* The RX ring scheme is composed of multiple rings which post fresh
  * buffers to the chip, and one special ring the chip uses to report
  * status back to the host.
  *
  * The special ring reports the status of received packets to the
- * host.  The chip करोes not ग_लिखो पूर्णांकo the original descriptor the
+ * host.  The chip does not write into the original descriptor the
  * RX buffer was obtained from.  The chip simply takes the original
  * descriptor as provided by the host, updates the status and length
- * field, then ग_लिखोs this पूर्णांकo the next status ring entry.
+ * field, then writes this into the next status ring entry.
  *
  * Each ring the host uses to post buffers to the chip is described
  * by a TG3_BDINFO entry in the chips SRAM area.  When a packet arrives,
- * it is first placed पूर्णांकo the on-chip ram.  When the packet's length
- * is known, it walks करोwn the TG3_BDINFO entries to select the ring.
- * Each TG3_BDINFO specअगरies a MAXLEN field and the first TG3_BDINFO
+ * it is first placed into the on-chip ram.  When the packet's length
+ * is known, it walks down the TG3_BDINFO entries to select the ring.
+ * Each TG3_BDINFO specifies a MAXLEN field and the first TG3_BDINFO
  * which is within the range of the new packet's length is chosen.
  *
  * The "separate ring for rx status" scheme may sound queer, but it makes
- * sense from a cache coherency perspective.  If only the host ग_लिखोs
- * to the buffer post rings, and only the chip ग_लिखोs to the rx status
- * rings, then cache lines never move beyond shared-modअगरied state.
- * If both the host and chip were to ग_लिखो पूर्णांकo the same ring, cache line
+ * sense from a cache coherency perspective.  If only the host writes
+ * to the buffer post rings, and only the chip writes to the rx status
+ * rings, then cache lines never move beyond shared-modified state.
+ * If both the host and chip were to write into the same ring, cache line
  * eviction could occur since both entities want it in an exclusive state.
  */
-अटल पूर्णांक tg3_rx(काष्ठा tg3_napi *tnapi, पूर्णांक budget)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
+static int tg3_rx(struct tg3_napi *tnapi, int budget)
+{
+	struct tg3 *tp = tnapi->tp;
 	u32 work_mask, rx_std_posted = 0;
 	u32 std_prod_idx, jmb_prod_idx;
 	u32 sw_idx = tnapi->rx_rcb_ptr;
 	u16 hw_idx;
-	पूर्णांक received;
-	काष्ठा tg3_rx_prodring_set *tpr = &tnapi->prodring;
+	int received;
+	struct tg3_rx_prodring_set *tpr = &tnapi->prodring;
 
 	hw_idx = *(tnapi->rx_rcb_prod_idx);
 	/*
-	 * We need to order the पढ़ो of hw_idx and the पढ़ो of
+	 * We need to order the read of hw_idx and the read of
 	 * the opaque cookie.
 	 */
 	rmb();
@@ -6824,11 +6823,11 @@ err_out:
 	received = 0;
 	std_prod_idx = tpr->rx_std_prod_idx;
 	jmb_prod_idx = tpr->rx_jmb_prod_idx;
-	जबतक (sw_idx != hw_idx && budget > 0) अणु
-		काष्ठा ring_info *ri;
-		काष्ठा tg3_rx_buffer_desc *desc = &tnapi->rx_rcb[sw_idx];
-		अचिन्हित पूर्णांक len;
-		काष्ठा sk_buff *skb;
+	while (sw_idx != hw_idx && budget > 0) {
+		struct ring_info *ri;
+		struct tg3_rx_buffer_desc *desc = &tnapi->rx_rcb[sw_idx];
+		unsigned int len;
+		struct sk_buff *skb;
 		dma_addr_t dma_addr;
 		u32 opaque_key, desc_idx, *post_ptr;
 		u8 *data;
@@ -6836,52 +6835,52 @@ err_out:
 
 		desc_idx = desc->opaque & RXD_OPAQUE_INDEX_MASK;
 		opaque_key = desc->opaque & RXD_OPAQUE_RING_MASK;
-		अगर (opaque_key == RXD_OPAQUE_RING_STD) अणु
+		if (opaque_key == RXD_OPAQUE_RING_STD) {
 			ri = &tp->napi[0].prodring.rx_std_buffers[desc_idx];
 			dma_addr = dma_unmap_addr(ri, mapping);
 			data = ri->data;
 			post_ptr = &std_prod_idx;
 			rx_std_posted++;
-		पूर्ण अन्यथा अगर (opaque_key == RXD_OPAQUE_RING_JUMBO) अणु
+		} else if (opaque_key == RXD_OPAQUE_RING_JUMBO) {
 			ri = &tp->napi[0].prodring.rx_jmb_buffers[desc_idx];
 			dma_addr = dma_unmap_addr(ri, mapping);
 			data = ri->data;
 			post_ptr = &jmb_prod_idx;
-		पूर्ण अन्यथा
-			जाओ next_pkt_nopost;
+		} else
+			goto next_pkt_nopost;
 
 		work_mask |= opaque_key;
 
-		अगर (desc->err_vlan & RXD_ERR_MASK) अणु
+		if (desc->err_vlan & RXD_ERR_MASK) {
 		drop_it:
 			tg3_recycle_rx(tnapi, tpr, opaque_key,
 				       desc_idx, *post_ptr);
 		drop_it_no_recycle:
 			/* Other statistics kept track of by card. */
 			tp->rx_dropped++;
-			जाओ next_pkt;
-		पूर्ण
+			goto next_pkt;
+		}
 
 		prefetch(data + TG3_RX_OFFSET(tp));
 		len = ((desc->idx_len & RXD_LEN_MASK) >> RXD_LEN_SHIFT) -
 		      ETH_FCS_LEN;
 
-		अगर ((desc->type_flags & RXD_FLAG_PTPSTAT_MASK) ==
+		if ((desc->type_flags & RXD_FLAG_PTPSTAT_MASK) ==
 		     RXD_FLAG_PTPSTAT_PTPV1 ||
 		    (desc->type_flags & RXD_FLAG_PTPSTAT_MASK) ==
-		     RXD_FLAG_PTPSTAT_PTPV2) अणु
+		     RXD_FLAG_PTPSTAT_PTPV2) {
 			tstamp = tr32(TG3_RX_TSTAMP_LSB);
 			tstamp |= (u64)tr32(TG3_RX_TSTAMP_MSB) << 32;
-		पूर्ण
+		}
 
-		अगर (len > TG3_RX_COPY_THRESH(tp)) अणु
-			पूर्णांक skb_size;
-			अचिन्हित पूर्णांक frag_size;
+		if (len > TG3_RX_COPY_THRESH(tp)) {
+			int skb_size;
+			unsigned int frag_size;
 
 			skb_size = tg3_alloc_rx_data(tp, tpr, opaque_key,
 						    *post_ptr, &frag_size);
-			अगर (skb_size < 0)
-				जाओ drop_it;
+			if (skb_size < 0)
+				goto drop_it;
 
 			pci_unmap_single(tp->pdev, dma_addr, skb_size,
 					 PCI_DMA_FROMDEVICE);
@@ -6891,54 +6890,54 @@ err_out:
 			 */
 			smp_wmb();
 
-			ri->data = शून्य;
+			ri->data = NULL;
 
 			skb = build_skb(data, frag_size);
-			अगर (!skb) अणु
-				tg3_frag_मुक्त(frag_size != 0, data);
-				जाओ drop_it_no_recycle;
-			पूर्ण
+			if (!skb) {
+				tg3_frag_free(frag_size != 0, data);
+				goto drop_it_no_recycle;
+			}
 			skb_reserve(skb, TG3_RX_OFFSET(tp));
-		पूर्ण अन्यथा अणु
+		} else {
 			tg3_recycle_rx(tnapi, tpr, opaque_key,
 				       desc_idx, *post_ptr);
 
 			skb = netdev_alloc_skb(tp->dev,
 					       len + TG3_RAW_IP_ALIGN);
-			अगर (skb == शून्य)
-				जाओ drop_it_no_recycle;
+			if (skb == NULL)
+				goto drop_it_no_recycle;
 
 			skb_reserve(skb, TG3_RAW_IP_ALIGN);
-			pci_dma_sync_single_क्रम_cpu(tp->pdev, dma_addr, len, PCI_DMA_FROMDEVICE);
-			स_नकल(skb->data,
+			pci_dma_sync_single_for_cpu(tp->pdev, dma_addr, len, PCI_DMA_FROMDEVICE);
+			memcpy(skb->data,
 			       data + TG3_RX_OFFSET(tp),
 			       len);
-			pci_dma_sync_single_क्रम_device(tp->pdev, dma_addr, len, PCI_DMA_FROMDEVICE);
-		पूर्ण
+			pci_dma_sync_single_for_device(tp->pdev, dma_addr, len, PCI_DMA_FROMDEVICE);
+		}
 
 		skb_put(skb, len);
-		अगर (tstamp)
-			tg3_hwघड़ी_प्रकारo_बारtamp(tp, tstamp,
+		if (tstamp)
+			tg3_hwclock_to_timestamp(tp, tstamp,
 						 skb_hwtstamps(skb));
 
-		अगर ((tp->dev->features & NETIF_F_RXCSUM) &&
+		if ((tp->dev->features & NETIF_F_RXCSUM) &&
 		    (desc->type_flags & RXD_FLAG_TCPUDP_CSUM) &&
 		    (((desc->ip_tcp_csum & RXD_TCPCSUM_MASK)
 		      >> RXD_TCPCSUM_SHIFT) == 0xffff))
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
-		अन्यथा
-			skb_checksum_none_निश्चित(skb);
+		else
+			skb_checksum_none_assert(skb);
 
 		skb->protocol = eth_type_trans(skb, tp->dev);
 
-		अगर (len > (tp->dev->mtu + ETH_HLEN) &&
+		if (len > (tp->dev->mtu + ETH_HLEN) &&
 		    skb->protocol != htons(ETH_P_8021Q) &&
-		    skb->protocol != htons(ETH_P_8021AD)) अणु
-			dev_kमुक्त_skb_any(skb);
-			जाओ drop_it_no_recycle;
-		पूर्ण
+		    skb->protocol != htons(ETH_P_8021AD)) {
+			dev_kfree_skb_any(skb);
+			goto drop_it_no_recycle;
+		}
 
-		अगर (desc->type_flags & RXD_FLAG_VLAN &&
+		if (desc->type_flags & RXD_FLAG_VLAN &&
 		    !(tp->rx_mode & RX_MODE_KEEP_VLAN_TAG))
 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q),
 					       desc->err_vlan & RXD_VLAN_MASK);
@@ -6951,96 +6950,96 @@ err_out:
 next_pkt:
 		(*post_ptr)++;
 
-		अगर (unlikely(rx_std_posted >= tp->rx_std_max_post)) अणु
+		if (unlikely(rx_std_posted >= tp->rx_std_max_post)) {
 			tpr->rx_std_prod_idx = std_prod_idx &
 					       tp->rx_std_ring_mask;
 			tw32_rx_mbox(TG3_RX_STD_PROD_IDX_REG,
 				     tpr->rx_std_prod_idx);
 			work_mask &= ~RXD_OPAQUE_RING_STD;
 			rx_std_posted = 0;
-		पूर्ण
+		}
 next_pkt_nopost:
 		sw_idx++;
 		sw_idx &= tp->rx_ret_ring_mask;
 
-		/* Refresh hw_idx to see अगर there is new work */
-		अगर (sw_idx == hw_idx) अणु
+		/* Refresh hw_idx to see if there is new work */
+		if (sw_idx == hw_idx) {
 			hw_idx = *(tnapi->rx_rcb_prod_idx);
 			rmb();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* ACK the status ring. */
 	tnapi->rx_rcb_ptr = sw_idx;
 	tw32_rx_mbox(tnapi->consmbox, sw_idx);
 
 	/* Refill RX ring(s). */
-	अगर (!tg3_flag(tp, ENABLE_RSS)) अणु
-		/* Sync BD data beक्रमe updating mailbox */
+	if (!tg3_flag(tp, ENABLE_RSS)) {
+		/* Sync BD data before updating mailbox */
 		wmb();
 
-		अगर (work_mask & RXD_OPAQUE_RING_STD) अणु
+		if (work_mask & RXD_OPAQUE_RING_STD) {
 			tpr->rx_std_prod_idx = std_prod_idx &
 					       tp->rx_std_ring_mask;
 			tw32_rx_mbox(TG3_RX_STD_PROD_IDX_REG,
 				     tpr->rx_std_prod_idx);
-		पूर्ण
-		अगर (work_mask & RXD_OPAQUE_RING_JUMBO) अणु
+		}
+		if (work_mask & RXD_OPAQUE_RING_JUMBO) {
 			tpr->rx_jmb_prod_idx = jmb_prod_idx &
 					       tp->rx_jmb_ring_mask;
 			tw32_rx_mbox(TG3_RX_JMB_PROD_IDX_REG,
 				     tpr->rx_jmb_prod_idx);
-		पूर्ण
-	पूर्ण अन्यथा अगर (work_mask) अणु
+		}
+	} else if (work_mask) {
 		/* rx_std_buffers[] and rx_jmb_buffers[] entries must be
-		 * updated beक्रमe the producer indices can be updated.
+		 * updated before the producer indices can be updated.
 		 */
 		smp_wmb();
 
 		tpr->rx_std_prod_idx = std_prod_idx & tp->rx_std_ring_mask;
 		tpr->rx_jmb_prod_idx = jmb_prod_idx & tp->rx_jmb_ring_mask;
 
-		अगर (tnapi != &tp->napi[1]) अणु
+		if (tnapi != &tp->napi[1]) {
 			tp->rx_refill = true;
 			napi_schedule(&tp->napi[1].napi);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस received;
-पूर्ण
+	return received;
+}
 
-अटल व्योम tg3_poll_link(काष्ठा tg3 *tp)
-अणु
+static void tg3_poll_link(struct tg3 *tp)
+{
 	/* handle link change and other phy events */
-	अगर (!(tg3_flag(tp, USE_LINKCHG_REG) || tg3_flag(tp, POLL_SERDES))) अणु
-		काष्ठा tg3_hw_status *sblk = tp->napi[0].hw_status;
+	if (!(tg3_flag(tp, USE_LINKCHG_REG) || tg3_flag(tp, POLL_SERDES))) {
+		struct tg3_hw_status *sblk = tp->napi[0].hw_status;
 
-		अगर (sblk->status & SD_STATUS_LINK_CHG) अणु
+		if (sblk->status & SD_STATUS_LINK_CHG) {
 			sblk->status = SD_STATUS_UPDATED |
 				       (sblk->status & ~SD_STATUS_LINK_CHG);
 			spin_lock(&tp->lock);
-			अगर (tg3_flag(tp, USE_PHYLIB)) अणु
+			if (tg3_flag(tp, USE_PHYLIB)) {
 				tw32_f(MAC_STATUS,
 				     (MAC_STATUS_SYNC_CHANGED |
 				      MAC_STATUS_CFG_CHANGED |
 				      MAC_STATUS_MI_COMPLETION |
 				      MAC_STATUS_LNKSTATE_CHANGED));
 				udelay(40);
-			पूर्ण अन्यथा
+			} else
 				tg3_setup_phy(tp, false);
 			spin_unlock(&tp->lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक tg3_rx_prodring_xfer(काष्ठा tg3 *tp,
-				काष्ठा tg3_rx_prodring_set *dpr,
-				काष्ठा tg3_rx_prodring_set *spr)
-अणु
+static int tg3_rx_prodring_xfer(struct tg3 *tp,
+				struct tg3_rx_prodring_set *dpr,
+				struct tg3_rx_prodring_set *spr)
+{
 	u32 si, di, cpycnt, src_prod_idx;
-	पूर्णांक i, err = 0;
+	int i, err = 0;
 
-	जबतक (1) अणु
+	while (1) {
 		src_prod_idx = spr->rx_std_prod_idx;
 
 		/* Make sure updates to the rx_std_buffers[] entries and the
@@ -7048,12 +7047,12 @@ next_pkt_nopost:
 		 */
 		smp_rmb();
 
-		अगर (spr->rx_std_cons_idx == src_prod_idx)
-			अवरोध;
+		if (spr->rx_std_cons_idx == src_prod_idx)
+			break;
 
-		अगर (spr->rx_std_cons_idx < src_prod_idx)
+		if (spr->rx_std_cons_idx < src_prod_idx)
 			cpycnt = src_prod_idx - spr->rx_std_cons_idx;
-		अन्यथा
+		else
 			cpycnt = tp->rx_std_ring_mask + 1 -
 				 spr->rx_std_cons_idx;
 
@@ -7063,42 +7062,42 @@ next_pkt_nopost:
 		si = spr->rx_std_cons_idx;
 		di = dpr->rx_std_prod_idx;
 
-		क्रम (i = di; i < di + cpycnt; i++) अणु
-			अगर (dpr->rx_std_buffers[i].data) अणु
+		for (i = di; i < di + cpycnt; i++) {
+			if (dpr->rx_std_buffers[i].data) {
 				cpycnt = i - di;
 				err = -ENOSPC;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!cpycnt)
-			अवरोध;
+		if (!cpycnt)
+			break;
 
 		/* Ensure that updates to the rx_std_buffers ring and the
-		 * shaकरोwed hardware producer ring from tg3_recycle_skb() are
+		 * shadowed hardware producer ring from tg3_recycle_skb() are
 		 * ordered correctly WRT the skb check above.
 		 */
 		smp_rmb();
 
-		स_नकल(&dpr->rx_std_buffers[di],
+		memcpy(&dpr->rx_std_buffers[di],
 		       &spr->rx_std_buffers[si],
-		       cpycnt * माप(काष्ठा ring_info));
+		       cpycnt * sizeof(struct ring_info));
 
-		क्रम (i = 0; i < cpycnt; i++, di++, si++) अणु
-			काष्ठा tg3_rx_buffer_desc *sbd, *dbd;
+		for (i = 0; i < cpycnt; i++, di++, si++) {
+			struct tg3_rx_buffer_desc *sbd, *dbd;
 			sbd = &spr->rx_std[si];
 			dbd = &dpr->rx_std[di];
 			dbd->addr_hi = sbd->addr_hi;
 			dbd->addr_lo = sbd->addr_lo;
-		पूर्ण
+		}
 
 		spr->rx_std_cons_idx = (spr->rx_std_cons_idx + cpycnt) &
 				       tp->rx_std_ring_mask;
 		dpr->rx_std_prod_idx = (dpr->rx_std_prod_idx + cpycnt) &
 				       tp->rx_std_ring_mask;
-	पूर्ण
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		src_prod_idx = spr->rx_jmb_prod_idx;
 
 		/* Make sure updates to the rx_jmb_buffers[] entries and
@@ -7106,12 +7105,12 @@ next_pkt_nopost:
 		 */
 		smp_rmb();
 
-		अगर (spr->rx_jmb_cons_idx == src_prod_idx)
-			अवरोध;
+		if (spr->rx_jmb_cons_idx == src_prod_idx)
+			break;
 
-		अगर (spr->rx_jmb_cons_idx < src_prod_idx)
+		if (spr->rx_jmb_cons_idx < src_prod_idx)
 			cpycnt = src_prod_idx - spr->rx_jmb_cons_idx;
-		अन्यथा
+		else
 			cpycnt = tp->rx_jmb_ring_mask + 1 -
 				 spr->rx_jmb_cons_idx;
 
@@ -7121,314 +7120,314 @@ next_pkt_nopost:
 		si = spr->rx_jmb_cons_idx;
 		di = dpr->rx_jmb_prod_idx;
 
-		क्रम (i = di; i < di + cpycnt; i++) अणु
-			अगर (dpr->rx_jmb_buffers[i].data) अणु
+		for (i = di; i < di + cpycnt; i++) {
+			if (dpr->rx_jmb_buffers[i].data) {
 				cpycnt = i - di;
 				err = -ENOSPC;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!cpycnt)
-			अवरोध;
+		if (!cpycnt)
+			break;
 
 		/* Ensure that updates to the rx_jmb_buffers ring and the
-		 * shaकरोwed hardware producer ring from tg3_recycle_skb() are
+		 * shadowed hardware producer ring from tg3_recycle_skb() are
 		 * ordered correctly WRT the skb check above.
 		 */
 		smp_rmb();
 
-		स_नकल(&dpr->rx_jmb_buffers[di],
+		memcpy(&dpr->rx_jmb_buffers[di],
 		       &spr->rx_jmb_buffers[si],
-		       cpycnt * माप(काष्ठा ring_info));
+		       cpycnt * sizeof(struct ring_info));
 
-		क्रम (i = 0; i < cpycnt; i++, di++, si++) अणु
-			काष्ठा tg3_rx_buffer_desc *sbd, *dbd;
+		for (i = 0; i < cpycnt; i++, di++, si++) {
+			struct tg3_rx_buffer_desc *sbd, *dbd;
 			sbd = &spr->rx_jmb[si].std;
 			dbd = &dpr->rx_jmb[di].std;
 			dbd->addr_hi = sbd->addr_hi;
 			dbd->addr_lo = sbd->addr_lo;
-		पूर्ण
+		}
 
 		spr->rx_jmb_cons_idx = (spr->rx_jmb_cons_idx + cpycnt) &
 				       tp->rx_jmb_ring_mask;
 		dpr->rx_jmb_prod_idx = (dpr->rx_jmb_prod_idx + cpycnt) &
 				       tp->rx_jmb_ring_mask;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_poll_work(काष्ठा tg3_napi *tnapi, पूर्णांक work_करोne, पूर्णांक budget)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
+static int tg3_poll_work(struct tg3_napi *tnapi, int work_done, int budget)
+{
+	struct tg3 *tp = tnapi->tp;
 
-	/* run TX completion thपढ़ो */
-	अगर (tnapi->hw_status->idx[0].tx_consumer != tnapi->tx_cons) अणु
+	/* run TX completion thread */
+	if (tnapi->hw_status->idx[0].tx_consumer != tnapi->tx_cons) {
 		tg3_tx(tnapi);
-		अगर (unlikely(tg3_flag(tp, TX_RECOVERY_PENDING)))
-			वापस work_करोne;
-	पूर्ण
+		if (unlikely(tg3_flag(tp, TX_RECOVERY_PENDING)))
+			return work_done;
+	}
 
-	अगर (!tnapi->rx_rcb_prod_idx)
-		वापस work_करोne;
+	if (!tnapi->rx_rcb_prod_idx)
+		return work_done;
 
-	/* run RX thपढ़ो, within the bounds set by NAPI.
-	 * All RX "locking" is करोne by ensuring outside
+	/* run RX thread, within the bounds set by NAPI.
+	 * All RX "locking" is done by ensuring outside
 	 * code synchronizes with tg3->napi.poll()
 	 */
-	अगर (*(tnapi->rx_rcb_prod_idx) != tnapi->rx_rcb_ptr)
-		work_करोne += tg3_rx(tnapi, budget - work_करोne);
+	if (*(tnapi->rx_rcb_prod_idx) != tnapi->rx_rcb_ptr)
+		work_done += tg3_rx(tnapi, budget - work_done);
 
-	अगर (tg3_flag(tp, ENABLE_RSS) && tnapi == &tp->napi[1]) अणु
-		काष्ठा tg3_rx_prodring_set *dpr = &tp->napi[0].prodring;
-		पूर्णांक i, err = 0;
+	if (tg3_flag(tp, ENABLE_RSS) && tnapi == &tp->napi[1]) {
+		struct tg3_rx_prodring_set *dpr = &tp->napi[0].prodring;
+		int i, err = 0;
 		u32 std_prod_idx = dpr->rx_std_prod_idx;
 		u32 jmb_prod_idx = dpr->rx_jmb_prod_idx;
 
 		tp->rx_refill = false;
-		क्रम (i = 1; i <= tp->rxq_cnt; i++)
+		for (i = 1; i <= tp->rxq_cnt; i++)
 			err |= tg3_rx_prodring_xfer(tp, dpr,
 						    &tp->napi[i].prodring);
 
 		wmb();
 
-		अगर (std_prod_idx != dpr->rx_std_prod_idx)
+		if (std_prod_idx != dpr->rx_std_prod_idx)
 			tw32_rx_mbox(TG3_RX_STD_PROD_IDX_REG,
 				     dpr->rx_std_prod_idx);
 
-		अगर (jmb_prod_idx != dpr->rx_jmb_prod_idx)
+		if (jmb_prod_idx != dpr->rx_jmb_prod_idx)
 			tw32_rx_mbox(TG3_RX_JMB_PROD_IDX_REG,
 				     dpr->rx_jmb_prod_idx);
 
-		अगर (err)
+		if (err)
 			tw32_f(HOSTCC_MODE, tp->coal_now);
-	पूर्ण
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल अंतरभूत व्योम tg3_reset_task_schedule(काष्ठा tg3 *tp)
-अणु
-	अगर (!test_and_set_bit(TG3_FLAG_RESET_TASK_PENDING, tp->tg3_flags))
+static inline void tg3_reset_task_schedule(struct tg3 *tp)
+{
+	if (!test_and_set_bit(TG3_FLAG_RESET_TASK_PENDING, tp->tg3_flags))
 		schedule_work(&tp->reset_task);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tg3_reset_task_cancel(काष्ठा tg3 *tp)
-अणु
-	अगर (test_and_clear_bit(TG3_FLAG_RESET_TASK_PENDING, tp->tg3_flags))
+static inline void tg3_reset_task_cancel(struct tg3 *tp)
+{
+	if (test_and_clear_bit(TG3_FLAG_RESET_TASK_PENDING, tp->tg3_flags))
 		cancel_work_sync(&tp->reset_task);
 	tg3_flag_clear(tp, TX_RECOVERY_PENDING);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_poll_msix(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा tg3_napi *tnapi = container_of(napi, काष्ठा tg3_napi, napi);
-	काष्ठा tg3 *tp = tnapi->tp;
-	पूर्णांक work_करोne = 0;
-	काष्ठा tg3_hw_status *sblk = tnapi->hw_status;
+static int tg3_poll_msix(struct napi_struct *napi, int budget)
+{
+	struct tg3_napi *tnapi = container_of(napi, struct tg3_napi, napi);
+	struct tg3 *tp = tnapi->tp;
+	int work_done = 0;
+	struct tg3_hw_status *sblk = tnapi->hw_status;
 
-	जबतक (1) अणु
-		work_करोne = tg3_poll_work(tnapi, work_करोne, budget);
+	while (1) {
+		work_done = tg3_poll_work(tnapi, work_done, budget);
 
-		अगर (unlikely(tg3_flag(tp, TX_RECOVERY_PENDING)))
-			जाओ tx_recovery;
+		if (unlikely(tg3_flag(tp, TX_RECOVERY_PENDING)))
+			goto tx_recovery;
 
-		अगर (unlikely(work_करोne >= budget))
-			अवरोध;
+		if (unlikely(work_done >= budget))
+			break;
 
-		/* tp->last_tag is used in tg3_पूर्णांक_reenable() below
+		/* tp->last_tag is used in tg3_int_reenable() below
 		 * to tell the hw how much work has been processed,
-		 * so we must पढ़ो it beक्रमe checking क्रम more work.
+		 * so we must read it before checking for more work.
 		 */
 		tnapi->last_tag = sblk->status_tag;
 		tnapi->last_irq_tag = tnapi->last_tag;
 		rmb();
 
-		/* check क्रम RX/TX work to करो */
-		अगर (likely(sblk->idx[0].tx_consumer == tnapi->tx_cons &&
-			   *(tnapi->rx_rcb_prod_idx) == tnapi->rx_rcb_ptr)) अणु
+		/* check for RX/TX work to do */
+		if (likely(sblk->idx[0].tx_consumer == tnapi->tx_cons &&
+			   *(tnapi->rx_rcb_prod_idx) == tnapi->rx_rcb_ptr)) {
 
-			/* This test here is not race मुक्त, but will reduce
-			 * the number of पूर्णांकerrupts by looping again.
+			/* This test here is not race free, but will reduce
+			 * the number of interrupts by looping again.
 			 */
-			अगर (tnapi == &tp->napi[1] && tp->rx_refill)
-				जारी;
+			if (tnapi == &tp->napi[1] && tp->rx_refill)
+				continue;
 
-			napi_complete_करोne(napi, work_करोne);
-			/* Reenable पूर्णांकerrupts. */
-			tw32_mailbox(tnapi->पूर्णांक_mbox, tnapi->last_tag << 24);
+			napi_complete_done(napi, work_done);
+			/* Reenable interrupts. */
+			tw32_mailbox(tnapi->int_mbox, tnapi->last_tag << 24);
 
 			/* This test here is synchronized by napi_schedule()
-			 * and napi_complete() to बंद the race condition.
+			 * and napi_complete() to close the race condition.
 			 */
-			अगर (unlikely(tnapi == &tp->napi[1] && tp->rx_refill)) अणु
+			if (unlikely(tnapi == &tp->napi[1] && tp->rx_refill)) {
 				tw32(HOSTCC_MODE, tp->coalesce_mode |
 						  HOSTCC_MODE_ENABLE |
 						  tnapi->coal_now);
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		}
+	}
 
 	tg3_send_ape_heartbeat(tp, TG3_APE_HB_INTERVAL << 1);
-	वापस work_करोne;
+	return work_done;
 
 tx_recovery:
-	/* work_करोne is guaranteed to be less than budget. */
+	/* work_done is guaranteed to be less than budget. */
 	napi_complete(napi);
 	tg3_reset_task_schedule(tp);
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल व्योम tg3_process_error(काष्ठा tg3 *tp)
-अणु
+static void tg3_process_error(struct tg3 *tp)
+{
 	u32 val;
 	bool real_error = false;
 
-	अगर (tg3_flag(tp, ERROR_PROCESSED))
-		वापस;
+	if (tg3_flag(tp, ERROR_PROCESSED))
+		return;
 
-	/* Check Flow Attention रेजिस्टर */
+	/* Check Flow Attention register */
 	val = tr32(HOSTCC_FLOW_ATTN);
-	अगर (val & ~HOSTCC_FLOW_ATTN_MBUF_LWM) अणु
+	if (val & ~HOSTCC_FLOW_ATTN_MBUF_LWM) {
 		netdev_err(tp->dev, "FLOW Attention error.  Resetting chip.\n");
 		real_error = true;
-	पूर्ण
+	}
 
-	अगर (tr32(MSGINT_STATUS) & ~MSGINT_STATUS_MSI_REQ) अणु
+	if (tr32(MSGINT_STATUS) & ~MSGINT_STATUS_MSI_REQ) {
 		netdev_err(tp->dev, "MSI Status error.  Resetting chip.\n");
 		real_error = true;
-	पूर्ण
+	}
 
-	अगर (tr32(RDMAC_STATUS) || tr32(WDMAC_STATUS)) अणु
+	if (tr32(RDMAC_STATUS) || tr32(WDMAC_STATUS)) {
 		netdev_err(tp->dev, "DMA Status error.  Resetting chip.\n");
 		real_error = true;
-	पूर्ण
+	}
 
-	अगर (!real_error)
-		वापस;
+	if (!real_error)
+		return;
 
 	tg3_dump_state(tp);
 
 	tg3_flag_set(tp, ERROR_PROCESSED);
 	tg3_reset_task_schedule(tp);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा tg3_napi *tnapi = container_of(napi, काष्ठा tg3_napi, napi);
-	काष्ठा tg3 *tp = tnapi->tp;
-	पूर्णांक work_करोne = 0;
-	काष्ठा tg3_hw_status *sblk = tnapi->hw_status;
+static int tg3_poll(struct napi_struct *napi, int budget)
+{
+	struct tg3_napi *tnapi = container_of(napi, struct tg3_napi, napi);
+	struct tg3 *tp = tnapi->tp;
+	int work_done = 0;
+	struct tg3_hw_status *sblk = tnapi->hw_status;
 
-	जबतक (1) अणु
-		अगर (sblk->status & SD_STATUS_ERROR)
+	while (1) {
+		if (sblk->status & SD_STATUS_ERROR)
 			tg3_process_error(tp);
 
 		tg3_poll_link(tp);
 
-		work_करोne = tg3_poll_work(tnapi, work_करोne, budget);
+		work_done = tg3_poll_work(tnapi, work_done, budget);
 
-		अगर (unlikely(tg3_flag(tp, TX_RECOVERY_PENDING)))
-			जाओ tx_recovery;
+		if (unlikely(tg3_flag(tp, TX_RECOVERY_PENDING)))
+			goto tx_recovery;
 
-		अगर (unlikely(work_करोne >= budget))
-			अवरोध;
+		if (unlikely(work_done >= budget))
+			break;
 
-		अगर (tg3_flag(tp, TAGGED_STATUS)) अणु
-			/* tp->last_tag is used in tg3_पूर्णांक_reenable() below
+		if (tg3_flag(tp, TAGGED_STATUS)) {
+			/* tp->last_tag is used in tg3_int_reenable() below
 			 * to tell the hw how much work has been processed,
-			 * so we must पढ़ो it beक्रमe checking क्रम more work.
+			 * so we must read it before checking for more work.
 			 */
 			tnapi->last_tag = sblk->status_tag;
 			tnapi->last_irq_tag = tnapi->last_tag;
 			rmb();
-		पूर्ण अन्यथा
+		} else
 			sblk->status &= ~SD_STATUS_UPDATED;
 
-		अगर (likely(!tg3_has_work(tnapi))) अणु
-			napi_complete_करोne(napi, work_करोne);
-			tg3_पूर्णांक_reenable(tnapi);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (likely(!tg3_has_work(tnapi))) {
+			napi_complete_done(napi, work_done);
+			tg3_int_reenable(tnapi);
+			break;
+		}
+	}
 
 	tg3_send_ape_heartbeat(tp, TG3_APE_HB_INTERVAL << 1);
-	वापस work_करोne;
+	return work_done;
 
 tx_recovery:
-	/* work_करोne is guaranteed to be less than budget. */
+	/* work_done is guaranteed to be less than budget. */
 	napi_complete(napi);
 	tg3_reset_task_schedule(tp);
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-अटल व्योम tg3_napi_disable(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_napi_disable(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = tp->irq_cnt - 1; i >= 0; i--)
+	for (i = tp->irq_cnt - 1; i >= 0; i--)
 		napi_disable(&tp->napi[i].napi);
-पूर्ण
+}
 
-अटल व्योम tg3_napi_enable(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_napi_enable(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = 0; i < tp->irq_cnt; i++)
+	for (i = 0; i < tp->irq_cnt; i++)
 		napi_enable(&tp->napi[i].napi);
-पूर्ण
+}
 
-अटल व्योम tg3_napi_init(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_napi_init(struct tg3 *tp)
+{
+	int i;
 
-	netअगर_napi_add(tp->dev, &tp->napi[0].napi, tg3_poll, 64);
-	क्रम (i = 1; i < tp->irq_cnt; i++)
-		netअगर_napi_add(tp->dev, &tp->napi[i].napi, tg3_poll_msix, 64);
-पूर्ण
+	netif_napi_add(tp->dev, &tp->napi[0].napi, tg3_poll, 64);
+	for (i = 1; i < tp->irq_cnt; i++)
+		netif_napi_add(tp->dev, &tp->napi[i].napi, tg3_poll_msix, 64);
+}
 
-अटल व्योम tg3_napi_fini(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_napi_fini(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = 0; i < tp->irq_cnt; i++)
-		netअगर_napi_del(&tp->napi[i].napi);
-पूर्ण
+	for (i = 0; i < tp->irq_cnt; i++)
+		netif_napi_del(&tp->napi[i].napi);
+}
 
-अटल अंतरभूत व्योम tg3_netअगर_stop(काष्ठा tg3 *tp)
-अणु
-	netअगर_trans_update(tp->dev);	/* prevent tx समयout */
+static inline void tg3_netif_stop(struct tg3 *tp)
+{
+	netif_trans_update(tp->dev);	/* prevent tx timeout */
 	tg3_napi_disable(tp);
-	netअगर_carrier_off(tp->dev);
-	netअगर_tx_disable(tp->dev);
-पूर्ण
+	netif_carrier_off(tp->dev);
+	netif_tx_disable(tp->dev);
+}
 
 /* tp->lock must be held */
-अटल अंतरभूत व्योम tg3_netअगर_start(काष्ठा tg3 *tp)
-अणु
+static inline void tg3_netif_start(struct tg3 *tp)
+{
 	tg3_ptp_resume(tp);
 
-	/* NOTE: unconditional netअगर_tx_wake_all_queues is only
-	 * appropriate so दीर्घ as all callers are assured to
-	 * have मुक्त tx slots (such as after tg3_init_hw)
+	/* NOTE: unconditional netif_tx_wake_all_queues is only
+	 * appropriate so long as all callers are assured to
+	 * have free tx slots (such as after tg3_init_hw)
 	 */
-	netअगर_tx_wake_all_queues(tp->dev);
+	netif_tx_wake_all_queues(tp->dev);
 
-	अगर (tp->link_up)
-		netअगर_carrier_on(tp->dev);
+	if (tp->link_up)
+		netif_carrier_on(tp->dev);
 
 	tg3_napi_enable(tp);
 	tp->napi[0].hw_status->status |= SD_STATUS_UPDATED;
-	tg3_enable_पूर्णांकs(tp);
-पूर्ण
+	tg3_enable_ints(tp);
+}
 
-अटल व्योम tg3_irq_quiesce(काष्ठा tg3 *tp)
+static void tg3_irq_quiesce(struct tg3 *tp)
 	__releases(tp->lock)
 	__acquires(tp->lock)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
 	BUG_ON(tp->irq_sync);
 
@@ -7437,345 +7436,345 @@ tx_recovery:
 
 	spin_unlock_bh(&tp->lock);
 
-	क्रम (i = 0; i < tp->irq_cnt; i++)
+	for (i = 0; i < tp->irq_cnt; i++)
 		synchronize_irq(tp->napi[i].irq_vec);
 
 	spin_lock_bh(&tp->lock);
-पूर्ण
+}
 
-/* Fully shutकरोwn all tg3 driver activity अन्यथाwhere in the प्रणाली.
+/* Fully shutdown all tg3 driver activity elsewhere in the system.
  * If irq_sync is non-zero, then the IRQ handler must be synchronized
- * with as well.  Most of the समय, this is not necessary except when
- * shutting करोwn the device.
+ * with as well.  Most of the time, this is not necessary except when
+ * shutting down the device.
  */
-अटल अंतरभूत व्योम tg3_full_lock(काष्ठा tg3 *tp, पूर्णांक irq_sync)
-अणु
+static inline void tg3_full_lock(struct tg3 *tp, int irq_sync)
+{
 	spin_lock_bh(&tp->lock);
-	अगर (irq_sync)
+	if (irq_sync)
 		tg3_irq_quiesce(tp);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tg3_full_unlock(काष्ठा tg3 *tp)
-अणु
+static inline void tg3_full_unlock(struct tg3 *tp)
+{
 	spin_unlock_bh(&tp->lock);
-पूर्ण
+}
 
-/* One-shot MSI handler - Chip स्वतःmatically disables पूर्णांकerrupt
- * after sending MSI so driver करोesn't have to करो it.
+/* One-shot MSI handler - Chip automatically disables interrupt
+ * after sending MSI so driver doesn't have to do it.
  */
-अटल irqवापस_t tg3_msi_1shot(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tg3_napi *tnapi = dev_id;
-	काष्ठा tg3 *tp = tnapi->tp;
+static irqreturn_t tg3_msi_1shot(int irq, void *dev_id)
+{
+	struct tg3_napi *tnapi = dev_id;
+	struct tg3 *tp = tnapi->tp;
 
 	prefetch(tnapi->hw_status);
-	अगर (tnapi->rx_rcb)
+	if (tnapi->rx_rcb)
 		prefetch(&tnapi->rx_rcb[tnapi->rx_rcb_ptr]);
 
-	अगर (likely(!tg3_irq_sync(tp)))
+	if (likely(!tg3_irq_sync(tp)))
 		napi_schedule(&tnapi->napi);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-/* MSI ISR - No need to check क्रम पूर्णांकerrupt sharing and no need to
- * flush status block and पूर्णांकerrupt mailbox. PCI ordering rules
+/* MSI ISR - No need to check for interrupt sharing and no need to
+ * flush status block and interrupt mailbox. PCI ordering rules
  * guarantee that MSI will arrive after the status block.
  */
-अटल irqवापस_t tg3_msi(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tg3_napi *tnapi = dev_id;
-	काष्ठा tg3 *tp = tnapi->tp;
+static irqreturn_t tg3_msi(int irq, void *dev_id)
+{
+	struct tg3_napi *tnapi = dev_id;
+	struct tg3 *tp = tnapi->tp;
 
 	prefetch(tnapi->hw_status);
-	अगर (tnapi->rx_rcb)
+	if (tnapi->rx_rcb)
 		prefetch(&tnapi->rx_rcb[tnapi->rx_rcb_ptr]);
 	/*
-	 * Writing any value to पूर्णांकr-mbox-0 clears PCI INTA# and
-	 * chip-पूर्णांकernal पूर्णांकerrupt pending events.
-	 * Writing non-zero to पूर्णांकr-mbox-0 additional tells the
+	 * Writing any value to intr-mbox-0 clears PCI INTA# and
+	 * chip-internal interrupt pending events.
+	 * Writing non-zero to intr-mbox-0 additional tells the
 	 * NIC to stop sending us irqs, engaging "in-intr-handler"
 	 * event coalescing.
 	 */
-	tw32_mailbox(tnapi->पूर्णांक_mbox, 0x00000001);
-	अगर (likely(!tg3_irq_sync(tp)))
+	tw32_mailbox(tnapi->int_mbox, 0x00000001);
+	if (likely(!tg3_irq_sync(tp)))
 		napi_schedule(&tnapi->napi);
 
-	वापस IRQ_RETVAL(1);
-पूर्ण
+	return IRQ_RETVAL(1);
+}
 
-अटल irqवापस_t tg3_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tg3_napi *tnapi = dev_id;
-	काष्ठा tg3 *tp = tnapi->tp;
-	काष्ठा tg3_hw_status *sblk = tnapi->hw_status;
-	अचिन्हित पूर्णांक handled = 1;
+static irqreturn_t tg3_interrupt(int irq, void *dev_id)
+{
+	struct tg3_napi *tnapi = dev_id;
+	struct tg3 *tp = tnapi->tp;
+	struct tg3_hw_status *sblk = tnapi->hw_status;
+	unsigned int handled = 1;
 
-	/* In INTx mode, it is possible क्रम the पूर्णांकerrupt to arrive at
-	 * the CPU beक्रमe the status block posted prior to the पूर्णांकerrupt.
-	 * Reading the PCI State रेजिस्टर will confirm whether the
-	 * पूर्णांकerrupt is ours and will flush the status block.
+	/* In INTx mode, it is possible for the interrupt to arrive at
+	 * the CPU before the status block posted prior to the interrupt.
+	 * Reading the PCI State register will confirm whether the
+	 * interrupt is ours and will flush the status block.
 	 */
-	अगर (unlikely(!(sblk->status & SD_STATUS_UPDATED))) अणु
-		अगर (tg3_flag(tp, CHIP_RESETTING) ||
-		    (tr32(TG3PCI_PCISTATE) & PCISTATE_INT_NOT_ACTIVE)) अणु
+	if (unlikely(!(sblk->status & SD_STATUS_UPDATED))) {
+		if (tg3_flag(tp, CHIP_RESETTING) ||
+		    (tr32(TG3PCI_PCISTATE) & PCISTATE_INT_NOT_ACTIVE)) {
 			handled = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
-	 * Writing any value to पूर्णांकr-mbox-0 clears PCI INTA# and
-	 * chip-पूर्णांकernal पूर्णांकerrupt pending events.
-	 * Writing non-zero to पूर्णांकr-mbox-0 additional tells the
+	 * Writing any value to intr-mbox-0 clears PCI INTA# and
+	 * chip-internal interrupt pending events.
+	 * Writing non-zero to intr-mbox-0 additional tells the
 	 * NIC to stop sending us irqs, engaging "in-intr-handler"
 	 * event coalescing.
 	 *
-	 * Flush the mailbox to de-निश्चित the IRQ immediately to prevent
-	 * spurious पूर्णांकerrupts.  The flush impacts perक्रमmance but
-	 * excessive spurious पूर्णांकerrupts can be worse in some हालs.
+	 * Flush the mailbox to de-assert the IRQ immediately to prevent
+	 * spurious interrupts.  The flush impacts performance but
+	 * excessive spurious interrupts can be worse in some cases.
 	 */
 	tw32_mailbox_f(MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW, 0x00000001);
-	अगर (tg3_irq_sync(tp))
-		जाओ out;
+	if (tg3_irq_sync(tp))
+		goto out;
 	sblk->status &= ~SD_STATUS_UPDATED;
-	अगर (likely(tg3_has_work(tnapi))) अणु
+	if (likely(tg3_has_work(tnapi))) {
 		prefetch(&tnapi->rx_rcb[tnapi->rx_rcb_ptr]);
 		napi_schedule(&tnapi->napi);
-	पूर्ण अन्यथा अणु
-		/* No work, shared पूर्णांकerrupt perhaps?  re-enable
-		 * पूर्णांकerrupts, and flush that PCI ग_लिखो
+	} else {
+		/* No work, shared interrupt perhaps?  re-enable
+		 * interrupts, and flush that PCI write
 		 */
 		tw32_mailbox_f(MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW,
 			       0x00000000);
-	पूर्ण
+	}
 out:
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
-अटल irqवापस_t tg3_पूर्णांकerrupt_tagged(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tg3_napi *tnapi = dev_id;
-	काष्ठा tg3 *tp = tnapi->tp;
-	काष्ठा tg3_hw_status *sblk = tnapi->hw_status;
-	अचिन्हित पूर्णांक handled = 1;
+static irqreturn_t tg3_interrupt_tagged(int irq, void *dev_id)
+{
+	struct tg3_napi *tnapi = dev_id;
+	struct tg3 *tp = tnapi->tp;
+	struct tg3_hw_status *sblk = tnapi->hw_status;
+	unsigned int handled = 1;
 
-	/* In INTx mode, it is possible क्रम the पूर्णांकerrupt to arrive at
-	 * the CPU beक्रमe the status block posted prior to the पूर्णांकerrupt.
-	 * Reading the PCI State रेजिस्टर will confirm whether the
-	 * पूर्णांकerrupt is ours and will flush the status block.
+	/* In INTx mode, it is possible for the interrupt to arrive at
+	 * the CPU before the status block posted prior to the interrupt.
+	 * Reading the PCI State register will confirm whether the
+	 * interrupt is ours and will flush the status block.
 	 */
-	अगर (unlikely(sblk->status_tag == tnapi->last_irq_tag)) अणु
-		अगर (tg3_flag(tp, CHIP_RESETTING) ||
-		    (tr32(TG3PCI_PCISTATE) & PCISTATE_INT_NOT_ACTIVE)) अणु
+	if (unlikely(sblk->status_tag == tnapi->last_irq_tag)) {
+		if (tg3_flag(tp, CHIP_RESETTING) ||
+		    (tr32(TG3PCI_PCISTATE) & PCISTATE_INT_NOT_ACTIVE)) {
 			handled = 0;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
-	 * writing any value to पूर्णांकr-mbox-0 clears PCI INTA# and
-	 * chip-पूर्णांकernal पूर्णांकerrupt pending events.
-	 * writing non-zero to पूर्णांकr-mbox-0 additional tells the
+	 * writing any value to intr-mbox-0 clears PCI INTA# and
+	 * chip-internal interrupt pending events.
+	 * writing non-zero to intr-mbox-0 additional tells the
 	 * NIC to stop sending us irqs, engaging "in-intr-handler"
 	 * event coalescing.
 	 *
-	 * Flush the mailbox to de-निश्चित the IRQ immediately to prevent
-	 * spurious पूर्णांकerrupts.  The flush impacts perक्रमmance but
-	 * excessive spurious पूर्णांकerrupts can be worse in some हालs.
+	 * Flush the mailbox to de-assert the IRQ immediately to prevent
+	 * spurious interrupts.  The flush impacts performance but
+	 * excessive spurious interrupts can be worse in some cases.
 	 */
 	tw32_mailbox_f(MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW, 0x00000001);
 
 	/*
-	 * In a shared पूर्णांकerrupt configuration, someबार other devices'
-	 * पूर्णांकerrupts will scream.  We record the current status tag here
-	 * so that the above check can report that the screaming पूर्णांकerrupts
+	 * In a shared interrupt configuration, sometimes other devices'
+	 * interrupts will scream.  We record the current status tag here
+	 * so that the above check can report that the screaming interrupts
 	 * are unhandled.  Eventually they will be silenced.
 	 */
 	tnapi->last_irq_tag = sblk->status_tag;
 
-	अगर (tg3_irq_sync(tp))
-		जाओ out;
+	if (tg3_irq_sync(tp))
+		goto out;
 
 	prefetch(&tnapi->rx_rcb[tnapi->rx_rcb_ptr]);
 
 	napi_schedule(&tnapi->napi);
 
 out:
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
-/* ISR क्रम पूर्णांकerrupt test */
-अटल irqवापस_t tg3_test_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा tg3_napi *tnapi = dev_id;
-	काष्ठा tg3 *tp = tnapi->tp;
-	काष्ठा tg3_hw_status *sblk = tnapi->hw_status;
+/* ISR for interrupt test */
+static irqreturn_t tg3_test_isr(int irq, void *dev_id)
+{
+	struct tg3_napi *tnapi = dev_id;
+	struct tg3 *tp = tnapi->tp;
+	struct tg3_hw_status *sblk = tnapi->hw_status;
 
-	अगर ((sblk->status & SD_STATUS_UPDATED) ||
-	    !(tr32(TG3PCI_PCISTATE) & PCISTATE_INT_NOT_ACTIVE)) अणु
-		tg3_disable_पूर्णांकs(tp);
-		वापस IRQ_RETVAL(1);
-	पूर्ण
-	वापस IRQ_RETVAL(0);
-पूर्ण
+	if ((sblk->status & SD_STATUS_UPDATED) ||
+	    !(tr32(TG3PCI_PCISTATE) & PCISTATE_INT_NOT_ACTIVE)) {
+		tg3_disable_ints(tp);
+		return IRQ_RETVAL(1);
+	}
+	return IRQ_RETVAL(0);
+}
 
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-अटल व्योम tg3_poll_controller(काष्ठा net_device *dev)
-अणु
-	पूर्णांक i;
-	काष्ठा tg3 *tp = netdev_priv(dev);
+#ifdef CONFIG_NET_POLL_CONTROLLER
+static void tg3_poll_controller(struct net_device *dev)
+{
+	int i;
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (tg3_irq_sync(tp))
-		वापस;
+	if (tg3_irq_sync(tp))
+		return;
 
-	क्रम (i = 0; i < tp->irq_cnt; i++)
-		tg3_पूर्णांकerrupt(tp->napi[i].irq_vec, &tp->napi[i]);
-पूर्ण
-#पूर्ण_अगर
+	for (i = 0; i < tp->irq_cnt; i++)
+		tg3_interrupt(tp->napi[i].irq_vec, &tp->napi[i]);
+}
+#endif
 
-अटल व्योम tg3_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_tx_timeout(struct net_device *dev, unsigned int txqueue)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (netअगर_msg_tx_err(tp)) अणु
+	if (netif_msg_tx_err(tp)) {
 		netdev_err(dev, "transmit timed out, resetting\n");
 		tg3_dump_state(tp);
-	पूर्ण
+	}
 
 	tg3_reset_task_schedule(tp);
-पूर्ण
+}
 
-/* Test क्रम DMA buffers crossing any 4GB boundaries: 4G, 8G, etc */
-अटल अंतरभूत पूर्णांक tg3_4g_overflow_test(dma_addr_t mapping, पूर्णांक len)
-अणु
+/* Test for DMA buffers crossing any 4GB boundaries: 4G, 8G, etc */
+static inline int tg3_4g_overflow_test(dma_addr_t mapping, int len)
+{
 	u32 base = (u32) mapping & 0xffffffff;
 
-	वापस base + len + 8 < base;
-पूर्ण
+	return base + len + 8 < base;
+}
 
-/* Test क्रम TSO DMA buffers that cross पूर्णांकo regions which are within MSS bytes
+/* Test for TSO DMA buffers that cross into regions which are within MSS bytes
  * of any 4GB boundaries: 4G, 8G, etc
  */
-अटल अंतरभूत पूर्णांक tg3_4g_tso_overflow_test(काष्ठा tg3 *tp, dma_addr_t mapping,
+static inline int tg3_4g_tso_overflow_test(struct tg3 *tp, dma_addr_t mapping,
 					   u32 len, u32 mss)
-अणु
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5762 && mss) अणु
+{
+	if (tg3_asic_rev(tp) == ASIC_REV_5762 && mss) {
 		u32 base = (u32) mapping & 0xffffffff;
 
-		वापस ((base + len + (mss & 0x3fff)) < base);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ((base + len + (mss & 0x3fff)) < base);
+	}
+	return 0;
+}
 
-/* Test क्रम DMA addresses > 40-bit */
-अटल अंतरभूत पूर्णांक tg3_40bit_overflow_test(काष्ठा tg3 *tp, dma_addr_t mapping,
-					  पूर्णांक len)
-अणु
-#अगर defined(CONFIG_HIGHMEM) && (BITS_PER_LONG == 64)
-	अगर (tg3_flag(tp, 40BIT_DMA_BUG))
-		वापस ((u64) mapping + len) > DMA_BIT_MASK(40);
-	वापस 0;
-#अन्यथा
-	वापस 0;
-#पूर्ण_अगर
-पूर्ण
+/* Test for DMA addresses > 40-bit */
+static inline int tg3_40bit_overflow_test(struct tg3 *tp, dma_addr_t mapping,
+					  int len)
+{
+#if defined(CONFIG_HIGHMEM) && (BITS_PER_LONG == 64)
+	if (tg3_flag(tp, 40BIT_DMA_BUG))
+		return ((u64) mapping + len) > DMA_BIT_MASK(40);
+	return 0;
+#else
+	return 0;
+#endif
+}
 
-अटल अंतरभूत व्योम tg3_tx_set_bd(काष्ठा tg3_tx_buffer_desc *txbd,
+static inline void tg3_tx_set_bd(struct tg3_tx_buffer_desc *txbd,
 				 dma_addr_t mapping, u32 len, u32 flags,
 				 u32 mss, u32 vlan)
-अणु
+{
 	txbd->addr_hi = ((u64) mapping >> 32);
 	txbd->addr_lo = ((u64) mapping & 0xffffffff);
 	txbd->len_flags = (len << TXD_LEN_SHIFT) | (flags & 0x0000ffff);
 	txbd->vlan_tag = (mss << TXD_MSS_SHIFT) | (vlan << TXD_VLAN_TAG_SHIFT);
-पूर्ण
+}
 
-अटल bool tg3_tx_frag_set(काष्ठा tg3_napi *tnapi, u32 *entry, u32 *budget,
+static bool tg3_tx_frag_set(struct tg3_napi *tnapi, u32 *entry, u32 *budget,
 			    dma_addr_t map, u32 len, u32 flags,
 			    u32 mss, u32 vlan)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
+{
+	struct tg3 *tp = tnapi->tp;
 	bool hwbug = false;
 
-	अगर (tg3_flag(tp, SHORT_DMA_BUG) && len <= 8)
+	if (tg3_flag(tp, SHORT_DMA_BUG) && len <= 8)
 		hwbug = true;
 
-	अगर (tg3_4g_overflow_test(map, len))
+	if (tg3_4g_overflow_test(map, len))
 		hwbug = true;
 
-	अगर (tg3_4g_tso_overflow_test(tp, map, len, mss))
+	if (tg3_4g_tso_overflow_test(tp, map, len, mss))
 		hwbug = true;
 
-	अगर (tg3_40bit_overflow_test(tp, map, len))
+	if (tg3_40bit_overflow_test(tp, map, len))
 		hwbug = true;
 
-	अगर (tp->dma_limit) अणु
+	if (tp->dma_limit) {
 		u32 prvidx = *entry;
-		u32 पंचांगp_flag = flags & ~TXD_FLAG_END;
-		जबतक (len > tp->dma_limit && *budget) अणु
+		u32 tmp_flag = flags & ~TXD_FLAG_END;
+		while (len > tp->dma_limit && *budget) {
 			u32 frag_len = tp->dma_limit;
 			len -= tp->dma_limit;
 
-			/* Aव्योम the 8byte DMA problem */
-			अगर (len <= 8) अणु
+			/* Avoid the 8byte DMA problem */
+			if (len <= 8) {
 				len += tp->dma_limit / 2;
 				frag_len = tp->dma_limit / 2;
-			पूर्ण
+			}
 
 			tnapi->tx_buffers[*entry].fragmented = true;
 
 			tg3_tx_set_bd(&tnapi->tx_ring[*entry], map,
-				      frag_len, पंचांगp_flag, mss, vlan);
+				      frag_len, tmp_flag, mss, vlan);
 			*budget -= 1;
 			prvidx = *entry;
 			*entry = NEXT_TX(*entry);
 
 			map += frag_len;
-		पूर्ण
+		}
 
-		अगर (len) अणु
-			अगर (*budget) अणु
+		if (len) {
+			if (*budget) {
 				tg3_tx_set_bd(&tnapi->tx_ring[*entry], map,
 					      len, flags, mss, vlan);
 				*budget -= 1;
 				*entry = NEXT_TX(*entry);
-			पूर्ण अन्यथा अणु
+			} else {
 				hwbug = true;
 				tnapi->tx_buffers[prvidx].fragmented = false;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		tg3_tx_set_bd(&tnapi->tx_ring[*entry], map,
 			      len, flags, mss, vlan);
 		*entry = NEXT_TX(*entry);
-	पूर्ण
+	}
 
-	वापस hwbug;
-पूर्ण
+	return hwbug;
+}
 
-अटल व्योम tg3_tx_skb_unmap(काष्ठा tg3_napi *tnapi, u32 entry, पूर्णांक last)
-अणु
-	पूर्णांक i;
-	काष्ठा sk_buff *skb;
-	काष्ठा tg3_tx_ring_info *txb = &tnapi->tx_buffers[entry];
+static void tg3_tx_skb_unmap(struct tg3_napi *tnapi, u32 entry, int last)
+{
+	int i;
+	struct sk_buff *skb;
+	struct tg3_tx_ring_info *txb = &tnapi->tx_buffers[entry];
 
 	skb = txb->skb;
-	txb->skb = शून्य;
+	txb->skb = NULL;
 
 	pci_unmap_single(tnapi->tp->pdev,
 			 dma_unmap_addr(txb, mapping),
 			 skb_headlen(skb),
 			 PCI_DMA_TODEVICE);
 
-	जबतक (txb->fragmented) अणु
+	while (txb->fragmented) {
 		txb->fragmented = false;
 		entry = NEXT_TX(entry);
 		txb = &tnapi->tx_buffers[entry];
-	पूर्ण
+	}
 
-	क्रम (i = 0; i <= last; i++) अणु
-		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	for (i = 0; i <= last; i++) {
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		entry = NEXT_TX(entry);
 		txb = &tnapi->tx_buffers[entry];
@@ -7784,46 +7783,46 @@ out:
 			       dma_unmap_addr(txb, mapping),
 			       skb_frag_size(frag), PCI_DMA_TODEVICE);
 
-		जबतक (txb->fragmented) अणु
+		while (txb->fragmented) {
 			txb->fragmented = false;
 			entry = NEXT_TX(entry);
 			txb = &tnapi->tx_buffers[entry];
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* Workaround 4GB and 40-bit hardware DMA bugs. */
-अटल पूर्णांक tigon3_dma_hwbug_workaround(काष्ठा tg3_napi *tnapi,
-				       काष्ठा sk_buff **pskb,
+static int tigon3_dma_hwbug_workaround(struct tg3_napi *tnapi,
+				       struct sk_buff **pskb,
 				       u32 *entry, u32 *budget,
 				       u32 base_flags, u32 mss, u32 vlan)
-अणु
-	काष्ठा tg3 *tp = tnapi->tp;
-	काष्ठा sk_buff *new_skb, *skb = *pskb;
+{
+	struct tg3 *tp = tnapi->tp;
+	struct sk_buff *new_skb, *skb = *pskb;
 	dma_addr_t new_addr = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5701)
+	if (tg3_asic_rev(tp) != ASIC_REV_5701)
 		new_skb = skb_copy(skb, GFP_ATOMIC);
-	अन्यथा अणु
-		पूर्णांक more_headroom = 4 - ((अचिन्हित दीर्घ)skb->data & 3);
+	else {
+		int more_headroom = 4 - ((unsigned long)skb->data & 3);
 
 		new_skb = skb_copy_expand(skb,
 					  skb_headroom(skb) + more_headroom,
 					  skb_tailroom(skb), GFP_ATOMIC);
-	पूर्ण
+	}
 
-	अगर (!new_skb) अणु
+	if (!new_skb) {
 		ret = -1;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* New SKB is guaranteed to be linear. */
 		new_addr = pci_map_single(tp->pdev, new_skb->data, new_skb->len,
 					  PCI_DMA_TODEVICE);
 		/* Make sure the mapping succeeded */
-		अगर (pci_dma_mapping_error(tp->pdev, new_addr)) अणु
-			dev_kमुक्त_skb_any(new_skb);
+		if (pci_dma_mapping_error(tp->pdev, new_addr)) {
+			dev_kfree_skb_any(new_skb);
 			ret = -1;
-		पूर्ण अन्यथा अणु
+		} else {
 			u32 save_entry = *entry;
 
 			base_flags |= TXD_FLAG_END;
@@ -7832,120 +7831,120 @@ out:
 			dma_unmap_addr_set(&tnapi->tx_buffers[*entry],
 					   mapping, new_addr);
 
-			अगर (tg3_tx_frag_set(tnapi, entry, budget, new_addr,
+			if (tg3_tx_frag_set(tnapi, entry, budget, new_addr,
 					    new_skb->len, base_flags,
-					    mss, vlan)) अणु
+					    mss, vlan)) {
 				tg3_tx_skb_unmap(tnapi, save_entry, -1);
-				dev_kमुक्त_skb_any(new_skb);
+				dev_kfree_skb_any(new_skb);
 				ret = -1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	dev_consume_skb_any(skb);
 	*pskb = new_skb;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool tg3_tso_bug_gso_check(काष्ठा tg3_napi *tnapi, काष्ठा sk_buff *skb)
-अणु
-	/* Check अगर we will never have enough descriptors,
+static bool tg3_tso_bug_gso_check(struct tg3_napi *tnapi, struct sk_buff *skb)
+{
+	/* Check if we will never have enough descriptors,
 	 * as gso_segs can be more than current ring size
 	 */
-	वापस skb_shinfo(skb)->gso_segs < tnapi->tx_pending / 3;
-पूर्ण
+	return skb_shinfo(skb)->gso_segs < tnapi->tx_pending / 3;
+}
 
-अटल netdev_tx_t tg3_start_xmit(काष्ठा sk_buff *, काष्ठा net_device *);
+static netdev_tx_t tg3_start_xmit(struct sk_buff *, struct net_device *);
 
 /* Use GSO to workaround all TSO packets that meet HW bug conditions
  * indicated in tg3_tx_frag_set()
  */
-अटल पूर्णांक tg3_tso_bug(काष्ठा tg3 *tp, काष्ठा tg3_napi *tnapi,
-		       काष्ठा netdev_queue *txq, काष्ठा sk_buff *skb)
-अणु
+static int tg3_tso_bug(struct tg3 *tp, struct tg3_napi *tnapi,
+		       struct netdev_queue *txq, struct sk_buff *skb)
+{
 	u32 frag_cnt_est = skb_shinfo(skb)->gso_segs * 3;
-	काष्ठा sk_buff *segs, *seg, *next;
+	struct sk_buff *segs, *seg, *next;
 
-	/* Estimate the number of fragments in the worst हाल */
-	अगर (unlikely(tg3_tx_avail(tnapi) <= frag_cnt_est)) अणु
-		netअगर_tx_stop_queue(txq);
+	/* Estimate the number of fragments in the worst case */
+	if (unlikely(tg3_tx_avail(tnapi) <= frag_cnt_est)) {
+		netif_tx_stop_queue(txq);
 
-		/* netअगर_tx_stop_queue() must be करोne beक्रमe checking
+		/* netif_tx_stop_queue() must be done before checking
 		 * checking tx index in tg3_tx_avail() below, because in
-		 * tg3_tx(), we update tx index beक्रमe checking क्रम
-		 * netअगर_tx_queue_stopped().
+		 * tg3_tx(), we update tx index before checking for
+		 * netif_tx_queue_stopped().
 		 */
 		smp_mb();
-		अगर (tg3_tx_avail(tnapi) <= frag_cnt_est)
-			वापस NETDEV_TX_BUSY;
+		if (tg3_tx_avail(tnapi) <= frag_cnt_est)
+			return NETDEV_TX_BUSY;
 
-		netअगर_tx_wake_queue(txq);
-	पूर्ण
+		netif_tx_wake_queue(txq);
+	}
 
 	segs = skb_gso_segment(skb, tp->dev->features &
 				    ~(NETIF_F_TSO | NETIF_F_TSO6));
-	अगर (IS_ERR(segs) || !segs)
-		जाओ tg3_tso_bug_end;
+	if (IS_ERR(segs) || !segs)
+		goto tg3_tso_bug_end;
 
-	skb_list_walk_safe(segs, seg, next) अणु
+	skb_list_walk_safe(segs, seg, next) {
 		skb_mark_not_on_list(seg);
 		tg3_start_xmit(seg, tp->dev);
-	पूर्ण
+	}
 
 tg3_tso_bug_end:
 	dev_consume_skb_any(skb);
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-/* hard_start_xmit क्रम all devices */
-अटल netdev_tx_t tg3_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+/* hard_start_xmit for all devices */
+static netdev_tx_t tg3_start_xmit(struct sk_buff *skb, struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
 	u32 len, entry, base_flags, mss, vlan = 0;
 	u32 budget;
-	पूर्णांक i = -1, would_hit_hwbug;
+	int i = -1, would_hit_hwbug;
 	dma_addr_t mapping;
-	काष्ठा tg3_napi *tnapi;
-	काष्ठा netdev_queue *txq;
-	अचिन्हित पूर्णांक last;
-	काष्ठा iphdr *iph = शून्य;
-	काष्ठा tcphdr *tcph = शून्य;
+	struct tg3_napi *tnapi;
+	struct netdev_queue *txq;
+	unsigned int last;
+	struct iphdr *iph = NULL;
+	struct tcphdr *tcph = NULL;
 	__sum16 tcp_csum = 0, ip_csum = 0;
 	__be16 ip_tot_len = 0;
 
 	txq = netdev_get_tx_queue(dev, skb_get_queue_mapping(skb));
 	tnapi = &tp->napi[skb_get_queue_mapping(skb)];
-	अगर (tg3_flag(tp, ENABLE_TSS))
+	if (tg3_flag(tp, ENABLE_TSS))
 		tnapi++;
 
 	budget = tg3_tx_avail(tnapi);
 
-	/* We are running in BH disabled context with netअगर_tx_lock
+	/* We are running in BH disabled context with netif_tx_lock
 	 * and TX reclaim runs via tp->napi.poll inside of a software
-	 * पूर्णांकerrupt.  Furthermore, IRQ processing runs lockless so we have
+	 * interrupt.  Furthermore, IRQ processing runs lockless so we have
 	 * no IRQ context deadlocks to worry about either.  Rejoice!
 	 */
-	अगर (unlikely(budget <= (skb_shinfo(skb)->nr_frags + 1))) अणु
-		अगर (!netअगर_tx_queue_stopped(txq)) अणु
-			netअगर_tx_stop_queue(txq);
+	if (unlikely(budget <= (skb_shinfo(skb)->nr_frags + 1))) {
+		if (!netif_tx_queue_stopped(txq)) {
+			netif_tx_stop_queue(txq);
 
 			/* This is a hard error, log it. */
 			netdev_err(dev,
 				   "BUG! Tx Ring full when queue awake!\n");
-		पूर्ण
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		}
+		return NETDEV_TX_BUSY;
+	}
 
 	entry = tnapi->tx_prod;
 	base_flags = 0;
 
 	mss = skb_shinfo(skb)->gso_size;
-	अगर (mss) अणु
+	if (mss) {
 		u32 tcp_opt_len, hdr_len;
 
-		अगर (skb_cow_head(skb, 0))
-			जाओ drop;
+		if (skb_cow_head(skb, 0))
+			goto drop;
 
 		iph = ip_hdr(skb);
 		tcp_opt_len = tcp_optlen(skb);
@@ -7955,25 +7954,25 @@ tg3_tso_bug_end:
 		/* HW/FW can not correctly segment packets that have been
 		 * vlan encapsulated.
 		 */
-		अगर (skb->protocol == htons(ETH_P_8021Q) ||
-		    skb->protocol == htons(ETH_P_8021AD)) अणु
-			अगर (tg3_tso_bug_gso_check(tnapi, skb))
-				वापस tg3_tso_bug(tp, tnapi, txq, skb);
-			जाओ drop;
-		पूर्ण
+		if (skb->protocol == htons(ETH_P_8021Q) ||
+		    skb->protocol == htons(ETH_P_8021AD)) {
+			if (tg3_tso_bug_gso_check(tnapi, skb))
+				return tg3_tso_bug(tp, tnapi, txq, skb);
+			goto drop;
+		}
 
-		अगर (!skb_is_gso_v6(skb)) अणु
-			अगर (unlikely((ETH_HLEN + hdr_len) > 80) &&
-			    tg3_flag(tp, TSO_BUG)) अणु
-				अगर (tg3_tso_bug_gso_check(tnapi, skb))
-					वापस tg3_tso_bug(tp, tnapi, txq, skb);
-				जाओ drop;
-			पूर्ण
+		if (!skb_is_gso_v6(skb)) {
+			if (unlikely((ETH_HLEN + hdr_len) > 80) &&
+			    tg3_flag(tp, TSO_BUG)) {
+				if (tg3_tso_bug_gso_check(tnapi, skb))
+					return tg3_tso_bug(tp, tnapi, txq, skb);
+				goto drop;
+			}
 			ip_csum = iph->check;
 			ip_tot_len = iph->tot_len;
 			iph->check = 0;
 			iph->tot_len = htons(mss + hdr_len);
-		पूर्ण
+		}
 
 		base_flags |= (TXD_FLAG_CPU_PRE_DMA |
 			       TXD_FLAG_CPU_POST_DMA);
@@ -7981,72 +7980,72 @@ tg3_tso_bug_end:
 		tcph = tcp_hdr(skb);
 		tcp_csum = tcph->check;
 
-		अगर (tg3_flag(tp, HW_TSO_1) ||
+		if (tg3_flag(tp, HW_TSO_1) ||
 		    tg3_flag(tp, HW_TSO_2) ||
-		    tg3_flag(tp, HW_TSO_3)) अणु
+		    tg3_flag(tp, HW_TSO_3)) {
 			tcph->check = 0;
 			base_flags &= ~TXD_FLAG_TCPUDP_CSUM;
-		पूर्ण अन्यथा अणु
+		} else {
 			tcph->check = ~csum_tcpudp_magic(iph->saddr, iph->daddr,
 							 0, IPPROTO_TCP, 0);
-		पूर्ण
+		}
 
-		अगर (tg3_flag(tp, HW_TSO_3)) अणु
+		if (tg3_flag(tp, HW_TSO_3)) {
 			mss |= (hdr_len & 0xc) << 12;
-			अगर (hdr_len & 0x10)
+			if (hdr_len & 0x10)
 				base_flags |= 0x00000010;
 			base_flags |= (hdr_len & 0x3e0) << 5;
-		पूर्ण अन्यथा अगर (tg3_flag(tp, HW_TSO_2))
+		} else if (tg3_flag(tp, HW_TSO_2))
 			mss |= hdr_len << 9;
-		अन्यथा अगर (tg3_flag(tp, HW_TSO_1) ||
-			 tg3_asic_rev(tp) == ASIC_REV_5705) अणु
-			अगर (tcp_opt_len || iph->ihl > 5) अणु
-				पूर्णांक tsflags;
+		else if (tg3_flag(tp, HW_TSO_1) ||
+			 tg3_asic_rev(tp) == ASIC_REV_5705) {
+			if (tcp_opt_len || iph->ihl > 5) {
+				int tsflags;
 
 				tsflags = (iph->ihl - 5) + (tcp_opt_len >> 2);
 				mss |= (tsflags << 11);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (tcp_opt_len || iph->ihl > 5) अणु
-				पूर्णांक tsflags;
+			}
+		} else {
+			if (tcp_opt_len || iph->ihl > 5) {
+				int tsflags;
 
 				tsflags = (iph->ihl - 5) + (tcp_opt_len >> 2);
 				base_flags |= tsflags << 12;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+			}
+		}
+	} else if (skb->ip_summed == CHECKSUM_PARTIAL) {
 		/* HW/FW can not correctly checksum packets that have been
 		 * vlan encapsulated.
 		 */
-		अगर (skb->protocol == htons(ETH_P_8021Q) ||
-		    skb->protocol == htons(ETH_P_8021AD)) अणु
-			अगर (skb_checksum_help(skb))
-				जाओ drop;
-		पूर्ण अन्यथा  अणु
+		if (skb->protocol == htons(ETH_P_8021Q) ||
+		    skb->protocol == htons(ETH_P_8021AD)) {
+			if (skb_checksum_help(skb))
+				goto drop;
+		} else  {
 			base_flags |= TXD_FLAG_TCPUDP_CSUM;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_flag(tp, USE_JUMBO_BDFLAG) &&
+	if (tg3_flag(tp, USE_JUMBO_BDFLAG) &&
 	    !mss && skb->len > VLAN_ETH_FRAME_LEN)
 		base_flags |= TXD_FLAG_JMB_PKT;
 
-	अगर (skb_vlan_tag_present(skb)) अणु
+	if (skb_vlan_tag_present(skb)) {
 		base_flags |= TXD_FLAG_VLAN;
 		vlan = skb_vlan_tag_get(skb);
-	पूर्ण
+	}
 
-	अगर ((unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) &&
-	    tg3_flag(tp, TX_TSTAMP_EN)) अणु
+	if ((unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) &&
+	    tg3_flag(tp, TX_TSTAMP_EN)) {
 		skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 		base_flags |= TXD_FLAG_HWTSTAMP;
-	पूर्ण
+	}
 
 	len = skb_headlen(skb);
 
 	mapping = pci_map_single(tp->pdev, skb->data, len, PCI_DMA_TODEVICE);
-	अगर (pci_dma_mapping_error(tp->pdev, mapping))
-		जाओ drop;
+	if (pci_dma_mapping_error(tp->pdev, mapping))
+		goto drop;
 
 
 	tnapi->tx_buffers[entry].skb = skb;
@@ -8054,248 +8053,248 @@ tg3_tso_bug_end:
 
 	would_hit_hwbug = 0;
 
-	अगर (tg3_flag(tp, 5701_DMA_BUG))
+	if (tg3_flag(tp, 5701_DMA_BUG))
 		would_hit_hwbug = 1;
 
-	अगर (tg3_tx_frag_set(tnapi, &entry, &budget, mapping, len, base_flags |
+	if (tg3_tx_frag_set(tnapi, &entry, &budget, mapping, len, base_flags |
 			  ((skb_shinfo(skb)->nr_frags == 0) ? TXD_FLAG_END : 0),
-			    mss, vlan)) अणु
+			    mss, vlan)) {
 		would_hit_hwbug = 1;
-	पूर्ण अन्यथा अगर (skb_shinfo(skb)->nr_frags > 0) अणु
-		u32 पंचांगp_mss = mss;
+	} else if (skb_shinfo(skb)->nr_frags > 0) {
+		u32 tmp_mss = mss;
 
-		अगर (!tg3_flag(tp, HW_TSO_1) &&
+		if (!tg3_flag(tp, HW_TSO_1) &&
 		    !tg3_flag(tp, HW_TSO_2) &&
 		    !tg3_flag(tp, HW_TSO_3))
-			पंचांगp_mss = 0;
+			tmp_mss = 0;
 
 		/* Now loop through additional data
 		 * fragments, and queue them.
 		 */
 		last = skb_shinfo(skb)->nr_frags - 1;
-		क्रम (i = 0; i <= last; i++) अणु
+		for (i = 0; i <= last; i++) {
 			skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 			len = skb_frag_size(frag);
 			mapping = skb_frag_dma_map(&tp->pdev->dev, frag, 0,
 						   len, DMA_TO_DEVICE);
 
-			tnapi->tx_buffers[entry].skb = शून्य;
+			tnapi->tx_buffers[entry].skb = NULL;
 			dma_unmap_addr_set(&tnapi->tx_buffers[entry], mapping,
 					   mapping);
-			अगर (dma_mapping_error(&tp->pdev->dev, mapping))
-				जाओ dma_error;
+			if (dma_mapping_error(&tp->pdev->dev, mapping))
+				goto dma_error;
 
-			अगर (!budget ||
+			if (!budget ||
 			    tg3_tx_frag_set(tnapi, &entry, &budget, mapping,
 					    len, base_flags |
 					    ((i == last) ? TXD_FLAG_END : 0),
-					    पंचांगp_mss, vlan)) अणु
+					    tmp_mss, vlan)) {
 				would_hit_hwbug = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (would_hit_hwbug) अणु
+	if (would_hit_hwbug) {
 		tg3_tx_skb_unmap(tnapi, tnapi->tx_prod, i);
 
-		अगर (mss && tg3_tso_bug_gso_check(tnapi, skb)) अणु
-			/* If it's a TSO packet, करो GSO instead of
+		if (mss && tg3_tso_bug_gso_check(tnapi, skb)) {
+			/* If it's a TSO packet, do GSO instead of
 			 * allocating and copying to a large linear SKB
 			 */
-			अगर (ip_tot_len) अणु
+			if (ip_tot_len) {
 				iph->check = ip_csum;
 				iph->tot_len = ip_tot_len;
-			पूर्ण
+			}
 			tcph->check = tcp_csum;
-			वापस tg3_tso_bug(tp, tnapi, txq, skb);
-		पूर्ण
+			return tg3_tso_bug(tp, tnapi, txq, skb);
+		}
 
 		/* If the workaround fails due to memory/mapping
 		 * failure, silently drop this packet.
 		 */
 		entry = tnapi->tx_prod;
 		budget = tg3_tx_avail(tnapi);
-		अगर (tigon3_dma_hwbug_workaround(tnapi, &skb, &entry, &budget,
+		if (tigon3_dma_hwbug_workaround(tnapi, &skb, &entry, &budget,
 						base_flags, mss, vlan))
-			जाओ drop_noमुक्त;
-	पूर्ण
+			goto drop_nofree;
+	}
 
-	skb_tx_बारtamp(skb);
+	skb_tx_timestamp(skb);
 	netdev_tx_sent_queue(txq, skb->len);
 
-	/* Sync BD data beक्रमe updating mailbox */
+	/* Sync BD data before updating mailbox */
 	wmb();
 
 	tnapi->tx_prod = entry;
-	अगर (unlikely(tg3_tx_avail(tnapi) <= (MAX_SKB_FRAGS + 1))) अणु
-		netअगर_tx_stop_queue(txq);
+	if (unlikely(tg3_tx_avail(tnapi) <= (MAX_SKB_FRAGS + 1))) {
+		netif_tx_stop_queue(txq);
 
-		/* netअगर_tx_stop_queue() must be करोne beक्रमe checking
+		/* netif_tx_stop_queue() must be done before checking
 		 * checking tx index in tg3_tx_avail() below, because in
-		 * tg3_tx(), we update tx index beक्रमe checking क्रम
-		 * netअगर_tx_queue_stopped().
+		 * tg3_tx(), we update tx index before checking for
+		 * netif_tx_queue_stopped().
 		 */
 		smp_mb();
-		अगर (tg3_tx_avail(tnapi) > TG3_TX_WAKEUP_THRESH(tnapi))
-			netअगर_tx_wake_queue(txq);
-	पूर्ण
+		if (tg3_tx_avail(tnapi) > TG3_TX_WAKEUP_THRESH(tnapi))
+			netif_tx_wake_queue(txq);
+	}
 
-	अगर (!netdev_xmit_more() || netअगर_xmit_stopped(txq)) अणु
-		/* Packets are पढ़ोy, update Tx producer idx on card. */
+	if (!netdev_xmit_more() || netif_xmit_stopped(txq)) {
+		/* Packets are ready, update Tx producer idx on card. */
 		tw32_tx_mbox(tnapi->prodmbox, entry);
-	पूर्ण
+	}
 
-	वापस NETDEV_TX_OK;
+	return NETDEV_TX_OK;
 
 dma_error:
 	tg3_tx_skb_unmap(tnapi, tnapi->tx_prod, --i);
-	tnapi->tx_buffers[tnapi->tx_prod].skb = शून्य;
+	tnapi->tx_buffers[tnapi->tx_prod].skb = NULL;
 drop:
-	dev_kमुक्त_skb_any(skb);
-drop_noमुक्त:
+	dev_kfree_skb_any(skb);
+drop_nofree:
 	tp->tx_dropped++;
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल व्योम tg3_mac_loopback(काष्ठा tg3 *tp, bool enable)
-अणु
-	अगर (enable) अणु
+static void tg3_mac_loopback(struct tg3 *tp, bool enable)
+{
+	if (enable) {
 		tp->mac_mode &= ~(MAC_MODE_HALF_DUPLEX |
 				  MAC_MODE_PORT_MODE_MASK);
 
 		tp->mac_mode |= MAC_MODE_PORT_INT_LPBACK;
 
-		अगर (!tg3_flag(tp, 5705_PLUS))
+		if (!tg3_flag(tp, 5705_PLUS))
 			tp->mac_mode |= MAC_MODE_LINK_POLARITY;
 
-		अगर (tp->phy_flags & TG3_PHYFLG_10_100_ONLY)
+		if (tp->phy_flags & TG3_PHYFLG_10_100_ONLY)
 			tp->mac_mode |= MAC_MODE_PORT_MODE_MII;
-		अन्यथा
+		else
 			tp->mac_mode |= MAC_MODE_PORT_MODE_GMII;
-	पूर्ण अन्यथा अणु
+	} else {
 		tp->mac_mode &= ~MAC_MODE_PORT_INT_LPBACK;
 
-		अगर (tg3_flag(tp, 5705_PLUS) ||
+		if (tg3_flag(tp, 5705_PLUS) ||
 		    (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) ||
 		    tg3_asic_rev(tp) == ASIC_REV_5700)
 			tp->mac_mode &= ~MAC_MODE_LINK_POLARITY;
-	पूर्ण
+	}
 
 	tw32(MAC_MODE, tp->mac_mode);
 	udelay(40);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_phy_lpbk_set(काष्ठा tg3 *tp, u32 speed, bool extlpbk)
-अणु
+static int tg3_phy_lpbk_set(struct tg3 *tp, u32 speed, bool extlpbk)
+{
 	u32 val, bmcr, mac_mode, ptest = 0;
 
 	tg3_phy_toggle_apd(tp, false);
-	tg3_phy_toggle_स्वतःmdix(tp, false);
+	tg3_phy_toggle_automdix(tp, false);
 
-	अगर (extlpbk && tg3_phy_set_extloopbk(tp))
-		वापस -EIO;
+	if (extlpbk && tg3_phy_set_extloopbk(tp))
+		return -EIO;
 
 	bmcr = BMCR_FULLDPLX;
-	चयन (speed) अणु
-	हाल SPEED_10:
-		अवरोध;
-	हाल SPEED_100:
+	switch (speed) {
+	case SPEED_10:
+		break;
+	case SPEED_100:
 		bmcr |= BMCR_SPEED100;
-		अवरोध;
-	हाल SPEED_1000:
-	शेष:
-		अगर (tp->phy_flags & TG3_PHYFLG_IS_FET) अणु
+		break;
+	case SPEED_1000:
+	default:
+		if (tp->phy_flags & TG3_PHYFLG_IS_FET) {
 			speed = SPEED_100;
 			bmcr |= BMCR_SPEED100;
-		पूर्ण अन्यथा अणु
+		} else {
 			speed = SPEED_1000;
 			bmcr |= BMCR_SPEED1000;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (extlpbk) अणु
-		अगर (!(tp->phy_flags & TG3_PHYFLG_IS_FET)) अणु
-			tg3_पढ़ोphy(tp, MII_CTRL1000, &val);
+	if (extlpbk) {
+		if (!(tp->phy_flags & TG3_PHYFLG_IS_FET)) {
+			tg3_readphy(tp, MII_CTRL1000, &val);
 			val |= CTL1000_AS_MASTER |
 			       CTL1000_ENABLE_MASTER;
-			tg3_ग_लिखोphy(tp, MII_CTRL1000, val);
-		पूर्ण अन्यथा अणु
+			tg3_writephy(tp, MII_CTRL1000, val);
+		} else {
 			ptest = MII_TG3_FET_PTEST_TRIM_SEL |
 				MII_TG3_FET_PTEST_TRIM_2;
-			tg3_ग_लिखोphy(tp, MII_TG3_FET_PTEST, ptest);
-		पूर्ण
-	पूर्ण अन्यथा
+			tg3_writephy(tp, MII_TG3_FET_PTEST, ptest);
+		}
+	} else
 		bmcr |= BMCR_LOOPBACK;
 
-	tg3_ग_लिखोphy(tp, MII_BMCR, bmcr);
+	tg3_writephy(tp, MII_BMCR, bmcr);
 
-	/* The ग_लिखो needs to be flushed क्रम the FETs */
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_FET)
-		tg3_पढ़ोphy(tp, MII_BMCR, &bmcr);
+	/* The write needs to be flushed for the FETs */
+	if (tp->phy_flags & TG3_PHYFLG_IS_FET)
+		tg3_readphy(tp, MII_BMCR, &bmcr);
 
 	udelay(40);
 
-	अगर ((tp->phy_flags & TG3_PHYFLG_IS_FET) &&
-	    tg3_asic_rev(tp) == ASIC_REV_5785) अणु
-		tg3_ग_लिखोphy(tp, MII_TG3_FET_PTEST, ptest |
+	if ((tp->phy_flags & TG3_PHYFLG_IS_FET) &&
+	    tg3_asic_rev(tp) == ASIC_REV_5785) {
+		tg3_writephy(tp, MII_TG3_FET_PTEST, ptest |
 			     MII_TG3_FET_PTEST_FRC_TX_LINK |
 			     MII_TG3_FET_PTEST_FRC_TX_LOCK);
 
-		/* The ग_लिखो needs to be flushed क्रम the AC131 */
-		tg3_पढ़ोphy(tp, MII_TG3_FET_PTEST, &val);
-	पूर्ण
+		/* The write needs to be flushed for the AC131 */
+		tg3_readphy(tp, MII_TG3_FET_PTEST, &val);
+	}
 
-	/* Reset to prevent losing 1st rx packet पूर्णांकermittently */
-	अगर ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
-	    tg3_flag(tp, 5780_CLASS)) अणु
+	/* Reset to prevent losing 1st rx packet intermittently */
+	if ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
+	    tg3_flag(tp, 5780_CLASS)) {
 		tw32_f(MAC_RX_MODE, RX_MODE_RESET);
 		udelay(10);
 		tw32_f(MAC_RX_MODE, tp->rx_mode);
-	पूर्ण
+	}
 
 	mac_mode = tp->mac_mode &
 		   ~(MAC_MODE_PORT_MODE_MASK | MAC_MODE_HALF_DUPLEX);
-	अगर (speed == SPEED_1000)
+	if (speed == SPEED_1000)
 		mac_mode |= MAC_MODE_PORT_MODE_GMII;
-	अन्यथा
+	else
 		mac_mode |= MAC_MODE_PORT_MODE_MII;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5700) {
 		u32 masked_phy_id = tp->phy_id & TG3_PHY_ID_MASK;
 
-		अगर (masked_phy_id == TG3_PHY_ID_BCM5401)
+		if (masked_phy_id == TG3_PHY_ID_BCM5401)
 			mac_mode &= ~MAC_MODE_LINK_POLARITY;
-		अन्यथा अगर (masked_phy_id == TG3_PHY_ID_BCM5411)
+		else if (masked_phy_id == TG3_PHY_ID_BCM5411)
 			mac_mode |= MAC_MODE_LINK_POLARITY;
 
-		tg3_ग_लिखोphy(tp, MII_TG3_EXT_CTRL,
+		tg3_writephy(tp, MII_TG3_EXT_CTRL,
 			     MII_TG3_EXT_CTRL_LNK3_LED_MODE);
-	पूर्ण
+	}
 
 	tw32(MAC_MODE, mac_mode);
 	udelay(40);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_set_loopback(काष्ठा net_device *dev, netdev_features_t features)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_set_loopback(struct net_device *dev, netdev_features_t features)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (features & NETIF_F_LOOPBACK) अणु
-		अगर (tp->mac_mode & MAC_MODE_PORT_INT_LPBACK)
-			वापस;
+	if (features & NETIF_F_LOOPBACK) {
+		if (tp->mac_mode & MAC_MODE_PORT_INT_LPBACK)
+			return;
 
 		spin_lock_bh(&tp->lock);
 		tg3_mac_loopback(tp, true);
-		netअगर_carrier_on(tp->dev);
+		netif_carrier_on(tp->dev);
 		spin_unlock_bh(&tp->lock);
 		netdev_info(dev, "Internal MAC loopback mode enabled.\n");
-	पूर्ण अन्यथा अणु
-		अगर (!(tp->mac_mode & MAC_MODE_PORT_INT_LPBACK))
-			वापस;
+	} else {
+		if (!(tp->mac_mode & MAC_MODE_PORT_INT_LPBACK))
+			return;
 
 		spin_lock_bh(&tp->lock);
 		tg3_mac_loopback(tp, false);
@@ -8303,74 +8302,74 @@ drop_noमुक्त:
 		tg3_setup_phy(tp, true);
 		spin_unlock_bh(&tp->lock);
 		netdev_info(dev, "Internal MAC loopback mode disabled.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल netdev_features_t tg3_fix_features(काष्ठा net_device *dev,
+static netdev_features_t tg3_fix_features(struct net_device *dev,
 	netdev_features_t features)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (dev->mtu > ETH_DATA_LEN && tg3_flag(tp, 5780_CLASS))
+	if (dev->mtu > ETH_DATA_LEN && tg3_flag(tp, 5780_CLASS))
 		features &= ~NETIF_F_ALL_TSO;
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-अटल पूर्णांक tg3_set_features(काष्ठा net_device *dev, netdev_features_t features)
-अणु
+static int tg3_set_features(struct net_device *dev, netdev_features_t features)
+{
 	netdev_features_t changed = dev->features ^ features;
 
-	अगर ((changed & NETIF_F_LOOPBACK) && netअगर_running(dev))
+	if ((changed & NETIF_F_LOOPBACK) && netif_running(dev))
 		tg3_set_loopback(dev, features);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_rx_prodring_मुक्त(काष्ठा tg3 *tp,
-				 काष्ठा tg3_rx_prodring_set *tpr)
-अणु
-	पूर्णांक i;
+static void tg3_rx_prodring_free(struct tg3 *tp,
+				 struct tg3_rx_prodring_set *tpr)
+{
+	int i;
 
-	अगर (tpr != &tp->napi[0].prodring) अणु
-		क्रम (i = tpr->rx_std_cons_idx; i != tpr->rx_std_prod_idx;
+	if (tpr != &tp->napi[0].prodring) {
+		for (i = tpr->rx_std_cons_idx; i != tpr->rx_std_prod_idx;
 		     i = (i + 1) & tp->rx_std_ring_mask)
-			tg3_rx_data_मुक्त(tp, &tpr->rx_std_buffers[i],
+			tg3_rx_data_free(tp, &tpr->rx_std_buffers[i],
 					tp->rx_pkt_map_sz);
 
-		अगर (tg3_flag(tp, JUMBO_CAPABLE)) अणु
-			क्रम (i = tpr->rx_jmb_cons_idx;
+		if (tg3_flag(tp, JUMBO_CAPABLE)) {
+			for (i = tpr->rx_jmb_cons_idx;
 			     i != tpr->rx_jmb_prod_idx;
-			     i = (i + 1) & tp->rx_jmb_ring_mask) अणु
-				tg3_rx_data_मुक्त(tp, &tpr->rx_jmb_buffers[i],
+			     i = (i + 1) & tp->rx_jmb_ring_mask) {
+				tg3_rx_data_free(tp, &tpr->rx_jmb_buffers[i],
 						TG3_RX_JMB_MAP_SZ);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i <= tp->rx_std_ring_mask; i++)
-		tg3_rx_data_मुक्त(tp, &tpr->rx_std_buffers[i],
+	for (i = 0; i <= tp->rx_std_ring_mask; i++)
+		tg3_rx_data_free(tp, &tpr->rx_std_buffers[i],
 				tp->rx_pkt_map_sz);
 
-	अगर (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS)) अणु
-		क्रम (i = 0; i <= tp->rx_jmb_ring_mask; i++)
-			tg3_rx_data_मुक्त(tp, &tpr->rx_jmb_buffers[i],
+	if (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS)) {
+		for (i = 0; i <= tp->rx_jmb_ring_mask; i++)
+			tg3_rx_data_free(tp, &tpr->rx_jmb_buffers[i],
 					TG3_RX_JMB_MAP_SZ);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Initialize rx rings क्रम packet processing.
+/* Initialize rx rings for packet processing.
  *
- * The chip has been shut करोwn and the driver detached from
- * the networking, so no पूर्णांकerrupts or new tx packets will
- * end up in the driver.  tp->अणुtx,पूर्णlock are held and thus
+ * The chip has been shut down and the driver detached from
+ * the networking, so no interrupts or new tx packets will
+ * end up in the driver.  tp->{tx,}lock are held and thus
  * we may not sleep.
  */
-अटल पूर्णांक tg3_rx_prodring_alloc(काष्ठा tg3 *tp,
-				 काष्ठा tg3_rx_prodring_set *tpr)
-अणु
+static int tg3_rx_prodring_alloc(struct tg3 *tp,
+				 struct tg3_rx_prodring_set *tpr)
+{
 	u32 i, rx_pkt_dma_sz;
 
 	tpr->rx_std_cons_idx = 0;
@@ -8378,65 +8377,65 @@ drop_noमुक्त:
 	tpr->rx_jmb_cons_idx = 0;
 	tpr->rx_jmb_prod_idx = 0;
 
-	अगर (tpr != &tp->napi[0].prodring) अणु
-		स_रखो(&tpr->rx_std_buffers[0], 0,
+	if (tpr != &tp->napi[0].prodring) {
+		memset(&tpr->rx_std_buffers[0], 0,
 		       TG3_RX_STD_BUFF_RING_SIZE(tp));
-		अगर (tpr->rx_jmb_buffers)
-			स_रखो(&tpr->rx_jmb_buffers[0], 0,
+		if (tpr->rx_jmb_buffers)
+			memset(&tpr->rx_jmb_buffers[0], 0,
 			       TG3_RX_JMB_BUFF_RING_SIZE(tp));
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Zero out all descriptors. */
-	स_रखो(tpr->rx_std, 0, TG3_RX_STD_RING_BYTES(tp));
+	memset(tpr->rx_std, 0, TG3_RX_STD_RING_BYTES(tp));
 
 	rx_pkt_dma_sz = TG3_RX_STD_DMA_SZ;
-	अगर (tg3_flag(tp, 5780_CLASS) &&
+	if (tg3_flag(tp, 5780_CLASS) &&
 	    tp->dev->mtu > ETH_DATA_LEN)
 		rx_pkt_dma_sz = TG3_RX_JMB_DMA_SZ;
 	tp->rx_pkt_map_sz = TG3_RX_DMA_TO_MAP_SZ(rx_pkt_dma_sz);
 
 	/* Initialize invariants of the rings, we only set this
-	 * stuff once.  This works because the card करोes not
-	 * ग_लिखो पूर्णांकo the rx buffer posting rings.
+	 * stuff once.  This works because the card does not
+	 * write into the rx buffer posting rings.
 	 */
-	क्रम (i = 0; i <= tp->rx_std_ring_mask; i++) अणु
-		काष्ठा tg3_rx_buffer_desc *rxd;
+	for (i = 0; i <= tp->rx_std_ring_mask; i++) {
+		struct tg3_rx_buffer_desc *rxd;
 
 		rxd = &tpr->rx_std[i];
 		rxd->idx_len = rx_pkt_dma_sz << RXD_LEN_SHIFT;
 		rxd->type_flags = (RXD_FLAG_END << RXD_FLAGS_SHIFT);
 		rxd->opaque = (RXD_OPAQUE_RING_STD |
 			       (i << RXD_OPAQUE_INDEX_SHIFT));
-	पूर्ण
+	}
 
-	/* Now allocate fresh SKBs क्रम each rx ring. */
-	क्रम (i = 0; i < tp->rx_pending; i++) अणु
-		अचिन्हित पूर्णांक frag_size;
+	/* Now allocate fresh SKBs for each rx ring. */
+	for (i = 0; i < tp->rx_pending; i++) {
+		unsigned int frag_size;
 
-		अगर (tg3_alloc_rx_data(tp, tpr, RXD_OPAQUE_RING_STD, i,
-				      &frag_size) < 0) अणु
+		if (tg3_alloc_rx_data(tp, tpr, RXD_OPAQUE_RING_STD, i,
+				      &frag_size) < 0) {
 			netdev_warn(tp->dev,
 				    "Using a smaller RX standard ring. Only "
 				    "%d out of %d buffers were allocated "
 				    "successfully\n", i, tp->rx_pending);
-			अगर (i == 0)
-				जाओ initfail;
+			if (i == 0)
+				goto initfail;
 			tp->rx_pending = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!tg3_flag(tp, JUMBO_CAPABLE) || tg3_flag(tp, 5780_CLASS))
-		जाओ करोne;
+	if (!tg3_flag(tp, JUMBO_CAPABLE) || tg3_flag(tp, 5780_CLASS))
+		goto done;
 
-	स_रखो(tpr->rx_jmb, 0, TG3_RX_JMB_RING_BYTES(tp));
+	memset(tpr->rx_jmb, 0, TG3_RX_JMB_RING_BYTES(tp));
 
-	अगर (!tg3_flag(tp, JUMBO_RING_ENABLE))
-		जाओ करोne;
+	if (!tg3_flag(tp, JUMBO_RING_ENABLE))
+		goto done;
 
-	क्रम (i = 0; i <= tp->rx_jmb_ring_mask; i++) अणु
-		काष्ठा tg3_rx_buffer_desc *rxd;
+	for (i = 0; i <= tp->rx_jmb_ring_mask; i++) {
+		struct tg3_rx_buffer_desc *rxd;
 
 		rxd = &tpr->rx_jmb[i].std;
 		rxd->idx_len = TG3_RX_JMB_DMA_SZ << RXD_LEN_SHIFT;
@@ -8444,442 +8443,442 @@ drop_noमुक्त:
 				  RXD_FLAG_JUMBO;
 		rxd->opaque = (RXD_OPAQUE_RING_JUMBO |
 		       (i << RXD_OPAQUE_INDEX_SHIFT));
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < tp->rx_jumbo_pending; i++) अणु
-		अचिन्हित पूर्णांक frag_size;
+	for (i = 0; i < tp->rx_jumbo_pending; i++) {
+		unsigned int frag_size;
 
-		अगर (tg3_alloc_rx_data(tp, tpr, RXD_OPAQUE_RING_JUMBO, i,
-				      &frag_size) < 0) अणु
+		if (tg3_alloc_rx_data(tp, tpr, RXD_OPAQUE_RING_JUMBO, i,
+				      &frag_size) < 0) {
 			netdev_warn(tp->dev,
 				    "Using a smaller RX jumbo ring. Only %d "
 				    "out of %d buffers were allocated "
 				    "successfully\n", i, tp->rx_jumbo_pending);
-			अगर (i == 0)
-				जाओ initfail;
+			if (i == 0)
+				goto initfail;
 			tp->rx_jumbo_pending = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-करोne:
-	वापस 0;
+done:
+	return 0;
 
 initfail:
-	tg3_rx_prodring_मुक्त(tp, tpr);
-	वापस -ENOMEM;
-पूर्ण
+	tg3_rx_prodring_free(tp, tpr);
+	return -ENOMEM;
+}
 
-अटल व्योम tg3_rx_prodring_fini(काष्ठा tg3 *tp,
-				 काष्ठा tg3_rx_prodring_set *tpr)
-अणु
-	kमुक्त(tpr->rx_std_buffers);
-	tpr->rx_std_buffers = शून्य;
-	kमुक्त(tpr->rx_jmb_buffers);
-	tpr->rx_jmb_buffers = शून्य;
-	अगर (tpr->rx_std) अणु
-		dma_मुक्त_coherent(&tp->pdev->dev, TG3_RX_STD_RING_BYTES(tp),
+static void tg3_rx_prodring_fini(struct tg3 *tp,
+				 struct tg3_rx_prodring_set *tpr)
+{
+	kfree(tpr->rx_std_buffers);
+	tpr->rx_std_buffers = NULL;
+	kfree(tpr->rx_jmb_buffers);
+	tpr->rx_jmb_buffers = NULL;
+	if (tpr->rx_std) {
+		dma_free_coherent(&tp->pdev->dev, TG3_RX_STD_RING_BYTES(tp),
 				  tpr->rx_std, tpr->rx_std_mapping);
-		tpr->rx_std = शून्य;
-	पूर्ण
-	अगर (tpr->rx_jmb) अणु
-		dma_मुक्त_coherent(&tp->pdev->dev, TG3_RX_JMB_RING_BYTES(tp),
+		tpr->rx_std = NULL;
+	}
+	if (tpr->rx_jmb) {
+		dma_free_coherent(&tp->pdev->dev, TG3_RX_JMB_RING_BYTES(tp),
 				  tpr->rx_jmb, tpr->rx_jmb_mapping);
-		tpr->rx_jmb = शून्य;
-	पूर्ण
-पूर्ण
+		tpr->rx_jmb = NULL;
+	}
+}
 
-अटल पूर्णांक tg3_rx_prodring_init(काष्ठा tg3 *tp,
-				काष्ठा tg3_rx_prodring_set *tpr)
-अणु
+static int tg3_rx_prodring_init(struct tg3 *tp,
+				struct tg3_rx_prodring_set *tpr)
+{
 	tpr->rx_std_buffers = kzalloc(TG3_RX_STD_BUFF_RING_SIZE(tp),
 				      GFP_KERNEL);
-	अगर (!tpr->rx_std_buffers)
-		वापस -ENOMEM;
+	if (!tpr->rx_std_buffers)
+		return -ENOMEM;
 
 	tpr->rx_std = dma_alloc_coherent(&tp->pdev->dev,
 					 TG3_RX_STD_RING_BYTES(tp),
 					 &tpr->rx_std_mapping,
 					 GFP_KERNEL);
-	अगर (!tpr->rx_std)
-		जाओ err_out;
+	if (!tpr->rx_std)
+		goto err_out;
 
-	अगर (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS)) अणु
+	if (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS)) {
 		tpr->rx_jmb_buffers = kzalloc(TG3_RX_JMB_BUFF_RING_SIZE(tp),
 					      GFP_KERNEL);
-		अगर (!tpr->rx_jmb_buffers)
-			जाओ err_out;
+		if (!tpr->rx_jmb_buffers)
+			goto err_out;
 
 		tpr->rx_jmb = dma_alloc_coherent(&tp->pdev->dev,
 						 TG3_RX_JMB_RING_BYTES(tp),
 						 &tpr->rx_jmb_mapping,
 						 GFP_KERNEL);
-		अगर (!tpr->rx_jmb)
-			जाओ err_out;
-	पूर्ण
+		if (!tpr->rx_jmb)
+			goto err_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
 	tg3_rx_prodring_fini(tp, tpr);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /* Free up pending packets in all rx/tx rings.
  *
- * The chip has been shut करोwn and the driver detached from
- * the networking, so no पूर्णांकerrupts or new tx packets will
- * end up in the driver.  tp->अणुtx,पूर्णlock is not held and we are not
- * in an पूर्णांकerrupt context and thus may sleep.
+ * The chip has been shut down and the driver detached from
+ * the networking, so no interrupts or new tx packets will
+ * end up in the driver.  tp->{tx,}lock is not held and we are not
+ * in an interrupt context and thus may sleep.
  */
-अटल व्योम tg3_मुक्त_rings(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i, j;
+static void tg3_free_rings(struct tg3 *tp)
+{
+	int i, j;
 
-	क्रम (j = 0; j < tp->irq_cnt; j++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[j];
+	for (j = 0; j < tp->irq_cnt; j++) {
+		struct tg3_napi *tnapi = &tp->napi[j];
 
-		tg3_rx_prodring_मुक्त(tp, &tnapi->prodring);
+		tg3_rx_prodring_free(tp, &tnapi->prodring);
 
-		अगर (!tnapi->tx_buffers)
-			जारी;
+		if (!tnapi->tx_buffers)
+			continue;
 
-		क्रम (i = 0; i < TG3_TX_RING_SIZE; i++) अणु
-			काष्ठा sk_buff *skb = tnapi->tx_buffers[i].skb;
+		for (i = 0; i < TG3_TX_RING_SIZE; i++) {
+			struct sk_buff *skb = tnapi->tx_buffers[i].skb;
 
-			अगर (!skb)
-				जारी;
+			if (!skb)
+				continue;
 
 			tg3_tx_skb_unmap(tnapi, i,
 					 skb_shinfo(skb)->nr_frags - 1);
 
 			dev_consume_skb_any(skb);
-		पूर्ण
+		}
 		netdev_tx_reset_queue(netdev_get_tx_queue(tp->dev, j));
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Initialize tx/rx rings क्रम packet processing.
+/* Initialize tx/rx rings for packet processing.
  *
- * The chip has been shut करोwn and the driver detached from
- * the networking, so no पूर्णांकerrupts or new tx packets will
- * end up in the driver.  tp->अणुtx,पूर्णlock are held and thus
+ * The chip has been shut down and the driver detached from
+ * the networking, so no interrupts or new tx packets will
+ * end up in the driver.  tp->{tx,}lock are held and thus
  * we may not sleep.
  */
-अटल पूर्णांक tg3_init_rings(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static int tg3_init_rings(struct tg3 *tp)
+{
+	int i;
 
 	/* Free up all the SKBs. */
-	tg3_मुक्त_rings(tp);
+	tg3_free_rings(tp);
 
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
 		tnapi->last_tag = 0;
 		tnapi->last_irq_tag = 0;
 		tnapi->hw_status->status = 0;
 		tnapi->hw_status->status_tag = 0;
-		स_रखो(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
+		memset(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
 
 		tnapi->tx_prod = 0;
 		tnapi->tx_cons = 0;
-		अगर (tnapi->tx_ring)
-			स_रखो(tnapi->tx_ring, 0, TG3_TX_RING_BYTES);
+		if (tnapi->tx_ring)
+			memset(tnapi->tx_ring, 0, TG3_TX_RING_BYTES);
 
 		tnapi->rx_rcb_ptr = 0;
-		अगर (tnapi->rx_rcb)
-			स_रखो(tnapi->rx_rcb, 0, TG3_RX_RCB_RING_BYTES(tp));
+		if (tnapi->rx_rcb)
+			memset(tnapi->rx_rcb, 0, TG3_RX_RCB_RING_BYTES(tp));
 
-		अगर (tnapi->prodring.rx_std &&
-		    tg3_rx_prodring_alloc(tp, &tnapi->prodring)) अणु
-			tg3_मुक्त_rings(tp);
-			वापस -ENOMEM;
-		पूर्ण
-	पूर्ण
+		if (tnapi->prodring.rx_std &&
+		    tg3_rx_prodring_alloc(tp, &tnapi->prodring)) {
+			tg3_free_rings(tp);
+			return -ENOMEM;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_mem_tx_release(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_mem_tx_release(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = 0; i < tp->irq_max; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_max; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		अगर (tnapi->tx_ring) अणु
-			dma_मुक्त_coherent(&tp->pdev->dev, TG3_TX_RING_BYTES,
+		if (tnapi->tx_ring) {
+			dma_free_coherent(&tp->pdev->dev, TG3_TX_RING_BYTES,
 				tnapi->tx_ring, tnapi->tx_desc_mapping);
-			tnapi->tx_ring = शून्य;
-		पूर्ण
+			tnapi->tx_ring = NULL;
+		}
 
-		kमुक्त(tnapi->tx_buffers);
-		tnapi->tx_buffers = शून्य;
-	पूर्ण
-पूर्ण
+		kfree(tnapi->tx_buffers);
+		tnapi->tx_buffers = NULL;
+	}
+}
 
-अटल पूर्णांक tg3_mem_tx_acquire(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
-	काष्ठा tg3_napi *tnapi = &tp->napi[0];
+static int tg3_mem_tx_acquire(struct tg3 *tp)
+{
+	int i;
+	struct tg3_napi *tnapi = &tp->napi[0];
 
-	/* If multivector TSS is enabled, vector 0 करोes not handle
-	 * tx पूर्णांकerrupts.  Don't allocate any resources क्रम it.
+	/* If multivector TSS is enabled, vector 0 does not handle
+	 * tx interrupts.  Don't allocate any resources for it.
 	 */
-	अगर (tg3_flag(tp, ENABLE_TSS))
+	if (tg3_flag(tp, ENABLE_TSS))
 		tnapi++;
 
-	क्रम (i = 0; i < tp->txq_cnt; i++, tnapi++) अणु
-		tnapi->tx_buffers = kसुस्मृति(TG3_TX_RING_SIZE,
-					    माप(काष्ठा tg3_tx_ring_info),
+	for (i = 0; i < tp->txq_cnt; i++, tnapi++) {
+		tnapi->tx_buffers = kcalloc(TG3_TX_RING_SIZE,
+					    sizeof(struct tg3_tx_ring_info),
 					    GFP_KERNEL);
-		अगर (!tnapi->tx_buffers)
-			जाओ err_out;
+		if (!tnapi->tx_buffers)
+			goto err_out;
 
 		tnapi->tx_ring = dma_alloc_coherent(&tp->pdev->dev,
 						    TG3_TX_RING_BYTES,
 						    &tnapi->tx_desc_mapping,
 						    GFP_KERNEL);
-		अगर (!tnapi->tx_ring)
-			जाओ err_out;
-	पूर्ण
+		if (!tnapi->tx_ring)
+			goto err_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
 	tg3_mem_tx_release(tp);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम tg3_mem_rx_release(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_mem_rx_release(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = 0; i < tp->irq_max; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_max; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
 		tg3_rx_prodring_fini(tp, &tnapi->prodring);
 
-		अगर (!tnapi->rx_rcb)
-			जारी;
+		if (!tnapi->rx_rcb)
+			continue;
 
-		dma_मुक्त_coherent(&tp->pdev->dev,
+		dma_free_coherent(&tp->pdev->dev,
 				  TG3_RX_RCB_RING_BYTES(tp),
 				  tnapi->rx_rcb,
 				  tnapi->rx_rcb_mapping);
-		tnapi->rx_rcb = शून्य;
-	पूर्ण
-पूर्ण
+		tnapi->rx_rcb = NULL;
+	}
+}
 
-अटल पूर्णांक tg3_mem_rx_acquire(काष्ठा tg3 *tp)
-अणु
-	अचिन्हित पूर्णांक i, limit;
+static int tg3_mem_rx_acquire(struct tg3 *tp)
+{
+	unsigned int i, limit;
 
 	limit = tp->rxq_cnt;
 
 	/* If RSS is enabled, we need a (dummy) producer ring
 	 * set on vector zero.  This is the true hw prodring.
 	 */
-	अगर (tg3_flag(tp, ENABLE_RSS))
+	if (tg3_flag(tp, ENABLE_RSS))
 		limit++;
 
-	क्रम (i = 0; i < limit; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < limit; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		अगर (tg3_rx_prodring_init(tp, &tnapi->prodring))
-			जाओ err_out;
+		if (tg3_rx_prodring_init(tp, &tnapi->prodring))
+			goto err_out;
 
 		/* If multivector RSS is enabled, vector 0
-		 * करोes not handle rx or tx पूर्णांकerrupts.
-		 * Don't allocate any resources क्रम it.
+		 * does not handle rx or tx interrupts.
+		 * Don't allocate any resources for it.
 		 */
-		अगर (!i && tg3_flag(tp, ENABLE_RSS))
-			जारी;
+		if (!i && tg3_flag(tp, ENABLE_RSS))
+			continue;
 
 		tnapi->rx_rcb = dma_alloc_coherent(&tp->pdev->dev,
 						   TG3_RX_RCB_RING_BYTES(tp),
 						   &tnapi->rx_rcb_mapping,
 						   GFP_KERNEL);
-		अगर (!tnapi->rx_rcb)
-			जाओ err_out;
-	पूर्ण
+		if (!tnapi->rx_rcb)
+			goto err_out;
+	}
 
-	वापस 0;
+	return 0;
 
 err_out:
 	tg3_mem_rx_release(tp);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
- * Must not be invoked with पूर्णांकerrupt sources disabled and
- * the hardware shutकरोwn करोwn.
+ * Must not be invoked with interrupt sources disabled and
+ * the hardware shutdown down.
  */
-अटल व्योम tg3_मुक्त_consistent(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_free_consistent(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		अगर (tnapi->hw_status) अणु
-			dma_मुक्त_coherent(&tp->pdev->dev, TG3_HW_STATUS_SIZE,
+		if (tnapi->hw_status) {
+			dma_free_coherent(&tp->pdev->dev, TG3_HW_STATUS_SIZE,
 					  tnapi->hw_status,
 					  tnapi->status_mapping);
-			tnapi->hw_status = शून्य;
-		पूर्ण
-	पूर्ण
+			tnapi->hw_status = NULL;
+		}
+	}
 
 	tg3_mem_rx_release(tp);
 	tg3_mem_tx_release(tp);
 
 	/* tp->hw_stats can be referenced safely:
 	 *     1. under rtnl_lock
-	 *     2. or under tp->lock अगर TG3_FLAG_INIT_COMPLETE is set.
+	 *     2. or under tp->lock if TG3_FLAG_INIT_COMPLETE is set.
 	 */
-	अगर (tp->hw_stats) अणु
-		dma_मुक्त_coherent(&tp->pdev->dev, माप(काष्ठा tg3_hw_stats),
+	if (tp->hw_stats) {
+		dma_free_coherent(&tp->pdev->dev, sizeof(struct tg3_hw_stats),
 				  tp->hw_stats, tp->stats_mapping);
-		tp->hw_stats = शून्य;
-	पूर्ण
-पूर्ण
+		tp->hw_stats = NULL;
+	}
+}
 
 /*
- * Must not be invoked with पूर्णांकerrupt sources disabled and
- * the hardware shutकरोwn करोwn.  Can sleep.
+ * Must not be invoked with interrupt sources disabled and
+ * the hardware shutdown down.  Can sleep.
  */
-अटल पूर्णांक tg3_alloc_consistent(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static int tg3_alloc_consistent(struct tg3 *tp)
+{
+	int i;
 
 	tp->hw_stats = dma_alloc_coherent(&tp->pdev->dev,
-					  माप(काष्ठा tg3_hw_stats),
+					  sizeof(struct tg3_hw_stats),
 					  &tp->stats_mapping, GFP_KERNEL);
-	अगर (!tp->hw_stats)
-		जाओ err_out;
+	if (!tp->hw_stats)
+		goto err_out;
 
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
-		काष्ठा tg3_hw_status *sblk;
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
+		struct tg3_hw_status *sblk;
 
 		tnapi->hw_status = dma_alloc_coherent(&tp->pdev->dev,
 						      TG3_HW_STATUS_SIZE,
 						      &tnapi->status_mapping,
 						      GFP_KERNEL);
-		अगर (!tnapi->hw_status)
-			जाओ err_out;
+		if (!tnapi->hw_status)
+			goto err_out;
 
 		sblk = tnapi->hw_status;
 
-		अगर (tg3_flag(tp, ENABLE_RSS)) अणु
-			u16 *prodptr = शून्य;
+		if (tg3_flag(tp, ENABLE_RSS)) {
+			u16 *prodptr = NULL;
 
 			/*
-			 * When RSS is enabled, the status block क्रमmat changes
+			 * When RSS is enabled, the status block format changes
 			 * slightly.  The "rx_jumbo_consumer", "reserved",
 			 * and "rx_mini_consumer" members get mapped to the
-			 * other three rx वापस ring producer indexes.
+			 * other three rx return ring producer indexes.
 			 */
-			चयन (i) अणु
-			हाल 1:
+			switch (i) {
+			case 1:
 				prodptr = &sblk->idx[0].rx_producer;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				prodptr = &sblk->rx_jumbo_consumer;
-				अवरोध;
-			हाल 3:
+				break;
+			case 3:
 				prodptr = &sblk->reserved;
-				अवरोध;
-			हाल 4:
+				break;
+			case 4:
 				prodptr = &sblk->rx_mini_consumer;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			tnapi->rx_rcb_prod_idx = prodptr;
-		पूर्ण अन्यथा अणु
+		} else {
 			tnapi->rx_rcb_prod_idx = &sblk->idx[0].rx_producer;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_mem_tx_acquire(tp) || tg3_mem_rx_acquire(tp))
-		जाओ err_out;
+	if (tg3_mem_tx_acquire(tp) || tg3_mem_rx_acquire(tp))
+		goto err_out;
 
-	वापस 0;
+	return 0;
 
 err_out:
-	tg3_मुक्त_consistent(tp);
-	वापस -ENOMEM;
-पूर्ण
+	tg3_free_consistent(tp);
+	return -ENOMEM;
+}
 
-#घोषणा MAX_WAIT_CNT 1000
+#define MAX_WAIT_CNT 1000
 
 /* To stop a block, clear the enable bit and poll till it
  * clears.  tp->lock is held.
  */
-अटल पूर्णांक tg3_stop_block(काष्ठा tg3 *tp, अचिन्हित दीर्घ ofs, u32 enable_bit, bool silent)
-अणु
-	अचिन्हित पूर्णांक i;
+static int tg3_stop_block(struct tg3 *tp, unsigned long ofs, u32 enable_bit, bool silent)
+{
+	unsigned int i;
 	u32 val;
 
-	अगर (tg3_flag(tp, 5705_PLUS)) अणु
-		चयन (ofs) अणु
-		हाल RCVLSC_MODE:
-		हाल DMAC_MODE:
-		हाल MBFREE_MODE:
-		हाल BUFMGR_MODE:
-		हाल MEMARB_MODE:
+	if (tg3_flag(tp, 5705_PLUS)) {
+		switch (ofs) {
+		case RCVLSC_MODE:
+		case DMAC_MODE:
+		case MBFREE_MODE:
+		case BUFMGR_MODE:
+		case MEMARB_MODE:
 			/* We can't enable/disable these bits of the
 			 * 5705/5750, just say success.
 			 */
-			वापस 0;
+			return 0;
 
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		default:
+			break;
+		}
+	}
 
 	val = tr32(ofs);
 	val &= ~enable_bit;
 	tw32_f(ofs, val);
 
-	क्रम (i = 0; i < MAX_WAIT_CNT; i++) अणु
-		अगर (pci_channel_offline(tp->pdev)) अणु
+	for (i = 0; i < MAX_WAIT_CNT; i++) {
+		if (pci_channel_offline(tp->pdev)) {
 			dev_err(&tp->pdev->dev,
 				"tg3_stop_block device offline, "
 				"ofs=%lx enable_bit=%x\n",
 				ofs, enable_bit);
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
 		udelay(100);
 		val = tr32(ofs);
-		अगर ((val & enable_bit) == 0)
-			अवरोध;
-	पूर्ण
+		if ((val & enable_bit) == 0)
+			break;
+	}
 
-	अगर (i == MAX_WAIT_CNT && !silent) अणु
+	if (i == MAX_WAIT_CNT && !silent) {
 		dev_err(&tp->pdev->dev,
 			"tg3_stop_block timed out, ofs=%lx enable_bit=%x\n",
 			ofs, enable_bit);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_पात_hw(काष्ठा tg3 *tp, bool silent)
-अणु
-	पूर्णांक i, err;
+static int tg3_abort_hw(struct tg3 *tp, bool silent)
+{
+	int i, err;
 
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 
-	अगर (pci_channel_offline(tp->pdev)) अणु
+	if (pci_channel_offline(tp->pdev)) {
 		tp->rx_mode &= ~(RX_MODE_ENABLE | TX_MODE_ENABLE);
 		tp->mac_mode &= ~MAC_MODE_TDE_ENABLE;
 		err = -ENODEV;
-		जाओ err_no_dev;
-	पूर्ण
+		goto err_no_dev;
+	}
 
 	tp->rx_mode &= ~RX_MODE_ENABLE;
 	tw32_f(MAC_RX_MODE, tp->rx_mode);
@@ -8907,17 +8906,17 @@ err_out:
 	tp->tx_mode &= ~TX_MODE_ENABLE;
 	tw32_f(MAC_TX_MODE, tp->tx_mode);
 
-	क्रम (i = 0; i < MAX_WAIT_CNT; i++) अणु
+	for (i = 0; i < MAX_WAIT_CNT; i++) {
 		udelay(100);
-		अगर (!(tr32(MAC_TX_MODE) & TX_MODE_ENABLE))
-			अवरोध;
-	पूर्ण
-	अगर (i >= MAX_WAIT_CNT) अणु
+		if (!(tr32(MAC_TX_MODE) & TX_MODE_ENABLE))
+			break;
+	}
+	if (i >= MAX_WAIT_CNT) {
 		dev_err(&tp->pdev->dev,
 			"%s timed out, TX_MODE_ENABLE will not clear "
 			"MAC_TX_MODE=%08x\n", __func__, tr32(MAC_TX_MODE));
 		err |= -ENODEV;
-	पूर्ण
+	}
 
 	err |= tg3_stop_block(tp, HOSTCC_MODE, HOSTCC_MODE_ENABLE, silent);
 	err |= tg3_stop_block(tp, WDMAC_MODE, WDMAC_MODE_ENABLE, silent);
@@ -8930,293 +8929,293 @@ err_out:
 	err |= tg3_stop_block(tp, MEMARB_MODE, MEMARB_MODE_ENABLE, silent);
 
 err_no_dev:
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
-		अगर (tnapi->hw_status)
-			स_रखो(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
-	पूर्ण
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
+		if (tnapi->hw_status)
+			memset(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* Save PCI command रेजिस्टर beक्रमe chip reset */
-अटल व्योम tg3_save_pci_state(काष्ठा tg3 *tp)
-अणु
-	pci_पढ़ो_config_word(tp->pdev, PCI_COMMAND, &tp->pci_cmd);
-पूर्ण
+/* Save PCI command register before chip reset */
+static void tg3_save_pci_state(struct tg3 *tp)
+{
+	pci_read_config_word(tp->pdev, PCI_COMMAND, &tp->pci_cmd);
+}
 
 /* Restore PCI state after chip reset */
-अटल व्योम tg3_restore_pci_state(काष्ठा tg3 *tp)
-अणु
+static void tg3_restore_pci_state(struct tg3 *tp)
+{
 	u32 val;
 
-	/* Re-enable indirect रेजिस्टर accesses. */
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
+	/* Re-enable indirect register accesses. */
+	pci_write_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
 			       tp->misc_host_ctrl);
 
 	/* Set MAX PCI retry to zero. */
 	val = (PCISTATE_ROM_ENABLE | PCISTATE_ROM_RETRY_ENABLE);
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0 &&
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0 &&
 	    tg3_flag(tp, PCIX_MODE))
 		val |= PCISTATE_RETRY_SAME_DMA;
-	/* Allow पढ़ोs and ग_लिखोs to the APE रेजिस्टर and memory space. */
-	अगर (tg3_flag(tp, ENABLE_APE))
+	/* Allow reads and writes to the APE register and memory space. */
+	if (tg3_flag(tp, ENABLE_APE))
 		val |= PCISTATE_ALLOW_APE_CTLSPC_WR |
 		       PCISTATE_ALLOW_APE_SHMEM_WR |
 		       PCISTATE_ALLOW_APE_PSPACE_WR;
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_PCISTATE, val);
+	pci_write_config_dword(tp->pdev, TG3PCI_PCISTATE, val);
 
-	pci_ग_लिखो_config_word(tp->pdev, PCI_COMMAND, tp->pci_cmd);
+	pci_write_config_word(tp->pdev, PCI_COMMAND, tp->pci_cmd);
 
-	अगर (!tg3_flag(tp, PCI_EXPRESS)) अणु
-		pci_ग_लिखो_config_byte(tp->pdev, PCI_CACHE_LINE_SIZE,
+	if (!tg3_flag(tp, PCI_EXPRESS)) {
+		pci_write_config_byte(tp->pdev, PCI_CACHE_LINE_SIZE,
 				      tp->pci_cacheline_sz);
-		pci_ग_लिखो_config_byte(tp->pdev, PCI_LATENCY_TIMER,
-				      tp->pci_lat_समयr);
-	पूर्ण
+		pci_write_config_byte(tp->pdev, PCI_LATENCY_TIMER,
+				      tp->pci_lat_timer);
+	}
 
 	/* Make sure PCI-X relaxed ordering bit is clear. */
-	अगर (tg3_flag(tp, PCIX_MODE)) अणु
+	if (tg3_flag(tp, PCIX_MODE)) {
 		u16 pcix_cmd;
 
-		pci_पढ़ो_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
+		pci_read_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
 				     &pcix_cmd);
 		pcix_cmd &= ~PCI_X_CMD_ERO;
-		pci_ग_लिखो_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
+		pci_write_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
 				      pcix_cmd);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, 5780_CLASS)) अणु
+	if (tg3_flag(tp, 5780_CLASS)) {
 
 		/* Chip reset on 5780 will reset MSI enable bit,
 		 * so need to restore it.
 		 */
-		अगर (tg3_flag(tp, USING_MSI)) अणु
+		if (tg3_flag(tp, USING_MSI)) {
 			u16 ctrl;
 
-			pci_पढ़ो_config_word(tp->pdev,
+			pci_read_config_word(tp->pdev,
 					     tp->msi_cap + PCI_MSI_FLAGS,
 					     &ctrl);
-			pci_ग_लिखो_config_word(tp->pdev,
+			pci_write_config_word(tp->pdev,
 					      tp->msi_cap + PCI_MSI_FLAGS,
 					      ctrl | PCI_MSI_FLAGS_ENABLE);
 			val = tr32(MSGINT_MODE);
 			tw32(MSGINT_MODE, val | MSGINT_MODE_ENABLE);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम tg3_override_clk(काष्ठा tg3 *tp)
-अणु
+static void tg3_override_clk(struct tg3 *tp)
+{
 	u32 val;
 
-	चयन (tg3_asic_rev(tp)) अणु
-	हाल ASIC_REV_5717:
+	switch (tg3_asic_rev(tp)) {
+	case ASIC_REV_5717:
 		val = tr32(TG3_CPMU_CLCK_ORIDE_ENABLE);
 		tw32(TG3_CPMU_CLCK_ORIDE_ENABLE, val |
 		     TG3_CPMU_MAC_ORIDE_ENABLE);
-		अवरोध;
+		break;
 
-	हाल ASIC_REV_5719:
-	हाल ASIC_REV_5720:
+	case ASIC_REV_5719:
+	case ASIC_REV_5720:
 		tw32(TG3_CPMU_CLCK_ORIDE, CPMU_CLCK_ORIDE_MAC_ORIDE_EN);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
-पूर्ण
+	default:
+		return;
+	}
+}
 
-अटल व्योम tg3_restore_clk(काष्ठा tg3 *tp)
-अणु
+static void tg3_restore_clk(struct tg3 *tp)
+{
 	u32 val;
 
-	चयन (tg3_asic_rev(tp)) अणु
-	हाल ASIC_REV_5717:
+	switch (tg3_asic_rev(tp)) {
+	case ASIC_REV_5717:
 		val = tr32(TG3_CPMU_CLCK_ORIDE_ENABLE);
 		tw32(TG3_CPMU_CLCK_ORIDE_ENABLE,
 		     val & ~TG3_CPMU_MAC_ORIDE_ENABLE);
-		अवरोध;
+		break;
 
-	हाल ASIC_REV_5719:
-	हाल ASIC_REV_5720:
+	case ASIC_REV_5719:
+	case ASIC_REV_5720:
 		val = tr32(TG3_CPMU_CLCK_ORIDE);
 		tw32(TG3_CPMU_CLCK_ORIDE, val & ~CPMU_CLCK_ORIDE_MAC_ORIDE_EN);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
-पूर्ण
+	default:
+		return;
+	}
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_chip_reset(काष्ठा tg3 *tp)
+static int tg3_chip_reset(struct tg3 *tp)
 	__releases(tp->lock)
 	__acquires(tp->lock)
-अणु
+{
 	u32 val;
-	व्योम (*ग_लिखो_op)(काष्ठा tg3 *, u32, u32);
-	पूर्णांक i, err;
+	void (*write_op)(struct tg3 *, u32, u32);
+	int i, err;
 
-	अगर (!pci_device_is_present(tp->pdev))
-		वापस -ENODEV;
+	if (!pci_device_is_present(tp->pdev))
+		return -ENODEV;
 
 	tg3_nvram_lock(tp);
 
 	tg3_ape_lock(tp, TG3_APE_LOCK_GRC);
 
 	/* No matching tg3_nvram_unlock() after this because
-	 * chip reset below will unकरो the nvram lock.
+	 * chip reset below will undo the nvram lock.
 	 */
 	tp->nvram_lock_cnt = 0;
 
-	/* GRC_MISC_CFG core घड़ी reset will clear the memory
-	 * enable bit in PCI रेजिस्टर 4 and the MSI enable bit
-	 * on some chips, so we save relevant रेजिस्टरs here.
+	/* GRC_MISC_CFG core clock reset will clear the memory
+	 * enable bit in PCI register 4 and the MSI enable bit
+	 * on some chips, so we save relevant registers here.
 	 */
 	tg3_save_pci_state(tp);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5752 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5752 ||
 	    tg3_flag(tp, 5755_PLUS))
 		tw32(GRC_FASTBOOT_PC, 0);
 
 	/*
-	 * We must aव्योम the पढ़ोl() that normally takes place.
+	 * We must avoid the readl() that normally takes place.
 	 * It locks machines, causes machine checks, and other
 	 * fun things.  So, temporarily disable the 5701
-	 * hardware workaround, जबतक we करो the reset.
+	 * hardware workaround, while we do the reset.
 	 */
-	ग_लिखो_op = tp->ग_लिखो32;
-	अगर (ग_लिखो_op == tg3_ग_लिखो_flush_reg32)
-		tp->ग_लिखो32 = tg3_ग_लिखो32;
+	write_op = tp->write32;
+	if (write_op == tg3_write_flush_reg32)
+		tp->write32 = tg3_write32;
 
-	/* Prevent the irq handler from पढ़ोing or writing PCI रेजिस्टरs
+	/* Prevent the irq handler from reading or writing PCI registers
 	 * during chip reset when the memory enable bit in the PCI command
-	 * रेजिस्टर may be cleared.  The chip करोes not generate पूर्णांकerrupt
-	 * at this समय, but the irq handler may still be called due to irq
+	 * register may be cleared.  The chip does not generate interrupt
+	 * at this time, but the irq handler may still be called due to irq
 	 * sharing or irqpoll.
 	 */
 	tg3_flag_set(tp, CHIP_RESETTING);
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
-		अगर (tnapi->hw_status) अणु
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
+		if (tnapi->hw_status) {
 			tnapi->hw_status->status = 0;
 			tnapi->hw_status->status_tag = 0;
-		पूर्ण
+		}
 		tnapi->last_tag = 0;
 		tnapi->last_irq_tag = 0;
-	पूर्ण
+	}
 	smp_mb();
 
 	tg3_full_unlock(tp);
 
-	क्रम (i = 0; i < tp->irq_cnt; i++)
+	for (i = 0; i < tp->irq_cnt; i++)
 		synchronize_irq(tp->napi[i].irq_vec);
 
 	tg3_full_lock(tp, 0);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57780) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_57780) {
 		val = tr32(TG3_PCIE_LNKCTL) & ~TG3_PCIE_LNKCTL_L1_PLL_PD_EN;
 		tw32(TG3_PCIE_LNKCTL, val | TG3_PCIE_LNKCTL_L1_PLL_PD_DIS);
-	पूर्ण
+	}
 
-	/* करो the reset */
+	/* do the reset */
 	val = GRC_MISC_CFG_CORECLK_RESET;
 
-	अगर (tg3_flag(tp, PCI_EXPRESS)) अणु
+	if (tg3_flag(tp, PCI_EXPRESS)) {
 		/* Force PCIe 1.0a mode */
-		अगर (tg3_asic_rev(tp) != ASIC_REV_5785 &&
+		if (tg3_asic_rev(tp) != ASIC_REV_5785 &&
 		    !tg3_flag(tp, 57765_PLUS) &&
 		    tr32(TG3_PCIE_PHY_TSTCTL) ==
 		    (TG3_PCIE_PHY_TSTCTL_PCIE10 | TG3_PCIE_PHY_TSTCTL_PSCRAM))
 			tw32(TG3_PCIE_PHY_TSTCTL, TG3_PCIE_PHY_TSTCTL_PSCRAM);
 
-		अगर (tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0) अणु
+		if (tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0) {
 			tw32(GRC_MISC_CFG, (1 << 29));
 			val |= (1 << 29);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 		tw32(VCPU_STATUS, tr32(VCPU_STATUS) | VCPU_STATUS_DRV_RESET);
 		tw32(GRC_VCPU_EXT_CTRL,
 		     tr32(GRC_VCPU_EXT_CTRL) & ~GRC_VCPU_EXT_CTRL_HALT_CPU);
-	पूर्ण
+	}
 
-	/* Set the घड़ी to the highest frequency to aव्योम समयouts. With link
-	 * aware mode, the घड़ी speed could be slow and bootcode करोes not
-	 * complete within the expected समय. Override the घड़ी to allow the
+	/* Set the clock to the highest frequency to avoid timeouts. With link
+	 * aware mode, the clock speed could be slow and bootcode does not
+	 * complete within the expected time. Override the clock to allow the
 	 * bootcode to finish sooner and then restore it.
 	 */
 	tg3_override_clk(tp);
 
-	/* Manage gphy घातer क्रम all CPMU असलent PCIe devices. */
-	अगर (tg3_flag(tp, 5705_PLUS) && !tg3_flag(tp, CPMU_PRESENT))
+	/* Manage gphy power for all CPMU absent PCIe devices. */
+	if (tg3_flag(tp, 5705_PLUS) && !tg3_flag(tp, CPMU_PRESENT))
 		val |= GRC_MISC_CFG_KEEP_GPHY_POWER;
 
 	tw32(GRC_MISC_CFG, val);
 
-	/* restore 5701 hardware bug workaround ग_लिखो method */
-	tp->ग_लिखो32 = ग_लिखो_op;
+	/* restore 5701 hardware bug workaround write method */
+	tp->write32 = write_op;
 
-	/* Unक्रमtunately, we have to delay beक्रमe the PCI पढ़ो back.
+	/* Unfortunately, we have to delay before the PCI read back.
 	 * Some 575X chips even will not respond to a PCI cfg access
 	 * when the reset command is given to the chip.
 	 *
-	 * How करो these hardware designers expect things to work
-	 * properly अगर the PCI ग_लिखो is posted क्रम a दीर्घ period
-	 * of समय?  It is always necessary to have some method by
-	 * which a रेजिस्टर पढ़ो back can occur to push the ग_लिखो
-	 * out which करोes the reset.
+	 * How do these hardware designers expect things to work
+	 * properly if the PCI write is posted for a long period
+	 * of time?  It is always necessary to have some method by
+	 * which a register read back can occur to push the write
+	 * out which does the reset.
 	 *
 	 * For most tg3 variants the trick below was working.
 	 * Ho hum...
 	 */
 	udelay(120);
 
-	/* Flush PCI posted ग_लिखोs.  The normal MMIO रेजिस्टरs
-	 * are inaccessible at this समय so this is the only
-	 * way to make this reliably (actually, this is no दीर्घer
-	 * the हाल, see above).  I tried to use indirect
-	 * रेजिस्टर पढ़ो/ग_लिखो but this upset some 5701 variants.
+	/* Flush PCI posted writes.  The normal MMIO registers
+	 * are inaccessible at this time so this is the only
+	 * way to make this reliably (actually, this is no longer
+	 * the case, see above).  I tried to use indirect
+	 * register read/write but this upset some 5701 variants.
 	 */
-	pci_पढ़ो_config_dword(tp->pdev, PCI_COMMAND, &val);
+	pci_read_config_dword(tp->pdev, PCI_COMMAND, &val);
 
 	udelay(120);
 
-	अगर (tg3_flag(tp, PCI_EXPRESS) && pci_is_pcie(tp->pdev)) अणु
+	if (tg3_flag(tp, PCI_EXPRESS) && pci_is_pcie(tp->pdev)) {
 		u16 val16;
 
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5750_A0) अणु
-			पूर्णांक j;
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_5750_A0) {
+			int j;
 			u32 cfg_val;
 
-			/* Wait क्रम link training to complete.  */
-			क्रम (j = 0; j < 5000; j++)
+			/* Wait for link training to complete.  */
+			for (j = 0; j < 5000; j++)
 				udelay(100);
 
-			pci_पढ़ो_config_dword(tp->pdev, 0xc4, &cfg_val);
-			pci_ग_लिखो_config_dword(tp->pdev, 0xc4,
+			pci_read_config_dword(tp->pdev, 0xc4, &cfg_val);
+			pci_write_config_dword(tp->pdev, 0xc4,
 					       cfg_val | (1 << 15));
-		पूर्ण
+		}
 
 		/* Clear the "no snoop" and "relaxed ordering" bits. */
 		val16 = PCI_EXP_DEVCTL_RELAX_EN | PCI_EXP_DEVCTL_NOSNOOP_EN;
 		/*
 		 * Older PCIe devices only support the 128 byte
-		 * MPS setting.  Enक्रमce the restriction.
+		 * MPS setting.  Enforce the restriction.
 		 */
-		अगर (!tg3_flag(tp, CPMU_PRESENT))
+		if (!tg3_flag(tp, CPMU_PRESENT))
 			val16 |= PCI_EXP_DEVCTL_PAYLOAD;
 		pcie_capability_clear_word(tp->pdev, PCI_EXP_DEVCTL, val16);
 
 		/* Clear error status */
-		pcie_capability_ग_लिखो_word(tp->pdev, PCI_EXP_DEVSTA,
+		pcie_capability_write_word(tp->pdev, PCI_EXP_DEVSTA,
 				      PCI_EXP_DEVSTA_CED |
 				      PCI_EXP_DEVSTA_NFED |
 				      PCI_EXP_DEVSTA_FED |
 				      PCI_EXP_DEVSTA_URD);
-	पूर्ण
+	}
 
 	tg3_restore_pci_state(tp);
 
@@ -9224,52 +9223,52 @@ err_no_dev:
 	tg3_flag_clear(tp, ERROR_PROCESSED);
 
 	val = 0;
-	अगर (tg3_flag(tp, 5780_CLASS))
+	if (tg3_flag(tp, 5780_CLASS))
 		val = tr32(MEMARB_MODE);
 	tw32(MEMARB_MODE, val | MEMARB_MODE_ENABLE);
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5750_A3) अणु
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5750_A3) {
 		tg3_stop_fw(tp);
 		tw32(0x5000, 0x400);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, IS_SSB_CORE)) अणु
+	if (tg3_flag(tp, IS_SSB_CORE)) {
 		/*
-		 * BCM4785: In order to aव्योम repercussions from using
-		 * potentially defective पूर्णांकernal ROM, stop the Rx RISC CPU,
+		 * BCM4785: In order to avoid repercussions from using
+		 * potentially defective internal ROM, stop the Rx RISC CPU,
 		 * which is not required.
 		 */
 		tg3_stop_fw(tp);
 		tg3_halt_cpu(tp, RX_CPU_BASE);
-	पूर्ण
+	}
 
 	err = tg3_poll_fw(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	tw32(GRC_MODE, tp->grc_mode);
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A0) अणु
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A0) {
 		val = tr32(0xc4);
 
 		tw32(0xc4, val | (1 << 15));
-	पूर्ण
+	}
 
-	अगर ((tp->nic_sram_data_cfg & NIC_SRAM_DATA_CFG_MINI_PCI) != 0 &&
-	    tg3_asic_rev(tp) == ASIC_REV_5705) अणु
-		tp->pci_घड़ी_ctrl |= CLOCK_CTRL_CLKRUN_OENABLE;
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A0)
-			tp->pci_घड़ी_ctrl |= CLOCK_CTRL_FORCE_CLKRUN;
-		tw32(TG3PCI_CLOCK_CTRL, tp->pci_घड़ी_ctrl);
-	पूर्ण
+	if ((tp->nic_sram_data_cfg & NIC_SRAM_DATA_CFG_MINI_PCI) != 0 &&
+	    tg3_asic_rev(tp) == ASIC_REV_5705) {
+		tp->pci_clock_ctrl |= CLOCK_CTRL_CLKRUN_OENABLE;
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A0)
+			tp->pci_clock_ctrl |= CLOCK_CTRL_FORCE_CLKRUN;
+		tw32(TG3PCI_CLOCK_CTRL, tp->pci_clock_ctrl);
+	}
 
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) अणु
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) {
 		tp->mac_mode = MAC_MODE_PORT_MODE_TBI;
 		val = tp->mac_mode;
-	पूर्ण अन्यथा अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES) अणु
+	} else if (tp->phy_flags & TG3_PHYFLG_MII_SERDES) {
 		tp->mac_mode = MAC_MODE_PORT_MODE_GMII;
 		val = tp->mac_mode;
-	पूर्ण अन्यथा
+	} else
 		val = 0;
 
 	tw32_f(MAC_MODE, val);
@@ -9279,25 +9278,25 @@ err_no_dev:
 
 	tg3_mdio_start(tp);
 
-	अगर (tg3_flag(tp, PCI_EXPRESS) &&
+	if (tg3_flag(tp, PCI_EXPRESS) &&
 	    tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0 &&
 	    tg3_asic_rev(tp) != ASIC_REV_5785 &&
-	    !tg3_flag(tp, 57765_PLUS)) अणु
+	    !tg3_flag(tp, 57765_PLUS)) {
 		val = tr32(0x7c00);
 
 		tw32(0x7c00, val | (1 << 25));
-	पूर्ण
+	}
 
 	tg3_restore_clk(tp);
 
-	/* Increase the core घड़ी speed to fix tx समयout issue क्रम 5762
+	/* Increase the core clock speed to fix tx timeout issue for 5762
 	 * with 100Mbps link speed.
 	 */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5762) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5762) {
 		val = tr32(TG3_CPMU_CLCK_ORIDE_ENABLE);
 		tw32(TG3_CPMU_CLCK_ORIDE_ENABLE, val |
 		     TG3_CPMU_MAC_ORIDE_ENABLE);
-	पूर्ण
+	}
 
 	/* Reprobe ASF enable state.  */
 	tg3_flag_clear(tp, ENABLE_ASF);
@@ -9305,77 +9304,77 @@ err_no_dev:
 			   TG3_PHYFLG_KEEP_LINK_ON_PWRDN);
 
 	tg3_flag_clear(tp, ASF_NEW_HANDSHAKE);
-	tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_SIG, &val);
-	अगर (val == NIC_SRAM_DATA_SIG_MAGIC) अणु
+	tg3_read_mem(tp, NIC_SRAM_DATA_SIG, &val);
+	if (val == NIC_SRAM_DATA_SIG_MAGIC) {
 		u32 nic_cfg;
 
-		tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG, &nic_cfg);
-		अगर (nic_cfg & NIC_SRAM_DATA_CFG_ASF_ENABLE) अणु
+		tg3_read_mem(tp, NIC_SRAM_DATA_CFG, &nic_cfg);
+		if (nic_cfg & NIC_SRAM_DATA_CFG_ASF_ENABLE) {
 			tg3_flag_set(tp, ENABLE_ASF);
-			tp->last_event_jअगरfies = jअगरfies;
-			अगर (tg3_flag(tp, 5750_PLUS))
+			tp->last_event_jiffies = jiffies;
+			if (tg3_flag(tp, 5750_PLUS))
 				tg3_flag_set(tp, ASF_NEW_HANDSHAKE);
 
-			tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG_3, &nic_cfg);
-			अगर (nic_cfg & NIC_SRAM_1G_ON_VAUX_OK)
+			tg3_read_mem(tp, NIC_SRAM_DATA_CFG_3, &nic_cfg);
+			if (nic_cfg & NIC_SRAM_1G_ON_VAUX_OK)
 				tp->phy_flags |= TG3_PHYFLG_1G_ON_VAUX_OK;
-			अगर (nic_cfg & NIC_SRAM_LNK_FLAP_AVOID)
+			if (nic_cfg & NIC_SRAM_LNK_FLAP_AVOID)
 				tp->phy_flags |= TG3_PHYFLG_KEEP_LINK_ON_PWRDN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_get_nstats(काष्ठा tg3 *, काष्ठा rtnl_link_stats64 *);
-अटल व्योम tg3_get_estats(काष्ठा tg3 *, काष्ठा tg3_ethtool_stats *);
-अटल व्योम __tg3_set_rx_mode(काष्ठा net_device *);
+static void tg3_get_nstats(struct tg3 *, struct rtnl_link_stats64 *);
+static void tg3_get_estats(struct tg3 *, struct tg3_ethtool_stats *);
+static void __tg3_set_rx_mode(struct net_device *);
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_halt(काष्ठा tg3 *tp, पूर्णांक kind, bool silent)
-अणु
-	पूर्णांक err;
+static int tg3_halt(struct tg3 *tp, int kind, bool silent)
+{
+	int err;
 
 	tg3_stop_fw(tp);
 
-	tg3_ग_लिखो_sig_pre_reset(tp, kind);
+	tg3_write_sig_pre_reset(tp, kind);
 
-	tg3_पात_hw(tp, silent);
+	tg3_abort_hw(tp, silent);
 	err = tg3_chip_reset(tp);
 
 	__tg3_set_mac_addr(tp, false);
 
-	tg3_ग_लिखो_sig_legacy(tp, kind);
-	tg3_ग_लिखो_sig_post_reset(tp, kind);
+	tg3_write_sig_legacy(tp, kind);
+	tg3_write_sig_post_reset(tp, kind);
 
-	अगर (tp->hw_stats) अणु
+	if (tp->hw_stats) {
 		/* Save the stats across chip resets... */
 		tg3_get_nstats(tp, &tp->net_stats_prev);
 		tg3_get_estats(tp, &tp->estats_prev);
 
 		/* And make sure the next sample is new data */
-		स_रखो(tp->hw_stats, 0, माप(काष्ठा tg3_hw_stats));
-	पूर्ण
+		memset(tp->hw_stats, 0, sizeof(struct tg3_hw_stats));
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_set_mac_addr(काष्ठा net_device *dev, व्योम *p)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	काष्ठा sockaddr *addr = p;
-	पूर्णांक err = 0;
+static int tg3_set_mac_addr(struct net_device *dev, void *p)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	struct sockaddr *addr = p;
+	int err = 0;
 	bool skip_mac_1 = false;
 
-	अगर (!is_valid_ether_addr(addr->sa_data))
-		वापस -EADDRNOTAVAIL;
+	if (!is_valid_ether_addr(addr->sa_data))
+		return -EADDRNOTAVAIL;
 
-	स_नकल(dev->dev_addr, addr->sa_data, dev->addr_len);
+	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 
-	अगर (!netअगर_running(dev))
-		वापस 0;
+	if (!netif_running(dev))
+		return 0;
 
-	अगर (tg3_flag(tp, ENABLE_ASF)) अणु
+	if (tg3_flag(tp, ENABLE_ASF)) {
 		u32 addr0_high, addr0_low, addr1_high, addr1_low;
 
 		addr0_high = tr32(MAC_ADDR_0_HIGH);
@@ -9383,55 +9382,55 @@ err_no_dev:
 		addr1_high = tr32(MAC_ADDR_1_HIGH);
 		addr1_low = tr32(MAC_ADDR_1_LOW);
 
-		/* Skip MAC addr 1 अगर ASF is using it. */
-		अगर ((addr0_high != addr1_high || addr0_low != addr1_low) &&
+		/* Skip MAC addr 1 if ASF is using it. */
+		if ((addr0_high != addr1_high || addr0_low != addr1_low) &&
 		    !(addr1_high == 0 && addr1_low == 0))
 			skip_mac_1 = true;
-	पूर्ण
+	}
 	spin_lock_bh(&tp->lock);
 	__tg3_set_mac_addr(tp, skip_mac_1);
 	__tg3_set_rx_mode(dev);
 	spin_unlock_bh(&tp->lock);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_set_bdinfo(काष्ठा tg3 *tp, u32 bdinfo_addr,
+static void tg3_set_bdinfo(struct tg3 *tp, u32 bdinfo_addr,
 			   dma_addr_t mapping, u32 maxlen_flags,
 			   u32 nic_addr)
-अणु
-	tg3_ग_लिखो_mem(tp,
+{
+	tg3_write_mem(tp,
 		      (bdinfo_addr + TG3_BDINFO_HOST_ADDR + TG3_64BIT_REG_HIGH),
 		      ((u64) mapping >> 32));
-	tg3_ग_लिखो_mem(tp,
+	tg3_write_mem(tp,
 		      (bdinfo_addr + TG3_BDINFO_HOST_ADDR + TG3_64BIT_REG_LOW),
 		      ((u64) mapping & 0xffffffff));
-	tg3_ग_लिखो_mem(tp,
+	tg3_write_mem(tp,
 		      (bdinfo_addr + TG3_BDINFO_MAXLEN_FLAGS),
 		       maxlen_flags);
 
-	अगर (!tg3_flag(tp, 5705_PLUS))
-		tg3_ग_लिखो_mem(tp,
+	if (!tg3_flag(tp, 5705_PLUS))
+		tg3_write_mem(tp,
 			      (bdinfo_addr + TG3_BDINFO_NIC_ADDR),
 			      nic_addr);
-पूर्ण
+}
 
 
-अटल व्योम tg3_coal_tx_init(काष्ठा tg3 *tp, काष्ठा ethtool_coalesce *ec)
-अणु
-	पूर्णांक i = 0;
+static void tg3_coal_tx_init(struct tg3 *tp, struct ethtool_coalesce *ec)
+{
+	int i = 0;
 
-	अगर (!tg3_flag(tp, ENABLE_TSS)) अणु
+	if (!tg3_flag(tp, ENABLE_TSS)) {
 		tw32(HOSTCC_TXCOL_TICKS, ec->tx_coalesce_usecs);
 		tw32(HOSTCC_TXMAX_FRAMES, ec->tx_max_coalesced_frames);
 		tw32(HOSTCC_TXCOAL_MAXF_INT, ec->tx_max_coalesced_frames_irq);
-	पूर्ण अन्यथा अणु
+	} else {
 		tw32(HOSTCC_TXCOL_TICKS, 0);
 		tw32(HOSTCC_TXMAX_FRAMES, 0);
 		tw32(HOSTCC_TXCOAL_MAXF_INT, 0);
 
-		क्रम (; i < tp->txq_cnt; i++) अणु
+		for (; i < tp->txq_cnt; i++) {
 			u32 reg;
 
 			reg = HOSTCC_TXCOL_TICKS_VEC1 + i * 0x18;
@@ -9440,33 +9439,33 @@ err_no_dev:
 			tw32(reg, ec->tx_max_coalesced_frames);
 			reg = HOSTCC_TXCOAL_MAXF_INT_VEC1 + i * 0x18;
 			tw32(reg, ec->tx_max_coalesced_frames_irq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (; i < tp->irq_max - 1; i++) अणु
+	for (; i < tp->irq_max - 1; i++) {
 		tw32(HOSTCC_TXCOL_TICKS_VEC1 + i * 0x18, 0);
 		tw32(HOSTCC_TXMAX_FRAMES_VEC1 + i * 0x18, 0);
 		tw32(HOSTCC_TXCOAL_MAXF_INT_VEC1 + i * 0x18, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_coal_rx_init(काष्ठा tg3 *tp, काष्ठा ethtool_coalesce *ec)
-अणु
-	पूर्णांक i = 0;
+static void tg3_coal_rx_init(struct tg3 *tp, struct ethtool_coalesce *ec)
+{
+	int i = 0;
 	u32 limit = tp->rxq_cnt;
 
-	अगर (!tg3_flag(tp, ENABLE_RSS)) अणु
+	if (!tg3_flag(tp, ENABLE_RSS)) {
 		tw32(HOSTCC_RXCOL_TICKS, ec->rx_coalesce_usecs);
 		tw32(HOSTCC_RXMAX_FRAMES, ec->rx_max_coalesced_frames);
 		tw32(HOSTCC_RXCOAL_MAXF_INT, ec->rx_max_coalesced_frames_irq);
 		limit--;
-	पूर्ण अन्यथा अणु
+	} else {
 		tw32(HOSTCC_RXCOL_TICKS, 0);
 		tw32(HOSTCC_RXMAX_FRAMES, 0);
 		tw32(HOSTCC_RXCOAL_MAXF_INT, 0);
-	पूर्ण
+	}
 
-	क्रम (; i < limit; i++) अणु
+	for (; i < limit; i++) {
 		u32 reg;
 
 		reg = HOSTCC_RXCOL_TICKS_VEC1 + i * 0x18;
@@ -9475,168 +9474,168 @@ err_no_dev:
 		tw32(reg, ec->rx_max_coalesced_frames);
 		reg = HOSTCC_RXCOAL_MAXF_INT_VEC1 + i * 0x18;
 		tw32(reg, ec->rx_max_coalesced_frames_irq);
-	पूर्ण
+	}
 
-	क्रम (; i < tp->irq_max - 1; i++) अणु
+	for (; i < tp->irq_max - 1; i++) {
 		tw32(HOSTCC_RXCOL_TICKS_VEC1 + i * 0x18, 0);
 		tw32(HOSTCC_RXMAX_FRAMES_VEC1 + i * 0x18, 0);
 		tw32(HOSTCC_RXCOAL_MAXF_INT_VEC1 + i * 0x18, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __tg3_set_coalesce(काष्ठा tg3 *tp, काष्ठा ethtool_coalesce *ec)
-अणु
+static void __tg3_set_coalesce(struct tg3 *tp, struct ethtool_coalesce *ec)
+{
 	tg3_coal_tx_init(tp, ec);
 	tg3_coal_rx_init(tp, ec);
 
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
+	if (!tg3_flag(tp, 5705_PLUS)) {
 		u32 val = ec->stats_block_coalesce_usecs;
 
 		tw32(HOSTCC_RXCOAL_TICK_INT, ec->rx_coalesce_usecs_irq);
 		tw32(HOSTCC_TXCOAL_TICK_INT, ec->tx_coalesce_usecs_irq);
 
-		अगर (!tp->link_up)
+		if (!tp->link_up)
 			val = 0;
 
 		tw32(HOSTCC_STAT_COAL_TICKS, val);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_tx_rcbs_disable(काष्ठा tg3 *tp)
-अणु
+static void tg3_tx_rcbs_disable(struct tg3 *tp)
+{
 	u32 txrcb, limit;
 
 	/* Disable all transmit rings but the first. */
-	अगर (!tg3_flag(tp, 5705_PLUS))
+	if (!tg3_flag(tp, 5705_PLUS))
 		limit = NIC_SRAM_SEND_RCB + TG3_BDINFO_SIZE * 16;
-	अन्यथा अगर (tg3_flag(tp, 5717_PLUS))
+	else if (tg3_flag(tp, 5717_PLUS))
 		limit = NIC_SRAM_SEND_RCB + TG3_BDINFO_SIZE * 4;
-	अन्यथा अगर (tg3_flag(tp, 57765_CLASS) ||
+	else if (tg3_flag(tp, 57765_CLASS) ||
 		 tg3_asic_rev(tp) == ASIC_REV_5762)
 		limit = NIC_SRAM_SEND_RCB + TG3_BDINFO_SIZE * 2;
-	अन्यथा
+	else
 		limit = NIC_SRAM_SEND_RCB + TG3_BDINFO_SIZE;
 
-	क्रम (txrcb = NIC_SRAM_SEND_RCB + TG3_BDINFO_SIZE;
+	for (txrcb = NIC_SRAM_SEND_RCB + TG3_BDINFO_SIZE;
 	     txrcb < limit; txrcb += TG3_BDINFO_SIZE)
-		tg3_ग_लिखो_mem(tp, txrcb + TG3_BDINFO_MAXLEN_FLAGS,
+		tg3_write_mem(tp, txrcb + TG3_BDINFO_MAXLEN_FLAGS,
 			      BDINFO_FLAGS_DISABLED);
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_tx_rcbs_init(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i = 0;
+static void tg3_tx_rcbs_init(struct tg3 *tp)
+{
+	int i = 0;
 	u32 txrcb = NIC_SRAM_SEND_RCB;
 
-	अगर (tg3_flag(tp, ENABLE_TSS))
+	if (tg3_flag(tp, ENABLE_TSS))
 		i++;
 
-	क्रम (; i < tp->irq_max; i++, txrcb += TG3_BDINFO_SIZE) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (; i < tp->irq_max; i++, txrcb += TG3_BDINFO_SIZE) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		अगर (!tnapi->tx_ring)
-			जारी;
+		if (!tnapi->tx_ring)
+			continue;
 
 		tg3_set_bdinfo(tp, txrcb, tnapi->tx_desc_mapping,
 			       (TG3_TX_RING_SIZE << BDINFO_FLAGS_MAXLEN_SHIFT),
 			       NIC_SRAM_TX_BUFFER_DESC);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_rx_ret_rcbs_disable(काष्ठा tg3 *tp)
-अणु
+static void tg3_rx_ret_rcbs_disable(struct tg3 *tp)
+{
 	u32 rxrcb, limit;
 
-	/* Disable all receive वापस rings but the first. */
-	अगर (tg3_flag(tp, 5717_PLUS))
+	/* Disable all receive return rings but the first. */
+	if (tg3_flag(tp, 5717_PLUS))
 		limit = NIC_SRAM_RCV_RET_RCB + TG3_BDINFO_SIZE * 17;
-	अन्यथा अगर (!tg3_flag(tp, 5705_PLUS))
+	else if (!tg3_flag(tp, 5705_PLUS))
 		limit = NIC_SRAM_RCV_RET_RCB + TG3_BDINFO_SIZE * 16;
-	अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5755 ||
+	else if (tg3_asic_rev(tp) == ASIC_REV_5755 ||
 		 tg3_asic_rev(tp) == ASIC_REV_5762 ||
 		 tg3_flag(tp, 57765_CLASS))
 		limit = NIC_SRAM_RCV_RET_RCB + TG3_BDINFO_SIZE * 4;
-	अन्यथा
+	else
 		limit = NIC_SRAM_RCV_RET_RCB + TG3_BDINFO_SIZE;
 
-	क्रम (rxrcb = NIC_SRAM_RCV_RET_RCB + TG3_BDINFO_SIZE;
+	for (rxrcb = NIC_SRAM_RCV_RET_RCB + TG3_BDINFO_SIZE;
 	     rxrcb < limit; rxrcb += TG3_BDINFO_SIZE)
-		tg3_ग_लिखो_mem(tp, rxrcb + TG3_BDINFO_MAXLEN_FLAGS,
+		tg3_write_mem(tp, rxrcb + TG3_BDINFO_MAXLEN_FLAGS,
 			      BDINFO_FLAGS_DISABLED);
-पूर्ण
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_rx_ret_rcbs_init(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i = 0;
+static void tg3_rx_ret_rcbs_init(struct tg3 *tp)
+{
+	int i = 0;
 	u32 rxrcb = NIC_SRAM_RCV_RET_RCB;
 
-	अगर (tg3_flag(tp, ENABLE_RSS))
+	if (tg3_flag(tp, ENABLE_RSS))
 		i++;
 
-	क्रम (; i < tp->irq_max; i++, rxrcb += TG3_BDINFO_SIZE) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (; i < tp->irq_max; i++, rxrcb += TG3_BDINFO_SIZE) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		अगर (!tnapi->rx_rcb)
-			जारी;
+		if (!tnapi->rx_rcb)
+			continue;
 
 		tg3_set_bdinfo(tp, rxrcb, tnapi->rx_rcb_mapping,
 			       (tp->rx_ret_ring_mask + 1) <<
 				BDINFO_FLAGS_MAXLEN_SHIFT, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* tp->lock is held. */
-अटल व्योम tg3_rings_reset(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_rings_reset(struct tg3 *tp)
+{
+	int i;
 	u32 stblk;
-	काष्ठा tg3_napi *tnapi = &tp->napi[0];
+	struct tg3_napi *tnapi = &tp->napi[0];
 
 	tg3_tx_rcbs_disable(tp);
 
 	tg3_rx_ret_rcbs_disable(tp);
 
-	/* Disable पूर्णांकerrupts */
-	tw32_mailbox_f(tp->napi[0].पूर्णांक_mbox, 1);
+	/* Disable interrupts */
+	tw32_mailbox_f(tp->napi[0].int_mbox, 1);
 	tp->napi[0].chk_msi_cnt = 0;
 	tp->napi[0].last_rx_cons = 0;
 	tp->napi[0].last_tx_cons = 0;
 
-	/* Zero mailbox रेजिस्टरs. */
-	अगर (tg3_flag(tp, SUPPORT_MSIX)) अणु
-		क्रम (i = 1; i < tp->irq_max; i++) अणु
+	/* Zero mailbox registers. */
+	if (tg3_flag(tp, SUPPORT_MSIX)) {
+		for (i = 1; i < tp->irq_max; i++) {
 			tp->napi[i].tx_prod = 0;
 			tp->napi[i].tx_cons = 0;
-			अगर (tg3_flag(tp, ENABLE_TSS))
+			if (tg3_flag(tp, ENABLE_TSS))
 				tw32_mailbox(tp->napi[i].prodmbox, 0);
 			tw32_rx_mbox(tp->napi[i].consmbox, 0);
-			tw32_mailbox_f(tp->napi[i].पूर्णांक_mbox, 1);
+			tw32_mailbox_f(tp->napi[i].int_mbox, 1);
 			tp->napi[i].chk_msi_cnt = 0;
 			tp->napi[i].last_rx_cons = 0;
 			tp->napi[i].last_tx_cons = 0;
-		पूर्ण
-		अगर (!tg3_flag(tp, ENABLE_TSS))
+		}
+		if (!tg3_flag(tp, ENABLE_TSS))
 			tw32_mailbox(tp->napi[0].prodmbox, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		tp->napi[0].tx_prod = 0;
 		tp->napi[0].tx_cons = 0;
 		tw32_mailbox(tp->napi[0].prodmbox, 0);
 		tw32_rx_mbox(tp->napi[0].consmbox, 0);
-	पूर्ण
+	}
 
 	/* Make sure the NIC-based send BD rings are disabled. */
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
+	if (!tg3_flag(tp, 5705_PLUS)) {
 		u32 mbox = MAILBOX_SNDNIC_PROD_IDX_0 + TG3_64BIT_REG_LOW;
-		क्रम (i = 0; i < 16; i++)
+		for (i = 0; i < 16; i++)
 			tw32_tx_mbox(mbox + i * 8, 0);
-	पूर्ण
+	}
 
 	/* Clear status block in ram. */
-	स_रखो(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
+	memset(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
 
 	/* Set status block DMA address */
 	tw32(HOSTCC_STATUS_BLK_HOST_ADDR + TG3_64BIT_REG_HIGH,
@@ -9646,34 +9645,34 @@ err_no_dev:
 
 	stblk = HOSTCC_STATBLCK_RING1;
 
-	क्रम (i = 1, tnapi++; i < tp->irq_cnt; i++, tnapi++) अणु
+	for (i = 1, tnapi++; i < tp->irq_cnt; i++, tnapi++) {
 		u64 mapping = (u64)tnapi->status_mapping;
 		tw32(stblk + TG3_64BIT_REG_HIGH, mapping >> 32);
 		tw32(stblk + TG3_64BIT_REG_LOW, mapping & 0xffffffff);
 		stblk += 8;
 
 		/* Clear status block in ram. */
-		स_रखो(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
-	पूर्ण
+		memset(tnapi->hw_status, 0, TG3_HW_STATUS_SIZE);
+	}
 
 	tg3_tx_rcbs_init(tp);
 	tg3_rx_ret_rcbs_init(tp);
-पूर्ण
+}
 
-अटल व्योम tg3_setup_rxbd_thresholds(काष्ठा tg3 *tp)
-अणु
+static void tg3_setup_rxbd_thresholds(struct tg3 *tp)
+{
 	u32 val, bdcache_maxcnt, host_rep_thresh, nic_rep_thresh;
 
-	अगर (!tg3_flag(tp, 5750_PLUS) ||
+	if (!tg3_flag(tp, 5750_PLUS) ||
 	    tg3_flag(tp, 5780_CLASS) ||
 	    tg3_asic_rev(tp) == ASIC_REV_5750 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5752 ||
 	    tg3_flag(tp, 57765_PLUS))
 		bdcache_maxcnt = TG3_SRAM_RX_STD_BDCACHE_SIZE_5700;
-	अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5755 ||
+	else if (tg3_asic_rev(tp) == ASIC_REV_5755 ||
 		 tg3_asic_rev(tp) == ASIC_REV_5787)
 		bdcache_maxcnt = TG3_SRAM_RX_STD_BDCACHE_SIZE_5755;
-	अन्यथा
+	else
 		bdcache_maxcnt = TG3_SRAM_RX_STD_BDCACHE_SIZE_5906;
 
 	nic_rep_thresh = min(bdcache_maxcnt / 2, tp->rx_std_max_post);
@@ -9682,11 +9681,11 @@ err_no_dev:
 	val = min(nic_rep_thresh, host_rep_thresh);
 	tw32(RCVBDI_STD_THRESH, val);
 
-	अगर (tg3_flag(tp, 57765_PLUS))
+	if (tg3_flag(tp, 57765_PLUS))
 		tw32(STD_REPLENISH_LWM, bdcache_maxcnt);
 
-	अगर (!tg3_flag(tp, JUMBO_CAPABLE) || tg3_flag(tp, 5780_CLASS))
-		वापस;
+	if (!tg3_flag(tp, JUMBO_CAPABLE) || tg3_flag(tp, 5780_CLASS))
+		return;
 
 	bdcache_maxcnt = TG3_SRAM_RX_JMB_BDCACHE_SIZE_5700;
 
@@ -9695,203 +9694,203 @@ err_no_dev:
 	val = min(bdcache_maxcnt / 2, host_rep_thresh);
 	tw32(RCVBDI_JUMBO_THRESH, val);
 
-	अगर (tg3_flag(tp, 57765_PLUS))
+	if (tg3_flag(tp, 57765_PLUS))
 		tw32(JMB_REPLENISH_LWM, bdcache_maxcnt);
-पूर्ण
+}
 
-अटल अंतरभूत u32 calc_crc(अचिन्हित अक्षर *buf, पूर्णांक len)
-अणु
+static inline u32 calc_crc(unsigned char *buf, int len)
+{
 	u32 reg;
-	u32 पंचांगp;
-	पूर्णांक j, k;
+	u32 tmp;
+	int j, k;
 
 	reg = 0xffffffff;
 
-	क्रम (j = 0; j < len; j++) अणु
+	for (j = 0; j < len; j++) {
 		reg ^= buf[j];
 
-		क्रम (k = 0; k < 8; k++) अणु
-			पंचांगp = reg & 0x01;
+		for (k = 0; k < 8; k++) {
+			tmp = reg & 0x01;
 
 			reg >>= 1;
 
-			अगर (पंचांगp)
+			if (tmp)
 				reg ^= CRC32_POLY_LE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ~reg;
-पूर्ण
+	return ~reg;
+}
 
-अटल व्योम tg3_set_multi(काष्ठा tg3 *tp, अचिन्हित पूर्णांक accept_all)
-अणु
+static void tg3_set_multi(struct tg3 *tp, unsigned int accept_all)
+{
 	/* accept or reject all multicast frames */
 	tw32(MAC_HASH_REG_0, accept_all ? 0xffffffff : 0);
 	tw32(MAC_HASH_REG_1, accept_all ? 0xffffffff : 0);
 	tw32(MAC_HASH_REG_2, accept_all ? 0xffffffff : 0);
 	tw32(MAC_HASH_REG_3, accept_all ? 0xffffffff : 0);
-पूर्ण
+}
 
-अटल व्योम __tg3_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void __tg3_set_rx_mode(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
 	u32 rx_mode;
 
 	rx_mode = tp->rx_mode & ~(RX_MODE_PROMISC |
 				  RX_MODE_KEEP_VLAN_TAG);
 
-#अगर !defined(CONFIG_VLAN_8021Q) && !defined(CONFIG_VLAN_8021Q_MODULE)
+#if !defined(CONFIG_VLAN_8021Q) && !defined(CONFIG_VLAN_8021Q_MODULE)
 	/* When ASF is in use, we always keep the RX_MODE_KEEP_VLAN_TAG
 	 * flag clear.
 	 */
-	अगर (!tg3_flag(tp, ENABLE_ASF))
+	if (!tg3_flag(tp, ENABLE_ASF))
 		rx_mode |= RX_MODE_KEEP_VLAN_TAG;
-#पूर्ण_अगर
+#endif
 
-	अगर (dev->flags & IFF_PROMISC) अणु
+	if (dev->flags & IFF_PROMISC) {
 		/* Promiscuous mode. */
 		rx_mode |= RX_MODE_PROMISC;
-	पूर्ण अन्यथा अगर (dev->flags & IFF_ALLMULTI) अणु
+	} else if (dev->flags & IFF_ALLMULTI) {
 		/* Accept all multicast. */
 		tg3_set_multi(tp, 1);
-	पूर्ण अन्यथा अगर (netdev_mc_empty(dev)) अणु
+	} else if (netdev_mc_empty(dev)) {
 		/* Reject all multicast. */
 		tg3_set_multi(tp, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Accept one or more multicast(s). */
-		काष्ठा netdev_hw_addr *ha;
-		u32 mc_filter[4] = अणु 0, पूर्ण;
+		struct netdev_hw_addr *ha;
+		u32 mc_filter[4] = { 0, };
 		u32 regidx;
 		u32 bit;
 		u32 crc;
 
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
+		netdev_for_each_mc_addr(ha, dev) {
 			crc = calc_crc(ha->addr, ETH_ALEN);
 			bit = ~crc & 0x7f;
 			regidx = (bit & 0x60) >> 5;
 			bit &= 0x1f;
 			mc_filter[regidx] |= (1 << bit);
-		पूर्ण
+		}
 
 		tw32(MAC_HASH_REG_0, mc_filter[0]);
 		tw32(MAC_HASH_REG_1, mc_filter[1]);
 		tw32(MAC_HASH_REG_2, mc_filter[2]);
 		tw32(MAC_HASH_REG_3, mc_filter[3]);
-	पूर्ण
+	}
 
-	अगर (netdev_uc_count(dev) > TG3_MAX_UCAST_ADDR(tp)) अणु
+	if (netdev_uc_count(dev) > TG3_MAX_UCAST_ADDR(tp)) {
 		rx_mode |= RX_MODE_PROMISC;
-	पूर्ण अन्यथा अगर (!(dev->flags & IFF_PROMISC)) अणु
-		/* Add all entries पूर्णांकo to the mac addr filter list */
-		पूर्णांक i = 0;
-		काष्ठा netdev_hw_addr *ha;
+	} else if (!(dev->flags & IFF_PROMISC)) {
+		/* Add all entries into to the mac addr filter list */
+		int i = 0;
+		struct netdev_hw_addr *ha;
 
-		netdev_क्रम_each_uc_addr(ha, dev) अणु
+		netdev_for_each_uc_addr(ha, dev) {
 			__tg3_set_one_mac_addr(tp, ha->addr,
 					       i + TG3_UCAST_ADDR_IDX(tp));
 			i++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (rx_mode != tp->rx_mode) अणु
+	if (rx_mode != tp->rx_mode) {
 		tp->rx_mode = rx_mode;
 		tw32_f(MAC_RX_MODE, rx_mode);
 		udelay(10);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_rss_init_dflt_indir_tbl(काष्ठा tg3 *tp, u32 qcnt)
-अणु
-	पूर्णांक i;
+static void tg3_rss_init_dflt_indir_tbl(struct tg3 *tp, u32 qcnt)
+{
+	int i;
 
-	क्रम (i = 0; i < TG3_RSS_INसूची_TBL_SIZE; i++)
-		tp->rss_ind_tbl[i] = ethtool_rxfh_indir_शेष(i, qcnt);
-पूर्ण
+	for (i = 0; i < TG3_RSS_INDIR_TBL_SIZE; i++)
+		tp->rss_ind_tbl[i] = ethtool_rxfh_indir_default(i, qcnt);
+}
 
-अटल व्योम tg3_rss_check_indir_tbl(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_rss_check_indir_tbl(struct tg3 *tp)
+{
+	int i;
 
-	अगर (!tg3_flag(tp, SUPPORT_MSIX))
-		वापस;
+	if (!tg3_flag(tp, SUPPORT_MSIX))
+		return;
 
-	अगर (tp->rxq_cnt == 1) अणु
-		स_रखो(&tp->rss_ind_tbl[0], 0, माप(tp->rss_ind_tbl));
-		वापस;
-	पूर्ण
+	if (tp->rxq_cnt == 1) {
+		memset(&tp->rss_ind_tbl[0], 0, sizeof(tp->rss_ind_tbl));
+		return;
+	}
 
 	/* Validate table against current IRQ count */
-	क्रम (i = 0; i < TG3_RSS_INसूची_TBL_SIZE; i++) अणु
-		अगर (tp->rss_ind_tbl[i] >= tp->rxq_cnt)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < TG3_RSS_INDIR_TBL_SIZE; i++) {
+		if (tp->rss_ind_tbl[i] >= tp->rxq_cnt)
+			break;
+	}
 
-	अगर (i != TG3_RSS_INसूची_TBL_SIZE)
+	if (i != TG3_RSS_INDIR_TBL_SIZE)
 		tg3_rss_init_dflt_indir_tbl(tp, tp->rxq_cnt);
-पूर्ण
+}
 
-अटल व्योम tg3_rss_ग_लिखो_indir_tbl(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i = 0;
-	u32 reg = MAC_RSS_INसूची_TBL_0;
+static void tg3_rss_write_indir_tbl(struct tg3 *tp)
+{
+	int i = 0;
+	u32 reg = MAC_RSS_INDIR_TBL_0;
 
-	जबतक (i < TG3_RSS_INसूची_TBL_SIZE) अणु
+	while (i < TG3_RSS_INDIR_TBL_SIZE) {
 		u32 val = tp->rss_ind_tbl[i];
 		i++;
-		क्रम (; i % 8; i++) अणु
+		for (; i % 8; i++) {
 			val <<= 4;
 			val |= tp->rss_ind_tbl[i];
-		पूर्ण
+		}
 		tw32(reg, val);
 		reg += 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत u32 tg3_lso_rd_dma_workaround_bit(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5719)
-		वापस TG3_LSO_RD_DMA_TX_LENGTH_WA_5719;
-	अन्यथा
-		वापस TG3_LSO_RD_DMA_TX_LENGTH_WA_5720;
-पूर्ण
+static inline u32 tg3_lso_rd_dma_workaround_bit(struct tg3 *tp)
+{
+	if (tg3_asic_rev(tp) == ASIC_REV_5719)
+		return TG3_LSO_RD_DMA_TX_LENGTH_WA_5719;
+	else
+		return TG3_LSO_RD_DMA_TX_LENGTH_WA_5720;
+}
 
 /* tp->lock is held. */
-अटल पूर्णांक tg3_reset_hw(काष्ठा tg3 *tp, bool reset_phy)
-अणु
+static int tg3_reset_hw(struct tg3 *tp, bool reset_phy)
+{
 	u32 val, rdmac_mode;
-	पूर्णांक i, err, limit;
-	काष्ठा tg3_rx_prodring_set *tpr = &tp->napi[0].prodring;
+	int i, err, limit;
+	struct tg3_rx_prodring_set *tpr = &tp->napi[0].prodring;
 
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 
 	tg3_stop_fw(tp);
 
-	tg3_ग_लिखो_sig_pre_reset(tp, RESET_KIND_INIT);
+	tg3_write_sig_pre_reset(tp, RESET_KIND_INIT);
 
-	अगर (tg3_flag(tp, INIT_COMPLETE))
-		tg3_पात_hw(tp, 1);
+	if (tg3_flag(tp, INIT_COMPLETE))
+		tg3_abort_hw(tp, 1);
 
-	अगर ((tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN) &&
-	    !(tp->phy_flags & TG3_PHYFLG_USER_CONFIGURED)) अणु
+	if ((tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN) &&
+	    !(tp->phy_flags & TG3_PHYFLG_USER_CONFIGURED)) {
 		tg3_phy_pull_config(tp);
-		tg3_eee_pull_config(tp, शून्य);
+		tg3_eee_pull_config(tp, NULL);
 		tp->phy_flags |= TG3_PHYFLG_USER_CONFIGURED;
-	पूर्ण
+	}
 
 	/* Enable MAC control of LPI */
-	अगर (tp->phy_flags & TG3_PHYFLG_EEE_CAP)
+	if (tp->phy_flags & TG3_PHYFLG_EEE_CAP)
 		tg3_setup_eee(tp);
 
-	अगर (reset_phy)
+	if (reset_phy)
 		tg3_phy_reset(tp);
 
 	err = tg3_chip_reset(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	tg3_ग_लिखो_sig_legacy(tp, RESET_KIND_INIT);
+	tg3_write_sig_legacy(tp, RESET_KIND_INIT);
 
-	अगर (tg3_chip_rev(tp) == CHIPREV_5784_AX) अणु
+	if (tg3_chip_rev(tp) == CHIPREV_5784_AX) {
 		val = tr32(TG3_CPMU_CTRL);
 		val &= ~(CPMU_CTRL_LINK_AWARE_MODE | CPMU_CTRL_LINK_IDLE_MODE);
 		tw32(TG3_CPMU_CTRL, val);
@@ -9910,9 +9909,9 @@ err_no_dev:
 		val &= ~CPMU_HST_ACC_MACCLK_MASK;
 		val |= CPMU_HST_ACC_MACCLK_6_25;
 		tw32(TG3_CPMU_HST_ACC, val);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57780) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_57780) {
 		val = tr32(PCIE_PWR_MGMT_THRESH) & ~PCIE_PWR_MGMT_L1_THRESH_MSK;
 		val |= PCIE_PWR_MGMT_EXT_ASPM_TMR_EN |
 		       PCIE_PWR_MGMT_L1_THRESH_4MS;
@@ -9925,12 +9924,12 @@ err_no_dev:
 
 		val = tr32(TG3_PCIE_LNKCTL) & ~TG3_PCIE_LNKCTL_L1_PLL_PD_EN;
 		tw32(TG3_PCIE_LNKCTL, val | TG3_PCIE_LNKCTL_L1_PLL_PD_DIS);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, L1PLLPD_EN)) अणु
+	if (tg3_flag(tp, L1PLLPD_EN)) {
 		u32 grc_mode = tr32(GRC_MODE);
 
-		/* Access the lower 1K of PL PCIE block रेजिस्टरs. */
+		/* Access the lower 1K of PL PCIE block registers. */
 		val = grc_mode & ~GRC_MODE_PCIE_PORT_MASK;
 		tw32(GRC_MODE, val | GRC_MODE_PCIE_PL_SEL);
 
@@ -9939,13 +9938,13 @@ err_no_dev:
 		     val | TG3_PCIE_PL_LO_PHYCTL1_L1PLLPD_EN);
 
 		tw32(GRC_MODE, grc_mode);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, 57765_CLASS)) अणु
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0) अणु
+	if (tg3_flag(tp, 57765_CLASS)) {
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0) {
 			u32 grc_mode = tr32(GRC_MODE);
 
-			/* Access the lower 1K of PL PCIE block रेजिस्टरs. */
+			/* Access the lower 1K of PL PCIE block registers. */
 			val = grc_mode & ~GRC_MODE_PCIE_PORT_MASK;
 			tw32(GRC_MODE, val | GRC_MODE_PCIE_PL_SEL);
 
@@ -9955,9 +9954,9 @@ err_no_dev:
 			     val | TG3_PCIE_PL_LO_PHYCTL5_DIS_L2CLKREQ);
 
 			tw32(GRC_MODE, grc_mode);
-		पूर्ण
+		}
 
-		अगर (tg3_chip_rev(tp) != CHIPREV_57765_AX) अणु
+		if (tg3_chip_rev(tp) != CHIPREV_57765_AX) {
 			u32 grc_mode;
 
 			/* Fix transmit hangs */
@@ -9967,7 +9966,7 @@ err_no_dev:
 
 			grc_mode = tr32(GRC_MODE);
 
-			/* Access the lower 1K of DL PCIE block रेजिस्टरs. */
+			/* Access the lower 1K of DL PCIE block registers. */
 			val = grc_mode & ~GRC_MODE_PCIE_PORT_MASK;
 			tw32(GRC_MODE, val | GRC_MODE_PCIE_DL_SEL);
 
@@ -9978,76 +9977,76 @@ err_no_dev:
 			     val | TG3_PCIE_DL_LO_FTSMAX_VAL);
 
 			tw32(GRC_MODE, grc_mode);
-		पूर्ण
+		}
 
 		val = tr32(TG3_CPMU_LSPD_10MB_CLK);
 		val &= ~CPMU_LSPD_10MB_MACCLK_MASK;
 		val |= CPMU_LSPD_10MB_MACCLK_6_25;
 		tw32(TG3_CPMU_LSPD_10MB_CLK, val);
-	पूर्ण
+	}
 
 	/* This works around an issue with Athlon chipsets on
 	 * B3 tigon3 silicon.  This bit has no effect on any
-	 * other revision.  But करो not set this on PCI Express
-	 * chips and करोn't even touch the घड़ीs अगर the CPMU is present.
+	 * other revision.  But do not set this on PCI Express
+	 * chips and don't even touch the clocks if the CPMU is present.
 	 */
-	अगर (!tg3_flag(tp, CPMU_PRESENT)) अणु
-		अगर (!tg3_flag(tp, PCI_EXPRESS))
-			tp->pci_घड़ी_ctrl |= CLOCK_CTRL_DELAY_PCI_GRANT;
-		tw32_f(TG3PCI_CLOCK_CTRL, tp->pci_घड़ी_ctrl);
-	पूर्ण
+	if (!tg3_flag(tp, CPMU_PRESENT)) {
+		if (!tg3_flag(tp, PCI_EXPRESS))
+			tp->pci_clock_ctrl |= CLOCK_CTRL_DELAY_PCI_GRANT;
+		tw32_f(TG3PCI_CLOCK_CTRL, tp->pci_clock_ctrl);
+	}
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0 &&
-	    tg3_flag(tp, PCIX_MODE)) अणु
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0 &&
+	    tg3_flag(tp, PCIX_MODE)) {
 		val = tr32(TG3PCI_PCISTATE);
 		val |= PCISTATE_RETRY_SAME_DMA;
 		tw32(TG3PCI_PCISTATE, val);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, ENABLE_APE)) अणु
-		/* Allow पढ़ोs and ग_लिखोs to the
-		 * APE रेजिस्टर and memory space.
+	if (tg3_flag(tp, ENABLE_APE)) {
+		/* Allow reads and writes to the
+		 * APE register and memory space.
 		 */
 		val = tr32(TG3PCI_PCISTATE);
 		val |= PCISTATE_ALLOW_APE_CTLSPC_WR |
 		       PCISTATE_ALLOW_APE_SHMEM_WR |
 		       PCISTATE_ALLOW_APE_PSPACE_WR;
 		tw32(TG3PCI_PCISTATE, val);
-	पूर्ण
+	}
 
-	अगर (tg3_chip_rev(tp) == CHIPREV_5704_BX) अणु
+	if (tg3_chip_rev(tp) == CHIPREV_5704_BX) {
 		/* Enable some hw fixes.  */
 		val = tr32(TG3PCI_MSI_DATA);
 		val |= (1 << 26) | (1 << 28) | (1 << 29);
 		tw32(TG3PCI_MSI_DATA, val);
-	पूर्ण
+	}
 
 	/* Descriptor ring init may make accesses to the
 	 * NIC SRAM area to setup the TX descriptors, so we
-	 * can only करो this after the hardware has been
+	 * can only do this after the hardware has been
 	 * successfully reset.
 	 */
 	err = tg3_init_rings(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (tg3_flag(tp, 57765_PLUS)) अणु
+	if (tg3_flag(tp, 57765_PLUS)) {
 		val = tr32(TG3PCI_DMA_RW_CTRL) &
 		      ~DMA_RWCTRL_DIS_CACHE_ALIGNMENT;
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0)
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_57765_A0)
 			val &= ~DMA_RWCTRL_CRDRDR_RDMA_MRRS_MSK;
-		अगर (!tg3_flag(tp, 57765_CLASS) &&
+		if (!tg3_flag(tp, 57765_CLASS) &&
 		    tg3_asic_rev(tp) != ASIC_REV_5717 &&
 		    tg3_asic_rev(tp) != ASIC_REV_5762)
 			val |= DMA_RWCTRL_TAGGED_STAT_WA;
 		tw32(TG3PCI_DMA_RW_CTRL, val | tp->dma_rwctrl);
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) != ASIC_REV_5784 &&
-		   tg3_asic_rev(tp) != ASIC_REV_5761) अणु
-		/* This value is determined during the probe समय DMA
+	} else if (tg3_asic_rev(tp) != ASIC_REV_5784 &&
+		   tg3_asic_rev(tp) != ASIC_REV_5761) {
+		/* This value is determined during the probe time DMA
 		 * engine test, tg3_test_dma.
 		 */
 		tw32(TG3PCI_DMA_RW_CTRL, tp->dma_rwctrl);
-	पूर्ण
+	}
 
 	tp->grc_mode &= ~(GRC_MODE_HOST_SENDBDS |
 			  GRC_MODE_4X_NIC_SEND_RINGS |
@@ -10055,53 +10054,53 @@ err_no_dev:
 			  GRC_MODE_NO_RX_PHDR_CSUM);
 	tp->grc_mode |= GRC_MODE_HOST_SENDBDS;
 
-	/* Pseuकरो-header checksum is करोne by hardware logic and not
-	 * the offload processers, so make the chip करो the pseuकरो-
+	/* Pseudo-header checksum is done by hardware logic and not
+	 * the offload processers, so make the chip do the pseudo-
 	 * header checksums on receive.  For transmit it is more
-	 * convenient to करो the pseuकरो-header checksum in software
-	 * as Linux करोes that on transmit क्रम us in all हालs.
+	 * convenient to do the pseudo-header checksum in software
+	 * as Linux does that on transmit for us in all cases.
 	 */
 	tp->grc_mode |= GRC_MODE_NO_TX_PHDR_CSUM;
 
 	val = GRC_MODE_IRQ_ON_MAC_ATTN | GRC_MODE_HOST_STACKUP;
-	अगर (tp->rxptpctl)
+	if (tp->rxptpctl)
 		tw32(TG3_RX_PTP_CTL,
 		     tp->rxptpctl | TG3_RX_PTP_CTL_HWTS_INTERLOCK);
 
-	अगर (tg3_flag(tp, PTP_CAPABLE))
+	if (tg3_flag(tp, PTP_CAPABLE))
 		val |= GRC_MODE_TIME_SYNC_ENABLE;
 
 	tw32(GRC_MODE, tp->grc_mode | val);
 
-	/* On one of the AMD platक्रमm, MRRS is restricted to 4000 because of
+	/* On one of the AMD platform, MRRS is restricted to 4000 because of
 	 * south bridge limitation. As a workaround, Driver is setting MRRS
-	 * to 2048 instead of शेष 4096.
+	 * to 2048 instead of default 4096.
 	 */
-	अगर (tp->pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_DELL &&
-	    tp->pdev->subप्रणाली_device == TG3PCI_SUBDEVICE_ID_DELL_5762) अणु
+	if (tp->pdev->subsystem_vendor == PCI_VENDOR_ID_DELL &&
+	    tp->pdev->subsystem_device == TG3PCI_SUBDEVICE_ID_DELL_5762) {
 		val = tr32(TG3PCI_DEV_STATUS_CTRL) & ~MAX_READ_REQ_MASK;
 		tw32(TG3PCI_DEV_STATUS_CTRL, val | MAX_READ_REQ_SIZE_2048);
-	पूर्ण
+	}
 
-	/* Setup the समयr prescalar रेजिस्टर.  Clock is always 66Mhz. */
+	/* Setup the timer prescalar register.  Clock is always 66Mhz. */
 	val = tr32(GRC_MISC_CFG);
 	val &= ~0xff;
 	val |= (65 << GRC_MISC_CFG_PRESCALAR_SHIFT);
 	tw32(GRC_MISC_CFG, val);
 
 	/* Initialize MBUF/DESC pool. */
-	अगर (tg3_flag(tp, 5750_PLUS)) अणु
+	if (tg3_flag(tp, 5750_PLUS)) {
 		/* Do nothing.  */
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) != ASIC_REV_5705) अणु
+	} else if (tg3_asic_rev(tp) != ASIC_REV_5705) {
 		tw32(BUFMGR_MB_POOL_ADDR, NIC_SRAM_MBUF_POOL_BASE);
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5704)
+		if (tg3_asic_rev(tp) == ASIC_REV_5704)
 			tw32(BUFMGR_MB_POOL_SIZE, NIC_SRAM_MBUF_POOL_SIZE64);
-		अन्यथा
+		else
 			tw32(BUFMGR_MB_POOL_SIZE, NIC_SRAM_MBUF_POOL_SIZE96);
 		tw32(BUFMGR_DMA_DESC_POOL_ADDR, NIC_SRAM_DMA_DESC_POOL_BASE);
 		tw32(BUFMGR_DMA_DESC_POOL_SIZE, NIC_SRAM_DMA_DESC_POOL_SIZE);
-	पूर्ण अन्यथा अगर (tg3_flag(tp, TSO_CAPABLE)) अणु
-		पूर्णांक fw_len;
+	} else if (tg3_flag(tp, TSO_CAPABLE)) {
+		int fw_len;
 
 		fw_len = tp->fw_len;
 		fw_len = (fw_len + (0x80 - 1)) & ~(0x80 - 1);
@@ -10109,48 +10108,48 @@ err_no_dev:
 		     NIC_SRAM_MBUF_POOL_BASE5705 + fw_len);
 		tw32(BUFMGR_MB_POOL_SIZE,
 		     NIC_SRAM_MBUF_POOL_SIZE5705 - fw_len - 0xa00);
-	पूर्ण
+	}
 
-	अगर (tp->dev->mtu <= ETH_DATA_LEN) अणु
+	if (tp->dev->mtu <= ETH_DATA_LEN) {
 		tw32(BUFMGR_MB_RDMA_LOW_WATER,
-		     tp->bufmgr_config.mbuf_पढ़ो_dma_low_water);
+		     tp->bufmgr_config.mbuf_read_dma_low_water);
 		tw32(BUFMGR_MB_MACRX_LOW_WATER,
 		     tp->bufmgr_config.mbuf_mac_rx_low_water);
 		tw32(BUFMGR_MB_HIGH_WATER,
 		     tp->bufmgr_config.mbuf_high_water);
-	पूर्ण अन्यथा अणु
+	} else {
 		tw32(BUFMGR_MB_RDMA_LOW_WATER,
-		     tp->bufmgr_config.mbuf_पढ़ो_dma_low_water_jumbo);
+		     tp->bufmgr_config.mbuf_read_dma_low_water_jumbo);
 		tw32(BUFMGR_MB_MACRX_LOW_WATER,
 		     tp->bufmgr_config.mbuf_mac_rx_low_water_jumbo);
 		tw32(BUFMGR_MB_HIGH_WATER,
 		     tp->bufmgr_config.mbuf_high_water_jumbo);
-	पूर्ण
+	}
 	tw32(BUFMGR_DMA_LOW_WATER,
 	     tp->bufmgr_config.dma_low_water);
 	tw32(BUFMGR_DMA_HIGH_WATER,
 	     tp->bufmgr_config.dma_high_water);
 
 	val = BUFMGR_MODE_ENABLE | BUFMGR_MODE_ATTN_ENABLE;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5719)
+	if (tg3_asic_rev(tp) == ASIC_REV_5719)
 		val |= BUFMGR_MODE_NO_TX_UNDERRUN;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762 ||
 	    tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0 ||
 	    tg3_chip_rev_id(tp) == CHIPREV_ID_5720_A0)
 		val |= BUFMGR_MODE_MBLOW_ATTN_ENAB;
 	tw32(BUFMGR_MODE, val);
-	क्रम (i = 0; i < 2000; i++) अणु
-		अगर (tr32(BUFMGR_MODE) & BUFMGR_MODE_ENABLE)
-			अवरोध;
+	for (i = 0; i < 2000; i++) {
+		if (tr32(BUFMGR_MODE) & BUFMGR_MODE_ENABLE)
+			break;
 		udelay(10);
-	पूर्ण
-	अगर (i >= 2000) अणु
+	}
+	if (i >= 2000) {
 		netdev_err(tp->dev, "%s cannot enable BUFMGR\n", __func__);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5906_A1)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5906_A1)
 		tw32(ISO_PKT_TX, (tr32(ISO_PKT_TX) & ~0x3) | 0x2);
 
 	tg3_setup_rxbd_thresholds(tp);
@@ -10158,7 +10157,7 @@ err_no_dev:
 	/* Initialize TG3_BDINFO's at:
 	 *  RCVDBDI_STD_BD:	standard eth size rx ring
 	 *  RCVDBDI_JUMBO_BD:	jumbo frame rx ring
-	 *  RCVDBDI_MINI_BD:	small frame rx ring (??? करोes not work)
+	 *  RCVDBDI_MINI_BD:	small frame rx ring (??? does not work)
 	 *
 	 * like so:
 	 *  TG3_BDINFO_HOST_ADDR:	high/low parts of DMA address of ring
@@ -10176,22 +10175,22 @@ err_no_dev:
 	     ((u64) tpr->rx_std_mapping >> 32));
 	tw32(RCVDBDI_STD_BD + TG3_BDINFO_HOST_ADDR + TG3_64BIT_REG_LOW,
 	     ((u64) tpr->rx_std_mapping & 0xffffffff));
-	अगर (!tg3_flag(tp, 5717_PLUS))
+	if (!tg3_flag(tp, 5717_PLUS))
 		tw32(RCVDBDI_STD_BD + TG3_BDINFO_NIC_ADDR,
 		     NIC_SRAM_RX_BUFFER_DESC);
 
 	/* Disable the mini ring */
-	अगर (!tg3_flag(tp, 5705_PLUS))
+	if (!tg3_flag(tp, 5705_PLUS))
 		tw32(RCVDBDI_MINI_BD + TG3_BDINFO_MAXLEN_FLAGS,
 		     BDINFO_FLAGS_DISABLED);
 
 	/* Program the jumbo buffer descriptor ring control
 	 * blocks on those devices that have them.
 	 */
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0 ||
-	    (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS))) अणु
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0 ||
+	    (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS))) {
 
-		अगर (tg3_flag(tp, JUMBO_RING_ENABLE)) अणु
+		if (tg3_flag(tp, JUMBO_RING_ENABLE)) {
 			tw32(RCVDBDI_JUMBO_BD + TG3_BDINFO_HOST_ADDR + TG3_64BIT_REG_HIGH,
 			     ((u64) tpr->rx_jmb_mapping >> 32));
 			tw32(RCVDBDI_JUMBO_BD + TG3_BDINFO_HOST_ADDR + TG3_64BIT_REG_LOW,
@@ -10200,23 +10199,23 @@ err_no_dev:
 			      BDINFO_FLAGS_MAXLEN_SHIFT;
 			tw32(RCVDBDI_JUMBO_BD + TG3_BDINFO_MAXLEN_FLAGS,
 			     val | BDINFO_FLAGS_USE_EXT_RECV);
-			अगर (!tg3_flag(tp, USE_JUMBO_BDFLAG) ||
+			if (!tg3_flag(tp, USE_JUMBO_BDFLAG) ||
 			    tg3_flag(tp, 57765_CLASS) ||
 			    tg3_asic_rev(tp) == ASIC_REV_5762)
 				tw32(RCVDBDI_JUMBO_BD + TG3_BDINFO_NIC_ADDR,
 				     NIC_SRAM_RX_JUMBO_BUFFER_DESC);
-		पूर्ण अन्यथा अणु
+		} else {
 			tw32(RCVDBDI_JUMBO_BD + TG3_BDINFO_MAXLEN_FLAGS,
 			     BDINFO_FLAGS_DISABLED);
-		पूर्ण
+		}
 
-		अगर (tg3_flag(tp, 57765_PLUS)) अणु
+		if (tg3_flag(tp, 57765_PLUS)) {
 			val = TG3_RX_STD_RING_SIZE(tp);
 			val <<= BDINFO_FLAGS_MAXLEN_SHIFT;
 			val |= (TG3_RX_STD_DMA_SZ << 2);
-		पूर्ण अन्यथा
+		} else
 			val = TG3_RX_STD_DMA_SZ << BDINFO_FLAGS_MAXLEN_SHIFT;
-	पूर्ण अन्यथा
+	} else
 		val = TG3_RX_STD_MAX_SIZE_5700 << BDINFO_FLAGS_MAXLEN_SHIFT;
 
 	tw32(RCVDBDI_STD_BD + TG3_BDINFO_MAXLEN_FLAGS, val);
@@ -10237,14 +10236,14 @@ err_no_dev:
 	tw32(MAC_RX_MTU_SIZE,
 	     tp->dev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN);
 
-	/* The slot समय is changed by tg3_setup_phy अगर we
+	/* The slot time is changed by tg3_setup_phy if we
 	 * run at gigabit with half duplex.
 	 */
 	val = (2 << TX_LENGTHS_IPG_CRS_SHIFT) |
 	      (6 << TX_LENGTHS_IPG_SHIFT) |
 	      (32 << TX_LENGTHS_SLOT_TIME_SHIFT);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5720 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762)
 		val |= tr32(MAC_TX_LENGTHS) &
 		       (TX_LENGTHS_JMB_FRM_LEN_MSK |
@@ -10265,106 +10264,106 @@ err_no_dev:
 		      RDMAC_MODE_FIFOURUN_ENAB | RDMAC_MODE_FIFOOREAD_ENAB |
 		      RDMAC_MODE_LNGREAD_ENAB);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717)
+	if (tg3_asic_rev(tp) == ASIC_REV_5717)
 		rdmac_mode |= RDMAC_MODE_MULT_DMA_RD_DIS;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5784 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5784 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5785 ||
 	    tg3_asic_rev(tp) == ASIC_REV_57780)
 		rdmac_mode |= RDMAC_MODE_BD_SBD_CRPT_ENAB |
 			      RDMAC_MODE_MBUF_RBD_CRPT_ENAB |
 			      RDMAC_MODE_MBUF_SBD_CRPT_ENAB;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5705 &&
-	    tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) अणु
-		अगर (tg3_flag(tp, TSO_CAPABLE) &&
-		    tg3_asic_rev(tp) == ASIC_REV_5705) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5705 &&
+	    tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) {
+		if (tg3_flag(tp, TSO_CAPABLE) &&
+		    tg3_asic_rev(tp) == ASIC_REV_5705) {
 			rdmac_mode |= RDMAC_MODE_FIFO_SIZE_128;
-		पूर्ण अन्यथा अगर (!(tr32(TG3PCI_PCISTATE) & PCISTATE_BUS_SPEED_HIGH) &&
-			   !tg3_flag(tp, IS_5788)) अणु
+		} else if (!(tr32(TG3PCI_PCISTATE) & PCISTATE_BUS_SPEED_HIGH) &&
+			   !tg3_flag(tp, IS_5788)) {
 			rdmac_mode |= RDMAC_MODE_FIFO_LONG_BURST;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_flag(tp, PCI_EXPRESS))
+	if (tg3_flag(tp, PCI_EXPRESS))
 		rdmac_mode |= RDMAC_MODE_FIFO_LONG_BURST;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57766) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_57766) {
 		tp->dma_limit = 0;
-		अगर (tp->dev->mtu <= ETH_DATA_LEN) अणु
+		if (tp->dev->mtu <= ETH_DATA_LEN) {
 			rdmac_mode |= RDMAC_MODE_JMB_2K_MMRR;
 			tp->dma_limit = TG3_TX_BD_DMA_MAX_2K;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (tg3_flag(tp, HW_TSO_1) ||
+	if (tg3_flag(tp, HW_TSO_1) ||
 	    tg3_flag(tp, HW_TSO_2) ||
 	    tg3_flag(tp, HW_TSO_3))
 		rdmac_mode |= RDMAC_MODE_IPV4_LSO_EN;
 
-	अगर (tg3_flag(tp, 57765_PLUS) ||
+	if (tg3_flag(tp, 57765_PLUS) ||
 	    tg3_asic_rev(tp) == ASIC_REV_5785 ||
 	    tg3_asic_rev(tp) == ASIC_REV_57780)
 		rdmac_mode |= RDMAC_MODE_IPV6_LSO_EN;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5720 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762)
 		rdmac_mode |= tr32(RDMAC_MODE) & RDMAC_MODE_H2BNC_VLAN_DET;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5761 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5761 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5784 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5785 ||
 	    tg3_asic_rev(tp) == ASIC_REV_57780 ||
-	    tg3_flag(tp, 57765_PLUS)) अणु
+	    tg3_flag(tp, 57765_PLUS)) {
 		u32 tgtreg;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5762)
+		if (tg3_asic_rev(tp) == ASIC_REV_5762)
 			tgtreg = TG3_RDMA_RSRVCTRL_REG2;
-		अन्यथा
+		else
 			tgtreg = TG3_RDMA_RSRVCTRL_REG;
 
 		val = tr32(tgtreg);
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0 ||
-		    tg3_asic_rev(tp) == ASIC_REV_5762) अणु
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0 ||
+		    tg3_asic_rev(tp) == ASIC_REV_5762) {
 			val &= ~(TG3_RDMA_RSRVCTRL_TXMRGN_MASK |
 				 TG3_RDMA_RSRVCTRL_FIFO_LWM_MASK |
 				 TG3_RDMA_RSRVCTRL_FIFO_HWM_MASK);
 			val |= TG3_RDMA_RSRVCTRL_TXMRGN_320B |
 			       TG3_RDMA_RSRVCTRL_FIFO_LWM_1_5K |
 			       TG3_RDMA_RSRVCTRL_FIFO_HWM_1_5K;
-		पूर्ण
+		}
 		tw32(tgtreg, val | TG3_RDMA_RSRVCTRL_FIFO_OFLW_FIX);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5719 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5720 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5762) अणु
+	    tg3_asic_rev(tp) == ASIC_REV_5762) {
 		u32 tgtreg;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5762)
+		if (tg3_asic_rev(tp) == ASIC_REV_5762)
 			tgtreg = TG3_LSO_RD_DMA_CRPTEN_CTRL2;
-		अन्यथा
+		else
 			tgtreg = TG3_LSO_RD_DMA_CRPTEN_CTRL;
 
 		val = tr32(tgtreg);
 		tw32(tgtreg, val |
 		     TG3_LSO_RD_DMA_CRPTEN_CTRL_BLEN_BD_4K |
 		     TG3_LSO_RD_DMA_CRPTEN_CTRL_BLEN_LSO_4K);
-	पूर्ण
+	}
 
 	/* Receive/send statistics. */
-	अगर (tg3_flag(tp, 5750_PLUS)) अणु
+	if (tg3_flag(tp, 5750_PLUS)) {
 		val = tr32(RCVLPC_STATS_ENABLE);
 		val &= ~RCVLPC_STATSENAB_DACK_FIX;
 		tw32(RCVLPC_STATS_ENABLE, val);
-	पूर्ण अन्यथा अगर ((rdmac_mode & RDMAC_MODE_FIFO_SIZE_128) &&
-		   tg3_flag(tp, TSO_CAPABLE)) अणु
+	} else if ((rdmac_mode & RDMAC_MODE_FIFO_SIZE_128) &&
+		   tg3_flag(tp, TSO_CAPABLE)) {
 		val = tr32(RCVLPC_STATS_ENABLE);
 		val &= ~RCVLPC_STATSENAB_LNGBRST_RFIX;
 		tw32(RCVLPC_STATS_ENABLE, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		tw32(RCVLPC_STATS_ENABLE, 0xffffff);
-	पूर्ण
+	}
 	tw32(RCVLPC_STATSCTRL, RCVLPC_STATSCTRL_ENABLE);
 	tw32(SNDDATAI_STATSENAB, 0xffffff);
 	tw32(SNDDATAI_STATSCTRL,
@@ -10373,18 +10372,18 @@ err_no_dev:
 
 	/* Setup host coalescing engine. */
 	tw32(HOSTCC_MODE, 0);
-	क्रम (i = 0; i < 2000; i++) अणु
-		अगर (!(tr32(HOSTCC_MODE) & HOSTCC_MODE_ENABLE))
-			अवरोध;
+	for (i = 0; i < 2000; i++) {
+		if (!(tr32(HOSTCC_MODE) & HOSTCC_MODE_ENABLE))
+			break;
 		udelay(10);
-	पूर्ण
+	}
 
 	__tg3_set_coalesce(tp, &tp->coal);
 
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
-		/* Status/statistics block address.  See tg3_समयr,
+	if (!tg3_flag(tp, 5705_PLUS)) {
+		/* Status/statistics block address.  See tg3_timer,
 		 * the tg3_periodic_fetch_stats call there, and
-		 * tg3_get_stats to see how this works क्रम 5705/5750 chips.
+		 * tg3_get_stats to see how this works for 5705/5750 chips.
 		 */
 		tw32(HOSTCC_STATS_BLK_HOST_ADDR + TG3_64BIT_REG_HIGH,
 		     ((u64) tp->stats_mapping >> 32));
@@ -10395,34 +10394,34 @@ err_no_dev:
 		tw32(HOSTCC_STATUS_BLK_NIC_ADDR, NIC_SRAM_STATUS_BLK);
 
 		/* Clear statistics and status block memory areas */
-		क्रम (i = NIC_SRAM_STATS_BLK;
+		for (i = NIC_SRAM_STATS_BLK;
 		     i < NIC_SRAM_STATUS_BLK + TG3_HW_STATUS_SIZE;
-		     i += माप(u32)) अणु
-			tg3_ग_लिखो_mem(tp, i, 0);
+		     i += sizeof(u32)) {
+			tg3_write_mem(tp, i, 0);
 			udelay(40);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tw32(HOSTCC_MODE, HOSTCC_MODE_ENABLE | tp->coalesce_mode);
 
 	tw32(RCVCC_MODE, RCVCC_MODE_ENABLE | RCVCC_MODE_ATTN_ENABLE);
 	tw32(RCVLPC_MODE, RCVLPC_MODE_ENABLE);
-	अगर (!tg3_flag(tp, 5705_PLUS))
+	if (!tg3_flag(tp, 5705_PLUS))
 		tw32(RCVLSC_MODE, RCVLSC_MODE_ENABLE | RCVLSC_MODE_ATTN_ENABLE);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES) अणु
+	if (tp->phy_flags & TG3_PHYFLG_MII_SERDES) {
 		tp->phy_flags &= ~TG3_PHYFLG_PARALLEL_DETECT;
-		/* reset to prevent losing 1st rx packet पूर्णांकermittently */
+		/* reset to prevent losing 1st rx packet intermittently */
 		tw32_f(MAC_RX_MODE, RX_MODE_RESET);
 		udelay(10);
-	पूर्ण
+	}
 
 	tp->mac_mode |= MAC_MODE_TXSTAT_ENABLE | MAC_MODE_RXSTAT_ENABLE |
 			MAC_MODE_TDE_ENABLE | MAC_MODE_RDE_ENABLE |
 			MAC_MODE_FHDE_ENABLE;
-	अगर (tg3_flag(tp, ENABLE_APE))
+	if (tg3_flag(tp, ENABLE_APE))
 		tp->mac_mode |= MAC_MODE_APE_TX_EN | MAC_MODE_APE_RX_EN;
-	अगर (!tg3_flag(tp, 5705_PLUS) &&
+	if (!tg3_flag(tp, 5705_PLUS) &&
 	    !(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
 	    tg3_asic_rev(tp) != ASIC_REV_5700)
 		tp->mac_mode |= MAC_MODE_LINK_POLARITY;
@@ -10430,50 +10429,50 @@ err_no_dev:
 	udelay(40);
 
 	/* tp->grc_local_ctrl is partially set up during tg3_get_invariants().
-	 * If TG3_FLAG_IS_NIC is zero, we should पढ़ो the
-	 * रेजिस्टर to preserve the GPIO settings क्रम LOMs. The GPIOs,
-	 * whether used as inमाला_दो or outमाला_दो, are set by boot code after
+	 * If TG3_FLAG_IS_NIC is zero, we should read the
+	 * register to preserve the GPIO settings for LOMs. The GPIOs,
+	 * whether used as inputs or outputs, are set by boot code after
 	 * reset.
 	 */
-	अगर (!tg3_flag(tp, IS_NIC)) अणु
+	if (!tg3_flag(tp, IS_NIC)) {
 		u32 gpio_mask;
 
 		gpio_mask = GRC_LCLCTRL_GPIO_OE0 | GRC_LCLCTRL_GPIO_OE1 |
 			    GRC_LCLCTRL_GPIO_OE2 | GRC_LCLCTRL_GPIO_OUTPUT0 |
 			    GRC_LCLCTRL_GPIO_OUTPUT1 | GRC_LCLCTRL_GPIO_OUTPUT2;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5752)
+		if (tg3_asic_rev(tp) == ASIC_REV_5752)
 			gpio_mask |= GRC_LCLCTRL_GPIO_OE3 |
 				     GRC_LCLCTRL_GPIO_OUTPUT3;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5755)
+		if (tg3_asic_rev(tp) == ASIC_REV_5755)
 			gpio_mask |= GRC_LCLCTRL_GPIO_UART_SEL;
 
 		tp->grc_local_ctrl &= ~gpio_mask;
 		tp->grc_local_ctrl |= tr32(GRC_LOCAL_CTRL) & gpio_mask;
 
-		/* GPIO1 must be driven high क्रम eeprom ग_लिखो protect */
-		अगर (tg3_flag(tp, EEPROM_WRITE_PROT))
+		/* GPIO1 must be driven high for eeprom write protect */
+		if (tg3_flag(tp, EEPROM_WRITE_PROT))
 			tp->grc_local_ctrl |= (GRC_LCLCTRL_GPIO_OE1 |
 					       GRC_LCLCTRL_GPIO_OUTPUT1);
-	पूर्ण
+	}
 	tw32_f(GRC_LOCAL_CTRL, tp->grc_local_ctrl);
 	udelay(100);
 
-	अगर (tg3_flag(tp, USING_MSIX)) अणु
+	if (tg3_flag(tp, USING_MSIX)) {
 		val = tr32(MSGINT_MODE);
 		val |= MSGINT_MODE_ENABLE;
-		अगर (tp->irq_cnt > 1)
+		if (tp->irq_cnt > 1)
 			val |= MSGINT_MODE_MULTIVEC_EN;
-		अगर (!tg3_flag(tp, 1SHOT_MSI))
+		if (!tg3_flag(tp, 1SHOT_MSI))
 			val |= MSGINT_MODE_ONE_SHOT_DISABLE;
 		tw32(MSGINT_MODE, val);
-	पूर्ण
+	}
 
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
+	if (!tg3_flag(tp, 5705_PLUS)) {
 		tw32_f(DMAC_MODE, DMAC_MODE_ENABLE);
 		udelay(40);
-	पूर्ण
+	}
 
 	val = (WDMAC_MODE_ENABLE | WDMAC_MODE_TGTABORT_ENAB |
 	       WDMAC_MODE_MSTABORT_ENAB | WDMAC_MODE_PARITYERR_ENAB |
@@ -10481,142 +10480,142 @@ err_no_dev:
 	       WDMAC_MODE_FIFOURUN_ENAB | WDMAC_MODE_FIFOOREAD_ENAB |
 	       WDMAC_MODE_LNGREAD_ENAB);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5705 &&
-	    tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) अणु
-		अगर (tg3_flag(tp, TSO_CAPABLE) &&
+	if (tg3_asic_rev(tp) == ASIC_REV_5705 &&
+	    tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) {
+		if (tg3_flag(tp, TSO_CAPABLE) &&
 		    (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A1 ||
-		     tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A2)) अणु
+		     tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A2)) {
 			/* nothing */
-		पूर्ण अन्यथा अगर (!(tr32(TG3PCI_PCISTATE) & PCISTATE_BUS_SPEED_HIGH) &&
-			   !tg3_flag(tp, IS_5788)) अणु
+		} else if (!(tr32(TG3PCI_PCISTATE) & PCISTATE_BUS_SPEED_HIGH) &&
+			   !tg3_flag(tp, IS_5788)) {
 			val |= WDMAC_MODE_RX_ACCEL;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Enable host coalescing bug fix */
-	अगर (tg3_flag(tp, 5755_PLUS))
+	if (tg3_flag(tp, 5755_PLUS))
 		val |= WDMAC_MODE_STATUS_TAG_FIX;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5785)
+	if (tg3_asic_rev(tp) == ASIC_REV_5785)
 		val |= WDMAC_MODE_BURST_ALL_DATA;
 
 	tw32_f(WDMAC_MODE, val);
 	udelay(40);
 
-	अगर (tg3_flag(tp, PCIX_MODE)) अणु
+	if (tg3_flag(tp, PCIX_MODE)) {
 		u16 pcix_cmd;
 
-		pci_पढ़ो_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
+		pci_read_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
 				     &pcix_cmd);
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5703) अणु
+		if (tg3_asic_rev(tp) == ASIC_REV_5703) {
 			pcix_cmd &= ~PCI_X_CMD_MAX_READ;
 			pcix_cmd |= PCI_X_CMD_READ_2K;
-		पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5704) अणु
+		} else if (tg3_asic_rev(tp) == ASIC_REV_5704) {
 			pcix_cmd &= ~(PCI_X_CMD_MAX_SPLIT | PCI_X_CMD_MAX_READ);
 			pcix_cmd |= PCI_X_CMD_READ_2K;
-		पूर्ण
-		pci_ग_लिखो_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
+		}
+		pci_write_config_word(tp->pdev, tp->pcix_cap + PCI_X_CMD,
 				      pcix_cmd);
-	पूर्ण
+	}
 
 	tw32_f(RDMAC_MODE, rdmac_mode);
 	udelay(40);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5719 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5720) अणु
-		क्रम (i = 0; i < TG3_NUM_RDMA_CHANNELS; i++) अणु
-			अगर (tr32(TG3_RDMA_LENGTH + (i << 2)) > TG3_MAX_MTU(tp))
-				अवरोध;
-		पूर्ण
-		अगर (i < TG3_NUM_RDMA_CHANNELS) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5719 ||
+	    tg3_asic_rev(tp) == ASIC_REV_5720) {
+		for (i = 0; i < TG3_NUM_RDMA_CHANNELS; i++) {
+			if (tr32(TG3_RDMA_LENGTH + (i << 2)) > TG3_MAX_MTU(tp))
+				break;
+		}
+		if (i < TG3_NUM_RDMA_CHANNELS) {
 			val = tr32(TG3_LSO_RD_DMA_CRPTEN_CTRL);
 			val |= tg3_lso_rd_dma_workaround_bit(tp);
 			tw32(TG3_LSO_RD_DMA_CRPTEN_CTRL, val);
 			tg3_flag_set(tp, 5719_5720_RDMA_BUG);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tw32(RCVDCC_MODE, RCVDCC_MODE_ENABLE | RCVDCC_MODE_ATTN_ENABLE);
-	अगर (!tg3_flag(tp, 5705_PLUS))
+	if (!tg3_flag(tp, 5705_PLUS))
 		tw32(MBFREE_MODE, MBFREE_MODE_ENABLE);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5761)
+	if (tg3_asic_rev(tp) == ASIC_REV_5761)
 		tw32(SNDDATAC_MODE,
 		     SNDDATAC_MODE_ENABLE | SNDDATAC_MODE_CDELAY);
-	अन्यथा
+	else
 		tw32(SNDDATAC_MODE, SNDDATAC_MODE_ENABLE);
 
 	tw32(SNDBDC_MODE, SNDBDC_MODE_ENABLE | SNDBDC_MODE_ATTN_ENABLE);
 	tw32(RCVBDI_MODE, RCVBDI_MODE_ENABLE | RCVBDI_MODE_RCB_ATTN_ENAB);
 	val = RCVDBDI_MODE_ENABLE | RCVDBDI_MODE_INV_RING_SZ;
-	अगर (tg3_flag(tp, LRG_PROD_RING_CAP))
+	if (tg3_flag(tp, LRG_PROD_RING_CAP))
 		val |= RCVDBDI_MODE_LRG_RING_SZ;
 	tw32(RCVDBDI_MODE, val);
 	tw32(SNDDATAI_MODE, SNDDATAI_MODE_ENABLE);
-	अगर (tg3_flag(tp, HW_TSO_1) ||
+	if (tg3_flag(tp, HW_TSO_1) ||
 	    tg3_flag(tp, HW_TSO_2) ||
 	    tg3_flag(tp, HW_TSO_3))
 		tw32(SNDDATAI_MODE, SNDDATAI_MODE_ENABLE | 0x8);
 	val = SNDBDI_MODE_ENABLE | SNDBDI_MODE_ATTN_ENABLE;
-	अगर (tg3_flag(tp, ENABLE_TSS))
+	if (tg3_flag(tp, ENABLE_TSS))
 		val |= SNDBDI_MODE_MULTI_TXQ_EN;
 	tw32(SNDBDI_MODE, val);
 	tw32(SNDBDS_MODE, SNDBDS_MODE_ENABLE | SNDBDS_MODE_ATTN_ENABLE);
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0) अणु
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0) {
 		err = tg3_load_5701_a0_firmware_fix(tp);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57766) अणु
-		/* Ignore any errors क्रम the firmware करोwnload. If करोwnload
+	if (tg3_asic_rev(tp) == ASIC_REV_57766) {
+		/* Ignore any errors for the firmware download. If download
 		 * fails, the device will operate with EEE disabled
 		 */
 		tg3_load_57766_firmware(tp);
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, TSO_CAPABLE)) अणु
+	if (tg3_flag(tp, TSO_CAPABLE)) {
 		err = tg3_load_tso_firmware(tp);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	tp->tx_mode = TX_MODE_ENABLE;
 
-	अगर (tg3_flag(tp, 5755_PLUS) ||
+	if (tg3_flag(tp, 5755_PLUS) ||
 	    tg3_asic_rev(tp) == ASIC_REV_5906)
 		tp->tx_mode |= TX_MODE_MBUF_LOCKUP_FIX;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5720 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5762) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5720 ||
+	    tg3_asic_rev(tp) == ASIC_REV_5762) {
 		val = TX_MODE_JMB_FRM_LEN | TX_MODE_CNT_DN_MODE;
 		tp->tx_mode &= ~val;
 		tp->tx_mode |= tr32(MAC_TX_MODE) & val;
-	पूर्ण
+	}
 
 	tw32_f(MAC_TX_MODE, tp->tx_mode);
 	udelay(100);
 
-	अगर (tg3_flag(tp, ENABLE_RSS)) अणु
+	if (tg3_flag(tp, ENABLE_RSS)) {
 		u32 rss_key[10];
 
-		tg3_rss_ग_लिखो_indir_tbl(tp);
+		tg3_rss_write_indir_tbl(tp);
 
-		netdev_rss_key_fill(rss_key, 10 * माप(u32));
+		netdev_rss_key_fill(rss_key, 10 * sizeof(u32));
 
-		क्रम (i = 0; i < 10 ; i++)
+		for (i = 0; i < 10 ; i++)
 			tw32(MAC_RSS_HASH_KEY_0 + i*4, rss_key[i]);
-	पूर्ण
+	}
 
 	tp->rx_mode = RX_MODE_ENABLE;
-	अगर (tg3_flag(tp, 5755_PLUS))
+	if (tg3_flag(tp, 5755_PLUS))
 		tp->rx_mode |= RX_MODE_IPV6_CSUM_ENABLE;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5762)
+	if (tg3_asic_rev(tp) == ASIC_REV_5762)
 		tp->rx_mode |= RX_MODE_IPV4_FRAG_FIX;
 
-	अगर (tg3_flag(tp, ENABLE_RSS))
+	if (tg3_flag(tp, ENABLE_RSS))
 		tp->rx_mode |= RX_MODE_RSS_ENABLE |
 			       RX_MODE_RSS_ITBL_HASH_BITS_7 |
 			       RX_MODE_RSS_IPV6_HASH_EN |
@@ -10630,73 +10629,73 @@ err_no_dev:
 	tw32(MAC_LED_CTRL, tp->led_ctrl);
 
 	tw32(MAC_MI_STAT, MAC_MI_STAT_LNKSTAT_ATTN_ENAB);
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) अणु
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) {
 		tw32_f(MAC_RX_MODE, RX_MODE_RESET);
 		udelay(10);
-	पूर्ण
+	}
 	tw32_f(MAC_RX_MODE, tp->rx_mode);
 	udelay(10);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) अणु
-		अगर ((tg3_asic_rev(tp) == ASIC_REV_5704) &&
-		    !(tp->phy_flags & TG3_PHYFLG_SERDES_PREEMPHASIS)) अणु
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) {
+		if ((tg3_asic_rev(tp) == ASIC_REV_5704) &&
+		    !(tp->phy_flags & TG3_PHYFLG_SERDES_PREEMPHASIS)) {
 			/* Set drive transmission level to 1.2V  */
-			/* only अगर the संकेत pre-emphasis bit is not set  */
+			/* only if the signal pre-emphasis bit is not set  */
 			val = tr32(MAC_SERDES_CFG);
 			val &= 0xfffff000;
 			val |= 0x880;
 			tw32(MAC_SERDES_CFG, val);
-		पूर्ण
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5703_A1)
+		}
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_5703_A1)
 			tw32(MAC_SERDES_CFG, 0x616000);
-	पूर्ण
+	}
 
 	/* Prevent chip from dropping frames when flow control
 	 * is enabled.
 	 */
-	अगर (tg3_flag(tp, 57765_CLASS))
+	if (tg3_flag(tp, 57765_CLASS))
 		val = 1;
-	अन्यथा
+	else
 		val = 2;
 	tw32_f(MAC_LOW_WMARK_MAX_RX_FRAME, val);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5704 &&
-	    (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)) अणु
-		/* Use hardware link स्वतः-negotiation */
+	if (tg3_asic_rev(tp) == ASIC_REV_5704 &&
+	    (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)) {
+		/* Use hardware link auto-negotiation */
 		tg3_flag_set(tp, HW_AUTONEG);
-	पूर्ण
+	}
 
-	अगर ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
-	    tg3_asic_rev(tp) == ASIC_REV_5714) अणु
-		u32 पंचांगp;
+	if ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
+	    tg3_asic_rev(tp) == ASIC_REV_5714) {
+		u32 tmp;
 
-		पंचांगp = tr32(SERDES_RX_CTRL);
-		tw32(SERDES_RX_CTRL, पंचांगp | SERDES_RX_SIG_DETECT);
+		tmp = tr32(SERDES_RX_CTRL);
+		tw32(SERDES_RX_CTRL, tmp | SERDES_RX_SIG_DETECT);
 		tp->grc_local_ctrl &= ~GRC_LCLCTRL_USE_EXT_SIG_DETECT;
 		tp->grc_local_ctrl |= GRC_LCLCTRL_USE_SIG_DETECT;
 		tw32(GRC_LOCAL_CTRL, tp->grc_local_ctrl);
-	पूर्ण
+	}
 
-	अगर (!tg3_flag(tp, USE_PHYLIB)) अणु
-		अगर (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)
+	if (!tg3_flag(tp, USE_PHYLIB)) {
+		if (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)
 			tp->phy_flags &= ~TG3_PHYFLG_IS_LOW_POWER;
 
 		err = tg3_setup_phy(tp, false);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
-		    !(tp->phy_flags & TG3_PHYFLG_IS_FET)) अणु
-			u32 पंचांगp;
+		if (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
+		    !(tp->phy_flags & TG3_PHYFLG_IS_FET)) {
+			u32 tmp;
 
 			/* Clear CRC stats. */
-			अगर (!tg3_पढ़ोphy(tp, MII_TG3_TEST1, &पंचांगp)) अणु
-				tg3_ग_लिखोphy(tp, MII_TG3_TEST1,
-					     पंचांगp | MII_TG3_TEST1_CRC_EN);
-				tg3_पढ़ोphy(tp, MII_TG3_RXR_COUNTERS, &पंचांगp);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (!tg3_readphy(tp, MII_TG3_TEST1, &tmp)) {
+				tg3_writephy(tp, MII_TG3_TEST1,
+					     tmp | MII_TG3_TEST1_CRC_EN);
+				tg3_readphy(tp, MII_TG3_RXR_COUNTERS, &tmp);
+			}
+		}
+	}
 
 	__tg3_set_rx_mode(tp->dev);
 
@@ -10706,189 +10705,189 @@ err_no_dev:
 	tw32(MAC_RCV_RULE_1,  0x86000004 & RCV_RULE_DISABLE_MASK);
 	tw32(MAC_RCV_VALUE_1, 0xffffffff & RCV_RULE_DISABLE_MASK);
 
-	अगर (tg3_flag(tp, 5705_PLUS) && !tg3_flag(tp, 5780_CLASS))
+	if (tg3_flag(tp, 5705_PLUS) && !tg3_flag(tp, 5780_CLASS))
 		limit = 8;
-	अन्यथा
+	else
 		limit = 16;
-	अगर (tg3_flag(tp, ENABLE_ASF))
+	if (tg3_flag(tp, ENABLE_ASF))
 		limit -= 4;
-	चयन (limit) अणु
-	हाल 16:
+	switch (limit) {
+	case 16:
 		tw32(MAC_RCV_RULE_15,  0); tw32(MAC_RCV_VALUE_15,  0);
 		fallthrough;
-	हाल 15:
+	case 15:
 		tw32(MAC_RCV_RULE_14,  0); tw32(MAC_RCV_VALUE_14,  0);
 		fallthrough;
-	हाल 14:
+	case 14:
 		tw32(MAC_RCV_RULE_13,  0); tw32(MAC_RCV_VALUE_13,  0);
 		fallthrough;
-	हाल 13:
+	case 13:
 		tw32(MAC_RCV_RULE_12,  0); tw32(MAC_RCV_VALUE_12,  0);
 		fallthrough;
-	हाल 12:
+	case 12:
 		tw32(MAC_RCV_RULE_11,  0); tw32(MAC_RCV_VALUE_11,  0);
 		fallthrough;
-	हाल 11:
+	case 11:
 		tw32(MAC_RCV_RULE_10,  0); tw32(MAC_RCV_VALUE_10,  0);
 		fallthrough;
-	हाल 10:
+	case 10:
 		tw32(MAC_RCV_RULE_9,  0); tw32(MAC_RCV_VALUE_9,  0);
 		fallthrough;
-	हाल 9:
+	case 9:
 		tw32(MAC_RCV_RULE_8,  0); tw32(MAC_RCV_VALUE_8,  0);
 		fallthrough;
-	हाल 8:
+	case 8:
 		tw32(MAC_RCV_RULE_7,  0); tw32(MAC_RCV_VALUE_7,  0);
 		fallthrough;
-	हाल 7:
+	case 7:
 		tw32(MAC_RCV_RULE_6,  0); tw32(MAC_RCV_VALUE_6,  0);
 		fallthrough;
-	हाल 6:
+	case 6:
 		tw32(MAC_RCV_RULE_5,  0); tw32(MAC_RCV_VALUE_5,  0);
 		fallthrough;
-	हाल 5:
+	case 5:
 		tw32(MAC_RCV_RULE_4,  0); tw32(MAC_RCV_VALUE_4,  0);
 		fallthrough;
-	हाल 4:
+	case 4:
 		/* tw32(MAC_RCV_RULE_3,  0); tw32(MAC_RCV_VALUE_3,  0); */
-	हाल 3:
+	case 3:
 		/* tw32(MAC_RCV_RULE_2,  0); tw32(MAC_RCV_VALUE_2,  0); */
-	हाल 2:
-	हाल 1:
+	case 2:
+	case 1:
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	अगर (tg3_flag(tp, ENABLE_APE))
-		/* Write our heartbeat update पूर्णांकerval to APE. */
-		tg3_ape_ग_लिखो32(tp, TG3_APE_HOST_HEARTBEAT_INT_MS,
+	if (tg3_flag(tp, ENABLE_APE))
+		/* Write our heartbeat update interval to APE. */
+		tg3_ape_write32(tp, TG3_APE_HOST_HEARTBEAT_INT_MS,
 				APE_HOST_HEARTBEAT_INT_5SEC);
 
-	tg3_ग_लिखो_sig_post_reset(tp, RESET_KIND_INIT);
+	tg3_write_sig_post_reset(tp, RESET_KIND_INIT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Called at device खोलो समय to get the chip पढ़ोy क्रम
+/* Called at device open time to get the chip ready for
  * packet processing.  Invoked with tp->lock held.
  */
-अटल पूर्णांक tg3_init_hw(काष्ठा tg3 *tp, bool reset_phy)
-अणु
-	/* Chip may have been just घातered on. If so, the boot code may still
-	 * be running initialization. Wait क्रम it to finish to aव्योम races in
+static int tg3_init_hw(struct tg3 *tp, bool reset_phy)
+{
+	/* Chip may have been just powered on. If so, the boot code may still
+	 * be running initialization. Wait for it to finish to avoid races in
 	 * accessing the hardware.
 	 */
-	tg3_enable_रेजिस्टर_access(tp);
+	tg3_enable_register_access(tp);
 	tg3_poll_fw(tp);
 
-	tg3_चयन_घड़ीs(tp);
+	tg3_switch_clocks(tp);
 
 	tw32(TG3PCI_MEM_WIN_BASE_ADDR, 0);
 
-	वापस tg3_reset_hw(tp, reset_phy);
-पूर्ण
+	return tg3_reset_hw(tp, reset_phy);
+}
 
-#अगर_घोषित CONFIG_TIGON3_HWMON
-अटल व्योम tg3_sd_scan_scratchpad(काष्ठा tg3 *tp, काष्ठा tg3_ocir *ocir)
-अणु
+#ifdef CONFIG_TIGON3_HWMON
+static void tg3_sd_scan_scratchpad(struct tg3 *tp, struct tg3_ocir *ocir)
+{
 	u32 off, len = TG3_OCIR_LEN;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0, off = 0; i < TG3_SD_NUM_RECS; i++, ocir++, off += len) अणु
-		tg3_ape_scratchpad_पढ़ो(tp, (u32 *) ocir, off, len);
+	for (i = 0, off = 0; i < TG3_SD_NUM_RECS; i++, ocir++, off += len) {
+		tg3_ape_scratchpad_read(tp, (u32 *) ocir, off, len);
 
-		अगर (ocir->signature != TG3_OCIR_SIG_MAGIC ||
+		if (ocir->signature != TG3_OCIR_SIG_MAGIC ||
 		    !(ocir->version_flags & TG3_OCIR_FLAG_ACTIVE))
-			स_रखो(ocir, 0, len);
-	पूर्ण
-पूर्ण
+			memset(ocir, 0, len);
+	}
+}
 
-/* sysfs attributes क्रम hwmon */
-अटल sमाप_प्रकार tg3_show_temp(काष्ठा device *dev,
-			     काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा tg3 *tp = dev_get_drvdata(dev);
+/* sysfs attributes for hwmon */
+static ssize_t tg3_show_temp(struct device *dev,
+			     struct device_attribute *devattr, char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct tg3 *tp = dev_get_drvdata(dev);
 	u32 temperature;
 
 	spin_lock_bh(&tp->lock);
-	tg3_ape_scratchpad_पढ़ो(tp, &temperature, attr->index,
-				माप(temperature));
+	tg3_ape_scratchpad_read(tp, &temperature, attr->index,
+				sizeof(temperature));
 	spin_unlock_bh(&tp->lock);
-	वापस प्र_लिखो(buf, "%u\n", temperature * 1000);
-पूर्ण
+	return sprintf(buf, "%u\n", temperature * 1000);
+}
 
 
-अटल SENSOR_DEVICE_ATTR(temp1_input, 0444, tg3_show_temp, शून्य,
+static SENSOR_DEVICE_ATTR(temp1_input, 0444, tg3_show_temp, NULL,
 			  TG3_TEMP_SENSOR_OFFSET);
-अटल SENSOR_DEVICE_ATTR(temp1_crit, 0444, tg3_show_temp, शून्य,
+static SENSOR_DEVICE_ATTR(temp1_crit, 0444, tg3_show_temp, NULL,
 			  TG3_TEMP_CAUTION_OFFSET);
-अटल SENSOR_DEVICE_ATTR(temp1_max, 0444, tg3_show_temp, शून्य,
+static SENSOR_DEVICE_ATTR(temp1_max, 0444, tg3_show_temp, NULL,
 			  TG3_TEMP_MAX_OFFSET);
 
-अटल काष्ठा attribute *tg3_attrs[] = अणु
+static struct attribute *tg3_attrs[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp1_crit.dev_attr.attr,
 	&sensor_dev_attr_temp1_max.dev_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 ATTRIBUTE_GROUPS(tg3);
 
-अटल व्योम tg3_hwmon_बंद(काष्ठा tg3 *tp)
-अणु
-	अगर (tp->hwmon_dev) अणु
-		hwmon_device_unरेजिस्टर(tp->hwmon_dev);
-		tp->hwmon_dev = शून्य;
-	पूर्ण
-पूर्ण
+static void tg3_hwmon_close(struct tg3 *tp)
+{
+	if (tp->hwmon_dev) {
+		hwmon_device_unregister(tp->hwmon_dev);
+		tp->hwmon_dev = NULL;
+	}
+}
 
-अटल व्योम tg3_hwmon_खोलो(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_hwmon_open(struct tg3 *tp)
+{
+	int i;
 	u32 size = 0;
-	काष्ठा pci_dev *pdev = tp->pdev;
-	काष्ठा tg3_ocir ocirs[TG3_SD_NUM_RECS];
+	struct pci_dev *pdev = tp->pdev;
+	struct tg3_ocir ocirs[TG3_SD_NUM_RECS];
 
 	tg3_sd_scan_scratchpad(tp, ocirs);
 
-	क्रम (i = 0; i < TG3_SD_NUM_RECS; i++) अणु
-		अगर (!ocirs[i].src_data_length)
-			जारी;
+	for (i = 0; i < TG3_SD_NUM_RECS; i++) {
+		if (!ocirs[i].src_data_length)
+			continue;
 
 		size += ocirs[i].src_hdr_length;
 		size += ocirs[i].src_data_length;
-	पूर्ण
+	}
 
-	अगर (!size)
-		वापस;
+	if (!size)
+		return;
 
-	tp->hwmon_dev = hwmon_device_रेजिस्टर_with_groups(&pdev->dev, "tg3",
+	tp->hwmon_dev = hwmon_device_register_with_groups(&pdev->dev, "tg3",
 							  tp, tg3_groups);
-	अगर (IS_ERR(tp->hwmon_dev)) अणु
-		tp->hwmon_dev = शून्य;
+	if (IS_ERR(tp->hwmon_dev)) {
+		tp->hwmon_dev = NULL;
 		dev_err(&pdev->dev, "Cannot register hwmon device, aborting\n");
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम tg3_hwmon_बंद(काष्ठा tg3 *tp) अणु पूर्ण
-अटल अंतरभूत व्योम tg3_hwmon_खोलो(काष्ठा tg3 *tp) अणु पूर्ण
-#पूर्ण_अगर /* CONFIG_TIGON3_HWMON */
+	}
+}
+#else
+static inline void tg3_hwmon_close(struct tg3 *tp) { }
+static inline void tg3_hwmon_open(struct tg3 *tp) { }
+#endif /* CONFIG_TIGON3_HWMON */
 
 
-#घोषणा TG3_STAT_ADD32(PSTAT, REG) \
-करो अणु	u32 __val = tr32(REG); \
+#define TG3_STAT_ADD32(PSTAT, REG) \
+do {	u32 __val = tr32(REG); \
 	(PSTAT)->low += __val; \
-	अगर ((PSTAT)->low < __val) \
+	if ((PSTAT)->low < __val) \
 		(PSTAT)->high += 1; \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल व्योम tg3_periodic_fetch_stats(काष्ठा tg3 *tp)
-अणु
-	काष्ठा tg3_hw_stats *sp = tp->hw_stats;
+static void tg3_periodic_fetch_stats(struct tg3 *tp)
+{
+	struct tg3_hw_stats *sp = tp->hw_stats;
 
-	अगर (!tp->link_up)
-		वापस;
+	if (!tp->link_up)
+		return;
 
 	TG3_STAT_ADD32(&sp->tx_octets, MAC_TX_STATS_OCTETS);
 	TG3_STAT_ADD32(&sp->tx_collisions, MAC_TX_STATS_COLLISIONS);
@@ -10903,16 +10902,16 @@ ATTRIBUTE_GROUPS(tg3);
 	TG3_STAT_ADD32(&sp->tx_ucast_packets, MAC_TX_STATS_UCAST);
 	TG3_STAT_ADD32(&sp->tx_mcast_packets, MAC_TX_STATS_MCAST);
 	TG3_STAT_ADD32(&sp->tx_bcast_packets, MAC_TX_STATS_BCAST);
-	अगर (unlikely(tg3_flag(tp, 5719_5720_RDMA_BUG) &&
+	if (unlikely(tg3_flag(tp, 5719_5720_RDMA_BUG) &&
 		     (sp->tx_ucast_packets.low + sp->tx_mcast_packets.low +
-		      sp->tx_bcast_packets.low) > TG3_NUM_RDMA_CHANNELS)) अणु
+		      sp->tx_bcast_packets.low) > TG3_NUM_RDMA_CHANNELS)) {
 		u32 val;
 
 		val = tr32(TG3_LSO_RD_DMA_CRPTEN_CTRL);
 		val &= ~tg3_lso_rd_dma_workaround_bit(tp);
 		tw32(TG3_LSO_RD_DMA_CRPTEN_CTRL, val);
 		tg3_flag_clear(tp, 5719_5720_RDMA_BUG);
-	पूर्ण
+	}
 
 	TG3_STAT_ADD32(&sp->rx_octets, MAC_RX_STATS_OCTETS);
 	TG3_STAT_ADD32(&sp->rx_fragments, MAC_RX_STATS_FRAGMENTS);
@@ -10921,463 +10920,463 @@ ATTRIBUTE_GROUPS(tg3);
 	TG3_STAT_ADD32(&sp->rx_bcast_packets, MAC_RX_STATS_BCAST);
 	TG3_STAT_ADD32(&sp->rx_fcs_errors, MAC_RX_STATS_FCS_ERRORS);
 	TG3_STAT_ADD32(&sp->rx_align_errors, MAC_RX_STATS_ALIGN_ERRORS);
-	TG3_STAT_ADD32(&sp->rx_xon_छोड़ो_rcvd, MAC_RX_STATS_XON_PAUSE_RECVD);
-	TG3_STAT_ADD32(&sp->rx_xoff_छोड़ो_rcvd, MAC_RX_STATS_XOFF_PAUSE_RECVD);
+	TG3_STAT_ADD32(&sp->rx_xon_pause_rcvd, MAC_RX_STATS_XON_PAUSE_RECVD);
+	TG3_STAT_ADD32(&sp->rx_xoff_pause_rcvd, MAC_RX_STATS_XOFF_PAUSE_RECVD);
 	TG3_STAT_ADD32(&sp->rx_mac_ctrl_rcvd, MAC_RX_STATS_MAC_CTRL_RECVD);
 	TG3_STAT_ADD32(&sp->rx_xoff_entered, MAC_RX_STATS_XOFF_ENTERED);
-	TG3_STAT_ADD32(&sp->rx_frame_too_दीर्घ_errors, MAC_RX_STATS_FRAME_TOO_LONG);
+	TG3_STAT_ADD32(&sp->rx_frame_too_long_errors, MAC_RX_STATS_FRAME_TOO_LONG);
 	TG3_STAT_ADD32(&sp->rx_jabbers, MAC_RX_STATS_JABBERS);
 	TG3_STAT_ADD32(&sp->rx_undersize_packets, MAC_RX_STATS_UNDERSIZE);
 
 	TG3_STAT_ADD32(&sp->rxbds_empty, RCVLPC_NO_RCV_BD_CNT);
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5717 &&
+	if (tg3_asic_rev(tp) != ASIC_REV_5717 &&
 	    tg3_asic_rev(tp) != ASIC_REV_5762 &&
 	    tg3_chip_rev_id(tp) != CHIPREV_ID_5719_A0 &&
-	    tg3_chip_rev_id(tp) != CHIPREV_ID_5720_A0) अणु
+	    tg3_chip_rev_id(tp) != CHIPREV_ID_5720_A0) {
 		TG3_STAT_ADD32(&sp->rx_discards, RCVLPC_IN_DISCARDS_CNT);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 val = tr32(HOSTCC_FLOW_ATTN);
 		val = (val & HOSTCC_FLOW_ATTN_MBUF_LWM) ? 1 : 0;
-		अगर (val) अणु
+		if (val) {
 			tw32(HOSTCC_FLOW_ATTN, HOSTCC_FLOW_ATTN_MBUF_LWM);
 			sp->rx_discards.low += val;
-			अगर (sp->rx_discards.low < val)
+			if (sp->rx_discards.low < val)
 				sp->rx_discards.high += 1;
-		पूर्ण
+		}
 		sp->mbuf_lwm_thresh_hit = sp->rx_discards;
-	पूर्ण
+	}
 	TG3_STAT_ADD32(&sp->rx_errors, RCVLPC_IN_ERRORS_CNT);
-पूर्ण
+}
 
-अटल व्योम tg3_chk_missed_msi(काष्ठा tg3 *tp)
-अणु
+static void tg3_chk_missed_msi(struct tg3 *tp)
+{
 	u32 i;
 
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_cnt; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
-		अगर (tg3_has_work(tnapi)) अणु
-			अगर (tnapi->last_rx_cons == tnapi->rx_rcb_ptr &&
-			    tnapi->last_tx_cons == tnapi->tx_cons) अणु
-				अगर (tnapi->chk_msi_cnt < 1) अणु
+		if (tg3_has_work(tnapi)) {
+			if (tnapi->last_rx_cons == tnapi->rx_rcb_ptr &&
+			    tnapi->last_tx_cons == tnapi->tx_cons) {
+				if (tnapi->chk_msi_cnt < 1) {
 					tnapi->chk_msi_cnt++;
-					वापस;
-				पूर्ण
+					return;
+				}
 				tg3_msi(0, tnapi);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		tnapi->chk_msi_cnt = 0;
 		tnapi->last_rx_cons = tnapi->rx_rcb_ptr;
 		tnapi->last_tx_cons = tnapi->tx_cons;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा tg3 *tp = from_समयr(tp, t, समयr);
+static void tg3_timer(struct timer_list *t)
+{
+	struct tg3 *tp = from_timer(tp, t, timer);
 
 	spin_lock(&tp->lock);
 
-	अगर (tp->irq_sync || tg3_flag(tp, RESET_TASK_PENDING)) अणु
+	if (tp->irq_sync || tg3_flag(tp, RESET_TASK_PENDING)) {
 		spin_unlock(&tp->lock);
-		जाओ restart_समयr;
-	पूर्ण
+		goto restart_timer;
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_flag(tp, 57765_CLASS))
 		tg3_chk_missed_msi(tp);
 
-	अगर (tg3_flag(tp, FLUSH_POSTED_WRITES)) अणु
-		/* BCM4785: Flush posted ग_लिखोs from GbE to host memory. */
+	if (tg3_flag(tp, FLUSH_POSTED_WRITES)) {
+		/* BCM4785: Flush posted writes from GbE to host memory. */
 		tr32(HOSTCC_MODE);
-	पूर्ण
+	}
 
-	अगर (!tg3_flag(tp, TAGGED_STATUS)) अणु
+	if (!tg3_flag(tp, TAGGED_STATUS)) {
 		/* All of this garbage is because when using non-tagged
 		 * IRQ status the mailbox/status_block protocol the chip
 		 * uses with the cpu is race prone.
 		 */
-		अगर (tp->napi[0].hw_status->status & SD_STATUS_UPDATED) अणु
+		if (tp->napi[0].hw_status->status & SD_STATUS_UPDATED) {
 			tw32(GRC_LOCAL_CTRL,
 			     tp->grc_local_ctrl | GRC_LCLCTRL_SETINT);
-		पूर्ण अन्यथा अणु
+		} else {
 			tw32(HOSTCC_MODE, tp->coalesce_mode |
 			     HOSTCC_MODE_ENABLE | HOSTCC_MODE_NOW);
-		पूर्ण
+		}
 
-		अगर (!(tr32(WDMAC_MODE) & WDMAC_MODE_ENABLE)) अणु
+		if (!(tr32(WDMAC_MODE) & WDMAC_MODE_ENABLE)) {
 			spin_unlock(&tp->lock);
 			tg3_reset_task_schedule(tp);
-			जाओ restart_समयr;
-		पूर्ण
-	पूर्ण
+			goto restart_timer;
+		}
+	}
 
 	/* This part only runs once per second. */
-	अगर (!--tp->समयr_counter) अणु
-		अगर (tg3_flag(tp, 5705_PLUS))
+	if (!--tp->timer_counter) {
+		if (tg3_flag(tp, 5705_PLUS))
 			tg3_periodic_fetch_stats(tp);
 
-		अगर (tp->setlpicnt && !--tp->setlpicnt)
+		if (tp->setlpicnt && !--tp->setlpicnt)
 			tg3_phy_eee_enable(tp);
 
-		अगर (tg3_flag(tp, USE_LINKCHG_REG)) अणु
+		if (tg3_flag(tp, USE_LINKCHG_REG)) {
 			u32 mac_stat;
-			पूर्णांक phy_event;
+			int phy_event;
 
 			mac_stat = tr32(MAC_STATUS);
 
 			phy_event = 0;
-			अगर (tp->phy_flags & TG3_PHYFLG_USE_MI_INTERRUPT) अणु
-				अगर (mac_stat & MAC_STATUS_MI_INTERRUPT)
+			if (tp->phy_flags & TG3_PHYFLG_USE_MI_INTERRUPT) {
+				if (mac_stat & MAC_STATUS_MI_INTERRUPT)
 					phy_event = 1;
-			पूर्ण अन्यथा अगर (mac_stat & MAC_STATUS_LNKSTATE_CHANGED)
+			} else if (mac_stat & MAC_STATUS_LNKSTATE_CHANGED)
 				phy_event = 1;
 
-			अगर (phy_event)
+			if (phy_event)
 				tg3_setup_phy(tp, false);
-		पूर्ण अन्यथा अगर (tg3_flag(tp, POLL_SERDES)) अणु
+		} else if (tg3_flag(tp, POLL_SERDES)) {
 			u32 mac_stat = tr32(MAC_STATUS);
-			पूर्णांक need_setup = 0;
+			int need_setup = 0;
 
-			अगर (tp->link_up &&
-			    (mac_stat & MAC_STATUS_LNKSTATE_CHANGED)) अणु
+			if (tp->link_up &&
+			    (mac_stat & MAC_STATUS_LNKSTATE_CHANGED)) {
 				need_setup = 1;
-			पूर्ण
-			अगर (!tp->link_up &&
+			}
+			if (!tp->link_up &&
 			    (mac_stat & (MAC_STATUS_PCS_SYNCED |
-					 MAC_STATUS_SIGNAL_DET))) अणु
+					 MAC_STATUS_SIGNAL_DET))) {
 				need_setup = 1;
-			पूर्ण
-			अगर (need_setup) अणु
-				अगर (!tp->serdes_counter) अणु
+			}
+			if (need_setup) {
+				if (!tp->serdes_counter) {
 					tw32_f(MAC_MODE,
 					     (tp->mac_mode &
 					      ~MAC_MODE_PORT_MODE_MASK));
 					udelay(40);
 					tw32_f(MAC_MODE, tp->mac_mode);
 					udelay(40);
-				पूर्ण
+				}
 				tg3_setup_phy(tp, false);
-			पूर्ण
-		पूर्ण अन्यथा अगर ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
-			   tg3_flag(tp, 5780_CLASS)) अणु
+			}
+		} else if ((tp->phy_flags & TG3_PHYFLG_MII_SERDES) &&
+			   tg3_flag(tp, 5780_CLASS)) {
 			tg3_serdes_parallel_detect(tp);
-		पूर्ण अन्यथा अगर (tg3_flag(tp, POLL_CPMU_LINK)) अणु
+		} else if (tg3_flag(tp, POLL_CPMU_LINK)) {
 			u32 cpmu = tr32(TG3_CPMU_STATUS);
 			bool link_up = !((cpmu & TG3_CPMU_STATUS_LINK_MASK) ==
 					 TG3_CPMU_STATUS_LINK_MASK);
 
-			अगर (link_up != tp->link_up)
+			if (link_up != tp->link_up)
 				tg3_setup_phy(tp, false);
-		पूर्ण
+		}
 
-		tp->समयr_counter = tp->समयr_multiplier;
-	पूर्ण
+		tp->timer_counter = tp->timer_multiplier;
+	}
 
 	/* Heartbeat is only sent once every 2 seconds.
 	 *
 	 * The heartbeat is to tell the ASF firmware that the host
 	 * driver is still alive.  In the event that the OS crashes,
-	 * ASF needs to reset the hardware to मुक्त up the FIFO space
-	 * that may be filled with rx packets destined क्रम the host.
-	 * If the FIFO is full, ASF will no दीर्घer function properly.
+	 * ASF needs to reset the hardware to free up the FIFO space
+	 * that may be filled with rx packets destined for the host.
+	 * If the FIFO is full, ASF will no longer function properly.
 	 *
-	 * Unपूर्णांकended resets have been reported on real समय kernels
-	 * where the समयr करोesn't run on समय.  Netpoll will also have
+	 * Unintended resets have been reported on real time kernels
+	 * where the timer doesn't run on time.  Netpoll will also have
 	 * same problem.
 	 *
 	 * The new FWCMD_NICDRV_ALIVE3 command tells the ASF firmware
 	 * to check the ring condition when the heartbeat is expiring
-	 * beक्रमe करोing the reset.  This will prevent most unपूर्णांकended
+	 * before doing the reset.  This will prevent most unintended
 	 * resets.
 	 */
-	अगर (!--tp->asf_counter) अणु
-		अगर (tg3_flag(tp, ENABLE_ASF) && !tg3_flag(tp, ENABLE_APE)) अणु
-			tg3_रुको_क्रम_event_ack(tp);
+	if (!--tp->asf_counter) {
+		if (tg3_flag(tp, ENABLE_ASF) && !tg3_flag(tp, ENABLE_APE)) {
+			tg3_wait_for_event_ack(tp);
 
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_MBOX,
+			tg3_write_mem(tp, NIC_SRAM_FW_CMD_MBOX,
 				      FWCMD_NICDRV_ALIVE3);
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_LEN_MBOX, 4);
-			tg3_ग_लिखो_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX,
+			tg3_write_mem(tp, NIC_SRAM_FW_CMD_LEN_MBOX, 4);
+			tg3_write_mem(tp, NIC_SRAM_FW_CMD_DATA_MBOX,
 				      TG3_FW_UPDATE_TIMEOUT_SEC);
 
 			tg3_generate_fw_event(tp);
-		पूर्ण
+		}
 		tp->asf_counter = tp->asf_multiplier;
-	पूर्ण
+	}
 
 	/* Update the APE heartbeat every 5 seconds.*/
 	tg3_send_ape_heartbeat(tp, TG3_APE_HB_INTERVAL);
 
 	spin_unlock(&tp->lock);
 
-restart_समयr:
-	tp->समयr.expires = jअगरfies + tp->समयr_offset;
-	add_समयr(&tp->समयr);
-पूर्ण
+restart_timer:
+	tp->timer.expires = jiffies + tp->timer_offset;
+	add_timer(&tp->timer);
+}
 
-अटल व्योम tg3_समयr_init(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, TAGGED_STATUS) &&
+static void tg3_timer_init(struct tg3 *tp)
+{
+	if (tg3_flag(tp, TAGGED_STATUS) &&
 	    tg3_asic_rev(tp) != ASIC_REV_5717 &&
 	    !tg3_flag(tp, 57765_CLASS))
-		tp->समयr_offset = HZ;
-	अन्यथा
-		tp->समयr_offset = HZ / 10;
+		tp->timer_offset = HZ;
+	else
+		tp->timer_offset = HZ / 10;
 
-	BUG_ON(tp->समयr_offset > HZ);
+	BUG_ON(tp->timer_offset > HZ);
 
-	tp->समयr_multiplier = (HZ / tp->समयr_offset);
-	tp->asf_multiplier = (HZ / tp->समयr_offset) *
+	tp->timer_multiplier = (HZ / tp->timer_offset);
+	tp->asf_multiplier = (HZ / tp->timer_offset) *
 			     TG3_FW_UPDATE_FREQ_SEC;
 
-	समयr_setup(&tp->समयr, tg3_समयr, 0);
-पूर्ण
+	timer_setup(&tp->timer, tg3_timer, 0);
+}
 
-अटल व्योम tg3_समयr_start(काष्ठा tg3 *tp)
-अणु
+static void tg3_timer_start(struct tg3 *tp)
+{
 	tp->asf_counter   = tp->asf_multiplier;
-	tp->समयr_counter = tp->समयr_multiplier;
+	tp->timer_counter = tp->timer_multiplier;
 
-	tp->समयr.expires = jअगरfies + tp->समयr_offset;
-	add_समयr(&tp->समयr);
-पूर्ण
+	tp->timer.expires = jiffies + tp->timer_offset;
+	add_timer(&tp->timer);
+}
 
-अटल व्योम tg3_समयr_stop(काष्ठा tg3 *tp)
-अणु
-	del_समयr_sync(&tp->समयr);
-पूर्ण
+static void tg3_timer_stop(struct tg3 *tp)
+{
+	del_timer_sync(&tp->timer);
+}
 
 /* Restart hardware after configuration changes, self-test, etc.
  * Invoked with tp->lock held.
  */
-अटल पूर्णांक tg3_restart_hw(काष्ठा tg3 *tp, bool reset_phy)
+static int tg3_restart_hw(struct tg3 *tp, bool reset_phy)
 	__releases(tp->lock)
 	__acquires(tp->lock)
-अणु
-	पूर्णांक err;
+{
+	int err;
 
 	err = tg3_init_hw(tp, reset_phy);
-	अगर (err) अणु
+	if (err) {
 		netdev_err(tp->dev,
 			   "Failed to re-initialize device, aborting\n");
 		tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
 		tg3_full_unlock(tp);
-		tg3_समयr_stop(tp);
+		tg3_timer_stop(tp);
 		tp->irq_sync = 0;
 		tg3_napi_enable(tp);
-		dev_बंद(tp->dev);
+		dev_close(tp->dev);
 		tg3_full_lock(tp, 0);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल व्योम tg3_reset_task(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा tg3 *tp = container_of(work, काष्ठा tg3, reset_task);
-	पूर्णांक err;
+static void tg3_reset_task(struct work_struct *work)
+{
+	struct tg3 *tp = container_of(work, struct tg3, reset_task);
+	int err;
 
 	rtnl_lock();
 	tg3_full_lock(tp, 0);
 
-	अगर (!netअगर_running(tp->dev)) अणु
+	if (!netif_running(tp->dev)) {
 		tg3_flag_clear(tp, RESET_TASK_PENDING);
 		tg3_full_unlock(tp);
 		rtnl_unlock();
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tg3_full_unlock(tp);
 
 	tg3_phy_stop(tp);
 
-	tg3_netअगर_stop(tp);
+	tg3_netif_stop(tp);
 
 	tg3_full_lock(tp, 1);
 
-	अगर (tg3_flag(tp, TX_RECOVERY_PENDING)) अणु
-		tp->ग_लिखो32_tx_mbox = tg3_ग_लिखो32_tx_mbox;
-		tp->ग_लिखो32_rx_mbox = tg3_ग_लिखो_flush_reg32;
+	if (tg3_flag(tp, TX_RECOVERY_PENDING)) {
+		tp->write32_tx_mbox = tg3_write32_tx_mbox;
+		tp->write32_rx_mbox = tg3_write_flush_reg32;
 		tg3_flag_set(tp, MBOX_WRITE_REORDER);
 		tg3_flag_clear(tp, TX_RECOVERY_PENDING);
-	पूर्ण
+	}
 
 	tg3_halt(tp, RESET_KIND_SHUTDOWN, 0);
 	err = tg3_init_hw(tp, true);
-	अगर (err) अणु
+	if (err) {
 		tg3_full_unlock(tp);
 		tp->irq_sync = 0;
 		tg3_napi_enable(tp);
 		/* Clear this flag so that tg3_reset_task_cancel() will not
-		 * call cancel_work_sync() and रुको क्रमever.
+		 * call cancel_work_sync() and wait forever.
 		 */
 		tg3_flag_clear(tp, RESET_TASK_PENDING);
-		dev_बंद(tp->dev);
-		जाओ out;
-	पूर्ण
+		dev_close(tp->dev);
+		goto out;
+	}
 
-	tg3_netअगर_start(tp);
+	tg3_netif_start(tp);
 
 	tg3_full_unlock(tp);
 
-	अगर (!err)
+	if (!err)
 		tg3_phy_start(tp);
 
 	tg3_flag_clear(tp, RESET_TASK_PENDING);
 out:
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल पूर्णांक tg3_request_irq(काष्ठा tg3 *tp, पूर्णांक irq_num)
-अणु
+static int tg3_request_irq(struct tg3 *tp, int irq_num)
+{
 	irq_handler_t fn;
-	अचिन्हित दीर्घ flags;
-	अक्षर *name;
-	काष्ठा tg3_napi *tnapi = &tp->napi[irq_num];
+	unsigned long flags;
+	char *name;
+	struct tg3_napi *tnapi = &tp->napi[irq_num];
 
-	अगर (tp->irq_cnt == 1)
+	if (tp->irq_cnt == 1)
 		name = tp->dev->name;
-	अन्यथा अणु
+	else {
 		name = &tnapi->irq_lbl[0];
-		अगर (tnapi->tx_buffers && tnapi->rx_rcb)
-			snम_लिखो(name, IFNAMSIZ,
+		if (tnapi->tx_buffers && tnapi->rx_rcb)
+			snprintf(name, IFNAMSIZ,
 				 "%s-txrx-%d", tp->dev->name, irq_num);
-		अन्यथा अगर (tnapi->tx_buffers)
-			snम_लिखो(name, IFNAMSIZ,
+		else if (tnapi->tx_buffers)
+			snprintf(name, IFNAMSIZ,
 				 "%s-tx-%d", tp->dev->name, irq_num);
-		अन्यथा अगर (tnapi->rx_rcb)
-			snम_लिखो(name, IFNAMSIZ,
+		else if (tnapi->rx_rcb)
+			snprintf(name, IFNAMSIZ,
 				 "%s-rx-%d", tp->dev->name, irq_num);
-		अन्यथा
-			snम_लिखो(name, IFNAMSIZ,
+		else
+			snprintf(name, IFNAMSIZ,
 				 "%s-%d", tp->dev->name, irq_num);
 		name[IFNAMSIZ-1] = 0;
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, USING_MSI) || tg3_flag(tp, USING_MSIX)) अणु
+	if (tg3_flag(tp, USING_MSI) || tg3_flag(tp, USING_MSIX)) {
 		fn = tg3_msi;
-		अगर (tg3_flag(tp, 1SHOT_MSI))
+		if (tg3_flag(tp, 1SHOT_MSI))
 			fn = tg3_msi_1shot;
 		flags = 0;
-	पूर्ण अन्यथा अणु
-		fn = tg3_पूर्णांकerrupt;
-		अगर (tg3_flag(tp, TAGGED_STATUS))
-			fn = tg3_पूर्णांकerrupt_tagged;
+	} else {
+		fn = tg3_interrupt;
+		if (tg3_flag(tp, TAGGED_STATUS))
+			fn = tg3_interrupt_tagged;
 		flags = IRQF_SHARED;
-	पूर्ण
+	}
 
-	वापस request_irq(tnapi->irq_vec, fn, flags, name, tnapi);
-पूर्ण
+	return request_irq(tnapi->irq_vec, fn, flags, name, tnapi);
+}
 
-अटल पूर्णांक tg3_test_पूर्णांकerrupt(काष्ठा tg3 *tp)
-अणु
-	काष्ठा tg3_napi *tnapi = &tp->napi[0];
-	काष्ठा net_device *dev = tp->dev;
-	पूर्णांक err, i, पूर्णांकr_ok = 0;
+static int tg3_test_interrupt(struct tg3 *tp)
+{
+	struct tg3_napi *tnapi = &tp->napi[0];
+	struct net_device *dev = tp->dev;
+	int err, i, intr_ok = 0;
 	u32 val;
 
-	अगर (!netअगर_running(dev))
-		वापस -ENODEV;
+	if (!netif_running(dev))
+		return -ENODEV;
 
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 
-	मुक्त_irq(tnapi->irq_vec, tnapi);
+	free_irq(tnapi->irq_vec, tnapi);
 
 	/*
 	 * Turn off MSI one shot mode.  Otherwise this test has no
-	 * observable way to know whether the पूर्णांकerrupt was delivered.
+	 * observable way to know whether the interrupt was delivered.
 	 */
-	अगर (tg3_flag(tp, 57765_PLUS)) अणु
+	if (tg3_flag(tp, 57765_PLUS)) {
 		val = tr32(MSGINT_MODE) | MSGINT_MODE_ONE_SHOT_DISABLE;
 		tw32(MSGINT_MODE, val);
-	पूर्ण
+	}
 
 	err = request_irq(tnapi->irq_vec, tg3_test_isr,
 			  IRQF_SHARED, dev->name, tnapi);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	tnapi->hw_status->status &= ~SD_STATUS_UPDATED;
-	tg3_enable_पूर्णांकs(tp);
+	tg3_enable_ints(tp);
 
 	tw32_f(HOSTCC_MODE, tp->coalesce_mode | HOSTCC_MODE_ENABLE |
 	       tnapi->coal_now);
 
-	क्रम (i = 0; i < 5; i++) अणु
-		u32 पूर्णांक_mbox, misc_host_ctrl;
+	for (i = 0; i < 5; i++) {
+		u32 int_mbox, misc_host_ctrl;
 
-		पूर्णांक_mbox = tr32_mailbox(tnapi->पूर्णांक_mbox);
+		int_mbox = tr32_mailbox(tnapi->int_mbox);
 		misc_host_ctrl = tr32(TG3PCI_MISC_HOST_CTRL);
 
-		अगर ((पूर्णांक_mbox != 0) ||
-		    (misc_host_ctrl & MISC_HOST_CTRL_MASK_PCI_INT)) अणु
-			पूर्णांकr_ok = 1;
-			अवरोध;
-		पूर्ण
+		if ((int_mbox != 0) ||
+		    (misc_host_ctrl & MISC_HOST_CTRL_MASK_PCI_INT)) {
+			intr_ok = 1;
+			break;
+		}
 
-		अगर (tg3_flag(tp, 57765_PLUS) &&
+		if (tg3_flag(tp, 57765_PLUS) &&
 		    tnapi->hw_status->status_tag != tnapi->last_tag)
-			tw32_mailbox_f(tnapi->पूर्णांक_mbox, tnapi->last_tag << 24);
+			tw32_mailbox_f(tnapi->int_mbox, tnapi->last_tag << 24);
 
 		msleep(10);
-	पूर्ण
+	}
 
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 
-	मुक्त_irq(tnapi->irq_vec, tnapi);
+	free_irq(tnapi->irq_vec, tnapi);
 
 	err = tg3_request_irq(tp, 0);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (पूर्णांकr_ok) अणु
+	if (intr_ok) {
 		/* Reenable MSI one shot mode. */
-		अगर (tg3_flag(tp, 57765_PLUS) && tg3_flag(tp, 1SHOT_MSI)) अणु
+		if (tg3_flag(tp, 57765_PLUS) && tg3_flag(tp, 1SHOT_MSI)) {
 			val = tr32(MSGINT_MODE) & ~MSGINT_MODE_ONE_SHOT_DISABLE;
 			tw32(MSGINT_MODE, val);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-/* Returns 0 अगर MSI test succeeds or MSI test fails and INTx mode is
+/* Returns 0 if MSI test succeeds or MSI test fails and INTx mode is
  * successfully restored
  */
-अटल पूर्णांक tg3_test_msi(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक err;
+static int tg3_test_msi(struct tg3 *tp)
+{
+	int err;
 	u16 pci_cmd;
 
-	अगर (!tg3_flag(tp, USING_MSI))
-		वापस 0;
+	if (!tg3_flag(tp, USING_MSI))
+		return 0;
 
-	/* Turn off SERR reporting in हाल MSI terminates with Master
+	/* Turn off SERR reporting in case MSI terminates with Master
 	 * Abort.
 	 */
-	pci_पढ़ो_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
-	pci_ग_लिखो_config_word(tp->pdev, PCI_COMMAND,
+	pci_read_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
+	pci_write_config_word(tp->pdev, PCI_COMMAND,
 			      pci_cmd & ~PCI_COMMAND_SERR);
 
-	err = tg3_test_पूर्णांकerrupt(tp);
+	err = tg3_test_interrupt(tp);
 
-	pci_ग_लिखो_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
+	pci_write_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
 
-	अगर (!err)
-		वापस 0;
+	if (!err)
+		return 0;
 
 	/* other failures */
-	अगर (err != -EIO)
-		वापस err;
+	if (err != -EIO)
+		return err;
 
 	/* MSI test failed, go back to INTx mode */
 	netdev_warn(tp->dev, "No interrupt was generated using MSI. Switching "
 		    "to INTx mode. Please report this failure to the PCI "
 		    "maintainer and include system chipset information\n");
 
-	मुक्त_irq(tp->napi[0].irq_vec, &tp->napi[0]);
+	free_irq(tp->napi[0].irq_vec, &tp->napi[0]);
 
 	pci_disable_msi(tp->pdev);
 
@@ -11385,8 +11384,8 @@ out:
 	tp->napi[0].irq_vec = tp->pdev->irq;
 
 	err = tg3_request_irq(tp, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Need to reset the chip because the MSI cycle may have terminated
 	 * with Master Abort.
@@ -11398,180 +11397,180 @@ out:
 
 	tg3_full_unlock(tp);
 
-	अगर (err)
-		मुक्त_irq(tp->napi[0].irq_vec, &tp->napi[0]);
+	if (err)
+		free_irq(tp->napi[0].irq_vec, &tp->napi[0]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_request_firmware(काष्ठा tg3 *tp)
-अणु
-	स्थिर काष्ठा tg3_firmware_hdr *fw_hdr;
+static int tg3_request_firmware(struct tg3 *tp)
+{
+	const struct tg3_firmware_hdr *fw_hdr;
 
-	अगर (request_firmware(&tp->fw, tp->fw_needed, &tp->pdev->dev)) अणु
+	if (request_firmware(&tp->fw, tp->fw_needed, &tp->pdev->dev)) {
 		netdev_err(tp->dev, "Failed to load firmware \"%s\"\n",
 			   tp->fw_needed);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	fw_hdr = (काष्ठा tg3_firmware_hdr *)tp->fw->data;
+	fw_hdr = (struct tg3_firmware_hdr *)tp->fw->data;
 
 	/* Firmware blob starts with version numbers, followed by
 	 * start address and _full_ length including BSS sections
-	 * (which must be दीर्घer than the actual data, of course
+	 * (which must be longer than the actual data, of course
 	 */
 
 	tp->fw_len = be32_to_cpu(fw_hdr->len);	/* includes bss */
-	अगर (tp->fw_len < (tp->fw->size - TG3_FW_HDR_LEN)) अणु
+	if (tp->fw_len < (tp->fw->size - TG3_FW_HDR_LEN)) {
 		netdev_err(tp->dev, "bogus length %d in \"%s\"\n",
 			   tp->fw_len, tp->fw_needed);
 		release_firmware(tp->fw);
-		tp->fw = शून्य;
-		वापस -EINVAL;
-	पूर्ण
+		tp->fw = NULL;
+		return -EINVAL;
+	}
 
-	/* We no दीर्घer need firmware; we have it. */
-	tp->fw_needed = शून्य;
-	वापस 0;
-पूर्ण
+	/* We no longer need firmware; we have it. */
+	tp->fw_needed = NULL;
+	return 0;
+}
 
-अटल u32 tg3_irq_count(काष्ठा tg3 *tp)
-अणु
+static u32 tg3_irq_count(struct tg3 *tp)
+{
 	u32 irq_cnt = max(tp->rxq_cnt, tp->txq_cnt);
 
-	अगर (irq_cnt > 1) अणु
+	if (irq_cnt > 1) {
 		/* We want as many rx rings enabled as there are cpus.
 		 * In multiqueue MSI-X mode, the first MSI-X vector
-		 * only deals with link पूर्णांकerrupts, etc, so we add
+		 * only deals with link interrupts, etc, so we add
 		 * one to the number of vectors we are requesting.
 		 */
-		irq_cnt = min_t(अचिन्हित, irq_cnt + 1, tp->irq_max);
-	पूर्ण
+		irq_cnt = min_t(unsigned, irq_cnt + 1, tp->irq_max);
+	}
 
-	वापस irq_cnt;
-पूर्ण
+	return irq_cnt;
+}
 
-अटल bool tg3_enable_msix(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i, rc;
-	काष्ठा msix_entry msix_ent[TG3_IRQ_MAX_VECS];
+static bool tg3_enable_msix(struct tg3 *tp)
+{
+	int i, rc;
+	struct msix_entry msix_ent[TG3_IRQ_MAX_VECS];
 
 	tp->txq_cnt = tp->txq_req;
 	tp->rxq_cnt = tp->rxq_req;
-	अगर (!tp->rxq_cnt)
-		tp->rxq_cnt = netअगर_get_num_शेष_rss_queues();
-	अगर (tp->rxq_cnt > tp->rxq_max)
+	if (!tp->rxq_cnt)
+		tp->rxq_cnt = netif_get_num_default_rss_queues();
+	if (tp->rxq_cnt > tp->rxq_max)
 		tp->rxq_cnt = tp->rxq_max;
 
-	/* Disable multiple TX rings by शेष.  Simple round-robin hardware
+	/* Disable multiple TX rings by default.  Simple round-robin hardware
 	 * scheduling of the TX rings can cause starvation of rings with
 	 * small packets when other rings have TSO or jumbo packets.
 	 */
-	अगर (!tp->txq_req)
+	if (!tp->txq_req)
 		tp->txq_cnt = 1;
 
 	tp->irq_cnt = tg3_irq_count(tp);
 
-	क्रम (i = 0; i < tp->irq_max; i++) अणु
+	for (i = 0; i < tp->irq_max; i++) {
 		msix_ent[i].entry  = i;
 		msix_ent[i].vector = 0;
-	पूर्ण
+	}
 
 	rc = pci_enable_msix_range(tp->pdev, msix_ent, 1, tp->irq_cnt);
-	अगर (rc < 0) अणु
-		वापस false;
-	पूर्ण अन्यथा अगर (rc < tp->irq_cnt) अणु
+	if (rc < 0) {
+		return false;
+	} else if (rc < tp->irq_cnt) {
 		netdev_notice(tp->dev, "Requested %d MSI-X vectors, received %d\n",
 			      tp->irq_cnt, rc);
 		tp->irq_cnt = rc;
 		tp->rxq_cnt = max(rc - 1, 1);
-		अगर (tp->txq_cnt)
+		if (tp->txq_cnt)
 			tp->txq_cnt = min(tp->rxq_cnt, tp->txq_max);
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < tp->irq_max; i++)
+	for (i = 0; i < tp->irq_max; i++)
 		tp->napi[i].irq_vec = msix_ent[i].vector;
 
-	अगर (netअगर_set_real_num_rx_queues(tp->dev, tp->rxq_cnt)) अणु
+	if (netif_set_real_num_rx_queues(tp->dev, tp->rxq_cnt)) {
 		pci_disable_msix(tp->pdev);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (tp->irq_cnt == 1)
-		वापस true;
+	if (tp->irq_cnt == 1)
+		return true;
 
 	tg3_flag_set(tp, ENABLE_RSS);
 
-	अगर (tp->txq_cnt > 1)
+	if (tp->txq_cnt > 1)
 		tg3_flag_set(tp, ENABLE_TSS);
 
-	netअगर_set_real_num_tx_queues(tp->dev, tp->txq_cnt);
+	netif_set_real_num_tx_queues(tp->dev, tp->txq_cnt);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम tg3_पूर्णांकs_init(काष्ठा tg3 *tp)
-अणु
-	अगर ((tg3_flag(tp, SUPPORT_MSI) || tg3_flag(tp, SUPPORT_MSIX)) &&
-	    !tg3_flag(tp, TAGGED_STATUS)) अणु
+static void tg3_ints_init(struct tg3 *tp)
+{
+	if ((tg3_flag(tp, SUPPORT_MSI) || tg3_flag(tp, SUPPORT_MSIX)) &&
+	    !tg3_flag(tp, TAGGED_STATUS)) {
 		/* All MSI supporting chips should support tagged
-		 * status.  Assert that this is the हाल.
+		 * status.  Assert that this is the case.
 		 */
 		netdev_warn(tp->dev,
 			    "MSI without TAGGED_STATUS? Not using MSI\n");
-		जाओ defcfg;
-	पूर्ण
+		goto defcfg;
+	}
 
-	अगर (tg3_flag(tp, SUPPORT_MSIX) && tg3_enable_msix(tp))
+	if (tg3_flag(tp, SUPPORT_MSIX) && tg3_enable_msix(tp))
 		tg3_flag_set(tp, USING_MSIX);
-	अन्यथा अगर (tg3_flag(tp, SUPPORT_MSI) && pci_enable_msi(tp->pdev) == 0)
+	else if (tg3_flag(tp, SUPPORT_MSI) && pci_enable_msi(tp->pdev) == 0)
 		tg3_flag_set(tp, USING_MSI);
 
-	अगर (tg3_flag(tp, USING_MSI) || tg3_flag(tp, USING_MSIX)) अणु
+	if (tg3_flag(tp, USING_MSI) || tg3_flag(tp, USING_MSIX)) {
 		u32 msi_mode = tr32(MSGINT_MODE);
-		अगर (tg3_flag(tp, USING_MSIX) && tp->irq_cnt > 1)
+		if (tg3_flag(tp, USING_MSIX) && tp->irq_cnt > 1)
 			msi_mode |= MSGINT_MODE_MULTIVEC_EN;
-		अगर (!tg3_flag(tp, 1SHOT_MSI))
+		if (!tg3_flag(tp, 1SHOT_MSI))
 			msi_mode |= MSGINT_MODE_ONE_SHOT_DISABLE;
 		tw32(MSGINT_MODE, msi_mode | MSGINT_MODE_ENABLE);
-	पूर्ण
+	}
 defcfg:
-	अगर (!tg3_flag(tp, USING_MSIX)) अणु
+	if (!tg3_flag(tp, USING_MSIX)) {
 		tp->irq_cnt = 1;
 		tp->napi[0].irq_vec = tp->pdev->irq;
-	पूर्ण
+	}
 
-	अगर (tp->irq_cnt == 1) अणु
+	if (tp->irq_cnt == 1) {
 		tp->txq_cnt = 1;
 		tp->rxq_cnt = 1;
-		netअगर_set_real_num_tx_queues(tp->dev, 1);
-		netअगर_set_real_num_rx_queues(tp->dev, 1);
-	पूर्ण
-पूर्ण
+		netif_set_real_num_tx_queues(tp->dev, 1);
+		netif_set_real_num_rx_queues(tp->dev, 1);
+	}
+}
 
-अटल व्योम tg3_पूर्णांकs_fini(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, USING_MSIX))
+static void tg3_ints_fini(struct tg3 *tp)
+{
+	if (tg3_flag(tp, USING_MSIX))
 		pci_disable_msix(tp->pdev);
-	अन्यथा अगर (tg3_flag(tp, USING_MSI))
+	else if (tg3_flag(tp, USING_MSI))
 		pci_disable_msi(tp->pdev);
 	tg3_flag_clear(tp, USING_MSI);
 	tg3_flag_clear(tp, USING_MSIX);
 	tg3_flag_clear(tp, ENABLE_RSS);
 	tg3_flag_clear(tp, ENABLE_TSS);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_start(काष्ठा tg3 *tp, bool reset_phy, bool test_irq,
+static int tg3_start(struct tg3 *tp, bool reset_phy, bool test_irq,
 		     bool init)
-अणु
-	काष्ठा net_device *dev = tp->dev;
-	पूर्णांक i, err;
+{
+	struct net_device *dev = tp->dev;
+	int i, err;
 
 	/*
-	 * Setup पूर्णांकerrupts first so we know how
+	 * Setup interrupts first so we know how
 	 * many NAPI resources to allocate
 	 */
-	tg3_पूर्णांकs_init(tp);
+	tg3_ints_init(tp);
 
 	tg3_rss_check_indir_tbl(tp);
 
@@ -11579,180 +11578,180 @@ defcfg:
 	 * to the setup and use of Host TX descriptors.
 	 */
 	err = tg3_alloc_consistent(tp);
-	अगर (err)
-		जाओ out_पूर्णांकs_fini;
+	if (err)
+		goto out_ints_fini;
 
 	tg3_napi_init(tp);
 
 	tg3_napi_enable(tp);
 
-	क्रम (i = 0; i < tp->irq_cnt; i++) अणु
+	for (i = 0; i < tp->irq_cnt; i++) {
 		err = tg3_request_irq(tp, i);
-		अगर (err) अणु
-			क्रम (i--; i >= 0; i--) अणु
-				काष्ठा tg3_napi *tnapi = &tp->napi[i];
+		if (err) {
+			for (i--; i >= 0; i--) {
+				struct tg3_napi *tnapi = &tp->napi[i];
 
-				मुक्त_irq(tnapi->irq_vec, tnapi);
-			पूर्ण
-			जाओ out_napi_fini;
-		पूर्ण
-	पूर्ण
+				free_irq(tnapi->irq_vec, tnapi);
+			}
+			goto out_napi_fini;
+		}
+	}
 
 	tg3_full_lock(tp, 0);
 
-	अगर (init)
+	if (init)
 		tg3_ape_driver_state_change(tp, RESET_KIND_INIT);
 
 	err = tg3_init_hw(tp, reset_phy);
-	अगर (err) अणु
+	if (err) {
 		tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
-		tg3_मुक्त_rings(tp);
-	पूर्ण
+		tg3_free_rings(tp);
+	}
 
 	tg3_full_unlock(tp);
 
-	अगर (err)
-		जाओ out_मुक्त_irq;
+	if (err)
+		goto out_free_irq;
 
-	अगर (test_irq && tg3_flag(tp, USING_MSI)) अणु
+	if (test_irq && tg3_flag(tp, USING_MSI)) {
 		err = tg3_test_msi(tp);
 
-		अगर (err) अणु
+		if (err) {
 			tg3_full_lock(tp, 0);
 			tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
-			tg3_मुक्त_rings(tp);
+			tg3_free_rings(tp);
 			tg3_full_unlock(tp);
 
-			जाओ out_napi_fini;
-		पूर्ण
+			goto out_napi_fini;
+		}
 
-		अगर (!tg3_flag(tp, 57765_PLUS) && tg3_flag(tp, USING_MSI)) अणु
+		if (!tg3_flag(tp, 57765_PLUS) && tg3_flag(tp, USING_MSI)) {
 			u32 val = tr32(PCIE_TRANSACTION_CFG);
 
 			tw32(PCIE_TRANSACTION_CFG,
 			     val | PCIE_TRANS_CFG_1SHOT_MSI);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tg3_phy_start(tp);
 
-	tg3_hwmon_खोलो(tp);
+	tg3_hwmon_open(tp);
 
 	tg3_full_lock(tp, 0);
 
-	tg3_समयr_start(tp);
+	tg3_timer_start(tp);
 	tg3_flag_set(tp, INIT_COMPLETE);
-	tg3_enable_पूर्णांकs(tp);
+	tg3_enable_ints(tp);
 
 	tg3_ptp_resume(tp);
 
 	tg3_full_unlock(tp);
 
-	netअगर_tx_start_all_queues(dev);
+	netif_tx_start_all_queues(dev);
 
 	/*
-	 * Reset loopback feature अगर it was turned on जबतक the device was करोwn
+	 * Reset loopback feature if it was turned on while the device was down
 	 * make sure that it's installed properly now.
 	 */
-	अगर (dev->features & NETIF_F_LOOPBACK)
+	if (dev->features & NETIF_F_LOOPBACK)
 		tg3_set_loopback(dev, dev->features);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_irq:
-	क्रम (i = tp->irq_cnt - 1; i >= 0; i--) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
-		मुक्त_irq(tnapi->irq_vec, tnapi);
-	पूर्ण
+out_free_irq:
+	for (i = tp->irq_cnt - 1; i >= 0; i--) {
+		struct tg3_napi *tnapi = &tp->napi[i];
+		free_irq(tnapi->irq_vec, tnapi);
+	}
 
 out_napi_fini:
 	tg3_napi_disable(tp);
 	tg3_napi_fini(tp);
-	tg3_मुक्त_consistent(tp);
+	tg3_free_consistent(tp);
 
-out_पूर्णांकs_fini:
-	tg3_पूर्णांकs_fini(tp);
+out_ints_fini:
+	tg3_ints_fini(tp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tg3_stop(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static void tg3_stop(struct tg3 *tp)
+{
+	int i;
 
 	tg3_reset_task_cancel(tp);
-	tg3_netअगर_stop(tp);
+	tg3_netif_stop(tp);
 
-	tg3_समयr_stop(tp);
+	tg3_timer_stop(tp);
 
-	tg3_hwmon_बंद(tp);
+	tg3_hwmon_close(tp);
 
 	tg3_phy_stop(tp);
 
 	tg3_full_lock(tp, 1);
 
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 
 	tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
-	tg3_मुक्त_rings(tp);
+	tg3_free_rings(tp);
 	tg3_flag_clear(tp, INIT_COMPLETE);
 
 	tg3_full_unlock(tp);
 
-	क्रम (i = tp->irq_cnt - 1; i >= 0; i--) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
-		मुक्त_irq(tnapi->irq_vec, tnapi);
-	पूर्ण
+	for (i = tp->irq_cnt - 1; i >= 0; i--) {
+		struct tg3_napi *tnapi = &tp->napi[i];
+		free_irq(tnapi->irq_vec, tnapi);
+	}
 
-	tg3_पूर्णांकs_fini(tp);
+	tg3_ints_fini(tp);
 
 	tg3_napi_fini(tp);
 
-	tg3_मुक्त_consistent(tp);
-पूर्ण
+	tg3_free_consistent(tp);
+}
 
-अटल पूर्णांक tg3_खोलो(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक err;
+static int tg3_open(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int err;
 
-	अगर (tp->pcierr_recovery) अणु
+	if (tp->pcierr_recovery) {
 		netdev_err(dev, "Failed to open device. PCI error recovery "
 			   "in progress\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	अगर (tp->fw_needed) अणु
+	if (tp->fw_needed) {
 		err = tg3_request_firmware(tp);
-		अगर (tg3_asic_rev(tp) == ASIC_REV_57766) अणु
-			अगर (err) अणु
+		if (tg3_asic_rev(tp) == ASIC_REV_57766) {
+			if (err) {
 				netdev_warn(tp->dev, "EEE capability disabled\n");
 				tp->phy_flags &= ~TG3_PHYFLG_EEE_CAP;
-			पूर्ण अन्यथा अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP)) अणु
+			} else if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP)) {
 				netdev_warn(tp->dev, "EEE capability restored\n");
 				tp->phy_flags |= TG3_PHYFLG_EEE_CAP;
-			पूर्ण
-		पूर्ण अन्यथा अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0) अणु
-			अगर (err)
-				वापस err;
-		पूर्ण अन्यथा अगर (err) अणु
+			}
+		} else if (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0) {
+			if (err)
+				return err;
+		} else if (err) {
 			netdev_warn(tp->dev, "TSO capability disabled\n");
 			tg3_flag_clear(tp, TSO_CAPABLE);
-		पूर्ण अन्यथा अगर (!tg3_flag(tp, TSO_CAPABLE)) अणु
+		} else if (!tg3_flag(tp, TSO_CAPABLE)) {
 			netdev_notice(tp->dev, "TSO capability restored\n");
 			tg3_flag_set(tp, TSO_CAPABLE);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tg3_carrier_off(tp);
 
-	err = tg3_घातer_up(tp);
-	अगर (err)
-		वापस err;
+	err = tg3_power_up(tp);
+	if (err)
+		return err;
 
 	tg3_full_lock(tp, 0);
 
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 	tg3_flag_clear(tp, INIT_COMPLETE);
 
 	tg3_full_unlock(tp);
@@ -11760,71 +11759,71 @@ out_पूर्णांकs_fini:
 	err = tg3_start(tp,
 			!(tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN),
 			true, true);
-	अगर (err) अणु
-		tg3_frob_aux_घातer(tp, false);
-		pci_set_घातer_state(tp->pdev, PCI_D3hot);
-	पूर्ण
+	if (err) {
+		tg3_frob_aux_power(tp, false);
+		pci_set_power_state(tp->pdev, PCI_D3hot);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_बंद(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_close(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (tp->pcierr_recovery) अणु
+	if (tp->pcierr_recovery) {
 		netdev_err(dev, "Failed to close device. PCI error recovery "
 			   "in progress\n");
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
 	tg3_stop(tp);
 
-	अगर (pci_device_is_present(tp->pdev)) अणु
-		tg3_घातer_करोwn_prepare(tp);
+	if (pci_device_is_present(tp->pdev)) {
+		tg3_power_down_prepare(tp);
 
 		tg3_carrier_off(tp);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल अंतरभूत u64 get_stat64(tg3_stat64_t *val)
-अणु
-       वापस ((u64)val->high << 32) | ((u64)val->low);
-पूर्ण
+static inline u64 get_stat64(tg3_stat64_t *val)
+{
+       return ((u64)val->high << 32) | ((u64)val->low);
+}
 
-अटल u64 tg3_calc_crc_errors(काष्ठा tg3 *tp)
-अणु
-	काष्ठा tg3_hw_stats *hw_stats = tp->hw_stats;
+static u64 tg3_calc_crc_errors(struct tg3 *tp)
+{
+	struct tg3_hw_stats *hw_stats = tp->hw_stats;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
+	if (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
 	    (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-	     tg3_asic_rev(tp) == ASIC_REV_5701)) अणु
+	     tg3_asic_rev(tp) == ASIC_REV_5701)) {
 		u32 val;
 
-		अगर (!tg3_पढ़ोphy(tp, MII_TG3_TEST1, &val)) अणु
-			tg3_ग_लिखोphy(tp, MII_TG3_TEST1,
+		if (!tg3_readphy(tp, MII_TG3_TEST1, &val)) {
+			tg3_writephy(tp, MII_TG3_TEST1,
 				     val | MII_TG3_TEST1_CRC_EN);
-			tg3_पढ़ोphy(tp, MII_TG3_RXR_COUNTERS, &val);
-		पूर्ण अन्यथा
+			tg3_readphy(tp, MII_TG3_RXR_COUNTERS, &val);
+		} else
 			val = 0;
 
 		tp->phy_crc_errors += val;
 
-		वापस tp->phy_crc_errors;
-	पूर्ण
+		return tp->phy_crc_errors;
+	}
 
-	वापस get_stat64(&hw_stats->rx_fcs_errors);
-पूर्ण
+	return get_stat64(&hw_stats->rx_fcs_errors);
+}
 
-#घोषणा ESTAT_ADD(member) \
+#define ESTAT_ADD(member) \
 	estats->member =	old_estats->member + \
 				get_stat64(&hw_stats->member)
 
-अटल व्योम tg3_get_estats(काष्ठा tg3 *tp, काष्ठा tg3_ethtool_stats *estats)
-अणु
-	काष्ठा tg3_ethtool_stats *old_estats = &tp->estats_prev;
-	काष्ठा tg3_hw_stats *hw_stats = tp->hw_stats;
+static void tg3_get_estats(struct tg3 *tp, struct tg3_ethtool_stats *estats)
+{
+	struct tg3_ethtool_stats *old_estats = &tp->estats_prev;
+	struct tg3_hw_stats *hw_stats = tp->hw_stats;
 
 	ESTAT_ADD(rx_octets);
 	ESTAT_ADD(rx_fragments);
@@ -11833,11 +11832,11 @@ out_पूर्णांकs_fini:
 	ESTAT_ADD(rx_bcast_packets);
 	ESTAT_ADD(rx_fcs_errors);
 	ESTAT_ADD(rx_align_errors);
-	ESTAT_ADD(rx_xon_छोड़ो_rcvd);
-	ESTAT_ADD(rx_xoff_छोड़ो_rcvd);
+	ESTAT_ADD(rx_xon_pause_rcvd);
+	ESTAT_ADD(rx_xoff_pause_rcvd);
 	ESTAT_ADD(rx_mac_ctrl_rcvd);
 	ESTAT_ADD(rx_xoff_entered);
-	ESTAT_ADD(rx_frame_too_दीर्घ_errors);
+	ESTAT_ADD(rx_frame_too_long_errors);
 	ESTAT_ADD(rx_jabbers);
 	ESTAT_ADD(rx_undersize_packets);
 	ESTAT_ADD(rx_in_length_errors);
@@ -11864,20 +11863,20 @@ out_पूर्णांकs_fini:
 	ESTAT_ADD(tx_deferred);
 	ESTAT_ADD(tx_excessive_collisions);
 	ESTAT_ADD(tx_late_collisions);
-	ESTAT_ADD(tx_collide_2बार);
-	ESTAT_ADD(tx_collide_3बार);
-	ESTAT_ADD(tx_collide_4बार);
-	ESTAT_ADD(tx_collide_5बार);
-	ESTAT_ADD(tx_collide_6बार);
-	ESTAT_ADD(tx_collide_7बार);
-	ESTAT_ADD(tx_collide_8बार);
-	ESTAT_ADD(tx_collide_9बार);
-	ESTAT_ADD(tx_collide_10बार);
-	ESTAT_ADD(tx_collide_11बार);
-	ESTAT_ADD(tx_collide_12बार);
-	ESTAT_ADD(tx_collide_13बार);
-	ESTAT_ADD(tx_collide_14बार);
-	ESTAT_ADD(tx_collide_15बार);
+	ESTAT_ADD(tx_collide_2times);
+	ESTAT_ADD(tx_collide_3times);
+	ESTAT_ADD(tx_collide_4times);
+	ESTAT_ADD(tx_collide_5times);
+	ESTAT_ADD(tx_collide_6times);
+	ESTAT_ADD(tx_collide_7times);
+	ESTAT_ADD(tx_collide_8times);
+	ESTAT_ADD(tx_collide_9times);
+	ESTAT_ADD(tx_collide_10times);
+	ESTAT_ADD(tx_collide_11times);
+	ESTAT_ADD(tx_collide_12times);
+	ESTAT_ADD(tx_collide_13times);
+	ESTAT_ADD(tx_collide_14times);
+	ESTAT_ADD(tx_collide_15times);
 	ESTAT_ADD(tx_ucast_packets);
 	ESTAT_ADD(tx_mcast_packets);
 	ESTAT_ADD(tx_bcast_packets);
@@ -11885,30 +11884,30 @@ out_पूर्णांकs_fini:
 	ESTAT_ADD(tx_discards);
 	ESTAT_ADD(tx_errors);
 
-	ESTAT_ADD(dma_ग_लिखोq_full);
-	ESTAT_ADD(dma_ग_लिखो_prioq_full);
+	ESTAT_ADD(dma_writeq_full);
+	ESTAT_ADD(dma_write_prioq_full);
 	ESTAT_ADD(rxbds_empty);
 	ESTAT_ADD(rx_discards);
 	ESTAT_ADD(rx_errors);
 	ESTAT_ADD(rx_threshold_hit);
 
-	ESTAT_ADD(dma_पढ़ोq_full);
-	ESTAT_ADD(dma_पढ़ो_prioq_full);
+	ESTAT_ADD(dma_readq_full);
+	ESTAT_ADD(dma_read_prioq_full);
 	ESTAT_ADD(tx_comp_queue_full);
 
 	ESTAT_ADD(ring_set_send_prod_index);
 	ESTAT_ADD(ring_status_update);
 	ESTAT_ADD(nic_irqs);
-	ESTAT_ADD(nic_aव्योमed_irqs);
+	ESTAT_ADD(nic_avoided_irqs);
 	ESTAT_ADD(nic_tx_threshold_hit);
 
 	ESTAT_ADD(mbuf_lwm_thresh_hit);
-पूर्ण
+}
 
-अटल व्योम tg3_get_nstats(काष्ठा tg3 *tp, काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा rtnl_link_stats64 *old_stats = &tp->net_stats_prev;
-	काष्ठा tg3_hw_stats *hw_stats = tp->hw_stats;
+static void tg3_get_nstats(struct tg3 *tp, struct rtnl_link_stats64 *stats)
+{
+	struct rtnl_link_stats64 *old_stats = &tp->net_stats_prev;
+	struct tg3_hw_stats *hw_stats = tp->hw_stats;
 
 	stats->rx_packets = old_stats->rx_packets +
 		get_stat64(&hw_stats->rx_ucast_packets) +
@@ -11939,12 +11938,12 @@ out_पूर्णांकs_fini:
 		get_stat64(&hw_stats->tx_collisions);
 
 	stats->rx_length_errors = old_stats->rx_length_errors +
-		get_stat64(&hw_stats->rx_frame_too_दीर्घ_errors) +
+		get_stat64(&hw_stats->rx_frame_too_long_errors) +
 		get_stat64(&hw_stats->rx_undersize_packets);
 
 	stats->rx_frame_errors = old_stats->rx_frame_errors +
 		get_stat64(&hw_stats->rx_align_errors);
-	stats->tx_पातed_errors = old_stats->tx_पातed_errors +
+	stats->tx_aborted_errors = old_stats->tx_aborted_errors +
 		get_stat64(&hw_stats->tx_discards);
 	stats->tx_carrier_errors = old_stats->tx_carrier_errors +
 		get_stat64(&hw_stats->tx_carrier_sense_errors);
@@ -11957,49 +11956,49 @@ out_पूर्णांकs_fini:
 
 	stats->rx_dropped = tp->rx_dropped;
 	stats->tx_dropped = tp->tx_dropped;
-पूर्ण
+}
 
-अटल पूर्णांक tg3_get_regs_len(काष्ठा net_device *dev)
-अणु
-	वापस TG3_REG_BLK_SIZE;
-पूर्ण
+static int tg3_get_regs_len(struct net_device *dev)
+{
+	return TG3_REG_BLK_SIZE;
+}
 
-अटल व्योम tg3_get_regs(काष्ठा net_device *dev,
-		काष्ठा ethtool_regs *regs, व्योम *_p)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_regs(struct net_device *dev,
+		struct ethtool_regs *regs, void *_p)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
 	regs->version = 0;
 
-	स_रखो(_p, 0, TG3_REG_BLK_SIZE);
+	memset(_p, 0, TG3_REG_BLK_SIZE);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)
-		वापस;
+	if (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)
+		return;
 
 	tg3_full_lock(tp, 0);
 
 	tg3_dump_legacy_regs(tp, (u32 *)_p);
 
 	tg3_full_unlock(tp);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_get_eeprom_len(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_get_eeprom_len(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	वापस tp->nvram_size;
-पूर्ण
+	return tp->nvram_size;
+}
 
-अटल पूर्णांक tg3_get_eeprom(काष्ठा net_device *dev, काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक ret, cpmu_restore = 0;
+static int tg3_get_eeprom(struct net_device *dev, struct ethtool_eeprom *eeprom, u8 *data)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int ret, cpmu_restore = 0;
 	u8  *pd;
 	u32 i, offset, len, b_offset, b_count, cpmu_val = 0;
 	__be32 val;
 
-	अगर (tg3_flag(tp, NO_NVRAM))
-		वापस -EINVAL;
+	if (tg3_flag(tp, NO_NVRAM))
+		return -EINVAL;
 
 	offset = eeprom->offset;
 	len = eeprom->len;
@@ -12007,258 +12006,258 @@ out_पूर्णांकs_fini:
 
 	eeprom->magic = TG3_EEPROM_MAGIC;
 
-	/* Override घड़ी, link aware and link idle modes */
-	अगर (tg3_flag(tp, CPMU_PRESENT)) अणु
+	/* Override clock, link aware and link idle modes */
+	if (tg3_flag(tp, CPMU_PRESENT)) {
 		cpmu_val = tr32(TG3_CPMU_CTRL);
-		अगर (cpmu_val & (CPMU_CTRL_LINK_AWARE_MODE |
-				CPMU_CTRL_LINK_IDLE_MODE)) अणु
+		if (cpmu_val & (CPMU_CTRL_LINK_AWARE_MODE |
+				CPMU_CTRL_LINK_IDLE_MODE)) {
 			tw32(TG3_CPMU_CTRL, cpmu_val &
 					    ~(CPMU_CTRL_LINK_AWARE_MODE |
 					     CPMU_CTRL_LINK_IDLE_MODE));
 			cpmu_restore = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	tg3_override_clk(tp);
 
-	अगर (offset & 3) अणु
-		/* adjusपंचांगents to start on required 4 byte boundary */
+	if (offset & 3) {
+		/* adjustments to start on required 4 byte boundary */
 		b_offset = offset & 3;
 		b_count = 4 - b_offset;
-		अगर (b_count > len) अणु
+		if (b_count > len) {
 			/* i.e. offset=1 len=2 */
 			b_count = len;
-		पूर्ण
-		ret = tg3_nvram_पढ़ो_be32(tp, offset-b_offset, &val);
-		अगर (ret)
-			जाओ eeprom_करोne;
-		स_नकल(data, ((अक्षर *)&val) + b_offset, b_count);
+		}
+		ret = tg3_nvram_read_be32(tp, offset-b_offset, &val);
+		if (ret)
+			goto eeprom_done;
+		memcpy(data, ((char *)&val) + b_offset, b_count);
 		len -= b_count;
 		offset += b_count;
 		eeprom->len += b_count;
-	पूर्ण
+	}
 
-	/* पढ़ो bytes up to the last 4 byte boundary */
+	/* read bytes up to the last 4 byte boundary */
 	pd = &data[eeprom->len];
-	क्रम (i = 0; i < (len - (len & 3)); i += 4) अणु
-		ret = tg3_nvram_पढ़ो_be32(tp, offset + i, &val);
-		अगर (ret) अणु
-			अगर (i)
+	for (i = 0; i < (len - (len & 3)); i += 4) {
+		ret = tg3_nvram_read_be32(tp, offset + i, &val);
+		if (ret) {
+			if (i)
 				i -= 4;
 			eeprom->len += i;
-			जाओ eeprom_करोne;
-		पूर्ण
-		स_नकल(pd + i, &val, 4);
-		अगर (need_resched()) अणु
-			अगर (संकेत_pending(current)) अणु
+			goto eeprom_done;
+		}
+		memcpy(pd + i, &val, 4);
+		if (need_resched()) {
+			if (signal_pending(current)) {
 				eeprom->len += i;
 				ret = -EINTR;
-				जाओ eeprom_करोne;
-			पूर्ण
+				goto eeprom_done;
+			}
 			cond_resched();
-		पूर्ण
-	पूर्ण
+		}
+	}
 	eeprom->len += i;
 
-	अगर (len & 3) अणु
-		/* पढ़ो last bytes not ending on 4 byte boundary */
+	if (len & 3) {
+		/* read last bytes not ending on 4 byte boundary */
 		pd = &data[eeprom->len];
 		b_count = len & 3;
 		b_offset = offset + len - b_count;
-		ret = tg3_nvram_पढ़ो_be32(tp, b_offset, &val);
-		अगर (ret)
-			जाओ eeprom_करोne;
-		स_नकल(pd, &val, b_count);
+		ret = tg3_nvram_read_be32(tp, b_offset, &val);
+		if (ret)
+			goto eeprom_done;
+		memcpy(pd, &val, b_count);
 		eeprom->len += b_count;
-	पूर्ण
+	}
 	ret = 0;
 
-eeprom_करोne:
-	/* Restore घड़ी, link aware and link idle modes */
+eeprom_done:
+	/* Restore clock, link aware and link idle modes */
 	tg3_restore_clk(tp);
-	अगर (cpmu_restore)
+	if (cpmu_restore)
 		tw32(TG3_CPMU_CTRL, cpmu_val);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tg3_set_eeprom(काष्ठा net_device *dev, काष्ठा ethtool_eeprom *eeprom, u8 *data)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक ret;
+static int tg3_set_eeprom(struct net_device *dev, struct ethtool_eeprom *eeprom, u8 *data)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int ret;
 	u32 offset, len, b_offset, odd_len;
 	u8 *buf;
 	__be32 start = 0, end;
 
-	अगर (tg3_flag(tp, NO_NVRAM) ||
+	if (tg3_flag(tp, NO_NVRAM) ||
 	    eeprom->magic != TG3_EEPROM_MAGIC)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	offset = eeprom->offset;
 	len = eeprom->len;
 
-	अगर ((b_offset = (offset & 3))) अणु
-		/* adjusपंचांगents to start on required 4 byte boundary */
-		ret = tg3_nvram_पढ़ो_be32(tp, offset-b_offset, &start);
-		अगर (ret)
-			वापस ret;
+	if ((b_offset = (offset & 3))) {
+		/* adjustments to start on required 4 byte boundary */
+		ret = tg3_nvram_read_be32(tp, offset-b_offset, &start);
+		if (ret)
+			return ret;
 		len += b_offset;
 		offset &= ~3;
-		अगर (len < 4)
+		if (len < 4)
 			len = 4;
-	पूर्ण
+	}
 
 	odd_len = 0;
-	अगर (len & 3) अणु
-		/* adjusपंचांगents to end on required 4 byte boundary */
+	if (len & 3) {
+		/* adjustments to end on required 4 byte boundary */
 		odd_len = 1;
 		len = (len + 3) & ~3;
-		ret = tg3_nvram_पढ़ो_be32(tp, offset+len-4, &end);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = tg3_nvram_read_be32(tp, offset+len-4, &end);
+		if (ret)
+			return ret;
+	}
 
 	buf = data;
-	अगर (b_offset || odd_len) अणु
-		buf = kदो_स्मृति(len, GFP_KERNEL);
-		अगर (!buf)
-			वापस -ENOMEM;
-		अगर (b_offset)
-			स_नकल(buf, &start, 4);
-		अगर (odd_len)
-			स_नकल(buf+len-4, &end, 4);
-		स_नकल(buf + b_offset, data, eeprom->len);
-	पूर्ण
+	if (b_offset || odd_len) {
+		buf = kmalloc(len, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
+		if (b_offset)
+			memcpy(buf, &start, 4);
+		if (odd_len)
+			memcpy(buf+len-4, &end, 4);
+		memcpy(buf + b_offset, data, eeprom->len);
+	}
 
-	ret = tg3_nvram_ग_लिखो_block(tp, offset, len, buf);
+	ret = tg3_nvram_write_block(tp, offset, len, buf);
 
-	अगर (buf != data)
-		kमुक्त(buf);
+	if (buf != data)
+		kfree(buf);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक tg3_get_link_ksettings(काष्ठा net_device *dev,
-				  काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_get_link_ksettings(struct net_device *dev,
+				  struct ethtool_link_ksettings *cmd)
+{
+	struct tg3 *tp = netdev_priv(dev);
 	u32 supported, advertising;
 
-	अगर (tg3_flag(tp, USE_PHYLIB)) अणु
-		काष्ठा phy_device *phydev;
-		अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
-			वापस -EAGAIN;
+	if (tg3_flag(tp, USE_PHYLIB)) {
+		struct phy_device *phydev;
+		if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
+			return -EAGAIN;
 		phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
 		phy_ethtool_ksettings_get(phydev, cmd);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	supported = (SUPPORTED_Autoneg);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY))
+	if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY))
 		supported |= (SUPPORTED_1000baseT_Half |
 			      SUPPORTED_1000baseT_Full);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) {
 		supported |= (SUPPORTED_100baseT_Half |
 			      SUPPORTED_100baseT_Full |
 			      SUPPORTED_10baseT_Half |
 			      SUPPORTED_10baseT_Full |
 			      SUPPORTED_TP);
 		cmd->base.port = PORT_TP;
-	पूर्ण अन्यथा अणु
+	} else {
 		supported |= SUPPORTED_FIBRE;
 		cmd->base.port = PORT_FIBRE;
-	पूर्ण
+	}
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
 						supported);
 
 	advertising = tp->link_config.advertising;
-	अगर (tg3_flag(tp, PAUSE_AUTONEG)) अणु
-		अगर (tp->link_config.flowctrl & FLOW_CTRL_RX) अणु
-			अगर (tp->link_config.flowctrl & FLOW_CTRL_TX) अणु
+	if (tg3_flag(tp, PAUSE_AUTONEG)) {
+		if (tp->link_config.flowctrl & FLOW_CTRL_RX) {
+			if (tp->link_config.flowctrl & FLOW_CTRL_TX) {
 				advertising |= ADVERTISED_Pause;
-			पूर्ण अन्यथा अणु
+			} else {
 				advertising |= ADVERTISED_Pause |
 					ADVERTISED_Asym_Pause;
-			पूर्ण
-		पूर्ण अन्यथा अगर (tp->link_config.flowctrl & FLOW_CTRL_TX) अणु
+			}
+		} else if (tp->link_config.flowctrl & FLOW_CTRL_TX) {
 			advertising |= ADVERTISED_Asym_Pause;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	अगर (netअगर_running(dev) && tp->link_up) अणु
+	if (netif_running(dev) && tp->link_up) {
 		cmd->base.speed = tp->link_config.active_speed;
 		cmd->base.duplex = tp->link_config.active_duplex;
 		ethtool_convert_legacy_u32_to_link_mode(
 			cmd->link_modes.lp_advertising,
 			tp->link_config.rmt_adv);
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) अणु
-			अगर (tp->phy_flags & TG3_PHYFLG_MDIX_STATE)
+		if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES)) {
+			if (tp->phy_flags & TG3_PHYFLG_MDIX_STATE)
 				cmd->base.eth_tp_mdix = ETH_TP_MDI_X;
-			अन्यथा
+			else
 				cmd->base.eth_tp_mdix = ETH_TP_MDI;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		cmd->base.speed = SPEED_UNKNOWN;
 		cmd->base.duplex = DUPLEX_UNKNOWN;
 		cmd->base.eth_tp_mdix = ETH_TP_MDI_INVALID;
-	पूर्ण
+	}
 	cmd->base.phy_address = tp->phy_addr;
-	cmd->base.स्वतःneg = tp->link_config.स्वतःneg;
-	वापस 0;
-पूर्ण
+	cmd->base.autoneg = tp->link_config.autoneg;
+	return 0;
+}
 
-अटल पूर्णांक tg3_set_link_ksettings(काष्ठा net_device *dev,
-				  स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_set_link_ksettings(struct net_device *dev,
+				  const struct ethtool_link_ksettings *cmd)
+{
+	struct tg3 *tp = netdev_priv(dev);
 	u32 speed = cmd->base.speed;
 	u32 advertising;
 
-	अगर (tg3_flag(tp, USE_PHYLIB)) अणु
-		काष्ठा phy_device *phydev;
-		अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
-			वापस -EAGAIN;
+	if (tg3_flag(tp, USE_PHYLIB)) {
+		struct phy_device *phydev;
+		if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
+			return -EAGAIN;
 		phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
-		वापस phy_ethtool_ksettings_set(phydev, cmd);
-	पूर्ण
+		return phy_ethtool_ksettings_set(phydev, cmd);
+	}
 
-	अगर (cmd->base.स्वतःneg != AUTONEG_ENABLE &&
-	    cmd->base.स्वतःneg != AUTONEG_DISABLE)
-		वापस -EINVAL;
+	if (cmd->base.autoneg != AUTONEG_ENABLE &&
+	    cmd->base.autoneg != AUTONEG_DISABLE)
+		return -EINVAL;
 
-	अगर (cmd->base.स्वतःneg == AUTONEG_DISABLE &&
+	if (cmd->base.autoneg == AUTONEG_DISABLE &&
 	    cmd->base.duplex != DUPLEX_FULL &&
 	    cmd->base.duplex != DUPLEX_HALF)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
+	if (cmd->base.autoneg == AUTONEG_ENABLE) {
 		u32 mask = ADVERTISED_Autoneg |
 			   ADVERTISED_Pause |
 			   ADVERTISED_Asym_Pause;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY))
+		if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY))
 			mask |= ADVERTISED_1000baseT_Half |
 				ADVERTISED_1000baseT_Full;
 
-		अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
+		if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
 			mask |= ADVERTISED_100baseT_Half |
 				ADVERTISED_100baseT_Full |
 				ADVERTISED_10baseT_Half |
 				ADVERTISED_10baseT_Full |
 				ADVERTISED_TP;
-		अन्यथा
+		else
 			mask |= ADVERTISED_FIBRE;
 
-		अगर (advertising & ~mask)
-			वापस -EINVAL;
+		if (advertising & ~mask)
+			return -EINVAL;
 
 		mask &= (ADVERTISED_1000baseT_Half |
 			 ADVERTISED_1000baseT_Full |
@@ -12268,462 +12267,462 @@ eeprom_करोne:
 			 ADVERTISED_10baseT_Full);
 
 		advertising &= mask;
-	पूर्ण अन्यथा अणु
-		अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES) अणु
-			अगर (speed != SPEED_1000)
-				वापस -EINVAL;
+	} else {
+		if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES) {
+			if (speed != SPEED_1000)
+				return -EINVAL;
 
-			अगर (cmd->base.duplex != DUPLEX_FULL)
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			अगर (speed != SPEED_100 &&
+			if (cmd->base.duplex != DUPLEX_FULL)
+				return -EINVAL;
+		} else {
+			if (speed != SPEED_100 &&
 			    speed != SPEED_10)
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+				return -EINVAL;
+		}
+	}
 
 	tg3_full_lock(tp, 0);
 
-	tp->link_config.स्वतःneg = cmd->base.स्वतःneg;
-	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
+	tp->link_config.autoneg = cmd->base.autoneg;
+	if (cmd->base.autoneg == AUTONEG_ENABLE) {
 		tp->link_config.advertising = (advertising |
 					      ADVERTISED_Autoneg);
 		tp->link_config.speed = SPEED_UNKNOWN;
 		tp->link_config.duplex = DUPLEX_UNKNOWN;
-	पूर्ण अन्यथा अणु
+	} else {
 		tp->link_config.advertising = 0;
 		tp->link_config.speed = speed;
 		tp->link_config.duplex = cmd->base.duplex;
-	पूर्ण
+	}
 
 	tp->phy_flags |= TG3_PHYFLG_USER_CONFIGURED;
 
 	tg3_warn_mgmt_link_flap(tp);
 
-	अगर (netअगर_running(dev))
+	if (netif_running(dev))
 		tg3_setup_phy(tp, true);
 
 	tg3_full_unlock(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	strlcpy(info->driver, DRV_MODULE_NAME, माप(info->driver));
-	strlcpy(info->fw_version, tp->fw_ver, माप(info->fw_version));
-	strlcpy(info->bus_info, pci_name(tp->pdev), माप(info->bus_info));
-पूर्ण
+	strlcpy(info->driver, DRV_MODULE_NAME, sizeof(info->driver));
+	strlcpy(info->fw_version, tp->fw_ver, sizeof(info->fw_version));
+	strlcpy(info->bus_info, pci_name(tp->pdev), sizeof(info->bus_info));
+}
 
-अटल व्योम tg3_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (tg3_flag(tp, WOL_CAP) && device_can_wakeup(&tp->pdev->dev))
+	if (tg3_flag(tp, WOL_CAP) && device_can_wakeup(&tp->pdev->dev))
 		wol->supported = WAKE_MAGIC;
-	अन्यथा
+	else
 		wol->supported = 0;
 	wol->wolopts = 0;
-	अगर (tg3_flag(tp, WOL_ENABLE) && device_can_wakeup(&tp->pdev->dev))
+	if (tg3_flag(tp, WOL_ENABLE) && device_can_wakeup(&tp->pdev->dev))
 		wol->wolopts = WAKE_MAGIC;
-	स_रखो(&wol->sopass, 0, माप(wol->sopass));
-पूर्ण
+	memset(&wol->sopass, 0, sizeof(wol->sopass));
+}
 
-अटल पूर्णांक tg3_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	काष्ठा device *dp = &tp->pdev->dev;
+static int tg3_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	struct device *dp = &tp->pdev->dev;
 
-	अगर (wol->wolopts & ~WAKE_MAGIC)
-		वापस -EINVAL;
-	अगर ((wol->wolopts & WAKE_MAGIC) &&
+	if (wol->wolopts & ~WAKE_MAGIC)
+		return -EINVAL;
+	if ((wol->wolopts & WAKE_MAGIC) &&
 	    !(tg3_flag(tp, WOL_CAP) && device_can_wakeup(dp)))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	device_set_wakeup_enable(dp, wol->wolopts & WAKE_MAGIC);
 
-	अगर (device_may_wakeup(dp))
+	if (device_may_wakeup(dp))
 		tg3_flag_set(tp, WOL_ENABLE);
-	अन्यथा
+	else
 		tg3_flag_clear(tp, WOL_ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 tg3_get_msglevel(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	वापस tp->msg_enable;
-पूर्ण
+static u32 tg3_get_msglevel(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	return tp->msg_enable;
+}
 
-अटल व्योम tg3_set_msglevel(काष्ठा net_device *dev, u32 value)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_set_msglevel(struct net_device *dev, u32 value)
+{
+	struct tg3 *tp = netdev_priv(dev);
 	tp->msg_enable = value;
-पूर्ण
+}
 
-अटल पूर्णांक tg3_nway_reset(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक r;
+static int tg3_nway_reset(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int r;
 
-	अगर (!netअगर_running(dev))
-		वापस -EAGAIN;
+	if (!netif_running(dev))
+		return -EAGAIN;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
-		वापस -EINVAL;
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
+		return -EINVAL;
 
 	tg3_warn_mgmt_link_flap(tp);
 
-	अगर (tg3_flag(tp, USE_PHYLIB)) अणु
-		अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
-			वापस -EAGAIN;
+	if (tg3_flag(tp, USE_PHYLIB)) {
+		if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
+			return -EAGAIN;
 		r = phy_start_aneg(mdiobus_get_phy(tp->mdio_bus, tp->phy_addr));
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 bmcr;
 
 		spin_lock_bh(&tp->lock);
 		r = -EINVAL;
-		tg3_पढ़ोphy(tp, MII_BMCR, &bmcr);
-		अगर (!tg3_पढ़ोphy(tp, MII_BMCR, &bmcr) &&
+		tg3_readphy(tp, MII_BMCR, &bmcr);
+		if (!tg3_readphy(tp, MII_BMCR, &bmcr) &&
 		    ((bmcr & BMCR_ANENABLE) ||
-		     (tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT))) अणु
-			tg3_ग_लिखोphy(tp, MII_BMCR, bmcr | BMCR_ANRESTART |
+		     (tp->phy_flags & TG3_PHYFLG_PARALLEL_DETECT))) {
+			tg3_writephy(tp, MII_BMCR, bmcr | BMCR_ANRESTART |
 						   BMCR_ANENABLE);
 			r = 0;
-		पूर्ण
+		}
 		spin_unlock_bh(&tp->lock);
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम tg3_get_ringparam(काष्ठा net_device *dev, काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_ringparam(struct net_device *dev, struct ethtool_ringparam *ering)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
 	ering->rx_max_pending = tp->rx_std_ring_mask;
-	अगर (tg3_flag(tp, JUMBO_RING_ENABLE))
+	if (tg3_flag(tp, JUMBO_RING_ENABLE))
 		ering->rx_jumbo_max_pending = tp->rx_jmb_ring_mask;
-	अन्यथा
+	else
 		ering->rx_jumbo_max_pending = 0;
 
 	ering->tx_max_pending = TG3_TX_RING_SIZE - 1;
 
 	ering->rx_pending = tp->rx_pending;
-	अगर (tg3_flag(tp, JUMBO_RING_ENABLE))
+	if (tg3_flag(tp, JUMBO_RING_ENABLE))
 		ering->rx_jumbo_pending = tp->rx_jumbo_pending;
-	अन्यथा
+	else
 		ering->rx_jumbo_pending = 0;
 
 	ering->tx_pending = tp->napi[0].tx_pending;
-पूर्ण
+}
 
-अटल पूर्णांक tg3_set_ringparam(काष्ठा net_device *dev, काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक i, irq_sync = 0, err = 0;
+static int tg3_set_ringparam(struct net_device *dev, struct ethtool_ringparam *ering)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int i, irq_sync = 0, err = 0;
 	bool reset_phy = false;
 
-	अगर ((ering->rx_pending > tp->rx_std_ring_mask) ||
+	if ((ering->rx_pending > tp->rx_std_ring_mask) ||
 	    (ering->rx_jumbo_pending > tp->rx_jmb_ring_mask) ||
 	    (ering->tx_pending > TG3_TX_RING_SIZE - 1) ||
 	    (ering->tx_pending <= MAX_SKB_FRAGS) ||
 	    (tg3_flag(tp, TSO_BUG) &&
 	     (ering->tx_pending <= (MAX_SKB_FRAGS * 3))))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (netअगर_running(dev)) अणु
+	if (netif_running(dev)) {
 		tg3_phy_stop(tp);
-		tg3_netअगर_stop(tp);
+		tg3_netif_stop(tp);
 		irq_sync = 1;
-	पूर्ण
+	}
 
 	tg3_full_lock(tp, irq_sync);
 
 	tp->rx_pending = ering->rx_pending;
 
-	अगर (tg3_flag(tp, MAX_RXPEND_64) &&
+	if (tg3_flag(tp, MAX_RXPEND_64) &&
 	    tp->rx_pending > 63)
 		tp->rx_pending = 63;
 
-	अगर (tg3_flag(tp, JUMBO_RING_ENABLE))
+	if (tg3_flag(tp, JUMBO_RING_ENABLE))
 		tp->rx_jumbo_pending = ering->rx_jumbo_pending;
 
-	क्रम (i = 0; i < tp->irq_max; i++)
+	for (i = 0; i < tp->irq_max; i++)
 		tp->napi[i].tx_pending = ering->tx_pending;
 
-	अगर (netअगर_running(dev)) अणु
+	if (netif_running(dev)) {
 		tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
-		/* Reset PHY to aव्योम PHY lock up */
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+		/* Reset PHY to avoid PHY lock up */
+		if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5719 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5720)
 			reset_phy = true;
 
 		err = tg3_restart_hw(tp, reset_phy);
-		अगर (!err)
-			tg3_netअगर_start(tp);
-	पूर्ण
+		if (!err)
+			tg3_netif_start(tp);
+	}
 
 	tg3_full_unlock(tp);
 
-	अगर (irq_sync && !err)
+	if (irq_sync && !err)
 		tg3_phy_start(tp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tg3_get_छोड़ोparam(काष्ठा net_device *dev, काष्ठा ethtool_छोड़ोparam *eछोड़ो)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_pauseparam(struct net_device *dev, struct ethtool_pauseparam *epause)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	eछोड़ो->स्वतःneg = !!tg3_flag(tp, PAUSE_AUTONEG);
+	epause->autoneg = !!tg3_flag(tp, PAUSE_AUTONEG);
 
-	अगर (tp->link_config.flowctrl & FLOW_CTRL_RX)
-		eछोड़ो->rx_छोड़ो = 1;
-	अन्यथा
-		eछोड़ो->rx_छोड़ो = 0;
+	if (tp->link_config.flowctrl & FLOW_CTRL_RX)
+		epause->rx_pause = 1;
+	else
+		epause->rx_pause = 0;
 
-	अगर (tp->link_config.flowctrl & FLOW_CTRL_TX)
-		eछोड़ो->tx_छोड़ो = 1;
-	अन्यथा
-		eछोड़ो->tx_छोड़ो = 0;
-पूर्ण
+	if (tp->link_config.flowctrl & FLOW_CTRL_TX)
+		epause->tx_pause = 1;
+	else
+		epause->tx_pause = 0;
+}
 
-अटल पूर्णांक tg3_set_छोड़ोparam(काष्ठा net_device *dev, काष्ठा ethtool_छोड़ोparam *eछोड़ो)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक err = 0;
+static int tg3_set_pauseparam(struct net_device *dev, struct ethtool_pauseparam *epause)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int err = 0;
 	bool reset_phy = false;
 
-	अगर (tp->link_config.स्वतःneg == AUTONEG_ENABLE)
+	if (tp->link_config.autoneg == AUTONEG_ENABLE)
 		tg3_warn_mgmt_link_flap(tp);
 
-	अगर (tg3_flag(tp, USE_PHYLIB)) अणु
-		काष्ठा phy_device *phydev;
+	if (tg3_flag(tp, USE_PHYLIB)) {
+		struct phy_device *phydev;
 
 		phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
 
-		अगर (!phy_validate_छोड़ो(phydev, eछोड़ो))
-			वापस -EINVAL;
+		if (!phy_validate_pause(phydev, epause))
+			return -EINVAL;
 
 		tp->link_config.flowctrl = 0;
-		phy_set_asym_छोड़ो(phydev, eछोड़ो->rx_छोड़ो, eछोड़ो->tx_छोड़ो);
-		अगर (eछोड़ो->rx_छोड़ो) अणु
+		phy_set_asym_pause(phydev, epause->rx_pause, epause->tx_pause);
+		if (epause->rx_pause) {
 			tp->link_config.flowctrl |= FLOW_CTRL_RX;
 
-			अगर (eछोड़ो->tx_छोड़ो) अणु
+			if (epause->tx_pause) {
 				tp->link_config.flowctrl |= FLOW_CTRL_TX;
-			पूर्ण
-		पूर्ण अन्यथा अगर (eछोड़ो->tx_छोड़ो) अणु
+			}
+		} else if (epause->tx_pause) {
 			tp->link_config.flowctrl |= FLOW_CTRL_TX;
-		पूर्ण
+		}
 
-		अगर (eछोड़ो->स्वतःneg)
+		if (epause->autoneg)
 			tg3_flag_set(tp, PAUSE_AUTONEG);
-		अन्यथा
+		else
 			tg3_flag_clear(tp, PAUSE_AUTONEG);
 
-		अगर (tp->phy_flags & TG3_PHYFLG_IS_CONNECTED) अणु
-			अगर (phydev->स्वतःneg) अणु
-				/* phy_set_asym_छोड़ो() will
-				 * renegotiate the link to inक्रमm our
+		if (tp->phy_flags & TG3_PHYFLG_IS_CONNECTED) {
+			if (phydev->autoneg) {
+				/* phy_set_asym_pause() will
+				 * renegotiate the link to inform our
 				 * link partner of our flow control
-				 * settings, even अगर the flow control
-				 * is क्रमced.  Let tg3_adjust_link()
-				 * करो the final flow control setup.
+				 * settings, even if the flow control
+				 * is forced.  Let tg3_adjust_link()
+				 * do the final flow control setup.
 				 */
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
-			अगर (!eछोड़ो->स्वतःneg)
+			if (!epause->autoneg)
 				tg3_setup_flow_control(tp, 0, 0);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		पूर्णांक irq_sync = 0;
+		}
+	} else {
+		int irq_sync = 0;
 
-		अगर (netअगर_running(dev)) अणु
-			tg3_netअगर_stop(tp);
+		if (netif_running(dev)) {
+			tg3_netif_stop(tp);
 			irq_sync = 1;
-		पूर्ण
+		}
 
 		tg3_full_lock(tp, irq_sync);
 
-		अगर (eछोड़ो->स्वतःneg)
+		if (epause->autoneg)
 			tg3_flag_set(tp, PAUSE_AUTONEG);
-		अन्यथा
+		else
 			tg3_flag_clear(tp, PAUSE_AUTONEG);
-		अगर (eछोड़ो->rx_छोड़ो)
+		if (epause->rx_pause)
 			tp->link_config.flowctrl |= FLOW_CTRL_RX;
-		अन्यथा
+		else
 			tp->link_config.flowctrl &= ~FLOW_CTRL_RX;
-		अगर (eछोड़ो->tx_छोड़ो)
+		if (epause->tx_pause)
 			tp->link_config.flowctrl |= FLOW_CTRL_TX;
-		अन्यथा
+		else
 			tp->link_config.flowctrl &= ~FLOW_CTRL_TX;
 
-		अगर (netअगर_running(dev)) अणु
+		if (netif_running(dev)) {
 			tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
-			/* Reset PHY to aव्योम PHY lock up */
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+			/* Reset PHY to avoid PHY lock up */
+			if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 			    tg3_asic_rev(tp) == ASIC_REV_5719 ||
 			    tg3_asic_rev(tp) == ASIC_REV_5720)
 				reset_phy = true;
 
 			err = tg3_restart_hw(tp, reset_phy);
-			अगर (!err)
-				tg3_netअगर_start(tp);
-		पूर्ण
+			if (!err)
+				tg3_netif_start(tp);
+		}
 
 		tg3_full_unlock(tp);
-	पूर्ण
+	}
 
 	tp->phy_flags |= TG3_PHYFLG_USER_CONFIGURED;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
-अणु
-	चयन (sset) अणु
-	हाल ETH_SS_TEST:
-		वापस TG3_NUM_TEST;
-	हाल ETH_SS_STATS:
-		वापस TG3_NUM_STATS;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+static int tg3_get_sset_count(struct net_device *dev, int sset)
+{
+	switch (sset) {
+	case ETH_SS_TEST:
+		return TG3_NUM_TEST;
+	case ETH_SS_STATS:
+		return TG3_NUM_STATS;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक tg3_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *info,
+static int tg3_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *info,
 			 u32 *rules __always_unused)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (!tg3_flag(tp, SUPPORT_MSIX))
-		वापस -EOPNOTSUPP;
+	if (!tg3_flag(tp, SUPPORT_MSIX))
+		return -EOPNOTSUPP;
 
-	चयन (info->cmd) अणु
-	हाल ETHTOOL_GRXRINGS:
-		अगर (netअगर_running(tp->dev))
+	switch (info->cmd) {
+	case ETHTOOL_GRXRINGS:
+		if (netif_running(tp->dev))
 			info->data = tp->rxq_cnt;
-		अन्यथा अणु
+		else {
 			info->data = num_online_cpus();
-			अगर (info->data > TG3_RSS_MAX_NUM_QS)
+			if (info->data > TG3_RSS_MAX_NUM_QS)
 				info->data = TG3_RSS_MAX_NUM_QS;
-		पूर्ण
+		}
 
-		वापस 0;
+		return 0;
 
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल u32 tg3_get_rxfh_indir_size(काष्ठा net_device *dev)
-अणु
+static u32 tg3_get_rxfh_indir_size(struct net_device *dev)
+{
 	u32 size = 0;
-	काष्ठा tg3 *tp = netdev_priv(dev);
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (tg3_flag(tp, SUPPORT_MSIX))
-		size = TG3_RSS_INसूची_TBL_SIZE;
+	if (tg3_flag(tp, SUPPORT_MSIX))
+		size = TG3_RSS_INDIR_TBL_SIZE;
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक tg3_get_rxfh(काष्ठा net_device *dev, u32 *indir, u8 *key, u8 *hfunc)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक i;
+static int tg3_get_rxfh(struct net_device *dev, u32 *indir, u8 *key, u8 *hfunc)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int i;
 
-	अगर (hfunc)
+	if (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
-	अगर (!indir)
-		वापस 0;
+	if (!indir)
+		return 0;
 
-	क्रम (i = 0; i < TG3_RSS_INसूची_TBL_SIZE; i++)
+	for (i = 0; i < TG3_RSS_INDIR_TBL_SIZE; i++)
 		indir[i] = tp->rss_ind_tbl[i];
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_set_rxfh(काष्ठा net_device *dev, स्थिर u32 *indir, स्थिर u8 *key,
-			स्थिर u8 hfunc)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	माप_प्रकार i;
+static int tg3_set_rxfh(struct net_device *dev, const u32 *indir, const u8 *key,
+			const u8 hfunc)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	size_t i;
 
 	/* We require at least one supported parameter to be changed and no
 	 * change in any of the unsupported parameters
 	 */
-	अगर (key ||
+	if (key ||
 	    (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (!indir)
-		वापस 0;
+	if (!indir)
+		return 0;
 
-	क्रम (i = 0; i < TG3_RSS_INसूची_TBL_SIZE; i++)
+	for (i = 0; i < TG3_RSS_INDIR_TBL_SIZE; i++)
 		tp->rss_ind_tbl[i] = indir[i];
 
-	अगर (!netअगर_running(dev) || !tg3_flag(tp, ENABLE_RSS))
-		वापस 0;
+	if (!netif_running(dev) || !tg3_flag(tp, ENABLE_RSS))
+		return 0;
 
-	/* It is legal to ग_लिखो the indirection
-	 * table जबतक the device is running.
+	/* It is legal to write the indirection
+	 * table while the device is running.
 	 */
 	tg3_full_lock(tp, 0);
-	tg3_rss_ग_लिखो_indir_tbl(tp);
+	tg3_rss_write_indir_tbl(tp);
 	tg3_full_unlock(tp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_get_channels(काष्ठा net_device *dev,
-			     काष्ठा ethtool_channels *channel)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	u32 deflt_qs = netअगर_get_num_शेष_rss_queues();
+static void tg3_get_channels(struct net_device *dev,
+			     struct ethtool_channels *channel)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	u32 deflt_qs = netif_get_num_default_rss_queues();
 
 	channel->max_rx = tp->rxq_max;
 	channel->max_tx = tp->txq_max;
 
-	अगर (netअगर_running(dev)) अणु
+	if (netif_running(dev)) {
 		channel->rx_count = tp->rxq_cnt;
 		channel->tx_count = tp->txq_cnt;
-	पूर्ण अन्यथा अणु
-		अगर (tp->rxq_req)
+	} else {
+		if (tp->rxq_req)
 			channel->rx_count = tp->rxq_req;
-		अन्यथा
+		else
 			channel->rx_count = min(deflt_qs, tp->rxq_max);
 
-		अगर (tp->txq_req)
+		if (tp->txq_req)
 			channel->tx_count = tp->txq_req;
-		अन्यथा
+		else
 			channel->tx_count = min(deflt_qs, tp->txq_max);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tg3_set_channels(काष्ठा net_device *dev,
-			    काष्ठा ethtool_channels *channel)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_set_channels(struct net_device *dev,
+			    struct ethtool_channels *channel)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (!tg3_flag(tp, SUPPORT_MSIX))
-		वापस -EOPNOTSUPP;
+	if (!tg3_flag(tp, SUPPORT_MSIX))
+		return -EOPNOTSUPP;
 
-	अगर (channel->rx_count > tp->rxq_max ||
+	if (channel->rx_count > tp->rxq_max ||
 	    channel->tx_count > tp->txq_max)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	tp->rxq_req = channel->rx_count;
 	tp->txq_req = channel->tx_count;
 
-	अगर (!netअगर_running(dev))
-		वापस 0;
+	if (!netif_running(dev))
+		return 0;
 
 	tg3_stop(tp);
 
@@ -12731,34 +12730,34 @@ eeprom_करोne:
 
 	tg3_start(tp, true, false, false);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_get_strings(काष्ठा net_device *dev, u32 stringset, u8 *buf)
-अणु
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		स_नकल(buf, &ethtool_stats_keys, माप(ethtool_stats_keys));
-		अवरोध;
-	हाल ETH_SS_TEST:
-		स_नकल(buf, &ethtool_test_keys, माप(ethtool_test_keys));
-		अवरोध;
-	शेष:
+static void tg3_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
+{
+	switch (stringset) {
+	case ETH_SS_STATS:
+		memcpy(buf, &ethtool_stats_keys, sizeof(ethtool_stats_keys));
+		break;
+	case ETH_SS_TEST:
+		memcpy(buf, &ethtool_test_keys, sizeof(ethtool_test_keys));
+		break;
+	default:
 		WARN_ON(1);	/* we need a WARN() */
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक tg3_set_phys_id(काष्ठा net_device *dev,
-			    क्रमागत ethtool_phys_id_state state)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_set_phys_id(struct net_device *dev,
+			    enum ethtool_phys_id_state state)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	चयन (state) अणु
-	हाल ETHTOOL_ID_ACTIVE:
-		वापस 1;	/* cycle on/off once per second */
+	switch (state) {
+	case ETHTOOL_ID_ACTIVE:
+		return 1;	/* cycle on/off once per second */
 
-	हाल ETHTOOL_ID_ON:
+	case ETHTOOL_ID_ON:
 		tw32(MAC_LED_CTRL, LED_CTRL_LNKLED_OVERRIDE |
 		     LED_CTRL_1000MBPS_ON |
 		     LED_CTRL_100MBPS_ON |
@@ -12766,632 +12765,632 @@ eeprom_करोne:
 		     LED_CTRL_TRAFFIC_OVERRIDE |
 		     LED_CTRL_TRAFFIC_BLINK |
 		     LED_CTRL_TRAFFIC_LED);
-		अवरोध;
+		break;
 
-	हाल ETHTOOL_ID_OFF:
+	case ETHTOOL_ID_OFF:
 		tw32(MAC_LED_CTRL, LED_CTRL_LNKLED_OVERRIDE |
 		     LED_CTRL_TRAFFIC_OVERRIDE);
-		अवरोध;
+		break;
 
-	हाल ETHTOOL_ID_INACTIVE:
+	case ETHTOOL_ID_INACTIVE:
 		tw32(MAC_LED_CTRL, tp->led_ctrl);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tg3_get_ethtool_stats(काष्ठा net_device *dev,
-				   काष्ठा ethtool_stats *estats, u64 *पंचांगp_stats)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_ethtool_stats(struct net_device *dev,
+				   struct ethtool_stats *estats, u64 *tmp_stats)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (tp->hw_stats)
-		tg3_get_estats(tp, (काष्ठा tg3_ethtool_stats *)पंचांगp_stats);
-	अन्यथा
-		स_रखो(पंचांगp_stats, 0, माप(काष्ठा tg3_ethtool_stats));
-पूर्ण
+	if (tp->hw_stats)
+		tg3_get_estats(tp, (struct tg3_ethtool_stats *)tmp_stats);
+	else
+		memset(tmp_stats, 0, sizeof(struct tg3_ethtool_stats));
+}
 
-अटल __be32 *tg3_vpd_पढ़ोblock(काष्ठा tg3 *tp, u32 *vpdlen)
-अणु
-	पूर्णांक i;
+static __be32 *tg3_vpd_readblock(struct tg3 *tp, u32 *vpdlen)
+{
+	int i;
 	__be32 *buf;
 	u32 offset = 0, len = 0;
 	u32 magic, val;
 
-	अगर (tg3_flag(tp, NO_NVRAM) || tg3_nvram_पढ़ो(tp, 0, &magic))
-		वापस शून्य;
+	if (tg3_flag(tp, NO_NVRAM) || tg3_nvram_read(tp, 0, &magic))
+		return NULL;
 
-	अगर (magic == TG3_EEPROM_MAGIC) अणु
-		क्रम (offset = TG3_NVM_सूची_START;
-		     offset < TG3_NVM_सूची_END;
-		     offset += TG3_NVM_सूचीENT_SIZE) अणु
-			अगर (tg3_nvram_पढ़ो(tp, offset, &val))
-				वापस शून्य;
+	if (magic == TG3_EEPROM_MAGIC) {
+		for (offset = TG3_NVM_DIR_START;
+		     offset < TG3_NVM_DIR_END;
+		     offset += TG3_NVM_DIRENT_SIZE) {
+			if (tg3_nvram_read(tp, offset, &val))
+				return NULL;
 
-			अगर ((val >> TG3_NVM_सूचीTYPE_SHIFT) ==
-			    TG3_NVM_सूचीTYPE_EXTVPD)
-				अवरोध;
-		पूर्ण
+			if ((val >> TG3_NVM_DIRTYPE_SHIFT) ==
+			    TG3_NVM_DIRTYPE_EXTVPD)
+				break;
+		}
 
-		अगर (offset != TG3_NVM_सूची_END) अणु
-			len = (val & TG3_NVM_सूचीTYPE_LENMSK) * 4;
-			अगर (tg3_nvram_पढ़ो(tp, offset + 4, &offset))
-				वापस शून्य;
+		if (offset != TG3_NVM_DIR_END) {
+			len = (val & TG3_NVM_DIRTYPE_LENMSK) * 4;
+			if (tg3_nvram_read(tp, offset + 4, &offset))
+				return NULL;
 
 			offset = tg3_nvram_logical_addr(tp, offset);
-		पूर्ण
+		}
 
-		अगर (!offset || !len) अणु
+		if (!offset || !len) {
 			offset = TG3_NVM_VPD_OFF;
 			len = TG3_NVM_VPD_LEN;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		len = TG3_NVM_PCI_VPD_MAX_LEN;
-	पूर्ण
+	}
 
-	buf = kदो_स्मृति(len, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस शून्य;
+	buf = kmalloc(len, GFP_KERNEL);
+	if (buf == NULL)
+		return NULL;
 
-	अगर (magic == TG3_EEPROM_MAGIC) अणु
-		क्रम (i = 0; i < len; i += 4) अणु
-			/* The data is in little-endian क्रमmat in NVRAM.
-			 * Use the big-endian पढ़ो routines to preserve
+	if (magic == TG3_EEPROM_MAGIC) {
+		for (i = 0; i < len; i += 4) {
+			/* The data is in little-endian format in NVRAM.
+			 * Use the big-endian read routines to preserve
 			 * the byte order as it exists in NVRAM.
 			 */
-			अगर (tg3_nvram_पढ़ो_be32(tp, offset + i, &buf[i/4]))
-				जाओ error;
-		पूर्ण
+			if (tg3_nvram_read_be32(tp, offset + i, &buf[i/4]))
+				goto error;
+		}
 		*vpdlen = len;
-	पूर्ण अन्यथा अणु
-		sमाप_प्रकार cnt;
+	} else {
+		ssize_t cnt;
 
-		cnt = pci_पढ़ो_vpd(tp->pdev, 0, len, (u8 *)buf);
-		अगर (cnt < 0)
-			जाओ error;
+		cnt = pci_read_vpd(tp->pdev, 0, len, (u8 *)buf);
+		if (cnt < 0)
+			goto error;
 		*vpdlen = cnt;
-	पूर्ण
+	}
 
-	वापस buf;
+	return buf;
 
 error:
-	kमुक्त(buf);
-	वापस शून्य;
-पूर्ण
+	kfree(buf);
+	return NULL;
+}
 
-#घोषणा NVRAM_TEST_SIZE 0x100
-#घोषणा NVRAM_SELFBOOT_FORMAT1_0_SIZE	0x14
-#घोषणा NVRAM_SELFBOOT_FORMAT1_2_SIZE	0x18
-#घोषणा NVRAM_SELFBOOT_FORMAT1_3_SIZE	0x1c
-#घोषणा NVRAM_SELFBOOT_FORMAT1_4_SIZE	0x20
-#घोषणा NVRAM_SELFBOOT_FORMAT1_5_SIZE	0x24
-#घोषणा NVRAM_SELFBOOT_FORMAT1_6_SIZE	0x50
-#घोषणा NVRAM_SELFBOOT_HW_SIZE 0x20
-#घोषणा NVRAM_SELFBOOT_DATA_SIZE 0x1c
+#define NVRAM_TEST_SIZE 0x100
+#define NVRAM_SELFBOOT_FORMAT1_0_SIZE	0x14
+#define NVRAM_SELFBOOT_FORMAT1_2_SIZE	0x18
+#define NVRAM_SELFBOOT_FORMAT1_3_SIZE	0x1c
+#define NVRAM_SELFBOOT_FORMAT1_4_SIZE	0x20
+#define NVRAM_SELFBOOT_FORMAT1_5_SIZE	0x24
+#define NVRAM_SELFBOOT_FORMAT1_6_SIZE	0x50
+#define NVRAM_SELFBOOT_HW_SIZE 0x20
+#define NVRAM_SELFBOOT_DATA_SIZE 0x1c
 
-अटल पूर्णांक tg3_test_nvram(काष्ठा tg3 *tp)
-अणु
+static int tg3_test_nvram(struct tg3 *tp)
+{
 	u32 csum, magic, len;
 	__be32 *buf;
-	पूर्णांक i, j, k, err = 0, size;
+	int i, j, k, err = 0, size;
 
-	अगर (tg3_flag(tp, NO_NVRAM))
-		वापस 0;
+	if (tg3_flag(tp, NO_NVRAM))
+		return 0;
 
-	अगर (tg3_nvram_पढ़ो(tp, 0, &magic) != 0)
-		वापस -EIO;
+	if (tg3_nvram_read(tp, 0, &magic) != 0)
+		return -EIO;
 
-	अगर (magic == TG3_EEPROM_MAGIC)
+	if (magic == TG3_EEPROM_MAGIC)
 		size = NVRAM_TEST_SIZE;
-	अन्यथा अगर ((magic & TG3_EEPROM_MAGIC_FW_MSK) == TG3_EEPROM_MAGIC_FW) अणु
-		अगर ((magic & TG3_EEPROM_SB_FORMAT_MASK) ==
-		    TG3_EEPROM_SB_FORMAT_1) अणु
-			चयन (magic & TG3_EEPROM_SB_REVISION_MASK) अणु
-			हाल TG3_EEPROM_SB_REVISION_0:
+	else if ((magic & TG3_EEPROM_MAGIC_FW_MSK) == TG3_EEPROM_MAGIC_FW) {
+		if ((magic & TG3_EEPROM_SB_FORMAT_MASK) ==
+		    TG3_EEPROM_SB_FORMAT_1) {
+			switch (magic & TG3_EEPROM_SB_REVISION_MASK) {
+			case TG3_EEPROM_SB_REVISION_0:
 				size = NVRAM_SELFBOOT_FORMAT1_0_SIZE;
-				अवरोध;
-			हाल TG3_EEPROM_SB_REVISION_2:
+				break;
+			case TG3_EEPROM_SB_REVISION_2:
 				size = NVRAM_SELFBOOT_FORMAT1_2_SIZE;
-				अवरोध;
-			हाल TG3_EEPROM_SB_REVISION_3:
+				break;
+			case TG3_EEPROM_SB_REVISION_3:
 				size = NVRAM_SELFBOOT_FORMAT1_3_SIZE;
-				अवरोध;
-			हाल TG3_EEPROM_SB_REVISION_4:
+				break;
+			case TG3_EEPROM_SB_REVISION_4:
 				size = NVRAM_SELFBOOT_FORMAT1_4_SIZE;
-				अवरोध;
-			हाल TG3_EEPROM_SB_REVISION_5:
+				break;
+			case TG3_EEPROM_SB_REVISION_5:
 				size = NVRAM_SELFBOOT_FORMAT1_5_SIZE;
-				अवरोध;
-			हाल TG3_EEPROM_SB_REVISION_6:
+				break;
+			case TG3_EEPROM_SB_REVISION_6:
 				size = NVRAM_SELFBOOT_FORMAT1_6_SIZE;
-				अवरोध;
-			शेष:
-				वापस -EIO;
-			पूर्ण
-		पूर्ण अन्यथा
-			वापस 0;
-	पूर्ण अन्यथा अगर ((magic & TG3_EEPROM_MAGIC_HW_MSK) == TG3_EEPROM_MAGIC_HW)
+				break;
+			default:
+				return -EIO;
+			}
+		} else
+			return 0;
+	} else if ((magic & TG3_EEPROM_MAGIC_HW_MSK) == TG3_EEPROM_MAGIC_HW)
 		size = NVRAM_SELFBOOT_HW_SIZE;
-	अन्यथा
-		वापस -EIO;
+	else
+		return -EIO;
 
-	buf = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	buf = kmalloc(size, GFP_KERNEL);
+	if (buf == NULL)
+		return -ENOMEM;
 
 	err = -EIO;
-	क्रम (i = 0, j = 0; i < size; i += 4, j++) अणु
-		err = tg3_nvram_पढ़ो_be32(tp, i, &buf[j]);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-	अगर (i < size)
-		जाओ out;
+	for (i = 0, j = 0; i < size; i += 4, j++) {
+		err = tg3_nvram_read_be32(tp, i, &buf[j]);
+		if (err)
+			break;
+	}
+	if (i < size)
+		goto out;
 
-	/* Selfboot क्रमmat */
+	/* Selfboot format */
 	magic = be32_to_cpu(buf[0]);
-	अगर ((magic & TG3_EEPROM_MAGIC_FW_MSK) ==
-	    TG3_EEPROM_MAGIC_FW) अणु
+	if ((magic & TG3_EEPROM_MAGIC_FW_MSK) ==
+	    TG3_EEPROM_MAGIC_FW) {
 		u8 *buf8 = (u8 *) buf, csum8 = 0;
 
-		अगर ((magic & TG3_EEPROM_SB_REVISION_MASK) ==
-		    TG3_EEPROM_SB_REVISION_2) अणु
-			/* For rev 2, the csum करोesn't include the MBA. */
-			क्रम (i = 0; i < TG3_EEPROM_SB_F1R2_MBA_OFF; i++)
+		if ((magic & TG3_EEPROM_SB_REVISION_MASK) ==
+		    TG3_EEPROM_SB_REVISION_2) {
+			/* For rev 2, the csum doesn't include the MBA. */
+			for (i = 0; i < TG3_EEPROM_SB_F1R2_MBA_OFF; i++)
 				csum8 += buf8[i];
-			क्रम (i = TG3_EEPROM_SB_F1R2_MBA_OFF + 4; i < size; i++)
+			for (i = TG3_EEPROM_SB_F1R2_MBA_OFF + 4; i < size; i++)
 				csum8 += buf8[i];
-		पूर्ण अन्यथा अणु
-			क्रम (i = 0; i < size; i++)
+		} else {
+			for (i = 0; i < size; i++)
 				csum8 += buf8[i];
-		पूर्ण
+		}
 
-		अगर (csum8 == 0) अणु
+		if (csum8 == 0) {
 			err = 0;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		err = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((magic & TG3_EEPROM_MAGIC_HW_MSK) ==
-	    TG3_EEPROM_MAGIC_HW) अणु
+	if ((magic & TG3_EEPROM_MAGIC_HW_MSK) ==
+	    TG3_EEPROM_MAGIC_HW) {
 		u8 data[NVRAM_SELFBOOT_DATA_SIZE];
 		u8 parity[NVRAM_SELFBOOT_DATA_SIZE];
 		u8 *buf8 = (u8 *) buf;
 
 		/* Separate the parity bits and the data bytes.  */
-		क्रम (i = 0, j = 0, k = 0; i < NVRAM_SELFBOOT_HW_SIZE; i++) अणु
-			अगर ((i == 0) || (i == 8)) अणु
-				पूर्णांक l;
+		for (i = 0, j = 0, k = 0; i < NVRAM_SELFBOOT_HW_SIZE; i++) {
+			if ((i == 0) || (i == 8)) {
+				int l;
 				u8 msk;
 
-				क्रम (l = 0, msk = 0x80; l < 7; l++, msk >>= 1)
+				for (l = 0, msk = 0x80; l < 7; l++, msk >>= 1)
 					parity[k++] = buf8[i] & msk;
 				i++;
-			पूर्ण अन्यथा अगर (i == 16) अणु
-				पूर्णांक l;
+			} else if (i == 16) {
+				int l;
 				u8 msk;
 
-				क्रम (l = 0, msk = 0x20; l < 6; l++, msk >>= 1)
+				for (l = 0, msk = 0x20; l < 6; l++, msk >>= 1)
 					parity[k++] = buf8[i] & msk;
 				i++;
 
-				क्रम (l = 0, msk = 0x80; l < 8; l++, msk >>= 1)
+				for (l = 0, msk = 0x80; l < 8; l++, msk >>= 1)
 					parity[k++] = buf8[i] & msk;
 				i++;
-			पूर्ण
+			}
 			data[j++] = buf8[i];
-		पूर्ण
+		}
 
 		err = -EIO;
-		क्रम (i = 0; i < NVRAM_SELFBOOT_DATA_SIZE; i++) अणु
+		for (i = 0; i < NVRAM_SELFBOOT_DATA_SIZE; i++) {
 			u8 hw8 = hweight8(data[i]);
 
-			अगर ((hw8 & 0x1) && parity[i])
-				जाओ out;
-			अन्यथा अगर (!(hw8 & 0x1) && !parity[i])
-				जाओ out;
-		पूर्ण
+			if ((hw8 & 0x1) && parity[i])
+				goto out;
+			else if (!(hw8 & 0x1) && !parity[i])
+				goto out;
+		}
 		err = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = -EIO;
 
 	/* Bootstrap checksum at offset 0x10 */
-	csum = calc_crc((अचिन्हित अक्षर *) buf, 0x10);
-	अगर (csum != le32_to_cpu(buf[0x10/4]))
-		जाओ out;
+	csum = calc_crc((unsigned char *) buf, 0x10);
+	if (csum != le32_to_cpu(buf[0x10/4]))
+		goto out;
 
 	/* Manufacturing block starts at offset 0x74, checksum at 0xfc */
-	csum = calc_crc((अचिन्हित अक्षर *) &buf[0x74/4], 0x88);
-	अगर (csum != le32_to_cpu(buf[0xfc/4]))
-		जाओ out;
+	csum = calc_crc((unsigned char *) &buf[0x74/4], 0x88);
+	if (csum != le32_to_cpu(buf[0xfc/4]))
+		goto out;
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	buf = tg3_vpd_पढ़ोblock(tp, &len);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = tg3_vpd_readblock(tp, &len);
+	if (!buf)
+		return -ENOMEM;
 
 	i = pci_vpd_find_tag((u8 *)buf, len, PCI_VPD_LRDT_RO_DATA);
-	अगर (i > 0) अणु
+	if (i > 0) {
 		j = pci_vpd_lrdt_size(&((u8 *)buf)[i]);
-		अगर (j < 0)
-			जाओ out;
+		if (j < 0)
+			goto out;
 
-		अगर (i + PCI_VPD_LRDT_TAG_SIZE + j > len)
-			जाओ out;
+		if (i + PCI_VPD_LRDT_TAG_SIZE + j > len)
+			goto out;
 
 		i += PCI_VPD_LRDT_TAG_SIZE;
 		j = pci_vpd_find_info_keyword((u8 *)buf, i, j,
 					      PCI_VPD_RO_KEYWORD_CHKSUM);
-		अगर (j > 0) अणु
+		if (j > 0) {
 			u8 csum8 = 0;
 
 			j += PCI_VPD_INFO_FLD_HDR_SIZE;
 
-			क्रम (i = 0; i <= j; i++)
+			for (i = 0; i <= j; i++)
 				csum8 += ((u8 *)buf)[i];
 
-			अगर (csum8)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (csum8)
+				goto out;
+		}
+	}
 
 	err = 0;
 
 out:
-	kमुक्त(buf);
-	वापस err;
-पूर्ण
+	kfree(buf);
+	return err;
+}
 
-#घोषणा TG3_SERDES_TIMEOUT_SEC	2
-#घोषणा TG3_COPPER_TIMEOUT_SEC	6
+#define TG3_SERDES_TIMEOUT_SEC	2
+#define TG3_COPPER_TIMEOUT_SEC	6
 
-अटल पूर्णांक tg3_test_link(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i, max;
+static int tg3_test_link(struct tg3 *tp)
+{
+	int i, max;
 
-	अगर (!netअगर_running(tp->dev))
-		वापस -ENODEV;
+	if (!netif_running(tp->dev))
+		return -ENODEV;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
+	if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
 		max = TG3_SERDES_TIMEOUT_SEC;
-	अन्यथा
+	else
 		max = TG3_COPPER_TIMEOUT_SEC;
 
-	क्रम (i = 0; i < max; i++) अणु
-		अगर (tp->link_up)
-			वापस 0;
+	for (i = 0; i < max; i++) {
+		if (tp->link_up)
+			return 0;
 
-		अगर (msleep_पूर्णांकerruptible(1000))
-			अवरोध;
-	पूर्ण
+		if (msleep_interruptible(1000))
+			break;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-/* Only test the commonly used रेजिस्टरs */
-अटल पूर्णांक tg3_test_रेजिस्टरs(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i, is_5705, is_5750;
-	u32 offset, पढ़ो_mask, ग_लिखो_mask, val, save_val, पढ़ो_val;
-	अटल काष्ठा अणु
+/* Only test the commonly used registers */
+static int tg3_test_registers(struct tg3 *tp)
+{
+	int i, is_5705, is_5750;
+	u32 offset, read_mask, write_mask, val, save_val, read_val;
+	static struct {
 		u16 offset;
 		u16 flags;
-#घोषणा TG3_FL_5705	0x1
-#घोषणा TG3_FL_NOT_5705	0x2
-#घोषणा TG3_FL_NOT_5788	0x4
-#घोषणा TG3_FL_NOT_5750	0x8
-		u32 पढ़ो_mask;
-		u32 ग_लिखो_mask;
-	पूर्ण reg_tbl[] = अणु
+#define TG3_FL_5705	0x1
+#define TG3_FL_NOT_5705	0x2
+#define TG3_FL_NOT_5788	0x4
+#define TG3_FL_NOT_5750	0x8
+		u32 read_mask;
+		u32 write_mask;
+	} reg_tbl[] = {
 		/* MAC Control Registers */
-		अणु MAC_MODE, TG3_FL_NOT_5705,
-			0x00000000, 0x00ef6f8c पूर्ण,
-		अणु MAC_MODE, TG3_FL_5705,
-			0x00000000, 0x01ef6b8c पूर्ण,
-		अणु MAC_STATUS, TG3_FL_NOT_5705,
-			0x03800107, 0x00000000 पूर्ण,
-		अणु MAC_STATUS, TG3_FL_5705,
-			0x03800100, 0x00000000 पूर्ण,
-		अणु MAC_ADDR_0_HIGH, 0x0000,
-			0x00000000, 0x0000ffff पूर्ण,
-		अणु MAC_ADDR_0_LOW, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु MAC_RX_MTU_SIZE, 0x0000,
-			0x00000000, 0x0000ffff पूर्ण,
-		अणु MAC_TX_MODE, 0x0000,
-			0x00000000, 0x00000070 पूर्ण,
-		अणु MAC_TX_LENGTHS, 0x0000,
-			0x00000000, 0x00003fff पूर्ण,
-		अणु MAC_RX_MODE, TG3_FL_NOT_5705,
-			0x00000000, 0x000007fc पूर्ण,
-		अणु MAC_RX_MODE, TG3_FL_5705,
-			0x00000000, 0x000007dc पूर्ण,
-		अणु MAC_HASH_REG_0, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु MAC_HASH_REG_1, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु MAC_HASH_REG_2, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु MAC_HASH_REG_3, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
+		{ MAC_MODE, TG3_FL_NOT_5705,
+			0x00000000, 0x00ef6f8c },
+		{ MAC_MODE, TG3_FL_5705,
+			0x00000000, 0x01ef6b8c },
+		{ MAC_STATUS, TG3_FL_NOT_5705,
+			0x03800107, 0x00000000 },
+		{ MAC_STATUS, TG3_FL_5705,
+			0x03800100, 0x00000000 },
+		{ MAC_ADDR_0_HIGH, 0x0000,
+			0x00000000, 0x0000ffff },
+		{ MAC_ADDR_0_LOW, 0x0000,
+			0x00000000, 0xffffffff },
+		{ MAC_RX_MTU_SIZE, 0x0000,
+			0x00000000, 0x0000ffff },
+		{ MAC_TX_MODE, 0x0000,
+			0x00000000, 0x00000070 },
+		{ MAC_TX_LENGTHS, 0x0000,
+			0x00000000, 0x00003fff },
+		{ MAC_RX_MODE, TG3_FL_NOT_5705,
+			0x00000000, 0x000007fc },
+		{ MAC_RX_MODE, TG3_FL_5705,
+			0x00000000, 0x000007dc },
+		{ MAC_HASH_REG_0, 0x0000,
+			0x00000000, 0xffffffff },
+		{ MAC_HASH_REG_1, 0x0000,
+			0x00000000, 0xffffffff },
+		{ MAC_HASH_REG_2, 0x0000,
+			0x00000000, 0xffffffff },
+		{ MAC_HASH_REG_3, 0x0000,
+			0x00000000, 0xffffffff },
 
 		/* Receive Data and Receive BD Initiator Control Registers. */
-		अणु RCVDBDI_JUMBO_BD+0, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु RCVDBDI_JUMBO_BD+4, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु RCVDBDI_JUMBO_BD+8, TG3_FL_NOT_5705,
-			0x00000000, 0x00000003 पूर्ण,
-		अणु RCVDBDI_JUMBO_BD+0xc, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु RCVDBDI_STD_BD+0, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु RCVDBDI_STD_BD+4, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु RCVDBDI_STD_BD+8, 0x0000,
-			0x00000000, 0xffff0002 पूर्ण,
-		अणु RCVDBDI_STD_BD+0xc, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
+		{ RCVDBDI_JUMBO_BD+0, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ RCVDBDI_JUMBO_BD+4, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ RCVDBDI_JUMBO_BD+8, TG3_FL_NOT_5705,
+			0x00000000, 0x00000003 },
+		{ RCVDBDI_JUMBO_BD+0xc, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ RCVDBDI_STD_BD+0, 0x0000,
+			0x00000000, 0xffffffff },
+		{ RCVDBDI_STD_BD+4, 0x0000,
+			0x00000000, 0xffffffff },
+		{ RCVDBDI_STD_BD+8, 0x0000,
+			0x00000000, 0xffff0002 },
+		{ RCVDBDI_STD_BD+0xc, 0x0000,
+			0x00000000, 0xffffffff },
 
 		/* Receive BD Initiator Control Registers. */
-		अणु RCVBDI_STD_THRESH, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु RCVBDI_STD_THRESH, TG3_FL_5705,
-			0x00000000, 0x000003ff पूर्ण,
-		अणु RCVBDI_JUMBO_THRESH, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
+		{ RCVBDI_STD_THRESH, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ RCVBDI_STD_THRESH, TG3_FL_5705,
+			0x00000000, 0x000003ff },
+		{ RCVBDI_JUMBO_THRESH, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
 
 		/* Host Coalescing Control Registers. */
-		अणु HOSTCC_MODE, TG3_FL_NOT_5705,
-			0x00000000, 0x00000004 पूर्ण,
-		अणु HOSTCC_MODE, TG3_FL_5705,
-			0x00000000, 0x000000f6 पूर्ण,
-		अणु HOSTCC_RXCOL_TICKS, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_RXCOL_TICKS, TG3_FL_5705,
-			0x00000000, 0x000003ff पूर्ण,
-		अणु HOSTCC_TXCOL_TICKS, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_TXCOL_TICKS, TG3_FL_5705,
-			0x00000000, 0x000003ff पूर्ण,
-		अणु HOSTCC_RXMAX_FRAMES, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_RXMAX_FRAMES, TG3_FL_5705 | TG3_FL_NOT_5788,
-			0x00000000, 0x000000ff पूर्ण,
-		अणु HOSTCC_TXMAX_FRAMES, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_TXMAX_FRAMES, TG3_FL_5705 | TG3_FL_NOT_5788,
-			0x00000000, 0x000000ff पूर्ण,
-		अणु HOSTCC_RXCOAL_TICK_INT, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_TXCOAL_TICK_INT, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_RXCOAL_MAXF_INT, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_RXCOAL_MAXF_INT, TG3_FL_5705 | TG3_FL_NOT_5788,
-			0x00000000, 0x000000ff पूर्ण,
-		अणु HOSTCC_TXCOAL_MAXF_INT, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_TXCOAL_MAXF_INT, TG3_FL_5705 | TG3_FL_NOT_5788,
-			0x00000000, 0x000000ff पूर्ण,
-		अणु HOSTCC_STAT_COAL_TICKS, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_STATS_BLK_HOST_ADDR, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_STATS_BLK_HOST_ADDR+4, TG3_FL_NOT_5705,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_STATUS_BLK_HOST_ADDR, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_STATUS_BLK_HOST_ADDR+4, 0x0000,
-			0x00000000, 0xffffffff पूर्ण,
-		अणु HOSTCC_STATS_BLK_NIC_ADDR, 0x0000,
-			0xffffffff, 0x00000000 पूर्ण,
-		अणु HOSTCC_STATUS_BLK_NIC_ADDR, 0x0000,
-			0xffffffff, 0x00000000 पूर्ण,
+		{ HOSTCC_MODE, TG3_FL_NOT_5705,
+			0x00000000, 0x00000004 },
+		{ HOSTCC_MODE, TG3_FL_5705,
+			0x00000000, 0x000000f6 },
+		{ HOSTCC_RXCOL_TICKS, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_RXCOL_TICKS, TG3_FL_5705,
+			0x00000000, 0x000003ff },
+		{ HOSTCC_TXCOL_TICKS, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_TXCOL_TICKS, TG3_FL_5705,
+			0x00000000, 0x000003ff },
+		{ HOSTCC_RXMAX_FRAMES, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_RXMAX_FRAMES, TG3_FL_5705 | TG3_FL_NOT_5788,
+			0x00000000, 0x000000ff },
+		{ HOSTCC_TXMAX_FRAMES, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_TXMAX_FRAMES, TG3_FL_5705 | TG3_FL_NOT_5788,
+			0x00000000, 0x000000ff },
+		{ HOSTCC_RXCOAL_TICK_INT, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_TXCOAL_TICK_INT, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_RXCOAL_MAXF_INT, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_RXCOAL_MAXF_INT, TG3_FL_5705 | TG3_FL_NOT_5788,
+			0x00000000, 0x000000ff },
+		{ HOSTCC_TXCOAL_MAXF_INT, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_TXCOAL_MAXF_INT, TG3_FL_5705 | TG3_FL_NOT_5788,
+			0x00000000, 0x000000ff },
+		{ HOSTCC_STAT_COAL_TICKS, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_STATS_BLK_HOST_ADDR, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_STATS_BLK_HOST_ADDR+4, TG3_FL_NOT_5705,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_STATUS_BLK_HOST_ADDR, 0x0000,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_STATUS_BLK_HOST_ADDR+4, 0x0000,
+			0x00000000, 0xffffffff },
+		{ HOSTCC_STATS_BLK_NIC_ADDR, 0x0000,
+			0xffffffff, 0x00000000 },
+		{ HOSTCC_STATUS_BLK_NIC_ADDR, 0x0000,
+			0xffffffff, 0x00000000 },
 
 		/* Buffer Manager Control Registers. */
-		अणु BUFMGR_MB_POOL_ADDR, TG3_FL_NOT_5750,
-			0x00000000, 0x007fff80 पूर्ण,
-		अणु BUFMGR_MB_POOL_SIZE, TG3_FL_NOT_5750,
-			0x00000000, 0x007fffff पूर्ण,
-		अणु BUFMGR_MB_RDMA_LOW_WATER, 0x0000,
-			0x00000000, 0x0000003f पूर्ण,
-		अणु BUFMGR_MB_MACRX_LOW_WATER, 0x0000,
-			0x00000000, 0x000001ff पूर्ण,
-		अणु BUFMGR_MB_HIGH_WATER, 0x0000,
-			0x00000000, 0x000001ff पूर्ण,
-		अणु BUFMGR_DMA_DESC_POOL_ADDR, TG3_FL_NOT_5705,
-			0xffffffff, 0x00000000 पूर्ण,
-		अणु BUFMGR_DMA_DESC_POOL_SIZE, TG3_FL_NOT_5705,
-			0xffffffff, 0x00000000 पूर्ण,
+		{ BUFMGR_MB_POOL_ADDR, TG3_FL_NOT_5750,
+			0x00000000, 0x007fff80 },
+		{ BUFMGR_MB_POOL_SIZE, TG3_FL_NOT_5750,
+			0x00000000, 0x007fffff },
+		{ BUFMGR_MB_RDMA_LOW_WATER, 0x0000,
+			0x00000000, 0x0000003f },
+		{ BUFMGR_MB_MACRX_LOW_WATER, 0x0000,
+			0x00000000, 0x000001ff },
+		{ BUFMGR_MB_HIGH_WATER, 0x0000,
+			0x00000000, 0x000001ff },
+		{ BUFMGR_DMA_DESC_POOL_ADDR, TG3_FL_NOT_5705,
+			0xffffffff, 0x00000000 },
+		{ BUFMGR_DMA_DESC_POOL_SIZE, TG3_FL_NOT_5705,
+			0xffffffff, 0x00000000 },
 
 		/* Mailbox Registers */
-		अणु GRCMBOX_RCVSTD_PROD_IDX+4, 0x0000,
-			0x00000000, 0x000001ff पूर्ण,
-		अणु GRCMBOX_RCVJUMBO_PROD_IDX+4, TG3_FL_NOT_5705,
-			0x00000000, 0x000001ff पूर्ण,
-		अणु GRCMBOX_RCVRET_CON_IDX_0+4, 0x0000,
-			0x00000000, 0x000007ff पूर्ण,
-		अणु GRCMBOX_SNDHOST_PROD_IDX_0+4, 0x0000,
-			0x00000000, 0x000001ff पूर्ण,
+		{ GRCMBOX_RCVSTD_PROD_IDX+4, 0x0000,
+			0x00000000, 0x000001ff },
+		{ GRCMBOX_RCVJUMBO_PROD_IDX+4, TG3_FL_NOT_5705,
+			0x00000000, 0x000001ff },
+		{ GRCMBOX_RCVRET_CON_IDX_0+4, 0x0000,
+			0x00000000, 0x000007ff },
+		{ GRCMBOX_SNDHOST_PROD_IDX_0+4, 0x0000,
+			0x00000000, 0x000001ff },
 
-		अणु 0xffff, 0x0000, 0x00000000, 0x00000000 पूर्ण,
-	पूर्ण;
+		{ 0xffff, 0x0000, 0x00000000, 0x00000000 },
+	};
 
 	is_5705 = is_5750 = 0;
-	अगर (tg3_flag(tp, 5705_PLUS)) अणु
+	if (tg3_flag(tp, 5705_PLUS)) {
 		is_5705 = 1;
-		अगर (tg3_flag(tp, 5750_PLUS))
+		if (tg3_flag(tp, 5750_PLUS))
 			is_5750 = 1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; reg_tbl[i].offset != 0xffff; i++) अणु
-		अगर (is_5705 && (reg_tbl[i].flags & TG3_FL_NOT_5705))
-			जारी;
+	for (i = 0; reg_tbl[i].offset != 0xffff; i++) {
+		if (is_5705 && (reg_tbl[i].flags & TG3_FL_NOT_5705))
+			continue;
 
-		अगर (!is_5705 && (reg_tbl[i].flags & TG3_FL_5705))
-			जारी;
+		if (!is_5705 && (reg_tbl[i].flags & TG3_FL_5705))
+			continue;
 
-		अगर (tg3_flag(tp, IS_5788) &&
+		if (tg3_flag(tp, IS_5788) &&
 		    (reg_tbl[i].flags & TG3_FL_NOT_5788))
-			जारी;
+			continue;
 
-		अगर (is_5750 && (reg_tbl[i].flags & TG3_FL_NOT_5750))
-			जारी;
+		if (is_5750 && (reg_tbl[i].flags & TG3_FL_NOT_5750))
+			continue;
 
 		offset = (u32) reg_tbl[i].offset;
-		पढ़ो_mask = reg_tbl[i].पढ़ो_mask;
-		ग_लिखो_mask = reg_tbl[i].ग_लिखो_mask;
+		read_mask = reg_tbl[i].read_mask;
+		write_mask = reg_tbl[i].write_mask;
 
-		/* Save the original रेजिस्टर content */
+		/* Save the original register content */
 		save_val = tr32(offset);
 
-		/* Determine the पढ़ो-only value. */
-		पढ़ो_val = save_val & पढ़ो_mask;
+		/* Determine the read-only value. */
+		read_val = save_val & read_mask;
 
-		/* Write zero to the रेजिस्टर, then make sure the पढ़ो-only bits
-		 * are not changed and the पढ़ो/ग_लिखो bits are all zeros.
+		/* Write zero to the register, then make sure the read-only bits
+		 * are not changed and the read/write bits are all zeros.
 		 */
 		tw32(offset, 0);
 
 		val = tr32(offset);
 
-		/* Test the पढ़ो-only and पढ़ो/ग_लिखो bits. */
-		अगर (((val & पढ़ो_mask) != पढ़ो_val) || (val & ग_लिखो_mask))
-			जाओ out;
+		/* Test the read-only and read/write bits. */
+		if (((val & read_mask) != read_val) || (val & write_mask))
+			goto out;
 
 		/* Write ones to all the bits defined by RdMask and WrMask, then
-		 * make sure the पढ़ो-only bits are not changed and the
-		 * पढ़ो/ग_लिखो bits are all ones.
+		 * make sure the read-only bits are not changed and the
+		 * read/write bits are all ones.
 		 */
-		tw32(offset, पढ़ो_mask | ग_लिखो_mask);
+		tw32(offset, read_mask | write_mask);
 
 		val = tr32(offset);
 
-		/* Test the पढ़ो-only bits. */
-		अगर ((val & पढ़ो_mask) != पढ़ो_val)
-			जाओ out;
+		/* Test the read-only bits. */
+		if ((val & read_mask) != read_val)
+			goto out;
 
-		/* Test the पढ़ो/ग_लिखो bits. */
-		अगर ((val & ग_लिखो_mask) != ग_लिखो_mask)
-			जाओ out;
+		/* Test the read/write bits. */
+		if ((val & write_mask) != write_mask)
+			goto out;
 
 		tw32(offset, save_val);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 out:
-	अगर (netअगर_msg_hw(tp))
+	if (netif_msg_hw(tp))
 		netdev_err(tp->dev,
 			   "Register test failed at offset %x\n", offset);
 	tw32(offset, save_val);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक tg3_करो_mem_test(काष्ठा tg3 *tp, u32 offset, u32 len)
-अणु
-	अटल स्थिर u32 test_pattern[] = अणु 0x00000000, 0xffffffff, 0xaa55a55a पूर्ण;
-	पूर्णांक i;
+static int tg3_do_mem_test(struct tg3 *tp, u32 offset, u32 len)
+{
+	static const u32 test_pattern[] = { 0x00000000, 0xffffffff, 0xaa55a55a };
+	int i;
 	u32 j;
 
-	क्रम (i = 0; i < ARRAY_SIZE(test_pattern); i++) अणु
-		क्रम (j = 0; j < len; j += 4) अणु
+	for (i = 0; i < ARRAY_SIZE(test_pattern); i++) {
+		for (j = 0; j < len; j += 4) {
 			u32 val;
 
-			tg3_ग_लिखो_mem(tp, offset + j, test_pattern[i]);
-			tg3_पढ़ो_mem(tp, offset + j, &val);
-			अगर (val != test_pattern[i])
-				वापस -EIO;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			tg3_write_mem(tp, offset + j, test_pattern[i]);
+			tg3_read_mem(tp, offset + j, &val);
+			if (val != test_pattern[i])
+				return -EIO;
+		}
+	}
+	return 0;
+}
 
-अटल पूर्णांक tg3_test_memory(काष्ठा tg3 *tp)
-अणु
-	अटल काष्ठा mem_entry अणु
+static int tg3_test_memory(struct tg3 *tp)
+{
+	static struct mem_entry {
 		u32 offset;
 		u32 len;
-	पूर्ण mem_tbl_570x[] = अणु
-		अणु 0x00000000, 0x00b50पूर्ण,
-		अणु 0x00002000, 0x1c000पूर्ण,
-		अणु 0xffffffff, 0x00000पूर्ण
-	पूर्ण, mem_tbl_5705[] = अणु
-		अणु 0x00000100, 0x0000cपूर्ण,
-		अणु 0x00000200, 0x00008पूर्ण,
-		अणु 0x00004000, 0x00800पूर्ण,
-		अणु 0x00006000, 0x01000पूर्ण,
-		अणु 0x00008000, 0x02000पूर्ण,
-		अणु 0x00010000, 0x0e000पूर्ण,
-		अणु 0xffffffff, 0x00000पूर्ण
-	पूर्ण, mem_tbl_5755[] = अणु
-		अणु 0x00000200, 0x00008पूर्ण,
-		अणु 0x00004000, 0x00800पूर्ण,
-		अणु 0x00006000, 0x00800पूर्ण,
-		अणु 0x00008000, 0x02000पूर्ण,
-		अणु 0x00010000, 0x0c000पूर्ण,
-		अणु 0xffffffff, 0x00000पूर्ण
-	पूर्ण, mem_tbl_5906[] = अणु
-		अणु 0x00000200, 0x00008पूर्ण,
-		अणु 0x00004000, 0x00400पूर्ण,
-		अणु 0x00006000, 0x00400पूर्ण,
-		अणु 0x00008000, 0x01000पूर्ण,
-		अणु 0x00010000, 0x01000पूर्ण,
-		अणु 0xffffffff, 0x00000पूर्ण
-	पूर्ण, mem_tbl_5717[] = अणु
-		अणु 0x00000200, 0x00008पूर्ण,
-		अणु 0x00010000, 0x0a000पूर्ण,
-		अणु 0x00020000, 0x13c00पूर्ण,
-		अणु 0xffffffff, 0x00000पूर्ण
-	पूर्ण, mem_tbl_57765[] = अणु
-		अणु 0x00000200, 0x00008पूर्ण,
-		अणु 0x00004000, 0x00800पूर्ण,
-		अणु 0x00006000, 0x09800पूर्ण,
-		अणु 0x00010000, 0x0a000पूर्ण,
-		अणु 0xffffffff, 0x00000पूर्ण
-	पूर्ण;
-	काष्ठा mem_entry *mem_tbl;
-	पूर्णांक err = 0;
-	पूर्णांक i;
+	} mem_tbl_570x[] = {
+		{ 0x00000000, 0x00b50},
+		{ 0x00002000, 0x1c000},
+		{ 0xffffffff, 0x00000}
+	}, mem_tbl_5705[] = {
+		{ 0x00000100, 0x0000c},
+		{ 0x00000200, 0x00008},
+		{ 0x00004000, 0x00800},
+		{ 0x00006000, 0x01000},
+		{ 0x00008000, 0x02000},
+		{ 0x00010000, 0x0e000},
+		{ 0xffffffff, 0x00000}
+	}, mem_tbl_5755[] = {
+		{ 0x00000200, 0x00008},
+		{ 0x00004000, 0x00800},
+		{ 0x00006000, 0x00800},
+		{ 0x00008000, 0x02000},
+		{ 0x00010000, 0x0c000},
+		{ 0xffffffff, 0x00000}
+	}, mem_tbl_5906[] = {
+		{ 0x00000200, 0x00008},
+		{ 0x00004000, 0x00400},
+		{ 0x00006000, 0x00400},
+		{ 0x00008000, 0x01000},
+		{ 0x00010000, 0x01000},
+		{ 0xffffffff, 0x00000}
+	}, mem_tbl_5717[] = {
+		{ 0x00000200, 0x00008},
+		{ 0x00010000, 0x0a000},
+		{ 0x00020000, 0x13c00},
+		{ 0xffffffff, 0x00000}
+	}, mem_tbl_57765[] = {
+		{ 0x00000200, 0x00008},
+		{ 0x00004000, 0x00800},
+		{ 0x00006000, 0x09800},
+		{ 0x00010000, 0x0a000},
+		{ 0xffffffff, 0x00000}
+	};
+	struct mem_entry *mem_tbl;
+	int err = 0;
+	int i;
 
-	अगर (tg3_flag(tp, 5717_PLUS))
+	if (tg3_flag(tp, 5717_PLUS))
 		mem_tbl = mem_tbl_5717;
-	अन्यथा अगर (tg3_flag(tp, 57765_CLASS) ||
+	else if (tg3_flag(tp, 57765_CLASS) ||
 		 tg3_asic_rev(tp) == ASIC_REV_5762)
 		mem_tbl = mem_tbl_57765;
-	अन्यथा अगर (tg3_flag(tp, 5755_PLUS))
+	else if (tg3_flag(tp, 5755_PLUS))
 		mem_tbl = mem_tbl_5755;
-	अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5906)
+	else if (tg3_asic_rev(tp) == ASIC_REV_5906)
 		mem_tbl = mem_tbl_5906;
-	अन्यथा अगर (tg3_flag(tp, 5705_PLUS))
+	else if (tg3_flag(tp, 5705_PLUS))
 		mem_tbl = mem_tbl_5705;
-	अन्यथा
+	else
 		mem_tbl = mem_tbl_570x;
 
-	क्रम (i = 0; mem_tbl[i].offset != 0xffffffff; i++) अणु
-		err = tg3_करो_mem_test(tp, mem_tbl[i].offset, mem_tbl[i].len);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+	for (i = 0; mem_tbl[i].offset != 0xffffffff; i++) {
+		err = tg3_do_mem_test(tp, mem_tbl[i].offset, mem_tbl[i].len);
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा TG3_TSO_MSS		500
+#define TG3_TSO_MSS		500
 
-#घोषणा TG3_TSO_IP_HDR_LEN	20
-#घोषणा TG3_TSO_TCP_HDR_LEN	20
-#घोषणा TG3_TSO_TCP_OPT_LEN	12
+#define TG3_TSO_IP_HDR_LEN	20
+#define TG3_TSO_TCP_HDR_LEN	20
+#define TG3_TSO_TCP_OPT_LEN	12
 
-अटल स्थिर u8 tg3_tso_header[] = अणु
+static const u8 tg3_tso_header[] = {
 0x08, 0x00,
 0x45, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x40, 0x00,
@@ -13406,55 +13405,55 @@ out:
 0x01, 0x01, 0x08, 0x0a,
 0x11, 0x11, 0x11, 0x11,
 0x11, 0x11, 0x11, 0x11,
-पूर्ण;
+};
 
-अटल पूर्णांक tg3_run_loopback(काष्ठा tg3 *tp, u32 pktsz, bool tso_loopback)
-अणु
+static int tg3_run_loopback(struct tg3 *tp, u32 pktsz, bool tso_loopback)
+{
 	u32 rx_start_idx, rx_idx, tx_idx, opaque_key;
 	u32 base_flags = 0, mss = 0, desc_idx, coal_now, data_off, val;
 	u32 budget;
-	काष्ठा sk_buff *skb;
+	struct sk_buff *skb;
 	u8 *tx_data, *rx_data;
 	dma_addr_t map;
-	पूर्णांक num_pkts, tx_len, rx_len, i, err;
-	काष्ठा tg3_rx_buffer_desc *desc;
-	काष्ठा tg3_napi *tnapi, *rnapi;
-	काष्ठा tg3_rx_prodring_set *tpr = &tp->napi[0].prodring;
+	int num_pkts, tx_len, rx_len, i, err;
+	struct tg3_rx_buffer_desc *desc;
+	struct tg3_napi *tnapi, *rnapi;
+	struct tg3_rx_prodring_set *tpr = &tp->napi[0].prodring;
 
 	tnapi = &tp->napi[0];
 	rnapi = &tp->napi[0];
-	अगर (tp->irq_cnt > 1) अणु
-		अगर (tg3_flag(tp, ENABLE_RSS))
+	if (tp->irq_cnt > 1) {
+		if (tg3_flag(tp, ENABLE_RSS))
 			rnapi = &tp->napi[1];
-		अगर (tg3_flag(tp, ENABLE_TSS))
+		if (tg3_flag(tp, ENABLE_TSS))
 			tnapi = &tp->napi[1];
-	पूर्ण
+	}
 	coal_now = tnapi->coal_now | rnapi->coal_now;
 
 	err = -EIO;
 
 	tx_len = pktsz;
 	skb = netdev_alloc_skb(tp->dev, tx_len);
-	अगर (!skb)
-		वापस -ENOMEM;
+	if (!skb)
+		return -ENOMEM;
 
 	tx_data = skb_put(skb, tx_len);
-	स_नकल(tx_data, tp->dev->dev_addr, ETH_ALEN);
-	स_रखो(tx_data + ETH_ALEN, 0x0, 8);
+	memcpy(tx_data, tp->dev->dev_addr, ETH_ALEN);
+	memset(tx_data + ETH_ALEN, 0x0, 8);
 
 	tw32(MAC_RX_MTU_SIZE, tx_len + ETH_FCS_LEN);
 
-	अगर (tso_loopback) अणु
-		काष्ठा iphdr *iph = (काष्ठा iphdr *)&tx_data[ETH_HLEN];
+	if (tso_loopback) {
+		struct iphdr *iph = (struct iphdr *)&tx_data[ETH_HLEN];
 
 		u32 hdr_len = TG3_TSO_IP_HDR_LEN + TG3_TSO_TCP_HDR_LEN +
 			      TG3_TSO_TCP_OPT_LEN;
 
-		स_नकल(tx_data + ETH_ALEN * 2, tg3_tso_header,
-		       माप(tg3_tso_header));
+		memcpy(tx_data + ETH_ALEN * 2, tg3_tso_header,
+		       sizeof(tg3_tso_header));
 		mss = TG3_TSO_MSS;
 
-		val = tx_len - ETH_ALEN * 2 - माप(tg3_tso_header);
+		val = tx_len - ETH_ALEN * 2 - sizeof(tg3_tso_header);
 		num_pkts = DIV_ROUND_UP(val, TG3_TSO_MSS);
 
 		/* Set the total length field in the IP header */
@@ -13463,48 +13462,48 @@ out:
 		base_flags = (TXD_FLAG_CPU_PRE_DMA |
 			      TXD_FLAG_CPU_POST_DMA);
 
-		अगर (tg3_flag(tp, HW_TSO_1) ||
+		if (tg3_flag(tp, HW_TSO_1) ||
 		    tg3_flag(tp, HW_TSO_2) ||
-		    tg3_flag(tp, HW_TSO_3)) अणु
-			काष्ठा tcphdr *th;
+		    tg3_flag(tp, HW_TSO_3)) {
+			struct tcphdr *th;
 			val = ETH_HLEN + TG3_TSO_IP_HDR_LEN;
-			th = (काष्ठा tcphdr *)&tx_data[val];
+			th = (struct tcphdr *)&tx_data[val];
 			th->check = 0;
-		पूर्ण अन्यथा
+		} else
 			base_flags |= TXD_FLAG_TCPUDP_CSUM;
 
-		अगर (tg3_flag(tp, HW_TSO_3)) अणु
+		if (tg3_flag(tp, HW_TSO_3)) {
 			mss |= (hdr_len & 0xc) << 12;
-			अगर (hdr_len & 0x10)
+			if (hdr_len & 0x10)
 				base_flags |= 0x00000010;
 			base_flags |= (hdr_len & 0x3e0) << 5;
-		पूर्ण अन्यथा अगर (tg3_flag(tp, HW_TSO_2))
+		} else if (tg3_flag(tp, HW_TSO_2))
 			mss |= hdr_len << 9;
-		अन्यथा अगर (tg3_flag(tp, HW_TSO_1) ||
-			 tg3_asic_rev(tp) == ASIC_REV_5705) अणु
+		else if (tg3_flag(tp, HW_TSO_1) ||
+			 tg3_asic_rev(tp) == ASIC_REV_5705) {
 			mss |= (TG3_TSO_TCP_OPT_LEN << 9);
-		पूर्ण अन्यथा अणु
+		} else {
 			base_flags |= (TG3_TSO_TCP_OPT_LEN << 10);
-		पूर्ण
+		}
 
-		data_off = ETH_ALEN * 2 + माप(tg3_tso_header);
-	पूर्ण अन्यथा अणु
+		data_off = ETH_ALEN * 2 + sizeof(tg3_tso_header);
+	} else {
 		num_pkts = 1;
 		data_off = ETH_HLEN;
 
-		अगर (tg3_flag(tp, USE_JUMBO_BDFLAG) &&
+		if (tg3_flag(tp, USE_JUMBO_BDFLAG) &&
 		    tx_len > VLAN_ETH_FRAME_LEN)
 			base_flags |= TXD_FLAG_JMB_PKT;
-	पूर्ण
+	}
 
-	क्रम (i = data_off; i < tx_len; i++)
+	for (i = data_off; i < tx_len; i++)
 		tx_data[i] = (u8) (i & 0xff);
 
 	map = pci_map_single(tp->pdev, skb->data, tx_len, PCI_DMA_TODEVICE);
-	अगर (pci_dma_mapping_error(tp->pdev, map)) अणु
-		dev_kमुक्त_skb(skb);
-		वापस -EIO;
-	पूर्ण
+	if (pci_dma_mapping_error(tp->pdev, map)) {
+		dev_kfree_skb(skb);
+		return -EIO;
+	}
 
 	val = tnapi->tx_prod;
 	tnapi->tx_buffers[val].skb = skb;
@@ -13518,16 +13517,16 @@ out:
 	rx_start_idx = rnapi->hw_status->idx[0].rx_producer;
 
 	budget = tg3_tx_avail(tnapi);
-	अगर (tg3_tx_frag_set(tnapi, &val, &budget, map, tx_len,
-			    base_flags | TXD_FLAG_END, mss, 0)) अणु
-		tnapi->tx_buffers[val].skb = शून्य;
-		dev_kमुक्त_skb(skb);
-		वापस -EIO;
-	पूर्ण
+	if (tg3_tx_frag_set(tnapi, &val, &budget, map, tx_len,
+			    base_flags | TXD_FLAG_END, mss, 0)) {
+		tnapi->tx_buffers[val].skb = NULL;
+		dev_kfree_skb(skb);
+		return -EIO;
+	}
 
 	tnapi->tx_prod++;
 
-	/* Sync BD data beक्रमe updating mailbox */
+	/* Sync BD data before updating mailbox */
 	wmb();
 
 	tw32_tx_mbox(tnapi->prodmbox, tnapi->tx_prod);
@@ -13535,8 +13534,8 @@ out:
 
 	udelay(10);
 
-	/* 350 usec to allow enough समय on some 10/100 Mbps devices.  */
-	क्रम (i = 0; i < 35; i++) अणु
+	/* 350 usec to allow enough time on some 10/100 Mbps devices.  */
+	for (i = 0; i < 35; i++) {
 		tw32_f(HOSTCC_MODE, tp->coalesce_mode | HOSTCC_MODE_ENABLE |
 		       coal_now);
 
@@ -13544,537 +13543,537 @@ out:
 
 		tx_idx = tnapi->hw_status->idx[0].tx_consumer;
 		rx_idx = rnapi->hw_status->idx[0].rx_producer;
-		अगर ((tx_idx == tnapi->tx_prod) &&
+		if ((tx_idx == tnapi->tx_prod) &&
 		    (rx_idx == (rx_start_idx + num_pkts)))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	tg3_tx_skb_unmap(tnapi, tnapi->tx_prod - 1, -1);
-	dev_kमुक्त_skb(skb);
+	dev_kfree_skb(skb);
 
-	अगर (tx_idx != tnapi->tx_prod)
-		जाओ out;
+	if (tx_idx != tnapi->tx_prod)
+		goto out;
 
-	अगर (rx_idx != rx_start_idx + num_pkts)
-		जाओ out;
+	if (rx_idx != rx_start_idx + num_pkts)
+		goto out;
 
 	val = data_off;
-	जबतक (rx_idx != rx_start_idx) अणु
+	while (rx_idx != rx_start_idx) {
 		desc = &rnapi->rx_rcb[rx_start_idx++];
 		desc_idx = desc->opaque & RXD_OPAQUE_INDEX_MASK;
 		opaque_key = desc->opaque & RXD_OPAQUE_RING_MASK;
 
-		अगर ((desc->err_vlan & RXD_ERR_MASK) != 0 &&
+		if ((desc->err_vlan & RXD_ERR_MASK) != 0 &&
 		    (desc->err_vlan != RXD_ERR_ODD_NIBBLE_RCVD_MII))
-			जाओ out;
+			goto out;
 
 		rx_len = ((desc->idx_len & RXD_LEN_MASK) >> RXD_LEN_SHIFT)
 			 - ETH_FCS_LEN;
 
-		अगर (!tso_loopback) अणु
-			अगर (rx_len != tx_len)
-				जाओ out;
+		if (!tso_loopback) {
+			if (rx_len != tx_len)
+				goto out;
 
-			अगर (pktsz <= TG3_RX_STD_DMA_SZ - ETH_FCS_LEN) अणु
-				अगर (opaque_key != RXD_OPAQUE_RING_STD)
-					जाओ out;
-			पूर्ण अन्यथा अणु
-				अगर (opaque_key != RXD_OPAQUE_RING_JUMBO)
-					जाओ out;
-			पूर्ण
-		पूर्ण अन्यथा अगर ((desc->type_flags & RXD_FLAG_TCPUDP_CSUM) &&
+			if (pktsz <= TG3_RX_STD_DMA_SZ - ETH_FCS_LEN) {
+				if (opaque_key != RXD_OPAQUE_RING_STD)
+					goto out;
+			} else {
+				if (opaque_key != RXD_OPAQUE_RING_JUMBO)
+					goto out;
+			}
+		} else if ((desc->type_flags & RXD_FLAG_TCPUDP_CSUM) &&
 			   (desc->ip_tcp_csum & RXD_TCPCSUM_MASK)
-			    >> RXD_TCPCSUM_SHIFT != 0xffff) अणु
-			जाओ out;
-		पूर्ण
+			    >> RXD_TCPCSUM_SHIFT != 0xffff) {
+			goto out;
+		}
 
-		अगर (opaque_key == RXD_OPAQUE_RING_STD) अणु
+		if (opaque_key == RXD_OPAQUE_RING_STD) {
 			rx_data = tpr->rx_std_buffers[desc_idx].data;
 			map = dma_unmap_addr(&tpr->rx_std_buffers[desc_idx],
 					     mapping);
-		पूर्ण अन्यथा अगर (opaque_key == RXD_OPAQUE_RING_JUMBO) अणु
+		} else if (opaque_key == RXD_OPAQUE_RING_JUMBO) {
 			rx_data = tpr->rx_jmb_buffers[desc_idx].data;
 			map = dma_unmap_addr(&tpr->rx_jmb_buffers[desc_idx],
 					     mapping);
-		पूर्ण अन्यथा
-			जाओ out;
+		} else
+			goto out;
 
-		pci_dma_sync_single_क्रम_cpu(tp->pdev, map, rx_len,
+		pci_dma_sync_single_for_cpu(tp->pdev, map, rx_len,
 					    PCI_DMA_FROMDEVICE);
 
 		rx_data += TG3_RX_OFFSET(tp);
-		क्रम (i = data_off; i < rx_len; i++, val++) अणु
-			अगर (*(rx_data + i) != (u8) (val & 0xff))
-				जाओ out;
-		पूर्ण
-	पूर्ण
+		for (i = data_off; i < rx_len; i++, val++) {
+			if (*(rx_data + i) != (u8) (val & 0xff))
+				goto out;
+		}
+	}
 
 	err = 0;
 
-	/* tg3_मुक्त_rings will unmap and मुक्त the rx_data */
+	/* tg3_free_rings will unmap and free the rx_data */
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#घोषणा TG3_STD_LOOPBACK_FAILED		1
-#घोषणा TG3_JMB_LOOPBACK_FAILED		2
-#घोषणा TG3_TSO_LOOPBACK_FAILED		4
-#घोषणा TG3_LOOPBACK_FAILED \
+#define TG3_STD_LOOPBACK_FAILED		1
+#define TG3_JMB_LOOPBACK_FAILED		2
+#define TG3_TSO_LOOPBACK_FAILED		4
+#define TG3_LOOPBACK_FAILED \
 	(TG3_STD_LOOPBACK_FAILED | \
 	 TG3_JMB_LOOPBACK_FAILED | \
 	 TG3_TSO_LOOPBACK_FAILED)
 
-अटल पूर्णांक tg3_test_loopback(काष्ठा tg3 *tp, u64 *data, bool करो_extlpbk)
-अणु
-	पूर्णांक err = -EIO;
+static int tg3_test_loopback(struct tg3 *tp, u64 *data, bool do_extlpbk)
+{
+	int err = -EIO;
 	u32 eee_cap;
 	u32 jmb_pkt_sz = 9000;
 
-	अगर (tp->dma_limit)
+	if (tp->dma_limit)
 		jmb_pkt_sz = tp->dma_limit - ETH_HLEN;
 
 	eee_cap = tp->phy_flags & TG3_PHYFLG_EEE_CAP;
 	tp->phy_flags &= ~TG3_PHYFLG_EEE_CAP;
 
-	अगर (!netअगर_running(tp->dev)) अणु
+	if (!netif_running(tp->dev)) {
 		data[TG3_MAC_LOOPB_TEST] = TG3_LOOPBACK_FAILED;
 		data[TG3_PHY_LOOPB_TEST] = TG3_LOOPBACK_FAILED;
-		अगर (करो_extlpbk)
+		if (do_extlpbk)
 			data[TG3_EXT_LOOPB_TEST] = TG3_LOOPBACK_FAILED;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	err = tg3_reset_hw(tp, true);
-	अगर (err) अणु
+	if (err) {
 		data[TG3_MAC_LOOPB_TEST] = TG3_LOOPBACK_FAILED;
 		data[TG3_PHY_LOOPB_TEST] = TG3_LOOPBACK_FAILED;
-		अगर (करो_extlpbk)
+		if (do_extlpbk)
 			data[TG3_EXT_LOOPB_TEST] = TG3_LOOPBACK_FAILED;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (tg3_flag(tp, ENABLE_RSS)) अणु
-		पूर्णांक i;
+	if (tg3_flag(tp, ENABLE_RSS)) {
+		int i;
 
 		/* Reroute all rx packets to the 1st queue */
-		क्रम (i = MAC_RSS_INसूची_TBL_0;
-		     i < MAC_RSS_INसूची_TBL_0 + TG3_RSS_INसूची_TBL_SIZE; i += 4)
+		for (i = MAC_RSS_INDIR_TBL_0;
+		     i < MAC_RSS_INDIR_TBL_0 + TG3_RSS_INDIR_TBL_SIZE; i += 4)
 			tw32(i, 0x0);
-	पूर्ण
+	}
 
-	/* HW errata - mac loopback fails in some हालs on 5780.
+	/* HW errata - mac loopback fails in some cases on 5780.
 	 * Normal traffic and PHY loopback are not affected by
-	 * errata.  Also, the MAC loopback test is deprecated क्रम
+	 * errata.  Also, the MAC loopback test is deprecated for
 	 * all newer ASIC revisions.
 	 */
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5780 &&
-	    !tg3_flag(tp, CPMU_PRESENT)) अणु
+	if (tg3_asic_rev(tp) != ASIC_REV_5780 &&
+	    !tg3_flag(tp, CPMU_PRESENT)) {
 		tg3_mac_loopback(tp, true);
 
-		अगर (tg3_run_loopback(tp, ETH_FRAME_LEN, false))
+		if (tg3_run_loopback(tp, ETH_FRAME_LEN, false))
 			data[TG3_MAC_LOOPB_TEST] |= TG3_STD_LOOPBACK_FAILED;
 
-		अगर (tg3_flag(tp, JUMBO_RING_ENABLE) &&
+		if (tg3_flag(tp, JUMBO_RING_ENABLE) &&
 		    tg3_run_loopback(tp, jmb_pkt_sz + ETH_HLEN, false))
 			data[TG3_MAC_LOOPB_TEST] |= TG3_JMB_LOOPBACK_FAILED;
 
 		tg3_mac_loopback(tp, false);
-	पूर्ण
+	}
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
-	    !tg3_flag(tp, USE_PHYLIB)) अणु
-		पूर्णांक i;
+	if (!(tp->phy_flags & TG3_PHYFLG_PHY_SERDES) &&
+	    !tg3_flag(tp, USE_PHYLIB)) {
+		int i;
 
 		tg3_phy_lpbk_set(tp, 0, false);
 
-		/* Wait क्रम link */
-		क्रम (i = 0; i < 100; i++) अणु
-			अगर (tr32(MAC_TX_STATUS) & TX_STATUS_LINK_UP)
-				अवरोध;
+		/* Wait for link */
+		for (i = 0; i < 100; i++) {
+			if (tr32(MAC_TX_STATUS) & TX_STATUS_LINK_UP)
+				break;
 			mdelay(1);
-		पूर्ण
+		}
 
-		अगर (tg3_run_loopback(tp, ETH_FRAME_LEN, false))
+		if (tg3_run_loopback(tp, ETH_FRAME_LEN, false))
 			data[TG3_PHY_LOOPB_TEST] |= TG3_STD_LOOPBACK_FAILED;
-		अगर (tg3_flag(tp, TSO_CAPABLE) &&
+		if (tg3_flag(tp, TSO_CAPABLE) &&
 		    tg3_run_loopback(tp, ETH_FRAME_LEN, true))
 			data[TG3_PHY_LOOPB_TEST] |= TG3_TSO_LOOPBACK_FAILED;
-		अगर (tg3_flag(tp, JUMBO_RING_ENABLE) &&
+		if (tg3_flag(tp, JUMBO_RING_ENABLE) &&
 		    tg3_run_loopback(tp, jmb_pkt_sz + ETH_HLEN, false))
 			data[TG3_PHY_LOOPB_TEST] |= TG3_JMB_LOOPBACK_FAILED;
 
-		अगर (करो_extlpbk) अणु
+		if (do_extlpbk) {
 			tg3_phy_lpbk_set(tp, 0, true);
 
 			/* All link indications report up, but the hardware
-			 * isn't really पढ़ोy क्रम about 20 msec.  Double it
+			 * isn't really ready for about 20 msec.  Double it
 			 * to be sure.
 			 */
 			mdelay(40);
 
-			अगर (tg3_run_loopback(tp, ETH_FRAME_LEN, false))
+			if (tg3_run_loopback(tp, ETH_FRAME_LEN, false))
 				data[TG3_EXT_LOOPB_TEST] |=
 							TG3_STD_LOOPBACK_FAILED;
-			अगर (tg3_flag(tp, TSO_CAPABLE) &&
+			if (tg3_flag(tp, TSO_CAPABLE) &&
 			    tg3_run_loopback(tp, ETH_FRAME_LEN, true))
 				data[TG3_EXT_LOOPB_TEST] |=
 							TG3_TSO_LOOPBACK_FAILED;
-			अगर (tg3_flag(tp, JUMBO_RING_ENABLE) &&
+			if (tg3_flag(tp, JUMBO_RING_ENABLE) &&
 			    tg3_run_loopback(tp, jmb_pkt_sz + ETH_HLEN, false))
 				data[TG3_EXT_LOOPB_TEST] |=
 							TG3_JMB_LOOPBACK_FAILED;
-		पूर्ण
+		}
 
-		/* Re-enable gphy स्वतःघातerकरोwn. */
-		अगर (tp->phy_flags & TG3_PHYFLG_ENABLE_APD)
+		/* Re-enable gphy autopowerdown. */
+		if (tp->phy_flags & TG3_PHYFLG_ENABLE_APD)
 			tg3_phy_toggle_apd(tp, true);
-	पूर्ण
+	}
 
 	err = (data[TG3_MAC_LOOPB_TEST] | data[TG3_PHY_LOOPB_TEST] |
 	       data[TG3_EXT_LOOPB_TEST]) ? -EIO : 0;
 
-करोne:
+done:
 	tp->phy_flags |= eee_cap;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tg3_self_test(काष्ठा net_device *dev, काष्ठा ethtool_test *etest,
+static void tg3_self_test(struct net_device *dev, struct ethtool_test *etest,
 			  u64 *data)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	bool करोextlpbk = etest->flags & ETH_TEST_FL_EXTERNAL_LB;
+{
+	struct tg3 *tp = netdev_priv(dev);
+	bool doextlpbk = etest->flags & ETH_TEST_FL_EXTERNAL_LB;
 
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) अणु
-		अगर (tg3_घातer_up(tp)) अणु
+	if (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER) {
+		if (tg3_power_up(tp)) {
 			etest->flags |= ETH_TEST_FL_FAILED;
-			स_रखो(data, 1, माप(u64) * TG3_NUM_TEST);
-			वापस;
-		पूर्ण
+			memset(data, 1, sizeof(u64) * TG3_NUM_TEST);
+			return;
+		}
 		tg3_ape_driver_state_change(tp, RESET_KIND_INIT);
-	पूर्ण
+	}
 
-	स_रखो(data, 0, माप(u64) * TG3_NUM_TEST);
+	memset(data, 0, sizeof(u64) * TG3_NUM_TEST);
 
-	अगर (tg3_test_nvram(tp) != 0) अणु
+	if (tg3_test_nvram(tp) != 0) {
 		etest->flags |= ETH_TEST_FL_FAILED;
 		data[TG3_NVRAM_TEST] = 1;
-	पूर्ण
-	अगर (!करोextlpbk && tg3_test_link(tp)) अणु
+	}
+	if (!doextlpbk && tg3_test_link(tp)) {
 		etest->flags |= ETH_TEST_FL_FAILED;
 		data[TG3_LINK_TEST] = 1;
-	पूर्ण
-	अगर (etest->flags & ETH_TEST_FL_OFFLINE) अणु
-		पूर्णांक err, err2 = 0, irq_sync = 0;
+	}
+	if (etest->flags & ETH_TEST_FL_OFFLINE) {
+		int err, err2 = 0, irq_sync = 0;
 
-		अगर (netअगर_running(dev)) अणु
+		if (netif_running(dev)) {
 			tg3_phy_stop(tp);
-			tg3_netअगर_stop(tp);
+			tg3_netif_stop(tp);
 			irq_sync = 1;
-		पूर्ण
+		}
 
 		tg3_full_lock(tp, irq_sync);
 		tg3_halt(tp, RESET_KIND_SUSPEND, 1);
 		err = tg3_nvram_lock(tp);
 		tg3_halt_cpu(tp, RX_CPU_BASE);
-		अगर (!tg3_flag(tp, 5705_PLUS))
+		if (!tg3_flag(tp, 5705_PLUS))
 			tg3_halt_cpu(tp, TX_CPU_BASE);
-		अगर (!err)
+		if (!err)
 			tg3_nvram_unlock(tp);
 
-		अगर (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
+		if (tp->phy_flags & TG3_PHYFLG_MII_SERDES)
 			tg3_phy_reset(tp);
 
-		अगर (tg3_test_रेजिस्टरs(tp) != 0) अणु
+		if (tg3_test_registers(tp) != 0) {
 			etest->flags |= ETH_TEST_FL_FAILED;
 			data[TG3_REGISTER_TEST] = 1;
-		पूर्ण
+		}
 
-		अगर (tg3_test_memory(tp) != 0) अणु
+		if (tg3_test_memory(tp) != 0) {
 			etest->flags |= ETH_TEST_FL_FAILED;
 			data[TG3_MEMORY_TEST] = 1;
-		पूर्ण
+		}
 
-		अगर (करोextlpbk)
+		if (doextlpbk)
 			etest->flags |= ETH_TEST_FL_EXTERNAL_LB_DONE;
 
-		अगर (tg3_test_loopback(tp, data, करोextlpbk))
+		if (tg3_test_loopback(tp, data, doextlpbk))
 			etest->flags |= ETH_TEST_FL_FAILED;
 
 		tg3_full_unlock(tp);
 
-		अगर (tg3_test_पूर्णांकerrupt(tp) != 0) अणु
+		if (tg3_test_interrupt(tp) != 0) {
 			etest->flags |= ETH_TEST_FL_FAILED;
 			data[TG3_INTERRUPT_TEST] = 1;
-		पूर्ण
+		}
 
 		tg3_full_lock(tp, 0);
 
 		tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
-		अगर (netअगर_running(dev)) अणु
+		if (netif_running(dev)) {
 			tg3_flag_set(tp, INIT_COMPLETE);
 			err2 = tg3_restart_hw(tp, true);
-			अगर (!err2)
-				tg3_netअगर_start(tp);
-		पूर्ण
+			if (!err2)
+				tg3_netif_start(tp);
+		}
 
 		tg3_full_unlock(tp);
 
-		अगर (irq_sync && !err2)
+		if (irq_sync && !err2)
 			tg3_phy_start(tp);
-	पूर्ण
-	अगर (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)
-		tg3_घातer_करोwn_prepare(tp);
+	}
+	if (tp->phy_flags & TG3_PHYFLG_IS_LOW_POWER)
+		tg3_power_down_prepare(tp);
 
-पूर्ण
+}
 
-अटल पूर्णांक tg3_hwtstamp_set(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	काष्ठा hwtstamp_config sपंचांगpconf;
+static int tg3_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	struct hwtstamp_config stmpconf;
 
-	अगर (!tg3_flag(tp, PTP_CAPABLE))
-		वापस -EOPNOTSUPP;
+	if (!tg3_flag(tp, PTP_CAPABLE))
+		return -EOPNOTSUPP;
 
-	अगर (copy_from_user(&sपंचांगpconf, अगरr->अगरr_data, माप(sपंचांगpconf)))
-		वापस -EFAULT;
+	if (copy_from_user(&stmpconf, ifr->ifr_data, sizeof(stmpconf)))
+		return -EFAULT;
 
-	अगर (sपंचांगpconf.flags)
-		वापस -EINVAL;
+	if (stmpconf.flags)
+		return -EINVAL;
 
-	अगर (sपंचांगpconf.tx_type != HWTSTAMP_TX_ON &&
-	    sपंचांगpconf.tx_type != HWTSTAMP_TX_OFF)
-		वापस -दुस्फल;
+	if (stmpconf.tx_type != HWTSTAMP_TX_ON &&
+	    stmpconf.tx_type != HWTSTAMP_TX_OFF)
+		return -ERANGE;
 
-	चयन (sपंचांगpconf.rx_filter) अणु
-	हाल HWTSTAMP_FILTER_NONE:
+	switch (stmpconf.rx_filter) {
+	case HWTSTAMP_FILTER_NONE:
 		tp->rxptpctl = 0;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V1_EN |
 			       TG3_RX_PTP_CTL_ALL_V1_EVENTS;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V1_EN |
 			       TG3_RX_PTP_CTL_SYNC_EVNT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V1_EN |
 			       TG3_RX_PTP_CTL_DELAY_REQ;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_EVENT:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_EN |
 			       TG3_RX_PTP_CTL_ALL_V2_EVENTS;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN |
 			       TG3_RX_PTP_CTL_ALL_V2_EVENTS;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN |
 			       TG3_RX_PTP_CTL_ALL_V2_EVENTS;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_SYNC:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_EN |
 			       TG3_RX_PTP_CTL_SYNC_EVNT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN |
 			       TG3_RX_PTP_CTL_SYNC_EVNT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN |
 			       TG3_RX_PTP_CTL_SYNC_EVNT;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_EN |
 			       TG3_RX_PTP_CTL_DELAY_REQ;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN |
 			       TG3_RX_PTP_CTL_DELAY_REQ;
-		अवरोध;
-	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+		break;
+	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
 		tp->rxptpctl = TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN |
 			       TG3_RX_PTP_CTL_DELAY_REQ;
-		अवरोध;
-	शेष:
-		वापस -दुस्फल;
-	पूर्ण
+		break;
+	default:
+		return -ERANGE;
+	}
 
-	अगर (netअगर_running(dev) && tp->rxptpctl)
+	if (netif_running(dev) && tp->rxptpctl)
 		tw32(TG3_RX_PTP_CTL,
 		     tp->rxptpctl | TG3_RX_PTP_CTL_HWTS_INTERLOCK);
 
-	अगर (sपंचांगpconf.tx_type == HWTSTAMP_TX_ON)
+	if (stmpconf.tx_type == HWTSTAMP_TX_ON)
 		tg3_flag_set(tp, TX_TSTAMP_EN);
-	अन्यथा
+	else
 		tg3_flag_clear(tp, TX_TSTAMP_EN);
 
-	वापस copy_to_user(अगरr->अगरr_data, &sपंचांगpconf, माप(sपंचांगpconf)) ?
+	return copy_to_user(ifr->ifr_data, &stmpconf, sizeof(stmpconf)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-अटल पूर्णांक tg3_hwtstamp_get(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	काष्ठा hwtstamp_config sपंचांगpconf;
+static int tg3_hwtstamp_get(struct net_device *dev, struct ifreq *ifr)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	struct hwtstamp_config stmpconf;
 
-	अगर (!tg3_flag(tp, PTP_CAPABLE))
-		वापस -EOPNOTSUPP;
+	if (!tg3_flag(tp, PTP_CAPABLE))
+		return -EOPNOTSUPP;
 
-	sपंचांगpconf.flags = 0;
-	sपंचांगpconf.tx_type = (tg3_flag(tp, TX_TSTAMP_EN) ?
+	stmpconf.flags = 0;
+	stmpconf.tx_type = (tg3_flag(tp, TX_TSTAMP_EN) ?
 			    HWTSTAMP_TX_ON : HWTSTAMP_TX_OFF);
 
-	चयन (tp->rxptpctl) अणु
-	हाल 0:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_NONE;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V1_EN | TG3_RX_PTP_CTL_ALL_V1_EVENTS:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_EVENT;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V1_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_SYNC;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V1_EN | TG3_RX_PTP_CTL_DELAY_REQ:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_EN | TG3_RX_PTP_CTL_ALL_V2_EVENTS:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN | TG3_RX_PTP_CTL_ALL_V2_EVENTS:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_EVENT;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN | TG3_RX_PTP_CTL_ALL_V2_EVENTS:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_EVENT;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_SYNC;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_SYNC;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_SYNC;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_EN | TG3_RX_PTP_CTL_DELAY_REQ:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_DELAY_REQ;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN | TG3_RX_PTP_CTL_DELAY_REQ:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ;
-		अवरोध;
-	हाल TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN | TG3_RX_PTP_CTL_DELAY_REQ:
-		sपंचांगpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ;
-		अवरोध;
-	शेष:
+	switch (tp->rxptpctl) {
+	case 0:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_NONE;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V1_EN | TG3_RX_PTP_CTL_ALL_V1_EVENTS:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_EVENT;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V1_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_SYNC;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V1_EN | TG3_RX_PTP_CTL_DELAY_REQ:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_EN | TG3_RX_PTP_CTL_ALL_V2_EVENTS:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN | TG3_RX_PTP_CTL_ALL_V2_EVENTS:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_EVENT;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN | TG3_RX_PTP_CTL_ALL_V2_EVENTS:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_EVENT;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_SYNC;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_SYNC;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN | TG3_RX_PTP_CTL_SYNC_EVNT:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_SYNC;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_EN | TG3_RX_PTP_CTL_DELAY_REQ:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_DELAY_REQ;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_L2_EN | TG3_RX_PTP_CTL_DELAY_REQ:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ;
+		break;
+	case TG3_RX_PTP_CTL_RX_PTP_V2_L4_EN | TG3_RX_PTP_CTL_DELAY_REQ:
+		stmpconf.rx_filter = HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ;
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	वापस copy_to_user(अगरr->अगरr_data, &sपंचांगpconf, माप(sपंचांगpconf)) ?
+	return copy_to_user(ifr->ifr_data, &stmpconf, sizeof(stmpconf)) ?
 		-EFAULT : 0;
-पूर्ण
+}
 
-अटल पूर्णांक tg3_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा mii_ioctl_data *data = अगर_mii(अगरr);
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक err;
+static int tg3_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct mii_ioctl_data *data = if_mii(ifr);
+	struct tg3 *tp = netdev_priv(dev);
+	int err;
 
-	अगर (tg3_flag(tp, USE_PHYLIB)) अणु
-		काष्ठा phy_device *phydev;
-		अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
-			वापस -EAGAIN;
+	if (tg3_flag(tp, USE_PHYLIB)) {
+		struct phy_device *phydev;
+		if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED))
+			return -EAGAIN;
 		phydev = mdiobus_get_phy(tp->mdio_bus, tp->phy_addr);
-		वापस phy_mii_ioctl(phydev, अगरr, cmd);
-	पूर्ण
+		return phy_mii_ioctl(phydev, ifr, cmd);
+	}
 
-	चयन (cmd) अणु
-	हाल SIOCGMIIPHY:
+	switch (cmd) {
+	case SIOCGMIIPHY:
 		data->phy_id = tp->phy_addr;
 
 		fallthrough;
-	हाल SIOCGMIIREG: अणु
+	case SIOCGMIIREG: {
 		u32 mii_regval;
 
-		अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
-			अवरोध;			/* We have no PHY */
+		if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
+			break;			/* We have no PHY */
 
-		अगर (!netअगर_running(dev))
-			वापस -EAGAIN;
+		if (!netif_running(dev))
+			return -EAGAIN;
 
 		spin_lock_bh(&tp->lock);
-		err = __tg3_पढ़ोphy(tp, data->phy_id & 0x1f,
+		err = __tg3_readphy(tp, data->phy_id & 0x1f,
 				    data->reg_num & 0x1f, &mii_regval);
 		spin_unlock_bh(&tp->lock);
 
 		data->val_out = mii_regval;
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	हाल SIOCSMIIREG:
-		अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
-			अवरोध;			/* We have no PHY */
+	case SIOCSMIIREG:
+		if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
+			break;			/* We have no PHY */
 
-		अगर (!netअगर_running(dev))
-			वापस -EAGAIN;
+		if (!netif_running(dev))
+			return -EAGAIN;
 
 		spin_lock_bh(&tp->lock);
-		err = __tg3_ग_लिखोphy(tp, data->phy_id & 0x1f,
+		err = __tg3_writephy(tp, data->phy_id & 0x1f,
 				     data->reg_num & 0x1f, data->val_in);
 		spin_unlock_bh(&tp->lock);
 
-		वापस err;
+		return err;
 
-	हाल SIOCSHWTSTAMP:
-		वापस tg3_hwtstamp_set(dev, अगरr);
+	case SIOCSHWTSTAMP:
+		return tg3_hwtstamp_set(dev, ifr);
 
-	हाल SIOCGHWTSTAMP:
-		वापस tg3_hwtstamp_get(dev, अगरr);
+	case SIOCGHWTSTAMP:
+		return tg3_hwtstamp_get(dev, ifr);
 
-	शेष:
-		/* करो nothing */
-		अवरोध;
-	पूर्ण
-	वापस -EOPNOTSUPP;
-पूर्ण
+	default:
+		/* do nothing */
+		break;
+	}
+	return -EOPNOTSUPP;
+}
 
-अटल पूर्णांक tg3_get_coalesce(काष्ठा net_device *dev, काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_get_coalesce(struct net_device *dev, struct ethtool_coalesce *ec)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	स_नकल(ec, &tp->coal, माप(*ec));
-	वापस 0;
-पूर्ण
+	memcpy(ec, &tp->coal, sizeof(*ec));
+	return 0;
+}
 
-अटल पूर्णांक tg3_set_coalesce(काष्ठा net_device *dev, काष्ठा ethtool_coalesce *ec)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	u32 max_rxcoal_tick_पूर्णांक = 0, max_txcoal_tick_पूर्णांक = 0;
+static int tg3_set_coalesce(struct net_device *dev, struct ethtool_coalesce *ec)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	u32 max_rxcoal_tick_int = 0, max_txcoal_tick_int = 0;
 	u32 max_stat_coal_ticks = 0, min_stat_coal_ticks = 0;
 
-	अगर (!tg3_flag(tp, 5705_PLUS)) अणु
-		max_rxcoal_tick_पूर्णांक = MAX_RXCOAL_TICK_INT;
-		max_txcoal_tick_पूर्णांक = MAX_TXCOAL_TICK_INT;
+	if (!tg3_flag(tp, 5705_PLUS)) {
+		max_rxcoal_tick_int = MAX_RXCOAL_TICK_INT;
+		max_txcoal_tick_int = MAX_TXCOAL_TICK_INT;
 		max_stat_coal_ticks = MAX_STAT_COAL_TICKS;
 		min_stat_coal_ticks = MIN_STAT_COAL_TICKS;
-	पूर्ण
+	}
 
-	अगर ((ec->rx_coalesce_usecs > MAX_RXCOL_TICKS) ||
+	if ((ec->rx_coalesce_usecs > MAX_RXCOL_TICKS) ||
 	    (!ec->rx_coalesce_usecs) ||
 	    (ec->tx_coalesce_usecs > MAX_TXCOL_TICKS) ||
 	    (!ec->tx_coalesce_usecs) ||
 	    (ec->rx_max_coalesced_frames > MAX_RXMAX_FRAMES) ||
 	    (ec->tx_max_coalesced_frames > MAX_TXMAX_FRAMES) ||
-	    (ec->rx_coalesce_usecs_irq > max_rxcoal_tick_पूर्णांक) ||
-	    (ec->tx_coalesce_usecs_irq > max_txcoal_tick_पूर्णांक) ||
+	    (ec->rx_coalesce_usecs_irq > max_rxcoal_tick_int) ||
+	    (ec->tx_coalesce_usecs_irq > max_txcoal_tick_int) ||
 	    (ec->rx_max_coalesced_frames_irq > MAX_RXCOAL_MAXF_INT) ||
 	    (ec->tx_max_coalesced_frames_irq > MAX_TXCOAL_MAXF_INT) ||
 	    (ec->stats_block_coalesce_usecs > max_stat_coal_ticks) ||
 	    (ec->stats_block_coalesce_usecs < min_stat_coal_ticks))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/* Only copy relevant parameters, ignore all others. */
 	tp->coal.rx_coalesce_usecs = ec->rx_coalesce_usecs;
@@ -14087,66 +14086,66 @@ out:
 	tp->coal.tx_max_coalesced_frames_irq = ec->tx_max_coalesced_frames_irq;
 	tp->coal.stats_block_coalesce_usecs = ec->stats_block_coalesce_usecs;
 
-	अगर (netअगर_running(dev)) अणु
+	if (netif_running(dev)) {
 		tg3_full_lock(tp, 0);
 		__tg3_set_coalesce(tp, &tp->coal);
 		tg3_full_unlock(tp);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक tg3_set_eee(काष्ठा net_device *dev, काष्ठा ethtool_eee *edata)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_set_eee(struct net_device *dev, struct ethtool_eee *edata)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP)) {
 		netdev_warn(tp->dev, "Board does not support EEE!\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (edata->advertised != tp->eee.advertised) अणु
+	if (edata->advertised != tp->eee.advertised) {
 		netdev_warn(tp->dev,
 			    "Direct manipulation of EEE advertisement is not supported\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (edata->tx_lpi_समयr > TG3_CPMU_DBTMR1_LNKIDLE_MAX) अणु
+	if (edata->tx_lpi_timer > TG3_CPMU_DBTMR1_LNKIDLE_MAX) {
 		netdev_warn(tp->dev,
 			    "Maximal Tx Lpi timer supported is %#x(u)\n",
 			    TG3_CPMU_DBTMR1_LNKIDLE_MAX);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tp->eee = *edata;
 
 	tp->phy_flags |= TG3_PHYFLG_USER_CONFIGURED;
 	tg3_warn_mgmt_link_flap(tp);
 
-	अगर (netअगर_running(tp->dev)) अणु
+	if (netif_running(tp->dev)) {
 		tg3_full_lock(tp, 0);
 		tg3_setup_eee(tp);
 		tg3_phy_reset(tp);
 		tg3_full_unlock(tp);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tg3_get_eee(काष्ठा net_device *dev, काष्ठा ethtool_eee *edata)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static int tg3_get_eee(struct net_device *dev, struct ethtool_eee *edata)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP)) अणु
+	if (!(tp->phy_flags & TG3_PHYFLG_EEE_CAP)) {
 		netdev_warn(tp->dev,
 			    "Board does not support EEE!\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	*edata = tp->eee;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ethtool_ops tg3_ethtool_ops = अणु
+static const struct ethtool_ops tg3_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES |
 				     ETHTOOL_COALESCE_USECS_IRQ |
@@ -14166,8 +14165,8 @@ out:
 	.set_eeprom		= tg3_set_eeprom,
 	.get_ringparam		= tg3_get_ringparam,
 	.set_ringparam		= tg3_set_ringparam,
-	.get_छोड़ोparam		= tg3_get_छोड़ोparam,
-	.set_छोड़ोparam		= tg3_set_छोड़ोparam,
+	.get_pauseparam		= tg3_get_pauseparam,
+	.set_pauseparam		= tg3_set_pauseparam,
 	.self_test		= tg3_self_test,
 	.get_strings		= tg3_get_strings,
 	.set_phys_id		= tg3_set_phys_id,
@@ -14186,74 +14185,74 @@ out:
 	.set_eee		= tg3_set_eee,
 	.get_link_ksettings	= tg3_get_link_ksettings,
 	.set_link_ksettings	= tg3_set_link_ksettings,
-पूर्ण;
+};
 
-अटल व्योम tg3_get_stats64(काष्ठा net_device *dev,
-			    काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_get_stats64(struct net_device *dev,
+			    struct rtnl_link_stats64 *stats)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
 	spin_lock_bh(&tp->lock);
-	अगर (!tp->hw_stats || !tg3_flag(tp, INIT_COMPLETE)) अणु
+	if (!tp->hw_stats || !tg3_flag(tp, INIT_COMPLETE)) {
 		*stats = tp->net_stats_prev;
 		spin_unlock_bh(&tp->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tg3_get_nstats(tp, stats);
 	spin_unlock_bh(&tp->lock);
-पूर्ण
+}
 
-अटल व्योम tg3_set_rx_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_set_rx_mode(struct net_device *dev)
+{
+	struct tg3 *tp = netdev_priv(dev);
 
-	अगर (!netअगर_running(dev))
-		वापस;
+	if (!netif_running(dev))
+		return;
 
 	tg3_full_lock(tp, 0);
 	__tg3_set_rx_mode(dev);
 	tg3_full_unlock(tp);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम tg3_set_mtu(काष्ठा net_device *dev, काष्ठा tg3 *tp,
-			       पूर्णांक new_mtu)
-अणु
+static inline void tg3_set_mtu(struct net_device *dev, struct tg3 *tp,
+			       int new_mtu)
+{
 	dev->mtu = new_mtu;
 
-	अगर (new_mtu > ETH_DATA_LEN) अणु
-		अगर (tg3_flag(tp, 5780_CLASS)) अणु
+	if (new_mtu > ETH_DATA_LEN) {
+		if (tg3_flag(tp, 5780_CLASS)) {
 			netdev_update_features(dev);
 			tg3_flag_clear(tp, TSO_CAPABLE);
-		पूर्ण अन्यथा अणु
+		} else {
 			tg3_flag_set(tp, JUMBO_RING_ENABLE);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (tg3_flag(tp, 5780_CLASS)) अणु
+		}
+	} else {
+		if (tg3_flag(tp, 5780_CLASS)) {
 			tg3_flag_set(tp, TSO_CAPABLE);
 			netdev_update_features(dev);
-		पूर्ण
+		}
 		tg3_flag_clear(tp, JUMBO_RING_ENABLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tg3_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
-अणु
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक err;
+static int tg3_change_mtu(struct net_device *dev, int new_mtu)
+{
+	struct tg3 *tp = netdev_priv(dev);
+	int err;
 	bool reset_phy = false;
 
-	अगर (!netअगर_running(dev)) अणु
+	if (!netif_running(dev)) {
 		/* We'll just catch it later when the
 		 * device is up'd.
 		 */
 		tg3_set_mtu(dev, tp, new_mtu);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	tg3_phy_stop(tp);
 
-	tg3_netअगर_stop(tp);
+	tg3_netif_stop(tp);
 
 	tg3_set_mtu(dev, tp, new_mtu);
 
@@ -14261,10 +14260,10 @@ out:
 
 	tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
 
-	/* Reset PHY, otherwise the पढ़ो DMA engine will be in a mode that
-	 * अवरोधs all requests to 256 bytes.
+	/* Reset PHY, otherwise the read DMA engine will be in a mode that
+	 * breaks all requests to 256 bytes.
 	 */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57766 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_57766 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5720)
@@ -14272,567 +14271,567 @@ out:
 
 	err = tg3_restart_hw(tp, reset_phy);
 
-	अगर (!err)
-		tg3_netअगर_start(tp);
+	if (!err)
+		tg3_netif_start(tp);
 
 	tg3_full_unlock(tp);
 
-	अगर (!err)
+	if (!err)
 		tg3_phy_start(tp);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा net_device_ops tg3_netdev_ops = अणु
-	.nकरो_खोलो		= tg3_खोलो,
-	.nकरो_stop		= tg3_बंद,
-	.nकरो_start_xmit		= tg3_start_xmit,
-	.nकरो_get_stats64	= tg3_get_stats64,
-	.nकरो_validate_addr	= eth_validate_addr,
-	.nकरो_set_rx_mode	= tg3_set_rx_mode,
-	.nकरो_set_mac_address	= tg3_set_mac_addr,
-	.nकरो_करो_ioctl		= tg3_ioctl,
-	.nकरो_tx_समयout		= tg3_tx_समयout,
-	.nकरो_change_mtu		= tg3_change_mtu,
-	.nकरो_fix_features	= tg3_fix_features,
-	.nकरो_set_features	= tg3_set_features,
-#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
-	.nकरो_poll_controller	= tg3_poll_controller,
-#पूर्ण_अगर
-पूर्ण;
+static const struct net_device_ops tg3_netdev_ops = {
+	.ndo_open		= tg3_open,
+	.ndo_stop		= tg3_close,
+	.ndo_start_xmit		= tg3_start_xmit,
+	.ndo_get_stats64	= tg3_get_stats64,
+	.ndo_validate_addr	= eth_validate_addr,
+	.ndo_set_rx_mode	= tg3_set_rx_mode,
+	.ndo_set_mac_address	= tg3_set_mac_addr,
+	.ndo_do_ioctl		= tg3_ioctl,
+	.ndo_tx_timeout		= tg3_tx_timeout,
+	.ndo_change_mtu		= tg3_change_mtu,
+	.ndo_fix_features	= tg3_fix_features,
+	.ndo_set_features	= tg3_set_features,
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller	= tg3_poll_controller,
+#endif
+};
 
-अटल व्योम tg3_get_eeprom_size(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_eeprom_size(struct tg3 *tp)
+{
 	u32 cursize, val, magic;
 
 	tp->nvram_size = EEPROM_CHIP_SIZE;
 
-	अगर (tg3_nvram_पढ़ो(tp, 0, &magic) != 0)
-		वापस;
+	if (tg3_nvram_read(tp, 0, &magic) != 0)
+		return;
 
-	अगर ((magic != TG3_EEPROM_MAGIC) &&
+	if ((magic != TG3_EEPROM_MAGIC) &&
 	    ((magic & TG3_EEPROM_MAGIC_FW_MSK) != TG3_EEPROM_MAGIC_FW) &&
 	    ((magic & TG3_EEPROM_MAGIC_HW_MSK) != TG3_EEPROM_MAGIC_HW))
-		वापस;
+		return;
 
 	/*
-	 * Size the chip by पढ़ोing offsets at increasing घातers of two.
+	 * Size the chip by reading offsets at increasing powers of two.
 	 * When we encounter our validation signature, we know the addressing
 	 * has wrapped around, and thus have our chip size.
 	 */
 	cursize = 0x10;
 
-	जबतक (cursize < tp->nvram_size) अणु
-		अगर (tg3_nvram_पढ़ो(tp, cursize, &val) != 0)
-			वापस;
+	while (cursize < tp->nvram_size) {
+		if (tg3_nvram_read(tp, cursize, &val) != 0)
+			return;
 
-		अगर (val == magic)
-			अवरोध;
+		if (val == magic)
+			break;
 
 		cursize <<= 1;
-	पूर्ण
+	}
 
 	tp->nvram_size = cursize;
-पूर्ण
+}
 
-अटल व्योम tg3_get_nvram_size(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_nvram_size(struct tg3 *tp)
+{
 	u32 val;
 
-	अगर (tg3_flag(tp, NO_NVRAM) || tg3_nvram_पढ़ो(tp, 0, &val) != 0)
-		वापस;
+	if (tg3_flag(tp, NO_NVRAM) || tg3_nvram_read(tp, 0, &val) != 0)
+		return;
 
-	/* Selfboot क्रमmat */
-	अगर (val != TG3_EEPROM_MAGIC) अणु
+	/* Selfboot format */
+	if (val != TG3_EEPROM_MAGIC) {
 		tg3_get_eeprom_size(tp);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (tg3_nvram_पढ़ो(tp, 0xf0, &val) == 0) अणु
-		अगर (val != 0) अणु
+	if (tg3_nvram_read(tp, 0xf0, &val) == 0) {
+		if (val != 0) {
 			/* This is confusing.  We want to operate on the
-			 * 16-bit value at offset 0xf2.  The tg3_nvram_पढ़ो()
-			 * call will पढ़ो from NVRAM and byteswap the data
-			 * according to the byteswapping settings क्रम all
-			 * other रेजिस्टर accesses.  This ensures the data we
+			 * 16-bit value at offset 0xf2.  The tg3_nvram_read()
+			 * call will read from NVRAM and byteswap the data
+			 * according to the byteswapping settings for all
+			 * other register accesses.  This ensures the data we
 			 * want will always reside in the lower 16-bits.
-			 * However, the data in NVRAM is in LE क्रमmat, which
-			 * means the data from the NVRAM पढ़ो will always be
+			 * However, the data in NVRAM is in LE format, which
+			 * means the data from the NVRAM read will always be
 			 * opposite the endianness of the CPU.  The 16-bit
 			 * byteswap then brings the data to CPU endianness.
 			 */
 			tp->nvram_size = swab16((u16)(val & 0x0000ffff)) * 1024;
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	tp->nvram_size = TG3_NVRAM_SIZE_512KB;
-पूर्ण
+}
 
-अटल व्योम tg3_get_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
-	अगर (nvcfg1 & NVRAM_CFG1_FLASHIF_ENAB) अणु
+	if (nvcfg1 & NVRAM_CFG1_FLASHIF_ENAB) {
 		tg3_flag_set(tp, FLASH);
-	पूर्ण अन्यथा अणु
+	} else {
 		nvcfg1 &= ~NVRAM_CFG1_COMPAT_BYPASS;
 		tw32(NVRAM_CFG1, nvcfg1);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5750 ||
-	    tg3_flag(tp, 5780_CLASS)) अणु
-		चयन (nvcfg1 & NVRAM_CFG1_VENDOR_MASK) अणु
-		हाल FLASH_VENDOR_ATMEL_FLASH_BUFFERED:
+	if (tg3_asic_rev(tp) == ASIC_REV_5750 ||
+	    tg3_flag(tp, 5780_CLASS)) {
+		switch (nvcfg1 & NVRAM_CFG1_VENDOR_MASK) {
+		case FLASH_VENDOR_ATMEL_FLASH_BUFFERED:
 			tp->nvram_jedecnum = JEDEC_ATMEL;
 			tp->nvram_pagesize = ATMEL_AT45DB0X1B_PAGE_SIZE;
 			tg3_flag_set(tp, NVRAM_BUFFERED);
-			अवरोध;
-		हाल FLASH_VENDOR_ATMEL_FLASH_UNBUFFERED:
+			break;
+		case FLASH_VENDOR_ATMEL_FLASH_UNBUFFERED:
 			tp->nvram_jedecnum = JEDEC_ATMEL;
 			tp->nvram_pagesize = ATMEL_AT25F512_PAGE_SIZE;
-			अवरोध;
-		हाल FLASH_VENDOR_ATMEL_EEPROM:
+			break;
+		case FLASH_VENDOR_ATMEL_EEPROM:
 			tp->nvram_jedecnum = JEDEC_ATMEL;
 			tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
 			tg3_flag_set(tp, NVRAM_BUFFERED);
-			अवरोध;
-		हाल FLASH_VENDOR_ST:
+			break;
+		case FLASH_VENDOR_ST:
 			tp->nvram_jedecnum = JEDEC_ST;
 			tp->nvram_pagesize = ST_M45PEX0_PAGE_SIZE;
 			tg3_flag_set(tp, NVRAM_BUFFERED);
-			अवरोध;
-		हाल FLASH_VENDOR_SAIFUN:
+			break;
+		case FLASH_VENDOR_SAIFUN:
 			tp->nvram_jedecnum = JEDEC_SAIFUN;
 			tp->nvram_pagesize = SAIFUN_SA25F0XX_PAGE_SIZE;
-			अवरोध;
-		हाल FLASH_VENDOR_SST_SMALL:
-		हाल FLASH_VENDOR_SST_LARGE:
+			break;
+		case FLASH_VENDOR_SST_SMALL:
+		case FLASH_VENDOR_SST_LARGE:
 			tp->nvram_jedecnum = JEDEC_SST;
 			tp->nvram_pagesize = SST_25VF0X0_PAGE_SIZE;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tp->nvram_pagesize = ATMEL_AT45DB0X1B_PAGE_SIZE;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_nvram_get_pagesize(काष्ठा tg3 *tp, u32 nvmcfg1)
-अणु
-	चयन (nvmcfg1 & NVRAM_CFG1_5752PAGE_SIZE_MASK) अणु
-	हाल FLASH_5752PAGE_SIZE_256:
+static void tg3_nvram_get_pagesize(struct tg3 *tp, u32 nvmcfg1)
+{
+	switch (nvmcfg1 & NVRAM_CFG1_5752PAGE_SIZE_MASK) {
+	case FLASH_5752PAGE_SIZE_256:
 		tp->nvram_pagesize = 256;
-		अवरोध;
-	हाल FLASH_5752PAGE_SIZE_512:
+		break;
+	case FLASH_5752PAGE_SIZE_512:
 		tp->nvram_pagesize = 512;
-		अवरोध;
-	हाल FLASH_5752PAGE_SIZE_1K:
+		break;
+	case FLASH_5752PAGE_SIZE_1K:
 		tp->nvram_pagesize = 1024;
-		अवरोध;
-	हाल FLASH_5752PAGE_SIZE_2K:
+		break;
+	case FLASH_5752PAGE_SIZE_2K:
 		tp->nvram_pagesize = 2048;
-		अवरोध;
-	हाल FLASH_5752PAGE_SIZE_4K:
+		break;
+	case FLASH_5752PAGE_SIZE_4K:
 		tp->nvram_pagesize = 4096;
-		अवरोध;
-	हाल FLASH_5752PAGE_SIZE_264:
+		break;
+	case FLASH_5752PAGE_SIZE_264:
 		tp->nvram_pagesize = 264;
-		अवरोध;
-	हाल FLASH_5752PAGE_SIZE_528:
+		break;
+	case FLASH_5752PAGE_SIZE_528:
 		tp->nvram_pagesize = 528;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम tg3_get_5752_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5752_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 
-	/* NVRAM protection क्रम TPM */
-	अगर (nvcfg1 & (1 << 27))
+	/* NVRAM protection for TPM */
+	if (nvcfg1 & (1 << 27))
 		tg3_flag_set(tp, PROTECTED_NVRAM);
 
-	चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-	हाल FLASH_5752VENDOR_ATMEL_EEPROM_64KHZ:
-	हाल FLASH_5752VENDOR_ATMEL_EEPROM_376KHZ:
+	switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+	case FLASH_5752VENDOR_ATMEL_EEPROM_64KHZ:
+	case FLASH_5752VENDOR_ATMEL_EEPROM_376KHZ:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
-		अवरोध;
-	हाल FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
+		break;
+	case FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
-		अवरोध;
-	हाल FLASH_5752VENDOR_ST_M45PE10:
-	हाल FLASH_5752VENDOR_ST_M45PE20:
-	हाल FLASH_5752VENDOR_ST_M45PE40:
+		break;
+	case FLASH_5752VENDOR_ST_M45PE10:
+	case FLASH_5752VENDOR_ST_M45PE20:
+	case FLASH_5752VENDOR_ST_M45PE40:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (tg3_flag(tp, FLASH)) अणु
+	if (tg3_flag(tp, FLASH)) {
 		tg3_nvram_get_pagesize(tp, nvcfg1);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* For eeprom, set pagesize to maximum eeprom size */
 		tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
 
 		nvcfg1 &= ~NVRAM_CFG1_COMPAT_BYPASS;
 		tw32(NVRAM_CFG1, nvcfg1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_get_5755_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5755_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1, protect = 0;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 
-	/* NVRAM protection क्रम TPM */
-	अगर (nvcfg1 & (1 << 27)) अणु
+	/* NVRAM protection for TPM */
+	if (nvcfg1 & (1 << 27)) {
 		tg3_flag_set(tp, PROTECTED_NVRAM);
 		protect = 1;
-	पूर्ण
+	}
 
 	nvcfg1 &= NVRAM_CFG1_5752VENDOR_MASK;
-	चयन (nvcfg1) अणु
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_1:
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_2:
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_3:
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_5:
+	switch (nvcfg1) {
+	case FLASH_5755VENDOR_ATMEL_FLASH_1:
+	case FLASH_5755VENDOR_ATMEL_FLASH_2:
+	case FLASH_5755VENDOR_ATMEL_FLASH_3:
+	case FLASH_5755VENDOR_ATMEL_FLASH_5:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 		tp->nvram_pagesize = 264;
-		अगर (nvcfg1 == FLASH_5755VENDOR_ATMEL_FLASH_1 ||
+		if (nvcfg1 == FLASH_5755VENDOR_ATMEL_FLASH_1 ||
 		    nvcfg1 == FLASH_5755VENDOR_ATMEL_FLASH_5)
 			tp->nvram_size = (protect ? 0x3e200 :
 					  TG3_NVRAM_SIZE_512KB);
-		अन्यथा अगर (nvcfg1 == FLASH_5755VENDOR_ATMEL_FLASH_2)
+		else if (nvcfg1 == FLASH_5755VENDOR_ATMEL_FLASH_2)
 			tp->nvram_size = (protect ? 0x1f200 :
 					  TG3_NVRAM_SIZE_256KB);
-		अन्यथा
+		else
 			tp->nvram_size = (protect ? 0x1f200 :
 					  TG3_NVRAM_SIZE_128KB);
-		अवरोध;
-	हाल FLASH_5752VENDOR_ST_M45PE10:
-	हाल FLASH_5752VENDOR_ST_M45PE20:
-	हाल FLASH_5752VENDOR_ST_M45PE40:
+		break;
+	case FLASH_5752VENDOR_ST_M45PE10:
+	case FLASH_5752VENDOR_ST_M45PE20:
+	case FLASH_5752VENDOR_ST_M45PE40:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 		tp->nvram_pagesize = 256;
-		अगर (nvcfg1 == FLASH_5752VENDOR_ST_M45PE10)
+		if (nvcfg1 == FLASH_5752VENDOR_ST_M45PE10)
 			tp->nvram_size = (protect ?
 					  TG3_NVRAM_SIZE_64KB :
 					  TG3_NVRAM_SIZE_128KB);
-		अन्यथा अगर (nvcfg1 == FLASH_5752VENDOR_ST_M45PE20)
+		else if (nvcfg1 == FLASH_5752VENDOR_ST_M45PE20)
 			tp->nvram_size = (protect ?
 					  TG3_NVRAM_SIZE_64KB :
 					  TG3_NVRAM_SIZE_256KB);
-		अन्यथा
+		else
 			tp->nvram_size = (protect ?
 					  TG3_NVRAM_SIZE_128KB :
 					  TG3_NVRAM_SIZE_512KB);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम tg3_get_5787_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5787_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 
-	चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-	हाल FLASH_5787VENDOR_ATMEL_EEPROM_64KHZ:
-	हाल FLASH_5787VENDOR_ATMEL_EEPROM_376KHZ:
-	हाल FLASH_5787VENDOR_MICRO_EEPROM_64KHZ:
-	हाल FLASH_5787VENDOR_MICRO_EEPROM_376KHZ:
+	switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+	case FLASH_5787VENDOR_ATMEL_EEPROM_64KHZ:
+	case FLASH_5787VENDOR_ATMEL_EEPROM_376KHZ:
+	case FLASH_5787VENDOR_MICRO_EEPROM_64KHZ:
+	case FLASH_5787VENDOR_MICRO_EEPROM_376KHZ:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
 
 		nvcfg1 &= ~NVRAM_CFG1_COMPAT_BYPASS;
 		tw32(NVRAM_CFG1, nvcfg1);
-		अवरोध;
-	हाल FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_1:
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_2:
-	हाल FLASH_5755VENDOR_ATMEL_FLASH_3:
+		break;
+	case FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
+	case FLASH_5755VENDOR_ATMEL_FLASH_1:
+	case FLASH_5755VENDOR_ATMEL_FLASH_2:
+	case FLASH_5755VENDOR_ATMEL_FLASH_3:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 		tp->nvram_pagesize = 264;
-		अवरोध;
-	हाल FLASH_5752VENDOR_ST_M45PE10:
-	हाल FLASH_5752VENDOR_ST_M45PE20:
-	हाल FLASH_5752VENDOR_ST_M45PE40:
+		break;
+	case FLASH_5752VENDOR_ST_M45PE10:
+	case FLASH_5752VENDOR_ST_M45PE20:
+	case FLASH_5752VENDOR_ST_M45PE40:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 		tp->nvram_pagesize = 256;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम tg3_get_5761_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5761_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1, protect = 0;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 
-	/* NVRAM protection क्रम TPM */
-	अगर (nvcfg1 & (1 << 27)) अणु
+	/* NVRAM protection for TPM */
+	if (nvcfg1 & (1 << 27)) {
 		tg3_flag_set(tp, PROTECTED_NVRAM);
 		protect = 1;
-	पूर्ण
+	}
 
 	nvcfg1 &= NVRAM_CFG1_5752VENDOR_MASK;
-	चयन (nvcfg1) अणु
-	हाल FLASH_5761VENDOR_ATMEL_ADB021D:
-	हाल FLASH_5761VENDOR_ATMEL_ADB041D:
-	हाल FLASH_5761VENDOR_ATMEL_ADB081D:
-	हाल FLASH_5761VENDOR_ATMEL_ADB161D:
-	हाल FLASH_5761VENDOR_ATMEL_MDB021D:
-	हाल FLASH_5761VENDOR_ATMEL_MDB041D:
-	हाल FLASH_5761VENDOR_ATMEL_MDB081D:
-	हाल FLASH_5761VENDOR_ATMEL_MDB161D:
+	switch (nvcfg1) {
+	case FLASH_5761VENDOR_ATMEL_ADB021D:
+	case FLASH_5761VENDOR_ATMEL_ADB041D:
+	case FLASH_5761VENDOR_ATMEL_ADB081D:
+	case FLASH_5761VENDOR_ATMEL_ADB161D:
+	case FLASH_5761VENDOR_ATMEL_MDB021D:
+	case FLASH_5761VENDOR_ATMEL_MDB041D:
+	case FLASH_5761VENDOR_ATMEL_MDB081D:
+	case FLASH_5761VENDOR_ATMEL_MDB161D:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 		tg3_flag_set(tp, NO_NVRAM_ADDR_TRANS);
 		tp->nvram_pagesize = 256;
-		अवरोध;
-	हाल FLASH_5761VENDOR_ST_A_M45PE20:
-	हाल FLASH_5761VENDOR_ST_A_M45PE40:
-	हाल FLASH_5761VENDOR_ST_A_M45PE80:
-	हाल FLASH_5761VENDOR_ST_A_M45PE16:
-	हाल FLASH_5761VENDOR_ST_M_M45PE20:
-	हाल FLASH_5761VENDOR_ST_M_M45PE40:
-	हाल FLASH_5761VENDOR_ST_M_M45PE80:
-	हाल FLASH_5761VENDOR_ST_M_M45PE16:
+		break;
+	case FLASH_5761VENDOR_ST_A_M45PE20:
+	case FLASH_5761VENDOR_ST_A_M45PE40:
+	case FLASH_5761VENDOR_ST_A_M45PE80:
+	case FLASH_5761VENDOR_ST_A_M45PE16:
+	case FLASH_5761VENDOR_ST_M_M45PE20:
+	case FLASH_5761VENDOR_ST_M_M45PE40:
+	case FLASH_5761VENDOR_ST_M_M45PE80:
+	case FLASH_5761VENDOR_ST_M_M45PE16:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 		tp->nvram_pagesize = 256;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (protect) अणु
+	if (protect) {
 		tp->nvram_size = tr32(NVRAM_ADDR_LOCKOUT);
-	पूर्ण अन्यथा अणु
-		चयन (nvcfg1) अणु
-		हाल FLASH_5761VENDOR_ATMEL_ADB161D:
-		हाल FLASH_5761VENDOR_ATMEL_MDB161D:
-		हाल FLASH_5761VENDOR_ST_A_M45PE16:
-		हाल FLASH_5761VENDOR_ST_M_M45PE16:
+	} else {
+		switch (nvcfg1) {
+		case FLASH_5761VENDOR_ATMEL_ADB161D:
+		case FLASH_5761VENDOR_ATMEL_MDB161D:
+		case FLASH_5761VENDOR_ST_A_M45PE16:
+		case FLASH_5761VENDOR_ST_M_M45PE16:
 			tp->nvram_size = TG3_NVRAM_SIZE_2MB;
-			अवरोध;
-		हाल FLASH_5761VENDOR_ATMEL_ADB081D:
-		हाल FLASH_5761VENDOR_ATMEL_MDB081D:
-		हाल FLASH_5761VENDOR_ST_A_M45PE80:
-		हाल FLASH_5761VENDOR_ST_M_M45PE80:
+			break;
+		case FLASH_5761VENDOR_ATMEL_ADB081D:
+		case FLASH_5761VENDOR_ATMEL_MDB081D:
+		case FLASH_5761VENDOR_ST_A_M45PE80:
+		case FLASH_5761VENDOR_ST_M_M45PE80:
 			tp->nvram_size = TG3_NVRAM_SIZE_1MB;
-			अवरोध;
-		हाल FLASH_5761VENDOR_ATMEL_ADB041D:
-		हाल FLASH_5761VENDOR_ATMEL_MDB041D:
-		हाल FLASH_5761VENDOR_ST_A_M45PE40:
-		हाल FLASH_5761VENDOR_ST_M_M45PE40:
+			break;
+		case FLASH_5761VENDOR_ATMEL_ADB041D:
+		case FLASH_5761VENDOR_ATMEL_MDB041D:
+		case FLASH_5761VENDOR_ST_A_M45PE40:
+		case FLASH_5761VENDOR_ST_M_M45PE40:
 			tp->nvram_size = TG3_NVRAM_SIZE_512KB;
-			अवरोध;
-		हाल FLASH_5761VENDOR_ATMEL_ADB021D:
-		हाल FLASH_5761VENDOR_ATMEL_MDB021D:
-		हाल FLASH_5761VENDOR_ST_A_M45PE20:
-		हाल FLASH_5761VENDOR_ST_M_M45PE20:
+			break;
+		case FLASH_5761VENDOR_ATMEL_ADB021D:
+		case FLASH_5761VENDOR_ATMEL_MDB021D:
+		case FLASH_5761VENDOR_ST_A_M45PE20:
+		case FLASH_5761VENDOR_ST_M_M45PE20:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-अटल व्योम tg3_get_5906_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5906_nvram_info(struct tg3 *tp)
+{
 	tp->nvram_jedecnum = JEDEC_ATMEL;
 	tg3_flag_set(tp, NVRAM_BUFFERED);
 	tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
-पूर्ण
+}
 
-अटल व्योम tg3_get_57780_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_57780_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 
-	चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-	हाल FLASH_5787VENDOR_ATMEL_EEPROM_376KHZ:
-	हाल FLASH_5787VENDOR_MICRO_EEPROM_376KHZ:
+	switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+	case FLASH_5787VENDOR_ATMEL_EEPROM_376KHZ:
+	case FLASH_5787VENDOR_MICRO_EEPROM_376KHZ:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
 
 		nvcfg1 &= ~NVRAM_CFG1_COMPAT_BYPASS;
 		tw32(NVRAM_CFG1, nvcfg1);
-		वापस;
-	हाल FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
-	हाल FLASH_57780VENDOR_ATMEL_AT45DB011D:
-	हाल FLASH_57780VENDOR_ATMEL_AT45DB011B:
-	हाल FLASH_57780VENDOR_ATMEL_AT45DB021D:
-	हाल FLASH_57780VENDOR_ATMEL_AT45DB021B:
-	हाल FLASH_57780VENDOR_ATMEL_AT45DB041D:
-	हाल FLASH_57780VENDOR_ATMEL_AT45DB041B:
+		return;
+	case FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
+	case FLASH_57780VENDOR_ATMEL_AT45DB011D:
+	case FLASH_57780VENDOR_ATMEL_AT45DB011B:
+	case FLASH_57780VENDOR_ATMEL_AT45DB021D:
+	case FLASH_57780VENDOR_ATMEL_AT45DB021B:
+	case FLASH_57780VENDOR_ATMEL_AT45DB041D:
+	case FLASH_57780VENDOR_ATMEL_AT45DB041B:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 
-		चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-		हाल FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
-		हाल FLASH_57780VENDOR_ATMEL_AT45DB011D:
-		हाल FLASH_57780VENDOR_ATMEL_AT45DB011B:
+		switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+		case FLASH_5752VENDOR_ATMEL_FLASH_BUFFERED:
+		case FLASH_57780VENDOR_ATMEL_AT45DB011D:
+		case FLASH_57780VENDOR_ATMEL_AT45DB011B:
 			tp->nvram_size = TG3_NVRAM_SIZE_128KB;
-			अवरोध;
-		हाल FLASH_57780VENDOR_ATMEL_AT45DB021D:
-		हाल FLASH_57780VENDOR_ATMEL_AT45DB021B:
+			break;
+		case FLASH_57780VENDOR_ATMEL_AT45DB021D:
+		case FLASH_57780VENDOR_ATMEL_AT45DB021B:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		हाल FLASH_57780VENDOR_ATMEL_AT45DB041D:
-		हाल FLASH_57780VENDOR_ATMEL_AT45DB041B:
+			break;
+		case FLASH_57780VENDOR_ATMEL_AT45DB041D:
+		case FLASH_57780VENDOR_ATMEL_AT45DB041B:
 			tp->nvram_size = TG3_NVRAM_SIZE_512KB;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल FLASH_5752VENDOR_ST_M45PE10:
-	हाल FLASH_5752VENDOR_ST_M45PE20:
-	हाल FLASH_5752VENDOR_ST_M45PE40:
+			break;
+		}
+		break;
+	case FLASH_5752VENDOR_ST_M45PE10:
+	case FLASH_5752VENDOR_ST_M45PE20:
+	case FLASH_5752VENDOR_ST_M45PE40:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 
-		चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-		हाल FLASH_5752VENDOR_ST_M45PE10:
+		switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+		case FLASH_5752VENDOR_ST_M45PE10:
 			tp->nvram_size = TG3_NVRAM_SIZE_128KB;
-			अवरोध;
-		हाल FLASH_5752VENDOR_ST_M45PE20:
+			break;
+		case FLASH_5752VENDOR_ST_M45PE20:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		हाल FLASH_5752VENDOR_ST_M45PE40:
+			break;
+		case FLASH_5752VENDOR_ST_M45PE40:
 			tp->nvram_size = TG3_NVRAM_SIZE_512KB;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		tg3_flag_set(tp, NO_NVRAM);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tg3_nvram_get_pagesize(tp, nvcfg1);
-	अगर (tp->nvram_pagesize != 264 && tp->nvram_pagesize != 528)
+	if (tp->nvram_pagesize != 264 && tp->nvram_pagesize != 528)
 		tg3_flag_set(tp, NO_NVRAM_ADDR_TRANS);
-पूर्ण
+}
 
 
-अटल व्योम tg3_get_5717_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5717_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 
-	चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-	हाल FLASH_5717VENDOR_ATMEL_EEPROM:
-	हाल FLASH_5717VENDOR_MICRO_EEPROM:
+	switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+	case FLASH_5717VENDOR_ATMEL_EEPROM:
+	case FLASH_5717VENDOR_MICRO_EEPROM:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
 
 		nvcfg1 &= ~NVRAM_CFG1_COMPAT_BYPASS;
 		tw32(NVRAM_CFG1, nvcfg1);
-		वापस;
-	हाल FLASH_5717VENDOR_ATMEL_MDB011D:
-	हाल FLASH_5717VENDOR_ATMEL_ADB011B:
-	हाल FLASH_5717VENDOR_ATMEL_ADB011D:
-	हाल FLASH_5717VENDOR_ATMEL_MDB021D:
-	हाल FLASH_5717VENDOR_ATMEL_ADB021B:
-	हाल FLASH_5717VENDOR_ATMEL_ADB021D:
-	हाल FLASH_5717VENDOR_ATMEL_45USPT:
+		return;
+	case FLASH_5717VENDOR_ATMEL_MDB011D:
+	case FLASH_5717VENDOR_ATMEL_ADB011B:
+	case FLASH_5717VENDOR_ATMEL_ADB011D:
+	case FLASH_5717VENDOR_ATMEL_MDB021D:
+	case FLASH_5717VENDOR_ATMEL_ADB021B:
+	case FLASH_5717VENDOR_ATMEL_ADB021D:
+	case FLASH_5717VENDOR_ATMEL_45USPT:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 
-		चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-		हाल FLASH_5717VENDOR_ATMEL_MDB021D:
+		switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+		case FLASH_5717VENDOR_ATMEL_MDB021D:
 			/* Detect size with tg3_nvram_get_size() */
-			अवरोध;
-		हाल FLASH_5717VENDOR_ATMEL_ADB021B:
-		हाल FLASH_5717VENDOR_ATMEL_ADB021D:
+			break;
+		case FLASH_5717VENDOR_ATMEL_ADB021B:
+		case FLASH_5717VENDOR_ATMEL_ADB021D:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			tp->nvram_size = TG3_NVRAM_SIZE_128KB;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल FLASH_5717VENDOR_ST_M_M25PE10:
-	हाल FLASH_5717VENDOR_ST_A_M25PE10:
-	हाल FLASH_5717VENDOR_ST_M_M45PE10:
-	हाल FLASH_5717VENDOR_ST_A_M45PE10:
-	हाल FLASH_5717VENDOR_ST_M_M25PE20:
-	हाल FLASH_5717VENDOR_ST_A_M25PE20:
-	हाल FLASH_5717VENDOR_ST_M_M45PE20:
-	हाल FLASH_5717VENDOR_ST_A_M45PE20:
-	हाल FLASH_5717VENDOR_ST_25USPT:
-	हाल FLASH_5717VENDOR_ST_45USPT:
+			break;
+		}
+		break;
+	case FLASH_5717VENDOR_ST_M_M25PE10:
+	case FLASH_5717VENDOR_ST_A_M25PE10:
+	case FLASH_5717VENDOR_ST_M_M45PE10:
+	case FLASH_5717VENDOR_ST_A_M45PE10:
+	case FLASH_5717VENDOR_ST_M_M25PE20:
+	case FLASH_5717VENDOR_ST_A_M25PE20:
+	case FLASH_5717VENDOR_ST_M_M45PE20:
+	case FLASH_5717VENDOR_ST_A_M45PE20:
+	case FLASH_5717VENDOR_ST_25USPT:
+	case FLASH_5717VENDOR_ST_45USPT:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 
-		चयन (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) अणु
-		हाल FLASH_5717VENDOR_ST_M_M25PE20:
-		हाल FLASH_5717VENDOR_ST_M_M45PE20:
+		switch (nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK) {
+		case FLASH_5717VENDOR_ST_M_M25PE20:
+		case FLASH_5717VENDOR_ST_M_M45PE20:
 			/* Detect size with tg3_nvram_get_size() */
-			अवरोध;
-		हाल FLASH_5717VENDOR_ST_A_M25PE20:
-		हाल FLASH_5717VENDOR_ST_A_M45PE20:
+			break;
+		case FLASH_5717VENDOR_ST_A_M25PE20:
+		case FLASH_5717VENDOR_ST_A_M45PE20:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			tp->nvram_size = TG3_NVRAM_SIZE_128KB;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		tg3_flag_set(tp, NO_NVRAM);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tg3_nvram_get_pagesize(tp, nvcfg1);
-	अगर (tp->nvram_pagesize != 264 && tp->nvram_pagesize != 528)
+	if (tp->nvram_pagesize != 264 && tp->nvram_pagesize != 528)
 		tg3_flag_set(tp, NO_NVRAM_ADDR_TRANS);
-पूर्ण
+}
 
-अटल व्योम tg3_get_5720_nvram_info(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_5720_nvram_info(struct tg3 *tp)
+{
 	u32 nvcfg1, nvmpinstrp, nv_status;
 
 	nvcfg1 = tr32(NVRAM_CFG1);
 	nvmpinstrp = nvcfg1 & NVRAM_CFG1_5752VENDOR_MASK;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5762) अणु
-		अगर (!(nvcfg1 & NVRAM_CFG1_5762VENDOR_MASK)) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5762) {
+		if (!(nvcfg1 & NVRAM_CFG1_5762VENDOR_MASK)) {
 			tg3_flag_set(tp, NO_NVRAM);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		चयन (nvmpinstrp) अणु
-		हाल FLASH_5762_MX25L_100:
-		हाल FLASH_5762_MX25L_200:
-		हाल FLASH_5762_MX25L_400:
-		हाल FLASH_5762_MX25L_800:
-		हाल FLASH_5762_MX25L_160_320:
+		switch (nvmpinstrp) {
+		case FLASH_5762_MX25L_100:
+		case FLASH_5762_MX25L_200:
+		case FLASH_5762_MX25L_400:
+		case FLASH_5762_MX25L_800:
+		case FLASH_5762_MX25L_160_320:
 			tp->nvram_pagesize = 4096;
 			tp->nvram_jedecnum = JEDEC_MACRONIX;
 			tg3_flag_set(tp, NVRAM_BUFFERED);
@@ -14843,151 +14842,151 @@ out:
 				(1 << (nv_status >> AUTOSENSE_DEVID &
 						AUTOSENSE_DEVID_MASK)
 					<< AUTOSENSE_SIZE_IN_MB);
-			वापस;
+			return;
 
-		हाल FLASH_5762_EEPROM_HD:
+		case FLASH_5762_EEPROM_HD:
 			nvmpinstrp = FLASH_5720_EEPROM_HD;
-			अवरोध;
-		हाल FLASH_5762_EEPROM_LD:
+			break;
+		case FLASH_5762_EEPROM_LD:
 			nvmpinstrp = FLASH_5720_EEPROM_LD;
-			अवरोध;
-		हाल FLASH_5720VENDOR_M_ST_M45PE20:
-			/* This pinstrap supports multiple sizes, so क्रमce it
-			 * to पढ़ो the actual size from location 0xf0.
+			break;
+		case FLASH_5720VENDOR_M_ST_M45PE20:
+			/* This pinstrap supports multiple sizes, so force it
+			 * to read the actual size from location 0xf0.
 			 */
 			nvmpinstrp = FLASH_5720VENDOR_ST_45USPT;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	चयन (nvmpinstrp) अणु
-	हाल FLASH_5720_EEPROM_HD:
-	हाल FLASH_5720_EEPROM_LD:
+	switch (nvmpinstrp) {
+	case FLASH_5720_EEPROM_HD:
+	case FLASH_5720_EEPROM_LD:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 
 		nvcfg1 &= ~NVRAM_CFG1_COMPAT_BYPASS;
 		tw32(NVRAM_CFG1, nvcfg1);
-		अगर (nvmpinstrp == FLASH_5720_EEPROM_HD)
+		if (nvmpinstrp == FLASH_5720_EEPROM_HD)
 			tp->nvram_pagesize = ATMEL_AT24C512_CHIP_SIZE;
-		अन्यथा
+		else
 			tp->nvram_pagesize = ATMEL_AT24C02_CHIP_SIZE;
-		वापस;
-	हाल FLASH_5720VENDOR_M_ATMEL_DB011D:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB011B:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB011D:
-	हाल FLASH_5720VENDOR_M_ATMEL_DB021D:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB021B:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB021D:
-	हाल FLASH_5720VENDOR_M_ATMEL_DB041D:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB041B:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB041D:
-	हाल FLASH_5720VENDOR_M_ATMEL_DB081D:
-	हाल FLASH_5720VENDOR_A_ATMEL_DB081D:
-	हाल FLASH_5720VENDOR_ATMEL_45USPT:
+		return;
+	case FLASH_5720VENDOR_M_ATMEL_DB011D:
+	case FLASH_5720VENDOR_A_ATMEL_DB011B:
+	case FLASH_5720VENDOR_A_ATMEL_DB011D:
+	case FLASH_5720VENDOR_M_ATMEL_DB021D:
+	case FLASH_5720VENDOR_A_ATMEL_DB021B:
+	case FLASH_5720VENDOR_A_ATMEL_DB021D:
+	case FLASH_5720VENDOR_M_ATMEL_DB041D:
+	case FLASH_5720VENDOR_A_ATMEL_DB041B:
+	case FLASH_5720VENDOR_A_ATMEL_DB041D:
+	case FLASH_5720VENDOR_M_ATMEL_DB081D:
+	case FLASH_5720VENDOR_A_ATMEL_DB081D:
+	case FLASH_5720VENDOR_ATMEL_45USPT:
 		tp->nvram_jedecnum = JEDEC_ATMEL;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 
-		चयन (nvmpinstrp) अणु
-		हाल FLASH_5720VENDOR_M_ATMEL_DB021D:
-		हाल FLASH_5720VENDOR_A_ATMEL_DB021B:
-		हाल FLASH_5720VENDOR_A_ATMEL_DB021D:
+		switch (nvmpinstrp) {
+		case FLASH_5720VENDOR_M_ATMEL_DB021D:
+		case FLASH_5720VENDOR_A_ATMEL_DB021B:
+		case FLASH_5720VENDOR_A_ATMEL_DB021D:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		हाल FLASH_5720VENDOR_M_ATMEL_DB041D:
-		हाल FLASH_5720VENDOR_A_ATMEL_DB041B:
-		हाल FLASH_5720VENDOR_A_ATMEL_DB041D:
+			break;
+		case FLASH_5720VENDOR_M_ATMEL_DB041D:
+		case FLASH_5720VENDOR_A_ATMEL_DB041B:
+		case FLASH_5720VENDOR_A_ATMEL_DB041D:
 			tp->nvram_size = TG3_NVRAM_SIZE_512KB;
-			अवरोध;
-		हाल FLASH_5720VENDOR_M_ATMEL_DB081D:
-		हाल FLASH_5720VENDOR_A_ATMEL_DB081D:
+			break;
+		case FLASH_5720VENDOR_M_ATMEL_DB081D:
+		case FLASH_5720VENDOR_A_ATMEL_DB081D:
 			tp->nvram_size = TG3_NVRAM_SIZE_1MB;
-			अवरोध;
-		शेष:
-			अगर (tg3_asic_rev(tp) != ASIC_REV_5762)
+			break;
+		default:
+			if (tg3_asic_rev(tp) != ASIC_REV_5762)
 				tp->nvram_size = TG3_NVRAM_SIZE_128KB;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	हाल FLASH_5720VENDOR_M_ST_M25PE10:
-	हाल FLASH_5720VENDOR_M_ST_M45PE10:
-	हाल FLASH_5720VENDOR_A_ST_M25PE10:
-	हाल FLASH_5720VENDOR_A_ST_M45PE10:
-	हाल FLASH_5720VENDOR_M_ST_M25PE20:
-	हाल FLASH_5720VENDOR_M_ST_M45PE20:
-	हाल FLASH_5720VENDOR_A_ST_M25PE20:
-	हाल FLASH_5720VENDOR_A_ST_M45PE20:
-	हाल FLASH_5720VENDOR_M_ST_M25PE40:
-	हाल FLASH_5720VENDOR_M_ST_M45PE40:
-	हाल FLASH_5720VENDOR_A_ST_M25PE40:
-	हाल FLASH_5720VENDOR_A_ST_M45PE40:
-	हाल FLASH_5720VENDOR_M_ST_M25PE80:
-	हाल FLASH_5720VENDOR_M_ST_M45PE80:
-	हाल FLASH_5720VENDOR_A_ST_M25PE80:
-	हाल FLASH_5720VENDOR_A_ST_M45PE80:
-	हाल FLASH_5720VENDOR_ST_25USPT:
-	हाल FLASH_5720VENDOR_ST_45USPT:
+			break;
+		}
+		break;
+	case FLASH_5720VENDOR_M_ST_M25PE10:
+	case FLASH_5720VENDOR_M_ST_M45PE10:
+	case FLASH_5720VENDOR_A_ST_M25PE10:
+	case FLASH_5720VENDOR_A_ST_M45PE10:
+	case FLASH_5720VENDOR_M_ST_M25PE20:
+	case FLASH_5720VENDOR_M_ST_M45PE20:
+	case FLASH_5720VENDOR_A_ST_M25PE20:
+	case FLASH_5720VENDOR_A_ST_M45PE20:
+	case FLASH_5720VENDOR_M_ST_M25PE40:
+	case FLASH_5720VENDOR_M_ST_M45PE40:
+	case FLASH_5720VENDOR_A_ST_M25PE40:
+	case FLASH_5720VENDOR_A_ST_M45PE40:
+	case FLASH_5720VENDOR_M_ST_M25PE80:
+	case FLASH_5720VENDOR_M_ST_M45PE80:
+	case FLASH_5720VENDOR_A_ST_M25PE80:
+	case FLASH_5720VENDOR_A_ST_M45PE80:
+	case FLASH_5720VENDOR_ST_25USPT:
+	case FLASH_5720VENDOR_ST_45USPT:
 		tp->nvram_jedecnum = JEDEC_ST;
 		tg3_flag_set(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, FLASH);
 
-		चयन (nvmpinstrp) अणु
-		हाल FLASH_5720VENDOR_M_ST_M25PE20:
-		हाल FLASH_5720VENDOR_M_ST_M45PE20:
-		हाल FLASH_5720VENDOR_A_ST_M25PE20:
-		हाल FLASH_5720VENDOR_A_ST_M45PE20:
+		switch (nvmpinstrp) {
+		case FLASH_5720VENDOR_M_ST_M25PE20:
+		case FLASH_5720VENDOR_M_ST_M45PE20:
+		case FLASH_5720VENDOR_A_ST_M25PE20:
+		case FLASH_5720VENDOR_A_ST_M45PE20:
 			tp->nvram_size = TG3_NVRAM_SIZE_256KB;
-			अवरोध;
-		हाल FLASH_5720VENDOR_M_ST_M25PE40:
-		हाल FLASH_5720VENDOR_M_ST_M45PE40:
-		हाल FLASH_5720VENDOR_A_ST_M25PE40:
-		हाल FLASH_5720VENDOR_A_ST_M45PE40:
+			break;
+		case FLASH_5720VENDOR_M_ST_M25PE40:
+		case FLASH_5720VENDOR_M_ST_M45PE40:
+		case FLASH_5720VENDOR_A_ST_M25PE40:
+		case FLASH_5720VENDOR_A_ST_M45PE40:
 			tp->nvram_size = TG3_NVRAM_SIZE_512KB;
-			अवरोध;
-		हाल FLASH_5720VENDOR_M_ST_M25PE80:
-		हाल FLASH_5720VENDOR_M_ST_M45PE80:
-		हाल FLASH_5720VENDOR_A_ST_M25PE80:
-		हाल FLASH_5720VENDOR_A_ST_M45PE80:
+			break;
+		case FLASH_5720VENDOR_M_ST_M25PE80:
+		case FLASH_5720VENDOR_M_ST_M45PE80:
+		case FLASH_5720VENDOR_A_ST_M25PE80:
+		case FLASH_5720VENDOR_A_ST_M45PE80:
 			tp->nvram_size = TG3_NVRAM_SIZE_1MB;
-			अवरोध;
-		शेष:
-			अगर (tg3_asic_rev(tp) != ASIC_REV_5762)
+			break;
+		default:
+			if (tg3_asic_rev(tp) != ASIC_REV_5762)
 				tp->nvram_size = TG3_NVRAM_SIZE_128KB;
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	शेष:
+			break;
+		}
+		break;
+	default:
 		tg3_flag_set(tp, NO_NVRAM);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tg3_nvram_get_pagesize(tp, nvcfg1);
-	अगर (tp->nvram_pagesize != 264 && tp->nvram_pagesize != 528)
+	if (tp->nvram_pagesize != 264 && tp->nvram_pagesize != 528)
 		tg3_flag_set(tp, NO_NVRAM_ADDR_TRANS);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5762) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5762) {
 		u32 val;
 
-		अगर (tg3_nvram_पढ़ो(tp, 0, &val))
-			वापस;
+		if (tg3_nvram_read(tp, 0, &val))
+			return;
 
-		अगर (val != TG3_EEPROM_MAGIC &&
+		if (val != TG3_EEPROM_MAGIC &&
 		    (val & TG3_EEPROM_MAGIC_FW_MSK) != TG3_EEPROM_MAGIC_FW)
 			tg3_flag_set(tp, NO_NVRAM);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Chips other than 5700/5701 use the NVRAM क्रम fetching info. */
-अटल व्योम tg3_nvram_init(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, IS_SSB_CORE)) अणु
+/* Chips other than 5700/5701 use the NVRAM for fetching info. */
+static void tg3_nvram_init(struct tg3 *tp)
+{
+	if (tg3_flag(tp, IS_SSB_CORE)) {
 		/* No NVRAM and EEPROM on the SSB Broadcom GigE core. */
 		tg3_flag_clear(tp, NVRAM);
 		tg3_flag_clear(tp, NVRAM_BUFFERED);
 		tg3_flag_set(tp, NO_NVRAM);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	tw32_f(GRC_EEPROM_ADDR,
 	     (EEPROM_ADDR_FSM_RESET |
@@ -15001,565 +15000,565 @@ out:
 	     tr32(GRC_LOCAL_CTRL) | GRC_LCLCTRL_AUTO_SEEPROM);
 	udelay(100);
 
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5700 &&
-	    tg3_asic_rev(tp) != ASIC_REV_5701) अणु
+	if (tg3_asic_rev(tp) != ASIC_REV_5700 &&
+	    tg3_asic_rev(tp) != ASIC_REV_5701) {
 		tg3_flag_set(tp, NVRAM);
 
-		अगर (tg3_nvram_lock(tp)) अणु
+		if (tg3_nvram_lock(tp)) {
 			netdev_warn(tp->dev,
 				    "Cannot get nvram lock, %s failed\n",
 				    __func__);
-			वापस;
-		पूर्ण
+			return;
+		}
 		tg3_enable_nvram_access(tp);
 
 		tp->nvram_size = 0;
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5752)
+		if (tg3_asic_rev(tp) == ASIC_REV_5752)
 			tg3_get_5752_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5755)
+		else if (tg3_asic_rev(tp) == ASIC_REV_5755)
 			tg3_get_5755_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5787 ||
+		else if (tg3_asic_rev(tp) == ASIC_REV_5787 ||
 			 tg3_asic_rev(tp) == ASIC_REV_5784 ||
 			 tg3_asic_rev(tp) == ASIC_REV_5785)
 			tg3_get_5787_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5761)
+		else if (tg3_asic_rev(tp) == ASIC_REV_5761)
 			tg3_get_5761_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5906)
+		else if (tg3_asic_rev(tp) == ASIC_REV_5906)
 			tg3_get_5906_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_57780 ||
+		else if (tg3_asic_rev(tp) == ASIC_REV_57780 ||
 			 tg3_flag(tp, 57765_CLASS))
 			tg3_get_57780_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+		else if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 			 tg3_asic_rev(tp) == ASIC_REV_5719)
 			tg3_get_5717_nvram_info(tp);
-		अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5720 ||
+		else if (tg3_asic_rev(tp) == ASIC_REV_5720 ||
 			 tg3_asic_rev(tp) == ASIC_REV_5762)
 			tg3_get_5720_nvram_info(tp);
-		अन्यथा
+		else
 			tg3_get_nvram_info(tp);
 
-		अगर (tp->nvram_size == 0)
+		if (tp->nvram_size == 0)
 			tg3_get_nvram_size(tp);
 
 		tg3_disable_nvram_access(tp);
 		tg3_nvram_unlock(tp);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		tg3_flag_clear(tp, NVRAM);
 		tg3_flag_clear(tp, NVRAM_BUFFERED);
 
 		tg3_get_eeprom_size(tp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा subsys_tbl_ent अणु
-	u16 subsys_venकरोr, subsys_devid;
+struct subsys_tbl_ent {
+	u16 subsys_vendor, subsys_devid;
 	u32 phy_id;
-पूर्ण;
+};
 
-अटल काष्ठा subsys_tbl_ent subsys_id_to_phy_id[] = अणु
+static struct subsys_tbl_ent subsys_id_to_phy_id[] = {
 	/* Broadcom boards. */
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95700A6, TG3_PHY_ID_BCM5401 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A5, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95700T6, TG3_PHY_ID_BCM8002 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95700A9, 0 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701T1, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701T8, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A7, 0 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A10, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A12, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95703AX1, TG3_PHY_ID_BCM5703 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_BROADCOM,
-	  TG3PCI_SUBDEVICE_ID_BROADCOM_95703AX2, TG3_PHY_ID_BCM5703 पूर्ण,
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95700A6, TG3_PHY_ID_BCM5401 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A5, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95700T6, TG3_PHY_ID_BCM8002 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95700A9, 0 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701T1, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701T8, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A7, 0 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A10, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95701A12, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95703AX1, TG3_PHY_ID_BCM5703 },
+	{ TG3PCI_SUBVENDOR_ID_BROADCOM,
+	  TG3PCI_SUBDEVICE_ID_BROADCOM_95703AX2, TG3_PHY_ID_BCM5703 },
 
 	/* 3com boards. */
-	अणु TG3PCI_SUBVENDOR_ID_3COM,
-	  TG3PCI_SUBDEVICE_ID_3COM_3C996T, TG3_PHY_ID_BCM5401 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_3COM,
-	  TG3PCI_SUBDEVICE_ID_3COM_3C996BT, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_3COM,
-	  TG3PCI_SUBDEVICE_ID_3COM_3C996SX, 0 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_3COM,
-	  TG3PCI_SUBDEVICE_ID_3COM_3C1000T, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_3COM,
-	  TG3PCI_SUBDEVICE_ID_3COM_3C940BR01, TG3_PHY_ID_BCM5701 पूर्ण,
+	{ TG3PCI_SUBVENDOR_ID_3COM,
+	  TG3PCI_SUBDEVICE_ID_3COM_3C996T, TG3_PHY_ID_BCM5401 },
+	{ TG3PCI_SUBVENDOR_ID_3COM,
+	  TG3PCI_SUBDEVICE_ID_3COM_3C996BT, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_3COM,
+	  TG3PCI_SUBDEVICE_ID_3COM_3C996SX, 0 },
+	{ TG3PCI_SUBVENDOR_ID_3COM,
+	  TG3PCI_SUBDEVICE_ID_3COM_3C1000T, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_3COM,
+	  TG3PCI_SUBDEVICE_ID_3COM_3C940BR01, TG3_PHY_ID_BCM5701 },
 
 	/* DELL boards. */
-	अणु TG3PCI_SUBVENDOR_ID_DELL,
-	  TG3PCI_SUBDEVICE_ID_DELL_VIPER, TG3_PHY_ID_BCM5401 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_DELL,
-	  TG3PCI_SUBDEVICE_ID_DELL_JAGUAR, TG3_PHY_ID_BCM5401 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_DELL,
-	  TG3PCI_SUBDEVICE_ID_DELL_MERLOT, TG3_PHY_ID_BCM5411 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_DELL,
-	  TG3PCI_SUBDEVICE_ID_DELL_SLIM_MERLOT, TG3_PHY_ID_BCM5411 पूर्ण,
+	{ TG3PCI_SUBVENDOR_ID_DELL,
+	  TG3PCI_SUBDEVICE_ID_DELL_VIPER, TG3_PHY_ID_BCM5401 },
+	{ TG3PCI_SUBVENDOR_ID_DELL,
+	  TG3PCI_SUBDEVICE_ID_DELL_JAGUAR, TG3_PHY_ID_BCM5401 },
+	{ TG3PCI_SUBVENDOR_ID_DELL,
+	  TG3PCI_SUBDEVICE_ID_DELL_MERLOT, TG3_PHY_ID_BCM5411 },
+	{ TG3PCI_SUBVENDOR_ID_DELL,
+	  TG3PCI_SUBDEVICE_ID_DELL_SLIM_MERLOT, TG3_PHY_ID_BCM5411 },
 
 	/* Compaq boards. */
-	अणु TG3PCI_SUBVENDOR_ID_COMPAQ,
-	  TG3PCI_SUBDEVICE_ID_COMPAQ_BANSHEE, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_COMPAQ,
-	  TG3PCI_SUBDEVICE_ID_COMPAQ_BANSHEE_2, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_COMPAQ,
-	  TG3PCI_SUBDEVICE_ID_COMPAQ_CHANGELING, 0 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_COMPAQ,
-	  TG3PCI_SUBDEVICE_ID_COMPAQ_NC7780, TG3_PHY_ID_BCM5701 पूर्ण,
-	अणु TG3PCI_SUBVENDOR_ID_COMPAQ,
-	  TG3PCI_SUBDEVICE_ID_COMPAQ_NC7780_2, TG3_PHY_ID_BCM5701 पूर्ण,
+	{ TG3PCI_SUBVENDOR_ID_COMPAQ,
+	  TG3PCI_SUBDEVICE_ID_COMPAQ_BANSHEE, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_COMPAQ,
+	  TG3PCI_SUBDEVICE_ID_COMPAQ_BANSHEE_2, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_COMPAQ,
+	  TG3PCI_SUBDEVICE_ID_COMPAQ_CHANGELING, 0 },
+	{ TG3PCI_SUBVENDOR_ID_COMPAQ,
+	  TG3PCI_SUBDEVICE_ID_COMPAQ_NC7780, TG3_PHY_ID_BCM5701 },
+	{ TG3PCI_SUBVENDOR_ID_COMPAQ,
+	  TG3PCI_SUBDEVICE_ID_COMPAQ_NC7780_2, TG3_PHY_ID_BCM5701 },
 
 	/* IBM boards. */
-	अणु TG3PCI_SUBVENDOR_ID_IBM,
-	  TG3PCI_SUBDEVICE_ID_IBM_5703SAX2, 0 पूर्ण
-पूर्ण;
+	{ TG3PCI_SUBVENDOR_ID_IBM,
+	  TG3PCI_SUBDEVICE_ID_IBM_5703SAX2, 0 }
+};
 
-अटल काष्ठा subsys_tbl_ent *tg3_lookup_by_subsys(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक i;
+static struct subsys_tbl_ent *tg3_lookup_by_subsys(struct tg3 *tp)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(subsys_id_to_phy_id); i++) अणु
-		अगर ((subsys_id_to_phy_id[i].subsys_venकरोr ==
-		     tp->pdev->subप्रणाली_venकरोr) &&
+	for (i = 0; i < ARRAY_SIZE(subsys_id_to_phy_id); i++) {
+		if ((subsys_id_to_phy_id[i].subsys_vendor ==
+		     tp->pdev->subsystem_vendor) &&
 		    (subsys_id_to_phy_id[i].subsys_devid ==
-		     tp->pdev->subप्रणाली_device))
-			वापस &subsys_id_to_phy_id[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		     tp->pdev->subsystem_device))
+			return &subsys_id_to_phy_id[i];
+	}
+	return NULL;
+}
 
-अटल व्योम tg3_get_eeprom_hw_cfg(काष्ठा tg3 *tp)
-अणु
+static void tg3_get_eeprom_hw_cfg(struct tg3 *tp)
+{
 	u32 val;
 
 	tp->phy_id = TG3_PHY_ID_INVALID;
 	tp->led_ctrl = LED_CTRL_MODE_PHY_1;
 
-	/* Assume an onboard device and WOL capable by शेष.  */
+	/* Assume an onboard device and WOL capable by default.  */
 	tg3_flag_set(tp, EEPROM_WRITE_PROT);
 	tg3_flag_set(tp, WOL_CAP);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
-		अगर (!(tr32(PCIE_TRANSACTION_CFG) & PCIE_TRANS_CFG_LOM)) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
+		if (!(tr32(PCIE_TRANSACTION_CFG) & PCIE_TRANS_CFG_LOM)) {
 			tg3_flag_clear(tp, EEPROM_WRITE_PROT);
 			tg3_flag_set(tp, IS_NIC);
-		पूर्ण
+		}
 		val = tr32(VCPU_CFGSHDW);
-		अगर (val & VCPU_CFGSHDW_ASPM_DBNC)
+		if (val & VCPU_CFGSHDW_ASPM_DBNC)
 			tg3_flag_set(tp, ASPM_WORKAROUND);
-		अगर ((val & VCPU_CFGSHDW_WOL_ENABLE) &&
-		    (val & VCPU_CFGSHDW_WOL_MAGPKT)) अणु
+		if ((val & VCPU_CFGSHDW_WOL_ENABLE) &&
+		    (val & VCPU_CFGSHDW_WOL_MAGPKT)) {
 			tg3_flag_set(tp, WOL_ENABLE);
 			device_set_wakeup_enable(&tp->pdev->dev, true);
-		पूर्ण
-		जाओ करोne;
-	पूर्ण
+		}
+		goto done;
+	}
 
-	tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_SIG, &val);
-	अगर (val == NIC_SRAM_DATA_SIG_MAGIC) अणु
+	tg3_read_mem(tp, NIC_SRAM_DATA_SIG, &val);
+	if (val == NIC_SRAM_DATA_SIG_MAGIC) {
 		u32 nic_cfg, led_cfg;
 		u32 cfg2 = 0, cfg4 = 0, cfg5 = 0;
 		u32 nic_phy_id, ver, eeprom_phy_id;
-		पूर्णांक eeprom_phy_serdes = 0;
+		int eeprom_phy_serdes = 0;
 
-		tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG, &nic_cfg);
+		tg3_read_mem(tp, NIC_SRAM_DATA_CFG, &nic_cfg);
 		tp->nic_sram_data_cfg = nic_cfg;
 
-		tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_VER, &ver);
+		tg3_read_mem(tp, NIC_SRAM_DATA_VER, &ver);
 		ver >>= NIC_SRAM_DATA_VER_SHIFT;
-		अगर (tg3_asic_rev(tp) != ASIC_REV_5700 &&
+		if (tg3_asic_rev(tp) != ASIC_REV_5700 &&
 		    tg3_asic_rev(tp) != ASIC_REV_5701 &&
 		    tg3_asic_rev(tp) != ASIC_REV_5703 &&
 		    (ver > 0) && (ver < 0x100))
-			tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG_2, &cfg2);
+			tg3_read_mem(tp, NIC_SRAM_DATA_CFG_2, &cfg2);
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5785)
-			tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG_4, &cfg4);
+		if (tg3_asic_rev(tp) == ASIC_REV_5785)
+			tg3_read_mem(tp, NIC_SRAM_DATA_CFG_4, &cfg4);
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+		if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5719 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5720)
-			tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG_5, &cfg5);
+			tg3_read_mem(tp, NIC_SRAM_DATA_CFG_5, &cfg5);
 
-		अगर ((nic_cfg & NIC_SRAM_DATA_CFG_PHY_TYPE_MASK) ==
+		if ((nic_cfg & NIC_SRAM_DATA_CFG_PHY_TYPE_MASK) ==
 		    NIC_SRAM_DATA_CFG_PHY_TYPE_FIBER)
 			eeprom_phy_serdes = 1;
 
-		tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_PHY_ID, &nic_phy_id);
-		अगर (nic_phy_id != 0) अणु
+		tg3_read_mem(tp, NIC_SRAM_DATA_PHY_ID, &nic_phy_id);
+		if (nic_phy_id != 0) {
 			u32 id1 = nic_phy_id & NIC_SRAM_DATA_PHY_ID1_MASK;
 			u32 id2 = nic_phy_id & NIC_SRAM_DATA_PHY_ID2_MASK;
 
 			eeprom_phy_id  = (id1 >> 16) << 10;
 			eeprom_phy_id |= (id2 & 0xfc00) << 16;
 			eeprom_phy_id |= (id2 & 0x03ff) <<  0;
-		पूर्ण अन्यथा
+		} else
 			eeprom_phy_id = 0;
 
 		tp->phy_id = eeprom_phy_id;
-		अगर (eeprom_phy_serdes) अणु
-			अगर (!tg3_flag(tp, 5705_PLUS))
+		if (eeprom_phy_serdes) {
+			if (!tg3_flag(tp, 5705_PLUS))
 				tp->phy_flags |= TG3_PHYFLG_PHY_SERDES;
-			अन्यथा
+			else
 				tp->phy_flags |= TG3_PHYFLG_MII_SERDES;
-		पूर्ण
+		}
 
-		अगर (tg3_flag(tp, 5750_PLUS))
+		if (tg3_flag(tp, 5750_PLUS))
 			led_cfg = cfg2 & (NIC_SRAM_DATA_CFG_LED_MODE_MASK |
 				    SHASTA_EXT_LED_MODE_MASK);
-		अन्यथा
+		else
 			led_cfg = nic_cfg & NIC_SRAM_DATA_CFG_LED_MODE_MASK;
 
-		चयन (led_cfg) अणु
-		शेष:
-		हाल NIC_SRAM_DATA_CFG_LED_MODE_PHY_1:
+		switch (led_cfg) {
+		default:
+		case NIC_SRAM_DATA_CFG_LED_MODE_PHY_1:
 			tp->led_ctrl = LED_CTRL_MODE_PHY_1;
-			अवरोध;
+			break;
 
-		हाल NIC_SRAM_DATA_CFG_LED_MODE_PHY_2:
+		case NIC_SRAM_DATA_CFG_LED_MODE_PHY_2:
 			tp->led_ctrl = LED_CTRL_MODE_PHY_2;
-			अवरोध;
+			break;
 
-		हाल NIC_SRAM_DATA_CFG_LED_MODE_MAC:
+		case NIC_SRAM_DATA_CFG_LED_MODE_MAC:
 			tp->led_ctrl = LED_CTRL_MODE_MAC;
 
-			/* Default to PHY_1_MODE अगर 0 (MAC_MODE) is
-			 * पढ़ो on some older 5700/5701 bootcode.
+			/* Default to PHY_1_MODE if 0 (MAC_MODE) is
+			 * read on some older 5700/5701 bootcode.
 			 */
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+			if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
 			    tg3_asic_rev(tp) == ASIC_REV_5701)
 				tp->led_ctrl = LED_CTRL_MODE_PHY_1;
 
-			अवरोध;
+			break;
 
-		हाल SHASTA_EXT_LED_SHARED:
+		case SHASTA_EXT_LED_SHARED:
 			tp->led_ctrl = LED_CTRL_MODE_SHARED;
-			अगर (tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0 &&
+			if (tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0 &&
 			    tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A1)
 				tp->led_ctrl |= (LED_CTRL_MODE_PHY_1 |
 						 LED_CTRL_MODE_PHY_2);
 
-			अगर (tg3_flag(tp, 5717_PLUS) ||
+			if (tg3_flag(tp, 5717_PLUS) ||
 			    tg3_asic_rev(tp) == ASIC_REV_5762)
 				tp->led_ctrl |= LED_CTRL_BLINK_RATE_OVERRIDE |
 						LED_CTRL_BLINK_RATE_MASK;
 
-			अवरोध;
+			break;
 
-		हाल SHASTA_EXT_LED_MAC:
+		case SHASTA_EXT_LED_MAC:
 			tp->led_ctrl = LED_CTRL_MODE_SHASTA_MAC;
-			अवरोध;
+			break;
 
-		हाल SHASTA_EXT_LED_COMBO:
+		case SHASTA_EXT_LED_COMBO:
 			tp->led_ctrl = LED_CTRL_MODE_COMBO;
-			अगर (tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0)
+			if (tg3_chip_rev_id(tp) != CHIPREV_ID_5750_A0)
 				tp->led_ctrl |= (LED_CTRL_MODE_PHY_1 |
 						 LED_CTRL_MODE_PHY_2);
-			अवरोध;
+			break;
 
-		पूर्ण
+		}
 
-		अगर ((tg3_asic_rev(tp) == ASIC_REV_5700 ||
+		if ((tg3_asic_rev(tp) == ASIC_REV_5700 ||
 		     tg3_asic_rev(tp) == ASIC_REV_5701) &&
-		    tp->pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_DELL)
+		    tp->pdev->subsystem_vendor == PCI_VENDOR_ID_DELL)
 			tp->led_ctrl = LED_CTRL_MODE_PHY_2;
 
-		अगर (tg3_chip_rev(tp) == CHIPREV_5784_AX)
+		if (tg3_chip_rev(tp) == CHIPREV_5784_AX)
 			tp->led_ctrl = LED_CTRL_MODE_PHY_1;
 
-		अगर (nic_cfg & NIC_SRAM_DATA_CFG_EEPROM_WP) अणु
+		if (nic_cfg & NIC_SRAM_DATA_CFG_EEPROM_WP) {
 			tg3_flag_set(tp, EEPROM_WRITE_PROT);
-			अगर ((tp->pdev->subप्रणाली_venकरोr ==
+			if ((tp->pdev->subsystem_vendor ==
 			     PCI_VENDOR_ID_ARIMA) &&
-			    (tp->pdev->subप्रणाली_device == 0x205a ||
-			     tp->pdev->subप्रणाली_device == 0x2063))
+			    (tp->pdev->subsystem_device == 0x205a ||
+			     tp->pdev->subsystem_device == 0x2063))
 				tg3_flag_clear(tp, EEPROM_WRITE_PROT);
-		पूर्ण अन्यथा अणु
+		} else {
 			tg3_flag_clear(tp, EEPROM_WRITE_PROT);
 			tg3_flag_set(tp, IS_NIC);
-		पूर्ण
+		}
 
-		अगर (nic_cfg & NIC_SRAM_DATA_CFG_ASF_ENABLE) अणु
+		if (nic_cfg & NIC_SRAM_DATA_CFG_ASF_ENABLE) {
 			tg3_flag_set(tp, ENABLE_ASF);
-			अगर (tg3_flag(tp, 5750_PLUS))
+			if (tg3_flag(tp, 5750_PLUS))
 				tg3_flag_set(tp, ASF_NEW_HANDSHAKE);
-		पूर्ण
+		}
 
-		अगर ((nic_cfg & NIC_SRAM_DATA_CFG_APE_ENABLE) &&
+		if ((nic_cfg & NIC_SRAM_DATA_CFG_APE_ENABLE) &&
 		    tg3_flag(tp, 5750_PLUS))
 			tg3_flag_set(tp, ENABLE_APE);
 
-		अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES &&
+		if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES &&
 		    !(nic_cfg & NIC_SRAM_DATA_CFG_FIBER_WOL))
 			tg3_flag_clear(tp, WOL_CAP);
 
-		अगर (tg3_flag(tp, WOL_CAP) &&
-		    (nic_cfg & NIC_SRAM_DATA_CFG_WOL_ENABLE)) अणु
+		if (tg3_flag(tp, WOL_CAP) &&
+		    (nic_cfg & NIC_SRAM_DATA_CFG_WOL_ENABLE)) {
 			tg3_flag_set(tp, WOL_ENABLE);
 			device_set_wakeup_enable(&tp->pdev->dev, true);
-		पूर्ण
+		}
 
-		अगर (cfg2 & (1 << 17))
+		if (cfg2 & (1 << 17))
 			tp->phy_flags |= TG3_PHYFLG_CAPACITIVE_COUPLING;
 
-		/* serdes संकेत pre-emphasis in रेजिस्टर 0x590 set by */
-		/* bootcode अगर bit 18 is set */
-		अगर (cfg2 & (1 << 18))
+		/* serdes signal pre-emphasis in register 0x590 set by */
+		/* bootcode if bit 18 is set */
+		if (cfg2 & (1 << 18))
 			tp->phy_flags |= TG3_PHYFLG_SERDES_PREEMPHASIS;
 
-		अगर ((tg3_flag(tp, 57765_PLUS) ||
+		if ((tg3_flag(tp, 57765_PLUS) ||
 		     (tg3_asic_rev(tp) == ASIC_REV_5784 &&
 		      tg3_chip_rev(tp) != CHIPREV_5784_AX)) &&
 		    (cfg2 & NIC_SRAM_DATA_CFG_2_APD_EN))
 			tp->phy_flags |= TG3_PHYFLG_ENABLE_APD;
 
-		अगर (tg3_flag(tp, PCI_EXPRESS)) अणु
+		if (tg3_flag(tp, PCI_EXPRESS)) {
 			u32 cfg3;
 
-			tg3_पढ़ो_mem(tp, NIC_SRAM_DATA_CFG_3, &cfg3);
-			अगर (tg3_asic_rev(tp) != ASIC_REV_5785 &&
+			tg3_read_mem(tp, NIC_SRAM_DATA_CFG_3, &cfg3);
+			if (tg3_asic_rev(tp) != ASIC_REV_5785 &&
 			    !tg3_flag(tp, 57765_PLUS) &&
 			    (cfg3 & NIC_SRAM_ASPM_DEBOUNCE))
 				tg3_flag_set(tp, ASPM_WORKAROUND);
-			अगर (cfg3 & NIC_SRAM_LNK_FLAP_AVOID)
+			if (cfg3 & NIC_SRAM_LNK_FLAP_AVOID)
 				tp->phy_flags |= TG3_PHYFLG_KEEP_LINK_ON_PWRDN;
-			अगर (cfg3 & NIC_SRAM_1G_ON_VAUX_OK)
+			if (cfg3 & NIC_SRAM_1G_ON_VAUX_OK)
 				tp->phy_flags |= TG3_PHYFLG_1G_ON_VAUX_OK;
-		पूर्ण
+		}
 
-		अगर (cfg4 & NIC_SRAM_RGMII_INBAND_DISABLE)
+		if (cfg4 & NIC_SRAM_RGMII_INBAND_DISABLE)
 			tg3_flag_set(tp, RGMII_INBAND_DISABLE);
-		अगर (cfg4 & NIC_SRAM_RGMII_EXT_IBND_RX_EN)
+		if (cfg4 & NIC_SRAM_RGMII_EXT_IBND_RX_EN)
 			tg3_flag_set(tp, RGMII_EXT_IBND_RX_EN);
-		अगर (cfg4 & NIC_SRAM_RGMII_EXT_IBND_TX_EN)
+		if (cfg4 & NIC_SRAM_RGMII_EXT_IBND_TX_EN)
 			tg3_flag_set(tp, RGMII_EXT_IBND_TX_EN);
 
-		अगर (cfg5 & NIC_SRAM_DISABLE_1G_HALF_ADV)
+		if (cfg5 & NIC_SRAM_DISABLE_1G_HALF_ADV)
 			tp->phy_flags |= TG3_PHYFLG_DISABLE_1G_HD_ADV;
-	पूर्ण
-करोne:
-	अगर (tg3_flag(tp, WOL_CAP))
+	}
+done:
+	if (tg3_flag(tp, WOL_CAP))
 		device_set_wakeup_enable(&tp->pdev->dev,
 					 tg3_flag(tp, WOL_ENABLE));
-	अन्यथा
+	else
 		device_set_wakeup_capable(&tp->pdev->dev, false);
-पूर्ण
+}
 
-अटल पूर्णांक tg3_ape_otp_पढ़ो(काष्ठा tg3 *tp, u32 offset, u32 *val)
-अणु
-	पूर्णांक i, err;
+static int tg3_ape_otp_read(struct tg3 *tp, u32 offset, u32 *val)
+{
+	int i, err;
 	u32 val2, off = offset * 8;
 
 	err = tg3_nvram_lock(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	tg3_ape_ग_लिखो32(tp, TG3_APE_OTP_ADDR, off | APE_OTP_ADDR_CPU_ENABLE);
-	tg3_ape_ग_लिखो32(tp, TG3_APE_OTP_CTRL, APE_OTP_CTRL_PROG_EN |
+	tg3_ape_write32(tp, TG3_APE_OTP_ADDR, off | APE_OTP_ADDR_CPU_ENABLE);
+	tg3_ape_write32(tp, TG3_APE_OTP_CTRL, APE_OTP_CTRL_PROG_EN |
 			APE_OTP_CTRL_CMD_RD | APE_OTP_CTRL_START);
-	tg3_ape_पढ़ो32(tp, TG3_APE_OTP_CTRL);
+	tg3_ape_read32(tp, TG3_APE_OTP_CTRL);
 	udelay(10);
 
-	क्रम (i = 0; i < 100; i++) अणु
-		val2 = tg3_ape_पढ़ो32(tp, TG3_APE_OTP_STATUS);
-		अगर (val2 & APE_OTP_STATUS_CMD_DONE) अणु
-			*val = tg3_ape_पढ़ो32(tp, TG3_APE_OTP_RD_DATA);
-			अवरोध;
-		पूर्ण
+	for (i = 0; i < 100; i++) {
+		val2 = tg3_ape_read32(tp, TG3_APE_OTP_STATUS);
+		if (val2 & APE_OTP_STATUS_CMD_DONE) {
+			*val = tg3_ape_read32(tp, TG3_APE_OTP_RD_DATA);
+			break;
+		}
 		udelay(10);
-	पूर्ण
+	}
 
-	tg3_ape_ग_लिखो32(tp, TG3_APE_OTP_CTRL, 0);
+	tg3_ape_write32(tp, TG3_APE_OTP_CTRL, 0);
 
 	tg3_nvram_unlock(tp);
-	अगर (val2 & APE_OTP_STATUS_CMD_DONE)
-		वापस 0;
+	if (val2 & APE_OTP_STATUS_CMD_DONE)
+		return 0;
 
-	वापस -EBUSY;
-पूर्ण
+	return -EBUSY;
+}
 
-अटल पूर्णांक tg3_issue_otp_command(काष्ठा tg3 *tp, u32 cmd)
-अणु
-	पूर्णांक i;
+static int tg3_issue_otp_command(struct tg3 *tp, u32 cmd)
+{
+	int i;
 	u32 val;
 
 	tw32(OTP_CTRL, cmd | OTP_CTRL_OTP_CMD_START);
 	tw32(OTP_CTRL, cmd);
 
-	/* Wait क्रम up to 1 ms क्रम command to execute. */
-	क्रम (i = 0; i < 100; i++) अणु
+	/* Wait for up to 1 ms for command to execute. */
+	for (i = 0; i < 100; i++) {
 		val = tr32(OTP_STATUS);
-		अगर (val & OTP_STATUS_CMD_DONE)
-			अवरोध;
+		if (val & OTP_STATUS_CMD_DONE)
+			break;
 		udelay(10);
-	पूर्ण
+	}
 
-	वापस (val & OTP_STATUS_CMD_DONE) ? 0 : -EBUSY;
-पूर्ण
+	return (val & OTP_STATUS_CMD_DONE) ? 0 : -EBUSY;
+}
 
 /* Read the gphy configuration from the OTP region of the chip.  The gphy
  * configuration is a 32-bit value that straddles the alignment boundary.
- * We करो two 32-bit पढ़ोs and then shअगरt and merge the results.
+ * We do two 32-bit reads and then shift and merge the results.
  */
-अटल u32 tg3_पढ़ो_otp_phycfg(काष्ठा tg3 *tp)
-अणु
+static u32 tg3_read_otp_phycfg(struct tg3 *tp)
+{
 	u32 bhalf_otp, thalf_otp;
 
 	tw32(OTP_MODE, OTP_MODE_OTP_THRU_GRC);
 
-	अगर (tg3_issue_otp_command(tp, OTP_CTRL_OTP_CMD_INIT))
-		वापस 0;
+	if (tg3_issue_otp_command(tp, OTP_CTRL_OTP_CMD_INIT))
+		return 0;
 
 	tw32(OTP_ADDRESS, OTP_ADDRESS_MAGIC1);
 
-	अगर (tg3_issue_otp_command(tp, OTP_CTRL_OTP_CMD_READ))
-		वापस 0;
+	if (tg3_issue_otp_command(tp, OTP_CTRL_OTP_CMD_READ))
+		return 0;
 
 	thalf_otp = tr32(OTP_READ_DATA);
 
 	tw32(OTP_ADDRESS, OTP_ADDRESS_MAGIC2);
 
-	अगर (tg3_issue_otp_command(tp, OTP_CTRL_OTP_CMD_READ))
-		वापस 0;
+	if (tg3_issue_otp_command(tp, OTP_CTRL_OTP_CMD_READ))
+		return 0;
 
 	bhalf_otp = tr32(OTP_READ_DATA);
 
-	वापस ((thalf_otp & 0x0000ffff) << 16) | (bhalf_otp >> 16);
-पूर्ण
+	return ((thalf_otp & 0x0000ffff) << 16) | (bhalf_otp >> 16);
+}
 
-अटल व्योम tg3_phy_init_link_config(काष्ठा tg3 *tp)
-अणु
+static void tg3_phy_init_link_config(struct tg3 *tp)
+{
 	u32 adv = ADVERTISED_Autoneg;
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) अणु
-		अगर (!(tp->phy_flags & TG3_PHYFLG_DISABLE_1G_HD_ADV))
+	if (!(tp->phy_flags & TG3_PHYFLG_10_100_ONLY)) {
+		if (!(tp->phy_flags & TG3_PHYFLG_DISABLE_1G_HD_ADV))
 			adv |= ADVERTISED_1000baseT_Half;
 		adv |= ADVERTISED_1000baseT_Full;
-	पूर्ण
+	}
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
+	if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
 		adv |= ADVERTISED_100baseT_Half |
 		       ADVERTISED_100baseT_Full |
 		       ADVERTISED_10baseT_Half |
 		       ADVERTISED_10baseT_Full |
 		       ADVERTISED_TP;
-	अन्यथा
+	else
 		adv |= ADVERTISED_FIBRE;
 
 	tp->link_config.advertising = adv;
 	tp->link_config.speed = SPEED_UNKNOWN;
 	tp->link_config.duplex = DUPLEX_UNKNOWN;
-	tp->link_config.स्वतःneg = AUTONEG_ENABLE;
+	tp->link_config.autoneg = AUTONEG_ENABLE;
 	tp->link_config.active_speed = SPEED_UNKNOWN;
 	tp->link_config.active_duplex = DUPLEX_UNKNOWN;
 
 	tp->old_link = -1;
-पूर्ण
+}
 
-अटल पूर्णांक tg3_phy_probe(काष्ठा tg3 *tp)
-अणु
+static int tg3_phy_probe(struct tg3 *tp)
+{
 	u32 hw_phy_id_1, hw_phy_id_2;
 	u32 hw_phy_id, hw_phy_id_masked;
-	पूर्णांक err;
+	int err;
 
-	/* flow control स्वतःnegotiation is शेष behavior */
+	/* flow control autonegotiation is default behavior */
 	tg3_flag_set(tp, PAUSE_AUTONEG);
 	tp->link_config.flowctrl = FLOW_CTRL_TX | FLOW_CTRL_RX;
 
-	अगर (tg3_flag(tp, ENABLE_APE)) अणु
-		चयन (tp->pci_fn) अणु
-		हाल 0:
+	if (tg3_flag(tp, ENABLE_APE)) {
+		switch (tp->pci_fn) {
+		case 0:
 			tp->phy_ape_lock = TG3_APE_LOCK_PHY0;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			tp->phy_ape_lock = TG3_APE_LOCK_PHY1;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			tp->phy_ape_lock = TG3_APE_LOCK_PHY2;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			tp->phy_ape_lock = TG3_APE_LOCK_PHY3;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!tg3_flag(tp, ENABLE_ASF) &&
+	if (!tg3_flag(tp, ENABLE_ASF) &&
 	    !(tp->phy_flags & TG3_PHYFLG_ANY_SERDES) &&
 	    !(tp->phy_flags & TG3_PHYFLG_10_100_ONLY))
 		tp->phy_flags &= ~(TG3_PHYFLG_1G_ON_VAUX_OK |
 				   TG3_PHYFLG_KEEP_LINK_ON_PWRDN);
 
-	अगर (tg3_flag(tp, USE_PHYLIB))
-		वापस tg3_phy_init(tp);
+	if (tg3_flag(tp, USE_PHYLIB))
+		return tg3_phy_init(tp);
 
-	/* Reading the PHY ID रेजिस्टर can conflict with ASF
+	/* Reading the PHY ID register can conflict with ASF
 	 * firmware access to the PHY hardware.
 	 */
 	err = 0;
-	अगर (tg3_flag(tp, ENABLE_ASF) || tg3_flag(tp, ENABLE_APE)) अणु
+	if (tg3_flag(tp, ENABLE_ASF) || tg3_flag(tp, ENABLE_APE)) {
 		hw_phy_id = hw_phy_id_masked = TG3_PHY_ID_INVALID;
-	पूर्ण अन्यथा अणु
-		/* Now पढ़ो the physical PHY_ID from the chip and verअगरy
-		 * that it is sane.  If it करोesn't look good, we fall back
+	} else {
+		/* Now read the physical PHY_ID from the chip and verify
+		 * that it is sane.  If it doesn't look good, we fall back
 		 * to either the hard-coded table based PHY_ID and failing
 		 * that the value found in the eeprom area.
 		 */
-		err |= tg3_पढ़ोphy(tp, MII_PHYSID1, &hw_phy_id_1);
-		err |= tg3_पढ़ोphy(tp, MII_PHYSID2, &hw_phy_id_2);
+		err |= tg3_readphy(tp, MII_PHYSID1, &hw_phy_id_1);
+		err |= tg3_readphy(tp, MII_PHYSID2, &hw_phy_id_2);
 
 		hw_phy_id  = (hw_phy_id_1 & 0xffff) << 10;
 		hw_phy_id |= (hw_phy_id_2 & 0xfc00) << 16;
 		hw_phy_id |= (hw_phy_id_2 & 0x03ff) <<  0;
 
 		hw_phy_id_masked = hw_phy_id & TG3_PHY_ID_MASK;
-	पूर्ण
+	}
 
-	अगर (!err && TG3_KNOWN_PHY_ID(hw_phy_id_masked)) अणु
+	if (!err && TG3_KNOWN_PHY_ID(hw_phy_id_masked)) {
 		tp->phy_id = hw_phy_id;
-		अगर (hw_phy_id_masked == TG3_PHY_ID_BCM8002)
+		if (hw_phy_id_masked == TG3_PHY_ID_BCM8002)
 			tp->phy_flags |= TG3_PHYFLG_PHY_SERDES;
-		अन्यथा
+		else
 			tp->phy_flags &= ~TG3_PHYFLG_PHY_SERDES;
-	पूर्ण अन्यथा अणु
-		अगर (tp->phy_id != TG3_PHY_ID_INVALID) अणु
-			/* Do nothing, phy ID alपढ़ोy set up in
+	} else {
+		if (tp->phy_id != TG3_PHY_ID_INVALID) {
+			/* Do nothing, phy ID already set up in
 			 * tg3_get_eeprom_hw_cfg().
 			 */
-		पूर्ण अन्यथा अणु
-			काष्ठा subsys_tbl_ent *p;
+		} else {
+			struct subsys_tbl_ent *p;
 
 			/* No eeprom signature?  Try the hardcoded
 			 * subsys device table.
 			 */
 			p = tg3_lookup_by_subsys(tp);
-			अगर (p) अणु
+			if (p) {
 				tp->phy_id = p->phy_id;
-			पूर्ण अन्यथा अगर (!tg3_flag(tp, IS_SSB_CORE)) अणु
+			} else if (!tg3_flag(tp, IS_SSB_CORE)) {
 				/* For now we saw the IDs 0xbc050cd0,
 				 * 0xbc050f80 and 0xbc050c30 on devices
 				 * connected to an BCM4785 and there are
 				 * probably more. Just assume that the phy is
 				 * supported when it is connected to a SSB core
-				 * क्रम now.
+				 * for now.
 				 */
-				वापस -ENODEV;
-			पूर्ण
+				return -ENODEV;
+			}
 
-			अगर (!tp->phy_id ||
+			if (!tp->phy_id ||
 			    tp->phy_id == TG3_PHY_ID_BCM8002)
 				tp->phy_flags |= TG3_PHYFLG_PHY_SERDES;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES) &&
+	if (!(tp->phy_flags & TG3_PHYFLG_ANY_SERDES) &&
 	    (tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	     tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	     tg3_asic_rev(tp) == ASIC_REV_57766 ||
@@ -15567,7 +15566,7 @@ out:
 	     (tg3_asic_rev(tp) == ASIC_REV_5717 &&
 	      tg3_chip_rev_id(tp) != CHIPREV_ID_5717_A0) ||
 	     (tg3_asic_rev(tp) == ASIC_REV_57765 &&
-	      tg3_chip_rev_id(tp) != CHIPREV_ID_57765_A0))) अणु
+	      tg3_chip_rev_id(tp) != CHIPREV_ID_57765_A0))) {
 		tp->phy_flags |= TG3_PHYFLG_EEE_CAP;
 
 		tp->eee.supported = SUPPORTED_100baseT_Full |
@@ -15576,288 +15575,288 @@ out:
 				     ADVERTISED_1000baseT_Full;
 		tp->eee.eee_enabled = 1;
 		tp->eee.tx_lpi_enabled = 1;
-		tp->eee.tx_lpi_समयr = TG3_CPMU_DBTMR1_LNKIDLE_2047US;
-	पूर्ण
+		tp->eee.tx_lpi_timer = TG3_CPMU_DBTMR1_LNKIDLE_2047US;
+	}
 
 	tg3_phy_init_link_config(tp);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN) &&
+	if (!(tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN) &&
 	    !(tp->phy_flags & TG3_PHYFLG_ANY_SERDES) &&
 	    !tg3_flag(tp, ENABLE_APE) &&
-	    !tg3_flag(tp, ENABLE_ASF)) अणु
+	    !tg3_flag(tp, ENABLE_ASF)) {
 		u32 bmsr, dummy;
 
-		tg3_पढ़ोphy(tp, MII_BMSR, &bmsr);
-		अगर (!tg3_पढ़ोphy(tp, MII_BMSR, &bmsr) &&
+		tg3_readphy(tp, MII_BMSR, &bmsr);
+		if (!tg3_readphy(tp, MII_BMSR, &bmsr) &&
 		    (bmsr & BMSR_LSTATUS))
-			जाओ skip_phy_reset;
+			goto skip_phy_reset;
 
 		err = tg3_phy_reset(tp);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		tg3_phy_set_wirespeed(tp);
 
-		अगर (!tg3_phy_copper_an_config_ok(tp, &dummy)) अणु
-			tg3_phy_स्वतःneg_cfg(tp, tp->link_config.advertising,
+		if (!tg3_phy_copper_an_config_ok(tp, &dummy)) {
+			tg3_phy_autoneg_cfg(tp, tp->link_config.advertising,
 					    tp->link_config.flowctrl);
 
-			tg3_ग_लिखोphy(tp, MII_BMCR,
+			tg3_writephy(tp, MII_BMCR,
 				     BMCR_ANENABLE | BMCR_ANRESTART);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 skip_phy_reset:
-	अगर ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) अणु
+	if ((tp->phy_id & TG3_PHY_ID_MASK) == TG3_PHY_ID_BCM5401) {
 		err = tg3_init_5401phy_dsp(tp);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = tg3_init_5401phy_dsp(tp);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tg3_पढ़ो_vpd(काष्ठा tg3 *tp)
-अणु
+static void tg3_read_vpd(struct tg3 *tp)
+{
 	u8 *vpd_data;
-	अचिन्हित पूर्णांक block_end, rosize, len;
+	unsigned int block_end, rosize, len;
 	u32 vpdlen;
-	पूर्णांक j, i = 0;
+	int j, i = 0;
 
-	vpd_data = (u8 *)tg3_vpd_पढ़ोblock(tp, &vpdlen);
-	अगर (!vpd_data)
-		जाओ out_no_vpd;
+	vpd_data = (u8 *)tg3_vpd_readblock(tp, &vpdlen);
+	if (!vpd_data)
+		goto out_no_vpd;
 
 	i = pci_vpd_find_tag(vpd_data, vpdlen, PCI_VPD_LRDT_RO_DATA);
-	अगर (i < 0)
-		जाओ out_not_found;
+	if (i < 0)
+		goto out_not_found;
 
 	rosize = pci_vpd_lrdt_size(&vpd_data[i]);
 	block_end = i + PCI_VPD_LRDT_TAG_SIZE + rosize;
 	i += PCI_VPD_LRDT_TAG_SIZE;
 
-	अगर (block_end > vpdlen)
-		जाओ out_not_found;
+	if (block_end > vpdlen)
+		goto out_not_found;
 
 	j = pci_vpd_find_info_keyword(vpd_data, i, rosize,
 				      PCI_VPD_RO_KEYWORD_MFR_ID);
-	अगर (j > 0) अणु
+	if (j > 0) {
 		len = pci_vpd_info_field_size(&vpd_data[j]);
 
 		j += PCI_VPD_INFO_FLD_HDR_SIZE;
-		अगर (j + len > block_end || len != 4 ||
-		    स_भेद(&vpd_data[j], "1028", 4))
-			जाओ partno;
+		if (j + len > block_end || len != 4 ||
+		    memcmp(&vpd_data[j], "1028", 4))
+			goto partno;
 
 		j = pci_vpd_find_info_keyword(vpd_data, i, rosize,
 					      PCI_VPD_RO_KEYWORD_VENDOR0);
-		अगर (j < 0)
-			जाओ partno;
+		if (j < 0)
+			goto partno;
 
 		len = pci_vpd_info_field_size(&vpd_data[j]);
 
 		j += PCI_VPD_INFO_FLD_HDR_SIZE;
-		अगर (j + len > block_end)
-			जाओ partno;
+		if (j + len > block_end)
+			goto partno;
 
-		अगर (len >= माप(tp->fw_ver))
-			len = माप(tp->fw_ver) - 1;
-		स_रखो(tp->fw_ver, 0, माप(tp->fw_ver));
-		snम_लिखो(tp->fw_ver, माप(tp->fw_ver), "%.*s bc ", len,
+		if (len >= sizeof(tp->fw_ver))
+			len = sizeof(tp->fw_ver) - 1;
+		memset(tp->fw_ver, 0, sizeof(tp->fw_ver));
+		snprintf(tp->fw_ver, sizeof(tp->fw_ver), "%.*s bc ", len,
 			 &vpd_data[j]);
-	पूर्ण
+	}
 
 partno:
 	i = pci_vpd_find_info_keyword(vpd_data, i, rosize,
 				      PCI_VPD_RO_KEYWORD_PARTNO);
-	अगर (i < 0)
-		जाओ out_not_found;
+	if (i < 0)
+		goto out_not_found;
 
 	len = pci_vpd_info_field_size(&vpd_data[i]);
 
 	i += PCI_VPD_INFO_FLD_HDR_SIZE;
-	अगर (len > TG3_BPN_SIZE ||
+	if (len > TG3_BPN_SIZE ||
 	    (len + i) > vpdlen)
-		जाओ out_not_found;
+		goto out_not_found;
 
-	स_नकल(tp->board_part_number, &vpd_data[i], len);
+	memcpy(tp->board_part_number, &vpd_data[i], len);
 
 out_not_found:
-	kमुक्त(vpd_data);
-	अगर (tp->board_part_number[0])
-		वापस;
+	kfree(vpd_data);
+	if (tp->board_part_number[0])
+		return;
 
 out_no_vpd:
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717) अणु
-		अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717) {
+		if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5717 ||
 		    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5717_C)
-			म_नकल(tp->board_part_number, "BCM5717");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5718)
-			म_नकल(tp->board_part_number, "BCM5718");
-		अन्यथा
-			जाओ nomatch;
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_57780) अणु
-		अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57780)
-			म_नकल(tp->board_part_number, "BCM57780");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57760)
-			म_नकल(tp->board_part_number, "BCM57760");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57790)
-			म_नकल(tp->board_part_number, "BCM57790");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57788)
-			म_नकल(tp->board_part_number, "BCM57788");
-		अन्यथा
-			जाओ nomatch;
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_57765) अणु
-		अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57761)
-			म_नकल(tp->board_part_number, "BCM57761");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57765)
-			म_नकल(tp->board_part_number, "BCM57765");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57781)
-			म_नकल(tp->board_part_number, "BCM57781");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57785)
-			म_नकल(tp->board_part_number, "BCM57785");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57791)
-			म_नकल(tp->board_part_number, "BCM57791");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57795)
-			म_नकल(tp->board_part_number, "BCM57795");
-		अन्यथा
-			जाओ nomatch;
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_57766) अणु
-		अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57762)
-			म_नकल(tp->board_part_number, "BCM57762");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57766)
-			म_नकल(tp->board_part_number, "BCM57766");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57782)
-			म_नकल(tp->board_part_number, "BCM57782");
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57786)
-			म_नकल(tp->board_part_number, "BCM57786");
-		अन्यथा
-			जाओ nomatch;
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
-		म_नकल(tp->board_part_number, "BCM95906");
-	पूर्ण अन्यथा अणु
+			strcpy(tp->board_part_number, "BCM5717");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5718)
+			strcpy(tp->board_part_number, "BCM5718");
+		else
+			goto nomatch;
+	} else if (tg3_asic_rev(tp) == ASIC_REV_57780) {
+		if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57780)
+			strcpy(tp->board_part_number, "BCM57780");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57760)
+			strcpy(tp->board_part_number, "BCM57760");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57790)
+			strcpy(tp->board_part_number, "BCM57790");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57788)
+			strcpy(tp->board_part_number, "BCM57788");
+		else
+			goto nomatch;
+	} else if (tg3_asic_rev(tp) == ASIC_REV_57765) {
+		if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57761)
+			strcpy(tp->board_part_number, "BCM57761");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57765)
+			strcpy(tp->board_part_number, "BCM57765");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57781)
+			strcpy(tp->board_part_number, "BCM57781");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57785)
+			strcpy(tp->board_part_number, "BCM57785");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57791)
+			strcpy(tp->board_part_number, "BCM57791");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57795)
+			strcpy(tp->board_part_number, "BCM57795");
+		else
+			goto nomatch;
+	} else if (tg3_asic_rev(tp) == ASIC_REV_57766) {
+		if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57762)
+			strcpy(tp->board_part_number, "BCM57762");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57766)
+			strcpy(tp->board_part_number, "BCM57766");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57782)
+			strcpy(tp->board_part_number, "BCM57782");
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57786)
+			strcpy(tp->board_part_number, "BCM57786");
+		else
+			goto nomatch;
+	} else if (tg3_asic_rev(tp) == ASIC_REV_5906) {
+		strcpy(tp->board_part_number, "BCM95906");
+	} else {
 nomatch:
-		म_नकल(tp->board_part_number, "none");
-	पूर्ण
-पूर्ण
+		strcpy(tp->board_part_number, "none");
+	}
+}
 
-अटल पूर्णांक tg3_fw_img_is_valid(काष्ठा tg3 *tp, u32 offset)
-अणु
+static int tg3_fw_img_is_valid(struct tg3 *tp, u32 offset)
+{
 	u32 val;
 
-	अगर (tg3_nvram_पढ़ो(tp, offset, &val) ||
+	if (tg3_nvram_read(tp, offset, &val) ||
 	    (val & 0xfc000000) != 0x0c000000 ||
-	    tg3_nvram_पढ़ो(tp, offset + 4, &val) ||
+	    tg3_nvram_read(tp, offset + 4, &val) ||
 	    val != 0)
-		वापस 0;
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम tg3_पढ़ो_bc_ver(काष्ठा tg3 *tp)
-अणु
+static void tg3_read_bc_ver(struct tg3 *tp)
+{
 	u32 val, offset, start, ver_offset;
-	पूर्णांक i, dst_off;
+	int i, dst_off;
 	bool newver = false;
 
-	अगर (tg3_nvram_पढ़ो(tp, 0xc, &offset) ||
-	    tg3_nvram_पढ़ो(tp, 0x4, &start))
-		वापस;
+	if (tg3_nvram_read(tp, 0xc, &offset) ||
+	    tg3_nvram_read(tp, 0x4, &start))
+		return;
 
 	offset = tg3_nvram_logical_addr(tp, offset);
 
-	अगर (tg3_nvram_पढ़ो(tp, offset, &val))
-		वापस;
+	if (tg3_nvram_read(tp, offset, &val))
+		return;
 
-	अगर ((val & 0xfc000000) == 0x0c000000) अणु
-		अगर (tg3_nvram_पढ़ो(tp, offset + 4, &val))
-			वापस;
+	if ((val & 0xfc000000) == 0x0c000000) {
+		if (tg3_nvram_read(tp, offset + 4, &val))
+			return;
 
-		अगर (val == 0)
+		if (val == 0)
 			newver = true;
-	पूर्ण
+	}
 
-	dst_off = म_माप(tp->fw_ver);
+	dst_off = strlen(tp->fw_ver);
 
-	अगर (newver) अणु
-		अगर (TG3_VER_SIZE - dst_off < 16 ||
-		    tg3_nvram_पढ़ो(tp, offset + 8, &ver_offset))
-			वापस;
+	if (newver) {
+		if (TG3_VER_SIZE - dst_off < 16 ||
+		    tg3_nvram_read(tp, offset + 8, &ver_offset))
+			return;
 
 		offset = offset + ver_offset - start;
-		क्रम (i = 0; i < 16; i += 4) अणु
+		for (i = 0; i < 16; i += 4) {
 			__be32 v;
-			अगर (tg3_nvram_पढ़ो_be32(tp, offset + i, &v))
-				वापस;
+			if (tg3_nvram_read_be32(tp, offset + i, &v))
+				return;
 
-			स_नकल(tp->fw_ver + dst_off + i, &v, माप(v));
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			memcpy(tp->fw_ver + dst_off + i, &v, sizeof(v));
+		}
+	} else {
 		u32 major, minor;
 
-		अगर (tg3_nvram_पढ़ो(tp, TG3_NVM_PTREV_BCVER, &ver_offset))
-			वापस;
+		if (tg3_nvram_read(tp, TG3_NVM_PTREV_BCVER, &ver_offset))
+			return;
 
 		major = (ver_offset & TG3_NVM_BCVER_MAJMSK) >>
 			TG3_NVM_BCVER_MAJSFT;
 		minor = ver_offset & TG3_NVM_BCVER_MINMSK;
-		snम_लिखो(&tp->fw_ver[dst_off], TG3_VER_SIZE - dst_off,
+		snprintf(&tp->fw_ver[dst_off], TG3_VER_SIZE - dst_off,
 			 "v%d.%02d", major, minor);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_पढ़ो_hwsb_ver(काष्ठा tg3 *tp)
-अणु
+static void tg3_read_hwsb_ver(struct tg3 *tp)
+{
 	u32 val, major, minor;
 
 	/* Use native endian representation */
-	अगर (tg3_nvram_पढ़ो(tp, TG3_NVM_HWSB_CFG1, &val))
-		वापस;
+	if (tg3_nvram_read(tp, TG3_NVM_HWSB_CFG1, &val))
+		return;
 
 	major = (val & TG3_NVM_HWSB_CFG1_MAJMSK) >>
 		TG3_NVM_HWSB_CFG1_MAJSFT;
 	minor = (val & TG3_NVM_HWSB_CFG1_MINMSK) >>
 		TG3_NVM_HWSB_CFG1_MINSFT;
 
-	snम_लिखो(&tp->fw_ver[0], 32, "sb v%d.%02d", major, minor);
-पूर्ण
+	snprintf(&tp->fw_ver[0], 32, "sb v%d.%02d", major, minor);
+}
 
-अटल व्योम tg3_पढ़ो_sb_ver(काष्ठा tg3 *tp, u32 val)
-अणु
+static void tg3_read_sb_ver(struct tg3 *tp, u32 val)
+{
 	u32 offset, major, minor, build;
 
-	म_जोड़न(tp->fw_ver, "sb", TG3_VER_SIZE - म_माप(tp->fw_ver) - 1);
+	strncat(tp->fw_ver, "sb", TG3_VER_SIZE - strlen(tp->fw_ver) - 1);
 
-	अगर ((val & TG3_EEPROM_SB_FORMAT_MASK) != TG3_EEPROM_SB_FORMAT_1)
-		वापस;
+	if ((val & TG3_EEPROM_SB_FORMAT_MASK) != TG3_EEPROM_SB_FORMAT_1)
+		return;
 
-	चयन (val & TG3_EEPROM_SB_REVISION_MASK) अणु
-	हाल TG3_EEPROM_SB_REVISION_0:
+	switch (val & TG3_EEPROM_SB_REVISION_MASK) {
+	case TG3_EEPROM_SB_REVISION_0:
 		offset = TG3_EEPROM_SB_F1R0_EDH_OFF;
-		अवरोध;
-	हाल TG3_EEPROM_SB_REVISION_2:
+		break;
+	case TG3_EEPROM_SB_REVISION_2:
 		offset = TG3_EEPROM_SB_F1R2_EDH_OFF;
-		अवरोध;
-	हाल TG3_EEPROM_SB_REVISION_3:
+		break;
+	case TG3_EEPROM_SB_REVISION_3:
 		offset = TG3_EEPROM_SB_F1R3_EDH_OFF;
-		अवरोध;
-	हाल TG3_EEPROM_SB_REVISION_4:
+		break;
+	case TG3_EEPROM_SB_REVISION_4:
 		offset = TG3_EEPROM_SB_F1R4_EDH_OFF;
-		अवरोध;
-	हाल TG3_EEPROM_SB_REVISION_5:
+		break;
+	case TG3_EEPROM_SB_REVISION_5:
 		offset = TG3_EEPROM_SB_F1R5_EDH_OFF;
-		अवरोध;
-	हाल TG3_EEPROM_SB_REVISION_6:
+		break;
+	case TG3_EEPROM_SB_REVISION_6:
 		offset = TG3_EEPROM_SB_F1R6_EDH_OFF;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (tg3_nvram_पढ़ो(tp, offset, &val))
-		वापस;
+	if (tg3_nvram_read(tp, offset, &val))
+		return;
 
 	build = (val & TG3_EEPROM_SB_EDH_BLD_MASK) >>
 		TG3_EEPROM_SB_EDH_BLD_SHFT;
@@ -15865,224 +15864,224 @@ nomatch:
 		TG3_EEPROM_SB_EDH_MAJ_SHFT;
 	minor =  val & TG3_EEPROM_SB_EDH_MIN_MASK;
 
-	अगर (minor > 99 || build > 26)
-		वापस;
+	if (minor > 99 || build > 26)
+		return;
 
-	offset = म_माप(tp->fw_ver);
-	snम_लिखो(&tp->fw_ver[offset], TG3_VER_SIZE - offset,
+	offset = strlen(tp->fw_ver);
+	snprintf(&tp->fw_ver[offset], TG3_VER_SIZE - offset,
 		 " v%d.%02d", major, minor);
 
-	अगर (build > 0) अणु
-		offset = म_माप(tp->fw_ver);
-		अगर (offset < TG3_VER_SIZE - 1)
+	if (build > 0) {
+		offset = strlen(tp->fw_ver);
+		if (offset < TG3_VER_SIZE - 1)
 			tp->fw_ver[offset] = 'a' + build - 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tg3_पढ़ो_mgmtfw_ver(काष्ठा tg3 *tp)
-अणु
+static void tg3_read_mgmtfw_ver(struct tg3 *tp)
+{
 	u32 val, offset, start;
-	पूर्णांक i, vlen;
+	int i, vlen;
 
-	क्रम (offset = TG3_NVM_सूची_START;
-	     offset < TG3_NVM_सूची_END;
-	     offset += TG3_NVM_सूचीENT_SIZE) अणु
-		अगर (tg3_nvram_पढ़ो(tp, offset, &val))
-			वापस;
+	for (offset = TG3_NVM_DIR_START;
+	     offset < TG3_NVM_DIR_END;
+	     offset += TG3_NVM_DIRENT_SIZE) {
+		if (tg3_nvram_read(tp, offset, &val))
+			return;
 
-		अगर ((val >> TG3_NVM_सूचीTYPE_SHIFT) == TG3_NVM_सूचीTYPE_ASFINI)
-			अवरोध;
-	पूर्ण
+		if ((val >> TG3_NVM_DIRTYPE_SHIFT) == TG3_NVM_DIRTYPE_ASFINI)
+			break;
+	}
 
-	अगर (offset == TG3_NVM_सूची_END)
-		वापस;
+	if (offset == TG3_NVM_DIR_END)
+		return;
 
-	अगर (!tg3_flag(tp, 5705_PLUS))
+	if (!tg3_flag(tp, 5705_PLUS))
 		start = 0x08000000;
-	अन्यथा अगर (tg3_nvram_पढ़ो(tp, offset - 4, &start))
-		वापस;
+	else if (tg3_nvram_read(tp, offset - 4, &start))
+		return;
 
-	अगर (tg3_nvram_पढ़ो(tp, offset + 4, &offset) ||
+	if (tg3_nvram_read(tp, offset + 4, &offset) ||
 	    !tg3_fw_img_is_valid(tp, offset) ||
-	    tg3_nvram_पढ़ो(tp, offset + 8, &val))
-		वापस;
+	    tg3_nvram_read(tp, offset + 8, &val))
+		return;
 
 	offset += val - start;
 
-	vlen = म_माप(tp->fw_ver);
+	vlen = strlen(tp->fw_ver);
 
 	tp->fw_ver[vlen++] = ',';
 	tp->fw_ver[vlen++] = ' ';
 
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		__be32 v;
-		अगर (tg3_nvram_पढ़ो_be32(tp, offset, &v))
-			वापस;
+		if (tg3_nvram_read_be32(tp, offset, &v))
+			return;
 
-		offset += माप(v);
+		offset += sizeof(v);
 
-		अगर (vlen > TG3_VER_SIZE - माप(v)) अणु
-			स_नकल(&tp->fw_ver[vlen], &v, TG3_VER_SIZE - vlen);
-			अवरोध;
-		पूर्ण
+		if (vlen > TG3_VER_SIZE - sizeof(v)) {
+			memcpy(&tp->fw_ver[vlen], &v, TG3_VER_SIZE - vlen);
+			break;
+		}
 
-		स_नकल(&tp->fw_ver[vlen], &v, माप(v));
-		vlen += माप(v);
-	पूर्ण
-पूर्ण
+		memcpy(&tp->fw_ver[vlen], &v, sizeof(v));
+		vlen += sizeof(v);
+	}
+}
 
-अटल व्योम tg3_probe_ncsi(काष्ठा tg3 *tp)
-अणु
+static void tg3_probe_ncsi(struct tg3 *tp)
+{
 	u32 apedata;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_SEG_SIG);
-	अगर (apedata != APE_SEG_SIG_MAGIC)
-		वापस;
+	apedata = tg3_ape_read32(tp, TG3_APE_SEG_SIG);
+	if (apedata != APE_SEG_SIG_MAGIC)
+		return;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_FW_STATUS);
-	अगर (!(apedata & APE_FW_STATUS_READY))
-		वापस;
+	apedata = tg3_ape_read32(tp, TG3_APE_FW_STATUS);
+	if (!(apedata & APE_FW_STATUS_READY))
+		return;
 
-	अगर (tg3_ape_पढ़ो32(tp, TG3_APE_FW_FEATURES) & TG3_APE_FW_FEATURE_NCSI)
+	if (tg3_ape_read32(tp, TG3_APE_FW_FEATURES) & TG3_APE_FW_FEATURE_NCSI)
 		tg3_flag_set(tp, APE_HAS_NCSI);
-पूर्ण
+}
 
-अटल व्योम tg3_पढ़ो_dash_ver(काष्ठा tg3 *tp)
-अणु
-	पूर्णांक vlen;
+static void tg3_read_dash_ver(struct tg3 *tp)
+{
+	int vlen;
 	u32 apedata;
-	अक्षर *fwtype;
+	char *fwtype;
 
-	apedata = tg3_ape_पढ़ो32(tp, TG3_APE_FW_VERSION);
+	apedata = tg3_ape_read32(tp, TG3_APE_FW_VERSION);
 
-	अगर (tg3_flag(tp, APE_HAS_NCSI))
+	if (tg3_flag(tp, APE_HAS_NCSI))
 		fwtype = "NCSI";
-	अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5725)
+	else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5725)
 		fwtype = "SMASH";
-	अन्यथा
+	else
 		fwtype = "DASH";
 
-	vlen = म_माप(tp->fw_ver);
+	vlen = strlen(tp->fw_ver);
 
-	snम_लिखो(&tp->fw_ver[vlen], TG3_VER_SIZE - vlen, " %s v%d.%d.%d.%d",
+	snprintf(&tp->fw_ver[vlen], TG3_VER_SIZE - vlen, " %s v%d.%d.%d.%d",
 		 fwtype,
 		 (apedata & APE_FW_VERSION_MAJMSK) >> APE_FW_VERSION_MAJSFT,
 		 (apedata & APE_FW_VERSION_MINMSK) >> APE_FW_VERSION_MINSFT,
 		 (apedata & APE_FW_VERSION_REVMSK) >> APE_FW_VERSION_REVSFT,
 		 (apedata & APE_FW_VERSION_BLDMSK));
-पूर्ण
+}
 
-अटल व्योम tg3_पढ़ो_otp_ver(काष्ठा tg3 *tp)
-अणु
+static void tg3_read_otp_ver(struct tg3 *tp)
+{
 	u32 val, val2;
 
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5762)
-		वापस;
+	if (tg3_asic_rev(tp) != ASIC_REV_5762)
+		return;
 
-	अगर (!tg3_ape_otp_पढ़ो(tp, OTP_ADDRESS_MAGIC0, &val) &&
-	    !tg3_ape_otp_पढ़ो(tp, OTP_ADDRESS_MAGIC0 + 4, &val2) &&
-	    TG3_OTP_MAGIC0_VALID(val)) अणु
+	if (!tg3_ape_otp_read(tp, OTP_ADDRESS_MAGIC0, &val) &&
+	    !tg3_ape_otp_read(tp, OTP_ADDRESS_MAGIC0 + 4, &val2) &&
+	    TG3_OTP_MAGIC0_VALID(val)) {
 		u64 val64 = (u64) val << 32 | val2;
 		u32 ver = 0;
-		पूर्णांक i, vlen;
+		int i, vlen;
 
-		क्रम (i = 0; i < 7; i++) अणु
-			अगर ((val64 & 0xff) == 0)
-				अवरोध;
+		for (i = 0; i < 7; i++) {
+			if ((val64 & 0xff) == 0)
+				break;
 			ver = val64 & 0xff;
 			val64 >>= 8;
-		पूर्ण
-		vlen = म_माप(tp->fw_ver);
-		snम_लिखो(&tp->fw_ver[vlen], TG3_VER_SIZE - vlen, " .%02d", ver);
-	पूर्ण
-पूर्ण
+		}
+		vlen = strlen(tp->fw_ver);
+		snprintf(&tp->fw_ver[vlen], TG3_VER_SIZE - vlen, " .%02d", ver);
+	}
+}
 
-अटल व्योम tg3_पढ़ो_fw_ver(काष्ठा tg3 *tp)
-अणु
+static void tg3_read_fw_ver(struct tg3 *tp)
+{
 	u32 val;
 	bool vpd_vers = false;
 
-	अगर (tp->fw_ver[0] != 0)
+	if (tp->fw_ver[0] != 0)
 		vpd_vers = true;
 
-	अगर (tg3_flag(tp, NO_NVRAM)) अणु
-		म_जोड़ो(tp->fw_ver, "sb");
-		tg3_पढ़ो_otp_ver(tp);
-		वापस;
-	पूर्ण
+	if (tg3_flag(tp, NO_NVRAM)) {
+		strcat(tp->fw_ver, "sb");
+		tg3_read_otp_ver(tp);
+		return;
+	}
 
-	अगर (tg3_nvram_पढ़ो(tp, 0, &val))
-		वापस;
+	if (tg3_nvram_read(tp, 0, &val))
+		return;
 
-	अगर (val == TG3_EEPROM_MAGIC)
-		tg3_पढ़ो_bc_ver(tp);
-	अन्यथा अगर ((val & TG3_EEPROM_MAGIC_FW_MSK) == TG3_EEPROM_MAGIC_FW)
-		tg3_पढ़ो_sb_ver(tp, val);
-	अन्यथा अगर ((val & TG3_EEPROM_MAGIC_HW_MSK) == TG3_EEPROM_MAGIC_HW)
-		tg3_पढ़ो_hwsb_ver(tp);
+	if (val == TG3_EEPROM_MAGIC)
+		tg3_read_bc_ver(tp);
+	else if ((val & TG3_EEPROM_MAGIC_FW_MSK) == TG3_EEPROM_MAGIC_FW)
+		tg3_read_sb_ver(tp, val);
+	else if ((val & TG3_EEPROM_MAGIC_HW_MSK) == TG3_EEPROM_MAGIC_HW)
+		tg3_read_hwsb_ver(tp);
 
-	अगर (tg3_flag(tp, ENABLE_ASF)) अणु
-		अगर (tg3_flag(tp, ENABLE_APE)) अणु
+	if (tg3_flag(tp, ENABLE_ASF)) {
+		if (tg3_flag(tp, ENABLE_APE)) {
 			tg3_probe_ncsi(tp);
-			अगर (!vpd_vers)
-				tg3_पढ़ो_dash_ver(tp);
-		पूर्ण अन्यथा अगर (!vpd_vers) अणु
-			tg3_पढ़ो_mgmtfw_ver(tp);
-		पूर्ण
-	पूर्ण
+			if (!vpd_vers)
+				tg3_read_dash_ver(tp);
+		} else if (!vpd_vers) {
+			tg3_read_mgmtfw_ver(tp);
+		}
+	}
 
 	tp->fw_ver[TG3_VER_SIZE - 1] = 0;
-पूर्ण
+}
 
-अटल अंतरभूत u32 tg3_rx_ret_ring_size(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, LRG_PROD_RING_CAP))
-		वापस TG3_RX_RET_MAX_SIZE_5717;
-	अन्यथा अगर (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS))
-		वापस TG3_RX_RET_MAX_SIZE_5700;
-	अन्यथा
-		वापस TG3_RX_RET_MAX_SIZE_5705;
-पूर्ण
+static inline u32 tg3_rx_ret_ring_size(struct tg3 *tp)
+{
+	if (tg3_flag(tp, LRG_PROD_RING_CAP))
+		return TG3_RX_RET_MAX_SIZE_5717;
+	else if (tg3_flag(tp, JUMBO_CAPABLE) && !tg3_flag(tp, 5780_CLASS))
+		return TG3_RX_RET_MAX_SIZE_5700;
+	else
+		return TG3_RX_RET_MAX_SIZE_5705;
+}
 
-अटल स्थिर काष्ठा pci_device_id tg3_ग_लिखो_reorder_chipsets[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_FE_GATE_700C) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_8131_BRIDGE) पूर्ण,
-	अणु PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8385_0) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id tg3_write_reorder_chipsets[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_FE_GATE_700C) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_8131_BRIDGE) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8385_0) },
+	{ },
+};
 
-अटल काष्ठा pci_dev *tg3_find_peer(काष्ठा tg3 *tp)
-अणु
-	काष्ठा pci_dev *peer;
-	अचिन्हित पूर्णांक func, devnr = tp->pdev->devfn & ~7;
+static struct pci_dev *tg3_find_peer(struct tg3 *tp)
+{
+	struct pci_dev *peer;
+	unsigned int func, devnr = tp->pdev->devfn & ~7;
 
-	क्रम (func = 0; func < 8; func++) अणु
+	for (func = 0; func < 8; func++) {
 		peer = pci_get_slot(tp->pdev->bus, devnr | func);
-		अगर (peer && peer != tp->pdev)
-			अवरोध;
+		if (peer && peer != tp->pdev)
+			break;
 		pci_dev_put(peer);
-	पूर्ण
+	}
 	/* 5704 can be configured in single-port mode, set peer to
-	 * tp->pdev in that हाल.
+	 * tp->pdev in that case.
 	 */
-	अगर (!peer) अणु
+	if (!peer) {
 		peer = tp->pdev;
-		वापस peer;
-	पूर्ण
+		return peer;
+	}
 
 	/*
-	 * We करोn't need to keep the refcount elevated; there's no way
-	 * to हटाओ one half of this device without removing the other
+	 * We don't need to keep the refcount elevated; there's no way
+	 * to remove one half of this device without removing the other
 	 */
 	pci_dev_put(peer);
 
-	वापस peer;
-पूर्ण
+	return peer;
+}
 
-अटल व्योम tg3_detect_asic_rev(काष्ठा tg3 *tp, u32 misc_ctrl_reg)
-अणु
+static void tg3_detect_asic_rev(struct tg3 *tp, u32 misc_ctrl_reg)
+{
 	tp->pci_chip_rev_id = misc_ctrl_reg >> MISC_HOST_CTRL_CHIPREV_SHIFT;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_USE_PROD_ID_REG) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_USE_PROD_ID_REG) {
 		u32 reg;
 
 		/* All devices that use the alternate
@@ -16090,7 +16089,7 @@ nomatch:
 		 */
 		tg3_flag_set(tp, CPMU_PRESENT);
 
-		अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5717 ||
+		if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_5717 ||
 		    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5717_C ||
 		    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5718 ||
 		    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5719 ||
@@ -16102,7 +16101,7 @@ nomatch:
 		    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5727 ||
 		    tp->pdev->device == TG3PCI_DEVICE_TIGON3_57787)
 			reg = TG3PCI_GEN2_PRODID_ASICREV;
-		अन्यथा अगर (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57781 ||
+		else if (tp->pdev->device == TG3PCI_DEVICE_TIGON3_57781 ||
 			 tp->pdev->device == TG3PCI_DEVICE_TIGON3_57785 ||
 			 tp->pdev->device == TG3PCI_DEVICE_TIGON3_57761 ||
 			 tp->pdev->device == TG3PCI_DEVICE_TIGON3_57765 ||
@@ -16113,36 +16112,36 @@ nomatch:
 			 tp->pdev->device == TG3PCI_DEVICE_TIGON3_57782 ||
 			 tp->pdev->device == TG3PCI_DEVICE_TIGON3_57786)
 			reg = TG3PCI_GEN15_PRODID_ASICREV;
-		अन्यथा
+		else
 			reg = TG3PCI_PRODID_ASICREV;
 
-		pci_पढ़ो_config_dword(tp->pdev, reg, &tp->pci_chip_rev_id);
-	पूर्ण
+		pci_read_config_dword(tp->pdev, reg, &tp->pci_chip_rev_id);
+	}
 
-	/* Wrong chip ID in 5752 A0. This code can be हटाओd later
+	/* Wrong chip ID in 5752 A0. This code can be removed later
 	 * as A0 is not in production.
 	 */
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5752_A0_HW)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5752_A0_HW)
 		tp->pci_chip_rev_id = CHIPREV_ID_5752_A0;
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5717_C0)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5717_C0)
 		tp->pci_chip_rev_id = CHIPREV_ID_5720_A0;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5720)
 		tg3_flag_set(tp, 5717_PLUS);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57765 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_57765 ||
 	    tg3_asic_rev(tp) == ASIC_REV_57766)
 		tg3_flag_set(tp, 57765_CLASS);
 
-	अगर (tg3_flag(tp, 57765_CLASS) || tg3_flag(tp, 5717_PLUS) ||
+	if (tg3_flag(tp, 57765_CLASS) || tg3_flag(tp, 5717_PLUS) ||
 	     tg3_asic_rev(tp) == ASIC_REV_5762)
 		tg3_flag_set(tp, 57765_PLUS);
 
 	/* Intentionally exclude ASIC_REV_5906 */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5755 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5755 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5787 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5784 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5761 ||
@@ -16151,83 +16150,83 @@ nomatch:
 	    tg3_flag(tp, 57765_PLUS))
 		tg3_flag_set(tp, 5755_PLUS);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5780 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5780 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5714)
 		tg3_flag_set(tp, 5780_CLASS);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5750 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5750 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5752 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5906 ||
 	    tg3_flag(tp, 5755_PLUS) ||
 	    tg3_flag(tp, 5780_CLASS))
 		tg3_flag_set(tp, 5750_PLUS);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5705 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5705 ||
 	    tg3_flag(tp, 5750_PLUS))
 		tg3_flag_set(tp, 5705_PLUS);
-पूर्ण
+}
 
-अटल bool tg3_10_100_only_device(काष्ठा tg3 *tp,
-				   स्थिर काष्ठा pci_device_id *ent)
-अणु
+static bool tg3_10_100_only_device(struct tg3 *tp,
+				   const struct pci_device_id *ent)
+{
 	u32 grc_misc_cfg = tr32(GRC_MISC_CFG) & GRC_MISC_CFG_BOARD_ID_MASK;
 
-	अगर ((tg3_asic_rev(tp) == ASIC_REV_5703 &&
+	if ((tg3_asic_rev(tp) == ASIC_REV_5703 &&
 	     (grc_misc_cfg == 0x8000 || grc_misc_cfg == 0x4000)) ||
 	    (tp->phy_flags & TG3_PHYFLG_IS_FET))
-		वापस true;
+		return true;
 
-	अगर (ent->driver_data & TG3_DRV_DATA_FLAG_10_100_ONLY) अणु
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5705) अणु
-			अगर (ent->driver_data & TG3_DRV_DATA_FLAG_5705_10_100)
-				वापस true;
-		पूर्ण अन्यथा अणु
-			वापस true;
-		पूर्ण
-	पूर्ण
+	if (ent->driver_data & TG3_DRV_DATA_FLAG_10_100_ONLY) {
+		if (tg3_asic_rev(tp) == ASIC_REV_5705) {
+			if (ent->driver_data & TG3_DRV_DATA_FLAG_5705_10_100)
+				return true;
+		} else {
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक tg3_get_invariants(काष्ठा tg3 *tp, स्थिर काष्ठा pci_device_id *ent)
-अणु
+static int tg3_get_invariants(struct tg3 *tp, const struct pci_device_id *ent)
+{
 	u32 misc_ctrl_reg;
 	u32 pci_state_reg, grc_misc_cfg;
 	u32 val;
 	u16 pci_cmd;
-	पूर्णांक err;
+	int err;
 
-	/* Force memory ग_लिखो invalidate off.  If we leave it on,
+	/* Force memory write invalidate off.  If we leave it on,
 	 * then on 5700_BX chips we have to enable a workaround.
 	 * The workaround is to set the TG3PCI_DMA_RW_CTRL boundary
 	 * to match the cacheline size.  The Broadcom driver have this
-	 * workaround but turns MWI off all the बार so never uses
+	 * workaround but turns MWI off all the times so never uses
 	 * it.  This seems to suggest that the workaround is insufficient.
 	 */
-	pci_पढ़ो_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
+	pci_read_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
 	pci_cmd &= ~PCI_COMMAND_INVALIDATE;
-	pci_ग_लिखो_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
+	pci_write_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
 
-	/* Important! -- Make sure रेजिस्टर accesses are byteswapped
-	 * correctly.  Also, क्रम those chips that require it, make
-	 * sure that indirect रेजिस्टर accesses are enabled beक्रमe
+	/* Important! -- Make sure register accesses are byteswapped
+	 * correctly.  Also, for those chips that require it, make
+	 * sure that indirect register accesses are enabled before
 	 * the first operation.
 	 */
-	pci_पढ़ो_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
+	pci_read_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
 			      &misc_ctrl_reg);
 	tp->misc_host_ctrl |= (misc_ctrl_reg &
 			       MISC_HOST_CTRL_CHIPREV);
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
+	pci_write_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
 			       tp->misc_host_ctrl);
 
 	tg3_detect_asic_rev(tp, misc_ctrl_reg);
 
 	/* If we have 5702/03 A1 or A2 on certain ICH chipsets,
 	 * we need to disable memory and use config. cycles
-	 * only to access all रेजिस्टरs. The 5702/03 chips
+	 * only to access all registers. The 5702/03 chips
 	 * can mistakenly decode the special cycles from the
-	 * ICH chipsets as memory ग_लिखो cycles, causing corruption
-	 * of रेजिस्टर and memory space. Only certain ICH bridges
+	 * ICH chipsets as memory write cycles, causing corruption
+	 * of register and memory space. Only certain ICH bridges
 	 * will drive special cycles with non-zero data during the
 	 * address phase which can fall within the 5703's address
 	 * range. This is not an ICH bug as the PCI spec allows
@@ -16235,514 +16234,514 @@ nomatch:
 	 * these ICH bridges are known to drive non-zero addresses
 	 * during special cycles.
 	 *
-	 * Since special cycles करो not cross PCI bridges, we only
-	 * enable this workaround अगर the 5703 is on the secondary
+	 * Since special cycles do not cross PCI bridges, we only
+	 * enable this workaround if the 5703 is on the secondary
 	 * bus of these ICH bridges.
 	 */
-	अगर ((tg3_chip_rev_id(tp) == CHIPREV_ID_5703_A1) ||
-	    (tg3_chip_rev_id(tp) == CHIPREV_ID_5703_A2)) अणु
-		अटल काष्ठा tg3_dev_id अणु
-			u32	venकरोr;
+	if ((tg3_chip_rev_id(tp) == CHIPREV_ID_5703_A1) ||
+	    (tg3_chip_rev_id(tp) == CHIPREV_ID_5703_A2)) {
+		static struct tg3_dev_id {
+			u32	vendor;
 			u32	device;
 			u32	rev;
-		पूर्ण ich_chipsets[] = अणु
-			अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_8,
-			  PCI_ANY_ID पूर्ण,
-			अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_8,
-			  PCI_ANY_ID पूर्ण,
-			अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_11,
-			  0xa पूर्ण,
-			अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_6,
-			  PCI_ANY_ID पूर्ण,
-			अणु पूर्ण,
-		पूर्ण;
-		काष्ठा tg3_dev_id *pci_id = &ich_chipsets[0];
-		काष्ठा pci_dev *bridge = शून्य;
+		} ich_chipsets[] = {
+			{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AA_8,
+			  PCI_ANY_ID },
+			{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801AB_8,
+			  PCI_ANY_ID },
+			{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_11,
+			  0xa },
+			{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82801BA_6,
+			  PCI_ANY_ID },
+			{ },
+		};
+		struct tg3_dev_id *pci_id = &ich_chipsets[0];
+		struct pci_dev *bridge = NULL;
 
-		जबतक (pci_id->venकरोr != 0) अणु
-			bridge = pci_get_device(pci_id->venकरोr, pci_id->device,
+		while (pci_id->vendor != 0) {
+			bridge = pci_get_device(pci_id->vendor, pci_id->device,
 						bridge);
-			अगर (!bridge) अणु
+			if (!bridge) {
 				pci_id++;
-				जारी;
-			पूर्ण
-			अगर (pci_id->rev != PCI_ANY_ID) अणु
-				अगर (bridge->revision > pci_id->rev)
-					जारी;
-			पूर्ण
-			अगर (bridge->subordinate &&
+				continue;
+			}
+			if (pci_id->rev != PCI_ANY_ID) {
+				if (bridge->revision > pci_id->rev)
+					continue;
+			}
+			if (bridge->subordinate &&
 			    (bridge->subordinate->number ==
-			     tp->pdev->bus->number)) अणु
+			     tp->pdev->bus->number)) {
 				tg3_flag_set(tp, ICH_WORKAROUND);
 				pci_dev_put(bridge);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5701) अणु
-		अटल काष्ठा tg3_dev_id अणु
-			u32	venकरोr;
+	if (tg3_asic_rev(tp) == ASIC_REV_5701) {
+		static struct tg3_dev_id {
+			u32	vendor;
 			u32	device;
-		पूर्ण bridge_chipsets[] = अणु
-			अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_PXH_0 पूर्ण,
-			अणु PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_PXH_1 पूर्ण,
-			अणु पूर्ण,
-		पूर्ण;
-		काष्ठा tg3_dev_id *pci_id = &bridge_chipsets[0];
-		काष्ठा pci_dev *bridge = शून्य;
+		} bridge_chipsets[] = {
+			{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_PXH_0 },
+			{ PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_PXH_1 },
+			{ },
+		};
+		struct tg3_dev_id *pci_id = &bridge_chipsets[0];
+		struct pci_dev *bridge = NULL;
 
-		जबतक (pci_id->venकरोr != 0) अणु
-			bridge = pci_get_device(pci_id->venकरोr,
+		while (pci_id->vendor != 0) {
+			bridge = pci_get_device(pci_id->vendor,
 						pci_id->device,
 						bridge);
-			अगर (!bridge) अणु
+			if (!bridge) {
 				pci_id++;
-				जारी;
-			पूर्ण
-			अगर (bridge->subordinate &&
+				continue;
+			}
+			if (bridge->subordinate &&
 			    (bridge->subordinate->number <=
 			     tp->pdev->bus->number) &&
 			    (bridge->subordinate->busn_res.end >=
-			     tp->pdev->bus->number)) अणु
+			     tp->pdev->bus->number)) {
 				tg3_flag_set(tp, 5701_DMA_BUG);
 				pci_dev_put(bridge);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
 	/* The EPB bridge inside 5714, 5715, and 5780 cannot support
 	 * DMA addresses > 40-bit. This bridge may have other additional
-	 * 57xx devices behind it in some 4-port NIC designs क्रम example.
+	 * 57xx devices behind it in some 4-port NIC designs for example.
 	 * Any tg3 device found behind the bridge will also need the 40-bit
 	 * DMA workaround.
 	 */
-	अगर (tg3_flag(tp, 5780_CLASS)) अणु
+	if (tg3_flag(tp, 5780_CLASS)) {
 		tg3_flag_set(tp, 40BIT_DMA_BUG);
 		tp->msi_cap = tp->pdev->msi_cap;
-	पूर्ण अन्यथा अणु
-		काष्ठा pci_dev *bridge = शून्य;
+	} else {
+		struct pci_dev *bridge = NULL;
 
-		करो अणु
+		do {
 			bridge = pci_get_device(PCI_VENDOR_ID_SERVERWORKS,
 						PCI_DEVICE_ID_SERVERWORKS_EPB,
 						bridge);
-			अगर (bridge && bridge->subordinate &&
+			if (bridge && bridge->subordinate &&
 			    (bridge->subordinate->number <=
 			     tp->pdev->bus->number) &&
 			    (bridge->subordinate->busn_res.end >=
-			     tp->pdev->bus->number)) अणु
+			     tp->pdev->bus->number)) {
 				tg3_flag_set(tp, 40BIT_DMA_BUG);
 				pci_dev_put(bridge);
-				अवरोध;
-			पूर्ण
-		पूर्ण जबतक (bridge);
-	पूर्ण
+				break;
+			}
+		} while (bridge);
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5704 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5704 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5714)
 		tp->pdev_peer = tg3_find_peer(tp);
 
 	/* Determine TSO capabilities */
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0)
 		; /* Do nothing. HW bug. */
-	अन्यथा अगर (tg3_flag(tp, 57765_PLUS))
+	else if (tg3_flag(tp, 57765_PLUS))
 		tg3_flag_set(tp, HW_TSO_3);
-	अन्यथा अगर (tg3_flag(tp, 5755_PLUS) ||
+	else if (tg3_flag(tp, 5755_PLUS) ||
 		 tg3_asic_rev(tp) == ASIC_REV_5906)
 		tg3_flag_set(tp, HW_TSO_2);
-	अन्यथा अगर (tg3_flag(tp, 5750_PLUS)) अणु
+	else if (tg3_flag(tp, 5750_PLUS)) {
 		tg3_flag_set(tp, HW_TSO_1);
 		tg3_flag_set(tp, TSO_BUG);
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5750 &&
+		if (tg3_asic_rev(tp) == ASIC_REV_5750 &&
 		    tg3_chip_rev_id(tp) >= CHIPREV_ID_5750_C2)
 			tg3_flag_clear(tp, TSO_BUG);
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) != ASIC_REV_5700 &&
+	} else if (tg3_asic_rev(tp) != ASIC_REV_5700 &&
 		   tg3_asic_rev(tp) != ASIC_REV_5701 &&
-		   tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) अणु
+		   tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) {
 		tg3_flag_set(tp, FW_TSO);
 		tg3_flag_set(tp, TSO_BUG);
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5705)
+		if (tg3_asic_rev(tp) == ASIC_REV_5705)
 			tp->fw_needed = FIRMWARE_TG3TSO5;
-		अन्यथा
+		else
 			tp->fw_needed = FIRMWARE_TG3TSO;
-	पूर्ण
+	}
 
 	/* Selectively allow TSO based on operating conditions */
-	अगर (tg3_flag(tp, HW_TSO_1) ||
+	if (tg3_flag(tp, HW_TSO_1) ||
 	    tg3_flag(tp, HW_TSO_2) ||
 	    tg3_flag(tp, HW_TSO_3) ||
-	    tg3_flag(tp, FW_TSO)) अणु
+	    tg3_flag(tp, FW_TSO)) {
 		/* For firmware TSO, assume ASF is disabled.
-		 * We'll disable TSO later अगर we discover ASF
+		 * We'll disable TSO later if we discover ASF
 		 * is enabled in tg3_get_eeprom_hw_cfg().
 		 */
 		tg3_flag_set(tp, TSO_CAPABLE);
-	पूर्ण अन्यथा अणु
+	} else {
 		tg3_flag_clear(tp, TSO_CAPABLE);
 		tg3_flag_clear(tp, TSO_BUG);
-		tp->fw_needed = शून्य;
-	पूर्ण
+		tp->fw_needed = NULL;
+	}
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0)
 		tp->fw_needed = FIRMWARE_TG3;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57766)
+	if (tg3_asic_rev(tp) == ASIC_REV_57766)
 		tp->fw_needed = FIRMWARE_TG357766;
 
 	tp->irq_max = 1;
 
-	अगर (tg3_flag(tp, 5750_PLUS)) अणु
+	if (tg3_flag(tp, 5750_PLUS)) {
 		tg3_flag_set(tp, SUPPORT_MSI);
-		अगर (tg3_chip_rev(tp) == CHIPREV_5750_AX ||
+		if (tg3_chip_rev(tp) == CHIPREV_5750_AX ||
 		    tg3_chip_rev(tp) == CHIPREV_5750_BX ||
 		    (tg3_asic_rev(tp) == ASIC_REV_5714 &&
 		     tg3_chip_rev_id(tp) <= CHIPREV_ID_5714_A2 &&
 		     tp->pdev_peer == tp->pdev))
 			tg3_flag_clear(tp, SUPPORT_MSI);
 
-		अगर (tg3_flag(tp, 5755_PLUS) ||
-		    tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+		if (tg3_flag(tp, 5755_PLUS) ||
+		    tg3_asic_rev(tp) == ASIC_REV_5906) {
 			tg3_flag_set(tp, 1SHOT_MSI);
-		पूर्ण
+		}
 
-		अगर (tg3_flag(tp, 57765_PLUS)) अणु
+		if (tg3_flag(tp, 57765_PLUS)) {
 			tg3_flag_set(tp, SUPPORT_MSIX);
 			tp->irq_max = TG3_IRQ_MAX_VECS;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	tp->txq_max = 1;
 	tp->rxq_max = 1;
-	अगर (tp->irq_max > 1) अणु
+	if (tp->irq_max > 1) {
 		tp->rxq_max = TG3_RSS_MAX_NUM_QS;
 		tg3_rss_init_dflt_indir_tbl(tp, TG3_RSS_MAX_NUM_QS);
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5719 ||
+		if (tg3_asic_rev(tp) == ASIC_REV_5719 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5720)
 			tp->txq_max = tp->irq_max - 1;
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, 5755_PLUS) ||
+	if (tg3_flag(tp, 5755_PLUS) ||
 	    tg3_asic_rev(tp) == ASIC_REV_5906)
 		tg3_flag_set(tp, SHORT_DMA_BUG);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5719)
+	if (tg3_asic_rev(tp) == ASIC_REV_5719)
 		tp->dma_limit = TG3_TX_BD_DMA_MAX_4K;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762)
 		tg3_flag_set(tp, LRG_PROD_RING_CAP);
 
-	अगर (tg3_flag(tp, 57765_PLUS) &&
+	if (tg3_flag(tp, 57765_PLUS) &&
 	    tg3_chip_rev_id(tp) != CHIPREV_ID_5719_A0)
 		tg3_flag_set(tp, USE_JUMBO_BDFLAG);
 
-	अगर (!tg3_flag(tp, 5705_PLUS) ||
+	if (!tg3_flag(tp, 5705_PLUS) ||
 	    tg3_flag(tp, 5780_CLASS) ||
 	    tg3_flag(tp, USE_JUMBO_BDFLAG))
 		tg3_flag_set(tp, JUMBO_CAPABLE);
 
-	pci_पढ़ो_config_dword(tp->pdev, TG3PCI_PCISTATE,
+	pci_read_config_dword(tp->pdev, TG3PCI_PCISTATE,
 			      &pci_state_reg);
 
-	अगर (pci_is_pcie(tp->pdev)) अणु
+	if (pci_is_pcie(tp->pdev)) {
 		u16 lnkctl;
 
 		tg3_flag_set(tp, PCI_EXPRESS);
 
-		pcie_capability_पढ़ो_word(tp->pdev, PCI_EXP_LNKCTL, &lnkctl);
-		अगर (lnkctl & PCI_EXP_LNKCTL_CLKREQ_EN) अणु
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+		pcie_capability_read_word(tp->pdev, PCI_EXP_LNKCTL, &lnkctl);
+		if (lnkctl & PCI_EXP_LNKCTL_CLKREQ_EN) {
+			if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 				tg3_flag_clear(tp, HW_TSO_2);
 				tg3_flag_clear(tp, TSO_CAPABLE);
-			पूर्ण
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5784 ||
+			}
+			if (tg3_asic_rev(tp) == ASIC_REV_5784 ||
 			    tg3_asic_rev(tp) == ASIC_REV_5761 ||
 			    tg3_chip_rev_id(tp) == CHIPREV_ID_57780_A0 ||
 			    tg3_chip_rev_id(tp) == CHIPREV_ID_57780_A1)
 				tg3_flag_set(tp, CLKREQ_BUG);
-		पूर्ण अन्यथा अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5717_A0) अणु
+		} else if (tg3_chip_rev_id(tp) == CHIPREV_ID_5717_A0) {
 			tg3_flag_set(tp, L1PLLPD_EN);
-		पूर्ण
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5785) अणु
+		}
+	} else if (tg3_asic_rev(tp) == ASIC_REV_5785) {
 		/* BCM5785 devices are effectively PCIe devices, and should
-		 * follow PCIe codepaths, but करो not have a PCIe capabilities
+		 * follow PCIe codepaths, but do not have a PCIe capabilities
 		 * section.
 		 */
 		tg3_flag_set(tp, PCI_EXPRESS);
-	पूर्ण अन्यथा अगर (!tg3_flag(tp, 5705_PLUS) ||
-		   tg3_flag(tp, 5780_CLASS)) अणु
+	} else if (!tg3_flag(tp, 5705_PLUS) ||
+		   tg3_flag(tp, 5780_CLASS)) {
 		tp->pcix_cap = pci_find_capability(tp->pdev, PCI_CAP_ID_PCIX);
-		अगर (!tp->pcix_cap) अणु
+		if (!tp->pcix_cap) {
 			dev_err(&tp->pdev->dev,
 				"Cannot find PCI-X capability, aborting\n");
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
-		अगर (!(pci_state_reg & PCISTATE_CONV_PCI_MODE))
+		if (!(pci_state_reg & PCISTATE_CONV_PCI_MODE))
 			tg3_flag_set(tp, PCIX_MODE);
-	पूर्ण
+	}
 
-	/* If we have an AMD 762 or VIA K8T800 chipset, ग_लिखो
-	 * reordering to the mailbox रेजिस्टरs करोne by the host
-	 * controller can cause major troubles.  We पढ़ो back from
-	 * every mailbox रेजिस्टर ग_लिखो to क्रमce the ग_लिखोs to be
+	/* If we have an AMD 762 or VIA K8T800 chipset, write
+	 * reordering to the mailbox registers done by the host
+	 * controller can cause major troubles.  We read back from
+	 * every mailbox register write to force the writes to be
 	 * posted to the chip in order.
 	 */
-	अगर (pci_dev_present(tg3_ग_लिखो_reorder_chipsets) &&
+	if (pci_dev_present(tg3_write_reorder_chipsets) &&
 	    !tg3_flag(tp, PCI_EXPRESS))
 		tg3_flag_set(tp, MBOX_WRITE_REORDER);
 
-	pci_पढ़ो_config_byte(tp->pdev, PCI_CACHE_LINE_SIZE,
+	pci_read_config_byte(tp->pdev, PCI_CACHE_LINE_SIZE,
 			     &tp->pci_cacheline_sz);
-	pci_पढ़ो_config_byte(tp->pdev, PCI_LATENCY_TIMER,
-			     &tp->pci_lat_समयr);
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5703 &&
-	    tp->pci_lat_समयr < 64) अणु
-		tp->pci_lat_समयr = 64;
-		pci_ग_लिखो_config_byte(tp->pdev, PCI_LATENCY_TIMER,
-				      tp->pci_lat_समयr);
-	पूर्ण
+	pci_read_config_byte(tp->pdev, PCI_LATENCY_TIMER,
+			     &tp->pci_lat_timer);
+	if (tg3_asic_rev(tp) == ASIC_REV_5703 &&
+	    tp->pci_lat_timer < 64) {
+		tp->pci_lat_timer = 64;
+		pci_write_config_byte(tp->pdev, PCI_LATENCY_TIMER,
+				      tp->pci_lat_timer);
+	}
 
 	/* Important! -- It is critical that the PCI-X hw workaround
-	 * situation is decided beक्रमe the first MMIO रेजिस्टर access.
+	 * situation is decided before the first MMIO register access.
 	 */
-	अगर (tg3_chip_rev(tp) == CHIPREV_5700_BX) अणु
+	if (tg3_chip_rev(tp) == CHIPREV_5700_BX) {
 		/* 5700 BX chips need to have their TX producer index
 		 * mailboxes written twice to workaround a bug.
 		 */
 		tg3_flag_set(tp, TXD_MBOX_HWBUG);
 
-		/* If we are in PCI-X mode, enable रेजिस्टर ग_लिखो workaround.
+		/* If we are in PCI-X mode, enable register write workaround.
 		 *
-		 * The workaround is to use indirect रेजिस्टर accesses
-		 * क्रम all chip ग_लिखोs not to mailbox रेजिस्टरs.
+		 * The workaround is to use indirect register accesses
+		 * for all chip writes not to mailbox registers.
 		 */
-		अगर (tg3_flag(tp, PCIX_MODE)) अणु
+		if (tg3_flag(tp, PCIX_MODE)) {
 			u32 pm_reg;
 
 			tg3_flag_set(tp, PCIX_TARGET_HWBUG);
 
-			/* The chip can have it's घातer management PCI config
-			 * space रेजिस्टरs clobbered due to this bug.
-			 * So explicitly क्रमce the chip पूर्णांकo D0 here.
+			/* The chip can have it's power management PCI config
+			 * space registers clobbered due to this bug.
+			 * So explicitly force the chip into D0 here.
 			 */
-			pci_पढ़ो_config_dword(tp->pdev,
+			pci_read_config_dword(tp->pdev,
 					      tp->pdev->pm_cap + PCI_PM_CTRL,
 					      &pm_reg);
 			pm_reg &= ~PCI_PM_CTRL_STATE_MASK;
 			pm_reg |= PCI_PM_CTRL_PME_ENABLE | 0 /* D0 */;
-			pci_ग_लिखो_config_dword(tp->pdev,
+			pci_write_config_dword(tp->pdev,
 					       tp->pdev->pm_cap + PCI_PM_CTRL,
 					       pm_reg);
 
-			/* Also, क्रमce SERR#/PERR# in PCI command. */
-			pci_पढ़ो_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
+			/* Also, force SERR#/PERR# in PCI command. */
+			pci_read_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
 			pci_cmd |= PCI_COMMAND_PARITY | PCI_COMMAND_SERR;
-			pci_ग_लिखो_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
-		पूर्ण
-	पूर्ण
+			pci_write_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
+		}
+	}
 
-	अगर ((pci_state_reg & PCISTATE_BUS_SPEED_HIGH) != 0)
+	if ((pci_state_reg & PCISTATE_BUS_SPEED_HIGH) != 0)
 		tg3_flag_set(tp, PCI_HIGH_SPEED);
-	अगर ((pci_state_reg & PCISTATE_BUS_32BIT) != 0)
+	if ((pci_state_reg & PCISTATE_BUS_32BIT) != 0)
 		tg3_flag_set(tp, PCI_32BIT);
 
-	/* Chip-specअगरic fixup from Broadcom driver */
-	अगर ((tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0) &&
-	    (!(pci_state_reg & PCISTATE_RETRY_SAME_DMA))) अणु
+	/* Chip-specific fixup from Broadcom driver */
+	if ((tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0) &&
+	    (!(pci_state_reg & PCISTATE_RETRY_SAME_DMA))) {
 		pci_state_reg |= PCISTATE_RETRY_SAME_DMA;
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_PCISTATE, pci_state_reg);
-	पूर्ण
+		pci_write_config_dword(tp->pdev, TG3PCI_PCISTATE, pci_state_reg);
+	}
 
-	/* Default fast path रेजिस्टर access methods */
-	tp->पढ़ो32 = tg3_पढ़ो32;
-	tp->ग_लिखो32 = tg3_ग_लिखो32;
-	tp->पढ़ो32_mbox = tg3_पढ़ो32;
-	tp->ग_लिखो32_mbox = tg3_ग_लिखो32;
-	tp->ग_लिखो32_tx_mbox = tg3_ग_लिखो32;
-	tp->ग_लिखो32_rx_mbox = tg3_ग_लिखो32;
+	/* Default fast path register access methods */
+	tp->read32 = tg3_read32;
+	tp->write32 = tg3_write32;
+	tp->read32_mbox = tg3_read32;
+	tp->write32_mbox = tg3_write32;
+	tp->write32_tx_mbox = tg3_write32;
+	tp->write32_rx_mbox = tg3_write32;
 
-	/* Various workaround रेजिस्टर access methods */
-	अगर (tg3_flag(tp, PCIX_TARGET_HWBUG))
-		tp->ग_लिखो32 = tg3_ग_लिखो_indirect_reg32;
-	अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5701 ||
+	/* Various workaround register access methods */
+	if (tg3_flag(tp, PCIX_TARGET_HWBUG))
+		tp->write32 = tg3_write_indirect_reg32;
+	else if (tg3_asic_rev(tp) == ASIC_REV_5701 ||
 		 (tg3_flag(tp, PCI_EXPRESS) &&
-		  tg3_chip_rev_id(tp) == CHIPREV_ID_5750_A0)) अणु
+		  tg3_chip_rev_id(tp) == CHIPREV_ID_5750_A0)) {
 		/*
-		 * Back to back रेजिस्टर ग_लिखोs can cause problems on these
-		 * chips, the workaround is to पढ़ो back all reg ग_लिखोs
+		 * Back to back register writes can cause problems on these
+		 * chips, the workaround is to read back all reg writes
 		 * except those to mailbox regs.
 		 *
-		 * See tg3_ग_लिखो_indirect_reg32().
+		 * See tg3_write_indirect_reg32().
 		 */
-		tp->ग_लिखो32 = tg3_ग_लिखो_flush_reg32;
-	पूर्ण
+		tp->write32 = tg3_write_flush_reg32;
+	}
 
-	अगर (tg3_flag(tp, TXD_MBOX_HWBUG) || tg3_flag(tp, MBOX_WRITE_REORDER)) अणु
-		tp->ग_लिखो32_tx_mbox = tg3_ग_लिखो32_tx_mbox;
-		अगर (tg3_flag(tp, MBOX_WRITE_REORDER))
-			tp->ग_लिखो32_rx_mbox = tg3_ग_लिखो_flush_reg32;
-	पूर्ण
+	if (tg3_flag(tp, TXD_MBOX_HWBUG) || tg3_flag(tp, MBOX_WRITE_REORDER)) {
+		tp->write32_tx_mbox = tg3_write32_tx_mbox;
+		if (tg3_flag(tp, MBOX_WRITE_REORDER))
+			tp->write32_rx_mbox = tg3_write_flush_reg32;
+	}
 
-	अगर (tg3_flag(tp, ICH_WORKAROUND)) अणु
-		tp->पढ़ो32 = tg3_पढ़ो_indirect_reg32;
-		tp->ग_लिखो32 = tg3_ग_लिखो_indirect_reg32;
-		tp->पढ़ो32_mbox = tg3_पढ़ो_indirect_mbox;
-		tp->ग_लिखो32_mbox = tg3_ग_लिखो_indirect_mbox;
-		tp->ग_लिखो32_tx_mbox = tg3_ग_लिखो_indirect_mbox;
-		tp->ग_लिखो32_rx_mbox = tg3_ग_लिखो_indirect_mbox;
+	if (tg3_flag(tp, ICH_WORKAROUND)) {
+		tp->read32 = tg3_read_indirect_reg32;
+		tp->write32 = tg3_write_indirect_reg32;
+		tp->read32_mbox = tg3_read_indirect_mbox;
+		tp->write32_mbox = tg3_write_indirect_mbox;
+		tp->write32_tx_mbox = tg3_write_indirect_mbox;
+		tp->write32_rx_mbox = tg3_write_indirect_mbox;
 
 		iounmap(tp->regs);
-		tp->regs = शून्य;
+		tp->regs = NULL;
 
-		pci_पढ़ो_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
+		pci_read_config_word(tp->pdev, PCI_COMMAND, &pci_cmd);
 		pci_cmd &= ~PCI_COMMAND_MEMORY;
-		pci_ग_लिखो_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
-	पूर्ण
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
-		tp->पढ़ो32_mbox = tg3_पढ़ो32_mbox_5906;
-		tp->ग_लिखो32_mbox = tg3_ग_लिखो32_mbox_5906;
-		tp->ग_लिखो32_tx_mbox = tg3_ग_लिखो32_mbox_5906;
-		tp->ग_लिखो32_rx_mbox = tg3_ग_लिखो32_mbox_5906;
-	पूर्ण
+		pci_write_config_word(tp->pdev, PCI_COMMAND, pci_cmd);
+	}
+	if (tg3_asic_rev(tp) == ASIC_REV_5906) {
+		tp->read32_mbox = tg3_read32_mbox_5906;
+		tp->write32_mbox = tg3_write32_mbox_5906;
+		tp->write32_tx_mbox = tg3_write32_mbox_5906;
+		tp->write32_rx_mbox = tg3_write32_mbox_5906;
+	}
 
-	अगर (tp->ग_लिखो32 == tg3_ग_लिखो_indirect_reg32 ||
+	if (tp->write32 == tg3_write_indirect_reg32 ||
 	    (tg3_flag(tp, PCIX_MODE) &&
 	     (tg3_asic_rev(tp) == ASIC_REV_5700 ||
 	      tg3_asic_rev(tp) == ASIC_REV_5701)))
 		tg3_flag_set(tp, SRAM_USE_CONFIG);
 
-	/* The memory arbiter has to be enabled in order क्रम SRAM accesses
-	 * to succeed.  Normally on घातerup the tg3 chip firmware will make
-	 * sure it is enabled, but other entities such as प्रणाली netboot
+	/* The memory arbiter has to be enabled in order for SRAM accesses
+	 * to succeed.  Normally on powerup the tg3 chip firmware will make
+	 * sure it is enabled, but other entities such as system netboot
 	 * code might disable it.
 	 */
 	val = tr32(MEMARB_MODE);
 	tw32(MEMARB_MODE, val | MEMARB_MODE_ENABLE);
 
 	tp->pci_fn = PCI_FUNC(tp->pdev->devfn) & 3;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5704 ||
-	    tg3_flag(tp, 5780_CLASS)) अणु
-		अगर (tg3_flag(tp, PCIX_MODE)) अणु
-			pci_पढ़ो_config_dword(tp->pdev,
+	if (tg3_asic_rev(tp) == ASIC_REV_5704 ||
+	    tg3_flag(tp, 5780_CLASS)) {
+		if (tg3_flag(tp, PCIX_MODE)) {
+			pci_read_config_dword(tp->pdev,
 					      tp->pcix_cap + PCI_X_STATUS,
 					      &val);
 			tp->pci_fn = val & 0x7;
-		पूर्ण
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+		}
+	} else if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 		   tg3_asic_rev(tp) == ASIC_REV_5719 ||
-		   tg3_asic_rev(tp) == ASIC_REV_5720) अणु
-		tg3_पढ़ो_mem(tp, NIC_SRAM_CPMU_STATUS, &val);
-		अगर ((val & NIC_SRAM_CPMUSTAT_SIG_MSK) != NIC_SRAM_CPMUSTAT_SIG)
+		   tg3_asic_rev(tp) == ASIC_REV_5720) {
+		tg3_read_mem(tp, NIC_SRAM_CPMU_STATUS, &val);
+		if ((val & NIC_SRAM_CPMUSTAT_SIG_MSK) != NIC_SRAM_CPMUSTAT_SIG)
 			val = tr32(TG3_CPMU_STATUS);
 
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5717)
+		if (tg3_asic_rev(tp) == ASIC_REV_5717)
 			tp->pci_fn = (val & TG3_CPMU_STATUS_FMSK_5717) ? 1 : 0;
-		अन्यथा
+		else
 			tp->pci_fn = (val & TG3_CPMU_STATUS_FMSK_5719) >>
 				     TG3_CPMU_STATUS_FSHFT_5719;
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, FLUSH_POSTED_WRITES)) अणु
-		tp->ग_लिखो32_tx_mbox = tg3_ग_लिखो_flush_reg32;
-		tp->ग_लिखो32_rx_mbox = tg3_ग_लिखो_flush_reg32;
-	पूर्ण
+	if (tg3_flag(tp, FLUSH_POSTED_WRITES)) {
+		tp->write32_tx_mbox = tg3_write_flush_reg32;
+		tp->write32_rx_mbox = tg3_write_flush_reg32;
+	}
 
-	/* Get eeprom hw config beक्रमe calling tg3_set_घातer_state().
+	/* Get eeprom hw config before calling tg3_set_power_state().
 	 * In particular, the TG3_FLAG_IS_NIC flag must be
-	 * determined beक्रमe calling tg3_set_घातer_state() so that
-	 * we know whether or not to चयन out of Vaux घातer.
-	 * When the flag is set, it means that GPIO1 is used क्रम eeprom
-	 * ग_लिखो protect and also implies that it is a LOM where GPIOs
-	 * are not used to चयन घातer.
+	 * determined before calling tg3_set_power_state() so that
+	 * we know whether or not to switch out of Vaux power.
+	 * When the flag is set, it means that GPIO1 is used for eeprom
+	 * write protect and also implies that it is a LOM where GPIOs
+	 * are not used to switch power.
 	 */
 	tg3_get_eeprom_hw_cfg(tp);
 
-	अगर (tg3_flag(tp, FW_TSO) && tg3_flag(tp, ENABLE_ASF)) अणु
+	if (tg3_flag(tp, FW_TSO) && tg3_flag(tp, ENABLE_ASF)) {
 		tg3_flag_clear(tp, TSO_CAPABLE);
 		tg3_flag_clear(tp, TSO_BUG);
-		tp->fw_needed = शून्य;
-	पूर्ण
+		tp->fw_needed = NULL;
+	}
 
-	अगर (tg3_flag(tp, ENABLE_APE)) अणु
-		/* Allow पढ़ोs and ग_लिखोs to the
-		 * APE रेजिस्टर and memory space.
+	if (tg3_flag(tp, ENABLE_APE)) {
+		/* Allow reads and writes to the
+		 * APE register and memory space.
 		 */
 		pci_state_reg |= PCISTATE_ALLOW_APE_CTLSPC_WR |
 				 PCISTATE_ALLOW_APE_SHMEM_WR |
 				 PCISTATE_ALLOW_APE_PSPACE_WR;
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_PCISTATE,
+		pci_write_config_dword(tp->pdev, TG3PCI_PCISTATE,
 				       pci_state_reg);
 
 		tg3_ape_lock_init(tp);
-		tp->ape_hb_पूर्णांकerval =
-			msecs_to_jअगरfies(APE_HOST_HEARTBEAT_INT_5SEC);
-	पूर्ण
+		tp->ape_hb_interval =
+			msecs_to_jiffies(APE_HOST_HEARTBEAT_INT_5SEC);
+	}
 
-	/* Set up tp->grc_local_ctrl beक्रमe calling
-	 * tg3_pwrsrc_चयन_to_vमुख्य().  GPIO1 driven high
-	 * will bring 5700's बाह्यal PHY out of reset.
-	 * It is also used as eeprom ग_लिखो protect on LOMs.
+	/* Set up tp->grc_local_ctrl before calling
+	 * tg3_pwrsrc_switch_to_vmain().  GPIO1 driven high
+	 * will bring 5700's external PHY out of reset.
+	 * It is also used as eeprom write protect on LOMs.
 	 */
 	tp->grc_local_ctrl = GRC_LCLCTRL_INT_ON_ATTN | GRC_LCLCTRL_AUTO_SEEPROM;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
 	    tg3_flag(tp, EEPROM_WRITE_PROT))
 		tp->grc_local_ctrl |= (GRC_LCLCTRL_GPIO_OE1 |
 				       GRC_LCLCTRL_GPIO_OUTPUT1);
 	/* Unused GPIO3 must be driven as output on 5752 because there
 	 * are no pull-up resistors on unused GPIO pins.
 	 */
-	अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5752)
+	else if (tg3_asic_rev(tp) == ASIC_REV_5752)
 		tp->grc_local_ctrl |= GRC_LCLCTRL_GPIO_OE3;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5755 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5755 ||
 	    tg3_asic_rev(tp) == ASIC_REV_57780 ||
 	    tg3_flag(tp, 57765_CLASS))
 		tp->grc_local_ctrl |= GRC_LCLCTRL_GPIO_UART_SEL;
 
-	अगर (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761 ||
-	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5761S) अणु
+	if (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761 ||
+	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5761S) {
 		/* Turn off the debug UART. */
 		tp->grc_local_ctrl |= GRC_LCLCTRL_GPIO_UART_SEL;
-		अगर (tg3_flag(tp, IS_NIC))
-			/* Keep VMain घातer. */
+		if (tg3_flag(tp, IS_NIC))
+			/* Keep VMain power. */
 			tp->grc_local_ctrl |= GRC_LCLCTRL_GPIO_OE0 |
 					      GRC_LCLCTRL_GPIO_OUTPUT0;
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5762)
+	if (tg3_asic_rev(tp) == ASIC_REV_5762)
 		tp->grc_local_ctrl |=
 			tr32(GRC_LOCAL_CTRL) & GRC_LCLCTRL_GPIO_UART_SEL;
 
-	/* Switch out of Vaux अगर it is a NIC */
-	tg3_pwrsrc_चयन_to_vमुख्य(tp);
+	/* Switch out of Vaux if it is a NIC */
+	tg3_pwrsrc_switch_to_vmain(tp);
 
-	/* Derive initial jumbo mode from MTU asचिन्हित in
+	/* Derive initial jumbo mode from MTU assigned in
 	 * ether_setup() via the alloc_etherdev() call
 	 */
-	अगर (tp->dev->mtu > ETH_DATA_LEN && !tg3_flag(tp, 5780_CLASS))
+	if (tp->dev->mtu > ETH_DATA_LEN && !tg3_flag(tp, 5780_CLASS))
 		tg3_flag_set(tp, JUMBO_RING_ENABLE);
 
 	/* Determine WakeOnLan speed to use. */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
 	    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
 	    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0 ||
-	    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B2) अणु
+	    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B2) {
 		tg3_flag_clear(tp, WOL_SPEED_100MB);
-	पूर्ण अन्यथा अणु
+	} else {
 		tg3_flag_set(tp, WOL_SPEED_100MB);
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5906)
+	if (tg3_asic_rev(tp) == ASIC_REV_5906)
 		tp->phy_flags |= TG3_PHYFLG_IS_FET;
 
-	/* A few boards करोn't want Ethernet@WireSpeed phy feature */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+	/* A few boards don't want Ethernet@WireSpeed phy feature */
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
 	    (tg3_asic_rev(tp) == ASIC_REV_5705 &&
 	     (tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A0) &&
 	     (tg3_chip_rev_id(tp) != CHIPREV_ID_5705_A1)) ||
@@ -16750,204 +16749,204 @@ nomatch:
 	    (tp->phy_flags & TG3_PHYFLG_ANY_SERDES))
 		tp->phy_flags |= TG3_PHYFLG_NO_ETH_WIRE_SPEED;
 
-	अगर (tg3_chip_rev(tp) == CHIPREV_5703_AX ||
+	if (tg3_chip_rev(tp) == CHIPREV_5703_AX ||
 	    tg3_chip_rev(tp) == CHIPREV_5704_AX)
 		tp->phy_flags |= TG3_PHYFLG_ADC_BUG;
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0)
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5704_A0)
 		tp->phy_flags |= TG3_PHYFLG_5704_A0_BUG;
 
-	अगर (tg3_flag(tp, 5705_PLUS) &&
+	if (tg3_flag(tp, 5705_PLUS) &&
 	    !(tp->phy_flags & TG3_PHYFLG_IS_FET) &&
 	    tg3_asic_rev(tp) != ASIC_REV_5785 &&
 	    tg3_asic_rev(tp) != ASIC_REV_57780 &&
-	    !tg3_flag(tp, 57765_PLUS)) अणु
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5755 ||
+	    !tg3_flag(tp, 57765_PLUS)) {
+		if (tg3_asic_rev(tp) == ASIC_REV_5755 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5787 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5784 ||
-		    tg3_asic_rev(tp) == ASIC_REV_5761) अणु
-			अगर (tp->pdev->device != PCI_DEVICE_ID_TIGON3_5756 &&
+		    tg3_asic_rev(tp) == ASIC_REV_5761) {
+			if (tp->pdev->device != PCI_DEVICE_ID_TIGON3_5756 &&
 			    tp->pdev->device != PCI_DEVICE_ID_TIGON3_5722)
 				tp->phy_flags |= TG3_PHYFLG_JITTER_BUG;
-			अगर (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5755M)
+			if (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5755M)
 				tp->phy_flags |= TG3_PHYFLG_ADJUST_TRIM;
-		पूर्ण अन्यथा
+		} else
 			tp->phy_flags |= TG3_PHYFLG_BER_BUG;
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5784 &&
-	    tg3_chip_rev(tp) != CHIPREV_5784_AX) अणु
-		tp->phy_otp = tg3_पढ़ो_otp_phycfg(tp);
-		अगर (tp->phy_otp == 0)
+	if (tg3_asic_rev(tp) == ASIC_REV_5784 &&
+	    tg3_chip_rev(tp) != CHIPREV_5784_AX) {
+		tp->phy_otp = tg3_read_otp_phycfg(tp);
+		if (tp->phy_otp == 0)
 			tp->phy_otp = TG3_OTP_DEFAULT;
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, CPMU_PRESENT))
+	if (tg3_flag(tp, CPMU_PRESENT))
 		tp->mi_mode = MAC_MI_MODE_500KHZ_CONST;
-	अन्यथा
+	else
 		tp->mi_mode = MAC_MI_MODE_BASE;
 
 	tp->coalesce_mode = 0;
-	अगर (tg3_chip_rev(tp) != CHIPREV_5700_AX &&
+	if (tg3_chip_rev(tp) != CHIPREV_5700_AX &&
 	    tg3_chip_rev(tp) != CHIPREV_5700_BX)
 		tp->coalesce_mode |= HOSTCC_MODE_32BYTE;
 
 	/* Set these bits to enable statistics workaround. */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5717 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5717 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762 ||
 	    tg3_chip_rev_id(tp) == CHIPREV_ID_5719_A0 ||
-	    tg3_chip_rev_id(tp) == CHIPREV_ID_5720_A0) अणु
+	    tg3_chip_rev_id(tp) == CHIPREV_ID_5720_A0) {
 		tp->coalesce_mode |= HOSTCC_MODE_ATTN;
 		tp->grc_mode |= GRC_MODE_IRQ_ON_FLOW_ATTN;
-	पूर्ण
+	}
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5785 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5785 ||
 	    tg3_asic_rev(tp) == ASIC_REV_57780)
 		tg3_flag_set(tp, USE_PHYLIB);
 
 	err = tg3_mdio_init(tp);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Initialize data/descriptor byte/word swapping. */
 	val = tr32(GRC_MODE);
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5720 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762)
 		val &= (GRC_MODE_BYTE_SWAP_B2HRX_DATA |
 			GRC_MODE_WORD_SWAP_B2HRX_DATA |
 			GRC_MODE_B2HRX_ENABLE |
 			GRC_MODE_HTX2B_ENABLE |
 			GRC_MODE_HOST_STACKUP);
-	अन्यथा
+	else
 		val &= GRC_MODE_HOST_STACKUP;
 
 	tw32(GRC_MODE, val | tp->grc_mode);
 
-	tg3_चयन_घड़ीs(tp);
+	tg3_switch_clocks(tp);
 
-	/* Clear this out क्रम sanity. */
+	/* Clear this out for sanity. */
 	tw32(TG3PCI_MEM_WIN_BASE_ADDR, 0);
 
 	/* Clear TG3PCI_REG_BASE_ADDR to prevent hangs. */
 	tw32(TG3PCI_REG_BASE_ADDR, 0);
 
-	pci_पढ़ो_config_dword(tp->pdev, TG3PCI_PCISTATE,
+	pci_read_config_dword(tp->pdev, TG3PCI_PCISTATE,
 			      &pci_state_reg);
-	अगर ((pci_state_reg & PCISTATE_CONV_PCI_MODE) == 0 &&
-	    !tg3_flag(tp, PCIX_TARGET_HWBUG)) अणु
-		अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
+	if ((pci_state_reg & PCISTATE_CONV_PCI_MODE) == 0 &&
+	    !tg3_flag(tp, PCIX_TARGET_HWBUG)) {
+		if (tg3_chip_rev_id(tp) == CHIPREV_ID_5701_A0 ||
 		    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B0 ||
 		    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B2 ||
-		    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B5) अणु
-			व्योम __iomem *sram_base;
+		    tg3_chip_rev_id(tp) == CHIPREV_ID_5701_B5) {
+			void __iomem *sram_base;
 
-			/* Write some dummy words पूर्णांकo the SRAM status block
-			 * area, see अगर it पढ़ोs back correctly.  If the वापस
-			 * value is bad, क्रमce enable the PCIX workaround.
+			/* Write some dummy words into the SRAM status block
+			 * area, see if it reads back correctly.  If the return
+			 * value is bad, force enable the PCIX workaround.
 			 */
 			sram_base = tp->regs + NIC_SRAM_WIN_BASE + NIC_SRAM_STATS_BLK;
 
-			ग_लिखोl(0x00000000, sram_base);
-			ग_लिखोl(0x00000000, sram_base + 4);
-			ग_लिखोl(0xffffffff, sram_base + 4);
-			अगर (पढ़ोl(sram_base) != 0x00000000)
+			writel(0x00000000, sram_base);
+			writel(0x00000000, sram_base + 4);
+			writel(0xffffffff, sram_base + 4);
+			if (readl(sram_base) != 0x00000000)
 				tg3_flag_set(tp, PCIX_TARGET_HWBUG);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	udelay(50);
 	tg3_nvram_init(tp);
 
 	/* If the device has an NVRAM, no need to load patch firmware */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_57766 &&
+	if (tg3_asic_rev(tp) == ASIC_REV_57766 &&
 	    !tg3_flag(tp, NO_NVRAM))
-		tp->fw_needed = शून्य;
+		tp->fw_needed = NULL;
 
 	grc_misc_cfg = tr32(GRC_MISC_CFG);
 	grc_misc_cfg &= GRC_MISC_CFG_BOARD_ID_MASK;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5705 &&
+	if (tg3_asic_rev(tp) == ASIC_REV_5705 &&
 	    (grc_misc_cfg == GRC_MISC_CFG_BOARD_ID_5788 ||
 	     grc_misc_cfg == GRC_MISC_CFG_BOARD_ID_5788M))
 		tg3_flag_set(tp, IS_5788);
 
-	अगर (!tg3_flag(tp, IS_5788) &&
+	if (!tg3_flag(tp, IS_5788) &&
 	    tg3_asic_rev(tp) != ASIC_REV_5700)
 		tg3_flag_set(tp, TAGGED_STATUS);
-	अगर (tg3_flag(tp, TAGGED_STATUS)) अणु
+	if (tg3_flag(tp, TAGGED_STATUS)) {
 		tp->coalesce_mode |= (HOSTCC_MODE_CLRTICK_RXBD |
 				      HOSTCC_MODE_CLRTICK_TXBD);
 
 		tp->misc_host_ctrl |= MISC_HOST_CTRL_TAGGED_STATUS;
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
+		pci_write_config_dword(tp->pdev, TG3PCI_MISC_HOST_CTRL,
 				       tp->misc_host_ctrl);
-	पूर्ण
+	}
 
 	/* Preserve the APE MAC_MODE bits */
-	अगर (tg3_flag(tp, ENABLE_APE))
+	if (tg3_flag(tp, ENABLE_APE))
 		tp->mac_mode = MAC_MODE_APE_TX_EN | MAC_MODE_APE_RX_EN;
-	अन्यथा
+	else
 		tp->mac_mode = 0;
 
-	अगर (tg3_10_100_only_device(tp, ent))
+	if (tg3_10_100_only_device(tp, ent))
 		tp->phy_flags |= TG3_PHYFLG_10_100_ONLY;
 
 	err = tg3_phy_probe(tp);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&tp->pdev->dev, "phy probe failed, err %d\n", err);
-		/* ... but करो not वापस immediately ... */
+		/* ... but do not return immediately ... */
 		tg3_mdio_fini(tp);
-	पूर्ण
+	}
 
-	tg3_पढ़ो_vpd(tp);
-	tg3_पढ़ो_fw_ver(tp);
+	tg3_read_vpd(tp);
+	tg3_read_fw_ver(tp);
 
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) अणु
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES) {
 		tp->phy_flags &= ~TG3_PHYFLG_USE_MI_INTERRUPT;
-	पूर्ण अन्यथा अणु
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5700)
+	} else {
+		if (tg3_asic_rev(tp) == ASIC_REV_5700)
 			tp->phy_flags |= TG3_PHYFLG_USE_MI_INTERRUPT;
-		अन्यथा
+		else
 			tp->phy_flags &= ~TG3_PHYFLG_USE_MI_INTERRUPT;
-	पूर्ण
+	}
 
-	/* 5700 अणुAX,BXपूर्ण chips have a broken status block link
+	/* 5700 {AX,BX} chips have a broken status block link
 	 * change bit implementation, so we must use the
-	 * status रेजिस्टर in those हालs.
+	 * status register in those cases.
 	 */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700)
+	if (tg3_asic_rev(tp) == ASIC_REV_5700)
 		tg3_flag_set(tp, USE_LINKCHG_REG);
-	अन्यथा
+	else
 		tg3_flag_clear(tp, USE_LINKCHG_REG);
 
 	/* The led_ctrl is set during tg3_phy_probe, here we might
-	 * have to क्रमce the link status polling mechanism based
-	 * upon subप्रणाली IDs.
+	 * have to force the link status polling mechanism based
+	 * upon subsystem IDs.
 	 */
-	अगर (tp->pdev->subप्रणाली_venकरोr == PCI_VENDOR_ID_DELL &&
+	if (tp->pdev->subsystem_vendor == PCI_VENDOR_ID_DELL &&
 	    tg3_asic_rev(tp) == ASIC_REV_5701 &&
-	    !(tp->phy_flags & TG3_PHYFLG_PHY_SERDES)) अणु
+	    !(tp->phy_flags & TG3_PHYFLG_PHY_SERDES)) {
 		tp->phy_flags |= TG3_PHYFLG_USE_MI_INTERRUPT;
 		tg3_flag_set(tp, USE_LINKCHG_REG);
-	पूर्ण
+	}
 
-	/* For all SERDES we poll the MAC status रेजिस्टर. */
-	अगर (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
+	/* For all SERDES we poll the MAC status register. */
+	if (tp->phy_flags & TG3_PHYFLG_PHY_SERDES)
 		tg3_flag_set(tp, POLL_SERDES);
-	अन्यथा
+	else
 		tg3_flag_clear(tp, POLL_SERDES);
 
-	अगर (tg3_flag(tp, ENABLE_APE) && tg3_flag(tp, ENABLE_ASF))
+	if (tg3_flag(tp, ENABLE_APE) && tg3_flag(tp, ENABLE_ASF))
 		tg3_flag_set(tp, POLL_CPMU_LINK);
 
 	tp->rx_offset = NET_SKB_PAD + NET_IP_ALIGN;
 	tp->rx_copy_thresh = TG3_RX_COPY_THRESHOLD;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5701 &&
-	    tg3_flag(tp, PCIX_MODE)) अणु
+	if (tg3_asic_rev(tp) == ASIC_REV_5701 &&
+	    tg3_flag(tp, PCIX_MODE)) {
 		tp->rx_offset = NET_SKB_PAD;
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 		tp->rx_copy_thresh = ~(u16)0;
-#पूर्ण_अगर
-	पूर्ण
+#endif
+	}
 
 	tp->rx_std_ring_mask = TG3_RX_STD_RING_SIZE(tp) - 1;
 	tp->rx_jmb_ring_mask = TG3_RX_JMB_RING_SIZE(tp) - 1;
@@ -16956,60 +16955,60 @@ nomatch:
 	tp->rx_std_max_post = tp->rx_std_ring_mask + 1;
 
 	/* Increment the rx prod index on the rx std ring by at most
-	 * 8 क्रम these chips to workaround hw errata.
+	 * 8 for these chips to workaround hw errata.
 	 */
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5750 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5750 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5752 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5755)
 		tp->rx_std_max_post = 8;
 
-	अगर (tg3_flag(tp, ASPM_WORKAROUND))
+	if (tg3_flag(tp, ASPM_WORKAROUND))
 		tp->pwrmgmt_thresh = tr32(PCIE_PWR_MGMT_THRESH) &
 				     PCIE_PWR_MGMT_L1_THRESH_MSK;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_get_device_address(काष्ठा tg3 *tp)
-अणु
-	काष्ठा net_device *dev = tp->dev;
+static int tg3_get_device_address(struct tg3 *tp)
+{
+	struct net_device *dev = tp->dev;
 	u32 hi, lo, mac_offset;
-	पूर्णांक addr_ok = 0;
-	पूर्णांक err;
+	int addr_ok = 0;
+	int err;
 
-	अगर (!eth_platक्रमm_get_mac_address(&tp->pdev->dev, dev->dev_addr))
-		वापस 0;
+	if (!eth_platform_get_mac_address(&tp->pdev->dev, dev->dev_addr))
+		return 0;
 
-	अगर (tg3_flag(tp, IS_SSB_CORE)) अणु
+	if (tg3_flag(tp, IS_SSB_CORE)) {
 		err = ssb_gige_get_macaddr(tp->pdev, &dev->dev_addr[0]);
-		अगर (!err && is_valid_ether_addr(&dev->dev_addr[0]))
-			वापस 0;
-	पूर्ण
+		if (!err && is_valid_ether_addr(&dev->dev_addr[0]))
+			return 0;
+	}
 
 	mac_offset = 0x7c;
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5704 ||
-	    tg3_flag(tp, 5780_CLASS)) अणु
-		अगर (tr32(TG3PCI_DUAL_MAC_CTRL) & DUAL_MAC_CTRL_ID)
+	if (tg3_asic_rev(tp) == ASIC_REV_5704 ||
+	    tg3_flag(tp, 5780_CLASS)) {
+		if (tr32(TG3PCI_DUAL_MAC_CTRL) & DUAL_MAC_CTRL_ID)
 			mac_offset = 0xcc;
-		अगर (tg3_nvram_lock(tp))
+		if (tg3_nvram_lock(tp))
 			tw32_f(NVRAM_CMD, NVRAM_CMD_RESET);
-		अन्यथा
+		else
 			tg3_nvram_unlock(tp);
-	पूर्ण अन्यथा अगर (tg3_flag(tp, 5717_PLUS)) अणु
-		अगर (tp->pci_fn & 1)
+	} else if (tg3_flag(tp, 5717_PLUS)) {
+		if (tp->pci_fn & 1)
 			mac_offset = 0xcc;
-		अगर (tp->pci_fn > 1)
+		if (tp->pci_fn > 1)
 			mac_offset += 0x18c;
-	पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5906)
+	} else if (tg3_asic_rev(tp) == ASIC_REV_5906)
 		mac_offset = 0x10;
 
 	/* First try to get it from MAC address mailbox. */
-	tg3_पढ़ो_mem(tp, NIC_SRAM_MAC_ADDR_HIGH_MBOX, &hi);
-	अगर ((hi >> 16) == 0x484b) अणु
+	tg3_read_mem(tp, NIC_SRAM_MAC_ADDR_HIGH_MBOX, &hi);
+	if ((hi >> 16) == 0x484b) {
 		dev->dev_addr[0] = (hi >>  8) & 0xff;
 		dev->dev_addr[1] = (hi >>  0) & 0xff;
 
-		tg3_पढ़ो_mem(tp, NIC_SRAM_MAC_ADDR_LOW_MBOX, &lo);
+		tg3_read_mem(tp, NIC_SRAM_MAC_ADDR_LOW_MBOX, &lo);
 		dev->dev_addr[2] = (lo >> 24) & 0xff;
 		dev->dev_addr[3] = (lo >> 16) & 0xff;
 		dev->dev_addr[4] = (lo >>  8) & 0xff;
@@ -17017,17 +17016,17 @@ nomatch:
 
 		/* Some old bootcode may report a 0 MAC address in SRAM */
 		addr_ok = is_valid_ether_addr(&dev->dev_addr[0]);
-	पूर्ण
-	अगर (!addr_ok) अणु
+	}
+	if (!addr_ok) {
 		/* Next, try NVRAM. */
-		अगर (!tg3_flag(tp, NO_NVRAM) &&
-		    !tg3_nvram_पढ़ो_be32(tp, mac_offset + 0, &hi) &&
-		    !tg3_nvram_पढ़ो_be32(tp, mac_offset + 4, &lo)) अणु
-			स_नकल(&dev->dev_addr[0], ((अक्षर *)&hi) + 2, 2);
-			स_नकल(&dev->dev_addr[2], (अक्षर *)&lo, माप(lo));
-		पूर्ण
+		if (!tg3_flag(tp, NO_NVRAM) &&
+		    !tg3_nvram_read_be32(tp, mac_offset + 0, &hi) &&
+		    !tg3_nvram_read_be32(tp, mac_offset + 4, &lo)) {
+			memcpy(&dev->dev_addr[0], ((char *)&hi) + 2, 2);
+			memcpy(&dev->dev_addr[2], (char *)&lo, sizeof(lo));
+		}
 		/* Finally just fetch it out of the MAC control regs. */
-		अन्यथा अणु
+		else {
 			hi = tr32(MAC_ADDR_0_HIGH);
 			lo = tr32(MAC_ADDR_0_LOW);
 
@@ -17037,164 +17036,164 @@ nomatch:
 			dev->dev_addr[2] = (lo >> 24) & 0xff;
 			dev->dev_addr[1] = hi & 0xff;
 			dev->dev_addr[0] = (hi >> 8) & 0xff;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!is_valid_ether_addr(&dev->dev_addr[0]))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	if (!is_valid_ether_addr(&dev->dev_addr[0]))
+		return -EINVAL;
+	return 0;
+}
 
-#घोषणा BOUNDARY_SINGLE_CACHELINE	1
-#घोषणा BOUNDARY_MULTI_CACHELINE	2
+#define BOUNDARY_SINGLE_CACHELINE	1
+#define BOUNDARY_MULTI_CACHELINE	2
 
-अटल u32 tg3_calc_dma_bndry(काष्ठा tg3 *tp, u32 val)
-अणु
-	पूर्णांक cacheline_size;
+static u32 tg3_calc_dma_bndry(struct tg3 *tp, u32 val)
+{
+	int cacheline_size;
 	u8 byte;
-	पूर्णांक goal;
+	int goal;
 
-	pci_पढ़ो_config_byte(tp->pdev, PCI_CACHE_LINE_SIZE, &byte);
-	अगर (byte == 0)
+	pci_read_config_byte(tp->pdev, PCI_CACHE_LINE_SIZE, &byte);
+	if (byte == 0)
 		cacheline_size = 1024;
-	अन्यथा
-		cacheline_size = (पूर्णांक) byte * 4;
+	else
+		cacheline_size = (int) byte * 4;
 
 	/* On 5703 and later chips, the boundary bits have no
 	 * effect.
 	 */
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5700 &&
+	if (tg3_asic_rev(tp) != ASIC_REV_5700 &&
 	    tg3_asic_rev(tp) != ASIC_REV_5701 &&
 	    !tg3_flag(tp, PCI_EXPRESS))
-		जाओ out;
+		goto out;
 
-#अगर defined(CONFIG_PPC64) || defined(CONFIG_IA64) || defined(CONFIG_PARISC)
+#if defined(CONFIG_PPC64) || defined(CONFIG_IA64) || defined(CONFIG_PARISC)
 	goal = BOUNDARY_MULTI_CACHELINE;
-#अन्यथा
-#अगर defined(CONFIG_SPARC64) || defined(CONFIG_ALPHA)
+#else
+#if defined(CONFIG_SPARC64) || defined(CONFIG_ALPHA)
 	goal = BOUNDARY_SINGLE_CACHELINE;
-#अन्यथा
+#else
 	goal = 0;
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif
 
-	अगर (tg3_flag(tp, 57765_PLUS)) अणु
+	if (tg3_flag(tp, 57765_PLUS)) {
 		val = goal ? 0 : DMA_RWCTRL_DIS_CACHE_ALIGNMENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!goal)
-		जाओ out;
+	if (!goal)
+		goto out;
 
-	/* PCI controllers on most RISC प्रणालीs tend to disconnect
+	/* PCI controllers on most RISC systems tend to disconnect
 	 * when a device tries to burst across a cache-line boundary.
-	 * Thereक्रमe, letting tg3 करो so just wastes PCI bandwidth.
+	 * Therefore, letting tg3 do so just wastes PCI bandwidth.
 	 *
-	 * Unक्रमtunately, क्रम PCI-E there are only limited
-	 * ग_लिखो-side controls क्रम this, and thus क्रम पढ़ोs
+	 * Unfortunately, for PCI-E there are only limited
+	 * write-side controls for this, and thus for reads
 	 * we will still get the disconnects.  We'll also waste
-	 * these PCI cycles क्रम both पढ़ो and ग_लिखो क्रम chips
-	 * other than 5700 and 5701 which करो not implement the
+	 * these PCI cycles for both read and write for chips
+	 * other than 5700 and 5701 which do not implement the
 	 * boundary bits.
 	 */
-	अगर (tg3_flag(tp, PCIX_MODE) && !tg3_flag(tp, PCI_EXPRESS)) अणु
-		चयन (cacheline_size) अणु
-		हाल 16:
-		हाल 32:
-		हाल 64:
-		हाल 128:
-			अगर (goal == BOUNDARY_SINGLE_CACHELINE) अणु
+	if (tg3_flag(tp, PCIX_MODE) && !tg3_flag(tp, PCI_EXPRESS)) {
+		switch (cacheline_size) {
+		case 16:
+		case 32:
+		case 64:
+		case 128:
+			if (goal == BOUNDARY_SINGLE_CACHELINE) {
 				val |= (DMA_RWCTRL_READ_BNDRY_128_PCIX |
 					DMA_RWCTRL_WRITE_BNDRY_128_PCIX);
-			पूर्ण अन्यथा अणु
+			} else {
 				val |= (DMA_RWCTRL_READ_BNDRY_384_PCIX |
 					DMA_RWCTRL_WRITE_BNDRY_384_PCIX);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल 256:
+		case 256:
 			val |= (DMA_RWCTRL_READ_BNDRY_256_PCIX |
 				DMA_RWCTRL_WRITE_BNDRY_256_PCIX);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			val |= (DMA_RWCTRL_READ_BNDRY_384_PCIX |
 				DMA_RWCTRL_WRITE_BNDRY_384_PCIX);
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (tg3_flag(tp, PCI_EXPRESS)) अणु
-		चयन (cacheline_size) अणु
-		हाल 16:
-		हाल 32:
-		हाल 64:
-			अगर (goal == BOUNDARY_SINGLE_CACHELINE) अणु
+			break;
+		}
+	} else if (tg3_flag(tp, PCI_EXPRESS)) {
+		switch (cacheline_size) {
+		case 16:
+		case 32:
+		case 64:
+			if (goal == BOUNDARY_SINGLE_CACHELINE) {
 				val &= ~DMA_RWCTRL_WRITE_BNDRY_DISAB_PCIE;
 				val |= DMA_RWCTRL_WRITE_BNDRY_64_PCIE;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल 128:
-		शेष:
+		case 128:
+		default:
 			val &= ~DMA_RWCTRL_WRITE_BNDRY_DISAB_PCIE;
 			val |= DMA_RWCTRL_WRITE_BNDRY_128_PCIE;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (cacheline_size) अणु
-		हाल 16:
-			अगर (goal == BOUNDARY_SINGLE_CACHELINE) अणु
+			break;
+		}
+	} else {
+		switch (cacheline_size) {
+		case 16:
+			if (goal == BOUNDARY_SINGLE_CACHELINE) {
 				val |= (DMA_RWCTRL_READ_BNDRY_16 |
 					DMA_RWCTRL_WRITE_BNDRY_16);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल 32:
-			अगर (goal == BOUNDARY_SINGLE_CACHELINE) अणु
+		case 32:
+			if (goal == BOUNDARY_SINGLE_CACHELINE) {
 				val |= (DMA_RWCTRL_READ_BNDRY_32 |
 					DMA_RWCTRL_WRITE_BNDRY_32);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल 64:
-			अगर (goal == BOUNDARY_SINGLE_CACHELINE) अणु
+		case 64:
+			if (goal == BOUNDARY_SINGLE_CACHELINE) {
 				val |= (DMA_RWCTRL_READ_BNDRY_64 |
 					DMA_RWCTRL_WRITE_BNDRY_64);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल 128:
-			अगर (goal == BOUNDARY_SINGLE_CACHELINE) अणु
+		case 128:
+			if (goal == BOUNDARY_SINGLE_CACHELINE) {
 				val |= (DMA_RWCTRL_READ_BNDRY_128 |
 					DMA_RWCTRL_WRITE_BNDRY_128);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			fallthrough;
-		हाल 256:
+		case 256:
 			val |= (DMA_RWCTRL_READ_BNDRY_256 |
 				DMA_RWCTRL_WRITE_BNDRY_256);
-			अवरोध;
-		हाल 512:
+			break;
+		case 512:
 			val |= (DMA_RWCTRL_READ_BNDRY_512 |
 				DMA_RWCTRL_WRITE_BNDRY_512);
-			अवरोध;
-		हाल 1024:
-		शेष:
+			break;
+		case 1024:
+		default:
 			val |= (DMA_RWCTRL_READ_BNDRY_1024 |
 				DMA_RWCTRL_WRITE_BNDRY_1024);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 out:
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक tg3_करो_test_dma(काष्ठा tg3 *tp, u32 *buf, dma_addr_t buf_dma,
-			   पूर्णांक size, bool to_device)
-अणु
-	काष्ठा tg3_पूर्णांकernal_buffer_desc test_desc;
+static int tg3_do_test_dma(struct tg3 *tp, u32 *buf, dma_addr_t buf_dma,
+			   int size, bool to_device)
+{
+	struct tg3_internal_buffer_desc test_desc;
 	u32 sram_dma_descs;
-	पूर्णांक i, ret;
+	int i, ret;
 
 	sram_dma_descs = NIC_SRAM_DMA_DESC_POOL_BASE;
 
@@ -17212,144 +17211,144 @@ out:
 	test_desc.len = size;
 
 	/*
-	 * HP ZX1 was seeing test failures क्रम 5701 cards running at 33Mhz
-	 * the *second* समय the tg3 driver was getting loaded after an
+	 * HP ZX1 was seeing test failures for 5701 cards running at 33Mhz
+	 * the *second* time the tg3 driver was getting loaded after an
 	 * initial scan.
 	 *
 	 * Broadcom tells me:
 	 *   ...the DMA engine is connected to the GRC block and a DMA
 	 *   reset may affect the GRC block in some unpredictable way...
-	 *   The behavior of resets to inभागidual blocks has not been tested.
+	 *   The behavior of resets to individual blocks has not been tested.
 	 *
 	 * Broadcom noted the GRC reset will also reset all sub-components.
 	 */
-	अगर (to_device) अणु
+	if (to_device) {
 		test_desc.cqid_sqid = (13 << 8) | 2;
 
 		tw32_f(RDMAC_MODE, RDMAC_MODE_ENABLE);
 		udelay(40);
-	पूर्ण अन्यथा अणु
+	} else {
 		test_desc.cqid_sqid = (16 << 8) | 7;
 
 		tw32_f(WDMAC_MODE, WDMAC_MODE_ENABLE);
 		udelay(40);
-	पूर्ण
+	}
 	test_desc.flags = 0x00000005;
 
-	क्रम (i = 0; i < (माप(test_desc) / माप(u32)); i++) अणु
+	for (i = 0; i < (sizeof(test_desc) / sizeof(u32)); i++) {
 		u32 val;
 
 		val = *(((u32 *)&test_desc) + i);
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR,
-				       sram_dma_descs + (i * माप(u32)));
-		pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_DATA, val);
-	पूर्ण
-	pci_ग_लिखो_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, 0);
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR,
+				       sram_dma_descs + (i * sizeof(u32)));
+		pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_DATA, val);
+	}
+	pci_write_config_dword(tp->pdev, TG3PCI_MEM_WIN_BASE_ADDR, 0);
 
-	अगर (to_device)
+	if (to_device)
 		tw32(FTQ_DMA_HIGH_READ_FIFO_ENQDEQ, sram_dma_descs);
-	अन्यथा
+	else
 		tw32(FTQ_DMA_HIGH_WRITE_FIFO_ENQDEQ, sram_dma_descs);
 
 	ret = -ENODEV;
-	क्रम (i = 0; i < 40; i++) अणु
+	for (i = 0; i < 40; i++) {
 		u32 val;
 
-		अगर (to_device)
+		if (to_device)
 			val = tr32(FTQ_RCVBD_COMP_FIFO_ENQDEQ);
-		अन्यथा
+		else
 			val = tr32(FTQ_RCVDATA_COMP_FIFO_ENQDEQ);
-		अगर ((val & 0xffff) == sram_dma_descs) अणु
+		if ((val & 0xffff) == sram_dma_descs) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		udelay(100);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#घोषणा TEST_BUFFER_SIZE	0x2000
+#define TEST_BUFFER_SIZE	0x2000
 
-अटल स्थिर काष्ठा pci_device_id tg3_dma_रुको_state_chipsets[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_PCI15) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id tg3_dma_wait_state_chipsets[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_PCI15) },
+	{ },
+};
 
-अटल पूर्णांक tg3_test_dma(काष्ठा tg3 *tp)
-अणु
+static int tg3_test_dma(struct tg3 *tp)
+{
 	dma_addr_t buf_dma;
 	u32 *buf, saved_dma_rwctrl;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	buf = dma_alloc_coherent(&tp->pdev->dev, TEST_BUFFER_SIZE,
 				 &buf_dma, GFP_KERNEL);
-	अगर (!buf) अणु
+	if (!buf) {
 		ret = -ENOMEM;
-		जाओ out_noमुक्त;
-	पूर्ण
+		goto out_nofree;
+	}
 
 	tp->dma_rwctrl = ((0x7 << DMA_RWCTRL_PCI_WRITE_CMD_SHIFT) |
 			  (0x6 << DMA_RWCTRL_PCI_READ_CMD_SHIFT));
 
 	tp->dma_rwctrl = tg3_calc_dma_bndry(tp, tp->dma_rwctrl);
 
-	अगर (tg3_flag(tp, 57765_PLUS))
-		जाओ out;
+	if (tg3_flag(tp, 57765_PLUS))
+		goto out;
 
-	अगर (tg3_flag(tp, PCI_EXPRESS)) अणु
-		/* DMA पढ़ो watermark not used on PCIE */
+	if (tg3_flag(tp, PCI_EXPRESS)) {
+		/* DMA read watermark not used on PCIE */
 		tp->dma_rwctrl |= 0x00180000;
-	पूर्ण अन्यथा अगर (!tg3_flag(tp, PCIX_MODE)) अणु
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5705 ||
+	} else if (!tg3_flag(tp, PCIX_MODE)) {
+		if (tg3_asic_rev(tp) == ASIC_REV_5705 ||
 		    tg3_asic_rev(tp) == ASIC_REV_5750)
 			tp->dma_rwctrl |= 0x003f0000;
-		अन्यथा
+		else
 			tp->dma_rwctrl |= 0x003f000f;
-	पूर्ण अन्यथा अणु
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5703 ||
-		    tg3_asic_rev(tp) == ASIC_REV_5704) अणु
+	} else {
+		if (tg3_asic_rev(tp) == ASIC_REV_5703 ||
+		    tg3_asic_rev(tp) == ASIC_REV_5704) {
 			u32 ccval = (tr32(TG3PCI_CLOCK_CTRL) & 0x1f);
-			u32 पढ़ो_water = 0x7;
+			u32 read_water = 0x7;
 
 			/* If the 5704 is behind the EPB bridge, we can
-			 * करो the less restrictive ONE_DMA workaround क्रम
-			 * better perक्रमmance.
+			 * do the less restrictive ONE_DMA workaround for
+			 * better performance.
 			 */
-			अगर (tg3_flag(tp, 40BIT_DMA_BUG) &&
+			if (tg3_flag(tp, 40BIT_DMA_BUG) &&
 			    tg3_asic_rev(tp) == ASIC_REV_5704)
 				tp->dma_rwctrl |= 0x8000;
-			अन्यथा अगर (ccval == 0x6 || ccval == 0x7)
+			else if (ccval == 0x6 || ccval == 0x7)
 				tp->dma_rwctrl |= DMA_RWCTRL_ONE_DMA;
 
-			अगर (tg3_asic_rev(tp) == ASIC_REV_5703)
-				पढ़ो_water = 4;
+			if (tg3_asic_rev(tp) == ASIC_REV_5703)
+				read_water = 4;
 			/* Set bit 23 to enable PCIX hw bug fix */
 			tp->dma_rwctrl |=
-				(पढ़ो_water << DMA_RWCTRL_READ_WATER_SHIFT) |
+				(read_water << DMA_RWCTRL_READ_WATER_SHIFT) |
 				(0x3 << DMA_RWCTRL_WRITE_WATER_SHIFT) |
 				(1 << 23);
-		पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5780) अणु
+		} else if (tg3_asic_rev(tp) == ASIC_REV_5780) {
 			/* 5780 always in PCIX mode */
 			tp->dma_rwctrl |= 0x00144000;
-		पूर्ण अन्यथा अगर (tg3_asic_rev(tp) == ASIC_REV_5714) अणु
+		} else if (tg3_asic_rev(tp) == ASIC_REV_5714) {
 			/* 5714 always in PCIX mode */
 			tp->dma_rwctrl |= 0x00148000;
-		पूर्ण अन्यथा अणु
+		} else {
 			tp->dma_rwctrl |= 0x001b000f;
-		पूर्ण
-	पूर्ण
-	अगर (tg3_flag(tp, ONE_DMA_AT_ONCE))
+		}
+	}
+	if (tg3_flag(tp, ONE_DMA_AT_ONCE))
 		tp->dma_rwctrl |= DMA_RWCTRL_ONE_DMA;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5703 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5703 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5704)
 		tp->dma_rwctrl &= 0xfffffff0;
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5700 ||
-	    tg3_asic_rev(tp) == ASIC_REV_5701) अणु
-		/* Remove this अगर it causes problems क्रम some boards. */
+	if (tg3_asic_rev(tp) == ASIC_REV_5700 ||
+	    tg3_asic_rev(tp) == ASIC_REV_5701) {
+		/* Remove this if it causes problems for some boards. */
 		tp->dma_rwctrl |= DMA_RWCTRL_USE_MEM_READ_MULT;
 
 		/* On 5700/5701 chips, we need to set this bit.
@@ -17358,228 +17357,228 @@ out:
 		 * enables turned on.  This is an error on several
 		 * RISC PCI controllers, in particular sparc64.
 		 *
-		 * On 5703/5704 chips, this bit has been reasचिन्हित
-		 * a dअगरferent meaning.  In particular, it is used
+		 * On 5703/5704 chips, this bit has been reassigned
+		 * a different meaning.  In particular, it is used
 		 * on those chips to enable a PCI-X workaround.
 		 */
 		tp->dma_rwctrl |= DMA_RWCTRL_ASSERT_ALL_BE;
-	पूर्ण
+	}
 
 	tw32(TG3PCI_DMA_RW_CTRL, tp->dma_rwctrl);
 
 
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5700 &&
+	if (tg3_asic_rev(tp) != ASIC_REV_5700 &&
 	    tg3_asic_rev(tp) != ASIC_REV_5701)
-		जाओ out;
+		goto out;
 
-	/* It is best to perक्रमm DMA test with maximum ग_लिखो burst size
-	 * to expose the 5700/5701 ग_लिखो DMA bug.
+	/* It is best to perform DMA test with maximum write burst size
+	 * to expose the 5700/5701 write DMA bug.
 	 */
 	saved_dma_rwctrl = tp->dma_rwctrl;
 	tp->dma_rwctrl &= ~DMA_RWCTRL_WRITE_BNDRY_MASK;
 	tw32(TG3PCI_DMA_RW_CTRL, tp->dma_rwctrl);
 
-	जबतक (1) अणु
+	while (1) {
 		u32 *p = buf, i;
 
-		क्रम (i = 0; i < TEST_BUFFER_SIZE / माप(u32); i++)
+		for (i = 0; i < TEST_BUFFER_SIZE / sizeof(u32); i++)
 			p[i] = i;
 
 		/* Send the buffer to the chip. */
-		ret = tg3_करो_test_dma(tp, buf, buf_dma, TEST_BUFFER_SIZE, true);
-		अगर (ret) अणु
+		ret = tg3_do_test_dma(tp, buf, buf_dma, TEST_BUFFER_SIZE, true);
+		if (ret) {
 			dev_err(&tp->pdev->dev,
 				"%s: Buffer write failed. err = %d\n",
 				__func__, ret);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Now पढ़ो it back. */
-		ret = tg3_करो_test_dma(tp, buf, buf_dma, TEST_BUFFER_SIZE, false);
-		अगर (ret) अणु
+		/* Now read it back. */
+		ret = tg3_do_test_dma(tp, buf, buf_dma, TEST_BUFFER_SIZE, false);
+		if (ret) {
 			dev_err(&tp->pdev->dev, "%s: Buffer read failed. "
 				"err = %d\n", __func__, ret);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* Verअगरy it. */
-		क्रम (i = 0; i < TEST_BUFFER_SIZE / माप(u32); i++) अणु
-			अगर (p[i] == i)
-				जारी;
+		/* Verify it. */
+		for (i = 0; i < TEST_BUFFER_SIZE / sizeof(u32); i++) {
+			if (p[i] == i)
+				continue;
 
-			अगर ((tp->dma_rwctrl & DMA_RWCTRL_WRITE_BNDRY_MASK) !=
-			    DMA_RWCTRL_WRITE_BNDRY_16) अणु
+			if ((tp->dma_rwctrl & DMA_RWCTRL_WRITE_BNDRY_MASK) !=
+			    DMA_RWCTRL_WRITE_BNDRY_16) {
 				tp->dma_rwctrl &= ~DMA_RWCTRL_WRITE_BNDRY_MASK;
 				tp->dma_rwctrl |= DMA_RWCTRL_WRITE_BNDRY_16;
 				tw32(TG3PCI_DMA_RW_CTRL, tp->dma_rwctrl);
-				अवरोध;
-			पूर्ण अन्यथा अणु
+				break;
+			} else {
 				dev_err(&tp->pdev->dev,
 					"%s: Buffer corrupted on read back! "
 					"(%d != %d)\n", __func__, p[i], i);
 				ret = -ENODEV;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		अगर (i == (TEST_BUFFER_SIZE / माप(u32))) अणु
+		if (i == (TEST_BUFFER_SIZE / sizeof(u32))) {
 			/* Success. */
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर ((tp->dma_rwctrl & DMA_RWCTRL_WRITE_BNDRY_MASK) !=
-	    DMA_RWCTRL_WRITE_BNDRY_16) अणु
+			break;
+		}
+	}
+	if ((tp->dma_rwctrl & DMA_RWCTRL_WRITE_BNDRY_MASK) !=
+	    DMA_RWCTRL_WRITE_BNDRY_16) {
 		/* DMA test passed without adjusting DMA boundary,
-		 * now look क्रम chipsets that are known to expose the
+		 * now look for chipsets that are known to expose the
 		 * DMA bug without failing the test.
 		 */
-		अगर (pci_dev_present(tg3_dma_रुको_state_chipsets)) अणु
+		if (pci_dev_present(tg3_dma_wait_state_chipsets)) {
 			tp->dma_rwctrl &= ~DMA_RWCTRL_WRITE_BNDRY_MASK;
 			tp->dma_rwctrl |= DMA_RWCTRL_WRITE_BNDRY_16;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Safe to use the calculated DMA boundary. */
 			tp->dma_rwctrl = saved_dma_rwctrl;
-		पूर्ण
+		}
 
 		tw32(TG3PCI_DMA_RW_CTRL, tp->dma_rwctrl);
-	पूर्ण
+	}
 
 out:
-	dma_मुक्त_coherent(&tp->pdev->dev, TEST_BUFFER_SIZE, buf, buf_dma);
-out_noमुक्त:
-	वापस ret;
-पूर्ण
+	dma_free_coherent(&tp->pdev->dev, TEST_BUFFER_SIZE, buf, buf_dma);
+out_nofree:
+	return ret;
+}
 
-अटल व्योम tg3_init_bufmgr_config(काष्ठा tg3 *tp)
-अणु
-	अगर (tg3_flag(tp, 57765_PLUS)) अणु
-		tp->bufmgr_config.mbuf_पढ़ो_dma_low_water =
+static void tg3_init_bufmgr_config(struct tg3 *tp)
+{
+	if (tg3_flag(tp, 57765_PLUS)) {
+		tp->bufmgr_config.mbuf_read_dma_low_water =
 			DEFAULT_MB_RDMA_LOW_WATER_5705;
 		tp->bufmgr_config.mbuf_mac_rx_low_water =
 			DEFAULT_MB_MACRX_LOW_WATER_57765;
 		tp->bufmgr_config.mbuf_high_water =
 			DEFAULT_MB_HIGH_WATER_57765;
 
-		tp->bufmgr_config.mbuf_पढ़ो_dma_low_water_jumbo =
+		tp->bufmgr_config.mbuf_read_dma_low_water_jumbo =
 			DEFAULT_MB_RDMA_LOW_WATER_5705;
 		tp->bufmgr_config.mbuf_mac_rx_low_water_jumbo =
 			DEFAULT_MB_MACRX_LOW_WATER_JUMBO_57765;
 		tp->bufmgr_config.mbuf_high_water_jumbo =
 			DEFAULT_MB_HIGH_WATER_JUMBO_57765;
-	पूर्ण अन्यथा अगर (tg3_flag(tp, 5705_PLUS)) अणु
-		tp->bufmgr_config.mbuf_पढ़ो_dma_low_water =
+	} else if (tg3_flag(tp, 5705_PLUS)) {
+		tp->bufmgr_config.mbuf_read_dma_low_water =
 			DEFAULT_MB_RDMA_LOW_WATER_5705;
 		tp->bufmgr_config.mbuf_mac_rx_low_water =
 			DEFAULT_MB_MACRX_LOW_WATER_5705;
 		tp->bufmgr_config.mbuf_high_water =
 			DEFAULT_MB_HIGH_WATER_5705;
-		अगर (tg3_asic_rev(tp) == ASIC_REV_5906) अणु
+		if (tg3_asic_rev(tp) == ASIC_REV_5906) {
 			tp->bufmgr_config.mbuf_mac_rx_low_water =
 				DEFAULT_MB_MACRX_LOW_WATER_5906;
 			tp->bufmgr_config.mbuf_high_water =
 				DEFAULT_MB_HIGH_WATER_5906;
-		पूर्ण
+		}
 
-		tp->bufmgr_config.mbuf_पढ़ो_dma_low_water_jumbo =
+		tp->bufmgr_config.mbuf_read_dma_low_water_jumbo =
 			DEFAULT_MB_RDMA_LOW_WATER_JUMBO_5780;
 		tp->bufmgr_config.mbuf_mac_rx_low_water_jumbo =
 			DEFAULT_MB_MACRX_LOW_WATER_JUMBO_5780;
 		tp->bufmgr_config.mbuf_high_water_jumbo =
 			DEFAULT_MB_HIGH_WATER_JUMBO_5780;
-	पूर्ण अन्यथा अणु
-		tp->bufmgr_config.mbuf_पढ़ो_dma_low_water =
+	} else {
+		tp->bufmgr_config.mbuf_read_dma_low_water =
 			DEFAULT_MB_RDMA_LOW_WATER;
 		tp->bufmgr_config.mbuf_mac_rx_low_water =
 			DEFAULT_MB_MACRX_LOW_WATER;
 		tp->bufmgr_config.mbuf_high_water =
 			DEFAULT_MB_HIGH_WATER;
 
-		tp->bufmgr_config.mbuf_पढ़ो_dma_low_water_jumbo =
+		tp->bufmgr_config.mbuf_read_dma_low_water_jumbo =
 			DEFAULT_MB_RDMA_LOW_WATER_JUMBO;
 		tp->bufmgr_config.mbuf_mac_rx_low_water_jumbo =
 			DEFAULT_MB_MACRX_LOW_WATER_JUMBO;
 		tp->bufmgr_config.mbuf_high_water_jumbo =
 			DEFAULT_MB_HIGH_WATER_JUMBO;
-	पूर्ण
+	}
 
 	tp->bufmgr_config.dma_low_water = DEFAULT_DMA_LOW_WATER;
 	tp->bufmgr_config.dma_high_water = DEFAULT_DMA_HIGH_WATER;
-पूर्ण
+}
 
-अटल अक्षर *tg3_phy_string(काष्ठा tg3 *tp)
-अणु
-	चयन (tp->phy_id & TG3_PHY_ID_MASK) अणु
-	हाल TG3_PHY_ID_BCM5400:	वापस "5400";
-	हाल TG3_PHY_ID_BCM5401:	वापस "5401";
-	हाल TG3_PHY_ID_BCM5411:	वापस "5411";
-	हाल TG3_PHY_ID_BCM5701:	वापस "5701";
-	हाल TG3_PHY_ID_BCM5703:	वापस "5703";
-	हाल TG3_PHY_ID_BCM5704:	वापस "5704";
-	हाल TG3_PHY_ID_BCM5705:	वापस "5705";
-	हाल TG3_PHY_ID_BCM5750:	वापस "5750";
-	हाल TG3_PHY_ID_BCM5752:	वापस "5752";
-	हाल TG3_PHY_ID_BCM5714:	वापस "5714";
-	हाल TG3_PHY_ID_BCM5780:	वापस "5780";
-	हाल TG3_PHY_ID_BCM5755:	वापस "5755";
-	हाल TG3_PHY_ID_BCM5787:	वापस "5787";
-	हाल TG3_PHY_ID_BCM5784:	वापस "5784";
-	हाल TG3_PHY_ID_BCM5756:	वापस "5722/5756";
-	हाल TG3_PHY_ID_BCM5906:	वापस "5906";
-	हाल TG3_PHY_ID_BCM5761:	वापस "5761";
-	हाल TG3_PHY_ID_BCM5718C:	वापस "5718C";
-	हाल TG3_PHY_ID_BCM5718S:	वापस "5718S";
-	हाल TG3_PHY_ID_BCM57765:	वापस "57765";
-	हाल TG3_PHY_ID_BCM5719C:	वापस "5719C";
-	हाल TG3_PHY_ID_BCM5720C:	वापस "5720C";
-	हाल TG3_PHY_ID_BCM5762:	वापस "5762C";
-	हाल TG3_PHY_ID_BCM8002:	वापस "8002/serdes";
-	हाल 0:			वापस "serdes";
-	शेष:		वापस "unknown";
-	पूर्ण
-पूर्ण
+static char *tg3_phy_string(struct tg3 *tp)
+{
+	switch (tp->phy_id & TG3_PHY_ID_MASK) {
+	case TG3_PHY_ID_BCM5400:	return "5400";
+	case TG3_PHY_ID_BCM5401:	return "5401";
+	case TG3_PHY_ID_BCM5411:	return "5411";
+	case TG3_PHY_ID_BCM5701:	return "5701";
+	case TG3_PHY_ID_BCM5703:	return "5703";
+	case TG3_PHY_ID_BCM5704:	return "5704";
+	case TG3_PHY_ID_BCM5705:	return "5705";
+	case TG3_PHY_ID_BCM5750:	return "5750";
+	case TG3_PHY_ID_BCM5752:	return "5752";
+	case TG3_PHY_ID_BCM5714:	return "5714";
+	case TG3_PHY_ID_BCM5780:	return "5780";
+	case TG3_PHY_ID_BCM5755:	return "5755";
+	case TG3_PHY_ID_BCM5787:	return "5787";
+	case TG3_PHY_ID_BCM5784:	return "5784";
+	case TG3_PHY_ID_BCM5756:	return "5722/5756";
+	case TG3_PHY_ID_BCM5906:	return "5906";
+	case TG3_PHY_ID_BCM5761:	return "5761";
+	case TG3_PHY_ID_BCM5718C:	return "5718C";
+	case TG3_PHY_ID_BCM5718S:	return "5718S";
+	case TG3_PHY_ID_BCM57765:	return "57765";
+	case TG3_PHY_ID_BCM5719C:	return "5719C";
+	case TG3_PHY_ID_BCM5720C:	return "5720C";
+	case TG3_PHY_ID_BCM5762:	return "5762C";
+	case TG3_PHY_ID_BCM8002:	return "8002/serdes";
+	case 0:			return "serdes";
+	default:		return "unknown";
+	}
+}
 
-अटल अक्षर *tg3_bus_string(काष्ठा tg3 *tp, अक्षर *str)
-अणु
-	अगर (tg3_flag(tp, PCI_EXPRESS)) अणु
-		म_नकल(str, "PCI Express");
-		वापस str;
-	पूर्ण अन्यथा अगर (tg3_flag(tp, PCIX_MODE)) अणु
-		u32 घड़ी_ctrl = tr32(TG3PCI_CLOCK_CTRL) & 0x1f;
+static char *tg3_bus_string(struct tg3 *tp, char *str)
+{
+	if (tg3_flag(tp, PCI_EXPRESS)) {
+		strcpy(str, "PCI Express");
+		return str;
+	} else if (tg3_flag(tp, PCIX_MODE)) {
+		u32 clock_ctrl = tr32(TG3PCI_CLOCK_CTRL) & 0x1f;
 
-		म_नकल(str, "PCIX:");
+		strcpy(str, "PCIX:");
 
-		अगर ((घड़ी_ctrl == 7) ||
+		if ((clock_ctrl == 7) ||
 		    ((tr32(GRC_MISC_CFG) & GRC_MISC_CFG_BOARD_ID_MASK) ==
 		     GRC_MISC_CFG_BOARD_ID_5704CIOBE))
-			म_जोड़ो(str, "133MHz");
-		अन्यथा अगर (घड़ी_ctrl == 0)
-			म_जोड़ो(str, "33MHz");
-		अन्यथा अगर (घड़ी_ctrl == 2)
-			म_जोड़ो(str, "50MHz");
-		अन्यथा अगर (घड़ी_ctrl == 4)
-			म_जोड़ो(str, "66MHz");
-		अन्यथा अगर (घड़ी_ctrl == 6)
-			म_जोड़ो(str, "100MHz");
-	पूर्ण अन्यथा अणु
-		म_नकल(str, "PCI:");
-		अगर (tg3_flag(tp, PCI_HIGH_SPEED))
-			म_जोड़ो(str, "66MHz");
-		अन्यथा
-			म_जोड़ो(str, "33MHz");
-	पूर्ण
-	अगर (tg3_flag(tp, PCI_32BIT))
-		म_जोड़ो(str, ":32-bit");
-	अन्यथा
-		म_जोड़ो(str, ":64-bit");
-	वापस str;
-पूर्ण
+			strcat(str, "133MHz");
+		else if (clock_ctrl == 0)
+			strcat(str, "33MHz");
+		else if (clock_ctrl == 2)
+			strcat(str, "50MHz");
+		else if (clock_ctrl == 4)
+			strcat(str, "66MHz");
+		else if (clock_ctrl == 6)
+			strcat(str, "100MHz");
+	} else {
+		strcpy(str, "PCI:");
+		if (tg3_flag(tp, PCI_HIGH_SPEED))
+			strcat(str, "66MHz");
+		else
+			strcat(str, "33MHz");
+	}
+	if (tg3_flag(tp, PCI_32BIT))
+		strcat(str, ":32-bit");
+	else
+		strcat(str, ":64-bit");
+	return str;
+}
 
-अटल व्योम tg3_init_coal(काष्ठा tg3 *tp)
-अणु
-	काष्ठा ethtool_coalesce *ec = &tp->coal;
+static void tg3_init_coal(struct tg3 *tp)
+{
+	struct ethtool_coalesce *ec = &tp->coal;
 
-	स_रखो(ec, 0, माप(*ec));
+	memset(ec, 0, sizeof(*ec));
 	ec->cmd = ETHTOOL_GCOALESCE;
 	ec->rx_coalesce_usecs = LOW_RXCOL_TICKS;
 	ec->tx_coalesce_usecs = LOW_TXCOL_TICKS;
@@ -17591,51 +17590,51 @@ out_noमुक्त:
 	ec->tx_max_coalesced_frames_irq = DEFAULT_TXCOAL_MAXF_INT;
 	ec->stats_block_coalesce_usecs = DEFAULT_STAT_COAL_TICKS;
 
-	अगर (tp->coalesce_mode & (HOSTCC_MODE_CLRTICK_RXBD |
-				 HOSTCC_MODE_CLRTICK_TXBD)) अणु
+	if (tp->coalesce_mode & (HOSTCC_MODE_CLRTICK_RXBD |
+				 HOSTCC_MODE_CLRTICK_TXBD)) {
 		ec->rx_coalesce_usecs = LOW_RXCOL_TICKS_CLRTCKS;
 		ec->rx_coalesce_usecs_irq = DEFAULT_RXCOAL_TICK_INT_CLRTCKS;
 		ec->tx_coalesce_usecs = LOW_TXCOL_TICKS_CLRTCKS;
 		ec->tx_coalesce_usecs_irq = DEFAULT_TXCOAL_TICK_INT_CLRTCKS;
-	पूर्ण
+	}
 
-	अगर (tg3_flag(tp, 5705_PLUS)) अणु
+	if (tg3_flag(tp, 5705_PLUS)) {
 		ec->rx_coalesce_usecs_irq = 0;
 		ec->tx_coalesce_usecs_irq = 0;
 		ec->stats_block_coalesce_usecs = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक tg3_init_one(काष्ठा pci_dev *pdev,
-				  स्थिर काष्ठा pci_device_id *ent)
-अणु
-	काष्ठा net_device *dev;
-	काष्ठा tg3 *tp;
-	पूर्णांक i, err;
-	u32 sndmbx, rcvmbx, पूर्णांकmbx;
-	अक्षर str[40];
+static int tg3_init_one(struct pci_dev *pdev,
+				  const struct pci_device_id *ent)
+{
+	struct net_device *dev;
+	struct tg3 *tp;
+	int i, err;
+	u32 sndmbx, rcvmbx, intmbx;
+	char str[40];
 	u64 dma_mask, persist_dma_mask;
 	netdev_features_t features = 0;
 
 	err = pci_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Cannot enable PCI device, aborting\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = pci_request_regions(pdev, DRV_MODULE_NAME);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "Cannot obtain PCI resources, aborting\n");
-		जाओ err_out_disable_pdev;
-	पूर्ण
+		goto err_out_disable_pdev;
+	}
 
 	pci_set_master(pdev);
 
-	dev = alloc_etherdev_mq(माप(*tp), TG3_IRQ_MAX_VECS);
-	अगर (!dev) अणु
+	dev = alloc_etherdev_mq(sizeof(*tp), TG3_IRQ_MAX_VECS);
+	if (!dev) {
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_res;
-	पूर्ण
+		goto err_out_free_res;
+	}
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
@@ -17647,58 +17646,58 @@ out_noमुक्त:
 	tp->irq_sync = 1;
 	tp->pcierr_recovery = false;
 
-	अगर (tg3_debug > 0)
+	if (tg3_debug > 0)
 		tp->msg_enable = tg3_debug;
-	अन्यथा
+	else
 		tp->msg_enable = TG3_DEF_MSG_ENABLE;
 
-	अगर (pdev_is_ssb_gige_core(pdev)) अणु
+	if (pdev_is_ssb_gige_core(pdev)) {
 		tg3_flag_set(tp, IS_SSB_CORE);
-		अगर (ssb_gige_must_flush_posted_ग_लिखोs(pdev))
+		if (ssb_gige_must_flush_posted_writes(pdev))
 			tg3_flag_set(tp, FLUSH_POSTED_WRITES);
-		अगर (ssb_gige_one_dma_at_once(pdev))
+		if (ssb_gige_one_dma_at_once(pdev))
 			tg3_flag_set(tp, ONE_DMA_AT_ONCE);
-		अगर (ssb_gige_have_roboचयन(pdev)) अणु
+		if (ssb_gige_have_roboswitch(pdev)) {
 			tg3_flag_set(tp, USE_PHYLIB);
 			tg3_flag_set(tp, ROBOSWITCH);
-		पूर्ण
-		अगर (ssb_gige_is_rgmii(pdev))
+		}
+		if (ssb_gige_is_rgmii(pdev))
 			tg3_flag_set(tp, RGMII_MODE);
-	पूर्ण
+	}
 
-	/* The word/byte swap controls here control रेजिस्टर access byte
+	/* The word/byte swap controls here control register access byte
 	 * swapping.  DMA data byte swapping is controlled in the GRC_MODE
 	 * setting below.
 	 */
 	tp->misc_host_ctrl =
 		MISC_HOST_CTRL_MASK_PCI_INT |
 		MISC_HOST_CTRL_WORD_SWAP |
-		MISC_HOST_CTRL_INसूची_ACCESS |
+		MISC_HOST_CTRL_INDIR_ACCESS |
 		MISC_HOST_CTRL_PCISTATE_RW;
 
 	/* The NONFRM (non-frame) byte/word swap controls take effect
 	 * on descriptor entries, anything which isn't packet data.
 	 *
-	 * The StrongARM chips on the board (one क्रम tx, one क्रम rx)
+	 * The StrongARM chips on the board (one for tx, one for rx)
 	 * are running in big-endian mode.
 	 */
 	tp->grc_mode = (GRC_MODE_WSWAP_DATA | GRC_MODE_BSWAP_DATA |
 			GRC_MODE_WSWAP_NONFRM_DATA);
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 	tp->grc_mode |= GRC_MODE_BSWAP_NONFRM_DATA;
-#पूर्ण_अगर
+#endif
 	spin_lock_init(&tp->lock);
 	spin_lock_init(&tp->indirect_lock);
 	INIT_WORK(&tp->reset_task, tg3_reset_task);
 
 	tp->regs = pci_ioremap_bar(pdev, BAR_0);
-	अगर (!tp->regs) अणु
+	if (!tp->regs) {
 		dev_err(&pdev->dev, "Cannot map device registers, aborting\n");
 		err = -ENOMEM;
-		जाओ err_out_मुक्त_dev;
-	पूर्ण
+		goto err_out_free_dev;
+	}
 
-	अगर (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761 ||
+	if (tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761 ||
 	    tp->pdev->device == PCI_DEVICE_ID_TIGON3_5761E ||
 	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5761S ||
 	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5761SE ||
@@ -17712,114 +17711,114 @@ out_noमुक्त:
 	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5762 ||
 	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5725 ||
 	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_5727 ||
-	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_57787) अणु
+	    tp->pdev->device == TG3PCI_DEVICE_TIGON3_57787) {
 		tg3_flag_set(tp, ENABLE_APE);
 		tp->aperegs = pci_ioremap_bar(pdev, BAR_2);
-		अगर (!tp->aperegs) अणु
+		if (!tp->aperegs) {
 			dev_err(&pdev->dev,
 				"Cannot map APE registers, aborting\n");
 			err = -ENOMEM;
-			जाओ err_out_iounmap;
-		पूर्ण
-	पूर्ण
+			goto err_out_iounmap;
+		}
+	}
 
 	tp->rx_pending = TG3_DEF_RX_RING_PENDING;
 	tp->rx_jumbo_pending = TG3_DEF_RX_JUMBO_RING_PENDING;
 
 	dev->ethtool_ops = &tg3_ethtool_ops;
-	dev->watchकरोg_समयo = TG3_TX_TIMEOUT;
+	dev->watchdog_timeo = TG3_TX_TIMEOUT;
 	dev->netdev_ops = &tg3_netdev_ops;
 	dev->irq = pdev->irq;
 
 	err = tg3_get_invariants(tp, ent);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev,
 			"Problem fetching invariants of chip, aborting\n");
-		जाओ err_out_apeunmap;
-	पूर्ण
+		goto err_out_apeunmap;
+	}
 
 	/* The EPB bridge inside 5714, 5715, and 5780 and any
 	 * device behind the EPB cannot support DMA addresses > 40-bit.
-	 * On 64-bit प्रणालीs with IOMMU, use 40-bit dma_mask.
-	 * On 64-bit प्रणालीs without IOMMU, use 64-bit dma_mask and
-	 * करो DMA address check in tg3_start_xmit().
+	 * On 64-bit systems with IOMMU, use 40-bit dma_mask.
+	 * On 64-bit systems without IOMMU, use 64-bit dma_mask and
+	 * do DMA address check in tg3_start_xmit().
 	 */
-	अगर (tg3_flag(tp, IS_5788))
+	if (tg3_flag(tp, IS_5788))
 		persist_dma_mask = dma_mask = DMA_BIT_MASK(32);
-	अन्यथा अगर (tg3_flag(tp, 40BIT_DMA_BUG)) अणु
+	else if (tg3_flag(tp, 40BIT_DMA_BUG)) {
 		persist_dma_mask = dma_mask = DMA_BIT_MASK(40);
-#अगर_घोषित CONFIG_HIGHMEM
+#ifdef CONFIG_HIGHMEM
 		dma_mask = DMA_BIT_MASK(64);
-#पूर्ण_अगर
-	पूर्ण अन्यथा
+#endif
+	} else
 		persist_dma_mask = dma_mask = DMA_BIT_MASK(64);
 
 	/* Configure DMA attributes. */
-	अगर (dma_mask > DMA_BIT_MASK(32)) अणु
+	if (dma_mask > DMA_BIT_MASK(32)) {
 		err = pci_set_dma_mask(pdev, dma_mask);
-		अगर (!err) अणु
+		if (!err) {
 			features |= NETIF_F_HIGHDMA;
 			err = pci_set_consistent_dma_mask(pdev,
 							  persist_dma_mask);
-			अगर (err < 0) अणु
+			if (err < 0) {
 				dev_err(&pdev->dev, "Unable to obtain 64 bit "
 					"DMA for consistent allocations\n");
-				जाओ err_out_apeunmap;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	अगर (err || dma_mask == DMA_BIT_MASK(32)) अणु
+				goto err_out_apeunmap;
+			}
+		}
+	}
+	if (err || dma_mask == DMA_BIT_MASK(32)) {
 		err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-		अगर (err) अणु
+		if (err) {
 			dev_err(&pdev->dev,
 				"No usable DMA configuration, aborting\n");
-			जाओ err_out_apeunmap;
-		पूर्ण
-	पूर्ण
+			goto err_out_apeunmap;
+		}
+	}
 
 	tg3_init_bufmgr_config(tp);
 
-	/* 5700 B0 chips करो not support checksumming correctly due
+	/* 5700 B0 chips do not support checksumming correctly due
 	 * to hardware bugs.
 	 */
-	अगर (tg3_chip_rev_id(tp) != CHIPREV_ID_5700_B0) अणु
+	if (tg3_chip_rev_id(tp) != CHIPREV_ID_5700_B0) {
 		features |= NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_RXCSUM;
 
-		अगर (tg3_flag(tp, 5755_PLUS))
+		if (tg3_flag(tp, 5755_PLUS))
 			features |= NETIF_F_IPV6_CSUM;
-	पूर्ण
+	}
 
-	/* TSO is on by शेष on chips that support hardware TSO.
-	 * Firmware TSO on older chips gives lower perक्रमmance, so it
-	 * is off by शेष, but can be enabled using ethtool.
+	/* TSO is on by default on chips that support hardware TSO.
+	 * Firmware TSO on older chips gives lower performance, so it
+	 * is off by default, but can be enabled using ethtool.
 	 */
-	अगर ((tg3_flag(tp, HW_TSO_1) ||
+	if ((tg3_flag(tp, HW_TSO_1) ||
 	     tg3_flag(tp, HW_TSO_2) ||
 	     tg3_flag(tp, HW_TSO_3)) &&
 	    (features & NETIF_F_IP_CSUM))
 		features |= NETIF_F_TSO;
-	अगर (tg3_flag(tp, HW_TSO_2) || tg3_flag(tp, HW_TSO_3)) अणु
-		अगर (features & NETIF_F_IPV6_CSUM)
+	if (tg3_flag(tp, HW_TSO_2) || tg3_flag(tp, HW_TSO_3)) {
+		if (features & NETIF_F_IPV6_CSUM)
 			features |= NETIF_F_TSO6;
-		अगर (tg3_flag(tp, HW_TSO_3) ||
+		if (tg3_flag(tp, HW_TSO_3) ||
 		    tg3_asic_rev(tp) == ASIC_REV_5761 ||
 		    (tg3_asic_rev(tp) == ASIC_REV_5784 &&
 		     tg3_chip_rev(tp) != CHIPREV_5784_AX) ||
 		    tg3_asic_rev(tp) == ASIC_REV_5785 ||
 		    tg3_asic_rev(tp) == ASIC_REV_57780)
 			features |= NETIF_F_TSO_ECN;
-	पूर्ण
+	}
 
 	dev->features |= features | NETIF_F_HW_VLAN_CTAG_TX |
 			 NETIF_F_HW_VLAN_CTAG_RX;
 	dev->vlan_features |= features;
 
 	/*
-	 * Add loopback capability only क्रम a subset of devices that support
+	 * Add loopback capability only for a subset of devices that support
 	 * MAC-LOOPBACK. Eventually this need to be enhanced to allow INT-PHY
-	 * loopback क्रम the reमुख्यing devices.
+	 * loopback for the remaining devices.
 	 */
-	अगर (tg3_asic_rev(tp) != ASIC_REV_5780 &&
+	if (tg3_asic_rev(tp) != ASIC_REV_5780 &&
 	    !tg3_flag(tp, CPMU_PRESENT))
 		/* Add the loopback capability */
 		features |= NETIF_F_LOOPBACK;
@@ -17831,109 +17830,109 @@ out_noमुक्त:
 	dev->min_mtu = TG3_MIN_MTU;
 	dev->max_mtu = TG3_MAX_MTU(tp);
 
-	अगर (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A1 &&
+	if (tg3_chip_rev_id(tp) == CHIPREV_ID_5705_A1 &&
 	    !tg3_flag(tp, TSO_CAPABLE) &&
-	    !(tr32(TG3PCI_PCISTATE) & PCISTATE_BUS_SPEED_HIGH)) अणु
+	    !(tr32(TG3PCI_PCISTATE) & PCISTATE_BUS_SPEED_HIGH)) {
 		tg3_flag_set(tp, MAX_RXPEND_64);
 		tp->rx_pending = 63;
-	पूर्ण
+	}
 
 	err = tg3_get_device_address(tp);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev,
 			"Could not obtain valid ethernet address, aborting\n");
-		जाओ err_out_apeunmap;
-	पूर्ण
+		goto err_out_apeunmap;
+	}
 
-	पूर्णांकmbx = MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW;
+	intmbx = MAILBOX_INTERRUPT_0 + TG3_64BIT_REG_LOW;
 	rcvmbx = MAILBOX_RCVRET_CON_IDX_0 + TG3_64BIT_REG_LOW;
 	sndmbx = MAILBOX_SNDHOST_PROD_IDX_0 + TG3_64BIT_REG_LOW;
-	क्रम (i = 0; i < tp->irq_max; i++) अणु
-		काष्ठा tg3_napi *tnapi = &tp->napi[i];
+	for (i = 0; i < tp->irq_max; i++) {
+		struct tg3_napi *tnapi = &tp->napi[i];
 
 		tnapi->tp = tp;
 		tnapi->tx_pending = TG3_DEF_TX_RING_PENDING;
 
-		tnapi->पूर्णांक_mbox = पूर्णांकmbx;
-		अगर (i <= 4)
-			पूर्णांकmbx += 0x8;
-		अन्यथा
-			पूर्णांकmbx += 0x4;
+		tnapi->int_mbox = intmbx;
+		if (i <= 4)
+			intmbx += 0x8;
+		else
+			intmbx += 0x4;
 
 		tnapi->consmbox = rcvmbx;
 		tnapi->prodmbox = sndmbx;
 
-		अगर (i)
+		if (i)
 			tnapi->coal_now = HOSTCC_MODE_COAL_VEC1_NOW << (i - 1);
-		अन्यथा
+		else
 			tnapi->coal_now = HOSTCC_MODE_NOW;
 
-		अगर (!tg3_flag(tp, SUPPORT_MSIX))
-			अवरोध;
+		if (!tg3_flag(tp, SUPPORT_MSIX))
+			break;
 
 		/*
 		 * If we support MSIX, we'll be using RSS.  If we're using
-		 * RSS, the first vector only handles link पूर्णांकerrupts and the
-		 * reमुख्यing vectors handle rx and tx पूर्णांकerrupts.  Reuse the
-		 * mailbox values क्रम the next iteration.  The values we setup
-		 * above are still useful क्रम the single vectored mode.
+		 * RSS, the first vector only handles link interrupts and the
+		 * remaining vectors handle rx and tx interrupts.  Reuse the
+		 * mailbox values for the next iteration.  The values we setup
+		 * above are still useful for the single vectored mode.
 		 */
-		अगर (!i)
-			जारी;
+		if (!i)
+			continue;
 
 		rcvmbx += 0x8;
 
-		अगर (sndmbx & 0x4)
+		if (sndmbx & 0x4)
 			sndmbx -= 0x4;
-		अन्यथा
+		else
 			sndmbx += 0xc;
-	पूर्ण
+	}
 
 	/*
-	 * Reset chip in हाल UNDI or EFI driver did not shutकरोwn
+	 * Reset chip in case UNDI or EFI driver did not shutdown
 	 * DMA self test will enable WDMAC and we'll see (spurious)
-	 * pending DMA on the PCI bus at that poपूर्णांक.
+	 * pending DMA on the PCI bus at that point.
 	 */
-	अगर ((tr32(HOSTCC_MODE) & HOSTCC_MODE_ENABLE) ||
-	    (tr32(WDMAC_MODE) & WDMAC_MODE_ENABLE)) अणु
+	if ((tr32(HOSTCC_MODE) & HOSTCC_MODE_ENABLE) ||
+	    (tr32(WDMAC_MODE) & WDMAC_MODE_ENABLE)) {
 		tg3_full_lock(tp, 0);
 		tw32(MEMARB_MODE, MEMARB_MODE_ENABLE);
 		tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
 		tg3_full_unlock(tp);
-	पूर्ण
+	}
 
 	err = tg3_test_dma(tp);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&pdev->dev, "DMA engine test failed, aborting\n");
-		जाओ err_out_apeunmap;
-	पूर्ण
+		goto err_out_apeunmap;
+	}
 
 	tg3_init_coal(tp);
 
 	pci_set_drvdata(pdev, dev);
 
-	अगर (tg3_asic_rev(tp) == ASIC_REV_5719 ||
+	if (tg3_asic_rev(tp) == ASIC_REV_5719 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5720 ||
 	    tg3_asic_rev(tp) == ASIC_REV_5762)
 		tg3_flag_set(tp, PTP_CAPABLE);
 
-	tg3_समयr_init(tp);
+	tg3_timer_init(tp);
 
 	tg3_carrier_off(tp);
 
-	err = रेजिस्टर_netdev(dev);
-	अगर (err) अणु
+	err = register_netdev(dev);
+	if (err) {
 		dev_err(&pdev->dev, "Cannot register net device, aborting\n");
-		जाओ err_out_apeunmap;
-	पूर्ण
+		goto err_out_apeunmap;
+	}
 
-	अगर (tg3_flag(tp, PTP_CAPABLE)) अणु
+	if (tg3_flag(tp, PTP_CAPABLE)) {
 		tg3_ptp_init(tp);
-		tp->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&tp->ptp_info,
+		tp->ptp_clock = ptp_clock_register(&tp->ptp_info,
 						   &tp->pdev->dev);
-		अगर (IS_ERR(tp->ptp_घड़ी))
-			tp->ptp_घड़ी = शून्य;
-	पूर्ण
+		if (IS_ERR(tp->ptp_clock))
+			tp->ptp_clock = NULL;
+	}
 
 	netdev_info(dev, "Tigon3 [partno(%s) rev %04x] (%s) MAC address %pM\n",
 		    tp->board_part_number,
@@ -17941,14 +17940,14 @@ out_noमुक्त:
 		    tg3_bus_string(tp, str),
 		    dev->dev_addr);
 
-	अगर (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED)) अणु
-		अक्षर *ethtype;
+	if (!(tp->phy_flags & TG3_PHYFLG_IS_CONNECTED)) {
+		char *ethtype;
 
-		अगर (tp->phy_flags & TG3_PHYFLG_10_100_ONLY)
+		if (tp->phy_flags & TG3_PHYFLG_10_100_ONLY)
 			ethtype = "10/100Base-TX";
-		अन्यथा अगर (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
+		else if (tp->phy_flags & TG3_PHYFLG_ANY_SERDES)
 			ethtype = "1000Base-SX";
-		अन्यथा
+		else
 			ethtype = "10/100/1000Base-T";
 
 		netdev_info(dev, "attached PHY is %s (%s Ethernet) "
@@ -17956,7 +17955,7 @@ out_noमुक्त:
 			    tg3_phy_string(tp), ethtype,
 			    (tp->phy_flags & TG3_PHYFLG_NO_ETH_WIRE_SPEED) == 0,
 			    (tp->phy_flags & TG3_PHYFLG_EEE_CAP) != 0);
-	पूर्ण
+	}
 
 	netdev_info(dev, "RXcsums[%d] LinkChgREG[%d] MIirq[%d] ASF[%d] TSOcap[%d]\n",
 		    (dev->features & NETIF_F_RXCSUM) != 0,
@@ -17971,38 +17970,38 @@ out_noमुक्त:
 
 	pci_save_state(pdev);
 
-	वापस 0;
+	return 0;
 
 err_out_apeunmap:
-	अगर (tp->aperegs) अणु
+	if (tp->aperegs) {
 		iounmap(tp->aperegs);
-		tp->aperegs = शून्य;
-	पूर्ण
+		tp->aperegs = NULL;
+	}
 
 err_out_iounmap:
-	अगर (tp->regs) अणु
+	if (tp->regs) {
 		iounmap(tp->regs);
-		tp->regs = शून्य;
-	पूर्ण
+		tp->regs = NULL;
+	}
 
-err_out_मुक्त_dev:
-	मुक्त_netdev(dev);
+err_out_free_dev:
+	free_netdev(dev);
 
-err_out_मुक्त_res:
+err_out_free_res:
 	pci_release_regions(pdev);
 
 err_out_disable_pdev:
-	अगर (pci_is_enabled(pdev))
+	if (pci_is_enabled(pdev))
 		pci_disable_device(pdev);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम tg3_हटाओ_one(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+static void tg3_remove_one(struct pci_dev *pdev)
+{
+	struct net_device *dev = pci_get_drvdata(pdev);
 
-	अगर (dev) अणु
-		काष्ठा tg3 *tp = netdev_priv(dev);
+	if (dev) {
+		struct tg3 *tp = netdev_priv(dev);
 
 		tg3_ptp_fini(tp);
 
@@ -18010,95 +18009,95 @@ err_out_disable_pdev:
 
 		tg3_reset_task_cancel(tp);
 
-		अगर (tg3_flag(tp, USE_PHYLIB)) अणु
+		if (tg3_flag(tp, USE_PHYLIB)) {
 			tg3_phy_fini(tp);
 			tg3_mdio_fini(tp);
-		पूर्ण
+		}
 
-		unरेजिस्टर_netdev(dev);
-		अगर (tp->aperegs) अणु
+		unregister_netdev(dev);
+		if (tp->aperegs) {
 			iounmap(tp->aperegs);
-			tp->aperegs = शून्य;
-		पूर्ण
-		अगर (tp->regs) अणु
+			tp->aperegs = NULL;
+		}
+		if (tp->regs) {
 			iounmap(tp->regs);
-			tp->regs = शून्य;
-		पूर्ण
-		मुक्त_netdev(dev);
+			tp->regs = NULL;
+		}
+		free_netdev(dev);
 		pci_release_regions(pdev);
 		pci_disable_device(pdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक tg3_suspend(काष्ठा device *device)
-अणु
-	काष्ठा net_device *dev = dev_get_drvdata(device);
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक err = 0;
+#ifdef CONFIG_PM_SLEEP
+static int tg3_suspend(struct device *device)
+{
+	struct net_device *dev = dev_get_drvdata(device);
+	struct tg3 *tp = netdev_priv(dev);
+	int err = 0;
 
 	rtnl_lock();
 
-	अगर (!netअगर_running(dev))
-		जाओ unlock;
+	if (!netif_running(dev))
+		goto unlock;
 
 	tg3_reset_task_cancel(tp);
 	tg3_phy_stop(tp);
-	tg3_netअगर_stop(tp);
+	tg3_netif_stop(tp);
 
-	tg3_समयr_stop(tp);
+	tg3_timer_stop(tp);
 
 	tg3_full_lock(tp, 1);
-	tg3_disable_पूर्णांकs(tp);
+	tg3_disable_ints(tp);
 	tg3_full_unlock(tp);
 
-	netअगर_device_detach(dev);
+	netif_device_detach(dev);
 
 	tg3_full_lock(tp, 0);
 	tg3_halt(tp, RESET_KIND_SHUTDOWN, 1);
 	tg3_flag_clear(tp, INIT_COMPLETE);
 	tg3_full_unlock(tp);
 
-	err = tg3_घातer_करोwn_prepare(tp);
-	अगर (err) अणु
-		पूर्णांक err2;
+	err = tg3_power_down_prepare(tp);
+	if (err) {
+		int err2;
 
 		tg3_full_lock(tp, 0);
 
 		tg3_flag_set(tp, INIT_COMPLETE);
 		err2 = tg3_restart_hw(tp, true);
-		अगर (err2)
-			जाओ out;
+		if (err2)
+			goto out;
 
-		tg3_समयr_start(tp);
+		tg3_timer_start(tp);
 
-		netअगर_device_attach(dev);
-		tg3_netअगर_start(tp);
+		netif_device_attach(dev);
+		tg3_netif_start(tp);
 
 out:
 		tg3_full_unlock(tp);
 
-		अगर (!err2)
+		if (!err2)
 			tg3_phy_start(tp);
-	पूर्ण
+	}
 
 unlock:
 	rtnl_unlock();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक tg3_resume(काष्ठा device *device)
-अणु
-	काष्ठा net_device *dev = dev_get_drvdata(device);
-	काष्ठा tg3 *tp = netdev_priv(dev);
-	पूर्णांक err = 0;
+static int tg3_resume(struct device *device)
+{
+	struct net_device *dev = dev_get_drvdata(device);
+	struct tg3 *tp = netdev_priv(dev);
+	int err = 0;
 
 	rtnl_lock();
 
-	अगर (!netअगर_running(dev))
-		जाओ unlock;
+	if (!netif_running(dev))
+		goto unlock;
 
-	netअगर_device_attach(dev);
+	netif_device_attach(dev);
 
 	tg3_full_lock(tp, 0);
 
@@ -18107,209 +18106,209 @@ unlock:
 	tg3_flag_set(tp, INIT_COMPLETE);
 	err = tg3_restart_hw(tp,
 			     !(tp->phy_flags & TG3_PHYFLG_KEEP_LINK_ON_PWRDN));
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	tg3_समयr_start(tp);
+	tg3_timer_start(tp);
 
-	tg3_netअगर_start(tp);
+	tg3_netif_start(tp);
 
 out:
 	tg3_full_unlock(tp);
 
-	अगर (!err)
+	if (!err)
 		tg3_phy_start(tp);
 
 unlock:
 	rtnl_unlock();
-	वापस err;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return err;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल SIMPLE_DEV_PM_OPS(tg3_pm_ops, tg3_suspend, tg3_resume);
+static SIMPLE_DEV_PM_OPS(tg3_pm_ops, tg3_suspend, tg3_resume);
 
-अटल व्योम tg3_shutकरोwn(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *dev = pci_get_drvdata(pdev);
-	काष्ठा tg3 *tp = netdev_priv(dev);
+static void tg3_shutdown(struct pci_dev *pdev)
+{
+	struct net_device *dev = pci_get_drvdata(pdev);
+	struct tg3 *tp = netdev_priv(dev);
 
 	rtnl_lock();
-	netअगर_device_detach(dev);
+	netif_device_detach(dev);
 
-	अगर (netअगर_running(dev))
-		dev_बंद(dev);
+	if (netif_running(dev))
+		dev_close(dev);
 
-	अगर (प्रणाली_state == SYSTEM_POWER_OFF)
-		tg3_घातer_करोwn(tp);
+	if (system_state == SYSTEM_POWER_OFF)
+		tg3_power_down(tp);
 
 	rtnl_unlock();
-पूर्ण
+}
 
 /**
  * tg3_io_error_detected - called when PCI error is detected
- * @pdev: Poपूर्णांकer to PCI device
+ * @pdev: Pointer to PCI device
  * @state: The current pci connection state
  *
  * This function is called after a PCI bus error affecting
  * this device has been detected.
  */
-अटल pci_ers_result_t tg3_io_error_detected(काष्ठा pci_dev *pdev,
+static pci_ers_result_t tg3_io_error_detected(struct pci_dev *pdev,
 					      pci_channel_state_t state)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
-	काष्ठा tg3 *tp = netdev_priv(netdev);
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct tg3 *tp = netdev_priv(netdev);
 	pci_ers_result_t err = PCI_ERS_RESULT_NEED_RESET;
 
 	netdev_info(netdev, "PCI I/O error detected\n");
 
 	rtnl_lock();
 
-	/* Could be second call or maybe we करोn't have netdev yet */
-	अगर (!netdev || tp->pcierr_recovery || !netअगर_running(netdev))
-		जाओ करोne;
+	/* Could be second call or maybe we don't have netdev yet */
+	if (!netdev || tp->pcierr_recovery || !netif_running(netdev))
+		goto done;
 
 	/* We needn't recover from permanent error */
-	अगर (state == pci_channel_io_frozen)
+	if (state == pci_channel_io_frozen)
 		tp->pcierr_recovery = true;
 
 	tg3_phy_stop(tp);
 
-	tg3_netअगर_stop(tp);
+	tg3_netif_stop(tp);
 
-	tg3_समयr_stop(tp);
+	tg3_timer_stop(tp);
 
-	/* Want to make sure that the reset task करोesn't run */
+	/* Want to make sure that the reset task doesn't run */
 	tg3_reset_task_cancel(tp);
 
-	netअगर_device_detach(netdev);
+	netif_device_detach(netdev);
 
-	/* Clean up software state, even अगर MMIO is blocked */
+	/* Clean up software state, even if MMIO is blocked */
 	tg3_full_lock(tp, 0);
 	tg3_halt(tp, RESET_KIND_SHUTDOWN, 0);
 	tg3_full_unlock(tp);
 
-करोne:
-	अगर (state == pci_channel_io_perm_failure) अणु
-		अगर (netdev) अणु
+done:
+	if (state == pci_channel_io_perm_failure) {
+		if (netdev) {
 			tg3_napi_enable(tp);
-			dev_बंद(netdev);
-		पूर्ण
+			dev_close(netdev);
+		}
 		err = PCI_ERS_RESULT_DISCONNECT;
-	पूर्ण अन्यथा अणु
+	} else {
 		pci_disable_device(pdev);
-	पूर्ण
+	}
 
 	rtnl_unlock();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * tg3_io_slot_reset - called after the pci bus has been reset.
- * @pdev: Poपूर्णांकer to PCI device
+ * @pdev: Pointer to PCI device
  *
- * Restart the card from scratch, as अगर from a cold-boot.
- * At this poपूर्णांक, the card has exprienced a hard reset,
+ * Restart the card from scratch, as if from a cold-boot.
+ * At this point, the card has exprienced a hard reset,
  * followed by fixups by BIOS, and has its config space
  * set up identically to what it was at cold boot.
  */
-अटल pci_ers_result_t tg3_io_slot_reset(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
-	काष्ठा tg3 *tp = netdev_priv(netdev);
+static pci_ers_result_t tg3_io_slot_reset(struct pci_dev *pdev)
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct tg3 *tp = netdev_priv(netdev);
 	pci_ers_result_t rc = PCI_ERS_RESULT_DISCONNECT;
-	पूर्णांक err;
+	int err;
 
 	rtnl_lock();
 
-	अगर (pci_enable_device(pdev)) अणु
+	if (pci_enable_device(pdev)) {
 		dev_err(&pdev->dev,
 			"Cannot re-enable PCI device after reset.\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	pci_set_master(pdev);
 	pci_restore_state(pdev);
 	pci_save_state(pdev);
 
-	अगर (!netdev || !netअगर_running(netdev)) अणु
+	if (!netdev || !netif_running(netdev)) {
 		rc = PCI_ERS_RESULT_RECOVERED;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	err = tg3_घातer_up(tp);
-	अगर (err)
-		जाओ करोne;
+	err = tg3_power_up(tp);
+	if (err)
+		goto done;
 
 	rc = PCI_ERS_RESULT_RECOVERED;
 
-करोne:
-	अगर (rc != PCI_ERS_RESULT_RECOVERED && netdev && netअगर_running(netdev)) अणु
+done:
+	if (rc != PCI_ERS_RESULT_RECOVERED && netdev && netif_running(netdev)) {
 		tg3_napi_enable(tp);
-		dev_बंद(netdev);
-	पूर्ण
+		dev_close(netdev);
+	}
 	rtnl_unlock();
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /**
  * tg3_io_resume - called when traffic can start flowing again.
- * @pdev: Poपूर्णांकer to PCI device
+ * @pdev: Pointer to PCI device
  *
  * This callback is called when the error recovery driver tells
  * us that its OK to resume normal operation.
  */
-अटल व्योम tg3_io_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
-	काष्ठा tg3 *tp = netdev_priv(netdev);
-	पूर्णांक err;
+static void tg3_io_resume(struct pci_dev *pdev)
+{
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct tg3 *tp = netdev_priv(netdev);
+	int err;
 
 	rtnl_lock();
 
-	अगर (!netdev || !netअगर_running(netdev))
-		जाओ करोne;
+	if (!netdev || !netif_running(netdev))
+		goto done;
 
 	tg3_full_lock(tp, 0);
 	tg3_ape_driver_state_change(tp, RESET_KIND_INIT);
 	tg3_flag_set(tp, INIT_COMPLETE);
 	err = tg3_restart_hw(tp, true);
-	अगर (err) अणु
+	if (err) {
 		tg3_full_unlock(tp);
 		netdev_err(netdev, "Cannot restart hardware after reset.\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	netअगर_device_attach(netdev);
+	netif_device_attach(netdev);
 
-	tg3_समयr_start(tp);
+	tg3_timer_start(tp);
 
-	tg3_netअगर_start(tp);
+	tg3_netif_start(tp);
 
 	tg3_full_unlock(tp);
 
 	tg3_phy_start(tp);
 
-करोne:
+done:
 	tp->pcierr_recovery = false;
 	rtnl_unlock();
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pci_error_handlers tg3_err_handler = अणु
+static const struct pci_error_handlers tg3_err_handler = {
 	.error_detected	= tg3_io_error_detected,
 	.slot_reset	= tg3_io_slot_reset,
 	.resume		= tg3_io_resume
-पूर्ण;
+};
 
-अटल काष्ठा pci_driver tg3_driver = अणु
+static struct pci_driver tg3_driver = {
 	.name		= DRV_MODULE_NAME,
 	.id_table	= tg3_pci_tbl,
 	.probe		= tg3_init_one,
-	.हटाओ		= tg3_हटाओ_one,
+	.remove		= tg3_remove_one,
 	.err_handler	= &tg3_err_handler,
 	.driver.pm	= &tg3_pm_ops,
-	.shutकरोwn	= tg3_shutकरोwn,
-पूर्ण;
+	.shutdown	= tg3_shutdown,
+};
 
 module_pci_driver(tg3_driver);

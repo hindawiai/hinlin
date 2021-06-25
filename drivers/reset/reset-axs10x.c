@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2017 Synopsys.
  *
@@ -9,52 +8,52 @@
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
 
-#घोषणा to_axs10x_rst(p)	container_of((p), काष्ठा axs10x_rst, rcdev)
+#define to_axs10x_rst(p)	container_of((p), struct axs10x_rst, rcdev)
 
-#घोषणा AXS10X_MAX_RESETS	32
+#define AXS10X_MAX_RESETS	32
 
-काष्ठा axs10x_rst अणु
-	व्योम __iomem			*regs_rst;
+struct axs10x_rst {
+	void __iomem			*regs_rst;
 	spinlock_t			lock;
-	काष्ठा reset_controller_dev	rcdev;
-पूर्ण;
+	struct reset_controller_dev	rcdev;
+};
 
-अटल पूर्णांक axs10x_reset_reset(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा axs10x_rst *rst = to_axs10x_rst(rcdev);
-	अचिन्हित दीर्घ flags;
+static int axs10x_reset_reset(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct axs10x_rst *rst = to_axs10x_rst(rcdev);
+	unsigned long flags;
 
 	spin_lock_irqsave(&rst->lock, flags);
-	ग_लिखोl(BIT(id), rst->regs_rst);
+	writel(BIT(id), rst->regs_rst);
 	spin_unlock_irqrestore(&rst->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा reset_control_ops axs10x_reset_ops = अणु
+static const struct reset_control_ops axs10x_reset_ops = {
 	.reset	= axs10x_reset_reset,
-पूर्ण;
+};
 
-अटल पूर्णांक axs10x_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा axs10x_rst *rst;
-	काष्ठा resource *mem;
+static int axs10x_reset_probe(struct platform_device *pdev)
+{
+	struct axs10x_rst *rst;
+	struct resource *mem;
 
-	rst = devm_kzalloc(&pdev->dev, माप(*rst), GFP_KERNEL);
-	अगर (!rst)
-		वापस -ENOMEM;
+	rst = devm_kzalloc(&pdev->dev, sizeof(*rst), GFP_KERNEL);
+	if (!rst)
+		return -ENOMEM;
 
-	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	rst->regs_rst = devm_ioremap_resource(&pdev->dev, mem);
-	अगर (IS_ERR(rst->regs_rst))
-		वापस PTR_ERR(rst->regs_rst);
+	if (IS_ERR(rst->regs_rst))
+		return PTR_ERR(rst->regs_rst);
 
 	spin_lock_init(&rst->lock);
 
@@ -63,22 +62,22 @@
 	rst->rcdev.of_node = pdev->dev.of_node;
 	rst->rcdev.nr_resets = AXS10X_MAX_RESETS;
 
-	वापस devm_reset_controller_रेजिस्टर(&pdev->dev, &rst->rcdev);
-पूर्ण
+	return devm_reset_controller_register(&pdev->dev, &rst->rcdev);
+}
 
-अटल स्थिर काष्ठा of_device_id axs10x_reset_dt_match[] = अणु
-	अणु .compatible = "snps,axs10x-reset" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id axs10x_reset_dt_match[] = {
+	{ .compatible = "snps,axs10x-reset" },
+	{ },
+};
 
-अटल काष्ठा platक्रमm_driver axs10x_reset_driver = अणु
+static struct platform_driver axs10x_reset_driver = {
 	.probe	= axs10x_reset_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "axs10x-reset",
 		.of_match_table = axs10x_reset_dt_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(axs10x_reset_driver);
+	},
+};
+builtin_platform_driver(axs10x_reset_driver);
 
 MODULE_AUTHOR("Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>");
 MODULE_DESCRIPTION("Synopsys AXS10x reset driver");

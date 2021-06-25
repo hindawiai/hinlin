@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * UART Link Layer क्रम S3FWRN82 NCI based Driver
+ * UART Link Layer for S3FWRN82 NCI based Driver
  *
  * Copyright (C) 2015 Samsung Electronics
  * Robert Baldyga <r.baldyga@samsung.com>
@@ -9,118 +8,118 @@
  * Bongsu Jeon <bongsu.jeon@samsung.com>
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/nfc.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/of.h>
-#समावेश <linux/serdev.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/of_gpपन.स>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/nfc.h>
+#include <linux/netdevice.h>
+#include <linux/of.h>
+#include <linux/serdev.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
-#समावेश "phy_common.h"
+#include "phy_common.h"
 
-#घोषणा S3FWRN82_NCI_HEADER 3
-#घोषणा S3FWRN82_NCI_IDX 2
-#घोषणा NCI_SKB_BUFF_LEN 258
+#define S3FWRN82_NCI_HEADER 3
+#define S3FWRN82_NCI_IDX 2
+#define NCI_SKB_BUFF_LEN 258
 
-काष्ठा s3fwrn82_uart_phy अणु
-	काष्ठा phy_common common;
-	काष्ठा serdev_device *ser_dev;
-	काष्ठा sk_buff *recv_skb;
-पूर्ण;
+struct s3fwrn82_uart_phy {
+	struct phy_common common;
+	struct serdev_device *ser_dev;
+	struct sk_buff *recv_skb;
+};
 
-अटल पूर्णांक s3fwrn82_uart_ग_लिखो(व्योम *phy_id, काष्ठा sk_buff *out)
-अणु
-	काष्ठा s3fwrn82_uart_phy *phy = phy_id;
-	पूर्णांक err;
+static int s3fwrn82_uart_write(void *phy_id, struct sk_buff *out)
+{
+	struct s3fwrn82_uart_phy *phy = phy_id;
+	int err;
 
-	err = serdev_device_ग_लिखो(phy->ser_dev,
+	err = serdev_device_write(phy->ser_dev,
 				  out->data, out->len,
 				  MAX_SCHEDULE_TIMEOUT);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा s3fwrn5_phy_ops uart_phy_ops = अणु
+static const struct s3fwrn5_phy_ops uart_phy_ops = {
 	.set_wake = s3fwrn5_phy_set_wake,
 	.set_mode = s3fwrn5_phy_set_mode,
 	.get_mode = s3fwrn5_phy_get_mode,
-	.ग_लिखो = s3fwrn82_uart_ग_लिखो,
-पूर्ण;
+	.write = s3fwrn82_uart_write,
+};
 
-अटल पूर्णांक s3fwrn82_uart_पढ़ो(काष्ठा serdev_device *serdev,
-			      स्थिर अचिन्हित अक्षर *data,
-			      माप_प्रकार count)
-अणु
-	काष्ठा s3fwrn82_uart_phy *phy = serdev_device_get_drvdata(serdev);
-	माप_प्रकार i;
+static int s3fwrn82_uart_read(struct serdev_device *serdev,
+			      const unsigned char *data,
+			      size_t count)
+{
+	struct s3fwrn82_uart_phy *phy = serdev_device_get_drvdata(serdev);
+	size_t i;
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		skb_put_u8(phy->recv_skb, *data++);
 
-		अगर (phy->recv_skb->len < S3FWRN82_NCI_HEADER)
-			जारी;
+		if (phy->recv_skb->len < S3FWRN82_NCI_HEADER)
+			continue;
 
-		अगर ((phy->recv_skb->len - S3FWRN82_NCI_HEADER)
+		if ((phy->recv_skb->len - S3FWRN82_NCI_HEADER)
 				< phy->recv_skb->data[S3FWRN82_NCI_IDX])
-			जारी;
+			continue;
 
 		s3fwrn5_recv_frame(phy->common.ndev, phy->recv_skb,
 				   phy->common.mode);
 		phy->recv_skb = alloc_skb(NCI_SKB_BUFF_LEN, GFP_KERNEL);
-		अगर (!phy->recv_skb)
-			वापस 0;
-	पूर्ण
+		if (!phy->recv_skb)
+			return 0;
+	}
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल स्थिर काष्ठा serdev_device_ops s3fwrn82_serdev_ops = अणु
-	.receive_buf = s3fwrn82_uart_पढ़ो,
-	.ग_लिखो_wakeup = serdev_device_ग_लिखो_wakeup,
-पूर्ण;
+static const struct serdev_device_ops s3fwrn82_serdev_ops = {
+	.receive_buf = s3fwrn82_uart_read,
+	.write_wakeup = serdev_device_write_wakeup,
+};
 
-अटल स्थिर काष्ठा of_device_id s3fwrn82_uart_of_match[] = अणु
-	अणु .compatible = "samsung,s3fwrn82", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id s3fwrn82_uart_of_match[] = {
+	{ .compatible = "samsung,s3fwrn82", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, s3fwrn82_uart_of_match);
 
-अटल पूर्णांक s3fwrn82_uart_parse_dt(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा s3fwrn82_uart_phy *phy = serdev_device_get_drvdata(serdev);
-	काष्ठा device_node *np = serdev->dev.of_node;
+static int s3fwrn82_uart_parse_dt(struct serdev_device *serdev)
+{
+	struct s3fwrn82_uart_phy *phy = serdev_device_get_drvdata(serdev);
+	struct device_node *np = serdev->dev.of_node;
 
-	अगर (!np)
-		वापस -ENODEV;
+	if (!np)
+		return -ENODEV;
 
 	phy->common.gpio_en = of_get_named_gpio(np, "en-gpios", 0);
-	अगर (!gpio_is_valid(phy->common.gpio_en))
-		वापस -ENODEV;
+	if (!gpio_is_valid(phy->common.gpio_en))
+		return -ENODEV;
 
 	phy->common.gpio_fw_wake = of_get_named_gpio(np, "wake-gpios", 0);
-	अगर (!gpio_is_valid(phy->common.gpio_fw_wake))
-		वापस -ENODEV;
+	if (!gpio_is_valid(phy->common.gpio_fw_wake))
+		return -ENODEV;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3fwrn82_uart_probe(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा s3fwrn82_uart_phy *phy;
-	पूर्णांक ret = -ENOMEM;
+static int s3fwrn82_uart_probe(struct serdev_device *serdev)
+{
+	struct s3fwrn82_uart_phy *phy;
+	int ret = -ENOMEM;
 
-	phy = devm_kzalloc(&serdev->dev, माप(*phy), GFP_KERNEL);
-	अगर (!phy)
-		जाओ err_निकास;
+	phy = devm_kzalloc(&serdev->dev, sizeof(*phy), GFP_KERNEL);
+	if (!phy)
+		goto err_exit;
 
 	phy->recv_skb = alloc_skb(NCI_SKB_BUFF_LEN, GFP_KERNEL);
-	अगर (!phy->recv_skb)
-		जाओ err_निकास;
+	if (!phy->recv_skb)
+		goto err_exit;
 
 	mutex_init(&phy->common.mutex);
 	phy->common.mode = S3FWRN5_MODE_COLD;
@@ -128,67 +127,67 @@ MODULE_DEVICE_TABLE(of, s3fwrn82_uart_of_match);
 	phy->ser_dev = serdev;
 	serdev_device_set_drvdata(serdev, phy);
 	serdev_device_set_client_ops(serdev, &s3fwrn82_serdev_ops);
-	ret = serdev_device_खोलो(serdev);
-	अगर (ret) अणु
+	ret = serdev_device_open(serdev);
+	if (ret) {
 		dev_err(&serdev->dev, "Unable to open device\n");
-		जाओ err_skb;
-	पूर्ण
+		goto err_skb;
+	}
 
 	ret = serdev_device_set_baudrate(serdev, 115200);
-	अगर (ret != 115200) अणु
+	if (ret != 115200) {
 		ret = -EINVAL;
-		जाओ err_serdev;
-	पूर्ण
+		goto err_serdev;
+	}
 
 	serdev_device_set_flow_control(serdev, false);
 
 	ret = s3fwrn82_uart_parse_dt(serdev);
-	अगर (ret < 0)
-		जाओ err_serdev;
+	if (ret < 0)
+		goto err_serdev;
 
 	ret = devm_gpio_request_one(&phy->ser_dev->dev, phy->common.gpio_en,
 				    GPIOF_OUT_INIT_HIGH, "s3fwrn82_en");
-	अगर (ret < 0)
-		जाओ err_serdev;
+	if (ret < 0)
+		goto err_serdev;
 
 	ret = devm_gpio_request_one(&phy->ser_dev->dev,
 				    phy->common.gpio_fw_wake,
 				    GPIOF_OUT_INIT_LOW, "s3fwrn82_fw_wake");
-	अगर (ret < 0)
-		जाओ err_serdev;
+	if (ret < 0)
+		goto err_serdev;
 
 	ret = s3fwrn5_probe(&phy->common.ndev, phy, &phy->ser_dev->dev,
 			    &uart_phy_ops);
-	अगर (ret < 0)
-		जाओ err_serdev;
+	if (ret < 0)
+		goto err_serdev;
 
-	वापस ret;
+	return ret;
 
 err_serdev:
-	serdev_device_बंद(serdev);
+	serdev_device_close(serdev);
 err_skb:
-	kमुक्त_skb(phy->recv_skb);
-err_निकास:
-	वापस ret;
-पूर्ण
+	kfree_skb(phy->recv_skb);
+err_exit:
+	return ret;
+}
 
-अटल व्योम s3fwrn82_uart_हटाओ(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा s3fwrn82_uart_phy *phy = serdev_device_get_drvdata(serdev);
+static void s3fwrn82_uart_remove(struct serdev_device *serdev)
+{
+	struct s3fwrn82_uart_phy *phy = serdev_device_get_drvdata(serdev);
 
-	s3fwrn5_हटाओ(phy->common.ndev);
-	serdev_device_बंद(serdev);
-	kमुक्त_skb(phy->recv_skb);
-पूर्ण
+	s3fwrn5_remove(phy->common.ndev);
+	serdev_device_close(serdev);
+	kfree_skb(phy->recv_skb);
+}
 
-अटल काष्ठा serdev_device_driver s3fwrn82_uart_driver = अणु
+static struct serdev_device_driver s3fwrn82_uart_driver = {
 	.probe = s3fwrn82_uart_probe,
-	.हटाओ = s3fwrn82_uart_हटाओ,
-	.driver = अणु
+	.remove = s3fwrn82_uart_remove,
+	.driver = {
 		.name = "s3fwrn82_uart",
 		.of_match_table = s3fwrn82_uart_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_serdev_device_driver(s3fwrn82_uart_driver);
 

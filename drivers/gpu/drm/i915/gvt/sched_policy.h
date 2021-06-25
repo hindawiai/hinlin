@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,44 +22,44 @@
  *
  * Authors:
  *    Anhua Xu
- *    Kevin Tian <kevin.tian@पूर्णांकel.com>
+ *    Kevin Tian <kevin.tian@intel.com>
  *
  * Contributors:
- *    Min He <min.he@पूर्णांकel.com>
- *    Bing Niu <bing.niu@पूर्णांकel.com>
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Min He <min.he@intel.com>
+ *    Bing Niu <bing.niu@intel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
  */
 
-#अगर_अघोषित __GVT_SCHED_POLICY__
-#घोषणा __GVT_SCHED_POLICY__
+#ifndef __GVT_SCHED_POLICY__
+#define __GVT_SCHED_POLICY__
 
-काष्ठा पूर्णांकel_gvt;
-काष्ठा पूर्णांकel_vgpu;
+struct intel_gvt;
+struct intel_vgpu;
 
-काष्ठा पूर्णांकel_gvt_sched_policy_ops अणु
-	पूर्णांक (*init)(काष्ठा पूर्णांकel_gvt *gvt);
-	व्योम (*clean)(काष्ठा पूर्णांकel_gvt *gvt);
-	पूर्णांक (*init_vgpu)(काष्ठा पूर्णांकel_vgpu *vgpu);
-	व्योम (*clean_vgpu)(काष्ठा पूर्णांकel_vgpu *vgpu);
-	व्योम (*start_schedule)(काष्ठा पूर्णांकel_vgpu *vgpu);
-	व्योम (*stop_schedule)(काष्ठा पूर्णांकel_vgpu *vgpu);
-पूर्ण;
+struct intel_gvt_sched_policy_ops {
+	int (*init)(struct intel_gvt *gvt);
+	void (*clean)(struct intel_gvt *gvt);
+	int (*init_vgpu)(struct intel_vgpu *vgpu);
+	void (*clean_vgpu)(struct intel_vgpu *vgpu);
+	void (*start_schedule)(struct intel_vgpu *vgpu);
+	void (*stop_schedule)(struct intel_vgpu *vgpu);
+};
 
-व्योम पूर्णांकel_gvt_schedule(काष्ठा पूर्णांकel_gvt *gvt);
+void intel_gvt_schedule(struct intel_gvt *gvt);
 
-पूर्णांक पूर्णांकel_gvt_init_sched_policy(काष्ठा पूर्णांकel_gvt *gvt);
+int intel_gvt_init_sched_policy(struct intel_gvt *gvt);
 
-व्योम पूर्णांकel_gvt_clean_sched_policy(काष्ठा पूर्णांकel_gvt *gvt);
+void intel_gvt_clean_sched_policy(struct intel_gvt *gvt);
 
-पूर्णांक पूर्णांकel_vgpu_init_sched_policy(काष्ठा पूर्णांकel_vgpu *vgpu);
+int intel_vgpu_init_sched_policy(struct intel_vgpu *vgpu);
 
-व्योम पूर्णांकel_vgpu_clean_sched_policy(काष्ठा पूर्णांकel_vgpu *vgpu);
+void intel_vgpu_clean_sched_policy(struct intel_vgpu *vgpu);
 
-व्योम पूर्णांकel_vgpu_start_schedule(काष्ठा पूर्णांकel_vgpu *vgpu);
+void intel_vgpu_start_schedule(struct intel_vgpu *vgpu);
 
-व्योम पूर्णांकel_vgpu_stop_schedule(काष्ठा पूर्णांकel_vgpu *vgpu);
+void intel_vgpu_stop_schedule(struct intel_vgpu *vgpu);
 
-व्योम पूर्णांकel_gvt_kick_schedule(काष्ठा पूर्णांकel_gvt *gvt);
+void intel_gvt_kick_schedule(struct intel_gvt *gvt);
 
-#पूर्ण_अगर
+#endif

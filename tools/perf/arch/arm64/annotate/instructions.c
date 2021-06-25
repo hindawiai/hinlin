@@ -1,123 +1,122 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/compiler.h>
-#समावेश <sys/types.h>
-#समावेश <regex.h>
-#समावेश <मानककोष.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/compiler.h>
+#include <sys/types.h>
+#include <regex.h>
+#include <stdlib.h>
 
-काष्ठा arm64_annotate अणु
+struct arm64_annotate {
 	regex_t call_insn,
 		jump_insn;
-पूर्ण;
+};
 
-अटल पूर्णांक arm64_mov__parse(काष्ठा arch *arch __maybe_unused,
-			    काष्ठा ins_opeअक्रमs *ops,
-			    काष्ठा map_symbol *ms __maybe_unused)
-अणु
-	अक्षर *s = म_अक्षर(ops->raw, ','), *target, *endptr;
+static int arm64_mov__parse(struct arch *arch __maybe_unused,
+			    struct ins_operands *ops,
+			    struct map_symbol *ms __maybe_unused)
+{
+	char *s = strchr(ops->raw, ','), *target, *endptr;
 
-	अगर (s == शून्य)
-		वापस -1;
+	if (s == NULL)
+		return -1;
 
 	*s = '\0';
 	ops->source.raw = strdup(ops->raw);
 	*s = ',';
 
-	अगर (ops->source.raw == शून्य)
-		वापस -1;
+	if (ops->source.raw == NULL)
+		return -1;
 
 	target = ++s;
 	ops->target.raw = strdup(target);
-	अगर (ops->target.raw == शून्य)
-		जाओ out_मुक्त_source;
+	if (ops->target.raw == NULL)
+		goto out_free_source;
 
-	ops->target.addr = म_से_अदीर्घl(target, &endptr, 16);
-	अगर (endptr == target)
-		जाओ out_मुक्त_target;
+	ops->target.addr = strtoull(target, &endptr, 16);
+	if (endptr == target)
+		goto out_free_target;
 
-	s = म_अक्षर(endptr, '<');
-	अगर (s == शून्य)
-		जाओ out_मुक्त_target;
-	endptr = म_अक्षर(s + 1, '>');
-	अगर (endptr == शून्य)
-		जाओ out_मुक्त_target;
+	s = strchr(endptr, '<');
+	if (s == NULL)
+		goto out_free_target;
+	endptr = strchr(s + 1, '>');
+	if (endptr == NULL)
+		goto out_free_target;
 
 	*endptr = '\0';
 	*s = ' ';
 	ops->target.name = strdup(s);
 	*s = '<';
 	*endptr = '>';
-	अगर (ops->target.name == शून्य)
-		जाओ out_मुक्त_target;
+	if (ops->target.name == NULL)
+		goto out_free_target;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_target:
-	zमुक्त(&ops->target.raw);
-out_मुक्त_source:
-	zमुक्त(&ops->source.raw);
-	वापस -1;
-पूर्ण
+out_free_target:
+	zfree(&ops->target.raw);
+out_free_source:
+	zfree(&ops->source.raw);
+	return -1;
+}
 
-अटल पूर्णांक mov__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			  काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name);
+static int mov__scnprintf(struct ins *ins, char *bf, size_t size,
+			  struct ins_operands *ops, int max_ins_name);
 
-अटल काष्ठा ins_ops arm64_mov_ops = अणु
+static struct ins_ops arm64_mov_ops = {
 	.parse	   = arm64_mov__parse,
-	.scnम_लिखो = mov__scnम_लिखो,
-पूर्ण;
+	.scnprintf = mov__scnprintf,
+};
 
-अटल काष्ठा ins_ops *arm64__associate_inकाष्ठाion_ops(काष्ठा arch *arch, स्थिर अक्षर *name)
-अणु
-	काष्ठा arm64_annotate *arm = arch->priv;
-	काष्ठा ins_ops *ops;
+static struct ins_ops *arm64__associate_instruction_ops(struct arch *arch, const char *name)
+{
+	struct arm64_annotate *arm = arch->priv;
+	struct ins_ops *ops;
 	regmatch_t match[2];
 
-	अगर (!regexec(&arm->jump_insn, name, 2, match, 0))
+	if (!regexec(&arm->jump_insn, name, 2, match, 0))
 		ops = &jump_ops;
-	अन्यथा अगर (!regexec(&arm->call_insn, name, 2, match, 0))
+	else if (!regexec(&arm->call_insn, name, 2, match, 0))
 		ops = &call_ops;
-	अन्यथा अगर (!म_भेद(name, "ret"))
+	else if (!strcmp(name, "ret"))
 		ops = &ret_ops;
-	अन्यथा
+	else
 		ops = &arm64_mov_ops;
 
 	arch__associate_ins_ops(arch, name, ops);
-	वापस ops;
-पूर्ण
+	return ops;
+}
 
-अटल पूर्णांक arm64__annotate_init(काष्ठा arch *arch, अक्षर *cpuid __maybe_unused)
-अणु
-	काष्ठा arm64_annotate *arm;
-	पूर्णांक err;
+static int arm64__annotate_init(struct arch *arch, char *cpuid __maybe_unused)
+{
+	struct arm64_annotate *arm;
+	int err;
 
-	अगर (arch->initialized)
-		वापस 0;
+	if (arch->initialized)
+		return 0;
 
-	arm = zalloc(माप(*arm));
-	अगर (!arm)
-		वापस ENOMEM;
+	arm = zalloc(sizeof(*arm));
+	if (!arm)
+		return ENOMEM;
 
 	/* bl, blr */
 	err = regcomp(&arm->call_insn, "^blr?$", REG_EXTENDED);
-	अगर (err)
-		जाओ out_मुक्त_arm;
+	if (err)
+		goto out_free_arm;
 	/* b, b.cond, br, cbz/cbnz, tbz/tbnz */
 	err = regcomp(&arm->jump_insn, "^[ct]?br?\\.?(cc|cs|eq|ge|gt|hi|le|ls|lt|mi|ne|pl)?n?z?$",
 		      REG_EXTENDED);
-	अगर (err)
-		जाओ out_मुक्त_call;
+	if (err)
+		goto out_free_call;
 
 	arch->initialized = true;
 	arch->priv	  = arm;
-	arch->associate_inकाष्ठाion_ops   = arm64__associate_inकाष्ठाion_ops;
-	arch->objdump.comment_अक्षर	  = '/';
-	arch->objdump.skip_functions_अक्षर = '+';
-	वापस 0;
+	arch->associate_instruction_ops   = arm64__associate_instruction_ops;
+	arch->objdump.comment_char	  = '/';
+	arch->objdump.skip_functions_char = '+';
+	return 0;
 
-out_मुक्त_call:
-	regमुक्त(&arm->call_insn);
-out_मुक्त_arm:
-	मुक्त(arm);
-	वापस SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP;
-पूर्ण
+out_free_call:
+	regfree(&arm->call_insn);
+out_free_arm:
+	free(arm);
+	return SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP;
+}

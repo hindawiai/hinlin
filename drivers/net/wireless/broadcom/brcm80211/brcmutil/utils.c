@@ -1,328 +1,327 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/module.h>
 
-#समावेश <brcmu_utils.h>
+#include <brcmu_utils.h>
 
 MODULE_AUTHOR("Broadcom Corporation");
 MODULE_DESCRIPTION("Broadcom 802.11n wireless LAN driver utilities.");
 MODULE_LICENSE("Dual BSD/GPL");
 
-काष्ठा sk_buff *brcmu_pkt_buf_get_skb(uपूर्णांक len)
-अणु
-	काष्ठा sk_buff *skb;
+struct sk_buff *brcmu_pkt_buf_get_skb(uint len)
+{
+	struct sk_buff *skb;
 
 	skb = dev_alloc_skb(len);
-	अगर (skb) अणु
+	if (skb) {
 		skb_put(skb, len);
 		skb->priority = 0;
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 EXPORT_SYMBOL(brcmu_pkt_buf_get_skb);
 
-/* Free the driver packet. Free the tag अगर present */
-व्योम brcmu_pkt_buf_मुक्त_skb(काष्ठा sk_buff *skb)
-अणु
-	अगर (!skb)
-		वापस;
+/* Free the driver packet. Free the tag if present */
+void brcmu_pkt_buf_free_skb(struct sk_buff *skb)
+{
+	if (!skb)
+		return;
 
 	WARN_ON(skb->next);
-	dev_kमुक्त_skb_any(skb);
-पूर्ण
-EXPORT_SYMBOL(brcmu_pkt_buf_मुक्त_skb);
+	dev_kfree_skb_any(skb);
+}
+EXPORT_SYMBOL(brcmu_pkt_buf_free_skb);
 
 /*
  * osl multiple-precedence packet queue
  * hi_prec is always >= the number of the highest non-empty precedence
  */
-काष्ठा sk_buff *brcmu_pktq_penq(काष्ठा pktq *pq, पूर्णांक prec,
-				      काष्ठा sk_buff *p)
-अणु
-	काष्ठा sk_buff_head *q;
+struct sk_buff *brcmu_pktq_penq(struct pktq *pq, int prec,
+				      struct sk_buff *p)
+{
+	struct sk_buff_head *q;
 
-	अगर (pktq_full(pq) || pktq_pfull(pq, prec))
-		वापस शून्य;
+	if (pktq_full(pq) || pktq_pfull(pq, prec))
+		return NULL;
 
 	q = &pq->q[prec].skblist;
 	skb_queue_tail(q, p);
 	pq->len++;
 
-	अगर (pq->hi_prec < prec)
+	if (pq->hi_prec < prec)
 		pq->hi_prec = (u8) prec;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(brcmu_pktq_penq);
 
-काष्ठा sk_buff *brcmu_pktq_penq_head(काष्ठा pktq *pq, पूर्णांक prec,
-					   काष्ठा sk_buff *p)
-अणु
-	काष्ठा sk_buff_head *q;
+struct sk_buff *brcmu_pktq_penq_head(struct pktq *pq, int prec,
+					   struct sk_buff *p)
+{
+	struct sk_buff_head *q;
 
-	अगर (pktq_full(pq) || pktq_pfull(pq, prec))
-		वापस शून्य;
+	if (pktq_full(pq) || pktq_pfull(pq, prec))
+		return NULL;
 
 	q = &pq->q[prec].skblist;
 	skb_queue_head(q, p);
 	pq->len++;
 
-	अगर (pq->hi_prec < prec)
+	if (pq->hi_prec < prec)
 		pq->hi_prec = (u8) prec;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(brcmu_pktq_penq_head);
 
-काष्ठा sk_buff *brcmu_pktq_pdeq(काष्ठा pktq *pq, पूर्णांक prec)
-अणु
-	काष्ठा sk_buff_head *q;
-	काष्ठा sk_buff *p;
+struct sk_buff *brcmu_pktq_pdeq(struct pktq *pq, int prec)
+{
+	struct sk_buff_head *q;
+	struct sk_buff *p;
 
 	q = &pq->q[prec].skblist;
 	p = skb_dequeue(q);
-	अगर (p == शून्य)
-		वापस शून्य;
+	if (p == NULL)
+		return NULL;
 
 	pq->len--;
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(brcmu_pktq_pdeq);
 
 /*
- * precedence based dequeue with match function. Passing a शून्य poपूर्णांकer
- * क्रम the match function parameter is considered to be a wildcard so
- * any packet on the queue is वापसed. In that हाल it is no dअगरferent
+ * precedence based dequeue with match function. Passing a NULL pointer
+ * for the match function parameter is considered to be a wildcard so
+ * any packet on the queue is returned. In that case it is no different
  * from brcmu_pktq_pdeq() above.
  */
-काष्ठा sk_buff *brcmu_pktq_pdeq_match(काष्ठा pktq *pq, पूर्णांक prec,
-				      bool (*match_fn)(काष्ठा sk_buff *skb,
-						       व्योम *arg), व्योम *arg)
-अणु
-	काष्ठा sk_buff_head *q;
-	काष्ठा sk_buff *p, *next;
+struct sk_buff *brcmu_pktq_pdeq_match(struct pktq *pq, int prec,
+				      bool (*match_fn)(struct sk_buff *skb,
+						       void *arg), void *arg)
+{
+	struct sk_buff_head *q;
+	struct sk_buff *p, *next;
 
 	q = &pq->q[prec].skblist;
-	skb_queue_walk_safe(q, p, next) अणु
-		अगर (match_fn == शून्य || match_fn(p, arg)) अणु
+	skb_queue_walk_safe(q, p, next) {
+		if (match_fn == NULL || match_fn(p, arg)) {
 			skb_unlink(p, q);
 			pq->len--;
-			वापस p;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return p;
+		}
+	}
+	return NULL;
+}
 EXPORT_SYMBOL(brcmu_pktq_pdeq_match);
 
-काष्ठा sk_buff *brcmu_pktq_pdeq_tail(काष्ठा pktq *pq, पूर्णांक prec)
-अणु
-	काष्ठा sk_buff_head *q;
-	काष्ठा sk_buff *p;
+struct sk_buff *brcmu_pktq_pdeq_tail(struct pktq *pq, int prec)
+{
+	struct sk_buff_head *q;
+	struct sk_buff *p;
 
 	q = &pq->q[prec].skblist;
 	p = skb_dequeue_tail(q);
-	अगर (p == शून्य)
-		वापस शून्य;
+	if (p == NULL)
+		return NULL;
 
 	pq->len--;
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(brcmu_pktq_pdeq_tail);
 
-व्योम
-brcmu_pktq_pflush(काष्ठा pktq *pq, पूर्णांक prec, bool dir,
-		  bool (*fn)(काष्ठा sk_buff *, व्योम *), व्योम *arg)
-अणु
-	काष्ठा sk_buff_head *q;
-	काष्ठा sk_buff *p, *next;
+void
+brcmu_pktq_pflush(struct pktq *pq, int prec, bool dir,
+		  bool (*fn)(struct sk_buff *, void *), void *arg)
+{
+	struct sk_buff_head *q;
+	struct sk_buff *p, *next;
 
 	q = &pq->q[prec].skblist;
-	skb_queue_walk_safe(q, p, next) अणु
-		अगर (fn == शून्य || (*fn) (p, arg)) अणु
+	skb_queue_walk_safe(q, p, next) {
+		if (fn == NULL || (*fn) (p, arg)) {
 			skb_unlink(p, q);
-			brcmu_pkt_buf_मुक्त_skb(p);
+			brcmu_pkt_buf_free_skb(p);
 			pq->len--;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL(brcmu_pktq_pflush);
 
-व्योम brcmu_pktq_flush(काष्ठा pktq *pq, bool dir,
-		      bool (*fn)(काष्ठा sk_buff *, व्योम *), व्योम *arg)
-अणु
-	पूर्णांक prec;
-	क्रम (prec = 0; prec < pq->num_prec; prec++)
+void brcmu_pktq_flush(struct pktq *pq, bool dir,
+		      bool (*fn)(struct sk_buff *, void *), void *arg)
+{
+	int prec;
+	for (prec = 0; prec < pq->num_prec; prec++)
 		brcmu_pktq_pflush(pq, prec, dir, fn, arg);
-पूर्ण
+}
 EXPORT_SYMBOL(brcmu_pktq_flush);
 
-व्योम brcmu_pktq_init(काष्ठा pktq *pq, पूर्णांक num_prec, पूर्णांक max_len)
-अणु
-	पूर्णांक prec;
+void brcmu_pktq_init(struct pktq *pq, int num_prec, int max_len)
+{
+	int prec;
 
 	/* pq is variable size; only zero out what's requested */
-	स_रखो(pq, 0,
-	      दुरत्व(काष्ठा pktq, q) + (माप(काष्ठा pktq_prec) * num_prec));
+	memset(pq, 0,
+	      offsetof(struct pktq, q) + (sizeof(struct pktq_prec) * num_prec));
 
 	pq->num_prec = (u16) num_prec;
 
 	pq->max = (u16) max_len;
 
-	क्रम (prec = 0; prec < num_prec; prec++) अणु
+	for (prec = 0; prec < num_prec; prec++) {
 		pq->q[prec].max = pq->max;
 		skb_queue_head_init(&pq->q[prec].skblist);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(brcmu_pktq_init);
 
-काष्ठा sk_buff *brcmu_pktq_peek_tail(काष्ठा pktq *pq, पूर्णांक *prec_out)
-अणु
-	पूर्णांक prec;
+struct sk_buff *brcmu_pktq_peek_tail(struct pktq *pq, int *prec_out)
+{
+	int prec;
 
-	अगर (pq->len == 0)
-		वापस शून्य;
+	if (pq->len == 0)
+		return NULL;
 
-	क्रम (prec = 0; prec < pq->hi_prec; prec++)
-		अगर (!skb_queue_empty(&pq->q[prec].skblist))
-			अवरोध;
+	for (prec = 0; prec < pq->hi_prec; prec++)
+		if (!skb_queue_empty(&pq->q[prec].skblist))
+			break;
 
-	अगर (prec_out)
+	if (prec_out)
 		*prec_out = prec;
 
-	वापस skb_peek_tail(&pq->q[prec].skblist);
-पूर्ण
+	return skb_peek_tail(&pq->q[prec].skblist);
+}
 EXPORT_SYMBOL(brcmu_pktq_peek_tail);
 
-/* Return sum of lengths of a specअगरic set of precedences */
-पूर्णांक brcmu_pktq_mlen(काष्ठा pktq *pq, uपूर्णांक prec_bmp)
-अणु
-	पूर्णांक prec, len;
+/* Return sum of lengths of a specific set of precedences */
+int brcmu_pktq_mlen(struct pktq *pq, uint prec_bmp)
+{
+	int prec, len;
 
 	len = 0;
 
-	क्रम (prec = 0; prec <= pq->hi_prec; prec++)
-		अगर (prec_bmp & (1 << prec))
+	for (prec = 0; prec <= pq->hi_prec; prec++)
+		if (prec_bmp & (1 << prec))
 			len += pq->q[prec].skblist.qlen;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL(brcmu_pktq_mlen);
 
-/* Priority dequeue from a specअगरic set of precedences */
-काष्ठा sk_buff *brcmu_pktq_mdeq(काष्ठा pktq *pq, uपूर्णांक prec_bmp,
-				      पूर्णांक *prec_out)
-अणु
-	काष्ठा sk_buff_head *q;
-	काष्ठा sk_buff *p;
-	पूर्णांक prec;
+/* Priority dequeue from a specific set of precedences */
+struct sk_buff *brcmu_pktq_mdeq(struct pktq *pq, uint prec_bmp,
+				      int *prec_out)
+{
+	struct sk_buff_head *q;
+	struct sk_buff *p;
+	int prec;
 
-	अगर (pq->len == 0)
-		वापस शून्य;
+	if (pq->len == 0)
+		return NULL;
 
-	जबतक ((prec = pq->hi_prec) > 0 &&
+	while ((prec = pq->hi_prec) > 0 &&
 	       skb_queue_empty(&pq->q[prec].skblist))
 		pq->hi_prec--;
 
-	जबतक ((prec_bmp & (1 << prec)) == 0 ||
+	while ((prec_bmp & (1 << prec)) == 0 ||
 	       skb_queue_empty(&pq->q[prec].skblist))
-		अगर (prec-- == 0)
-			वापस शून्य;
+		if (prec-- == 0)
+			return NULL;
 
 	q = &pq->q[prec].skblist;
 	p = skb_dequeue(q);
-	अगर (p == शून्य)
-		वापस शून्य;
+	if (p == NULL)
+		return NULL;
 
 	pq->len--;
 
-	अगर (prec_out)
+	if (prec_out)
 		*prec_out = prec;
 
-	वापस p;
-पूर्ण
+	return p;
+}
 EXPORT_SYMBOL(brcmu_pktq_mdeq);
 
-/* Produce a human-पढ़ोable string क्रम boardrev */
-अक्षर *brcmu_boardrev_str(u32 brev, अक्षर *buf)
-अणु
-	अक्षर c;
+/* Produce a human-readable string for boardrev */
+char *brcmu_boardrev_str(u32 brev, char *buf)
+{
+	char c;
 
-	अगर (brev < 0x100) अणु
-		snम_लिखो(buf, BRCMU_BOARDREV_LEN, "%d.%d",
+	if (brev < 0x100) {
+		snprintf(buf, BRCMU_BOARDREV_LEN, "%d.%d",
 			 (brev & 0xf0) >> 4, brev & 0xf);
-	पूर्ण अन्यथा अणु
+	} else {
 		c = (brev & 0xf000) == 0x1000 ? 'P' : 'A';
-		snम_लिखो(buf, BRCMU_BOARDREV_LEN, "%c%03x", c, brev & 0xfff);
-	पूर्ण
-	वापस buf;
-पूर्ण
+		snprintf(buf, BRCMU_BOARDREV_LEN, "%c%03x", c, brev & 0xfff);
+	}
+	return buf;
+}
 EXPORT_SYMBOL(brcmu_boardrev_str);
 
-अक्षर *brcmu_करोtrev_str(u32 करोtrev, अक्षर *buf)
-अणु
-	u8 करोtval[4];
+char *brcmu_dotrev_str(u32 dotrev, char *buf)
+{
+	u8 dotval[4];
 
-	अगर (!करोtrev) अणु
-		snम_लिखो(buf, BRCMU_DOTREV_LEN, "unknown");
-		वापस buf;
-	पूर्ण
-	करोtval[0] = (करोtrev >> 24) & 0xFF;
-	करोtval[1] = (करोtrev >> 16) & 0xFF;
-	करोtval[2] = (करोtrev >> 8) & 0xFF;
-	करोtval[3] = करोtrev & 0xFF;
+	if (!dotrev) {
+		snprintf(buf, BRCMU_DOTREV_LEN, "unknown");
+		return buf;
+	}
+	dotval[0] = (dotrev >> 24) & 0xFF;
+	dotval[1] = (dotrev >> 16) & 0xFF;
+	dotval[2] = (dotrev >> 8) & 0xFF;
+	dotval[3] = dotrev & 0xFF;
 
-	अगर (करोtval[3])
-		snम_लिखो(buf, BRCMU_DOTREV_LEN, "%d.%d.%d.%d", करोtval[0],
-			करोtval[1], करोtval[2], करोtval[3]);
-	अन्यथा अगर (करोtval[2])
-		snम_लिखो(buf, BRCMU_DOTREV_LEN, "%d.%d.%d", करोtval[0],
-			करोtval[1], करोtval[2]);
-	अन्यथा
-		snम_लिखो(buf, BRCMU_DOTREV_LEN, "%d.%d", करोtval[0],
-			करोtval[1]);
+	if (dotval[3])
+		snprintf(buf, BRCMU_DOTREV_LEN, "%d.%d.%d.%d", dotval[0],
+			dotval[1], dotval[2], dotval[3]);
+	else if (dotval[2])
+		snprintf(buf, BRCMU_DOTREV_LEN, "%d.%d.%d", dotval[0],
+			dotval[1], dotval[2]);
+	else
+		snprintf(buf, BRCMU_DOTREV_LEN, "%d.%d", dotval[0],
+			dotval[1]);
 
-	वापस buf;
-पूर्ण
-EXPORT_SYMBOL(brcmu_करोtrev_str);
+	return buf;
+}
+EXPORT_SYMBOL(brcmu_dotrev_str);
 
-#अगर defined(DEBUG)
-/* pretty hex prपूर्णांक a pkt buffer chain */
-व्योम brcmu_prpkt(स्थिर अक्षर *msg, काष्ठा sk_buff *p0)
-अणु
-	काष्ठा sk_buff *p;
+#if defined(DEBUG)
+/* pretty hex print a pkt buffer chain */
+void brcmu_prpkt(const char *msg, struct sk_buff *p0)
+{
+	struct sk_buff *p;
 
-	अगर (msg && (msg[0] != '\0'))
+	if (msg && (msg[0] != '\0'))
 		pr_debug("%s:\n", msg);
 
-	क्रम (p = p0; p; p = p->next)
-		prपूर्णांक_hex_dump_bytes("", DUMP_PREFIX_OFFSET, p->data, p->len);
-पूर्ण
+	for (p = p0; p; p = p->next)
+		print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, p->data, p->len);
+}
 EXPORT_SYMBOL(brcmu_prpkt);
 
-व्योम brcmu_dbg_hex_dump(स्थिर व्योम *data, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
-अणु
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+void brcmu_dbg_hex_dump(const void *data, size_t size, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	pr_debug("%pV", &vaf);
 
-	बहु_पूर्ण(args);
+	va_end(args);
 
-	prपूर्णांक_hex_dump_bytes("", DUMP_PREFIX_OFFSET, data, size);
-पूर्ण
+	print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, data, size);
+}
 EXPORT_SYMBOL(brcmu_dbg_hex_dump);
 
-#पूर्ण_अगर				/* defined(DEBUG) */
+#endif				/* defined(DEBUG) */

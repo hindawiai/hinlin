@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2015 Nikolay Martynov <mar.kolya@gmail.com>
  * Copyright (C) 2015 John Crispin <john@phrozen.org>
  */
 
-#समावेश <linux/init.h>
+#include <linux/init.h>
 
-#समावेश <linux/of.h>
-#समावेश <linux/irqchip.h>
-#समावेश <यंत्र/mips-cps.h>
+#include <linux/of.h>
+#include <linux/irqchip.h>
+#include <asm/mips-cps.h>
 
-पूर्णांक get_c0_perfcount_पूर्णांक(व्योम)
-अणु
-	वापस gic_get_c0_perfcount_पूर्णांक();
-पूर्ण
-EXPORT_SYMBOL_GPL(get_c0_perfcount_पूर्णांक);
+int get_c0_perfcount_int(void)
+{
+	return gic_get_c0_perfcount_int();
+}
+EXPORT_SYMBOL_GPL(get_c0_perfcount_int);
 
-व्योम __init arch_init_irq(व्योम)
-अणु
+void __init arch_init_irq(void)
+{
 	irqchip_init();
-पूर्ण
+}

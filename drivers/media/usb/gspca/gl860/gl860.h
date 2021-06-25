@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-/* GSPCA subdrivers क्रम Genesys Logic webcams with the GL860 chip
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* GSPCA subdrivers for Genesys Logic webcams with the GL860 chip
  * Subdriver declarations
  *
  * 2009/10/14 Olivier LORIN <o.lorin@laposte.net>
  */
-#अगर_अघोषित GL860_DEV_H
-#घोषणा GL860_DEV_H
+#ifndef GL860_DEV_H
+#define GL860_DEV_H
 
-#समावेश "gspca.h"
+#include "gspca.h"
 
-#घोषणा MODULE_NAME "gspca_gl860"
-#घोषणा DRIVER_VERSION "0.9d10"
+#define MODULE_NAME "gspca_gl860"
+#define DRIVER_VERSION "0.9d10"
 
-#घोषणा ctrl_in  gl860_RTx
-#घोषणा ctrl_out gl860_RTx
+#define ctrl_in  gl860_RTx
+#define ctrl_out gl860_RTx
 
-#घोषणा ID_MI1320   1
-#घोषणा ID_OV2640   2
-#घोषणा ID_OV9655   4
-#घोषणा ID_MI2020   8
+#define ID_MI1320   1
+#define ID_OV2640   2
+#define ID_OV9655   4
+#define ID_MI2020   8
 
-#घोषणा _MI1320_  (((काष्ठा sd *) gspca_dev)->sensor == ID_MI1320)
-#घोषणा _MI2020_  (((काष्ठा sd *) gspca_dev)->sensor == ID_MI2020)
-#घोषणा _OV2640_  (((काष्ठा sd *) gspca_dev)->sensor == ID_OV2640)
-#घोषणा _OV9655_  (((काष्ठा sd *) gspca_dev)->sensor == ID_OV9655)
+#define _MI1320_  (((struct sd *) gspca_dev)->sensor == ID_MI1320)
+#define _MI2020_  (((struct sd *) gspca_dev)->sensor == ID_MI2020)
+#define _OV2640_  (((struct sd *) gspca_dev)->sensor == ID_OV2640)
+#define _OV9655_  (((struct sd *) gspca_dev)->sensor == ID_OV9655)
 
-#घोषणा IMAGE_640   0
-#घोषणा IMAGE_800   1
-#घोषणा IMAGE_1280  2
-#घोषणा IMAGE_1600  3
+#define IMAGE_640   0
+#define IMAGE_800   1
+#define IMAGE_1280  2
+#define IMAGE_1600  3
 
-काष्ठा sd_gl860 अणु
+struct sd_gl860 {
 	u16 backlight;
 	u16 brightness;
 	u16 sharpness;
@@ -43,52 +42,52 @@
 	u8  mirror;
 	u8  flip;
 	u8  AC50Hz;
-पूर्ण;
+};
 
-/* Specअगरic webcam descriptor */
-काष्ठा sd अणु
-	काष्ठा gspca_dev gspca_dev;	/* !! must be the first item */
+/* Specific webcam descriptor */
+struct sd {
+	struct gspca_dev gspca_dev;	/* !! must be the first item */
 
-	काष्ठा sd_gl860 vcur;
-	काष्ठा sd_gl860 vold;
-	काष्ठा sd_gl860 vmax;
+	struct sd_gl860 vcur;
+	struct sd_gl860 vold;
+	struct sd_gl860 vmax;
 
-	पूर्णांक  (*dev_configure_alt)  (काष्ठा gspca_dev *);
-	पूर्णांक  (*dev_init_at_startup)(काष्ठा gspca_dev *);
-	पूर्णांक  (*dev_init_pre_alt)   (काष्ठा gspca_dev *);
-	व्योम (*dev_post_unset_alt) (काष्ठा gspca_dev *);
-	पूर्णांक  (*dev_camera_settings)(काष्ठा gspca_dev *);
+	int  (*dev_configure_alt)  (struct gspca_dev *);
+	int  (*dev_init_at_startup)(struct gspca_dev *);
+	int  (*dev_init_pre_alt)   (struct gspca_dev *);
+	void (*dev_post_unset_alt) (struct gspca_dev *);
+	int  (*dev_camera_settings)(struct gspca_dev *);
 
 	u8   swapRB;
 	u8   mirrorMask;
 	u8   sensor;
 	s32  nbIm;
 	s32  nbRightUp;
-	u8   रुकोSet;
-पूर्ण;
+	u8   waitSet;
+};
 
-काष्ठा validx अणु
+struct validx {
 	u16 val;
 	u16 idx;
-पूर्ण;
+};
 
-काष्ठा idxdata अणु
+struct idxdata {
 	u8 idx;
 	u8 data[3];
-पूर्ण;
+};
 
-पूर्णांक fetch_validx(काष्ठा gspca_dev *gspca_dev, काष्ठा validx *tbl, पूर्णांक len);
-पूर्णांक keep_on_fetching_validx(काष्ठा gspca_dev *gspca_dev, काष्ठा validx *tbl,
-				पूर्णांक len, पूर्णांक n);
-व्योम fetch_idxdata(काष्ठा gspca_dev *gspca_dev, काष्ठा idxdata *tbl, पूर्णांक len);
+int fetch_validx(struct gspca_dev *gspca_dev, struct validx *tbl, int len);
+int keep_on_fetching_validx(struct gspca_dev *gspca_dev, struct validx *tbl,
+				int len, int n);
+void fetch_idxdata(struct gspca_dev *gspca_dev, struct idxdata *tbl, int len);
 
-पूर्णांक gl860_RTx(काष्ठा gspca_dev *gspca_dev,
-			अचिन्हित अक्षर pref, u32 req, u16 val, u16 index,
-			s32 len, व्योम *pdata);
+int gl860_RTx(struct gspca_dev *gspca_dev,
+			unsigned char pref, u32 req, u16 val, u16 index,
+			s32 len, void *pdata);
 
-व्योम mi1320_init_settings(काष्ठा gspca_dev *);
-व्योम ov2640_init_settings(काष्ठा gspca_dev *);
-व्योम ov9655_init_settings(काष्ठा gspca_dev *);
-व्योम mi2020_init_settings(काष्ठा gspca_dev *);
+void mi1320_init_settings(struct gspca_dev *);
+void ov2640_init_settings(struct gspca_dev *);
+void ov9655_init_settings(struct gspca_dev *);
+void mi2020_init_settings(struct gspca_dev *);
 
-#पूर्ण_अगर
+#endif

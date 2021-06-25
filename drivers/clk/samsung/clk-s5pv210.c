@@ -1,87 +1,86 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  * Author: Mateusz Krawczuk <m.krawczuk@partner.samsung.com>
  *
- * Based on घड़ी drivers क्रम S3C64xx and Exynos4 SoCs.
+ * Based on clock drivers for S3C64xx and Exynos4 SoCs.
  *
- * Common Clock Framework support क्रम all S5PC110/S5PV210 SoCs.
+ * Common Clock Framework support for all S5PC110/S5PV210 SoCs.
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/clk-provider.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश "clk.h"
-#समावेश "clk-pll.h"
+#include "clk.h"
+#include "clk-pll.h"
 
-#समावेश <dt-bindings/घड़ी/s5pv210.h>
+#include <dt-bindings/clock/s5pv210.h>
 
-/* S5PC110/S5PV210 घड़ी controller रेजिस्टर offsets */
-#घोषणा APLL_LOCK		0x0000
-#घोषणा MPLL_LOCK		0x0008
-#घोषणा EPLL_LOCK		0x0010
-#घोषणा VPLL_LOCK		0x0020
-#घोषणा APLL_CON0		0x0100
-#घोषणा APLL_CON1		0x0104
-#घोषणा MPLL_CON		0x0108
-#घोषणा EPLL_CON0		0x0110
-#घोषणा EPLL_CON1		0x0114
-#घोषणा VPLL_CON		0x0120
-#घोषणा CLK_SRC0		0x0200
-#घोषणा CLK_SRC1		0x0204
-#घोषणा CLK_SRC2		0x0208
-#घोषणा CLK_SRC3		0x020c
-#घोषणा CLK_SRC4		0x0210
-#घोषणा CLK_SRC5		0x0214
-#घोषणा CLK_SRC6		0x0218
-#घोषणा CLK_SRC_MASK0		0x0280
-#घोषणा CLK_SRC_MASK1		0x0284
-#घोषणा CLK_DIV0		0x0300
-#घोषणा CLK_DIV1		0x0304
-#घोषणा CLK_DIV2		0x0308
-#घोषणा CLK_DIV3		0x030c
-#घोषणा CLK_DIV4		0x0310
-#घोषणा CLK_DIV5		0x0314
-#घोषणा CLK_DIV6		0x0318
-#घोषणा CLK_DIV7		0x031c
-#घोषणा CLK_GATE_MAIN0		0x0400
-#घोषणा CLK_GATE_MAIN1		0x0404
-#घोषणा CLK_GATE_MAIN2		0x0408
-#घोषणा CLK_GATE_PERI0		0x0420
-#घोषणा CLK_GATE_PERI1		0x0424
-#घोषणा CLK_GATE_SCLK0		0x0440
-#घोषणा CLK_GATE_SCLK1		0x0444
-#घोषणा CLK_GATE_IP0		0x0460
-#घोषणा CLK_GATE_IP1		0x0464
-#घोषणा CLK_GATE_IP2		0x0468
-#घोषणा CLK_GATE_IP3		0x046c
-#घोषणा CLK_GATE_IP4		0x0470
-#घोषणा CLK_GATE_BLOCK		0x0480
-#घोषणा CLK_GATE_IP5		0x0484
-#घोषणा CLK_OUT			0x0500
-#घोषणा MISC			0xe000
-#घोषणा OM_STAT			0xe100
+/* S5PC110/S5PV210 clock controller register offsets */
+#define APLL_LOCK		0x0000
+#define MPLL_LOCK		0x0008
+#define EPLL_LOCK		0x0010
+#define VPLL_LOCK		0x0020
+#define APLL_CON0		0x0100
+#define APLL_CON1		0x0104
+#define MPLL_CON		0x0108
+#define EPLL_CON0		0x0110
+#define EPLL_CON1		0x0114
+#define VPLL_CON		0x0120
+#define CLK_SRC0		0x0200
+#define CLK_SRC1		0x0204
+#define CLK_SRC2		0x0208
+#define CLK_SRC3		0x020c
+#define CLK_SRC4		0x0210
+#define CLK_SRC5		0x0214
+#define CLK_SRC6		0x0218
+#define CLK_SRC_MASK0		0x0280
+#define CLK_SRC_MASK1		0x0284
+#define CLK_DIV0		0x0300
+#define CLK_DIV1		0x0304
+#define CLK_DIV2		0x0308
+#define CLK_DIV3		0x030c
+#define CLK_DIV4		0x0310
+#define CLK_DIV5		0x0314
+#define CLK_DIV6		0x0318
+#define CLK_DIV7		0x031c
+#define CLK_GATE_MAIN0		0x0400
+#define CLK_GATE_MAIN1		0x0404
+#define CLK_GATE_MAIN2		0x0408
+#define CLK_GATE_PERI0		0x0420
+#define CLK_GATE_PERI1		0x0424
+#define CLK_GATE_SCLK0		0x0440
+#define CLK_GATE_SCLK1		0x0444
+#define CLK_GATE_IP0		0x0460
+#define CLK_GATE_IP1		0x0464
+#define CLK_GATE_IP2		0x0468
+#define CLK_GATE_IP3		0x046c
+#define CLK_GATE_IP4		0x0470
+#define CLK_GATE_BLOCK		0x0480
+#define CLK_GATE_IP5		0x0484
+#define CLK_OUT			0x0500
+#define MISC			0xe000
+#define OM_STAT			0xe100
 
 /* IDs of PLLs available on S5PV210/S5P6442 SoCs */
-क्रमागत अणु
+enum {
 	apll,
 	mpll,
 	epll,
 	vpll,
-पूर्ण;
+};
 
-/* IDs of बाह्यal घड़ीs (used क्रम legacy boards) */
-क्रमागत अणु
+/* IDs of external clocks (used for legacy boards) */
+enum {
 	xxti,
 	xusbxti,
-पूर्ण;
+};
 
-अटल व्योम __iomem *reg_base;
+static void __iomem *reg_base;
 
-/* List of रेजिस्टरs that need to be preserved across suspend/resume. */
-अटल अचिन्हित दीर्घ s5pv210_clk_regs[] __initdata = अणु
+/* List of registers that need to be preserved across suspend/resume. */
+static unsigned long s5pv210_clk_regs[] __initdata = {
 	CLK_SRC0,
 	CLK_SRC1,
 	CLK_SRC2,
@@ -124,47 +123,47 @@
 	EPLL_CON1,
 	VPLL_CON,
 	CLK_OUT,
-पूर्ण;
+};
 
 /* Mux parent lists. */
-अटल स्थिर अक्षर *स्थिर fin_pll_p[] __initस्थिर = अणु
+static const char *const fin_pll_p[] __initconst = {
 	"xxti",
 	"xusbxti"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_apll_p[] __initस्थिर = अणु
+static const char *const mout_apll_p[] __initconst = {
 	"fin_pll",
 	"fout_apll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_mpll_p[] __initस्थिर = अणु
+static const char *const mout_mpll_p[] __initconst = {
 	"fin_pll",
 	"fout_mpll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_epll_p[] __initस्थिर = अणु
+static const char *const mout_epll_p[] __initconst = {
 	"fin_pll",
 	"fout_epll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_vpllsrc_p[] __initस्थिर = अणु
+static const char *const mout_vpllsrc_p[] __initconst = {
 	"fin_pll",
 	"sclk_hdmi27m"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_vpll_p[] __initस्थिर = अणु
+static const char *const mout_vpll_p[] __initconst = {
 	"mout_vpllsrc",
 	"fout_vpll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_group1_p[] __initस्थिर = अणु
+static const char *const mout_group1_p[] __initconst = {
 	"dout_a2m",
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_group2_p[] __initस्थिर = अणु
+static const char *const mout_group2_p[] __initconst = {
 	"xxti",
 	"xusbxti",
 	"sclk_hdmi27m",
@@ -174,9 +173,9 @@
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_audio0_p[] __initस्थिर = अणु
+static const char *const mout_audio0_p[] __initconst = {
 	"xxti",
 	"pcmcdclk0",
 	"sclk_hdmi27m",
@@ -186,9 +185,9 @@
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_audio1_p[] __initस्थिर = अणु
+static const char *const mout_audio1_p[] __initconst = {
 	"i2scdclk1",
 	"pcmcdclk1",
 	"sclk_hdmi27m",
@@ -198,9 +197,9 @@
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_audio2_p[] __initस्थिर = अणु
+static const char *const mout_audio2_p[] __initconst = {
 	"i2scdclk2",
 	"pcmcdclk2",
 	"sclk_hdmi27m",
@@ -210,65 +209,65 @@
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_spdअगर_p[] __initस्थिर = अणु
+static const char *const mout_spdif_p[] __initconst = {
 	"dout_audio0",
 	"dout_audio1",
 	"dout_audio3",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_group3_p[] __initस्थिर = अणु
+static const char *const mout_group3_p[] __initconst = {
 	"mout_apll",
 	"mout_mpll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_group4_p[] __initस्थिर = अणु
+static const char *const mout_group4_p[] __initconst = {
 	"mout_mpll",
 	"dout_a2m"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_flash_p[] __initस्थिर = अणु
+static const char *const mout_flash_p[] __initconst = {
 	"dout_hclkd",
 	"dout_hclkp"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_dac_p[] __initस्थिर = अणु
+static const char *const mout_dac_p[] __initconst = {
 	"mout_vpll",
 	"sclk_hdmiphy"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_hdmi_p[] __initस्थिर = अणु
+static const char *const mout_hdmi_p[] __initconst = {
 	"sclk_hdmiphy",
 	"dout_tblk"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_mixer_p[] __initस्थिर = अणु
+static const char *const mout_mixer_p[] __initconst = {
 	"mout_dac",
 	"mout_hdmi"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_vpll_6442_p[] __initस्थिर = अणु
+static const char *const mout_vpll_6442_p[] __initconst = {
 	"fin_pll",
 	"fout_vpll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_mixer_6442_p[] __initस्थिर = अणु
+static const char *const mout_mixer_6442_p[] __initconst = {
 	"mout_vpll",
 	"dout_mixer"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_d0sync_6442_p[] __initस्थिर = अणु
+static const char *const mout_d0sync_6442_p[] __initconst = {
 	"mout_dsys",
 	"div_apll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_d1sync_6442_p[] __initस्थिर = अणु
+static const char *const mout_d1sync_6442_p[] __initconst = {
 	"mout_psys",
 	"div_apll"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_group2_6442_p[] __initस्थिर = अणु
+static const char *const mout_group2_6442_p[] __initconst = {
 	"fin_pll",
 	"none",
 	"none",
@@ -278,9 +277,9 @@
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_audio0_6442_p[] __initस्थिर = अणु
+static const char *const mout_audio0_6442_p[] __initconst = {
 	"fin_pll",
 	"pcmcdclk0",
 	"none",
@@ -290,9 +289,9 @@
 	"mout_mpll",
 	"mout_epll",
 	"mout_vpll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_audio1_6442_p[] __initस्थिर = अणु
+static const char *const mout_audio1_6442_p[] __initconst = {
 	"i2scdclk1",
 	"pcmcdclk1",
 	"none",
@@ -303,9 +302,9 @@
 	"mout_epll",
 	"mout_vpll",
 	"fin_pll",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_clksel_p[] __initस्थिर = अणु
+static const char *const mout_clksel_p[] __initconst = {
 	"fout_apll_clkout",
 	"fout_mpll_clkout",
 	"fout_epll",
@@ -326,9 +325,9 @@
 	"xxti",
 	"xusbxti",
 	"div_dclk"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_clksel_6442_p[] __initस्थिर = अणु
+static const char *const mout_clksel_6442_p[] __initconst = {
 	"fout_apll_clkout",
 	"fout_mpll_clkout",
 	"fout_epll",
@@ -349,30 +348,30 @@
 	"fin_pll",
 	"none",
 	"div_dclk"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *स्थिर mout_clkout_p[] __initस्थिर = अणु
+static const char *const mout_clkout_p[] __initconst = {
 	"dout_clkout",
 	"none",
 	"xxti",
 	"xusbxti"
-पूर्ण;
+};
 
-/* Common fixed factor घड़ीs. */
-अटल स्थिर काष्ठा samsung_fixed_factor_घड़ी ffactor_clks[] __initस्थिर = अणु
+/* Common fixed factor clocks. */
+static const struct samsung_fixed_factor_clock ffactor_clks[] __initconst = {
 	FFACTOR(FOUT_APLL_CLKOUT, "fout_apll_clkout", "fout_apll", 1, 4, 0),
 	FFACTOR(FOUT_MPLL_CLKOUT, "fout_mpll_clkout", "fout_mpll", 1, 2, 0),
 	FFACTOR(DOUT_APLL_CLKOUT, "dout_apll_clkout", "dout_apll", 1, 4, 0),
-पूर्ण;
+};
 
-/* PLL input mux (fin_pll), which needs to be रेजिस्टरed beक्रमe PLLs. */
-अटल स्थिर काष्ठा samsung_mux_घड़ी early_mux_clks[] __initस्थिर = अणु
+/* PLL input mux (fin_pll), which needs to be registered before PLLs. */
+static const struct samsung_mux_clock early_mux_clks[] __initconst = {
 	MUX_F(FIN_PLL, "fin_pll", fin_pll_p, OM_STAT, 0, 1,
 					CLK_MUX_READ_ONLY, 0),
-पूर्ण;
+};
 
-/* Common घड़ी muxes. */
-अटल स्थिर काष्ठा samsung_mux_घड़ी mux_clks[] __initस्थिर = अणु
+/* Common clock muxes. */
+static const struct samsung_mux_clock mux_clks[] __initconst = {
 	MUX(MOUT_FLASH, "mout_flash", mout_flash_p, CLK_SRC0, 28, 1),
 	MUX(MOUT_PSYS, "mout_psys", mout_group4_p, CLK_SRC0, 24, 1),
 	MUX(MOUT_DSYS, "mout_dsys", mout_group4_p, CLK_SRC0, 20, 1),
@@ -382,10 +381,10 @@
 	MUX(MOUT_APLL, "mout_apll", mout_apll_p, CLK_SRC0, 0, 1),
 
 	MUX(MOUT_CLKOUT, "mout_clkout", mout_clkout_p, MISC, 8, 2),
-पूर्ण;
+};
 
-/* S5PV210-specअगरic घड़ी muxes. */
-अटल स्थिर काष्ठा samsung_mux_घड़ी s5pv210_mux_clks[] __initस्थिर = अणु
+/* S5PV210-specific clock muxes. */
+static const struct samsung_mux_clock s5pv210_mux_clks[] __initconst = {
 	MUX(MOUT_VPLL, "mout_vpll", mout_vpll_p, CLK_SRC0, 12, 1),
 
 	MUX(MOUT_VPLLSRC, "mout_vpllsrc", mout_vpllsrc_p, CLK_SRC1, 28, 1),
@@ -421,16 +420,16 @@
 	MUX(MOUT_DMC0, "mout_dmc0", mout_group1_p, CLK_SRC6, 24, 2),
 	MUX(MOUT_PWI, "mout_pwi", mout_group2_p, CLK_SRC6, 20, 4),
 	MUX(MOUT_HPM, "mout_hpm", mout_group3_p, CLK_SRC6, 16, 1),
-	MUX(MOUT_SPDIF, "mout_spdif", mout_spdअगर_p, CLK_SRC6, 12, 2),
+	MUX(MOUT_SPDIF, "mout_spdif", mout_spdif_p, CLK_SRC6, 12, 2),
 	MUX(MOUT_AUDIO2, "mout_audio2", mout_audio2_p, CLK_SRC6, 8, 4),
 	MUX(MOUT_AUDIO1, "mout_audio1", mout_audio1_p, CLK_SRC6, 4, 4),
 	MUX(MOUT_AUDIO0, "mout_audio0", mout_audio0_p, CLK_SRC6, 0, 4),
 
 	MUX(MOUT_CLKSEL, "mout_clksel", mout_clksel_p, CLK_OUT, 12, 5),
-पूर्ण;
+};
 
-/* S5P6442-specअगरic घड़ी muxes. */
-अटल स्थिर काष्ठा samsung_mux_घड़ी s5p6442_mux_clks[] __initस्थिर = अणु
+/* S5P6442-specific clock muxes. */
+static const struct samsung_mux_clock s5p6442_mux_clks[] __initconst = {
 	MUX(MOUT_VPLL, "mout_vpll", mout_vpll_6442_p, CLK_SRC0, 12, 1),
 
 	MUX(MOUT_FIMD, "mout_fimd", mout_group2_6442_p, CLK_SRC1, 20, 4),
@@ -459,23 +458,23 @@
 	MUX(MOUT_AUDIO0, "mout_audio0", mout_audio0_6442_p, CLK_SRC6, 0, 4),
 
 	MUX(MOUT_CLKSEL, "mout_clksel", mout_clksel_6442_p, CLK_OUT, 12, 5),
-पूर्ण;
+};
 
-/* S5PV210-specअगरic fixed rate घड़ीs generated inside the SoC. */
-अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी s5pv210_frate_clks[] __initस्थिर = अणु
-	FRATE(SCLK_HDMI27M, "sclk_hdmi27m", शून्य, 0, 27000000),
-	FRATE(SCLK_HDMIPHY, "sclk_hdmiphy", शून्य, 0, 27000000),
-	FRATE(SCLK_USBPHY0, "sclk_usbphy0", शून्य, 0, 48000000),
-	FRATE(SCLK_USBPHY1, "sclk_usbphy1", शून्य, 0, 48000000),
-पूर्ण;
+/* S5PV210-specific fixed rate clocks generated inside the SoC. */
+static const struct samsung_fixed_rate_clock s5pv210_frate_clks[] __initconst = {
+	FRATE(SCLK_HDMI27M, "sclk_hdmi27m", NULL, 0, 27000000),
+	FRATE(SCLK_HDMIPHY, "sclk_hdmiphy", NULL, 0, 27000000),
+	FRATE(SCLK_USBPHY0, "sclk_usbphy0", NULL, 0, 48000000),
+	FRATE(SCLK_USBPHY1, "sclk_usbphy1", NULL, 0, 48000000),
+};
 
-/* S5P6442-specअगरic fixed rate घड़ीs generated inside the SoC. */
-अटल स्थिर काष्ठा samsung_fixed_rate_घड़ी s5p6442_frate_clks[] __initस्थिर = अणु
-	FRATE(SCLK_USBPHY0, "sclk_usbphy0", शून्य, 0, 30000000),
-पूर्ण;
+/* S5P6442-specific fixed rate clocks generated inside the SoC. */
+static const struct samsung_fixed_rate_clock s5p6442_frate_clks[] __initconst = {
+	FRATE(SCLK_USBPHY0, "sclk_usbphy0", NULL, 0, 30000000),
+};
 
-/* Common घड़ी भागiders. */
-अटल स्थिर काष्ठा samsung_भाग_घड़ी भाग_clks[] __initस्थिर = अणु
+/* Common clock dividers. */
+static const struct samsung_div_clock div_clks[] __initconst = {
 	DIV(DOUT_PCLKP, "dout_pclkp", "dout_hclkp", CLK_DIV0, 28, 3),
 	DIV(DOUT_PCLKD, "dout_pclkd", "dout_hclkd", CLK_DIV0, 20, 3),
 	DIV(DOUT_A2M, "dout_a2m", "mout_apll", CLK_DIV0, 4, 3),
@@ -504,10 +503,10 @@
 	DIV(DOUT_AUDIO0, "dout_audio0", "mout_audio0", CLK_DIV6, 0, 4),
 
 	DIV(DOUT_CLKOUT, "dout_clkout", "mout_clksel", CLK_OUT, 20, 4),
-पूर्ण;
+};
 
-/* S5PV210-specअगरic घड़ी भागiders. */
-अटल स्थिर काष्ठा samsung_भाग_घड़ी s5pv210_भाग_clks[] __initस्थिर = अणु
+/* S5PV210-specific clock dividers. */
+static const struct samsung_div_clock s5pv210_div_clks[] __initconst = {
 	DIV(DOUT_HCLKP, "dout_hclkp", "mout_psys", CLK_DIV0, 24, 4),
 	DIV(DOUT_HCLKD, "dout_hclkd", "mout_dsys", CLK_DIV0, 16, 4),
 	DIV(DOUT_PCLKM, "dout_pclkm", "dout_hclkm", CLK_DIV0, 12, 3),
@@ -533,18 +532,18 @@
 
 	DIV(DOUT_DPM, "dout_dpm", "dout_pclkp", CLK_DIV7, 8, 7),
 	DIV(DOUT_DVSEM, "dout_dvsem", "dout_pclkp", CLK_DIV7, 0, 7),
-पूर्ण;
+};
 
-/* S5P6442-specअगरic घड़ी भागiders. */
-अटल स्थिर काष्ठा samsung_भाग_घड़ी s5p6442_भाग_clks[] __initस्थिर = अणु
+/* S5P6442-specific clock dividers. */
+static const struct samsung_div_clock s5p6442_div_clks[] __initconst = {
 	DIV(DOUT_HCLKP, "dout_hclkp", "mout_d1sync", CLK_DIV0, 24, 4),
 	DIV(DOUT_HCLKD, "dout_hclkd", "mout_d0sync", CLK_DIV0, 16, 4),
 
 	DIV(DOUT_MIXER, "dout_mixer", "mout_vpll", CLK_DIV1, 0, 4),
-पूर्ण;
+};
 
-/* Common घड़ी gates. */
-अटल स्थिर काष्ठा samsung_gate_घड़ी gate_clks[] __initस्थिर = अणु
+/* Common clock gates. */
+static const struct samsung_gate_clock gate_clks[] __initconst = {
 	GATE(CLK_ROTATOR, "rotator", "dout_hclkd", CLK_GATE_IP0, 29, 0, 0),
 	GATE(CLK_FIMC2, "fimc2", "dout_hclkd", CLK_GATE_IP0, 26, 0, 0),
 	GATE(CLK_FIMC1, "fimc1", "dout_hclkd", CLK_GATE_IP0, 25, 0, 0),
@@ -553,7 +552,7 @@
 	GATE(CLK_MDMA, "mdma", "dout_hclkd", CLK_GATE_IP0, 2, 0, 0),
 
 	GATE(CLK_SROMC, "sromc", "dout_hclkp", CLK_GATE_IP1, 26, 0, 0),
-	GATE(CLK_न_अंकDXL, "nandxl", "dout_hclkp", CLK_GATE_IP1, 24, 0, 0),
+	GATE(CLK_NANDXL, "nandxl", "dout_hclkp", CLK_GATE_IP1, 24, 0, 0),
 	GATE(CLK_USB_OTG, "usb_otg", "dout_hclkp", CLK_GATE_IP1, 16, 0, 0),
 	GATE(CLK_TVENC, "tvenc", "dout_hclkd", CLK_GATE_IP1, 10, 0, 0),
 	GATE(CLK_MIXER, "mixer", "dout_hclkd", CLK_GATE_IP1, 9, 0, 0),
@@ -621,10 +620,10 @@
 			CLK_SET_RATE_PARENT, 0),
 	GATE(SCLK_FIMC0, "sclk_fimc0", "dout_fimc0", CLK_SRC_MASK1, 2,
 			CLK_SET_RATE_PARENT, 0),
-पूर्ण;
+};
 
-/* S5PV210-specअगरic घड़ी gates. */
-अटल स्थिर काष्ठा samsung_gate_घड़ी s5pv210_gate_clks[] __initस्थिर = अणु
+/* S5PV210-specific clock gates. */
+static const struct samsung_gate_clock s5pv210_gate_clks[] __initconst = {
 	GATE(CLK_CSIS, "clk_csis", "dout_hclkd", CLK_GATE_IP0, 31, 0, 0),
 	GATE(CLK_MFC, "mfc", "dout_hclkm", CLK_GATE_IP0, 16, 0, 0),
 	GATE(CLK_G2D, "g2d", "dout_hclkd", CLK_GATE_IP0, 12, 0, 0),
@@ -683,10 +682,10 @@
 			CLK_SET_RATE_PARENT, 0),
 	GATE(SCLK_HDMI, "sclk_hdmi", "mout_hdmi", CLK_SRC_MASK0, 0,
 			CLK_SET_RATE_PARENT, 0),
-पूर्ण;
+};
 
-/* S5P6442-specअगरic घड़ी gates. */
-अटल स्थिर काष्ठा samsung_gate_घड़ी s5p6442_gate_clks[] __initस्थिर = अणु
+/* S5P6442-specific clock gates. */
+static const struct samsung_gate_clock s5p6442_gate_clks[] __initconst = {
 	GATE(CLK_JPEG, "jpeg", "dout_hclkd", CLK_GATE_IP0, 28, 0, 0),
 	GATE(CLK_MFC, "mfc", "dout_hclkd", CLK_GATE_IP0, 16, 0, 0),
 	GATE(CLK_G2D, "g2d", "dout_hclkd", CLK_GATE_IP0, 12, 0, 0),
@@ -700,86 +699,86 @@
 
 	GATE(SCLK_DAC, "sclk_dac", "mout_vpll", CLK_SRC_MASK0, 2,
 			CLK_SET_RATE_PARENT, 0),
-पूर्ण;
+};
 
 /*
- * Clock aliases क्रम legacy clkdev look-up.
+ * Clock aliases for legacy clkdev look-up.
  * NOTE: Needed only to support legacy board files.
  */
-अटल स्थिर काष्ठा samsung_घड़ी_alias s5pv210_aliases[] __initस्थिर = अणु
-	ALIAS(DOUT_APLL, शून्य, "armclk"),
-	ALIAS(DOUT_HCLKM, शून्य, "hclk_msys"),
-	ALIAS(MOUT_DMC0, शून्य, "sclk_dmc0"),
-पूर्ण;
+static const struct samsung_clock_alias s5pv210_aliases[] __initconst = {
+	ALIAS(DOUT_APLL, NULL, "armclk"),
+	ALIAS(DOUT_HCLKM, NULL, "hclk_msys"),
+	ALIAS(MOUT_DMC0, NULL, "sclk_dmc0"),
+};
 
-/* S5PV210-specअगरic PLLs. */
-अटल स्थिर काष्ठा samsung_pll_घड़ी s5pv210_pll_clks[] __initस्थिर = अणु
+/* S5PV210-specific PLLs. */
+static const struct samsung_pll_clock s5pv210_pll_clks[] __initconst = {
 	[apll] = PLL(pll_4508, FOUT_APLL, "fout_apll", "fin_pll",
-						APLL_LOCK, APLL_CON0, शून्य),
+						APLL_LOCK, APLL_CON0, NULL),
 	[mpll] = PLL(pll_4502, FOUT_MPLL, "fout_mpll", "fin_pll",
-						MPLL_LOCK, MPLL_CON, शून्य),
+						MPLL_LOCK, MPLL_CON, NULL),
 	[epll] = PLL(pll_4600, FOUT_EPLL, "fout_epll", "fin_pll",
-						EPLL_LOCK, EPLL_CON0, शून्य),
+						EPLL_LOCK, EPLL_CON0, NULL),
 	[vpll] = PLL(pll_4502, FOUT_VPLL, "fout_vpll", "mout_vpllsrc",
-						VPLL_LOCK, VPLL_CON, शून्य),
-पूर्ण;
+						VPLL_LOCK, VPLL_CON, NULL),
+};
 
-/* S5P6442-specअगरic PLLs. */
-अटल स्थिर काष्ठा samsung_pll_घड़ी s5p6442_pll_clks[] __initस्थिर = अणु
+/* S5P6442-specific PLLs. */
+static const struct samsung_pll_clock s5p6442_pll_clks[] __initconst = {
 	[apll] = PLL(pll_4502, FOUT_APLL, "fout_apll", "fin_pll",
-						APLL_LOCK, APLL_CON0, शून्य),
+						APLL_LOCK, APLL_CON0, NULL),
 	[mpll] = PLL(pll_4502, FOUT_MPLL, "fout_mpll", "fin_pll",
-						MPLL_LOCK, MPLL_CON, शून्य),
+						MPLL_LOCK, MPLL_CON, NULL),
 	[epll] = PLL(pll_4500, FOUT_EPLL, "fout_epll", "fin_pll",
-						EPLL_LOCK, EPLL_CON0, शून्य),
+						EPLL_LOCK, EPLL_CON0, NULL),
 	[vpll] = PLL(pll_4500, FOUT_VPLL, "fout_vpll", "fin_pll",
-						VPLL_LOCK, VPLL_CON, शून्य),
-पूर्ण;
+						VPLL_LOCK, VPLL_CON, NULL),
+};
 
-अटल व्योम __init __s5pv210_clk_init(काष्ठा device_node *np,
-				      अचिन्हित दीर्घ xxti_f,
-				      अचिन्हित दीर्घ xusbxti_f,
+static void __init __s5pv210_clk_init(struct device_node *np,
+				      unsigned long xxti_f,
+				      unsigned long xusbxti_f,
 				      bool is_s5p6442)
-अणु
-	काष्ठा samsung_clk_provider *ctx;
+{
+	struct samsung_clk_provider *ctx;
 
 	ctx = samsung_clk_init(np, reg_base, NR_CLKS);
 
-	samsung_clk_रेजिस्टर_mux(ctx, early_mux_clks,
+	samsung_clk_register_mux(ctx, early_mux_clks,
 					ARRAY_SIZE(early_mux_clks));
 
-	अगर (is_s5p6442) अणु
-		samsung_clk_रेजिस्टर_fixed_rate(ctx, s5p6442_frate_clks,
+	if (is_s5p6442) {
+		samsung_clk_register_fixed_rate(ctx, s5p6442_frate_clks,
 			ARRAY_SIZE(s5p6442_frate_clks));
-		samsung_clk_रेजिस्टर_pll(ctx, s5p6442_pll_clks,
+		samsung_clk_register_pll(ctx, s5p6442_pll_clks,
 			ARRAY_SIZE(s5p6442_pll_clks), reg_base);
-		samsung_clk_रेजिस्टर_mux(ctx, s5p6442_mux_clks,
+		samsung_clk_register_mux(ctx, s5p6442_mux_clks,
 				ARRAY_SIZE(s5p6442_mux_clks));
-		samsung_clk_रेजिस्टर_भाग(ctx, s5p6442_भाग_clks,
-				ARRAY_SIZE(s5p6442_भाग_clks));
-		samsung_clk_रेजिस्टर_gate(ctx, s5p6442_gate_clks,
+		samsung_clk_register_div(ctx, s5p6442_div_clks,
+				ARRAY_SIZE(s5p6442_div_clks));
+		samsung_clk_register_gate(ctx, s5p6442_gate_clks,
 				ARRAY_SIZE(s5p6442_gate_clks));
-	पूर्ण अन्यथा अणु
-		samsung_clk_रेजिस्टर_fixed_rate(ctx, s5pv210_frate_clks,
+	} else {
+		samsung_clk_register_fixed_rate(ctx, s5pv210_frate_clks,
 			ARRAY_SIZE(s5pv210_frate_clks));
-		samsung_clk_रेजिस्टर_pll(ctx, s5pv210_pll_clks,
+		samsung_clk_register_pll(ctx, s5pv210_pll_clks,
 			ARRAY_SIZE(s5pv210_pll_clks), reg_base);
-		samsung_clk_रेजिस्टर_mux(ctx, s5pv210_mux_clks,
+		samsung_clk_register_mux(ctx, s5pv210_mux_clks,
 				ARRAY_SIZE(s5pv210_mux_clks));
-		samsung_clk_रेजिस्टर_भाग(ctx, s5pv210_भाग_clks,
-				ARRAY_SIZE(s5pv210_भाग_clks));
-		samsung_clk_रेजिस्टर_gate(ctx, s5pv210_gate_clks,
+		samsung_clk_register_div(ctx, s5pv210_div_clks,
+				ARRAY_SIZE(s5pv210_div_clks));
+		samsung_clk_register_gate(ctx, s5pv210_gate_clks,
 				ARRAY_SIZE(s5pv210_gate_clks));
-	पूर्ण
+	}
 
-	samsung_clk_रेजिस्टर_mux(ctx, mux_clks, ARRAY_SIZE(mux_clks));
-	samsung_clk_रेजिस्टर_भाग(ctx, भाग_clks, ARRAY_SIZE(भाग_clks));
-	samsung_clk_रेजिस्टर_gate(ctx, gate_clks, ARRAY_SIZE(gate_clks));
+	samsung_clk_register_mux(ctx, mux_clks, ARRAY_SIZE(mux_clks));
+	samsung_clk_register_div(ctx, div_clks, ARRAY_SIZE(div_clks));
+	samsung_clk_register_gate(ctx, gate_clks, ARRAY_SIZE(gate_clks));
 
-	samsung_clk_रेजिस्टर_fixed_factor(ctx, ffactor_clks,
+	samsung_clk_register_fixed_factor(ctx, ffactor_clks,
 						ARRAY_SIZE(ffactor_clks));
 
-	samsung_clk_रेजिस्टर_alias(ctx, s5pv210_aliases,
+	samsung_clk_register_alias(ctx, s5pv210_aliases,
 						ARRAY_SIZE(s5pv210_aliases));
 
 	samsung_clk_sleep_init(reg_base, s5pv210_clk_regs,
@@ -792,24 +791,24 @@
 		is_s5p6442 ? "S5P6442" : "S5PV210",
 		_get_rate("mout_apll"), _get_rate("mout_mpll"),
 		_get_rate("mout_epll"), _get_rate("mout_vpll"));
-पूर्ण
+}
 
-अटल व्योम __init s5pv210_clk_dt_init(काष्ठा device_node *np)
-अणु
+static void __init s5pv210_clk_dt_init(struct device_node *np)
+{
 	reg_base = of_iomap(np, 0);
-	अगर (!reg_base)
+	if (!reg_base)
 		panic("%s: failed to map registers\n", __func__);
 
 	__s5pv210_clk_init(np, 0, 0, false);
-पूर्ण
+}
 CLK_OF_DECLARE(s5pv210_clk, "samsung,s5pv210-clock", s5pv210_clk_dt_init);
 
-अटल व्योम __init s5p6442_clk_dt_init(काष्ठा device_node *np)
-अणु
+static void __init s5p6442_clk_dt_init(struct device_node *np)
+{
 	reg_base = of_iomap(np, 0);
-	अगर (!reg_base)
+	if (!reg_base)
 		panic("%s: failed to map registers\n", __func__);
 
 	__s5pv210_clk_init(np, 0, 0, true);
-पूर्ण
+}
 CLK_OF_DECLARE(s5p6442_clk, "samsung,s5p6442-clock", s5p6442_clk_dt_init);

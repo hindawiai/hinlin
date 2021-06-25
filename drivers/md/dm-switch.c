@@ -1,345 +1,344 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2010-2012 by Dell Inc.  All rights reserved.
  * Copyright (C) 2011-2013 Red Hat, Inc.
  *
  * This file is released under the GPL.
  *
- * dm-चयन is a device-mapper target that maps IO to underlying block
+ * dm-switch is a device-mapper target that maps IO to underlying block
  * devices efficiently when there are a large number of fixed-sized
- * address regions but there is no simple pattern to allow क्रम a compact
+ * address regions but there is no simple pattern to allow for a compact
  * mapping representation such as dm-stripe.
  */
 
-#समावेश <linux/device-mapper.h>
+#include <linux/device-mapper.h>
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/vmalloc.h>
 
-#घोषणा DM_MSG_PREFIX "switch"
+#define DM_MSG_PREFIX "switch"
 
 /*
  * One region_table_slot_t holds <region_entries_per_slot> region table
  * entries each of which is <region_table_entry_bits> in size.
  */
-प्रकार अचिन्हित दीर्घ region_table_slot_t;
+typedef unsigned long region_table_slot_t;
 
 /*
  * A device with the offset to its start sector.
  */
-काष्ठा चयन_path अणु
-	काष्ठा dm_dev *dmdev;
+struct switch_path {
+	struct dm_dev *dmdev;
 	sector_t start;
-पूर्ण;
+};
 
 /*
- * Context block क्रम a dm चयन device.
+ * Context block for a dm switch device.
  */
-काष्ठा चयन_ctx अणु
-	काष्ठा dm_target *ti;
+struct switch_ctx {
+	struct dm_target *ti;
 
-	अचिन्हित nr_paths;		/* Number of paths in path_list. */
+	unsigned nr_paths;		/* Number of paths in path_list. */
 
-	अचिन्हित region_size;		/* Region size in 512-byte sectors */
-	अचिन्हित दीर्घ nr_regions;	/* Number of regions making up the device */
-	चिन्हित अक्षर region_size_bits;	/* log2 of region_size or -1 */
+	unsigned region_size;		/* Region size in 512-byte sectors */
+	unsigned long nr_regions;	/* Number of regions making up the device */
+	signed char region_size_bits;	/* log2 of region_size or -1 */
 
-	अचिन्हित अक्षर region_table_entry_bits;	/* Number of bits in one region table entry */
-	अचिन्हित अक्षर region_entries_per_slot;	/* Number of entries in one region table slot */
-	चिन्हित अक्षर region_entries_per_slot_bits;	/* log2 of region_entries_per_slot or -1 */
+	unsigned char region_table_entry_bits;	/* Number of bits in one region table entry */
+	unsigned char region_entries_per_slot;	/* Number of entries in one region table slot */
+	signed char region_entries_per_slot_bits;	/* log2 of region_entries_per_slot or -1 */
 
 	region_table_slot_t *region_table;	/* Region table */
 
 	/*
-	 * Array of dm devices to चयन between.
+	 * Array of dm devices to switch between.
 	 */
-	काष्ठा चयन_path path_list[];
-पूर्ण;
+	struct switch_path path_list[];
+};
 
-अटल काष्ठा चयन_ctx *alloc_चयन_ctx(काष्ठा dm_target *ti, अचिन्हित nr_paths,
-					   अचिन्हित region_size)
-अणु
-	काष्ठा चयन_ctx *sctx;
+static struct switch_ctx *alloc_switch_ctx(struct dm_target *ti, unsigned nr_paths,
+					   unsigned region_size)
+{
+	struct switch_ctx *sctx;
 
-	sctx = kzalloc(काष्ठा_size(sctx, path_list, nr_paths), GFP_KERNEL);
-	अगर (!sctx)
-		वापस शून्य;
+	sctx = kzalloc(struct_size(sctx, path_list, nr_paths), GFP_KERNEL);
+	if (!sctx)
+		return NULL;
 
 	sctx->ti = ti;
 	sctx->region_size = region_size;
 
-	ti->निजी = sctx;
+	ti->private = sctx;
 
-	वापस sctx;
-पूर्ण
+	return sctx;
+}
 
-अटल पूर्णांक alloc_region_table(काष्ठा dm_target *ti, अचिन्हित nr_paths)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
+static int alloc_region_table(struct dm_target *ti, unsigned nr_paths)
+{
+	struct switch_ctx *sctx = ti->private;
 	sector_t nr_regions = ti->len;
 	sector_t nr_slots;
 
-	अगर (!(sctx->region_size & (sctx->region_size - 1)))
+	if (!(sctx->region_size & (sctx->region_size - 1)))
 		sctx->region_size_bits = __ffs(sctx->region_size);
-	अन्यथा
+	else
 		sctx->region_size_bits = -1;
 
 	sctx->region_table_entry_bits = 1;
-	जबतक (sctx->region_table_entry_bits < माप(region_table_slot_t) * 8 &&
+	while (sctx->region_table_entry_bits < sizeof(region_table_slot_t) * 8 &&
 	       (region_table_slot_t)1 << sctx->region_table_entry_bits < nr_paths)
 		sctx->region_table_entry_bits++;
 
-	sctx->region_entries_per_slot = (माप(region_table_slot_t) * 8) / sctx->region_table_entry_bits;
-	अगर (!(sctx->region_entries_per_slot & (sctx->region_entries_per_slot - 1)))
+	sctx->region_entries_per_slot = (sizeof(region_table_slot_t) * 8) / sctx->region_table_entry_bits;
+	if (!(sctx->region_entries_per_slot & (sctx->region_entries_per_slot - 1)))
 		sctx->region_entries_per_slot_bits = __ffs(sctx->region_entries_per_slot);
-	अन्यथा
+	else
 		sctx->region_entries_per_slot_bits = -1;
 
-	अगर (sector_भाग(nr_regions, sctx->region_size))
+	if (sector_div(nr_regions, sctx->region_size))
 		nr_regions++;
 
-	अगर (nr_regions >= अच_दीर्घ_उच्च) अणु
+	if (nr_regions >= ULONG_MAX) {
 		ti->error = "Region table too large";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	sctx->nr_regions = nr_regions;
 
 	nr_slots = nr_regions;
-	अगर (sector_भाग(nr_slots, sctx->region_entries_per_slot))
+	if (sector_div(nr_slots, sctx->region_entries_per_slot))
 		nr_slots++;
 
-	अगर (nr_slots > अच_दीर्घ_उच्च / माप(region_table_slot_t)) अणु
+	if (nr_slots > ULONG_MAX / sizeof(region_table_slot_t)) {
 		ti->error = "Region table too large";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sctx->region_table = vदो_स्मृति(array_size(nr_slots,
-						माप(region_table_slot_t)));
-	अगर (!sctx->region_table) अणु
+	sctx->region_table = vmalloc(array_size(nr_slots,
+						sizeof(region_table_slot_t)));
+	if (!sctx->region_table) {
 		ti->error = "Cannot allocate region table";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम चयन_get_position(काष्ठा चयन_ctx *sctx, अचिन्हित दीर्घ region_nr,
-				अचिन्हित दीर्घ *region_index, अचिन्हित *bit)
-अणु
-	अगर (sctx->region_entries_per_slot_bits >= 0) अणु
+static void switch_get_position(struct switch_ctx *sctx, unsigned long region_nr,
+				unsigned long *region_index, unsigned *bit)
+{
+	if (sctx->region_entries_per_slot_bits >= 0) {
 		*region_index = region_nr >> sctx->region_entries_per_slot_bits;
 		*bit = region_nr & (sctx->region_entries_per_slot - 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		*region_index = region_nr / sctx->region_entries_per_slot;
 		*bit = region_nr % sctx->region_entries_per_slot;
-	पूर्ण
+	}
 
 	*bit *= sctx->region_table_entry_bits;
-पूर्ण
+}
 
-अटल अचिन्हित चयन_region_table_पढ़ो(काष्ठा चयन_ctx *sctx, अचिन्हित दीर्घ region_nr)
-अणु
-	अचिन्हित दीर्घ region_index;
-	अचिन्हित bit;
+static unsigned switch_region_table_read(struct switch_ctx *sctx, unsigned long region_nr)
+{
+	unsigned long region_index;
+	unsigned bit;
 
-	चयन_get_position(sctx, region_nr, &region_index, &bit);
+	switch_get_position(sctx, region_nr, &region_index, &bit);
 
-	वापस (READ_ONCE(sctx->region_table[region_index]) >> bit) &
+	return (READ_ONCE(sctx->region_table[region_index]) >> bit) &
 		((1 << sctx->region_table_entry_bits) - 1);
-पूर्ण
+}
 
 /*
  * Find which path to use at given offset.
  */
-अटल अचिन्हित चयन_get_path_nr(काष्ठा चयन_ctx *sctx, sector_t offset)
-अणु
-	अचिन्हित path_nr;
+static unsigned switch_get_path_nr(struct switch_ctx *sctx, sector_t offset)
+{
+	unsigned path_nr;
 	sector_t p;
 
 	p = offset;
-	अगर (sctx->region_size_bits >= 0)
+	if (sctx->region_size_bits >= 0)
 		p >>= sctx->region_size_bits;
-	अन्यथा
-		sector_भाग(p, sctx->region_size);
+	else
+		sector_div(p, sctx->region_size);
 
-	path_nr = चयन_region_table_पढ़ो(sctx, p);
+	path_nr = switch_region_table_read(sctx, p);
 
-	/* This can only happen अगर the processor uses non-atomic stores. */
-	अगर (unlikely(path_nr >= sctx->nr_paths))
+	/* This can only happen if the processor uses non-atomic stores. */
+	if (unlikely(path_nr >= sctx->nr_paths))
 		path_nr = 0;
 
-	वापस path_nr;
-पूर्ण
+	return path_nr;
+}
 
-अटल व्योम चयन_region_table_ग_लिखो(काष्ठा चयन_ctx *sctx, अचिन्हित दीर्घ region_nr,
-				      अचिन्हित value)
-अणु
-	अचिन्हित दीर्घ region_index;
-	अचिन्हित bit;
+static void switch_region_table_write(struct switch_ctx *sctx, unsigned long region_nr,
+				      unsigned value)
+{
+	unsigned long region_index;
+	unsigned bit;
 	region_table_slot_t pte;
 
-	चयन_get_position(sctx, region_nr, &region_index, &bit);
+	switch_get_position(sctx, region_nr, &region_index, &bit);
 
 	pte = sctx->region_table[region_index];
 	pte &= ~((((region_table_slot_t)1 << sctx->region_table_entry_bits) - 1) << bit);
 	pte |= (region_table_slot_t)value << bit;
 	sctx->region_table[region_index] = pte;
-पूर्ण
+}
 
 /*
  * Fill the region table with an initial round robin pattern.
  */
-अटल व्योम initialise_region_table(काष्ठा चयन_ctx *sctx)
-अणु
-	अचिन्हित path_nr = 0;
-	अचिन्हित दीर्घ region_nr;
+static void initialise_region_table(struct switch_ctx *sctx)
+{
+	unsigned path_nr = 0;
+	unsigned long region_nr;
 
-	क्रम (region_nr = 0; region_nr < sctx->nr_regions; region_nr++) अणु
-		चयन_region_table_ग_लिखो(sctx, region_nr, path_nr);
-		अगर (++path_nr >= sctx->nr_paths)
+	for (region_nr = 0; region_nr < sctx->nr_regions; region_nr++) {
+		switch_region_table_write(sctx, region_nr, path_nr);
+		if (++path_nr >= sctx->nr_paths)
 			path_nr = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक parse_path(काष्ठा dm_arg_set *as, काष्ठा dm_target *ti)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
-	अचिन्हित दीर्घ दीर्घ start;
-	पूर्णांक r;
+static int parse_path(struct dm_arg_set *as, struct dm_target *ti)
+{
+	struct switch_ctx *sctx = ti->private;
+	unsigned long long start;
+	int r;
 
-	r = dm_get_device(ti, dm_shअगरt_arg(as), dm_table_get_mode(ti->table),
+	r = dm_get_device(ti, dm_shift_arg(as), dm_table_get_mode(ti->table),
 			  &sctx->path_list[sctx->nr_paths].dmdev);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Device lookup failed";
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	अगर (kम_से_अदीर्घl(dm_shअगरt_arg(as), 10, &start) || start != (sector_t)start) अणु
+	if (kstrtoull(dm_shift_arg(as), 10, &start) || start != (sector_t)start) {
 		ti->error = "Invalid device starting offset";
 		dm_put_device(ti, sctx->path_list[sctx->nr_paths].dmdev);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sctx->path_list[sctx->nr_paths].start = start;
 
 	sctx->nr_paths++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Deकाष्ठाor: Don't मुक्त the dm_target, just the ti->निजी data (अगर any).
+ * Destructor: Don't free the dm_target, just the ti->private data (if any).
  */
-अटल व्योम चयन_dtr(काष्ठा dm_target *ti)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
+static void switch_dtr(struct dm_target *ti)
+{
+	struct switch_ctx *sctx = ti->private;
 
-	जबतक (sctx->nr_paths--)
+	while (sctx->nr_paths--)
 		dm_put_device(ti, sctx->path_list[sctx->nr_paths].dmdev);
 
-	vमुक्त(sctx->region_table);
-	kमुक्त(sctx);
-पूर्ण
+	vfree(sctx->region_table);
+	kfree(sctx);
+}
 
 /*
- * Conकाष्ठाor arguments:
+ * Constructor arguments:
  *   <num_paths> <region_size> <num_optional_args> [<optional_args>...]
  *   [<dev_path> <offset>]+
  *
- * Optional args are to allow क्रम future extension: currently this
+ * Optional args are to allow for future extension: currently this
  * parameter must be 0.
  */
-अटल पूर्णांक चयन_ctr(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv)
-अणु
-	अटल स्थिर काष्ठा dm_arg _args[] = अणु
-		अणु1, (KMALLOC_MAX_SIZE - माप(काष्ठा चयन_ctx)) / माप(काष्ठा चयन_path), "Invalid number of paths"पूर्ण,
-		अणु1, अच_पूर्णांक_उच्च, "Invalid region size"पूर्ण,
-		अणु0, 0, "Invalid number of optional args"पूर्ण,
-	पूर्ण;
+static int switch_ctr(struct dm_target *ti, unsigned argc, char **argv)
+{
+	static const struct dm_arg _args[] = {
+		{1, (KMALLOC_MAX_SIZE - sizeof(struct switch_ctx)) / sizeof(struct switch_path), "Invalid number of paths"},
+		{1, UINT_MAX, "Invalid region size"},
+		{0, 0, "Invalid number of optional args"},
+	};
 
-	काष्ठा चयन_ctx *sctx;
-	काष्ठा dm_arg_set as;
-	अचिन्हित nr_paths, region_size, nr_optional_args;
-	पूर्णांक r;
+	struct switch_ctx *sctx;
+	struct dm_arg_set as;
+	unsigned nr_paths, region_size, nr_optional_args;
+	int r;
 
 	as.argc = argc;
 	as.argv = argv;
 
-	r = dm_पढ़ो_arg(_args, &as, &nr_paths, &ti->error);
-	अगर (r)
-		वापस -EINVAL;
+	r = dm_read_arg(_args, &as, &nr_paths, &ti->error);
+	if (r)
+		return -EINVAL;
 
-	r = dm_पढ़ो_arg(_args + 1, &as, &region_size, &ti->error);
-	अगर (r)
-		वापस r;
+	r = dm_read_arg(_args + 1, &as, &region_size, &ti->error);
+	if (r)
+		return r;
 
-	r = dm_पढ़ो_arg_group(_args + 2, &as, &nr_optional_args, &ti->error);
-	अगर (r)
-		वापस r;
-	/* parse optional arguments here, अगर we add any */
+	r = dm_read_arg_group(_args + 2, &as, &nr_optional_args, &ti->error);
+	if (r)
+		return r;
+	/* parse optional arguments here, if we add any */
 
-	अगर (as.argc != nr_paths * 2) अणु
+	if (as.argc != nr_paths * 2) {
 		ti->error = "Incorrect number of path arguments";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sctx = alloc_चयन_ctx(ti, nr_paths, region_size);
-	अगर (!sctx) अणु
+	sctx = alloc_switch_ctx(ti, nr_paths, region_size);
+	if (!sctx) {
 		ti->error = "Cannot allocate redirection context";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	r = dm_set_target_max_io_len(ti, region_size);
-	अगर (r)
-		जाओ error;
+	if (r)
+		goto error;
 
-	जबतक (as.argc) अणु
+	while (as.argc) {
 		r = parse_path(&as, ti);
-		अगर (r)
-			जाओ error;
-	पूर्ण
+		if (r)
+			goto error;
+	}
 
 	r = alloc_region_table(ti, nr_paths);
-	अगर (r)
-		जाओ error;
+	if (r)
+		goto error;
 
 	initialise_region_table(sctx);
 
-	/* For UNMAP, sending the request करोwn any path is sufficient */
+	/* For UNMAP, sending the request down any path is sufficient */
 	ti->num_discard_bios = 1;
 
-	वापस 0;
+	return 0;
 
 error:
-	चयन_dtr(ti);
+	switch_dtr(ti);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक चयन_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
+static int switch_map(struct dm_target *ti, struct bio *bio)
+{
+	struct switch_ctx *sctx = ti->private;
 	sector_t offset = dm_target_offset(ti, bio->bi_iter.bi_sector);
-	अचिन्हित path_nr = चयन_get_path_nr(sctx, offset);
+	unsigned path_nr = switch_get_path_nr(sctx, offset);
 
 	bio_set_dev(bio, sctx->path_list[path_nr].dmdev->bdev);
 	bio->bi_iter.bi_sector = sctx->path_list[path_nr].start + offset;
 
-	वापस DM_MAPIO_REMAPPED;
-पूर्ण
+	return DM_MAPIO_REMAPPED;
+}
 
 /*
  * We need to parse hex numbers in the message as quickly as possible.
  *
- * This table-based hex parser improves perक्रमmance.
- * It improves a समय to load 1000000 entries compared to the condition-based
+ * This table-based hex parser improves performance.
+ * It improves a time to load 1000000 entries compared to the condition-based
  * parser.
  *		table-based parser	condition-based parser
  * PA-RISC	0.29s			0.31s
  * Opteron	0.0495s			0.0498s
  */
-अटल स्थिर अचिन्हित अक्षर hex_table[256] = अणु
+static const unsigned char hex_table[256] = {
 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -356,230 +355,230 @@ error:
 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255
-पूर्ण;
+};
 
-अटल __always_अंतरभूत अचिन्हित दीर्घ parse_hex(स्थिर अक्षर **string)
-अणु
-	अचिन्हित अक्षर d;
-	अचिन्हित दीर्घ r = 0;
+static __always_inline unsigned long parse_hex(const char **string)
+{
+	unsigned char d;
+	unsigned long r = 0;
 
-	जबतक ((d = hex_table[(अचिन्हित अक्षर)**string]) < 16) अणु
+	while ((d = hex_table[(unsigned char)**string]) < 16) {
 		r = (r << 4) | d;
 		(*string)++;
-	पूर्ण
+	}
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक process_set_region_mappings(काष्ठा चयन_ctx *sctx,
-				       अचिन्हित argc, अक्षर **argv)
-अणु
-	अचिन्हित i;
-	अचिन्हित दीर्घ region_index = 0;
+static int process_set_region_mappings(struct switch_ctx *sctx,
+				       unsigned argc, char **argv)
+{
+	unsigned i;
+	unsigned long region_index = 0;
 
-	क्रम (i = 1; i < argc; i++) अणु
-		अचिन्हित दीर्घ path_nr;
-		स्थिर अक्षर *string = argv[i];
+	for (i = 1; i < argc; i++) {
+		unsigned long path_nr;
+		const char *string = argv[i];
 
-		अगर ((*string & 0xdf) == 'R') अणु
-			अचिन्हित दीर्घ cycle_length, num_ग_लिखो;
+		if ((*string & 0xdf) == 'R') {
+			unsigned long cycle_length, num_write;
 
 			string++;
-			अगर (unlikely(*string == ',')) अणु
+			if (unlikely(*string == ',')) {
 				DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			cycle_length = parse_hex(&string);
-			अगर (unlikely(*string != ',')) अणु
+			if (unlikely(*string != ',')) {
 				DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			string++;
-			अगर (unlikely(!*string)) अणु
+			if (unlikely(!*string)) {
 				DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-				वापस -EINVAL;
-			पूर्ण
-			num_ग_लिखो = parse_hex(&string);
-			अगर (unlikely(*string)) अणु
+				return -EINVAL;
+			}
+			num_write = parse_hex(&string);
+			if (unlikely(*string)) {
 				DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			अगर (unlikely(!cycle_length) || unlikely(cycle_length - 1 > region_index)) अणु
+			if (unlikely(!cycle_length) || unlikely(cycle_length - 1 > region_index)) {
 				DMWARN("invalid set_region_mappings cycle length: %lu > %lu",
 				       cycle_length - 1, region_index);
-				वापस -EINVAL;
-			पूर्ण
-			अगर (unlikely(region_index + num_ग_लिखो < region_index) ||
-			    unlikely(region_index + num_ग_लिखो >= sctx->nr_regions)) अणु
+				return -EINVAL;
+			}
+			if (unlikely(region_index + num_write < region_index) ||
+			    unlikely(region_index + num_write >= sctx->nr_regions)) {
 				DMWARN("invalid set_region_mappings region number: %lu + %lu >= %lu",
-				       region_index, num_ग_लिखो, sctx->nr_regions);
-				वापस -EINVAL;
-			पूर्ण
+				       region_index, num_write, sctx->nr_regions);
+				return -EINVAL;
+			}
 
-			जबतक (num_ग_लिखो--) अणु
+			while (num_write--) {
 				region_index++;
-				path_nr = चयन_region_table_पढ़ो(sctx, region_index - cycle_length);
-				चयन_region_table_ग_लिखो(sctx, region_index, path_nr);
-			पूर्ण
+				path_nr = switch_region_table_read(sctx, region_index - cycle_length);
+				switch_region_table_write(sctx, region_index, path_nr);
+			}
 
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (*string == ':')
+		if (*string == ':')
 			region_index++;
-		अन्यथा अणु
+		else {
 			region_index = parse_hex(&string);
-			अगर (unlikely(*string != ':')) अणु
+			if (unlikely(*string != ':')) {
 				DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
 		string++;
-		अगर (unlikely(!*string)) अणु
+		if (unlikely(!*string)) {
 			DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		path_nr = parse_hex(&string);
-		अगर (unlikely(*string)) अणु
+		if (unlikely(*string)) {
 			DMWARN("invalid set_region_mappings argument: '%s'", argv[i]);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (unlikely(region_index >= sctx->nr_regions)) अणु
+			return -EINVAL;
+		}
+		if (unlikely(region_index >= sctx->nr_regions)) {
 			DMWARN("invalid set_region_mappings region number: %lu >= %lu", region_index, sctx->nr_regions);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (unlikely(path_nr >= sctx->nr_paths)) अणु
+			return -EINVAL;
+		}
+		if (unlikely(path_nr >= sctx->nr_paths)) {
 			DMWARN("invalid set_region_mappings device: %lu >= %u", path_nr, sctx->nr_paths);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		चयन_region_table_ग_लिखो(sctx, region_index, path_nr);
-	पूर्ण
+		switch_region_table_write(sctx, region_index, path_nr);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Messages are processed one-at-a-समय.
+ * Messages are processed one-at-a-time.
  *
  * Only set_region_mappings is supported.
  */
-अटल पूर्णांक चयन_message(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv,
-			  अक्षर *result, अचिन्हित maxlen)
-अणु
-	अटल DEFINE_MUTEX(message_mutex);
+static int switch_message(struct dm_target *ti, unsigned argc, char **argv,
+			  char *result, unsigned maxlen)
+{
+	static DEFINE_MUTEX(message_mutex);
 
-	काष्ठा चयन_ctx *sctx = ti->निजी;
-	पूर्णांक r = -EINVAL;
+	struct switch_ctx *sctx = ti->private;
+	int r = -EINVAL;
 
 	mutex_lock(&message_mutex);
 
-	अगर (!strहालcmp(argv[0], "set_region_mappings"))
+	if (!strcasecmp(argv[0], "set_region_mappings"))
 		r = process_set_region_mappings(sctx, argc, argv);
-	अन्यथा
+	else
 		DMWARN("Unrecognised message received.");
 
 	mutex_unlock(&message_mutex);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम चयन_status(काष्ठा dm_target *ti, status_type_t type,
-			  अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
-	अचिन्हित sz = 0;
-	पूर्णांक path_nr;
+static void switch_status(struct dm_target *ti, status_type_t type,
+			  unsigned status_flags, char *result, unsigned maxlen)
+{
+	struct switch_ctx *sctx = ti->private;
+	unsigned sz = 0;
+	int path_nr;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
+	switch (type) {
+	case STATUSTYPE_INFO:
 		result[0] = '\0';
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
+	case STATUSTYPE_TABLE:
 		DMEMIT("%u %u 0", sctx->nr_paths, sctx->region_size);
-		क्रम (path_nr = 0; path_nr < sctx->nr_paths; path_nr++)
+		for (path_nr = 0; path_nr < sctx->nr_paths; path_nr++)
 			DMEMIT(" %s %llu", sctx->path_list[path_nr].dmdev->name,
-			       (अचिन्हित दीर्घ दीर्घ)sctx->path_list[path_nr].start);
-		अवरोध;
-	पूर्ण
-पूर्ण
+			       (unsigned long long)sctx->path_list[path_nr].start);
+		break;
+	}
+}
 
 /*
  * Switch ioctl:
  *
- * Passthrough all ioctls to the path क्रम sector 0
+ * Passthrough all ioctls to the path for sector 0
  */
-अटल पूर्णांक चयन_prepare_ioctl(काष्ठा dm_target *ti, काष्ठा block_device **bdev)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
-	अचिन्हित path_nr;
+static int switch_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
+{
+	struct switch_ctx *sctx = ti->private;
+	unsigned path_nr;
 
-	path_nr = चयन_get_path_nr(sctx, 0);
+	path_nr = switch_get_path_nr(sctx, 0);
 
 	*bdev = sctx->path_list[path_nr].dmdev->bdev;
 
 	/*
-	 * Only pass ioctls through अगर the device sizes match exactly.
+	 * Only pass ioctls through if the device sizes match exactly.
 	 */
-	अगर (ti->len + sctx->path_list[path_nr].start !=
-	    i_size_पढ़ो((*bdev)->bd_inode) >> SECTOR_SHIFT)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (ti->len + sctx->path_list[path_nr].start !=
+	    i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक चयन_iterate_devices(काष्ठा dm_target *ti,
-				  iterate_devices_callout_fn fn, व्योम *data)
-अणु
-	काष्ठा चयन_ctx *sctx = ti->निजी;
-	पूर्णांक path_nr;
-	पूर्णांक r;
+static int switch_iterate_devices(struct dm_target *ti,
+				  iterate_devices_callout_fn fn, void *data)
+{
+	struct switch_ctx *sctx = ti->private;
+	int path_nr;
+	int r;
 
-	क्रम (path_nr = 0; path_nr < sctx->nr_paths; path_nr++) अणु
+	for (path_nr = 0; path_nr < sctx->nr_paths; path_nr++) {
 		r = fn(ti, sctx->path_list[path_nr].dmdev,
 			 sctx->path_list[path_nr].start, ti->len, data);
-		अगर (r)
-			वापस r;
-	पूर्ण
+		if (r)
+			return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा target_type चयन_target = अणु
+static struct target_type switch_target = {
 	.name = "switch",
-	.version = अणु1, 1, 0पूर्ण,
+	.version = {1, 1, 0},
 	.features = DM_TARGET_NOWAIT,
 	.module = THIS_MODULE,
-	.ctr = चयन_ctr,
-	.dtr = चयन_dtr,
-	.map = चयन_map,
-	.message = चयन_message,
-	.status = चयन_status,
-	.prepare_ioctl = चयन_prepare_ioctl,
-	.iterate_devices = चयन_iterate_devices,
-पूर्ण;
+	.ctr = switch_ctr,
+	.dtr = switch_dtr,
+	.map = switch_map,
+	.message = switch_message,
+	.status = switch_status,
+	.prepare_ioctl = switch_prepare_ioctl,
+	.iterate_devices = switch_iterate_devices,
+};
 
-अटल पूर्णांक __init dm_चयन_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init dm_switch_init(void)
+{
+	int r;
 
-	r = dm_रेजिस्टर_target(&चयन_target);
-	अगर (r < 0)
+	r = dm_register_target(&switch_target);
+	if (r < 0)
 		DMERR("dm_register_target() failed %d", r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम __निकास dm_चयन_निकास(व्योम)
-अणु
-	dm_unरेजिस्टर_target(&चयन_target);
-पूर्ण
+static void __exit dm_switch_exit(void)
+{
+	dm_unregister_target(&switch_target);
+}
 
-module_init(dm_चयन_init);
-module_निकास(dm_चयन_निकास);
+module_init(dm_switch_init);
+module_exit(dm_switch_exit);
 
 MODULE_DESCRIPTION(DM_NAME " dynamic path switching target");
 MODULE_AUTHOR("Kevin D. O'Kelley <Kevin_OKelley@dell.com>");

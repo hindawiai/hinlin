@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __PARISC_SWITCH_TO_H
-#घोषणा __PARISC_SWITCH_TO_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __PARISC_SWITCH_TO_H
+#define __PARISC_SWITCH_TO_H
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-बाह्य काष्ठा task_काष्ठा *_चयन_to(काष्ठा task_काष्ठा *, काष्ठा task_काष्ठा *);
+extern struct task_struct *_switch_to(struct task_struct *, struct task_struct *);
 
-#घोषणा चयन_to(prev, next, last) करो अणु			\
-	(last) = _चयन_to(prev, next);			\
-पूर्ण जबतक(0)
+#define switch_to(prev, next, last) do {			\
+	(last) = _switch_to(prev, next);			\
+} while(0)
 
-#पूर्ण_अगर /* __PARISC_SWITCH_TO_H */
+#endif /* __PARISC_SWITCH_TO_H */

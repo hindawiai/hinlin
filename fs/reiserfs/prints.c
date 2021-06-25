@@ -1,340 +1,339 @@
-<शैली गुरु>
 /*
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
-#समावेश <linux/समय.स>
-#समावेश <linux/fs.h>
-#समावेश "reiserfs.h"
-#समावेश <linux/माला.स>
-#समावेश <linux/buffer_head.h>
+#include <linux/time.h>
+#include <linux/fs.h>
+#include "reiserfs.h"
+#include <linux/string.h>
+#include <linux/buffer_head.h>
 
-#समावेश <मानकतर्क.स>
+#include <stdarg.h>
 
-अटल अक्षर error_buf[1024];
-अटल अक्षर fmt_buf[1024];
-अटल अक्षर off_buf[80];
+static char error_buf[1024];
+static char fmt_buf[1024];
+static char off_buf[80];
 
-अटल अक्षर *reiserfs_cpu_offset(काष्ठा cpu_key *key)
-अणु
-	अगर (cpu_key_k_type(key) == TYPE_सूचीENTRY)
-		प्र_लिखो(off_buf, "%llu(%llu)",
-			(अचिन्हित दीर्घ दीर्घ)
+static char *reiserfs_cpu_offset(struct cpu_key *key)
+{
+	if (cpu_key_k_type(key) == TYPE_DIRENTRY)
+		sprintf(off_buf, "%llu(%llu)",
+			(unsigned long long)
 			GET_HASH_VALUE(cpu_key_k_offset(key)),
-			(अचिन्हित दीर्घ दीर्घ)
+			(unsigned long long)
 			GET_GENERATION_NUMBER(cpu_key_k_offset(key)));
-	अन्यथा
-		प्र_लिखो(off_buf, "0x%Lx",
-			(अचिन्हित दीर्घ दीर्घ)cpu_key_k_offset(key));
-	वापस off_buf;
-पूर्ण
+	else
+		sprintf(off_buf, "0x%Lx",
+			(unsigned long long)cpu_key_k_offset(key));
+	return off_buf;
+}
 
-अटल अक्षर *le_offset(काष्ठा reiserfs_key *key)
-अणु
-	पूर्णांक version;
+static char *le_offset(struct reiserfs_key *key)
+{
+	int version;
 
 	version = le_key_version(key);
-	अगर (le_key_k_type(version, key) == TYPE_सूचीENTRY)
-		प्र_लिखो(off_buf, "%llu(%llu)",
-			(अचिन्हित दीर्घ दीर्घ)
+	if (le_key_k_type(version, key) == TYPE_DIRENTRY)
+		sprintf(off_buf, "%llu(%llu)",
+			(unsigned long long)
 			GET_HASH_VALUE(le_key_k_offset(version, key)),
-			(अचिन्हित दीर्घ दीर्घ)
+			(unsigned long long)
 			GET_GENERATION_NUMBER(le_key_k_offset(version, key)));
-	अन्यथा
-		प्र_लिखो(off_buf, "0x%Lx",
-			(अचिन्हित दीर्घ दीर्घ)le_key_k_offset(version, key));
-	वापस off_buf;
-पूर्ण
+	else
+		sprintf(off_buf, "0x%Lx",
+			(unsigned long long)le_key_k_offset(version, key));
+	return off_buf;
+}
 
-अटल अक्षर *cpu_type(काष्ठा cpu_key *key)
-अणु
-	अगर (cpu_key_k_type(key) == TYPE_STAT_DATA)
-		वापस "SD";
-	अगर (cpu_key_k_type(key) == TYPE_सूचीENTRY)
-		वापस "DIR";
-	अगर (cpu_key_k_type(key) == TYPE_सूचीECT)
-		वापस "DIRECT";
-	अगर (cpu_key_k_type(key) == TYPE_INसूचीECT)
-		वापस "IND";
-	वापस "UNKNOWN";
-पूर्ण
+static char *cpu_type(struct cpu_key *key)
+{
+	if (cpu_key_k_type(key) == TYPE_STAT_DATA)
+		return "SD";
+	if (cpu_key_k_type(key) == TYPE_DIRENTRY)
+		return "DIR";
+	if (cpu_key_k_type(key) == TYPE_DIRECT)
+		return "DIRECT";
+	if (cpu_key_k_type(key) == TYPE_INDIRECT)
+		return "IND";
+	return "UNKNOWN";
+}
 
-अटल अक्षर *le_type(काष्ठा reiserfs_key *key)
-अणु
-	पूर्णांक version;
+static char *le_type(struct reiserfs_key *key)
+{
+	int version;
 
 	version = le_key_version(key);
 
-	अगर (le_key_k_type(version, key) == TYPE_STAT_DATA)
-		वापस "SD";
-	अगर (le_key_k_type(version, key) == TYPE_सूचीENTRY)
-		वापस "DIR";
-	अगर (le_key_k_type(version, key) == TYPE_सूचीECT)
-		वापस "DIRECT";
-	अगर (le_key_k_type(version, key) == TYPE_INसूचीECT)
-		वापस "IND";
-	वापस "UNKNOWN";
-पूर्ण
+	if (le_key_k_type(version, key) == TYPE_STAT_DATA)
+		return "SD";
+	if (le_key_k_type(version, key) == TYPE_DIRENTRY)
+		return "DIR";
+	if (le_key_k_type(version, key) == TYPE_DIRECT)
+		return "DIRECT";
+	if (le_key_k_type(version, key) == TYPE_INDIRECT)
+		return "IND";
+	return "UNKNOWN";
+}
 
 /* %k */
-अटल पूर्णांक scnम_लिखो_le_key(अक्षर *buf, माप_प्रकार size, काष्ठा reiserfs_key *key)
-अणु
-	अगर (key)
-		वापस scnम_लिखो(buf, size, "[%d %d %s %s]",
+static int scnprintf_le_key(char *buf, size_t size, struct reiserfs_key *key)
+{
+	if (key)
+		return scnprintf(buf, size, "[%d %d %s %s]",
 				 le32_to_cpu(key->k_dir_id),
 				 le32_to_cpu(key->k_objectid), le_offset(key),
 				 le_type(key));
-	अन्यथा
-		वापस scnम_लिखो(buf, size, "[NULL]");
-पूर्ण
+	else
+		return scnprintf(buf, size, "[NULL]");
+}
 
 /* %K */
-अटल पूर्णांक scnम_लिखो_cpu_key(अक्षर *buf, माप_प्रकार size, काष्ठा cpu_key *key)
-अणु
-	अगर (key)
-		वापस scnम_लिखो(buf, size, "[%d %d %s %s]",
+static int scnprintf_cpu_key(char *buf, size_t size, struct cpu_key *key)
+{
+	if (key)
+		return scnprintf(buf, size, "[%d %d %s %s]",
 				 key->on_disk_key.k_dir_id,
 				 key->on_disk_key.k_objectid,
 				 reiserfs_cpu_offset(key), cpu_type(key));
-	अन्यथा
-		वापस scnम_लिखो(buf, size, "[NULL]");
-पूर्ण
+	else
+		return scnprintf(buf, size, "[NULL]");
+}
 
-अटल पूर्णांक scnम_लिखो_de_head(अक्षर *buf, माप_प्रकार size,
-			     काष्ठा reiserfs_de_head *deh)
-अणु
-	अगर (deh)
-		वापस scnम_लिखो(buf, size,
+static int scnprintf_de_head(char *buf, size_t size,
+			     struct reiserfs_de_head *deh)
+{
+	if (deh)
+		return scnprintf(buf, size,
 				 "[offset=%d dir_id=%d objectid=%d location=%d state=%04x]",
 				 deh_offset(deh), deh_dir_id(deh),
 				 deh_objectid(deh), deh_location(deh),
 				 deh_state(deh));
-	अन्यथा
-		वापस scnम_लिखो(buf, size, "[NULL]");
+	else
+		return scnprintf(buf, size, "[NULL]");
 
-पूर्ण
+}
 
-अटल पूर्णांक scnम_लिखो_item_head(अक्षर *buf, माप_प्रकार size, काष्ठा item_head *ih)
-अणु
-	अगर (ih) अणु
-		अक्षर *p = buf;
-		अक्षर * स्थिर end = buf + size;
+static int scnprintf_item_head(char *buf, size_t size, struct item_head *ih)
+{
+	if (ih) {
+		char *p = buf;
+		char * const end = buf + size;
 
-		p += scnम_लिखो(p, end - p, "%s",
+		p += scnprintf(p, end - p, "%s",
 			       (ih_version(ih) == KEY_FORMAT_3_6) ?
 			       "*3.6* " : "*3.5*");
 
-		p += scnम_लिखो_le_key(p, end - p, &ih->ih_key);
+		p += scnprintf_le_key(p, end - p, &ih->ih_key);
 
-		p += scnम_लिखो(p, end - p,
+		p += scnprintf(p, end - p,
 			       ", item_len %d, item_location %d, free_space(entry_count) %d",
 			       ih_item_len(ih), ih_location(ih),
-			       ih_मुक्त_space(ih));
-		वापस p - buf;
-	पूर्ण अन्यथा
-		वापस scnम_लिखो(buf, size, "[NULL]");
-पूर्ण
+			       ih_free_space(ih));
+		return p - buf;
+	} else
+		return scnprintf(buf, size, "[NULL]");
+}
 
-अटल पूर्णांक scnम_लिखो_direntry(अक्षर *buf, माप_प्रकार size,
-			      काष्ठा reiserfs_dir_entry *de)
-अणु
-	अक्षर name[20];
+static int scnprintf_direntry(char *buf, size_t size,
+			      struct reiserfs_dir_entry *de)
+{
+	char name[20];
 
-	स_नकल(name, de->de_name, de->de_namelen > 19 ? 19 : de->de_namelen);
+	memcpy(name, de->de_name, de->de_namelen > 19 ? 19 : de->de_namelen);
 	name[de->de_namelen > 19 ? 19 : de->de_namelen] = 0;
-	वापस scnम_लिखो(buf, size, "\"%s\"==>[%d %d]",
+	return scnprintf(buf, size, "\"%s\"==>[%d %d]",
 			 name, de->de_dir_id, de->de_objectid);
-पूर्ण
+}
 
-अटल पूर्णांक scnम_लिखो_block_head(अक्षर *buf, माप_प्रकार size, काष्ठा buffer_head *bh)
-अणु
-	वापस scnम_लिखो(buf, size,
+static int scnprintf_block_head(char *buf, size_t size, struct buffer_head *bh)
+{
+	return scnprintf(buf, size,
 			 "level=%d, nr_items=%d, free_space=%d rdkey ",
 			 B_LEVEL(bh), B_NR_ITEMS(bh), B_FREE_SPACE(bh));
-पूर्ण
+}
 
-अटल पूर्णांक scnम_लिखो_buffer_head(अक्षर *buf, माप_प्रकार size, काष्ठा buffer_head *bh)
-अणु
-	वापस scnम_लिखो(buf, size,
+static int scnprintf_buffer_head(char *buf, size_t size, struct buffer_head *bh)
+{
+	return scnprintf(buf, size,
 			 "dev %pg, size %zd, blocknr %llu, count %d, state 0x%lx, page %p, (%s, %s, %s)",
 			 bh->b_bdev, bh->b_size,
-			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
-			 atomic_पढ़ो(&(bh->b_count)),
+			 (unsigned long long)bh->b_blocknr,
+			 atomic_read(&(bh->b_count)),
 			 bh->b_state, bh->b_page,
 			 buffer_uptodate(bh) ? "UPTODATE" : "!UPTODATE",
 			 buffer_dirty(bh) ? "DIRTY" : "CLEAN",
 			 buffer_locked(bh) ? "LOCKED" : "UNLOCKED");
-पूर्ण
+}
 
-अटल पूर्णांक scnम_लिखो_disk_child(अक्षर *buf, माप_प्रकार size, काष्ठा disk_child *dc)
-अणु
-	वापस scnम_लिखो(buf, size, "[dc_number=%d, dc_size=%u]",
+static int scnprintf_disk_child(char *buf, size_t size, struct disk_child *dc)
+{
+	return scnprintf(buf, size, "[dc_number=%d, dc_size=%u]",
 			 dc_block_number(dc), dc_size(dc));
-पूर्ण
+}
 
-अटल अक्षर *is_there_reiserfs_काष्ठा(अक्षर *fmt, पूर्णांक *what)
-अणु
-	अक्षर *k = fmt;
+static char *is_there_reiserfs_struct(char *fmt, int *what)
+{
+	char *k = fmt;
 
-	जबतक ((k = म_अक्षर(k, '%')) != शून्य) अणु
-		अगर (k[1] == 'k' || k[1] == 'K' || k[1] == 'h' || k[1] == 't' ||
-		    k[1] == 'z' || k[1] == 'b' || k[1] == 'y' || k[1] == 'a') अणु
+	while ((k = strchr(k, '%')) != NULL) {
+		if (k[1] == 'k' || k[1] == 'K' || k[1] == 'h' || k[1] == 't' ||
+		    k[1] == 'z' || k[1] == 'b' || k[1] == 'y' || k[1] == 'a') {
 			*what = k[1];
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		k++;
-	पूर्ण
-	वापस k;
-पूर्ण
+	}
+	return k;
+}
 
 /*
- * debugging reiserfs we used to prपूर्णांक out a lot of dअगरferent
+ * debugging reiserfs we used to print out a lot of different
  * variables, like keys, item headers, buffer heads etc. Values of
- * most fields matter. So it took a दीर्घ समय just to ग_लिखो
- * appropriative prपूर्णांकk. With this reiserfs_warning you can use क्रमmat
- * specअगरication क्रम complex काष्ठाures like you used to करो with
- * म_लिखोs क्रम पूर्णांकegers, द्विगुनs and poपूर्णांकers. For instance, to prपूर्णांक
- * out key काष्ठाure you have to ग_लिखो just:
+ * most fields matter. So it took a long time just to write
+ * appropriative printk. With this reiserfs_warning you can use format
+ * specification for complex structures like you used to do with
+ * printfs for integers, doubles and pointers. For instance, to print
+ * out key structure you have to write just:
  * reiserfs_warning ("bad key %k", key);
  * instead of
- * prपूर्णांकk ("bad key %lu %lu %lu %lu", key->k_dir_id, key->k_objectid,
+ * printk ("bad key %lu %lu %lu %lu", key->k_dir_id, key->k_objectid,
  *         key->k_offset, key->k_uniqueness);
  */
-अटल DEFINE_SPINLOCK(error_lock);
-अटल व्योम prepare_error_buf(स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	अक्षर *fmt1 = fmt_buf;
-	अक्षर *k;
-	अक्षर *p = error_buf;
-	अक्षर * स्थिर end = &error_buf[माप(error_buf)];
-	पूर्णांक what;
+static DEFINE_SPINLOCK(error_lock);
+static void prepare_error_buf(const char *fmt, va_list args)
+{
+	char *fmt1 = fmt_buf;
+	char *k;
+	char *p = error_buf;
+	char * const end = &error_buf[sizeof(error_buf)];
+	int what;
 
 	spin_lock(&error_lock);
 
-	अगर (WARN_ON(strscpy(fmt_buf, fmt, माप(fmt_buf)) < 0)) अणु
+	if (WARN_ON(strscpy(fmt_buf, fmt, sizeof(fmt_buf)) < 0)) {
 		strscpy(error_buf, "format string too long", end - error_buf);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	जबतक ((k = is_there_reiserfs_काष्ठा(fmt1, &what)) != शून्य) अणु
+	while ((k = is_there_reiserfs_struct(fmt1, &what)) != NULL) {
 		*k = 0;
 
-		p += vscnम_लिखो(p, end - p, fmt1, args);
+		p += vscnprintf(p, end - p, fmt1, args);
 
-		चयन (what) अणु
-		हाल 'k':
-			p += scnम_लिखो_le_key(p, end - p,
-					      बहु_तर्क(args, काष्ठा reiserfs_key *));
-			अवरोध;
-		हाल 'K':
-			p += scnम_लिखो_cpu_key(p, end - p,
-					       बहु_तर्क(args, काष्ठा cpu_key *));
-			अवरोध;
-		हाल 'h':
-			p += scnम_लिखो_item_head(p, end - p,
-						 बहु_तर्क(args, काष्ठा item_head *));
-			अवरोध;
-		हाल 't':
-			p += scnम_लिखो_direntry(p, end - p,
-						बहु_तर्क(args, काष्ठा reiserfs_dir_entry *));
-			अवरोध;
-		हाल 'y':
-			p += scnम_लिखो_disk_child(p, end - p,
-						  बहु_तर्क(args, काष्ठा disk_child *));
-			अवरोध;
-		हाल 'z':
-			p += scnम_लिखो_block_head(p, end - p,
-						  बहु_तर्क(args, काष्ठा buffer_head *));
-			अवरोध;
-		हाल 'b':
-			p += scnम_लिखो_buffer_head(p, end - p,
-						   बहु_तर्क(args, काष्ठा buffer_head *));
-			अवरोध;
-		हाल 'a':
-			p += scnम_लिखो_de_head(p, end - p,
-					       बहु_तर्क(args, काष्ठा reiserfs_de_head *));
-			अवरोध;
-		पूर्ण
+		switch (what) {
+		case 'k':
+			p += scnprintf_le_key(p, end - p,
+					      va_arg(args, struct reiserfs_key *));
+			break;
+		case 'K':
+			p += scnprintf_cpu_key(p, end - p,
+					       va_arg(args, struct cpu_key *));
+			break;
+		case 'h':
+			p += scnprintf_item_head(p, end - p,
+						 va_arg(args, struct item_head *));
+			break;
+		case 't':
+			p += scnprintf_direntry(p, end - p,
+						va_arg(args, struct reiserfs_dir_entry *));
+			break;
+		case 'y':
+			p += scnprintf_disk_child(p, end - p,
+						  va_arg(args, struct disk_child *));
+			break;
+		case 'z':
+			p += scnprintf_block_head(p, end - p,
+						  va_arg(args, struct buffer_head *));
+			break;
+		case 'b':
+			p += scnprintf_buffer_head(p, end - p,
+						   va_arg(args, struct buffer_head *));
+			break;
+		case 'a':
+			p += scnprintf_de_head(p, end - p,
+					       va_arg(args, struct reiserfs_de_head *));
+			break;
+		}
 
 		fmt1 = k + 2;
-	पूर्ण
-	p += vscnम_लिखो(p, end - p, fmt1, args);
+	}
+	p += vscnprintf(p, end - p, fmt1, args);
 out_unlock:
 	spin_unlock(&error_lock);
 
-पूर्ण
+}
 
 /*
- * in addition to usual conversion specअगरiers this accepts reiserfs
- * specअगरic conversion specअगरiers:
- * %k to prपूर्णांक little endian key,
- * %K to prपूर्णांक cpu key,
- * %h to prपूर्णांक item_head,
- * %t to prपूर्णांक directory entry
- * %z to prपूर्णांक block head (arg must be काष्ठा buffer_head *
- * %b to prपूर्णांक buffer_head
+ * in addition to usual conversion specifiers this accepts reiserfs
+ * specific conversion specifiers:
+ * %k to print little endian key,
+ * %K to print cpu key,
+ * %h to print item_head,
+ * %t to print directory entry
+ * %z to print block head (arg must be struct buffer_head *
+ * %b to print buffer_head
  */
 
-#घोषणा करो_reiserfs_warning(fmt)\
-अणु\
-    बहु_सूची args;\
-    बहु_शुरू( args, fmt );\
+#define do_reiserfs_warning(fmt)\
+{\
+    va_list args;\
+    va_start( args, fmt );\
     prepare_error_buf( fmt, args );\
-    बहु_पूर्ण( args );\
-पूर्ण
+    va_end( args );\
+}
 
-व्योम __reiserfs_warning(काष्ठा super_block *sb, स्थिर अक्षर *id,
-			 स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...)
-अणु
-	करो_reiserfs_warning(fmt);
-	अगर (sb)
-		prपूर्णांकk(KERN_WARNING "REISERFS warning (device %s): %s%s%s: "
+void __reiserfs_warning(struct super_block *sb, const char *id,
+			 const char *function, const char *fmt, ...)
+{
+	do_reiserfs_warning(fmt);
+	if (sb)
+		printk(KERN_WARNING "REISERFS warning (device %s): %s%s%s: "
 		       "%s\n", sb->s_id, id ? id : "", id ? " " : "",
 		       function, error_buf);
-	अन्यथा
-		prपूर्णांकk(KERN_WARNING "REISERFS warning: %s%s%s: %s\n",
+	else
+		printk(KERN_WARNING "REISERFS warning: %s%s%s: %s\n",
 		       id ? id : "", id ? " " : "", function, error_buf);
-पूर्ण
+}
 
-/* No newline.. reiserfs_info calls can be followed by prपूर्णांकk's */
-व्योम reiserfs_info(काष्ठा super_block *sb, स्थिर अक्षर *fmt, ...)
-अणु
-	करो_reiserfs_warning(fmt);
-	अगर (sb)
-		prपूर्णांकk(KERN_NOTICE "REISERFS (device %s): %s",
+/* No newline.. reiserfs_info calls can be followed by printk's */
+void reiserfs_info(struct super_block *sb, const char *fmt, ...)
+{
+	do_reiserfs_warning(fmt);
+	if (sb)
+		printk(KERN_NOTICE "REISERFS (device %s): %s",
 		       sb->s_id, error_buf);
-	अन्यथा
-		prपूर्णांकk(KERN_NOTICE "REISERFS %s:", error_buf);
-पूर्ण
+	else
+		printk(KERN_NOTICE "REISERFS %s:", error_buf);
+}
 
-/* No newline.. reiserfs_prपूर्णांकk calls can be followed by prपूर्णांकk's */
-अटल व्योम reiserfs_prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-अणु
-	करो_reiserfs_warning(fmt);
-	prपूर्णांकk(error_buf);
-पूर्ण
+/* No newline.. reiserfs_printk calls can be followed by printk's */
+static void reiserfs_printk(const char *fmt, ...)
+{
+	do_reiserfs_warning(fmt);
+	printk(error_buf);
+}
 
-व्योम reiserfs_debug(काष्ठा super_block *s, पूर्णांक level, स्थिर अक्षर *fmt, ...)
-अणु
-#अगर_घोषित CONFIG_REISERFS_CHECK
-	करो_reiserfs_warning(fmt);
-	अगर (s)
-		prपूर्णांकk(KERN_DEBUG "REISERFS debug (device %s): %s\n",
+void reiserfs_debug(struct super_block *s, int level, const char *fmt, ...)
+{
+#ifdef CONFIG_REISERFS_CHECK
+	do_reiserfs_warning(fmt);
+	if (s)
+		printk(KERN_DEBUG "REISERFS debug (device %s): %s\n",
 		       s->s_id, error_buf);
-	अन्यथा
-		prपूर्णांकk(KERN_DEBUG "REISERFS debug: %s\n", error_buf);
-#पूर्ण_अगर
-पूर्ण
+	else
+		printk(KERN_DEBUG "REISERFS debug: %s\n", error_buf);
+#endif
+}
 
 /*
- * The क्रमmat:
+ * The format:
  *
- *          मुख्यtainer-errorid: [function-name:] message
+ *          maintainer-errorid: [function-name:] message
  *
- *   where errorid is unique to the मुख्यtainer and function-name is
+ *   where errorid is unique to the maintainer and function-name is
  *   optional, is recommended, so that anyone can easily find the bug
- *   with a simple grep क्रम the लघु to type string
- *   मुख्यtainer-errorid.  Don't bother with reusing errorids, there are
+ *   with a simple grep for the short to type string
+ *   maintainer-errorid.  Don't bother with reusing errorids, there are
  *   lots of numbers out there.
  *
  *   Example:
@@ -347,24 +346,24 @@ out_unlock:
  *     rn, bh
  *   );
  *
- *   Regular panic()s someबार clear the screen beक्रमe the message can
- *   be पढ़ो, thus the need क्रम the जबतक loop.
+ *   Regular panic()s sometimes clear the screen before the message can
+ *   be read, thus the need for the while loop.
  *
- *   Numbering scheme क्रम panic used by Vladimir and Anम_से_दy( Hans completely
- *   ignores this scheme, and considers it poपूर्णांकless complनिकासy):
+ *   Numbering scheme for panic used by Vladimir and Anatoly( Hans completely
+ *   ignores this scheme, and considers it pointless complexity):
  *
  *   panics in reiserfs_fs.h have numbers from 1000 to 1999
  *   super.c			2000 to 2999
  *   preserve.c (unused)	3000 to 3999
- *   biपंचांगap.c			4000 to 4999
+ *   bitmap.c			4000 to 4999
  *   stree.c			5000 to 5999
- *   prपूर्णांकs.c			6000 to 6999
+ *   prints.c			6000 to 6999
  *   namei.c			7000 to 7999
  *   fix_nodes.c		8000 to 8999
  *   dir.c			9000 to 9999
  *   lbalance.c			10000 to 10999
- *   ibalance.c			11000 to 11999 not पढ़ोy
- *   करो_balan.c			12000 to 12999
+ *   ibalance.c			11000 to 11999 not ready
+ *   do_balan.c			12000 to 12999
  *   inode.c			13000 to 13999
  *   file.c			14000 to 14999
  *   objectid.c			15000 - 15999
@@ -373,118 +372,118 @@ out_unlock:
  *
  *  .  */
 
-व्योम __reiserfs_panic(काष्ठा super_block *sb, स्थिर अक्षर *id,
-		      स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...)
-अणु
-	करो_reiserfs_warning(fmt);
+void __reiserfs_panic(struct super_block *sb, const char *id,
+		      const char *function, const char *fmt, ...)
+{
+	do_reiserfs_warning(fmt);
 
-#अगर_घोषित CONFIG_REISERFS_CHECK
+#ifdef CONFIG_REISERFS_CHECK
 	dump_stack();
-#पूर्ण_अगर
-	अगर (sb)
-		prपूर्णांकk(KERN_WARNING "REISERFS panic (device %s): %s%s%s: %s\n",
+#endif
+	if (sb)
+		printk(KERN_WARNING "REISERFS panic (device %s): %s%s%s: %s\n",
 		      sb->s_id, id ? id : "", id ? " " : "",
 		      function, error_buf);
-	अन्यथा
-		prपूर्णांकk(KERN_WARNING "REISERFS panic: %s%s%s: %s\n",
+	else
+		printk(KERN_WARNING "REISERFS panic: %s%s%s: %s\n",
 		      id ? id : "", id ? " " : "", function, error_buf);
 	BUG();
-पूर्ण
+}
 
-व्योम __reiserfs_error(काष्ठा super_block *sb, स्थिर अक्षर *id,
-		      स्थिर अक्षर *function, स्थिर अक्षर *fmt, ...)
-अणु
-	करो_reiserfs_warning(fmt);
+void __reiserfs_error(struct super_block *sb, const char *id,
+		      const char *function, const char *fmt, ...)
+{
+	do_reiserfs_warning(fmt);
 
-	BUG_ON(sb == शून्य);
+	BUG_ON(sb == NULL);
 
-	अगर (reiserfs_error_panic(sb))
+	if (reiserfs_error_panic(sb))
 		__reiserfs_panic(sb, id, function, error_buf);
 
-	अगर (id && id[0])
-		prपूर्णांकk(KERN_CRIT "REISERFS error (device %s): %s %s: %s\n",
+	if (id && id[0])
+		printk(KERN_CRIT "REISERFS error (device %s): %s %s: %s\n",
 		       sb->s_id, id, function, error_buf);
-	अन्यथा
-		prपूर्णांकk(KERN_CRIT "REISERFS error (device %s): %s: %s\n",
+	else
+		printk(KERN_CRIT "REISERFS error (device %s): %s: %s\n",
 		       sb->s_id, function, error_buf);
 
-	अगर (sb_rकरोnly(sb))
-		वापस;
+	if (sb_rdonly(sb))
+		return;
 
 	reiserfs_info(sb, "Remounting filesystem read-only\n");
 	sb->s_flags |= SB_RDONLY;
-	reiserfs_पात_journal(sb, -EIO);
-पूर्ण
+	reiserfs_abort_journal(sb, -EIO);
+}
 
-व्योम reiserfs_पात(काष्ठा super_block *sb, पूर्णांक त्रुटि_सं, स्थिर अक्षर *fmt, ...)
-अणु
-	करो_reiserfs_warning(fmt);
+void reiserfs_abort(struct super_block *sb, int errno, const char *fmt, ...)
+{
+	do_reiserfs_warning(fmt);
 
-	अगर (reiserfs_error_panic(sb)) अणु
+	if (reiserfs_error_panic(sb)) {
 		panic(KERN_CRIT "REISERFS panic (device %s): %s\n", sb->s_id,
 		      error_buf);
-	पूर्ण
+	}
 
-	अगर (reiserfs_is_journal_पातed(SB_JOURNAL(sb)))
-		वापस;
+	if (reiserfs_is_journal_aborted(SB_JOURNAL(sb)))
+		return;
 
-	prपूर्णांकk(KERN_CRIT "REISERFS abort (device %s): %s\n", sb->s_id,
+	printk(KERN_CRIT "REISERFS abort (device %s): %s\n", sb->s_id,
 	       error_buf);
 
 	sb->s_flags |= SB_RDONLY;
-	reiserfs_पात_journal(sb, त्रुटि_सं);
-पूर्ण
+	reiserfs_abort_journal(sb, errno);
+}
 
 /*
- * this prपूर्णांकs पूर्णांकernal nodes (4 keys/items in line) (dc_number,
+ * this prints internal nodes (4 keys/items in line) (dc_number,
  * dc_size)[k_dirid, k_objectid, k_offset, k_uniqueness](dc_number,
  * dc_size)...
  */
-अटल पूर्णांक prपूर्णांक_पूर्णांकernal(काष्ठा buffer_head *bh, पूर्णांक first, पूर्णांक last)
-अणु
-	काष्ठा reiserfs_key *key;
-	काष्ठा disk_child *dc;
-	पूर्णांक i;
-	पूर्णांक from, to;
+static int print_internal(struct buffer_head *bh, int first, int last)
+{
+	struct reiserfs_key *key;
+	struct disk_child *dc;
+	int i;
+	int from, to;
 
-	अगर (!B_IS_KEYS_LEVEL(bh))
-		वापस 1;
+	if (!B_IS_KEYS_LEVEL(bh))
+		return 1;
 
-	check_पूर्णांकernal(bh);
+	check_internal(bh);
 
-	अगर (first == -1) अणु
+	if (first == -1) {
 		from = 0;
 		to = B_NR_ITEMS(bh);
-	पूर्ण अन्यथा अणु
+	} else {
 		from = first;
 		to = last < B_NR_ITEMS(bh) ? last : B_NR_ITEMS(bh);
-	पूर्ण
+	}
 
-	reiserfs_prपूर्णांकk("INTERNAL NODE (%ld) contains %z\n", bh->b_blocknr, bh);
+	reiserfs_printk("INTERNAL NODE (%ld) contains %z\n", bh->b_blocknr, bh);
 
 	dc = B_N_CHILD(bh, from);
-	reiserfs_prपूर्णांकk("PTR %d: %y ", from, dc);
+	reiserfs_printk("PTR %d: %y ", from, dc);
 
-	क्रम (i = from, key = पूर्णांकernal_key(bh, from), dc++; i < to;
-	     i++, key++, dc++) अणु
-		reiserfs_prपूर्णांकk("KEY %d: %k PTR %d: %y ", i, key, i + 1, dc);
-		अगर (i && i % 4 == 0)
-			prपूर्णांकk("\n");
-	पूर्ण
-	prपूर्णांकk("\n");
-	वापस 0;
-पूर्ण
+	for (i = from, key = internal_key(bh, from), dc++; i < to;
+	     i++, key++, dc++) {
+		reiserfs_printk("KEY %d: %k PTR %d: %y ", i, key, i + 1, dc);
+		if (i && i % 4 == 0)
+			printk("\n");
+	}
+	printk("\n");
+	return 0;
+}
 
-अटल पूर्णांक prपूर्णांक_leaf(काष्ठा buffer_head *bh, पूर्णांक prपूर्णांक_mode, पूर्णांक first,
-		      पूर्णांक last)
-अणु
-	काष्ठा block_head *blkh;
-	काष्ठा item_head *ih;
-	पूर्णांक i, nr;
-	पूर्णांक from, to;
+static int print_leaf(struct buffer_head *bh, int print_mode, int first,
+		      int last)
+{
+	struct block_head *blkh;
+	struct item_head *ih;
+	int i, nr;
+	int from, to;
 
-	अगर (!B_IS_ITEMS_LEVEL(bh))
-		वापस 1;
+	if (!B_IS_ITEMS_LEVEL(bh))
+		return 1;
 
 	check_leaf(bh);
 
@@ -492,202 +491,202 @@ out_unlock:
 	ih = item_head(bh, 0);
 	nr = blkh_nr_item(blkh);
 
-	prपूर्णांकk
+	printk
 	    ("\n===================================================================\n");
-	reiserfs_prपूर्णांकk("LEAF NODE (%ld) contains %z\n", bh->b_blocknr, bh);
+	reiserfs_printk("LEAF NODE (%ld) contains %z\n", bh->b_blocknr, bh);
 
-	अगर (!(prपूर्णांक_mode & PRINT_LEAF_ITEMS)) अणु
-		reiserfs_prपूर्णांकk("FIRST ITEM_KEY: %k, LAST ITEM KEY: %k\n",
+	if (!(print_mode & PRINT_LEAF_ITEMS)) {
+		reiserfs_printk("FIRST ITEM_KEY: %k, LAST ITEM KEY: %k\n",
 				&(ih->ih_key), &((ih + nr - 1)->ih_key));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (first < 0 || first > nr - 1)
+	if (first < 0 || first > nr - 1)
 		from = 0;
-	अन्यथा
+	else
 		from = first;
 
-	अगर (last < 0 || last > nr)
+	if (last < 0 || last > nr)
 		to = nr;
-	अन्यथा
+	else
 		to = last;
 
 	ih += from;
-	prपूर्णांकk
+	printk
 	    ("-------------------------------------------------------------------------------\n");
-	prपूर्णांकk
+	printk
 	    ("|##|   type    |           key           | ilen | free_space | version | loc  |\n");
-	क्रम (i = from; i < to; i++, ih++) अणु
-		prपूर्णांकk
+	for (i = from; i < to; i++, ih++) {
+		printk
 		    ("-------------------------------------------------------------------------------\n");
-		reiserfs_prपूर्णांकk("|%2d| %h |\n", i, ih);
-		अगर (prपूर्णांक_mode & PRINT_LEAF_ITEMS)
-			op_prपूर्णांक_item(ih, ih_item_body(bh, ih));
-	पूर्ण
+		reiserfs_printk("|%2d| %h |\n", i, ih);
+		if (print_mode & PRINT_LEAF_ITEMS)
+			op_print_item(ih, ih_item_body(bh, ih));
+	}
 
-	prपूर्णांकk
+	printk
 	    ("===================================================================\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अक्षर *reiserfs_hashname(पूर्णांक code)
-अणु
-	अगर (code == YURA_HASH)
-		वापस "rupasov";
-	अगर (code == TEA_HASH)
-		वापस "tea";
-	अगर (code == R5_HASH)
-		वापस "r5";
+char *reiserfs_hashname(int code)
+{
+	if (code == YURA_HASH)
+		return "rupasov";
+	if (code == TEA_HASH)
+		return "tea";
+	if (code == R5_HASH)
+		return "r5";
 
-	वापस "unknown";
-पूर्ण
+	return "unknown";
+}
 
-/* वापस 1 अगर this is not super block */
-अटल पूर्णांक prपूर्णांक_super_block(काष्ठा buffer_head *bh)
-अणु
-	काष्ठा reiserfs_super_block *rs =
-	    (काष्ठा reiserfs_super_block *)(bh->b_data);
-	पूर्णांक skipped, data_blocks;
-	अक्षर *version;
+/* return 1 if this is not super block */
+static int print_super_block(struct buffer_head *bh)
+{
+	struct reiserfs_super_block *rs =
+	    (struct reiserfs_super_block *)(bh->b_data);
+	int skipped, data_blocks;
+	char *version;
 
-	अगर (is_reiserfs_3_5(rs)) अणु
+	if (is_reiserfs_3_5(rs)) {
 		version = "3.5";
-	पूर्ण अन्यथा अगर (is_reiserfs_3_6(rs)) अणु
+	} else if (is_reiserfs_3_6(rs)) {
 		version = "3.6";
-	पूर्ण अन्यथा अगर (is_reiserfs_jr(rs)) अणु
+	} else if (is_reiserfs_jr(rs)) {
 		version = ((sb_version(rs) == REISERFS_VERSION_2) ?
 			   "3.6" : "3.5");
-	पूर्ण अन्यथा अणु
-		वापस 1;
-	पूर्ण
+	} else {
+		return 1;
+	}
 
-	prपूर्णांकk("%pg\'s super block is in block %llu\n", bh->b_bdev,
-	       (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
-	prपूर्णांकk("Reiserfs version %s\n", version);
-	prपूर्णांकk("Block count %u\n", sb_block_count(rs));
-	prपूर्णांकk("Blocksize %d\n", sb_blocksize(rs));
-	prपूर्णांकk("Free blocks %u\n", sb_मुक्त_blocks(rs));
+	printk("%pg\'s super block is in block %llu\n", bh->b_bdev,
+	       (unsigned long long)bh->b_blocknr);
+	printk("Reiserfs version %s\n", version);
+	printk("Block count %u\n", sb_block_count(rs));
+	printk("Blocksize %d\n", sb_blocksize(rs));
+	printk("Free blocks %u\n", sb_free_blocks(rs));
 	/*
-	 * FIXME: this would be confusing अगर
+	 * FIXME: this would be confusing if
 	 * someone stores reiserfs super block in some data block ;)
 //    skipped = (bh->b_blocknr * bh->b_size) / sb_blocksize(rs);
 	 */
 	skipped = bh->b_blocknr;
 	data_blocks = sb_block_count(rs) - skipped - 1 - sb_bmap_nr(rs) -
 	    (!is_reiserfs_jr(rs) ? sb_jp_journal_size(rs) +
-	     1 : sb_reserved_क्रम_journal(rs)) - sb_मुक्त_blocks(rs);
-	prपूर्णांकk
+	     1 : sb_reserved_for_journal(rs)) - sb_free_blocks(rs);
+	printk
 	    ("Busy blocks (skipped %d, bitmaps - %d, journal (or reserved) blocks - %d\n"
 	     "1 super block, %d data blocks\n", skipped, sb_bmap_nr(rs),
 	     (!is_reiserfs_jr(rs) ? (sb_jp_journal_size(rs) + 1) :
-	      sb_reserved_क्रम_journal(rs)), data_blocks);
-	prपूर्णांकk("Root block %u\n", sb_root_block(rs));
-	prपूर्णांकk("Journal block (first) %d\n", sb_jp_journal_1st_block(rs));
-	prपूर्णांकk("Journal dev %d\n", sb_jp_journal_dev(rs));
-	prपूर्णांकk("Journal orig size %d\n", sb_jp_journal_size(rs));
-	prपूर्णांकk("FS state %d\n", sb_fs_state(rs));
-	prपूर्णांकk("Hash function \"%s\"\n",
+	      sb_reserved_for_journal(rs)), data_blocks);
+	printk("Root block %u\n", sb_root_block(rs));
+	printk("Journal block (first) %d\n", sb_jp_journal_1st_block(rs));
+	printk("Journal dev %d\n", sb_jp_journal_dev(rs));
+	printk("Journal orig size %d\n", sb_jp_journal_size(rs));
+	printk("FS state %d\n", sb_fs_state(rs));
+	printk("Hash function \"%s\"\n",
 	       reiserfs_hashname(sb_hash_function_code(rs)));
 
-	prपूर्णांकk("Tree height %d\n", sb_tree_height(rs));
-	वापस 0;
-पूर्ण
+	printk("Tree height %d\n", sb_tree_height(rs));
+	return 0;
+}
 
-अटल पूर्णांक prपूर्णांक_desc_block(काष्ठा buffer_head *bh)
-अणु
-	काष्ठा reiserfs_journal_desc *desc;
+static int print_desc_block(struct buffer_head *bh)
+{
+	struct reiserfs_journal_desc *desc;
 
-	अगर (स_भेद(get_journal_desc_magic(bh), JOURNAL_DESC_MAGIC, 8))
-		वापस 1;
+	if (memcmp(get_journal_desc_magic(bh), JOURNAL_DESC_MAGIC, 8))
+		return 1;
 
-	desc = (काष्ठा reiserfs_journal_desc *)(bh->b_data);
-	prपूर्णांकk("Desc block %llu (j_trans_id %d, j_mount_id %d, j_len %d)",
-	       (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr, get_desc_trans_id(desc),
+	desc = (struct reiserfs_journal_desc *)(bh->b_data);
+	printk("Desc block %llu (j_trans_id %d, j_mount_id %d, j_len %d)",
+	       (unsigned long long)bh->b_blocknr, get_desc_trans_id(desc),
 	       get_desc_mount_id(desc), get_desc_trans_len(desc));
 
-	वापस 0;
-पूर्ण
-/* ..., पूर्णांक prपूर्णांक_mode, पूर्णांक first, पूर्णांक last) */
-व्योम prपूर्णांक_block(काष्ठा buffer_head *bh, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक mode, first, last;
+	return 0;
+}
+/* ..., int print_mode, int first, int last) */
+void print_block(struct buffer_head *bh, ...)
+{
+	va_list args;
+	int mode, first, last;
 
-	अगर (!bh) अणु
-		prपूर्णांकk("print_block: buffer is NULL\n");
-		वापस;
-	पूर्ण
+	if (!bh) {
+		printk("print_block: buffer is NULL\n");
+		return;
+	}
 
-	बहु_शुरू(args, bh);
+	va_start(args, bh);
 
-	mode = बहु_तर्क(args, पूर्णांक);
-	first = बहु_तर्क(args, पूर्णांक);
-	last = बहु_तर्क(args, पूर्णांक);
-	अगर (prपूर्णांक_leaf(bh, mode, first, last))
-		अगर (prपूर्णांक_पूर्णांकernal(bh, first, last))
-			अगर (prपूर्णांक_super_block(bh))
-				अगर (prपूर्णांक_desc_block(bh))
-					prपूर्णांकk
+	mode = va_arg(args, int);
+	first = va_arg(args, int);
+	last = va_arg(args, int);
+	if (print_leaf(bh, mode, first, last))
+		if (print_internal(bh, first, last))
+			if (print_super_block(bh))
+				if (print_desc_block(bh))
+					printk
 					    ("Block %llu contains unformatted data\n",
-					     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+					     (unsigned long long)bh->b_blocknr);
 
-	बहु_पूर्ण(args);
-पूर्ण
+	va_end(args);
+}
 
-अटल अक्षर prपूर्णांक_tb_buf[2048];
+static char print_tb_buf[2048];
 
-/* this stores initial state of tree balance in the prपूर्णांक_tb_buf */
-व्योम store_prपूर्णांक_tb(काष्ठा tree_balance *tb)
-अणु
-	पूर्णांक h = 0;
-	पूर्णांक i;
-	काष्ठा buffer_head *tbSh, *tbFh;
+/* this stores initial state of tree balance in the print_tb_buf */
+void store_print_tb(struct tree_balance *tb)
+{
+	int h = 0;
+	int i;
+	struct buffer_head *tbSh, *tbFh;
 
-	अगर (!tb)
-		वापस;
+	if (!tb)
+		return;
 
-	प्र_लिखो(prपूर्णांक_tb_buf, "\n"
+	sprintf(print_tb_buf, "\n"
 		"BALANCING %d\n"
 		"MODE=%c, ITEM_POS=%d POS_IN_ITEM=%d\n"
 		"=====================================================================\n"
 		"* h *    S    *    L    *    R    *   F   *   FL  *   FR  *  CFL  *  CFR  *\n",
-		REISERFS_SB(tb->tb_sb)->s_करो_balance,
+		REISERFS_SB(tb->tb_sb)->s_do_balance,
 		tb->tb_mode, PATH_LAST_POSITION(tb->tb_path),
 		tb->tb_path->pos_in_item);
 
-	क्रम (h = 0; h < ARRAY_SIZE(tb->insert_size); h++) अणु
-		अगर (PATH_H_PATH_OFFSET(tb->tb_path, h) <=
+	for (h = 0; h < ARRAY_SIZE(tb->insert_size); h++) {
+		if (PATH_H_PATH_OFFSET(tb->tb_path, h) <=
 		    tb->tb_path->path_length
 		    && PATH_H_PATH_OFFSET(tb->tb_path,
-					  h) > ILLEGAL_PATH_ELEMENT_OFFSET) अणु
+					  h) > ILLEGAL_PATH_ELEMENT_OFFSET) {
 			tbSh = PATH_H_PBUFFER(tb->tb_path, h);
 			tbFh = PATH_H_PPARENT(tb->tb_path, h);
-		पूर्ण अन्यथा अणु
-			tbSh = शून्य;
-			tbFh = शून्य;
-		पूर्ण
-		प्र_लिखो(prपूर्णांक_tb_buf + म_माप(prपूर्णांक_tb_buf),
+		} else {
+			tbSh = NULL;
+			tbFh = NULL;
+		}
+		sprintf(print_tb_buf + strlen(print_tb_buf),
 			"* %d * %3lld(%2d) * %3lld(%2d) * %3lld(%2d) * %5lld * %5lld * %5lld * %5lld * %5lld *\n",
 			h,
-			(tbSh) ? (दीर्घ दीर्घ)(tbSh->b_blocknr) : (-1LL),
-			(tbSh) ? atomic_पढ़ो(&tbSh->b_count) : -1,
-			(tb->L[h]) ? (दीर्घ दीर्घ)(tb->L[h]->b_blocknr) : (-1LL),
-			(tb->L[h]) ? atomic_पढ़ो(&tb->L[h]->b_count) : -1,
-			(tb->R[h]) ? (दीर्घ दीर्घ)(tb->R[h]->b_blocknr) : (-1LL),
-			(tb->R[h]) ? atomic_पढ़ो(&tb->R[h]->b_count) : -1,
-			(tbFh) ? (दीर्घ दीर्घ)(tbFh->b_blocknr) : (-1LL),
-			(tb->FL[h]) ? (दीर्घ दीर्घ)(tb->FL[h]->
+			(tbSh) ? (long long)(tbSh->b_blocknr) : (-1LL),
+			(tbSh) ? atomic_read(&tbSh->b_count) : -1,
+			(tb->L[h]) ? (long long)(tb->L[h]->b_blocknr) : (-1LL),
+			(tb->L[h]) ? atomic_read(&tb->L[h]->b_count) : -1,
+			(tb->R[h]) ? (long long)(tb->R[h]->b_blocknr) : (-1LL),
+			(tb->R[h]) ? atomic_read(&tb->R[h]->b_count) : -1,
+			(tbFh) ? (long long)(tbFh->b_blocknr) : (-1LL),
+			(tb->FL[h]) ? (long long)(tb->FL[h]->
 						  b_blocknr) : (-1LL),
-			(tb->FR[h]) ? (दीर्घ दीर्घ)(tb->FR[h]->
+			(tb->FR[h]) ? (long long)(tb->FR[h]->
 						  b_blocknr) : (-1LL),
-			(tb->CFL[h]) ? (दीर्घ दीर्घ)(tb->CFL[h]->
+			(tb->CFL[h]) ? (long long)(tb->CFL[h]->
 						   b_blocknr) : (-1LL),
-			(tb->CFR[h]) ? (दीर्घ दीर्घ)(tb->CFR[h]->
+			(tb->CFR[h]) ? (long long)(tb->CFR[h]->
 						   b_blocknr) : (-1LL));
-	पूर्ण
+	}
 
-	प्र_लिखो(prपूर्णांक_tb_buf + म_माप(prपूर्णांक_tb_buf),
+	sprintf(print_tb_buf + strlen(print_tb_buf),
 		"=====================================================================\n"
 		"* h * size * ln * lb * rn * rb * blkn * s0 * s1 * s1b * s2 * s2b * curb * lk * rk *\n"
 		"* 0 * %4d * %2d * %2d * %2d * %2d * %4d * %2d * %2d * %3d * %2d * %3d * %4d * %2d * %2d *\n",
@@ -696,98 +695,98 @@ out_unlock:
 		tb->sbytes[0], tb->snum[1], tb->sbytes[1],
 		tb->cur_blknum, tb->lkey[0], tb->rkey[0]);
 
-	/* this prपूर्णांकs balance parameters क्रम non-leaf levels */
+	/* this prints balance parameters for non-leaf levels */
 	h = 0;
-	करो अणु
+	do {
 		h++;
-		प्र_लिखो(prपूर्णांक_tb_buf + म_माप(prपूर्णांक_tb_buf),
+		sprintf(print_tb_buf + strlen(print_tb_buf),
 			"* %d * %4d * %2d *    * %2d *    * %2d *\n",
 			h, tb->insert_size[h], tb->lnum[h], tb->rnum[h],
 			tb->blknum[h]);
-	पूर्ण जबतक (tb->insert_size[h]);
+	} while (tb->insert_size[h]);
 
-	प्र_लिखो(prपूर्णांक_tb_buf + म_माप(prपूर्णांक_tb_buf),
+	sprintf(print_tb_buf + strlen(print_tb_buf),
 		"=====================================================================\n"
 		"FEB list: ");
 
-	/* prपूर्णांक FEB list (list of buffers in क्रमm (bh (b_blocknr, b_count), that will be used क्रम new nodes) */
+	/* print FEB list (list of buffers in form (bh (b_blocknr, b_count), that will be used for new nodes) */
 	h = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(tb->FEB); i++)
-		प्र_लिखो(prपूर्णांक_tb_buf + म_माप(prपूर्णांक_tb_buf),
+	for (i = 0; i < ARRAY_SIZE(tb->FEB); i++)
+		sprintf(print_tb_buf + strlen(print_tb_buf),
 			"%p (%llu %d)%s", tb->FEB[i],
-			tb->FEB[i] ? (अचिन्हित दीर्घ दीर्घ)tb->FEB[i]->
+			tb->FEB[i] ? (unsigned long long)tb->FEB[i]->
 			b_blocknr : 0ULL,
-			tb->FEB[i] ? atomic_पढ़ो(&tb->FEB[i]->b_count) : 0,
+			tb->FEB[i] ? atomic_read(&tb->FEB[i]->b_count) : 0,
 			(i == ARRAY_SIZE(tb->FEB) - 1) ? "\n" : ", ");
 
-	प्र_लिखो(prपूर्णांक_tb_buf + म_माप(prपूर्णांक_tb_buf),
+	sprintf(print_tb_buf + strlen(print_tb_buf),
 		"======================== the end ====================================\n");
-पूर्ण
+}
 
-व्योम prपूर्णांक_cur_tb(अक्षर *mes)
-अणु
-	prपूर्णांकk("%s\n%s", mes, prपूर्णांक_tb_buf);
-पूर्ण
+void print_cur_tb(char *mes)
+{
+	printk("%s\n%s", mes, print_tb_buf);
+}
 
-अटल व्योम check_leaf_block_head(काष्ठा buffer_head *bh)
-अणु
-	काष्ठा block_head *blkh;
-	पूर्णांक nr;
+static void check_leaf_block_head(struct buffer_head *bh)
+{
+	struct block_head *blkh;
+	int nr;
 
 	blkh = B_BLK_HEAD(bh);
 	nr = blkh_nr_item(blkh);
-	अगर (nr > (bh->b_size - BLKH_SIZE) / IH_SIZE)
-		reiserfs_panic(शून्य, "vs-6010", "invalid item number %z",
+	if (nr > (bh->b_size - BLKH_SIZE) / IH_SIZE)
+		reiserfs_panic(NULL, "vs-6010", "invalid item number %z",
 			       bh);
-	अगर (blkh_मुक्त_space(blkh) > bh->b_size - BLKH_SIZE - IH_SIZE * nr)
-		reiserfs_panic(शून्य, "vs-6020", "invalid free space %z",
+	if (blkh_free_space(blkh) > bh->b_size - BLKH_SIZE - IH_SIZE * nr)
+		reiserfs_panic(NULL, "vs-6020", "invalid free space %z",
 			       bh);
 
-पूर्ण
+}
 
-अटल व्योम check_पूर्णांकernal_block_head(काष्ठा buffer_head *bh)
-अणु
-	अगर (!(B_LEVEL(bh) > DISK_LEAF_NODE_LEVEL && B_LEVEL(bh) <= MAX_HEIGHT))
-		reiserfs_panic(शून्य, "vs-6025", "invalid level %z", bh);
+static void check_internal_block_head(struct buffer_head *bh)
+{
+	if (!(B_LEVEL(bh) > DISK_LEAF_NODE_LEVEL && B_LEVEL(bh) <= MAX_HEIGHT))
+		reiserfs_panic(NULL, "vs-6025", "invalid level %z", bh);
 
-	अगर (B_NR_ITEMS(bh) > (bh->b_size - BLKH_SIZE) / IH_SIZE)
-		reiserfs_panic(शून्य, "vs-6030", "invalid item number %z", bh);
+	if (B_NR_ITEMS(bh) > (bh->b_size - BLKH_SIZE) / IH_SIZE)
+		reiserfs_panic(NULL, "vs-6030", "invalid item number %z", bh);
 
-	अगर (B_FREE_SPACE(bh) !=
+	if (B_FREE_SPACE(bh) !=
 	    bh->b_size - BLKH_SIZE - KEY_SIZE * B_NR_ITEMS(bh) -
 	    DC_SIZE * (B_NR_ITEMS(bh) + 1))
-		reiserfs_panic(शून्य, "vs-6040", "invalid free space %z", bh);
+		reiserfs_panic(NULL, "vs-6040", "invalid free space %z", bh);
 
-पूर्ण
+}
 
-व्योम check_leaf(काष्ठा buffer_head *bh)
-अणु
-	पूर्णांक i;
-	काष्ठा item_head *ih;
+void check_leaf(struct buffer_head *bh)
+{
+	int i;
+	struct item_head *ih;
 
-	अगर (!bh)
-		वापस;
+	if (!bh)
+		return;
 	check_leaf_block_head(bh);
-	क्रम (i = 0, ih = item_head(bh, 0); i < B_NR_ITEMS(bh); i++, ih++)
+	for (i = 0, ih = item_head(bh, 0); i < B_NR_ITEMS(bh); i++, ih++)
 		op_check_item(ih, ih_item_body(bh, ih));
-पूर्ण
+}
 
-व्योम check_पूर्णांकernal(काष्ठा buffer_head *bh)
-अणु
-	अगर (!bh)
-		वापस;
-	check_पूर्णांकernal_block_head(bh);
-पूर्ण
+void check_internal(struct buffer_head *bh)
+{
+	if (!bh)
+		return;
+	check_internal_block_head(bh);
+}
 
-व्योम prपूर्णांक_statistics(काष्ठा super_block *s)
-अणु
+void print_statistics(struct super_block *s)
+{
 
 	/*
-	   prपूर्णांकk ("reiserfs_put_super: session statistics: balances %d, fix_nodes %d, \
-	   bmap with search %d, without %d, dir2ind %d, ind2dir %d\न",
-	   REISERFS_SB(s)->s_करो_balance, REISERFS_SB(s)->s_fix_nodes,
+	   printk ("reiserfs_put_super: session statistics: balances %d, fix_nodes %d, \
+	   bmap with search %d, without %d, dir2ind %d, ind2dir %d\n",
+	   REISERFS_SB(s)->s_do_balance, REISERFS_SB(s)->s_fix_nodes,
 	   REISERFS_SB(s)->s_bmaps, REISERFS_SB(s)->s_bmaps_without_search,
 	   REISERFS_SB(s)->s_direct2indirect, REISERFS_SB(s)->s_indirect2direct);
 	 */
 
-पूर्ण
+}

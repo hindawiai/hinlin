@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,73 +19,73 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "ummu.h"
-#समावेश "umem.h"
-#समावेश "uvmm.h"
+#include "ummu.h"
+#include "umem.h"
+#include "uvmm.h"
 
-#समावेश <core/client.h>
+#include <core/client.h>
 
-#समावेश <nvअगर/अगर0008.h>
-#समावेश <nvअगर/unpack.h>
+#include <nvif/if0008.h>
+#include <nvif/unpack.h>
 
-अटल पूर्णांक
-nvkm_ummu_sclass(काष्ठा nvkm_object *object, पूर्णांक index,
-		 काष्ठा nvkm_oclass *oclass)
-अणु
-	काष्ठा nvkm_mmu *mmu = nvkm_ummu(object)->mmu;
+static int
+nvkm_ummu_sclass(struct nvkm_object *object, int index,
+		 struct nvkm_oclass *oclass)
+{
+	struct nvkm_mmu *mmu = nvkm_ummu(object)->mmu;
 
-	अगर (mmu->func->mem.user.oclass && oclass->client->super) अणु
-		अगर (index-- == 0) अणु
+	if (mmu->func->mem.user.oclass && oclass->client->super) {
+		if (index-- == 0) {
 			oclass->base = mmu->func->mem.user;
 			oclass->ctor = nvkm_umem_new;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (mmu->func->vmm.user.oclass) अणु
-		अगर (index-- == 0) अणु
+	if (mmu->func->vmm.user.oclass) {
+		if (index-- == 0) {
 			oclass->base = mmu->func->vmm.user;
 			oclass->ctor = nvkm_uvmm_new;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक
-nvkm_ummu_heap(काष्ठा nvkm_ummu *ummu, व्योम *argv, u32 argc)
-अणु
-	काष्ठा nvkm_mmu *mmu = ummu->mmu;
-	जोड़ अणु
-		काष्ठा nvअगर_mmu_heap_v0 v0;
-	पूर्ण *args = argv;
-	पूर्णांक ret = -ENOSYS;
+static int
+nvkm_ummu_heap(struct nvkm_ummu *ummu, void *argv, u32 argc)
+{
+	struct nvkm_mmu *mmu = ummu->mmu;
+	union {
+		struct nvif_mmu_heap_v0 v0;
+	} *args = argv;
+	int ret = -ENOSYS;
 	u8 index;
 
-	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
-		अगर ((index = args->v0.index) >= mmu->heap_nr)
-			वापस -EINVAL;
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
+		if ((index = args->v0.index) >= mmu->heap_nr)
+			return -EINVAL;
 		args->v0.size = mmu->heap[index].size;
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_ummu_type(काष्ठा nvkm_ummu *ummu, व्योम *argv, u32 argc)
-अणु
-	काष्ठा nvkm_mmu *mmu = ummu->mmu;
-	जोड़ अणु
-		काष्ठा nvअगर_mmu_type_v0 v0;
-	पूर्ण *args = argv;
-	पूर्णांक ret = -ENOSYS;
+static int
+nvkm_ummu_type(struct nvkm_ummu *ummu, void *argv, u32 argc)
+{
+	struct nvkm_mmu *mmu = ummu->mmu;
+	union {
+		struct nvif_mmu_type_v0 v0;
+	} *args = argv;
+	int ret = -ENOSYS;
 	u8 type, index;
 
-	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
-		अगर ((index = args->v0.index) >= mmu->type_nr)
-			वापस -EINVAL;
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
+		if ((index = args->v0.index) >= mmu->type_nr)
+			return -EINVAL;
 		type = mmu->type[index].type;
 		args->v0.heap = mmu->type[index].heap;
 		args->v0.vram = !!(type & NVKM_MEM_VRAM);
@@ -97,86 +96,86 @@ nvkm_ummu_type(काष्ठा nvkm_ummu *ummu, व्योम *argv, u32 ar
 		args->v0.mappable = !!(type & NVKM_MEM_MAPPABLE);
 		args->v0.coherent = !!(type & NVKM_MEM_COHERENT);
 		args->v0.uncached = !!(type & NVKM_MEM_UNCACHED);
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_ummu_kind(काष्ठा nvkm_ummu *ummu, व्योम *argv, u32 argc)
-अणु
-	काष्ठा nvkm_mmu *mmu = ummu->mmu;
-	जोड़ अणु
-		काष्ठा nvअगर_mmu_kind_v0 v0;
-	पूर्ण *args = argv;
-	स्थिर u8 *kind = शून्य;
-	पूर्णांक ret = -ENOSYS, count = 0;
+static int
+nvkm_ummu_kind(struct nvkm_ummu *ummu, void *argv, u32 argc)
+{
+	struct nvkm_mmu *mmu = ummu->mmu;
+	union {
+		struct nvif_mmu_kind_v0 v0;
+	} *args = argv;
+	const u8 *kind = NULL;
+	int ret = -ENOSYS, count = 0;
 	u8 kind_inv = 0;
 
-	अगर (mmu->func->kind)
+	if (mmu->func->kind)
 		kind = mmu->func->kind(mmu, &count, &kind_inv);
 
-	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, true))) अणु
-		अगर (argc != args->v0.count * माप(*args->v0.data))
-			वापस -EINVAL;
-		अगर (args->v0.count > count)
-			वापस -EINVAL;
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, true))) {
+		if (argc != args->v0.count * sizeof(*args->v0.data))
+			return -EINVAL;
+		if (args->v0.count > count)
+			return -EINVAL;
 		args->v0.kind_inv = kind_inv;
-		स_नकल(args->v0.data, kind, args->v0.count);
-	पूर्ण अन्यथा
-		वापस ret;
+		memcpy(args->v0.data, kind, args->v0.count);
+	} else
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_ummu_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *argv, u32 argc)
-अणु
-	काष्ठा nvkm_ummu *ummu = nvkm_ummu(object);
-	चयन (mthd) अणु
-	हाल NVIF_MMU_V0_HEAP: वापस nvkm_ummu_heap(ummu, argv, argc);
-	हाल NVIF_MMU_V0_TYPE: वापस nvkm_ummu_type(ummu, argv, argc);
-	हाल NVIF_MMU_V0_KIND: वापस nvkm_ummu_kind(ummu, argv, argc);
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+static int
+nvkm_ummu_mthd(struct nvkm_object *object, u32 mthd, void *argv, u32 argc)
+{
+	struct nvkm_ummu *ummu = nvkm_ummu(object);
+	switch (mthd) {
+	case NVIF_MMU_V0_HEAP: return nvkm_ummu_heap(ummu, argv, argc);
+	case NVIF_MMU_V0_TYPE: return nvkm_ummu_type(ummu, argv, argc);
+	case NVIF_MMU_V0_KIND: return nvkm_ummu_kind(ummu, argv, argc);
+	default:
+		break;
+	}
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nvkm_ummu = अणु
+static const struct nvkm_object_func
+nvkm_ummu = {
 	.mthd = nvkm_ummu_mthd,
 	.sclass = nvkm_ummu_sclass,
-पूर्ण;
+};
 
-पूर्णांक
-nvkm_ummu_new(काष्ठा nvkm_device *device, स्थिर काष्ठा nvkm_oclass *oclass,
-	      व्योम *argv, u32 argc, काष्ठा nvkm_object **pobject)
-अणु
-	जोड़ अणु
-		काष्ठा nvअगर_mmu_v0 v0;
-	पूर्ण *args = argv;
-	काष्ठा nvkm_mmu *mmu = device->mmu;
-	काष्ठा nvkm_ummu *ummu;
-	पूर्णांक ret = -ENOSYS, kinds = 0;
+int
+nvkm_ummu_new(struct nvkm_device *device, const struct nvkm_oclass *oclass,
+	      void *argv, u32 argc, struct nvkm_object **pobject)
+{
+	union {
+		struct nvif_mmu_v0 v0;
+	} *args = argv;
+	struct nvkm_mmu *mmu = device->mmu;
+	struct nvkm_ummu *ummu;
+	int ret = -ENOSYS, kinds = 0;
 	u8 unused = 0;
 
-	अगर (mmu->func->kind)
+	if (mmu->func->kind)
 		mmu->func->kind(mmu, &kinds, &unused);
 
-	अगर (!(ret = nvअगर_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) अणु
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
 		args->v0.dmabits = mmu->dma_bits;
 		args->v0.heap_nr = mmu->heap_nr;
 		args->v0.type_nr = mmu->type_nr;
 		args->v0.kind_nr = kinds;
-	पूर्ण अन्यथा
-		वापस ret;
+	} else
+		return ret;
 
-	अगर (!(ummu = kzalloc(माप(*ummu), GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(ummu = kzalloc(sizeof(*ummu), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_object_ctor(&nvkm_ummu, oclass, &ummu->object);
 	ummu->mmu = mmu;
 	*pobject = &ummu->object;
-	वापस 0;
-पूर्ण
+	return 0;
+}

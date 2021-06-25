@@ -1,198 +1,197 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2013, Intel Corporation.
  *
- * MEI Library क्रम mei bus nfc device access
+ * MEI Library for mei bus nfc device access
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/nfc.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/nfc.h>
 
-#समावेश "mei_phy.h"
+#include "mei_phy.h"
 
-काष्ठा mei_nfc_hdr अणु
+struct mei_nfc_hdr {
 	u8 cmd;
 	u8 status;
 	u16 req_id;
 	u32 reserved;
 	u16 data_size;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mei_nfc_cmd अणु
-	काष्ठा mei_nfc_hdr hdr;
+struct mei_nfc_cmd {
+	struct mei_nfc_hdr hdr;
 	u8 sub_command;
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mei_nfc_reply अणु
-	काष्ठा mei_nfc_hdr hdr;
+struct mei_nfc_reply {
+	struct mei_nfc_hdr hdr;
 	u8 sub_command;
 	u8 reply_status;
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mei_nfc_अगर_version अणु
+struct mei_nfc_if_version {
 	u8 radio_version_sw[3];
 	u8 reserved[3];
 	u8 radio_version_hw[3];
 	u8 i2c_addr;
 	u8 fw_ivn;
-	u8 venकरोr_id;
+	u8 vendor_id;
 	u8 radio_type;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा mei_nfc_connect अणु
+struct mei_nfc_connect {
 	u8 fw_ivn;
-	u8 venकरोr_id;
-पूर्ण __packed;
+	u8 vendor_id;
+} __packed;
 
-काष्ठा mei_nfc_connect_resp अणु
+struct mei_nfc_connect_resp {
 	u8 fw_ivn;
-	u8 venकरोr_id;
+	u8 vendor_id;
 	u16 me_major;
 	u16 me_minor;
 	u16 me_hotfix;
 	u16 me_build;
-पूर्ण __packed;
+} __packed;
 
 
-#घोषणा MEI_NFC_CMD_MAINTEन_अंकCE 0x00
-#घोषणा MEI_NFC_CMD_HCI_SEND 0x01
-#घोषणा MEI_NFC_CMD_HCI_RECV 0x02
+#define MEI_NFC_CMD_MAINTENANCE 0x00
+#define MEI_NFC_CMD_HCI_SEND 0x01
+#define MEI_NFC_CMD_HCI_RECV 0x02
 
-#घोषणा MEI_NFC_SUBCMD_CONNECT    0x00
-#घोषणा MEI_NFC_SUBCMD_IF_VERSION 0x01
+#define MEI_NFC_SUBCMD_CONNECT    0x00
+#define MEI_NFC_SUBCMD_IF_VERSION 0x01
 
-#घोषणा MEI_NFC_MAX_READ (MEI_NFC_HEADER_SIZE + MEI_NFC_MAX_HCI_PAYLOAD)
+#define MEI_NFC_MAX_READ (MEI_NFC_HEADER_SIZE + MEI_NFC_MAX_HCI_PAYLOAD)
 
-#घोषणा MEI_DUMP_SKB_IN(info, skb)				\
-करो अणु								\
+#define MEI_DUMP_SKB_IN(info, skb)				\
+do {								\
 	pr_debug("%s:\n", info);				\
-	prपूर्णांक_hex_dump_debug("mei in : ", DUMP_PREFIX_OFFSET,	\
+	print_hex_dump_debug("mei in : ", DUMP_PREFIX_OFFSET,	\
 			16, 1, (skb)->data, (skb)->len, false);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा MEI_DUMP_SKB_OUT(info, skb)				\
-करो अणु								\
+#define MEI_DUMP_SKB_OUT(info, skb)				\
+do {								\
 	pr_debug("%s:\n", info);				\
-	prपूर्णांक_hex_dump_debug("mei out: ", DUMP_PREFIX_OFFSET,	\
+	print_hex_dump_debug("mei out: ", DUMP_PREFIX_OFFSET,	\
 			16, 1, (skb)->data, (skb)->len, false);	\
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा MEI_DUMP_NFC_HDR(info, _hdr)                                \
-करो अणु                                                                \
+#define MEI_DUMP_NFC_HDR(info, _hdr)                                \
+do {                                                                \
 	pr_debug("%s:\n", info);                                    \
 	pr_debug("cmd=%02d status=%d req_id=%d rsvd=%d size=%d\n",  \
 		 (_hdr)->cmd, (_hdr)->status, (_hdr)->req_id,       \
 		 (_hdr)->reserved, (_hdr)->data_size);              \
-पूर्ण जबतक (0)
+} while (0)
 
-अटल पूर्णांक mei_nfc_अगर_version(काष्ठा nfc_mei_phy *phy)
-अणु
+static int mei_nfc_if_version(struct nfc_mei_phy *phy)
+{
 
-	काष्ठा mei_nfc_cmd cmd;
-	काष्ठा mei_nfc_reply *reply = शून्य;
-	काष्ठा mei_nfc_अगर_version *version;
-	माप_प्रकार अगर_version_length;
-	पूर्णांक bytes_recv, r;
+	struct mei_nfc_cmd cmd;
+	struct mei_nfc_reply *reply = NULL;
+	struct mei_nfc_if_version *version;
+	size_t if_version_length;
+	int bytes_recv, r;
 
 	pr_info("%s\n", __func__);
 
-	स_रखो(&cmd, 0, माप(काष्ठा mei_nfc_cmd));
-	cmd.hdr.cmd = MEI_NFC_CMD_MAINTEन_अंकCE;
+	memset(&cmd, 0, sizeof(struct mei_nfc_cmd));
+	cmd.hdr.cmd = MEI_NFC_CMD_MAINTENANCE;
 	cmd.hdr.data_size = 1;
 	cmd.sub_command = MEI_NFC_SUBCMD_IF_VERSION;
 
 	MEI_DUMP_NFC_HDR("version", &cmd.hdr);
-	r = mei_cldev_send(phy->cldev, (u8 *)&cmd, माप(काष्ठा mei_nfc_cmd));
-	अगर (r < 0) अणु
+	r = mei_cldev_send(phy->cldev, (u8 *)&cmd, sizeof(struct mei_nfc_cmd));
+	if (r < 0) {
 		pr_err("Could not send IF version cmd\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	/* to be sure on the stack we alloc memory */
-	अगर_version_length = माप(काष्ठा mei_nfc_reply) +
-		माप(काष्ठा mei_nfc_अगर_version);
+	if_version_length = sizeof(struct mei_nfc_reply) +
+		sizeof(struct mei_nfc_if_version);
 
-	reply = kzalloc(अगर_version_length, GFP_KERNEL);
-	अगर (!reply)
-		वापस -ENOMEM;
+	reply = kzalloc(if_version_length, GFP_KERNEL);
+	if (!reply)
+		return -ENOMEM;
 
-	bytes_recv = mei_cldev_recv(phy->cldev, (u8 *)reply, अगर_version_length);
-	अगर (bytes_recv < 0 || bytes_recv < अगर_version_length) अणु
+	bytes_recv = mei_cldev_recv(phy->cldev, (u8 *)reply, if_version_length);
+	if (bytes_recv < 0 || bytes_recv < if_version_length) {
 		pr_err("Could not read IF version\n");
 		r = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	version = (काष्ठा mei_nfc_अगर_version *)reply->data;
+	version = (struct mei_nfc_if_version *)reply->data;
 
 	phy->fw_ivn = version->fw_ivn;
-	phy->venकरोr_id = version->venकरोr_id;
+	phy->vendor_id = version->vendor_id;
 	phy->radio_type = version->radio_type;
 
 err:
-	kमुक्त(reply);
-	वापस r;
-पूर्ण
+	kfree(reply);
+	return r;
+}
 
-अटल पूर्णांक mei_nfc_connect(काष्ठा nfc_mei_phy *phy)
-अणु
-	काष्ठा mei_nfc_cmd *cmd, *reply;
-	काष्ठा mei_nfc_connect *connect;
-	काष्ठा mei_nfc_connect_resp *connect_resp;
-	माप_प्रकार connect_length, connect_resp_length;
-	पूर्णांक bytes_recv, r;
+static int mei_nfc_connect(struct nfc_mei_phy *phy)
+{
+	struct mei_nfc_cmd *cmd, *reply;
+	struct mei_nfc_connect *connect;
+	struct mei_nfc_connect_resp *connect_resp;
+	size_t connect_length, connect_resp_length;
+	int bytes_recv, r;
 
 	pr_info("%s\n", __func__);
 
-	connect_length = माप(काष्ठा mei_nfc_cmd) +
-			माप(काष्ठा mei_nfc_connect);
+	connect_length = sizeof(struct mei_nfc_cmd) +
+			sizeof(struct mei_nfc_connect);
 
-	connect_resp_length = माप(काष्ठा mei_nfc_cmd) +
-			माप(काष्ठा mei_nfc_connect_resp);
+	connect_resp_length = sizeof(struct mei_nfc_cmd) +
+			sizeof(struct mei_nfc_connect_resp);
 
 	cmd = kzalloc(connect_length, GFP_KERNEL);
-	अगर (!cmd)
-		वापस -ENOMEM;
-	connect = (काष्ठा mei_nfc_connect *)cmd->data;
+	if (!cmd)
+		return -ENOMEM;
+	connect = (struct mei_nfc_connect *)cmd->data;
 
 	reply = kzalloc(connect_resp_length, GFP_KERNEL);
-	अगर (!reply) अणु
-		kमुक्त(cmd);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!reply) {
+		kfree(cmd);
+		return -ENOMEM;
+	}
 
-	connect_resp = (काष्ठा mei_nfc_connect_resp *)reply->data;
+	connect_resp = (struct mei_nfc_connect_resp *)reply->data;
 
-	cmd->hdr.cmd = MEI_NFC_CMD_MAINTEन_अंकCE;
+	cmd->hdr.cmd = MEI_NFC_CMD_MAINTENANCE;
 	cmd->hdr.data_size = 3;
 	cmd->sub_command = MEI_NFC_SUBCMD_CONNECT;
 	connect->fw_ivn = phy->fw_ivn;
-	connect->venकरोr_id = phy->venकरोr_id;
+	connect->vendor_id = phy->vendor_id;
 
 	MEI_DUMP_NFC_HDR("connect request", &cmd->hdr);
 	r = mei_cldev_send(phy->cldev, (u8 *)cmd, connect_length);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Could not send connect cmd %d\n", r);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	bytes_recv = mei_cldev_recv(phy->cldev, (u8 *)reply,
 				    connect_resp_length);
-	अगर (bytes_recv < 0) अणु
+	if (bytes_recv < 0) {
 		r = bytes_recv;
 		pr_err("Could not read connect response %d\n", r);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	MEI_DUMP_NFC_HDR("connect reply", &reply->hdr);
 
 	pr_info("IVN 0x%x Vendor ID 0x%x\n",
-		 connect_resp->fw_ivn, connect_resp->venकरोr_id);
+		 connect_resp->fw_ivn, connect_resp->vendor_id);
 
 	pr_info("ME FW %d.%d.%d.%d\n",
 		connect_resp->me_major, connect_resp->me_minor,
@@ -201,24 +200,24 @@ err:
 	r = 0;
 
 err:
-	kमुक्त(reply);
-	kमुक्त(cmd);
+	kfree(reply);
+	kfree(cmd);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक mei_nfc_send(काष्ठा nfc_mei_phy *phy, u8 *buf, माप_प्रकार length)
-अणु
-	काष्ठा mei_nfc_hdr *hdr;
+static int mei_nfc_send(struct nfc_mei_phy *phy, u8 *buf, size_t length)
+{
+	struct mei_nfc_hdr *hdr;
 	u8 *mei_buf;
-	पूर्णांक err;
+	int err;
 
 	err = -ENOMEM;
 	mei_buf = kzalloc(length + MEI_NFC_HEADER_SIZE, GFP_KERNEL);
-	अगर (!mei_buf)
-		जाओ out;
+	if (!mei_buf)
+		goto out;
 
-	hdr = (काष्ठा mei_nfc_hdr *)mei_buf;
+	hdr = (struct mei_nfc_hdr *)mei_buf;
 	hdr->cmd = MEI_NFC_CMD_HCI_SEND;
 	hdr->status = 0;
 	hdr->req_id = phy->req_id;
@@ -227,86 +226,86 @@ err:
 
 	MEI_DUMP_NFC_HDR("send", hdr);
 
-	स_नकल(mei_buf + MEI_NFC_HEADER_SIZE, buf, length);
+	memcpy(mei_buf + MEI_NFC_HEADER_SIZE, buf, length);
 	err = mei_cldev_send(phy->cldev, mei_buf, length + MEI_NFC_HEADER_SIZE);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
-	अगर (!रुको_event_पूर्णांकerruptible_समयout(phy->send_wq,
-				phy->recv_req_id == phy->req_id, HZ)) अणु
+	if (!wait_event_interruptible_timeout(phy->send_wq,
+				phy->recv_req_id == phy->req_id, HZ)) {
 		pr_err("NFC MEI command timeout\n");
 		err = -ETIME;
-	पूर्ण अन्यथा अणु
+	} else {
 		phy->req_id++;
-	पूर्ण
+	}
 out:
-	kमुक्त(mei_buf);
-	वापस err;
-पूर्ण
+	kfree(mei_buf);
+	return err;
+}
 
 /*
- * Writing a frame must not वापस the number of written bytes.
- * It must वापस either zero क्रम success, or <0 क्रम error.
+ * Writing a frame must not return the number of written bytes.
+ * It must return either zero for success, or <0 for error.
  * In addition, it must not alter the skb
  */
-अटल पूर्णांक nfc_mei_phy_ग_लिखो(व्योम *phy_id, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nfc_mei_phy *phy = phy_id;
-	पूर्णांक r;
+static int nfc_mei_phy_write(void *phy_id, struct sk_buff *skb)
+{
+	struct nfc_mei_phy *phy = phy_id;
+	int r;
 
 	MEI_DUMP_SKB_OUT("mei frame sent", skb);
 
 	r = mei_nfc_send(phy, skb->data, skb->len);
-	अगर (r > 0)
+	if (r > 0)
 		r = 0;
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल पूर्णांक mei_nfc_recv(काष्ठा nfc_mei_phy *phy, u8 *buf, माप_प्रकार length)
-अणु
-	काष्ठा mei_nfc_hdr *hdr;
-	पूर्णांक received_length;
+static int mei_nfc_recv(struct nfc_mei_phy *phy, u8 *buf, size_t length)
+{
+	struct mei_nfc_hdr *hdr;
+	int received_length;
 
 	received_length = mei_cldev_recv(phy->cldev, buf, length);
-	अगर (received_length < 0)
-		वापस received_length;
+	if (received_length < 0)
+		return received_length;
 
-	hdr = (काष्ठा mei_nfc_hdr *) buf;
+	hdr = (struct mei_nfc_hdr *) buf;
 
 	MEI_DUMP_NFC_HDR("receive", hdr);
-	अगर (hdr->cmd == MEI_NFC_CMD_HCI_SEND) अणु
+	if (hdr->cmd == MEI_NFC_CMD_HCI_SEND) {
 		phy->recv_req_id = hdr->req_id;
 		wake_up(&phy->send_wq);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस received_length;
-पूर्ण
+	return received_length;
+}
 
 
-अटल व्योम nfc_mei_rx_cb(काष्ठा mei_cl_device *cldev)
-अणु
-	काष्ठा nfc_mei_phy *phy = mei_cldev_get_drvdata(cldev);
-	काष्ठा sk_buff *skb;
-	पूर्णांक reply_size;
+static void nfc_mei_rx_cb(struct mei_cl_device *cldev)
+{
+	struct nfc_mei_phy *phy = mei_cldev_get_drvdata(cldev);
+	struct sk_buff *skb;
+	int reply_size;
 
-	अगर (!phy)
-		वापस;
+	if (!phy)
+		return;
 
-	अगर (phy->hard_fault != 0)
-		वापस;
+	if (phy->hard_fault != 0)
+		return;
 
 	skb = alloc_skb(MEI_NFC_MAX_READ, GFP_KERNEL);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	reply_size = mei_nfc_recv(phy, skb->data, MEI_NFC_MAX_READ);
-	अगर (reply_size < MEI_NFC_HEADER_SIZE) अणु
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	if (reply_size < MEI_NFC_HEADER_SIZE) {
+		kfree_skb(skb);
+		return;
+	}
 
 	skb_put(skb, reply_size);
 	skb_pull(skb, MEI_NFC_HEADER_SIZE);
@@ -314,92 +313,92 @@ out:
 	MEI_DUMP_SKB_IN("mei frame read", skb);
 
 	nfc_hci_recv_frame(phy->hdev, skb);
-पूर्ण
+}
 
-अटल पूर्णांक nfc_mei_phy_enable(व्योम *phy_id)
-अणु
-	पूर्णांक r;
-	काष्ठा nfc_mei_phy *phy = phy_id;
+static int nfc_mei_phy_enable(void *phy_id)
+{
+	int r;
+	struct nfc_mei_phy *phy = phy_id;
 
 	pr_info("%s\n", __func__);
 
-	अगर (phy->घातered == 1)
-		वापस 0;
+	if (phy->powered == 1)
+		return 0;
 
 	r = mei_cldev_enable(phy->cldev);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Could not enable device %d\n", r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	r = mei_nfc_अगर_version(phy);
-	अगर (r < 0) अणु
+	r = mei_nfc_if_version(phy);
+	if (r < 0) {
 		pr_err("Could not enable device %d\n", r);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	r = mei_nfc_connect(phy);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Could not connect to device %d\n", r);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	r = mei_cldev_रेजिस्टर_rx_cb(phy->cldev, nfc_mei_rx_cb);
-	अगर (r) अणु
+	r = mei_cldev_register_rx_cb(phy->cldev, nfc_mei_rx_cb);
+	if (r) {
 		pr_err("Event cb registration failed %d\n", r);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	phy->घातered = 1;
+	phy->powered = 1;
 
-	वापस 0;
+	return 0;
 
 err:
-	phy->घातered = 0;
+	phy->powered = 0;
 	mei_cldev_disable(phy->cldev);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम nfc_mei_phy_disable(व्योम *phy_id)
-अणु
-	काष्ठा nfc_mei_phy *phy = phy_id;
+static void nfc_mei_phy_disable(void *phy_id)
+{
+	struct nfc_mei_phy *phy = phy_id;
 
 	pr_info("%s\n", __func__);
 
 	mei_cldev_disable(phy->cldev);
 
-	phy->घातered = 0;
-पूर्ण
+	phy->powered = 0;
+}
 
-काष्ठा nfc_phy_ops mei_phy_ops = अणु
-	.ग_लिखो = nfc_mei_phy_ग_लिखो,
+struct nfc_phy_ops mei_phy_ops = {
+	.write = nfc_mei_phy_write,
 	.enable = nfc_mei_phy_enable,
 	.disable = nfc_mei_phy_disable,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(mei_phy_ops);
 
-काष्ठा nfc_mei_phy *nfc_mei_phy_alloc(काष्ठा mei_cl_device *cldev)
-अणु
-	काष्ठा nfc_mei_phy *phy;
+struct nfc_mei_phy *nfc_mei_phy_alloc(struct mei_cl_device *cldev)
+{
+	struct nfc_mei_phy *phy;
 
-	phy = kzalloc(माप(काष्ठा nfc_mei_phy), GFP_KERNEL);
-	अगर (!phy)
-		वापस शून्य;
+	phy = kzalloc(sizeof(struct nfc_mei_phy), GFP_KERNEL);
+	if (!phy)
+		return NULL;
 
 	phy->cldev = cldev;
-	init_रुकोqueue_head(&phy->send_wq);
+	init_waitqueue_head(&phy->send_wq);
 	mei_cldev_set_drvdata(cldev, phy);
 
-	वापस phy;
-पूर्ण
+	return phy;
+}
 EXPORT_SYMBOL_GPL(nfc_mei_phy_alloc);
 
-व्योम nfc_mei_phy_मुक्त(काष्ठा nfc_mei_phy *phy)
-अणु
+void nfc_mei_phy_free(struct nfc_mei_phy *phy)
+{
 	mei_cldev_disable(phy->cldev);
-	kमुक्त(phy);
-पूर्ण
-EXPORT_SYMBOL_GPL(nfc_mei_phy_मुक्त);
+	kfree(phy);
+}
+EXPORT_SYMBOL_GPL(nfc_mei_phy_free);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("mei bus NFC device interface");

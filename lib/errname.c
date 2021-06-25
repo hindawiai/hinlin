@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/build_bug.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/errname.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/गणित.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/build_bug.h>
+#include <linux/errno.h>
+#include <linux/errname.h>
+#include <linux/kernel.h>
+#include <linux/math.h>
 
 /*
- * Ensure these tables करो not accidentally become gigantic अगर some
- * huge त्रुटि_सं makes it in. On most architectures, the first table will
+ * Ensure these tables do not accidentally become gigantic if some
+ * huge errno makes it in. On most architectures, the first table will
  * only have about 140 entries, but mips and parisc have more sparsely
- * allocated त्रुटि_संs (with EHWPOISON = 257 on parisc, and EDQUOT = 1133
+ * allocated errnos (with EHWPOISON = 257 on parisc, and EDQUOT = 1133
  * on mips), so this wastes a bit of space on those - though we
- * special हाल the EDQUOT हाल.
+ * special case the EDQUOT case.
  */
-#घोषणा E(err) [err + BUILD_BUG_ON_ZERO(err <= 0 || err > 300)] = "-" #err
-अटल स्थिर अक्षर *names_0[] = अणु
+#define E(err) [err + BUILD_BUG_ON_ZERO(err <= 0 || err > 300)] = "-" #err
+static const char *names_0[] = {
 	E(E2BIG),
 	E(EACCES),
 	E(EADDRINUSE),
@@ -32,9 +31,9 @@
 	E(EBADSLT),
 	E(EBFONT),
 	E(EBUSY),
-#अगर_घोषित ECANCELLED
+#ifdef ECANCELLED
 	E(ECANCELLED),
-#पूर्ण_अगर
+#endif
 	E(ECHILD),
 	E(ECHRNG),
 	E(ECOMM),
@@ -42,11 +41,11 @@
 	E(ECONNRESET),
 	E(EDEADLOCK),
 	E(EDESTADDRREQ),
-	E(गलत_तर्क),
+	E(EDOM),
 	E(EDOTDOT),
-#अगर_अघोषित CONFIG_MIPS
+#ifndef CONFIG_MIPS
 	E(EDQUOT),
-#पूर्ण_अगर
+#endif
 	E(EEXIST),
 	E(EFAULT),
 	E(EFBIG),
@@ -55,15 +54,15 @@
 	E(EHWPOISON),
 	E(EIDRM),
 	E(EILSEQ),
-#अगर_घोषित EINIT
+#ifdef EINIT
 	E(EINIT),
-#पूर्ण_अगर
+#endif
 	E(EINPROGRESS),
 	E(EINTR),
 	E(EINVAL),
 	E(EIO),
 	E(EISCONN),
-	E(EISसूची),
+	E(EISDIR),
 	E(EISNAM),
 	E(EKEYEXPIRED),
 	E(EKEYREJECTED),
@@ -80,7 +79,7 @@
 	E(ELNRNG),
 	E(ELOOP),
 	E(EMEDIUMTYPE),
-	E(EMखाता),
+	E(EMFILE),
 	E(EMLINK),
 	E(EMSGSIZE),
 	E(EMULTIHOP),
@@ -89,7 +88,7 @@
 	E(ENETDOWN),
 	E(ENETRESET),
 	E(ENETUNREACH),
-	E(ENखाता),
+	E(ENFILE),
 	E(ENOANO),
 	E(ENOBUFS),
 	E(ENOCSI),
@@ -109,13 +108,13 @@
 	E(ENOSPC),
 	E(ENOSR),
 	E(ENOSTR),
-#अगर_घोषित ENOSYM
+#ifdef ENOSYM
 	E(ENOSYM),
-#पूर्ण_अगर
+#endif
 	E(ENOSYS),
 	E(ENOTBLK),
 	E(ENOTCONN),
-	E(ENOTसूची),
+	E(ENOTDIR),
 	E(ENOTEMPTY),
 	E(ENOTNAM),
 	E(ENOTRECOVERABLE),
@@ -129,28 +128,28 @@
 	E(EPERM),
 	E(EPFNOSUPPORT),
 	E(EPIPE),
-#अगर_घोषित EPROCLIM
+#ifdef EPROCLIM
 	E(EPROCLIM),
-#पूर्ण_अगर
+#endif
 	E(EPROTO),
 	E(EPROTONOSUPPORT),
 	E(EPROTOTYPE),
-	E(दुस्फल),
+	E(ERANGE),
 	E(EREMCHG),
-#अगर_घोषित EREMDEV
+#ifdef EREMDEV
 	E(EREMDEV),
-#पूर्ण_अगर
+#endif
 	E(EREMOTE),
 	E(EREMOTEIO),
-#अगर_घोषित EREMOTERELEASE
+#ifdef EREMOTERELEASE
 	E(EREMOTERELEASE),
-#पूर्ण_अगर
+#endif
 	E(ERESTART),
 	E(ERFKILL),
 	E(EROFS),
-#अगर_घोषित ERREMOTE
+#ifdef ERREMOTE
 	E(ERREMOTE),
-#पूर्ण_अगर
+#endif
 	E(ESHUTDOWN),
 	E(ESOCKTNOSUPPORT),
 	E(ESPIPE),
@@ -172,11 +171,11 @@
 	E(EAGAIN), /* EWOULDBLOCK */
 	E(ECONNREFUSED), /* EREFUSED */
 	E(EDEADLK), /* EDEADLOCK */
-पूर्ण;
-#अघोषित E
+};
+#undef E
 
-#घोषणा E(err) [err - 512 + BUILD_BUG_ON_ZERO(err < 512 || err > 550)] = "-" #err
-अटल स्थिर अक्षर *names_512[] = अणु
+#define E(err) [err - 512 + BUILD_BUG_ON_ZERO(err < 512 || err > 550)] = "-" #err
+static const char *names_512[] = {
 	E(ERESTARTSYS),
 	E(ERESTARTNOINTR),
 	E(ERESTARTNOHAND),
@@ -196,30 +195,30 @@
 	E(EJUKEBOX),
 	E(EIOCBQUEUED),
 	E(ERECALLCONFLICT),
-पूर्ण;
-#अघोषित E
+};
+#undef E
 
-अटल स्थिर अक्षर *__errname(अचिन्हित err)
-अणु
-	अगर (err < ARRAY_SIZE(names_0))
-		वापस names_0[err];
-	अगर (err >= 512 && err - 512 < ARRAY_SIZE(names_512))
-		वापस names_512[err - 512];
+static const char *__errname(unsigned err)
+{
+	if (err < ARRAY_SIZE(names_0))
+		return names_0[err];
+	if (err >= 512 && err - 512 < ARRAY_SIZE(names_512))
+		return names_512[err - 512];
 	/* But why? */
-	अगर (IS_ENABLED(CONFIG_MIPS) && err == EDQUOT) /* 1133 */
-		वापस "-EDQUOT";
-	वापस शून्य;
-पूर्ण
+	if (IS_ENABLED(CONFIG_MIPS) && err == EDQUOT) /* 1133 */
+		return "-EDQUOT";
+	return NULL;
+}
 
 /*
  * errname(EIO) -> "EIO"
  * errname(-EIO) -> "-EIO"
  */
-स्थिर अक्षर *errname(पूर्णांक err)
-अणु
-	स्थिर अक्षर *name = __errname(असल(err));
-	अगर (!name)
-		वापस शून्य;
+const char *errname(int err)
+{
+	const char *name = __errname(abs(err));
+	if (!name)
+		return NULL;
 
-	वापस err > 0 ? name + 1 : name;
-पूर्ण
+	return err > 0 ? name + 1 : name;
+}

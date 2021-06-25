@@ -1,45 +1,44 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2013 Eugene Krasnikov <k.eugene.e@gmail.com>
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#अगर_अघोषित _TXRX_H_
-#घोषणा _TXRX_H_
+#ifndef _TXRX_H_
+#define _TXRX_H_
 
-#समावेश <linux/etherdevice.h>
-#समावेश "wcn36xx.h"
+#include <linux/etherdevice.h>
+#include "wcn36xx.h"
 
 /* TODO describe all properties */
-#घोषणा WCN36XX_802_11_HEADER_LEN	24
-#घोषणा WCN36XX_BMU_WQ_TX		25
-#घोषणा WCN36XX_TID			7
+#define WCN36XX_802_11_HEADER_LEN	24
+#define WCN36XX_BMU_WQ_TX		25
+#define WCN36XX_TID			7
 /* broadcast wq ID */
-#घोषणा WCN36XX_TX_B_WQ_ID		0xA
-#घोषणा WCN36XX_TX_U_WQ_ID		0x9
+#define WCN36XX_TX_B_WQ_ID		0xA
+#define WCN36XX_TX_U_WQ_ID		0x9
 /* bd_rate */
-#घोषणा WCN36XX_BD_RATE_DATA 0
-#घोषणा WCN36XX_BD_RATE_MGMT 2
-#घोषणा WCN36XX_BD_RATE_CTRL 3
+#define WCN36XX_BD_RATE_DATA 0
+#define WCN36XX_BD_RATE_MGMT 2
+#define WCN36XX_BD_RATE_CTRL 3
 
-क्रमागत wcn36xx_txbd_ssn_type अणु
+enum wcn36xx_txbd_ssn_type {
 	WCN36XX_TXBD_SSN_FILL_HOST = 0,
 	WCN36XX_TXBD_SSN_FILL_DPU_NON_QOS = 1,
 	WCN36XX_TXBD_SSN_FILL_DPU_QOS = 2,
-पूर्ण;
+};
 
-काष्ठा wcn36xx_pdu अणु
+struct wcn36xx_pdu {
 	u32	dpu_fb:8;
 	u32	adu_fb:8;
 	u32	pdu_id:16;
@@ -60,9 +59,9 @@
 	u32	bd_ssn:2;
 	u32	reserved3:2;
 	u32	mpdu_len:16;
-पूर्ण;
+};
 
-काष्ठा wcn36xx_rx_bd अणु
+struct wcn36xx_rx_bd {
 	u32	bdt:2;
 	u32	ft:1;
 	u32	dpu_ne:1;
@@ -81,7 +80,7 @@
 	u32	dpu_sign:3;
 	u32	dpu_rf:8;
 
-	काष्ठा wcn36xx_pdu pdu;
+	struct wcn36xx_pdu pdu;
 
 	/* 0x14*/
 	u32	addr3:8;
@@ -97,7 +96,7 @@
 	u32	phy_stat1;
 
 	/* 0x24 */
-	u32	rx_बार;
+	u32	rx_times;
 
 	u32	pmi_cmd[6];
 
@@ -122,9 +121,9 @@
 	u32	lsf:1;
 	u32	esf:1;
 	u32	asf:1;
-पूर्ण;
+};
 
-काष्ठा wcn36xx_tx_bd अणु
+struct wcn36xx_tx_bd {
 	u32	bdt:2;
 	u32	ft:1;
 	u32	dpu_ne:1;
@@ -137,7 +136,7 @@
 	u32	dpu_sign:3;
 	u32	dpu_rf:8;
 
-	काष्ठा wcn36xx_pdu pdu;
+	struct wcn36xx_pdu pdu;
 
 	/* 0x14*/
 	u32	reserved5:7;
@@ -149,20 +148,20 @@
 
 	u32	tx_bd_sign;
 	u32	reserved6;
-	u32	dxe_start_समय;
-	u32	dxe_end_समय;
+	u32	dxe_start_time;
+	u32	dxe_end_time;
 
 	/*u32	tcp_udp_start_off:10;
 	u32	header_cks:16;
 	u32	reserved7:6;*/
-पूर्ण;
+};
 
-काष्ठा wcn36xx_sta;
-काष्ठा wcn36xx;
+struct wcn36xx_sta;
+struct wcn36xx;
 
-पूर्णांक  wcn36xx_rx_skb(काष्ठा wcn36xx *wcn, काष्ठा sk_buff *skb);
-पूर्णांक wcn36xx_start_tx(काष्ठा wcn36xx *wcn,
-		     काष्ठा wcn36xx_sta *sta_priv,
-		     काष्ठा sk_buff *skb);
+int  wcn36xx_rx_skb(struct wcn36xx *wcn, struct sk_buff *skb);
+int wcn36xx_start_tx(struct wcn36xx *wcn,
+		     struct wcn36xx_sta *sta_priv,
+		     struct sk_buff *skb);
 
-#पूर्ण_अगर	/* _TXRX_H_ */
+#endif	/* _TXRX_H_ */

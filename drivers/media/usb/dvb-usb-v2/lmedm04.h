@@ -1,6 +1,5 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
-/* DVB USB compliant linux driver क्रम
+/* SPDX-License-Identifier: GPL-2.0-only */
+/* DVB USB compliant linux driver for
  *
  * DM04/QQBOX DVB-S USB BOX	LME2510C + SHARP:BS2F7HZ7395
  *				LME2510C + LG TDQY-P001F
@@ -15,15 +14,15 @@
  * MVB0001F (LME2510C+LGTDQT-P001F)
  *
  * *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
  */
-#अगर_अघोषित _DVB_USB_LME2510_H_
-#घोषणा _DVB_USB_LME2510_H_
+#ifndef _DVB_USB_LME2510_H_
+#define _DVB_USB_LME2510_H_
 
 /* Streamer &  PID
  *
- * Note:	These commands करो not actually stop the streaming
- *		but क्रमm some kind of packet filtering/stream count
+ * Note:	These commands do not actually stop the streaming
+ *		but form some kind of packet filtering/stream count
  *		or tuning related functions.
  *  06 XX
  *  offset 1 = 00 Enable Streaming
@@ -37,10 +36,10 @@
  *  end byte = clear pid always a0, other wise 9c, 9a ??
  *
 */
-#घोषणा LME_ST_ON_W	अणु0x06, 0x00पूर्ण
-#घोषणा LME_CLEAR_PID   अणु0x03, 0x02, 0x20, 0xa0पूर्ण
-#घोषणा LME_ZERO_PID	अणु0x03, 0x06, 0x00, 0x00, 0x01, 0x00, 0x20, 0x9cपूर्ण
-#घोषणा LME_ALL_PIDS	अणु0x03, 0x06, 0x00, 0xff, 0x01, 0x1f, 0x20, 0x81पूर्ण
+#define LME_ST_ON_W	{0x06, 0x00}
+#define LME_CLEAR_PID   {0x03, 0x02, 0x20, 0xa0}
+#define LME_ZERO_PID	{0x03, 0x06, 0x00, 0x00, 0x01, 0x00, 0x20, 0x9c}
+#define LME_ALL_PIDS	{0x03, 0x06, 0x00, 0xff, 0x01, 0x1f, 0x20, 0x81}
 
 /*  LNB Voltage
  *  07 XX XX
@@ -52,13 +51,13 @@
  *  offset 2 = 00=ON 01=OFF
  */
 
-#घोषणा LME_VOLTAGE_L	अणु0x07, 0x01, 0x00पूर्ण
-#घोषणा LME_VOLTAGE_H	अणु0x07, 0x01, 0x01पूर्ण
-#घोषणा LNB_ON		अणु0x3a, 0x01, 0x00पूर्ण
-#घोषणा LNB_OFF		अणु0x3a, 0x01, 0x01पूर्ण
+#define LME_VOLTAGE_L	{0x07, 0x01, 0x00}
+#define LME_VOLTAGE_H	{0x07, 0x01, 0x01}
+#define LNB_ON		{0x3a, 0x01, 0x00}
+#define LNB_OFF		{0x3a, 0x01, 0x01}
 
-/* Initial stv0288 settings क्रम 7395 Frontend */
-अटल u8 s7395_inittab[] = अणु
+/* Initial stv0288 settings for 7395 Frontend */
+static u8 s7395_inittab[] = {
 	0x01, 0x15,
 	0x02, 0x20,
 	0x03, 0xa0,
@@ -170,5 +169,5 @@
 	0xf1, 0x0,
 	0xf2, 0xc0,
 	0xff, 0xff,
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

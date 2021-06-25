@@ -1,38 +1,37 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Timer tick function क्रम architectures that lack generic घड़ीevents,
+ * Timer tick function for architectures that lack generic clockevents,
  * consolidated here from m68k/ia64/parisc/arm.
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/profile.h>
-#समावेश <linux/समयkeeper_पूर्णांकernal.h>
+#include <linux/irq.h>
+#include <linux/profile.h>
+#include <linux/timekeeper_internal.h>
 
-#समावेश "tick-internal.h"
+#include "tick-internal.h"
 
 /**
- * legacy_समयr_tick() - advances the समयkeeping infraकाष्ठाure
+ * legacy_timer_tick() - advances the timekeeping infrastructure
  * @ticks:	number of ticks, that have elapsed since the last call.
  *
- * This is used by platक्रमms that have not been converted to
- * generic घड़ीevents.
+ * This is used by platforms that have not been converted to
+ * generic clockevents.
  *
- * If 'ticks' is zero, the CPU is not handling समयkeeping, so
- * only perक्रमm process accounting and profiling.
+ * If 'ticks' is zero, the CPU is not handling timekeeping, so
+ * only perform process accounting and profiling.
  *
- * Must be called with पूर्णांकerrupts disabled.
+ * Must be called with interrupts disabled.
  */
-व्योम legacy_समयr_tick(अचिन्हित दीर्घ ticks)
-अणु
-	अगर (ticks) अणु
-		raw_spin_lock(&jअगरfies_lock);
-		ग_लिखो_seqcount_begin(&jअगरfies_seq);
-		करो_समयr(ticks);
-		ग_लिखो_seqcount_end(&jअगरfies_seq);
-		raw_spin_unlock(&jअगरfies_lock);
-		update_wall_समय();
-	पूर्ण
-	update_process_बार(user_mode(get_irq_regs()));
+void legacy_timer_tick(unsigned long ticks)
+{
+	if (ticks) {
+		raw_spin_lock(&jiffies_lock);
+		write_seqcount_begin(&jiffies_seq);
+		do_timer(ticks);
+		write_seqcount_end(&jiffies_seq);
+		raw_spin_unlock(&jiffies_lock);
+		update_wall_time();
+	}
+	update_process_times(user_mode(get_irq_regs()));
 	profile_tick(CPU_PROFILING);
-पूर्ण
+}

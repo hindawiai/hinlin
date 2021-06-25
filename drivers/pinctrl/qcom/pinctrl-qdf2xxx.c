@@ -1,113 +1,112 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  *
  * GPIO and pin control functions on this SOC are handled by the "TLMM"
  * device.  The driver which controls this device is pinctrl-msm.c.  Each
- * SOC with a TLMM is expected to create a client driver that रेजिस्टरs
+ * SOC with a TLMM is expected to create a client driver that registers
  * with pinctrl-msm.c.  This means that all TLMM drivers are pin control
  * drivers.
  *
- * This pin control driver is पूर्णांकended to be used only an ACPI-enabled
- * प्रणाली.  As such, UEFI will handle all pin control configuration, so
- * this driver करोes not provide pin control functions.  It is effectively
+ * This pin control driver is intended to be used only an ACPI-enabled
+ * system.  As such, UEFI will handle all pin control configuration, so
+ * this driver does not provide pin control functions.  It is effectively
  * a GPIO-only driver.  The alternative is to duplicate the GPIO code of
- * pinctrl-msm.c पूर्णांकo another driver.
+ * pinctrl-msm.c into another driver.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/acpi.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/acpi.h>
 
-#समावेश "pinctrl-msm.h"
+#include "pinctrl-msm.h"
 
 /* A maximum of 256 allows us to use a u8 array to hold the GPIO numbers */
-#घोषणा MAX_GPIOS	256
+#define MAX_GPIOS	256
 
-/* maximum size of each gpio name (enough room क्रम "gpioXXX" + null) */
-#घोषणा NAME_SIZE	8
+/* maximum size of each gpio name (enough room for "gpioXXX" + null) */
+#define NAME_SIZE	8
 
-अटल पूर्णांक qdf2xxx_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा msm_pinctrl_soc_data *pinctrl;
-	काष्ठा pinctrl_pin_desc *pins;
-	काष्ठा msm_pingroup *groups;
-	अक्षर (*names)[NAME_SIZE];
-	अचिन्हित पूर्णांक i;
+static int qdf2xxx_pinctrl_probe(struct platform_device *pdev)
+{
+	struct msm_pinctrl_soc_data *pinctrl;
+	struct pinctrl_pin_desc *pins;
+	struct msm_pingroup *groups;
+	char (*names)[NAME_SIZE];
+	unsigned int i;
 	u32 num_gpios;
-	अचिन्हित पूर्णांक avail_gpios; /* The number of GPIOs we support */
+	unsigned int avail_gpios; /* The number of GPIOs we support */
 	u8 gpios[MAX_GPIOS];      /* An array of supported GPIOs */
-	पूर्णांक ret;
+	int ret;
 
 	/* Query the number of GPIOs from ACPI */
-	ret = device_property_पढ़ो_u32(&pdev->dev, "num-gpios", &num_gpios);
-	अगर (ret < 0) अणु
+	ret = device_property_read_u32(&pdev->dev, "num-gpios", &num_gpios);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "missing 'num-gpios' property\n");
-		वापस ret;
-	पूर्ण
-	अगर (!num_gpios || num_gpios > MAX_GPIOS) अणु
+		return ret;
+	}
+	if (!num_gpios || num_gpios > MAX_GPIOS) {
 		dev_err(&pdev->dev, "invalid 'num-gpios' property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* The number of GPIOs in the approved list */
 	ret = device_property_count_u8(&pdev->dev, "gpios");
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "missing 'gpios' property\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	/*
 	 * The number of available GPIOs should be non-zero, and no
 	 * more than the total number of GPIOS.
 	 */
-	अगर (!ret || ret > num_gpios) अणु
+	if (!ret || ret > num_gpios) {
 		dev_err(&pdev->dev, "invalid 'gpios' property\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	avail_gpios = ret;
 
-	ret = device_property_पढ़ो_u8_array(&pdev->dev, "gpios", gpios,
+	ret = device_property_read_u8_array(&pdev->dev, "gpios", gpios,
 					    avail_gpios);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "could not read list of GPIOs\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	pinctrl = devm_kzalloc(&pdev->dev, माप(*pinctrl), GFP_KERNEL);
-	pins = devm_kसुस्मृति(&pdev->dev, num_gpios,
-		माप(काष्ठा pinctrl_pin_desc), GFP_KERNEL);
-	groups = devm_kसुस्मृति(&pdev->dev, num_gpios,
-		माप(काष्ठा msm_pingroup), GFP_KERNEL);
-	names = devm_kसुस्मृति(&pdev->dev, avail_gpios, NAME_SIZE, GFP_KERNEL);
+	pinctrl = devm_kzalloc(&pdev->dev, sizeof(*pinctrl), GFP_KERNEL);
+	pins = devm_kcalloc(&pdev->dev, num_gpios,
+		sizeof(struct pinctrl_pin_desc), GFP_KERNEL);
+	groups = devm_kcalloc(&pdev->dev, num_gpios,
+		sizeof(struct msm_pingroup), GFP_KERNEL);
+	names = devm_kcalloc(&pdev->dev, avail_gpios, NAME_SIZE, GFP_KERNEL);
 
-	अगर (!pinctrl || !pins || !groups || !names)
-		वापस -ENOMEM;
+	if (!pinctrl || !pins || !groups || !names)
+		return -ENOMEM;
 
 	/*
 	 * Initialize the array.  GPIOs not listed in the 'gpios' array
-	 * still need a number, but nothing अन्यथा.
+	 * still need a number, but nothing else.
 	 */
-	क्रम (i = 0; i < num_gpios; i++) अणु
+	for (i = 0; i < num_gpios; i++) {
 		pins[i].number = i;
 		groups[i].pins = &pins[i].number;
-	पूर्ण
+	}
 
 	/* Populate the entries that are meant to be exposed as GPIOs. */
-	क्रम (i = 0; i < avail_gpios; i++) अणु
-		अचिन्हित पूर्णांक gpio = gpios[i];
+	for (i = 0; i < avail_gpios; i++) {
+		unsigned int gpio = gpios[i];
 
 		groups[gpio].npins = 1;
-		snम_लिखो(names[i], NAME_SIZE, "gpio%u", gpio);
+		snprintf(names[i], NAME_SIZE, "gpio%u", gpio);
 		pins[gpio].name = names[i];
 		groups[gpio].name = names[i];
 
 		groups[gpio].ctl_reg = 0x10000 * gpio;
 		groups[gpio].io_reg = 0x04 + 0x10000 * gpio;
-		groups[gpio].पूर्णांकr_cfg_reg = 0x08 + 0x10000 * gpio;
-		groups[gpio].पूर्णांकr_status_reg = 0x0c + 0x10000 * gpio;
-		groups[gpio].पूर्णांकr_target_reg = 0x08 + 0x10000 * gpio;
+		groups[gpio].intr_cfg_reg = 0x08 + 0x10000 * gpio;
+		groups[gpio].intr_status_reg = 0x0c + 0x10000 * gpio;
+		groups[gpio].intr_target_reg = 0x08 + 0x10000 * gpio;
 
 		groups[gpio].mux_bit = 2;
 		groups[gpio].pull_bit = 0;
@@ -115,15 +114,15 @@
 		groups[gpio].oe_bit = 9;
 		groups[gpio].in_bit = 0;
 		groups[gpio].out_bit = 1;
-		groups[gpio].पूर्णांकr_enable_bit = 0;
-		groups[gpio].पूर्णांकr_status_bit = 0;
-		groups[gpio].पूर्णांकr_target_bit = 5;
-		groups[gpio].पूर्णांकr_target_kpss_val = 1;
-		groups[gpio].पूर्णांकr_raw_status_bit = 4;
-		groups[gpio].पूर्णांकr_polarity_bit = 1;
-		groups[gpio].पूर्णांकr_detection_bit = 2;
-		groups[gpio].पूर्णांकr_detection_width = 2;
-	पूर्ण
+		groups[gpio].intr_enable_bit = 0;
+		groups[gpio].intr_status_bit = 0;
+		groups[gpio].intr_target_bit = 5;
+		groups[gpio].intr_target_kpss_val = 1;
+		groups[gpio].intr_raw_status_bit = 4;
+		groups[gpio].intr_polarity_bit = 1;
+		groups[gpio].intr_detection_bit = 2;
+		groups[gpio].intr_detection_width = 2;
+	}
 
 	pinctrl->pins = pins;
 	pinctrl->groups = groups;
@@ -131,35 +130,35 @@
 	pinctrl->ngroups = num_gpios;
 	pinctrl->ngpios = num_gpios;
 
-	वापस msm_pinctrl_probe(pdev, pinctrl);
-पूर्ण
+	return msm_pinctrl_probe(pdev, pinctrl);
+}
 
-अटल स्थिर काष्ठा acpi_device_id qdf2xxx_acpi_ids[] = अणु
-	अणु"QCOM8002"पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct acpi_device_id qdf2xxx_acpi_ids[] = {
+	{"QCOM8002"},
+	{},
+};
 MODULE_DEVICE_TABLE(acpi, qdf2xxx_acpi_ids);
 
-अटल काष्ठा platक्रमm_driver qdf2xxx_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver qdf2xxx_pinctrl_driver = {
+	.driver = {
 		.name = "qdf2xxx-pinctrl",
 		.acpi_match_table = ACPI_PTR(qdf2xxx_acpi_ids),
-	पूर्ण,
+	},
 	.probe = qdf2xxx_pinctrl_probe,
-	.हटाओ = msm_pinctrl_हटाओ,
-पूर्ण;
+	.remove = msm_pinctrl_remove,
+};
 
-अटल पूर्णांक __init qdf2xxx_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&qdf2xxx_pinctrl_driver);
-पूर्ण
+static int __init qdf2xxx_pinctrl_init(void)
+{
+	return platform_driver_register(&qdf2xxx_pinctrl_driver);
+}
 arch_initcall(qdf2xxx_pinctrl_init);
 
-अटल व्योम __निकास qdf2xxx_pinctrl_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&qdf2xxx_pinctrl_driver);
-पूर्ण
-module_निकास(qdf2xxx_pinctrl_निकास);
+static void __exit qdf2xxx_pinctrl_exit(void)
+{
+	platform_driver_unregister(&qdf2xxx_pinctrl_driver);
+}
+module_exit(qdf2xxx_pinctrl_exit);
 
 MODULE_DESCRIPTION("Qualcomm Technologies QDF2xxx pin control driver");
 MODULE_LICENSE("GPL v2");

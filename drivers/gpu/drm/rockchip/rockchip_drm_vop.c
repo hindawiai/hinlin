@@ -1,424 +1,423 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/component.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/overflow.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/component.h>
+#include <linux/delay.h>
+#include <linux/iopoll.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/overflow.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/reset.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_uapi.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_flip_work.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_gem_framebuffer_helper.h>
-#समावेश <drm/drm_plane_helper.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_self_refresh_helper.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_flip_work.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_plane_helper.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_self_refresh_helper.h>
+#include <drm/drm_vblank.h>
 
-#अगर_घोषित CONFIG_DRM_ANALOGIX_DP
-#समावेश <drm/bridge/analogix_dp.h>
-#पूर्ण_अगर
+#ifdef CONFIG_DRM_ANALOGIX_DP
+#include <drm/bridge/analogix_dp.h>
+#endif
 
-#समावेश "rockchip_drm_drv.h"
-#समावेश "rockchip_drm_gem.h"
-#समावेश "rockchip_drm_fb.h"
-#समावेश "rockchip_drm_vop.h"
-#समावेश "rockchip_rgb.h"
+#include "rockchip_drm_drv.h"
+#include "rockchip_drm_gem.h"
+#include "rockchip_drm_fb.h"
+#include "rockchip_drm_vop.h"
+#include "rockchip_rgb.h"
 
-#घोषणा VOP_WIN_SET(vop, win, name, v) \
+#define VOP_WIN_SET(vop, win, name, v) \
 		vop_reg_set(vop, &win->phy->name, win->base, ~0, v, #name)
-#घोषणा VOP_SCL_SET(vop, win, name, v) \
+#define VOP_SCL_SET(vop, win, name, v) \
 		vop_reg_set(vop, &win->phy->scl->name, win->base, ~0, v, #name)
-#घोषणा VOP_SCL_SET_EXT(vop, win, name, v) \
+#define VOP_SCL_SET_EXT(vop, win, name, v) \
 		vop_reg_set(vop, &win->phy->scl->ext->name, \
 			    win->base, ~0, v, #name)
 
-#घोषणा VOP_WIN_YUV2YUV_SET(vop, win_yuv2yuv, name, v) \
-	करो अणु \
-		अगर (win_yuv2yuv && win_yuv2yuv->name.mask) \
+#define VOP_WIN_YUV2YUV_SET(vop, win_yuv2yuv, name, v) \
+	do { \
+		if (win_yuv2yuv && win_yuv2yuv->name.mask) \
 			vop_reg_set(vop, &win_yuv2yuv->name, 0, ~0, v, #name); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा VOP_WIN_YUV2YUV_COEFFICIENT_SET(vop, win_yuv2yuv, name, v) \
-	करो अणु \
-		अगर (win_yuv2yuv && win_yuv2yuv->phy->name.mask) \
+#define VOP_WIN_YUV2YUV_COEFFICIENT_SET(vop, win_yuv2yuv, name, v) \
+	do { \
+		if (win_yuv2yuv && win_yuv2yuv->phy->name.mask) \
 			vop_reg_set(vop, &win_yuv2yuv->phy->name, win_yuv2yuv->base, ~0, v, #name); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा VOP_INTR_SET_MASK(vop, name, mask, v) \
-		vop_reg_set(vop, &vop->data->पूर्णांकr->name, 0, mask, v, #name)
+#define VOP_INTR_SET_MASK(vop, name, mask, v) \
+		vop_reg_set(vop, &vop->data->intr->name, 0, mask, v, #name)
 
-#घोषणा VOP_REG_SET(vop, group, name, v) \
+#define VOP_REG_SET(vop, group, name, v) \
 		    vop_reg_set(vop, &vop->data->group->name, 0, ~0, v, #name)
 
-#घोषणा VOP_INTR_SET_TYPE(vop, name, type, v) \
-	करो अणु \
-		पूर्णांक i, reg = 0, mask = 0; \
-		क्रम (i = 0; i < vop->data->पूर्णांकr->nपूर्णांकrs; i++) अणु \
-			अगर (vop->data->पूर्णांकr->पूर्णांकrs[i] & type) अणु \
+#define VOP_INTR_SET_TYPE(vop, name, type, v) \
+	do { \
+		int i, reg = 0, mask = 0; \
+		for (i = 0; i < vop->data->intr->nintrs; i++) { \
+			if (vop->data->intr->intrs[i] & type) { \
 				reg |= (v) << i; \
 				mask |= 1 << i; \
-			पूर्ण \
-		पूर्ण \
+			} \
+		} \
 		VOP_INTR_SET_MASK(vop, name, mask, reg); \
-	पूर्ण जबतक (0)
-#घोषणा VOP_INTR_GET_TYPE(vop, name, type) \
-		vop_get_पूर्णांकr_type(vop, &vop->data->पूर्णांकr->name, type)
+	} while (0)
+#define VOP_INTR_GET_TYPE(vop, name, type) \
+		vop_get_intr_type(vop, &vop->data->intr->name, type)
 
-#घोषणा VOP_WIN_GET(vop, win, name) \
-		vop_पढ़ो_reg(vop, win->base, &win->phy->name)
+#define VOP_WIN_GET(vop, win, name) \
+		vop_read_reg(vop, win->base, &win->phy->name)
 
-#घोषणा VOP_WIN_HAS_REG(win, name) \
+#define VOP_WIN_HAS_REG(win, name) \
 	(!!(win->phy->name.mask))
 
-#घोषणा VOP_WIN_GET_YRGBADDR(vop, win) \
-		vop_पढ़ोl(vop, win->base + win->phy->yrgb_mst.offset)
+#define VOP_WIN_GET_YRGBADDR(vop, win) \
+		vop_readl(vop, win->base + win->phy->yrgb_mst.offset)
 
-#घोषणा VOP_WIN_TO_INDEX(vop_win) \
+#define VOP_WIN_TO_INDEX(vop_win) \
 	((vop_win) - (vop_win)->vop->win)
 
-#घोषणा VOP_AFBC_SET(vop, name, v) \
-	करो अणु \
-		अगर ((vop)->data->afbc) \
+#define VOP_AFBC_SET(vop, name, v) \
+	do { \
+		if ((vop)->data->afbc) \
 			vop_reg_set((vop), &(vop)->data->afbc->name, \
 				    0, ~0, v, #name); \
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा to_vop(x) container_of(x, काष्ठा vop, crtc)
-#घोषणा to_vop_win(x) container_of(x, काष्ठा vop_win, base)
+#define to_vop(x) container_of(x, struct vop, crtc)
+#define to_vop_win(x) container_of(x, struct vop_win, base)
 
-#घोषणा AFBC_FMT_RGB565		0x0
-#घोषणा AFBC_FMT_U8U8U8U8	0x5
-#घोषणा AFBC_FMT_U8U8U8		0x4
+#define AFBC_FMT_RGB565		0x0
+#define AFBC_FMT_U8U8U8U8	0x5
+#define AFBC_FMT_U8U8U8		0x4
 
-#घोषणा AFBC_TILE_16x16		BIT(4)
+#define AFBC_TILE_16x16		BIT(4)
 
 /*
- * The coefficients of the following matrix are all fixed poपूर्णांकs.
- * The क्रमmat is S2.10 क्रम the 3x3 part of the matrix, and S9.12 क्रम the offsets.
+ * The coefficients of the following matrix are all fixed points.
+ * The format is S2.10 for the 3x3 part of the matrix, and S9.12 for the offsets.
  * They are all represented in two's complement.
  */
-अटल स्थिर uपूर्णांक32_t bt601_yuv2rgb[] = अणु
+static const uint32_t bt601_yuv2rgb[] = {
 	0x4A8, 0x0,    0x662,
 	0x4A8, 0x1E6F, 0x1CBF,
 	0x4A8, 0x812,  0x0,
 	0x321168, 0x0877CF, 0x2EB127
-पूर्ण;
+};
 
-क्रमागत vop_pending अणु
+enum vop_pending {
 	VOP_PENDING_FB_UNREF,
-पूर्ण;
+};
 
-काष्ठा vop_win अणु
-	काष्ठा drm_plane base;
-	स्थिर काष्ठा vop_win_data *data;
-	स्थिर काष्ठा vop_win_yuv2yuv_data *yuv2yuv_data;
-	काष्ठा vop *vop;
-पूर्ण;
+struct vop_win {
+	struct drm_plane base;
+	const struct vop_win_data *data;
+	const struct vop_win_yuv2yuv_data *yuv2yuv_data;
+	struct vop *vop;
+};
 
-काष्ठा rockchip_rgb;
-काष्ठा vop अणु
-	काष्ठा drm_crtc crtc;
-	काष्ठा device *dev;
-	काष्ठा drm_device *drm_dev;
+struct rockchip_rgb;
+struct vop {
+	struct drm_crtc crtc;
+	struct device *dev;
+	struct drm_device *drm_dev;
 	bool is_enabled;
 
-	काष्ठा completion dsp_hold_completion;
-	अचिन्हित पूर्णांक win_enabled;
+	struct completion dsp_hold_completion;
+	unsigned int win_enabled;
 
-	/* रक्षित by dev->event_lock */
-	काष्ठा drm_pending_vblank_event *event;
+	/* protected by dev->event_lock */
+	struct drm_pending_vblank_event *event;
 
-	काष्ठा drm_flip_work fb_unref_work;
-	अचिन्हित दीर्घ pending;
+	struct drm_flip_work fb_unref_work;
+	unsigned long pending;
 
-	काष्ठा completion line_flag_completion;
+	struct completion line_flag_completion;
 
-	स्थिर काष्ठा vop_data *data;
+	const struct vop_data *data;
 
-	uपूर्णांक32_t *regsbak;
-	व्योम __iomem *regs;
-	व्योम __iomem *lut_regs;
+	uint32_t *regsbak;
+	void __iomem *regs;
+	void __iomem *lut_regs;
 
-	/* physical map length of vop रेजिस्टर */
-	uपूर्णांक32_t len;
+	/* physical map length of vop register */
+	uint32_t len;
 
-	/* one समय only one process allowed to config the रेजिस्टर */
+	/* one time only one process allowed to config the register */
 	spinlock_t reg_lock;
 	/* lock vop irq reg */
 	spinlock_t irq_lock;
 	/* protects crtc enable/disable */
-	काष्ठा mutex vop_lock;
+	struct mutex vop_lock;
 
-	अचिन्हित पूर्णांक irq;
+	unsigned int irq;
 
 	/* vop AHP clk */
-	काष्ठा clk *hclk;
+	struct clk *hclk;
 	/* vop dclk */
-	काष्ठा clk *dclk;
+	struct clk *dclk;
 	/* vop share memory frequency */
-	काष्ठा clk *aclk;
+	struct clk *aclk;
 
 	/* vop dclk reset */
-	काष्ठा reset_control *dclk_rst;
+	struct reset_control *dclk_rst;
 
-	/* optional पूर्णांकernal rgb encoder */
-	काष्ठा rockchip_rgb *rgb;
+	/* optional internal rgb encoder */
+	struct rockchip_rgb *rgb;
 
-	काष्ठा vop_win win[];
-पूर्ण;
+	struct vop_win win[];
+};
 
-अटल अंतरभूत व्योम vop_ग_लिखोl(काष्ठा vop *vop, uपूर्णांक32_t offset, uपूर्णांक32_t v)
-अणु
-	ग_लिखोl(v, vop->regs + offset);
+static inline void vop_writel(struct vop *vop, uint32_t offset, uint32_t v)
+{
+	writel(v, vop->regs + offset);
 	vop->regsbak[offset >> 2] = v;
-पूर्ण
+}
 
-अटल अंतरभूत uपूर्णांक32_t vop_पढ़ोl(काष्ठा vop *vop, uपूर्णांक32_t offset)
-अणु
-	वापस पढ़ोl(vop->regs + offset);
-पूर्ण
+static inline uint32_t vop_readl(struct vop *vop, uint32_t offset)
+{
+	return readl(vop->regs + offset);
+}
 
-अटल अंतरभूत uपूर्णांक32_t vop_पढ़ो_reg(काष्ठा vop *vop, uपूर्णांक32_t base,
-				    स्थिर काष्ठा vop_reg *reg)
-अणु
-	वापस (vop_पढ़ोl(vop, base + reg->offset) >> reg->shअगरt) & reg->mask;
-पूर्ण
+static inline uint32_t vop_read_reg(struct vop *vop, uint32_t base,
+				    const struct vop_reg *reg)
+{
+	return (vop_readl(vop, base + reg->offset) >> reg->shift) & reg->mask;
+}
 
-अटल व्योम vop_reg_set(काष्ठा vop *vop, स्थिर काष्ठा vop_reg *reg,
-			uपूर्णांक32_t _offset, uपूर्णांक32_t _mask, uपूर्णांक32_t v,
-			स्थिर अक्षर *reg_name)
-अणु
-	पूर्णांक offset, mask, shअगरt;
+static void vop_reg_set(struct vop *vop, const struct vop_reg *reg,
+			uint32_t _offset, uint32_t _mask, uint32_t v,
+			const char *reg_name)
+{
+	int offset, mask, shift;
 
-	अगर (!reg || !reg->mask) अणु
+	if (!reg || !reg->mask) {
 		DRM_DEV_DEBUG(vop->dev, "Warning: not support %s\n", reg_name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	offset = reg->offset + _offset;
 	mask = reg->mask & _mask;
-	shअगरt = reg->shअगरt;
+	shift = reg->shift;
 
-	अगर (reg->ग_लिखो_mask) अणु
-		v = ((v << shअगरt) & 0xffff) | (mask << (shअगरt + 16));
-	पूर्ण अन्यथा अणु
-		uपूर्णांक32_t cached_val = vop->regsbak[offset >> 2];
+	if (reg->write_mask) {
+		v = ((v << shift) & 0xffff) | (mask << (shift + 16));
+	} else {
+		uint32_t cached_val = vop->regsbak[offset >> 2];
 
-		v = (cached_val & ~(mask << shअगरt)) | ((v & mask) << shअगरt);
+		v = (cached_val & ~(mask << shift)) | ((v & mask) << shift);
 		vop->regsbak[offset >> 2] = v;
-	पूर्ण
+	}
 
-	अगर (reg->relaxed)
-		ग_लिखोl_relaxed(v, vop->regs + offset);
-	अन्यथा
-		ग_लिखोl(v, vop->regs + offset);
-पूर्ण
+	if (reg->relaxed)
+		writel_relaxed(v, vop->regs + offset);
+	else
+		writel(v, vop->regs + offset);
+}
 
-अटल अंतरभूत uपूर्णांक32_t vop_get_पूर्णांकr_type(काष्ठा vop *vop,
-					 स्थिर काष्ठा vop_reg *reg, पूर्णांक type)
-अणु
-	uपूर्णांक32_t i, ret = 0;
-	uपूर्णांक32_t regs = vop_पढ़ो_reg(vop, 0, reg);
+static inline uint32_t vop_get_intr_type(struct vop *vop,
+					 const struct vop_reg *reg, int type)
+{
+	uint32_t i, ret = 0;
+	uint32_t regs = vop_read_reg(vop, 0, reg);
 
-	क्रम (i = 0; i < vop->data->पूर्णांकr->nपूर्णांकrs; i++) अणु
-		अगर ((type & vop->data->पूर्णांकr->पूर्णांकrs[i]) && (regs & 1 << i))
-			ret |= vop->data->पूर्णांकr->पूर्णांकrs[i];
-	पूर्ण
+	for (i = 0; i < vop->data->intr->nintrs; i++) {
+		if ((type & vop->data->intr->intrs[i]) && (regs & 1 << i))
+			ret |= vop->data->intr->intrs[i];
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत व्योम vop_cfg_करोne(काष्ठा vop *vop)
-अणु
-	VOP_REG_SET(vop, common, cfg_करोne, 1);
-पूर्ण
+static inline void vop_cfg_done(struct vop *vop)
+{
+	VOP_REG_SET(vop, common, cfg_done, 1);
+}
 
-अटल bool has_rb_swapped(uपूर्णांक32_t क्रमmat)
-अणु
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ABGR8888:
-	हाल DRM_FORMAT_BGR888:
-	हाल DRM_FORMAT_BGR565:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool has_rb_swapped(uint32_t format)
+{
+	switch (format) {
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ABGR8888:
+	case DRM_FORMAT_BGR888:
+	case DRM_FORMAT_BGR565:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल क्रमागत vop_data_क्रमmat vop_convert_क्रमmat(uपूर्णांक32_t क्रमmat)
-अणु
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_XRGB8888:
-	हाल DRM_FORMAT_ARGB8888:
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ABGR8888:
-		वापस VOP_FMT_ARGB8888;
-	हाल DRM_FORMAT_RGB888:
-	हाल DRM_FORMAT_BGR888:
-		वापस VOP_FMT_RGB888;
-	हाल DRM_FORMAT_RGB565:
-	हाल DRM_FORMAT_BGR565:
-		वापस VOP_FMT_RGB565;
-	हाल DRM_FORMAT_NV12:
-		वापस VOP_FMT_YUV420SP;
-	हाल DRM_FORMAT_NV16:
-		वापस VOP_FMT_YUV422SP;
-	हाल DRM_FORMAT_NV24:
-		वापस VOP_FMT_YUV444SP;
-	शेष:
-		DRM_ERROR("unsupported format[%08x]\n", क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static enum vop_data_format vop_convert_format(uint32_t format)
+{
+	switch (format) {
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ABGR8888:
+		return VOP_FMT_ARGB8888;
+	case DRM_FORMAT_RGB888:
+	case DRM_FORMAT_BGR888:
+		return VOP_FMT_RGB888;
+	case DRM_FORMAT_RGB565:
+	case DRM_FORMAT_BGR565:
+		return VOP_FMT_RGB565;
+	case DRM_FORMAT_NV12:
+		return VOP_FMT_YUV420SP;
+	case DRM_FORMAT_NV16:
+		return VOP_FMT_YUV422SP;
+	case DRM_FORMAT_NV24:
+		return VOP_FMT_YUV444SP;
+	default:
+		DRM_ERROR("unsupported format[%08x]\n", format);
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक vop_convert_afbc_क्रमmat(uपूर्णांक32_t क्रमmat)
-अणु
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_XRGB8888:
-	हाल DRM_FORMAT_ARGB8888:
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ABGR8888:
-		वापस AFBC_FMT_U8U8U8U8;
-	हाल DRM_FORMAT_RGB888:
-	हाल DRM_FORMAT_BGR888:
-		वापस AFBC_FMT_U8U8U8;
-	हाल DRM_FORMAT_RGB565:
-	हाल DRM_FORMAT_BGR565:
-		वापस AFBC_FMT_RGB565;
+static int vop_convert_afbc_format(uint32_t format)
+{
+	switch (format) {
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ABGR8888:
+		return AFBC_FMT_U8U8U8U8;
+	case DRM_FORMAT_RGB888:
+	case DRM_FORMAT_BGR888:
+		return AFBC_FMT_U8U8U8;
+	case DRM_FORMAT_RGB565:
+	case DRM_FORMAT_BGR565:
+		return AFBC_FMT_RGB565;
 	/* either of the below should not be reachable */
-	शेष:
-		DRM_WARN_ONCE("unsupported AFBC format[%08x]\n", क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		DRM_WARN_ONCE("unsupported AFBC format[%08x]\n", format);
+		return -EINVAL;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल uपूर्णांक16_t scl_vop_cal_scale(क्रमागत scale_mode mode, uपूर्णांक32_t src,
-				  uपूर्णांक32_t dst, bool is_horizontal,
-				  पूर्णांक vsu_mode, पूर्णांक *vskiplines)
-अणु
-	uपूर्णांक16_t val = 1 << SCL_FT_DEFAULT_FIXPOINT_SHIFT;
+static uint16_t scl_vop_cal_scale(enum scale_mode mode, uint32_t src,
+				  uint32_t dst, bool is_horizontal,
+				  int vsu_mode, int *vskiplines)
+{
+	uint16_t val = 1 << SCL_FT_DEFAULT_FIXPOINT_SHIFT;
 
-	अगर (vskiplines)
+	if (vskiplines)
 		*vskiplines = 0;
 
-	अगर (is_horizontal) अणु
-		अगर (mode == SCALE_UP)
+	if (is_horizontal) {
+		if (mode == SCALE_UP)
 			val = GET_SCL_FT_BIC(src, dst);
-		अन्यथा अगर (mode == SCALE_DOWN)
+		else if (mode == SCALE_DOWN)
 			val = GET_SCL_FT_BILI_DN(src, dst);
-	पूर्ण अन्यथा अणु
-		अगर (mode == SCALE_UP) अणु
-			अगर (vsu_mode == SCALE_UP_BIL)
+	} else {
+		if (mode == SCALE_UP) {
+			if (vsu_mode == SCALE_UP_BIL)
 				val = GET_SCL_FT_BILI_UP(src, dst);
-			अन्यथा
+			else
 				val = GET_SCL_FT_BIC(src, dst);
-		पूर्ण अन्यथा अगर (mode == SCALE_DOWN) अणु
-			अगर (vskiplines) अणु
+		} else if (mode == SCALE_DOWN) {
+			if (vskiplines) {
 				*vskiplines = scl_get_vskiplines(src, dst);
 				val = scl_get_bili_dn_vskip(src, dst,
 							    *vskiplines);
-			पूर्ण अन्यथा अणु
+			} else {
 				val = GET_SCL_FT_BILI_DN(src, dst);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल व्योम scl_vop_cal_scl_fac(काष्ठा vop *vop, स्थिर काष्ठा vop_win_data *win,
-			     uपूर्णांक32_t src_w, uपूर्णांक32_t src_h, uपूर्णांक32_t dst_w,
-			     uपूर्णांक32_t dst_h, स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	uपूर्णांक16_t yrgb_hor_scl_mode, yrgb_ver_scl_mode;
-	uपूर्णांक16_t cbcr_hor_scl_mode = SCALE_NONE;
-	uपूर्णांक16_t cbcr_ver_scl_mode = SCALE_NONE;
+static void scl_vop_cal_scl_fac(struct vop *vop, const struct vop_win_data *win,
+			     uint32_t src_w, uint32_t src_h, uint32_t dst_w,
+			     uint32_t dst_h, const struct drm_format_info *info)
+{
+	uint16_t yrgb_hor_scl_mode, yrgb_ver_scl_mode;
+	uint16_t cbcr_hor_scl_mode = SCALE_NONE;
+	uint16_t cbcr_ver_scl_mode = SCALE_NONE;
 	bool is_yuv = false;
-	uपूर्णांक16_t cbcr_src_w = src_w / info->hsub;
-	uपूर्णांक16_t cbcr_src_h = src_h / info->vsub;
-	uपूर्णांक16_t vsu_mode;
-	uपूर्णांक16_t lb_mode;
-	uपूर्णांक32_t val;
-	पूर्णांक vskiplines;
+	uint16_t cbcr_src_w = src_w / info->hsub;
+	uint16_t cbcr_src_h = src_h / info->vsub;
+	uint16_t vsu_mode;
+	uint16_t lb_mode;
+	uint32_t val;
+	int vskiplines;
 
-	अगर (info->is_yuv)
+	if (info->is_yuv)
 		is_yuv = true;
 
-	अगर (dst_w > 3840) अणु
+	if (dst_w > 3840) {
 		DRM_DEV_ERROR(vop->dev, "Maximum dst width (3840) exceeded\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!win->phy->scl->ext) अणु
+	if (!win->phy->scl->ext) {
 		VOP_SCL_SET(vop, win, scale_yrgb_x,
 			    scl_cal_scale2(src_w, dst_w));
 		VOP_SCL_SET(vop, win, scale_yrgb_y,
 			    scl_cal_scale2(src_h, dst_h));
-		अगर (is_yuv) अणु
+		if (is_yuv) {
 			VOP_SCL_SET(vop, win, scale_cbcr_x,
 				    scl_cal_scale2(cbcr_src_w, dst_w));
 			VOP_SCL_SET(vop, win, scale_cbcr_y,
 				    scl_cal_scale2(cbcr_src_h, dst_h));
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	yrgb_hor_scl_mode = scl_get_scl_mode(src_w, dst_w);
 	yrgb_ver_scl_mode = scl_get_scl_mode(src_h, dst_h);
 
-	अगर (is_yuv) अणु
+	if (is_yuv) {
 		cbcr_hor_scl_mode = scl_get_scl_mode(cbcr_src_w, dst_w);
 		cbcr_ver_scl_mode = scl_get_scl_mode(cbcr_src_h, dst_h);
-		अगर (cbcr_hor_scl_mode == SCALE_DOWN)
+		if (cbcr_hor_scl_mode == SCALE_DOWN)
 			lb_mode = scl_vop_cal_lb_mode(dst_w, true);
-		अन्यथा
+		else
 			lb_mode = scl_vop_cal_lb_mode(cbcr_src_w, true);
-	पूर्ण अन्यथा अणु
-		अगर (yrgb_hor_scl_mode == SCALE_DOWN)
+	} else {
+		if (yrgb_hor_scl_mode == SCALE_DOWN)
 			lb_mode = scl_vop_cal_lb_mode(dst_w, false);
-		अन्यथा
+		else
 			lb_mode = scl_vop_cal_lb_mode(src_w, false);
-	पूर्ण
+	}
 
 	VOP_SCL_SET_EXT(vop, win, lb_mode, lb_mode);
-	अगर (lb_mode == LB_RGB_3840X2) अणु
-		अगर (yrgb_ver_scl_mode != SCALE_NONE) अणु
+	if (lb_mode == LB_RGB_3840X2) {
+		if (yrgb_ver_scl_mode != SCALE_NONE) {
 			DRM_DEV_ERROR(vop->dev, "not allow yrgb ver scale\n");
-			वापस;
-		पूर्ण
-		अगर (cbcr_ver_scl_mode != SCALE_NONE) अणु
+			return;
+		}
+		if (cbcr_ver_scl_mode != SCALE_NONE) {
 			DRM_DEV_ERROR(vop->dev, "not allow cbcr ver scale\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		vsu_mode = SCALE_UP_BIL;
-	पूर्ण अन्यथा अगर (lb_mode == LB_RGB_2560X4) अणु
+	} else if (lb_mode == LB_RGB_2560X4) {
 		vsu_mode = SCALE_UP_BIL;
-	पूर्ण अन्यथा अणु
+	} else {
 		vsu_mode = SCALE_UP_BIC;
-	पूर्ण
+	}
 
 	val = scl_vop_cal_scale(yrgb_hor_scl_mode, src_w, dst_w,
-				true, 0, शून्य);
+				true, 0, NULL);
 	VOP_SCL_SET(vop, win, scale_yrgb_x, val);
 	val = scl_vop_cal_scale(yrgb_ver_scl_mode, src_h, dst_h,
 				false, vsu_mode, &vskiplines);
@@ -432,9 +431,9 @@
 	VOP_SCL_SET_EXT(vop, win, yrgb_hsd_mode, SCALE_DOWN_BIL);
 	VOP_SCL_SET_EXT(vop, win, yrgb_vsd_mode, SCALE_DOWN_BIL);
 	VOP_SCL_SET_EXT(vop, win, yrgb_vsu_mode, vsu_mode);
-	अगर (is_yuv) अणु
+	if (is_yuv) {
 		val = scl_vop_cal_scale(cbcr_hor_scl_mode, cbcr_src_w,
-					dst_w, true, 0, शून्य);
+					dst_w, true, 0, NULL);
 		VOP_SCL_SET(vop, win, scale_cbcr_x, val);
 		val = scl_vop_cal_scale(cbcr_ver_scl_mode, cbcr_src_h,
 					dst_h, false, vsu_mode, &vskiplines);
@@ -447,15 +446,15 @@
 		VOP_SCL_SET_EXT(vop, win, cbcr_hsd_mode, SCALE_DOWN_BIL);
 		VOP_SCL_SET_EXT(vop, win, cbcr_vsd_mode, SCALE_DOWN_BIL);
 		VOP_SCL_SET_EXT(vop, win, cbcr_vsu_mode, vsu_mode);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vop_dsp_hold_valid_irq_enable(काष्ठा vop *vop)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vop_dsp_hold_valid_irq_enable(struct vop *vop)
+{
+	unsigned long flags;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
@@ -463,28 +462,28 @@
 	VOP_INTR_SET_TYPE(vop, enable, DSP_HOLD_VALID_INTR, 1);
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
-पूर्ण
+}
 
-अटल व्योम vop_dsp_hold_valid_irq_disable(काष्ठा vop *vop)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vop_dsp_hold_valid_irq_disable(struct vop *vop)
+{
+	unsigned long flags;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
 	VOP_INTR_SET_TYPE(vop, enable, DSP_HOLD_VALID_INTR, 0);
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
-पूर्ण
+}
 
 /*
- * (1) each frame starts at the start of the Vsync pulse which is संकेतed by
- *     the "FRAME_SYNC" पूर्णांकerrupt.
+ * (1) each frame starts at the start of the Vsync pulse which is signaled by
+ *     the "FRAME_SYNC" interrupt.
  * (2) the active data region of each frame ends at dsp_vact_end
- * (3) we should program this same number (dsp_vact_end) पूर्णांकo dsp_line_frag_num,
- *      to get "LINE_FLAG" पूर्णांकerrupt at the end of the active on screen data.
+ * (3) we should program this same number (dsp_vact_end) into dsp_line_frag_num,
+ *      to get "LINE_FLAG" interrupt at the end of the active on screen data.
  *
  * VOP_INTR_CTRL0.dsp_line_frag_num = VOP_DSP_VACT_ST_END.dsp_vact_end
  * Interrupts
@@ -501,10 +500,10 @@
  * dsp_vact_end ----------------------------+     |   VOP_DSP_VACT_ST_END
  * dsp_total -------------------------------------+   VOP_DSP_VTOTAL_VS_END
  */
-अटल bool vop_line_flag_irq_is_enabled(काष्ठा vop *vop)
-अणु
-	uपूर्णांक32_t line_flag_irq;
-	अचिन्हित दीर्घ flags;
+static bool vop_line_flag_irq_is_enabled(struct vop *vop)
+{
+	uint32_t line_flag_irq;
+	unsigned long flags;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
@@ -512,15 +511,15 @@
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
 
-	वापस !!line_flag_irq;
-पूर्ण
+	return !!line_flag_irq;
+}
 
-अटल व्योम vop_line_flag_irq_enable(काष्ठा vop *vop)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vop_line_flag_irq_enable(struct vop *vop)
+{
+	unsigned long flags;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
@@ -528,131 +527,131 @@
 	VOP_INTR_SET_TYPE(vop, enable, LINE_FLAG_INTR, 1);
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
-पूर्ण
+}
 
-अटल व्योम vop_line_flag_irq_disable(काष्ठा vop *vop)
-अणु
-	अचिन्हित दीर्घ flags;
+static void vop_line_flag_irq_disable(struct vop *vop)
+{
+	unsigned long flags;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
 	VOP_INTR_SET_TYPE(vop, enable, LINE_FLAG_INTR, 0);
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक vop_core_clks_enable(काष्ठा vop *vop)
-अणु
-	पूर्णांक ret;
+static int vop_core_clks_enable(struct vop *vop)
+{
+	int ret;
 
 	ret = clk_enable(vop->hclk);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = clk_enable(vop->aclk);
-	अगर (ret < 0)
-		जाओ err_disable_hclk;
+	if (ret < 0)
+		goto err_disable_hclk;
 
-	वापस 0;
+	return 0;
 
 err_disable_hclk:
 	clk_disable(vop->hclk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vop_core_clks_disable(काष्ठा vop *vop)
-अणु
+static void vop_core_clks_disable(struct vop *vop)
+{
 	clk_disable(vop->aclk);
 	clk_disable(vop->hclk);
-पूर्ण
+}
 
-अटल व्योम vop_win_disable(काष्ठा vop *vop, स्थिर काष्ठा vop_win *vop_win)
-अणु
-	स्थिर काष्ठा vop_win_data *win = vop_win->data;
+static void vop_win_disable(struct vop *vop, const struct vop_win *vop_win)
+{
+	const struct vop_win_data *win = vop_win->data;
 
-	अगर (win->phy->scl && win->phy->scl->ext) अणु
+	if (win->phy->scl && win->phy->scl->ext) {
 		VOP_SCL_SET_EXT(vop, win, yrgb_hor_scl_mode, SCALE_NONE);
 		VOP_SCL_SET_EXT(vop, win, yrgb_ver_scl_mode, SCALE_NONE);
 		VOP_SCL_SET_EXT(vop, win, cbcr_hor_scl_mode, SCALE_NONE);
 		VOP_SCL_SET_EXT(vop, win, cbcr_ver_scl_mode, SCALE_NONE);
-	पूर्ण
+	}
 
 	VOP_WIN_SET(vop, win, enable, 0);
 	vop->win_enabled &= ~BIT(VOP_WIN_TO_INDEX(vop_win));
-पूर्ण
+}
 
-अटल पूर्णांक vop_enable(काष्ठा drm_crtc *crtc, काष्ठा drm_crtc_state *old_state)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
-	पूर्णांक ret, i;
+static int vop_enable(struct drm_crtc *crtc, struct drm_crtc_state *old_state)
+{
+	struct vop *vop = to_vop(crtc);
+	int ret, i;
 
-	ret = pm_runसमय_get_sync(vop->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(vop->dev);
+	if (ret < 0) {
 		DRM_DEV_ERROR(vop->dev, "failed to get pm runtime: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = vop_core_clks_enable(vop);
-	अगर (WARN_ON(ret < 0))
-		जाओ err_put_pm_runसमय;
+	if (WARN_ON(ret < 0))
+		goto err_put_pm_runtime;
 
 	ret = clk_enable(vop->dclk);
-	अगर (WARN_ON(ret < 0))
-		जाओ err_disable_core;
+	if (WARN_ON(ret < 0))
+		goto err_disable_core;
 
 	/*
-	 * Slave iommu shares घातer, irq and घड़ी with vop.  It was associated
-	 * स्वतःmatically with this master device via common driver code.
-	 * Now that we have enabled the घड़ी we attach it to the shared drm
+	 * Slave iommu shares power, irq and clock with vop.  It was associated
+	 * automatically with this master device via common driver code.
+	 * Now that we have enabled the clock we attach it to the shared drm
 	 * mapping.
 	 */
 	ret = rockchip_drm_dma_attach_device(vop->drm_dev, vop->dev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(vop->dev,
 			      "failed to attach dma mapping, %d\n", ret);
-		जाओ err_disable_dclk;
-	पूर्ण
+		goto err_disable_dclk;
+	}
 
 	spin_lock(&vop->reg_lock);
-	क्रम (i = 0; i < vop->len; i += 4)
-		ग_लिखोl_relaxed(vop->regsbak[i / 4], vop->regs + i);
+	for (i = 0; i < vop->len; i += 4)
+		writel_relaxed(vop->regsbak[i / 4], vop->regs + i);
 
 	/*
-	 * We need to make sure that all winकरोws are disabled beक्रमe we
+	 * We need to make sure that all windows are disabled before we
 	 * enable the crtc. Otherwise we might try to scan from a destroyed
 	 * buffer later.
 	 *
-	 * In the हाल of enable-after-PSR, we करोn't need to worry about this
-	 * हाल since the buffer is guaranteed to be valid and disabling the
-	 * winकरोw will result in screen glitches on PSR निकास.
+	 * In the case of enable-after-PSR, we don't need to worry about this
+	 * case since the buffer is guaranteed to be valid and disabling the
+	 * window will result in screen glitches on PSR exit.
 	 */
-	अगर (!old_state || !old_state->self_refresh_active) अणु
-		क्रम (i = 0; i < vop->data->win_size; i++) अणु
-			काष्ठा vop_win *vop_win = &vop->win[i];
+	if (!old_state || !old_state->self_refresh_active) {
+		for (i = 0; i < vop->data->win_size; i++) {
+			struct vop_win *vop_win = &vop->win[i];
 
 			vop_win_disable(vop, vop_win);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (vop->data->afbc) अणु
-		काष्ठा rockchip_crtc_state *s;
+	if (vop->data->afbc) {
+		struct rockchip_crtc_state *s;
 		/*
-		 * Disable AFBC and क्रमget there was a vop winकरोw with AFBC
+		 * Disable AFBC and forget there was a vop window with AFBC
 		 */
 		VOP_AFBC_SET(vop, enable, 0);
 		s = to_rockchip_crtc_state(crtc->state);
 		s->enable_afbc = false;
-	पूर्ण
+	}
 
-	vop_cfg_करोne(vop);
+	vop_cfg_done(vop);
 
 	spin_unlock(&vop->reg_lock);
 
 	/*
-	 * At here, vop घड़ी & iommu is enable, R/W vop regs would be safe.
+	 * At here, vop clock & iommu is enable, R/W vop regs would be safe.
 	 */
 	vop->is_enabled = true;
 
@@ -664,59 +663,59 @@ err_disable_hclk:
 
 	drm_crtc_vblank_on(crtc);
 
-	वापस 0;
+	return 0;
 
 err_disable_dclk:
 	clk_disable(vop->dclk);
 err_disable_core:
 	vop_core_clks_disable(vop);
-err_put_pm_runसमय:
-	pm_runसमय_put_sync(vop->dev);
-	वापस ret;
-पूर्ण
+err_put_pm_runtime:
+	pm_runtime_put_sync(vop->dev);
+	return ret;
+}
 
-अटल व्योम rockchip_drm_set_win_enabled(काष्ठा drm_crtc *crtc, bool enabled)
-अणु
-        काष्ठा vop *vop = to_vop(crtc);
-        पूर्णांक i;
+static void rockchip_drm_set_win_enabled(struct drm_crtc *crtc, bool enabled)
+{
+        struct vop *vop = to_vop(crtc);
+        int i;
 
         spin_lock(&vop->reg_lock);
 
-        क्रम (i = 0; i < vop->data->win_size; i++) अणु
-                काष्ठा vop_win *vop_win = &vop->win[i];
-                स्थिर काष्ठा vop_win_data *win = vop_win->data;
+        for (i = 0; i < vop->data->win_size; i++) {
+                struct vop_win *vop_win = &vop->win[i];
+                const struct vop_win_data *win = vop_win->data;
 
                 VOP_WIN_SET(vop, win, enable,
                             enabled && (vop->win_enabled & BIT(i)));
-        पूर्ण
-        vop_cfg_करोne(vop);
+        }
+        vop_cfg_done(vop);
 
         spin_unlock(&vop->reg_lock);
-पूर्ण
+}
 
-अटल व्योम vop_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
-				    काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
+static void vop_crtc_atomic_disable(struct drm_crtc *crtc,
+				    struct drm_atomic_state *state)
+{
+	struct vop *vop = to_vop(crtc);
 
 	WARN_ON(vop->event);
 
-	अगर (crtc->state->self_refresh_active)
+	if (crtc->state->self_refresh_active)
 		rockchip_drm_set_win_enabled(crtc, false);
 
 	mutex_lock(&vop->vop_lock);
 
 	drm_crtc_vblank_off(crtc);
 
-	अगर (crtc->state->self_refresh_active)
-		जाओ out;
+	if (crtc->state->self_refresh_active)
+		goto out;
 
 	/*
 	 * Vop standby will take effect at end of current frame,
-	 * अगर dsp hold valid irq happen, it means standby complete.
+	 * if dsp hold valid irq happen, it means standby complete.
 	 *
-	 * we must रुको standby complete when we want to disable aclk,
-	 * अगर not, memory bus maybe dead.
+	 * we must wait standby complete when we want to disable aclk,
+	 * if not, memory bus maybe dead.
 	 */
 	reinit_completion(&vop->dsp_hold_completion);
 	vop_dsp_hold_valid_irq_enable(vop);
@@ -727,7 +726,7 @@ err_put_pm_runसमय:
 
 	spin_unlock(&vop->reg_lock);
 
-	रुको_क्रम_completion(&vop->dsp_hold_completion);
+	wait_for_completion(&vop->dsp_hold_completion);
 
 	vop_dsp_hold_valid_irq_disable(vop);
 
@@ -740,183 +739,183 @@ err_put_pm_runसमय:
 
 	clk_disable(vop->dclk);
 	vop_core_clks_disable(vop);
-	pm_runसमय_put(vop->dev);
+	pm_runtime_put(vop->dev);
 
 out:
 	mutex_unlock(&vop->vop_lock);
 
-	अगर (crtc->state->event && !crtc->state->active) अणु
+	if (crtc->state->event && !crtc->state->active) {
 		spin_lock_irq(&crtc->dev->event_lock);
 		drm_crtc_send_vblank_event(crtc, crtc->state->event);
 		spin_unlock_irq(&crtc->dev->event_lock);
 
-		crtc->state->event = शून्य;
-	पूर्ण
-पूर्ण
+		crtc->state->event = NULL;
+	}
+}
 
-अटल व्योम vop_plane_destroy(काष्ठा drm_plane *plane)
-अणु
+static void vop_plane_destroy(struct drm_plane *plane)
+{
 	drm_plane_cleanup(plane);
-पूर्ण
+}
 
-अटल अंतरभूत bool rockchip_afbc(u64 modअगरier)
-अणु
-	वापस modअगरier == ROCKCHIP_AFBC_MOD;
-पूर्ण
+static inline bool rockchip_afbc(u64 modifier)
+{
+	return modifier == ROCKCHIP_AFBC_MOD;
+}
 
-अटल bool rockchip_mod_supported(काष्ठा drm_plane *plane,
-				   u32 क्रमmat, u64 modअगरier)
-अणु
-	अगर (modअगरier == DRM_FORMAT_MOD_LINEAR)
-		वापस true;
+static bool rockchip_mod_supported(struct drm_plane *plane,
+				   u32 format, u64 modifier)
+{
+	if (modifier == DRM_FORMAT_MOD_LINEAR)
+		return true;
 
-	अगर (!rockchip_afbc(modअगरier)) अणु
-		DRM_DEBUG_KMS("Unsupported format modifier 0x%llx\n", modअगरier);
+	if (!rockchip_afbc(modifier)) {
+		DRM_DEBUG_KMS("Unsupported format modifier 0x%llx\n", modifier);
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस vop_convert_afbc_क्रमmat(क्रमmat) >= 0;
-पूर्ण
+	return vop_convert_afbc_format(format) >= 0;
+}
 
-अटल पूर्णांक vop_plane_atomic_check(काष्ठा drm_plane *plane,
-			   काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+static int vop_plane_atomic_check(struct drm_plane *plane,
+			   struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा drm_crtc *crtc = new_plane_state->crtc;
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा drm_framebuffer *fb = new_plane_state->fb;
-	काष्ठा vop_win *vop_win = to_vop_win(plane);
-	स्थिर काष्ठा vop_win_data *win = vop_win->data;
-	पूर्णांक ret;
-	पूर्णांक min_scale = win->phy->scl ? FRAC_16_16(1, 8) :
+	struct drm_crtc *crtc = new_plane_state->crtc;
+	struct drm_crtc_state *crtc_state;
+	struct drm_framebuffer *fb = new_plane_state->fb;
+	struct vop_win *vop_win = to_vop_win(plane);
+	const struct vop_win_data *win = vop_win->data;
+	int ret;
+	int min_scale = win->phy->scl ? FRAC_16_16(1, 8) :
 					DRM_PLANE_HELPER_NO_SCALING;
-	पूर्णांक max_scale = win->phy->scl ? FRAC_16_16(8, 1) :
+	int max_scale = win->phy->scl ? FRAC_16_16(8, 1) :
 					DRM_PLANE_HELPER_NO_SCALING;
 
-	अगर (!crtc || WARN_ON(!fb))
-		वापस 0;
+	if (!crtc || WARN_ON(!fb))
+		return 0;
 
 	crtc_state = drm_atomic_get_existing_crtc_state(state,
 							crtc);
-	अगर (WARN_ON(!crtc_state))
-		वापस -EINVAL;
+	if (WARN_ON(!crtc_state))
+		return -EINVAL;
 
 	ret = drm_atomic_helper_check_plane_state(new_plane_state, crtc_state,
 						  min_scale, max_scale,
 						  true, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!new_plane_state->visible)
-		वापस 0;
+	if (!new_plane_state->visible)
+		return 0;
 
-	ret = vop_convert_क्रमmat(fb->क्रमmat->क्रमmat);
-	अगर (ret < 0)
-		वापस ret;
+	ret = vop_convert_format(fb->format->format);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * Src.x1 can be odd when करो clip, but yuv plane start poपूर्णांक
+	 * Src.x1 can be odd when do clip, but yuv plane start point
 	 * need align with 2 pixel.
 	 */
-	अगर (fb->क्रमmat->is_yuv && ((new_plane_state->src.x1 >> 16) % 2)) अणु
+	if (fb->format->is_yuv && ((new_plane_state->src.x1 >> 16) % 2)) {
 		DRM_ERROR("Invalid Source: Yuv format not support odd xpos\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (fb->क्रमmat->is_yuv && new_plane_state->rotation & DRM_MODE_REFLECT_Y) अणु
+	if (fb->format->is_yuv && new_plane_state->rotation & DRM_MODE_REFLECT_Y) {
 		DRM_ERROR("Invalid Source: Yuv format does not support this rotation\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (rockchip_afbc(fb->modअगरier)) अणु
-		काष्ठा vop *vop = to_vop(crtc);
+	if (rockchip_afbc(fb->modifier)) {
+		struct vop *vop = to_vop(crtc);
 
-		अगर (!vop->data->afbc) अणु
+		if (!vop->data->afbc) {
 			DRM_ERROR("vop does not support AFBC\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		ret = vop_convert_afbc_क्रमmat(fb->क्रमmat->क्रमmat);
-		अगर (ret < 0)
-			वापस ret;
+		ret = vop_convert_afbc_format(fb->format->format);
+		if (ret < 0)
+			return ret;
 
-		अगर (new_plane_state->src.x1 || new_plane_state->src.y1) अणु
+		if (new_plane_state->src.x1 || new_plane_state->src.y1) {
 			DRM_ERROR("AFBC does not support offset display, xpos=%d, ypos=%d, offset=%d\n",
 				  new_plane_state->src.x1,
 				  new_plane_state->src.y1, fb->offsets[0]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (new_plane_state->rotation && new_plane_state->rotation != DRM_MODE_ROTATE_0) अणु
+		if (new_plane_state->rotation && new_plane_state->rotation != DRM_MODE_ROTATE_0) {
 			DRM_ERROR("No rotation support in AFBC, rotation=%d\n",
 				  new_plane_state->rotation);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vop_plane_atomic_disable(काष्ठा drm_plane *plane,
-				     काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+static void vop_plane_atomic_disable(struct drm_plane *plane,
+				     struct drm_atomic_state *state)
+{
+	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	काष्ठा vop_win *vop_win = to_vop_win(plane);
-	काष्ठा vop *vop = to_vop(old_state->crtc);
+	struct vop_win *vop_win = to_vop_win(plane);
+	struct vop *vop = to_vop(old_state->crtc);
 
-	अगर (!old_state->crtc)
-		वापस;
+	if (!old_state->crtc)
+		return;
 
 	spin_lock(&vop->reg_lock);
 
 	vop_win_disable(vop, vop_win);
 
 	spin_unlock(&vop->reg_lock);
-पूर्ण
+}
 
-अटल व्योम vop_plane_atomic_update(काष्ठा drm_plane *plane,
-		काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static void vop_plane_atomic_update(struct drm_plane *plane,
+		struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा drm_crtc *crtc = new_state->crtc;
-	काष्ठा vop_win *vop_win = to_vop_win(plane);
-	स्थिर काष्ठा vop_win_data *win = vop_win->data;
-	स्थिर काष्ठा vop_win_yuv2yuv_data *win_yuv2yuv = vop_win->yuv2yuv_data;
-	काष्ठा vop *vop = to_vop(new_state->crtc);
-	काष्ठा drm_framebuffer *fb = new_state->fb;
-	अचिन्हित पूर्णांक actual_w, actual_h;
-	अचिन्हित पूर्णांक dsp_stx, dsp_sty;
-	uपूर्णांक32_t act_info, dsp_info, dsp_st;
-	काष्ठा drm_rect *src = &new_state->src;
-	काष्ठा drm_rect *dest = &new_state->dst;
-	काष्ठा drm_gem_object *obj, *uv_obj;
-	काष्ठा rockchip_gem_object *rk_obj, *rk_uv_obj;
-	अचिन्हित दीर्घ offset;
+	struct drm_crtc *crtc = new_state->crtc;
+	struct vop_win *vop_win = to_vop_win(plane);
+	const struct vop_win_data *win = vop_win->data;
+	const struct vop_win_yuv2yuv_data *win_yuv2yuv = vop_win->yuv2yuv_data;
+	struct vop *vop = to_vop(new_state->crtc);
+	struct drm_framebuffer *fb = new_state->fb;
+	unsigned int actual_w, actual_h;
+	unsigned int dsp_stx, dsp_sty;
+	uint32_t act_info, dsp_info, dsp_st;
+	struct drm_rect *src = &new_state->src;
+	struct drm_rect *dest = &new_state->dst;
+	struct drm_gem_object *obj, *uv_obj;
+	struct rockchip_gem_object *rk_obj, *rk_uv_obj;
+	unsigned long offset;
 	dma_addr_t dma_addr;
-	uपूर्णांक32_t val;
+	uint32_t val;
 	bool rb_swap;
-	पूर्णांक win_index = VOP_WIN_TO_INDEX(vop_win);
-	पूर्णांक क्रमmat;
-	पूर्णांक is_yuv = fb->क्रमmat->is_yuv;
-	पूर्णांक i;
+	int win_index = VOP_WIN_TO_INDEX(vop_win);
+	int format;
+	int is_yuv = fb->format->is_yuv;
+	int i;
 
 	/*
 	 * can't update plane when vop is disabled.
 	 */
-	अगर (WARN_ON(!crtc))
-		वापस;
+	if (WARN_ON(!crtc))
+		return;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
-	अगर (!new_state->visible) अणु
+	if (!new_state->visible) {
 		vop_plane_atomic_disable(plane, state);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	obj = fb->obj[0];
 	rk_obj = to_rockchip_obj(obj);
@@ -932,7 +931,7 @@ out:
 	dsp_sty = dest->y1 + crtc->mode.vtotal - crtc->mode.vsync_start;
 	dsp_st = dsp_sty << 16 | (dsp_stx & 0xffff);
 
-	offset = (src->x1 >> 16) * fb->क्रमmat->cpp[0];
+	offset = (src->x1 >> 16) * fb->format->cpp[0];
 	offset += (src->y1 >> 16) * fb->pitches[0];
 	dma_addr = rk_obj->dma_addr + offset + fb->offsets[0];
 
@@ -940,24 +939,24 @@ out:
 	 * For y-mirroring we need to move address
 	 * to the beginning of the last line.
 	 */
-	अगर (new_state->rotation & DRM_MODE_REFLECT_Y)
+	if (new_state->rotation & DRM_MODE_REFLECT_Y)
 		dma_addr += (actual_h - 1) * fb->pitches[0];
 
-	क्रमmat = vop_convert_क्रमmat(fb->क्रमmat->क्रमmat);
+	format = vop_convert_format(fb->format->format);
 
 	spin_lock(&vop->reg_lock);
 
-	अगर (rockchip_afbc(fb->modअगरier)) अणु
-		पूर्णांक afbc_क्रमmat = vop_convert_afbc_क्रमmat(fb->क्रमmat->क्रमmat);
+	if (rockchip_afbc(fb->modifier)) {
+		int afbc_format = vop_convert_afbc_format(fb->format->format);
 
-		VOP_AFBC_SET(vop, क्रमmat, afbc_क्रमmat | AFBC_TILE_16x16);
+		VOP_AFBC_SET(vop, format, afbc_format | AFBC_TILE_16x16);
 		VOP_AFBC_SET(vop, hreg_block_split, 0);
 		VOP_AFBC_SET(vop, win_sel, VOP_WIN_TO_INDEX(vop_win));
 		VOP_AFBC_SET(vop, hdr_ptr, dma_addr);
 		VOP_AFBC_SET(vop, pic_size, act_info);
-	पूर्ण
+	}
 
-	VOP_WIN_SET(vop, win, क्रमmat, क्रमmat);
+	VOP_WIN_SET(vop, win, format, format);
 	VOP_WIN_SET(vop, win, yrgb_vir, DIV_ROUND_UP(fb->pitches[0], 4));
 	VOP_WIN_SET(vop, win, yrgb_mst, dma_addr);
 	VOP_WIN_YUV2YUV_SET(vop, win_yuv2yuv, y2r_en, is_yuv);
@@ -966,10 +965,10 @@ out:
 	VOP_WIN_SET(vop, win, x_mir_en,
 		    (new_state->rotation & DRM_MODE_REFLECT_X) ? 1 : 0);
 
-	अगर (is_yuv) अणु
-		पूर्णांक hsub = fb->क्रमmat->hsub;
-		पूर्णांक vsub = fb->क्रमmat->vsub;
-		पूर्णांक bpp = fb->क्रमmat->cpp[1];
+	if (is_yuv) {
+		int hsub = fb->format->hsub;
+		int vsub = fb->format->vsub;
+		int bpp = fb->format->cpp[1];
 
 		uv_obj = fb->obj[1];
 		rk_uv_obj = to_rockchip_obj(uv_obj);
@@ -981,34 +980,34 @@ out:
 		VOP_WIN_SET(vop, win, uv_vir, DIV_ROUND_UP(fb->pitches[1], 4));
 		VOP_WIN_SET(vop, win, uv_mst, dma_addr);
 
-		क्रम (i = 0; i < NUM_YUV2YUV_COEFFICIENTS; i++) अणु
+		for (i = 0; i < NUM_YUV2YUV_COEFFICIENTS; i++) {
 			VOP_WIN_YUV2YUV_COEFFICIENT_SET(vop,
 							win_yuv2yuv,
 							y2r_coefficients[i],
 							bt601_yuv2rgb[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (win->phy->scl)
+	if (win->phy->scl)
 		scl_vop_cal_scl_fac(vop, win, actual_w, actual_h,
 				    drm_rect_width(dest), drm_rect_height(dest),
-				    fb->क्रमmat);
+				    fb->format);
 
 	VOP_WIN_SET(vop, win, act_info, act_info);
 	VOP_WIN_SET(vop, win, dsp_info, dsp_info);
 	VOP_WIN_SET(vop, win, dsp_st, dsp_st);
 
-	rb_swap = has_rb_swapped(fb->क्रमmat->क्रमmat);
+	rb_swap = has_rb_swapped(fb->format->format);
 	VOP_WIN_SET(vop, win, rb_swap, rb_swap);
 
 	/*
-	 * Blending win0 with the background color करोesn't seem to work
+	 * Blending win0 with the background color doesn't seem to work
 	 * correctly. We only get the background color, no matter the contents
 	 * of the win0 framebuffer.  However, blending pre-multiplied color
-	 * with the शेष opaque black शेष background color is a no-op,
+	 * with the default opaque black default background color is a no-op,
 	 * so we can just disable blending to get the correct result.
 	 */
-	अगर (fb->क्रमmat->has_alpha && win_index > 0) अणु
+	if (fb->format->has_alpha && win_index > 0) {
 		VOP_WIN_SET(vop, win, dst_alpha_ctl,
 			    DST_FACTOR_M0(ALPHA_SRC_INVERSE));
 		val = SRC_ALPHA_EN(1) | SRC_COLOR_M0(ALPHA_SRC_PRE_MUL) |
@@ -1021,55 +1020,55 @@ out:
 		VOP_WIN_SET(vop, win, alpha_pre_mul, ALPHA_SRC_PRE_MUL);
 		VOP_WIN_SET(vop, win, alpha_mode, ALPHA_PER_PIX);
 		VOP_WIN_SET(vop, win, alpha_en, 1);
-	पूर्ण अन्यथा अणु
+	} else {
 		VOP_WIN_SET(vop, win, src_alpha_ctl, SRC_ALPHA_EN(0));
-	पूर्ण
+	}
 
 	VOP_WIN_SET(vop, win, enable, 1);
 	vop->win_enabled |= BIT(win_index);
 	spin_unlock(&vop->reg_lock);
-पूर्ण
+}
 
-अटल पूर्णांक vop_plane_atomic_async_check(काष्ठा drm_plane *plane,
-					काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+static int vop_plane_atomic_async_check(struct drm_plane *plane,
+					struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	काष्ठा vop_win *vop_win = to_vop_win(plane);
-	स्थिर काष्ठा vop_win_data *win = vop_win->data;
-	पूर्णांक min_scale = win->phy->scl ? FRAC_16_16(1, 8) :
+	struct vop_win *vop_win = to_vop_win(plane);
+	const struct vop_win_data *win = vop_win->data;
+	int min_scale = win->phy->scl ? FRAC_16_16(1, 8) :
 					DRM_PLANE_HELPER_NO_SCALING;
-	पूर्णांक max_scale = win->phy->scl ? FRAC_16_16(8, 1) :
+	int max_scale = win->phy->scl ? FRAC_16_16(8, 1) :
 					DRM_PLANE_HELPER_NO_SCALING;
-	काष्ठा drm_crtc_state *crtc_state;
+	struct drm_crtc_state *crtc_state;
 
-	अगर (plane != new_plane_state->crtc->cursor)
-		वापस -EINVAL;
+	if (plane != new_plane_state->crtc->cursor)
+		return -EINVAL;
 
-	अगर (!plane->state)
-		वापस -EINVAL;
+	if (!plane->state)
+		return -EINVAL;
 
-	अगर (!plane->state->fb)
-		वापस -EINVAL;
+	if (!plane->state->fb)
+		return -EINVAL;
 
-	अगर (state)
+	if (state)
 		crtc_state = drm_atomic_get_existing_crtc_state(state,
 								new_plane_state->crtc);
-	अन्यथा /* Special हाल क्रम asynchronous cursor updates. */
+	else /* Special case for asynchronous cursor updates. */
 		crtc_state = plane->crtc->state;
 
-	वापस drm_atomic_helper_check_plane_state(plane->state, crtc_state,
+	return drm_atomic_helper_check_plane_state(plane->state, crtc_state,
 						   min_scale, max_scale,
 						   true, true);
-पूर्ण
+}
 
-अटल व्योम vop_plane_atomic_async_update(काष्ठा drm_plane *plane,
-					  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+static void vop_plane_atomic_async_update(struct drm_plane *plane,
+					  struct drm_atomic_state *state)
+{
+	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	काष्ठा vop *vop = to_vop(plane->state->crtc);
-	काष्ठा drm_framebuffer *old_fb = plane->state->fb;
+	struct vop *vop = to_vop(plane->state->crtc);
+	struct drm_framebuffer *old_fb = plane->state->fb;
 
 	plane->state->crtc_x = new_state->crtc_x;
 	plane->state->crtc_y = new_state->crtc_y;
@@ -1081,55 +1080,55 @@ out:
 	plane->state->src_w = new_state->src_w;
 	swap(plane->state->fb, new_state->fb);
 
-	अगर (vop->is_enabled) अणु
+	if (vop->is_enabled) {
 		vop_plane_atomic_update(plane, state);
 		spin_lock(&vop->reg_lock);
-		vop_cfg_करोne(vop);
+		vop_cfg_done(vop);
 		spin_unlock(&vop->reg_lock);
 
 		/*
 		 * A scanout can still be occurring, so we can't drop the
 		 * reference to the old framebuffer. To solve this we get a
 		 * reference to old_fb and set a worker to release it later.
-		 * FIXME: अगर we perक्रमm 500 async_update calls beक्रमe the
-		 * vblank, then we can have 500 dअगरferent framebuffers रुकोing
+		 * FIXME: if we perform 500 async_update calls before the
+		 * vblank, then we can have 500 different framebuffers waiting
 		 * to be released.
 		 */
-		अगर (old_fb && plane->state->fb != old_fb) अणु
+		if (old_fb && plane->state->fb != old_fb) {
 			drm_framebuffer_get(old_fb);
 			WARN_ON(drm_crtc_vblank_get(plane->state->crtc) != 0);
 			drm_flip_work_queue(&vop->fb_unref_work, old_fb);
 			set_bit(VOP_PENDING_FB_UNREF, &vop->pending);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल स्थिर काष्ठा drm_plane_helper_funcs plane_helper_funcs = अणु
+static const struct drm_plane_helper_funcs plane_helper_funcs = {
 	.atomic_check = vop_plane_atomic_check,
 	.atomic_update = vop_plane_atomic_update,
 	.atomic_disable = vop_plane_atomic_disable,
 	.atomic_async_check = vop_plane_atomic_async_check,
 	.atomic_async_update = vop_plane_atomic_async_update,
 	.prepare_fb = drm_gem_plane_helper_prepare_fb,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_plane_funcs vop_plane_funcs = अणु
+static const struct drm_plane_funcs vop_plane_funcs = {
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy = vop_plane_destroy,
 	.reset = drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-	.क्रमmat_mod_supported = rockchip_mod_supported,
-पूर्ण;
+	.format_mod_supported = rockchip_mod_supported,
+};
 
-अटल पूर्णांक vop_crtc_enable_vblank(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
-	अचिन्हित दीर्घ flags;
+static int vop_crtc_enable_vblank(struct drm_crtc *crtc)
+{
+	struct vop *vop = to_vop(crtc);
+	unsigned long flags;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस -EPERM;
+	if (WARN_ON(!vop->is_enabled))
+		return -EPERM;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
@@ -1138,154 +1137,154 @@ out:
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vop_crtc_disable_vblank(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
-	अचिन्हित दीर्घ flags;
+static void vop_crtc_disable_vblank(struct drm_crtc *crtc)
+{
+	struct vop *vop = to_vop(crtc);
+	unsigned long flags;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
 	spin_lock_irqsave(&vop->irq_lock, flags);
 
 	VOP_INTR_SET_TYPE(vop, enable, FS_INTR, 0);
 
 	spin_unlock_irqrestore(&vop->irq_lock, flags);
-पूर्ण
+}
 
-अटल bool vop_crtc_mode_fixup(काष्ठा drm_crtc *crtc,
-				स्थिर काष्ठा drm_display_mode *mode,
-				काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
-	अचिन्हित दीर्घ rate;
+static bool vop_crtc_mode_fixup(struct drm_crtc *crtc,
+				const struct drm_display_mode *mode,
+				struct drm_display_mode *adjusted_mode)
+{
+	struct vop *vop = to_vop(crtc);
+	unsigned long rate;
 
 	/*
 	 * Clock craziness.
 	 *
-	 * Key poपूर्णांकs:
+	 * Key points:
 	 *
 	 * - DRM works in in kHz.
 	 * - Clock framework works in Hz.
-	 * - Rockchip's घड़ी driver picks the घड़ी rate that is the
+	 * - Rockchip's clock driver picks the clock rate that is the
 	 *   same _OR LOWER_ than the one requested.
 	 *
 	 * Action plan:
 	 *
 	 * 1. When DRM gives us a mode, we should add 999 Hz to it.  That way
-	 *    अगर the घड़ी we need is 60000001 Hz (~60 MHz) and DRM tells us to
-	 *    make 60000 kHz then the घड़ी framework will actually give us
-	 *    the right घड़ी.
+	 *    if the clock we need is 60000001 Hz (~60 MHz) and DRM tells us to
+	 *    make 60000 kHz then the clock framework will actually give us
+	 *    the right clock.
 	 *
-	 *    NOTE: अगर the PLL (maybe through a भागider) could actually make
-	 *    a घड़ी rate 999 Hz higher instead of the one we want then this
-	 *    could be a problem.  Unक्रमtunately there's not much we can करो
+	 *    NOTE: if the PLL (maybe through a divider) could actually make
+	 *    a clock rate 999 Hz higher instead of the one we want then this
+	 *    could be a problem.  Unfortunately there's not much we can do
 	 *    since it's baked into DRM to use kHz.  It shouldn't matter in
 	 *    practice since Rockchip PLLs are controlled by tables and
-	 *    even अगर there is a भागider in the middle I wouldn't expect PLL
-	 *    rates in the table that are just a few kHz dअगरferent.
+	 *    even if there is a divider in the middle I wouldn't expect PLL
+	 *    rates in the table that are just a few kHz different.
 	 *
-	 * 2. Get the घड़ी framework to round the rate क्रम us to tell us
+	 * 2. Get the clock framework to round the rate for us to tell us
 	 *    what it will actually make.
 	 *
-	 * 3. Store the rounded up rate so that we करोn't need to worry about
+	 * 3. Store the rounded up rate so that we don't need to worry about
 	 *    this in the actual clk_set_rate().
 	 */
-	rate = clk_round_rate(vop->dclk, adjusted_mode->घड़ी * 1000 + 999);
-	adjusted_mode->घड़ी = DIV_ROUND_UP(rate, 1000);
+	rate = clk_round_rate(vop->dclk, adjusted_mode->clock * 1000 + 999);
+	adjusted_mode->clock = DIV_ROUND_UP(rate, 1000);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool vop_dsp_lut_is_enabled(काष्ठा vop *vop)
-अणु
-	वापस vop_पढ़ो_reg(vop, 0, &vop->data->common->dsp_lut_en);
-पूर्ण
+static bool vop_dsp_lut_is_enabled(struct vop *vop)
+{
+	return vop_read_reg(vop, 0, &vop->data->common->dsp_lut_en);
+}
 
-अटल व्योम vop_crtc_ग_लिखो_gamma_lut(काष्ठा vop *vop, काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_color_lut *lut = crtc->state->gamma_lut->data;
-	अचिन्हित पूर्णांक i;
+static void vop_crtc_write_gamma_lut(struct vop *vop, struct drm_crtc *crtc)
+{
+	struct drm_color_lut *lut = crtc->state->gamma_lut->data;
+	unsigned int i;
 
-	क्रम (i = 0; i < crtc->gamma_size; i++) अणु
+	for (i = 0; i < crtc->gamma_size; i++) {
 		u32 word;
 
 		word = (drm_color_lut_extract(lut[i].red, 10) << 20) |
 		       (drm_color_lut_extract(lut[i].green, 10) << 10) |
 			drm_color_lut_extract(lut[i].blue, 10);
-		ग_लिखोl(word, vop->lut_regs + i * 4);
-	पूर्ण
-पूर्ण
+		writel(word, vop->lut_regs + i * 4);
+	}
+}
 
-अटल व्योम vop_crtc_gamma_set(काष्ठा vop *vop, काष्ठा drm_crtc *crtc,
-			       काष्ठा drm_crtc_state *old_state)
-अणु
-	काष्ठा drm_crtc_state *state = crtc->state;
-	अचिन्हित पूर्णांक idle;
-	पूर्णांक ret;
+static void vop_crtc_gamma_set(struct vop *vop, struct drm_crtc *crtc,
+			       struct drm_crtc_state *old_state)
+{
+	struct drm_crtc_state *state = crtc->state;
+	unsigned int idle;
+	int ret;
 
-	अगर (!vop->lut_regs)
-		वापस;
+	if (!vop->lut_regs)
+		return;
 	/*
-	 * To disable gamma (gamma_lut is null) or to ग_लिखो
+	 * To disable gamma (gamma_lut is null) or to write
 	 * an update to the LUT, clear dsp_lut_en.
 	 */
 	spin_lock(&vop->reg_lock);
 	VOP_REG_SET(vop, common, dsp_lut_en, 0);
-	vop_cfg_करोne(vop);
+	vop_cfg_done(vop);
 	spin_unlock(&vop->reg_lock);
 
 	/*
-	 * In order to ग_लिखो the LUT to the पूर्णांकernal memory,
+	 * In order to write the LUT to the internal memory,
 	 * we need to first make sure the dsp_lut_en bit is cleared.
 	 */
-	ret = पढ़ोx_poll_समयout(vop_dsp_lut_is_enabled, vop,
+	ret = readx_poll_timeout(vop_dsp_lut_is_enabled, vop,
 				 idle, !idle, 5, 30 * 1000);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(vop->dev, "display LUT RAM enable timeout!\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!state->gamma_lut)
-		वापस;
+	if (!state->gamma_lut)
+		return;
 
 	spin_lock(&vop->reg_lock);
-	vop_crtc_ग_लिखो_gamma_lut(vop, crtc);
+	vop_crtc_write_gamma_lut(vop, crtc);
 	VOP_REG_SET(vop, common, dsp_lut_en, 1);
-	vop_cfg_करोne(vop);
+	vop_cfg_done(vop);
 	spin_unlock(&vop->reg_lock);
-पूर्ण
+}
 
-अटल व्योम vop_crtc_atomic_begin(काष्ठा drm_crtc *crtc,
-				  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+static void vop_crtc_atomic_begin(struct drm_crtc *crtc,
+				  struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	काष्ठा drm_crtc_state *old_crtc_state = drm_atomic_get_old_crtc_state(state,
+	struct drm_crtc_state *old_crtc_state = drm_atomic_get_old_crtc_state(state,
 									      crtc);
-	काष्ठा vop *vop = to_vop(crtc);
+	struct vop *vop = to_vop(crtc);
 
 	/*
-	 * Only update GAMMA अगर the 'active' flag is not changed,
+	 * Only update GAMMA if the 'active' flag is not changed,
 	 * otherwise it's updated by .atomic_enable.
 	 */
-	अगर (crtc_state->color_mgmt_changed &&
+	if (crtc_state->color_mgmt_changed &&
 	    !crtc_state->active_changed)
 		vop_crtc_gamma_set(vop, crtc, old_crtc_state);
-पूर्ण
+}
 
-अटल व्योम vop_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
-				   काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *old_state = drm_atomic_get_old_crtc_state(state,
+static void vop_crtc_atomic_enable(struct drm_crtc *crtc,
+				   struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *old_state = drm_atomic_get_old_crtc_state(state,
 									 crtc);
-	काष्ठा vop *vop = to_vop(crtc);
-	स्थिर काष्ठा vop_data *vop_data = vop->data;
-	काष्ठा rockchip_crtc_state *s = to_rockchip_crtc_state(crtc->state);
-	काष्ठा drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
+	struct vop *vop = to_vop(crtc);
+	const struct vop_data *vop_data = vop->data;
+	struct rockchip_crtc_state *s = to_rockchip_crtc_state(crtc->state);
+	struct drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
 	u16 hsync_len = adjusted_mode->hsync_end - adjusted_mode->hsync_start;
 	u16 hdisplay = adjusted_mode->hdisplay;
 	u16 htotal = adjusted_mode->htotal;
@@ -1296,22 +1295,22 @@ out:
 	u16 vsync_len = adjusted_mode->vsync_end - adjusted_mode->vsync_start;
 	u16 vact_st = adjusted_mode->vtotal - adjusted_mode->vsync_start;
 	u16 vact_end = vact_st + vdisplay;
-	uपूर्णांक32_t pin_pol, val;
-	पूर्णांक dither_bpc = s->output_bpc ? s->output_bpc : 10;
-	पूर्णांक ret;
+	uint32_t pin_pol, val;
+	int dither_bpc = s->output_bpc ? s->output_bpc : 10;
+	int ret;
 
-	अगर (old_state && old_state->self_refresh_active) अणु
+	if (old_state && old_state->self_refresh_active) {
 		drm_crtc_vblank_on(crtc);
 		rockchip_drm_set_win_enabled(crtc, true);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If we have a GAMMA LUT in the state, then let's make sure
 	 * it's updated. We might be coming out of suspend,
-	 * which means the LUT पूर्णांकernal memory needs to be re-written.
+	 * which means the LUT internal memory needs to be re-written.
 	 */
-	अगर (crtc->state->gamma_lut)
+	if (crtc->state->gamma_lut)
 		vop_crtc_gamma_set(vop, crtc, old_state);
 
 	mutex_lock(&vop->vop_lock);
@@ -1319,11 +1318,11 @@ out:
 	WARN_ON(vop->event);
 
 	ret = vop_enable(crtc, old_state);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&vop->vop_lock);
 		DRM_DEV_ERROR(vop->dev, "Failed to enable vop (%d)\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pin_pol = (adjusted_mode->flags & DRM_MODE_FLAG_PHSYNC) ?
 		   BIT(HSYNC_POSITIVE) : 0;
 	pin_pol |= (adjusted_mode->flags & DRM_MODE_FLAG_PVSYNC) ?
@@ -1331,58 +1330,58 @@ out:
 	VOP_REG_SET(vop, output, pin_pol, pin_pol);
 	VOP_REG_SET(vop, output, mipi_dual_channel_en, 0);
 
-	चयन (s->output_type) अणु
-	हाल DRM_MODE_CONNECTOR_LVDS:
+	switch (s->output_type) {
+	case DRM_MODE_CONNECTOR_LVDS:
 		VOP_REG_SET(vop, output, rgb_dclk_pol, 1);
 		VOP_REG_SET(vop, output, rgb_pin_pol, pin_pol);
 		VOP_REG_SET(vop, output, rgb_en, 1);
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_eDP:
+		break;
+	case DRM_MODE_CONNECTOR_eDP:
 		VOP_REG_SET(vop, output, edp_dclk_pol, 1);
 		VOP_REG_SET(vop, output, edp_pin_pol, pin_pol);
 		VOP_REG_SET(vop, output, edp_en, 1);
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_HDMIA:
+		break;
+	case DRM_MODE_CONNECTOR_HDMIA:
 		VOP_REG_SET(vop, output, hdmi_dclk_pol, 1);
 		VOP_REG_SET(vop, output, hdmi_pin_pol, pin_pol);
 		VOP_REG_SET(vop, output, hdmi_en, 1);
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_DSI:
+		break;
+	case DRM_MODE_CONNECTOR_DSI:
 		VOP_REG_SET(vop, output, mipi_dclk_pol, 1);
 		VOP_REG_SET(vop, output, mipi_pin_pol, pin_pol);
 		VOP_REG_SET(vop, output, mipi_en, 1);
 		VOP_REG_SET(vop, output, mipi_dual_channel_en,
 			    !!(s->output_flags & ROCKCHIP_OUTPUT_DSI_DUAL));
-		अवरोध;
-	हाल DRM_MODE_CONNECTOR_DisplayPort:
+		break;
+	case DRM_MODE_CONNECTOR_DisplayPort:
 		VOP_REG_SET(vop, output, dp_dclk_pol, 0);
 		VOP_REG_SET(vop, output, dp_pin_pol, pin_pol);
 		VOP_REG_SET(vop, output, dp_en, 1);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_DEV_ERROR(vop->dev, "unsupported connector_type [%d]\n",
 			      s->output_type);
-	पूर्ण
+	}
 
 	/*
-	 * अगर vop is not support RGB10 output, need क्रमce RGB10 to RGB888.
+	 * if vop is not support RGB10 output, need force RGB10 to RGB888.
 	 */
-	अगर (s->output_mode == ROCKCHIP_OUT_MODE_AAAA &&
+	if (s->output_mode == ROCKCHIP_OUT_MODE_AAAA &&
 	    !(vop_data->feature & VOP_FEATURE_OUTPUT_RGB10))
 		s->output_mode = ROCKCHIP_OUT_MODE_P888;
 
-	अगर (s->output_mode == ROCKCHIP_OUT_MODE_AAAA && dither_bpc <= 8)
-		VOP_REG_SET(vop, common, pre_dither_करोwn, 1);
-	अन्यथा
-		VOP_REG_SET(vop, common, pre_dither_करोwn, 0);
+	if (s->output_mode == ROCKCHIP_OUT_MODE_AAAA && dither_bpc <= 8)
+		VOP_REG_SET(vop, common, pre_dither_down, 1);
+	else
+		VOP_REG_SET(vop, common, pre_dither_down, 0);
 
-	अगर (dither_bpc == 6) अणु
-		VOP_REG_SET(vop, common, dither_करोwn_sel, DITHER_DOWN_ALLEGRO);
-		VOP_REG_SET(vop, common, dither_करोwn_mode, RGB888_TO_RGB666);
-		VOP_REG_SET(vop, common, dither_करोwn_en, 1);
-	पूर्ण अन्यथा अणु
-		VOP_REG_SET(vop, common, dither_करोwn_en, 0);
-	पूर्ण
+	if (dither_bpc == 6) {
+		VOP_REG_SET(vop, common, dither_down_sel, DITHER_DOWN_ALLEGRO);
+		VOP_REG_SET(vop, common, dither_down_mode, RGB888_TO_RGB666);
+		VOP_REG_SET(vop, common, dither_down_en, 1);
+	} else {
+		VOP_REG_SET(vop, common, dither_down_en, 0);
+	}
 
 	VOP_REG_SET(vop, common, out_mode, s->output_mode);
 
@@ -1398,255 +1397,255 @@ out:
 	VOP_REG_SET(vop, modeset, vact_st_end, val);
 	VOP_REG_SET(vop, modeset, vpost_st_end, val);
 
-	VOP_REG_SET(vop, पूर्णांकr, line_flag_num[0], vact_end);
+	VOP_REG_SET(vop, intr, line_flag_num[0], vact_end);
 
-	clk_set_rate(vop->dclk, adjusted_mode->घड़ी * 1000);
+	clk_set_rate(vop->dclk, adjusted_mode->clock * 1000);
 
 	VOP_REG_SET(vop, common, standby, 0);
 	mutex_unlock(&vop->vop_lock);
-पूर्ण
+}
 
-अटल bool vop_fs_irq_is_pending(काष्ठा vop *vop)
-अणु
-	वापस VOP_INTR_GET_TYPE(vop, status, FS_INTR);
-पूर्ण
+static bool vop_fs_irq_is_pending(struct vop *vop)
+{
+	return VOP_INTR_GET_TYPE(vop, status, FS_INTR);
+}
 
-अटल व्योम vop_रुको_क्रम_irq_handler(काष्ठा vop *vop)
-अणु
+static void vop_wait_for_irq_handler(struct vop *vop)
+{
 	bool pending;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Spin until frame start पूर्णांकerrupt status bit goes low, which means
-	 * that पूर्णांकerrupt handler was invoked and cleared it. The समयout of
-	 * 10 msecs is really too दीर्घ, but it is just a safety measure अगर
-	 * something goes really wrong. The रुको will only happen in the very
-	 * unlikely हाल of a vblank happening exactly at the same समय and
+	 * Spin until frame start interrupt status bit goes low, which means
+	 * that interrupt handler was invoked and cleared it. The timeout of
+	 * 10 msecs is really too long, but it is just a safety measure if
+	 * something goes really wrong. The wait will only happen in the very
+	 * unlikely case of a vblank happening exactly at the same time and
 	 * shouldn't exceed microseconds range.
 	 */
-	ret = पढ़ोx_poll_समयout_atomic(vop_fs_irq_is_pending, vop, pending,
+	ret = readx_poll_timeout_atomic(vop_fs_irq_is_pending, vop, pending,
 					!pending, 0, 10 * 1000);
-	अगर (ret)
+	if (ret)
 		DRM_DEV_ERROR(vop->dev, "VOP vblank IRQ stuck for 10 ms\n");
 
 	synchronize_irq(vop->irq);
-पूर्ण
+}
 
-अटल पूर्णांक vop_crtc_atomic_check(काष्ठा drm_crtc *crtc,
-				 काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+static int vop_crtc_atomic_check(struct drm_crtc *crtc,
+				 struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	काष्ठा vop *vop = to_vop(crtc);
-	काष्ठा drm_plane *plane;
-	काष्ठा drm_plane_state *plane_state;
-	काष्ठा rockchip_crtc_state *s;
-	पूर्णांक afbc_planes = 0;
+	struct vop *vop = to_vop(crtc);
+	struct drm_plane *plane;
+	struct drm_plane_state *plane_state;
+	struct rockchip_crtc_state *s;
+	int afbc_planes = 0;
 
-	अगर (vop->lut_regs && crtc_state->color_mgmt_changed &&
-	    crtc_state->gamma_lut) अणु
-		अचिन्हित पूर्णांक len;
+	if (vop->lut_regs && crtc_state->color_mgmt_changed &&
+	    crtc_state->gamma_lut) {
+		unsigned int len;
 
 		len = drm_color_lut_size(crtc_state->gamma_lut);
-		अगर (len != crtc->gamma_size) अणु
+		if (len != crtc->gamma_size) {
 			DRM_DEBUG_KMS("Invalid LUT size; got %d, expected %d\n",
 				      len, crtc->gamma_size);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	drm_atomic_crtc_state_क्रम_each_plane(plane, crtc_state) अणु
+	drm_atomic_crtc_state_for_each_plane(plane, crtc_state) {
 		plane_state =
 			drm_atomic_get_plane_state(crtc_state->state, plane);
-		अगर (IS_ERR(plane_state)) अणु
+		if (IS_ERR(plane_state)) {
 			DRM_DEBUG_KMS("Cannot get plane state for plane %s\n",
 				      plane->name);
-			वापस PTR_ERR(plane_state);
-		पूर्ण
+			return PTR_ERR(plane_state);
+		}
 
-		अगर (drm_is_afbc(plane_state->fb->modअगरier))
+		if (drm_is_afbc(plane_state->fb->modifier))
 			++afbc_planes;
-	पूर्ण
+	}
 
-	अगर (afbc_planes > 1) अणु
+	if (afbc_planes > 1) {
 		DRM_DEBUG_KMS("Invalid number of AFBC planes; got %d, expected at most 1\n", afbc_planes);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	s = to_rockchip_crtc_state(crtc_state);
 	s->enable_afbc = afbc_planes > 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vop_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
-				  काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_crtc_state *old_crtc_state = drm_atomic_get_old_crtc_state(state,
+static void vop_crtc_atomic_flush(struct drm_crtc *crtc,
+				  struct drm_atomic_state *state)
+{
+	struct drm_crtc_state *old_crtc_state = drm_atomic_get_old_crtc_state(state,
 									      crtc);
-	काष्ठा drm_atomic_state *old_state = old_crtc_state->state;
-	काष्ठा drm_plane_state *old_plane_state, *new_plane_state;
-	काष्ठा vop *vop = to_vop(crtc);
-	काष्ठा drm_plane *plane;
-	काष्ठा rockchip_crtc_state *s;
-	पूर्णांक i;
+	struct drm_atomic_state *old_state = old_crtc_state->state;
+	struct drm_plane_state *old_plane_state, *new_plane_state;
+	struct vop *vop = to_vop(crtc);
+	struct drm_plane *plane;
+	struct rockchip_crtc_state *s;
+	int i;
 
-	अगर (WARN_ON(!vop->is_enabled))
-		वापस;
+	if (WARN_ON(!vop->is_enabled))
+		return;
 
 	spin_lock(&vop->reg_lock);
 
-	/* Enable AFBC अगर there is some AFBC winकरोw, disable otherwise. */
+	/* Enable AFBC if there is some AFBC window, disable otherwise. */
 	s = to_rockchip_crtc_state(crtc->state);
 	VOP_AFBC_SET(vop, enable, s->enable_afbc);
-	vop_cfg_करोne(vop);
+	vop_cfg_done(vop);
 
 	spin_unlock(&vop->reg_lock);
 
 	/*
-	 * There is a (rather unlikely) possiblity that a vblank पूर्णांकerrupt
-	 * fired beक्रमe we set the cfg_करोne bit. To aव्योम spuriously
-	 * संकेतling flip completion we need to रुको क्रम it to finish.
+	 * There is a (rather unlikely) possiblity that a vblank interrupt
+	 * fired before we set the cfg_done bit. To avoid spuriously
+	 * signalling flip completion we need to wait for it to finish.
 	 */
-	vop_रुको_क्रम_irq_handler(vop);
+	vop_wait_for_irq_handler(vop);
 
 	spin_lock_irq(&crtc->dev->event_lock);
-	अगर (crtc->state->event) अणु
+	if (crtc->state->event) {
 		WARN_ON(drm_crtc_vblank_get(crtc) != 0);
 		WARN_ON(vop->event);
 
 		vop->event = crtc->state->event;
-		crtc->state->event = शून्य;
-	पूर्ण
+		crtc->state->event = NULL;
+	}
 	spin_unlock_irq(&crtc->dev->event_lock);
 
-	क्रम_each_oldnew_plane_in_state(old_state, plane, old_plane_state,
-				       new_plane_state, i) अणु
-		अगर (!old_plane_state->fb)
-			जारी;
+	for_each_oldnew_plane_in_state(old_state, plane, old_plane_state,
+				       new_plane_state, i) {
+		if (!old_plane_state->fb)
+			continue;
 
-		अगर (old_plane_state->fb == new_plane_state->fb)
-			जारी;
+		if (old_plane_state->fb == new_plane_state->fb)
+			continue;
 
 		drm_framebuffer_get(old_plane_state->fb);
 		WARN_ON(drm_crtc_vblank_get(crtc) != 0);
 		drm_flip_work_queue(&vop->fb_unref_work, old_plane_state->fb);
 		set_bit(VOP_PENDING_FB_UNREF, &vop->pending);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा drm_crtc_helper_funcs vop_crtc_helper_funcs = अणु
+static const struct drm_crtc_helper_funcs vop_crtc_helper_funcs = {
 	.mode_fixup = vop_crtc_mode_fixup,
 	.atomic_check = vop_crtc_atomic_check,
 	.atomic_begin = vop_crtc_atomic_begin,
 	.atomic_flush = vop_crtc_atomic_flush,
 	.atomic_enable = vop_crtc_atomic_enable,
 	.atomic_disable = vop_crtc_atomic_disable,
-पूर्ण;
+};
 
-अटल व्योम vop_crtc_destroy(काष्ठा drm_crtc *crtc)
-अणु
+static void vop_crtc_destroy(struct drm_crtc *crtc)
+{
 	drm_crtc_cleanup(crtc);
-पूर्ण
+}
 
-अटल काष्ठा drm_crtc_state *vop_crtc_duplicate_state(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा rockchip_crtc_state *rockchip_state;
+static struct drm_crtc_state *vop_crtc_duplicate_state(struct drm_crtc *crtc)
+{
+	struct rockchip_crtc_state *rockchip_state;
 
-	rockchip_state = kzalloc(माप(*rockchip_state), GFP_KERNEL);
-	अगर (!rockchip_state)
-		वापस शून्य;
+	rockchip_state = kzalloc(sizeof(*rockchip_state), GFP_KERNEL);
+	if (!rockchip_state)
+		return NULL;
 
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &rockchip_state->base);
-	वापस &rockchip_state->base;
-पूर्ण
+	return &rockchip_state->base;
+}
 
-अटल व्योम vop_crtc_destroy_state(काष्ठा drm_crtc *crtc,
-				   काष्ठा drm_crtc_state *state)
-अणु
-	काष्ठा rockchip_crtc_state *s = to_rockchip_crtc_state(state);
+static void vop_crtc_destroy_state(struct drm_crtc *crtc,
+				   struct drm_crtc_state *state)
+{
+	struct rockchip_crtc_state *s = to_rockchip_crtc_state(state);
 
 	__drm_atomic_helper_crtc_destroy_state(&s->base);
-	kमुक्त(s);
-पूर्ण
+	kfree(s);
+}
 
-अटल व्योम vop_crtc_reset(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा rockchip_crtc_state *crtc_state =
-		kzalloc(माप(*crtc_state), GFP_KERNEL);
+static void vop_crtc_reset(struct drm_crtc *crtc)
+{
+	struct rockchip_crtc_state *crtc_state =
+		kzalloc(sizeof(*crtc_state), GFP_KERNEL);
 
-	अगर (crtc->state)
+	if (crtc->state)
 		vop_crtc_destroy_state(crtc, crtc->state);
 
 	__drm_atomic_helper_crtc_reset(crtc, &crtc_state->base);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_DRM_ANALOGIX_DP
-अटल काष्ठा drm_connector *vop_get_edp_connector(काष्ठा vop *vop)
-अणु
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_connector_list_iter conn_iter;
+#ifdef CONFIG_DRM_ANALOGIX_DP
+static struct drm_connector *vop_get_edp_connector(struct vop *vop)
+{
+	struct drm_connector *connector;
+	struct drm_connector_list_iter conn_iter;
 
 	drm_connector_list_iter_begin(vop->drm_dev, &conn_iter);
-	drm_क्रम_each_connector_iter(connector, &conn_iter) अणु
-		अगर (connector->connector_type == DRM_MODE_CONNECTOR_eDP) अणु
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		if (connector->connector_type == DRM_MODE_CONNECTOR_eDP) {
 			drm_connector_list_iter_end(&conn_iter);
-			वापस connector;
-		पूर्ण
-	पूर्ण
+			return connector;
+		}
+	}
 	drm_connector_list_iter_end(&conn_iter);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक vop_crtc_set_crc_source(काष्ठा drm_crtc *crtc,
-				   स्थिर अक्षर *source_name)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
-	काष्ठा drm_connector *connector;
-	पूर्णांक ret;
+static int vop_crtc_set_crc_source(struct drm_crtc *crtc,
+				   const char *source_name)
+{
+	struct vop *vop = to_vop(crtc);
+	struct drm_connector *connector;
+	int ret;
 
 	connector = vop_get_edp_connector(vop);
-	अगर (!connector)
-		वापस -EINVAL;
+	if (!connector)
+		return -EINVAL;
 
-	अगर (source_name && म_भेद(source_name, "auto") == 0)
+	if (source_name && strcmp(source_name, "auto") == 0)
 		ret = analogix_dp_start_crc(connector);
-	अन्यथा अगर (!source_name)
+	else if (!source_name)
 		ret = analogix_dp_stop_crc(connector);
-	अन्यथा
+	else
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-vop_crtc_verअगरy_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *source_name,
-			   माप_प्रकार *values_cnt)
-अणु
-	अगर (source_name && म_भेद(source_name, "auto") != 0)
-		वापस -EINVAL;
+static int
+vop_crtc_verify_crc_source(struct drm_crtc *crtc, const char *source_name,
+			   size_t *values_cnt)
+{
+	if (source_name && strcmp(source_name, "auto") != 0)
+		return -EINVAL;
 
 	*values_cnt = 3;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अन्यथा
-अटल पूर्णांक vop_crtc_set_crc_source(काष्ठा drm_crtc *crtc,
-				   स्थिर अक्षर *source_name)
-अणु
-	वापस -ENODEV;
-पूर्ण
+#else
+static int vop_crtc_set_crc_source(struct drm_crtc *crtc,
+				   const char *source_name)
+{
+	return -ENODEV;
+}
 
-अटल पूर्णांक
-vop_crtc_verअगरy_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *source_name,
-			   माप_प्रकार *values_cnt)
-अणु
-	वापस -ENODEV;
-पूर्ण
-#पूर्ण_अगर
+static int
+vop_crtc_verify_crc_source(struct drm_crtc *crtc, const char *source_name,
+			   size_t *values_cnt)
+{
+	return -ENODEV;
+}
+#endif
 
-अटल स्थिर काष्ठा drm_crtc_funcs vop_crtc_funcs = अणु
+static const struct drm_crtc_funcs vop_crtc_funcs = {
 	.set_config = drm_atomic_helper_set_config,
 	.page_flip = drm_atomic_helper_page_flip,
 	.destroy = vop_crtc_destroy,
@@ -1656,205 +1655,205 @@ vop_crtc_verअगरy_crc_source(काष्ठा drm_crtc *crtc, स्थ�
 	.enable_vblank = vop_crtc_enable_vblank,
 	.disable_vblank = vop_crtc_disable_vblank,
 	.set_crc_source = vop_crtc_set_crc_source,
-	.verअगरy_crc_source = vop_crtc_verअगरy_crc_source,
-पूर्ण;
+	.verify_crc_source = vop_crtc_verify_crc_source,
+};
 
-अटल व्योम vop_fb_unref_worker(काष्ठा drm_flip_work *work, व्योम *val)
-अणु
-	काष्ठा vop *vop = container_of(work, काष्ठा vop, fb_unref_work);
-	काष्ठा drm_framebuffer *fb = val;
+static void vop_fb_unref_worker(struct drm_flip_work *work, void *val)
+{
+	struct vop *vop = container_of(work, struct vop, fb_unref_work);
+	struct drm_framebuffer *fb = val;
 
 	drm_crtc_vblank_put(&vop->crtc);
 	drm_framebuffer_put(fb);
-पूर्ण
+}
 
-अटल व्योम vop_handle_vblank(काष्ठा vop *vop)
-अणु
-	काष्ठा drm_device *drm = vop->drm_dev;
-	काष्ठा drm_crtc *crtc = &vop->crtc;
+static void vop_handle_vblank(struct vop *vop)
+{
+	struct drm_device *drm = vop->drm_dev;
+	struct drm_crtc *crtc = &vop->crtc;
 
 	spin_lock(&drm->event_lock);
-	अगर (vop->event) अणु
+	if (vop->event) {
 		drm_crtc_send_vblank_event(crtc, vop->event);
 		drm_crtc_vblank_put(crtc);
-		vop->event = शून्य;
-	पूर्ण
+		vop->event = NULL;
+	}
 	spin_unlock(&drm->event_lock);
 
-	अगर (test_and_clear_bit(VOP_PENDING_FB_UNREF, &vop->pending))
-		drm_flip_work_commit(&vop->fb_unref_work, प्रणाली_unbound_wq);
-पूर्ण
+	if (test_and_clear_bit(VOP_PENDING_FB_UNREF, &vop->pending))
+		drm_flip_work_commit(&vop->fb_unref_work, system_unbound_wq);
+}
 
-अटल irqवापस_t vop_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा vop *vop = data;
-	काष्ठा drm_crtc *crtc = &vop->crtc;
-	uपूर्णांक32_t active_irqs;
-	पूर्णांक ret = IRQ_NONE;
+static irqreturn_t vop_isr(int irq, void *data)
+{
+	struct vop *vop = data;
+	struct drm_crtc *crtc = &vop->crtc;
+	uint32_t active_irqs;
+	int ret = IRQ_NONE;
 
 	/*
-	 * The irq is shared with the iommu. If the runसमय-pm state of the
+	 * The irq is shared with the iommu. If the runtime-pm state of the
 	 * vop-device is disabled the irq has to be targeted at the iommu.
 	 */
-	अगर (!pm_runसमय_get_अगर_in_use(vop->dev))
-		वापस IRQ_NONE;
+	if (!pm_runtime_get_if_in_use(vop->dev))
+		return IRQ_NONE;
 
-	अगर (vop_core_clks_enable(vop)) अणु
+	if (vop_core_clks_enable(vop)) {
 		DRM_DEV_ERROR_RATELIMITED(vop->dev, "couldn't enable clocks\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * पूर्णांकerrupt रेजिस्टर has पूर्णांकerrupt status, enable and clear bits, we
-	 * must hold irq_lock to aव्योम a race with enable/disable_vblank().
+	 * interrupt register has interrupt status, enable and clear bits, we
+	 * must hold irq_lock to avoid a race with enable/disable_vblank().
 	*/
 	spin_lock(&vop->irq_lock);
 
 	active_irqs = VOP_INTR_GET_TYPE(vop, status, INTR_MASK);
-	/* Clear all active पूर्णांकerrupt sources */
-	अगर (active_irqs)
+	/* Clear all active interrupt sources */
+	if (active_irqs)
 		VOP_INTR_SET_TYPE(vop, clear, active_irqs, 1);
 
 	spin_unlock(&vop->irq_lock);
 
-	/* This is expected क्रम vop iommu irqs, since the irq is shared */
-	अगर (!active_irqs)
-		जाओ out_disable;
+	/* This is expected for vop iommu irqs, since the irq is shared */
+	if (!active_irqs)
+		goto out_disable;
 
-	अगर (active_irqs & DSP_HOLD_VALID_INTR) अणु
+	if (active_irqs & DSP_HOLD_VALID_INTR) {
 		complete(&vop->dsp_hold_completion);
 		active_irqs &= ~DSP_HOLD_VALID_INTR;
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (active_irqs & LINE_FLAG_INTR) अणु
+	if (active_irqs & LINE_FLAG_INTR) {
 		complete(&vop->line_flag_completion);
 		active_irqs &= ~LINE_FLAG_INTR;
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	अगर (active_irqs & FS_INTR) अणु
+	if (active_irqs & FS_INTR) {
 		drm_crtc_handle_vblank(crtc);
 		vop_handle_vblank(vop);
 		active_irqs &= ~FS_INTR;
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
 	/* Unhandled irqs are spurious. */
-	अगर (active_irqs)
+	if (active_irqs)
 		DRM_DEV_ERROR(vop->dev, "Unknown VOP IRQs: %#02x\n",
 			      active_irqs);
 
 out_disable:
 	vop_core_clks_disable(vop);
 out:
-	pm_runसमय_put(vop->dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_put(vop->dev);
+	return ret;
+}
 
-अटल व्योम vop_plane_add_properties(काष्ठा drm_plane *plane,
-				     स्थिर काष्ठा vop_win_data *win_data)
-अणु
-	अचिन्हित पूर्णांक flags = 0;
+static void vop_plane_add_properties(struct drm_plane *plane,
+				     const struct vop_win_data *win_data)
+{
+	unsigned int flags = 0;
 
 	flags |= VOP_WIN_HAS_REG(win_data, x_mir_en) ? DRM_MODE_REFLECT_X : 0;
 	flags |= VOP_WIN_HAS_REG(win_data, y_mir_en) ? DRM_MODE_REFLECT_Y : 0;
-	अगर (flags)
+	if (flags)
 		drm_plane_create_rotation_property(plane, DRM_MODE_ROTATE_0,
 						   DRM_MODE_ROTATE_0 | flags);
-पूर्ण
+}
 
-अटल पूर्णांक vop_create_crtc(काष्ठा vop *vop)
-अणु
-	स्थिर काष्ठा vop_data *vop_data = vop->data;
-	काष्ठा device *dev = vop->dev;
-	काष्ठा drm_device *drm_dev = vop->drm_dev;
-	काष्ठा drm_plane *primary = शून्य, *cursor = शून्य, *plane, *पंचांगp;
-	काष्ठा drm_crtc *crtc = &vop->crtc;
-	काष्ठा device_node *port;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int vop_create_crtc(struct vop *vop)
+{
+	const struct vop_data *vop_data = vop->data;
+	struct device *dev = vop->dev;
+	struct drm_device *drm_dev = vop->drm_dev;
+	struct drm_plane *primary = NULL, *cursor = NULL, *plane, *tmp;
+	struct drm_crtc *crtc = &vop->crtc;
+	struct device_node *port;
+	int ret;
+	int i;
 
 	/*
-	 * Create drm_plane क्रम primary and cursor planes first, since we need
+	 * Create drm_plane for primary and cursor planes first, since we need
 	 * to pass them to drm_crtc_init_with_planes, which sets the
 	 * "possible_crtcs" to the newly initialized crtc.
 	 */
-	क्रम (i = 0; i < vop_data->win_size; i++) अणु
-		काष्ठा vop_win *vop_win = &vop->win[i];
-		स्थिर काष्ठा vop_win_data *win_data = vop_win->data;
+	for (i = 0; i < vop_data->win_size; i++) {
+		struct vop_win *vop_win = &vop->win[i];
+		const struct vop_win_data *win_data = vop_win->data;
 
-		अगर (win_data->type != DRM_PLANE_TYPE_PRIMARY &&
+		if (win_data->type != DRM_PLANE_TYPE_PRIMARY &&
 		    win_data->type != DRM_PLANE_TYPE_CURSOR)
-			जारी;
+			continue;
 
 		ret = drm_universal_plane_init(vop->drm_dev, &vop_win->base,
 					       0, &vop_plane_funcs,
-					       win_data->phy->data_क्रमmats,
-					       win_data->phy->nक्रमmats,
-					       win_data->phy->क्रमmat_modअगरiers,
-					       win_data->type, शून्य);
-		अगर (ret) अणु
+					       win_data->phy->data_formats,
+					       win_data->phy->nformats,
+					       win_data->phy->format_modifiers,
+					       win_data->type, NULL);
+		if (ret) {
 			DRM_DEV_ERROR(vop->dev, "failed to init plane %d\n",
 				      ret);
-			जाओ err_cleanup_planes;
-		पूर्ण
+			goto err_cleanup_planes;
+		}
 
 		plane = &vop_win->base;
 		drm_plane_helper_add(plane, &plane_helper_funcs);
 		vop_plane_add_properties(plane, win_data);
-		अगर (plane->type == DRM_PLANE_TYPE_PRIMARY)
+		if (plane->type == DRM_PLANE_TYPE_PRIMARY)
 			primary = plane;
-		अन्यथा अगर (plane->type == DRM_PLANE_TYPE_CURSOR)
+		else if (plane->type == DRM_PLANE_TYPE_CURSOR)
 			cursor = plane;
-	पूर्ण
+	}
 
 	ret = drm_crtc_init_with_planes(drm_dev, crtc, primary, cursor,
-					&vop_crtc_funcs, शून्य);
-	अगर (ret)
-		जाओ err_cleanup_planes;
+					&vop_crtc_funcs, NULL);
+	if (ret)
+		goto err_cleanup_planes;
 
 	drm_crtc_helper_add(crtc, &vop_crtc_helper_funcs);
-	अगर (vop->lut_regs) अणु
+	if (vop->lut_regs) {
 		drm_mode_crtc_set_gamma_size(crtc, vop_data->lut_size);
 		drm_crtc_enable_color_mgmt(crtc, 0, false, vop_data->lut_size);
-	पूर्ण
+	}
 
 	/*
-	 * Create drm_planes क्रम overlay winकरोws with possible_crtcs restricted
+	 * Create drm_planes for overlay windows with possible_crtcs restricted
 	 * to the newly created crtc.
 	 */
-	क्रम (i = 0; i < vop_data->win_size; i++) अणु
-		काष्ठा vop_win *vop_win = &vop->win[i];
-		स्थिर काष्ठा vop_win_data *win_data = vop_win->data;
-		अचिन्हित दीर्घ possible_crtcs = drm_crtc_mask(crtc);
+	for (i = 0; i < vop_data->win_size; i++) {
+		struct vop_win *vop_win = &vop->win[i];
+		const struct vop_win_data *win_data = vop_win->data;
+		unsigned long possible_crtcs = drm_crtc_mask(crtc);
 
-		अगर (win_data->type != DRM_PLANE_TYPE_OVERLAY)
-			जारी;
+		if (win_data->type != DRM_PLANE_TYPE_OVERLAY)
+			continue;
 
 		ret = drm_universal_plane_init(vop->drm_dev, &vop_win->base,
 					       possible_crtcs,
 					       &vop_plane_funcs,
-					       win_data->phy->data_क्रमmats,
-					       win_data->phy->nक्रमmats,
-					       win_data->phy->क्रमmat_modअगरiers,
-					       win_data->type, शून्य);
-		अगर (ret) अणु
+					       win_data->phy->data_formats,
+					       win_data->phy->nformats,
+					       win_data->phy->format_modifiers,
+					       win_data->type, NULL);
+		if (ret) {
 			DRM_DEV_ERROR(vop->dev, "failed to init overlay %d\n",
 				      ret);
-			जाओ err_cleanup_crtc;
-		पूर्ण
+			goto err_cleanup_crtc;
+		}
 		drm_plane_helper_add(&vop_win->base, &plane_helper_funcs);
 		vop_plane_add_properties(&vop_win->base, win_data);
-	पूर्ण
+	}
 
 	port = of_get_child_by_name(dev->of_node, "port");
-	अगर (!port) अणु
+	if (!port) {
 		DRM_DEV_ERROR(vop->dev, "no port node found in %pOF\n",
 			      dev->of_node);
 		ret = -ENOENT;
-		जाओ err_cleanup_crtc;
-	पूर्ण
+		goto err_cleanup_crtc;
+	}
 
 	drm_flip_work_init(&vop->fb_unref_work, "fb_unref",
 			   vop_fb_unref_worker);
@@ -1864,27 +1863,27 @@ out:
 	crtc->port = port;
 
 	ret = drm_self_refresh_helper_init(crtc);
-	अगर (ret)
+	if (ret)
 		DRM_DEV_DEBUG_KMS(vop->dev,
 			"Failed to init %s with SR helpers %d, ignoring\n",
 			crtc->name, ret);
 
-	वापस 0;
+	return 0;
 
 err_cleanup_crtc:
 	drm_crtc_cleanup(crtc);
 err_cleanup_planes:
-	list_क्रम_each_entry_safe(plane, पंचांगp, &drm_dev->mode_config.plane_list,
+	list_for_each_entry_safe(plane, tmp, &drm_dev->mode_config.plane_list,
 				 head)
 		drm_plane_cleanup(plane);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vop_destroy_crtc(काष्ठा vop *vop)
-अणु
-	काष्ठा drm_crtc *crtc = &vop->crtc;
-	काष्ठा drm_device *drm_dev = vop->drm_dev;
-	काष्ठा drm_plane *plane, *पंचांगp;
+static void vop_destroy_crtc(struct vop *vop)
+{
+	struct drm_crtc *crtc = &vop->crtc;
+	struct drm_device *drm_dev = vop->drm_dev;
+	struct drm_plane *plane, *tmp;
 
 	drm_self_refresh_helper_cleanup(crtc);
 
@@ -1896,9 +1895,9 @@ err_cleanup_planes:
 	 * The planes are "&vop->win[i].base".  That means the memory is
 	 * all part of the big "struct vop" chunk of memory.  That memory
 	 * was devm allocated and associated with this component.  We need to
-	 * मुक्त it ourselves beक्रमe vop_unbind() finishes.
+	 * free it ourselves before vop_unbind() finishes.
 	 */
-	list_क्रम_each_entry_safe(plane, पंचांगp, &drm_dev->mode_config.plane_list,
+	list_for_each_entry_safe(plane, tmp, &drm_dev->mode_config.plane_list,
 				 head)
 		vop_plane_destroy(plane);
 
@@ -1908,109 +1907,109 @@ err_cleanup_planes:
 	 */
 	drm_crtc_cleanup(crtc);
 	drm_flip_work_cleanup(&vop->fb_unref_work);
-पूर्ण
+}
 
-अटल पूर्णांक vop_initial(काष्ठा vop *vop)
-अणु
-	काष्ठा reset_control *ahb_rst;
-	पूर्णांक i, ret;
+static int vop_initial(struct vop *vop)
+{
+	struct reset_control *ahb_rst;
+	int i, ret;
 
 	vop->hclk = devm_clk_get(vop->dev, "hclk_vop");
-	अगर (IS_ERR(vop->hclk)) अणु
+	if (IS_ERR(vop->hclk)) {
 		DRM_DEV_ERROR(vop->dev, "failed to get hclk source\n");
-		वापस PTR_ERR(vop->hclk);
-	पूर्ण
+		return PTR_ERR(vop->hclk);
+	}
 	vop->aclk = devm_clk_get(vop->dev, "aclk_vop");
-	अगर (IS_ERR(vop->aclk)) अणु
+	if (IS_ERR(vop->aclk)) {
 		DRM_DEV_ERROR(vop->dev, "failed to get aclk source\n");
-		वापस PTR_ERR(vop->aclk);
-	पूर्ण
+		return PTR_ERR(vop->aclk);
+	}
 	vop->dclk = devm_clk_get(vop->dev, "dclk_vop");
-	अगर (IS_ERR(vop->dclk)) अणु
+	if (IS_ERR(vop->dclk)) {
 		DRM_DEV_ERROR(vop->dev, "failed to get dclk source\n");
-		वापस PTR_ERR(vop->dclk);
-	पूर्ण
+		return PTR_ERR(vop->dclk);
+	}
 
-	ret = pm_runसमय_get_sync(vop->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(vop->dev);
+	if (ret < 0) {
 		DRM_DEV_ERROR(vop->dev, "failed to get pm runtime: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_prepare(vop->dclk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(vop->dev, "failed to prepare dclk\n");
-		जाओ err_put_pm_runसमय;
-	पूर्ण
+		goto err_put_pm_runtime;
+	}
 
 	/* Enable both the hclk and aclk to setup the vop */
 	ret = clk_prepare_enable(vop->hclk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(vop->dev, "failed to prepare/enable hclk\n");
-		जाओ err_unprepare_dclk;
-	पूर्ण
+		goto err_unprepare_dclk;
+	}
 
 	ret = clk_prepare_enable(vop->aclk);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(vop->dev, "failed to prepare/enable aclk\n");
-		जाओ err_disable_hclk;
-	पूर्ण
+		goto err_disable_hclk;
+	}
 
 	/*
-	 * करो hclk_reset, reset all vop रेजिस्टरs.
+	 * do hclk_reset, reset all vop registers.
 	 */
 	ahb_rst = devm_reset_control_get(vop->dev, "ahb");
-	अगर (IS_ERR(ahb_rst)) अणु
+	if (IS_ERR(ahb_rst)) {
 		DRM_DEV_ERROR(vop->dev, "failed to get ahb reset\n");
 		ret = PTR_ERR(ahb_rst);
-		जाओ err_disable_aclk;
-	पूर्ण
-	reset_control_निश्चित(ahb_rst);
+		goto err_disable_aclk;
+	}
+	reset_control_assert(ahb_rst);
 	usleep_range(10, 20);
-	reset_control_deनिश्चित(ahb_rst);
+	reset_control_deassert(ahb_rst);
 
 	VOP_INTR_SET_TYPE(vop, clear, INTR_MASK, 1);
 	VOP_INTR_SET_TYPE(vop, enable, INTR_MASK, 0);
 
-	क्रम (i = 0; i < vop->len; i += माप(u32))
-		vop->regsbak[i / 4] = पढ़ोl_relaxed(vop->regs + i);
+	for (i = 0; i < vop->len; i += sizeof(u32))
+		vop->regsbak[i / 4] = readl_relaxed(vop->regs + i);
 
-	VOP_REG_SET(vop, misc, global_regकरोne_en, 1);
+	VOP_REG_SET(vop, misc, global_regdone_en, 1);
 	VOP_REG_SET(vop, common, dsp_blank, 0);
 
-	क्रम (i = 0; i < vop->data->win_size; i++) अणु
-		काष्ठा vop_win *vop_win = &vop->win[i];
-		स्थिर काष्ठा vop_win_data *win = vop_win->data;
-		पूर्णांक channel = i * 2 + 1;
+	for (i = 0; i < vop->data->win_size; i++) {
+		struct vop_win *vop_win = &vop->win[i];
+		const struct vop_win_data *win = vop_win->data;
+		int channel = i * 2 + 1;
 
 		VOP_WIN_SET(vop, win, channel, (channel + 1) << 4 | channel);
 		vop_win_disable(vop, vop_win);
 		VOP_WIN_SET(vop, win, gate, 1);
-	पूर्ण
+	}
 
-	vop_cfg_करोne(vop);
+	vop_cfg_done(vop);
 
 	/*
-	 * करो dclk_reset, let all config take affect.
+	 * do dclk_reset, let all config take affect.
 	 */
 	vop->dclk_rst = devm_reset_control_get(vop->dev, "dclk");
-	अगर (IS_ERR(vop->dclk_rst)) अणु
+	if (IS_ERR(vop->dclk_rst)) {
 		DRM_DEV_ERROR(vop->dev, "failed to get dclk reset\n");
 		ret = PTR_ERR(vop->dclk_rst);
-		जाओ err_disable_aclk;
-	पूर्ण
-	reset_control_निश्चित(vop->dclk_rst);
+		goto err_disable_aclk;
+	}
+	reset_control_assert(vop->dclk_rst);
 	usleep_range(10, 20);
-	reset_control_deनिश्चित(vop->dclk_rst);
+	reset_control_deassert(vop->dclk_rst);
 
 	clk_disable(vop->hclk);
 	clk_disable(vop->aclk);
 
 	vop->is_enabled = false;
 
-	pm_runसमय_put_sync(vop->dev);
+	pm_runtime_put_sync(vop->dev);
 
-	वापस 0;
+	return 0;
 
 err_disable_aclk:
 	clk_disable_unprepare(vop->aclk);
@@ -2018,98 +2017,98 @@ err_disable_hclk:
 	clk_disable_unprepare(vop->hclk);
 err_unprepare_dclk:
 	clk_unprepare(vop->dclk);
-err_put_pm_runसमय:
-	pm_runसमय_put_sync(vop->dev);
-	वापस ret;
-पूर्ण
+err_put_pm_runtime:
+	pm_runtime_put_sync(vop->dev);
+	return ret;
+}
 
 /*
  * Initialize the vop->win array elements.
  */
-अटल व्योम vop_win_init(काष्ठा vop *vop)
-अणु
-	स्थिर काष्ठा vop_data *vop_data = vop->data;
-	अचिन्हित पूर्णांक i;
+static void vop_win_init(struct vop *vop)
+{
+	const struct vop_data *vop_data = vop->data;
+	unsigned int i;
 
-	क्रम (i = 0; i < vop_data->win_size; i++) अणु
-		काष्ठा vop_win *vop_win = &vop->win[i];
-		स्थिर काष्ठा vop_win_data *win_data = &vop_data->win[i];
+	for (i = 0; i < vop_data->win_size; i++) {
+		struct vop_win *vop_win = &vop->win[i];
+		const struct vop_win_data *win_data = &vop_data->win[i];
 
 		vop_win->data = win_data;
 		vop_win->vop = vop;
 
-		अगर (vop_data->win_yuv2yuv)
+		if (vop_data->win_yuv2yuv)
 			vop_win->yuv2yuv_data = &vop_data->win_yuv2yuv[i];
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * rockchip_drm_रुको_vact_end
+ * rockchip_drm_wait_vact_end
  * @crtc: CRTC to enable line flag
- * @msसमयout: millisecond क्रम समयout
+ * @mstimeout: millisecond for timeout
  *
- * Wait क्रम vact_end line flag irq or समयout.
+ * Wait for vact_end line flag irq or timeout.
  *
  * Returns:
- * Zero on success, negative त्रुटि_सं on failure.
+ * Zero on success, negative errno on failure.
  */
-पूर्णांक rockchip_drm_रुको_vact_end(काष्ठा drm_crtc *crtc, अचिन्हित पूर्णांक msसमयout)
-अणु
-	काष्ठा vop *vop = to_vop(crtc);
-	अचिन्हित दीर्घ jअगरfies_left;
-	पूर्णांक ret = 0;
+int rockchip_drm_wait_vact_end(struct drm_crtc *crtc, unsigned int mstimeout)
+{
+	struct vop *vop = to_vop(crtc);
+	unsigned long jiffies_left;
+	int ret = 0;
 
-	अगर (!crtc || !vop->is_enabled)
-		वापस -ENODEV;
+	if (!crtc || !vop->is_enabled)
+		return -ENODEV;
 
 	mutex_lock(&vop->vop_lock);
-	अगर (msसमयout <= 0) अणु
+	if (mstimeout <= 0) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (vop_line_flag_irq_is_enabled(vop)) अणु
+	if (vop_line_flag_irq_is_enabled(vop)) {
 		ret = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	reinit_completion(&vop->line_flag_completion);
 	vop_line_flag_irq_enable(vop);
 
-	jअगरfies_left = रुको_क्रम_completion_समयout(&vop->line_flag_completion,
-						   msecs_to_jअगरfies(msसमयout));
+	jiffies_left = wait_for_completion_timeout(&vop->line_flag_completion,
+						   msecs_to_jiffies(mstimeout));
 	vop_line_flag_irq_disable(vop);
 
-	अगर (jअगरfies_left == 0) अणु
+	if (jiffies_left == 0) {
 		DRM_DEV_ERROR(vop->dev, "Timeout waiting for IRQ\n");
 		ret = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	mutex_unlock(&vop->vop_lock);
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(rockchip_drm_रुको_vact_end);
+	return ret;
+}
+EXPORT_SYMBOL(rockchip_drm_wait_vact_end);
 
-अटल पूर्णांक vop_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
-	स्थिर काष्ठा vop_data *vop_data;
-	काष्ठा drm_device *drm_dev = data;
-	काष्ठा vop *vop;
-	काष्ठा resource *res;
-	पूर्णांक ret, irq;
+static int vop_bind(struct device *dev, struct device *master, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	const struct vop_data *vop_data;
+	struct drm_device *drm_dev = data;
+	struct vop *vop;
+	struct resource *res;
+	int ret, irq;
 
 	vop_data = of_device_get_match_data(dev);
-	अगर (!vop_data)
-		वापस -ENODEV;
+	if (!vop_data)
+		return -ENODEV;
 
-	/* Allocate vop काष्ठा and its vop_win array */
-	vop = devm_kzalloc(dev, काष्ठा_size(vop, win, vop_data->win_size),
+	/* Allocate vop struct and its vop_win array */
+	vop = devm_kzalloc(dev, struct_size(vop, win, vop_data->win_size),
 			   GFP_KERNEL);
-	अगर (!vop)
-		वापस -ENOMEM;
+	if (!vop)
+		return -ENOMEM;
 
 	vop->dev = dev;
 	vop->data = vop_data;
@@ -2118,89 +2117,89 @@ EXPORT_SYMBOL(rockchip_drm_रुको_vact_end);
 
 	vop_win_init(vop);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	vop->len = resource_size(res);
 	vop->regs = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(vop->regs))
-		वापस PTR_ERR(vop->regs);
+	if (IS_ERR(vop->regs))
+		return PTR_ERR(vop->regs);
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
-	अगर (res) अणु
-		अगर (!vop_data->lut_size) अणु
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	if (res) {
+		if (!vop_data->lut_size) {
 			DRM_DEV_ERROR(dev, "no gamma LUT size defined\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		vop->lut_regs = devm_ioremap_resource(dev, res);
-		अगर (IS_ERR(vop->lut_regs))
-			वापस PTR_ERR(vop->lut_regs);
-	पूर्ण
+		if (IS_ERR(vop->lut_regs))
+			return PTR_ERR(vop->lut_regs);
+	}
 
 	vop->regsbak = devm_kzalloc(dev, vop->len, GFP_KERNEL);
-	अगर (!vop->regsbak)
-		वापस -ENOMEM;
+	if (!vop->regsbak)
+		return -ENOMEM;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		DRM_DEV_ERROR(dev, "cannot find irq for vop\n");
-		वापस irq;
-	पूर्ण
-	vop->irq = (अचिन्हित पूर्णांक)irq;
+		return irq;
+	}
+	vop->irq = (unsigned int)irq;
 
 	spin_lock_init(&vop->reg_lock);
 	spin_lock_init(&vop->irq_lock);
 	mutex_init(&vop->vop_lock);
 
 	ret = vop_create_crtc(vop);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	ret = vop_initial(vop);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		DRM_DEV_ERROR(&pdev->dev,
 			      "cannot initial vop dev - err %d\n", ret);
-		जाओ err_disable_pm_runसमय;
-	पूर्ण
+		goto err_disable_pm_runtime;
+	}
 
 	ret = devm_request_irq(dev, vop->irq, vop_isr,
 			       IRQF_SHARED, dev_name(dev), vop);
-	अगर (ret)
-		जाओ err_disable_pm_runसमय;
+	if (ret)
+		goto err_disable_pm_runtime;
 
-	अगर (vop->data->feature & VOP_FEATURE_INTERNAL_RGB) अणु
+	if (vop->data->feature & VOP_FEATURE_INTERNAL_RGB) {
 		vop->rgb = rockchip_rgb_init(dev, &vop->crtc, vop->drm_dev);
-		अगर (IS_ERR(vop->rgb)) अणु
+		if (IS_ERR(vop->rgb)) {
 			ret = PTR_ERR(vop->rgb);
-			जाओ err_disable_pm_runसमय;
-		पूर्ण
-	पूर्ण
+			goto err_disable_pm_runtime;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
-err_disable_pm_runसमय:
-	pm_runसमय_disable(&pdev->dev);
+err_disable_pm_runtime:
+	pm_runtime_disable(&pdev->dev);
 	vop_destroy_crtc(vop);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vop_unbind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
-अणु
-	काष्ठा vop *vop = dev_get_drvdata(dev);
+static void vop_unbind(struct device *dev, struct device *master, void *data)
+{
+	struct vop *vop = dev_get_drvdata(dev);
 
-	अगर (vop->rgb)
+	if (vop->rgb)
 		rockchip_rgb_fini(vop->rgb);
 
-	pm_runसमय_disable(dev);
+	pm_runtime_disable(dev);
 	vop_destroy_crtc(vop);
 
 	clk_unprepare(vop->aclk);
 	clk_unprepare(vop->hclk);
 	clk_unprepare(vop->dclk);
-पूर्ण
+}
 
-स्थिर काष्ठा component_ops vop_component_ops = अणु
+const struct component_ops vop_component_ops = {
 	.bind = vop_bind,
 	.unbind = vop_unbind,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(vop_component_ops);

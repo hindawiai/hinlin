@@ -1,27 +1,26 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2017 Hari Bathini, IBM Corporation
  */
 
-#समावेश "namespaces.h"
-#समावेश "event.h"
-#समावेश "get_current_dir_name.h"
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <सीमा.स>
-#समावेश <sched.h>
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <यंत्र/bug.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/zभाग.स>
+#include "namespaces.h"
+#include "event.h"
+#include "get_current_dir_name.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <sched.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <asm/bug.h>
+#include <linux/kernel.h>
+#include <linux/zalloc.h>
 
-अटल स्थिर अक्षर *perf_ns__names[] = अणु
+static const char *perf_ns__names[] = {
 	[NET_NS_INDEX]		= "net",
 	[UTS_NS_INDEX]		= "uts",
 	[IPC_NS_INDEX]		= "ipc",
@@ -29,274 +28,274 @@
 	[USER_NS_INDEX]		= "user",
 	[MNT_NS_INDEX]		= "mnt",
 	[CGROUP_NS_INDEX]	= "cgroup",
-पूर्ण;
+};
 
-स्थिर अक्षर *perf_ns__name(अचिन्हित पूर्णांक id)
-अणु
-	अगर (id >= ARRAY_SIZE(perf_ns__names))
-		वापस "UNKNOWN";
-	वापस perf_ns__names[id];
-पूर्ण
+const char *perf_ns__name(unsigned int id)
+{
+	if (id >= ARRAY_SIZE(perf_ns__names))
+		return "UNKNOWN";
+	return perf_ns__names[id];
+}
 
-काष्ठा namespaces *namespaces__new(काष्ठा perf_record_namespaces *event)
-अणु
-	काष्ठा namespaces *namespaces;
+struct namespaces *namespaces__new(struct perf_record_namespaces *event)
+{
+	struct namespaces *namespaces;
 	u64 link_info_size = ((event ? event->nr_namespaces : NR_NAMESPACES) *
-			      माप(काष्ठा perf_ns_link_info));
+			      sizeof(struct perf_ns_link_info));
 
-	namespaces = zalloc(माप(काष्ठा namespaces) + link_info_size);
-	अगर (!namespaces)
-		वापस शून्य;
+	namespaces = zalloc(sizeof(struct namespaces) + link_info_size);
+	if (!namespaces)
+		return NULL;
 
-	namespaces->end_समय = -1;
+	namespaces->end_time = -1;
 
-	अगर (event)
-		स_नकल(namespaces->link_info, event->link_info, link_info_size);
+	if (event)
+		memcpy(namespaces->link_info, event->link_info, link_info_size);
 
-	वापस namespaces;
-पूर्ण
+	return namespaces;
+}
 
-व्योम namespaces__मुक्त(काष्ठा namespaces *namespaces)
-अणु
-	मुक्त(namespaces);
-पूर्ण
+void namespaces__free(struct namespaces *namespaces)
+{
+	free(namespaces);
+}
 
-पूर्णांक nsinfo__init(काष्ठा nsinfo *nsi)
-अणु
-	अक्षर oldns[PATH_MAX];
-	अक्षर spath[PATH_MAX];
-	अक्षर *newns = शून्य;
-	अक्षर *statln = शून्य;
-	अक्षर *nspid;
-	काष्ठा stat old_stat;
-	काष्ठा stat new_stat;
-	खाता *f = शून्य;
-	माप_प्रकार linesz = 0;
-	पूर्णांक rv = -1;
+int nsinfo__init(struct nsinfo *nsi)
+{
+	char oldns[PATH_MAX];
+	char spath[PATH_MAX];
+	char *newns = NULL;
+	char *statln = NULL;
+	char *nspid;
+	struct stat old_stat;
+	struct stat new_stat;
+	FILE *f = NULL;
+	size_t linesz = 0;
+	int rv = -1;
 
-	अगर (snम_लिखो(oldns, PATH_MAX, "/proc/self/ns/mnt") >= PATH_MAX)
-		वापस rv;
+	if (snprintf(oldns, PATH_MAX, "/proc/self/ns/mnt") >= PATH_MAX)
+		return rv;
 
-	अगर (aप्र_लिखो(&newns, "/proc/%d/ns/mnt", nsi->pid) == -1)
-		वापस rv;
+	if (asprintf(&newns, "/proc/%d/ns/mnt", nsi->pid) == -1)
+		return rv;
 
-	अगर (stat(oldns, &old_stat) < 0)
-		जाओ out;
+	if (stat(oldns, &old_stat) < 0)
+		goto out;
 
-	अगर (stat(newns, &new_stat) < 0)
-		जाओ out;
+	if (stat(newns, &new_stat) < 0)
+		goto out;
 
-	/* Check अगर the mount namespaces dअगरfer, अगर so then indicate that we
-	 * want to चयन as part of looking up dso/map data.
+	/* Check if the mount namespaces differ, if so then indicate that we
+	 * want to switch as part of looking up dso/map data.
 	 */
-	अगर (old_stat.st_ino != new_stat.st_ino) अणु
+	if (old_stat.st_ino != new_stat.st_ino) {
 		nsi->need_setns = true;
 		nsi->mntns_path = newns;
-		newns = शून्य;
-	पूर्ण
+		newns = NULL;
+	}
 
-	/* If we're dealing with a process that is in a dअगरferent PID namespace,
-	 * attempt to work out the innermost tgid क्रम the process.
+	/* If we're dealing with a process that is in a different PID namespace,
+	 * attempt to work out the innermost tgid for the process.
 	 */
-	अगर (snम_लिखो(spath, PATH_MAX, "/proc/%d/status", nsi->pid) >= PATH_MAX)
-		जाओ out;
+	if (snprintf(spath, PATH_MAX, "/proc/%d/status", nsi->pid) >= PATH_MAX)
+		goto out;
 
-	f = ख_खोलो(spath, "r");
-	अगर (f == शून्य)
-		जाओ out;
+	f = fopen(spath, "r");
+	if (f == NULL)
+		goto out;
 
-	जबतक (getline(&statln, &linesz, f) != -1) अणु
-		/* Use tgid अगर CONFIG_PID_NS is not defined. */
-		अगर (म_माला(statln, "Tgid:") != शून्य) अणु
-			nsi->tgid = (pid_t)म_से_दीर्घ(म_खोजप(statln, '\t'),
-						     शून्य, 10);
+	while (getline(&statln, &linesz, f) != -1) {
+		/* Use tgid if CONFIG_PID_NS is not defined. */
+		if (strstr(statln, "Tgid:") != NULL) {
+			nsi->tgid = (pid_t)strtol(strrchr(statln, '\t'),
+						     NULL, 10);
 			nsi->nstgid = nsi->tgid;
-		पूर्ण
+		}
 
-		अगर (म_माला(statln, "NStgid:") != शून्य) अणु
-			nspid = म_खोजप(statln, '\t');
-			nsi->nstgid = (pid_t)म_से_दीर्घ(nspid, शून्य, 10);
-			/* If innermost tgid is not the first, process is in a dअगरferent
+		if (strstr(statln, "NStgid:") != NULL) {
+			nspid = strrchr(statln, '\t');
+			nsi->nstgid = (pid_t)strtol(nspid, NULL, 10);
+			/* If innermost tgid is not the first, process is in a different
 			 * PID namespace.
 			 */
-			nsi->in_pidns = (statln + माप("NStgid:") - 1) != nspid;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			nsi->in_pidns = (statln + sizeof("NStgid:") - 1) != nspid;
+			break;
+		}
+	}
 	rv = 0;
 
 out:
-	अगर (f != शून्य)
-		(व्योम) ख_बंद(f);
-	मुक्त(statln);
-	मुक्त(newns);
-	वापस rv;
-पूर्ण
+	if (f != NULL)
+		(void) fclose(f);
+	free(statln);
+	free(newns);
+	return rv;
+}
 
-काष्ठा nsinfo *nsinfo__new(pid_t pid)
-अणु
-	काष्ठा nsinfo *nsi;
+struct nsinfo *nsinfo__new(pid_t pid)
+{
+	struct nsinfo *nsi;
 
-	अगर (pid == 0)
-		वापस शून्य;
+	if (pid == 0)
+		return NULL;
 
-	nsi = सुस्मृति(1, माप(*nsi));
-	अगर (nsi != शून्य) अणु
+	nsi = calloc(1, sizeof(*nsi));
+	if (nsi != NULL) {
 		nsi->pid = pid;
 		nsi->tgid = pid;
 		nsi->nstgid = pid;
 		nsi->need_setns = false;
 		nsi->in_pidns = false;
-		/* Init may fail अगर the process निकासs जबतक we're trying to look
-		 * at its proc inक्रमmation.  In that हाल, save the pid but
-		 * करोn't try to enter the namespace.
+		/* Init may fail if the process exits while we're trying to look
+		 * at its proc information.  In that case, save the pid but
+		 * don't try to enter the namespace.
 		 */
-		अगर (nsinfo__init(nsi) == -1)
+		if (nsinfo__init(nsi) == -1)
 			nsi->need_setns = false;
 
 		refcount_set(&nsi->refcnt, 1);
-	पूर्ण
+	}
 
-	वापस nsi;
-पूर्ण
+	return nsi;
+}
 
-काष्ठा nsinfo *nsinfo__copy(काष्ठा nsinfo *nsi)
-अणु
-	काष्ठा nsinfo *nnsi;
+struct nsinfo *nsinfo__copy(struct nsinfo *nsi)
+{
+	struct nsinfo *nnsi;
 
-	अगर (nsi == शून्य)
-		वापस शून्य;
+	if (nsi == NULL)
+		return NULL;
 
-	nnsi = सुस्मृति(1, माप(*nnsi));
-	अगर (nnsi != शून्य) अणु
+	nnsi = calloc(1, sizeof(*nnsi));
+	if (nnsi != NULL) {
 		nnsi->pid = nsi->pid;
 		nnsi->tgid = nsi->tgid;
 		nnsi->nstgid = nsi->nstgid;
 		nnsi->need_setns = nsi->need_setns;
 		nnsi->in_pidns = nsi->in_pidns;
-		अगर (nsi->mntns_path) अणु
+		if (nsi->mntns_path) {
 			nnsi->mntns_path = strdup(nsi->mntns_path);
-			अगर (!nnsi->mntns_path) अणु
-				मुक्त(nnsi);
-				वापस शून्य;
-			पूर्ण
-		पूर्ण
+			if (!nnsi->mntns_path) {
+				free(nnsi);
+				return NULL;
+			}
+		}
 		refcount_set(&nnsi->refcnt, 1);
-	पूर्ण
+	}
 
-	वापस nnsi;
-पूर्ण
+	return nnsi;
+}
 
-व्योम nsinfo__delete(काष्ठा nsinfo *nsi)
-अणु
-	zमुक्त(&nsi->mntns_path);
-	मुक्त(nsi);
-पूर्ण
+void nsinfo__delete(struct nsinfo *nsi)
+{
+	zfree(&nsi->mntns_path);
+	free(nsi);
+}
 
-काष्ठा nsinfo *nsinfo__get(काष्ठा nsinfo *nsi)
-अणु
-	अगर (nsi)
+struct nsinfo *nsinfo__get(struct nsinfo *nsi)
+{
+	if (nsi)
 		refcount_inc(&nsi->refcnt);
-	वापस nsi;
-पूर्ण
+	return nsi;
+}
 
-व्योम nsinfo__put(काष्ठा nsinfo *nsi)
-अणु
-	अगर (nsi && refcount_dec_and_test(&nsi->refcnt))
+void nsinfo__put(struct nsinfo *nsi)
+{
+	if (nsi && refcount_dec_and_test(&nsi->refcnt))
 		nsinfo__delete(nsi);
-पूर्ण
+}
 
-व्योम nsinfo__mountns_enter(काष्ठा nsinfo *nsi,
-				  काष्ठा nscookie *nc)
-अणु
-	अक्षर curpath[PATH_MAX];
-	पूर्णांक oldns = -1;
-	पूर्णांक newns = -1;
-	अक्षर *oldcwd = शून्य;
+void nsinfo__mountns_enter(struct nsinfo *nsi,
+				  struct nscookie *nc)
+{
+	char curpath[PATH_MAX];
+	int oldns = -1;
+	int newns = -1;
+	char *oldcwd = NULL;
 
-	अगर (nc == शून्य)
-		वापस;
+	if (nc == NULL)
+		return;
 
 	nc->oldns = -1;
 	nc->newns = -1;
 
-	अगर (!nsi || !nsi->need_setns)
-		वापस;
+	if (!nsi || !nsi->need_setns)
+		return;
 
-	अगर (snम_लिखो(curpath, PATH_MAX, "/proc/self/ns/mnt") >= PATH_MAX)
-		वापस;
+	if (snprintf(curpath, PATH_MAX, "/proc/self/ns/mnt") >= PATH_MAX)
+		return;
 
 	oldcwd = get_current_dir_name();
-	अगर (!oldcwd)
-		वापस;
+	if (!oldcwd)
+		return;
 
-	oldns = खोलो(curpath, O_RDONLY);
-	अगर (oldns < 0)
-		जाओ errout;
+	oldns = open(curpath, O_RDONLY);
+	if (oldns < 0)
+		goto errout;
 
-	newns = खोलो(nsi->mntns_path, O_RDONLY);
-	अगर (newns < 0)
-		जाओ errout;
+	newns = open(nsi->mntns_path, O_RDONLY);
+	if (newns < 0)
+		goto errout;
 
-	अगर (setns(newns, CLONE_NEWNS) < 0)
-		जाओ errout;
+	if (setns(newns, CLONE_NEWNS) < 0)
+		goto errout;
 
 	nc->oldcwd = oldcwd;
 	nc->oldns = oldns;
 	nc->newns = newns;
-	वापस;
+	return;
 
 errout:
-	मुक्त(oldcwd);
-	अगर (oldns > -1)
-		बंद(oldns);
-	अगर (newns > -1)
-		बंद(newns);
-पूर्ण
+	free(oldcwd);
+	if (oldns > -1)
+		close(oldns);
+	if (newns > -1)
+		close(newns);
+}
 
-व्योम nsinfo__mountns_निकास(काष्ठा nscookie *nc)
-अणु
-	अगर (nc == शून्य || nc->oldns == -1 || nc->newns == -1 || !nc->oldcwd)
-		वापस;
+void nsinfo__mountns_exit(struct nscookie *nc)
+{
+	if (nc == NULL || nc->oldns == -1 || nc->newns == -1 || !nc->oldcwd)
+		return;
 
 	setns(nc->oldns, CLONE_NEWNS);
 
-	अगर (nc->oldcwd) अणु
-		WARN_ON_ONCE(स_बदलो(nc->oldcwd));
-		zमुक्त(&nc->oldcwd);
-	पूर्ण
+	if (nc->oldcwd) {
+		WARN_ON_ONCE(chdir(nc->oldcwd));
+		zfree(&nc->oldcwd);
+	}
 
-	अगर (nc->oldns > -1) अणु
-		बंद(nc->oldns);
+	if (nc->oldns > -1) {
+		close(nc->oldns);
 		nc->oldns = -1;
-	पूर्ण
+	}
 
-	अगर (nc->newns > -1) अणु
-		बंद(nc->newns);
+	if (nc->newns > -1) {
+		close(nc->newns);
 		nc->newns = -1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अक्षर *nsinfo__realpath(स्थिर अक्षर *path, काष्ठा nsinfo *nsi)
-अणु
-	अक्षर *rpath;
-	काष्ठा nscookie nsc;
+char *nsinfo__realpath(const char *path, struct nsinfo *nsi)
+{
+	char *rpath;
+	struct nscookie nsc;
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	rpath = realpath(path, शून्य);
-	nsinfo__mountns_निकास(&nsc);
+	rpath = realpath(path, NULL);
+	nsinfo__mountns_exit(&nsc);
 
-	वापस rpath;
-पूर्ण
+	return rpath;
+}
 
-पूर्णांक nsinfo__stat(स्थिर अक्षर *filename, काष्ठा stat *st, काष्ठा nsinfo *nsi)
-अणु
-	पूर्णांक ret;
-	काष्ठा nscookie nsc;
+int nsinfo__stat(const char *filename, struct stat *st, struct nsinfo *nsi)
+{
+	int ret;
+	struct nscookie nsc;
 
 	nsinfo__mountns_enter(nsi, &nsc);
 	ret = stat(filename, st);
-	nsinfo__mountns_निकास(&nsc);
+	nsinfo__mountns_exit(&nsc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

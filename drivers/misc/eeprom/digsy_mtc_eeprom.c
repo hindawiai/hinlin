@@ -1,68 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * EEPROMs access control driver क्रम display configuration EEPROMs
+ * EEPROMs access control driver for display configuration EEPROMs
  * on DigsyMTC board.
  *
- * (C) 2011 DENX Software Engineering, Anम_से_दij Gustschin <agust@denx.de>
+ * (C) 2011 DENX Software Engineering, Anatolij Gustschin <agust@denx.de>
  *
- * FIXME: this driver is used on a device-tree probed platक्रमm: it
+ * FIXME: this driver is used on a device-tree probed platform: it
  * should be defined as a bit-banged SPI device and probed from the device
- * tree and not like this with अटल grabbing of a few numbered GPIO
- * lines at अक्रमom.
+ * tree and not like this with static grabbing of a few numbered GPIO
+ * lines at random.
  *
- * Add proper SPI and EEPROM in arch/घातerpc/boot/dts/digsy_mtc.dts
+ * Add proper SPI and EEPROM in arch/powerpc/boot/dts/digsy_mtc.dts
  * and delete this driver.
  */
 
-#समावेश <linux/gpपन.स>
-#समावेश <linux/gpio/machine.h>
-#समावेश <linux/init.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/spi/spi_gpपन.स>
-#समावेश <linux/eeprom_93xx46.h>
+#include <linux/gpio.h>
+#include <linux/gpio/machine.h>
+#include <linux/init.h>
+#include <linux/platform_device.h>
+#include <linux/spi/spi.h>
+#include <linux/spi/spi_gpio.h>
+#include <linux/eeprom_93xx46.h>
 
-#घोषणा GPIO_EEPROM_CLK		216
-#घोषणा GPIO_EEPROM_CS		210
-#घोषणा GPIO_EEPROM_DI		217
-#घोषणा GPIO_EEPROM_DO		249
-#घोषणा GPIO_EEPROM_OE		255
-#घोषणा EE_SPI_BUS_NUM	1
+#define GPIO_EEPROM_CLK		216
+#define GPIO_EEPROM_CS		210
+#define GPIO_EEPROM_DI		217
+#define GPIO_EEPROM_DO		249
+#define GPIO_EEPROM_OE		255
+#define EE_SPI_BUS_NUM	1
 
-अटल व्योम digsy_mtc_op_prepare(व्योम *p)
-अणु
+static void digsy_mtc_op_prepare(void *p)
+{
 	/* enable */
 	gpio_set_value(GPIO_EEPROM_OE, 0);
-पूर्ण
+}
 
-अटल व्योम digsy_mtc_op_finish(व्योम *p)
-अणु
+static void digsy_mtc_op_finish(void *p)
+{
 	/* disable */
 	gpio_set_value(GPIO_EEPROM_OE, 1);
-पूर्ण
+}
 
-काष्ठा eeprom_93xx46_platक्रमm_data digsy_mtc_eeprom_data = अणु
+struct eeprom_93xx46_platform_data digsy_mtc_eeprom_data = {
 	.flags		= EE_ADDR8,
 	.prepare	= digsy_mtc_op_prepare,
 	.finish		= digsy_mtc_op_finish,
-पूर्ण;
+};
 
-अटल काष्ठा spi_gpio_platक्रमm_data eeprom_spi_gpio_data = अणु
+static struct spi_gpio_platform_data eeprom_spi_gpio_data = {
 	.num_chipselect	= 1,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device digsy_mtc_eeprom = अणु
+static struct platform_device digsy_mtc_eeprom = {
 	.name	= "spi_gpio",
 	.id	= EE_SPI_BUS_NUM,
-	.dev	= अणु
-		.platक्रमm_data	= &eeprom_spi_gpio_data,
-	पूर्ण,
-पूर्ण;
+	.dev	= {
+		.platform_data	= &eeprom_spi_gpio_data,
+	},
+};
 
-अटल काष्ठा gpiod_lookup_table eeprom_spi_gpiod_table = अणु
+static struct gpiod_lookup_table eeprom_spi_gpiod_table = {
 	.dev_id         = "spi_gpio",
-	.table          = अणु
+	.table          = {
 		GPIO_LOOKUP("gpio@b00", GPIO_EEPROM_CLK,
 			    "sck", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("gpio@b00", GPIO_EEPROM_DI,
@@ -71,34 +70,34 @@
 			    "miso", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("gpio@b00", GPIO_EEPROM_CS,
 			    "cs", GPIO_ACTIVE_HIGH),
-		अणु पूर्ण,
-	पूर्ण,
-पूर्ण;
+		{ },
+	},
+};
 
-अटल काष्ठा spi_board_info digsy_mtc_eeprom_info[] __initdata = अणु
-	अणु
+static struct spi_board_info digsy_mtc_eeprom_info[] __initdata = {
+	{
 		.modalias		= "93xx46",
 		.max_speed_hz		= 1000000,
 		.bus_num		= EE_SPI_BUS_NUM,
 		.chip_select		= 0,
 		.mode			= SPI_MODE_0,
-		.platक्रमm_data		= &digsy_mtc_eeprom_data,
-	पूर्ण,
-पूर्ण;
+		.platform_data		= &digsy_mtc_eeprom_data,
+	},
+};
 
-अटल पूर्णांक __init digsy_mtc_eeprom_devices_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init digsy_mtc_eeprom_devices_init(void)
+{
+	int ret;
 
 	ret = gpio_request_one(GPIO_EEPROM_OE, GPIOF_OUT_INIT_HIGH,
 				"93xx46 EEPROMs OE");
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("can't request gpio %d\n", GPIO_EEPROM_OE);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	gpiod_add_lookup_table(&eeprom_spi_gpiod_table);
-	spi_रेजिस्टर_board_info(digsy_mtc_eeprom_info,
+	spi_register_board_info(digsy_mtc_eeprom_info,
 				ARRAY_SIZE(digsy_mtc_eeprom_info));
-	वापस platक्रमm_device_रेजिस्टर(&digsy_mtc_eeprom);
-पूर्ण
+	return platform_device_register(&digsy_mtc_eeprom);
+}
 device_initcall(digsy_mtc_eeprom_devices_init);

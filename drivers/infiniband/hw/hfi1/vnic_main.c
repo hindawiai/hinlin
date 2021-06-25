@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2017 - 2020 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -47,48 +46,48 @@
  */
 
 /*
- * This file contains HFI1 support क्रम VNIC functionality
+ * This file contains HFI1 support for VNIC functionality
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/अगर_vlan.h>
+#include <linux/io.h>
+#include <linux/if_vlan.h>
 
-#समावेश "vnic.h"
-#समावेश "netdev.h"
+#include "vnic.h"
+#include "netdev.h"
 
-#घोषणा HFI_TX_TIMEOUT_MS 1000
+#define HFI_TX_TIMEOUT_MS 1000
 
-#घोषणा HFI1_VNIC_RCV_Q_SIZE   1024
+#define HFI1_VNIC_RCV_Q_SIZE   1024
 
-#घोषणा HFI1_VNIC_UP 0
+#define HFI1_VNIC_UP 0
 
-अटल DEFINE_SPINLOCK(vport_cntr_lock);
+static DEFINE_SPINLOCK(vport_cntr_lock);
 
-#घोषणा SUM_GRP_COUNTERS(stats, qstats, x_grp) करो अणु            \
+#define SUM_GRP_COUNTERS(stats, qstats, x_grp) do {            \
 		u64 *src64, *dst64;                            \
-		क्रम (src64 = &qstats->x_grp.unicast,           \
+		for (src64 = &qstats->x_grp.unicast,           \
 			dst64 = &stats->x_grp.unicast;         \
-			dst64 <= &stats->x_grp.s_1519_max;) अणु  \
+			dst64 <= &stats->x_grp.s_1519_max;) {  \
 			*dst64++ += *src64++;                  \
-		पूर्ण                                              \
-	पूर्ण जबतक (0)
+		}                                              \
+	} while (0)
 
-#घोषणा VNIC_MASK (0xFF)
-#घोषणा VNIC_ID(val) ((1ull << 24) | ((val) & VNIC_MASK))
+#define VNIC_MASK (0xFF)
+#define VNIC_ID(val) ((1ull << 24) | ((val) & VNIC_MASK))
 
 /* hfi1_vnic_update_stats - update statistics */
-अटल व्योम hfi1_vnic_update_stats(काष्ठा hfi1_vnic_vport_info *vinfo,
-				   काष्ठा opa_vnic_stats *stats)
-अणु
-	काष्ठा net_device *netdev = vinfo->netdev;
+static void hfi1_vnic_update_stats(struct hfi1_vnic_vport_info *vinfo,
+				   struct opa_vnic_stats *stats)
+{
+	struct net_device *netdev = vinfo->netdev;
 	u8 i;
 
-	/* add tx counters on dअगरferent queues */
-	क्रम (i = 0; i < vinfo->num_tx_q; i++) अणु
-		काष्ठा opa_vnic_stats *qstats = &vinfo->stats[i];
-		काष्ठा rtnl_link_stats64 *qnstats = &vinfo->stats[i].netstats;
+	/* add tx counters on different queues */
+	for (i = 0; i < vinfo->num_tx_q; i++) {
+		struct opa_vnic_stats *qstats = &vinfo->stats[i];
+		struct rtnl_link_stats64 *qnstats = &vinfo->stats[i].netstats;
 
-		stats->netstats.tx_fअगरo_errors += qnstats->tx_fअगरo_errors;
+		stats->netstats.tx_fifo_errors += qnstats->tx_fifo_errors;
 		stats->netstats.tx_carrier_errors += qnstats->tx_carrier_errors;
 		stats->tx_drop_state += qstats->tx_drop_state;
 		stats->tx_dlid_zero += qstats->tx_dlid_zero;
@@ -96,14 +95,14 @@
 		SUM_GRP_COUNTERS(stats, qstats, tx_grp);
 		stats->netstats.tx_packets += qnstats->tx_packets;
 		stats->netstats.tx_bytes += qnstats->tx_bytes;
-	पूर्ण
+	}
 
-	/* add rx counters on dअगरferent queues */
-	क्रम (i = 0; i < vinfo->num_rx_q; i++) अणु
-		काष्ठा opa_vnic_stats *qstats = &vinfo->stats[i];
-		काष्ठा rtnl_link_stats64 *qnstats = &vinfo->stats[i].netstats;
+	/* add rx counters on different queues */
+	for (i = 0; i < vinfo->num_rx_q; i++) {
+		struct opa_vnic_stats *qstats = &vinfo->stats[i];
+		struct rtnl_link_stats64 *qnstats = &vinfo->stats[i].netstats;
 
-		stats->netstats.rx_fअगरo_errors += qnstats->rx_fअगरo_errors;
+		stats->netstats.rx_fifo_errors += qnstats->rx_fifo_errors;
 		stats->netstats.rx_nohandler += qnstats->rx_nohandler;
 		stats->rx_drop_state += qstats->rx_drop_state;
 		stats->rx_oversize += qstats->rx_oversize;
@@ -112,14 +111,14 @@
 		SUM_GRP_COUNTERS(stats, qstats, rx_grp);
 		stats->netstats.rx_packets += qnstats->rx_packets;
 		stats->netstats.rx_bytes += qnstats->rx_bytes;
-	पूर्ण
+	}
 
-	stats->netstats.tx_errors = stats->netstats.tx_fअगरo_errors +
+	stats->netstats.tx_errors = stats->netstats.tx_fifo_errors +
 				    stats->netstats.tx_carrier_errors +
 				    stats->tx_drop_state + stats->tx_dlid_zero;
 	stats->netstats.tx_dropped = stats->netstats.tx_errors;
 
-	stats->netstats.rx_errors = stats->netstats.rx_fअगरo_errors +
+	stats->netstats.rx_errors = stats->netstats.rx_fifo_errors +
 				    stats->netstats.rx_nohandler +
 				    stats->rx_drop_state + stats->rx_oversize +
 				    stats->rx_runt;
@@ -127,48 +126,48 @@
 
 	netdev->stats.tx_packets = stats->netstats.tx_packets;
 	netdev->stats.tx_bytes = stats->netstats.tx_bytes;
-	netdev->stats.tx_fअगरo_errors = stats->netstats.tx_fअगरo_errors;
+	netdev->stats.tx_fifo_errors = stats->netstats.tx_fifo_errors;
 	netdev->stats.tx_carrier_errors = stats->netstats.tx_carrier_errors;
 	netdev->stats.tx_errors = stats->netstats.tx_errors;
 	netdev->stats.tx_dropped = stats->netstats.tx_dropped;
 
 	netdev->stats.rx_packets = stats->netstats.rx_packets;
 	netdev->stats.rx_bytes = stats->netstats.rx_bytes;
-	netdev->stats.rx_fअगरo_errors = stats->netstats.rx_fअगरo_errors;
+	netdev->stats.rx_fifo_errors = stats->netstats.rx_fifo_errors;
 	netdev->stats.multicast = stats->rx_grp.mcastbcast;
 	netdev->stats.rx_length_errors = stats->rx_oversize + stats->rx_runt;
 	netdev->stats.rx_errors = stats->netstats.rx_errors;
 	netdev->stats.rx_dropped = stats->netstats.rx_dropped;
-पूर्ण
+}
 
 /* update_len_counters - update pkt's len histogram counters */
-अटल अंतरभूत व्योम update_len_counters(काष्ठा opa_vnic_grp_stats *grp,
-				       पूर्णांक len)
-अणु
-	/* account क्रम 4 byte FCS */
-	अगर (len >= 1515)
+static inline void update_len_counters(struct opa_vnic_grp_stats *grp,
+				       int len)
+{
+	/* account for 4 byte FCS */
+	if (len >= 1515)
 		grp->s_1519_max++;
-	अन्यथा अगर (len >= 1020)
+	else if (len >= 1020)
 		grp->s_1024_1518++;
-	अन्यथा अगर (len >= 508)
+	else if (len >= 508)
 		grp->s_512_1023++;
-	अन्यथा अगर (len >= 252)
+	else if (len >= 252)
 		grp->s_256_511++;
-	अन्यथा अगर (len >= 124)
+	else if (len >= 124)
 		grp->s_128_255++;
-	अन्यथा अगर (len >= 61)
+	else if (len >= 61)
 		grp->s_65_127++;
-	अन्यथा
+	else
 		grp->s_64++;
-पूर्ण
+}
 
 /* hfi1_vnic_update_tx_counters - update transmit counters */
-अटल व्योम hfi1_vnic_update_tx_counters(काष्ठा hfi1_vnic_vport_info *vinfo,
-					 u8 q_idx, काष्ठा sk_buff *skb, पूर्णांक err)
-अणु
-	काष्ठा ethhdr *mac_hdr = (काष्ठा ethhdr *)skb_mac_header(skb);
-	काष्ठा opa_vnic_stats *stats = &vinfo->stats[q_idx];
-	काष्ठा opa_vnic_grp_stats *tx_grp = &stats->tx_grp;
+static void hfi1_vnic_update_tx_counters(struct hfi1_vnic_vport_info *vinfo,
+					 u8 q_idx, struct sk_buff *skb, int err)
+{
+	struct ethhdr *mac_hdr = (struct ethhdr *)skb_mac_header(skb);
+	struct opa_vnic_stats *stats = &vinfo->stats[q_idx];
+	struct opa_vnic_grp_stats *tx_grp = &stats->tx_grp;
 	u16 vlan_tci;
 
 	stats->netstats.tx_packets++;
@@ -176,28 +175,28 @@
 
 	update_len_counters(tx_grp, skb->len);
 
-	/* rest of the counts are क्रम good packets only */
-	अगर (unlikely(err))
-		वापस;
+	/* rest of the counts are for good packets only */
+	if (unlikely(err))
+		return;
 
-	अगर (is_multicast_ether_addr(mac_hdr->h_dest))
+	if (is_multicast_ether_addr(mac_hdr->h_dest))
 		tx_grp->mcastbcast++;
-	अन्यथा
+	else
 		tx_grp->unicast++;
 
-	अगर (!__vlan_get_tag(skb, &vlan_tci))
+	if (!__vlan_get_tag(skb, &vlan_tci))
 		tx_grp->vlan++;
-	अन्यथा
+	else
 		tx_grp->untagged++;
-पूर्ण
+}
 
 /* hfi1_vnic_update_rx_counters - update receive counters */
-अटल व्योम hfi1_vnic_update_rx_counters(काष्ठा hfi1_vnic_vport_info *vinfo,
-					 u8 q_idx, काष्ठा sk_buff *skb, पूर्णांक err)
-अणु
-	काष्ठा ethhdr *mac_hdr = (काष्ठा ethhdr *)skb->data;
-	काष्ठा opa_vnic_stats *stats = &vinfo->stats[q_idx];
-	काष्ठा opa_vnic_grp_stats *rx_grp = &stats->rx_grp;
+static void hfi1_vnic_update_rx_counters(struct hfi1_vnic_vport_info *vinfo,
+					 u8 q_idx, struct sk_buff *skb, int err)
+{
+	struct ethhdr *mac_hdr = (struct ethhdr *)skb->data;
+	struct opa_vnic_stats *stats = &vinfo->stats[q_idx];
+	struct opa_vnic_grp_stats *rx_grp = &stats->rx_grp;
 	u16 vlan_tci;
 
 	stats->netstats.rx_packets++;
@@ -205,33 +204,33 @@
 
 	update_len_counters(rx_grp, skb->len);
 
-	/* rest of the counts are क्रम good packets only */
-	अगर (unlikely(err))
-		वापस;
+	/* rest of the counts are for good packets only */
+	if (unlikely(err))
+		return;
 
-	अगर (is_multicast_ether_addr(mac_hdr->h_dest))
+	if (is_multicast_ether_addr(mac_hdr->h_dest))
 		rx_grp->mcastbcast++;
-	अन्यथा
+	else
 		rx_grp->unicast++;
 
-	अगर (!__vlan_get_tag(skb, &vlan_tci))
+	if (!__vlan_get_tag(skb, &vlan_tci))
 		rx_grp->vlan++;
-	अन्यथा
+	else
 		rx_grp->untagged++;
-पूर्ण
+}
 
-/* This function is overloaded क्रम opa_vnic specअगरic implementation */
-अटल व्योम hfi1_vnic_get_stats64(काष्ठा net_device *netdev,
-				  काष्ठा rtnl_link_stats64 *stats)
-अणु
-	काष्ठा opa_vnic_stats *vstats = (काष्ठा opa_vnic_stats *)stats;
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+/* This function is overloaded for opa_vnic specific implementation */
+static void hfi1_vnic_get_stats64(struct net_device *netdev,
+				  struct rtnl_link_stats64 *stats)
+{
+	struct opa_vnic_stats *vstats = (struct opa_vnic_stats *)stats;
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
 
 	hfi1_vnic_update_stats(vinfo, vstats);
-पूर्ण
+}
 
-अटल u64 create_bypass_pbc(u32 vl, u32 dw_len)
-अणु
+static u64 create_bypass_pbc(u32 vl, u32 dw_len)
+{
 	u64 pbc;
 
 	pbc = ((u64)PBC_IHCRC_NONE << PBC_INSERT_HCRC_SHIFT)
@@ -240,51 +239,51 @@
 		| ((vl & PBC_VL_MASK) << PBC_VL_SHIFT)
 		| (dw_len & PBC_LENGTH_DWS_MASK) << PBC_LENGTH_DWS_SHIFT;
 
-	वापस pbc;
-पूर्ण
+	return pbc;
+}
 
-/* hfi1_vnic_maybe_stop_tx - stop tx queue अगर required */
-अटल व्योम hfi1_vnic_maybe_stop_tx(काष्ठा hfi1_vnic_vport_info *vinfo,
+/* hfi1_vnic_maybe_stop_tx - stop tx queue if required */
+static void hfi1_vnic_maybe_stop_tx(struct hfi1_vnic_vport_info *vinfo,
 				    u8 q_idx)
-अणु
-	netअगर_stop_subqueue(vinfo->netdev, q_idx);
-	अगर (!hfi1_vnic_sdma_ग_लिखो_avail(vinfo, q_idx))
-		वापस;
+{
+	netif_stop_subqueue(vinfo->netdev, q_idx);
+	if (!hfi1_vnic_sdma_write_avail(vinfo, q_idx))
+		return;
 
-	netअगर_start_subqueue(vinfo->netdev, q_idx);
-पूर्ण
+	netif_start_subqueue(vinfo->netdev, q_idx);
+}
 
-अटल netdev_tx_t hfi1_netdev_start_xmit(काष्ठा sk_buff *skb,
-					  काष्ठा net_device *netdev)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+static netdev_tx_t hfi1_netdev_start_xmit(struct sk_buff *skb,
+					  struct net_device *netdev)
+{
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
 	u8 pad_len, q_idx = skb->queue_mapping;
-	काष्ठा hfi1_devdata *dd = vinfo->dd;
-	काष्ठा opa_vnic_skb_mdata *mdata;
+	struct hfi1_devdata *dd = vinfo->dd;
+	struct opa_vnic_skb_mdata *mdata;
 	u32 pkt_len, total_len;
-	पूर्णांक err = -EINVAL;
+	int err = -EINVAL;
 	u64 pbc;
 
 	v_dbg("xmit: queue %d skb len %d\n", q_idx, skb->len);
-	अगर (unlikely(!netअगर_oper_up(netdev))) अणु
+	if (unlikely(!netif_oper_up(netdev))) {
 		vinfo->stats[q_idx].tx_drop_state++;
-		जाओ tx_finish;
-	पूर्ण
+		goto tx_finish;
+	}
 
 	/* take out meta data */
-	mdata = (काष्ठा opa_vnic_skb_mdata *)skb->data;
-	skb_pull(skb, माप(*mdata));
-	अगर (unlikely(mdata->flags & OPA_VNIC_SKB_MDATA_ENCAP_ERR)) अणु
+	mdata = (struct opa_vnic_skb_mdata *)skb->data;
+	skb_pull(skb, sizeof(*mdata));
+	if (unlikely(mdata->flags & OPA_VNIC_SKB_MDATA_ENCAP_ERR)) {
 		vinfo->stats[q_idx].tx_dlid_zero++;
-		जाओ tx_finish;
-	पूर्ण
+		goto tx_finish;
+	}
 
-	/* add tail padding (क्रम 8 bytes size alignment) and icrc */
+	/* add tail padding (for 8 bytes size alignment) and icrc */
 	pad_len = -(skb->len + OPA_VNIC_ICRC_TAIL_LEN) & 0x7;
 	pad_len += OPA_VNIC_ICRC_TAIL_LEN;
 
 	/*
-	 * pkt_len is how much data we have to ग_लिखो, includes header and data.
+	 * pkt_len is how much data we have to write, includes header and data.
 	 * total_len is length of the packet in Dwords plus the PBC should not
 	 * include the CRC.
 	 */
@@ -296,133 +295,133 @@
 	skb_get(skb);
 	v_dbg("pbc 0x%016llX len %d pad_len %d\n", pbc, skb->len, pad_len);
 	err = dd->process_vnic_dma_send(dd, q_idx, vinfo, skb, pbc, pad_len);
-	अगर (unlikely(err)) अणु
-		अगर (err == -ENOMEM)
-			vinfo->stats[q_idx].netstats.tx_fअगरo_errors++;
-		अन्यथा अगर (err != -EBUSY)
+	if (unlikely(err)) {
+		if (err == -ENOMEM)
+			vinfo->stats[q_idx].netstats.tx_fifo_errors++;
+		else if (err != -EBUSY)
 			vinfo->stats[q_idx].netstats.tx_carrier_errors++;
-	पूर्ण
-	/* हटाओ the header beक्रमe updating tx counters */
+	}
+	/* remove the header before updating tx counters */
 	skb_pull(skb, OPA_VNIC_HDR_LEN);
 
-	अगर (unlikely(err == -EBUSY)) अणु
+	if (unlikely(err == -EBUSY)) {
 		hfi1_vnic_maybe_stop_tx(vinfo, q_idx);
-		dev_kमुक्त_skb_any(skb);
-		वापस NETDEV_TX_BUSY;
-	पूर्ण
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_BUSY;
+	}
 
 tx_finish:
 	/* update tx counters */
 	hfi1_vnic_update_tx_counters(vinfo, q_idx, skb, err);
-	dev_kमुक्त_skb_any(skb);
-	वापस NETDEV_TX_OK;
-पूर्ण
+	dev_kfree_skb_any(skb);
+	return NETDEV_TX_OK;
+}
 
-अटल u16 hfi1_vnic_select_queue(काष्ठा net_device *netdev,
-				  काष्ठा sk_buff *skb,
-				  काष्ठा net_device *sb_dev)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
-	काष्ठा opa_vnic_skb_mdata *mdata;
-	काष्ठा sdma_engine *sde;
+static u16 hfi1_vnic_select_queue(struct net_device *netdev,
+				  struct sk_buff *skb,
+				  struct net_device *sb_dev)
+{
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+	struct opa_vnic_skb_mdata *mdata;
+	struct sdma_engine *sde;
 
-	mdata = (काष्ठा opa_vnic_skb_mdata *)skb->data;
+	mdata = (struct opa_vnic_skb_mdata *)skb->data;
 	sde = sdma_select_engine_vl(vinfo->dd, mdata->entropy, mdata->vl);
-	वापस sde->this_idx;
-पूर्ण
+	return sde->this_idx;
+}
 
 /* hfi1_vnic_decap_skb - strip OPA header from the skb (ethernet) packet */
-अटल अंतरभूत पूर्णांक hfi1_vnic_decap_skb(काष्ठा hfi1_vnic_rx_queue *rxq,
-				      काष्ठा sk_buff *skb)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = rxq->vinfo;
-	पूर्णांक max_len = vinfo->netdev->mtu + VLAN_ETH_HLEN;
-	पूर्णांक rc = -EFAULT;
+static inline int hfi1_vnic_decap_skb(struct hfi1_vnic_rx_queue *rxq,
+				      struct sk_buff *skb)
+{
+	struct hfi1_vnic_vport_info *vinfo = rxq->vinfo;
+	int max_len = vinfo->netdev->mtu + VLAN_ETH_HLEN;
+	int rc = -EFAULT;
 
 	skb_pull(skb, OPA_VNIC_HDR_LEN);
 
 	/* Validate Packet length */
-	अगर (unlikely(skb->len > max_len))
+	if (unlikely(skb->len > max_len))
 		vinfo->stats[rxq->idx].rx_oversize++;
-	अन्यथा अगर (unlikely(skb->len < ETH_ZLEN))
+	else if (unlikely(skb->len < ETH_ZLEN))
 		vinfo->stats[rxq->idx].rx_runt++;
-	अन्यथा
+	else
 		rc = 0;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा hfi1_vnic_vport_info *get_vnic_port(काष्ठा hfi1_devdata *dd,
-						  पूर्णांक vesw_id)
-अणु
-	पूर्णांक vnic_id = VNIC_ID(vesw_id);
+static struct hfi1_vnic_vport_info *get_vnic_port(struct hfi1_devdata *dd,
+						  int vesw_id)
+{
+	int vnic_id = VNIC_ID(vesw_id);
 
-	वापस hfi1_netdev_get_data(dd, vnic_id);
-पूर्ण
+	return hfi1_netdev_get_data(dd, vnic_id);
+}
 
-अटल काष्ठा hfi1_vnic_vport_info *get_first_vnic_port(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo;
-	पूर्णांक next_id = VNIC_ID(0);
+static struct hfi1_vnic_vport_info *get_first_vnic_port(struct hfi1_devdata *dd)
+{
+	struct hfi1_vnic_vport_info *vinfo;
+	int next_id = VNIC_ID(0);
 
 	vinfo = hfi1_netdev_get_first_data(dd, &next_id);
 
-	अगर (next_id > VNIC_ID(VNIC_MASK))
-		वापस शून्य;
+	if (next_id > VNIC_ID(VNIC_MASK))
+		return NULL;
 
-	वापस vinfo;
-पूर्ण
+	return vinfo;
+}
 
-व्योम hfi1_vnic_bypass_rcv(काष्ठा hfi1_packet *packet)
-अणु
-	काष्ठा hfi1_devdata *dd = packet->rcd->dd;
-	काष्ठा hfi1_vnic_vport_info *vinfo = शून्य;
-	काष्ठा hfi1_vnic_rx_queue *rxq;
-	काष्ठा sk_buff *skb;
-	पूर्णांक l4_type, vesw_id = -1, rc;
+void hfi1_vnic_bypass_rcv(struct hfi1_packet *packet)
+{
+	struct hfi1_devdata *dd = packet->rcd->dd;
+	struct hfi1_vnic_vport_info *vinfo = NULL;
+	struct hfi1_vnic_rx_queue *rxq;
+	struct sk_buff *skb;
+	int l4_type, vesw_id = -1, rc;
 	u8 q_idx;
-	अचिन्हित अक्षर *pad_info;
+	unsigned char *pad_info;
 
 	l4_type = hfi1_16B_get_l4(packet->ebuf);
-	अगर (likely(l4_type == OPA_16B_L4_ETHR)) अणु
+	if (likely(l4_type == OPA_16B_L4_ETHR)) {
 		vesw_id = HFI1_VNIC_GET_VESWID(packet->ebuf);
 		vinfo = get_vnic_port(dd, vesw_id);
 
 		/*
-		 * In हाल of invalid vesw id, count the error on
+		 * In case of invalid vesw id, count the error on
 		 * the first available vport.
 		 */
-		अगर (unlikely(!vinfo)) अणु
-			काष्ठा hfi1_vnic_vport_info *vinfo_पंचांगp;
+		if (unlikely(!vinfo)) {
+			struct hfi1_vnic_vport_info *vinfo_tmp;
 
-			vinfo_पंचांगp = get_first_vnic_port(dd);
-			अगर (vinfo_पंचांगp) अणु
+			vinfo_tmp = get_first_vnic_port(dd);
+			if (vinfo_tmp) {
 				spin_lock(&vport_cntr_lock);
-				vinfo_पंचांगp->stats[0].netstats.rx_nohandler++;
+				vinfo_tmp->stats[0].netstats.rx_nohandler++;
 				spin_unlock(&vport_cntr_lock);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (unlikely(!vinfo)) अणु
+	if (unlikely(!vinfo)) {
 		dd_dev_warn(dd, "vnic rcv err: l4 %d vesw id %d ctx %d\n",
 			    l4_type, vesw_id, packet->rcd->ctxt);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	q_idx = packet->rcd->vnic_q_idx;
 	rxq = &vinfo->rxq[q_idx];
-	अगर (unlikely(!netअगर_oper_up(vinfo->netdev))) अणु
+	if (unlikely(!netif_oper_up(vinfo->netdev))) {
 		vinfo->stats[q_idx].rx_drop_state++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	skb = netdev_alloc_skb(vinfo->netdev, packet->tlen);
-	अगर (unlikely(!skb)) अणु
-		vinfo->stats[q_idx].netstats.rx_fअगरo_errors++;
-		वापस;
-	पूर्ण
+	if (unlikely(!skb)) {
+		vinfo->stats[q_idx].netstats.rx_fifo_errors++;
+		return;
+	}
 
-	स_नकल(skb->data, packet->ebuf, packet->tlen);
+	memcpy(skb->data, packet->ebuf, packet->tlen);
 	skb_put(skb, packet->tlen);
 
 	pad_info = skb->data + skb->len - 1;
@@ -433,97 +432,97 @@ tx_finish:
 
 	/* update rx counters */
 	hfi1_vnic_update_rx_counters(vinfo, rxq->idx, skb, rc);
-	अगर (unlikely(rc)) अणु
-		dev_kमुक्त_skb_any(skb);
-		वापस;
-	पूर्ण
+	if (unlikely(rc)) {
+		dev_kfree_skb_any(skb);
+		return;
+	}
 
-	skb_checksum_none_निश्चित(skb);
+	skb_checksum_none_assert(skb);
 	skb->protocol = eth_type_trans(skb, rxq->netdev);
 
 	napi_gro_receive(&rxq->napi, skb);
-पूर्ण
+}
 
-अटल पूर्णांक hfi1_vnic_up(काष्ठा hfi1_vnic_vport_info *vinfo)
-अणु
-	काष्ठा hfi1_devdata *dd = vinfo->dd;
-	काष्ठा net_device *netdev = vinfo->netdev;
-	पूर्णांक rc;
+static int hfi1_vnic_up(struct hfi1_vnic_vport_info *vinfo)
+{
+	struct hfi1_devdata *dd = vinfo->dd;
+	struct net_device *netdev = vinfo->netdev;
+	int rc;
 
-	/* ensure भव eth चयन id is valid */
-	अगर (!vinfo->vesw_id)
-		वापस -EINVAL;
+	/* ensure virtual eth switch id is valid */
+	if (!vinfo->vesw_id)
+		return -EINVAL;
 
 	rc = hfi1_netdev_add_data(dd, VNIC_ID(vinfo->vesw_id), vinfo);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	rc = hfi1_netdev_rx_init(dd);
-	अगर (rc)
-		जाओ err_हटाओ;
+	if (rc)
+		goto err_remove;
 
-	netअगर_carrier_on(netdev);
-	netअगर_tx_start_all_queues(netdev);
+	netif_carrier_on(netdev);
+	netif_tx_start_all_queues(netdev);
 	set_bit(HFI1_VNIC_UP, &vinfo->flags);
 
-	वापस 0;
+	return 0;
 
-err_हटाओ:
-	hfi1_netdev_हटाओ_data(dd, VNIC_ID(vinfo->vesw_id));
-	वापस rc;
-पूर्ण
+err_remove:
+	hfi1_netdev_remove_data(dd, VNIC_ID(vinfo->vesw_id));
+	return rc;
+}
 
-अटल व्योम hfi1_vnic_करोwn(काष्ठा hfi1_vnic_vport_info *vinfo)
-अणु
-	काष्ठा hfi1_devdata *dd = vinfo->dd;
+static void hfi1_vnic_down(struct hfi1_vnic_vport_info *vinfo)
+{
+	struct hfi1_devdata *dd = vinfo->dd;
 
 	clear_bit(HFI1_VNIC_UP, &vinfo->flags);
-	netअगर_carrier_off(vinfo->netdev);
-	netअगर_tx_disable(vinfo->netdev);
-	hfi1_netdev_हटाओ_data(dd, VNIC_ID(vinfo->vesw_id));
+	netif_carrier_off(vinfo->netdev);
+	netif_tx_disable(vinfo->netdev);
+	hfi1_netdev_remove_data(dd, VNIC_ID(vinfo->vesw_id));
 
 	hfi1_netdev_rx_destroy(dd);
-पूर्ण
+}
 
-अटल पूर्णांक hfi1_netdev_खोलो(काष्ठा net_device *netdev)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
-	पूर्णांक rc;
+static int hfi1_netdev_open(struct net_device *netdev)
+{
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+	int rc;
 
 	mutex_lock(&vinfo->lock);
 	rc = hfi1_vnic_up(vinfo);
 	mutex_unlock(&vinfo->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक hfi1_netdev_बंद(काष्ठा net_device *netdev)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+static int hfi1_netdev_close(struct net_device *netdev)
+{
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
 
 	mutex_lock(&vinfo->lock);
-	अगर (test_bit(HFI1_VNIC_UP, &vinfo->flags))
-		hfi1_vnic_करोwn(vinfo);
+	if (test_bit(HFI1_VNIC_UP, &vinfo->flags))
+		hfi1_vnic_down(vinfo);
 	mutex_unlock(&vinfo->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hfi1_vnic_init(काष्ठा hfi1_vnic_vport_info *vinfo)
-अणु
-	काष्ठा hfi1_devdata *dd = vinfo->dd;
-	पूर्णांक rc = 0;
+static int hfi1_vnic_init(struct hfi1_vnic_vport_info *vinfo)
+{
+	struct hfi1_devdata *dd = vinfo->dd;
+	int rc = 0;
 
 	mutex_lock(&hfi1_mutex);
-	अगर (!dd->vnic_num_vports) अणु
+	if (!dd->vnic_num_vports) {
 		rc = hfi1_vnic_txreq_init(dd);
-		अगर (rc)
-			जाओ txreq_fail;
-	पूर्ण
+		if (rc)
+			goto txreq_fail;
+	}
 
 	rc = hfi1_netdev_rx_init(dd);
-	अगर (rc) अणु
+	if (rc) {
 		dd_dev_err(dd, "Unable to initialize netdev contexts\n");
-		जाओ alloc_fail;
-	पूर्ण
+		goto alloc_fail;
+	}
 
 	hfi1_init_vnic_rsm(dd);
 
@@ -531,96 +530,96 @@ err_हटाओ:
 	hfi1_vnic_sdma_init(vinfo);
 
 alloc_fail:
-	अगर (!dd->vnic_num_vports)
+	if (!dd->vnic_num_vports)
 		hfi1_vnic_txreq_deinit(dd);
 txreq_fail:
 	mutex_unlock(&hfi1_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम hfi1_vnic_deinit(काष्ठा hfi1_vnic_vport_info *vinfo)
-अणु
-	काष्ठा hfi1_devdata *dd = vinfo->dd;
+static void hfi1_vnic_deinit(struct hfi1_vnic_vport_info *vinfo)
+{
+	struct hfi1_devdata *dd = vinfo->dd;
 
 	mutex_lock(&hfi1_mutex);
-	अगर (--dd->vnic_num_vports == 0) अणु
+	if (--dd->vnic_num_vports == 0) {
 		hfi1_deinit_vnic_rsm(dd);
 		hfi1_vnic_txreq_deinit(dd);
-	पूर्ण
+	}
 	mutex_unlock(&hfi1_mutex);
 	hfi1_netdev_rx_destroy(dd);
-पूर्ण
+}
 
-अटल व्योम hfi1_vnic_set_vesw_id(काष्ठा net_device *netdev, पूर्णांक id)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
-	bool reखोलो = false;
+static void hfi1_vnic_set_vesw_id(struct net_device *netdev, int id)
+{
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+	bool reopen = false;
 
 	/*
-	 * If vesw_id is being changed, and अगर the vnic port is up,
-	 * reset the vnic port to ensure new vesw_id माला_लो picked up
+	 * If vesw_id is being changed, and if the vnic port is up,
+	 * reset the vnic port to ensure new vesw_id gets picked up
 	 */
-	अगर (id != vinfo->vesw_id) अणु
+	if (id != vinfo->vesw_id) {
 		mutex_lock(&vinfo->lock);
-		अगर (test_bit(HFI1_VNIC_UP, &vinfo->flags)) अणु
-			hfi1_vnic_करोwn(vinfo);
-			reखोलो = true;
-		पूर्ण
+		if (test_bit(HFI1_VNIC_UP, &vinfo->flags)) {
+			hfi1_vnic_down(vinfo);
+			reopen = true;
+		}
 
 		vinfo->vesw_id = id;
-		अगर (reखोलो)
+		if (reopen)
 			hfi1_vnic_up(vinfo);
 
 		mutex_unlock(&vinfo->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* netdev ops */
-अटल स्थिर काष्ठा net_device_ops hfi1_netdev_ops = अणु
-	.nकरो_खोलो = hfi1_netdev_खोलो,
-	.nकरो_stop = hfi1_netdev_बंद,
-	.nकरो_start_xmit = hfi1_netdev_start_xmit,
-	.nकरो_select_queue = hfi1_vnic_select_queue,
-	.nकरो_get_stats64 = hfi1_vnic_get_stats64,
-पूर्ण;
+static const struct net_device_ops hfi1_netdev_ops = {
+	.ndo_open = hfi1_netdev_open,
+	.ndo_stop = hfi1_netdev_close,
+	.ndo_start_xmit = hfi1_netdev_start_xmit,
+	.ndo_select_queue = hfi1_vnic_select_queue,
+	.ndo_get_stats64 = hfi1_vnic_get_stats64,
+};
 
-अटल व्योम hfi1_vnic_मुक्त_rn(काष्ठा net_device *netdev)
-अणु
-	काष्ठा hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
+static void hfi1_vnic_free_rn(struct net_device *netdev)
+{
+	struct hfi1_vnic_vport_info *vinfo = opa_vnic_dev_priv(netdev);
 
 	hfi1_vnic_deinit(vinfo);
 	mutex_destroy(&vinfo->lock);
-	मुक्त_netdev(netdev);
-पूर्ण
+	free_netdev(netdev);
+}
 
-काष्ठा net_device *hfi1_vnic_alloc_rn(काष्ठा ib_device *device,
+struct net_device *hfi1_vnic_alloc_rn(struct ib_device *device,
 				      u32 port_num,
-				      क्रमागत rdma_netdev_t type,
-				      स्थिर अक्षर *name,
-				      अचिन्हित अक्षर name_assign_type,
-				      व्योम (*setup)(काष्ठा net_device *))
-अणु
-	काष्ठा hfi1_devdata *dd = dd_from_ibdev(device);
-	काष्ठा hfi1_vnic_vport_info *vinfo;
-	काष्ठा net_device *netdev;
-	काष्ठा rdma_netdev *rn;
-	पूर्णांक i, size, rc;
+				      enum rdma_netdev_t type,
+				      const char *name,
+				      unsigned char name_assign_type,
+				      void (*setup)(struct net_device *))
+{
+	struct hfi1_devdata *dd = dd_from_ibdev(device);
+	struct hfi1_vnic_vport_info *vinfo;
+	struct net_device *netdev;
+	struct rdma_netdev *rn;
+	int i, size, rc;
 
-	अगर (!dd->num_netdev_contexts)
-		वापस ERR_PTR(-ENOMEM);
+	if (!dd->num_netdev_contexts)
+		return ERR_PTR(-ENOMEM);
 
-	अगर (!port_num || (port_num > dd->num_pports))
-		वापस ERR_PTR(-EINVAL);
+	if (!port_num || (port_num > dd->num_pports))
+		return ERR_PTR(-EINVAL);
 
-	अगर (type != RDMA_NETDEV_OPA_VNIC)
-		वापस ERR_PTR(-EOPNOTSUPP);
+	if (type != RDMA_NETDEV_OPA_VNIC)
+		return ERR_PTR(-EOPNOTSUPP);
 
-	size = माप(काष्ठा opa_vnic_rdma_netdev) + माप(*vinfo);
+	size = sizeof(struct opa_vnic_rdma_netdev) + sizeof(*vinfo);
 	netdev = alloc_netdev_mqs(size, name, name_assign_type, setup,
 				  chip_sdma_engines(dd),
 				  dd->num_netdev_contexts);
-	अगर (!netdev)
-		वापस ERR_PTR(-ENOMEM);
+	if (!netdev)
+		return ERR_PTR(-ENOMEM);
 
 	rn = netdev_priv(netdev);
 	vinfo = opa_vnic_dev_priv(netdev);
@@ -628,31 +627,31 @@ txreq_fail:
 	vinfo->num_tx_q = chip_sdma_engines(dd);
 	vinfo->num_rx_q = dd->num_netdev_contexts;
 	vinfo->netdev = netdev;
-	rn->मुक्त_rdma_netdev = hfi1_vnic_मुक्त_rn;
+	rn->free_rdma_netdev = hfi1_vnic_free_rn;
 	rn->set_id = hfi1_vnic_set_vesw_id;
 
 	netdev->features = NETIF_F_HIGHDMA | NETIF_F_SG;
 	netdev->hw_features = netdev->features;
 	netdev->vlan_features = netdev->features;
-	netdev->watchकरोg_समयo = msecs_to_jअगरfies(HFI_TX_TIMEOUT_MS);
+	netdev->watchdog_timeo = msecs_to_jiffies(HFI_TX_TIMEOUT_MS);
 	netdev->netdev_ops = &hfi1_netdev_ops;
 	mutex_init(&vinfo->lock);
 
-	क्रम (i = 0; i < vinfo->num_rx_q; i++) अणु
-		काष्ठा hfi1_vnic_rx_queue *rxq = &vinfo->rxq[i];
+	for (i = 0; i < vinfo->num_rx_q; i++) {
+		struct hfi1_vnic_rx_queue *rxq = &vinfo->rxq[i];
 
 		rxq->idx = i;
 		rxq->vinfo = vinfo;
 		rxq->netdev = netdev;
-	पूर्ण
+	}
 
 	rc = hfi1_vnic_init(vinfo);
-	अगर (rc)
-		जाओ init_fail;
+	if (rc)
+		goto init_fail;
 
-	वापस netdev;
+	return netdev;
 init_fail:
 	mutex_destroy(&vinfo->lock);
-	मुक्त_netdev(netdev);
-	वापस ERR_PTR(rc);
-पूर्ण
+	free_netdev(netdev);
+	return ERR_PTR(rc);
+}

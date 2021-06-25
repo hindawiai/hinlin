@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
-#अगर_अघोषित __SPRD_MCDT_H
-#घोषणा __SPRD_MCDT_H
+#ifndef __SPRD_MCDT_H
+#define __SPRD_MCDT_H
 
-क्रमागत sprd_mcdt_channel_type अणु
+enum sprd_mcdt_channel_type {
 	SPRD_MCDT_DAC_CHAN,
 	SPRD_MCDT_ADC_CHAN,
 	SPRD_MCDT_UNKNOWN_CHAN,
-पूर्ण;
+};
 
-क्रमागत sprd_mcdt_dma_chan अणु
+enum sprd_mcdt_dma_chan {
 	SPRD_MCDT_DMA_CH0,
 	SPRD_MCDT_DMA_CH1,
 	SPRD_MCDT_DMA_CH2,
 	SPRD_MCDT_DMA_CH3,
 	SPRD_MCDT_DMA_CH4,
-पूर्ण;
+};
 
-काष्ठा sprd_mcdt_chan_callback अणु
-	व्योम (*notअगरy)(व्योम *data);
-	व्योम *data;
-पूर्ण;
+struct sprd_mcdt_chan_callback {
+	void (*notify)(void *data);
+	void *data;
+};
 
 /**
- * काष्ठा sprd_mcdt_chan - this काष्ठा represents a single channel instance
+ * struct sprd_mcdt_chan - this struct represents a single channel instance
  * @mcdt: the mcdt controller
  * @id: channel id
- * @fअगरo_phys: channel fअगरo physical address which is used क्रम DMA transfer
+ * @fifo_phys: channel fifo physical address which is used for DMA transfer
  * @type: channel type
- * @cb: channel fअगरo पूर्णांकerrupt's callback पूर्णांकerface to notअगरy the fअगरo events
- * @dma_enable: indicate अगर use DMA mode to transfer data
- * @पूर्णांक_enable: indicate अगर use पूर्णांकerrupt mode to notअगरy users to पढ़ो or
- * ग_लिखो data manually
- * @list: used to link पूर्णांकo the global list
+ * @cb: channel fifo interrupt's callback interface to notify the fifo events
+ * @dma_enable: indicate if use DMA mode to transfer data
+ * @int_enable: indicate if use interrupt mode to notify users to read or
+ * write data manually
+ * @list: used to link into the global list
  *
- * Note: users should not modअगरy any members of this काष्ठाure.
+ * Note: users should not modify any members of this structure.
  */
-काष्ठा sprd_mcdt_chan अणु
-	काष्ठा sprd_mcdt_dev *mcdt;
+struct sprd_mcdt_chan {
+	struct sprd_mcdt_dev *mcdt;
 	u8 id;
-	अचिन्हित दीर्घ fअगरo_phys;
-	क्रमागत sprd_mcdt_channel_type type;
-	क्रमागत sprd_mcdt_dma_chan dma_chan;
-	काष्ठा sprd_mcdt_chan_callback *cb;
+	unsigned long fifo_phys;
+	enum sprd_mcdt_channel_type type;
+	enum sprd_mcdt_dma_chan dma_chan;
+	struct sprd_mcdt_chan_callback *cb;
 	bool dma_enable;
-	bool पूर्णांक_enable;
-	काष्ठा list_head list;
-पूर्ण;
+	bool int_enable;
+	struct list_head list;
+};
 
-#अगर IS_ENABLED(CONFIG_SND_SOC_SPRD_MCDT)
-काष्ठा sprd_mcdt_chan *sprd_mcdt_request_chan(u8 channel,
-					      क्रमागत sprd_mcdt_channel_type type);
-व्योम sprd_mcdt_मुक्त_chan(काष्ठा sprd_mcdt_chan *chan);
+#if IS_ENABLED(CONFIG_SND_SOC_SPRD_MCDT)
+struct sprd_mcdt_chan *sprd_mcdt_request_chan(u8 channel,
+					      enum sprd_mcdt_channel_type type);
+void sprd_mcdt_free_chan(struct sprd_mcdt_chan *chan);
 
-पूर्णांक sprd_mcdt_chan_ग_लिखो(काष्ठा sprd_mcdt_chan *chan, अक्षर *tx_buf, u32 size);
-पूर्णांक sprd_mcdt_chan_पढ़ो(काष्ठा sprd_mcdt_chan *chan, अक्षर *rx_buf, u32 size);
-पूर्णांक sprd_mcdt_chan_पूर्णांक_enable(काष्ठा sprd_mcdt_chan *chan, u32 water_mark,
-			      काष्ठा sprd_mcdt_chan_callback *cb);
-व्योम sprd_mcdt_chan_पूर्णांक_disable(काष्ठा sprd_mcdt_chan *chan);
+int sprd_mcdt_chan_write(struct sprd_mcdt_chan *chan, char *tx_buf, u32 size);
+int sprd_mcdt_chan_read(struct sprd_mcdt_chan *chan, char *rx_buf, u32 size);
+int sprd_mcdt_chan_int_enable(struct sprd_mcdt_chan *chan, u32 water_mark,
+			      struct sprd_mcdt_chan_callback *cb);
+void sprd_mcdt_chan_int_disable(struct sprd_mcdt_chan *chan);
 
-पूर्णांक sprd_mcdt_chan_dma_enable(काष्ठा sprd_mcdt_chan *chan,
-			      क्रमागत sprd_mcdt_dma_chan dma_chan, u32 water_mark);
-व्योम sprd_mcdt_chan_dma_disable(काष्ठा sprd_mcdt_chan *chan);
+int sprd_mcdt_chan_dma_enable(struct sprd_mcdt_chan *chan,
+			      enum sprd_mcdt_dma_chan dma_chan, u32 water_mark);
+void sprd_mcdt_chan_dma_disable(struct sprd_mcdt_chan *chan);
 
-#अन्यथा
+#else
 
-काष्ठा sprd_mcdt_chan *sprd_mcdt_request_chan(u8 channel,
-					      क्रमागत sprd_mcdt_channel_type type)
-अणु
-	वापस शून्य;
-पूर्ण
+struct sprd_mcdt_chan *sprd_mcdt_request_chan(u8 channel,
+					      enum sprd_mcdt_channel_type type)
+{
+	return NULL;
+}
 
-व्योम sprd_mcdt_मुक्त_chan(काष्ठा sprd_mcdt_chan *chan)
-अणु पूर्ण
+void sprd_mcdt_free_chan(struct sprd_mcdt_chan *chan)
+{ }
 
-पूर्णांक sprd_mcdt_chan_ग_लिखो(काष्ठा sprd_mcdt_chan *chan, अक्षर *tx_buf, u32 size)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int sprd_mcdt_chan_write(struct sprd_mcdt_chan *chan, char *tx_buf, u32 size)
+{
+	return -EINVAL;
+}
 
-पूर्णांक sprd_mcdt_chan_पढ़ो(काष्ठा sprd_mcdt_chan *chan, अक्षर *rx_buf, u32 size)
-अणु
-	वापस 0;
-पूर्ण
+int sprd_mcdt_chan_read(struct sprd_mcdt_chan *chan, char *rx_buf, u32 size)
+{
+	return 0;
+}
 
-पूर्णांक sprd_mcdt_chan_पूर्णांक_enable(काष्ठा sprd_mcdt_chan *chan, u32 water_mark,
-			      काष्ठा sprd_mcdt_chan_callback *cb)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int sprd_mcdt_chan_int_enable(struct sprd_mcdt_chan *chan, u32 water_mark,
+			      struct sprd_mcdt_chan_callback *cb)
+{
+	return -EINVAL;
+}
 
-व्योम sprd_mcdt_chan_पूर्णांक_disable(काष्ठा sprd_mcdt_chan *chan)
-अणु पूर्ण
+void sprd_mcdt_chan_int_disable(struct sprd_mcdt_chan *chan)
+{ }
 
-पूर्णांक sprd_mcdt_chan_dma_enable(काष्ठा sprd_mcdt_chan *chan,
-			      क्रमागत sprd_mcdt_dma_chan dma_chan, u32 water_mark)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int sprd_mcdt_chan_dma_enable(struct sprd_mcdt_chan *chan,
+			      enum sprd_mcdt_dma_chan dma_chan, u32 water_mark)
+{
+	return -EINVAL;
+}
 
-व्योम sprd_mcdt_chan_dma_disable(काष्ठा sprd_mcdt_chan *chan)
-अणु पूर्ण
+void sprd_mcdt_chan_dma_disable(struct sprd_mcdt_chan *chan)
+{ }
 
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* __SPRD_MCDT_H */
+#endif /* __SPRD_MCDT_H */

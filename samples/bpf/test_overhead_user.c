@@ -1,217 +1,216 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2016 Facebook
  */
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकपन.स>
-#समावेश <sys/types.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <निश्चित.स>
-#समावेश <sys/रुको.h>
-#समावेश <मानककोष.स>
-#समावेश <संकेत.स>
-#समावेश <linux/bpf.h>
-#समावेश <माला.स>
-#समावेश <समय.स>
-#समावेश <sys/resource.h>
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/libbpf.h>
+#define _GNU_SOURCE
+#include <sched.h>
+#include <errno.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <asm/unistd.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <assert.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <linux/bpf.h>
+#include <string.h>
+#include <time.h>
+#include <sys/resource.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 
-#घोषणा MAX_CNT 1000000
+#define MAX_CNT 1000000
 
-अटल काष्ठा bpf_link *links[2];
-अटल काष्ठा bpf_object *obj;
-अटल पूर्णांक cnt;
+static struct bpf_link *links[2];
+static struct bpf_object *obj;
+static int cnt;
 
-अटल __u64 समय_get_ns(व्योम)
-अणु
-	काष्ठा बारpec ts;
+static __u64 time_get_ns(void)
+{
+	struct timespec ts;
 
-	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
-	वापस ts.tv_sec * 1000000000ull + ts.tv_nsec;
-पूर्ण
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec * 1000000000ull + ts.tv_nsec;
+}
 
-अटल व्योम test_task_नाम(पूर्णांक cpu)
-अणु
-	__u64 start_समय;
-	अक्षर buf[] = "test\n";
-	पूर्णांक i, fd;
+static void test_task_rename(int cpu)
+{
+	__u64 start_time;
+	char buf[] = "test\n";
+	int i, fd;
 
-	fd = खोलो("/proc/self/comm", O_WRONLY|O_TRUNC);
-	अगर (fd < 0) अणु
-		म_लिखो("couldn't open /proc\n");
-		निकास(1);
-	पूर्ण
-	start_समय = समय_get_ns();
-	क्रम (i = 0; i < MAX_CNT; i++) अणु
-		अगर (ग_लिखो(fd, buf, माप(buf)) < 0) अणु
-			म_लिखो("task rename failed: %s\n", म_त्रुटि(त्रुटि_सं));
-			बंद(fd);
-			वापस;
-		पूर्ण
-	पूर्ण
-	म_लिखो("task_rename:%d: %lld events per sec\n",
-	       cpu, MAX_CNT * 1000000000ll / (समय_get_ns() - start_समय));
-	बंद(fd);
-पूर्ण
+	fd = open("/proc/self/comm", O_WRONLY|O_TRUNC);
+	if (fd < 0) {
+		printf("couldn't open /proc\n");
+		exit(1);
+	}
+	start_time = time_get_ns();
+	for (i = 0; i < MAX_CNT; i++) {
+		if (write(fd, buf, sizeof(buf)) < 0) {
+			printf("task rename failed: %s\n", strerror(errno));
+			close(fd);
+			return;
+		}
+	}
+	printf("task_rename:%d: %lld events per sec\n",
+	       cpu, MAX_CNT * 1000000000ll / (time_get_ns() - start_time));
+	close(fd);
+}
 
-अटल व्योम test_uअक्रमom_पढ़ो(पूर्णांक cpu)
-अणु
-	__u64 start_समय;
-	अक्षर buf[4];
-	पूर्णांक i, fd;
+static void test_urandom_read(int cpu)
+{
+	__u64 start_time;
+	char buf[4];
+	int i, fd;
 
-	fd = खोलो("/dev/urandom", O_RDONLY);
-	अगर (fd < 0) अणु
-		म_लिखो("couldn't open /dev/urandom\n");
-		निकास(1);
-	पूर्ण
-	start_समय = समय_get_ns();
-	क्रम (i = 0; i < MAX_CNT; i++) अणु
-		अगर (पढ़ो(fd, buf, माप(buf)) < 0) अणु
-			म_लिखो("failed to read from /dev/urandom: %s\n", म_त्रुटि(त्रुटि_सं));
-			बंद(fd);
-			वापस;
-		पूर्ण
-	पूर्ण
-	म_लिखो("urandom_read:%d: %lld events per sec\n",
-	       cpu, MAX_CNT * 1000000000ll / (समय_get_ns() - start_समय));
-	बंद(fd);
-पूर्ण
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0) {
+		printf("couldn't open /dev/urandom\n");
+		exit(1);
+	}
+	start_time = time_get_ns();
+	for (i = 0; i < MAX_CNT; i++) {
+		if (read(fd, buf, sizeof(buf)) < 0) {
+			printf("failed to read from /dev/urandom: %s\n", strerror(errno));
+			close(fd);
+			return;
+		}
+	}
+	printf("urandom_read:%d: %lld events per sec\n",
+	       cpu, MAX_CNT * 1000000000ll / (time_get_ns() - start_time));
+	close(fd);
+}
 
-अटल व्योम loop(पूर्णांक cpu, पूर्णांक flags)
-अणु
+static void loop(int cpu, int flags)
+{
 	cpu_set_t cpuset;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
-	sched_setaffinity(0, माप(cpuset), &cpuset);
+	sched_setaffinity(0, sizeof(cpuset), &cpuset);
 
-	अगर (flags & 1)
-		test_task_नाम(cpu);
-	अगर (flags & 2)
-		test_uअक्रमom_पढ़ो(cpu);
-पूर्ण
+	if (flags & 1)
+		test_task_rename(cpu);
+	if (flags & 2)
+		test_urandom_read(cpu);
+}
 
-अटल व्योम run_perf_test(पूर्णांक tasks, पूर्णांक flags)
-अणु
+static void run_perf_test(int tasks, int flags)
+{
 	pid_t pid[tasks];
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < tasks; i++) अणु
-		pid[i] = विभाजन();
-		अगर (pid[i] == 0) अणु
+	for (i = 0; i < tasks; i++) {
+		pid[i] = fork();
+		if (pid[i] == 0) {
 			loop(i, flags);
-			निकास(0);
-		पूर्ण अन्यथा अगर (pid[i] == -1) अणु
-			म_लिखो("couldn't spawn #%d process\n", i);
-			निकास(1);
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < tasks; i++) अणु
-		पूर्णांक status;
+			exit(0);
+		} else if (pid[i] == -1) {
+			printf("couldn't spawn #%d process\n", i);
+			exit(1);
+		}
+	}
+	for (i = 0; i < tasks; i++) {
+		int status;
 
-		निश्चित(रुकोpid(pid[i], &status, 0) == pid[i]);
-		निश्चित(status == 0);
-	पूर्ण
-पूर्ण
+		assert(waitpid(pid[i], &status, 0) == pid[i]);
+		assert(status == 0);
+	}
+}
 
-अटल पूर्णांक load_progs(अक्षर *filename)
-अणु
-	काष्ठा bpf_program *prog;
-	पूर्णांक err = 0;
+static int load_progs(char *filename)
+{
+	struct bpf_program *prog;
+	int err = 0;
 
-	obj = bpf_object__खोलो_file(filename, शून्य);
+	obj = bpf_object__open_file(filename, NULL);
 	err = libbpf_get_error(obj);
-	अगर (err < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		fprintf(stderr, "ERROR: opening BPF object file failed\n");
+		return err;
+	}
 
 	/* load BPF program */
 	err = bpf_object__load(obj);
-	अगर (err < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		fprintf(stderr, "ERROR: loading BPF object file failed\n");
+		return err;
+	}
 
-	bpf_object__क्रम_each_program(prog, obj) अणु
+	bpf_object__for_each_program(prog, obj) {
 		links[cnt] = bpf_program__attach(prog);
 		err = libbpf_get_error(links[cnt]);
-		अगर (err < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
-			links[cnt] = शून्य;
-			वापस err;
-		पूर्ण
+		if (err < 0) {
+			fprintf(stderr, "ERROR: bpf_program__attach failed\n");
+			links[cnt] = NULL;
+			return err;
+		}
 		cnt++;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम unload_progs(व्योम)
-अणु
-	जबतक (cnt)
+static void unload_progs(void)
+{
+	while (cnt)
 		bpf_link__destroy(links[--cnt]);
 
-	bpf_object__बंद(obj);
-पूर्ण
+	bpf_object__close(obj);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक num_cpu = sysconf(_SC_NPROCESSORS_ONLN);
-	पूर्णांक test_flags = ~0;
-	अक्षर filename[256];
-	पूर्णांक err = 0;
+int main(int argc, char **argv)
+{
+	int num_cpu = sysconf(_SC_NPROCESSORS_ONLN);
+	int test_flags = ~0;
+	char filename[256];
+	int err = 0;
 
 
-	अगर (argc > 1)
-		test_flags = म_से_प(argv[1]) ? : test_flags;
-	अगर (argc > 2)
-		num_cpu = म_से_प(argv[2]) ? : num_cpu;
+	if (argc > 1)
+		test_flags = atoi(argv[1]) ? : test_flags;
+	if (argc > 2)
+		num_cpu = atoi(argv[2]) ? : num_cpu;
 
-	अगर (test_flags & 0x3) अणु
-		म_लिखो("BASE\n");
+	if (test_flags & 0x3) {
+		printf("BASE\n");
 		run_perf_test(num_cpu, test_flags);
-	पूर्ण
+	}
 
-	अगर (test_flags & 0xC) अणु
-		snम_लिखो(filename, माप(filename),
+	if (test_flags & 0xC) {
+		snprintf(filename, sizeof(filename),
 			 "%s_kprobe_kern.o", argv[0]);
 
-		म_लिखो("w/KPROBE\n");
+		printf("w/KPROBE\n");
 		err = load_progs(filename);
-		अगर (!err)
+		if (!err)
 			run_perf_test(num_cpu, test_flags >> 2);
 
 		unload_progs();
-	पूर्ण
+	}
 
-	अगर (test_flags & 0x30) अणु
-		snम_लिखो(filename, माप(filename),
+	if (test_flags & 0x30) {
+		snprintf(filename, sizeof(filename),
 			 "%s_tp_kern.o", argv[0]);
-		म_लिखो("w/TRACEPOINT\n");
+		printf("w/TRACEPOINT\n");
 		err = load_progs(filename);
-		अगर (!err)
+		if (!err)
 			run_perf_test(num_cpu, test_flags >> 4);
 
 		unload_progs();
-	पूर्ण
+	}
 
-	अगर (test_flags & 0xC0) अणु
-		snम_लिखो(filename, माप(filename),
+	if (test_flags & 0xC0) {
+		snprintf(filename, sizeof(filename),
 			 "%s_raw_tp_kern.o", argv[0]);
-		म_लिखो("w/RAW_TRACEPOINT\n");
+		printf("w/RAW_TRACEPOINT\n");
 		err = load_progs(filename);
-		अगर (!err)
+		if (!err)
 			run_perf_test(num_cpu, test_flags >> 6);
 
 		unload_progs();
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}

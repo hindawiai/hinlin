@@ -1,308 +1,307 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) 2003, 04, 11 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2011 Wind River Systems,
  *   written by Ralf Baechle (ralf@linux-mips.org)
  */
-#समावेश <linux/bug.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/of_address.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/memblock.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/pci.h>
+#include <linux/of_address.h>
 
-#समावेश <यंत्र/cpu-info.h>
+#include <asm/cpu-info.h>
 
 /*
- * If PCI_PROBE_ONLY in pci_flags is set, we करोn't change any PCI resource
+ * If PCI_PROBE_ONLY in pci_flags is set, we don't change any PCI resource
  * assignments.
  */
 
 /*
  * The PCI controller list.
  */
-अटल LIST_HEAD(controllers);
+static LIST_HEAD(controllers);
 
-अटल पूर्णांक pci_initialized;
+static int pci_initialized;
 
 /*
- * We need to aव्योम collisions with `mirrored' VGA ports
+ * We need to avoid collisions with `mirrored' VGA ports
  * and other strange ISA hardware, so we always want the
  * addresses to be allocated in the 0x000-0x0ff region
  * modulo 0x400.
  *
- * Why? Because some silly बाह्यal IO cards only decode
+ * Why? Because some silly external IO cards only decode
  * the low 10 bits of the IO address. The 0x00-0xff region
- * is reserved क्रम motherboard devices that decode all 16
+ * is reserved for motherboard devices that decode all 16
  * bits, so it's ok to allocate at, say, 0x2800-0x28ff,
- * but we want to try to aव्योम allocating at 0x2900-0x2bff
+ * but we want to try to avoid allocating at 0x2900-0x2bff
  * which might have be mirrored at 0x0100-0x03ff..
  */
-resource_माप_प्रकार
-pcibios_align_resource(व्योम *data, स्थिर काष्ठा resource *res,
-		       resource_माप_प्रकार size, resource_माप_प्रकार align)
-अणु
-	काष्ठा pci_dev *dev = data;
-	काष्ठा pci_controller *hose = dev->sysdata;
-	resource_माप_प्रकार start = res->start;
+resource_size_t
+pcibios_align_resource(void *data, const struct resource *res,
+		       resource_size_t size, resource_size_t align)
+{
+	struct pci_dev *dev = data;
+	struct pci_controller *hose = dev->sysdata;
+	resource_size_t start = res->start;
 
-	अगर (res->flags & IORESOURCE_IO) अणु
+	if (res->flags & IORESOURCE_IO) {
 		/* Make sure we start at our min on all hoses */
-		अगर (start < PCIBIOS_MIN_IO + hose->io_resource->start)
+		if (start < PCIBIOS_MIN_IO + hose->io_resource->start)
 			start = PCIBIOS_MIN_IO + hose->io_resource->start;
 
 		/*
-		 * Put everything पूर्णांकo 0x00-0xff region modulo 0x400
+		 * Put everything into 0x00-0xff region modulo 0x400
 		 */
-		अगर (start & 0x300)
+		if (start & 0x300)
 			start = (start + 0x3ff) & ~0x3ff;
-	पूर्ण अन्यथा अगर (res->flags & IORESOURCE_MEM) अणु
+	} else if (res->flags & IORESOURCE_MEM) {
 		/* Make sure we start at our min on all hoses */
-		अगर (start < PCIBIOS_MIN_MEM + hose->mem_resource->start)
+		if (start < PCIBIOS_MIN_MEM + hose->mem_resource->start)
 			start = PCIBIOS_MIN_MEM + hose->mem_resource->start;
-	पूर्ण
+	}
 
-	वापस start;
-पूर्ण
+	return start;
+}
 
-अटल व्योम pcibios_scanbus(काष्ठा pci_controller *hose)
-अणु
-	अटल पूर्णांक next_busno;
-	अटल पूर्णांक need_करोमुख्य_info;
+static void pcibios_scanbus(struct pci_controller *hose)
+{
+	static int next_busno;
+	static int need_domain_info;
 	LIST_HEAD(resources);
-	काष्ठा pci_bus *bus;
-	काष्ठा pci_host_bridge *bridge;
-	पूर्णांक ret;
+	struct pci_bus *bus;
+	struct pci_host_bridge *bridge;
+	int ret;
 
 	bridge = pci_alloc_host_bridge(0);
-	अगर (!bridge)
-		वापस;
+	if (!bridge)
+		return;
 
-	अगर (hose->get_busno && pci_has_flag(PCI_PROBE_ONLY))
+	if (hose->get_busno && pci_has_flag(PCI_PROBE_ONLY))
 		next_busno = (*hose->get_busno)();
 
 	pci_add_resource_offset(&resources,
 				hose->mem_resource, hose->mem_offset);
 	pci_add_resource_offset(&resources,
 				hose->io_resource, hose->io_offset);
-	list_splice_init(&resources, &bridge->winकरोws);
-	bridge->dev.parent = शून्य;
+	list_splice_init(&resources, &bridge->windows);
+	bridge->dev.parent = NULL;
 	bridge->sysdata = hose;
 	bridge->busnr = next_busno;
 	bridge->ops = hose->pci_ops;
 	bridge->swizzle_irq = pci_common_swizzle;
 	bridge->map_irq = pcibios_map_irq;
 	ret = pci_scan_root_bus_bridge(bridge);
-	अगर (ret) अणु
-		pci_मुक्त_host_bridge(bridge);
-		वापस;
-	पूर्ण
+	if (ret) {
+		pci_free_host_bridge(bridge);
+		return;
+	}
 
 	hose->bus = bus = bridge->bus;
 
-	need_करोमुख्य_info = need_करोमुख्य_info || pci_करोमुख्य_nr(bus);
-	set_pci_need_करोमुख्य_info(hose, need_करोमुख्य_info);
+	need_domain_info = need_domain_info || pci_domain_nr(bus);
+	set_pci_need_domain_info(hose, need_domain_info);
 
 	next_busno = bus->busn_res.end + 1;
 	/* Don't allow 8-bit bus number overflow inside the hose -
-	   reserve some space क्रम bridges. */
-	अगर (next_busno > 224) अणु
+	   reserve some space for bridges. */
+	if (next_busno > 224) {
 		next_busno = 0;
-		need_करोमुख्य_info = 1;
-	पूर्ण
+		need_domain_info = 1;
+	}
 
 	/*
-	 * We insert PCI resources पूर्णांकo the iomem_resource and
+	 * We insert PCI resources into the iomem_resource and
 	 * ioport_resource trees in either pci_bus_claim_resources()
 	 * or pci_bus_assign_resources().
 	 */
-	अगर (pci_has_flag(PCI_PROBE_ONLY)) अणु
+	if (pci_has_flag(PCI_PROBE_ONLY)) {
 		pci_bus_claim_resources(bus);
-	पूर्ण अन्यथा अणु
-		काष्ठा pci_bus *child;
+	} else {
+		struct pci_bus *child;
 
 		pci_bus_size_bridges(bus);
 		pci_bus_assign_resources(bus);
-		list_क्रम_each_entry(child, &bus->children, node)
+		list_for_each_entry(child, &bus->children, node)
 			pcie_bus_configure_settings(child);
-	पूर्ण
+	}
 	pci_bus_add_devices(bus);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_OF
-व्योम pci_load_of_ranges(काष्ठा pci_controller *hose, काष्ठा device_node *node)
-अणु
-	काष्ठा of_pci_range range;
-	काष्ठा of_pci_range_parser parser;
+#ifdef CONFIG_OF
+void pci_load_of_ranges(struct pci_controller *hose, struct device_node *node)
+{
+	struct of_pci_range range;
+	struct of_pci_range_parser parser;
 
 	hose->of_node = node;
 
-	अगर (of_pci_range_parser_init(&parser, node))
-		वापस;
+	if (of_pci_range_parser_init(&parser, node))
+		return;
 
-	क्रम_each_of_pci_range(&parser, &range) अणु
-		काष्ठा resource *res = शून्य;
+	for_each_of_pci_range(&parser, &range) {
+		struct resource *res = NULL;
 
-		चयन (range.flags & IORESOURCE_TYPE_BITS) अणु
-		हाल IORESOURCE_IO:
+		switch (range.flags & IORESOURCE_TYPE_BITS) {
+		case IORESOURCE_IO:
 			hose->io_map_base =
-				(अचिन्हित दीर्घ)ioremap(range.cpu_addr,
+				(unsigned long)ioremap(range.cpu_addr,
 						       range.size);
 			res = hose->io_resource;
-			अवरोध;
-		हाल IORESOURCE_MEM:
+			break;
+		case IORESOURCE_MEM:
 			res = hose->mem_resource;
-			अवरोध;
-		पूर्ण
-		अगर (res != शून्य) अणु
+			break;
+		}
+		if (res != NULL) {
 			res->name = node->full_name;
 			res->flags = range.flags;
 			res->start = range.cpu_addr;
 			res->end = range.cpu_addr + range.size - 1;
-			res->parent = res->child = res->sibling = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			res->parent = res->child = res->sibling = NULL;
+		}
+	}
+}
 
-काष्ठा device_node *pcibios_get_phb_of_node(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_controller *hose = bus->sysdata;
+struct device_node *pcibios_get_phb_of_node(struct pci_bus *bus)
+{
+	struct pci_controller *hose = bus->sysdata;
 
-	वापस of_node_get(hose->of_node);
-पूर्ण
-#पूर्ण_अगर
+	return of_node_get(hose->of_node);
+}
+#endif
 
-अटल DEFINE_MUTEX(pci_scan_mutex);
+static DEFINE_MUTEX(pci_scan_mutex);
 
-व्योम रेजिस्टर_pci_controller(काष्ठा pci_controller *hose)
-अणु
-	काष्ठा resource *parent;
+void register_pci_controller(struct pci_controller *hose)
+{
+	struct resource *parent;
 
 	parent = hose->mem_resource->parent;
-	अगर (!parent)
+	if (!parent)
 		parent = &iomem_resource;
 
-	अगर (request_resource(parent, hose->mem_resource) < 0)
-		जाओ out;
+	if (request_resource(parent, hose->mem_resource) < 0)
+		goto out;
 
 	parent = hose->io_resource->parent;
-	अगर (!parent)
+	if (!parent)
 		parent = &ioport_resource;
 
-	अगर (request_resource(parent, hose->io_resource) < 0) अणु
+	if (request_resource(parent, hose->io_resource) < 0) {
 		release_resource(hose->mem_resource);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	INIT_LIST_HEAD(&hose->list);
 	list_add_tail(&hose->list, &controllers);
 
 	/*
-	 * Do not panic here but later - this might happen beक्रमe console init.
+	 * Do not panic here but later - this might happen before console init.
 	 */
-	अगर (!hose->io_map_base) अणु
-		prपूर्णांकk(KERN_WARNING
+	if (!hose->io_map_base) {
+		printk(KERN_WARNING
 		       "registering PCI controller with io_map_base unset\n");
-	पूर्ण
+	}
 
 	/*
-	 * Scan the bus अगर it is रेजिस्टर after the PCI subप्रणाली
+	 * Scan the bus if it is register after the PCI subsystem
 	 * initialization.
 	 */
-	अगर (pci_initialized) अणु
+	if (pci_initialized) {
 		mutex_lock(&pci_scan_mutex);
 		pcibios_scanbus(hose);
 		mutex_unlock(&pci_scan_mutex);
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
 out:
-	prपूर्णांकk(KERN_WARNING
+	printk(KERN_WARNING
 	       "Skipping PCI bus scan due to resource conflict\n");
-पूर्ण
+}
 
-अटल पूर्णांक __init pcibios_init(व्योम)
-अणु
-	काष्ठा pci_controller *hose;
+static int __init pcibios_init(void)
+{
+	struct pci_controller *hose;
 
 	/* Scan all of the recorded PCI controllers.  */
-	list_क्रम_each_entry(hose, &controllers, list)
+	list_for_each_entry(hose, &controllers, list)
 		pcibios_scanbus(hose);
 
 	pci_initialized = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 subsys_initcall(pcibios_init);
 
-अटल पूर्णांक pcibios_enable_resources(काष्ठा pci_dev *dev, पूर्णांक mask)
-अणु
+static int pcibios_enable_resources(struct pci_dev *dev, int mask)
+{
 	u16 cmd, old_cmd;
-	पूर्णांक idx;
-	काष्ठा resource *r;
+	int idx;
+	struct resource *r;
 
-	pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd);
+	pci_read_config_word(dev, PCI_COMMAND, &cmd);
 	old_cmd = cmd;
-	क्रम (idx = 0; idx < PCI_NUM_RESOURCES; idx++) अणु
+	for (idx = 0; idx < PCI_NUM_RESOURCES; idx++) {
 		/* Only set up the requested stuff */
-		अगर (!(mask & (1<<idx)))
-			जारी;
+		if (!(mask & (1<<idx)))
+			continue;
 
 		r = &dev->resource[idx];
-		अगर (!(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
-			जारी;
-		अगर ((idx == PCI_ROM_RESOURCE) &&
+		if (!(r->flags & (IORESOURCE_IO | IORESOURCE_MEM)))
+			continue;
+		if ((idx == PCI_ROM_RESOURCE) &&
 				(!(r->flags & IORESOURCE_ROM_ENABLE)))
-			जारी;
-		अगर (!r->start && r->end) अणु
+			continue;
+		if (!r->start && r->end) {
 			pci_err(dev,
 				"can't enable device: resource collisions\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (r->flags & IORESOURCE_IO)
+			return -EINVAL;
+		}
+		if (r->flags & IORESOURCE_IO)
 			cmd |= PCI_COMMAND_IO;
-		अगर (r->flags & IORESOURCE_MEM)
+		if (r->flags & IORESOURCE_MEM)
 			cmd |= PCI_COMMAND_MEMORY;
-	पूर्ण
-	अगर (cmd != old_cmd) अणु
+	}
+	if (cmd != old_cmd) {
 		pci_info(dev, "enabling device (%04x -> %04x)\n", old_cmd, cmd);
-		pci_ग_लिखो_config_word(dev, PCI_COMMAND, cmd);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		pci_write_config_word(dev, PCI_COMMAND, cmd);
+	}
+	return 0;
+}
 
-पूर्णांक pcibios_enable_device(काष्ठा pci_dev *dev, पूर्णांक mask)
-अणु
-	पूर्णांक err = pcibios_enable_resources(dev, mask);
+int pcibios_enable_device(struct pci_dev *dev, int mask)
+{
+	int err = pcibios_enable_resources(dev, mask);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस pcibios_plat_dev_init(dev);
-पूर्ण
+	return pcibios_plat_dev_init(dev);
+}
 
-व्योम pcibios_fixup_bus(काष्ठा pci_bus *bus)
-अणु
-	काष्ठा pci_dev *dev = bus->self;
+void pcibios_fixup_bus(struct pci_bus *bus)
+{
+	struct pci_dev *dev = bus->self;
 
-	अगर (pci_has_flag(PCI_PROBE_ONLY) && dev &&
-	    (dev->class >> 8) == PCI_CLASS_BRIDGE_PCI) अणु
-		pci_पढ़ो_bridge_bases(bus);
-	पूर्ण
-पूर्ण
+	if (pci_has_flag(PCI_PROBE_ONLY) && dev &&
+	    (dev->class >> 8) == PCI_CLASS_BRIDGE_PCI) {
+		pci_read_bridge_bases(bus);
+	}
+}
 
-अक्षर * (*pcibios_plat_setup)(अक्षर *str) __initdata;
+char * (*pcibios_plat_setup)(char *str) __initdata;
 
-अक्षर *__init pcibios_setup(अक्षर *str)
-अणु
-	अगर (pcibios_plat_setup)
-		वापस pcibios_plat_setup(str);
-	वापस str;
-पूर्ण
+char *__init pcibios_setup(char *str)
+{
+	if (pcibios_plat_setup)
+		return pcibios_plat_setup(str);
+	return str;
+}

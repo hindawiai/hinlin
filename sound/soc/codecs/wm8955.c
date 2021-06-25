@@ -1,293 +1,292 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * wm8955.c  --  WM8955 ALSA SoC Audio driver
  *
  * Copyright 2009 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/tlv.h>
-#समावेश <sound/wm8955.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/pm.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/slab.h>
+#include <sound/core.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include <sound/initval.h>
+#include <sound/tlv.h>
+#include <sound/wm8955.h>
 
-#समावेश "wm8955.h"
+#include "wm8955.h"
 
-#घोषणा WM8955_NUM_SUPPLIES 4
-अटल स्थिर अक्षर *wm8955_supply_names[WM8955_NUM_SUPPLIES] = अणु
+#define WM8955_NUM_SUPPLIES 4
+static const char *wm8955_supply_names[WM8955_NUM_SUPPLIES] = {
 	"DCVDD",
 	"DBVDD",
 	"HPVDD",
 	"AVDD",
-पूर्ण;
+};
 
-/* codec निजी data */
-काष्ठा wm8955_priv अणु
-	काष्ठा regmap *regmap;
+/* codec private data */
+struct wm8955_priv {
+	struct regmap *regmap;
 
-	अचिन्हित पूर्णांक mclk_rate;
+	unsigned int mclk_rate;
 
-	पूर्णांक deemph;
-	पूर्णांक fs;
+	int deemph;
+	int fs;
 
-	काष्ठा regulator_bulk_data supplies[WM8955_NUM_SUPPLIES];
-पूर्ण;
+	struct regulator_bulk_data supplies[WM8955_NUM_SUPPLIES];
+};
 
-अटल स्थिर काष्ठा reg_शेष wm8955_reg_शेषs[] = अणु
-	अणु 2,  0x0079 पूर्ण,     /* R2  - LOUT1 volume */
-	अणु 3,  0x0079 पूर्ण,     /* R3  - ROUT1 volume */
-	अणु 5,  0x0008 पूर्ण,     /* R5  - DAC Control */
-	अणु 7,  0x000A पूर्ण,     /* R7  - Audio Interface */
-	अणु 8,  0x0000 पूर्ण,     /* R8  - Sample Rate */
-	अणु 10, 0x00FF पूर्ण,     /* R10 - Left DAC volume */
-	अणु 11, 0x00FF पूर्ण,     /* R11 - Right DAC volume */
-	अणु 12, 0x000F पूर्ण,     /* R12 - Bass control */
-	अणु 13, 0x000F पूर्ण,     /* R13 - Treble control */
-	अणु 23, 0x00C1 पूर्ण,     /* R23 - Additional control (1) */
-	अणु 24, 0x0000 पूर्ण,     /* R24 - Additional control (2) */
-	अणु 25, 0x0000 पूर्ण,     /* R25 - Power Management (1) */
-	अणु 26, 0x0000 पूर्ण,     /* R26 - Power Management (2) */
-	अणु 27, 0x0000 पूर्ण,     /* R27 - Additional Control (3) */
-	अणु 34, 0x0050 पूर्ण,     /* R34 - Left out Mix (1) */
-	अणु 35, 0x0050 पूर्ण,     /* R35 - Left out Mix (2) */
-	अणु 36, 0x0050 पूर्ण,     /* R36 - Right out Mix (1) */
-	अणु 37, 0x0050 पूर्ण,     /* R37 - Right Out Mix (2) */
-	अणु 38, 0x0050 पूर्ण,     /* R38 - Mono out Mix (1) */
-	अणु 39, 0x0050 पूर्ण,     /* R39 - Mono out Mix (2) */
-	अणु 40, 0x0079 पूर्ण,     /* R40 - LOUT2 volume */
-	अणु 41, 0x0079 पूर्ण,     /* R41 - ROUT2 volume */
-	अणु 42, 0x0079 पूर्ण,     /* R42 - MONOOUT volume */
-	अणु 43, 0x0000 पूर्ण,     /* R43 - Clocking / PLL */
-	अणु 44, 0x0103 पूर्ण,     /* R44 - PLL Control 1 */
-	अणु 45, 0x0024 पूर्ण,     /* R45 - PLL Control 2 */
-	अणु 46, 0x01BA पूर्ण,     /* R46 - PLL Control 3 */
-	अणु 59, 0x0000 पूर्ण,     /* R59 - PLL Control 4 */
-पूर्ण;
+static const struct reg_default wm8955_reg_defaults[] = {
+	{ 2,  0x0079 },     /* R2  - LOUT1 volume */
+	{ 3,  0x0079 },     /* R3  - ROUT1 volume */
+	{ 5,  0x0008 },     /* R5  - DAC Control */
+	{ 7,  0x000A },     /* R7  - Audio Interface */
+	{ 8,  0x0000 },     /* R8  - Sample Rate */
+	{ 10, 0x00FF },     /* R10 - Left DAC volume */
+	{ 11, 0x00FF },     /* R11 - Right DAC volume */
+	{ 12, 0x000F },     /* R12 - Bass control */
+	{ 13, 0x000F },     /* R13 - Treble control */
+	{ 23, 0x00C1 },     /* R23 - Additional control (1) */
+	{ 24, 0x0000 },     /* R24 - Additional control (2) */
+	{ 25, 0x0000 },     /* R25 - Power Management (1) */
+	{ 26, 0x0000 },     /* R26 - Power Management (2) */
+	{ 27, 0x0000 },     /* R27 - Additional Control (3) */
+	{ 34, 0x0050 },     /* R34 - Left out Mix (1) */
+	{ 35, 0x0050 },     /* R35 - Left out Mix (2) */
+	{ 36, 0x0050 },     /* R36 - Right out Mix (1) */
+	{ 37, 0x0050 },     /* R37 - Right Out Mix (2) */
+	{ 38, 0x0050 },     /* R38 - Mono out Mix (1) */
+	{ 39, 0x0050 },     /* R39 - Mono out Mix (2) */
+	{ 40, 0x0079 },     /* R40 - LOUT2 volume */
+	{ 41, 0x0079 },     /* R41 - ROUT2 volume */
+	{ 42, 0x0079 },     /* R42 - MONOOUT volume */
+	{ 43, 0x0000 },     /* R43 - Clocking / PLL */
+	{ 44, 0x0103 },     /* R44 - PLL Control 1 */
+	{ 45, 0x0024 },     /* R45 - PLL Control 2 */
+	{ 46, 0x01BA },     /* R46 - PLL Control 3 */
+	{ 59, 0x0000 },     /* R59 - PLL Control 4 */
+};
 
-अटल bool wm8955_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल WM8955_LOUT1_VOLUME:
-	हाल WM8955_ROUT1_VOLUME:
-	हाल WM8955_DAC_CONTROL:
-	हाल WM8955_AUDIO_INTERFACE:
-	हाल WM8955_SAMPLE_RATE:
-	हाल WM8955_LEFT_DAC_VOLUME:
-	हाल WM8955_RIGHT_DAC_VOLUME:
-	हाल WM8955_BASS_CONTROL:
-	हाल WM8955_TREBLE_CONTROL:
-	हाल WM8955_RESET:
-	हाल WM8955_ADDITIONAL_CONTROL_1:
-	हाल WM8955_ADDITIONAL_CONTROL_2:
-	हाल WM8955_POWER_MANAGEMENT_1:
-	हाल WM8955_POWER_MANAGEMENT_2:
-	हाल WM8955_ADDITIONAL_CONTROL_3:
-	हाल WM8955_LEFT_OUT_MIX_1:
-	हाल WM8955_LEFT_OUT_MIX_2:
-	हाल WM8955_RIGHT_OUT_MIX_1:
-	हाल WM8955_RIGHT_OUT_MIX_2:
-	हाल WM8955_MONO_OUT_MIX_1:
-	हाल WM8955_MONO_OUT_MIX_2:
-	हाल WM8955_LOUT2_VOLUME:
-	हाल WM8955_ROUT2_VOLUME:
-	हाल WM8955_MONOOUT_VOLUME:
-	हाल WM8955_CLOCKING_PLL:
-	हाल WM8955_PLL_CONTROL_1:
-	हाल WM8955_PLL_CONTROL_2:
-	हाल WM8955_PLL_CONTROL_3:
-	हाल WM8955_PLL_CONTROL_4:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool wm8955_writeable(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case WM8955_LOUT1_VOLUME:
+	case WM8955_ROUT1_VOLUME:
+	case WM8955_DAC_CONTROL:
+	case WM8955_AUDIO_INTERFACE:
+	case WM8955_SAMPLE_RATE:
+	case WM8955_LEFT_DAC_VOLUME:
+	case WM8955_RIGHT_DAC_VOLUME:
+	case WM8955_BASS_CONTROL:
+	case WM8955_TREBLE_CONTROL:
+	case WM8955_RESET:
+	case WM8955_ADDITIONAL_CONTROL_1:
+	case WM8955_ADDITIONAL_CONTROL_2:
+	case WM8955_POWER_MANAGEMENT_1:
+	case WM8955_POWER_MANAGEMENT_2:
+	case WM8955_ADDITIONAL_CONTROL_3:
+	case WM8955_LEFT_OUT_MIX_1:
+	case WM8955_LEFT_OUT_MIX_2:
+	case WM8955_RIGHT_OUT_MIX_1:
+	case WM8955_RIGHT_OUT_MIX_2:
+	case WM8955_MONO_OUT_MIX_1:
+	case WM8955_MONO_OUT_MIX_2:
+	case WM8955_LOUT2_VOLUME:
+	case WM8955_ROUT2_VOLUME:
+	case WM8955_MONOOUT_VOLUME:
+	case WM8955_CLOCKING_PLL:
+	case WM8955_PLL_CONTROL_1:
+	case WM8955_PLL_CONTROL_2:
+	case WM8955_PLL_CONTROL_3:
+	case WM8955_PLL_CONTROL_4:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool wm8955_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल WM8955_RESET:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool wm8955_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case WM8955_RESET:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक wm8955_reset(काष्ठा snd_soc_component *component)
-अणु
-	वापस snd_soc_component_ग_लिखो(component, WM8955_RESET, 0);
-पूर्ण
+static int wm8955_reset(struct snd_soc_component *component)
+{
+	return snd_soc_component_write(component, WM8955_RESET, 0);
+}
 
-काष्ठा pll_factors अणु
-	पूर्णांक n;
-	पूर्णांक k;
-	पूर्णांक outभाग;
-पूर्ण;
+struct pll_factors {
+	int n;
+	int k;
+	int outdiv;
+};
 
-/* The size in bits of the FLL भागide multiplied by 10
+/* The size in bits of the FLL divide multiplied by 10
  * to allow rounding later */
-#घोषणा FIXED_FLL_SIZE ((1 << 22) * 10)
+#define FIXED_FLL_SIZE ((1 << 22) * 10)
 
-अटल पूर्णांक wm8955_pll_factors(काष्ठा device *dev,
-			      पूर्णांक Fref, पूर्णांक Fout, काष्ठा pll_factors *pll)
-अणु
+static int wm8955_pll_factors(struct device *dev,
+			      int Fref, int Fout, struct pll_factors *pll)
+{
 	u64 Kpart;
-	अचिन्हित पूर्णांक K, Nभाग, Nmod, target;
+	unsigned int K, Ndiv, Nmod, target;
 
 	dev_dbg(dev, "Fref=%u Fout=%u\n", Fref, Fout);
 
 	/* The oscilator should run at should be 90-100MHz, and
-	 * there's a भागide by 4 plus an optional भागide by 2 in the
-	 * output path to generate the प्रणाली घड़ी.  The घड़ी table
+	 * there's a divide by 4 plus an optional divide by 2 in the
+	 * output path to generate the system clock.  The clock table
 	 * is sortd so we should always generate a suitable target. */
 	target = Fout * 4;
-	अगर (target < 90000000) अणु
-		pll->outभाग = 1;
+	if (target < 90000000) {
+		pll->outdiv = 1;
 		target *= 2;
-	पूर्ण अन्यथा अणु
-		pll->outभाग = 0;
-	पूर्ण
+	} else {
+		pll->outdiv = 0;
+	}
 
 	WARN_ON(target < 90000000 || target > 100000000);
 
 	dev_dbg(dev, "Fvco=%dHz\n", target);
 
 	/* Now, calculate N.K */
-	Nभाग = target / Fref;
+	Ndiv = target / Fref;
 
-	pll->n = Nभाग;
+	pll->n = Ndiv;
 	Nmod = target % Fref;
 	dev_dbg(dev, "Nmod=%d\n", Nmod);
 
 	/* Calculate fractional part - scale up so we can round. */
-	Kpart = FIXED_FLL_SIZE * (दीर्घ दीर्घ)Nmod;
+	Kpart = FIXED_FLL_SIZE * (long long)Nmod;
 
-	करो_भाग(Kpart, Fref);
+	do_div(Kpart, Fref);
 
 	K = Kpart & 0xFFFFFFFF;
 
-	अगर ((K % 10) >= 5)
+	if ((K % 10) >= 5)
 		K += 5;
 
-	/* Move करोwn to proper range now rounding is करोne */
+	/* Move down to proper range now rounding is done */
 	pll->k = K / 10;
 
-	dev_dbg(dev, "N=%x K=%x OUTDIV=%x\n", pll->n, pll->k, pll->outभाग);
+	dev_dbg(dev, "N=%x K=%x OUTDIV=%x\n", pll->n, pll->k, pll->outdiv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Lookup table specअगरying SRATE (table 25 in datasheet); some of the
+/* Lookup table specifying SRATE (table 25 in datasheet); some of the
  * output frequencies have been rounded to the standard frequencies
- * they are पूर्णांकended to match where the error is slight. */
-अटल काष्ठा अणु
-	पूर्णांक mclk;
-	पूर्णांक fs;
-	पूर्णांक usb;
-	पूर्णांक sr;
-पूर्ण घड़ी_cfgs[] = अणु
-	अणु 18432000,  8000, 0,  3, पूर्ण,
-	अणु 18432000, 12000, 0,  9, पूर्ण,
-	अणु 18432000, 16000, 0, 11, पूर्ण,
-	अणु 18432000, 24000, 0, 29, पूर्ण,
-	अणु 18432000, 32000, 0, 13, पूर्ण,
-	अणु 18432000, 48000, 0,  1, पूर्ण,
-	अणु 18432000, 96000, 0, 15, पूर्ण,
+ * they are intended to match where the error is slight. */
+static struct {
+	int mclk;
+	int fs;
+	int usb;
+	int sr;
+} clock_cfgs[] = {
+	{ 18432000,  8000, 0,  3, },
+	{ 18432000, 12000, 0,  9, },
+	{ 18432000, 16000, 0, 11, },
+	{ 18432000, 24000, 0, 29, },
+	{ 18432000, 32000, 0, 13, },
+	{ 18432000, 48000, 0,  1, },
+	{ 18432000, 96000, 0, 15, },
 
-	अणु 16934400,  8018, 0, 19, पूर्ण,
-	अणु 16934400, 11025, 0, 25, पूर्ण,
-	अणु 16934400, 22050, 0, 27, पूर्ण,
-	अणु 16934400, 44100, 0, 17, पूर्ण,
-	अणु 16934400, 88200, 0, 31, पूर्ण,
+	{ 16934400,  8018, 0, 19, },
+	{ 16934400, 11025, 0, 25, },
+	{ 16934400, 22050, 0, 27, },
+	{ 16934400, 44100, 0, 17, },
+	{ 16934400, 88200, 0, 31, },
 
-	अणु 12000000,  8000, 1,  2, पूर्ण,
-	अणु 12000000, 11025, 1, 25, पूर्ण,
-	अणु 12000000, 12000, 1,  8, पूर्ण,
-	अणु 12000000, 16000, 1, 10, पूर्ण,
-	अणु 12000000, 22050, 1, 27, पूर्ण,
-	अणु 12000000, 24000, 1, 28, पूर्ण,
-	अणु 12000000, 32000, 1, 12, पूर्ण,
-	अणु 12000000, 44100, 1, 17, पूर्ण,
-	अणु 12000000, 48000, 1,  0, पूर्ण,
-	अणु 12000000, 88200, 1, 31, पूर्ण,
-	अणु 12000000, 96000, 1, 14, पूर्ण,
+	{ 12000000,  8000, 1,  2, },
+	{ 12000000, 11025, 1, 25, },
+	{ 12000000, 12000, 1,  8, },
+	{ 12000000, 16000, 1, 10, },
+	{ 12000000, 22050, 1, 27, },
+	{ 12000000, 24000, 1, 28, },
+	{ 12000000, 32000, 1, 12, },
+	{ 12000000, 44100, 1, 17, },
+	{ 12000000, 48000, 1,  0, },
+	{ 12000000, 88200, 1, 31, },
+	{ 12000000, 96000, 1, 14, },
 
-	अणु 12288000,  8000, 0,  2, पूर्ण,
-	अणु 12288000, 12000, 0,  8, पूर्ण,
-	अणु 12288000, 16000, 0, 10, पूर्ण,
-	अणु 12288000, 24000, 0, 28, पूर्ण,
-	अणु 12288000, 32000, 0, 12, पूर्ण,
-	अणु 12288000, 48000, 0,  0, पूर्ण,
-	अणु 12288000, 96000, 0, 14, पूर्ण,
+	{ 12288000,  8000, 0,  2, },
+	{ 12288000, 12000, 0,  8, },
+	{ 12288000, 16000, 0, 10, },
+	{ 12288000, 24000, 0, 28, },
+	{ 12288000, 32000, 0, 12, },
+	{ 12288000, 48000, 0,  0, },
+	{ 12288000, 96000, 0, 14, },
 
-	अणु 12289600,  8018, 0, 18, पूर्ण,
-	अणु 12289600, 11025, 0, 24, पूर्ण,
-	अणु 12289600, 22050, 0, 26, पूर्ण,
-	अणु 11289600, 44100, 0, 16, पूर्ण,
-	अणु 11289600, 88200, 0, 31, पूर्ण,
-पूर्ण;
+	{ 12289600,  8018, 0, 18, },
+	{ 12289600, 11025, 0, 24, },
+	{ 12289600, 22050, 0, 26, },
+	{ 11289600, 44100, 0, 16, },
+	{ 11289600, 88200, 0, 31, },
+};
 
-अटल पूर्णांक wm8955_configure_घड़ीing(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
-	पूर्णांक i, ret, val;
-	पूर्णांक घड़ीing = 0;
-	पूर्णांक srate = 0;
-	पूर्णांक sr = -1;
-	काष्ठा pll_factors pll;
+static int wm8955_configure_clocking(struct snd_soc_component *component)
+{
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+	int i, ret, val;
+	int clocking = 0;
+	int srate = 0;
+	int sr = -1;
+	struct pll_factors pll;
 
 	/* If we're not running a sample rate currently just pick one */
-	अगर (wm8955->fs == 0)
+	if (wm8955->fs == 0)
 		wm8955->fs = 8000;
 
 	/* Can we generate an exact output? */
-	क्रम (i = 0; i < ARRAY_SIZE(घड़ी_cfgs); i++) अणु
-		अगर (wm8955->fs != घड़ी_cfgs[i].fs)
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(clock_cfgs); i++) {
+		if (wm8955->fs != clock_cfgs[i].fs)
+			continue;
 		sr = i;
 
-		अगर (wm8955->mclk_rate == घड़ी_cfgs[i].mclk)
-			अवरोध;
-	पूर्ण
+		if (wm8955->mclk_rate == clock_cfgs[i].mclk)
+			break;
+	}
 
 	/* We should never get here with an unsupported sample rate */
-	अगर (sr == -1) अणु
+	if (sr == -1) {
 		dev_err(component->dev, "Sample rate %dHz unsupported\n",
 			wm8955->fs);
 		WARN_ON(sr == -1);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (i == ARRAY_SIZE(घड़ी_cfgs)) अणु
-		/* If we can't generate the right घड़ी from MCLK then
+	if (i == ARRAY_SIZE(clock_cfgs)) {
+		/* If we can't generate the right clock from MCLK then
 		 * we should configure the PLL to supply us with an
-		 * appropriate घड़ी.
+		 * appropriate clock.
 		 */
-		घड़ीing |= WM8955_MCLKSEL;
+		clocking |= WM8955_MCLKSEL;
 
-		/* Use the last भागider configuration we saw क्रम the
+		/* Use the last divider configuration we saw for the
 		 * sample rate. */
 		ret = wm8955_pll_factors(component->dev, wm8955->mclk_rate,
-					 घड़ी_cfgs[sr].mclk, &pll);
-		अगर (ret != 0) अणु
+					 clock_cfgs[sr].mclk, &pll);
+		if (ret != 0) {
 			dev_err(component->dev,
 				"Unable to generate %dHz from %dHz MCLK\n",
 				wm8955->fs, wm8955->mclk_rate);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		snd_soc_component_update_bits(component, WM8955_PLL_CONTROL_1,
 				    WM8955_N_MASK | WM8955_K_21_18_MASK,
@@ -299,16 +298,16 @@
 		snd_soc_component_update_bits(component, WM8955_PLL_CONTROL_3,
 				    WM8955_K_8_0_MASK,
 				    pll.k & WM8955_K_8_0_MASK);
-		अगर (pll.k)
+		if (pll.k)
 			snd_soc_component_update_bits(component, WM8955_PLL_CONTROL_4,
 					    WM8955_KEN, WM8955_KEN);
-		अन्यथा
+		else
 			snd_soc_component_update_bits(component, WM8955_PLL_CONTROL_4,
 					    WM8955_KEN, 0);
 
-		अगर (pll.outभाग)
+		if (pll.outdiv)
 			val = WM8955_PLL_RB | WM8955_PLLOUTDIV2;
-		अन्यथा
+		else
 			val = WM8955_PLL_RB;
 
 		/* Now start the PLL running */
@@ -316,128 +315,128 @@
 				    WM8955_PLL_RB | WM8955_PLLOUTDIV2, val);
 		snd_soc_component_update_bits(component, WM8955_CLOCKING_PLL,
 				    WM8955_PLLEN, WM8955_PLLEN);
-	पूर्ण
+	}
 
-	srate = घड़ी_cfgs[sr].usb | (घड़ी_cfgs[sr].sr << WM8955_SR_SHIFT);
+	srate = clock_cfgs[sr].usb | (clock_cfgs[sr].sr << WM8955_SR_SHIFT);
 
 	snd_soc_component_update_bits(component, WM8955_SAMPLE_RATE,
 			    WM8955_USB | WM8955_SR_MASK, srate);
 	snd_soc_component_update_bits(component, WM8955_CLOCKING_PLL,
-			    WM8955_MCLKSEL, घड़ीing);
+			    WM8955_MCLKSEL, clocking);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8955_sysclk(काष्ठा snd_soc_dapm_widget *w,
-			 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	पूर्णांक ret = 0;
+static int wm8955_sysclk(struct snd_soc_dapm_widget *w,
+			 struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
 
-	/* Always disable the घड़ीs - अगर we're करोing reconfiguration this
-	 * aव्योमs misघड़ीing.
+	/* Always disable the clocks - if we're doing reconfiguration this
+	 * avoids misclocking.
 	 */
 	snd_soc_component_update_bits(component, WM8955_POWER_MANAGEMENT_1,
 			    WM8955_DIGENB, 0);
 	snd_soc_component_update_bits(component, WM8955_CLOCKING_PLL,
 			    WM8955_PLL_RB | WM8955_PLLEN, 0);
 
-	चयन (event) अणु
-	हाल SND_SOC_DAPM_POST_PMD:
-		अवरोध;
-	हाल SND_SOC_DAPM_PRE_PMU:
-		ret = wm8955_configure_घड़ीing(component);
-		अवरोध;
-	शेष:
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMD:
+		break;
+	case SND_SOC_DAPM_PRE_PMU:
+		ret = wm8955_configure_clocking(component);
+		break;
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक deemph_settings[] = अणु 0, 32000, 44100, 48000 पूर्ण;
+static int deemph_settings[] = { 0, 32000, 44100, 48000 };
 
-अटल पूर्णांक wm8955_set_deemph(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
-	पूर्णांक val, i, best;
+static int wm8955_set_deemph(struct snd_soc_component *component)
+{
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+	int val, i, best;
 
 	/* If we're using deemphasis select the nearest available sample
 	 * rate.
 	 */
-	अगर (wm8955->deemph) अणु
+	if (wm8955->deemph) {
 		best = 1;
-		क्रम (i = 2; i < ARRAY_SIZE(deemph_settings); i++) अणु
-			अगर (असल(deemph_settings[i] - wm8955->fs) <
-			    असल(deemph_settings[best] - wm8955->fs))
+		for (i = 2; i < ARRAY_SIZE(deemph_settings); i++) {
+			if (abs(deemph_settings[i] - wm8955->fs) <
+			    abs(deemph_settings[best] - wm8955->fs))
 				best = i;
-		पूर्ण
+		}
 
 		val = best << WM8955_DEEMPH_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		val = 0;
-	पूर्ण
+	}
 
 	dev_dbg(component->dev, "Set deemphasis %d\n", val);
 
-	वापस snd_soc_component_update_bits(component, WM8955_DAC_CONTROL,
+	return snd_soc_component_update_bits(component, WM8955_DAC_CONTROL,
 				   WM8955_DEEMPH_MASK, val);
-पूर्ण
+}
 
-अटल पूर्णांक wm8955_get_deemph(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+static int wm8955_get_deemph(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
 
-	ucontrol->value.पूर्णांकeger.value[0] = wm8955->deemph;
-	वापस 0;
-पूर्ण
+	ucontrol->value.integer.value[0] = wm8955->deemph;
+	return 0;
+}
 
-अटल पूर्णांक wm8955_put_deemph(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
-	अचिन्हित पूर्णांक deemph = ucontrol->value.पूर्णांकeger.value[0];
+static int wm8955_put_deemph(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+	unsigned int deemph = ucontrol->value.integer.value[0];
 
-	अगर (deemph > 1)
-		वापस -EINVAL;
+	if (deemph > 1)
+		return -EINVAL;
 
 	wm8955->deemph = deemph;
 
-	वापस wm8955_set_deemph(component);
-पूर्ण
+	return wm8955_set_deemph(component);
+}
 
-अटल स्थिर अक्षर *bass_mode_text[] = अणु
+static const char *bass_mode_text[] = {
 	"Linear", "Adaptive",
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(bass_mode, WM8955_BASS_CONTROL, 7, bass_mode_text);
+static SOC_ENUM_SINGLE_DECL(bass_mode, WM8955_BASS_CONTROL, 7, bass_mode_text);
 
-अटल स्थिर अक्षर *bass_cutoff_text[] = अणु
+static const char *bass_cutoff_text[] = {
 	"Low", "High"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(bass_cutoff, WM8955_BASS_CONTROL, 6,
+static SOC_ENUM_SINGLE_DECL(bass_cutoff, WM8955_BASS_CONTROL, 6,
 			    bass_cutoff_text);
 
-अटल स्थिर अक्षर *treble_cutoff_text[] = अणु
+static const char *treble_cutoff_text[] = {
 	"High", "Low"
-पूर्ण;
+};
 
-अटल SOC_ENUM_SINGLE_DECL(treble_cutoff, WM8955_TREBLE_CONTROL, 2,
+static SOC_ENUM_SINGLE_DECL(treble_cutoff, WM8955_TREBLE_CONTROL, 2,
 			    treble_cutoff_text);
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(digital_tlv, -12750, 50, 1);
-अटल स्थिर DECLARE_TLV_DB_SCALE(atten_tlv, -600, 600, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(bypass_tlv, -1500, 300, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(mono_tlv, -2100, 300, 0);
-अटल स्थिर DECLARE_TLV_DB_SCALE(out_tlv, -12100, 100, 1);
-अटल स्थिर DECLARE_TLV_DB_SCALE(treble_tlv, -1200, 150, 1);
+static const DECLARE_TLV_DB_SCALE(digital_tlv, -12750, 50, 1);
+static const DECLARE_TLV_DB_SCALE(atten_tlv, -600, 600, 0);
+static const DECLARE_TLV_DB_SCALE(bypass_tlv, -1500, 300, 0);
+static const DECLARE_TLV_DB_SCALE(mono_tlv, -2100, 300, 0);
+static const DECLARE_TLV_DB_SCALE(out_tlv, -12100, 100, 1);
+static const DECLARE_TLV_DB_SCALE(treble_tlv, -1200, 150, 1);
 
-अटल स्थिर काष्ठा snd_kcontrol_new wm8955_snd_controls[] = अणु
+static const struct snd_kcontrol_new wm8955_snd_controls[] = {
 SOC_DOUBLE_R_TLV("Digital Playback Volume", WM8955_LEFT_DAC_VOLUME,
 		 WM8955_RIGHT_DAC_VOLUME, 0, 255, 0, digital_tlv),
 SOC_SINGLE_TLV("Playback Attenuation Volume", WM8955_DAC_CONTROL, 7, 1, 1,
@@ -462,7 +461,7 @@ SOC_SINGLE_TLV("Right Mono Volume", WM8955_RIGHT_OUT_MIX_1, 4, 7, 1,
 SOC_SINGLE_TLV("Right Bypass Volume", WM8955_RIGHT_OUT_MIX_2, 4, 7, 1,
 	       bypass_tlv),
 
-/* Not a stereo pair so they line up with the DAPM चयनes */
+/* Not a stereo pair so they line up with the DAPM switches */
 SOC_SINGLE_TLV("Mono Left Bypass Volume", WM8955_MONO_OUT_MIX_1, 4, 7, 1,
 	       mono_tlv),
 SOC_SINGLE_TLV("Mono Right Bypass Volume", WM8955_MONO_OUT_MIX_2, 4, 7, 1,
@@ -480,50 +479,50 @@ SOC_DOUBLE_R("Speaker ZC Switch", WM8955_LOUT2_VOLUME,
 
 SOC_SINGLE_TLV("Mono Volume", WM8955_MONOOUT_VOLUME, 0, 127, 0, out_tlv),
 SOC_SINGLE("Mono ZC Switch", WM8955_MONOOUT_VOLUME, 7, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new lmixer[] = अणु
+static const struct snd_kcontrol_new lmixer[] = {
 SOC_DAPM_SINGLE("Playback Switch", WM8955_LEFT_OUT_MIX_1, 8, 1, 0),
 SOC_DAPM_SINGLE("Bypass Switch", WM8955_LEFT_OUT_MIX_1, 7, 1, 0),
 SOC_DAPM_SINGLE("Right Playback Switch", WM8955_LEFT_OUT_MIX_2, 8, 1, 0),
 SOC_DAPM_SINGLE("Mono Switch", WM8955_LEFT_OUT_MIX_2, 7, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new rmixer[] = अणु
+static const struct snd_kcontrol_new rmixer[] = {
 SOC_DAPM_SINGLE("Left Playback Switch", WM8955_RIGHT_OUT_MIX_1, 8, 1, 0),
 SOC_DAPM_SINGLE("Mono Switch", WM8955_RIGHT_OUT_MIX_1, 7, 1, 0),
 SOC_DAPM_SINGLE("Playback Switch", WM8955_RIGHT_OUT_MIX_2, 8, 1, 0),
 SOC_DAPM_SINGLE("Bypass Switch", WM8955_RIGHT_OUT_MIX_2, 7, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new mmixer[] = अणु
+static const struct snd_kcontrol_new mmixer[] = {
 SOC_DAPM_SINGLE("Left Playback Switch", WM8955_MONO_OUT_MIX_1, 8, 1, 0),
 SOC_DAPM_SINGLE("Left Bypass Switch", WM8955_MONO_OUT_MIX_1, 7, 1, 0),
 SOC_DAPM_SINGLE("Right Playback Switch", WM8955_MONO_OUT_MIX_2, 8, 1, 0),
 SOC_DAPM_SINGLE("Right Bypass Switch", WM8955_MONO_OUT_MIX_2, 7, 1, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget wm8955_dapm_widमाला_लो[] = अणु
+static const struct snd_soc_dapm_widget wm8955_dapm_widgets[] = {
 SND_SOC_DAPM_INPUT("MONOIN-"),
 SND_SOC_DAPM_INPUT("MONOIN+"),
 SND_SOC_DAPM_INPUT("LINEINR"),
 SND_SOC_DAPM_INPUT("LINEINL"),
 
-SND_SOC_DAPM_PGA("Mono Input", SND_SOC_NOPM, 0, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("Mono Input", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 SND_SOC_DAPM_SUPPLY("SYSCLK", WM8955_POWER_MANAGEMENT_1, 0, 1, wm8955_sysclk,
 		    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-SND_SOC_DAPM_SUPPLY("TSDEN", WM8955_ADDITIONAL_CONTROL_1, 8, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("TSDEN", WM8955_ADDITIONAL_CONTROL_1, 8, 0, NULL, 0),
 
 SND_SOC_DAPM_DAC("DACL", "Playback", WM8955_POWER_MANAGEMENT_2, 8, 0),
 SND_SOC_DAPM_DAC("DACR", "Playback", WM8955_POWER_MANAGEMENT_2, 7, 0),
 
-SND_SOC_DAPM_PGA("LOUT1 PGA", WM8955_POWER_MANAGEMENT_2, 6, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("ROUT1 PGA", WM8955_POWER_MANAGEMENT_2, 5, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("LOUT2 PGA", WM8955_POWER_MANAGEMENT_2, 4, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("ROUT2 PGA", WM8955_POWER_MANAGEMENT_2, 3, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("MOUT PGA", WM8955_POWER_MANAGEMENT_2, 2, 0, शून्य, 0),
-SND_SOC_DAPM_PGA("OUT3 PGA", WM8955_POWER_MANAGEMENT_2, 1, 0, शून्य, 0),
+SND_SOC_DAPM_PGA("LOUT1 PGA", WM8955_POWER_MANAGEMENT_2, 6, 0, NULL, 0),
+SND_SOC_DAPM_PGA("ROUT1 PGA", WM8955_POWER_MANAGEMENT_2, 5, 0, NULL, 0),
+SND_SOC_DAPM_PGA("LOUT2 PGA", WM8955_POWER_MANAGEMENT_2, 4, 0, NULL, 0),
+SND_SOC_DAPM_PGA("ROUT2 PGA", WM8955_POWER_MANAGEMENT_2, 3, 0, NULL, 0),
+SND_SOC_DAPM_PGA("MOUT PGA", WM8955_POWER_MANAGEMENT_2, 2, 0, NULL, 0),
+SND_SOC_DAPM_PGA("OUT3 PGA", WM8955_POWER_MANAGEMENT_2, 1, 0, NULL, 0),
 
 /* The names are chosen to make the control names nice */
 SND_SOC_DAPM_MIXER("Left", SND_SOC_NOPM, 0, 0,
@@ -539,239 +538,239 @@ SND_SOC_DAPM_OUTPUT("LOUT2"),
 SND_SOC_DAPM_OUTPUT("ROUT2"),
 SND_SOC_DAPM_OUTPUT("MONOOUT"),
 SND_SOC_DAPM_OUTPUT("OUT3"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route wm8955_dapm_routes[] = अणु
-	अणु "DACL", शून्य, "SYSCLK" पूर्ण,
-	अणु "DACR", शून्य, "SYSCLK" पूर्ण,
+static const struct snd_soc_dapm_route wm8955_dapm_routes[] = {
+	{ "DACL", NULL, "SYSCLK" },
+	{ "DACR", NULL, "SYSCLK" },
 
-	अणु "Mono Input", शून्य, "MONOIN-" पूर्ण,
-	अणु "Mono Input", शून्य, "MONOIN+" पूर्ण,
+	{ "Mono Input", NULL, "MONOIN-" },
+	{ "Mono Input", NULL, "MONOIN+" },
 
-	अणु "Left", "Playback Switch", "DACL" पूर्ण,
-	अणु "Left", "Right Playback Switch", "DACR" पूर्ण,
-	अणु "Left", "Bypass Switch", "LINEINL" पूर्ण,
-	अणु "Left", "Mono Switch", "Mono Input" पूर्ण,
+	{ "Left", "Playback Switch", "DACL" },
+	{ "Left", "Right Playback Switch", "DACR" },
+	{ "Left", "Bypass Switch", "LINEINL" },
+	{ "Left", "Mono Switch", "Mono Input" },
 
-	अणु "Right", "Playback Switch", "DACR" पूर्ण,
-	अणु "Right", "Left Playback Switch", "DACL" पूर्ण,
-	अणु "Right", "Bypass Switch", "LINEINR" पूर्ण,
-	अणु "Right", "Mono Switch", "Mono Input" पूर्ण,
+	{ "Right", "Playback Switch", "DACR" },
+	{ "Right", "Left Playback Switch", "DACL" },
+	{ "Right", "Bypass Switch", "LINEINR" },
+	{ "Right", "Mono Switch", "Mono Input" },
 
-	अणु "Mono", "Left Playback Switch", "DACL" पूर्ण,
-	अणु "Mono", "Right Playback Switch", "DACR" पूर्ण,
-	अणु "Mono", "Left Bypass Switch", "LINEINL" पूर्ण,
-	अणु "Mono", "Right Bypass Switch", "LINEINR" पूर्ण,
+	{ "Mono", "Left Playback Switch", "DACL" },
+	{ "Mono", "Right Playback Switch", "DACR" },
+	{ "Mono", "Left Bypass Switch", "LINEINL" },
+	{ "Mono", "Right Bypass Switch", "LINEINR" },
 
-	अणु "LOUT1 PGA", शून्य, "Left" पूर्ण,
-	अणु "LOUT1", शून्य, "TSDEN" पूर्ण,
-	अणु "LOUT1", शून्य, "LOUT1 PGA" पूर्ण,
+	{ "LOUT1 PGA", NULL, "Left" },
+	{ "LOUT1", NULL, "TSDEN" },
+	{ "LOUT1", NULL, "LOUT1 PGA" },
 
-	अणु "ROUT1 PGA", शून्य, "Right" पूर्ण,
-	अणु "ROUT1", शून्य, "TSDEN" पूर्ण,
-	अणु "ROUT1", शून्य, "ROUT1 PGA" पूर्ण,
+	{ "ROUT1 PGA", NULL, "Right" },
+	{ "ROUT1", NULL, "TSDEN" },
+	{ "ROUT1", NULL, "ROUT1 PGA" },
 
-	अणु "LOUT2 PGA", शून्य, "Left" पूर्ण,
-	अणु "LOUT2", शून्य, "TSDEN" पूर्ण,
-	अणु "LOUT2", शून्य, "LOUT2 PGA" पूर्ण,
+	{ "LOUT2 PGA", NULL, "Left" },
+	{ "LOUT2", NULL, "TSDEN" },
+	{ "LOUT2", NULL, "LOUT2 PGA" },
 
-	अणु "ROUT2 PGA", शून्य, "Right" पूर्ण,
-	अणु "ROUT2", शून्य, "TSDEN" पूर्ण,
-	अणु "ROUT2", शून्य, "ROUT2 PGA" पूर्ण,
+	{ "ROUT2 PGA", NULL, "Right" },
+	{ "ROUT2", NULL, "TSDEN" },
+	{ "ROUT2", NULL, "ROUT2 PGA" },
 
-	अणु "MOUT PGA", शून्य, "Mono" पूर्ण,
-	अणु "MONOOUT", शून्य, "MOUT PGA" पूर्ण,
+	{ "MOUT PGA", NULL, "Mono" },
+	{ "MONOOUT", NULL, "MOUT PGA" },
 
 	/* OUT3 not currently implemented */
-	अणु "OUT3", शून्य, "OUT3 PGA" पूर्ण,
-पूर्ण;
+	{ "OUT3", NULL, "OUT3 PGA" },
+};
 
-अटल पूर्णांक wm8955_hw_params(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_pcm_hw_params *params,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
-	पूर्णांक wl;
+static int wm8955_hw_params(struct snd_pcm_substream *substream,
+			    struct snd_pcm_hw_params *params,
+			    struct snd_soc_dai *dai)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+	int ret;
+	int wl;
 
-	चयन (params_width(params)) अणु
-	हाल 16:
+	switch (params_width(params)) {
+	case 16:
 		wl = 0;
-		अवरोध;
-	हाल 20:
+		break;
+	case 20:
 		wl = 0x4;
-		अवरोध;
-	हाल 24:
+		break;
+	case 24:
 		wl = 0x8;
-		अवरोध;
-	हाल 32:
+		break;
+	case 32:
 		wl = 0xc;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	snd_soc_component_update_bits(component, WM8955_AUDIO_INTERFACE,
 			    WM8955_WL_MASK, wl);
 
 	wm8955->fs = params_rate(params);
 	wm8955_set_deemph(component);
 
-	/* If the chip is घड़ीed then disable the घड़ीs and क्रमce a
-	 * reconfiguration, otherwise DAPM will घातer up the
-	 * घड़ीs क्रम us later. */
-	ret = snd_soc_component_पढ़ो(component, WM8955_POWER_MANAGEMENT_1);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret & WM8955_DIGENB) अणु
+	/* If the chip is clocked then disable the clocks and force a
+	 * reconfiguration, otherwise DAPM will power up the
+	 * clocks for us later. */
+	ret = snd_soc_component_read(component, WM8955_POWER_MANAGEMENT_1);
+	if (ret < 0)
+		return ret;
+	if (ret & WM8955_DIGENB) {
 		snd_soc_component_update_bits(component, WM8955_POWER_MANAGEMENT_1,
 				    WM8955_DIGENB, 0);
 		snd_soc_component_update_bits(component, WM8955_CLOCKING_PLL,
 				    WM8955_PLL_RB | WM8955_PLLEN, 0);
 
-		wm8955_configure_घड़ीing(component);
-	पूर्ण
+		wm8955_configure_clocking(component);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक wm8955_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
-			     अचिन्हित पूर्णांक freq, पूर्णांक dir)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	काष्ठा wm8955_priv *priv = snd_soc_component_get_drvdata(component);
-	पूर्णांक भाग;
+static int wm8955_set_sysclk(struct snd_soc_dai *dai, int clk_id,
+			     unsigned int freq, int dir)
+{
+	struct snd_soc_component *component = dai->component;
+	struct wm8955_priv *priv = snd_soc_component_get_drvdata(component);
+	int div;
 
-	चयन (clk_id) अणु
-	हाल WM8955_CLK_MCLK:
-		अगर (freq > 15000000) अणु
+	switch (clk_id) {
+	case WM8955_CLK_MCLK:
+		if (freq > 15000000) {
 			priv->mclk_rate = freq /= 2;
-			भाग = WM8955_MCLKDIV2;
-		पूर्ण अन्यथा अणु
+			div = WM8955_MCLKDIV2;
+		} else {
 			priv->mclk_rate = freq;
-			भाग = 0;
-		पूर्ण
+			div = 0;
+		}
 
 		snd_soc_component_update_bits(component, WM8955_SAMPLE_RATE,
-				    WM8955_MCLKDIV2, भाग);
-		अवरोध;
+				    WM8955_MCLKDIV2, div);
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	dev_dbg(dai->dev, "Clock source is %d at %uHz\n", clk_id, freq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8955_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
-अणु
-	काष्ठा snd_soc_component *component = dai->component;
-	u16 aअगर = 0;
+static int wm8955_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
+{
+	struct snd_soc_component *component = dai->component;
+	u16 aif = 0;
 
-	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
-	हाल SND_SOC_DAIFMT_CBS_CFS:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_CBM_CFM:
-		aअगर |= WM8955_MS;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
+	case SND_SOC_DAIFMT_CBS_CFS:
+		break;
+	case SND_SOC_DAIFMT_CBM_CFM:
+		aif |= WM8955_MS;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_B:
-		aअगर |= WM8955_LRP;
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_B:
+		aif |= WM8955_LRP;
 		fallthrough;
-	हाल SND_SOC_DAIFMT_DSP_A:
-		aअगर |= 0x3;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_I2S:
-		aअगर |= 0x2;
-		अवरोध;
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-		अवरोध;
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		aअगर |= 0x1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case SND_SOC_DAIFMT_DSP_A:
+		aif |= 0x3;
+		break;
+	case SND_SOC_DAIFMT_I2S:
+		aif |= 0x2;
+		break;
+	case SND_SOC_DAIFMT_RIGHT_J:
+		break;
+	case SND_SOC_DAIFMT_LEFT_J:
+		aif |= 0x1;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
-	हाल SND_SOC_DAIFMT_DSP_A:
-	हाल SND_SOC_DAIFMT_DSP_B:
-		/* frame inversion not valid क्रम DSP modes */
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			aअगर |= WM8955_BCLKINV;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
+	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
+	case SND_SOC_DAIFMT_DSP_A:
+	case SND_SOC_DAIFMT_DSP_B:
+		/* frame inversion not valid for DSP modes */
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			aif |= WM8955_BCLKINV;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
 
-	हाल SND_SOC_DAIFMT_I2S:
-	हाल SND_SOC_DAIFMT_RIGHT_J:
-	हाल SND_SOC_DAIFMT_LEFT_J:
-		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
-		हाल SND_SOC_DAIFMT_NB_NF:
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_IF:
-			aअगर |= WM8955_BCLKINV | WM8955_LRP;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_IB_NF:
-			aअगर |= WM8955_BCLKINV;
-			अवरोध;
-		हाल SND_SOC_DAIFMT_NB_IF:
-			aअगर |= WM8955_LRP;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case SND_SOC_DAIFMT_I2S:
+	case SND_SOC_DAIFMT_RIGHT_J:
+	case SND_SOC_DAIFMT_LEFT_J:
+		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
+		case SND_SOC_DAIFMT_NB_NF:
+			break;
+		case SND_SOC_DAIFMT_IB_IF:
+			aif |= WM8955_BCLKINV | WM8955_LRP;
+			break;
+		case SND_SOC_DAIFMT_IB_NF:
+			aif |= WM8955_BCLKINV;
+			break;
+		case SND_SOC_DAIFMT_NB_IF:
+			aif |= WM8955_LRP;
+			break;
+		default:
+			return -EINVAL;
+		}
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	snd_soc_component_update_bits(component, WM8955_AUDIO_INTERFACE,
 			    WM8955_MS | WM8955_FORMAT_MASK | WM8955_BCLKINV |
-			    WM8955_LRP, aअगर);
+			    WM8955_LRP, aif);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक wm8955_mute(काष्ठा snd_soc_dai *codec_dai, पूर्णांक mute, पूर्णांक direction)
-अणु
-	काष्ठा snd_soc_component *component = codec_dai->component;
-	पूर्णांक val;
+static int wm8955_mute(struct snd_soc_dai *codec_dai, int mute, int direction)
+{
+	struct snd_soc_component *component = codec_dai->component;
+	int val;
 
-	अगर (mute)
+	if (mute)
 		val = WM8955_DACMU;
-	अन्यथा
+	else
 		val = 0;
 
 	snd_soc_component_update_bits(component, WM8955_DAC_CONTROL, WM8955_DACMU, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक wm8955_set_bias_level(काष्ठा snd_soc_component *component,
-				 क्रमागत snd_soc_bias_level level)
-अणु
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
-	पूर्णांक ret;
+static int wm8955_set_bias_level(struct snd_soc_component *component,
+				 enum snd_soc_bias_level level)
+{
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+	int ret;
 
-	चयन (level) अणु
-	हाल SND_SOC_BIAS_ON:
-		अवरोध;
+	switch (level) {
+	case SND_SOC_BIAS_ON:
+		break;
 
-	हाल SND_SOC_BIAS_PREPARE:
+	case SND_SOC_BIAS_PREPARE:
 		/* VMID resistance 2*50k */
 		snd_soc_component_update_bits(component, WM8955_POWER_MANAGEMENT_1,
 				    WM8955_VMIDSEL_MASK,
@@ -781,18 +780,18 @@ SND_SOC_DAPM_OUTPUT("OUT3"),
 		snd_soc_component_update_bits(component, WM8955_ADDITIONAL_CONTROL_1,
 				    WM8955_VSEL_MASK,
 				    0x2 << WM8955_VSEL_SHIFT);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_STANDBY:
-		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
+	case SND_SOC_BIAS_STANDBY:
+		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
 			ret = regulator_bulk_enable(ARRAY_SIZE(wm8955->supplies),
 						    wm8955->supplies);
-			अगर (ret != 0) अणु
+			if (ret != 0) {
 				dev_err(component->dev,
 					"Failed to enable supplies: %d\n",
 					ret);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			regcache_sync(wm8955->regmap);
 
@@ -806,13 +805,13 @@ SND_SOC_DAPM_OUTPUT("OUT3"),
 			/* Let VMID ramp */
 			msleep(500);
 
-			/* High resistance VROI to मुख्यtain outमाला_दो */
+			/* High resistance VROI to maintain outputs */
 			snd_soc_component_update_bits(component,
 					    WM8955_ADDITIONAL_CONTROL_3,
 					    WM8955_VROI, WM8955_VROI);
-		पूर्ण
+		}
 
-		/* Maपूर्णांकain VMID with 2*250k */
+		/* Maintain VMID with 2*250k */
 		snd_soc_component_update_bits(component, WM8955_POWER_MANAGEMENT_1,
 				    WM8955_VMIDSEL_MASK,
 				    0x2 << WM8955_VMIDSEL_SHIFT);
@@ -820,10 +819,10 @@ SND_SOC_DAPM_OUTPUT("OUT3"),
 		/* Minimum bias current */
 		snd_soc_component_update_bits(component, WM8955_ADDITIONAL_CONTROL_1,
 				    WM8955_VSEL_MASK, 0);
-		अवरोध;
+		break;
 
-	हाल SND_SOC_BIAS_OFF:
-		/* Low resistance VROI to help disअक्षरge */
+	case SND_SOC_BIAS_OFF:
+		/* Low resistance VROI to help discharge */
 		snd_soc_component_update_bits(component,
 				    WM8955_ADDITIONAL_CONTROL_3,
 				    WM8955_VROI, 0);
@@ -835,66 +834,66 @@ SND_SOC_DAPM_OUTPUT("OUT3"),
 
 		regulator_bulk_disable(ARRAY_SIZE(wm8955->supplies),
 				       wm8955->supplies);
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
-#घोषणा WM8955_RATES SNDRV_PCM_RATE_8000_96000
+#define WM8955_RATES SNDRV_PCM_RATE_8000_96000
 
-#घोषणा WM8955_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#define WM8955_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 			SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
 
-अटल स्थिर काष्ठा snd_soc_dai_ops wm8955_dai_ops = अणु
+static const struct snd_soc_dai_ops wm8955_dai_ops = {
 	.set_sysclk = wm8955_set_sysclk,
 	.set_fmt = wm8955_set_fmt,
 	.hw_params = wm8955_hw_params,
 	.mute_stream = wm8955_mute,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver wm8955_dai = अणु
+static struct snd_soc_dai_driver wm8955_dai = {
 	.name = "wm8955-hifi",
-	.playback = अणु
+	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = WM8955_RATES,
-		.क्रमmats = WM8955_FORMATS,
-	पूर्ण,
+		.formats = WM8955_FORMATS,
+	},
 	.ops = &wm8955_dai_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक wm8955_probe(काष्ठा snd_soc_component *component)
-अणु
-	काष्ठा wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
-	काष्ठा wm8955_pdata *pdata = dev_get_platdata(component->dev);
-	पूर्णांक ret, i;
+static int wm8955_probe(struct snd_soc_component *component)
+{
+	struct wm8955_priv *wm8955 = snd_soc_component_get_drvdata(component);
+	struct wm8955_pdata *pdata = dev_get_platdata(component->dev);
+	int ret, i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(wm8955->supplies); i++)
+	for (i = 0; i < ARRAY_SIZE(wm8955->supplies); i++)
 		wm8955->supplies[i].supply = wm8955_supply_names[i];
 
 	ret = devm_regulator_bulk_get(component->dev, ARRAY_SIZE(wm8955->supplies),
 				 wm8955->supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(component->dev, "Failed to request supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(wm8955->supplies),
 				    wm8955->supplies);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		dev_err(component->dev, "Failed to enable supplies: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = wm8955_reset(component);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(component->dev, "Failed to issue reset: %d\n", ret);
-		जाओ err_enable;
-	पूर्ण
+		goto err_enable;
+	}
 
-	/* Change some शेष settings - latch VU and enable ZC */
+	/* Change some default settings - latch VU and enable ZC */
 	snd_soc_component_update_bits(component, WM8955_LEFT_DAC_VOLUME,
 			    WM8955_LDVU, WM8955_LDVU);
 	snd_soc_component_update_bits(component, WM8955_RIGHT_DAC_VOLUME,
@@ -914,101 +913,101 @@ SND_SOC_DAPM_OUTPUT("OUT3"),
 	snd_soc_component_update_bits(component, WM8955_MONOOUT_VOLUME,
 			    WM8955_MOZC, WM8955_MOZC);
 
-	/* Also enable adaptive bass boost by शेष */
+	/* Also enable adaptive bass boost by default */
 	snd_soc_component_update_bits(component, WM8955_BASS_CONTROL, WM8955_BB, WM8955_BB);
 
-	/* Set platक्रमm data values */
-	अगर (pdata) अणु
-		अगर (pdata->out2_speaker)
+	/* Set platform data values */
+	if (pdata) {
+		if (pdata->out2_speaker)
 			snd_soc_component_update_bits(component, WM8955_ADDITIONAL_CONTROL_2,
 					    WM8955_ROUT2INV, WM8955_ROUT2INV);
 
-		अगर (pdata->monoin_dअगरf)
+		if (pdata->monoin_diff)
 			snd_soc_component_update_bits(component, WM8955_MONO_OUT_MIX_1,
 					    WM8955_DMEN, WM8955_DMEN);
-	पूर्ण
+	}
 
-	snd_soc_component_क्रमce_bias_level(component, SND_SOC_BIAS_STANDBY);
+	snd_soc_component_force_bias_level(component, SND_SOC_BIAS_STANDBY);
 
-	/* Bias level configuration will have करोne an extra enable */
+	/* Bias level configuration will have done an extra enable */
 	regulator_bulk_disable(ARRAY_SIZE(wm8955->supplies), wm8955->supplies);
 
-	वापस 0;
+	return 0;
 
 err_enable:
 	regulator_bulk_disable(ARRAY_SIZE(wm8955->supplies), wm8955->supplies);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_wm8955 = अणु
+static const struct snd_soc_component_driver soc_component_dev_wm8955 = {
 	.probe			= wm8955_probe,
 	.set_bias_level		= wm8955_set_bias_level,
 	.controls		= wm8955_snd_controls,
 	.num_controls		= ARRAY_SIZE(wm8955_snd_controls),
-	.dapm_widमाला_लो		= wm8955_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो	= ARRAY_SIZE(wm8955_dapm_widमाला_लो),
+	.dapm_widgets		= wm8955_dapm_widgets,
+	.num_dapm_widgets	= ARRAY_SIZE(wm8955_dapm_widgets),
 	.dapm_routes		= wm8955_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(wm8955_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmकरोwn_समय	= 1,
+	.use_pmdown_time	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_config wm8955_regmap = अणु
+static const struct regmap_config wm8955_regmap = {
 	.reg_bits = 7,
 	.val_bits = 9,
 
-	.max_रेजिस्टर = WM8955_MAX_REGISTER,
-	.अस्थिर_reg = wm8955_अस्थिर,
-	.ग_लिखोable_reg = wm8955_ग_लिखोable,
+	.max_register = WM8955_MAX_REGISTER,
+	.volatile_reg = wm8955_volatile,
+	.writeable_reg = wm8955_writeable,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_शेषs = wm8955_reg_शेषs,
-	.num_reg_शेषs = ARRAY_SIZE(wm8955_reg_शेषs),
-पूर्ण;
+	.reg_defaults = wm8955_reg_defaults,
+	.num_reg_defaults = ARRAY_SIZE(wm8955_reg_defaults),
+};
 
-अटल पूर्णांक wm8955_i2c_probe(काष्ठा i2c_client *i2c,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा wm8955_priv *wm8955;
-	पूर्णांक ret;
+static int wm8955_i2c_probe(struct i2c_client *i2c,
+			    const struct i2c_device_id *id)
+{
+	struct wm8955_priv *wm8955;
+	int ret;
 
-	wm8955 = devm_kzalloc(&i2c->dev, माप(काष्ठा wm8955_priv),
+	wm8955 = devm_kzalloc(&i2c->dev, sizeof(struct wm8955_priv),
 			      GFP_KERNEL);
-	अगर (wm8955 == शून्य)
-		वापस -ENOMEM;
+	if (wm8955 == NULL)
+		return -ENOMEM;
 
 	wm8955->regmap = devm_regmap_init_i2c(i2c, &wm8955_regmap);
-	अगर (IS_ERR(wm8955->regmap)) अणु
+	if (IS_ERR(wm8955->regmap)) {
 		ret = PTR_ERR(wm8955->regmap);
 		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	i2c_set_clientdata(i2c, wm8955);
 
-	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
+	ret = devm_snd_soc_register_component(&i2c->dev,
 			&soc_component_dev_wm8955, &wm8955_dai, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i2c_device_id wm8955_i2c_id[] = अणु
-	अणु "wm8955", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id wm8955_i2c_id[] = {
+	{ "wm8955", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, wm8955_i2c_id);
 
-अटल काष्ठा i2c_driver wm8955_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver wm8955_i2c_driver = {
+	.driver = {
 		.name = "wm8955",
-	पूर्ण,
+	},
 	.probe =    wm8955_i2c_probe,
 	.id_table = wm8955_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(wm8955_i2c_driver);
 

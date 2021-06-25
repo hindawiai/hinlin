@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -7,140 +6,140 @@
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * Fractional Synthesizer घड़ी implementation
+ * Fractional Synthesizer clock implementation
  */
 
-#घोषणा pr_fmt(fmt) "clk-frac-synth: " fmt
+#define pr_fmt(fmt) "clk-frac-synth: " fmt
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश "clk.h"
+#include <linux/clk-provider.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include "clk.h"
 
-#घोषणा DIV_FACTOR_MASK		0x1FFFF
+#define DIV_FACTOR_MASK		0x1FFFF
 
 /*
- * DOC: Fractional Synthesizer घड़ी
+ * DOC: Fractional Synthesizer clock
  *
  * Fout from synthesizer can be given from below equation:
  *
- * Fout= Fin/2*भाग (भागision factor)
- * भाग is 17 bits:-
+ * Fout= Fin/2*div (division factor)
+ * div is 17 bits:-
  *	0-13 (fractional part)
- *	14-16 (पूर्णांकeger part)
- *	भाग is (16-14 bits).(13-0 bits) (in binary)
+ *	14-16 (integer part)
+ *	div is (16-14 bits).(13-0 bits) (in binary)
  *
- *	Fout = Fin/(2 * भाग)
- *	Fout = ((Fin / 10000)/(2 * भाग)) * 10000
- *	Fout = (2^14 * (Fin / 10000)/(2^14 * (2 * भाग))) * 10000
- *	Fout = (((Fin / 10000) << 14)/(2 * (भाग << 14))) * 10000
+ *	Fout = Fin/(2 * div)
+ *	Fout = ((Fin / 10000)/(2 * div)) * 10000
+ *	Fout = (2^14 * (Fin / 10000)/(2^14 * (2 * div))) * 10000
+ *	Fout = (((Fin / 10000) << 14)/(2 * (div << 14))) * 10000
  *
- * भाग << 14 simply 17 bit value written at रेजिस्टर.
- * Max error due to scaling करोwn by 10000 is 10 KHz
+ * div << 14 simply 17 bit value written at register.
+ * Max error due to scaling down by 10000 is 10 KHz
  */
 
-#घोषणा to_clk_frac(_hw) container_of(_hw, काष्ठा clk_frac, hw)
+#define to_clk_frac(_hw) container_of(_hw, struct clk_frac, hw)
 
-अटल अचिन्हित दीर्घ frac_calc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ prate,
-		पूर्णांक index)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	काष्ठा frac_rate_tbl *rtbl = frac->rtbl;
+static unsigned long frac_calc_rate(struct clk_hw *hw, unsigned long prate,
+		int index)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	struct frac_rate_tbl *rtbl = frac->rtbl;
 
 	prate /= 10000;
 	prate <<= 14;
-	prate /= (2 * rtbl[index].भाग);
+	prate /= (2 * rtbl[index].div);
 	prate *= 10000;
 
-	वापस prate;
-पूर्ण
+	return prate;
+}
 
-अटल दीर्घ clk_frac_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
-		अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	पूर्णांक unused;
+static long clk_frac_round_rate(struct clk_hw *hw, unsigned long drate,
+		unsigned long *prate)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	int unused;
 
-	वापस clk_round_rate_index(hw, drate, *prate, frac_calc_rate,
+	return clk_round_rate_index(hw, drate, *prate, frac_calc_rate,
 			frac->rtbl_cnt, &unused);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ clk_frac_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	अचिन्हित दीर्घ flags = 0;
-	अचिन्हित पूर्णांक भाग = 1, val;
+static unsigned long clk_frac_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	unsigned long flags = 0;
+	unsigned int div = 1, val;
 
-	अगर (frac->lock)
+	if (frac->lock)
 		spin_lock_irqsave(frac->lock, flags);
 
-	val = पढ़ोl_relaxed(frac->reg);
+	val = readl_relaxed(frac->reg);
 
-	अगर (frac->lock)
+	if (frac->lock)
 		spin_unlock_irqrestore(frac->lock, flags);
 
-	भाग = val & DIV_FACTOR_MASK;
+	div = val & DIV_FACTOR_MASK;
 
-	अगर (!भाग)
-		वापस 0;
+	if (!div)
+		return 0;
 
 	parent_rate = parent_rate / 10000;
 
-	parent_rate = (parent_rate << 14) / (2 * भाग);
-	वापस parent_rate * 10000;
-पूर्ण
+	parent_rate = (parent_rate << 14) / (2 * div);
+	return parent_rate * 10000;
+}
 
-/* Configures new घड़ी rate of frac */
-अटल पूर्णांक clk_frac_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
-				अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_frac *frac = to_clk_frac(hw);
-	काष्ठा frac_rate_tbl *rtbl = frac->rtbl;
-	अचिन्हित दीर्घ flags = 0, val;
-	पूर्णांक i;
+/* Configures new clock rate of frac */
+static int clk_frac_set_rate(struct clk_hw *hw, unsigned long drate,
+				unsigned long prate)
+{
+	struct clk_frac *frac = to_clk_frac(hw);
+	struct frac_rate_tbl *rtbl = frac->rtbl;
+	unsigned long flags = 0, val;
+	int i;
 
 	clk_round_rate_index(hw, drate, prate, frac_calc_rate, frac->rtbl_cnt,
 			&i);
 
-	अगर (frac->lock)
+	if (frac->lock)
 		spin_lock_irqsave(frac->lock, flags);
 
-	val = पढ़ोl_relaxed(frac->reg) & ~DIV_FACTOR_MASK;
-	val |= rtbl[i].भाग & DIV_FACTOR_MASK;
-	ग_लिखोl_relaxed(val, frac->reg);
+	val = readl_relaxed(frac->reg) & ~DIV_FACTOR_MASK;
+	val |= rtbl[i].div & DIV_FACTOR_MASK;
+	writel_relaxed(val, frac->reg);
 
-	अगर (frac->lock)
+	if (frac->lock)
 		spin_unlock_irqrestore(frac->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_frac_ops = अणु
+static const struct clk_ops clk_frac_ops = {
 	.recalc_rate = clk_frac_recalc_rate,
 	.round_rate = clk_frac_round_rate,
 	.set_rate = clk_frac_set_rate,
-पूर्ण;
+};
 
-काष्ठा clk *clk_रेजिस्टर_frac(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
-		अचिन्हित दीर्घ flags, व्योम __iomem *reg,
-		काष्ठा frac_rate_tbl *rtbl, u8 rtbl_cnt, spinlock_t *lock)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा clk_frac *frac;
-	काष्ठा clk *clk;
+struct clk *clk_register_frac(const char *name, const char *parent_name,
+		unsigned long flags, void __iomem *reg,
+		struct frac_rate_tbl *rtbl, u8 rtbl_cnt, spinlock_t *lock)
+{
+	struct clk_init_data init;
+	struct clk_frac *frac;
+	struct clk *clk;
 
-	अगर (!name || !parent_name || !reg || !rtbl || !rtbl_cnt) अणु
+	if (!name || !parent_name || !reg || !rtbl || !rtbl_cnt) {
 		pr_err("Invalid arguments passed\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	frac = kzalloc(माप(*frac), GFP_KERNEL);
-	अगर (!frac)
-		वापस ERR_PTR(-ENOMEM);
+	frac = kzalloc(sizeof(*frac), GFP_KERNEL);
+	if (!frac)
+		return ERR_PTR(-ENOMEM);
 
-	/* काष्ठा clk_frac assignments */
+	/* struct clk_frac assignments */
 	frac->reg = reg;
 	frac->rtbl = rtbl;
 	frac->rtbl_cnt = rtbl_cnt;
@@ -153,12 +152,12 @@
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	clk = clk_रेजिस्टर(शून्य, &frac->hw);
-	अगर (!IS_ERR_OR_शून्य(clk))
-		वापस clk;
+	clk = clk_register(NULL, &frac->hw);
+	if (!IS_ERR_OR_NULL(clk))
+		return clk;
 
 	pr_err("clk register failed\n");
-	kमुक्त(frac);
+	kfree(frac);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}

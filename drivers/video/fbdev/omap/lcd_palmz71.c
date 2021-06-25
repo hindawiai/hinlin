@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * LCD panel support क्रम the Palm Zire71
+ * LCD panel support for the Palm Zire71
  *
- * Original version : Roमुख्य Goyet
+ * Original version : Romain Goyet
  * Current version : Laurent Gonzalez
- * Modअगरied क्रम zire71 : Marek Vasut
+ * Modified for zire71 : Marek Vasut
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
 
-#समावेश "omapfb.h"
+#include "omapfb.h"
 
-अटल अचिन्हित दीर्घ palmz71_panel_get_caps(काष्ठा lcd_panel *panel)
-अणु
-	वापस OMAPFB_CAPS_SET_BACKLIGHT;
-पूर्ण
+static unsigned long palmz71_panel_get_caps(struct lcd_panel *panel)
+{
+	return OMAPFB_CAPS_SET_BACKLIGHT;
+}
 
-अटल काष्ठा lcd_panel palmz71_panel = अणु
+static struct lcd_panel palmz71_panel = {
 	.name		= "palmz71",
 	.config		= OMAP_LCDC_PANEL_TFT | OMAP_LCDC_INV_VSYNC |
 			  OMAP_LCDC_INV_HSYNC | OMAP_LCDC_HSVS_RISING_EDGE |
 			  OMAP_LCDC_HSVS_OPPOSITE,
 	.data_lines	= 16,
 	.bpp		= 16,
-	.pixel_घड़ी	= 24000,
+	.pixel_clock	= 24000,
 	.x_res		= 320,
 	.y_res		= 320,
 	.hsw		= 4,
@@ -38,22 +37,22 @@
 	.pcd		= 0,
 
 	.get_caps	= palmz71_panel_get_caps,
-पूर्ण;
+};
 
-अटल पूर्णांक palmz71_panel_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	omapfb_रेजिस्टर_panel(&palmz71_panel);
-	वापस 0;
-पूर्ण
+static int palmz71_panel_probe(struct platform_device *pdev)
+{
+	omapfb_register_panel(&palmz71_panel);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver palmz71_panel_driver = अणु
+static struct platform_driver palmz71_panel_driver = {
 	.probe		= palmz71_panel_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "lcd_palmz71",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(palmz71_panel_driver);
+module_platform_driver(palmz71_panel_driver);
 
 MODULE_AUTHOR("Romain Goyet, Laurent Gonzalez, Marek Vasut");
 MODULE_LICENSE("GPL");

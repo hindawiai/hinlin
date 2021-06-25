@@ -1,84 +1,83 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/pagewalk.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/hugetlb.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/pagewalk.h>
+#include <linux/highmem.h>
+#include <linux/sched.h>
+#include <linux/hugetlb.h>
 
 /*
  * We want to know the real level where a entry is located ignoring any
- * folding of levels which may be happening. For example अगर p4d is folded then
+ * folding of levels which may be happening. For example if p4d is folded then
  * a missing entry found at level 1 (p4d) is actually at level 0 (pgd).
  */
-अटल पूर्णांक real_depth(पूर्णांक depth)
-अणु
-	अगर (depth == 3 && PTRS_PER_PMD == 1)
+static int real_depth(int depth)
+{
+	if (depth == 3 && PTRS_PER_PMD == 1)
 		depth = 2;
-	अगर (depth == 2 && PTRS_PER_PUD == 1)
+	if (depth == 2 && PTRS_PER_PUD == 1)
 		depth = 1;
-	अगर (depth == 1 && PTRS_PER_P4D == 1)
+	if (depth == 1 && PTRS_PER_P4D == 1)
 		depth = 0;
-	वापस depth;
-पूर्ण
+	return depth;
+}
 
-अटल पूर्णांक walk_pte_range_inner(pte_t *pte, अचिन्हित दीर्घ addr,
-				अचिन्हित दीर्घ end, काष्ठा mm_walk *walk)
-अणु
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
-	पूर्णांक err = 0;
+static int walk_pte_range_inner(pte_t *pte, unsigned long addr,
+				unsigned long end, struct mm_walk *walk)
+{
+	const struct mm_walk_ops *ops = walk->ops;
+	int err = 0;
 
-	क्रम (;;) अणु
+	for (;;) {
 		err = ops->pte_entry(pte, addr, addr + PAGE_SIZE, walk);
-		अगर (err)
-		       अवरोध;
-		अगर (addr >= end - PAGE_SIZE)
-			अवरोध;
+		if (err)
+		       break;
+		if (addr >= end - PAGE_SIZE)
+			break;
 		addr += PAGE_SIZE;
 		pte++;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक walk_pte_range(pmd_t *pmd, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			  काष्ठा mm_walk *walk)
-अणु
+static int walk_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
+			  struct mm_walk *walk)
+{
 	pte_t *pte;
-	पूर्णांक err = 0;
+	int err = 0;
 	spinlock_t *ptl;
 
-	अगर (walk->no_vma) अणु
+	if (walk->no_vma) {
 		pte = pte_offset_map(pmd, addr);
 		err = walk_pte_range_inner(pte, addr, end, walk);
 		pte_unmap(pte);
-	पूर्ण अन्यथा अणु
+	} else {
 		pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
 		err = walk_pte_range_inner(pte, addr, end, walk);
 		pte_unmap_unlock(pte, ptl);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक walk_pmd_range(pud_t *pud, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			  काष्ठा mm_walk *walk)
-अणु
+static int walk_pmd_range(pud_t *pud, unsigned long addr, unsigned long end,
+			  struct mm_walk *walk)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ next;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
-	पूर्णांक err = 0;
-	पूर्णांक depth = real_depth(3);
+	unsigned long next;
+	const struct mm_walk_ops *ops = walk->ops;
+	int err = 0;
+	int depth = real_depth(3);
 
 	pmd = pmd_offset(pud, addr);
-	करो अणु
+	do {
 again:
 		next = pmd_addr_end(addr, end);
-		अगर (pmd_none(*pmd) || (!walk->vma && !walk->no_vma)) अणु
-			अगर (ops->pte_hole)
+		if (pmd_none(*pmd) || (!walk->vma && !walk->no_vma)) {
+			if (ops->pte_hole)
 				err = ops->pte_hole(addr, next, depth, walk);
-			अगर (err)
-				अवरोध;
-			जारी;
-		पूर्ण
+			if (err)
+				break;
+			continue;
+		}
 
 		walk->action = ACTION_SUBTREE;
 
@@ -86,449 +85,449 @@ again:
 		 * This implies that each ->pmd_entry() handler
 		 * needs to know about pmd_trans_huge() pmds
 		 */
-		अगर (ops->pmd_entry)
+		if (ops->pmd_entry)
 			err = ops->pmd_entry(pmd, addr, next, walk);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		अगर (walk->action == ACTION_AGAIN)
-			जाओ again;
+		if (walk->action == ACTION_AGAIN)
+			goto again;
 
 		/*
-		 * Check this here so we only अवरोध करोwn trans_huge
+		 * Check this here so we only break down trans_huge
 		 * pages when we _need_ to
 		 */
-		अगर ((!walk->vma && (pmd_leaf(*pmd) || !pmd_present(*pmd))) ||
+		if ((!walk->vma && (pmd_leaf(*pmd) || !pmd_present(*pmd))) ||
 		    walk->action == ACTION_CONTINUE ||
 		    !(ops->pte_entry))
-			जारी;
+			continue;
 
-		अगर (walk->vma) अणु
+		if (walk->vma) {
 			split_huge_pmd(walk->vma, pmd, addr);
-			अगर (pmd_trans_unstable(pmd))
-				जाओ again;
-		पूर्ण
+			if (pmd_trans_unstable(pmd))
+				goto again;
+		}
 
 		err = walk_pte_range(pmd, addr, next, walk);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (pmd++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (pmd++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक walk_pud_range(p4d_t *p4d, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			  काष्ठा mm_walk *walk)
-अणु
+static int walk_pud_range(p4d_t *p4d, unsigned long addr, unsigned long end,
+			  struct mm_walk *walk)
+{
 	pud_t *pud;
-	अचिन्हित दीर्घ next;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
-	पूर्णांक err = 0;
-	पूर्णांक depth = real_depth(2);
+	unsigned long next;
+	const struct mm_walk_ops *ops = walk->ops;
+	int err = 0;
+	int depth = real_depth(2);
 
 	pud = pud_offset(p4d, addr);
-	करो अणु
+	do {
  again:
 		next = pud_addr_end(addr, end);
-		अगर (pud_none(*pud) || (!walk->vma && !walk->no_vma)) अणु
-			अगर (ops->pte_hole)
+		if (pud_none(*pud) || (!walk->vma && !walk->no_vma)) {
+			if (ops->pte_hole)
 				err = ops->pte_hole(addr, next, depth, walk);
-			अगर (err)
-				अवरोध;
-			जारी;
-		पूर्ण
+			if (err)
+				break;
+			continue;
+		}
 
 		walk->action = ACTION_SUBTREE;
 
-		अगर (ops->pud_entry)
+		if (ops->pud_entry)
 			err = ops->pud_entry(pud, addr, next, walk);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		अगर (walk->action == ACTION_AGAIN)
-			जाओ again;
+		if (walk->action == ACTION_AGAIN)
+			goto again;
 
-		अगर ((!walk->vma && (pud_leaf(*pud) || !pud_present(*pud))) ||
+		if ((!walk->vma && (pud_leaf(*pud) || !pud_present(*pud))) ||
 		    walk->action == ACTION_CONTINUE ||
 		    !(ops->pmd_entry || ops->pte_entry))
-			जारी;
+			continue;
 
-		अगर (walk->vma)
+		if (walk->vma)
 			split_huge_pud(walk->vma, pud, addr);
-		अगर (pud_none(*pud))
-			जाओ again;
+		if (pud_none(*pud))
+			goto again;
 
 		err = walk_pmd_range(pud, addr, next, walk);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (pud++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (pud++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक walk_p4d_range(pgd_t *pgd, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			  काष्ठा mm_walk *walk)
-अणु
+static int walk_p4d_range(pgd_t *pgd, unsigned long addr, unsigned long end,
+			  struct mm_walk *walk)
+{
 	p4d_t *p4d;
-	अचिन्हित दीर्घ next;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
-	पूर्णांक err = 0;
-	पूर्णांक depth = real_depth(1);
+	unsigned long next;
+	const struct mm_walk_ops *ops = walk->ops;
+	int err = 0;
+	int depth = real_depth(1);
 
 	p4d = p4d_offset(pgd, addr);
-	करो अणु
+	do {
 		next = p4d_addr_end(addr, end);
-		अगर (p4d_none_or_clear_bad(p4d)) अणु
-			अगर (ops->pte_hole)
+		if (p4d_none_or_clear_bad(p4d)) {
+			if (ops->pte_hole)
 				err = ops->pte_hole(addr, next, depth, walk);
-			अगर (err)
-				अवरोध;
-			जारी;
-		पूर्ण
-		अगर (ops->p4d_entry) अणु
+			if (err)
+				break;
+			continue;
+		}
+		if (ops->p4d_entry) {
 			err = ops->p4d_entry(p4d, addr, next, walk);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-		अगर (ops->pud_entry || ops->pmd_entry || ops->pte_entry)
+			if (err)
+				break;
+		}
+		if (ops->pud_entry || ops->pmd_entry || ops->pte_entry)
 			err = walk_pud_range(p4d, addr, next, walk);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (p4d++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (p4d++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक walk_pgd_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			  काष्ठा mm_walk *walk)
-अणु
+static int walk_pgd_range(unsigned long addr, unsigned long end,
+			  struct mm_walk *walk)
+{
 	pgd_t *pgd;
-	अचिन्हित दीर्घ next;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
-	पूर्णांक err = 0;
+	unsigned long next;
+	const struct mm_walk_ops *ops = walk->ops;
+	int err = 0;
 
-	अगर (walk->pgd)
+	if (walk->pgd)
 		pgd = walk->pgd + pgd_index(addr);
-	अन्यथा
+	else
 		pgd = pgd_offset(walk->mm, addr);
-	करो अणु
+	do {
 		next = pgd_addr_end(addr, end);
-		अगर (pgd_none_or_clear_bad(pgd)) अणु
-			अगर (ops->pte_hole)
+		if (pgd_none_or_clear_bad(pgd)) {
+			if (ops->pte_hole)
 				err = ops->pte_hole(addr, next, 0, walk);
-			अगर (err)
-				अवरोध;
-			जारी;
-		पूर्ण
-		अगर (ops->pgd_entry) अणु
+			if (err)
+				break;
+			continue;
+		}
+		if (ops->pgd_entry) {
 			err = ops->pgd_entry(pgd, addr, next, walk);
-			अगर (err)
-				अवरोध;
-		पूर्ण
-		अगर (ops->p4d_entry || ops->pud_entry || ops->pmd_entry ||
+			if (err)
+				break;
+		}
+		if (ops->p4d_entry || ops->pud_entry || ops->pmd_entry ||
 		    ops->pte_entry)
 			err = walk_p4d_range(pgd, addr, next, walk);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (pgd++, addr = next, addr != end);
+		if (err)
+			break;
+	} while (pgd++, addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अगर_घोषित CONFIG_HUGETLB_PAGE
-अटल अचिन्हित दीर्घ hugetlb_entry_end(काष्ठा hstate *h, अचिन्हित दीर्घ addr,
-				       अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ boundary = (addr & huge_page_mask(h)) + huge_page_size(h);
-	वापस boundary < end ? boundary : end;
-पूर्ण
+#ifdef CONFIG_HUGETLB_PAGE
+static unsigned long hugetlb_entry_end(struct hstate *h, unsigned long addr,
+				       unsigned long end)
+{
+	unsigned long boundary = (addr & huge_page_mask(h)) + huge_page_size(h);
+	return boundary < end ? boundary : end;
+}
 
-अटल पूर्णांक walk_hugetlb_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			      काष्ठा mm_walk *walk)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = walk->vma;
-	काष्ठा hstate *h = hstate_vma(vma);
-	अचिन्हित दीर्घ next;
-	अचिन्हित दीर्घ hmask = huge_page_mask(h);
-	अचिन्हित दीर्घ sz = huge_page_size(h);
+static int walk_hugetlb_range(unsigned long addr, unsigned long end,
+			      struct mm_walk *walk)
+{
+	struct vm_area_struct *vma = walk->vma;
+	struct hstate *h = hstate_vma(vma);
+	unsigned long next;
+	unsigned long hmask = huge_page_mask(h);
+	unsigned long sz = huge_page_size(h);
 	pte_t *pte;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
-	पूर्णांक err = 0;
+	const struct mm_walk_ops *ops = walk->ops;
+	int err = 0;
 
-	करो अणु
+	do {
 		next = hugetlb_entry_end(h, addr, end);
 		pte = huge_pte_offset(walk->mm, addr & hmask, sz);
 
-		अगर (pte)
+		if (pte)
 			err = ops->hugetlb_entry(pte, hmask, addr, next, walk);
-		अन्यथा अगर (ops->pte_hole)
+		else if (ops->pte_hole)
 			err = ops->pte_hole(addr, next, -1, walk);
 
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (addr = next, addr != end);
+		if (err)
+			break;
+	} while (addr = next, addr != end);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-#अन्यथा /* CONFIG_HUGETLB_PAGE */
-अटल पूर्णांक walk_hugetlb_range(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
-			      काष्ठा mm_walk *walk)
-अणु
-	वापस 0;
-पूर्ण
+#else /* CONFIG_HUGETLB_PAGE */
+static int walk_hugetlb_range(unsigned long addr, unsigned long end,
+			      struct mm_walk *walk)
+{
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_HUGETLB_PAGE */
+#endif /* CONFIG_HUGETLB_PAGE */
 
 /*
  * Decide whether we really walk over the current vma on [@start, @end)
- * or skip it via the वापसed value. Return 0 अगर we करो walk over the
- * current vma, and वापस 1 अगर we skip the vma. Negative values means
- * error, where we पात the current walk.
+ * or skip it via the returned value. Return 0 if we do walk over the
+ * current vma, and return 1 if we skip the vma. Negative values means
+ * error, where we abort the current walk.
  */
-अटल पूर्णांक walk_page_test(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-			काष्ठा mm_walk *walk)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = walk->vma;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
+static int walk_page_test(unsigned long start, unsigned long end,
+			struct mm_walk *walk)
+{
+	struct vm_area_struct *vma = walk->vma;
+	const struct mm_walk_ops *ops = walk->ops;
 
-	अगर (ops->test_walk)
-		वापस ops->test_walk(start, end, walk);
+	if (ops->test_walk)
+		return ops->test_walk(start, end, walk);
 
 	/*
-	 * vma(VM_PFNMAP) करोesn't have any valid काष्ठा pages behind VM_PFNMAP
-	 * range, so we करोn't walk over it as we करो क्रम normal vmas. However,
-	 * Some callers are पूर्णांकerested in handling hole range and they करोn't
+	 * vma(VM_PFNMAP) doesn't have any valid struct pages behind VM_PFNMAP
+	 * range, so we don't walk over it as we do for normal vmas. However,
+	 * Some callers are interested in handling hole range and they don't
 	 * want to just ignore any single address range. Such users certainly
 	 * define their ->pte_hole() callbacks, so let's delegate them to handle
 	 * vma(VM_PFNMAP).
 	 */
-	अगर (vma->vm_flags & VM_PFNMAP) अणु
-		पूर्णांक err = 1;
-		अगर (ops->pte_hole)
+	if (vma->vm_flags & VM_PFNMAP) {
+		int err = 1;
+		if (ops->pte_hole)
 			err = ops->pte_hole(start, end, -1, walk);
-		वापस err ? err : 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err ? err : 1;
+	}
+	return 0;
+}
 
-अटल पूर्णांक __walk_page_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
-			काष्ठा mm_walk *walk)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा vm_area_काष्ठा *vma = walk->vma;
-	स्थिर काष्ठा mm_walk_ops *ops = walk->ops;
+static int __walk_page_range(unsigned long start, unsigned long end,
+			struct mm_walk *walk)
+{
+	int err = 0;
+	struct vm_area_struct *vma = walk->vma;
+	const struct mm_walk_ops *ops = walk->ops;
 
-	अगर (vma && ops->pre_vma) अणु
+	if (vma && ops->pre_vma) {
 		err = ops->pre_vma(start, end, walk);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (vma && is_vm_hugetlb_page(vma)) अणु
-		अगर (ops->hugetlb_entry)
+	if (vma && is_vm_hugetlb_page(vma)) {
+		if (ops->hugetlb_entry)
 			err = walk_hugetlb_range(start, end, walk);
-	पूर्ण अन्यथा
+	} else
 		err = walk_pgd_range(start, end, walk);
 
-	अगर (vma && ops->post_vma)
+	if (vma && ops->post_vma)
 		ops->post_vma(walk);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * walk_page_range - walk page table with caller specअगरic callbacks
- * @mm:		mm_काष्ठा representing the target process of page table walk
- * @start:	start address of the भव address range
- * @end:	end address of the भव address range
+ * walk_page_range - walk page table with caller specific callbacks
+ * @mm:		mm_struct representing the target process of page table walk
+ * @start:	start address of the virtual address range
+ * @end:	end address of the virtual address range
  * @ops:	operation to call during the walk
- * @निजी:	निजी data क्रम callbacks' usage
+ * @private:	private data for callbacks' usage
  *
  * Recursively walk the page table tree of the process represented by @mm
- * within the भव address range [@start, @end). During walking, we can करो
- * some caller-specअगरic works क्रम each entry, by setting up pmd_entry(),
- * pte_entry(), and/or hugetlb_entry(). If you करोn't set up क्रम some of these
+ * within the virtual address range [@start, @end). During walking, we can do
+ * some caller-specific works for each entry, by setting up pmd_entry(),
+ * pte_entry(), and/or hugetlb_entry(). If you don't set up for some of these
  * callbacks, the associated entries/pages are just ignored.
- * The वापस values of these callbacks are commonly defined like below:
+ * The return values of these callbacks are commonly defined like below:
  *
- *  - 0  : succeeded to handle the current entry, and अगर you करोn't reach the
- *         end address yet, जारी to walk.
- *  - >0 : succeeded to handle the current entry, and वापस to the caller
- *         with caller specअगरic value.
- *  - <0 : failed to handle the current entry, and वापस to the caller
+ *  - 0  : succeeded to handle the current entry, and if you don't reach the
+ *         end address yet, continue to walk.
+ *  - >0 : succeeded to handle the current entry, and return to the caller
+ *         with caller specific value.
+ *  - <0 : failed to handle the current entry, and return to the caller
  *         with error code.
  *
- * Beक्रमe starting to walk page table, some callers want to check whether
+ * Before starting to walk page table, some callers want to check whether
  * they really want to walk over the current vma, typically by checking
- * its vm_flags. walk_page_test() and @ops->test_walk() are used क्रम this
+ * its vm_flags. walk_page_test() and @ops->test_walk() are used for this
  * purpose.
  *
- * If operations need to be staged beक्रमe and committed after a vma is walked,
+ * If operations need to be staged before and committed after a vma is walked,
  * there are two callbacks, pre_vma() and post_vma(). Note that post_vma(),
- * since it is पूर्णांकended to handle commit-type operations, can't वापस any
+ * since it is intended to handle commit-type operations, can't return any
  * errors.
  *
- * काष्ठा mm_walk keeps current values of some common data like vma and pmd,
- * which are useful क्रम the access from callbacks. If you want to pass some
- * caller-specअगरic data to callbacks, @निजी should be helpful.
+ * struct mm_walk keeps current values of some common data like vma and pmd,
+ * which are useful for the access from callbacks. If you want to pass some
+ * caller-specific data to callbacks, @private should be helpful.
  *
  * Locking:
  *   Callers of walk_page_range() and walk_page_vma() should hold @mm->mmap_lock,
  *   because these function traverse vma list and/or access to vma's data.
  */
-पूर्णांक walk_page_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
-		अचिन्हित दीर्घ end, स्थिर काष्ठा mm_walk_ops *ops,
-		व्योम *निजी)
-अणु
-	पूर्णांक err = 0;
-	अचिन्हित दीर्घ next;
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा mm_walk walk = अणु
+int walk_page_range(struct mm_struct *mm, unsigned long start,
+		unsigned long end, const struct mm_walk_ops *ops,
+		void *private)
+{
+	int err = 0;
+	unsigned long next;
+	struct vm_area_struct *vma;
+	struct mm_walk walk = {
 		.ops		= ops,
 		.mm		= mm,
-		.निजी	= निजी,
-	पूर्ण;
+		.private	= private,
+	};
 
-	अगर (start >= end)
-		वापस -EINVAL;
+	if (start >= end)
+		return -EINVAL;
 
-	अगर (!walk.mm)
-		वापस -EINVAL;
+	if (!walk.mm)
+		return -EINVAL;
 
-	mmap_निश्चित_locked(walk.mm);
+	mmap_assert_locked(walk.mm);
 
 	vma = find_vma(walk.mm, start);
-	करो अणु
-		अगर (!vma) अणु /* after the last vma */
-			walk.vma = शून्य;
+	do {
+		if (!vma) { /* after the last vma */
+			walk.vma = NULL;
 			next = end;
-		पूर्ण अन्यथा अगर (start < vma->vm_start) अणु /* outside vma */
-			walk.vma = शून्य;
+		} else if (start < vma->vm_start) { /* outside vma */
+			walk.vma = NULL;
 			next = min(end, vma->vm_start);
-		पूर्ण अन्यथा अणु /* inside vma */
+		} else { /* inside vma */
 			walk.vma = vma;
 			next = min(end, vma->vm_end);
 			vma = vma->vm_next;
 
 			err = walk_page_test(start, next, &walk);
-			अगर (err > 0) अणु
+			if (err > 0) {
 				/*
-				 * positive वापस values are purely क्रम
+				 * positive return values are purely for
 				 * controlling the pagewalk, so should never
 				 * be passed to the callers.
 				 */
 				err = 0;
-				जारी;
-			पूर्ण
-			अगर (err < 0)
-				अवरोध;
-		पूर्ण
-		अगर (walk.vma || walk.ops->pte_hole)
+				continue;
+			}
+			if (err < 0)
+				break;
+		}
+		if (walk.vma || walk.ops->pte_hole)
 			err = __walk_page_range(start, next, &walk);
-		अगर (err)
-			अवरोध;
-	पूर्ण जबतक (start = next, start < end);
-	वापस err;
-पूर्ण
+		if (err)
+			break;
+	} while (start = next, start < end);
+	return err;
+}
 
 /*
- * Similar to walk_page_range() but can walk any page tables even अगर they are
+ * Similar to walk_page_range() but can walk any page tables even if they are
  * not backed by VMAs. Because 'unusual' entries may be walked this function
- * will also not lock the PTEs क्रम the pte_entry() callback. This is useful क्रम
- * walking the kernel pages tables or page tables क्रम firmware.
+ * will also not lock the PTEs for the pte_entry() callback. This is useful for
+ * walking the kernel pages tables or page tables for firmware.
  */
-पूर्णांक walk_page_range_novma(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start,
-			  अचिन्हित दीर्घ end, स्थिर काष्ठा mm_walk_ops *ops,
+int walk_page_range_novma(struct mm_struct *mm, unsigned long start,
+			  unsigned long end, const struct mm_walk_ops *ops,
 			  pgd_t *pgd,
-			  व्योम *निजी)
-अणु
-	काष्ठा mm_walk walk = अणु
+			  void *private)
+{
+	struct mm_walk walk = {
 		.ops		= ops,
 		.mm		= mm,
 		.pgd		= pgd,
-		.निजी	= निजी,
+		.private	= private,
 		.no_vma		= true
-	पूर्ण;
+	};
 
-	अगर (start >= end || !walk.mm)
-		वापस -EINVAL;
+	if (start >= end || !walk.mm)
+		return -EINVAL;
 
-	mmap_निश्चित_locked(walk.mm);
+	mmap_assert_locked(walk.mm);
 
-	वापस __walk_page_range(start, end, &walk);
-पूर्ण
+	return __walk_page_range(start, end, &walk);
+}
 
-पूर्णांक walk_page_vma(काष्ठा vm_area_काष्ठा *vma, स्थिर काष्ठा mm_walk_ops *ops,
-		व्योम *निजी)
-अणु
-	काष्ठा mm_walk walk = अणु
+int walk_page_vma(struct vm_area_struct *vma, const struct mm_walk_ops *ops,
+		void *private)
+{
+	struct mm_walk walk = {
 		.ops		= ops,
 		.mm		= vma->vm_mm,
 		.vma		= vma,
-		.निजी	= निजी,
-	पूर्ण;
-	पूर्णांक err;
+		.private	= private,
+	};
+	int err;
 
-	अगर (!walk.mm)
-		वापस -EINVAL;
+	if (!walk.mm)
+		return -EINVAL;
 
-	mmap_निश्चित_locked(walk.mm);
+	mmap_assert_locked(walk.mm);
 
 	err = walk_page_test(vma->vm_start, vma->vm_end, &walk);
-	अगर (err > 0)
-		वापस 0;
-	अगर (err < 0)
-		वापस err;
-	वापस __walk_page_range(vma->vm_start, vma->vm_end, &walk);
-पूर्ण
+	if (err > 0)
+		return 0;
+	if (err < 0)
+		return err;
+	return __walk_page_range(vma->vm_start, vma->vm_end, &walk);
+}
 
 /**
- * walk_page_mapping - walk all memory areas mapped पूर्णांकo a काष्ठा address_space.
- * @mapping: Poपूर्णांकer to the काष्ठा address_space
+ * walk_page_mapping - walk all memory areas mapped into a struct address_space.
+ * @mapping: Pointer to the struct address_space
  * @first_index: First page offset in the address_space
  * @nr: Number of incremental page offsets to cover
  * @ops:	operation to call during the walk
- * @निजी:	निजी data क्रम callbacks' usage
+ * @private:	private data for callbacks' usage
  *
- * This function walks all memory areas mapped पूर्णांकo a काष्ठा address_space.
- * The walk is limited to only the given page-size index range, but अगर
+ * This function walks all memory areas mapped into a struct address_space.
+ * The walk is limited to only the given page-size index range, but if
  * the index boundaries cross a huge page-table entry, that entry will be
  * included.
  *
- * Also see walk_page_range() क्रम additional inक्रमmation.
+ * Also see walk_page_range() for additional information.
  *
  * Locking:
- *   This function can't require that the काष्ठा mm_काष्ठा::mmap_lock is held,
+ *   This function can't require that the struct mm_struct::mmap_lock is held,
  *   since @mapping may be mapped by multiple processes. Instead
  *   @mapping->i_mmap_rwsem must be held. This might have implications in the
  *   callbacks, and it's up tho the caller to ensure that the
- *   काष्ठा mm_काष्ठा::mmap_lock is not needed.
+ *   struct mm_struct::mmap_lock is not needed.
  *
- *   Also this means that a caller can't rely on the काष्ठा
- *   vm_area_काष्ठा::vm_flags to be स्थिरant across a call,
- *   except क्रम immutable flags. Callers requiring this shouldn't use
+ *   Also this means that a caller can't rely on the struct
+ *   vm_area_struct::vm_flags to be constant across a call,
+ *   except for immutable flags. Callers requiring this shouldn't use
  *   this function.
  *
  * Return: 0 on success, negative error code on failure, positive number on
  * caller defined premature termination.
  */
-पूर्णांक walk_page_mapping(काष्ठा address_space *mapping, pgoff_t first_index,
-		      pgoff_t nr, स्थिर काष्ठा mm_walk_ops *ops,
-		      व्योम *निजी)
-अणु
-	काष्ठा mm_walk walk = अणु
+int walk_page_mapping(struct address_space *mapping, pgoff_t first_index,
+		      pgoff_t nr, const struct mm_walk_ops *ops,
+		      void *private)
+{
+	struct mm_walk walk = {
 		.ops		= ops,
-		.निजी	= निजी,
-	पूर्ण;
-	काष्ठा vm_area_काष्ठा *vma;
+		.private	= private,
+	};
+	struct vm_area_struct *vma;
 	pgoff_t vba, vea, cba, cea;
-	अचिन्हित दीर्घ start_addr, end_addr;
-	पूर्णांक err = 0;
+	unsigned long start_addr, end_addr;
+	int err = 0;
 
-	lockdep_निश्चित_held(&mapping->i_mmap_rwsem);
-	vma_पूर्णांकerval_tree_क्रमeach(vma, &mapping->i_mmap, first_index,
-				  first_index + nr - 1) अणु
+	lockdep_assert_held(&mapping->i_mmap_rwsem);
+	vma_interval_tree_foreach(vma, &mapping->i_mmap, first_index,
+				  first_index + nr - 1) {
 		/* Clip to the vma */
 		vba = vma->vm_pgoff;
 		vea = vba + vma_pages(vma);
@@ -539,23 +538,23 @@ again:
 
 		start_addr = ((cba - vba) << PAGE_SHIFT) + vma->vm_start;
 		end_addr = ((cea - vba) << PAGE_SHIFT) + vma->vm_start;
-		अगर (start_addr >= end_addr)
-			जारी;
+		if (start_addr >= end_addr)
+			continue;
 
 		walk.vma = vma;
 		walk.mm = vma->vm_mm;
 
 		err = walk_page_test(vma->vm_start, vma->vm_end, &walk);
-		अगर (err > 0) अणु
+		if (err > 0) {
 			err = 0;
-			अवरोध;
-		पूर्ण अन्यथा अगर (err < 0)
-			अवरोध;
+			break;
+		} else if (err < 0)
+			break;
 
 		err = __walk_page_range(start_addr, end_addr, &walk);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}

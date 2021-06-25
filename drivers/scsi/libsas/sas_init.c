@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Serial Attached SCSI (SAS) Transport Layer initialization
  *
@@ -7,97 +6,97 @@
  * Copyright (C) 2005 Luben Tuikov <luben_tuikov@adaptec.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/spinlock.h>
-#समावेश <scsi/sas_ata.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_transport.h>
-#समावेश <scsi/scsi_transport_sas.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/spinlock.h>
+#include <scsi/sas_ata.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_transport.h>
+#include <scsi/scsi_transport_sas.h>
 
-#समावेश "sas_internal.h"
+#include "sas_internal.h"
 
-#समावेश "../scsi_sas_internal.h"
+#include "../scsi_sas_internal.h"
 
-अटल काष्ठा kmem_cache *sas_task_cache;
-अटल काष्ठा kmem_cache *sas_event_cache;
+static struct kmem_cache *sas_task_cache;
+static struct kmem_cache *sas_event_cache;
 
-काष्ठा sas_task *sas_alloc_task(gfp_t flags)
-अणु
-	काष्ठा sas_task *task = kmem_cache_zalloc(sas_task_cache, flags);
+struct sas_task *sas_alloc_task(gfp_t flags)
+{
+	struct sas_task *task = kmem_cache_zalloc(sas_task_cache, flags);
 
-	अगर (task) अणु
+	if (task) {
 		spin_lock_init(&task->task_state_lock);
 		task->task_state_flags = SAS_TASK_STATE_PENDING;
-	पूर्ण
+	}
 
-	वापस task;
-पूर्ण
+	return task;
+}
 EXPORT_SYMBOL_GPL(sas_alloc_task);
 
-काष्ठा sas_task *sas_alloc_slow_task(gfp_t flags)
-अणु
-	काष्ठा sas_task *task = sas_alloc_task(flags);
-	काष्ठा sas_task_slow *slow = kदो_स्मृति(माप(*slow), flags);
+struct sas_task *sas_alloc_slow_task(gfp_t flags)
+{
+	struct sas_task *task = sas_alloc_task(flags);
+	struct sas_task_slow *slow = kmalloc(sizeof(*slow), flags);
 
-	अगर (!task || !slow) अणु
-		अगर (task)
-			kmem_cache_मुक्त(sas_task_cache, task);
-		kमुक्त(slow);
-		वापस शून्य;
-	पूर्ण
+	if (!task || !slow) {
+		if (task)
+			kmem_cache_free(sas_task_cache, task);
+		kfree(slow);
+		return NULL;
+	}
 
 	task->slow_task = slow;
 	slow->task = task;
-	समयr_setup(&slow->समयr, शून्य, 0);
+	timer_setup(&slow->timer, NULL, 0);
 	init_completion(&slow->completion);
 
-	वापस task;
-पूर्ण
+	return task;
+}
 EXPORT_SYMBOL_GPL(sas_alloc_slow_task);
 
-व्योम sas_मुक्त_task(काष्ठा sas_task *task)
-अणु
-	अगर (task) अणु
-		kमुक्त(task->slow_task);
-		kmem_cache_मुक्त(sas_task_cache, task);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(sas_मुक्त_task);
+void sas_free_task(struct sas_task *task)
+{
+	if (task) {
+		kfree(task->slow_task);
+		kmem_cache_free(sas_task_cache, task);
+	}
+}
+EXPORT_SYMBOL_GPL(sas_free_task);
 
 /*------------ SAS addr hash -----------*/
-व्योम sas_hash_addr(u8 *hashed, स्थिर u8 *sas_addr)
-अणु
-	स्थिर u32 poly = 0x00DB2777;
+void sas_hash_addr(u8 *hashed, const u8 *sas_addr)
+{
+	const u32 poly = 0x00DB2777;
 	u32 r = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < SAS_ADDR_SIZE; i++) अणु
-		पूर्णांक b;
+	for (i = 0; i < SAS_ADDR_SIZE; i++) {
+		int b;
 
-		क्रम (b = (SAS_ADDR_SIZE - 1); b >= 0; b--) अणु
+		for (b = (SAS_ADDR_SIZE - 1); b >= 0; b--) {
 			r <<= 1;
-			अगर ((1 << b) & sas_addr[i]) अणु
-				अगर (!(r & 0x01000000))
+			if ((1 << b) & sas_addr[i]) {
+				if (!(r & 0x01000000))
 					r ^= poly;
-			पूर्ण अन्यथा अगर (r & 0x01000000) अणु
+			} else if (r & 0x01000000) {
 				r ^= poly;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	hashed[0] = (r >> 16) & 0xFF;
 	hashed[1] = (r >> 8) & 0xFF;
 	hashed[2] = r & 0xFF;
-पूर्ण
+}
 
-पूर्णांक sas_रेजिस्टर_ha(काष्ठा sas_ha_काष्ठा *sas_ha)
-अणु
-	अक्षर name[64];
-	पूर्णांक error = 0;
+int sas_register_ha(struct sas_ha_struct *sas_ha)
+{
+	char name[64];
+	int error = 0;
 
 	mutex_init(&sas_ha->disco_mutex);
 	spin_lock_init(&sas_ha->phy_port_lock);
@@ -106,52 +105,52 @@ EXPORT_SYMBOL_GPL(sas_मुक्त_task);
 	set_bit(SAS_HA_REGISTERED, &sas_ha->state);
 	spin_lock_init(&sas_ha->lock);
 	mutex_init(&sas_ha->drain_mutex);
-	init_रुकोqueue_head(&sas_ha->eh_रुको_q);
+	init_waitqueue_head(&sas_ha->eh_wait_q);
 	INIT_LIST_HEAD(&sas_ha->defer_q);
 	INIT_LIST_HEAD(&sas_ha->eh_dev_q);
 
 	sas_ha->event_thres = SAS_PHY_SHUTDOWN_THRES;
 
-	error = sas_रेजिस्टर_phys(sas_ha);
-	अगर (error) अणु
+	error = sas_register_phys(sas_ha);
+	if (error) {
 		pr_notice("couldn't register sas phys:%d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	error = sas_रेजिस्टर_ports(sas_ha);
-	अगर (error) अणु
+	error = sas_register_ports(sas_ha);
+	if (error) {
 		pr_notice("couldn't register sas ports:%d\n", error);
-		जाओ Unकरो_phys;
-	पूर्ण
+		goto Undo_phys;
+	}
 
 	error = -ENOMEM;
-	snम_लिखो(name, माप(name), "%s_event_q", dev_name(sas_ha->dev));
-	sas_ha->event_q = create_singlethपढ़ो_workqueue(name);
-	अगर (!sas_ha->event_q)
-		जाओ Unकरो_ports;
+	snprintf(name, sizeof(name), "%s_event_q", dev_name(sas_ha->dev));
+	sas_ha->event_q = create_singlethread_workqueue(name);
+	if (!sas_ha->event_q)
+		goto Undo_ports;
 
-	snम_लिखो(name, माप(name), "%s_disco_q", dev_name(sas_ha->dev));
-	sas_ha->disco_q = create_singlethपढ़ो_workqueue(name);
-	अगर (!sas_ha->disco_q)
-		जाओ Unकरो_event_q;
+	snprintf(name, sizeof(name), "%s_disco_q", dev_name(sas_ha->dev));
+	sas_ha->disco_q = create_singlethread_workqueue(name);
+	if (!sas_ha->disco_q)
+		goto Undo_event_q;
 
-	INIT_LIST_HEAD(&sas_ha->eh_करोne_q);
+	INIT_LIST_HEAD(&sas_ha->eh_done_q);
 	INIT_LIST_HEAD(&sas_ha->eh_ata_q);
 
-	वापस 0;
+	return 0;
 
-Unकरो_event_q:
+Undo_event_q:
 	destroy_workqueue(sas_ha->event_q);
-Unकरो_ports:
-	sas_unरेजिस्टर_ports(sas_ha);
-Unकरो_phys:
+Undo_ports:
+	sas_unregister_ports(sas_ha);
+Undo_phys:
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल व्योम sas_disable_events(काष्ठा sas_ha_काष्ठा *sas_ha)
-अणु
-	/* Set the state to unरेजिस्टरed to aव्योम further unchained
+static void sas_disable_events(struct sas_ha_struct *sas_ha)
+{
+	/* Set the state to unregistered to avoid further unchained
 	 * events to be queued, and flush any in-progress drainers
 	 */
 	mutex_lock(&sas_ha->drain_mutex);
@@ -160,12 +159,12 @@ Unकरो_phys:
 	spin_unlock_irq(&sas_ha->lock);
 	__sas_drain_work(sas_ha);
 	mutex_unlock(&sas_ha->drain_mutex);
-पूर्ण
+}
 
-पूर्णांक sas_unरेजिस्टर_ha(काष्ठा sas_ha_काष्ठा *sas_ha)
-अणु
+int sas_unregister_ha(struct sas_ha_struct *sas_ha)
+{
 	sas_disable_events(sas_ha);
-	sas_unरेजिस्टर_ports(sas_ha);
+	sas_unregister_ports(sas_ha);
 
 	/* flush unregistration work */
 	mutex_lock(&sas_ha->drain_mutex);
@@ -175,294 +174,294 @@ Unकरो_phys:
 	destroy_workqueue(sas_ha->disco_q);
 	destroy_workqueue(sas_ha->event_q);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sas_get_linkerrors(काष्ठा sas_phy *phy)
-अणु
-	अगर (scsi_is_sas_phy_local(phy)) अणु
-		काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-		काष्ठा sas_ha_काष्ठा *sas_ha = SHOST_TO_SAS_HA(shost);
-		काष्ठा asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
-		काष्ठा sas_पूर्णांकernal *i =
-			to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+static int sas_get_linkerrors(struct sas_phy *phy)
+{
+	if (scsi_is_sas_phy_local(phy)) {
+		struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+		struct sas_ha_struct *sas_ha = SHOST_TO_SAS_HA(shost);
+		struct asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
+		struct sas_internal *i =
+			to_sas_internal(sas_ha->core.shost->transportt);
 
-		वापस i->dft->lldd_control_phy(asd_phy, PHY_FUNC_GET_EVENTS, शून्य);
-	पूर्ण
+		return i->dft->lldd_control_phy(asd_phy, PHY_FUNC_GET_EVENTS, NULL);
+	}
 
-	वापस sas_smp_get_phy_events(phy);
-पूर्ण
+	return sas_smp_get_phy_events(phy);
+}
 
-पूर्णांक sas_try_ata_reset(काष्ठा asd_sas_phy *asd_phy)
-अणु
-	काष्ठा करोमुख्य_device *dev = शून्य;
+int sas_try_ata_reset(struct asd_sas_phy *asd_phy)
+{
+	struct domain_device *dev = NULL;
 
 	/* try to route user requested link resets through libata */
-	अगर (asd_phy->port)
+	if (asd_phy->port)
 		dev = asd_phy->port->port_dev;
 
 	/* validate that dev has been probed */
-	अगर (dev)
+	if (dev)
 		dev = sas_find_dev_by_rphy(dev->rphy);
 
-	अगर (dev && dev_is_sata(dev)) अणु
+	if (dev && dev_is_sata(dev)) {
 		sas_ata_schedule_reset(dev);
-		sas_ata_रुको_eh(dev);
-		वापस 0;
-	पूर्ण
+		sas_ata_wait_eh(dev);
+		return 0;
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 /*
  * transport_sas_phy_reset - reset a phy and permit libata to manage the link
  *
  * phy reset request via sysfs in host workqueue context so we know we
- * can block on eh and safely traverse the करोमुख्य_device topology
+ * can block on eh and safely traverse the domain_device topology
  */
-अटल पूर्णांक transport_sas_phy_reset(काष्ठा sas_phy *phy, पूर्णांक hard_reset)
-अणु
-	क्रमागत phy_func reset_type;
+static int transport_sas_phy_reset(struct sas_phy *phy, int hard_reset)
+{
+	enum phy_func reset_type;
 
-	अगर (hard_reset)
+	if (hard_reset)
 		reset_type = PHY_FUNC_HARD_RESET;
-	अन्यथा
+	else
 		reset_type = PHY_FUNC_LINK_RESET;
 
-	अगर (scsi_is_sas_phy_local(phy)) अणु
-		काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-		काष्ठा sas_ha_काष्ठा *sas_ha = SHOST_TO_SAS_HA(shost);
-		काष्ठा asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
-		काष्ठा sas_पूर्णांकernal *i =
-			to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+	if (scsi_is_sas_phy_local(phy)) {
+		struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+		struct sas_ha_struct *sas_ha = SHOST_TO_SAS_HA(shost);
+		struct asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
+		struct sas_internal *i =
+			to_sas_internal(sas_ha->core.shost->transportt);
 
-		अगर (!hard_reset && sas_try_ata_reset(asd_phy) == 0)
-			वापस 0;
-		वापस i->dft->lldd_control_phy(asd_phy, reset_type, शून्य);
-	पूर्ण अन्यथा अणु
-		काष्ठा sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
-		काष्ठा करोमुख्य_device *ddev = sas_find_dev_by_rphy(rphy);
-		काष्ठा करोमुख्य_device *ata_dev = sas_ex_to_ata(ddev, phy->number);
+		if (!hard_reset && sas_try_ata_reset(asd_phy) == 0)
+			return 0;
+		return i->dft->lldd_control_phy(asd_phy, reset_type, NULL);
+	} else {
+		struct sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
+		struct domain_device *ddev = sas_find_dev_by_rphy(rphy);
+		struct domain_device *ata_dev = sas_ex_to_ata(ddev, phy->number);
 
-		अगर (ata_dev && !hard_reset) अणु
+		if (ata_dev && !hard_reset) {
 			sas_ata_schedule_reset(ata_dev);
-			sas_ata_रुको_eh(ata_dev);
-			वापस 0;
-		पूर्ण अन्यथा
-			वापस sas_smp_phy_control(ddev, phy->number, reset_type, शून्य);
-	पूर्ण
-पूर्ण
+			sas_ata_wait_eh(ata_dev);
+			return 0;
+		} else
+			return sas_smp_phy_control(ddev, phy->number, reset_type, NULL);
+	}
+}
 
-अटल पूर्णांक sas_phy_enable(काष्ठा sas_phy *phy, पूर्णांक enable)
-अणु
-	पूर्णांक ret;
-	क्रमागत phy_func cmd;
+static int sas_phy_enable(struct sas_phy *phy, int enable)
+{
+	int ret;
+	enum phy_func cmd;
 
-	अगर (enable)
+	if (enable)
 		cmd = PHY_FUNC_LINK_RESET;
-	अन्यथा
+	else
 		cmd = PHY_FUNC_DISABLE;
 
-	अगर (scsi_is_sas_phy_local(phy)) अणु
-		काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-		काष्ठा sas_ha_काष्ठा *sas_ha = SHOST_TO_SAS_HA(shost);
-		काष्ठा asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
-		काष्ठा sas_पूर्णांकernal *i =
-			to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+	if (scsi_is_sas_phy_local(phy)) {
+		struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+		struct sas_ha_struct *sas_ha = SHOST_TO_SAS_HA(shost);
+		struct asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
+		struct sas_internal *i =
+			to_sas_internal(sas_ha->core.shost->transportt);
 
-		अगर (enable)
+		if (enable)
 			ret = transport_sas_phy_reset(phy, 0);
-		अन्यथा
-			ret = i->dft->lldd_control_phy(asd_phy, cmd, शून्य);
-	पूर्ण अन्यथा अणु
-		काष्ठा sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
-		काष्ठा करोमुख्य_device *ddev = sas_find_dev_by_rphy(rphy);
+		else
+			ret = i->dft->lldd_control_phy(asd_phy, cmd, NULL);
+	} else {
+		struct sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
+		struct domain_device *ddev = sas_find_dev_by_rphy(rphy);
 
-		अगर (enable)
+		if (enable)
 			ret = transport_sas_phy_reset(phy, 0);
-		अन्यथा
-			ret = sas_smp_phy_control(ddev, phy->number, cmd, शून्य);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		else
+			ret = sas_smp_phy_control(ddev, phy->number, cmd, NULL);
+	}
+	return ret;
+}
 
-पूर्णांक sas_phy_reset(काष्ठा sas_phy *phy, पूर्णांक hard_reset)
-अणु
-	पूर्णांक ret;
-	क्रमागत phy_func reset_type;
+int sas_phy_reset(struct sas_phy *phy, int hard_reset)
+{
+	int ret;
+	enum phy_func reset_type;
 
-	अगर (!phy->enabled)
-		वापस -ENODEV;
+	if (!phy->enabled)
+		return -ENODEV;
 
-	अगर (hard_reset)
+	if (hard_reset)
 		reset_type = PHY_FUNC_HARD_RESET;
-	अन्यथा
+	else
 		reset_type = PHY_FUNC_LINK_RESET;
 
-	अगर (scsi_is_sas_phy_local(phy)) अणु
-		काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-		काष्ठा sas_ha_काष्ठा *sas_ha = SHOST_TO_SAS_HA(shost);
-		काष्ठा asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
-		काष्ठा sas_पूर्णांकernal *i =
-			to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+	if (scsi_is_sas_phy_local(phy)) {
+		struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+		struct sas_ha_struct *sas_ha = SHOST_TO_SAS_HA(shost);
+		struct asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
+		struct sas_internal *i =
+			to_sas_internal(sas_ha->core.shost->transportt);
 
-		ret = i->dft->lldd_control_phy(asd_phy, reset_type, शून्य);
-	पूर्ण अन्यथा अणु
-		काष्ठा sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
-		काष्ठा करोमुख्य_device *ddev = sas_find_dev_by_rphy(rphy);
-		ret = sas_smp_phy_control(ddev, phy->number, reset_type, शून्य);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		ret = i->dft->lldd_control_phy(asd_phy, reset_type, NULL);
+	} else {
+		struct sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
+		struct domain_device *ddev = sas_find_dev_by_rphy(rphy);
+		ret = sas_smp_phy_control(ddev, phy->number, reset_type, NULL);
+	}
+	return ret;
+}
 
-पूर्णांक sas_set_phy_speed(काष्ठा sas_phy *phy,
-		      काष्ठा sas_phy_linkrates *rates)
-अणु
-	पूर्णांक ret;
+int sas_set_phy_speed(struct sas_phy *phy,
+		      struct sas_phy_linkrates *rates)
+{
+	int ret;
 
-	अगर ((rates->minimum_linkrate &&
+	if ((rates->minimum_linkrate &&
 	     rates->minimum_linkrate > phy->maximum_linkrate) ||
 	    (rates->maximum_linkrate &&
 	     rates->maximum_linkrate < phy->minimum_linkrate))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (rates->minimum_linkrate &&
+	if (rates->minimum_linkrate &&
 	    rates->minimum_linkrate < phy->minimum_linkrate_hw)
 		rates->minimum_linkrate = phy->minimum_linkrate_hw;
 
-	अगर (rates->maximum_linkrate &&
+	if (rates->maximum_linkrate &&
 	    rates->maximum_linkrate > phy->maximum_linkrate_hw)
 		rates->maximum_linkrate = phy->maximum_linkrate_hw;
 
-	अगर (scsi_is_sas_phy_local(phy)) अणु
-		काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-		काष्ठा sas_ha_काष्ठा *sas_ha = SHOST_TO_SAS_HA(shost);
-		काष्ठा asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
-		काष्ठा sas_पूर्णांकernal *i =
-			to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+	if (scsi_is_sas_phy_local(phy)) {
+		struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+		struct sas_ha_struct *sas_ha = SHOST_TO_SAS_HA(shost);
+		struct asd_sas_phy *asd_phy = sas_ha->sas_phy[phy->number];
+		struct sas_internal *i =
+			to_sas_internal(sas_ha->core.shost->transportt);
 
 		ret = i->dft->lldd_control_phy(asd_phy, PHY_FUNC_SET_LINK_RATE,
 					       rates);
-	पूर्ण अन्यथा अणु
-		काष्ठा sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
-		काष्ठा करोमुख्य_device *ddev = sas_find_dev_by_rphy(rphy);
+	} else {
+		struct sas_rphy *rphy = dev_to_rphy(phy->dev.parent);
+		struct domain_device *ddev = sas_find_dev_by_rphy(rphy);
 		ret = sas_smp_phy_control(ddev, phy->number,
 					  PHY_FUNC_LINK_RESET, rates);
 
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम sas_prep_resume_ha(काष्ठा sas_ha_काष्ठा *ha)
-अणु
-	पूर्णांक i;
+void sas_prep_resume_ha(struct sas_ha_struct *ha)
+{
+	int i;
 
 	set_bit(SAS_HA_REGISTERED, &ha->state);
 
 	/* clear out any stale link events/data from the suspension path */
-	क्रम (i = 0; i < ha->num_phys; i++) अणु
-		काष्ठा asd_sas_phy *phy = ha->sas_phy[i];
+	for (i = 0; i < ha->num_phys; i++) {
+		struct asd_sas_phy *phy = ha->sas_phy[i];
 
-		स_रखो(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
+		memset(phy->attached_sas_addr, 0, SAS_ADDR_SIZE);
 		phy->frame_rcvd_size = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL(sas_prep_resume_ha);
 
-अटल पूर्णांक phys_suspended(काष्ठा sas_ha_काष्ठा *ha)
-अणु
-	पूर्णांक i, rc = 0;
+static int phys_suspended(struct sas_ha_struct *ha)
+{
+	int i, rc = 0;
 
-	क्रम (i = 0; i < ha->num_phys; i++) अणु
-		काष्ठा asd_sas_phy *phy = ha->sas_phy[i];
+	for (i = 0; i < ha->num_phys; i++) {
+		struct asd_sas_phy *phy = ha->sas_phy[i];
 
-		अगर (phy->suspended)
+		if (phy->suspended)
 			rc++;
-	पूर्ण
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम sas_resume_ha(काष्ठा sas_ha_काष्ठा *ha)
-अणु
-	स्थिर अचिन्हित दीर्घ पंचांगo = msecs_to_jअगरfies(25000);
-	पूर्णांक i;
+void sas_resume_ha(struct sas_ha_struct *ha)
+{
+	const unsigned long tmo = msecs_to_jiffies(25000);
+	int i;
 
-	/* deक्रमm ports on phys that did not resume
-	 * at this poपूर्णांक we may be racing the phy coming back (as posted
+	/* deform ports on phys that did not resume
+	 * at this point we may be racing the phy coming back (as posted
 	 * by the lldd).  So we post the event and once we are in the
-	 * libsas context check that the phy reमुख्यs suspended beक्रमe
-	 * tearing it करोwn.
+	 * libsas context check that the phy remains suspended before
+	 * tearing it down.
 	 */
 	i = phys_suspended(ha);
-	अगर (i)
+	if (i)
 		dev_info(ha->dev, "waiting up to 25 seconds for %d phy%s to resume\n",
 			 i, i > 1 ? "s" : "");
-	रुको_event_समयout(ha->eh_रुको_q, phys_suspended(ha) == 0, पंचांगo);
-	क्रम (i = 0; i < ha->num_phys; i++) अणु
-		काष्ठा asd_sas_phy *phy = ha->sas_phy[i];
+	wait_event_timeout(ha->eh_wait_q, phys_suspended(ha) == 0, tmo);
+	for (i = 0; i < ha->num_phys; i++) {
+		struct asd_sas_phy *phy = ha->sas_phy[i];
 
-		अगर (phy->suspended) अणु
+		if (phy->suspended) {
 			dev_warn(&phy->phy->dev, "resume timeout\n");
-			sas_notअगरy_phy_event(phy, PHYE_RESUME_TIMEOUT,
+			sas_notify_phy_event(phy, PHYE_RESUME_TIMEOUT,
 					     GFP_KERNEL);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* all phys are back up or समयd out, turn on i/o so we can
-	 * flush out disks that did not वापस
+	/* all phys are back up or timed out, turn on i/o so we can
+	 * flush out disks that did not return
 	 */
 	scsi_unblock_requests(ha->core.shost);
 	sas_drain_work(ha);
-पूर्ण
+}
 EXPORT_SYMBOL(sas_resume_ha);
 
-व्योम sas_suspend_ha(काष्ठा sas_ha_काष्ठा *ha)
-अणु
-	पूर्णांक i;
+void sas_suspend_ha(struct sas_ha_struct *ha)
+{
+	int i;
 
 	sas_disable_events(ha);
 	scsi_block_requests(ha->core.shost);
-	क्रम (i = 0; i < ha->num_phys; i++) अणु
-		काष्ठा asd_sas_port *port = ha->sas_port[i];
+	for (i = 0; i < ha->num_phys; i++) {
+		struct asd_sas_port *port = ha->sas_port[i];
 
 		sas_discover_event(port, DISCE_SUSPEND);
-	पूर्ण
+	}
 
-	/* flush suspend events जबतक unरेजिस्टरed */
+	/* flush suspend events while unregistered */
 	mutex_lock(&ha->drain_mutex);
 	__sas_drain_work(ha);
 	mutex_unlock(&ha->drain_mutex);
-पूर्ण
+}
 EXPORT_SYMBOL(sas_suspend_ha);
 
-अटल व्योम sas_phy_release(काष्ठा sas_phy *phy)
-अणु
-	kमुक्त(phy->hostdata);
-	phy->hostdata = शून्य;
-पूर्ण
+static void sas_phy_release(struct sas_phy *phy)
+{
+	kfree(phy->hostdata);
+	phy->hostdata = NULL;
+}
 
-अटल व्योम phy_reset_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sas_phy_data *d = container_of(work, typeof(*d), reset_work.work);
+static void phy_reset_work(struct work_struct *work)
+{
+	struct sas_phy_data *d = container_of(work, typeof(*d), reset_work.work);
 
 	d->reset_result = transport_sas_phy_reset(d->phy, d->hard_reset);
-पूर्ण
+}
 
-अटल व्योम phy_enable_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sas_phy_data *d = container_of(work, typeof(*d), enable_work.work);
+static void phy_enable_work(struct work_struct *work)
+{
+	struct sas_phy_data *d = container_of(work, typeof(*d), enable_work.work);
 
 	d->enable_result = sas_phy_enable(d->phy, d->enable);
-पूर्ण
+}
 
-अटल पूर्णांक sas_phy_setup(काष्ठा sas_phy *phy)
-अणु
-	काष्ठा sas_phy_data *d = kzalloc(माप(*d), GFP_KERNEL);
+static int sas_phy_setup(struct sas_phy *phy)
+{
+	struct sas_phy_data *d = kzalloc(sizeof(*d), GFP_KERNEL);
 
-	अगर (!d)
-		वापस -ENOMEM;
+	if (!d)
+		return -ENOMEM;
 
 	mutex_init(&d->event_lock);
 	INIT_SAS_WORK(&d->reset_work, phy_reset_work);
@@ -470,18 +469,18 @@ EXPORT_SYMBOL(sas_suspend_ha);
 	d->phy = phy;
 	phy->hostdata = d;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक queue_phy_reset(काष्ठा sas_phy *phy, पूर्णांक hard_reset)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-	काष्ठा sas_ha_काष्ठा *ha = SHOST_TO_SAS_HA(shost);
-	काष्ठा sas_phy_data *d = phy->hostdata;
-	पूर्णांक rc;
+static int queue_phy_reset(struct sas_phy *phy, int hard_reset)
+{
+	struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+	struct sas_ha_struct *ha = SHOST_TO_SAS_HA(shost);
+	struct sas_phy_data *d = phy->hostdata;
+	int rc;
 
-	अगर (!d)
-		वापस -ENOMEM;
+	if (!d)
+		return -ENOMEM;
 
 	/* libsas workqueue coordinates ata-eh reset with discovery */
 	mutex_lock(&d->event_lock);
@@ -493,22 +492,22 @@ EXPORT_SYMBOL(sas_suspend_ha);
 	spin_unlock_irq(&ha->lock);
 
 	rc = sas_drain_work(ha);
-	अगर (rc == 0)
+	if (rc == 0)
 		rc = d->reset_result;
 	mutex_unlock(&d->event_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक queue_phy_enable(काष्ठा sas_phy *phy, पूर्णांक enable)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(phy->dev.parent);
-	काष्ठा sas_ha_काष्ठा *ha = SHOST_TO_SAS_HA(shost);
-	काष्ठा sas_phy_data *d = phy->hostdata;
-	पूर्णांक rc;
+static int queue_phy_enable(struct sas_phy *phy, int enable)
+{
+	struct Scsi_Host *shost = dev_to_shost(phy->dev.parent);
+	struct sas_ha_struct *ha = SHOST_TO_SAS_HA(shost);
+	struct sas_phy_data *d = phy->hostdata;
+	int rc;
 
-	अगर (!d)
-		वापस -ENOMEM;
+	if (!d)
+		return -ENOMEM;
 
 	/* libsas workqueue coordinates ata-eh reset with discovery */
 	mutex_lock(&d->event_lock);
@@ -520,14 +519,14 @@ EXPORT_SYMBOL(sas_suspend_ha);
 	spin_unlock_irq(&ha->lock);
 
 	rc = sas_drain_work(ha);
-	अगर (rc == 0)
+	if (rc == 0)
 		rc = d->enable_result;
 	mutex_unlock(&d->event_lock);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा sas_function_ढाँचा sft = अणु
+static struct sas_function_template sft = {
 	.phy_enable = queue_phy_enable,
 	.phy_reset = queue_phy_reset,
 	.phy_setup = sas_phy_setup,
@@ -535,32 +534,32 @@ EXPORT_SYMBOL(sas_suspend_ha);
 	.set_phy_speed = sas_set_phy_speed,
 	.get_linkerrors = sas_get_linkerrors,
 	.smp_handler = sas_smp_handler,
-पूर्ण;
+};
 
-अटल अंतरभूत sमाप_प्रकार phy_event_threshold_show(काष्ठा device *dev,
-			काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा sas_ha_काष्ठा *sha = SHOST_TO_SAS_HA(shost);
+static inline ssize_t phy_event_threshold_show(struct device *dev,
+			struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct sas_ha_struct *sha = SHOST_TO_SAS_HA(shost);
 
-	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", sha->event_thres);
-पूर्ण
+	return scnprintf(buf, PAGE_SIZE, "%u\n", sha->event_thres);
+}
 
-अटल अंतरभूत sमाप_प्रकार phy_event_threshold_store(काष्ठा device *dev,
-			काष्ठा device_attribute *attr,
-			स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा Scsi_Host *shost = class_to_shost(dev);
-	काष्ठा sas_ha_काष्ठा *sha = SHOST_TO_SAS_HA(shost);
+static inline ssize_t phy_event_threshold_store(struct device *dev,
+			struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct sas_ha_struct *sha = SHOST_TO_SAS_HA(shost);
 
-	sha->event_thres = simple_म_से_दीर्घ(buf, शून्य, 10);
+	sha->event_thres = simple_strtol(buf, NULL, 10);
 
 	/* threshold cannot be set too small */
-	अगर (sha->event_thres < 32)
+	if (sha->event_thres < 32)
 		sha->event_thres = 32;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 DEVICE_ATTR(phy_event_threshold,
 	S_IRUGO|S_IWUSR,
@@ -568,97 +567,97 @@ DEVICE_ATTR(phy_event_threshold,
 	phy_event_threshold_store);
 EXPORT_SYMBOL_GPL(dev_attr_phy_event_threshold);
 
-काष्ठा scsi_transport_ढाँचा *
-sas_करोमुख्य_attach_transport(काष्ठा sas_करोमुख्य_function_ढाँचा *dft)
-अणु
-	काष्ठा scsi_transport_ढाँचा *stt = sas_attach_transport(&sft);
-	काष्ठा sas_पूर्णांकernal *i;
+struct scsi_transport_template *
+sas_domain_attach_transport(struct sas_domain_function_template *dft)
+{
+	struct scsi_transport_template *stt = sas_attach_transport(&sft);
+	struct sas_internal *i;
 
-	अगर (!stt)
-		वापस stt;
+	if (!stt)
+		return stt;
 
-	i = to_sas_पूर्णांकernal(stt);
+	i = to_sas_internal(stt);
 	i->dft = dft;
 	stt->create_work_queue = 1;
 	stt->eh_strategy_handler = sas_scsi_recover_host;
 
-	वापस stt;
-पूर्ण
-EXPORT_SYMBOL_GPL(sas_करोमुख्य_attach_transport);
+	return stt;
+}
+EXPORT_SYMBOL_GPL(sas_domain_attach_transport);
 
-काष्ठा asd_sas_event *sas_alloc_event(काष्ठा asd_sas_phy *phy,
+struct asd_sas_event *sas_alloc_event(struct asd_sas_phy *phy,
 				      gfp_t gfp_flags)
-अणु
-	काष्ठा asd_sas_event *event;
-	काष्ठा sas_ha_काष्ठा *sas_ha = phy->ha;
-	काष्ठा sas_पूर्णांकernal *i =
-		to_sas_पूर्णांकernal(sas_ha->core.shost->transportt);
+{
+	struct asd_sas_event *event;
+	struct sas_ha_struct *sas_ha = phy->ha;
+	struct sas_internal *i =
+		to_sas_internal(sas_ha->core.shost->transportt);
 
 	event = kmem_cache_zalloc(sas_event_cache, gfp_flags);
-	अगर (!event)
-		वापस शून्य;
+	if (!event)
+		return NULL;
 
 	atomic_inc(&phy->event_nr);
 
-	अगर (atomic_पढ़ो(&phy->event_nr) > phy->ha->event_thres) अणु
-		अगर (i->dft->lldd_control_phy) अणु
-			अगर (cmpxchg(&phy->in_shutकरोwn, 0, 1) == 0) अणु
+	if (atomic_read(&phy->event_nr) > phy->ha->event_thres) {
+		if (i->dft->lldd_control_phy) {
+			if (cmpxchg(&phy->in_shutdown, 0, 1) == 0) {
 				pr_notice("The phy%d bursting events, shut it down.\n",
 					  phy->id);
-				sas_notअगरy_phy_event(phy, PHYE_SHUTDOWN,
+				sas_notify_phy_event(phy, PHYE_SHUTDOWN,
 						     gfp_flags);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/* Do not support PHY control, stop allocating events */
 			WARN_ONCE(1, "PHY control not supported.\n");
-			kmem_cache_मुक्त(sas_event_cache, event);
+			kmem_cache_free(sas_event_cache, event);
 			atomic_dec(&phy->event_nr);
-			event = शून्य;
-		पूर्ण
-	पूर्ण
+			event = NULL;
+		}
+	}
 
-	वापस event;
-पूर्ण
+	return event;
+}
 
-व्योम sas_मुक्त_event(काष्ठा asd_sas_event *event)
-अणु
-	काष्ठा asd_sas_phy *phy = event->phy;
+void sas_free_event(struct asd_sas_event *event)
+{
+	struct asd_sas_phy *phy = event->phy;
 
-	kmem_cache_मुक्त(sas_event_cache, event);
+	kmem_cache_free(sas_event_cache, event);
 	atomic_dec(&phy->event_nr);
-पूर्ण
+}
 
-/* ---------- SAS Class रेजिस्टर/unरेजिस्टर ---------- */
+/* ---------- SAS Class register/unregister ---------- */
 
-अटल पूर्णांक __init sas_class_init(व्योम)
-अणु
+static int __init sas_class_init(void)
+{
 	sas_task_cache = KMEM_CACHE(sas_task, SLAB_HWCACHE_ALIGN);
-	अगर (!sas_task_cache)
-		जाओ out;
+	if (!sas_task_cache)
+		goto out;
 
 	sas_event_cache = KMEM_CACHE(asd_sas_event, SLAB_HWCACHE_ALIGN);
-	अगर (!sas_event_cache)
-		जाओ मुक्त_task_kmem;
+	if (!sas_event_cache)
+		goto free_task_kmem;
 
-	वापस 0;
-मुक्त_task_kmem:
+	return 0;
+free_task_kmem:
 	kmem_cache_destroy(sas_task_cache);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम __निकास sas_class_निकास(व्योम)
-अणु
+static void __exit sas_class_exit(void)
+{
 	kmem_cache_destroy(sas_task_cache);
 	kmem_cache_destroy(sas_event_cache);
-पूर्ण
+}
 
 MODULE_AUTHOR("Luben Tuikov <luben_tuikov@adaptec.com>");
 MODULE_DESCRIPTION("SAS Transport Layer");
 MODULE_LICENSE("GPL v2");
 
 module_init(sas_class_init);
-module_निकास(sas_class_निकास);
+module_exit(sas_class_exit);
 
-EXPORT_SYMBOL_GPL(sas_रेजिस्टर_ha);
-EXPORT_SYMBOL_GPL(sas_unरेजिस्टर_ha);
+EXPORT_SYMBOL_GPL(sas_register_ha);
+EXPORT_SYMBOL_GPL(sas_unregister_ha);

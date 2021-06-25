@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Pioctl operations क्रम Coda.
+ * Pioctl operations for Coda.
  * Original version: (C) 1996 Peter Braam
- * Rewritten क्रम Linux 2.1: (C) 1997 Carnegie Mellon University
+ * Rewritten for Linux 2.1: (C) 1997 Carnegie Mellon University
  *
  * Carnegie Mellon encourages users of this code to contribute improvements
  * to the Coda project. Contact Peter Braam <coda@cs.cmu.edu>.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/namei.h>
-#समावेश <linux/module.h>
-#समावेश <linux/uaccess.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/time.h>
+#include <linux/fs.h>
+#include <linux/stat.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/namei.h>
+#include <linux/module.h>
+#include <linux/uaccess.h>
 
-#समावेश <linux/coda.h>
-#समावेश "coda_psdev.h"
-#समावेश "coda_linux.h"
+#include <linux/coda.h>
+#include "coda_psdev.h"
+#include "coda_linux.h"
 
 /* pioctl ops */
-अटल पूर्णांक coda_ioctl_permission(काष्ठा user_namespace *mnt_userns,
-				 काष्ठा inode *inode, पूर्णांक mask);
-अटल दीर्घ coda_pioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
-			अचिन्हित दीर्घ user_data);
+static int coda_ioctl_permission(struct user_namespace *mnt_userns,
+				 struct inode *inode, int mask);
+static long coda_pioctl(struct file *filp, unsigned int cmd,
+			unsigned long user_data);
 
 /* exported from this file */
-स्थिर काष्ठा inode_operations coda_ioctl_inode_operations = अणु
+const struct inode_operations coda_ioctl_inode_operations = {
 	.permission	= coda_ioctl_permission,
 	.setattr	= coda_setattr,
-पूर्ण;
+};
 
-स्थिर काष्ठा file_operations coda_ioctl_operations = अणु
+const struct file_operations coda_ioctl_operations = {
 	.unlocked_ioctl	= coda_pioctl,
 	.llseek		= noop_llseek,
-पूर्ण;
+};
 
 /* the coda pioctl inode ops */
-अटल पूर्णांक coda_ioctl_permission(काष्ठा user_namespace *mnt_userns,
-				 काष्ठा inode *inode, पूर्णांक mask)
-अणु
-	वापस (mask & MAY_EXEC) ? -EACCES : 0;
-पूर्ण
+static int coda_ioctl_permission(struct user_namespace *mnt_userns,
+				 struct inode *inode, int mask)
+{
+	return (mask & MAY_EXEC) ? -EACCES : 0;
+}
 
-अटल दीर्घ coda_pioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
-			अचिन्हित दीर्घ user_data)
-अणु
-	काष्ठा path path;
-	पूर्णांक error;
-	काष्ठा PioctlData data;
-	काष्ठा inode *inode = file_inode(filp);
-	काष्ठा inode *target_inode = शून्य;
-	काष्ठा coda_inode_info *cnp;
+static long coda_pioctl(struct file *filp, unsigned int cmd,
+			unsigned long user_data)
+{
+	struct path path;
+	int error;
+	struct PioctlData data;
+	struct inode *inode = file_inode(filp);
+	struct inode *target_inode = NULL;
+	struct coda_inode_info *cnp;
 
 	/* get the Pioctl data arguments from user space */
-	अगर (copy_from_user(&data, (व्योम __user *)user_data, माप(data)))
-		वापस -EINVAL;
+	if (copy_from_user(&data, (void __user *)user_data, sizeof(data)))
+		return -EINVAL;
 
 	/*
 	 * Look up the pathname. Note that the pathname is in
@@ -68,16 +67,16 @@
 	 */
 	error = user_path_at(AT_FDCWD, data.path,
 			     data.follow ? LOOKUP_FOLLOW : 0, &path);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	target_inode = d_inode(path.dentry);
 
-	/* वापस अगर it is not a Coda inode */
-	अगर (target_inode->i_sb != inode->i_sb) अणु
+	/* return if it is not a Coda inode */
+	if (target_inode->i_sb != inode->i_sb) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* now proceed to make the upcall */
 	cnp = ITOC(target_inode);
@@ -85,5 +84,5 @@
 	error = venus_pioctl(inode->i_sb, &(cnp->c_fid), cmd, &data);
 out:
 	path_put(&path);
-	वापस error;
-पूर्ण
+	return error;
+}

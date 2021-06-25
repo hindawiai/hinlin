@@ -1,202 +1,201 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *
  *  Bluetooth HCI UART driver
  *
  *  Copyright (C) 2000-2001  Qualcomm Incorporated
  *  Copyright (C) 2002-2003  Maxim Krasnyansky <maxk@qualcomm.com>
- *  Copyright (C) 2004-2005  Marcel Holपंचांगann <marcel@holपंचांगann.org>
+ *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
  */
 
-#अगर_अघोषित N_HCI
-#घोषणा N_HCI	15
-#पूर्ण_अगर
+#ifndef N_HCI
+#define N_HCI	15
+#endif
 
 /* Ioctls */
-#घोषणा HCIUARTSETPROTO		_IOW('U', 200, पूर्णांक)
-#घोषणा HCIUARTGETPROTO		_IOR('U', 201, पूर्णांक)
-#घोषणा HCIUARTGETDEVICE	_IOR('U', 202, पूर्णांक)
-#घोषणा HCIUARTSETFLAGS		_IOW('U', 203, पूर्णांक)
-#घोषणा HCIUARTGETFLAGS		_IOR('U', 204, पूर्णांक)
+#define HCIUARTSETPROTO		_IOW('U', 200, int)
+#define HCIUARTGETPROTO		_IOR('U', 201, int)
+#define HCIUARTGETDEVICE	_IOR('U', 202, int)
+#define HCIUARTSETFLAGS		_IOW('U', 203, int)
+#define HCIUARTGETFLAGS		_IOR('U', 204, int)
 
 /* UART protocols */
-#घोषणा HCI_UART_MAX_PROTO	12
+#define HCI_UART_MAX_PROTO	12
 
-#घोषणा HCI_UART_H4	0
-#घोषणा HCI_UART_BCSP	1
-#घोषणा HCI_UART_3WIRE	2
-#घोषणा HCI_UART_H4DS	3
-#घोषणा HCI_UART_LL	4
-#घोषणा HCI_UART_ATH3K	5
-#घोषणा HCI_UART_INTEL	6
-#घोषणा HCI_UART_BCM	7
-#घोषणा HCI_UART_QCA	8
-#घोषणा HCI_UART_AG6XX	9
-#घोषणा HCI_UART_NOKIA	10
-#घोषणा HCI_UART_MRVL	11
+#define HCI_UART_H4	0
+#define HCI_UART_BCSP	1
+#define HCI_UART_3WIRE	2
+#define HCI_UART_H4DS	3
+#define HCI_UART_LL	4
+#define HCI_UART_ATH3K	5
+#define HCI_UART_INTEL	6
+#define HCI_UART_BCM	7
+#define HCI_UART_QCA	8
+#define HCI_UART_AG6XX	9
+#define HCI_UART_NOKIA	10
+#define HCI_UART_MRVL	11
 
-#घोषणा HCI_UART_RAW_DEVICE	0
-#घोषणा HCI_UART_RESET_ON_INIT	1
-#घोषणा HCI_UART_CREATE_AMP	2
-#घोषणा HCI_UART_INIT_PENDING	3
-#घोषणा HCI_UART_EXT_CONFIG	4
-#घोषणा HCI_UART_VND_DETECT	5
+#define HCI_UART_RAW_DEVICE	0
+#define HCI_UART_RESET_ON_INIT	1
+#define HCI_UART_CREATE_AMP	2
+#define HCI_UART_INIT_PENDING	3
+#define HCI_UART_EXT_CONFIG	4
+#define HCI_UART_VND_DETECT	5
 
-काष्ठा hci_uart;
-काष्ठा serdev_device;
+struct hci_uart;
+struct serdev_device;
 
-काष्ठा hci_uart_proto अणु
-	अचिन्हित पूर्णांक id;
-	स्थिर अक्षर *name;
-	अचिन्हित पूर्णांक manufacturer;
-	अचिन्हित पूर्णांक init_speed;
-	अचिन्हित पूर्णांक oper_speed;
-	पूर्णांक (*खोलो)(काष्ठा hci_uart *hu);
-	पूर्णांक (*बंद)(काष्ठा hci_uart *hu);
-	पूर्णांक (*flush)(काष्ठा hci_uart *hu);
-	पूर्णांक (*setup)(काष्ठा hci_uart *hu);
-	पूर्णांक (*set_baudrate)(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक speed);
-	पूर्णांक (*recv)(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक len);
-	पूर्णांक (*enqueue)(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb);
-	काष्ठा sk_buff *(*dequeue)(काष्ठा hci_uart *hu);
-पूर्ण;
+struct hci_uart_proto {
+	unsigned int id;
+	const char *name;
+	unsigned int manufacturer;
+	unsigned int init_speed;
+	unsigned int oper_speed;
+	int (*open)(struct hci_uart *hu);
+	int (*close)(struct hci_uart *hu);
+	int (*flush)(struct hci_uart *hu);
+	int (*setup)(struct hci_uart *hu);
+	int (*set_baudrate)(struct hci_uart *hu, unsigned int speed);
+	int (*recv)(struct hci_uart *hu, const void *data, int len);
+	int (*enqueue)(struct hci_uart *hu, struct sk_buff *skb);
+	struct sk_buff *(*dequeue)(struct hci_uart *hu);
+};
 
-काष्ठा hci_uart अणु
-	काष्ठा tty_काष्ठा	*tty;
-	काष्ठा serdev_device	*serdev;
-	काष्ठा hci_dev		*hdev;
-	अचिन्हित दीर्घ		flags;
-	अचिन्हित दीर्घ		hdev_flags;
+struct hci_uart {
+	struct tty_struct	*tty;
+	struct serdev_device	*serdev;
+	struct hci_dev		*hdev;
+	unsigned long		flags;
+	unsigned long		hdev_flags;
 
-	काष्ठा work_काष्ठा	init_पढ़ोy;
-	काष्ठा work_काष्ठा	ग_लिखो_work;
+	struct work_struct	init_ready;
+	struct work_struct	write_work;
 
-	स्थिर काष्ठा hci_uart_proto *proto;
-	काष्ठा percpu_rw_semaphore proto_lock;	/* Stop work क्रम proto बंद */
-	व्योम			*priv;
+	const struct hci_uart_proto *proto;
+	struct percpu_rw_semaphore proto_lock;	/* Stop work for proto close */
+	void			*priv;
 
-	काष्ठा sk_buff		*tx_skb;
-	अचिन्हित दीर्घ		tx_state;
+	struct sk_buff		*tx_skb;
+	unsigned long		tx_state;
 
-	अचिन्हित पूर्णांक init_speed;
-	अचिन्हित पूर्णांक oper_speed;
+	unsigned int init_speed;
+	unsigned int oper_speed;
 
 	u8			alignment;
 	u8			padding;
-पूर्ण;
+};
 
 /* HCI_UART proto flag bits */
-#घोषणा HCI_UART_PROTO_SET	0
-#घोषणा HCI_UART_REGISTERED	1
-#घोषणा HCI_UART_PROTO_READY	2
+#define HCI_UART_PROTO_SET	0
+#define HCI_UART_REGISTERED	1
+#define HCI_UART_PROTO_READY	2
 
 /* TX states  */
-#घोषणा HCI_UART_SENDING	1
-#घोषणा HCI_UART_TX_WAKEUP	2
+#define HCI_UART_SENDING	1
+#define HCI_UART_TX_WAKEUP	2
 
-पूर्णांक hci_uart_रेजिस्टर_proto(स्थिर काष्ठा hci_uart_proto *p);
-पूर्णांक hci_uart_unरेजिस्टर_proto(स्थिर काष्ठा hci_uart_proto *p);
-पूर्णांक hci_uart_रेजिस्टर_device(काष्ठा hci_uart *hu, स्थिर काष्ठा hci_uart_proto *p);
-व्योम hci_uart_unरेजिस्टर_device(काष्ठा hci_uart *hu);
+int hci_uart_register_proto(const struct hci_uart_proto *p);
+int hci_uart_unregister_proto(const struct hci_uart_proto *p);
+int hci_uart_register_device(struct hci_uart *hu, const struct hci_uart_proto *p);
+void hci_uart_unregister_device(struct hci_uart *hu);
 
-पूर्णांक hci_uart_tx_wakeup(काष्ठा hci_uart *hu);
-पूर्णांक hci_uart_रुको_until_sent(काष्ठा hci_uart *hu);
-पूर्णांक hci_uart_init_पढ़ोy(काष्ठा hci_uart *hu);
-व्योम hci_uart_init_work(काष्ठा work_काष्ठा *work);
-व्योम hci_uart_set_baudrate(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक speed);
-bool hci_uart_has_flow_control(काष्ठा hci_uart *hu);
-व्योम hci_uart_set_flow_control(काष्ठा hci_uart *hu, bool enable);
-व्योम hci_uart_set_speeds(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक init_speed,
-			 अचिन्हित पूर्णांक oper_speed);
+int hci_uart_tx_wakeup(struct hci_uart *hu);
+int hci_uart_wait_until_sent(struct hci_uart *hu);
+int hci_uart_init_ready(struct hci_uart *hu);
+void hci_uart_init_work(struct work_struct *work);
+void hci_uart_set_baudrate(struct hci_uart *hu, unsigned int speed);
+bool hci_uart_has_flow_control(struct hci_uart *hu);
+void hci_uart_set_flow_control(struct hci_uart *hu, bool enable);
+void hci_uart_set_speeds(struct hci_uart *hu, unsigned int init_speed,
+			 unsigned int oper_speed);
 
-#अगर_घोषित CONFIG_BT_HCIUART_H4
-पूर्णांक h4_init(व्योम);
-पूर्णांक h4_deinit(व्योम);
+#ifdef CONFIG_BT_HCIUART_H4
+int h4_init(void);
+int h4_deinit(void);
 
-काष्ठा h4_recv_pkt अणु
+struct h4_recv_pkt {
 	u8  type;	/* Packet type */
 	u8  hlen;	/* Header length */
 	u8  loff;	/* Data length offset in header */
 	u8  lsize;	/* Data length field size */
 	u16 maxlen;	/* Max overall packet length */
-	पूर्णांक (*recv)(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb);
-पूर्ण;
+	int (*recv)(struct hci_dev *hdev, struct sk_buff *skb);
+};
 
-#घोषणा H4_RECV_ACL \
+#define H4_RECV_ACL \
 	.type = HCI_ACLDATA_PKT, \
 	.hlen = HCI_ACL_HDR_SIZE, \
 	.loff = 2, \
 	.lsize = 2, \
 	.maxlen = HCI_MAX_FRAME_SIZE \
 
-#घोषणा H4_RECV_SCO \
+#define H4_RECV_SCO \
 	.type = HCI_SCODATA_PKT, \
 	.hlen = HCI_SCO_HDR_SIZE, \
 	.loff = 2, \
 	.lsize = 1, \
 	.maxlen = HCI_MAX_SCO_SIZE
 
-#घोषणा H4_RECV_EVENT \
+#define H4_RECV_EVENT \
 	.type = HCI_EVENT_PKT, \
 	.hlen = HCI_EVENT_HDR_SIZE, \
 	.loff = 1, \
 	.lsize = 1, \
 	.maxlen = HCI_MAX_EVENT_SIZE
 
-#घोषणा H4_RECV_ISO \
+#define H4_RECV_ISO \
 	.type = HCI_ISODATA_PKT, \
 	.hlen = HCI_ISO_HDR_SIZE, \
 	.loff = 2, \
 	.lsize = 2, \
 	.maxlen = HCI_MAX_FRAME_SIZE \
 
-काष्ठा sk_buff *h4_recv_buf(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb,
-			    स्थिर अचिन्हित अक्षर *buffer, पूर्णांक count,
-			    स्थिर काष्ठा h4_recv_pkt *pkts, पूर्णांक pkts_count);
-#पूर्ण_अगर
+struct sk_buff *h4_recv_buf(struct hci_dev *hdev, struct sk_buff *skb,
+			    const unsigned char *buffer, int count,
+			    const struct h4_recv_pkt *pkts, int pkts_count);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_BCSP
-पूर्णांक bcsp_init(व्योम);
-पूर्णांक bcsp_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_BCSP
+int bcsp_init(void);
+int bcsp_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_LL
-पूर्णांक ll_init(व्योम);
-पूर्णांक ll_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_LL
+int ll_init(void);
+int ll_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_ATH3K
-पूर्णांक ath_init(व्योम);
-पूर्णांक ath_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_ATH3K
+int ath_init(void);
+int ath_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_3WIRE
-पूर्णांक h5_init(व्योम);
-पूर्णांक h5_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_3WIRE
+int h5_init(void);
+int h5_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_INTEL
-पूर्णांक पूर्णांकel_init(व्योम);
-पूर्णांक पूर्णांकel_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_INTEL
+int intel_init(void);
+int intel_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_BCM
-पूर्णांक bcm_init(व्योम);
-पूर्णांक bcm_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_BCM
+int bcm_init(void);
+int bcm_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_QCA
-पूर्णांक qca_init(व्योम);
-पूर्णांक qca_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_QCA
+int qca_init(void);
+int qca_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_AG6XX
-पूर्णांक ag6xx_init(व्योम);
-पूर्णांक ag6xx_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_AG6XX
+int ag6xx_init(void);
+int ag6xx_deinit(void);
+#endif
 
-#अगर_घोषित CONFIG_BT_HCIUART_MRVL
-पूर्णांक mrvl_init(व्योम);
-पूर्णांक mrvl_deinit(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_BT_HCIUART_MRVL
+int mrvl_init(void);
+int mrvl_deinit(void);
+#endif

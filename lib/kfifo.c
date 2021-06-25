@@ -1,593 +1,592 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * A generic kernel FIFO implementation
  *
  * Copyright (C) 2009/2010 Stefani Seibold <stefani@seibold.net>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/kfअगरo.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/log2.h>
+#include <linux/uaccess.h>
+#include <linux/kfifo.h>
 
 /*
- * पूर्णांकernal helper to calculate the unused elements in a fअगरo
+ * internal helper to calculate the unused elements in a fifo
  */
-अटल अंतरभूत अचिन्हित पूर्णांक kfअगरo_unused(काष्ठा __kfअगरo *fअगरo)
-अणु
-	वापस (fअगरo->mask + 1) - (fअगरo->in - fअगरo->out);
-पूर्ण
+static inline unsigned int kfifo_unused(struct __kfifo *fifo)
+{
+	return (fifo->mask + 1) - (fifo->in - fifo->out);
+}
 
-पूर्णांक __kfअगरo_alloc(काष्ठा __kfअगरo *fअगरo, अचिन्हित पूर्णांक size,
-		माप_प्रकार esize, gfp_t gfp_mask)
-अणु
+int __kfifo_alloc(struct __kfifo *fifo, unsigned int size,
+		size_t esize, gfp_t gfp_mask)
+{
 	/*
-	 * round up to the next घातer of 2, since our 'let the indices
-	 * wrap' technique works only in this हाल.
+	 * round up to the next power of 2, since our 'let the indices
+	 * wrap' technique works only in this case.
 	 */
-	size = roundup_घात_of_two(size);
+	size = roundup_pow_of_two(size);
 
-	fअगरo->in = 0;
-	fअगरo->out = 0;
-	fअगरo->esize = esize;
+	fifo->in = 0;
+	fifo->out = 0;
+	fifo->esize = esize;
 
-	अगर (size < 2) अणु
-		fअगरo->data = शून्य;
-		fअगरo->mask = 0;
-		वापस -EINVAL;
-	पूर्ण
+	if (size < 2) {
+		fifo->data = NULL;
+		fifo->mask = 0;
+		return -EINVAL;
+	}
 
-	fअगरo->data = kदो_स्मृति_array(esize, size, gfp_mask);
+	fifo->data = kmalloc_array(esize, size, gfp_mask);
 
-	अगर (!fअगरo->data) अणु
-		fअगरo->mask = 0;
-		वापस -ENOMEM;
-	पूर्ण
-	fअगरo->mask = size - 1;
+	if (!fifo->data) {
+		fifo->mask = 0;
+		return -ENOMEM;
+	}
+	fifo->mask = size - 1;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_alloc);
+	return 0;
+}
+EXPORT_SYMBOL(__kfifo_alloc);
 
-व्योम __kfअगरo_मुक्त(काष्ठा __kfअगरo *fअगरo)
-अणु
-	kमुक्त(fअगरo->data);
-	fअगरo->in = 0;
-	fअगरo->out = 0;
-	fअगरo->esize = 0;
-	fअगरo->data = शून्य;
-	fअगरo->mask = 0;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_मुक्त);
+void __kfifo_free(struct __kfifo *fifo)
+{
+	kfree(fifo->data);
+	fifo->in = 0;
+	fifo->out = 0;
+	fifo->esize = 0;
+	fifo->data = NULL;
+	fifo->mask = 0;
+}
+EXPORT_SYMBOL(__kfifo_free);
 
-पूर्णांक __kfअगरo_init(काष्ठा __kfअगरo *fअगरo, व्योम *buffer,
-		अचिन्हित पूर्णांक size, माप_प्रकार esize)
-अणु
+int __kfifo_init(struct __kfifo *fifo, void *buffer,
+		unsigned int size, size_t esize)
+{
 	size /= esize;
 
-	अगर (!is_घातer_of_2(size))
-		size = roundकरोwn_घात_of_two(size);
+	if (!is_power_of_2(size))
+		size = rounddown_pow_of_two(size);
 
-	fअगरo->in = 0;
-	fअगरo->out = 0;
-	fअगरo->esize = esize;
-	fअगरo->data = buffer;
+	fifo->in = 0;
+	fifo->out = 0;
+	fifo->esize = esize;
+	fifo->data = buffer;
 
-	अगर (size < 2) अणु
-		fअगरo->mask = 0;
-		वापस -EINVAL;
-	पूर्ण
-	fअगरo->mask = size - 1;
+	if (size < 2) {
+		fifo->mask = 0;
+		return -EINVAL;
+	}
+	fifo->mask = size - 1;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_init);
+	return 0;
+}
+EXPORT_SYMBOL(__kfifo_init);
 
-अटल व्योम kfअगरo_copy_in(काष्ठा __kfअगरo *fअगरo, स्थिर व्योम *src,
-		अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off)
-अणु
-	अचिन्हित पूर्णांक size = fअगरo->mask + 1;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
-	अचिन्हित पूर्णांक l;
+static void kfifo_copy_in(struct __kfifo *fifo, const void *src,
+		unsigned int len, unsigned int off)
+{
+	unsigned int size = fifo->mask + 1;
+	unsigned int esize = fifo->esize;
+	unsigned int l;
 
-	off &= fअगरo->mask;
-	अगर (esize != 1) अणु
+	off &= fifo->mask;
+	if (esize != 1) {
 		off *= esize;
 		size *= esize;
 		len *= esize;
-	पूर्ण
+	}
 	l = min(len, size - off);
 
-	स_नकल(fअगरo->data + off, src, l);
-	स_नकल(fअगरo->data, src + l, len - l);
+	memcpy(fifo->data + off, src, l);
+	memcpy(fifo->data, src + l, len - l);
 	/*
-	 * make sure that the data in the fअगरo is up to date beक्रमe
-	 * incrementing the fअगरo->in index counter
+	 * make sure that the data in the fifo is up to date before
+	 * incrementing the fifo->in index counter
 	 */
 	smp_wmb();
-पूर्ण
+}
 
-अचिन्हित पूर्णांक __kfअगरo_in(काष्ठा __kfअगरo *fअगरo,
-		स्थिर व्योम *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक l;
+unsigned int __kfifo_in(struct __kfifo *fifo,
+		const void *buf, unsigned int len)
+{
+	unsigned int l;
 
-	l = kfअगरo_unused(fअगरo);
-	अगर (len > l)
+	l = kfifo_unused(fifo);
+	if (len > l)
 		len = l;
 
-	kfअगरo_copy_in(fअगरo, buf, len, fअगरo->in);
-	fअगरo->in += len;
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_in);
+	kfifo_copy_in(fifo, buf, len, fifo->in);
+	fifo->in += len;
+	return len;
+}
+EXPORT_SYMBOL(__kfifo_in);
 
-अटल व्योम kfअगरo_copy_out(काष्ठा __kfअगरo *fअगरo, व्योम *dst,
-		अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off)
-अणु
-	अचिन्हित पूर्णांक size = fअगरo->mask + 1;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
-	अचिन्हित पूर्णांक l;
+static void kfifo_copy_out(struct __kfifo *fifo, void *dst,
+		unsigned int len, unsigned int off)
+{
+	unsigned int size = fifo->mask + 1;
+	unsigned int esize = fifo->esize;
+	unsigned int l;
 
-	off &= fअगरo->mask;
-	अगर (esize != 1) अणु
+	off &= fifo->mask;
+	if (esize != 1) {
 		off *= esize;
 		size *= esize;
 		len *= esize;
-	पूर्ण
+	}
 	l = min(len, size - off);
 
-	स_नकल(dst, fअगरo->data + off, l);
-	स_नकल(dst + l, fअगरo->data, len - l);
+	memcpy(dst, fifo->data + off, l);
+	memcpy(dst + l, fifo->data, len - l);
 	/*
-	 * make sure that the data is copied beक्रमe
-	 * incrementing the fअगरo->out index counter
+	 * make sure that the data is copied before
+	 * incrementing the fifo->out index counter
 	 */
 	smp_wmb();
-पूर्ण
+}
 
-अचिन्हित पूर्णांक __kfअगरo_out_peek(काष्ठा __kfअगरo *fअगरo,
-		व्योम *buf, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक l;
+unsigned int __kfifo_out_peek(struct __kfifo *fifo,
+		void *buf, unsigned int len)
+{
+	unsigned int l;
 
-	l = fअगरo->in - fअगरo->out;
-	अगर (len > l)
+	l = fifo->in - fifo->out;
+	if (len > l)
 		len = l;
 
-	kfअगरo_copy_out(fअगरo, buf, len, fअगरo->out);
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_out_peek);
+	kfifo_copy_out(fifo, buf, len, fifo->out);
+	return len;
+}
+EXPORT_SYMBOL(__kfifo_out_peek);
 
-अचिन्हित पूर्णांक __kfअगरo_out(काष्ठा __kfअगरo *fअगरo,
-		व्योम *buf, अचिन्हित पूर्णांक len)
-अणु
-	len = __kfअगरo_out_peek(fअगरo, buf, len);
-	fअगरo->out += len;
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_out);
+unsigned int __kfifo_out(struct __kfifo *fifo,
+		void *buf, unsigned int len)
+{
+	len = __kfifo_out_peek(fifo, buf, len);
+	fifo->out += len;
+	return len;
+}
+EXPORT_SYMBOL(__kfifo_out);
 
-अटल अचिन्हित दीर्घ kfअगरo_copy_from_user(काष्ठा __kfअगरo *fअगरo,
-	स्थिर व्योम __user *from, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off,
-	अचिन्हित पूर्णांक *copied)
-अणु
-	अचिन्हित पूर्णांक size = fअगरo->mask + 1;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
-	अचिन्हित पूर्णांक l;
-	अचिन्हित दीर्घ ret;
+static unsigned long kfifo_copy_from_user(struct __kfifo *fifo,
+	const void __user *from, unsigned int len, unsigned int off,
+	unsigned int *copied)
+{
+	unsigned int size = fifo->mask + 1;
+	unsigned int esize = fifo->esize;
+	unsigned int l;
+	unsigned long ret;
 
-	off &= fअगरo->mask;
-	अगर (esize != 1) अणु
+	off &= fifo->mask;
+	if (esize != 1) {
 		off *= esize;
 		size *= esize;
 		len *= esize;
-	पूर्ण
+	}
 	l = min(len, size - off);
 
-	ret = copy_from_user(fअगरo->data + off, from, l);
-	अगर (unlikely(ret))
+	ret = copy_from_user(fifo->data + off, from, l);
+	if (unlikely(ret))
 		ret = DIV_ROUND_UP(ret + len - l, esize);
-	अन्यथा अणु
-		ret = copy_from_user(fअगरo->data, from + l, len - l);
-		अगर (unlikely(ret))
+	else {
+		ret = copy_from_user(fifo->data, from + l, len - l);
+		if (unlikely(ret))
 			ret = DIV_ROUND_UP(ret, esize);
-	पूर्ण
+	}
 	/*
-	 * make sure that the data in the fअगरo is up to date beक्रमe
-	 * incrementing the fअगरo->in index counter
+	 * make sure that the data in the fifo is up to date before
+	 * incrementing the fifo->in index counter
 	 */
 	smp_wmb();
 	*copied = len - ret * esize;
-	/* वापस the number of elements which are not copied */
-	वापस ret;
-पूर्ण
+	/* return the number of elements which are not copied */
+	return ret;
+}
 
-पूर्णांक __kfअगरo_from_user(काष्ठा __kfअगरo *fअगरo, स्थिर व्योम __user *from,
-		अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied)
-अणु
-	अचिन्हित पूर्णांक l;
-	अचिन्हित दीर्घ ret;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
-	पूर्णांक err;
+int __kfifo_from_user(struct __kfifo *fifo, const void __user *from,
+		unsigned long len, unsigned int *copied)
+{
+	unsigned int l;
+	unsigned long ret;
+	unsigned int esize = fifo->esize;
+	int err;
 
-	अगर (esize != 1)
+	if (esize != 1)
 		len /= esize;
 
-	l = kfअगरo_unused(fअगरo);
-	अगर (len > l)
+	l = kfifo_unused(fifo);
+	if (len > l)
 		len = l;
 
-	ret = kfअगरo_copy_from_user(fअगरo, from, len, fअगरo->in, copied);
-	अगर (unlikely(ret)) अणु
+	ret = kfifo_copy_from_user(fifo, from, len, fifo->in, copied);
+	if (unlikely(ret)) {
 		len -= ret;
 		err = -EFAULT;
-	पूर्ण अन्यथा
+	} else
 		err = 0;
-	fअगरo->in += len;
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_from_user);
+	fifo->in += len;
+	return err;
+}
+EXPORT_SYMBOL(__kfifo_from_user);
 
-अटल अचिन्हित दीर्घ kfअगरo_copy_to_user(काष्ठा __kfअगरo *fअगरo, व्योम __user *to,
-		अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off, अचिन्हित पूर्णांक *copied)
-अणु
-	अचिन्हित पूर्णांक l;
-	अचिन्हित दीर्घ ret;
-	अचिन्हित पूर्णांक size = fअगरo->mask + 1;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
+static unsigned long kfifo_copy_to_user(struct __kfifo *fifo, void __user *to,
+		unsigned int len, unsigned int off, unsigned int *copied)
+{
+	unsigned int l;
+	unsigned long ret;
+	unsigned int size = fifo->mask + 1;
+	unsigned int esize = fifo->esize;
 
-	off &= fअगरo->mask;
-	अगर (esize != 1) अणु
+	off &= fifo->mask;
+	if (esize != 1) {
 		off *= esize;
 		size *= esize;
 		len *= esize;
-	पूर्ण
+	}
 	l = min(len, size - off);
 
-	ret = copy_to_user(to, fअगरo->data + off, l);
-	अगर (unlikely(ret))
+	ret = copy_to_user(to, fifo->data + off, l);
+	if (unlikely(ret))
 		ret = DIV_ROUND_UP(ret + len - l, esize);
-	अन्यथा अणु
-		ret = copy_to_user(to + l, fअगरo->data, len - l);
-		अगर (unlikely(ret))
+	else {
+		ret = copy_to_user(to + l, fifo->data, len - l);
+		if (unlikely(ret))
 			ret = DIV_ROUND_UP(ret, esize);
-	पूर्ण
+	}
 	/*
-	 * make sure that the data is copied beक्रमe
-	 * incrementing the fअगरo->out index counter
+	 * make sure that the data is copied before
+	 * incrementing the fifo->out index counter
 	 */
 	smp_wmb();
 	*copied = len - ret * esize;
-	/* वापस the number of elements which are not copied */
-	वापस ret;
-पूर्ण
+	/* return the number of elements which are not copied */
+	return ret;
+}
 
-पूर्णांक __kfअगरo_to_user(काष्ठा __kfअगरo *fअगरo, व्योम __user *to,
-		अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied)
-अणु
-	अचिन्हित पूर्णांक l;
-	अचिन्हित दीर्घ ret;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
-	पूर्णांक err;
+int __kfifo_to_user(struct __kfifo *fifo, void __user *to,
+		unsigned long len, unsigned int *copied)
+{
+	unsigned int l;
+	unsigned long ret;
+	unsigned int esize = fifo->esize;
+	int err;
 
-	अगर (esize != 1)
+	if (esize != 1)
 		len /= esize;
 
-	l = fअगरo->in - fअगरo->out;
-	अगर (len > l)
+	l = fifo->in - fifo->out;
+	if (len > l)
 		len = l;
-	ret = kfअगरo_copy_to_user(fअगरo, to, len, fअगरo->out, copied);
-	अगर (unlikely(ret)) अणु
+	ret = kfifo_copy_to_user(fifo, to, len, fifo->out, copied);
+	if (unlikely(ret)) {
 		len -= ret;
 		err = -EFAULT;
-	पूर्ण अन्यथा
+	} else
 		err = 0;
-	fअगरo->out += len;
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_to_user);
+	fifo->out += len;
+	return err;
+}
+EXPORT_SYMBOL(__kfifo_to_user);
 
-अटल पूर्णांक setup_sgl_buf(काष्ठा scatterlist *sgl, व्योम *buf,
-		पूर्णांक nents, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक n;
-	अचिन्हित पूर्णांक l;
-	अचिन्हित पूर्णांक off;
-	काष्ठा page *page;
+static int setup_sgl_buf(struct scatterlist *sgl, void *buf,
+		int nents, unsigned int len)
+{
+	int n;
+	unsigned int l;
+	unsigned int off;
+	struct page *page;
 
-	अगर (!nents)
-		वापस 0;
+	if (!nents)
+		return 0;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
 	n = 0;
 	page = virt_to_page(buf);
 	off = offset_in_page(buf);
 	l = 0;
 
-	जबतक (len >= l + PAGE_SIZE - off) अणु
-		काष्ठा page *npage;
+	while (len >= l + PAGE_SIZE - off) {
+		struct page *npage;
 
 		l += PAGE_SIZE;
 		buf += PAGE_SIZE;
 		npage = virt_to_page(buf);
-		अगर (page_to_phys(page) != page_to_phys(npage) - l) अणु
+		if (page_to_phys(page) != page_to_phys(npage) - l) {
 			sg_set_page(sgl, page, l - off, off);
 			sgl = sg_next(sgl);
-			अगर (++n == nents || sgl == शून्य)
-				वापस n;
+			if (++n == nents || sgl == NULL)
+				return n;
 			page = npage;
 			len -= l - off;
 			l = off = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sg_set_page(sgl, page, len, off);
-	वापस n + 1;
-पूर्ण
+	return n + 1;
+}
 
-अटल अचिन्हित पूर्णांक setup_sgl(काष्ठा __kfअगरo *fअगरo, काष्ठा scatterlist *sgl,
-		पूर्णांक nents, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक off)
-अणु
-	अचिन्हित पूर्णांक size = fअगरo->mask + 1;
-	अचिन्हित पूर्णांक esize = fअगरo->esize;
-	अचिन्हित पूर्णांक l;
-	अचिन्हित पूर्णांक n;
+static unsigned int setup_sgl(struct __kfifo *fifo, struct scatterlist *sgl,
+		int nents, unsigned int len, unsigned int off)
+{
+	unsigned int size = fifo->mask + 1;
+	unsigned int esize = fifo->esize;
+	unsigned int l;
+	unsigned int n;
 
-	off &= fअगरo->mask;
-	अगर (esize != 1) अणु
+	off &= fifo->mask;
+	if (esize != 1) {
 		off *= esize;
 		size *= esize;
 		len *= esize;
-	पूर्ण
+	}
 	l = min(len, size - off);
 
-	n = setup_sgl_buf(sgl, fअगरo->data + off, nents, l);
-	n += setup_sgl_buf(sgl + n, fअगरo->data, nents - n, len - l);
+	n = setup_sgl_buf(sgl, fifo->data + off, nents, l);
+	n += setup_sgl_buf(sgl + n, fifo->data, nents - n, len - l);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अचिन्हित पूर्णांक __kfअगरo_dma_in_prepare(काष्ठा __kfअगरo *fअगरo,
-		काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक l;
+unsigned int __kfifo_dma_in_prepare(struct __kfifo *fifo,
+		struct scatterlist *sgl, int nents, unsigned int len)
+{
+	unsigned int l;
 
-	l = kfअगरo_unused(fअगरo);
-	अगर (len > l)
+	l = kfifo_unused(fifo);
+	if (len > l)
 		len = l;
 
-	वापस setup_sgl(fअगरo, sgl, nents, len, fअगरo->in);
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_dma_in_prepare);
+	return setup_sgl(fifo, sgl, nents, len, fifo->in);
+}
+EXPORT_SYMBOL(__kfifo_dma_in_prepare);
 
-अचिन्हित पूर्णांक __kfअगरo_dma_out_prepare(काष्ठा __kfअगरo *fअगरo,
-		काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len)
-अणु
-	अचिन्हित पूर्णांक l;
+unsigned int __kfifo_dma_out_prepare(struct __kfifo *fifo,
+		struct scatterlist *sgl, int nents, unsigned int len)
+{
+	unsigned int l;
 
-	l = fअगरo->in - fअगरo->out;
-	अगर (len > l)
+	l = fifo->in - fifo->out;
+	if (len > l)
 		len = l;
 
-	वापस setup_sgl(fअगरo, sgl, nents, len, fअगरo->out);
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_dma_out_prepare);
+	return setup_sgl(fifo, sgl, nents, len, fifo->out);
+}
+EXPORT_SYMBOL(__kfifo_dma_out_prepare);
 
-अचिन्हित पूर्णांक __kfअगरo_max_r(अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक max = (1 << (recsize << 3)) - 1;
+unsigned int __kfifo_max_r(unsigned int len, size_t recsize)
+{
+	unsigned int max = (1 << (recsize << 3)) - 1;
 
-	अगर (len > max)
-		वापस max;
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_max_r);
+	if (len > max)
+		return max;
+	return len;
+}
+EXPORT_SYMBOL(__kfifo_max_r);
 
-#घोषणा	__KFIFO_PEEK(data, out, mask) \
+#define	__KFIFO_PEEK(data, out, mask) \
 	((data)[(out) & (mask)])
 /*
- * __kfअगरo_peek_n पूर्णांकernal helper function क्रम determinate the length of
- * the next record in the fअगरo
+ * __kfifo_peek_n internal helper function for determinate the length of
+ * the next record in the fifo
  */
-अटल अचिन्हित पूर्णांक __kfअगरo_peek_n(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक l;
-	अचिन्हित पूर्णांक mask = fअगरo->mask;
-	अचिन्हित अक्षर *data = fअगरo->data;
+static unsigned int __kfifo_peek_n(struct __kfifo *fifo, size_t recsize)
+{
+	unsigned int l;
+	unsigned int mask = fifo->mask;
+	unsigned char *data = fifo->data;
 
-	l = __KFIFO_PEEK(data, fअगरo->out, mask);
+	l = __KFIFO_PEEK(data, fifo->out, mask);
 
-	अगर (--recsize)
-		l |= __KFIFO_PEEK(data, fअगरo->out + 1, mask) << 8;
+	if (--recsize)
+		l |= __KFIFO_PEEK(data, fifo->out + 1, mask) << 8;
 
-	वापस l;
-पूर्ण
+	return l;
+}
 
-#घोषणा	__KFIFO_POKE(data, in, mask, val) \
+#define	__KFIFO_POKE(data, in, mask, val) \
 	( \
-	(data)[(in) & (mask)] = (अचिन्हित अक्षर)(val) \
+	(data)[(in) & (mask)] = (unsigned char)(val) \
 	)
 
 /*
- * __kfअगरo_poke_n पूर्णांकernal helper function क्रम storeing the length of
- * the record पूर्णांकo the fअगरo
+ * __kfifo_poke_n internal helper function for storeing the length of
+ * the record into the fifo
  */
-अटल व्योम __kfअगरo_poke_n(काष्ठा __kfअगरo *fअगरo, अचिन्हित पूर्णांक n, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक mask = fअगरo->mask;
-	अचिन्हित अक्षर *data = fअगरo->data;
+static void __kfifo_poke_n(struct __kfifo *fifo, unsigned int n, size_t recsize)
+{
+	unsigned int mask = fifo->mask;
+	unsigned char *data = fifo->data;
 
-	__KFIFO_POKE(data, fअगरo->in, mask, n);
+	__KFIFO_POKE(data, fifo->in, mask, n);
 
-	अगर (recsize > 1)
-		__KFIFO_POKE(data, fअगरo->in + 1, mask, n >> 8);
-पूर्ण
+	if (recsize > 1)
+		__KFIFO_POKE(data, fifo->in + 1, mask, n >> 8);
+}
 
-अचिन्हित पूर्णांक __kfअगरo_len_r(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize)
-अणु
-	वापस __kfअगरo_peek_n(fअगरo, recsize);
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_len_r);
+unsigned int __kfifo_len_r(struct __kfifo *fifo, size_t recsize)
+{
+	return __kfifo_peek_n(fifo, recsize);
+}
+EXPORT_SYMBOL(__kfifo_len_r);
 
-अचिन्हित पूर्णांक __kfअगरo_in_r(काष्ठा __kfअगरo *fअगरo, स्थिर व्योम *buf,
-		अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
-	अगर (len + recsize > kfअगरo_unused(fअगरo))
-		वापस 0;
+unsigned int __kfifo_in_r(struct __kfifo *fifo, const void *buf,
+		unsigned int len, size_t recsize)
+{
+	if (len + recsize > kfifo_unused(fifo))
+		return 0;
 
-	__kfअगरo_poke_n(fअगरo, len, recsize);
+	__kfifo_poke_n(fifo, len, recsize);
 
-	kfअगरo_copy_in(fअगरo, buf, len, fअगरo->in + recsize);
-	fअगरo->in += len + recsize;
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_in_r);
+	kfifo_copy_in(fifo, buf, len, fifo->in + recsize);
+	fifo->in += len + recsize;
+	return len;
+}
+EXPORT_SYMBOL(__kfifo_in_r);
 
-अटल अचिन्हित पूर्णांक kfअगरo_out_copy_r(काष्ठा __kfअगरo *fअगरo,
-	व्योम *buf, अचिन्हित पूर्णांक len, माप_प्रकार recsize, अचिन्हित पूर्णांक *n)
-अणु
-	*n = __kfअगरo_peek_n(fअगरo, recsize);
+static unsigned int kfifo_out_copy_r(struct __kfifo *fifo,
+	void *buf, unsigned int len, size_t recsize, unsigned int *n)
+{
+	*n = __kfifo_peek_n(fifo, recsize);
 
-	अगर (len > *n)
+	if (len > *n)
 		len = *n;
 
-	kfअगरo_copy_out(fअगरo, buf, len, fअगरo->out + recsize);
-	वापस len;
-पूर्ण
+	kfifo_copy_out(fifo, buf, len, fifo->out + recsize);
+	return len;
+}
 
-अचिन्हित पूर्णांक __kfअगरo_out_peek_r(काष्ठा __kfअगरo *fअगरo, व्योम *buf,
-		अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक n;
+unsigned int __kfifo_out_peek_r(struct __kfifo *fifo, void *buf,
+		unsigned int len, size_t recsize)
+{
+	unsigned int n;
 
-	अगर (fअगरo->in == fअगरo->out)
-		वापस 0;
+	if (fifo->in == fifo->out)
+		return 0;
 
-	वापस kfअगरo_out_copy_r(fअगरo, buf, len, recsize, &n);
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_out_peek_r);
+	return kfifo_out_copy_r(fifo, buf, len, recsize, &n);
+}
+EXPORT_SYMBOL(__kfifo_out_peek_r);
 
-अचिन्हित पूर्णांक __kfअगरo_out_r(काष्ठा __kfअगरo *fअगरo, व्योम *buf,
-		अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक n;
+unsigned int __kfifo_out_r(struct __kfifo *fifo, void *buf,
+		unsigned int len, size_t recsize)
+{
+	unsigned int n;
 
-	अगर (fअगरo->in == fअगरo->out)
-		वापस 0;
+	if (fifo->in == fifo->out)
+		return 0;
 
-	len = kfअगरo_out_copy_r(fअगरo, buf, len, recsize, &n);
-	fअगरo->out += n + recsize;
-	वापस len;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_out_r);
+	len = kfifo_out_copy_r(fifo, buf, len, recsize, &n);
+	fifo->out += n + recsize;
+	return len;
+}
+EXPORT_SYMBOL(__kfifo_out_r);
 
-व्योम __kfअगरo_skip_r(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक n;
+void __kfifo_skip_r(struct __kfifo *fifo, size_t recsize)
+{
+	unsigned int n;
 
-	n = __kfअगरo_peek_n(fअगरo, recsize);
-	fअगरo->out += n + recsize;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_skip_r);
+	n = __kfifo_peek_n(fifo, recsize);
+	fifo->out += n + recsize;
+}
+EXPORT_SYMBOL(__kfifo_skip_r);
 
-पूर्णांक __kfअगरo_from_user_r(काष्ठा __kfअगरo *fअगरo, स्थिर व्योम __user *from,
-	अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied, माप_प्रकार recsize)
-अणु
-	अचिन्हित दीर्घ ret;
+int __kfifo_from_user_r(struct __kfifo *fifo, const void __user *from,
+	unsigned long len, unsigned int *copied, size_t recsize)
+{
+	unsigned long ret;
 
-	len = __kfअगरo_max_r(len, recsize);
+	len = __kfifo_max_r(len, recsize);
 
-	अगर (len + recsize > kfअगरo_unused(fअगरo)) अणु
+	if (len + recsize > kfifo_unused(fifo)) {
 		*copied = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	__kfअगरo_poke_n(fअगरo, len, recsize);
+	__kfifo_poke_n(fifo, len, recsize);
 
-	ret = kfअगरo_copy_from_user(fअगरo, from, len, fअगरo->in + recsize, copied);
-	अगर (unlikely(ret)) अणु
+	ret = kfifo_copy_from_user(fifo, from, len, fifo->in + recsize, copied);
+	if (unlikely(ret)) {
 		*copied = 0;
-		वापस -EFAULT;
-	पूर्ण
-	fअगरo->in += len + recsize;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_from_user_r);
+		return -EFAULT;
+	}
+	fifo->in += len + recsize;
+	return 0;
+}
+EXPORT_SYMBOL(__kfifo_from_user_r);
 
-पूर्णांक __kfअगरo_to_user_r(काष्ठा __kfअगरo *fअगरo, व्योम __user *to,
-	अचिन्हित दीर्घ len, अचिन्हित पूर्णांक *copied, माप_प्रकार recsize)
-अणु
-	अचिन्हित दीर्घ ret;
-	अचिन्हित पूर्णांक n;
+int __kfifo_to_user_r(struct __kfifo *fifo, void __user *to,
+	unsigned long len, unsigned int *copied, size_t recsize)
+{
+	unsigned long ret;
+	unsigned int n;
 
-	अगर (fअगरo->in == fअगरo->out) अणु
+	if (fifo->in == fifo->out) {
 		*copied = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	n = __kfअगरo_peek_n(fअगरo, recsize);
-	अगर (len > n)
+	n = __kfifo_peek_n(fifo, recsize);
+	if (len > n)
 		len = n;
 
-	ret = kfअगरo_copy_to_user(fअगरo, to, len, fअगरo->out + recsize, copied);
-	अगर (unlikely(ret)) अणु
+	ret = kfifo_copy_to_user(fifo, to, len, fifo->out + recsize, copied);
+	if (unlikely(ret)) {
 		*copied = 0;
-		वापस -EFAULT;
-	पूर्ण
-	fअगरo->out += n + recsize;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_to_user_r);
+		return -EFAULT;
+	}
+	fifo->out += n + recsize;
+	return 0;
+}
+EXPORT_SYMBOL(__kfifo_to_user_r);
 
-अचिन्हित पूर्णांक __kfअगरo_dma_in_prepare_r(काष्ठा __kfअगरo *fअगरo,
-	काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
+unsigned int __kfifo_dma_in_prepare_r(struct __kfifo *fifo,
+	struct scatterlist *sgl, int nents, unsigned int len, size_t recsize)
+{
 	BUG_ON(!nents);
 
-	len = __kfअगरo_max_r(len, recsize);
+	len = __kfifo_max_r(len, recsize);
 
-	अगर (len + recsize > kfअगरo_unused(fअगरo))
-		वापस 0;
+	if (len + recsize > kfifo_unused(fifo))
+		return 0;
 
-	वापस setup_sgl(fअगरo, sgl, nents, len, fअगरo->in + recsize);
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_dma_in_prepare_r);
+	return setup_sgl(fifo, sgl, nents, len, fifo->in + recsize);
+}
+EXPORT_SYMBOL(__kfifo_dma_in_prepare_r);
 
-व्योम __kfअगरo_dma_in_finish_r(काष्ठा __kfअगरo *fअगरo,
-	अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
-	len = __kfअगरo_max_r(len, recsize);
-	__kfअगरo_poke_n(fअगरo, len, recsize);
-	fअगरo->in += len + recsize;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_dma_in_finish_r);
+void __kfifo_dma_in_finish_r(struct __kfifo *fifo,
+	unsigned int len, size_t recsize)
+{
+	len = __kfifo_max_r(len, recsize);
+	__kfifo_poke_n(fifo, len, recsize);
+	fifo->in += len + recsize;
+}
+EXPORT_SYMBOL(__kfifo_dma_in_finish_r);
 
-अचिन्हित पूर्णांक __kfअगरo_dma_out_prepare_r(काष्ठा __kfअगरo *fअगरo,
-	काष्ठा scatterlist *sgl, पूर्णांक nents, अचिन्हित पूर्णांक len, माप_प्रकार recsize)
-अणु
+unsigned int __kfifo_dma_out_prepare_r(struct __kfifo *fifo,
+	struct scatterlist *sgl, int nents, unsigned int len, size_t recsize)
+{
 	BUG_ON(!nents);
 
-	len = __kfअगरo_max_r(len, recsize);
+	len = __kfifo_max_r(len, recsize);
 
-	अगर (len + recsize > fअगरo->in - fअगरo->out)
-		वापस 0;
+	if (len + recsize > fifo->in - fifo->out)
+		return 0;
 
-	वापस setup_sgl(fअगरo, sgl, nents, len, fअगरo->out + recsize);
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_dma_out_prepare_r);
+	return setup_sgl(fifo, sgl, nents, len, fifo->out + recsize);
+}
+EXPORT_SYMBOL(__kfifo_dma_out_prepare_r);
 
-व्योम __kfअगरo_dma_out_finish_r(काष्ठा __kfअगरo *fअगरo, माप_प्रकार recsize)
-अणु
-	अचिन्हित पूर्णांक len;
+void __kfifo_dma_out_finish_r(struct __kfifo *fifo, size_t recsize)
+{
+	unsigned int len;
 
-	len = __kfअगरo_peek_n(fअगरo, recsize);
-	fअगरo->out += len + recsize;
-पूर्ण
-EXPORT_SYMBOL(__kfअगरo_dma_out_finish_r);
+	len = __kfifo_peek_n(fifo, recsize);
+	fifo->out += len + recsize;
+}
+EXPORT_SYMBOL(__kfifo_dma_out_finish_r);

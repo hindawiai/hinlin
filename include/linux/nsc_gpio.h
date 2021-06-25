@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /**
    nsc_gpio.c
 
    National Semiconductor GPIO common access methods.
 
-   काष्ठा nsc_gpio_ops असलtracts the low-level access
-   operations क्रम the GPIO units on 2 NSC chip families; the GEODE
-   पूर्णांकegrated CPU, and the PC-8736[03456] पूर्णांकegrated PC-peripheral
+   struct nsc_gpio_ops abstracts the low-level access
+   operations for the GPIO units on 2 NSC chip families; the GEODE
+   integrated CPU, and the PC-8736[03456] integrated PC-peripheral
    chips.
 
    The GPIO units on these chips have the same pin architecture, but
-   the access methods dअगरfer.  Thus, scx200_gpio and pc8736x_gpio
+   the access methods differ.  Thus, scx200_gpio and pc8736x_gpio
    implement their own versions of these routines; and use the common
    file-operations routines implemented in nsc_gpio module.
 
@@ -21,22 +20,22 @@
    NSC sold the GEODE line to AMD, and the PC-8736x line to Winbond.
 */
 
-काष्ठा nsc_gpio_ops अणु
-	काष्ठा module*	owner;
-	u32	(*gpio_config)	(अचिन्हित iminor, u32 mask, u32 bits);
-	व्योम	(*gpio_dump)	(काष्ठा nsc_gpio_ops *amp, अचिन्हित iminor);
-	पूर्णांक	(*gpio_get)	(अचिन्हित iminor);
-	व्योम	(*gpio_set)	(अचिन्हित iminor, पूर्णांक state);
-	व्योम	(*gpio_change)	(अचिन्हित iminor);
-	पूर्णांक	(*gpio_current)	(अचिन्हित iminor);
-	काष्ठा device*	dev;	/* क्रम dev_dbg() support, set in init  */
-पूर्ण;
+struct nsc_gpio_ops {
+	struct module*	owner;
+	u32	(*gpio_config)	(unsigned iminor, u32 mask, u32 bits);
+	void	(*gpio_dump)	(struct nsc_gpio_ops *amp, unsigned iminor);
+	int	(*gpio_get)	(unsigned iminor);
+	void	(*gpio_set)	(unsigned iminor, int state);
+	void	(*gpio_change)	(unsigned iminor);
+	int	(*gpio_current)	(unsigned iminor);
+	struct device*	dev;	/* for dev_dbg() support, set in init  */
+};
 
-बाह्य sमाप_प्रकार nsc_gpio_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
-			      माप_प्रकार len, loff_t *ppos);
+extern ssize_t nsc_gpio_write(struct file *file, const char __user *data,
+			      size_t len, loff_t *ppos);
 
-बाह्य sमाप_प्रकार nsc_gpio_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			     माप_प्रकार len, loff_t *ppos);
+extern ssize_t nsc_gpio_read(struct file *file, char __user *buf,
+			     size_t len, loff_t *ppos);
 
-बाह्य व्योम nsc_gpio_dump(काष्ठा nsc_gpio_ops *amp, अचिन्हित index);
+extern void nsc_gpio_dump(struct nsc_gpio_ops *amp, unsigned index);
 

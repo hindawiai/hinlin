@@ -1,161 +1,160 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * net/sched/sch_mq.c		Classful multiqueue dummy scheduler
  *
  * Copyright (c) 2009 Patrick McHardy <kaber@trash.net>
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/skbuff.h>
-#समावेश <net/netlink.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/sch_generic.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/skbuff.h>
+#include <net/netlink.h>
+#include <net/pkt_cls.h>
+#include <net/pkt_sched.h>
+#include <net/sch_generic.h>
 
-काष्ठा mq_sched अणु
-	काष्ठा Qdisc		**qdiscs;
-पूर्ण;
+struct mq_sched {
+	struct Qdisc		**qdiscs;
+};
 
-अटल पूर्णांक mq_offload(काष्ठा Qdisc *sch, क्रमागत tc_mq_command cmd)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा tc_mq_qopt_offload opt = अणु
+static int mq_offload(struct Qdisc *sch, enum tc_mq_command cmd)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct tc_mq_qopt_offload opt = {
 		.command = cmd,
 		.handle = sch->handle,
-	पूर्ण;
+	};
 
-	अगर (!tc_can_offload(dev) || !dev->netdev_ops->nकरो_setup_tc)
-		वापस -EOPNOTSUPP;
+	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
+		return -EOPNOTSUPP;
 
-	वापस dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_MQ, &opt);
-पूर्ण
+	return dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_MQ, &opt);
+}
 
-अटल पूर्णांक mq_offload_stats(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा tc_mq_qopt_offload opt = अणु
+static int mq_offload_stats(struct Qdisc *sch)
+{
+	struct tc_mq_qopt_offload opt = {
 		.command = TC_MQ_STATS,
 		.handle = sch->handle,
-		.stats = अणु
+		.stats = {
 			.bstats = &sch->bstats,
 			.qstats = &sch->qstats,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
-	वापस qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_MQ, &opt);
-पूर्ण
+	return qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_MQ, &opt);
+}
 
-अटल व्योम mq_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा mq_sched *priv = qdisc_priv(sch);
-	अचिन्हित पूर्णांक ntx;
+static void mq_destroy(struct Qdisc *sch)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct mq_sched *priv = qdisc_priv(sch);
+	unsigned int ntx;
 
 	mq_offload(sch, TC_MQ_DESTROY);
 
-	अगर (!priv->qdiscs)
-		वापस;
-	क्रम (ntx = 0; ntx < dev->num_tx_queues && priv->qdiscs[ntx]; ntx++)
+	if (!priv->qdiscs)
+		return;
+	for (ntx = 0; ntx < dev->num_tx_queues && priv->qdiscs[ntx]; ntx++)
 		qdisc_put(priv->qdiscs[ntx]);
-	kमुक्त(priv->qdiscs);
-पूर्ण
+	kfree(priv->qdiscs);
+}
 
-अटल पूर्णांक mq_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा mq_sched *priv = qdisc_priv(sch);
-	काष्ठा netdev_queue *dev_queue;
-	काष्ठा Qdisc *qdisc;
-	अचिन्हित पूर्णांक ntx;
+static int mq_init(struct Qdisc *sch, struct nlattr *opt,
+		   struct netlink_ext_ack *extack)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct mq_sched *priv = qdisc_priv(sch);
+	struct netdev_queue *dev_queue;
+	struct Qdisc *qdisc;
+	unsigned int ntx;
 
-	अगर (sch->parent != TC_H_ROOT)
-		वापस -EOPNOTSUPP;
+	if (sch->parent != TC_H_ROOT)
+		return -EOPNOTSUPP;
 
-	अगर (!netअगर_is_multiqueue(dev))
-		वापस -EOPNOTSUPP;
+	if (!netif_is_multiqueue(dev))
+		return -EOPNOTSUPP;
 
 	/* pre-allocate qdiscs, attachment can't fail */
-	priv->qdiscs = kसुस्मृति(dev->num_tx_queues, माप(priv->qdiscs[0]),
+	priv->qdiscs = kcalloc(dev->num_tx_queues, sizeof(priv->qdiscs[0]),
 			       GFP_KERNEL);
-	अगर (!priv->qdiscs)
-		वापस -ENOMEM;
+	if (!priv->qdiscs)
+		return -ENOMEM;
 
-	क्रम (ntx = 0; ntx < dev->num_tx_queues; ntx++) अणु
+	for (ntx = 0; ntx < dev->num_tx_queues; ntx++) {
 		dev_queue = netdev_get_tx_queue(dev, ntx);
-		qdisc = qdisc_create_dflt(dev_queue, get_शेष_qdisc_ops(dev, ntx),
+		qdisc = qdisc_create_dflt(dev_queue, get_default_qdisc_ops(dev, ntx),
 					  TC_H_MAKE(TC_H_MAJ(sch->handle),
 						    TC_H_MIN(ntx + 1)),
 					  extack);
-		अगर (!qdisc)
-			वापस -ENOMEM;
+		if (!qdisc)
+			return -ENOMEM;
 		priv->qdiscs[ntx] = qdisc;
 		qdisc->flags |= TCQ_F_ONETXQUEUE | TCQ_F_NOPARENT;
-	पूर्ण
+	}
 
 	sch->flags |= TCQ_F_MQROOT;
 
 	mq_offload(sch, TC_MQ_CREATE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mq_attach(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा mq_sched *priv = qdisc_priv(sch);
-	काष्ठा Qdisc *qdisc, *old;
-	अचिन्हित पूर्णांक ntx;
+static void mq_attach(struct Qdisc *sch)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct mq_sched *priv = qdisc_priv(sch);
+	struct Qdisc *qdisc, *old;
+	unsigned int ntx;
 
-	क्रम (ntx = 0; ntx < dev->num_tx_queues; ntx++) अणु
+	for (ntx = 0; ntx < dev->num_tx_queues; ntx++) {
 		qdisc = priv->qdiscs[ntx];
 		old = dev_graft_qdisc(qdisc->dev_queue, qdisc);
-		अगर (old)
+		if (old)
 			qdisc_put(old);
-#अगर_घोषित CONFIG_NET_SCHED
-		अगर (ntx < dev->real_num_tx_queues)
+#ifdef CONFIG_NET_SCHED
+		if (ntx < dev->real_num_tx_queues)
 			qdisc_hash_add(qdisc, false);
-#पूर्ण_अगर
+#endif
 
-	पूर्ण
-	kमुक्त(priv->qdiscs);
-	priv->qdiscs = शून्य;
-पूर्ण
+	}
+	kfree(priv->qdiscs);
+	priv->qdiscs = NULL;
+}
 
-अटल पूर्णांक mq_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	काष्ठा Qdisc *qdisc;
-	अचिन्हित पूर्णांक ntx;
+static int mq_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	struct Qdisc *qdisc;
+	unsigned int ntx;
 	__u32 qlen = 0;
 
 	sch->q.qlen = 0;
-	स_रखो(&sch->bstats, 0, माप(sch->bstats));
-	स_रखो(&sch->qstats, 0, माप(sch->qstats));
+	memset(&sch->bstats, 0, sizeof(sch->bstats));
+	memset(&sch->qstats, 0, sizeof(sch->qstats));
 
 	/* MQ supports lockless qdiscs. However, statistics accounting needs
-	 * to account क्रम all, none, or a mix of locked and unlocked child
+	 * to account for all, none, or a mix of locked and unlocked child
 	 * qdiscs. Percpu stats are added to counters in-band and locking
 	 * qdisc totals are added at end.
 	 */
-	क्रम (ntx = 0; ntx < dev->num_tx_queues; ntx++) अणु
+	for (ntx = 0; ntx < dev->num_tx_queues; ntx++) {
 		qdisc = netdev_get_tx_queue(dev, ntx)->qdisc_sleeping;
 		spin_lock_bh(qdisc_lock(qdisc));
 
-		अगर (qdisc_is_percpu_stats(qdisc)) अणु
+		if (qdisc_is_percpu_stats(qdisc)) {
 			qlen = qdisc_qlen_sum(qdisc);
-			__gnet_stats_copy_basic(शून्य, &sch->bstats,
+			__gnet_stats_copy_basic(NULL, &sch->bstats,
 						qdisc->cpu_bstats,
 						&qdisc->bstats);
 			__gnet_stats_copy_queue(&sch->qstats,
 						qdisc->cpu_qstats,
 						&qdisc->qstats, qlen);
 			sch->q.qlen		+= qlen;
-		पूर्ण अन्यथा अणु
+		} else {
 			sch->q.qlen		+= qdisc->q.qlen;
 			sch->bstats.bytes	+= qdisc->bstats.bytes;
 			sch->bstats.packets	+= qdisc->bstats.packets;
@@ -164,44 +163,44 @@
 			sch->qstats.drops	+= qdisc->qstats.drops;
 			sch->qstats.requeues	+= qdisc->qstats.requeues;
 			sch->qstats.overlimits	+= qdisc->qstats.overlimits;
-		पूर्ण
+		}
 
 		spin_unlock_bh(qdisc_lock(qdisc));
-	पूर्ण
+	}
 
-	वापस mq_offload_stats(sch);
-पूर्ण
+	return mq_offload_stats(sch);
+}
 
-अटल काष्ठा netdev_queue *mq_queue_get(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	अचिन्हित दीर्घ ntx = cl - 1;
+static struct netdev_queue *mq_queue_get(struct Qdisc *sch, unsigned long cl)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	unsigned long ntx = cl - 1;
 
-	अगर (ntx >= dev->num_tx_queues)
-		वापस शून्य;
-	वापस netdev_get_tx_queue(dev, ntx);
-पूर्ण
+	if (ntx >= dev->num_tx_queues)
+		return NULL;
+	return netdev_get_tx_queue(dev, ntx);
+}
 
-अटल काष्ठा netdev_queue *mq_select_queue(काष्ठा Qdisc *sch,
-					    काष्ठा tcmsg *tcm)
-अणु
-	वापस mq_queue_get(sch, TC_H_MIN(tcm->tcm_parent));
-पूर्ण
+static struct netdev_queue *mq_select_queue(struct Qdisc *sch,
+					    struct tcmsg *tcm)
+{
+	return mq_queue_get(sch, TC_H_MIN(tcm->tcm_parent));
+}
 
-अटल पूर्णांक mq_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl, काष्ठा Qdisc *new,
-		    काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा netdev_queue *dev_queue = mq_queue_get(sch, cl);
-	काष्ठा tc_mq_qopt_offload graft_offload;
-	काष्ठा net_device *dev = qdisc_dev(sch);
+static int mq_graft(struct Qdisc *sch, unsigned long cl, struct Qdisc *new,
+		    struct Qdisc **old, struct netlink_ext_ack *extack)
+{
+	struct netdev_queue *dev_queue = mq_queue_get(sch, cl);
+	struct tc_mq_qopt_offload graft_offload;
+	struct net_device *dev = qdisc_dev(sch);
 
-	अगर (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP)
 		dev_deactivate(dev);
 
 	*old = dev_graft_qdisc(dev_queue, new);
-	अगर (new)
+	if (new)
 		new->flags |= TCQ_F_ONETXQUEUE | TCQ_F_NOPARENT;
-	अगर (dev->flags & IFF_UP)
+	if (dev->flags & IFF_UP)
 		dev_activate(dev);
 
 	graft_offload.handle = sch->handle;
@@ -211,68 +210,68 @@
 
 	qdisc_offload_graft_helper(qdisc_dev(sch), sch, new, *old,
 				   TC_SETUP_QDISC_MQ, &graft_offload, extack);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा Qdisc *mq_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl)
-अणु
-	काष्ठा netdev_queue *dev_queue = mq_queue_get(sch, cl);
+static struct Qdisc *mq_leaf(struct Qdisc *sch, unsigned long cl)
+{
+	struct netdev_queue *dev_queue = mq_queue_get(sch, cl);
 
-	वापस dev_queue->qdisc_sleeping;
-पूर्ण
+	return dev_queue->qdisc_sleeping;
+}
 
-अटल अचिन्हित दीर्घ mq_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	अचिन्हित पूर्णांक ntx = TC_H_MIN(classid);
+static unsigned long mq_find(struct Qdisc *sch, u32 classid)
+{
+	unsigned int ntx = TC_H_MIN(classid);
 
-	अगर (!mq_queue_get(sch, ntx))
-		वापस 0;
-	वापस ntx;
-पूर्ण
+	if (!mq_queue_get(sch, ntx))
+		return 0;
+	return ntx;
+}
 
-अटल पूर्णांक mq_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-			 काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा netdev_queue *dev_queue = mq_queue_get(sch, cl);
+static int mq_dump_class(struct Qdisc *sch, unsigned long cl,
+			 struct sk_buff *skb, struct tcmsg *tcm)
+{
+	struct netdev_queue *dev_queue = mq_queue_get(sch, cl);
 
 	tcm->tcm_parent = TC_H_ROOT;
 	tcm->tcm_handle |= TC_H_MIN(cl);
 	tcm->tcm_info = dev_queue->qdisc_sleeping->handle;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mq_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-			       काष्ठा gnet_dump *d)
-अणु
-	काष्ठा netdev_queue *dev_queue = mq_queue_get(sch, cl);
+static int mq_dump_class_stats(struct Qdisc *sch, unsigned long cl,
+			       struct gnet_dump *d)
+{
+	struct netdev_queue *dev_queue = mq_queue_get(sch, cl);
 
 	sch = dev_queue->qdisc_sleeping;
-	अगर (gnet_stats_copy_basic(&sch->running, d, sch->cpu_bstats,
+	if (gnet_stats_copy_basic(&sch->running, d, sch->cpu_bstats,
 				  &sch->bstats) < 0 ||
 	    qdisc_qstats_copy(d, sch) < 0)
-		वापस -1;
-	वापस 0;
-पूर्ण
+		return -1;
+	return 0;
+}
 
-अटल व्योम mq_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा net_device *dev = qdisc_dev(sch);
-	अचिन्हित पूर्णांक ntx;
+static void mq_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct net_device *dev = qdisc_dev(sch);
+	unsigned int ntx;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
 	arg->count = arg->skip;
-	क्रम (ntx = arg->skip; ntx < dev->num_tx_queues; ntx++) अणु
-		अगर (arg->fn(sch, ntx + 1, arg) < 0) अणु
+	for (ntx = arg->skip; ntx < dev->num_tx_queues; ntx++) {
+		if (arg->fn(sch, ntx + 1, arg) < 0) {
 			arg->stop = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		arg->count++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops mq_class_ops = अणु
+static const struct Qdisc_class_ops mq_class_ops = {
 	.select_queue	= mq_select_queue,
 	.graft		= mq_graft,
 	.leaf		= mq_leaf,
@@ -280,15 +279,15 @@
 	.walk		= mq_walk,
 	.dump		= mq_dump_class,
 	.dump_stats	= mq_dump_class_stats,
-पूर्ण;
+};
 
-काष्ठा Qdisc_ops mq_qdisc_ops __पढ़ो_mostly = अणु
+struct Qdisc_ops mq_qdisc_ops __read_mostly = {
 	.cl_ops		= &mq_class_ops,
 	.id		= "mq",
-	.priv_size	= माप(काष्ठा mq_sched),
+	.priv_size	= sizeof(struct mq_sched),
 	.init		= mq_init,
 	.destroy	= mq_destroy,
 	.attach		= mq_attach,
 	.dump		= mq_dump,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};

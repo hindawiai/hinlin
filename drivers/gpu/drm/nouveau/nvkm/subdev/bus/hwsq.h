@@ -1,149 +1,148 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_BUS_HWSQ_H__
-#घोषणा __NVKM_BUS_HWSQ_H__
-#समावेश <subdev/bus.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_BUS_HWSQ_H__
+#define __NVKM_BUS_HWSQ_H__
+#include <subdev/bus.h>
 
-काष्ठा hwsq अणु
-	काष्ठा nvkm_subdev *subdev;
-	काष्ठा nvkm_hwsq *hwsq;
-	पूर्णांक sequence;
-पूर्ण;
+struct hwsq {
+	struct nvkm_subdev *subdev;
+	struct nvkm_hwsq *hwsq;
+	int sequence;
+};
 
-काष्ठा hwsq_reg अणु
-	पूर्णांक sequence;
-	bool क्रमce;
+struct hwsq_reg {
+	int sequence;
+	bool force;
 	u32 addr;
 	u32 stride; /* in bytes */
 	u32 mask;
 	u32 data;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा hwsq_reg
+static inline struct hwsq_reg
 hwsq_stride(u32 addr, u32 stride, u32 mask)
-अणु
-	वापस (काष्ठा hwsq_reg) अणु
+{
+	return (struct hwsq_reg) {
 		.sequence = 0,
-		.क्रमce = 0,
+		.force = 0,
 		.addr = addr,
 		.stride = stride,
 		.mask = mask,
 		.data = 0xdeadbeef,
-	पूर्ण;
-पूर्ण
+	};
+}
 
-अटल अंतरभूत काष्ठा hwsq_reg
+static inline struct hwsq_reg
 hwsq_reg2(u32 addr1, u32 addr2)
-अणु
-	वापस (काष्ठा hwsq_reg) अणु
+{
+	return (struct hwsq_reg) {
 		.sequence = 0,
-		.क्रमce = 0,
+		.force = 0,
 		.addr = addr1,
 		.stride = addr2 - addr1,
 		.mask = 0x3,
 		.data = 0xdeadbeef,
-	पूर्ण;
-पूर्ण
+	};
+}
 
-अटल अंतरभूत काष्ठा hwsq_reg
+static inline struct hwsq_reg
 hwsq_reg(u32 addr)
-अणु
-	वापस (काष्ठा hwsq_reg) अणु
+{
+	return (struct hwsq_reg) {
 		.sequence = 0,
-		.क्रमce = 0,
+		.force = 0,
 		.addr = addr,
 		.stride = 0,
 		.mask = 0x1,
 		.data = 0xdeadbeef,
-	पूर्ण;
-पूर्ण
+	};
+}
 
-अटल अंतरभूत पूर्णांक
-hwsq_init(काष्ठा hwsq *ram, काष्ठा nvkm_subdev *subdev)
-अणु
-	पूर्णांक ret;
+static inline int
+hwsq_init(struct hwsq *ram, struct nvkm_subdev *subdev)
+{
+	int ret;
 
 	ret = nvkm_hwsq_init(subdev, &ram->hwsq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ram->sequence++;
 	ram->subdev = subdev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-hwsq_exec(काष्ठा hwsq *ram, bool exec)
-अणु
-	पूर्णांक ret = 0;
-	अगर (ram->subdev) अणु
+static inline int
+hwsq_exec(struct hwsq *ram, bool exec)
+{
+	int ret = 0;
+	if (ram->subdev) {
 		ret = nvkm_hwsq_fini(&ram->hwsq, exec);
-		ram->subdev = शून्य;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		ram->subdev = NULL;
+	}
+	return ret;
+}
 
-अटल अंतरभूत u32
-hwsq_rd32(काष्ठा hwsq *ram, काष्ठा hwsq_reg *reg)
-अणु
-	काष्ठा nvkm_device *device = ram->subdev->device;
-	अगर (reg->sequence != ram->sequence)
+static inline u32
+hwsq_rd32(struct hwsq *ram, struct hwsq_reg *reg)
+{
+	struct nvkm_device *device = ram->subdev->device;
+	if (reg->sequence != ram->sequence)
 		reg->data = nvkm_rd32(device, reg->addr);
-	वापस reg->data;
-पूर्ण
+	return reg->data;
+}
 
-अटल अंतरभूत व्योम
-hwsq_wr32(काष्ठा hwsq *ram, काष्ठा hwsq_reg *reg, u32 data)
-अणु
+static inline void
+hwsq_wr32(struct hwsq *ram, struct hwsq_reg *reg, u32 data)
+{
 	u32 mask, off = 0;
 
 	reg->sequence = ram->sequence;
 	reg->data = data;
 
-	क्रम (mask = reg->mask; mask > 0; mask = (mask & ~1) >> 1) अणु
-		अगर (mask & 1)
+	for (mask = reg->mask; mask > 0; mask = (mask & ~1) >> 1) {
+		if (mask & 1)
 			nvkm_hwsq_wr32(ram->hwsq, reg->addr+off, reg->data);
 
 		off += reg->stride;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम
-hwsq_nuke(काष्ठा hwsq *ram, काष्ठा hwsq_reg *reg)
-अणु
-	reg->क्रमce = true;
-पूर्ण
+static inline void
+hwsq_nuke(struct hwsq *ram, struct hwsq_reg *reg)
+{
+	reg->force = true;
+}
 
-अटल अंतरभूत u32
-hwsq_mask(काष्ठा hwsq *ram, काष्ठा hwsq_reg *reg, u32 mask, u32 data)
-अणु
+static inline u32
+hwsq_mask(struct hwsq *ram, struct hwsq_reg *reg, u32 mask, u32 data)
+{
 	u32 temp = hwsq_rd32(ram, reg);
-	अगर (temp != ((temp & ~mask) | data) || reg->क्रमce)
+	if (temp != ((temp & ~mask) | data) || reg->force)
 		hwsq_wr32(ram, reg, (temp & ~mask) | data);
-	वापस temp;
-पूर्ण
+	return temp;
+}
 
-अटल अंतरभूत व्योम
-hwsq_setf(काष्ठा hwsq *ram, u8 flag, पूर्णांक data)
-अणु
+static inline void
+hwsq_setf(struct hwsq *ram, u8 flag, int data)
+{
 	nvkm_hwsq_setf(ram->hwsq, flag, data);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-hwsq_रुको(काष्ठा hwsq *ram, u8 flag, u8 data)
-अणु
-	nvkm_hwsq_रुको(ram->hwsq, flag, data);
-पूर्ण
+static inline void
+hwsq_wait(struct hwsq *ram, u8 flag, u8 data)
+{
+	nvkm_hwsq_wait(ram->hwsq, flag, data);
+}
 
-अटल अंतरभूत व्योम
-hwsq_रुको_vblank(काष्ठा hwsq *ram)
-अणु
-	nvkm_hwsq_रुको_vblank(ram->hwsq);
-पूर्ण
+static inline void
+hwsq_wait_vblank(struct hwsq *ram)
+{
+	nvkm_hwsq_wait_vblank(ram->hwsq);
+}
 
-अटल अंतरभूत व्योम
-hwsq_nsec(काष्ठा hwsq *ram, u32 nsec)
-अणु
+static inline void
+hwsq_nsec(struct hwsq *ram, u32 nsec)
+{
 	nvkm_hwsq_nsec(ram->hwsq, nsec);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

@@ -1,77 +1,76 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित _ASM_POWERPC_DELAY_H
-#घोषणा _ASM_POWERPC_DELAY_H
-#अगर_घोषित __KERNEL__
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef _ASM_POWERPC_DELAY_H
+#define _ASM_POWERPC_DELAY_H
+#ifdef __KERNEL__
 
-#समावेश <linux/processor.h>
-#समावेश <यंत्र/समय.स>
+#include <linux/processor.h>
+#include <asm/time.h>
 
 /*
  * Copyright 1996, Paul Mackerras.
  * Copyright (C) 2009 Freescale Semiconductor, Inc. All rights reserved.
  *
  * PPC64 Support added by Dave Engebretsen, Todd Inglett, Mike Corrigan,
- * Anton Blanअक्षरd.
+ * Anton Blanchard.
  */
 
-बाह्य व्योम __delay(अचिन्हित दीर्घ loops);
-बाह्य व्योम udelay(अचिन्हित दीर्घ usecs);
+extern void __delay(unsigned long loops);
+extern void udelay(unsigned long usecs);
 
 /*
  * On shared processor machines the generic implementation of mdelay can
  * result in large errors. While each iteration of the loop inside mdelay
- * is supposed to take 1ms, the hypervisor could sleep our partition क्रम
- * दीर्घer (eg 10ms). With the right timing these errors can add up.
+ * is supposed to take 1ms, the hypervisor could sleep our partition for
+ * longer (eg 10ms). With the right timing these errors can add up.
  *
  * Since there is no 32bit overflow issue on 64bit kernels, just call
  * udelay directly.
  */
-#अगर_घोषित CONFIG_PPC64
-#घोषणा mdelay(n)	udelay((n) * 1000)
-#पूर्ण_अगर
+#ifdef CONFIG_PPC64
+#define mdelay(n)	udelay((n) * 1000)
+#endif
 
 /**
- * spin_event_समयout - spin until a condition माला_लो true or a समयout elapses
+ * spin_event_timeout - spin until a condition gets true or a timeout elapses
  * @condition: a C expression to evalate
- * @समयout: समयout, in microseconds
+ * @timeout: timeout, in microseconds
  * @delay: the number of microseconds to delay between each evaluation of
  *         @condition
  *
  * The process spins until the condition evaluates to true (non-zero) or the
- * समयout elapses.  The वापस value of this macro is the value of
+ * timeout elapses.  The return value of this macro is the value of
  * @condition when the loop terminates. This allows you to determine the cause
- * of the loop terminates.  If the वापस value is zero, then you know a
- * समयout has occurred.
+ * of the loop terminates.  If the return value is zero, then you know a
+ * timeout has occurred.
  *
- * This primary purpose of this macro is to poll on a hardware रेजिस्टर
- * until a status bit changes.  The समयout ensures that the loop still
- * terminates even अगर the bit never changes.  The delay is क्रम devices that
- * need a delay in between successive पढ़ोs.
+ * This primary purpose of this macro is to poll on a hardware register
+ * until a status bit changes.  The timeout ensures that the loop still
+ * terminates even if the bit never changes.  The delay is for devices that
+ * need a delay in between successive reads.
  *
- * gcc will optimize out the अगर-statement अगर @delay is a स्थिरant.
+ * gcc will optimize out the if-statement if @delay is a constant.
  */
-#घोषणा spin_event_समयout(condition, समयout, delay)                          \
-(अणु                                                                             \
+#define spin_event_timeout(condition, timeout, delay)                          \
+({                                                                             \
 	typeof(condition) __ret;                                               \
-	अचिन्हित दीर्घ __loops = tb_ticks_per_usec * समयout;                   \
-	अचिन्हित दीर्घ __start = mftb();                                     \
+	unsigned long __loops = tb_ticks_per_usec * timeout;                   \
+	unsigned long __start = mftb();                                     \
                                                                                \
-	अगर (delay) अणु                                                           \
-		जबतक (!(__ret = (condition)) &&                               \
+	if (delay) {                                                           \
+		while (!(__ret = (condition)) &&                               \
 				(tb_ticks_since(__start) <= __loops))          \
 			udelay(delay);                                         \
-	पूर्ण अन्यथा अणु                                                               \
+	} else {                                                               \
 		spin_begin();                                                  \
-		जबतक (!(__ret = (condition)) &&                               \
+		while (!(__ret = (condition)) &&                               \
 				(tb_ticks_since(__start) <= __loops))          \
 			spin_cpu_relax();                                      \
 		spin_end();                                                    \
-	पूर्ण                                                                      \
-	अगर (!__ret)                                                            \
+	}                                                                      \
+	if (!__ret)                                                            \
 		__ret = (condition);                                           \
 	__ret;		                                                       \
-पूर्ण)
+})
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* _ASM_POWERPC_DELAY_H */
+#endif /* __KERNEL__ */
+#endif /* _ASM_POWERPC_DELAY_H */

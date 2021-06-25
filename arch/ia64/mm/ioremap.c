@@ -1,45 +1,44 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (c) Copyright 2006, 2007 Hewlett-Packard Development Company, L.P.
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/module.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/meminit.h>
+#include <linux/compiler.h>
+#include <linux/module.h>
+#include <linux/efi.h>
+#include <linux/io.h>
+#include <linux/mm.h>
+#include <linux/vmalloc.h>
+#include <asm/io.h>
+#include <asm/meminit.h>
 
-अटल अंतरभूत व्योम __iomem *
-__ioremap_uc(अचिन्हित दीर्घ phys_addr)
-अणु
-	वापस (व्योम __iomem *) (__IA64_UNCACHED_OFFSET | phys_addr);
-पूर्ण
+static inline void __iomem *
+__ioremap_uc(unsigned long phys_addr)
+{
+	return (void __iomem *) (__IA64_UNCACHED_OFFSET | phys_addr);
+}
 
-व्योम __iomem *
-early_ioremap (अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
-अणु
+void __iomem *
+early_ioremap (unsigned long phys_addr, unsigned long size)
+{
 	u64 attr;
 	attr = kern_mem_attribute(phys_addr, size);
-	अगर (attr & EFI_MEMORY_WB)
-		वापस (व्योम __iomem *) phys_to_virt(phys_addr);
-	वापस __ioremap_uc(phys_addr);
-पूर्ण
+	if (attr & EFI_MEMORY_WB)
+		return (void __iomem *) phys_to_virt(phys_addr);
+	return __ioremap_uc(phys_addr);
+}
 
-व्योम __iomem *
-ioremap (अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
-अणु
-	व्योम __iomem *addr;
-	काष्ठा vm_काष्ठा *area;
-	अचिन्हित दीर्घ offset;
+void __iomem *
+ioremap (unsigned long phys_addr, unsigned long size)
+{
+	void __iomem *addr;
+	struct vm_struct *area;
+	unsigned long offset;
 	pgprot_t prot;
 	u64 attr;
-	अचिन्हित दीर्घ gran_base, gran_size;
-	अचिन्हित दीर्घ page_base;
+	unsigned long gran_base, gran_size;
+	unsigned long page_base;
 
 	/*
 	 * For things in kern_memmap, we must use the same attribute
@@ -47,29 +46,29 @@ ioremap (अचिन्हित दीर्घ phys_addr, अचिन्ह�
 	 * Documentation/ia64/aliasing.rst.
 	 */
 	attr = kern_mem_attribute(phys_addr, size);
-	अगर (attr & EFI_MEMORY_WB)
-		वापस (व्योम __iomem *) phys_to_virt(phys_addr);
-	अन्यथा अगर (attr & EFI_MEMORY_UC)
-		वापस __ioremap_uc(phys_addr);
+	if (attr & EFI_MEMORY_WB)
+		return (void __iomem *) phys_to_virt(phys_addr);
+	else if (attr & EFI_MEMORY_UC)
+		return __ioremap_uc(phys_addr);
 
 	/*
-	 * Some chipsets करोn't support UC access to memory.  If
-	 * WB is supported क्रम the whole granule, we prefer that.
+	 * Some chipsets don't support UC access to memory.  If
+	 * WB is supported for the whole granule, we prefer that.
 	 */
 	gran_base = GRANULEROUNDDOWN(phys_addr);
 	gran_size = GRANULEROUNDUP(phys_addr + size) - gran_base;
-	अगर (efi_mem_attribute(gran_base, gran_size) & EFI_MEMORY_WB)
-		वापस (व्योम __iomem *) phys_to_virt(phys_addr);
+	if (efi_mem_attribute(gran_base, gran_size) & EFI_MEMORY_WB)
+		return (void __iomem *) phys_to_virt(phys_addr);
 
 	/*
-	 * WB is not supported क्रम the whole granule, so we can't use
+	 * WB is not supported for the whole granule, so we can't use
 	 * the region 7 identity mapping.  If we can safely cover the
 	 * area with kernel page table mappings, we can use those
 	 * instead.
 	 */
 	page_base = phys_addr & PAGE_MASK;
 	size = PAGE_ALIGN(phys_addr + size) - page_base;
-	अगर (efi_mem_attribute(page_base, size) & EFI_MEMORY_WB) अणु
+	if (efi_mem_attribute(page_base, size) & EFI_MEMORY_WB) {
 		prot = PAGE_KERNEL;
 
 		/*
@@ -79,46 +78,46 @@ ioremap (अचिन्हित दीर्घ phys_addr, अचिन्ह�
 		phys_addr &= PAGE_MASK;
 
 		/*
-		 * Ok, go क्रम it..
+		 * Ok, go for it..
 		 */
 		area = get_vm_area(size, VM_IOREMAP);
-		अगर (!area)
-			वापस शून्य;
+		if (!area)
+			return NULL;
 
 		area->phys_addr = phys_addr;
-		addr = (व्योम __iomem *) area->addr;
-		अगर (ioremap_page_range((अचिन्हित दीर्घ) addr,
-				(अचिन्हित दीर्घ) addr + size, phys_addr, prot)) अणु
-			vunmap((व्योम __क्रमce *) addr);
-			वापस शून्य;
-		पूर्ण
+		addr = (void __iomem *) area->addr;
+		if (ioremap_page_range((unsigned long) addr,
+				(unsigned long) addr + size, phys_addr, prot)) {
+			vunmap((void __force *) addr);
+			return NULL;
+		}
 
-		वापस (व्योम __iomem *) (offset + (अक्षर __iomem *)addr);
-	पूर्ण
+		return (void __iomem *) (offset + (char __iomem *)addr);
+	}
 
-	वापस __ioremap_uc(phys_addr);
-पूर्ण
+	return __ioremap_uc(phys_addr);
+}
 EXPORT_SYMBOL(ioremap);
 
-व्योम __iomem *
-ioremap_uc(अचिन्हित दीर्घ phys_addr, अचिन्हित दीर्घ size)
-अणु
-	अगर (kern_mem_attribute(phys_addr, size) & EFI_MEMORY_WB)
-		वापस शून्य;
+void __iomem *
+ioremap_uc(unsigned long phys_addr, unsigned long size)
+{
+	if (kern_mem_attribute(phys_addr, size) & EFI_MEMORY_WB)
+		return NULL;
 
-	वापस __ioremap_uc(phys_addr);
-पूर्ण
+	return __ioremap_uc(phys_addr);
+}
 EXPORT_SYMBOL(ioremap_uc);
 
-व्योम
-early_iounmap (अस्थिर व्योम __iomem *addr, अचिन्हित दीर्घ size)
-अणु
-पूर्ण
+void
+early_iounmap (volatile void __iomem *addr, unsigned long size)
+{
+}
 
-व्योम
-iounmap (अस्थिर व्योम __iomem *addr)
-अणु
-	अगर (REGION_NUMBER(addr) == RGN_GATE)
-		vunmap((व्योम *) ((अचिन्हित दीर्घ) addr & PAGE_MASK));
-पूर्ण
+void
+iounmap (volatile void __iomem *addr)
+{
+	if (REGION_NUMBER(addr) == RGN_GATE)
+		vunmap((void *) ((unsigned long) addr & PAGE_MASK));
+}
 EXPORT_SYMBOL(iounmap);

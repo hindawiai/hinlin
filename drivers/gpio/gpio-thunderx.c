@@ -1,209 +1,208 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2016, 2017 Cavium Inc.
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/spinlock.h>
-#समावेश <यंत्र-generic/msi.h>
+#include <linux/bitops.h>
+#include <linux/gpio/driver.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/irq.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/spinlock.h>
+#include <asm-generic/msi.h>
 
 
-#घोषणा GPIO_RX_DAT	0x0
-#घोषणा GPIO_TX_SET	0x8
-#घोषणा GPIO_TX_CLR	0x10
-#घोषणा GPIO_CONST	0x90
-#घोषणा  GPIO_CONST_GPIOS_MASK 0xff
-#घोषणा GPIO_BIT_CFG	0x400
-#घोषणा  GPIO_BIT_CFG_TX_OE		BIT(0)
-#घोषणा  GPIO_BIT_CFG_PIN_XOR		BIT(1)
-#घोषणा  GPIO_BIT_CFG_INT_EN		BIT(2)
-#घोषणा  GPIO_BIT_CFG_INT_TYPE		BIT(3)
-#घोषणा  GPIO_BIT_CFG_FIL_MASK		GENMASK(11, 4)
-#घोषणा  GPIO_BIT_CFG_FIL_CNT_SHIFT	4
-#घोषणा  GPIO_BIT_CFG_FIL_SEL_SHIFT	8
-#घोषणा  GPIO_BIT_CFG_TX_OD		BIT(12)
-#घोषणा  GPIO_BIT_CFG_PIN_SEL_MASK	GENMASK(25, 16)
-#घोषणा GPIO_INTR	0x800
-#घोषणा  GPIO_INTR_INTR			BIT(0)
-#घोषणा  GPIO_INTR_INTR_W1S		BIT(1)
-#घोषणा  GPIO_INTR_ENA_W1C		BIT(2)
-#घोषणा  GPIO_INTR_ENA_W1S		BIT(3)
-#घोषणा GPIO_2ND_BANK	0x1400
+#define GPIO_RX_DAT	0x0
+#define GPIO_TX_SET	0x8
+#define GPIO_TX_CLR	0x10
+#define GPIO_CONST	0x90
+#define  GPIO_CONST_GPIOS_MASK 0xff
+#define GPIO_BIT_CFG	0x400
+#define  GPIO_BIT_CFG_TX_OE		BIT(0)
+#define  GPIO_BIT_CFG_PIN_XOR		BIT(1)
+#define  GPIO_BIT_CFG_INT_EN		BIT(2)
+#define  GPIO_BIT_CFG_INT_TYPE		BIT(3)
+#define  GPIO_BIT_CFG_FIL_MASK		GENMASK(11, 4)
+#define  GPIO_BIT_CFG_FIL_CNT_SHIFT	4
+#define  GPIO_BIT_CFG_FIL_SEL_SHIFT	8
+#define  GPIO_BIT_CFG_TX_OD		BIT(12)
+#define  GPIO_BIT_CFG_PIN_SEL_MASK	GENMASK(25, 16)
+#define GPIO_INTR	0x800
+#define  GPIO_INTR_INTR			BIT(0)
+#define  GPIO_INTR_INTR_W1S		BIT(1)
+#define  GPIO_INTR_ENA_W1C		BIT(2)
+#define  GPIO_INTR_ENA_W1S		BIT(3)
+#define GPIO_2ND_BANK	0x1400
 
-#घोषणा GLITCH_FILTER_400NS ((4u << GPIO_BIT_CFG_FIL_SEL_SHIFT) | \
+#define GLITCH_FILTER_400NS ((4u << GPIO_BIT_CFG_FIL_SEL_SHIFT) | \
 			     (9u << GPIO_BIT_CFG_FIL_CNT_SHIFT))
 
-काष्ठा thunderx_gpio;
+struct thunderx_gpio;
 
-काष्ठा thunderx_line अणु
-	काष्ठा thunderx_gpio	*txgpio;
-	अचिन्हित पूर्णांक		line;
-	अचिन्हित पूर्णांक		fil_bits;
-पूर्ण;
+struct thunderx_line {
+	struct thunderx_gpio	*txgpio;
+	unsigned int		line;
+	unsigned int		fil_bits;
+};
 
-काष्ठा thunderx_gpio अणु
-	काष्ठा gpio_chip	chip;
-	u8 __iomem		*रेजिस्टर_base;
-	काष्ठा msix_entry	*msix_entries;	/* per line MSI-X */
-	काष्ठा thunderx_line	*line_entries;	/* per line irq info */
+struct thunderx_gpio {
+	struct gpio_chip	chip;
+	u8 __iomem		*register_base;
+	struct msix_entry	*msix_entries;	/* per line MSI-X */
+	struct thunderx_line	*line_entries;	/* per line irq info */
 	raw_spinlock_t		lock;
-	अचिन्हित दीर्घ		invert_mask[2];
-	अचिन्हित दीर्घ		od_mask[2];
-	पूर्णांक			base_msi;
-पूर्ण;
+	unsigned long		invert_mask[2];
+	unsigned long		od_mask[2];
+	int			base_msi;
+};
 
-अटल अचिन्हित पूर्णांक bit_cfg_reg(अचिन्हित पूर्णांक line)
-अणु
-	वापस 8 * line + GPIO_BIT_CFG;
-पूर्ण
+static unsigned int bit_cfg_reg(unsigned int line)
+{
+	return 8 * line + GPIO_BIT_CFG;
+}
 
-अटल अचिन्हित पूर्णांक पूर्णांकr_reg(अचिन्हित पूर्णांक line)
-अणु
-	वापस 8 * line + GPIO_INTR;
-पूर्ण
+static unsigned int intr_reg(unsigned int line)
+{
+	return 8 * line + GPIO_INTR;
+}
 
-अटल bool thunderx_gpio_is_gpio_nowarn(काष्ठा thunderx_gpio *txgpio,
-					 अचिन्हित पूर्णांक line)
-अणु
-	u64 bit_cfg = पढ़ोq(txgpio->रेजिस्टर_base + bit_cfg_reg(line));
+static bool thunderx_gpio_is_gpio_nowarn(struct thunderx_gpio *txgpio,
+					 unsigned int line)
+{
+	u64 bit_cfg = readq(txgpio->register_base + bit_cfg_reg(line));
 
-	वापस (bit_cfg & GPIO_BIT_CFG_PIN_SEL_MASK) == 0;
-पूर्ण
+	return (bit_cfg & GPIO_BIT_CFG_PIN_SEL_MASK) == 0;
+}
 
 /*
- * Check (and WARN) that the pin is available क्रम GPIO.  We will not
- * allow modअगरication of the state of non-GPIO pins from this driver.
+ * Check (and WARN) that the pin is available for GPIO.  We will not
+ * allow modification of the state of non-GPIO pins from this driver.
  */
-अटल bool thunderx_gpio_is_gpio(काष्ठा thunderx_gpio *txgpio,
-				  अचिन्हित पूर्णांक line)
-अणु
+static bool thunderx_gpio_is_gpio(struct thunderx_gpio *txgpio,
+				  unsigned int line)
+{
 	bool rv = thunderx_gpio_is_gpio_nowarn(txgpio, line);
 
 	WARN_RATELIMIT(!rv, "Pin %d not available for GPIO\n", line);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक thunderx_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक line)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
+static int thunderx_gpio_request(struct gpio_chip *chip, unsigned int line)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
 
-	वापस thunderx_gpio_is_gpio(txgpio, line) ? 0 : -EIO;
-पूर्ण
+	return thunderx_gpio_is_gpio(txgpio, line) ? 0 : -EIO;
+}
 
-अटल पूर्णांक thunderx_gpio_dir_in(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक line)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
+static int thunderx_gpio_dir_in(struct gpio_chip *chip, unsigned int line)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
 
-	अगर (!thunderx_gpio_is_gpio(txgpio, line))
-		वापस -EIO;
+	if (!thunderx_gpio_is_gpio(txgpio, line))
+		return -EIO;
 
 	raw_spin_lock(&txgpio->lock);
 	clear_bit(line, txgpio->invert_mask);
 	clear_bit(line, txgpio->od_mask);
-	ग_लिखोq(txgpio->line_entries[line].fil_bits,
-	       txgpio->रेजिस्टर_base + bit_cfg_reg(line));
+	writeq(txgpio->line_entries[line].fil_bits,
+	       txgpio->register_base + bit_cfg_reg(line));
 	raw_spin_unlock(&txgpio->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम thunderx_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक line,
-			      पूर्णांक value)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
-	पूर्णांक bank = line / 64;
-	पूर्णांक bank_bit = line % 64;
+static void thunderx_gpio_set(struct gpio_chip *chip, unsigned int line,
+			      int value)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
+	int bank = line / 64;
+	int bank_bit = line % 64;
 
-	व्योम __iomem *reg = txgpio->रेजिस्टर_base +
+	void __iomem *reg = txgpio->register_base +
 		(bank * GPIO_2ND_BANK) + (value ? GPIO_TX_SET : GPIO_TX_CLR);
 
-	ग_लिखोq(BIT_ULL(bank_bit), reg);
-पूर्ण
+	writeq(BIT_ULL(bank_bit), reg);
+}
 
-अटल पूर्णांक thunderx_gpio_dir_out(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक line,
-				 पूर्णांक value)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
+static int thunderx_gpio_dir_out(struct gpio_chip *chip, unsigned int line,
+				 int value)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
 	u64 bit_cfg = txgpio->line_entries[line].fil_bits | GPIO_BIT_CFG_TX_OE;
 
-	अगर (!thunderx_gpio_is_gpio(txgpio, line))
-		वापस -EIO;
+	if (!thunderx_gpio_is_gpio(txgpio, line))
+		return -EIO;
 
 	raw_spin_lock(&txgpio->lock);
 
 	thunderx_gpio_set(chip, line, value);
 
-	अगर (test_bit(line, txgpio->invert_mask))
+	if (test_bit(line, txgpio->invert_mask))
 		bit_cfg |= GPIO_BIT_CFG_PIN_XOR;
 
-	अगर (test_bit(line, txgpio->od_mask))
+	if (test_bit(line, txgpio->od_mask))
 		bit_cfg |= GPIO_BIT_CFG_TX_OD;
 
-	ग_लिखोq(bit_cfg, txgpio->रेजिस्टर_base + bit_cfg_reg(line));
+	writeq(bit_cfg, txgpio->register_base + bit_cfg_reg(line));
 
 	raw_spin_unlock(&txgpio->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक thunderx_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक line)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
+static int thunderx_gpio_get_direction(struct gpio_chip *chip, unsigned int line)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
 	u64 bit_cfg;
 
-	अगर (!thunderx_gpio_is_gpio_nowarn(txgpio, line))
+	if (!thunderx_gpio_is_gpio_nowarn(txgpio, line))
 		/*
-		 * Say it is input क्रम now to aव्योम WARNing on
-		 * gpiochip_add_data().  We will WARN अगर someone
+		 * Say it is input for now to avoid WARNing on
+		 * gpiochip_add_data().  We will WARN if someone
 		 * requests it or tries to use it.
 		 */
-		वापस 1;
+		return 1;
 
-	bit_cfg = पढ़ोq(txgpio->रेजिस्टर_base + bit_cfg_reg(line));
+	bit_cfg = readq(txgpio->register_base + bit_cfg_reg(line));
 
-	अगर (bit_cfg & GPIO_BIT_CFG_TX_OE)
-		वापस GPIO_LINE_सूचीECTION_OUT;
+	if (bit_cfg & GPIO_BIT_CFG_TX_OE)
+		return GPIO_LINE_DIRECTION_OUT;
 
-	वापस GPIO_LINE_सूचीECTION_IN;
-पूर्ण
+	return GPIO_LINE_DIRECTION_IN;
+}
 
-अटल पूर्णांक thunderx_gpio_set_config(काष्ठा gpio_chip *chip,
-				    अचिन्हित पूर्णांक line,
-				    अचिन्हित दीर्घ cfg)
-अणु
+static int thunderx_gpio_set_config(struct gpio_chip *chip,
+				    unsigned int line,
+				    unsigned long cfg)
+{
 	bool orig_invert, orig_od, orig_dat, new_invert, new_od;
 	u32 arg, sel;
 	u64 bit_cfg;
-	पूर्णांक bank = line / 64;
-	पूर्णांक bank_bit = line % 64;
-	पूर्णांक ret = -ENOTSUPP;
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
-	व्योम __iomem *reg = txgpio->रेजिस्टर_base + (bank * GPIO_2ND_BANK) + GPIO_TX_SET;
+	int bank = line / 64;
+	int bank_bit = line % 64;
+	int ret = -ENOTSUPP;
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
+	void __iomem *reg = txgpio->register_base + (bank * GPIO_2ND_BANK) + GPIO_TX_SET;
 
-	अगर (!thunderx_gpio_is_gpio(txgpio, line))
-		वापस -EIO;
+	if (!thunderx_gpio_is_gpio(txgpio, line))
+		return -EIO;
 
 	raw_spin_lock(&txgpio->lock);
 	orig_invert = test_bit(line, txgpio->invert_mask);
 	new_invert  = orig_invert;
 	orig_od = test_bit(line, txgpio->od_mask);
 	new_od = orig_od;
-	orig_dat = ((पढ़ोq(reg) >> bank_bit) & 1) ^ orig_invert;
-	bit_cfg = पढ़ोq(txgpio->रेजिस्टर_base + bit_cfg_reg(line));
-	चयन (pinconf_to_config_param(cfg)) अणु
-	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+	orig_dat = ((readq(reg) >> bank_bit) & 1) ^ orig_invert;
+	bit_cfg = readq(txgpio->register_base + bit_cfg_reg(line));
+	switch (pinconf_to_config_param(cfg)) {
+	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
 		/*
-		 * Weird, setting खोलो-drain mode causes संकेत
+		 * Weird, setting open-drain mode causes signal
 		 * inversion.  Note this so we can compensate in the
 		 * dir_out function.
 		 */
@@ -212,123 +211,123 @@
 		set_bit(line, txgpio->od_mask);
 		new_od = true;
 		ret = 0;
-		अवरोध;
-	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
+		break;
+	case PIN_CONFIG_DRIVE_PUSH_PULL:
 		clear_bit(line, txgpio->invert_mask);
 		new_invert  = false;
 		clear_bit(line, txgpio->od_mask);
 		new_od  = false;
 		ret = 0;
-		अवरोध;
-	हाल PIN_CONFIG_INPUT_DEBOUNCE:
+		break;
+	case PIN_CONFIG_INPUT_DEBOUNCE:
 		arg = pinconf_to_config_argument(cfg);
-		अगर (arg > 1228) अणु /* 15 * 2^15 * 2.5nS maximum */
+		if (arg > 1228) { /* 15 * 2^15 * 2.5nS maximum */
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		arg *= 400; /* scale to 2.5nS घड़ीs. */
+			break;
+		}
+		arg *= 400; /* scale to 2.5nS clocks. */
 		sel = 0;
-		जबतक (arg > 15) अणु
+		while (arg > 15) {
 			sel++;
 			arg++; /* always round up */
 			arg >>= 1;
-		पूर्ण
+		}
 		txgpio->line_entries[line].fil_bits =
 			(sel << GPIO_BIT_CFG_FIL_SEL_SHIFT) |
 			(arg << GPIO_BIT_CFG_FIL_CNT_SHIFT);
 		bit_cfg &= ~GPIO_BIT_CFG_FIL_MASK;
 		bit_cfg |= txgpio->line_entries[line].fil_bits;
-		ग_लिखोq(bit_cfg, txgpio->रेजिस्टर_base + bit_cfg_reg(line));
+		writeq(bit_cfg, txgpio->register_base + bit_cfg_reg(line));
 		ret = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	raw_spin_unlock(&txgpio->lock);
 
 	/*
 	 * If currently output and OPEN_DRAIN changed, install the new
 	 * settings
 	 */
-	अगर ((new_invert != orig_invert || new_od != orig_od) &&
+	if ((new_invert != orig_invert || new_od != orig_od) &&
 	    (bit_cfg & GPIO_BIT_CFG_TX_OE))
 		ret = thunderx_gpio_dir_out(chip, line, orig_dat ^ new_invert);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक thunderx_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक line)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
-	पूर्णांक bank = line / 64;
-	पूर्णांक bank_bit = line % 64;
-	u64 पढ़ो_bits = पढ़ोq(txgpio->रेजिस्टर_base + (bank * GPIO_2ND_BANK) + GPIO_RX_DAT);
-	u64 masked_bits = पढ़ो_bits & BIT_ULL(bank_bit);
+static int thunderx_gpio_get(struct gpio_chip *chip, unsigned int line)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
+	int bank = line / 64;
+	int bank_bit = line % 64;
+	u64 read_bits = readq(txgpio->register_base + (bank * GPIO_2ND_BANK) + GPIO_RX_DAT);
+	u64 masked_bits = read_bits & BIT_ULL(bank_bit);
 
-	अगर (test_bit(line, txgpio->invert_mask))
-		वापस masked_bits == 0;
-	अन्यथा
-		वापस masked_bits != 0;
-पूर्ण
+	if (test_bit(line, txgpio->invert_mask))
+		return masked_bits == 0;
+	else
+		return masked_bits != 0;
+}
 
-अटल व्योम thunderx_gpio_set_multiple(काष्ठा gpio_chip *chip,
-				       अचिन्हित दीर्घ *mask,
-				       अचिन्हित दीर्घ *bits)
-अणु
-	पूर्णांक bank;
+static void thunderx_gpio_set_multiple(struct gpio_chip *chip,
+				       unsigned long *mask,
+				       unsigned long *bits)
+{
+	int bank;
 	u64 set_bits, clear_bits;
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(chip);
+	struct thunderx_gpio *txgpio = gpiochip_get_data(chip);
 
-	क्रम (bank = 0; bank <= chip->ngpio / 64; bank++) अणु
+	for (bank = 0; bank <= chip->ngpio / 64; bank++) {
 		set_bits = bits[bank] & mask[bank];
 		clear_bits = ~bits[bank] & mask[bank];
-		ग_लिखोq(set_bits, txgpio->रेजिस्टर_base + (bank * GPIO_2ND_BANK) + GPIO_TX_SET);
-		ग_लिखोq(clear_bits, txgpio->रेजिस्टर_base + (bank * GPIO_2ND_BANK) + GPIO_TX_CLR);
-	पूर्ण
-पूर्ण
+		writeq(set_bits, txgpio->register_base + (bank * GPIO_2ND_BANK) + GPIO_TX_SET);
+		writeq(clear_bits, txgpio->register_base + (bank * GPIO_2ND_BANK) + GPIO_TX_CLR);
+	}
+}
 
-अटल व्योम thunderx_gpio_irq_ack(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(gc);
+static void thunderx_gpio_irq_ack(struct irq_data *d)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct thunderx_gpio *txgpio = gpiochip_get_data(gc);
 
-	ग_लिखोq(GPIO_INTR_INTR,
-	       txgpio->रेजिस्टर_base + पूर्णांकr_reg(irqd_to_hwirq(d)));
-पूर्ण
+	writeq(GPIO_INTR_INTR,
+	       txgpio->register_base + intr_reg(irqd_to_hwirq(d)));
+}
 
-अटल व्योम thunderx_gpio_irq_mask(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(gc);
+static void thunderx_gpio_irq_mask(struct irq_data *d)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct thunderx_gpio *txgpio = gpiochip_get_data(gc);
 
-	ग_लिखोq(GPIO_INTR_ENA_W1C,
-	       txgpio->रेजिस्टर_base + पूर्णांकr_reg(irqd_to_hwirq(d)));
-पूर्ण
+	writeq(GPIO_INTR_ENA_W1C,
+	       txgpio->register_base + intr_reg(irqd_to_hwirq(d)));
+}
 
-अटल व्योम thunderx_gpio_irq_mask_ack(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(gc);
+static void thunderx_gpio_irq_mask_ack(struct irq_data *d)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct thunderx_gpio *txgpio = gpiochip_get_data(gc);
 
-	ग_लिखोq(GPIO_INTR_ENA_W1C | GPIO_INTR_INTR,
-	       txgpio->रेजिस्टर_base + पूर्णांकr_reg(irqd_to_hwirq(d)));
-पूर्ण
+	writeq(GPIO_INTR_ENA_W1C | GPIO_INTR_INTR,
+	       txgpio->register_base + intr_reg(irqd_to_hwirq(d)));
+}
 
-अटल व्योम thunderx_gpio_irq_unmask(काष्ठा irq_data *d)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(gc);
+static void thunderx_gpio_irq_unmask(struct irq_data *d)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct thunderx_gpio *txgpio = gpiochip_get_data(gc);
 
-	ग_लिखोq(GPIO_INTR_ENA_W1S,
-	       txgpio->रेजिस्टर_base + पूर्णांकr_reg(irqd_to_hwirq(d)));
-पूर्ण
+	writeq(GPIO_INTR_ENA_W1S,
+	       txgpio->register_base + intr_reg(irqd_to_hwirq(d)));
+}
 
-अटल पूर्णांक thunderx_gpio_irq_set_type(काष्ठा irq_data *d,
-				      अचिन्हित पूर्णांक flow_type)
-अणु
-	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(gc);
-	काष्ठा thunderx_line *txline =
+static int thunderx_gpio_irq_set_type(struct irq_data *d,
+				      unsigned int flow_type)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	struct thunderx_gpio *txgpio = gpiochip_get_data(gc);
+	struct thunderx_line *txline =
 		&txgpio->line_entries[irqd_to_hwirq(d)];
 	u64 bit_cfg;
 
@@ -336,38 +335,38 @@
 
 	bit_cfg = txline->fil_bits | GPIO_BIT_CFG_INT_EN;
 
-	अगर (flow_type & IRQ_TYPE_EDGE_BOTH) अणु
+	if (flow_type & IRQ_TYPE_EDGE_BOTH) {
 		irq_set_handler_locked(d, handle_fasteoi_ack_irq);
 		bit_cfg |= GPIO_BIT_CFG_INT_TYPE;
-	पूर्ण अन्यथा अणु
+	} else {
 		irq_set_handler_locked(d, handle_fasteoi_mask_irq);
-	पूर्ण
+	}
 
 	raw_spin_lock(&txgpio->lock);
-	अगर (flow_type & (IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_LEVEL_LOW)) अणु
+	if (flow_type & (IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_LEVEL_LOW)) {
 		bit_cfg |= GPIO_BIT_CFG_PIN_XOR;
 		set_bit(txline->line, txgpio->invert_mask);
-	पूर्ण अन्यथा अणु
+	} else {
 		clear_bit(txline->line, txgpio->invert_mask);
-	पूर्ण
+	}
 	clear_bit(txline->line, txgpio->od_mask);
-	ग_लिखोq(bit_cfg, txgpio->रेजिस्टर_base + bit_cfg_reg(txline->line));
+	writeq(bit_cfg, txgpio->register_base + bit_cfg_reg(txline->line));
 	raw_spin_unlock(&txgpio->lock);
 
-	वापस IRQ_SET_MASK_OK;
-पूर्ण
+	return IRQ_SET_MASK_OK;
+}
 
-अटल व्योम thunderx_gpio_irq_enable(काष्ठा irq_data *data)
-अणु
+static void thunderx_gpio_irq_enable(struct irq_data *data)
+{
 	irq_chip_enable_parent(data);
 	thunderx_gpio_irq_unmask(data);
-पूर्ण
+}
 
-अटल व्योम thunderx_gpio_irq_disable(काष्ठा irq_data *data)
-अणु
+static void thunderx_gpio_irq_disable(struct irq_data *data)
+{
 	thunderx_gpio_irq_mask(data);
 	irq_chip_disable_parent(data);
-पूर्ण
+}
 
 /*
  * Interrupts are chained from underlying MSI-X vectors.  We have
@@ -375,7 +374,7 @@
  * semantics and other acknowledgment tasks associated with the GPIO
  * mechanism.
  */
-अटल काष्ठा irq_chip thunderx_gpio_irq_chip = अणु
+static struct irq_chip thunderx_gpio_irq_chip = {
 	.name			= "GPIO",
 	.irq_enable		= thunderx_gpio_irq_enable,
 	.irq_disable		= thunderx_gpio_irq_disable,
@@ -388,55 +387,55 @@
 	.irq_set_type		= thunderx_gpio_irq_set_type,
 
 	.flags			= IRQCHIP_SET_TYPE_MASKED
-पूर्ण;
+};
 
-अटल पूर्णांक thunderx_gpio_child_to_parent_hwirq(काष्ठा gpio_chip *gc,
-					       अचिन्हित पूर्णांक child,
-					       अचिन्हित पूर्णांक child_type,
-					       अचिन्हित पूर्णांक *parent,
-					       अचिन्हित पूर्णांक *parent_type)
-अणु
-	काष्ठा thunderx_gpio *txgpio = gpiochip_get_data(gc);
-	काष्ठा irq_data *irqd;
-	अचिन्हित पूर्णांक irq;
+static int thunderx_gpio_child_to_parent_hwirq(struct gpio_chip *gc,
+					       unsigned int child,
+					       unsigned int child_type,
+					       unsigned int *parent,
+					       unsigned int *parent_type)
+{
+	struct thunderx_gpio *txgpio = gpiochip_get_data(gc);
+	struct irq_data *irqd;
+	unsigned int irq;
 
 	irq = txgpio->msix_entries[child].vector;
-	irqd = irq_करोमुख्य_get_irq_data(gc->irq.parent_करोमुख्य, irq);
-	अगर (!irqd)
-		वापस -EINVAL;
+	irqd = irq_domain_get_irq_data(gc->irq.parent_domain, irq);
+	if (!irqd)
+		return -EINVAL;
 	*parent = irqd_to_hwirq(irqd);
 	*parent_type = IRQ_TYPE_LEVEL_HIGH;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *thunderx_gpio_populate_parent_alloc_info(काष्ठा gpio_chip *chip,
-						      अचिन्हित पूर्णांक parent_hwirq,
-						      अचिन्हित पूर्णांक parent_type)
-अणु
+static void *thunderx_gpio_populate_parent_alloc_info(struct gpio_chip *chip,
+						      unsigned int parent_hwirq,
+						      unsigned int parent_type)
+{
 	msi_alloc_info_t *info;
 
-	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
-	अगर (!info)
-		वापस शून्य;
+	info = kmalloc(sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return NULL;
 
 	info->hwirq = parent_hwirq;
-	वापस info;
-पूर्ण
+	return info;
+}
 
-अटल पूर्णांक thunderx_gpio_probe(काष्ठा pci_dev *pdev,
-			       स्थिर काष्ठा pci_device_id *id)
-अणु
-	व्योम __iomem * स्थिर *tbl;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा thunderx_gpio *txgpio;
-	काष्ठा gpio_chip *chip;
-	काष्ठा gpio_irq_chip *girq;
-	पूर्णांक ngpio, i;
-	पूर्णांक err = 0;
+static int thunderx_gpio_probe(struct pci_dev *pdev,
+			       const struct pci_device_id *id)
+{
+	void __iomem * const *tbl;
+	struct device *dev = &pdev->dev;
+	struct thunderx_gpio *txgpio;
+	struct gpio_chip *chip;
+	struct gpio_irq_chip *girq;
+	int ngpio, i;
+	int err = 0;
 
-	txgpio = devm_kzalloc(dev, माप(*txgpio), GFP_KERNEL);
-	अगर (!txgpio)
-		वापस -ENOMEM;
+	txgpio = devm_kzalloc(dev, sizeof(*txgpio), GFP_KERNEL);
+	if (!txgpio)
+		return -ENOMEM;
 
 	raw_spin_lock_init(&txgpio->lock);
 	chip = &txgpio->chip;
@@ -444,78 +443,78 @@
 	pci_set_drvdata(pdev, txgpio);
 
 	err = pcim_enable_device(pdev);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to enable PCI device: err %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = pcim_iomap_regions(pdev, 1 << 0, KBUILD_MODNAME);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "Failed to iomap PCI device: err %d\n", err);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	tbl = pcim_iomap_table(pdev);
-	txgpio->रेजिस्टर_base = tbl[0];
-	अगर (!txgpio->रेजिस्टर_base) अणु
+	txgpio->register_base = tbl[0];
+	if (!txgpio->register_base) {
 		dev_err(dev, "Cannot map PCI resource\n");
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (pdev->subप्रणाली_device == 0xa10a) अणु
-		/* CN88XX has no GPIO_CONST रेजिस्टर*/
+	if (pdev->subsystem_device == 0xa10a) {
+		/* CN88XX has no GPIO_CONST register*/
 		ngpio = 50;
 		txgpio->base_msi = 48;
-	पूर्ण अन्यथा अणु
-		u64 c = पढ़ोq(txgpio->रेजिस्टर_base + GPIO_CONST);
+	} else {
+		u64 c = readq(txgpio->register_base + GPIO_CONST);
 
 		ngpio = c & GPIO_CONST_GPIOS_MASK;
 		txgpio->base_msi = (c >> 8) & 0xff;
-	पूर्ण
+	}
 
-	txgpio->msix_entries = devm_kसुस्मृति(dev,
-					    ngpio, माप(काष्ठा msix_entry),
+	txgpio->msix_entries = devm_kcalloc(dev,
+					    ngpio, sizeof(struct msix_entry),
 					    GFP_KERNEL);
-	अगर (!txgpio->msix_entries) अणु
+	if (!txgpio->msix_entries) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	txgpio->line_entries = devm_kसुस्मृति(dev,
+	txgpio->line_entries = devm_kcalloc(dev,
 					    ngpio,
-					    माप(काष्ठा thunderx_line),
+					    sizeof(struct thunderx_line),
 					    GFP_KERNEL);
-	अगर (!txgpio->line_entries) अणु
+	if (!txgpio->line_entries) {
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < ngpio; i++) अणु
-		u64 bit_cfg = पढ़ोq(txgpio->रेजिस्टर_base + bit_cfg_reg(i));
+	for (i = 0; i < ngpio; i++) {
+		u64 bit_cfg = readq(txgpio->register_base + bit_cfg_reg(i));
 
 		txgpio->msix_entries[i].entry = txgpio->base_msi + (2 * i);
 		txgpio->line_entries[i].line = i;
 		txgpio->line_entries[i].txgpio = txgpio;
 		/*
-		 * If something has alपढ़ोy programmed the pin, use
+		 * If something has already programmed the pin, use
 		 * the existing glitch filter settings, otherwise go
 		 * to 400nS.
 		 */
 		txgpio->line_entries[i].fil_bits = bit_cfg ?
 			(bit_cfg & GPIO_BIT_CFG_FIL_MASK) : GLITCH_FILTER_400NS;
 
-		अगर ((bit_cfg & GPIO_BIT_CFG_TX_OE) && (bit_cfg & GPIO_BIT_CFG_TX_OD))
+		if ((bit_cfg & GPIO_BIT_CFG_TX_OE) && (bit_cfg & GPIO_BIT_CFG_TX_OD))
 			set_bit(i, txgpio->od_mask);
-		अगर (bit_cfg & GPIO_BIT_CFG_PIN_XOR)
+		if (bit_cfg & GPIO_BIT_CFG_PIN_XOR)
 			set_bit(i, txgpio->invert_mask);
-	पूर्ण
+	}
 
 
-	/* Enable all MSI-X क्रम पूर्णांकerrupts on all possible lines. */
+	/* Enable all MSI-X for interrupts on all possible lines. */
 	err = pci_enable_msix_range(pdev, txgpio->msix_entries, ngpio, ngpio);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
 	chip->label = KBUILD_MODNAME;
 	chip->parent = dev;
@@ -534,67 +533,67 @@
 	girq = &chip->irq;
 	girq->chip = &thunderx_gpio_irq_chip;
 	girq->fwnode = of_node_to_fwnode(dev->of_node);
-	girq->parent_करोमुख्य =
-		irq_get_irq_data(txgpio->msix_entries[0].vector)->करोमुख्य;
+	girq->parent_domain =
+		irq_get_irq_data(txgpio->msix_entries[0].vector)->domain;
 	girq->child_to_parent_hwirq = thunderx_gpio_child_to_parent_hwirq;
 	girq->populate_parent_alloc_arg = thunderx_gpio_populate_parent_alloc_info;
 	girq->handler = handle_bad_irq;
-	girq->शेष_type = IRQ_TYPE_NONE;
+	girq->default_type = IRQ_TYPE_NONE;
 
 	err = devm_gpiochip_add_data(dev, chip, txgpio);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Push on irq_data and the करोमुख्य क्रम each line. */
-	क्रम (i = 0; i < ngpio; i++) अणु
-		काष्ठा irq_fwspec fwspec;
+	/* Push on irq_data and the domain for each line. */
+	for (i = 0; i < ngpio; i++) {
+		struct irq_fwspec fwspec;
 
 		fwspec.fwnode = of_node_to_fwnode(dev->of_node);
 		fwspec.param_count = 2;
 		fwspec.param[0] = i;
 		fwspec.param[1] = IRQ_TYPE_NONE;
-		err = irq_करोमुख्य_push_irq(girq->करोमुख्य,
+		err = irq_domain_push_irq(girq->domain,
 					  txgpio->msix_entries[i].vector,
 					  &fwspec);
-		अगर (err < 0)
+		if (err < 0)
 			dev_err(dev, "irq_domain_push_irq: %d\n", err);
-	पूर्ण
+	}
 
 	dev_info(dev, "ThunderX GPIO: %d lines with base %d.\n",
 		 ngpio, chip->base);
-	वापस 0;
+	return 0;
 out:
-	pci_set_drvdata(pdev, शून्य);
-	वापस err;
-पूर्ण
+	pci_set_drvdata(pdev, NULL);
+	return err;
+}
 
-अटल व्योम thunderx_gpio_हटाओ(काष्ठा pci_dev *pdev)
-अणु
-	पूर्णांक i;
-	काष्ठा thunderx_gpio *txgpio = pci_get_drvdata(pdev);
+static void thunderx_gpio_remove(struct pci_dev *pdev)
+{
+	int i;
+	struct thunderx_gpio *txgpio = pci_get_drvdata(pdev);
 
-	क्रम (i = 0; i < txgpio->chip.ngpio; i++)
-		irq_करोमुख्य_pop_irq(txgpio->chip.irq.करोमुख्य,
+	for (i = 0; i < txgpio->chip.ngpio; i++)
+		irq_domain_pop_irq(txgpio->chip.irq.domain,
 				   txgpio->msix_entries[i].vector);
 
-	irq_करोमुख्य_हटाओ(txgpio->chip.irq.करोमुख्य);
+	irq_domain_remove(txgpio->chip.irq.domain);
 
-	pci_set_drvdata(pdev, शून्य);
-पूर्ण
+	pci_set_drvdata(pdev, NULL);
+}
 
-अटल स्थिर काष्ठा pci_device_id thunderx_gpio_id_table[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, 0xA00A) पूर्ण,
-	अणु 0, पूर्ण	/* end of table */
-पूर्ण;
+static const struct pci_device_id thunderx_gpio_id_table[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, 0xA00A) },
+	{ 0, }	/* end of table */
+};
 
 MODULE_DEVICE_TABLE(pci, thunderx_gpio_id_table);
 
-अटल काष्ठा pci_driver thunderx_gpio_driver = अणु
+static struct pci_driver thunderx_gpio_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = thunderx_gpio_id_table,
 	.probe = thunderx_gpio_probe,
-	.हटाओ = thunderx_gpio_हटाओ,
-पूर्ण;
+	.remove = thunderx_gpio_remove,
+};
 
 module_pci_driver(thunderx_gpio_driver);
 

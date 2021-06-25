@@ -1,42 +1,41 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* display7seg.c - Driver implementation क्रम the 7-segment display
- *                 present on Sun Microप्रणालीs CP1400 and CP1500
+// SPDX-License-Identifier: GPL-2.0-only
+/* display7seg.c - Driver implementation for the 7-segment display
+ *                 present on Sun Microsystems CP1400 and CP1500
  *
  * Copyright (c) 2000 Eric Brower (ebrower@usa.net)
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/major.h>
-#समावेश <linux/miscdevice.h>
-#समावेश <linux/ioport.h>		/* request_region */
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/uaccess.h>		/* put_/get_user			*/
-#समावेश <यंत्र/पन.स>
+#include <linux/device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
+#include <linux/major.h>
+#include <linux/miscdevice.h>
+#include <linux/ioport.h>		/* request_region */
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/atomic.h>
+#include <linux/uaccess.h>		/* put_/get_user			*/
+#include <asm/io.h>
 
-#समावेश <यंत्र/display7seg.h>
+#include <asm/display7seg.h>
 
-#घोषणा DRIVER_NAME	"d7s"
-#घोषणा PFX		DRIVER_NAME ": "
+#define DRIVER_NAME	"d7s"
+#define PFX		DRIVER_NAME ": "
 
-अटल DEFINE_MUTEX(d7s_mutex);
-अटल पूर्णांक sol_compat = 0;		/* Solaris compatibility mode	*/
+static DEFINE_MUTEX(d7s_mutex);
+static int sol_compat = 0;		/* Solaris compatibility mode	*/
 
 /* Solaris compatibility flag -
- * The Solaris implementation omits support क्रम several
- * करोcumented driver features (ref Sun करोc 806-0180-03).  
- * By शेष, this module supports the करोcumented driver 
+ * The Solaris implementation omits support for several
+ * documented driver features (ref Sun doc 806-0180-03).  
+ * By default, this module supports the documented driver 
  * abilities, rather than the Solaris implementation:
  *
- * 	1) Device ALWAYS reverts to OBP-specअगरied FLIPPED mode
+ * 	1) Device ALWAYS reverts to OBP-specified FLIPPED mode
  * 	   upon closure of device or module unload.
  * 	2) Device ioctls D7SIOCRD/D7SIOCWR honor toggling of
  * 	   FLIP bit
@@ -44,7 +43,7 @@
  * If you wish the device to operate as under Solaris,
  * omitting above features, set this parameter to non-zero.
  */
-module_param(sol_compat, पूर्णांक, 0);
+module_param(sol_compat, int, 0);
 MODULE_PARM_DESC(sol_compat, 
 		 "Disables documented functionality omitted from Solaris driver");
 
@@ -52,167 +51,167 @@ MODULE_AUTHOR("Eric Brower <ebrower@usa.net>");
 MODULE_DESCRIPTION("7-Segment Display driver for Sun Microsystems CP1400/1500");
 MODULE_LICENSE("GPL");
 
-काष्ठा d7s अणु
-	व्योम __iomem	*regs;
+struct d7s {
+	void __iomem	*regs;
 	bool		flipped;
-पूर्ण;
-काष्ठा d7s *d7s_device;
+};
+struct d7s *d7s_device;
 
 /*
- * Register block address- see header क्रम details
+ * Register block address- see header for details
  * -----------------------------------------
  * | DP | ALARM | FLIP | 4 | 3 | 2 | 1 | 0 |
  * -----------------------------------------
  *
- * DP 		- Toggles decimal poपूर्णांक on/off 
+ * DP 		- Toggles decimal point on/off 
  * ALARM	- Toggles "Alarm" LED green/red
- * FLIP		- Inverts display क्रम upside-करोwn mounted board
+ * FLIP		- Inverts display for upside-down mounted board
  * bits 0-4	- 7-segment display contents
  */
-अटल atomic_t d7s_users = ATOMIC_INIT(0);
+static atomic_t d7s_users = ATOMIC_INIT(0);
 
-अटल पूर्णांक d7s_खोलो(काष्ठा inode *inode, काष्ठा file *f)
-अणु
-	अगर (D7S_MINOR != iminor(inode))
-		वापस -ENODEV;
+static int d7s_open(struct inode *inode, struct file *f)
+{
+	if (D7S_MINOR != iminor(inode))
+		return -ENODEV;
 	atomic_inc(&d7s_users);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक d7s_release(काष्ठा inode *inode, काष्ठा file *f)
-अणु
-	/* Reset flipped state to OBP शेष only अगर
-	 * no other users have the device खोलो and we
+static int d7s_release(struct inode *inode, struct file *f)
+{
+	/* Reset flipped state to OBP default only if
+	 * no other users have the device open and we
 	 * are not operating in solaris-compat mode
 	 */
-	अगर (atomic_dec_and_test(&d7s_users) && !sol_compat) अणु
-		काष्ठा d7s *p = d7s_device;
+	if (atomic_dec_and_test(&d7s_users) && !sol_compat) {
+		struct d7s *p = d7s_device;
 		u8 regval = 0;
 
-		regval = पढ़ोb(p->regs);
-		अगर (p->flipped)
+		regval = readb(p->regs);
+		if (p->flipped)
 			regval |= D7S_FLIP;
-		अन्यथा
+		else
 			regval &= ~D7S_FLIP;
-		ग_लिखोb(regval, p->regs);
-	पूर्ण
+		writeb(regval, p->regs);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ d7s_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा d7s *p = d7s_device;
-	u8 regs = पढ़ोb(p->regs);
-	पूर्णांक error = 0;
+static long d7s_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct d7s *p = d7s_device;
+	u8 regs = readb(p->regs);
+	int error = 0;
 	u8 ireg = 0;
 
-	अगर (D7S_MINOR != iminor(file_inode(file)))
-		वापस -ENODEV;
+	if (D7S_MINOR != iminor(file_inode(file)))
+		return -ENODEV;
 
 	mutex_lock(&d7s_mutex);
-	चयन (cmd) अणु
-	हाल D7SIOCWR:
-		/* assign device रेजिस्टर values we mask-out D7S_FLIP
-		 * अगर in sol_compat mode
+	switch (cmd) {
+	case D7SIOCWR:
+		/* assign device register values we mask-out D7S_FLIP
+		 * if in sol_compat mode
 		 */
-		अगर (get_user(ireg, (पूर्णांक __user *) arg)) अणु
+		if (get_user(ireg, (int __user *) arg)) {
 			error = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अगर (sol_compat) अणु
-			अगर (regs & D7S_FLIP)
+			break;
+		}
+		if (sol_compat) {
+			if (regs & D7S_FLIP)
 				ireg |= D7S_FLIP;
-			अन्यथा
+			else
 				ireg &= ~D7S_FLIP;
-		पूर्ण
-		ग_लिखोb(ireg, p->regs);
-		अवरोध;
+		}
+		writeb(ireg, p->regs);
+		break;
 
-	हाल D7SIOCRD:
-		/* retrieve device रेजिस्टर values
-		 * NOTE: Solaris implementation वापसs D7S_FLIP bit
-		 * as toggled by user, even though it करोes not honor it.
-		 * This driver will not misinक्रमm you about the state
-		 * of your hardware जबतक in sol_compat mode
+	case D7SIOCRD:
+		/* retrieve device register values
+		 * NOTE: Solaris implementation returns D7S_FLIP bit
+		 * as toggled by user, even though it does not honor it.
+		 * This driver will not misinform you about the state
+		 * of your hardware while in sol_compat mode
 		 */
-		अगर (put_user(regs, (पूर्णांक __user *) arg)) अणु
+		if (put_user(regs, (int __user *) arg)) {
 			error = -EFAULT;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल D7SIOCTM:
+	case D7SIOCTM:
 		/* toggle device mode-- flip display orientation */
 		regs ^= D7S_FLIP;
-		ग_लिखोb(regs, p->regs);
-		अवरोध;
-	पूर्ण
+		writeb(regs, p->regs);
+		break;
+	}
 	mutex_unlock(&d7s_mutex);
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल स्थिर काष्ठा file_operations d7s_fops = अणु
+static const struct file_operations d7s_fops = {
 	.owner =		THIS_MODULE,
 	.unlocked_ioctl =	d7s_ioctl,
 	.compat_ioctl =		compat_ptr_ioctl,
-	.खोलो =			d7s_खोलो,
+	.open =			d7s_open,
 	.release =		d7s_release,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-अटल काष्ठा miscdevice d7s_miscdev = अणु
+static struct miscdevice d7s_miscdev = {
 	.minor		= D7S_MINOR,
 	.name		= DRIVER_NAME,
 	.fops		= &d7s_fops
-पूर्ण;
+};
 
-अटल पूर्णांक d7s_probe(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा device_node *opts;
-	पूर्णांक err = -EINVAL;
-	काष्ठा d7s *p;
+static int d7s_probe(struct platform_device *op)
+{
+	struct device_node *opts;
+	int err = -EINVAL;
+	struct d7s *p;
 	u8 regs;
 
-	अगर (d7s_device)
-		जाओ out;
+	if (d7s_device)
+		goto out;
 
-	p = devm_kzalloc(&op->dev, माप(*p), GFP_KERNEL);
+	p = devm_kzalloc(&op->dev, sizeof(*p), GFP_KERNEL);
 	err = -ENOMEM;
-	अगर (!p)
-		जाओ out;
+	if (!p)
+		goto out;
 
-	p->regs = of_ioremap(&op->resource[0], 0, माप(u8), "d7s");
-	अगर (!p->regs) अणु
-		prपूर्णांकk(KERN_ERR PFX "Cannot map chip registers\n");
-		जाओ out;
-	पूर्ण
+	p->regs = of_ioremap(&op->resource[0], 0, sizeof(u8), "d7s");
+	if (!p->regs) {
+		printk(KERN_ERR PFX "Cannot map chip registers\n");
+		goto out;
+	}
 
-	err = misc_रेजिस्टर(&d7s_miscdev);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR PFX "Unable to acquire miscdevice minor %i\n",
+	err = misc_register(&d7s_miscdev);
+	if (err) {
+		printk(KERN_ERR PFX "Unable to acquire miscdevice minor %i\n",
 		       D7S_MINOR);
-		जाओ out_iounmap;
-	पूर्ण
+		goto out_iounmap;
+	}
 
-	/* OBP option "d7s-flipped?" is honored as शेष क्रम the
-	 * device, and reset शेष when detached
+	/* OBP option "d7s-flipped?" is honored as default for the
+	 * device, and reset default when detached
 	 */
-	regs = पढ़ोb(p->regs);
+	regs = readb(p->regs);
 	opts = of_find_node_by_path("/options");
-	अगर (opts &&
-	    of_get_property(opts, "d7s-flipped?", शून्य))
+	if (opts &&
+	    of_get_property(opts, "d7s-flipped?", NULL))
 		p->flipped = true;
 
-	अगर (p->flipped)
+	if (p->flipped)
 		regs |= D7S_FLIP;
-	अन्यथा
+	else
 		regs &= ~D7S_FLIP;
 
-	ग_लिखोb(regs,  p->regs);
+	writeb(regs,  p->regs);
 
-	prपूर्णांकk(KERN_INFO PFX "7-Segment Display%pOF at [%s:0x%llx] %s\n",
+	printk(KERN_INFO PFX "7-Segment Display%pOF at [%s:0x%llx] %s\n",
 	       op->dev.of_node,
 	       (regs & D7S_FLIP) ? " (FLIPPED)" : "",
 	       op->resource[0].start,
@@ -224,48 +223,48 @@ MODULE_LICENSE("GPL");
 	of_node_put(opts);
 
 out:
-	वापस err;
+	return err;
 
 out_iounmap:
-	of_iounmap(&op->resource[0], p->regs, माप(u8));
-	जाओ out;
-पूर्ण
+	of_iounmap(&op->resource[0], p->regs, sizeof(u8));
+	goto out;
+}
 
-अटल पूर्णांक d7s_हटाओ(काष्ठा platक्रमm_device *op)
-अणु
-	काष्ठा d7s *p = dev_get_drvdata(&op->dev);
-	u8 regs = पढ़ोb(p->regs);
+static int d7s_remove(struct platform_device *op)
+{
+	struct d7s *p = dev_get_drvdata(&op->dev);
+	u8 regs = readb(p->regs);
 
 	/* Honor OBP d7s-flipped? unless operating in solaris-compat mode */
-	अगर (sol_compat) अणु
-		अगर (p->flipped)
+	if (sol_compat) {
+		if (p->flipped)
 			regs |= D7S_FLIP;
-		अन्यथा
+		else
 			regs &= ~D7S_FLIP;
-		ग_लिखोb(regs, p->regs);
-	पूर्ण
+		writeb(regs, p->regs);
+	}
 
-	misc_deरेजिस्टर(&d7s_miscdev);
-	of_iounmap(&op->resource[0], p->regs, माप(u8));
+	misc_deregister(&d7s_miscdev);
+	of_iounmap(&op->resource[0], p->regs, sizeof(u8));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id d7s_match[] = अणु
-	अणु
+static const struct of_device_id d7s_match[] = {
+	{
 		.name = "display7seg",
-	पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+	},
+	{},
+};
 MODULE_DEVICE_TABLE(of, d7s_match);
 
-अटल काष्ठा platक्रमm_driver d7s_driver = अणु
-	.driver = अणु
+static struct platform_driver d7s_driver = {
+	.driver = {
 		.name = DRIVER_NAME,
 		.of_match_table = d7s_match,
-	पूर्ण,
+	},
 	.probe		= d7s_probe,
-	.हटाओ		= d7s_हटाओ,
-पूर्ण;
+	.remove		= d7s_remove,
+};
 
-module_platक्रमm_driver(d7s_driver);
+module_platform_driver(d7s_driver);

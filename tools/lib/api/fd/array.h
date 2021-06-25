@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __API_FD_ARRAY__
-#घोषणा __API_FD_ARRAY__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __API_FD_ARRAY__
+#define __API_FD_ARRAY__
 
-#समावेश <मानकपन.स>
+#include <stdio.h>
 
-काष्ठा pollfd;
+struct pollfd;
 
 /**
- * काष्ठा fdarray: Array of file descriptors
+ * struct fdarray: Array of file descriptors
  *
  * @priv: Per array entry priv area, users should access just its contents,
  *	  not set it to anything, as it is kept in synch with @entries, being
- *	  पुनः_स्मृति'ed, * क्रम instance, in fdarray__अणुgrow,filterपूर्ण.
+ *	  realloc'ed, * for instance, in fdarray__{grow,filter}.
  *
  *	  I.e. using 'fda->priv[N].idx = * value' where N < fda->nr is ok,
- *	  but करोing 'fda->priv = malloc(M)' is not allowed.
+ *	  but doing 'fda->priv = malloc(M)' is not allowed.
  */
-काष्ठा fdarray अणु
-	पूर्णांक	       nr;
-	पूर्णांक	       nr_alloc;
-	पूर्णांक	       nr_स्वतःgrow;
-	काष्ठा pollfd *entries;
-	काष्ठा priv अणु
-		जोड़ अणु
-			पूर्णांक    idx;
-			व्योम   *ptr;
-		पूर्ण;
-		अचिन्हित पूर्णांक flags;
-	पूर्ण *priv;
-पूर्ण;
+struct fdarray {
+	int	       nr;
+	int	       nr_alloc;
+	int	       nr_autogrow;
+	struct pollfd *entries;
+	struct priv {
+		union {
+			int    idx;
+			void   *ptr;
+		};
+		unsigned int flags;
+	} *priv;
+};
 
-क्रमागत fdarray_flags अणु
-	fdarray_flag__शेष	    = 0x00000000,
+enum fdarray_flags {
+	fdarray_flag__default	    = 0x00000000,
 	fdarray_flag__nonfilterable = 0x00000001
-पूर्ण;
+};
 
-व्योम fdarray__init(काष्ठा fdarray *fda, पूर्णांक nr_स्वतःgrow);
-व्योम fdarray__निकास(काष्ठा fdarray *fda);
+void fdarray__init(struct fdarray *fda, int nr_autogrow);
+void fdarray__exit(struct fdarray *fda);
 
-काष्ठा fdarray *fdarray__new(पूर्णांक nr_alloc, पूर्णांक nr_स्वतःgrow);
-व्योम fdarray__delete(काष्ठा fdarray *fda);
+struct fdarray *fdarray__new(int nr_alloc, int nr_autogrow);
+void fdarray__delete(struct fdarray *fda);
 
-पूर्णांक fdarray__add(काष्ठा fdarray *fda, पूर्णांक fd, लघु revents, क्रमागत fdarray_flags flags);
-पूर्णांक fdarray__poll(काष्ठा fdarray *fda, पूर्णांक समयout);
-पूर्णांक fdarray__filter(काष्ठा fdarray *fda, लघु revents,
-		    व्योम (*entry_deकाष्ठाor)(काष्ठा fdarray *fda, पूर्णांक fd, व्योम *arg),
-		    व्योम *arg);
-पूर्णांक fdarray__grow(काष्ठा fdarray *fda, पूर्णांक extra);
-पूर्णांक fdarray__ख_लिखो(काष्ठा fdarray *fda, खाता *fp);
+int fdarray__add(struct fdarray *fda, int fd, short revents, enum fdarray_flags flags);
+int fdarray__poll(struct fdarray *fda, int timeout);
+int fdarray__filter(struct fdarray *fda, short revents,
+		    void (*entry_destructor)(struct fdarray *fda, int fd, void *arg),
+		    void *arg);
+int fdarray__grow(struct fdarray *fda, int extra);
+int fdarray__fprintf(struct fdarray *fda, FILE *fp);
 
-अटल अंतरभूत पूर्णांक fdarray__available_entries(काष्ठा fdarray *fda)
-अणु
-	वापस fda->nr_alloc - fda->nr;
-पूर्ण
+static inline int fdarray__available_entries(struct fdarray *fda)
+{
+	return fda->nr_alloc - fda->nr;
+}
 
-#पूर्ण_अगर /* __API_FD_ARRAY__ */
+#endif /* __API_FD_ARRAY__ */

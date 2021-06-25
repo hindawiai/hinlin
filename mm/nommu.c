@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/mm/nommu.c
  *
- *  Replacement code क्रम mm functions to support CPU's that don't
- *  have any क्रमm of memory management unit (thus no भव memory).
+ *  Replacement code for mm functions to support CPU's that don't
+ *  have any form of memory management unit (thus no virtual memory).
  *
  *  See Documentation/admin-guide/mm/nommu-mmap.rst
  *
@@ -15,547 +14,547 @@
  *  Copyright (c) 2007-2010 Paul Mundt <lethal@linux-sh.org>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/export.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/vmacache.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/file.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/personality.h>
-#समावेश <linux/security.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/export.h>
+#include <linux/mm.h>
+#include <linux/sched/mm.h>
+#include <linux/vmacache.h>
+#include <linux/mman.h>
+#include <linux/swap.h>
+#include <linux/file.h>
+#include <linux/highmem.h>
+#include <linux/pagemap.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/blkdev.h>
+#include <linux/backing-dev.h>
+#include <linux/compiler.h>
+#include <linux/mount.h>
+#include <linux/personality.h>
+#include <linux/security.h>
+#include <linux/syscalls.h>
+#include <linux/audit.h>
+#include <linux/printk.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/tlb.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश "internal.h"
+#include <linux/uaccess.h>
+#include <asm/tlb.h>
+#include <asm/tlbflush.h>
+#include <asm/mmu_context.h>
+#include "internal.h"
 
-व्योम *high_memory;
+void *high_memory;
 EXPORT_SYMBOL(high_memory);
-काष्ठा page *mem_map;
-अचिन्हित दीर्घ max_mapnr;
+struct page *mem_map;
+unsigned long max_mapnr;
 EXPORT_SYMBOL(max_mapnr);
-अचिन्हित दीर्घ highest_memmap_pfn;
-पूर्णांक sysctl_nr_trim_pages = CONFIG_NOMMU_INITIAL_TRIM_EXCESS;
-पूर्णांक heap_stack_gap = 0;
+unsigned long highest_memmap_pfn;
+int sysctl_nr_trim_pages = CONFIG_NOMMU_INITIAL_TRIM_EXCESS;
+int heap_stack_gap = 0;
 
-atomic_दीर्घ_t mmap_pages_allocated;
+atomic_long_t mmap_pages_allocated;
 
 EXPORT_SYMBOL(mem_map);
 
 /* list of mapped, potentially shareable regions */
-अटल काष्ठा kmem_cache *vm_region_jar;
-काष्ठा rb_root nommu_region_tree = RB_ROOT;
+static struct kmem_cache *vm_region_jar;
+struct rb_root nommu_region_tree = RB_ROOT;
 DECLARE_RWSEM(nommu_region_sem);
 
-स्थिर काष्ठा vm_operations_काष्ठा generic_file_vm_ops = अणु
-पूर्ण;
+const struct vm_operations_struct generic_file_vm_ops = {
+};
 
 /*
- * Return the total memory allocated क्रम this poपूर्णांकer, not
- * just what the caller asked क्रम.
+ * Return the total memory allocated for this pointer, not
+ * just what the caller asked for.
  *
  * Doesn't have to be accurate, i.e. may have races.
  */
-अचिन्हित पूर्णांक kobjsize(स्थिर व्योम *objp)
-अणु
-	काष्ठा page *page;
+unsigned int kobjsize(const void *objp)
+{
+	struct page *page;
 
 	/*
-	 * If the object we have should not have ksize perक्रमmed on it,
-	 * वापस size of 0
+	 * If the object we have should not have ksize performed on it,
+	 * return size of 0
 	 */
-	अगर (!objp || !virt_addr_valid(objp))
-		वापस 0;
+	if (!objp || !virt_addr_valid(objp))
+		return 0;
 
 	page = virt_to_head_page(objp);
 
 	/*
-	 * If the allocator sets PageSlab, we know the poपूर्णांकer came from
-	 * kदो_स्मृति().
+	 * If the allocator sets PageSlab, we know the pointer came from
+	 * kmalloc().
 	 */
-	अगर (PageSlab(page))
-		वापस ksize(objp);
+	if (PageSlab(page))
+		return ksize(objp);
 
 	/*
-	 * If it's not a compound page, see अगर we have a matching VMA
-	 * region. This test is पूर्णांकentionally करोne in reverse order,
-	 * so अगर there's no VMA, we still fall through and hand back
-	 * PAGE_SIZE क्रम 0-order pages.
+	 * If it's not a compound page, see if we have a matching VMA
+	 * region. This test is intentionally done in reverse order,
+	 * so if there's no VMA, we still fall through and hand back
+	 * PAGE_SIZE for 0-order pages.
 	 */
-	अगर (!PageCompound(page)) अणु
-		काष्ठा vm_area_काष्ठा *vma;
+	if (!PageCompound(page)) {
+		struct vm_area_struct *vma;
 
-		vma = find_vma(current->mm, (अचिन्हित दीर्घ)objp);
-		अगर (vma)
-			वापस vma->vm_end - vma->vm_start;
-	पूर्ण
+		vma = find_vma(current->mm, (unsigned long)objp);
+		if (vma)
+			return vma->vm_end - vma->vm_start;
+	}
 
 	/*
-	 * The ksize() function is only guaranteed to work क्रम poपूर्णांकers
-	 * वापसed by kदो_स्मृति(). So handle arbitrary poपूर्णांकers here.
+	 * The ksize() function is only guaranteed to work for pointers
+	 * returned by kmalloc(). So handle arbitrary pointers here.
 	 */
-	वापस page_size(page);
-पूर्ण
+	return page_size(page);
+}
 
 /**
- * follow_pfn - look up PFN at a user भव address
+ * follow_pfn - look up PFN at a user virtual address
  * @vma: memory mapping
- * @address: user भव address
+ * @address: user virtual address
  * @pfn: location to store found PFN
  *
  * Only IO mappings and raw PFN mappings are allowed.
  *
  * Returns zero and the pfn at @pfn on success, -ve otherwise.
  */
-पूर्णांक follow_pfn(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-	अचिन्हित दीर्घ *pfn)
-अणु
-	अगर (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		वापस -EINVAL;
+int follow_pfn(struct vm_area_struct *vma, unsigned long address,
+	unsigned long *pfn)
+{
+	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
+		return -EINVAL;
 
 	*pfn = address >> PAGE_SHIFT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(follow_pfn);
 
 LIST_HEAD(vmap_area_list);
 
-व्योम vमुक्त(स्थिर व्योम *addr)
-अणु
-	kमुक्त(addr);
-पूर्ण
-EXPORT_SYMBOL(vमुक्त);
+void vfree(const void *addr)
+{
+	kfree(addr);
+}
+EXPORT_SYMBOL(vfree);
 
-व्योम *__vदो_स्मृति(अचिन्हित दीर्घ size, gfp_t gfp_mask)
-अणु
+void *__vmalloc(unsigned long size, gfp_t gfp_mask)
+{
 	/*
-	 *  You can't specअगरy __GFP_HIGHMEM with kदो_स्मृति() since kदो_स्मृति()
-	 * वापसs only a logical address.
+	 *  You can't specify __GFP_HIGHMEM with kmalloc() since kmalloc()
+	 * returns only a logical address.
 	 */
-	वापस kदो_स्मृति(size, (gfp_mask | __GFP_COMP) & ~__GFP_HIGHMEM);
-पूर्ण
-EXPORT_SYMBOL(__vदो_स्मृति);
+	return kmalloc(size, (gfp_mask | __GFP_COMP) & ~__GFP_HIGHMEM);
+}
+EXPORT_SYMBOL(__vmalloc);
 
-व्योम *__vदो_स्मृति_node_range(अचिन्हित दीर्घ size, अचिन्हित दीर्घ align,
-		अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, gfp_t gfp_mask,
-		pgprot_t prot, अचिन्हित दीर्घ vm_flags, पूर्णांक node,
-		स्थिर व्योम *caller)
-अणु
-	वापस __vदो_स्मृति(size, gfp_mask);
-पूर्ण
+void *__vmalloc_node_range(unsigned long size, unsigned long align,
+		unsigned long start, unsigned long end, gfp_t gfp_mask,
+		pgprot_t prot, unsigned long vm_flags, int node,
+		const void *caller)
+{
+	return __vmalloc(size, gfp_mask);
+}
 
-व्योम *__vदो_स्मृति_node(अचिन्हित दीर्घ size, अचिन्हित दीर्घ align, gfp_t gfp_mask,
-		पूर्णांक node, स्थिर व्योम *caller)
-अणु
-	वापस __vदो_स्मृति(size, gfp_mask);
-पूर्ण
+void *__vmalloc_node(unsigned long size, unsigned long align, gfp_t gfp_mask,
+		int node, const void *caller)
+{
+	return __vmalloc(size, gfp_mask);
+}
 
-अटल व्योम *__vदो_स्मृति_user_flags(अचिन्हित दीर्घ size, gfp_t flags)
-अणु
-	व्योम *ret;
+static void *__vmalloc_user_flags(unsigned long size, gfp_t flags)
+{
+	void *ret;
 
-	ret = __vदो_स्मृति(size, flags);
-	अगर (ret) अणु
-		काष्ठा vm_area_काष्ठा *vma;
+	ret = __vmalloc(size, flags);
+	if (ret) {
+		struct vm_area_struct *vma;
 
-		mmap_ग_लिखो_lock(current->mm);
-		vma = find_vma(current->mm, (अचिन्हित दीर्घ)ret);
-		अगर (vma)
+		mmap_write_lock(current->mm);
+		vma = find_vma(current->mm, (unsigned long)ret);
+		if (vma)
 			vma->vm_flags |= VM_USERMAP;
-		mmap_ग_लिखो_unlock(current->mm);
-	पूर्ण
+		mmap_write_unlock(current->mm);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम *vदो_स्मृति_user(अचिन्हित दीर्घ size)
-अणु
-	वापस __vदो_स्मृति_user_flags(size, GFP_KERNEL | __GFP_ZERO);
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति_user);
+void *vmalloc_user(unsigned long size)
+{
+	return __vmalloc_user_flags(size, GFP_KERNEL | __GFP_ZERO);
+}
+EXPORT_SYMBOL(vmalloc_user);
 
-काष्ठा page *vदो_स्मृति_to_page(स्थिर व्योम *addr)
-अणु
-	वापस virt_to_page(addr);
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति_to_page);
+struct page *vmalloc_to_page(const void *addr)
+{
+	return virt_to_page(addr);
+}
+EXPORT_SYMBOL(vmalloc_to_page);
 
-अचिन्हित दीर्घ vदो_स्मृति_to_pfn(स्थिर व्योम *addr)
-अणु
-	वापस page_to_pfn(virt_to_page(addr));
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति_to_pfn);
+unsigned long vmalloc_to_pfn(const void *addr)
+{
+	return page_to_pfn(virt_to_page(addr));
+}
+EXPORT_SYMBOL(vmalloc_to_pfn);
 
-दीर्घ vपढ़ो(अक्षर *buf, अक्षर *addr, अचिन्हित दीर्घ count)
-अणु
+long vread(char *buf, char *addr, unsigned long count)
+{
 	/* Don't allow overflow */
-	अगर ((अचिन्हित दीर्घ) buf + count < count)
-		count = -(अचिन्हित दीर्घ) buf;
+	if ((unsigned long) buf + count < count)
+		count = -(unsigned long) buf;
 
-	स_नकल(buf, addr, count);
-	वापस count;
-पूर्ण
+	memcpy(buf, addr, count);
+	return count;
+}
 
 /*
- *	vदो_स्मृति  -  allocate भवly contiguous memory
+ *	vmalloc  -  allocate virtually contiguous memory
  *
  *	@size:		allocation size
  *
  *	Allocate enough pages to cover @size from the page level
- *	allocator and map them पूर्णांकo contiguous kernel भव space.
+ *	allocator and map them into contiguous kernel virtual space.
  *
  *	For tight control over page level allocator and protection flags
- *	use __vदो_स्मृति() instead.
+ *	use __vmalloc() instead.
  */
-व्योम *vदो_स्मृति(अचिन्हित दीर्घ size)
-अणु
-       वापस __vदो_स्मृति(size, GFP_KERNEL | __GFP_HIGHMEM);
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति);
+void *vmalloc(unsigned long size)
+{
+       return __vmalloc(size, GFP_KERNEL | __GFP_HIGHMEM);
+}
+EXPORT_SYMBOL(vmalloc);
 
 /*
- *	vzalloc - allocate भवly contiguous memory with zero fill
+ *	vzalloc - allocate virtually contiguous memory with zero fill
  *
  *	@size:		allocation size
  *
  *	Allocate enough pages to cover @size from the page level
- *	allocator and map them पूर्णांकo contiguous kernel भव space.
+ *	allocator and map them into contiguous kernel virtual space.
  *	The memory allocated is set to zero.
  *
  *	For tight control over page level allocator and protection flags
- *	use __vदो_स्मृति() instead.
+ *	use __vmalloc() instead.
  */
-व्योम *vzalloc(अचिन्हित दीर्घ size)
-अणु
-	वापस __vदो_स्मृति(size, GFP_KERNEL | __GFP_HIGHMEM | __GFP_ZERO);
-पूर्ण
+void *vzalloc(unsigned long size)
+{
+	return __vmalloc(size, GFP_KERNEL | __GFP_HIGHMEM | __GFP_ZERO);
+}
 EXPORT_SYMBOL(vzalloc);
 
 /**
- * vदो_स्मृति_node - allocate memory on a specअगरic node
+ * vmalloc_node - allocate memory on a specific node
  * @size:	allocation size
  * @node:	numa node
  *
  * Allocate enough pages to cover @size from the page level
- * allocator and map them पूर्णांकo contiguous kernel भव space.
+ * allocator and map them into contiguous kernel virtual space.
  *
  * For tight control over page level allocator and protection flags
- * use __vदो_स्मृति() instead.
+ * use __vmalloc() instead.
  */
-व्योम *vदो_स्मृति_node(अचिन्हित दीर्घ size, पूर्णांक node)
-अणु
-	वापस vदो_स्मृति(size);
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति_node);
+void *vmalloc_node(unsigned long size, int node)
+{
+	return vmalloc(size);
+}
+EXPORT_SYMBOL(vmalloc_node);
 
 /**
- * vzalloc_node - allocate memory on a specअगरic node with zero fill
+ * vzalloc_node - allocate memory on a specific node with zero fill
  * @size:	allocation size
  * @node:	numa node
  *
  * Allocate enough pages to cover @size from the page level
- * allocator and map them पूर्णांकo contiguous kernel भव space.
+ * allocator and map them into contiguous kernel virtual space.
  * The memory allocated is set to zero.
  *
  * For tight control over page level allocator and protection flags
- * use __vदो_स्मृति() instead.
+ * use __vmalloc() instead.
  */
-व्योम *vzalloc_node(अचिन्हित दीर्घ size, पूर्णांक node)
-अणु
-	वापस vzalloc(size);
-पूर्ण
+void *vzalloc_node(unsigned long size, int node)
+{
+	return vzalloc(size);
+}
 EXPORT_SYMBOL(vzalloc_node);
 
 /**
- * vदो_स्मृति_32  -  allocate भवly contiguous memory (32bit addressable)
+ * vmalloc_32  -  allocate virtually contiguous memory (32bit addressable)
  *	@size:		allocation size
  *
  *	Allocate enough 32bit PA addressable pages to cover @size from the
- *	page level allocator and map them पूर्णांकo contiguous kernel भव space.
+ *	page level allocator and map them into contiguous kernel virtual space.
  */
-व्योम *vदो_स्मृति_32(अचिन्हित दीर्घ size)
-अणु
-	वापस __vदो_स्मृति(size, GFP_KERNEL);
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति_32);
+void *vmalloc_32(unsigned long size)
+{
+	return __vmalloc(size, GFP_KERNEL);
+}
+EXPORT_SYMBOL(vmalloc_32);
 
 /**
- * vदो_स्मृति_32_user - allocate zeroed भवly contiguous 32bit memory
+ * vmalloc_32_user - allocate zeroed virtually contiguous 32bit memory
  *	@size:		allocation size
  *
  * The resulting memory area is 32bit addressable and zeroed so it can be
  * mapped to userspace without leaking data.
  *
  * VM_USERMAP is set on the corresponding VMA so that subsequent calls to
- * remap_vदो_स्मृति_range() are permissible.
+ * remap_vmalloc_range() are permissible.
  */
-व्योम *vदो_स्मृति_32_user(अचिन्हित दीर्घ size)
-अणु
+void *vmalloc_32_user(unsigned long size)
+{
 	/*
-	 * We'll have to sort out the ZONE_DMA bits क्रम 64-bit,
-	 * but क्रम now this can simply use vदो_स्मृति_user() directly.
+	 * We'll have to sort out the ZONE_DMA bits for 64-bit,
+	 * but for now this can simply use vmalloc_user() directly.
 	 */
-	वापस vदो_स्मृति_user(size);
-पूर्ण
-EXPORT_SYMBOL(vदो_स्मृति_32_user);
+	return vmalloc_user(size);
+}
+EXPORT_SYMBOL(vmalloc_32_user);
 
-व्योम *vmap(काष्ठा page **pages, अचिन्हित पूर्णांक count, अचिन्हित दीर्घ flags, pgprot_t prot)
-अणु
+void *vmap(struct page **pages, unsigned int count, unsigned long flags, pgprot_t prot)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(vmap);
 
-व्योम vunmap(स्थिर व्योम *addr)
-अणु
+void vunmap(const void *addr)
+{
 	BUG();
-पूर्ण
+}
 EXPORT_SYMBOL(vunmap);
 
-व्योम *vm_map_ram(काष्ठा page **pages, अचिन्हित पूर्णांक count, पूर्णांक node)
-अणु
+void *vm_map_ram(struct page **pages, unsigned int count, int node)
+{
 	BUG();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(vm_map_ram);
 
-व्योम vm_unmap_ram(स्थिर व्योम *mem, अचिन्हित पूर्णांक count)
-अणु
+void vm_unmap_ram(const void *mem, unsigned int count)
+{
 	BUG();
-पूर्ण
+}
 EXPORT_SYMBOL(vm_unmap_ram);
 
-व्योम vm_unmap_aliases(व्योम)
-अणु
-पूर्ण
+void vm_unmap_aliases(void)
+{
+}
 EXPORT_SYMBOL_GPL(vm_unmap_aliases);
 
-व्योम मुक्त_vm_area(काष्ठा vm_काष्ठा *area)
-अणु
+void free_vm_area(struct vm_struct *area)
+{
 	BUG();
-पूर्ण
-EXPORT_SYMBOL_GPL(मुक्त_vm_area);
+}
+EXPORT_SYMBOL_GPL(free_vm_area);
 
-पूर्णांक vm_insert_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-		   काष्ठा page *page)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int vm_insert_page(struct vm_area_struct *vma, unsigned long addr,
+		   struct page *page)
+{
+	return -EINVAL;
+}
 EXPORT_SYMBOL(vm_insert_page);
 
-पूर्णांक vm_map_pages(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
-			अचिन्हित दीर्घ num)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int vm_map_pages(struct vm_area_struct *vma, struct page **pages,
+			unsigned long num)
+{
+	return -EINVAL;
+}
 EXPORT_SYMBOL(vm_map_pages);
 
-पूर्णांक vm_map_pages_zero(काष्ठा vm_area_काष्ठा *vma, काष्ठा page **pages,
-				अचिन्हित दीर्घ num)
-अणु
-	वापस -EINVAL;
-पूर्ण
+int vm_map_pages_zero(struct vm_area_struct *vma, struct page **pages,
+				unsigned long num)
+{
+	return -EINVAL;
+}
 EXPORT_SYMBOL(vm_map_pages_zero);
 
 /*
- *  sys_brk() क्रम the most part करोesn't need the global kernel
- *  lock, except when an application is करोing something nasty
- *  like trying to un-brk an area that has alपढ़ोy been mapped
- *  to a regular file.  in this हाल, the unmapping will need
- *  to invoke file प्रणाली routines that need the global lock.
+ *  sys_brk() for the most part doesn't need the global kernel
+ *  lock, except when an application is doing something nasty
+ *  like trying to un-brk an area that has already been mapped
+ *  to a regular file.  in this case, the unmapping will need
+ *  to invoke file system routines that need the global lock.
  */
-SYSCALL_DEFINE1(brk, अचिन्हित दीर्घ, brk)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
+SYSCALL_DEFINE1(brk, unsigned long, brk)
+{
+	struct mm_struct *mm = current->mm;
 
-	अगर (brk < mm->start_brk || brk > mm->context.end_brk)
-		वापस mm->brk;
+	if (brk < mm->start_brk || brk > mm->context.end_brk)
+		return mm->brk;
 
-	अगर (mm->brk == brk)
-		वापस mm->brk;
+	if (mm->brk == brk)
+		return mm->brk;
 
 	/*
 	 * Always allow shrinking brk
 	 */
-	अगर (brk <= mm->brk) अणु
+	if (brk <= mm->brk) {
 		mm->brk = brk;
-		वापस brk;
-	पूर्ण
+		return brk;
+	}
 
 	/*
 	 * Ok, looks good - let it rip.
 	 */
 	flush_icache_user_range(mm->brk, brk);
-	वापस mm->brk = brk;
-पूर्ण
+	return mm->brk = brk;
+}
 
 /*
- * initialise the percpu counter क्रम VM and region record sद_असल
+ * initialise the percpu counter for VM and region record slabs
  */
-व्योम __init mmap_init(व्योम)
-अणु
-	पूर्णांक ret;
+void __init mmap_init(void)
+{
+	int ret;
 
 	ret = percpu_counter_init(&vm_committed_as, 0, GFP_KERNEL);
 	VM_BUG_ON(ret);
 	vm_region_jar = KMEM_CACHE(vm_region, SLAB_PANIC|SLAB_ACCOUNT);
-पूर्ण
+}
 
 /*
  * validate the region tree
  * - the caller must hold the region lock
  */
-#अगर_घोषित CONFIG_DEBUG_NOMMU_REGIONS
-अटल noअंतरभूत व्योम validate_nommu_regions(व्योम)
-अणु
-	काष्ठा vm_region *region, *last;
-	काष्ठा rb_node *p, *lastp;
+#ifdef CONFIG_DEBUG_NOMMU_REGIONS
+static noinline void validate_nommu_regions(void)
+{
+	struct vm_region *region, *last;
+	struct rb_node *p, *lastp;
 
 	lastp = rb_first(&nommu_region_tree);
-	अगर (!lastp)
-		वापस;
+	if (!lastp)
+		return;
 
-	last = rb_entry(lastp, काष्ठा vm_region, vm_rb);
+	last = rb_entry(lastp, struct vm_region, vm_rb);
 	BUG_ON(last->vm_end <= last->vm_start);
 	BUG_ON(last->vm_top < last->vm_end);
 
-	जबतक ((p = rb_next(lastp))) अणु
-		region = rb_entry(p, काष्ठा vm_region, vm_rb);
-		last = rb_entry(lastp, काष्ठा vm_region, vm_rb);
+	while ((p = rb_next(lastp))) {
+		region = rb_entry(p, struct vm_region, vm_rb);
+		last = rb_entry(lastp, struct vm_region, vm_rb);
 
 		BUG_ON(region->vm_end <= region->vm_start);
 		BUG_ON(region->vm_top < region->vm_end);
 		BUG_ON(region->vm_start < last->vm_top);
 
 		lastp = p;
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल व्योम validate_nommu_regions(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#else
+static void validate_nommu_regions(void)
+{
+}
+#endif
 
 /*
- * add a region पूर्णांकo the global tree
+ * add a region into the global tree
  */
-अटल व्योम add_nommu_region(काष्ठा vm_region *region)
-अणु
-	काष्ठा vm_region *pregion;
-	काष्ठा rb_node **p, *parent;
+static void add_nommu_region(struct vm_region *region)
+{
+	struct vm_region *pregion;
+	struct rb_node **p, *parent;
 
 	validate_nommu_regions();
 
-	parent = शून्य;
+	parent = NULL;
 	p = &nommu_region_tree.rb_node;
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		pregion = rb_entry(parent, काष्ठा vm_region, vm_rb);
-		अगर (region->vm_start < pregion->vm_start)
+		pregion = rb_entry(parent, struct vm_region, vm_rb);
+		if (region->vm_start < pregion->vm_start)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (region->vm_start > pregion->vm_start)
+		else if (region->vm_start > pregion->vm_start)
 			p = &(*p)->rb_right;
-		अन्यथा अगर (pregion == region)
-			वापस;
-		अन्यथा
+		else if (pregion == region)
+			return;
+		else
 			BUG();
-	पूर्ण
+	}
 
 	rb_link_node(&region->vm_rb, parent, p);
 	rb_insert_color(&region->vm_rb, &nommu_region_tree);
 
 	validate_nommu_regions();
-पूर्ण
+}
 
 /*
  * delete a region from the global tree
  */
-अटल व्योम delete_nommu_region(काष्ठा vm_region *region)
-अणु
+static void delete_nommu_region(struct vm_region *region)
+{
 	BUG_ON(!nommu_region_tree.rb_node);
 
 	validate_nommu_regions();
 	rb_erase(&region->vm_rb, &nommu_region_tree);
 	validate_nommu_regions();
-पूर्ण
+}
 
 /*
- * मुक्त a contiguous series of pages
+ * free a contiguous series of pages
  */
-अटल व्योम मुक्त_page_series(अचिन्हित दीर्घ from, अचिन्हित दीर्घ to)
-अणु
-	क्रम (; from < to; from += PAGE_SIZE) अणु
-		काष्ठा page *page = virt_to_page(from);
+static void free_page_series(unsigned long from, unsigned long to)
+{
+	for (; from < to; from += PAGE_SIZE) {
+		struct page *page = virt_to_page(from);
 
-		atomic_दीर्घ_dec(&mmap_pages_allocated);
+		atomic_long_dec(&mmap_pages_allocated);
 		put_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * release a reference to a region
- * - the caller must hold the region semaphore क्रम writing, which this releases
- * - the region may not have been added to the tree yet, in which हाल vm_top
+ * - the caller must hold the region semaphore for writing, which this releases
+ * - the region may not have been added to the tree yet, in which case vm_top
  *   will equal vm_start
  */
-अटल व्योम __put_nommu_region(काष्ठा vm_region *region)
+static void __put_nommu_region(struct vm_region *region)
 	__releases(nommu_region_sem)
-अणु
+{
 	BUG_ON(!nommu_region_tree.rb_node);
 
-	अगर (--region->vm_usage == 0) अणु
-		अगर (region->vm_top > region->vm_start)
+	if (--region->vm_usage == 0) {
+		if (region->vm_top > region->vm_start)
 			delete_nommu_region(region);
-		up_ग_लिखो(&nommu_region_sem);
+		up_write(&nommu_region_sem);
 
-		अगर (region->vm_file)
+		if (region->vm_file)
 			fput(region->vm_file);
 
 		/* IO memory and memory shared directly out of the pagecache
-		 * from ramfs/पंचांगpfs mustn't be released here */
-		अगर (region->vm_flags & VM_MAPPED_COPY)
-			मुक्त_page_series(region->vm_start, region->vm_top);
-		kmem_cache_मुक्त(vm_region_jar, region);
-	पूर्ण अन्यथा अणु
-		up_ग_लिखो(&nommu_region_sem);
-	पूर्ण
-पूर्ण
+		 * from ramfs/tmpfs mustn't be released here */
+		if (region->vm_flags & VM_MAPPED_COPY)
+			free_page_series(region->vm_start, region->vm_top);
+		kmem_cache_free(vm_region_jar, region);
+	} else {
+		up_write(&nommu_region_sem);
+	}
+}
 
 /*
  * release a reference to a region
  */
-अटल व्योम put_nommu_region(काष्ठा vm_region *region)
-अणु
-	करोwn_ग_लिखो(&nommu_region_sem);
+static void put_nommu_region(struct vm_region *region)
+{
+	down_write(&nommu_region_sem);
 	__put_nommu_region(region);
-पूर्ण
+}
 
 /*
- * add a VMA पूर्णांकo a process's mm_काष्ठा in the appropriate place in the list
- * and tree and add to the address space's page tree also अगर not an anonymous
+ * add a VMA into a process's mm_struct in the appropriate place in the list
+ * and tree and add to the address space's page tree also if not an anonymous
  * page
- * - should be called with mm->mmap_lock held ग_लिखोlocked
+ * - should be called with mm->mmap_lock held writelocked
  */
-अटल व्योम add_vma_to_mm(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	काष्ठा vm_area_काष्ठा *pvma, *prev;
-	काष्ठा address_space *mapping;
-	काष्ठा rb_node **p, *parent, *rb_prev;
+static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	struct vm_area_struct *pvma, *prev;
+	struct address_space *mapping;
+	struct rb_node **p, *parent, *rb_prev;
 
 	BUG_ON(!vma->vm_region);
 
@@ -563,541 +562,541 @@ SYSCALL_DEFINE1(brk, अचिन्हित दीर्घ, brk)
 	vma->vm_mm = mm;
 
 	/* add the VMA to the mapping */
-	अगर (vma->vm_file) अणु
+	if (vma->vm_file) {
 		mapping = vma->vm_file->f_mapping;
 
-		i_mmap_lock_ग_लिखो(mapping);
+		i_mmap_lock_write(mapping);
 		flush_dcache_mmap_lock(mapping);
-		vma_पूर्णांकerval_tree_insert(vma, &mapping->i_mmap);
+		vma_interval_tree_insert(vma, &mapping->i_mmap);
 		flush_dcache_mmap_unlock(mapping);
-		i_mmap_unlock_ग_लिखो(mapping);
-	पूर्ण
+		i_mmap_unlock_write(mapping);
+	}
 
 	/* add the VMA to the tree */
-	parent = rb_prev = शून्य;
+	parent = rb_prev = NULL;
 	p = &mm->mm_rb.rb_node;
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		pvma = rb_entry(parent, काष्ठा vm_area_काष्ठा, vm_rb);
+		pvma = rb_entry(parent, struct vm_area_struct, vm_rb);
 
-		/* sort by: start addr, end addr, VMA काष्ठा addr in that order
+		/* sort by: start addr, end addr, VMA struct addr in that order
 		 * (the latter is necessary as we may get identical VMAs) */
-		अगर (vma->vm_start < pvma->vm_start)
+		if (vma->vm_start < pvma->vm_start)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (vma->vm_start > pvma->vm_start) अणु
+		else if (vma->vm_start > pvma->vm_start) {
 			rb_prev = parent;
 			p = &(*p)->rb_right;
-		पूर्ण अन्यथा अगर (vma->vm_end < pvma->vm_end)
+		} else if (vma->vm_end < pvma->vm_end)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (vma->vm_end > pvma->vm_end) अणु
+		else if (vma->vm_end > pvma->vm_end) {
 			rb_prev = parent;
 			p = &(*p)->rb_right;
-		पूर्ण अन्यथा अगर (vma < pvma)
+		} else if (vma < pvma)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (vma > pvma) अणु
+		else if (vma > pvma) {
 			rb_prev = parent;
 			p = &(*p)->rb_right;
-		पूर्ण अन्यथा
+		} else
 			BUG();
-	पूर्ण
+	}
 
 	rb_link_node(&vma->vm_rb, parent, p);
 	rb_insert_color(&vma->vm_rb, &mm->mm_rb);
 
 	/* add VMA to the VMA list also */
-	prev = शून्य;
-	अगर (rb_prev)
-		prev = rb_entry(rb_prev, काष्ठा vm_area_काष्ठा, vm_rb);
+	prev = NULL;
+	if (rb_prev)
+		prev = rb_entry(rb_prev, struct vm_area_struct, vm_rb);
 
 	__vma_link_list(mm, vma, prev);
-पूर्ण
+}
 
 /*
- * delete a VMA from its owning mm_काष्ठा and address space
+ * delete a VMA from its owning mm_struct and address space
  */
-अटल व्योम delete_vma_from_mm(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक i;
-	काष्ठा address_space *mapping;
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा task_काष्ठा *curr = current;
+static void delete_vma_from_mm(struct vm_area_struct *vma)
+{
+	int i;
+	struct address_space *mapping;
+	struct mm_struct *mm = vma->vm_mm;
+	struct task_struct *curr = current;
 
 	mm->map_count--;
-	क्रम (i = 0; i < VMACACHE_SIZE; i++) अणु
-		/* अगर the vma is cached, invalidate the entire cache */
-		अगर (curr->vmacache.vmas[i] == vma) अणु
+	for (i = 0; i < VMACACHE_SIZE; i++) {
+		/* if the vma is cached, invalidate the entire cache */
+		if (curr->vmacache.vmas[i] == vma) {
 			vmacache_invalidate(mm);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* हटाओ the VMA from the mapping */
-	अगर (vma->vm_file) अणु
+	/* remove the VMA from the mapping */
+	if (vma->vm_file) {
 		mapping = vma->vm_file->f_mapping;
 
-		i_mmap_lock_ग_लिखो(mapping);
+		i_mmap_lock_write(mapping);
 		flush_dcache_mmap_lock(mapping);
-		vma_पूर्णांकerval_tree_हटाओ(vma, &mapping->i_mmap);
+		vma_interval_tree_remove(vma, &mapping->i_mmap);
 		flush_dcache_mmap_unlock(mapping);
-		i_mmap_unlock_ग_लिखो(mapping);
-	पूर्ण
+		i_mmap_unlock_write(mapping);
+	}
 
-	/* हटाओ from the MM's tree and list */
+	/* remove from the MM's tree and list */
 	rb_erase(&vma->vm_rb, &mm->mm_rb);
 
 	__vma_unlink_list(mm, vma);
-पूर्ण
+}
 
 /*
  * destroy a VMA record
  */
-अटल व्योम delete_vma(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma)
-अणु
-	अगर (vma->vm_ops && vma->vm_ops->बंद)
-		vma->vm_ops->बंद(vma);
-	अगर (vma->vm_file)
+static void delete_vma(struct mm_struct *mm, struct vm_area_struct *vma)
+{
+	if (vma->vm_ops && vma->vm_ops->close)
+		vma->vm_ops->close(vma);
+	if (vma->vm_file)
 		fput(vma->vm_file);
 	put_nommu_region(vma->vm_region);
-	vm_area_मुक्त(vma);
-पूर्ण
+	vm_area_free(vma);
+}
 
 /*
- * look up the first VMA in which addr resides, शून्य अगर none
- * - should be called with mm->mmap_lock at least held पढ़ोlocked
+ * look up the first VMA in which addr resides, NULL if none
+ * - should be called with mm->mmap_lock at least held readlocked
  */
-काष्ठा vm_area_काष्ठा *find_vma(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
+{
+	struct vm_area_struct *vma;
 
 	/* check the cache first */
 	vma = vmacache_find(mm, addr);
-	अगर (likely(vma))
-		वापस vma;
+	if (likely(vma))
+		return vma;
 
 	/* trawl the list (there may be multiple mappings in which addr
 	 * resides) */
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (vma->vm_start > addr)
-			वापस शून्य;
-		अगर (vma->vm_end > addr) अणु
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (vma->vm_start > addr)
+			return NULL;
+		if (vma->vm_end > addr) {
 			vmacache_update(addr, vma);
-			वापस vma;
-		पूर्ण
-	पूर्ण
+			return vma;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(find_vma);
 
 /*
  * find a VMA
- * - we करोn't extend stack VMAs under NOMMU conditions
+ * - we don't extend stack VMAs under NOMMU conditions
  */
-काष्ठा vm_area_काष्ठा *find_extend_vma(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
-अणु
-	वापस find_vma(mm, addr);
-पूर्ण
+struct vm_area_struct *find_extend_vma(struct mm_struct *mm, unsigned long addr)
+{
+	return find_vma(mm, addr);
+}
 
 /*
  * expand a stack to a given address
  * - not supported under NOMMU conditions
  */
-पूर्णांक expand_stack(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
-अणु
-	वापस -ENOMEM;
-पूर्ण
+int expand_stack(struct vm_area_struct *vma, unsigned long address)
+{
+	return -ENOMEM;
+}
 
 /*
  * look up the first VMA exactly that exactly matches addr
- * - should be called with mm->mmap_lock at least held पढ़ोlocked
+ * - should be called with mm->mmap_lock at least held readlocked
  */
-अटल काष्ठा vm_area_काष्ठा *find_vma_exact(काष्ठा mm_काष्ठा *mm,
-					     अचिन्हित दीर्घ addr,
-					     अचिन्हित दीर्घ len)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ end = addr + len;
+static struct vm_area_struct *find_vma_exact(struct mm_struct *mm,
+					     unsigned long addr,
+					     unsigned long len)
+{
+	struct vm_area_struct *vma;
+	unsigned long end = addr + len;
 
 	/* check the cache first */
 	vma = vmacache_find_exact(mm, addr, end);
-	अगर (vma)
-		वापस vma;
+	if (vma)
+		return vma;
 
 	/* trawl the list (there may be multiple mappings in which addr
 	 * resides) */
-	क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-		अगर (vma->vm_start < addr)
-			जारी;
-		अगर (vma->vm_start > addr)
-			वापस शून्य;
-		अगर (vma->vm_end == end) अणु
+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+		if (vma->vm_start < addr)
+			continue;
+		if (vma->vm_start > addr)
+			return NULL;
+		if (vma->vm_end == end) {
 			vmacache_update(addr, vma);
-			वापस vma;
-		पूर्ण
-	पूर्ण
+			return vma;
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * determine whether a mapping should be permitted and, अगर so, what sort of
+ * determine whether a mapping should be permitted and, if so, what sort of
  * mapping we're capable of supporting
  */
-अटल पूर्णांक validate_mmap_request(काष्ठा file *file,
-				 अचिन्हित दीर्घ addr,
-				 अचिन्हित दीर्घ len,
-				 अचिन्हित दीर्घ prot,
-				 अचिन्हित दीर्घ flags,
-				 अचिन्हित दीर्घ pgoff,
-				 अचिन्हित दीर्घ *_capabilities)
-अणु
-	अचिन्हित दीर्घ capabilities, rlen;
-	पूर्णांक ret;
+static int validate_mmap_request(struct file *file,
+				 unsigned long addr,
+				 unsigned long len,
+				 unsigned long prot,
+				 unsigned long flags,
+				 unsigned long pgoff,
+				 unsigned long *_capabilities)
+{
+	unsigned long capabilities, rlen;
+	int ret;
 
-	/* करो the simple checks first */
-	अगर (flags & MAP_FIXED)
-		वापस -EINVAL;
+	/* do the simple checks first */
+	if (flags & MAP_FIXED)
+		return -EINVAL;
 
-	अगर ((flags & MAP_TYPE) != MAP_PRIVATE &&
+	if ((flags & MAP_TYPE) != MAP_PRIVATE &&
 	    (flags & MAP_TYPE) != MAP_SHARED)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (!len)
-		वापस -EINVAL;
+	if (!len)
+		return -EINVAL;
 
 	/* Careful about overflows.. */
 	rlen = PAGE_ALIGN(len);
-	अगर (!rlen || rlen > TASK_SIZE)
-		वापस -ENOMEM;
+	if (!rlen || rlen > TASK_SIZE)
+		return -ENOMEM;
 
 	/* offset overflow? */
-	अगर ((pgoff + (rlen >> PAGE_SHIFT)) < pgoff)
-		वापस -EOVERFLOW;
+	if ((pgoff + (rlen >> PAGE_SHIFT)) < pgoff)
+		return -EOVERFLOW;
 
-	अगर (file) अणु
+	if (file) {
 		/* files must support mmap */
-		अगर (!file->f_op->mmap)
-			वापस -ENODEV;
+		if (!file->f_op->mmap)
+			return -ENODEV;
 
-		/* work out अगर what we've got could possibly be shared
-		 * - we support अक्षरdevs that provide their own "memory"
+		/* work out if what we've got could possibly be shared
+		 * - we support chardevs that provide their own "memory"
 		 * - we support files/blockdevs that are memory backed
 		 */
-		अगर (file->f_op->mmap_capabilities) अणु
+		if (file->f_op->mmap_capabilities) {
 			capabilities = file->f_op->mmap_capabilities(file);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* no explicit capabilities set, so assume some
-			 * शेषs */
-			चयन (file_inode(file)->i_mode & S_IFMT) अणु
-			हाल S_IFREG:
-			हाल S_IFBLK:
+			 * defaults */
+			switch (file_inode(file)->i_mode & S_IFMT) {
+			case S_IFREG:
+			case S_IFBLK:
 				capabilities = NOMMU_MAP_COPY;
-				अवरोध;
+				break;
 
-			हाल S_IFCHR:
+			case S_IFCHR:
 				capabilities =
-					NOMMU_MAP_सूचीECT |
+					NOMMU_MAP_DIRECT |
 					NOMMU_MAP_READ |
 					NOMMU_MAP_WRITE;
-				अवरोध;
+				break;
 
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+			default:
+				return -EINVAL;
+			}
+		}
 
 		/* eliminate any capabilities that we can't support on this
 		 * device */
-		अगर (!file->f_op->get_unmapped_area)
-			capabilities &= ~NOMMU_MAP_सूचीECT;
-		अगर (!(file->f_mode & FMODE_CAN_READ))
+		if (!file->f_op->get_unmapped_area)
+			capabilities &= ~NOMMU_MAP_DIRECT;
+		if (!(file->f_mode & FMODE_CAN_READ))
 			capabilities &= ~NOMMU_MAP_COPY;
 
-		/* The file shall have been खोलोed with पढ़ो permission. */
-		अगर (!(file->f_mode & FMODE_READ))
-			वापस -EACCES;
+		/* The file shall have been opened with read permission. */
+		if (!(file->f_mode & FMODE_READ))
+			return -EACCES;
 
-		अगर (flags & MAP_SHARED) अणु
-			/* करो checks क्रम writing, appending and locking */
-			अगर ((prot & PROT_WRITE) &&
+		if (flags & MAP_SHARED) {
+			/* do checks for writing, appending and locking */
+			if ((prot & PROT_WRITE) &&
 			    !(file->f_mode & FMODE_WRITE))
-				वापस -EACCES;
+				return -EACCES;
 
-			अगर (IS_APPEND(file_inode(file)) &&
+			if (IS_APPEND(file_inode(file)) &&
 			    (file->f_mode & FMODE_WRITE))
-				वापस -EACCES;
+				return -EACCES;
 
-			अगर (locks_verअगरy_locked(file))
-				वापस -EAGAIN;
+			if (locks_verify_locked(file))
+				return -EAGAIN;
 
-			अगर (!(capabilities & NOMMU_MAP_सूचीECT))
-				वापस -ENODEV;
+			if (!(capabilities & NOMMU_MAP_DIRECT))
+				return -ENODEV;
 
 			/* we mustn't privatise shared mappings */
 			capabilities &= ~NOMMU_MAP_COPY;
-		पूर्ण अन्यथा अणु
-			/* we're going to पढ़ो the file पूर्णांकo निजी memory we
+		} else {
+			/* we're going to read the file into private memory we
 			 * allocate */
-			अगर (!(capabilities & NOMMU_MAP_COPY))
-				वापस -ENODEV;
+			if (!(capabilities & NOMMU_MAP_COPY))
+				return -ENODEV;
 
-			/* we करोn't permit a निजी writable mapping to be
+			/* we don't permit a private writable mapping to be
 			 * shared with the backing device */
-			अगर (prot & PROT_WRITE)
-				capabilities &= ~NOMMU_MAP_सूचीECT;
-		पूर्ण
+			if (prot & PROT_WRITE)
+				capabilities &= ~NOMMU_MAP_DIRECT;
+		}
 
-		अगर (capabilities & NOMMU_MAP_सूचीECT) अणु
-			अगर (((prot & PROT_READ)  && !(capabilities & NOMMU_MAP_READ))  ||
+		if (capabilities & NOMMU_MAP_DIRECT) {
+			if (((prot & PROT_READ)  && !(capabilities & NOMMU_MAP_READ))  ||
 			    ((prot & PROT_WRITE) && !(capabilities & NOMMU_MAP_WRITE)) ||
 			    ((prot & PROT_EXEC)  && !(capabilities & NOMMU_MAP_EXEC))
-			    ) अणु
-				capabilities &= ~NOMMU_MAP_सूचीECT;
-				अगर (flags & MAP_SHARED) अणु
+			    ) {
+				capabilities &= ~NOMMU_MAP_DIRECT;
+				if (flags & MAP_SHARED) {
 					pr_warn("MAP_SHARED not completely supported on !MMU\n");
-					वापस -EINVAL;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					return -EINVAL;
+				}
+			}
+		}
 
 		/* handle executable mappings and implied executable
 		 * mappings */
-		अगर (path_noexec(&file->f_path)) अणु
-			अगर (prot & PROT_EXEC)
-				वापस -EPERM;
-		पूर्ण अन्यथा अगर ((prot & PROT_READ) && !(prot & PROT_EXEC)) अणु
+		if (path_noexec(&file->f_path)) {
+			if (prot & PROT_EXEC)
+				return -EPERM;
+		} else if ((prot & PROT_READ) && !(prot & PROT_EXEC)) {
 			/* handle implication of PROT_EXEC by PROT_READ */
-			अगर (current->personality & READ_IMPLIES_EXEC) अणु
-				अगर (capabilities & NOMMU_MAP_EXEC)
+			if (current->personality & READ_IMPLIES_EXEC) {
+				if (capabilities & NOMMU_MAP_EXEC)
 					prot |= PROT_EXEC;
-			पूर्ण
-		पूर्ण अन्यथा अगर ((prot & PROT_READ) &&
+			}
+		} else if ((prot & PROT_READ) &&
 			 (prot & PROT_EXEC) &&
 			 !(capabilities & NOMMU_MAP_EXEC)
-			 ) अणु
+			 ) {
 			/* backing file is not executable, try to copy */
-			capabilities &= ~NOMMU_MAP_सूचीECT;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			capabilities &= ~NOMMU_MAP_DIRECT;
+		}
+	} else {
 		/* anonymous mappings are always memory backed and can be
-		 * निजीly mapped
+		 * privately mapped
 		 */
 		capabilities = NOMMU_MAP_COPY;
 
 		/* handle PROT_EXEC implication by PROT_READ */
-		अगर ((prot & PROT_READ) &&
+		if ((prot & PROT_READ) &&
 		    (current->personality & READ_IMPLIES_EXEC))
 			prot |= PROT_EXEC;
-	पूर्ण
+	}
 
 	/* allow the security API to have its say */
 	ret = security_mmap_addr(addr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* looks okay */
 	*_capabilities = capabilities;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * we've determined that we can make the mapping, now translate what we
- * now know पूर्णांकo VMA flags
+ * now know into VMA flags
  */
-अटल अचिन्हित दीर्घ determine_vm_flags(काष्ठा file *file,
-					अचिन्हित दीर्घ prot,
-					अचिन्हित दीर्घ flags,
-					अचिन्हित दीर्घ capabilities)
-अणु
-	अचिन्हित दीर्घ vm_flags;
+static unsigned long determine_vm_flags(struct file *file,
+					unsigned long prot,
+					unsigned long flags,
+					unsigned long capabilities)
+{
+	unsigned long vm_flags;
 
 	vm_flags = calc_vm_prot_bits(prot, 0) | calc_vm_flag_bits(flags);
 	/* vm_flags |= mm->def_flags; */
 
-	अगर (!(capabilities & NOMMU_MAP_सूचीECT)) अणु
-		/* attempt to share पढ़ो-only copies of mapped file chunks */
+	if (!(capabilities & NOMMU_MAP_DIRECT)) {
+		/* attempt to share read-only copies of mapped file chunks */
 		vm_flags |= VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
-		अगर (file && !(prot & PROT_WRITE))
+		if (file && !(prot & PROT_WRITE))
 			vm_flags |= VM_MAYSHARE;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* overlay a shareable mapping on the backing device or inode
-		 * अगर possible - used क्रम अक्षरdevs, ramfs/पंचांगpfs/shmfs and
+		 * if possible - used for chardevs, ramfs/tmpfs/shmfs and
 		 * romfs/cramfs */
 		vm_flags |= VM_MAYSHARE | (capabilities & NOMMU_VMFLAGS);
-		अगर (flags & MAP_SHARED)
+		if (flags & MAP_SHARED)
 			vm_flags |= VM_SHARED;
-	पूर्ण
+	}
 
-	/* refuse to let anyone share निजी mappings with this process अगर
-	 * it's being traced - otherwise अवरोधpoपूर्णांकs set in it may पूर्णांकerfere
+	/* refuse to let anyone share private mappings with this process if
+	 * it's being traced - otherwise breakpoints set in it may interfere
 	 * with another untraced process
 	 */
-	अगर ((flags & MAP_PRIVATE) && current->ptrace)
+	if ((flags & MAP_PRIVATE) && current->ptrace)
 		vm_flags &= ~VM_MAYSHARE;
 
-	वापस vm_flags;
-पूर्ण
+	return vm_flags;
+}
 
 /*
- * set up a shared mapping on a file (the driver or fileप्रणाली provides and
+ * set up a shared mapping on a file (the driver or filesystem provides and
  * pins the storage)
  */
-अटल पूर्णांक करो_mmap_shared_file(काष्ठा vm_area_काष्ठा *vma)
-अणु
-	पूर्णांक ret;
+static int do_mmap_shared_file(struct vm_area_struct *vma)
+{
+	int ret;
 
 	ret = call_mmap(vma->vm_file, vma);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		vma->vm_region->vm_top = vma->vm_region->vm_end;
-		वापस 0;
-	पूर्ण
-	अगर (ret != -ENOSYS)
-		वापस ret;
+		return 0;
+	}
+	if (ret != -ENOSYS)
+		return ret;
 
 	/* getting -ENOSYS indicates that direct mmap isn't possible (as
 	 * opposed to tried but failed) so we can only give a suitable error as
-	 * it's not possible to make a निजी copy अगर MAP_SHARED was given */
-	वापस -ENODEV;
-पूर्ण
+	 * it's not possible to make a private copy if MAP_SHARED was given */
+	return -ENODEV;
+}
 
 /*
- * set up a निजी mapping or an anonymous shared mapping
+ * set up a private mapping or an anonymous shared mapping
  */
-अटल पूर्णांक करो_mmap_निजी(काष्ठा vm_area_काष्ठा *vma,
-			   काष्ठा vm_region *region,
-			   अचिन्हित दीर्घ len,
-			   अचिन्हित दीर्घ capabilities)
-अणु
-	अचिन्हित दीर्घ total, poपूर्णांक;
-	व्योम *base;
-	पूर्णांक ret, order;
+static int do_mmap_private(struct vm_area_struct *vma,
+			   struct vm_region *region,
+			   unsigned long len,
+			   unsigned long capabilities)
+{
+	unsigned long total, point;
+	void *base;
+	int ret, order;
 
 	/* invoke the file's mapping function so that it can keep track of
 	 * shared mappings on devices or memory
-	 * - VM_MAYSHARE will be set अगर it may attempt to share
+	 * - VM_MAYSHARE will be set if it may attempt to share
 	 */
-	अगर (capabilities & NOMMU_MAP_सूचीECT) अणु
+	if (capabilities & NOMMU_MAP_DIRECT) {
 		ret = call_mmap(vma->vm_file, vma);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			/* shouldn't return success if we're not sharing */
 			BUG_ON(!(vma->vm_flags & VM_MAYSHARE));
 			vma->vm_region->vm_top = vma->vm_region->vm_end;
-			वापस 0;
-		पूर्ण
-		अगर (ret != -ENOSYS)
-			वापस ret;
+			return 0;
+		}
+		if (ret != -ENOSYS)
+			return ret;
 
 		/* getting an ENOSYS error indicates that direct mmap isn't
 		 * possible (as opposed to tried but failed) so we'll try to
-		 * make a निजी copy of the data and map that instead */
-	पूर्ण
+		 * make a private copy of the data and map that instead */
+	}
 
 
 	/* allocate some memory to hold the mapping
-	 * - note that this may not वापस a page-aligned address अगर the object
+	 * - note that this may not return a page-aligned address if the object
 	 *   we're allocating is smaller than a page
 	 */
 	order = get_order(len);
 	total = 1 << order;
-	poपूर्णांक = len >> PAGE_SHIFT;
+	point = len >> PAGE_SHIFT;
 
-	/* we करोn't want to allocate a घातer-of-2 sized page set */
-	अगर (sysctl_nr_trim_pages && total - poपूर्णांक >= sysctl_nr_trim_pages)
-		total = poपूर्णांक;
+	/* we don't want to allocate a power-of-2 sized page set */
+	if (sysctl_nr_trim_pages && total - point >= sysctl_nr_trim_pages)
+		total = point;
 
 	base = alloc_pages_exact(total << PAGE_SHIFT, GFP_KERNEL);
-	अगर (!base)
-		जाओ enomem;
+	if (!base)
+		goto enomem;
 
-	atomic_दीर्घ_add(total, &mmap_pages_allocated);
+	atomic_long_add(total, &mmap_pages_allocated);
 
 	region->vm_flags = vma->vm_flags |= VM_MAPPED_COPY;
-	region->vm_start = (अचिन्हित दीर्घ) base;
+	region->vm_start = (unsigned long) base;
 	region->vm_end   = region->vm_start + len;
 	region->vm_top   = region->vm_start + (total << PAGE_SHIFT);
 
 	vma->vm_start = region->vm_start;
 	vma->vm_end   = region->vm_start + len;
 
-	अगर (vma->vm_file) अणु
-		/* पढ़ो the contents of a file पूर्णांकo the copy */
+	if (vma->vm_file) {
+		/* read the contents of a file into the copy */
 		loff_t fpos;
 
 		fpos = vma->vm_pgoff;
 		fpos <<= PAGE_SHIFT;
 
-		ret = kernel_पढ़ो(vma->vm_file, base, len, &fpos);
-		अगर (ret < 0)
-			जाओ error_मुक्त;
+		ret = kernel_read(vma->vm_file, base, len, &fpos);
+		if (ret < 0)
+			goto error_free;
 
 		/* clear the last little bit */
-		अगर (ret < len)
-			स_रखो(base + ret, 0, len - ret);
+		if (ret < len)
+			memset(base + ret, 0, len - ret);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		vma_set_anonymous(vma);
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
-error_मुक्त:
-	मुक्त_page_series(region->vm_start, region->vm_top);
+error_free:
+	free_page_series(region->vm_start, region->vm_top);
 	region->vm_start = vma->vm_start = 0;
 	region->vm_end   = vma->vm_end = 0;
 	region->vm_top   = 0;
-	वापस ret;
+	return ret;
 
 enomem:
 	pr_err("Allocation of length %lu from process %d (%s) failed\n",
 	       len, current->pid, current->comm);
-	show_मुक्त_areas(0, शून्य);
-	वापस -ENOMEM;
-पूर्ण
+	show_free_areas(0, NULL);
+	return -ENOMEM;
+}
 
 /*
- * handle mapping creation क्रम uClinux
+ * handle mapping creation for uClinux
  */
-अचिन्हित दीर्घ करो_mmap(काष्ठा file *file,
-			अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ len,
-			अचिन्हित दीर्घ prot,
-			अचिन्हित दीर्घ flags,
-			अचिन्हित दीर्घ pgoff,
-			अचिन्हित दीर्घ *populate,
-			काष्ठा list_head *uf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा vm_region *region;
-	काष्ठा rb_node *rb;
+unsigned long do_mmap(struct file *file,
+			unsigned long addr,
+			unsigned long len,
+			unsigned long prot,
+			unsigned long flags,
+			unsigned long pgoff,
+			unsigned long *populate,
+			struct list_head *uf)
+{
+	struct vm_area_struct *vma;
+	struct vm_region *region;
+	struct rb_node *rb;
 	vm_flags_t vm_flags;
-	अचिन्हित दीर्घ capabilities, result;
-	पूर्णांक ret;
+	unsigned long capabilities, result;
+	int ret;
 
 	*populate = 0;
 
-	/* decide whether we should attempt the mapping, and अगर so what sort of
+	/* decide whether we should attempt the mapping, and if so what sort of
 	 * mapping */
 	ret = validate_mmap_request(file, addr, len, prot, flags, pgoff,
 				    &capabilities);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* we ignore the address hपूर्णांक */
+	/* we ignore the address hint */
 	addr = 0;
 	len = PAGE_ALIGN(len);
 
 	/* we've determined that we can make the mapping, now translate what we
-	 * now know पूर्णांकo VMA flags */
+	 * now know into VMA flags */
 	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
 
 	/* we're going to need to record the mapping */
 	region = kmem_cache_zalloc(vm_region_jar, GFP_KERNEL);
-	अगर (!region)
-		जाओ error_getting_region;
+	if (!region)
+		goto error_getting_region;
 
 	vma = vm_area_alloc(current->mm);
-	अगर (!vma)
-		जाओ error_getting_vma;
+	if (!vma)
+		goto error_getting_vma;
 
 	region->vm_usage = 1;
 	region->vm_flags = vm_flags;
@@ -1106,57 +1105,57 @@ enomem:
 	vma->vm_flags = vm_flags;
 	vma->vm_pgoff = pgoff;
 
-	अगर (file) अणु
+	if (file) {
 		region->vm_file = get_file(file);
 		vma->vm_file = get_file(file);
-	पूर्ण
+	}
 
-	करोwn_ग_लिखो(&nommu_region_sem);
+	down_write(&nommu_region_sem);
 
-	/* अगर we want to share, we need to check क्रम regions created by other
+	/* if we want to share, we need to check for regions created by other
 	 * mmap() calls that overlap with our proposed mapping
 	 * - we can only share with a superset match on most regular files
-	 * - shared mappings on अक्षरacter devices and memory backed files are
-	 *   permitted to overlap inexactly as far as we are concerned क्रम in
-	 *   these हालs, sharing is handled in the driver or fileप्रणाली rather
+	 * - shared mappings on character devices and memory backed files are
+	 *   permitted to overlap inexactly as far as we are concerned for in
+	 *   these cases, sharing is handled in the driver or filesystem rather
 	 *   than here
 	 */
-	अगर (vm_flags & VM_MAYSHARE) अणु
-		काष्ठा vm_region *pregion;
-		अचिन्हित दीर्घ pglen, rpglen, pgend, rpgend, start;
+	if (vm_flags & VM_MAYSHARE) {
+		struct vm_region *pregion;
+		unsigned long pglen, rpglen, pgend, rpgend, start;
 
 		pglen = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
 		pgend = pgoff + pglen;
 
-		क्रम (rb = rb_first(&nommu_region_tree); rb; rb = rb_next(rb)) अणु
-			pregion = rb_entry(rb, काष्ठा vm_region, vm_rb);
+		for (rb = rb_first(&nommu_region_tree); rb; rb = rb_next(rb)) {
+			pregion = rb_entry(rb, struct vm_region, vm_rb);
 
-			अगर (!(pregion->vm_flags & VM_MAYSHARE))
-				जारी;
+			if (!(pregion->vm_flags & VM_MAYSHARE))
+				continue;
 
-			/* search क्रम overlapping mappings on the same file */
-			अगर (file_inode(pregion->vm_file) !=
+			/* search for overlapping mappings on the same file */
+			if (file_inode(pregion->vm_file) !=
 			    file_inode(file))
-				जारी;
+				continue;
 
-			अगर (pregion->vm_pgoff >= pgend)
-				जारी;
+			if (pregion->vm_pgoff >= pgend)
+				continue;
 
 			rpglen = pregion->vm_end - pregion->vm_start;
 			rpglen = (rpglen + PAGE_SIZE - 1) >> PAGE_SHIFT;
 			rpgend = pregion->vm_pgoff + rpglen;
-			अगर (pgoff >= rpgend)
-				जारी;
+			if (pgoff >= rpgend)
+				continue;
 
 			/* handle inexactly overlapping matches between
 			 * mappings */
-			अगर ((pregion->vm_pgoff != pgoff || rpglen != pglen) &&
-			    !(pgoff >= pregion->vm_pgoff && pgend <= rpgend)) अणु
+			if ((pregion->vm_pgoff != pgoff || rpglen != pglen) &&
+			    !(pgoff >= pregion->vm_pgoff && pgend <= rpgend)) {
 				/* new mapping is not a subset of the region */
-				अगर (!(capabilities & NOMMU_MAP_सूचीECT))
-					जाओ sharing_violation;
-				जारी;
-			पूर्ण
+				if (!(capabilities & NOMMU_MAP_DIRECT))
+					goto sharing_violation;
+				continue;
+			}
 
 			/* we've found a region we can share */
 			pregion->vm_usage++;
@@ -1166,74 +1165,74 @@ enomem:
 			vma->vm_start = start;
 			vma->vm_end = start + len;
 
-			अगर (pregion->vm_flags & VM_MAPPED_COPY)
+			if (pregion->vm_flags & VM_MAPPED_COPY)
 				vma->vm_flags |= VM_MAPPED_COPY;
-			अन्यथा अणु
-				ret = करो_mmap_shared_file(vma);
-				अगर (ret < 0) अणु
-					vma->vm_region = शून्य;
+			else {
+				ret = do_mmap_shared_file(vma);
+				if (ret < 0) {
+					vma->vm_region = NULL;
 					vma->vm_start = 0;
 					vma->vm_end = 0;
 					pregion->vm_usage--;
-					pregion = शून्य;
-					जाओ error_just_मुक्त;
-				पूर्ण
-			पूर्ण
+					pregion = NULL;
+					goto error_just_free;
+				}
+			}
 			fput(region->vm_file);
-			kmem_cache_मुक्त(vm_region_jar, region);
+			kmem_cache_free(vm_region_jar, region);
 			region = pregion;
 			result = start;
-			जाओ share;
-		पूर्ण
+			goto share;
+		}
 
 		/* obtain the address at which to make a shared mapping
-		 * - this is the hook क्रम quasi-memory अक्षरacter devices to
+		 * - this is the hook for quasi-memory character devices to
 		 *   tell us the location of a shared mapping
 		 */
-		अगर (capabilities & NOMMU_MAP_सूचीECT) अणु
+		if (capabilities & NOMMU_MAP_DIRECT) {
 			addr = file->f_op->get_unmapped_area(file, addr, len,
 							     pgoff, flags);
-			अगर (IS_ERR_VALUE(addr)) अणु
+			if (IS_ERR_VALUE(addr)) {
 				ret = addr;
-				अगर (ret != -ENOSYS)
-					जाओ error_just_मुक्त;
+				if (ret != -ENOSYS)
+					goto error_just_free;
 
 				/* the driver refused to tell us where to site
 				 * the mapping so we'll have to attempt to copy
 				 * it */
 				ret = -ENODEV;
-				अगर (!(capabilities & NOMMU_MAP_COPY))
-					जाओ error_just_मुक्त;
+				if (!(capabilities & NOMMU_MAP_COPY))
+					goto error_just_free;
 
-				capabilities &= ~NOMMU_MAP_सूचीECT;
-			पूर्ण अन्यथा अणु
+				capabilities &= ~NOMMU_MAP_DIRECT;
+			} else {
 				vma->vm_start = region->vm_start = addr;
 				vma->vm_end = region->vm_end = addr + len;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	vma->vm_region = region;
 
 	/* set up the mapping
-	 * - the region is filled in अगर NOMMU_MAP_सूचीECT is still set
+	 * - the region is filled in if NOMMU_MAP_DIRECT is still set
 	 */
-	अगर (file && vma->vm_flags & VM_SHARED)
-		ret = करो_mmap_shared_file(vma);
-	अन्यथा
-		ret = करो_mmap_निजी(vma, region, len, capabilities);
-	अगर (ret < 0)
-		जाओ error_just_मुक्त;
+	if (file && vma->vm_flags & VM_SHARED)
+		ret = do_mmap_shared_file(vma);
+	else
+		ret = do_mmap_private(vma, region, len, capabilities);
+	if (ret < 0)
+		goto error_just_free;
 	add_nommu_region(region);
 
-	/* clear anonymous mappings that करोn't ask क्रम uninitialized data */
-	अगर (!vma->vm_file &&
+	/* clear anonymous mappings that don't ask for uninitialized data */
+	if (!vma->vm_file &&
 	    (!IS_ENABLED(CONFIG_MMAP_ALLOW_UNINITIALIZED) ||
 	     !(flags & MAP_UNINITIALIZED)))
-		स_रखो((व्योम *)region->vm_start, 0,
+		memset((void *)region->vm_start, 0,
 		       region->vm_end - region->vm_start);
 
-	/* okay... we have a mapping; now we have to रेजिस्टर it */
+	/* okay... we have a mapping; now we have to register it */
 	result = vma->vm_start;
 
 	current->mm->total_vm += len >> PAGE_SHIFT;
@@ -1243,129 +1242,129 @@ share:
 
 	/* we flush the region from the icache only when the first executable
 	 * mapping of it is made  */
-	अगर (vma->vm_flags & VM_EXEC && !region->vm_icache_flushed) अणु
+	if (vma->vm_flags & VM_EXEC && !region->vm_icache_flushed) {
 		flush_icache_user_range(region->vm_start, region->vm_end);
 		region->vm_icache_flushed = true;
-	पूर्ण
+	}
 
-	up_ग_लिखो(&nommu_region_sem);
+	up_write(&nommu_region_sem);
 
-	वापस result;
+	return result;
 
-error_just_मुक्त:
-	up_ग_लिखो(&nommu_region_sem);
+error_just_free:
+	up_write(&nommu_region_sem);
 error:
-	अगर (region->vm_file)
+	if (region->vm_file)
 		fput(region->vm_file);
-	kmem_cache_मुक्त(vm_region_jar, region);
-	अगर (vma->vm_file)
+	kmem_cache_free(vm_region_jar, region);
+	if (vma->vm_file)
 		fput(vma->vm_file);
-	vm_area_मुक्त(vma);
-	वापस ret;
+	vm_area_free(vma);
+	return ret;
 
 sharing_violation:
-	up_ग_लिखो(&nommu_region_sem);
+	up_write(&nommu_region_sem);
 	pr_warn("Attempt to share mismatched mappings\n");
 	ret = -EINVAL;
-	जाओ error;
+	goto error;
 
 error_getting_vma:
-	kmem_cache_मुक्त(vm_region_jar, region);
+	kmem_cache_free(vm_region_jar, region);
 	pr_warn("Allocation of vma for %lu byte allocation from process %d failed\n",
 			len, current->pid);
-	show_मुक्त_areas(0, शून्य);
-	वापस -ENOMEM;
+	show_free_areas(0, NULL);
+	return -ENOMEM;
 
 error_getting_region:
 	pr_warn("Allocation of vm region for %lu byte allocation from process %d failed\n",
 			len, current->pid);
-	show_मुक्त_areas(0, शून्य);
-	वापस -ENOMEM;
-पूर्ण
+	show_free_areas(0, NULL);
+	return -ENOMEM;
+}
 
-अचिन्हित दीर्घ ksys_mmap_pgoff(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
-			      अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
-			      अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff)
-अणु
-	काष्ठा file *file = शून्य;
-	अचिन्हित दीर्घ retval = -EBADF;
+unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
+			      unsigned long prot, unsigned long flags,
+			      unsigned long fd, unsigned long pgoff)
+{
+	struct file *file = NULL;
+	unsigned long retval = -EBADF;
 
 	audit_mmap_fd(fd, flags);
-	अगर (!(flags & MAP_ANONYMOUS)) अणु
+	if (!(flags & MAP_ANONYMOUS)) {
 		file = fget(fd);
-		अगर (!file)
-			जाओ out;
-	पूर्ण
+		if (!file)
+			goto out;
+	}
 
 	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
 
 	retval = vm_mmap_pgoff(file, addr, len, prot, flags, pgoff);
 
-	अगर (file)
+	if (file)
 		fput(file);
 out:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-SYSCALL_DEFINE6(mmap_pgoff, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
-		अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags,
-		अचिन्हित दीर्घ, fd, अचिन्हित दीर्घ, pgoff)
-अणु
-	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
-पूर्ण
+SYSCALL_DEFINE6(mmap_pgoff, unsigned long, addr, unsigned long, len,
+		unsigned long, prot, unsigned long, flags,
+		unsigned long, fd, unsigned long, pgoff)
+{
+	return ksys_mmap_pgoff(addr, len, prot, flags, fd, pgoff);
+}
 
-#अगर_घोषित __ARCH_WANT_SYS_OLD_MMAP
-काष्ठा mmap_arg_काष्ठा अणु
-	अचिन्हित दीर्घ addr;
-	अचिन्हित दीर्घ len;
-	अचिन्हित दीर्घ prot;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ fd;
-	अचिन्हित दीर्घ offset;
-पूर्ण;
+#ifdef __ARCH_WANT_SYS_OLD_MMAP
+struct mmap_arg_struct {
+	unsigned long addr;
+	unsigned long len;
+	unsigned long prot;
+	unsigned long flags;
+	unsigned long fd;
+	unsigned long offset;
+};
 
-SYSCALL_DEFINE1(old_mmap, काष्ठा mmap_arg_काष्ठा __user *, arg)
-अणु
-	काष्ठा mmap_arg_काष्ठा a;
+SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
+{
+	struct mmap_arg_struct a;
 
-	अगर (copy_from_user(&a, arg, माप(a)))
-		वापस -EFAULT;
-	अगर (offset_in_page(a.offset))
-		वापस -EINVAL;
+	if (copy_from_user(&a, arg, sizeof(a)))
+		return -EFAULT;
+	if (offset_in_page(a.offset))
+		return -EINVAL;
 
-	वापस ksys_mmap_pgoff(a.addr, a.len, a.prot, a.flags, a.fd,
+	return ksys_mmap_pgoff(a.addr, a.len, a.prot, a.flags, a.fd,
 			       a.offset >> PAGE_SHIFT);
-पूर्ण
-#पूर्ण_अगर /* __ARCH_WANT_SYS_OLD_MMAP */
+}
+#endif /* __ARCH_WANT_SYS_OLD_MMAP */
 
 /*
- * split a vma पूर्णांकo two pieces at address 'addr', a new vma is allocated either
- * क्रम the first part or the tail.
+ * split a vma into two pieces at address 'addr', a new vma is allocated either
+ * for the first part or the tail.
  */
-पूर्णांक split_vma(काष्ठा mm_काष्ठा *mm, काष्ठा vm_area_काष्ठा *vma,
-	      अचिन्हित दीर्घ addr, पूर्णांक new_below)
-अणु
-	काष्ठा vm_area_काष्ठा *new;
-	काष्ठा vm_region *region;
-	अचिन्हित दीर्घ npages;
+int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+	      unsigned long addr, int new_below)
+{
+	struct vm_area_struct *new;
+	struct vm_region *region;
+	unsigned long npages;
 
 	/* we're only permitted to split anonymous regions (these should have
 	 * only a single usage on the region) */
-	अगर (vma->vm_file)
-		वापस -ENOMEM;
+	if (vma->vm_file)
+		return -ENOMEM;
 
-	अगर (mm->map_count >= sysctl_max_map_count)
-		वापस -ENOMEM;
+	if (mm->map_count >= sysctl_max_map_count)
+		return -ENOMEM;
 
 	region = kmem_cache_alloc(vm_region_jar, GFP_KERNEL);
-	अगर (!region)
-		वापस -ENOMEM;
+	if (!region)
+		return -ENOMEM;
 
 	new = vm_area_dup(vma);
-	अगर (!new) अणु
-		kmem_cache_मुक्त(vm_region_jar, region);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!new) {
+		kmem_cache_free(vm_region_jar, region);
+		return -ENOMEM;
+	}
 
 	/* most fields are the same, copy all, and then fixup */
 	*region = *vma->vm_region;
@@ -1373,371 +1372,371 @@ SYSCALL_DEFINE1(old_mmap, काष्ठा mmap_arg_काष्ठा __user 
 
 	npages = (addr - vma->vm_start) >> PAGE_SHIFT;
 
-	अगर (new_below) अणु
+	if (new_below) {
 		region->vm_top = region->vm_end = new->vm_end = addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		region->vm_start = new->vm_start = addr;
 		region->vm_pgoff = new->vm_pgoff += npages;
-	पूर्ण
+	}
 
-	अगर (new->vm_ops && new->vm_ops->खोलो)
-		new->vm_ops->खोलो(new);
+	if (new->vm_ops && new->vm_ops->open)
+		new->vm_ops->open(new);
 
 	delete_vma_from_mm(vma);
-	करोwn_ग_लिखो(&nommu_region_sem);
+	down_write(&nommu_region_sem);
 	delete_nommu_region(vma->vm_region);
-	अगर (new_below) अणु
+	if (new_below) {
 		vma->vm_region->vm_start = vma->vm_start = addr;
 		vma->vm_region->vm_pgoff = vma->vm_pgoff += npages;
-	पूर्ण अन्यथा अणु
+	} else {
 		vma->vm_region->vm_end = vma->vm_end = addr;
 		vma->vm_region->vm_top = addr;
-	पूर्ण
+	}
 	add_nommu_region(vma->vm_region);
 	add_nommu_region(new->vm_region);
-	up_ग_लिखो(&nommu_region_sem);
+	up_write(&nommu_region_sem);
 	add_vma_to_mm(mm, vma);
 	add_vma_to_mm(mm, new);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * shrink a VMA by removing the specअगरied chunk from either the beginning or
+ * shrink a VMA by removing the specified chunk from either the beginning or
  * the end
  */
-अटल पूर्णांक shrink_vma(काष्ठा mm_काष्ठा *mm,
-		      काष्ठा vm_area_काष्ठा *vma,
-		      अचिन्हित दीर्घ from, अचिन्हित दीर्घ to)
-अणु
-	काष्ठा vm_region *region;
+static int shrink_vma(struct mm_struct *mm,
+		      struct vm_area_struct *vma,
+		      unsigned long from, unsigned long to)
+{
+	struct vm_region *region;
 
 	/* adjust the VMA's pointers, which may reposition it in the MM's tree
 	 * and list */
 	delete_vma_from_mm(vma);
-	अगर (from > vma->vm_start)
+	if (from > vma->vm_start)
 		vma->vm_end = from;
-	अन्यथा
+	else
 		vma->vm_start = to;
 	add_vma_to_mm(mm, vma);
 
-	/* cut the backing region करोwn to size */
+	/* cut the backing region down to size */
 	region = vma->vm_region;
 	BUG_ON(region->vm_usage != 1);
 
-	करोwn_ग_लिखो(&nommu_region_sem);
+	down_write(&nommu_region_sem);
 	delete_nommu_region(region);
-	अगर (from > region->vm_start) अणु
+	if (from > region->vm_start) {
 		to = region->vm_top;
 		region->vm_top = region->vm_end = from;
-	पूर्ण अन्यथा अणु
+	} else {
 		region->vm_start = to;
-	पूर्ण
+	}
 	add_nommu_region(region);
-	up_ग_लिखो(&nommu_region_sem);
+	up_write(&nommu_region_sem);
 
-	मुक्त_page_series(from, to);
-	वापस 0;
-पूर्ण
+	free_page_series(from, to);
+	return 0;
+}
 
 /*
  * release a mapping
  * - under NOMMU conditions the chunk to be unmapped must be backed by a single
  *   VMA, though it need not cover the whole VMA
  */
-पूर्णांक करो_munmap(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, माप_प्रकार len, काष्ठा list_head *uf)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	अचिन्हित दीर्घ end;
-	पूर्णांक ret;
+int do_munmap(struct mm_struct *mm, unsigned long start, size_t len, struct list_head *uf)
+{
+	struct vm_area_struct *vma;
+	unsigned long end;
+	int ret;
 
 	len = PAGE_ALIGN(len);
-	अगर (len == 0)
-		वापस -EINVAL;
+	if (len == 0)
+		return -EINVAL;
 
 	end = start + len;
 
 	/* find the first potentially overlapping VMA */
 	vma = find_vma(mm, start);
-	अगर (!vma) अणु
-		अटल पूर्णांक limit;
-		अगर (limit < 5) अणु
+	if (!vma) {
+		static int limit;
+		if (limit < 5) {
 			pr_warn("munmap of memory not mmapped by process %d (%s): 0x%lx-0x%lx\n",
 					current->pid, current->comm,
 					start, start + len - 1);
 			limit++;
-		पूर्ण
-		वापस -EINVAL;
-	पूर्ण
+		}
+		return -EINVAL;
+	}
 
 	/* we're allowed to split an anonymous VMA but not a file-backed one */
-	अगर (vma->vm_file) अणु
-		करो अणु
-			अगर (start > vma->vm_start)
-				वापस -EINVAL;
-			अगर (end == vma->vm_end)
-				जाओ erase_whole_vma;
+	if (vma->vm_file) {
+		do {
+			if (start > vma->vm_start)
+				return -EINVAL;
+			if (end == vma->vm_end)
+				goto erase_whole_vma;
 			vma = vma->vm_next;
-		पूर्ण जबतक (vma);
-		वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		} while (vma);
+		return -EINVAL;
+	} else {
 		/* the chunk must be a subset of the VMA found */
-		अगर (start == vma->vm_start && end == vma->vm_end)
-			जाओ erase_whole_vma;
-		अगर (start < vma->vm_start || end > vma->vm_end)
-			वापस -EINVAL;
-		अगर (offset_in_page(start))
-			वापस -EINVAL;
-		अगर (end != vma->vm_end && offset_in_page(end))
-			वापस -EINVAL;
-		अगर (start != vma->vm_start && end != vma->vm_end) अणु
+		if (start == vma->vm_start && end == vma->vm_end)
+			goto erase_whole_vma;
+		if (start < vma->vm_start || end > vma->vm_end)
+			return -EINVAL;
+		if (offset_in_page(start))
+			return -EINVAL;
+		if (end != vma->vm_end && offset_in_page(end))
+			return -EINVAL;
+		if (start != vma->vm_start && end != vma->vm_end) {
 			ret = split_vma(mm, vma, start, 1);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-		वापस shrink_vma(mm, vma, start, end);
-	पूर्ण
+			if (ret < 0)
+				return ret;
+		}
+		return shrink_vma(mm, vma, start, end);
+	}
 
 erase_whole_vma:
 	delete_vma_from_mm(vma);
 	delete_vma(mm, vma);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(करो_munmap);
+	return 0;
+}
+EXPORT_SYMBOL(do_munmap);
 
-पूर्णांक vm_munmap(अचिन्हित दीर्घ addr, माप_प्रकार len)
-अणु
-	काष्ठा mm_काष्ठा *mm = current->mm;
-	पूर्णांक ret;
+int vm_munmap(unsigned long addr, size_t len)
+{
+	struct mm_struct *mm = current->mm;
+	int ret;
 
-	mmap_ग_लिखो_lock(mm);
-	ret = करो_munmap(mm, addr, len, शून्य);
-	mmap_ग_लिखो_unlock(mm);
-	वापस ret;
-पूर्ण
+	mmap_write_lock(mm);
+	ret = do_munmap(mm, addr, len, NULL);
+	mmap_write_unlock(mm);
+	return ret;
+}
 EXPORT_SYMBOL(vm_munmap);
 
-SYSCALL_DEFINE2(munmap, अचिन्हित दीर्घ, addr, माप_प्रकार, len)
-अणु
-	वापस vm_munmap(addr, len);
-पूर्ण
+SYSCALL_DEFINE2(munmap, unsigned long, addr, size_t, len)
+{
+	return vm_munmap(addr, len);
+}
 
 /*
  * release all the mappings made in a process's VM space
  */
-व्योम निकास_mmap(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+void exit_mmap(struct mm_struct *mm)
+{
+	struct vm_area_struct *vma;
 
-	अगर (!mm)
-		वापस;
+	if (!mm)
+		return;
 
 	mm->total_vm = 0;
 
-	जबतक ((vma = mm->mmap)) अणु
+	while ((vma = mm->mmap)) {
 		mm->mmap = vma->vm_next;
 		delete_vma_from_mm(vma);
 		delete_vma(mm, vma);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक vm_brk(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len)
-अणु
-	वापस -ENOMEM;
-पूर्ण
+int vm_brk(unsigned long addr, unsigned long len)
+{
+	return -ENOMEM;
+}
 
 /*
  * expand (or shrink) an existing mapping, potentially moving it at the same
- * समय (controlled by the MREMAP_MAYMOVE flag and available VM space)
+ * time (controlled by the MREMAP_MAYMOVE flag and available VM space)
  *
  * under NOMMU conditions, we only permit changing a mapping's size, and only
- * as दीर्घ as it stays within the region allocated by करो_mmap_निजी() and the
+ * as long as it stays within the region allocated by do_mmap_private() and the
  * block is not shareable
  *
  * MREMAP_FIXED is not supported under NOMMU conditions
  */
-अटल अचिन्हित दीर्घ करो_mremap(अचिन्हित दीर्घ addr,
-			अचिन्हित दीर्घ old_len, अचिन्हित दीर्घ new_len,
-			अचिन्हित दीर्घ flags, अचिन्हित दीर्घ new_addr)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
+static unsigned long do_mremap(unsigned long addr,
+			unsigned long old_len, unsigned long new_len,
+			unsigned long flags, unsigned long new_addr)
+{
+	struct vm_area_struct *vma;
 
 	/* insanity checks first */
 	old_len = PAGE_ALIGN(old_len);
 	new_len = PAGE_ALIGN(new_len);
-	अगर (old_len == 0 || new_len == 0)
-		वापस (अचिन्हित दीर्घ) -EINVAL;
+	if (old_len == 0 || new_len == 0)
+		return (unsigned long) -EINVAL;
 
-	अगर (offset_in_page(addr))
-		वापस -EINVAL;
+	if (offset_in_page(addr))
+		return -EINVAL;
 
-	अगर (flags & MREMAP_FIXED && new_addr != addr)
-		वापस (अचिन्हित दीर्घ) -EINVAL;
+	if (flags & MREMAP_FIXED && new_addr != addr)
+		return (unsigned long) -EINVAL;
 
 	vma = find_vma_exact(current->mm, addr, old_len);
-	अगर (!vma)
-		वापस (अचिन्हित दीर्घ) -EINVAL;
+	if (!vma)
+		return (unsigned long) -EINVAL;
 
-	अगर (vma->vm_end != vma->vm_start + old_len)
-		वापस (अचिन्हित दीर्घ) -EFAULT;
+	if (vma->vm_end != vma->vm_start + old_len)
+		return (unsigned long) -EFAULT;
 
-	अगर (vma->vm_flags & VM_MAYSHARE)
-		वापस (अचिन्हित दीर्घ) -EPERM;
+	if (vma->vm_flags & VM_MAYSHARE)
+		return (unsigned long) -EPERM;
 
-	अगर (new_len > vma->vm_region->vm_end - vma->vm_region->vm_start)
-		वापस (अचिन्हित दीर्घ) -ENOMEM;
+	if (new_len > vma->vm_region->vm_end - vma->vm_region->vm_start)
+		return (unsigned long) -ENOMEM;
 
-	/* all checks complete - करो it */
+	/* all checks complete - do it */
 	vma->vm_end = vma->vm_start + new_len;
-	वापस vma->vm_start;
-पूर्ण
+	return vma->vm_start;
+}
 
-SYSCALL_DEFINE5(mremap, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, old_len,
-		अचिन्हित दीर्घ, new_len, अचिन्हित दीर्घ, flags,
-		अचिन्हित दीर्घ, new_addr)
-अणु
-	अचिन्हित दीर्घ ret;
+SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
+		unsigned long, new_len, unsigned long, flags,
+		unsigned long, new_addr)
+{
+	unsigned long ret;
 
-	mmap_ग_लिखो_lock(current->mm);
-	ret = करो_mremap(addr, old_len, new_len, flags, new_addr);
-	mmap_ग_लिखो_unlock(current->mm);
-	वापस ret;
-पूर्ण
+	mmap_write_lock(current->mm);
+	ret = do_mremap(addr, old_len, new_len, flags, new_addr);
+	mmap_write_unlock(current->mm);
+	return ret;
+}
 
-काष्ठा page *follow_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address,
-			 अचिन्हित पूर्णांक foll_flags)
-अणु
-	वापस शून्य;
-पूर्ण
+struct page *follow_page(struct vm_area_struct *vma, unsigned long address,
+			 unsigned int foll_flags)
+{
+	return NULL;
+}
 
-पूर्णांक remap_pfn_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
-		अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size, pgprot_t prot)
-अणु
-	अगर (addr != (pfn << PAGE_SHIFT))
-		वापस -EINVAL;
+int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
+		unsigned long pfn, unsigned long size, pgprot_t prot)
+{
+	if (addr != (pfn << PAGE_SHIFT))
+		return -EINVAL;
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(remap_pfn_range);
 
-पूर्णांक vm_iomap_memory(काष्ठा vm_area_काष्ठा *vma, phys_addr_t start, अचिन्हित दीर्घ len)
-अणु
-	अचिन्हित दीर्घ pfn = start >> PAGE_SHIFT;
-	अचिन्हित दीर्घ vm_len = vma->vm_end - vma->vm_start;
+int vm_iomap_memory(struct vm_area_struct *vma, phys_addr_t start, unsigned long len)
+{
+	unsigned long pfn = start >> PAGE_SHIFT;
+	unsigned long vm_len = vma->vm_end - vma->vm_start;
 
 	pfn += vma->vm_pgoff;
-	वापस io_remap_pfn_range(vma, vma->vm_start, pfn, vm_len, vma->vm_page_prot);
-पूर्ण
+	return io_remap_pfn_range(vma, vma->vm_start, pfn, vm_len, vma->vm_page_prot);
+}
 EXPORT_SYMBOL(vm_iomap_memory);
 
-पूर्णांक remap_vदो_स्मृति_range(काष्ठा vm_area_काष्ठा *vma, व्योम *addr,
-			अचिन्हित दीर्घ pgoff)
-अणु
-	अचिन्हित पूर्णांक size = vma->vm_end - vma->vm_start;
+int remap_vmalloc_range(struct vm_area_struct *vma, void *addr,
+			unsigned long pgoff)
+{
+	unsigned int size = vma->vm_end - vma->vm_start;
 
-	अगर (!(vma->vm_flags & VM_USERMAP))
-		वापस -EINVAL;
+	if (!(vma->vm_flags & VM_USERMAP))
+		return -EINVAL;
 
-	vma->vm_start = (अचिन्हित दीर्घ)(addr + (pgoff << PAGE_SHIFT));
+	vma->vm_start = (unsigned long)(addr + (pgoff << PAGE_SHIFT));
 	vma->vm_end = vma->vm_start + size;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(remap_vदो_स्मृति_range);
+	return 0;
+}
+EXPORT_SYMBOL(remap_vmalloc_range);
 
-अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *file, अचिन्हित दीर्घ addr,
-	अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
-अणु
-	वापस -ENOMEM;
-पूर्ण
+unsigned long arch_get_unmapped_area(struct file *file, unsigned long addr,
+	unsigned long len, unsigned long pgoff, unsigned long flags)
+{
+	return -ENOMEM;
+}
 
-vm_fault_t filemap_fault(काष्ठा vm_fault *vmf)
-अणु
+vm_fault_t filemap_fault(struct vm_fault *vmf)
+{
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(filemap_fault);
 
-vm_fault_t filemap_map_pages(काष्ठा vm_fault *vmf,
+vm_fault_t filemap_map_pages(struct vm_fault *vmf,
 		pgoff_t start_pgoff, pgoff_t end_pgoff)
-अणु
+{
 	BUG();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(filemap_map_pages);
 
-पूर्णांक __access_remote_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, व्योम *buf,
-		       पूर्णांक len, अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक ग_लिखो = gup_flags & FOLL_WRITE;
+int __access_remote_vm(struct mm_struct *mm, unsigned long addr, void *buf,
+		       int len, unsigned int gup_flags)
+{
+	struct vm_area_struct *vma;
+	int write = gup_flags & FOLL_WRITE;
 
-	अगर (mmap_पढ़ो_lock_समाप्तable(mm))
-		वापस 0;
+	if (mmap_read_lock_killable(mm))
+		return 0;
 
 	/* the access must start within one of the target process's mappings */
 	vma = find_vma(mm, addr);
-	अगर (vma) अणु
-		/* करोn't overrun this mapping */
-		अगर (addr + len >= vma->vm_end)
+	if (vma) {
+		/* don't overrun this mapping */
+		if (addr + len >= vma->vm_end)
 			len = vma->vm_end - addr;
 
-		/* only पढ़ो or ग_लिखो mappings where it is permitted */
-		अगर (ग_लिखो && vma->vm_flags & VM_MAYWRITE)
-			copy_to_user_page(vma, शून्य, addr,
-					 (व्योम *) addr, buf, len);
-		अन्यथा अगर (!ग_लिखो && vma->vm_flags & VM_MAYREAD)
-			copy_from_user_page(vma, शून्य, addr,
-					    buf, (व्योम *) addr, len);
-		अन्यथा
+		/* only read or write mappings where it is permitted */
+		if (write && vma->vm_flags & VM_MAYWRITE)
+			copy_to_user_page(vma, NULL, addr,
+					 (void *) addr, buf, len);
+		else if (!write && vma->vm_flags & VM_MAYREAD)
+			copy_from_user_page(vma, NULL, addr,
+					    buf, (void *) addr, len);
+		else
 			len = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		len = 0;
-	पूर्ण
+	}
 
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /**
  * access_remote_vm - access another process' address space
- * @mm:		the mm_काष्ठा of the target address space
+ * @mm:		the mm_struct of the target address space
  * @addr:	start address to access
  * @buf:	source or destination buffer
  * @len:	number of bytes to transfer
- * @gup_flags:	flags modअगरying lookup behaviour
+ * @gup_flags:	flags modifying lookup behaviour
  *
  * The caller must hold a reference on @mm.
  */
-पूर्णांक access_remote_vm(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
-		व्योम *buf, पूर्णांक len, अचिन्हित पूर्णांक gup_flags)
-अणु
-	वापस __access_remote_vm(mm, addr, buf, len, gup_flags);
-पूर्ण
+int access_remote_vm(struct mm_struct *mm, unsigned long addr,
+		void *buf, int len, unsigned int gup_flags)
+{
+	return __access_remote_vm(mm, addr, buf, len, gup_flags);
+}
 
 /*
  * Access another process' address space.
  * - source/target buffer must be kernel space
  */
-पूर्णांक access_process_vm(काष्ठा task_काष्ठा *tsk, अचिन्हित दीर्घ addr, व्योम *buf, पूर्णांक len,
-		अचिन्हित पूर्णांक gup_flags)
-अणु
-	काष्ठा mm_काष्ठा *mm;
+int access_process_vm(struct task_struct *tsk, unsigned long addr, void *buf, int len,
+		unsigned int gup_flags)
+{
+	struct mm_struct *mm;
 
-	अगर (addr + len < addr)
-		वापस 0;
+	if (addr + len < addr)
+		return 0;
 
 	mm = get_task_mm(tsk);
-	अगर (!mm)
-		वापस 0;
+	if (!mm)
+		return 0;
 
 	len = __access_remote_vm(mm, addr, buf, len, gup_flags);
 
 	mmput(mm);
-	वापस len;
-पूर्ण
+	return len;
+}
 EXPORT_SYMBOL_GPL(access_process_vm);
 
 /**
@@ -1748,98 +1747,98 @@ EXPORT_SYMBOL_GPL(access_process_vm);
  *
  * Check the shared mappings on an inode on behalf of a shrinking truncate to
  * make sure that any outstanding VMAs aren't broken and then shrink the
- * vm_regions that extend beyond so that करो_mmap() करोesn't
- * स्वतःmatically grant mappings that are too large.
+ * vm_regions that extend beyond so that do_mmap() doesn't
+ * automatically grant mappings that are too large.
  */
-पूर्णांक nommu_shrink_inode_mappings(काष्ठा inode *inode, माप_प्रकार size,
-				माप_प्रकार newsize)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा vm_region *region;
+int nommu_shrink_inode_mappings(struct inode *inode, size_t size,
+				size_t newsize)
+{
+	struct vm_area_struct *vma;
+	struct vm_region *region;
 	pgoff_t low, high;
-	माप_प्रकार r_size, r_top;
+	size_t r_size, r_top;
 
 	low = newsize >> PAGE_SHIFT;
 	high = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 
-	करोwn_ग_लिखो(&nommu_region_sem);
-	i_mmap_lock_पढ़ो(inode->i_mapping);
+	down_write(&nommu_region_sem);
+	i_mmap_lock_read(inode->i_mapping);
 
-	/* search क्रम VMAs that fall within the dead zone */
-	vma_पूर्णांकerval_tree_क्रमeach(vma, &inode->i_mapping->i_mmap, low, high) अणु
-		/* found one - only पूर्णांकerested अगर it's shared out of the page
+	/* search for VMAs that fall within the dead zone */
+	vma_interval_tree_foreach(vma, &inode->i_mapping->i_mmap, low, high) {
+		/* found one - only interested if it's shared out of the page
 		 * cache */
-		अगर (vma->vm_flags & VM_SHARED) अणु
-			i_mmap_unlock_पढ़ो(inode->i_mapping);
-			up_ग_लिखो(&nommu_region_sem);
-			वापस -ETXTBSY; /* not quite true, but near enough */
-		पूर्ण
-	पूर्ण
+		if (vma->vm_flags & VM_SHARED) {
+			i_mmap_unlock_read(inode->i_mapping);
+			up_write(&nommu_region_sem);
+			return -ETXTBSY; /* not quite true, but near enough */
+		}
+	}
 
-	/* reduce any regions that overlap the dead zone - अगर in existence,
-	 * these will be poपूर्णांकed to by VMAs that करोn't overlap the dead zone
+	/* reduce any regions that overlap the dead zone - if in existence,
+	 * these will be pointed to by VMAs that don't overlap the dead zone
 	 *
-	 * we करोn't check क्रम any regions that start beyond the खातापूर्ण as there
+	 * we don't check for any regions that start beyond the EOF as there
 	 * shouldn't be any
 	 */
-	vma_पूर्णांकerval_tree_क्रमeach(vma, &inode->i_mapping->i_mmap, 0, अच_दीर्घ_उच्च) अणु
-		अगर (!(vma->vm_flags & VM_SHARED))
-			जारी;
+	vma_interval_tree_foreach(vma, &inode->i_mapping->i_mmap, 0, ULONG_MAX) {
+		if (!(vma->vm_flags & VM_SHARED))
+			continue;
 
 		region = vma->vm_region;
 		r_size = region->vm_top - region->vm_start;
 		r_top = (region->vm_pgoff << PAGE_SHIFT) + r_size;
 
-		अगर (r_top > newsize) अणु
+		if (r_top > newsize) {
 			region->vm_top -= r_top - newsize;
-			अगर (region->vm_end > region->vm_top)
+			if (region->vm_end > region->vm_top)
 				region->vm_end = region->vm_top;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	i_mmap_unlock_पढ़ो(inode->i_mapping);
-	up_ग_लिखो(&nommu_region_sem);
-	वापस 0;
-पूर्ण
+	i_mmap_unlock_read(inode->i_mapping);
+	up_write(&nommu_region_sem);
+	return 0;
+}
 
 /*
  * Initialise sysctl_user_reserve_kbytes.
  *
- * This is पूर्णांकended to prevent a user from starting a single memory hogging
- * process, such that they cannot recover (समाप्त the hog) in OVERCOMMIT_NEVER
+ * This is intended to prevent a user from starting a single memory hogging
+ * process, such that they cannot recover (kill the hog) in OVERCOMMIT_NEVER
  * mode.
  *
- * The शेष value is min(3% of मुक्त memory, 128MB)
- * 128MB is enough to recover with sshd/login, bash, and top/समाप्त.
+ * The default value is min(3% of free memory, 128MB)
+ * 128MB is enough to recover with sshd/login, bash, and top/kill.
  */
-अटल पूर्णांक __meminit init_user_reserve(व्योम)
-अणु
-	अचिन्हित दीर्घ मुक्त_kbytes;
+static int __meminit init_user_reserve(void)
+{
+	unsigned long free_kbytes;
 
-	मुक्त_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
+	free_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
 
-	sysctl_user_reserve_kbytes = min(मुक्त_kbytes / 32, 1UL << 17);
-	वापस 0;
-पूर्ण
+	sysctl_user_reserve_kbytes = min(free_kbytes / 32, 1UL << 17);
+	return 0;
+}
 subsys_initcall(init_user_reserve);
 
 /*
  * Initialise sysctl_admin_reserve_kbytes.
  *
  * The purpose of sysctl_admin_reserve_kbytes is to allow the sys admin
- * to log in and समाप्त a memory hogging process.
+ * to log in and kill a memory hogging process.
  *
  * Systems with more than 256MB will reserve 8MB, enough to recover
- * with sshd, bash, and top in OVERCOMMIT_GUESS. Smaller प्रणालीs will
- * only reserve 3% of मुक्त pages by शेष.
+ * with sshd, bash, and top in OVERCOMMIT_GUESS. Smaller systems will
+ * only reserve 3% of free pages by default.
  */
-अटल पूर्णांक __meminit init_admin_reserve(व्योम)
-अणु
-	अचिन्हित दीर्घ मुक्त_kbytes;
+static int __meminit init_admin_reserve(void)
+{
+	unsigned long free_kbytes;
 
-	मुक्त_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
+	free_kbytes = global_zone_page_state(NR_FREE_PAGES) << (PAGE_SHIFT - 10);
 
-	sysctl_admin_reserve_kbytes = min(मुक्त_kbytes / 32, 1UL << 13);
-	वापस 0;
-पूर्ण
+	sysctl_admin_reserve_kbytes = min(free_kbytes / 32, 1UL << 13);
+	return 0;
+}
 subsys_initcall(init_admin_reserve);

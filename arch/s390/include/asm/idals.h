@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* 
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  *		    Martin Schwidefsky <schwidefsky@de.ibm.com>
@@ -8,226 +7,226 @@
  *
  * History of changes
  * 07/24/00 new file
- * 05/04/02 code reकाष्ठाuring.
+ * 05/04/02 code restructuring.
  */
 
-#अगर_अघोषित _S390_IDALS_H
-#घोषणा _S390_IDALS_H
+#ifndef _S390_IDALS_H
+#define _S390_IDALS_H
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/err.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/cपन.स>
-#समावेश <linux/uaccess.h>
+#include <linux/errno.h>
+#include <linux/err.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <asm/cio.h>
+#include <linux/uaccess.h>
 
-#घोषणा IDA_SIZE_LOG 12 /* 11 क्रम 2k , 12 क्रम 4k */
-#घोषणा IDA_BLOCK_SIZE (1L<<IDA_SIZE_LOG)
+#define IDA_SIZE_LOG 12 /* 11 for 2k , 12 for 4k */
+#define IDA_BLOCK_SIZE (1L<<IDA_SIZE_LOG)
 
 /*
- * Test अगर an address/length pair needs an idal list.
+ * Test if an address/length pair needs an idal list.
  */
-अटल अंतरभूत पूर्णांक
-idal_is_needed(व्योम *vaddr, अचिन्हित पूर्णांक length)
-अणु
-	वापस ((__pa(vaddr) + length - 1) >> 31) != 0;
-पूर्ण
+static inline int
+idal_is_needed(void *vaddr, unsigned int length)
+{
+	return ((__pa(vaddr) + length - 1) >> 31) != 0;
+}
 
 
 /*
- * Return the number of idal words needed क्रम an address/length pair.
+ * Return the number of idal words needed for an address/length pair.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक idal_nr_words(व्योम *vaddr, अचिन्हित पूर्णांक length)
-अणु
-	वापस ((__pa(vaddr) & (IDA_BLOCK_SIZE-1)) + length +
+static inline unsigned int idal_nr_words(void *vaddr, unsigned int length)
+{
+	return ((__pa(vaddr) & (IDA_BLOCK_SIZE-1)) + length +
 		(IDA_BLOCK_SIZE-1)) >> IDA_SIZE_LOG;
-पूर्ण
+}
 
 /*
- * Create the list of idal words क्रम an address/length pair.
+ * Create the list of idal words for an address/length pair.
  */
-अटल अंतरभूत अचिन्हित दीर्घ *idal_create_words(अचिन्हित दीर्घ *idaws,
-					       व्योम *vaddr, अचिन्हित पूर्णांक length)
-अणु
-	अचिन्हित दीर्घ paddr;
-	अचिन्हित पूर्णांक cidaw;
+static inline unsigned long *idal_create_words(unsigned long *idaws,
+					       void *vaddr, unsigned int length)
+{
+	unsigned long paddr;
+	unsigned int cidaw;
 
 	paddr = __pa(vaddr);
 	cidaw = ((paddr & (IDA_BLOCK_SIZE-1)) + length + 
 		 (IDA_BLOCK_SIZE-1)) >> IDA_SIZE_LOG;
 	*idaws++ = paddr;
 	paddr &= -IDA_BLOCK_SIZE;
-	जबतक (--cidaw > 0) अणु
+	while (--cidaw > 0) {
 		paddr += IDA_BLOCK_SIZE;
 		*idaws++ = paddr;
-	पूर्ण
-	वापस idaws;
-पूर्ण
+	}
+	return idaws;
+}
 
 /*
  * Sets the address of the data in CCW.
  * If necessary it allocates an IDAL and sets the appropriate flags.
  */
-अटल अंतरभूत पूर्णांक
-set_normalized_cda(काष्ठा ccw1 * ccw, व्योम *vaddr)
-अणु
-	अचिन्हित पूर्णांक nridaws;
-	अचिन्हित दीर्घ *idal;
+static inline int
+set_normalized_cda(struct ccw1 * ccw, void *vaddr)
+{
+	unsigned int nridaws;
+	unsigned long *idal;
 
-	अगर (ccw->flags & CCW_FLAG_IDA)
-		वापस -EINVAL;
+	if (ccw->flags & CCW_FLAG_IDA)
+		return -EINVAL;
 	nridaws = idal_nr_words(vaddr, ccw->count);
-	अगर (nridaws > 0) अणु
-		idal = kदो_स्मृति(nridaws * माप(अचिन्हित दीर्घ),
+	if (nridaws > 0) {
+		idal = kmalloc(nridaws * sizeof(unsigned long),
 			       GFP_ATOMIC | GFP_DMA );
-		अगर (idal == शून्य)
-			वापस -ENOMEM;
+		if (idal == NULL)
+			return -ENOMEM;
 		idal_create_words(idal, vaddr, ccw->count);
 		ccw->flags |= CCW_FLAG_IDA;
 		vaddr = idal;
-	पूर्ण
-	ccw->cda = (__u32)(अचिन्हित दीर्घ) vaddr;
-	वापस 0;
-पूर्ण
+	}
+	ccw->cda = (__u32)(unsigned long) vaddr;
+	return 0;
+}
 
 /*
  * Releases any allocated IDAL related to the CCW.
  */
-अटल अंतरभूत व्योम
-clear_normalized_cda(काष्ठा ccw1 * ccw)
-अणु
-	अगर (ccw->flags & CCW_FLAG_IDA) अणु
-		kमुक्त((व्योम *)(अचिन्हित दीर्घ) ccw->cda);
+static inline void
+clear_normalized_cda(struct ccw1 * ccw)
+{
+	if (ccw->flags & CCW_FLAG_IDA) {
+		kfree((void *)(unsigned long) ccw->cda);
 		ccw->flags &= ~CCW_FLAG_IDA;
-	पूर्ण
+	}
 	ccw->cda = 0;
-पूर्ण
+}
 
 /*
  * Idal buffer extension
  */
-काष्ठा idal_buffer अणु
-	माप_प्रकार size;
-	माप_प्रकार page_order;
-	व्योम *data[0];
-पूर्ण;
+struct idal_buffer {
+	size_t size;
+	size_t page_order;
+	void *data[0];
+};
 
 /*
  * Allocate an idal buffer
  */
-अटल अंतरभूत काष्ठा idal_buffer *
-idal_buffer_alloc(माप_प्रकार size, पूर्णांक page_order)
-अणु
-	काष्ठा idal_buffer *ib;
-	पूर्णांक nr_chunks, nr_ptrs, i;
+static inline struct idal_buffer *
+idal_buffer_alloc(size_t size, int page_order)
+{
+	struct idal_buffer *ib;
+	int nr_chunks, nr_ptrs, i;
 
 	nr_ptrs = (size + IDA_BLOCK_SIZE - 1) >> IDA_SIZE_LOG;
 	nr_chunks = (4096 << page_order) >> IDA_SIZE_LOG;
-	ib = kदो_स्मृति(काष्ठा_size(ib, data, nr_ptrs), GFP_DMA | GFP_KERNEL);
-	अगर (ib == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	ib = kmalloc(struct_size(ib, data, nr_ptrs), GFP_DMA | GFP_KERNEL);
+	if (ib == NULL)
+		return ERR_PTR(-ENOMEM);
 	ib->size = size;
 	ib->page_order = page_order;
-	क्रम (i = 0; i < nr_ptrs; i++) अणु
-		अगर ((i & (nr_chunks - 1)) != 0) अणु
+	for (i = 0; i < nr_ptrs; i++) {
+		if ((i & (nr_chunks - 1)) != 0) {
 			ib->data[i] = ib->data[i-1] + IDA_BLOCK_SIZE;
-			जारी;
-		पूर्ण
-		ib->data[i] = (व्योम *)
-			__get_मुक्त_pages(GFP_KERNEL, page_order);
-		अगर (ib->data[i] != शून्य)
-			जारी;
+			continue;
+		}
+		ib->data[i] = (void *)
+			__get_free_pages(GFP_KERNEL, page_order);
+		if (ib->data[i] != NULL)
+			continue;
 		// Not enough memory
-		जबतक (i >= nr_chunks) अणु
+		while (i >= nr_chunks) {
 			i -= nr_chunks;
-			मुक्त_pages((अचिन्हित दीर्घ) ib->data[i],
+			free_pages((unsigned long) ib->data[i],
 				   ib->page_order);
-		पूर्ण
-		kमुक्त(ib);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	वापस ib;
-पूर्ण
+		}
+		kfree(ib);
+		return ERR_PTR(-ENOMEM);
+	}
+	return ib;
+}
 
 /*
  * Free an idal buffer.
  */
-अटल अंतरभूत व्योम
-idal_buffer_मुक्त(काष्ठा idal_buffer *ib)
-अणु
-	पूर्णांक nr_chunks, nr_ptrs, i;
+static inline void
+idal_buffer_free(struct idal_buffer *ib)
+{
+	int nr_chunks, nr_ptrs, i;
 
 	nr_ptrs = (ib->size + IDA_BLOCK_SIZE - 1) >> IDA_SIZE_LOG;
 	nr_chunks = (4096 << ib->page_order) >> IDA_SIZE_LOG;
-	क्रम (i = 0; i < nr_ptrs; i += nr_chunks)
-		मुक्त_pages((अचिन्हित दीर्घ) ib->data[i], ib->page_order);
-	kमुक्त(ib);
-पूर्ण
+	for (i = 0; i < nr_ptrs; i += nr_chunks)
+		free_pages((unsigned long) ib->data[i], ib->page_order);
+	kfree(ib);
+}
 
 /*
- * Test अगर a idal list is really needed.
+ * Test if a idal list is really needed.
  */
-अटल अंतरभूत पूर्णांक
-__idal_buffer_is_needed(काष्ठा idal_buffer *ib)
-अणु
-	वापस ib->size > (4096ul << ib->page_order) ||
+static inline int
+__idal_buffer_is_needed(struct idal_buffer *ib)
+{
+	return ib->size > (4096ul << ib->page_order) ||
 		idal_is_needed(ib->data[0], ib->size);
-पूर्ण
+}
 
 /*
  * Set channel data address to idal buffer.
  */
-अटल अंतरभूत व्योम
-idal_buffer_set_cda(काष्ठा idal_buffer *ib, काष्ठा ccw1 *ccw)
-अणु
-	अगर (__idal_buffer_is_needed(ib)) अणु
+static inline void
+idal_buffer_set_cda(struct idal_buffer *ib, struct ccw1 *ccw)
+{
+	if (__idal_buffer_is_needed(ib)) {
 		// setup idals;
 		ccw->cda = (u32)(addr_t) ib->data;
 		ccw->flags |= CCW_FLAG_IDA;
-	पूर्ण अन्यथा
-		// we करो not need idals - use direct addressing
+	} else
+		// we do not need idals - use direct addressing
 		ccw->cda = (u32)(addr_t) ib->data[0];
 	ccw->count = ib->size;
-पूर्ण
+}
 
 /*
  * Copy count bytes from an idal buffer to user memory
  */
-अटल अंतरभूत माप_प्रकार
-idal_buffer_to_user(काष्ठा idal_buffer *ib, व्योम __user *to, माप_प्रकार count)
-अणु
-	माप_प्रकार left;
-	पूर्णांक i;
+static inline size_t
+idal_buffer_to_user(struct idal_buffer *ib, void __user *to, size_t count)
+{
+	size_t left;
+	int i;
 
 	BUG_ON(count > ib->size);
-	क्रम (i = 0; count > IDA_BLOCK_SIZE; i++) अणु
+	for (i = 0; count > IDA_BLOCK_SIZE; i++) {
 		left = copy_to_user(to, ib->data[i], IDA_BLOCK_SIZE);
-		अगर (left)
-			वापस left + count - IDA_BLOCK_SIZE;
-		to = (व्योम __user *) to + IDA_BLOCK_SIZE;
+		if (left)
+			return left + count - IDA_BLOCK_SIZE;
+		to = (void __user *) to + IDA_BLOCK_SIZE;
 		count -= IDA_BLOCK_SIZE;
-	पूर्ण
-	वापस copy_to_user(to, ib->data[i], count);
-पूर्ण
+	}
+	return copy_to_user(to, ib->data[i], count);
+}
 
 /*
  * Copy count bytes from user memory to an idal buffer
  */
-अटल अंतरभूत माप_प्रकार
-idal_buffer_from_user(काष्ठा idal_buffer *ib, स्थिर व्योम __user *from, माप_प्रकार count)
-अणु
-	माप_प्रकार left;
-	पूर्णांक i;
+static inline size_t
+idal_buffer_from_user(struct idal_buffer *ib, const void __user *from, size_t count)
+{
+	size_t left;
+	int i;
 
 	BUG_ON(count > ib->size);
-	क्रम (i = 0; count > IDA_BLOCK_SIZE; i++) अणु
+	for (i = 0; count > IDA_BLOCK_SIZE; i++) {
 		left = copy_from_user(ib->data[i], from, IDA_BLOCK_SIZE);
-		अगर (left)
-			वापस left + count - IDA_BLOCK_SIZE;
-		from = (व्योम __user *) from + IDA_BLOCK_SIZE;
+		if (left)
+			return left + count - IDA_BLOCK_SIZE;
+		from = (void __user *) from + IDA_BLOCK_SIZE;
 		count -= IDA_BLOCK_SIZE;
-	पूर्ण
-	वापस copy_from_user(ib->data[i], from, count);
-पूर्ण
+	}
+	return copy_from_user(ib->data[i], from, count);
+}
 
-#पूर्ण_अगर
+#endif

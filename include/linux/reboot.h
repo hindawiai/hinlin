@@ -1,31 +1,30 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_REBOOT_H
-#घोषणा _LINUX_REBOOT_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_REBOOT_H
+#define _LINUX_REBOOT_H
 
 
-#समावेश <linux/notअगरier.h>
-#समावेश <uapi/linux/reboot.h>
+#include <linux/notifier.h>
+#include <uapi/linux/reboot.h>
 
-काष्ठा device;
+struct device;
 
-#घोषणा SYS_DOWN	0x0001	/* Notअगरy of प्रणाली करोwn */
-#घोषणा SYS_RESTART	SYS_DOWN
-#घोषणा SYS_HALT	0x0002	/* Notअगरy of प्रणाली halt */
-#घोषणा SYS_POWER_OFF	0x0003	/* Notअगरy of प्रणाली घातer off */
+#define SYS_DOWN	0x0001	/* Notify of system down */
+#define SYS_RESTART	SYS_DOWN
+#define SYS_HALT	0x0002	/* Notify of system halt */
+#define SYS_POWER_OFF	0x0003	/* Notify of system power off */
 
-क्रमागत reboot_mode अणु
+enum reboot_mode {
 	REBOOT_UNDEFINED = -1,
 	REBOOT_COLD = 0,
 	REBOOT_WARM,
 	REBOOT_HARD,
 	REBOOT_SOFT,
 	REBOOT_GPIO,
-पूर्ण;
-बाह्य क्रमागत reboot_mode reboot_mode;
-बाह्य क्रमागत reboot_mode panic_reboot_mode;
+};
+extern enum reboot_mode reboot_mode;
+extern enum reboot_mode panic_reboot_mode;
 
-क्रमागत reboot_type अणु
+enum reboot_type {
 	BOOT_TRIPLE	= 't',
 	BOOT_KBD	= 'k',
 	BOOT_BIOS	= 'b',
@@ -33,59 +32,59 @@
 	BOOT_EFI	= 'e',
 	BOOT_CF9_FORCE	= 'p',
 	BOOT_CF9_SAFE	= 'q',
-पूर्ण;
-बाह्य क्रमागत reboot_type reboot_type;
+};
+extern enum reboot_type reboot_type;
 
-बाह्य पूर्णांक reboot_शेष;
-बाह्य पूर्णांक reboot_cpu;
-बाह्य पूर्णांक reboot_क्रमce;
+extern int reboot_default;
+extern int reboot_cpu;
+extern int reboot_force;
 
 
-बाह्य पूर्णांक रेजिस्टर_reboot_notअगरier(काष्ठा notअगरier_block *);
-बाह्य पूर्णांक unरेजिस्टर_reboot_notअगरier(काष्ठा notअगरier_block *);
+extern int register_reboot_notifier(struct notifier_block *);
+extern int unregister_reboot_notifier(struct notifier_block *);
 
-बाह्य पूर्णांक devm_रेजिस्टर_reboot_notअगरier(काष्ठा device *, काष्ठा notअगरier_block *);
+extern int devm_register_reboot_notifier(struct device *, struct notifier_block *);
 
-बाह्य पूर्णांक रेजिस्टर_restart_handler(काष्ठा notअगरier_block *);
-बाह्य पूर्णांक unरेजिस्टर_restart_handler(काष्ठा notअगरier_block *);
-बाह्य व्योम करो_kernel_restart(अक्षर *cmd);
+extern int register_restart_handler(struct notifier_block *);
+extern int unregister_restart_handler(struct notifier_block *);
+extern void do_kernel_restart(char *cmd);
 
 /*
- * Architecture-specअगरic implementations of sys_reboot commands.
+ * Architecture-specific implementations of sys_reboot commands.
  */
 
-बाह्य व्योम migrate_to_reboot_cpu(व्योम);
-बाह्य व्योम machine_restart(अक्षर *cmd);
-बाह्य व्योम machine_halt(व्योम);
-बाह्य व्योम machine_घातer_off(व्योम);
+extern void migrate_to_reboot_cpu(void);
+extern void machine_restart(char *cmd);
+extern void machine_halt(void);
+extern void machine_power_off(void);
 
-बाह्य व्योम machine_shutकरोwn(व्योम);
-काष्ठा pt_regs;
-बाह्य व्योम machine_crash_shutकरोwn(काष्ठा pt_regs *);
+extern void machine_shutdown(void);
+struct pt_regs;
+extern void machine_crash_shutdown(struct pt_regs *);
 
 /*
  * Architecture independent implemenations of sys_reboot commands.
  */
 
-बाह्य व्योम kernel_restart_prepare(अक्षर *cmd);
-बाह्य व्योम kernel_restart(अक्षर *cmd);
-बाह्य व्योम kernel_halt(व्योम);
-बाह्य व्योम kernel_घातer_off(व्योम);
+extern void kernel_restart_prepare(char *cmd);
+extern void kernel_restart(char *cmd);
+extern void kernel_halt(void);
+extern void kernel_power_off(void);
 
-बाह्य पूर्णांक C_A_D; /* क्रम sysctl */
-व्योम ctrl_alt_del(व्योम);
+extern int C_A_D; /* for sysctl */
+void ctrl_alt_del(void);
 
-#घोषणा POWEROFF_CMD_PATH_LEN	256
-बाह्य अक्षर घातeroff_cmd[POWEROFF_CMD_PATH_LEN];
+#define POWEROFF_CMD_PATH_LEN	256
+extern char poweroff_cmd[POWEROFF_CMD_PATH_LEN];
 
-बाह्य व्योम orderly_घातeroff(bool क्रमce);
-बाह्य व्योम orderly_reboot(व्योम);
+extern void orderly_poweroff(bool force);
+extern void orderly_reboot(void);
 
 /*
- * Emergency restart, callable from an पूर्णांकerrupt handler.
+ * Emergency restart, callable from an interrupt handler.
  */
 
-बाह्य व्योम emergency_restart(व्योम);
-#समावेश <यंत्र/emergency-restart.h>
+extern void emergency_restart(void);
+#include <asm/emergency-restart.h>
 
-#पूर्ण_अगर /* _LINUX_REBOOT_H */
+#endif /* _LINUX_REBOOT_H */

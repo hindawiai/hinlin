@@ -1,61 +1,60 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * camss-video.h
  *
- * Qualcomm MSM Camera Subप्रणाली - V4L2 device node
+ * Qualcomm MSM Camera Subsystem - V4L2 device node
  *
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
-#अगर_अघोषित QC_MSM_CAMSS_VIDEO_H
-#घोषणा QC_MSM_CAMSS_VIDEO_H
+#ifndef QC_MSM_CAMSS_VIDEO_H
+#define QC_MSM_CAMSS_VIDEO_H
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fh.h>
-#समावेश <media/v4l2-mediabus.h>
-#समावेश <media/videobuf2-v4l2.h>
+#include <linux/mutex.h>
+#include <linux/videodev2.h>
+#include <media/media-entity.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fh.h>
+#include <media/v4l2-mediabus.h>
+#include <media/videobuf2-v4l2.h>
 
-काष्ठा camss_buffer अणु
-	काष्ठा vb2_v4l2_buffer vb;
+struct camss_buffer {
+	struct vb2_v4l2_buffer vb;
 	dma_addr_t addr[3];
-	काष्ठा list_head queue;
-पूर्ण;
+	struct list_head queue;
+};
 
-काष्ठा camss_video;
+struct camss_video;
 
-काष्ठा camss_video_ops अणु
-	पूर्णांक (*queue_buffer)(काष्ठा camss_video *vid, काष्ठा camss_buffer *buf);
-	पूर्णांक (*flush_buffers)(काष्ठा camss_video *vid,
-			     क्रमागत vb2_buffer_state state);
-पूर्ण;
+struct camss_video_ops {
+	int (*queue_buffer)(struct camss_video *vid, struct camss_buffer *buf);
+	int (*flush_buffers)(struct camss_video *vid,
+			     enum vb2_buffer_state state);
+};
 
-काष्ठा camss_क्रमmat_info;
+struct camss_format_info;
 
-काष्ठा camss_video अणु
-	काष्ठा camss *camss;
-	काष्ठा vb2_queue vb2_q;
-	काष्ठा video_device vdev;
-	काष्ठा media_pad pad;
-	काष्ठा v4l2_क्रमmat active_fmt;
-	क्रमागत v4l2_buf_type type;
-	काष्ठा media_pipeline pipe;
-	स्थिर काष्ठा camss_video_ops *ops;
-	काष्ठा mutex lock;
-	काष्ठा mutex q_lock;
-	अचिन्हित पूर्णांक bpl_alignment;
-	अचिन्हित पूर्णांक line_based;
-	स्थिर काष्ठा camss_क्रमmat_info *क्रमmats;
-	अचिन्हित पूर्णांक nक्रमmats;
-पूर्ण;
+struct camss_video {
+	struct camss *camss;
+	struct vb2_queue vb2_q;
+	struct video_device vdev;
+	struct media_pad pad;
+	struct v4l2_format active_fmt;
+	enum v4l2_buf_type type;
+	struct media_pipeline pipe;
+	const struct camss_video_ops *ops;
+	struct mutex lock;
+	struct mutex q_lock;
+	unsigned int bpl_alignment;
+	unsigned int line_based;
+	const struct camss_format_info *formats;
+	unsigned int nformats;
+};
 
-पूर्णांक msm_video_रेजिस्टर(काष्ठा camss_video *video, काष्ठा v4l2_device *v4l2_dev,
-		       स्थिर अक्षर *name, पूर्णांक is_pix);
+int msm_video_register(struct camss_video *video, struct v4l2_device *v4l2_dev,
+		       const char *name, int is_pix);
 
-व्योम msm_video_unरेजिस्टर(काष्ठा camss_video *video);
+void msm_video_unregister(struct camss_video *video);
 
-#पूर्ण_अगर /* QC_MSM_CAMSS_VIDEO_H */
+#endif /* QC_MSM_CAMSS_VIDEO_H */

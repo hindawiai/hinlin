@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Hash Info: Hash algorithms inक्रमmation
+ * Hash Info: Hash algorithms information
  *
  * Copyright (c) 2013 Dmitry Kasatkin <d.kasatkin@samsung.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <crypto/hash_info.h>
+#include <linux/export.h>
+#include <crypto/hash_info.h>
 
-स्थिर अक्षर *स्थिर hash_algo_name[HASH_ALGO__LAST] = अणु
+const char *const hash_algo_name[HASH_ALGO__LAST] = {
 	[HASH_ALGO_MD4]		= "md4",
 	[HASH_ALGO_MD5]		= "md5",
 	[HASH_ALGO_SHA1]	= "sha1",
@@ -30,10 +29,10 @@
 	[HASH_ALGO_SM3_256]	= "sm3",
 	[HASH_ALGO_STREEBOG_256] = "streebog256",
 	[HASH_ALGO_STREEBOG_512] = "streebog512",
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(hash_algo_name);
 
-स्थिर पूर्णांक hash_digest_size[HASH_ALGO__LAST] = अणु
+const int hash_digest_size[HASH_ALGO__LAST] = {
 	[HASH_ALGO_MD4]		= MD5_DIGEST_SIZE,
 	[HASH_ALGO_MD5]		= MD5_DIGEST_SIZE,
 	[HASH_ALGO_SHA1]	= SHA1_DIGEST_SIZE,
@@ -54,5 +53,5 @@ EXPORT_SYMBOL_GPL(hash_algo_name);
 	[HASH_ALGO_SM3_256]	= SM3256_DIGEST_SIZE,
 	[HASH_ALGO_STREEBOG_256] = STREEBOG256_DIGEST_SIZE,
 	[HASH_ALGO_STREEBOG_512] = STREEBOG512_DIGEST_SIZE,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(hash_digest_size);

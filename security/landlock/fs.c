@@ -1,264 +1,263 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Landlock LSM - Fileप्रणाली management and hooks
+ * Landlock LSM - Filesystem management and hooks
  *
- * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
- * Copyright तऊ 2018-2020 ANSSI
+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
+ * Copyright © 2018-2020 ANSSI
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/bits.h>
-#समावेश <linux/compiler_types.h>
-#समावेश <linux/dcache.h>
-#समावेश <linux/err.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/list.h>
-#समावेश <linux/lsm_hooks.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/path.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/types.h>
-#समावेश <linux/रुको_bit.h>
-#समावेश <linux/workqueue.h>
-#समावेश <uapi/linux/landlock.h>
+#include <linux/atomic.h>
+#include <linux/bitops.h>
+#include <linux/bits.h>
+#include <linux/compiler_types.h>
+#include <linux/dcache.h>
+#include <linux/err.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/limits.h>
+#include <linux/list.h>
+#include <linux/lsm_hooks.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/path.h>
+#include <linux/rcupdate.h>
+#include <linux/spinlock.h>
+#include <linux/stat.h>
+#include <linux/types.h>
+#include <linux/wait_bit.h>
+#include <linux/workqueue.h>
+#include <uapi/linux/landlock.h>
 
-#समावेश "common.h"
-#समावेश "cred.h"
-#समावेश "fs.h"
-#समावेश "limits.h"
-#समावेश "object.h"
-#समावेश "ruleset.h"
-#समावेश "setup.h"
+#include "common.h"
+#include "cred.h"
+#include "fs.h"
+#include "limits.h"
+#include "object.h"
+#include "ruleset.h"
+#include "setup.h"
 
 /* Underlying object management */
 
-अटल व्योम release_inode(काष्ठा landlock_object *स्थिर object)
+static void release_inode(struct landlock_object *const object)
 	__releases(object->lock)
-अणु
-	काष्ठा inode *स्थिर inode = object->underobj;
-	काष्ठा super_block *sb;
+{
+	struct inode *const inode = object->underobj;
+	struct super_block *sb;
 
-	अगर (!inode) अणु
+	if (!inode) {
 		spin_unlock(&object->lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Protects against concurrent use by hook_sb_delete() of the reference
 	 * to the underlying inode.
 	 */
-	object->underobj = शून्य;
+	object->underobj = NULL;
 	/*
-	 * Makes sure that अगर the fileप्रणाली is concurrently unmounted,
-	 * hook_sb_delete() will रुको क्रम us to finish iput().
+	 * Makes sure that if the filesystem is concurrently unmounted,
+	 * hook_sb_delete() will wait for us to finish iput().
 	 */
 	sb = inode->i_sb;
-	atomic_दीर्घ_inc(&landlock_superblock(sb)->inode_refs);
+	atomic_long_inc(&landlock_superblock(sb)->inode_refs);
 	spin_unlock(&object->lock);
 	/*
-	 * Because object->underobj was not शून्य, hook_sb_delete() and
+	 * Because object->underobj was not NULL, hook_sb_delete() and
 	 * get_inode_object() guarantee that it is safe to reset
-	 * landlock_inode(inode)->object जबतक it is not शून्य.  It is thereक्रमe
+	 * landlock_inode(inode)->object while it is not NULL.  It is therefore
 	 * not necessary to lock inode->i_lock.
 	 */
-	rcu_assign_poपूर्णांकer(landlock_inode(inode)->object, शून्य);
+	rcu_assign_pointer(landlock_inode(inode)->object, NULL);
 	/*
 	 * Now, new rules can safely be tied to @inode with get_inode_object().
 	 */
 
 	iput(inode);
-	अगर (atomic_दीर्घ_dec_and_test(&landlock_superblock(sb)->inode_refs))
+	if (atomic_long_dec_and_test(&landlock_superblock(sb)->inode_refs))
 		wake_up_var(&landlock_superblock(sb)->inode_refs);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा landlock_object_underops landlock_fs_underops = अणु
+static const struct landlock_object_underops landlock_fs_underops = {
 	.release = release_inode
-पूर्ण;
+};
 
 /* Ruleset management */
 
-अटल काष्ठा landlock_object *get_inode_object(काष्ठा inode *स्थिर inode)
-अणु
-	काष्ठा landlock_object *object, *new_object;
-	काष्ठा landlock_inode_security *inode_sec = landlock_inode(inode);
+static struct landlock_object *get_inode_object(struct inode *const inode)
+{
+	struct landlock_object *object, *new_object;
+	struct landlock_inode_security *inode_sec = landlock_inode(inode);
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 retry:
 	object = rcu_dereference(inode_sec->object);
-	अगर (object) अणु
-		अगर (likely(refcount_inc_not_zero(&object->usage))) अणु
-			rcu_पढ़ो_unlock();
-			वापस object;
-		पूर्ण
+	if (object) {
+		if (likely(refcount_inc_not_zero(&object->usage))) {
+			rcu_read_unlock();
+			return object;
+		}
 		/*
 		 * We are racing with release_inode(), the object is going
-		 * away.  Wait क्रम release_inode(), then retry.
+		 * away.  Wait for release_inode(), then retry.
 		 */
 		spin_lock(&object->lock);
 		spin_unlock(&object->lock);
-		जाओ retry;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		goto retry;
+	}
+	rcu_read_unlock();
 
 	/*
 	 * If there is no object tied to @inode, then create a new one (without
 	 * holding any locks).
 	 */
 	new_object = landlock_create_object(&landlock_fs_underops, inode);
-	अगर (IS_ERR(new_object))
-		वापस new_object;
+	if (IS_ERR(new_object))
+		return new_object;
 
 	/*
 	 * Protects against concurrent calls to get_inode_object() or
 	 * hook_sb_delete().
 	 */
 	spin_lock(&inode->i_lock);
-	अगर (unlikely(rcu_access_poपूर्णांकer(inode_sec->object))) अणु
-		/* Someone अन्यथा just created the object, bail out and retry. */
+	if (unlikely(rcu_access_pointer(inode_sec->object))) {
+		/* Someone else just created the object, bail out and retry. */
 		spin_unlock(&inode->i_lock);
-		kमुक्त(new_object);
+		kfree(new_object);
 
-		rcu_पढ़ो_lock();
-		जाओ retry;
-	पूर्ण
+		rcu_read_lock();
+		goto retry;
+	}
 
 	/*
 	 * @inode will be released by hook_sb_delete() on its superblock
-	 * shutकरोwn, or by release_inode() when no more ruleset references the
+	 * shutdown, or by release_inode() when no more ruleset references the
 	 * related object.
 	 */
 	ihold(inode);
-	rcu_assign_poपूर्णांकer(inode_sec->object, new_object);
+	rcu_assign_pointer(inode_sec->object, new_object);
 	spin_unlock(&inode->i_lock);
-	वापस new_object;
-पूर्ण
+	return new_object;
+}
 
 /* All access rights that can be tied to files. */
-#घोषणा ACCESS_खाता ( \
+#define ACCESS_FILE ( \
 	LANDLOCK_ACCESS_FS_EXECUTE | \
-	LANDLOCK_ACCESS_FS_WRITE_खाता | \
-	LANDLOCK_ACCESS_FS_READ_खाता)
+	LANDLOCK_ACCESS_FS_WRITE_FILE | \
+	LANDLOCK_ACCESS_FS_READ_FILE)
 
 /*
  * @path: Should have been checked by get_path_from_fd().
  */
-पूर्णांक landlock_append_fs_rule(काष्ठा landlock_ruleset *स्थिर ruleset,
-		स्थिर काष्ठा path *स्थिर path, u32 access_rights)
-अणु
-	पूर्णांक err;
-	काष्ठा landlock_object *object;
+int landlock_append_fs_rule(struct landlock_ruleset *const ruleset,
+		const struct path *const path, u32 access_rights)
+{
+	int err;
+	struct landlock_object *object;
 
 	/* Files only get access rights that make sense. */
-	अगर (!d_is_dir(path->dentry) && (access_rights | ACCESS_खाता) !=
-			ACCESS_खाता)
-		वापस -EINVAL;
-	अगर (WARN_ON_ONCE(ruleset->num_layers != 1))
-		वापस -EINVAL;
+	if (!d_is_dir(path->dentry) && (access_rights | ACCESS_FILE) !=
+			ACCESS_FILE)
+		return -EINVAL;
+	if (WARN_ON_ONCE(ruleset->num_layers != 1))
+		return -EINVAL;
 
-	/* Transक्रमms relative access rights to असलolute ones. */
+	/* Transforms relative access rights to absolute ones. */
 	access_rights |= LANDLOCK_MASK_ACCESS_FS & ~ruleset->fs_access_masks[0];
 	object = get_inode_object(d_backing_inode(path->dentry));
-	अगर (IS_ERR(object))
-		वापस PTR_ERR(object);
+	if (IS_ERR(object))
+		return PTR_ERR(object);
 	mutex_lock(&ruleset->lock);
 	err = landlock_insert_rule(ruleset, object, access_rights);
 	mutex_unlock(&ruleset->lock);
 	/*
-	 * No need to check क्रम an error because landlock_insert_rule()
-	 * increments the refcount क्रम the new object अगर needed.
+	 * No need to check for an error because landlock_insert_rule()
+	 * increments the refcount for the new object if needed.
 	 */
 	landlock_put_object(object);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Access-control management */
 
-अटल अंतरभूत u64 unmask_layers(
-		स्थिर काष्ठा landlock_ruleset *स्थिर करोमुख्य,
-		स्थिर काष्ठा path *स्थिर path, स्थिर u32 access_request,
+static inline u64 unmask_layers(
+		const struct landlock_ruleset *const domain,
+		const struct path *const path, const u32 access_request,
 		u64 layer_mask)
-अणु
-	स्थिर काष्ठा landlock_rule *rule;
-	स्थिर काष्ठा inode *inode;
-	माप_प्रकार i;
+{
+	const struct landlock_rule *rule;
+	const struct inode *inode;
+	size_t i;
 
-	अगर (d_is_negative(path->dentry))
+	if (d_is_negative(path->dentry))
 		/* Ignore nonexistent leafs. */
-		वापस layer_mask;
+		return layer_mask;
 	inode = d_backing_inode(path->dentry);
-	rcu_पढ़ो_lock();
-	rule = landlock_find_rule(करोमुख्य,
+	rcu_read_lock();
+	rule = landlock_find_rule(domain,
 			rcu_dereference(landlock_inode(inode)->object));
-	rcu_पढ़ो_unlock();
-	अगर (!rule)
-		वापस layer_mask;
+	rcu_read_unlock();
+	if (!rule)
+		return layer_mask;
 
 	/*
-	 * An access is granted अगर, क्रम each policy layer, at least one rule
+	 * An access is granted if, for each policy layer, at least one rule
 	 * encountered on the pathwalk grants the requested accesses,
 	 * regardless of their position in the layer stack.  We must then check
-	 * the reमुख्यing layers क्रम each inode, from the first added layer to
+	 * the remaining layers for each inode, from the first added layer to
 	 * the last one.
 	 */
-	क्रम (i = 0; i < rule->num_layers; i++) अणु
-		स्थिर काष्ठा landlock_layer *स्थिर layer = &rule->layers[i];
-		स्थिर u64 layer_level = BIT_ULL(layer->level - 1);
+	for (i = 0; i < rule->num_layers; i++) {
+		const struct landlock_layer *const layer = &rule->layers[i];
+		const u64 layer_level = BIT_ULL(layer->level - 1);
 
 		/* Checks that the layer grants access to the full request. */
-		अगर ((layer->access & access_request) == access_request) अणु
+		if ((layer->access & access_request) == access_request) {
 			layer_mask &= ~layer_level;
 
-			अगर (layer_mask == 0)
-				वापस layer_mask;
-		पूर्ण
-	पूर्ण
-	वापस layer_mask;
-पूर्ण
+			if (layer_mask == 0)
+				return layer_mask;
+		}
+	}
+	return layer_mask;
+}
 
-अटल पूर्णांक check_access_path(स्थिर काष्ठा landlock_ruleset *स्थिर करोमुख्य,
-		स्थिर काष्ठा path *स्थिर path, u32 access_request)
-अणु
+static int check_access_path(const struct landlock_ruleset *const domain,
+		const struct path *const path, u32 access_request)
+{
 	bool allowed = false;
-	काष्ठा path walker_path;
+	struct path walker_path;
 	u64 layer_mask;
-	माप_प्रकार i;
+	size_t i;
 
 	/* Make sure all layers can be checked. */
 	BUILD_BUG_ON(BITS_PER_TYPE(layer_mask) < LANDLOCK_MAX_NUM_LAYERS);
 
-	अगर (!access_request)
-		वापस 0;
-	अगर (WARN_ON_ONCE(!करोमुख्य || !path))
-		वापस 0;
+	if (!access_request)
+		return 0;
+	if (WARN_ON_ONCE(!domain || !path))
+		return 0;
 	/*
-	 * Allows access to pseuकरो fileप्रणालीs that will never be mountable
+	 * Allows access to pseudo filesystems that will never be mountable
 	 * (e.g. sockfs, pipefs), but can still be reachable through
 	 * /proc/<pid>/fd/<file-descriptor> .
 	 */
-	अगर ((path->dentry->d_sb->s_flags & SB_NOUSER) ||
+	if ((path->dentry->d_sb->s_flags & SB_NOUSER) ||
 			(d_is_positive(path->dentry) &&
 			 unlikely(IS_PRIVATE(d_backing_inode(path->dentry)))))
-		वापस 0;
-	अगर (WARN_ON_ONCE(करोमुख्य->num_layers < 1))
-		वापस -EACCES;
+		return 0;
+	if (WARN_ON_ONCE(domain->num_layers < 1))
+		return -EACCES;
 
 	/* Saves all layers handling a subset of requested accesses. */
 	layer_mask = 0;
-	क्रम (i = 0; i < करोमुख्य->num_layers; i++) अणु
-		अगर (करोमुख्य->fs_access_masks[i] & access_request)
+	for (i = 0; i < domain->num_layers; i++) {
+		if (domain->fs_access_masks[i] & access_request)
 			layer_mask |= BIT_ULL(i);
-	पूर्ण
-	/* An access request not handled by the करोमुख्य is allowed. */
-	अगर (layer_mask == 0)
-		वापस 0;
+	}
+	/* An access request not handled by the domain is allowed. */
+	if (layer_mask == 0)
+		return 0;
 
 	walker_path = *path;
 	path_get(&walker_path);
@@ -266,157 +265,157 @@ retry:
 	 * We need to walk through all the hierarchy to not miss any relevant
 	 * restriction.
 	 */
-	जबतक (true) अणु
-		काष्ठा dentry *parent_dentry;
+	while (true) {
+		struct dentry *parent_dentry;
 
-		layer_mask = unmask_layers(करोमुख्य, &walker_path,
+		layer_mask = unmask_layers(domain, &walker_path,
 				access_request, layer_mask);
-		अगर (layer_mask == 0) अणु
+		if (layer_mask == 0) {
 			/* Stops when a rule from each layer grants access. */
 			allowed = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 jump_up:
-		अगर (walker_path.dentry == walker_path.mnt->mnt_root) अणु
-			अगर (follow_up(&walker_path)) अणु
-				/* Ignores hidden mount poपूर्णांकs. */
-				जाओ jump_up;
-			पूर्ण अन्यथा अणु
+		if (walker_path.dentry == walker_path.mnt->mnt_root) {
+			if (follow_up(&walker_path)) {
+				/* Ignores hidden mount points. */
+				goto jump_up;
+			} else {
 				/*
 				 * Stops at the real root.  Denies access
 				 * because not all layers have granted access.
 				 */
 				allowed = false;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (unlikely(IS_ROOT(walker_path.dentry))) अणु
+				break;
+			}
+		}
+		if (unlikely(IS_ROOT(walker_path.dentry))) {
 			/*
 			 * Stops at disconnected root directories.  Only allows
-			 * access to पूर्णांकernal fileप्रणालीs (e.g. nsfs, which is
+			 * access to internal filesystems (e.g. nsfs, which is
 			 * reachable through /proc/<pid>/ns/<namespace>).
 			 */
 			allowed = !!(walker_path.mnt->mnt_flags & MNT_INTERNAL);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		parent_dentry = dget_parent(walker_path.dentry);
 		dput(walker_path.dentry);
 		walker_path.dentry = parent_dentry;
-	पूर्ण
+	}
 	path_put(&walker_path);
-	वापस allowed ? 0 : -EACCES;
-पूर्ण
+	return allowed ? 0 : -EACCES;
+}
 
-अटल अंतरभूत पूर्णांक current_check_access_path(स्थिर काष्ठा path *स्थिर path,
-		स्थिर u32 access_request)
-अणु
-	स्थिर काष्ठा landlock_ruleset *स्थिर करोm =
-		landlock_get_current_करोमुख्य();
+static inline int current_check_access_path(const struct path *const path,
+		const u32 access_request)
+{
+	const struct landlock_ruleset *const dom =
+		landlock_get_current_domain();
 
-	अगर (!करोm)
-		वापस 0;
-	वापस check_access_path(करोm, path, access_request);
-पूर्ण
+	if (!dom)
+		return 0;
+	return check_access_path(dom, path, access_request);
+}
 
 /* Inode hooks */
 
-अटल व्योम hook_inode_मुक्त_security(काष्ठा inode *स्थिर inode)
-अणु
+static void hook_inode_free_security(struct inode *const inode)
+{
 	/*
-	 * All inodes must alपढ़ोy have been untied from their object by
+	 * All inodes must already have been untied from their object by
 	 * release_inode() or hook_sb_delete().
 	 */
 	WARN_ON_ONCE(landlock_inode(inode)->object);
-पूर्ण
+}
 
 /* Super-block hooks */
 
 /*
  * Release the inodes used in a security policy.
  *
- * Cf. fsnotअगरy_unmount_inodes() and invalidate_inodes()
+ * Cf. fsnotify_unmount_inodes() and invalidate_inodes()
  */
-अटल व्योम hook_sb_delete(काष्ठा super_block *स्थिर sb)
-अणु
-	काष्ठा inode *inode, *prev_inode = शून्य;
+static void hook_sb_delete(struct super_block *const sb)
+{
+	struct inode *inode, *prev_inode = NULL;
 
-	अगर (!landlock_initialized)
-		वापस;
+	if (!landlock_initialized)
+		return;
 
 	spin_lock(&sb->s_inode_list_lock);
-	list_क्रम_each_entry(inode, &sb->s_inodes, i_sb_list) अणु
-		काष्ठा landlock_object *object;
+	list_for_each_entry(inode, &sb->s_inodes, i_sb_list) {
+		struct landlock_object *object;
 
 		/* Only handles referenced inodes. */
-		अगर (!atomic_पढ़ो(&inode->i_count))
-			जारी;
+		if (!atomic_read(&inode->i_count))
+			continue;
 
 		/*
-		 * Protects against concurrent modअगरication of inode (e.g.
+		 * Protects against concurrent modification of inode (e.g.
 		 * from get_inode_object()).
 		 */
 		spin_lock(&inode->i_lock);
 		/*
 		 * Checks I_FREEING and I_WILL_FREE  to protect against a race
 		 * condition when release_inode() just called iput(), which
-		 * could lead to a शून्य dereference of inode->security or a
-		 * second call to iput() क्रम the same Landlock object.  Also
+		 * could lead to a NULL dereference of inode->security or a
+		 * second call to iput() for the same Landlock object.  Also
 		 * checks I_NEW because such inode cannot be tied to an object.
 		 */
-		अगर (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW)) अणु
+		if (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW)) {
 			spin_unlock(&inode->i_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		rcu_पढ़ो_lock();
+		rcu_read_lock();
 		object = rcu_dereference(landlock_inode(inode)->object);
-		अगर (!object) अणु
-			rcu_पढ़ो_unlock();
+		if (!object) {
+			rcu_read_unlock();
 			spin_unlock(&inode->i_lock);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* Keeps a reference to this inode until the next loop walk. */
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
 
 		/*
 		 * If there is no concurrent release_inode() ongoing, then we
-		 * are in अक्षरge of calling iput() on this inode, otherwise we
-		 * will just रुको क्रम it to finish.
+		 * are in charge of calling iput() on this inode, otherwise we
+		 * will just wait for it to finish.
 		 */
 		spin_lock(&object->lock);
-		अगर (object->underobj == inode) अणु
-			object->underobj = शून्य;
+		if (object->underobj == inode) {
+			object->underobj = NULL;
 			spin_unlock(&object->lock);
-			rcu_पढ़ो_unlock();
+			rcu_read_unlock();
 
 			/*
-			 * Because object->underobj was not शून्य,
+			 * Because object->underobj was not NULL,
 			 * release_inode() and get_inode_object() guarantee
 			 * that it is safe to reset
-			 * landlock_inode(inode)->object जबतक it is not शून्य.
-			 * It is thereक्रमe not necessary to lock inode->i_lock.
+			 * landlock_inode(inode)->object while it is not NULL.
+			 * It is therefore not necessary to lock inode->i_lock.
 			 */
-			rcu_assign_poपूर्णांकer(landlock_inode(inode)->object, शून्य);
+			rcu_assign_pointer(landlock_inode(inode)->object, NULL);
 			/*
-			 * At this poपूर्णांक, we own the ihold() reference that was
+			 * At this point, we own the ihold() reference that was
 			 * originally set up by get_inode_object() and the
 			 * __iget() reference that we just set in this loop
-			 * walk.  Thereक्रमe the following call to iput() will
+			 * walk.  Therefore the following call to iput() will
 			 * not sleep nor drop the inode because there is now at
 			 * least two references to it.
 			 */
 			iput(inode);
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_unlock(&object->lock);
-			rcu_पढ़ो_unlock();
-		पूर्ण
+			rcu_read_unlock();
+		}
 
-		अगर (prev_inode) अणु
+		if (prev_inode) {
 			/*
-			 * At this poपूर्णांक, we still own the __iget() reference
-			 * that we just set in this loop walk.  Thereक्रमe we
+			 * At this point, we still own the __iget() reference
+			 * that we just set in this loop walk.  Therefore we
 			 * can drop the list lock and know that the inode won't
 			 * disappear from under us until the next loop walk.
 			 */
@@ -428,245 +427,245 @@ jump_up:
 			iput(prev_inode);
 			cond_resched();
 			spin_lock(&sb->s_inode_list_lock);
-		पूर्ण
+		}
 		prev_inode = inode;
-	पूर्ण
+	}
 	spin_unlock(&sb->s_inode_list_lock);
 
-	/* Puts the inode reference from the last loop walk, अगर any. */
-	अगर (prev_inode)
+	/* Puts the inode reference from the last loop walk, if any. */
+	if (prev_inode)
 		iput(prev_inode);
-	/* Waits क्रम pending iput() in release_inode(). */
-	रुको_var_event(&landlock_superblock(sb)->inode_refs, !atomic_दीर्घ_पढ़ो(
+	/* Waits for pending iput() in release_inode(). */
+	wait_var_event(&landlock_superblock(sb)->inode_refs, !atomic_long_read(
 				&landlock_superblock(sb)->inode_refs));
-पूर्ण
+}
 
 /*
- * Because a Landlock security policy is defined according to the fileप्रणाली
+ * Because a Landlock security policy is defined according to the filesystem
  * topology (i.e. the mount namespace), changing it may grant access to files
  * not previously allowed.
  *
- * To make it simple, deny any fileप्रणाली topology modअगरication by landlocked
+ * To make it simple, deny any filesystem topology modification by landlocked
  * processes.  Non-landlocked processes may still change the namespace of a
- * landlocked process, but this kind of threat must be handled by a प्रणाली-wide
+ * landlocked process, but this kind of threat must be handled by a system-wide
  * access-control security policy.
  *
- * This could be lअगरted in the future अगर Landlock can safely handle mount
+ * This could be lifted in the future if Landlock can safely handle mount
  * namespace updates requested by a landlocked process.  Indeed, we could
- * update the current करोमुख्य (which is currently पढ़ो-only) by taking पूर्णांकo
- * account the accesses of the source and the destination of a new mount poपूर्णांक.
- * However, it would also require to make all the child करोमुख्यs dynamically
- * inherit these new स्थिरraपूर्णांकs.  Anyway, क्रम backward compatibility reasons,
+ * update the current domain (which is currently read-only) by taking into
+ * account the accesses of the source and the destination of a new mount point.
+ * However, it would also require to make all the child domains dynamically
+ * inherit these new constraints.  Anyway, for backward compatibility reasons,
  * a dedicated user space option would be required (e.g. as a ruleset flag).
  */
-अटल पूर्णांक hook_sb_mount(स्थिर अक्षर *स्थिर dev_name,
-		स्थिर काष्ठा path *स्थिर path, स्थिर अक्षर *स्थिर type,
-		स्थिर अचिन्हित दीर्घ flags, व्योम *स्थिर data)
-अणु
-	अगर (!landlock_get_current_करोमुख्य())
-		वापस 0;
-	वापस -EPERM;
-पूर्ण
+static int hook_sb_mount(const char *const dev_name,
+		const struct path *const path, const char *const type,
+		const unsigned long flags, void *const data)
+{
+	if (!landlock_get_current_domain())
+		return 0;
+	return -EPERM;
+}
 
-अटल पूर्णांक hook_move_mount(स्थिर काष्ठा path *स्थिर from_path,
-		स्थिर काष्ठा path *स्थिर to_path)
-अणु
-	अगर (!landlock_get_current_करोमुख्य())
-		वापस 0;
-	वापस -EPERM;
-पूर्ण
+static int hook_move_mount(const struct path *const from_path,
+		const struct path *const to_path)
+{
+	if (!landlock_get_current_domain())
+		return 0;
+	return -EPERM;
+}
 
 /*
- * Removing a mount poपूर्णांक may reveal a previously hidden file hierarchy, which
- * may then grant access to files, which may have previously been क्रमbidden.
+ * Removing a mount point may reveal a previously hidden file hierarchy, which
+ * may then grant access to files, which may have previously been forbidden.
  */
-अटल पूर्णांक hook_sb_umount(काष्ठा vfsmount *स्थिर mnt, स्थिर पूर्णांक flags)
-अणु
-	अगर (!landlock_get_current_करोमुख्य())
-		वापस 0;
-	वापस -EPERM;
-पूर्ण
+static int hook_sb_umount(struct vfsmount *const mnt, const int flags)
+{
+	if (!landlock_get_current_domain())
+		return 0;
+	return -EPERM;
+}
 
-अटल पूर्णांक hook_sb_remount(काष्ठा super_block *स्थिर sb, व्योम *स्थिर mnt_opts)
-अणु
-	अगर (!landlock_get_current_करोमुख्य())
-		वापस 0;
-	वापस -EPERM;
-पूर्ण
+static int hook_sb_remount(struct super_block *const sb, void *const mnt_opts)
+{
+	if (!landlock_get_current_domain())
+		return 0;
+	return -EPERM;
+}
 
 /*
  * pivot_root(2), like mount(2), changes the current mount namespace.  It must
- * then be क्रमbidden क्रम a landlocked process.
+ * then be forbidden for a landlocked process.
  *
  * However, chroot(2) may be allowed because it only changes the relative root
  * directory of the current process.  Moreover, it can be used to restrict the
- * view of the fileप्रणाली.
+ * view of the filesystem.
  */
-अटल पूर्णांक hook_sb_pivotroot(स्थिर काष्ठा path *स्थिर old_path,
-		स्थिर काष्ठा path *स्थिर new_path)
-अणु
-	अगर (!landlock_get_current_करोमुख्य())
-		वापस 0;
-	वापस -EPERM;
-पूर्ण
+static int hook_sb_pivotroot(const struct path *const old_path,
+		const struct path *const new_path)
+{
+	if (!landlock_get_current_domain())
+		return 0;
+	return -EPERM;
+}
 
 /* Path hooks */
 
-अटल अंतरभूत u32 get_mode_access(स्थिर umode_t mode)
-अणु
-	चयन (mode & S_IFMT) अणु
-	हाल S_IFLNK:
-		वापस LANDLOCK_ACCESS_FS_MAKE_SYM;
-	हाल 0:
+static inline u32 get_mode_access(const umode_t mode)
+{
+	switch (mode & S_IFMT) {
+	case S_IFLNK:
+		return LANDLOCK_ACCESS_FS_MAKE_SYM;
+	case 0:
 		/* A zero mode translates to S_IFREG. */
-	हाल S_IFREG:
-		वापस LANDLOCK_ACCESS_FS_MAKE_REG;
-	हाल S_IFसूची:
-		वापस LANDLOCK_ACCESS_FS_MAKE_सूची;
-	हाल S_IFCHR:
-		वापस LANDLOCK_ACCESS_FS_MAKE_CHAR;
-	हाल S_IFBLK:
-		वापस LANDLOCK_ACCESS_FS_MAKE_BLOCK;
-	हाल S_IFIFO:
-		वापस LANDLOCK_ACCESS_FS_MAKE_FIFO;
-	हाल S_IFSOCK:
-		वापस LANDLOCK_ACCESS_FS_MAKE_SOCK;
-	शेष:
+	case S_IFREG:
+		return LANDLOCK_ACCESS_FS_MAKE_REG;
+	case S_IFDIR:
+		return LANDLOCK_ACCESS_FS_MAKE_DIR;
+	case S_IFCHR:
+		return LANDLOCK_ACCESS_FS_MAKE_CHAR;
+	case S_IFBLK:
+		return LANDLOCK_ACCESS_FS_MAKE_BLOCK;
+	case S_IFIFO:
+		return LANDLOCK_ACCESS_FS_MAKE_FIFO;
+	case S_IFSOCK:
+		return LANDLOCK_ACCESS_FS_MAKE_SOCK;
+	default:
 		WARN_ON_ONCE(1);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
 /*
- * Creating multiple links or renaming may lead to privilege escalations अगर not
- * handled properly.  Indeed, we must be sure that the source करोesn't gain more
+ * Creating multiple links or renaming may lead to privilege escalations if not
+ * handled properly.  Indeed, we must be sure that the source doesn't gain more
  * privileges by being accessible from the destination.  This is getting more
  * complex when dealing with multiple layers.  The whole picture can be seen as
  * a multilayer partial ordering problem.  A future version of Landlock will
  * deal with that.
  */
-अटल पूर्णांक hook_path_link(काष्ठा dentry *स्थिर old_dentry,
-		स्थिर काष्ठा path *स्थिर new_dir,
-		काष्ठा dentry *स्थिर new_dentry)
-अणु
-	स्थिर काष्ठा landlock_ruleset *स्थिर करोm =
-		landlock_get_current_करोमुख्य();
+static int hook_path_link(struct dentry *const old_dentry,
+		const struct path *const new_dir,
+		struct dentry *const new_dentry)
+{
+	const struct landlock_ruleset *const dom =
+		landlock_get_current_domain();
 
-	अगर (!करोm)
-		वापस 0;
-	/* The mount poपूर्णांकs are the same क्रम old and new paths, cf. EXDEV. */
-	अगर (old_dentry->d_parent != new_dir->dentry)
-		/* Gracefully क्रमbids reparenting. */
-		वापस -EXDEV;
-	अगर (unlikely(d_is_negative(old_dentry)))
-		वापस -ENOENT;
-	वापस check_access_path(करोm, new_dir,
+	if (!dom)
+		return 0;
+	/* The mount points are the same for old and new paths, cf. EXDEV. */
+	if (old_dentry->d_parent != new_dir->dentry)
+		/* Gracefully forbids reparenting. */
+		return -EXDEV;
+	if (unlikely(d_is_negative(old_dentry)))
+		return -ENOENT;
+	return check_access_path(dom, new_dir,
 			get_mode_access(d_backing_inode(old_dentry)->i_mode));
-पूर्ण
+}
 
-अटल अंतरभूत u32 maybe_हटाओ(स्थिर काष्ठा dentry *स्थिर dentry)
-अणु
-	अगर (d_is_negative(dentry))
-		वापस 0;
-	वापस d_is_dir(dentry) ? LANDLOCK_ACCESS_FS_REMOVE_सूची :
-		LANDLOCK_ACCESS_FS_REMOVE_खाता;
-पूर्ण
+static inline u32 maybe_remove(const struct dentry *const dentry)
+{
+	if (d_is_negative(dentry))
+		return 0;
+	return d_is_dir(dentry) ? LANDLOCK_ACCESS_FS_REMOVE_DIR :
+		LANDLOCK_ACCESS_FS_REMOVE_FILE;
+}
 
-अटल पूर्णांक hook_path_नाम(स्थिर काष्ठा path *स्थिर old_dir,
-		काष्ठा dentry *स्थिर old_dentry,
-		स्थिर काष्ठा path *स्थिर new_dir,
-		काष्ठा dentry *स्थिर new_dentry)
-अणु
-	स्थिर काष्ठा landlock_ruleset *स्थिर करोm =
-		landlock_get_current_करोमुख्य();
+static int hook_path_rename(const struct path *const old_dir,
+		struct dentry *const old_dentry,
+		const struct path *const new_dir,
+		struct dentry *const new_dentry)
+{
+	const struct landlock_ruleset *const dom =
+		landlock_get_current_domain();
 
-	अगर (!करोm)
-		वापस 0;
-	/* The mount poपूर्णांकs are the same क्रम old and new paths, cf. EXDEV. */
-	अगर (old_dir->dentry != new_dir->dentry)
-		/* Gracefully क्रमbids reparenting. */
-		वापस -EXDEV;
-	अगर (unlikely(d_is_negative(old_dentry)))
-		वापस -ENOENT;
+	if (!dom)
+		return 0;
+	/* The mount points are the same for old and new paths, cf. EXDEV. */
+	if (old_dir->dentry != new_dir->dentry)
+		/* Gracefully forbids reparenting. */
+		return -EXDEV;
+	if (unlikely(d_is_negative(old_dentry)))
+		return -ENOENT;
 	/* RENAME_EXCHANGE is handled because directories are the same. */
-	वापस check_access_path(करोm, old_dir, maybe_हटाओ(old_dentry) |
-			maybe_हटाओ(new_dentry) |
+	return check_access_path(dom, old_dir, maybe_remove(old_dentry) |
+			maybe_remove(new_dentry) |
 			get_mode_access(d_backing_inode(old_dentry)->i_mode));
-पूर्ण
+}
 
-अटल पूर्णांक hook_path_सूची_गढ़ो(स्थिर काष्ठा path *स्थिर dir,
-		काष्ठा dentry *स्थिर dentry, स्थिर umode_t mode)
-अणु
-	वापस current_check_access_path(dir, LANDLOCK_ACCESS_FS_MAKE_सूची);
-पूर्ण
+static int hook_path_mkdir(const struct path *const dir,
+		struct dentry *const dentry, const umode_t mode)
+{
+	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_MAKE_DIR);
+}
 
-अटल पूर्णांक hook_path_mknod(स्थिर काष्ठा path *स्थिर dir,
-		काष्ठा dentry *स्थिर dentry, स्थिर umode_t mode,
-		स्थिर अचिन्हित पूर्णांक dev)
-अणु
-	स्थिर काष्ठा landlock_ruleset *स्थिर करोm =
-		landlock_get_current_करोमुख्य();
+static int hook_path_mknod(const struct path *const dir,
+		struct dentry *const dentry, const umode_t mode,
+		const unsigned int dev)
+{
+	const struct landlock_ruleset *const dom =
+		landlock_get_current_domain();
 
-	अगर (!करोm)
-		वापस 0;
-	वापस check_access_path(करोm, dir, get_mode_access(mode));
-पूर्ण
+	if (!dom)
+		return 0;
+	return check_access_path(dom, dir, get_mode_access(mode));
+}
 
-अटल पूर्णांक hook_path_symlink(स्थिर काष्ठा path *स्थिर dir,
-		काष्ठा dentry *स्थिर dentry, स्थिर अक्षर *स्थिर old_name)
-अणु
-	वापस current_check_access_path(dir, LANDLOCK_ACCESS_FS_MAKE_SYM);
-पूर्ण
+static int hook_path_symlink(const struct path *const dir,
+		struct dentry *const dentry, const char *const old_name)
+{
+	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_MAKE_SYM);
+}
 
-अटल पूर्णांक hook_path_unlink(स्थिर काष्ठा path *स्थिर dir,
-		काष्ठा dentry *स्थिर dentry)
-अणु
-	वापस current_check_access_path(dir, LANDLOCK_ACCESS_FS_REMOVE_खाता);
-पूर्ण
+static int hook_path_unlink(const struct path *const dir,
+		struct dentry *const dentry)
+{
+	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_REMOVE_FILE);
+}
 
-अटल पूर्णांक hook_path_सूची_हटाओ(स्थिर काष्ठा path *स्थिर dir,
-		काष्ठा dentry *स्थिर dentry)
-अणु
-	वापस current_check_access_path(dir, LANDLOCK_ACCESS_FS_REMOVE_सूची);
-पूर्ण
+static int hook_path_rmdir(const struct path *const dir,
+		struct dentry *const dentry)
+{
+	return current_check_access_path(dir, LANDLOCK_ACCESS_FS_REMOVE_DIR);
+}
 
 /* File hooks */
 
-अटल अंतरभूत u32 get_file_access(स्थिर काष्ठा file *स्थिर file)
-अणु
+static inline u32 get_file_access(const struct file *const file)
+{
 	u32 access = 0;
 
-	अगर (file->f_mode & FMODE_READ) अणु
-		/* A directory can only be खोलोed in पढ़ो mode. */
-		अगर (S_ISसूची(file_inode(file)->i_mode))
-			वापस LANDLOCK_ACCESS_FS_READ_सूची;
-		access = LANDLOCK_ACCESS_FS_READ_खाता;
-	पूर्ण
-	अगर (file->f_mode & FMODE_WRITE)
-		access |= LANDLOCK_ACCESS_FS_WRITE_खाता;
+	if (file->f_mode & FMODE_READ) {
+		/* A directory can only be opened in read mode. */
+		if (S_ISDIR(file_inode(file)->i_mode))
+			return LANDLOCK_ACCESS_FS_READ_DIR;
+		access = LANDLOCK_ACCESS_FS_READ_FILE;
+	}
+	if (file->f_mode & FMODE_WRITE)
+		access |= LANDLOCK_ACCESS_FS_WRITE_FILE;
 	/* __FMODE_EXEC is indeed part of f_flags, not f_mode. */
-	अगर (file->f_flags & __FMODE_EXEC)
+	if (file->f_flags & __FMODE_EXEC)
 		access |= LANDLOCK_ACCESS_FS_EXECUTE;
-	वापस access;
-पूर्ण
+	return access;
+}
 
-अटल पूर्णांक hook_file_खोलो(काष्ठा file *स्थिर file)
-अणु
-	स्थिर काष्ठा landlock_ruleset *स्थिर करोm =
-		landlock_get_current_करोमुख्य();
+static int hook_file_open(struct file *const file)
+{
+	const struct landlock_ruleset *const dom =
+		landlock_get_current_domain();
 
-	अगर (!करोm)
-		वापस 0;
+	if (!dom)
+		return 0;
 	/*
-	 * Because a file may be खोलोed with O_PATH, get_file_access() may
-	 * वापस 0.  This हाल will be handled with a future Landlock
+	 * Because a file may be opened with O_PATH, get_file_access() may
+	 * return 0.  This case will be handled with a future Landlock
 	 * evolution.
 	 */
-	वापस check_access_path(करोm, &file->f_path, get_file_access(file));
-पूर्ण
+	return check_access_path(dom, &file->f_path, get_file_access(file));
+}
 
-अटल काष्ठा security_hook_list landlock_hooks[] __lsm_ro_after_init = अणु
-	LSM_HOOK_INIT(inode_मुक्त_security, hook_inode_मुक्त_security),
+static struct security_hook_list landlock_hooks[] __lsm_ro_after_init = {
+	LSM_HOOK_INIT(inode_free_security, hook_inode_free_security),
 
 	LSM_HOOK_INIT(sb_delete, hook_sb_delete),
 	LSM_HOOK_INIT(sb_mount, hook_sb_mount),
@@ -676,18 +675,18 @@ jump_up:
 	LSM_HOOK_INIT(sb_pivotroot, hook_sb_pivotroot),
 
 	LSM_HOOK_INIT(path_link, hook_path_link),
-	LSM_HOOK_INIT(path_नाम, hook_path_नाम),
-	LSM_HOOK_INIT(path_सूची_गढ़ो, hook_path_सूची_गढ़ो),
+	LSM_HOOK_INIT(path_rename, hook_path_rename),
+	LSM_HOOK_INIT(path_mkdir, hook_path_mkdir),
 	LSM_HOOK_INIT(path_mknod, hook_path_mknod),
 	LSM_HOOK_INIT(path_symlink, hook_path_symlink),
 	LSM_HOOK_INIT(path_unlink, hook_path_unlink),
-	LSM_HOOK_INIT(path_सूची_हटाओ, hook_path_सूची_हटाओ),
+	LSM_HOOK_INIT(path_rmdir, hook_path_rmdir),
 
-	LSM_HOOK_INIT(file_खोलो, hook_file_खोलो),
-पूर्ण;
+	LSM_HOOK_INIT(file_open, hook_file_open),
+};
 
-__init व्योम landlock_add_fs_hooks(व्योम)
-अणु
+__init void landlock_add_fs_hooks(void)
+{
 	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
 			LANDLOCK_NAME);
-पूर्ण
+}

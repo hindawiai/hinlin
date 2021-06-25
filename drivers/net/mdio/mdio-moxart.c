@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* MOXA ART Ethernet (RTL8201CP) MDIO पूर्णांकerface driver
+// SPDX-License-Identifier: GPL-2.0
+/* MOXA ART Ethernet (RTL8201CP) MDIO interface driver
  *
  * Copyright (C) 2013 Jonas Jensen <jonas.jensen@gmail.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/phy.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of_address.h>
+#include <linux/of_mdio.h>
+#include <linux/phy.h>
+#include <linux/platform_device.h>
 
-#घोषणा REG_PHY_CTRL            0
-#घोषणा REG_PHY_WRITE_DATA      4
+#define REG_PHY_CTRL            0
+#define REG_PHY_WRITE_DATA      4
 
 /* REG_PHY_CTRL */
-#घोषणा MIIWR                   BIT(27) /* init ग_लिखो sequence (स्वतः cleared)*/
-#घोषणा MIIRD                   BIT(26)
-#घोषणा REGAD_MASK              0x3e00000
-#घोषणा PHYAD_MASK              0x1f0000
-#घोषणा MIIRDATA_MASK           0xffff
+#define MIIWR                   BIT(27) /* init write sequence (auto cleared)*/
+#define MIIRD                   BIT(26)
+#define REGAD_MASK              0x3e00000
+#define PHYAD_MASK              0x1f0000
+#define MIIRDATA_MASK           0xffff
 
 /* REG_PHY_WRITE_DATA */
-#घोषणा MIIWDATA_MASK           0xffff
+#define MIIWDATA_MASK           0xffff
 
-काष्ठा moxart_mdio_data अणु
-	व्योम __iomem		*base;
-पूर्ण;
+struct moxart_mdio_data {
+	void __iomem		*base;
+};
 
-अटल पूर्णांक moxart_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
-अणु
-	काष्ठा moxart_mdio_data *data = bus->priv;
+static int moxart_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
+{
+	struct moxart_mdio_data *data = bus->priv;
 	u32 ctrl = 0;
-	अचिन्हित पूर्णांक count = 5;
+	unsigned int count = 5;
 
 	dev_dbg(&bus->dev, "%s\n", __func__);
 
 	ctrl |= MIIRD | ((mii_id << 16) & PHYAD_MASK) |
 		((regnum << 21) & REGAD_MASK);
 
-	ग_लिखोl(ctrl, data->base + REG_PHY_CTRL);
+	writel(ctrl, data->base + REG_PHY_CTRL);
 
-	करो अणु
-		ctrl = पढ़ोl(data->base + REG_PHY_CTRL);
+	do {
+		ctrl = readl(data->base + REG_PHY_CTRL);
 
-		अगर (!(ctrl & MIIRD))
-			वापस ctrl & MIIRDATA_MASK;
+		if (!(ctrl & MIIRD))
+			return ctrl & MIIRDATA_MASK;
 
 		mdelay(10);
 		count--;
-	पूर्ण जबतक (count > 0);
+	} while (count > 0);
 
 	dev_dbg(&bus->dev, "%s timed out\n", __func__);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक moxart_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id,
-			     पूर्णांक regnum, u16 value)
-अणु
-	काष्ठा moxart_mdio_data *data = bus->priv;
+static int moxart_mdio_write(struct mii_bus *bus, int mii_id,
+			     int regnum, u16 value)
+{
+	struct moxart_mdio_data *data = bus->priv;
 	u32 ctrl = 0;
-	अचिन्हित पूर्णांक count = 5;
+	unsigned int count = 5;
 
 	dev_dbg(&bus->dev, "%s\n", __func__);
 
@@ -73,115 +72,115 @@
 
 	value &= MIIWDATA_MASK;
 
-	ग_लिखोl(value, data->base + REG_PHY_WRITE_DATA);
-	ग_लिखोl(ctrl, data->base + REG_PHY_CTRL);
+	writel(value, data->base + REG_PHY_WRITE_DATA);
+	writel(ctrl, data->base + REG_PHY_CTRL);
 
-	करो अणु
-		ctrl = पढ़ोl(data->base + REG_PHY_CTRL);
+	do {
+		ctrl = readl(data->base + REG_PHY_CTRL);
 
-		अगर (!(ctrl & MIIWR))
-			वापस 0;
+		if (!(ctrl & MIIWR))
+			return 0;
 
 		mdelay(10);
 		count--;
-	पूर्ण जबतक (count > 0);
+	} while (count > 0);
 
 	dev_dbg(&bus->dev, "%s timed out\n", __func__);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक moxart_mdio_reset(काष्ठा mii_bus *bus)
-अणु
-	पूर्णांक data, i;
+static int moxart_mdio_reset(struct mii_bus *bus)
+{
+	int data, i;
 
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++) अणु
-		data = moxart_mdio_पढ़ो(bus, i, MII_BMCR);
-		अगर (data < 0)
-			जारी;
+	for (i = 0; i < PHY_MAX_ADDR; i++) {
+		data = moxart_mdio_read(bus, i, MII_BMCR);
+		if (data < 0)
+			continue;
 
 		data |= BMCR_RESET;
-		अगर (moxart_mdio_ग_लिखो(bus, i, MII_BMCR, data) < 0)
-			जारी;
-	पूर्ण
+		if (moxart_mdio_write(bus, i, MII_BMCR, data) < 0)
+			continue;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक moxart_mdio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा mii_bus *bus;
-	काष्ठा moxart_mdio_data *data;
-	पूर्णांक ret, i;
+static int moxart_mdio_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct mii_bus *bus;
+	struct moxart_mdio_data *data;
+	int ret, i;
 
-	bus = mdiobus_alloc_size(माप(*data));
-	अगर (!bus)
-		वापस -ENOMEM;
+	bus = mdiobus_alloc_size(sizeof(*data));
+	if (!bus)
+		return -ENOMEM;
 
 	bus->name = "MOXA ART Ethernet MII";
-	bus->पढ़ो = &moxart_mdio_पढ़ो;
-	bus->ग_लिखो = &moxart_mdio_ग_लिखो;
+	bus->read = &moxart_mdio_read;
+	bus->write = &moxart_mdio_write;
 	bus->reset = &moxart_mdio_reset;
-	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s-%d-mii", pdev->name, pdev->id);
+	snprintf(bus->id, MII_BUS_ID_SIZE, "%s-%d-mii", pdev->name, pdev->id);
 	bus->parent = &pdev->dev;
 
-	/* Setting PHY_MAC_INTERRUPT here even अगर it has no effect,
-	 * of_mdiobus_रेजिस्टर() sets these PHY_POLL.
-	 * Ideally, the पूर्णांकerrupt from MAC controller could be used to
-	 * detect link state changes, not polling, i.e. अगर there was
+	/* Setting PHY_MAC_INTERRUPT here even if it has no effect,
+	 * of_mdiobus_register() sets these PHY_POLL.
+	 * Ideally, the interrupt from MAC controller could be used to
+	 * detect link state changes, not polling, i.e. if there was
 	 * a way phy_driver could set PHY_HAS_INTERRUPT but have that
-	 * पूर्णांकerrupt handled in ethernet drivercode.
+	 * interrupt handled in ethernet drivercode.
 	 */
-	क्रम (i = 0; i < PHY_MAX_ADDR; i++)
+	for (i = 0; i < PHY_MAX_ADDR; i++)
 		bus->irq[i] = PHY_MAC_INTERRUPT;
 
 	data = bus->priv;
-	data->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(data->base)) अणु
+	data->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(data->base)) {
 		ret = PTR_ERR(data->base);
-		जाओ err_out_मुक्त_mdiobus;
-	पूर्ण
+		goto err_out_free_mdiobus;
+	}
 
-	ret = of_mdiobus_रेजिस्टर(bus, np);
-	अगर (ret < 0)
-		जाओ err_out_मुक्त_mdiobus;
+	ret = of_mdiobus_register(bus, np);
+	if (ret < 0)
+		goto err_out_free_mdiobus;
 
-	platक्रमm_set_drvdata(pdev, bus);
+	platform_set_drvdata(pdev, bus);
 
-	वापस 0;
+	return 0;
 
-err_out_मुक्त_mdiobus:
-	mdiobus_मुक्त(bus);
-	वापस ret;
-पूर्ण
+err_out_free_mdiobus:
+	mdiobus_free(bus);
+	return ret;
+}
 
-अटल पूर्णांक moxart_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mii_bus *bus = platक्रमm_get_drvdata(pdev);
+static int moxart_mdio_remove(struct platform_device *pdev)
+{
+	struct mii_bus *bus = platform_get_drvdata(pdev);
 
-	mdiobus_unरेजिस्टर(bus);
-	mdiobus_मुक्त(bus);
+	mdiobus_unregister(bus);
+	mdiobus_free(bus);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id moxart_mdio_dt_ids[] = अणु
-	अणु .compatible = "moxa,moxart-mdio" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id moxart_mdio_dt_ids[] = {
+	{ .compatible = "moxa,moxart-mdio" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, moxart_mdio_dt_ids);
 
-अटल काष्ठा platक्रमm_driver moxart_mdio_driver = अणु
+static struct platform_driver moxart_mdio_driver = {
 	.probe = moxart_mdio_probe,
-	.हटाओ = moxart_mdio_हटाओ,
-	.driver = अणु
+	.remove = moxart_mdio_remove,
+	.driver = {
 		.name = "moxart-mdio",
 		.of_match_table = moxart_mdio_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(moxart_mdio_driver);
+module_platform_driver(moxart_mdio_driver);
 
 MODULE_DESCRIPTION("MOXA ART MDIO interface driver");
 MODULE_AUTHOR("Jonas Jensen <jonas.jensen@gmail.com>");

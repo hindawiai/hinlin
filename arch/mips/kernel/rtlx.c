@@ -1,409 +1,408 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2005, 06 Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/moduleloader.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/sched/संकेत.स>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/syscalls.h>
+#include <linux/moduleloader.h>
+#include <linux/atomic.h>
+#include <linux/sched/signal.h>
 
-#समावेश <यंत्र/mipsmtregs.h>
-#समावेश <यंत्र/mips_mt.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/rtlx.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/vpe.h>
+#include <asm/mipsmtregs.h>
+#include <asm/mips_mt.h>
+#include <asm/processor.h>
+#include <asm/rtlx.h>
+#include <asm/setup.h>
+#include <asm/vpe.h>
 
-अटल पूर्णांक sp_stopping;
-काष्ठा rtlx_info *rtlx;
-काष्ठा chan_रुकोqueues channel_wqs[RTLX_CHANNELS];
-काष्ठा vpe_notअगरications rtlx_notअगरy;
-व्योम (*aprp_hook)(व्योम) = शून्य;
+static int sp_stopping;
+struct rtlx_info *rtlx;
+struct chan_waitqueues channel_wqs[RTLX_CHANNELS];
+struct vpe_notifications rtlx_notify;
+void (*aprp_hook)(void) = NULL;
 EXPORT_SYMBOL(aprp_hook);
 
-अटल व्योम __used dump_rtlx(व्योम)
-अणु
-	पूर्णांक i;
+static void __used dump_rtlx(void)
+{
+	int i;
 
 	pr_info("id 0x%lx state %d\n", rtlx->id, rtlx->state);
 
-	क्रम (i = 0; i < RTLX_CHANNELS; i++) अणु
-		काष्ठा rtlx_channel *chan = &rtlx->channel[i];
+	for (i = 0; i < RTLX_CHANNELS; i++) {
+		struct rtlx_channel *chan = &rtlx->channel[i];
 
 		pr_info(" rt_state %d lx_state %d buffer_size %d\n",
 			chan->rt_state, chan->lx_state, chan->buffer_size);
 
 		pr_info(" rt_read %d rt_write %d\n",
-			chan->rt_पढ़ो, chan->rt_ग_लिखो);
+			chan->rt_read, chan->rt_write);
 
 		pr_info(" lx_read %d lx_write %d\n",
-			chan->lx_पढ़ो, chan->lx_ग_लिखो);
+			chan->lx_read, chan->lx_write);
 
 		pr_info(" rt_buffer <%s>\n", chan->rt_buffer);
 		pr_info(" lx_buffer <%s>\n", chan->lx_buffer);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* call when we have the address of the shared काष्ठाure from the SP side. */
-अटल पूर्णांक rtlx_init(काष्ठा rtlx_info *rtlxi)
-अणु
-	अगर (rtlxi->id != RTLX_ID) अणु
+/* call when we have the address of the shared structure from the SP side. */
+static int rtlx_init(struct rtlx_info *rtlxi)
+{
+	if (rtlxi->id != RTLX_ID) {
 		pr_err("no valid RTLX id at 0x%p 0x%lx\n", rtlxi, rtlxi->id);
-		वापस -ENOEXEC;
-	पूर्ण
+		return -ENOEXEC;
+	}
 
 	rtlx = rtlxi;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* notअगरications */
-व्योम rtlx_starting(पूर्णांक vpe)
-अणु
-	पूर्णांक i;
+/* notifications */
+void rtlx_starting(int vpe)
+{
+	int i;
 	sp_stopping = 0;
 
-	/* क्रमce a reload of rtlx */
-	rtlx = शून्य;
+	/* force a reload of rtlx */
+	rtlx = NULL;
 
-	/* wake up any sleeping rtlx_खोलो's */
-	क्रम (i = 0; i < RTLX_CHANNELS; i++)
-		wake_up_पूर्णांकerruptible(&channel_wqs[i].lx_queue);
-पूर्ण
+	/* wake up any sleeping rtlx_open's */
+	for (i = 0; i < RTLX_CHANNELS; i++)
+		wake_up_interruptible(&channel_wqs[i].lx_queue);
+}
 
-व्योम rtlx_stopping(पूर्णांक vpe)
-अणु
-	पूर्णांक i;
+void rtlx_stopping(int vpe)
+{
+	int i;
 
 	sp_stopping = 1;
-	क्रम (i = 0; i < RTLX_CHANNELS; i++)
-		wake_up_पूर्णांकerruptible(&channel_wqs[i].lx_queue);
-पूर्ण
+	for (i = 0; i < RTLX_CHANNELS; i++)
+		wake_up_interruptible(&channel_wqs[i].lx_queue);
+}
 
 
-पूर्णांक rtlx_खोलो(पूर्णांक index, पूर्णांक can_sleep)
-अणु
-	काष्ठा rtlx_info **p;
-	काष्ठा rtlx_channel *chan;
-	क्रमागत rtlx_state state;
-	पूर्णांक ret = 0;
+int rtlx_open(int index, int can_sleep)
+{
+	struct rtlx_info **p;
+	struct rtlx_channel *chan;
+	enum rtlx_state state;
+	int ret = 0;
 
-	अगर (index >= RTLX_CHANNELS) अणु
+	if (index >= RTLX_CHANNELS) {
 		pr_debug("rtlx_open index out of range\n");
-		वापस -ENOSYS;
-	पूर्ण
+		return -ENOSYS;
+	}
 
-	अगर (atomic_inc_वापस(&channel_wqs[index].in_खोलो) > 1) अणु
+	if (atomic_inc_return(&channel_wqs[index].in_open) > 1) {
 		pr_debug("rtlx_open channel %d already opened\n", index);
 		ret = -EBUSY;
-		जाओ out_fail;
-	पूर्ण
+		goto out_fail;
+	}
 
-	अगर (rtlx == शून्य) अणु
+	if (rtlx == NULL) {
 		p = vpe_get_shared(aprp_cpu_index());
-		अगर (p == शून्य) अणु
-			अगर (can_sleep) अणु
-				ret = __रुको_event_पूर्णांकerruptible(
+		if (p == NULL) {
+			if (can_sleep) {
+				ret = __wait_event_interruptible(
 					channel_wqs[index].lx_queue,
 					(p = vpe_get_shared(aprp_cpu_index())));
-				अगर (ret)
-					जाओ out_fail;
-			पूर्ण अन्यथा अणु
+				if (ret)
+					goto out_fail;
+			} else {
 				pr_debug("No SP program loaded, and device opened with O_NONBLOCK\n");
 				ret = -ENOSYS;
-				जाओ out_fail;
-			पूर्ण
-		पूर्ण
+				goto out_fail;
+			}
+		}
 
 		smp_rmb();
-		अगर (*p == शून्य) अणु
-			अगर (can_sleep) अणु
-				DEFINE_WAIT(रुको);
+		if (*p == NULL) {
+			if (can_sleep) {
+				DEFINE_WAIT(wait);
 
-				क्रम (;;) अणु
-					prepare_to_रुको(
+				for (;;) {
+					prepare_to_wait(
 						&channel_wqs[index].lx_queue,
-						&रुको, TASK_INTERRUPTIBLE);
+						&wait, TASK_INTERRUPTIBLE);
 					smp_rmb();
-					अगर (*p != शून्य)
-						अवरोध;
-					अगर (!संकेत_pending(current)) अणु
+					if (*p != NULL)
+						break;
+					if (!signal_pending(current)) {
 						schedule();
-						जारी;
-					पूर्ण
+						continue;
+					}
 					ret = -ERESTARTSYS;
-					जाओ out_fail;
-				पूर्ण
-				finish_रुको(&channel_wqs[index].lx_queue,
-					    &रुको);
-			पूर्ण अन्यथा अणु
+					goto out_fail;
+				}
+				finish_wait(&channel_wqs[index].lx_queue,
+					    &wait);
+			} else {
 				pr_err(" *vpe_get_shared is NULL. Has an SP program been loaded?\n");
 				ret = -ENOSYS;
-				जाओ out_fail;
-			पूर्ण
-		पूर्ण
+				goto out_fail;
+			}
+		}
 
-		अगर ((अचिन्हित पूर्णांक)*p < KSEG0) अणु
+		if ((unsigned int)*p < KSEG0) {
 			pr_warn("vpe_get_shared returned an invalid pointer maybe an error code %d\n",
-				(पूर्णांक)*p);
+				(int)*p);
 			ret = -ENOSYS;
-			जाओ out_fail;
-		पूर्ण
+			goto out_fail;
+		}
 
 		ret = rtlx_init(*p);
-		अगर (ret < 0)
-			जाओ out_ret;
-	पूर्ण
+		if (ret < 0)
+			goto out_ret;
+	}
 
 	chan = &rtlx->channel[index];
 
 	state = xchg(&chan->lx_state, RTLX_STATE_OPENED);
-	अगर (state == RTLX_STATE_OPENED) अणु
+	if (state == RTLX_STATE_OPENED) {
 		ret = -EBUSY;
-		जाओ out_fail;
-	पूर्ण
+		goto out_fail;
+	}
 
 out_fail:
 	smp_mb();
-	atomic_dec(&channel_wqs[index].in_खोलो);
+	atomic_dec(&channel_wqs[index].in_open);
 	smp_mb();
 
 out_ret:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक rtlx_release(पूर्णांक index)
-अणु
-	अगर (rtlx == शून्य) अणु
+int rtlx_release(int index)
+{
+	if (rtlx == NULL) {
 		pr_err("rtlx_release() with null rtlx\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	rtlx->channel[index].lx_state = RTLX_STATE_UNUSED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित पूर्णांक rtlx_पढ़ो_poll(पूर्णांक index, पूर्णांक can_sleep)
-अणु
-	काष्ठा rtlx_channel *chan;
+unsigned int rtlx_read_poll(int index, int can_sleep)
+{
+	struct rtlx_channel *chan;
 
-	अगर (rtlx == शून्य)
-		वापस 0;
+	if (rtlx == NULL)
+		return 0;
 
 	chan = &rtlx->channel[index];
 
-	/* data available to पढ़ो? */
-	अगर (chan->lx_पढ़ो == chan->lx_ग_लिखो) अणु
-		अगर (can_sleep) अणु
-			पूर्णांक ret = __रुको_event_पूर्णांकerruptible(
+	/* data available to read? */
+	if (chan->lx_read == chan->lx_write) {
+		if (can_sleep) {
+			int ret = __wait_event_interruptible(
 				channel_wqs[index].lx_queue,
-				(chan->lx_पढ़ो != chan->lx_ग_लिखो) ||
+				(chan->lx_read != chan->lx_write) ||
 				sp_stopping);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			अगर (sp_stopping)
-				वापस 0;
-		पूर्ण अन्यथा
-			वापस 0;
-	पूर्ण
+			if (sp_stopping)
+				return 0;
+		} else
+			return 0;
+	}
 
-	वापस (chan->lx_ग_लिखो + chan->buffer_size - chan->lx_पढ़ो)
+	return (chan->lx_write + chan->buffer_size - chan->lx_read)
 	       % chan->buffer_size;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ग_लिखो_spaceमुक्त(पूर्णांक पढ़ो, पूर्णांक ग_लिखो, पूर्णांक size)
-अणु
-	अगर (पढ़ो == ग_लिखो) अणु
+static inline int write_spacefree(int read, int write, int size)
+{
+	if (read == write) {
 		/*
 		 * Never fill the buffer completely, so indexes are always
-		 * equal अगर empty and only empty, or !equal अगर data available
+		 * equal if empty and only empty, or !equal if data available
 		 */
-		वापस size - 1;
-	पूर्ण
+		return size - 1;
+	}
 
-	वापस ((पढ़ो + size - ग_लिखो) % size) - 1;
-पूर्ण
+	return ((read + size - write) % size) - 1;
+}
 
-अचिन्हित पूर्णांक rtlx_ग_लिखो_poll(पूर्णांक index)
-अणु
-	काष्ठा rtlx_channel *chan = &rtlx->channel[index];
+unsigned int rtlx_write_poll(int index)
+{
+	struct rtlx_channel *chan = &rtlx->channel[index];
 
-	वापस ग_लिखो_spaceमुक्त(chan->rt_पढ़ो, chan->rt_ग_लिखो,
+	return write_spacefree(chan->rt_read, chan->rt_write,
 				chan->buffer_size);
-पूर्ण
+}
 
-sमाप_प्रकार rtlx_पढ़ो(पूर्णांक index, व्योम __user *buff, माप_प्रकार count)
-अणु
-	माप_प्रकार lx_ग_लिखो, fl = 0L;
-	काष्ठा rtlx_channel *lx;
-	अचिन्हित दीर्घ failed;
+ssize_t rtlx_read(int index, void __user *buff, size_t count)
+{
+	size_t lx_write, fl = 0L;
+	struct rtlx_channel *lx;
+	unsigned long failed;
 
-	अगर (rtlx == शून्य)
-		वापस -ENOSYS;
+	if (rtlx == NULL)
+		return -ENOSYS;
 
 	lx = &rtlx->channel[index];
 
 	mutex_lock(&channel_wqs[index].mutex);
 	smp_rmb();
-	lx_ग_लिखो = lx->lx_ग_लिखो;
+	lx_write = lx->lx_write;
 
 	/* find out how much in total */
 	count = min(count,
-		     (माप_प्रकार)(lx_ग_लिखो + lx->buffer_size - lx->lx_पढ़ो)
+		     (size_t)(lx_write + lx->buffer_size - lx->lx_read)
 		     % lx->buffer_size);
 
-	/* then how much from the पढ़ो poपूर्णांकer onwards */
-	fl = min(count, (माप_प्रकार)lx->buffer_size - lx->lx_पढ़ो);
+	/* then how much from the read pointer onwards */
+	fl = min(count, (size_t)lx->buffer_size - lx->lx_read);
 
-	failed = copy_to_user(buff, lx->lx_buffer + lx->lx_पढ़ो, fl);
-	अगर (failed)
-		जाओ out;
+	failed = copy_to_user(buff, lx->lx_buffer + lx->lx_read, fl);
+	if (failed)
+		goto out;
 
-	/* and अगर there is anything left at the beginning of the buffer */
-	अगर (count - fl)
+	/* and if there is anything left at the beginning of the buffer */
+	if (count - fl)
 		failed = copy_to_user(buff + fl, lx->lx_buffer, count - fl);
 
 out:
 	count -= failed;
 
 	smp_wmb();
-	lx->lx_पढ़ो = (lx->lx_पढ़ो + count) % lx->buffer_size;
+	lx->lx_read = (lx->lx_read + count) % lx->buffer_size;
 	smp_wmb();
 	mutex_unlock(&channel_wqs[index].mutex);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-sमाप_प्रकार rtlx_ग_लिखो(पूर्णांक index, स्थिर व्योम __user *buffer, माप_प्रकार count)
-अणु
-	काष्ठा rtlx_channel *rt;
-	अचिन्हित दीर्घ failed;
-	माप_प्रकार rt_पढ़ो;
-	माप_प्रकार fl;
+ssize_t rtlx_write(int index, const void __user *buffer, size_t count)
+{
+	struct rtlx_channel *rt;
+	unsigned long failed;
+	size_t rt_read;
+	size_t fl;
 
-	अगर (rtlx == शून्य)
-		वापस -ENOSYS;
+	if (rtlx == NULL)
+		return -ENOSYS;
 
 	rt = &rtlx->channel[index];
 
 	mutex_lock(&channel_wqs[index].mutex);
 	smp_rmb();
-	rt_पढ़ो = rt->rt_पढ़ो;
+	rt_read = rt->rt_read;
 
 	/* total number of bytes to copy */
-	count = min_t(माप_प्रकार, count, ग_लिखो_spaceमुक्त(rt_पढ़ो, rt->rt_ग_लिखो,
+	count = min_t(size_t, count, write_spacefree(rt_read, rt->rt_write,
 						     rt->buffer_size));
 
-	/* first bit from ग_लिखो poपूर्णांकer to the end of the buffer, or count */
-	fl = min(count, (माप_प्रकार) rt->buffer_size - rt->rt_ग_लिखो);
+	/* first bit from write pointer to the end of the buffer, or count */
+	fl = min(count, (size_t) rt->buffer_size - rt->rt_write);
 
-	failed = copy_from_user(rt->rt_buffer + rt->rt_ग_लिखो, buffer, fl);
-	अगर (failed)
-		जाओ out;
+	failed = copy_from_user(rt->rt_buffer + rt->rt_write, buffer, fl);
+	if (failed)
+		goto out;
 
-	/* अगर there's any left copy to the beginning of the buffer */
-	अगर (count - fl)
+	/* if there's any left copy to the beginning of the buffer */
+	if (count - fl)
 		failed = copy_from_user(rt->rt_buffer, buffer + fl, count - fl);
 
 out:
 	count -= failed;
 
 	smp_wmb();
-	rt->rt_ग_लिखो = (rt->rt_ग_लिखो + count) % rt->buffer_size;
+	rt->rt_write = (rt->rt_write + count) % rt->buffer_size;
 	smp_wmb();
 	mutex_unlock(&channel_wqs[index].mutex);
 
-	_पूर्णांकerrupt_sp();
+	_interrupt_sp();
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 
-अटल पूर्णांक file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	वापस rtlx_खोलो(iminor(inode), (filp->f_flags & O_NONBLOCK) ? 0 : 1);
-पूर्ण
+static int file_open(struct inode *inode, struct file *filp)
+{
+	return rtlx_open(iminor(inode), (filp->f_flags & O_NONBLOCK) ? 0 : 1);
+}
 
-अटल पूर्णांक file_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	वापस rtlx_release(iminor(inode));
-पूर्ण
+static int file_release(struct inode *inode, struct file *filp)
+{
+	return rtlx_release(iminor(inode));
+}
 
-अटल __poll_t file_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	पूर्णांक minor = iminor(file_inode(file));
+static __poll_t file_poll(struct file *file, poll_table *wait)
+{
+	int minor = iminor(file_inode(file));
 	__poll_t mask = 0;
 
-	poll_रुको(file, &channel_wqs[minor].rt_queue, रुको);
-	poll_रुको(file, &channel_wqs[minor].lx_queue, रुको);
+	poll_wait(file, &channel_wqs[minor].rt_queue, wait);
+	poll_wait(file, &channel_wqs[minor].lx_queue, wait);
 
-	अगर (rtlx == शून्य)
-		वापस 0;
+	if (rtlx == NULL)
+		return 0;
 
-	/* data available to पढ़ो? */
-	अगर (rtlx_पढ़ो_poll(minor, 0))
+	/* data available to read? */
+	if (rtlx_read_poll(minor, 0))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	/* space to ग_लिखो */
-	अगर (rtlx_ग_लिखो_poll(minor))
+	/* space to write */
+	if (rtlx_write_poll(minor))
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल sमाप_प्रकार file_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count,
+static ssize_t file_read(struct file *file, char __user *buffer, size_t count,
 			 loff_t *ppos)
-अणु
-	पूर्णांक minor = iminor(file_inode(file));
+{
+	int minor = iminor(file_inode(file));
 
 	/* data available? */
-	अगर (!rtlx_पढ़ो_poll(minor, (file->f_flags & O_NONBLOCK) ? 0 : 1))
-		वापस 0;	/* -EAGAIN makes 'cat' whine */
+	if (!rtlx_read_poll(minor, (file->f_flags & O_NONBLOCK) ? 0 : 1))
+		return 0;	/* -EAGAIN makes 'cat' whine */
 
-	वापस rtlx_पढ़ो(minor, buffer, count);
-पूर्ण
+	return rtlx_read(minor, buffer, count);
+}
 
-अटल sमाप_प्रकार file_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			  माप_प्रकार count, loff_t *ppos)
-अणु
-	पूर्णांक minor = iminor(file_inode(file));
+static ssize_t file_write(struct file *file, const char __user *buffer,
+			  size_t count, loff_t *ppos)
+{
+	int minor = iminor(file_inode(file));
 
 	/* any space left... */
-	अगर (!rtlx_ग_लिखो_poll(minor)) अणु
-		पूर्णांक ret;
+	if (!rtlx_write_poll(minor)) {
+		int ret;
 
-		अगर (file->f_flags & O_NONBLOCK)
-			वापस -EAGAIN;
+		if (file->f_flags & O_NONBLOCK)
+			return -EAGAIN;
 
-		ret = __रुको_event_पूर्णांकerruptible(channel_wqs[minor].rt_queue,
-					   rtlx_ग_लिखो_poll(minor));
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = __wait_event_interruptible(channel_wqs[minor].rt_queue,
+					   rtlx_write_poll(minor));
+		if (ret)
+			return ret;
+	}
 
-	वापस rtlx_ग_लिखो(minor, buffer, count);
-पूर्ण
+	return rtlx_write(minor, buffer, count);
+}
 
-स्थिर काष्ठा file_operations rtlx_fops = अणु
+const struct file_operations rtlx_fops = {
 	.owner =   THIS_MODULE,
-	.खोलो =    file_खोलो,
+	.open =    file_open,
 	.release = file_release,
-	.ग_लिखो =   file_ग_लिखो,
-	.पढ़ो =    file_पढ़ो,
+	.write =   file_write,
+	.read =    file_read,
 	.poll =    file_poll,
 	.llseek =  noop_llseek,
-पूर्ण;
+};
 
 module_init(rtlx_module_init);
-module_निकास(rtlx_module_निकास);
+module_exit(rtlx_module_exit);
 
 MODULE_DESCRIPTION("MIPS RTLX");
 MODULE_AUTHOR("Elizabeth Oldham, MIPS Technologies, Inc.");

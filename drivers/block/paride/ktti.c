@@ -1,129 +1,128 @@
-<शैली गुरु>
 /* 
         ktti.c        (c) 1998  Grant R. Guenther <grant@torque.net>
                           Under the terms of the GNU General Public License.
 
-	ktti.c is a low-level protocol driver क्रम the KT Technology
+	ktti.c is a low-level protocol driver for the KT Technology
 	parallel port adapter.  This adapter is used in the "PHd" 
         portable hard-drives.  As far as I can tell, this device
 	supports 4-bit mode _only_.  
 
 */
 
-#घोषणा KTTI_VERSION      "1.0"
+#define KTTI_VERSION      "1.0"
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/रुको.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/wait.h>
+#include <asm/io.h>
 
-#समावेश "paride.h"
+#include "paride.h"
 
-#घोषणा j44(a,b)                (((a>>4)&0x0f)|(b&0xf0))
+#define j44(a,b)                (((a>>4)&0x0f)|(b&0xf0))
 
-/* cont = 0 - access the IDE रेजिस्टर file 
+/* cont = 0 - access the IDE register file 
    cont = 1 - access the IDE command set 
 */
 
-अटल पूर्णांक  cont_map[2] = अणु 0x10, 0x08 पूर्ण;
+static int  cont_map[2] = { 0x10, 0x08 };
 
-अटल व्योम  ktti_ग_लिखो_regr( PIA *pi, पूर्णांक cont, पूर्णांक regr, पूर्णांक val)
+static void  ktti_write_regr( PIA *pi, int cont, int regr, int val)
 
-अणु	पूर्णांक r;
+{	int r;
 
 	r = regr + cont_map[cont];
 
 	w0(r); w2(0xb); w2(0xa); w2(3); w2(6); 
 	w0(val); w2(3); w0(0); w2(6); w2(0xb);
-पूर्ण
+}
 
-अटल पूर्णांक ktti_पढ़ो_regr( PIA *pi, पूर्णांक cont, पूर्णांक regr )
+static int ktti_read_regr( PIA *pi, int cont, int regr )
 
-अणु	पूर्णांक  a, b, r;
+{	int  a, b, r;
 
         r = regr + cont_map[cont];
 
         w0(r); w2(0xb); w2(0xa); w2(9); w2(0xc); w2(9); 
 	a = r1(); w2(0xc);  b = r1(); w2(9); w2(0xc); w2(9);
-	वापस j44(a,b);
+	return j44(a,b);
 
-पूर्ण
+}
 
-अटल व्योम ktti_पढ़ो_block( PIA *pi, अक्षर * buf, पूर्णांक count )
+static void ktti_read_block( PIA *pi, char * buf, int count )
 
-अणु	पूर्णांक  k, a, b;
+{	int  k, a, b;
 
-	क्रम (k=0;k<count/2;k++) अणु
+	for (k=0;k<count/2;k++) {
 		w0(0x10); w2(0xb); w2(0xa); w2(9); w2(0xc); w2(9);
 		a = r1(); w2(0xc); b = r1(); w2(9);
 		buf[2*k] = j44(a,b);
 		a = r1(); w2(0xc); b = r1(); w2(9);
 		buf[2*k+1] = j44(a,b);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ktti_ग_लिखो_block( PIA *pi, अक्षर * buf, पूर्णांक count )
+static void ktti_write_block( PIA *pi, char * buf, int count )
 
-अणु	पूर्णांक k;
+{	int k;
 
-	क्रम (k=0;k<count/2;k++) अणु
+	for (k=0;k<count/2;k++) {
 		w0(0x10); w2(0xb); w2(0xa); w2(3); w2(6);
 		w0(buf[2*k]); w2(3);
 		w0(buf[2*k+1]); w2(6);
 		w2(0xb);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ktti_connect ( PIA *pi  )
+static void ktti_connect ( PIA *pi  )
 
-अणु       pi->saved_r0 = r0();
+{       pi->saved_r0 = r0();
         pi->saved_r2 = r2();
 	w2(0xb); w2(0xa); w0(0); w2(3); w2(6);	
-पूर्ण
+}
 
-अटल व्योम ktti_disconnect ( PIA *pi )
+static void ktti_disconnect ( PIA *pi )
 
-अणु       w2(0xb); w2(0xa); w0(0xa0); w2(3); w2(4);
+{       w2(0xb); w2(0xa); w0(0xa0); w2(3); w2(4);
 	w0(pi->saved_r0);
         w2(pi->saved_r2);
-पूर्ण 
+} 
 
-अटल व्योम ktti_log_adapter( PIA *pi, अक्षर * scratch, पूर्णांक verbose )
+static void ktti_log_adapter( PIA *pi, char * scratch, int verbose )
 
-अणु       prपूर्णांकk("%s: ktti %s, KT adapter at 0x%x, delay %d\n",
+{       printk("%s: ktti %s, KT adapter at 0x%x, delay %d\n",
                 pi->device,KTTI_VERSION,pi->port,pi->delay);
 
-पूर्ण
+}
 
-अटल काष्ठा pi_protocol ktti = अणु
+static struct pi_protocol ktti = {
 	.owner		= THIS_MODULE,
 	.name		= "ktti",
 	.max_mode	= 1,
 	.epp_first	= 2,
-	.शेष_delay	= 1,
+	.default_delay	= 1,
 	.max_units	= 1,
-	.ग_लिखो_regr	= ktti_ग_लिखो_regr,
-	.पढ़ो_regr	= ktti_पढ़ो_regr,
-	.ग_लिखो_block	= ktti_ग_लिखो_block,
-	.पढ़ो_block	= ktti_पढ़ो_block,
+	.write_regr	= ktti_write_regr,
+	.read_regr	= ktti_read_regr,
+	.write_block	= ktti_write_block,
+	.read_block	= ktti_read_block,
 	.connect	= ktti_connect,
 	.disconnect	= ktti_disconnect,
 	.log_adapter	= ktti_log_adapter,
-पूर्ण;
+};
 
-अटल पूर्णांक __init ktti_init(व्योम)
-अणु
-	वापस paride_रेजिस्टर(&ktti);
-पूर्ण
+static int __init ktti_init(void)
+{
+	return paride_register(&ktti);
+}
 
-अटल व्योम __निकास ktti_निकास(व्योम)
-अणु
-	paride_unरेजिस्टर(&ktti);
-पूर्ण
+static void __exit ktti_exit(void)
+{
+	paride_unregister(&ktti);
+}
 
 MODULE_LICENSE("GPL");
 module_init(ktti_init)
-module_निकास(ktti_निकास)
+module_exit(ktti_exit)

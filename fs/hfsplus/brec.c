@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/hfsplus/brec.c
  *
@@ -7,80 +6,80 @@
  * Brad Boyer (flar@allandria.com)
  * (C) 2003 Ardis Technologies <roman@ardistech.com>
  *
- * Handle inभागidual btree records
+ * Handle individual btree records
  */
 
-#समावेश "hfsplus_fs.h"
-#समावेश "hfsplus_raw.h"
+#include "hfsplus_fs.h"
+#include "hfsplus_raw.h"
 
-अटल काष्ठा hfs_bnode *hfs_bnode_split(काष्ठा hfs_find_data *fd);
-अटल पूर्णांक hfs_brec_update_parent(काष्ठा hfs_find_data *fd);
-अटल पूर्णांक hfs_btree_inc_height(काष्ठा hfs_btree *);
+static struct hfs_bnode *hfs_bnode_split(struct hfs_find_data *fd);
+static int hfs_brec_update_parent(struct hfs_find_data *fd);
+static int hfs_btree_inc_height(struct hfs_btree *);
 
 /* Get the length and offset of the given record in the given node */
-u16 hfs_brec_lenoff(काष्ठा hfs_bnode *node, u16 rec, u16 *off)
-अणु
+u16 hfs_brec_lenoff(struct hfs_bnode *node, u16 rec, u16 *off)
+{
 	__be16 retval[2];
 	u16 dataoff;
 
 	dataoff = node->tree->node_size - (rec + 2) * 2;
-	hfs_bnode_पढ़ो(node, retval, dataoff, 4);
+	hfs_bnode_read(node, retval, dataoff, 4);
 	*off = be16_to_cpu(retval[1]);
-	वापस be16_to_cpu(retval[0]) - *off;
-पूर्ण
+	return be16_to_cpu(retval[0]) - *off;
+}
 
 /* Get the length of the key from a keyed record */
-u16 hfs_brec_keylen(काष्ठा hfs_bnode *node, u16 rec)
-अणु
+u16 hfs_brec_keylen(struct hfs_bnode *node, u16 rec)
+{
 	u16 retval, recoff;
 
-	अगर (node->type != HFS_NODE_INDEX && node->type != HFS_NODE_LEAF)
-		वापस 0;
+	if (node->type != HFS_NODE_INDEX && node->type != HFS_NODE_LEAF)
+		return 0;
 
-	अगर ((node->type == HFS_NODE_INDEX) &&
+	if ((node->type == HFS_NODE_INDEX) &&
 	   !(node->tree->attributes & HFS_TREE_VARIDXKEYS) &&
-	   (node->tree->cnid != HFSPLUS_ATTR_CNID)) अणु
+	   (node->tree->cnid != HFSPLUS_ATTR_CNID)) {
 		retval = node->tree->max_key_len + 2;
-	पूर्ण अन्यथा अणु
-		recoff = hfs_bnode_पढ़ो_u16(node,
+	} else {
+		recoff = hfs_bnode_read_u16(node,
 			node->tree->node_size - (rec + 1) * 2);
-		अगर (!recoff)
-			वापस 0;
-		अगर (recoff > node->tree->node_size - 2) अणु
+		if (!recoff)
+			return 0;
+		if (recoff > node->tree->node_size - 2) {
 			pr_err("recoff %d too large\n", recoff);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		retval = hfs_bnode_पढ़ो_u16(node, recoff) + 2;
-		अगर (retval > node->tree->max_key_len + 2) अणु
+		retval = hfs_bnode_read_u16(node, recoff) + 2;
+		if (retval > node->tree->max_key_len + 2) {
 			pr_err("keylen %d too large\n",
 				retval);
 			retval = 0;
-		पूर्ण
-	पूर्ण
-	वापस retval;
-पूर्ण
+		}
+	}
+	return retval;
+}
 
-पूर्णांक hfs_brec_insert(काष्ठा hfs_find_data *fd, व्योम *entry, पूर्णांक entry_len)
-अणु
-	काष्ठा hfs_btree *tree;
-	काष्ठा hfs_bnode *node, *new_node;
-	पूर्णांक size, key_len, rec;
-	पूर्णांक data_off, end_off;
-	पूर्णांक idx_rec_off, data_rec_off, end_rec_off;
+int hfs_brec_insert(struct hfs_find_data *fd, void *entry, int entry_len)
+{
+	struct hfs_btree *tree;
+	struct hfs_bnode *node, *new_node;
+	int size, key_len, rec;
+	int data_off, end_off;
+	int idx_rec_off, data_rec_off, end_rec_off;
 	__be32 cnid;
 
 	tree = fd->tree;
-	अगर (!fd->bnode) अणु
-		अगर (!tree->root)
+	if (!fd->bnode) {
+		if (!tree->root)
 			hfs_btree_inc_height(tree);
 		node = hfs_bnode_find(tree, tree->leaf_head);
-		अगर (IS_ERR(node))
-			वापस PTR_ERR(node);
+		if (IS_ERR(node))
+			return PTR_ERR(node);
 		fd->bnode = node;
 		fd->record = -1;
-	पूर्ण
-	new_node = शून्य;
+	}
+	new_node = NULL;
 	key_len = be16_to_cpu(fd->search_key->key_len) + 2;
 again:
 	/* new record idx and complete record size */
@@ -91,97 +90,97 @@ again:
 	hfs_bnode_dump(node);
 	/* get last offset */
 	end_rec_off = tree->node_size - (node->num_recs + 1) * 2;
-	end_off = hfs_bnode_पढ़ो_u16(node, end_rec_off);
+	end_off = hfs_bnode_read_u16(node, end_rec_off);
 	end_rec_off -= 2;
 	hfs_dbg(BNODE_MOD, "insert_rec: %d, %d, %d, %d\n",
 		rec, size, end_off, end_rec_off);
-	अगर (size > end_rec_off - end_off) अणु
-		अगर (new_node)
+	if (size > end_rec_off - end_off) {
+		if (new_node)
 			panic("not enough room!\n");
 		new_node = hfs_bnode_split(fd);
-		अगर (IS_ERR(new_node))
-			वापस PTR_ERR(new_node);
-		जाओ again;
-	पूर्ण
-	अगर (node->type == HFS_NODE_LEAF) अणु
+		if (IS_ERR(new_node))
+			return PTR_ERR(new_node);
+		goto again;
+	}
+	if (node->type == HFS_NODE_LEAF) {
 		tree->leaf_count++;
 		mark_inode_dirty(tree->inode);
-	पूर्ण
+	}
 	node->num_recs++;
-	/* ग_लिखो new last offset */
-	hfs_bnode_ग_लिखो_u16(node,
-		दुरत्व(काष्ठा hfs_bnode_desc, num_recs),
+	/* write new last offset */
+	hfs_bnode_write_u16(node,
+		offsetof(struct hfs_bnode_desc, num_recs),
 		node->num_recs);
-	hfs_bnode_ग_लिखो_u16(node, end_rec_off, end_off + size);
+	hfs_bnode_write_u16(node, end_rec_off, end_off + size);
 	data_off = end_off;
 	data_rec_off = end_rec_off + 2;
 	idx_rec_off = tree->node_size - (rec + 1) * 2;
-	अगर (idx_rec_off == data_rec_off)
-		जाओ skip;
+	if (idx_rec_off == data_rec_off)
+		goto skip;
 	/* move all following entries */
-	करो अणु
-		data_off = hfs_bnode_पढ़ो_u16(node, data_rec_off + 2);
-		hfs_bnode_ग_लिखो_u16(node, data_rec_off, data_off + size);
+	do {
+		data_off = hfs_bnode_read_u16(node, data_rec_off + 2);
+		hfs_bnode_write_u16(node, data_rec_off, data_off + size);
 		data_rec_off += 2;
-	पूर्ण जबतक (data_rec_off < idx_rec_off);
+	} while (data_rec_off < idx_rec_off);
 
 	/* move data away */
 	hfs_bnode_move(node, data_off + size, data_off,
 		       end_off - data_off);
 
 skip:
-	hfs_bnode_ग_लिखो(node, fd->search_key, data_off, key_len);
-	hfs_bnode_ग_लिखो(node, entry, data_off + key_len, entry_len);
+	hfs_bnode_write(node, fd->search_key, data_off, key_len);
+	hfs_bnode_write(node, entry, data_off + key_len, entry_len);
 	hfs_bnode_dump(node);
 
 	/*
-	 * update parent key अगर we inserted a key
+	 * update parent key if we inserted a key
 	 * at the start of the node and it is not the new node
 	 */
-	अगर (!rec && new_node != node) अणु
-		hfs_bnode_पढ़ो_key(node, fd->search_key, data_off + size);
+	if (!rec && new_node != node) {
+		hfs_bnode_read_key(node, fd->search_key, data_off + size);
 		hfs_brec_update_parent(fd);
-	पूर्ण
+	}
 
-	अगर (new_node) अणु
+	if (new_node) {
 		hfs_bnode_put(fd->bnode);
-		अगर (!new_node->parent) अणु
+		if (!new_node->parent) {
 			hfs_btree_inc_height(tree);
 			new_node->parent = tree->root;
-		पूर्ण
+		}
 		fd->bnode = hfs_bnode_find(tree, new_node->parent);
 
 		/* create index data entry */
 		cnid = cpu_to_be32(new_node->this);
 		entry = &cnid;
-		entry_len = माप(cnid);
+		entry_len = sizeof(cnid);
 
 		/* get index key */
-		hfs_bnode_पढ़ो_key(new_node, fd->search_key, 14);
+		hfs_bnode_read_key(new_node, fd->search_key, 14);
 		__hfs_brec_find(fd->bnode, fd, hfs_find_rec_by_key);
 
 		hfs_bnode_put(new_node);
-		new_node = शून्य;
+		new_node = NULL;
 
-		अगर ((tree->attributes & HFS_TREE_VARIDXKEYS) ||
+		if ((tree->attributes & HFS_TREE_VARIDXKEYS) ||
 				(tree->cnid == HFSPLUS_ATTR_CNID))
 			key_len = be16_to_cpu(fd->search_key->key_len) + 2;
-		अन्यथा अणु
+		else {
 			fd->search_key->key_len =
 				cpu_to_be16(tree->max_key_len);
 			key_len = tree->max_key_len + 2;
-		पूर्ण
-		जाओ again;
-	पूर्ण
+		}
+		goto again;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfs_brec_हटाओ(काष्ठा hfs_find_data *fd)
-अणु
-	काष्ठा hfs_btree *tree;
-	काष्ठा hfs_bnode *node, *parent;
-	पूर्णांक end_off, rec_off, data_off, size;
+int hfs_brec_remove(struct hfs_find_data *fd)
+{
+	struct hfs_btree *tree;
+	struct hfs_bnode *node, *parent;
+	int end_off, rec_off, data_off, size;
 
 	tree = fd->tree;
 	node = fd->bnode;
@@ -189,63 +188,63 @@ again:
 	rec_off = tree->node_size - (fd->record + 2) * 2;
 	end_off = tree->node_size - (node->num_recs + 1) * 2;
 
-	अगर (node->type == HFS_NODE_LEAF) अणु
+	if (node->type == HFS_NODE_LEAF) {
 		tree->leaf_count--;
 		mark_inode_dirty(tree->inode);
-	पूर्ण
+	}
 	hfs_bnode_dump(node);
 	hfs_dbg(BNODE_MOD, "remove_rec: %d, %d\n",
 		fd->record, fd->keylength + fd->entrylength);
-	अगर (!--node->num_recs) अणु
+	if (!--node->num_recs) {
 		hfs_bnode_unlink(node);
-		अगर (!node->parent)
-			वापस 0;
+		if (!node->parent)
+			return 0;
 		parent = hfs_bnode_find(tree, node->parent);
-		अगर (IS_ERR(parent))
-			वापस PTR_ERR(parent);
+		if (IS_ERR(parent))
+			return PTR_ERR(parent);
 		hfs_bnode_put(node);
 		node = fd->bnode = parent;
 
 		__hfs_brec_find(node, fd, hfs_find_rec_by_key);
-		जाओ again;
-	पूर्ण
-	hfs_bnode_ग_लिखो_u16(node,
-		दुरत्व(काष्ठा hfs_bnode_desc, num_recs),
+		goto again;
+	}
+	hfs_bnode_write_u16(node,
+		offsetof(struct hfs_bnode_desc, num_recs),
 		node->num_recs);
 
-	अगर (rec_off == end_off)
-		जाओ skip;
+	if (rec_off == end_off)
+		goto skip;
 	size = fd->keylength + fd->entrylength;
 
-	करो अणु
-		data_off = hfs_bnode_पढ़ो_u16(node, rec_off);
-		hfs_bnode_ग_लिखो_u16(node, rec_off + 2, data_off - size);
+	do {
+		data_off = hfs_bnode_read_u16(node, rec_off);
+		hfs_bnode_write_u16(node, rec_off + 2, data_off - size);
 		rec_off -= 2;
-	पूर्ण जबतक (rec_off >= end_off);
+	} while (rec_off >= end_off);
 
 	/* fill hole */
 	hfs_bnode_move(node, fd->keyoffset, fd->keyoffset + size,
 		       data_off - fd->keyoffset - size);
 skip:
 	hfs_bnode_dump(node);
-	अगर (!fd->record)
+	if (!fd->record)
 		hfs_brec_update_parent(fd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा hfs_bnode *hfs_bnode_split(काष्ठा hfs_find_data *fd)
-अणु
-	काष्ठा hfs_btree *tree;
-	काष्ठा hfs_bnode *node, *new_node, *next_node;
-	काष्ठा hfs_bnode_desc node_desc;
-	पूर्णांक num_recs, new_rec_off, new_off, old_rec_off;
-	पूर्णांक data_start, data_end, size;
+static struct hfs_bnode *hfs_bnode_split(struct hfs_find_data *fd)
+{
+	struct hfs_btree *tree;
+	struct hfs_bnode *node, *new_node, *next_node;
+	struct hfs_bnode_desc node_desc;
+	int num_recs, new_rec_off, new_off, old_rec_off;
+	int data_start, data_end, size;
 
 	tree = fd->tree;
 	node = fd->bnode;
 	new_node = hfs_bmap_alloc(tree);
-	अगर (IS_ERR(new_node))
-		वापस new_node;
+	if (IS_ERR(new_node))
+		return new_node;
 	hfs_bnode_get(node);
 	hfs_dbg(BNODE_MOD, "split_nodes: %d - %d - %d\n",
 		node->this, new_node->this, node->next);
@@ -255,50 +254,50 @@ skip:
 	new_node->type = node->type;
 	new_node->height = node->height;
 
-	अगर (node->next)
+	if (node->next)
 		next_node = hfs_bnode_find(tree, node->next);
-	अन्यथा
-		next_node = शून्य;
+	else
+		next_node = NULL;
 
-	अगर (IS_ERR(next_node)) अणु
+	if (IS_ERR(next_node)) {
 		hfs_bnode_put(node);
 		hfs_bnode_put(new_node);
-		वापस next_node;
-	पूर्ण
+		return next_node;
+	}
 
 	size = tree->node_size / 2 - node->num_recs * 2 - 14;
 	old_rec_off = tree->node_size - 4;
 	num_recs = 1;
-	क्रम (;;) अणु
-		data_start = hfs_bnode_पढ़ो_u16(node, old_rec_off);
-		अगर (data_start > size)
-			अवरोध;
+	for (;;) {
+		data_start = hfs_bnode_read_u16(node, old_rec_off);
+		if (data_start > size)
+			break;
 		old_rec_off -= 2;
-		अगर (++num_recs < node->num_recs)
-			जारी;
+		if (++num_recs < node->num_recs)
+			continue;
 		/* panic? */
 		hfs_bnode_put(node);
 		hfs_bnode_put(new_node);
-		अगर (next_node)
+		if (next_node)
 			hfs_bnode_put(next_node);
-		वापस ERR_PTR(-ENOSPC);
-	पूर्ण
+		return ERR_PTR(-ENOSPC);
+	}
 
-	अगर (fd->record + 1 < num_recs) अणु
+	if (fd->record + 1 < num_recs) {
 		/* new record is in the lower half,
 		 * so leave some more space there
 		 */
 		old_rec_off += 2;
 		num_recs--;
-		data_start = hfs_bnode_पढ़ो_u16(node, old_rec_off);
-	पूर्ण अन्यथा अणु
+		data_start = hfs_bnode_read_u16(node, old_rec_off);
+	} else {
 		hfs_bnode_put(node);
 		hfs_bnode_get(new_node);
 		fd->bnode = new_node;
 		fd->record -= num_recs;
 		fd->keyoffset -= data_start - 14;
 		fd->entryoffset -= data_start - 14;
-	पूर्ण
+	}
 	new_node->num_recs = node->num_recs - num_recs;
 	node->num_recs = num_recs;
 
@@ -307,15 +306,15 @@ skip:
 	size = data_start - new_off;
 	num_recs = new_node->num_recs;
 	data_end = data_start;
-	जबतक (num_recs) अणु
-		hfs_bnode_ग_लिखो_u16(new_node, new_rec_off, new_off);
+	while (num_recs) {
+		hfs_bnode_write_u16(new_node, new_rec_off, new_off);
 		old_rec_off -= 2;
 		new_rec_off -= 2;
-		data_end = hfs_bnode_पढ़ो_u16(node, old_rec_off);
+		data_end = hfs_bnode_read_u16(node, old_rec_off);
 		new_off = data_end - size;
 		num_recs--;
-	पूर्ण
-	hfs_bnode_ग_लिखो_u16(new_node, new_rec_off, new_off);
+	}
+	hfs_bnode_write_u16(new_node, new_rec_off, new_off);
 	hfs_bnode_copy(new_node, 14, node, data_start, data_end - data_start);
 
 	/* update new bnode header */
@@ -325,100 +324,100 @@ skip:
 	node_desc.height = new_node->height;
 	node_desc.num_recs = cpu_to_be16(new_node->num_recs);
 	node_desc.reserved = 0;
-	hfs_bnode_ग_लिखो(new_node, &node_desc, 0, माप(node_desc));
+	hfs_bnode_write(new_node, &node_desc, 0, sizeof(node_desc));
 
 	/* update previous bnode header */
 	node->next = new_node->this;
-	hfs_bnode_पढ़ो(node, &node_desc, 0, माप(node_desc));
+	hfs_bnode_read(node, &node_desc, 0, sizeof(node_desc));
 	node_desc.next = cpu_to_be32(node->next);
 	node_desc.num_recs = cpu_to_be16(node->num_recs);
-	hfs_bnode_ग_लिखो(node, &node_desc, 0, माप(node_desc));
+	hfs_bnode_write(node, &node_desc, 0, sizeof(node_desc));
 
 	/* update next bnode header */
-	अगर (next_node) अणु
+	if (next_node) {
 		next_node->prev = new_node->this;
-		hfs_bnode_पढ़ो(next_node, &node_desc, 0, माप(node_desc));
+		hfs_bnode_read(next_node, &node_desc, 0, sizeof(node_desc));
 		node_desc.prev = cpu_to_be32(next_node->prev);
-		hfs_bnode_ग_लिखो(next_node, &node_desc, 0, माप(node_desc));
+		hfs_bnode_write(next_node, &node_desc, 0, sizeof(node_desc));
 		hfs_bnode_put(next_node);
-	पूर्ण अन्यथा अगर (node->this == tree->leaf_tail) अणु
-		/* अगर there is no next node, this might be the new tail */
+	} else if (node->this == tree->leaf_tail) {
+		/* if there is no next node, this might be the new tail */
 		tree->leaf_tail = new_node->this;
 		mark_inode_dirty(tree->inode);
-	पूर्ण
+	}
 
 	hfs_bnode_dump(node);
 	hfs_bnode_dump(new_node);
 	hfs_bnode_put(node);
 
-	वापस new_node;
-पूर्ण
+	return new_node;
+}
 
-अटल पूर्णांक hfs_brec_update_parent(काष्ठा hfs_find_data *fd)
-अणु
-	काष्ठा hfs_btree *tree;
-	काष्ठा hfs_bnode *node, *new_node, *parent;
-	पूर्णांक newkeylen, dअगरf;
-	पूर्णांक rec, rec_off, end_rec_off;
-	पूर्णांक start_off, end_off;
+static int hfs_brec_update_parent(struct hfs_find_data *fd)
+{
+	struct hfs_btree *tree;
+	struct hfs_bnode *node, *new_node, *parent;
+	int newkeylen, diff;
+	int rec, rec_off, end_rec_off;
+	int start_off, end_off;
 
 	tree = fd->tree;
 	node = fd->bnode;
-	new_node = शून्य;
-	अगर (!node->parent)
-		वापस 0;
+	new_node = NULL;
+	if (!node->parent)
+		return 0;
 
 again:
 	parent = hfs_bnode_find(tree, node->parent);
-	अगर (IS_ERR(parent))
-		वापस PTR_ERR(parent);
+	if (IS_ERR(parent))
+		return PTR_ERR(parent);
 	__hfs_brec_find(parent, fd, hfs_find_rec_by_key);
-	अगर (fd->record < 0)
-		वापस -ENOENT;
+	if (fd->record < 0)
+		return -ENOENT;
 	hfs_bnode_dump(parent);
 	rec = fd->record;
 
-	/* size dअगरference between old and new key */
-	अगर ((tree->attributes & HFS_TREE_VARIDXKEYS) ||
+	/* size difference between old and new key */
+	if ((tree->attributes & HFS_TREE_VARIDXKEYS) ||
 				(tree->cnid == HFSPLUS_ATTR_CNID))
-		newkeylen = hfs_bnode_पढ़ो_u16(node, 14) + 2;
-	अन्यथा
+		newkeylen = hfs_bnode_read_u16(node, 14) + 2;
+	else
 		fd->keylength = newkeylen = tree->max_key_len + 2;
 	hfs_dbg(BNODE_MOD, "update_rec: %d, %d, %d\n",
 		rec, fd->keylength, newkeylen);
 
 	rec_off = tree->node_size - (rec + 2) * 2;
 	end_rec_off = tree->node_size - (parent->num_recs + 1) * 2;
-	dअगरf = newkeylen - fd->keylength;
-	अगर (!dअगरf)
-		जाओ skip;
-	अगर (dअगरf > 0) अणु
-		end_off = hfs_bnode_पढ़ो_u16(parent, end_rec_off);
-		अगर (end_rec_off - end_off < dअगरf) अणु
+	diff = newkeylen - fd->keylength;
+	if (!diff)
+		goto skip;
+	if (diff > 0) {
+		end_off = hfs_bnode_read_u16(parent, end_rec_off);
+		if (end_rec_off - end_off < diff) {
 
 			hfs_dbg(BNODE_MOD, "splitting index node\n");
 			fd->bnode = parent;
 			new_node = hfs_bnode_split(fd);
-			अगर (IS_ERR(new_node))
-				वापस PTR_ERR(new_node);
+			if (IS_ERR(new_node))
+				return PTR_ERR(new_node);
 			parent = fd->bnode;
 			rec = fd->record;
 			rec_off = tree->node_size - (rec + 2) * 2;
 			end_rec_off = tree->node_size -
 				(parent->num_recs + 1) * 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	end_off = start_off = hfs_bnode_पढ़ो_u16(parent, rec_off);
-	hfs_bnode_ग_लिखो_u16(parent, rec_off, start_off + dअगरf);
+	end_off = start_off = hfs_bnode_read_u16(parent, rec_off);
+	hfs_bnode_write_u16(parent, rec_off, start_off + diff);
 	start_off -= 4;	/* move previous cnid too */
 
-	जबतक (rec_off > end_rec_off) अणु
+	while (rec_off > end_rec_off) {
 		rec_off -= 2;
-		end_off = hfs_bnode_पढ़ो_u16(parent, rec_off);
-		hfs_bnode_ग_लिखो_u16(parent, rec_off, end_off + dअगरf);
-	पूर्ण
-	hfs_bnode_move(parent, start_off + dअगरf, start_off,
+		end_off = hfs_bnode_read_u16(parent, rec_off);
+		hfs_bnode_write_u16(parent, rec_off, end_off + diff);
+	}
+	hfs_bnode_move(parent, start_off + diff, start_off,
 		       end_off - start_off);
 skip:
 	hfs_bnode_copy(parent, fd->keyoffset, node, 14, newkeylen);
@@ -427,67 +426,67 @@ skip:
 	hfs_bnode_put(node);
 	node = parent;
 
-	अगर (new_node) अणु
+	if (new_node) {
 		__be32 cnid;
 
-		अगर (!new_node->parent) अणु
+		if (!new_node->parent) {
 			hfs_btree_inc_height(tree);
 			new_node->parent = tree->root;
-		पूर्ण
+		}
 		fd->bnode = hfs_bnode_find(tree, new_node->parent);
 		/* create index key and entry */
-		hfs_bnode_पढ़ो_key(new_node, fd->search_key, 14);
+		hfs_bnode_read_key(new_node, fd->search_key, 14);
 		cnid = cpu_to_be32(new_node->this);
 
 		__hfs_brec_find(fd->bnode, fd, hfs_find_rec_by_key);
-		hfs_brec_insert(fd, &cnid, माप(cnid));
+		hfs_brec_insert(fd, &cnid, sizeof(cnid));
 		hfs_bnode_put(fd->bnode);
 		hfs_bnode_put(new_node);
 
-		अगर (!rec) अणु
-			अगर (new_node == node)
-				जाओ out;
+		if (!rec) {
+			if (new_node == node)
+				goto out;
 			/* restore search_key */
-			hfs_bnode_पढ़ो_key(node, fd->search_key, 14);
-		पूर्ण
-		new_node = शून्य;
-	पूर्ण
+			hfs_bnode_read_key(node, fd->search_key, 14);
+		}
+		new_node = NULL;
+	}
 
-	अगर (!rec && node->parent)
-		जाओ again;
+	if (!rec && node->parent)
+		goto again;
 out:
 	fd->bnode = node;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hfs_btree_inc_height(काष्ठा hfs_btree *tree)
-अणु
-	काष्ठा hfs_bnode *node, *new_node;
-	काष्ठा hfs_bnode_desc node_desc;
-	पूर्णांक key_size, rec;
+static int hfs_btree_inc_height(struct hfs_btree *tree)
+{
+	struct hfs_bnode *node, *new_node;
+	struct hfs_bnode_desc node_desc;
+	int key_size, rec;
 	__be32 cnid;
 
-	node = शून्य;
-	अगर (tree->root) अणु
+	node = NULL;
+	if (tree->root) {
 		node = hfs_bnode_find(tree, tree->root);
-		अगर (IS_ERR(node))
-			वापस PTR_ERR(node);
-	पूर्ण
+		if (IS_ERR(node))
+			return PTR_ERR(node);
+	}
 	new_node = hfs_bmap_alloc(tree);
-	अगर (IS_ERR(new_node)) अणु
+	if (IS_ERR(new_node)) {
 		hfs_bnode_put(node);
-		वापस PTR_ERR(new_node);
-	पूर्ण
+		return PTR_ERR(new_node);
+	}
 
 	tree->root = new_node->this;
-	अगर (!tree->depth) अणु
+	if (!tree->depth) {
 		tree->leaf_head = tree->leaf_tail = new_node->this;
 		new_node->type = HFS_NODE_LEAF;
 		new_node->num_recs = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		new_node->type = HFS_NODE_INDEX;
 		new_node->num_recs = 1;
-	पूर्ण
+	}
 	new_node->parent = 0;
 	new_node->next = 0;
 	new_node->prev = 0;
@@ -499,37 +498,37 @@ out:
 	node_desc.height = new_node->height;
 	node_desc.num_recs = cpu_to_be16(new_node->num_recs);
 	node_desc.reserved = 0;
-	hfs_bnode_ग_लिखो(new_node, &node_desc, 0, माप(node_desc));
+	hfs_bnode_write(new_node, &node_desc, 0, sizeof(node_desc));
 
 	rec = tree->node_size - 2;
-	hfs_bnode_ग_लिखो_u16(new_node, rec, 14);
+	hfs_bnode_write_u16(new_node, rec, 14);
 
-	अगर (node) अणु
-		/* insert old root idx पूर्णांकo new root */
+	if (node) {
+		/* insert old root idx into new root */
 		node->parent = tree->root;
-		अगर (node->type == HFS_NODE_LEAF ||
+		if (node->type == HFS_NODE_LEAF ||
 				tree->attributes & HFS_TREE_VARIDXKEYS ||
 				tree->cnid == HFSPLUS_ATTR_CNID)
-			key_size = hfs_bnode_पढ़ो_u16(node, 14) + 2;
-		अन्यथा
+			key_size = hfs_bnode_read_u16(node, 14) + 2;
+		else
 			key_size = tree->max_key_len + 2;
 		hfs_bnode_copy(new_node, 14, node, 14, key_size);
 
-		अगर (!(tree->attributes & HFS_TREE_VARIDXKEYS) &&
-				(tree->cnid != HFSPLUS_ATTR_CNID)) अणु
+		if (!(tree->attributes & HFS_TREE_VARIDXKEYS) &&
+				(tree->cnid != HFSPLUS_ATTR_CNID)) {
 			key_size = tree->max_key_len + 2;
-			hfs_bnode_ग_लिखो_u16(new_node, 14, tree->max_key_len);
-		पूर्ण
+			hfs_bnode_write_u16(new_node, 14, tree->max_key_len);
+		}
 		cnid = cpu_to_be32(node->this);
-		hfs_bnode_ग_लिखो(new_node, &cnid, 14 + key_size, 4);
+		hfs_bnode_write(new_node, &cnid, 14 + key_size, 4);
 
 		rec -= 2;
-		hfs_bnode_ग_लिखो_u16(new_node, rec, 14 + key_size + 4);
+		hfs_bnode_write_u16(new_node, rec, 14 + key_size + 4);
 
 		hfs_bnode_put(node);
-	पूर्ण
+	}
 	hfs_bnode_put(new_node);
 	mark_inode_dirty(tree->inode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

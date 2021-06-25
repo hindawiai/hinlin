@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  *  Copyright (C) 2004 Florian Schirmer <jolt@tuxbox.org>
  *
- *  This program is मुक्त software; you can redistribute  it and/or modअगरy it
+ *  This program is free software; you can redistribute  it and/or modify it
  *  under  the terms of  the GNU General  Public License as published by the
  *  Free Software Foundation;  either version 2 of the  License, or (at your
  *  option) any later version.
@@ -10,7 +9,7 @@
  *  THIS  SOFTWARE  IS PROVIDED   ``AS  IS'' AND   ANY  EXPRESS OR IMPLIED
  *  WARRANTIES,   INCLUDING, BUT NOT  LIMITED  TO, THE IMPLIED WARRANTIES OF
  *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
- *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   सूचीECT, INसूचीECT,
+ *  NO  EVENT  SHALL   THE AUTHOR  BE    LIABLE FOR ANY   DIRECT, INDIRECT,
  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  *  NOT LIMITED   TO, PROCUREMENT OF  SUBSTITUTE GOODS  OR SERVICES; LOSS OF
  *  USE, DATA,  OR PROFITS; OR  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -18,47 +17,47 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  You should have received a copy of the  GNU General Public License aदीर्घ
- *  with this program; अगर not, ग_लिखो  to the Free Software Foundation, Inc.,
+ *  You should have received a copy of the  GNU General Public License along
+ *  with this program; if not, write  to the Free Software Foundation, Inc.,
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#समावेश "bcm47xx_private.h"
+#include "bcm47xx_private.h"
 
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/irq_cpu.h>
-#समावेश <bcm47xx.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <asm/setup.h>
+#include <asm/irq_cpu.h>
+#include <bcm47xx.h>
 
-यंत्रlinkage व्योम plat_irq_dispatch(व्योम)
-अणु
+asmlinkage void plat_irq_dispatch(void)
+{
 	u32 cause;
 
-	cause = पढ़ो_c0_cause() & पढ़ो_c0_status() & CAUSEF_IP;
+	cause = read_c0_cause() & read_c0_status() & CAUSEF_IP;
 
 	clear_c0_status(cause);
 
-	अगर (cause & CAUSEF_IP7)
-		करो_IRQ(7);
-	अगर (cause & CAUSEF_IP2)
-		करो_IRQ(2);
-	अगर (cause & CAUSEF_IP3)
-		करो_IRQ(3);
-	अगर (cause & CAUSEF_IP4)
-		करो_IRQ(4);
-	अगर (cause & CAUSEF_IP5)
-		करो_IRQ(5);
-	अगर (cause & CAUSEF_IP6)
-		करो_IRQ(6);
-पूर्ण
+	if (cause & CAUSEF_IP7)
+		do_IRQ(7);
+	if (cause & CAUSEF_IP2)
+		do_IRQ(2);
+	if (cause & CAUSEF_IP3)
+		do_IRQ(3);
+	if (cause & CAUSEF_IP4)
+		do_IRQ(4);
+	if (cause & CAUSEF_IP5)
+		do_IRQ(5);
+	if (cause & CAUSEF_IP6)
+		do_IRQ(6);
+}
 
-#घोषणा DEFINE_HWx_IRQDISPATCH(x)					\
-	अटल व्योम bcm47xx_hw ## x ## _irqdispatch(व्योम)		\
-	अणु								\
-		करो_IRQ(x);						\
-	पूर्ण
+#define DEFINE_HWx_IRQDISPATCH(x)					\
+	static void bcm47xx_hw ## x ## _irqdispatch(void)		\
+	{								\
+		do_IRQ(x);						\
+	}
 DEFINE_HWx_IRQDISPATCH(2)
 DEFINE_HWx_IRQDISPATCH(3)
 DEFINE_HWx_IRQDISPATCH(4)
@@ -66,28 +65,28 @@ DEFINE_HWx_IRQDISPATCH(5)
 DEFINE_HWx_IRQDISPATCH(6)
 DEFINE_HWx_IRQDISPATCH(7)
 
-व्योम __init arch_init_irq(व्योम)
-अणु
+void __init arch_init_irq(void)
+{
 	/*
-	 * This is the first arch callback after mm_init (we can use kदो_स्मृति),
+	 * This is the first arch callback after mm_init (we can use kmalloc),
 	 * so let's finish bus initialization now.
 	 */
 	bcm47xx_bus_setup();
 
-#अगर_घोषित CONFIG_BCM47XX_BCMA
-	अगर (bcm47xx_bus_type == BCM47XX_BUS_TYPE_BCMA) अणु
-		bcma_ग_लिखो32(bcm47xx_bus.bcma.bus.drv_mips.core,
+#ifdef CONFIG_BCM47XX_BCMA
+	if (bcm47xx_bus_type == BCM47XX_BUS_TYPE_BCMA) {
+		bcma_write32(bcm47xx_bus.bcma.bus.drv_mips.core,
 			     BCMA_MIPS_MIPS74K_INTMASK(5), 1 << 31);
 		/*
-		 * the kernel पढ़ोs the समयr irq from some रेजिस्टर and thinks
+		 * the kernel reads the timer irq from some register and thinks
 		 * it's #5, but we offset it by 2 and route to #7
 		 */
 		cp0_compare_irq = 7;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	mips_cpu_irq_init();
 
-	अगर (cpu_has_vपूर्णांक) अणु
+	if (cpu_has_vint) {
 		pr_info("Setting up vectored interrupts\n");
 		set_vi_handler(2, bcm47xx_hw2_irqdispatch);
 		set_vi_handler(3, bcm47xx_hw3_irqdispatch);
@@ -95,5 +94,5 @@ DEFINE_HWx_IRQDISPATCH(7)
 		set_vi_handler(5, bcm47xx_hw5_irqdispatch);
 		set_vi_handler(6, bcm47xx_hw6_irqdispatch);
 		set_vi_handler(7, bcm47xx_hw7_irqdispatch);
-	पूर्ण
-पूर्ण
+	}
+}

@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Copyright (C) 2015 Aपंचांगel Corporation,
- *                     Nicolas Ferre <nicolas.ferre@aपंचांगel.com>
+ *  Copyright (C) 2015 Atmel Corporation,
+ *                     Nicolas Ferre <nicolas.ferre@atmel.com>
  *
  * Based on clk-programmable & clk-peripheral drivers by Boris BREZILLON.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk/at91_pmc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
+#include <linux/bitfield.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/clk/at91_pmc.h>
+#include <linux/of.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
 
-#समावेश "pmc.h"
+#include "pmc.h"
 
-#घोषणा GENERATED_MAX_DIV	255
+#define GENERATED_MAX_DIV	255
 
-काष्ठा clk_generated अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap;
-	काष्ठा clk_range range;
+struct clk_generated {
+	struct clk_hw hw;
+	struct regmap *regmap;
+	struct clk_range range;
 	spinlock_t *lock;
 	u32 *mux_table;
 	u32 id;
-	u32 gckभाग;
-	स्थिर काष्ठा clk_pcr_layout *layout;
+	u32 gckdiv;
+	const struct clk_pcr_layout *layout;
 	u8 parent_id;
-	पूर्णांक chg_pid;
-पूर्ण;
+	int chg_pid;
+};
 
-#घोषणा to_clk_generated(hw) \
-	container_of(hw, काष्ठा clk_generated, hw)
+#define to_clk_generated(hw) \
+	container_of(hw, struct clk_generated, hw)
 
-अटल पूर्णांक clk_generated_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
-	अचिन्हित दीर्घ flags;
+static int clk_generated_enable(struct clk_hw *hw)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
+	unsigned long flags;
 
 	pr_debug("GCLK: %s, gckdiv = %d, parent id = %d\n",
-		 __func__, gck->gckभाग, gck->parent_id);
+		 __func__, gck->gckdiv, gck->parent_id);
 
 	spin_lock_irqsave(gck->lock, flags);
-	regmap_ग_लिखो(gck->regmap, gck->layout->offset,
+	regmap_write(gck->regmap, gck->layout->offset,
 		     (gck->id & gck->layout->pid_mask));
 	regmap_update_bits(gck->regmap, gck->layout->offset,
 			   AT91_PMC_PCR_GCKDIV_MASK | gck->layout->gckcss_mask |
 			   gck->layout->cmd | AT91_PMC_PCR_GCKEN,
 			   field_prep(gck->layout->gckcss_mask, gck->parent_id) |
 			   gck->layout->cmd |
-			   FIELD_PREP(AT91_PMC_PCR_GCKDIV_MASK, gck->gckभाग) |
+			   FIELD_PREP(AT91_PMC_PCR_GCKDIV_MASK, gck->gckdiv) |
 			   AT91_PMC_PCR_GCKEN);
 	spin_unlock_irqrestore(gck->lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_generated_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
-	अचिन्हित दीर्घ flags;
+static void clk_generated_disable(struct clk_hw *hw)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
+	unsigned long flags;
 
 	spin_lock_irqsave(gck->lock, flags);
-	regmap_ग_लिखो(gck->regmap, gck->layout->offset,
+	regmap_write(gck->regmap, gck->layout->offset,
 		     (gck->id & gck->layout->pid_mask));
 	regmap_update_bits(gck->regmap, gck->layout->offset,
 			   gck->layout->cmd | AT91_PMC_PCR_GCKEN,
 			   gck->layout->cmd);
 	spin_unlock_irqrestore(gck->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक clk_generated_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
-	अचिन्हित दीर्घ flags;
-	अचिन्हित पूर्णांक status;
+static int clk_generated_is_enabled(struct clk_hw *hw)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
+	unsigned long flags;
+	unsigned int status;
 
 	spin_lock_irqsave(gck->lock, flags);
-	regmap_ग_लिखो(gck->regmap, gck->layout->offset,
+	regmap_write(gck->regmap, gck->layout->offset,
 		     (gck->id & gck->layout->pid_mask));
-	regmap_पढ़ो(gck->regmap, gck->layout->offset, &status);
+	regmap_read(gck->regmap, gck->layout->offset, &status);
 	spin_unlock_irqrestore(gck->lock, flags);
 
-	वापस !!(status & AT91_PMC_PCR_GCKEN);
-पूर्ण
+	return !!(status & AT91_PMC_PCR_GCKEN);
+}
 
-अटल अचिन्हित दीर्घ
-clk_generated_recalc_rate(काष्ठा clk_hw *hw,
-			  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
+static unsigned long
+clk_generated_recalc_rate(struct clk_hw *hw,
+			  unsigned long parent_rate)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
 
-	वापस DIV_ROUND_CLOSEST(parent_rate, gck->gckभाग + 1);
-पूर्ण
+	return DIV_ROUND_CLOSEST(parent_rate, gck->gckdiv + 1);
+}
 
-अटल व्योम clk_generated_best_dअगरf(काष्ठा clk_rate_request *req,
-				    काष्ठा clk_hw *parent,
-				    अचिन्हित दीर्घ parent_rate, u32 भाग,
-				    पूर्णांक *best_dअगरf, दीर्घ *best_rate)
-अणु
-	अचिन्हित दीर्घ पंचांगp_rate;
-	पूर्णांक पंचांगp_dअगरf;
+static void clk_generated_best_diff(struct clk_rate_request *req,
+				    struct clk_hw *parent,
+				    unsigned long parent_rate, u32 div,
+				    int *best_diff, long *best_rate)
+{
+	unsigned long tmp_rate;
+	int tmp_diff;
 
-	अगर (!भाग)
-		पंचांगp_rate = parent_rate;
-	अन्यथा
-		पंचांगp_rate = parent_rate / भाग;
-	पंचांगp_dअगरf = असल(req->rate - पंचांगp_rate);
+	if (!div)
+		tmp_rate = parent_rate;
+	else
+		tmp_rate = parent_rate / div;
+	tmp_diff = abs(req->rate - tmp_rate);
 
-	अगर (*best_dअगरf < 0 || *best_dअगरf >= पंचांगp_dअगरf) अणु
-		*best_rate = पंचांगp_rate;
-		*best_dअगरf = पंचांगp_dअगरf;
+	if (*best_diff < 0 || *best_diff >= tmp_diff) {
+		*best_rate = tmp_rate;
+		*best_diff = tmp_diff;
 		req->best_parent_rate = parent_rate;
 		req->best_parent_hw = parent;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक clk_generated_determine_rate(काष्ठा clk_hw *hw,
-					काष्ठा clk_rate_request *req)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
-	काष्ठा clk_hw *parent = शून्य;
-	काष्ठा clk_rate_request req_parent = *req;
-	दीर्घ best_rate = -EINVAL;
-	अचिन्हित दीर्घ min_rate, parent_rate;
-	पूर्णांक best_dअगरf = -1;
-	पूर्णांक i;
-	u32 भाग;
+static int clk_generated_determine_rate(struct clk_hw *hw,
+					struct clk_rate_request *req)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
+	struct clk_hw *parent = NULL;
+	struct clk_rate_request req_parent = *req;
+	long best_rate = -EINVAL;
+	unsigned long min_rate, parent_rate;
+	int best_diff = -1;
+	int i;
+	u32 div;
 
-	क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
-		अगर (gck->chg_pid == i)
-			जारी;
+	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
+		if (gck->chg_pid == i)
+			continue;
 
 		parent = clk_hw_get_parent_by_index(hw, i);
-		अगर (!parent)
-			जारी;
+		if (!parent)
+			continue;
 
 		parent_rate = clk_hw_get_rate(parent);
 		min_rate = DIV_ROUND_CLOSEST(parent_rate, GENERATED_MAX_DIV + 1);
-		अगर (!parent_rate ||
+		if (!parent_rate ||
 		    (gck->range.max && min_rate > gck->range.max))
-			जारी;
+			continue;
 
-		भाग = DIV_ROUND_CLOSEST(parent_rate, req->rate);
-		अगर (भाग > GENERATED_MAX_DIV + 1)
-			भाग = GENERATED_MAX_DIV + 1;
+		div = DIV_ROUND_CLOSEST(parent_rate, req->rate);
+		if (div > GENERATED_MAX_DIV + 1)
+			div = GENERATED_MAX_DIV + 1;
 
-		clk_generated_best_dअगरf(req, parent, parent_rate, भाग,
-					&best_dअगरf, &best_rate);
+		clk_generated_best_diff(req, parent, parent_rate, div,
+					&best_diff, &best_rate);
 
-		अगर (!best_dअगरf)
-			अवरोध;
-	पूर्ण
+		if (!best_diff)
+			break;
+	}
 
 	/*
-	 * The audio_pll rate can be modअगरied, unlike the five others घड़ीs
+	 * The audio_pll rate can be modified, unlike the five others clocks
 	 * that should never be altered.
 	 * The audio_pll can technically be used by multiple consumers. However,
-	 * with the rate locking, the first consumer to enable to घड़ी will be
-	 * the one definitely setting the rate of the घड़ी.
-	 * Since audio IPs are most likely to request the same rate, we enक्रमce
-	 * that the only clks able to modअगरy gck rate are those of audio IPs.
+	 * with the rate locking, the first consumer to enable to clock will be
+	 * the one definitely setting the rate of the clock.
+	 * Since audio IPs are most likely to request the same rate, we enforce
+	 * that the only clks able to modify gck rate are those of audio IPs.
 	 */
 
-	अगर (gck->chg_pid < 0)
-		जाओ end;
+	if (gck->chg_pid < 0)
+		goto end;
 
 	parent = clk_hw_get_parent_by_index(hw, gck->chg_pid);
-	अगर (!parent)
-		जाओ end;
+	if (!parent)
+		goto end;
 
-	क्रम (भाग = 1; भाग < GENERATED_MAX_DIV + 2; भाग++) अणु
-		req_parent.rate = req->rate * भाग;
-		अगर (__clk_determine_rate(parent, &req_parent))
-			जारी;
-		clk_generated_best_dअगरf(req, parent, req_parent.rate, भाग,
-					&best_dअगरf, &best_rate);
+	for (div = 1; div < GENERATED_MAX_DIV + 2; div++) {
+		req_parent.rate = req->rate * div;
+		if (__clk_determine_rate(parent, &req_parent))
+			continue;
+		clk_generated_best_diff(req, parent, req_parent.rate, div,
+					&best_diff, &best_rate);
 
-		अगर (!best_dअगरf)
-			अवरोध;
-	पूर्ण
+		if (!best_diff)
+			break;
+	}
 
 end:
 	pr_debug("GCLK: %s, best_rate = %ld, parent clk: %s @ %ld\n",
@@ -188,59 +187,59 @@ end:
 		 __clk_get_name((req->best_parent_hw)->clk),
 		 req->best_parent_rate);
 
-	अगर (best_rate < 0 || (gck->range.max && best_rate > gck->range.max))
-		वापस -EINVAL;
+	if (best_rate < 0 || (gck->range.max && best_rate > gck->range.max))
+		return -EINVAL;
 
 	req->rate = best_rate;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* No modअगरication of hardware as we have the flag CLK_SET_PARENT_GATE set */
-अटल पूर्णांक clk_generated_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
+/* No modification of hardware as we have the flag CLK_SET_PARENT_GATE set */
+static int clk_generated_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
 
-	अगर (index >= clk_hw_get_num_parents(hw))
-		वापस -EINVAL;
+	if (index >= clk_hw_get_num_parents(hw))
+		return -EINVAL;
 
-	अगर (gck->mux_table)
+	if (gck->mux_table)
 		gck->parent_id = clk_mux_index_to_val(gck->mux_table, 0, index);
-	अन्यथा
+	else
 		gck->parent_id = index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 clk_generated_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
+static u8 clk_generated_get_parent(struct clk_hw *hw)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
 
-	वापस gck->parent_id;
-पूर्ण
+	return gck->parent_id;
+}
 
-/* No modअगरication of hardware as we have the flag CLK_SET_RATE_GATE set */
-अटल पूर्णांक clk_generated_set_rate(काष्ठा clk_hw *hw,
-				  अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_generated *gck = to_clk_generated(hw);
-	u32 भाग;
+/* No modification of hardware as we have the flag CLK_SET_RATE_GATE set */
+static int clk_generated_set_rate(struct clk_hw *hw,
+				  unsigned long rate,
+				  unsigned long parent_rate)
+{
+	struct clk_generated *gck = to_clk_generated(hw);
+	u32 div;
 
-	अगर (!rate)
-		वापस -EINVAL;
+	if (!rate)
+		return -EINVAL;
 
-	अगर (gck->range.max && rate > gck->range.max)
-		वापस -EINVAL;
+	if (gck->range.max && rate > gck->range.max)
+		return -EINVAL;
 
-	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
-	अगर (भाग > GENERATED_MAX_DIV + 1 || !भाग)
-		वापस -EINVAL;
+	div = DIV_ROUND_CLOSEST(parent_rate, rate);
+	if (div > GENERATED_MAX_DIV + 1 || !div)
+		return -EINVAL;
 
-	gck->gckभाग = भाग - 1;
-	वापस 0;
-पूर्ण
+	gck->gckdiv = div - 1;
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops generated_ops = अणु
+static const struct clk_ops generated_ops = {
 	.enable = clk_generated_enable,
 	.disable = clk_generated_disable,
 	.is_enabled = clk_generated_is_enabled,
@@ -249,55 +248,55 @@ end:
 	.get_parent = clk_generated_get_parent,
 	.set_parent = clk_generated_set_parent,
 	.set_rate = clk_generated_set_rate,
-पूर्ण;
+};
 
 /**
- * clk_generated_startup - Initialize a given घड़ी to its शेष parent and
- * भागisor parameter.
+ * clk_generated_startup - Initialize a given clock to its default parent and
+ * divisor parameter.
  *
- * @gck:	Generated घड़ी to set the startup parameters क्रम.
+ * @gck:	Generated clock to set the startup parameters for.
  *
- * Take parameters from the hardware and update local घड़ी configuration
+ * Take parameters from the hardware and update local clock configuration
  * accordingly.
  */
-अटल व्योम clk_generated_startup(काष्ठा clk_generated *gck)
-अणु
-	u32 पंचांगp;
-	अचिन्हित दीर्घ flags;
+static void clk_generated_startup(struct clk_generated *gck)
+{
+	u32 tmp;
+	unsigned long flags;
 
 	spin_lock_irqsave(gck->lock, flags);
-	regmap_ग_लिखो(gck->regmap, gck->layout->offset,
+	regmap_write(gck->regmap, gck->layout->offset,
 		     (gck->id & gck->layout->pid_mask));
-	regmap_पढ़ो(gck->regmap, gck->layout->offset, &पंचांगp);
+	regmap_read(gck->regmap, gck->layout->offset, &tmp);
 	spin_unlock_irqrestore(gck->lock, flags);
 
-	gck->parent_id = field_get(gck->layout->gckcss_mask, पंचांगp);
-	gck->gckभाग = FIELD_GET(AT91_PMC_PCR_GCKDIV_MASK, पंचांगp);
-पूर्ण
+	gck->parent_id = field_get(gck->layout->gckcss_mask, tmp);
+	gck->gckdiv = FIELD_GET(AT91_PMC_PCR_GCKDIV_MASK, tmp);
+}
 
-काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_generated(काष्ठा regmap *regmap, spinlock_t *lock,
-			    स्थिर काष्ठा clk_pcr_layout *layout,
-			    स्थिर अक्षर *name, स्थिर अक्षर **parent_names,
+struct clk_hw * __init
+at91_clk_register_generated(struct regmap *regmap, spinlock_t *lock,
+			    const struct clk_pcr_layout *layout,
+			    const char *name, const char **parent_names,
 			    u32 *mux_table, u8 num_parents, u8 id,
-			    स्थिर काष्ठा clk_range *range,
-			    पूर्णांक chg_pid)
-अणु
-	काष्ठा clk_generated *gck;
-	काष्ठा clk_init_data init;
-	काष्ठा clk_hw *hw;
-	पूर्णांक ret;
+			    const struct clk_range *range,
+			    int chg_pid)
+{
+	struct clk_generated *gck;
+	struct clk_init_data init;
+	struct clk_hw *hw;
+	int ret;
 
-	gck = kzalloc(माप(*gck), GFP_KERNEL);
-	अगर (!gck)
-		वापस ERR_PTR(-ENOMEM);
+	gck = kzalloc(sizeof(*gck), GFP_KERNEL);
+	if (!gck)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &generated_ops;
 	init.parent_names = parent_names;
 	init.num_parents = num_parents;
 	init.flags = CLK_SET_RATE_GATE | CLK_SET_PARENT_GATE;
-	अगर (chg_pid >= 0)
+	if (chg_pid >= 0)
 		init.flags |= CLK_SET_RATE_PARENT;
 
 	gck->id = id;
@@ -311,13 +310,13 @@ at91_clk_रेजिस्टर_generated(काष्ठा regmap *regmap, s
 
 	clk_generated_startup(gck);
 	hw = &gck->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &gck->hw);
-	अगर (ret) अणु
-		kमुक्त(gck);
+	ret = clk_hw_register(NULL, &gck->hw);
+	if (ret) {
+		kfree(gck);
 		hw = ERR_PTR(ret);
-	पूर्ण अन्यथा अणु
-		pmc_रेजिस्टर_id(id);
-	पूर्ण
+	} else {
+		pmc_register_id(id);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}

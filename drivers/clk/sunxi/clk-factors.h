@@ -1,66 +1,65 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MACH_SUNXI_CLK_FACTORS_H
-#घोषणा __MACH_SUNXI_CLK_FACTORS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MACH_SUNXI_CLK_FACTORS_H
+#define __MACH_SUNXI_CLK_FACTORS_H
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk-provider.h>
+#include <linux/spinlock.h>
 
-#घोषणा SUNXI_FACTORS_NOT_APPLICABLE	(0)
+#define SUNXI_FACTORS_NOT_APPLICABLE	(0)
 
-काष्ठा clk_factors_config अणु
-	u8 nshअगरt;
+struct clk_factors_config {
+	u8 nshift;
 	u8 nwidth;
-	u8 kshअगरt;
+	u8 kshift;
 	u8 kwidth;
-	u8 mshअगरt;
+	u8 mshift;
 	u8 mwidth;
-	u8 pshअगरt;
+	u8 pshift;
 	u8 pwidth;
 	u8 n_start;
-पूर्ण;
+};
 
-काष्ठा factors_request अणु
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ parent_rate;
+struct factors_request {
+	unsigned long rate;
+	unsigned long parent_rate;
 	u8 parent_index;
 	u8 n;
 	u8 k;
 	u8 m;
 	u8 p;
-पूर्ण;
+};
 
-काष्ठा factors_data अणु
-	पूर्णांक enable;
-	पूर्णांक mux;
-	पूर्णांक muxmask;
-	स्थिर काष्ठा clk_factors_config *table;
-	व्योम (*getter)(काष्ठा factors_request *req);
-	व्योम (*recalc)(काष्ठा factors_request *req);
-	स्थिर अक्षर *name;
-पूर्ण;
+struct factors_data {
+	int enable;
+	int mux;
+	int muxmask;
+	const struct clk_factors_config *table;
+	void (*getter)(struct factors_request *req);
+	void (*recalc)(struct factors_request *req);
+	const char *name;
+};
 
-काष्ठा clk_factors अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *reg;
-	स्थिर काष्ठा clk_factors_config *config;
-	व्योम (*get_factors)(काष्ठा factors_request *req);
-	व्योम (*recalc)(काष्ठा factors_request *req);
+struct clk_factors {
+	struct clk_hw hw;
+	void __iomem *reg;
+	const struct clk_factors_config *config;
+	void (*get_factors)(struct factors_request *req);
+	void (*recalc)(struct factors_request *req);
 	spinlock_t *lock;
-	/* क्रम cleanup */
-	काष्ठा clk_mux *mux;
-	काष्ठा clk_gate *gate;
-पूर्ण;
+	/* for cleanup */
+	struct clk_mux *mux;
+	struct clk_gate *gate;
+};
 
-काष्ठा clk *sunxi_factors_रेजिस्टर(काष्ठा device_node *node,
-				   स्थिर काष्ठा factors_data *data,
+struct clk *sunxi_factors_register(struct device_node *node,
+				   const struct factors_data *data,
 				   spinlock_t *lock,
-				   व्योम __iomem *reg);
-काष्ठा clk *sunxi_factors_रेजिस्टर_critical(काष्ठा device_node *node,
-					    स्थिर काष्ठा factors_data *data,
+				   void __iomem *reg);
+struct clk *sunxi_factors_register_critical(struct device_node *node,
+					    const struct factors_data *data,
 					    spinlock_t *lock,
-					    व्योम __iomem *reg);
+					    void __iomem *reg);
 
-व्योम sunxi_factors_unरेजिस्टर(काष्ठा device_node *node, काष्ठा clk *clk);
+void sunxi_factors_unregister(struct device_node *node, struct clk *clk);
 
-#पूर्ण_अगर
+#endif

@@ -1,294 +1,293 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/clk/at91_pmc.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/regmap.h>
+#include <linux/clk-provider.h>
+#include <linux/clkdev.h>
+#include <linux/clk/at91_pmc.h>
+#include <linux/of.h>
+#include <linux/mfd/syscon.h>
+#include <linux/regmap.h>
 
-#समावेश "pmc.h"
+#include "pmc.h"
 
-#घोषणा PLL_STATUS_MASK(id)	(1 << (1 + (id)))
-#घोषणा PLL_REG(id)		(AT91_CKGR_PLLAR + ((id) * 4))
-#घोषणा PLL_DIV_MASK		0xff
-#घोषणा PLL_DIV_MAX		PLL_DIV_MASK
-#घोषणा PLL_DIV(reg)		((reg) & PLL_DIV_MASK)
-#घोषणा PLL_MUL(reg, layout)	(((reg) >> (layout)->mul_shअगरt) & \
+#define PLL_STATUS_MASK(id)	(1 << (1 + (id)))
+#define PLL_REG(id)		(AT91_CKGR_PLLAR + ((id) * 4))
+#define PLL_DIV_MASK		0xff
+#define PLL_DIV_MAX		PLL_DIV_MASK
+#define PLL_DIV(reg)		((reg) & PLL_DIV_MASK)
+#define PLL_MUL(reg, layout)	(((reg) >> (layout)->mul_shift) & \
 				 (layout)->mul_mask)
-#घोषणा PLL_MUL_MIN		2
-#घोषणा PLL_MUL_MASK(layout)	((layout)->mul_mask)
-#घोषणा PLL_MUL_MAX(layout)	(PLL_MUL_MASK(layout) + 1)
-#घोषणा PLL_ICPR_SHIFT(id)	((id) * 16)
-#घोषणा PLL_ICPR_MASK(id)	(0xffff << PLL_ICPR_SHIFT(id))
-#घोषणा PLL_MAX_COUNT		0x3f
-#घोषणा PLL_COUNT_SHIFT		8
-#घोषणा PLL_OUT_SHIFT		14
-#घोषणा PLL_MAX_ID		1
+#define PLL_MUL_MIN		2
+#define PLL_MUL_MASK(layout)	((layout)->mul_mask)
+#define PLL_MUL_MAX(layout)	(PLL_MUL_MASK(layout) + 1)
+#define PLL_ICPR_SHIFT(id)	((id) * 16)
+#define PLL_ICPR_MASK(id)	(0xffff << PLL_ICPR_SHIFT(id))
+#define PLL_MAX_COUNT		0x3f
+#define PLL_COUNT_SHIFT		8
+#define PLL_OUT_SHIFT		14
+#define PLL_MAX_ID		1
 
-#घोषणा to_clk_pll(hw) container_of(hw, काष्ठा clk_pll, hw)
+#define to_clk_pll(hw) container_of(hw, struct clk_pll, hw)
 
-काष्ठा clk_pll अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap;
+struct clk_pll {
+	struct clk_hw hw;
+	struct regmap *regmap;
 	u8 id;
-	u8 भाग;
+	u8 div;
 	u8 range;
 	u16 mul;
-	स्थिर काष्ठा clk_pll_layout *layout;
-	स्थिर काष्ठा clk_pll_अक्षरacteristics *अक्षरacteristics;
-पूर्ण;
+	const struct clk_pll_layout *layout;
+	const struct clk_pll_characteristics *characteristics;
+};
 
-अटल अंतरभूत bool clk_pll_पढ़ोy(काष्ठा regmap *regmap, पूर्णांक id)
-अणु
-	अचिन्हित पूर्णांक status;
+static inline bool clk_pll_ready(struct regmap *regmap, int id)
+{
+	unsigned int status;
 
-	regmap_पढ़ो(regmap, AT91_PMC_SR, &status);
+	regmap_read(regmap, AT91_PMC_SR, &status);
 
-	वापस status & PLL_STATUS_MASK(id) ? 1 : 0;
-पूर्ण
+	return status & PLL_STATUS_MASK(id) ? 1 : 0;
+}
 
-अटल पूर्णांक clk_pll_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	काष्ठा regmap *regmap = pll->regmap;
-	स्थिर काष्ठा clk_pll_layout *layout = pll->layout;
-	स्थिर काष्ठा clk_pll_अक्षरacteristics *अक्षरacteristics =
-							pll->अक्षरacteristics;
+static int clk_pll_prepare(struct clk_hw *hw)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	struct regmap *regmap = pll->regmap;
+	const struct clk_pll_layout *layout = pll->layout;
+	const struct clk_pll_characteristics *characteristics =
+							pll->characteristics;
 	u8 id = pll->id;
 	u32 mask = PLL_STATUS_MASK(id);
-	पूर्णांक offset = PLL_REG(id);
+	int offset = PLL_REG(id);
 	u8 out = 0;
-	अचिन्हित पूर्णांक pllr;
-	अचिन्हित पूर्णांक status;
-	u8 भाग;
+	unsigned int pllr;
+	unsigned int status;
+	u8 div;
 	u16 mul;
 
-	regmap_पढ़ो(regmap, offset, &pllr);
-	भाग = PLL_DIV(pllr);
+	regmap_read(regmap, offset, &pllr);
+	div = PLL_DIV(pllr);
 	mul = PLL_MUL(pllr, layout);
 
-	regmap_पढ़ो(regmap, AT91_PMC_SR, &status);
-	अगर ((status & mask) &&
-	    (भाग == pll->भाग && mul == pll->mul))
-		वापस 0;
+	regmap_read(regmap, AT91_PMC_SR, &status);
+	if ((status & mask) &&
+	    (div == pll->div && mul == pll->mul))
+		return 0;
 
-	अगर (अक्षरacteristics->out)
-		out = अक्षरacteristics->out[pll->range];
+	if (characteristics->out)
+		out = characteristics->out[pll->range];
 
-	अगर (अक्षरacteristics->icpll)
+	if (characteristics->icpll)
 		regmap_update_bits(regmap, AT91_PMC_PLLICPR, PLL_ICPR_MASK(id),
-			अक्षरacteristics->icpll[pll->range] << PLL_ICPR_SHIFT(id));
+			characteristics->icpll[pll->range] << PLL_ICPR_SHIFT(id));
 
 	regmap_update_bits(regmap, offset, layout->pllr_mask,
-			pll->भाग | (PLL_MAX_COUNT << PLL_COUNT_SHIFT) |
+			pll->div | (PLL_MAX_COUNT << PLL_COUNT_SHIFT) |
 			(out << PLL_OUT_SHIFT) |
-			((pll->mul & layout->mul_mask) << layout->mul_shअगरt));
+			((pll->mul & layout->mul_mask) << layout->mul_shift));
 
-	जबतक (!clk_pll_पढ़ोy(regmap, pll->id))
+	while (!clk_pll_ready(regmap, pll->id))
 		cpu_relax();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_pll_is_prepared(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
+static int clk_pll_is_prepared(struct clk_hw *hw)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
 
-	वापस clk_pll_पढ़ोy(pll->regmap, pll->id);
-पूर्ण
+	return clk_pll_ready(pll->regmap, pll->id);
+}
 
-अटल व्योम clk_pll_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	अचिन्हित पूर्णांक mask = pll->layout->pllr_mask;
+static void clk_pll_unprepare(struct clk_hw *hw)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	unsigned int mask = pll->layout->pllr_mask;
 
 	regmap_update_bits(pll->regmap, PLL_REG(pll->id), mask, ~mask);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ clk_pll_recalc_rate(काष्ठा clk_hw *hw,
-					 अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
+static unsigned long clk_pll_recalc_rate(struct clk_hw *hw,
+					 unsigned long parent_rate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
 
-	अगर (!pll->भाग || !pll->mul)
-		वापस 0;
+	if (!pll->div || !pll->mul)
+		return 0;
 
-	वापस (parent_rate / pll->भाग) * (pll->mul + 1);
-पूर्ण
+	return (parent_rate / pll->div) * (pll->mul + 1);
+}
 
-अटल दीर्घ clk_pll_get_best_भाग_mul(काष्ठा clk_pll *pll, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ parent_rate,
-				     u32 *भाग, u32 *mul,
-				     u32 *index) अणु
-	स्थिर काष्ठा clk_pll_layout *layout = pll->layout;
-	स्थिर काष्ठा clk_pll_अक्षरacteristics *अक्षरacteristics =
-							pll->अक्षरacteristics;
-	अचिन्हित दीर्घ bestreमुख्यder = अच_दीर्घ_उच्च;
-	अचिन्हित दीर्घ maxभाग, minभाग, पंचांगpभाग;
-	दीर्घ bestrate = -दुस्फल;
-	अचिन्हित दीर्घ bestभाग;
-	अचिन्हित दीर्घ besपंचांगul;
-	पूर्णांक i = 0;
+static long clk_pll_get_best_div_mul(struct clk_pll *pll, unsigned long rate,
+				     unsigned long parent_rate,
+				     u32 *div, u32 *mul,
+				     u32 *index) {
+	const struct clk_pll_layout *layout = pll->layout;
+	const struct clk_pll_characteristics *characteristics =
+							pll->characteristics;
+	unsigned long bestremainder = ULONG_MAX;
+	unsigned long maxdiv, mindiv, tmpdiv;
+	long bestrate = -ERANGE;
+	unsigned long bestdiv;
+	unsigned long bestmul;
+	int i = 0;
 
-	/* Check अगर parent_rate is a valid input rate */
-	अगर (parent_rate < अक्षरacteristics->input.min)
-		वापस -दुस्फल;
+	/* Check if parent_rate is a valid input rate */
+	if (parent_rate < characteristics->input.min)
+		return -ERANGE;
 
 	/*
-	 * Calculate minimum भागider based on the minimum multiplier, the
+	 * Calculate minimum divider based on the minimum multiplier, the
 	 * parent_rate and the requested rate.
-	 * Should always be 2 according to the input and output अक्षरacteristics
+	 * Should always be 2 according to the input and output characteristics
 	 * of the PLL blocks.
 	 */
-	minभाग = (parent_rate * PLL_MUL_MIN) / rate;
-	अगर (!minभाग)
-		minभाग = 1;
+	mindiv = (parent_rate * PLL_MUL_MIN) / rate;
+	if (!mindiv)
+		mindiv = 1;
 
-	अगर (parent_rate > अक्षरacteristics->input.max) अणु
-		पंचांगpभाग = DIV_ROUND_UP(parent_rate, अक्षरacteristics->input.max);
-		अगर (पंचांगpभाग > PLL_DIV_MAX)
-			वापस -दुस्फल;
+	if (parent_rate > characteristics->input.max) {
+		tmpdiv = DIV_ROUND_UP(parent_rate, characteristics->input.max);
+		if (tmpdiv > PLL_DIV_MAX)
+			return -ERANGE;
 
-		अगर (पंचांगpभाग > minभाग)
-			minभाग = पंचांगpभाग;
-	पूर्ण
+		if (tmpdiv > mindiv)
+			mindiv = tmpdiv;
+	}
 
 	/*
-	 * Calculate the maximum भागider which is limited by PLL रेजिस्टर
+	 * Calculate the maximum divider which is limited by PLL register
 	 * layout (limited by the MUL or DIV field size).
 	 */
-	maxभाग = DIV_ROUND_UP(parent_rate * PLL_MUL_MAX(layout), rate);
-	अगर (maxभाग > PLL_DIV_MAX)
-		maxभाग = PLL_DIV_MAX;
+	maxdiv = DIV_ROUND_UP(parent_rate * PLL_MUL_MAX(layout), rate);
+	if (maxdiv > PLL_DIV_MAX)
+		maxdiv = PLL_DIV_MAX;
 
 	/*
-	 * Iterate over the acceptable भागider values to find the best
-	 * भागider/multiplier pair (the one that generates the बंदst
+	 * Iterate over the acceptable divider values to find the best
+	 * divider/multiplier pair (the one that generates the closest
 	 * rate to the requested one).
 	 */
-	क्रम (पंचांगpभाग = minभाग; पंचांगpभाग <= maxभाग; पंचांगpभाग++) अणु
-		अचिन्हित दीर्घ reमुख्यder;
-		अचिन्हित दीर्घ पंचांगprate;
-		अचिन्हित दीर्घ पंचांगpmul;
+	for (tmpdiv = mindiv; tmpdiv <= maxdiv; tmpdiv++) {
+		unsigned long remainder;
+		unsigned long tmprate;
+		unsigned long tmpmul;
 
 		/*
 		 * Calculate the multiplier associated with the current
-		 * भागider that provide the बंदst rate to the requested one.
+		 * divider that provide the closest rate to the requested one.
 		 */
-		पंचांगpmul = DIV_ROUND_CLOSEST(rate, parent_rate / पंचांगpभाग);
-		पंचांगprate = (parent_rate / पंचांगpभाग) * पंचांगpmul;
-		अगर (पंचांगprate > rate)
-			reमुख्यder = पंचांगprate - rate;
-		अन्यथा
-			reमुख्यder = rate - पंचांगprate;
+		tmpmul = DIV_ROUND_CLOSEST(rate, parent_rate / tmpdiv);
+		tmprate = (parent_rate / tmpdiv) * tmpmul;
+		if (tmprate > rate)
+			remainder = tmprate - rate;
+		else
+			remainder = rate - tmprate;
 
 		/*
-		 * Compare the reमुख्यder with the best reमुख्यder found until
-		 * now and elect a new best multiplier/भागider pair अगर the
-		 * current reमुख्यder is smaller than the best one.
+		 * Compare the remainder with the best remainder found until
+		 * now and elect a new best multiplier/divider pair if the
+		 * current remainder is smaller than the best one.
 		 */
-		अगर (reमुख्यder < bestreमुख्यder) अणु
-			bestreमुख्यder = reमुख्यder;
-			bestभाग = पंचांगpभाग;
-			besपंचांगul = पंचांगpmul;
-			bestrate = पंचांगprate;
-		पूर्ण
+		if (remainder < bestremainder) {
+			bestremainder = remainder;
+			bestdiv = tmpdiv;
+			bestmul = tmpmul;
+			bestrate = tmprate;
+		}
 
 		/*
 		 * We've found a perfect match!
-		 * Stop searching now and use this multiplier/भागider pair.
+		 * Stop searching now and use this multiplier/divider pair.
 		 */
-		अगर (!reमुख्यder)
-			अवरोध;
-	पूर्ण
+		if (!remainder)
+			break;
+	}
 
-	/* We haven't found any multiplier/भागider pair => वापस -दुस्फल */
-	अगर (bestrate < 0)
-		वापस bestrate;
+	/* We haven't found any multiplier/divider pair => return -ERANGE */
+	if (bestrate < 0)
+		return bestrate;
 
-	/* Check अगर bestrate is a valid output rate  */
-	क्रम (i = 0; i < अक्षरacteristics->num_output; i++) अणु
-		अगर (bestrate >= अक्षरacteristics->output[i].min &&
-		    bestrate <= अक्षरacteristics->output[i].max)
-			अवरोध;
-	पूर्ण
+	/* Check if bestrate is a valid output rate  */
+	for (i = 0; i < characteristics->num_output; i++) {
+		if (bestrate >= characteristics->output[i].min &&
+		    bestrate <= characteristics->output[i].max)
+			break;
+	}
 
-	अगर (i >= अक्षरacteristics->num_output)
-		वापस -दुस्फल;
+	if (i >= characteristics->num_output)
+		return -ERANGE;
 
-	अगर (भाग)
-		*भाग = bestभाग;
-	अगर (mul)
-		*mul = besपंचांगul - 1;
-	अगर (index)
+	if (div)
+		*div = bestdiv;
+	if (mul)
+		*mul = bestmul - 1;
+	if (index)
 		*index = i;
 
-	वापस bestrate;
-पूर्ण
+	return bestrate;
+}
 
-अटल दीर्घ clk_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ *parent_rate)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
+static long clk_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long *parent_rate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
 
-	वापस clk_pll_get_best_भाग_mul(pll, rate, *parent_rate,
-					शून्य, शून्य, शून्य);
-पूर्ण
+	return clk_pll_get_best_div_mul(pll, rate, *parent_rate,
+					NULL, NULL, NULL);
+}
 
-अटल पूर्णांक clk_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			    अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pll *pll = to_clk_pll(hw);
-	दीर्घ ret;
-	u32 भाग;
+static int clk_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+			    unsigned long parent_rate)
+{
+	struct clk_pll *pll = to_clk_pll(hw);
+	long ret;
+	u32 div;
 	u32 mul;
 	u32 index;
 
-	ret = clk_pll_get_best_भाग_mul(pll, rate, parent_rate,
-				       &भाग, &mul, &index);
-	अगर (ret < 0)
-		वापस ret;
+	ret = clk_pll_get_best_div_mul(pll, rate, parent_rate,
+				       &div, &mul, &index);
+	if (ret < 0)
+		return ret;
 
 	pll->range = index;
-	pll->भाग = भाग;
+	pll->div = div;
 	pll->mul = mul;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops pll_ops = अणु
+static const struct clk_ops pll_ops = {
 	.prepare = clk_pll_prepare,
 	.unprepare = clk_pll_unprepare,
 	.is_prepared = clk_pll_is_prepared,
 	.recalc_rate = clk_pll_recalc_rate,
 	.round_rate = clk_pll_round_rate,
 	.set_rate = clk_pll_set_rate,
-पूर्ण;
+};
 
-काष्ठा clk_hw * __init
-at91_clk_रेजिस्टर_pll(काष्ठा regmap *regmap, स्थिर अक्षर *name,
-		      स्थिर अक्षर *parent_name, u8 id,
-		      स्थिर काष्ठा clk_pll_layout *layout,
-		      स्थिर काष्ठा clk_pll_अक्षरacteristics *अक्षरacteristics)
-अणु
-	काष्ठा clk_pll *pll;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक offset = PLL_REG(id);
-	अचिन्हित पूर्णांक pllr;
-	पूर्णांक ret;
+struct clk_hw * __init
+at91_clk_register_pll(struct regmap *regmap, const char *name,
+		      const char *parent_name, u8 id,
+		      const struct clk_pll_layout *layout,
+		      const struct clk_pll_characteristics *characteristics)
+{
+	struct clk_pll *pll;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int offset = PLL_REG(id);
+	unsigned int pllr;
+	int ret;
 
-	अगर (id > PLL_MAX_ID)
-		वापस ERR_PTR(-EINVAL);
+	if (id > PLL_MAX_ID)
+		return ERR_PTR(-EINVAL);
 
-	pll = kzalloc(माप(*pll), GFP_KERNEL);
-	अगर (!pll)
-		वापस ERR_PTR(-ENOMEM);
+	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
+	if (!pll)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &pll_ops;
@@ -299,43 +298,43 @@ at91_clk_रेजिस्टर_pll(काष्ठा regmap *regmap, स्�
 	pll->id = id;
 	pll->hw.init = &init;
 	pll->layout = layout;
-	pll->अक्षरacteristics = अक्षरacteristics;
+	pll->characteristics = characteristics;
 	pll->regmap = regmap;
-	regmap_पढ़ो(regmap, offset, &pllr);
-	pll->भाग = PLL_DIV(pllr);
+	regmap_read(regmap, offset, &pllr);
+	pll->div = PLL_DIV(pllr);
 	pll->mul = PLL_MUL(pllr, layout);
 
 	hw = &pll->hw;
-	ret = clk_hw_रेजिस्टर(शून्य, &pll->hw);
-	अगर (ret) अणु
-		kमुक्त(pll);
+	ret = clk_hw_register(NULL, &pll->hw);
+	if (ret) {
+		kfree(pll);
 		hw = ERR_PTR(ret);
-	पूर्ण
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}
 
 
-स्थिर काष्ठा clk_pll_layout at91rm9200_pll_layout = अणु
+const struct clk_pll_layout at91rm9200_pll_layout = {
 	.pllr_mask = 0x7FFFFFF,
-	.mul_shअगरt = 16,
+	.mul_shift = 16,
 	.mul_mask = 0x7FF,
-पूर्ण;
+};
 
-स्थिर काष्ठा clk_pll_layout at91sam9g45_pll_layout = अणु
+const struct clk_pll_layout at91sam9g45_pll_layout = {
 	.pllr_mask = 0xFFFFFF,
-	.mul_shअगरt = 16,
+	.mul_shift = 16,
 	.mul_mask = 0xFF,
-पूर्ण;
+};
 
-स्थिर काष्ठा clk_pll_layout at91sam9g20_pllb_layout = अणु
+const struct clk_pll_layout at91sam9g20_pllb_layout = {
 	.pllr_mask = 0x3FFFFF,
-	.mul_shअगरt = 16,
+	.mul_shift = 16,
 	.mul_mask = 0x3F,
-पूर्ण;
+};
 
-स्थिर काष्ठा clk_pll_layout sama5d3_pll_layout = अणु
+const struct clk_pll_layout sama5d3_pll_layout = {
 	.pllr_mask = 0x1FFFFFF,
-	.mul_shअगरt = 18,
+	.mul_shift = 18,
 	.mul_mask = 0x7F,
-पूर्ण;
+};

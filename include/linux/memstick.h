@@ -1,150 +1,149 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  Sony MemoryStick support
  *
  *  Copyright (C) 2007 Alex Dubov <oakad@yahoo.com>
  */
 
-#अगर_अघोषित _MEMSTICK_H
-#घोषणा _MEMSTICK_H
+#ifndef _MEMSTICK_H
+#define _MEMSTICK_H
 
-#समावेश <linux/workqueue.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/device.h>
+#include <linux/workqueue.h>
+#include <linux/scatterlist.h>
+#include <linux/device.h>
 
-/*** Hardware based काष्ठाures ***/
+/*** Hardware based structures ***/
 
-काष्ठा ms_status_रेजिस्टर अणु
-	अचिन्हित अक्षर reserved;
-	अचिन्हित अक्षर पूर्णांकerrupt;
-#घोषणा MEMSTICK_INT_CMDNAK 0x01
-#घोषणा MEMSTICK_INT_IOREQ  0x08
-#घोषणा MEMSTICK_INT_IOBREQ 0x10
-#घोषणा MEMSTICK_INT_BREQ   0x20
-#घोषणा MEMSTICK_INT_ERR    0x40
-#घोषणा MEMSTICK_INT_CED    0x80
+struct ms_status_register {
+	unsigned char reserved;
+	unsigned char interrupt;
+#define MEMSTICK_INT_CMDNAK 0x01
+#define MEMSTICK_INT_IOREQ  0x08
+#define MEMSTICK_INT_IOBREQ 0x10
+#define MEMSTICK_INT_BREQ   0x20
+#define MEMSTICK_INT_ERR    0x40
+#define MEMSTICK_INT_CED    0x80
 
-	अचिन्हित अक्षर status0;
-#घोषणा MEMSTICK_STATUS0_WP  0x01
-#घोषणा MEMSTICK_STATUS0_SL  0x02
-#घोषणा MEMSTICK_STATUS0_BF  0x10
-#घोषणा MEMSTICK_STATUS0_BE  0x20
-#घोषणा MEMSTICK_STATUS0_FB0 0x40
-#घोषणा MEMSTICK_STATUS0_MB  0x80
+	unsigned char status0;
+#define MEMSTICK_STATUS0_WP  0x01
+#define MEMSTICK_STATUS0_SL  0x02
+#define MEMSTICK_STATUS0_BF  0x10
+#define MEMSTICK_STATUS0_BE  0x20
+#define MEMSTICK_STATUS0_FB0 0x40
+#define MEMSTICK_STATUS0_MB  0x80
 
-	अचिन्हित अक्षर status1;
-#घोषणा MEMSTICK_STATUS1_UCFG 0x01
-#घोषणा MEMSTICK_STATUS1_FGER 0x02
-#घोषणा MEMSTICK_STATUS1_UCEX 0x04
-#घोषणा MEMSTICK_STATUS1_EXER 0x08
-#घोषणा MEMSTICK_STATUS1_UCDT 0x10
-#घोषणा MEMSTICK_STATUS1_DTER 0x20
-#घोषणा MEMSTICK_STATUS1_FB1  0x40
-#घोषणा MEMSTICK_STATUS1_MB   0x80
-पूर्ण __attribute__((packed));
+	unsigned char status1;
+#define MEMSTICK_STATUS1_UCFG 0x01
+#define MEMSTICK_STATUS1_FGER 0x02
+#define MEMSTICK_STATUS1_UCEX 0x04
+#define MEMSTICK_STATUS1_EXER 0x08
+#define MEMSTICK_STATUS1_UCDT 0x10
+#define MEMSTICK_STATUS1_DTER 0x20
+#define MEMSTICK_STATUS1_FB1  0x40
+#define MEMSTICK_STATUS1_MB   0x80
+} __attribute__((packed));
 
-काष्ठा ms_id_रेजिस्टर अणु
-	अचिन्हित अक्षर type;
-	अचिन्हित अक्षर अगर_mode;
-	अचिन्हित अक्षर category;
-	अचिन्हित अक्षर class;
-पूर्ण __attribute__((packed));
+struct ms_id_register {
+	unsigned char type;
+	unsigned char if_mode;
+	unsigned char category;
+	unsigned char class;
+} __attribute__((packed));
 
-काष्ठा ms_param_रेजिस्टर अणु
-	अचिन्हित अक्षर प्रणाली;
-#घोषणा MEMSTICK_SYS_PAM  0x08
-#घोषणा MEMSTICK_SYS_BAMD 0x80
+struct ms_param_register {
+	unsigned char system;
+#define MEMSTICK_SYS_PAM  0x08
+#define MEMSTICK_SYS_BAMD 0x80
 
-	अचिन्हित अक्षर block_address_msb;
-	अचिन्हित लघु block_address;
-	अचिन्हित अक्षर cp;
-#घोषणा MEMSTICK_CP_BLOCK     0x00
-#घोषणा MEMSTICK_CP_PAGE      0x20
-#घोषणा MEMSTICK_CP_EXTRA     0x40
-#घोषणा MEMSTICK_CP_OVERWRITE 0x80
+	unsigned char block_address_msb;
+	unsigned short block_address;
+	unsigned char cp;
+#define MEMSTICK_CP_BLOCK     0x00
+#define MEMSTICK_CP_PAGE      0x20
+#define MEMSTICK_CP_EXTRA     0x40
+#define MEMSTICK_CP_OVERWRITE 0x80
 
-	अचिन्हित अक्षर page_address;
-पूर्ण __attribute__((packed));
+	unsigned char page_address;
+} __attribute__((packed));
 
-काष्ठा ms_extra_data_रेजिस्टर अणु
-	अचिन्हित अक्षर  overग_लिखो_flag;
-#घोषणा MEMSTICK_OVERWRITE_UDST  0x10
-#घोषणा MEMSTICK_OVERWRITE_PGST1 0x20
-#घोषणा MEMSTICK_OVERWRITE_PGST0 0x40
-#घोषणा MEMSTICK_OVERWRITE_BKST  0x80
+struct ms_extra_data_register {
+	unsigned char  overwrite_flag;
+#define MEMSTICK_OVERWRITE_UDST  0x10
+#define MEMSTICK_OVERWRITE_PGST1 0x20
+#define MEMSTICK_OVERWRITE_PGST0 0x40
+#define MEMSTICK_OVERWRITE_BKST  0x80
 
-	अचिन्हित अक्षर  management_flag;
-#घोषणा MEMSTICK_MANAGEMENT_SYSFLG 0x04
-#घोषणा MEMSTICK_MANAGEMENT_ATFLG  0x08
-#घोषणा MEMSTICK_MANAGEMENT_SCMS1  0x10
-#घोषणा MEMSTICK_MANAGEMENT_SCMS0  0x20
+	unsigned char  management_flag;
+#define MEMSTICK_MANAGEMENT_SYSFLG 0x04
+#define MEMSTICK_MANAGEMENT_ATFLG  0x08
+#define MEMSTICK_MANAGEMENT_SCMS1  0x10
+#define MEMSTICK_MANAGEMENT_SCMS0  0x20
 
-	अचिन्हित लघु logical_address;
-पूर्ण __attribute__((packed));
+	unsigned short logical_address;
+} __attribute__((packed));
 
-काष्ठा ms_रेजिस्टर अणु
-	काष्ठा ms_status_रेजिस्टर     status;
-	काष्ठा ms_id_रेजिस्टर         id;
-	अचिन्हित अक्षर                 reserved[8];
-	काष्ठा ms_param_रेजिस्टर      param;
-	काष्ठा ms_extra_data_रेजिस्टर extra_data;
-पूर्ण __attribute__((packed));
+struct ms_register {
+	struct ms_status_register     status;
+	struct ms_id_register         id;
+	unsigned char                 reserved[8];
+	struct ms_param_register      param;
+	struct ms_extra_data_register extra_data;
+} __attribute__((packed));
 
-काष्ठा mspro_param_रेजिस्टर अणु
-	अचिन्हित अक्षर  प्रणाली;
-#घोषणा MEMSTICK_SYS_PAR4   0x00
-#घोषणा MEMSTICK_SYS_PAR8   0x40
-#घोषणा MEMSTICK_SYS_SERIAL 0x80
+struct mspro_param_register {
+	unsigned char  system;
+#define MEMSTICK_SYS_PAR4   0x00
+#define MEMSTICK_SYS_PAR8   0x40
+#define MEMSTICK_SYS_SERIAL 0x80
 
 	__be16 data_count;
 	__be32 data_address;
-	अचिन्हित अक्षर  tpc_param;
-पूर्ण __attribute__((packed));
+	unsigned char  tpc_param;
+} __attribute__((packed));
 
-काष्ठा mspro_io_info_रेजिस्टर अणु
-	अचिन्हित अक्षर version;
-	अचिन्हित अक्षर io_category;
-	अचिन्हित अक्षर current_req;
-	अचिन्हित अक्षर card_opt_info;
-	अचिन्हित अक्षर rdy_रुको_समय;
-पूर्ण __attribute__((packed));
+struct mspro_io_info_register {
+	unsigned char version;
+	unsigned char io_category;
+	unsigned char current_req;
+	unsigned char card_opt_info;
+	unsigned char rdy_wait_time;
+} __attribute__((packed));
 
-काष्ठा mspro_io_func_रेजिस्टर अणु
-	अचिन्हित अक्षर func_enable;
-	अचिन्हित अक्षर func_select;
-	अचिन्हित अक्षर func_पूर्णांकmask;
-	अचिन्हित अक्षर transfer_mode;
-पूर्ण __attribute__((packed));
+struct mspro_io_func_register {
+	unsigned char func_enable;
+	unsigned char func_select;
+	unsigned char func_intmask;
+	unsigned char transfer_mode;
+} __attribute__((packed));
 
-काष्ठा mspro_io_cmd_रेजिस्टर अणु
-	अचिन्हित लघु tpc_param;
-	अचिन्हित लघु data_count;
-	अचिन्हित पूर्णांक   data_address;
-पूर्ण __attribute__((packed));
+struct mspro_io_cmd_register {
+	unsigned short tpc_param;
+	unsigned short data_count;
+	unsigned int   data_address;
+} __attribute__((packed));
 
-काष्ठा mspro_रेजिस्टर अणु
-	काष्ठा ms_status_रेजिस्टर     status;
-	काष्ठा ms_id_रेजिस्टर         id;
-	अचिन्हित अक्षर                 reserved0[8];
-	काष्ठा mspro_param_रेजिस्टर   param;
-	अचिन्हित अक्षर                 reserved1[8];
-	काष्ठा mspro_io_info_रेजिस्टर io_info;
-	काष्ठा mspro_io_func_रेजिस्टर io_func;
-	अचिन्हित अक्षर                 reserved2[7];
-	काष्ठा mspro_io_cmd_रेजिस्टर  io_cmd;
-	अचिन्हित अक्षर                 io_पूर्णांक;
-	अचिन्हित अक्षर                 io_पूर्णांक_func;
-पूर्ण __attribute__((packed));
+struct mspro_register {
+	struct ms_status_register     status;
+	struct ms_id_register         id;
+	unsigned char                 reserved0[8];
+	struct mspro_param_register   param;
+	unsigned char                 reserved1[8];
+	struct mspro_io_info_register io_info;
+	struct mspro_io_func_register io_func;
+	unsigned char                 reserved2[7];
+	struct mspro_io_cmd_register  io_cmd;
+	unsigned char                 io_int;
+	unsigned char                 io_int_func;
+} __attribute__((packed));
 
-काष्ठा ms_रेजिस्टर_addr अणु
-	अचिन्हित अक्षर r_offset;
-	अचिन्हित अक्षर r_length;
-	अचिन्हित अक्षर w_offset;
-	अचिन्हित अक्षर w_length;
-पूर्ण __attribute__((packed));
+struct ms_register_addr {
+	unsigned char r_offset;
+	unsigned char r_length;
+	unsigned char w_offset;
+	unsigned char w_length;
+} __attribute__((packed));
 
-क्रमागत memstick_tpc अणु
+enum memstick_tpc {
 	MS_TPC_READ_MG_STATUS   = 0x01,
 	MS_TPC_READ_LONG_DATA   = 0x02,
 	MS_TPC_READ_SHORT_DATA  = 0x03,
@@ -162,9 +161,9 @@
 	MS_TPC_WRITE_MG_DATA    = 0x0c,
 	MS_TPC_WRITE_LONG_DATA  = 0x0d,
 	MS_TPC_SET_CMD          = 0x0e
-पूर्ण;
+};
 
-क्रमागत memstick_command अणु
+enum memstick_command {
 	MS_CMD_BLOCK_END       = 0x33,
 	MS_CMD_RESET           = 0x3c,
 	MS_CMD_BLOCK_WRITE     = 0x55,
@@ -194,152 +193,152 @@
 	MSPRO_CMD_OUT_IO_FIFO  = 0xb4,
 	MSPRO_CMD_IN_IOM       = 0xb5,
 	MSPRO_CMD_OUT_IOM      = 0xb6,
-पूर्ण;
+};
 
-/*** Driver काष्ठाures and functions ***/
+/*** Driver structures and functions ***/
 
-क्रमागत memstick_param अणु MEMSTICK_POWER = 1, MEMSTICK_INTERFACE पूर्ण;
+enum memstick_param { MEMSTICK_POWER = 1, MEMSTICK_INTERFACE };
 
-#घोषणा MEMSTICK_POWER_OFF 0
-#घोषणा MEMSTICK_POWER_ON  1
+#define MEMSTICK_POWER_OFF 0
+#define MEMSTICK_POWER_ON  1
 
-#घोषणा MEMSTICK_SERIAL   0
-#घोषणा MEMSTICK_PAR4     1
-#घोषणा MEMSTICK_PAR8     2
+#define MEMSTICK_SERIAL   0
+#define MEMSTICK_PAR4     1
+#define MEMSTICK_PAR8     2
 
-काष्ठा memstick_host;
-काष्ठा memstick_driver;
+struct memstick_host;
+struct memstick_driver;
 
-काष्ठा memstick_device_id अणु
-	अचिन्हित अक्षर match_flags;
-#घोषणा MEMSTICK_MATCH_ALL            0x01
+struct memstick_device_id {
+	unsigned char match_flags;
+#define MEMSTICK_MATCH_ALL            0x01
 
-	अचिन्हित अक्षर type;
-#घोषणा MEMSTICK_TYPE_LEGACY          0xff
-#घोषणा MEMSTICK_TYPE_DUO             0x00
-#घोषणा MEMSTICK_TYPE_PRO             0x01
+	unsigned char type;
+#define MEMSTICK_TYPE_LEGACY          0xff
+#define MEMSTICK_TYPE_DUO             0x00
+#define MEMSTICK_TYPE_PRO             0x01
 
-	अचिन्हित अक्षर category;
-#घोषणा MEMSTICK_CATEGORY_STORAGE     0xff
-#घोषणा MEMSTICK_CATEGORY_STORAGE_DUO 0x00
-#घोषणा MEMSTICK_CATEGORY_IO          0x01
-#घोषणा MEMSTICK_CATEGORY_IO_PRO      0x10
+	unsigned char category;
+#define MEMSTICK_CATEGORY_STORAGE     0xff
+#define MEMSTICK_CATEGORY_STORAGE_DUO 0x00
+#define MEMSTICK_CATEGORY_IO          0x01
+#define MEMSTICK_CATEGORY_IO_PRO      0x10
 
-	अचिन्हित अक्षर class;
-#घोषणा MEMSTICK_CLASS_FLASH          0xff
-#घोषणा MEMSTICK_CLASS_DUO            0x00
-#घोषणा MEMSTICK_CLASS_ROM            0x01
-#घोषणा MEMSTICK_CLASS_RO             0x02
-#घोषणा MEMSTICK_CLASS_WP             0x03
-पूर्ण;
+	unsigned char class;
+#define MEMSTICK_CLASS_FLASH          0xff
+#define MEMSTICK_CLASS_DUO            0x00
+#define MEMSTICK_CLASS_ROM            0x01
+#define MEMSTICK_CLASS_RO             0x02
+#define MEMSTICK_CLASS_WP             0x03
+};
 
-काष्ठा memstick_request अणु
-	अचिन्हित अक्षर tpc;
-	अचिन्हित अक्षर data_dir:1,
-		      need_card_पूर्णांक:1,
-		      दीर्घ_data:1;
-	अचिन्हित अक्षर पूर्णांक_reg;
-	पूर्णांक           error;
-	जोड़ अणु
-		काष्ठा scatterlist sg;
-		काष्ठा अणु
-			अचिन्हित अक्षर data_len;
-			अचिन्हित अक्षर data[15];
-		पूर्ण;
-	पूर्ण;
-पूर्ण;
+struct memstick_request {
+	unsigned char tpc;
+	unsigned char data_dir:1,
+		      need_card_int:1,
+		      long_data:1;
+	unsigned char int_reg;
+	int           error;
+	union {
+		struct scatterlist sg;
+		struct {
+			unsigned char data_len;
+			unsigned char data[15];
+		};
+	};
+};
 
-काष्ठा memstick_dev अणु
-	काष्ठा memstick_device_id id;
-	काष्ठा memstick_host     *host;
-	काष्ठा ms_रेजिस्टर_addr  reg_addr;
-	काष्ठा completion        mrq_complete;
-	काष्ठा memstick_request  current_mrq;
+struct memstick_dev {
+	struct memstick_device_id id;
+	struct memstick_host     *host;
+	struct ms_register_addr  reg_addr;
+	struct completion        mrq_complete;
+	struct memstick_request  current_mrq;
 
 	/* Check that media driver is still willing to operate the device. */
-	पूर्णांक                      (*check)(काष्ठा memstick_dev *card);
+	int                      (*check)(struct memstick_dev *card);
 	/* Get next request from the media driver.                         */
-	पूर्णांक                      (*next_request)(काष्ठा memstick_dev *card,
-						 काष्ठा memstick_request **mrq);
-	/* Tell the media driver to stop करोing things                      */
-	व्योम                     (*stop)(काष्ठा memstick_dev *card);
-	/* Allow the media driver to जारी                              */
-	व्योम                     (*start)(काष्ठा memstick_dev *card);
+	int                      (*next_request)(struct memstick_dev *card,
+						 struct memstick_request **mrq);
+	/* Tell the media driver to stop doing things                      */
+	void                     (*stop)(struct memstick_dev *card);
+	/* Allow the media driver to continue                              */
+	void                     (*start)(struct memstick_dev *card);
 
-	काष्ठा device            dev;
-पूर्ण;
+	struct device            dev;
+};
 
-काष्ठा memstick_host अणु
-	काष्ठा mutex        lock;
-	अचिन्हित पूर्णांक        id;
-	अचिन्हित पूर्णांक        caps;
-#घोषणा MEMSTICK_CAP_AUTO_GET_INT  1
-#घोषणा MEMSTICK_CAP_PAR4          2
-#घोषणा MEMSTICK_CAP_PAR8          4
+struct memstick_host {
+	struct mutex        lock;
+	unsigned int        id;
+	unsigned int        caps;
+#define MEMSTICK_CAP_AUTO_GET_INT  1
+#define MEMSTICK_CAP_PAR4          2
+#define MEMSTICK_CAP_PAR8          4
 
-	काष्ठा work_काष्ठा  media_checker;
-	काष्ठा device       dev;
+	struct work_struct  media_checker;
+	struct device       dev;
 
-	काष्ठा memstick_dev *card;
-	अचिन्हित पूर्णांक        retries;
+	struct memstick_dev *card;
+	unsigned int        retries;
 	bool removing;
 
-	/* Notअगरy the host that some requests are pending. */
-	व्योम                (*request)(काष्ठा memstick_host *host);
-	/* Set host IO parameters (घातer, घड़ी, etc).     */
-	पूर्णांक                 (*set_param)(काष्ठा memstick_host *host,
-					 क्रमागत memstick_param param,
-					 पूर्णांक value);
-	अचिन्हित दीर्घ       निजी[] ____cacheline_aligned;
-पूर्ण;
+	/* Notify the host that some requests are pending. */
+	void                (*request)(struct memstick_host *host);
+	/* Set host IO parameters (power, clock, etc).     */
+	int                 (*set_param)(struct memstick_host *host,
+					 enum memstick_param param,
+					 int value);
+	unsigned long       private[] ____cacheline_aligned;
+};
 
-काष्ठा memstick_driver अणु
-	काष्ठा memstick_device_id *id_table;
-	पूर्णांक                       (*probe)(काष्ठा memstick_dev *card);
-	व्योम                      (*हटाओ)(काष्ठा memstick_dev *card);
-	पूर्णांक                       (*suspend)(काष्ठा memstick_dev *card,
+struct memstick_driver {
+	struct memstick_device_id *id_table;
+	int                       (*probe)(struct memstick_dev *card);
+	void                      (*remove)(struct memstick_dev *card);
+	int                       (*suspend)(struct memstick_dev *card,
 					     pm_message_t state);
-	पूर्णांक                       (*resume)(काष्ठा memstick_dev *card);
+	int                       (*resume)(struct memstick_dev *card);
 
-	काष्ठा device_driver      driver;
-पूर्ण;
+	struct device_driver      driver;
+};
 
-पूर्णांक memstick_रेजिस्टर_driver(काष्ठा memstick_driver *drv);
-व्योम memstick_unरेजिस्टर_driver(काष्ठा memstick_driver *drv);
+int memstick_register_driver(struct memstick_driver *drv);
+void memstick_unregister_driver(struct memstick_driver *drv);
 
-काष्ठा memstick_host *memstick_alloc_host(अचिन्हित पूर्णांक extra,
-					  काष्ठा device *dev);
+struct memstick_host *memstick_alloc_host(unsigned int extra,
+					  struct device *dev);
 
-पूर्णांक memstick_add_host(काष्ठा memstick_host *host);
-व्योम memstick_हटाओ_host(काष्ठा memstick_host *host);
-व्योम memstick_मुक्त_host(काष्ठा memstick_host *host);
-व्योम memstick_detect_change(काष्ठा memstick_host *host);
-व्योम memstick_suspend_host(काष्ठा memstick_host *host);
-व्योम memstick_resume_host(काष्ठा memstick_host *host);
+int memstick_add_host(struct memstick_host *host);
+void memstick_remove_host(struct memstick_host *host);
+void memstick_free_host(struct memstick_host *host);
+void memstick_detect_change(struct memstick_host *host);
+void memstick_suspend_host(struct memstick_host *host);
+void memstick_resume_host(struct memstick_host *host);
 
-व्योम memstick_init_req_sg(काष्ठा memstick_request *mrq, अचिन्हित अक्षर tpc,
-			  स्थिर काष्ठा scatterlist *sg);
-व्योम memstick_init_req(काष्ठा memstick_request *mrq, अचिन्हित अक्षर tpc,
-		       स्थिर व्योम *buf, माप_प्रकार length);
-पूर्णांक memstick_next_req(काष्ठा memstick_host *host,
-		      काष्ठा memstick_request **mrq);
-व्योम memstick_new_req(काष्ठा memstick_host *host);
+void memstick_init_req_sg(struct memstick_request *mrq, unsigned char tpc,
+			  const struct scatterlist *sg);
+void memstick_init_req(struct memstick_request *mrq, unsigned char tpc,
+		       const void *buf, size_t length);
+int memstick_next_req(struct memstick_host *host,
+		      struct memstick_request **mrq);
+void memstick_new_req(struct memstick_host *host);
 
-पूर्णांक memstick_set_rw_addr(काष्ठा memstick_dev *card);
+int memstick_set_rw_addr(struct memstick_dev *card);
 
-अटल अंतरभूत व्योम *memstick_priv(काष्ठा memstick_host *host)
-अणु
-	वापस (व्योम *)host->निजी;
-पूर्ण
+static inline void *memstick_priv(struct memstick_host *host)
+{
+	return (void *)host->private;
+}
 
-अटल अंतरभूत व्योम *memstick_get_drvdata(काष्ठा memstick_dev *card)
-अणु
-	वापस dev_get_drvdata(&card->dev);
-पूर्ण
+static inline void *memstick_get_drvdata(struct memstick_dev *card)
+{
+	return dev_get_drvdata(&card->dev);
+}
 
-अटल अंतरभूत व्योम memstick_set_drvdata(काष्ठा memstick_dev *card, व्योम *data)
-अणु
+static inline void memstick_set_drvdata(struct memstick_dev *card, void *data)
+{
 	dev_set_drvdata(&card->dev, data);
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif

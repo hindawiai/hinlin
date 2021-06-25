@@ -1,101 +1,100 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * nop tracer
  *
- * Copyright (C) 2008 Steven Noonan <steven@uplinkद_असल.net>
+ * Copyright (C) 2008 Steven Noonan <steven@uplinklabs.net>
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/ftrace.h>
+#include <linux/module.h>
+#include <linux/ftrace.h>
 
-#समावेश "trace.h"
+#include "trace.h"
 
 /* Our two options */
-क्रमागत अणु
+enum {
 	TRACE_NOP_OPT_ACCEPT = 0x1,
 	TRACE_NOP_OPT_REFUSE = 0x2
-पूर्ण;
+};
 
-/* Options क्रम the tracer (see trace_options file) */
-अटल काष्ठा tracer_opt nop_opts[] = अणु
+/* Options for the tracer (see trace_options file) */
+static struct tracer_opt nop_opts[] = {
 	/* Option that will be accepted by set_flag callback */
-	अणु TRACER_OPT(test_nop_accept, TRACE_NOP_OPT_ACCEPT) पूर्ण,
+	{ TRACER_OPT(test_nop_accept, TRACE_NOP_OPT_ACCEPT) },
 	/* Option that will be refused by set_flag callback */
-	अणु TRACER_OPT(test_nop_refuse, TRACE_NOP_OPT_REFUSE) पूर्ण,
-	अणु पूर्ण /* Always set a last empty entry */
-पूर्ण;
+	{ TRACER_OPT(test_nop_refuse, TRACE_NOP_OPT_REFUSE) },
+	{ } /* Always set a last empty entry */
+};
 
-अटल काष्ठा tracer_flags nop_flags = अणु
+static struct tracer_flags nop_flags = {
 	/* You can check your flags value here when you want. */
-	.val = 0, /* By शेष: all flags disabled */
+	.val = 0, /* By default: all flags disabled */
 	.opts = nop_opts
-पूर्ण;
+};
 
-अटल काष्ठा trace_array	*ctx_trace;
+static struct trace_array	*ctx_trace;
 
-अटल व्योम start_nop_trace(काष्ठा trace_array *tr)
-अणु
-	/* Nothing to करो! */
-पूर्ण
+static void start_nop_trace(struct trace_array *tr)
+{
+	/* Nothing to do! */
+}
 
-अटल व्योम stop_nop_trace(काष्ठा trace_array *tr)
-अणु
-	/* Nothing to करो! */
-पूर्ण
+static void stop_nop_trace(struct trace_array *tr)
+{
+	/* Nothing to do! */
+}
 
-अटल पूर्णांक nop_trace_init(काष्ठा trace_array *tr)
-अणु
+static int nop_trace_init(struct trace_array *tr)
+{
 	ctx_trace = tr;
 	start_nop_trace(tr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nop_trace_reset(काष्ठा trace_array *tr)
-अणु
+static void nop_trace_reset(struct trace_array *tr)
+{
 	stop_nop_trace(tr);
-पूर्ण
+}
 
-/* It only serves as a संकेत handler and a callback to
+/* It only serves as a signal handler and a callback to
  * accept or refuse the setting of a flag.
- * If you करोn't implement it, then the flag setting will be
- * स्वतःmatically accepted.
+ * If you don't implement it, then the flag setting will be
+ * automatically accepted.
  */
-अटल पूर्णांक nop_set_flag(काष्ठा trace_array *tr, u32 old_flags, u32 bit, पूर्णांक set)
-अणु
+static int nop_set_flag(struct trace_array *tr, u32 old_flags, u32 bit, int set)
+{
 	/*
-	 * Note that you करोn't need to update nop_flags.val yourself.
-	 * The tracing Api will करो it स्वतःmatically अगर you वापस 0
+	 * Note that you don't need to update nop_flags.val yourself.
+	 * The tracing Api will do it automatically if you return 0
 	 */
-	अगर (bit == TRACE_NOP_OPT_ACCEPT) अणु
-		prपूर्णांकk(KERN_DEBUG "nop_test_accept flag set to %d: we accept."
+	if (bit == TRACE_NOP_OPT_ACCEPT) {
+		printk(KERN_DEBUG "nop_test_accept flag set to %d: we accept."
 			" Now cat trace_options to see the result\n",
 			set);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (bit == TRACE_NOP_OPT_REFUSE) अणु
-		prपूर्णांकk(KERN_DEBUG "nop_test_refuse flag set to %d: we refuse."
+	if (bit == TRACE_NOP_OPT_REFUSE) {
+		printk(KERN_DEBUG "nop_test_refuse flag set to %d: we refuse."
 			" Now cat trace_options to see the result\n",
 			set);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-काष्ठा tracer nop_trace __पढ़ो_mostly =
-अणु
+struct tracer nop_trace __read_mostly =
+{
 	.name		= "nop",
 	.init		= nop_trace_init,
 	.reset		= nop_trace_reset,
-#अगर_घोषित CONFIG_FTRACE_SELFTEST
+#ifdef CONFIG_FTRACE_SELFTEST
 	.selftest	= trace_selftest_startup_nop,
-#पूर्ण_अगर
+#endif
 	.flags		= &nop_flags,
 	.set_flag	= nop_set_flag,
 	.allow_instances = true,
-पूर्ण;
+};
 

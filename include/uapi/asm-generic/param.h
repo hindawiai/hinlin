@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _UAPI__ASM_GENERIC_PARAM_H
-#घोषणा _UAPI__ASM_GENERIC_PARAM_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI__ASM_GENERIC_PARAM_H
+#define _UAPI__ASM_GENERIC_PARAM_H
 
-#अगर_अघोषित HZ
-#घोषणा HZ 100
-#पूर्ण_अगर
+#ifndef HZ
+#define HZ 100
+#endif
 
-#अगर_अघोषित EXEC_PAGESIZE
-#घोषणा EXEC_PAGESIZE	4096
-#पूर्ण_अगर
+#ifndef EXEC_PAGESIZE
+#define EXEC_PAGESIZE	4096
+#endif
 
-#अगर_अघोषित NOGROUP
-#घोषणा NOGROUP		(-1)
-#पूर्ण_अगर
+#ifndef NOGROUP
+#define NOGROUP		(-1)
+#endif
 
-#घोषणा MAXHOSTNAMELEN	64	/* max length of hostname */
+#define MAXHOSTNAMELEN	64	/* max length of hostname */
 
 
-#पूर्ण_अगर /* _UAPI__ASM_GENERIC_PARAM_H */
+#endif /* _UAPI__ASM_GENERIC_PARAM_H */

@@ -1,12 +1,11 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __NET_NETLINK_H
-#घोषणा __NET_NETLINK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __NET_NETLINK_H
+#define __NET_NETLINK_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/in6.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
+#include <linux/jiffies.h>
+#include <linux/in6.h>
 
 /* ========================================================================
  *         Netlink Messages and Attributes Interface (As Seen On TV)
@@ -32,22 +31,22 @@
  *   nlmsg_attrdata(nlh, hdrlen)---^
  *
  * Data Structures:
- *   काष्ठा nlmsghdr			netlink message header
+ *   struct nlmsghdr			netlink message header
  *
- * Message Conकाष्ठाion:
+ * Message Construction:
  *   nlmsg_new()			create a new netlink message
  *   nlmsg_put()			add a netlink message to an skb
  *   nlmsg_put_answer()			callback based nlmsg_put()
  *   nlmsg_end()			finalize netlink message
- *   nlmsg_get_pos()			वापस current position in message
+ *   nlmsg_get_pos()			return current position in message
  *   nlmsg_trim()			trim part of message
- *   nlmsg_cancel()			cancel message स्थिरruction
- *   nlmsg_मुक्त()			मुक्त a netlink message
+ *   nlmsg_cancel()			cancel message construction
+ *   nlmsg_free()			free a netlink message
  *
  * Message Sending:
  *   nlmsg_multicast()			multicast message to several groups
  *   nlmsg_unicast()			unicast a message to a single socket
- *   nlmsg_notअगरy()			send notअगरication message
+ *   nlmsg_notify()			send notification message
  *
  * Message Length Calculations:
  *   nlmsg_msg_size(payload)		length of message w/o padding
@@ -61,13 +60,13 @@
  *   nlmsg_attrlen(nlh, hdrlen)		length of attributes data
  *
  * Message Parsing:
- *   nlmsg_ok(nlh, reमुख्यing)		करोes nlh fit पूर्णांकo reमुख्यing bytes?
- *   nlmsg_next(nlh, reमुख्यing)		get next netlink message
+ *   nlmsg_ok(nlh, remaining)		does nlh fit into remaining bytes?
+ *   nlmsg_next(nlh, remaining)		get next netlink message
  *   nlmsg_parse()			parse attributes of a message
  *   nlmsg_find_attr()			find an attribute in a message
- *   nlmsg_क्रम_each_msg()		loop over all messages
+ *   nlmsg_for_each_msg()		loop over all messages
  *   nlmsg_validate()			validate netlink message incl. attrs
- *   nlmsg_क्रम_each_attr()		loop over all attributes
+ *   nlmsg_for_each_attr()		loop over all attributes
  *
  * Misc:
  *   nlmsg_report()			report back to application?
@@ -87,16 +86,16 @@
  *   nla_next(nla)-----------------------------'
  *
  * Data Structures:
- *   काष्ठा nlattr			netlink attribute header
+ *   struct nlattr			netlink attribute header
  *
- * Attribute Conकाष्ठाion:
- *   nla_reserve(skb, type, len)	reserve room क्रम an attribute
- *   nla_reserve_nohdr(skb, len)	reserve room क्रम an attribute w/o hdr
+ * Attribute Construction:
+ *   nla_reserve(skb, type, len)	reserve room for an attribute
+ *   nla_reserve_nohdr(skb, len)	reserve room for an attribute w/o hdr
  *   nla_put(skb, type, len, data)	add attribute to skb
  *   nla_put_nohdr(skb, len, data)	add attribute w/o hdr
  *   nla_append(skb, len, data)		append data to skb
  *
- * Attribute Conकाष्ठाion क्रम Basic Types:
+ * Attribute Construction for Basic Types:
  *   nla_put_u8(skb, type, value)	add u8 attribute to skb
  *   nla_put_u16(skb, type, value)	add u16 attribute to skb
  *   nla_put_u32(skb, type, value)	add u32 attribute to skb
@@ -109,15 +108,15 @@
  *               padattr)		add s64 attribute to skb
  *   nla_put_string(skb, type, str)	add string attribute to skb
  *   nla_put_flag(skb, type)		add flag attribute to skb
- *   nla_put_msecs(skb, type, jअगरfies,
+ *   nla_put_msecs(skb, type, jiffies,
  *                 padattr)		add msecs attribute to skb
  *   nla_put_in_addr(skb, type, addr)	add IPv4 address attribute to skb
  *   nla_put_in6_addr(skb, type, addr)	add IPv6 address attribute to skb
  *
- * Nested Attributes Conकाष्ठाion:
+ * Nested Attributes Construction:
  *   nla_nest_start(skb, type)		start a nested attribute
  *   nla_nest_end(skb, nla)		finalize a nested attribute
- *   nla_nest_cancel(skb, nla)		cancel nested attribute स्थिरruction
+ *   nla_nest_cancel(skb, nla)		cancel nested attribute construction
  *
  * Attribute Length Calculations:
  *   nla_attr_size(payload)		length of attribute w/o padding
@@ -128,42 +127,42 @@
  *   nla_data(nla)			head of attribute payload
  *   nla_len(nla)			length of attribute payload
  *
- * Attribute Payload Access क्रम Basic Types:
- *   nla_get_u8(nla)			get payload क्रम a u8 attribute
- *   nla_get_u16(nla)			get payload क्रम a u16 attribute
- *   nla_get_u32(nla)			get payload क्रम a u32 attribute
- *   nla_get_u64(nla)			get payload क्रम a u64 attribute
- *   nla_get_s8(nla)			get payload क्रम a s8 attribute
- *   nla_get_s16(nla)			get payload क्रम a s16 attribute
- *   nla_get_s32(nla)			get payload क्रम a s32 attribute
- *   nla_get_s64(nla)			get payload क्रम a s64 attribute
- *   nla_get_flag(nla)			वापस 1 अगर flag is true
- *   nla_get_msecs(nla)			get payload क्रम a msecs attribute
+ * Attribute Payload Access for Basic Types:
+ *   nla_get_u8(nla)			get payload for a u8 attribute
+ *   nla_get_u16(nla)			get payload for a u16 attribute
+ *   nla_get_u32(nla)			get payload for a u32 attribute
+ *   nla_get_u64(nla)			get payload for a u64 attribute
+ *   nla_get_s8(nla)			get payload for a s8 attribute
+ *   nla_get_s16(nla)			get payload for a s16 attribute
+ *   nla_get_s32(nla)			get payload for a s32 attribute
+ *   nla_get_s64(nla)			get payload for a s64 attribute
+ *   nla_get_flag(nla)			return 1 if flag is true
+ *   nla_get_msecs(nla)			get payload for a msecs attribute
  *
  * Attribute Misc:
- *   nla_स_नकल(dest, nla, count)	copy attribute पूर्णांकo memory
- *   nla_स_भेद(nla, data, size)	compare attribute with memory area
+ *   nla_memcpy(dest, nla, count)	copy attribute into memory
+ *   nla_memcmp(nla, data, size)	compare attribute with memory area
  *   nla_strscpy(dst, nla, size)	copy attribute to a sized string
- *   nla_म_भेद(nla, str)		compare attribute with string
+ *   nla_strcmp(nla, str)		compare attribute with string
  *
  * Attribute Parsing:
- *   nla_ok(nla, reमुख्यing)		करोes nla fit पूर्णांकo reमुख्यing bytes?
- *   nla_next(nla, reमुख्यing)		get next netlink attribute
+ *   nla_ok(nla, remaining)		does nla fit into remaining bytes?
+ *   nla_next(nla, remaining)		get next netlink attribute
  *   nla_validate()			validate a stream of attributes
  *   nla_validate_nested()		validate a stream of nested attributes
  *   nla_find()				find attribute in stream of attributes
  *   nla_find_nested()			find attribute in nested attributes
  *   nla_parse()			parse and validate stream of attrs
  *   nla_parse_nested()			parse nested attributes
- *   nla_क्रम_each_attr()		loop over all attributes
- *   nla_क्रम_each_nested()		loop over the nested attributes
+ *   nla_for_each_attr()		loop over all attributes
+ *   nla_for_each_nested()		loop over the nested attributes
  *=========================================================================
  */
 
  /**
-  * Standard attribute types to specअगरy validation policy
+  * Standard attribute types to specify validation policy
   */
-क्रमागत अणु
+enum {
 	NLA_UNSPEC,
 	NLA_U8,
 	NLA_U16,
@@ -183,19 +182,19 @@
 	NLA_BITFIELD32,
 	NLA_REJECT,
 	__NLA_TYPE_MAX,
-पूर्ण;
+};
 
-#घोषणा NLA_TYPE_MAX (__NLA_TYPE_MAX - 1)
+#define NLA_TYPE_MAX (__NLA_TYPE_MAX - 1)
 
-काष्ठा netlink_range_validation अणु
+struct netlink_range_validation {
 	u64 min, max;
-पूर्ण;
+};
 
-काष्ठा netlink_range_validation_चिन्हित अणु
+struct netlink_range_validation_signed {
 	s64 min, max;
-पूर्ण;
+};
 
-क्रमागत nla_policy_validation अणु
+enum nla_policy_validation {
 	NLA_VALIDATE_NONE,
 	NLA_VALIDATE_RANGE,
 	NLA_VALIDATE_RANGE_WARN_TOO_LONG,
@@ -204,18 +203,18 @@
 	NLA_VALIDATE_MASK,
 	NLA_VALIDATE_RANGE_PTR,
 	NLA_VALIDATE_FUNCTION,
-पूर्ण;
+};
 
 /**
- * काष्ठा nla_policy - attribute validation policy
+ * struct nla_policy - attribute validation policy
  * @type: Type of attribute or NLA_UNSPEC
- * @validation_type: type of attribute validation करोne in addition to
- *	type-specअगरic validation (e.g. range, function call), see
- *	&क्रमागत nla_policy_validation
- * @len: Type specअगरic length of payload
+ * @validation_type: type of attribute validation done in addition to
+ *	type-specific validation (e.g. range, function call), see
+ *	&enum nla_policy_validation
+ * @len: Type specific length of payload
  *
- * Policies are defined as arrays of this काष्ठा, the array must be
- * accessible by attribute type up to the highest identअगरier to be expected.
+ * Policies are defined as arrays of this struct, the array must be
+ * accessible by attribute type up to the highest identifier to be expected.
  *
  * Meaning of `len' field:
  *    NLA_STRING           Maximum length of string
@@ -224,40 +223,40 @@
  *    NLA_BINARY           Maximum length of attribute payload
  *                         (but see also below with the validation type)
  *    NLA_NESTED,
- *    NLA_NESTED_ARRAY     Length verअगरication is करोne by checking len of
- *                         nested header (or empty); len field is used अगर
- *                         nested_policy is also used, क्रम the max attr
+ *    NLA_NESTED_ARRAY     Length verification is done by checking len of
+ *                         nested header (or empty); len field is used if
+ *                         nested_policy is also used, for the max attr
  *                         number in the nested policy.
  *    NLA_U8, NLA_U16,
  *    NLA_U32, NLA_U64,
  *    NLA_S8, NLA_S16,
  *    NLA_S32, NLA_S64,
- *    NLA_MSECS            Leaving the length field zero will verअगरy the
- *                         given type fits, using it verअगरies minimum length
+ *    NLA_MSECS            Leaving the length field zero will verify the
+ *                         given type fits, using it verifies minimum length
  *                         just like "All other"
  *    NLA_BITFIELD32       Unused
  *    NLA_REJECT           Unused
  *    All other            Minimum length of attribute payload
  *
- * Meaning of validation जोड़:
- *    NLA_BITFIELD32       This is a 32-bit biपंचांगap/bitselector attribute and
+ * Meaning of validation union:
+ *    NLA_BITFIELD32       This is a 32-bit bitmap/bitselector attribute and
  *                         `bitfield32_valid' is the u32 value of valid flags
  *    NLA_REJECT           This attribute is always rejected and `reject_message'
- *                         may poपूर्णांक to a string to report as the error instead
+ *                         may point to a string to report as the error instead
  *                         of the generic one in extended ACK.
  *    NLA_NESTED           `nested_policy' to a nested policy to validate, must
  *                         also set `len' to the max attribute number. Use the
  *                         provided NLA_POLICY_NESTED() macro.
  *                         Note that nla_parse() will validate, but of course not
  *                         parse, the nested sub-policies.
- *    NLA_NESTED_ARRAY     `nested_policy' poपूर्णांकs to a nested policy to validate,
+ *    NLA_NESTED_ARRAY     `nested_policy' points to a nested policy to validate,
  *                         must also set `len' to the max attribute number. Use
  *                         the provided NLA_POLICY_NESTED_ARRAY() macro.
- *                         The dअगरference to NLA_NESTED is the काष्ठाure:
+ *                         The difference to NLA_NESTED is the structure:
  *                         NLA_NESTED has the nested attributes directly inside
- *                         जबतक an array has the nested attributes at another
- *                         level करोwn and the attribute types directly in the
- *                         nesting करोn't matter.
+ *                         while an array has the nested attributes at another
+ *                         level down and the attribute types directly in the
+ *                         nesting don't matter.
  *    NLA_U8,
  *    NLA_U16,
  *    NLA_U32,
@@ -266,203 +265,203 @@
  *    NLA_S16,
  *    NLA_S32,
  *    NLA_S64              The `min' and `max' fields are used depending on the
- *                         validation_type field, अगर that is min/max/range then
+ *                         validation_type field, if that is min/max/range then
  *                         the min, max or both are used (respectively) to check
- *                         the value of the पूर्णांकeger attribute.
- *                         Note that in the पूर्णांकerest of code simplicity and
- *                         काष्ठा size both limits are s16, so you cannot
- *                         enक्रमce a range that करोesn't fall within the range
- *                         of s16 - करो that as usual in the code instead.
+ *                         the value of the integer attribute.
+ *                         Note that in the interest of code simplicity and
+ *                         struct size both limits are s16, so you cannot
+ *                         enforce a range that doesn't fall within the range
+ *                         of s16 - do that as usual in the code instead.
  *                         Use the NLA_POLICY_MIN(), NLA_POLICY_MAX() and
  *                         NLA_POLICY_RANGE() macros.
  *    NLA_U8,
  *    NLA_U16,
  *    NLA_U32,
  *    NLA_U64              If the validation_type field instead is set to
- *                         NLA_VALIDATE_RANGE_PTR, `range' must be a poपूर्णांकer
- *                         to a काष्ठा netlink_range_validation that indicates
+ *                         NLA_VALIDATE_RANGE_PTR, `range' must be a pointer
+ *                         to a struct netlink_range_validation that indicates
  *                         the min/max values.
  *                         Use NLA_POLICY_FULL_RANGE().
  *    NLA_S8,
  *    NLA_S16,
  *    NLA_S32,
  *    NLA_S64              If the validation_type field instead is set to
- *                         NLA_VALIDATE_RANGE_PTR, `range_चिन्हित' must be a
- *                         poपूर्णांकer to a काष्ठा netlink_range_validation_चिन्हित
+ *                         NLA_VALIDATE_RANGE_PTR, `range_signed' must be a
+ *                         pointer to a struct netlink_range_validation_signed
  *                         that indicates the min/max values.
  *                         Use NLA_POLICY_FULL_RANGE_SIGNED().
  *
- *    NLA_BINARY           If the validation type is like the ones क्रम पूर्णांकegers
- *                         above, then the min/max length (not value like क्रम
- *                         पूर्णांकegers) of the attribute is enक्रमced.
+ *    NLA_BINARY           If the validation type is like the ones for integers
+ *                         above, then the min/max length (not value like for
+ *                         integers) of the attribute is enforced.
  *
- *    All other            Unused - but note that it's a जोड़
+ *    All other            Unused - but note that it's a union
  *
  * Meaning of `validate' field, use via NLA_POLICY_VALIDATE_FN:
- *    NLA_BINARY           Validation function called क्रम the attribute.
- *    All other            Unused - but note that it's a जोड़
+ *    NLA_BINARY           Validation function called for the attribute.
+ *    All other            Unused - but note that it's a union
  *
  * Example:
  *
- * अटल स्थिर u32 myvalidflags = 0xff231023;
+ * static const u32 myvalidflags = 0xff231023;
  *
- * अटल स्थिर काष्ठा nla_policy my_policy[ATTR_MAX+1] = अणु
- * 	[ATTR_FOO] = अणु .type = NLA_U16 पूर्ण,
- *	[ATTR_BAR] = अणु .type = NLA_STRING, .len = BARSIZ पूर्ण,
- *	[ATTR_BAZ] = NLA_POLICY_EXACT_LEN(माप(काष्ठा myकाष्ठा)),
+ * static const struct nla_policy my_policy[ATTR_MAX+1] = {
+ * 	[ATTR_FOO] = { .type = NLA_U16 },
+ *	[ATTR_BAR] = { .type = NLA_STRING, .len = BARSIZ },
+ *	[ATTR_BAZ] = NLA_POLICY_EXACT_LEN(sizeof(struct mystruct)),
  *	[ATTR_GOO] = NLA_POLICY_BITFIELD32(myvalidflags),
- * पूर्ण;
+ * };
  */
-काष्ठा nla_policy अणु
+struct nla_policy {
 	u8		type;
 	u8		validation_type;
 	u16		len;
-	जोड़ अणु
-		स्थिर u32 bitfield32_valid;
-		स्थिर u32 mask;
-		स्थिर अक्षर *reject_message;
-		स्थिर काष्ठा nla_policy *nested_policy;
-		काष्ठा netlink_range_validation *range;
-		काष्ठा netlink_range_validation_चिन्हित *range_चिन्हित;
-		काष्ठा अणु
+	union {
+		const u32 bitfield32_valid;
+		const u32 mask;
+		const char *reject_message;
+		const struct nla_policy *nested_policy;
+		struct netlink_range_validation *range;
+		struct netlink_range_validation_signed *range_signed;
+		struct {
 			s16 min, max;
-		पूर्ण;
-		पूर्णांक (*validate)(स्थिर काष्ठा nlattr *attr,
-				काष्ठा netlink_ext_ack *extack);
-		/* This entry is special, and used क्रम the attribute at index 0
-		 * only, and specअगरies special data about the policy, namely it
-		 * specअगरies the "boundary type" where strict length validation
-		 * starts क्रम any attribute types >= this value, also, strict
+		};
+		int (*validate)(const struct nlattr *attr,
+				struct netlink_ext_ack *extack);
+		/* This entry is special, and used for the attribute at index 0
+		 * only, and specifies special data about the policy, namely it
+		 * specifies the "boundary type" where strict length validation
+		 * starts for any attribute types >= this value, also, strict
 		 * nesting validation starts here.
 		 *
 		 * Additionally, it means that NLA_UNSPEC is actually NLA_REJECT
-		 * क्रम any types >= this, so need to use NLA_POLICY_MIN_LEN() to
-		 * get the previous pure अणु .len = xyz पूर्ण behaviour. The advantage
-		 * of this is that types not specअगरied in the policy will be
+		 * for any types >= this, so need to use NLA_POLICY_MIN_LEN() to
+		 * get the previous pure { .len = xyz } behaviour. The advantage
+		 * of this is that types not specified in the policy will be
 		 * rejected.
 		 *
 		 * For completely new families it should be set to 1 so that the
-		 * validation is enक्रमced क्रम all attributes. For existing ones
+		 * validation is enforced for all attributes. For existing ones
 		 * it should be set at least when new attributes are added to
-		 * the क्रमागत used by the policy, and be set to the new value that
-		 * was added to enक्रमce strict validation from thereon.
+		 * the enum used by the policy, and be set to the new value that
+		 * was added to enforce strict validation from thereon.
 		 */
 		u16 strict_start_type;
-	पूर्ण;
-पूर्ण;
+	};
+};
 
-#घोषणा NLA_POLICY_ETH_ADDR		NLA_POLICY_EXACT_LEN(ETH_ALEN)
-#घोषणा NLA_POLICY_ETH_ADDR_COMPAT	NLA_POLICY_EXACT_LEN_WARN(ETH_ALEN)
+#define NLA_POLICY_ETH_ADDR		NLA_POLICY_EXACT_LEN(ETH_ALEN)
+#define NLA_POLICY_ETH_ADDR_COMPAT	NLA_POLICY_EXACT_LEN_WARN(ETH_ALEN)
 
-#घोषणा _NLA_POLICY_NESTED(maxattr, policy) \
-	अणु .type = NLA_NESTED, .nested_policy = policy, .len = maxattr पूर्ण
-#घोषणा _NLA_POLICY_NESTED_ARRAY(maxattr, policy) \
-	अणु .type = NLA_NESTED_ARRAY, .nested_policy = policy, .len = maxattr पूर्ण
-#घोषणा NLA_POLICY_NESTED(policy) \
+#define _NLA_POLICY_NESTED(maxattr, policy) \
+	{ .type = NLA_NESTED, .nested_policy = policy, .len = maxattr }
+#define _NLA_POLICY_NESTED_ARRAY(maxattr, policy) \
+	{ .type = NLA_NESTED_ARRAY, .nested_policy = policy, .len = maxattr }
+#define NLA_POLICY_NESTED(policy) \
 	_NLA_POLICY_NESTED(ARRAY_SIZE(policy) - 1, policy)
-#घोषणा NLA_POLICY_NESTED_ARRAY(policy) \
+#define NLA_POLICY_NESTED_ARRAY(policy) \
 	_NLA_POLICY_NESTED_ARRAY(ARRAY_SIZE(policy) - 1, policy)
-#घोषणा NLA_POLICY_BITFIELD32(valid) \
-	अणु .type = NLA_BITFIELD32, .bitfield32_valid = valid पूर्ण
+#define NLA_POLICY_BITFIELD32(valid) \
+	{ .type = NLA_BITFIELD32, .bitfield32_valid = valid }
 
-#घोषणा __NLA_IS_UINT_TYPE(tp)						\
+#define __NLA_IS_UINT_TYPE(tp)						\
 	(tp == NLA_U8 || tp == NLA_U16 || tp == NLA_U32 || tp == NLA_U64)
-#घोषणा __NLA_IS_SINT_TYPE(tp)						\
+#define __NLA_IS_SINT_TYPE(tp)						\
 	(tp == NLA_S8 || tp == NLA_S16 || tp == NLA_S32 || tp == NLA_S64)
 
-#घोषणा __NLA_ENSURE(condition) BUILD_BUG_ON_ZERO(!(condition))
-#घोषणा NLA_ENSURE_UINT_TYPE(tp)			\
+#define __NLA_ENSURE(condition) BUILD_BUG_ON_ZERO(!(condition))
+#define NLA_ENSURE_UINT_TYPE(tp)			\
 	(__NLA_ENSURE(__NLA_IS_UINT_TYPE(tp)) + tp)
-#घोषणा NLA_ENSURE_UINT_OR_BINARY_TYPE(tp)		\
+#define NLA_ENSURE_UINT_OR_BINARY_TYPE(tp)		\
 	(__NLA_ENSURE(__NLA_IS_UINT_TYPE(tp) ||	\
 		      tp == NLA_MSECS ||		\
 		      tp == NLA_BINARY) + tp)
-#घोषणा NLA_ENSURE_SINT_TYPE(tp)			\
+#define NLA_ENSURE_SINT_TYPE(tp)			\
 	(__NLA_ENSURE(__NLA_IS_SINT_TYPE(tp)) + tp)
-#घोषणा NLA_ENSURE_INT_OR_BINARY_TYPE(tp)		\
+#define NLA_ENSURE_INT_OR_BINARY_TYPE(tp)		\
 	(__NLA_ENSURE(__NLA_IS_UINT_TYPE(tp) ||		\
 		      __NLA_IS_SINT_TYPE(tp) ||		\
 		      tp == NLA_MSECS ||		\
 		      tp == NLA_BINARY) + tp)
-#घोषणा NLA_ENSURE_NO_VALIDATION_PTR(tp)		\
+#define NLA_ENSURE_NO_VALIDATION_PTR(tp)		\
 	(__NLA_ENSURE(tp != NLA_BITFIELD32 &&		\
 		      tp != NLA_REJECT &&		\
 		      tp != NLA_NESTED &&		\
 		      tp != NLA_NESTED_ARRAY) + tp)
 
-#घोषणा NLA_POLICY_RANGE(tp, _min, _max) अणु		\
+#define NLA_POLICY_RANGE(tp, _min, _max) {		\
 	.type = NLA_ENSURE_INT_OR_BINARY_TYPE(tp),	\
 	.validation_type = NLA_VALIDATE_RANGE,		\
 	.min = _min,					\
 	.max = _max					\
-पूर्ण
+}
 
-#घोषणा NLA_POLICY_FULL_RANGE(tp, _range) अणु		\
+#define NLA_POLICY_FULL_RANGE(tp, _range) {		\
 	.type = NLA_ENSURE_UINT_OR_BINARY_TYPE(tp),	\
 	.validation_type = NLA_VALIDATE_RANGE_PTR,	\
 	.range = _range,				\
-पूर्ण
+}
 
-#घोषणा NLA_POLICY_FULL_RANGE_SIGNED(tp, _range) अणु	\
+#define NLA_POLICY_FULL_RANGE_SIGNED(tp, _range) {	\
 	.type = NLA_ENSURE_SINT_TYPE(tp),		\
 	.validation_type = NLA_VALIDATE_RANGE_PTR,	\
-	.range_चिन्हित = _range,				\
-पूर्ण
+	.range_signed = _range,				\
+}
 
-#घोषणा NLA_POLICY_MIN(tp, _min) अणु			\
+#define NLA_POLICY_MIN(tp, _min) {			\
 	.type = NLA_ENSURE_INT_OR_BINARY_TYPE(tp),	\
 	.validation_type = NLA_VALIDATE_MIN,		\
 	.min = _min,					\
-पूर्ण
+}
 
-#घोषणा NLA_POLICY_MAX(tp, _max) अणु			\
+#define NLA_POLICY_MAX(tp, _max) {			\
 	.type = NLA_ENSURE_INT_OR_BINARY_TYPE(tp),	\
 	.validation_type = NLA_VALIDATE_MAX,		\
 	.max = _max,					\
-पूर्ण
+}
 
-#घोषणा NLA_POLICY_MASK(tp, _mask) अणु			\
+#define NLA_POLICY_MASK(tp, _mask) {			\
 	.type = NLA_ENSURE_UINT_TYPE(tp),		\
 	.validation_type = NLA_VALIDATE_MASK,		\
 	.mask = _mask,					\
-पूर्ण
+}
 
-#घोषणा NLA_POLICY_VALIDATE_FN(tp, fn, ...) अणु		\
+#define NLA_POLICY_VALIDATE_FN(tp, fn, ...) {		\
 	.type = NLA_ENSURE_NO_VALIDATION_PTR(tp),	\
 	.validation_type = NLA_VALIDATE_FUNCTION,	\
 	.validate = fn,					\
 	.len = __VA_ARGS__ + 0,				\
-पूर्ण
+}
 
-#घोषणा NLA_POLICY_EXACT_LEN(_len)	NLA_POLICY_RANGE(NLA_BINARY, _len, _len)
-#घोषणा NLA_POLICY_EXACT_LEN_WARN(_len) अणु			\
+#define NLA_POLICY_EXACT_LEN(_len)	NLA_POLICY_RANGE(NLA_BINARY, _len, _len)
+#define NLA_POLICY_EXACT_LEN_WARN(_len) {			\
 	.type = NLA_BINARY,					\
 	.validation_type = NLA_VALIDATE_RANGE_WARN_TOO_LONG,	\
 	.min = _len,						\
 	.max = _len						\
-पूर्ण
-#घोषणा NLA_POLICY_MIN_LEN(_len)	NLA_POLICY_MIN(NLA_BINARY, _len)
+}
+#define NLA_POLICY_MIN_LEN(_len)	NLA_POLICY_MIN(NLA_BINARY, _len)
 
 /**
- * काष्ठा nl_info - netlink source inक्रमmation
+ * struct nl_info - netlink source information
  * @nlh: Netlink message header of original request
  * @nl_net: Network namespace
  * @portid: Netlink PORTID of requesting application
- * @skip_notअगरy: Skip netlink notअगरications to user space
- * @skip_notअगरy_kernel: Skip selected in-kernel notअगरications
+ * @skip_notify: Skip netlink notifications to user space
+ * @skip_notify_kernel: Skip selected in-kernel notifications
  */
-काष्ठा nl_info अणु
-	काष्ठा nlmsghdr		*nlh;
-	काष्ठा net		*nl_net;
+struct nl_info {
+	struct nlmsghdr		*nlh;
+	struct net		*nl_net;
 	u32			portid;
-	u8			skip_notअगरy:1,
-				skip_notअगरy_kernel:1;
-पूर्ण;
+	u8			skip_notify:1,
+				skip_notify_kernel:1;
+};
 
 /**
- * क्रमागत netlink_validation - netlink message/attribute validation levels
+ * enum netlink_validation - netlink message/attribute validation levels
  * @NL_VALIDATE_LIBERAL: Old-style "be liberal" validation, not caring about
- *	extra data at the end of the message, attributes being दीर्घer than
+ *	extra data at the end of the message, attributes being longer than
  *	they should be, or unknown attributes being present.
  * @NL_VALIDATE_TRAILING: Reject junk data encountered after attribute parsing.
  * @NL_VALIDATE_MAXTYPE: Reject attributes > max type; Together with _TRAILING
@@ -470,66 +469,66 @@
  * @NL_VALIDATE_UNSPEC: Reject attributes with NLA_UNSPEC in the policy.
  *	This can safely be set by the kernel when the given policy has no
  *	NLA_UNSPEC anymore, and can thus be used to ensure policy entries
- *	are enक्रमced going क्रमward.
+ *	are enforced going forward.
  * @NL_VALIDATE_STRICT_ATTRS: strict attribute policy parsing (e.g.
  *	U8, U16, U32 must have exact size, etc.)
- * @NL_VALIDATE_NESTED: Check that NLA_F_NESTED is set क्रम NLA_NESTED(_ARRAY)
- *	and unset क्रम other policies.
+ * @NL_VALIDATE_NESTED: Check that NLA_F_NESTED is set for NLA_NESTED(_ARRAY)
+ *	and unset for other policies.
  */
-क्रमागत netlink_validation अणु
+enum netlink_validation {
 	NL_VALIDATE_LIBERAL = 0,
 	NL_VALIDATE_TRAILING = BIT(0),
 	NL_VALIDATE_MAXTYPE = BIT(1),
 	NL_VALIDATE_UNSPEC = BIT(2),
 	NL_VALIDATE_STRICT_ATTRS = BIT(3),
 	NL_VALIDATE_NESTED = BIT(4),
-पूर्ण;
+};
 
-#घोषणा NL_VALIDATE_DEPRECATED_STRICT (NL_VALIDATE_TRAILING |\
+#define NL_VALIDATE_DEPRECATED_STRICT (NL_VALIDATE_TRAILING |\
 				       NL_VALIDATE_MAXTYPE)
-#घोषणा NL_VALIDATE_STRICT (NL_VALIDATE_TRAILING |\
+#define NL_VALIDATE_STRICT (NL_VALIDATE_TRAILING |\
 			    NL_VALIDATE_MAXTYPE |\
 			    NL_VALIDATE_UNSPEC |\
 			    NL_VALIDATE_STRICT_ATTRS |\
 			    NL_VALIDATE_NESTED)
 
-पूर्णांक netlink_rcv_skb(काष्ठा sk_buff *skb,
-		    पूर्णांक (*cb)(काष्ठा sk_buff *, काष्ठा nlmsghdr *,
-			      काष्ठा netlink_ext_ack *));
-पूर्णांक nlmsg_notअगरy(काष्ठा sock *sk, काष्ठा sk_buff *skb, u32 portid,
-		 अचिन्हित पूर्णांक group, पूर्णांक report, gfp_t flags);
+int netlink_rcv_skb(struct sk_buff *skb,
+		    int (*cb)(struct sk_buff *, struct nlmsghdr *,
+			      struct netlink_ext_ack *));
+int nlmsg_notify(struct sock *sk, struct sk_buff *skb, u32 portid,
+		 unsigned int group, int report, gfp_t flags);
 
-पूर्णांक __nla_validate(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक maxtype,
-		   स्थिर काष्ठा nla_policy *policy, अचिन्हित पूर्णांक validate,
-		   काष्ठा netlink_ext_ack *extack);
-पूर्णांक __nla_parse(काष्ठा nlattr **tb, पूर्णांक maxtype, स्थिर काष्ठा nlattr *head,
-		पूर्णांक len, स्थिर काष्ठा nla_policy *policy, अचिन्हित पूर्णांक validate,
-		काष्ठा netlink_ext_ack *extack);
-पूर्णांक nla_policy_len(स्थिर काष्ठा nla_policy *, पूर्णांक);
-काष्ठा nlattr *nla_find(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक attrtype);
-sमाप_प्रकार nla_strscpy(अक्षर *dst, स्थिर काष्ठा nlattr *nla, माप_प्रकार dstsize);
-अक्षर *nla_strdup(स्थिर काष्ठा nlattr *nla, gfp_t flags);
-पूर्णांक nla_स_नकल(व्योम *dest, स्थिर काष्ठा nlattr *src, पूर्णांक count);
-पूर्णांक nla_स_भेद(स्थिर काष्ठा nlattr *nla, स्थिर व्योम *data, माप_प्रकार size);
-पूर्णांक nla_म_भेद(स्थिर काष्ठा nlattr *nla, स्थिर अक्षर *str);
-काष्ठा nlattr *__nla_reserve(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen);
-काष्ठा nlattr *__nla_reserve_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				   पूर्णांक attrlen, पूर्णांक padattr);
-व्योम *__nla_reserve_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen);
-काष्ठा nlattr *nla_reserve(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen);
-काष्ठा nlattr *nla_reserve_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				 पूर्णांक attrlen, पूर्णांक padattr);
-व्योम *nla_reserve_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen);
-व्योम __nla_put(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-	       स्थिर व्योम *data);
-व्योम __nla_put_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-		     स्थिर व्योम *data, पूर्णांक padattr);
-व्योम __nla_put_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen, स्थिर व्योम *data);
-पूर्णांक nla_put(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen, स्थिर व्योम *data);
-पूर्णांक nla_put_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype, पूर्णांक attrlen,
-		  स्थिर व्योम *data, पूर्णांक padattr);
-पूर्णांक nla_put_nohdr(काष्ठा sk_buff *skb, पूर्णांक attrlen, स्थिर व्योम *data);
-पूर्णांक nla_append(काष्ठा sk_buff *skb, पूर्णांक attrlen, स्थिर व्योम *data);
+int __nla_validate(const struct nlattr *head, int len, int maxtype,
+		   const struct nla_policy *policy, unsigned int validate,
+		   struct netlink_ext_ack *extack);
+int __nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
+		int len, const struct nla_policy *policy, unsigned int validate,
+		struct netlink_ext_ack *extack);
+int nla_policy_len(const struct nla_policy *, int);
+struct nlattr *nla_find(const struct nlattr *head, int len, int attrtype);
+ssize_t nla_strscpy(char *dst, const struct nlattr *nla, size_t dstsize);
+char *nla_strdup(const struct nlattr *nla, gfp_t flags);
+int nla_memcpy(void *dest, const struct nlattr *src, int count);
+int nla_memcmp(const struct nlattr *nla, const void *data, size_t size);
+int nla_strcmp(const struct nlattr *nla, const char *str);
+struct nlattr *__nla_reserve(struct sk_buff *skb, int attrtype, int attrlen);
+struct nlattr *__nla_reserve_64bit(struct sk_buff *skb, int attrtype,
+				   int attrlen, int padattr);
+void *__nla_reserve_nohdr(struct sk_buff *skb, int attrlen);
+struct nlattr *nla_reserve(struct sk_buff *skb, int attrtype, int attrlen);
+struct nlattr *nla_reserve_64bit(struct sk_buff *skb, int attrtype,
+				 int attrlen, int padattr);
+void *nla_reserve_nohdr(struct sk_buff *skb, int attrlen);
+void __nla_put(struct sk_buff *skb, int attrtype, int attrlen,
+	       const void *data);
+void __nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+		     const void *data, int padattr);
+void __nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data);
+int nla_put(struct sk_buff *skb, int attrtype, int attrlen, const void *data);
+int nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
+		  const void *data, int padattr);
+int nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data);
+int nla_append(struct sk_buff *skb, int attrlen, const void *data);
 
 /**************************************************************************
  * Netlink Messages
@@ -539,275 +538,275 @@ sमाप_प्रकार nla_strscpy(अक्षर *dst, स्थिर 
  * nlmsg_msg_size - length of netlink message not including padding
  * @payload: length of message payload
  */
-अटल अंतरभूत पूर्णांक nlmsg_msg_size(पूर्णांक payload)
-अणु
-	वापस NLMSG_HDRLEN + payload;
-पूर्ण
+static inline int nlmsg_msg_size(int payload)
+{
+	return NLMSG_HDRLEN + payload;
+}
 
 /**
  * nlmsg_total_size - length of netlink message including padding
  * @payload: length of message payload
  */
-अटल अंतरभूत पूर्णांक nlmsg_total_size(पूर्णांक payload)
-अणु
-	वापस NLMSG_ALIGN(nlmsg_msg_size(payload));
-पूर्ण
+static inline int nlmsg_total_size(int payload)
+{
+	return NLMSG_ALIGN(nlmsg_msg_size(payload));
+}
 
 /**
  * nlmsg_padlen - length of padding at the message's tail
  * @payload: length of message payload
  */
-अटल अंतरभूत पूर्णांक nlmsg_padlen(पूर्णांक payload)
-अणु
-	वापस nlmsg_total_size(payload) - nlmsg_msg_size(payload);
-पूर्ण
+static inline int nlmsg_padlen(int payload)
+{
+	return nlmsg_total_size(payload) - nlmsg_msg_size(payload);
+}
 
 /**
  * nlmsg_data - head of message payload
  * @nlh: netlink message header
  */
-अटल अंतरभूत व्योम *nlmsg_data(स्थिर काष्ठा nlmsghdr *nlh)
-अणु
-	वापस (अचिन्हित अक्षर *) nlh + NLMSG_HDRLEN;
-पूर्ण
+static inline void *nlmsg_data(const struct nlmsghdr *nlh)
+{
+	return (unsigned char *) nlh + NLMSG_HDRLEN;
+}
 
 /**
  * nlmsg_len - length of message payload
  * @nlh: netlink message header
  */
-अटल अंतरभूत पूर्णांक nlmsg_len(स्थिर काष्ठा nlmsghdr *nlh)
-अणु
-	वापस nlh->nlmsg_len - NLMSG_HDRLEN;
-पूर्ण
+static inline int nlmsg_len(const struct nlmsghdr *nlh)
+{
+	return nlh->nlmsg_len - NLMSG_HDRLEN;
+}
 
 /**
  * nlmsg_attrdata - head of attributes data
  * @nlh: netlink message header
- * @hdrlen: length of family specअगरic header
+ * @hdrlen: length of family specific header
  */
-अटल अंतरभूत काष्ठा nlattr *nlmsg_attrdata(स्थिर काष्ठा nlmsghdr *nlh,
-					    पूर्णांक hdrlen)
-अणु
-	अचिन्हित अक्षर *data = nlmsg_data(nlh);
-	वापस (काष्ठा nlattr *) (data + NLMSG_ALIGN(hdrlen));
-पूर्ण
+static inline struct nlattr *nlmsg_attrdata(const struct nlmsghdr *nlh,
+					    int hdrlen)
+{
+	unsigned char *data = nlmsg_data(nlh);
+	return (struct nlattr *) (data + NLMSG_ALIGN(hdrlen));
+}
 
 /**
  * nlmsg_attrlen - length of attributes data
  * @nlh: netlink message header
- * @hdrlen: length of family specअगरic header
+ * @hdrlen: length of family specific header
  */
-अटल अंतरभूत पूर्णांक nlmsg_attrlen(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक hdrlen)
-अणु
-	वापस nlmsg_len(nlh) - NLMSG_ALIGN(hdrlen);
-पूर्ण
+static inline int nlmsg_attrlen(const struct nlmsghdr *nlh, int hdrlen)
+{
+	return nlmsg_len(nlh) - NLMSG_ALIGN(hdrlen);
+}
 
 /**
- * nlmsg_ok - check अगर the netlink message fits पूर्णांकo the reमुख्यing bytes
+ * nlmsg_ok - check if the netlink message fits into the remaining bytes
  * @nlh: netlink message header
- * @reमुख्यing: number of bytes reमुख्यing in message stream
+ * @remaining: number of bytes remaining in message stream
  */
-अटल अंतरभूत पूर्णांक nlmsg_ok(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक reमुख्यing)
-अणु
-	वापस (reमुख्यing >= (पूर्णांक) माप(काष्ठा nlmsghdr) &&
-		nlh->nlmsg_len >= माप(काष्ठा nlmsghdr) &&
-		nlh->nlmsg_len <= reमुख्यing);
-पूर्ण
+static inline int nlmsg_ok(const struct nlmsghdr *nlh, int remaining)
+{
+	return (remaining >= (int) sizeof(struct nlmsghdr) &&
+		nlh->nlmsg_len >= sizeof(struct nlmsghdr) &&
+		nlh->nlmsg_len <= remaining);
+}
 
 /**
  * nlmsg_next - next netlink message in message stream
  * @nlh: netlink message header
- * @reमुख्यing: number of bytes reमुख्यing in message stream
+ * @remaining: number of bytes remaining in message stream
  *
  * Returns the next netlink message in the message stream and
- * decrements reमुख्यing by the size of the current message.
+ * decrements remaining by the size of the current message.
  */
-अटल अंतरभूत काष्ठा nlmsghdr *
-nlmsg_next(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक *reमुख्यing)
-अणु
-	पूर्णांक totlen = NLMSG_ALIGN(nlh->nlmsg_len);
+static inline struct nlmsghdr *
+nlmsg_next(const struct nlmsghdr *nlh, int *remaining)
+{
+	int totlen = NLMSG_ALIGN(nlh->nlmsg_len);
 
-	*reमुख्यing -= totlen;
+	*remaining -= totlen;
 
-	वापस (काष्ठा nlmsghdr *) ((अचिन्हित अक्षर *) nlh + totlen);
-पूर्ण
+	return (struct nlmsghdr *) ((unsigned char *) nlh + totlen);
+}
 
 /**
- * nla_parse - Parse a stream of attributes पूर्णांकo a tb buffer
+ * nla_parse - Parse a stream of attributes into a tb buffer
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @head: head of attribute stream
  * @len: length of attribute stream
  * @policy: validation policy
- * @extack: extended ACK poपूर्णांकer
+ * @extack: extended ACK pointer
  *
- * Parses a stream of attributes and stores a poपूर्णांकer to each attribute in
+ * Parses a stream of attributes and stores a pointer to each attribute in
  * the tb array accessible via the attribute type. Attributes with a type
- * exceeding maxtype will be rejected, policy must be specअगरied, attributes
+ * exceeding maxtype will be rejected, policy must be specified, attributes
  * will be validated in the strictest way possible.
  *
  * Returns 0 on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक nla_parse(काष्ठा nlattr **tb, पूर्णांक maxtype,
-			    स्थिर काष्ठा nlattr *head, पूर्णांक len,
-			    स्थिर काष्ठा nla_policy *policy,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_parse(tb, maxtype, head, len, policy,
+static inline int nla_parse(struct nlattr **tb, int maxtype,
+			    const struct nlattr *head, int len,
+			    const struct nla_policy *policy,
+			    struct netlink_ext_ack *extack)
+{
+	return __nla_parse(tb, maxtype, head, len, policy,
 			   NL_VALIDATE_STRICT, extack);
-पूर्ण
+}
 
 /**
- * nla_parse_deprecated - Parse a stream of attributes पूर्णांकo a tb buffer
+ * nla_parse_deprecated - Parse a stream of attributes into a tb buffer
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @head: head of attribute stream
  * @len: length of attribute stream
  * @policy: validation policy
- * @extack: extended ACK poपूर्णांकer
+ * @extack: extended ACK pointer
  *
- * Parses a stream of attributes and stores a poपूर्णांकer to each attribute in
+ * Parses a stream of attributes and stores a pointer to each attribute in
  * the tb array accessible via the attribute type. Attributes with a type
  * exceeding maxtype will be ignored and attributes from the policy are not
- * always strictly validated (only क्रम new attributes).
+ * always strictly validated (only for new attributes).
  *
  * Returns 0 on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक nla_parse_deprecated(काष्ठा nlattr **tb, पूर्णांक maxtype,
-				       स्थिर काष्ठा nlattr *head, पूर्णांक len,
-				       स्थिर काष्ठा nla_policy *policy,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_parse(tb, maxtype, head, len, policy,
+static inline int nla_parse_deprecated(struct nlattr **tb, int maxtype,
+				       const struct nlattr *head, int len,
+				       const struct nla_policy *policy,
+				       struct netlink_ext_ack *extack)
+{
+	return __nla_parse(tb, maxtype, head, len, policy,
 			   NL_VALIDATE_LIBERAL, extack);
-पूर्ण
+}
 
 /**
- * nla_parse_deprecated_strict - Parse a stream of attributes पूर्णांकo a tb buffer
+ * nla_parse_deprecated_strict - Parse a stream of attributes into a tb buffer
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @head: head of attribute stream
  * @len: length of attribute stream
  * @policy: validation policy
- * @extack: extended ACK poपूर्णांकer
+ * @extack: extended ACK pointer
  *
- * Parses a stream of attributes and stores a poपूर्णांकer to each attribute in
+ * Parses a stream of attributes and stores a pointer to each attribute in
  * the tb array accessible via the attribute type. Attributes with a type
  * exceeding maxtype will be rejected as well as trailing data, but the
- * policy is not completely strictly validated (only क्रम new attributes).
+ * policy is not completely strictly validated (only for new attributes).
  *
  * Returns 0 on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक nla_parse_deprecated_strict(काष्ठा nlattr **tb, पूर्णांक maxtype,
-					      स्थिर काष्ठा nlattr *head,
-					      पूर्णांक len,
-					      स्थिर काष्ठा nla_policy *policy,
-					      काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_parse(tb, maxtype, head, len, policy,
+static inline int nla_parse_deprecated_strict(struct nlattr **tb, int maxtype,
+					      const struct nlattr *head,
+					      int len,
+					      const struct nla_policy *policy,
+					      struct netlink_ext_ack *extack)
+{
+	return __nla_parse(tb, maxtype, head, len, policy,
 			   NL_VALIDATE_DEPRECATED_STRICT, extack);
-पूर्ण
+}
 
 /**
  * __nlmsg_parse - parse attributes of a netlink message
  * @nlh: netlink message header
- * @hdrlen: length of family specअगरic header
+ * @hdrlen: length of family specific header
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
  * @validate: validation strictness
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * See nla_parse()
  */
-अटल अंतरभूत पूर्णांक __nlmsg_parse(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक hdrlen,
-				काष्ठा nlattr *tb[], पूर्णांक maxtype,
-				स्थिर काष्ठा nla_policy *policy,
-				अचिन्हित पूर्णांक validate,
-				काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(hdrlen)) अणु
+static inline int __nlmsg_parse(const struct nlmsghdr *nlh, int hdrlen,
+				struct nlattr *tb[], int maxtype,
+				const struct nla_policy *policy,
+				unsigned int validate,
+				struct netlink_ext_ack *extack)
+{
+	if (nlh->nlmsg_len < nlmsg_msg_size(hdrlen)) {
 		NL_SET_ERR_MSG(extack, "Invalid header length");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस __nla_parse(tb, maxtype, nlmsg_attrdata(nlh, hdrlen),
+	return __nla_parse(tb, maxtype, nlmsg_attrdata(nlh, hdrlen),
 			   nlmsg_attrlen(nlh, hdrlen), policy, validate,
 			   extack);
-पूर्ण
+}
 
 /**
  * nlmsg_parse - parse attributes of a netlink message
  * @nlh: netlink message header
- * @hdrlen: length of family specअगरic header
+ * @hdrlen: length of family specific header
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * See nla_parse()
  */
-अटल अंतरभूत पूर्णांक nlmsg_parse(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक hdrlen,
-			      काष्ठा nlattr *tb[], पूर्णांक maxtype,
-			      स्थिर काष्ठा nla_policy *policy,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nlmsg_parse(nlh, hdrlen, tb, maxtype, policy,
+static inline int nlmsg_parse(const struct nlmsghdr *nlh, int hdrlen,
+			      struct nlattr *tb[], int maxtype,
+			      const struct nla_policy *policy,
+			      struct netlink_ext_ack *extack)
+{
+	return __nlmsg_parse(nlh, hdrlen, tb, maxtype, policy,
 			     NL_VALIDATE_STRICT, extack);
-पूर्ण
+}
 
 /**
  * nlmsg_parse_deprecated - parse attributes of a netlink message
  * @nlh: netlink message header
- * @hdrlen: length of family specअगरic header
+ * @hdrlen: length of family specific header
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * See nla_parse_deprecated()
  */
-अटल अंतरभूत पूर्णांक nlmsg_parse_deprecated(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक hdrlen,
-					 काष्ठा nlattr *tb[], पूर्णांक maxtype,
-					 स्थिर काष्ठा nla_policy *policy,
-					 काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nlmsg_parse(nlh, hdrlen, tb, maxtype, policy,
+static inline int nlmsg_parse_deprecated(const struct nlmsghdr *nlh, int hdrlen,
+					 struct nlattr *tb[], int maxtype,
+					 const struct nla_policy *policy,
+					 struct netlink_ext_ack *extack)
+{
+	return __nlmsg_parse(nlh, hdrlen, tb, maxtype, policy,
 			     NL_VALIDATE_LIBERAL, extack);
-पूर्ण
+}
 
 /**
  * nlmsg_parse_deprecated_strict - parse attributes of a netlink message
  * @nlh: netlink message header
- * @hdrlen: length of family specअगरic header
+ * @hdrlen: length of family specific header
  * @tb: destination array with maxtype+1 elements
  * @maxtype: maximum attribute type to be expected
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * See nla_parse_deprecated_strict()
  */
-अटल अंतरभूत पूर्णांक
-nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, पूर्णांक hdrlen,
-			      काष्ठा nlattr *tb[], पूर्णांक maxtype,
-			      स्थिर काष्ठा nla_policy *policy,
-			      काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nlmsg_parse(nlh, hdrlen, tb, maxtype, policy,
+static inline int
+nlmsg_parse_deprecated_strict(const struct nlmsghdr *nlh, int hdrlen,
+			      struct nlattr *tb[], int maxtype,
+			      const struct nla_policy *policy,
+			      struct netlink_ext_ack *extack)
+{
+	return __nlmsg_parse(nlh, hdrlen, tb, maxtype, policy,
 			     NL_VALIDATE_DEPRECATED_STRICT, extack);
-पूर्ण
+}
 
 /**
- * nlmsg_find_attr - find a specअगरic attribute in a netlink message
+ * nlmsg_find_attr - find a specific attribute in a netlink message
  * @nlh: netlink message header
- * @hdrlen: length of familiy specअगरic header
- * @attrtype: type of attribute to look क्रम
+ * @hdrlen: length of familiy specific header
+ * @attrtype: type of attribute to look for
  *
- * Returns the first attribute which matches the specअगरied type.
+ * Returns the first attribute which matches the specified type.
  */
-अटल अंतरभूत काष्ठा nlattr *nlmsg_find_attr(स्थिर काष्ठा nlmsghdr *nlh,
-					     पूर्णांक hdrlen, पूर्णांक attrtype)
-अणु
-	वापस nla_find(nlmsg_attrdata(nlh, hdrlen),
+static inline struct nlattr *nlmsg_find_attr(const struct nlmsghdr *nlh,
+					     int hdrlen, int attrtype)
+{
+	return nla_find(nlmsg_attrdata(nlh, hdrlen),
 			nlmsg_attrlen(nlh, hdrlen), attrtype);
-पूर्ण
+}
 
 /**
  * nla_validate_deprecated - Validate a stream of attributes
@@ -816,22 +815,22 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
  * @validate: validation strictness
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
- * Validates all attributes in the specअगरied attribute stream against the
- * specअगरied policy. Validation is करोne in liberal mode.
- * See करोcumenation of काष्ठा nla_policy क्रम more details.
+ * Validates all attributes in the specified attribute stream against the
+ * specified policy. Validation is done in liberal mode.
+ * See documenation of struct nla_policy for more details.
  *
  * Returns 0 on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक nla_validate_deprecated(स्थिर काष्ठा nlattr *head, पूर्णांक len,
-					  पूर्णांक maxtype,
-					  स्थिर काष्ठा nla_policy *policy,
-					  काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate(head, len, maxtype, policy, NL_VALIDATE_LIBERAL,
+static inline int nla_validate_deprecated(const struct nlattr *head, int len,
+					  int maxtype,
+					  const struct nla_policy *policy,
+					  struct netlink_ext_ack *extack)
+{
+	return __nla_validate(head, len, maxtype, policy, NL_VALIDATE_LIBERAL,
 			      extack);
-पूर्ण
+}
 
 /**
  * nla_validate - Validate a stream of attributes
@@ -839,42 +838,42 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  * @len: length of attribute stream
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
- * Validates all attributes in the specअगरied attribute stream against the
- * specअगरied policy. Validation is करोne in strict mode.
- * See करोcumenation of काष्ठा nla_policy क्रम more details.
+ * Validates all attributes in the specified attribute stream against the
+ * specified policy. Validation is done in strict mode.
+ * See documenation of struct nla_policy for more details.
  *
  * Returns 0 on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक nla_validate(स्थिर काष्ठा nlattr *head, पूर्णांक len, पूर्णांक maxtype,
-			       स्थिर काष्ठा nla_policy *policy,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate(head, len, maxtype, policy, NL_VALIDATE_STRICT,
+static inline int nla_validate(const struct nlattr *head, int len, int maxtype,
+			       const struct nla_policy *policy,
+			       struct netlink_ext_ack *extack)
+{
+	return __nla_validate(head, len, maxtype, policy, NL_VALIDATE_STRICT,
 			      extack);
-पूर्ण
+}
 
 /**
  * nlmsg_validate_deprecated - validate a netlink message including attributes
  * @nlh: netlinket message header
- * @hdrlen: length of familiy specअगरic header
+ * @hdrlen: length of familiy specific header
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  */
-अटल अंतरभूत पूर्णांक nlmsg_validate_deprecated(स्थिर काष्ठा nlmsghdr *nlh,
-					    पूर्णांक hdrlen, पूर्णांक maxtype,
-					    स्थिर काष्ठा nla_policy *policy,
-					    काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (nlh->nlmsg_len < nlmsg_msg_size(hdrlen))
-		वापस -EINVAL;
+static inline int nlmsg_validate_deprecated(const struct nlmsghdr *nlh,
+					    int hdrlen, int maxtype,
+					    const struct nla_policy *policy,
+					    struct netlink_ext_ack *extack)
+{
+	if (nlh->nlmsg_len < nlmsg_msg_size(hdrlen))
+		return -EINVAL;
 
-	वापस __nla_validate(nlmsg_attrdata(nlh, hdrlen),
+	return __nla_validate(nlmsg_attrdata(nlh, hdrlen),
 			      nlmsg_attrlen(nlh, hdrlen), maxtype,
 			      policy, NL_VALIDATE_LIBERAL, extack);
-पूर्ण
+}
 
 
 
@@ -882,22 +881,22 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  * nlmsg_report - need to report back to application?
  * @nlh: netlink message header
  *
- * Returns 1 अगर a report back to the application is requested.
+ * Returns 1 if a report back to the application is requested.
  */
-अटल अंतरभूत पूर्णांक nlmsg_report(स्थिर काष्ठा nlmsghdr *nlh)
-अणु
-	वापस !!(nlh->nlmsg_flags & NLM_F_ECHO);
-पूर्ण
+static inline int nlmsg_report(const struct nlmsghdr *nlh)
+{
+	return !!(nlh->nlmsg_flags & NLM_F_ECHO);
+}
 
 /**
- * nlmsg_क्रम_each_attr - iterate over a stream of attributes
+ * nlmsg_for_each_attr - iterate over a stream of attributes
  * @pos: loop counter, set to current attribute
  * @nlh: netlink message header
- * @hdrlen: length of familiy specअगरic header
- * @rem: initialized to len, holds bytes currently reमुख्यing in stream
+ * @hdrlen: length of familiy specific header
+ * @rem: initialized to len, holds bytes currently remaining in stream
  */
-#घोषणा nlmsg_क्रम_each_attr(pos, nlh, hdrlen, rem) \
-	nla_क्रम_each_attr(pos, nlmsg_attrdata(nlh, hdrlen), \
+#define nlmsg_for_each_attr(pos, nlh, hdrlen, rem) \
+	nla_for_each_attr(pos, nlmsg_attrdata(nlh, hdrlen), \
 			  nlmsg_attrlen(nlh, hdrlen), rem)
 
 /**
@@ -909,17 +908,17 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  * @payload: length of message payload
  * @flags: message flags
  *
- * Returns शून्य अगर the tailroom of the skb is insufficient to store
+ * Returns NULL if the tailroom of the skb is insufficient to store
  * the message header and payload.
  */
-अटल अंतरभूत काष्ठा nlmsghdr *nlmsg_put(काष्ठा sk_buff *skb, u32 portid, u32 seq,
-					 पूर्णांक type, पूर्णांक payload, पूर्णांक flags)
-अणु
-	अगर (unlikely(skb_tailroom(skb) < nlmsg_total_size(payload)))
-		वापस शून्य;
+static inline struct nlmsghdr *nlmsg_put(struct sk_buff *skb, u32 portid, u32 seq,
+					 int type, int payload, int flags)
+{
+	if (unlikely(skb_tailroom(skb) < nlmsg_total_size(payload)))
+		return NULL;
 
-	वापस __nlmsg_put(skb, portid, seq, type, payload, flags);
-पूर्ण
+	return __nlmsg_put(skb, portid, seq, type, payload, flags);
+}
 
 /**
  * nlmsg_put_answer - Add a new callback based netlink message to an skb
@@ -929,30 +928,30 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  * @payload: length of message payload
  * @flags: message flags
  *
- * Returns शून्य अगर the tailroom of the skb is insufficient to store
+ * Returns NULL if the tailroom of the skb is insufficient to store
  * the message header and payload.
  */
-अटल अंतरभूत काष्ठा nlmsghdr *nlmsg_put_answer(काष्ठा sk_buff *skb,
-						काष्ठा netlink_callback *cb,
-						पूर्णांक type, पूर्णांक payload,
-						पूर्णांक flags)
-अणु
-	वापस nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
+static inline struct nlmsghdr *nlmsg_put_answer(struct sk_buff *skb,
+						struct netlink_callback *cb,
+						int type, int payload,
+						int flags)
+{
+	return nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			 type, payload, flags);
-पूर्ण
+}
 
 /**
  * nlmsg_new - Allocate a new netlink message
  * @payload: size of the message payload
  * @flags: the type of memory to allocate.
  *
- * Use NLMSG_DEFAULT_SIZE अगर the size of the payload isn't known
- * and a good शेष is needed.
+ * Use NLMSG_DEFAULT_SIZE if the size of the payload isn't known
+ * and a good default is needed.
  */
-अटल अंतरभूत काष्ठा sk_buff *nlmsg_new(माप_प्रकार payload, gfp_t flags)
-अणु
-	वापस alloc_skb(nlmsg_total_size(payload), flags);
-पूर्ण
+static inline struct sk_buff *nlmsg_new(size_t payload, gfp_t flags)
+{
+	return alloc_skb(nlmsg_total_size(payload), flags);
+}
 
 /**
  * nlmsg_end - Finalize a netlink message
@@ -960,24 +959,24 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  * @nlh: netlink message header
  *
  * Corrects the netlink message header to include the appeneded
- * attributes. Only necessary अगर attributes have been added to
+ * attributes. Only necessary if attributes have been added to
  * the message.
  */
-अटल अंतरभूत व्योम nlmsg_end(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh)
-अणु
-	nlh->nlmsg_len = skb_tail_poपूर्णांकer(skb) - (अचिन्हित अक्षर *)nlh;
-पूर्ण
+static inline void nlmsg_end(struct sk_buff *skb, struct nlmsghdr *nlh)
+{
+	nlh->nlmsg_len = skb_tail_pointer(skb) - (unsigned char *)nlh;
+}
 
 /**
- * nlmsg_get_pos - वापस current position in netlink message
+ * nlmsg_get_pos - return current position in netlink message
  * @skb: socket buffer the message is stored in
  *
- * Returns a poपूर्णांकer to the current tail of the message.
+ * Returns a pointer to the current tail of the message.
  */
-अटल अंतरभूत व्योम *nlmsg_get_pos(काष्ठा sk_buff *skb)
-अणु
-	वापस skb_tail_poपूर्णांकer(skb);
-पूर्ण
+static inline void *nlmsg_get_pos(struct sk_buff *skb)
+{
+	return skb_tail_pointer(skb);
+}
 
 /**
  * nlmsg_trim - Trim message to a mark
@@ -986,110 +985,110 @@ nlmsg_parse_deprecated_strict(स्थिर काष्ठा nlmsghdr *nlh, 
  *
  * Trims the message to the provided mark.
  */
-अटल अंतरभूत व्योम nlmsg_trim(काष्ठा sk_buff *skb, स्थिर व्योम *mark)
-अणु
-	अगर (mark) अणु
-		WARN_ON((अचिन्हित अक्षर *) mark < skb->data);
-		skb_trim(skb, (अचिन्हित अक्षर *) mark - skb->data);
-	पूर्ण
-पूर्ण
+static inline void nlmsg_trim(struct sk_buff *skb, const void *mark)
+{
+	if (mark) {
+		WARN_ON((unsigned char *) mark < skb->data);
+		skb_trim(skb, (unsigned char *) mark - skb->data);
+	}
+}
 
 /**
- * nlmsg_cancel - Cancel स्थिरruction of a netlink message
+ * nlmsg_cancel - Cancel construction of a netlink message
  * @skb: socket buffer the message is stored in
  * @nlh: netlink message header
  *
  * Removes the complete netlink message including all
  * attributes from the socket buffer again.
  */
-अटल अंतरभूत व्योम nlmsg_cancel(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh)
-अणु
+static inline void nlmsg_cancel(struct sk_buff *skb, struct nlmsghdr *nlh)
+{
 	nlmsg_trim(skb, nlh);
-पूर्ण
+}
 
 /**
- * nlmsg_मुक्त - मुक्त a netlink message
+ * nlmsg_free - free a netlink message
  * @skb: socket buffer of netlink message
  */
-अटल अंतरभूत व्योम nlmsg_मुक्त(काष्ठा sk_buff *skb)
-अणु
-	kमुक्त_skb(skb);
-पूर्ण
+static inline void nlmsg_free(struct sk_buff *skb)
+{
+	kfree_skb(skb);
+}
 
 /**
  * nlmsg_multicast - multicast a netlink message
- * @sk: netlink socket to spपढ़ो messages to
+ * @sk: netlink socket to spread messages to
  * @skb: netlink message as socket buffer
- * @portid: own netlink portid to aव्योम sending to yourself
+ * @portid: own netlink portid to avoid sending to yourself
  * @group: multicast group id
  * @flags: allocation flags
  */
-अटल अंतरभूत पूर्णांक nlmsg_multicast(काष्ठा sock *sk, काष्ठा sk_buff *skb,
-				  u32 portid, अचिन्हित पूर्णांक group, gfp_t flags)
-अणु
-	पूर्णांक err;
+static inline int nlmsg_multicast(struct sock *sk, struct sk_buff *skb,
+				  u32 portid, unsigned int group, gfp_t flags)
+{
+	int err;
 
 	NETLINK_CB(skb).dst_group = group;
 
 	err = netlink_broadcast(sk, skb, portid, group, flags);
-	अगर (err > 0)
+	if (err > 0)
 		err = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * nlmsg_unicast - unicast a netlink message
- * @sk: netlink socket to spपढ़ो message to
+ * @sk: netlink socket to spread message to
  * @skb: netlink message as socket buffer
  * @portid: netlink portid of the destination socket
  */
-अटल अंतरभूत पूर्णांक nlmsg_unicast(काष्ठा sock *sk, काष्ठा sk_buff *skb, u32 portid)
-अणु
-	पूर्णांक err;
+static inline int nlmsg_unicast(struct sock *sk, struct sk_buff *skb, u32 portid)
+{
+	int err;
 
 	err = netlink_unicast(sk, skb, portid, MSG_DONTWAIT);
-	अगर (err > 0)
+	if (err > 0)
 		err = 0;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * nlmsg_क्रम_each_msg - iterate over a stream of messages
+ * nlmsg_for_each_msg - iterate over a stream of messages
  * @pos: loop counter, set to current message
  * @head: head of message stream
  * @len: length of message stream
- * @rem: initialized to len, holds bytes currently reमुख्यing in stream
+ * @rem: initialized to len, holds bytes currently remaining in stream
  */
-#घोषणा nlmsg_क्रम_each_msg(pos, head, len, rem) \
-	क्रम (pos = head, rem = len; \
+#define nlmsg_for_each_msg(pos, head, len, rem) \
+	for (pos = head, rem = len; \
 	     nlmsg_ok(pos, rem); \
 	     pos = nlmsg_next(pos, &(rem)))
 
 /**
- * nl_dump_check_consistent - check अगर sequence is consistent and advertise अगर not
- * @cb: netlink callback काष्ठाure that stores the sequence number
- * @nlh: netlink message header to ग_लिखो the flag to
+ * nl_dump_check_consistent - check if sequence is consistent and advertise if not
+ * @cb: netlink callback structure that stores the sequence number
+ * @nlh: netlink message header to write the flag to
  *
- * This function checks अगर the sequence (generation) number changed during dump
- * and अगर it did, advertises it in the netlink message header.
+ * This function checks if the sequence (generation) number changed during dump
+ * and if it did, advertises it in the netlink message header.
  *
  * The correct way to use it is to set cb->seq to the generation counter when
- * all locks क्रम dumping have been acquired, and then call this function क्रम
+ * all locks for dumping have been acquired, and then call this function for
  * each message that is generated.
  *
  * Note that due to initialisation concerns, 0 is an invalid sequence number
  * and must not be used by code that uses this functionality.
  */
-अटल अंतरभूत व्योम
-nl_dump_check_consistent(काष्ठा netlink_callback *cb,
-			 काष्ठा nlmsghdr *nlh)
-अणु
-	अगर (cb->prev_seq && cb->seq != cb->prev_seq)
+static inline void
+nl_dump_check_consistent(struct netlink_callback *cb,
+			 struct nlmsghdr *nlh)
+{
+	if (cb->prev_seq && cb->seq != cb->prev_seq)
 		nlh->nlmsg_flags |= NLM_F_DUMP_INTR;
 	cb->prev_seq = cb->seq;
-पूर्ण
+}
 
 /**************************************************************************
  * Netlink Attributes
@@ -1099,96 +1098,96 @@ nl_dump_check_consistent(काष्ठा netlink_callback *cb,
  * nla_attr_size - length of attribute not including padding
  * @payload: length of payload
  */
-अटल अंतरभूत पूर्णांक nla_attr_size(पूर्णांक payload)
-अणु
-	वापस NLA_HDRLEN + payload;
-पूर्ण
+static inline int nla_attr_size(int payload)
+{
+	return NLA_HDRLEN + payload;
+}
 
 /**
  * nla_total_size - total length of attribute including padding
  * @payload: length of payload
  */
-अटल अंतरभूत पूर्णांक nla_total_size(पूर्णांक payload)
-अणु
-	वापस NLA_ALIGN(nla_attr_size(payload));
-पूर्ण
+static inline int nla_total_size(int payload)
+{
+	return NLA_ALIGN(nla_attr_size(payload));
+}
 
 /**
  * nla_padlen - length of padding at the tail of attribute
  * @payload: length of payload
  */
-अटल अंतरभूत पूर्णांक nla_padlen(पूर्णांक payload)
-अणु
-	वापस nla_total_size(payload) - nla_attr_size(payload);
-पूर्ण
+static inline int nla_padlen(int payload)
+{
+	return nla_total_size(payload) - nla_attr_size(payload);
+}
 
 /**
  * nla_type - attribute type
  * @nla: netlink attribute
  */
-अटल अंतरभूत पूर्णांक nla_type(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस nla->nla_type & NLA_TYPE_MASK;
-पूर्ण
+static inline int nla_type(const struct nlattr *nla)
+{
+	return nla->nla_type & NLA_TYPE_MASK;
+}
 
 /**
  * nla_data - head of payload
  * @nla: netlink attribute
  */
-अटल अंतरभूत व्योम *nla_data(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस (अक्षर *) nla + NLA_HDRLEN;
-पूर्ण
+static inline void *nla_data(const struct nlattr *nla)
+{
+	return (char *) nla + NLA_HDRLEN;
+}
 
 /**
  * nla_len - length of payload
  * @nla: netlink attribute
  */
-अटल अंतरभूत पूर्णांक nla_len(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस nla->nla_len - NLA_HDRLEN;
-पूर्ण
+static inline int nla_len(const struct nlattr *nla)
+{
+	return nla->nla_len - NLA_HDRLEN;
+}
 
 /**
- * nla_ok - check अगर the netlink attribute fits पूर्णांकo the reमुख्यing bytes
+ * nla_ok - check if the netlink attribute fits into the remaining bytes
  * @nla: netlink attribute
- * @reमुख्यing: number of bytes reमुख्यing in attribute stream
+ * @remaining: number of bytes remaining in attribute stream
  */
-अटल अंतरभूत पूर्णांक nla_ok(स्थिर काष्ठा nlattr *nla, पूर्णांक reमुख्यing)
-अणु
-	वापस reमुख्यing >= (पूर्णांक) माप(*nla) &&
-	       nla->nla_len >= माप(*nla) &&
-	       nla->nla_len <= reमुख्यing;
-पूर्ण
+static inline int nla_ok(const struct nlattr *nla, int remaining)
+{
+	return remaining >= (int) sizeof(*nla) &&
+	       nla->nla_len >= sizeof(*nla) &&
+	       nla->nla_len <= remaining;
+}
 
 /**
  * nla_next - next netlink attribute in attribute stream
  * @nla: netlink attribute
- * @reमुख्यing: number of bytes reमुख्यing in attribute stream
+ * @remaining: number of bytes remaining in attribute stream
  *
  * Returns the next netlink attribute in the attribute stream and
- * decrements reमुख्यing by the size of the current attribute.
+ * decrements remaining by the size of the current attribute.
  */
-अटल अंतरभूत काष्ठा nlattr *nla_next(स्थिर काष्ठा nlattr *nla, पूर्णांक *reमुख्यing)
-अणु
-	अचिन्हित पूर्णांक totlen = NLA_ALIGN(nla->nla_len);
+static inline struct nlattr *nla_next(const struct nlattr *nla, int *remaining)
+{
+	unsigned int totlen = NLA_ALIGN(nla->nla_len);
 
-	*reमुख्यing -= totlen;
-	वापस (काष्ठा nlattr *) ((अक्षर *) nla + totlen);
-पूर्ण
+	*remaining -= totlen;
+	return (struct nlattr *) ((char *) nla + totlen);
+}
 
 /**
  * nla_find_nested - find attribute in a set of nested attributes
  * @nla: attribute containing the nested attributes
- * @attrtype: type of attribute to look क्रम
+ * @attrtype: type of attribute to look for
  *
- * Returns the first attribute which matches the specअगरied type.
+ * Returns the first attribute which matches the specified type.
  */
-अटल अंतरभूत काष्ठा nlattr *
-nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्णांक attrtype)
-अणु
-	वापस nla_find(nla_data(nla), nla_len(nla), attrtype);
-पूर्ण
+static inline struct nlattr *
+nla_find_nested(const struct nlattr *nla, int attrtype)
+{
+	return nla_find(nla_data(nla), nla_len(nla), attrtype);
+}
 
 /**
  * nla_parse_nested - parse nested attributes
@@ -1196,23 +1195,23 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @maxtype: maximum attribute type to be expected
  * @nla: attribute containing the nested attributes
  * @policy: validation policy
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * See nla_parse()
  */
-अटल अंतरभूत पूर्णांक nla_parse_nested(काष्ठा nlattr *tb[], पूर्णांक maxtype,
-				   स्थिर काष्ठा nlattr *nla,
-				   स्थिर काष्ठा nla_policy *policy,
-				   काष्ठा netlink_ext_ack *extack)
-अणु
-	अगर (!(nla->nla_type & NLA_F_NESTED)) अणु
+static inline int nla_parse_nested(struct nlattr *tb[], int maxtype,
+				   const struct nlattr *nla,
+				   const struct nla_policy *policy,
+				   struct netlink_ext_ack *extack)
+{
+	if (!(nla->nla_type & NLA_F_NESTED)) {
 		NL_SET_ERR_MSG_ATTR(extack, nla, "NLA_F_NESTED is missing");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस __nla_parse(tb, maxtype, nla_data(nla), nla_len(nla), policy,
+	return __nla_parse(tb, maxtype, nla_data(nla), nla_len(nla), policy,
 			   NL_VALIDATE_STRICT, extack);
-पूर्ण
+}
 
 /**
  * nla_parse_nested_deprecated - parse nested attributes
@@ -1220,18 +1219,18 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @maxtype: maximum attribute type to be expected
  * @nla: attribute containing the nested attributes
  * @policy: validation policy
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * See nla_parse_deprecated()
  */
-अटल अंतरभूत पूर्णांक nla_parse_nested_deprecated(काष्ठा nlattr *tb[], पूर्णांक maxtype,
-					      स्थिर काष्ठा nlattr *nla,
-					      स्थिर काष्ठा nla_policy *policy,
-					      काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_parse(tb, maxtype, nla_data(nla), nla_len(nla), policy,
+static inline int nla_parse_nested_deprecated(struct nlattr *tb[], int maxtype,
+					      const struct nlattr *nla,
+					      const struct nla_policy *policy,
+					      struct netlink_ext_ack *extack)
+{
+	return __nla_parse(tb, maxtype, nla_data(nla), nla_len(nla), policy,
 			   NL_VALIDATE_LIBERAL, extack);
-पूर्ण
+}
 
 /**
  * nla_put_u8 - Add a u8 netlink attribute to a socket buffer
@@ -1239,13 +1238,13 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_u8(काष्ठा sk_buff *skb, पूर्णांक attrtype, u8 value)
-अणु
+static inline int nla_put_u8(struct sk_buff *skb, int attrtype, u8 value)
+{
 	/* temporary variables to work around GCC PR81715 with asan-stack=1 */
-	u8 पंचांगp = value;
+	u8 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(u8), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(u8), &tmp);
+}
 
 /**
  * nla_put_u16 - Add a u16 netlink attribute to a socket buffer
@@ -1253,12 +1252,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_u16(काष्ठा sk_buff *skb, पूर्णांक attrtype, u16 value)
-अणु
-	u16 पंचांगp = value;
+static inline int nla_put_u16(struct sk_buff *skb, int attrtype, u16 value)
+{
+	u16 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(u16), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(u16), &tmp);
+}
 
 /**
  * nla_put_be16 - Add a __be16 netlink attribute to a socket buffer
@@ -1266,12 +1265,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_be16(काष्ठा sk_buff *skb, पूर्णांक attrtype, __be16 value)
-अणु
-	__be16 पंचांगp = value;
+static inline int nla_put_be16(struct sk_buff *skb, int attrtype, __be16 value)
+{
+	__be16 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(__be16), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(__be16), &tmp);
+}
 
 /**
  * nla_put_net16 - Add 16-bit network byte order netlink attribute to a socket buffer
@@ -1279,12 +1278,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_net16(काष्ठा sk_buff *skb, पूर्णांक attrtype, __be16 value)
-अणु
-	__be16 पंचांगp = value;
+static inline int nla_put_net16(struct sk_buff *skb, int attrtype, __be16 value)
+{
+	__be16 tmp = value;
 
-	वापस nla_put_be16(skb, attrtype | NLA_F_NET_BYTEORDER, पंचांगp);
-पूर्ण
+	return nla_put_be16(skb, attrtype | NLA_F_NET_BYTEORDER, tmp);
+}
 
 /**
  * nla_put_le16 - Add a __le16 netlink attribute to a socket buffer
@@ -1292,12 +1291,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_le16(काष्ठा sk_buff *skb, पूर्णांक attrtype, __le16 value)
-अणु
-	__le16 पंचांगp = value;
+static inline int nla_put_le16(struct sk_buff *skb, int attrtype, __le16 value)
+{
+	__le16 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(__le16), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(__le16), &tmp);
+}
 
 /**
  * nla_put_u32 - Add a u32 netlink attribute to a socket buffer
@@ -1305,12 +1304,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_u32(काष्ठा sk_buff *skb, पूर्णांक attrtype, u32 value)
-अणु
-	u32 पंचांगp = value;
+static inline int nla_put_u32(struct sk_buff *skb, int attrtype, u32 value)
+{
+	u32 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(u32), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(u32), &tmp);
+}
 
 /**
  * nla_put_be32 - Add a __be32 netlink attribute to a socket buffer
@@ -1318,12 +1317,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_be32(काष्ठा sk_buff *skb, पूर्णांक attrtype, __be32 value)
-अणु
-	__be32 पंचांगp = value;
+static inline int nla_put_be32(struct sk_buff *skb, int attrtype, __be32 value)
+{
+	__be32 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(__be32), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(__be32), &tmp);
+}
 
 /**
  * nla_put_net32 - Add 32-bit network byte order netlink attribute to a socket buffer
@@ -1331,12 +1330,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_net32(काष्ठा sk_buff *skb, पूर्णांक attrtype, __be32 value)
-अणु
-	__be32 पंचांगp = value;
+static inline int nla_put_net32(struct sk_buff *skb, int attrtype, __be32 value)
+{
+	__be32 tmp = value;
 
-	वापस nla_put_be32(skb, attrtype | NLA_F_NET_BYTEORDER, पंचांगp);
-पूर्ण
+	return nla_put_be32(skb, attrtype | NLA_F_NET_BYTEORDER, tmp);
+}
 
 /**
  * nla_put_le32 - Add a __le32 netlink attribute to a socket buffer
@@ -1344,73 +1343,73 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_le32(काष्ठा sk_buff *skb, पूर्णांक attrtype, __le32 value)
-अणु
-	__le32 पंचांगp = value;
+static inline int nla_put_le32(struct sk_buff *skb, int attrtype, __le32 value)
+{
+	__le32 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(__le32), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(__le32), &tmp);
+}
 
 /**
  * nla_put_u64_64bit - Add a u64 netlink attribute to a skb and align it
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
  * @value: numeric value
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  */
-अटल अंतरभूत पूर्णांक nla_put_u64_64bit(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				    u64 value, पूर्णांक padattr)
-अणु
-	u64 पंचांगp = value;
+static inline int nla_put_u64_64bit(struct sk_buff *skb, int attrtype,
+				    u64 value, int padattr)
+{
+	u64 tmp = value;
 
-	वापस nla_put_64bit(skb, attrtype, माप(u64), &पंचांगp, padattr);
-पूर्ण
+	return nla_put_64bit(skb, attrtype, sizeof(u64), &tmp, padattr);
+}
 
 /**
  * nla_put_be64 - Add a __be64 netlink attribute to a socket buffer and align it
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
  * @value: numeric value
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  */
-अटल अंतरभूत पूर्णांक nla_put_be64(काष्ठा sk_buff *skb, पूर्णांक attrtype, __be64 value,
-			       पूर्णांक padattr)
-अणु
-	__be64 पंचांगp = value;
+static inline int nla_put_be64(struct sk_buff *skb, int attrtype, __be64 value,
+			       int padattr)
+{
+	__be64 tmp = value;
 
-	वापस nla_put_64bit(skb, attrtype, माप(__be64), &पंचांगp, padattr);
-पूर्ण
+	return nla_put_64bit(skb, attrtype, sizeof(__be64), &tmp, padattr);
+}
 
 /**
  * nla_put_net64 - Add 64-bit network byte order nlattr to a skb and align it
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
  * @value: numeric value
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  */
-अटल अंतरभूत पूर्णांक nla_put_net64(काष्ठा sk_buff *skb, पूर्णांक attrtype, __be64 value,
-				पूर्णांक padattr)
-अणु
-	__be64 पंचांगp = value;
+static inline int nla_put_net64(struct sk_buff *skb, int attrtype, __be64 value,
+				int padattr)
+{
+	__be64 tmp = value;
 
-	वापस nla_put_be64(skb, attrtype | NLA_F_NET_BYTEORDER, पंचांगp,
+	return nla_put_be64(skb, attrtype | NLA_F_NET_BYTEORDER, tmp,
 			    padattr);
-पूर्ण
+}
 
 /**
  * nla_put_le64 - Add a __le64 netlink attribute to a socket buffer and align it
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
  * @value: numeric value
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  */
-अटल अंतरभूत पूर्णांक nla_put_le64(काष्ठा sk_buff *skb, पूर्णांक attrtype, __le64 value,
-			       पूर्णांक padattr)
-अणु
-	__le64 पंचांगp = value;
+static inline int nla_put_le64(struct sk_buff *skb, int attrtype, __le64 value,
+			       int padattr)
+{
+	__le64 tmp = value;
 
-	वापस nla_put_64bit(skb, attrtype, माप(__le64), &पंचांगp, padattr);
-पूर्ण
+	return nla_put_64bit(skb, attrtype, sizeof(__le64), &tmp, padattr);
+}
 
 /**
  * nla_put_s8 - Add a s8 netlink attribute to a socket buffer
@@ -1418,12 +1417,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_s8(काष्ठा sk_buff *skb, पूर्णांक attrtype, s8 value)
-अणु
-	s8 पंचांगp = value;
+static inline int nla_put_s8(struct sk_buff *skb, int attrtype, s8 value)
+{
+	s8 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(s8), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(s8), &tmp);
+}
 
 /**
  * nla_put_s16 - Add a s16 netlink attribute to a socket buffer
@@ -1431,12 +1430,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_s16(काष्ठा sk_buff *skb, पूर्णांक attrtype, s16 value)
-अणु
-	s16 पंचांगp = value;
+static inline int nla_put_s16(struct sk_buff *skb, int attrtype, s16 value)
+{
+	s16 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(s16), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(s16), &tmp);
+}
 
 /**
  * nla_put_s32 - Add a s32 netlink attribute to a socket buffer
@@ -1444,27 +1443,27 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @value: numeric value
  */
-अटल अंतरभूत पूर्णांक nla_put_s32(काष्ठा sk_buff *skb, पूर्णांक attrtype, s32 value)
-अणु
-	s32 पंचांगp = value;
+static inline int nla_put_s32(struct sk_buff *skb, int attrtype, s32 value)
+{
+	s32 tmp = value;
 
-	वापस nla_put(skb, attrtype, माप(s32), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(s32), &tmp);
+}
 
 /**
  * nla_put_s64 - Add a s64 netlink attribute to a socket buffer and align it
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
  * @value: numeric value
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  */
-अटल अंतरभूत पूर्णांक nla_put_s64(काष्ठा sk_buff *skb, पूर्णांक attrtype, s64 value,
-			      पूर्णांक padattr)
-अणु
-	s64 पंचांगp = value;
+static inline int nla_put_s64(struct sk_buff *skb, int attrtype, s64 value,
+			      int padattr)
+{
+	s64 tmp = value;
 
-	वापस nla_put_64bit(skb, attrtype, माप(s64), &पंचांगp, padattr);
-पूर्ण
+	return nla_put_64bit(skb, attrtype, sizeof(s64), &tmp, padattr);
+}
 
 /**
  * nla_put_string - Add a string netlink attribute to a socket buffer
@@ -1472,36 +1471,36 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @str: NUL terminated string
  */
-अटल अंतरभूत पूर्णांक nla_put_string(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				 स्थिर अक्षर *str)
-अणु
-	वापस nla_put(skb, attrtype, म_माप(str) + 1, str);
-पूर्ण
+static inline int nla_put_string(struct sk_buff *skb, int attrtype,
+				 const char *str)
+{
+	return nla_put(skb, attrtype, strlen(str) + 1, str);
+}
 
 /**
  * nla_put_flag - Add a flag netlink attribute to a socket buffer
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
  */
-अटल अंतरभूत पूर्णांक nla_put_flag(काष्ठा sk_buff *skb, पूर्णांक attrtype)
-अणु
-	वापस nla_put(skb, attrtype, 0, शून्य);
-पूर्ण
+static inline int nla_put_flag(struct sk_buff *skb, int attrtype)
+{
+	return nla_put(skb, attrtype, 0, NULL);
+}
 
 /**
  * nla_put_msecs - Add a msecs netlink attribute to a skb and align it
  * @skb: socket buffer to add attribute to
  * @attrtype: attribute type
- * @njअगरfies: number of jअगरfies to convert to msecs
- * @padattr: attribute type क्रम the padding
+ * @njiffies: number of jiffies to convert to msecs
+ * @padattr: attribute type for the padding
  */
-अटल अंतरभूत पूर्णांक nla_put_msecs(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				अचिन्हित दीर्घ njअगरfies, पूर्णांक padattr)
-अणु
-	u64 पंचांगp = jअगरfies_to_msecs(njअगरfies);
+static inline int nla_put_msecs(struct sk_buff *skb, int attrtype,
+				unsigned long njiffies, int padattr)
+{
+	u64 tmp = jiffies_to_msecs(njiffies);
 
-	वापस nla_put_64bit(skb, attrtype, माप(u64), &पंचांगp, padattr);
-पूर्ण
+	return nla_put_64bit(skb, attrtype, sizeof(u64), &tmp, padattr);
+}
 
 /**
  * nla_put_in_addr - Add an IPv4 address netlink attribute to a socket
@@ -1510,13 +1509,13 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @addr: IPv4 address
  */
-अटल अंतरभूत पूर्णांक nla_put_in_addr(काष्ठा sk_buff *skb, पूर्णांक attrtype,
+static inline int nla_put_in_addr(struct sk_buff *skb, int attrtype,
 				  __be32 addr)
-अणु
-	__be32 पंचांगp = addr;
+{
+	__be32 tmp = addr;
 
-	वापस nla_put_be32(skb, attrtype, पंचांगp);
-पूर्ण
+	return nla_put_be32(skb, attrtype, tmp);
+}
 
 /**
  * nla_put_in6_addr - Add an IPv6 address netlink attribute to a socket
@@ -1525,11 +1524,11 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @attrtype: attribute type
  * @addr: IPv6 address
  */
-अटल अंतरभूत पूर्णांक nla_put_in6_addr(काष्ठा sk_buff *skb, पूर्णांक attrtype,
-				   स्थिर काष्ठा in6_addr *addr)
-अणु
-	वापस nla_put(skb, attrtype, माप(*addr), addr);
-पूर्ण
+static inline int nla_put_in6_addr(struct sk_buff *skb, int attrtype,
+				   const struct in6_addr *addr)
+{
+	return nla_put(skb, attrtype, sizeof(*addr), addr);
+}
 
 /**
  * nla_put_bitfield32 - Add a bitfield32 netlink attribute to a socket buffer
@@ -1538,238 +1537,238 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @value: value carrying bits
  * @selector: selector of valid bits
  */
-अटल अंतरभूत पूर्णांक nla_put_bitfield32(काष्ठा sk_buff *skb, पूर्णांक attrtype,
+static inline int nla_put_bitfield32(struct sk_buff *skb, int attrtype,
 				     __u32 value, __u32 selector)
-अणु
-	काष्ठा nla_bitfield32 पंचांगp = अणु value, selector, पूर्ण;
+{
+	struct nla_bitfield32 tmp = { value, selector, };
 
-	वापस nla_put(skb, attrtype, माप(पंचांगp), &पंचांगp);
-पूर्ण
+	return nla_put(skb, attrtype, sizeof(tmp), &tmp);
+}
 
 /**
- * nla_get_u32 - वापस payload of u32 attribute
+ * nla_get_u32 - return payload of u32 attribute
  * @nla: u32 netlink attribute
  */
-अटल अंतरभूत u32 nla_get_u32(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(u32 *) nla_data(nla);
-पूर्ण
+static inline u32 nla_get_u32(const struct nlattr *nla)
+{
+	return *(u32 *) nla_data(nla);
+}
 
 /**
- * nla_get_be32 - वापस payload of __be32 attribute
+ * nla_get_be32 - return payload of __be32 attribute
  * @nla: __be32 netlink attribute
  */
-अटल अंतरभूत __be32 nla_get_be32(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(__be32 *) nla_data(nla);
-पूर्ण
+static inline __be32 nla_get_be32(const struct nlattr *nla)
+{
+	return *(__be32 *) nla_data(nla);
+}
 
 /**
- * nla_get_le32 - वापस payload of __le32 attribute
+ * nla_get_le32 - return payload of __le32 attribute
  * @nla: __le32 netlink attribute
  */
-अटल अंतरभूत __le32 nla_get_le32(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(__le32 *) nla_data(nla);
-पूर्ण
+static inline __le32 nla_get_le32(const struct nlattr *nla)
+{
+	return *(__le32 *) nla_data(nla);
+}
 
 /**
- * nla_get_u16 - वापस payload of u16 attribute
+ * nla_get_u16 - return payload of u16 attribute
  * @nla: u16 netlink attribute
  */
-अटल अंतरभूत u16 nla_get_u16(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(u16 *) nla_data(nla);
-पूर्ण
+static inline u16 nla_get_u16(const struct nlattr *nla)
+{
+	return *(u16 *) nla_data(nla);
+}
 
 /**
- * nla_get_be16 - वापस payload of __be16 attribute
+ * nla_get_be16 - return payload of __be16 attribute
  * @nla: __be16 netlink attribute
  */
-अटल अंतरभूत __be16 nla_get_be16(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(__be16 *) nla_data(nla);
-पूर्ण
+static inline __be16 nla_get_be16(const struct nlattr *nla)
+{
+	return *(__be16 *) nla_data(nla);
+}
 
 /**
- * nla_get_le16 - वापस payload of __le16 attribute
+ * nla_get_le16 - return payload of __le16 attribute
  * @nla: __le16 netlink attribute
  */
-अटल अंतरभूत __le16 nla_get_le16(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(__le16 *) nla_data(nla);
-पूर्ण
+static inline __le16 nla_get_le16(const struct nlattr *nla)
+{
+	return *(__le16 *) nla_data(nla);
+}
 
 /**
- * nla_get_u8 - वापस payload of u8 attribute
+ * nla_get_u8 - return payload of u8 attribute
  * @nla: u8 netlink attribute
  */
-अटल अंतरभूत u8 nla_get_u8(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(u8 *) nla_data(nla);
-पूर्ण
+static inline u8 nla_get_u8(const struct nlattr *nla)
+{
+	return *(u8 *) nla_data(nla);
+}
 
 /**
- * nla_get_u64 - वापस payload of u64 attribute
+ * nla_get_u64 - return payload of u64 attribute
  * @nla: u64 netlink attribute
  */
-अटल अंतरभूत u64 nla_get_u64(स्थिर काष्ठा nlattr *nla)
-अणु
-	u64 पंचांगp;
+static inline u64 nla_get_u64(const struct nlattr *nla)
+{
+	u64 tmp;
 
-	nla_स_नकल(&पंचांगp, nla, माप(पंचांगp));
+	nla_memcpy(&tmp, nla, sizeof(tmp));
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
 /**
- * nla_get_be64 - वापस payload of __be64 attribute
+ * nla_get_be64 - return payload of __be64 attribute
  * @nla: __be64 netlink attribute
  */
-अटल अंतरभूत __be64 nla_get_be64(स्थिर काष्ठा nlattr *nla)
-अणु
-	__be64 पंचांगp;
+static inline __be64 nla_get_be64(const struct nlattr *nla)
+{
+	__be64 tmp;
 
-	nla_स_नकल(&पंचांगp, nla, माप(पंचांगp));
+	nla_memcpy(&tmp, nla, sizeof(tmp));
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
 /**
- * nla_get_le64 - वापस payload of __le64 attribute
+ * nla_get_le64 - return payload of __le64 attribute
  * @nla: __le64 netlink attribute
  */
-अटल अंतरभूत __le64 nla_get_le64(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(__le64 *) nla_data(nla);
-पूर्ण
+static inline __le64 nla_get_le64(const struct nlattr *nla)
+{
+	return *(__le64 *) nla_data(nla);
+}
 
 /**
- * nla_get_s32 - वापस payload of s32 attribute
+ * nla_get_s32 - return payload of s32 attribute
  * @nla: s32 netlink attribute
  */
-अटल अंतरभूत s32 nla_get_s32(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(s32 *) nla_data(nla);
-पूर्ण
+static inline s32 nla_get_s32(const struct nlattr *nla)
+{
+	return *(s32 *) nla_data(nla);
+}
 
 /**
- * nla_get_s16 - वापस payload of s16 attribute
+ * nla_get_s16 - return payload of s16 attribute
  * @nla: s16 netlink attribute
  */
-अटल अंतरभूत s16 nla_get_s16(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(s16 *) nla_data(nla);
-पूर्ण
+static inline s16 nla_get_s16(const struct nlattr *nla)
+{
+	return *(s16 *) nla_data(nla);
+}
 
 /**
- * nla_get_s8 - वापस payload of s8 attribute
+ * nla_get_s8 - return payload of s8 attribute
  * @nla: s8 netlink attribute
  */
-अटल अंतरभूत s8 nla_get_s8(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(s8 *) nla_data(nla);
-पूर्ण
+static inline s8 nla_get_s8(const struct nlattr *nla)
+{
+	return *(s8 *) nla_data(nla);
+}
 
 /**
- * nla_get_s64 - वापस payload of s64 attribute
+ * nla_get_s64 - return payload of s64 attribute
  * @nla: s64 netlink attribute
  */
-अटल अंतरभूत s64 nla_get_s64(स्थिर काष्ठा nlattr *nla)
-अणु
-	s64 पंचांगp;
+static inline s64 nla_get_s64(const struct nlattr *nla)
+{
+	s64 tmp;
 
-	nla_स_नकल(&पंचांगp, nla, माप(पंचांगp));
+	nla_memcpy(&tmp, nla, sizeof(tmp));
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
 /**
- * nla_get_flag - वापस payload of flag attribute
+ * nla_get_flag - return payload of flag attribute
  * @nla: flag netlink attribute
  */
-अटल अंतरभूत पूर्णांक nla_get_flag(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस !!nla;
-पूर्ण
+static inline int nla_get_flag(const struct nlattr *nla)
+{
+	return !!nla;
+}
 
 /**
- * nla_get_msecs - वापस payload of msecs attribute
+ * nla_get_msecs - return payload of msecs attribute
  * @nla: msecs netlink attribute
  *
- * Returns the number of milliseconds in jअगरfies.
+ * Returns the number of milliseconds in jiffies.
  */
-अटल अंतरभूत अचिन्हित दीर्घ nla_get_msecs(स्थिर काष्ठा nlattr *nla)
-अणु
+static inline unsigned long nla_get_msecs(const struct nlattr *nla)
+{
 	u64 msecs = nla_get_u64(nla);
 
-	वापस msecs_to_jअगरfies((अचिन्हित दीर्घ) msecs);
-पूर्ण
+	return msecs_to_jiffies((unsigned long) msecs);
+}
 
 /**
- * nla_get_in_addr - वापस payload of IPv4 address attribute
+ * nla_get_in_addr - return payload of IPv4 address attribute
  * @nla: IPv4 address netlink attribute
  */
-अटल अंतरभूत __be32 nla_get_in_addr(स्थिर काष्ठा nlattr *nla)
-अणु
-	वापस *(__be32 *) nla_data(nla);
-पूर्ण
+static inline __be32 nla_get_in_addr(const struct nlattr *nla)
+{
+	return *(__be32 *) nla_data(nla);
+}
 
 /**
- * nla_get_in6_addr - वापस payload of IPv6 address attribute
+ * nla_get_in6_addr - return payload of IPv6 address attribute
  * @nla: IPv6 address netlink attribute
  */
-अटल अंतरभूत काष्ठा in6_addr nla_get_in6_addr(स्थिर काष्ठा nlattr *nla)
-अणु
-	काष्ठा in6_addr पंचांगp;
+static inline struct in6_addr nla_get_in6_addr(const struct nlattr *nla)
+{
+	struct in6_addr tmp;
 
-	nla_स_नकल(&पंचांगp, nla, माप(पंचांगp));
-	वापस पंचांगp;
-पूर्ण
+	nla_memcpy(&tmp, nla, sizeof(tmp));
+	return tmp;
+}
 
 /**
- * nla_get_bitfield32 - वापस payload of 32 bitfield attribute
+ * nla_get_bitfield32 - return payload of 32 bitfield attribute
  * @nla: nla_bitfield32 attribute
  */
-अटल अंतरभूत काष्ठा nla_bitfield32 nla_get_bitfield32(स्थिर काष्ठा nlattr *nla)
-अणु
-	काष्ठा nla_bitfield32 पंचांगp;
+static inline struct nla_bitfield32 nla_get_bitfield32(const struct nlattr *nla)
+{
+	struct nla_bitfield32 tmp;
 
-	nla_स_नकल(&पंचांगp, nla, माप(पंचांगp));
-	वापस पंचांगp;
-पूर्ण
+	nla_memcpy(&tmp, nla, sizeof(tmp));
+	return tmp;
+}
 
 /**
  * nla_memdup - duplicate attribute memory (kmemdup)
  * @src: netlink attribute to duplicate from
  * @gfp: GFP mask
  */
-अटल अंतरभूत व्योम *nla_memdup(स्थिर काष्ठा nlattr *src, gfp_t gfp)
-अणु
-	वापस kmemdup(nla_data(src), nla_len(src), gfp);
-पूर्ण
+static inline void *nla_memdup(const struct nlattr *src, gfp_t gfp)
+{
+	return kmemdup(nla_data(src), nla_len(src), gfp);
+}
 
 /**
  * nla_nest_start_noflag - Start a new level of nested attributes
  * @skb: socket buffer to add attributes to
  * @attrtype: attribute type of container
  *
- * This function exists क्रम backward compatibility to use in APIs which never
+ * This function exists for backward compatibility to use in APIs which never
  * marked their nest attributes with NLA_F_NESTED flag. New APIs should use
  * nla_nest_start() which sets the flag.
  *
- * Returns the container attribute or शून्य on error
+ * Returns the container attribute or NULL on error
  */
-अटल अंतरभूत काष्ठा nlattr *nla_nest_start_noflag(काष्ठा sk_buff *skb,
-						   पूर्णांक attrtype)
-अणु
-	काष्ठा nlattr *start = (काष्ठा nlattr *)skb_tail_poपूर्णांकer(skb);
+static inline struct nlattr *nla_nest_start_noflag(struct sk_buff *skb,
+						   int attrtype)
+{
+	struct nlattr *start = (struct nlattr *)skb_tail_pointer(skb);
 
-	अगर (nla_put(skb, attrtype, 0, शून्य) < 0)
-		वापस शून्य;
+	if (nla_put(skb, attrtype, 0, NULL) < 0)
+		return NULL;
 
-	वापस start;
-पूर्ण
+	return start;
+}
 
 /**
  * nla_nest_start - Start a new level of nested attributes, with NLA_F_NESTED
@@ -1779,12 +1778,12 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * Unlike nla_nest_start_noflag(), mark the nest attribute with NLA_F_NESTED
  * flag. This is the preferred function to use in new code.
  *
- * Returns the container attribute or शून्य on error
+ * Returns the container attribute or NULL on error
  */
-अटल अंतरभूत काष्ठा nlattr *nla_nest_start(काष्ठा sk_buff *skb, पूर्णांक attrtype)
-अणु
-	वापस nla_nest_start_noflag(skb, attrtype | NLA_F_NESTED);
-पूर्ण
+static inline struct nlattr *nla_nest_start(struct sk_buff *skb, int attrtype)
+{
+	return nla_nest_start_noflag(skb, attrtype | NLA_F_NESTED);
+}
 
 /**
  * nla_nest_end - Finalize nesting of attributes
@@ -1796,11 +1795,11 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  *
  * Returns the total data length of the skb.
  */
-अटल अंतरभूत पूर्णांक nla_nest_end(काष्ठा sk_buff *skb, काष्ठा nlattr *start)
-अणु
-	start->nla_len = skb_tail_poपूर्णांकer(skb) - (अचिन्हित अक्षर *)start;
-	वापस skb->len;
-पूर्ण
+static inline int nla_nest_end(struct sk_buff *skb, struct nlattr *start)
+{
+	start->nla_len = skb_tail_pointer(skb) - (unsigned char *)start;
+	return skb->len;
+}
 
 /**
  * nla_nest_cancel - Cancel nesting of attributes
@@ -1810,10 +1809,10 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * Removes the container attribute and including all nested
  * attributes. Returns -EMSGSIZE
  */
-अटल अंतरभूत व्योम nla_nest_cancel(काष्ठा sk_buff *skb, काष्ठा nlattr *start)
-अणु
+static inline void nla_nest_cancel(struct sk_buff *skb, struct nlattr *start)
+{
 	nlmsg_trim(skb, start);
-पूर्ण
+}
 
 /**
  * __nla_validate_nested - Validate a stream of nested attributes
@@ -1821,147 +1820,147 @@ nla_find_nested(स्थिर काष्ठा nlattr *nla, पूर्ण�
  * @maxtype: maximum attribute type to be expected
  * @policy: validation policy
  * @validate: validation strictness
- * @extack: extended ACK report काष्ठा
+ * @extack: extended ACK report struct
  *
  * Validates all attributes in the nested attribute stream against the
- * specअगरied policy. Attributes with a type exceeding maxtype will be
- * ignored. See करोcumenation of काष्ठा nla_policy क्रम more details.
+ * specified policy. Attributes with a type exceeding maxtype will be
+ * ignored. See documenation of struct nla_policy for more details.
  *
  * Returns 0 on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक __nla_validate_nested(स्थिर काष्ठा nlattr *start, पूर्णांक maxtype,
-					स्थिर काष्ठा nla_policy *policy,
-					अचिन्हित पूर्णांक validate,
-					काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate(nla_data(start), nla_len(start), maxtype, policy,
+static inline int __nla_validate_nested(const struct nlattr *start, int maxtype,
+					const struct nla_policy *policy,
+					unsigned int validate,
+					struct netlink_ext_ack *extack)
+{
+	return __nla_validate(nla_data(start), nla_len(start), maxtype, policy,
 			      validate, extack);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-nla_validate_nested(स्थिर काष्ठा nlattr *start, पूर्णांक maxtype,
-		    स्थिर काष्ठा nla_policy *policy,
-		    काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate_nested(start, maxtype, policy,
+static inline int
+nla_validate_nested(const struct nlattr *start, int maxtype,
+		    const struct nla_policy *policy,
+		    struct netlink_ext_ack *extack)
+{
+	return __nla_validate_nested(start, maxtype, policy,
 				     NL_VALIDATE_STRICT, extack);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-nla_validate_nested_deprecated(स्थिर काष्ठा nlattr *start, पूर्णांक maxtype,
-			       स्थिर काष्ठा nla_policy *policy,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	वापस __nla_validate_nested(start, maxtype, policy,
+static inline int
+nla_validate_nested_deprecated(const struct nlattr *start, int maxtype,
+			       const struct nla_policy *policy,
+			       struct netlink_ext_ack *extack)
+{
+	return __nla_validate_nested(start, maxtype, policy,
 				     NL_VALIDATE_LIBERAL, extack);
-पूर्ण
+}
 
 /**
- * nla_need_padding_क्रम_64bit - test 64-bit alignment of the next attribute
+ * nla_need_padding_for_64bit - test 64-bit alignment of the next attribute
  * @skb: socket buffer the message is stored in
  *
- * Return true अगर padding is needed to align the next attribute (nla_data()) to
+ * Return true if padding is needed to align the next attribute (nla_data()) to
  * a 64-bit aligned area.
  */
-अटल अंतरभूत bool nla_need_padding_क्रम_64bit(काष्ठा sk_buff *skb)
-अणु
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+static inline bool nla_need_padding_for_64bit(struct sk_buff *skb)
+{
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 	/* The nlattr header is 4 bytes in size, that's why we test
-	 * अगर the skb->data _is_ aligned.  A NOP attribute, plus
-	 * nlattr header क्रम next attribute, will make nla_data()
+	 * if the skb->data _is_ aligned.  A NOP attribute, plus
+	 * nlattr header for next attribute, will make nla_data()
 	 * 8-byte aligned.
 	 */
-	अगर (IS_ALIGNED((अचिन्हित दीर्घ)skb_tail_poपूर्णांकer(skb), 8))
-		वापस true;
-#पूर्ण_अगर
-	वापस false;
-पूर्ण
+	if (IS_ALIGNED((unsigned long)skb_tail_pointer(skb), 8))
+		return true;
+#endif
+	return false;
+}
 
 /**
  * nla_align_64bit - 64-bit align the nla_data() of next attribute
  * @skb: socket buffer the message is stored in
- * @padattr: attribute type क्रम the padding
+ * @padattr: attribute type for the padding
  *
  * Conditionally emit a padding netlink attribute in order to make
  * the next attribute we emit have a 64-bit aligned nla_data() area.
- * This will only be करोne in architectures which करो not have
+ * This will only be done in architectures which do not have
  * CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS defined.
  *
  * Returns zero on success or a negative error code.
  */
-अटल अंतरभूत पूर्णांक nla_align_64bit(काष्ठा sk_buff *skb, पूर्णांक padattr)
-अणु
-	अगर (nla_need_padding_क्रम_64bit(skb) &&
+static inline int nla_align_64bit(struct sk_buff *skb, int padattr)
+{
+	if (nla_need_padding_for_64bit(skb) &&
 	    !nla_reserve(skb, padattr, 0))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * nla_total_size_64bit - total length of attribute including padding
  * @payload: length of payload
  */
-अटल अंतरभूत पूर्णांक nla_total_size_64bit(पूर्णांक payload)
-अणु
-	वापस NLA_ALIGN(nla_attr_size(payload))
-#अगर_अघोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+static inline int nla_total_size_64bit(int payload)
+{
+	return NLA_ALIGN(nla_attr_size(payload))
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 		+ NLA_ALIGN(nla_attr_size(0))
-#पूर्ण_अगर
+#endif
 		;
-पूर्ण
+}
 
 /**
- * nla_क्रम_each_attr - iterate over a stream of attributes
+ * nla_for_each_attr - iterate over a stream of attributes
  * @pos: loop counter, set to current attribute
  * @head: head of attribute stream
  * @len: length of attribute stream
- * @rem: initialized to len, holds bytes currently reमुख्यing in stream
+ * @rem: initialized to len, holds bytes currently remaining in stream
  */
-#घोषणा nla_क्रम_each_attr(pos, head, len, rem) \
-	क्रम (pos = head, rem = len; \
+#define nla_for_each_attr(pos, head, len, rem) \
+	for (pos = head, rem = len; \
 	     nla_ok(pos, rem); \
 	     pos = nla_next(pos, &(rem)))
 
 /**
- * nla_क्रम_each_nested - iterate over nested attributes
+ * nla_for_each_nested - iterate over nested attributes
  * @pos: loop counter, set to current attribute
  * @nla: attribute containing the nested attributes
- * @rem: initialized to len, holds bytes currently reमुख्यing in stream
+ * @rem: initialized to len, holds bytes currently remaining in stream
  */
-#घोषणा nla_क्रम_each_nested(pos, nla, rem) \
-	nla_क्रम_each_attr(pos, nla_data(nla), nla_len(nla), rem)
+#define nla_for_each_nested(pos, nla, rem) \
+	nla_for_each_attr(pos, nla_data(nla), nla_len(nla), rem)
 
 /**
- * nla_is_last - Test अगर attribute is last in stream
+ * nla_is_last - Test if attribute is last in stream
  * @nla: attribute to test
- * @rem: bytes reमुख्यing in stream
+ * @rem: bytes remaining in stream
  */
-अटल अंतरभूत bool nla_is_last(स्थिर काष्ठा nlattr *nla, पूर्णांक rem)
-अणु
-	वापस nla->nla_len == rem;
-पूर्ण
+static inline bool nla_is_last(const struct nlattr *nla, int rem)
+{
+	return nla->nla_len == rem;
+}
 
-व्योम nla_get_range_अचिन्हित(स्थिर काष्ठा nla_policy *pt,
-			    काष्ठा netlink_range_validation *range);
-व्योम nla_get_range_चिन्हित(स्थिर काष्ठा nla_policy *pt,
-			  काष्ठा netlink_range_validation_चिन्हित *range);
+void nla_get_range_unsigned(const struct nla_policy *pt,
+			    struct netlink_range_validation *range);
+void nla_get_range_signed(const struct nla_policy *pt,
+			  struct netlink_range_validation_signed *range);
 
-काष्ठा netlink_policy_dump_state;
+struct netlink_policy_dump_state;
 
-पूर्णांक netlink_policy_dump_add_policy(काष्ठा netlink_policy_dump_state **pstate,
-				   स्थिर काष्ठा nla_policy *policy,
-				   अचिन्हित पूर्णांक maxtype);
-पूर्णांक netlink_policy_dump_get_policy_idx(काष्ठा netlink_policy_dump_state *state,
-				       स्थिर काष्ठा nla_policy *policy,
-				       अचिन्हित पूर्णांक maxtype);
-bool netlink_policy_dump_loop(काष्ठा netlink_policy_dump_state *state);
-पूर्णांक netlink_policy_dump_ग_लिखो(काष्ठा sk_buff *skb,
-			      काष्ठा netlink_policy_dump_state *state);
-पूर्णांक netlink_policy_dump_attr_size_estimate(स्थिर काष्ठा nla_policy *pt);
-पूर्णांक netlink_policy_dump_ग_लिखो_attr(काष्ठा sk_buff *skb,
-				   स्थिर काष्ठा nla_policy *pt,
-				   पूर्णांक nestattr);
-व्योम netlink_policy_dump_मुक्त(काष्ठा netlink_policy_dump_state *state);
+int netlink_policy_dump_add_policy(struct netlink_policy_dump_state **pstate,
+				   const struct nla_policy *policy,
+				   unsigned int maxtype);
+int netlink_policy_dump_get_policy_idx(struct netlink_policy_dump_state *state,
+				       const struct nla_policy *policy,
+				       unsigned int maxtype);
+bool netlink_policy_dump_loop(struct netlink_policy_dump_state *state);
+int netlink_policy_dump_write(struct sk_buff *skb,
+			      struct netlink_policy_dump_state *state);
+int netlink_policy_dump_attr_size_estimate(const struct nla_policy *pt);
+int netlink_policy_dump_write_attr(struct sk_buff *skb,
+				   const struct nla_policy *pt,
+				   int nestattr);
+void netlink_policy_dump_free(struct netlink_policy_dump_state *state);
 
-#पूर्ण_अगर
+#endif

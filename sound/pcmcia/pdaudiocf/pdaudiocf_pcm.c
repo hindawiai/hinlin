@@ -1,174 +1,173 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Sound Core PDAudioCF soundcards
+ * Driver for Sound Core PDAudioCF soundcards
  *
  * PCM part
  *
  * Copyright (c) 2003 by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <sound/core.h>
-#समावेश <sound/asoundef.h>
-#समावेश "pdaudiocf.h"
+#include <linux/delay.h>
+#include <sound/core.h>
+#include <sound/asoundef.h>
+#include "pdaudiocf.h"
 
 
 /*
  * clear the SRAM contents
  */
-अटल पूर्णांक pdacf_pcm_clear_sram(काष्ठा snd_pdacf *chip)
-अणु
-	पूर्णांक max_loop = 64 * 1024;
+static int pdacf_pcm_clear_sram(struct snd_pdacf *chip)
+{
+	int max_loop = 64 * 1024;
 
-	जबतक (inw(chip->port + PDAUDIOCF_REG_RDP) != inw(chip->port + PDAUDIOCF_REG_WDP)) अणु
-		अगर (max_loop-- < 0)
-			वापस -EIO;
+	while (inw(chip->port + PDAUDIOCF_REG_RDP) != inw(chip->port + PDAUDIOCF_REG_WDP)) {
+		if (max_loop-- < 0)
+			return -EIO;
 		inw(chip->port + PDAUDIOCF_REG_MD);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
- * pdacf_pcm_trigger - trigger callback क्रम capture
+ * pdacf_pcm_trigger - trigger callback for capture
  */
-अटल पूर्णांक pdacf_pcm_trigger(काष्ठा snd_pcm_substream *subs, पूर्णांक cmd)
-अणु
-	काष्ठा snd_pdacf *chip = snd_pcm_substream_chip(subs);
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
-	पूर्णांक inc, ret = 0, rate;
-	अचिन्हित लघु mask, val, पंचांगp;
+static int pdacf_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
+{
+	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
+	struct snd_pcm_runtime *runtime = subs->runtime;
+	int inc, ret = 0, rate;
+	unsigned short mask, val, tmp;
 
-	अगर (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
-		वापस -EBUSY;
+	if (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
+		return -EBUSY;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 		chip->pcm_hwptr = 0;
-		chip->pcm_tकरोne = 0;
+		chip->pcm_tdone = 0;
 		fallthrough;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	case SNDRV_PCM_TRIGGER_RESUME:
 		mask = 0;
 		val = PDAUDIOCF_RECORD;
 		inc = 1;
 		rate = snd_ak4117_check_rate_and_errors(chip->ak4117, AK4117_CHECK_NO_STAT|AK4117_CHECK_NO_RATE);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
 		mask = PDAUDIOCF_RECORD;
 		val = 0;
 		inc = -1;
 		rate = 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 	mutex_lock(&chip->reg_lock);
 	chip->pcm_running += inc;
-	पंचांगp = pdacf_reg_पढ़ो(chip, PDAUDIOCF_REG_SCR);
-	अगर (chip->pcm_running) अणु
-		अगर ((chip->ak4117->rcs0 & AK4117_UNLCK) || runसमय->rate != rate) अणु
+	tmp = pdacf_reg_read(chip, PDAUDIOCF_REG_SCR);
+	if (chip->pcm_running) {
+		if ((chip->ak4117->rcs0 & AK4117_UNLCK) || runtime->rate != rate) {
 			chip->pcm_running -= inc;
 			ret = -EIO;
-			जाओ __end;
-		पूर्ण
-	पूर्ण
-	पंचांगp &= ~mask;
-	पंचांगp |= val;
-	pdacf_reg_ग_लिखो(chip, PDAUDIOCF_REG_SCR, पंचांगp);
+			goto __end;
+		}
+	}
+	tmp &= ~mask;
+	tmp |= val;
+	pdacf_reg_write(chip, PDAUDIOCF_REG_SCR, tmp);
       __end:
 	mutex_unlock(&chip->reg_lock);
 	snd_ak4117_check_rate_and_errors(chip->ak4117, AK4117_CHECK_NO_RATE);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * pdacf_pcm_prepare - prepare callback क्रम playback and capture
+ * pdacf_pcm_prepare - prepare callback for playback and capture
  */
-अटल पूर्णांक pdacf_pcm_prepare(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_pdacf *chip = snd_pcm_substream_chip(subs);
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
+static int pdacf_pcm_prepare(struct snd_pcm_substream *subs)
+{
+	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
+	struct snd_pcm_runtime *runtime = subs->runtime;
 	u16 val, nval, aval;
 
-	अगर (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
-		वापस -EBUSY;
+	if (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
+		return -EBUSY;
 
-	chip->pcm_channels = runसमय->channels;
+	chip->pcm_channels = runtime->channels;
 
-	chip->pcm_little = snd_pcm_क्रमmat_little_endian(runसमय->क्रमmat) > 0;
-#अगर_घोषित SNDRV_LITTLE_ENDIAN
-	chip->pcm_swab = snd_pcm_क्रमmat_big_endian(runसमय->क्रमmat) > 0;
-#अन्यथा
+	chip->pcm_little = snd_pcm_format_little_endian(runtime->format) > 0;
+#ifdef SNDRV_LITTLE_ENDIAN
+	chip->pcm_swab = snd_pcm_format_big_endian(runtime->format) > 0;
+#else
 	chip->pcm_swab = chip->pcm_little;
-#पूर्ण_अगर
+#endif
 
-	अगर (snd_pcm_क्रमmat_अचिन्हित(runसमय->क्रमmat))
+	if (snd_pcm_format_unsigned(runtime->format))
 		chip->pcm_xor = 0x80008000;
 
-	अगर (pdacf_pcm_clear_sram(chip) < 0)
-		वापस -EIO;
+	if (pdacf_pcm_clear_sram(chip) < 0)
+		return -EIO;
 	
-	val = nval = pdacf_reg_पढ़ो(chip, PDAUDIOCF_REG_SCR);
+	val = nval = pdacf_reg_read(chip, PDAUDIOCF_REG_SCR);
 	nval &= ~(PDAUDIOCF_DATAFMT0|PDAUDIOCF_DATAFMT1);
-	चयन (runसमय->क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
-	हाल SNDRV_PCM_FORMAT_S16_BE:
-		अवरोध;
-	शेष: /* 24-bit */
+	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+	case SNDRV_PCM_FORMAT_S16_BE:
+		break;
+	default: /* 24-bit */
 		nval |= PDAUDIOCF_DATAFMT0 | PDAUDIOCF_DATAFMT1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	aval = 0;
 	chip->pcm_sample = 4;
-	चयन (runसमय->क्रमmat) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
-	हाल SNDRV_PCM_FORMAT_S16_BE:
+	switch (runtime->format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+	case SNDRV_PCM_FORMAT_S16_BE:
 		aval = AK4117_DIF_16R;
 		chip->pcm_frame = 2;
 		chip->pcm_sample = 2;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_3LE:
-	हाल SNDRV_PCM_FORMAT_S24_3BE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_3LE:
+	case SNDRV_PCM_FORMAT_S24_3BE:
 		chip->pcm_sample = 3;
 		fallthrough;
-	शेष: /* 24-bit */
+	default: /* 24-bit */
 		aval = AK4117_DIF_24R;
 		chip->pcm_frame = 3;
 		chip->pcm_xor &= 0xffff0000;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (val != nval) अणु
-		snd_ak4117_reg_ग_लिखो(chip->ak4117, AK4117_REG_IO, AK4117_DIF2|AK4117_DIF1|AK4117_DIF0, aval);
-		pdacf_reg_ग_लिखो(chip, PDAUDIOCF_REG_SCR, nval);
-	पूर्ण
+	if (val != nval) {
+		snd_ak4117_reg_write(chip->ak4117, AK4117_REG_IO, AK4117_DIF2|AK4117_DIF1|AK4117_DIF0, aval);
+		pdacf_reg_write(chip, PDAUDIOCF_REG_SCR, nval);
+	}
 
-	val = pdacf_reg_पढ़ो(chip,  PDAUDIOCF_REG_IER);
+	val = pdacf_reg_read(chip,  PDAUDIOCF_REG_IER);
 	val &= ~(PDAUDIOCF_IRQLVLEN1);
 	val |= PDAUDIOCF_IRQLVLEN0;
-	pdacf_reg_ग_लिखो(chip, PDAUDIOCF_REG_IER, val);
+	pdacf_reg_write(chip, PDAUDIOCF_REG_IER, val);
 
-	chip->pcm_size = runसमय->buffer_size;
-	chip->pcm_period = runसमय->period_size;
-	chip->pcm_area = runसमय->dma_area;
+	chip->pcm_size = runtime->buffer_size;
+	chip->pcm_period = runtime->period_size;
+	chip->pcm_area = runtime->dma_area;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- * capture hw inक्रमmation
+ * capture hw information
  */
 
-अटल स्थिर काष्ठा snd_pcm_hardware pdacf_pcm_capture_hw = अणु
+static const struct snd_pcm_hardware pdacf_pcm_capture_hw = {
 	.info =			(SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 				 SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME |
 				 SNDRV_PCM_INFO_MMAP_VALID |
 				 SNDRV_PCM_INFO_BATCH),
-	.क्रमmats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
+	.formats =		SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
 				SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_3BE |
 				SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S32_BE,
 	.rates =		SNDRV_PCM_RATE_32000 |
@@ -187,90 +186,90 @@
 	.period_bytes_max =	(64*1024),
 	.periods_min =		2,
 	.periods_max =		128,
-	.fअगरo_size =		0,
-पूर्ण;
+	.fifo_size =		0,
+};
 
 
 /*
- * pdacf_pcm_capture_खोलो - खोलो callback क्रम capture
+ * pdacf_pcm_capture_open - open callback for capture
  */
-अटल पूर्णांक pdacf_pcm_capture_खोलो(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
-	काष्ठा snd_pdacf *chip = snd_pcm_substream_chip(subs);
+static int pdacf_pcm_capture_open(struct snd_pcm_substream *subs)
+{
+	struct snd_pcm_runtime *runtime = subs->runtime;
+	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
 
-	अगर (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
-		वापस -EBUSY;
+	if (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
+		return -EBUSY;
 
-	runसमय->hw = pdacf_pcm_capture_hw;
-	runसमय->निजी_data = chip;
+	runtime->hw = pdacf_pcm_capture_hw;
+	runtime->private_data = chip;
 	chip->pcm_substream = subs;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * pdacf_pcm_capture_बंद - बंद callback क्रम capture
+ * pdacf_pcm_capture_close - close callback for capture
  */
-अटल पूर्णांक pdacf_pcm_capture_बंद(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_pdacf *chip = snd_pcm_substream_chip(subs);
+static int pdacf_pcm_capture_close(struct snd_pcm_substream *subs)
+{
+	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
 
-	अगर (!chip)
-		वापस -EINVAL;
+	if (!chip)
+		return -EINVAL;
 	pdacf_reinit(chip, 0);
-	chip->pcm_substream = शून्य;
-	वापस 0;
-पूर्ण
+	chip->pcm_substream = NULL;
+	return 0;
+}
 
 
 /*
- * pdacf_pcm_capture_poपूर्णांकer - poपूर्णांकer callback क्रम capture
+ * pdacf_pcm_capture_pointer - pointer callback for capture
  */
-अटल snd_pcm_uframes_t pdacf_pcm_capture_poपूर्णांकer(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_pdacf *chip = snd_pcm_substream_chip(subs);
-	वापस chip->pcm_hwptr;
-पूर्ण
+static snd_pcm_uframes_t pdacf_pcm_capture_pointer(struct snd_pcm_substream *subs)
+{
+	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
+	return chip->pcm_hwptr;
+}
 
 /*
- * चालकs क्रम PCM capture
+ * operators for PCM capture
  */
-अटल स्थिर काष्ठा snd_pcm_ops pdacf_pcm_capture_ops = अणु
-	.खोलो =		pdacf_pcm_capture_खोलो,
-	.बंद =	pdacf_pcm_capture_बंद,
+static const struct snd_pcm_ops pdacf_pcm_capture_ops = {
+	.open =		pdacf_pcm_capture_open,
+	.close =	pdacf_pcm_capture_close,
 	.prepare =	pdacf_pcm_prepare,
 	.trigger =	pdacf_pcm_trigger,
-	.poपूर्णांकer =	pdacf_pcm_capture_poपूर्णांकer,
-पूर्ण;
+	.pointer =	pdacf_pcm_capture_pointer,
+};
 
 
 /*
  * snd_pdacf_pcm_new - create and initialize a pcm
  */
-पूर्णांक snd_pdacf_pcm_new(काष्ठा snd_pdacf *chip)
-अणु
-	काष्ठा snd_pcm *pcm;
-	पूर्णांक err;
+int snd_pdacf_pcm_new(struct snd_pdacf *chip)
+{
+	struct snd_pcm *pcm;
+	int err;
 
 	err = snd_pcm_new(chip->card, "PDAudioCF", 0, 0, 1, &pcm);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 		
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &pdacf_pcm_capture_ops);
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC,
 				       snd_dma_continuous_data(GFP_KERNEL | GFP_DMA32),
 				       0, 0);
 
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 	pcm->info_flags = 0;
 	pcm->nonatomic = true;
-	म_नकल(pcm->name, chip->card->लघुname);
+	strcpy(pcm->name, chip->card->shortname);
 	chip->pcm = pcm;
 	
 	err = snd_ak4117_build(chip->ak4117, pcm->streams[SNDRV_PCM_STREAM_CAPTURE].substream);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

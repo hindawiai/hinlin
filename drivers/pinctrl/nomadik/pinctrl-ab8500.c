@@ -1,73 +1,72 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2012
  *
- * Author: Patrice Chotard <patrice.chotard@stericsson.com> क्रम ST-Ericsson.
+ * Author: Patrice Chotard <patrice.chotard@stericsson.com> for ST-Ericsson.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/gpio/driver.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/mfd/abx500/ab8500.h>
-#समावेश "pinctrl-abx500.h"
+#include <linux/kernel.h>
+#include <linux/gpio/driver.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/mfd/abx500/ab8500.h>
+#include "pinctrl-abx500.h"
 
-/* All the pins that can be used क्रम GPIO and some other functions */
-#घोषणा ABX500_GPIO(offset)		(offset)
+/* All the pins that can be used for GPIO and some other functions */
+#define ABX500_GPIO(offset)		(offset)
 
-#घोषणा AB8500_PIN_T10		ABX500_GPIO(1)
-#घोषणा AB8500_PIN_T9		ABX500_GPIO(2)
-#घोषणा AB8500_PIN_U9		ABX500_GPIO(3)
-#घोषणा AB8500_PIN_W2		ABX500_GPIO(4)
+#define AB8500_PIN_T10		ABX500_GPIO(1)
+#define AB8500_PIN_T9		ABX500_GPIO(2)
+#define AB8500_PIN_U9		ABX500_GPIO(3)
+#define AB8500_PIN_W2		ABX500_GPIO(4)
 /* hole */
-#घोषणा AB8500_PIN_Y18		ABX500_GPIO(6)
-#घोषणा AB8500_PIN_AA20		ABX500_GPIO(7)
-#घोषणा AB8500_PIN_W18		ABX500_GPIO(8)
-#घोषणा AB8500_PIN_AA19		ABX500_GPIO(9)
-#घोषणा AB8500_PIN_U17		ABX500_GPIO(10)
-#घोषणा AB8500_PIN_AA18		ABX500_GPIO(11)
-#घोषणा AB8500_PIN_U16		ABX500_GPIO(12)
-#घोषणा AB8500_PIN_W17		ABX500_GPIO(13)
-#घोषणा AB8500_PIN_F14		ABX500_GPIO(14)
-#घोषणा AB8500_PIN_B17		ABX500_GPIO(15)
-#घोषणा AB8500_PIN_F15		ABX500_GPIO(16)
-#घोषणा AB8500_PIN_P5		ABX500_GPIO(17)
-#घोषणा AB8500_PIN_R5		ABX500_GPIO(18)
-#घोषणा AB8500_PIN_U5		ABX500_GPIO(19)
-#घोषणा AB8500_PIN_T5		ABX500_GPIO(20)
-#घोषणा AB8500_PIN_H19		ABX500_GPIO(21)
-#घोषणा AB8500_PIN_G20		ABX500_GPIO(22)
-#घोषणा AB8500_PIN_G19		ABX500_GPIO(23)
-#घोषणा AB8500_PIN_T14		ABX500_GPIO(24)
-#घोषणा AB8500_PIN_R16		ABX500_GPIO(25)
-#घोषणा AB8500_PIN_M16		ABX500_GPIO(26)
-#घोषणा AB8500_PIN_J6		ABX500_GPIO(27)
-#घोषणा AB8500_PIN_K6		ABX500_GPIO(28)
-#घोषणा AB8500_PIN_G6		ABX500_GPIO(29)
-#घोषणा AB8500_PIN_H6		ABX500_GPIO(30)
-#घोषणा AB8500_PIN_F5		ABX500_GPIO(31)
-#घोषणा AB8500_PIN_G5		ABX500_GPIO(32)
+#define AB8500_PIN_Y18		ABX500_GPIO(6)
+#define AB8500_PIN_AA20		ABX500_GPIO(7)
+#define AB8500_PIN_W18		ABX500_GPIO(8)
+#define AB8500_PIN_AA19		ABX500_GPIO(9)
+#define AB8500_PIN_U17		ABX500_GPIO(10)
+#define AB8500_PIN_AA18		ABX500_GPIO(11)
+#define AB8500_PIN_U16		ABX500_GPIO(12)
+#define AB8500_PIN_W17		ABX500_GPIO(13)
+#define AB8500_PIN_F14		ABX500_GPIO(14)
+#define AB8500_PIN_B17		ABX500_GPIO(15)
+#define AB8500_PIN_F15		ABX500_GPIO(16)
+#define AB8500_PIN_P5		ABX500_GPIO(17)
+#define AB8500_PIN_R5		ABX500_GPIO(18)
+#define AB8500_PIN_U5		ABX500_GPIO(19)
+#define AB8500_PIN_T5		ABX500_GPIO(20)
+#define AB8500_PIN_H19		ABX500_GPIO(21)
+#define AB8500_PIN_G20		ABX500_GPIO(22)
+#define AB8500_PIN_G19		ABX500_GPIO(23)
+#define AB8500_PIN_T14		ABX500_GPIO(24)
+#define AB8500_PIN_R16		ABX500_GPIO(25)
+#define AB8500_PIN_M16		ABX500_GPIO(26)
+#define AB8500_PIN_J6		ABX500_GPIO(27)
+#define AB8500_PIN_K6		ABX500_GPIO(28)
+#define AB8500_PIN_G6		ABX500_GPIO(29)
+#define AB8500_PIN_H6		ABX500_GPIO(30)
+#define AB8500_PIN_F5		ABX500_GPIO(31)
+#define AB8500_PIN_G5		ABX500_GPIO(32)
 /* hole */
-#घोषणा AB8500_PIN_R17		ABX500_GPIO(34)
-#घोषणा AB8500_PIN_W15		ABX500_GPIO(35)
-#घोषणा AB8500_PIN_A17		ABX500_GPIO(36)
-#घोषणा AB8500_PIN_E15		ABX500_GPIO(37)
-#घोषणा AB8500_PIN_C17		ABX500_GPIO(38)
-#घोषणा AB8500_PIN_E16		ABX500_GPIO(39)
-#घोषणा AB8500_PIN_T19		ABX500_GPIO(40)
-#घोषणा AB8500_PIN_U19		ABX500_GPIO(41)
-#घोषणा AB8500_PIN_U2		ABX500_GPIO(42)
+#define AB8500_PIN_R17		ABX500_GPIO(34)
+#define AB8500_PIN_W15		ABX500_GPIO(35)
+#define AB8500_PIN_A17		ABX500_GPIO(36)
+#define AB8500_PIN_E15		ABX500_GPIO(37)
+#define AB8500_PIN_C17		ABX500_GPIO(38)
+#define AB8500_PIN_E16		ABX500_GPIO(39)
+#define AB8500_PIN_T19		ABX500_GPIO(40)
+#define AB8500_PIN_U19		ABX500_GPIO(41)
+#define AB8500_PIN_U2		ABX500_GPIO(42)
 
 /* indicates the highest GPIO number */
-#घोषणा AB8500_GPIO_MAX_NUMBER	42
+#define AB8500_GPIO_MAX_NUMBER	42
 
 /*
  * The names of the pins are denoted by GPIO number and ball name, even
- * though they can be used क्रम other things than GPIO, this is the first
+ * though they can be used for other things than GPIO, this is the first
  * column in the table of the data sheet and often used on schematics and
  * such.
  */
-अटल स्थिर काष्ठा pinctrl_pin_desc ab8500_pins[] = अणु
+static const struct pinctrl_pin_desc ab8500_pins[] = {
 	PINCTRL_PIN(AB8500_PIN_T10, "GPIO1_T10"),
 	PINCTRL_PIN(AB8500_PIN_T9, "GPIO2_T9"),
 	PINCTRL_PIN(AB8500_PIN_U9, "GPIO3_U9"),
@@ -110,12 +109,12 @@
 	PINCTRL_PIN(AB8500_PIN_T19, "GPIO40_T19"),
 	PINCTRL_PIN(AB8500_PIN_U19, "GPIO41_U19"),
 	PINCTRL_PIN(AB8500_PIN_U2, "GPIO42_U2"),
-पूर्ण;
+};
 
 /*
  * Maps local GPIO offsets to local pin numbers
  */
-अटल स्थिर काष्ठा abx500_pinrange ab8500_pinranges[] = अणु
+static const struct abx500_pinrange ab8500_pinranges[] = {
 	ABX500_PINRANGE(1, 4, ABX500_ALT_A),
 	ABX500_PINRANGE(6, 4, ABX500_ALT_A),
 	ABX500_PINRANGE(10, 4, ABX500_DEFAULT),
@@ -125,111 +124,111 @@
 	ABX500_PINRANGE(34, 1, ABX500_ALT_A),
 	ABX500_PINRANGE(35, 1, ABX500_DEFAULT),
 	ABX500_PINRANGE(36, 7, ABX500_ALT_A),
-पूर्ण;
+};
 
 /*
  * Read the pin group names like this:
- * sysclkreq2_d_1 = first groups of pins क्रम sysclkreq2 on शेष function
+ * sysclkreq2_d_1 = first groups of pins for sysclkreq2 on default function
  *
  * The groups are arranged as sets per altfunction column, so we can
- * mux in one group at a समय by selecting the same altfunction क्रम them
- * all. When functions require pins on dअगरferent altfunctions, you need
+ * mux in one group at a time by selecting the same altfunction for them
+ * all. When functions require pins on different altfunctions, you need
  * to combine several groups.
  */
 
-/* शेष column */
-अटल स्थिर अचिन्हित sysclkreq2_d_1_pins[] = अणु AB8500_PIN_T10 पूर्ण;
-अटल स्थिर अचिन्हित sysclkreq3_d_1_pins[] = अणु AB8500_PIN_T9 पूर्ण;
-अटल स्थिर अचिन्हित sysclkreq4_d_1_pins[] = अणु AB8500_PIN_U9 पूर्ण;
-अटल स्थिर अचिन्हित sysclkreq6_d_1_pins[] = अणु AB8500_PIN_W2 पूर्ण;
-अटल स्थिर अचिन्हित ycbcr0123_d_1_pins[] = अणु AB8500_PIN_Y18, AB8500_PIN_AA20,
-					AB8500_PIN_W18, AB8500_PIN_AA19पूर्ण;
-अटल स्थिर अचिन्हित gpio10_d_1_pins[] = अणु AB8500_PIN_U17 पूर्ण;
-अटल स्थिर अचिन्हित gpio11_d_1_pins[] = अणु AB8500_PIN_AA18 पूर्ण;
-अटल स्थिर अचिन्हित gpio12_d_1_pins[] = अणु AB8500_PIN_U16 पूर्ण;
-अटल स्थिर अचिन्हित gpio13_d_1_pins[] = अणु AB8500_PIN_W17 पूर्ण;
-अटल स्थिर अचिन्हित pwmout1_d_1_pins[] = अणु AB8500_PIN_F14 पूर्ण;
-अटल स्थिर अचिन्हित pwmout2_d_1_pins[] = अणु AB8500_PIN_B17 पूर्ण;
-अटल स्थिर अचिन्हित pwmout3_d_1_pins[] = अणु AB8500_PIN_F15 पूर्ण;
+/* default column */
+static const unsigned sysclkreq2_d_1_pins[] = { AB8500_PIN_T10 };
+static const unsigned sysclkreq3_d_1_pins[] = { AB8500_PIN_T9 };
+static const unsigned sysclkreq4_d_1_pins[] = { AB8500_PIN_U9 };
+static const unsigned sysclkreq6_d_1_pins[] = { AB8500_PIN_W2 };
+static const unsigned ycbcr0123_d_1_pins[] = { AB8500_PIN_Y18, AB8500_PIN_AA20,
+					AB8500_PIN_W18, AB8500_PIN_AA19};
+static const unsigned gpio10_d_1_pins[] = { AB8500_PIN_U17 };
+static const unsigned gpio11_d_1_pins[] = { AB8500_PIN_AA18 };
+static const unsigned gpio12_d_1_pins[] = { AB8500_PIN_U16 };
+static const unsigned gpio13_d_1_pins[] = { AB8500_PIN_W17 };
+static const unsigned pwmout1_d_1_pins[] = { AB8500_PIN_F14 };
+static const unsigned pwmout2_d_1_pins[] = { AB8500_PIN_B17 };
+static const unsigned pwmout3_d_1_pins[] = { AB8500_PIN_F15 };
 
-/* audio data पूर्णांकerface 1*/
-अटल स्थिर अचिन्हित adi1_d_1_pins[] = अणु AB8500_PIN_P5, AB8500_PIN_R5,
-					AB8500_PIN_U5, AB8500_PIN_T5 पूर्ण;
+/* audio data interface 1*/
+static const unsigned adi1_d_1_pins[] = { AB8500_PIN_P5, AB8500_PIN_R5,
+					AB8500_PIN_U5, AB8500_PIN_T5 };
 /* USBUICC */
-अटल स्थिर अचिन्हित usbuicc_d_1_pins[] = अणु AB8500_PIN_H19, AB8500_PIN_G20,
-					AB8500_PIN_G19 पूर्ण;
-अटल स्थिर अचिन्हित sysclkreq7_d_1_pins[] = अणु AB8500_PIN_T14 पूर्ण;
-अटल स्थिर अचिन्हित sysclkreq8_d_1_pins[] = अणु AB8500_PIN_R16 पूर्ण;
-अटल स्थिर अचिन्हित gpio26_d_1_pins[] = अणु AB8500_PIN_M16 पूर्ण;
+static const unsigned usbuicc_d_1_pins[] = { AB8500_PIN_H19, AB8500_PIN_G20,
+					AB8500_PIN_G19 };
+static const unsigned sysclkreq7_d_1_pins[] = { AB8500_PIN_T14 };
+static const unsigned sysclkreq8_d_1_pins[] = { AB8500_PIN_R16 };
+static const unsigned gpio26_d_1_pins[] = { AB8500_PIN_M16 };
 /* Digital microphone 1 and 2 */
-अटल स्थिर अचिन्हित dmic12_d_1_pins[] = अणु AB8500_PIN_J6, AB8500_PIN_K6 पूर्ण;
+static const unsigned dmic12_d_1_pins[] = { AB8500_PIN_J6, AB8500_PIN_K6 };
 /* Digital microphone 3 and 4 */
-अटल स्थिर अचिन्हित dmic34_d_1_pins[] = अणु AB8500_PIN_G6, AB8500_PIN_H6 पूर्ण;
+static const unsigned dmic34_d_1_pins[] = { AB8500_PIN_G6, AB8500_PIN_H6 };
 /* Digital microphone 5 and 6 */
-अटल स्थिर अचिन्हित dmic56_d_1_pins[] = अणु AB8500_PIN_F5, AB8500_PIN_G5 पूर्ण;
-अटल स्थिर अचिन्हित extcpena_d_1_pins[] = अणु AB8500_PIN_R17 पूर्ण;
-अटल स्थिर अचिन्हित gpio35_d_1_pins[] = अणु AB8500_PIN_W15 पूर्ण;
+static const unsigned dmic56_d_1_pins[] = { AB8500_PIN_F5, AB8500_PIN_G5 };
+static const unsigned extcpena_d_1_pins[] = { AB8500_PIN_R17 };
+static const unsigned gpio35_d_1_pins[] = { AB8500_PIN_W15 };
 /* APE SPI */
-अटल स्थिर अचिन्हित apespi_d_1_pins[] = अणु AB8500_PIN_A17, AB8500_PIN_E15,
-					AB8500_PIN_C17, AB8500_PIN_E16पूर्ण;
+static const unsigned apespi_d_1_pins[] = { AB8500_PIN_A17, AB8500_PIN_E15,
+					AB8500_PIN_C17, AB8500_PIN_E16};
 /* modem SDA/SCL */
-अटल स्थिर अचिन्हित modsclsda_d_1_pins[] = अणु AB8500_PIN_T19, AB8500_PIN_U19 पूर्ण;
-अटल स्थिर अचिन्हित sysclkreq5_d_1_pins[] = अणु AB8500_PIN_U2 पूर्ण;
+static const unsigned modsclsda_d_1_pins[] = { AB8500_PIN_T19, AB8500_PIN_U19 };
+static const unsigned sysclkreq5_d_1_pins[] = { AB8500_PIN_U2 };
 
 /* Altfunction A column */
-अटल स्थिर अचिन्हित gpio1_a_1_pins[] = अणु AB8500_PIN_T10 पूर्ण;
-अटल स्थिर अचिन्हित gpio2_a_1_pins[] = अणु AB8500_PIN_T9 पूर्ण;
-अटल स्थिर अचिन्हित gpio3_a_1_pins[] = अणु AB8500_PIN_U9 पूर्ण;
-अटल स्थिर अचिन्हित gpio4_a_1_pins[] = अणु AB8500_PIN_W2 पूर्ण;
-अटल स्थिर अचिन्हित gpio6_a_1_pins[] = अणु AB8500_PIN_Y18 पूर्ण;
-अटल स्थिर अचिन्हित gpio7_a_1_pins[] = अणु AB8500_PIN_AA20 पूर्ण;
-अटल स्थिर अचिन्हित gpio8_a_1_pins[] = अणु AB8500_PIN_W18 पूर्ण;
-अटल स्थिर अचिन्हित gpio9_a_1_pins[] = अणु AB8500_PIN_AA19 पूर्ण;
+static const unsigned gpio1_a_1_pins[] = { AB8500_PIN_T10 };
+static const unsigned gpio2_a_1_pins[] = { AB8500_PIN_T9 };
+static const unsigned gpio3_a_1_pins[] = { AB8500_PIN_U9 };
+static const unsigned gpio4_a_1_pins[] = { AB8500_PIN_W2 };
+static const unsigned gpio6_a_1_pins[] = { AB8500_PIN_Y18 };
+static const unsigned gpio7_a_1_pins[] = { AB8500_PIN_AA20 };
+static const unsigned gpio8_a_1_pins[] = { AB8500_PIN_W18 };
+static const unsigned gpio9_a_1_pins[] = { AB8500_PIN_AA19 };
 /* YCbCr4 YCbCr5 YCbCr6 YCbCr7*/
-अटल स्थिर अचिन्हित ycbcr4567_a_1_pins[] = अणु AB8500_PIN_U17, AB8500_PIN_AA18,
-					AB8500_PIN_U16, AB8500_PIN_W17पूर्ण;
-अटल स्थिर अचिन्हित gpio14_a_1_pins[] = अणु AB8500_PIN_F14 पूर्ण;
-अटल स्थिर अचिन्हित gpio15_a_1_pins[] = अणु AB8500_PIN_B17 पूर्ण;
-अटल स्थिर अचिन्हित gpio16_a_1_pins[] = अणु AB8500_PIN_F15 पूर्ण;
-अटल स्थिर अचिन्हित gpio17_a_1_pins[] = अणु AB8500_PIN_P5 पूर्ण;
-अटल स्थिर अचिन्हित gpio18_a_1_pins[] = अणु AB8500_PIN_R5 पूर्ण;
-अटल स्थिर अचिन्हित gpio19_a_1_pins[] = अणु AB8500_PIN_U5 पूर्ण;
-अटल स्थिर अचिन्हित gpio20_a_1_pins[] = अणु AB8500_PIN_T5 पूर्ण;
-अटल स्थिर अचिन्हित gpio21_a_1_pins[] = अणु AB8500_PIN_H19 पूर्ण;
-अटल स्थिर अचिन्हित gpio22_a_1_pins[] = अणु AB8500_PIN_G20 पूर्ण;
-अटल स्थिर अचिन्हित gpio23_a_1_pins[] = अणु AB8500_PIN_G19 पूर्ण;
-अटल स्थिर अचिन्हित gpio24_a_1_pins[] = अणु AB8500_PIN_T14 पूर्ण;
-अटल स्थिर अचिन्हित gpio25_a_1_pins[] = अणु AB8500_PIN_R16 पूर्ण;
-अटल स्थिर अचिन्हित gpio27_a_1_pins[] = अणु AB8500_PIN_J6 पूर्ण;
-अटल स्थिर अचिन्हित gpio28_a_1_pins[] = अणु AB8500_PIN_K6 पूर्ण;
-अटल स्थिर अचिन्हित gpio29_a_1_pins[] = अणु AB8500_PIN_G6 पूर्ण;
-अटल स्थिर अचिन्हित gpio30_a_1_pins[] = अणु AB8500_PIN_H6 पूर्ण;
-अटल स्थिर अचिन्हित gpio31_a_1_pins[] = अणु AB8500_PIN_F5 पूर्ण;
-अटल स्थिर अचिन्हित gpio32_a_1_pins[] = अणु AB8500_PIN_G5 पूर्ण;
-अटल स्थिर अचिन्हित gpio34_a_1_pins[] = अणु AB8500_PIN_R17 पूर्ण;
-अटल स्थिर अचिन्हित gpio36_a_1_pins[] = अणु AB8500_PIN_A17 पूर्ण;
-अटल स्थिर अचिन्हित gpio37_a_1_pins[] = अणु AB8500_PIN_E15 पूर्ण;
-अटल स्थिर अचिन्हित gpio38_a_1_pins[] = अणु AB8500_PIN_C17 पूर्ण;
-अटल स्थिर अचिन्हित gpio39_a_1_pins[] = अणु AB8500_PIN_E16 पूर्ण;
-अटल स्थिर अचिन्हित gpio40_a_1_pins[] = अणु AB8500_PIN_T19 पूर्ण;
-अटल स्थिर अचिन्हित gpio41_a_1_pins[] = अणु AB8500_PIN_U19 पूर्ण;
-अटल स्थिर अचिन्हित gpio42_a_1_pins[] = अणु AB8500_PIN_U2 पूर्ण;
+static const unsigned ycbcr4567_a_1_pins[] = { AB8500_PIN_U17, AB8500_PIN_AA18,
+					AB8500_PIN_U16, AB8500_PIN_W17};
+static const unsigned gpio14_a_1_pins[] = { AB8500_PIN_F14 };
+static const unsigned gpio15_a_1_pins[] = { AB8500_PIN_B17 };
+static const unsigned gpio16_a_1_pins[] = { AB8500_PIN_F15 };
+static const unsigned gpio17_a_1_pins[] = { AB8500_PIN_P5 };
+static const unsigned gpio18_a_1_pins[] = { AB8500_PIN_R5 };
+static const unsigned gpio19_a_1_pins[] = { AB8500_PIN_U5 };
+static const unsigned gpio20_a_1_pins[] = { AB8500_PIN_T5 };
+static const unsigned gpio21_a_1_pins[] = { AB8500_PIN_H19 };
+static const unsigned gpio22_a_1_pins[] = { AB8500_PIN_G20 };
+static const unsigned gpio23_a_1_pins[] = { AB8500_PIN_G19 };
+static const unsigned gpio24_a_1_pins[] = { AB8500_PIN_T14 };
+static const unsigned gpio25_a_1_pins[] = { AB8500_PIN_R16 };
+static const unsigned gpio27_a_1_pins[] = { AB8500_PIN_J6 };
+static const unsigned gpio28_a_1_pins[] = { AB8500_PIN_K6 };
+static const unsigned gpio29_a_1_pins[] = { AB8500_PIN_G6 };
+static const unsigned gpio30_a_1_pins[] = { AB8500_PIN_H6 };
+static const unsigned gpio31_a_1_pins[] = { AB8500_PIN_F5 };
+static const unsigned gpio32_a_1_pins[] = { AB8500_PIN_G5 };
+static const unsigned gpio34_a_1_pins[] = { AB8500_PIN_R17 };
+static const unsigned gpio36_a_1_pins[] = { AB8500_PIN_A17 };
+static const unsigned gpio37_a_1_pins[] = { AB8500_PIN_E15 };
+static const unsigned gpio38_a_1_pins[] = { AB8500_PIN_C17 };
+static const unsigned gpio39_a_1_pins[] = { AB8500_PIN_E16 };
+static const unsigned gpio40_a_1_pins[] = { AB8500_PIN_T19 };
+static const unsigned gpio41_a_1_pins[] = { AB8500_PIN_U19 };
+static const unsigned gpio42_a_1_pins[] = { AB8500_PIN_U2 };
 
 /* Altfunction B colum */
-अटल स्थिर अचिन्हित hiqclkena_b_1_pins[] = अणु AB8500_PIN_U17 पूर्ण;
-अटल स्थिर अचिन्हित usbuiccpd_b_1_pins[] = अणु AB8500_PIN_AA18 पूर्ण;
-अटल स्थिर अचिन्हित i2ctrig1_b_1_pins[] = अणु AB8500_PIN_U16 पूर्ण;
-अटल स्थिर अचिन्हित i2ctrig2_b_1_pins[] = अणु AB8500_PIN_W17 पूर्ण;
+static const unsigned hiqclkena_b_1_pins[] = { AB8500_PIN_U17 };
+static const unsigned usbuiccpd_b_1_pins[] = { AB8500_PIN_AA18 };
+static const unsigned i2ctrig1_b_1_pins[] = { AB8500_PIN_U16 };
+static const unsigned i2ctrig2_b_1_pins[] = { AB8500_PIN_W17 };
 
 /* Altfunction C column */
-अटल स्थिर अचिन्हित usbvdat_c_1_pins[] = अणु AB8500_PIN_W17 पूर्ण;
+static const unsigned usbvdat_c_1_pins[] = { AB8500_PIN_W17 };
 
 
-#घोषणा AB8500_PIN_GROUP(a, b) अणु .name = #a, .pins = a##_pins,		\
-			.npins = ARRAY_SIZE(a##_pins), .altsetting = b पूर्ण
+#define AB8500_PIN_GROUP(a, b) { .name = #a, .pins = a##_pins,		\
+			.npins = ARRAY_SIZE(a##_pins), .altsetting = b }
 
-अटल स्थिर काष्ठा abx500_pingroup ab8500_groups[] = अणु
-	/* शेष column */
+static const struct abx500_pingroup ab8500_groups[] = {
+	/* default column */
 	AB8500_PIN_GROUP(sysclkreq2_d_1, ABX500_DEFAULT),
 	AB8500_PIN_GROUP(sysclkreq3_d_1, ABX500_DEFAULT),
 	AB8500_PIN_GROUP(sysclkreq4_d_1, ABX500_DEFAULT),
@@ -298,11 +297,11 @@
 	AB8500_PIN_GROUP(i2ctrig2_b_1, ABX500_ALT_B),
 	/* Altfunction C column */
 	AB8500_PIN_GROUP(usbvdat_c_1, ABX500_ALT_C),
-पूर्ण;
+};
 
 /* We use this macro to define the groups applicable to a function */
-#घोषणा AB8500_FUNC_GROUPS(a, b...)	   \
-अटल स्थिर अक्षर * स्थिर a##_groups[] = अणु b पूर्ण;
+#define AB8500_FUNC_GROUPS(a, b...)	   \
+static const char * const a##_groups[] = { b };
 
 AB8500_FUNC_GROUPS(sysclkreq, "sysclkreq2_d_1", "sysclkreq3_d_1",
 		"sysclkreq4_d_1", "sysclkreq5_d_1", "sysclkreq6_d_1",
@@ -329,14 +328,14 @@ AB8500_FUNC_GROUPS(hiqclkena, "hiqclkena_b_1");
 AB8500_FUNC_GROUPS(i2ctrig, "i2ctrig1_b_1", "i2ctrig2_b_1");
 AB8500_FUNC_GROUPS(usbvdat, "usbvdat_c_1");
 
-#घोषणा FUNCTION(fname)					\
-	अणु						\
+#define FUNCTION(fname)					\
+	{						\
 		.name = #fname,				\
 		.groups = fname##_groups,		\
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा abx500_function ab8500_functions[] = अणु
+static const struct abx500_function ab8500_functions[] = {
 	FUNCTION(sysclkreq),
 	FUNCTION(ycbcr),
 	FUNCTION(gpio),
@@ -350,45 +349,45 @@ AB8500_FUNC_GROUPS(usbvdat, "usbvdat_c_1");
 	FUNCTION(hiqclkena),
 	FUNCTION(i2ctrig),
 	FUNCTION(usbvdat),
-पूर्ण;
+};
 
 /*
- * this table translates what's is in the AB8500 specअगरication regarding the
- * balls alternate functions (as क्रम DB, शेष, ALT_A, ALT_B and ALT_C).
+ * this table translates what's is in the AB8500 specification regarding the
+ * balls alternate functions (as for DB, default, ALT_A, ALT_B and ALT_C).
  * ALTERNATE_FUNCTIONS(GPIO_NUMBER, GPIOSEL bit, ALTERNATFUNC bit1,
  * ALTERNATEFUNC bit2, ALTA val, ALTB val, ALTC val),
  *
  * example :
  *
  *	ALTERNATE_FUNCTIONS(13,     4,      3,      4, 0, 1 ,2),
- *	means that pin AB8500_PIN_W17 (pin 13) supports 4 mux (शेष/ALT_A,
- *	ALT_B and ALT_C), so GPIOSEL and ALTERNATFUNC रेजिस्टरs are used to
- *	select the mux.  ALTA, ALTB and ALTC val indicates values to ग_लिखो in
- *	ALTERNATFUNC रेजिस्टर. We need to specअगरies these values as SOC
+ *	means that pin AB8500_PIN_W17 (pin 13) supports 4 mux (default/ALT_A,
+ *	ALT_B and ALT_C), so GPIOSEL and ALTERNATFUNC registers are used to
+ *	select the mux.  ALTA, ALTB and ALTC val indicates values to write in
+ *	ALTERNATFUNC register. We need to specifies these values as SOC
  *	designers didn't apply the same logic on how to select mux in the
  *	ABx500 family.
  *
- *	As this pins supports at least ALT_B mux, शेष mux is
+ *	As this pins supports at least ALT_B mux, default mux is
  *	selected by writing 1 in GPIOSEL bit :
  *
  *		| GPIOSEL bit=4 | alternatfunc bit2=4 | alternatfunc bit1=3
- *	शेष	|       1       |          0          |          0
+ *	default	|       1       |          0          |          0
  *	alt_A	|       0       |          0          |          0
  *	alt_B	|       0       |          0          |          1
  *	alt_C	|       0       |          1          |          0
  *
  *	ALTERNATE_FUNCTIONS(8,      7, UNUSED, UNUSED),
  *	means that pin AB8500_PIN_W18 (pin 8) supports 2 mux, so only GPIOSEL
- *	रेजिस्टर is used to select the mux. As this pins करोesn't support at
- *	least ALT_B mux, शेष mux is by writing 0 in GPIOSEL bit :
+ *	register is used to select the mux. As this pins doesn't support at
+ *	least ALT_B mux, default mux is by writing 0 in GPIOSEL bit :
  *
  *		| GPIOSEL bit=7 | alternatfunc bit2=  | alternatfunc bit1=
- *	शेष	|       0       |          0          |          0
+ *	default	|       0       |          0          |          0
  *	alt_A	|       1       |          0          |          0
  */
 
-अटल काष्ठा
-alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = अणु
+static struct
+alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = {
 	ALTERNATE_FUNCTIONS(0, UNUSED, UNUSED, UNUSED, 0, 0, 0), /* no GPIO0 */
 	ALTERNATE_FUNCTIONS(1,	    0, UNUSED, UNUSED, 0, 0, 0), /* GPIO1, altA controlled by bit 0 */
 	ALTERNATE_FUNCTIONS(2,      1, UNUSED, UNUSED, 0, 0, 0), /* GPIO2, altA controlled by bit 1 */
@@ -409,8 +408,8 @@ alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = अ
 	ALTERNATE_FUNCTIONS(15,     6, UNUSED, UNUSED, 0, 0, 0), /* GPIO15, altA controlled by bit 6 */
 	ALTERNATE_FUNCTIONS(16,     7, UNUSED, UNUSED, 0, 0, 0), /* GPIO16, altA controlled by bit 7 */
 	/*
-	 * pins 17 to 20 are special हाल, only bit 0 is used to select
-	 * alternate function क्रम these 4 pins.
+	 * pins 17 to 20 are special case, only bit 0 is used to select
+	 * alternate function for these 4 pins.
 	 * bits 1 to 3 are reserved
 	 */
 	ALTERNATE_FUNCTIONS(17,      0, UNUSED, UNUSED, 0, 0, 0), /* GPIO17, altA controlled by bit 0 */
@@ -423,7 +422,7 @@ alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = अ
 	ALTERNATE_FUNCTIONS(24,      7, UNUSED, UNUSED, 0, 0, 0), /* GPIO24, altA controlled by bit 7 */
 
 	ALTERNATE_FUNCTIONS(25,      0, UNUSED, UNUSED, 0, 0, 0), /* GPIO25, altA controlled by bit 0 */
-	/* pin 26 special हाल, no alternate function, bit 1 reserved */
+	/* pin 26 special case, no alternate function, bit 1 reserved */
 	ALTERNATE_FUNCTIONS(26, UNUSED, UNUSED, UNUSED, 0, 0, 0), /* GPIO26 */
 	ALTERNATE_FUNCTIONS(27,      2, UNUSED, UNUSED, 0, 0, 0), /* GPIO27, altA controlled by bit 2 */
 	ALTERNATE_FUNCTIONS(28,      3, UNUSED, UNUSED, 0, 0, 0), /* GPIO28, altA controlled by bit 3 */
@@ -434,7 +433,7 @@ alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = अ
 
 	ALTERNATE_FUNCTIONS(33, UNUSED, UNUSED, UNUSED, 0, 0, 0), /* no GPIO33 */
 	ALTERNATE_FUNCTIONS(34,      1, UNUSED, UNUSED, 0, 0, 0), /* GPIO34, altA controlled by bit 1 */
-	/* pin 35 special हाल, no alternate function, bit 2 reserved */
+	/* pin 35 special case, no alternate function, bit 2 reserved */
 	ALTERNATE_FUNCTIONS(35, UNUSED, UNUSED, UNUSED, 0, 0, 0), /* GPIO35 */
 	ALTERNATE_FUNCTIONS(36,      3, UNUSED, UNUSED, 0, 0, 0), /* GPIO36, altA controlled by bit 3 */
 	ALTERNATE_FUNCTIONS(37,      4, UNUSED, UNUSED, 0, 0, 0), /* GPIO37, altA controlled by bit 4 */
@@ -444,23 +443,23 @@ alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = अ
 
 	ALTERNATE_FUNCTIONS(41,      0, UNUSED, UNUSED, 0, 0, 0), /* GPIO41, altA controlled by bit 0 */
 	ALTERNATE_FUNCTIONS(42,      1, UNUSED, UNUSED, 0, 0, 0), /* GPIO42, altA controlled by bit 1 */
-पूर्ण;
+};
 
 /*
- * Only some GPIOs are पूर्णांकerrupt capable, and they are
+ * Only some GPIOs are interrupt capable, and they are
  * organized in discontiguous clusters:
  *
  *	GPIO6 to GPIO13
  *	GPIO24 and GPIO25
  *	GPIO36 to GPIO41
  */
-अटल काष्ठा abx500_gpio_irq_cluster ab8500_gpio_irq_cluster[] = अणु
+static struct abx500_gpio_irq_cluster ab8500_gpio_irq_cluster[] = {
 	GPIO_IRQ_CLUSTER(6,  13, AB8500_INT_GPIO6R),
 	GPIO_IRQ_CLUSTER(24, 25, AB8500_INT_GPIO24R),
 	GPIO_IRQ_CLUSTER(36, 41, AB8500_INT_GPIO36R),
-पूर्ण;
+};
 
-अटल काष्ठा abx500_pinctrl_soc_data ab8500_soc = अणु
+static struct abx500_pinctrl_soc_data ab8500_soc = {
 	.gpio_ranges = ab8500_pinranges,
 	.gpio_num_ranges = ARRAY_SIZE(ab8500_pinranges),
 	.pins = ab8500_pins,
@@ -475,9 +474,9 @@ alternate_functions ab8500_alternate_functions[AB8500_GPIO_MAX_NUMBER + 1] = अ
 	.irq_gpio_rising_offset = AB8500_INT_GPIO6R,
 	.irq_gpio_falling_offset = AB8500_INT_GPIO6F,
 	.irq_gpio_factor = 1,
-पूर्ण;
+};
 
-व्योम abx500_pinctrl_ab8500_init(काष्ठा abx500_pinctrl_soc_data **soc)
-अणु
+void abx500_pinctrl_ab8500_init(struct abx500_pinctrl_soc_data **soc)
+{
 	*soc = &ab8500_soc;
-पूर्ण
+}

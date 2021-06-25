@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित REQUEST
-#अघोषित __field
-#अघोषित __array
-#अघोषित __count
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef REQUEST
+#undef __field
+#undef __array
+#undef __count
 
-#अघोषित REQUEST_NAME
-#अघोषित REQUEST_NUM
-#अघोषित REQUEST_IDX_KIND
+#undef REQUEST_NAME
+#undef REQUEST_NUM
+#undef REQUEST_IDX_KIND

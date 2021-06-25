@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Device handling thपढ़ो implementation क्रम mac80211 ST-Ericsson CW1200 drivers
+ * Device handling thread implementation for mac80211 ST-Ericsson CW1200 drivers
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
@@ -12,54 +11,54 @@
  * Author: Ajitpal Singh <ajitpal.singh@stericsson.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <net/mac80211.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/समयr.h>
+#include <linux/module.h>
+#include <net/mac80211.h>
+#include <linux/kthread.h>
+#include <linux/timer.h>
 
-#समावेश "cw1200.h"
-#समावेश "bh.h"
-#समावेश "hwio.h"
-#समावेश "wsm.h"
-#समावेश "hwbus.h"
-#समावेश "debug.h"
-#समावेश "fwio.h"
+#include "cw1200.h"
+#include "bh.h"
+#include "hwio.h"
+#include "wsm.h"
+#include "hwbus.h"
+#include "debug.h"
+#include "fwio.h"
 
-अटल पूर्णांक cw1200_bh(व्योम *arg);
+static int cw1200_bh(void *arg);
 
-#घोषणा DOWNLOAD_BLOCK_SIZE_WR	(0x1000 - 4)
+#define DOWNLOAD_BLOCK_SIZE_WR	(0x1000 - 4)
 /* an SPI message cannot be bigger than (2"12-1)*2 bytes
  * "*2" to cvt to bytes
  */
-#घोषणा MAX_SZ_RD_WR_BUFFERS	(DOWNLOAD_BLOCK_SIZE_WR*2)
-#घोषणा PIGGYBACK_CTRL_REG	(2)
-#घोषणा EFFECTIVE_BUF_SIZE	(MAX_SZ_RD_WR_BUFFERS - PIGGYBACK_CTRL_REG)
+#define MAX_SZ_RD_WR_BUFFERS	(DOWNLOAD_BLOCK_SIZE_WR*2)
+#define PIGGYBACK_CTRL_REG	(2)
+#define EFFECTIVE_BUF_SIZE	(MAX_SZ_RD_WR_BUFFERS - PIGGYBACK_CTRL_REG)
 
-/* Suspend state निजीs */
-क्रमागत cw1200_bh_pm_state अणु
+/* Suspend state privates */
+enum cw1200_bh_pm_state {
 	CW1200_BH_RESUMED = 0,
 	CW1200_BH_SUSPEND,
 	CW1200_BH_SUSPENDED,
 	CW1200_BH_RESUME,
-पूर्ण;
+};
 
-अटल व्योम cw1200_bh_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा cw1200_common *priv =
-	container_of(work, काष्ठा cw1200_common, bh_work);
+static void cw1200_bh_work(struct work_struct *work)
+{
+	struct cw1200_common *priv =
+	container_of(work, struct cw1200_common, bh_work);
 	cw1200_bh(priv);
-पूर्ण
+}
 
-पूर्णांक cw1200_रेजिस्टर_bh(काष्ठा cw1200_common *priv)
-अणु
-	पूर्णांक err = 0;
-	/* Realसमय workqueue */
+int cw1200_register_bh(struct cw1200_common *priv)
+{
+	int err = 0;
+	/* Realtime workqueue */
 	priv->bh_workqueue = alloc_workqueue("cw1200_bh",
 				WQ_MEM_RECLAIM | WQ_HIGHPRI
 				| WQ_CPU_INTENSIVE, 1);
 
-	अगर (!priv->bh_workqueue)
-		वापस -ENOMEM;
+	if (!priv->bh_workqueue)
+		return -ENOMEM;
 
 	INIT_WORK(&priv->bh_work, cw1200_bh_work);
 
@@ -73,231 +72,231 @@
 	priv->hw_bufs_used = 0;
 	priv->buf_id_tx = 0;
 	priv->buf_id_rx = 0;
-	init_रुकोqueue_head(&priv->bh_wq);
-	init_रुकोqueue_head(&priv->bh_evt_wq);
+	init_waitqueue_head(&priv->bh_wq);
+	init_waitqueue_head(&priv->bh_evt_wq);
 
 	err = !queue_work(priv->bh_workqueue, &priv->bh_work);
 	WARN_ON(err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम cw1200_unरेजिस्टर_bh(काष्ठा cw1200_common *priv)
-अणु
+void cw1200_unregister_bh(struct cw1200_common *priv)
+{
 	atomic_inc(&priv->bh_term);
 	wake_up(&priv->bh_wq);
 
 	flush_workqueue(priv->bh_workqueue);
 
 	destroy_workqueue(priv->bh_workqueue);
-	priv->bh_workqueue = शून्य;
+	priv->bh_workqueue = NULL;
 
 	pr_debug("[BH] unregistered.\n");
-पूर्ण
+}
 
-व्योम cw1200_irq_handler(काष्ठा cw1200_common *priv)
-अणु
+void cw1200_irq_handler(struct cw1200_common *priv)
+{
 	pr_debug("[BH] irq.\n");
 
 	/* Disable Interrupts! */
-	/* NOTE:  hwbus_ops->lock alपढ़ोy held */
+	/* NOTE:  hwbus_ops->lock already held */
 	__cw1200_irq_enable(priv, 0);
 
-	अगर (/* WARN_ON */(priv->bh_error))
-		वापस;
+	if (/* WARN_ON */(priv->bh_error))
+		return;
 
-	अगर (atomic_inc_वापस(&priv->bh_rx) == 1)
+	if (atomic_inc_return(&priv->bh_rx) == 1)
 		wake_up(&priv->bh_wq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(cw1200_irq_handler);
 
-व्योम cw1200_bh_wakeup(काष्ठा cw1200_common *priv)
-अणु
+void cw1200_bh_wakeup(struct cw1200_common *priv)
+{
 	pr_debug("[BH] wakeup.\n");
-	अगर (priv->bh_error) अणु
+	if (priv->bh_error) {
 		pr_err("[BH] wakeup failed (BH error)\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (atomic_inc_वापस(&priv->bh_tx) == 1)
+	if (atomic_inc_return(&priv->bh_tx) == 1)
 		wake_up(&priv->bh_wq);
-पूर्ण
+}
 
-पूर्णांक cw1200_bh_suspend(काष्ठा cw1200_common *priv)
-अणु
+int cw1200_bh_suspend(struct cw1200_common *priv)
+{
 	pr_debug("[BH] suspend.\n");
-	अगर (priv->bh_error) अणु
+	if (priv->bh_error) {
 		wiphy_warn(priv->hw->wiphy, "BH error -- can't suspend\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	atomic_set(&priv->bh_suspend, CW1200_BH_SUSPEND);
 	wake_up(&priv->bh_wq);
-	वापस रुको_event_समयout(priv->bh_evt_wq, priv->bh_error ||
-		(CW1200_BH_SUSPENDED == atomic_पढ़ो(&priv->bh_suspend)),
+	return wait_event_timeout(priv->bh_evt_wq, priv->bh_error ||
+		(CW1200_BH_SUSPENDED == atomic_read(&priv->bh_suspend)),
 		 1 * HZ) ? 0 : -ETIMEDOUT;
-पूर्ण
+}
 
-पूर्णांक cw1200_bh_resume(काष्ठा cw1200_common *priv)
-अणु
+int cw1200_bh_resume(struct cw1200_common *priv)
+{
 	pr_debug("[BH] resume.\n");
-	अगर (priv->bh_error) अणु
+	if (priv->bh_error) {
 		wiphy_warn(priv->hw->wiphy, "BH error -- can't resume\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	atomic_set(&priv->bh_suspend, CW1200_BH_RESUME);
 	wake_up(&priv->bh_wq);
-	वापस रुको_event_समयout(priv->bh_evt_wq, priv->bh_error ||
-		(CW1200_BH_RESUMED == atomic_पढ़ो(&priv->bh_suspend)),
+	return wait_event_timeout(priv->bh_evt_wq, priv->bh_error ||
+		(CW1200_BH_RESUMED == atomic_read(&priv->bh_suspend)),
 		1 * HZ) ? 0 : -ETIMEDOUT;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wsm_alloc_tx_buffer(काष्ठा cw1200_common *priv)
-अणु
+static inline void wsm_alloc_tx_buffer(struct cw1200_common *priv)
+{
 	++priv->hw_bufs_used;
-पूर्ण
+}
 
-पूर्णांक wsm_release_tx_buffer(काष्ठा cw1200_common *priv, पूर्णांक count)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक hw_bufs_used = priv->hw_bufs_used;
+int wsm_release_tx_buffer(struct cw1200_common *priv, int count)
+{
+	int ret = 0;
+	int hw_bufs_used = priv->hw_bufs_used;
 
 	priv->hw_bufs_used -= count;
-	अगर (WARN_ON(priv->hw_bufs_used < 0))
+	if (WARN_ON(priv->hw_bufs_used < 0))
 		ret = -1;
-	अन्यथा अगर (hw_bufs_used >= priv->wsm_caps.input_buffers)
+	else if (hw_bufs_used >= priv->wsm_caps.input_buffers)
 		ret = 1;
-	अगर (!priv->hw_bufs_used)
+	if (!priv->hw_bufs_used)
 		wake_up(&priv->bh_evt_wq);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cw1200_bh_पढ़ो_ctrl_reg(काष्ठा cw1200_common *priv,
+static int cw1200_bh_read_ctrl_reg(struct cw1200_common *priv,
 					  u16 *ctrl_reg)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	ret = cw1200_reg_पढ़ो_16(priv,
+	ret = cw1200_reg_read_16(priv,
 			ST90TDS_CONTROL_REG_ID, ctrl_reg);
-	अगर (ret) अणु
-		ret = cw1200_reg_पढ़ो_16(priv,
+	if (ret) {
+		ret = cw1200_reg_read_16(priv,
 				ST90TDS_CONTROL_REG_ID, ctrl_reg);
-		अगर (ret)
+		if (ret)
 			pr_err("[BH] Failed to read control register.\n");
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cw1200_device_wakeup(काष्ठा cw1200_common *priv)
-अणु
+static int cw1200_device_wakeup(struct cw1200_common *priv)
+{
 	u16 ctrl_reg;
-	पूर्णांक ret;
+	int ret;
 
 	pr_debug("[BH] Device wakeup.\n");
 
-	/* First, set the dpll रेजिस्टर */
-	ret = cw1200_reg_ग_लिखो_32(priv, ST90TDS_TSET_GEN_R_W_REG_ID,
+	/* First, set the dpll register */
+	ret = cw1200_reg_write_32(priv, ST90TDS_TSET_GEN_R_W_REG_ID,
 				  cw1200_dpll_from_clk(priv->hw_refclk));
-	अगर (WARN_ON(ret))
-		वापस ret;
+	if (WARN_ON(ret))
+		return ret;
 
-	/* To क्रमce the device to be always-on, the host sets WLAN_UP to 1 */
-	ret = cw1200_reg_ग_लिखो_16(priv, ST90TDS_CONTROL_REG_ID,
+	/* To force the device to be always-on, the host sets WLAN_UP to 1 */
+	ret = cw1200_reg_write_16(priv, ST90TDS_CONTROL_REG_ID,
 			ST90TDS_CONT_WUP_BIT);
-	अगर (WARN_ON(ret))
-		वापस ret;
+	if (WARN_ON(ret))
+		return ret;
 
-	ret = cw1200_bh_पढ़ो_ctrl_reg(priv, &ctrl_reg);
-	अगर (WARN_ON(ret))
-		वापस ret;
+	ret = cw1200_bh_read_ctrl_reg(priv, &ctrl_reg);
+	if (WARN_ON(ret))
+		return ret;
 
-	/* If the device वापसs WLAN_RDY as 1, the device is active and will
-	 * reमुख्य active.
+	/* If the device returns WLAN_RDY as 1, the device is active and will
+	 * remain active.
 	 */
-	अगर (ctrl_reg & ST90TDS_CONT_RDY_BIT) अणु
+	if (ctrl_reg & ST90TDS_CONT_RDY_BIT) {
 		pr_debug("[BH] Device awake.\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Must be called from BH thraed. */
-व्योम cw1200_enable_घातersave(काष्ठा cw1200_common *priv,
+void cw1200_enable_powersave(struct cw1200_common *priv,
 			     bool enable)
-अणु
+{
 	pr_debug("[BH] Powerave is %s.\n",
 		 enable ? "enabled" : "disabled");
-	priv->घातersave_enabled = enable;
-पूर्ण
+	priv->powersave_enabled = enable;
+}
 
-अटल पूर्णांक cw1200_bh_rx_helper(काष्ठा cw1200_common *priv,
-			       uपूर्णांक16_t *ctrl_reg,
-			       पूर्णांक *tx)
-अणु
-	माप_प्रकार पढ़ो_len = 0;
-	काष्ठा sk_buff *skb_rx = शून्य;
-	काष्ठा wsm_hdr *wsm;
-	माप_प्रकार wsm_len;
+static int cw1200_bh_rx_helper(struct cw1200_common *priv,
+			       uint16_t *ctrl_reg,
+			       int *tx)
+{
+	size_t read_len = 0;
+	struct sk_buff *skb_rx = NULL;
+	struct wsm_hdr *wsm;
+	size_t wsm_len;
 	u16 wsm_id;
 	u8 wsm_seq;
-	पूर्णांक rx_resync = 1;
+	int rx_resync = 1;
 
-	माप_प्रकार alloc_len;
+	size_t alloc_len;
 	u8 *data;
 
-	पढ़ो_len = (*ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK) * 2;
-	अगर (!पढ़ो_len)
-		वापस 0; /* No more work */
+	read_len = (*ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK) * 2;
+	if (!read_len)
+		return 0; /* No more work */
 
-	अगर (WARN_ON((पढ़ो_len < माप(काष्ठा wsm_hdr)) ||
-		    (पढ़ो_len > EFFECTIVE_BUF_SIZE))) अणु
+	if (WARN_ON((read_len < sizeof(struct wsm_hdr)) ||
+		    (read_len > EFFECTIVE_BUF_SIZE))) {
 		pr_debug("Invalid read len: %zu (%04x)",
-			 पढ़ो_len, *ctrl_reg);
-		जाओ err;
-	पूर्ण
+			 read_len, *ctrl_reg);
+		goto err;
+	}
 
 	/* Add SIZE of PIGGYBACK reg (CONTROL Reg)
-	 * to the NEXT Message length + 2 Bytes क्रम SKB
+	 * to the NEXT Message length + 2 Bytes for SKB
 	 */
-	पढ़ो_len = पढ़ो_len + 2;
+	read_len = read_len + 2;
 
 	alloc_len = priv->hwbus_ops->align_size(
-		priv->hwbus_priv, पढ़ो_len);
+		priv->hwbus_priv, read_len);
 
-	/* Check अगर not exceeding CW1200 capabilities */
-	अगर (WARN_ON_ONCE(alloc_len > EFFECTIVE_BUF_SIZE)) अणु
+	/* Check if not exceeding CW1200 capabilities */
+	if (WARN_ON_ONCE(alloc_len > EFFECTIVE_BUF_SIZE)) {
 		pr_debug("Read aligned len: %zu\n",
 			 alloc_len);
-	पूर्ण
+	}
 
 	skb_rx = dev_alloc_skb(alloc_len);
-	अगर (WARN_ON(!skb_rx))
-		जाओ err;
+	if (WARN_ON(!skb_rx))
+		goto err;
 
 	skb_trim(skb_rx, 0);
-	skb_put(skb_rx, पढ़ो_len);
+	skb_put(skb_rx, read_len);
 	data = skb_rx->data;
-	अगर (WARN_ON(!data))
-		जाओ err;
+	if (WARN_ON(!data))
+		goto err;
 
-	अगर (WARN_ON(cw1200_data_पढ़ो(priv, data, alloc_len))) अणु
+	if (WARN_ON(cw1200_data_read(priv, data, alloc_len))) {
 		pr_err("rx blew up, len %zu\n", alloc_len);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Piggyback */
 	*ctrl_reg = __le16_to_cpu(
 		((__le16 *)data)[alloc_len / 2 - 1]);
 
-	wsm = (काष्ठा wsm_hdr *)data;
+	wsm = (struct wsm_hdr *)data;
 	wsm_len = __le16_to_cpu(wsm->len);
-	अगर (WARN_ON(wsm_len > पढ़ो_len))
-		जाओ err;
+	if (WARN_ON(wsm_len > read_len))
+		goto err;
 
-	अगर (priv->wsm_enable_wsm_dumps)
-		prपूर्णांक_hex_dump_bytes("<-- ",
+	if (priv->wsm_enable_wsm_dumps)
+		print_hex_dump_bytes("<-- ",
 				     DUMP_PREFIX_NONE,
 				     data, wsm_len);
 
@@ -306,78 +305,78 @@ EXPORT_SYMBOL_GPL(cw1200_irq_handler);
 
 	skb_trim(skb_rx, wsm_len);
 
-	अगर (wsm_id == 0x0800) अणु
+	if (wsm_id == 0x0800) {
 		wsm_handle_exception(priv,
-				     &data[माप(*wsm)],
-				     wsm_len - माप(*wsm));
-		जाओ err;
-	पूर्ण अन्यथा अगर (!rx_resync) अणु
-		अगर (WARN_ON(wsm_seq != priv->wsm_rx_seq))
-			जाओ err;
-	पूर्ण
+				     &data[sizeof(*wsm)],
+				     wsm_len - sizeof(*wsm));
+		goto err;
+	} else if (!rx_resync) {
+		if (WARN_ON(wsm_seq != priv->wsm_rx_seq))
+			goto err;
+	}
 	priv->wsm_rx_seq = (wsm_seq + 1) & 7;
 	rx_resync = 0;
 
-	अगर (wsm_id & 0x0400) अणु
-		पूर्णांक rc = wsm_release_tx_buffer(priv, 1);
-		अगर (WARN_ON(rc < 0))
-			वापस rc;
-		अन्यथा अगर (rc > 0)
+	if (wsm_id & 0x0400) {
+		int rc = wsm_release_tx_buffer(priv, 1);
+		if (WARN_ON(rc < 0))
+			return rc;
+		else if (rc > 0)
 			*tx = 1;
-	पूर्ण
+	}
 
-	/* cw1200_wsm_rx takes care on SKB liveसमय */
-	अगर (WARN_ON(wsm_handle_rx(priv, wsm_id, wsm, &skb_rx)))
-		जाओ err;
+	/* cw1200_wsm_rx takes care on SKB livetime */
+	if (WARN_ON(wsm_handle_rx(priv, wsm_id, wsm, &skb_rx)))
+		goto err;
 
-	अगर (skb_rx) अणु
-		dev_kमुक्त_skb(skb_rx);
-		skb_rx = शून्य;
-	पूर्ण
+	if (skb_rx) {
+		dev_kfree_skb(skb_rx);
+		skb_rx = NULL;
+	}
 
-	वापस 0;
+	return 0;
 
 err:
-	अगर (skb_rx) अणु
-		dev_kमुक्त_skb(skb_rx);
-		skb_rx = शून्य;
-	पूर्ण
-	वापस -1;
-पूर्ण
+	if (skb_rx) {
+		dev_kfree_skb(skb_rx);
+		skb_rx = NULL;
+	}
+	return -1;
+}
 
-अटल पूर्णांक cw1200_bh_tx_helper(काष्ठा cw1200_common *priv,
-			       पूर्णांक *pending_tx,
-			       पूर्णांक *tx_burst)
-अणु
-	माप_प्रकार tx_len;
+static int cw1200_bh_tx_helper(struct cw1200_common *priv,
+			       int *pending_tx,
+			       int *tx_burst)
+{
+	size_t tx_len;
 	u8 *data;
-	पूर्णांक ret;
-	काष्ठा wsm_hdr *wsm;
+	int ret;
+	struct wsm_hdr *wsm;
 
-	अगर (priv->device_can_sleep) अणु
+	if (priv->device_can_sleep) {
 		ret = cw1200_device_wakeup(priv);
-		अगर (WARN_ON(ret < 0)) अणु /* Error in wakeup */
+		if (WARN_ON(ret < 0)) { /* Error in wakeup */
 			*pending_tx = 1;
-			वापस 0;
-		पूर्ण अन्यथा अगर (ret) अणु /* Woke up */
+			return 0;
+		} else if (ret) { /* Woke up */
 			priv->device_can_sleep = false;
-		पूर्ण अन्यथा अणु /* Did not awake */
+		} else { /* Did not awake */
 			*pending_tx = 1;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	wsm_alloc_tx_buffer(priv);
 	ret = wsm_get_tx(priv, &data, &tx_len, tx_burst);
-	अगर (ret <= 0) अणु
+	if (ret <= 0) {
 		wsm_release_tx_buffer(priv, 1);
-		अगर (WARN_ON(ret < 0))
-			वापस ret; /* Error */
-		वापस 0; /* No work */
-	पूर्ण
+		if (WARN_ON(ret < 0))
+			return ret; /* Error */
+		return 0; /* No work */
+	}
 
-	wsm = (काष्ठा wsm_hdr *)data;
-	BUG_ON(tx_len < माप(*wsm));
+	wsm = (struct wsm_hdr *)data;
+	BUG_ON(tx_len < sizeof(*wsm));
 	BUG_ON(__le16_to_cpu(wsm->len) != tx_len);
 
 	atomic_inc(&priv->bh_tx);
@@ -385,21 +384,21 @@ err:
 	tx_len = priv->hwbus_ops->align_size(
 		priv->hwbus_priv, tx_len);
 
-	/* Check अगर not exceeding CW1200 capabilities */
-	अगर (WARN_ON_ONCE(tx_len > EFFECTIVE_BUF_SIZE))
+	/* Check if not exceeding CW1200 capabilities */
+	if (WARN_ON_ONCE(tx_len > EFFECTIVE_BUF_SIZE))
 		pr_debug("Write aligned len: %zu\n", tx_len);
 
 	wsm->id &= __cpu_to_le16(0xffff ^ WSM_TX_SEQ(WSM_TX_SEQ_MAX));
 	wsm->id |= __cpu_to_le16(WSM_TX_SEQ(priv->wsm_tx_seq));
 
-	अगर (WARN_ON(cw1200_data_ग_लिखो(priv, data, tx_len))) अणु
+	if (WARN_ON(cw1200_data_write(priv, data, tx_len))) {
 		pr_err("tx blew up, len %zu\n", tx_len);
 		wsm_release_tx_buffer(priv, 1);
-		वापस -1; /* Error */
-	पूर्ण
+		return -1; /* Error */
+	}
 
-	अगर (priv->wsm_enable_wsm_dumps)
-		prपूर्णांक_hex_dump_bytes("--> ",
+	if (priv->wsm_enable_wsm_dumps)
+		print_hex_dump_bytes("--> ",
 				     DUMP_PREFIX_NONE,
 				     data,
 				     __le16_to_cpu(wsm->len));
@@ -407,208 +406,208 @@ err:
 	wsm_txed(priv, data);
 	priv->wsm_tx_seq = (priv->wsm_tx_seq + 1) & WSM_TX_SEQ_MAX;
 
-	अगर (*tx_burst > 1) अणु
+	if (*tx_burst > 1) {
 		cw1200_debug_tx_burst(priv);
-		वापस 1; /* Work reमुख्यs */
-	पूर्ण
+		return 1; /* Work remains */
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cw1200_bh(व्योम *arg)
-अणु
-	काष्ठा cw1200_common *priv = arg;
-	पूर्णांक rx, tx, term, suspend;
+static int cw1200_bh(void *arg)
+{
+	struct cw1200_common *priv = arg;
+	int rx, tx, term, suspend;
 	u16 ctrl_reg = 0;
-	पूर्णांक tx_allowed;
-	पूर्णांक pending_tx = 0;
-	पूर्णांक tx_burst;
-	दीर्घ status;
+	int tx_allowed;
+	int pending_tx = 0;
+	int tx_burst;
+	long status;
 	u32 dummy;
-	पूर्णांक ret;
+	int ret;
 
-	क्रम (;;) अणु
-		अगर (!priv->hw_bufs_used &&
-		    priv->घातersave_enabled &&
+	for (;;) {
+		if (!priv->hw_bufs_used &&
+		    priv->powersave_enabled &&
 		    !priv->device_can_sleep &&
-		    !atomic_पढ़ो(&priv->recent_scan)) अणु
+		    !atomic_read(&priv->recent_scan)) {
 			status = 1 * HZ;
 			pr_debug("[BH] Device wakedown. No data.\n");
-			cw1200_reg_ग_लिखो_16(priv, ST90TDS_CONTROL_REG_ID, 0);
+			cw1200_reg_write_16(priv, ST90TDS_CONTROL_REG_ID, 0);
 			priv->device_can_sleep = true;
-		पूर्ण अन्यथा अगर (priv->hw_bufs_used) अणु
+		} else if (priv->hw_bufs_used) {
 			/* Interrupt loss detection */
 			status = 1 * HZ;
-		पूर्ण अन्यथा अणु
+		} else {
 			status = MAX_SCHEDULE_TIMEOUT;
-		पूर्ण
+		}
 
-		/* Dummy Read क्रम SDIO retry mechanism*/
-		अगर ((priv->hw_type != -1) &&
-		    (atomic_पढ़ो(&priv->bh_rx) == 0) &&
-		    (atomic_पढ़ो(&priv->bh_tx) == 0))
-			cw1200_reg_पढ़ो(priv, ST90TDS_CONFIG_REG_ID,
-					&dummy, माप(dummy));
+		/* Dummy Read for SDIO retry mechanism*/
+		if ((priv->hw_type != -1) &&
+		    (atomic_read(&priv->bh_rx) == 0) &&
+		    (atomic_read(&priv->bh_tx) == 0))
+			cw1200_reg_read(priv, ST90TDS_CONFIG_REG_ID,
+					&dummy, sizeof(dummy));
 
 		pr_debug("[BH] waiting ...\n");
-		status = रुको_event_पूर्णांकerruptible_समयout(priv->bh_wq, (अणु
+		status = wait_event_interruptible_timeout(priv->bh_wq, ({
 				rx = atomic_xchg(&priv->bh_rx, 0);
 				tx = atomic_xchg(&priv->bh_tx, 0);
 				term = atomic_xchg(&priv->bh_term, 0);
 				suspend = pending_tx ?
-					0 : atomic_पढ़ो(&priv->bh_suspend);
+					0 : atomic_read(&priv->bh_suspend);
 				(rx || tx || term || suspend || priv->bh_error);
-			पूर्ण), status);
+			}), status);
 
 		pr_debug("[BH] - rx: %d, tx: %d, term: %d, bh_err: %d, suspend: %d, status: %ld\n",
 			 rx, tx, term, suspend, priv->bh_error, status);
 
 		/* Did an error occur? */
-		अगर ((status < 0 && status != -ERESTARTSYS) ||
-		    term || priv->bh_error) अणु
-			अवरोध;
-		पूर्ण
-		अगर (!status) अणु  /* रुको_event समयd out */
-			अचिन्हित दीर्घ बारtamp = jअगरfies;
-			दीर्घ समयout;
-			पूर्णांक pending = 0;
-			पूर्णांक i;
+		if ((status < 0 && status != -ERESTARTSYS) ||
+		    term || priv->bh_error) {
+			break;
+		}
+		if (!status) {  /* wait_event timed out */
+			unsigned long timestamp = jiffies;
+			long timeout;
+			int pending = 0;
+			int i;
 
-			/* Check to see अगर we have any outstanding frames */
-			अगर (priv->hw_bufs_used && (!rx || !tx)) अणु
+			/* Check to see if we have any outstanding frames */
+			if (priv->hw_bufs_used && (!rx || !tx)) {
 				wiphy_warn(priv->hw->wiphy,
 					   "Missed interrupt? (%d frames outstanding)\n",
 					   priv->hw_bufs_used);
 				rx = 1;
 
-				/* Get a बारtamp of "oldest" frame */
-				क्रम (i = 0; i < 4; ++i)
-					pending += cw1200_queue_get_xmit_बारtamp(
+				/* Get a timestamp of "oldest" frame */
+				for (i = 0; i < 4; ++i)
+					pending += cw1200_queue_get_xmit_timestamp(
 						&priv->tx_queue[i],
-						&बारtamp,
+						&timestamp,
 						priv->pending_frame_id);
 
-				/* Check अगर frame transmission is समयd out.
+				/* Check if frame transmission is timed out.
 				 * Add an extra second with respect to possible
-				 * पूर्णांकerrupt loss.
+				 * interrupt loss.
 				 */
-				समयout = बारtamp +
+				timeout = timestamp +
 					WSM_CMD_LAST_CHANCE_TIMEOUT +
 					1 * HZ  -
-					jअगरfies;
+					jiffies;
 
-				/* And terminate BH thपढ़ो अगर the frame is "stuck" */
-				अगर (pending && समयout < 0) अणु
+				/* And terminate BH thread if the frame is "stuck" */
+				if (pending && timeout < 0) {
 					wiphy_warn(priv->hw->wiphy,
 						   "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
 						   priv->hw_bufs_used, pending,
-						   बारtamp, jअगरfies);
-					अवरोध;
-				पूर्ण
-			पूर्ण अन्यथा अगर (!priv->device_can_sleep &&
-				   !atomic_पढ़ो(&priv->recent_scan)) अणु
+						   timestamp, jiffies);
+					break;
+				}
+			} else if (!priv->device_can_sleep &&
+				   !atomic_read(&priv->recent_scan)) {
 				pr_debug("[BH] Device wakedown. Timeout.\n");
-				cw1200_reg_ग_लिखो_16(priv,
+				cw1200_reg_write_16(priv,
 						    ST90TDS_CONTROL_REG_ID, 0);
 				priv->device_can_sleep = true;
-			पूर्ण
-			जाओ करोne;
-		पूर्ण अन्यथा अगर (suspend) अणु
+			}
+			goto done;
+		} else if (suspend) {
 			pr_debug("[BH] Device suspend.\n");
-			अगर (priv->घातersave_enabled) अणु
+			if (priv->powersave_enabled) {
 				pr_debug("[BH] Device wakedown. Suspend.\n");
-				cw1200_reg_ग_लिखो_16(priv,
+				cw1200_reg_write_16(priv,
 						    ST90TDS_CONTROL_REG_ID, 0);
 				priv->device_can_sleep = true;
-			पूर्ण
+			}
 
 			atomic_set(&priv->bh_suspend, CW1200_BH_SUSPENDED);
 			wake_up(&priv->bh_evt_wq);
-			status = रुको_event_पूर्णांकerruptible(priv->bh_wq,
-							  CW1200_BH_RESUME == atomic_पढ़ो(&priv->bh_suspend));
-			अगर (status < 0) अणु
+			status = wait_event_interruptible(priv->bh_wq,
+							  CW1200_BH_RESUME == atomic_read(&priv->bh_suspend));
+			if (status < 0) {
 				wiphy_err(priv->hw->wiphy,
 					  "Failed to wait for resume: %ld.\n",
 					  status);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			pr_debug("[BH] Device resume.\n");
 			atomic_set(&priv->bh_suspend, CW1200_BH_RESUMED);
 			wake_up(&priv->bh_evt_wq);
 			atomic_inc(&priv->bh_rx);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 	rx:
 		tx += pending_tx;
 		pending_tx = 0;
 
-		अगर (cw1200_bh_पढ़ो_ctrl_reg(priv, &ctrl_reg))
-			अवरोध;
+		if (cw1200_bh_read_ctrl_reg(priv, &ctrl_reg))
+			break;
 
-		/* Don't bother trying to rx unless we have data to पढ़ो */
-		अगर (ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK) अणु
+		/* Don't bother trying to rx unless we have data to read */
+		if (ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK) {
 			ret = cw1200_bh_rx_helper(priv, &ctrl_reg, &tx);
-			अगर (ret < 0)
-				अवरोध;
-			/* Double up here अगर there's more data.. */
-			अगर (ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK) अणु
+			if (ret < 0)
+				break;
+			/* Double up here if there's more data.. */
+			if (ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK) {
 				ret = cw1200_bh_rx_helper(priv, &ctrl_reg, &tx);
-				अगर (ret < 0)
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				if (ret < 0)
+					break;
+			}
+		}
 
 	tx:
-		अगर (tx) अणु
+		if (tx) {
 			tx = 0;
 
 			BUG_ON(priv->hw_bufs_used > priv->wsm_caps.input_buffers);
 			tx_burst = priv->wsm_caps.input_buffers - priv->hw_bufs_used;
 			tx_allowed = tx_burst > 0;
 
-			अगर (!tx_allowed) अणु
+			if (!tx_allowed) {
 				/* Buffers full.  Ensure we process tx
 				 * after we handle rx..
 				 */
 				pending_tx = tx;
-				जाओ करोne_rx;
-			पूर्ण
+				goto done_rx;
+			}
 			ret = cw1200_bh_tx_helper(priv, &pending_tx, &tx_burst);
-			अगर (ret < 0)
-				अवरोध;
-			अगर (ret > 0) /* More to transmit */
+			if (ret < 0)
+				break;
+			if (ret > 0) /* More to transmit */
 				tx = ret;
 
-			/* Re-पढ़ो ctrl reg */
-			अगर (cw1200_bh_पढ़ो_ctrl_reg(priv, &ctrl_reg))
-				अवरोध;
-		पूर्ण
+			/* Re-read ctrl reg */
+			if (cw1200_bh_read_ctrl_reg(priv, &ctrl_reg))
+				break;
+		}
 
-	करोne_rx:
-		अगर (priv->bh_error)
-			अवरोध;
-		अगर (ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK)
-			जाओ rx;
-		अगर (tx)
-			जाओ tx;
+	done_rx:
+		if (priv->bh_error)
+			break;
+		if (ctrl_reg & ST90TDS_CONT_NEXT_LEN_MASK)
+			goto rx;
+		if (tx)
+			goto tx;
 
-	करोne:
-		/* Re-enable device पूर्णांकerrupts */
+	done:
+		/* Re-enable device interrupts */
 		priv->hwbus_ops->lock(priv->hwbus_priv);
 		__cw1200_irq_enable(priv, 1);
 		priv->hwbus_ops->unlock(priv->hwbus_priv);
-	पूर्ण
+	}
 
-	/* Explicitly disable device पूर्णांकerrupts */
+	/* Explicitly disable device interrupts */
 	priv->hwbus_ops->lock(priv->hwbus_priv);
 	__cw1200_irq_enable(priv, 0);
 	priv->hwbus_ops->unlock(priv->hwbus_priv);
 
-	अगर (!term) अणु
+	if (!term) {
 		pr_err("[BH] Fatal error, exiting.\n");
 		priv->bh_error = 1;
 		/* TODO: schedule_work(recovery) */
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}

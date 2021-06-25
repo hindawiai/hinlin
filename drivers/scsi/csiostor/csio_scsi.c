@@ -1,26 +1,25 @@
-<शैली गुरु>
 /*
- * This file is part of the Chelsio FCoE driver क्रम Linux.
+ * This file is part of the Chelsio FCoE driver for Linux.
  *
  * Copyright (c) 2008-2012 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,179 +32,179 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/export.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <यंत्र/page.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_transport_fc.h>
+#include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/compiler.h>
+#include <linux/export.h>
+#include <linux/module.h>
+#include <asm/unaligned.h>
+#include <asm/page.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_transport_fc.h>
 
-#समावेश "csio_hw.h"
-#समावेश "csio_lnode.h"
-#समावेश "csio_rnode.h"
-#समावेश "csio_scsi.h"
-#समावेश "csio_init.h"
+#include "csio_hw.h"
+#include "csio_lnode.h"
+#include "csio_rnode.h"
+#include "csio_scsi.h"
+#include "csio_init.h"
 
-पूर्णांक csio_scsi_eqsize = 65536;
-पूर्णांक csio_scsi_iqlen = 128;
-पूर्णांक csio_scsi_ioreqs = 2048;
-uपूर्णांक32_t csio_max_scan_पंचांगo;
-uपूर्णांक32_t csio_delta_scan_पंचांगo = 5;
-पूर्णांक csio_lun_qdepth = 32;
+int csio_scsi_eqsize = 65536;
+int csio_scsi_iqlen = 128;
+int csio_scsi_ioreqs = 2048;
+uint32_t csio_max_scan_tmo;
+uint32_t csio_delta_scan_tmo = 5;
+int csio_lun_qdepth = 32;
 
-अटल पूर्णांक csio_ddp_descs = 128;
+static int csio_ddp_descs = 128;
 
-अटल पूर्णांक csio_करो_abrt_cls(काष्ठा csio_hw *,
-				      काष्ठा csio_ioreq *, bool);
+static int csio_do_abrt_cls(struct csio_hw *,
+				      struct csio_ioreq *, bool);
 
-अटल व्योम csio_scsis_uninit(काष्ठा csio_ioreq *, क्रमागत csio_scsi_ev);
-अटल व्योम csio_scsis_io_active(काष्ठा csio_ioreq *, क्रमागत csio_scsi_ev);
-अटल व्योम csio_scsis_पंचांग_active(काष्ठा csio_ioreq *, क्रमागत csio_scsi_ev);
-अटल व्योम csio_scsis_पातing(काष्ठा csio_ioreq *, क्रमागत csio_scsi_ev);
-अटल व्योम csio_scsis_closing(काष्ठा csio_ioreq *, क्रमागत csio_scsi_ev);
-अटल व्योम csio_scsis_shost_cmpl_aरुको(काष्ठा csio_ioreq *, क्रमागत csio_scsi_ev);
+static void csio_scsis_uninit(struct csio_ioreq *, enum csio_scsi_ev);
+static void csio_scsis_io_active(struct csio_ioreq *, enum csio_scsi_ev);
+static void csio_scsis_tm_active(struct csio_ioreq *, enum csio_scsi_ev);
+static void csio_scsis_aborting(struct csio_ioreq *, enum csio_scsi_ev);
+static void csio_scsis_closing(struct csio_ioreq *, enum csio_scsi_ev);
+static void csio_scsis_shost_cmpl_await(struct csio_ioreq *, enum csio_scsi_ev);
 
 /*
  * csio_scsi_match_io - Match an ioreq with the given SCSI level data.
  * @ioreq: The I/O request
- * @sld: Level inक्रमmation
+ * @sld: Level information
  *
  * Should be called with lock held.
  *
  */
-अटल bool
-csio_scsi_match_io(काष्ठा csio_ioreq *ioreq, काष्ठा csio_scsi_level_data *sld)
-अणु
-	काष्ठा scsi_cmnd *scmnd = csio_scsi_cmnd(ioreq);
+static bool
+csio_scsi_match_io(struct csio_ioreq *ioreq, struct csio_scsi_level_data *sld)
+{
+	struct scsi_cmnd *scmnd = csio_scsi_cmnd(ioreq);
 
-	चयन (sld->level) अणु
-	हाल CSIO_LEV_LUN:
-		अगर (scmnd == शून्य)
-			वापस false;
+	switch (sld->level) {
+	case CSIO_LEV_LUN:
+		if (scmnd == NULL)
+			return false;
 
-		वापस ((ioreq->lnode == sld->lnode) &&
+		return ((ioreq->lnode == sld->lnode) &&
 			(ioreq->rnode == sld->rnode) &&
-			((uपूर्णांक64_t)scmnd->device->lun == sld->oslun));
+			((uint64_t)scmnd->device->lun == sld->oslun));
 
-	हाल CSIO_LEV_RNODE:
-		वापस ((ioreq->lnode == sld->lnode) &&
+	case CSIO_LEV_RNODE:
+		return ((ioreq->lnode == sld->lnode) &&
 				(ioreq->rnode == sld->rnode));
-	हाल CSIO_LEV_LNODE:
-		वापस (ioreq->lnode == sld->lnode);
-	हाल CSIO_LEV_ALL:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	case CSIO_LEV_LNODE:
+		return (ioreq->lnode == sld->lnode);
+	case CSIO_LEV_ALL:
+		return true;
+	default:
+		return false;
+	}
+}
 
 /*
  * csio_scsi_gather_active_ios - Gather active I/Os based on level
  * @scm: SCSI module
- * @sld: Level inक्रमmation
+ * @sld: Level information
  * @dest: The queue where these I/Os have to be gathered.
  *
  * Should be called with lock held.
  */
-अटल व्योम
-csio_scsi_gather_active_ios(काष्ठा csio_scsim *scm,
-			    काष्ठा csio_scsi_level_data *sld,
-			    काष्ठा list_head *dest)
-अणु
-	काष्ठा list_head *पंचांगp, *next;
+static void
+csio_scsi_gather_active_ios(struct csio_scsim *scm,
+			    struct csio_scsi_level_data *sld,
+			    struct list_head *dest)
+{
+	struct list_head *tmp, *next;
 
-	अगर (list_empty(&scm->active_q))
-		वापस;
+	if (list_empty(&scm->active_q))
+		return;
 
-	/* Just splice the entire active_q पूर्णांकo dest */
-	अगर (sld->level == CSIO_LEV_ALL) अणु
+	/* Just splice the entire active_q into dest */
+	if (sld->level == CSIO_LEV_ALL) {
 		list_splice_tail_init(&scm->active_q, dest);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	list_क्रम_each_safe(पंचांगp, next, &scm->active_q) अणु
-		अगर (csio_scsi_match_io((काष्ठा csio_ioreq *)पंचांगp, sld)) अणु
-			list_del_init(पंचांगp);
-			list_add_tail(पंचांगp, dest);
-		पूर्ण
-	पूर्ण
-पूर्ण
+	list_for_each_safe(tmp, next, &scm->active_q) {
+		if (csio_scsi_match_io((struct csio_ioreq *)tmp, sld)) {
+			list_del_init(tmp);
+			list_add_tail(tmp, dest);
+		}
+	}
+}
 
-अटल अंतरभूत bool
-csio_scsi_itnexus_loss_error(uपूर्णांक16_t error)
-अणु
-	चयन (error) अणु
-	हाल FW_ERR_LINK_DOWN:
-	हाल FW_RDEV_NOT_READY:
-	हाल FW_ERR_RDEV_LOST:
-	हाल FW_ERR_RDEV_LOGO:
-	हाल FW_ERR_RDEV_IMPL_LOGO:
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+static inline bool
+csio_scsi_itnexus_loss_error(uint16_t error)
+{
+	switch (error) {
+	case FW_ERR_LINK_DOWN:
+	case FW_RDEV_NOT_READY:
+	case FW_ERR_RDEV_LOST:
+	case FW_ERR_RDEV_LOGO:
+	case FW_ERR_RDEV_IMPL_LOGO:
+		return true;
+	}
+	return false;
+}
 
 /*
  * csio_scsi_fcp_cmnd - Frame the SCSI FCP command paylod.
- * @req: IO req काष्ठाure.
+ * @req: IO req structure.
  * @addr: DMA location to place the payload.
  *
  * This routine is shared between FCP_WRITE, FCP_READ and FCP_CMD requests.
  */
-अटल अंतरभूत व्योम
-csio_scsi_fcp_cmnd(काष्ठा csio_ioreq *req, व्योम *addr)
-अणु
-	काष्ठा fcp_cmnd *fcp_cmnd = (काष्ठा fcp_cmnd *)addr;
-	काष्ठा scsi_cmnd *scmnd = csio_scsi_cmnd(req);
+static inline void
+csio_scsi_fcp_cmnd(struct csio_ioreq *req, void *addr)
+{
+	struct fcp_cmnd *fcp_cmnd = (struct fcp_cmnd *)addr;
+	struct scsi_cmnd *scmnd = csio_scsi_cmnd(req);
 
-	/* Check क्रम Task Management */
-	अगर (likely(scmnd->SCp.Message == 0)) अणु
-		पूर्णांक_to_scsilun(scmnd->device->lun, &fcp_cmnd->fc_lun);
-		fcp_cmnd->fc_पंचांग_flags = 0;
+	/* Check for Task Management */
+	if (likely(scmnd->SCp.Message == 0)) {
+		int_to_scsilun(scmnd->device->lun, &fcp_cmnd->fc_lun);
+		fcp_cmnd->fc_tm_flags = 0;
 		fcp_cmnd->fc_cmdref = 0;
 
-		स_नकल(fcp_cmnd->fc_cdb, scmnd->cmnd, 16);
+		memcpy(fcp_cmnd->fc_cdb, scmnd->cmnd, 16);
 		fcp_cmnd->fc_pri_ta = FCP_PTA_SIMPLE;
 		fcp_cmnd->fc_dl = cpu_to_be32(scsi_bufflen(scmnd));
 
-		अगर (req->nsge)
-			अगर (req->datadir == DMA_TO_DEVICE)
+		if (req->nsge)
+			if (req->datadir == DMA_TO_DEVICE)
 				fcp_cmnd->fc_flags = FCP_CFL_WRDATA;
-			अन्यथा
+			else
 				fcp_cmnd->fc_flags = FCP_CFL_RDDATA;
-		अन्यथा
+		else
 			fcp_cmnd->fc_flags = 0;
-	पूर्ण अन्यथा अणु
-		स_रखो(fcp_cmnd, 0, माप(*fcp_cmnd));
-		पूर्णांक_to_scsilun(scmnd->device->lun, &fcp_cmnd->fc_lun);
-		fcp_cmnd->fc_पंचांग_flags = (uपूर्णांक8_t)scmnd->SCp.Message;
-	पूर्ण
-पूर्ण
+	} else {
+		memset(fcp_cmnd, 0, sizeof(*fcp_cmnd));
+		int_to_scsilun(scmnd->device->lun, &fcp_cmnd->fc_lun);
+		fcp_cmnd->fc_tm_flags = (uint8_t)scmnd->SCp.Message;
+	}
+}
 
 /*
  * csio_scsi_init_cmd_wr - Initialize the SCSI CMD WR.
- * @req: IO req काष्ठाure.
+ * @req: IO req structure.
  * @addr: DMA location to place the payload.
  * @size: Size of WR (including FW WR + immed data + rsp SG entry
  *
- * Wrapper क्रम populating fw_scsi_cmd_wr.
+ * Wrapper for populating fw_scsi_cmd_wr.
  */
-अटल अंतरभूत व्योम
-csio_scsi_init_cmd_wr(काष्ठा csio_ioreq *req, व्योम *addr, uपूर्णांक32_t size)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_rnode *rn = req->rnode;
-	काष्ठा fw_scsi_cmd_wr *wr = (काष्ठा fw_scsi_cmd_wr *)addr;
-	काष्ठा csio_dma_buf *dma_buf;
-	uपूर्णांक8_t imm = csio_hw_to_scsim(hw)->proto_cmd_len;
+static inline void
+csio_scsi_init_cmd_wr(struct csio_ioreq *req, void *addr, uint32_t size)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_rnode *rn = req->rnode;
+	struct fw_scsi_cmd_wr *wr = (struct fw_scsi_cmd_wr *)addr;
+	struct csio_dma_buf *dma_buf;
+	uint8_t imm = csio_hw_to_scsim(hw)->proto_cmd_len;
 
 	wr->op_immdlen = cpu_to_be32(FW_WR_OP_V(FW_SCSI_CMD_WR) |
 					  FW_SCSI_CMD_WR_IMMDLEN(imm));
@@ -213,11 +212,11 @@ csio_scsi_init_cmd_wr(काष्ठा csio_ioreq *req, व्योम *addr,
 					    FW_WR_LEN16_V(
 						DIV_ROUND_UP(size, 16)));
 
-	wr->cookie = (uपूर्णांकptr_t) req;
+	wr->cookie = (uintptr_t) req;
 	wr->iqid = cpu_to_be16(csio_q_physiqid(hw, req->iq_idx));
-	wr->पंचांगo_val = (uपूर्णांक8_t) req->पंचांगo;
+	wr->tmo_val = (uint8_t) req->tmo;
 	wr->r3 = 0;
-	स_रखो(&wr->r5, 0, 8);
+	memset(&wr->r5, 0, 8);
 
 	/* Get RSP DMA buffer */
 	dma_buf = &req->dma_buf;
@@ -234,147 +233,147 @@ csio_scsi_init_cmd_wr(काष्ठा csio_ioreq *req, व्योम *addr,
 	wr->u.fcoe.r4_lo[1] = 0;
 
 	/* Frame a FCP command */
-	csio_scsi_fcp_cmnd(req, (व्योम *)((uपूर्णांकptr_t)addr +
-				    माप(काष्ठा fw_scsi_cmd_wr)));
-पूर्ण
+	csio_scsi_fcp_cmnd(req, (void *)((uintptr_t)addr +
+				    sizeof(struct fw_scsi_cmd_wr)));
+}
 
-#घोषणा CSIO_SCSI_CMD_WR_SZ(_imm)					\
-	(माप(काष्ठा fw_scsi_cmd_wr) +		/* WR size */	\
+#define CSIO_SCSI_CMD_WR_SZ(_imm)					\
+	(sizeof(struct fw_scsi_cmd_wr) +		/* WR size */	\
 	 ALIGN((_imm), 16))				/* Immed data */
 
-#घोषणा CSIO_SCSI_CMD_WR_SZ_16(_imm)					\
+#define CSIO_SCSI_CMD_WR_SZ_16(_imm)					\
 			(ALIGN(CSIO_SCSI_CMD_WR_SZ((_imm)), 16))
 
 /*
  * csio_scsi_cmd - Create a SCSI CMD WR.
- * @req: IO req काष्ठाure.
+ * @req: IO req structure.
  *
  * Gets a WR slot in the ingress queue and initializes it with SCSI CMD WR.
  *
  */
-अटल अंतरभूत व्योम
-csio_scsi_cmd(काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा csio_wr_pair wrp;
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
-	uपूर्णांक32_t size = CSIO_SCSI_CMD_WR_SZ_16(scsim->proto_cmd_len);
+static inline void
+csio_scsi_cmd(struct csio_ioreq *req)
+{
+	struct csio_wr_pair wrp;
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
+	uint32_t size = CSIO_SCSI_CMD_WR_SZ_16(scsim->proto_cmd_len);
 
 	req->drv_status = csio_wr_get(hw, req->eq_idx, size, &wrp);
-	अगर (unlikely(req->drv_status != 0))
-		वापस;
+	if (unlikely(req->drv_status != 0))
+		return;
 
-	अगर (wrp.size1 >= size) अणु
+	if (wrp.size1 >= size) {
 		/* Initialize WR in one shot */
 		csio_scsi_init_cmd_wr(req, wrp.addr1, size);
-	पूर्ण अन्यथा अणु
-		uपूर्णांक8_t *पंचांगpwr = csio_q_eq_wrap(hw, req->eq_idx);
+	} else {
+		uint8_t *tmpwr = csio_q_eq_wrap(hw, req->eq_idx);
 
 		/*
-		 * Make a temporary copy of the WR and ग_लिखो back
-		 * the copy पूर्णांकo the WR pair.
+		 * Make a temporary copy of the WR and write back
+		 * the copy into the WR pair.
 		 */
-		csio_scsi_init_cmd_wr(req, (व्योम *)पंचांगpwr, size);
-		स_नकल(wrp.addr1, पंचांगpwr, wrp.size1);
-		स_नकल(wrp.addr2, पंचांगpwr + wrp.size1, size - wrp.size1);
-	पूर्ण
-पूर्ण
+		csio_scsi_init_cmd_wr(req, (void *)tmpwr, size);
+		memcpy(wrp.addr1, tmpwr, wrp.size1);
+		memcpy(wrp.addr2, tmpwr + wrp.size1, size - wrp.size1);
+	}
+}
 
 /*
  * csio_scsi_init_ulptx_dsgl - Fill in a ULP_TX_SC_DSGL
  * @hw: HW module
  * @req: IO request
- * @sgl: ULP TX SGL poपूर्णांकer.
+ * @sgl: ULP TX SGL pointer.
  *
  */
-अटल अंतरभूत व्योम
-csio_scsi_init_ultptx_dsgl(काष्ठा csio_hw *hw, काष्ठा csio_ioreq *req,
-			   काष्ठा ulptx_sgl *sgl)
-अणु
-	काष्ठा ulptx_sge_pair *sge_pair = शून्य;
-	काष्ठा scatterlist *sgel;
-	uपूर्णांक32_t i = 0;
-	uपूर्णांक32_t xfer_len;
-	काष्ठा list_head *पंचांगp;
-	काष्ठा csio_dma_buf *dma_buf;
-	काष्ठा scsi_cmnd *scmnd = csio_scsi_cmnd(req);
+static inline void
+csio_scsi_init_ultptx_dsgl(struct csio_hw *hw, struct csio_ioreq *req,
+			   struct ulptx_sgl *sgl)
+{
+	struct ulptx_sge_pair *sge_pair = NULL;
+	struct scatterlist *sgel;
+	uint32_t i = 0;
+	uint32_t xfer_len;
+	struct list_head *tmp;
+	struct csio_dma_buf *dma_buf;
+	struct scsi_cmnd *scmnd = csio_scsi_cmnd(req);
 
 	sgl->cmd_nsge = htonl(ULPTX_CMD_V(ULP_TX_SC_DSGL) | ULPTX_MORE_F |
 				     ULPTX_NSGE_V(req->nsge));
 	/* Now add the data SGLs */
-	अगर (likely(!req->dcopy)) अणु
-		scsi_क्रम_each_sg(scmnd, sgel, req->nsge, i) अणु
-			अगर (i == 0) अणु
+	if (likely(!req->dcopy)) {
+		scsi_for_each_sg(scmnd, sgel, req->nsge, i) {
+			if (i == 0) {
 				sgl->addr0 = cpu_to_be64(sg_dma_address(sgel));
 				sgl->len0 = cpu_to_be32(sg_dma_len(sgel));
-				sge_pair = (काष्ठा ulptx_sge_pair *)(sgl + 1);
-				जारी;
-			पूर्ण
-			अगर ((i - 1) & 0x1) अणु
+				sge_pair = (struct ulptx_sge_pair *)(sgl + 1);
+				continue;
+			}
+			if ((i - 1) & 0x1) {
 				sge_pair->addr[1] = cpu_to_be64(
 							sg_dma_address(sgel));
 				sge_pair->len[1] = cpu_to_be32(
 							sg_dma_len(sgel));
 				sge_pair++;
-			पूर्ण अन्यथा अणु
+			} else {
 				sge_pair->addr[0] = cpu_to_be64(
 							sg_dma_address(sgel));
 				sge_pair->len[0] = cpu_to_be32(
 							sg_dma_len(sgel));
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		/* Program sg elements with driver's DDP buffer */
 		xfer_len = scsi_bufflen(scmnd);
-		list_क्रम_each(पंचांगp, &req->gen_list) अणु
-			dma_buf = (काष्ठा csio_dma_buf *)पंचांगp;
-			अगर (i == 0) अणु
+		list_for_each(tmp, &req->gen_list) {
+			dma_buf = (struct csio_dma_buf *)tmp;
+			if (i == 0) {
 				sgl->addr0 = cpu_to_be64(dma_buf->paddr);
 				sgl->len0 = cpu_to_be32(
 						min(xfer_len, dma_buf->len));
-				sge_pair = (काष्ठा ulptx_sge_pair *)(sgl + 1);
-			पूर्ण अन्यथा अगर ((i - 1) & 0x1) अणु
+				sge_pair = (struct ulptx_sge_pair *)(sgl + 1);
+			} else if ((i - 1) & 0x1) {
 				sge_pair->addr[1] = cpu_to_be64(dma_buf->paddr);
 				sge_pair->len[1] = cpu_to_be32(
 						min(xfer_len, dma_buf->len));
 				sge_pair++;
-			पूर्ण अन्यथा अणु
+			} else {
 				sge_pair->addr[0] = cpu_to_be64(dma_buf->paddr);
 				sge_pair->len[0] = cpu_to_be32(
 						min(xfer_len, dma_buf->len));
-			पूर्ण
+			}
 			xfer_len -= min(xfer_len, dma_buf->len);
 			i++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * csio_scsi_init_पढ़ो_wr - Initialize the READ SCSI WR.
- * @req: IO req काष्ठाure.
+ * csio_scsi_init_read_wr - Initialize the READ SCSI WR.
+ * @req: IO req structure.
  * @wrp: DMA location to place the payload.
  * @size: Size of WR (including FW WR + immed data + rsp SG entry + data SGL
  *
- * Wrapper क्रम populating fw_scsi_पढ़ो_wr.
+ * Wrapper for populating fw_scsi_read_wr.
  */
-अटल अंतरभूत व्योम
-csio_scsi_init_पढ़ो_wr(काष्ठा csio_ioreq *req, व्योम *wrp, uपूर्णांक32_t size)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_rnode *rn = req->rnode;
-	काष्ठा fw_scsi_पढ़ो_wr *wr = (काष्ठा fw_scsi_पढ़ो_wr *)wrp;
-	काष्ठा ulptx_sgl *sgl;
-	काष्ठा csio_dma_buf *dma_buf;
-	uपूर्णांक8_t imm = csio_hw_to_scsim(hw)->proto_cmd_len;
-	काष्ठा scsi_cmnd *scmnd = csio_scsi_cmnd(req);
+static inline void
+csio_scsi_init_read_wr(struct csio_ioreq *req, void *wrp, uint32_t size)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_rnode *rn = req->rnode;
+	struct fw_scsi_read_wr *wr = (struct fw_scsi_read_wr *)wrp;
+	struct ulptx_sgl *sgl;
+	struct csio_dma_buf *dma_buf;
+	uint8_t imm = csio_hw_to_scsim(hw)->proto_cmd_len;
+	struct scsi_cmnd *scmnd = csio_scsi_cmnd(req);
 
 	wr->op_immdlen = cpu_to_be32(FW_WR_OP_V(FW_SCSI_READ_WR) |
 				     FW_SCSI_READ_WR_IMMDLEN(imm));
 	wr->flowid_len16 = cpu_to_be32(FW_WR_FLOWID_V(rn->flowid) |
 				       FW_WR_LEN16_V(DIV_ROUND_UP(size, 16)));
-	wr->cookie = (uपूर्णांकptr_t)req;
+	wr->cookie = (uintptr_t)req;
 	wr->iqid = cpu_to_be16(csio_q_physiqid(hw, req->iq_idx));
-	wr->पंचांगo_val = (uपूर्णांक8_t)(req->पंचांगo);
+	wr->tmo_val = (uint8_t)(req->tmo);
 	wr->use_xfer_cnt = 1;
 	wr->xfer_cnt = cpu_to_be32(scsi_bufflen(scmnd));
 	wr->ini_xfer_cnt = cpu_to_be32(scsi_bufflen(scmnd));
@@ -391,43 +390,43 @@ csio_scsi_init_पढ़ो_wr(काष्ठा csio_ioreq *req, व्यो�
 	wr->u.fcoe.cp_en_class = 0;
 	wr->u.fcoe.r3_lo[0] = 0;
 	wr->u.fcoe.r3_lo[1] = 0;
-	csio_scsi_fcp_cmnd(req, (व्योम *)((uपूर्णांकptr_t)wrp +
-					माप(काष्ठा fw_scsi_पढ़ो_wr)));
+	csio_scsi_fcp_cmnd(req, (void *)((uintptr_t)wrp +
+					sizeof(struct fw_scsi_read_wr)));
 
-	/* Move WR poपूर्णांकer past command and immediate data */
-	sgl = (काष्ठा ulptx_sgl *)((uपूर्णांकptr_t)wrp +
-			      माप(काष्ठा fw_scsi_पढ़ो_wr) + ALIGN(imm, 16));
+	/* Move WR pointer past command and immediate data */
+	sgl = (struct ulptx_sgl *)((uintptr_t)wrp +
+			      sizeof(struct fw_scsi_read_wr) + ALIGN(imm, 16));
 
 	/* Fill in the DSGL */
 	csio_scsi_init_ultptx_dsgl(hw, req, sgl);
-पूर्ण
+}
 
 /*
- * csio_scsi_init_ग_लिखो_wr - Initialize the WRITE SCSI WR.
- * @req: IO req काष्ठाure.
+ * csio_scsi_init_write_wr - Initialize the WRITE SCSI WR.
+ * @req: IO req structure.
  * @wrp: DMA location to place the payload.
  * @size: Size of WR (including FW WR + immed data + rsp SG entry + data SGL
  *
- * Wrapper क्रम populating fw_scsi_ग_लिखो_wr.
+ * Wrapper for populating fw_scsi_write_wr.
  */
-अटल अंतरभूत व्योम
-csio_scsi_init_ग_लिखो_wr(काष्ठा csio_ioreq *req, व्योम *wrp, uपूर्णांक32_t size)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_rnode *rn = req->rnode;
-	काष्ठा fw_scsi_ग_लिखो_wr *wr = (काष्ठा fw_scsi_ग_लिखो_wr *)wrp;
-	काष्ठा ulptx_sgl *sgl;
-	काष्ठा csio_dma_buf *dma_buf;
-	uपूर्णांक8_t imm = csio_hw_to_scsim(hw)->proto_cmd_len;
-	काष्ठा scsi_cmnd *scmnd = csio_scsi_cmnd(req);
+static inline void
+csio_scsi_init_write_wr(struct csio_ioreq *req, void *wrp, uint32_t size)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_rnode *rn = req->rnode;
+	struct fw_scsi_write_wr *wr = (struct fw_scsi_write_wr *)wrp;
+	struct ulptx_sgl *sgl;
+	struct csio_dma_buf *dma_buf;
+	uint8_t imm = csio_hw_to_scsim(hw)->proto_cmd_len;
+	struct scsi_cmnd *scmnd = csio_scsi_cmnd(req);
 
 	wr->op_immdlen = cpu_to_be32(FW_WR_OP_V(FW_SCSI_WRITE_WR) |
 				     FW_SCSI_WRITE_WR_IMMDLEN(imm));
 	wr->flowid_len16 = cpu_to_be32(FW_WR_FLOWID_V(rn->flowid) |
 				       FW_WR_LEN16_V(DIV_ROUND_UP(size, 16)));
-	wr->cookie = (uपूर्णांकptr_t)req;
+	wr->cookie = (uintptr_t)req;
 	wr->iqid = cpu_to_be16(csio_q_physiqid(hw, req->iq_idx));
-	wr->पंचांगo_val = (uपूर्णांक8_t)(req->पंचांगo);
+	wr->tmo_val = (uint8_t)(req->tmo);
 	wr->use_xfer_cnt = 1;
 	wr->xfer_cnt = cpu_to_be32(scsi_bufflen(scmnd));
 	wr->ini_xfer_cnt = cpu_to_be32(scsi_bufflen(scmnd));
@@ -444,162 +443,162 @@ csio_scsi_init_ग_लिखो_wr(काष्ठा csio_ioreq *req, व्य
 	wr->u.fcoe.cp_en_class = 0;
 	wr->u.fcoe.r3_lo[0] = 0;
 	wr->u.fcoe.r3_lo[1] = 0;
-	csio_scsi_fcp_cmnd(req, (व्योम *)((uपूर्णांकptr_t)wrp +
-					माप(काष्ठा fw_scsi_ग_लिखो_wr)));
+	csio_scsi_fcp_cmnd(req, (void *)((uintptr_t)wrp +
+					sizeof(struct fw_scsi_write_wr)));
 
-	/* Move WR poपूर्णांकer past command and immediate data */
-	sgl = (काष्ठा ulptx_sgl *)((uपूर्णांकptr_t)wrp +
-			      माप(काष्ठा fw_scsi_ग_लिखो_wr) + ALIGN(imm, 16));
+	/* Move WR pointer past command and immediate data */
+	sgl = (struct ulptx_sgl *)((uintptr_t)wrp +
+			      sizeof(struct fw_scsi_write_wr) + ALIGN(imm, 16));
 
 	/* Fill in the DSGL */
 	csio_scsi_init_ultptx_dsgl(hw, req, sgl);
-पूर्ण
+}
 
-/* Calculate WR size needed क्रम fw_scsi_पढ़ो_wr/fw_scsi_ग_लिखो_wr */
-#घोषणा CSIO_SCSI_DATA_WRSZ(req, oper, sz, imm)				       \
-करो अणु									       \
-	(sz) = माप(काष्ठा fw_scsi_##oper##_wr) +	/* WR size */          \
+/* Calculate WR size needed for fw_scsi_read_wr/fw_scsi_write_wr */
+#define CSIO_SCSI_DATA_WRSZ(req, oper, sz, imm)				       \
+do {									       \
+	(sz) = sizeof(struct fw_scsi_##oper##_wr) +	/* WR size */          \
 	       ALIGN((imm), 16) +			/* Immed data */       \
-	       माप(काष्ठा ulptx_sgl);		/* ulptx_sgl */	       \
+	       sizeof(struct ulptx_sgl);		/* ulptx_sgl */	       \
 									       \
-	अगर (unlikely((req)->nsge > 1))				               \
-		(sz) += (माप(काष्ठा ulptx_sge_pair) *		       \
+	if (unlikely((req)->nsge > 1))				               \
+		(sz) += (sizeof(struct ulptx_sge_pair) *		       \
 				(ALIGN(((req)->nsge - 1), 2) / 2));            \
 							/* Data SGE */	       \
-पूर्ण जबतक (0)
+} while (0)
 
 /*
- * csio_scsi_पढ़ो - Create a SCSI READ WR.
- * @req: IO req काष्ठाure.
+ * csio_scsi_read - Create a SCSI READ WR.
+ * @req: IO req structure.
  *
  * Gets a WR slot in the ingress queue and initializes it with
  * SCSI READ WR.
  *
  */
-अटल अंतरभूत व्योम
-csio_scsi_पढ़ो(काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा csio_wr_pair wrp;
-	uपूर्णांक32_t size;
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
+static inline void
+csio_scsi_read(struct csio_ioreq *req)
+{
+	struct csio_wr_pair wrp;
+	uint32_t size;
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
 
-	CSIO_SCSI_DATA_WRSZ(req, पढ़ो, size, scsim->proto_cmd_len);
+	CSIO_SCSI_DATA_WRSZ(req, read, size, scsim->proto_cmd_len);
 	size = ALIGN(size, 16);
 
 	req->drv_status = csio_wr_get(hw, req->eq_idx, size, &wrp);
-	अगर (likely(req->drv_status == 0)) अणु
-		अगर (likely(wrp.size1 >= size)) अणु
+	if (likely(req->drv_status == 0)) {
+		if (likely(wrp.size1 >= size)) {
 			/* Initialize WR in one shot */
-			csio_scsi_init_पढ़ो_wr(req, wrp.addr1, size);
-		पूर्ण अन्यथा अणु
-			uपूर्णांक8_t *पंचांगpwr = csio_q_eq_wrap(hw, req->eq_idx);
+			csio_scsi_init_read_wr(req, wrp.addr1, size);
+		} else {
+			uint8_t *tmpwr = csio_q_eq_wrap(hw, req->eq_idx);
 			/*
-			 * Make a temporary copy of the WR and ग_लिखो back
-			 * the copy पूर्णांकo the WR pair.
+			 * Make a temporary copy of the WR and write back
+			 * the copy into the WR pair.
 			 */
-			csio_scsi_init_पढ़ो_wr(req, (व्योम *)पंचांगpwr, size);
-			स_नकल(wrp.addr1, पंचांगpwr, wrp.size1);
-			स_नकल(wrp.addr2, पंचांगpwr + wrp.size1, size - wrp.size1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			csio_scsi_init_read_wr(req, (void *)tmpwr, size);
+			memcpy(wrp.addr1, tmpwr, wrp.size1);
+			memcpy(wrp.addr2, tmpwr + wrp.size1, size - wrp.size1);
+		}
+	}
+}
 
 /*
- * csio_scsi_ग_लिखो - Create a SCSI WRITE WR.
- * @req: IO req काष्ठाure.
+ * csio_scsi_write - Create a SCSI WRITE WR.
+ * @req: IO req structure.
  *
  * Gets a WR slot in the ingress queue and initializes it with
  * SCSI WRITE WR.
  *
  */
-अटल अंतरभूत व्योम
-csio_scsi_ग_लिखो(काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा csio_wr_pair wrp;
-	uपूर्णांक32_t size;
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
+static inline void
+csio_scsi_write(struct csio_ioreq *req)
+{
+	struct csio_wr_pair wrp;
+	uint32_t size;
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
 
-	CSIO_SCSI_DATA_WRSZ(req, ग_लिखो, size, scsim->proto_cmd_len);
+	CSIO_SCSI_DATA_WRSZ(req, write, size, scsim->proto_cmd_len);
 	size = ALIGN(size, 16);
 
 	req->drv_status = csio_wr_get(hw, req->eq_idx, size, &wrp);
-	अगर (likely(req->drv_status == 0)) अणु
-		अगर (likely(wrp.size1 >= size)) अणु
+	if (likely(req->drv_status == 0)) {
+		if (likely(wrp.size1 >= size)) {
 			/* Initialize WR in one shot */
-			csio_scsi_init_ग_लिखो_wr(req, wrp.addr1, size);
-		पूर्ण अन्यथा अणु
-			uपूर्णांक8_t *पंचांगpwr = csio_q_eq_wrap(hw, req->eq_idx);
+			csio_scsi_init_write_wr(req, wrp.addr1, size);
+		} else {
+			uint8_t *tmpwr = csio_q_eq_wrap(hw, req->eq_idx);
 			/*
-			 * Make a temporary copy of the WR and ग_लिखो back
-			 * the copy पूर्णांकo the WR pair.
+			 * Make a temporary copy of the WR and write back
+			 * the copy into the WR pair.
 			 */
-			csio_scsi_init_ग_लिखो_wr(req, (व्योम *)पंचांगpwr, size);
-			स_नकल(wrp.addr1, पंचांगpwr, wrp.size1);
-			स_नकल(wrp.addr2, पंचांगpwr + wrp.size1, size - wrp.size1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			csio_scsi_init_write_wr(req, (void *)tmpwr, size);
+			memcpy(wrp.addr1, tmpwr, wrp.size1);
+			memcpy(wrp.addr2, tmpwr + wrp.size1, size - wrp.size1);
+		}
+	}
+}
 
 /*
- * csio_setup_ddp - Setup DDP buffers क्रम Read request.
- * @req: IO req काष्ठाure.
+ * csio_setup_ddp - Setup DDP buffers for Read request.
+ * @req: IO req structure.
  *
- * Checks SGLs/Data buffers are भवly contiguous required क्रम DDP.
- * If contiguous,driver posts SGLs in the WR otherwise post पूर्णांकernal
- * buffers क्रम such request क्रम DDP.
+ * Checks SGLs/Data buffers are virtually contiguous required for DDP.
+ * If contiguous,driver posts SGLs in the WR otherwise post internal
+ * buffers for such request for DDP.
  */
-अटल अंतरभूत व्योम
-csio_setup_ddp(काष्ठा csio_scsim *scsim, काष्ठा csio_ioreq *req)
-अणु
-#अगर_घोषित __CSIO_DEBUG__
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-#पूर्ण_अगर
-	काष्ठा scatterlist *sgel = शून्य;
-	काष्ठा scsi_cmnd *scmnd = csio_scsi_cmnd(req);
-	uपूर्णांक64_t sg_addr = 0;
-	uपूर्णांक32_t ddp_pagesz = 4096;
-	uपूर्णांक32_t buf_off;
-	काष्ठा csio_dma_buf *dma_buf = शून्य;
-	uपूर्णांक32_t alloc_len = 0;
-	uपूर्णांक32_t xfer_len = 0;
-	uपूर्णांक32_t sg_len = 0;
-	uपूर्णांक32_t i;
+static inline void
+csio_setup_ddp(struct csio_scsim *scsim, struct csio_ioreq *req)
+{
+#ifdef __CSIO_DEBUG__
+	struct csio_hw *hw = req->lnode->hwp;
+#endif
+	struct scatterlist *sgel = NULL;
+	struct scsi_cmnd *scmnd = csio_scsi_cmnd(req);
+	uint64_t sg_addr = 0;
+	uint32_t ddp_pagesz = 4096;
+	uint32_t buf_off;
+	struct csio_dma_buf *dma_buf = NULL;
+	uint32_t alloc_len = 0;
+	uint32_t xfer_len = 0;
+	uint32_t sg_len = 0;
+	uint32_t i;
 
-	scsi_क्रम_each_sg(scmnd, sgel, req->nsge, i) अणु
+	scsi_for_each_sg(scmnd, sgel, req->nsge, i) {
 		sg_addr = sg_dma_address(sgel);
 		sg_len	= sg_dma_len(sgel);
 
 		buf_off = sg_addr & (ddp_pagesz - 1);
 
 		/* Except 1st buffer,all buffer addr have to be Page aligned */
-		अगर (i != 0 && buf_off) अणु
+		if (i != 0 && buf_off) {
 			csio_dbg(hw, "SGL addr not DDP aligned (%llx:%d)\n",
 				 sg_addr, sg_len);
-			जाओ unaligned;
-		पूर्ण
+			goto unaligned;
+		}
 
 		/* Except last buffer,all buffer must end on page boundary */
-		अगर ((i != (req->nsge - 1)) &&
-			((buf_off + sg_len) & (ddp_pagesz - 1))) अणु
+		if ((i != (req->nsge - 1)) &&
+			((buf_off + sg_len) & (ddp_pagesz - 1))) {
 			csio_dbg(hw,
 				 "SGL addr not ending on page boundary"
 				 "(%llx:%d)\n", sg_addr, sg_len);
-			जाओ unaligned;
-		पूर्ण
-	पूर्ण
+			goto unaligned;
+		}
+	}
 
-	/* SGL's are भवly contiguous. HW will DDP to SGLs */
+	/* SGL's are virtually contiguous. HW will DDP to SGLs */
 	req->dcopy = 0;
-	csio_scsi_पढ़ो(req);
+	csio_scsi_read(req);
 
-	वापस;
+	return;
 
 unaligned:
 	CSIO_INC_STATS(scsim, n_unaligned);
 	/*
-	 * For unaligned SGLs, driver will allocate पूर्णांकernal DDP buffer.
+	 * For unaligned SGLs, driver will allocate internal DDP buffer.
 	 * Once command is completed data from DDP buffer copied to SGLs
 	 */
 	req->dcopy = 1;
@@ -609,348 +608,348 @@ unaligned:
 	xfer_len = scsi_bufflen(scmnd);
 
 	i = 0;
-	/* Allocate ddp buffers क्रम this request */
-	जबतक (alloc_len < xfer_len) अणु
+	/* Allocate ddp buffers for this request */
+	while (alloc_len < xfer_len) {
 		dma_buf = csio_get_scsi_ddp(scsim);
-		अगर (dma_buf == शून्य || i > scsim->max_sge) अणु
+		if (dma_buf == NULL || i > scsim->max_sge) {
 			req->drv_status = -EBUSY;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		alloc_len += dma_buf->len;
 		/* Added to IO req */
 		list_add_tail(&dma_buf->list, &req->gen_list);
 		i++;
-	पूर्ण
+	}
 
-	अगर (!req->drv_status) अणु
+	if (!req->drv_status) {
 		/* set number of ddp bufs used */
 		req->nsge = i;
-		csio_scsi_पढ़ो(req);
-		वापस;
-	पूर्ण
+		csio_scsi_read(req);
+		return;
+	}
 
 	 /* release dma descs */
-	अगर (i > 0)
+	if (i > 0)
 		csio_put_scsi_ddp_list(scsim, &req->gen_list, i);
-पूर्ण
+}
 
 /*
  * csio_scsi_init_abrt_cls_wr - Initialize an ABORT/CLOSE WR.
- * @req: IO req काष्ठाure.
+ * @req: IO req structure.
  * @addr: DMA location to place the payload.
  * @size: Size of WR
- * @पात: पात OR बंद
+ * @abort: abort OR close
  *
- * Wrapper क्रम populating fw_scsi_cmd_wr.
+ * Wrapper for populating fw_scsi_cmd_wr.
  */
-अटल अंतरभूत व्योम
-csio_scsi_init_abrt_cls_wr(काष्ठा csio_ioreq *req, व्योम *addr, uपूर्णांक32_t size,
-			   bool पात)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_rnode *rn = req->rnode;
-	काष्ठा fw_scsi_abrt_cls_wr *wr = (काष्ठा fw_scsi_abrt_cls_wr *)addr;
+static inline void
+csio_scsi_init_abrt_cls_wr(struct csio_ioreq *req, void *addr, uint32_t size,
+			   bool abort)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_rnode *rn = req->rnode;
+	struct fw_scsi_abrt_cls_wr *wr = (struct fw_scsi_abrt_cls_wr *)addr;
 
 	wr->op_immdlen = cpu_to_be32(FW_WR_OP_V(FW_SCSI_ABRT_CLS_WR));
 	wr->flowid_len16 = cpu_to_be32(FW_WR_FLOWID_V(rn->flowid) |
 					    FW_WR_LEN16_V(
 						DIV_ROUND_UP(size, 16)));
 
-	wr->cookie = (uपूर्णांकptr_t) req;
+	wr->cookie = (uintptr_t) req;
 	wr->iqid = cpu_to_be16(csio_q_physiqid(hw, req->iq_idx));
-	wr->पंचांगo_val = (uपूर्णांक8_t) req->पंचांगo;
-	/* 0 क्रम CHK_ALL_IO tells FW to look up t_cookie */
+	wr->tmo_val = (uint8_t) req->tmo;
+	/* 0 for CHK_ALL_IO tells FW to look up t_cookie */
 	wr->sub_opcode_to_chk_all_io =
-				(FW_SCSI_ABRT_CLS_WR_SUB_OPCODE(पात) |
+				(FW_SCSI_ABRT_CLS_WR_SUB_OPCODE(abort) |
 				 FW_SCSI_ABRT_CLS_WR_CHK_ALL_IO(0));
 	wr->r3[0] = 0;
 	wr->r3[1] = 0;
 	wr->r3[2] = 0;
 	wr->r3[3] = 0;
-	/* Since we re-use the same ioreq क्रम पात as well */
-	wr->t_cookie = (uपूर्णांकptr_t) req;
-पूर्ण
+	/* Since we re-use the same ioreq for abort as well */
+	wr->t_cookie = (uintptr_t) req;
+}
 
-अटल अंतरभूत व्योम
-csio_scsi_abrt_cls(काष्ठा csio_ioreq *req, bool पात)
-अणु
-	काष्ठा csio_wr_pair wrp;
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	uपूर्णांक32_t size = ALIGN(माप(काष्ठा fw_scsi_abrt_cls_wr), 16);
+static inline void
+csio_scsi_abrt_cls(struct csio_ioreq *req, bool abort)
+{
+	struct csio_wr_pair wrp;
+	struct csio_hw *hw = req->lnode->hwp;
+	uint32_t size = ALIGN(sizeof(struct fw_scsi_abrt_cls_wr), 16);
 
 	req->drv_status = csio_wr_get(hw, req->eq_idx, size, &wrp);
-	अगर (req->drv_status != 0)
-		वापस;
+	if (req->drv_status != 0)
+		return;
 
-	अगर (wrp.size1 >= size) अणु
+	if (wrp.size1 >= size) {
 		/* Initialize WR in one shot */
-		csio_scsi_init_abrt_cls_wr(req, wrp.addr1, size, पात);
-	पूर्ण अन्यथा अणु
-		uपूर्णांक8_t *पंचांगpwr = csio_q_eq_wrap(hw, req->eq_idx);
+		csio_scsi_init_abrt_cls_wr(req, wrp.addr1, size, abort);
+	} else {
+		uint8_t *tmpwr = csio_q_eq_wrap(hw, req->eq_idx);
 		/*
-		 * Make a temporary copy of the WR and ग_लिखो back
-		 * the copy पूर्णांकo the WR pair.
+		 * Make a temporary copy of the WR and write back
+		 * the copy into the WR pair.
 		 */
-		csio_scsi_init_abrt_cls_wr(req, (व्योम *)पंचांगpwr, size, पात);
-		स_नकल(wrp.addr1, पंचांगpwr, wrp.size1);
-		स_नकल(wrp.addr2, पंचांगpwr + wrp.size1, size - wrp.size1);
-	पूर्ण
-पूर्ण
+		csio_scsi_init_abrt_cls_wr(req, (void *)tmpwr, size, abort);
+		memcpy(wrp.addr1, tmpwr, wrp.size1);
+		memcpy(wrp.addr2, tmpwr + wrp.size1, size - wrp.size1);
+	}
+}
 
 /*****************************************************************************/
 /* START: SCSI SM                                                            */
 /*****************************************************************************/
-अटल व्योम
-csio_scsis_uninit(काष्ठा csio_ioreq *req, क्रमागत csio_scsi_ev evt)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
+static void
+csio_scsis_uninit(struct csio_ioreq *req, enum csio_scsi_ev evt)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
 
-	चयन (evt) अणु
-	हाल CSIO_SCSIE_START_IO:
+	switch (evt) {
+	case CSIO_SCSIE_START_IO:
 
-		अगर (req->nsge) अणु
-			अगर (req->datadir == DMA_TO_DEVICE) अणु
+		if (req->nsge) {
+			if (req->datadir == DMA_TO_DEVICE) {
 				req->dcopy = 0;
-				csio_scsi_ग_लिखो(req);
-			पूर्ण अन्यथा
+				csio_scsi_write(req);
+			} else
 				csio_setup_ddp(scsim, req);
-		पूर्ण अन्यथा अणु
+		} else {
 			csio_scsi_cmd(req);
-		पूर्ण
+		}
 
-		अगर (likely(req->drv_status == 0)) अणु
+		if (likely(req->drv_status == 0)) {
 			/* change state and enqueue on active_q */
 			csio_set_state(&req->sm, csio_scsis_io_active);
 			list_add_tail(&req->sm.sm_list, &scsim->active_q);
 			csio_wr_issue(hw, req->eq_idx, false);
 			CSIO_INC_STATS(scsim, n_active);
 
-			वापस;
-		पूर्ण
-		अवरोध;
+			return;
+		}
+		break;
 
-	हाल CSIO_SCSIE_START_TM:
+	case CSIO_SCSIE_START_TM:
 		csio_scsi_cmd(req);
-		अगर (req->drv_status == 0) अणु
+		if (req->drv_status == 0) {
 			/*
 			 * NOTE: We collect the affected I/Os prior to issuing
 			 * LUN reset, and not after it. This is to prevent
-			 * पातing I/Os that get issued after the LUN reset,
+			 * aborting I/Os that get issued after the LUN reset,
 			 * but prior to LUN reset completion (in the event that
 			 * the host stack has not blocked I/Os to a LUN that is
 			 * being reset.
 			 */
-			csio_set_state(&req->sm, csio_scsis_पंचांग_active);
+			csio_set_state(&req->sm, csio_scsis_tm_active);
 			list_add_tail(&req->sm.sm_list, &scsim->active_q);
 			csio_wr_issue(hw, req->eq_idx, false);
-			CSIO_INC_STATS(scsim, n_पंचांग_active);
-		पूर्ण
-		वापस;
+			CSIO_INC_STATS(scsim, n_tm_active);
+		}
+		return;
 
-	हाल CSIO_SCSIE_ABORT:
-	हाल CSIO_SCSIE_CLOSE:
+	case CSIO_SCSIE_ABORT:
+	case CSIO_SCSIE_CLOSE:
 		/*
 		 * NOTE:
 		 * We could get here due to  :
-		 * - a winकरोw in the cleanup path of the SCSI module
-		 *   (csio_scsi_पात_io()). Please see NOTE in this function.
-		 * - a winकरोw in the समय we tried to issue an पात/बंद
+		 * - a window in the cleanup path of the SCSI module
+		 *   (csio_scsi_abort_io()). Please see NOTE in this function.
+		 * - a window in the time we tried to issue an abort/close
 		 *   of a request to FW, and the FW completed the request
 		 *   itself.
-		 *   Prपूर्णांक a message क्रम now, and वापस INVAL either way.
+		 *   Print a message for now, and return INVAL either way.
 		 */
 		req->drv_status = -EINVAL;
 		csio_warn(hw, "Trying to abort/close completed IO:%p!\n", req);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		csio_dbg(hw, "Unhandled event:%d sent to req:%p\n", evt, req);
 		CSIO_DB_ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-csio_scsis_io_active(काष्ठा csio_ioreq *req, क्रमागत csio_scsi_ev evt)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scm = csio_hw_to_scsim(hw);
-	काष्ठा csio_rnode *rn;
+static void
+csio_scsis_io_active(struct csio_ioreq *req, enum csio_scsi_ev evt)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scm = csio_hw_to_scsim(hw);
+	struct csio_rnode *rn;
 
-	चयन (evt) अणु
-	हाल CSIO_SCSIE_COMPLETED:
+	switch (evt) {
+	case CSIO_SCSIE_COMPLETED:
 		CSIO_DEC_STATS(scm, n_active);
 		list_del_init(&req->sm.sm_list);
 		csio_set_state(&req->sm, csio_scsis_uninit);
 		/*
 		 * In MSIX mode, with multiple queues, the SCSI compeltions
 		 * could reach us sooner than the FW events sent to indicate
-		 * I-T nexus loss (link करोwn, remote device logo etc). We
-		 * करोnt want to be वापसing such I/Os to the upper layer
+		 * I-T nexus loss (link down, remote device logo etc). We
+		 * dont want to be returning such I/Os to the upper layer
 		 * immediately, since we wouldnt have reported the I-T nexus
-		 * loss itself. This क्रमces us to serialize such completions
-		 * with the reporting of the I-T nexus loss. Thereक्रमe, we
-		 * पूर्णांकernally queue up such up such completions in the rnode.
+		 * loss itself. This forces us to serialize such completions
+		 * with the reporting of the I-T nexus loss. Therefore, we
+		 * internally queue up such up such completions in the rnode.
 		 * The reporting of I-T nexus loss to the upper layer is then
-		 * followed by the वापसing of I/Os in this पूर्णांकernal queue.
-		 * Having another state aदीर्घwith another queue helps us take
-		 * actions क्रम events such as ABORT received जबतक we are
+		 * followed by the returning of I/Os in this internal queue.
+		 * Having another state alongwith another queue helps us take
+		 * actions for events such as ABORT received while we are
 		 * in this rnode queue.
 		 */
-		अगर (unlikely(req->wr_status != FW_SUCCESS)) अणु
+		if (unlikely(req->wr_status != FW_SUCCESS)) {
 			rn = req->rnode;
 			/*
 			 * FW says remote device is lost, but rnode
-			 * करोesnt reflect it.
+			 * doesnt reflect it.
 			 */
-			अगर (csio_scsi_itnexus_loss_error(req->wr_status) &&
-						csio_is_rnode_पढ़ोy(rn)) अणु
+			if (csio_scsi_itnexus_loss_error(req->wr_status) &&
+						csio_is_rnode_ready(rn)) {
 				csio_set_state(&req->sm,
-						csio_scsis_shost_cmpl_aरुको);
+						csio_scsis_shost_cmpl_await);
 				list_add_tail(&req->sm.sm_list,
 					      &rn->host_cmpl_q);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_ABORT:
+	case CSIO_SCSIE_ABORT:
 		csio_scsi_abrt_cls(req, SCSI_ABORT);
-		अगर (req->drv_status == 0) अणु
+		if (req->drv_status == 0) {
 			csio_wr_issue(hw, req->eq_idx, false);
-			csio_set_state(&req->sm, csio_scsis_पातing);
-		पूर्ण
-		अवरोध;
+			csio_set_state(&req->sm, csio_scsis_aborting);
+		}
+		break;
 
-	हाल CSIO_SCSIE_CLOSE:
+	case CSIO_SCSIE_CLOSE:
 		csio_scsi_abrt_cls(req, SCSI_CLOSE);
-		अगर (req->drv_status == 0) अणु
+		if (req->drv_status == 0) {
 			csio_wr_issue(hw, req->eq_idx, false);
 			csio_set_state(&req->sm, csio_scsis_closing);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CSIO_SCSIE_DRVCLEANUP:
+	case CSIO_SCSIE_DRVCLEANUP:
 		req->wr_status = FW_HOSTERROR;
 		CSIO_DEC_STATS(scm, n_active);
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		csio_dbg(hw, "Unhandled event:%d sent to req:%p\n", evt, req);
 		CSIO_DB_ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-csio_scsis_पंचांग_active(काष्ठा csio_ioreq *req, क्रमागत csio_scsi_ev evt)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scm = csio_hw_to_scsim(hw);
+static void
+csio_scsis_tm_active(struct csio_ioreq *req, enum csio_scsi_ev evt)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scm = csio_hw_to_scsim(hw);
 
-	चयन (evt) अणु
-	हाल CSIO_SCSIE_COMPLETED:
-		CSIO_DEC_STATS(scm, n_पंचांग_active);
+	switch (evt) {
+	case CSIO_SCSIE_COMPLETED:
+		CSIO_DEC_STATS(scm, n_tm_active);
 		list_del_init(&req->sm.sm_list);
 		csio_set_state(&req->sm, csio_scsis_uninit);
 
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_ABORT:
+	case CSIO_SCSIE_ABORT:
 		csio_scsi_abrt_cls(req, SCSI_ABORT);
-		अगर (req->drv_status == 0) अणु
+		if (req->drv_status == 0) {
 			csio_wr_issue(hw, req->eq_idx, false);
-			csio_set_state(&req->sm, csio_scsis_पातing);
-		पूर्ण
-		अवरोध;
+			csio_set_state(&req->sm, csio_scsis_aborting);
+		}
+		break;
 
 
-	हाल CSIO_SCSIE_CLOSE:
+	case CSIO_SCSIE_CLOSE:
 		csio_scsi_abrt_cls(req, SCSI_CLOSE);
-		अगर (req->drv_status == 0) अणु
+		if (req->drv_status == 0) {
 			csio_wr_issue(hw, req->eq_idx, false);
 			csio_set_state(&req->sm, csio_scsis_closing);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल CSIO_SCSIE_DRVCLEANUP:
+	case CSIO_SCSIE_DRVCLEANUP:
 		req->wr_status = FW_HOSTERROR;
-		CSIO_DEC_STATS(scm, n_पंचांग_active);
+		CSIO_DEC_STATS(scm, n_tm_active);
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		csio_dbg(hw, "Unhandled event:%d sent to req:%p\n", evt, req);
 		CSIO_DB_ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-csio_scsis_पातing(काष्ठा csio_ioreq *req, क्रमागत csio_scsi_ev evt)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scm = csio_hw_to_scsim(hw);
+static void
+csio_scsis_aborting(struct csio_ioreq *req, enum csio_scsi_ev evt)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scm = csio_hw_to_scsim(hw);
 
-	चयन (evt) अणु
-	हाल CSIO_SCSIE_COMPLETED:
+	switch (evt) {
+	case CSIO_SCSIE_COMPLETED:
 		csio_dbg(hw,
 			 "ioreq %p recvd cmpltd (wr_status:%d) "
 			 "in aborting st\n", req, req->wr_status);
 		/*
 		 * Use -ECANCELED to explicitly tell the ABORTED event that
-		 * the original I/O was वापसed to driver by FW.
-		 * We करोnt really care अगर the I/O was वापसed with success by
+		 * the original I/O was returned to driver by FW.
+		 * We dont really care if the I/O was returned with success by
 		 * FW (because the ABORT and completion of the I/O crossed each
-		 * other), or any other वापस value. Once we are in पातing
+		 * other), or any other return value. Once we are in aborting
 		 * state, the success or failure of the I/O is unimportant to
 		 * us.
 		 */
 		req->drv_status = -ECANCELED;
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_ABORT:
+	case CSIO_SCSIE_ABORT:
 		CSIO_INC_STATS(scm, n_abrt_dups);
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_ABORTED:
+	case CSIO_SCSIE_ABORTED:
 
 		csio_dbg(hw, "abort of %p return status:0x%x drv_status:%x\n",
 			 req, req->wr_status, req->drv_status);
 		/*
-		 * Check अगर original I/O WR completed beक्रमe the Abort
+		 * Check if original I/O WR completed before the Abort
 		 * completion.
 		 */
-		अगर (req->drv_status != -ECANCELED) अणु
+		if (req->drv_status != -ECANCELED) {
 			csio_warn(hw,
 				  "Abort completed before original I/O,"
 				   " req:%p\n", req);
 			CSIO_DB_ASSERT(0);
-		पूर्ण
+		}
 
 		/*
 		 * There are the following possible scenarios:
-		 * 1. The पात completed successfully, FW वापसed FW_SUCCESS.
+		 * 1. The abort completed successfully, FW returned FW_SUCCESS.
 		 * 2. The completion of an I/O and the receipt of
-		 *    पात क्रम that I/O by the FW crossed each other.
-		 *    The FW वापसed FW_EINVAL. The original I/O would have
-		 *    वापसed with FW_SUCCESS or any other SCSI error.
-		 * 3. The FW couldn't sent the पात out on the wire, as there
-		 *    was an I-T nexus loss (link करोwn, remote device logged
+		 *    abort for that I/O by the FW crossed each other.
+		 *    The FW returned FW_EINVAL. The original I/O would have
+		 *    returned with FW_SUCCESS or any other SCSI error.
+		 * 3. The FW couldn't sent the abort out on the wire, as there
+		 *    was an I-T nexus loss (link down, remote device logged
 		 *    out etc). FW sent back an appropriate IT nexus loss status
-		 *    क्रम the पात.
-		 * 4. FW sent an पात, but पात समयd out (remote device
+		 *    for the abort.
+		 * 4. FW sent an abort, but abort timed out (remote device
 		 *    didnt respond). FW replied back with
 		 *    FW_SCSI_ABORT_TIMEDOUT.
-		 * 5. FW couldn't genuinely पात the request क्रम some reason,
+		 * 5. FW couldn't genuinely abort the request for some reason,
 		 *    and sent us an error.
 		 *
-		 * The first 3 scenarios are treated as  succesful पात
-		 * operations by the host, जबतक the last 2 are failed attempts
-		 * to पात. Manipulate the वापस value of the request
+		 * The first 3 scenarios are treated as  succesful abort
+		 * operations by the host, while the last 2 are failed attempts
+		 * to abort. Manipulate the return value of the request
 		 * appropriately, so that host can convey these results
 		 * back to the upper layer.
 		 */
-		अगर ((req->wr_status == FW_SUCCESS) ||
+		if ((req->wr_status == FW_SUCCESS) ||
 		    (req->wr_status == FW_EINVAL) ||
 		    csio_scsi_itnexus_loss_error(req->wr_status))
 			req->wr_status = FW_SCSI_ABORT_REQUESTED;
@@ -958,69 +957,69 @@ csio_scsis_पातing(काष्ठा csio_ioreq *req, क्रमाग�
 		CSIO_DEC_STATS(scm, n_active);
 		list_del_init(&req->sm.sm_list);
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_DRVCLEANUP:
+	case CSIO_SCSIE_DRVCLEANUP:
 		req->wr_status = FW_HOSTERROR;
 		CSIO_DEC_STATS(scm, n_active);
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_CLOSE:
+	case CSIO_SCSIE_CLOSE:
 		/*
 		 * We can receive this event from the module
-		 * cleanup paths, अगर the FW क्रमgot to reply to the ABORT WR
+		 * cleanup paths, if the FW forgot to reply to the ABORT WR
 		 * and left this ioreq in this state. For now, just ignore
 		 * the event. The CLOSE event is sent to this state, as
-		 * the LINK may have alपढ़ोy gone करोwn.
+		 * the LINK may have already gone down.
 		 */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		csio_dbg(hw, "Unhandled event:%d sent to req:%p\n", evt, req);
 		CSIO_DB_ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-csio_scsis_closing(काष्ठा csio_ioreq *req, क्रमागत csio_scsi_ev evt)
-अणु
-	काष्ठा csio_hw *hw = req->lnode->hwp;
-	काष्ठा csio_scsim *scm = csio_hw_to_scsim(hw);
+static void
+csio_scsis_closing(struct csio_ioreq *req, enum csio_scsi_ev evt)
+{
+	struct csio_hw *hw = req->lnode->hwp;
+	struct csio_scsim *scm = csio_hw_to_scsim(hw);
 
-	चयन (evt) अणु
-	हाल CSIO_SCSIE_COMPLETED:
+	switch (evt) {
+	case CSIO_SCSIE_COMPLETED:
 		csio_dbg(hw,
 			 "ioreq %p recvd cmpltd (wr_status:%d) "
 			 "in closing st\n", req, req->wr_status);
 		/*
 		 * Use -ECANCELED to explicitly tell the CLOSED event that
-		 * the original I/O was वापसed to driver by FW.
-		 * We करोnt really care अगर the I/O was वापसed with success by
+		 * the original I/O was returned to driver by FW.
+		 * We dont really care if the I/O was returned with success by
 		 * FW (because the CLOSE and completion of the I/O crossed each
-		 * other), or any other वापस value. Once we are in पातing
+		 * other), or any other return value. Once we are in aborting
 		 * state, the success or failure of the I/O is unimportant to
 		 * us.
 		 */
 		req->drv_status = -ECANCELED;
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_CLOSED:
+	case CSIO_SCSIE_CLOSED:
 		/*
-		 * Check अगर original I/O WR completed beक्रमe the Close
+		 * Check if original I/O WR completed before the Close
 		 * completion.
 		 */
-		अगर (req->drv_status != -ECANCELED) अणु
+		if (req->drv_status != -ECANCELED) {
 			csio_fatal(hw,
 				   "Close completed before original I/O,"
 				   " req:%p\n", req);
 			CSIO_DB_ASSERT(0);
-		पूर्ण
+		}
 
 		/*
-		 * Either बंद succeeded, or we issued बंद to FW at the
-		 * same समय FW compelted it to us. Either way, the I/O
-		 * is बंदd.
+		 * Either close succeeded, or we issued close to FW at the
+		 * same time FW compelted it to us. Either way, the I/O
+		 * is closed.
 		 */
 		CSIO_DB_ASSERT((req->wr_status == FW_SUCCESS) ||
 					(req->wr_status == FW_EINVAL));
@@ -1029,144 +1028,144 @@ csio_scsis_closing(काष्ठा csio_ioreq *req, क्रमागत csi
 		CSIO_DEC_STATS(scm, n_active);
 		list_del_init(&req->sm.sm_list);
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
+		break;
 
-	हाल CSIO_SCSIE_CLOSE:
-		अवरोध;
+	case CSIO_SCSIE_CLOSE:
+		break;
 
-	हाल CSIO_SCSIE_DRVCLEANUP:
+	case CSIO_SCSIE_DRVCLEANUP:
 		req->wr_status = FW_HOSTERROR;
 		CSIO_DEC_STATS(scm, n_active);
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		csio_dbg(hw, "Unhandled event:%d sent to req:%p\n", evt, req);
 		CSIO_DB_ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-csio_scsis_shost_cmpl_aरुको(काष्ठा csio_ioreq *req, क्रमागत csio_scsi_ev evt)
-अणु
-	चयन (evt) अणु
-	हाल CSIO_SCSIE_ABORT:
-	हाल CSIO_SCSIE_CLOSE:
+static void
+csio_scsis_shost_cmpl_await(struct csio_ioreq *req, enum csio_scsi_ev evt)
+{
+	switch (evt) {
+	case CSIO_SCSIE_ABORT:
+	case CSIO_SCSIE_CLOSE:
 		/*
-		 * Just succeed the पात request, and hope that
-		 * the remote device unरेजिस्टर path will cleanup
+		 * Just succeed the abort request, and hope that
+		 * the remote device unregister path will cleanup
 		 * this I/O to the upper layer within a sane
-		 * amount of समय.
+		 * amount of time.
 		 */
 		/*
-		 * A बंद can come in during a LINK DOWN. The FW would have
-		 * वापसed us the I/O back, but not the remote device lost
-		 * FW event. In this पूर्णांकerval, अगर the I/O बार out at the upper
-		 * layer, a बंद can come in. Take the same action as पात:
-		 * वापस success, and hope that the remote device unरेजिस्टर
-		 * path will cleanup this I/O. If the FW still करोesnt send
-		 * the msg, the बंद बार out, and the upper layer resorts
+		 * A close can come in during a LINK DOWN. The FW would have
+		 * returned us the I/O back, but not the remote device lost
+		 * FW event. In this interval, if the I/O times out at the upper
+		 * layer, a close can come in. Take the same action as abort:
+		 * return success, and hope that the remote device unregister
+		 * path will cleanup this I/O. If the FW still doesnt send
+		 * the msg, the close times out, and the upper layer resorts
 		 * to the next level of error recovery.
 		 */
 		req->drv_status = 0;
-		अवरोध;
-	हाल CSIO_SCSIE_DRVCLEANUP:
+		break;
+	case CSIO_SCSIE_DRVCLEANUP:
 		csio_set_state(&req->sm, csio_scsis_uninit);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		csio_dbg(req->lnode->hwp, "Unhandled event:%d sent to req:%p\n",
 			 evt, req);
 		CSIO_DB_ASSERT(0);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * csio_scsi_cmpl_handler - WR completion handler क्रम SCSI.
+ * csio_scsi_cmpl_handler - WR completion handler for SCSI.
  * @hw: HW module.
  * @wr: The completed WR from the ingress queue.
  * @len: Length of the WR.
  * @flb: Freelist buffer array.
  * @priv: Private object
- * @scsiwr: Poपूर्णांकer to SCSI WR.
+ * @scsiwr: Pointer to SCSI WR.
  *
  * This is the WR completion handler called per completion from the
  * ISR. It is called with lock held. It walks past the RSS and CPL message
  * header where the actual WR is present.
- * It then माला_लो the status, WR handle (ioreq poपूर्णांकer) and the len of
+ * It then gets the status, WR handle (ioreq pointer) and the len of
  * the WR, based on WR opcode. Only on a non-good status is the entire
- * WR copied पूर्णांकo the WR cache (ioreq->fw_wr).
- * The ioreq corresponding to the WR is वापसed to the caller.
- * NOTE: The SCSI queue करोesnt allocate a मुक्तlist today, hence
- * no मुक्तlist buffer is expected.
+ * WR copied into the WR cache (ioreq->fw_wr).
+ * The ioreq corresponding to the WR is returned to the caller.
+ * NOTE: The SCSI queue doesnt allocate a freelist today, hence
+ * no freelist buffer is expected.
  */
-काष्ठा csio_ioreq *
-csio_scsi_cmpl_handler(काष्ठा csio_hw *hw, व्योम *wr, uपूर्णांक32_t len,
-		     काष्ठा csio_fl_dma_buf *flb, व्योम *priv, uपूर्णांक8_t **scsiwr)
-अणु
-	काष्ठा csio_ioreq *ioreq = शून्य;
-	काष्ठा cpl_fw6_msg *cpl;
-	uपूर्णांक8_t *tempwr;
-	uपूर्णांक8_t	status;
-	काष्ठा csio_scsim *scm = csio_hw_to_scsim(hw);
+struct csio_ioreq *
+csio_scsi_cmpl_handler(struct csio_hw *hw, void *wr, uint32_t len,
+		     struct csio_fl_dma_buf *flb, void *priv, uint8_t **scsiwr)
+{
+	struct csio_ioreq *ioreq = NULL;
+	struct cpl_fw6_msg *cpl;
+	uint8_t *tempwr;
+	uint8_t	status;
+	struct csio_scsim *scm = csio_hw_to_scsim(hw);
 
 	/* skip RSS header */
-	cpl = (काष्ठा cpl_fw6_msg *)((uपूर्णांकptr_t)wr + माप(__be64));
+	cpl = (struct cpl_fw6_msg *)((uintptr_t)wr + sizeof(__be64));
 
-	अगर (unlikely(cpl->opcode != CPL_FW6_MSG)) अणु
+	if (unlikely(cpl->opcode != CPL_FW6_MSG)) {
 		csio_warn(hw, "Error: Invalid CPL msg %x recvd on SCSI q\n",
 			  cpl->opcode);
 		CSIO_INC_STATS(scm, n_inval_cplop);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	tempwr = (uपूर्णांक8_t *)(cpl->data);
+	tempwr = (uint8_t *)(cpl->data);
 	status = csio_wr_status(tempwr);
 	*scsiwr = tempwr;
 
-	अगर (likely((*tempwr == FW_SCSI_READ_WR) ||
+	if (likely((*tempwr == FW_SCSI_READ_WR) ||
 			(*tempwr == FW_SCSI_WRITE_WR) ||
-			(*tempwr == FW_SCSI_CMD_WR))) अणु
-		ioreq = (काष्ठा csio_ioreq *)((uपूर्णांकptr_t)
-				 (((काष्ठा fw_scsi_पढ़ो_wr *)tempwr)->cookie));
+			(*tempwr == FW_SCSI_CMD_WR))) {
+		ioreq = (struct csio_ioreq *)((uintptr_t)
+				 (((struct fw_scsi_read_wr *)tempwr)->cookie));
 		CSIO_DB_ASSERT(virt_addr_valid(ioreq));
 
 		ioreq->wr_status = status;
 
-		वापस ioreq;
-	पूर्ण
+		return ioreq;
+	}
 
-	अगर (*tempwr == FW_SCSI_ABRT_CLS_WR) अणु
-		ioreq = (काष्ठा csio_ioreq *)((uपूर्णांकptr_t)
-			 (((काष्ठा fw_scsi_abrt_cls_wr *)tempwr)->cookie));
+	if (*tempwr == FW_SCSI_ABRT_CLS_WR) {
+		ioreq = (struct csio_ioreq *)((uintptr_t)
+			 (((struct fw_scsi_abrt_cls_wr *)tempwr)->cookie));
 		CSIO_DB_ASSERT(virt_addr_valid(ioreq));
 
 		ioreq->wr_status = status;
-		वापस ioreq;
-	पूर्ण
+		return ioreq;
+	}
 
 	csio_warn(hw, "WR with invalid opcode in SCSI IQ: %x\n", *tempwr);
 	CSIO_INC_STATS(scm, n_inval_scsiop);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * csio_scsi_cleanup_io_q - Cleanup the given queue.
  * @scm: SCSI module.
  * @q: Queue to be cleaned up.
  *
- * Called with lock held. Has to निकास with lock held.
+ * Called with lock held. Has to exit with lock held.
  */
-व्योम
-csio_scsi_cleanup_io_q(काष्ठा csio_scsim *scm, काष्ठा list_head *q)
-अणु
-	काष्ठा csio_hw *hw = scm->hw;
-	काष्ठा csio_ioreq *ioreq;
-	काष्ठा list_head *पंचांगp, *next;
-	काष्ठा scsi_cmnd *scmnd;
+void
+csio_scsi_cleanup_io_q(struct csio_scsim *scm, struct list_head *q)
+{
+	struct csio_hw *hw = scm->hw;
+	struct csio_ioreq *ioreq;
+	struct list_head *tmp, *next;
+	struct scsi_cmnd *scmnd;
 
 	/* Call back the completion routines of the active_q */
-	list_क्रम_each_safe(पंचांगp, next, q) अणु
-		ioreq = (काष्ठा csio_ioreq *)पंचांगp;
+	list_for_each_safe(tmp, next, q) {
+		ioreq = (struct csio_ioreq *)tmp;
 		csio_scsi_drvcleanup(ioreq);
 		list_del_init(&ioreq->sm.sm_list);
 		scmnd = csio_scsi_cmnd(ioreq);
@@ -1174,154 +1173,154 @@ csio_scsi_cleanup_io_q(काष्ठा csio_scsim *scm, काष्ठा li
 
 		/*
 		 * Upper layers may have cleared this command, hence this
-		 * check to aव्योम accessing stale references.
+		 * check to avoid accessing stale references.
 		 */
-		अगर (scmnd != शून्य)
+		if (scmnd != NULL)
 			ioreq->io_cbfn(hw, ioreq);
 
-		spin_lock_irq(&scm->मुक्तlist_lock);
+		spin_lock_irq(&scm->freelist_lock);
 		csio_put_scsi_ioreq(scm, ioreq);
-		spin_unlock_irq(&scm->मुक्तlist_lock);
+		spin_unlock_irq(&scm->freelist_lock);
 
 		spin_lock_irq(&hw->lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा CSIO_SCSI_ABORT_Q_POLL_MS		2000
+#define CSIO_SCSI_ABORT_Q_POLL_MS		2000
 
-अटल व्योम
-csio_abrt_cls(काष्ठा csio_ioreq *ioreq, काष्ठा scsi_cmnd *scmnd)
-अणु
-	काष्ठा csio_lnode *ln = ioreq->lnode;
-	काष्ठा csio_hw *hw = ln->hwp;
-	पूर्णांक पढ़ोy = 0;
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
-	पूर्णांक rv;
+static void
+csio_abrt_cls(struct csio_ioreq *ioreq, struct scsi_cmnd *scmnd)
+{
+	struct csio_lnode *ln = ioreq->lnode;
+	struct csio_hw *hw = ln->hwp;
+	int ready = 0;
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
+	int rv;
 
-	अगर (csio_scsi_cmnd(ioreq) != scmnd) अणु
+	if (csio_scsi_cmnd(ioreq) != scmnd) {
 		CSIO_INC_STATS(scsim, n_abrt_race_comp);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	पढ़ोy = csio_is_lnode_पढ़ोy(ln);
+	ready = csio_is_lnode_ready(ln);
 
-	rv = csio_करो_abrt_cls(hw, ioreq, (पढ़ोy ? SCSI_ABORT : SCSI_CLOSE));
-	अगर (rv != 0) अणु
-		अगर (पढ़ोy)
+	rv = csio_do_abrt_cls(hw, ioreq, (ready ? SCSI_ABORT : SCSI_CLOSE));
+	if (rv != 0) {
+		if (ready)
 			CSIO_INC_STATS(scsim, n_abrt_busy_error);
-		अन्यथा
+		else
 			CSIO_INC_STATS(scsim, n_cls_busy_error);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * csio_scsi_पात_io_q - Abort all I/Os on given queue
+ * csio_scsi_abort_io_q - Abort all I/Os on given queue
  * @scm: SCSI module.
- * @q: Queue to पात.
- * @पंचांगo: Timeout in ms
+ * @q: Queue to abort.
+ * @tmo: Timeout in ms
  *
- * Attempt to पात all I/Os on given queue, and रुको क्रम a max
- * of पंचांगo milliseconds क्रम them to complete. Returns success
- * अगर all I/Os are पातed. Else वापसs -ETIMEDOUT.
+ * Attempt to abort all I/Os on given queue, and wait for a max
+ * of tmo milliseconds for them to complete. Returns success
+ * if all I/Os are aborted. Else returns -ETIMEDOUT.
  * Should be entered with lock held. Exits with lock held.
  * NOTE:
- * Lock has to be held across the loop that पातs I/Os, since dropping the lock
+ * Lock has to be held across the loop that aborts I/Os, since dropping the lock
  * in between can cause the list to be corrupted. As a result, the caller
- * of this function has to ensure that the number of I/os to be पातed
- * is finite enough to not cause lock-held-क्रम-too-दीर्घ issues.
+ * of this function has to ensure that the number of I/os to be aborted
+ * is finite enough to not cause lock-held-for-too-long issues.
  */
-अटल पूर्णांक
-csio_scsi_पात_io_q(काष्ठा csio_scsim *scm, काष्ठा list_head *q, uपूर्णांक32_t पंचांगo)
-अणु
-	काष्ठा csio_hw *hw = scm->hw;
-	काष्ठा list_head *पंचांगp, *next;
-	पूर्णांक count = DIV_ROUND_UP(पंचांगo, CSIO_SCSI_ABORT_Q_POLL_MS);
-	काष्ठा scsi_cmnd *scmnd;
+static int
+csio_scsi_abort_io_q(struct csio_scsim *scm, struct list_head *q, uint32_t tmo)
+{
+	struct csio_hw *hw = scm->hw;
+	struct list_head *tmp, *next;
+	int count = DIV_ROUND_UP(tmo, CSIO_SCSI_ABORT_Q_POLL_MS);
+	struct scsi_cmnd *scmnd;
 
-	अगर (list_empty(q))
-		वापस 0;
+	if (list_empty(q))
+		return 0;
 
 	csio_dbg(hw, "Aborting SCSI I/Os\n");
 
-	/* Now पात/बंद I/Os in the queue passed */
-	list_क्रम_each_safe(पंचांगp, next, q) अणु
-		scmnd = csio_scsi_cmnd((काष्ठा csio_ioreq *)पंचांगp);
-		csio_abrt_cls((काष्ठा csio_ioreq *)पंचांगp, scmnd);
-	पूर्ण
+	/* Now abort/close I/Os in the queue passed */
+	list_for_each_safe(tmp, next, q) {
+		scmnd = csio_scsi_cmnd((struct csio_ioreq *)tmp);
+		csio_abrt_cls((struct csio_ioreq *)tmp, scmnd);
+	}
 
-	/* Wait till all active I/Os are completed/पातed/बंदd */
-	जबतक (!list_empty(q) && count--) अणु
+	/* Wait till all active I/Os are completed/aborted/closed */
+	while (!list_empty(q) && count--) {
 		spin_unlock_irq(&hw->lock);
 		msleep(CSIO_SCSI_ABORT_Q_POLL_MS);
 		spin_lock_irq(&hw->lock);
-	पूर्ण
+	}
 
-	/* all पातs completed */
-	अगर (list_empty(q))
-		वापस 0;
+	/* all aborts completed */
+	if (list_empty(q))
+		return 0;
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
 /*
  * csio_scsim_cleanup_io - Cleanup all I/Os in SCSI module.
  * @scm: SCSI module.
- * @पात: पात required.
- * Called with lock held, should निकास with lock held.
- * Can sleep when रुकोing क्रम I/Os to complete.
+ * @abort: abort required.
+ * Called with lock held, should exit with lock held.
+ * Can sleep when waiting for I/Os to complete.
  */
-पूर्णांक
-csio_scsim_cleanup_io(काष्ठा csio_scsim *scm, bool पात)
-अणु
-	काष्ठा csio_hw *hw = scm->hw;
-	पूर्णांक rv = 0;
-	पूर्णांक count = DIV_ROUND_UP(60 * 1000, CSIO_SCSI_ABORT_Q_POLL_MS);
+int
+csio_scsim_cleanup_io(struct csio_scsim *scm, bool abort)
+{
+	struct csio_hw *hw = scm->hw;
+	int rv = 0;
+	int count = DIV_ROUND_UP(60 * 1000, CSIO_SCSI_ABORT_Q_POLL_MS);
 
 	/* No I/Os pending */
-	अगर (list_empty(&scm->active_q))
-		वापस 0;
+	if (list_empty(&scm->active_q))
+		return 0;
 
 	/* Wait until all active I/Os are completed */
-	जबतक (!list_empty(&scm->active_q) && count--) अणु
+	while (!list_empty(&scm->active_q) && count--) {
 		spin_unlock_irq(&hw->lock);
 		msleep(CSIO_SCSI_ABORT_Q_POLL_MS);
 		spin_lock_irq(&hw->lock);
-	पूर्ण
+	}
 
 	/* all I/Os completed */
-	अगर (list_empty(&scm->active_q))
-		वापस 0;
+	if (list_empty(&scm->active_q))
+		return 0;
 
-	/* Else पात */
-	अगर (पात) अणु
-		rv = csio_scsi_पात_io_q(scm, &scm->active_q, 30000);
-		अगर (rv == 0)
-			वापस rv;
+	/* Else abort */
+	if (abort) {
+		rv = csio_scsi_abort_io_q(scm, &scm->active_q, 30000);
+		if (rv == 0)
+			return rv;
 		csio_dbg(hw, "Some I/O aborts timed out, cleaning up..\n");
-	पूर्ण
+	}
 
 	csio_scsi_cleanup_io_q(scm, &scm->active_q);
 
 	CSIO_DB_ASSERT(list_empty(&scm->active_q));
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
 /*
  * csio_scsim_cleanup_io_lnode - Cleanup all I/Os of given lnode.
  * @scm: SCSI module.
  * @lnode: lnode
  *
- * Called with lock held, should निकास with lock held.
- * Can sleep (with dropped lock) when रुकोing क्रम I/Os to complete.
+ * Called with lock held, should exit with lock held.
+ * Can sleep (with dropped lock) when waiting for I/Os to complete.
  */
-पूर्णांक
-csio_scsim_cleanup_io_lnode(काष्ठा csio_scsim *scm, काष्ठा csio_lnode *ln)
-अणु
-	काष्ठा csio_hw *hw = scm->hw;
-	काष्ठा csio_scsi_level_data sld;
-	पूर्णांक rv;
-	पूर्णांक count = DIV_ROUND_UP(60 * 1000, CSIO_SCSI_ABORT_Q_POLL_MS);
+int
+csio_scsim_cleanup_io_lnode(struct csio_scsim *scm, struct csio_lnode *ln)
+{
+	struct csio_hw *hw = scm->hw;
+	struct csio_scsi_level_data sld;
+	int rv;
+	int count = DIV_ROUND_UP(60 * 1000, CSIO_SCSI_ABORT_Q_POLL_MS);
 
 	csio_dbg(hw, "Gathering all SCSI I/Os on lnode %p\n", ln);
 
@@ -1331,60 +1330,60 @@ csio_scsim_cleanup_io_lnode(काष्ठा csio_scsim *scm, काष्ठ�
 	csio_scsi_gather_active_ios(scm, &sld, &ln->cmpl_q);
 
 	/* No I/Os pending on this lnode  */
-	अगर (list_empty(&ln->cmpl_q))
-		वापस 0;
+	if (list_empty(&ln->cmpl_q))
+		return 0;
 
 	/* Wait until all active I/Os on this lnode are completed */
-	जबतक (!list_empty(&ln->cmpl_q) && count--) अणु
+	while (!list_empty(&ln->cmpl_q) && count--) {
 		spin_unlock_irq(&hw->lock);
 		msleep(CSIO_SCSI_ABORT_Q_POLL_MS);
 		spin_lock_irq(&hw->lock);
-	पूर्ण
+	}
 
 	/* all I/Os completed */
-	अगर (list_empty(&ln->cmpl_q))
-		वापस 0;
+	if (list_empty(&ln->cmpl_q))
+		return 0;
 
 	csio_dbg(hw, "Some I/Os pending on ln:%p, aborting them..\n", ln);
 
-	/* I/Os are pending, पात them */
-	rv = csio_scsi_पात_io_q(scm, &ln->cmpl_q, 30000);
-	अगर (rv != 0) अणु
+	/* I/Os are pending, abort them */
+	rv = csio_scsi_abort_io_q(scm, &ln->cmpl_q, 30000);
+	if (rv != 0) {
 		csio_dbg(hw, "Some I/O aborts timed out, cleaning up..\n");
 		csio_scsi_cleanup_io_q(scm, &ln->cmpl_q);
-	पूर्ण
+	}
 
 	CSIO_DB_ASSERT(list_empty(&ln->cmpl_q));
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल sमाप_प्रकार
-csio_show_hw_state(काष्ठा device *dev,
-		   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(class_to_shost(dev));
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static ssize_t
+csio_show_hw_state(struct device *dev,
+		   struct device_attribute *attr, char *buf)
+{
+	struct csio_lnode *ln = shost_priv(class_to_shost(dev));
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
-	अगर (csio_is_hw_पढ़ोy(hw))
-		वापस snम_लिखो(buf, PAGE_SIZE, "ready\n");
-	अन्यथा
-		वापस snम_लिखो(buf, PAGE_SIZE, "not ready\n");
-पूर्ण
+	if (csio_is_hw_ready(hw))
+		return snprintf(buf, PAGE_SIZE, "ready\n");
+	else
+		return snprintf(buf, PAGE_SIZE, "not ready\n");
+}
 
 /* Device reset */
-अटल sमाप_प्रकार
-csio_device_reset(काष्ठा device *dev,
-		   काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(class_to_shost(dev));
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static ssize_t
+csio_device_reset(struct device *dev,
+		   struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct csio_lnode *ln = shost_priv(class_to_shost(dev));
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 
-	अगर (*buf != '1')
-		वापस -EINVAL;
+	if (*buf != '1')
+		return -EINVAL;
 
 	/* Delete NPIV lnodes */
-	csio_lnodes_निकास(hw, 1);
+	csio_lnodes_exit(hw, 1);
 
 	/* Block upper IOs */
 	csio_lnodes_block_request(hw);
@@ -1395,22 +1394,22 @@ csio_device_reset(काष्ठा device *dev,
 
 	/* Unblock upper IOs */
 	csio_lnodes_unblock_request(hw);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* disable port */
-अटल sमाप_प्रकार
-csio_disable_port(काष्ठा device *dev,
-		   काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(class_to_shost(dev));
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
+static ssize_t
+csio_disable_port(struct device *dev,
+		   struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct csio_lnode *ln = shost_priv(class_to_shost(dev));
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
 	bool disable;
 
-	अगर (*buf == '1' || *buf == '0')
+	if (*buf == '1' || *buf == '0')
 		disable = (*buf == '1') ? true : false;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	/* Block upper IOs */
 	csio_lnodes_block_by_port(hw, ln->portid);
@@ -1421,133 +1420,133 @@ csio_disable_port(काष्ठा device *dev,
 
 	/* Unblock upper IOs */
 	csio_lnodes_unblock_by_port(hw, ln->portid);
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* Show debug level */
-अटल sमाप_प्रकार
-csio_show_dbg_level(काष्ठा device *dev,
-		   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(class_to_shost(dev));
+static ssize_t
+csio_show_dbg_level(struct device *dev,
+		   struct device_attribute *attr, char *buf)
+{
+	struct csio_lnode *ln = shost_priv(class_to_shost(dev));
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%x\n", ln->params.log_level);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%x\n", ln->params.log_level);
+}
 
 /* Store debug level */
-अटल sमाप_प्रकार
-csio_store_dbg_level(काष्ठा device *dev,
-		   काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(class_to_shost(dev));
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	uपूर्णांक32_t dbg_level = 0;
+static ssize_t
+csio_store_dbg_level(struct device *dev,
+		   struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct csio_lnode *ln = shost_priv(class_to_shost(dev));
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	uint32_t dbg_level = 0;
 
-	अगर (!है_अंक(buf[0]))
-		वापस -EINVAL;
+	if (!isdigit(buf[0]))
+		return -EINVAL;
 
-	अगर (माला_पूछो(buf, "%i", &dbg_level))
-		वापस -EINVAL;
+	if (sscanf(buf, "%i", &dbg_level))
+		return -EINVAL;
 
 	ln->params.log_level = dbg_level;
 	hw->params.log_level = dbg_level;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEVICE_ATTR(hw_state, S_IRUGO, csio_show_hw_state, शून्य);
-अटल DEVICE_ATTR(device_reset, S_IWUSR, शून्य, csio_device_reset);
-अटल DEVICE_ATTR(disable_port, S_IWUSR, शून्य, csio_disable_port);
-अटल DEVICE_ATTR(dbg_level, S_IRUGO | S_IWUSR, csio_show_dbg_level,
+static DEVICE_ATTR(hw_state, S_IRUGO, csio_show_hw_state, NULL);
+static DEVICE_ATTR(device_reset, S_IWUSR, NULL, csio_device_reset);
+static DEVICE_ATTR(disable_port, S_IWUSR, NULL, csio_disable_port);
+static DEVICE_ATTR(dbg_level, S_IRUGO | S_IWUSR, csio_show_dbg_level,
 		  csio_store_dbg_level);
 
-अटल काष्ठा device_attribute *csio_fcoe_lport_attrs[] = अणु
+static struct device_attribute *csio_fcoe_lport_attrs[] = {
 	&dev_attr_hw_state,
 	&dev_attr_device_reset,
 	&dev_attr_disable_port,
 	&dev_attr_dbg_level,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल sमाप_प्रकार
-csio_show_num_reg_rnodes(काष्ठा device *dev,
-		     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(class_to_shost(dev));
+static ssize_t
+csio_show_num_reg_rnodes(struct device *dev,
+		     struct device_attribute *attr, char *buf)
+{
+	struct csio_lnode *ln = shost_priv(class_to_shost(dev));
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", ln->num_reg_rnodes);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", ln->num_reg_rnodes);
+}
 
-अटल DEVICE_ATTR(num_reg_rnodes, S_IRUGO, csio_show_num_reg_rnodes, शून्य);
+static DEVICE_ATTR(num_reg_rnodes, S_IRUGO, csio_show_num_reg_rnodes, NULL);
 
-अटल काष्ठा device_attribute *csio_fcoe_vport_attrs[] = अणु
+static struct device_attribute *csio_fcoe_vport_attrs[] = {
 	&dev_attr_num_reg_rnodes,
 	&dev_attr_dbg_level,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल अंतरभूत uपूर्णांक32_t
-csio_scsi_copy_to_sgl(काष्ठा csio_hw *hw, काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा scsi_cmnd *scmnd  = (काष्ठा scsi_cmnd *)csio_scsi_cmnd(req);
-	काष्ठा scatterlist *sg;
-	uपूर्णांक32_t bytes_left;
-	uपूर्णांक32_t bytes_copy;
-	uपूर्णांक32_t buf_off = 0;
-	uपूर्णांक32_t start_off = 0;
-	uपूर्णांक32_t sg_off = 0;
-	व्योम *sg_addr;
-	व्योम *buf_addr;
-	काष्ठा csio_dma_buf *dma_buf;
+static inline uint32_t
+csio_scsi_copy_to_sgl(struct csio_hw *hw, struct csio_ioreq *req)
+{
+	struct scsi_cmnd *scmnd  = (struct scsi_cmnd *)csio_scsi_cmnd(req);
+	struct scatterlist *sg;
+	uint32_t bytes_left;
+	uint32_t bytes_copy;
+	uint32_t buf_off = 0;
+	uint32_t start_off = 0;
+	uint32_t sg_off = 0;
+	void *sg_addr;
+	void *buf_addr;
+	struct csio_dma_buf *dma_buf;
 
 	bytes_left = scsi_bufflen(scmnd);
 	sg = scsi_sglist(scmnd);
-	dma_buf = (काष्ठा csio_dma_buf *)csio_list_next(&req->gen_list);
+	dma_buf = (struct csio_dma_buf *)csio_list_next(&req->gen_list);
 
 	/* Copy data from driver buffer to SGs of SCSI CMD */
-	जबतक (bytes_left > 0 && sg && dma_buf) अणु
-		अगर (buf_off >= dma_buf->len) अणु
+	while (bytes_left > 0 && sg && dma_buf) {
+		if (buf_off >= dma_buf->len) {
 			buf_off = 0;
-			dma_buf = (काष्ठा csio_dma_buf *)
+			dma_buf = (struct csio_dma_buf *)
 					csio_list_next(dma_buf);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (start_off >= sg->length) अणु
+		if (start_off >= sg->length) {
 			start_off -= sg->length;
 			sg = sg_next(sg);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		buf_addr = dma_buf->vaddr + buf_off;
 		sg_off = sg->offset + start_off;
 		bytes_copy = min((dma_buf->len - buf_off),
 				sg->length - start_off);
-		bytes_copy = min((uपूर्णांक32_t)(PAGE_SIZE - (sg_off & ~PAGE_MASK)),
+		bytes_copy = min((uint32_t)(PAGE_SIZE - (sg_off & ~PAGE_MASK)),
 				 bytes_copy);
 
 		sg_addr = kmap_atomic(sg_page(sg) + (sg_off >> PAGE_SHIFT));
-		अगर (!sg_addr) अणु
+		if (!sg_addr) {
 			csio_err(hw, "failed to kmap sg:%p of ioreq:%p\n",
 				sg, req);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		csio_dbg(hw, "copy_to_sgl:sg_addr %p sg_off %d buf %p len %d\n",
 				sg_addr, sg_off, buf_addr, bytes_copy);
-		स_नकल(sg_addr + (sg_off & ~PAGE_MASK), buf_addr, bytes_copy);
+		memcpy(sg_addr + (sg_off & ~PAGE_MASK), buf_addr, bytes_copy);
 		kunmap_atomic(sg_addr);
 
 		start_off +=  bytes_copy;
 		buf_off += bytes_copy;
 		bytes_left -= bytes_copy;
-	पूर्ण
+	}
 
-	अगर (bytes_left > 0)
-		वापस DID_ERROR;
-	अन्यथा
-		वापस DID_OK;
-पूर्ण
+	if (bytes_left > 0)
+		return DID_ERROR;
+	else
+		return DID_OK;
+}
 
 /*
  * csio_scsi_err_handler - SCSI error handler.
@@ -1555,83 +1554,83 @@ csio_scsi_copy_to_sgl(काष्ठा csio_hw *hw, काष्ठा csio_io
  * @req: IO request.
  *
  */
-अटल अंतरभूत व्योम
-csio_scsi_err_handler(काष्ठा csio_hw *hw, काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा scsi_cmnd *cmnd  = (काष्ठा scsi_cmnd *)csio_scsi_cmnd(req);
-	काष्ठा csio_scsim *scm = csio_hw_to_scsim(hw);
-	काष्ठा fcp_resp_with_ext *fcp_resp;
-	काष्ठा fcp_resp_rsp_info *rsp_info;
-	काष्ठा csio_dma_buf *dma_buf;
-	uपूर्णांक8_t flags, scsi_status = 0;
-	uपूर्णांक32_t host_status = DID_OK;
-	uपूर्णांक32_t rsp_len = 0, sns_len = 0;
-	काष्ठा csio_rnode *rn = (काष्ठा csio_rnode *)(cmnd->device->hostdata);
+static inline void
+csio_scsi_err_handler(struct csio_hw *hw, struct csio_ioreq *req)
+{
+	struct scsi_cmnd *cmnd  = (struct scsi_cmnd *)csio_scsi_cmnd(req);
+	struct csio_scsim *scm = csio_hw_to_scsim(hw);
+	struct fcp_resp_with_ext *fcp_resp;
+	struct fcp_resp_rsp_info *rsp_info;
+	struct csio_dma_buf *dma_buf;
+	uint8_t flags, scsi_status = 0;
+	uint32_t host_status = DID_OK;
+	uint32_t rsp_len = 0, sns_len = 0;
+	struct csio_rnode *rn = (struct csio_rnode *)(cmnd->device->hostdata);
 
 
-	चयन (req->wr_status) अणु
-	हाल FW_HOSTERROR:
-		अगर (unlikely(!csio_is_hw_पढ़ोy(hw)))
-			वापस;
+	switch (req->wr_status) {
+	case FW_HOSTERROR:
+		if (unlikely(!csio_is_hw_ready(hw)))
+			return;
 
 		host_status = DID_ERROR;
 		CSIO_INC_STATS(scm, n_hosterror);
 
-		अवरोध;
-	हाल FW_SCSI_RSP_ERR:
+		break;
+	case FW_SCSI_RSP_ERR:
 		dma_buf = &req->dma_buf;
-		fcp_resp = (काष्ठा fcp_resp_with_ext *)dma_buf->vaddr;
-		rsp_info = (काष्ठा fcp_resp_rsp_info *)(fcp_resp + 1);
+		fcp_resp = (struct fcp_resp_with_ext *)dma_buf->vaddr;
+		rsp_info = (struct fcp_resp_rsp_info *)(fcp_resp + 1);
 		flags = fcp_resp->resp.fr_flags;
 		scsi_status = fcp_resp->resp.fr_status;
 
-		अगर (flags & FCP_RSP_LEN_VAL) अणु
+		if (flags & FCP_RSP_LEN_VAL) {
 			rsp_len = be32_to_cpu(fcp_resp->ext.fr_rsp_len);
-			अगर ((rsp_len != 0 && rsp_len != 4 && rsp_len != 8) ||
-				(rsp_info->rsp_code != FCP_TMF_CMPL)) अणु
+			if ((rsp_len != 0 && rsp_len != 4 && rsp_len != 8) ||
+				(rsp_info->rsp_code != FCP_TMF_CMPL)) {
 				host_status = DID_ERROR;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		अगर ((flags & FCP_SNS_LEN_VAL) && fcp_resp->ext.fr_sns_len) अणु
+		if ((flags & FCP_SNS_LEN_VAL) && fcp_resp->ext.fr_sns_len) {
 			sns_len = be32_to_cpu(fcp_resp->ext.fr_sns_len);
-			अगर (sns_len > SCSI_SENSE_BUFFERSIZE)
+			if (sns_len > SCSI_SENSE_BUFFERSIZE)
 				sns_len = SCSI_SENSE_BUFFERSIZE;
 
-			स_नकल(cmnd->sense_buffer,
+			memcpy(cmnd->sense_buffer,
 			       &rsp_info->_fr_resvd[0] + rsp_len, sns_len);
-			CSIO_INC_STATS(scm, n_स्वतःsense);
-		पूर्ण
+			CSIO_INC_STATS(scm, n_autosense);
+		}
 
 		scsi_set_resid(cmnd, 0);
 
 		/* Under run */
-		अगर (flags & FCP_RESID_UNDER) अणु
+		if (flags & FCP_RESID_UNDER) {
 			scsi_set_resid(cmnd,
 				       be32_to_cpu(fcp_resp->ext.fr_resid));
 
-			अगर (!(flags & FCP_SNS_LEN_VAL) &&
+			if (!(flags & FCP_SNS_LEN_VAL) &&
 			    (scsi_status == SAM_STAT_GOOD) &&
 			    ((scsi_bufflen(cmnd) - scsi_get_resid(cmnd))
 							< cmnd->underflow))
 				host_status = DID_ERROR;
-		पूर्ण अन्यथा अगर (flags & FCP_RESID_OVER)
+		} else if (flags & FCP_RESID_OVER)
 			host_status = DID_ERROR;
 
-		CSIO_INC_STATS(scm, n_rsलिखो_त्रुटि);
-		अवरोध;
+		CSIO_INC_STATS(scm, n_rsperror);
+		break;
 
-	हाल FW_SCSI_OVER_FLOW_ERR:
+	case FW_SCSI_OVER_FLOW_ERR:
 		csio_warn(hw,
 			  "Over-flow error,cmnd:0x%x expected len:0x%x"
 			  " resid:0x%x\n", cmnd->cmnd[0],
 			  scsi_bufflen(cmnd), scsi_get_resid(cmnd));
 		host_status = DID_ERROR;
 		CSIO_INC_STATS(scm, n_ovflerror);
-		अवरोध;
+		break;
 
-	हाल FW_SCSI_UNDER_FLOW_ERR:
+	case FW_SCSI_UNDER_FLOW_ERR:
 		csio_warn(hw,
 			  "Under-flow error,cmnd:0x%x expected"
 			  " len:0x%x resid:0x%x lun:0x%llx ssn:0x%x\n",
@@ -1640,93 +1639,93 @@ csio_scsi_err_handler(काष्ठा csio_hw *hw, काष्ठा csio_io
 			  rn->flowid);
 		host_status = DID_ERROR;
 		CSIO_INC_STATS(scm, n_unflerror);
-		अवरोध;
+		break;
 
-	हाल FW_SCSI_ABORT_REQUESTED:
-	हाल FW_SCSI_ABORTED:
-	हाल FW_SCSI_CLOSE_REQUESTED:
+	case FW_SCSI_ABORT_REQUESTED:
+	case FW_SCSI_ABORTED:
+	case FW_SCSI_CLOSE_REQUESTED:
 		csio_dbg(hw, "Req %p cmd:%p op:%x %s\n", req, cmnd,
 			     cmnd->cmnd[0],
 			    (req->wr_status == FW_SCSI_CLOSE_REQUESTED) ?
 			    "closed" : "aborted");
 		/*
-		 * csio_eh_पात_handler checks this value to
-		 * succeed or fail the पात request.
+		 * csio_eh_abort_handler checks this value to
+		 * succeed or fail the abort request.
 		 */
 		host_status = DID_REQUEUE;
-		अगर (req->wr_status == FW_SCSI_CLOSE_REQUESTED)
-			CSIO_INC_STATS(scm, n_बंदd);
-		अन्यथा
-			CSIO_INC_STATS(scm, n_पातed);
-		अवरोध;
+		if (req->wr_status == FW_SCSI_CLOSE_REQUESTED)
+			CSIO_INC_STATS(scm, n_closed);
+		else
+			CSIO_INC_STATS(scm, n_aborted);
+		break;
 
-	हाल FW_SCSI_ABORT_TIMEDOUT:
-		/* FW समयd out the पात itself */
+	case FW_SCSI_ABORT_TIMEDOUT:
+		/* FW timed out the abort itself */
 		csio_dbg(hw, "FW timed out abort req:%p cmnd:%p status:%x\n",
 			 req, cmnd, req->wr_status);
 		host_status = DID_ERROR;
-		CSIO_INC_STATS(scm, n_abrt_समयकरोut);
-		अवरोध;
+		CSIO_INC_STATS(scm, n_abrt_timedout);
+		break;
 
-	हाल FW_RDEV_NOT_READY:
+	case FW_RDEV_NOT_READY:
 		/*
-		 * In firmware, a RDEV can get पूर्णांकo this state
-		 * temporarily, beक्रमe moving पूर्णांकo dissapeared/lost
+		 * In firmware, a RDEV can get into this state
+		 * temporarily, before moving into dissapeared/lost
 		 * state. So, the driver should complete the request equivalent
 		 * to device-disappeared!
 		 */
 		CSIO_INC_STATS(scm, n_rdev_nr_error);
 		host_status = DID_ERROR;
-		अवरोध;
+		break;
 
-	हाल FW_ERR_RDEV_LOST:
+	case FW_ERR_RDEV_LOST:
 		CSIO_INC_STATS(scm, n_rdev_lost_error);
 		host_status = DID_ERROR;
-		अवरोध;
+		break;
 
-	हाल FW_ERR_RDEV_LOGO:
+	case FW_ERR_RDEV_LOGO:
 		CSIO_INC_STATS(scm, n_rdev_logo_error);
 		host_status = DID_ERROR;
-		अवरोध;
+		break;
 
-	हाल FW_ERR_RDEV_IMPL_LOGO:
+	case FW_ERR_RDEV_IMPL_LOGO:
 		host_status = DID_ERROR;
-		अवरोध;
+		break;
 
-	हाल FW_ERR_LINK_DOWN:
-		CSIO_INC_STATS(scm, n_link_करोwn_error);
+	case FW_ERR_LINK_DOWN:
+		CSIO_INC_STATS(scm, n_link_down_error);
 		host_status = DID_ERROR;
-		अवरोध;
+		break;
 
-	हाल FW_FCOE_NO_XCHG:
+	case FW_FCOE_NO_XCHG:
 		CSIO_INC_STATS(scm, n_no_xchg_error);
 		host_status = DID_ERROR;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		csio_err(hw, "Unknown SCSI FW WR status:%d req:%p cmnd:%p\n",
 			    req->wr_status, req, cmnd);
 		CSIO_DB_ASSERT(0);
 
 		CSIO_INC_STATS(scm, n_unknown_error);
 		host_status = DID_ERROR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	अगर (req->nsge > 0) अणु
+	if (req->nsge > 0) {
 		scsi_dma_unmap(cmnd);
-		अगर (req->dcopy && (host_status == DID_OK))
+		if (req->dcopy && (host_status == DID_OK))
 			host_status = csio_scsi_copy_to_sgl(hw, req);
-	पूर्ण
+	}
 
 	cmnd->result = (((host_status) << 16) | scsi_status);
-	cmnd->scsi_करोne(cmnd);
+	cmnd->scsi_done(cmnd);
 
-	/* Wake up रुकोing thपढ़ोs */
-	csio_scsi_cmnd(req) = शून्य;
+	/* Wake up waiting threads */
+	csio_scsi_cmnd(req) = NULL;
 	complete(&req->cmplobj);
-पूर्ण
+}
 
 /*
  * csio_scsi_cbfn - SCSI callback function.
@@ -1734,98 +1733,98 @@ out:
  * @req: IO request.
  *
  */
-अटल व्योम
-csio_scsi_cbfn(काष्ठा csio_hw *hw, काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा scsi_cmnd *cmnd  = (काष्ठा scsi_cmnd *)csio_scsi_cmnd(req);
-	uपूर्णांक8_t scsi_status = SAM_STAT_GOOD;
-	uपूर्णांक32_t host_status = DID_OK;
+static void
+csio_scsi_cbfn(struct csio_hw *hw, struct csio_ioreq *req)
+{
+	struct scsi_cmnd *cmnd  = (struct scsi_cmnd *)csio_scsi_cmnd(req);
+	uint8_t scsi_status = SAM_STAT_GOOD;
+	uint32_t host_status = DID_OK;
 
-	अगर (likely(req->wr_status == FW_SUCCESS)) अणु
-		अगर (req->nsge > 0) अणु
+	if (likely(req->wr_status == FW_SUCCESS)) {
+		if (req->nsge > 0) {
 			scsi_dma_unmap(cmnd);
-			अगर (req->dcopy)
+			if (req->dcopy)
 				host_status = csio_scsi_copy_to_sgl(hw, req);
-		पूर्ण
+		}
 
 		cmnd->result = (((host_status) << 16) | scsi_status);
-		cmnd->scsi_करोne(cmnd);
-		csio_scsi_cmnd(req) = शून्य;
+		cmnd->scsi_done(cmnd);
+		csio_scsi_cmnd(req) = NULL;
 		CSIO_INC_STATS(csio_hw_to_scsim(hw), n_tot_success);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Error handling */
 		csio_scsi_err_handler(hw, req);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * csio_queuecommand - Entry poपूर्णांक to kickstart an I/O request.
- * @host:	The scsi_host poपूर्णांकer.
+ * csio_queuecommand - Entry point to kickstart an I/O request.
+ * @host:	The scsi_host pointer.
  * @cmnd:	The I/O request from ML.
  *
- * This routine करोes the following:
- *	- Checks क्रम HW and Rnode module पढ़ोiness.
- *	- Gets a मुक्त ioreq काष्ठाure (which is alपढ़ोy initialized
+ * This routine does the following:
+ *	- Checks for HW and Rnode module readiness.
+ *	- Gets a free ioreq structure (which is already initialized
  *	  to uninit during its allocation).
  *	- Maps SG elements.
  *	- Initializes ioreq members.
- *	- Kicks off the SCSI state machine क्रम this IO.
+ *	- Kicks off the SCSI state machine for this IO.
  *	- Returns busy status on error.
  */
-अटल पूर्णांक
-csio_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cmnd *cmnd)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(host);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
-	काष्ठा csio_rnode *rn = (काष्ठा csio_rnode *)(cmnd->device->hostdata);
-	काष्ठा csio_ioreq *ioreq = शून्य;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक nsge = 0;
-	पूर्णांक rv = SCSI_MLQUEUE_HOST_BUSY, nr;
-	पूर्णांक retval;
-	काष्ठा csio_scsi_qset *sqset;
-	काष्ठा fc_rport *rport = starget_to_rport(scsi_target(cmnd->device));
+static int
+csio_queuecommand(struct Scsi_Host *host, struct scsi_cmnd *cmnd)
+{
+	struct csio_lnode *ln = shost_priv(host);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
+	struct csio_rnode *rn = (struct csio_rnode *)(cmnd->device->hostdata);
+	struct csio_ioreq *ioreq = NULL;
+	unsigned long flags;
+	int nsge = 0;
+	int rv = SCSI_MLQUEUE_HOST_BUSY, nr;
+	int retval;
+	struct csio_scsi_qset *sqset;
+	struct fc_rport *rport = starget_to_rport(scsi_target(cmnd->device));
 
 	sqset = &hw->sqset[ln->portid][blk_mq_rq_cpu(cmnd->request)];
 
-	nr = fc_remote_port_chkपढ़ोy(rport);
-	अगर (nr) अणु
+	nr = fc_remote_port_chkready(rport);
+	if (nr) {
 		cmnd->result = nr;
 		CSIO_INC_STATS(scsim, n_rn_nr_error);
-		जाओ err_करोne;
-	पूर्ण
+		goto err_done;
+	}
 
-	अगर (unlikely(!csio_is_hw_पढ़ोy(hw))) अणु
+	if (unlikely(!csio_is_hw_ready(hw))) {
 		cmnd->result = (DID_REQUEUE << 16);
 		CSIO_INC_STATS(scsim, n_hw_nr_error);
-		जाओ err_करोne;
-	पूर्ण
+		goto err_done;
+	}
 
-	/* Get req->nsge, अगर there are SG elements to be mapped  */
+	/* Get req->nsge, if there are SG elements to be mapped  */
 	nsge = scsi_dma_map(cmnd);
-	अगर (unlikely(nsge < 0)) अणु
+	if (unlikely(nsge < 0)) {
 		CSIO_INC_STATS(scsim, n_dmamap_error);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Do we support so many mappings? */
-	अगर (unlikely(nsge > scsim->max_sge)) अणु
+	if (unlikely(nsge > scsim->max_sge)) {
 		csio_warn(hw,
 			  "More SGEs than can be supported."
 			  " SGEs: %d, Max SGEs: %d\n", nsge, scsim->max_sge);
 		CSIO_INC_STATS(scsim, n_unsupp_sge_error);
-		जाओ err_dma_unmap;
-	पूर्ण
+		goto err_dma_unmap;
+	}
 
-	/* Get a मुक्त ioreq काष्ठाure - SM is alपढ़ोy set to uninit */
+	/* Get a free ioreq structure - SM is already set to uninit */
 	ioreq = csio_get_scsi_ioreq_lock(hw, scsim);
-	अगर (!ioreq) अणु
+	if (!ioreq) {
 		csio_err(hw, "Out of I/O request elements. Active #:%d\n",
 			 scsim->stats.n_active);
 		CSIO_INC_STATS(scsim, n_no_req_error);
-		जाओ err_dma_unmap;
-	पूर्ण
+		goto err_dma_unmap;
+	}
 
 	ioreq->nsge		= nsge;
 	ioreq->lnode		= ln;
@@ -1834,24 +1833,24 @@ csio_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cm
 	ioreq->eq_idx		= sqset->eq_idx;
 	ioreq->wr_status	= 0;
 	ioreq->drv_status	= 0;
-	csio_scsi_cmnd(ioreq)	= (व्योम *)cmnd;
-	ioreq->पंचांगo		= 0;
+	csio_scsi_cmnd(ioreq)	= (void *)cmnd;
+	ioreq->tmo		= 0;
 	ioreq->datadir		= cmnd->sc_data_direction;
 
-	अगर (cmnd->sc_data_direction == DMA_TO_DEVICE) अणु
+	if (cmnd->sc_data_direction == DMA_TO_DEVICE) {
 		CSIO_INC_STATS(ln, n_output_requests);
 		ln->stats.n_output_bytes += scsi_bufflen(cmnd);
-	पूर्ण अन्यथा अगर (cmnd->sc_data_direction == DMA_FROM_DEVICE) अणु
+	} else if (cmnd->sc_data_direction == DMA_FROM_DEVICE) {
 		CSIO_INC_STATS(ln, n_input_requests);
 		ln->stats.n_input_bytes += scsi_bufflen(cmnd);
-	पूर्ण अन्यथा
+	} else
 		CSIO_INC_STATS(ln, n_control_requests);
 
 	/* Set cbfn */
 	ioreq->io_cbfn = csio_scsi_cbfn;
 
-	/* Needed during पात */
-	cmnd->host_scribble = (अचिन्हित अक्षर *)ioreq;
+	/* Needed during abort */
+	cmnd->host_scribble = (unsigned char *)ioreq;
 	cmnd->SCp.Message = 0;
 
 	/* Kick off SCSI IO SM on the ioreq */
@@ -1859,259 +1858,259 @@ csio_queuecommand(काष्ठा Scsi_Host *host, काष्ठा scsi_cm
 	retval = csio_scsi_start_io(ioreq);
 	spin_unlock_irqrestore(&hw->lock, flags);
 
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		csio_err(hw, "ioreq: %p couldn't be started, status:%d\n",
 			 ioreq, retval);
 		CSIO_INC_STATS(scsim, n_busy_error);
-		जाओ err_put_req;
-	पूर्ण
+		goto err_put_req;
+	}
 
-	वापस 0;
+	return 0;
 
 err_put_req:
 	csio_put_scsi_ioreq_lock(hw, scsim, ioreq);
 err_dma_unmap:
-	अगर (nsge > 0)
+	if (nsge > 0)
 		scsi_dma_unmap(cmnd);
 err:
-	वापस rv;
+	return rv;
 
-err_करोne:
-	cmnd->scsi_करोne(cmnd);
-	वापस 0;
-पूर्ण
+err_done:
+	cmnd->scsi_done(cmnd);
+	return 0;
+}
 
-अटल पूर्णांक
-csio_करो_abrt_cls(काष्ठा csio_hw *hw, काष्ठा csio_ioreq *ioreq, bool पात)
-अणु
-	पूर्णांक rv;
-	पूर्णांक cpu = smp_processor_id();
-	काष्ठा csio_lnode *ln = ioreq->lnode;
-	काष्ठा csio_scsi_qset *sqset = &hw->sqset[ln->portid][cpu];
+static int
+csio_do_abrt_cls(struct csio_hw *hw, struct csio_ioreq *ioreq, bool abort)
+{
+	int rv;
+	int cpu = smp_processor_id();
+	struct csio_lnode *ln = ioreq->lnode;
+	struct csio_scsi_qset *sqset = &hw->sqset[ln->portid][cpu];
 
-	ioreq->पंचांगo = CSIO_SCSI_ABRT_TMO_MS;
+	ioreq->tmo = CSIO_SCSI_ABRT_TMO_MS;
 	/*
-	 * Use current processor queue क्रम posting the पात/बंद, but retain
-	 * the ingress queue ID of the original I/O being पातed/बंदd - we
-	 * need the पात/बंद completion to be received on the same queue
+	 * Use current processor queue for posting the abort/close, but retain
+	 * the ingress queue ID of the original I/O being aborted/closed - we
+	 * need the abort/close completion to be received on the same queue
 	 * as the original I/O.
 	 */
 	ioreq->eq_idx = sqset->eq_idx;
 
-	अगर (पात == SCSI_ABORT)
-		rv = csio_scsi_पात(ioreq);
-	अन्यथा
-		rv = csio_scsi_बंद(ioreq);
+	if (abort == SCSI_ABORT)
+		rv = csio_scsi_abort(ioreq);
+	else
+		rv = csio_scsi_close(ioreq);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-अटल पूर्णांक
-csio_eh_पात_handler(काष्ठा scsi_cmnd *cmnd)
-अणु
-	काष्ठा csio_ioreq *ioreq;
-	काष्ठा csio_lnode *ln = shost_priv(cmnd->device->host);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
-	पूर्णांक पढ़ोy = 0, ret;
-	अचिन्हित दीर्घ पंचांगo = 0;
-	पूर्णांक rv;
-	काष्ठा csio_rnode *rn = (काष्ठा csio_rnode *)(cmnd->device->hostdata);
+static int
+csio_eh_abort_handler(struct scsi_cmnd *cmnd)
+{
+	struct csio_ioreq *ioreq;
+	struct csio_lnode *ln = shost_priv(cmnd->device->host);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
+	int ready = 0, ret;
+	unsigned long tmo = 0;
+	int rv;
+	struct csio_rnode *rn = (struct csio_rnode *)(cmnd->device->hostdata);
 
 	ret = fc_block_scsi_eh(cmnd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ioreq = (काष्ठा csio_ioreq *)cmnd->host_scribble;
-	अगर (!ioreq)
-		वापस SUCCESS;
+	ioreq = (struct csio_ioreq *)cmnd->host_scribble;
+	if (!ioreq)
+		return SUCCESS;
 
-	अगर (!rn)
-		वापस FAILED;
+	if (!rn)
+		return FAILED;
 
 	csio_dbg(hw,
 		 "Request to abort ioreq:%p cmd:%p cdb:%08llx"
 		 " ssni:0x%x lun:%llu iq:0x%x\n",
-		ioreq, cmnd, *((uपूर्णांक64_t *)cmnd->cmnd), rn->flowid,
+		ioreq, cmnd, *((uint64_t *)cmnd->cmnd), rn->flowid,
 		cmnd->device->lun, csio_q_physiqid(hw, ioreq->iq_idx));
 
-	अगर (((काष्ठा scsi_cmnd *)csio_scsi_cmnd(ioreq)) != cmnd) अणु
+	if (((struct scsi_cmnd *)csio_scsi_cmnd(ioreq)) != cmnd) {
 		CSIO_INC_STATS(scsim, n_abrt_race_comp);
-		वापस SUCCESS;
-	पूर्ण
+		return SUCCESS;
+	}
 
-	पढ़ोy = csio_is_lnode_पढ़ोy(ln);
-	पंचांगo = CSIO_SCSI_ABRT_TMO_MS;
+	ready = csio_is_lnode_ready(ln);
+	tmo = CSIO_SCSI_ABRT_TMO_MS;
 
 	reinit_completion(&ioreq->cmplobj);
 	spin_lock_irq(&hw->lock);
-	rv = csio_करो_abrt_cls(hw, ioreq, (पढ़ोy ? SCSI_ABORT : SCSI_CLOSE));
+	rv = csio_do_abrt_cls(hw, ioreq, (ready ? SCSI_ABORT : SCSI_CLOSE));
 	spin_unlock_irq(&hw->lock);
 
-	अगर (rv != 0) अणु
-		अगर (rv == -EINVAL) अणु
-			/* Return success, अगर पात/बंद request issued on
-			 * alपढ़ोy completed IO
+	if (rv != 0) {
+		if (rv == -EINVAL) {
+			/* Return success, if abort/close request issued on
+			 * already completed IO
 			 */
-			वापस SUCCESS;
-		पूर्ण
-		अगर (पढ़ोy)
+			return SUCCESS;
+		}
+		if (ready)
 			CSIO_INC_STATS(scsim, n_abrt_busy_error);
-		अन्यथा
+		else
 			CSIO_INC_STATS(scsim, n_cls_busy_error);
 
-		जाओ inval_scmnd;
-	पूर्ण
+		goto inval_scmnd;
+	}
 
-	रुको_क्रम_completion_समयout(&ioreq->cmplobj, msecs_to_jअगरfies(पंचांगo));
+	wait_for_completion_timeout(&ioreq->cmplobj, msecs_to_jiffies(tmo));
 
-	/* FW didnt respond to पात within our समयout */
-	अगर (((काष्ठा scsi_cmnd *)csio_scsi_cmnd(ioreq)) == cmnd) अणु
+	/* FW didnt respond to abort within our timeout */
+	if (((struct scsi_cmnd *)csio_scsi_cmnd(ioreq)) == cmnd) {
 
 		csio_err(hw, "Abort timed out -- req: %p\n", ioreq);
-		CSIO_INC_STATS(scsim, n_abrt_समयकरोut);
+		CSIO_INC_STATS(scsim, n_abrt_timedout);
 
 inval_scmnd:
-		अगर (ioreq->nsge > 0)
+		if (ioreq->nsge > 0)
 			scsi_dma_unmap(cmnd);
 
 		spin_lock_irq(&hw->lock);
-		csio_scsi_cmnd(ioreq) = शून्य;
+		csio_scsi_cmnd(ioreq) = NULL;
 		spin_unlock_irq(&hw->lock);
 
 		cmnd->result = (DID_ERROR << 16);
-		cmnd->scsi_करोne(cmnd);
+		cmnd->scsi_done(cmnd);
 
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 
-	/* FW successfully पातed the request */
-	अगर (host_byte(cmnd->result) == DID_REQUEUE) अणु
+	/* FW successfully aborted the request */
+	if (host_byte(cmnd->result) == DID_REQUEUE) {
 		csio_info(hw,
 			"Aborted SCSI command to (%d:%llu) tag %u\n",
 			cmnd->device->id, cmnd->device->lun,
 			cmnd->request->tag);
-		वापस SUCCESS;
-	पूर्ण अन्यथा अणु
+		return SUCCESS;
+	} else {
 		csio_info(hw,
 			"Failed to abort SCSI command, (%d:%llu) tag %u\n",
 			cmnd->device->id, cmnd->device->lun,
 			cmnd->request->tag);
-		वापस FAILED;
-	पूर्ण
-पूर्ण
+		return FAILED;
+	}
+}
 
 /*
- * csio_पंचांग_cbfn - TM callback function.
+ * csio_tm_cbfn - TM callback function.
  * @hw: HW module.
  * @req: IO request.
  *
- * Cache the result in 'cmnd', since ioreq will be मुक्तd soon
- * after we वापस from here, and the रुकोing thपढ़ो shouldnt trust
+ * Cache the result in 'cmnd', since ioreq will be freed soon
+ * after we return from here, and the waiting thread shouldnt trust
  * the ioreq contents.
  */
-अटल व्योम
-csio_पंचांग_cbfn(काष्ठा csio_hw *hw, काष्ठा csio_ioreq *req)
-अणु
-	काष्ठा scsi_cmnd *cmnd  = (काष्ठा scsi_cmnd *)csio_scsi_cmnd(req);
-	काष्ठा csio_dma_buf *dma_buf;
-	uपूर्णांक8_t flags = 0;
-	काष्ठा fcp_resp_with_ext *fcp_resp;
-	काष्ठा fcp_resp_rsp_info *rsp_info;
+static void
+csio_tm_cbfn(struct csio_hw *hw, struct csio_ioreq *req)
+{
+	struct scsi_cmnd *cmnd  = (struct scsi_cmnd *)csio_scsi_cmnd(req);
+	struct csio_dma_buf *dma_buf;
+	uint8_t flags = 0;
+	struct fcp_resp_with_ext *fcp_resp;
+	struct fcp_resp_rsp_info *rsp_info;
 
 	csio_dbg(hw, "req: %p in csio_tm_cbfn status: %d\n",
 		      req, req->wr_status);
 
-	/* Cache FW वापस status */
+	/* Cache FW return status */
 	cmnd->SCp.Status = req->wr_status;
 
 	/* Special handling based on FCP response */
 
 	/*
-	 * FW वापसs us this error, अगर flags were set. FCP4 says
-	 * FCP_RSP_LEN_VAL in flags shall be set क्रम TM completions.
-	 * So अगर a target were to set this bit, we expect that the
-	 * rsp_code is set to FCP_TMF_CMPL क्रम a successful TM
+	 * FW returns us this error, if flags were set. FCP4 says
+	 * FCP_RSP_LEN_VAL in flags shall be set for TM completions.
+	 * So if a target were to set this bit, we expect that the
+	 * rsp_code is set to FCP_TMF_CMPL for a successful TM
 	 * completion. Any other rsp_code means TM operation failed.
 	 * If a target were to just ignore setting flags, we treat
-	 * the TM operation as success, and FW वापसs FW_SUCCESS.
+	 * the TM operation as success, and FW returns FW_SUCCESS.
 	 */
-	अगर (req->wr_status == FW_SCSI_RSP_ERR) अणु
+	if (req->wr_status == FW_SCSI_RSP_ERR) {
 		dma_buf = &req->dma_buf;
-		fcp_resp = (काष्ठा fcp_resp_with_ext *)dma_buf->vaddr;
-		rsp_info = (काष्ठा fcp_resp_rsp_info *)(fcp_resp + 1);
+		fcp_resp = (struct fcp_resp_with_ext *)dma_buf->vaddr;
+		rsp_info = (struct fcp_resp_rsp_info *)(fcp_resp + 1);
 
 		flags = fcp_resp->resp.fr_flags;
 
-		/* Modअगरy वापस status अगर flags indicate success */
-		अगर (flags & FCP_RSP_LEN_VAL)
-			अगर (rsp_info->rsp_code == FCP_TMF_CMPL)
+		/* Modify return status if flags indicate success */
+		if (flags & FCP_RSP_LEN_VAL)
+			if (rsp_info->rsp_code == FCP_TMF_CMPL)
 				cmnd->SCp.Status = FW_SUCCESS;
 
 		csio_dbg(hw, "TM FCP rsp code: %d\n", rsp_info->rsp_code);
-	पूर्ण
+	}
 
-	/* Wake up the TM handler thपढ़ो */
-	csio_scsi_cmnd(req) = शून्य;
-पूर्ण
+	/* Wake up the TM handler thread */
+	csio_scsi_cmnd(req) = NULL;
+}
 
-अटल पूर्णांक
-csio_eh_lun_reset_handler(काष्ठा scsi_cmnd *cmnd)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(cmnd->device->host);
-	काष्ठा csio_hw *hw = csio_lnode_to_hw(ln);
-	काष्ठा csio_scsim *scsim = csio_hw_to_scsim(hw);
-	काष्ठा csio_rnode *rn = (काष्ठा csio_rnode *)(cmnd->device->hostdata);
-	काष्ठा csio_ioreq *ioreq = शून्य;
-	काष्ठा csio_scsi_qset *sqset;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval;
-	पूर्णांक count, ret;
+static int
+csio_eh_lun_reset_handler(struct scsi_cmnd *cmnd)
+{
+	struct csio_lnode *ln = shost_priv(cmnd->device->host);
+	struct csio_hw *hw = csio_lnode_to_hw(ln);
+	struct csio_scsim *scsim = csio_hw_to_scsim(hw);
+	struct csio_rnode *rn = (struct csio_rnode *)(cmnd->device->hostdata);
+	struct csio_ioreq *ioreq = NULL;
+	struct csio_scsi_qset *sqset;
+	unsigned long flags;
+	int retval;
+	int count, ret;
 	LIST_HEAD(local_q);
-	काष्ठा csio_scsi_level_data sld;
+	struct csio_scsi_level_data sld;
 
-	अगर (!rn)
-		जाओ fail;
+	if (!rn)
+		goto fail;
 
 	csio_dbg(hw, "Request to reset LUN:%llu (ssni:0x%x tgtid:%d)\n",
 		      cmnd->device->lun, rn->flowid, rn->scsi_id);
 
-	अगर (!csio_is_lnode_पढ़ोy(ln)) अणु
+	if (!csio_is_lnode_ready(ln)) {
 		csio_err(hw,
 			 "LUN reset cannot be issued on non-ready"
 			 " local node vnpi:0x%x (LUN:%llu)\n",
 			 ln->vnp_flowid, cmnd->device->lun);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* Lnode is पढ़ोy, now रुको on rport node पढ़ोiness */
+	/* Lnode is ready, now wait on rport node readiness */
 	ret = fc_block_scsi_eh(cmnd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * If we have blocked in the previous call, at this poपूर्णांक, either the
-	 * remote node has come back online, or device loss समयr has fired
-	 * and the remote node is destroyed. Allow the LUN reset only क्रम
-	 * the क्रमmer हाल, since LUN reset is a TMF I/O on the wire, and we
+	 * If we have blocked in the previous call, at this point, either the
+	 * remote node has come back online, or device loss timer has fired
+	 * and the remote node is destroyed. Allow the LUN reset only for
+	 * the former case, since LUN reset is a TMF I/O on the wire, and we
 	 * need a valid session to issue it.
 	 */
-	अगर (fc_remote_port_chkपढ़ोy(rn->rport)) अणु
+	if (fc_remote_port_chkready(rn->rport)) {
 		csio_err(hw,
 			 "LUN reset cannot be issued on non-ready"
 			 " remote node ssni:0x%x (LUN:%llu)\n",
 			 rn->flowid, cmnd->device->lun);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* Get a मुक्त ioreq काष्ठाure - SM is alपढ़ोy set to uninit */
+	/* Get a free ioreq structure - SM is already set to uninit */
 	ioreq = csio_get_scsi_ioreq_lock(hw, scsim);
 
-	अगर (!ioreq) अणु
+	if (!ioreq) {
 		csio_err(hw, "Out of IO request elements. Active # :%d\n",
 			 scsim->stats.n_active);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	sqset			= &hw->sqset[ln->portid][smp_processor_id()];
 	ioreq->nsge		= 0;
@@ -2121,23 +2120,23 @@ csio_eh_lun_reset_handler(काष्ठा scsi_cmnd *cmnd)
 	ioreq->eq_idx		= sqset->eq_idx;
 
 	csio_scsi_cmnd(ioreq)	= cmnd;
-	cmnd->host_scribble	= (अचिन्हित अक्षर *)ioreq;
+	cmnd->host_scribble	= (unsigned char *)ioreq;
 	cmnd->SCp.Status	= 0;
 
 	cmnd->SCp.Message	= FCP_TMF_LUN_RESET;
-	ioreq->पंचांगo		= CSIO_SCSI_LUNRST_TMO_MS / 1000;
+	ioreq->tmo		= CSIO_SCSI_LUNRST_TMO_MS / 1000;
 
 	/*
-	 * FW बार the LUN reset क्रम ioreq->पंचांगo, so we got to रुको a little
-	 * दीर्घer (10s क्रम now) than that to allow FW to वापस the समयd
+	 * FW times the LUN reset for ioreq->tmo, so we got to wait a little
+	 * longer (10s for now) than that to allow FW to return the timed
 	 * out command.
 	 */
-	count = DIV_ROUND_UP((ioreq->पंचांगo + 10) * 1000, CSIO_SCSI_TM_POLL_MS);
+	count = DIV_ROUND_UP((ioreq->tmo + 10) * 1000, CSIO_SCSI_TM_POLL_MS);
 
 	/* Set cbfn */
-	ioreq->io_cbfn = csio_पंचांग_cbfn;
+	ioreq->io_cbfn = csio_tm_cbfn;
 
-	/* Save of the ioreq info क्रम later use */
+	/* Save of the ioreq info for later use */
 	sld.level = CSIO_LEV_LUN;
 	sld.lnode = ioreq->lnode;
 	sld.rnode = ioreq->rnode;
@@ -2145,24 +2144,24 @@ csio_eh_lun_reset_handler(काष्ठा scsi_cmnd *cmnd)
 
 	spin_lock_irqsave(&hw->lock, flags);
 	/* Kick off TM SM on the ioreq */
-	retval = csio_scsi_start_पंचांग(ioreq);
+	retval = csio_scsi_start_tm(ioreq);
 	spin_unlock_irqrestore(&hw->lock, flags);
 
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		csio_err(hw, "Failed to issue LUN reset, req:%p, status:%d\n",
 			    ioreq, retval);
-		जाओ fail_ret_ioreq;
-	पूर्ण
+		goto fail_ret_ioreq;
+	}
 
 	csio_dbg(hw, "Waiting max %d secs for LUN reset completion\n",
 		    count * (CSIO_SCSI_TM_POLL_MS / 1000));
-	/* Wait क्रम completion */
-	जबतक ((((काष्ठा scsi_cmnd *)csio_scsi_cmnd(ioreq)) == cmnd)
+	/* Wait for completion */
+	while ((((struct scsi_cmnd *)csio_scsi_cmnd(ioreq)) == cmnd)
 								&& count--)
 		msleep(CSIO_SCSI_TM_POLL_MS);
 
-	/* LUN reset समयd-out */
-	अगर (((काष्ठा scsi_cmnd *)csio_scsi_cmnd(ioreq)) == cmnd) अणु
+	/* LUN reset timed-out */
+	if (((struct scsi_cmnd *)csio_scsi_cmnd(ioreq)) == cmnd) {
 		csio_err(hw, "LUN reset (%d:%llu) timed out\n",
 			 cmnd->device->id, cmnd->device->lun);
 
@@ -2171,17 +2170,17 @@ csio_eh_lun_reset_handler(काष्ठा scsi_cmnd *cmnd)
 		list_del_init(&ioreq->sm.sm_list);
 		spin_unlock_irq(&hw->lock);
 
-		जाओ fail_ret_ioreq;
-	पूर्ण
+		goto fail_ret_ioreq;
+	}
 
-	/* LUN reset वापसed, check cached status */
-	अगर (cmnd->SCp.Status != FW_SUCCESS) अणु
+	/* LUN reset returned, check cached status */
+	if (cmnd->SCp.Status != FW_SUCCESS) {
 		csio_err(hw, "LUN reset failed (%d:%llu), status: %d\n",
 			 cmnd->device->id, cmnd->device->lun, cmnd->SCp.Status);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	/* LUN reset succeeded, Start पातing affected I/Os */
+	/* LUN reset succeeded, Start aborting affected I/Os */
 	/*
 	 * Since the host guarantees during LUN reset that there
 	 * will not be any more I/Os to that LUN, until the LUN reset
@@ -2190,11 +2189,11 @@ csio_eh_lun_reset_handler(काष्ठा scsi_cmnd *cmnd)
 	spin_lock_irq(&hw->lock);
 	csio_scsi_gather_active_ios(scsim, &sld, &local_q);
 
-	retval = csio_scsi_पात_io_q(scsim, &local_q, 30000);
+	retval = csio_scsi_abort_io_q(scsim, &local_q, 30000);
 	spin_unlock_irq(&hw->lock);
 
-	/* Aborts may have समयd out */
-	अगर (retval != 0) अणु
+	/* Aborts may have timed out */
+	if (retval != 0) {
 		csio_err(hw,
 			 "Attempt to abort I/Os during LUN reset of %llu"
 			 " returned %d\n", cmnd->device->lun, retval);
@@ -2202,74 +2201,74 @@ csio_eh_lun_reset_handler(काष्ठा scsi_cmnd *cmnd)
 		spin_lock_irq(&hw->lock);
 		list_splice_tail_init(&local_q, &scsim->active_q);
 		spin_unlock_irq(&hw->lock);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	CSIO_INC_STATS(rn, n_lun_rst);
 
 	csio_info(hw, "LUN reset occurred (%d:%llu)\n",
 		  cmnd->device->id, cmnd->device->lun);
 
-	वापस SUCCESS;
+	return SUCCESS;
 
 fail_ret_ioreq:
 	csio_put_scsi_ioreq_lock(hw, scsim, ioreq);
 fail:
 	CSIO_INC_STATS(rn, n_lun_rst_fail);
-	वापस FAILED;
-पूर्ण
+	return FAILED;
+}
 
-अटल पूर्णांक
-csio_slave_alloc(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा fc_rport *rport = starget_to_rport(scsi_target(sdev));
+static int
+csio_slave_alloc(struct scsi_device *sdev)
+{
+	struct fc_rport *rport = starget_to_rport(scsi_target(sdev));
 
-	अगर (!rport || fc_remote_port_chkपढ़ोy(rport))
-		वापस -ENXIO;
+	if (!rport || fc_remote_port_chkready(rport))
+		return -ENXIO;
 
-	sdev->hostdata = *((काष्ठा csio_lnode **)(rport->dd_data));
+	sdev->hostdata = *((struct csio_lnode **)(rport->dd_data));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-csio_slave_configure(काष्ठा scsi_device *sdev)
-अणु
+static int
+csio_slave_configure(struct scsi_device *sdev)
+{
 	scsi_change_queue_depth(sdev, csio_lun_qdepth);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-csio_slave_destroy(काष्ठा scsi_device *sdev)
-अणु
-	sdev->hostdata = शून्य;
-पूर्ण
+static void
+csio_slave_destroy(struct scsi_device *sdev)
+{
+	sdev->hostdata = NULL;
+}
 
-अटल पूर्णांक
-csio_scan_finished(काष्ठा Scsi_Host *shost, अचिन्हित दीर्घ समय)
-अणु
-	काष्ठा csio_lnode *ln = shost_priv(shost);
-	पूर्णांक rv = 1;
+static int
+csio_scan_finished(struct Scsi_Host *shost, unsigned long time)
+{
+	struct csio_lnode *ln = shost_priv(shost);
+	int rv = 1;
 
 	spin_lock_irq(shost->host_lock);
-	अगर (!ln->hwp || csio_list_deleted(&ln->sm.sm_list))
-		जाओ out;
+	if (!ln->hwp || csio_list_deleted(&ln->sm.sm_list))
+		goto out;
 
-	rv = csio_scan_करोne(ln, jअगरfies, समय, csio_max_scan_पंचांगo * HZ,
-			    csio_delta_scan_पंचांगo * HZ);
+	rv = csio_scan_done(ln, jiffies, time, csio_max_scan_tmo * HZ,
+			    csio_delta_scan_tmo * HZ);
 out:
 	spin_unlock_irq(shost->host_lock);
 
-	वापस rv;
-पूर्ण
+	return rv;
+}
 
-काष्ठा scsi_host_ढाँचा csio_fcoe_shost_ढाँचा = अणु
+struct scsi_host_template csio_fcoe_shost_template = {
 	.module			= THIS_MODULE,
 	.name			= CSIO_DRV_DESC,
 	.proc_name		= KBUILD_MODNAME,
 	.queuecommand		= csio_queuecommand,
-	.eh_समयd_out		= fc_eh_समयd_out,
-	.eh_पात_handler	= csio_eh_पात_handler,
+	.eh_timed_out		= fc_eh_timed_out,
+	.eh_abort_handler	= csio_eh_abort_handler,
 	.eh_device_reset_handler = csio_eh_lun_reset_handler,
 	.slave_alloc		= csio_slave_alloc,
 	.slave_configure	= csio_slave_configure,
@@ -2280,15 +2279,15 @@ out:
 	.cmd_per_lun		= CSIO_MAX_CMD_PER_LUN,
 	.shost_attrs		= csio_fcoe_lport_attrs,
 	.max_sectors		= CSIO_MAX_SECTOR_SIZE,
-पूर्ण;
+};
 
-काष्ठा scsi_host_ढाँचा csio_fcoe_shost_vport_ढाँचा = अणु
+struct scsi_host_template csio_fcoe_shost_vport_template = {
 	.module			= THIS_MODULE,
 	.name			= CSIO_DRV_DESC,
 	.proc_name		= KBUILD_MODNAME,
 	.queuecommand		= csio_queuecommand,
-	.eh_समयd_out		= fc_eh_समयd_out,
-	.eh_पात_handler	= csio_eh_पात_handler,
+	.eh_timed_out		= fc_eh_timed_out,
+	.eh_abort_handler	= csio_eh_abort_handler,
 	.eh_device_reset_handler = csio_eh_lun_reset_handler,
 	.slave_alloc		= csio_slave_alloc,
 	.slave_configure	= csio_slave_configure,
@@ -2299,109 +2298,109 @@ out:
 	.cmd_per_lun		= CSIO_MAX_CMD_PER_LUN,
 	.shost_attrs		= csio_fcoe_vport_attrs,
 	.max_sectors		= CSIO_MAX_SECTOR_SIZE,
-पूर्ण;
+};
 
 /*
- * csio_scsi_alloc_ddp_bufs - Allocate buffers क्रम DDP of unaligned SGLs.
+ * csio_scsi_alloc_ddp_bufs - Allocate buffers for DDP of unaligned SGLs.
  * @scm: SCSI Module
  * @hw: HW device.
  * @buf_size: buffer size
  * @num_buf : Number of buffers.
  *
- * This routine allocates DMA buffers required क्रम SCSI Data xfer, अगर
- * each SGL buffer क्रम a SCSI Read request posted by SCSI midlayer are
- * not भवly contiguous.
+ * This routine allocates DMA buffers required for SCSI Data xfer, if
+ * each SGL buffer for a SCSI Read request posted by SCSI midlayer are
+ * not virtually contiguous.
  */
-अटल पूर्णांक
-csio_scsi_alloc_ddp_bufs(काष्ठा csio_scsim *scm, काष्ठा csio_hw *hw,
-			 पूर्णांक buf_size, पूर्णांक num_buf)
-अणु
-	पूर्णांक n = 0;
-	काष्ठा list_head *पंचांगp;
-	काष्ठा csio_dma_buf *ddp_desc = शून्य;
-	uपूर्णांक32_t unit_size = 0;
+static int
+csio_scsi_alloc_ddp_bufs(struct csio_scsim *scm, struct csio_hw *hw,
+			 int buf_size, int num_buf)
+{
+	int n = 0;
+	struct list_head *tmp;
+	struct csio_dma_buf *ddp_desc = NULL;
+	uint32_t unit_size = 0;
 
-	अगर (!num_buf)
-		वापस 0;
+	if (!num_buf)
+		return 0;
 
-	अगर (!buf_size)
-		वापस -EINVAL;
+	if (!buf_size)
+		return -EINVAL;
 
-	INIT_LIST_HEAD(&scm->ddp_मुक्तlist);
+	INIT_LIST_HEAD(&scm->ddp_freelist);
 
 	/* Align buf size to page size */
 	buf_size = (buf_size + PAGE_SIZE - 1) & PAGE_MASK;
 	/* Initialize dma descriptors */
-	क्रम (n = 0; n < num_buf; n++) अणु
+	for (n = 0; n < num_buf; n++) {
 		/* Set unit size to request size */
 		unit_size = buf_size;
-		ddp_desc = kzalloc(माप(काष्ठा csio_dma_buf), GFP_KERNEL);
-		अगर (!ddp_desc) अणु
+		ddp_desc = kzalloc(sizeof(struct csio_dma_buf), GFP_KERNEL);
+		if (!ddp_desc) {
 			csio_err(hw,
 				 "Failed to allocate ddp descriptors,"
 				 " Num allocated = %d.\n",
-				 scm->stats.n_मुक्त_ddp);
-			जाओ no_mem;
-		पूर्ण
+				 scm->stats.n_free_ddp);
+			goto no_mem;
+		}
 
-		/* Allocate Dma buffers क्रम DDP */
+		/* Allocate Dma buffers for DDP */
 		ddp_desc->vaddr = dma_alloc_coherent(&hw->pdev->dev, unit_size,
 				&ddp_desc->paddr, GFP_KERNEL);
-		अगर (!ddp_desc->vaddr) अणु
+		if (!ddp_desc->vaddr) {
 			csio_err(hw,
 				 "SCSI response DMA buffer (ddp) allocation"
 				 " failed!\n");
-			kमुक्त(ddp_desc);
-			जाओ no_mem;
-		पूर्ण
+			kfree(ddp_desc);
+			goto no_mem;
+		}
 
 		ddp_desc->len = unit_size;
 
-		/* Added it to scsi ddp मुक्तlist */
-		list_add_tail(&ddp_desc->list, &scm->ddp_मुक्तlist);
-		CSIO_INC_STATS(scm, n_मुक्त_ddp);
-	पूर्ण
+		/* Added it to scsi ddp freelist */
+		list_add_tail(&ddp_desc->list, &scm->ddp_freelist);
+		CSIO_INC_STATS(scm, n_free_ddp);
+	}
 
-	वापस 0;
+	return 0;
 no_mem:
-	/* release dma descs back to मुक्तlist and मुक्त dma memory */
-	list_क्रम_each(पंचांगp, &scm->ddp_मुक्तlist) अणु
-		ddp_desc = (काष्ठा csio_dma_buf *) पंचांगp;
-		पंचांगp = csio_list_prev(पंचांगp);
-		dma_मुक्त_coherent(&hw->pdev->dev, ddp_desc->len,
+	/* release dma descs back to freelist and free dma memory */
+	list_for_each(tmp, &scm->ddp_freelist) {
+		ddp_desc = (struct csio_dma_buf *) tmp;
+		tmp = csio_list_prev(tmp);
+		dma_free_coherent(&hw->pdev->dev, ddp_desc->len,
 				  ddp_desc->vaddr, ddp_desc->paddr);
 		list_del_init(&ddp_desc->list);
-		kमुक्त(ddp_desc);
-	पूर्ण
-	scm->stats.n_मुक्त_ddp = 0;
+		kfree(ddp_desc);
+	}
+	scm->stats.n_free_ddp = 0;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /*
- * csio_scsi_मुक्त_ddp_bufs - मुक्त DDP buffers of unaligned SGLs.
+ * csio_scsi_free_ddp_bufs - free DDP buffers of unaligned SGLs.
  * @scm: SCSI Module
  * @hw: HW device.
  *
- * This routine मुक्तs ddp buffers.
+ * This routine frees ddp buffers.
  */
-अटल व्योम
-csio_scsi_मुक्त_ddp_bufs(काष्ठा csio_scsim *scm, काष्ठा csio_hw *hw)
-अणु
-	काष्ठा list_head *पंचांगp;
-	काष्ठा csio_dma_buf *ddp_desc;
+static void
+csio_scsi_free_ddp_bufs(struct csio_scsim *scm, struct csio_hw *hw)
+{
+	struct list_head *tmp;
+	struct csio_dma_buf *ddp_desc;
 
-	/* release dma descs back to मुक्तlist and मुक्त dma memory */
-	list_क्रम_each(पंचांगp, &scm->ddp_मुक्तlist) अणु
-		ddp_desc = (काष्ठा csio_dma_buf *) पंचांगp;
-		पंचांगp = csio_list_prev(पंचांगp);
-		dma_मुक्त_coherent(&hw->pdev->dev, ddp_desc->len,
+	/* release dma descs back to freelist and free dma memory */
+	list_for_each(tmp, &scm->ddp_freelist) {
+		ddp_desc = (struct csio_dma_buf *) tmp;
+		tmp = csio_list_prev(tmp);
+		dma_free_coherent(&hw->pdev->dev, ddp_desc->len,
 				  ddp_desc->vaddr, ddp_desc->paddr);
 		list_del_init(&ddp_desc->list);
-		kमुक्त(ddp_desc);
-	पूर्ण
-	scm->stats.n_मुक्त_ddp = 0;
-पूर्ण
+		kfree(ddp_desc);
+	}
+	scm->stats.n_free_ddp = 0;
+}
 
 /**
  * csio_scsim_init - Initialize SCSI Module
@@ -2409,47 +2408,47 @@ csio_scsi_मुक्त_ddp_bufs(काष्ठा csio_scsim *scm, काष
  * @hw:		HW module
  *
  */
-पूर्णांक
-csio_scsim_init(काष्ठा csio_scsim *scm, काष्ठा csio_hw *hw)
-अणु
-	पूर्णांक i;
-	काष्ठा csio_ioreq *ioreq;
-	काष्ठा csio_dma_buf *dma_buf;
+int
+csio_scsim_init(struct csio_scsim *scm, struct csio_hw *hw)
+{
+	int i;
+	struct csio_ioreq *ioreq;
+	struct csio_dma_buf *dma_buf;
 
 	INIT_LIST_HEAD(&scm->active_q);
 	scm->hw = hw;
 
-	scm->proto_cmd_len = माप(काष्ठा fcp_cmnd);
+	scm->proto_cmd_len = sizeof(struct fcp_cmnd);
 	scm->proto_rsp_len = CSIO_SCSI_RSP_LEN;
 	scm->max_sge = CSIO_SCSI_MAX_SGE;
 
-	spin_lock_init(&scm->मुक्तlist_lock);
+	spin_lock_init(&scm->freelist_lock);
 
 	/* Pre-allocate ioreqs and initialize them */
-	INIT_LIST_HEAD(&scm->ioreq_मुक्तlist);
-	क्रम (i = 0; i < csio_scsi_ioreqs; i++) अणु
+	INIT_LIST_HEAD(&scm->ioreq_freelist);
+	for (i = 0; i < csio_scsi_ioreqs; i++) {
 
-		ioreq = kzalloc(माप(काष्ठा csio_ioreq), GFP_KERNEL);
-		अगर (!ioreq) अणु
+		ioreq = kzalloc(sizeof(struct csio_ioreq), GFP_KERNEL);
+		if (!ioreq) {
 			csio_err(hw,
 				 "I/O request element allocation failed, "
 				 " Num allocated = %d.\n",
-				 scm->stats.n_मुक्त_ioreq);
+				 scm->stats.n_free_ioreq);
 
-			जाओ मुक्त_ioreq;
-		पूर्ण
+			goto free_ioreq;
+		}
 
-		/* Allocate Dma buffers क्रम Response Payload */
+		/* Allocate Dma buffers for Response Payload */
 		dma_buf = &ioreq->dma_buf;
 		dma_buf->vaddr = dma_pool_alloc(hw->scsi_dma_pool, GFP_KERNEL,
 						&dma_buf->paddr);
-		अगर (!dma_buf->vaddr) अणु
+		if (!dma_buf->vaddr) {
 			csio_err(hw,
 				 "SCSI response DMA buffer allocation"
 				 " failed!\n");
-			kमुक्त(ioreq);
-			जाओ मुक्त_ioreq;
-		पूर्ण
+			kfree(ioreq);
+			goto free_ioreq;
+		}
 
 		dma_buf->len = scm->proto_rsp_len;
 
@@ -2458,67 +2457,67 @@ csio_scsim_init(काष्ठा csio_scsim *scm, काष्ठा csio_hw *
 		INIT_LIST_HEAD(&ioreq->gen_list);
 		init_completion(&ioreq->cmplobj);
 
-		list_add_tail(&ioreq->sm.sm_list, &scm->ioreq_मुक्तlist);
-		CSIO_INC_STATS(scm, n_मुक्त_ioreq);
-	पूर्ण
+		list_add_tail(&ioreq->sm.sm_list, &scm->ioreq_freelist);
+		CSIO_INC_STATS(scm, n_free_ioreq);
+	}
 
-	अगर (csio_scsi_alloc_ddp_bufs(scm, hw, PAGE_SIZE, csio_ddp_descs))
-		जाओ मुक्त_ioreq;
+	if (csio_scsi_alloc_ddp_bufs(scm, hw, PAGE_SIZE, csio_ddp_descs))
+		goto free_ioreq;
 
-	वापस 0;
+	return 0;
 
-मुक्त_ioreq:
+free_ioreq:
 	/*
 	 * Free up existing allocations, since an error
-	 * from here means we are वापसing क्रम good
+	 * from here means we are returning for good
 	 */
-	जबतक (!list_empty(&scm->ioreq_मुक्तlist)) अणु
-		काष्ठा csio_sm *पंचांगp;
+	while (!list_empty(&scm->ioreq_freelist)) {
+		struct csio_sm *tmp;
 
-		पंचांगp = list_first_entry(&scm->ioreq_मुक्तlist,
-				       काष्ठा csio_sm, sm_list);
-		list_del_init(&पंचांगp->sm_list);
-		ioreq = (काष्ठा csio_ioreq *)पंचांगp;
+		tmp = list_first_entry(&scm->ioreq_freelist,
+				       struct csio_sm, sm_list);
+		list_del_init(&tmp->sm_list);
+		ioreq = (struct csio_ioreq *)tmp;
 
 		dma_buf = &ioreq->dma_buf;
-		dma_pool_मुक्त(hw->scsi_dma_pool, dma_buf->vaddr,
+		dma_pool_free(hw->scsi_dma_pool, dma_buf->vaddr,
 			      dma_buf->paddr);
 
-		kमुक्त(ioreq);
-	पूर्ण
+		kfree(ioreq);
+	}
 
-	scm->stats.n_मुक्त_ioreq = 0;
+	scm->stats.n_free_ioreq = 0;
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
 /**
- * csio_scsim_निकास: Uninitialize SCSI Module
+ * csio_scsim_exit: Uninitialize SCSI Module
  * @scm: SCSI Module
  *
  */
-व्योम
-csio_scsim_निकास(काष्ठा csio_scsim *scm)
-अणु
-	काष्ठा csio_ioreq *ioreq;
-	काष्ठा csio_dma_buf *dma_buf;
+void
+csio_scsim_exit(struct csio_scsim *scm)
+{
+	struct csio_ioreq *ioreq;
+	struct csio_dma_buf *dma_buf;
 
-	जबतक (!list_empty(&scm->ioreq_मुक्तlist)) अणु
-		काष्ठा csio_sm *पंचांगp;
+	while (!list_empty(&scm->ioreq_freelist)) {
+		struct csio_sm *tmp;
 
-		पंचांगp = list_first_entry(&scm->ioreq_मुक्तlist,
-				       काष्ठा csio_sm, sm_list);
-		list_del_init(&पंचांगp->sm_list);
-		ioreq = (काष्ठा csio_ioreq *)पंचांगp;
+		tmp = list_first_entry(&scm->ioreq_freelist,
+				       struct csio_sm, sm_list);
+		list_del_init(&tmp->sm_list);
+		ioreq = (struct csio_ioreq *)tmp;
 
 		dma_buf = &ioreq->dma_buf;
-		dma_pool_मुक्त(scm->hw->scsi_dma_pool, dma_buf->vaddr,
+		dma_pool_free(scm->hw->scsi_dma_pool, dma_buf->vaddr,
 			      dma_buf->paddr);
 
-		kमुक्त(ioreq);
-	पूर्ण
+		kfree(ioreq);
+	}
 
-	scm->stats.n_मुक्त_ioreq = 0;
+	scm->stats.n_free_ioreq = 0;
 
-	csio_scsi_मुक्त_ddp_bufs(scm, scm->hw);
-पूर्ण
+	csio_scsi_free_ddp_bufs(scm, scm->hw);
+}

@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#समावेश <linux/bpf.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_core_पढ़ो.h>
+#include <linux/bpf.h>
+#include <stdint.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_core_read.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-काष्ठा अणु
-	अक्षर in[256];
-	अक्षर out[256];
-पूर्ण data = अणुपूर्ण;
+struct {
+	char in[256];
+	char out[256];
+} data = {};
 
-काष्ठा core_reloc_flavors अणु
-	पूर्णांक a;
-	पूर्णांक b;
-	पूर्णांक c;
-पूर्ण;
+struct core_reloc_flavors {
+	int a;
+	int b;
+	int c;
+};
 
 /* local flavor with reversed layout */
-काष्ठा core_reloc_flavors___reversed अणु
-	पूर्णांक c;
-	पूर्णांक b;
-	पूर्णांक a;
-पूर्ण;
+struct core_reloc_flavors___reversed {
+	int c;
+	int b;
+	int a;
+};
 
 /* local flavor with nested/overlapping layout */
-काष्ठा core_reloc_flavors___weird अणु
-	काष्ठा अणु
-		पूर्णांक b;
-	पूर्ण;
+struct core_reloc_flavors___weird {
+	struct {
+		int b;
+	};
 	/* a and c overlap in local flavor, but this should still work
 	 * correctly with target original flavor
 	 */
-	जोड़ अणु
-		पूर्णांक a;
-		पूर्णांक c;
-	पूर्ण;
-पूर्ण;
+	union {
+		int a;
+		int c;
+	};
+};
 
-#घोषणा CORE_READ(dst, src) bpf_core_पढ़ो(dst, माप(*(dst)), src)
+#define CORE_READ(dst, src) bpf_core_read(dst, sizeof(*(dst)), src)
 
 SEC("raw_tracepoint/sys_enter")
-पूर्णांक test_core_flavors(व्योम *ctx)
-अणु
-	काष्ठा core_reloc_flavors *in_orig = (व्योम *)&data.in;
-	काष्ठा core_reloc_flavors___reversed *in_rev = (व्योम *)&data.in;
-	काष्ठा core_reloc_flavors___weird *in_weird = (व्योम *)&data.in;
-	काष्ठा core_reloc_flavors *out = (व्योम *)&data.out;
+int test_core_flavors(void *ctx)
+{
+	struct core_reloc_flavors *in_orig = (void *)&data.in;
+	struct core_reloc_flavors___reversed *in_rev = (void *)&data.in;
+	struct core_reloc_flavors___weird *in_weird = (void *)&data.in;
+	struct core_reloc_flavors *out = (void *)&data.out;
 
-	/* पढ़ो a using weird layout */
-	अगर (CORE_READ(&out->a, &in_weird->a))
-		वापस 1;
-	/* पढ़ो b using reversed layout */
-	अगर (CORE_READ(&out->b, &in_rev->b))
-		वापस 1;
-	/* पढ़ो c using original layout */
-	अगर (CORE_READ(&out->c, &in_orig->c))
-		वापस 1;
+	/* read a using weird layout */
+	if (CORE_READ(&out->a, &in_weird->a))
+		return 1;
+	/* read b using reversed layout */
+	if (CORE_READ(&out->b, &in_rev->b))
+		return 1;
+	/* read c using original layout */
+	if (CORE_READ(&out->c, &in_orig->c))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 

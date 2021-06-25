@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_bit.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_defer.h"
-#समावेश "xfs_btree.h"
-#समावेश "xfs_rmap.h"
-#समावेश "xfs_alloc_btree.h"
-#समावेश "xfs_alloc.h"
-#समावेश "xfs_extent_busy.h"
-#समावेश "xfs_errortag.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_buf_item.h"
-#समावेश "xfs_log.h"
-#समावेश "xfs_ag_resv.h"
-#समावेश "xfs_bmap.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_shared.h"
+#include "xfs_trans_resv.h"
+#include "xfs_bit.h"
+#include "xfs_sb.h"
+#include "xfs_mount.h"
+#include "xfs_defer.h"
+#include "xfs_btree.h"
+#include "xfs_rmap.h"
+#include "xfs_alloc_btree.h"
+#include "xfs_alloc.h"
+#include "xfs_extent_busy.h"
+#include "xfs_errortag.h"
+#include "xfs_error.h"
+#include "xfs_trace.h"
+#include "xfs_trans.h"
+#include "xfs_buf_item.h"
+#include "xfs_log.h"
+#include "xfs_ag_resv.h"
+#include "xfs_bmap.h"
 
-बाह्य kmem_zone_t	*xfs_bmap_मुक्त_item_zone;
+extern kmem_zone_t	*xfs_bmap_free_item_zone;
 
-काष्ठा workqueue_काष्ठा *xfs_alloc_wq;
+struct workqueue_struct *xfs_alloc_wq;
 
-#घोषणा XFS_ABSDIFF(a,b)	(((a) <= (b)) ? ((b) - (a)) : ((a) - (b)))
+#define XFS_ABSDIFF(a,b)	(((a) <= (b)) ? ((b) - (a)) : ((a) - (b)))
 
-#घोषणा	XFSA_FIXUP_BNO_OK	1
-#घोषणा	XFSA_FIXUP_CNT_OK	2
+#define	XFSA_FIXUP_BNO_OK	1
+#define	XFSA_FIXUP_CNT_OK	2
 
-STATIC पूर्णांक xfs_alloc_ag_vextent_exact(xfs_alloc_arg_t *);
-STATIC पूर्णांक xfs_alloc_ag_vextent_near(xfs_alloc_arg_t *);
-STATIC पूर्णांक xfs_alloc_ag_vextent_size(xfs_alloc_arg_t *);
+STATIC int xfs_alloc_ag_vextent_exact(xfs_alloc_arg_t *);
+STATIC int xfs_alloc_ag_vextent_near(xfs_alloc_arg_t *);
+STATIC int xfs_alloc_ag_vextent_size(xfs_alloc_arg_t *);
 
 /*
  * Size of the AGFL.  For CRC-enabled filesystes we steal a couple of slots in
- * the beginning of the block क्रम a proper header with the location inक्रमmation
+ * the beginning of the block for a proper header with the location information
  * and CRC.
  */
-अचिन्हित पूर्णांक
+unsigned int
 xfs_agfl_size(
-	काष्ठा xfs_mount	*mp)
-अणु
-	अचिन्हित पूर्णांक		size = mp->m_sb.sb_sectsize;
+	struct xfs_mount	*mp)
+{
+	unsigned int		size = mp->m_sb.sb_sectsize;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb))
-		size -= माप(काष्ठा xfs_agfl);
+	if (xfs_sb_version_hascrc(&mp->m_sb))
+		size -= sizeof(struct xfs_agfl);
 
-	वापस size / माप(xfs_agblock_t);
-पूर्ण
+	return size / sizeof(xfs_agblock_t);
+}
 
-अचिन्हित पूर्णांक
+unsigned int
 xfs_refc_block(
-	काष्ठा xfs_mount	*mp)
-अणु
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb))
-		वापस XFS_RMAP_BLOCK(mp) + 1;
-	अगर (xfs_sb_version_hasfinobt(&mp->m_sb))
-		वापस XFS_FIBT_BLOCK(mp) + 1;
-	वापस XFS_IBT_BLOCK(mp) + 1;
-पूर्ण
+	struct xfs_mount	*mp)
+{
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
+		return XFS_RMAP_BLOCK(mp) + 1;
+	if (xfs_sb_version_hasfinobt(&mp->m_sb))
+		return XFS_FIBT_BLOCK(mp) + 1;
+	return XFS_IBT_BLOCK(mp) + 1;
+}
 
 xfs_extlen_t
-xfs_pपुनः_स्मृति_blocks(
-	काष्ठा xfs_mount	*mp)
-अणु
-	अगर (xfs_sb_version_hasreflink(&mp->m_sb))
-		वापस xfs_refc_block(mp) + 1;
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb))
-		वापस XFS_RMAP_BLOCK(mp) + 1;
-	अगर (xfs_sb_version_hasfinobt(&mp->m_sb))
-		वापस XFS_FIBT_BLOCK(mp) + 1;
-	वापस XFS_IBT_BLOCK(mp) + 1;
-पूर्ण
+xfs_prealloc_blocks(
+	struct xfs_mount	*mp)
+{
+	if (xfs_sb_version_hasreflink(&mp->m_sb))
+		return xfs_refc_block(mp) + 1;
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
+		return XFS_RMAP_BLOCK(mp) + 1;
+	if (xfs_sb_version_hasfinobt(&mp->m_sb))
+		return XFS_FIBT_BLOCK(mp) + 1;
+	return XFS_IBT_BLOCK(mp) + 1;
+}
 
 /*
- * In order to aव्योम ENOSPC-related deadlock caused by out-of-order locking of
- * AGF buffer (PV 947395), we place स्थिरraपूर्णांकs on the relationship among
- * actual allocations क्रम data blocks, मुक्तlist blocks, and potential file data
+ * In order to avoid ENOSPC-related deadlock caused by out-of-order locking of
+ * AGF buffer (PV 947395), we place constraints on the relationship among
+ * actual allocations for data blocks, freelist blocks, and potential file data
  * bmap btree blocks. However, these restrictions may result in no actual space
- * allocated क्रम a delayed extent, क्रम example, a data block in a certain AG is
- * allocated but there is no additional block क्रम the additional bmap btree
+ * allocated for a delayed extent, for example, a data block in a certain AG is
+ * allocated but there is no additional block for the additional bmap btree
  * block due to a split of the bmap btree of the file. The result of this may
- * lead to an infinite loop when the file माला_लो flushed to disk and all delayed
+ * lead to an infinite loop when the file gets flushed to disk and all delayed
  * extents need to be actually allocated. To get around this, we explicitly set
  * aside a few blocks which will not be reserved in delayed allocation.
  *
- * We need to reserve 4 fsbs _per AG_ क्रम the मुक्तlist and 4 more to handle a
+ * We need to reserve 4 fsbs _per AG_ for the freelist and 4 more to handle a
  * potential split of the file's bmap btree.
  */
-अचिन्हित पूर्णांक
+unsigned int
 xfs_alloc_set_aside(
-	काष्ठा xfs_mount	*mp)
-अणु
-	वापस mp->m_sb.sb_agcount * (XFS_ALLOC_AGFL_RESERVE + 4);
-पूर्ण
+	struct xfs_mount	*mp)
+{
+	return mp->m_sb.sb_agcount * (XFS_ALLOC_AGFL_RESERVE + 4);
+}
 
 /*
  * When deciding how much space to allocate out of an AG, we limit the
@@ -111,149 +110,149 @@ xfs_alloc_set_aside(
  * blocks are generally:
  *	- the AG superblock, AGF, AGI and AGFL
  *	- the AGF (bno and cnt) and AGI btree root blocks, and optionally
- *	  the AGI मुक्त inode and rmap btree root blocks.
+ *	  the AGI free inode and rmap btree root blocks.
  *	- blocks on the AGFL according to xfs_alloc_set_aside() limits
  *	- the rmapbt root block
  *
  * The AG headers are sector sized, so the amount of space they take up is
- * dependent on fileप्रणाली geometry. The others are all single blocks.
+ * dependent on filesystem geometry. The others are all single blocks.
  */
-अचिन्हित पूर्णांक
+unsigned int
 xfs_alloc_ag_max_usable(
-	काष्ठा xfs_mount	*mp)
-अणु
-	अचिन्हित पूर्णांक		blocks;
+	struct xfs_mount	*mp)
+{
+	unsigned int		blocks;
 
 	blocks = XFS_BB_TO_FSB(mp, XFS_FSS_TO_BB(mp, 4)); /* ag headers */
 	blocks += XFS_ALLOC_AGFL_RESERVE;
 	blocks += 3;			/* AGF, AGI btree root blocks */
-	अगर (xfs_sb_version_hasfinobt(&mp->m_sb))
+	if (xfs_sb_version_hasfinobt(&mp->m_sb))
 		blocks++;		/* finobt root block */
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb))
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
 		blocks++; 		/* rmap root block */
-	अगर (xfs_sb_version_hasreflink(&mp->m_sb))
+	if (xfs_sb_version_hasreflink(&mp->m_sb))
 		blocks++;		/* refcount root block */
 
-	वापस mp->m_sb.sb_agblocks - blocks;
-पूर्ण
+	return mp->m_sb.sb_agblocks - blocks;
+}
 
 /*
  * Lookup the record equal to [bno, len] in the btree given by cur.
  */
-STATIC पूर्णांक				/* error */
+STATIC int				/* error */
 xfs_alloc_lookup_eq(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agblock_t		bno,	/* starting block of extent */
 	xfs_extlen_t		len,	/* length of extent */
-	पूर्णांक			*stat)	/* success/failure */
-अणु
-	पूर्णांक			error;
+	int			*stat)	/* success/failure */
+{
+	int			error;
 
 	cur->bc_rec.a.ar_startblock = bno;
 	cur->bc_rec.a.ar_blockcount = len;
 	error = xfs_btree_lookup(cur, XFS_LOOKUP_EQ, stat);
 	cur->bc_ag.abt.active = (*stat == 1);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Lookup the first record greater than or equal to [bno, len]
  * in the btree given by cur.
  */
-पूर्णांक				/* error */
+int				/* error */
 xfs_alloc_lookup_ge(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agblock_t		bno,	/* starting block of extent */
 	xfs_extlen_t		len,	/* length of extent */
-	पूर्णांक			*stat)	/* success/failure */
-अणु
-	पूर्णांक			error;
+	int			*stat)	/* success/failure */
+{
+	int			error;
 
 	cur->bc_rec.a.ar_startblock = bno;
 	cur->bc_rec.a.ar_blockcount = len;
 	error = xfs_btree_lookup(cur, XFS_LOOKUP_GE, stat);
 	cur->bc_ag.abt.active = (*stat == 1);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Lookup the first record less than or equal to [bno, len]
  * in the btree given by cur.
  */
-पूर्णांक					/* error */
+int					/* error */
 xfs_alloc_lookup_le(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agblock_t		bno,	/* starting block of extent */
 	xfs_extlen_t		len,	/* length of extent */
-	पूर्णांक			*stat)	/* success/failure */
-अणु
-	पूर्णांक			error;
+	int			*stat)	/* success/failure */
+{
+	int			error;
 	cur->bc_rec.a.ar_startblock = bno;
 	cur->bc_rec.a.ar_blockcount = len;
 	error = xfs_btree_lookup(cur, XFS_LOOKUP_LE, stat);
 	cur->bc_ag.abt.active = (*stat == 1);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल अंतरभूत bool
+static inline bool
 xfs_alloc_cur_active(
-	काष्ठा xfs_btree_cur	*cur)
-अणु
-	वापस cur && cur->bc_ag.abt.active;
-पूर्ण
+	struct xfs_btree_cur	*cur)
+{
+	return cur && cur->bc_ag.abt.active;
+}
 
 /*
  * Update the record referred to by cur to the value given
  * by [bno, len].
- * This either works (वापस 0) or माला_लो an EFSCORRUPTED error.
+ * This either works (return 0) or gets an EFSCORRUPTED error.
  */
-STATIC पूर्णांक				/* error */
+STATIC int				/* error */
 xfs_alloc_update(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agblock_t		bno,	/* starting block of extent */
 	xfs_extlen_t		len)	/* length of extent */
-अणु
-	जोड़ xfs_btree_rec	rec;
+{
+	union xfs_btree_rec	rec;
 
 	rec.alloc.ar_startblock = cpu_to_be32(bno);
 	rec.alloc.ar_blockcount = cpu_to_be32(len);
-	वापस xfs_btree_update(cur, &rec);
-पूर्ण
+	return xfs_btree_update(cur, &rec);
+}
 
 /*
- * Get the data from the poपूर्णांकed-to record.
+ * Get the data from the pointed-to record.
  */
-पूर्णांक					/* error */
+int					/* error */
 xfs_alloc_get_rec(
-	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	struct xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agblock_t		*bno,	/* output: starting block of extent */
 	xfs_extlen_t		*len,	/* output: length of extent */
-	पूर्णांक			*stat)	/* output: success/failure */
-अणु
-	काष्ठा xfs_mount	*mp = cur->bc_mp;
+	int			*stat)	/* output: success/failure */
+{
+	struct xfs_mount	*mp = cur->bc_mp;
 	xfs_agnumber_t		agno = cur->bc_ag.agno;
-	जोड़ xfs_btree_rec	*rec;
-	पूर्णांक			error;
+	union xfs_btree_rec	*rec;
+	int			error;
 
 	error = xfs_btree_get_rec(cur, &rec, stat);
-	अगर (error || !(*stat))
-		वापस error;
+	if (error || !(*stat))
+		return error;
 
 	*bno = be32_to_cpu(rec->alloc.ar_startblock);
 	*len = be32_to_cpu(rec->alloc.ar_blockcount);
 
-	अगर (*len == 0)
-		जाओ out_bad_rec;
+	if (*len == 0)
+		goto out_bad_rec;
 
-	/* check क्रम valid extent range, including overflow */
-	अगर (!xfs_verअगरy_agbno(mp, agno, *bno))
-		जाओ out_bad_rec;
-	अगर (*bno > *bno + *len)
-		जाओ out_bad_rec;
-	अगर (!xfs_verअगरy_agbno(mp, agno, *bno + *len - 1))
-		जाओ out_bad_rec;
+	/* check for valid extent range, including overflow */
+	if (!xfs_verify_agbno(mp, agno, *bno))
+		goto out_bad_rec;
+	if (*bno > *bno + *len)
+		goto out_bad_rec;
+	if (!xfs_verify_agbno(mp, agno, *bno + *len - 1))
+		goto out_bad_rec;
 
-	वापस 0;
+	return 0;
 
 out_bad_rec:
 	xfs_warn(mp,
@@ -261,136 +260,136 @@ out_bad_rec:
 		cur->bc_btnum == XFS_BTNUM_BNO ? "Block" : "Size", agno);
 	xfs_warn(mp,
 		"start block 0x%x block count 0x%x", *bno, *len);
-	वापस -EFSCORRUPTED;
-पूर्ण
+	return -EFSCORRUPTED;
+}
 
 /*
  * Compute aligned version of the found extent.
- * Takes alignment and min length पूर्णांकo account.
+ * Takes alignment and min length into account.
  */
 STATIC bool
 xfs_alloc_compute_aligned(
-	xfs_alloc_arg_t	*args,		/* allocation argument काष्ठाure */
+	xfs_alloc_arg_t	*args,		/* allocation argument structure */
 	xfs_agblock_t	foundbno,	/* starting block in found extent */
 	xfs_extlen_t	foundlen,	/* length in found extent */
 	xfs_agblock_t	*resbno,	/* result block number */
 	xfs_extlen_t	*reslen,	/* result length */
-	अचिन्हित	*busy_gen)
-अणु
+	unsigned	*busy_gen)
+{
 	xfs_agblock_t	bno = foundbno;
 	xfs_extlen_t	len = foundlen;
-	xfs_extlen_t	dअगरf;
+	xfs_extlen_t	diff;
 	bool		busy;
 
 	/* Trim busy sections out of found extent */
 	busy = xfs_extent_busy_trim(args, &bno, &len, busy_gen);
 
 	/*
-	 * If we have a largish extent that happens to start beक्रमe min_agbno,
-	 * see अगर we can shअगरt it पूर्णांकo range...
+	 * If we have a largish extent that happens to start before min_agbno,
+	 * see if we can shift it into range...
 	 */
-	अगर (bno < args->min_agbno && bno + len > args->min_agbno) अणु
-		dअगरf = args->min_agbno - bno;
-		अगर (len > dअगरf) अणु
-			bno += dअगरf;
-			len -= dअगरf;
-		पूर्ण
-	पूर्ण
+	if (bno < args->min_agbno && bno + len > args->min_agbno) {
+		diff = args->min_agbno - bno;
+		if (len > diff) {
+			bno += diff;
+			len -= diff;
+		}
+	}
 
-	अगर (args->alignment > 1 && len >= args->minlen) अणु
+	if (args->alignment > 1 && len >= args->minlen) {
 		xfs_agblock_t	aligned_bno = roundup(bno, args->alignment);
 
-		dअगरf = aligned_bno - bno;
+		diff = aligned_bno - bno;
 
 		*resbno = aligned_bno;
-		*reslen = dअगरf >= len ? 0 : len - dअगरf;
-	पूर्ण अन्यथा अणु
+		*reslen = diff >= len ? 0 : len - diff;
+	} else {
 		*resbno = bno;
 		*reslen = len;
-	पूर्ण
+	}
 
-	वापस busy;
-पूर्ण
+	return busy;
+}
 
 /*
- * Compute best start block and dअगरf क्रम "near" allocations.
- * मुक्तlen >= wantlen alपढ़ोy checked by caller.
+ * Compute best start block and diff for "near" allocations.
+ * freelen >= wantlen already checked by caller.
  */
-STATIC xfs_extlen_t			/* dअगरference value (असलolute) */
-xfs_alloc_compute_dअगरf(
+STATIC xfs_extlen_t			/* difference value (absolute) */
+xfs_alloc_compute_diff(
 	xfs_agblock_t	wantbno,	/* target starting block */
 	xfs_extlen_t	wantlen,	/* target length */
 	xfs_extlen_t	alignment,	/* target alignment */
-	पूर्णांक		datatype,	/* are we allocating data? */
-	xfs_agblock_t	मुक्तbno,	/* मुक्तspace's starting block */
-	xfs_extlen_t	मुक्तlen,	/* मुक्तspace's length */
-	xfs_agblock_t	*newbnop)	/* result: best start block from मुक्त */
-अणु
-	xfs_agblock_t	मुक्तend;	/* end of मुक्तspace extent */
-	xfs_agblock_t	newbno1;	/* वापस block number */
+	int		datatype,	/* are we allocating data? */
+	xfs_agblock_t	freebno,	/* freespace's starting block */
+	xfs_extlen_t	freelen,	/* freespace's length */
+	xfs_agblock_t	*newbnop)	/* result: best start block from free */
+{
+	xfs_agblock_t	freeend;	/* end of freespace extent */
+	xfs_agblock_t	newbno1;	/* return block number */
 	xfs_agblock_t	newbno2;	/* other new block number */
 	xfs_extlen_t	newlen1=0;	/* length with newbno1 */
 	xfs_extlen_t	newlen2=0;	/* length with newbno2 */
 	xfs_agblock_t	wantend;	/* end of target extent */
 	bool		userdata = datatype & XFS_ALLOC_USERDATA;
 
-	ASSERT(मुक्तlen >= wantlen);
-	मुक्तend = मुक्तbno + मुक्तlen;
+	ASSERT(freelen >= wantlen);
+	freeend = freebno + freelen;
 	wantend = wantbno + wantlen;
 	/*
-	 * We want to allocate from the start of a मुक्त extent अगर it is past
-	 * the desired block or अगर we are allocating user data and the मुक्त
-	 * extent is beक्रमe desired block. The second हाल is there to allow
-	 * क्रम contiguous allocation from the reमुख्यing मुक्त space अगर the file
-	 * grows in the लघु term.
+	 * We want to allocate from the start of a free extent if it is past
+	 * the desired block or if we are allocating user data and the free
+	 * extent is before desired block. The second case is there to allow
+	 * for contiguous allocation from the remaining free space if the file
+	 * grows in the short term.
 	 */
-	अगर (मुक्तbno >= wantbno || (userdata && मुक्तend < wantend)) अणु
-		अगर ((newbno1 = roundup(मुक्तbno, alignment)) >= मुक्तend)
-			newbno1 = शून्यAGBLOCK;
-	पूर्ण अन्यथा अगर (मुक्तend >= wantend && alignment > 1) अणु
+	if (freebno >= wantbno || (userdata && freeend < wantend)) {
+		if ((newbno1 = roundup(freebno, alignment)) >= freeend)
+			newbno1 = NULLAGBLOCK;
+	} else if (freeend >= wantend && alignment > 1) {
 		newbno1 = roundup(wantbno, alignment);
 		newbno2 = newbno1 - alignment;
-		अगर (newbno1 >= मुक्तend)
-			newbno1 = शून्यAGBLOCK;
-		अन्यथा
-			newlen1 = XFS_EXTLEN_MIN(wantlen, मुक्तend - newbno1);
-		अगर (newbno2 < मुक्तbno)
-			newbno2 = शून्यAGBLOCK;
-		अन्यथा
-			newlen2 = XFS_EXTLEN_MIN(wantlen, मुक्तend - newbno2);
-		अगर (newbno1 != शून्यAGBLOCK && newbno2 != शून्यAGBLOCK) अणु
-			अगर (newlen1 < newlen2 ||
+		if (newbno1 >= freeend)
+			newbno1 = NULLAGBLOCK;
+		else
+			newlen1 = XFS_EXTLEN_MIN(wantlen, freeend - newbno1);
+		if (newbno2 < freebno)
+			newbno2 = NULLAGBLOCK;
+		else
+			newlen2 = XFS_EXTLEN_MIN(wantlen, freeend - newbno2);
+		if (newbno1 != NULLAGBLOCK && newbno2 != NULLAGBLOCK) {
+			if (newlen1 < newlen2 ||
 			    (newlen1 == newlen2 &&
 			     XFS_ABSDIFF(newbno1, wantbno) >
 			     XFS_ABSDIFF(newbno2, wantbno)))
 				newbno1 = newbno2;
-		पूर्ण अन्यथा अगर (newbno2 != शून्यAGBLOCK)
+		} else if (newbno2 != NULLAGBLOCK)
 			newbno1 = newbno2;
-	पूर्ण अन्यथा अगर (मुक्तend >= wantend) अणु
+	} else if (freeend >= wantend) {
 		newbno1 = wantbno;
-	पूर्ण अन्यथा अगर (alignment > 1) अणु
-		newbno1 = roundup(मुक्तend - wantlen, alignment);
-		अगर (newbno1 > मुक्तend - wantlen &&
-		    newbno1 - alignment >= मुक्तbno)
+	} else if (alignment > 1) {
+		newbno1 = roundup(freeend - wantlen, alignment);
+		if (newbno1 > freeend - wantlen &&
+		    newbno1 - alignment >= freebno)
 			newbno1 -= alignment;
-		अन्यथा अगर (newbno1 >= मुक्तend)
-			newbno1 = शून्यAGBLOCK;
-	पूर्ण अन्यथा
-		newbno1 = मुक्तend - wantlen;
+		else if (newbno1 >= freeend)
+			newbno1 = NULLAGBLOCK;
+	} else
+		newbno1 = freeend - wantlen;
 	*newbnop = newbno1;
-	वापस newbno1 == शून्यAGBLOCK ? 0 : XFS_ABSDIFF(newbno1, wantbno);
-पूर्ण
+	return newbno1 == NULLAGBLOCK ? 0 : XFS_ABSDIFF(newbno1, wantbno);
+}
 
 /*
  * Fix up the length, based on mod and prod.
- * len should be k * prod + mod क्रम some k.
- * If len is too small it is वापसed unchanged.
+ * len should be k * prod + mod for some k.
+ * If len is too small it is returned unchanged.
  * If len hits maxlen it is left alone.
  */
-STATIC व्योम
+STATIC void
 xfs_alloc_fix_len(
-	xfs_alloc_arg_t	*args)		/* allocation argument काष्ठाure */
-अणु
+	xfs_alloc_arg_t	*args)		/* allocation argument structure */
+{
 	xfs_extlen_t	k;
 	xfs_extlen_t	rlen;
 
@@ -398,366 +397,366 @@ xfs_alloc_fix_len(
 	rlen = args->len;
 	ASSERT(rlen >= args->minlen);
 	ASSERT(rlen <= args->maxlen);
-	अगर (args->prod <= 1 || rlen < args->mod || rlen == args->maxlen ||
+	if (args->prod <= 1 || rlen < args->mod || rlen == args->maxlen ||
 	    (args->mod == 0 && rlen < args->prod))
-		वापस;
+		return;
 	k = rlen % args->prod;
-	अगर (k == args->mod)
-		वापस;
-	अगर (k > args->mod)
+	if (k == args->mod)
+		return;
+	if (k > args->mod)
 		rlen = rlen - (k - args->mod);
-	अन्यथा
+	else
 		rlen = rlen - args->prod + (args->mod - k);
-	/* casts to (पूर्णांक) catch length underflows */
-	अगर ((पूर्णांक)rlen < (पूर्णांक)args->minlen)
-		वापस;
+	/* casts to (int) catch length underflows */
+	if ((int)rlen < (int)args->minlen)
+		return;
 	ASSERT(rlen >= args->minlen && rlen <= args->maxlen);
 	ASSERT(rlen % args->prod == args->mod);
-	ASSERT(args->pag->pagf_मुक्तblks + args->pag->pagf_flcount >=
+	ASSERT(args->pag->pagf_freeblks + args->pag->pagf_flcount >=
 		rlen + args->minleft);
 	args->len = rlen;
-पूर्ण
+}
 
 /*
- * Update the two btrees, logically removing from मुक्तspace the extent
+ * Update the two btrees, logically removing from freespace the extent
  * starting at rbno, rlen blocks.  The extent is contained within the
- * actual (current) मुक्त extent fbno क्रम flen blocks.
+ * actual (current) free extent fbno for flen blocks.
  * Flags are passed in indicating whether the cursors are set to the
  * relevant records.
  */
-STATIC पूर्णांक				/* error code */
+STATIC int				/* error code */
 xfs_alloc_fixup_trees(
-	xfs_btree_cur_t	*cnt_cur,	/* cursor क्रम by-size btree */
-	xfs_btree_cur_t	*bno_cur,	/* cursor क्रम by-block btree */
-	xfs_agblock_t	fbno,		/* starting block of मुक्त extent */
-	xfs_extlen_t	flen,		/* length of मुक्त extent */
-	xfs_agblock_t	rbno,		/* starting block of वापसed extent */
-	xfs_extlen_t	rlen,		/* length of वापसed extent */
-	पूर्णांक		flags)		/* flags, XFSA_FIXUP_... */
-अणु
-	पूर्णांक		error;		/* error code */
-	पूर्णांक		i;		/* operation results */
-	xfs_agblock_t	nfbno1;		/* first new मुक्त startblock */
-	xfs_agblock_t	nfbno2;		/* second new मुक्त startblock */
-	xfs_extlen_t	nflen1=0;	/* first new मुक्त length */
-	xfs_extlen_t	nflen2=0;	/* second new मुक्त length */
-	काष्ठा xfs_mount *mp;
+	xfs_btree_cur_t	*cnt_cur,	/* cursor for by-size btree */
+	xfs_btree_cur_t	*bno_cur,	/* cursor for by-block btree */
+	xfs_agblock_t	fbno,		/* starting block of free extent */
+	xfs_extlen_t	flen,		/* length of free extent */
+	xfs_agblock_t	rbno,		/* starting block of returned extent */
+	xfs_extlen_t	rlen,		/* length of returned extent */
+	int		flags)		/* flags, XFSA_FIXUP_... */
+{
+	int		error;		/* error code */
+	int		i;		/* operation results */
+	xfs_agblock_t	nfbno1;		/* first new free startblock */
+	xfs_agblock_t	nfbno2;		/* second new free startblock */
+	xfs_extlen_t	nflen1=0;	/* first new free length */
+	xfs_extlen_t	nflen2=0;	/* second new free length */
+	struct xfs_mount *mp;
 
 	mp = cnt_cur->bc_mp;
 
 	/*
-	 * Look up the record in the by-size tree अगर necessary.
+	 * Look up the record in the by-size tree if necessary.
 	 */
-	अगर (flags & XFSA_FIXUP_CNT_OK) अणु
-#अगर_घोषित DEBUG
-		अगर ((error = xfs_alloc_get_rec(cnt_cur, &nfbno1, &nflen1, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp,
+	if (flags & XFSA_FIXUP_CNT_OK) {
+#ifdef DEBUG
+		if ((error = xfs_alloc_get_rec(cnt_cur, &nfbno1, &nflen1, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp,
 				   i != 1 ||
 				   nfbno1 != fbno ||
 				   nflen1 != flen))
-			वापस -EFSCORRUPTED;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, fbno, flen, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
+			return -EFSCORRUPTED;
+#endif
+	} else {
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, fbno, flen, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 1))
+			return -EFSCORRUPTED;
+	}
 	/*
-	 * Look up the record in the by-block tree अगर necessary.
+	 * Look up the record in the by-block tree if necessary.
 	 */
-	अगर (flags & XFSA_FIXUP_BNO_OK) अणु
-#अगर_घोषित DEBUG
-		अगर ((error = xfs_alloc_get_rec(bno_cur, &nfbno1, &nflen1, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp,
+	if (flags & XFSA_FIXUP_BNO_OK) {
+#ifdef DEBUG
+		if ((error = xfs_alloc_get_rec(bno_cur, &nfbno1, &nflen1, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp,
 				   i != 1 ||
 				   nfbno1 != fbno ||
 				   nflen1 != flen))
-			वापस -EFSCORRUPTED;
-#पूर्ण_अगर
-	पूर्ण अन्यथा अणु
-		अगर ((error = xfs_alloc_lookup_eq(bno_cur, fbno, flen, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
+			return -EFSCORRUPTED;
+#endif
+	} else {
+		if ((error = xfs_alloc_lookup_eq(bno_cur, fbno, flen, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 1))
+			return -EFSCORRUPTED;
+	}
 
-#अगर_घोषित DEBUG
-	अगर (bno_cur->bc_nlevels == 1 && cnt_cur->bc_nlevels == 1) अणु
-		काष्ठा xfs_btree_block	*bnoblock;
-		काष्ठा xfs_btree_block	*cntblock;
+#ifdef DEBUG
+	if (bno_cur->bc_nlevels == 1 && cnt_cur->bc_nlevels == 1) {
+		struct xfs_btree_block	*bnoblock;
+		struct xfs_btree_block	*cntblock;
 
 		bnoblock = XFS_BUF_TO_BLOCK(bno_cur->bc_bufs[0]);
 		cntblock = XFS_BUF_TO_BLOCK(cnt_cur->bc_bufs[0]);
 
-		अगर (XFS_IS_CORRUPT(mp,
+		if (XFS_IS_CORRUPT(mp,
 				   bnoblock->bb_numrecs !=
 				   cntblock->bb_numrecs))
-			वापस -EFSCORRUPTED;
-	पूर्ण
-#पूर्ण_अगर
+			return -EFSCORRUPTED;
+	}
+#endif
 
 	/*
-	 * Deal with all four हालs: the allocated record is contained
-	 * within the मुक्तspace record, so we can have new मुक्तspace
-	 * at either (or both) end, or no मुक्तspace reमुख्यing.
+	 * Deal with all four cases: the allocated record is contained
+	 * within the freespace record, so we can have new freespace
+	 * at either (or both) end, or no freespace remaining.
 	 */
-	अगर (rbno == fbno && rlen == flen)
-		nfbno1 = nfbno2 = शून्यAGBLOCK;
-	अन्यथा अगर (rbno == fbno) अणु
+	if (rbno == fbno && rlen == flen)
+		nfbno1 = nfbno2 = NULLAGBLOCK;
+	else if (rbno == fbno) {
 		nfbno1 = rbno + rlen;
 		nflen1 = flen - rlen;
-		nfbno2 = शून्यAGBLOCK;
-	पूर्ण अन्यथा अगर (rbno + rlen == fbno + flen) अणु
+		nfbno2 = NULLAGBLOCK;
+	} else if (rbno + rlen == fbno + flen) {
 		nfbno1 = fbno;
 		nflen1 = flen - rlen;
-		nfbno2 = शून्यAGBLOCK;
-	पूर्ण अन्यथा अणु
+		nfbno2 = NULLAGBLOCK;
+	} else {
 		nfbno1 = fbno;
 		nflen1 = rbno - fbno;
 		nfbno2 = rbno + rlen;
 		nflen2 = (fbno + flen) - nfbno2;
-	पूर्ण
+	}
 	/*
 	 * Delete the entry from the by-size btree.
 	 */
-	अगर ((error = xfs_btree_delete(cnt_cur, &i)))
-		वापस error;
-	अगर (XFS_IS_CORRUPT(mp, i != 1))
-		वापस -EFSCORRUPTED;
+	if ((error = xfs_btree_delete(cnt_cur, &i)))
+		return error;
+	if (XFS_IS_CORRUPT(mp, i != 1))
+		return -EFSCORRUPTED;
 	/*
 	 * Add new by-size btree entry(s).
 	 */
-	अगर (nfbno1 != शून्यAGBLOCK) अणु
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, nfbno1, nflen1, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 0))
-			वापस -EFSCORRUPTED;
-		अगर ((error = xfs_btree_insert(cnt_cur, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
-	अगर (nfbno2 != शून्यAGBLOCK) अणु
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, nfbno2, nflen2, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 0))
-			वापस -EFSCORRUPTED;
-		अगर ((error = xfs_btree_insert(cnt_cur, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
+	if (nfbno1 != NULLAGBLOCK) {
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, nfbno1, nflen1, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 0))
+			return -EFSCORRUPTED;
+		if ((error = xfs_btree_insert(cnt_cur, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 1))
+			return -EFSCORRUPTED;
+	}
+	if (nfbno2 != NULLAGBLOCK) {
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, nfbno2, nflen2, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 0))
+			return -EFSCORRUPTED;
+		if ((error = xfs_btree_insert(cnt_cur, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 1))
+			return -EFSCORRUPTED;
+	}
 	/*
 	 * Fix up the by-block btree entry(s).
 	 */
-	अगर (nfbno1 == शून्यAGBLOCK) अणु
+	if (nfbno1 == NULLAGBLOCK) {
 		/*
-		 * No reमुख्यing मुक्तspace, just delete the by-block tree entry.
+		 * No remaining freespace, just delete the by-block tree entry.
 		 */
-		अगर ((error = xfs_btree_delete(bno_cur, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण अन्यथा अणु
+		if ((error = xfs_btree_delete(bno_cur, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 1))
+			return -EFSCORRUPTED;
+	} else {
 		/*
-		 * Update the by-block entry to start later|be लघुer.
+		 * Update the by-block entry to start later|be shorter.
 		 */
-		अगर ((error = xfs_alloc_update(bno_cur, nfbno1, nflen1)))
-			वापस error;
-	पूर्ण
-	अगर (nfbno2 != शून्यAGBLOCK) अणु
+		if ((error = xfs_alloc_update(bno_cur, nfbno1, nflen1)))
+			return error;
+	}
+	if (nfbno2 != NULLAGBLOCK) {
 		/*
-		 * 2 resulting मुक्त entries, need to add one.
+		 * 2 resulting free entries, need to add one.
 		 */
-		अगर ((error = xfs_alloc_lookup_eq(bno_cur, nfbno2, nflen2, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 0))
-			वापस -EFSCORRUPTED;
-		अगर ((error = xfs_btree_insert(bno_cur, &i)))
-			वापस error;
-		अगर (XFS_IS_CORRUPT(mp, i != 1))
-			वापस -EFSCORRUPTED;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if ((error = xfs_alloc_lookup_eq(bno_cur, nfbno2, nflen2, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 0))
+			return -EFSCORRUPTED;
+		if ((error = xfs_btree_insert(bno_cur, &i)))
+			return error;
+		if (XFS_IS_CORRUPT(mp, i != 1))
+			return -EFSCORRUPTED;
+	}
+	return 0;
+}
 
-अटल xfs_failaddr_t
-xfs_agfl_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount *mp = bp->b_mount;
-	काष्ठा xfs_agfl	*agfl = XFS_BUF_TO_AGFL(bp);
+static xfs_failaddr_t
+xfs_agfl_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount *mp = bp->b_mount;
+	struct xfs_agfl	*agfl = XFS_BUF_TO_AGFL(bp);
 	__be32		*agfl_bno = xfs_buf_to_agfl_bno(bp);
-	पूर्णांक		i;
+	int		i;
 
 	/*
-	 * There is no verअगरication of non-crc AGFLs because mkfs करोes not
-	 * initialise the AGFL to zero or शून्य. Hence the only valid part of the
+	 * There is no verification of non-crc AGFLs because mkfs does not
+	 * initialise the AGFL to zero or NULL. Hence the only valid part of the
 	 * AGFL is what the AGF says is active. We can't get to the AGF, so we
-	 * can't verअगरy just those entries are valid.
+	 * can't verify just those entries are valid.
 	 */
-	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
-		वापस शून्य;
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return NULL;
 
-	अगर (!xfs_verअगरy_magic(bp, agfl->agfl_magicnum))
-		वापस __this_address;
-	अगर (!uuid_equal(&agfl->agfl_uuid, &mp->m_sb.sb_meta_uuid))
-		वापस __this_address;
+	if (!xfs_verify_magic(bp, agfl->agfl_magicnum))
+		return __this_address;
+	if (!uuid_equal(&agfl->agfl_uuid, &mp->m_sb.sb_meta_uuid))
+		return __this_address;
 	/*
 	 * during growfs operations, the perag is not fully initialised,
 	 * so we can't use it for any useful checking. growfs ensures we can't
-	 * use it by using uncached buffers that करोn't have the perag attached
-	 * so we can detect and aव्योम this problem.
+	 * use it by using uncached buffers that don't have the perag attached
+	 * so we can detect and avoid this problem.
 	 */
-	अगर (bp->b_pag && be32_to_cpu(agfl->agfl_seqno) != bp->b_pag->pag_agno)
-		वापस __this_address;
+	if (bp->b_pag && be32_to_cpu(agfl->agfl_seqno) != bp->b_pag->pag_agno)
+		return __this_address;
 
-	क्रम (i = 0; i < xfs_agfl_size(mp); i++) अणु
-		अगर (be32_to_cpu(agfl_bno[i]) != शून्यAGBLOCK &&
+	for (i = 0; i < xfs_agfl_size(mp); i++) {
+		if (be32_to_cpu(agfl_bno[i]) != NULLAGBLOCK &&
 		    be32_to_cpu(agfl_bno[i]) >= mp->m_sb.sb_agblocks)
-			वापस __this_address;
-	पूर्ण
+			return __this_address;
+	}
 
-	अगर (!xfs_log_check_lsn(mp, be64_to_cpu(XFS_BUF_TO_AGFL(bp)->agfl_lsn)))
-		वापस __this_address;
-	वापस शून्य;
-पूर्ण
+	if (!xfs_log_check_lsn(mp, be64_to_cpu(XFS_BUF_TO_AGFL(bp)->agfl_lsn)))
+		return __this_address;
+	return NULL;
+}
 
-अटल व्योम
-xfs_agfl_पढ़ो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount *mp = bp->b_mount;
+static void
+xfs_agfl_read_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount *mp = bp->b_mount;
 	xfs_failaddr_t	fa;
 
 	/*
-	 * There is no verअगरication of non-crc AGFLs because mkfs करोes not
-	 * initialise the AGFL to zero or शून्य. Hence the only valid part of the
+	 * There is no verification of non-crc AGFLs because mkfs does not
+	 * initialise the AGFL to zero or NULL. Hence the only valid part of the
 	 * AGFL is what the AGF says is active. We can't get to the AGF, so we
-	 * can't verअगरy just those entries are valid.
+	 * can't verify just those entries are valid.
 	 */
-	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
-		वापस;
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return;
 
-	अगर (!xfs_buf_verअगरy_cksum(bp, XFS_AGFL_CRC_OFF))
-		xfs_verअगरier_error(bp, -EFSBADCRC, __this_address);
-	अन्यथा अणु
-		fa = xfs_agfl_verअगरy(bp);
-		अगर (fa)
-			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-	पूर्ण
-पूर्ण
+	if (!xfs_buf_verify_cksum(bp, XFS_AGFL_CRC_OFF))
+		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
+	else {
+		fa = xfs_agfl_verify(bp);
+		if (fa)
+			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+	}
+}
 
-अटल व्योम
-xfs_agfl_ग_लिखो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
+static void
+xfs_agfl_write_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
 	xfs_failaddr_t		fa;
 
-	/* no verअगरication of non-crc AGFLs */
-	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
-		वापस;
+	/* no verification of non-crc AGFLs */
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return;
 
-	fa = xfs_agfl_verअगरy(bp);
-	अगर (fa) अणु
-		xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-		वापस;
-	पूर्ण
+	fa = xfs_agfl_verify(bp);
+	if (fa) {
+		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+		return;
+	}
 
-	अगर (bip)
+	if (bip)
 		XFS_BUF_TO_AGFL(bp)->agfl_lsn = cpu_to_be64(bip->bli_item.li_lsn);
 
 	xfs_buf_update_cksum(bp, XFS_AGFL_CRC_OFF);
-पूर्ण
+}
 
-स्थिर काष्ठा xfs_buf_ops xfs_agfl_buf_ops = अणु
+const struct xfs_buf_ops xfs_agfl_buf_ops = {
 	.name = "xfs_agfl",
-	.magic = अणु cpu_to_be32(XFS_AGFL_MAGIC), cpu_to_be32(XFS_AGFL_MAGIC) पूर्ण,
-	.verअगरy_पढ़ो = xfs_agfl_पढ़ो_verअगरy,
-	.verअगरy_ग_लिखो = xfs_agfl_ग_लिखो_verअगरy,
-	.verअगरy_काष्ठा = xfs_agfl_verअगरy,
-पूर्ण;
+	.magic = { cpu_to_be32(XFS_AGFL_MAGIC), cpu_to_be32(XFS_AGFL_MAGIC) },
+	.verify_read = xfs_agfl_read_verify,
+	.verify_write = xfs_agfl_write_verify,
+	.verify_struct = xfs_agfl_verify,
+};
 
 /*
- * Read in the allocation group मुक्त block array.
+ * Read in the allocation group free block array.
  */
-पूर्णांक					/* error */
-xfs_alloc_पढ़ो_agfl(
-	xfs_mount_t	*mp,		/* mount poपूर्णांक काष्ठाure */
-	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+int					/* error */
+xfs_alloc_read_agfl(
+	xfs_mount_t	*mp,		/* mount point structure */
+	xfs_trans_t	*tp,		/* transaction pointer */
 	xfs_agnumber_t	agno,		/* allocation group number */
-	काष्ठा xfs_buf	**bpp)		/* buffer क्रम the ag मुक्त block array */
-अणु
-	काष्ठा xfs_buf	*bp;		/* वापस value */
-	पूर्णांक		error;
+	struct xfs_buf	**bpp)		/* buffer for the ag free block array */
+{
+	struct xfs_buf	*bp;		/* return value */
+	int		error;
 
-	ASSERT(agno != शून्यAGNUMBER);
-	error = xfs_trans_पढ़ो_buf(
+	ASSERT(agno != NULLAGNUMBER);
+	error = xfs_trans_read_buf(
 			mp, tp, mp->m_ddev_targp,
 			XFS_AG_DADDR(mp, agno, XFS_AGFL_DADDR(mp)),
 			XFS_FSS_TO_BB(mp, 1), 0, &bp, &xfs_agfl_buf_ops);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	xfs_buf_set_ref(bp, XFS_AGFL_REF);
 	*bpp = bp;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_update_counters(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp,
-	दीर्घ			len)
-अणु
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp,
+	long			len)
+{
+	struct xfs_agf		*agf = agbp->b_addr;
 
-	agbp->b_pag->pagf_मुक्तblks += len;
-	be32_add_cpu(&agf->agf_मुक्तblks, len);
+	agbp->b_pag->pagf_freeblks += len;
+	be32_add_cpu(&agf->agf_freeblks, len);
 
-	अगर (unlikely(be32_to_cpu(agf->agf_मुक्तblks) >
-		     be32_to_cpu(agf->agf_length))) अणु
+	if (unlikely(be32_to_cpu(agf->agf_freeblks) >
+		     be32_to_cpu(agf->agf_length))) {
 		xfs_buf_mark_corrupt(agbp);
-		वापस -EFSCORRUPTED;
-	पूर्ण
+		return -EFSCORRUPTED;
+	}
 
 	xfs_alloc_log_agf(tp, agbp, XFS_AGF_FREEBLKS);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Block allocation algorithm and data काष्ठाures.
+ * Block allocation algorithm and data structures.
  */
-काष्ठा xfs_alloc_cur अणु
-	काष्ठा xfs_btree_cur		*cnt;	/* btree cursors */
-	काष्ठा xfs_btree_cur		*bnolt;
-	काष्ठा xfs_btree_cur		*bnogt;
+struct xfs_alloc_cur {
+	struct xfs_btree_cur		*cnt;	/* btree cursors */
+	struct xfs_btree_cur		*bnolt;
+	struct xfs_btree_cur		*bnogt;
 	xfs_extlen_t			cur_len;/* current search length */
 	xfs_agblock_t			rec_bno;/* extent startblock */
 	xfs_extlen_t			rec_len;/* extent length */
 	xfs_agblock_t			bno;	/* alloc bno */
 	xfs_extlen_t			len;	/* alloc len */
-	xfs_extlen_t			dअगरf;	/* dअगरf from search bno */
-	अचिन्हित पूर्णांक			busy_gen;/* busy state */
+	xfs_extlen_t			diff;	/* diff from search bno */
+	unsigned int			busy_gen;/* busy state */
 	bool				busy;
-पूर्ण;
+};
 
 /*
  * Set up cursors, etc. in the extent allocation cursor. This function can be
- * called multiple बार to reset an initialized काष्ठाure without having to
- * पुनः_स्मृतिate cursors.
+ * called multiple times to reset an initialized structure without having to
+ * reallocate cursors.
  */
-अटल पूर्णांक
+static int
 xfs_alloc_cur_setup(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_alloc_cur	*acur)
-अणु
-	पूर्णांक			error;
-	पूर्णांक			i;
+	struct xfs_alloc_arg	*args,
+	struct xfs_alloc_cur	*acur)
+{
+	int			error;
+	int			i;
 
 	ASSERT(args->alignment == 1 || args->type != XFS_ALLOCTYPE_THIS_BNO);
 
@@ -766,164 +765,164 @@ xfs_alloc_cur_setup(
 	acur->rec_len = 0;
 	acur->bno = 0;
 	acur->len = 0;
-	acur->dअगरf = -1;
+	acur->diff = -1;
 	acur->busy = false;
 	acur->busy_gen = 0;
 
 	/*
-	 * Perक्रमm an initial cntbt lookup to check क्रम availability of maxlen
-	 * extents. If this fails, we'll वापस -ENOSPC to संकेत the caller to
+	 * Perform an initial cntbt lookup to check for availability of maxlen
+	 * extents. If this fails, we'll return -ENOSPC to signal the caller to
 	 * attempt a small allocation.
 	 */
-	अगर (!acur->cnt)
+	if (!acur->cnt)
 		acur->cnt = xfs_allocbt_init_cursor(args->mp, args->tp,
 					args->agbp, args->agno, XFS_BTNUM_CNT);
 	error = xfs_alloc_lookup_ge(acur->cnt, 0, args->maxlen, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
 	 * Allocate the bnobt left and right search cursors.
 	 */
-	अगर (!acur->bnolt)
+	if (!acur->bnolt)
 		acur->bnolt = xfs_allocbt_init_cursor(args->mp, args->tp,
 					args->agbp, args->agno, XFS_BTNUM_BNO);
-	अगर (!acur->bnogt)
+	if (!acur->bnogt)
 		acur->bnogt = xfs_allocbt_init_cursor(args->mp, args->tp,
 					args->agbp, args->agno, XFS_BTNUM_BNO);
-	वापस i == 1 ? 0 : -ENOSPC;
-पूर्ण
+	return i == 1 ? 0 : -ENOSPC;
+}
 
-अटल व्योम
-xfs_alloc_cur_बंद(
-	काष्ठा xfs_alloc_cur	*acur,
+static void
+xfs_alloc_cur_close(
+	struct xfs_alloc_cur	*acur,
 	bool			error)
-अणु
-	पूर्णांक			cur_error = XFS_BTREE_NOERROR;
+{
+	int			cur_error = XFS_BTREE_NOERROR;
 
-	अगर (error)
+	if (error)
 		cur_error = XFS_BTREE_ERROR;
 
-	अगर (acur->cnt)
+	if (acur->cnt)
 		xfs_btree_del_cursor(acur->cnt, cur_error);
-	अगर (acur->bnolt)
+	if (acur->bnolt)
 		xfs_btree_del_cursor(acur->bnolt, cur_error);
-	अगर (acur->bnogt)
+	if (acur->bnogt)
 		xfs_btree_del_cursor(acur->bnogt, cur_error);
-	acur->cnt = acur->bnolt = acur->bnogt = शून्य;
-पूर्ण
+	acur->cnt = acur->bnolt = acur->bnogt = NULL;
+}
 
 /*
- * Check an extent क्रम allocation and track the best available candidate in the
- * allocation काष्ठाure. The cursor is deactivated अगर it has entered an out of
- * range state based on allocation arguments. Optionally वापस the extent
- * extent geometry and allocation status अगर requested by the caller.
+ * Check an extent for allocation and track the best available candidate in the
+ * allocation structure. The cursor is deactivated if it has entered an out of
+ * range state based on allocation arguments. Optionally return the extent
+ * extent geometry and allocation status if requested by the caller.
  */
-अटल पूर्णांक
+static int
 xfs_alloc_cur_check(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_alloc_cur	*acur,
-	काष्ठा xfs_btree_cur	*cur,
-	पूर्णांक			*new)
-अणु
-	पूर्णांक			error, i;
+	struct xfs_alloc_arg	*args,
+	struct xfs_alloc_cur	*acur,
+	struct xfs_btree_cur	*cur,
+	int			*new)
+{
+	int			error, i;
 	xfs_agblock_t		bno, bnoa, bnew;
-	xfs_extlen_t		len, lena, dअगरf = -1;
+	xfs_extlen_t		len, lena, diff = -1;
 	bool			busy;
-	अचिन्हित		busy_gen = 0;
+	unsigned		busy_gen = 0;
 	bool			deactivate = false;
 	bool			isbnobt = cur->bc_btnum == XFS_BTNUM_BNO;
 
 	*new = 0;
 
 	error = xfs_alloc_get_rec(cur, &bno, &len, &i);
-	अगर (error)
-		वापस error;
-	अगर (XFS_IS_CORRUPT(args->mp, i != 1))
-		वापस -EFSCORRUPTED;
+	if (error)
+		return error;
+	if (XFS_IS_CORRUPT(args->mp, i != 1))
+		return -EFSCORRUPTED;
 
 	/*
-	 * Check minlen and deactivate a cntbt cursor अगर out of acceptable size
-	 * range (i.e., walking backwards looking क्रम a minlen extent).
+	 * Check minlen and deactivate a cntbt cursor if out of acceptable size
+	 * range (i.e., walking backwards looking for a minlen extent).
 	 */
-	अगर (len < args->minlen) अणु
+	if (len < args->minlen) {
 		deactivate = !isbnobt;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	busy = xfs_alloc_compute_aligned(args, bno, len, &bnoa, &lena,
 					 &busy_gen);
 	acur->busy |= busy;
-	अगर (busy)
+	if (busy)
 		acur->busy_gen = busy_gen;
 	/* deactivate a bnobt cursor outside of locality range */
-	अगर (bnoa < args->min_agbno || bnoa > args->max_agbno) अणु
+	if (bnoa < args->min_agbno || bnoa > args->max_agbno) {
 		deactivate = isbnobt;
-		जाओ out;
-	पूर्ण
-	अगर (lena < args->minlen)
-		जाओ out;
+		goto out;
+	}
+	if (lena < args->minlen)
+		goto out;
 
 	args->len = XFS_EXTLEN_MIN(lena, args->maxlen);
 	xfs_alloc_fix_len(args);
 	ASSERT(args->len >= args->minlen);
-	अगर (args->len < acur->len)
-		जाओ out;
+	if (args->len < acur->len)
+		goto out;
 
 	/*
 	 * We have an aligned record that satisfies minlen and beats or matches
-	 * the candidate extent size. Compare locality क्रम near allocation mode.
+	 * the candidate extent size. Compare locality for near allocation mode.
 	 */
 	ASSERT(args->type == XFS_ALLOCTYPE_NEAR_BNO);
-	dअगरf = xfs_alloc_compute_dअगरf(args->agbno, args->len,
+	diff = xfs_alloc_compute_diff(args->agbno, args->len,
 				      args->alignment, args->datatype,
 				      bnoa, lena, &bnew);
-	अगर (bnew == शून्यAGBLOCK)
-		जाओ out;
+	if (bnew == NULLAGBLOCK)
+		goto out;
 
 	/*
 	 * Deactivate a bnobt cursor with worse locality than the current best.
 	 */
-	अगर (dअगरf > acur->dअगरf) अणु
+	if (diff > acur->diff) {
 		deactivate = isbnobt;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ASSERT(args->len > acur->len ||
-	       (args->len == acur->len && dअगरf <= acur->dअगरf));
+	       (args->len == acur->len && diff <= acur->diff));
 	acur->rec_bno = bno;
 	acur->rec_len = len;
 	acur->bno = bnew;
 	acur->len = args->len;
-	acur->dअगरf = dअगरf;
+	acur->diff = diff;
 	*new = 1;
 
 	/*
-	 * We're करोne अगर we found a perfect allocation. This only deactivates
+	 * We're done if we found a perfect allocation. This only deactivates
 	 * the current cursor, but this is just an optimization to terminate a
 	 * cntbt search that otherwise runs to the edge of the tree.
 	 */
-	अगर (acur->dअगरf == 0 && acur->len == args->maxlen)
+	if (acur->diff == 0 && acur->len == args->maxlen)
 		deactivate = true;
 out:
-	अगर (deactivate)
+	if (deactivate)
 		cur->bc_ag.abt.active = false;
-	trace_xfs_alloc_cur_check(args->mp, cur->bc_btnum, bno, len, dअगरf,
+	trace_xfs_alloc_cur_check(args->mp, cur->bc_btnum, bno, len, diff,
 				  *new);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Complete an allocation of a candidate extent. Remove the extent from both
- * trees and update the args काष्ठाure.
+ * trees and update the args structure.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_cur_finish(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_alloc_cur	*acur)
-अणु
-	काष्ठा xfs_agf __maybe_unused *agf = args->agbp->b_addr;
-	पूर्णांक			error;
+	struct xfs_alloc_arg	*args,
+	struct xfs_alloc_cur	*acur)
+{
+	struct xfs_agf __maybe_unused *agf = args->agbp->b_addr;
+	int			error;
 
 	ASSERT(acur->cnt && acur->bnolt);
 	ASSERT(acur->bno >= acur->rec_bno);
@@ -932,205 +931,205 @@ xfs_alloc_cur_finish(
 
 	error = xfs_alloc_fixup_trees(acur->cnt, acur->bnolt, acur->rec_bno,
 				      acur->rec_len, acur->bno, acur->len, 0);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	args->agbno = acur->bno;
 	args->len = acur->len;
 	args->wasfromfl = 0;
 
 	trace_xfs_alloc_cur(args);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Locality allocation lookup algorithm. This expects a cntbt cursor and uses
- * bno optimized lookup to search क्रम extents with ideal size and locality.
+ * bno optimized lookup to search for extents with ideal size and locality.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_cntbt_iter(
-	काष्ठा xfs_alloc_arg		*args,
-	काष्ठा xfs_alloc_cur		*acur)
-अणु
-	काष्ठा xfs_btree_cur	*cur = acur->cnt;
+	struct xfs_alloc_arg		*args,
+	struct xfs_alloc_cur		*acur)
+{
+	struct xfs_btree_cur	*cur = acur->cnt;
 	xfs_agblock_t		bno;
 	xfs_extlen_t		len, cur_len;
-	पूर्णांक			error;
-	पूर्णांक			i;
+	int			error;
+	int			i;
 
-	अगर (!xfs_alloc_cur_active(cur))
-		वापस 0;
+	if (!xfs_alloc_cur_active(cur))
+		return 0;
 
 	/* locality optimized lookup */
 	cur_len = acur->cur_len;
 	error = xfs_alloc_lookup_ge(cur, args->agbno, cur_len, &i);
-	अगर (error)
-		वापस error;
-	अगर (i == 0)
-		वापस 0;
+	if (error)
+		return error;
+	if (i == 0)
+		return 0;
 	error = xfs_alloc_get_rec(cur, &bno, &len, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/* check the current record and update search length from it */
 	error = xfs_alloc_cur_check(args, acur, cur, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	ASSERT(len >= acur->cur_len);
 	acur->cur_len = len;
 
 	/*
 	 * We looked up the first record >= [agbno, len] above. The agbno is a
-	 * secondary key and so the current record may lie just beक्रमe or after
-	 * agbno. If it is past agbno, check the previous record too so दीर्घ as
-	 * the length matches as it may be बंदr. Don't check a smaller record
+	 * secondary key and so the current record may lie just before or after
+	 * agbno. If it is past agbno, check the previous record too so long as
+	 * the length matches as it may be closer. Don't check a smaller record
 	 * because that could deactivate our cursor.
 	 */
-	अगर (bno > args->agbno) अणु
+	if (bno > args->agbno) {
 		error = xfs_btree_decrement(cur, 0, &i);
-		अगर (!error && i) अणु
+		if (!error && i) {
 			error = xfs_alloc_get_rec(cur, &bno, &len, &i);
-			अगर (!error && i && len == acur->cur_len)
+			if (!error && i && len == acur->cur_len)
 				error = xfs_alloc_cur_check(args, acur, cur,
 							    &i);
-		पूर्ण
-		अगर (error)
-			वापस error;
-	पूर्ण
+		}
+		if (error)
+			return error;
+	}
 
 	/*
 	 * Increment the search key until we find at least one allocation
-	 * candidate or अगर the extent we found was larger. Otherwise, द्विगुन the
+	 * candidate or if the extent we found was larger. Otherwise, double the
 	 * search key to optimize the search. Efficiency is more important here
-	 * than असलolute best locality.
+	 * than absolute best locality.
 	 */
 	cur_len <<= 1;
-	अगर (!acur->len || acur->cur_len >= cur_len)
+	if (!acur->len || acur->cur_len >= cur_len)
 		acur->cur_len++;
-	अन्यथा
+	else
 		acur->cur_len = cur_len;
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Deal with the हाल where only small मुक्तspaces reमुख्य. Either वापस the
- * contents of the last मुक्तspace record, or allocate space from the मुक्तlist अगर
+ * Deal with the case where only small freespaces remain. Either return the
+ * contents of the last freespace record, or allocate space from the freelist if
  * there is nothing in the tree.
  */
-STATIC पूर्णांक			/* error */
+STATIC int			/* error */
 xfs_alloc_ag_vextent_small(
-	काष्ठा xfs_alloc_arg	*args,	/* allocation argument काष्ठाure */
-	काष्ठा xfs_btree_cur	*ccur,	/* optional by-size cursor */
+	struct xfs_alloc_arg	*args,	/* allocation argument structure */
+	struct xfs_btree_cur	*ccur,	/* optional by-size cursor */
 	xfs_agblock_t		*fbnop,	/* result block number */
 	xfs_extlen_t		*flenp,	/* result length */
-	पूर्णांक			*stat)	/* status: 0-मुक्तlist, 1-normal/none */
-अणु
-	काष्ठा xfs_agf		*agf = args->agbp->b_addr;
-	पूर्णांक			error = 0;
-	xfs_agblock_t		fbno = शून्यAGBLOCK;
+	int			*stat)	/* status: 0-freelist, 1-normal/none */
+{
+	struct xfs_agf		*agf = args->agbp->b_addr;
+	int			error = 0;
+	xfs_agblock_t		fbno = NULLAGBLOCK;
 	xfs_extlen_t		flen = 0;
-	पूर्णांक			i = 0;
+	int			i = 0;
 
 	/*
 	 * If a cntbt cursor is provided, try to allocate the largest record in
-	 * the tree. Try the AGFL अगर the cntbt is empty, otherwise fail the
+	 * the tree. Try the AGFL if the cntbt is empty, otherwise fail the
 	 * allocation. Make sure to respect minleft even when pulling from the
-	 * मुक्तlist.
+	 * freelist.
 	 */
-	अगर (ccur)
+	if (ccur)
 		error = xfs_btree_decrement(ccur, 0, &i);
-	अगर (error)
-		जाओ error;
-	अगर (i) अणु
+	if (error)
+		goto error;
+	if (i) {
 		error = xfs_alloc_get_rec(ccur, &fbno, &flen, &i);
-		अगर (error)
-			जाओ error;
-		अगर (XFS_IS_CORRUPT(args->mp, i != 1)) अणु
+		if (error)
+			goto error;
+		if (XFS_IS_CORRUPT(args->mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error;
-		पूर्ण
-		जाओ out;
-	पूर्ण
+			goto error;
+		}
+		goto out;
+	}
 
-	अगर (args->minlen != 1 || args->alignment != 1 ||
+	if (args->minlen != 1 || args->alignment != 1 ||
 	    args->resv == XFS_AG_RESV_AGFL ||
 	    be32_to_cpu(agf->agf_flcount) <= args->minleft)
-		जाओ out;
+		goto out;
 
-	error = xfs_alloc_get_मुक्तlist(args->tp, args->agbp, &fbno, 0);
-	अगर (error)
-		जाओ error;
-	अगर (fbno == शून्यAGBLOCK)
-		जाओ out;
+	error = xfs_alloc_get_freelist(args->tp, args->agbp, &fbno, 0);
+	if (error)
+		goto error;
+	if (fbno == NULLAGBLOCK)
+		goto out;
 
 	xfs_extent_busy_reuse(args->mp, args->agno, fbno, 1,
 			      (args->datatype & XFS_ALLOC_NOBUSY));
 
-	अगर (args->datatype & XFS_ALLOC_USERDATA) अणु
-		काष्ठा xfs_buf	*bp;
+	if (args->datatype & XFS_ALLOC_USERDATA) {
+		struct xfs_buf	*bp;
 
 		error = xfs_trans_get_buf(args->tp, args->mp->m_ddev_targp,
 				XFS_AGB_TO_DADDR(args->mp, args->agno, fbno),
 				args->mp->m_bsize, 0, &bp);
-		अगर (error)
-			जाओ error;
+		if (error)
+			goto error;
 		xfs_trans_binval(args->tp, bp);
-	पूर्ण
+	}
 	*fbnop = args->agbno = fbno;
 	*flenp = args->len = 1;
-	अगर (XFS_IS_CORRUPT(args->mp, fbno >= be32_to_cpu(agf->agf_length))) अणु
+	if (XFS_IS_CORRUPT(args->mp, fbno >= be32_to_cpu(agf->agf_length))) {
 		error = -EFSCORRUPTED;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	args->wasfromfl = 1;
-	trace_xfs_alloc_small_मुक्तlist(args);
+	trace_xfs_alloc_small_freelist(args);
 
 	/*
 	 * If we're feeding an AGFL block to something that doesn't live in the
-	 * मुक्त space, we need to clear out the OWN_AG rmap.
+	 * free space, we need to clear out the OWN_AG rmap.
 	 */
-	error = xfs_rmap_मुक्त(args->tp, args->agbp, args->agno, fbno, 1,
+	error = xfs_rmap_free(args->tp, args->agbp, args->agno, fbno, 1,
 			      &XFS_RMAP_OINFO_AG);
-	अगर (error)
-		जाओ error;
+	if (error)
+		goto error;
 
 	*stat = 0;
-	वापस 0;
+	return 0;
 
 out:
 	/*
-	 * Can't करो the allocation, give up.
+	 * Can't do the allocation, give up.
 	 */
-	अगर (flen < args->minlen) अणु
-		args->agbno = शून्यAGBLOCK;
+	if (flen < args->minlen) {
+		args->agbno = NULLAGBLOCK;
 		trace_xfs_alloc_small_notenough(args);
 		flen = 0;
-	पूर्ण
+	}
 	*fbnop = fbno;
 	*flenp = flen;
 	*stat = 1;
-	trace_xfs_alloc_small_करोne(args);
-	वापस 0;
+	trace_xfs_alloc_small_done(args);
+	return 0;
 
 error:
 	trace_xfs_alloc_small_error(args);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Allocate a variable extent in the allocation group agno.
  * Type and bno are used to determine where in the allocation group the
  * extent will start.
- * Extent's length (वापसed in *len) will be between minlen and maxlen,
- * and of the क्रमm k * prod + mod unless there's nothing that large.
- * Return the starting a.g. block, or शून्यAGBLOCK अगर we can't करो it.
+ * Extent's length (returned in *len) will be between minlen and maxlen,
+ * and of the form k * prod + mod unless there's nothing that large.
+ * Return the starting a.g. block, or NULLAGBLOCK if we can't do it.
  */
-STATIC पूर्णांक			/* error */
+STATIC int			/* error */
 xfs_alloc_ag_vextent(
-	xfs_alloc_arg_t	*args)	/* argument काष्ठाure क्रम allocation */
-अणु
-	पूर्णांक		error=0;
+	xfs_alloc_arg_t	*args)	/* argument structure for allocation */
+{
+	int		error=0;
 
 	ASSERT(args->minlen > 0);
 	ASSERT(args->maxlen > 0);
@@ -1142,131 +1141,131 @@ xfs_alloc_ag_vextent(
 	 * Branch to correct routine based on the type.
 	 */
 	args->wasfromfl = 0;
-	चयन (args->type) अणु
-	हाल XFS_ALLOCTYPE_THIS_AG:
+	switch (args->type) {
+	case XFS_ALLOCTYPE_THIS_AG:
 		error = xfs_alloc_ag_vextent_size(args);
-		अवरोध;
-	हाल XFS_ALLOCTYPE_NEAR_BNO:
+		break;
+	case XFS_ALLOCTYPE_NEAR_BNO:
 		error = xfs_alloc_ag_vextent_near(args);
-		अवरोध;
-	हाल XFS_ALLOCTYPE_THIS_BNO:
+		break;
+	case XFS_ALLOCTYPE_THIS_BNO:
 		error = xfs_alloc_ag_vextent_exact(args);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ASSERT(0);
 		/* NOTREACHED */
-	पूर्ण
+	}
 
-	अगर (error || args->agbno == शून्यAGBLOCK)
-		वापस error;
+	if (error || args->agbno == NULLAGBLOCK)
+		return error;
 
 	ASSERT(args->len >= args->minlen);
 	ASSERT(args->len <= args->maxlen);
 	ASSERT(!args->wasfromfl || args->resv != XFS_AG_RESV_AGFL);
 	ASSERT(args->agbno % args->alignment == 0);
 
-	/* अगर not file data, insert new block पूर्णांकo the reverse map btree */
-	अगर (!xfs_rmap_should_skip_owner_update(&args->oinfo)) अणु
+	/* if not file data, insert new block into the reverse map btree */
+	if (!xfs_rmap_should_skip_owner_update(&args->oinfo)) {
 		error = xfs_rmap_alloc(args->tp, args->agbp, args->agno,
 				       args->agbno, args->len, &args->oinfo);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	अगर (!args->wasfromfl) अणु
+	if (!args->wasfromfl) {
 		error = xfs_alloc_update_counters(args->tp, args->agbp,
-						  -((दीर्घ)(args->len)));
-		अगर (error)
-			वापस error;
+						  -((long)(args->len)));
+		if (error)
+			return error;
 
 		ASSERT(!xfs_extent_busy_search(args->mp, args->agno,
 					      args->agbno, args->len));
-	पूर्ण
+	}
 
 	xfs_ag_resv_alloc_extent(args->pag, args->resv, args);
 
 	XFS_STATS_INC(args->mp, xs_allocx);
 	XFS_STATS_ADD(args->mp, xs_allocb, args->len);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Allocate a variable extent at exactly agno/bno.
- * Extent's length (वापसed in *len) will be between minlen and maxlen,
- * and of the क्रमm k * prod + mod unless there's nothing that large.
- * Return the starting a.g. block (bno), or शून्यAGBLOCK अगर we can't करो it.
+ * Extent's length (returned in *len) will be between minlen and maxlen,
+ * and of the form k * prod + mod unless there's nothing that large.
+ * Return the starting a.g. block (bno), or NULLAGBLOCK if we can't do it.
  */
-STATIC पूर्णांक			/* error */
+STATIC int			/* error */
 xfs_alloc_ag_vextent_exact(
-	xfs_alloc_arg_t	*args)	/* allocation argument काष्ठाure */
-अणु
-	काष्ठा xfs_agf __maybe_unused *agf = args->agbp->b_addr;
+	xfs_alloc_arg_t	*args)	/* allocation argument structure */
+{
+	struct xfs_agf __maybe_unused *agf = args->agbp->b_addr;
 	xfs_btree_cur_t	*bno_cur;/* by block-number btree cursor */
 	xfs_btree_cur_t	*cnt_cur;/* by count btree cursor */
-	पूर्णांक		error;
+	int		error;
 	xfs_agblock_t	fbno;	/* start block of found extent */
 	xfs_extlen_t	flen;	/* length of found extent */
 	xfs_agblock_t	tbno;	/* start block of busy extent */
 	xfs_extlen_t	tlen;	/* length of busy extent */
 	xfs_agblock_t	tend;	/* end block of busy extent */
-	पूर्णांक		i;	/* success/failure of operation */
-	अचिन्हित	busy_gen;
+	int		i;	/* success/failure of operation */
+	unsigned	busy_gen;
 
 	ASSERT(args->alignment == 1);
 
 	/*
-	 * Allocate/initialize a cursor क्रम the by-number मुक्तspace btree.
+	 * Allocate/initialize a cursor for the by-number freespace btree.
 	 */
 	bno_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
 					  args->agno, XFS_BTNUM_BNO);
 
 	/*
 	 * Lookup bno and minlen in the btree (minlen is irrelevant, really).
-	 * Look क्रम the बंदst मुक्त block <= bno, it must contain bno
-	 * अगर any मुक्त block करोes.
+	 * Look for the closest free block <= bno, it must contain bno
+	 * if any free block does.
 	 */
 	error = xfs_alloc_lookup_le(bno_cur, args->agbno, args->minlen, &i);
-	अगर (error)
-		जाओ error0;
-	अगर (!i)
-		जाओ not_found;
+	if (error)
+		goto error0;
+	if (!i)
+		goto not_found;
 
 	/*
-	 * Grab the मुक्तspace record.
+	 * Grab the freespace record.
 	 */
 	error = xfs_alloc_get_rec(bno_cur, &fbno, &flen, &i);
-	अगर (error)
-		जाओ error0;
-	अगर (XFS_IS_CORRUPT(args->mp, i != 1)) अणु
+	if (error)
+		goto error0;
+	if (XFS_IS_CORRUPT(args->mp, i != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 	ASSERT(fbno <= args->agbno);
 
 	/*
-	 * Check क्रम overlapping busy extents.
+	 * Check for overlapping busy extents.
 	 */
 	tbno = fbno;
 	tlen = flen;
 	xfs_extent_busy_trim(args, &tbno, &tlen, &busy_gen);
 
 	/*
-	 * Give up अगर the start of the extent is busy, or the मुक्तspace isn't
-	 * दीर्घ enough क्रम the minimum request.
+	 * Give up if the start of the extent is busy, or the freespace isn't
+	 * long enough for the minimum request.
 	 */
-	अगर (tbno > args->agbno)
-		जाओ not_found;
-	अगर (tlen < args->minlen)
-		जाओ not_found;
+	if (tbno > args->agbno)
+		goto not_found;
+	if (tlen < args->minlen)
+		goto not_found;
 	tend = tbno + tlen;
-	अगर (tend < args->agbno + args->minlen)
-		जाओ not_found;
+	if (tend < args->agbno + args->minlen)
+		goto not_found;
 
 	/*
-	 * End of extent will be smaller of the मुक्तspace end and the
+	 * End of extent will be smaller of the freespace end and the
 	 * maximal requested end.
 	 *
-	 * Fix the length according to mod and prod अगर given.
+	 * Fix the length according to mod and prod if given.
 	 */
 	args->len = XFS_AGBLOCK_MIN(tend, args->agbno + args->maxlen)
 						- args->agbno;
@@ -1274,104 +1273,104 @@ xfs_alloc_ag_vextent_exact(
 	ASSERT(args->agbno + args->len <= tend);
 
 	/*
-	 * We are allocating agbno क्रम args->len
-	 * Allocate/initialize a cursor क्रम the by-size btree.
+	 * We are allocating agbno for args->len
+	 * Allocate/initialize a cursor for the by-size btree.
 	 */
 	cnt_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
 		args->agno, XFS_BTNUM_CNT);
 	ASSERT(args->agbno + args->len <= be32_to_cpu(agf->agf_length));
 	error = xfs_alloc_fixup_trees(cnt_cur, bno_cur, fbno, flen, args->agbno,
 				      args->len, XFSA_FIXUP_BNO_OK);
-	अगर (error) अणु
+	if (error) {
 		xfs_btree_del_cursor(cnt_cur, XFS_BTREE_ERROR);
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 
 	xfs_btree_del_cursor(bno_cur, XFS_BTREE_NOERROR);
 	xfs_btree_del_cursor(cnt_cur, XFS_BTREE_NOERROR);
 
 	args->wasfromfl = 0;
-	trace_xfs_alloc_exact_करोne(args);
-	वापस 0;
+	trace_xfs_alloc_exact_done(args);
+	return 0;
 
 not_found:
-	/* Didn't find it, वापस null. */
+	/* Didn't find it, return null. */
 	xfs_btree_del_cursor(bno_cur, XFS_BTREE_NOERROR);
-	args->agbno = शून्यAGBLOCK;
+	args->agbno = NULLAGBLOCK;
 	trace_xfs_alloc_exact_notfound(args);
-	वापस 0;
+	return 0;
 
 error0:
 	xfs_btree_del_cursor(bno_cur, XFS_BTREE_ERROR);
 	trace_xfs_alloc_exact_error(args);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Search a given number of btree records in a given direction. Check each
- * record against the good extent we've alपढ़ोy found.
+ * record against the good extent we've already found.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_walk_iter(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_alloc_cur	*acur,
-	काष्ठा xfs_btree_cur	*cur,
+	struct xfs_alloc_arg	*args,
+	struct xfs_alloc_cur	*acur,
+	struct xfs_btree_cur	*cur,
 	bool			increment,
 	bool			find_one, /* quit on first candidate */
-	पूर्णांक			count,    /* rec count (-1 क्रम infinite) */
-	पूर्णांक			*stat)
-अणु
-	पूर्णांक			error;
-	पूर्णांक			i;
+	int			count,    /* rec count (-1 for infinite) */
+	int			*stat)
+{
+	int			error;
+	int			i;
 
 	*stat = 0;
 
 	/*
-	 * Search so दीर्घ as the cursor is active or we find a better extent.
-	 * The cursor is deactivated अगर it extends beyond the range of the
+	 * Search so long as the cursor is active or we find a better extent.
+	 * The cursor is deactivated if it extends beyond the range of the
 	 * current allocation candidate.
 	 */
-	जबतक (xfs_alloc_cur_active(cur) && count) अणु
+	while (xfs_alloc_cur_active(cur) && count) {
 		error = xfs_alloc_cur_check(args, acur, cur, &i);
-		अगर (error)
-			वापस error;
-		अगर (i == 1) अणु
+		if (error)
+			return error;
+		if (i == 1) {
 			*stat = 1;
-			अगर (find_one)
-				अवरोध;
-		पूर्ण
-		अगर (!xfs_alloc_cur_active(cur))
-			अवरोध;
+			if (find_one)
+				break;
+		}
+		if (!xfs_alloc_cur_active(cur))
+			break;
 
-		अगर (increment)
+		if (increment)
 			error = xfs_btree_increment(cur, 0, &i);
-		अन्यथा
+		else
 			error = xfs_btree_decrement(cur, 0, &i);
-		अगर (error)
-			वापस error;
-		अगर (i == 0)
+		if (error)
+			return error;
+		if (i == 0)
 			cur->bc_ag.abt.active = false;
 
-		अगर (count > 0)
+		if (count > 0)
 			count--;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Search the by-bno and by-size btrees in parallel in search of an extent with
- * ideal locality based on the NEAR mode ->agbno locality hपूर्णांक.
+ * ideal locality based on the NEAR mode ->agbno locality hint.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_ag_vextent_locality(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_alloc_cur	*acur,
-	पूर्णांक			*stat)
-अणु
-	काष्ठा xfs_btree_cur	*fbcur = शून्य;
-	पूर्णांक			error;
-	पूर्णांक			i;
+	struct xfs_alloc_arg	*args,
+	struct xfs_alloc_cur	*acur,
+	int			*stat)
+{
+	struct xfs_btree_cur	*fbcur = NULL;
+	int			error;
+	int			i;
 	bool			fbinc;
 
 	ASSERT(acur->len == 0);
@@ -1380,358 +1379,358 @@ xfs_alloc_ag_vextent_locality(
 	*stat = 0;
 
 	error = xfs_alloc_lookup_ge(acur->cnt, args->agbno, acur->cur_len, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	error = xfs_alloc_lookup_le(acur->bnolt, args->agbno, 0, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	error = xfs_alloc_lookup_ge(acur->bnogt, args->agbno, 0, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
 	 * Search the bnobt and cntbt in parallel. Search the bnobt left and
-	 * right and lookup the बंदst extent to the locality hपूर्णांक क्रम each
+	 * right and lookup the closest extent to the locality hint for each
 	 * extent size key in the cntbt. The entire search terminates
-	 * immediately on a bnobt hit because that means we've found best हाल
-	 * locality. Otherwise the search जारीs until the cntbt cursor runs
+	 * immediately on a bnobt hit because that means we've found best case
+	 * locality. Otherwise the search continues until the cntbt cursor runs
 	 * off the end of the tree. If no allocation candidate is found at this
-	 * poपूर्णांक, give up on locality, walk backwards from the end of the cntbt
+	 * point, give up on locality, walk backwards from the end of the cntbt
 	 * and take the first available extent.
 	 *
 	 * The parallel tree searches balance each other out to provide fairly
-	 * consistent perक्रमmance क्रम various situations. The bnobt search can
-	 * have pathological behavior in the worst हाल scenario of larger
-	 * allocation requests and fragmented मुक्त space. On the other hand, the
+	 * consistent performance for various situations. The bnobt search can
+	 * have pathological behavior in the worst case scenario of larger
+	 * allocation requests and fragmented free space. On the other hand, the
 	 * bnobt is able to satisfy most smaller allocation requests much more
-	 * quickly than the cntbt. The cntbt search can sअगरt through fragmented
-	 * मुक्त space and sets of मुक्त extents क्रम larger allocation requests
-	 * more quickly than the bnobt. Since the locality hपूर्णांक is just a hपूर्णांक
-	 * and we करोn't want to scan the entire bnobt क्रम perfect locality, the
+	 * quickly than the cntbt. The cntbt search can sift through fragmented
+	 * free space and sets of free extents for larger allocation requests
+	 * more quickly than the bnobt. Since the locality hint is just a hint
+	 * and we don't want to scan the entire bnobt for perfect locality, the
 	 * cntbt search essentially bounds the bnobt search such that we can
-	 * find good enough locality at reasonable perक्रमmance in most हालs.
+	 * find good enough locality at reasonable performance in most cases.
 	 */
-	जबतक (xfs_alloc_cur_active(acur->bnolt) ||
+	while (xfs_alloc_cur_active(acur->bnolt) ||
 	       xfs_alloc_cur_active(acur->bnogt) ||
-	       xfs_alloc_cur_active(acur->cnt)) अणु
+	       xfs_alloc_cur_active(acur->cnt)) {
 
 		trace_xfs_alloc_cur_lookup(args);
 
 		/*
-		 * Search the bnobt left and right. In the हाल of a hit, finish
-		 * the search in the opposite direction and we're करोne.
+		 * Search the bnobt left and right. In the case of a hit, finish
+		 * the search in the opposite direction and we're done.
 		 */
 		error = xfs_alloc_walk_iter(args, acur, acur->bnolt, false,
 					    true, 1, &i);
-		अगर (error)
-			वापस error;
-		अगर (i == 1) अणु
+		if (error)
+			return error;
+		if (i == 1) {
 			trace_xfs_alloc_cur_left(args);
 			fbcur = acur->bnogt;
 			fbinc = true;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		error = xfs_alloc_walk_iter(args, acur, acur->bnogt, true, true,
 					    1, &i);
-		अगर (error)
-			वापस error;
-		अगर (i == 1) अणु
+		if (error)
+			return error;
+		if (i == 1) {
 			trace_xfs_alloc_cur_right(args);
 			fbcur = acur->bnolt;
 			fbinc = false;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * Check the extent with best locality based on the current
 		 * extent size search key and keep track of the best candidate.
 		 */
 		error = xfs_alloc_cntbt_iter(args, acur);
-		अगर (error)
-			वापस error;
-		अगर (!xfs_alloc_cur_active(acur->cnt)) अणु
-			trace_xfs_alloc_cur_lookup_करोne(args);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (error)
+			return error;
+		if (!xfs_alloc_cur_active(acur->cnt)) {
+			trace_xfs_alloc_cur_lookup_done(args);
+			break;
+		}
+	}
 
 	/*
-	 * If we failed to find anything due to busy extents, वापस empty
+	 * If we failed to find anything due to busy extents, return empty
 	 * handed so the caller can flush and retry. If no busy extents were
 	 * found, walk backwards from the end of the cntbt as a last resort.
 	 */
-	अगर (!xfs_alloc_cur_active(acur->cnt) && !acur->len && !acur->busy) अणु
+	if (!xfs_alloc_cur_active(acur->cnt) && !acur->len && !acur->busy) {
 		error = xfs_btree_decrement(acur->cnt, 0, &i);
-		अगर (error)
-			वापस error;
-		अगर (i) अणु
+		if (error)
+			return error;
+		if (i) {
 			acur->cnt->bc_ag.abt.active = true;
 			fbcur = acur->cnt;
 			fbinc = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Search in the opposite direction क्रम a better entry in the हाल of
+	 * Search in the opposite direction for a better entry in the case of
 	 * a bnobt hit or walk backwards from the end of the cntbt.
 	 */
-	अगर (fbcur) अणु
+	if (fbcur) {
 		error = xfs_alloc_walk_iter(args, acur, fbcur, fbinc, true, -1,
 					    &i);
-		अगर (error)
-			वापस error;
-	पूर्ण
+		if (error)
+			return error;
+	}
 
-	अगर (acur->len)
+	if (acur->len)
 		*stat = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Check the last block of the cnt btree क्रम allocations. */
-अटल पूर्णांक
+/* Check the last block of the cnt btree for allocations. */
+static int
 xfs_alloc_ag_vextent_lastblock(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_alloc_cur	*acur,
+	struct xfs_alloc_arg	*args,
+	struct xfs_alloc_cur	*acur,
 	xfs_agblock_t		*bno,
 	xfs_extlen_t		*len,
 	bool			*allocated)
-अणु
-	पूर्णांक			error;
-	पूर्णांक			i;
+{
+	int			error;
+	int			i;
 
-#अगर_घोषित DEBUG
-	/* Ranकरोmly करोn't execute the first algorithm. */
-	अगर (pअक्रमom_u32() & 1)
-		वापस 0;
-#पूर्ण_अगर
+#ifdef DEBUG
+	/* Randomly don't execute the first algorithm. */
+	if (prandom_u32() & 1)
+		return 0;
+#endif
 
 	/*
 	 * Start from the entry that lookup found, sequence through all larger
-	 * मुक्त blocks.  If we're actually poपूर्णांकing at a record smaller than
+	 * free blocks.  If we're actually pointing at a record smaller than
 	 * maxlen, go to the start of this block, and skip all those smaller
 	 * than minlen.
 	 */
-	अगर (*len || args->alignment > 1) अणु
+	if (*len || args->alignment > 1) {
 		acur->cnt->bc_ptrs[0] = 1;
-		करो अणु
+		do {
 			error = xfs_alloc_get_rec(acur->cnt, bno, len, &i);
-			अगर (error)
-				वापस error;
-			अगर (XFS_IS_CORRUPT(args->mp, i != 1))
-				वापस -EFSCORRUPTED;
-			अगर (*len >= args->minlen)
-				अवरोध;
+			if (error)
+				return error;
+			if (XFS_IS_CORRUPT(args->mp, i != 1))
+				return -EFSCORRUPTED;
+			if (*len >= args->minlen)
+				break;
 			error = xfs_btree_increment(acur->cnt, 0, &i);
-			अगर (error)
-				वापस error;
-		पूर्ण जबतक (i);
+			if (error)
+				return error;
+		} while (i);
 		ASSERT(*len >= args->minlen);
-		अगर (!i)
-			वापस 0;
-	पूर्ण
+		if (!i)
+			return 0;
+	}
 
 	error = xfs_alloc_walk_iter(args, acur, acur->cnt, true, false, -1, &i);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
 	 * It didn't work.  We COULD be in a case where there's a good record
 	 * somewhere, so try again.
 	 */
-	अगर (acur->len == 0)
-		वापस 0;
+	if (acur->len == 0)
+		return 0;
 
 	trace_xfs_alloc_near_first(args);
 	*allocated = true;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Allocate a variable extent near bno in the allocation group agno.
- * Extent's length (वापसed in len) will be between minlen and maxlen,
- * and of the क्रमm k * prod + mod unless there's nothing that large.
- * Return the starting a.g. block, or शून्यAGBLOCK अगर we can't करो it.
+ * Extent's length (returned in len) will be between minlen and maxlen,
+ * and of the form k * prod + mod unless there's nothing that large.
+ * Return the starting a.g. block, or NULLAGBLOCK if we can't do it.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_ag_vextent_near(
-	काष्ठा xfs_alloc_arg	*args)
-अणु
-	काष्ठा xfs_alloc_cur	acur = अणुपूर्ण;
-	पूर्णांक			error;		/* error code */
-	पूर्णांक			i;		/* result code, temporary */
+	struct xfs_alloc_arg	*args)
+{
+	struct xfs_alloc_cur	acur = {};
+	int			error;		/* error code */
+	int			i;		/* result code, temporary */
 	xfs_agblock_t		bno;
 	xfs_extlen_t		len;
 
-	/* handle uninitialized agbno range so caller करोesn't have to */
-	अगर (!args->min_agbno && !args->max_agbno)
+	/* handle uninitialized agbno range so caller doesn't have to */
+	if (!args->min_agbno && !args->max_agbno)
 		args->max_agbno = args->mp->m_sb.sb_agblocks - 1;
 	ASSERT(args->min_agbno <= args->max_agbno);
 
-	/* clamp agbno to the range अगर it's outside */
-	अगर (args->agbno < args->min_agbno)
+	/* clamp agbno to the range if it's outside */
+	if (args->agbno < args->min_agbno)
 		args->agbno = args->min_agbno;
-	अगर (args->agbno > args->max_agbno)
+	if (args->agbno > args->max_agbno)
 		args->agbno = args->max_agbno;
 
 restart:
 	len = 0;
 
 	/*
-	 * Set up cursors and see अगर there are any मुक्त extents as big as
+	 * Set up cursors and see if there are any free extents as big as
 	 * maxlen. If not, pick the last entry in the tree unless the tree is
 	 * empty.
 	 */
 	error = xfs_alloc_cur_setup(args, &acur);
-	अगर (error == -ENOSPC) अणु
+	if (error == -ENOSPC) {
 		error = xfs_alloc_ag_vextent_small(args, acur.cnt, &bno,
 				&len, &i);
-		अगर (error)
-			जाओ out;
-		अगर (i == 0 || len == 0) अणु
+		if (error)
+			goto out;
+		if (i == 0 || len == 0) {
 			trace_xfs_alloc_near_noentry(args);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ASSERT(i == 1);
-	पूर्ण अन्यथा अगर (error) अणु
-		जाओ out;
-	पूर्ण
+	} else if (error) {
+		goto out;
+	}
 
 	/*
 	 * First algorithm.
-	 * If the requested extent is large wrt the मुक्तspaces available
-	 * in this a.g., then the cursor will be poपूर्णांकing to a btree entry
+	 * If the requested extent is large wrt the freespaces available
+	 * in this a.g., then the cursor will be pointing to a btree entry
 	 * near the right edge of the tree.  If it's in the last btree leaf
 	 * block, then we just examine all the entries in that block
 	 * that are big enough, and pick the best one.
 	 */
-	अगर (xfs_btree_islastblock(acur.cnt, 0)) अणु
+	if (xfs_btree_islastblock(acur.cnt, 0)) {
 		bool		allocated = false;
 
 		error = xfs_alloc_ag_vextent_lastblock(args, &acur, &bno, &len,
 				&allocated);
-		अगर (error)
-			जाओ out;
-		अगर (allocated)
-			जाओ alloc_finish;
-	पूर्ण
+		if (error)
+			goto out;
+		if (allocated)
+			goto alloc_finish;
+	}
 
 	/*
 	 * Second algorithm. Combined cntbt and bnobt search to find ideal
 	 * locality.
 	 */
 	error = xfs_alloc_ag_vextent_locality(args, &acur, &i);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
 	/*
 	 * If we couldn't get anything, give up.
 	 */
-	अगर (!acur.len) अणु
-		अगर (acur.busy) अणु
+	if (!acur.len) {
+		if (acur.busy) {
 			trace_xfs_alloc_near_busy(args);
 			xfs_extent_busy_flush(args->mp, args->pag,
 					      acur.busy_gen);
-			जाओ restart;
-		पूर्ण
+			goto restart;
+		}
 		trace_xfs_alloc_size_neither(args);
-		args->agbno = शून्यAGBLOCK;
-		जाओ out;
-	पूर्ण
+		args->agbno = NULLAGBLOCK;
+		goto out;
+	}
 
 alloc_finish:
 	/* fix up btrees on a successful allocation */
 	error = xfs_alloc_cur_finish(args, &acur);
 
 out:
-	xfs_alloc_cur_बंद(&acur, error);
-	वापस error;
-पूर्ण
+	xfs_alloc_cur_close(&acur, error);
+	return error;
+}
 
 /*
  * Allocate a variable extent anywhere in the allocation group agno.
- * Extent's length (वापसed in len) will be between minlen and maxlen,
- * and of the क्रमm k * prod + mod unless there's nothing that large.
- * Return the starting a.g. block, or शून्यAGBLOCK अगर we can't करो it.
+ * Extent's length (returned in len) will be between minlen and maxlen,
+ * and of the form k * prod + mod unless there's nothing that large.
+ * Return the starting a.g. block, or NULLAGBLOCK if we can't do it.
  */
-STATIC पूर्णांक				/* error */
+STATIC int				/* error */
 xfs_alloc_ag_vextent_size(
-	xfs_alloc_arg_t	*args)		/* allocation argument काष्ठाure */
-अणु
-	काष्ठा xfs_agf	*agf = args->agbp->b_addr;
-	xfs_btree_cur_t	*bno_cur;	/* cursor क्रम bno btree */
-	xfs_btree_cur_t	*cnt_cur;	/* cursor क्रम cnt btree */
-	पूर्णांक		error;		/* error result */
-	xfs_agblock_t	fbno;		/* start of found मुक्तspace */
-	xfs_extlen_t	flen;		/* length of found मुक्तspace */
-	पूर्णांक		i;		/* temp status variable */
-	xfs_agblock_t	rbno;		/* वापसed block number */
-	xfs_extlen_t	rlen;		/* length of वापसed extent */
+	xfs_alloc_arg_t	*args)		/* allocation argument structure */
+{
+	struct xfs_agf	*agf = args->agbp->b_addr;
+	xfs_btree_cur_t	*bno_cur;	/* cursor for bno btree */
+	xfs_btree_cur_t	*cnt_cur;	/* cursor for cnt btree */
+	int		error;		/* error result */
+	xfs_agblock_t	fbno;		/* start of found freespace */
+	xfs_extlen_t	flen;		/* length of found freespace */
+	int		i;		/* temp status variable */
+	xfs_agblock_t	rbno;		/* returned block number */
+	xfs_extlen_t	rlen;		/* length of returned extent */
 	bool		busy;
-	अचिन्हित	busy_gen;
+	unsigned	busy_gen;
 
 restart:
 	/*
-	 * Allocate and initialize a cursor क्रम the by-size btree.
+	 * Allocate and initialize a cursor for the by-size btree.
 	 */
 	cnt_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
 		args->agno, XFS_BTNUM_CNT);
-	bno_cur = शून्य;
+	bno_cur = NULL;
 	busy = false;
 
 	/*
-	 * Look क्रम an entry >= maxlen+alignment-1 blocks.
+	 * Look for an entry >= maxlen+alignment-1 blocks.
 	 */
-	अगर ((error = xfs_alloc_lookup_ge(cnt_cur, 0,
+	if ((error = xfs_alloc_lookup_ge(cnt_cur, 0,
 			args->maxlen + args->alignment - 1, &i)))
-		जाओ error0;
+		goto error0;
 
 	/*
-	 * If none then we have to settle क्रम a smaller extent. In the हाल that
-	 * there are no large extents, this will वापस the last entry in the
-	 * tree unless the tree is empty. In the हाल that there are only busy
-	 * large extents, this will वापस the largest small extent unless there
+	 * If none then we have to settle for a smaller extent. In the case that
+	 * there are no large extents, this will return the last entry in the
+	 * tree unless the tree is empty. In the case that there are only busy
+	 * large extents, this will return the largest small extent unless there
 	 * are no smaller extents available.
 	 */
-	अगर (!i) अणु
+	if (!i) {
 		error = xfs_alloc_ag_vextent_small(args, cnt_cur,
 						   &fbno, &flen, &i);
-		अगर (error)
-			जाओ error0;
-		अगर (i == 0 || flen == 0) अणु
+		if (error)
+			goto error0;
+		if (i == 0 || flen == 0) {
 			xfs_btree_del_cursor(cnt_cur, XFS_BTREE_NOERROR);
 			trace_xfs_alloc_size_noentry(args);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		ASSERT(i == 1);
 		busy = xfs_alloc_compute_aligned(args, fbno, flen, &rbno,
 				&rlen, &busy_gen);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * Search क्रम a non-busy extent that is large enough.
+		 * Search for a non-busy extent that is large enough.
 		 */
-		क्रम (;;) अणु
+		for (;;) {
 			error = xfs_alloc_get_rec(cnt_cur, &fbno, &flen, &i);
-			अगर (error)
-				जाओ error0;
-			अगर (XFS_IS_CORRUPT(args->mp, i != 1)) अणु
+			if (error)
+				goto error0;
+			if (XFS_IS_CORRUPT(args->mp, i != 1)) {
 				error = -EFSCORRUPTED;
-				जाओ error0;
-			पूर्ण
+				goto error0;
+			}
 
 			busy = xfs_alloc_compute_aligned(args, fbno, flen,
 					&rbno, &rlen, &busy_gen);
 
-			अगर (rlen >= args->maxlen)
-				अवरोध;
+			if (rlen >= args->maxlen)
+				break;
 
 			error = xfs_btree_increment(cnt_cur, 0, &i);
-			अगर (error)
-				जाओ error0;
-			अगर (i == 0) अणु
+			if (error)
+				goto error0;
+			if (i == 0) {
 				/*
 				 * Our only valid extents must have been busy.
-				 * Make it unbusy by क्रमcing the log out and
+				 * Make it unbusy by forcing the log out and
 				 * retrying.
 				 */
 				xfs_btree_del_cursor(cnt_cur,
@@ -1739,686 +1738,686 @@ restart:
 				trace_xfs_alloc_size_busy(args);
 				xfs_extent_busy_flush(args->mp,
 							args->pag, busy_gen);
-				जाओ restart;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto restart;
+			}
+		}
+	}
 
 	/*
-	 * In the first हाल above, we got the last entry in the
-	 * by-size btree.  Now we check to see अगर the space hits maxlen
-	 * once aligned; अगर not, we search left क्रम something better.
-	 * This can't happen in the second हाल above.
+	 * In the first case above, we got the last entry in the
+	 * by-size btree.  Now we check to see if the space hits maxlen
+	 * once aligned; if not, we search left for something better.
+	 * This can't happen in the second case above.
 	 */
 	rlen = XFS_EXTLEN_MIN(args->maxlen, rlen);
-	अगर (XFS_IS_CORRUPT(args->mp,
+	if (XFS_IS_CORRUPT(args->mp,
 			   rlen != 0 &&
 			   (rlen > flen ||
-			    rbno + rlen > fbno + flen))) अणु
+			    rbno + rlen > fbno + flen))) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
-	अगर (rlen < args->maxlen) अणु
+		goto error0;
+	}
+	if (rlen < args->maxlen) {
 		xfs_agblock_t	bestfbno;
 		xfs_extlen_t	bestflen;
 		xfs_agblock_t	bestrbno;
-		xfs_extlen_t	beम_माप;
+		xfs_extlen_t	bestrlen;
 
-		beम_माप = rlen;
+		bestrlen = rlen;
 		bestrbno = rbno;
 		bestflen = flen;
 		bestfbno = fbno;
-		क्रम (;;) अणु
-			अगर ((error = xfs_btree_decrement(cnt_cur, 0, &i)))
-				जाओ error0;
-			अगर (i == 0)
-				अवरोध;
-			अगर ((error = xfs_alloc_get_rec(cnt_cur, &fbno, &flen,
+		for (;;) {
+			if ((error = xfs_btree_decrement(cnt_cur, 0, &i)))
+				goto error0;
+			if (i == 0)
+				break;
+			if ((error = xfs_alloc_get_rec(cnt_cur, &fbno, &flen,
 					&i)))
-				जाओ error0;
-			अगर (XFS_IS_CORRUPT(args->mp, i != 1)) अणु
+				goto error0;
+			if (XFS_IS_CORRUPT(args->mp, i != 1)) {
 				error = -EFSCORRUPTED;
-				जाओ error0;
-			पूर्ण
-			अगर (flen < beम_माप)
-				अवरोध;
+				goto error0;
+			}
+			if (flen < bestrlen)
+				break;
 			busy = xfs_alloc_compute_aligned(args, fbno, flen,
 					&rbno, &rlen, &busy_gen);
 			rlen = XFS_EXTLEN_MIN(args->maxlen, rlen);
-			अगर (XFS_IS_CORRUPT(args->mp,
+			if (XFS_IS_CORRUPT(args->mp,
 					   rlen != 0 &&
 					   (rlen > flen ||
-					    rbno + rlen > fbno + flen))) अणु
+					    rbno + rlen > fbno + flen))) {
 				error = -EFSCORRUPTED;
-				जाओ error0;
-			पूर्ण
-			अगर (rlen > beम_माप) अणु
-				beम_माप = rlen;
+				goto error0;
+			}
+			if (rlen > bestrlen) {
+				bestrlen = rlen;
 				bestrbno = rbno;
 				bestflen = flen;
 				bestfbno = fbno;
-				अगर (rlen == args->maxlen)
-					अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, bestfbno, bestflen,
+				if (rlen == args->maxlen)
+					break;
+			}
+		}
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, bestfbno, bestflen,
 				&i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(args->mp, i != 1)) अणु
+			goto error0;
+		if (XFS_IS_CORRUPT(args->mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-		rlen = beम_माप;
+			goto error0;
+		}
+		rlen = bestrlen;
 		rbno = bestrbno;
 		flen = bestflen;
 		fbno = bestfbno;
-	पूर्ण
+	}
 	args->wasfromfl = 0;
 	/*
 	 * Fix up the length.
 	 */
 	args->len = rlen;
-	अगर (rlen < args->minlen) अणु
-		अगर (busy) अणु
+	if (rlen < args->minlen) {
+		if (busy) {
 			xfs_btree_del_cursor(cnt_cur, XFS_BTREE_NOERROR);
 			trace_xfs_alloc_size_busy(args);
 			xfs_extent_busy_flush(args->mp, args->pag, busy_gen);
-			जाओ restart;
-		पूर्ण
-		जाओ out_nominleft;
-	पूर्ण
+			goto restart;
+		}
+		goto out_nominleft;
+	}
 	xfs_alloc_fix_len(args);
 
 	rlen = args->len;
-	अगर (XFS_IS_CORRUPT(args->mp, rlen > flen)) अणु
+	if (XFS_IS_CORRUPT(args->mp, rlen > flen)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 	/*
-	 * Allocate and initialize a cursor क्रम the by-block tree.
+	 * Allocate and initialize a cursor for the by-block tree.
 	 */
 	bno_cur = xfs_allocbt_init_cursor(args->mp, args->tp, args->agbp,
 		args->agno, XFS_BTNUM_BNO);
-	अगर ((error = xfs_alloc_fixup_trees(cnt_cur, bno_cur, fbno, flen,
+	if ((error = xfs_alloc_fixup_trees(cnt_cur, bno_cur, fbno, flen,
 			rbno, rlen, XFSA_FIXUP_CNT_OK)))
-		जाओ error0;
+		goto error0;
 	xfs_btree_del_cursor(cnt_cur, XFS_BTREE_NOERROR);
 	xfs_btree_del_cursor(bno_cur, XFS_BTREE_NOERROR);
-	cnt_cur = bno_cur = शून्य;
+	cnt_cur = bno_cur = NULL;
 	args->len = rlen;
 	args->agbno = rbno;
-	अगर (XFS_IS_CORRUPT(args->mp,
+	if (XFS_IS_CORRUPT(args->mp,
 			   args->agbno + args->len >
-			   be32_to_cpu(agf->agf_length))) अणु
+			   be32_to_cpu(agf->agf_length))) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
-	trace_xfs_alloc_size_करोne(args);
-	वापस 0;
+		goto error0;
+	}
+	trace_xfs_alloc_size_done(args);
+	return 0;
 
 error0:
 	trace_xfs_alloc_size_error(args);
-	अगर (cnt_cur)
+	if (cnt_cur)
 		xfs_btree_del_cursor(cnt_cur, XFS_BTREE_ERROR);
-	अगर (bno_cur)
+	if (bno_cur)
 		xfs_btree_del_cursor(bno_cur, XFS_BTREE_ERROR);
-	वापस error;
+	return error;
 
 out_nominleft:
 	xfs_btree_del_cursor(cnt_cur, XFS_BTREE_NOERROR);
 	trace_xfs_alloc_size_nominleft(args);
-	args->agbno = शून्यAGBLOCK;
-	वापस 0;
-पूर्ण
+	args->agbno = NULLAGBLOCK;
+	return 0;
+}
 
 /*
- * Free the extent starting at agno/bno क्रम length.
+ * Free the extent starting at agno/bno for length.
  */
-STATIC पूर्णांक
-xfs_मुक्त_ag_extent(
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_buf			*agbp,
+STATIC int
+xfs_free_ag_extent(
+	struct xfs_trans		*tp,
+	struct xfs_buf			*agbp,
 	xfs_agnumber_t			agno,
 	xfs_agblock_t			bno,
 	xfs_extlen_t			len,
-	स्थिर काष्ठा xfs_owner_info	*oinfo,
-	क्रमागत xfs_ag_resv_type		type)
-अणु
-	काष्ठा xfs_mount		*mp;
-	काष्ठा xfs_btree_cur		*bno_cur;
-	काष्ठा xfs_btree_cur		*cnt_cur;
+	const struct xfs_owner_info	*oinfo,
+	enum xfs_ag_resv_type		type)
+{
+	struct xfs_mount		*mp;
+	struct xfs_btree_cur		*bno_cur;
+	struct xfs_btree_cur		*cnt_cur;
 	xfs_agblock_t			gtbno; /* start of right neighbor */
 	xfs_extlen_t			gtlen; /* length of right neighbor */
 	xfs_agblock_t			ltbno; /* start of left neighbor */
 	xfs_extlen_t			ltlen; /* length of left neighbor */
-	xfs_agblock_t			nbno; /* new starting block of मुक्तsp */
-	xfs_extlen_t			nlen; /* new length of मुक्तspace */
-	पूर्णांक				haveleft; /* have a left neighbor */
-	पूर्णांक				haveright; /* have a right neighbor */
-	पूर्णांक				i;
-	पूर्णांक				error;
+	xfs_agblock_t			nbno; /* new starting block of freesp */
+	xfs_extlen_t			nlen; /* new length of freespace */
+	int				haveleft; /* have a left neighbor */
+	int				haveright; /* have a right neighbor */
+	int				i;
+	int				error;
 
-	bno_cur = cnt_cur = शून्य;
+	bno_cur = cnt_cur = NULL;
 	mp = tp->t_mountp;
 
-	अगर (!xfs_rmap_should_skip_owner_update(oinfo)) अणु
-		error = xfs_rmap_मुक्त(tp, agbp, agno, bno, len, oinfo);
-		अगर (error)
-			जाओ error0;
-	पूर्ण
+	if (!xfs_rmap_should_skip_owner_update(oinfo)) {
+		error = xfs_rmap_free(tp, agbp, agno, bno, len, oinfo);
+		if (error)
+			goto error0;
+	}
 
 	/*
-	 * Allocate and initialize a cursor क्रम the by-block btree.
+	 * Allocate and initialize a cursor for the by-block btree.
 	 */
 	bno_cur = xfs_allocbt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_BNO);
 	/*
-	 * Look क्रम a neighboring block on the left (lower block numbers)
+	 * Look for a neighboring block on the left (lower block numbers)
 	 * that is contiguous with this space.
 	 */
-	अगर ((error = xfs_alloc_lookup_le(bno_cur, bno, len, &haveleft)))
-		जाओ error0;
-	अगर (haveleft) अणु
+	if ((error = xfs_alloc_lookup_le(bno_cur, bno, len, &haveleft)))
+		goto error0;
+	if (haveleft) {
 		/*
 		 * There is a block to our left.
 		 */
-		अगर ((error = xfs_alloc_get_rec(bno_cur, &ltbno, &ltlen, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_alloc_get_rec(bno_cur, &ltbno, &ltlen, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
 		 * It's not contiguous, though.
 		 */
-		अगर (ltbno + ltlen < bno)
+		if (ltbno + ltlen < bno)
 			haveleft = 0;
-		अन्यथा अणु
+		else {
 			/*
-			 * If this failure happens the request to मुक्त this
-			 * space was invalid, it's (partly) alपढ़ोy मुक्त.
+			 * If this failure happens the request to free this
+			 * space was invalid, it's (partly) already free.
 			 * Very bad.
 			 */
-			अगर (XFS_IS_CORRUPT(mp, ltbno + ltlen > bno)) अणु
+			if (XFS_IS_CORRUPT(mp, ltbno + ltlen > bno)) {
 				error = -EFSCORRUPTED;
-				जाओ error0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto error0;
+			}
+		}
+	}
 	/*
-	 * Look क्रम a neighboring block on the right (higher block numbers)
+	 * Look for a neighboring block on the right (higher block numbers)
 	 * that is contiguous with this space.
 	 */
-	अगर ((error = xfs_btree_increment(bno_cur, 0, &haveright)))
-		जाओ error0;
-	अगर (haveright) अणु
+	if ((error = xfs_btree_increment(bno_cur, 0, &haveright)))
+		goto error0;
+	if (haveright) {
 		/*
 		 * There is a block to our right.
 		 */
-		अगर ((error = xfs_alloc_get_rec(bno_cur, &gtbno, &gtlen, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_alloc_get_rec(bno_cur, &gtbno, &gtlen, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
 		 * It's not contiguous, though.
 		 */
-		अगर (bno + len < gtbno)
+		if (bno + len < gtbno)
 			haveright = 0;
-		अन्यथा अणु
+		else {
 			/*
-			 * If this failure happens the request to मुक्त this
-			 * space was invalid, it's (partly) alपढ़ोy मुक्त.
+			 * If this failure happens the request to free this
+			 * space was invalid, it's (partly) already free.
 			 * Very bad.
 			 */
-			अगर (XFS_IS_CORRUPT(mp, bno + len > gtbno)) अणु
+			if (XFS_IS_CORRUPT(mp, bno + len > gtbno)) {
 				error = -EFSCORRUPTED;
-				जाओ error0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto error0;
+			}
+		}
+	}
 	/*
-	 * Now allocate and initialize a cursor क्रम the by-size tree.
+	 * Now allocate and initialize a cursor for the by-size tree.
 	 */
 	cnt_cur = xfs_allocbt_init_cursor(mp, tp, agbp, agno, XFS_BTNUM_CNT);
 	/*
 	 * Have both left and right contiguous neighbors.
-	 * Merge all three पूर्णांकo a single मुक्त block.
+	 * Merge all three into a single free block.
 	 */
-	अगर (haveleft && haveright) अणु
+	if (haveleft && haveright) {
 		/*
 		 * Delete the old by-size entry on the left.
 		 */
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, ltbno, ltlen, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, ltbno, ltlen, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-		अगर ((error = xfs_btree_delete(cnt_cur, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+			goto error0;
+		}
+		if ((error = xfs_btree_delete(cnt_cur, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
 		 * Delete the old by-size entry on the right.
 		 */
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, gtbno, gtlen, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, gtbno, gtlen, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-		अगर ((error = xfs_btree_delete(cnt_cur, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+			goto error0;
+		}
+		if ((error = xfs_btree_delete(cnt_cur, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
-		 * Delete the old by-block entry क्रम the right block.
+		 * Delete the old by-block entry for the right block.
 		 */
-		अगर ((error = xfs_btree_delete(bno_cur, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_btree_delete(bno_cur, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
 		 * Move the by-block cursor back to the left neighbor.
 		 */
-		अगर ((error = xfs_btree_decrement(bno_cur, 0, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_btree_decrement(bno_cur, 0, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-#अगर_घोषित DEBUG
+			goto error0;
+		}
+#ifdef DEBUG
 		/*
 		 * Check that this is the right record: delete didn't
 		 * mangle the cursor.
 		 */
-		अणु
+		{
 			xfs_agblock_t	xxbno;
 			xfs_extlen_t	xxlen;
 
-			अगर ((error = xfs_alloc_get_rec(bno_cur, &xxbno, &xxlen,
+			if ((error = xfs_alloc_get_rec(bno_cur, &xxbno, &xxlen,
 					&i)))
-				जाओ error0;
-			अगर (XFS_IS_CORRUPT(mp,
+				goto error0;
+			if (XFS_IS_CORRUPT(mp,
 					   i != 1 ||
 					   xxbno != ltbno ||
-					   xxlen != ltlen)) अणु
+					   xxlen != ltlen)) {
 				error = -EFSCORRUPTED;
-				जाओ error0;
-			पूर्ण
-		पूर्ण
-#पूर्ण_अगर
+				goto error0;
+			}
+		}
+#endif
 		/*
-		 * Update reमुख्यing by-block entry to the new, joined block.
+		 * Update remaining by-block entry to the new, joined block.
 		 */
 		nbno = ltbno;
 		nlen = len + ltlen + gtlen;
-		अगर ((error = xfs_alloc_update(bno_cur, nbno, nlen)))
-			जाओ error0;
-	पूर्ण
+		if ((error = xfs_alloc_update(bno_cur, nbno, nlen)))
+			goto error0;
+	}
 	/*
 	 * Have only a left contiguous neighbor.
-	 * Merge it together with the new मुक्तspace.
+	 * Merge it together with the new freespace.
 	 */
-	अन्यथा अगर (haveleft) अणु
+	else if (haveleft) {
 		/*
 		 * Delete the old by-size entry on the left.
 		 */
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, ltbno, ltlen, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, ltbno, ltlen, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-		अगर ((error = xfs_btree_delete(cnt_cur, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+			goto error0;
+		}
+		if ((error = xfs_btree_delete(cnt_cur, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
 		 * Back up the by-block cursor to the left neighbor, and
 		 * update its length.
 		 */
-		अगर ((error = xfs_btree_decrement(bno_cur, 0, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_btree_decrement(bno_cur, 0, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		nbno = ltbno;
 		nlen = len + ltlen;
-		अगर ((error = xfs_alloc_update(bno_cur, nbno, nlen)))
-			जाओ error0;
-	पूर्ण
+		if ((error = xfs_alloc_update(bno_cur, nbno, nlen)))
+			goto error0;
+	}
 	/*
 	 * Have only a right contiguous neighbor.
-	 * Merge it together with the new मुक्तspace.
+	 * Merge it together with the new freespace.
 	 */
-	अन्यथा अगर (haveright) अणु
+	else if (haveright) {
 		/*
 		 * Delete the old by-size entry on the right.
 		 */
-		अगर ((error = xfs_alloc_lookup_eq(cnt_cur, gtbno, gtlen, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_alloc_lookup_eq(cnt_cur, gtbno, gtlen, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-		अगर ((error = xfs_btree_delete(cnt_cur, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+			goto error0;
+		}
+		if ((error = xfs_btree_delete(cnt_cur, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
+			goto error0;
+		}
 		/*
 		 * Update the starting block and length of the right
 		 * neighbor in the by-block tree.
 		 */
 		nbno = bno;
 		nlen = len + gtlen;
-		अगर ((error = xfs_alloc_update(bno_cur, nbno, nlen)))
-			जाओ error0;
-	पूर्ण
+		if ((error = xfs_alloc_update(bno_cur, nbno, nlen)))
+			goto error0;
+	}
 	/*
 	 * No contiguous neighbors.
-	 * Insert the new मुक्तspace पूर्णांकo the by-block tree.
+	 * Insert the new freespace into the by-block tree.
 	 */
-	अन्यथा अणु
+	else {
 		nbno = bno;
 		nlen = len;
-		अगर ((error = xfs_btree_insert(bno_cur, &i)))
-			जाओ error0;
-		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		if ((error = xfs_btree_insert(bno_cur, &i)))
+			goto error0;
+		if (XFS_IS_CORRUPT(mp, i != 1)) {
 			error = -EFSCORRUPTED;
-			जाओ error0;
-		पूर्ण
-	पूर्ण
+			goto error0;
+		}
+	}
 	xfs_btree_del_cursor(bno_cur, XFS_BTREE_NOERROR);
-	bno_cur = शून्य;
+	bno_cur = NULL;
 	/*
-	 * In all हालs we need to insert the new मुक्तspace in the by-size tree.
+	 * In all cases we need to insert the new freespace in the by-size tree.
 	 */
-	अगर ((error = xfs_alloc_lookup_eq(cnt_cur, nbno, nlen, &i)))
-		जाओ error0;
-	अगर (XFS_IS_CORRUPT(mp, i != 0)) अणु
+	if ((error = xfs_alloc_lookup_eq(cnt_cur, nbno, nlen, &i)))
+		goto error0;
+	if (XFS_IS_CORRUPT(mp, i != 0)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
-	अगर ((error = xfs_btree_insert(cnt_cur, &i)))
-		जाओ error0;
-	अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
+		goto error0;
+	}
+	if ((error = xfs_btree_insert(cnt_cur, &i)))
+		goto error0;
+	if (XFS_IS_CORRUPT(mp, i != 1)) {
 		error = -EFSCORRUPTED;
-		जाओ error0;
-	पूर्ण
+		goto error0;
+	}
 	xfs_btree_del_cursor(cnt_cur, XFS_BTREE_NOERROR);
-	cnt_cur = शून्य;
+	cnt_cur = NULL;
 
 	/*
-	 * Update the मुक्तspace totals in the ag and superblock.
+	 * Update the freespace totals in the ag and superblock.
 	 */
 	error = xfs_alloc_update_counters(tp, agbp, len);
-	xfs_ag_resv_मुक्त_extent(agbp->b_pag, type, tp, len);
-	अगर (error)
-		जाओ error0;
+	xfs_ag_resv_free_extent(agbp->b_pag, type, tp, len);
+	if (error)
+		goto error0;
 
-	XFS_STATS_INC(mp, xs_मुक्तx);
-	XFS_STATS_ADD(mp, xs_मुक्तb, len);
+	XFS_STATS_INC(mp, xs_freex);
+	XFS_STATS_ADD(mp, xs_freeb, len);
 
-	trace_xfs_मुक्त_extent(mp, agno, bno, len, type, haveleft, haveright);
+	trace_xfs_free_extent(mp, agno, bno, len, type, haveleft, haveright);
 
-	वापस 0;
+	return 0;
 
  error0:
-	trace_xfs_मुक्त_extent(mp, agno, bno, len, type, -1, -1);
-	अगर (bno_cur)
+	trace_xfs_free_extent(mp, agno, bno, len, type, -1, -1);
+	if (bno_cur)
 		xfs_btree_del_cursor(bno_cur, XFS_BTREE_ERROR);
-	अगर (cnt_cur)
+	if (cnt_cur)
 		xfs_btree_del_cursor(cnt_cur, XFS_BTREE_ERROR);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Visible (exported) allocation/मुक्त functions.
+ * Visible (exported) allocation/free functions.
  * Some of these are used just by xfs_alloc_btree.c and this file.
  */
 
 /*
  * Compute and fill in value of m_ag_maxlevels.
  */
-व्योम
+void
 xfs_alloc_compute_maxlevels(
-	xfs_mount_t	*mp)	/* file प्रणाली mount काष्ठाure */
-अणु
+	xfs_mount_t	*mp)	/* file system mount structure */
+{
 	mp->m_ag_maxlevels = xfs_btree_compute_maxlevels(mp->m_alloc_mnr,
 			(mp->m_sb.sb_agblocks + 1) / 2);
-पूर्ण
+}
 
 /*
- * Find the length of the दीर्घest extent in an AG.  The 'need' parameter
- * specअगरies how much space we're going to need क्रम the AGFL and the
- * 'reserved' parameter tells us how many blocks in this AG are reserved क्रम
+ * Find the length of the longest extent in an AG.  The 'need' parameter
+ * specifies how much space we're going to need for the AGFL and the
+ * 'reserved' parameter tells us how many blocks in this AG are reserved for
  * other callers.
  */
 xfs_extlen_t
-xfs_alloc_दीर्घest_मुक्त_extent(
-	काष्ठा xfs_perag	*pag,
+xfs_alloc_longest_free_extent(
+	struct xfs_perag	*pag,
 	xfs_extlen_t		need,
 	xfs_extlen_t		reserved)
-अणु
+{
 	xfs_extlen_t		delta = 0;
 
 	/*
-	 * If the AGFL needs a reअक्षरge, we'll have to subtract that from the
-	 * दीर्घest extent.
+	 * If the AGFL needs a recharge, we'll have to subtract that from the
+	 * longest extent.
 	 */
-	अगर (need > pag->pagf_flcount)
+	if (need > pag->pagf_flcount)
 		delta = need - pag->pagf_flcount;
 
 	/*
-	 * If we cannot मुख्यtain others' reservations with space from the
-	 * not-दीर्घest मुक्तsp extents, we'll have to subtract /that/ from
-	 * the दीर्घest extent too.
+	 * If we cannot maintain others' reservations with space from the
+	 * not-longest freesp extents, we'll have to subtract /that/ from
+	 * the longest extent too.
 	 */
-	अगर (pag->pagf_मुक्तblks - pag->pagf_दीर्घest < reserved)
-		delta += reserved - (pag->pagf_मुक्तblks - pag->pagf_दीर्घest);
+	if (pag->pagf_freeblks - pag->pagf_longest < reserved)
+		delta += reserved - (pag->pagf_freeblks - pag->pagf_longest);
 
 	/*
-	 * If the दीर्घest extent is दीर्घ enough to satisfy all the
-	 * reservations and AGFL rules in place, we can वापस this extent.
+	 * If the longest extent is long enough to satisfy all the
+	 * reservations and AGFL rules in place, we can return this extent.
 	 */
-	अगर (pag->pagf_दीर्घest > delta)
-		वापस min_t(xfs_extlen_t, pag->pag_mount->m_ag_max_usable,
-				pag->pagf_दीर्घest - delta);
+	if (pag->pagf_longest > delta)
+		return min_t(xfs_extlen_t, pag->pag_mount->m_ag_max_usable,
+				pag->pagf_longest - delta);
 
-	/* Otherwise, let the caller try क्रम 1 block अगर there's space. */
-	वापस pag->pagf_flcount > 0 || pag->pagf_दीर्घest > 0;
-पूर्ण
+	/* Otherwise, let the caller try for 1 block if there's space. */
+	return pag->pagf_flcount > 0 || pag->pagf_longest > 0;
+}
 
 /*
- * Compute the minimum length of the AGFL in the given AG.  If @pag is शून्य,
- * वापस the largest possible minimum length.
+ * Compute the minimum length of the AGFL in the given AG.  If @pag is NULL,
+ * return the largest possible minimum length.
  */
-अचिन्हित पूर्णांक
-xfs_alloc_min_मुक्तlist(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_perag	*pag)
-अणु
+unsigned int
+xfs_alloc_min_freelist(
+	struct xfs_mount	*mp,
+	struct xfs_perag	*pag)
+{
 	/* AG btrees have at least 1 level. */
-	अटल स्थिर uपूर्णांक8_t	fake_levels[XFS_BTNUM_AGF] = अणु1, 1, 1पूर्ण;
-	स्थिर uपूर्णांक8_t		*levels = pag ? pag->pagf_levels : fake_levels;
-	अचिन्हित पूर्णांक		min_मुक्त;
+	static const uint8_t	fake_levels[XFS_BTNUM_AGF] = {1, 1, 1};
+	const uint8_t		*levels = pag ? pag->pagf_levels : fake_levels;
+	unsigned int		min_free;
 
 	ASSERT(mp->m_ag_maxlevels > 0);
 
-	/* space needed by-bno मुक्तspace btree */
-	min_मुक्त = min_t(अचिन्हित पूर्णांक, levels[XFS_BTNUM_BNOi] + 1,
+	/* space needed by-bno freespace btree */
+	min_free = min_t(unsigned int, levels[XFS_BTNUM_BNOi] + 1,
 				       mp->m_ag_maxlevels);
-	/* space needed by-size मुक्तspace btree */
-	min_मुक्त += min_t(अचिन्हित पूर्णांक, levels[XFS_BTNUM_CNTi] + 1,
+	/* space needed by-size freespace btree */
+	min_free += min_t(unsigned int, levels[XFS_BTNUM_CNTi] + 1,
 				       mp->m_ag_maxlevels);
 	/* space needed reverse mapping used space btree */
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb))
-		min_मुक्त += min_t(अचिन्हित पूर्णांक, levels[XFS_BTNUM_RMAPi] + 1,
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb))
+		min_free += min_t(unsigned int, levels[XFS_BTNUM_RMAPi] + 1,
 						mp->m_rmap_maxlevels);
 
-	वापस min_मुक्त;
-पूर्ण
+	return min_free;
+}
 
 /*
- * Check अगर the operation we are fixing up the मुक्तlist क्रम should go ahead or
- * not. If we are मुक्तing blocks, we always allow it, otherwise the allocation
- * is dependent on whether the size and shape of मुक्त space available will
+ * Check if the operation we are fixing up the freelist for should go ahead or
+ * not. If we are freeing blocks, we always allow it, otherwise the allocation
+ * is dependent on whether the size and shape of free space available will
  * permit the requested allocation to take place.
  */
-अटल bool
+static bool
 xfs_alloc_space_available(
-	काष्ठा xfs_alloc_arg	*args,
-	xfs_extlen_t		min_मुक्त,
-	पूर्णांक			flags)
-अणु
-	काष्ठा xfs_perag	*pag = args->pag;
-	xfs_extlen_t		alloc_len, दीर्घest;
+	struct xfs_alloc_arg	*args,
+	xfs_extlen_t		min_free,
+	int			flags)
+{
+	struct xfs_perag	*pag = args->pag;
+	xfs_extlen_t		alloc_len, longest;
 	xfs_extlen_t		reservation; /* blocks that are still reserved */
-	पूर्णांक			available;
+	int			available;
 	xfs_extlen_t		agflcount;
 
-	अगर (flags & XFS_ALLOC_FLAG_FREEING)
-		वापस true;
+	if (flags & XFS_ALLOC_FLAG_FREEING)
+		return true;
 
 	reservation = xfs_ag_resv_needed(pag, args->resv);
 
-	/* करो we have enough contiguous मुक्त space क्रम the allocation? */
+	/* do we have enough contiguous free space for the allocation? */
 	alloc_len = args->minlen + (args->alignment - 1) + args->minalignslop;
-	दीर्घest = xfs_alloc_दीर्घest_मुक्त_extent(pag, min_मुक्त, reservation);
-	अगर (दीर्घest < alloc_len)
-		वापस false;
+	longest = xfs_alloc_longest_free_extent(pag, min_free, reservation);
+	if (longest < alloc_len)
+		return false;
 
 	/*
-	 * Do we have enough मुक्त space reमुख्यing क्रम the allocation? Don't
-	 * account extra agfl blocks because we are about to defer मुक्त them,
+	 * Do we have enough free space remaining for the allocation? Don't
+	 * account extra agfl blocks because we are about to defer free them,
 	 * making them unavailable until the current transaction commits.
 	 */
-	agflcount = min_t(xfs_extlen_t, pag->pagf_flcount, min_मुक्त);
-	available = (पूर्णांक)(pag->pagf_मुक्तblks + agflcount -
-			  reservation - min_मुक्त - args->minleft);
-	अगर (available < (पूर्णांक)max(args->total, alloc_len))
-		वापस false;
+	agflcount = min_t(xfs_extlen_t, pag->pagf_flcount, min_free);
+	available = (int)(pag->pagf_freeblks + agflcount -
+			  reservation - min_free - args->minleft);
+	if (available < (int)max(args->total, alloc_len))
+		return false;
 
 	/*
-	 * Clamp maxlen to the amount of मुक्त space available क्रम the actual
+	 * Clamp maxlen to the amount of free space available for the actual
 	 * extent allocation.
 	 */
-	अगर (available < (पूर्णांक)args->maxlen && !(flags & XFS_ALLOC_FLAG_CHECK)) अणु
+	if (available < (int)args->maxlen && !(flags & XFS_ALLOC_FLAG_CHECK)) {
 		args->maxlen = available;
 		ASSERT(args->maxlen > 0);
 		ASSERT(args->maxlen >= args->minlen);
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक
-xfs_मुक्त_agfl_block(
-	काष्ठा xfs_trans	*tp,
+int
+xfs_free_agfl_block(
+	struct xfs_trans	*tp,
 	xfs_agnumber_t		agno,
 	xfs_agblock_t		agbno,
-	काष्ठा xfs_buf		*agbp,
-	काष्ठा xfs_owner_info	*oinfo)
-अणु
-	पूर्णांक			error;
-	काष्ठा xfs_buf		*bp;
+	struct xfs_buf		*agbp,
+	struct xfs_owner_info	*oinfo)
+{
+	int			error;
+	struct xfs_buf		*bp;
 
-	error = xfs_मुक्त_ag_extent(tp, agbp, agno, agbno, 1, oinfo,
+	error = xfs_free_ag_extent(tp, agbp, agno, agbno, 1, oinfo,
 				   XFS_AG_RESV_AGFL);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = xfs_trans_get_buf(tp, tp->t_mountp->m_ddev_targp,
 			XFS_AGB_TO_DADDR(tp->t_mountp, agno, agbno),
 			tp->t_mountp->m_bsize, 0, &bp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	xfs_trans_binval(tp, bp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Check the agfl fields of the agf क्रम inconsistency or corruption. The purpose
+ * Check the agfl fields of the agf for inconsistency or corruption. The purpose
  * is to detect an agfl header padding mismatch between current and early v5
- * kernels. This problem manअगरests as a 1-slot size dअगरference between the
+ * kernels. This problem manifests as a 1-slot size difference between the
  * on-disk flcount and the active [first, last] range of a wrapped agfl. This
  * may also catch variants of agfl count corruption unrelated to padding. Either
  * way, we'll reset the agfl and warn the user.
  *
- * Return true अगर a reset is required beक्रमe the agfl can be used, false
+ * Return true if a reset is required before the agfl can be used, false
  * otherwise.
  */
-अटल bool
+static bool
 xfs_agfl_needs_reset(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_agf		*agf)
-अणु
-	uपूर्णांक32_t		f = be32_to_cpu(agf->agf_flfirst);
-	uपूर्णांक32_t		l = be32_to_cpu(agf->agf_fllast);
-	uपूर्णांक32_t		c = be32_to_cpu(agf->agf_flcount);
-	पूर्णांक			agfl_size = xfs_agfl_size(mp);
-	पूर्णांक			active;
+	struct xfs_mount	*mp,
+	struct xfs_agf		*agf)
+{
+	uint32_t		f = be32_to_cpu(agf->agf_flfirst);
+	uint32_t		l = be32_to_cpu(agf->agf_fllast);
+	uint32_t		c = be32_to_cpu(agf->agf_flcount);
+	int			agfl_size = xfs_agfl_size(mp);
+	int			active;
 
 	/* no agfl header on v4 supers */
-	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
-		वापस false;
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return false;
 
 	/*
-	 * The agf पढ़ो verअगरier catches severe corruption of these fields.
-	 * Repeat some sanity checks to cover a packed -> unpacked mismatch अगर
-	 * the verअगरier allows it.
+	 * The agf read verifier catches severe corruption of these fields.
+	 * Repeat some sanity checks to cover a packed -> unpacked mismatch if
+	 * the verifier allows it.
 	 */
-	अगर (f >= agfl_size || l >= agfl_size)
-		वापस true;
-	अगर (c > agfl_size)
-		वापस true;
+	if (f >= agfl_size || l >= agfl_size)
+		return true;
+	if (c > agfl_size)
+		return true;
 
 	/*
 	 * Check consistency between the on-disk count and the active range. An
-	 * agfl padding mismatch manअगरests as an inconsistent flcount.
+	 * agfl padding mismatch manifests as an inconsistent flcount.
 	 */
-	अगर (c && l >= f)
+	if (c && l >= f)
 		active = l - f + 1;
-	अन्यथा अगर (c)
+	else if (c)
 		active = agfl_size - f + l + 1;
-	अन्यथा
+	else
 		active = 0;
 
-	वापस active != c;
-पूर्ण
+	return active != c;
+}
 
 /*
  * Reset the agfl to an empty state. Ignore/drop any existing blocks since the
  * agfl content cannot be trusted. Warn the user that a repair is required to
  * recover leaked blocks.
  *
- * The purpose of this mechanism is to handle fileप्रणालीs affected by the agfl
- * header padding mismatch problem. A reset keeps the fileप्रणाली online with a
- * relatively minor मुक्त space accounting inconsistency rather than suffer the
+ * The purpose of this mechanism is to handle filesystems affected by the agfl
+ * header padding mismatch problem. A reset keeps the filesystem online with a
+ * relatively minor free space accounting inconsistency rather than suffer the
  * inevitable crash from use of an invalid agfl block.
  */
-अटल व्योम
+static void
 xfs_agfl_reset(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_buf		*agbp,
-	काष्ठा xfs_perag	*pag)
-अणु
-	काष्ठा xfs_mount	*mp = tp->t_mountp;
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
+	struct xfs_trans	*tp,
+	struct xfs_buf		*agbp,
+	struct xfs_perag	*pag)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_agf		*agf = agbp->b_addr;
 
 	ASSERT(pag->pagf_agflreset);
 	trace_xfs_agfl_reset(mp, agf, 0, _RET_IP_);
@@ -2436,203 +2435,203 @@ xfs_agfl_reset(
 
 	pag->pagf_flcount = 0;
 	pag->pagf_agflreset = false;
-पूर्ण
+}
 
 /*
- * Defer an AGFL block मुक्त. This is effectively equivalent to
- * xfs_bmap_add_मुक्त() with some special handling particular to AGFL blocks.
+ * Defer an AGFL block free. This is effectively equivalent to
+ * xfs_bmap_add_free() with some special handling particular to AGFL blocks.
  *
- * Deferring AGFL मुक्तs helps prevent log reservation overruns due to too many
- * allocation operations in a transaction. AGFL मुक्तs are prone to this problem
- * because क्रम one they are always मुक्तd one at a समय. Further, an immediate
- * AGFL block मुक्त can cause a btree join and require another block मुक्त beक्रमe
- * the real allocation can proceed. Deferring the मुक्त disconnects मुक्तing up
- * the AGFL slot from मुक्तing the block.
+ * Deferring AGFL frees helps prevent log reservation overruns due to too many
+ * allocation operations in a transaction. AGFL frees are prone to this problem
+ * because for one they are always freed one at a time. Further, an immediate
+ * AGFL block free can cause a btree join and require another block free before
+ * the real allocation can proceed. Deferring the free disconnects freeing up
+ * the AGFL slot from freeing the block.
  */
-STATIC व्योम
+STATIC void
 xfs_defer_agfl_block(
-	काष्ठा xfs_trans		*tp,
+	struct xfs_trans		*tp,
 	xfs_agnumber_t			agno,
 	xfs_fsblock_t			agbno,
-	काष्ठा xfs_owner_info		*oinfo)
-अणु
-	काष्ठा xfs_mount		*mp = tp->t_mountp;
-	काष्ठा xfs_extent_मुक्त_item	*new;		/* new element */
+	struct xfs_owner_info		*oinfo)
+{
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_extent_free_item	*new;		/* new element */
 
-	ASSERT(xfs_bmap_मुक्त_item_zone != शून्य);
-	ASSERT(oinfo != शून्य);
+	ASSERT(xfs_bmap_free_item_zone != NULL);
+	ASSERT(oinfo != NULL);
 
-	new = kmem_cache_alloc(xfs_bmap_मुक्त_item_zone,
+	new = kmem_cache_alloc(xfs_bmap_free_item_zone,
 			       GFP_KERNEL | __GFP_NOFAIL);
 	new->xefi_startblock = XFS_AGB_TO_FSB(mp, agno, agbno);
 	new->xefi_blockcount = 1;
 	new->xefi_oinfo = *oinfo;
 	new->xefi_skip_discard = false;
 
-	trace_xfs_agfl_मुक्त_defer(mp, agno, 0, agbno, 1);
+	trace_xfs_agfl_free_defer(mp, agno, 0, agbno, 1);
 
 	xfs_defer_add(tp, XFS_DEFER_OPS_TYPE_AGFL_FREE, &new->xefi_list);
-पूर्ण
+}
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 /*
- * Check अगर an AGF has a मुक्त extent record whose length is equal to
+ * Check if an AGF has a free extent record whose length is equal to
  * args->minlen.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_exact_minlen_extent_available(
-	काष्ठा xfs_alloc_arg	*args,
-	काष्ठा xfs_buf		*agbp,
-	पूर्णांक			*stat)
-अणु
-	काष्ठा xfs_btree_cur	*cnt_cur;
+	struct xfs_alloc_arg	*args,
+	struct xfs_buf		*agbp,
+	int			*stat)
+{
+	struct xfs_btree_cur	*cnt_cur;
 	xfs_agblock_t		fbno;
 	xfs_extlen_t		flen;
-	पूर्णांक			error = 0;
+	int			error = 0;
 
 	cnt_cur = xfs_allocbt_init_cursor(args->mp, args->tp, agbp,
 			args->agno, XFS_BTNUM_CNT);
 	error = xfs_alloc_lookup_ge(cnt_cur, 0, args->minlen, stat);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	अगर (*stat == 0) अणु
+	if (*stat == 0) {
 		error = -EFSCORRUPTED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	error = xfs_alloc_get_rec(cnt_cur, &fbno, &flen, stat);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 
-	अगर (*stat == 1 && flen != args->minlen)
+	if (*stat == 1 && flen != args->minlen)
 		*stat = 0;
 
 out:
 	xfs_btree_del_cursor(cnt_cur, error);
 
-	वापस error;
-पूर्ण
-#पूर्ण_अगर
+	return error;
+}
+#endif
 
 /*
- * Decide whether to use this allocation group क्रम this allocation.
- * If so, fix up the btree मुक्तlist's size.
+ * Decide whether to use this allocation group for this allocation.
+ * If so, fix up the btree freelist's size.
  */
-पूर्णांक			/* error */
-xfs_alloc_fix_मुक्तlist(
-	काष्ठा xfs_alloc_arg	*args,	/* allocation argument काष्ठाure */
-	पूर्णांक			flags)	/* XFS_ALLOC_FLAG_... */
-अणु
-	काष्ठा xfs_mount	*mp = args->mp;
-	काष्ठा xfs_perag	*pag = args->pag;
-	काष्ठा xfs_trans	*tp = args->tp;
-	काष्ठा xfs_buf		*agbp = शून्य;
-	काष्ठा xfs_buf		*agflbp = शून्य;
-	काष्ठा xfs_alloc_arg	targs;	/* local allocation arguments */
-	xfs_agblock_t		bno;	/* मुक्तlist block */
-	xfs_extlen_t		need;	/* total blocks needed in मुक्तlist */
-	पूर्णांक			error = 0;
+int			/* error */
+xfs_alloc_fix_freelist(
+	struct xfs_alloc_arg	*args,	/* allocation argument structure */
+	int			flags)	/* XFS_ALLOC_FLAG_... */
+{
+	struct xfs_mount	*mp = args->mp;
+	struct xfs_perag	*pag = args->pag;
+	struct xfs_trans	*tp = args->tp;
+	struct xfs_buf		*agbp = NULL;
+	struct xfs_buf		*agflbp = NULL;
+	struct xfs_alloc_arg	targs;	/* local allocation arguments */
+	xfs_agblock_t		bno;	/* freelist block */
+	xfs_extlen_t		need;	/* total blocks needed in freelist */
+	int			error = 0;
 
-	/* deferred ops (AGFL block मुक्तs) require permanent transactions */
+	/* deferred ops (AGFL block frees) require permanent transactions */
 	ASSERT(tp->t_flags & XFS_TRANS_PERM_LOG_RES);
 
-	अगर (!pag->pagf_init) अणु
-		error = xfs_alloc_पढ़ो_agf(mp, tp, args->agno, flags, &agbp);
-		अगर (error) अणु
+	if (!pag->pagf_init) {
+		error = xfs_alloc_read_agf(mp, tp, args->agno, flags, &agbp);
+		if (error) {
 			/* Couldn't lock the AGF so skip this AG. */
-			अगर (error == -EAGAIN)
+			if (error == -EAGAIN)
 				error = 0;
-			जाओ out_no_agbp;
-		पूर्ण
-	पूर्ण
+			goto out_no_agbp;
+		}
+	}
 
 	/*
 	 * If this is a metadata preferred pag and we are user data then try
-	 * somewhere अन्यथा अगर we are not being asked to try harder at this
-	 * poपूर्णांक
+	 * somewhere else if we are not being asked to try harder at this
+	 * point
 	 */
-	अगर (pag->pagf_metadata && (args->datatype & XFS_ALLOC_USERDATA) &&
-	    (flags & XFS_ALLOC_FLAG_TRYLOCK)) अणु
+	if (pag->pagf_metadata && (args->datatype & XFS_ALLOC_USERDATA) &&
+	    (flags & XFS_ALLOC_FLAG_TRYLOCK)) {
 		ASSERT(!(flags & XFS_ALLOC_FLAG_FREEING));
-		जाओ out_agbp_rअन्यथा;
-	पूर्ण
+		goto out_agbp_relse;
+	}
 
-	need = xfs_alloc_min_मुक्तlist(mp, pag);
-	अगर (!xfs_alloc_space_available(args, need, flags |
+	need = xfs_alloc_min_freelist(mp, pag);
+	if (!xfs_alloc_space_available(args, need, flags |
 			XFS_ALLOC_FLAG_CHECK))
-		जाओ out_agbp_rअन्यथा;
+		goto out_agbp_relse;
 
 	/*
-	 * Get the a.g. मुक्तspace buffer.
-	 * Can fail अगर we're not blocking on locks, and it's held.
+	 * Get the a.g. freespace buffer.
+	 * Can fail if we're not blocking on locks, and it's held.
 	 */
-	अगर (!agbp) अणु
-		error = xfs_alloc_पढ़ो_agf(mp, tp, args->agno, flags, &agbp);
-		अगर (error) अणु
+	if (!agbp) {
+		error = xfs_alloc_read_agf(mp, tp, args->agno, flags, &agbp);
+		if (error) {
 			/* Couldn't lock the AGF so skip this AG. */
-			अगर (error == -EAGAIN)
+			if (error == -EAGAIN)
 				error = 0;
-			जाओ out_no_agbp;
-		पूर्ण
-	पूर्ण
+			goto out_no_agbp;
+		}
+	}
 
-	/* reset a padding mismatched agfl beक्रमe final मुक्त space check */
-	अगर (pag->pagf_agflreset)
+	/* reset a padding mismatched agfl before final free space check */
+	if (pag->pagf_agflreset)
 		xfs_agfl_reset(tp, agbp, pag);
 
 	/* If there isn't enough total space or single-extent, reject it. */
-	need = xfs_alloc_min_मुक्तlist(mp, pag);
-	अगर (!xfs_alloc_space_available(args, need, flags))
-		जाओ out_agbp_rअन्यथा;
+	need = xfs_alloc_min_freelist(mp, pag);
+	if (!xfs_alloc_space_available(args, need, flags))
+		goto out_agbp_relse;
 
-#अगर_घोषित DEBUG
-	अगर (args->alloc_minlen_only) अणु
-		पूर्णांक stat;
+#ifdef DEBUG
+	if (args->alloc_minlen_only) {
+		int stat;
 
 		error = xfs_exact_minlen_extent_available(args, agbp, &stat);
-		अगर (error || !stat)
-			जाओ out_agbp_rअन्यथा;
-	पूर्ण
-#पूर्ण_अगर
+		if (error || !stat)
+			goto out_agbp_relse;
+	}
+#endif
 	/*
-	 * Make the मुक्तlist लघुer अगर it's too दीर्घ.
+	 * Make the freelist shorter if it's too long.
 	 *
-	 * Note that from this poपूर्णांक onwards, we will always release the agf and
-	 * agfl buffers on error. This handles the हाल where we error out and
+	 * Note that from this point onwards, we will always release the agf and
+	 * agfl buffers on error. This handles the case where we error out and
 	 * the buffers are clean or may not have been joined to the transaction
 	 * and hence need to be released manually. If they have been joined to
-	 * the transaction, then xfs_trans_brअन्यथा() will handle them
+	 * the transaction, then xfs_trans_brelse() will handle them
 	 * appropriately based on the recursion count and dirty state of the
 	 * buffer.
 	 *
-	 * XXX (dgc): When we have lots of मुक्त space, करोes this buy us
+	 * XXX (dgc): When we have lots of free space, does this buy us
 	 * anything other than extra overhead when we need to put more blocks
-	 * back on the मुक्त list? Maybe we should only करो this when space is
+	 * back on the free list? Maybe we should only do this when space is
 	 * getting low or the AGFL is more than half full?
 	 *
-	 * The NOSHRINK flag prevents the AGFL from being shrunk अगर it's too
+	 * The NOSHRINK flag prevents the AGFL from being shrunk if it's too
 	 * big; the NORMAP flag prevents AGFL expand/shrink operations from
-	 * updating the rmapbt.  Both flags are used in xfs_repair जबतक we're
+	 * updating the rmapbt.  Both flags are used in xfs_repair while we're
 	 * rebuilding the rmapbt, and neither are used by the kernel.  They're
-	 * both required to ensure that rmaps are correctly recorded क्रम the
+	 * both required to ensure that rmaps are correctly recorded for the
 	 * regenerated AGFL, bnobt, and cntbt.  See repair/phase5.c and
-	 * repair/rmap.c in xfsprogs क्रम details.
+	 * repair/rmap.c in xfsprogs for details.
 	 */
-	स_रखो(&targs, 0, माप(targs));
-	/* काष्ठा copy below */
-	अगर (flags & XFS_ALLOC_FLAG_NORMAP)
+	memset(&targs, 0, sizeof(targs));
+	/* struct copy below */
+	if (flags & XFS_ALLOC_FLAG_NORMAP)
 		targs.oinfo = XFS_RMAP_OINFO_SKIP_UPDATE;
-	अन्यथा
+	else
 		targs.oinfo = XFS_RMAP_OINFO_AG;
-	जबतक (!(flags & XFS_ALLOC_FLAG_NOSHRINK) && pag->pagf_flcount > need) अणु
-		error = xfs_alloc_get_मुक्तlist(tp, agbp, &bno, 0);
-		अगर (error)
-			जाओ out_agbp_rअन्यथा;
+	while (!(flags & XFS_ALLOC_FLAG_NOSHRINK) && pag->pagf_flcount > need) {
+		error = xfs_alloc_get_freelist(tp, agbp, &bno, 0);
+		if (error)
+			goto out_agbp_relse;
 
-		/* defer agfl मुक्तs */
+		/* defer agfl frees */
 		xfs_defer_agfl_block(tp, args->agno, bno, &targs.oinfo);
-	पूर्ण
+	}
 
 	targs.tp = tp;
 	targs.mp = mp;
@@ -2641,99 +2640,99 @@ xfs_alloc_fix_मुक्तlist(
 	targs.alignment = targs.minlen = targs.prod = 1;
 	targs.type = XFS_ALLOCTYPE_THIS_AG;
 	targs.pag = pag;
-	error = xfs_alloc_पढ़ो_agfl(mp, tp, targs.agno, &agflbp);
-	अगर (error)
-		जाओ out_agbp_rअन्यथा;
+	error = xfs_alloc_read_agfl(mp, tp, targs.agno, &agflbp);
+	if (error)
+		goto out_agbp_relse;
 
-	/* Make the मुक्तlist दीर्घer अगर it's too लघु. */
-	जबतक (pag->pagf_flcount < need) अणु
+	/* Make the freelist longer if it's too short. */
+	while (pag->pagf_flcount < need) {
 		targs.agbno = 0;
 		targs.maxlen = need - pag->pagf_flcount;
 		targs.resv = XFS_AG_RESV_AGFL;
 
 		/* Allocate as many blocks as possible at once. */
 		error = xfs_alloc_ag_vextent(&targs);
-		अगर (error)
-			जाओ out_agflbp_rअन्यथा;
+		if (error)
+			goto out_agflbp_relse;
 
 		/*
-		 * Stop अगर we run out.  Won't happen अगर callers are obeying
-		 * the restrictions correctly.  Can happen क्रम मुक्त calls
+		 * Stop if we run out.  Won't happen if callers are obeying
+		 * the restrictions correctly.  Can happen for free calls
 		 * on a completely full ag.
 		 */
-		अगर (targs.agbno == शून्यAGBLOCK) अणु
-			अगर (flags & XFS_ALLOC_FLAG_FREEING)
-				अवरोध;
-			जाओ out_agflbp_rअन्यथा;
-		पूर्ण
+		if (targs.agbno == NULLAGBLOCK) {
+			if (flags & XFS_ALLOC_FLAG_FREEING)
+				break;
+			goto out_agflbp_relse;
+		}
 		/*
 		 * Put each allocated block on the list.
 		 */
-		क्रम (bno = targs.agbno; bno < targs.agbno + targs.len; bno++) अणु
-			error = xfs_alloc_put_मुक्तlist(tp, agbp,
+		for (bno = targs.agbno; bno < targs.agbno + targs.len; bno++) {
+			error = xfs_alloc_put_freelist(tp, agbp,
 							agflbp, bno, 0);
-			अगर (error)
-				जाओ out_agflbp_rअन्यथा;
-		पूर्ण
-	पूर्ण
-	xfs_trans_brअन्यथा(tp, agflbp);
+			if (error)
+				goto out_agflbp_relse;
+		}
+	}
+	xfs_trans_brelse(tp, agflbp);
 	args->agbp = agbp;
-	वापस 0;
+	return 0;
 
-out_agflbp_rअन्यथा:
-	xfs_trans_brअन्यथा(tp, agflbp);
-out_agbp_rअन्यथा:
-	अगर (agbp)
-		xfs_trans_brअन्यथा(tp, agbp);
+out_agflbp_relse:
+	xfs_trans_brelse(tp, agflbp);
+out_agbp_relse:
+	if (agbp)
+		xfs_trans_brelse(tp, agbp);
 out_no_agbp:
-	args->agbp = शून्य;
-	वापस error;
-पूर्ण
+	args->agbp = NULL;
+	return error;
+}
 
 /*
- * Get a block from the मुक्तlist.
- * Returns with the buffer क्रम the block gotten.
+ * Get a block from the freelist.
+ * Returns with the buffer for the block gotten.
  */
-पूर्णांक				/* error */
-xfs_alloc_get_मुक्तlist(
-	xfs_trans_t	*tp,	/* transaction poपूर्णांकer */
-	काष्ठा xfs_buf	*agbp,	/* buffer containing the agf काष्ठाure */
-	xfs_agblock_t	*bnop,	/* block address retrieved from मुक्तlist */
-	पूर्णांक		btreeblk) /* destination is a AGF btree */
-अणु
-	काष्ठा xfs_agf	*agf = agbp->b_addr;
-	काष्ठा xfs_buf	*agflbp;/* buffer क्रम a.g. मुक्तlist काष्ठाure */
-	xfs_agblock_t	bno;	/* block number वापसed */
+int				/* error */
+xfs_alloc_get_freelist(
+	xfs_trans_t	*tp,	/* transaction pointer */
+	struct xfs_buf	*agbp,	/* buffer containing the agf structure */
+	xfs_agblock_t	*bnop,	/* block address retrieved from freelist */
+	int		btreeblk) /* destination is a AGF btree */
+{
+	struct xfs_agf	*agf = agbp->b_addr;
+	struct xfs_buf	*agflbp;/* buffer for a.g. freelist structure */
+	xfs_agblock_t	bno;	/* block number returned */
 	__be32		*agfl_bno;
-	पूर्णांक		error;
-	पूर्णांक		logflags;
+	int		error;
+	int		logflags;
 	xfs_mount_t	*mp = tp->t_mountp;
 	xfs_perag_t	*pag;	/* per allocation group data */
 
 	/*
 	 * Freelist is empty, give up.
 	 */
-	अगर (!agf->agf_flcount) अणु
-		*bnop = शून्यAGBLOCK;
-		वापस 0;
-	पूर्ण
+	if (!agf->agf_flcount) {
+		*bnop = NULLAGBLOCK;
+		return 0;
+	}
 	/*
-	 * Read the array of मुक्त blocks.
+	 * Read the array of free blocks.
 	 */
-	error = xfs_alloc_पढ़ो_agfl(mp, tp, be32_to_cpu(agf->agf_seqno),
+	error = xfs_alloc_read_agfl(mp, tp, be32_to_cpu(agf->agf_seqno),
 				    &agflbp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 
 	/*
-	 * Get the block number and update the data काष्ठाures.
+	 * Get the block number and update the data structures.
 	 */
 	agfl_bno = xfs_buf_to_agfl_bno(agflbp);
 	bno = be32_to_cpu(agfl_bno[be32_to_cpu(agf->agf_flfirst)]);
 	be32_add_cpu(&agf->agf_flfirst, 1);
-	xfs_trans_brअन्यथा(tp, agflbp);
-	अगर (be32_to_cpu(agf->agf_flfirst) == xfs_agfl_size(mp))
+	xfs_trans_brelse(tp, agflbp);
+	if (be32_to_cpu(agf->agf_flfirst) == xfs_agfl_size(mp))
 		agf->agf_flfirst = 0;
 
 	pag = agbp->b_pag;
@@ -2742,104 +2741,104 @@ xfs_alloc_get_मुक्तlist(
 	pag->pagf_flcount--;
 
 	logflags = XFS_AGF_FLFIRST | XFS_AGF_FLCOUNT;
-	अगर (btreeblk) अणु
+	if (btreeblk) {
 		be32_add_cpu(&agf->agf_btreeblks, 1);
 		pag->pagf_btreeblks++;
 		logflags |= XFS_AGF_BTREEBLKS;
-	पूर्ण
+	}
 
 	xfs_alloc_log_agf(tp, agbp, logflags);
 	*bnop = bno;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Log the given fields from the agf काष्ठाure.
+ * Log the given fields from the agf structure.
  */
-व्योम
+void
 xfs_alloc_log_agf(
-	xfs_trans_t	*tp,	/* transaction poपूर्णांकer */
-	काष्ठा xfs_buf	*bp,	/* buffer क्रम a.g. मुक्तlist header */
-	पूर्णांक		fields)	/* mask of fields to be logged (XFS_AGF_...) */
-अणु
-	पूर्णांक	first;		/* first byte offset */
-	पूर्णांक	last;		/* last byte offset */
-	अटल स्थिर लघु	offsets[] = अणु
-		दुरत्व(xfs_agf_t, agf_magicnum),
-		दुरत्व(xfs_agf_t, agf_versionnum),
-		दुरत्व(xfs_agf_t, agf_seqno),
-		दुरत्व(xfs_agf_t, agf_length),
-		दुरत्व(xfs_agf_t, agf_roots[0]),
-		दुरत्व(xfs_agf_t, agf_levels[0]),
-		दुरत्व(xfs_agf_t, agf_flfirst),
-		दुरत्व(xfs_agf_t, agf_fllast),
-		दुरत्व(xfs_agf_t, agf_flcount),
-		दुरत्व(xfs_agf_t, agf_मुक्तblks),
-		दुरत्व(xfs_agf_t, agf_दीर्घest),
-		दुरत्व(xfs_agf_t, agf_btreeblks),
-		दुरत्व(xfs_agf_t, agf_uuid),
-		दुरत्व(xfs_agf_t, agf_rmap_blocks),
-		दुरत्व(xfs_agf_t, agf_refcount_blocks),
-		दुरत्व(xfs_agf_t, agf_refcount_root),
-		दुरत्व(xfs_agf_t, agf_refcount_level),
-		/* needed so that we करोn't log the whole rest of the काष्ठाure: */
-		दुरत्व(xfs_agf_t, agf_spare64),
-		माप(xfs_agf_t)
-	पूर्ण;
+	xfs_trans_t	*tp,	/* transaction pointer */
+	struct xfs_buf	*bp,	/* buffer for a.g. freelist header */
+	int		fields)	/* mask of fields to be logged (XFS_AGF_...) */
+{
+	int	first;		/* first byte offset */
+	int	last;		/* last byte offset */
+	static const short	offsets[] = {
+		offsetof(xfs_agf_t, agf_magicnum),
+		offsetof(xfs_agf_t, agf_versionnum),
+		offsetof(xfs_agf_t, agf_seqno),
+		offsetof(xfs_agf_t, agf_length),
+		offsetof(xfs_agf_t, agf_roots[0]),
+		offsetof(xfs_agf_t, agf_levels[0]),
+		offsetof(xfs_agf_t, agf_flfirst),
+		offsetof(xfs_agf_t, agf_fllast),
+		offsetof(xfs_agf_t, agf_flcount),
+		offsetof(xfs_agf_t, agf_freeblks),
+		offsetof(xfs_agf_t, agf_longest),
+		offsetof(xfs_agf_t, agf_btreeblks),
+		offsetof(xfs_agf_t, agf_uuid),
+		offsetof(xfs_agf_t, agf_rmap_blocks),
+		offsetof(xfs_agf_t, agf_refcount_blocks),
+		offsetof(xfs_agf_t, agf_refcount_root),
+		offsetof(xfs_agf_t, agf_refcount_level),
+		/* needed so that we don't log the whole rest of the structure: */
+		offsetof(xfs_agf_t, agf_spare64),
+		sizeof(xfs_agf_t)
+	};
 
 	trace_xfs_agf(tp->t_mountp, bp->b_addr, fields, _RET_IP_);
 
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_AGF_BUF);
 
 	xfs_btree_offsets(fields, offsets, XFS_AGF_NUM_BITS, &first, &last);
-	xfs_trans_log_buf(tp, bp, (uपूर्णांक)first, (uपूर्णांक)last);
-पूर्ण
+	xfs_trans_log_buf(tp, bp, (uint)first, (uint)last);
+}
 
 /*
- * Interface क्रम inode allocation to क्रमce the pag data to be initialized.
+ * Interface for inode allocation to force the pag data to be initialized.
  */
-पूर्णांक					/* error */
+int					/* error */
 xfs_alloc_pagf_init(
-	xfs_mount_t		*mp,	/* file प्रणाली mount काष्ठाure */
-	xfs_trans_t		*tp,	/* transaction poपूर्णांकer */
+	xfs_mount_t		*mp,	/* file system mount structure */
+	xfs_trans_t		*tp,	/* transaction pointer */
 	xfs_agnumber_t		agno,	/* allocation group number */
-	पूर्णांक			flags)	/* XFS_ALLOC_FLAGS_... */
-अणु
-	काष्ठा xfs_buf		*bp;
-	पूर्णांक			error;
+	int			flags)	/* XFS_ALLOC_FLAGS_... */
+{
+	struct xfs_buf		*bp;
+	int			error;
 
-	error = xfs_alloc_पढ़ो_agf(mp, tp, agno, flags, &bp);
-	अगर (!error)
-		xfs_trans_brअन्यथा(tp, bp);
-	वापस error;
-पूर्ण
+	error = xfs_alloc_read_agf(mp, tp, agno, flags, &bp);
+	if (!error)
+		xfs_trans_brelse(tp, bp);
+	return error;
+}
 
 /*
- * Put the block on the मुक्तlist क्रम the allocation group.
+ * Put the block on the freelist for the allocation group.
  */
-पूर्णांक					/* error */
-xfs_alloc_put_मुक्तlist(
-	xfs_trans_t		*tp,	/* transaction poपूर्णांकer */
-	काष्ठा xfs_buf		*agbp,	/* buffer क्रम a.g. मुक्तlist header */
-	काष्ठा xfs_buf		*agflbp,/* buffer क्रम a.g. मुक्त block array */
-	xfs_agblock_t		bno,	/* block being मुक्तd */
-	पूर्णांक			btreeblk) /* block came from a AGF btree */
-अणु
-	काष्ठा xfs_mount	*mp = tp->t_mountp;
-	काष्ठा xfs_agf		*agf = agbp->b_addr;
-	__be32			*blockp;/* poपूर्णांकer to array entry */
-	पूर्णांक			error;
-	पूर्णांक			logflags;
+int					/* error */
+xfs_alloc_put_freelist(
+	xfs_trans_t		*tp,	/* transaction pointer */
+	struct xfs_buf		*agbp,	/* buffer for a.g. freelist header */
+	struct xfs_buf		*agflbp,/* buffer for a.g. free block array */
+	xfs_agblock_t		bno,	/* block being freed */
+	int			btreeblk) /* block came from a AGF btree */
+{
+	struct xfs_mount	*mp = tp->t_mountp;
+	struct xfs_agf		*agf = agbp->b_addr;
+	__be32			*blockp;/* pointer to array entry */
+	int			error;
+	int			logflags;
 	xfs_perag_t		*pag;	/* per allocation group data */
 	__be32			*agfl_bno;
-	पूर्णांक			startoff;
+	int			startoff;
 
-	अगर (!agflbp && (error = xfs_alloc_पढ़ो_agfl(mp, tp,
+	if (!agflbp && (error = xfs_alloc_read_agfl(mp, tp,
 			be32_to_cpu(agf->agf_seqno), &agflbp)))
-		वापस error;
+		return error;
 	be32_add_cpu(&agf->agf_fllast, 1);
-	अगर (be32_to_cpu(agf->agf_fllast) == xfs_agfl_size(mp))
+	if (be32_to_cpu(agf->agf_fllast) == xfs_agfl_size(mp))
 		agf->agf_fllast = 0;
 
 	pag = agbp->b_pag;
@@ -2848,11 +2847,11 @@ xfs_alloc_put_मुक्तlist(
 	pag->pagf_flcount++;
 
 	logflags = XFS_AGF_FLLAST | XFS_AGF_FLCOUNT;
-	अगर (btreeblk) अणु
+	if (btreeblk) {
 		be32_add_cpu(&agf->agf_btreeblks, -1);
 		pag->pagf_btreeblks--;
 		logflags |= XFS_AGF_BTREEBLKS;
-	पूर्ण
+	}
 
 	xfs_alloc_log_agf(tp, agbp, logflags);
 
@@ -2861,201 +2860,201 @@ xfs_alloc_put_मुक्तlist(
 	agfl_bno = xfs_buf_to_agfl_bno(agflbp);
 	blockp = &agfl_bno[be32_to_cpu(agf->agf_fllast)];
 	*blockp = cpu_to_be32(bno);
-	startoff = (अक्षर *)blockp - (अक्षर *)agflbp->b_addr;
+	startoff = (char *)blockp - (char *)agflbp->b_addr;
 
 	xfs_alloc_log_agf(tp, agbp, logflags);
 
 	xfs_trans_buf_set_type(tp, agflbp, XFS_BLFT_AGFL_BUF);
 	xfs_trans_log_buf(tp, agflbp, startoff,
-			  startoff + माप(xfs_agblock_t) - 1);
-	वापस 0;
-पूर्ण
+			  startoff + sizeof(xfs_agblock_t) - 1);
+	return 0;
+}
 
-अटल xfs_failaddr_t
-xfs_agf_verअगरy(
-	काष्ठा xfs_buf		*bp)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	काष्ठा xfs_agf		*agf = bp->b_addr;
+static xfs_failaddr_t
+xfs_agf_verify(
+	struct xfs_buf		*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_agf		*agf = bp->b_addr;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb)) अणु
-		अगर (!uuid_equal(&agf->agf_uuid, &mp->m_sb.sb_meta_uuid))
-			वापस __this_address;
-		अगर (!xfs_log_check_lsn(mp, be64_to_cpu(agf->agf_lsn)))
-			वापस __this_address;
-	पूर्ण
+	if (xfs_sb_version_hascrc(&mp->m_sb)) {
+		if (!uuid_equal(&agf->agf_uuid, &mp->m_sb.sb_meta_uuid))
+			return __this_address;
+		if (!xfs_log_check_lsn(mp, be64_to_cpu(agf->agf_lsn)))
+			return __this_address;
+	}
 
-	अगर (!xfs_verअगरy_magic(bp, agf->agf_magicnum))
-		वापस __this_address;
+	if (!xfs_verify_magic(bp, agf->agf_magicnum))
+		return __this_address;
 
-	अगर (!(XFS_AGF_GOOD_VERSION(be32_to_cpu(agf->agf_versionnum)) &&
-	      be32_to_cpu(agf->agf_मुक्तblks) <= be32_to_cpu(agf->agf_length) &&
+	if (!(XFS_AGF_GOOD_VERSION(be32_to_cpu(agf->agf_versionnum)) &&
+	      be32_to_cpu(agf->agf_freeblks) <= be32_to_cpu(agf->agf_length) &&
 	      be32_to_cpu(agf->agf_flfirst) < xfs_agfl_size(mp) &&
 	      be32_to_cpu(agf->agf_fllast) < xfs_agfl_size(mp) &&
 	      be32_to_cpu(agf->agf_flcount) <= xfs_agfl_size(mp)))
-		वापस __this_address;
+		return __this_address;
 
-	अगर (be32_to_cpu(agf->agf_length) > mp->m_sb.sb_dblocks)
-		वापस __this_address;
+	if (be32_to_cpu(agf->agf_length) > mp->m_sb.sb_dblocks)
+		return __this_address;
 
-	अगर (be32_to_cpu(agf->agf_मुक्तblks) < be32_to_cpu(agf->agf_दीर्घest) ||
-	    be32_to_cpu(agf->agf_मुक्तblks) > be32_to_cpu(agf->agf_length))
-		वापस __this_address;
+	if (be32_to_cpu(agf->agf_freeblks) < be32_to_cpu(agf->agf_longest) ||
+	    be32_to_cpu(agf->agf_freeblks) > be32_to_cpu(agf->agf_length))
+		return __this_address;
 
-	अगर (be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]) < 1 ||
+	if (be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]) < 1 ||
 	    be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]) < 1 ||
 	    be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNO]) > mp->m_ag_maxlevels ||
 	    be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNT]) > mp->m_ag_maxlevels)
-		वापस __this_address;
+		return __this_address;
 
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb) &&
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb) &&
 	    (be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]) < 1 ||
 	     be32_to_cpu(agf->agf_levels[XFS_BTNUM_RMAP]) > mp->m_rmap_maxlevels))
-		वापस __this_address;
+		return __this_address;
 
-	अगर (xfs_sb_version_hasrmapbt(&mp->m_sb) &&
+	if (xfs_sb_version_hasrmapbt(&mp->m_sb) &&
 	    be32_to_cpu(agf->agf_rmap_blocks) > be32_to_cpu(agf->agf_length))
-		वापस __this_address;
+		return __this_address;
 
 	/*
 	 * during growfs operations, the perag is not fully initialised,
 	 * so we can't use it for any useful checking. growfs ensures we can't
-	 * use it by using uncached buffers that करोn't have the perag attached
-	 * so we can detect and aव्योम this problem.
+	 * use it by using uncached buffers that don't have the perag attached
+	 * so we can detect and avoid this problem.
 	 */
-	अगर (bp->b_pag && be32_to_cpu(agf->agf_seqno) != bp->b_pag->pag_agno)
-		वापस __this_address;
+	if (bp->b_pag && be32_to_cpu(agf->agf_seqno) != bp->b_pag->pag_agno)
+		return __this_address;
 
-	अगर (xfs_sb_version_haslazysbcount(&mp->m_sb) &&
+	if (xfs_sb_version_haslazysbcount(&mp->m_sb) &&
 	    be32_to_cpu(agf->agf_btreeblks) > be32_to_cpu(agf->agf_length))
-		वापस __this_address;
+		return __this_address;
 
-	अगर (xfs_sb_version_hasreflink(&mp->m_sb) &&
+	if (xfs_sb_version_hasreflink(&mp->m_sb) &&
 	    be32_to_cpu(agf->agf_refcount_blocks) >
 	    be32_to_cpu(agf->agf_length))
-		वापस __this_address;
+		return __this_address;
 
-	अगर (xfs_sb_version_hasreflink(&mp->m_sb) &&
+	if (xfs_sb_version_hasreflink(&mp->m_sb) &&
 	    (be32_to_cpu(agf->agf_refcount_level) < 1 ||
 	     be32_to_cpu(agf->agf_refcount_level) > mp->m_refc_maxlevels))
-		वापस __this_address;
+		return __this_address;
 
-	वापस शून्य;
+	return NULL;
 
-पूर्ण
+}
 
-अटल व्योम
-xfs_agf_पढ़ो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount *mp = bp->b_mount;
+static void
+xfs_agf_read_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount *mp = bp->b_mount;
 	xfs_failaddr_t	fa;
 
-	अगर (xfs_sb_version_hascrc(&mp->m_sb) &&
-	    !xfs_buf_verअगरy_cksum(bp, XFS_AGF_CRC_OFF))
-		xfs_verअगरier_error(bp, -EFSBADCRC, __this_address);
-	अन्यथा अणु
-		fa = xfs_agf_verअगरy(bp);
-		अगर (XFS_TEST_ERROR(fa, mp, XFS_ERRTAG_ALLOC_READ_AGF))
-			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-	पूर्ण
-पूर्ण
+	if (xfs_sb_version_hascrc(&mp->m_sb) &&
+	    !xfs_buf_verify_cksum(bp, XFS_AGF_CRC_OFF))
+		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
+	else {
+		fa = xfs_agf_verify(bp);
+		if (XFS_TEST_ERROR(fa, mp, XFS_ERRTAG_ALLOC_READ_AGF))
+			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+	}
+}
 
-अटल व्योम
-xfs_agf_ग_लिखो_verअगरy(
-	काष्ठा xfs_buf	*bp)
-अणु
-	काष्ठा xfs_mount	*mp = bp->b_mount;
-	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
-	काष्ठा xfs_agf		*agf = bp->b_addr;
+static void
+xfs_agf_write_verify(
+	struct xfs_buf	*bp)
+{
+	struct xfs_mount	*mp = bp->b_mount;
+	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	struct xfs_agf		*agf = bp->b_addr;
 	xfs_failaddr_t		fa;
 
-	fa = xfs_agf_verअगरy(bp);
-	अगर (fa) अणु
-		xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
-		वापस;
-	पूर्ण
+	fa = xfs_agf_verify(bp);
+	if (fa) {
+		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
+		return;
+	}
 
-	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
-		वापस;
+	if (!xfs_sb_version_hascrc(&mp->m_sb))
+		return;
 
-	अगर (bip)
+	if (bip)
 		agf->agf_lsn = cpu_to_be64(bip->bli_item.li_lsn);
 
 	xfs_buf_update_cksum(bp, XFS_AGF_CRC_OFF);
-पूर्ण
+}
 
-स्थिर काष्ठा xfs_buf_ops xfs_agf_buf_ops = अणु
+const struct xfs_buf_ops xfs_agf_buf_ops = {
 	.name = "xfs_agf",
-	.magic = अणु cpu_to_be32(XFS_AGF_MAGIC), cpu_to_be32(XFS_AGF_MAGIC) पूर्ण,
-	.verअगरy_पढ़ो = xfs_agf_पढ़ो_verअगरy,
-	.verअगरy_ग_लिखो = xfs_agf_ग_लिखो_verअगरy,
-	.verअगरy_काष्ठा = xfs_agf_verअगरy,
-पूर्ण;
+	.magic = { cpu_to_be32(XFS_AGF_MAGIC), cpu_to_be32(XFS_AGF_MAGIC) },
+	.verify_read = xfs_agf_read_verify,
+	.verify_write = xfs_agf_write_verify,
+	.verify_struct = xfs_agf_verify,
+};
 
 /*
- * Read in the allocation group header (मुक्त/alloc section).
+ * Read in the allocation group header (free/alloc section).
  */
-पूर्णांक					/* error */
-xfs_पढ़ो_agf(
-	काष्ठा xfs_mount	*mp,	/* mount poपूर्णांक काष्ठाure */
-	काष्ठा xfs_trans	*tp,	/* transaction poपूर्णांकer */
+int					/* error */
+xfs_read_agf(
+	struct xfs_mount	*mp,	/* mount point structure */
+	struct xfs_trans	*tp,	/* transaction pointer */
 	xfs_agnumber_t		agno,	/* allocation group number */
-	पूर्णांक			flags,	/* XFS_BUF_ */
-	काष्ठा xfs_buf		**bpp)	/* buffer क्रम the ag मुक्तlist header */
-अणु
-	पूर्णांक		error;
+	int			flags,	/* XFS_BUF_ */
+	struct xfs_buf		**bpp)	/* buffer for the ag freelist header */
+{
+	int		error;
 
-	trace_xfs_पढ़ो_agf(mp, agno);
+	trace_xfs_read_agf(mp, agno);
 
-	ASSERT(agno != शून्यAGNUMBER);
-	error = xfs_trans_पढ़ो_buf(mp, tp, mp->m_ddev_targp,
+	ASSERT(agno != NULLAGNUMBER);
+	error = xfs_trans_read_buf(mp, tp, mp->m_ddev_targp,
 			XFS_AG_DADDR(mp, agno, XFS_AGF_DADDR(mp)),
 			XFS_FSS_TO_BB(mp, 1), flags, bpp, &xfs_agf_buf_ops);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	ASSERT(!(*bpp)->b_error);
 	xfs_buf_set_ref(*bpp, XFS_AGF_REF);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Read in the allocation group header (मुक्त/alloc section).
+ * Read in the allocation group header (free/alloc section).
  */
-पूर्णांक					/* error */
-xfs_alloc_पढ़ो_agf(
-	काष्ठा xfs_mount	*mp,	/* mount poपूर्णांक काष्ठाure */
-	काष्ठा xfs_trans	*tp,	/* transaction poपूर्णांकer */
+int					/* error */
+xfs_alloc_read_agf(
+	struct xfs_mount	*mp,	/* mount point structure */
+	struct xfs_trans	*tp,	/* transaction pointer */
 	xfs_agnumber_t		agno,	/* allocation group number */
-	पूर्णांक			flags,	/* XFS_ALLOC_FLAG_... */
-	काष्ठा xfs_buf		**bpp)	/* buffer क्रम the ag मुक्तlist header */
-अणु
-	काष्ठा xfs_agf		*agf;		/* ag मुक्तlist header */
-	काष्ठा xfs_perag	*pag;		/* per allocation group data */
-	पूर्णांक			error;
-	पूर्णांक			allocbt_blks;
+	int			flags,	/* XFS_ALLOC_FLAG_... */
+	struct xfs_buf		**bpp)	/* buffer for the ag freelist header */
+{
+	struct xfs_agf		*agf;		/* ag freelist header */
+	struct xfs_perag	*pag;		/* per allocation group data */
+	int			error;
+	int			allocbt_blks;
 
-	trace_xfs_alloc_पढ़ो_agf(mp, agno);
+	trace_xfs_alloc_read_agf(mp, agno);
 
-	/* We करोn't support trylock when मुक्तing. */
+	/* We don't support trylock when freeing. */
 	ASSERT((flags & (XFS_ALLOC_FLAG_FREEING | XFS_ALLOC_FLAG_TRYLOCK)) !=
 			(XFS_ALLOC_FLAG_FREEING | XFS_ALLOC_FLAG_TRYLOCK));
-	ASSERT(agno != शून्यAGNUMBER);
-	error = xfs_पढ़ो_agf(mp, tp, agno,
+	ASSERT(agno != NULLAGNUMBER);
+	error = xfs_read_agf(mp, tp, agno,
 			(flags & XFS_ALLOC_FLAG_TRYLOCK) ? XBF_TRYLOCK : 0,
 			bpp);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 	ASSERT(!(*bpp)->b_error);
 
 	agf = (*bpp)->b_addr;
 	pag = (*bpp)->b_pag;
-	अगर (!pag->pagf_init) अणु
-		pag->pagf_मुक्तblks = be32_to_cpu(agf->agf_मुक्तblks);
+	if (!pag->pagf_init) {
+		pag->pagf_freeblks = be32_to_cpu(agf->agf_freeblks);
 		pag->pagf_btreeblks = be32_to_cpu(agf->agf_btreeblks);
 		pag->pagf_flcount = be32_to_cpu(agf->agf_flcount);
-		pag->pagf_दीर्घest = be32_to_cpu(agf->agf_दीर्घest);
+		pag->pagf_longest = be32_to_cpu(agf->agf_longest);
 		pag->pagf_levels[XFS_BTNUM_BNOi] =
 			be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNOi]);
 		pag->pagf_levels[XFS_BTNUM_CNTi] =
@@ -3069,118 +3068,118 @@ xfs_alloc_पढ़ो_agf(
 		/*
 		 * Update the in-core allocbt counter. Filter out the rmapbt
 		 * subset of the btreeblks counter because the rmapbt is managed
-		 * by perag reservation. Subtract one क्रम the rmapbt root block
-		 * because the rmap counter includes it जबतक the btreeblks
+		 * by perag reservation. Subtract one for the rmapbt root block
+		 * because the rmap counter includes it while the btreeblks
 		 * counter only tracks non-root blocks.
 		 */
 		allocbt_blks = pag->pagf_btreeblks;
-		अगर (xfs_sb_version_hasrmapbt(&mp->m_sb))
+		if (xfs_sb_version_hasrmapbt(&mp->m_sb))
 			allocbt_blks -= be32_to_cpu(agf->agf_rmap_blocks) - 1;
-		अगर (allocbt_blks > 0)
+		if (allocbt_blks > 0)
 			atomic64_add(allocbt_blks, &mp->m_allocbt_blks);
-	पूर्ण
-#अगर_घोषित DEBUG
-	अन्यथा अगर (!XFS_FORCED_SHUTDOWN(mp)) अणु
-		ASSERT(pag->pagf_मुक्तblks == be32_to_cpu(agf->agf_मुक्तblks));
+	}
+#ifdef DEBUG
+	else if (!XFS_FORCED_SHUTDOWN(mp)) {
+		ASSERT(pag->pagf_freeblks == be32_to_cpu(agf->agf_freeblks));
 		ASSERT(pag->pagf_btreeblks == be32_to_cpu(agf->agf_btreeblks));
 		ASSERT(pag->pagf_flcount == be32_to_cpu(agf->agf_flcount));
-		ASSERT(pag->pagf_दीर्घest == be32_to_cpu(agf->agf_दीर्घest));
+		ASSERT(pag->pagf_longest == be32_to_cpu(agf->agf_longest));
 		ASSERT(pag->pagf_levels[XFS_BTNUM_BNOi] ==
 		       be32_to_cpu(agf->agf_levels[XFS_BTNUM_BNOi]));
 		ASSERT(pag->pagf_levels[XFS_BTNUM_CNTi] ==
 		       be32_to_cpu(agf->agf_levels[XFS_BTNUM_CNTi]));
-	पूर्ण
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+	}
+#endif
+	return 0;
+}
 
 /*
  * Allocate an extent (variable-size).
  * Depending on the allocation type, we either look in a single allocation
  * group or loop over the allocation groups to find the result.
  */
-पूर्णांक				/* error */
+int				/* error */
 xfs_alloc_vextent(
-	काष्ठा xfs_alloc_arg	*args)	/* allocation argument काष्ठाure */
-अणु
+	struct xfs_alloc_arg	*args)	/* allocation argument structure */
+{
 	xfs_agblock_t		agsize;	/* allocation group size */
-	पूर्णांक			error;
-	पूर्णांक			flags;	/* XFS_ALLOC_FLAG_... locking flags */
-	काष्ठा xfs_mount	*mp;	/* mount काष्ठाure poपूर्णांकer */
+	int			error;
+	int			flags;	/* XFS_ALLOC_FLAG_... locking flags */
+	struct xfs_mount	*mp;	/* mount structure pointer */
 	xfs_agnumber_t		sagno;	/* starting allocation group number */
 	xfs_alloctype_t		type;	/* input allocation type */
-	पूर्णांक			bump_rotor = 0;
+	int			bump_rotor = 0;
 	xfs_agnumber_t		rotorstep = xfs_rotorstep; /* inode32 agf stepper */
 
 	mp = args->mp;
 	type = args->otype = args->type;
-	args->agbno = शून्यAGBLOCK;
+	args->agbno = NULLAGBLOCK;
 	/*
-	 * Just fix this up, क्रम the हाल where the last a.g. is लघुer
+	 * Just fix this up, for the case where the last a.g. is shorter
 	 * (or there's only one a.g.) and the caller couldn't easily figure
 	 * that out (xfs_bmap_alloc).
 	 */
 	agsize = mp->m_sb.sb_agblocks;
-	अगर (args->maxlen > agsize)
+	if (args->maxlen > agsize)
 		args->maxlen = agsize;
-	अगर (args->alignment == 0)
+	if (args->alignment == 0)
 		args->alignment = 1;
 	ASSERT(XFS_FSB_TO_AGNO(mp, args->fsbno) < mp->m_sb.sb_agcount);
 	ASSERT(XFS_FSB_TO_AGBNO(mp, args->fsbno) < agsize);
 	ASSERT(args->minlen <= args->maxlen);
 	ASSERT(args->minlen <= agsize);
 	ASSERT(args->mod < args->prod);
-	अगर (XFS_FSB_TO_AGNO(mp, args->fsbno) >= mp->m_sb.sb_agcount ||
+	if (XFS_FSB_TO_AGNO(mp, args->fsbno) >= mp->m_sb.sb_agcount ||
 	    XFS_FSB_TO_AGBNO(mp, args->fsbno) >= agsize ||
 	    args->minlen > args->maxlen || args->minlen > agsize ||
-	    args->mod >= args->prod) अणु
-		args->fsbno = शून्यFSBLOCK;
+	    args->mod >= args->prod) {
+		args->fsbno = NULLFSBLOCK;
 		trace_xfs_alloc_vextent_badargs(args);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (type) अणु
-	हाल XFS_ALLOCTYPE_THIS_AG:
-	हाल XFS_ALLOCTYPE_NEAR_BNO:
-	हाल XFS_ALLOCTYPE_THIS_BNO:
+	switch (type) {
+	case XFS_ALLOCTYPE_THIS_AG:
+	case XFS_ALLOCTYPE_NEAR_BNO:
+	case XFS_ALLOCTYPE_THIS_BNO:
 		/*
-		 * These three क्रमce us पूर्णांकo a single a.g.
+		 * These three force us into a single a.g.
 		 */
 		args->agno = XFS_FSB_TO_AGNO(mp, args->fsbno);
 		args->pag = xfs_perag_get(mp, args->agno);
-		error = xfs_alloc_fix_मुक्तlist(args, 0);
-		अगर (error) अणु
+		error = xfs_alloc_fix_freelist(args, 0);
+		if (error) {
 			trace_xfs_alloc_vextent_nofix(args);
-			जाओ error0;
-		पूर्ण
-		अगर (!args->agbp) अणु
+			goto error0;
+		}
+		if (!args->agbp) {
 			trace_xfs_alloc_vextent_noagbp(args);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		args->agbno = XFS_FSB_TO_AGBNO(mp, args->fsbno);
-		अगर ((error = xfs_alloc_ag_vextent(args)))
-			जाओ error0;
-		अवरोध;
-	हाल XFS_ALLOCTYPE_START_BNO:
+		if ((error = xfs_alloc_ag_vextent(args)))
+			goto error0;
+		break;
+	case XFS_ALLOCTYPE_START_BNO:
 		/*
 		 * Try near allocation first, then anywhere-in-ag after
 		 * the first a.g. fails.
 		 */
-		अगर ((args->datatype & XFS_ALLOC_INITIAL_USER_DATA) &&
-		    (mp->m_flags & XFS_MOUNT_32BITINODES)) अणु
+		if ((args->datatype & XFS_ALLOC_INITIAL_USER_DATA) &&
+		    (mp->m_flags & XFS_MOUNT_32BITINODES)) {
 			args->fsbno = XFS_AGB_TO_FSB(mp,
 					((mp->m_agfrotor / rotorstep) %
 					mp->m_sb.sb_agcount), 0);
 			bump_rotor = 1;
-		पूर्ण
+		}
 		args->agbno = XFS_FSB_TO_AGBNO(mp, args->fsbno);
 		args->type = XFS_ALLOCTYPE_NEAR_BNO;
 		/* FALLTHROUGH */
-	हाल XFS_ALLOCTYPE_FIRST_AG:
+	case XFS_ALLOCTYPE_FIRST_AG:
 		/*
-		 * Rotate through the allocation groups looking क्रम a winner.
+		 * Rotate through the allocation groups looking for a winner.
 		 */
-		अगर (type == XFS_ALLOCTYPE_FIRST_AG) अणु
+		if (type == XFS_ALLOCTYPE_FIRST_AG) {
 			/*
 			 * Start with allocation group given by bno.
 			 */
@@ -3188,310 +3187,310 @@ xfs_alloc_vextent(
 			args->type = XFS_ALLOCTYPE_THIS_AG;
 			sagno = 0;
 			flags = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Start with the given allocation group.
 			 */
 			args->agno = sagno = XFS_FSB_TO_AGNO(mp, args->fsbno);
 			flags = XFS_ALLOC_FLAG_TRYLOCK;
-		पूर्ण
+		}
 		/*
-		 * Loop over allocation groups twice; first समय with
-		 * trylock set, second समय without.
+		 * Loop over allocation groups twice; first time with
+		 * trylock set, second time without.
 		 */
-		क्रम (;;) अणु
+		for (;;) {
 			args->pag = xfs_perag_get(mp, args->agno);
-			error = xfs_alloc_fix_मुक्तlist(args, flags);
-			अगर (error) अणु
+			error = xfs_alloc_fix_freelist(args, flags);
+			if (error) {
 				trace_xfs_alloc_vextent_nofix(args);
-				जाओ error0;
-			पूर्ण
+				goto error0;
+			}
 			/*
 			 * If we get a buffer back then the allocation will fly.
 			 */
-			अगर (args->agbp) अणु
-				अगर ((error = xfs_alloc_ag_vextent(args)))
-					जाओ error0;
-				अवरोध;
-			पूर्ण
+			if (args->agbp) {
+				if ((error = xfs_alloc_ag_vextent(args)))
+					goto error0;
+				break;
+			}
 
 			trace_xfs_alloc_vextent_loopfailed(args);
 
 			/*
 			 * Didn't work, figure out the next iteration.
 			 */
-			अगर (args->agno == sagno &&
+			if (args->agno == sagno &&
 			    type == XFS_ALLOCTYPE_START_BNO)
 				args->type = XFS_ALLOCTYPE_THIS_AG;
 			/*
 			* For the first allocation, we can try any AG to get
-			* space.  However, अगर we alपढ़ोy have allocated a
-			* block, we करोn't want to try AGs whose number is below
+			* space.  However, if we already have allocated a
+			* block, we don't want to try AGs whose number is below
 			* sagno. Otherwise, we may end up with out-of-order
 			* locking of AGF, which might cause deadlock.
 			*/
-			अगर (++(args->agno) == mp->m_sb.sb_agcount) अणु
-				अगर (args->tp->t_firstblock != शून्यFSBLOCK)
+			if (++(args->agno) == mp->m_sb.sb_agcount) {
+				if (args->tp->t_firstblock != NULLFSBLOCK)
 					args->agno = sagno;
-				अन्यथा
+				else
 					args->agno = 0;
-			पूर्ण
+			}
 			/*
-			 * Reached the starting a.g., must either be करोne
-			 * or चयन to non-trylock mode.
+			 * Reached the starting a.g., must either be done
+			 * or switch to non-trylock mode.
 			 */
-			अगर (args->agno == sagno) अणु
-				अगर (flags == 0) अणु
-					args->agbno = शून्यAGBLOCK;
+			if (args->agno == sagno) {
+				if (flags == 0) {
+					args->agbno = NULLAGBLOCK;
 					trace_xfs_alloc_vextent_allfailed(args);
-					अवरोध;
-				पूर्ण
+					break;
+				}
 
 				flags = 0;
-				अगर (type == XFS_ALLOCTYPE_START_BNO) अणु
+				if (type == XFS_ALLOCTYPE_START_BNO) {
 					args->agbno = XFS_FSB_TO_AGBNO(mp,
 						args->fsbno);
 					args->type = XFS_ALLOCTYPE_NEAR_BNO;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			xfs_perag_put(args->pag);
-		पूर्ण
-		अगर (bump_rotor) अणु
-			अगर (args->agno == sagno)
+		}
+		if (bump_rotor) {
+			if (args->agno == sagno)
 				mp->m_agfrotor = (mp->m_agfrotor + 1) %
 					(mp->m_sb.sb_agcount * rotorstep);
-			अन्यथा
+			else
 				mp->m_agfrotor = (args->agno * rotorstep + 1) %
 					(mp->m_sb.sb_agcount * rotorstep);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		ASSERT(0);
 		/* NOTREACHED */
-	पूर्ण
-	अगर (args->agbno == शून्यAGBLOCK)
-		args->fsbno = शून्यFSBLOCK;
-	अन्यथा अणु
+	}
+	if (args->agbno == NULLAGBLOCK)
+		args->fsbno = NULLFSBLOCK;
+	else {
 		args->fsbno = XFS_AGB_TO_FSB(mp, args->agno, args->agbno);
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 		ASSERT(args->len >= args->minlen);
 		ASSERT(args->len <= args->maxlen);
 		ASSERT(args->agbno % args->alignment == 0);
 		XFS_AG_CHECK_DADDR(mp, XFS_FSB_TO_DADDR(mp, args->fsbno),
 			args->len);
-#पूर्ण_अगर
+#endif
 
-	पूर्ण
+	}
 	xfs_perag_put(args->pag);
-	वापस 0;
+	return 0;
 error0:
 	xfs_perag_put(args->pag);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* Ensure that the मुक्तlist is at full capacity. */
-पूर्णांक
-xfs_मुक्त_extent_fix_मुक्तlist(
-	काष्ठा xfs_trans	*tp,
+/* Ensure that the freelist is at full capacity. */
+int
+xfs_free_extent_fix_freelist(
+	struct xfs_trans	*tp,
 	xfs_agnumber_t		agno,
-	काष्ठा xfs_buf		**agbp)
-अणु
-	काष्ठा xfs_alloc_arg	args;
-	पूर्णांक			error;
+	struct xfs_buf		**agbp)
+{
+	struct xfs_alloc_arg	args;
+	int			error;
 
-	स_रखो(&args, 0, माप(काष्ठा xfs_alloc_arg));
+	memset(&args, 0, sizeof(struct xfs_alloc_arg));
 	args.tp = tp;
 	args.mp = tp->t_mountp;
 	args.agno = agno;
 
 	/*
 	 * validate that the block number is legal - the enables us to detect
-	 * and handle a silent fileप्रणाली corruption rather than crashing.
+	 * and handle a silent filesystem corruption rather than crashing.
 	 */
-	अगर (args.agno >= args.mp->m_sb.sb_agcount)
-		वापस -EFSCORRUPTED;
+	if (args.agno >= args.mp->m_sb.sb_agcount)
+		return -EFSCORRUPTED;
 
 	args.pag = xfs_perag_get(args.mp, args.agno);
 	ASSERT(args.pag);
 
-	error = xfs_alloc_fix_मुक्तlist(&args, XFS_ALLOC_FLAG_FREEING);
-	अगर (error)
-		जाओ out;
+	error = xfs_alloc_fix_freelist(&args, XFS_ALLOC_FLAG_FREEING);
+	if (error)
+		goto out;
 
 	*agbp = args.agbp;
 out:
 	xfs_perag_put(args.pag);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Free an extent.
- * Just अवरोध up the extent address and hand off to xfs_मुक्त_ag_extent
- * after fixing up the मुक्तlist.
+ * Just break up the extent address and hand off to xfs_free_ag_extent
+ * after fixing up the freelist.
  */
-पूर्णांक
-__xfs_मुक्त_extent(
-	काष्ठा xfs_trans		*tp,
+int
+__xfs_free_extent(
+	struct xfs_trans		*tp,
 	xfs_fsblock_t			bno,
 	xfs_extlen_t			len,
-	स्थिर काष्ठा xfs_owner_info	*oinfo,
-	क्रमागत xfs_ag_resv_type		type,
+	const struct xfs_owner_info	*oinfo,
+	enum xfs_ag_resv_type		type,
 	bool				skip_discard)
-अणु
-	काष्ठा xfs_mount		*mp = tp->t_mountp;
-	काष्ठा xfs_buf			*agbp;
+{
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_buf			*agbp;
 	xfs_agnumber_t			agno = XFS_FSB_TO_AGNO(mp, bno);
 	xfs_agblock_t			agbno = XFS_FSB_TO_AGBNO(mp, bno);
-	काष्ठा xfs_agf			*agf;
-	पूर्णांक				error;
-	अचिन्हित पूर्णांक			busy_flags = 0;
+	struct xfs_agf			*agf;
+	int				error;
+	unsigned int			busy_flags = 0;
 
 	ASSERT(len != 0);
 	ASSERT(type != XFS_AG_RESV_AGFL);
 
-	अगर (XFS_TEST_ERROR(false, mp,
+	if (XFS_TEST_ERROR(false, mp,
 			XFS_ERRTAG_FREE_EXTENT))
-		वापस -EIO;
+		return -EIO;
 
-	error = xfs_मुक्त_extent_fix_मुक्तlist(tp, agno, &agbp);
-	अगर (error)
-		वापस error;
+	error = xfs_free_extent_fix_freelist(tp, agno, &agbp);
+	if (error)
+		return error;
 	agf = agbp->b_addr;
 
-	अगर (XFS_IS_CORRUPT(mp, agbno >= mp->m_sb.sb_agblocks)) अणु
+	if (XFS_IS_CORRUPT(mp, agbno >= mp->m_sb.sb_agblocks)) {
 		error = -EFSCORRUPTED;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* validate the extent size is legal now we have the agf locked */
-	अगर (XFS_IS_CORRUPT(mp, agbno + len > be32_to_cpu(agf->agf_length))) अणु
+	if (XFS_IS_CORRUPT(mp, agbno + len > be32_to_cpu(agf->agf_length))) {
 		error = -EFSCORRUPTED;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	error = xfs_मुक्त_ag_extent(tp, agbp, agno, agbno, len, oinfo, type);
-	अगर (error)
-		जाओ err;
+	error = xfs_free_ag_extent(tp, agbp, agno, agbno, len, oinfo, type);
+	if (error)
+		goto err;
 
-	अगर (skip_discard)
+	if (skip_discard)
 		busy_flags |= XFS_EXTENT_BUSY_SKIP_DISCARD;
 	xfs_extent_busy_insert(tp, agno, agbno, len, busy_flags);
-	वापस 0;
+	return 0;
 
 err:
-	xfs_trans_brअन्यथा(tp, agbp);
-	वापस error;
-पूर्ण
+	xfs_trans_brelse(tp, agbp);
+	return error;
+}
 
-काष्ठा xfs_alloc_query_range_info अणु
+struct xfs_alloc_query_range_info {
 	xfs_alloc_query_range_fn	fn;
-	व्योम				*priv;
-पूर्ण;
+	void				*priv;
+};
 
 /* Format btree record and pass to our callback. */
-STATIC पूर्णांक
+STATIC int
 xfs_alloc_query_range_helper(
-	काष्ठा xfs_btree_cur		*cur,
-	जोड़ xfs_btree_rec		*rec,
-	व्योम				*priv)
-अणु
-	काष्ठा xfs_alloc_query_range_info	*query = priv;
-	काष्ठा xfs_alloc_rec_incore		irec;
+	struct xfs_btree_cur		*cur,
+	union xfs_btree_rec		*rec,
+	void				*priv)
+{
+	struct xfs_alloc_query_range_info	*query = priv;
+	struct xfs_alloc_rec_incore		irec;
 
 	irec.ar_startblock = be32_to_cpu(rec->alloc.ar_startblock);
 	irec.ar_blockcount = be32_to_cpu(rec->alloc.ar_blockcount);
-	वापस query->fn(cur, &irec, query->priv);
-पूर्ण
+	return query->fn(cur, &irec, query->priv);
+}
 
-/* Find all मुक्त space within a given range of blocks. */
-पूर्णांक
+/* Find all free space within a given range of blocks. */
+int
 xfs_alloc_query_range(
-	काष्ठा xfs_btree_cur			*cur,
-	काष्ठा xfs_alloc_rec_incore		*low_rec,
-	काष्ठा xfs_alloc_rec_incore		*high_rec,
+	struct xfs_btree_cur			*cur,
+	struct xfs_alloc_rec_incore		*low_rec,
+	struct xfs_alloc_rec_incore		*high_rec,
 	xfs_alloc_query_range_fn		fn,
-	व्योम					*priv)
-अणु
-	जोड़ xfs_btree_irec			low_brec;
-	जोड़ xfs_btree_irec			high_brec;
-	काष्ठा xfs_alloc_query_range_info	query;
+	void					*priv)
+{
+	union xfs_btree_irec			low_brec;
+	union xfs_btree_irec			high_brec;
+	struct xfs_alloc_query_range_info	query;
 
 	ASSERT(cur->bc_btnum == XFS_BTNUM_BNO);
 	low_brec.a = *low_rec;
 	high_brec.a = *high_rec;
 	query.priv = priv;
 	query.fn = fn;
-	वापस xfs_btree_query_range(cur, &low_brec, &high_brec,
+	return xfs_btree_query_range(cur, &low_brec, &high_brec,
 			xfs_alloc_query_range_helper, &query);
-पूर्ण
+}
 
-/* Find all मुक्त space records. */
-पूर्णांक
+/* Find all free space records. */
+int
 xfs_alloc_query_all(
-	काष्ठा xfs_btree_cur			*cur,
+	struct xfs_btree_cur			*cur,
 	xfs_alloc_query_range_fn		fn,
-	व्योम					*priv)
-अणु
-	काष्ठा xfs_alloc_query_range_info	query;
+	void					*priv)
+{
+	struct xfs_alloc_query_range_info	query;
 
 	ASSERT(cur->bc_btnum == XFS_BTNUM_BNO);
 	query.priv = priv;
 	query.fn = fn;
-	वापस xfs_btree_query_all(cur, xfs_alloc_query_range_helper, &query);
-पूर्ण
+	return xfs_btree_query_all(cur, xfs_alloc_query_range_helper, &query);
+}
 
 /* Is there a record covering a given extent? */
-पूर्णांक
+int
 xfs_alloc_has_record(
-	काष्ठा xfs_btree_cur	*cur,
+	struct xfs_btree_cur	*cur,
 	xfs_agblock_t		bno,
 	xfs_extlen_t		len,
 	bool			*exists)
-अणु
-	जोड़ xfs_btree_irec	low;
-	जोड़ xfs_btree_irec	high;
+{
+	union xfs_btree_irec	low;
+	union xfs_btree_irec	high;
 
-	स_रखो(&low, 0, माप(low));
+	memset(&low, 0, sizeof(low));
 	low.a.ar_startblock = bno;
-	स_रखो(&high, 0xFF, माप(high));
+	memset(&high, 0xFF, sizeof(high));
 	high.a.ar_startblock = bno + len - 1;
 
-	वापस xfs_btree_has_record(cur, &low, &high, exists);
-पूर्ण
+	return xfs_btree_has_record(cur, &low, &high, exists);
+}
 
 /*
- * Walk all the blocks in the AGFL.  The @walk_fn can वापस any negative
+ * Walk all the blocks in the AGFL.  The @walk_fn can return any negative
  * error code or XFS_ITER_*.
  */
-पूर्णांक
+int
 xfs_agfl_walk(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_agf		*agf,
-	काष्ठा xfs_buf		*agflbp,
+	struct xfs_mount	*mp,
+	struct xfs_agf		*agf,
+	struct xfs_buf		*agflbp,
 	xfs_agfl_walk_fn	walk_fn,
-	व्योम			*priv)
-अणु
+	void			*priv)
+{
 	__be32			*agfl_bno;
-	अचिन्हित पूर्णांक		i;
-	पूर्णांक			error;
+	unsigned int		i;
+	int			error;
 
 	agfl_bno = xfs_buf_to_agfl_bno(agflbp);
 	i = be32_to_cpu(agf->agf_flfirst);
 
 	/* Nothing to walk in an empty AGFL. */
-	अगर (agf->agf_flcount == cpu_to_be32(0))
-		वापस 0;
+	if (agf->agf_flcount == cpu_to_be32(0))
+		return 0;
 
 	/* Otherwise, walk from first to last, wrapping as needed. */
-	क्रम (;;) अणु
+	for (;;) {
 		error = walk_fn(mp, be32_to_cpu(agfl_bno[i]), priv);
-		अगर (error)
-			वापस error;
-		अगर (i == be32_to_cpu(agf->agf_fllast))
-			अवरोध;
-		अगर (++i == xfs_agfl_size(mp))
+		if (error)
+			return error;
+		if (i == be32_to_cpu(agf->agf_fllast))
+			break;
+		if (++i == xfs_agfl_size(mp))
 			i = 0;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

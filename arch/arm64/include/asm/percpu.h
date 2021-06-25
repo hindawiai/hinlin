@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 ARM Ltd.
  */
-#अगर_अघोषित __ASM_PERCPU_H
-#घोषणा __ASM_PERCPU_H
+#ifndef __ASM_PERCPU_H
+#define __ASM_PERCPU_H
 
-#समावेश <linux/preempt.h>
+#include <linux/preempt.h>
 
-#समावेश <यंत्र/alternative.h>
-#समावेश <यंत्र/cmpxchg.h>
-#समावेश <यंत्र/stack_poपूर्णांकer.h>
+#include <asm/alternative.h>
+#include <asm/cmpxchg.h>
+#include <asm/stack_pointer.h>
 
-अटल अंतरभूत व्योम set_my_cpu_offset(अचिन्हित दीर्घ off)
-अणु
-	यंत्र अस्थिर(ALTERNATIVE("msr tpidr_el1, %0",
+static inline void set_my_cpu_offset(unsigned long off)
+{
+	asm volatile(ALTERNATIVE("msr tpidr_el1, %0",
 				 "msr tpidr_el2, %0",
 				 ARM64_HAS_VIRT_HOST_EXTN)
 			:: "r" (off) : "memory");
-पूर्ण
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ __hyp_my_cpu_offset(व्योम)
-अणु
+static inline unsigned long __hyp_my_cpu_offset(void)
+{
 	/*
 	 * Non-VHE hyp code runs with preemption disabled. No need to hazard
-	 * the रेजिस्टर access against barrier() as in __kern_my_cpu_offset.
+	 * the register access against barrier() as in __kern_my_cpu_offset.
 	 */
-	वापस पढ़ो_sysreg(tpidr_el2);
-पूर्ण
+	return read_sysreg(tpidr_el2);
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ __kern_my_cpu_offset(व्योम)
-अणु
-	अचिन्हित दीर्घ off;
+static inline unsigned long __kern_my_cpu_offset(void)
+{
+	unsigned long off;
 
 	/*
-	 * We want to allow caching the value, so aव्योम using अस्थिर and
-	 * instead use a fake stack पढ़ो to hazard against barrier().
+	 * We want to allow caching the value, so avoid using volatile and
+	 * instead use a fake stack read to hazard against barrier().
 	 */
-	यंत्र(ALTERNATIVE("mrs %0, tpidr_el1",
+	asm(ALTERNATIVE("mrs %0, tpidr_el1",
 			"mrs %0, tpidr_el2",
 			ARM64_HAS_VIRT_HOST_EXTN)
 		: "=r" (off) :
-		"Q" (*(स्थिर अचिन्हित दीर्घ *)current_stack_poपूर्णांकer));
+		"Q" (*(const unsigned long *)current_stack_pointer));
 
-	वापस off;
-पूर्ण
+	return off;
+}
 
-#अगर_घोषित __KVM_NVHE_HYPERVISOR__
-#घोषणा __my_cpu_offset __hyp_my_cpu_offset()
-#अन्यथा
-#घोषणा __my_cpu_offset __kern_my_cpu_offset()
-#पूर्ण_अगर
+#ifdef __KVM_NVHE_HYPERVISOR__
+#define __my_cpu_offset __hyp_my_cpu_offset()
+#else
+#define __my_cpu_offset __kern_my_cpu_offset()
+#endif
 
-#घोषणा PERCPU_RW_OPS(sz)						\
-अटल अंतरभूत अचिन्हित दीर्घ __percpu_पढ़ो_##sz(व्योम *ptr)		\
-अणु									\
-	वापस READ_ONCE(*(u##sz *)ptr);				\
-पूर्ण									\
+#define PERCPU_RW_OPS(sz)						\
+static inline unsigned long __percpu_read_##sz(void *ptr)		\
+{									\
+	return READ_ONCE(*(u##sz *)ptr);				\
+}									\
 									\
-अटल अंतरभूत व्योम __percpu_ग_लिखो_##sz(व्योम *ptr, अचिन्हित दीर्घ val)	\
-अणु									\
+static inline void __percpu_write_##sz(void *ptr, unsigned long val)	\
+{									\
 	WRITE_ONCE(*(u##sz *)ptr, (u##sz)val);				\
-पूर्ण
+}
 
-#घोषणा __PERCPU_OP_CASE(w, sfx, name, sz, op_llsc, op_lse)		\
-अटल अंतरभूत व्योम							\
-__percpu_##name##_हाल_##sz(व्योम *ptr, अचिन्हित दीर्घ val)		\
-अणु									\
-	अचिन्हित पूर्णांक loop;						\
-	u##sz पंचांगp;							\
+#define __PERCPU_OP_CASE(w, sfx, name, sz, op_llsc, op_lse)		\
+static inline void							\
+__percpu_##name##_case_##sz(void *ptr, unsigned long val)		\
+{									\
+	unsigned int loop;						\
+	u##sz tmp;							\
 									\
-	यंत्र अस्थिर (ARM64_LSE_ATOMIC_INSN(				\
+	asm volatile (ARM64_LSE_ATOMIC_INSN(				\
 	/* LL/SC */							\
 	"1:	ldxr" #sfx "\t%" #w "[tmp], %[ptr]\n"			\
 		#op_llsc "\t%" #w "[tmp], %" #w "[tmp], %" #w "[val]\n"	\
@@ -79,19 +78,19 @@ __percpu_##name##_हाल_##sz(व्योम *ptr, अचिन्हित 
 	/* LSE atomics */						\
 		#op_lse "\t%" #w "[val], %[ptr]\n"			\
 		__nops(3))						\
-	: [loop] "=&r" (loop), [पंचांगp] "=&r" (पंचांगp),			\
+	: [loop] "=&r" (loop), [tmp] "=&r" (tmp),			\
 	  [ptr] "+Q"(*(u##sz *)ptr)					\
 	: [val] "r" ((u##sz)(val)));					\
-पूर्ण
+}
 
-#घोषणा __PERCPU_RET_OP_CASE(w, sfx, name, sz, op_llsc, op_lse)		\
-अटल अंतरभूत u##sz							\
-__percpu_##name##_वापस_हाल_##sz(व्योम *ptr, अचिन्हित दीर्घ val)	\
-अणु									\
-	अचिन्हित पूर्णांक loop;						\
+#define __PERCPU_RET_OP_CASE(w, sfx, name, sz, op_llsc, op_lse)		\
+static inline u##sz							\
+__percpu_##name##_return_case_##sz(void *ptr, unsigned long val)	\
+{									\
+	unsigned int loop;						\
 	u##sz ret;							\
 									\
-	यंत्र अस्थिर (ARM64_LSE_ATOMIC_INSN(				\
+	asm volatile (ARM64_LSE_ATOMIC_INSN(				\
 	/* LL/SC */							\
 	"1:	ldxr" #sfx "\t%" #w "[ret], %[ptr]\n"			\
 		#op_llsc "\t%" #w "[ret], %" #w "[ret], %" #w "[val]\n"	\
@@ -105,16 +104,16 @@ __percpu_##name##_वापस_हाल_##sz(व्योम *ptr, अचिन
 	  [ptr] "+Q"(*(u##sz *)ptr)					\
 	: [val] "r" ((u##sz)(val)));					\
 									\
-	वापस ret;							\
-पूर्ण
+	return ret;							\
+}
 
-#घोषणा PERCPU_OP(name, op_llsc, op_lse)				\
+#define PERCPU_OP(name, op_llsc, op_lse)				\
 	__PERCPU_OP_CASE(w, b, name,  8, op_llsc, op_lse)		\
 	__PERCPU_OP_CASE(w, h, name, 16, op_llsc, op_lse)		\
 	__PERCPU_OP_CASE(w,  , name, 32, op_llsc, op_lse)		\
 	__PERCPU_OP_CASE( ,  , name, 64, op_llsc, op_lse)
 
-#घोषणा PERCPU_RET_OP(name, op_llsc, op_lse)				\
+#define PERCPU_RET_OP(name, op_llsc, op_lse)				\
 	__PERCPU_RET_OP_CASE(w, b, name,  8, op_llsc, op_lse)		\
 	__PERCPU_RET_OP_CASE(w, h, name, 16, op_llsc, op_lse)		\
 	__PERCPU_RET_OP_CASE(w,  , name, 32, op_llsc, op_lse)		\
@@ -129,133 +128,133 @@ PERCPU_OP(andnot, bic, stclr)
 PERCPU_OP(or, orr, stset)
 PERCPU_RET_OP(add, add, ldadd)
 
-#अघोषित PERCPU_RW_OPS
-#अघोषित __PERCPU_OP_CASE
-#अघोषित __PERCPU_RET_OP_CASE
-#अघोषित PERCPU_OP
-#अघोषित PERCPU_RET_OP
+#undef PERCPU_RW_OPS
+#undef __PERCPU_OP_CASE
+#undef __PERCPU_RET_OP_CASE
+#undef PERCPU_OP
+#undef PERCPU_RET_OP
 
 /*
- * It would be nice to aव्योम the conditional call पूर्णांकo the scheduler when
- * re-enabling preemption क्रम preemptible kernels, but करोing that in a way
+ * It would be nice to avoid the conditional call into the scheduler when
+ * re-enabling preemption for preemptible kernels, but doing that in a way
  * which builds inside a module would mean messing directly with the preempt
- * count. If you करो this, peterz and tglx will hunt you करोwn.
+ * count. If you do this, peterz and tglx will hunt you down.
  */
-#घोषणा this_cpu_cmpxchg_द्विगुन_8(ptr1, ptr2, o1, o2, n1, n2)		\
-(अणु									\
-	पूर्णांक __ret;							\
+#define this_cpu_cmpxchg_double_8(ptr1, ptr2, o1, o2, n1, n2)		\
+({									\
+	int __ret;							\
 	preempt_disable_notrace();					\
-	__ret = cmpxchg_द्विगुन_local(	raw_cpu_ptr(&(ptr1)),		\
+	__ret = cmpxchg_double_local(	raw_cpu_ptr(&(ptr1)),		\
 					raw_cpu_ptr(&(ptr2)),		\
 					o1, o2, n1, n2);		\
 	preempt_enable_notrace();					\
 	__ret;								\
-पूर्ण)
+})
 
-#घोषणा _pcp_protect(op, pcp, ...)					\
-(अणु									\
+#define _pcp_protect(op, pcp, ...)					\
+({									\
 	preempt_disable_notrace();					\
 	op(raw_cpu_ptr(&(pcp)), __VA_ARGS__);				\
 	preempt_enable_notrace();					\
-पूर्ण)
+})
 
-#घोषणा _pcp_protect_वापस(op, pcp, args...)				\
-(अणु									\
+#define _pcp_protect_return(op, pcp, args...)				\
+({									\
 	typeof(pcp) __retval;						\
 	preempt_disable_notrace();					\
 	__retval = (typeof(pcp))op(raw_cpu_ptr(&(pcp)), ##args);	\
 	preempt_enable_notrace();					\
 	__retval;							\
-पूर्ण)
+})
 
-#घोषणा this_cpu_पढ़ो_1(pcp)		\
-	_pcp_protect_वापस(__percpu_पढ़ो_8, pcp)
-#घोषणा this_cpu_पढ़ो_2(pcp)		\
-	_pcp_protect_वापस(__percpu_पढ़ो_16, pcp)
-#घोषणा this_cpu_पढ़ो_4(pcp)		\
-	_pcp_protect_वापस(__percpu_पढ़ो_32, pcp)
-#घोषणा this_cpu_पढ़ो_8(pcp)		\
-	_pcp_protect_वापस(__percpu_पढ़ो_64, pcp)
+#define this_cpu_read_1(pcp)		\
+	_pcp_protect_return(__percpu_read_8, pcp)
+#define this_cpu_read_2(pcp)		\
+	_pcp_protect_return(__percpu_read_16, pcp)
+#define this_cpu_read_4(pcp)		\
+	_pcp_protect_return(__percpu_read_32, pcp)
+#define this_cpu_read_8(pcp)		\
+	_pcp_protect_return(__percpu_read_64, pcp)
 
-#घोषणा this_cpu_ग_लिखो_1(pcp, val)	\
-	_pcp_protect(__percpu_ग_लिखो_8, pcp, (अचिन्हित दीर्घ)val)
-#घोषणा this_cpu_ग_लिखो_2(pcp, val)	\
-	_pcp_protect(__percpu_ग_लिखो_16, pcp, (अचिन्हित दीर्घ)val)
-#घोषणा this_cpu_ग_लिखो_4(pcp, val)	\
-	_pcp_protect(__percpu_ग_लिखो_32, pcp, (अचिन्हित दीर्घ)val)
-#घोषणा this_cpu_ग_लिखो_8(pcp, val)	\
-	_pcp_protect(__percpu_ग_लिखो_64, pcp, (अचिन्हित दीर्घ)val)
+#define this_cpu_write_1(pcp, val)	\
+	_pcp_protect(__percpu_write_8, pcp, (unsigned long)val)
+#define this_cpu_write_2(pcp, val)	\
+	_pcp_protect(__percpu_write_16, pcp, (unsigned long)val)
+#define this_cpu_write_4(pcp, val)	\
+	_pcp_protect(__percpu_write_32, pcp, (unsigned long)val)
+#define this_cpu_write_8(pcp, val)	\
+	_pcp_protect(__percpu_write_64, pcp, (unsigned long)val)
 
-#घोषणा this_cpu_add_1(pcp, val)	\
-	_pcp_protect(__percpu_add_हाल_8, pcp, val)
-#घोषणा this_cpu_add_2(pcp, val)	\
-	_pcp_protect(__percpu_add_हाल_16, pcp, val)
-#घोषणा this_cpu_add_4(pcp, val)	\
-	_pcp_protect(__percpu_add_हाल_32, pcp, val)
-#घोषणा this_cpu_add_8(pcp, val)	\
-	_pcp_protect(__percpu_add_हाल_64, pcp, val)
+#define this_cpu_add_1(pcp, val)	\
+	_pcp_protect(__percpu_add_case_8, pcp, val)
+#define this_cpu_add_2(pcp, val)	\
+	_pcp_protect(__percpu_add_case_16, pcp, val)
+#define this_cpu_add_4(pcp, val)	\
+	_pcp_protect(__percpu_add_case_32, pcp, val)
+#define this_cpu_add_8(pcp, val)	\
+	_pcp_protect(__percpu_add_case_64, pcp, val)
 
-#घोषणा this_cpu_add_वापस_1(pcp, val)	\
-	_pcp_protect_वापस(__percpu_add_वापस_हाल_8, pcp, val)
-#घोषणा this_cpu_add_वापस_2(pcp, val)	\
-	_pcp_protect_वापस(__percpu_add_वापस_हाल_16, pcp, val)
-#घोषणा this_cpu_add_वापस_4(pcp, val)	\
-	_pcp_protect_वापस(__percpu_add_वापस_हाल_32, pcp, val)
-#घोषणा this_cpu_add_वापस_8(pcp, val)	\
-	_pcp_protect_वापस(__percpu_add_वापस_हाल_64, pcp, val)
+#define this_cpu_add_return_1(pcp, val)	\
+	_pcp_protect_return(__percpu_add_return_case_8, pcp, val)
+#define this_cpu_add_return_2(pcp, val)	\
+	_pcp_protect_return(__percpu_add_return_case_16, pcp, val)
+#define this_cpu_add_return_4(pcp, val)	\
+	_pcp_protect_return(__percpu_add_return_case_32, pcp, val)
+#define this_cpu_add_return_8(pcp, val)	\
+	_pcp_protect_return(__percpu_add_return_case_64, pcp, val)
 
-#घोषणा this_cpu_and_1(pcp, val)	\
-	_pcp_protect(__percpu_andnot_हाल_8, pcp, ~val)
-#घोषणा this_cpu_and_2(pcp, val)	\
-	_pcp_protect(__percpu_andnot_हाल_16, pcp, ~val)
-#घोषणा this_cpu_and_4(pcp, val)	\
-	_pcp_protect(__percpu_andnot_हाल_32, pcp, ~val)
-#घोषणा this_cpu_and_8(pcp, val)	\
-	_pcp_protect(__percpu_andnot_हाल_64, pcp, ~val)
+#define this_cpu_and_1(pcp, val)	\
+	_pcp_protect(__percpu_andnot_case_8, pcp, ~val)
+#define this_cpu_and_2(pcp, val)	\
+	_pcp_protect(__percpu_andnot_case_16, pcp, ~val)
+#define this_cpu_and_4(pcp, val)	\
+	_pcp_protect(__percpu_andnot_case_32, pcp, ~val)
+#define this_cpu_and_8(pcp, val)	\
+	_pcp_protect(__percpu_andnot_case_64, pcp, ~val)
 
-#घोषणा this_cpu_or_1(pcp, val)		\
-	_pcp_protect(__percpu_or_हाल_8, pcp, val)
-#घोषणा this_cpu_or_2(pcp, val)		\
-	_pcp_protect(__percpu_or_हाल_16, pcp, val)
-#घोषणा this_cpu_or_4(pcp, val)		\
-	_pcp_protect(__percpu_or_हाल_32, pcp, val)
-#घोषणा this_cpu_or_8(pcp, val)		\
-	_pcp_protect(__percpu_or_हाल_64, pcp, val)
+#define this_cpu_or_1(pcp, val)		\
+	_pcp_protect(__percpu_or_case_8, pcp, val)
+#define this_cpu_or_2(pcp, val)		\
+	_pcp_protect(__percpu_or_case_16, pcp, val)
+#define this_cpu_or_4(pcp, val)		\
+	_pcp_protect(__percpu_or_case_32, pcp, val)
+#define this_cpu_or_8(pcp, val)		\
+	_pcp_protect(__percpu_or_case_64, pcp, val)
 
-#घोषणा this_cpu_xchg_1(pcp, val)	\
-	_pcp_protect_वापस(xchg_relaxed, pcp, val)
-#घोषणा this_cpu_xchg_2(pcp, val)	\
-	_pcp_protect_वापस(xchg_relaxed, pcp, val)
-#घोषणा this_cpu_xchg_4(pcp, val)	\
-	_pcp_protect_वापस(xchg_relaxed, pcp, val)
-#घोषणा this_cpu_xchg_8(pcp, val)	\
-	_pcp_protect_वापस(xchg_relaxed, pcp, val)
+#define this_cpu_xchg_1(pcp, val)	\
+	_pcp_protect_return(xchg_relaxed, pcp, val)
+#define this_cpu_xchg_2(pcp, val)	\
+	_pcp_protect_return(xchg_relaxed, pcp, val)
+#define this_cpu_xchg_4(pcp, val)	\
+	_pcp_protect_return(xchg_relaxed, pcp, val)
+#define this_cpu_xchg_8(pcp, val)	\
+	_pcp_protect_return(xchg_relaxed, pcp, val)
 
-#घोषणा this_cpu_cmpxchg_1(pcp, o, n)	\
-	_pcp_protect_वापस(cmpxchg_relaxed, pcp, o, n)
-#घोषणा this_cpu_cmpxchg_2(pcp, o, n)	\
-	_pcp_protect_वापस(cmpxchg_relaxed, pcp, o, n)
-#घोषणा this_cpu_cmpxchg_4(pcp, o, n)	\
-	_pcp_protect_वापस(cmpxchg_relaxed, pcp, o, n)
-#घोषणा this_cpu_cmpxchg_8(pcp, o, n)	\
-	_pcp_protect_वापस(cmpxchg_relaxed, pcp, o, n)
+#define this_cpu_cmpxchg_1(pcp, o, n)	\
+	_pcp_protect_return(cmpxchg_relaxed, pcp, o, n)
+#define this_cpu_cmpxchg_2(pcp, o, n)	\
+	_pcp_protect_return(cmpxchg_relaxed, pcp, o, n)
+#define this_cpu_cmpxchg_4(pcp, o, n)	\
+	_pcp_protect_return(cmpxchg_relaxed, pcp, o, n)
+#define this_cpu_cmpxchg_8(pcp, o, n)	\
+	_pcp_protect_return(cmpxchg_relaxed, pcp, o, n)
 
-#अगर_घोषित __KVM_NVHE_HYPERVISOR__
-बाह्य अचिन्हित दीर्घ __hyp_per_cpu_offset(अचिन्हित पूर्णांक cpu);
-#घोषणा __per_cpu_offset
-#घोषणा per_cpu_offset(cpu)	__hyp_per_cpu_offset((cpu))
-#पूर्ण_अगर
+#ifdef __KVM_NVHE_HYPERVISOR__
+extern unsigned long __hyp_per_cpu_offset(unsigned int cpu);
+#define __per_cpu_offset
+#define per_cpu_offset(cpu)	__hyp_per_cpu_offset((cpu))
+#endif
 
-#समावेश <यंत्र-generic/percpu.h>
+#include <asm-generic/percpu.h>
 
-/* Redefine macros क्रम nVHE hyp under DEBUG_PREEMPT to aव्योम its dependencies. */
-#अगर defined(__KVM_NVHE_HYPERVISOR__) && defined(CONFIG_DEBUG_PREEMPT)
-#अघोषित	this_cpu_ptr
-#घोषणा	this_cpu_ptr		raw_cpu_ptr
-#अघोषित	__this_cpu_पढ़ो
-#घोषणा	__this_cpu_पढ़ो		raw_cpu_पढ़ो
-#अघोषित	__this_cpu_ग_लिखो
-#घोषणा	__this_cpu_ग_लिखो	raw_cpu_ग_लिखो
-#पूर्ण_अगर
+/* Redefine macros for nVHE hyp under DEBUG_PREEMPT to avoid its dependencies. */
+#if defined(__KVM_NVHE_HYPERVISOR__) && defined(CONFIG_DEBUG_PREEMPT)
+#undef	this_cpu_ptr
+#define	this_cpu_ptr		raw_cpu_ptr
+#undef	__this_cpu_read
+#define	__this_cpu_read		raw_cpu_read
+#undef	__this_cpu_write
+#define	__this_cpu_write	raw_cpu_write
+#endif
 
-#पूर्ण_अगर /* __ASM_PERCPU_H */
+#endif /* __ASM_PERCPU_H */

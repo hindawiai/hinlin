@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,10 +21,10 @@
  *
  */
 
-#समावेश "clearstate_defs.h"
+#include "clearstate_defs.h"
 
-अटल स्थिर u32 SECT_CONTEXT_def_1[] =
-अणु
+static const u32 SECT_CONTEXT_def_1[] =
+{
     0x00000000, // DB_RENDER_CONTROL
     0x00000000, // DB_COUNT_CONTROL
     0x00000000, // DB_DEPTH_VIEW
@@ -514,18 +513,18 @@
     0x00000000, // CB_BLEND5_CONTROL
     0x00000000, // CB_BLEND6_CONTROL
     0x00000000, // CB_BLEND7_CONTROL
-पूर्ण;
-अटल स्थिर u32 SECT_CONTEXT_def_2[] =
-अणु
+};
+static const u32 SECT_CONTEXT_def_2[] =
+{
     0x00000000, // PA_CL_POINT_X_RAD
     0x00000000, // PA_CL_POINT_Y_RAD
     0x00000000, // PA_CL_POINT_SIZE
     0x00000000, // PA_CL_POINT_CULL_RAD
     0x00000000, // VGT_DMA_BASE_HI
     0x00000000, // VGT_DMA_BASE
-पूर्ण;
-अटल स्थिर u32 SECT_CONTEXT_def_3[] =
-अणु
+};
+static const u32 SECT_CONTEXT_def_3[] =
+{
     0x00000000, // DB_DEPTH_CONTROL
     0x00000000, // DB_EQAA
     0x00000000, // CB_COLOR_CONTROL
@@ -534,7 +533,7 @@
     0x00000000, // PA_SU_SC_MODE_CNTL
     0x00000000, // PA_CL_VTE_CNTL
     0x00000000, // PA_CL_VS_OUT_CNTL
-    0x00000000, // PA_CL_न_अंकINF_CNTL
+    0x00000000, // PA_CL_NANINF_CNTL
     0x00000000, // PA_SU_LINE_STIPPLE_CNTL
     0x00000000, // PA_SU_LINE_STIPPLE_SCALE
     0x00000000, // PA_SU_PRIM_FILTER_CNTL
@@ -581,9 +580,9 @@
     0x00000000, // SQ_PGM_START_LS
     0x00000000, // SQ_PGM_RESOURCES_LS
     0x00000000, // SQ_PGM_RESOURCES_2_LS
-पूर्ण;
-अटल स्थिर u32 SECT_CONTEXT_def_4[] =
-अणु
+};
+static const u32 SECT_CONTEXT_def_4[] =
+{
     0x00000000, // SQ_LDS_ALLOC
     0x00000000, // SQ_LDS_ALLOC_PS
     0x00000000, // SQ_VTX_SEMANTIC_CLEAR
@@ -655,7 +654,7 @@
     0x00000000, // SQ_ALU_CONST_CACHE_GS_14
     0x00000000, // SQ_ALU_CONST_CACHE_GS_15
     0x00000000, // PA_SU_POINT_SIZE
-    0x00000000, // PA_SU_POपूर्णांक_न्यूनMAX
+    0x00000000, // PA_SU_POINT_MINMAX
     0x00000000, // PA_SU_LINE_CNTL
     0x00000000, // PA_SC_LINE_STIPPLE
     0x00000000, // VGT_OUTPUT_PATH_CNTL
@@ -683,17 +682,17 @@
     0, // HOLE
     0x00000000, // VGT_GS_OUT_PRIM_TYPE
     0x00000000, // IA_ENHANCE
-पूर्ण;
-अटल स्थिर u32 SECT_CONTEXT_def_5[] =
-अणु
+};
+static const u32 SECT_CONTEXT_def_5[] =
+{
     0x00000000, // VGT_DMA_MAX_SIZE
     0x00000000, // VGT_DMA_INDEX_TYPE
     0, // HOLE
     0x00000000, // VGT_PRIMITIVEID_EN
     0x00000000, // VGT_DMA_NUM_INSTANCES
-पूर्ण;
-अटल स्थिर u32 SECT_CONTEXT_def_6[] =
-अणु
+};
+static const u32 SECT_CONTEXT_def_6[] =
+{
     0x00000000, // VGT_MULTI_PRIM_IB_RESET_EN
     0, // HOLE
     0, // HOLE
@@ -750,9 +749,9 @@
     0, // HOLE
     0x00000000, // VGT_TF_PARAM
     0x00000000, // DB_ALPHA_TO_MASK
-पूर्ण;
-अटल स्थिर u32 SECT_CONTEXT_def_7[] =
-अणु
+};
+static const u32 SECT_CONTEXT_def_7[] =
+{
     0x00000000, // PA_SU_POLY_OFFSET_DB_FMT_CNTL
     0x00000000, // PA_SU_POLY_OFFSET_CLAMP
     0x00000000, // PA_SU_POLY_OFFSET_FRONT_SCALE
@@ -1043,42 +1042,42 @@
     0x00000000, // SQ_ALU_CONST_BUFFER_SIZE_LS_13
     0x00000000, // SQ_ALU_CONST_BUFFER_SIZE_LS_14
     0x00000000, // SQ_ALU_CONST_BUFFER_SIZE_LS_15
-पूर्ण;
-अटल स्थिर काष्ठा cs_extent_def SECT_CONTEXT_defs[] =
-अणु
-    अणुSECT_CONTEXT_def_1, 0x0000a000, 488 पूर्ण,
-    अणुSECT_CONTEXT_def_2, 0x0000a1f5, 6 पूर्ण,
-    अणुSECT_CONTEXT_def_3, 0x0000a200, 55 पूर्ण,
-    अणुSECT_CONTEXT_def_4, 0x0000a23a, 99 पूर्ण,
-    अणुSECT_CONTEXT_def_5, 0x0000a29e, 5 पूर्ण,
-    अणुSECT_CONTEXT_def_6, 0x0000a2a5, 56 पूर्ण,
-    अणुSECT_CONTEXT_def_7, 0x0000a2de, 290 पूर्ण,
-    अणु शून्य, 0, 0 पूर्ण
-पूर्ण;
-अटल स्थिर u32 SECT_CLEAR_def_1[] =
-अणु
+};
+static const struct cs_extent_def SECT_CONTEXT_defs[] =
+{
+    {SECT_CONTEXT_def_1, 0x0000a000, 488 },
+    {SECT_CONTEXT_def_2, 0x0000a1f5, 6 },
+    {SECT_CONTEXT_def_3, 0x0000a200, 55 },
+    {SECT_CONTEXT_def_4, 0x0000a23a, 99 },
+    {SECT_CONTEXT_def_5, 0x0000a29e, 5 },
+    {SECT_CONTEXT_def_6, 0x0000a2a5, 56 },
+    {SECT_CONTEXT_def_7, 0x0000a2de, 290 },
+    { NULL, 0, 0 }
+};
+static const u32 SECT_CLEAR_def_1[] =
+{
     0xffffffff, // SQ_TEX_SAMPLER_CLEAR
     0xffffffff, // SQ_TEX_RESOURCE_CLEAR
     0xffffffff, // SQ_LOOP_BOOL_CLEAR
-पूर्ण;
-अटल स्थिर काष्ठा cs_extent_def SECT_CLEAR_defs[] =
-अणु
-    अणुSECT_CLEAR_def_1, 0x0000ffc0, 3 पूर्ण,
-    अणु शून्य, 0, 0 पूर्ण
-पूर्ण;
-अटल स्थिर u32 SECT_CTRLCONST_def_1[] =
-अणु
+};
+static const struct cs_extent_def SECT_CLEAR_defs[] =
+{
+    {SECT_CLEAR_def_1, 0x0000ffc0, 3 },
+    { NULL, 0, 0 }
+};
+static const u32 SECT_CTRLCONST_def_1[] =
+{
     0x00000000, // SQ_VTX_BASE_VTX_LOC
     0x00000000, // SQ_VTX_START_INST_LOC
-पूर्ण;
-अटल स्थिर काष्ठा cs_extent_def SECT_CTRLCONST_defs[] =
-अणु
-    अणुSECT_CTRLCONST_def_1, 0x0000f3fc, 2 पूर्ण,
-    अणु शून्य, 0, 0 पूर्ण
-पूर्ण;
-अटल स्थिर काष्ठा cs_section_def cayman_cs_data[] = अणु
-    अणु SECT_CONTEXT_defs, SECT_CONTEXT पूर्ण,
-    अणु SECT_CLEAR_defs, SECT_CLEAR पूर्ण,
-    अणु SECT_CTRLCONST_defs, SECT_CTRLCONST पूर्ण,
-    अणु शून्य, SECT_NONE पूर्ण
-पूर्ण;
+};
+static const struct cs_extent_def SECT_CTRLCONST_defs[] =
+{
+    {SECT_CTRLCONST_def_1, 0x0000f3fc, 2 },
+    { NULL, 0, 0 }
+};
+static const struct cs_section_def cayman_cs_data[] = {
+    { SECT_CONTEXT_defs, SECT_CONTEXT },
+    { SECT_CLEAR_defs, SECT_CLEAR },
+    { SECT_CTRLCONST_defs, SECT_CTRLCONST },
+    { NULL, SECT_NONE }
+};

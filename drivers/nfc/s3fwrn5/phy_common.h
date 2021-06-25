@@ -1,7 +1,6 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later
+/* SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Link Layer क्रम Samsung S3FWRN5 NCI based Driver
+ * Link Layer for Samsung S3FWRN5 NCI based Driver
  *
  * Copyright (C) 2015 Samsung Electrnoics
  * Robert Baldyga <r.baldyga@samsung.com>
@@ -9,30 +8,30 @@
  * Bongsu Jeon <bongsu.jeon@samsung.com>
  */
 
-#अगर_अघोषित __NFC_S3FWRN5_PHY_COMMON_H
-#घोषणा __NFC_S3FWRN5_PHY_COMMON_H
+#ifndef __NFC_S3FWRN5_PHY_COMMON_H
+#define __NFC_S3FWRN5_PHY_COMMON_H
 
-#समावेश <linux/mutex.h>
-#समावेश <net/nfc/nci_core.h>
+#include <linux/mutex.h>
+#include <net/nfc/nci_core.h>
 
-#समावेश "s3fwrn5.h"
+#include "s3fwrn5.h"
 
-#घोषणा S3FWRN5_EN_WAIT_TIME 20
+#define S3FWRN5_EN_WAIT_TIME 20
 
-काष्ठा phy_common अणु
-	काष्ठा nci_dev *ndev;
+struct phy_common {
+	struct nci_dev *ndev;
 
-	पूर्णांक gpio_en;
-	पूर्णांक gpio_fw_wake;
+	int gpio_en;
+	int gpio_fw_wake;
 
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 
-	क्रमागत s3fwrn5_mode mode;
-पूर्ण;
+	enum s3fwrn5_mode mode;
+};
 
-व्योम s3fwrn5_phy_set_wake(व्योम *phy_id, bool wake);
-bool s3fwrn5_phy_घातer_ctrl(काष्ठा phy_common *phy, क्रमागत s3fwrn5_mode mode);
-व्योम s3fwrn5_phy_set_mode(व्योम *phy_id, क्रमागत s3fwrn5_mode mode);
-क्रमागत s3fwrn5_mode s3fwrn5_phy_get_mode(व्योम *phy_id);
+void s3fwrn5_phy_set_wake(void *phy_id, bool wake);
+bool s3fwrn5_phy_power_ctrl(struct phy_common *phy, enum s3fwrn5_mode mode);
+void s3fwrn5_phy_set_mode(void *phy_id, enum s3fwrn5_mode mode);
+enum s3fwrn5_mode s3fwrn5_phy_get_mode(void *phy_id);
 
-#पूर्ण_अगर /* __NFC_S3FWRN5_PHY_COMMON_H */
+#endif /* __NFC_S3FWRN5_PHY_COMMON_H */

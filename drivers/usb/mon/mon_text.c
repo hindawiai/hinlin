@@ -1,252 +1,251 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * The USB Monitor, inspired by Dave Harding's USBMon.
  *
- * This is a text क्रमmat पढ़ोer.
+ * This is a text format reader.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/list.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/समय.स>
-#समावेश <linux/kसमय.स>
-#समावेश <linux/export.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/uaccess.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/time.h>
+#include <linux/ktime.h>
+#include <linux/export.h>
+#include <linux/mutex.h>
+#include <linux/debugfs.h>
+#include <linux/scatterlist.h>
+#include <linux/uaccess.h>
 
-#समावेश "usb_mon.h"
+#include "usb_mon.h"
 
 /*
- * No, we करो not want arbitrarily दीर्घ data strings.
- * Use the binary पूर्णांकerface अगर you want to capture bulk data!
+ * No, we do not want arbitrarily long data strings.
+ * Use the binary interface if you want to capture bulk data!
  */
-#घोषणा DATA_MAX  32
+#define DATA_MAX  32
 
 /*
  * Defined by USB 2.0 clause 9.3, table 9.2.
  */
-#घोषणा SETUP_MAX  8
+#define SETUP_MAX  8
 
 /*
- * This limit exists to prevent OOMs when the user process stops पढ़ोing.
- * If usbmon were available to unprivileged processes, it might be खोलो
+ * This limit exists to prevent OOMs when the user process stops reading.
+ * If usbmon were available to unprivileged processes, it might be open
  * to a local DoS. But we have to keep to root in order to prevent
- * password snअगरfing from HID devices.
+ * password sniffing from HID devices.
  */
-#घोषणा EVENT_MAX  (4*PAGE_SIZE / माप(काष्ठा mon_event_text))
+#define EVENT_MAX  (4*PAGE_SIZE / sizeof(struct mon_event_text))
 
 /*
- * Potentially unlimited number; we limit it क्रम similar allocations.
+ * Potentially unlimited number; we limit it for similar allocations.
  * The usbfs limits this to 128, but we're not quite as generous.
  */
-#घोषणा ISODESC_MAX   5
+#define ISODESC_MAX   5
 
-#घोषणा PRINTF_DFL  250   /* with 5 ISOs segs */
+#define PRINTF_DFL  250   /* with 5 ISOs segs */
 
-काष्ठा mon_iso_desc अणु
-	पूर्णांक status;
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक length;	/* Unचिन्हित here, चिन्हित in URB. Historic. */
-पूर्ण;
+struct mon_iso_desc {
+	int status;
+	unsigned int offset;
+	unsigned int length;	/* Unsigned here, signed in URB. Historic. */
+};
 
-काष्ठा mon_event_text अणु
-	काष्ठा list_head e_link;
-	पूर्णांक type;		/* submit, complete, etc. */
-	अचिन्हित दीर्घ id;	/* From poपूर्णांकer, most of the समय */
-	अचिन्हित पूर्णांक tstamp;
-	पूर्णांक busnum;
-	अक्षर devnum;
-	अक्षर epnum;
-	अक्षर is_in;
-	अक्षर xfertype;
-	पूर्णांक length;		/* Depends on type: xfer length or act length */
-	पूर्णांक status;
-	पूर्णांक पूर्णांकerval;
-	पूर्णांक start_frame;
-	पूर्णांक error_count;
-	अक्षर setup_flag;
-	अक्षर data_flag;
-	पूर्णांक numdesc;		/* Full number */
-	काष्ठा mon_iso_desc isodesc[ISODESC_MAX];
-	अचिन्हित अक्षर setup[SETUP_MAX];
-	अचिन्हित अक्षर data[DATA_MAX];
-पूर्ण;
+struct mon_event_text {
+	struct list_head e_link;
+	int type;		/* submit, complete, etc. */
+	unsigned long id;	/* From pointer, most of the time */
+	unsigned int tstamp;
+	int busnum;
+	char devnum;
+	char epnum;
+	char is_in;
+	char xfertype;
+	int length;		/* Depends on type: xfer length or act length */
+	int status;
+	int interval;
+	int start_frame;
+	int error_count;
+	char setup_flag;
+	char data_flag;
+	int numdesc;		/* Full number */
+	struct mon_iso_desc isodesc[ISODESC_MAX];
+	unsigned char setup[SETUP_MAX];
+	unsigned char data[DATA_MAX];
+};
 
-#घोषणा SLAB_NAME_SZ  30
-काष्ठा mon_पढ़ोer_text अणु
-	काष्ठा kmem_cache *e_slab;
-	पूर्णांक nevents;
-	काष्ठा list_head e_list;
-	काष्ठा mon_पढ़ोer r;	/* In C, parent class can be placed anywhere */
+#define SLAB_NAME_SZ  30
+struct mon_reader_text {
+	struct kmem_cache *e_slab;
+	int nevents;
+	struct list_head e_list;
+	struct mon_reader r;	/* In C, parent class can be placed anywhere */
 
-	रुको_queue_head_t रुको;
-	पूर्णांक म_लिखो_size;
-	माप_प्रकार म_लिखो_offset;
-	माप_प्रकार म_लिखो_togo;
-	अक्षर *म_लिखो_buf;
-	काष्ठा mutex म_लिखो_lock;
+	wait_queue_head_t wait;
+	int printf_size;
+	size_t printf_offset;
+	size_t printf_togo;
+	char *printf_buf;
+	struct mutex printf_lock;
 
-	अक्षर slab_name[SLAB_NAME_SZ];
-पूर्ण;
+	char slab_name[SLAB_NAME_SZ];
+};
 
-अटल काष्ठा dentry *mon_dir;		/* Usually /sys/kernel/debug/usbmon */
+static struct dentry *mon_dir;		/* Usually /sys/kernel/debug/usbmon */
 
-अटल व्योम mon_text_ctor(व्योम *);
+static void mon_text_ctor(void *);
 
-काष्ठा mon_text_ptr अणु
-	पूर्णांक cnt, limit;
-	अक्षर *pbuf;
-पूर्ण;
+struct mon_text_ptr {
+	int cnt, limit;
+	char *pbuf;
+};
 
-अटल काष्ठा mon_event_text *
-    mon_text_पढ़ो_रुको(काष्ठा mon_पढ़ोer_text *rp, काष्ठा file *file);
-अटल व्योम mon_text_पढ़ो_head_t(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
-अटल व्योम mon_text_पढ़ो_head_u(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
-अटल व्योम mon_text_पढ़ो_statset(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
-अटल व्योम mon_text_पढ़ो_पूर्णांकstat(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
-अटल व्योम mon_text_पढ़ो_isostat(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
-अटल व्योम mon_text_पढ़ो_isodesc(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
-अटल व्योम mon_text_पढ़ो_data(काष्ठा mon_पढ़ोer_text *rp,
-    काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep);
+static struct mon_event_text *
+    mon_text_read_wait(struct mon_reader_text *rp, struct file *file);
+static void mon_text_read_head_t(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep);
+static void mon_text_read_head_u(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep);
+static void mon_text_read_statset(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep);
+static void mon_text_read_intstat(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep);
+static void mon_text_read_isostat(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep);
+static void mon_text_read_isodesc(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep);
+static void mon_text_read_data(struct mon_reader_text *rp,
+    struct mon_text_ptr *p, const struct mon_event_text *ep);
 
 /*
  * mon_text_submit
  * mon_text_complete
  *
- * May be called from an पूर्णांकerrupt.
+ * May be called from an interrupt.
  *
  * This is called with the whole mon_bus locked, so no additional lock.
  */
 
-अटल अंतरभूत अक्षर mon_text_get_setup(काष्ठा mon_event_text *ep,
-    काष्ठा urb *urb, अक्षर ev_type, काष्ठा mon_bus *mbus)
-अणु
+static inline char mon_text_get_setup(struct mon_event_text *ep,
+    struct urb *urb, char ev_type, struct mon_bus *mbus)
+{
 
-	अगर (ep->xfertype != USB_ENDPOINT_XFER_CONTROL || ev_type != 'S')
-		वापस '-';
+	if (ep->xfertype != USB_ENDPOINT_XFER_CONTROL || ev_type != 'S')
+		return '-';
 
-	अगर (urb->setup_packet == शून्य)
-		वापस 'Z';	/* '0' would be not as pretty. */
+	if (urb->setup_packet == NULL)
+		return 'Z';	/* '0' would be not as pretty. */
 
-	स_नकल(ep->setup, urb->setup_packet, SETUP_MAX);
-	वापस 0;
-पूर्ण
+	memcpy(ep->setup, urb->setup_packet, SETUP_MAX);
+	return 0;
+}
 
-अटल अंतरभूत अक्षर mon_text_get_data(काष्ठा mon_event_text *ep, काष्ठा urb *urb,
-    पूर्णांक len, अक्षर ev_type, काष्ठा mon_bus *mbus)
-अणु
-	व्योम *src;
+static inline char mon_text_get_data(struct mon_event_text *ep, struct urb *urb,
+    int len, char ev_type, struct mon_bus *mbus)
+{
+	void *src;
 
-	अगर (len <= 0)
-		वापस 'L';
-	अगर (len >= DATA_MAX)
+	if (len <= 0)
+		return 'L';
+	if (len >= DATA_MAX)
 		len = DATA_MAX;
 
-	अगर (ep->is_in) अणु
-		अगर (ev_type != 'C')
-			वापस '<';
-	पूर्ण अन्यथा अणु
-		अगर (ev_type != 'S')
-			वापस '>';
-	पूर्ण
+	if (ep->is_in) {
+		if (ev_type != 'C')
+			return '<';
+	} else {
+		if (ev_type != 'S')
+			return '>';
+	}
 
-	अगर (urb->num_sgs == 0) अणु
+	if (urb->num_sgs == 0) {
 		src = urb->transfer_buffer;
-		अगर (src == शून्य)
-			वापस 'Z';	/* '0' would be not as pretty. */
-	पूर्ण अन्यथा अणु
-		काष्ठा scatterlist *sg = urb->sg;
+		if (src == NULL)
+			return 'Z';	/* '0' would be not as pretty. */
+	} else {
+		struct scatterlist *sg = urb->sg;
 
-		अगर (PageHighMem(sg_page(sg)))
-			वापस 'D';
+		if (PageHighMem(sg_page(sg)))
+			return 'D';
 
-		/* For the text पूर्णांकerface we copy only the first sg buffer */
-		len = min_t(पूर्णांक, sg->length, len);
+		/* For the text interface we copy only the first sg buffer */
+		len = min_t(int, sg->length, len);
 		src = sg_virt(sg);
-	पूर्ण
+	}
 
-	स_नकल(ep->data, src, len);
-	वापस 0;
-पूर्ण
+	memcpy(ep->data, src, len);
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक mon_get_बारtamp(व्योम)
-अणु
-	काष्ठा बारpec64 now;
-	अचिन्हित पूर्णांक stamp;
+static inline unsigned int mon_get_timestamp(void)
+{
+	struct timespec64 now;
+	unsigned int stamp;
 
-	kसमय_get_ts64(&now);
+	ktime_get_ts64(&now);
 	stamp = now.tv_sec & 0xFFF;  /* 2^32 = 4294967296. Limit to 4096s. */
 	stamp = stamp * USEC_PER_SEC + now.tv_nsec / NSEC_PER_USEC;
-	वापस stamp;
-पूर्ण
+	return stamp;
+}
 
-अटल व्योम mon_text_event(काष्ठा mon_पढ़ोer_text *rp, काष्ठा urb *urb,
-    अक्षर ev_type, पूर्णांक status)
-अणु
-	काष्ठा mon_event_text *ep;
-	अचिन्हित पूर्णांक stamp;
-	काष्ठा usb_iso_packet_descriptor *fp;
-	काष्ठा mon_iso_desc *dp;
-	पूर्णांक i, ndesc;
+static void mon_text_event(struct mon_reader_text *rp, struct urb *urb,
+    char ev_type, int status)
+{
+	struct mon_event_text *ep;
+	unsigned int stamp;
+	struct usb_iso_packet_descriptor *fp;
+	struct mon_iso_desc *dp;
+	int i, ndesc;
 
-	stamp = mon_get_बारtamp();
+	stamp = mon_get_timestamp();
 
-	अगर (rp->nevents >= EVENT_MAX ||
-	    (ep = kmem_cache_alloc(rp->e_slab, GFP_ATOMIC)) == शून्य) अणु
+	if (rp->nevents >= EVENT_MAX ||
+	    (ep = kmem_cache_alloc(rp->e_slab, GFP_ATOMIC)) == NULL) {
 		rp->r.m_bus->cnt_text_lost++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ep->type = ev_type;
-	ep->id = (अचिन्हित दीर्घ) urb;
+	ep->id = (unsigned long) urb;
 	ep->busnum = urb->dev->bus->busnum;
 	ep->devnum = urb->dev->devnum;
-	ep->epnum = usb_endpoपूर्णांक_num(&urb->ep->desc);
-	ep->xfertype = usb_endpoपूर्णांक_type(&urb->ep->desc);
+	ep->epnum = usb_endpoint_num(&urb->ep->desc);
+	ep->xfertype = usb_endpoint_type(&urb->ep->desc);
 	ep->is_in = usb_urb_dir_in(urb);
 	ep->tstamp = stamp;
 	ep->length = (ev_type == 'S') ?
 	    urb->transfer_buffer_length : urb->actual_length;
-	/* Collecting status makes debugging sense क्रम submits, too */
+	/* Collecting status makes debugging sense for submits, too */
 	ep->status = status;
 
-	अगर (ep->xfertype == USB_ENDPOINT_XFER_INT) अणु
-		ep->पूर्णांकerval = urb->पूर्णांकerval;
-	पूर्ण अन्यथा अगर (ep->xfertype == USB_ENDPOINT_XFER_ISOC) अणु
-		ep->पूर्णांकerval = urb->पूर्णांकerval;
+	if (ep->xfertype == USB_ENDPOINT_XFER_INT) {
+		ep->interval = urb->interval;
+	} else if (ep->xfertype == USB_ENDPOINT_XFER_ISOC) {
+		ep->interval = urb->interval;
 		ep->start_frame = urb->start_frame;
 		ep->error_count = urb->error_count;
-	पूर्ण
+	}
 	ep->numdesc = urb->number_of_packets;
-	अगर (ep->xfertype == USB_ENDPOINT_XFER_ISOC &&
-			urb->number_of_packets > 0) अणु
-		अगर ((ndesc = urb->number_of_packets) > ISODESC_MAX)
+	if (ep->xfertype == USB_ENDPOINT_XFER_ISOC &&
+			urb->number_of_packets > 0) {
+		if ((ndesc = urb->number_of_packets) > ISODESC_MAX)
 			ndesc = ISODESC_MAX;
 		fp = urb->iso_frame_desc;
 		dp = ep->isodesc;
-		क्रम (i = 0; i < ndesc; i++) अणु
+		for (i = 0; i < ndesc; i++) {
 			dp->status = fp->status;
 			dp->offset = fp->offset;
 			dp->length = (ev_type == 'S') ?
 			    fp->length : fp->actual_length;
 			fp++;
 			dp++;
-		पूर्ण
+		}
 		/* Wasteful, but simple to understand: ISO 'C' is sparse. */
-		अगर (ev_type == 'C')
+		if (ev_type == 'C')
 			ep->length = urb->transfer_buffer_length;
-	पूर्ण
+	}
 
 	ep->setup_flag = mon_text_get_setup(ep, urb, ev_type, rp->r.m_bus);
 	ep->data_flag = mon_text_get_data(ep, urb, ep->length, ev_type,
@@ -254,40 +253,40 @@
 
 	rp->nevents++;
 	list_add_tail(&ep->e_link, &rp->e_list);
-	wake_up(&rp->रुको);
-पूर्ण
+	wake_up(&rp->wait);
+}
 
-अटल व्योम mon_text_submit(व्योम *data, काष्ठा urb *urb)
-अणु
-	काष्ठा mon_पढ़ोer_text *rp = data;
+static void mon_text_submit(void *data, struct urb *urb)
+{
+	struct mon_reader_text *rp = data;
 	mon_text_event(rp, urb, 'S', -EINPROGRESS);
-पूर्ण
+}
 
-अटल व्योम mon_text_complete(व्योम *data, काष्ठा urb *urb, पूर्णांक status)
-अणु
-	काष्ठा mon_पढ़ोer_text *rp = data;
+static void mon_text_complete(void *data, struct urb *urb, int status)
+{
+	struct mon_reader_text *rp = data;
 	mon_text_event(rp, urb, 'C', status);
-पूर्ण
+}
 
-अटल व्योम mon_text_error(व्योम *data, काष्ठा urb *urb, पूर्णांक error)
-अणु
-	काष्ठा mon_पढ़ोer_text *rp = data;
-	काष्ठा mon_event_text *ep;
+static void mon_text_error(void *data, struct urb *urb, int error)
+{
+	struct mon_reader_text *rp = data;
+	struct mon_event_text *ep;
 
-	अगर (rp->nevents >= EVENT_MAX ||
-	    (ep = kmem_cache_alloc(rp->e_slab, GFP_ATOMIC)) == शून्य) अणु
+	if (rp->nevents >= EVENT_MAX ||
+	    (ep = kmem_cache_alloc(rp->e_slab, GFP_ATOMIC)) == NULL) {
 		rp->r.m_bus->cnt_text_lost++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ep->type = 'E';
-	ep->id = (अचिन्हित दीर्घ) urb;
+	ep->id = (unsigned long) urb;
 	ep->busnum = urb->dev->bus->busnum;
 	ep->devnum = urb->dev->devnum;
-	ep->epnum = usb_endpoपूर्णांक_num(&urb->ep->desc);
-	ep->xfertype = usb_endpoपूर्णांक_type(&urb->ep->desc);
+	ep->epnum = usb_endpoint_num(&urb->ep->desc);
+	ep->xfertype = usb_endpoint_type(&urb->ep->desc);
 	ep->is_in = usb_urb_dir_in(urb);
-	ep->tstamp = mon_get_बारtamp();
+	ep->tstamp = mon_get_timestamp();
 	ep->length = 0;
 	ep->status = error;
 
@@ -296,56 +295,56 @@
 
 	rp->nevents++;
 	list_add_tail(&ep->e_link, &rp->e_list);
-	wake_up(&rp->रुको);
-पूर्ण
+	wake_up(&rp->wait);
+}
 
 /*
  * Fetch next event from the circular buffer.
  */
-अटल काष्ठा mon_event_text *mon_text_fetch(काष्ठा mon_पढ़ोer_text *rp,
-    काष्ठा mon_bus *mbus)
-अणु
-	काष्ठा list_head *p;
-	अचिन्हित दीर्घ flags;
+static struct mon_event_text *mon_text_fetch(struct mon_reader_text *rp,
+    struct mon_bus *mbus)
+{
+	struct list_head *p;
+	unsigned long flags;
 
 	spin_lock_irqsave(&mbus->lock, flags);
-	अगर (list_empty(&rp->e_list)) अणु
+	if (list_empty(&rp->e_list)) {
 		spin_unlock_irqrestore(&mbus->lock, flags);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	p = rp->e_list.next;
 	list_del(p);
 	--rp->nevents;
 	spin_unlock_irqrestore(&mbus->lock, flags);
-	वापस list_entry(p, काष्ठा mon_event_text, e_link);
-पूर्ण
+	return list_entry(p, struct mon_event_text, e_link);
+}
 
 /*
  */
-अटल पूर्णांक mon_text_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mon_bus *mbus;
-	काष्ठा mon_पढ़ोer_text *rp;
-	पूर्णांक rc;
+static int mon_text_open(struct inode *inode, struct file *file)
+{
+	struct mon_bus *mbus;
+	struct mon_reader_text *rp;
+	int rc;
 
 	mutex_lock(&mon_lock);
-	mbus = inode->i_निजी;
+	mbus = inode->i_private;
 
-	rp = kzalloc(माप(काष्ठा mon_पढ़ोer_text), GFP_KERNEL);
-	अगर (rp == शून्य) अणु
+	rp = kzalloc(sizeof(struct mon_reader_text), GFP_KERNEL);
+	if (rp == NULL) {
 		rc = -ENOMEM;
-		जाओ err_alloc;
-	पूर्ण
+		goto err_alloc;
+	}
 	INIT_LIST_HEAD(&rp->e_list);
-	init_रुकोqueue_head(&rp->रुको);
-	mutex_init(&rp->म_लिखो_lock);
+	init_waitqueue_head(&rp->wait);
+	mutex_init(&rp->printf_lock);
 
-	rp->म_लिखो_size = PRINTF_DFL;
-	rp->म_लिखो_buf = kदो_स्मृति(rp->म_लिखो_size, GFP_KERNEL);
-	अगर (rp->म_लिखो_buf == शून्य) अणु
+	rp->printf_size = PRINTF_DFL;
+	rp->printf_buf = kmalloc(rp->printf_size, GFP_KERNEL);
+	if (rp->printf_buf == NULL) {
 		rc = -ENOMEM;
-		जाओ err_alloc_pr;
-	पूर्ण
+		goto err_alloc_pr;
+	}
 
 	rp->r.m_bus = mbus;
 	rp->r.r_data = rp;
@@ -353,422 +352,422 @@
 	rp->r.rnf_error = mon_text_error;
 	rp->r.rnf_complete = mon_text_complete;
 
-	snम_लिखो(rp->slab_name, SLAB_NAME_SZ, "mon_text_%p", rp);
+	snprintf(rp->slab_name, SLAB_NAME_SZ, "mon_text_%p", rp);
 	rp->e_slab = kmem_cache_create(rp->slab_name,
-	    माप(काष्ठा mon_event_text), माप(दीर्घ), 0,
+	    sizeof(struct mon_event_text), sizeof(long), 0,
 	    mon_text_ctor);
-	अगर (rp->e_slab == शून्य) अणु
+	if (rp->e_slab == NULL) {
 		rc = -ENOMEM;
-		जाओ err_slab;
-	पूर्ण
+		goto err_slab;
+	}
 
-	mon_पढ़ोer_add(mbus, &rp->r);
+	mon_reader_add(mbus, &rp->r);
 
-	file->निजी_data = rp;
+	file->private_data = rp;
 	mutex_unlock(&mon_lock);
-	वापस 0;
+	return 0;
 
 // err_busy:
 //	kmem_cache_destroy(rp->e_slab);
 err_slab:
-	kमुक्त(rp->म_लिखो_buf);
+	kfree(rp->printf_buf);
 err_alloc_pr:
-	kमुक्त(rp);
+	kfree(rp);
 err_alloc:
 	mutex_unlock(&mon_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल sमाप_प्रकार mon_text_copy_to_user(काष्ठा mon_पढ़ोer_text *rp,
-    अक्षर __user * स्थिर buf, स्थिर माप_प्रकार nbytes)
-अणु
-	स्थिर माप_प्रकार togo = min(nbytes, rp->म_लिखो_togo);
+static ssize_t mon_text_copy_to_user(struct mon_reader_text *rp,
+    char __user * const buf, const size_t nbytes)
+{
+	const size_t togo = min(nbytes, rp->printf_togo);
 
-	अगर (copy_to_user(buf, &rp->म_लिखो_buf[rp->म_लिखो_offset], togo))
-		वापस -EFAULT;
-	rp->म_लिखो_togo -= togo;
-	rp->म_लिखो_offset += togo;
-	वापस togo;
-पूर्ण
-
-/* ppos is not advanced since the llseek operation is not permitted. */
-अटल sमाप_प्रकार mon_text_पढ़ो_t(काष्ठा file *file, अक्षर __user *buf,
-    माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	काष्ठा mon_पढ़ोer_text *rp = file->निजी_data;
-	काष्ठा mon_event_text *ep;
-	काष्ठा mon_text_ptr ptr;
-	sमाप_प्रकार ret;
-
-	mutex_lock(&rp->म_लिखो_lock);
-
-	अगर (rp->म_लिखो_togo == 0) अणु
-
-		ep = mon_text_पढ़ो_रुको(rp, file);
-		अगर (IS_ERR(ep)) अणु
-			mutex_unlock(&rp->म_लिखो_lock);
-			वापस PTR_ERR(ep);
-		पूर्ण
-		ptr.cnt = 0;
-		ptr.pbuf = rp->म_लिखो_buf;
-		ptr.limit = rp->म_लिखो_size;
-
-		mon_text_पढ़ो_head_t(rp, &ptr, ep);
-		mon_text_पढ़ो_statset(rp, &ptr, ep);
-		ptr.cnt += scnम_लिखो(ptr.pbuf + ptr.cnt, ptr.limit - ptr.cnt,
-		    " %d", ep->length);
-		mon_text_पढ़ो_data(rp, &ptr, ep);
-
-		rp->म_लिखो_togo = ptr.cnt;
-		rp->म_लिखो_offset = 0;
-
-		kmem_cache_मुक्त(rp->e_slab, ep);
-	पूर्ण
-
-	ret = mon_text_copy_to_user(rp, buf, nbytes);
-	mutex_unlock(&rp->म_लिखो_lock);
-	वापस ret;
-पूर्ण
+	if (copy_to_user(buf, &rp->printf_buf[rp->printf_offset], togo))
+		return -EFAULT;
+	rp->printf_togo -= togo;
+	rp->printf_offset += togo;
+	return togo;
+}
 
 /* ppos is not advanced since the llseek operation is not permitted. */
-अटल sमाप_प्रकार mon_text_पढ़ो_u(काष्ठा file *file, अक्षर __user *buf,
-    माप_प्रकार nbytes, loff_t *ppos)
-अणु
-	काष्ठा mon_पढ़ोer_text *rp = file->निजी_data;
-	काष्ठा mon_event_text *ep;
-	काष्ठा mon_text_ptr ptr;
-	sमाप_प्रकार ret;
+static ssize_t mon_text_read_t(struct file *file, char __user *buf,
+    size_t nbytes, loff_t *ppos)
+{
+	struct mon_reader_text *rp = file->private_data;
+	struct mon_event_text *ep;
+	struct mon_text_ptr ptr;
+	ssize_t ret;
 
-	mutex_lock(&rp->म_लिखो_lock);
+	mutex_lock(&rp->printf_lock);
 
-	अगर (rp->म_लिखो_togo == 0) अणु
+	if (rp->printf_togo == 0) {
 
-		ep = mon_text_पढ़ो_रुको(rp, file);
-		अगर (IS_ERR(ep)) अणु
-			mutex_unlock(&rp->म_लिखो_lock);
-			वापस PTR_ERR(ep);
-		पूर्ण
+		ep = mon_text_read_wait(rp, file);
+		if (IS_ERR(ep)) {
+			mutex_unlock(&rp->printf_lock);
+			return PTR_ERR(ep);
+		}
 		ptr.cnt = 0;
-		ptr.pbuf = rp->म_लिखो_buf;
-		ptr.limit = rp->म_लिखो_size;
+		ptr.pbuf = rp->printf_buf;
+		ptr.limit = rp->printf_size;
 
-		mon_text_पढ़ो_head_u(rp, &ptr, ep);
-		अगर (ep->type == 'E') अणु
-			mon_text_पढ़ो_statset(rp, &ptr, ep);
-		पूर्ण अन्यथा अगर (ep->xfertype == USB_ENDPOINT_XFER_ISOC) अणु
-			mon_text_पढ़ो_isostat(rp, &ptr, ep);
-			mon_text_पढ़ो_isodesc(rp, &ptr, ep);
-		पूर्ण अन्यथा अगर (ep->xfertype == USB_ENDPOINT_XFER_INT) अणु
-			mon_text_पढ़ो_पूर्णांकstat(rp, &ptr, ep);
-		पूर्ण अन्यथा अणु
-			mon_text_पढ़ो_statset(rp, &ptr, ep);
-		पूर्ण
-		ptr.cnt += scnम_लिखो(ptr.pbuf + ptr.cnt, ptr.limit - ptr.cnt,
+		mon_text_read_head_t(rp, &ptr, ep);
+		mon_text_read_statset(rp, &ptr, ep);
+		ptr.cnt += scnprintf(ptr.pbuf + ptr.cnt, ptr.limit - ptr.cnt,
 		    " %d", ep->length);
-		mon_text_पढ़ो_data(rp, &ptr, ep);
+		mon_text_read_data(rp, &ptr, ep);
 
-		rp->म_लिखो_togo = ptr.cnt;
-		rp->म_लिखो_offset = 0;
+		rp->printf_togo = ptr.cnt;
+		rp->printf_offset = 0;
 
-		kmem_cache_मुक्त(rp->e_slab, ep);
-	पूर्ण
+		kmem_cache_free(rp->e_slab, ep);
+	}
 
 	ret = mon_text_copy_to_user(rp, buf, nbytes);
-	mutex_unlock(&rp->म_लिखो_lock);
-	वापस ret;
-पूर्ण
+	mutex_unlock(&rp->printf_lock);
+	return ret;
+}
 
-अटल काष्ठा mon_event_text *mon_text_पढ़ो_रुको(काष्ठा mon_पढ़ोer_text *rp,
-    काष्ठा file *file)
-अणु
-	काष्ठा mon_bus *mbus = rp->r.m_bus;
-	DECLARE_WAITQUEUE(रुकोa, current);
-	काष्ठा mon_event_text *ep;
+/* ppos is not advanced since the llseek operation is not permitted. */
+static ssize_t mon_text_read_u(struct file *file, char __user *buf,
+    size_t nbytes, loff_t *ppos)
+{
+	struct mon_reader_text *rp = file->private_data;
+	struct mon_event_text *ep;
+	struct mon_text_ptr ptr;
+	ssize_t ret;
 
-	add_रुको_queue(&rp->रुको, &रुकोa);
+	mutex_lock(&rp->printf_lock);
+
+	if (rp->printf_togo == 0) {
+
+		ep = mon_text_read_wait(rp, file);
+		if (IS_ERR(ep)) {
+			mutex_unlock(&rp->printf_lock);
+			return PTR_ERR(ep);
+		}
+		ptr.cnt = 0;
+		ptr.pbuf = rp->printf_buf;
+		ptr.limit = rp->printf_size;
+
+		mon_text_read_head_u(rp, &ptr, ep);
+		if (ep->type == 'E') {
+			mon_text_read_statset(rp, &ptr, ep);
+		} else if (ep->xfertype == USB_ENDPOINT_XFER_ISOC) {
+			mon_text_read_isostat(rp, &ptr, ep);
+			mon_text_read_isodesc(rp, &ptr, ep);
+		} else if (ep->xfertype == USB_ENDPOINT_XFER_INT) {
+			mon_text_read_intstat(rp, &ptr, ep);
+		} else {
+			mon_text_read_statset(rp, &ptr, ep);
+		}
+		ptr.cnt += scnprintf(ptr.pbuf + ptr.cnt, ptr.limit - ptr.cnt,
+		    " %d", ep->length);
+		mon_text_read_data(rp, &ptr, ep);
+
+		rp->printf_togo = ptr.cnt;
+		rp->printf_offset = 0;
+
+		kmem_cache_free(rp->e_slab, ep);
+	}
+
+	ret = mon_text_copy_to_user(rp, buf, nbytes);
+	mutex_unlock(&rp->printf_lock);
+	return ret;
+}
+
+static struct mon_event_text *mon_text_read_wait(struct mon_reader_text *rp,
+    struct file *file)
+{
+	struct mon_bus *mbus = rp->r.m_bus;
+	DECLARE_WAITQUEUE(waita, current);
+	struct mon_event_text *ep;
+
+	add_wait_queue(&rp->wait, &waita);
 	set_current_state(TASK_INTERRUPTIBLE);
-	जबतक ((ep = mon_text_fetch(rp, mbus)) == शून्य) अणु
-		अगर (file->f_flags & O_NONBLOCK) अणु
+	while ((ep = mon_text_fetch(rp, mbus)) == NULL) {
+		if (file->f_flags & O_NONBLOCK) {
 			set_current_state(TASK_RUNNING);
-			हटाओ_रुको_queue(&rp->रुको, &रुकोa);
-			वापस ERR_PTR(-EWOULDBLOCK);
-		पूर्ण
+			remove_wait_queue(&rp->wait, &waita);
+			return ERR_PTR(-EWOULDBLOCK);
+		}
 		/*
-		 * We करो not count nरुकोers, because ->release is supposed
-		 * to be called when all खोलोers are gone only.
+		 * We do not count nwaiters, because ->release is supposed
+		 * to be called when all openers are gone only.
 		 */
 		schedule();
-		अगर (संकेत_pending(current)) अणु
-			हटाओ_रुको_queue(&rp->रुको, &रुकोa);
-			वापस ERR_PTR(-EINTR);
-		पूर्ण
+		if (signal_pending(current)) {
+			remove_wait_queue(&rp->wait, &waita);
+			return ERR_PTR(-EINTR);
+		}
 		set_current_state(TASK_INTERRUPTIBLE);
-	पूर्ण
+	}
 	set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(&rp->रुको, &रुकोa);
-	वापस ep;
-पूर्ण
+	remove_wait_queue(&rp->wait, &waita);
+	return ep;
+}
 
-अटल व्योम mon_text_पढ़ो_head_t(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
-	अक्षर udir, utype;
+static void mon_text_read_head_t(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
+	char udir, utype;
 
 	udir = (ep->is_in ? 'i' : 'o');
-	चयन (ep->xfertype) अणु
-	हाल USB_ENDPOINT_XFER_ISOC:	utype = 'Z'; अवरोध;
-	हाल USB_ENDPOINT_XFER_INT:	utype = 'I'; अवरोध;
-	हाल USB_ENDPOINT_XFER_CONTROL:	utype = 'C'; अवरोध;
-	शेष: /* PIPE_BULK */  utype = 'B';
-	पूर्ण
-	p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	switch (ep->xfertype) {
+	case USB_ENDPOINT_XFER_ISOC:	utype = 'Z'; break;
+	case USB_ENDPOINT_XFER_INT:	utype = 'I'; break;
+	case USB_ENDPOINT_XFER_CONTROL:	utype = 'C'; break;
+	default: /* PIPE_BULK */  utype = 'B';
+	}
+	p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 	    "%lx %u %c %c%c:%03u:%02u",
 	    ep->id, ep->tstamp, ep->type,
 	    utype, udir, ep->devnum, ep->epnum);
-पूर्ण
+}
 
-अटल व्योम mon_text_पढ़ो_head_u(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
-	अक्षर udir, utype;
+static void mon_text_read_head_u(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
+	char udir, utype;
 
 	udir = (ep->is_in ? 'i' : 'o');
-	चयन (ep->xfertype) अणु
-	हाल USB_ENDPOINT_XFER_ISOC:	utype = 'Z'; अवरोध;
-	हाल USB_ENDPOINT_XFER_INT:	utype = 'I'; अवरोध;
-	हाल USB_ENDPOINT_XFER_CONTROL:	utype = 'C'; अवरोध;
-	शेष: /* PIPE_BULK */  utype = 'B';
-	पूर्ण
-	p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	switch (ep->xfertype) {
+	case USB_ENDPOINT_XFER_ISOC:	utype = 'Z'; break;
+	case USB_ENDPOINT_XFER_INT:	utype = 'I'; break;
+	case USB_ENDPOINT_XFER_CONTROL:	utype = 'C'; break;
+	default: /* PIPE_BULK */  utype = 'B';
+	}
+	p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 	    "%lx %u %c %c%c:%d:%03u:%u",
 	    ep->id, ep->tstamp, ep->type,
 	    utype, udir, ep->busnum, ep->devnum, ep->epnum);
-पूर्ण
+}
 
-अटल व्योम mon_text_पढ़ो_statset(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
+static void mon_text_read_statset(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
 
-	अगर (ep->setup_flag == 0) अणु   /* Setup packet is present and captured */
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	if (ep->setup_flag == 0) {   /* Setup packet is present and captured */
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 		    " s %02x %02x %04x %04x %04x",
 		    ep->setup[0],
 		    ep->setup[1],
 		    (ep->setup[3] << 8) | ep->setup[2],
 		    (ep->setup[5] << 8) | ep->setup[4],
 		    (ep->setup[7] << 8) | ep->setup[6]);
-	पूर्ण अन्यथा अगर (ep->setup_flag != '-') अणु /* Unable to capture setup packet */
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	} else if (ep->setup_flag != '-') { /* Unable to capture setup packet */
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 		    " %c __ __ ____ ____ ____", ep->setup_flag);
-	पूर्ण अन्यथा अणु                     /* No setup क्रम this kind of URB */
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	} else {                     /* No setup for this kind of URB */
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 		    " %d", ep->status);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mon_text_पढ़ो_पूर्णांकstat(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
-	p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
-	    " %d:%d", ep->status, ep->पूर्णांकerval);
-पूर्ण
+static void mon_text_read_intstat(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
+	p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
+	    " %d:%d", ep->status, ep->interval);
+}
 
-अटल व्योम mon_text_पढ़ो_isostat(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
-	अगर (ep->type == 'S') अणु
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
-		    " %d:%d:%d", ep->status, ep->पूर्णांकerval, ep->start_frame);
-	पूर्ण अन्यथा अणु
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+static void mon_text_read_isostat(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
+	if (ep->type == 'S') {
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
+		    " %d:%d:%d", ep->status, ep->interval, ep->start_frame);
+	} else {
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 		    " %d:%d:%d:%d",
-		    ep->status, ep->पूर्णांकerval, ep->start_frame, ep->error_count);
-	पूर्ण
-पूर्ण
+		    ep->status, ep->interval, ep->start_frame, ep->error_count);
+	}
+}
 
-अटल व्योम mon_text_पढ़ो_isodesc(काष्ठा mon_पढ़ोer_text *rp,
-	काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
-	पूर्णांक ndesc;	/* Display this many */
-	पूर्णांक i;
-	स्थिर काष्ठा mon_iso_desc *dp;
+static void mon_text_read_isodesc(struct mon_reader_text *rp,
+	struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
+	int ndesc;	/* Display this many */
+	int i;
+	const struct mon_iso_desc *dp;
 
-	p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 	    " %d", ep->numdesc);
 	ndesc = ep->numdesc;
-	अगर (ndesc > ISODESC_MAX)
+	if (ndesc > ISODESC_MAX)
 		ndesc = ISODESC_MAX;
-	अगर (ndesc < 0)
+	if (ndesc < 0)
 		ndesc = 0;
 	dp = ep->isodesc;
-	क्रम (i = 0; i < ndesc; i++) अणु
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	for (i = 0; i < ndesc; i++) {
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 		    " %d:%u:%u", dp->status, dp->offset, dp->length);
 		dp++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mon_text_पढ़ो_data(काष्ठा mon_पढ़ोer_text *rp,
-    काष्ठा mon_text_ptr *p, स्थिर काष्ठा mon_event_text *ep)
-अणु
-	पूर्णांक data_len, i;
+static void mon_text_read_data(struct mon_reader_text *rp,
+    struct mon_text_ptr *p, const struct mon_event_text *ep)
+{
+	int data_len, i;
 
-	अगर ((data_len = ep->length) > 0) अणु
-		अगर (ep->data_flag == 0) अणु
-			p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+	if ((data_len = ep->length) > 0) {
+		if (ep->data_flag == 0) {
+			p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 			    " =");
-			अगर (data_len >= DATA_MAX)
+			if (data_len >= DATA_MAX)
 				data_len = DATA_MAX;
-			क्रम (i = 0; i < data_len; i++) अणु
-				अगर (i % 4 == 0) अणु
-					p->cnt += scnम_लिखो(p->pbuf + p->cnt,
+			for (i = 0; i < data_len; i++) {
+				if (i % 4 == 0) {
+					p->cnt += scnprintf(p->pbuf + p->cnt,
 					    p->limit - p->cnt,
 					    " ");
-				पूर्ण
-				p->cnt += scnम_लिखो(p->pbuf + p->cnt,
+				}
+				p->cnt += scnprintf(p->pbuf + p->cnt,
 				    p->limit - p->cnt,
 				    "%02x", ep->data[i]);
-			पूर्ण
-			p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+			}
+			p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 			    "\n");
-		पूर्ण अन्यथा अणु
-			p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt,
+		} else {
+			p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt,
 			    " %c\n", ep->data_flag);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		p->cnt += scnम_लिखो(p->pbuf + p->cnt, p->limit - p->cnt, "\n");
-	पूर्ण
-पूर्ण
+		}
+	} else {
+		p->cnt += scnprintf(p->pbuf + p->cnt, p->limit - p->cnt, "\n");
+	}
+}
 
-अटल पूर्णांक mon_text_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा mon_पढ़ोer_text *rp = file->निजी_data;
-	काष्ठा mon_bus *mbus;
-	/* अचिन्हित दीर्घ flags; */
-	काष्ठा list_head *p;
-	काष्ठा mon_event_text *ep;
+static int mon_text_release(struct inode *inode, struct file *file)
+{
+	struct mon_reader_text *rp = file->private_data;
+	struct mon_bus *mbus;
+	/* unsigned long flags; */
+	struct list_head *p;
+	struct mon_event_text *ep;
 
 	mutex_lock(&mon_lock);
-	mbus = inode->i_निजी;
+	mbus = inode->i_private;
 
-	अगर (mbus->nपढ़ोers <= 0) अणु
-		prपूर्णांकk(KERN_ERR TAG ": consistency error on close\n");
+	if (mbus->nreaders <= 0) {
+		printk(KERN_ERR TAG ": consistency error on close\n");
 		mutex_unlock(&mon_lock);
-		वापस 0;
-	पूर्ण
-	mon_पढ़ोer_del(mbus, &rp->r);
+		return 0;
+	}
+	mon_reader_del(mbus, &rp->r);
 
 	/*
-	 * In theory, e_list is रक्षित by mbus->lock. However,
-	 * after mon_पढ़ोer_del has finished, the following is the हाल:
-	 *  - we are not on पढ़ोer list anymore, so new events won't be added;
-	 *  - whole mbus may be dropped अगर it was orphaned.
+	 * In theory, e_list is protected by mbus->lock. However,
+	 * after mon_reader_del has finished, the following is the case:
+	 *  - we are not on reader list anymore, so new events won't be added;
+	 *  - whole mbus may be dropped if it was orphaned.
 	 * So, we better not touch mbus.
 	 */
 	/* spin_lock_irqsave(&mbus->lock, flags); */
-	जबतक (!list_empty(&rp->e_list)) अणु
+	while (!list_empty(&rp->e_list)) {
 		p = rp->e_list.next;
-		ep = list_entry(p, काष्ठा mon_event_text, e_link);
+		ep = list_entry(p, struct mon_event_text, e_link);
 		list_del(p);
 		--rp->nevents;
-		kmem_cache_मुक्त(rp->e_slab, ep);
-	पूर्ण
+		kmem_cache_free(rp->e_slab, ep);
+	}
 	/* spin_unlock_irqrestore(&mbus->lock, flags); */
 
 	kmem_cache_destroy(rp->e_slab);
-	kमुक्त(rp->म_लिखो_buf);
-	kमुक्त(rp);
+	kfree(rp->printf_buf);
+	kfree(rp);
 
 	mutex_unlock(&mon_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations mon_fops_text_t = अणु
+static const struct file_operations mon_fops_text_t = {
 	.owner =	THIS_MODULE,
-	.खोलो =		mon_text_खोलो,
+	.open =		mon_text_open,
 	.llseek =	no_llseek,
-	.पढ़ो =		mon_text_पढ़ो_t,
+	.read =		mon_text_read_t,
 	.release =	mon_text_release,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations mon_fops_text_u = अणु
+static const struct file_operations mon_fops_text_u = {
 	.owner =	THIS_MODULE,
-	.खोलो =		mon_text_खोलो,
+	.open =		mon_text_open,
 	.llseek =	no_llseek,
-	.पढ़ो =		mon_text_पढ़ो_u,
+	.read =		mon_text_read_u,
 	.release =	mon_text_release,
-पूर्ण;
+};
 
-पूर्णांक mon_text_add(काष्ठा mon_bus *mbus, स्थिर काष्ठा usb_bus *ubus)
-अणु
-	क्रमागत अणु NAMESZ = 10 पूर्ण;
-	अक्षर name[NAMESZ];
-	पूर्णांक busnum = ubus? ubus->busnum: 0;
-	पूर्णांक rc;
+int mon_text_add(struct mon_bus *mbus, const struct usb_bus *ubus)
+{
+	enum { NAMESZ = 10 };
+	char name[NAMESZ];
+	int busnum = ubus? ubus->busnum: 0;
+	int rc;
 
-	अगर (mon_dir == शून्य)
-		वापस 0;
+	if (mon_dir == NULL)
+		return 0;
 
-	अगर (ubus != शून्य) अणु
-		rc = snम_लिखो(name, NAMESZ, "%dt", busnum);
-		अगर (rc <= 0 || rc >= NAMESZ)
-			जाओ err_prपूर्णांक_t;
+	if (ubus != NULL) {
+		rc = snprintf(name, NAMESZ, "%dt", busnum);
+		if (rc <= 0 || rc >= NAMESZ)
+			goto err_print_t;
 		mbus->dent_t = debugfs_create_file(name, 0600, mon_dir, mbus,
 							     &mon_fops_text_t);
-	पूर्ण
+	}
 
-	rc = snम_लिखो(name, NAMESZ, "%du", busnum);
-	अगर (rc <= 0 || rc >= NAMESZ)
-		जाओ err_prपूर्णांक_u;
+	rc = snprintf(name, NAMESZ, "%du", busnum);
+	if (rc <= 0 || rc >= NAMESZ)
+		goto err_print_u;
 	mbus->dent_u = debugfs_create_file(name, 0600, mon_dir, mbus,
 					   &mon_fops_text_u);
 
-	rc = snम_लिखो(name, NAMESZ, "%ds", busnum);
-	अगर (rc <= 0 || rc >= NAMESZ)
-		जाओ err_prपूर्णांक_s;
+	rc = snprintf(name, NAMESZ, "%ds", busnum);
+	if (rc <= 0 || rc >= NAMESZ)
+		goto err_print_s;
 	mbus->dent_s = debugfs_create_file(name, 0600, mon_dir, mbus,
 					   &mon_fops_stat);
 
-	वापस 1;
+	return 1;
 
-err_prपूर्णांक_s:
-	debugfs_हटाओ(mbus->dent_u);
-	mbus->dent_u = शून्य;
-err_prपूर्णांक_u:
-	अगर (ubus != शून्य) अणु
-		debugfs_हटाओ(mbus->dent_t);
-		mbus->dent_t = शून्य;
-	पूर्ण
-err_prपूर्णांक_t:
-	वापस 0;
-पूर्ण
+err_print_s:
+	debugfs_remove(mbus->dent_u);
+	mbus->dent_u = NULL;
+err_print_u:
+	if (ubus != NULL) {
+		debugfs_remove(mbus->dent_t);
+		mbus->dent_t = NULL;
+	}
+err_print_t:
+	return 0;
+}
 
-व्योम mon_text_del(काष्ठा mon_bus *mbus)
-अणु
-	debugfs_हटाओ(mbus->dent_u);
-	debugfs_हटाओ(mbus->dent_t);
-	debugfs_हटाओ(mbus->dent_s);
-पूर्ण
+void mon_text_del(struct mon_bus *mbus)
+{
+	debugfs_remove(mbus->dent_u);
+	debugfs_remove(mbus->dent_t);
+	debugfs_remove(mbus->dent_s);
+}
 
 /*
- * Slab पूर्णांकerface: स्थिरructor.
+ * Slab interface: constructor.
  */
-अटल व्योम mon_text_ctor(व्योम *mem)
-अणु
+static void mon_text_ctor(void *mem)
+{
 	/*
 	 * Nothing to initialize. No, really!
 	 * So, we fill it with garbage to emulate a reused object.
 	 */
-	स_रखो(mem, 0xe5, माप(काष्ठा mon_event_text));
-पूर्ण
+	memset(mem, 0xe5, sizeof(struct mon_event_text));
+}
 
-पूर्णांक __init mon_text_init(व्योम)
-अणु
+int __init mon_text_init(void)
+{
 	mon_dir = debugfs_create_dir("usbmon", usb_debug_root);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mon_text_निकास(व्योम)
-अणु
-	debugfs_हटाओ(mon_dir);
-पूर्ण
+void mon_text_exit(void)
+{
+	debugfs_remove(mon_dir);
+}

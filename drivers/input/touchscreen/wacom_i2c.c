@@ -1,77 +1,76 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Wacom Penabled Driver क्रम I2C
+ * Wacom Penabled Driver for I2C
  *
  * Copyright (c) 2011 - 2013 Tatsunosuke Tobita, Wacom.
  * <tobita.tatsunosuke@wacom.co.jp>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <asm/unaligned.h>
 
-#घोषणा WACOM_CMD_QUERY0	0x04
-#घोषणा WACOM_CMD_QUERY1	0x00
-#घोषणा WACOM_CMD_QUERY2	0x33
-#घोषणा WACOM_CMD_QUERY3	0x02
-#घोषणा WACOM_CMD_THROW0	0x05
-#घोषणा WACOM_CMD_THROW1	0x00
-#घोषणा WACOM_QUERY_SIZE	19
+#define WACOM_CMD_QUERY0	0x04
+#define WACOM_CMD_QUERY1	0x00
+#define WACOM_CMD_QUERY2	0x33
+#define WACOM_CMD_QUERY3	0x02
+#define WACOM_CMD_THROW0	0x05
+#define WACOM_CMD_THROW1	0x00
+#define WACOM_QUERY_SIZE	19
 
-काष्ठा wacom_features अणु
-	पूर्णांक x_max;
-	पूर्णांक y_max;
-	पूर्णांक pressure_max;
-	अक्षर fw_version;
-पूर्ण;
+struct wacom_features {
+	int x_max;
+	int y_max;
+	int pressure_max;
+	char fw_version;
+};
 
-काष्ठा wacom_i2c अणु
-	काष्ठा i2c_client *client;
-	काष्ठा input_dev *input;
+struct wacom_i2c {
+	struct i2c_client *client;
+	struct input_dev *input;
 	u8 data[WACOM_QUERY_SIZE];
 	bool prox;
-	पूर्णांक tool;
-पूर्ण;
+	int tool;
+};
 
-अटल पूर्णांक wacom_query_device(काष्ठा i2c_client *client,
-			      काष्ठा wacom_features *features)
-अणु
-	पूर्णांक ret;
-	u8 cmd1[] = अणु WACOM_CMD_QUERY0, WACOM_CMD_QUERY1,
-			WACOM_CMD_QUERY2, WACOM_CMD_QUERY3 पूर्ण;
-	u8 cmd2[] = अणु WACOM_CMD_THROW0, WACOM_CMD_THROW1 पूर्ण;
+static int wacom_query_device(struct i2c_client *client,
+			      struct wacom_features *features)
+{
+	int ret;
+	u8 cmd1[] = { WACOM_CMD_QUERY0, WACOM_CMD_QUERY1,
+			WACOM_CMD_QUERY2, WACOM_CMD_QUERY3 };
+	u8 cmd2[] = { WACOM_CMD_THROW0, WACOM_CMD_THROW1 };
 	u8 data[WACOM_QUERY_SIZE];
-	काष्ठा i2c_msg msgs[] = अणु
-		अणु
+	struct i2c_msg msgs[] = {
+		{
 			.addr = client->addr,
 			.flags = 0,
-			.len = माप(cmd1),
+			.len = sizeof(cmd1),
 			.buf = cmd1,
-		पूर्ण,
-		अणु
+		},
+		{
 			.addr = client->addr,
 			.flags = 0,
-			.len = माप(cmd2),
+			.len = sizeof(cmd2),
 			.buf = cmd2,
-		पूर्ण,
-		अणु
+		},
+		{
 			.addr = client->addr,
 			.flags = I2C_M_RD,
-			.len = माप(data),
+			.len = sizeof(data),
 			.buf = data,
-		पूर्ण,
-	पूर्ण;
+		},
+	};
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret != ARRAY_SIZE(msgs))
-		वापस -EIO;
+	if (ret < 0)
+		return ret;
+	if (ret != ARRAY_SIZE(msgs))
+		return -EIO;
 
 	features->x_max = get_unaligned_le16(&data[3]);
 	features->y_max = get_unaligned_le16(&data[5]);
@@ -83,22 +82,22 @@
 		features->x_max, features->y_max,
 		features->pressure_max, features->fw_version);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t wacom_i2c_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा wacom_i2c *wac_i2c = dev_id;
-	काष्ठा input_dev *input = wac_i2c->input;
+static irqreturn_t wacom_i2c_irq(int irq, void *dev_id)
+{
+	struct wacom_i2c *wac_i2c = dev_id;
+	struct input_dev *input = wac_i2c->input;
 	u8 *data = wac_i2c->data;
-	अचिन्हित पूर्णांक x, y, pressure;
-	अचिन्हित अक्षर tsw, f1, f2, ers;
-	पूर्णांक error;
+	unsigned int x, y, pressure;
+	unsigned char tsw, f1, f2, ers;
+	int error;
 
 	error = i2c_master_recv(wac_i2c->client,
-				wac_i2c->data, माप(wac_i2c->data));
-	अगर (error < 0)
-		जाओ out;
+				wac_i2c->data, sizeof(wac_i2c->data));
+	if (error < 0)
+		goto out;
 
 	tsw = data[3] & 0x01;
 	ers = data[3] & 0x04;
@@ -108,7 +107,7 @@
 	y = le16_to_cpup((__le16 *)&data[6]);
 	pressure = le16_to_cpup((__le16 *)&data[8]);
 
-	अगर (!wac_i2c->prox)
+	if (!wac_i2c->prox)
 		wac_i2c->tool = (data[3] & 0x0c) ?
 			BTN_TOOL_RUBBER : BTN_TOOL_PEN;
 
@@ -118,69 +117,69 @@
 	input_report_key(input, wac_i2c->tool, wac_i2c->prox);
 	input_report_key(input, BTN_STYLUS, f1);
 	input_report_key(input, BTN_STYLUS2, f2);
-	input_report_असल(input, ABS_X, x);
-	input_report_असल(input, ABS_Y, y);
-	input_report_असल(input, ABS_PRESSURE, pressure);
+	input_report_abs(input, ABS_X, x);
+	input_report_abs(input, ABS_Y, y);
+	input_report_abs(input, ABS_PRESSURE, pressure);
 	input_sync(input);
 
 out:
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक wacom_i2c_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा wacom_i2c *wac_i2c = input_get_drvdata(dev);
-	काष्ठा i2c_client *client = wac_i2c->client;
+static int wacom_i2c_open(struct input_dev *dev)
+{
+	struct wacom_i2c *wac_i2c = input_get_drvdata(dev);
+	struct i2c_client *client = wac_i2c->client;
 
 	enable_irq(client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम wacom_i2c_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा wacom_i2c *wac_i2c = input_get_drvdata(dev);
-	काष्ठा i2c_client *client = wac_i2c->client;
+static void wacom_i2c_close(struct input_dev *dev)
+{
+	struct wacom_i2c *wac_i2c = input_get_drvdata(dev);
+	struct i2c_client *client = wac_i2c->client;
 
 	disable_irq(client->irq);
-पूर्ण
+}
 
-अटल पूर्णांक wacom_i2c_probe(काष्ठा i2c_client *client,
-			   स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा wacom_i2c *wac_i2c;
-	काष्ठा input_dev *input;
-	काष्ठा wacom_features features = अणु 0 पूर्ण;
-	पूर्णांक error;
+static int wacom_i2c_probe(struct i2c_client *client,
+			   const struct i2c_device_id *id)
+{
+	struct device *dev = &client->dev;
+	struct wacom_i2c *wac_i2c;
+	struct input_dev *input;
+	struct wacom_features features = { 0 };
+	int error;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		dev_err(dev, "i2c_check_functionality error\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	error = wacom_query_device(client, &features);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	wac_i2c = devm_kzalloc(dev, माप(*wac_i2c), GFP_KERNEL);
-	अगर (!wac_i2c)
-		वापस -ENOMEM;
+	wac_i2c = devm_kzalloc(dev, sizeof(*wac_i2c), GFP_KERNEL);
+	if (!wac_i2c)
+		return -ENOMEM;
 
 	wac_i2c->client = client;
 
 	input = devm_input_allocate_device(dev);
-	अगर (!input)
-		वापस -ENOMEM;
+	if (!input)
+		return -ENOMEM;
 
 	wac_i2c->input = input;
 
 	input->name = "Wacom I2C Digitizer";
 	input->id.bustype = BUS_I2C;
-	input->id.venकरोr = 0x56a;
+	input->id.vendor = 0x56a;
 	input->id.version = features.fw_version;
-	input->खोलो = wacom_i2c_खोलो;
-	input->बंद = wacom_i2c_बंद;
+	input->open = wacom_i2c_open;
+	input->close = wacom_i2c_close;
 
 	input->evbit[0] |= BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
@@ -190,67 +189,67 @@ out:
 	__set_bit(BTN_STYLUS2, input->keybit);
 	__set_bit(BTN_TOUCH, input->keybit);
 
-	input_set_असल_params(input, ABS_X, 0, features.x_max, 0, 0);
-	input_set_असल_params(input, ABS_Y, 0, features.y_max, 0, 0);
-	input_set_असल_params(input, ABS_PRESSURE,
+	input_set_abs_params(input, ABS_X, 0, features.x_max, 0, 0);
+	input_set_abs_params(input, ABS_Y, 0, features.y_max, 0, 0);
+	input_set_abs_params(input, ABS_PRESSURE,
 			     0, features.pressure_max, 0, 0);
 
 	input_set_drvdata(input, wac_i2c);
 
-	error = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य, wacom_i2c_irq,
+	error = devm_request_threaded_irq(dev, client->irq, NULL, wacom_i2c_irq,
 					  IRQF_ONESHOT, "wacom_i2c", wac_i2c);
-	अगर (error) अणु
+	if (error) {
 		dev_err(dev, "Failed to request IRQ: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	/* Disable the IRQ, we'll enable it in wac_i2c_खोलो() */
+	/* Disable the IRQ, we'll enable it in wac_i2c_open() */
 	disable_irq(client->irq);
 
-	error = input_रेजिस्टर_device(wac_i2c->input);
-	अगर (error) अणु
+	error = input_register_device(wac_i2c->input);
+	if (error) {
 		dev_err(dev, "Failed to register input device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused wacom_i2c_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
+static int __maybe_unused wacom_i2c_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
 
 	disable_irq(client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused wacom_i2c_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
+static int __maybe_unused wacom_i2c_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
 
 	enable_irq(client->irq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(wacom_i2c_pm, wacom_i2c_suspend, wacom_i2c_resume);
+static SIMPLE_DEV_PM_OPS(wacom_i2c_pm, wacom_i2c_suspend, wacom_i2c_resume);
 
-अटल स्थिर काष्ठा i2c_device_id wacom_i2c_id[] = अणु
-	अणु "WAC_I2C_EMR", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id wacom_i2c_id[] = {
+	{ "WAC_I2C_EMR", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, wacom_i2c_id);
 
-अटल काष्ठा i2c_driver wacom_i2c_driver = अणु
-	.driver	= अणु
+static struct i2c_driver wacom_i2c_driver = {
+	.driver	= {
 		.name	= "wacom_i2c",
 		.pm	= &wacom_i2c_pm,
-	पूर्ण,
+	},
 
 	.probe		= wacom_i2c_probe,
 	.id_table	= wacom_i2c_id,
-पूर्ण;
+};
 module_i2c_driver(wacom_i2c_driver);
 
 MODULE_AUTHOR("Tatsunosuke Tobita <tobita.tatsunosuke@wacom.co.jp>");

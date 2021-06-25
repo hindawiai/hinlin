@@ -1,134 +1,133 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * net/sched/sch_drr.c         Deficit Round Robin scheduler
  *
  * Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/pkt_sched.h>
-#समावेश <net/sch_generic.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/netdevice.h>
+#include <linux/pkt_sched.h>
+#include <net/sch_generic.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
 
-काष्ठा drr_class अणु
-	काष्ठा Qdisc_class_common	common;
-	अचिन्हित पूर्णांक			filter_cnt;
+struct drr_class {
+	struct Qdisc_class_common	common;
+	unsigned int			filter_cnt;
 
-	काष्ठा gnet_stats_basic_packed		bstats;
-	काष्ठा gnet_stats_queue		qstats;
-	काष्ठा net_rate_estimator __rcu *rate_est;
-	काष्ठा list_head		alist;
-	काष्ठा Qdisc			*qdisc;
+	struct gnet_stats_basic_packed		bstats;
+	struct gnet_stats_queue		qstats;
+	struct net_rate_estimator __rcu *rate_est;
+	struct list_head		alist;
+	struct Qdisc			*qdisc;
 
 	u32				quantum;
 	u32				deficit;
-पूर्ण;
+};
 
-काष्ठा drr_sched अणु
-	काष्ठा list_head		active;
-	काष्ठा tcf_proto __rcu		*filter_list;
-	काष्ठा tcf_block		*block;
-	काष्ठा Qdisc_class_hash		clhash;
-पूर्ण;
+struct drr_sched {
+	struct list_head		active;
+	struct tcf_proto __rcu		*filter_list;
+	struct tcf_block		*block;
+	struct Qdisc_class_hash		clhash;
+};
 
-अटल काष्ठा drr_class *drr_find_class(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा Qdisc_class_common *clc;
+static struct drr_class *drr_find_class(struct Qdisc *sch, u32 classid)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct Qdisc_class_common *clc;
 
 	clc = qdisc_class_find(&q->clhash, classid);
-	अगर (clc == शून्य)
-		वापस शून्य;
-	वापस container_of(clc, काष्ठा drr_class, common);
-पूर्ण
+	if (clc == NULL)
+		return NULL;
+	return container_of(clc, struct drr_class, common);
+}
 
-अटल स्थिर काष्ठा nla_policy drr_policy[TCA_DRR_MAX + 1] = अणु
-	[TCA_DRR_QUANTUM]	= अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy drr_policy[TCA_DRR_MAX + 1] = {
+	[TCA_DRR_QUANTUM]	= { .type = NLA_U32 },
+};
 
-अटल पूर्णांक drr_change_class(काष्ठा Qdisc *sch, u32 classid, u32 parentid,
-			    काष्ठा nlattr **tca, अचिन्हित दीर्घ *arg,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)*arg;
-	काष्ठा nlattr *opt = tca[TCA_OPTIONS];
-	काष्ठा nlattr *tb[TCA_DRR_MAX + 1];
+static int drr_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
+			    struct nlattr **tca, unsigned long *arg,
+			    struct netlink_ext_ack *extack)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl = (struct drr_class *)*arg;
+	struct nlattr *opt = tca[TCA_OPTIONS];
+	struct nlattr *tb[TCA_DRR_MAX + 1];
 	u32 quantum;
-	पूर्णांक err;
+	int err;
 
-	अगर (!opt) अणु
+	if (!opt) {
 		NL_SET_ERR_MSG(extack, "DRR options are required for this operation");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_DRR_MAX, opt, drr_policy,
 					  extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_DRR_QUANTUM]) अणु
+	if (tb[TCA_DRR_QUANTUM]) {
 		quantum = nla_get_u32(tb[TCA_DRR_QUANTUM]);
-		अगर (quantum == 0) अणु
+		if (quantum == 0) {
 			NL_SET_ERR_MSG(extack, "Specified DRR quantum cannot be zero");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा
+			return -EINVAL;
+		}
+	} else
 		quantum = psched_mtu(qdisc_dev(sch));
 
-	अगर (cl != शून्य) अणु
-		अगर (tca[TCA_RATE]) अणु
-			err = gen_replace_estimator(&cl->bstats, शून्य,
+	if (cl != NULL) {
+		if (tca[TCA_RATE]) {
+			err = gen_replace_estimator(&cl->bstats, NULL,
 						    &cl->rate_est,
-						    शून्य,
+						    NULL,
 						    qdisc_root_sleeping_running(sch),
 						    tca[TCA_RATE]);
-			अगर (err) अणु
+			if (err) {
 				NL_SET_ERR_MSG(extack, "Failed to replace estimator");
-				वापस err;
-			पूर्ण
-		पूर्ण
+				return err;
+			}
+		}
 
 		sch_tree_lock(sch);
-		अगर (tb[TCA_DRR_QUANTUM])
+		if (tb[TCA_DRR_QUANTUM])
 			cl->quantum = quantum;
 		sch_tree_unlock(sch);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	cl = kzalloc(माप(काष्ठा drr_class), GFP_KERNEL);
-	अगर (cl == शून्य)
-		वापस -ENOBUFS;
+	cl = kzalloc(sizeof(struct drr_class), GFP_KERNEL);
+	if (cl == NULL)
+		return -ENOBUFS;
 
 	cl->common.classid = classid;
 	cl->quantum	   = quantum;
 	cl->qdisc	   = qdisc_create_dflt(sch->dev_queue,
-					       &pfअगरo_qdisc_ops, classid,
-					       शून्य);
-	अगर (cl->qdisc == शून्य)
+					       &pfifo_qdisc_ops, classid,
+					       NULL);
+	if (cl->qdisc == NULL)
 		cl->qdisc = &noop_qdisc;
-	अन्यथा
+	else
 		qdisc_hash_add(cl->qdisc, true);
 
-	अगर (tca[TCA_RATE]) अणु
-		err = gen_replace_estimator(&cl->bstats, शून्य, &cl->rate_est,
-					    शून्य,
+	if (tca[TCA_RATE]) {
+		err = gen_replace_estimator(&cl->bstats, NULL, &cl->rate_est,
+					    NULL,
 					    qdisc_root_sleeping_running(sch),
 					    tca[TCA_RATE]);
-		अगर (err) अणु
+		if (err) {
 			NL_SET_ERR_MSG(extack, "Failed to replace estimator");
 			qdisc_put(cl->qdisc);
-			kमुक्त(cl);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			kfree(cl);
+			return err;
+		}
+	}
 
 	sch_tree_lock(sch);
 	qdisc_class_hash_insert(&q->clhash, &cl->common);
@@ -136,337 +135,337 @@
 
 	qdisc_class_hash_grow(sch, &q->clhash);
 
-	*arg = (अचिन्हित दीर्घ)cl;
-	वापस 0;
-पूर्ण
+	*arg = (unsigned long)cl;
+	return 0;
+}
 
-अटल व्योम drr_destroy_class(काष्ठा Qdisc *sch, काष्ठा drr_class *cl)
-अणु
-	gen_समाप्त_estimator(&cl->rate_est);
+static void drr_destroy_class(struct Qdisc *sch, struct drr_class *cl)
+{
+	gen_kill_estimator(&cl->rate_est);
 	qdisc_put(cl->qdisc);
-	kमुक्त(cl);
-पूर्ण
+	kfree(cl);
+}
 
-अटल पूर्णांक drr_delete_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			    काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
+static int drr_delete_class(struct Qdisc *sch, unsigned long arg,
+			    struct netlink_ext_ack *extack)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl = (struct drr_class *)arg;
 
-	अगर (cl->filter_cnt > 0)
-		वापस -EBUSY;
+	if (cl->filter_cnt > 0)
+		return -EBUSY;
 
 	sch_tree_lock(sch);
 
 	qdisc_purge_queue(cl->qdisc);
-	qdisc_class_hash_हटाओ(&q->clhash, &cl->common);
+	qdisc_class_hash_remove(&q->clhash, &cl->common);
 
 	sch_tree_unlock(sch);
 
 	drr_destroy_class(sch, cl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ drr_search_class(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	वापस (अचिन्हित दीर्घ)drr_find_class(sch, classid);
-पूर्ण
+static unsigned long drr_search_class(struct Qdisc *sch, u32 classid)
+{
+	return (unsigned long)drr_find_class(sch, classid);
+}
 
-अटल काष्ठा tcf_block *drr_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-				       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
+static struct tcf_block *drr_tcf_block(struct Qdisc *sch, unsigned long cl,
+				       struct netlink_ext_ack *extack)
+{
+	struct drr_sched *q = qdisc_priv(sch);
 
-	अगर (cl) अणु
+	if (cl) {
 		NL_SET_ERR_MSG(extack, "DRR classid must be zero");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस q->block;
-पूर्ण
+	return q->block;
+}
 
-अटल अचिन्हित दीर्घ drr_bind_tcf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent,
+static unsigned long drr_bind_tcf(struct Qdisc *sch, unsigned long parent,
 				  u32 classid)
-अणु
-	काष्ठा drr_class *cl = drr_find_class(sch, classid);
+{
+	struct drr_class *cl = drr_find_class(sch, classid);
 
-	अगर (cl != शून्य)
+	if (cl != NULL)
 		cl->filter_cnt++;
 
-	वापस (अचिन्हित दीर्घ)cl;
-पूर्ण
+	return (unsigned long)cl;
+}
 
-अटल व्योम drr_unbind_tcf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
+static void drr_unbind_tcf(struct Qdisc *sch, unsigned long arg)
+{
+	struct drr_class *cl = (struct drr_class *)arg;
 
 	cl->filter_cnt--;
-पूर्ण
+}
 
-अटल पूर्णांक drr_graft_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			   काष्ठा Qdisc *new, काष्ठा Qdisc **old,
-			   काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
+static int drr_graft_class(struct Qdisc *sch, unsigned long arg,
+			   struct Qdisc *new, struct Qdisc **old,
+			   struct netlink_ext_ack *extack)
+{
+	struct drr_class *cl = (struct drr_class *)arg;
 
-	अगर (new == शून्य) अणु
-		new = qdisc_create_dflt(sch->dev_queue, &pfअगरo_qdisc_ops,
-					cl->common.classid, शून्य);
-		अगर (new == शून्य)
+	if (new == NULL) {
+		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
+					cl->common.classid, NULL);
+		if (new == NULL)
 			new = &noop_qdisc;
-	पूर्ण
+	}
 
 	*old = qdisc_replace(sch, new, &cl->qdisc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा Qdisc *drr_class_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
+static struct Qdisc *drr_class_leaf(struct Qdisc *sch, unsigned long arg)
+{
+	struct drr_class *cl = (struct drr_class *)arg;
 
-	वापस cl->qdisc;
-पूर्ण
+	return cl->qdisc;
+}
 
-अटल व्योम drr_qlen_notअगरy(काष्ठा Qdisc *csh, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
+static void drr_qlen_notify(struct Qdisc *csh, unsigned long arg)
+{
+	struct drr_class *cl = (struct drr_class *)arg;
 
 	list_del(&cl->alist);
-पूर्ण
+}
 
-अटल पूर्णांक drr_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-			  काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
-	काष्ठा nlattr *nest;
+static int drr_dump_class(struct Qdisc *sch, unsigned long arg,
+			  struct sk_buff *skb, struct tcmsg *tcm)
+{
+	struct drr_class *cl = (struct drr_class *)arg;
+	struct nlattr *nest;
 
 	tcm->tcm_parent	= TC_H_ROOT;
 	tcm->tcm_handle	= cl->common.classid;
 	tcm->tcm_info	= cl->qdisc->handle;
 
 	nest = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (nest == शून्य)
-		जाओ nla_put_failure;
-	अगर (nla_put_u32(skb, TCA_DRR_QUANTUM, cl->quantum))
-		जाओ nla_put_failure;
-	वापस nla_nest_end(skb, nest);
+	if (nest == NULL)
+		goto nla_put_failure;
+	if (nla_put_u32(skb, TCA_DRR_QUANTUM, cl->quantum))
+		goto nla_put_failure;
+	return nla_nest_end(skb, nest);
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक drr_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg,
-				काष्ठा gnet_dump *d)
-अणु
-	काष्ठा drr_class *cl = (काष्ठा drr_class *)arg;
+static int drr_dump_class_stats(struct Qdisc *sch, unsigned long arg,
+				struct gnet_dump *d)
+{
+	struct drr_class *cl = (struct drr_class *)arg;
 	__u32 qlen = qdisc_qlen_sum(cl->qdisc);
-	काष्ठा Qdisc *cl_q = cl->qdisc;
-	काष्ठा tc_drr_stats xstats;
+	struct Qdisc *cl_q = cl->qdisc;
+	struct tc_drr_stats xstats;
 
-	स_रखो(&xstats, 0, माप(xstats));
-	अगर (qlen)
+	memset(&xstats, 0, sizeof(xstats));
+	if (qlen)
 		xstats.deficit = cl->deficit;
 
-	अगर (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
-				  d, शून्य, &cl->bstats) < 0 ||
+	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
+				  d, NULL, &cl->bstats) < 0 ||
 	    gnet_stats_copy_rate_est(d, &cl->rate_est) < 0 ||
 	    gnet_stats_copy_queue(d, cl_q->cpu_qstats, &cl_q->qstats, qlen) < 0)
-		वापस -1;
+		return -1;
 
-	वापस gnet_stats_copy_app(d, &xstats, माप(xstats));
-पूर्ण
+	return gnet_stats_copy_app(d, &xstats, sizeof(xstats));
+}
 
-अटल व्योम drr_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl;
-	अचिन्हित पूर्णांक i;
+static void drr_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl;
+	unsigned int i;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], common.hnode) अणु
-			अगर (arg->count < arg->skip) अणु
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode) {
+			if (arg->count < arg->skip) {
 				arg->count++;
-				जारी;
-			पूर्ण
-			अगर (arg->fn(sch, (अचिन्हित दीर्घ)cl, arg) < 0) अणु
+				continue;
+			}
+			if (arg->fn(sch, (unsigned long)cl, arg) < 0) {
 				arg->stop = 1;
-				वापस;
-			पूर्ण
+				return;
+			}
 			arg->count++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल काष्ठा drr_class *drr_classअगरy(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-				      पूर्णांक *qerr)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl;
-	काष्ठा tcf_result res;
-	काष्ठा tcf_proto *fl;
-	पूर्णांक result;
+static struct drr_class *drr_classify(struct sk_buff *skb, struct Qdisc *sch,
+				      int *qerr)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl;
+	struct tcf_result res;
+	struct tcf_proto *fl;
+	int result;
 
-	अगर (TC_H_MAJ(skb->priority ^ sch->handle) == 0) अणु
+	if (TC_H_MAJ(skb->priority ^ sch->handle) == 0) {
 		cl = drr_find_class(sch, skb->priority);
-		अगर (cl != शून्य)
-			वापस cl;
-	पूर्ण
+		if (cl != NULL)
+			return cl;
+	}
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
 	fl = rcu_dereference_bh(q->filter_list);
-	result = tcf_classअगरy(skb, fl, &res, false);
-	अगर (result >= 0) अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-		चयन (result) अणु
-		हाल TC_ACT_QUEUED:
-		हाल TC_ACT_STOLEN:
-		हाल TC_ACT_TRAP:
+	result = tcf_classify(skb, fl, &res, false);
+	if (result >= 0) {
+#ifdef CONFIG_NET_CLS_ACT
+		switch (result) {
+		case TC_ACT_QUEUED:
+		case TC_ACT_STOLEN:
+		case TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		हाल TC_ACT_SHOT:
-			वापस शून्य;
-		पूर्ण
-#पूर्ण_अगर
-		cl = (काष्ठा drr_class *)res.class;
-		अगर (cl == शून्य)
+		case TC_ACT_SHOT:
+			return NULL;
+		}
+#endif
+		cl = (struct drr_class *)res.class;
+		if (cl == NULL)
 			cl = drr_find_class(sch, res.classid);
-		वापस cl;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		return cl;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक drr_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-		       काष्ठा sk_buff **to_मुक्त)
-अणु
-	अचिन्हित पूर्णांक len = qdisc_pkt_len(skb);
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl;
-	पूर्णांक err = 0;
+static int drr_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+		       struct sk_buff **to_free)
+{
+	unsigned int len = qdisc_pkt_len(skb);
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl;
+	int err = 0;
 	bool first;
 
-	cl = drr_classअगरy(skb, sch, &err);
-	अगर (cl == शून्य) अणु
-		अगर (err & __NET_XMIT_BYPASS)
+	cl = drr_classify(skb, sch, &err);
+	if (cl == NULL) {
+		if (err & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_मुक्त);
-		वापस err;
-	पूर्ण
+		__qdisc_drop(skb, to_free);
+		return err;
+	}
 
 	first = !cl->qdisc->q.qlen;
-	err = qdisc_enqueue(skb, cl->qdisc, to_मुक्त);
-	अगर (unlikely(err != NET_XMIT_SUCCESS)) अणु
-		अगर (net_xmit_drop_count(err)) अणु
+	err = qdisc_enqueue(skb, cl->qdisc, to_free);
+	if (unlikely(err != NET_XMIT_SUCCESS)) {
+		if (net_xmit_drop_count(err)) {
 			cl->qstats.drops++;
 			qdisc_qstats_drop(sch);
-		पूर्ण
-		वापस err;
-	पूर्ण
+		}
+		return err;
+	}
 
-	अगर (first) अणु
+	if (first) {
 		list_add_tail(&cl->alist, &q->active);
 		cl->deficit = cl->quantum;
-	पूर्ण
+	}
 
 	sch->qstats.backlog += len;
 	sch->q.qlen++;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा sk_buff *drr_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl;
-	काष्ठा sk_buff *skb;
-	अचिन्हित पूर्णांक len;
+static struct sk_buff *drr_dequeue(struct Qdisc *sch)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl;
+	struct sk_buff *skb;
+	unsigned int len;
 
-	अगर (list_empty(&q->active))
-		जाओ out;
-	जबतक (1) अणु
-		cl = list_first_entry(&q->active, काष्ठा drr_class, alist);
+	if (list_empty(&q->active))
+		goto out;
+	while (1) {
+		cl = list_first_entry(&q->active, struct drr_class, alist);
 		skb = cl->qdisc->ops->peek(cl->qdisc);
-		अगर (skb == शून्य) अणु
+		if (skb == NULL) {
 			qdisc_warn_nonwc(__func__, cl->qdisc);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		len = qdisc_pkt_len(skb);
-		अगर (len <= cl->deficit) अणु
+		if (len <= cl->deficit) {
 			cl->deficit -= len;
 			skb = qdisc_dequeue_peeked(cl->qdisc);
-			अगर (unlikely(skb == शून्य))
-				जाओ out;
-			अगर (cl->qdisc->q.qlen == 0)
+			if (unlikely(skb == NULL))
+				goto out;
+			if (cl->qdisc->q.qlen == 0)
 				list_del(&cl->alist);
 
 			bstats_update(&cl->bstats, skb);
 			qdisc_bstats_update(sch, skb);
 			qdisc_qstats_backlog_dec(sch, skb);
 			sch->q.qlen--;
-			वापस skb;
-		पूर्ण
+			return skb;
+		}
 
 		cl->deficit += cl->quantum;
 		list_move_tail(&cl->alist, &q->active);
-	पूर्ण
+	}
 out:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक drr_init_qdisc(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-			  काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	पूर्णांक err;
+static int drr_init_qdisc(struct Qdisc *sch, struct nlattr *opt,
+			  struct netlink_ext_ack *extack)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	int err;
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 	err = qdisc_class_hash_init(&q->clhash);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	INIT_LIST_HEAD(&q->active);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम drr_reset_qdisc(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl;
-	अचिन्हित पूर्णांक i;
+static void drr_reset_qdisc(struct Qdisc *sch)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl;
+	unsigned int i;
 
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry(cl, &q->clhash.hash[i], common.hnode) अणु
-			अगर (cl->qdisc->q.qlen)
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry(cl, &q->clhash.hash[i], common.hnode) {
+			if (cl->qdisc->q.qlen)
 				list_del(&cl->alist);
 			qdisc_reset(cl->qdisc);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
-पूर्ण
+}
 
-अटल व्योम drr_destroy_qdisc(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा drr_sched *q = qdisc_priv(sch);
-	काष्ठा drr_class *cl;
-	काष्ठा hlist_node *next;
-	अचिन्हित पूर्णांक i;
+static void drr_destroy_qdisc(struct Qdisc *sch)
+{
+	struct drr_sched *q = qdisc_priv(sch);
+	struct drr_class *cl;
+	struct hlist_node *next;
+	unsigned int i;
 
 	tcf_block_put(q->block);
 
-	क्रम (i = 0; i < q->clhash.hashsize; i++) अणु
-		hlist_क्रम_each_entry_safe(cl, next, &q->clhash.hash[i],
+	for (i = 0; i < q->clhash.hashsize; i++) {
+		hlist_for_each_entry_safe(cl, next, &q->clhash.hash[i],
 					  common.hnode)
 			drr_destroy_class(sch, cl);
-	पूर्ण
+	}
 	qdisc_class_hash_destroy(&q->clhash);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops drr_class_ops = अणु
+static const struct Qdisc_class_ops drr_class_ops = {
 	.change		= drr_change_class,
 	.delete		= drr_delete_class,
 	.find		= drr_search_class,
@@ -475,16 +474,16 @@ out:
 	.unbind_tcf	= drr_unbind_tcf,
 	.graft		= drr_graft_class,
 	.leaf		= drr_class_leaf,
-	.qlen_notअगरy	= drr_qlen_notअगरy,
+	.qlen_notify	= drr_qlen_notify,
 	.dump		= drr_dump_class,
 	.dump_stats	= drr_dump_class_stats,
 	.walk		= drr_walk,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops drr_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops drr_qdisc_ops __read_mostly = {
 	.cl_ops		= &drr_class_ops,
 	.id		= "drr",
-	.priv_size	= माप(काष्ठा drr_sched),
+	.priv_size	= sizeof(struct drr_sched),
 	.enqueue	= drr_enqueue,
 	.dequeue	= drr_dequeue,
 	.peek		= qdisc_peek_dequeued,
@@ -492,18 +491,18 @@ out:
 	.reset		= drr_reset_qdisc,
 	.destroy	= drr_destroy_qdisc,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init drr_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&drr_qdisc_ops);
-पूर्ण
+static int __init drr_init(void)
+{
+	return register_qdisc(&drr_qdisc_ops);
+}
 
-अटल व्योम __निकास drr_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&drr_qdisc_ops);
-पूर्ण
+static void __exit drr_exit(void)
+{
+	unregister_qdisc(&drr_qdisc_ops);
+}
 
 module_init(drr_init);
-module_निकास(drr_निकास);
+module_exit(drr_exit);
 MODULE_LICENSE("GPL");

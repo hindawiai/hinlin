@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SVGA_H
-#घोषणा _LINUX_SVGA_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SVGA_H
+#define _LINUX_SVGA_H
 
-#समावेश <linux/pci.h>
-#समावेश <video/vga.h>
+#include <linux/pci.h>
+#include <video/vga.h>
 
-/* Terminator क्रम रेजिस्टर set */
+/* Terminator for register set */
 
-#घोषणा VGA_REGSET_END_VAL	0xFF
-#घोषणा VGA_REGSET_END		अणुVGA_REGSET_END_VAL, 0, 0पूर्ण
+#define VGA_REGSET_END_VAL	0xFF
+#define VGA_REGSET_END		{VGA_REGSET_END_VAL, 0, 0}
 
-काष्ठा vga_regset अणु
+struct vga_regset {
 	u8 regnum;
 	u8 lowbit;
 	u8 highbit;
-पूर्ण;
+};
 
 /* ------------------------------------------------------------------------- */
 
-#घोषणा SVGA_FORMAT_END_VAL	0xFFFF
-#घोषणा SVGA_FORMAT_END		अणुSVGA_FORMAT_END_VAL, अणु0, 0, 0पूर्ण, अणु0, 0, 0पूर्ण, अणु0, 0, 0पूर्ण, अणु0, 0, 0पूर्ण, 0, 0, 0, 0, 0, 0पूर्ण
+#define SVGA_FORMAT_END_VAL	0xFFFF
+#define SVGA_FORMAT_END		{SVGA_FORMAT_END_VAL, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0, 0, 0}
 
-काष्ठा svga_fb_क्रमmat अणु
+struct svga_fb_format {
 	/* var part */
 	u32 bits_per_pixel;
-	काष्ठा fb_bitfield red;
-	काष्ठा fb_bitfield green;
-	काष्ठा fb_bitfield blue;
-	काष्ठा fb_bitfield transp;
+	struct fb_bitfield red;
+	struct fb_bitfield green;
+	struct fb_bitfield blue;
+	struct fb_bitfield transp;
 	u32 nonstd;
 	/* fix part */
 	u32 type;
@@ -36,25 +35,25 @@
 	u32 visual;
 	u32 xpanstep;
 	u32 xresstep;
-पूर्ण;
+};
 
-काष्ठा svga_timing_regs अणु
-	स्थिर काष्ठा vga_regset *h_total_regs;
-	स्थिर काष्ठा vga_regset *h_display_regs;
-	स्थिर काष्ठा vga_regset *h_blank_start_regs;
-	स्थिर काष्ठा vga_regset *h_blank_end_regs;
-	स्थिर काष्ठा vga_regset *h_sync_start_regs;
-	स्थिर काष्ठा vga_regset *h_sync_end_regs;
+struct svga_timing_regs {
+	const struct vga_regset *h_total_regs;
+	const struct vga_regset *h_display_regs;
+	const struct vga_regset *h_blank_start_regs;
+	const struct vga_regset *h_blank_end_regs;
+	const struct vga_regset *h_sync_start_regs;
+	const struct vga_regset *h_sync_end_regs;
 
-	स्थिर काष्ठा vga_regset *v_total_regs;
-	स्थिर काष्ठा vga_regset *v_display_regs;
-	स्थिर काष्ठा vga_regset *v_blank_start_regs;
-	स्थिर काष्ठा vga_regset *v_blank_end_regs;
-	स्थिर काष्ठा vga_regset *v_sync_start_regs;
-	स्थिर काष्ठा vga_regset *v_sync_end_regs;
-पूर्ण;
+	const struct vga_regset *v_total_regs;
+	const struct vga_regset *v_display_regs;
+	const struct vga_regset *v_blank_start_regs;
+	const struct vga_regset *v_blank_end_regs;
+	const struct vga_regset *v_sync_start_regs;
+	const struct vga_regset *v_sync_end_regs;
+};
 
-काष्ठा svga_pll अणु
+struct svga_pll {
 	u16 m_min;
 	u16 m_max;
 	u16 n_min;
@@ -64,63 +63,63 @@
 	u32 f_vco_min;
 	u32 f_vco_max;
 	u32 f_base;
-पूर्ण;
+};
 
 
-/* Write a value to the attribute रेजिस्टर */
+/* Write a value to the attribute register */
 
-अटल अंतरभूत व्योम svga_wattr(व्योम __iomem *regbase, u8 index, u8 data)
-अणु
+static inline void svga_wattr(void __iomem *regbase, u8 index, u8 data)
+{
 	vga_r(regbase, VGA_IS1_RC);
 	vga_w(regbase, VGA_ATT_IW, index);
 	vga_w(regbase, VGA_ATT_W, data);
-पूर्ण
+}
 
-/* Write a value to a sequence रेजिस्टर with a mask */
+/* Write a value to a sequence register with a mask */
 
-अटल अंतरभूत व्योम svga_wseq_mask(व्योम __iomem *regbase, u8 index, u8 data, u8 mask)
-अणु
+static inline void svga_wseq_mask(void __iomem *regbase, u8 index, u8 data, u8 mask)
+{
 	vga_wseq(regbase, index, (data & mask) | (vga_rseq(regbase, index) & ~mask));
-पूर्ण
+}
 
-/* Write a value to a CRT रेजिस्टर with a mask */
+/* Write a value to a CRT register with a mask */
 
-अटल अंतरभूत व्योम svga_wcrt_mask(व्योम __iomem *regbase, u8 index, u8 data, u8 mask)
-अणु
+static inline void svga_wcrt_mask(void __iomem *regbase, u8 index, u8 data, u8 mask)
+{
 	vga_wcrt(regbase, index, (data & mask) | (vga_rcrt(regbase, index) & ~mask));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक svga_primary_device(काष्ठा pci_dev *dev)
-अणु
+static inline int svga_primary_device(struct pci_dev *dev)
+{
 	u16 flags;
-	pci_पढ़ो_config_word(dev, PCI_COMMAND, &flags);
-	वापस (flags & PCI_COMMAND_IO);
-पूर्ण
+	pci_read_config_word(dev, PCI_COMMAND, &flags);
+	return (flags & PCI_COMMAND_IO);
+}
 
 
-व्योम svga_wcrt_multi(व्योम __iomem *regbase, स्थिर काष्ठा vga_regset *regset, u32 value);
-व्योम svga_wseq_multi(व्योम __iomem *regbase, स्थिर काष्ठा vga_regset *regset, u32 value);
+void svga_wcrt_multi(void __iomem *regbase, const struct vga_regset *regset, u32 value);
+void svga_wseq_multi(void __iomem *regbase, const struct vga_regset *regset, u32 value);
 
-व्योम svga_set_शेष_gfx_regs(व्योम __iomem *regbase);
-व्योम svga_set_शेष_atc_regs(व्योम __iomem *regbase);
-व्योम svga_set_शेष_seq_regs(व्योम __iomem *regbase);
-व्योम svga_set_शेष_crt_regs(व्योम __iomem *regbase);
-व्योम svga_set_texपंचांगode_vga_regs(व्योम __iomem *regbase);
+void svga_set_default_gfx_regs(void __iomem *regbase);
+void svga_set_default_atc_regs(void __iomem *regbase);
+void svga_set_default_seq_regs(void __iomem *regbase);
+void svga_set_default_crt_regs(void __iomem *regbase);
+void svga_set_textmode_vga_regs(void __iomem *regbase);
 
-व्योम svga_settile(काष्ठा fb_info *info, काष्ठा fb_tilemap *map);
-व्योम svga_tilecopy(काष्ठा fb_info *info, काष्ठा fb_tilearea *area);
-व्योम svga_tilefill(काष्ठा fb_info *info, काष्ठा fb_tilerect *rect);
-व्योम svga_tileblit(काष्ठा fb_info *info, काष्ठा fb_tileblit *blit);
-व्योम svga_tilecursor(व्योम __iomem *regbase, काष्ठा fb_info *info, काष्ठा fb_tilecursor *cursor);
-पूर्णांक svga_get_tilemax(काष्ठा fb_info *info);
-व्योम svga_get_caps(काष्ठा fb_info *info, काष्ठा fb_blit_caps *caps,
-		   काष्ठा fb_var_screeninfo *var);
+void svga_settile(struct fb_info *info, struct fb_tilemap *map);
+void svga_tilecopy(struct fb_info *info, struct fb_tilearea *area);
+void svga_tilefill(struct fb_info *info, struct fb_tilerect *rect);
+void svga_tileblit(struct fb_info *info, struct fb_tileblit *blit);
+void svga_tilecursor(void __iomem *regbase, struct fb_info *info, struct fb_tilecursor *cursor);
+int svga_get_tilemax(struct fb_info *info);
+void svga_get_caps(struct fb_info *info, struct fb_blit_caps *caps,
+		   struct fb_var_screeninfo *var);
 
-पूर्णांक svga_compute_pll(स्थिर काष्ठा svga_pll *pll, u32 f_wanted, u16 *m, u16 *n, u16 *r, पूर्णांक node);
-पूर्णांक svga_check_timings(स्थिर काष्ठा svga_timing_regs *पंचांग, काष्ठा fb_var_screeninfo *var, पूर्णांक node);
-व्योम svga_set_timings(व्योम __iomem *regbase, स्थिर काष्ठा svga_timing_regs *पंचांग, काष्ठा fb_var_screeninfo *var, u32 hmul, u32 hभाग, u32 vmul, u32 vभाग, u32 hborder, पूर्णांक node);
+int svga_compute_pll(const struct svga_pll *pll, u32 f_wanted, u16 *m, u16 *n, u16 *r, int node);
+int svga_check_timings(const struct svga_timing_regs *tm, struct fb_var_screeninfo *var, int node);
+void svga_set_timings(void __iomem *regbase, const struct svga_timing_regs *tm, struct fb_var_screeninfo *var, u32 hmul, u32 hdiv, u32 vmul, u32 vdiv, u32 hborder, int node);
 
-पूर्णांक svga_match_क्रमmat(स्थिर काष्ठा svga_fb_क्रमmat *frm, काष्ठा fb_var_screeninfo *var, काष्ठा fb_fix_screeninfo *fix);
+int svga_match_format(const struct svga_fb_format *frm, struct fb_var_screeninfo *var, struct fb_fix_screeninfo *fix);
 
-#पूर्ण_अगर /* _LINUX_SVGA_H */
+#endif /* _LINUX_SVGA_H */
 

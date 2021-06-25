@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 1994, 95, 96, 97, 98, 2000, 01 Ralf Baechle
  * Copyright (c) 2000 by Silicon Graphics, Inc.
  * Copyright (c) 2001 MIPS Technologies, Inc.
  */
-#अगर_अघोषित _ASM_STRING_H
-#घोषणा _ASM_STRING_H
+#ifndef _ASM_STRING_H
+#define _ASM_STRING_H
 
-#घोषणा __HAVE_ARCH_MEMSET
-बाह्य व्योम *स_रखो(व्योम *__s, पूर्णांक __c, माप_प्रकार __count);
+#define __HAVE_ARCH_MEMSET
+extern void *memset(void *__s, int __c, size_t __count);
 
-#घोषणा __HAVE_ARCH_MEMCPY
-बाह्य व्योम *स_नकल(व्योम *__to, __स्थिर__ व्योम *__from, माप_प्रकार __n);
+#define __HAVE_ARCH_MEMCPY
+extern void *memcpy(void *__to, __const__ void *__from, size_t __n);
 
-#घोषणा __HAVE_ARCH_MEMMOVE
-बाह्य व्योम *स_हटाओ(व्योम *__dest, __स्थिर__ व्योम *__src, माप_प्रकार __n);
+#define __HAVE_ARCH_MEMMOVE
+extern void *memmove(void *__dest, __const__ void *__src, size_t __n);
 
-#पूर्ण_अगर /* _ASM_STRING_H */
+#endif /* _ASM_STRING_H */

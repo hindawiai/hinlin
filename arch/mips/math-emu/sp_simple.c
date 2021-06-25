@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* IEEE754 भग्नing poपूर्णांक arithmetic
+// SPDX-License-Identifier: GPL-2.0-only
+/* IEEE754 floating point arithmetic
  * single precision
  */
 /*
- * MIPS भग्नing poपूर्णांक support
+ * MIPS floating point support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#समावेश "ieee754sp.h"
+#include "ieee754sp.h"
 
-जोड़ ieee754sp ieee754sp_neg(जोड़ ieee754sp x)
-अणु
-	जोड़ ieee754sp y;
+union ieee754sp ieee754sp_neg(union ieee754sp x)
+{
+	union ieee754sp y;
 
-	अगर (ieee754_csr.असल2008) अणु
+	if (ieee754_csr.abs2008) {
 		y = x;
 		SPSIGN(y) = !SPSIGN(x);
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक oldrm;
+	} else {
+		unsigned int oldrm;
 
 		oldrm = ieee754_csr.rm;
 		ieee754_csr.rm = FPU_CSR_RD;
 		y = ieee754sp_sub(ieee754sp_zero(0), x);
 		ieee754_csr.rm = oldrm;
-	पूर्ण
-	वापस y;
-पूर्ण
+	}
+	return y;
+}
 
-जोड़ ieee754sp ieee754sp_असल(जोड़ ieee754sp x)
-अणु
-	जोड़ ieee754sp y;
+union ieee754sp ieee754sp_abs(union ieee754sp x)
+{
+	union ieee754sp y;
 
-	अगर (ieee754_csr.असल2008) अणु
+	if (ieee754_csr.abs2008) {
 		y = x;
 		SPSIGN(y) = 0;
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक oldrm;
+	} else {
+		unsigned int oldrm;
 
 		oldrm = ieee754_csr.rm;
 		ieee754_csr.rm = FPU_CSR_RD;
-		अगर (SPSIGN(x))
+		if (SPSIGN(x))
 			y = ieee754sp_sub(ieee754sp_zero(0), x);
-		अन्यथा
+		else
 			y = ieee754sp_add(ieee754sp_zero(0), x);
 		ieee754_csr.rm = oldrm;
-	पूर्ण
-	वापस y;
-पूर्ण
+	}
+	return y;
+}

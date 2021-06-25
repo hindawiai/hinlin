@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * drivers/aपंचांग/suni.c - S/UNI PHY driver
+ * drivers/atm/suni.c - S/UNI PHY driver
  *
  * Supports the following:
  * 	PMC PM5346 S/UNI LITE
@@ -11,56 +10,56 @@
  
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/aपंचांगdev.h>
-#समावेश <linux/sonet.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/init.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/param.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/atomic.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/errno.h>
+#include <linux/atmdev.h>
+#include <linux/sonet.h>
+#include <linux/delay.h>
+#include <linux/timer.h>
+#include <linux/init.h>
+#include <linux/capability.h>
+#include <linux/slab.h>
+#include <asm/param.h>
+#include <linux/uaccess.h>
+#include <linux/atomic.h>
 
-#समावेश "suni.h"
-
-
-#अगर 0
-#घोषणा DPRINTK(क्रमmat,args...) prपूर्णांकk(KERN_DEBUG क्रमmat,##args)
-#अन्यथा
-#घोषणा DPRINTK(क्रमmat,args...)
-#पूर्ण_अगर
-
-#घोषणा PRIV(dev) ((काष्ठा suni_priv *) dev->phy_data)
-
-#घोषणा PUT(val,reg) dev->ops->phy_put(dev,val,SUNI_##reg)
-#घोषणा GET(reg) dev->ops->phy_get(dev,SUNI_##reg)
-#घोषणा REG_CHANGE(mask,shअगरt,value,reg) \
-  PUT((GET(reg) & ~(mask)) | ((value) << (shअगरt)),reg)
+#include "suni.h"
 
 
-अटल काष्ठा समयr_list poll_समयr;
-अटल काष्ठा suni_priv *sunis = शून्य;
-अटल DEFINE_SPINLOCK(sunis_lock);
+#if 0
+#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
+#else
+#define DPRINTK(format,args...)
+#endif
+
+#define PRIV(dev) ((struct suni_priv *) dev->phy_data)
+
+#define PUT(val,reg) dev->ops->phy_put(dev,val,SUNI_##reg)
+#define GET(reg) dev->ops->phy_get(dev,SUNI_##reg)
+#define REG_CHANGE(mask,shift,value,reg) \
+  PUT((GET(reg) & ~(mask)) | ((value) << (shift)),reg)
 
 
-#घोषणा ADD_LIMITED(s,v) \
+static struct timer_list poll_timer;
+static struct suni_priv *sunis = NULL;
+static DEFINE_SPINLOCK(sunis_lock);
+
+
+#define ADD_LIMITED(s,v) \
     atomic_add((v),&stats->s); \
-    अगर (atomic_पढ़ो(&stats->s) < 0) atomic_set(&stats->s,पूर्णांक_उच्च);
+    if (atomic_read(&stats->s) < 0) atomic_set(&stats->s,INT_MAX);
 
 
-अटल व्योम suni_hz(काष्ठा समयr_list *समयr)
-अणु
-	काष्ठा suni_priv *walk;
-	काष्ठा aपंचांग_dev *dev;
-	काष्ठा k_sonet_stats *stats;
+static void suni_hz(struct timer_list *timer)
+{
+	struct suni_priv *walk;
+	struct atm_dev *dev;
+	struct k_sonet_stats *stats;
 
-	क्रम (walk = sunis; walk; walk = walk->next) अणु
+	for (walk = sunis; walk; walk = walk->next) {
 		dev = walk->dev;
 		stats = &walk->sonet_stats;
 		PUT(0,MRI); /* latch counters */
@@ -85,39 +84,39 @@
 		ADD_LIMITED(tx_cells,(GET(TACP_TCCL) & 0xff) |
 		    ((GET(TACP_TCC) & 0xff) << 8) |
 		    ((GET(TACP_TCCM) & 7) << 16));
-	पूर्ण
-	अगर (समयr) mod_समयr(&poll_समयr,jअगरfies+HZ);
-पूर्ण
+	}
+	if (timer) mod_timer(&poll_timer,jiffies+HZ);
+}
 
 
-#अघोषित ADD_LIMITED
+#undef ADD_LIMITED
 
 
-अटल पूर्णांक fetch_stats(काष्ठा aपंचांग_dev *dev,काष्ठा sonet_stats __user *arg,पूर्णांक zero)
-अणु
-	काष्ठा sonet_stats पंचांगp;
-	पूर्णांक error = 0;
+static int fetch_stats(struct atm_dev *dev,struct sonet_stats __user *arg,int zero)
+{
+	struct sonet_stats tmp;
+	int error = 0;
 
-	sonet_copy_stats(&PRIV(dev)->sonet_stats,&पंचांगp);
-	अगर (arg) error = copy_to_user(arg,&पंचांगp,माप(पंचांगp));
-	अगर (zero && !error) sonet_subtract_stats(&PRIV(dev)->sonet_stats,&पंचांगp);
-	वापस error ? -EFAULT : 0;
-पूर्ण
-
-
-#घोषणा HANDLE_FLAG(flag,reg,bit) \
-  अगर (toकरो & flag) अणु \
-    अगर (set) PUT(GET(reg) | bit,reg); \
-    अन्यथा PUT(GET(reg) & ~bit,reg); \
-    toकरो &= ~flag; \
-  पूर्ण
+	sonet_copy_stats(&PRIV(dev)->sonet_stats,&tmp);
+	if (arg) error = copy_to_user(arg,&tmp,sizeof(tmp));
+	if (zero && !error) sonet_subtract_stats(&PRIV(dev)->sonet_stats,&tmp);
+	return error ? -EFAULT : 0;
+}
 
 
-अटल पूर्णांक change_diag(काष्ठा aपंचांग_dev *dev,व्योम __user *arg,पूर्णांक set)
-अणु
-	पूर्णांक toकरो;
+#define HANDLE_FLAG(flag,reg,bit) \
+  if (todo & flag) { \
+    if (set) PUT(GET(reg) | bit,reg); \
+    else PUT(GET(reg) & ~bit,reg); \
+    todo &= ~flag; \
+  }
 
-	अगर (get_user(toकरो,(पूर्णांक __user *)arg)) वापस -EFAULT;
+
+static int change_diag(struct atm_dev *dev,void __user *arg,int set)
+{
+	int todo;
+
+	if (get_user(todo,(int __user *)arg)) return -EFAULT;
 	HANDLE_FLAG(SONET_INS_SBIP,TSOP_DIAG,SUNI_TSOP_DIAG_DBIP8);
 	HANDLE_FLAG(SONET_INS_LBIP,TLOP_DIAG,SUNI_TLOP_DIAG_DBIP);
 	HANDLE_FLAG(SONET_INS_PBIP,TPOP_CD,SUNI_TPOP_DIAG_DB3);
@@ -126,250 +125,250 @@
 	HANDLE_FLAG(SONET_INS_PAIS,TPOP_CD,SUNI_TPOP_DIAG_PAIS);
 	HANDLE_FLAG(SONET_INS_LOS,TSOP_DIAG,SUNI_TSOP_DIAG_DLOS);
 	HANDLE_FLAG(SONET_INS_HCS,TACP_CS,SUNI_TACP_CS_DHCS);
-	वापस put_user(toकरो,(पूर्णांक __user *)arg) ? -EFAULT : 0;
-पूर्ण
+	return put_user(todo,(int __user *)arg) ? -EFAULT : 0;
+}
 
 
-#अघोषित HANDLE_FLAG
+#undef HANDLE_FLAG
 
 
-अटल पूर्णांक get_diag(काष्ठा aपंचांग_dev *dev,व्योम __user *arg)
-अणु
-	पूर्णांक set;
+static int get_diag(struct atm_dev *dev,void __user *arg)
+{
+	int set;
 
 	set = 0;
-	अगर (GET(TSOP_DIAG) & SUNI_TSOP_DIAG_DBIP8) set |= SONET_INS_SBIP;
-	अगर (GET(TLOP_DIAG) & SUNI_TLOP_DIAG_DBIP) set |= SONET_INS_LBIP;
-	अगर (GET(TPOP_CD) & SUNI_TPOP_DIAG_DB3) set |= SONET_INS_PBIP;
+	if (GET(TSOP_DIAG) & SUNI_TSOP_DIAG_DBIP8) set |= SONET_INS_SBIP;
+	if (GET(TLOP_DIAG) & SUNI_TLOP_DIAG_DBIP) set |= SONET_INS_LBIP;
+	if (GET(TPOP_CD) & SUNI_TPOP_DIAG_DB3) set |= SONET_INS_PBIP;
 	/* SONET_INS_FRAME is one-shot only */
-	अगर (GET(TSOP_CTRL) & SUNI_TSOP_CTRL_LAIS) set |= SONET_INS_LAIS;
-	अगर (GET(TPOP_CD) & SUNI_TPOP_DIAG_PAIS) set |= SONET_INS_PAIS;
-	अगर (GET(TSOP_DIAG) & SUNI_TSOP_DIAG_DLOS) set |= SONET_INS_LOS;
-	अगर (GET(TACP_CS) & SUNI_TACP_CS_DHCS) set |= SONET_INS_HCS;
-	वापस put_user(set,(पूर्णांक __user *)arg) ? -EFAULT : 0;
-पूर्ण
+	if (GET(TSOP_CTRL) & SUNI_TSOP_CTRL_LAIS) set |= SONET_INS_LAIS;
+	if (GET(TPOP_CD) & SUNI_TPOP_DIAG_PAIS) set |= SONET_INS_PAIS;
+	if (GET(TSOP_DIAG) & SUNI_TSOP_DIAG_DLOS) set |= SONET_INS_LOS;
+	if (GET(TACP_CS) & SUNI_TACP_CS_DHCS) set |= SONET_INS_HCS;
+	return put_user(set,(int __user *)arg) ? -EFAULT : 0;
+}
 
 
-अटल पूर्णांक set_loopback(काष्ठा aपंचांग_dev *dev,पूर्णांक mode)
-अणु
-	अचिन्हित अक्षर control;
-	पूर्णांक reg, dle, lle;
+static int set_loopback(struct atm_dev *dev,int mode)
+{
+	unsigned char control;
+	int reg, dle, lle;
 
-	अगर (PRIV(dev)->type == SUNI_MRI_TYPE_PM5355) अणु
+	if (PRIV(dev)->type == SUNI_MRI_TYPE_PM5355) {
 		reg = SUNI_MCM;
 		dle = SUNI_MCM_DLE;
 		lle = SUNI_MCM_LLE;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = SUNI_MCT;
 		dle = SUNI_MCT_DLE;
 		lle = SUNI_MCT_LLE;
-	पूर्ण
+	}
 
 	control = dev->ops->phy_get(dev, reg) & ~(dle | lle);
-	चयन (mode) अणु
-		हाल ATM_LM_NONE:
-			अवरोध;
-		हाल ATM_LM_LOC_PHY:
+	switch (mode) {
+		case ATM_LM_NONE:
+			break;
+		case ATM_LM_LOC_PHY:
 			control |= dle;
-			अवरोध;
-		हाल ATM_LM_RMT_PHY:
+			break;
+		case ATM_LM_RMT_PHY:
 			control |= lle;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
+			break;
+		default:
+			return -EINVAL;
+	}
 	dev->ops->phy_put(dev, control, reg);
 	PRIV(dev)->loop_mode = mode;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * SONET vs. SDH Configuration
  *
- * Z0INS (रेजिस्टर 0x06): 0 क्रम SONET, 1 क्रम SDH
- * ENSS (रेजिस्टर 0x3D): 0 क्रम SONET, 1 क्रम SDH
- * LEN16 (रेजिस्टर 0x28): 0 क्रम SONET, 1 क्रम SDH (n/a क्रम S/UNI 155 QUAD)
- * LEN16 (रेजिस्टर 0x50): 0 क्रम SONET, 1 क्रम SDH (n/a क्रम S/UNI 155 QUAD)
- * S[1:0] (रेजिस्टर 0x46): 00 क्रम SONET, 10 क्रम SDH
+ * Z0INS (register 0x06): 0 for SONET, 1 for SDH
+ * ENSS (register 0x3D): 0 for SONET, 1 for SDH
+ * LEN16 (register 0x28): 0 for SONET, 1 for SDH (n/a for S/UNI 155 QUAD)
+ * LEN16 (register 0x50): 0 for SONET, 1 for SDH (n/a for S/UNI 155 QUAD)
+ * S[1:0] (register 0x46): 00 for SONET, 10 for SDH
  */
 
-अटल पूर्णांक set_sonet(काष्ठा aपंचांग_dev *dev)
-अणु
-	अगर (PRIV(dev)->type == SUNI_MRI_TYPE_PM5355) अणु
+static int set_sonet(struct atm_dev *dev)
+{
+	if (PRIV(dev)->type == SUNI_MRI_TYPE_PM5355) {
 		PUT(GET(RPOP_RC) & ~SUNI_RPOP_RC_ENSS, RPOP_RC);
 		PUT(GET(SSTB_CTRL) & ~SUNI_SSTB_CTRL_LEN16, SSTB_CTRL);
 		PUT(GET(SPTB_CTRL) & ~SUNI_SPTB_CTRL_LEN16, SPTB_CTRL);
-	पूर्ण
+	}
 
 	REG_CHANGE(SUNI_TPOP_APM_S, SUNI_TPOP_APM_S_SHIFT,
 		   SUNI_TPOP_S_SONET, TPOP_APM);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_sdh(काष्ठा aपंचांग_dev *dev)
-अणु
-	अगर (PRIV(dev)->type == SUNI_MRI_TYPE_PM5355) अणु
+static int set_sdh(struct atm_dev *dev)
+{
+	if (PRIV(dev)->type == SUNI_MRI_TYPE_PM5355) {
 		PUT(GET(RPOP_RC) | SUNI_RPOP_RC_ENSS, RPOP_RC);
 		PUT(GET(SSTB_CTRL) | SUNI_SSTB_CTRL_LEN16, SSTB_CTRL);
 		PUT(GET(SPTB_CTRL) | SUNI_SPTB_CTRL_LEN16, SPTB_CTRL);
-	पूर्ण
+	}
 
 	REG_CHANGE(SUNI_TPOP_APM_S, SUNI_TPOP_APM_S_SHIFT,
 		   SUNI_TPOP_S_SDH, TPOP_APM);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक get_framing(काष्ठा aपंचांग_dev *dev, व्योम __user *arg)
-अणु
-	पूर्णांक framing;
-	अचिन्हित अक्षर s;
+static int get_framing(struct atm_dev *dev, void __user *arg)
+{
+	int framing;
+	unsigned char s;
 
 
 	s = (GET(TPOP_APM) & SUNI_TPOP_APM_S) >> SUNI_TPOP_APM_S_SHIFT;
-	अगर (s == SUNI_TPOP_S_SONET)
+	if (s == SUNI_TPOP_S_SONET)
 		framing = SONET_FRAME_SONET;
-	अन्यथा
+	else
 		framing = SONET_FRAME_SDH;
 
-	वापस put_user(framing, (पूर्णांक __user *) arg) ? -EFAULT : 0;
-पूर्ण
+	return put_user(framing, (int __user *) arg) ? -EFAULT : 0;
+}
 
-अटल पूर्णांक set_framing(काष्ठा aपंचांग_dev *dev, व्योम __user *arg)
-अणु
-	पूर्णांक mode;
+static int set_framing(struct atm_dev *dev, void __user *arg)
+{
+	int mode;
 
-	अगर (get_user(mode, (पूर्णांक __user *) arg))
-		वापस -EFAULT;
+	if (get_user(mode, (int __user *) arg))
+		return -EFAULT;
 
-	अगर (mode == SONET_FRAME_SONET)
-		वापस set_sonet(dev);
-	अन्यथा अगर (mode == SONET_FRAME_SDH)
-		वापस set_sdh(dev);
+	if (mode == SONET_FRAME_SONET)
+		return set_sonet(dev);
+	else if (mode == SONET_FRAME_SDH)
+		return set_sdh(dev);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 
-अटल पूर्णांक suni_ioctl(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg)
-अणु
-	चयन (cmd) अणु
-		हाल SONET_GETSTATZ:
-		हाल SONET_GETSTAT:
-			वापस fetch_stats(dev, arg, cmd == SONET_GETSTATZ);
-		हाल SONET_SETDIAG:
-			वापस change_diag(dev,arg,1);
-		हाल SONET_CLRDIAG:
-			वापस change_diag(dev,arg,0);
-		हाल SONET_GETDIAG:
-			वापस get_diag(dev,arg);
-		हाल SONET_SETFRAMING:
-			अगर (!capable(CAP_NET_ADMIN))
-				वापस -EPERM;
-			वापस set_framing(dev, arg);
-		हाल SONET_GETFRAMING:
-			वापस get_framing(dev, arg);
-		हाल SONET_GETFRSENSE:
-			वापस -EINVAL;
-		हाल ATM_SETLOOP:
-			अगर (!capable(CAP_NET_ADMIN))
-				वापस -EPERM;
-			वापस set_loopback(dev,(पूर्णांक)(अचिन्हित दीर्घ)arg);
-		हाल ATM_GETLOOP:
-			वापस put_user(PRIV(dev)->loop_mode,(पूर्णांक __user *)arg) ?
+static int suni_ioctl(struct atm_dev *dev,unsigned int cmd,void __user *arg)
+{
+	switch (cmd) {
+		case SONET_GETSTATZ:
+		case SONET_GETSTAT:
+			return fetch_stats(dev, arg, cmd == SONET_GETSTATZ);
+		case SONET_SETDIAG:
+			return change_diag(dev,arg,1);
+		case SONET_CLRDIAG:
+			return change_diag(dev,arg,0);
+		case SONET_GETDIAG:
+			return get_diag(dev,arg);
+		case SONET_SETFRAMING:
+			if (!capable(CAP_NET_ADMIN))
+				return -EPERM;
+			return set_framing(dev, arg);
+		case SONET_GETFRAMING:
+			return get_framing(dev, arg);
+		case SONET_GETFRSENSE:
+			return -EINVAL;
+		case ATM_SETLOOP:
+			if (!capable(CAP_NET_ADMIN))
+				return -EPERM;
+			return set_loopback(dev,(int)(unsigned long)arg);
+		case ATM_GETLOOP:
+			return put_user(PRIV(dev)->loop_mode,(int __user *)arg) ?
 			    -EFAULT : 0;
-		हाल ATM_QUERYLOOP:
-			वापस put_user(ATM_LM_LOC_PHY | ATM_LM_RMT_PHY,
-			    (पूर्णांक __user *) arg) ? -EFAULT : 0;
-		शेष:
-			वापस -ENOIOCTLCMD;
-	पूर्ण
-पूर्ण
+		case ATM_QUERYLOOP:
+			return put_user(ATM_LM_LOC_PHY | ATM_LM_RMT_PHY,
+			    (int __user *) arg) ? -EFAULT : 0;
+		default:
+			return -ENOIOCTLCMD;
+	}
+}
 
 
-अटल व्योम poll_los(काष्ठा aपंचांग_dev *dev)
-अणु
-	aपंचांग_dev_संकेत_change(dev,
+static void poll_los(struct atm_dev *dev)
+{
+	atm_dev_signal_change(dev,
 		GET(RSOP_SIS) & SUNI_RSOP_SIS_LOSV ?
 		ATM_PHY_SIG_LOST : ATM_PHY_SIG_FOUND);
-पूर्ण
+}
 
 
-अटल व्योम suni_पूर्णांक(काष्ठा aपंचांग_dev *dev)
-अणु
+static void suni_int(struct atm_dev *dev)
+{
 	poll_los(dev);
-	prपूर्णांकk(KERN_NOTICE "%s(itf %d): signal %s\n",dev->type,dev->number,
-	    dev->संकेत == ATM_PHY_SIG_LOST ?  "lost" : "detected again");
-पूर्ण
+	printk(KERN_NOTICE "%s(itf %d): signal %s\n",dev->type,dev->number,
+	    dev->signal == ATM_PHY_SIG_LOST ?  "lost" : "detected again");
+}
 
 
-अटल पूर्णांक suni_start(काष्ठा aपंचांग_dev *dev)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक first;
+static int suni_start(struct atm_dev *dev)
+{
+	unsigned long flags;
+	int first;
 
 	spin_lock_irqsave(&sunis_lock,flags);
 	first = !sunis;
 	PRIV(dev)->next = sunis;
 	sunis = PRIV(dev);
 	spin_unlock_irqrestore(&sunis_lock,flags);
-	स_रखो(&PRIV(dev)->sonet_stats,0,माप(काष्ठा k_sonet_stats));
+	memset(&PRIV(dev)->sonet_stats,0,sizeof(struct k_sonet_stats));
 	PUT(GET(RSOP_CIE) | SUNI_RSOP_CIE_LOSE,RSOP_CIE);
-		/* पूर्णांकerrupt on loss of संकेत */
-	poll_los(dev); /* ... and clear SUNI पूर्णांकerrupts */
-	अगर (dev->संकेत == ATM_PHY_SIG_LOST)
-		prपूर्णांकk(KERN_WARNING "%s(itf %d): no signal\n",dev->type,
+		/* interrupt on loss of signal */
+	poll_los(dev); /* ... and clear SUNI interrupts */
+	if (dev->signal == ATM_PHY_SIG_LOST)
+		printk(KERN_WARNING "%s(itf %d): no signal\n",dev->type,
 		    dev->number);
 	PRIV(dev)->loop_mode = ATM_LM_NONE;
-	suni_hz(शून्य); /* clear SUNI counters */
-	(व्योम) fetch_stats(dev,शून्य,1); /* clear kernel counters */
-	अगर (first) अणु
-		समयr_setup(&poll_समयr, suni_hz, 0);
-		poll_समयr.expires = jअगरfies+HZ;
-#अगर 0
-prपूर्णांकk(KERN_DEBUG "[u] p=0x%lx,n=0x%lx\n",(अचिन्हित दीर्घ) poll_समयr.list.prev,
-    (अचिन्हित दीर्घ) poll_समयr.list.next);
-#पूर्ण_अगर
-		add_समयr(&poll_समयr);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	suni_hz(NULL); /* clear SUNI counters */
+	(void) fetch_stats(dev,NULL,1); /* clear kernel counters */
+	if (first) {
+		timer_setup(&poll_timer, suni_hz, 0);
+		poll_timer.expires = jiffies+HZ;
+#if 0
+printk(KERN_DEBUG "[u] p=0x%lx,n=0x%lx\n",(unsigned long) poll_timer.list.prev,
+    (unsigned long) poll_timer.list.next);
+#endif
+		add_timer(&poll_timer);
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक suni_stop(काष्ठा aपंचांग_dev *dev)
-अणु
-	काष्ठा suni_priv **walk;
-	अचिन्हित दीर्घ flags;
+static int suni_stop(struct atm_dev *dev)
+{
+	struct suni_priv **walk;
+	unsigned long flags;
 
-	/* let SAR driver worry about stopping पूर्णांकerrupts */
+	/* let SAR driver worry about stopping interrupts */
 	spin_lock_irqsave(&sunis_lock,flags);
-	क्रम (walk = &sunis; *walk != PRIV(dev);
+	for (walk = &sunis; *walk != PRIV(dev);
 	    walk = &PRIV((*walk)->dev)->next);
 	*walk = PRIV((*walk)->dev)->next;
-	अगर (!sunis) del_समयr_sync(&poll_समयr);
+	if (!sunis) del_timer_sync(&poll_timer);
 	spin_unlock_irqrestore(&sunis_lock,flags);
-	kमुक्त(PRIV(dev));
+	kfree(PRIV(dev));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल स्थिर काष्ठा aपंचांगphy_ops suni_ops = अणु
+static const struct atmphy_ops suni_ops = {
 	.start		= suni_start,
 	.ioctl		= suni_ioctl,
-	.पूर्णांकerrupt	= suni_पूर्णांक,
+	.interrupt	= suni_int,
 	.stop		= suni_stop,
-पूर्ण;
+};
 
 
-पूर्णांक suni_init(काष्ठा aपंचांग_dev *dev)
-अणु
-	अचिन्हित अक्षर mri;
+int suni_init(struct atm_dev *dev)
+{
+	unsigned char mri;
 
-	अगर (!(dev->phy_data = kदो_स्मृति(माप(काष्ठा suni_priv),GFP_KERNEL)))
-		वापस -ENOMEM;
+	if (!(dev->phy_data = kmalloc(sizeof(struct suni_priv),GFP_KERNEL)))
+		return -ENOMEM;
 	PRIV(dev)->dev = dev;
 
 	mri = GET(MRI); /* reset SUNI */
@@ -383,8 +382,8 @@ prपूर्णांकk(KERN_DEBUG "[u] p=0x%lx,n=0x%lx\n",(अचिन्�
 	PUT(SUNI_IDLE_PATTERN,TACP_IUCPOP);
 	dev->phy = &suni_ops;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 EXPORT_SYMBOL(suni_init);
 

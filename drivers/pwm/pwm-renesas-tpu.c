@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * R-Mobile TPU PWM driver
  *
  * Copyright (C) 2012 Renesas Solutions Corp.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/init.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pwm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/init.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <linux/pwm.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#घोषणा TPU_CHANNEL_MAX		4
+#define TPU_CHANNEL_MAX		4
 
-#घोषणा TPU_TSTR		0x00	/* Timer start रेजिस्टर (shared) */
+#define TPU_TSTR		0x00	/* Timer start register (shared) */
 
-#घोषणा TPU_TCRn		0x00	/* Timer control रेजिस्टर */
-#घोषणा TPU_TCR_CCLR_NONE	(0 << 5)
-#घोषणा TPU_TCR_CCLR_TGRA	(1 << 5)
-#घोषणा TPU_TCR_CCLR_TGRB	(2 << 5)
-#घोषणा TPU_TCR_CCLR_TGRC	(5 << 5)
-#घोषणा TPU_TCR_CCLR_TGRD	(6 << 5)
-#घोषणा TPU_TCR_CKEG_RISING	(0 << 3)
-#घोषणा TPU_TCR_CKEG_FALLING	(1 << 3)
-#घोषणा TPU_TCR_CKEG_BOTH	(2 << 3)
-#घोषणा TPU_TMDRn		0x04	/* Timer mode रेजिस्टर */
-#घोषणा TPU_TMDR_BFWT		(1 << 6)
-#घोषणा TPU_TMDR_BFB		(1 << 5)
-#घोषणा TPU_TMDR_BFA		(1 << 4)
-#घोषणा TPU_TMDR_MD_NORMAL	(0 << 0)
-#घोषणा TPU_TMDR_MD_PWM		(2 << 0)
-#घोषणा TPU_TIORn		0x08	/* Timer I/O control रेजिस्टर */
-#घोषणा TPU_TIOR_IOA_0		(0 << 0)
-#घोषणा TPU_TIOR_IOA_0_CLR	(1 << 0)
-#घोषणा TPU_TIOR_IOA_0_SET	(2 << 0)
-#घोषणा TPU_TIOR_IOA_0_TOGGLE	(3 << 0)
-#घोषणा TPU_TIOR_IOA_1		(4 << 0)
-#घोषणा TPU_TIOR_IOA_1_CLR	(5 << 0)
-#घोषणा TPU_TIOR_IOA_1_SET	(6 << 0)
-#घोषणा TPU_TIOR_IOA_1_TOGGLE	(7 << 0)
-#घोषणा TPU_TIERn		0x0c	/* Timer पूर्णांकerrupt enable रेजिस्टर */
-#घोषणा TPU_TSRn		0x10	/* Timer status रेजिस्टर */
-#घोषणा TPU_TCNTn		0x14	/* Timer counter */
-#घोषणा TPU_TGRAn		0x18	/* Timer general रेजिस्टर A */
-#घोषणा TPU_TGRBn		0x1c	/* Timer general रेजिस्टर B */
-#घोषणा TPU_TGRCn		0x20	/* Timer general रेजिस्टर C */
-#घोषणा TPU_TGRDn		0x24	/* Timer general रेजिस्टर D */
+#define TPU_TCRn		0x00	/* Timer control register */
+#define TPU_TCR_CCLR_NONE	(0 << 5)
+#define TPU_TCR_CCLR_TGRA	(1 << 5)
+#define TPU_TCR_CCLR_TGRB	(2 << 5)
+#define TPU_TCR_CCLR_TGRC	(5 << 5)
+#define TPU_TCR_CCLR_TGRD	(6 << 5)
+#define TPU_TCR_CKEG_RISING	(0 << 3)
+#define TPU_TCR_CKEG_FALLING	(1 << 3)
+#define TPU_TCR_CKEG_BOTH	(2 << 3)
+#define TPU_TMDRn		0x04	/* Timer mode register */
+#define TPU_TMDR_BFWT		(1 << 6)
+#define TPU_TMDR_BFB		(1 << 5)
+#define TPU_TMDR_BFA		(1 << 4)
+#define TPU_TMDR_MD_NORMAL	(0 << 0)
+#define TPU_TMDR_MD_PWM		(2 << 0)
+#define TPU_TIORn		0x08	/* Timer I/O control register */
+#define TPU_TIOR_IOA_0		(0 << 0)
+#define TPU_TIOR_IOA_0_CLR	(1 << 0)
+#define TPU_TIOR_IOA_0_SET	(2 << 0)
+#define TPU_TIOR_IOA_0_TOGGLE	(3 << 0)
+#define TPU_TIOR_IOA_1		(4 << 0)
+#define TPU_TIOR_IOA_1_CLR	(5 << 0)
+#define TPU_TIOR_IOA_1_SET	(6 << 0)
+#define TPU_TIOR_IOA_1_TOGGLE	(7 << 0)
+#define TPU_TIERn		0x0c	/* Timer interrupt enable register */
+#define TPU_TSRn		0x10	/* Timer status register */
+#define TPU_TCNTn		0x14	/* Timer counter */
+#define TPU_TGRAn		0x18	/* Timer general register A */
+#define TPU_TGRBn		0x1c	/* Timer general register B */
+#define TPU_TGRCn		0x20	/* Timer general register C */
+#define TPU_TGRDn		0x24	/* Timer general register D */
 
-#घोषणा TPU_CHANNEL_OFFSET	0x10
-#घोषणा TPU_CHANNEL_SIZE	0x40
+#define TPU_CHANNEL_OFFSET	0x10
+#define TPU_CHANNEL_SIZE	0x40
 
-क्रमागत tpu_pin_state अणु
+enum tpu_pin_state {
 	TPU_PIN_INACTIVE,		/* Pin is driven inactive */
 	TPU_PIN_PWM,			/* Pin is driven by PWM */
 	TPU_PIN_ACTIVE,			/* Pin is driven active */
-पूर्ण;
+};
 
-काष्ठा tpu_device;
+struct tpu_device;
 
-काष्ठा tpu_pwm_device अणु
-	bool समयr_on;			/* Whether the समयr is running */
+struct tpu_pwm_device {
+	bool timer_on;			/* Whether the timer is running */
 
-	काष्ठा tpu_device *tpu;
-	अचिन्हित पूर्णांक channel;		/* Channel number in the TPU */
+	struct tpu_device *tpu;
+	unsigned int channel;		/* Channel number in the TPU */
 
-	क्रमागत pwm_polarity polarity;
-	अचिन्हित पूर्णांक prescaler;
+	enum pwm_polarity polarity;
+	unsigned int prescaler;
 	u16 period;
 	u16 duty;
-पूर्ण;
+};
 
-काष्ठा tpu_device अणु
-	काष्ठा platक्रमm_device *pdev;
-	काष्ठा pwm_chip chip;
+struct tpu_device {
+	struct platform_device *pdev;
+	struct pwm_chip chip;
 	spinlock_t lock;
 
-	व्योम __iomem *base;
-	काष्ठा clk *clk;
-पूर्ण;
+	void __iomem *base;
+	struct clk *clk;
+};
 
-#घोषणा to_tpu_device(c)	container_of(c, काष्ठा tpu_device, chip)
+#define to_tpu_device(c)	container_of(c, struct tpu_device, chip)
 
-अटल व्योम tpu_pwm_ग_लिखो(काष्ठा tpu_pwm_device *pwm, पूर्णांक reg_nr, u16 value)
-अणु
-	व्योम __iomem *base = pwm->tpu->base + TPU_CHANNEL_OFFSET
+static void tpu_pwm_write(struct tpu_pwm_device *pwm, int reg_nr, u16 value)
+{
+	void __iomem *base = pwm->tpu->base + TPU_CHANNEL_OFFSET
 			   + pwm->channel * TPU_CHANNEL_SIZE;
 
-	ioग_लिखो16(value, base + reg_nr);
-पूर्ण
+	iowrite16(value, base + reg_nr);
+}
 
-अटल व्योम tpu_pwm_set_pin(काष्ठा tpu_pwm_device *pwm,
-			    क्रमागत tpu_pin_state state)
-अणु
-	अटल स्थिर अक्षर * स्थिर states[] = अणु "inactive", "PWM", "active" पूर्ण;
+static void tpu_pwm_set_pin(struct tpu_pwm_device *pwm,
+			    enum tpu_pin_state state)
+{
+	static const char * const states[] = { "inactive", "PWM", "active" };
 
 	dev_dbg(&pwm->tpu->pdev->dev, "%u: configuring pin as %s\n",
 		pwm->channel, states[state]);
 
-	चयन (state) अणु
-	हाल TPU_PIN_INACTIVE:
-		tpu_pwm_ग_लिखो(pwm, TPU_TIORn,
+	switch (state) {
+	case TPU_PIN_INACTIVE:
+		tpu_pwm_write(pwm, TPU_TIORn,
 			      pwm->polarity == PWM_POLARITY_INVERSED ?
 			      TPU_TIOR_IOA_1 : TPU_TIOR_IOA_0);
-		अवरोध;
-	हाल TPU_PIN_PWM:
-		tpu_pwm_ग_लिखो(pwm, TPU_TIORn,
+		break;
+	case TPU_PIN_PWM:
+		tpu_pwm_write(pwm, TPU_TIORn,
 			      pwm->polarity == PWM_POLARITY_INVERSED ?
 			      TPU_TIOR_IOA_0_SET : TPU_TIOR_IOA_1_CLR);
-		अवरोध;
-	हाल TPU_PIN_ACTIVE:
-		tpu_pwm_ग_लिखो(pwm, TPU_TIORn,
+		break;
+	case TPU_PIN_ACTIVE:
+		tpu_pwm_write(pwm, TPU_TIORn,
 			      pwm->polarity == PWM_POLARITY_INVERSED ?
 			      TPU_TIOR_IOA_0 : TPU_TIOR_IOA_1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम tpu_pwm_start_stop(काष्ठा tpu_pwm_device *pwm, पूर्णांक start)
-अणु
-	अचिन्हित दीर्घ flags;
+static void tpu_pwm_start_stop(struct tpu_pwm_device *pwm, int start)
+{
+	unsigned long flags;
 	u16 value;
 
 	spin_lock_irqsave(&pwm->tpu->lock, flags);
-	value = ioपढ़ो16(pwm->tpu->base + TPU_TSTR);
+	value = ioread16(pwm->tpu->base + TPU_TSTR);
 
-	अगर (start)
+	if (start)
 		value |= 1 << pwm->channel;
-	अन्यथा
+	else
 		value &= ~(1 << pwm->channel);
 
-	ioग_लिखो16(value, pwm->tpu->base + TPU_TSTR);
+	iowrite16(value, pwm->tpu->base + TPU_TSTR);
 	spin_unlock_irqrestore(&pwm->tpu->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक tpu_pwm_समयr_start(काष्ठा tpu_pwm_device *pwm)
-अणु
-	पूर्णांक ret;
+static int tpu_pwm_timer_start(struct tpu_pwm_device *pwm)
+{
+	int ret;
 
-	अगर (!pwm->समयr_on) अणु
-		/* Wake up device and enable घड़ी. */
-		pm_runसमय_get_sync(&pwm->tpu->pdev->dev);
+	if (!pwm->timer_on) {
+		/* Wake up device and enable clock. */
+		pm_runtime_get_sync(&pwm->tpu->pdev->dev);
 		ret = clk_prepare_enable(pwm->tpu->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pwm->tpu->pdev->dev, "cannot enable clock\n");
-			वापस ret;
-		पूर्ण
-		pwm->समयr_on = true;
-	पूर्ण
+			return ret;
+		}
+		pwm->timer_on = true;
+	}
 
 	/*
 	 * Make sure the channel is stopped, as we need to reconfigure it
-	 * completely. First drive the pin to the inactive state to aव्योम
+	 * completely. First drive the pin to the inactive state to avoid
 	 * glitches.
 	 */
 	tpu_pwm_set_pin(pwm, TPU_PIN_INACTIVE);
@@ -173,12 +172,12 @@
 	 * - Output 1 until TGRA, output 0 until TGRB (active high polarity
 	 * - PWM mode
 	 */
-	tpu_pwm_ग_लिखो(pwm, TPU_TCRn, TPU_TCR_CCLR_TGRB | TPU_TCR_CKEG_RISING |
+	tpu_pwm_write(pwm, TPU_TCRn, TPU_TCR_CCLR_TGRB | TPU_TCR_CKEG_RISING |
 		      pwm->prescaler);
-	tpu_pwm_ग_लिखो(pwm, TPU_TMDRn, TPU_TMDR_MD_PWM);
+	tpu_pwm_write(pwm, TPU_TMDRn, TPU_TMDR_MD_PWM);
 	tpu_pwm_set_pin(pwm, TPU_PIN_PWM);
-	tpu_pwm_ग_लिखो(pwm, TPU_TGRAn, pwm->duty);
-	tpu_pwm_ग_लिखो(pwm, TPU_TGRBn, pwm->period);
+	tpu_pwm_write(pwm, TPU_TGRAn, pwm->duty);
+	tpu_pwm_write(pwm, TPU_TGRBn, pwm->period);
 
 	dev_dbg(&pwm->tpu->pdev->dev, "%u: TGRA 0x%04x TGRB 0x%04x\n",
 		pwm->channel, pwm->duty, pwm->period);
@@ -186,39 +185,39 @@
 	/* Start the channel. */
 	tpu_pwm_start_stop(pwm, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpu_pwm_समयr_stop(काष्ठा tpu_pwm_device *pwm)
-अणु
-	अगर (!pwm->समयr_on)
-		वापस;
+static void tpu_pwm_timer_stop(struct tpu_pwm_device *pwm)
+{
+	if (!pwm->timer_on)
+		return;
 
 	/* Disable channel. */
 	tpu_pwm_start_stop(pwm, false);
 
-	/* Stop घड़ी and mark device as idle. */
+	/* Stop clock and mark device as idle. */
 	clk_disable_unprepare(pwm->tpu->clk);
-	pm_runसमय_put(&pwm->tpu->pdev->dev);
+	pm_runtime_put(&pwm->tpu->pdev->dev);
 
-	pwm->समयr_on = false;
-पूर्ण
+	pwm->timer_on = false;
+}
 
 /* -----------------------------------------------------------------------------
  * PWM API
  */
 
-अटल पूर्णांक tpu_pwm_request(काष्ठा pwm_chip *chip, काष्ठा pwm_device *_pwm)
-अणु
-	काष्ठा tpu_device *tpu = to_tpu_device(chip);
-	काष्ठा tpu_pwm_device *pwm;
+static int tpu_pwm_request(struct pwm_chip *chip, struct pwm_device *_pwm)
+{
+	struct tpu_device *tpu = to_tpu_device(chip);
+	struct tpu_pwm_device *pwm;
 
-	अगर (_pwm->hwpwm >= TPU_CHANNEL_MAX)
-		वापस -EINVAL;
+	if (_pwm->hwpwm >= TPU_CHANNEL_MAX)
+		return -EINVAL;
 
-	pwm = kzalloc(माप(*pwm), GFP_KERNEL);
-	अगर (pwm == शून्य)
-		वापस -ENOMEM;
+	pwm = kzalloc(sizeof(*pwm), GFP_KERNEL);
+	if (pwm == NULL)
+		return -ENOMEM;
 
 	pwm->tpu = tpu;
 	pwm->channel = _pwm->hwpwm;
@@ -227,185 +226,185 @@
 	pwm->period = 0;
 	pwm->duty = 0;
 
-	pwm->समयr_on = false;
+	pwm->timer_on = false;
 
 	pwm_set_chip_data(_pwm, pwm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpu_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *_pwm)
-अणु
-	काष्ठा tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
+static void tpu_pwm_free(struct pwm_chip *chip, struct pwm_device *_pwm)
+{
+	struct tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
 
-	tpu_pwm_समयr_stop(pwm);
-	kमुक्त(pwm);
-पूर्ण
+	tpu_pwm_timer_stop(pwm);
+	kfree(pwm);
+}
 
-अटल पूर्णांक tpu_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *_pwm,
-			  पूर्णांक duty_ns, पूर्णांक period_ns)
-अणु
-	अटल स्थिर अचिन्हित पूर्णांक prescalers[] = अणु 1, 4, 16, 64 पूर्ण;
-	काष्ठा tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
-	काष्ठा tpu_device *tpu = to_tpu_device(chip);
-	अचिन्हित पूर्णांक prescaler;
+static int tpu_pwm_config(struct pwm_chip *chip, struct pwm_device *_pwm,
+			  int duty_ns, int period_ns)
+{
+	static const unsigned int prescalers[] = { 1, 4, 16, 64 };
+	struct tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
+	struct tpu_device *tpu = to_tpu_device(chip);
+	unsigned int prescaler;
 	bool duty_only = false;
 	u32 clk_rate;
 	u32 period;
 	u32 duty;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Pick a prescaler to aव्योम overflowing the counter.
+	 * Pick a prescaler to avoid overflowing the counter.
 	 * TODO: Pick the highest acceptable prescaler.
 	 */
 	clk_rate = clk_get_rate(tpu->clk);
 
-	क्रम (prescaler = 0; prescaler < ARRAY_SIZE(prescalers); ++prescaler) अणु
+	for (prescaler = 0; prescaler < ARRAY_SIZE(prescalers); ++prescaler) {
 		period = clk_rate / prescalers[prescaler]
 		       / (NSEC_PER_SEC / period_ns);
-		अगर (period <= 0xffff)
-			अवरोध;
-	पूर्ण
+		if (period <= 0xffff)
+			break;
+	}
 
-	अगर (prescaler == ARRAY_SIZE(prescalers) || period == 0) अणु
+	if (prescaler == ARRAY_SIZE(prescalers) || period == 0) {
 		dev_err(&tpu->pdev->dev, "clock rate mismatch\n");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	अगर (duty_ns) अणु
+	if (duty_ns) {
 		duty = clk_rate / prescalers[prescaler]
 		     / (NSEC_PER_SEC / duty_ns);
-		अगर (duty > period)
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
+		if (duty > period)
+			return -EINVAL;
+	} else {
 		duty = 0;
-	पूर्ण
+	}
 
 	dev_dbg(&tpu->pdev->dev,
 		"rate %u, prescaler %u, period %u, duty %u\n",
 		clk_rate, prescalers[prescaler], period, duty);
 
-	अगर (pwm->prescaler == prescaler && pwm->period == period)
+	if (pwm->prescaler == prescaler && pwm->period == period)
 		duty_only = true;
 
 	pwm->prescaler = prescaler;
 	pwm->period = period;
 	pwm->duty = duty;
 
-	/* If the channel is disabled we're करोne. */
-	अगर (!pwm_is_enabled(_pwm))
-		वापस 0;
+	/* If the channel is disabled we're done. */
+	if (!pwm_is_enabled(_pwm))
+		return 0;
 
-	अगर (duty_only && pwm->समयr_on) अणु
+	if (duty_only && pwm->timer_on) {
 		/*
-		 * If only the duty cycle changed and the समयr is alपढ़ोy
+		 * If only the duty cycle changed and the timer is already
 		 * running, there's no need to reconfigure it completely, Just
-		 * modअगरy the duty cycle.
+		 * modify the duty cycle.
 		 */
-		tpu_pwm_ग_लिखो(pwm, TPU_TGRAn, pwm->duty);
+		tpu_pwm_write(pwm, TPU_TGRAn, pwm->duty);
 		dev_dbg(&tpu->pdev->dev, "%u: TGRA 0x%04x\n", pwm->channel,
 			pwm->duty);
-	पूर्ण अन्यथा अणु
-		/* Otherwise perक्रमm a full reconfiguration. */
-		ret = tpu_pwm_समयr_start(pwm);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	} else {
+		/* Otherwise perform a full reconfiguration. */
+		ret = tpu_pwm_timer_start(pwm);
+		if (ret < 0)
+			return ret;
+	}
 
-	अगर (duty == 0 || duty == period) अणु
+	if (duty == 0 || duty == period) {
 		/*
-		 * To aव्योम running the समयr when not strictly required, handle
-		 * 0% and 100% duty cycles as fixed levels and stop the समयr.
+		 * To avoid running the timer when not strictly required, handle
+		 * 0% and 100% duty cycles as fixed levels and stop the timer.
 		 */
 		tpu_pwm_set_pin(pwm, duty ? TPU_PIN_ACTIVE : TPU_PIN_INACTIVE);
-		tpu_pwm_समयr_stop(pwm);
-	पूर्ण
+		tpu_pwm_timer_stop(pwm);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpu_pwm_set_polarity(काष्ठा pwm_chip *chip, काष्ठा pwm_device *_pwm,
-				क्रमागत pwm_polarity polarity)
-अणु
-	काष्ठा tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
+static int tpu_pwm_set_polarity(struct pwm_chip *chip, struct pwm_device *_pwm,
+				enum pwm_polarity polarity)
+{
+	struct tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
 
 	pwm->polarity = polarity;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpu_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *_pwm)
-अणु
-	काष्ठा tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
-	पूर्णांक ret;
+static int tpu_pwm_enable(struct pwm_chip *chip, struct pwm_device *_pwm)
+{
+	struct tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
+	int ret;
 
-	ret = tpu_pwm_समयr_start(pwm);
-	अगर (ret < 0)
-		वापस ret;
+	ret = tpu_pwm_timer_start(pwm);
+	if (ret < 0)
+		return ret;
 
 	/*
-	 * To aव्योम running the समयr when not strictly required, handle 0% and
-	 * 100% duty cycles as fixed levels and stop the समयr.
+	 * To avoid running the timer when not strictly required, handle 0% and
+	 * 100% duty cycles as fixed levels and stop the timer.
 	 */
-	अगर (pwm->duty == 0 || pwm->duty == pwm->period) अणु
+	if (pwm->duty == 0 || pwm->duty == pwm->period) {
 		tpu_pwm_set_pin(pwm, pwm->duty ?
 				TPU_PIN_ACTIVE : TPU_PIN_INACTIVE);
-		tpu_pwm_समयr_stop(pwm);
-	पूर्ण
+		tpu_pwm_timer_stop(pwm);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tpu_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *_pwm)
-अणु
-	काष्ठा tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
+static void tpu_pwm_disable(struct pwm_chip *chip, struct pwm_device *_pwm)
+{
+	struct tpu_pwm_device *pwm = pwm_get_chip_data(_pwm);
 
-	/* The समयr must be running to modअगरy the pin output configuration. */
-	tpu_pwm_समयr_start(pwm);
+	/* The timer must be running to modify the pin output configuration. */
+	tpu_pwm_timer_start(pwm);
 	tpu_pwm_set_pin(pwm, TPU_PIN_INACTIVE);
-	tpu_pwm_समयr_stop(pwm);
-पूर्ण
+	tpu_pwm_timer_stop(pwm);
+}
 
-अटल स्थिर काष्ठा pwm_ops tpu_pwm_ops = अणु
+static const struct pwm_ops tpu_pwm_ops = {
 	.request = tpu_pwm_request,
-	.मुक्त = tpu_pwm_मुक्त,
+	.free = tpu_pwm_free,
 	.config = tpu_pwm_config,
 	.set_polarity = tpu_pwm_set_polarity,
 	.enable = tpu_pwm_enable,
 	.disable = tpu_pwm_disable,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
- * Probe and हटाओ
+ * Probe and remove
  */
 
-अटल पूर्णांक tpu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tpu_device *tpu;
-	पूर्णांक ret;
+static int tpu_probe(struct platform_device *pdev)
+{
+	struct tpu_device *tpu;
+	int ret;
 
-	tpu = devm_kzalloc(&pdev->dev, माप(*tpu), GFP_KERNEL);
-	अगर (tpu == शून्य)
-		वापस -ENOMEM;
+	tpu = devm_kzalloc(&pdev->dev, sizeof(*tpu), GFP_KERNEL);
+	if (tpu == NULL)
+		return -ENOMEM;
 
 	spin_lock_init(&tpu->lock);
 	tpu->pdev = pdev;
 
-	/* Map memory, get घड़ी and pin control. */
-	tpu->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(tpu->base))
-		वापस PTR_ERR(tpu->base);
+	/* Map memory, get clock and pin control. */
+	tpu->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(tpu->base))
+		return PTR_ERR(tpu->base);
 
-	tpu->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(tpu->clk)) अणु
+	tpu->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(tpu->clk)) {
 		dev_err(&pdev->dev, "cannot get clock\n");
-		वापस PTR_ERR(tpu->clk);
-	पूर्ण
+		return PTR_ERR(tpu->clk);
+	}
 
-	/* Initialize and रेजिस्टर the device. */
-	platक्रमm_set_drvdata(pdev, tpu);
+	/* Initialize and register the device. */
+	platform_set_drvdata(pdev, tpu);
 
 	tpu->chip.dev = &pdev->dev;
 	tpu->chip.ops = &tpu_pwm_ops;
@@ -413,52 +412,52 @@
 	tpu->chip.of_pwm_n_cells = 3;
 	tpu->chip.npwm = TPU_CHANNEL_MAX;
 
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	ret = pwmchip_add(&tpu->chip);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&pdev->dev, "failed to register PWM chip\n");
-		pm_runसमय_disable(&pdev->dev);
-		वापस ret;
-	पूर्ण
+		pm_runtime_disable(&pdev->dev);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tpu_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tpu_device *tpu = platक्रमm_get_drvdata(pdev);
-	पूर्णांक ret;
+static int tpu_remove(struct platform_device *pdev)
+{
+	struct tpu_device *tpu = platform_get_drvdata(pdev);
+	int ret;
 
-	ret = pwmchip_हटाओ(&tpu->chip);
+	ret = pwmchip_remove(&tpu->chip);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id tpu_of_table[] = अणु
-	अणु .compatible = "renesas,tpu-r8a73a4", पूर्ण,
-	अणु .compatible = "renesas,tpu-r8a7740", पूर्ण,
-	अणु .compatible = "renesas,tpu-r8a7790", पूर्ण,
-	अणु .compatible = "renesas,tpu", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id tpu_of_table[] = {
+	{ .compatible = "renesas,tpu-r8a73a4", },
+	{ .compatible = "renesas,tpu-r8a7740", },
+	{ .compatible = "renesas,tpu-r8a7790", },
+	{ .compatible = "renesas,tpu", },
+	{ },
+};
 
 MODULE_DEVICE_TABLE(of, tpu_of_table);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver tpu_driver = अणु
+static struct platform_driver tpu_driver = {
 	.probe		= tpu_probe,
-	.हटाओ		= tpu_हटाओ,
-	.driver		= अणु
+	.remove		= tpu_remove,
+	.driver		= {
 		.name	= "renesas-tpu-pwm",
 		.of_match_table = of_match_ptr(tpu_of_table),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-module_platक्रमm_driver(tpu_driver);
+module_platform_driver(tpu_driver);
 
 MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
 MODULE_DESCRIPTION("Renesas TPU PWM Driver");

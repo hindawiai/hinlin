@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,10 +23,10 @@
  *
  */
 
-#अगर_अघोषित _CORE_STATUS_H_
-#घोषणा _CORE_STATUS_H_
+#ifndef _CORE_STATUS_H_
+#define _CORE_STATUS_H_
 
-क्रमागत dc_status अणु
+enum dc_status {
 	DC_OK = 1,
 
 	DC_NO_CONTROLLER_RESOURCE = 2,
@@ -55,8 +54,8 @@
 	DC_UNSUPPORTED_VALUE = 25,
 
 	DC_ERROR_UNEXPECTED = -1
-पूर्ण;
+};
 
-अक्षर *dc_status_to_str(क्रमागत dc_status status);
+char *dc_status_to_str(enum dc_status status);
 
-#पूर्ण_अगर /* _CORE_STATUS_H_ */
+#endif /* _CORE_STATUS_H_ */

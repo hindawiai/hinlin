@@ -1,40 +1,39 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2020 Red Hat, Inc.
  * Author: Jason Wang <jasowang@redhat.com>
  *
- * IOTLB implementation क्रम vhost.
+ * IOTLB implementation for vhost.
  */
-#समावेश <linux/slab.h>
-#समावेश <linux/vhost_iotlb.h>
-#समावेश <linux/module.h>
+#include <linux/slab.h>
+#include <linux/vhost_iotlb.h>
+#include <linux/module.h>
 
-#घोषणा MOD_VERSION  "0.1"
-#घोषणा MOD_DESC     "VHOST IOTLB"
-#घोषणा MOD_AUTHOR   "Jason Wang <jasowang@redhat.com>"
-#घोषणा MOD_LICENSE  "GPL v2"
+#define MOD_VERSION  "0.1"
+#define MOD_DESC     "VHOST IOTLB"
+#define MOD_AUTHOR   "Jason Wang <jasowang@redhat.com>"
+#define MOD_LICENSE  "GPL v2"
 
-#घोषणा START(map) ((map)->start)
-#घोषणा LAST(map) ((map)->last)
+#define START(map) ((map)->start)
+#define LAST(map) ((map)->last)
 
-INTERVAL_TREE_DEFINE(काष्ठा vhost_iotlb_map,
+INTERVAL_TREE_DEFINE(struct vhost_iotlb_map,
 		     rb, __u64, __subtree_last,
-		     START, LAST, अटल अंतरभूत, vhost_iotlb_itree);
+		     START, LAST, static inline, vhost_iotlb_itree);
 
 /**
- * vhost_iotlb_map_मुक्त - हटाओ a map node and मुक्त it
+ * vhost_iotlb_map_free - remove a map node and free it
  * @iotlb: the IOTLB
- * @map: the map that want to be हटाओ and मुक्तd
+ * @map: the map that want to be remove and freed
  */
-व्योम vhost_iotlb_map_मुक्त(काष्ठा vhost_iotlb *iotlb,
-			  काष्ठा vhost_iotlb_map *map)
-अणु
-	vhost_iotlb_itree_हटाओ(map, &iotlb->root);
+void vhost_iotlb_map_free(struct vhost_iotlb *iotlb,
+			  struct vhost_iotlb_map *map)
+{
+	vhost_iotlb_itree_remove(map, &iotlb->root);
 	list_del(&map->link);
-	kमुक्त(map);
+	kfree(map);
 	iotlb->nmaps--;
-पूर्ण
-EXPORT_SYMBOL_GPL(vhost_iotlb_map_मुक्त);
+}
+EXPORT_SYMBOL_GPL(vhost_iotlb_map_free);
 
 /**
  * vhost_iotlb_add_range - add a new range to vhost IOTLB
@@ -47,25 +46,25 @@ EXPORT_SYMBOL_GPL(vhost_iotlb_map_मुक्त);
  * Returns an error last is smaller than start or memory allocation
  * fails
  */
-पूर्णांक vhost_iotlb_add_range(काष्ठा vhost_iotlb *iotlb,
+int vhost_iotlb_add_range(struct vhost_iotlb *iotlb,
 			  u64 start, u64 last,
-			  u64 addr, अचिन्हित पूर्णांक perm)
-अणु
-	काष्ठा vhost_iotlb_map *map;
+			  u64 addr, unsigned int perm)
+{
+	struct vhost_iotlb_map *map;
 
-	अगर (last < start)
-		वापस -EFAULT;
+	if (last < start)
+		return -EFAULT;
 
-	अगर (iotlb->limit &&
+	if (iotlb->limit &&
 	    iotlb->nmaps == iotlb->limit &&
-	    iotlb->flags & VHOST_IOTLB_FLAG_RETIRE) अणु
+	    iotlb->flags & VHOST_IOTLB_FLAG_RETIRE) {
 		map = list_first_entry(&iotlb->list, typeof(*map), link);
-		vhost_iotlb_map_मुक्त(iotlb, map);
-	पूर्ण
+		vhost_iotlb_map_free(iotlb, map);
+	}
 
-	map = kदो_स्मृति(माप(*map), GFP_ATOMIC);
-	अगर (!map)
-		वापस -ENOMEM;
+	map = kmalloc(sizeof(*map), GFP_ATOMIC);
+	if (!map)
+		return -ENOMEM;
 
 	map->start = start;
 	map->size = last - start + 1;
@@ -79,8 +78,8 @@ EXPORT_SYMBOL_GPL(vhost_iotlb_map_मुक्त);
 	INIT_LIST_HEAD(&map->link);
 	list_add_tail(&map->link, &iotlb->list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(vhost_iotlb_add_range);
 
 /**
@@ -89,14 +88,14 @@ EXPORT_SYMBOL_GPL(vhost_iotlb_add_range);
  * @start: start of the IOVA range
  * @last: last of IOVA range
  */
-व्योम vhost_iotlb_del_range(काष्ठा vhost_iotlb *iotlb, u64 start, u64 last)
-अणु
-	काष्ठा vhost_iotlb_map *map;
+void vhost_iotlb_del_range(struct vhost_iotlb *iotlb, u64 start, u64 last)
+{
+	struct vhost_iotlb_map *map;
 
-	जबतक ((map = vhost_iotlb_itree_iter_first(&iotlb->root,
+	while ((map = vhost_iotlb_itree_iter_first(&iotlb->root,
 						   start, last)))
-		vhost_iotlb_map_मुक्त(iotlb, map);
-पूर्ण
+		vhost_iotlb_map_free(iotlb, map);
+}
 EXPORT_SYMBOL_GPL(vhost_iotlb_del_range);
 
 /**
@@ -106,12 +105,12 @@ EXPORT_SYMBOL_GPL(vhost_iotlb_del_range);
  *
  * Returns an error is memory allocation fails
  */
-काष्ठा vhost_iotlb *vhost_iotlb_alloc(अचिन्हित पूर्णांक limit, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा vhost_iotlb *iotlb = kzalloc(माप(*iotlb), GFP_KERNEL);
+struct vhost_iotlb *vhost_iotlb_alloc(unsigned int limit, unsigned int flags)
+{
+	struct vhost_iotlb *iotlb = kzalloc(sizeof(*iotlb), GFP_KERNEL);
 
-	अगर (!iotlb)
-		वापस शून्य;
+	if (!iotlb)
+		return NULL;
 
 	iotlb->root = RB_ROOT_CACHED;
 	iotlb->limit = limit;
@@ -119,57 +118,57 @@ EXPORT_SYMBOL_GPL(vhost_iotlb_del_range);
 	iotlb->flags = flags;
 	INIT_LIST_HEAD(&iotlb->list);
 
-	वापस iotlb;
-पूर्ण
+	return iotlb;
+}
 EXPORT_SYMBOL_GPL(vhost_iotlb_alloc);
 
 /**
- * vhost_iotlb_reset - reset vhost IOTLB (मुक्त all IOTLB entries)
+ * vhost_iotlb_reset - reset vhost IOTLB (free all IOTLB entries)
  * @iotlb: the IOTLB to be reset
  */
-व्योम vhost_iotlb_reset(काष्ठा vhost_iotlb *iotlb)
-अणु
+void vhost_iotlb_reset(struct vhost_iotlb *iotlb)
+{
 	vhost_iotlb_del_range(iotlb, 0ULL, 0ULL - 1);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vhost_iotlb_reset);
 
 /**
- * vhost_iotlb_मुक्त - reset and मुक्त vhost IOTLB
- * @iotlb: the IOTLB to be मुक्तd
+ * vhost_iotlb_free - reset and free vhost IOTLB
+ * @iotlb: the IOTLB to be freed
  */
-व्योम vhost_iotlb_मुक्त(काष्ठा vhost_iotlb *iotlb)
-अणु
-	अगर (iotlb) अणु
+void vhost_iotlb_free(struct vhost_iotlb *iotlb)
+{
+	if (iotlb) {
 		vhost_iotlb_reset(iotlb);
-		kमुक्त(iotlb);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL_GPL(vhost_iotlb_मुक्त);
+		kfree(iotlb);
+	}
+}
+EXPORT_SYMBOL_GPL(vhost_iotlb_free);
 
 /**
- * vhost_iotlb_itree_first - वापस the first overlapped range
+ * vhost_iotlb_itree_first - return the first overlapped range
  * @iotlb: the IOTLB
  * @start: start of IOVA range
  * @last: last byte in IOVA range
  */
-काष्ठा vhost_iotlb_map *
-vhost_iotlb_itree_first(काष्ठा vhost_iotlb *iotlb, u64 start, u64 last)
-अणु
-	वापस vhost_iotlb_itree_iter_first(&iotlb->root, start, last);
-पूर्ण
+struct vhost_iotlb_map *
+vhost_iotlb_itree_first(struct vhost_iotlb *iotlb, u64 start, u64 last)
+{
+	return vhost_iotlb_itree_iter_first(&iotlb->root, start, last);
+}
 EXPORT_SYMBOL_GPL(vhost_iotlb_itree_first);
 
 /**
- * vhost_iotlb_itree_next - वापस the next overlapped range
+ * vhost_iotlb_itree_next - return the next overlapped range
  * @map: the starting map node
  * @start: start of IOVA range
  * @last: last byte IOVA range
  */
-काष्ठा vhost_iotlb_map *
-vhost_iotlb_itree_next(काष्ठा vhost_iotlb_map *map, u64 start, u64 last)
-अणु
-	वापस vhost_iotlb_itree_iter_next(map, start, last);
-पूर्ण
+struct vhost_iotlb_map *
+vhost_iotlb_itree_next(struct vhost_iotlb_map *map, u64 start, u64 last)
+{
+	return vhost_iotlb_itree_iter_next(map, start, last);
+}
 EXPORT_SYMBOL_GPL(vhost_iotlb_itree_next);
 
 MODULE_VERSION(MOD_VERSION);

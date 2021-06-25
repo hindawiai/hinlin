@@ -1,193 +1,192 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * arch/sh/kernel/cpu/sh4a/घड़ी-sh7724.c
+ * arch/sh/kernel/cpu/sh4a/clock-sh7724.c
  *
- * SH7724 घड़ी framework support
+ * SH7724 clock framework support
  *
  * Copyright (C) 2009 Magnus Damm
  */
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/clkdev.h>
-#समावेश <linux/sh_clk.h>
-#समावेश <यंत्र/घड़ी.h>
-#समावेश <cpu/sh7724.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/clkdev.h>
+#include <linux/sh_clk.h>
+#include <asm/clock.h>
+#include <cpu/sh7724.h>
 
-/* SH7724 रेजिस्टरs */
-#घोषणा FRQCRA		0xa4150000
-#घोषणा FRQCRB		0xa4150004
-#घोषणा VCLKCR		0xa4150048
-#घोषणा FCLKACR		0xa4150008
-#घोषणा FCLKBCR		0xa415000c
-#घोषणा IRDACLKCR	0xa4150018
-#घोषणा PLLCR		0xa4150024
-#घोषणा MSTPCR0		0xa4150030
-#घोषणा MSTPCR1		0xa4150034
-#घोषणा MSTPCR2		0xa4150038
-#घोषणा SPUCLKCR	0xa415003c
-#घोषणा FLLFRQ		0xa4150050
-#घोषणा LSTATS		0xa4150060
+/* SH7724 registers */
+#define FRQCRA		0xa4150000
+#define FRQCRB		0xa4150004
+#define VCLKCR		0xa4150048
+#define FCLKACR		0xa4150008
+#define FCLKBCR		0xa415000c
+#define IRDACLKCR	0xa4150018
+#define PLLCR		0xa4150024
+#define MSTPCR0		0xa4150030
+#define MSTPCR1		0xa4150034
+#define MSTPCR2		0xa4150038
+#define SPUCLKCR	0xa415003c
+#define FLLFRQ		0xa4150050
+#define LSTATS		0xa4150060
 
-/* Fixed 32 KHz root घड़ी क्रम RTC and Power Management purposes */
-अटल काष्ठा clk r_clk = अणु
+/* Fixed 32 KHz root clock for RTC and Power Management purposes */
+static struct clk r_clk = {
 	.rate           = 32768,
-पूर्ण;
+};
 
 /*
- * Default rate क्रम the root input घड़ी, reset this with clk_set_rate()
- * from the platक्रमm code.
+ * Default rate for the root input clock, reset this with clk_set_rate()
+ * from the platform code.
  */
-अटल काष्ठा clk extal_clk = अणु
+static struct clk extal_clk = {
 	.rate		= 33333333,
-पूर्ण;
+};
 
 /* The fll multiplies the 32khz r_clk, may be used instead of extal */
-अटल अचिन्हित दीर्घ fll_recalc(काष्ठा clk *clk)
-अणु
-	अचिन्हित दीर्घ mult = 0;
-	अचिन्हित दीर्घ भाग = 1;
+static unsigned long fll_recalc(struct clk *clk)
+{
+	unsigned long mult = 0;
+	unsigned long div = 1;
 
-	अगर (__raw_पढ़ोl(PLLCR) & 0x1000)
-		mult = __raw_पढ़ोl(FLLFRQ) & 0x3ff;
+	if (__raw_readl(PLLCR) & 0x1000)
+		mult = __raw_readl(FLLFRQ) & 0x3ff;
 
-	अगर (__raw_पढ़ोl(FLLFRQ) & 0x4000)
-		भाग = 2;
+	if (__raw_readl(FLLFRQ) & 0x4000)
+		div = 2;
 
-	वापस (clk->parent->rate * mult) / भाग;
-पूर्ण
+	return (clk->parent->rate * mult) / div;
+}
 
-अटल काष्ठा sh_clk_ops fll_clk_ops = अणु
+static struct sh_clk_ops fll_clk_ops = {
 	.recalc		= fll_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा clk fll_clk = अणु
+static struct clk fll_clk = {
 	.ops		= &fll_clk_ops,
 	.parent		= &r_clk,
 	.flags		= CLK_ENABLE_ON_INIT,
-पूर्ण;
+};
 
-अटल अचिन्हित दीर्घ pll_recalc(काष्ठा clk *clk)
-अणु
-	अचिन्हित दीर्घ mult = 1;
+static unsigned long pll_recalc(struct clk *clk)
+{
+	unsigned long mult = 1;
 
-	अगर (__raw_पढ़ोl(PLLCR) & 0x4000)
-		mult = (((__raw_पढ़ोl(FRQCRA) >> 24) & 0x3f) + 1) * 2;
+	if (__raw_readl(PLLCR) & 0x4000)
+		mult = (((__raw_readl(FRQCRA) >> 24) & 0x3f) + 1) * 2;
 
-	वापस clk->parent->rate * mult;
-पूर्ण
+	return clk->parent->rate * mult;
+}
 
-अटल काष्ठा sh_clk_ops pll_clk_ops = अणु
+static struct sh_clk_ops pll_clk_ops = {
 	.recalc		= pll_recalc,
-पूर्ण;
+};
 
-अटल काष्ठा clk pll_clk = अणु
+static struct clk pll_clk = {
 	.ops		= &pll_clk_ops,
 	.flags		= CLK_ENABLE_ON_INIT,
-पूर्ण;
+};
 
-/* A fixed भागide-by-3 block use by the भाग6 घड़ीs */
-अटल अचिन्हित दीर्घ भाग3_recalc(काष्ठा clk *clk)
-अणु
-	वापस clk->parent->rate / 3;
-पूर्ण
+/* A fixed divide-by-3 block use by the div6 clocks */
+static unsigned long div3_recalc(struct clk *clk)
+{
+	return clk->parent->rate / 3;
+}
 
-अटल काष्ठा sh_clk_ops भाग3_clk_ops = अणु
-	.recalc		= भाग3_recalc,
-पूर्ण;
+static struct sh_clk_ops div3_clk_ops = {
+	.recalc		= div3_recalc,
+};
 
-अटल काष्ठा clk भाग3_clk = अणु
-	.ops		= &भाग3_clk_ops,
+static struct clk div3_clk = {
+	.ops		= &div3_clk_ops,
 	.parent		= &pll_clk,
-पूर्ण;
+};
 
-/* External input घड़ी (pin name: FSIMCKA/FSIMCKB/DV_CLKI ) */
-काष्ठा clk sh7724_fsimcka_clk = अणु
-पूर्ण;
+/* External input clock (pin name: FSIMCKA/FSIMCKB/DV_CLKI ) */
+struct clk sh7724_fsimcka_clk = {
+};
 
-काष्ठा clk sh7724_fsimckb_clk = अणु
-पूर्ण;
+struct clk sh7724_fsimckb_clk = {
+};
 
-काष्ठा clk sh7724_dv_clki = अणु
-पूर्ण;
+struct clk sh7724_dv_clki = {
+};
 
-अटल काष्ठा clk *मुख्य_clks[] = अणु
+static struct clk *main_clks[] = {
 	&r_clk,
 	&extal_clk,
 	&fll_clk,
 	&pll_clk,
-	&भाग3_clk,
+	&div3_clk,
 	&sh7724_fsimcka_clk,
 	&sh7724_fsimckb_clk,
 	&sh7724_dv_clki,
-पूर्ण;
+};
 
-अटल व्योम भाग4_kick(काष्ठा clk *clk)
-अणु
-	अचिन्हित दीर्घ value;
+static void div4_kick(struct clk *clk)
+{
+	unsigned long value;
 
 	/* set KICK bit in FRQCRA to update hardware setting */
-	value = __raw_पढ़ोl(FRQCRA);
+	value = __raw_readl(FRQCRA);
 	value |= (1 << 31);
-	__raw_ग_लिखोl(value, FRQCRA);
-पूर्ण
+	__raw_writel(value, FRQCRA);
+}
 
-अटल पूर्णांक भागisors[] = अणु 2, 3, 4, 6, 8, 12, 16, 0, 24, 32, 36, 48, 0, 72 पूर्ण;
+static int divisors[] = { 2, 3, 4, 6, 8, 12, 16, 0, 24, 32, 36, 48, 0, 72 };
 
-अटल काष्ठा clk_भाग_mult_table भाग4_भाग_mult_table = अणु
-	.भागisors = भागisors,
-	.nr_भागisors = ARRAY_SIZE(भागisors),
-पूर्ण;
+static struct clk_div_mult_table div4_div_mult_table = {
+	.divisors = divisors,
+	.nr_divisors = ARRAY_SIZE(divisors),
+};
 
-अटल काष्ठा clk_भाग4_table भाग4_table = अणु
-	.भाग_mult_table = &भाग4_भाग_mult_table,
-	.kick = भाग4_kick,
-पूर्ण;
+static struct clk_div4_table div4_table = {
+	.div_mult_table = &div4_div_mult_table,
+	.kick = div4_kick,
+};
 
-क्रमागत अणु DIV4_I, DIV4_SH, DIV4_B, DIV4_P, DIV4_M1, DIV4_NR पूर्ण;
+enum { DIV4_I, DIV4_SH, DIV4_B, DIV4_P, DIV4_M1, DIV4_NR };
 
-#घोषणा DIV4(_reg, _bit, _mask, _flags) \
+#define DIV4(_reg, _bit, _mask, _flags) \
   SH_CLK_DIV4(&pll_clk, _reg, _bit, _mask, _flags)
 
-काष्ठा clk भाग4_clks[DIV4_NR] = अणु
+struct clk div4_clks[DIV4_NR] = {
 	[DIV4_I] = DIV4(FRQCRA, 20, 0x2f7d, CLK_ENABLE_ON_INIT),
 	[DIV4_SH] = DIV4(FRQCRA, 12, 0x2f7c, CLK_ENABLE_ON_INIT),
 	[DIV4_B] = DIV4(FRQCRA, 8, 0x2f7c, CLK_ENABLE_ON_INIT),
 	[DIV4_P] = DIV4(FRQCRA, 0, 0x2f7c, 0),
 	[DIV4_M1] = DIV4(FRQCRB, 4, 0x2f7c, CLK_ENABLE_ON_INIT),
-पूर्ण;
+};
 
-क्रमागत अणु DIV6_V, DIV6_I, DIV6_S, DIV6_FA, DIV6_FB, DIV6_NR पूर्ण;
+enum { DIV6_V, DIV6_I, DIV6_S, DIV6_FA, DIV6_FB, DIV6_NR };
 
 /* Indices are important - they are the actual src selecting values */
-अटल काष्ठा clk *common_parent[] = अणु
-	[0] = &भाग3_clk,
-	[1] = शून्य,
-पूर्ण;
+static struct clk *common_parent[] = {
+	[0] = &div3_clk,
+	[1] = NULL,
+};
 
-अटल काष्ठा clk *vclkcr_parent[8] = अणु
-	[0] = &भाग3_clk,
+static struct clk *vclkcr_parent[8] = {
+	[0] = &div3_clk,
 	[2] = &sh7724_dv_clki,
 	[4] = &extal_clk,
-पूर्ण;
+};
 
-अटल काष्ठा clk *fclkacr_parent[] = अणु
-	[0] = &भाग3_clk,
-	[1] = शून्य,
+static struct clk *fclkacr_parent[] = {
+	[0] = &div3_clk,
+	[1] = NULL,
 	[2] = &sh7724_fsimcka_clk,
-	[3] = शून्य,
-पूर्ण;
+	[3] = NULL,
+};
 
-अटल काष्ठा clk *fclkbcr_parent[] = अणु
-	[0] = &भाग3_clk,
-	[1] = शून्य,
+static struct clk *fclkbcr_parent[] = {
+	[0] = &div3_clk,
+	[1] = NULL,
 	[2] = &sh7724_fsimckb_clk,
-	[3] = शून्य,
-पूर्ण;
+	[3] = NULL,
+};
 
-अटल काष्ठा clk भाग6_clks[DIV6_NR] = अणु
+static struct clk div6_clks[DIV6_NR] = {
 	[DIV6_V] = SH_CLK_DIV6_EXT(VCLKCR, 0,
 			vclkcr_parent, ARRAY_SIZE(vclkcr_parent), 12, 3),
 	[DIV6_I] = SH_CLK_DIV6_EXT(IRDACLKCR, 0,
@@ -198,88 +197,88 @@
 				      fclkacr_parent, ARRAY_SIZE(fclkacr_parent), 6, 2),
 	[DIV6_FB] = SH_CLK_DIV6_EXT(FCLKBCR, 0,
 				      fclkbcr_parent, ARRAY_SIZE(fclkbcr_parent), 6, 2),
-पूर्ण;
+};
 
-अटल काष्ठा clk mstp_clks[HWBLK_NR] = अणु
-	[HWBLK_TLB] = SH_CLK_MSTP32(&भाग4_clks[DIV4_I],	    MSTPCR0, 31, CLK_ENABLE_ON_INIT),
-	[HWBLK_IC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_I],	    MSTPCR0, 30, CLK_ENABLE_ON_INIT),
-	[HWBLK_OC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_I],	    MSTPCR0, 29, CLK_ENABLE_ON_INIT),
-	[HWBLK_RSMEM] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR0, 28, CLK_ENABLE_ON_INIT),
-	[HWBLK_ILMEM] = SH_CLK_MSTP32(&भाग4_clks[DIV4_I],   MSTPCR0, 27, CLK_ENABLE_ON_INIT),
-	[HWBLK_L2C] = SH_CLK_MSTP32(&भाग4_clks[DIV4_SH],    MSTPCR0, 26, CLK_ENABLE_ON_INIT),
-	[HWBLK_FPU] = SH_CLK_MSTP32(&भाग4_clks[DIV4_I],	    MSTPCR0, 24, CLK_ENABLE_ON_INIT),
-	[HWBLK_INTC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR0, 22, CLK_ENABLE_ON_INIT),
-	[HWBLK_DMAC0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR0, 21, 0),
-	[HWBLK_SHYWAY] = SH_CLK_MSTP32(&भाग4_clks[DIV4_SH], MSTPCR0, 20, CLK_ENABLE_ON_INIT),
-	[HWBLK_HUDI] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR0, 19, 0),
-	[HWBLK_UBC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_I],     MSTPCR0, 17, 0),
-	[HWBLK_TMU0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR0, 15, 0),
+static struct clk mstp_clks[HWBLK_NR] = {
+	[HWBLK_TLB] = SH_CLK_MSTP32(&div4_clks[DIV4_I],	    MSTPCR0, 31, CLK_ENABLE_ON_INIT),
+	[HWBLK_IC] = SH_CLK_MSTP32(&div4_clks[DIV4_I],	    MSTPCR0, 30, CLK_ENABLE_ON_INIT),
+	[HWBLK_OC] = SH_CLK_MSTP32(&div4_clks[DIV4_I],	    MSTPCR0, 29, CLK_ENABLE_ON_INIT),
+	[HWBLK_RSMEM] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR0, 28, CLK_ENABLE_ON_INIT),
+	[HWBLK_ILMEM] = SH_CLK_MSTP32(&div4_clks[DIV4_I],   MSTPCR0, 27, CLK_ENABLE_ON_INIT),
+	[HWBLK_L2C] = SH_CLK_MSTP32(&div4_clks[DIV4_SH],    MSTPCR0, 26, CLK_ENABLE_ON_INIT),
+	[HWBLK_FPU] = SH_CLK_MSTP32(&div4_clks[DIV4_I],	    MSTPCR0, 24, CLK_ENABLE_ON_INIT),
+	[HWBLK_INTC] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR0, 22, CLK_ENABLE_ON_INIT),
+	[HWBLK_DMAC0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR0, 21, 0),
+	[HWBLK_SHYWAY] = SH_CLK_MSTP32(&div4_clks[DIV4_SH], MSTPCR0, 20, CLK_ENABLE_ON_INIT),
+	[HWBLK_HUDI] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR0, 19, 0),
+	[HWBLK_UBC] = SH_CLK_MSTP32(&div4_clks[DIV4_I],     MSTPCR0, 17, 0),
+	[HWBLK_TMU0] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR0, 15, 0),
 	[HWBLK_CMT] = SH_CLK_MSTP32(&r_clk,		    MSTPCR0, 14, 0),
 	[HWBLK_RWDT] = SH_CLK_MSTP32(&r_clk,		    MSTPCR0, 13, 0),
-	[HWBLK_DMAC1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR0, 12, 0),
-	[HWBLK_TMU1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR0, 10, 0),
-	[HWBLK_SCIF0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],   MSTPCR0, 9, 0),
-	[HWBLK_SCIF1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],   MSTPCR0, 8, 0),
-	[HWBLK_SCIF2] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],   MSTPCR0, 7, 0),
-	[HWBLK_SCIF3] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR0, 6, 0),
-	[HWBLK_SCIF4] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR0, 5, 0),
-	[HWBLK_SCIF5] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR0, 4, 0),
-	[HWBLK_MSIOF0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],  MSTPCR0, 2, 0),
-	[HWBLK_MSIOF1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],  MSTPCR0, 1, 0),
+	[HWBLK_DMAC1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR0, 12, 0),
+	[HWBLK_TMU1] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR0, 10, 0),
+	[HWBLK_SCIF0] = SH_CLK_MSTP32(&div4_clks[DIV4_P],   MSTPCR0, 9, 0),
+	[HWBLK_SCIF1] = SH_CLK_MSTP32(&div4_clks[DIV4_P],   MSTPCR0, 8, 0),
+	[HWBLK_SCIF2] = SH_CLK_MSTP32(&div4_clks[DIV4_P],   MSTPCR0, 7, 0),
+	[HWBLK_SCIF3] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR0, 6, 0),
+	[HWBLK_SCIF4] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR0, 5, 0),
+	[HWBLK_SCIF5] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR0, 4, 0),
+	[HWBLK_MSIOF0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],  MSTPCR0, 2, 0),
+	[HWBLK_MSIOF1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],  MSTPCR0, 1, 0),
 
 	[HWBLK_KEYSC] = SH_CLK_MSTP32(&r_clk,		    MSTPCR1, 12, 0),
 	[HWBLK_RTC] = SH_CLK_MSTP32(&r_clk,		    MSTPCR1, 11, 0),
-	[HWBLK_IIC0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR1, 9, 0),
-	[HWBLK_IIC1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR1, 8, 0),
+	[HWBLK_IIC0] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR1, 9, 0),
+	[HWBLK_IIC1] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR1, 8, 0),
 
-	[HWBLK_MMC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 29, 0),
-	[HWBLK_ETHER] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR2, 28, 0),
-	[HWBLK_ATAPI] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR2, 26, 0),
-	[HWBLK_TPU] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 25, 0),
-	[HWBLK_IRDA] = SH_CLK_MSTP32(&भाग4_clks[DIV4_P],    MSTPCR2, 24, 0),
-	[HWBLK_TSIF] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 22, 0),
-	[HWBLK_USB1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 21, 0),
-	[HWBLK_USB0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 20, 0),
-	[HWBLK_2DG] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 19, 0),
-	[HWBLK_SDHI0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR2, 18, 0),
-	[HWBLK_SDHI1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],   MSTPCR2, 17, 0),
-	[HWBLK_VEU1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 15, 0),
-	[HWBLK_CEU1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 13, 0),
-	[HWBLK_BEU1] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 12, 0),
-	[HWBLK_2DDMAC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_SH], MSTPCR2, 10, 0),
-	[HWBLK_SPU] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 9, 0),
-	[HWBLK_JPU] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 6, 0),
-	[HWBLK_VOU] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 5, 0),
-	[HWBLK_BEU0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 4, 0),
-	[HWBLK_CEU0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 3, 0),
-	[HWBLK_VEU0] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 2, 0),
-	[HWBLK_VPU] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],	    MSTPCR2, 1, 0),
-	[HWBLK_LCDC] = SH_CLK_MSTP32(&भाग4_clks[DIV4_B],    MSTPCR2, 0, 0),
-पूर्ण;
+	[HWBLK_MMC] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 29, 0),
+	[HWBLK_ETHER] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR2, 28, 0),
+	[HWBLK_ATAPI] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR2, 26, 0),
+	[HWBLK_TPU] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 25, 0),
+	[HWBLK_IRDA] = SH_CLK_MSTP32(&div4_clks[DIV4_P],    MSTPCR2, 24, 0),
+	[HWBLK_TSIF] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 22, 0),
+	[HWBLK_USB1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 21, 0),
+	[HWBLK_USB0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 20, 0),
+	[HWBLK_2DG] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 19, 0),
+	[HWBLK_SDHI0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR2, 18, 0),
+	[HWBLK_SDHI1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],   MSTPCR2, 17, 0),
+	[HWBLK_VEU1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 15, 0),
+	[HWBLK_CEU1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 13, 0),
+	[HWBLK_BEU1] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 12, 0),
+	[HWBLK_2DDMAC] = SH_CLK_MSTP32(&div4_clks[DIV4_SH], MSTPCR2, 10, 0),
+	[HWBLK_SPU] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 9, 0),
+	[HWBLK_JPU] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 6, 0),
+	[HWBLK_VOU] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 5, 0),
+	[HWBLK_BEU0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 4, 0),
+	[HWBLK_CEU0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 3, 0),
+	[HWBLK_VEU0] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 2, 0),
+	[HWBLK_VPU] = SH_CLK_MSTP32(&div4_clks[DIV4_B],	    MSTPCR2, 1, 0),
+	[HWBLK_LCDC] = SH_CLK_MSTP32(&div4_clks[DIV4_B],    MSTPCR2, 0, 0),
+};
 
-अटल काष्ठा clk_lookup lookups[] = अणु
-	/* मुख्य घड़ीs */
+static struct clk_lookup lookups[] = {
+	/* main clocks */
 	CLKDEV_CON_ID("rclk", &r_clk),
 	CLKDEV_CON_ID("extal", &extal_clk),
 	CLKDEV_CON_ID("fll_clk", &fll_clk),
 	CLKDEV_CON_ID("pll_clk", &pll_clk),
-	CLKDEV_CON_ID("div3_clk", &भाग3_clk),
+	CLKDEV_CON_ID("div3_clk", &div3_clk),
 
-	/* DIV4 घड़ीs */
-	CLKDEV_CON_ID("cpu_clk", &भाग4_clks[DIV4_I]),
-	CLKDEV_CON_ID("shyway_clk", &भाग4_clks[DIV4_SH]),
-	CLKDEV_CON_ID("bus_clk", &भाग4_clks[DIV4_B]),
-	CLKDEV_CON_ID("peripheral_clk", &भाग4_clks[DIV4_P]),
-	CLKDEV_CON_ID("vpu_clk", &भाग4_clks[DIV4_M1]),
+	/* DIV4 clocks */
+	CLKDEV_CON_ID("cpu_clk", &div4_clks[DIV4_I]),
+	CLKDEV_CON_ID("shyway_clk", &div4_clks[DIV4_SH]),
+	CLKDEV_CON_ID("bus_clk", &div4_clks[DIV4_B]),
+	CLKDEV_CON_ID("peripheral_clk", &div4_clks[DIV4_P]),
+	CLKDEV_CON_ID("vpu_clk", &div4_clks[DIV4_M1]),
 
-	/* DIV6 घड़ीs */
-	CLKDEV_CON_ID("video_clk", &भाग6_clks[DIV6_V]),
-	CLKDEV_CON_ID("fsia_clk", &भाग6_clks[DIV6_FA]),
-	CLKDEV_CON_ID("fsib_clk", &भाग6_clks[DIV6_FB]),
-	CLKDEV_CON_ID("irda_clk", &भाग6_clks[DIV6_I]),
-	CLKDEV_CON_ID("spu_clk", &भाग6_clks[DIV6_S]),
+	/* DIV6 clocks */
+	CLKDEV_CON_ID("video_clk", &div6_clks[DIV6_V]),
+	CLKDEV_CON_ID("fsia_clk", &div6_clks[DIV6_FA]),
+	CLKDEV_CON_ID("fsib_clk", &div6_clks[DIV6_FB]),
+	CLKDEV_CON_ID("irda_clk", &div6_clks[DIV6_I]),
+	CLKDEV_CON_ID("spu_clk", &div6_clks[DIV6_S]),
 
-	/* MSTP घड़ीs */
+	/* MSTP clocks */
 	CLKDEV_CON_ID("tlb0", &mstp_clks[HWBLK_TLB]),
 	CLKDEV_CON_ID("ic0", &mstp_clks[HWBLK_IC]),
 	CLKDEV_CON_ID("oc0", &mstp_clks[HWBLK_OC]),
@@ -338,31 +337,31 @@
 	CLKDEV_CON_ID("veu0", &mstp_clks[HWBLK_VEU0]),
 	CLKDEV_CON_ID("vpu0", &mstp_clks[HWBLK_VPU]),
 	CLKDEV_DEV_ID("sh_mobile_lcdc_fb.0", &mstp_clks[HWBLK_LCDC]),
-पूर्ण;
+};
 
-पूर्णांक __init arch_clk_init(व्योम)
-अणु
-	पूर्णांक k, ret = 0;
+int __init arch_clk_init(void)
+{
+	int k, ret = 0;
 
-	/* स्वतःdetect extal or fll configuration */
-	अगर (__raw_पढ़ोl(PLLCR) & 0x1000)
+	/* autodetect extal or fll configuration */
+	if (__raw_readl(PLLCR) & 0x1000)
 		pll_clk.parent = &fll_clk;
-	अन्यथा
+	else
 		pll_clk.parent = &extal_clk;
 
-	क्रम (k = 0; !ret && (k < ARRAY_SIZE(मुख्य_clks)); k++)
-		ret = clk_रेजिस्टर(मुख्य_clks[k]);
+	for (k = 0; !ret && (k < ARRAY_SIZE(main_clks)); k++)
+		ret = clk_register(main_clks[k]);
 
 	clkdev_add_table(lookups, ARRAY_SIZE(lookups));
 
-	अगर (!ret)
-		ret = sh_clk_भाग4_रेजिस्टर(भाग4_clks, DIV4_NR, &भाग4_table);
+	if (!ret)
+		ret = sh_clk_div4_register(div4_clks, DIV4_NR, &div4_table);
 
-	अगर (!ret)
-		ret = sh_clk_भाग6_reparent_रेजिस्टर(भाग6_clks, DIV6_NR);
+	if (!ret)
+		ret = sh_clk_div6_reparent_register(div6_clks, DIV6_NR);
 
-	अगर (!ret)
-		ret = sh_clk_mstp_रेजिस्टर(mstp_clks, HWBLK_NR);
+	if (!ret)
+		ret = sh_clk_mstp_register(mstp_clks, HWBLK_NR);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

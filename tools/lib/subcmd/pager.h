@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __SUBCMD_PAGER_H
-#घोषणा __SUBCMD_PAGER_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __SUBCMD_PAGER_H
+#define __SUBCMD_PAGER_H
 
-बाह्य व्योम pager_init(स्थिर अक्षर *pager_env);
+extern void pager_init(const char *pager_env);
 
-बाह्य व्योम setup_pager(व्योम);
-बाह्य पूर्णांक pager_in_use(व्योम);
-बाह्य पूर्णांक pager_get_columns(व्योम);
-बाह्य व्योम क्रमce_pager(स्थिर अक्षर *);
+extern void setup_pager(void);
+extern int pager_in_use(void);
+extern int pager_get_columns(void);
+extern void force_pager(const char *);
 
-#पूर्ण_अगर /* __SUBCMD_PAGER_H */
+#endif /* __SUBCMD_PAGER_H */

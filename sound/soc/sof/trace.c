@@ -1,226 +1,225 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may करो so under either license.
+// redistributing this file, you may do so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
+// Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
 //
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश "sof-priv.h"
-#समावेश "ops.h"
+#include <linux/debugfs.h>
+#include <linux/sched/signal.h>
+#include "sof-priv.h"
+#include "ops.h"
 
-#घोषणा TRACE_FILTER_ELEMENTS_PER_ENTRY 4
-#घोषणा TRACE_FILTER_MAX_CONFIG_STRING_LENGTH 1024
+#define TRACE_FILTER_ELEMENTS_PER_ENTRY 4
+#define TRACE_FILTER_MAX_CONFIG_STRING_LENGTH 1024
 
-अटल पूर्णांक trace_filter_append_elem(काष्ठा snd_sof_dev *sdev, uपूर्णांक32_t key, uपूर्णांक32_t value,
-				    काष्ठा sof_ipc_trace_filter_elem *elem_list,
-				    पूर्णांक capacity, पूर्णांक *counter)
-अणु
-	अगर (*counter >= capacity)
-		वापस -ENOMEM;
+static int trace_filter_append_elem(struct snd_sof_dev *sdev, uint32_t key, uint32_t value,
+				    struct sof_ipc_trace_filter_elem *elem_list,
+				    int capacity, int *counter)
+{
+	if (*counter >= capacity)
+		return -ENOMEM;
 
 	elem_list[*counter].key = key;
 	elem_list[*counter].value = value;
 	++*counter;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace_filter_parse_entry(काष्ठा snd_sof_dev *sdev, स्थिर अक्षर *line,
-				    काष्ठा sof_ipc_trace_filter_elem *elem,
-				    पूर्णांक capacity, पूर्णांक *counter)
-अणु
-	पूर्णांक len = म_माप(line);
-	पूर्णांक cnt = *counter;
-	uपूर्णांक32_t uuid_id;
-	पूर्णांक log_level;
-	पूर्णांक pipe_id;
-	पूर्णांक comp_id;
-	पूर्णांक पढ़ो;
-	पूर्णांक ret;
+static int trace_filter_parse_entry(struct snd_sof_dev *sdev, const char *line,
+				    struct sof_ipc_trace_filter_elem *elem,
+				    int capacity, int *counter)
+{
+	int len = strlen(line);
+	int cnt = *counter;
+	uint32_t uuid_id;
+	int log_level;
+	int pipe_id;
+	int comp_id;
+	int read;
+	int ret;
 
 	/* ignore empty content */
-	ret = माला_पूछो(line, " %n", &पढ़ो);
-	अगर (!ret && पढ़ो == len)
-		वापस len;
+	ret = sscanf(line, " %n", &read);
+	if (!ret && read == len)
+		return len;
 
-	ret = माला_पूछो(line, " %d %x %d %d %n", &log_level, &uuid_id, &pipe_id, &comp_id, &पढ़ो);
-	अगर (ret != TRACE_FILTER_ELEMENTS_PER_ENTRY || पढ़ो != len) अणु
+	ret = sscanf(line, " %d %x %d %d %n", &log_level, &uuid_id, &pipe_id, &comp_id, &read);
+	if (ret != TRACE_FILTER_ELEMENTS_PER_ENTRY || read != len) {
 		dev_err(sdev->dev, "error: invalid trace filter entry '%s'\n", line);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (uuid_id > 0) अणु
+	if (uuid_id > 0) {
 		ret = trace_filter_append_elem(sdev, SOF_IPC_TRACE_FILTER_ELEM_BY_UUID,
 					       uuid_id, elem, capacity, &cnt);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (pipe_id >= 0) अणु
+		if (ret)
+			return ret;
+	}
+	if (pipe_id >= 0) {
 		ret = trace_filter_append_elem(sdev, SOF_IPC_TRACE_FILTER_ELEM_BY_PIPE,
 					       pipe_id, elem, capacity, &cnt);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (comp_id >= 0) अणु
+		if (ret)
+			return ret;
+	}
+	if (comp_id >= 0) {
 		ret = trace_filter_append_elem(sdev, SOF_IPC_TRACE_FILTER_ELEM_BY_COMP,
 					       comp_id, elem, capacity, &cnt);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = trace_filter_append_elem(sdev, SOF_IPC_TRACE_FILTER_ELEM_SET_LEVEL |
 				       SOF_IPC_TRACE_FILTER_ELEM_FIN,
 				       log_level, elem, capacity, &cnt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* update counter only when parsing whole entry passed */
 	*counter = cnt;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल पूर्णांक trace_filter_parse(काष्ठा snd_sof_dev *sdev, अक्षर *string,
-			      पूर्णांक *out_elem_cnt,
-			      काष्ठा sof_ipc_trace_filter_elem **out)
-अणु
-	अटल स्थिर अक्षर entry_delimiter[] = ";";
-	अक्षर *entry = string;
-	पूर्णांक capacity = 0;
-	पूर्णांक entry_len;
-	पूर्णांक cnt = 0;
+static int trace_filter_parse(struct snd_sof_dev *sdev, char *string,
+			      int *out_elem_cnt,
+			      struct sof_ipc_trace_filter_elem **out)
+{
+	static const char entry_delimiter[] = ";";
+	char *entry = string;
+	int capacity = 0;
+	int entry_len;
+	int cnt = 0;
 
 	/*
 	 * Each entry contains at least 1, up to TRACE_FILTER_ELEMENTS_PER_ENTRY
 	 * IPC elements, depending on content. Calculate IPC elements capacity
-	 * क्रम the input string where each element is set.
+	 * for the input string where each element is set.
 	 */
-	जबतक (entry) अणु
+	while (entry) {
 		capacity += TRACE_FILTER_ELEMENTS_PER_ENTRY;
-		entry = म_अक्षर(entry + 1, entry_delimiter[0]);
-	पूर्ण
-	*out = kदो_स्मृति(capacity * माप(**out), GFP_KERNEL);
-	अगर (!*out)
-		वापस -ENOMEM;
+		entry = strchr(entry + 1, entry_delimiter[0]);
+	}
+	*out = kmalloc(capacity * sizeof(**out), GFP_KERNEL);
+	if (!*out)
+		return -ENOMEM;
 
 	/* split input string by ';', and parse each entry separately in trace_filter_parse_entry */
-	जबतक ((entry = strsep(&string, entry_delimiter))) अणु
+	while ((entry = strsep(&string, entry_delimiter))) {
 		entry_len = trace_filter_parse_entry(sdev, entry, *out, capacity, &cnt);
-		अगर (entry_len < 0) अणु
+		if (entry_len < 0) {
 			dev_err(sdev->dev, "error: %s failed for '%s', %d\n", __func__, entry,
 				entry_len);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	*out_elem_cnt = cnt;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sof_ipc_trace_update_filter(काष्ठा snd_sof_dev *sdev, पूर्णांक num_elems,
-				       काष्ठा sof_ipc_trace_filter_elem *elems)
-अणु
-	काष्ठा sof_ipc_trace_filter *msg;
-	काष्ठा sof_ipc_reply reply;
-	माप_प्रकार size;
-	पूर्णांक ret;
+static int sof_ipc_trace_update_filter(struct snd_sof_dev *sdev, int num_elems,
+				       struct sof_ipc_trace_filter_elem *elems)
+{
+	struct sof_ipc_trace_filter *msg;
+	struct sof_ipc_reply reply;
+	size_t size;
+	int ret;
 
-	size = काष्ठा_size(msg, elems, num_elems);
-	अगर (size > SOF_IPC_MSG_MAX_SIZE)
-		वापस -EINVAL;
+	size = struct_size(msg, elems, num_elems);
+	if (size > SOF_IPC_MSG_MAX_SIZE)
+		return -EINVAL;
 
-	msg = kदो_स्मृति(size, GFP_KERNEL);
-	अगर (!msg)
-		वापस -ENOMEM;
+	msg = kmalloc(size, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 
 	msg->hdr.size = size;
 	msg->hdr.cmd = SOF_IPC_GLB_TRACE_MSG | SOF_IPC_TRACE_FILTER_UPDATE;
 	msg->elem_cnt = num_elems;
-	स_नकल(&msg->elems[0], elems, num_elems * माप(*elems));
+	memcpy(&msg->elems[0], elems, num_elems * sizeof(*elems));
 
-	ret = pm_runसमय_get_sync(sdev->dev);
-	अगर (ret < 0 && ret != -EACCES) अणु
-		pm_runसमय_put_noidle(sdev->dev);
+	ret = pm_runtime_get_sync(sdev->dev);
+	if (ret < 0 && ret != -EACCES) {
+		pm_runtime_put_noidle(sdev->dev);
 		dev_err(sdev->dev, "error: enabling device failed: %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	ret = sof_ipc_tx_message(sdev->ipc, msg->hdr.cmd, msg, msg->hdr.size,
-				 &reply, माप(reply));
-	pm_runसमय_mark_last_busy(sdev->dev);
-	pm_runसमय_put_स्वतःsuspend(sdev->dev);
+				 &reply, sizeof(reply));
+	pm_runtime_mark_last_busy(sdev->dev);
+	pm_runtime_put_autosuspend(sdev->dev);
 
 error:
-	kमुक्त(msg);
-	वापस ret ? ret : reply.error;
-पूर्ण
+	kfree(msg);
+	return ret ? ret : reply.error;
+}
 
-अटल sमाप_प्रकार sof_dfsentry_trace_filter_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *from,
-					       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा snd_sof_dfsentry *dfse = file->निजी_data;
-	काष्ठा sof_ipc_trace_filter_elem *elems = शून्य;
-	काष्ठा snd_sof_dev *sdev = dfse->sdev;
+static ssize_t sof_dfsentry_trace_filter_write(struct file *file, const char __user *from,
+					       size_t count, loff_t *ppos)
+{
+	struct snd_sof_dfsentry *dfse = file->private_data;
+	struct sof_ipc_trace_filter_elem *elems = NULL;
+	struct snd_sof_dev *sdev = dfse->sdev;
 	loff_t pos = 0;
-	पूर्णांक num_elems;
-	अक्षर *string;
-	पूर्णांक ret;
+	int num_elems;
+	char *string;
+	int ret;
 
-	अगर (count > TRACE_FILTER_MAX_CONFIG_STRING_LENGTH) अणु
+	if (count > TRACE_FILTER_MAX_CONFIG_STRING_LENGTH) {
 		dev_err(sdev->dev, "%s too long input, %zu > %d\n", __func__, count,
 			TRACE_FILTER_MAX_CONFIG_STRING_LENGTH);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	string = kदो_स्मृति(count + 1, GFP_KERNEL);
-	अगर (!string)
-		वापस -ENOMEM;
+	string = kmalloc(count + 1, GFP_KERNEL);
+	if (!string)
+		return -ENOMEM;
 
-	/* निश्चित null termination */
+	/* assert null termination */
 	string[count] = 0;
-	ret = simple_ग_लिखो_to_buffer(string, count, &pos, from, count);
-	अगर (ret < 0)
-		जाओ error;
+	ret = simple_write_to_buffer(string, count, &pos, from, count);
+	if (ret < 0)
+		goto error;
 
 	ret = trace_filter_parse(sdev, string, &num_elems, &elems);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev, "error: fail in trace_filter_parse, %d\n", ret);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (num_elems) अणु
+	if (num_elems) {
 		ret = sof_ipc_trace_update_filter(sdev, num_elems, elems);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(sdev->dev, "error: fail in sof_ipc_trace_update_filter %d\n", ret);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 	ret = count;
 error:
-	kमुक्त(string);
-	kमुक्त(elems);
-	वापस ret;
-पूर्ण
+	kfree(string);
+	kfree(elems);
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations sof_dfs_trace_filter_fops = अणु
-	.खोलो = simple_खोलो,
-	.ग_लिखो = sof_dfsentry_trace_filter_ग_लिखो,
-	.llseek = शेष_llseek,
-पूर्ण;
+static const struct file_operations sof_dfs_trace_filter_fops = {
+	.open = simple_open,
+	.write = sof_dfsentry_trace_filter_write,
+	.llseek = default_llseek,
+};
 
-अटल पूर्णांक trace_debugfs_filter_create(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा snd_sof_dfsentry *dfse;
+static int trace_debugfs_filter_create(struct snd_sof_dev *sdev)
+{
+	struct snd_sof_dfsentry *dfse;
 
-	dfse = devm_kzalloc(sdev->dev, माप(*dfse), GFP_KERNEL);
-	अगर (!dfse)
-		वापस -ENOMEM;
+	dfse = devm_kzalloc(sdev->dev, sizeof(*dfse), GFP_KERNEL);
+	if (!dfse)
+		return -ENOMEM;
 
 	dfse->sdev = sdev;
 	dfse->type = SOF_DFSENTRY_TYPE_BUF;
@@ -230,143 +229,143 @@ error:
 	/* add to dfsentry list */
 	list_add(&dfse->list, &sdev->dfsentry_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार sof_trace_avail(काष्ठा snd_sof_dev *sdev,
-			      loff_t pos, माप_प्रकार buffer_size)
-अणु
+static size_t sof_trace_avail(struct snd_sof_dev *sdev,
+			      loff_t pos, size_t buffer_size)
+{
 	loff_t host_offset = READ_ONCE(sdev->host_offset);
 
 	/*
-	 * If host offset is less than local pos, it means ग_लिखो poपूर्णांकer of
+	 * If host offset is less than local pos, it means write pointer of
 	 * host DMA buffer has been wrapped. We should output the trace data
 	 * at the end of host DMA buffer at first.
 	 */
-	अगर (host_offset < pos)
-		वापस buffer_size - pos;
+	if (host_offset < pos)
+		return buffer_size - pos;
 
-	/* If there is available trace data now, it is unnecessary to रुको. */
-	अगर (host_offset > pos)
-		वापस host_offset - pos;
+	/* If there is available trace data now, it is unnecessary to wait. */
+	if (host_offset > pos)
+		return host_offset - pos;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल माप_प्रकार sof_रुको_trace_avail(काष्ठा snd_sof_dev *sdev,
-				   loff_t pos, माप_प्रकार buffer_size)
-अणु
-	रुको_queue_entry_t रुको;
-	माप_प्रकार ret = sof_trace_avail(sdev, pos, buffer_size);
+static size_t sof_wait_trace_avail(struct snd_sof_dev *sdev,
+				   loff_t pos, size_t buffer_size)
+{
+	wait_queue_entry_t wait;
+	size_t ret = sof_trace_avail(sdev, pos, buffer_size);
 
 	/* data immediately available */
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!sdev->dtrace_is_enabled && sdev->dtrace_draining) अणु
+	if (!sdev->dtrace_is_enabled && sdev->dtrace_draining) {
 		/*
 		 * tracing has ended and all traces have been
-		 * पढ़ो by client, वापस खातापूर्ण
+		 * read by client, return EOF
 		 */
 		sdev->dtrace_draining = false;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* रुको क्रम available trace data from FW */
-	init_रुकोqueue_entry(&रुको, current);
+	/* wait for available trace data from FW */
+	init_waitqueue_entry(&wait, current);
 	set_current_state(TASK_INTERRUPTIBLE);
-	add_रुको_queue(&sdev->trace_sleep, &रुको);
+	add_wait_queue(&sdev->trace_sleep, &wait);
 
-	अगर (!संकेत_pending(current)) अणु
-		/* set समयout to max value, no error code */
-		schedule_समयout(MAX_SCHEDULE_TIMEOUT);
-	पूर्ण
-	हटाओ_रुको_queue(&sdev->trace_sleep, &रुको);
+	if (!signal_pending(current)) {
+		/* set timeout to max value, no error code */
+		schedule_timeout(MAX_SCHEDULE_TIMEOUT);
+	}
+	remove_wait_queue(&sdev->trace_sleep, &wait);
 
-	वापस sof_trace_avail(sdev, pos, buffer_size);
-पूर्ण
+	return sof_trace_avail(sdev, pos, buffer_size);
+}
 
-अटल sमाप_प्रकार sof_dfsentry_trace_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-				       माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा snd_sof_dfsentry *dfse = file->निजी_data;
-	काष्ठा snd_sof_dev *sdev = dfse->sdev;
-	अचिन्हित दीर्घ rem;
+static ssize_t sof_dfsentry_trace_read(struct file *file, char __user *buffer,
+				       size_t count, loff_t *ppos)
+{
+	struct snd_sof_dfsentry *dfse = file->private_data;
+	struct snd_sof_dev *sdev = dfse->sdev;
+	unsigned long rem;
 	loff_t lpos = *ppos;
-	माप_प्रकार avail, buffer_size = dfse->size;
+	size_t avail, buffer_size = dfse->size;
 	u64 lpos_64;
 
 	/* make sure we know about any failures on the DSP side */
 	sdev->dtrace_error = false;
 
 	/* check pos and count */
-	अगर (lpos < 0)
-		वापस -EINVAL;
-	अगर (!count)
-		वापस 0;
+	if (lpos < 0)
+		return -EINVAL;
+	if (!count)
+		return 0;
 
-	/* check क्रम buffer wrap and count overflow */
+	/* check for buffer wrap and count overflow */
 	lpos_64 = lpos;
-	lpos = करो_भाग(lpos_64, buffer_size);
+	lpos = do_div(lpos_64, buffer_size);
 
-	अगर (count > buffer_size - lpos) /* min() not used to aव्योम sparse warnings */
+	if (count > buffer_size - lpos) /* min() not used to avoid sparse warnings */
 		count = buffer_size - lpos;
 
 	/* get available count based on current host offset */
-	avail = sof_रुको_trace_avail(sdev, lpos, buffer_size);
-	अगर (sdev->dtrace_error) अणु
+	avail = sof_wait_trace_avail(sdev, lpos, buffer_size);
+	if (sdev->dtrace_error) {
 		dev_err(sdev->dev, "error: trace IO error\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/* make sure count is <= avail */
 	count = avail > count ? count : avail;
 
 	/* copy available trace data to debugfs */
 	rem = copy_to_user(buffer, ((u8 *)(dfse->buf) + lpos), count);
-	अगर (rem)
-		वापस -EFAULT;
+	if (rem)
+		return -EFAULT;
 
 	*ppos += count;
 
-	/* move debugfs पढ़ोing position */
-	वापस count;
-पूर्ण
+	/* move debugfs reading position */
+	return count;
+}
 
-अटल पूर्णांक sof_dfsentry_trace_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा snd_sof_dfsentry *dfse = inode->i_निजी;
-	काष्ठा snd_sof_dev *sdev = dfse->sdev;
+static int sof_dfsentry_trace_release(struct inode *inode, struct file *file)
+{
+	struct snd_sof_dfsentry *dfse = inode->i_private;
+	struct snd_sof_dev *sdev = dfse->sdev;
 
-	/* aव्योम duplicate traces at next खोलो */
-	अगर (!sdev->dtrace_is_enabled)
+	/* avoid duplicate traces at next open */
+	if (!sdev->dtrace_is_enabled)
 		sdev->host_offset = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations sof_dfs_trace_fops = अणु
-	.खोलो = simple_खोलो,
-	.पढ़ो = sof_dfsentry_trace_पढ़ो,
-	.llseek = शेष_llseek,
+static const struct file_operations sof_dfs_trace_fops = {
+	.open = simple_open,
+	.read = sof_dfsentry_trace_read,
+	.llseek = default_llseek,
 	.release = sof_dfsentry_trace_release,
-पूर्ण;
+};
 
-अटल पूर्णांक trace_debugfs_create(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा snd_sof_dfsentry *dfse;
-	पूर्णांक ret;
+static int trace_debugfs_create(struct snd_sof_dev *sdev)
+{
+	struct snd_sof_dfsentry *dfse;
+	int ret;
 
-	अगर (!sdev)
-		वापस -EINVAL;
+	if (!sdev)
+		return -EINVAL;
 
 	ret = trace_debugfs_filter_create(sdev);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(sdev->dev, "error: fail in %s, %d", __func__, ret);
 
-	dfse = devm_kzalloc(sdev->dev, माप(*dfse), GFP_KERNEL);
-	अगर (!dfse)
-		वापस -ENOMEM;
+	dfse = devm_kzalloc(sdev->dev, sizeof(*dfse), GFP_KERNEL);
+	if (!dfse)
+		return -ENOMEM;
 
 	dfse->type = SOF_DFSENTRY_TYPE_BUF;
 	dfse->buf = sdev->dmatb.area;
@@ -376,34 +375,34 @@ error:
 	debugfs_create_file("trace", 0444, sdev->debugfs_root, dfse,
 			    &sof_dfs_trace_fops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_sof_init_trace_ipc(काष्ठा snd_sof_dev *sdev)
-अणु
-	काष्ठा sof_ipc_fw_पढ़ोy *पढ़ोy = &sdev->fw_पढ़ोy;
-	काष्ठा sof_ipc_fw_version *v = &पढ़ोy->version;
-	काष्ठा sof_ipc_dma_trace_params_ext params;
-	काष्ठा sof_ipc_reply ipc_reply;
-	पूर्णांक ret;
+int snd_sof_init_trace_ipc(struct snd_sof_dev *sdev)
+{
+	struct sof_ipc_fw_ready *ready = &sdev->fw_ready;
+	struct sof_ipc_fw_version *v = &ready->version;
+	struct sof_ipc_dma_trace_params_ext params;
+	struct sof_ipc_reply ipc_reply;
+	int ret;
 
-	अगर (!sdev->dtrace_is_supported)
-		वापस 0;
+	if (!sdev->dtrace_is_supported)
+		return 0;
 
-	अगर (sdev->dtrace_is_enabled || !sdev->dma_trace_pages)
-		वापस -EINVAL;
+	if (sdev->dtrace_is_enabled || !sdev->dma_trace_pages)
+		return -EINVAL;
 
 	/* set IPC parameters */
 	params.hdr.cmd = SOF_IPC_GLB_TRACE_MSG;
 	/* PARAMS_EXT is only supported from ABI 3.7.0 onwards */
-	अगर (v->abi_version >= SOF_ABI_VER(3, 7, 0)) अणु
-		params.hdr.size = माप(काष्ठा sof_ipc_dma_trace_params_ext);
+	if (v->abi_version >= SOF_ABI_VER(3, 7, 0)) {
+		params.hdr.size = sizeof(struct sof_ipc_dma_trace_params_ext);
 		params.hdr.cmd |= SOF_IPC_TRACE_DMA_PARAMS_EXT;
-		params.बारtamp_ns = kसमय_get(); /* in nanosecond */
-	पूर्ण अन्यथा अणु
-		params.hdr.size = माप(काष्ठा sof_ipc_dma_trace_params);
+		params.timestamp_ns = ktime_get(); /* in nanosecond */
+	} else {
+		params.hdr.size = sizeof(struct sof_ipc_dma_trace_params);
 		params.hdr.cmd |= SOF_IPC_TRACE_DMA_PARAMS;
-	पूर्ण
+	}
 	params.buffer.phy_addr = sdev->dmatp.addr;
 	params.buffer.size = sdev->dmatb.bytes;
 	params.buffer.pages = sdev->dma_trace_pages;
@@ -413,165 +412,165 @@ error:
 	sdev->dtrace_draining = false;
 
 	ret = snd_sof_dma_trace_init(sdev, &params.stream_tag);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev,
 			"error: fail in snd_sof_dma_trace_init %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	dev_dbg(sdev->dev, "stream_tag: %d\n", params.stream_tag);
 
 	/* send IPC to the DSP */
 	ret = sof_ipc_tx_message(sdev->ipc,
-				 params.hdr.cmd, &params, माप(params),
-				 &ipc_reply, माप(ipc_reply));
-	अगर (ret < 0) अणु
+				 params.hdr.cmd, &params, sizeof(params),
+				 &ipc_reply, sizeof(ipc_reply));
+	if (ret < 0) {
 		dev_err(sdev->dev,
 			"error: can't set params for DMA for trace %d\n", ret);
-		जाओ trace_release;
-	पूर्ण
+		goto trace_release;
+	}
 
 	ret = snd_sof_dma_trace_trigger(sdev, SNDRV_PCM_TRIGGER_START);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev,
 			"error: snd_sof_dma_trace_trigger: start: %d\n", ret);
-		जाओ trace_release;
-	पूर्ण
+		goto trace_release;
+	}
 
 	sdev->dtrace_is_enabled = true;
 
-	वापस 0;
+	return 0;
 
 trace_release:
 	snd_sof_dma_trace_release(sdev);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक snd_sof_init_trace(काष्ठा snd_sof_dev *sdev)
-अणु
-	पूर्णांक ret;
+int snd_sof_init_trace(struct snd_sof_dev *sdev)
+{
+	int ret;
 
-	अगर (!sdev->dtrace_is_supported)
-		वापस 0;
+	if (!sdev->dtrace_is_supported)
+		return 0;
 
-	/* set false beक्रमe start initialization */
+	/* set false before start initialization */
 	sdev->dtrace_is_enabled = false;
 
 	/* allocate trace page table buffer */
 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, sdev->dev,
 				  PAGE_SIZE, &sdev->dmatp);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev,
 			"error: can't alloc page table for trace %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* allocate trace data buffer */
 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV_SG, sdev->dev,
 				  DMA_BUF_SIZE_FOR_TRACE, &sdev->dmatb);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(sdev->dev,
 			"error: can't alloc buffer for trace %d\n", ret);
-		जाओ page_err;
-	पूर्ण
+		goto page_err;
+	}
 
-	/* create compressed page table क्रम audio firmware */
+	/* create compressed page table for audio firmware */
 	ret = snd_sof_create_page_table(sdev->dev, &sdev->dmatb,
 					sdev->dmatp.area, sdev->dmatb.bytes);
-	अगर (ret < 0)
-		जाओ table_err;
+	if (ret < 0)
+		goto table_err;
 
 	sdev->dma_trace_pages = ret;
 	dev_dbg(sdev->dev, "dma_trace_pages: %d\n", sdev->dma_trace_pages);
 
-	अगर (sdev->first_boot) अणु
+	if (sdev->first_boot) {
 		ret = trace_debugfs_create(sdev);
-		अगर (ret < 0)
-			जाओ table_err;
-	पूर्ण
+		if (ret < 0)
+			goto table_err;
+	}
 
-	init_रुकोqueue_head(&sdev->trace_sleep);
+	init_waitqueue_head(&sdev->trace_sleep);
 
 	ret = snd_sof_init_trace_ipc(sdev);
-	अगर (ret < 0)
-		जाओ table_err;
+	if (ret < 0)
+		goto table_err;
 
-	वापस 0;
+	return 0;
 table_err:
 	sdev->dma_trace_pages = 0;
-	snd_dma_मुक्त_pages(&sdev->dmatb);
+	snd_dma_free_pages(&sdev->dmatb);
 page_err:
-	snd_dma_मुक्त_pages(&sdev->dmatp);
-	वापस ret;
-पूर्ण
+	snd_dma_free_pages(&sdev->dmatp);
+	return ret;
+}
 EXPORT_SYMBOL(snd_sof_init_trace);
 
-पूर्णांक snd_sof_trace_update_pos(काष्ठा snd_sof_dev *sdev,
-			     काष्ठा sof_ipc_dma_trace_posn *posn)
-अणु
-	अगर (!sdev->dtrace_is_supported)
-		वापस 0;
+int snd_sof_trace_update_pos(struct snd_sof_dev *sdev,
+			     struct sof_ipc_dma_trace_posn *posn)
+{
+	if (!sdev->dtrace_is_supported)
+		return 0;
 
-	अगर (sdev->dtrace_is_enabled && sdev->host_offset != posn->host_offset) अणु
+	if (sdev->dtrace_is_enabled && sdev->host_offset != posn->host_offset) {
 		sdev->host_offset = posn->host_offset;
 		wake_up(&sdev->trace_sleep);
-	पूर्ण
+	}
 
-	अगर (posn->overflow != 0)
+	if (posn->overflow != 0)
 		dev_err(sdev->dev,
 			"error: DSP trace buffer overflow %u bytes. Total messages %d\n",
 			posn->overflow, posn->messages);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* an error has occurred within the DSP that prevents further trace */
-व्योम snd_sof_trace_notअगरy_क्रम_error(काष्ठा snd_sof_dev *sdev)
-अणु
-	अगर (!sdev->dtrace_is_supported)
-		वापस;
+void snd_sof_trace_notify_for_error(struct snd_sof_dev *sdev)
+{
+	if (!sdev->dtrace_is_supported)
+		return;
 
-	अगर (sdev->dtrace_is_enabled) अणु
+	if (sdev->dtrace_is_enabled) {
 		dev_err(sdev->dev, "error: waking up any trace sleepers\n");
 		sdev->dtrace_error = true;
 		wake_up(&sdev->trace_sleep);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(snd_sof_trace_notअगरy_क्रम_error);
+	}
+}
+EXPORT_SYMBOL(snd_sof_trace_notify_for_error);
 
-व्योम snd_sof_release_trace(काष्ठा snd_sof_dev *sdev)
-अणु
-	पूर्णांक ret;
+void snd_sof_release_trace(struct snd_sof_dev *sdev)
+{
+	int ret;
 
-	अगर (!sdev->dtrace_is_supported || !sdev->dtrace_is_enabled)
-		वापस;
+	if (!sdev->dtrace_is_supported || !sdev->dtrace_is_enabled)
+		return;
 
 	ret = snd_sof_dma_trace_trigger(sdev, SNDRV_PCM_TRIGGER_STOP);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(sdev->dev,
 			"error: snd_sof_dma_trace_trigger: stop: %d\n", ret);
 
 	ret = snd_sof_dma_trace_release(sdev);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(sdev->dev,
 			"error: fail in snd_sof_dma_trace_release %d\n", ret);
 
 	sdev->dtrace_is_enabled = false;
 	sdev->dtrace_draining = true;
 	wake_up(&sdev->trace_sleep);
-पूर्ण
+}
 EXPORT_SYMBOL(snd_sof_release_trace);
 
-व्योम snd_sof_मुक्त_trace(काष्ठा snd_sof_dev *sdev)
-अणु
-	अगर (!sdev->dtrace_is_supported)
-		वापस;
+void snd_sof_free_trace(struct snd_sof_dev *sdev)
+{
+	if (!sdev->dtrace_is_supported)
+		return;
 
 	snd_sof_release_trace(sdev);
 
-	अगर (sdev->dma_trace_pages) अणु
-		snd_dma_मुक्त_pages(&sdev->dmatb);
-		snd_dma_मुक्त_pages(&sdev->dmatp);
+	if (sdev->dma_trace_pages) {
+		snd_dma_free_pages(&sdev->dmatb);
+		snd_dma_free_pages(&sdev->dmatp);
 		sdev->dma_trace_pages = 0;
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(snd_sof_मुक्त_trace);
+	}
+}
+EXPORT_SYMBOL(snd_sof_free_trace);

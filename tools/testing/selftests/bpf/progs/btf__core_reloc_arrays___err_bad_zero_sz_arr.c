@@ -1,4 +1,3 @@
-<शैली गुरु>
-#समावेश "core_reloc_types.h"
+#include "core_reloc_types.h"
 
-व्योम f(काष्ठा core_reloc_arrays___err_bad_zero_sz_arr x) अणुपूर्ण
+void f(struct core_reloc_arrays___err_bad_zero_sz_arr x) {}

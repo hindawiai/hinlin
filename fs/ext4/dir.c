@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  *  linux/fs/ext4/dir.c
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laborम_से_पre MASI - Institut Blaise Pascal
+ * Laboratoire MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  from
@@ -16,360 +15,360 @@
  *
  *  ext4 directory handling functions
  *
- *  Big-endian to little-endian byte-swapping/biपंचांगaps by
+ *  Big-endian to little-endian byte-swapping/bitmaps by
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  *
  * Hash Tree Directory indexing (c) 2001  Daniel Phillips
  *
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/buffer_head.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/iversion.h>
-#समावेश <linux/unicode.h>
-#समावेश "ext4.h"
-#समावेश "xattr.h"
+#include <linux/fs.h>
+#include <linux/buffer_head.h>
+#include <linux/slab.h>
+#include <linux/iversion.h>
+#include <linux/unicode.h>
+#include "ext4.h"
+#include "xattr.h"
 
-अटल पूर्णांक ext4_dx_सूची_पढ़ो(काष्ठा file *, काष्ठा dir_context *);
+static int ext4_dx_readdir(struct file *, struct dir_context *);
 
 /**
- * is_dx_dir() - check अगर a directory is using htree indexing
+ * is_dx_dir() - check if a directory is using htree indexing
  * @inode: directory inode
  *
- * Check अगर the given dir-inode refers to an htree-indexed directory
+ * Check if the given dir-inode refers to an htree-indexed directory
  * (or a directory which could potentially get converted to use htree
  * indexing).
  *
- * Return 1 अगर it is a dx dir, 0 अगर not
+ * Return 1 if it is a dx dir, 0 if not
  */
-अटल पूर्णांक is_dx_dir(काष्ठा inode *inode)
-अणु
-	काष्ठा super_block *sb = inode->i_sb;
+static int is_dx_dir(struct inode *inode)
+{
+	struct super_block *sb = inode->i_sb;
 
-	अगर (ext4_has_feature_dir_index(inode->i_sb) &&
+	if (ext4_has_feature_dir_index(inode->i_sb) &&
 	    ((ext4_test_inode_flag(inode, EXT4_INODE_INDEX)) ||
 	     ((inode->i_size >> sb->s_blocksize_bits) == 1) ||
-	     ext4_has_अंतरभूत_data(inode)))
-		वापस 1;
+	     ext4_has_inline_data(inode)))
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool is_fake_dir_entry(काष्ठा ext4_dir_entry_2 *de)
-अणु
-	/* Check अगर . or .. , or skip अगर namelen is 0 */
-	अगर ((de->name_len > 0) && (de->name_len <= 2) && (de->name[0] == '.') &&
+static bool is_fake_dir_entry(struct ext4_dir_entry_2 *de)
+{
+	/* Check if . or .. , or skip if namelen is 0 */
+	if ((de->name_len > 0) && (de->name_len <= 2) && (de->name[0] == '.') &&
 	    (de->name[1] == '.' || de->name[1] == '\0'))
-		वापस true;
-	/* Check अगर this is a csum entry */
-	अगर (de->file_type == EXT4_FT_सूची_CSUM)
-		वापस true;
-	वापस false;
-पूर्ण
+		return true;
+	/* Check if this is a csum entry */
+	if (de->file_type == EXT4_FT_DIR_CSUM)
+		return true;
+	return false;
+}
 
 /*
- * Return 0 अगर the directory entry is OK, and 1 अगर there is a problem
+ * Return 0 if the directory entry is OK, and 1 if there is a problem
  *
- * Note: this is the opposite of what ext2 and ext3 historically वापसed...
+ * Note: this is the opposite of what ext2 and ext3 historically returned...
  *
  * bh passed here can be an inode block or a dir data block, depending
- * on the inode अंतरभूत data flag.
+ * on the inode inline data flag.
  */
-पूर्णांक __ext4_check_dir_entry(स्थिर अक्षर *function, अचिन्हित पूर्णांक line,
-			   काष्ठा inode *dir, काष्ठा file *filp,
-			   काष्ठा ext4_dir_entry_2 *de,
-			   काष्ठा buffer_head *bh, अक्षर *buf, पूर्णांक size,
-			   अचिन्हित पूर्णांक offset)
-अणु
-	स्थिर अक्षर *error_msg = शून्य;
-	स्थिर पूर्णांक rlen = ext4_rec_len_from_disk(de->rec_len,
+int __ext4_check_dir_entry(const char *function, unsigned int line,
+			   struct inode *dir, struct file *filp,
+			   struct ext4_dir_entry_2 *de,
+			   struct buffer_head *bh, char *buf, int size,
+			   unsigned int offset)
+{
+	const char *error_msg = NULL;
+	const int rlen = ext4_rec_len_from_disk(de->rec_len,
 						dir->i_sb->s_blocksize);
-	स्थिर पूर्णांक next_offset = ((अक्षर *) de - buf) + rlen;
+	const int next_offset = ((char *) de - buf) + rlen;
 	bool fake = is_fake_dir_entry(de);
 	bool has_csum = ext4_has_metadata_csum(dir->i_sb);
 
-	अगर (unlikely(rlen < ext4_dir_rec_len(1, fake ? शून्य : dir)))
+	if (unlikely(rlen < ext4_dir_rec_len(1, fake ? NULL : dir)))
 		error_msg = "rec_len is smaller than minimal";
-	अन्यथा अगर (unlikely(rlen % 4 != 0))
+	else if (unlikely(rlen % 4 != 0))
 		error_msg = "rec_len % 4 != 0";
-	अन्यथा अगर (unlikely(rlen < ext4_dir_rec_len(de->name_len,
-							fake ? शून्य : dir)))
+	else if (unlikely(rlen < ext4_dir_rec_len(de->name_len,
+							fake ? NULL : dir)))
 		error_msg = "rec_len is too small for name_len";
-	अन्यथा अगर (unlikely(next_offset > size))
+	else if (unlikely(next_offset > size))
 		error_msg = "directory entry overrun";
-	अन्यथा अगर (unlikely(next_offset > size - ext4_dir_rec_len(1,
-						  has_csum ? शून्य : dir) &&
+	else if (unlikely(next_offset > size - ext4_dir_rec_len(1,
+						  has_csum ? NULL : dir) &&
 			  next_offset != size))
 		error_msg = "directory entry too close to block end";
-	अन्यथा अगर (unlikely(le32_to_cpu(de->inode) >
+	else if (unlikely(le32_to_cpu(de->inode) >
 			le32_to_cpu(EXT4_SB(dir->i_sb)->s_es->s_inodes_count)))
 		error_msg = "inode out of bounds";
-	अन्यथा
-		वापस 0;
+	else
+		return 0;
 
-	अगर (filp)
+	if (filp)
 		ext4_error_file(filp, function, line, bh->b_blocknr,
 				"bad entry in directory: %s - offset=%u, "
 				"inode=%u, rec_len=%d, size=%d fake=%d",
 				error_msg, offset, le32_to_cpu(de->inode),
 				rlen, size, fake);
-	अन्यथा
+	else
 		ext4_error_inode(dir, function, line, bh->b_blocknr,
 				"bad entry in directory: %s - offset=%u, "
 				"inode=%u, rec_len=%d, size=%d fake=%d",
 				 error_msg, offset, le32_to_cpu(de->inode),
 				 rlen, size, fake);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक ext4_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	अचिन्हित पूर्णांक offset;
-	पूर्णांक i;
-	काष्ठा ext4_dir_entry_2 *de;
-	पूर्णांक err;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा super_block *sb = inode->i_sb;
-	काष्ठा buffer_head *bh = शून्य;
-	काष्ठा fscrypt_str fstr = FSTR_INIT(शून्य, 0);
+static int ext4_readdir(struct file *file, struct dir_context *ctx)
+{
+	unsigned int offset;
+	int i;
+	struct ext4_dir_entry_2 *de;
+	int err;
+	struct inode *inode = file_inode(file);
+	struct super_block *sb = inode->i_sb;
+	struct buffer_head *bh = NULL;
+	struct fscrypt_str fstr = FSTR_INIT(NULL, 0);
 
-	err = fscrypt_prepare_सूची_पढ़ो(inode);
-	अगर (err)
-		वापस err;
+	err = fscrypt_prepare_readdir(inode);
+	if (err)
+		return err;
 
-	अगर (is_dx_dir(inode)) अणु
-		err = ext4_dx_सूची_पढ़ो(file, ctx);
-		अगर (err != ERR_BAD_DX_सूची)
-			वापस err;
+	if (is_dx_dir(inode)) {
+		err = ext4_dx_readdir(file, ctx);
+		if (err != ERR_BAD_DX_DIR)
+			return err;
 
-		/* Can we just clear INDEX flag to ignore htree inक्रमmation? */
-		अगर (!ext4_has_metadata_csum(sb)) अणु
+		/* Can we just clear INDEX flag to ignore htree information? */
+		if (!ext4_has_metadata_csum(sb)) {
 			/*
-			 * We करोn't set the inode dirty flag since it's not
-			 * critical that it माला_लो flushed back to the disk.
+			 * We don't set the inode dirty flag since it's not
+			 * critical that it gets flushed back to the disk.
 			 */
 			ext4_clear_inode_flag(inode, EXT4_INODE_INDEX);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ext4_has_अंतरभूत_data(inode)) अणु
-		पूर्णांक has_अंतरभूत_data = 1;
-		err = ext4_पढ़ो_अंतरभूत_dir(file, ctx,
-					   &has_अंतरभूत_data);
-		अगर (has_अंतरभूत_data)
-			वापस err;
-	पूर्ण
+	if (ext4_has_inline_data(inode)) {
+		int has_inline_data = 1;
+		err = ext4_read_inline_dir(file, ctx,
+					   &has_inline_data);
+		if (has_inline_data)
+			return err;
+	}
 
-	अगर (IS_ENCRYPTED(inode)) अणु
+	if (IS_ENCRYPTED(inode)) {
 		err = fscrypt_fname_alloc_buffer(EXT4_NAME_LEN, &fstr);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
+		if (err < 0)
+			return err;
+	}
 
-	जबतक (ctx->pos < inode->i_size) अणु
-		काष्ठा ext4_map_blocks map;
+	while (ctx->pos < inode->i_size) {
+		struct ext4_map_blocks map;
 
-		अगर (fatal_संकेत_pending(current)) अणु
+		if (fatal_signal_pending(current)) {
 			err = -ERESTARTSYS;
-			जाओ errout;
-		पूर्ण
+			goto errout;
+		}
 		cond_resched();
 		offset = ctx->pos & (sb->s_blocksize - 1);
 		map.m_lblk = ctx->pos >> EXT4_BLOCK_SIZE_BITS(sb);
 		map.m_len = 1;
-		err = ext4_map_blocks(शून्य, inode, &map, 0);
-		अगर (err == 0) अणु
-			/* m_len should never be zero but let's aव्योम
-			 * an infinite loop अगर it somehow is */
-			अगर (map.m_len == 0)
+		err = ext4_map_blocks(NULL, inode, &map, 0);
+		if (err == 0) {
+			/* m_len should never be zero but let's avoid
+			 * an infinite loop if it somehow is */
+			if (map.m_len == 0)
 				map.m_len = 1;
 			ctx->pos += map.m_len * sb->s_blocksize;
-			जारी;
-		पूर्ण
-		अगर (err > 0) अणु
+			continue;
+		}
+		if (err > 0) {
 			pgoff_t index = map.m_pblk >>
 					(PAGE_SHIFT - inode->i_blkbits);
-			अगर (!ra_has_index(&file->f_ra, index))
-				page_cache_sync_पढ़ोahead(
+			if (!ra_has_index(&file->f_ra, index))
+				page_cache_sync_readahead(
 					sb->s_bdev->bd_inode->i_mapping,
 					&file->f_ra, file,
 					index, 1);
 			file->f_ra.prev_pos = (loff_t)index << PAGE_SHIFT;
-			bh = ext4_bपढ़ो(शून्य, inode, map.m_lblk, 0);
-			अगर (IS_ERR(bh)) अणु
+			bh = ext4_bread(NULL, inode, map.m_lblk, 0);
+			if (IS_ERR(bh)) {
 				err = PTR_ERR(bh);
-				bh = शून्य;
-				जाओ errout;
-			पूर्ण
-		पूर्ण
+				bh = NULL;
+				goto errout;
+			}
+		}
 
-		अगर (!bh) अणु
-			/* corrupt size?  Maybe no more blocks to पढ़ो */
-			अगर (ctx->pos > inode->i_blocks << 9)
-				अवरोध;
+		if (!bh) {
+			/* corrupt size?  Maybe no more blocks to read */
+			if (ctx->pos > inode->i_blocks << 9)
+				break;
 			ctx->pos += sb->s_blocksize - offset;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Check the checksum */
-		अगर (!buffer_verअगरied(bh) &&
-		    !ext4_dirblock_csum_verअगरy(inode, bh)) अणु
-			EXT4_ERROR_खाता(file, 0, "directory fails checksum "
+		if (!buffer_verified(bh) &&
+		    !ext4_dirblock_csum_verify(inode, bh)) {
+			EXT4_ERROR_FILE(file, 0, "directory fails checksum "
 					"at offset %llu",
-					(अचिन्हित दीर्घ दीर्घ)ctx->pos);
+					(unsigned long long)ctx->pos);
 			ctx->pos += sb->s_blocksize - offset;
-			brअन्यथा(bh);
-			bh = शून्य;
-			जारी;
-		पूर्ण
-		set_buffer_verअगरied(bh);
+			brelse(bh);
+			bh = NULL;
+			continue;
+		}
+		set_buffer_verified(bh);
 
 		/* If the dir block has changed since the last call to
-		 * सूची_पढ़ो(2), then we might be poपूर्णांकing to an invalid
+		 * readdir(2), then we might be pointing to an invalid
 		 * dirent right now.  Scan from the start of the block
 		 * to make sure. */
-		अगर (!inode_eq_iversion(inode, file->f_version)) अणु
-			क्रम (i = 0; i < sb->s_blocksize && i < offset; ) अणु
-				de = (काष्ठा ext4_dir_entry_2 *)
+		if (!inode_eq_iversion(inode, file->f_version)) {
+			for (i = 0; i < sb->s_blocksize && i < offset; ) {
+				de = (struct ext4_dir_entry_2 *)
 					(bh->b_data + i);
-				/* It's too expensive to करो a full
-				 * dirent test each समय round this
-				 * loop, but we करो have to test at
+				/* It's too expensive to do a full
+				 * dirent test each time round this
+				 * loop, but we do have to test at
 				 * least that it is non-zero.  A
 				 * failure will be detected in the
 				 * dirent test below. */
-				अगर (ext4_rec_len_from_disk(de->rec_len,
+				if (ext4_rec_len_from_disk(de->rec_len,
 					sb->s_blocksize) < ext4_dir_rec_len(1,
 									inode))
-					अवरोध;
+					break;
 				i += ext4_rec_len_from_disk(de->rec_len,
 							    sb->s_blocksize);
-			पूर्ण
+			}
 			offset = i;
 			ctx->pos = (ctx->pos & ~(sb->s_blocksize - 1))
 				| offset;
 			file->f_version = inode_query_iversion(inode);
-		पूर्ण
+		}
 
-		जबतक (ctx->pos < inode->i_size
-		       && offset < sb->s_blocksize) अणु
-			de = (काष्ठा ext4_dir_entry_2 *) (bh->b_data + offset);
-			अगर (ext4_check_dir_entry(inode, file, de, bh,
+		while (ctx->pos < inode->i_size
+		       && offset < sb->s_blocksize) {
+			de = (struct ext4_dir_entry_2 *) (bh->b_data + offset);
+			if (ext4_check_dir_entry(inode, file, de, bh,
 						 bh->b_data, bh->b_size,
-						 offset)) अणु
+						 offset)) {
 				/*
 				 * On error, skip to the next block
 				 */
 				ctx->pos = (ctx->pos |
 						(sb->s_blocksize - 1)) + 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			offset += ext4_rec_len_from_disk(de->rec_len,
 					sb->s_blocksize);
-			अगर (le32_to_cpu(de->inode)) अणु
-				अगर (!IS_ENCRYPTED(inode)) अणु
-					अगर (!dir_emit(ctx, de->name,
+			if (le32_to_cpu(de->inode)) {
+				if (!IS_ENCRYPTED(inode)) {
+					if (!dir_emit(ctx, de->name,
 					    de->name_len,
 					    le32_to_cpu(de->inode),
 					    get_dtype(sb, de->file_type)))
-						जाओ करोne;
-				पूर्ण अन्यथा अणु
-					पूर्णांक save_len = fstr.len;
-					काष्ठा fscrypt_str de_name =
+						goto done;
+				} else {
+					int save_len = fstr.len;
+					struct fscrypt_str de_name =
 							FSTR_INIT(de->name,
 								de->name_len);
 
 					/* Directory is encrypted */
 					err = fscrypt_fname_disk_to_usr(inode,
-						EXT4_सूचीENT_HASH(de),
-						EXT4_सूचीENT_MINOR_HASH(de),
+						EXT4_DIRENT_HASH(de),
+						EXT4_DIRENT_MINOR_HASH(de),
 						&de_name, &fstr);
 					de_name = fstr;
 					fstr.len = save_len;
-					अगर (err)
-						जाओ errout;
-					अगर (!dir_emit(ctx,
+					if (err)
+						goto errout;
+					if (!dir_emit(ctx,
 					    de_name.name, de_name.len,
 					    le32_to_cpu(de->inode),
 					    get_dtype(sb, de->file_type)))
-						जाओ करोne;
-				पूर्ण
-			पूर्ण
+						goto done;
+				}
+			}
 			ctx->pos += ext4_rec_len_from_disk(de->rec_len,
 						sb->s_blocksize);
-		पूर्ण
-		अगर ((ctx->pos < inode->i_size) && !dir_relax_shared(inode))
-			जाओ करोne;
-		brअन्यथा(bh);
-		bh = शून्य;
+		}
+		if ((ctx->pos < inode->i_size) && !dir_relax_shared(inode))
+			goto done;
+		brelse(bh);
+		bh = NULL;
 		offset = 0;
-	पूर्ण
-करोne:
+	}
+done:
 	err = 0;
 errout:
-	fscrypt_fname_मुक्त_buffer(&fstr);
-	brअन्यथा(bh);
-	वापस err;
-पूर्ण
+	fscrypt_fname_free_buffer(&fstr);
+	brelse(bh);
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक is_32bit_api(व्योम)
-अणु
-#अगर_घोषित CONFIG_COMPAT
-	वापस in_compat_syscall();
-#अन्यथा
-	वापस (BITS_PER_LONG == 32);
-#पूर्ण_अगर
-पूर्ण
+static inline int is_32bit_api(void)
+{
+#ifdef CONFIG_COMPAT
+	return in_compat_syscall();
+#else
+	return (BITS_PER_LONG == 32);
+#endif
+}
 
 /*
  * These functions convert from the major/minor hash to an f_pos
- * value क्रम dx directories
+ * value for dx directories
  *
- * Upper layer (क्रम example NFS) should specअगरy FMODE_32BITHASH or
+ * Upper layer (for example NFS) should specify FMODE_32BITHASH or
  * FMODE_64BITHASH explicitly. On the other hand, we allow ext4 to be mounted
- * directly on both 32-bit and 64-bit nodes, under such हाल, neither
- * FMODE_32BITHASH nor FMODE_64BITHASH is specअगरied.
+ * directly on both 32-bit and 64-bit nodes, under such case, neither
+ * FMODE_32BITHASH nor FMODE_64BITHASH is specified.
  */
-अटल अंतरभूत loff_t hash2pos(काष्ठा file *filp, __u32 major, __u32 minor)
-अणु
-	अगर ((filp->f_mode & FMODE_32BITHASH) ||
+static inline loff_t hash2pos(struct file *filp, __u32 major, __u32 minor)
+{
+	if ((filp->f_mode & FMODE_32BITHASH) ||
 	    (!(filp->f_mode & FMODE_64BITHASH) && is_32bit_api()))
-		वापस major >> 1;
-	अन्यथा
-		वापस ((__u64)(major >> 1) << 32) | (__u64)minor;
-पूर्ण
+		return major >> 1;
+	else
+		return ((__u64)(major >> 1) << 32) | (__u64)minor;
+}
 
-अटल अंतरभूत __u32 pos2maj_hash(काष्ठा file *filp, loff_t pos)
-अणु
-	अगर ((filp->f_mode & FMODE_32BITHASH) ||
+static inline __u32 pos2maj_hash(struct file *filp, loff_t pos)
+{
+	if ((filp->f_mode & FMODE_32BITHASH) ||
 	    (!(filp->f_mode & FMODE_64BITHASH) && is_32bit_api()))
-		वापस (pos << 1) & 0xffffffff;
-	अन्यथा
-		वापस ((pos >> 32) << 1) & 0xffffffff;
-पूर्ण
+		return (pos << 1) & 0xffffffff;
+	else
+		return ((pos >> 32) << 1) & 0xffffffff;
+}
 
-अटल अंतरभूत __u32 pos2min_hash(काष्ठा file *filp, loff_t pos)
-अणु
-	अगर ((filp->f_mode & FMODE_32BITHASH) ||
+static inline __u32 pos2min_hash(struct file *filp, loff_t pos)
+{
+	if ((filp->f_mode & FMODE_32BITHASH) ||
 	    (!(filp->f_mode & FMODE_64BITHASH) && is_32bit_api()))
-		वापस 0;
-	अन्यथा
-		वापस pos & 0xffffffff;
-पूर्ण
+		return 0;
+	else
+		return pos & 0xffffffff;
+}
 
 /*
- * Return 32- or 64-bit end-of-file क्रम dx directories
+ * Return 32- or 64-bit end-of-file for dx directories
  */
-अटल अंतरभूत loff_t ext4_get_htree_eof(काष्ठा file *filp)
-अणु
-	अगर ((filp->f_mode & FMODE_32BITHASH) ||
+static inline loff_t ext4_get_htree_eof(struct file *filp)
+{
+	if ((filp->f_mode & FMODE_32BITHASH) ||
 	    (!(filp->f_mode & FMODE_64BITHASH) && is_32bit_api()))
-		वापस EXT4_HTREE_खातापूर्ण_32BIT;
-	अन्यथा
-		वापस EXT4_HTREE_खातापूर्ण_64BIT;
-पूर्ण
+		return EXT4_HTREE_EOF_32BIT;
+	else
+		return EXT4_HTREE_EOF_64BIT;
+}
 
 
 /*
@@ -377,303 +376,303 @@ errout:
  * directories, where the "offset" is in terms of the filename hash
  * value instead of the byte offset.
  *
- * Because we may वापस a 64-bit hash that is well beyond offset limits,
+ * Because we may return a 64-bit hash that is well beyond offset limits,
  * we need to pass the max hash as the maximum allowable offset in
- * the htree directory हाल.
+ * the htree directory case.
  *
- * For non-htree, ext4_llseek alपढ़ोy chooses the proper max offset.
+ * For non-htree, ext4_llseek already chooses the proper max offset.
  */
-अटल loff_t ext4_dir_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा inode *inode = file->f_mapping->host;
-	पूर्णांक dx_dir = is_dx_dir(inode);
+static loff_t ext4_dir_llseek(struct file *file, loff_t offset, int whence)
+{
+	struct inode *inode = file->f_mapping->host;
+	int dx_dir = is_dx_dir(inode);
 	loff_t ret, htree_max = ext4_get_htree_eof(file);
 
-	अगर (likely(dx_dir))
+	if (likely(dx_dir))
 		ret = generic_file_llseek_size(file, offset, whence,
 						    htree_max, htree_max);
-	अन्यथा
+	else
 		ret = ext4_llseek(file, offset, whence);
 	file->f_version = inode_peek_iversion(inode) - 1;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This काष्ठाure holds the nodes of the red-black tree used to store
+ * This structure holds the nodes of the red-black tree used to store
  * the directory entry in hash order.
  */
-काष्ठा fname अणु
+struct fname {
 	__u32		hash;
 	__u32		minor_hash;
-	काष्ठा rb_node	rb_hash;
-	काष्ठा fname	*next;
+	struct rb_node	rb_hash;
+	struct fname	*next;
 	__u32		inode;
 	__u8		name_len;
 	__u8		file_type;
-	अक्षर		name[];
-पूर्ण;
+	char		name[];
+};
 
 /*
- * This functoin implements a non-recursive way of मुक्तing all of the
+ * This functoin implements a non-recursive way of freeing all of the
  * nodes in the red-black tree.
  */
-अटल व्योम मुक्त_rb_tree_fname(काष्ठा rb_root *root)
-अणु
-	काष्ठा fname *fname, *next;
+static void free_rb_tree_fname(struct rb_root *root)
+{
+	struct fname *fname, *next;
 
-	rbtree_postorder_क्रम_each_entry_safe(fname, next, root, rb_hash)
-		जबतक (fname) अणु
-			काष्ठा fname *old = fname;
+	rbtree_postorder_for_each_entry_safe(fname, next, root, rb_hash)
+		while (fname) {
+			struct fname *old = fname;
 			fname = fname->next;
-			kमुक्त(old);
-		पूर्ण
+			kfree(old);
+		}
 
 	*root = RB_ROOT;
-पूर्ण
+}
 
 
-अटल काष्ठा dir_निजी_info *ext4_htree_create_dir_info(काष्ठा file *filp,
+static struct dir_private_info *ext4_htree_create_dir_info(struct file *filp,
 							   loff_t pos)
-अणु
-	काष्ठा dir_निजी_info *p;
+{
+	struct dir_private_info *p;
 
-	p = kzalloc(माप(*p), GFP_KERNEL);
-	अगर (!p)
-		वापस शून्य;
+	p = kzalloc(sizeof(*p), GFP_KERNEL);
+	if (!p)
+		return NULL;
 	p->curr_hash = pos2maj_hash(filp, pos);
 	p->curr_minor_hash = pos2min_hash(filp, pos);
-	वापस p;
-पूर्ण
+	return p;
+}
 
-व्योम ext4_htree_मुक्त_dir_info(काष्ठा dir_निजी_info *p)
-अणु
-	मुक्त_rb_tree_fname(&p->root);
-	kमुक्त(p);
-पूर्ण
+void ext4_htree_free_dir_info(struct dir_private_info *p)
+{
+	free_rb_tree_fname(&p->root);
+	kfree(p);
+}
 
 /*
- * Given a directory entry, enter it पूर्णांकo the fname rb tree.
+ * Given a directory entry, enter it into the fname rb tree.
  *
  * When filename encryption is enabled, the dirent will hold the
- * encrypted filename, जबतक the htree will hold decrypted filename.
+ * encrypted filename, while the htree will hold decrypted filename.
  * The decrypted filename is passed in via ent_name.  parameter.
  */
-पूर्णांक ext4_htree_store_dirent(काष्ठा file *dir_file, __u32 hash,
+int ext4_htree_store_dirent(struct file *dir_file, __u32 hash,
 			     __u32 minor_hash,
-			    काष्ठा ext4_dir_entry_2 *dirent,
-			    काष्ठा fscrypt_str *ent_name)
-अणु
-	काष्ठा rb_node **p, *parent = शून्य;
-	काष्ठा fname *fname, *new_fn;
-	काष्ठा dir_निजी_info *info;
-	पूर्णांक len;
+			    struct ext4_dir_entry_2 *dirent,
+			    struct fscrypt_str *ent_name)
+{
+	struct rb_node **p, *parent = NULL;
+	struct fname *fname, *new_fn;
+	struct dir_private_info *info;
+	int len;
 
-	info = dir_file->निजी_data;
+	info = dir_file->private_data;
 	p = &info->root.rb_node;
 
-	/* Create and allocate the fname काष्ठाure */
-	len = माप(काष्ठा fname) + ent_name->len + 1;
+	/* Create and allocate the fname structure */
+	len = sizeof(struct fname) + ent_name->len + 1;
 	new_fn = kzalloc(len, GFP_KERNEL);
-	अगर (!new_fn)
-		वापस -ENOMEM;
+	if (!new_fn)
+		return -ENOMEM;
 	new_fn->hash = hash;
 	new_fn->minor_hash = minor_hash;
 	new_fn->inode = le32_to_cpu(dirent->inode);
 	new_fn->name_len = ent_name->len;
 	new_fn->file_type = dirent->file_type;
-	स_नकल(new_fn->name, ent_name->name, ent_name->len);
+	memcpy(new_fn->name, ent_name->name, ent_name->len);
 
-	जबतक (*p) अणु
+	while (*p) {
 		parent = *p;
-		fname = rb_entry(parent, काष्ठा fname, rb_hash);
+		fname = rb_entry(parent, struct fname, rb_hash);
 
 		/*
 		 * If the hash and minor hash match up, then we put
 		 * them on a linked list.  This rarely happens...
 		 */
-		अगर ((new_fn->hash == fname->hash) &&
-		    (new_fn->minor_hash == fname->minor_hash)) अणु
+		if ((new_fn->hash == fname->hash) &&
+		    (new_fn->minor_hash == fname->minor_hash)) {
 			new_fn->next = fname->next;
 			fname->next = new_fn;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (new_fn->hash < fname->hash)
+		if (new_fn->hash < fname->hash)
 			p = &(*p)->rb_left;
-		अन्यथा अगर (new_fn->hash > fname->hash)
+		else if (new_fn->hash > fname->hash)
 			p = &(*p)->rb_right;
-		अन्यथा अगर (new_fn->minor_hash < fname->minor_hash)
+		else if (new_fn->minor_hash < fname->minor_hash)
 			p = &(*p)->rb_left;
-		अन्यथा /* अगर (new_fn->minor_hash > fname->minor_hash) */
+		else /* if (new_fn->minor_hash > fname->minor_hash) */
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 
 	rb_link_node(&new_fn->rb_hash, parent, p);
 	rb_insert_color(&new_fn->rb_hash, &info->root);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /*
- * This is a helper function क्रम ext4_dx_सूची_पढ़ो.  It calls filldir
- * क्रम all entres on the fname linked list.  (Normally there is only
+ * This is a helper function for ext4_dx_readdir.  It calls filldir
+ * for all entres on the fname linked list.  (Normally there is only
  * one entry on the linked list, unless there are 62 bit hash collisions.)
  */
-अटल पूर्णांक call_filldir(काष्ठा file *file, काष्ठा dir_context *ctx,
-			काष्ठा fname *fname)
-अणु
-	काष्ठा dir_निजी_info *info = file->निजी_data;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा super_block *sb = inode->i_sb;
+static int call_filldir(struct file *file, struct dir_context *ctx,
+			struct fname *fname)
+{
+	struct dir_private_info *info = file->private_data;
+	struct inode *inode = file_inode(file);
+	struct super_block *sb = inode->i_sb;
 
-	अगर (!fname) अणु
+	if (!fname) {
 		ext4_msg(sb, KERN_ERR, "%s:%d: inode #%lu: comm %s: "
 			 "called with null fname?!?", __func__, __LINE__,
 			 inode->i_ino, current->comm);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	ctx->pos = hash2pos(file, fname->hash, fname->minor_hash);
-	जबतक (fname) अणु
-		अगर (!dir_emit(ctx, fname->name,
+	while (fname) {
+		if (!dir_emit(ctx, fname->name,
 				fname->name_len,
 				fname->inode,
-				get_dtype(sb, fname->file_type))) अणु
+				get_dtype(sb, fname->file_type))) {
 			info->extra_fname = fname;
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		fname = fname->next;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक ext4_dx_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
-अणु
-	काष्ठा dir_निजी_info *info = file->निजी_data;
-	काष्ठा inode *inode = file_inode(file);
-	काष्ठा fname *fname;
-	पूर्णांक	ret;
+static int ext4_dx_readdir(struct file *file, struct dir_context *ctx)
+{
+	struct dir_private_info *info = file->private_data;
+	struct inode *inode = file_inode(file);
+	struct fname *fname;
+	int	ret;
 
-	अगर (!info) अणु
+	if (!info) {
 		info = ext4_htree_create_dir_info(file, ctx->pos);
-		अगर (!info)
-			वापस -ENOMEM;
-		file->निजी_data = info;
-	पूर्ण
+		if (!info)
+			return -ENOMEM;
+		file->private_data = info;
+	}
 
-	अगर (ctx->pos == ext4_get_htree_eof(file))
-		वापस 0;	/* खातापूर्ण */
+	if (ctx->pos == ext4_get_htree_eof(file))
+		return 0;	/* EOF */
 
 	/* Some one has messed with f_pos; reset the world */
-	अगर (info->last_pos != ctx->pos) अणु
-		मुक्त_rb_tree_fname(&info->root);
-		info->curr_node = शून्य;
-		info->extra_fname = शून्य;
+	if (info->last_pos != ctx->pos) {
+		free_rb_tree_fname(&info->root);
+		info->curr_node = NULL;
+		info->extra_fname = NULL;
 		info->curr_hash = pos2maj_hash(file, ctx->pos);
 		info->curr_minor_hash = pos2min_hash(file, ctx->pos);
-	पूर्ण
+	}
 
 	/*
 	 * If there are any leftover names on the hash collision
-	 * chain, वापस them first.
+	 * chain, return them first.
 	 */
-	अगर (info->extra_fname) अणु
-		अगर (call_filldir(file, ctx, info->extra_fname))
-			जाओ finished;
-		info->extra_fname = शून्य;
-		जाओ next_node;
-	पूर्ण अन्यथा अगर (!info->curr_node)
+	if (info->extra_fname) {
+		if (call_filldir(file, ctx, info->extra_fname))
+			goto finished;
+		info->extra_fname = NULL;
+		goto next_node;
+	} else if (!info->curr_node)
 		info->curr_node = rb_first(&info->root);
 
-	जबतक (1) अणु
+	while (1) {
 		/*
-		 * Fill the rbtree अगर we have no more entries,
-		 * or the inode has changed since we last पढ़ो in the
+		 * Fill the rbtree if we have no more entries,
+		 * or the inode has changed since we last read in the
 		 * cached entries.
 		 */
-		अगर ((!info->curr_node) ||
-		    !inode_eq_iversion(inode, file->f_version)) अणु
-			info->curr_node = शून्य;
-			मुक्त_rb_tree_fname(&info->root);
+		if ((!info->curr_node) ||
+		    !inode_eq_iversion(inode, file->f_version)) {
+			info->curr_node = NULL;
+			free_rb_tree_fname(&info->root);
 			file->f_version = inode_query_iversion(inode);
 			ret = ext4_htree_fill_tree(file, info->curr_hash,
 						   info->curr_minor_hash,
 						   &info->next_hash);
-			अगर (ret < 0)
-				वापस ret;
-			अगर (ret == 0) अणु
+			if (ret < 0)
+				return ret;
+			if (ret == 0) {
 				ctx->pos = ext4_get_htree_eof(file);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			info->curr_node = rb_first(&info->root);
-		पूर्ण
+		}
 
-		fname = rb_entry(info->curr_node, काष्ठा fname, rb_hash);
+		fname = rb_entry(info->curr_node, struct fname, rb_hash);
 		info->curr_hash = fname->hash;
 		info->curr_minor_hash = fname->minor_hash;
-		अगर (call_filldir(file, ctx, fname))
-			अवरोध;
+		if (call_filldir(file, ctx, fname))
+			break;
 	next_node:
 		info->curr_node = rb_next(info->curr_node);
-		अगर (info->curr_node) अणु
-			fname = rb_entry(info->curr_node, काष्ठा fname,
+		if (info->curr_node) {
+			fname = rb_entry(info->curr_node, struct fname,
 					 rb_hash);
 			info->curr_hash = fname->hash;
 			info->curr_minor_hash = fname->minor_hash;
-		पूर्ण अन्यथा अणु
-			अगर (info->next_hash == ~0) अणु
+		} else {
+			if (info->next_hash == ~0) {
 				ctx->pos = ext4_get_htree_eof(file);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			info->curr_hash = info->next_hash;
 			info->curr_minor_hash = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 finished:
 	info->last_pos = ctx->pos;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ext4_release_dir(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	अगर (filp->निजी_data)
-		ext4_htree_मुक्त_dir_info(filp->निजी_data);
+static int ext4_release_dir(struct inode *inode, struct file *filp)
+{
+	if (filp->private_data)
+		ext4_htree_free_dir_info(filp->private_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक ext4_check_all_de(काष्ठा inode *dir, काष्ठा buffer_head *bh, व्योम *buf,
-		      पूर्णांक buf_size)
-अणु
-	काष्ठा ext4_dir_entry_2 *de;
-	पूर्णांक rlen;
-	अचिन्हित पूर्णांक offset = 0;
-	अक्षर *top;
+int ext4_check_all_de(struct inode *dir, struct buffer_head *bh, void *buf,
+		      int buf_size)
+{
+	struct ext4_dir_entry_2 *de;
+	int rlen;
+	unsigned int offset = 0;
+	char *top;
 
-	de = (काष्ठा ext4_dir_entry_2 *)buf;
+	de = (struct ext4_dir_entry_2 *)buf;
 	top = buf + buf_size;
-	जबतक ((अक्षर *) de < top) अणु
-		अगर (ext4_check_dir_entry(dir, शून्य, de, bh,
+	while ((char *) de < top) {
+		if (ext4_check_dir_entry(dir, NULL, de, bh,
 					 buf, buf_size, offset))
-			वापस -EFSCORRUPTED;
+			return -EFSCORRUPTED;
 		rlen = ext4_rec_len_from_disk(de->rec_len, buf_size);
-		de = (काष्ठा ext4_dir_entry_2 *)((अक्षर *)de + rlen);
+		de = (struct ext4_dir_entry_2 *)((char *)de + rlen);
 		offset += rlen;
-	पूर्ण
-	अगर ((अक्षर *) de > top)
-		वापस -EFSCORRUPTED;
+	}
+	if ((char *) de > top)
+		return -EFSCORRUPTED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा file_operations ext4_dir_operations = अणु
+const struct file_operations ext4_dir_operations = {
 	.llseek		= ext4_dir_llseek,
-	.पढ़ो		= generic_पढ़ो_dir,
-	.iterate_shared	= ext4_सूची_पढ़ो,
+	.read		= generic_read_dir,
+	.iterate_shared	= ext4_readdir,
 	.unlocked_ioctl = ext4_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= ext4_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.fsync		= ext4_sync_file,
 	.release	= ext4_release_dir,
-पूर्ण;
+};

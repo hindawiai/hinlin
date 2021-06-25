@@ -1,490 +1,489 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/fanotअगरy.h>
-#समावेश <linux/fdtable.h>
-#समावेश <linux/fsnotअगरy_backend.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h> /* अच_पूर्णांक_उच्च */
-#समावेश <linux/mount.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/user.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/types.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/statfs.h>
-#समावेश <linux/stringhash.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/fanotify.h>
+#include <linux/fdtable.h>
+#include <linux/fsnotify_backend.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h> /* UINT_MAX */
+#include <linux/mount.h>
+#include <linux/sched.h>
+#include <linux/sched/user.h>
+#include <linux/sched/signal.h>
+#include <linux/types.h>
+#include <linux/wait.h>
+#include <linux/audit.h>
+#include <linux/sched/mm.h>
+#include <linux/statfs.h>
+#include <linux/stringhash.h>
 
-#समावेश "fanotify.h"
+#include "fanotify.h"
 
-अटल bool fanotअगरy_path_equal(काष्ठा path *p1, काष्ठा path *p2)
-अणु
-	वापस p1->mnt == p2->mnt && p1->dentry == p2->dentry;
-पूर्ण
+static bool fanotify_path_equal(struct path *p1, struct path *p2)
+{
+	return p1->mnt == p2->mnt && p1->dentry == p2->dentry;
+}
 
-अटल अचिन्हित पूर्णांक fanotअगरy_hash_path(स्थिर काष्ठा path *path)
-अणु
-	वापस hash_ptr(path->dentry, FANOTIFY_EVENT_HASH_BITS) ^
+static unsigned int fanotify_hash_path(const struct path *path)
+{
+	return hash_ptr(path->dentry, FANOTIFY_EVENT_HASH_BITS) ^
 		hash_ptr(path->mnt, FANOTIFY_EVENT_HASH_BITS);
-पूर्ण
+}
 
-अटल अंतरभूत bool fanotअगरy_fsid_equal(__kernel_fsid_t *fsid1,
+static inline bool fanotify_fsid_equal(__kernel_fsid_t *fsid1,
 				       __kernel_fsid_t *fsid2)
-अणु
-	वापस fsid1->val[0] == fsid2->val[0] && fsid1->val[1] == fsid2->val[1];
-पूर्ण
+{
+	return fsid1->val[0] == fsid2->val[0] && fsid1->val[1] == fsid2->val[1];
+}
 
-अटल अचिन्हित पूर्णांक fanotअगरy_hash_fsid(__kernel_fsid_t *fsid)
-अणु
-	वापस hash_32(fsid->val[0], FANOTIFY_EVENT_HASH_BITS) ^
+static unsigned int fanotify_hash_fsid(__kernel_fsid_t *fsid)
+{
+	return hash_32(fsid->val[0], FANOTIFY_EVENT_HASH_BITS) ^
 		hash_32(fsid->val[1], FANOTIFY_EVENT_HASH_BITS);
-पूर्ण
+}
 
-अटल bool fanotअगरy_fh_equal(काष्ठा fanotअगरy_fh *fh1,
-			      काष्ठा fanotअगरy_fh *fh2)
-अणु
-	अगर (fh1->type != fh2->type || fh1->len != fh2->len)
-		वापस false;
+static bool fanotify_fh_equal(struct fanotify_fh *fh1,
+			      struct fanotify_fh *fh2)
+{
+	if (fh1->type != fh2->type || fh1->len != fh2->len)
+		return false;
 
-	वापस !fh1->len ||
-		!स_भेद(fanotअगरy_fh_buf(fh1), fanotअगरy_fh_buf(fh2), fh1->len);
-पूर्ण
+	return !fh1->len ||
+		!memcmp(fanotify_fh_buf(fh1), fanotify_fh_buf(fh2), fh1->len);
+}
 
-अटल अचिन्हित पूर्णांक fanotअगरy_hash_fh(काष्ठा fanotअगरy_fh *fh)
-अणु
-	दीर्घ salt = (दीर्घ)fh->type | (दीर्घ)fh->len << 8;
+static unsigned int fanotify_hash_fh(struct fanotify_fh *fh)
+{
+	long salt = (long)fh->type | (long)fh->len << 8;
 
 	/*
-	 * full_name_hash() works दीर्घ by दीर्घ, so it handles fh buf optimally.
+	 * full_name_hash() works long by long, so it handles fh buf optimally.
 	 */
-	वापस full_name_hash((व्योम *)salt, fanotअगरy_fh_buf(fh), fh->len);
-पूर्ण
+	return full_name_hash((void *)salt, fanotify_fh_buf(fh), fh->len);
+}
 
-अटल bool fanotअगरy_fid_event_equal(काष्ठा fanotअगरy_fid_event *ffe1,
-				     काष्ठा fanotअगरy_fid_event *ffe2)
-अणु
+static bool fanotify_fid_event_equal(struct fanotify_fid_event *ffe1,
+				     struct fanotify_fid_event *ffe2)
+{
 	/* Do not merge fid events without object fh */
-	अगर (!ffe1->object_fh.len)
-		वापस false;
+	if (!ffe1->object_fh.len)
+		return false;
 
-	वापस fanotअगरy_fsid_equal(&ffe1->fsid, &ffe2->fsid) &&
-		fanotअगरy_fh_equal(&ffe1->object_fh, &ffe2->object_fh);
-पूर्ण
+	return fanotify_fsid_equal(&ffe1->fsid, &ffe2->fsid) &&
+		fanotify_fh_equal(&ffe1->object_fh, &ffe2->object_fh);
+}
 
-अटल bool fanotअगरy_info_equal(काष्ठा fanotअगरy_info *info1,
-				काष्ठा fanotअगरy_info *info2)
-अणु
-	अगर (info1->dir_fh_totlen != info2->dir_fh_totlen ||
+static bool fanotify_info_equal(struct fanotify_info *info1,
+				struct fanotify_info *info2)
+{
+	if (info1->dir_fh_totlen != info2->dir_fh_totlen ||
 	    info1->file_fh_totlen != info2->file_fh_totlen ||
 	    info1->name_len != info2->name_len)
-		वापस false;
+		return false;
 
-	अगर (info1->dir_fh_totlen &&
-	    !fanotअगरy_fh_equal(fanotअगरy_info_dir_fh(info1),
-			       fanotअगरy_info_dir_fh(info2)))
-		वापस false;
+	if (info1->dir_fh_totlen &&
+	    !fanotify_fh_equal(fanotify_info_dir_fh(info1),
+			       fanotify_info_dir_fh(info2)))
+		return false;
 
-	अगर (info1->file_fh_totlen &&
-	    !fanotअगरy_fh_equal(fanotअगरy_info_file_fh(info1),
-			       fanotअगरy_info_file_fh(info2)))
-		वापस false;
+	if (info1->file_fh_totlen &&
+	    !fanotify_fh_equal(fanotify_info_file_fh(info1),
+			       fanotify_info_file_fh(info2)))
+		return false;
 
-	वापस !info1->name_len ||
-		!स_भेद(fanotअगरy_info_name(info1), fanotअगरy_info_name(info2),
+	return !info1->name_len ||
+		!memcmp(fanotify_info_name(info1), fanotify_info_name(info2),
 			info1->name_len);
-पूर्ण
+}
 
-अटल bool fanotअगरy_name_event_equal(काष्ठा fanotअगरy_name_event *fne1,
-				      काष्ठा fanotअगरy_name_event *fne2)
-अणु
-	काष्ठा fanotअगरy_info *info1 = &fne1->info;
-	काष्ठा fanotअगरy_info *info2 = &fne2->info;
+static bool fanotify_name_event_equal(struct fanotify_name_event *fne1,
+				      struct fanotify_name_event *fne2)
+{
+	struct fanotify_info *info1 = &fne1->info;
+	struct fanotify_info *info2 = &fne2->info;
 
 	/* Do not merge name events without dir fh */
-	अगर (!info1->dir_fh_totlen)
-		वापस false;
+	if (!info1->dir_fh_totlen)
+		return false;
 
-	अगर (!fanotअगरy_fsid_equal(&fne1->fsid, &fne2->fsid))
-		वापस false;
+	if (!fanotify_fsid_equal(&fne1->fsid, &fne2->fsid))
+		return false;
 
-	वापस fanotअगरy_info_equal(info1, info2);
-पूर्ण
+	return fanotify_info_equal(info1, info2);
+}
 
-अटल bool fanotअगरy_should_merge(काष्ठा fanotअगरy_event *old,
-				  काष्ठा fanotअगरy_event *new)
-अणु
+static bool fanotify_should_merge(struct fanotify_event *old,
+				  struct fanotify_event *new)
+{
 	pr_debug("%s: old=%p new=%p\n", __func__, old, new);
 
-	अगर (old->hash != new->hash ||
+	if (old->hash != new->hash ||
 	    old->type != new->type || old->pid != new->pid)
-		वापस false;
+		return false;
 
 	/*
 	 * We want to merge many dirent events in the same dir (i.e.
-	 * creates/unlinks/नामs), but we करो not want to merge dirent
+	 * creates/unlinks/renames), but we do not want to merge dirent
 	 * events referring to subdirs with dirent events referring to
 	 * non subdirs, otherwise, user won't be able to tell from a
-	 * mask FAN_CREATE|FAN_DELETE|FAN_ONसूची अगर it describes सूची_गढ़ो+
-	 * unlink pair or सूची_हटाओ+create pair of events.
+	 * mask FAN_CREATE|FAN_DELETE|FAN_ONDIR if it describes mkdir+
+	 * unlink pair or rmdir+create pair of events.
 	 */
-	अगर ((old->mask & FS_ISसूची) != (new->mask & FS_ISसूची))
-		वापस false;
+	if ((old->mask & FS_ISDIR) != (new->mask & FS_ISDIR))
+		return false;
 
-	चयन (old->type) अणु
-	हाल FANOTIFY_EVENT_TYPE_PATH:
-		वापस fanotअगरy_path_equal(fanotअगरy_event_path(old),
-					   fanotअगरy_event_path(new));
-	हाल FANOTIFY_EVENT_TYPE_FID:
-		वापस fanotअगरy_fid_event_equal(FANOTIFY_FE(old),
+	switch (old->type) {
+	case FANOTIFY_EVENT_TYPE_PATH:
+		return fanotify_path_equal(fanotify_event_path(old),
+					   fanotify_event_path(new));
+	case FANOTIFY_EVENT_TYPE_FID:
+		return fanotify_fid_event_equal(FANOTIFY_FE(old),
 						FANOTIFY_FE(new));
-	हाल FANOTIFY_EVENT_TYPE_FID_NAME:
-		वापस fanotअगरy_name_event_equal(FANOTIFY_NE(old),
+	case FANOTIFY_EVENT_TYPE_FID_NAME:
+		return fanotify_name_event_equal(FANOTIFY_NE(old),
 						 FANOTIFY_NE(new));
-	शेष:
+	default:
 		WARN_ON_ONCE(1);
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Limit event merges to limit CPU overhead per event */
-#घोषणा FANOTIFY_MAX_MERGE_EVENTS 128
+#define FANOTIFY_MAX_MERGE_EVENTS 128
 
 /* and the list better be locked by something too! */
-अटल पूर्णांक fanotअगरy_merge(काष्ठा fsnotअगरy_group *group,
-			  काष्ठा fsnotअगरy_event *event)
-अणु
-	काष्ठा fanotअगरy_event *old, *new = FANOTIFY_E(event);
-	अचिन्हित पूर्णांक bucket = fanotअगरy_event_hash_bucket(group, new);
-	काष्ठा hlist_head *hlist = &group->fanotअगरy_data.merge_hash[bucket];
-	पूर्णांक i = 0;
+static int fanotify_merge(struct fsnotify_group *group,
+			  struct fsnotify_event *event)
+{
+	struct fanotify_event *old, *new = FANOTIFY_E(event);
+	unsigned int bucket = fanotify_event_hash_bucket(group, new);
+	struct hlist_head *hlist = &group->fanotify_data.merge_hash[bucket];
+	int i = 0;
 
 	pr_debug("%s: group=%p event=%p bucket=%u\n", __func__,
 		 group, event, bucket);
 
 	/*
 	 * Don't merge a permission event with any other event so that we know
-	 * the event काष्ठाure we have created in fanotअगरy_handle_event() is the
-	 * one we should check क्रम permission response.
+	 * the event structure we have created in fanotify_handle_event() is the
+	 * one we should check for permission response.
 	 */
-	अगर (fanotअगरy_is_perm_event(new->mask))
-		वापस 0;
+	if (fanotify_is_perm_event(new->mask))
+		return 0;
 
-	hlist_क्रम_each_entry(old, hlist, merge_list) अणु
-		अगर (++i > FANOTIFY_MAX_MERGE_EVENTS)
-			अवरोध;
-		अगर (fanotअगरy_should_merge(old, new)) अणु
+	hlist_for_each_entry(old, hlist, merge_list) {
+		if (++i > FANOTIFY_MAX_MERGE_EVENTS)
+			break;
+		if (fanotify_should_merge(old, new)) {
 			old->mask |= new->mask;
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			return 1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Wait क्रम response to permission event. The function also takes care of
- * मुक्तing the permission event (or offloads that in हाल the रुको is canceled
- * by a संकेत). The function वापसs 0 in हाल access got allowed by userspace,
- * -EPERM in हाल userspace disallowed the access, and -ERESTARTSYS in हाल
- * the रुको got पूर्णांकerrupted by a संकेत.
+ * Wait for response to permission event. The function also takes care of
+ * freeing the permission event (or offloads that in case the wait is canceled
+ * by a signal). The function returns 0 in case access got allowed by userspace,
+ * -EPERM in case userspace disallowed the access, and -ERESTARTSYS in case
+ * the wait got interrupted by a signal.
  */
-अटल पूर्णांक fanotअगरy_get_response(काष्ठा fsnotअगरy_group *group,
-				 काष्ठा fanotअगरy_perm_event *event,
-				 काष्ठा fsnotअगरy_iter_info *iter_info)
-अणु
-	पूर्णांक ret;
+static int fanotify_get_response(struct fsnotify_group *group,
+				 struct fanotify_perm_event *event,
+				 struct fsnotify_iter_info *iter_info)
+{
+	int ret;
 
 	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
 
-	ret = रुको_event_समाप्तable(group->fanotअगरy_data.access_रुकोq,
+	ret = wait_event_killable(group->fanotify_data.access_waitq,
 				  event->state == FAN_EVENT_ANSWERED);
 	/* Signal pending? */
-	अगर (ret < 0) अणु
-		spin_lock(&group->notअगरication_lock);
+	if (ret < 0) {
+		spin_lock(&group->notification_lock);
 		/* Event reported to userspace and no answer yet? */
-		अगर (event->state == FAN_EVENT_REPORTED) अणु
-			/* Event will get मुक्तd once userspace answers to it */
+		if (event->state == FAN_EVENT_REPORTED) {
+			/* Event will get freed once userspace answers to it */
 			event->state = FAN_EVENT_CANCELED;
-			spin_unlock(&group->notअगरication_lock);
-			वापस ret;
-		पूर्ण
-		/* Event not yet reported? Just हटाओ it. */
-		अगर (event->state == FAN_EVENT_INIT) अणु
-			fsnotअगरy_हटाओ_queued_event(group, &event->fae.fse);
+			spin_unlock(&group->notification_lock);
+			return ret;
+		}
+		/* Event not yet reported? Just remove it. */
+		if (event->state == FAN_EVENT_INIT) {
+			fsnotify_remove_queued_event(group, &event->fae.fse);
 			/* Permission events are not supposed to be hashed */
 			WARN_ON_ONCE(!hlist_unhashed(&event->fae.merge_list));
-		पूर्ण
+		}
 		/*
-		 * Event may be also answered in हाल संकेत delivery raced
-		 * with wakeup. In that हाल we have nothing to करो besides
-		 * मुक्तing the event and reporting error.
+		 * Event may be also answered in case signal delivery raced
+		 * with wakeup. In that case we have nothing to do besides
+		 * freeing the event and reporting error.
 		 */
-		spin_unlock(&group->notअगरication_lock);
-		जाओ out;
-	पूर्ण
+		spin_unlock(&group->notification_lock);
+		goto out;
+	}
 
 	/* userspace responded, convert to something usable */
-	चयन (event->response & ~FAN_AUDIT) अणु
-	हाल FAN_ALLOW:
+	switch (event->response & ~FAN_AUDIT) {
+	case FAN_ALLOW:
 		ret = 0;
-		अवरोध;
-	हाल FAN_DENY:
-	शेष:
+		break;
+	case FAN_DENY:
+	default:
 		ret = -EPERM;
-	पूर्ण
+	}
 
-	/* Check अगर the response should be audited */
-	अगर (event->response & FAN_AUDIT)
-		audit_fanotअगरy(event->response & ~FAN_AUDIT);
+	/* Check if the response should be audited */
+	if (event->response & FAN_AUDIT)
+		audit_fanotify(event->response & ~FAN_AUDIT);
 
 	pr_debug("%s: group=%p event=%p about to return ret=%d\n", __func__,
 		 group, event, ret);
 out:
-	fsnotअगरy_destroy_event(group, &event->fae.fse);
+	fsnotify_destroy_event(group, &event->fae.fse);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This function वापसs a mask क्रम an event that only contains the flags
- * that have been specअगरically requested by the user. Flags that may have
+ * This function returns a mask for an event that only contains the flags
+ * that have been specifically requested by the user. Flags that may have
  * been included within the event mask, but have not been explicitly
- * requested by the user, will not be present in the वापसed mask.
+ * requested by the user, will not be present in the returned mask.
  */
-अटल u32 fanotअगरy_group_event_mask(काष्ठा fsnotअगरy_group *group,
-				     काष्ठा fsnotअगरy_iter_info *iter_info,
-				     u32 event_mask, स्थिर व्योम *data,
-				     पूर्णांक data_type, काष्ठा inode *dir)
-अणु
+static u32 fanotify_group_event_mask(struct fsnotify_group *group,
+				     struct fsnotify_iter_info *iter_info,
+				     u32 event_mask, const void *data,
+				     int data_type, struct inode *dir)
+{
 	__u32 marks_mask = 0, marks_ignored_mask = 0;
 	__u32 test_mask, user_mask = FANOTIFY_OUTGOING_EVENTS |
 				     FANOTIFY_EVENT_FLAGS;
-	स्थिर काष्ठा path *path = fsnotअगरy_data_path(data, data_type);
-	अचिन्हित पूर्णांक fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
-	काष्ठा fsnotअगरy_mark *mark;
-	पूर्णांक type;
+	const struct path *path = fsnotify_data_path(data, data_type);
+	unsigned int fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
+	struct fsnotify_mark *mark;
+	int type;
 
 	pr_debug("%s: report_mask=%x mask=%x data=%p data_type=%d\n",
 		 __func__, iter_info->report_mask, event_mask, data, data_type);
 
-	अगर (!fid_mode) अणु
-		/* Do we have path to खोलो a file descriptor? */
-		अगर (!path)
-			वापस 0;
-		/* Path type events are only relevant क्रम files and dirs */
-		अगर (!d_is_reg(path->dentry) && !d_can_lookup(path->dentry))
-			वापस 0;
-	पूर्ण अन्यथा अगर (!(fid_mode & FAN_REPORT_FID)) अणु
+	if (!fid_mode) {
+		/* Do we have path to open a file descriptor? */
+		if (!path)
+			return 0;
+		/* Path type events are only relevant for files and dirs */
+		if (!d_is_reg(path->dentry) && !d_can_lookup(path->dentry))
+			return 0;
+	} else if (!(fid_mode & FAN_REPORT_FID)) {
 		/* Do we have a directory inode to report? */
-		अगर (!dir && !(event_mask & FS_ISसूची))
-			वापस 0;
-	पूर्ण
+		if (!dir && !(event_mask & FS_ISDIR))
+			return 0;
+	}
 
-	fsnotअगरy_क्रमeach_obj_type(type) अणु
-		अगर (!fsnotअगरy_iter_should_report_type(iter_info, type))
-			जारी;
+	fsnotify_foreach_obj_type(type) {
+		if (!fsnotify_iter_should_report_type(iter_info, type))
+			continue;
 		mark = iter_info->marks[type];
 
-		/* Apply ignore mask regardless of ISसूची and ON_CHILD flags */
+		/* Apply ignore mask regardless of ISDIR and ON_CHILD flags */
 		marks_ignored_mask |= mark->ignored_mask;
 
 		/*
-		 * If the event is on dir and this mark करोesn't care about
-		 * events on dir, करोn't send it!
+		 * If the event is on dir and this mark doesn't care about
+		 * events on dir, don't send it!
 		 */
-		अगर (event_mask & FS_ISसूची && !(mark->mask & FS_ISसूची))
-			जारी;
+		if (event_mask & FS_ISDIR && !(mark->mask & FS_ISDIR))
+			continue;
 
 		/*
 		 * If the event is on a child and this mark is on a parent not
-		 * watching children, करोn't send it!
+		 * watching children, don't send it!
 		 */
-		अगर (type == FSNOTIFY_OBJ_TYPE_PARENT &&
+		if (type == FSNOTIFY_OBJ_TYPE_PARENT &&
 		    !(mark->mask & FS_EVENT_ON_CHILD))
-			जारी;
+			continue;
 
 		marks_mask |= mark->mask;
-	पूर्ण
+	}
 
 	test_mask = event_mask & marks_mask & ~marks_ignored_mask;
 
 	/*
-	 * For dirent modअगरication events (create/delete/move) that करो not carry
-	 * the child entry name inक्रमmation, we report FAN_ONसूची क्रम सूची_गढ़ो/सूची_हटाओ
-	 * so user can dअगरferentiate them from creat/unlink.
+	 * For dirent modification events (create/delete/move) that do not carry
+	 * the child entry name information, we report FAN_ONDIR for mkdir/rmdir
+	 * so user can differentiate them from creat/unlink.
 	 *
-	 * For backward compatibility and consistency, करो not report FAN_ONसूची
-	 * to user in legacy fanotअगरy mode (reporting fd) and report FAN_ONसूची
-	 * to user in fid mode क्रम all event types.
+	 * For backward compatibility and consistency, do not report FAN_ONDIR
+	 * to user in legacy fanotify mode (reporting fd) and report FAN_ONDIR
+	 * to user in fid mode for all event types.
 	 *
-	 * We never report FAN_EVENT_ON_CHILD to user, but we करो pass it in to
-	 * fanotअगरy_alloc_event() when group is reporting fid as indication
+	 * We never report FAN_EVENT_ON_CHILD to user, but we do pass it in to
+	 * fanotify_alloc_event() when group is reporting fid as indication
 	 * that event happened on child.
 	 */
-	अगर (fid_mode) अणु
+	if (fid_mode) {
 		/* Do not report event flags without any event */
-		अगर (!(test_mask & ~FANOTIFY_EVENT_FLAGS))
-			वापस 0;
-	पूर्ण अन्यथा अणु
+		if (!(test_mask & ~FANOTIFY_EVENT_FLAGS))
+			return 0;
+	} else {
 		user_mask &= ~FANOTIFY_EVENT_FLAGS;
-	पूर्ण
+	}
 
-	वापस test_mask & user_mask;
-पूर्ण
-
-/*
- * Check size needed to encode fanotअगरy_fh.
- *
- * Return size of encoded fh without fanotअगरy_fh header.
- * Return 0 on failure to encode.
- */
-अटल पूर्णांक fanotअगरy_encode_fh_len(काष्ठा inode *inode)
-अणु
-	पूर्णांक dwords = 0;
-
-	अगर (!inode)
-		वापस 0;
-
-	exportfs_encode_inode_fh(inode, शून्य, &dwords, शून्य);
-
-	वापस dwords << 2;
-पूर्ण
+	return test_mask & user_mask;
+}
 
 /*
- * Encode fanotअगरy_fh.
+ * Check size needed to encode fanotify_fh.
  *
- * Return total size of encoded fh including fanotअगरy_fh header.
+ * Return size of encoded fh without fanotify_fh header.
  * Return 0 on failure to encode.
  */
-अटल पूर्णांक fanotअगरy_encode_fh(काष्ठा fanotअगरy_fh *fh, काष्ठा inode *inode,
-			      अचिन्हित पूर्णांक fh_len, अचिन्हित पूर्णांक *hash,
+static int fanotify_encode_fh_len(struct inode *inode)
+{
+	int dwords = 0;
+
+	if (!inode)
+		return 0;
+
+	exportfs_encode_inode_fh(inode, NULL, &dwords, NULL);
+
+	return dwords << 2;
+}
+
+/*
+ * Encode fanotify_fh.
+ *
+ * Return total size of encoded fh including fanotify_fh header.
+ * Return 0 on failure to encode.
+ */
+static int fanotify_encode_fh(struct fanotify_fh *fh, struct inode *inode,
+			      unsigned int fh_len, unsigned int *hash,
 			      gfp_t gfp)
-अणु
-	पूर्णांक dwords, type = 0;
-	अक्षर *ext_buf = शून्य;
-	व्योम *buf = fh->buf;
-	पूर्णांक err;
+{
+	int dwords, type = 0;
+	char *ext_buf = NULL;
+	void *buf = fh->buf;
+	int err;
 
-	fh->type = खाताID_ROOT;
+	fh->type = FILEID_ROOT;
 	fh->len = 0;
 	fh->flags = 0;
-	अगर (!inode)
-		वापस 0;
+	if (!inode)
+		return 0;
 
 	/*
-	 * !gpf means pपुनः_स्मृतिated variable size fh, but fh_len could
-	 * be zero in that हाल अगर encoding fh len failed.
+	 * !gpf means preallocated variable size fh, but fh_len could
+	 * be zero in that case if encoding fh len failed.
 	 */
 	err = -ENOENT;
-	अगर (fh_len < 4 || WARN_ON_ONCE(fh_len % 4))
-		जाओ out_err;
+	if (fh_len < 4 || WARN_ON_ONCE(fh_len % 4))
+		goto out_err;
 
-	/* No बाह्यal buffer in a variable size allocated fh */
-	अगर (gfp && fh_len > FANOTIFY_INLINE_FH_LEN) अणु
+	/* No external buffer in a variable size allocated fh */
+	if (gfp && fh_len > FANOTIFY_INLINE_FH_LEN) {
 		/* Treat failure to allocate fh as failure to encode fh */
 		err = -ENOMEM;
-		ext_buf = kदो_स्मृति(fh_len, gfp);
-		अगर (!ext_buf)
-			जाओ out_err;
+		ext_buf = kmalloc(fh_len, gfp);
+		if (!ext_buf)
+			goto out_err;
 
-		*fanotअगरy_fh_ext_buf_ptr(fh) = ext_buf;
+		*fanotify_fh_ext_buf_ptr(fh) = ext_buf;
 		buf = ext_buf;
 		fh->flags |= FANOTIFY_FH_FLAG_EXT_BUF;
-	पूर्ण
+	}
 
 	dwords = fh_len >> 2;
-	type = exportfs_encode_inode_fh(inode, buf, &dwords, शून्य);
+	type = exportfs_encode_inode_fh(inode, buf, &dwords, NULL);
 	err = -EINVAL;
-	अगर (!type || type == खाताID_INVALID || fh_len != dwords << 2)
-		जाओ out_err;
+	if (!type || type == FILEID_INVALID || fh_len != dwords << 2)
+		goto out_err;
 
 	fh->type = type;
 	fh->len = fh_len;
 
-	/* Mix fh पूर्णांकo event merge key */
-	*hash ^= fanotअगरy_hash_fh(fh);
+	/* Mix fh into event merge key */
+	*hash ^= fanotify_hash_fh(fh);
 
-	वापस FANOTIFY_FH_HDR_LEN + fh_len;
+	return FANOTIFY_FH_HDR_LEN + fh_len;
 
 out_err:
 	pr_warn_ratelimited("fanotify: failed to encode fid (type=%d, len=%d, err=%i)\n",
 			    type, fh_len, err);
-	kमुक्त(ext_buf);
-	*fanotअगरy_fh_ext_buf_ptr(fh) = शून्य;
-	/* Report the event without a file identअगरier on encode error */
-	fh->type = खाताID_INVALID;
+	kfree(ext_buf);
+	*fanotify_fh_ext_buf_ptr(fh) = NULL;
+	/* Report the event without a file identifier on encode error */
+	fh->type = FILEID_INVALID;
 	fh->len = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * The inode to use as identअगरier when reporting fid depends on the event.
- * Report the modअगरied directory inode on dirent modअगरication events.
+ * The inode to use as identifier when reporting fid depends on the event.
+ * Report the modified directory inode on dirent modification events.
  * Report the "victim" inode otherwise.
  * For example:
- * FS_ATTRIB reports the child inode even अगर reported on a watched parent.
- * FS_CREATE reports the modअगरied dir inode and not the created inode.
+ * FS_ATTRIB reports the child inode even if reported on a watched parent.
+ * FS_CREATE reports the modified dir inode and not the created inode.
  */
-अटल काष्ठा inode *fanotअगरy_fid_inode(u32 event_mask, स्थिर व्योम *data,
-					पूर्णांक data_type, काष्ठा inode *dir)
-अणु
-	अगर (event_mask & ALL_FSNOTIFY_सूचीENT_EVENTS)
-		वापस dir;
+static struct inode *fanotify_fid_inode(u32 event_mask, const void *data,
+					int data_type, struct inode *dir)
+{
+	if (event_mask & ALL_FSNOTIFY_DIRENT_EVENTS)
+		return dir;
 
-	वापस fsnotअगरy_data_inode(data, data_type);
-पूर्ण
+	return fsnotify_data_inode(data, data_type);
+}
 
 /*
- * The inode to use as identअगरier when reporting dir fid depends on the event.
- * Report the modअगरied directory inode on dirent modअगरication events.
- * Report the "victim" inode अगर "victim" is a directory.
- * Report the parent inode अगर "victim" is not a directory and event is
+ * The inode to use as identifier when reporting dir fid depends on the event.
+ * Report the modified directory inode on dirent modification events.
+ * Report the "victim" inode if "victim" is a directory.
+ * Report the parent inode if "victim" is not a directory and event is
  * reported to parent.
- * Otherwise, करो not report dir fid.
+ * Otherwise, do not report dir fid.
  */
-अटल काष्ठा inode *fanotअगरy_dfid_inode(u32 event_mask, स्थिर व्योम *data,
-					 पूर्णांक data_type, काष्ठा inode *dir)
-अणु
-	काष्ठा inode *inode = fsnotअगरy_data_inode(data, data_type);
+static struct inode *fanotify_dfid_inode(u32 event_mask, const void *data,
+					 int data_type, struct inode *dir)
+{
+	struct inode *inode = fsnotify_data_inode(data, data_type);
 
-	अगर (event_mask & ALL_FSNOTIFY_सूचीENT_EVENTS)
-		वापस dir;
+	if (event_mask & ALL_FSNOTIFY_DIRENT_EVENTS)
+		return dir;
 
-	अगर (S_ISसूची(inode->i_mode))
-		वापस inode;
+	if (S_ISDIR(inode->i_mode))
+		return inode;
 
-	वापस dir;
-पूर्ण
+	return dir;
+}
 
-अटल काष्ठा fanotअगरy_event *fanotअगरy_alloc_path_event(स्थिर काष्ठा path *path,
-							अचिन्हित पूर्णांक *hash,
+static struct fanotify_event *fanotify_alloc_path_event(const struct path *path,
+							unsigned int *hash,
 							gfp_t gfp)
-अणु
-	काष्ठा fanotअगरy_path_event *pevent;
+{
+	struct fanotify_path_event *pevent;
 
-	pevent = kmem_cache_alloc(fanotअगरy_path_event_cachep, gfp);
-	अगर (!pevent)
-		वापस शून्य;
+	pevent = kmem_cache_alloc(fanotify_path_event_cachep, gfp);
+	if (!pevent)
+		return NULL;
 
 	pevent->fae.type = FANOTIFY_EVENT_TYPE_PATH;
 	pevent->path = *path;
-	*hash ^= fanotअगरy_hash_path(path);
+	*hash ^= fanotify_hash_path(path);
 	path_get(path);
 
-	वापस &pevent->fae;
-पूर्ण
+	return &pevent->fae;
+}
 
-अटल काष्ठा fanotअगरy_event *fanotअगरy_alloc_perm_event(स्थिर काष्ठा path *path,
+static struct fanotify_event *fanotify_alloc_perm_event(const struct path *path,
 							gfp_t gfp)
-अणु
-	काष्ठा fanotअगरy_perm_event *pevent;
+{
+	struct fanotify_perm_event *pevent;
 
-	pevent = kmem_cache_alloc(fanotअगरy_perm_event_cachep, gfp);
-	अगर (!pevent)
-		वापस शून्य;
+	pevent = kmem_cache_alloc(fanotify_perm_event_cachep, gfp);
+	if (!pevent)
+		return NULL;
 
 	pevent->fae.type = FANOTIFY_EVENT_TYPE_PATH_PERM;
 	pevent->response = 0;
@@ -492,104 +491,104 @@ out_err:
 	pevent->path = *path;
 	path_get(path);
 
-	वापस &pevent->fae;
-पूर्ण
+	return &pevent->fae;
+}
 
-अटल काष्ठा fanotअगरy_event *fanotअगरy_alloc_fid_event(काष्ठा inode *id,
+static struct fanotify_event *fanotify_alloc_fid_event(struct inode *id,
 						       __kernel_fsid_t *fsid,
-						       अचिन्हित पूर्णांक *hash,
+						       unsigned int *hash,
 						       gfp_t gfp)
-अणु
-	काष्ठा fanotअगरy_fid_event *ffe;
+{
+	struct fanotify_fid_event *ffe;
 
-	ffe = kmem_cache_alloc(fanotअगरy_fid_event_cachep, gfp);
-	अगर (!ffe)
-		वापस शून्य;
+	ffe = kmem_cache_alloc(fanotify_fid_event_cachep, gfp);
+	if (!ffe)
+		return NULL;
 
 	ffe->fae.type = FANOTIFY_EVENT_TYPE_FID;
 	ffe->fsid = *fsid;
-	*hash ^= fanotअगरy_hash_fsid(fsid);
-	fanotअगरy_encode_fh(&ffe->object_fh, id, fanotअगरy_encode_fh_len(id),
+	*hash ^= fanotify_hash_fsid(fsid);
+	fanotify_encode_fh(&ffe->object_fh, id, fanotify_encode_fh_len(id),
 			   hash, gfp);
 
-	वापस &ffe->fae;
-पूर्ण
+	return &ffe->fae;
+}
 
-अटल काष्ठा fanotअगरy_event *fanotअगरy_alloc_name_event(काष्ठा inode *id,
+static struct fanotify_event *fanotify_alloc_name_event(struct inode *id,
 							__kernel_fsid_t *fsid,
-							स्थिर काष्ठा qstr *name,
-							काष्ठा inode *child,
-							अचिन्हित पूर्णांक *hash,
+							const struct qstr *name,
+							struct inode *child,
+							unsigned int *hash,
 							gfp_t gfp)
-अणु
-	काष्ठा fanotअगरy_name_event *fne;
-	काष्ठा fanotअगरy_info *info;
-	काष्ठा fanotअगरy_fh *dfh, *ffh;
-	अचिन्हित पूर्णांक dir_fh_len = fanotअगरy_encode_fh_len(id);
-	अचिन्हित पूर्णांक child_fh_len = fanotअगरy_encode_fh_len(child);
-	अचिन्हित पूर्णांक size;
+{
+	struct fanotify_name_event *fne;
+	struct fanotify_info *info;
+	struct fanotify_fh *dfh, *ffh;
+	unsigned int dir_fh_len = fanotify_encode_fh_len(id);
+	unsigned int child_fh_len = fanotify_encode_fh_len(child);
+	unsigned int size;
 
-	size = माप(*fne) + FANOTIFY_FH_HDR_LEN + dir_fh_len;
-	अगर (child_fh_len)
+	size = sizeof(*fne) + FANOTIFY_FH_HDR_LEN + dir_fh_len;
+	if (child_fh_len)
 		size += FANOTIFY_FH_HDR_LEN + child_fh_len;
-	अगर (name)
+	if (name)
 		size += name->len + 1;
-	fne = kदो_स्मृति(size, gfp);
-	अगर (!fne)
-		वापस शून्य;
+	fne = kmalloc(size, gfp);
+	if (!fne)
+		return NULL;
 
 	fne->fae.type = FANOTIFY_EVENT_TYPE_FID_NAME;
 	fne->fsid = *fsid;
-	*hash ^= fanotअगरy_hash_fsid(fsid);
+	*hash ^= fanotify_hash_fsid(fsid);
 	info = &fne->info;
-	fanotअगरy_info_init(info);
-	dfh = fanotअगरy_info_dir_fh(info);
-	info->dir_fh_totlen = fanotअगरy_encode_fh(dfh, id, dir_fh_len, hash, 0);
-	अगर (child_fh_len) अणु
-		ffh = fanotअगरy_info_file_fh(info);
-		info->file_fh_totlen = fanotअगरy_encode_fh(ffh, child,
+	fanotify_info_init(info);
+	dfh = fanotify_info_dir_fh(info);
+	info->dir_fh_totlen = fanotify_encode_fh(dfh, id, dir_fh_len, hash, 0);
+	if (child_fh_len) {
+		ffh = fanotify_info_file_fh(info);
+		info->file_fh_totlen = fanotify_encode_fh(ffh, child,
 							child_fh_len, hash, 0);
-	पूर्ण
-	अगर (name) अणु
-		दीर्घ salt = name->len;
+	}
+	if (name) {
+		long salt = name->len;
 
-		fanotअगरy_info_copy_name(info, name);
-		*hash ^= full_name_hash((व्योम *)salt, name->name, name->len);
-	पूर्ण
+		fanotify_info_copy_name(info, name);
+		*hash ^= full_name_hash((void *)salt, name->name, name->len);
+	}
 
 	pr_debug("%s: ino=%lu size=%u dir_fh_len=%u child_fh_len=%u name_len=%u name='%.*s'\n",
 		 __func__, id->i_ino, size, dir_fh_len, child_fh_len,
-		 info->name_len, info->name_len, fanotअगरy_info_name(info));
+		 info->name_len, info->name_len, fanotify_info_name(info));
 
-	वापस &fne->fae;
-पूर्ण
+	return &fne->fae;
+}
 
-अटल काष्ठा fanotअगरy_event *fanotअगरy_alloc_event(काष्ठा fsnotअगरy_group *group,
-						   u32 mask, स्थिर व्योम *data,
-						   पूर्णांक data_type, काष्ठा inode *dir,
-						   स्थिर काष्ठा qstr *file_name,
+static struct fanotify_event *fanotify_alloc_event(struct fsnotify_group *group,
+						   u32 mask, const void *data,
+						   int data_type, struct inode *dir,
+						   const struct qstr *file_name,
 						   __kernel_fsid_t *fsid)
-अणु
-	काष्ठा fanotअगरy_event *event = शून्य;
+{
+	struct fanotify_event *event = NULL;
 	gfp_t gfp = GFP_KERNEL_ACCOUNT;
-	काष्ठा inode *id = fanotअगरy_fid_inode(mask, data, data_type, dir);
-	काष्ठा inode *dirid = fanotअगरy_dfid_inode(mask, data, data_type, dir);
-	स्थिर काष्ठा path *path = fsnotअगरy_data_path(data, data_type);
-	अचिन्हित पूर्णांक fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
-	काष्ठा mem_cgroup *old_memcg;
-	काष्ठा inode *child = शून्य;
+	struct inode *id = fanotify_fid_inode(mask, data, data_type, dir);
+	struct inode *dirid = fanotify_dfid_inode(mask, data, data_type, dir);
+	const struct path *path = fsnotify_data_path(data, data_type);
+	unsigned int fid_mode = FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS);
+	struct mem_cgroup *old_memcg;
+	struct inode *child = NULL;
 	bool name_event = false;
-	अचिन्हित पूर्णांक hash = 0;
-	bool ondir = mask & FAN_ONसूची;
-	काष्ठा pid *pid;
+	unsigned int hash = 0;
+	bool ondir = mask & FAN_ONDIR;
+	struct pid *pid;
 
-	अगर ((fid_mode & FAN_REPORT_सूची_FID) && dirid) अणु
+	if ((fid_mode & FAN_REPORT_DIR_FID) && dirid) {
 		/*
-		 * With both flags FAN_REPORT_सूची_FID and FAN_REPORT_FID, we
-		 * report the child fid क्रम events reported on a non-dir child
+		 * With both flags FAN_REPORT_DIR_FID and FAN_REPORT_FID, we
+		 * report the child fid for events reported on a non-dir child
 		 * in addition to reporting the parent fid and maybe child name.
 		 */
-		अगर ((fid_mode & FAN_REPORT_FID) && id != dirid && !ondir)
+		if ((fid_mode & FAN_REPORT_FID) && id != dirid && !ondir)
 			child = id;
 
 		id = dirid;
@@ -598,127 +597,127 @@ out_err:
 		 * We record file name only in a group with FAN_REPORT_NAME
 		 * and when we have a directory inode to report.
 		 *
-		 * For directory entry modअगरication event, we record the fid of
-		 * the directory and the name of the modअगरied entry.
+		 * For directory entry modification event, we record the fid of
+		 * the directory and the name of the modified entry.
 		 *
 		 * For event on non-directory that is reported to parent, we
 		 * record the fid of the parent and the name of the child.
 		 *
-		 * Even अगर not reporting name, we need a variable length
-		 * fanotअगरy_name_event अगर reporting both parent and child fids.
+		 * Even if not reporting name, we need a variable length
+		 * fanotify_name_event if reporting both parent and child fids.
 		 */
-		अगर (!(fid_mode & FAN_REPORT_NAME)) अणु
+		if (!(fid_mode & FAN_REPORT_NAME)) {
 			name_event = !!child;
-			file_name = शून्य;
-		पूर्ण अन्यथा अगर ((mask & ALL_FSNOTIFY_सूचीENT_EVENTS) || !ondir) अणु
+			file_name = NULL;
+		} else if ((mask & ALL_FSNOTIFY_DIRENT_EVENTS) || !ondir) {
 			name_event = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * For queues with unlimited length lost events are not expected and
-	 * can possibly have security implications. Aव्योम losing events when
-	 * memory is लघु. For the limited size queues, aव्योम OOM समाप्तer in the
+	 * can possibly have security implications. Avoid losing events when
+	 * memory is short. For the limited size queues, avoid OOM killer in the
 	 * target monitoring memcg as it may have security repercussion.
 	 */
-	अगर (group->max_events == अच_पूर्णांक_उच्च)
+	if (group->max_events == UINT_MAX)
 		gfp |= __GFP_NOFAIL;
-	अन्यथा
+	else
 		gfp |= __GFP_RETRY_MAYFAIL;
 
-	/* Whoever is पूर्णांकerested in the event, pays क्रम the allocation. */
+	/* Whoever is interested in the event, pays for the allocation. */
 	old_memcg = set_active_memcg(group->memcg);
 
-	अगर (fanotअगरy_is_perm_event(mask)) अणु
-		event = fanotअगरy_alloc_perm_event(path, gfp);
-	पूर्ण अन्यथा अगर (name_event && (file_name || child)) अणु
-		event = fanotअगरy_alloc_name_event(id, fsid, file_name, child,
+	if (fanotify_is_perm_event(mask)) {
+		event = fanotify_alloc_perm_event(path, gfp);
+	} else if (name_event && (file_name || child)) {
+		event = fanotify_alloc_name_event(id, fsid, file_name, child,
 						  &hash, gfp);
-	पूर्ण अन्यथा अगर (fid_mode) अणु
-		event = fanotअगरy_alloc_fid_event(id, fsid, &hash, gfp);
-	पूर्ण अन्यथा अणु
-		event = fanotअगरy_alloc_path_event(path, &hash, gfp);
-	पूर्ण
+	} else if (fid_mode) {
+		event = fanotify_alloc_fid_event(id, fsid, &hash, gfp);
+	} else {
+		event = fanotify_alloc_path_event(path, &hash, gfp);
+	}
 
-	अगर (!event)
-		जाओ out;
+	if (!event)
+		goto out;
 
-	अगर (FAN_GROUP_FLAG(group, FAN_REPORT_TID))
+	if (FAN_GROUP_FLAG(group, FAN_REPORT_TID))
 		pid = get_pid(task_pid(current));
-	अन्यथा
+	else
 		pid = get_pid(task_tgid(current));
 
-	/* Mix event info, FAN_ONसूची flag and pid पूर्णांकo event merge key */
-	hash ^= hash_दीर्घ((अचिन्हित दीर्घ)pid | ondir, FANOTIFY_EVENT_HASH_BITS);
-	fanotअगरy_init_event(event, hash, mask);
+	/* Mix event info, FAN_ONDIR flag and pid into event merge key */
+	hash ^= hash_long((unsigned long)pid | ondir, FANOTIFY_EVENT_HASH_BITS);
+	fanotify_init_event(event, hash, mask);
 	event->pid = pid;
 
 out:
 	set_active_memcg(old_memcg);
-	वापस event;
-पूर्ण
+	return event;
+}
 
 /*
- * Get cached fsid of the fileप्रणाली containing the object from any connector.
- * All connectors are supposed to have the same fsid, but we करो not verअगरy that
+ * Get cached fsid of the filesystem containing the object from any connector.
+ * All connectors are supposed to have the same fsid, but we do not verify that
  * here.
  */
-अटल __kernel_fsid_t fanotअगरy_get_fsid(काष्ठा fsnotअगरy_iter_info *iter_info)
-अणु
-	पूर्णांक type;
-	__kernel_fsid_t fsid = अणुपूर्ण;
+static __kernel_fsid_t fanotify_get_fsid(struct fsnotify_iter_info *iter_info)
+{
+	int type;
+	__kernel_fsid_t fsid = {};
 
-	fsnotअगरy_क्रमeach_obj_type(type) अणु
-		काष्ठा fsnotअगरy_mark_connector *conn;
+	fsnotify_foreach_obj_type(type) {
+		struct fsnotify_mark_connector *conn;
 
-		अगर (!fsnotअगरy_iter_should_report_type(iter_info, type))
-			जारी;
+		if (!fsnotify_iter_should_report_type(iter_info, type))
+			continue;
 
 		conn = READ_ONCE(iter_info->marks[type]->connector);
 		/* Mark is just getting destroyed or created? */
-		अगर (!conn)
-			जारी;
-		अगर (!(conn->flags & FSNOTIFY_CONN_FLAG_HAS_FSID))
-			जारी;
-		/* Pairs with smp_wmb() in fsnotअगरy_add_mark_list() */
+		if (!conn)
+			continue;
+		if (!(conn->flags & FSNOTIFY_CONN_FLAG_HAS_FSID))
+			continue;
+		/* Pairs with smp_wmb() in fsnotify_add_mark_list() */
 		smp_rmb();
 		fsid = conn->fsid;
-		अगर (WARN_ON_ONCE(!fsid.val[0] && !fsid.val[1]))
-			जारी;
-		वापस fsid;
-	पूर्ण
+		if (WARN_ON_ONCE(!fsid.val[0] && !fsid.val[1]))
+			continue;
+		return fsid;
+	}
 
-	वापस fsid;
-पूर्ण
+	return fsid;
+}
 
 /*
- * Add an event to hash table क्रम faster merge.
+ * Add an event to hash table for faster merge.
  */
-अटल व्योम fanotअगरy_insert_event(काष्ठा fsnotअगरy_group *group,
-				  काष्ठा fsnotअगरy_event *fsn_event)
-अणु
-	काष्ठा fanotअगरy_event *event = FANOTIFY_E(fsn_event);
-	अचिन्हित पूर्णांक bucket = fanotअगरy_event_hash_bucket(group, event);
-	काष्ठा hlist_head *hlist = &group->fanotअगरy_data.merge_hash[bucket];
+static void fanotify_insert_event(struct fsnotify_group *group,
+				  struct fsnotify_event *fsn_event)
+{
+	struct fanotify_event *event = FANOTIFY_E(fsn_event);
+	unsigned int bucket = fanotify_event_hash_bucket(group, event);
+	struct hlist_head *hlist = &group->fanotify_data.merge_hash[bucket];
 
-	निश्चित_spin_locked(&group->notअगरication_lock);
+	assert_spin_locked(&group->notification_lock);
 
 	pr_debug("%s: group=%p event=%p bucket=%u\n", __func__,
 		 group, event, bucket);
 
 	hlist_add_head(&event->merge_list, hlist);
-पूर्ण
+}
 
-अटल पूर्णांक fanotअगरy_handle_event(काष्ठा fsnotअगरy_group *group, u32 mask,
-				 स्थिर व्योम *data, पूर्णांक data_type,
-				 काष्ठा inode *dir,
-				 स्थिर काष्ठा qstr *file_name, u32 cookie,
-				 काष्ठा fsnotअगरy_iter_info *iter_info)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा fanotअगरy_event *event;
-	काष्ठा fsnotअगरy_event *fsn_event;
-	__kernel_fsid_t fsid = अणुपूर्ण;
+static int fanotify_handle_event(struct fsnotify_group *group, u32 mask,
+				 const void *data, int data_type,
+				 struct inode *dir,
+				 const struct qstr *file_name, u32 cookie,
+				 struct fsnotify_iter_info *iter_info)
+{
+	int ret = 0;
+	struct fanotify_event *event;
+	struct fsnotify_event *fsn_event;
+	__kernel_fsid_t fsid = {};
 
 	BUILD_BUG_ON(FAN_ACCESS != FS_ACCESS);
 	BUILD_BUG_ON(FAN_MODIFY != FS_MODIFY);
@@ -736,147 +735,147 @@ out:
 	BUILD_BUG_ON(FAN_Q_OVERFLOW != FS_Q_OVERFLOW);
 	BUILD_BUG_ON(FAN_OPEN_PERM != FS_OPEN_PERM);
 	BUILD_BUG_ON(FAN_ACCESS_PERM != FS_ACCESS_PERM);
-	BUILD_BUG_ON(FAN_ONसूची != FS_ISसूची);
+	BUILD_BUG_ON(FAN_ONDIR != FS_ISDIR);
 	BUILD_BUG_ON(FAN_OPEN_EXEC != FS_OPEN_EXEC);
 	BUILD_BUG_ON(FAN_OPEN_EXEC_PERM != FS_OPEN_EXEC_PERM);
 
 	BUILD_BUG_ON(HWEIGHT32(ALL_FANOTIFY_EVENT_BITS) != 19);
 
-	mask = fanotअगरy_group_event_mask(group, iter_info, mask, data,
+	mask = fanotify_group_event_mask(group, iter_info, mask, data,
 					 data_type, dir);
-	अगर (!mask)
-		वापस 0;
+	if (!mask)
+		return 0;
 
 	pr_debug("%s: group=%p mask=%x\n", __func__, group, mask);
 
-	अगर (fanotअगरy_is_perm_event(mask)) अणु
+	if (fanotify_is_perm_event(mask)) {
 		/*
-		 * fsnotअगरy_prepare_user_रुको() fails अगर we race with mark
-		 * deletion.  Just let the operation pass in that हाल.
+		 * fsnotify_prepare_user_wait() fails if we race with mark
+		 * deletion.  Just let the operation pass in that case.
 		 */
-		अगर (!fsnotअगरy_prepare_user_रुको(iter_info))
-			वापस 0;
-	पूर्ण
+		if (!fsnotify_prepare_user_wait(iter_info))
+			return 0;
+	}
 
-	अगर (FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS)) अणु
-		fsid = fanotअगरy_get_fsid(iter_info);
-		/* Racing with mark deकाष्ठाion or creation? */
-		अगर (!fsid.val[0] && !fsid.val[1])
-			वापस 0;
-	पूर्ण
+	if (FAN_GROUP_FLAG(group, FANOTIFY_FID_BITS)) {
+		fsid = fanotify_get_fsid(iter_info);
+		/* Racing with mark destruction or creation? */
+		if (!fsid.val[0] && !fsid.val[1])
+			return 0;
+	}
 
-	event = fanotअगरy_alloc_event(group, mask, data, data_type, dir,
+	event = fanotify_alloc_event(group, mask, data, data_type, dir,
 				     file_name, &fsid);
 	ret = -ENOMEM;
-	अगर (unlikely(!event)) अणु
+	if (unlikely(!event)) {
 		/*
-		 * We करोn't queue overflow events क्रम permission events as
+		 * We don't queue overflow events for permission events as
 		 * there the access is denied and so no event is in fact lost.
 		 */
-		अगर (!fanotअगरy_is_perm_event(mask))
-			fsnotअगरy_queue_overflow(group);
-		जाओ finish;
-	पूर्ण
+		if (!fanotify_is_perm_event(mask))
+			fsnotify_queue_overflow(group);
+		goto finish;
+	}
 
 	fsn_event = &event->fse;
-	ret = fsnotअगरy_add_event(group, fsn_event, fanotअगरy_merge,
-				 fanotअगरy_is_hashed_event(mask) ?
-				 fanotअगरy_insert_event : शून्य);
-	अगर (ret) अणु
+	ret = fsnotify_add_event(group, fsn_event, fanotify_merge,
+				 fanotify_is_hashed_event(mask) ?
+				 fanotify_insert_event : NULL);
+	if (ret) {
 		/* Permission events shouldn't be merged */
 		BUG_ON(ret == 1 && mask & FANOTIFY_PERM_EVENTS);
 		/* Our event wasn't used in the end. Free it. */
-		fsnotअगरy_destroy_event(group, fsn_event);
+		fsnotify_destroy_event(group, fsn_event);
 
 		ret = 0;
-	पूर्ण अन्यथा अगर (fanotअगरy_is_perm_event(mask)) अणु
-		ret = fanotअगरy_get_response(group, FANOTIFY_PERM(event),
+	} else if (fanotify_is_perm_event(mask)) {
+		ret = fanotify_get_response(group, FANOTIFY_PERM(event),
 					    iter_info);
-	पूर्ण
+	}
 finish:
-	अगर (fanotअगरy_is_perm_event(mask))
-		fsnotअगरy_finish_user_रुको(iter_info);
+	if (fanotify_is_perm_event(mask))
+		fsnotify_finish_user_wait(iter_info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fanotअगरy_मुक्त_group_priv(काष्ठा fsnotअगरy_group *group)
-अणु
-	kमुक्त(group->fanotअगरy_data.merge_hash);
-	अगर (group->fanotअगरy_data.ucounts)
-		dec_ucount(group->fanotअगरy_data.ucounts,
+static void fanotify_free_group_priv(struct fsnotify_group *group)
+{
+	kfree(group->fanotify_data.merge_hash);
+	if (group->fanotify_data.ucounts)
+		dec_ucount(group->fanotify_data.ucounts,
 			   UCOUNT_FANOTIFY_GROUPS);
-पूर्ण
+}
 
-अटल व्योम fanotअगरy_मुक्त_path_event(काष्ठा fanotअगरy_event *event)
-अणु
-	path_put(fanotअगरy_event_path(event));
-	kmem_cache_मुक्त(fanotअगरy_path_event_cachep, FANOTIFY_PE(event));
-पूर्ण
+static void fanotify_free_path_event(struct fanotify_event *event)
+{
+	path_put(fanotify_event_path(event));
+	kmem_cache_free(fanotify_path_event_cachep, FANOTIFY_PE(event));
+}
 
-अटल व्योम fanotअगरy_मुक्त_perm_event(काष्ठा fanotअगरy_event *event)
-अणु
-	path_put(fanotअगरy_event_path(event));
-	kmem_cache_मुक्त(fanotअगरy_perm_event_cachep, FANOTIFY_PERM(event));
-पूर्ण
+static void fanotify_free_perm_event(struct fanotify_event *event)
+{
+	path_put(fanotify_event_path(event));
+	kmem_cache_free(fanotify_perm_event_cachep, FANOTIFY_PERM(event));
+}
 
-अटल व्योम fanotअगरy_मुक्त_fid_event(काष्ठा fanotअगरy_event *event)
-अणु
-	काष्ठा fanotअगरy_fid_event *ffe = FANOTIFY_FE(event);
+static void fanotify_free_fid_event(struct fanotify_event *event)
+{
+	struct fanotify_fid_event *ffe = FANOTIFY_FE(event);
 
-	अगर (fanotअगरy_fh_has_ext_buf(&ffe->object_fh))
-		kमुक्त(fanotअगरy_fh_ext_buf(&ffe->object_fh));
-	kmem_cache_मुक्त(fanotअगरy_fid_event_cachep, ffe);
-पूर्ण
+	if (fanotify_fh_has_ext_buf(&ffe->object_fh))
+		kfree(fanotify_fh_ext_buf(&ffe->object_fh));
+	kmem_cache_free(fanotify_fid_event_cachep, ffe);
+}
 
-अटल व्योम fanotअगरy_मुक्त_name_event(काष्ठा fanotअगरy_event *event)
-अणु
-	kमुक्त(FANOTIFY_NE(event));
-पूर्ण
+static void fanotify_free_name_event(struct fanotify_event *event)
+{
+	kfree(FANOTIFY_NE(event));
+}
 
-अटल व्योम fanotअगरy_मुक्त_event(काष्ठा fsnotअगरy_event *fsn_event)
-अणु
-	काष्ठा fanotअगरy_event *event;
+static void fanotify_free_event(struct fsnotify_event *fsn_event)
+{
+	struct fanotify_event *event;
 
 	event = FANOTIFY_E(fsn_event);
 	put_pid(event->pid);
-	चयन (event->type) अणु
-	हाल FANOTIFY_EVENT_TYPE_PATH:
-		fanotअगरy_मुक्त_path_event(event);
-		अवरोध;
-	हाल FANOTIFY_EVENT_TYPE_PATH_PERM:
-		fanotअगरy_मुक्त_perm_event(event);
-		अवरोध;
-	हाल FANOTIFY_EVENT_TYPE_FID:
-		fanotअगरy_मुक्त_fid_event(event);
-		अवरोध;
-	हाल FANOTIFY_EVENT_TYPE_FID_NAME:
-		fanotअगरy_मुक्त_name_event(event);
-		अवरोध;
-	हाल FANOTIFY_EVENT_TYPE_OVERFLOW:
-		kमुक्त(event);
-		अवरोध;
-	शेष:
+	switch (event->type) {
+	case FANOTIFY_EVENT_TYPE_PATH:
+		fanotify_free_path_event(event);
+		break;
+	case FANOTIFY_EVENT_TYPE_PATH_PERM:
+		fanotify_free_perm_event(event);
+		break;
+	case FANOTIFY_EVENT_TYPE_FID:
+		fanotify_free_fid_event(event);
+		break;
+	case FANOTIFY_EVENT_TYPE_FID_NAME:
+		fanotify_free_name_event(event);
+		break;
+	case FANOTIFY_EVENT_TYPE_OVERFLOW:
+		kfree(event);
+		break;
+	default:
 		WARN_ON_ONCE(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fanotअगरy_मुक्तing_mark(काष्ठा fsnotअगरy_mark *mark,
-				  काष्ठा fsnotअगरy_group *group)
-अणु
-	अगर (!FAN_GROUP_FLAG(group, FAN_UNLIMITED_MARKS))
-		dec_ucount(group->fanotअगरy_data.ucounts, UCOUNT_FANOTIFY_MARKS);
-पूर्ण
+static void fanotify_freeing_mark(struct fsnotify_mark *mark,
+				  struct fsnotify_group *group)
+{
+	if (!FAN_GROUP_FLAG(group, FAN_UNLIMITED_MARKS))
+		dec_ucount(group->fanotify_data.ucounts, UCOUNT_FANOTIFY_MARKS);
+}
 
-अटल व्योम fanotअगरy_मुक्त_mark(काष्ठा fsnotअगरy_mark *fsn_mark)
-अणु
-	kmem_cache_मुक्त(fanotअगरy_mark_cache, fsn_mark);
-पूर्ण
+static void fanotify_free_mark(struct fsnotify_mark *fsn_mark)
+{
+	kmem_cache_free(fanotify_mark_cache, fsn_mark);
+}
 
-स्थिर काष्ठा fsnotअगरy_ops fanotअगरy_fsnotअगरy_ops = अणु
-	.handle_event = fanotअगरy_handle_event,
-	.मुक्त_group_priv = fanotअगरy_मुक्त_group_priv,
-	.मुक्त_event = fanotअगरy_मुक्त_event,
-	.मुक्तing_mark = fanotअगरy_मुक्तing_mark,
-	.मुक्त_mark = fanotअगरy_मुक्त_mark,
-पूर्ण;
+const struct fsnotify_ops fanotify_fsnotify_ops = {
+	.handle_event = fanotify_handle_event,
+	.free_group_priv = fanotify_free_group_priv,
+	.free_event = fanotify_free_event,
+	.freeing_mark = fanotify_freeing_mark,
+	.free_mark = fanotify_free_mark,
+};

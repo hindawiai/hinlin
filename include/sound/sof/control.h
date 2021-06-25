@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * Copyright(c) 2018 Intel Corporation. All rights reserved.
  */
 
-#अगर_अघोषित __INCLUDE_SOUND_SOF_CONTROL_H__
-#घोषणा __INCLUDE_SOUND_SOF_CONTROL_H__
+#ifndef __INCLUDE_SOUND_SOF_CONTROL_H__
+#define __INCLUDE_SOUND_SOF_CONTROL_H__
 
-#समावेश <uapi/sound/sof/header.h>
-#समावेश <sound/sof/header.h>
+#include <uapi/sound/sof/header.h>
+#include <sound/sof/header.h>
 
 /*
  * Component Mixers and Controls
  */
 
 /* channel positions - uses same values as ALSA */
-क्रमागत sof_ipc_chmap अणु
+enum sof_ipc_chmap {
 	SOF_CHMAP_UNKNOWN = 0,
 	SOF_CHMAP_NA,		/**< N/A, silent */
 	SOF_CHMAP_MONO,		/**< mono stream */
@@ -57,103 +56,103 @@
 	SOF_CHMAP_BLC,		/**< bottom left centre */
 	SOF_CHMAP_BRC,		/**< bottom right centre */
 	SOF_CHMAP_LAST = SOF_CHMAP_BRC,
-पूर्ण;
+};
 
 /* control data type and direction */
-क्रमागत sof_ipc_ctrl_type अणु
-	/*  per channel data - uses काष्ठा sof_ipc_ctrl_value_chan */
+enum sof_ipc_ctrl_type {
+	/*  per channel data - uses struct sof_ipc_ctrl_value_chan */
 	SOF_CTRL_TYPE_VALUE_CHAN_GET = 0,
 	SOF_CTRL_TYPE_VALUE_CHAN_SET,
-	/* component data - uses काष्ठा sof_ipc_ctrl_value_comp */
+	/* component data - uses struct sof_ipc_ctrl_value_comp */
 	SOF_CTRL_TYPE_VALUE_COMP_GET,
 	SOF_CTRL_TYPE_VALUE_COMP_SET,
-	/* bespoke data - uses काष्ठा sof_abi_hdr */
+	/* bespoke data - uses struct sof_abi_hdr */
 	SOF_CTRL_TYPE_DATA_GET,
 	SOF_CTRL_TYPE_DATA_SET,
-पूर्ण;
+};
 
 /* control command type */
-क्रमागत sof_ipc_ctrl_cmd अणु
+enum sof_ipc_ctrl_cmd {
 	SOF_CTRL_CMD_VOLUME = 0, /**< maps to ALSA volume style controls */
-	SOF_CTRL_CMD_ENUM,	/**< maps to ALSA क्रमागत style controls */
-	SOF_CTRL_CMD_SWITCH,	/**< maps to ALSA चयन style controls */
+	SOF_CTRL_CMD_ENUM,	/**< maps to ALSA enum style controls */
+	SOF_CTRL_CMD_SWITCH,	/**< maps to ALSA switch style controls */
 	SOF_CTRL_CMD_BINARY,	/**< maps to ALSA binary style controls */
-पूर्ण;
+};
 
 /* generic channel mapped value data */
-काष्ठा sof_ipc_ctrl_value_chan अणु
-	uपूर्णांक32_t channel;	/**< channel map - क्रमागत sof_ipc_chmap */
-	uपूर्णांक32_t value;
-पूर्ण __packed;
+struct sof_ipc_ctrl_value_chan {
+	uint32_t channel;	/**< channel map - enum sof_ipc_chmap */
+	uint32_t value;
+} __packed;
 
 /* generic component mapped value data */
-काष्ठा sof_ipc_ctrl_value_comp अणु
-	uपूर्णांक32_t index;	/**< component source/sink/control index in control */
-	जोड़ अणु
-		uपूर्णांक32_t uvalue;
-		पूर्णांक32_t svalue;
-	पूर्ण;
-पूर्ण __packed;
+struct sof_ipc_ctrl_value_comp {
+	uint32_t index;	/**< component source/sink/control index in control */
+	union {
+		uint32_t uvalue;
+		int32_t svalue;
+	};
+} __packed;
 
 /* generic control data */
-काष्ठा sof_ipc_ctrl_data अणु
-	काष्ठा sof_ipc_reply rhdr;
-	uपूर्णांक32_t comp_id;
+struct sof_ipc_ctrl_data {
+	struct sof_ipc_reply rhdr;
+	uint32_t comp_id;
 
 	/* control access and data type */
-	uपूर्णांक32_t type;		/**< क्रमागत sof_ipc_ctrl_type */
-	uपूर्णांक32_t cmd;		/**< क्रमागत sof_ipc_ctrl_cmd */
-	uपूर्णांक32_t index;		/**< control index क्रम comps > 1 control */
+	uint32_t type;		/**< enum sof_ipc_ctrl_type */
+	uint32_t cmd;		/**< enum sof_ipc_ctrl_cmd */
+	uint32_t index;		/**< control index for comps > 1 control */
 
 	/* control data - can either be appended or DMAed from host */
-	काष्ठा sof_ipc_host_buffer buffer;
-	uपूर्णांक32_t num_elems;	/**< in array elems or bytes क्रम data type */
-	uपूर्णांक32_t elems_reमुख्यing;	/**< elems reमुख्यing अगर sent in parts */
+	struct sof_ipc_host_buffer buffer;
+	uint32_t num_elems;	/**< in array elems or bytes for data type */
+	uint32_t elems_remaining;	/**< elems remaining if sent in parts */
 
-	uपूर्णांक32_t msg_index;	/**< क्रम large messages sent in parts */
+	uint32_t msg_index;	/**< for large messages sent in parts */
 
-	/* reserved क्रम future use */
-	uपूर्णांक32_t reserved[6];
+	/* reserved for future use */
+	uint32_t reserved[6];
 
-	/* control data - add new types अगर needed */
-	जोड़ अणु
+	/* control data - add new types if needed */
+	union {
 		/* channel values can be used by volume type controls */
-		काष्ठा sof_ipc_ctrl_value_chan chanv[0];
+		struct sof_ipc_ctrl_value_chan chanv[0];
 		/* component values used by routing controls like mux, mixer */
-		काष्ठा sof_ipc_ctrl_value_comp compv[0];
+		struct sof_ipc_ctrl_value_comp compv[0];
 		/* data can be used by binary controls */
-		काष्ठा sof_abi_hdr data[0];
-	पूर्ण;
-पूर्ण __packed;
+		struct sof_abi_hdr data[0];
+	};
+} __packed;
 
 /** Event type */
-क्रमागत sof_ipc_ctrl_event_type अणु
+enum sof_ipc_ctrl_event_type {
 	SOF_CTRL_EVENT_GENERIC = 0,	/**< generic event */
 	SOF_CTRL_EVENT_GENERIC_METADATA,	/**< generic event with metadata */
 	SOF_CTRL_EVENT_KD,	/**< keyword detection event */
 	SOF_CTRL_EVENT_VAD,	/**< voice activity detection event */
-पूर्ण;
+};
 
 /**
- * Generic notअगरication data.
+ * Generic notification data.
  */
-काष्ठा sof_ipc_comp_event अणु
-	काष्ठा sof_ipc_reply rhdr;
-	uपूर्णांक16_t src_comp_type;	/**< COMP_TYPE_ */
-	uपूर्णांक32_t src_comp_id;	/**< source component id */
-	uपूर्णांक32_t event_type;	/**< event type - SOF_CTRL_EVENT_* */
-	uपूर्णांक32_t num_elems;	/**< in array elems or bytes क्रम data type */
+struct sof_ipc_comp_event {
+	struct sof_ipc_reply rhdr;
+	uint16_t src_comp_type;	/**< COMP_TYPE_ */
+	uint32_t src_comp_id;	/**< source component id */
+	uint32_t event_type;	/**< event type - SOF_CTRL_EVENT_* */
+	uint32_t num_elems;	/**< in array elems or bytes for data type */
 
-	/* reserved क्रम future use */
-	uपूर्णांक32_t reserved[8];
+	/* reserved for future use */
+	uint32_t reserved[8];
 
-	/* control data - add new types अगर needed */
-	जोड़ अणु
+	/* control data - add new types if needed */
+	union {
 		/* data can be used by binary controls */
-		काष्ठा sof_abi_hdr data[0];
-		/* event specअगरic values */
-		uपूर्णांक32_t event_value;
-	पूर्ण;
-पूर्ण __packed;
+		struct sof_abi_hdr data[0];
+		/* event specific values */
+		uint32_t event_value;
+	};
+} __packed;
 
-#पूर्ण_अगर
+#endif

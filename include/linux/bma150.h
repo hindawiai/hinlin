@@ -1,46 +1,45 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2011 Bosch Sensortec GmbH
  * Copyright (c) 2011 Unixphere
  */
 
-#अगर_अघोषित _BMA150_H_
-#घोषणा _BMA150_H_
+#ifndef _BMA150_H_
+#define _BMA150_H_
 
-#घोषणा BMA150_DRIVER		"bma150"
+#define BMA150_DRIVER		"bma150"
 
-#घोषणा BMA150_RANGE_2G		0
-#घोषणा BMA150_RANGE_4G		1
-#घोषणा BMA150_RANGE_8G		2
+#define BMA150_RANGE_2G		0
+#define BMA150_RANGE_4G		1
+#define BMA150_RANGE_8G		2
 
-#घोषणा BMA150_BW_25HZ		0
-#घोषणा BMA150_BW_50HZ		1
-#घोषणा BMA150_BW_100HZ		2
-#घोषणा BMA150_BW_190HZ		3
-#घोषणा BMA150_BW_375HZ		4
-#घोषणा BMA150_BW_750HZ		5
-#घोषणा BMA150_BW_1500HZ	6
+#define BMA150_BW_25HZ		0
+#define BMA150_BW_50HZ		1
+#define BMA150_BW_100HZ		2
+#define BMA150_BW_190HZ		3
+#define BMA150_BW_375HZ		4
+#define BMA150_BW_750HZ		5
+#define BMA150_BW_1500HZ	6
 
-काष्ठा bma150_cfg अणु
-	bool any_motion_पूर्णांक;		/* Set to enable any-motion पूर्णांकerrupt */
-	bool hg_पूर्णांक;			/* Set to enable high-G पूर्णांकerrupt */
-	bool lg_पूर्णांक;			/* Set to enable low-G पूर्णांकerrupt */
-	अचिन्हित अक्षर any_motion_dur;	/* Any-motion duration */
-	अचिन्हित अक्षर any_motion_thres;	/* Any-motion threshold */
-	अचिन्हित अक्षर hg_hyst;		/* High-G hysterisis */
-	अचिन्हित अक्षर hg_dur;		/* High-G duration */
-	अचिन्हित अक्षर hg_thres;		/* High-G threshold */
-	अचिन्हित अक्षर lg_hyst;		/* Low-G hysterisis */
-	अचिन्हित अक्षर lg_dur;		/* Low-G duration */
-	अचिन्हित अक्षर lg_thres;		/* Low-G threshold */
-	अचिन्हित अक्षर range;		/* one of BMA0150_RANGE_xxx */
-	अचिन्हित अक्षर bandwidth;	/* one of BMA0150_BW_xxx */
-पूर्ण;
+struct bma150_cfg {
+	bool any_motion_int;		/* Set to enable any-motion interrupt */
+	bool hg_int;			/* Set to enable high-G interrupt */
+	bool lg_int;			/* Set to enable low-G interrupt */
+	unsigned char any_motion_dur;	/* Any-motion duration */
+	unsigned char any_motion_thres;	/* Any-motion threshold */
+	unsigned char hg_hyst;		/* High-G hysterisis */
+	unsigned char hg_dur;		/* High-G duration */
+	unsigned char hg_thres;		/* High-G threshold */
+	unsigned char lg_hyst;		/* Low-G hysterisis */
+	unsigned char lg_dur;		/* Low-G duration */
+	unsigned char lg_thres;		/* Low-G threshold */
+	unsigned char range;		/* one of BMA0150_RANGE_xxx */
+	unsigned char bandwidth;	/* one of BMA0150_BW_xxx */
+};
 
-काष्ठा bma150_platक्रमm_data अणु
-	काष्ठा bma150_cfg cfg;
-	पूर्णांक (*irq_gpio_cfg)(व्योम);
-पूर्ण;
+struct bma150_platform_data {
+	struct bma150_cfg cfg;
+	int (*irq_gpio_cfg)(void);
+};
 
-#पूर्ण_अगर /* _BMA150_H_ */
+#endif /* _BMA150_H_ */

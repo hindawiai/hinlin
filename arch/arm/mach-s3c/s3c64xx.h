@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -9,59 +8,59 @@
  *	Ben Dooks <ben@simtec.co.uk>
  *	http://armlinux.simtec.co.uk/
  *
- * Common Header क्रम S3C64XX machines
+ * Common Header for S3C64XX machines
  */
 
-#अगर_अघोषित __ARCH_ARM_MACH_S3C64XX_COMMON_H
-#घोषणा __ARCH_ARM_MACH_S3C64XX_COMMON_H
+#ifndef __ARCH_ARM_MACH_S3C64XX_COMMON_H
+#define __ARCH_ARM_MACH_S3C64XX_COMMON_H
 
-#समावेश <linux/reboot.h>
+#include <linux/reboot.h>
 
-व्योम s3c64xx_init_irq(u32 vic0, u32 vic1);
-व्योम s3c64xx_init_io(काष्ठा map_desc *mach_desc, पूर्णांक size);
+void s3c64xx_init_irq(u32 vic0, u32 vic1);
+void s3c64xx_init_io(struct map_desc *mach_desc, int size);
 
-काष्ठा device_node;
-व्योम s3c64xx_set_xtal_freq(अचिन्हित दीर्घ freq);
-व्योम s3c64xx_set_xusbxti_freq(अचिन्हित दीर्घ freq);
+struct device_node;
+void s3c64xx_set_xtal_freq(unsigned long freq);
+void s3c64xx_set_xusbxti_freq(unsigned long freq);
 
-#अगर_घोषित CONFIG_CPU_S3C6400
+#ifdef CONFIG_CPU_S3C6400
 
-बाह्य  पूर्णांक s3c6400_init(व्योम);
-बाह्य व्योम s3c6400_init_irq(व्योम);
-बाह्य व्योम s3c6400_map_io(व्योम);
+extern  int s3c6400_init(void);
+extern void s3c6400_init_irq(void);
+extern void s3c6400_map_io(void);
 
-#अन्यथा
-#घोषणा s3c6400_map_io शून्य
-#घोषणा s3c6400_init शून्य
-#पूर्ण_अगर
+#else
+#define s3c6400_map_io NULL
+#define s3c6400_init NULL
+#endif
 
-#अगर_घोषित CONFIG_CPU_S3C6410
+#ifdef CONFIG_CPU_S3C6410
 
-बाह्य  पूर्णांक s3c6410_init(व्योम);
-बाह्य व्योम s3c6410_init_irq(व्योम);
-बाह्य व्योम s3c6410_map_io(व्योम);
+extern  int s3c6410_init(void);
+extern void s3c6410_init_irq(void);
+extern void s3c6410_map_io(void);
 
-#अन्यथा
-#घोषणा s3c6410_map_io शून्य
-#घोषणा s3c6410_init शून्य
-#पूर्ण_अगर
+#else
+#define s3c6410_map_io NULL
+#define s3c6410_init NULL
+#endif
 
-#अगर_घोषित CONFIG_S3C64XX_PL080
-बाह्य काष्ठा pl08x_platक्रमm_data s3c64xx_dma0_plat_data;
-बाह्य काष्ठा pl08x_platक्रमm_data s3c64xx_dma1_plat_data;
-#पूर्ण_अगर
+#ifdef CONFIG_S3C64XX_PL080
+extern struct pl08x_platform_data s3c64xx_dma0_plat_data;
+extern struct pl08x_platform_data s3c64xx_dma1_plat_data;
+#endif
 
 /* Samsung HR-Timer Clock mode */
-क्रमागत s3c64xx_समयr_mode अणु
+enum s3c64xx_timer_mode {
 	S3C64XX_PWM0,
 	S3C64XX_PWM1,
 	S3C64XX_PWM2,
 	S3C64XX_PWM3,
 	S3C64XX_PWM4,
-पूर्ण;
+};
 
-बाह्य व्योम __init s3c64xx_set_समयr_source(क्रमागत s3c64xx_समयr_mode event,
-					    क्रमागत s3c64xx_समयr_mode source);
-बाह्य व्योम __init s3c64xx_समयr_init(व्योम);
+extern void __init s3c64xx_set_timer_source(enum s3c64xx_timer_mode event,
+					    enum s3c64xx_timer_mode source);
+extern void __init s3c64xx_timer_init(void);
 
-#पूर्ण_अगर /* __ARCH_ARM_MACH_S3C64XX_COMMON_H */
+#endif /* __ARCH_ARM_MACH_S3C64XX_COMMON_H */

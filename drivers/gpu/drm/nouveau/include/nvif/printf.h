@@ -1,21 +1,20 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVIF_PRINTF_H__
-#घोषणा __NVIF_PRINTF_H__
-#समावेश <nvअगर/client.h>
-#समावेश <nvअगर/parent.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVIF_PRINTF_H__
+#define __NVIF_PRINTF_H__
+#include <nvif/client.h>
+#include <nvif/parent.h>
 
-#घोषणा NVIF_PRINT(l,o,f,a...) करो अणु                                                                \
-	काष्ठा nvअगर_object *_o = (o);                                                              \
-	काष्ठा nvअगर_parent *_p = _o->parent;                                                       \
+#define NVIF_PRINT(l,o,f,a...) do {                                                                \
+	struct nvif_object *_o = (o);                                                              \
+	struct nvif_parent *_p = _o->parent;                                                       \
 	_p->func->l(_o, "[%s/%08x:%s] "f"\n", _o->client->object.name, _o->handle, _o->name, ##a); \
-पूर्ण जबतक(0)
+} while(0)
 
-#अगर_अघोषित NVIF_DEBUG_PRINT_DISABLE
-#घोषणा NVIF_DEBUG(o,f,a...) NVIF_PRINT(debugf, (o), f, ##a)
-#अन्यथा
-#घोषणा NVIF_DEBUG(o,f,a...)
-#पूर्ण_अगर
+#ifndef NVIF_DEBUG_PRINT_DISABLE
+#define NVIF_DEBUG(o,f,a...) NVIF_PRINT(debugf, (o), f, ##a)
+#else
+#define NVIF_DEBUG(o,f,a...)
+#endif
 
-#घोषणा NVIF_ERROR(o,f,a...) NVIF_PRINT(errorf, (o), f, ##a)
-#पूर्ण_अगर
+#define NVIF_ERROR(o,f,a...) NVIF_PRINT(errorf, (o), f, ##a)
+#endif

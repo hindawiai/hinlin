@@ -1,153 +1,152 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0 OR BSD-2-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0 OR BSD-2-Clause) */
 /*
  * Copyright (c) 2015-2021, Linaro Limited
  */
-#अगर_अघोषित OPTEE_SMC_H
-#घोषणा OPTEE_SMC_H
+#ifndef OPTEE_SMC_H
+#define OPTEE_SMC_H
 
-#समावेश <linux/arm-smccc.h>
-#समावेश <linux/bitops.h>
+#include <linux/arm-smccc.h>
+#include <linux/bitops.h>
 
-#घोषणा OPTEE_SMC_STD_CALL_VAL(func_num) \
+#define OPTEE_SMC_STD_CALL_VAL(func_num) \
 	ARM_SMCCC_CALL_VAL(ARM_SMCCC_STD_CALL, ARM_SMCCC_SMC_32, \
 			   ARM_SMCCC_OWNER_TRUSTED_OS, (func_num))
-#घोषणा OPTEE_SMC_FAST_CALL_VAL(func_num) \
+#define OPTEE_SMC_FAST_CALL_VAL(func_num) \
 	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL, ARM_SMCCC_SMC_32, \
 			   ARM_SMCCC_OWNER_TRUSTED_OS, (func_num))
 
 /*
- * Function specअगरied by SMC Calling convention.
+ * Function specified by SMC Calling convention.
  */
-#घोषणा OPTEE_SMC_FUNCID_CALLS_COUNT	0xFF00
-#घोषणा OPTEE_SMC_CALLS_COUNT \
+#define OPTEE_SMC_FUNCID_CALLS_COUNT	0xFF00
+#define OPTEE_SMC_CALLS_COUNT \
 	ARM_SMCCC_CALL_VAL(OPTEE_SMC_FAST_CALL, SMCCC_SMC_32, \
 			   SMCCC_OWNER_TRUSTED_OS_END, \
 			   OPTEE_SMC_FUNCID_CALLS_COUNT)
 
 /*
- * Normal cached memory (ग_लिखो-back), shareable क्रम SMP प्रणालीs and not
- * shareable क्रम UP प्रणालीs.
+ * Normal cached memory (write-back), shareable for SMP systems and not
+ * shareable for UP systems.
  */
-#घोषणा OPTEE_SMC_SHM_CACHED		1
+#define OPTEE_SMC_SHM_CACHED		1
 
 /*
- * a0..a7 is used as रेजिस्टर names in the descriptions below, on arm32
- * that translates to r0..r7 and on arm64 to w0..w7. In both हालs it's
- * 32-bit रेजिस्टरs.
+ * a0..a7 is used as register names in the descriptions below, on arm32
+ * that translates to r0..r7 and on arm64 to w0..w7. In both cases it's
+ * 32-bit registers.
  */
 
 /*
- * Function specअगरied by SMC Calling convention
+ * Function specified by SMC Calling convention
  *
- * Return the following UID अगर using API specअगरied in this file
+ * Return the following UID if using API specified in this file
  * without further extensions:
  * 384fb3e0-e7f8-11e3-af63-0002a5d5c51b.
  * see also OPTEE_MSG_UID_* in optee_msg.h
  */
-#घोषणा OPTEE_SMC_FUNCID_CALLS_UID OPTEE_MSG_FUNCID_CALLS_UID
-#घोषणा OPTEE_SMC_CALLS_UID \
+#define OPTEE_SMC_FUNCID_CALLS_UID OPTEE_MSG_FUNCID_CALLS_UID
+#define OPTEE_SMC_CALLS_UID \
 	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL, ARM_SMCCC_SMC_32, \
 			   ARM_SMCCC_OWNER_TRUSTED_OS_END, \
 			   OPTEE_SMC_FUNCID_CALLS_UID)
 
 /*
- * Function specअगरied by SMC Calling convention
+ * Function specified by SMC Calling convention
  *
- * Returns 2.0 अगर using API specअगरied in this file without further extensions.
+ * Returns 2.0 if using API specified in this file without further extensions.
  * see also OPTEE_MSG_REVISION_* in optee_msg.h
  */
-#घोषणा OPTEE_SMC_FUNCID_CALLS_REVISION OPTEE_MSG_FUNCID_CALLS_REVISION
-#घोषणा OPTEE_SMC_CALLS_REVISION \
+#define OPTEE_SMC_FUNCID_CALLS_REVISION OPTEE_MSG_FUNCID_CALLS_REVISION
+#define OPTEE_SMC_CALLS_REVISION \
 	ARM_SMCCC_CALL_VAL(ARM_SMCCC_FAST_CALL, ARM_SMCCC_SMC_32, \
 			   ARM_SMCCC_OWNER_TRUSTED_OS_END, \
 			   OPTEE_SMC_FUNCID_CALLS_REVISION)
 
-काष्ठा optee_smc_calls_revision_result अणु
-	अचिन्हित दीर्घ major;
-	अचिन्हित दीर्घ minor;
-	अचिन्हित दीर्घ reserved0;
-	अचिन्हित दीर्घ reserved1;
-पूर्ण;
+struct optee_smc_calls_revision_result {
+	unsigned long major;
+	unsigned long minor;
+	unsigned long reserved0;
+	unsigned long reserved1;
+};
 
 /*
  * Get UUID of Trusted OS.
  *
  * Used by non-secure world to figure out which Trusted OS is installed.
- * Note that वापसed UUID is the UUID of the Trusted OS, not of the API.
+ * Note that returned UUID is the UUID of the Trusted OS, not of the API.
  *
  * Returns UUID in a0-4 in the same way as OPTEE_SMC_CALLS_UID
  * described above.
  */
-#घोषणा OPTEE_SMC_FUNCID_GET_OS_UUID OPTEE_MSG_FUNCID_GET_OS_UUID
-#घोषणा OPTEE_SMC_CALL_GET_OS_UUID \
+#define OPTEE_SMC_FUNCID_GET_OS_UUID OPTEE_MSG_FUNCID_GET_OS_UUID
+#define OPTEE_SMC_CALL_GET_OS_UUID \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_GET_OS_UUID)
 
 /*
  * Get revision of Trusted OS.
  *
  * Used by non-secure world to figure out which version of the Trusted OS
- * is installed. Note that the वापसed revision is the revision of the
+ * is installed. Note that the returned revision is the revision of the
  * Trusted OS, not of the API.
  *
  * Returns revision in a0-1 in the same way as OPTEE_SMC_CALLS_REVISION
- * described above. May optionally वापस a 32-bit build identअगरier in a2,
- * with zero meaning unspecअगरied.
+ * described above. May optionally return a 32-bit build identifier in a2,
+ * with zero meaning unspecified.
  */
-#घोषणा OPTEE_SMC_FUNCID_GET_OS_REVISION OPTEE_MSG_FUNCID_GET_OS_REVISION
-#घोषणा OPTEE_SMC_CALL_GET_OS_REVISION \
+#define OPTEE_SMC_FUNCID_GET_OS_REVISION OPTEE_MSG_FUNCID_GET_OS_REVISION
+#define OPTEE_SMC_CALL_GET_OS_REVISION \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_GET_OS_REVISION)
 
-काष्ठा optee_smc_call_get_os_revision_result अणु
-	अचिन्हित दीर्घ major;
-	अचिन्हित दीर्घ minor;
-	अचिन्हित दीर्घ build_id;
-	अचिन्हित दीर्घ reserved1;
-पूर्ण;
+struct optee_smc_call_get_os_revision_result {
+	unsigned long major;
+	unsigned long minor;
+	unsigned long build_id;
+	unsigned long reserved1;
+};
 
 /*
- * Call with काष्ठा optee_msg_arg as argument
+ * Call with struct optee_msg_arg as argument
  *
- * Call रेजिस्टर usage:
+ * Call register usage:
  * a0	SMC Function ID, OPTEE_SMC*CALL_WITH_ARG
- * a1	Upper 32 bits of a 64-bit physical poपूर्णांकer to a काष्ठा optee_msg_arg
- * a2	Lower 32 bits of a 64-bit physical poपूर्णांकer to a काष्ठा optee_msg_arg
- * a3	Cache settings, not used अगर physical poपूर्णांकer is in a predefined shared
- *	memory area अन्यथा per OPTEE_SMC_SHM_*
+ * a1	Upper 32 bits of a 64-bit physical pointer to a struct optee_msg_arg
+ * a2	Lower 32 bits of a 64-bit physical pointer to a struct optee_msg_arg
+ * a3	Cache settings, not used if physical pointer is in a predefined shared
+ *	memory area else per OPTEE_SMC_SHM_*
  * a4-6	Not used
- * a7	Hypervisor Client ID रेजिस्टर
+ * a7	Hypervisor Client ID register
  *
- * Normal वापस रेजिस्टर usage:
+ * Normal return register usage:
  * a0	Return value, OPTEE_SMC_RETURN_*
  * a1-3	Not used
  * a4-7	Preserved
  *
- * OPTEE_SMC_RETURN_ETHREAD_LIMIT वापस रेजिस्टर usage:
+ * OPTEE_SMC_RETURN_ETHREAD_LIMIT return register usage:
  * a0	Return value, OPTEE_SMC_RETURN_ETHREAD_LIMIT
  * a1-3	Preserved
  * a4-7	Preserved
  *
- * RPC वापस रेजिस्टर usage:
+ * RPC return register usage:
  * a0	Return value, OPTEE_SMC_RETURN_IS_RPC(val)
  * a1-2	RPC parameters
- * a3-7	Resume inक्रमmation, must be preserved
+ * a3-7	Resume information, must be preserved
  *
- * Possible वापस values:
- * OPTEE_SMC_RETURN_UNKNOWN_FUNCTION	Trusted OS करोes not recognize this
+ * Possible return values:
+ * OPTEE_SMC_RETURN_UNKNOWN_FUNCTION	Trusted OS does not recognize this
  *					function.
  * OPTEE_SMC_RETURN_OK			Call completed, result updated in
- *					the previously supplied काष्ठा
+ *					the previously supplied struct
  *					optee_msg_arg.
- * OPTEE_SMC_RETURN_ETHREAD_LIMIT	Number of Trusted OS thपढ़ोs exceeded,
+ * OPTEE_SMC_RETURN_ETHREAD_LIMIT	Number of Trusted OS threads exceeded,
  *					try again later.
- * OPTEE_SMC_RETURN_EBADADDR		Bad physical poपूर्णांकer to काष्ठा
+ * OPTEE_SMC_RETURN_EBADADDR		Bad physical pointer to struct
  *					optee_msg_arg.
- * OPTEE_SMC_RETURN_EBADCMD		Bad/unknown cmd in काष्ठा optee_msg_arg
+ * OPTEE_SMC_RETURN_EBADCMD		Bad/unknown cmd in struct optee_msg_arg
  * OPTEE_SMC_RETURN_IS_RPC()		Call suspended by RPC call to normal
  *					world.
  */
-#घोषणा OPTEE_SMC_FUNCID_CALL_WITH_ARG OPTEE_MSG_FUNCID_CALL_WITH_ARG
-#घोषणा OPTEE_SMC_CALL_WITH_ARG \
+#define OPTEE_SMC_FUNCID_CALL_WITH_ARG OPTEE_MSG_FUNCID_CALL_WITH_ARG
+#define OPTEE_SMC_CALL_WITH_ARG \
 	OPTEE_SMC_STD_CALL_VAL(OPTEE_SMC_FUNCID_CALL_WITH_ARG)
 
 /*
@@ -155,12 +154,12 @@
  *
  * Returns the Secure/Non-secure shared memory config.
  *
- * Call रेजिस्टर usage:
+ * Call register usage:
  * a0	SMC Function ID, OPTEE_SMC_GET_SHM_CONFIG
  * a1-6	Not used
- * a7	Hypervisor Client ID रेजिस्टर
+ * a7	Hypervisor Client ID register
  *
- * Have config वापस रेजिस्टर usage:
+ * Have config return register usage:
  * a0	OPTEE_SMC_RETURN_OK
  * a1	Physical address of start of SHM
  * a2	Size of of SHM
@@ -168,306 +167,306 @@
  *	OPTEE_SMC_SHM_* values above
  * a4-7	Preserved
  *
- * Not available रेजिस्टर usage:
+ * Not available register usage:
  * a0	OPTEE_SMC_RETURN_ENOTAVAIL
  * a1-3 Not used
  * a4-7	Preserved
  */
-#घोषणा OPTEE_SMC_FUNCID_GET_SHM_CONFIG	7
-#घोषणा OPTEE_SMC_GET_SHM_CONFIG \
+#define OPTEE_SMC_FUNCID_GET_SHM_CONFIG	7
+#define OPTEE_SMC_GET_SHM_CONFIG \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_GET_SHM_CONFIG)
 
-काष्ठा optee_smc_get_shm_config_result अणु
-	अचिन्हित दीर्घ status;
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ size;
-	अचिन्हित दीर्घ settings;
-पूर्ण;
+struct optee_smc_get_shm_config_result {
+	unsigned long status;
+	unsigned long start;
+	unsigned long size;
+	unsigned long settings;
+};
 
 /*
  * Exchanges capabilities between normal world and secure world
  *
- * Call रेजिस्टर usage:
+ * Call register usage:
  * a0	SMC Function ID, OPTEE_SMC_EXCHANGE_CAPABILITIES
  * a1	bitfield of normal world capabilities OPTEE_SMC_NSEC_CAP_*
  * a2-6	Not used
- * a7	Hypervisor Client ID रेजिस्टर
+ * a7	Hypervisor Client ID register
  *
- * Normal वापस रेजिस्टर usage:
+ * Normal return register usage:
  * a0	OPTEE_SMC_RETURN_OK
  * a1	bitfield of secure world capabilities OPTEE_SMC_SEC_CAP_*
  * a2-7	Preserved
  *
- * Error वापस रेजिस्टर usage:
+ * Error return register usage:
  * a0	OPTEE_SMC_RETURN_ENOTAVAIL, can't use the capabilities from normal world
  * a1	bitfield of secure world capabilities OPTEE_SMC_SEC_CAP_*
  * a2-7 Preserved
  */
-/* Normal world works as a uniprocessor प्रणाली */
-#घोषणा OPTEE_SMC_NSEC_CAP_UNIPROCESSOR		BIT(0)
-/* Secure world has reserved shared memory क्रम normal world to use */
-#घोषणा OPTEE_SMC_SEC_CAP_HAVE_RESERVED_SHM	BIT(0)
-/* Secure world can communicate via previously unरेजिस्टरed shared memory */
-#घोषणा OPTEE_SMC_SEC_CAP_UNREGISTERED_SHM	BIT(1)
+/* Normal world works as a uniprocessor system */
+#define OPTEE_SMC_NSEC_CAP_UNIPROCESSOR		BIT(0)
+/* Secure world has reserved shared memory for normal world to use */
+#define OPTEE_SMC_SEC_CAP_HAVE_RESERVED_SHM	BIT(0)
+/* Secure world can communicate via previously unregistered shared memory */
+#define OPTEE_SMC_SEC_CAP_UNREGISTERED_SHM	BIT(1)
 
 /*
  * Secure world supports commands "register/unregister shared memory",
  * secure world accepts command buffers located in any parts of non-secure RAM
  */
-#घोषणा OPTEE_SMC_SEC_CAP_DYNAMIC_SHM		BIT(2)
-/* Secure world is built with भवization support */
-#घोषणा OPTEE_SMC_SEC_CAP_VIRTUALIZATION	BIT(3)
-/* Secure world supports Shared Memory with a शून्य reference */
-#घोषणा OPTEE_SMC_SEC_CAP_MEMREF_शून्य		BIT(4)
+#define OPTEE_SMC_SEC_CAP_DYNAMIC_SHM		BIT(2)
+/* Secure world is built with virtualization support */
+#define OPTEE_SMC_SEC_CAP_VIRTUALIZATION	BIT(3)
+/* Secure world supports Shared Memory with a NULL reference */
+#define OPTEE_SMC_SEC_CAP_MEMREF_NULL		BIT(4)
 
-#घोषणा OPTEE_SMC_FUNCID_EXCHANGE_CAPABILITIES	9
-#घोषणा OPTEE_SMC_EXCHANGE_CAPABILITIES \
+#define OPTEE_SMC_FUNCID_EXCHANGE_CAPABILITIES	9
+#define OPTEE_SMC_EXCHANGE_CAPABILITIES \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_EXCHANGE_CAPABILITIES)
 
-काष्ठा optee_smc_exchange_capabilities_result अणु
-	अचिन्हित दीर्घ status;
-	अचिन्हित दीर्घ capabilities;
-	अचिन्हित दीर्घ reserved0;
-	अचिन्हित दीर्घ reserved1;
-पूर्ण;
+struct optee_smc_exchange_capabilities_result {
+	unsigned long status;
+	unsigned long capabilities;
+	unsigned long reserved0;
+	unsigned long reserved1;
+};
 
 /*
  * Disable and empties cache of shared memory objects
  *
- * Secure world can cache frequently used shared memory objects, क्रम
+ * Secure world can cache frequently used shared memory objects, for
  * example objects used as RPC arguments. When secure world is idle this
- * function वापसs one shared memory reference to मुक्त. To disable the
- * cache and मुक्त all cached objects this function has to be called until
- * it वापसs OPTEE_SMC_RETURN_ENOTAVAIL.
+ * function returns one shared memory reference to free. To disable the
+ * cache and free all cached objects this function has to be called until
+ * it returns OPTEE_SMC_RETURN_ENOTAVAIL.
  *
- * Call रेजिस्टर usage:
+ * Call register usage:
  * a0	SMC Function ID, OPTEE_SMC_DISABLE_SHM_CACHE
  * a1-6	Not used
- * a7	Hypervisor Client ID रेजिस्टर
+ * a7	Hypervisor Client ID register
  *
- * Normal वापस रेजिस्टर usage:
+ * Normal return register usage:
  * a0	OPTEE_SMC_RETURN_OK
  * a1	Upper 32 bits of a 64-bit Shared memory cookie
  * a2	Lower 32 bits of a 64-bit Shared memory cookie
  * a3-7	Preserved
  *
- * Cache empty वापस रेजिस्टर usage:
+ * Cache empty return register usage:
  * a0	OPTEE_SMC_RETURN_ENOTAVAIL
  * a1-7	Preserved
  *
- * Not idle वापस रेजिस्टर usage:
+ * Not idle return register usage:
  * a0	OPTEE_SMC_RETURN_EBUSY
  * a1-7	Preserved
  */
-#घोषणा OPTEE_SMC_FUNCID_DISABLE_SHM_CACHE	10
-#घोषणा OPTEE_SMC_DISABLE_SHM_CACHE \
+#define OPTEE_SMC_FUNCID_DISABLE_SHM_CACHE	10
+#define OPTEE_SMC_DISABLE_SHM_CACHE \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_DISABLE_SHM_CACHE)
 
-काष्ठा optee_smc_disable_shm_cache_result अणु
-	अचिन्हित दीर्घ status;
-	अचिन्हित दीर्घ shm_upper32;
-	अचिन्हित दीर्घ shm_lower32;
-	अचिन्हित दीर्घ reserved0;
-पूर्ण;
+struct optee_smc_disable_shm_cache_result {
+	unsigned long status;
+	unsigned long shm_upper32;
+	unsigned long shm_lower32;
+	unsigned long reserved0;
+};
 
 /*
  * Enable cache of shared memory objects
  *
- * Secure world can cache frequently used shared memory objects, क्रम
+ * Secure world can cache frequently used shared memory objects, for
  * example objects used as RPC arguments. When secure world is idle this
- * function वापसs OPTEE_SMC_RETURN_OK and the cache is enabled. If
- * secure world isn't idle OPTEE_SMC_RETURN_EBUSY is वापसed.
+ * function returns OPTEE_SMC_RETURN_OK and the cache is enabled. If
+ * secure world isn't idle OPTEE_SMC_RETURN_EBUSY is returned.
  *
- * Call रेजिस्टर usage:
+ * Call register usage:
  * a0	SMC Function ID, OPTEE_SMC_ENABLE_SHM_CACHE
  * a1-6	Not used
- * a7	Hypervisor Client ID रेजिस्टर
+ * a7	Hypervisor Client ID register
  *
- * Normal वापस रेजिस्टर usage:
+ * Normal return register usage:
  * a0	OPTEE_SMC_RETURN_OK
  * a1-7	Preserved
  *
- * Not idle वापस रेजिस्टर usage:
+ * Not idle return register usage:
  * a0	OPTEE_SMC_RETURN_EBUSY
  * a1-7	Preserved
  */
-#घोषणा OPTEE_SMC_FUNCID_ENABLE_SHM_CACHE	11
-#घोषणा OPTEE_SMC_ENABLE_SHM_CACHE \
+#define OPTEE_SMC_FUNCID_ENABLE_SHM_CACHE	11
+#define OPTEE_SMC_ENABLE_SHM_CACHE \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_ENABLE_SHM_CACHE)
 
 /*
- * Query OP-TEE about number of supported thपढ़ोs
+ * Query OP-TEE about number of supported threads
  *
  * Normal World OS or Hypervisor issues this call to find out how many
- * thपढ़ोs OP-TEE supports. That is how many standard calls can be issued
- * in parallel beक्रमe OP-TEE will वापस OPTEE_SMC_RETURN_ETHREAD_LIMIT.
+ * threads OP-TEE supports. That is how many standard calls can be issued
+ * in parallel before OP-TEE will return OPTEE_SMC_RETURN_ETHREAD_LIMIT.
  *
  * Call requests usage:
  * a0	SMC Function ID, OPTEE_SMC_GET_THREAD_COUNT
  * a1-6 Not used
- * a7	Hypervisor Client ID रेजिस्टर
+ * a7	Hypervisor Client ID register
  *
- * Normal वापस रेजिस्टर usage:
+ * Normal return register usage:
  * a0	OPTEE_SMC_RETURN_OK
- * a1	Number of thपढ़ोs
+ * a1	Number of threads
  * a2-7 Preserved
  *
- * Error वापस:
+ * Error return:
  * a0	OPTEE_SMC_RETURN_UNKNOWN_FUNCTION   Requested call is not implemented
  * a1-7	Preserved
  */
-#घोषणा OPTEE_SMC_FUNCID_GET_THREAD_COUNT	15
-#घोषणा OPTEE_SMC_GET_THREAD_COUNT \
+#define OPTEE_SMC_FUNCID_GET_THREAD_COUNT	15
+#define OPTEE_SMC_GET_THREAD_COUNT \
 	OPTEE_SMC_FAST_CALL_VAL(OPTEE_SMC_FUNCID_GET_THREAD_COUNT)
 
 /*
- * Resume from RPC (क्रम example after processing a क्रमeign पूर्णांकerrupt)
+ * Resume from RPC (for example after processing a foreign interrupt)
  *
- * Call रेजिस्टर usage:
+ * Call register usage:
  * a0	SMC Function ID, OPTEE_SMC_CALL_RETURN_FROM_RPC
- * a1-3	Value of a1-3 when OPTEE_SMC_CALL_WITH_ARG वापसed
+ * a1-3	Value of a1-3 when OPTEE_SMC_CALL_WITH_ARG returned
  *	OPTEE_SMC_RETURN_RPC in a0
  *
- * Return रेजिस्टर usage is the same as क्रम OPTEE_SMC_*CALL_WITH_ARG above.
+ * Return register usage is the same as for OPTEE_SMC_*CALL_WITH_ARG above.
  *
- * Possible वापस values
- * OPTEE_SMC_RETURN_UNKNOWN_FUNCTION	Trusted OS करोes not recognize this
+ * Possible return values
+ * OPTEE_SMC_RETURN_UNKNOWN_FUNCTION	Trusted OS does not recognize this
  *					function.
  * OPTEE_SMC_RETURN_OK			Original call completed, result
  *					updated in the previously supplied.
- *					काष्ठा optee_msg_arg
+ *					struct optee_msg_arg
  * OPTEE_SMC_RETURN_RPC			Call suspended by RPC call to normal
  *					world.
  * OPTEE_SMC_RETURN_ERESUME		Resume failed, the opaque resume
- *					inक्रमmation was corrupt.
+ *					information was corrupt.
  */
-#घोषणा OPTEE_SMC_FUNCID_RETURN_FROM_RPC	3
-#घोषणा OPTEE_SMC_CALL_RETURN_FROM_RPC \
+#define OPTEE_SMC_FUNCID_RETURN_FROM_RPC	3
+#define OPTEE_SMC_CALL_RETURN_FROM_RPC \
 	OPTEE_SMC_STD_CALL_VAL(OPTEE_SMC_FUNCID_RETURN_FROM_RPC)
 
-#घोषणा OPTEE_SMC_RETURN_RPC_PREFIX_MASK	0xFFFF0000
-#घोषणा OPTEE_SMC_RETURN_RPC_PREFIX		0xFFFF0000
-#घोषणा OPTEE_SMC_RETURN_RPC_FUNC_MASK		0x0000FFFF
+#define OPTEE_SMC_RETURN_RPC_PREFIX_MASK	0xFFFF0000
+#define OPTEE_SMC_RETURN_RPC_PREFIX		0xFFFF0000
+#define OPTEE_SMC_RETURN_RPC_FUNC_MASK		0x0000FFFF
 
-#घोषणा OPTEE_SMC_RETURN_GET_RPC_FUNC(ret) \
+#define OPTEE_SMC_RETURN_GET_RPC_FUNC(ret) \
 	((ret) & OPTEE_SMC_RETURN_RPC_FUNC_MASK)
 
-#घोषणा OPTEE_SMC_RPC_VAL(func)		((func) | OPTEE_SMC_RETURN_RPC_PREFIX)
+#define OPTEE_SMC_RPC_VAL(func)		((func) | OPTEE_SMC_RETURN_RPC_PREFIX)
 
 /*
- * Allocate memory क्रम RPC parameter passing. The memory is used to hold a
- * काष्ठा optee_msg_arg.
+ * Allocate memory for RPC parameter passing. The memory is used to hold a
+ * struct optee_msg_arg.
  *
- * "Call" रेजिस्टर usage:
+ * "Call" register usage:
  * a0	This value, OPTEE_SMC_RETURN_RPC_ALLOC
  * a1	Size in bytes of required argument memory
  * a2	Not used
- * a3	Resume inक्रमmation, must be preserved
+ * a3	Resume information, must be preserved
  * a4-5	Not used
- * a6-7	Resume inक्रमmation, must be preserved
+ * a6-7	Resume information, must be preserved
  *
- * "Return" रेजिस्टर usage:
+ * "Return" register usage:
  * a0	SMC Function ID, OPTEE_SMC_CALL_RETURN_FROM_RPC.
- * a1	Upper 32 bits of 64-bit physical poपूर्णांकer to allocated
- *	memory, (a1 == 0 && a2 == 0) अगर size was 0 or अगर memory can't
+ * a1	Upper 32 bits of 64-bit physical pointer to allocated
+ *	memory, (a1 == 0 && a2 == 0) if size was 0 or if memory can't
  *	be allocated.
- * a2	Lower 32 bits of 64-bit physical poपूर्णांकer to allocated
- *	memory, (a1 == 0 && a2 == 0) अगर size was 0 or अगर memory can't
+ * a2	Lower 32 bits of 64-bit physical pointer to allocated
+ *	memory, (a1 == 0 && a2 == 0) if size was 0 or if memory can't
  *	be allocated
  * a3	Preserved
- * a4	Upper 32 bits of 64-bit Shared memory cookie used when मुक्तing
- *	the memory or करोing an RPC
- * a5	Lower 32 bits of 64-bit Shared memory cookie used when मुक्तing
- *	the memory or करोing an RPC
+ * a4	Upper 32 bits of 64-bit Shared memory cookie used when freeing
+ *	the memory or doing an RPC
+ * a5	Lower 32 bits of 64-bit Shared memory cookie used when freeing
+ *	the memory or doing an RPC
  * a6-7	Preserved
  */
-#घोषणा OPTEE_SMC_RPC_FUNC_ALLOC	0
-#घोषणा OPTEE_SMC_RETURN_RPC_ALLOC \
+#define OPTEE_SMC_RPC_FUNC_ALLOC	0
+#define OPTEE_SMC_RETURN_RPC_ALLOC \
 	OPTEE_SMC_RPC_VAL(OPTEE_SMC_RPC_FUNC_ALLOC)
 
 /*
  * Free memory previously allocated by OPTEE_SMC_RETURN_RPC_ALLOC
  *
- * "Call" रेजिस्टर usage:
+ * "Call" register usage:
  * a0	This value, OPTEE_SMC_RETURN_RPC_FREE
- * a1	Upper 32 bits of 64-bit shared memory cookie beदीर्घing to this
+ * a1	Upper 32 bits of 64-bit shared memory cookie belonging to this
  *	argument memory
- * a2	Lower 32 bits of 64-bit shared memory cookie beदीर्घing to this
+ * a2	Lower 32 bits of 64-bit shared memory cookie belonging to this
  *	argument memory
- * a3-7	Resume inक्रमmation, must be preserved
+ * a3-7	Resume information, must be preserved
  *
- * "Return" रेजिस्टर usage:
+ * "Return" register usage:
  * a0	SMC Function ID, OPTEE_SMC_CALL_RETURN_FROM_RPC.
  * a1-2	Not used
  * a3-7	Preserved
  */
-#घोषणा OPTEE_SMC_RPC_FUNC_FREE		2
-#घोषणा OPTEE_SMC_RETURN_RPC_FREE \
+#define OPTEE_SMC_RPC_FUNC_FREE		2
+#define OPTEE_SMC_RETURN_RPC_FREE \
 	OPTEE_SMC_RPC_VAL(OPTEE_SMC_RPC_FUNC_FREE)
 
 /*
- * Deliver a क्रमeign पूर्णांकerrupt in normal world.
+ * Deliver a foreign interrupt in normal world.
  *
- * "Call" रेजिस्टर usage:
+ * "Call" register usage:
  * a0	OPTEE_SMC_RETURN_RPC_FOREIGN_INTR
- * a1-7	Resume inक्रमmation, must be preserved
+ * a1-7	Resume information, must be preserved
  *
- * "Return" रेजिस्टर usage:
+ * "Return" register usage:
  * a0	SMC Function ID, OPTEE_SMC_CALL_RETURN_FROM_RPC.
  * a1-7	Preserved
  */
-#घोषणा OPTEE_SMC_RPC_FUNC_FOREIGN_INTR	4
-#घोषणा OPTEE_SMC_RETURN_RPC_FOREIGN_INTR \
+#define OPTEE_SMC_RPC_FUNC_FOREIGN_INTR	4
+#define OPTEE_SMC_RETURN_RPC_FOREIGN_INTR \
 	OPTEE_SMC_RPC_VAL(OPTEE_SMC_RPC_FUNC_FOREIGN_INTR)
 
 /*
- * Do an RPC request. The supplied काष्ठा optee_msg_arg tells which
- * request to करो and the parameters क्रम the request. The following fields
+ * Do an RPC request. The supplied struct optee_msg_arg tells which
+ * request to do and the parameters for the request. The following fields
  * are used (the rest are unused):
  * - cmd		the Request ID
- * - ret		वापस value of the request, filled in by normal world
- * - num_params		number of parameters क्रम the request
+ * - ret		return value of the request, filled in by normal world
+ * - num_params		number of parameters for the request
  * - params		the parameters
  * - param_attrs	attributes of the parameters
  *
- * "Call" रेजिस्टर usage:
+ * "Call" register usage:
  * a0	OPTEE_SMC_RETURN_RPC_CMD
  * a1	Upper 32 bits of a 64-bit Shared memory cookie holding a
- *	काष्ठा optee_msg_arg, must be preserved, only the data should
+ *	struct optee_msg_arg, must be preserved, only the data should
  *	be updated
  * a2	Lower 32 bits of a 64-bit Shared memory cookie holding a
- *	काष्ठा optee_msg_arg, must be preserved, only the data should
+ *	struct optee_msg_arg, must be preserved, only the data should
  *	be updated
- * a3-7	Resume inक्रमmation, must be preserved
+ * a3-7	Resume information, must be preserved
  *
- * "Return" रेजिस्टर usage:
+ * "Return" register usage:
  * a0	SMC Function ID, OPTEE_SMC_CALL_RETURN_FROM_RPC.
  * a1-2	Not used
  * a3-7	Preserved
  */
-#घोषणा OPTEE_SMC_RPC_FUNC_CMD		5
-#घोषणा OPTEE_SMC_RETURN_RPC_CMD \
+#define OPTEE_SMC_RPC_FUNC_CMD		5
+#define OPTEE_SMC_RETURN_RPC_CMD \
 	OPTEE_SMC_RPC_VAL(OPTEE_SMC_RPC_FUNC_CMD)
 
 /* Returned in a0 */
-#घोषणा OPTEE_SMC_RETURN_UNKNOWN_FUNCTION 0xFFFFFFFF
+#define OPTEE_SMC_RETURN_UNKNOWN_FUNCTION 0xFFFFFFFF
 
 /* Returned in a0 only from Trusted OS functions */
-#घोषणा OPTEE_SMC_RETURN_OK		0x0
-#घोषणा OPTEE_SMC_RETURN_ETHREAD_LIMIT	0x1
-#घोषणा OPTEE_SMC_RETURN_EBUSY		0x2
-#घोषणा OPTEE_SMC_RETURN_ERESUME	0x3
-#घोषणा OPTEE_SMC_RETURN_EBADADDR	0x4
-#घोषणा OPTEE_SMC_RETURN_EBADCMD	0x5
-#घोषणा OPTEE_SMC_RETURN_ENOMEM		0x6
-#घोषणा OPTEE_SMC_RETURN_ENOTAVAIL	0x7
-#घोषणा OPTEE_SMC_RETURN_IS_RPC(ret)	__optee_smc_वापस_is_rpc((ret))
+#define OPTEE_SMC_RETURN_OK		0x0
+#define OPTEE_SMC_RETURN_ETHREAD_LIMIT	0x1
+#define OPTEE_SMC_RETURN_EBUSY		0x2
+#define OPTEE_SMC_RETURN_ERESUME	0x3
+#define OPTEE_SMC_RETURN_EBADADDR	0x4
+#define OPTEE_SMC_RETURN_EBADCMD	0x5
+#define OPTEE_SMC_RETURN_ENOMEM		0x6
+#define OPTEE_SMC_RETURN_ENOTAVAIL	0x7
+#define OPTEE_SMC_RETURN_IS_RPC(ret)	__optee_smc_return_is_rpc((ret))
 
-अटल अंतरभूत bool __optee_smc_वापस_is_rpc(u32 ret)
-अणु
-	वापस ret != OPTEE_SMC_RETURN_UNKNOWN_FUNCTION &&
+static inline bool __optee_smc_return_is_rpc(u32 ret)
+{
+	return ret != OPTEE_SMC_RETURN_UNKNOWN_FUNCTION &&
 	       (ret & OPTEE_SMC_RETURN_RPC_PREFIX_MASK) ==
 			OPTEE_SMC_RETURN_RPC_PREFIX;
-पूर्ण
+}
 
-#पूर्ण_अगर /* OPTEE_SMC_H */
+#endif /* OPTEE_SMC_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * heartbeat.h
  *
@@ -8,23 +7,23 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#अगर_अघोषित OCFS2_HEARTBEAT_H
-#घोषणा OCFS2_HEARTBEAT_H
+#ifndef OCFS2_HEARTBEAT_H
+#define OCFS2_HEARTBEAT_H
 
-व्योम ocfs2_init_node_maps(काष्ठा ocfs2_super *osb);
+void ocfs2_init_node_maps(struct ocfs2_super *osb);
 
-व्योम ocfs2_करो_node_करोwn(पूर्णांक node_num, व्योम *data);
+void ocfs2_do_node_down(int node_num, void *data);
 
 /* node map functions - used to keep track of mounted and in-recovery
  * nodes. */
-व्योम ocfs2_node_map_set_bit(काष्ठा ocfs2_super *osb,
-			    काष्ठा ocfs2_node_map *map,
-			    पूर्णांक bit);
-व्योम ocfs2_node_map_clear_bit(काष्ठा ocfs2_super *osb,
-			      काष्ठा ocfs2_node_map *map,
-			      पूर्णांक bit);
-पूर्णांक ocfs2_node_map_test_bit(काष्ठा ocfs2_super *osb,
-			    काष्ठा ocfs2_node_map *map,
-			    पूर्णांक bit);
+void ocfs2_node_map_set_bit(struct ocfs2_super *osb,
+			    struct ocfs2_node_map *map,
+			    int bit);
+void ocfs2_node_map_clear_bit(struct ocfs2_super *osb,
+			      struct ocfs2_node_map *map,
+			      int bit);
+int ocfs2_node_map_test_bit(struct ocfs2_super *osb,
+			    struct ocfs2_node_map *map,
+			    int bit);
 
-#पूर्ण_अगर /* OCFS2_HEARTBEAT_H */
+#endif /* OCFS2_HEARTBEAT_H */

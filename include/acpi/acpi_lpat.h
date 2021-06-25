@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * acpi_lpat.h - LPAT table processing functions
  *
  * Copyright (C) 2015 Intel Corporation. All rights reserved.
  */
 
-#अगर_अघोषित ACPI_LPAT_H
-#घोषणा ACPI_LPAT_H
+#ifndef ACPI_LPAT_H
+#define ACPI_LPAT_H
 
-काष्ठा acpi_lpat अणु
-	पूर्णांक temp;
-	पूर्णांक raw;
-पूर्ण;
+struct acpi_lpat {
+	int temp;
+	int raw;
+};
 
-काष्ठा acpi_lpat_conversion_table अणु
-	काष्ठा acpi_lpat *lpat;
-	पूर्णांक lpat_count;
-पूर्ण;
+struct acpi_lpat_conversion_table {
+	struct acpi_lpat *lpat;
+	int lpat_count;
+};
 
-#अगर_घोषित CONFIG_ACPI
+#ifdef CONFIG_ACPI
 
-पूर्णांक acpi_lpat_raw_to_temp(काष्ठा acpi_lpat_conversion_table *lpat_table,
-			  पूर्णांक raw);
-पूर्णांक acpi_lpat_temp_to_raw(काष्ठा acpi_lpat_conversion_table *lpat_table,
-			  पूर्णांक temp);
-काष्ठा acpi_lpat_conversion_table *acpi_lpat_get_conversion_table(acpi_handle
+int acpi_lpat_raw_to_temp(struct acpi_lpat_conversion_table *lpat_table,
+			  int raw);
+int acpi_lpat_temp_to_raw(struct acpi_lpat_conversion_table *lpat_table,
+			  int temp);
+struct acpi_lpat_conversion_table *acpi_lpat_get_conversion_table(acpi_handle
 								  handle);
-व्योम acpi_lpat_मुक्त_conversion_table(काष्ठा acpi_lpat_conversion_table
+void acpi_lpat_free_conversion_table(struct acpi_lpat_conversion_table
 				     *lpat_table);
 
-#अन्यथा
-अटल पूर्णांक acpi_lpat_raw_to_temp(काष्ठा acpi_lpat_conversion_table *lpat_table,
-				 पूर्णांक raw)
-अणु
-	वापस 0;
-पूर्ण
+#else
+static int acpi_lpat_raw_to_temp(struct acpi_lpat_conversion_table *lpat_table,
+				 int raw)
+{
+	return 0;
+}
 
-अटल पूर्णांक acpi_lpat_temp_to_raw(काष्ठा acpi_lpat_conversion_table *lpat_table,
-				 पूर्णांक temp)
-अणु
-	वापस 0;
-पूर्ण
+static int acpi_lpat_temp_to_raw(struct acpi_lpat_conversion_table *lpat_table,
+				 int temp)
+{
+	return 0;
+}
 
-अटल काष्ठा acpi_lpat_conversion_table *acpi_lpat_get_conversion_table(
+static struct acpi_lpat_conversion_table *acpi_lpat_get_conversion_table(
 							acpi_handle handle)
-अणु
-	वापस शून्य;
-पूर्ण
+{
+	return NULL;
+}
 
-अटल व्योम acpi_lpat_मुक्त_conversion_table(काष्ठा acpi_lpat_conversion_table
+static void acpi_lpat_free_conversion_table(struct acpi_lpat_conversion_table
 					    *lpat_table)
-अणु
-पूर्ण
+{
+}
 
-#पूर्ण_अगर
-#पूर्ण_अगर
+#endif
+#endif

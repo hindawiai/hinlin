@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2011 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/preempt.h>
-#समावेश <linux/export.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/init.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/cma.h>
-#समावेश <linux/bitops.h>
+#include <linux/cpu.h>
+#include <linux/kvm_host.h>
+#include <linux/preempt.h>
+#include <linux/export.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/init.h>
+#include <linux/memblock.h>
+#include <linux/sizes.h>
+#include <linux/cma.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/यंत्र-prototypes.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/पूर्णांकerrupt.h>
-#समावेश <यंत्र/kvm_ppc.h>
-#समावेश <यंत्र/kvm_book3s.h>
-#समावेश <यंत्र/archअक्रमom.h>
-#समावेश <यंत्र/xics.h>
-#समावेश <यंत्र/xive.h>
-#समावेश <यंत्र/dbell.h>
-#समावेश <यंत्र/cputhपढ़ोs.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/opal.h>
-#समावेश <यंत्र/smp.h>
+#include <asm/asm-prototypes.h>
+#include <asm/cputable.h>
+#include <asm/interrupt.h>
+#include <asm/kvm_ppc.h>
+#include <asm/kvm_book3s.h>
+#include <asm/archrandom.h>
+#include <asm/xics.h>
+#include <asm/xive.h>
+#include <asm/dbell.h>
+#include <asm/cputhreads.h>
+#include <asm/io.h>
+#include <asm/opal.h>
+#include <asm/smp.h>
 
-#घोषणा KVM_CMA_CHUNK_ORDER	18
+#define KVM_CMA_CHUNK_ORDER	18
 
-#समावेश "book3s_xics.h"
-#समावेश "book3s_xive.h"
+#include "book3s_xics.h"
+#include "book3s_xive.h"
 
 /*
  * The XIVE module will populate these when it loads
  */
-अचिन्हित दीर्घ (*__xive_vm_h_xirr)(काष्ठा kvm_vcpu *vcpu);
-अचिन्हित दीर्घ (*__xive_vm_h_ipoll)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ server);
-पूर्णांक (*__xive_vm_h_ipi)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ server,
-		       अचिन्हित दीर्घ mfrr);
-पूर्णांक (*__xive_vm_h_cppr)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cppr);
-पूर्णांक (*__xive_vm_h_eoi)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ xirr);
+unsigned long (*__xive_vm_h_xirr)(struct kvm_vcpu *vcpu);
+unsigned long (*__xive_vm_h_ipoll)(struct kvm_vcpu *vcpu, unsigned long server);
+int (*__xive_vm_h_ipi)(struct kvm_vcpu *vcpu, unsigned long server,
+		       unsigned long mfrr);
+int (*__xive_vm_h_cppr)(struct kvm_vcpu *vcpu, unsigned long cppr);
+int (*__xive_vm_h_eoi)(struct kvm_vcpu *vcpu, unsigned long xirr);
 EXPORT_SYMBOL_GPL(__xive_vm_h_xirr);
 EXPORT_SYMBOL_GPL(__xive_vm_h_ipoll);
 EXPORT_SYMBOL_GPL(__xive_vm_h_ipi);
@@ -52,285 +51,285 @@ EXPORT_SYMBOL_GPL(__xive_vm_h_eoi);
 
 /*
  * Hash page table alignment on newer cpus(CPU_FTR_ARCH_206)
- * should be घातer of 2.
+ * should be power of 2.
  */
-#घोषणा HPT_ALIGN_PAGES		((1 << 18) >> PAGE_SHIFT) /* 256k */
+#define HPT_ALIGN_PAGES		((1 << 18) >> PAGE_SHIFT) /* 256k */
 /*
- * By शेष we reserve 5% of memory क्रम hash pagetable allocation.
+ * By default we reserve 5% of memory for hash pagetable allocation.
  */
-अटल अचिन्हित दीर्घ kvm_cma_resv_ratio = 5;
+static unsigned long kvm_cma_resv_ratio = 5;
 
-अटल काष्ठा cma *kvm_cma;
+static struct cma *kvm_cma;
 
-अटल पूर्णांक __init early_parse_kvm_cma_resv(अक्षर *p)
-अणु
+static int __init early_parse_kvm_cma_resv(char *p)
+{
 	pr_debug("%s(%s)\n", __func__, p);
-	अगर (!p)
-		वापस -EINVAL;
-	वापस kम_से_अदीर्घ(p, 0, &kvm_cma_resv_ratio);
-पूर्ण
+	if (!p)
+		return -EINVAL;
+	return kstrtoul(p, 0, &kvm_cma_resv_ratio);
+}
 early_param("kvm_cma_resv_ratio", early_parse_kvm_cma_resv);
 
-काष्ठा page *kvm_alloc_hpt_cma(अचिन्हित दीर्घ nr_pages)
-अणु
+struct page *kvm_alloc_hpt_cma(unsigned long nr_pages)
+{
 	VM_BUG_ON(order_base_2(nr_pages) < KVM_CMA_CHUNK_ORDER - PAGE_SHIFT);
 
-	वापस cma_alloc(kvm_cma, nr_pages, order_base_2(HPT_ALIGN_PAGES),
+	return cma_alloc(kvm_cma, nr_pages, order_base_2(HPT_ALIGN_PAGES),
 			 false);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kvm_alloc_hpt_cma);
 
-व्योम kvm_मुक्त_hpt_cma(काष्ठा page *page, अचिन्हित दीर्घ nr_pages)
-अणु
+void kvm_free_hpt_cma(struct page *page, unsigned long nr_pages)
+{
 	cma_release(kvm_cma, page, nr_pages);
-पूर्ण
-EXPORT_SYMBOL_GPL(kvm_मुक्त_hpt_cma);
+}
+EXPORT_SYMBOL_GPL(kvm_free_hpt_cma);
 
 /**
- * kvm_cma_reserve() - reserve area क्रम kvm hash pagetable
+ * kvm_cma_reserve() - reserve area for kvm hash pagetable
  *
  * This function reserves memory from early allocator. It should be
- * called by arch specअगरic code once the memblock allocator
- * has been activated and all other subप्रणालीs have alपढ़ोy allocated/reserved
+ * called by arch specific code once the memblock allocator
+ * has been activated and all other subsystems have already allocated/reserved
  * memory.
  */
-व्योम __init kvm_cma_reserve(व्योम)
-अणु
-	अचिन्हित दीर्घ align_size;
+void __init kvm_cma_reserve(void)
+{
+	unsigned long align_size;
 	phys_addr_t selected_size;
 
 	/*
 	 * We need CMA reservation only when we are in HV mode
 	 */
-	अगर (!cpu_has_feature(CPU_FTR_HVMODE))
-		वापस;
+	if (!cpu_has_feature(CPU_FTR_HVMODE))
+		return;
 
 	selected_size = PAGE_ALIGN(memblock_phys_mem_size() * kvm_cma_resv_ratio / 100);
-	अगर (selected_size) अणु
+	if (selected_size) {
 		pr_info("%s: reserving %ld MiB for global area\n", __func__,
-			 (अचिन्हित दीर्घ)selected_size / SZ_1M);
+			 (unsigned long)selected_size / SZ_1M);
 		align_size = HPT_ALIGN_PAGES << PAGE_SHIFT;
 		cma_declare_contiguous(0, selected_size, 0, align_size,
 			KVM_CMA_CHUNK_ORDER - PAGE_SHIFT, false, "kvm_cma",
 			&kvm_cma);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Real-mode H_CONFER implementation.
- * We check अगर we are the only vcpu out of this भव core
+ * We check if we are the only vcpu out of this virtual core
  * still running in the guest and not ceded.  If so, we pop up
- * to the भव-mode implementation; अगर not, just वापस to
+ * to the virtual-mode implementation; if not, just return to
  * the guest.
  */
-दीर्घ पूर्णांक kvmppc_rm_h_confer(काष्ठा kvm_vcpu *vcpu, पूर्णांक target,
-			    अचिन्हित पूर्णांक yield_count)
-अणु
-	काष्ठा kvmppc_vcore *vc = local_paca->kvm_hstate.kvm_vcore;
-	पूर्णांक ptid = local_paca->kvm_hstate.ptid;
-	पूर्णांक thपढ़ोs_running;
-	पूर्णांक thपढ़ोs_ceded;
-	पूर्णांक thपढ़ोs_conferring;
+long int kvmppc_rm_h_confer(struct kvm_vcpu *vcpu, int target,
+			    unsigned int yield_count)
+{
+	struct kvmppc_vcore *vc = local_paca->kvm_hstate.kvm_vcore;
+	int ptid = local_paca->kvm_hstate.ptid;
+	int threads_running;
+	int threads_ceded;
+	int threads_conferring;
 	u64 stop = get_tb() + 10 * tb_ticks_per_usec;
-	पूर्णांक rv = H_SUCCESS; /* => करोn't yield */
+	int rv = H_SUCCESS; /* => don't yield */
 
-	set_bit(ptid, &vc->conferring_thपढ़ोs);
-	जबतक ((get_tb() < stop) && !VCORE_IS_EXITING(vc)) अणु
-		thपढ़ोs_running = VCORE_ENTRY_MAP(vc);
-		thपढ़ोs_ceded = vc->napping_thपढ़ोs;
-		thपढ़ोs_conferring = vc->conferring_thपढ़ोs;
-		अगर ((thपढ़ोs_ceded | thपढ़ोs_conferring) == thपढ़ोs_running) अणु
-			rv = H_TOO_HARD; /* => करो yield */
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	clear_bit(ptid, &vc->conferring_thपढ़ोs);
-	वापस rv;
-पूर्ण
+	set_bit(ptid, &vc->conferring_threads);
+	while ((get_tb() < stop) && !VCORE_IS_EXITING(vc)) {
+		threads_running = VCORE_ENTRY_MAP(vc);
+		threads_ceded = vc->napping_threads;
+		threads_conferring = vc->conferring_threads;
+		if ((threads_ceded | threads_conferring) == threads_running) {
+			rv = H_TOO_HARD; /* => do yield */
+			break;
+		}
+	}
+	clear_bit(ptid, &vc->conferring_threads);
+	return rv;
+}
 
 /*
- * When running HV mode KVM we need to block certain operations जबतक KVM VMs
- * exist in the प्रणाली. We use a counter of VMs to track this.
+ * When running HV mode KVM we need to block certain operations while KVM VMs
+ * exist in the system. We use a counter of VMs to track this.
  *
  * One of the operations we need to block is onlining of secondaries, so we
  * protect hv_vm_count with get/put_online_cpus().
  */
-अटल atomic_t hv_vm_count;
+static atomic_t hv_vm_count;
 
-व्योम kvm_hv_vm_activated(व्योम)
-अणु
+void kvm_hv_vm_activated(void)
+{
 	get_online_cpus();
 	atomic_inc(&hv_vm_count);
 	put_online_cpus();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kvm_hv_vm_activated);
 
-व्योम kvm_hv_vm_deactivated(व्योम)
-अणु
+void kvm_hv_vm_deactivated(void)
+{
 	get_online_cpus();
 	atomic_dec(&hv_vm_count);
 	put_online_cpus();
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kvm_hv_vm_deactivated);
 
-bool kvm_hv_mode_active(व्योम)
-अणु
-	वापस atomic_पढ़ो(&hv_vm_count) != 0;
-पूर्ण
+bool kvm_hv_mode_active(void)
+{
+	return atomic_read(&hv_vm_count) != 0;
+}
 
-बाह्य पूर्णांक hcall_real_table[], hcall_real_table_end[];
+extern int hcall_real_table[], hcall_real_table_end[];
 
-पूर्णांक kvmppc_hcall_impl_hv_realmode(अचिन्हित दीर्घ cmd)
-अणु
+int kvmppc_hcall_impl_hv_realmode(unsigned long cmd)
+{
 	cmd /= 4;
-	अगर (cmd < hcall_real_table_end - hcall_real_table &&
+	if (cmd < hcall_real_table_end - hcall_real_table &&
 	    hcall_real_table[cmd])
-		वापस 1;
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(kvmppc_hcall_impl_hv_realmode);
 
-पूर्णांक kvmppc_hwrng_present(व्योम)
-अणु
-	वापस घातernv_hwrng_present();
-पूर्ण
+int kvmppc_hwrng_present(void)
+{
+	return powernv_hwrng_present();
+}
 EXPORT_SYMBOL_GPL(kvmppc_hwrng_present);
 
-दीर्घ kvmppc_h_अक्रमom(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक r;
+long kvmppc_h_random(struct kvm_vcpu *vcpu)
+{
+	int r;
 
-	/* Only need to करो the expensive mfmsr() on radix */
-	अगर (kvm_is_radix(vcpu->kvm) && (mfmsr() & MSR_IR))
-		r = घातernv_get_अक्रमom_दीर्घ(&vcpu->arch.regs.gpr[4]);
-	अन्यथा
-		r = घातernv_get_अक्रमom_real_mode(&vcpu->arch.regs.gpr[4]);
-	अगर (r)
-		वापस H_SUCCESS;
+	/* Only need to do the expensive mfmsr() on radix */
+	if (kvm_is_radix(vcpu->kvm) && (mfmsr() & MSR_IR))
+		r = powernv_get_random_long(&vcpu->arch.regs.gpr[4]);
+	else
+		r = powernv_get_random_real_mode(&vcpu->arch.regs.gpr[4]);
+	if (r)
+		return H_SUCCESS;
 
-	वापस H_HARDWARE;
-पूर्ण
+	return H_HARDWARE;
+}
 
 /*
- * Send an पूर्णांकerrupt or message to another CPU.
- * The caller needs to include any barrier needed to order ग_लिखोs
+ * Send an interrupt or message to another CPU.
+ * The caller needs to include any barrier needed to order writes
  * to memory vs. the IPI/message.
  */
-व्योम kvmhv_rm_send_ipi(पूर्णांक cpu)
-अणु
-	व्योम __iomem *xics_phys;
-	अचिन्हित दीर्घ msg = PPC_DBELL_TYPE(PPC_DBELL_SERVER);
+void kvmhv_rm_send_ipi(int cpu)
+{
+	void __iomem *xics_phys;
+	unsigned long msg = PPC_DBELL_TYPE(PPC_DBELL_SERVER);
 
 	/* For a nested hypervisor, use the XICS via hcall */
-	अगर (kvmhv_on_pseries()) अणु
-		अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
+	if (kvmhv_on_pseries()) {
+		unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
 
 		plpar_hcall_raw(H_IPI, retbuf, get_hard_smp_processor_id(cpu),
 				IPI_PRIORITY);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* On POWER9 we can use msgsnd क्रम any destination cpu. */
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300)) अणु
+	/* On POWER9 we can use msgsnd for any destination cpu. */
+	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
 		msg |= get_hard_smp_processor_id(cpu);
-		__यंत्र__ __अस्थिर__ (PPC_MSGSND(%0) : : "r" (msg));
-		वापस;
-	पूर्ण
+		__asm__ __volatile__ (PPC_MSGSND(%0) : : "r" (msg));
+		return;
+	}
 
-	/* On POWER8 क्रम IPIs to thपढ़ोs in the same core, use msgsnd. */
-	अगर (cpu_has_feature(CPU_FTR_ARCH_207S) &&
-	    cpu_first_thपढ़ो_sibling(cpu) ==
-	    cpu_first_thपढ़ो_sibling(raw_smp_processor_id())) अणु
-		msg |= cpu_thपढ़ो_in_core(cpu);
-		__यंत्र__ __अस्थिर__ (PPC_MSGSND(%0) : : "r" (msg));
-		वापस;
-	पूर्ण
+	/* On POWER8 for IPIs to threads in the same core, use msgsnd. */
+	if (cpu_has_feature(CPU_FTR_ARCH_207S) &&
+	    cpu_first_thread_sibling(cpu) ==
+	    cpu_first_thread_sibling(raw_smp_processor_id())) {
+		msg |= cpu_thread_in_core(cpu);
+		__asm__ __volatile__ (PPC_MSGSND(%0) : : "r" (msg));
+		return;
+	}
 
 	/* We should never reach this */
-	अगर (WARN_ON_ONCE(xics_on_xive()))
-	    वापस;
+	if (WARN_ON_ONCE(xics_on_xive()))
+	    return;
 
 	/* Else poke the target with an IPI */
 	xics_phys = paca_ptrs[cpu]->kvm_hstate.xics_phys;
-	अगर (xics_phys)
-		__raw_rm_ग_लिखोb(IPI_PRIORITY, xics_phys + XICS_MFRR);
-	अन्यथा
-		opal_पूर्णांक_set_mfrr(get_hard_smp_processor_id(cpu), IPI_PRIORITY);
-पूर्ण
+	if (xics_phys)
+		__raw_rm_writeb(IPI_PRIORITY, xics_phys + XICS_MFRR);
+	else
+		opal_int_set_mfrr(get_hard_smp_processor_id(cpu), IPI_PRIORITY);
+}
 
 /*
  * The following functions are called from the assembly code
  * in book3s_hv_rmhandlers.S.
  */
-अटल व्योम kvmhv_पूर्णांकerrupt_vcore(काष्ठा kvmppc_vcore *vc, पूर्णांक active)
-अणु
-	पूर्णांक cpu = vc->pcpu;
+static void kvmhv_interrupt_vcore(struct kvmppc_vcore *vc, int active)
+{
+	int cpu = vc->pcpu;
 
-	/* Order setting of निकास map vs. msgsnd/IPI */
+	/* Order setting of exit map vs. msgsnd/IPI */
 	smp_mb();
-	क्रम (; active; active >>= 1, ++cpu)
-		अगर (active & 1)
+	for (; active; active >>= 1, ++cpu)
+		if (active & 1)
 			kvmhv_rm_send_ipi(cpu);
-पूर्ण
+}
 
-व्योम kvmhv_commence_निकास(पूर्णांक trap)
-अणु
-	काष्ठा kvmppc_vcore *vc = local_paca->kvm_hstate.kvm_vcore;
-	पूर्णांक ptid = local_paca->kvm_hstate.ptid;
-	काष्ठा kvm_split_mode *sip = local_paca->kvm_hstate.kvm_split_mode;
-	पूर्णांक me, ee, i;
+void kvmhv_commence_exit(int trap)
+{
+	struct kvmppc_vcore *vc = local_paca->kvm_hstate.kvm_vcore;
+	int ptid = local_paca->kvm_hstate.ptid;
+	struct kvm_split_mode *sip = local_paca->kvm_hstate.kvm_split_mode;
+	int me, ee, i;
 
-	/* Set our bit in the thपढ़ोs-निकासing-guest map in the 0xff00
-	   bits of vcore->entry_निकास_map */
+	/* Set our bit in the threads-exiting-guest map in the 0xff00
+	   bits of vcore->entry_exit_map */
 	me = 0x100 << ptid;
-	करो अणु
-		ee = vc->entry_निकास_map;
-	पूर्ण जबतक (cmpxchg(&vc->entry_निकास_map, ee, ee | me) != ee);
+	do {
+		ee = vc->entry_exit_map;
+	} while (cmpxchg(&vc->entry_exit_map, ee, ee | me) != ee);
 
 	/* Are we the first here? */
-	अगर ((ee >> 8) != 0)
-		वापस;
+	if ((ee >> 8) != 0)
+		return;
 
 	/*
-	 * Trigger the other thपढ़ोs in this vcore to निकास the guest.
-	 * If this is a hypervisor decrementer पूर्णांकerrupt then they
-	 * will be alपढ़ोy on their way out of the guest.
+	 * Trigger the other threads in this vcore to exit the guest.
+	 * If this is a hypervisor decrementer interrupt then they
+	 * will be already on their way out of the guest.
 	 */
-	अगर (trap != BOOK3S_INTERRUPT_HV_DECREMENTER)
-		kvmhv_पूर्णांकerrupt_vcore(vc, ee & ~(1 << ptid));
+	if (trap != BOOK3S_INTERRUPT_HV_DECREMENTER)
+		kvmhv_interrupt_vcore(vc, ee & ~(1 << ptid));
 
 	/*
-	 * If we are करोing dynamic micro-thपढ़ोing, पूर्णांकerrupt the other
+	 * If we are doing dynamic micro-threading, interrupt the other
 	 * subcores to pull them out of their guests too.
 	 */
-	अगर (!sip)
-		वापस;
+	if (!sip)
+		return;
 
-	क्रम (i = 0; i < MAX_SUBCORES; ++i) अणु
+	for (i = 0; i < MAX_SUBCORES; ++i) {
 		vc = sip->vc[i];
-		अगर (!vc)
-			अवरोध;
-		करो अणु
-			ee = vc->entry_निकास_map;
-			/* Alपढ़ोy asked to निकास? */
-			अगर ((ee >> 8) != 0)
-				अवरोध;
-		पूर्ण जबतक (cmpxchg(&vc->entry_निकास_map, ee,
+		if (!vc)
+			break;
+		do {
+			ee = vc->entry_exit_map;
+			/* Already asked to exit? */
+			if ((ee >> 8) != 0)
+				break;
+		} while (cmpxchg(&vc->entry_exit_map, ee,
 				 ee | VCORE_EXIT_REQ) != ee);
-		अगर ((ee >> 8) == 0)
-			kvmhv_पूर्णांकerrupt_vcore(vc, ee);
-	पूर्ण
-पूर्ण
+		if ((ee >> 8) == 0)
+			kvmhv_interrupt_vcore(vc, ee);
+	}
+}
 
-काष्ठा kvmppc_host_rm_ops *kvmppc_host_rm_ops_hv;
+struct kvmppc_host_rm_ops *kvmppc_host_rm_ops_hv;
 EXPORT_SYMBOL_GPL(kvmppc_host_rm_ops_hv);
 
-#अगर_घोषित CONFIG_KVM_XICS
-अटल काष्ठा kvmppc_irq_map *get_irqmap(काष्ठा kvmppc_passthru_irqmap *pimap,
+#ifdef CONFIG_KVM_XICS
+static struct kvmppc_irq_map *get_irqmap(struct kvmppc_passthru_irqmap *pimap,
 					 u32 xisr)
-अणु
-	पूर्णांक i;
+{
+	int i;
 
 	/*
 	 * We access the mapped array here without a lock.  That
@@ -338,132 +337,132 @@ EXPORT_SYMBOL_GPL(kvmppc_host_rm_ops_hv);
 	 * in the array and we never change the v_hwirq field of
 	 * an entry once it is set.
 	 *
-	 * We have also carefully ordered the stores in the ग_लिखोr
-	 * and the loads here in the पढ़ोer, so that अगर we find a matching
+	 * We have also carefully ordered the stores in the writer
+	 * and the loads here in the reader, so that if we find a matching
 	 * hwirq here, the associated GSI and irq_desc fields are valid.
 	 */
-	क्रम (i = 0; i < pimap->n_mapped; i++)  अणु
-		अगर (xisr == pimap->mapped[i].r_hwirq) अणु
+	for (i = 0; i < pimap->n_mapped; i++)  {
+		if (xisr == pimap->mapped[i].r_hwirq) {
 			/*
-			 * Order subsequent पढ़ोs in the caller to serialize
-			 * with the ग_लिखोr.
+			 * Order subsequent reads in the caller to serialize
+			 * with the writer.
 			 */
 			smp_rmb();
-			वापस &pimap->mapped[i];
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return &pimap->mapped[i];
+		}
+	}
+	return NULL;
+}
 
 /*
- * If we have an पूर्णांकerrupt that's not an IPI, check अगर we have a
- * passthrough adapter and अगर so, check अगर this बाह्यal पूर्णांकerrupt
- * is क्रम the adapter.
+ * If we have an interrupt that's not an IPI, check if we have a
+ * passthrough adapter and if so, check if this external interrupt
+ * is for the adapter.
  * We will attempt to deliver the IRQ directly to the target VCPU's
- * ICP, the भव ICP (based on affinity - the xive value in ICS).
+ * ICP, the virtual ICP (based on affinity - the xive value in ICS).
  *
- * If the delivery fails or अगर this is not क्रम a passthrough adapter,
- * वापस to the host to handle this पूर्णांकerrupt. We earlier
+ * If the delivery fails or if this is not for a passthrough adapter,
+ * return to the host to handle this interrupt. We earlier
  * saved a copy of the XIRR in the PACA, it will be picked up by
  * the host ICP driver.
  */
-अटल पूर्णांक kvmppc_check_passthru(u32 xisr, __be32 xirr, bool *again)
-अणु
-	काष्ठा kvmppc_passthru_irqmap *pimap;
-	काष्ठा kvmppc_irq_map *irq_map;
-	काष्ठा kvm_vcpu *vcpu;
+static int kvmppc_check_passthru(u32 xisr, __be32 xirr, bool *again)
+{
+	struct kvmppc_passthru_irqmap *pimap;
+	struct kvmppc_irq_map *irq_map;
+	struct kvm_vcpu *vcpu;
 
 	vcpu = local_paca->kvm_hstate.kvm_vcpu;
-	अगर (!vcpu)
-		वापस 1;
+	if (!vcpu)
+		return 1;
 	pimap = kvmppc_get_passthru_irqmap(vcpu->kvm);
-	अगर (!pimap)
-		वापस 1;
+	if (!pimap)
+		return 1;
 	irq_map = get_irqmap(pimap, xisr);
-	अगर (!irq_map)
-		वापस 1;
+	if (!irq_map)
+		return 1;
 
 	/* We're handling this interrupt, generic code doesn't need to */
 	local_paca->kvm_hstate.saved_xirr = 0;
 
-	वापस kvmppc_deliver_irq_passthru(vcpu, xirr, irq_map, pimap, again);
-पूर्ण
+	return kvmppc_deliver_irq_passthru(vcpu, xirr, irq_map, pimap, again);
+}
 
-#अन्यथा
-अटल अंतरभूत पूर्णांक kvmppc_check_passthru(u32 xisr, __be32 xirr, bool *again)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+#else
+static inline int kvmppc_check_passthru(u32 xisr, __be32 xirr, bool *again)
+{
+	return 1;
+}
+#endif
 
 /*
- * Determine what sort of बाह्यal पूर्णांकerrupt is pending (अगर any).
+ * Determine what sort of external interrupt is pending (if any).
  * Returns:
- *	0 अगर no पूर्णांकerrupt is pending
- *	1 अगर an पूर्णांकerrupt is pending that needs to be handled by the host
+ *	0 if no interrupt is pending
+ *	1 if an interrupt is pending that needs to be handled by the host
  *	2 Passthrough that needs completion in the host
- *	-1 अगर there was a guest wakeup IPI (which has now been cleared)
- *	-2 अगर there is PCI passthrough बाह्यal पूर्णांकerrupt that was handled
+ *	-1 if there was a guest wakeup IPI (which has now been cleared)
+ *	-2 if there is PCI passthrough external interrupt that was handled
  */
-अटल दीर्घ kvmppc_पढ़ो_one_पूर्णांकr(bool *again);
+static long kvmppc_read_one_intr(bool *again);
 
-दीर्घ kvmppc_पढ़ो_पूर्णांकr(व्योम)
-अणु
-	दीर्घ ret = 0;
-	दीर्घ rc;
+long kvmppc_read_intr(void)
+{
+	long ret = 0;
+	long rc;
 	bool again;
 
-	अगर (xive_enabled())
-		वापस 1;
+	if (xive_enabled())
+		return 1;
 
-	करो अणु
+	do {
 		again = false;
-		rc = kvmppc_पढ़ो_one_पूर्णांकr(&again);
-		अगर (rc && (ret == 0 || rc > ret))
+		rc = kvmppc_read_one_intr(&again);
+		if (rc && (ret == 0 || rc > ret))
 			ret = rc;
-	पूर्ण जबतक (again);
-	वापस ret;
-पूर्ण
+	} while (again);
+	return ret;
+}
 
-अटल दीर्घ kvmppc_पढ़ो_one_पूर्णांकr(bool *again)
-अणु
-	व्योम __iomem *xics_phys;
+static long kvmppc_read_one_intr(bool *again)
+{
+	void __iomem *xics_phys;
 	u32 h_xirr;
 	__be32 xirr;
 	u32 xisr;
 	u8 host_ipi;
-	पूर्णांक64_t rc;
+	int64_t rc;
 
-	अगर (xive_enabled())
-		वापस 1;
+	if (xive_enabled())
+		return 1;
 
-	/* see अगर a host IPI is pending */
+	/* see if a host IPI is pending */
 	host_ipi = local_paca->kvm_hstate.host_ipi;
-	अगर (host_ipi)
-		वापस 1;
+	if (host_ipi)
+		return 1;
 
-	/* Now पढ़ो the पूर्णांकerrupt from the ICP */
-	अगर (kvmhv_on_pseries()) अणु
-		अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
+	/* Now read the interrupt from the ICP */
+	if (kvmhv_on_pseries()) {
+		unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
 
 		rc = plpar_hcall_raw(H_XIRR, retbuf, 0xFF);
 		xirr = cpu_to_be32(retbuf[0]);
-	पूर्ण अन्यथा अणु
+	} else {
 		xics_phys = local_paca->kvm_hstate.xics_phys;
 		rc = 0;
-		अगर (!xics_phys)
-			rc = opal_पूर्णांक_get_xirr(&xirr, false);
-		अन्यथा
-			xirr = __raw_rm_पढ़ोl(xics_phys + XICS_XIRR);
-	पूर्ण
-	अगर (rc < 0)
-		वापस 1;
+		if (!xics_phys)
+			rc = opal_int_get_xirr(&xirr, false);
+		else
+			xirr = __raw_rm_readl(xics_phys + XICS_XIRR);
+	}
+	if (rc < 0)
+		return 1;
 
 	/*
-	 * Save XIRR क्रम later. Since we get control in reverse endian
-	 * on LE प्रणालीs, save it byte reversed and fetch it back in
-	 * host endian. Note that xirr is the value पढ़ो from the
-	 * XIRR रेजिस्टर, जबतक h_xirr is the host endian version.
+	 * Save XIRR for later. Since we get control in reverse endian
+	 * on LE systems, save it byte reversed and fetch it back in
+	 * host endian. Note that xirr is the value read from the
+	 * XIRR register, while h_xirr is the host endian version.
 	 */
 	h_xirr = be32_to_cpu(xirr);
 	local_paca->kvm_hstate.saved_xirr = h_xirr;
@@ -474,345 +473,345 @@ EXPORT_SYMBOL_GPL(kvmppc_host_rm_ops_hv);
 	 */
 	smp_mb();
 
-	/* अगर nothing pending in the ICP */
-	अगर (!xisr)
-		वापस 0;
+	/* if nothing pending in the ICP */
+	if (!xisr)
+		return 0;
 
 	/* We found something in the ICP...
 	 *
 	 * If it is an IPI, clear the MFRR and EOI it.
 	 */
-	अगर (xisr == XICS_IPI) अणु
+	if (xisr == XICS_IPI) {
 		rc = 0;
-		अगर (kvmhv_on_pseries()) अणु
-			अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
+		if (kvmhv_on_pseries()) {
+			unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
 
 			plpar_hcall_raw(H_IPI, retbuf,
 					hard_smp_processor_id(), 0xff);
 			plpar_hcall_raw(H_EOI, retbuf, h_xirr);
-		पूर्ण अन्यथा अगर (xics_phys) अणु
-			__raw_rm_ग_लिखोb(0xff, xics_phys + XICS_MFRR);
-			__raw_rm_ग_लिखोl(xirr, xics_phys + XICS_XIRR);
-		पूर्ण अन्यथा अणु
-			opal_पूर्णांक_set_mfrr(hard_smp_processor_id(), 0xff);
-			rc = opal_पूर्णांक_eoi(h_xirr);
-		पूर्ण
-		/* If rc > 0, there is another पूर्णांकerrupt pending */
+		} else if (xics_phys) {
+			__raw_rm_writeb(0xff, xics_phys + XICS_MFRR);
+			__raw_rm_writel(xirr, xics_phys + XICS_XIRR);
+		} else {
+			opal_int_set_mfrr(hard_smp_processor_id(), 0xff);
+			rc = opal_int_eoi(h_xirr);
+		}
+		/* If rc > 0, there is another interrupt pending */
 		*again = rc > 0;
 
 		/*
 		 * Need to ensure side effects of above stores
-		 * complete beक्रमe proceeding.
+		 * complete before proceeding.
 		 */
 		smp_mb();
 
 		/*
-		 * We need to re-check host IPI now in हाल it got set in the
-		 * meanसमय. If it's clear, we bounce the पूर्णांकerrupt to the
+		 * We need to re-check host IPI now in case it got set in the
+		 * meantime. If it's clear, we bounce the interrupt to the
 		 * guest
 		 */
 		host_ipi = local_paca->kvm_hstate.host_ipi;
-		अगर (unlikely(host_ipi != 0)) अणु
+		if (unlikely(host_ipi != 0)) {
 			/* We raced with the host,
 			 * we need to resend that IPI, bummer
 			 */
-			अगर (kvmhv_on_pseries()) अणु
-				अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
+			if (kvmhv_on_pseries()) {
+				unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
 
 				plpar_hcall_raw(H_IPI, retbuf,
 						hard_smp_processor_id(),
 						IPI_PRIORITY);
-			पूर्ण अन्यथा अगर (xics_phys)
-				__raw_rm_ग_लिखोb(IPI_PRIORITY,
+			} else if (xics_phys)
+				__raw_rm_writeb(IPI_PRIORITY,
 						xics_phys + XICS_MFRR);
-			अन्यथा
-				opal_पूर्णांक_set_mfrr(hard_smp_processor_id(),
+			else
+				opal_int_set_mfrr(hard_smp_processor_id(),
 						  IPI_PRIORITY);
 			/* Let side effects complete */
 			smp_mb();
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
-		/* OK, it's an IPI क्रम us */
+		/* OK, it's an IPI for us */
 		local_paca->kvm_hstate.saved_xirr = 0;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस kvmppc_check_passthru(xisr, xirr, again);
-पूर्ण
+	return kvmppc_check_passthru(xisr, xirr, again);
+}
 
-#अगर_घोषित CONFIG_KVM_XICS
-अटल अंतरभूत bool is_rm(व्योम)
-अणु
-	वापस !(mfmsr() & MSR_DR);
-पूर्ण
+#ifdef CONFIG_KVM_XICS
+static inline bool is_rm(void)
+{
+	return !(mfmsr() & MSR_DR);
+}
 
-अचिन्हित दीर्घ kvmppc_rm_h_xirr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!kvmppc_xics_enabled(vcpu))
-		वापस H_TOO_HARD;
-	अगर (xics_on_xive()) अणु
-		अगर (is_rm())
-			वापस xive_rm_h_xirr(vcpu);
-		अगर (unlikely(!__xive_vm_h_xirr))
-			वापस H_NOT_AVAILABLE;
-		वापस __xive_vm_h_xirr(vcpu);
-	पूर्ण अन्यथा
-		वापस xics_rm_h_xirr(vcpu);
-पूर्ण
+unsigned long kvmppc_rm_h_xirr(struct kvm_vcpu *vcpu)
+{
+	if (!kvmppc_xics_enabled(vcpu))
+		return H_TOO_HARD;
+	if (xics_on_xive()) {
+		if (is_rm())
+			return xive_rm_h_xirr(vcpu);
+		if (unlikely(!__xive_vm_h_xirr))
+			return H_NOT_AVAILABLE;
+		return __xive_vm_h_xirr(vcpu);
+	} else
+		return xics_rm_h_xirr(vcpu);
+}
 
-अचिन्हित दीर्घ kvmppc_rm_h_xirr_x(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (!kvmppc_xics_enabled(vcpu))
-		वापस H_TOO_HARD;
+unsigned long kvmppc_rm_h_xirr_x(struct kvm_vcpu *vcpu)
+{
+	if (!kvmppc_xics_enabled(vcpu))
+		return H_TOO_HARD;
 	vcpu->arch.regs.gpr[5] = get_tb();
-	अगर (xics_on_xive()) अणु
-		अगर (is_rm())
-			वापस xive_rm_h_xirr(vcpu);
-		अगर (unlikely(!__xive_vm_h_xirr))
-			वापस H_NOT_AVAILABLE;
-		वापस __xive_vm_h_xirr(vcpu);
-	पूर्ण अन्यथा
-		वापस xics_rm_h_xirr(vcpu);
-पूर्ण
+	if (xics_on_xive()) {
+		if (is_rm())
+			return xive_rm_h_xirr(vcpu);
+		if (unlikely(!__xive_vm_h_xirr))
+			return H_NOT_AVAILABLE;
+		return __xive_vm_h_xirr(vcpu);
+	} else
+		return xics_rm_h_xirr(vcpu);
+}
 
-अचिन्हित दीर्घ kvmppc_rm_h_ipoll(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ server)
-अणु
-	अगर (!kvmppc_xics_enabled(vcpu))
-		वापस H_TOO_HARD;
-	अगर (xics_on_xive()) अणु
-		अगर (is_rm())
-			वापस xive_rm_h_ipoll(vcpu, server);
-		अगर (unlikely(!__xive_vm_h_ipoll))
-			वापस H_NOT_AVAILABLE;
-		वापस __xive_vm_h_ipoll(vcpu, server);
-	पूर्ण अन्यथा
-		वापस H_TOO_HARD;
-पूर्ण
+unsigned long kvmppc_rm_h_ipoll(struct kvm_vcpu *vcpu, unsigned long server)
+{
+	if (!kvmppc_xics_enabled(vcpu))
+		return H_TOO_HARD;
+	if (xics_on_xive()) {
+		if (is_rm())
+			return xive_rm_h_ipoll(vcpu, server);
+		if (unlikely(!__xive_vm_h_ipoll))
+			return H_NOT_AVAILABLE;
+		return __xive_vm_h_ipoll(vcpu, server);
+	} else
+		return H_TOO_HARD;
+}
 
-पूर्णांक kvmppc_rm_h_ipi(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ server,
-		    अचिन्हित दीर्घ mfrr)
-अणु
-	अगर (!kvmppc_xics_enabled(vcpu))
-		वापस H_TOO_HARD;
-	अगर (xics_on_xive()) अणु
-		अगर (is_rm())
-			वापस xive_rm_h_ipi(vcpu, server, mfrr);
-		अगर (unlikely(!__xive_vm_h_ipi))
-			वापस H_NOT_AVAILABLE;
-		वापस __xive_vm_h_ipi(vcpu, server, mfrr);
-	पूर्ण अन्यथा
-		वापस xics_rm_h_ipi(vcpu, server, mfrr);
-पूर्ण
+int kvmppc_rm_h_ipi(struct kvm_vcpu *vcpu, unsigned long server,
+		    unsigned long mfrr)
+{
+	if (!kvmppc_xics_enabled(vcpu))
+		return H_TOO_HARD;
+	if (xics_on_xive()) {
+		if (is_rm())
+			return xive_rm_h_ipi(vcpu, server, mfrr);
+		if (unlikely(!__xive_vm_h_ipi))
+			return H_NOT_AVAILABLE;
+		return __xive_vm_h_ipi(vcpu, server, mfrr);
+	} else
+		return xics_rm_h_ipi(vcpu, server, mfrr);
+}
 
-पूर्णांक kvmppc_rm_h_cppr(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cppr)
-अणु
-	अगर (!kvmppc_xics_enabled(vcpu))
-		वापस H_TOO_HARD;
-	अगर (xics_on_xive()) अणु
-		अगर (is_rm())
-			वापस xive_rm_h_cppr(vcpu, cppr);
-		अगर (unlikely(!__xive_vm_h_cppr))
-			वापस H_NOT_AVAILABLE;
-		वापस __xive_vm_h_cppr(vcpu, cppr);
-	पूर्ण अन्यथा
-		वापस xics_rm_h_cppr(vcpu, cppr);
-पूर्ण
+int kvmppc_rm_h_cppr(struct kvm_vcpu *vcpu, unsigned long cppr)
+{
+	if (!kvmppc_xics_enabled(vcpu))
+		return H_TOO_HARD;
+	if (xics_on_xive()) {
+		if (is_rm())
+			return xive_rm_h_cppr(vcpu, cppr);
+		if (unlikely(!__xive_vm_h_cppr))
+			return H_NOT_AVAILABLE;
+		return __xive_vm_h_cppr(vcpu, cppr);
+	} else
+		return xics_rm_h_cppr(vcpu, cppr);
+}
 
-पूर्णांक kvmppc_rm_h_eoi(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ xirr)
-अणु
-	अगर (!kvmppc_xics_enabled(vcpu))
-		वापस H_TOO_HARD;
-	अगर (xics_on_xive()) अणु
-		अगर (is_rm())
-			वापस xive_rm_h_eoi(vcpu, xirr);
-		अगर (unlikely(!__xive_vm_h_eoi))
-			वापस H_NOT_AVAILABLE;
-		वापस __xive_vm_h_eoi(vcpu, xirr);
-	पूर्ण अन्यथा
-		वापस xics_rm_h_eoi(vcpu, xirr);
-पूर्ण
-#पूर्ण_अगर /* CONFIG_KVM_XICS */
+int kvmppc_rm_h_eoi(struct kvm_vcpu *vcpu, unsigned long xirr)
+{
+	if (!kvmppc_xics_enabled(vcpu))
+		return H_TOO_HARD;
+	if (xics_on_xive()) {
+		if (is_rm())
+			return xive_rm_h_eoi(vcpu, xirr);
+		if (unlikely(!__xive_vm_h_eoi))
+			return H_NOT_AVAILABLE;
+		return __xive_vm_h_eoi(vcpu, xirr);
+	} else
+		return xics_rm_h_eoi(vcpu, xirr);
+}
+#endif /* CONFIG_KVM_XICS */
 
-व्योम kvmppc_bad_पूर्णांकerrupt(काष्ठा pt_regs *regs)
-अणु
+void kvmppc_bad_interrupt(struct pt_regs *regs)
+{
 	/*
-	 * 100 could happen at any समय, 200 can happen due to invalid real
-	 * address access क्रम example (or any समय due to a hardware problem).
+	 * 100 could happen at any time, 200 can happen due to invalid real
+	 * address access for example (or any time due to a hardware problem).
 	 */
-	अगर (TRAP(regs) == 0x100) अणु
+	if (TRAP(regs) == 0x100) {
 		get_paca()->in_nmi++;
-		प्रणाली_reset_exception(regs);
+		system_reset_exception(regs);
 		get_paca()->in_nmi--;
-	पूर्ण अन्यथा अगर (TRAP(regs) == 0x200) अणु
+	} else if (TRAP(regs) == 0x200) {
 		machine_check_exception(regs);
-	पूर्ण अन्यथा अणु
+	} else {
 		die("Bad interrupt in KVM entry/exit code", regs, SIGABRT);
-	पूर्ण
+	}
 	panic("Bad KVM trap");
-पूर्ण
+}
 
-अटल व्योम kvmppc_end_cede(काष्ठा kvm_vcpu *vcpu)
-अणु
+static void kvmppc_end_cede(struct kvm_vcpu *vcpu)
+{
 	vcpu->arch.ceded = 0;
-	अगर (vcpu->arch.समयr_running) अणु
-		hrसमयr_try_to_cancel(&vcpu->arch.dec_समयr);
-		vcpu->arch.समयr_running = 0;
-	पूर्ण
-पूर्ण
+	if (vcpu->arch.timer_running) {
+		hrtimer_try_to_cancel(&vcpu->arch.dec_timer);
+		vcpu->arch.timer_running = 0;
+	}
+}
 
-व्योम kvmppc_set_msr_hv(काष्ठा kvm_vcpu *vcpu, u64 msr)
-अणु
+void kvmppc_set_msr_hv(struct kvm_vcpu *vcpu, u64 msr)
+{
 	/* Guest must always run with ME enabled, HV disabled. */
 	msr = (msr | MSR_ME) & ~MSR_HV;
 
 	/*
-	 * Check क्रम illegal transactional state bit combination
-	 * and अगर we find it, क्रमce the TS field to a safe state.
+	 * Check for illegal transactional state bit combination
+	 * and if we find it, force the TS field to a safe state.
 	 */
-	अगर ((msr & MSR_TS_MASK) == MSR_TS_MASK)
+	if ((msr & MSR_TS_MASK) == MSR_TS_MASK)
 		msr &= ~MSR_TS_MASK;
 	vcpu->arch.shregs.msr = msr;
 	kvmppc_end_cede(vcpu);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(kvmppc_set_msr_hv);
 
-अटल व्योम inject_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu, पूर्णांक vec, u64 srr1_flags)
-अणु
-	अचिन्हित दीर्घ msr, pc, new_msr, new_pc;
+static void inject_interrupt(struct kvm_vcpu *vcpu, int vec, u64 srr1_flags)
+{
+	unsigned long msr, pc, new_msr, new_pc;
 
 	msr = kvmppc_get_msr(vcpu);
 	pc = kvmppc_get_pc(vcpu);
-	new_msr = vcpu->arch.पूर्णांकr_msr;
+	new_msr = vcpu->arch.intr_msr;
 	new_pc = vec;
 
 	/* If transactional, change to suspend mode on IRQ delivery */
-	अगर (MSR_TM_TRANSACTIONAL(msr))
+	if (MSR_TM_TRANSACTIONAL(msr))
 		new_msr |= MSR_TS_S;
-	अन्यथा
+	else
 		new_msr |= msr & MSR_TS_MASK;
 
 	/*
-	 * Perक्रमm MSR and PC adjusपंचांगent क्रम LPCR[AIL]=3 अगर it is set and
+	 * Perform MSR and PC adjustment for LPCR[AIL]=3 if it is set and
 	 * applicable. AIL=2 is not supported.
 	 *
-	 * AIL करोes not apply to SRESET, MCE, or HMI (which is never
-	 * delivered to the guest), and करोes not apply अगर IR=0 or DR=0.
+	 * AIL does not apply to SRESET, MCE, or HMI (which is never
+	 * delivered to the guest), and does not apply if IR=0 or DR=0.
 	 */
-	अगर (vec != BOOK3S_INTERRUPT_SYSTEM_RESET &&
+	if (vec != BOOK3S_INTERRUPT_SYSTEM_RESET &&
 	    vec != BOOK3S_INTERRUPT_MACHINE_CHECK &&
 	    (vcpu->arch.vcore->lpcr & LPCR_AIL) == LPCR_AIL_3 &&
-	    (msr & (MSR_IR|MSR_DR)) == (MSR_IR|MSR_DR) ) अणु
+	    (msr & (MSR_IR|MSR_DR)) == (MSR_IR|MSR_DR) ) {
 		new_msr |= MSR_IR | MSR_DR;
 		new_pc += 0xC000000000004000ULL;
-	पूर्ण
+	}
 
 	kvmppc_set_srr0(vcpu, pc);
 	kvmppc_set_srr1(vcpu, (msr & SRR1_MSR_BITS) | srr1_flags);
 	kvmppc_set_pc(vcpu, new_pc);
 	vcpu->arch.shregs.msr = new_msr;
-पूर्ण
+}
 
-व्योम kvmppc_inject_पूर्णांकerrupt_hv(काष्ठा kvm_vcpu *vcpu, पूर्णांक vec, u64 srr1_flags)
-अणु
-	inject_पूर्णांकerrupt(vcpu, vec, srr1_flags);
+void kvmppc_inject_interrupt_hv(struct kvm_vcpu *vcpu, int vec, u64 srr1_flags)
+{
+	inject_interrupt(vcpu, vec, srr1_flags);
 	kvmppc_end_cede(vcpu);
-पूर्ण
-EXPORT_SYMBOL_GPL(kvmppc_inject_पूर्णांकerrupt_hv);
+}
+EXPORT_SYMBOL_GPL(kvmppc_inject_interrupt_hv);
 
 /*
- * Is there a PRIV_DOORBELL pending क्रम the guest (on POWER9)?
- * Can we inject a Decrementer or a External पूर्णांकerrupt?
+ * Is there a PRIV_DOORBELL pending for the guest (on POWER9)?
+ * Can we inject a Decrementer or a External interrupt?
  */
-व्योम kvmppc_guest_entry_inject_पूर्णांक(काष्ठा kvm_vcpu *vcpu)
-अणु
-	पूर्णांक ext;
-	अचिन्हित दीर्घ lpcr;
+void kvmppc_guest_entry_inject_int(struct kvm_vcpu *vcpu)
+{
+	int ext;
+	unsigned long lpcr;
 
-	/* Insert EXTERNAL bit पूर्णांकo LPCR at the MER bit position */
+	/* Insert EXTERNAL bit into LPCR at the MER bit position */
 	ext = (vcpu->arch.pending_exceptions >> BOOK3S_IRQPRIO_EXTERNAL) & 1;
 	lpcr = mfspr(SPRN_LPCR);
 	lpcr |= ext << LPCR_MER_SH;
 	mtspr(SPRN_LPCR, lpcr);
 	isync();
 
-	अगर (vcpu->arch.shregs.msr & MSR_EE) अणु
-		अगर (ext) अणु
-			inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_EXTERNAL, 0);
-		पूर्ण अन्यथा अणु
-			दीर्घ पूर्णांक dec = mfspr(SPRN_DEC);
-			अगर (!(lpcr & LPCR_LD))
-				dec = (पूर्णांक) dec;
-			अगर (dec < 0)
-				inject_पूर्णांकerrupt(vcpu,
+	if (vcpu->arch.shregs.msr & MSR_EE) {
+		if (ext) {
+			inject_interrupt(vcpu, BOOK3S_INTERRUPT_EXTERNAL, 0);
+		} else {
+			long int dec = mfspr(SPRN_DEC);
+			if (!(lpcr & LPCR_LD))
+				dec = (int) dec;
+			if (dec < 0)
+				inject_interrupt(vcpu,
 					BOOK3S_INTERRUPT_DECREMENTER, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (vcpu->arch.करोorbell_request) अणु
+	if (vcpu->arch.doorbell_request) {
 		mtspr(SPRN_DPDES, 1);
 		vcpu->arch.vcore->dpdes = 1;
 		smp_wmb();
-		vcpu->arch.करोorbell_request = 0;
-	पूर्ण
-पूर्ण
+		vcpu->arch.doorbell_request = 0;
+	}
+}
 
-अटल व्योम flush_guest_tlb(काष्ठा kvm *kvm)
-अणु
-	अचिन्हित दीर्घ rb, set;
+static void flush_guest_tlb(struct kvm *kvm)
+{
+	unsigned long rb, set;
 
 	rb = PPC_BIT(52);	/* IS = 2 */
-	अगर (kvm_is_radix(kvm)) अणु
+	if (kvm_is_radix(kvm)) {
 		/* R=1 PRS=1 RIC=2 */
-		यंत्र अस्थिर(PPC_TLBIEL(%0, %4, %3, %2, %1)
+		asm volatile(PPC_TLBIEL(%0, %4, %3, %2, %1)
 			     : : "r" (rb), "i" (1), "i" (1), "i" (2),
 			       "r" (0) : "memory");
-		क्रम (set = 1; set < kvm->arch.tlb_sets; ++set) अणु
+		for (set = 1; set < kvm->arch.tlb_sets; ++set) {
 			rb += PPC_BIT(51);	/* increment set number */
 			/* R=1 PRS=1 RIC=0 */
-			यंत्र अस्थिर(PPC_TLBIEL(%0, %4, %3, %2, %1)
+			asm volatile(PPC_TLBIEL(%0, %4, %3, %2, %1)
 				     : : "r" (rb), "i" (1), "i" (1), "i" (0),
 				       "r" (0) : "memory");
-		पूर्ण
-		यंत्र अस्थिर("ptesync": : :"memory");
-		यंत्र अस्थिर(PPC_RADIX_INVALIDATE_ERAT_GUEST : : :"memory");
-	पूर्ण अन्यथा अणु
-		क्रम (set = 0; set < kvm->arch.tlb_sets; ++set) अणु
+		}
+		asm volatile("ptesync": : :"memory");
+		asm volatile(PPC_RADIX_INVALIDATE_ERAT_GUEST : : :"memory");
+	} else {
+		for (set = 0; set < kvm->arch.tlb_sets; ++set) {
 			/* R=0 PRS=0 RIC=0 */
-			यंत्र अस्थिर(PPC_TLBIEL(%0, %4, %3, %2, %1)
+			asm volatile(PPC_TLBIEL(%0, %4, %3, %2, %1)
 				     : : "r" (rb), "i" (0), "i" (0), "i" (0),
 				       "r" (0) : "memory");
 			rb += PPC_BIT(51);	/* increment set number */
-		पूर्ण
-		यंत्र अस्थिर("ptesync": : :"memory");
-		यंत्र अस्थिर(PPC_ISA_3_0_INVALIDATE_ERAT : : :"memory");
-	पूर्ण
-पूर्ण
+		}
+		asm volatile("ptesync": : :"memory");
+		asm volatile(PPC_ISA_3_0_INVALIDATE_ERAT : : :"memory");
+	}
+}
 
-व्योम kvmppc_check_need_tlb_flush(काष्ठा kvm *kvm, पूर्णांक pcpu,
-				 काष्ठा kvm_nested_guest *nested)
-अणु
+void kvmppc_check_need_tlb_flush(struct kvm *kvm, int pcpu,
+				 struct kvm_nested_guest *nested)
+{
 	cpumask_t *need_tlb_flush;
 
 	/*
-	 * On POWER9, inभागidual thपढ़ोs can come in here, but the
-	 * TLB is shared between the 4 thपढ़ोs in a core, hence
-	 * invalidating on one thपढ़ो invalidates क्रम all.
-	 * Thus we make all 4 thपढ़ोs use the same bit.
+	 * On POWER9, individual threads can come in here, but the
+	 * TLB is shared between the 4 threads in a core, hence
+	 * invalidating on one thread invalidates for all.
+	 * Thus we make all 4 threads use the same bit.
 	 */
-	अगर (cpu_has_feature(CPU_FTR_ARCH_300))
-		pcpu = cpu_first_thपढ़ो_sibling(pcpu);
+	if (cpu_has_feature(CPU_FTR_ARCH_300))
+		pcpu = cpu_first_thread_sibling(pcpu);
 
-	अगर (nested)
+	if (nested)
 		need_tlb_flush = &nested->need_tlb_flush;
-	अन्यथा
+	else
 		need_tlb_flush = &kvm->arch.need_tlb_flush;
 
-	अगर (cpumask_test_cpu(pcpu, need_tlb_flush)) अणु
+	if (cpumask_test_cpu(pcpu, need_tlb_flush)) {
 		flush_guest_tlb(kvm);
 
 		/* Clear the bit after the TLB flush */
 		cpumask_clear_cpu(pcpu, need_tlb_flush);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(kvmppc_check_need_tlb_flush);

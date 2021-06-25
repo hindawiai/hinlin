@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * phy-da8xx-usb - TI DaVinci DA8xx USB PHY driver
  *
  * Copyright (C) 2018 David Lechner <david@lechnology.com>
  */
 
-#अगर_अघोषित __LINUX_PLATFORM_DATA_PHY_DA8XX_USB_H__
-#घोषणा __LINUX_PLATFORM_DATA_PHY_DA8XX_USB_H__
+#ifndef __LINUX_PLATFORM_DATA_PHY_DA8XX_USB_H__
+#define __LINUX_PLATFORM_DATA_PHY_DA8XX_USB_H__
 
-#समावेश <linux/regmap.h>
+#include <linux/regmap.h>
 
 /**
- * da8xx_usb_phy_platक्रमm_data
+ * da8xx_usb_phy_platform_data
  * @cfgchip: CFGCHIP syscon regmap
  */
-काष्ठा da8xx_usb_phy_platक्रमm_data अणु
-	काष्ठा regmap *cfgchip;
-पूर्ण;
+struct da8xx_usb_phy_platform_data {
+	struct regmap *cfgchip;
+};
 
-#पूर्ण_अगर /* __LINUX_PLATFORM_DATA_PHY_DA8XX_USB_H__ */
+#endif /* __LINUX_PLATFORM_DATA_PHY_DA8XX_USB_H__ */

@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/fixed.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/fixed.h>
 
-काष्ठा fixed_regulator_data अणु
-	काष्ठा fixed_voltage_config cfg;
-	काष्ठा regulator_init_data init_data;
-	काष्ठा platक्रमm_device pdev;
-पूर्ण;
+struct fixed_regulator_data {
+	struct fixed_voltage_config cfg;
+	struct regulator_init_data init_data;
+	struct platform_device pdev;
+};
 
-अटल व्योम regulator_fixed_release(काष्ठा device *dev)
-अणु
-	काष्ठा fixed_regulator_data *data = container_of(dev,
-			काष्ठा fixed_regulator_data, pdev.dev);
-	kमुक्त(data->cfg.supply_name);
-	kमुक्त(data);
-पूर्ण
+static void regulator_fixed_release(struct device *dev)
+{
+	struct fixed_regulator_data *data = container_of(dev,
+			struct fixed_regulator_data, pdev.dev);
+	kfree(data->cfg.supply_name);
+	kfree(data);
+}
 
 /**
- * regulator_रेजिस्टर_fixed_name - रेजिस्टर a no-op fixed regulator
- * @id: platक्रमm device id
- * @name: name to be used क्रम the regulator
- * @supplies: consumers क्रम this regulator
+ * regulator_register_fixed_name - register a no-op fixed regulator
+ * @id: platform device id
+ * @name: name to be used for the regulator
+ * @supplies: consumers for this regulator
  * @num_supplies: number of consumers
  * @uv: voltage in microvolts
  */
-काष्ठा platक्रमm_device *regulator_रेजिस्टर_always_on(पूर्णांक id, स्थिर अक्षर *name,
-	काष्ठा regulator_consumer_supply *supplies, पूर्णांक num_supplies, पूर्णांक uv)
-अणु
-	काष्ठा fixed_regulator_data *data;
+struct platform_device *regulator_register_always_on(int id, const char *name,
+	struct regulator_consumer_supply *supplies, int num_supplies, int uv)
+{
+	struct fixed_regulator_data *data;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस शून्य;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return NULL;
 
 	data->cfg.supply_name = kstrdup(name, GFP_KERNEL);
-	अगर (!data->cfg.supply_name) अणु
-		kमुक्त(data);
-		वापस शून्य;
-	पूर्ण
+	if (!data->cfg.supply_name) {
+		kfree(data);
+		return NULL;
+	}
 
 	data->cfg.microvolts = uv;
 	data->cfg.enabled_at_boot = 1;
 	data->cfg.init_data = &data->init_data;
 
-	data->init_data.स्थिरraपूर्णांकs.always_on = 1;
+	data->init_data.constraints.always_on = 1;
 	data->init_data.consumer_supplies = supplies;
 	data->init_data.num_consumer_supplies = num_supplies;
 
 	data->pdev.name = "reg-fixed-voltage";
 	data->pdev.id = id;
-	data->pdev.dev.platक्रमm_data = &data->cfg;
+	data->pdev.dev.platform_data = &data->cfg;
 	data->pdev.dev.release = regulator_fixed_release;
 
-	platक्रमm_device_रेजिस्टर(&data->pdev);
+	platform_device_register(&data->pdev);
 
-	वापस &data->pdev;
-पूर्ण
+	return &data->pdev;
+}

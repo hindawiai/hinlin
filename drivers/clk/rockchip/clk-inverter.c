@@ -1,88 +1,87 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2015 Heiko Stuebner <heiko@sntech.de>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kernel.h>
-#समावेश "clk.h"
+#include <linux/slab.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/spinlock.h>
+#include <linux/kernel.h>
+#include "clk.h"
 
-काष्ठा rockchip_inv_घड़ी अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*reg;
-	पूर्णांक		shअगरt;
-	पूर्णांक		flags;
+struct rockchip_inv_clock {
+	struct clk_hw	hw;
+	void __iomem	*reg;
+	int		shift;
+	int		flags;
 	spinlock_t	*lock;
-पूर्ण;
+};
 
-#घोषणा to_inv_घड़ी(_hw) container_of(_hw, काष्ठा rockchip_inv_घड़ी, hw)
+#define to_inv_clock(_hw) container_of(_hw, struct rockchip_inv_clock, hw)
 
-#घोषणा INVERTER_MASK 0x1
+#define INVERTER_MASK 0x1
 
-अटल पूर्णांक rockchip_inv_get_phase(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा rockchip_inv_घड़ी *inv_घड़ी = to_inv_घड़ी(hw);
+static int rockchip_inv_get_phase(struct clk_hw *hw)
+{
+	struct rockchip_inv_clock *inv_clock = to_inv_clock(hw);
 	u32 val;
 
-	val = पढ़ोl(inv_घड़ी->reg) >> inv_घड़ी->shअगरt;
+	val = readl(inv_clock->reg) >> inv_clock->shift;
 	val &= INVERTER_MASK;
-	वापस val ? 180 : 0;
-पूर्ण
+	return val ? 180 : 0;
+}
 
-अटल पूर्णांक rockchip_inv_set_phase(काष्ठा clk_hw *hw, पूर्णांक degrees)
-अणु
-	काष्ठा rockchip_inv_घड़ी *inv_घड़ी = to_inv_घड़ी(hw);
+static int rockchip_inv_set_phase(struct clk_hw *hw, int degrees)
+{
+	struct rockchip_inv_clock *inv_clock = to_inv_clock(hw);
 	u32 val;
 
-	अगर (degrees % 180 == 0) अणु
+	if (degrees % 180 == 0) {
 		val = !!degrees;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("%s: unsupported phase %d for %s\n",
 		       __func__, degrees, clk_hw_get_name(hw));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (inv_घड़ी->flags & ROCKCHIP_INVERTER_HIWORD_MASK) अणु
-		ग_लिखोl(HIWORD_UPDATE(val, INVERTER_MASK, inv_घड़ी->shअगरt),
-		       inv_घड़ी->reg);
-	पूर्ण अन्यथा अणु
-		अचिन्हित दीर्घ flags;
+	if (inv_clock->flags & ROCKCHIP_INVERTER_HIWORD_MASK) {
+		writel(HIWORD_UPDATE(val, INVERTER_MASK, inv_clock->shift),
+		       inv_clock->reg);
+	} else {
+		unsigned long flags;
 		u32 reg;
 
-		spin_lock_irqsave(inv_घड़ी->lock, flags);
+		spin_lock_irqsave(inv_clock->lock, flags);
 
-		reg = पढ़ोl(inv_घड़ी->reg);
-		reg &= ~BIT(inv_घड़ी->shअगरt);
+		reg = readl(inv_clock->reg);
+		reg &= ~BIT(inv_clock->shift);
 		reg |= val;
-		ग_लिखोl(reg, inv_घड़ी->reg);
+		writel(reg, inv_clock->reg);
 
-		spin_unlock_irqrestore(inv_घड़ी->lock, flags);
-	पूर्ण
+		spin_unlock_irqrestore(inv_clock->lock, flags);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops rockchip_inv_clk_ops = अणु
+static const struct clk_ops rockchip_inv_clk_ops = {
 	.get_phase	= rockchip_inv_get_phase,
 	.set_phase	= rockchip_inv_set_phase,
-पूर्ण;
+};
 
-काष्ठा clk *rockchip_clk_रेजिस्टर_inverter(स्थिर अक्षर *name,
-				स्थिर अक्षर *स्थिर *parent_names, u8 num_parents,
-				व्योम __iomem *reg, पूर्णांक shअगरt, पूर्णांक flags,
+struct clk *rockchip_clk_register_inverter(const char *name,
+				const char *const *parent_names, u8 num_parents,
+				void __iomem *reg, int shift, int flags,
 				spinlock_t *lock)
-अणु
-	काष्ठा clk_init_data init;
-	काष्ठा rockchip_inv_घड़ी *inv_घड़ी;
-	काष्ठा clk *clk;
+{
+	struct clk_init_data init;
+	struct rockchip_inv_clock *inv_clock;
+	struct clk *clk;
 
-	inv_घड़ी = kदो_स्मृति(माप(*inv_घड़ी), GFP_KERNEL);
-	अगर (!inv_घड़ी)
-		वापस ERR_PTR(-ENOMEM);
+	inv_clock = kmalloc(sizeof(*inv_clock), GFP_KERNEL);
+	if (!inv_clock)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.num_parents = num_parents;
@@ -90,15 +89,15 @@
 	init.parent_names = parent_names;
 	init.ops = &rockchip_inv_clk_ops;
 
-	inv_घड़ी->hw.init = &init;
-	inv_घड़ी->reg = reg;
-	inv_घड़ी->shअगरt = shअगरt;
-	inv_घड़ी->flags = flags;
-	inv_घड़ी->lock = lock;
+	inv_clock->hw.init = &init;
+	inv_clock->reg = reg;
+	inv_clock->shift = shift;
+	inv_clock->flags = flags;
+	inv_clock->lock = lock;
 
-	clk = clk_रेजिस्टर(शून्य, &inv_घड़ी->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(inv_घड़ी);
+	clk = clk_register(NULL, &inv_clock->hw);
+	if (IS_ERR(clk))
+		kfree(inv_clock);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

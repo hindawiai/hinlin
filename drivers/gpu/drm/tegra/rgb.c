@@ -1,318 +1,317 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/clk.h>
+#include <linux/clk.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_bridge_connector.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_bridge_connector.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "drm.h"
-#समावेश "dc.h"
+#include "drm.h"
+#include "dc.h"
 
-काष्ठा tegra_rgb अणु
-	काष्ठा tegra_output output;
-	काष्ठा tegra_dc *dc;
+struct tegra_rgb {
+	struct tegra_output output;
+	struct tegra_dc *dc;
 
-	काष्ठा clk *clk_parent;
-	काष्ठा clk *clk;
-पूर्ण;
+	struct clk *clk_parent;
+	struct clk *clk;
+};
 
-अटल अंतरभूत काष्ठा tegra_rgb *to_rgb(काष्ठा tegra_output *output)
-अणु
-	वापस container_of(output, काष्ठा tegra_rgb, output);
-पूर्ण
+static inline struct tegra_rgb *to_rgb(struct tegra_output *output)
+{
+	return container_of(output, struct tegra_rgb, output);
+}
 
-काष्ठा reg_entry अणु
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ value;
-पूर्ण;
+struct reg_entry {
+	unsigned long offset;
+	unsigned long value;
+};
 
-अटल स्थिर काष्ठा reg_entry rgb_enable[] = अणु
-	अणु DC_COM_PIN_OUTPUT_ENABLE(0),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(1),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(2),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(3),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(0), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(1), 0x01000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(2), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(3), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(0),     0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(1),     0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(2),     0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(3),     0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(0),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(1),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(2),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(3),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(4),   0x00210222 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(5),   0x00002200 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(6),   0x00020000 पूर्ण,
-पूर्ण;
+static const struct reg_entry rgb_enable[] = {
+	{ DC_COM_PIN_OUTPUT_ENABLE(0),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(1),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(2),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(3),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(0), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(1), 0x01000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(2), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(3), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_DATA(0),     0x00000000 },
+	{ DC_COM_PIN_OUTPUT_DATA(1),     0x00000000 },
+	{ DC_COM_PIN_OUTPUT_DATA(2),     0x00000000 },
+	{ DC_COM_PIN_OUTPUT_DATA(3),     0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(0),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(1),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(2),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(3),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(4),   0x00210222 },
+	{ DC_COM_PIN_OUTPUT_SELECT(5),   0x00002200 },
+	{ DC_COM_PIN_OUTPUT_SELECT(6),   0x00020000 },
+};
 
-अटल स्थिर काष्ठा reg_entry rgb_disable[] = अणु
-	अणु DC_COM_PIN_OUTPUT_SELECT(6),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(5),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(4),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(3),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(2),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(1),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_SELECT(0),   0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(3),     0xaaaaaaaa पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(2),     0xaaaaaaaa पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(1),     0xaaaaaaaa पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_DATA(0),     0xaaaaaaaa पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(3), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(2), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(1), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_POLARITY(0), 0x00000000 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(3),   0x55555555 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(2),   0x55555555 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(1),   0x55150005 पूर्ण,
-	अणु DC_COM_PIN_OUTPUT_ENABLE(0),   0x55555555 पूर्ण,
-पूर्ण;
+static const struct reg_entry rgb_disable[] = {
+	{ DC_COM_PIN_OUTPUT_SELECT(6),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(5),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(4),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(3),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(2),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(1),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_SELECT(0),   0x00000000 },
+	{ DC_COM_PIN_OUTPUT_DATA(3),     0xaaaaaaaa },
+	{ DC_COM_PIN_OUTPUT_DATA(2),     0xaaaaaaaa },
+	{ DC_COM_PIN_OUTPUT_DATA(1),     0xaaaaaaaa },
+	{ DC_COM_PIN_OUTPUT_DATA(0),     0xaaaaaaaa },
+	{ DC_COM_PIN_OUTPUT_POLARITY(3), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(2), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(1), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_POLARITY(0), 0x00000000 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(3),   0x55555555 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(2),   0x55555555 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(1),   0x55150005 },
+	{ DC_COM_PIN_OUTPUT_ENABLE(0),   0x55555555 },
+};
 
-अटल व्योम tegra_dc_ग_लिखो_regs(काष्ठा tegra_dc *dc,
-				स्थिर काष्ठा reg_entry *table,
-				अचिन्हित पूर्णांक num)
-अणु
-	अचिन्हित पूर्णांक i;
+static void tegra_dc_write_regs(struct tegra_dc *dc,
+				const struct reg_entry *table,
+				unsigned int num)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < num; i++)
-		tegra_dc_ग_लिखोl(dc, table[i].value, table[i].offset);
-पूर्ण
+	for (i = 0; i < num; i++)
+		tegra_dc_writel(dc, table[i].value, table[i].offset);
+}
 
-अटल व्योम tegra_rgb_encoder_disable(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा tegra_output *output = encoder_to_output(encoder);
-	काष्ठा tegra_rgb *rgb = to_rgb(output);
+static void tegra_rgb_encoder_disable(struct drm_encoder *encoder)
+{
+	struct tegra_output *output = encoder_to_output(encoder);
+	struct tegra_rgb *rgb = to_rgb(output);
 
-	tegra_dc_ग_लिखो_regs(rgb->dc, rgb_disable, ARRAY_SIZE(rgb_disable));
+	tegra_dc_write_regs(rgb->dc, rgb_disable, ARRAY_SIZE(rgb_disable));
 	tegra_dc_commit(rgb->dc);
-पूर्ण
+}
 
-अटल व्योम tegra_rgb_encoder_enable(काष्ठा drm_encoder *encoder)
-अणु
-	काष्ठा tegra_output *output = encoder_to_output(encoder);
-	काष्ठा tegra_rgb *rgb = to_rgb(output);
+static void tegra_rgb_encoder_enable(struct drm_encoder *encoder)
+{
+	struct tegra_output *output = encoder_to_output(encoder);
+	struct tegra_rgb *rgb = to_rgb(output);
 	u32 value;
 
-	tegra_dc_ग_लिखो_regs(rgb->dc, rgb_enable, ARRAY_SIZE(rgb_enable));
+	tegra_dc_write_regs(rgb->dc, rgb_enable, ARRAY_SIZE(rgb_enable));
 
 	value = DE_SELECT_ACTIVE | DE_CONTROL_NORMAL;
-	tegra_dc_ग_लिखोl(rgb->dc, value, DC_DISP_DATA_ENABLE_OPTIONS);
+	tegra_dc_writel(rgb->dc, value, DC_DISP_DATA_ENABLE_OPTIONS);
 
 	/* XXX: parameterize? */
-	value = tegra_dc_पढ़ोl(rgb->dc, DC_COM_PIN_OUTPUT_POLARITY(1));
+	value = tegra_dc_readl(rgb->dc, DC_COM_PIN_OUTPUT_POLARITY(1));
 	value &= ~LVS_OUTPUT_POLARITY_LOW;
 	value &= ~LHS_OUTPUT_POLARITY_LOW;
-	tegra_dc_ग_लिखोl(rgb->dc, value, DC_COM_PIN_OUTPUT_POLARITY(1));
+	tegra_dc_writel(rgb->dc, value, DC_COM_PIN_OUTPUT_POLARITY(1));
 
 	/* XXX: parameterize? */
 	value = DISP_DATA_FORMAT_DF1P1C | DISP_ALIGNMENT_MSB |
 		DISP_ORDER_RED_BLUE;
-	tegra_dc_ग_लिखोl(rgb->dc, value, DC_DISP_DISP_INTERFACE_CONTROL);
+	tegra_dc_writel(rgb->dc, value, DC_DISP_DISP_INTERFACE_CONTROL);
 
 	/* XXX: parameterize? */
 	value = SC0_H_QUALIFIER_NONE | SC1_H_QUALIFIER_NONE;
-	tegra_dc_ग_लिखोl(rgb->dc, value, DC_DISP_SHIFT_CLOCK_OPTIONS);
+	tegra_dc_writel(rgb->dc, value, DC_DISP_SHIFT_CLOCK_OPTIONS);
 
 	tegra_dc_commit(rgb->dc);
-पूर्ण
+}
 
-अटल पूर्णांक
-tegra_rgb_encoder_atomic_check(काष्ठा drm_encoder *encoder,
-			       काष्ठा drm_crtc_state *crtc_state,
-			       काष्ठा drm_connector_state *conn_state)
-अणु
-	काष्ठा tegra_output *output = encoder_to_output(encoder);
-	काष्ठा tegra_dc *dc = to_tegra_dc(conn_state->crtc);
-	अचिन्हित दीर्घ pclk = crtc_state->mode.घड़ी * 1000;
-	काष्ठा tegra_rgb *rgb = to_rgb(output);
-	अचिन्हित पूर्णांक भाग;
-	पूर्णांक err;
+static int
+tegra_rgb_encoder_atomic_check(struct drm_encoder *encoder,
+			       struct drm_crtc_state *crtc_state,
+			       struct drm_connector_state *conn_state)
+{
+	struct tegra_output *output = encoder_to_output(encoder);
+	struct tegra_dc *dc = to_tegra_dc(conn_state->crtc);
+	unsigned long pclk = crtc_state->mode.clock * 1000;
+	struct tegra_rgb *rgb = to_rgb(output);
+	unsigned int div;
+	int err;
 
 	/*
-	 * We may not want to change the frequency of the parent घड़ी, since
-	 * it may be a parent क्रम other peripherals. This is due to the fact
-	 * that on Tegra20 there's only a single घड़ी dedicated to display
+	 * We may not want to change the frequency of the parent clock, since
+	 * it may be a parent for other peripherals. This is due to the fact
+	 * that on Tegra20 there's only a single clock dedicated to display
 	 * (pll_d_out0), whereas later generations have a second one that can
 	 * be used to independently drive a second output (pll_d2_out0).
 	 *
-	 * As a way to support multiple outमाला_दो on Tegra20 as well, pll_p is
-	 * typically used as the parent घड़ी क्रम the display controllers.
+	 * As a way to support multiple outputs on Tegra20 as well, pll_p is
+	 * typically used as the parent clock for the display controllers.
 	 * But this comes at a cost: pll_p is the parent of several other
 	 * peripherals, so its frequency shouldn't change out of the blue.
 	 *
-	 * The best we can करो at this poपूर्णांक is to use the shअगरt घड़ी भागider
+	 * The best we can do at this point is to use the shift clock divider
 	 * and hope that the desired frequency can be matched (or at least
-	 * matched sufficiently बंद that the panel will still work).
+	 * matched sufficiently close that the panel will still work).
 	 */
-	भाग = ((clk_get_rate(rgb->clk) * 2) / pclk) - 2;
+	div = ((clk_get_rate(rgb->clk) * 2) / pclk) - 2;
 	pclk = 0;
 
-	err = tegra_dc_state_setup_घड़ी(dc, crtc_state, rgb->clk_parent,
-					 pclk, भाग);
-	अगर (err < 0) अणु
+	err = tegra_dc_state_setup_clock(dc, crtc_state, rgb->clk_parent,
+					 pclk, div);
+	if (err < 0) {
 		dev_err(output->dev, "failed to setup CRTC state: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs tegra_rgb_encoder_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs tegra_rgb_encoder_helper_funcs = {
 	.disable = tegra_rgb_encoder_disable,
 	.enable = tegra_rgb_encoder_enable,
 	.atomic_check = tegra_rgb_encoder_atomic_check,
-पूर्ण;
+};
 
-पूर्णांक tegra_dc_rgb_probe(काष्ठा tegra_dc *dc)
-अणु
-	काष्ठा device_node *np;
-	काष्ठा tegra_rgb *rgb;
-	पूर्णांक err;
+int tegra_dc_rgb_probe(struct tegra_dc *dc)
+{
+	struct device_node *np;
+	struct tegra_rgb *rgb;
+	int err;
 
 	np = of_get_child_by_name(dc->dev->of_node, "rgb");
-	अगर (!np || !of_device_is_available(np))
-		वापस -ENODEV;
+	if (!np || !of_device_is_available(np))
+		return -ENODEV;
 
-	rgb = devm_kzalloc(dc->dev, माप(*rgb), GFP_KERNEL);
-	अगर (!rgb)
-		वापस -ENOMEM;
+	rgb = devm_kzalloc(dc->dev, sizeof(*rgb), GFP_KERNEL);
+	if (!rgb)
+		return -ENOMEM;
 
 	rgb->output.dev = dc->dev;
 	rgb->output.of_node = np;
 	rgb->dc = dc;
 
 	err = tegra_output_probe(&rgb->output);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	rgb->clk = devm_clk_get(dc->dev, शून्य);
-	अगर (IS_ERR(rgb->clk)) अणु
+	rgb->clk = devm_clk_get(dc->dev, NULL);
+	if (IS_ERR(rgb->clk)) {
 		dev_err(dc->dev, "failed to get clock\n");
-		वापस PTR_ERR(rgb->clk);
-	पूर्ण
+		return PTR_ERR(rgb->clk);
+	}
 
 	rgb->clk_parent = devm_clk_get(dc->dev, "parent");
-	अगर (IS_ERR(rgb->clk_parent)) अणु
+	if (IS_ERR(rgb->clk_parent)) {
 		dev_err(dc->dev, "failed to get parent clock\n");
-		वापस PTR_ERR(rgb->clk_parent);
-	पूर्ण
+		return PTR_ERR(rgb->clk_parent);
+	}
 
 	err = clk_set_parent(rgb->clk, rgb->clk_parent);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(dc->dev, "failed to set parent clock: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	dc->rgb = &rgb->output;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_dc_rgb_हटाओ(काष्ठा tegra_dc *dc)
-अणु
-	अगर (!dc->rgb)
-		वापस 0;
+int tegra_dc_rgb_remove(struct tegra_dc *dc)
+{
+	if (!dc->rgb)
+		return 0;
 
-	tegra_output_हटाओ(dc->rgb);
-	dc->rgb = शून्य;
+	tegra_output_remove(dc->rgb);
+	dc->rgb = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_dc_rgb_init(काष्ठा drm_device *drm, काष्ठा tegra_dc *dc)
-अणु
-	काष्ठा tegra_output *output = dc->rgb;
-	काष्ठा drm_connector *connector;
-	पूर्णांक err;
+int tegra_dc_rgb_init(struct drm_device *drm, struct tegra_dc *dc)
+{
+	struct tegra_output *output = dc->rgb;
+	struct drm_connector *connector;
+	int err;
 
-	अगर (!dc->rgb)
-		वापस -ENODEV;
+	if (!dc->rgb)
+		return -ENODEV;
 
 	drm_simple_encoder_init(drm, &output->encoder, DRM_MODE_ENCODER_LVDS);
 	drm_encoder_helper_add(&output->encoder,
 			       &tegra_rgb_encoder_helper_funcs);
 
 	/*
-	 * Wrap directly-connected panel पूर्णांकo DRM bridge in order to let
-	 * DRM core to handle panel क्रम us.
+	 * Wrap directly-connected panel into DRM bridge in order to let
+	 * DRM core to handle panel for us.
 	 */
-	अगर (output->panel) अणु
+	if (output->panel) {
 		output->bridge = devm_drm_panel_bridge_add(output->dev,
 							   output->panel);
-		अगर (IS_ERR(output->bridge)) अणु
+		if (IS_ERR(output->bridge)) {
 			dev_err(output->dev,
 				"failed to wrap panel into bridge: %pe\n",
 				output->bridge);
-			वापस PTR_ERR(output->bridge);
-		पूर्ण
+			return PTR_ERR(output->bridge);
+		}
 
-		output->panel = शून्य;
-	पूर्ण
+		output->panel = NULL;
+	}
 
 	/*
 	 * Tegra devices that have LVDS panel utilize LVDS encoder bridge
-	 * क्रम converting up to 28 LCD LVTTL lanes पूर्णांकo 5/4 LVDS lanes that
+	 * for converting up to 28 LCD LVTTL lanes into 5/4 LVDS lanes that
 	 * go to display panel's receiver.
 	 *
-	 * Encoder usually have a घातer-करोwn control which needs to be enabled
+	 * Encoder usually have a power-down control which needs to be enabled
 	 * in order to transmit data to the panel.  Historically devices that
 	 * use an older device-tree version didn't model the bridge, assuming
-	 * that encoder is turned ON by शेष, जबतक today's DRM allows us
+	 * that encoder is turned ON by default, while today's DRM allows us
 	 * to model LVDS encoder properly.
 	 *
 	 * Newer device-trees utilize LVDS encoder bridge, which provides
 	 * us with a connector and handles the display panel.
 	 *
-	 * For older device-trees we wrapped panel पूर्णांकo the panel-bridge.
+	 * For older device-trees we wrapped panel into the panel-bridge.
 	 */
-	अगर (output->bridge) अणु
+	if (output->bridge) {
 		err = drm_bridge_attach(&output->encoder, output->bridge,
-					शून्य, DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-		अगर (err) अणु
+					NULL, DRM_BRIDGE_ATTACH_NO_CONNECTOR);
+		if (err) {
 			dev_err(output->dev, "failed to attach bridge: %d\n",
 				err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		connector = drm_bridge_connector_init(drm, &output->encoder);
-		अगर (IS_ERR(connector)) अणु
+		if (IS_ERR(connector)) {
 			dev_err(output->dev,
 				"failed to initialize bridge connector: %pe\n",
 				connector);
-			वापस PTR_ERR(connector);
-		पूर्ण
+			return PTR_ERR(connector);
+		}
 
 		drm_connector_attach_encoder(connector, &output->encoder);
-	पूर्ण
+	}
 
 	err = tegra_output_init(drm, output);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(output->dev, "failed to initialize output: %d\n", err);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/*
-	 * Other outमाला_दो can be attached to either display controller. The RGB
-	 * outमाला_दो are an exception and work only with their parent display
+	 * Other outputs can be attached to either display controller. The RGB
+	 * outputs are an exception and work only with their parent display
 	 * controller.
 	 */
 	output->encoder.possible_crtcs = drm_crtc_mask(&dc->base);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक tegra_dc_rgb_निकास(काष्ठा tegra_dc *dc)
-अणु
-	अगर (dc->rgb)
-		tegra_output_निकास(dc->rgb);
+int tegra_dc_rgb_exit(struct tegra_dc *dc)
+{
+	if (dc->rgb)
+		tegra_output_exit(dc->rgb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

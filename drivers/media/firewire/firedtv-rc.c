@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * FireDTV driver (क्रमmerly known as FireSAT)
+ * FireDTV driver (formerly known as FireSAT)
  *
  * Copyright (C) 2004 Andreas Monitzer <andy@monitzer.com>
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/bitops.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-#समावेश "firedtv.h"
+#include "firedtv.h"
 
 /* fixed table with older keycodes, geared towards MythTV */
-अटल स्थिर u16 oldtable[] = अणु
+static const u16 oldtable[] = {
 
 	/* code from device: 0x4501...0x451f */
 
@@ -58,10 +57,10 @@
 	KEY_R,
 	KEY_V,
 	KEY_C,
-पूर्ण;
+};
 
-/* user-modअगरiable table क्रम a remote as sold in 2008 */
-अटल स्थिर u16 keytable[] = अणु
+/* user-modifiable table for a remote as sold in 2008 */
+static const u16 keytable[] = {
 
 	/* code from device: 0x0300...0x031f */
 
@@ -121,74 +120,74 @@
 	[0x32] = KEY_MENU,
 	[0x33] = KEY_EPG,
 	[0x34] = KEY_EXIT,
-पूर्ण;
+};
 
-पूर्णांक fdtv_रेजिस्टर_rc(काष्ठा firedtv *fdtv, काष्ठा device *dev)
-अणु
-	काष्ठा input_dev *idev;
-	पूर्णांक i, err;
+int fdtv_register_rc(struct firedtv *fdtv, struct device *dev)
+{
+	struct input_dev *idev;
+	int i, err;
 
 	idev = input_allocate_device();
-	अगर (!idev)
-		वापस -ENOMEM;
+	if (!idev)
+		return -ENOMEM;
 
 	fdtv->remote_ctrl_dev = idev;
 	idev->name = "FireDTV remote control";
 	idev->dev.parent = dev;
 	idev->evbit[0] = BIT_MASK(EV_KEY);
-	idev->keycode = kmemdup(keytable, माप(keytable), GFP_KERNEL);
-	अगर (!idev->keycode) अणु
+	idev->keycode = kmemdup(keytable, sizeof(keytable), GFP_KERNEL);
+	if (!idev->keycode) {
 		err = -ENOMEM;
-		जाओ fail;
-	पूर्ण
-	idev->keycodesize = माप(keytable[0]);
+		goto fail;
+	}
+	idev->keycodesize = sizeof(keytable[0]);
 	idev->keycodemax = ARRAY_SIZE(keytable);
 
-	क्रम (i = 0; i < ARRAY_SIZE(keytable); i++)
+	for (i = 0; i < ARRAY_SIZE(keytable); i++)
 		set_bit(keytable[i], idev->keybit);
 
-	err = input_रेजिस्टर_device(idev);
-	अगर (err)
-		जाओ fail_मुक्त_keymap;
+	err = input_register_device(idev);
+	if (err)
+		goto fail_free_keymap;
 
-	वापस 0;
+	return 0;
 
-fail_मुक्त_keymap:
-	kमुक्त(idev->keycode);
+fail_free_keymap:
+	kfree(idev->keycode);
 fail:
-	input_मुक्त_device(idev);
-	वापस err;
-पूर्ण
+	input_free_device(idev);
+	return err;
+}
 
-व्योम fdtv_unरेजिस्टर_rc(काष्ठा firedtv *fdtv)
-अणु
+void fdtv_unregister_rc(struct firedtv *fdtv)
+{
 	cancel_work_sync(&fdtv->remote_ctrl_work);
-	kमुक्त(fdtv->remote_ctrl_dev->keycode);
-	input_unरेजिस्टर_device(fdtv->remote_ctrl_dev);
-पूर्ण
+	kfree(fdtv->remote_ctrl_dev->keycode);
+	input_unregister_device(fdtv->remote_ctrl_dev);
+}
 
-व्योम fdtv_handle_rc(काष्ठा firedtv *fdtv, अचिन्हित पूर्णांक code)
-अणु
-	काष्ठा input_dev *idev = fdtv->remote_ctrl_dev;
+void fdtv_handle_rc(struct firedtv *fdtv, unsigned int code)
+{
+	struct input_dev *idev = fdtv->remote_ctrl_dev;
 	u16 *keycode = idev->keycode;
 
-	अगर (code >= 0x0300 && code <= 0x031f)
+	if (code >= 0x0300 && code <= 0x031f)
 		code = keycode[code - 0x0300];
-	अन्यथा अगर (code >= 0x0340 && code <= 0x0354)
+	else if (code >= 0x0340 && code <= 0x0354)
 		code = keycode[code - 0x0320];
-	अन्यथा अगर (code >= 0x4501 && code <= 0x451f)
+	else if (code >= 0x4501 && code <= 0x451f)
 		code = oldtable[code - 0x4501];
-	अन्यथा अगर (code >= 0x4540 && code <= 0x4542)
+	else if (code >= 0x4540 && code <= 0x4542)
 		code = oldtable[code - 0x4521];
-	अन्यथा अणु
+	else {
 		dev_dbg(fdtv->device,
 			"invalid key code 0x%04x from remote control\n",
 			code);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	input_report_key(idev, code, 1);
 	input_sync(idev);
 	input_report_key(idev, code, 0);
 	input_sync(idev);
-पूर्ण
+}

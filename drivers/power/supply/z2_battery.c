@@ -1,318 +1,317 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Battery measurement code क्रम Zipit Z2
+ * Battery measurement code for Zipit Z2
  *
  * Copyright (C) 2009 Peter Edwards <sweetlilmre@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/z2_battery.h>
+#include <linux/module.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/power_supply.h>
+#include <linux/slab.h>
+#include <linux/z2_battery.h>
 
-#घोषणा	Z2_DEFAULT_NAME	"Z2"
+#define	Z2_DEFAULT_NAME	"Z2"
 
-काष्ठा z2_अक्षरger अणु
-	काष्ठा z2_battery_info		*info;
-	काष्ठा gpio_desc		*अक्षरge_gpiod;
-	पूर्णांक				bat_status;
-	काष्ठा i2c_client		*client;
-	काष्ठा घातer_supply		*batt_ps;
-	काष्ठा घातer_supply_desc	batt_ps_desc;
-	काष्ठा mutex			work_lock;
-	काष्ठा work_काष्ठा		bat_work;
-पूर्ण;
+struct z2_charger {
+	struct z2_battery_info		*info;
+	struct gpio_desc		*charge_gpiod;
+	int				bat_status;
+	struct i2c_client		*client;
+	struct power_supply		*batt_ps;
+	struct power_supply_desc	batt_ps_desc;
+	struct mutex			work_lock;
+	struct work_struct		bat_work;
+};
 
-अटल अचिन्हित दीर्घ z2_पढ़ो_bat(काष्ठा z2_अक्षरger *अक्षरger)
-अणु
-	पूर्णांक data;
-	data = i2c_smbus_पढ़ो_byte_data(अक्षरger->client,
-					अक्षरger->info->batt_I2C_reg);
-	अगर (data < 0)
-		वापस 0;
+static unsigned long z2_read_bat(struct z2_charger *charger)
+{
+	int data;
+	data = i2c_smbus_read_byte_data(charger->client,
+					charger->info->batt_I2C_reg);
+	if (data < 0)
+		return 0;
 
-	वापस data * अक्षरger->info->batt_mult / अक्षरger->info->batt_भाग;
-पूर्ण
+	return data * charger->info->batt_mult / charger->info->batt_div;
+}
 
-अटल पूर्णांक z2_batt_get_property(काष्ठा घातer_supply *batt_ps,
-			    क्रमागत घातer_supply_property psp,
-			    जोड़ घातer_supply_propval *val)
-अणु
-	काष्ठा z2_अक्षरger *अक्षरger = घातer_supply_get_drvdata(batt_ps);
-	काष्ठा z2_battery_info *info = अक्षरger->info;
+static int z2_batt_get_property(struct power_supply *batt_ps,
+			    enum power_supply_property psp,
+			    union power_supply_propval *val)
+{
+	struct z2_charger *charger = power_supply_get_drvdata(batt_ps);
+	struct z2_battery_info *info = charger->info;
 
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_STATUS:
-		val->पूर्णांकval = अक्षरger->bat_status;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->पूर्णांकval = info->batt_tech;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		अगर (info->batt_I2C_reg >= 0)
-			val->पूर्णांकval = z2_पढ़ो_bat(अक्षरger);
-		अन्यथा
-			वापस -EINVAL;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MAX:
-		अगर (info->max_voltage >= 0)
-			val->पूर्णांकval = info->max_voltage;
-		अन्यथा
-			वापस -EINVAL;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		अगर (info->min_voltage >= 0)
-			val->पूर्णांकval = info->min_voltage;
-		अन्यथा
-			वापस -EINVAL;
-		अवरोध;
-	हाल POWER_SUPPLY_PROP_PRESENT:
-		val->पूर्णांकval = 1;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (psp) {
+	case POWER_SUPPLY_PROP_STATUS:
+		val->intval = charger->bat_status;
+		break;
+	case POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->intval = info->batt_tech;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		if (info->batt_I2C_reg >= 0)
+			val->intval = z2_read_bat(charger);
+		else
+			return -EINVAL;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		if (info->max_voltage >= 0)
+			val->intval = info->max_voltage;
+		else
+			return -EINVAL;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		if (info->min_voltage >= 0)
+			val->intval = info->min_voltage;
+		else
+			return -EINVAL;
+		break;
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = 1;
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम z2_batt_ext_घातer_changed(काष्ठा घातer_supply *batt_ps)
-अणु
-	काष्ठा z2_अक्षरger *अक्षरger = घातer_supply_get_drvdata(batt_ps);
+static void z2_batt_ext_power_changed(struct power_supply *batt_ps)
+{
+	struct z2_charger *charger = power_supply_get_drvdata(batt_ps);
 
-	schedule_work(&अक्षरger->bat_work);
-पूर्ण
+	schedule_work(&charger->bat_work);
+}
 
-अटल व्योम z2_batt_update(काष्ठा z2_अक्षरger *अक्षरger)
-अणु
-	पूर्णांक old_status = अक्षरger->bat_status;
+static void z2_batt_update(struct z2_charger *charger)
+{
+	int old_status = charger->bat_status;
 
-	mutex_lock(&अक्षरger->work_lock);
+	mutex_lock(&charger->work_lock);
 
-	अक्षरger->bat_status = अक्षरger->अक्षरge_gpiod ?
-		(gpiod_get_value(अक्षरger->अक्षरge_gpiod) ?
+	charger->bat_status = charger->charge_gpiod ?
+		(gpiod_get_value(charger->charge_gpiod) ?
 		POWER_SUPPLY_STATUS_CHARGING :
 		POWER_SUPPLY_STATUS_DISCHARGING) :
 		POWER_SUPPLY_STATUS_UNKNOWN;
 
-	अगर (old_status != अक्षरger->bat_status) अणु
-		pr_debug("%s: %i -> %i\n", अक्षरger->batt_ps->desc->name,
+	if (old_status != charger->bat_status) {
+		pr_debug("%s: %i -> %i\n", charger->batt_ps->desc->name,
 				old_status,
-				अक्षरger->bat_status);
-		घातer_supply_changed(अक्षरger->batt_ps);
-	पूर्ण
+				charger->bat_status);
+		power_supply_changed(charger->batt_ps);
+	}
 
-	mutex_unlock(&अक्षरger->work_lock);
-पूर्ण
+	mutex_unlock(&charger->work_lock);
+}
 
-अटल व्योम z2_batt_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा z2_अक्षरger *अक्षरger;
-	अक्षरger = container_of(work, काष्ठा z2_अक्षरger, bat_work);
-	z2_batt_update(अक्षरger);
-पूर्ण
+static void z2_batt_work(struct work_struct *work)
+{
+	struct z2_charger *charger;
+	charger = container_of(work, struct z2_charger, bat_work);
+	z2_batt_update(charger);
+}
 
-अटल irqवापस_t z2_अक्षरge_चयन_irq(पूर्णांक irq, व्योम *devid)
-अणु
-	काष्ठा z2_अक्षरger *अक्षरger = devid;
-	schedule_work(&अक्षरger->bat_work);
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t z2_charge_switch_irq(int irq, void *devid)
+{
+	struct z2_charger *charger = devid;
+	schedule_work(&charger->bat_work);
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक z2_batt_ps_init(काष्ठा z2_अक्षरger *अक्षरger, पूर्णांक props)
-अणु
-	पूर्णांक i = 0;
-	क्रमागत घातer_supply_property *prop;
-	काष्ठा z2_battery_info *info = अक्षरger->info;
+static int z2_batt_ps_init(struct z2_charger *charger, int props)
+{
+	int i = 0;
+	enum power_supply_property *prop;
+	struct z2_battery_info *info = charger->info;
 
-	अगर (अक्षरger->अक्षरge_gpiod)
+	if (charger->charge_gpiod)
 		props++;	/* POWER_SUPPLY_PROP_STATUS */
-	अगर (info->batt_tech >= 0)
+	if (info->batt_tech >= 0)
 		props++;	/* POWER_SUPPLY_PROP_TECHNOLOGY */
-	अगर (info->batt_I2C_reg >= 0)
+	if (info->batt_I2C_reg >= 0)
 		props++;	/* POWER_SUPPLY_PROP_VOLTAGE_NOW */
-	अगर (info->max_voltage >= 0)
+	if (info->max_voltage >= 0)
 		props++;	/* POWER_SUPPLY_PROP_VOLTAGE_MAX */
-	अगर (info->min_voltage >= 0)
+	if (info->min_voltage >= 0)
 		props++;	/* POWER_SUPPLY_PROP_VOLTAGE_MIN */
 
-	prop = kसुस्मृति(props, माप(*prop), GFP_KERNEL);
-	अगर (!prop)
-		वापस -ENOMEM;
+	prop = kcalloc(props, sizeof(*prop), GFP_KERNEL);
+	if (!prop)
+		return -ENOMEM;
 
 	prop[i++] = POWER_SUPPLY_PROP_PRESENT;
-	अगर (अक्षरger->अक्षरge_gpiod)
+	if (charger->charge_gpiod)
 		prop[i++] = POWER_SUPPLY_PROP_STATUS;
-	अगर (info->batt_tech >= 0)
+	if (info->batt_tech >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_TECHNOLOGY;
-	अगर (info->batt_I2C_reg >= 0)
+	if (info->batt_I2C_reg >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_VOLTAGE_NOW;
-	अगर (info->max_voltage >= 0)
+	if (info->max_voltage >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_VOLTAGE_MAX;
-	अगर (info->min_voltage >= 0)
+	if (info->min_voltage >= 0)
 		prop[i++] = POWER_SUPPLY_PROP_VOLTAGE_MIN;
 
-	अगर (!info->batt_name) अणु
-		dev_info(&अक्षरger->client->dev,
+	if (!info->batt_name) {
+		dev_info(&charger->client->dev,
 				"Please consider setting proper battery "
 				"name in platform definition file, falling "
 				"back to name \" Z2_DEFAULT_NAME \"\n");
-		अक्षरger->batt_ps_desc.name = Z2_DEFAULT_NAME;
-	पूर्ण अन्यथा
-		अक्षरger->batt_ps_desc.name = info->batt_name;
+		charger->batt_ps_desc.name = Z2_DEFAULT_NAME;
+	} else
+		charger->batt_ps_desc.name = info->batt_name;
 
-	अक्षरger->batt_ps_desc.properties	= prop;
-	अक्षरger->batt_ps_desc.num_properties	= props;
-	अक्षरger->batt_ps_desc.type		= POWER_SUPPLY_TYPE_BATTERY;
-	अक्षरger->batt_ps_desc.get_property	= z2_batt_get_property;
-	अक्षरger->batt_ps_desc.बाह्यal_घातer_changed =
-						z2_batt_ext_घातer_changed;
-	अक्षरger->batt_ps_desc.use_क्रम_apm	= 1;
+	charger->batt_ps_desc.properties	= prop;
+	charger->batt_ps_desc.num_properties	= props;
+	charger->batt_ps_desc.type		= POWER_SUPPLY_TYPE_BATTERY;
+	charger->batt_ps_desc.get_property	= z2_batt_get_property;
+	charger->batt_ps_desc.external_power_changed =
+						z2_batt_ext_power_changed;
+	charger->batt_ps_desc.use_for_apm	= 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक z2_batt_probe(काष्ठा i2c_client *client,
-				स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक props = 1;	/* POWER_SUPPLY_PROP_PRESENT */
-	काष्ठा z2_अक्षरger *अक्षरger;
-	काष्ठा z2_battery_info *info = client->dev.platक्रमm_data;
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+static int z2_batt_probe(struct i2c_client *client,
+				const struct i2c_device_id *id)
+{
+	int ret = 0;
+	int props = 1;	/* POWER_SUPPLY_PROP_PRESENT */
+	struct z2_charger *charger;
+	struct z2_battery_info *info = client->dev.platform_data;
+	struct power_supply_config psy_cfg = {};
 
-	अगर (info == शून्य) अणु
+	if (info == NULL) {
 		dev_err(&client->dev,
 			"Please set platform device platform_data"
 			" to a valid z2_battery_info pointer!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अक्षरger = kzalloc(माप(*अक्षरger), GFP_KERNEL);
-	अगर (अक्षरger == शून्य)
-		वापस -ENOMEM;
+	charger = kzalloc(sizeof(*charger), GFP_KERNEL);
+	if (charger == NULL)
+		return -ENOMEM;
 
-	अक्षरger->bat_status = POWER_SUPPLY_STATUS_UNKNOWN;
-	अक्षरger->info = info;
-	अक्षरger->client = client;
-	i2c_set_clientdata(client, अक्षरger);
-	psy_cfg.drv_data = अक्षरger;
+	charger->bat_status = POWER_SUPPLY_STATUS_UNKNOWN;
+	charger->info = info;
+	charger->client = client;
+	i2c_set_clientdata(client, charger);
+	psy_cfg.drv_data = charger;
 
-	mutex_init(&अक्षरger->work_lock);
+	mutex_init(&charger->work_lock);
 
-	अक्षरger->अक्षरge_gpiod = devm_gpiod_get_optional(&client->dev,
-							शून्य, GPIOD_IN);
-	अगर (IS_ERR(अक्षरger->अक्षरge_gpiod))
-		वापस dev_err_probe(&client->dev,
-				     PTR_ERR(अक्षरger->अक्षरge_gpiod),
+	charger->charge_gpiod = devm_gpiod_get_optional(&client->dev,
+							NULL, GPIOD_IN);
+	if (IS_ERR(charger->charge_gpiod))
+		return dev_err_probe(&client->dev,
+				     PTR_ERR(charger->charge_gpiod),
 				     "failed to get charge GPIO\n");
 
-	अगर (अक्षरger->अक्षरge_gpiod) अणु
-		gpiod_set_consumer_name(अक्षरger->अक्षरge_gpiod, "BATT CHRG");
+	if (charger->charge_gpiod) {
+		gpiod_set_consumer_name(charger->charge_gpiod, "BATT CHRG");
 
-		irq_set_irq_type(gpiod_to_irq(अक्षरger->अक्षरge_gpiod),
+		irq_set_irq_type(gpiod_to_irq(charger->charge_gpiod),
 				 IRQ_TYPE_EDGE_BOTH);
-		ret = request_irq(gpiod_to_irq(अक्षरger->अक्षरge_gpiod),
-				z2_अक्षरge_चयन_irq, 0,
-				"AC Detect", अक्षरger);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		ret = request_irq(gpiod_to_irq(charger->charge_gpiod),
+				z2_charge_switch_irq, 0,
+				"AC Detect", charger);
+		if (ret)
+			goto err;
+	}
 
-	ret = z2_batt_ps_init(अक्षरger, props);
-	अगर (ret)
-		जाओ err3;
+	ret = z2_batt_ps_init(charger, props);
+	if (ret)
+		goto err3;
 
-	INIT_WORK(&अक्षरger->bat_work, z2_batt_work);
+	INIT_WORK(&charger->bat_work, z2_batt_work);
 
-	अक्षरger->batt_ps = घातer_supply_रेजिस्टर(&client->dev,
-						 &अक्षरger->batt_ps_desc,
+	charger->batt_ps = power_supply_register(&client->dev,
+						 &charger->batt_ps_desc,
 						 &psy_cfg);
-	अगर (IS_ERR(अक्षरger->batt_ps)) अणु
-		ret = PTR_ERR(अक्षरger->batt_ps);
-		जाओ err4;
-	पूर्ण
+	if (IS_ERR(charger->batt_ps)) {
+		ret = PTR_ERR(charger->batt_ps);
+		goto err4;
+	}
 
-	schedule_work(&अक्षरger->bat_work);
+	schedule_work(&charger->bat_work);
 
-	वापस 0;
+	return 0;
 
 err4:
-	kमुक्त(अक्षरger->batt_ps_desc.properties);
+	kfree(charger->batt_ps_desc.properties);
 err3:
-	अगर (अक्षरger->अक्षरge_gpiod)
-		मुक्त_irq(gpiod_to_irq(अक्षरger->अक्षरge_gpiod), अक्षरger);
+	if (charger->charge_gpiod)
+		free_irq(gpiod_to_irq(charger->charge_gpiod), charger);
 err:
-	kमुक्त(अक्षरger);
-	वापस ret;
-पूर्ण
+	kfree(charger);
+	return ret;
+}
 
-अटल पूर्णांक z2_batt_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा z2_अक्षरger *अक्षरger = i2c_get_clientdata(client);
+static int z2_batt_remove(struct i2c_client *client)
+{
+	struct z2_charger *charger = i2c_get_clientdata(client);
 
-	cancel_work_sync(&अक्षरger->bat_work);
-	घातer_supply_unरेजिस्टर(अक्षरger->batt_ps);
+	cancel_work_sync(&charger->bat_work);
+	power_supply_unregister(charger->batt_ps);
 
-	kमुक्त(अक्षरger->batt_ps_desc.properties);
-	अगर (अक्षरger->अक्षरge_gpiod)
-		मुक्त_irq(gpiod_to_irq(अक्षरger->अक्षरge_gpiod), अक्षरger);
+	kfree(charger->batt_ps_desc.properties);
+	if (charger->charge_gpiod)
+		free_irq(gpiod_to_irq(charger->charge_gpiod), charger);
 
-	kमुक्त(अक्षरger);
+	kfree(charger);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक z2_batt_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा z2_अक्षरger *अक्षरger = i2c_get_clientdata(client);
+#ifdef CONFIG_PM
+static int z2_batt_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct z2_charger *charger = i2c_get_clientdata(client);
 
-	flush_work(&अक्षरger->bat_work);
-	वापस 0;
-पूर्ण
+	flush_work(&charger->bat_work);
+	return 0;
+}
 
-अटल पूर्णांक z2_batt_resume(काष्ठा device *dev)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(dev);
-	काष्ठा z2_अक्षरger *अक्षरger = i2c_get_clientdata(client);
+static int z2_batt_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct z2_charger *charger = i2c_get_clientdata(client);
 
-	schedule_work(&अक्षरger->bat_work);
-	वापस 0;
-पूर्ण
+	schedule_work(&charger->bat_work);
+	return 0;
+}
 
-अटल स्थिर काष्ठा dev_pm_ops z2_battery_pm_ops = अणु
+static const struct dev_pm_ops z2_battery_pm_ops = {
 	.suspend	= z2_batt_suspend,
 	.resume		= z2_batt_resume,
-पूर्ण;
+};
 
-#घोषणा	Z2_BATTERY_PM_OPS	(&z2_battery_pm_ops)
+#define	Z2_BATTERY_PM_OPS	(&z2_battery_pm_ops)
 
-#अन्यथा
-#घोषणा	Z2_BATTERY_PM_OPS	(शून्य)
-#पूर्ण_अगर
+#else
+#define	Z2_BATTERY_PM_OPS	(NULL)
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id z2_batt_id[] = अणु
-	अणु "aer915", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id z2_batt_id[] = {
+	{ "aer915", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, z2_batt_id);
 
-अटल काष्ठा i2c_driver z2_batt_driver = अणु
-	.driver	= अणु
+static struct i2c_driver z2_batt_driver = {
+	.driver	= {
 		.name	= "z2-battery",
 		.pm	= Z2_BATTERY_PM_OPS
-	पूर्ण,
+	},
 	.probe		= z2_batt_probe,
-	.हटाओ		= z2_batt_हटाओ,
+	.remove		= z2_batt_remove,
 	.id_table	= z2_batt_id,
-पूर्ण;
+};
 module_i2c_driver(z2_batt_driver);
 
 MODULE_LICENSE("GPL");

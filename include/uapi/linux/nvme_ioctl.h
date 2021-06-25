@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Definitions क्रम the NVM Express ioctl पूर्णांकerface
+ * Definitions for the NVM Express ioctl interface
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
-#अगर_अघोषित _UAPI_LINUX_NVME_IOCTL_H
-#घोषणा _UAPI_LINUX_NVME_IOCTL_H
+#ifndef _UAPI_LINUX_NVME_IOCTL_H
+#define _UAPI_LINUX_NVME_IOCTL_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा nvme_user_io अणु
+struct nvme_user_io {
 	__u8	opcode;
 	__u8	flags;
 	__u16	control;
@@ -23,9 +22,9 @@
 	__u32	reftag;
 	__u16	apptag;
 	__u16	appmask;
-पूर्ण;
+};
 
-काष्ठा nvme_passthru_cmd अणु
+struct nvme_passthru_cmd {
 	__u8	opcode;
 	__u8	flags;
 	__u16	rsvd1;
@@ -42,11 +41,11 @@
 	__u32	cdw13;
 	__u32	cdw14;
 	__u32	cdw15;
-	__u32	समयout_ms;
+	__u32	timeout_ms;
 	__u32	result;
-पूर्ण;
+};
 
-काष्ठा nvme_passthru_cmd64 अणु
+struct nvme_passthru_cmd64 {
 	__u8	opcode;
 	__u8	flags;
 	__u16	rsvd1;
@@ -63,21 +62,21 @@
 	__u32	cdw13;
 	__u32	cdw14;
 	__u32	cdw15;
-	__u32	समयout_ms;
+	__u32	timeout_ms;
 	__u32   rsvd2;
 	__u64	result;
-पूर्ण;
+};
 
-#घोषणा nvme_admin_cmd nvme_passthru_cmd
+#define nvme_admin_cmd nvme_passthru_cmd
 
-#घोषणा NVME_IOCTL_ID		_IO('N', 0x40)
-#घोषणा NVME_IOCTL_ADMIN_CMD	_IOWR('N', 0x41, काष्ठा nvme_admin_cmd)
-#घोषणा NVME_IOCTL_SUBMIT_IO	_IOW('N', 0x42, काष्ठा nvme_user_io)
-#घोषणा NVME_IOCTL_IO_CMD	_IOWR('N', 0x43, काष्ठा nvme_passthru_cmd)
-#घोषणा NVME_IOCTL_RESET	_IO('N', 0x44)
-#घोषणा NVME_IOCTL_SUBSYS_RESET	_IO('N', 0x45)
-#घोषणा NVME_IOCTL_RESCAN	_IO('N', 0x46)
-#घोषणा NVME_IOCTL_ADMIN64_CMD	_IOWR('N', 0x47, काष्ठा nvme_passthru_cmd64)
-#घोषणा NVME_IOCTL_IO64_CMD	_IOWR('N', 0x48, काष्ठा nvme_passthru_cmd64)
+#define NVME_IOCTL_ID		_IO('N', 0x40)
+#define NVME_IOCTL_ADMIN_CMD	_IOWR('N', 0x41, struct nvme_admin_cmd)
+#define NVME_IOCTL_SUBMIT_IO	_IOW('N', 0x42, struct nvme_user_io)
+#define NVME_IOCTL_IO_CMD	_IOWR('N', 0x43, struct nvme_passthru_cmd)
+#define NVME_IOCTL_RESET	_IO('N', 0x44)
+#define NVME_IOCTL_SUBSYS_RESET	_IO('N', 0x45)
+#define NVME_IOCTL_RESCAN	_IO('N', 0x46)
+#define NVME_IOCTL_ADMIN64_CMD	_IOWR('N', 0x47, struct nvme_passthru_cmd64)
+#define NVME_IOCTL_IO64_CMD	_IOWR('N', 0x48, struct nvme_passthru_cmd64)
 
-#पूर्ण_अगर /* _UAPI_LINUX_NVME_IOCTL_H */
+#endif /* _UAPI_LINUX_NVME_IOCTL_H */

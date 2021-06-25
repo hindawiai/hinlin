@@ -1,216 +1,215 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * NFC Digital Protocol stack
  * Copyright (c) 2013, Intel Corporation.
  */
 
-#घोषणा pr_fmt(fmt) "digital: %s: " fmt, __func__
+#define pr_fmt(fmt) "digital: %s: " fmt, __func__
 
-#समावेश <linux/module.h>
+#include <linux/module.h>
 
-#समावेश "digital.h"
+#include "digital.h"
 
-#घोषणा DIGITAL_PROTO_NFCA_RF_TECH \
+#define DIGITAL_PROTO_NFCA_RF_TECH \
 	(NFC_PROTO_JEWEL_MASK | NFC_PROTO_MIFARE_MASK | \
 	NFC_PROTO_NFC_DEP_MASK | NFC_PROTO_ISO14443_MASK)
 
-#घोषणा DIGITAL_PROTO_NFCB_RF_TECH	NFC_PROTO_ISO14443_B_MASK
+#define DIGITAL_PROTO_NFCB_RF_TECH	NFC_PROTO_ISO14443_B_MASK
 
-#घोषणा DIGITAL_PROTO_NFCF_RF_TECH \
+#define DIGITAL_PROTO_NFCF_RF_TECH \
 	(NFC_PROTO_FELICA_MASK | NFC_PROTO_NFC_DEP_MASK)
 
-#घोषणा DIGITAL_PROTO_ISO15693_RF_TECH	NFC_PROTO_ISO15693_MASK
+#define DIGITAL_PROTO_ISO15693_RF_TECH	NFC_PROTO_ISO15693_MASK
 
 /* Delay between each poll frame (ms) */
-#घोषणा DIGITAL_POLL_INTERVAL 10
+#define DIGITAL_POLL_INTERVAL 10
 
-काष्ठा digital_cmd अणु
-	काष्ठा list_head queue;
+struct digital_cmd {
+	struct list_head queue;
 
 	u8 type;
 	u8 pending;
 
-	u16 समयout;
-	काष्ठा sk_buff *req;
-	काष्ठा sk_buff *resp;
-	काष्ठा digital_tg_mdaa_params *mdaa_params;
+	u16 timeout;
+	struct sk_buff *req;
+	struct sk_buff *resp;
+	struct digital_tg_mdaa_params *mdaa_params;
 
 	nfc_digital_cmd_complete_t cmd_cb;
-	व्योम *cb_context;
-पूर्ण;
+	void *cb_context;
+};
 
-काष्ठा sk_buff *digital_skb_alloc(काष्ठा nfc_digital_dev *ddev,
-				  अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा sk_buff *skb;
+struct sk_buff *digital_skb_alloc(struct nfc_digital_dev *ddev,
+				  unsigned int len)
+{
+	struct sk_buff *skb;
 
 	skb = alloc_skb(len + ddev->tx_headroom + ddev->tx_tailroom,
 			GFP_KERNEL);
-	अगर (skb)
+	if (skb)
 		skb_reserve(skb, ddev->tx_headroom);
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-व्योम digital_skb_add_crc(काष्ठा sk_buff *skb, crc_func_t crc_func, u16 init,
+void digital_skb_add_crc(struct sk_buff *skb, crc_func_t crc_func, u16 init,
 			 u8 bitwise_inv, u8 msb_first)
-अणु
+{
 	u16 crc;
 
 	crc = crc_func(init, skb->data, skb->len);
 
-	अगर (bitwise_inv)
+	if (bitwise_inv)
 		crc = ~crc;
 
-	अगर (msb_first)
+	if (msb_first)
 		crc = __fswab16(crc);
 
 	skb_put_u8(skb, crc & 0xFF);
 	skb_put_u8(skb, (crc >> 8) & 0xFF);
-पूर्ण
+}
 
-पूर्णांक digital_skb_check_crc(काष्ठा sk_buff *skb, crc_func_t crc_func,
+int digital_skb_check_crc(struct sk_buff *skb, crc_func_t crc_func,
 			  u16 crc_init, u8 bitwise_inv, u8 msb_first)
-अणु
-	पूर्णांक rc;
+{
+	int rc;
 	u16 crc;
 
-	अगर (skb->len <= 2)
-		वापस -EIO;
+	if (skb->len <= 2)
+		return -EIO;
 
 	crc = crc_func(crc_init, skb->data, skb->len - 2);
 
-	अगर (bitwise_inv)
+	if (bitwise_inv)
 		crc = ~crc;
 
-	अगर (msb_first)
+	if (msb_first)
 		crc = __swab16(crc);
 
 	rc = (skb->data[skb->len - 2] - (crc & 0xFF)) +
 	     (skb->data[skb->len - 1] - ((crc >> 8) & 0xFF));
 
-	अगर (rc)
-		वापस -EIO;
+	if (rc)
+		return -EIO;
 
 	skb_trim(skb, skb->len - 2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम digital_चयन_rf(काष्ठा nfc_digital_dev *ddev, bool on)
-अणु
-	ddev->ops->चयन_rf(ddev, on);
-पूर्ण
+static inline void digital_switch_rf(struct nfc_digital_dev *ddev, bool on)
+{
+	ddev->ops->switch_rf(ddev, on);
+}
 
-अटल अंतरभूत व्योम digital_पात_cmd(काष्ठा nfc_digital_dev *ddev)
-अणु
-	ddev->ops->पात_cmd(ddev);
-पूर्ण
+static inline void digital_abort_cmd(struct nfc_digital_dev *ddev)
+{
+	ddev->ops->abort_cmd(ddev);
+}
 
-अटल व्योम digital_wq_cmd_complete(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा digital_cmd *cmd;
-	काष्ठा nfc_digital_dev *ddev = container_of(work,
-						    काष्ठा nfc_digital_dev,
+static void digital_wq_cmd_complete(struct work_struct *work)
+{
+	struct digital_cmd *cmd;
+	struct nfc_digital_dev *ddev = container_of(work,
+						    struct nfc_digital_dev,
 						    cmd_complete_work);
 
 	mutex_lock(&ddev->cmd_lock);
 
-	cmd = list_first_entry_or_null(&ddev->cmd_queue, काष्ठा digital_cmd,
+	cmd = list_first_entry_or_null(&ddev->cmd_queue, struct digital_cmd,
 				       queue);
-	अगर (!cmd) अणु
+	if (!cmd) {
 		mutex_unlock(&ddev->cmd_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	list_del(&cmd->queue);
 
 	mutex_unlock(&ddev->cmd_lock);
 
-	अगर (!IS_ERR(cmd->resp))
-		prपूर्णांक_hex_dump_debug("DIGITAL RX: ", DUMP_PREFIX_NONE, 16, 1,
+	if (!IS_ERR(cmd->resp))
+		print_hex_dump_debug("DIGITAL RX: ", DUMP_PREFIX_NONE, 16, 1,
 				     cmd->resp->data, cmd->resp->len, false);
 
 	cmd->cmd_cb(ddev, cmd->cb_context, cmd->resp);
 
-	kमुक्त(cmd->mdaa_params);
-	kमुक्त(cmd);
+	kfree(cmd->mdaa_params);
+	kfree(cmd);
 
 	schedule_work(&ddev->cmd_work);
-पूर्ण
+}
 
-अटल व्योम digital_send_cmd_complete(काष्ठा nfc_digital_dev *ddev,
-				      व्योम *arg, काष्ठा sk_buff *resp)
-अणु
-	काष्ठा digital_cmd *cmd = arg;
+static void digital_send_cmd_complete(struct nfc_digital_dev *ddev,
+				      void *arg, struct sk_buff *resp)
+{
+	struct digital_cmd *cmd = arg;
 
 	cmd->resp = resp;
 
 	schedule_work(&ddev->cmd_complete_work);
-पूर्ण
+}
 
-अटल व्योम digital_wq_cmd(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक rc;
-	काष्ठा digital_cmd *cmd;
-	काष्ठा digital_tg_mdaa_params *params;
-	काष्ठा nfc_digital_dev *ddev = container_of(work,
-						    काष्ठा nfc_digital_dev,
+static void digital_wq_cmd(struct work_struct *work)
+{
+	int rc;
+	struct digital_cmd *cmd;
+	struct digital_tg_mdaa_params *params;
+	struct nfc_digital_dev *ddev = container_of(work,
+						    struct nfc_digital_dev,
 						    cmd_work);
 
 	mutex_lock(&ddev->cmd_lock);
 
-	cmd = list_first_entry_or_null(&ddev->cmd_queue, काष्ठा digital_cmd,
+	cmd = list_first_entry_or_null(&ddev->cmd_queue, struct digital_cmd,
 				       queue);
-	अगर (!cmd || cmd->pending) अणु
+	if (!cmd || cmd->pending) {
 		mutex_unlock(&ddev->cmd_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	cmd->pending = 1;
 
 	mutex_unlock(&ddev->cmd_lock);
 
-	अगर (cmd->req)
-		prपूर्णांक_hex_dump_debug("DIGITAL TX: ", DUMP_PREFIX_NONE, 16, 1,
+	if (cmd->req)
+		print_hex_dump_debug("DIGITAL TX: ", DUMP_PREFIX_NONE, 16, 1,
 				     cmd->req->data, cmd->req->len, false);
 
-	चयन (cmd->type) अणु
-	हाल DIGITAL_CMD_IN_SEND:
-		rc = ddev->ops->in_send_cmd(ddev, cmd->req, cmd->समयout,
+	switch (cmd->type) {
+	case DIGITAL_CMD_IN_SEND:
+		rc = ddev->ops->in_send_cmd(ddev, cmd->req, cmd->timeout,
 					    digital_send_cmd_complete, cmd);
-		अवरोध;
+		break;
 
-	हाल DIGITAL_CMD_TG_SEND:
-		rc = ddev->ops->tg_send_cmd(ddev, cmd->req, cmd->समयout,
+	case DIGITAL_CMD_TG_SEND:
+		rc = ddev->ops->tg_send_cmd(ddev, cmd->req, cmd->timeout,
 					    digital_send_cmd_complete, cmd);
-		अवरोध;
+		break;
 
-	हाल DIGITAL_CMD_TG_LISTEN:
-		rc = ddev->ops->tg_listen(ddev, cmd->समयout,
+	case DIGITAL_CMD_TG_LISTEN:
+		rc = ddev->ops->tg_listen(ddev, cmd->timeout,
 					  digital_send_cmd_complete, cmd);
-		अवरोध;
+		break;
 
-	हाल DIGITAL_CMD_TG_LISTEN_MDAA:
+	case DIGITAL_CMD_TG_LISTEN_MDAA:
 		params = cmd->mdaa_params;
 
-		rc = ddev->ops->tg_listen_mdaa(ddev, params, cmd->समयout,
+		rc = ddev->ops->tg_listen_mdaa(ddev, params, cmd->timeout,
 					       digital_send_cmd_complete, cmd);
-		अवरोध;
+		break;
 
-	हाल DIGITAL_CMD_TG_LISTEN_MD:
-		rc = ddev->ops->tg_listen_md(ddev, cmd->समयout,
+	case DIGITAL_CMD_TG_LISTEN_MD:
+		rc = ddev->ops->tg_listen_md(ddev, cmd->timeout,
 					       digital_send_cmd_complete, cmd);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_err("Unknown cmd type %d\n", cmd->type);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!rc)
-		वापस;
+	if (!rc)
+		return;
 
 	pr_err("in_send_command returned err %d\n", rc);
 
@@ -218,26 +217,26 @@
 	list_del(&cmd->queue);
 	mutex_unlock(&ddev->cmd_lock);
 
-	kमुक्त_skb(cmd->req);
-	kमुक्त(cmd->mdaa_params);
-	kमुक्त(cmd);
+	kfree_skb(cmd->req);
+	kfree(cmd->mdaa_params);
+	kfree(cmd);
 
 	schedule_work(&ddev->cmd_work);
-पूर्ण
+}
 
-पूर्णांक digital_send_cmd(काष्ठा nfc_digital_dev *ddev, u8 cmd_type,
-		     काष्ठा sk_buff *skb, काष्ठा digital_tg_mdaa_params *params,
-		     u16 समयout, nfc_digital_cmd_complete_t cmd_cb,
-		     व्योम *cb_context)
-अणु
-	काष्ठा digital_cmd *cmd;
+int digital_send_cmd(struct nfc_digital_dev *ddev, u8 cmd_type,
+		     struct sk_buff *skb, struct digital_tg_mdaa_params *params,
+		     u16 timeout, nfc_digital_cmd_complete_t cmd_cb,
+		     void *cb_context)
+{
+	struct digital_cmd *cmd;
 
-	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->type = cmd_type;
-	cmd->समयout = समयout;
+	cmd->timeout = timeout;
 	cmd->req = skb;
 	cmd->mdaa_params = params;
 	cmd->cmd_cb = cmd_cb;
@@ -250,283 +249,283 @@
 
 	schedule_work(&ddev->cmd_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक digital_in_configure_hw(काष्ठा nfc_digital_dev *ddev, पूर्णांक type, पूर्णांक param)
-अणु
-	पूर्णांक rc;
+int digital_in_configure_hw(struct nfc_digital_dev *ddev, int type, int param)
+{
+	int rc;
 
 	rc = ddev->ops->in_configure_hw(ddev, type, param);
-	अगर (rc)
+	if (rc)
 		pr_err("in_configure_hw failed: %d\n", rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक digital_tg_configure_hw(काष्ठा nfc_digital_dev *ddev, पूर्णांक type, पूर्णांक param)
-अणु
-	पूर्णांक rc;
+int digital_tg_configure_hw(struct nfc_digital_dev *ddev, int type, int param)
+{
+	int rc;
 
 	rc = ddev->ops->tg_configure_hw(ddev, type, param);
-	अगर (rc)
+	if (rc)
 		pr_err("tg_configure_hw failed: %d\n", rc);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक digital_tg_listen_mdaa(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
-अणु
-	काष्ठा digital_tg_mdaa_params *params;
+static int digital_tg_listen_mdaa(struct nfc_digital_dev *ddev, u8 rf_tech)
+{
+	struct digital_tg_mdaa_params *params;
 
-	params = kzalloc(माप(*params), GFP_KERNEL);
-	अगर (!params)
-		वापस -ENOMEM;
+	params = kzalloc(sizeof(*params), GFP_KERNEL);
+	if (!params)
+		return -ENOMEM;
 
 	params->sens_res = DIGITAL_SENS_RES_NFC_DEP;
-	get_अक्रमom_bytes(params->nfcid1, माप(params->nfcid1));
+	get_random_bytes(params->nfcid1, sizeof(params->nfcid1));
 	params->sel_res = DIGITAL_SEL_RES_NFC_DEP;
 
 	params->nfcid2[0] = DIGITAL_SENSF_NFCID2_NFC_DEP_B1;
 	params->nfcid2[1] = DIGITAL_SENSF_NFCID2_NFC_DEP_B2;
-	get_अक्रमom_bytes(params->nfcid2 + 2, NFC_NFCID2_MAXSIZE - 2);
+	get_random_bytes(params->nfcid2 + 2, NFC_NFCID2_MAXSIZE - 2);
 	params->sc = DIGITAL_SENSF_FELICA_SC;
 
-	वापस digital_send_cmd(ddev, DIGITAL_CMD_TG_LISTEN_MDAA, शून्य, params,
-				500, digital_tg_recv_atr_req, शून्य);
-पूर्ण
+	return digital_send_cmd(ddev, DIGITAL_CMD_TG_LISTEN_MDAA, NULL, params,
+				500, digital_tg_recv_atr_req, NULL);
+}
 
-अटल पूर्णांक digital_tg_listen_md(काष्ठा nfc_digital_dev *ddev, u8 rf_tech)
-अणु
-	वापस digital_send_cmd(ddev, DIGITAL_CMD_TG_LISTEN_MD, शून्य, शून्य, 500,
-				digital_tg_recv_md_req, शून्य);
-पूर्ण
+static int digital_tg_listen_md(struct nfc_digital_dev *ddev, u8 rf_tech)
+{
+	return digital_send_cmd(ddev, DIGITAL_CMD_TG_LISTEN_MD, NULL, NULL, 500,
+				digital_tg_recv_md_req, NULL);
+}
 
-पूर्णांक digital_target_found(काष्ठा nfc_digital_dev *ddev,
-			 काष्ठा nfc_target *target, u8 protocol)
-अणु
-	पूर्णांक rc;
+int digital_target_found(struct nfc_digital_dev *ddev,
+			 struct nfc_target *target, u8 protocol)
+{
+	int rc;
 	u8 framing;
 	u8 rf_tech;
 	u8 poll_tech_count;
-	पूर्णांक (*check_crc)(काष्ठा sk_buff *skb);
-	व्योम (*add_crc)(काष्ठा sk_buff *skb);
+	int (*check_crc)(struct sk_buff *skb);
+	void (*add_crc)(struct sk_buff *skb);
 
 	rf_tech = ddev->poll_techs[ddev->poll_tech_index].rf_tech;
 
-	चयन (protocol) अणु
-	हाल NFC_PROTO_JEWEL:
+	switch (protocol) {
+	case NFC_PROTO_JEWEL:
 		framing = NFC_DIGITAL_FRAMING_NFCA_T1T;
 		check_crc = digital_skb_check_crc_b;
 		add_crc = digital_skb_add_crc_b;
-		अवरोध;
+		break;
 
-	हाल NFC_PROTO_MIFARE:
+	case NFC_PROTO_MIFARE:
 		framing = NFC_DIGITAL_FRAMING_NFCA_T2T;
 		check_crc = digital_skb_check_crc_a;
 		add_crc = digital_skb_add_crc_a;
-		अवरोध;
+		break;
 
-	हाल NFC_PROTO_FELICA:
+	case NFC_PROTO_FELICA:
 		framing = NFC_DIGITAL_FRAMING_NFCF_T3T;
 		check_crc = digital_skb_check_crc_f;
 		add_crc = digital_skb_add_crc_f;
-		अवरोध;
+		break;
 
-	हाल NFC_PROTO_NFC_DEP:
-		अगर (rf_tech == NFC_DIGITAL_RF_TECH_106A) अणु
+	case NFC_PROTO_NFC_DEP:
+		if (rf_tech == NFC_DIGITAL_RF_TECH_106A) {
 			framing = NFC_DIGITAL_FRAMING_NFCA_NFC_DEP;
 			check_crc = digital_skb_check_crc_a;
 			add_crc = digital_skb_add_crc_a;
-		पूर्ण अन्यथा अणु
+		} else {
 			framing = NFC_DIGITAL_FRAMING_NFCF_NFC_DEP;
 			check_crc = digital_skb_check_crc_f;
 			add_crc = digital_skb_add_crc_f;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल NFC_PROTO_ISO15693:
+	case NFC_PROTO_ISO15693:
 		framing = NFC_DIGITAL_FRAMING_ISO15693_T5T;
 		check_crc = digital_skb_check_crc_b;
 		add_crc = digital_skb_add_crc_b;
-		अवरोध;
+		break;
 
-	हाल NFC_PROTO_ISO14443:
+	case NFC_PROTO_ISO14443:
 		framing = NFC_DIGITAL_FRAMING_NFCA_T4T;
 		check_crc = digital_skb_check_crc_a;
 		add_crc = digital_skb_add_crc_a;
-		अवरोध;
+		break;
 
-	हाल NFC_PROTO_ISO14443_B:
+	case NFC_PROTO_ISO14443_B:
 		framing = NFC_DIGITAL_FRAMING_NFCB_T4T;
 		check_crc = digital_skb_check_crc_b;
 		add_crc = digital_skb_add_crc_b;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_err("Invalid protocol %d\n", protocol);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_debug("rf_tech=%d, protocol=%d\n", rf_tech, protocol);
 
 	ddev->curr_rf_tech = rf_tech;
 
-	अगर (DIGITAL_DRV_CAPS_IN_CRC(ddev)) अणु
+	if (DIGITAL_DRV_CAPS_IN_CRC(ddev)) {
 		ddev->skb_add_crc = digital_skb_add_crc_none;
 		ddev->skb_check_crc = digital_skb_check_crc_none;
-	पूर्ण अन्यथा अणु
+	} else {
 		ddev->skb_add_crc = add_crc;
 		ddev->skb_check_crc = check_crc;
-	पूर्ण
+	}
 
 	rc = digital_in_configure_hw(ddev, NFC_DIGITAL_CONFIG_FRAMING, framing);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	target->supported_protocols = (1 << protocol);
 
 	poll_tech_count = ddev->poll_tech_count;
 	ddev->poll_tech_count = 0;
 
-	rc = nfc_tarमाला_लो_found(ddev->nfc_dev, target, 1);
-	अगर (rc) अणु
+	rc = nfc_targets_found(ddev->nfc_dev, target, 1);
+	if (rc) {
 		ddev->poll_tech_count = poll_tech_count;
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम digital_poll_next_tech(काष्ठा nfc_digital_dev *ddev)
-अणु
-	u8 अक्रम_mod;
+void digital_poll_next_tech(struct nfc_digital_dev *ddev)
+{
+	u8 rand_mod;
 
-	digital_चयन_rf(ddev, 0);
+	digital_switch_rf(ddev, 0);
 
 	mutex_lock(&ddev->poll_lock);
 
-	अगर (!ddev->poll_tech_count) अणु
+	if (!ddev->poll_tech_count) {
 		mutex_unlock(&ddev->poll_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	get_अक्रमom_bytes(&अक्रम_mod, माप(अक्रम_mod));
-	ddev->poll_tech_index = अक्रम_mod % ddev->poll_tech_count;
+	get_random_bytes(&rand_mod, sizeof(rand_mod));
+	ddev->poll_tech_index = rand_mod % ddev->poll_tech_count;
 
 	mutex_unlock(&ddev->poll_lock);
 
 	schedule_delayed_work(&ddev->poll_work,
-			      msecs_to_jअगरfies(DIGITAL_POLL_INTERVAL));
-पूर्ण
+			      msecs_to_jiffies(DIGITAL_POLL_INTERVAL));
+}
 
-अटल व्योम digital_wq_poll(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक rc;
-	काष्ठा digital_poll_tech *poll_tech;
-	काष्ठा nfc_digital_dev *ddev = container_of(work,
-						    काष्ठा nfc_digital_dev,
+static void digital_wq_poll(struct work_struct *work)
+{
+	int rc;
+	struct digital_poll_tech *poll_tech;
+	struct nfc_digital_dev *ddev = container_of(work,
+						    struct nfc_digital_dev,
 						    poll_work.work);
 	mutex_lock(&ddev->poll_lock);
 
-	अगर (!ddev->poll_tech_count) अणु
+	if (!ddev->poll_tech_count) {
 		mutex_unlock(&ddev->poll_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	poll_tech = &ddev->poll_techs[ddev->poll_tech_index];
 
 	mutex_unlock(&ddev->poll_lock);
 
 	rc = poll_tech->poll_func(ddev, poll_tech->rf_tech);
-	अगर (rc)
+	if (rc)
 		digital_poll_next_tech(ddev);
-पूर्ण
+}
 
-अटल व्योम digital_add_poll_tech(काष्ठा nfc_digital_dev *ddev, u8 rf_tech,
+static void digital_add_poll_tech(struct nfc_digital_dev *ddev, u8 rf_tech,
 				  digital_poll_t poll_func)
-अणु
-	काष्ठा digital_poll_tech *poll_tech;
+{
+	struct digital_poll_tech *poll_tech;
 
-	अगर (ddev->poll_tech_count >= NFC_DIGITAL_POLL_MODE_COUNT_MAX)
-		वापस;
+	if (ddev->poll_tech_count >= NFC_DIGITAL_POLL_MODE_COUNT_MAX)
+		return;
 
 	poll_tech = &ddev->poll_techs[ddev->poll_tech_count++];
 
 	poll_tech->rf_tech = rf_tech;
 	poll_tech->poll_func = poll_func;
-पूर्ण
+}
 
 /**
  * digital_start_poll - start_poll operation
  * @nfc_dev: device to be polled
- * @im_protocols: bitset of nfc initiator protocols to be used क्रम polling
- * @पंचांग_protocols: bitset of nfc transport protocols to be used क्रम polling
+ * @im_protocols: bitset of nfc initiator protocols to be used for polling
+ * @tm_protocols: bitset of nfc transport protocols to be used for polling
  *
  * For every supported protocol, the corresponding polling function is added
  * to the table of polling technologies (ddev->poll_techs[]) using
  * digital_add_poll_tech().
- * When a polling function fails (by समयout or protocol error) the next one is
+ * When a polling function fails (by timeout or protocol error) the next one is
  * schedule by digital_poll_next_tech() on the poll workqueue (ddev->poll_work).
  */
-अटल पूर्णांक digital_start_poll(काष्ठा nfc_dev *nfc_dev, __u32 im_protocols,
-			      __u32 पंचांग_protocols)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
-	u32 matching_im_protocols, matching_पंचांग_protocols;
+static int digital_start_poll(struct nfc_dev *nfc_dev, __u32 im_protocols,
+			      __u32 tm_protocols)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+	u32 matching_im_protocols, matching_tm_protocols;
 
 	pr_debug("protocols: im 0x%x, tm 0x%x, supported 0x%x\n", im_protocols,
-		 पंचांग_protocols, ddev->protocols);
+		 tm_protocols, ddev->protocols);
 
 	matching_im_protocols = ddev->protocols & im_protocols;
-	matching_पंचांग_protocols = ddev->protocols & पंचांग_protocols;
+	matching_tm_protocols = ddev->protocols & tm_protocols;
 
-	अगर (!matching_im_protocols && !matching_पंचांग_protocols) अणु
+	if (!matching_im_protocols && !matching_tm_protocols) {
 		pr_err("Unknown protocol\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (ddev->poll_tech_count) अणु
+	if (ddev->poll_tech_count) {
 		pr_err("Already polling\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (ddev->curr_protocol) अणु
+	if (ddev->curr_protocol) {
 		pr_err("A target is already active\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ddev->poll_tech_count = 0;
 	ddev->poll_tech_index = 0;
 
-	अगर (matching_im_protocols & DIGITAL_PROTO_NFCA_RF_TECH)
+	if (matching_im_protocols & DIGITAL_PROTO_NFCA_RF_TECH)
 		digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_106A,
 				      digital_in_send_sens_req);
 
-	अगर (matching_im_protocols & DIGITAL_PROTO_NFCB_RF_TECH)
+	if (matching_im_protocols & DIGITAL_PROTO_NFCB_RF_TECH)
 		digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_106B,
 				      digital_in_send_sensb_req);
 
-	अगर (matching_im_protocols & DIGITAL_PROTO_NFCF_RF_TECH) अणु
+	if (matching_im_protocols & DIGITAL_PROTO_NFCF_RF_TECH) {
 		digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_212F,
 				      digital_in_send_sensf_req);
 
 		digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_424F,
 				      digital_in_send_sensf_req);
-	पूर्ण
+	}
 
-	अगर (matching_im_protocols & DIGITAL_PROTO_ISO15693_RF_TECH)
+	if (matching_im_protocols & DIGITAL_PROTO_ISO15693_RF_TECH)
 		digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_ISO15693,
 				      digital_in_send_iso15693_inv_req);
 
-	अगर (matching_पंचांग_protocols & NFC_PROTO_NFC_DEP_MASK) अणु
-		अगर (ddev->ops->tg_listen_mdaa) अणु
+	if (matching_tm_protocols & NFC_PROTO_NFC_DEP_MASK) {
+		if (ddev->ops->tg_listen_mdaa) {
 			digital_add_poll_tech(ddev, 0,
 					      digital_tg_listen_mdaa);
-		पूर्ण अन्यथा अगर (ddev->ops->tg_listen_md) अणु
+		} else if (ddev->ops->tg_listen_md) {
 			digital_add_poll_tech(ddev, 0,
 					      digital_tg_listen_md);
-		पूर्ण अन्यथा अणु
+		} else {
 			digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_106A,
 					      digital_tg_listen_nfca);
 
@@ -535,31 +534,31 @@
 
 			digital_add_poll_tech(ddev, NFC_DIGITAL_RF_TECH_424F,
 					      digital_tg_listen_nfcf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!ddev->poll_tech_count) अणु
+	if (!ddev->poll_tech_count) {
 		pr_err("Unsupported protocols: im=0x%x, tm=0x%x\n",
-		       matching_im_protocols, matching_पंचांग_protocols);
-		वापस -EINVAL;
-	पूर्ण
+		       matching_im_protocols, matching_tm_protocols);
+		return -EINVAL;
+	}
 
 	schedule_delayed_work(&ddev->poll_work, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम digital_stop_poll(काष्ठा nfc_dev *nfc_dev)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+static void digital_stop_poll(struct nfc_dev *nfc_dev)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
 
 	mutex_lock(&ddev->poll_lock);
 
-	अगर (!ddev->poll_tech_count) अणु
+	if (!ddev->poll_tech_count) {
 		pr_err("Polling operation was not running\n");
 		mutex_unlock(&ddev->poll_lock);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ddev->poll_tech_count = 0;
 
@@ -567,200 +566,200 @@
 
 	cancel_delayed_work_sync(&ddev->poll_work);
 
-	digital_पात_cmd(ddev);
-पूर्ण
+	digital_abort_cmd(ddev);
+}
 
-अटल पूर्णांक digital_dev_up(काष्ठा nfc_dev *nfc_dev)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+static int digital_dev_up(struct nfc_dev *nfc_dev)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
 
-	digital_चयन_rf(ddev, 1);
+	digital_switch_rf(ddev, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक digital_dev_करोwn(काष्ठा nfc_dev *nfc_dev)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+static int digital_dev_down(struct nfc_dev *nfc_dev)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
 
-	digital_चयन_rf(ddev, 0);
+	digital_switch_rf(ddev, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक digital_dep_link_up(काष्ठा nfc_dev *nfc_dev,
-			       काष्ठा nfc_target *target,
-			       __u8 comm_mode, __u8 *gb, माप_प्रकार gb_len)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
-	पूर्णांक rc;
+static int digital_dep_link_up(struct nfc_dev *nfc_dev,
+			       struct nfc_target *target,
+			       __u8 comm_mode, __u8 *gb, size_t gb_len)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+	int rc;
 
 	rc = digital_in_send_atr_req(ddev, target, comm_mode, gb, gb_len);
 
-	अगर (!rc)
+	if (!rc)
 		ddev->curr_protocol = NFC_PROTO_NFC_DEP;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक digital_dep_link_करोwn(काष्ठा nfc_dev *nfc_dev)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+static int digital_dep_link_down(struct nfc_dev *nfc_dev)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
 
-	digital_पात_cmd(ddev);
+	digital_abort_cmd(ddev);
 
 	ddev->curr_protocol = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक digital_activate_target(काष्ठा nfc_dev *nfc_dev,
-				   काष्ठा nfc_target *target, __u32 protocol)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+static int digital_activate_target(struct nfc_dev *nfc_dev,
+				   struct nfc_target *target, __u32 protocol)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
 
-	अगर (ddev->poll_tech_count) अणु
+	if (ddev->poll_tech_count) {
 		pr_err("Can't activate a target while polling\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अगर (ddev->curr_protocol) अणु
+	if (ddev->curr_protocol) {
 		pr_err("A target is already active\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	ddev->curr_protocol = protocol;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम digital_deactivate_target(काष्ठा nfc_dev *nfc_dev,
-				      काष्ठा nfc_target *target,
+static void digital_deactivate_target(struct nfc_dev *nfc_dev,
+				      struct nfc_target *target,
 				      u8 mode)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
 
-	अगर (!ddev->curr_protocol) अणु
+	if (!ddev->curr_protocol) {
 		pr_err("No active target\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	digital_पात_cmd(ddev);
+	digital_abort_cmd(ddev);
 	ddev->curr_protocol = 0;
-पूर्ण
+}
 
-अटल पूर्णांक digital_tg_send(काष्ठा nfc_dev *dev, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(dev);
+static int digital_tg_send(struct nfc_dev *dev, struct sk_buff *skb)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(dev);
 
-	वापस digital_tg_send_dep_res(ddev, skb);
-पूर्ण
+	return digital_tg_send_dep_res(ddev, skb);
+}
 
-अटल व्योम digital_in_send_complete(काष्ठा nfc_digital_dev *ddev, व्योम *arg,
-				     काष्ठा sk_buff *resp)
-अणु
-	काष्ठा digital_data_exch *data_exch = arg;
-	पूर्णांक rc;
+static void digital_in_send_complete(struct nfc_digital_dev *ddev, void *arg,
+				     struct sk_buff *resp)
+{
+	struct digital_data_exch *data_exch = arg;
+	int rc;
 
-	अगर (IS_ERR(resp)) अणु
+	if (IS_ERR(resp)) {
 		rc = PTR_ERR(resp);
-		resp = शून्य;
-		जाओ करोne;
-	पूर्ण
+		resp = NULL;
+		goto done;
+	}
 
-	अगर (ddev->curr_protocol == NFC_PROTO_MIFARE) अणु
-		rc = digital_in_recv_mअगरare_res(resp);
-		/* crc check is करोne in digital_in_recv_mअगरare_res() */
-		जाओ करोne;
-	पूर्ण
+	if (ddev->curr_protocol == NFC_PROTO_MIFARE) {
+		rc = digital_in_recv_mifare_res(resp);
+		/* crc check is done in digital_in_recv_mifare_res() */
+		goto done;
+	}
 
-	अगर ((ddev->curr_protocol == NFC_PROTO_ISO14443) ||
-	    (ddev->curr_protocol == NFC_PROTO_ISO14443_B)) अणु
+	if ((ddev->curr_protocol == NFC_PROTO_ISO14443) ||
+	    (ddev->curr_protocol == NFC_PROTO_ISO14443_B)) {
 		rc = digital_in_iso_dep_pull_sod(ddev, resp);
-		अगर (rc)
-			जाओ करोne;
-	पूर्ण
+		if (rc)
+			goto done;
+	}
 
 	rc = ddev->skb_check_crc(resp);
 
-करोne:
-	अगर (rc) अणु
-		kमुक्त_skb(resp);
-		resp = शून्य;
-	पूर्ण
+done:
+	if (rc) {
+		kfree_skb(resp);
+		resp = NULL;
+	}
 
 	data_exch->cb(data_exch->cb_context, resp, rc);
 
-	kमुक्त(data_exch);
-पूर्ण
+	kfree(data_exch);
+}
 
-अटल पूर्णांक digital_in_send(काष्ठा nfc_dev *nfc_dev, काष्ठा nfc_target *target,
-			   काष्ठा sk_buff *skb, data_exchange_cb_t cb,
-			   व्योम *cb_context)
-अणु
-	काष्ठा nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
-	काष्ठा digital_data_exch *data_exch;
-	पूर्णांक rc;
+static int digital_in_send(struct nfc_dev *nfc_dev, struct nfc_target *target,
+			   struct sk_buff *skb, data_exchange_cb_t cb,
+			   void *cb_context)
+{
+	struct nfc_digital_dev *ddev = nfc_get_drvdata(nfc_dev);
+	struct digital_data_exch *data_exch;
+	int rc;
 
-	data_exch = kzalloc(माप(*data_exch), GFP_KERNEL);
-	अगर (!data_exch)
-		वापस -ENOMEM;
+	data_exch = kzalloc(sizeof(*data_exch), GFP_KERNEL);
+	if (!data_exch)
+		return -ENOMEM;
 
 	data_exch->cb = cb;
 	data_exch->cb_context = cb_context;
 
-	अगर (ddev->curr_protocol == NFC_PROTO_NFC_DEP) अणु
+	if (ddev->curr_protocol == NFC_PROTO_NFC_DEP) {
 		rc = digital_in_send_dep_req(ddev, target, skb, data_exch);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर ((ddev->curr_protocol == NFC_PROTO_ISO14443) ||
-	    (ddev->curr_protocol == NFC_PROTO_ISO14443_B)) अणु
+	if ((ddev->curr_protocol == NFC_PROTO_ISO14443) ||
+	    (ddev->curr_protocol == NFC_PROTO_ISO14443_B)) {
 		rc = digital_in_iso_dep_push_sod(ddev, skb);
-		अगर (rc)
-			जाओ निकास;
-	पूर्ण
+		if (rc)
+			goto exit;
+	}
 
 	ddev->skb_add_crc(skb);
 
 	rc = digital_in_send_cmd(ddev, skb, 500, digital_in_send_complete,
 				 data_exch);
 
-निकास:
-	अगर (rc)
-		kमुक्त(data_exch);
+exit:
+	if (rc)
+		kfree(data_exch);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा nfc_ops digital_nfc_ops = अणु
+static struct nfc_ops digital_nfc_ops = {
 	.dev_up = digital_dev_up,
-	.dev_करोwn = digital_dev_करोwn,
+	.dev_down = digital_dev_down,
 	.start_poll = digital_start_poll,
 	.stop_poll = digital_stop_poll,
 	.dep_link_up = digital_dep_link_up,
-	.dep_link_करोwn = digital_dep_link_करोwn,
+	.dep_link_down = digital_dep_link_down,
 	.activate_target = digital_activate_target,
 	.deactivate_target = digital_deactivate_target,
-	.पंचांग_send = digital_tg_send,
+	.tm_send = digital_tg_send,
 	.im_transceive = digital_in_send,
-पूर्ण;
+};
 
-काष्ठा nfc_digital_dev *nfc_digital_allocate_device(काष्ठा nfc_digital_ops *ops,
+struct nfc_digital_dev *nfc_digital_allocate_device(struct nfc_digital_ops *ops,
 					    __u32 supported_protocols,
 					    __u32 driver_capabilities,
-					    पूर्णांक tx_headroom, पूर्णांक tx_tailroom)
-अणु
-	काष्ठा nfc_digital_dev *ddev;
+					    int tx_headroom, int tx_tailroom)
+{
+	struct nfc_digital_dev *ddev;
 
-	अगर (!ops->in_configure_hw || !ops->in_send_cmd || !ops->tg_listen ||
-	    !ops->tg_configure_hw || !ops->tg_send_cmd || !ops->पात_cmd ||
-	    !ops->चयन_rf || (ops->tg_listen_md && !ops->tg_get_rf_tech))
-		वापस शून्य;
+	if (!ops->in_configure_hw || !ops->in_send_cmd || !ops->tg_listen ||
+	    !ops->tg_configure_hw || !ops->tg_send_cmd || !ops->abort_cmd ||
+	    !ops->switch_rf || (ops->tg_listen_md && !ops->tg_get_rf_tech))
+		return NULL;
 
-	ddev = kzalloc(माप(*ddev), GFP_KERNEL);
-	अगर (!ddev)
-		वापस शून्य;
+	ddev = kzalloc(sizeof(*ddev), GFP_KERNEL);
+	if (!ddev)
+		return NULL;
 
 	ddev->driver_capabilities = driver_capabilities;
 	ddev->ops = ops;
@@ -774,19 +773,19 @@
 	mutex_init(&ddev->poll_lock);
 	INIT_DELAYED_WORK(&ddev->poll_work, digital_wq_poll);
 
-	अगर (supported_protocols & NFC_PROTO_JEWEL_MASK)
+	if (supported_protocols & NFC_PROTO_JEWEL_MASK)
 		ddev->protocols |= NFC_PROTO_JEWEL_MASK;
-	अगर (supported_protocols & NFC_PROTO_MIFARE_MASK)
+	if (supported_protocols & NFC_PROTO_MIFARE_MASK)
 		ddev->protocols |= NFC_PROTO_MIFARE_MASK;
-	अगर (supported_protocols & NFC_PROTO_FELICA_MASK)
+	if (supported_protocols & NFC_PROTO_FELICA_MASK)
 		ddev->protocols |= NFC_PROTO_FELICA_MASK;
-	अगर (supported_protocols & NFC_PROTO_NFC_DEP_MASK)
+	if (supported_protocols & NFC_PROTO_NFC_DEP_MASK)
 		ddev->protocols |= NFC_PROTO_NFC_DEP_MASK;
-	अगर (supported_protocols & NFC_PROTO_ISO15693_MASK)
+	if (supported_protocols & NFC_PROTO_ISO15693_MASK)
 		ddev->protocols |= NFC_PROTO_ISO15693_MASK;
-	अगर (supported_protocols & NFC_PROTO_ISO14443_MASK)
+	if (supported_protocols & NFC_PROTO_ISO14443_MASK)
 		ddev->protocols |= NFC_PROTO_ISO14443_MASK;
-	अगर (supported_protocols & NFC_PROTO_ISO14443_B_MASK)
+	if (supported_protocols & NFC_PROTO_ISO14443_B_MASK)
 		ddev->protocols |= NFC_PROTO_ISO14443_B_MASK;
 
 	ddev->tx_headroom = tx_headroom + DIGITAL_MAX_HEADER_LEN;
@@ -795,40 +794,40 @@
 	ddev->nfc_dev = nfc_allocate_device(&digital_nfc_ops, ddev->protocols,
 					    ddev->tx_headroom,
 					    ddev->tx_tailroom);
-	अगर (!ddev->nfc_dev) अणु
+	if (!ddev->nfc_dev) {
 		pr_err("nfc_allocate_device failed\n");
-		जाओ मुक्त_dev;
-	पूर्ण
+		goto free_dev;
+	}
 
 	nfc_set_drvdata(ddev->nfc_dev, ddev);
 
-	वापस ddev;
+	return ddev;
 
-मुक्त_dev:
-	kमुक्त(ddev);
+free_dev:
+	kfree(ddev);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL(nfc_digital_allocate_device);
 
-व्योम nfc_digital_मुक्त_device(काष्ठा nfc_digital_dev *ddev)
-अणु
-	nfc_मुक्त_device(ddev->nfc_dev);
-	kमुक्त(ddev);
-पूर्ण
-EXPORT_SYMBOL(nfc_digital_मुक्त_device);
+void nfc_digital_free_device(struct nfc_digital_dev *ddev)
+{
+	nfc_free_device(ddev->nfc_dev);
+	kfree(ddev);
+}
+EXPORT_SYMBOL(nfc_digital_free_device);
 
-पूर्णांक nfc_digital_रेजिस्टर_device(काष्ठा nfc_digital_dev *ddev)
-अणु
-	वापस nfc_रेजिस्टर_device(ddev->nfc_dev);
-पूर्ण
-EXPORT_SYMBOL(nfc_digital_रेजिस्टर_device);
+int nfc_digital_register_device(struct nfc_digital_dev *ddev)
+{
+	return nfc_register_device(ddev->nfc_dev);
+}
+EXPORT_SYMBOL(nfc_digital_register_device);
 
-व्योम nfc_digital_unरेजिस्टर_device(काष्ठा nfc_digital_dev *ddev)
-अणु
-	काष्ठा digital_cmd *cmd, *n;
+void nfc_digital_unregister_device(struct nfc_digital_dev *ddev)
+{
+	struct digital_cmd *cmd, *n;
 
-	nfc_unरेजिस्टर_device(ddev->nfc_dev);
+	nfc_unregister_device(ddev->nfc_dev);
 
 	mutex_lock(&ddev->poll_lock);
 	ddev->poll_tech_count = 0;
@@ -838,20 +837,20 @@ EXPORT_SYMBOL(nfc_digital_रेजिस्टर_device);
 	cancel_work_sync(&ddev->cmd_work);
 	cancel_work_sync(&ddev->cmd_complete_work);
 
-	list_क्रम_each_entry_safe(cmd, n, &ddev->cmd_queue, queue) अणु
+	list_for_each_entry_safe(cmd, n, &ddev->cmd_queue, queue) {
 		list_del(&cmd->queue);
 
-		/* Call the command callback अगर any and pass it a ENODEV error.
-		 * This gives a chance to the command issuer to मुक्त any
+		/* Call the command callback if any and pass it a ENODEV error.
+		 * This gives a chance to the command issuer to free any
 		 * allocated buffer.
 		 */
-		अगर (cmd->cmd_cb)
+		if (cmd->cmd_cb)
 			cmd->cmd_cb(ddev, cmd->cb_context, ERR_PTR(-ENODEV));
 
-		kमुक्त(cmd->mdaa_params);
-		kमुक्त(cmd);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(nfc_digital_unरेजिस्टर_device);
+		kfree(cmd->mdaa_params);
+		kfree(cmd);
+	}
+}
+EXPORT_SYMBOL(nfc_digital_unregister_device);
 
 MODULE_LICENSE("GPL");

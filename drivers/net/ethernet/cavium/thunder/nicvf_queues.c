@@ -1,164 +1,163 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Cavium, Inc.
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/iommu.h>
-#समावेश <net/ip.h>
-#समावेश <net/tso.h>
+#include <linux/pci.h>
+#include <linux/netdevice.h>
+#include <linux/ip.h>
+#include <linux/etherdevice.h>
+#include <linux/iommu.h>
+#include <net/ip.h>
+#include <net/tso.h>
 
-#समावेश "nic_reg.h"
-#समावेश "nic.h"
-#समावेश "q_struct.h"
-#समावेश "nicvf_queues.h"
+#include "nic_reg.h"
+#include "nic.h"
+#include "q_struct.h"
+#include "nicvf_queues.h"
 
-अटल अंतरभूत व्योम nicvf_sq_add_gather_subdesc(काष्ठा snd_queue *sq, पूर्णांक qentry,
-					       पूर्णांक size, u64 data);
-अटल व्योम nicvf_get_page(काष्ठा nicvf *nic)
-अणु
-	अगर (!nic->rb_pageref || !nic->rb_page)
-		वापस;
+static inline void nicvf_sq_add_gather_subdesc(struct snd_queue *sq, int qentry,
+					       int size, u64 data);
+static void nicvf_get_page(struct nicvf *nic)
+{
+	if (!nic->rb_pageref || !nic->rb_page)
+		return;
 
 	page_ref_add(nic->rb_page, nic->rb_pageref);
 	nic->rb_pageref = 0;
-पूर्ण
+}
 
-/* Poll a रेजिस्टर क्रम a specअगरic value */
-अटल पूर्णांक nicvf_poll_reg(काष्ठा nicvf *nic, पूर्णांक qidx,
-			  u64 reg, पूर्णांक bit_pos, पूर्णांक bits, पूर्णांक val)
-अणु
+/* Poll a register for a specific value */
+static int nicvf_poll_reg(struct nicvf *nic, int qidx,
+			  u64 reg, int bit_pos, int bits, int val)
+{
 	u64 bit_mask;
 	u64 reg_val;
-	पूर्णांक समयout = 10;
+	int timeout = 10;
 
 	bit_mask = (1ULL << bits) - 1;
 	bit_mask = (bit_mask << bit_pos);
 
-	जबतक (समयout) अणु
-		reg_val = nicvf_queue_reg_पढ़ो(nic, reg, qidx);
-		अगर (((reg_val & bit_mask) >> bit_pos) == val)
-			वापस 0;
+	while (timeout) {
+		reg_val = nicvf_queue_reg_read(nic, reg, qidx);
+		if (((reg_val & bit_mask) >> bit_pos) == val)
+			return 0;
 		usleep_range(1000, 2000);
-		समयout--;
-	पूर्ण
+		timeout--;
+	}
 	netdev_err(nic->netdev, "Poll on reg 0x%llx failed\n", reg);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Allocate memory क्रम a queue's descriptors */
-अटल पूर्णांक nicvf_alloc_q_desc_mem(काष्ठा nicvf *nic, काष्ठा q_desc_mem *dmem,
-				  पूर्णांक q_len, पूर्णांक desc_size, पूर्णांक align_bytes)
-अणु
+/* Allocate memory for a queue's descriptors */
+static int nicvf_alloc_q_desc_mem(struct nicvf *nic, struct q_desc_mem *dmem,
+				  int q_len, int desc_size, int align_bytes)
+{
 	dmem->q_len = q_len;
 	dmem->size = (desc_size * q_len) + align_bytes;
-	/* Save address, need it जबतक मुक्तing */
+	/* Save address, need it while freeing */
 	dmem->unalign_base = dma_alloc_coherent(&nic->pdev->dev, dmem->size,
 						&dmem->dma, GFP_KERNEL);
-	अगर (!dmem->unalign_base)
-		वापस -ENOMEM;
+	if (!dmem->unalign_base)
+		return -ENOMEM;
 
-	/* Align memory address क्रम 'align_bytes' */
+	/* Align memory address for 'align_bytes' */
 	dmem->phys_base = NICVF_ALIGNED_ADDR((u64)dmem->dma, align_bytes);
 	dmem->base = dmem->unalign_base + (dmem->phys_base - dmem->dma);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Free queue's descriptor memory */
-अटल व्योम nicvf_मुक्त_q_desc_mem(काष्ठा nicvf *nic, काष्ठा q_desc_mem *dmem)
-अणु
-	अगर (!dmem)
-		वापस;
+static void nicvf_free_q_desc_mem(struct nicvf *nic, struct q_desc_mem *dmem)
+{
+	if (!dmem)
+		return;
 
-	dma_मुक्त_coherent(&nic->pdev->dev, dmem->size,
+	dma_free_coherent(&nic->pdev->dev, dmem->size,
 			  dmem->unalign_base, dmem->dma);
-	dmem->unalign_base = शून्य;
-	dmem->base = शून्य;
-पूर्ण
+	dmem->unalign_base = NULL;
+	dmem->base = NULL;
+}
 
-#घोषणा XDP_PAGE_REFCNT_REFILL 256
+#define XDP_PAGE_REFCNT_REFILL 256
 
-/* Allocate a new page or recycle one अगर possible
+/* Allocate a new page or recycle one if possible
  *
  * We cannot optimize dma mapping here, since
- * 1. It's only one RBDR ring क्रम 8 Rx queues.
+ * 1. It's only one RBDR ring for 8 Rx queues.
  * 2. CQE_RX gives address of the buffer where pkt has been DMA'ed
- *    and not idx पूर्णांकo RBDR ring, so can't refer to saved info.
+ *    and not idx into RBDR ring, so can't refer to saved info.
  * 3. There are multiple receive buffers per page
  */
-अटल अंतरभूत काष्ठा pgcache *nicvf_alloc_page(काष्ठा nicvf *nic,
-					       काष्ठा rbdr *rbdr, gfp_t gfp)
-अणु
-	पूर्णांक ref_count;
-	काष्ठा page *page = शून्य;
-	काष्ठा pgcache *pgcache, *next;
+static inline struct pgcache *nicvf_alloc_page(struct nicvf *nic,
+					       struct rbdr *rbdr, gfp_t gfp)
+{
+	int ref_count;
+	struct page *page = NULL;
+	struct pgcache *pgcache, *next;
 
-	/* Check अगर page is alपढ़ोy allocated */
+	/* Check if page is already allocated */
 	pgcache = &rbdr->pgcache[rbdr->pgidx];
 	page = pgcache->page;
-	/* Check अगर page can be recycled */
-	अगर (page) अणु
+	/* Check if page can be recycled */
+	if (page) {
 		ref_count = page_ref_count(page);
-		/* This page can be recycled अगर पूर्णांकernal ref_count and page's
+		/* This page can be recycled if internal ref_count and page's
 		 * ref_count are equal, indicating that the page has been used
-		 * once क्रम packet transmission. For non-XDP mode, पूर्णांकernal
+		 * once for packet transmission. For non-XDP mode, internal
 		 * ref_count is always '1'.
 		 */
-		अगर (rbdr->is_xdp) अणु
-			अगर (ref_count == pgcache->ref_count)
+		if (rbdr->is_xdp) {
+			if (ref_count == pgcache->ref_count)
 				pgcache->ref_count--;
-			अन्यथा
-				page = शून्य;
-		पूर्ण अन्यथा अगर (ref_count != 1) अणु
-			page = शून्य;
-		पूर्ण
-	पूर्ण
+			else
+				page = NULL;
+		} else if (ref_count != 1) {
+			page = NULL;
+		}
+	}
 
-	अगर (!page) अणु
+	if (!page) {
 		page = alloc_pages(gfp | __GFP_COMP | __GFP_NOWARN, 0);
-		अगर (!page)
-			वापस शून्य;
+		if (!page)
+			return NULL;
 
 		this_cpu_inc(nic->pnicvf->drv_stats->page_alloc);
 
-		/* Check क्रम space */
-		अगर (rbdr->pgalloc >= rbdr->pgcnt) अणु
+		/* Check for space */
+		if (rbdr->pgalloc >= rbdr->pgcnt) {
 			/* Page can still be used */
 			nic->rb_page = page;
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		/* Save the page in page cache */
 		pgcache->page = page;
 		pgcache->dma_addr = 0;
 		pgcache->ref_count = 0;
 		rbdr->pgalloc++;
-	पूर्ण
+	}
 
-	/* Take additional page references क्रम recycling */
-	अगर (rbdr->is_xdp) अणु
-		/* Since there is single RBDR (i.e single core करोing
+	/* Take additional page references for recycling */
+	if (rbdr->is_xdp) {
+		/* Since there is single RBDR (i.e single core doing
 		 * page recycling) per 8 Rx queues, in XDP mode adjusting
 		 * page references atomically is the biggest bottleneck, so
-		 * take bunch of references at a समय.
+		 * take bunch of references at a time.
 		 *
 		 * So here, below reference counts defer by '1'.
 		 */
-		अगर (!pgcache->ref_count) अणु
+		if (!pgcache->ref_count) {
 			pgcache->ref_count = XDP_PAGE_REFCNT_REFILL;
 			page_ref_add(page, XDP_PAGE_REFCNT_REFILL);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		/* In non-XDP हाल, single 64K page is भागided across multiple
+		}
+	} else {
+		/* In non-XDP case, single 64K page is divided across multiple
 		 * receive buffers, so cost of recycling is less anyway.
-		 * So we can करो with just one extra reference.
+		 * So we can do with just one extra reference.
 		 */
 		page_ref_add(page, 1);
-	पूर्ण
+	}
 
 	rbdr->pgidx++;
 	rbdr->pgidx &= (rbdr->pgcnt - 1);
@@ -166,103 +165,103 @@
 	/* Prefetch refcount of next page in page cache */
 	next = &rbdr->pgcache[rbdr->pgidx];
 	page = next->page;
-	अगर (page)
+	if (page)
 		prefetch(&page->_refcount);
 
-	वापस pgcache;
-पूर्ण
+	return pgcache;
+}
 
-/* Allocate buffer क्रम packet reception */
-अटल अंतरभूत पूर्णांक nicvf_alloc_rcv_buffer(काष्ठा nicvf *nic, काष्ठा rbdr *rbdr,
+/* Allocate buffer for packet reception */
+static inline int nicvf_alloc_rcv_buffer(struct nicvf *nic, struct rbdr *rbdr,
 					 gfp_t gfp, u32 buf_len, u64 *rbuf)
-अणु
-	काष्ठा pgcache *pgcache = शून्य;
+{
+	struct pgcache *pgcache = NULL;
 
-	/* Check अगर request can be accomodated in previous allocated page.
+	/* Check if request can be accomodated in previous allocated page.
 	 * But in XDP mode only one buffer per page is permitted.
 	 */
-	अगर (!rbdr->is_xdp && nic->rb_page &&
-	    ((nic->rb_page_offset + buf_len) <= PAGE_SIZE)) अणु
+	if (!rbdr->is_xdp && nic->rb_page &&
+	    ((nic->rb_page_offset + buf_len) <= PAGE_SIZE)) {
 		nic->rb_pageref++;
-		जाओ ret;
-	पूर्ण
+		goto ret;
+	}
 
 	nicvf_get_page(nic);
-	nic->rb_page = शून्य;
+	nic->rb_page = NULL;
 
 	/* Get new page, either recycled or new one */
 	pgcache = nicvf_alloc_page(nic, rbdr, gfp);
-	अगर (!pgcache && !nic->rb_page) अणु
+	if (!pgcache && !nic->rb_page) {
 		this_cpu_inc(nic->pnicvf->drv_stats->rcv_buffer_alloc_failures);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	nic->rb_page_offset = 0;
 
-	/* Reserve space क्रम header modअगरications by BPF program */
-	अगर (rbdr->is_xdp)
+	/* Reserve space for header modifications by BPF program */
+	if (rbdr->is_xdp)
 		buf_len += XDP_PACKET_HEADROOM;
 
-	/* Check अगर it's recycled */
-	अगर (pgcache)
+	/* Check if it's recycled */
+	if (pgcache)
 		nic->rb_page = pgcache->page;
 ret:
-	अगर (rbdr->is_xdp && pgcache && pgcache->dma_addr) अणु
+	if (rbdr->is_xdp && pgcache && pgcache->dma_addr) {
 		*rbuf = pgcache->dma_addr;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* HW will ensure data coherency, CPU sync not required */
 		*rbuf = (u64)dma_map_page_attrs(&nic->pdev->dev, nic->rb_page,
 						nic->rb_page_offset, buf_len,
 						DMA_FROM_DEVICE,
 						DMA_ATTR_SKIP_CPU_SYNC);
-		अगर (dma_mapping_error(&nic->pdev->dev, (dma_addr_t)*rbuf)) अणु
-			अगर (!nic->rb_page_offset)
-				__मुक्त_pages(nic->rb_page, 0);
-			nic->rb_page = शून्य;
-			वापस -ENOMEM;
-		पूर्ण
-		अगर (pgcache)
+		if (dma_mapping_error(&nic->pdev->dev, (dma_addr_t)*rbuf)) {
+			if (!nic->rb_page_offset)
+				__free_pages(nic->rb_page, 0);
+			nic->rb_page = NULL;
+			return -ENOMEM;
+		}
+		if (pgcache)
 			pgcache->dma_addr = *rbuf + XDP_PACKET_HEADROOM;
 		nic->rb_page_offset += buf_len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Build skb around receive buffer */
-अटल काष्ठा sk_buff *nicvf_rb_ptr_to_skb(काष्ठा nicvf *nic,
-					   u64 rb_ptr, पूर्णांक len)
-अणु
-	व्योम *data;
-	काष्ठा sk_buff *skb;
+static struct sk_buff *nicvf_rb_ptr_to_skb(struct nicvf *nic,
+					   u64 rb_ptr, int len)
+{
+	void *data;
+	struct sk_buff *skb;
 
 	data = phys_to_virt(rb_ptr);
 
 	/* Now build an skb to give to stack */
 	skb = build_skb(data, RCV_FRAG_LEN);
-	अगर (!skb) अणु
+	if (!skb) {
 		put_page(virt_to_page(data));
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	prefetch(skb->data);
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /* Allocate RBDR ring and populate receive buffers */
-अटल पूर्णांक  nicvf_init_rbdr(काष्ठा nicvf *nic, काष्ठा rbdr *rbdr,
-			    पूर्णांक ring_len, पूर्णांक buf_size)
-अणु
-	पूर्णांक idx;
+static int  nicvf_init_rbdr(struct nicvf *nic, struct rbdr *rbdr,
+			    int ring_len, int buf_size)
+{
+	int idx;
 	u64 rbuf;
-	काष्ठा rbdr_entry_t *desc;
-	पूर्णांक err;
+	struct rbdr_entry_t *desc;
+	int err;
 
 	err = nicvf_alloc_q_desc_mem(nic, &rbdr->dmem, ring_len,
-				     माप(काष्ठा rbdr_entry_t),
+				     sizeof(struct rbdr_entry_t),
 				     NICVF_RCV_BUF_ALIGN_BYTES);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	rbdr->desc = rbdr->dmem.base;
 	/* Buffer size has to be in multiples of 128 bytes */
@@ -275,462 +274,462 @@ ret:
 	/* Initialize page recycling stuff.
 	 *
 	 * Can't use single buffer per page especially with 64K pages.
-	 * On embedded platक्रमms i.e 81xx/83xx available memory itself
+	 * On embedded platforms i.e 81xx/83xx available memory itself
 	 * is low and minimum ring size of RBDR is 8K, that takes away
 	 * lots of memory.
 	 *
-	 * But क्रम XDP it has to be a single buffer per page.
+	 * But for XDP it has to be a single buffer per page.
 	 */
-	अगर (!nic->pnicvf->xdp_prog) अणु
+	if (!nic->pnicvf->xdp_prog) {
 		rbdr->pgcnt = ring_len / (PAGE_SIZE / buf_size);
 		rbdr->is_xdp = false;
-	पूर्ण अन्यथा अणु
+	} else {
 		rbdr->pgcnt = ring_len;
 		rbdr->is_xdp = true;
-	पूर्ण
-	rbdr->pgcnt = roundup_घात_of_two(rbdr->pgcnt);
-	rbdr->pgcache = kसुस्मृति(rbdr->pgcnt, माप(*rbdr->pgcache),
+	}
+	rbdr->pgcnt = roundup_pow_of_two(rbdr->pgcnt);
+	rbdr->pgcache = kcalloc(rbdr->pgcnt, sizeof(*rbdr->pgcache),
 				GFP_KERNEL);
-	अगर (!rbdr->pgcache)
-		वापस -ENOMEM;
+	if (!rbdr->pgcache)
+		return -ENOMEM;
 	rbdr->pgidx = 0;
 	rbdr->pgalloc = 0;
 
-	nic->rb_page = शून्य;
-	क्रम (idx = 0; idx < ring_len; idx++) अणु
+	nic->rb_page = NULL;
+	for (idx = 0; idx < ring_len; idx++) {
 		err = nicvf_alloc_rcv_buffer(nic, rbdr, GFP_KERNEL,
 					     RCV_FRAG_LEN, &rbuf);
-		अगर (err) अणु
-			/* To मुक्त alपढ़ोy allocated and mapped ones */
+		if (err) {
+			/* To free already allocated and mapped ones */
 			rbdr->tail = idx - 1;
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		desc = GET_RBDR_DESC(rbdr, idx);
 		desc->buf_addr = rbuf & ~(NICVF_RCV_BUF_ALIGN_BYTES - 1);
-	पूर्ण
+	}
 
 	nicvf_get_page(nic);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Free RBDR ring and its receive buffers */
-अटल व्योम nicvf_मुक्त_rbdr(काष्ठा nicvf *nic, काष्ठा rbdr *rbdr)
-अणु
-	पूर्णांक head, tail;
+static void nicvf_free_rbdr(struct nicvf *nic, struct rbdr *rbdr)
+{
+	int head, tail;
 	u64 buf_addr, phys_addr;
-	काष्ठा pgcache *pgcache;
-	काष्ठा rbdr_entry_t *desc;
+	struct pgcache *pgcache;
+	struct rbdr_entry_t *desc;
 
-	अगर (!rbdr)
-		वापस;
+	if (!rbdr)
+		return;
 
 	rbdr->enable = false;
-	अगर (!rbdr->dmem.base)
-		वापस;
+	if (!rbdr->dmem.base)
+		return;
 
 	head = rbdr->head;
 	tail = rbdr->tail;
 
 	/* Release page references */
-	जबतक (head != tail) अणु
+	while (head != tail) {
 		desc = GET_RBDR_DESC(rbdr, head);
 		buf_addr = desc->buf_addr;
 		phys_addr = nicvf_iova_to_phys(nic, buf_addr);
 		dma_unmap_page_attrs(&nic->pdev->dev, buf_addr, RCV_FRAG_LEN,
 				     DMA_FROM_DEVICE, DMA_ATTR_SKIP_CPU_SYNC);
-		अगर (phys_addr)
+		if (phys_addr)
 			put_page(virt_to_page(phys_to_virt(phys_addr)));
 		head++;
 		head &= (rbdr->dmem.q_len - 1);
-	पूर्ण
+	}
 	/* Release buffer of tail desc */
 	desc = GET_RBDR_DESC(rbdr, tail);
 	buf_addr = desc->buf_addr;
 	phys_addr = nicvf_iova_to_phys(nic, buf_addr);
 	dma_unmap_page_attrs(&nic->pdev->dev, buf_addr, RCV_FRAG_LEN,
 			     DMA_FROM_DEVICE, DMA_ATTR_SKIP_CPU_SYNC);
-	अगर (phys_addr)
+	if (phys_addr)
 		put_page(virt_to_page(phys_to_virt(phys_addr)));
 
 	/* Sync page cache info */
 	smp_rmb();
 
-	/* Release additional page references held क्रम recycling */
+	/* Release additional page references held for recycling */
 	head = 0;
-	जबतक (head < rbdr->pgcnt) अणु
+	while (head < rbdr->pgcnt) {
 		pgcache = &rbdr->pgcache[head];
-		अगर (pgcache->page && page_ref_count(pgcache->page) != 0) अणु
-			अगर (rbdr->is_xdp) अणु
+		if (pgcache->page && page_ref_count(pgcache->page) != 0) {
+			if (rbdr->is_xdp) {
 				page_ref_sub(pgcache->page,
 					     pgcache->ref_count - 1);
-			पूर्ण
+			}
 			put_page(pgcache->page);
-		पूर्ण
+		}
 		head++;
-	पूर्ण
+	}
 
 	/* Free RBDR ring */
-	nicvf_मुक्त_q_desc_mem(nic, &rbdr->dmem);
-पूर्ण
+	nicvf_free_q_desc_mem(nic, &rbdr->dmem);
+}
 
 /* Refill receive buffer descriptors with new buffers.
  */
-अटल व्योम nicvf_refill_rbdr(काष्ठा nicvf *nic, gfp_t gfp)
-अणु
-	काष्ठा queue_set *qs = nic->qs;
-	पूर्णांक rbdr_idx = qs->rbdr_cnt;
-	पूर्णांक tail, qcount;
-	पूर्णांक refill_rb_cnt;
-	काष्ठा rbdr *rbdr;
-	काष्ठा rbdr_entry_t *desc;
+static void nicvf_refill_rbdr(struct nicvf *nic, gfp_t gfp)
+{
+	struct queue_set *qs = nic->qs;
+	int rbdr_idx = qs->rbdr_cnt;
+	int tail, qcount;
+	int refill_rb_cnt;
+	struct rbdr *rbdr;
+	struct rbdr_entry_t *desc;
 	u64 rbuf;
-	पूर्णांक new_rb = 0;
+	int new_rb = 0;
 
 refill:
-	अगर (!rbdr_idx)
-		वापस;
+	if (!rbdr_idx)
+		return;
 	rbdr_idx--;
 	rbdr = &qs->rbdr[rbdr_idx];
-	/* Check अगर it's enabled */
-	अगर (!rbdr->enable)
-		जाओ next_rbdr;
+	/* Check if it's enabled */
+	if (!rbdr->enable)
+		goto next_rbdr;
 
 	/* Get no of desc's to be refilled */
-	qcount = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_STATUS0, rbdr_idx);
+	qcount = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_STATUS0, rbdr_idx);
 	qcount &= 0x7FFFF;
 	/* Doorbell can be ringed with a max of ring size minus 1 */
-	अगर (qcount >= (qs->rbdr_len - 1))
-		जाओ next_rbdr;
-	अन्यथा
+	if (qcount >= (qs->rbdr_len - 1))
+		goto next_rbdr;
+	else
 		refill_rb_cnt = qs->rbdr_len - qcount - 1;
 
 	/* Sync page cache info */
 	smp_rmb();
 
 	/* Start filling descs from tail */
-	tail = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_TAIL, rbdr_idx) >> 3;
-	जबतक (refill_rb_cnt) अणु
+	tail = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_TAIL, rbdr_idx) >> 3;
+	while (refill_rb_cnt) {
 		tail++;
 		tail &= (rbdr->dmem.q_len - 1);
 
-		अगर (nicvf_alloc_rcv_buffer(nic, rbdr, gfp, RCV_FRAG_LEN, &rbuf))
-			अवरोध;
+		if (nicvf_alloc_rcv_buffer(nic, rbdr, gfp, RCV_FRAG_LEN, &rbuf))
+			break;
 
 		desc = GET_RBDR_DESC(rbdr, tail);
 		desc->buf_addr = rbuf & ~(NICVF_RCV_BUF_ALIGN_BYTES - 1);
 		refill_rb_cnt--;
 		new_rb++;
-	पूर्ण
+	}
 
 	nicvf_get_page(nic);
 
-	/* make sure all memory stores are करोne beक्रमe ringing करोorbell */
+	/* make sure all memory stores are done before ringing doorbell */
 	smp_wmb();
 
-	/* Check अगर buffer allocation failed */
-	अगर (refill_rb_cnt)
+	/* Check if buffer allocation failed */
+	if (refill_rb_cnt)
 		nic->rb_alloc_fail = true;
-	अन्यथा
+	else
 		nic->rb_alloc_fail = false;
 
-	/* Notअगरy HW */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_DOOR,
+	/* Notify HW */
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_DOOR,
 			      rbdr_idx, new_rb);
 next_rbdr:
-	/* Re-enable RBDR पूर्णांकerrupts only अगर buffer allocation is success */
-	अगर (!nic->rb_alloc_fail && rbdr->enable &&
-	    netअगर_running(nic->pnicvf->netdev))
-		nicvf_enable_पूर्णांकr(nic, NICVF_INTR_RBDR, rbdr_idx);
+	/* Re-enable RBDR interrupts only if buffer allocation is success */
+	if (!nic->rb_alloc_fail && rbdr->enable &&
+	    netif_running(nic->pnicvf->netdev))
+		nicvf_enable_intr(nic, NICVF_INTR_RBDR, rbdr_idx);
 
-	अगर (rbdr_idx)
-		जाओ refill;
-पूर्ण
+	if (rbdr_idx)
+		goto refill;
+}
 
-/* Alloc rcv buffers in non-atomic mode क्रम better success */
-व्योम nicvf_rbdr_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nicvf *nic = container_of(work, काष्ठा nicvf, rbdr_work.work);
+/* Alloc rcv buffers in non-atomic mode for better success */
+void nicvf_rbdr_work(struct work_struct *work)
+{
+	struct nicvf *nic = container_of(work, struct nicvf, rbdr_work.work);
 
 	nicvf_refill_rbdr(nic, GFP_KERNEL);
-	अगर (nic->rb_alloc_fail)
-		schedule_delayed_work(&nic->rbdr_work, msecs_to_jअगरfies(10));
-	अन्यथा
+	if (nic->rb_alloc_fail)
+		schedule_delayed_work(&nic->rbdr_work, msecs_to_jiffies(10));
+	else
 		nic->rb_work_scheduled = false;
-पूर्ण
+}
 
 /* In Softirq context, alloc rcv buffers in atomic mode */
-व्योम nicvf_rbdr_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा nicvf *nic = from_tasklet(nic, t, rbdr_task);
+void nicvf_rbdr_task(struct tasklet_struct *t)
+{
+	struct nicvf *nic = from_tasklet(nic, t, rbdr_task);
 
 	nicvf_refill_rbdr(nic, GFP_ATOMIC);
-	अगर (nic->rb_alloc_fail) अणु
+	if (nic->rb_alloc_fail) {
 		nic->rb_work_scheduled = true;
-		schedule_delayed_work(&nic->rbdr_work, msecs_to_jअगरfies(10));
-	पूर्ण
-पूर्ण
+		schedule_delayed_work(&nic->rbdr_work, msecs_to_jiffies(10));
+	}
+}
 
 /* Initialize completion queue */
-अटल पूर्णांक nicvf_init_cmp_queue(काष्ठा nicvf *nic,
-				काष्ठा cmp_queue *cq, पूर्णांक q_len)
-अणु
-	पूर्णांक err;
+static int nicvf_init_cmp_queue(struct nicvf *nic,
+				struct cmp_queue *cq, int q_len)
+{
+	int err;
 
 	err = nicvf_alloc_q_desc_mem(nic, &cq->dmem, q_len, CMP_QUEUE_DESC_SIZE,
 				     NICVF_CQ_BASE_ALIGN_BYTES);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	cq->desc = cq->dmem.base;
 	cq->thresh = pass1_silicon(nic->pdev) ? 0 : CMP_QUEUE_CQE_THRESH;
 	nic->cq_coalesce_usecs = (CMP_QUEUE_TIMER_THRESH * 0.05) - 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nicvf_मुक्त_cmp_queue(काष्ठा nicvf *nic, काष्ठा cmp_queue *cq)
-अणु
-	अगर (!cq)
-		वापस;
-	अगर (!cq->dmem.base)
-		वापस;
+static void nicvf_free_cmp_queue(struct nicvf *nic, struct cmp_queue *cq)
+{
+	if (!cq)
+		return;
+	if (!cq->dmem.base)
+		return;
 
-	nicvf_मुक्त_q_desc_mem(nic, &cq->dmem);
-पूर्ण
+	nicvf_free_q_desc_mem(nic, &cq->dmem);
+}
 
 /* Initialize transmit queue */
-अटल पूर्णांक nicvf_init_snd_queue(काष्ठा nicvf *nic,
-				काष्ठा snd_queue *sq, पूर्णांक q_len, पूर्णांक qidx)
-अणु
-	पूर्णांक err;
+static int nicvf_init_snd_queue(struct nicvf *nic,
+				struct snd_queue *sq, int q_len, int qidx)
+{
+	int err;
 
 	err = nicvf_alloc_q_desc_mem(nic, &sq->dmem, q_len, SND_QUEUE_DESC_SIZE,
 				     NICVF_SQ_BASE_ALIGN_BYTES);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	sq->desc = sq->dmem.base;
-	sq->skbuff = kसुस्मृति(q_len, माप(u64), GFP_KERNEL);
-	अगर (!sq->skbuff)
-		वापस -ENOMEM;
+	sq->skbuff = kcalloc(q_len, sizeof(u64), GFP_KERNEL);
+	if (!sq->skbuff)
+		return -ENOMEM;
 
 	sq->head = 0;
 	sq->tail = 0;
 	sq->thresh = SND_QUEUE_THRESH;
 
-	/* Check अगर this SQ is a XDP TX queue */
-	अगर (nic->sqs_mode)
+	/* Check if this SQ is a XDP TX queue */
+	if (nic->sqs_mode)
 		qidx += ((nic->sqs_id + 1) * MAX_SND_QUEUES_PER_QS);
-	अगर (qidx < nic->pnicvf->xdp_tx_queues) अणु
-		/* Alloc memory to save page poपूर्णांकers क्रम XDP_TX */
-		sq->xdp_page = kसुस्मृति(q_len, माप(u64), GFP_KERNEL);
-		अगर (!sq->xdp_page)
-			वापस -ENOMEM;
+	if (qidx < nic->pnicvf->xdp_tx_queues) {
+		/* Alloc memory to save page pointers for XDP_TX */
+		sq->xdp_page = kcalloc(q_len, sizeof(u64), GFP_KERNEL);
+		if (!sq->xdp_page)
+			return -ENOMEM;
 		sq->xdp_desc_cnt = 0;
-		sq->xdp_मुक्त_cnt = q_len - 1;
+		sq->xdp_free_cnt = q_len - 1;
 		sq->is_xdp = true;
-	पूर्ण अन्यथा अणु
-		sq->xdp_page = शून्य;
+	} else {
+		sq->xdp_page = NULL;
 		sq->xdp_desc_cnt = 0;
-		sq->xdp_मुक्त_cnt = 0;
+		sq->xdp_free_cnt = 0;
 		sq->is_xdp = false;
 
-		atomic_set(&sq->मुक्त_cnt, q_len - 1);
+		atomic_set(&sq->free_cnt, q_len - 1);
 
-		/* Pपुनः_स्मृतिate memory क्रम TSO segment's header */
+		/* Preallocate memory for TSO segment's header */
 		sq->tso_hdrs = dma_alloc_coherent(&nic->pdev->dev,
 						  q_len * TSO_HEADER_SIZE,
 						  &sq->tso_hdrs_phys,
 						  GFP_KERNEL);
-		अगर (!sq->tso_hdrs)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!sq->tso_hdrs)
+			return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम nicvf_unmap_sndq_buffers(काष्ठा nicvf *nic, काष्ठा snd_queue *sq,
-			      पूर्णांक hdr_sqe, u8 subdesc_cnt)
-अणु
+void nicvf_unmap_sndq_buffers(struct nicvf *nic, struct snd_queue *sq,
+			      int hdr_sqe, u8 subdesc_cnt)
+{
 	u8 idx;
-	काष्ठा sq_gather_subdesc *gather;
+	struct sq_gather_subdesc *gather;
 
 	/* Unmap DMA mapped skb data buffers */
-	क्रम (idx = 0; idx < subdesc_cnt; idx++) अणु
+	for (idx = 0; idx < subdesc_cnt; idx++) {
 		hdr_sqe++;
 		hdr_sqe &= (sq->dmem.q_len - 1);
-		gather = (काष्ठा sq_gather_subdesc *)GET_SQ_DESC(sq, hdr_sqe);
+		gather = (struct sq_gather_subdesc *)GET_SQ_DESC(sq, hdr_sqe);
 		/* HW will ensure data coherency, CPU sync not required */
 		dma_unmap_page_attrs(&nic->pdev->dev, gather->addr,
 				     gather->size, DMA_TO_DEVICE,
 				     DMA_ATTR_SKIP_CPU_SYNC);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nicvf_मुक्त_snd_queue(काष्ठा nicvf *nic, काष्ठा snd_queue *sq)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा page *page;
-	काष्ठा sq_hdr_subdesc *hdr;
-	काष्ठा sq_hdr_subdesc *tso_sqe;
+static void nicvf_free_snd_queue(struct nicvf *nic, struct snd_queue *sq)
+{
+	struct sk_buff *skb;
+	struct page *page;
+	struct sq_hdr_subdesc *hdr;
+	struct sq_hdr_subdesc *tso_sqe;
 
-	अगर (!sq)
-		वापस;
-	अगर (!sq->dmem.base)
-		वापस;
+	if (!sq)
+		return;
+	if (!sq->dmem.base)
+		return;
 
-	अगर (sq->tso_hdrs) अणु
-		dma_मुक्त_coherent(&nic->pdev->dev,
+	if (sq->tso_hdrs) {
+		dma_free_coherent(&nic->pdev->dev,
 				  sq->dmem.q_len * TSO_HEADER_SIZE,
 				  sq->tso_hdrs, sq->tso_hdrs_phys);
-		sq->tso_hdrs = शून्य;
-	पूर्ण
+		sq->tso_hdrs = NULL;
+	}
 
 	/* Free pending skbs in the queue */
 	smp_rmb();
-	जबतक (sq->head != sq->tail) अणु
-		skb = (काष्ठा sk_buff *)sq->skbuff[sq->head];
-		अगर (!skb || !sq->xdp_page)
-			जाओ next;
+	while (sq->head != sq->tail) {
+		skb = (struct sk_buff *)sq->skbuff[sq->head];
+		if (!skb || !sq->xdp_page)
+			goto next;
 
-		page = (काष्ठा page *)sq->xdp_page[sq->head];
-		अगर (!page)
-			जाओ next;
-		अन्यथा
+		page = (struct page *)sq->xdp_page[sq->head];
+		if (!page)
+			goto next;
+		else
 			put_page(page);
 
-		hdr = (काष्ठा sq_hdr_subdesc *)GET_SQ_DESC(sq, sq->head);
-		/* Check क्रम dummy descriptor used क्रम HW TSO offload on 88xx */
-		अगर (hdr->करोnt_send) अणु
+		hdr = (struct sq_hdr_subdesc *)GET_SQ_DESC(sq, sq->head);
+		/* Check for dummy descriptor used for HW TSO offload on 88xx */
+		if (hdr->dont_send) {
 			/* Get actual TSO descriptors and unmap them */
 			tso_sqe =
-			 (काष्ठा sq_hdr_subdesc *)GET_SQ_DESC(sq, hdr->rsvd2);
+			 (struct sq_hdr_subdesc *)GET_SQ_DESC(sq, hdr->rsvd2);
 			nicvf_unmap_sndq_buffers(nic, sq, hdr->rsvd2,
 						 tso_sqe->subdesc_cnt);
-		पूर्ण अन्यथा अणु
+		} else {
 			nicvf_unmap_sndq_buffers(nic, sq, sq->head,
 						 hdr->subdesc_cnt);
-		पूर्ण
-		अगर (skb)
-			dev_kमुक्त_skb_any(skb);
+		}
+		if (skb)
+			dev_kfree_skb_any(skb);
 next:
 		sq->head++;
 		sq->head &= (sq->dmem.q_len - 1);
-	पूर्ण
-	kमुक्त(sq->skbuff);
-	kमुक्त(sq->xdp_page);
-	nicvf_मुक्त_q_desc_mem(nic, &sq->dmem);
-पूर्ण
+	}
+	kfree(sq->skbuff);
+	kfree(sq->xdp_page);
+	nicvf_free_q_desc_mem(nic, &sq->dmem);
+}
 
-अटल व्योम nicvf_reclaim_snd_queue(काष्ठा nicvf *nic,
-				    काष्ठा queue_set *qs, पूर्णांक qidx)
-अणु
+static void nicvf_reclaim_snd_queue(struct nicvf *nic,
+				    struct queue_set *qs, int qidx)
+{
 	/* Disable send queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_CFG, qidx, 0);
-	/* Check अगर SQ is stopped */
-	अगर (nicvf_poll_reg(nic, qidx, NIC_QSET_SQ_0_7_STATUS, 21, 1, 0x01))
-		वापस;
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_CFG, qidx, 0);
+	/* Check if SQ is stopped */
+	if (nicvf_poll_reg(nic, qidx, NIC_QSET_SQ_0_7_STATUS, 21, 1, 0x01))
+		return;
 	/* Reset send queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_CFG, qidx, NICVF_SQ_RESET);
-पूर्ण
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_CFG, qidx, NICVF_SQ_RESET);
+}
 
-अटल व्योम nicvf_reclaim_rcv_queue(काष्ठा nicvf *nic,
-				    काष्ठा queue_set *qs, पूर्णांक qidx)
-अणु
-	जोड़ nic_mbx mbx = अणुपूर्ण;
+static void nicvf_reclaim_rcv_queue(struct nicvf *nic,
+				    struct queue_set *qs, int qidx)
+{
+	union nic_mbx mbx = {};
 
-	/* Make sure all packets in the pipeline are written back पूर्णांकo mem */
+	/* Make sure all packets in the pipeline are written back into mem */
 	mbx.msg.msg = NIC_MBOX_MSG_RQ_SW_SYNC;
 	nicvf_send_msg_to_pf(nic, &mbx);
-पूर्ण
+}
 
-अटल व्योम nicvf_reclaim_cmp_queue(काष्ठा nicvf *nic,
-				    काष्ठा queue_set *qs, पूर्णांक qidx)
-अणु
-	/* Disable समयr threshold (करोesn't get reset upon CQ reset */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_CFG2, qidx, 0);
+static void nicvf_reclaim_cmp_queue(struct nicvf *nic,
+				    struct queue_set *qs, int qidx)
+{
+	/* Disable timer threshold (doesn't get reset upon CQ reset */
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_CFG2, qidx, 0);
 	/* Disable completion queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_CFG, qidx, 0);
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_CFG, qidx, 0);
 	/* Reset completion queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_CFG, qidx, NICVF_CQ_RESET);
-पूर्ण
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_CFG, qidx, NICVF_CQ_RESET);
+}
 
-अटल व्योम nicvf_reclaim_rbdr(काष्ठा nicvf *nic,
-			       काष्ठा rbdr *rbdr, पूर्णांक qidx)
-अणु
-	u64 पंचांगp, fअगरo_state;
-	पूर्णांक समयout = 10;
+static void nicvf_reclaim_rbdr(struct nicvf *nic,
+			       struct rbdr *rbdr, int qidx)
+{
+	u64 tmp, fifo_state;
+	int timeout = 10;
 
-	/* Save head and tail poपूर्णांकers क्रम feeing up buffers */
-	rbdr->head = nicvf_queue_reg_पढ़ो(nic,
+	/* Save head and tail pointers for feeing up buffers */
+	rbdr->head = nicvf_queue_reg_read(nic,
 					  NIC_QSET_RBDR_0_1_HEAD,
 					  qidx) >> 3;
-	rbdr->tail = nicvf_queue_reg_पढ़ो(nic,
+	rbdr->tail = nicvf_queue_reg_read(nic,
 					  NIC_QSET_RBDR_0_1_TAIL,
 					  qidx) >> 3;
 
-	/* If RBDR FIFO is in 'FAIL' state then करो a reset first
-	 * beक्रमe relaiming.
+	/* If RBDR FIFO is in 'FAIL' state then do a reset first
+	 * before relaiming.
 	 */
-	fअगरo_state = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_STATUS0, qidx);
-	अगर (((fअगरo_state >> 62) & 0x03) == 0x3)
-		nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_CFG,
+	fifo_state = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_STATUS0, qidx);
+	if (((fifo_state >> 62) & 0x03) == 0x3)
+		nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_CFG,
 				      qidx, NICVF_RBDR_RESET);
 
 	/* Disable RBDR */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_CFG, qidx, 0);
-	अगर (nicvf_poll_reg(nic, qidx, NIC_QSET_RBDR_0_1_STATUS0, 62, 2, 0x00))
-		वापस;
-	जबतक (1) अणु
-		पंचांगp = nicvf_queue_reg_पढ़ो(nic,
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_CFG, qidx, 0);
+	if (nicvf_poll_reg(nic, qidx, NIC_QSET_RBDR_0_1_STATUS0, 62, 2, 0x00))
+		return;
+	while (1) {
+		tmp = nicvf_queue_reg_read(nic,
 					   NIC_QSET_RBDR_0_1_PREFETCH_STATUS,
 					   qidx);
-		अगर ((पंचांगp & 0xFFFFFFFF) == ((पंचांगp >> 32) & 0xFFFFFFFF))
-			अवरोध;
+		if ((tmp & 0xFFFFFFFF) == ((tmp >> 32) & 0xFFFFFFFF))
+			break;
 		usleep_range(1000, 2000);
-		समयout--;
-		अगर (!समयout) अणु
+		timeout--;
+		if (!timeout) {
 			netdev_err(nic->netdev,
 				   "Failed polling on prefetch status\n");
-			वापस;
-		पूर्ण
-	पूर्ण
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_CFG,
+			return;
+		}
+	}
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_CFG,
 			      qidx, NICVF_RBDR_RESET);
 
-	अगर (nicvf_poll_reg(nic, qidx, NIC_QSET_RBDR_0_1_STATUS0, 62, 2, 0x02))
-		वापस;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_CFG, qidx, 0x00);
-	अगर (nicvf_poll_reg(nic, qidx, NIC_QSET_RBDR_0_1_STATUS0, 62, 2, 0x00))
-		वापस;
-पूर्ण
+	if (nicvf_poll_reg(nic, qidx, NIC_QSET_RBDR_0_1_STATUS0, 62, 2, 0x02))
+		return;
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_CFG, qidx, 0x00);
+	if (nicvf_poll_reg(nic, qidx, NIC_QSET_RBDR_0_1_STATUS0, 62, 2, 0x00))
+		return;
+}
 
-व्योम nicvf_config_vlan_stripping(काष्ठा nicvf *nic, netdev_features_t features)
-अणु
+void nicvf_config_vlan_stripping(struct nicvf *nic, netdev_features_t features)
+{
 	u64 rq_cfg;
-	पूर्णांक sqs;
+	int sqs;
 
-	rq_cfg = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RQ_GEN_CFG, 0);
+	rq_cfg = nicvf_queue_reg_read(nic, NIC_QSET_RQ_GEN_CFG, 0);
 
 	/* Enable first VLAN stripping */
-	अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
+	if (features & NETIF_F_HW_VLAN_CTAG_RX)
 		rq_cfg |= (1ULL << 25);
-	अन्यथा
+	else
 		rq_cfg &= ~(1ULL << 25);
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RQ_GEN_CFG, 0, rq_cfg);
+	nicvf_queue_reg_write(nic, NIC_QSET_RQ_GEN_CFG, 0, rq_cfg);
 
-	/* Configure Secondary Qsets, अगर any */
-	क्रम (sqs = 0; sqs < nic->sqs_count; sqs++)
-		अगर (nic->snicvf[sqs])
-			nicvf_queue_reg_ग_लिखो(nic->snicvf[sqs],
+	/* Configure Secondary Qsets, if any */
+	for (sqs = 0; sqs < nic->sqs_count; sqs++)
+		if (nic->snicvf[sqs])
+			nicvf_queue_reg_write(nic->snicvf[sqs],
 					      NIC_QSET_RQ_GEN_CFG, 0, rq_cfg);
-पूर्ण
+}
 
-अटल व्योम nicvf_reset_rcv_queue_stats(काष्ठा nicvf *nic)
-अणु
-	जोड़ nic_mbx mbx = अणुपूर्ण;
+static void nicvf_reset_rcv_queue_stats(struct nicvf *nic)
+{
+	union nic_mbx mbx = {};
 
 	/* Reset all RQ/SQ and VF stats */
 	mbx.reset_stat.msg = NIC_MBOX_MSG_RESET_STAT_COUNTER;
@@ -739,27 +738,27 @@ next:
 	mbx.reset_stat.rq_stat_mask = 0xFFFF;
 	mbx.reset_stat.sq_stat_mask = 0xFFFF;
 	nicvf_send_msg_to_pf(nic, &mbx);
-पूर्ण
+}
 
 /* Configures receive queue */
-अटल व्योम nicvf_rcv_queue_config(काष्ठा nicvf *nic, काष्ठा queue_set *qs,
-				   पूर्णांक qidx, bool enable)
-अणु
-	जोड़ nic_mbx mbx = अणुपूर्ण;
-	काष्ठा rcv_queue *rq;
-	काष्ठा rq_cfg rq_cfg;
+static void nicvf_rcv_queue_config(struct nicvf *nic, struct queue_set *qs,
+				   int qidx, bool enable)
+{
+	union nic_mbx mbx = {};
+	struct rcv_queue *rq;
+	struct rq_cfg rq_cfg;
 
 	rq = &qs->rq[qidx];
 	rq->enable = enable;
 
 	/* Disable receive queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RQ_0_7_CFG, qidx, 0);
+	nicvf_queue_reg_write(nic, NIC_QSET_RQ_0_7_CFG, qidx, 0);
 
-	अगर (!rq->enable) अणु
+	if (!rq->enable) {
 		nicvf_reclaim_rcv_queue(nic, qs, qidx);
 		xdp_rxq_info_unreg(&rq->xdp_rxq);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	rq->cq_qs = qs->vnic_id;
 	rq->cq_idx = qidx;
@@ -767,10 +766,10 @@ next:
 	rq->start_qs_rbdr_idx = qs->rbdr_cnt - 1;
 	rq->cont_rbdr_qs = qs->vnic_id;
 	rq->cont_qs_rbdr_idx = qs->rbdr_cnt - 1;
-	/* all ग_लिखोs of RBDR data to be loaded पूर्णांकo L2 Cache as well*/
+	/* all writes of RBDR data to be loaded into L2 Cache as well*/
 	rq->caching = 1;
 
-	/* Driver have no proper error path क्रम failed XDP RX-queue info reg */
+	/* Driver have no proper error path for failed XDP RX-queue info reg */
 	WARN_ON(xdp_rxq_info_reg(&rq->xdp_rxq, nic->netdev, qidx, 0) < 0);
 
 	/* Send a mailbox msg to PF to config RQ */
@@ -790,7 +789,7 @@ next:
 	nicvf_send_msg_to_pf(nic, &mbx);
 
 	/* RQ drop config
-	 * Enable CQ drop to reserve sufficient CQEs क्रम all tx packets
+	 * Enable CQ drop to reserve sufficient CQEs for all tx packets
 	 */
 	mbx.rq.msg = NIC_MBOX_MSG_RQ_DROP_CFG;
 	mbx.rq.cfg = BIT_ULL(63) | BIT_ULL(62) |
@@ -798,81 +797,81 @@ next:
 		     (RQ_PASS_CQ_LVL << 16) | (RQ_DROP_CQ_LVL << 8);
 	nicvf_send_msg_to_pf(nic, &mbx);
 
-	अगर (!nic->sqs_mode && (qidx == 0)) अणु
+	if (!nic->sqs_mode && (qidx == 0)) {
 		/* Enable checking L3/L4 length and TCP/UDP checksums
 		 * Also allow IPv6 pkts with zero UDP checksum.
 		 */
-		nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RQ_GEN_CFG, 0,
+		nicvf_queue_reg_write(nic, NIC_QSET_RQ_GEN_CFG, 0,
 				      (BIT(24) | BIT(23) | BIT(21) | BIT(20)));
 		nicvf_config_vlan_stripping(nic, nic->netdev->features);
-	पूर्ण
+	}
 
 	/* Enable Receive queue */
-	स_रखो(&rq_cfg, 0, माप(काष्ठा rq_cfg));
+	memset(&rq_cfg, 0, sizeof(struct rq_cfg));
 	rq_cfg.ena = 1;
 	rq_cfg.tcp_ena = 0;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RQ_0_7_CFG, qidx, *(u64 *)&rq_cfg);
-पूर्ण
+	nicvf_queue_reg_write(nic, NIC_QSET_RQ_0_7_CFG, qidx, *(u64 *)&rq_cfg);
+}
 
 /* Configures completion queue */
-व्योम nicvf_cmp_queue_config(काष्ठा nicvf *nic, काष्ठा queue_set *qs,
-			    पूर्णांक qidx, bool enable)
-अणु
-	काष्ठा cmp_queue *cq;
-	काष्ठा cq_cfg cq_cfg;
+void nicvf_cmp_queue_config(struct nicvf *nic, struct queue_set *qs,
+			    int qidx, bool enable)
+{
+	struct cmp_queue *cq;
+	struct cq_cfg cq_cfg;
 
 	cq = &qs->cq[qidx];
 	cq->enable = enable;
 
-	अगर (!cq->enable) अणु
+	if (!cq->enable) {
 		nicvf_reclaim_cmp_queue(nic, qs, qidx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Reset completion queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_CFG, qidx, NICVF_CQ_RESET);
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_CFG, qidx, NICVF_CQ_RESET);
 
-	अगर (!cq->enable)
-		वापस;
+	if (!cq->enable)
+		return;
 
 	spin_lock_init(&cq->lock);
 	/* Set completion queue base address */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_BASE,
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_BASE,
 			      qidx, (u64)(cq->dmem.phys_base));
 
 	/* Enable Completion queue */
-	स_रखो(&cq_cfg, 0, माप(काष्ठा cq_cfg));
+	memset(&cq_cfg, 0, sizeof(struct cq_cfg));
 	cq_cfg.ena = 1;
 	cq_cfg.reset = 0;
 	cq_cfg.caching = 0;
 	cq_cfg.qsize = ilog2(qs->cq_len >> 10);
 	cq_cfg.avg_con = 0;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_CFG, qidx, *(u64 *)&cq_cfg);
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_CFG, qidx, *(u64 *)&cq_cfg);
 
-	/* Set threshold value क्रम पूर्णांकerrupt generation */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_THRESH, qidx, cq->thresh);
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_CQ_0_7_CFG2,
+	/* Set threshold value for interrupt generation */
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_THRESH, qidx, cq->thresh);
+	nicvf_queue_reg_write(nic, NIC_QSET_CQ_0_7_CFG2,
 			      qidx, CMP_QUEUE_TIMER_THRESH);
-पूर्ण
+}
 
 /* Configures transmit queue */
-अटल व्योम nicvf_snd_queue_config(काष्ठा nicvf *nic, काष्ठा queue_set *qs,
-				   पूर्णांक qidx, bool enable)
-अणु
-	जोड़ nic_mbx mbx = अणुपूर्ण;
-	काष्ठा snd_queue *sq;
-	काष्ठा sq_cfg sq_cfg;
+static void nicvf_snd_queue_config(struct nicvf *nic, struct queue_set *qs,
+				   int qidx, bool enable)
+{
+	union nic_mbx mbx = {};
+	struct snd_queue *sq;
+	struct sq_cfg sq_cfg;
 
 	sq = &qs->sq[qidx];
 	sq->enable = enable;
 
-	अगर (!sq->enable) अणु
+	if (!sq->enable) {
 		nicvf_reclaim_snd_queue(nic, qs, qidx);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Reset send queue */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_CFG, qidx, NICVF_SQ_RESET);
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_CFG, qidx, NICVF_SQ_RESET);
 
 	sq->cq_qs = qs->vnic_id;
 	sq->cq_idx = qidx;
@@ -886,82 +885,82 @@ next:
 	nicvf_send_msg_to_pf(nic, &mbx);
 
 	/* Set queue base address */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_BASE,
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_BASE,
 			      qidx, (u64)(sq->dmem.phys_base));
 
 	/* Enable send queue  & set queue size */
-	स_रखो(&sq_cfg, 0, माप(काष्ठा sq_cfg));
+	memset(&sq_cfg, 0, sizeof(struct sq_cfg));
 	sq_cfg.ena = 1;
 	sq_cfg.reset = 0;
 	sq_cfg.ldwb = 0;
 	sq_cfg.qsize = ilog2(qs->sq_len >> 10);
-	sq_cfg.tsपंचांगp_bgx_पूर्णांकf = 0;
-	/* CQ's level at which HW will stop processing SQEs to aव्योम
+	sq_cfg.tstmp_bgx_intf = 0;
+	/* CQ's level at which HW will stop processing SQEs to avoid
 	 * transmitting a pkt with no space in CQ to post CQE_TX.
 	 */
 	sq_cfg.cq_limit = (CMP_QUEUE_PIPELINE_RSVD * 256) / qs->cq_len;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_CFG, qidx, *(u64 *)&sq_cfg);
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_CFG, qidx, *(u64 *)&sq_cfg);
 
-	/* Set threshold value क्रम पूर्णांकerrupt generation */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_THRESH, qidx, sq->thresh);
+	/* Set threshold value for interrupt generation */
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_THRESH, qidx, sq->thresh);
 
-	/* Set queue:cpu affinity क्रम better load distribution */
-	अगर (cpu_online(qidx)) अणु
+	/* Set queue:cpu affinity for better load distribution */
+	if (cpu_online(qidx)) {
 		cpumask_set_cpu(qidx, &sq->affinity_mask);
-		netअगर_set_xps_queue(nic->netdev,
+		netif_set_xps_queue(nic->netdev,
 				    &sq->affinity_mask, qidx);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Configures receive buffer descriptor ring */
-अटल व्योम nicvf_rbdr_config(काष्ठा nicvf *nic, काष्ठा queue_set *qs,
-			      पूर्णांक qidx, bool enable)
-अणु
-	काष्ठा rbdr *rbdr;
-	काष्ठा rbdr_cfg rbdr_cfg;
+static void nicvf_rbdr_config(struct nicvf *nic, struct queue_set *qs,
+			      int qidx, bool enable)
+{
+	struct rbdr *rbdr;
+	struct rbdr_cfg rbdr_cfg;
 
 	rbdr = &qs->rbdr[qidx];
 	nicvf_reclaim_rbdr(nic, rbdr, qidx);
-	अगर (!enable)
-		वापस;
+	if (!enable)
+		return;
 
 	/* Set descriptor base address */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_BASE,
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_BASE,
 			      qidx, (u64)(rbdr->dmem.phys_base));
 
 	/* Enable RBDR  & set queue size */
 	/* Buffer size should be in multiples of 128 bytes */
-	स_रखो(&rbdr_cfg, 0, माप(काष्ठा rbdr_cfg));
+	memset(&rbdr_cfg, 0, sizeof(struct rbdr_cfg));
 	rbdr_cfg.ena = 1;
 	rbdr_cfg.reset = 0;
 	rbdr_cfg.ldwb = 0;
 	rbdr_cfg.qsize = RBDR_SIZE;
 	rbdr_cfg.avg_con = 0;
 	rbdr_cfg.lines = rbdr->dma_size / 128;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_CFG,
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_CFG,
 			      qidx, *(u64 *)&rbdr_cfg);
 
-	/* Notअगरy HW */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_DOOR,
+	/* Notify HW */
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_DOOR,
 			      qidx, qs->rbdr_len - 1);
 
-	/* Set threshold value क्रम पूर्णांकerrupt generation */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_RBDR_0_1_THRESH,
+	/* Set threshold value for interrupt generation */
+	nicvf_queue_reg_write(nic, NIC_QSET_RBDR_0_1_THRESH,
 			      qidx, rbdr->thresh - 1);
-पूर्ण
+}
 
 /* Requests PF to assign and enable Qset */
-व्योम nicvf_qset_config(काष्ठा nicvf *nic, bool enable)
-अणु
-	जोड़ nic_mbx mbx = अणुपूर्ण;
-	काष्ठा queue_set *qs = nic->qs;
-	काष्ठा qs_cfg *qs_cfg;
+void nicvf_qset_config(struct nicvf *nic, bool enable)
+{
+	union nic_mbx mbx = {};
+	struct queue_set *qs = nic->qs;
+	struct qs_cfg *qs_cfg;
 
-	अगर (!qs) अणु
+	if (!qs) {
 		netdev_warn(nic->netdev,
 			    "Qset is still not allocated, don't init queues\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	qs->enable = enable;
 	qs->vnic_id = nic->vf_id;
@@ -972,75 +971,75 @@ next:
 	mbx.qs.sqs_count = nic->sqs_count;
 
 	mbx.qs.cfg = 0;
-	qs_cfg = (काष्ठा qs_cfg *)&mbx.qs.cfg;
-	अगर (qs->enable) अणु
+	qs_cfg = (struct qs_cfg *)&mbx.qs.cfg;
+	if (qs->enable) {
 		qs_cfg->ena = 1;
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 		qs_cfg->be = 1;
-#पूर्ण_अगर
+#endif
 		qs_cfg->vnic = qs->vnic_id;
-		/* Enable Tx बारtamping capability */
-		अगर (nic->ptp_घड़ी)
-			qs_cfg->send_tsपंचांगp_ena = 1;
-	पूर्ण
+		/* Enable Tx timestamping capability */
+		if (nic->ptp_clock)
+			qs_cfg->send_tstmp_ena = 1;
+	}
 	nicvf_send_msg_to_pf(nic, &mbx);
-पूर्ण
+}
 
-अटल व्योम nicvf_मुक्त_resources(काष्ठा nicvf *nic)
-अणु
-	पूर्णांक qidx;
-	काष्ठा queue_set *qs = nic->qs;
+static void nicvf_free_resources(struct nicvf *nic)
+{
+	int qidx;
+	struct queue_set *qs = nic->qs;
 
 	/* Free receive buffer descriptor ring */
-	क्रम (qidx = 0; qidx < qs->rbdr_cnt; qidx++)
-		nicvf_मुक्त_rbdr(nic, &qs->rbdr[qidx]);
+	for (qidx = 0; qidx < qs->rbdr_cnt; qidx++)
+		nicvf_free_rbdr(nic, &qs->rbdr[qidx]);
 
 	/* Free completion queue */
-	क्रम (qidx = 0; qidx < qs->cq_cnt; qidx++)
-		nicvf_मुक्त_cmp_queue(nic, &qs->cq[qidx]);
+	for (qidx = 0; qidx < qs->cq_cnt; qidx++)
+		nicvf_free_cmp_queue(nic, &qs->cq[qidx]);
 
 	/* Free send queue */
-	क्रम (qidx = 0; qidx < qs->sq_cnt; qidx++)
-		nicvf_मुक्त_snd_queue(nic, &qs->sq[qidx]);
-पूर्ण
+	for (qidx = 0; qidx < qs->sq_cnt; qidx++)
+		nicvf_free_snd_queue(nic, &qs->sq[qidx]);
+}
 
-अटल पूर्णांक nicvf_alloc_resources(काष्ठा nicvf *nic)
-अणु
-	पूर्णांक qidx;
-	काष्ठा queue_set *qs = nic->qs;
+static int nicvf_alloc_resources(struct nicvf *nic)
+{
+	int qidx;
+	struct queue_set *qs = nic->qs;
 
 	/* Alloc receive buffer descriptor ring */
-	क्रम (qidx = 0; qidx < qs->rbdr_cnt; qidx++) अणु
-		अगर (nicvf_init_rbdr(nic, &qs->rbdr[qidx], qs->rbdr_len,
+	for (qidx = 0; qidx < qs->rbdr_cnt; qidx++) {
+		if (nicvf_init_rbdr(nic, &qs->rbdr[qidx], qs->rbdr_len,
 				    DMA_BUFFER_LEN))
-			जाओ alloc_fail;
-	पूर्ण
+			goto alloc_fail;
+	}
 
 	/* Alloc send queue */
-	क्रम (qidx = 0; qidx < qs->sq_cnt; qidx++) अणु
-		अगर (nicvf_init_snd_queue(nic, &qs->sq[qidx], qs->sq_len, qidx))
-			जाओ alloc_fail;
-	पूर्ण
+	for (qidx = 0; qidx < qs->sq_cnt; qidx++) {
+		if (nicvf_init_snd_queue(nic, &qs->sq[qidx], qs->sq_len, qidx))
+			goto alloc_fail;
+	}
 
 	/* Alloc completion queue */
-	क्रम (qidx = 0; qidx < qs->cq_cnt; qidx++) अणु
-		अगर (nicvf_init_cmp_queue(nic, &qs->cq[qidx], qs->cq_len))
-			जाओ alloc_fail;
-	पूर्ण
+	for (qidx = 0; qidx < qs->cq_cnt; qidx++) {
+		if (nicvf_init_cmp_queue(nic, &qs->cq[qidx], qs->cq_len))
+			goto alloc_fail;
+	}
 
-	वापस 0;
+	return 0;
 alloc_fail:
-	nicvf_मुक्त_resources(nic);
-	वापस -ENOMEM;
-पूर्ण
+	nicvf_free_resources(nic);
+	return -ENOMEM;
+}
 
-पूर्णांक nicvf_set_qset_resources(काष्ठा nicvf *nic)
-अणु
-	काष्ठा queue_set *qs;
+int nicvf_set_qset_resources(struct nicvf *nic)
+{
+	struct queue_set *qs;
 
-	qs = devm_kzalloc(&nic->pdev->dev, माप(*qs), GFP_KERNEL);
-	अगर (!qs)
-		वापस -ENOMEM;
+	qs = devm_kzalloc(&nic->pdev->dev, sizeof(*qs), GFP_KERNEL);
+	if (!qs)
+		return -ENOMEM;
 	nic->qs = qs;
 
 	/* Set count of each queue */
@@ -1058,189 +1057,189 @@ alloc_fail:
 	nic->tx_queues = qs->sq_cnt;
 	nic->xdp_tx_queues = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक nicvf_config_data_transfer(काष्ठा nicvf *nic, bool enable)
-अणु
+int nicvf_config_data_transfer(struct nicvf *nic, bool enable)
+{
 	bool disable = false;
-	काष्ठा queue_set *qs = nic->qs;
-	काष्ठा queue_set *pqs = nic->pnicvf->qs;
-	पूर्णांक qidx;
+	struct queue_set *qs = nic->qs;
+	struct queue_set *pqs = nic->pnicvf->qs;
+	int qidx;
 
-	अगर (!qs)
-		वापस 0;
+	if (!qs)
+		return 0;
 
 	/* Take primary VF's queue lengths.
 	 * This is needed to take queue lengths set from ethtool
-	 * पूर्णांकo consideration.
+	 * into consideration.
 	 */
-	अगर (nic->sqs_mode && pqs) अणु
+	if (nic->sqs_mode && pqs) {
 		qs->cq_len = pqs->cq_len;
 		qs->sq_len = pqs->sq_len;
-	पूर्ण
+	}
 
-	अगर (enable) अणु
-		अगर (nicvf_alloc_resources(nic))
-			वापस -ENOMEM;
+	if (enable) {
+		if (nicvf_alloc_resources(nic))
+			return -ENOMEM;
 
-		क्रम (qidx = 0; qidx < qs->sq_cnt; qidx++)
+		for (qidx = 0; qidx < qs->sq_cnt; qidx++)
 			nicvf_snd_queue_config(nic, qs, qidx, enable);
-		क्रम (qidx = 0; qidx < qs->cq_cnt; qidx++)
+		for (qidx = 0; qidx < qs->cq_cnt; qidx++)
 			nicvf_cmp_queue_config(nic, qs, qidx, enable);
-		क्रम (qidx = 0; qidx < qs->rbdr_cnt; qidx++)
+		for (qidx = 0; qidx < qs->rbdr_cnt; qidx++)
 			nicvf_rbdr_config(nic, qs, qidx, enable);
-		क्रम (qidx = 0; qidx < qs->rq_cnt; qidx++)
+		for (qidx = 0; qidx < qs->rq_cnt; qidx++)
 			nicvf_rcv_queue_config(nic, qs, qidx, enable);
-	पूर्ण अन्यथा अणु
-		क्रम (qidx = 0; qidx < qs->rq_cnt; qidx++)
+	} else {
+		for (qidx = 0; qidx < qs->rq_cnt; qidx++)
 			nicvf_rcv_queue_config(nic, qs, qidx, disable);
-		क्रम (qidx = 0; qidx < qs->rbdr_cnt; qidx++)
+		for (qidx = 0; qidx < qs->rbdr_cnt; qidx++)
 			nicvf_rbdr_config(nic, qs, qidx, disable);
-		क्रम (qidx = 0; qidx < qs->sq_cnt; qidx++)
+		for (qidx = 0; qidx < qs->sq_cnt; qidx++)
 			nicvf_snd_queue_config(nic, qs, qidx, disable);
-		क्रम (qidx = 0; qidx < qs->cq_cnt; qidx++)
+		for (qidx = 0; qidx < qs->cq_cnt; qidx++)
 			nicvf_cmp_queue_config(nic, qs, qidx, disable);
 
-		nicvf_मुक्त_resources(nic);
-	पूर्ण
+		nicvf_free_resources(nic);
+	}
 
 	/* Reset RXQ's stats.
-	 * SQ's stats will get reset स्वतःmatically once SQ is reset.
+	 * SQ's stats will get reset automatically once SQ is reset.
 	 */
 	nicvf_reset_rcv_queue_stats(nic);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Get a मुक्त desc from SQ
- * वापसs descriptor ponter & descriptor number
+/* Get a free desc from SQ
+ * returns descriptor ponter & descriptor number
  */
-अटल अंतरभूत पूर्णांक nicvf_get_sq_desc(काष्ठा snd_queue *sq, पूर्णांक desc_cnt)
-अणु
-	पूर्णांक qentry;
+static inline int nicvf_get_sq_desc(struct snd_queue *sq, int desc_cnt)
+{
+	int qentry;
 
 	qentry = sq->tail;
-	अगर (!sq->is_xdp)
-		atomic_sub(desc_cnt, &sq->मुक्त_cnt);
-	अन्यथा
-		sq->xdp_मुक्त_cnt -= desc_cnt;
+	if (!sq->is_xdp)
+		atomic_sub(desc_cnt, &sq->free_cnt);
+	else
+		sq->xdp_free_cnt -= desc_cnt;
 	sq->tail += desc_cnt;
 	sq->tail &= (sq->dmem.q_len - 1);
 
-	वापस qentry;
-पूर्ण
+	return qentry;
+}
 
-/* Rollback to previous tail poपूर्णांकer when descriptors not used */
-अटल अंतरभूत व्योम nicvf_rollback_sq_desc(काष्ठा snd_queue *sq,
-					  पूर्णांक qentry, पूर्णांक desc_cnt)
-अणु
+/* Rollback to previous tail pointer when descriptors not used */
+static inline void nicvf_rollback_sq_desc(struct snd_queue *sq,
+					  int qentry, int desc_cnt)
+{
 	sq->tail = qentry;
-	atomic_add(desc_cnt, &sq->मुक्त_cnt);
-पूर्ण
+	atomic_add(desc_cnt, &sq->free_cnt);
+}
 
-/* Free descriptor back to SQ क्रम future use */
-व्योम nicvf_put_sq_desc(काष्ठा snd_queue *sq, पूर्णांक desc_cnt)
-अणु
-	अगर (!sq->is_xdp)
-		atomic_add(desc_cnt, &sq->मुक्त_cnt);
-	अन्यथा
-		sq->xdp_मुक्त_cnt += desc_cnt;
+/* Free descriptor back to SQ for future use */
+void nicvf_put_sq_desc(struct snd_queue *sq, int desc_cnt)
+{
+	if (!sq->is_xdp)
+		atomic_add(desc_cnt, &sq->free_cnt);
+	else
+		sq->xdp_free_cnt += desc_cnt;
 	sq->head += desc_cnt;
 	sq->head &= (sq->dmem.q_len - 1);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक nicvf_get_nxt_sqentry(काष्ठा snd_queue *sq, पूर्णांक qentry)
-अणु
+static inline int nicvf_get_nxt_sqentry(struct snd_queue *sq, int qentry)
+{
 	qentry++;
 	qentry &= (sq->dmem.q_len - 1);
-	वापस qentry;
-पूर्ण
+	return qentry;
+}
 
-व्योम nicvf_sq_enable(काष्ठा nicvf *nic, काष्ठा snd_queue *sq, पूर्णांक qidx)
-अणु
+void nicvf_sq_enable(struct nicvf *nic, struct snd_queue *sq, int qidx)
+{
 	u64 sq_cfg;
 
-	sq_cfg = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_CFG, qidx);
+	sq_cfg = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_CFG, qidx);
 	sq_cfg |= NICVF_SQ_EN;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_CFG, qidx, sq_cfg);
-	/* Ring करोorbell so that H/W restarts processing SQEs */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_DOOR, qidx, 0);
-पूर्ण
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_CFG, qidx, sq_cfg);
+	/* Ring doorbell so that H/W restarts processing SQEs */
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_DOOR, qidx, 0);
+}
 
-व्योम nicvf_sq_disable(काष्ठा nicvf *nic, पूर्णांक qidx)
-अणु
+void nicvf_sq_disable(struct nicvf *nic, int qidx)
+{
 	u64 sq_cfg;
 
-	sq_cfg = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_CFG, qidx);
+	sq_cfg = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_CFG, qidx);
 	sq_cfg &= ~NICVF_SQ_EN;
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_CFG, qidx, sq_cfg);
-पूर्ण
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_CFG, qidx, sq_cfg);
+}
 
-व्योम nicvf_sq_मुक्त_used_descs(काष्ठा net_device *netdev, काष्ठा snd_queue *sq,
-			      पूर्णांक qidx)
-अणु
+void nicvf_sq_free_used_descs(struct net_device *netdev, struct snd_queue *sq,
+			      int qidx)
+{
 	u64 head;
-	काष्ठा sk_buff *skb;
-	काष्ठा nicvf *nic = netdev_priv(netdev);
-	काष्ठा sq_hdr_subdesc *hdr;
+	struct sk_buff *skb;
+	struct nicvf *nic = netdev_priv(netdev);
+	struct sq_hdr_subdesc *hdr;
 
-	head = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_HEAD, qidx) >> 4;
-	जबतक (sq->head != head) अणु
-		hdr = (काष्ठा sq_hdr_subdesc *)GET_SQ_DESC(sq, sq->head);
-		अगर (hdr->subdesc_type != SQ_DESC_TYPE_HEADER) अणु
+	head = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_HEAD, qidx) >> 4;
+	while (sq->head != head) {
+		hdr = (struct sq_hdr_subdesc *)GET_SQ_DESC(sq, sq->head);
+		if (hdr->subdesc_type != SQ_DESC_TYPE_HEADER) {
 			nicvf_put_sq_desc(sq, 1);
-			जारी;
-		पूर्ण
-		skb = (काष्ठा sk_buff *)sq->skbuff[sq->head];
-		अगर (skb)
-			dev_kमुक्त_skb_any(skb);
+			continue;
+		}
+		skb = (struct sk_buff *)sq->skbuff[sq->head];
+		if (skb)
+			dev_kfree_skb_any(skb);
 		atomic64_add(1, (atomic64_t *)&netdev->stats.tx_packets);
 		atomic64_add(hdr->tot_len,
 			     (atomic64_t *)&netdev->stats.tx_bytes);
 		nicvf_put_sq_desc(sq, hdr->subdesc_cnt + 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* XDP Transmit APIs */
-व्योम nicvf_xdp_sq_करोorbell(काष्ठा nicvf *nic,
-			   काष्ठा snd_queue *sq, पूर्णांक sq_num)
-अणु
-	अगर (!sq->xdp_desc_cnt)
-		वापस;
+void nicvf_xdp_sq_doorbell(struct nicvf *nic,
+			   struct snd_queue *sq, int sq_num)
+{
+	if (!sq->xdp_desc_cnt)
+		return;
 
-	/* make sure all memory stores are करोne beक्रमe ringing करोorbell */
+	/* make sure all memory stores are done before ringing doorbell */
 	wmb();
 
-	/* Inक्रमm HW to xmit all TSO segments */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_DOOR,
+	/* Inform HW to xmit all TSO segments */
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_DOOR,
 			      sq_num, sq->xdp_desc_cnt);
 	sq->xdp_desc_cnt = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-nicvf_xdp_sq_add_hdr_subdesc(काष्ठा snd_queue *sq, पूर्णांक qentry,
-			     पूर्णांक subdesc_cnt, u64 data, पूर्णांक len)
-अणु
-	काष्ठा sq_hdr_subdesc *hdr;
+static inline void
+nicvf_xdp_sq_add_hdr_subdesc(struct snd_queue *sq, int qentry,
+			     int subdesc_cnt, u64 data, int len)
+{
+	struct sq_hdr_subdesc *hdr;
 
-	hdr = (काष्ठा sq_hdr_subdesc *)GET_SQ_DESC(sq, qentry);
-	स_रखो(hdr, 0, SND_QUEUE_DESC_SIZE);
+	hdr = (struct sq_hdr_subdesc *)GET_SQ_DESC(sq, qentry);
+	memset(hdr, 0, SND_QUEUE_DESC_SIZE);
 	hdr->subdesc_type = SQ_DESC_TYPE_HEADER;
 	hdr->subdesc_cnt = subdesc_cnt;
 	hdr->tot_len = len;
 	hdr->post_cqe = 1;
-	sq->xdp_page[qentry] = (u64)virt_to_page((व्योम *)data);
-पूर्ण
+	sq->xdp_page[qentry] = (u64)virt_to_page((void *)data);
+}
 
-पूर्णांक nicvf_xdp_sq_append_pkt(काष्ठा nicvf *nic, काष्ठा snd_queue *sq,
+int nicvf_xdp_sq_append_pkt(struct nicvf *nic, struct snd_queue *sq,
 			    u64 bufaddr, u64 dma_addr, u16 len)
-अणु
-	पूर्णांक subdesc_cnt = MIN_SQ_DESC_PER_PKT_XMIT;
-	पूर्णांक qentry;
+{
+	int subdesc_cnt = MIN_SQ_DESC_PER_PKT_XMIT;
+	int qentry;
 
-	अगर (subdesc_cnt > sq->xdp_मुक्त_cnt)
-		वापस 0;
+	if (subdesc_cnt > sq->xdp_free_cnt)
+		return 0;
 
 	qentry = nicvf_get_sq_desc(sq, subdesc_cnt);
 
@@ -1251,115 +1250,115 @@ nicvf_xdp_sq_add_hdr_subdesc(काष्ठा snd_queue *sq, पूर्ण�
 
 	sq->xdp_desc_cnt += subdesc_cnt;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Calculate no of SQ subdescriptors needed to transmit all
  * segments of this TSO packet.
- * Taken from 'Tilera network driver' with a minor modअगरication.
+ * Taken from 'Tilera network driver' with a minor modification.
  */
-अटल पूर्णांक nicvf_tso_count_subdescs(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा skb_shared_info *sh = skb_shinfo(skb);
-	अचिन्हित पूर्णांक sh_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
-	अचिन्हित पूर्णांक data_len = skb->len - sh_len;
-	अचिन्हित पूर्णांक p_len = sh->gso_size;
-	दीर्घ f_id = -1;    /* id of the current fragment */
-	दीर्घ f_size = skb_headlen(skb) - sh_len;  /* current fragment size */
-	दीर्घ f_used = 0;  /* bytes used from the current fragment */
-	दीर्घ n;            /* size of the current piece of payload */
-	पूर्णांक num_edescs = 0;
-	पूर्णांक segment;
+static int nicvf_tso_count_subdescs(struct sk_buff *skb)
+{
+	struct skb_shared_info *sh = skb_shinfo(skb);
+	unsigned int sh_len = skb_transport_offset(skb) + tcp_hdrlen(skb);
+	unsigned int data_len = skb->len - sh_len;
+	unsigned int p_len = sh->gso_size;
+	long f_id = -1;    /* id of the current fragment */
+	long f_size = skb_headlen(skb) - sh_len;  /* current fragment size */
+	long f_used = 0;  /* bytes used from the current fragment */
+	long n;            /* size of the current piece of payload */
+	int num_edescs = 0;
+	int segment;
 
-	क्रम (segment = 0; segment < sh->gso_segs; segment++) अणु
-		अचिन्हित पूर्णांक p_used = 0;
+	for (segment = 0; segment < sh->gso_segs; segment++) {
+		unsigned int p_used = 0;
 
-		/* One edesc क्रम header and क्रम each piece of the payload. */
-		क्रम (num_edescs++; p_used < p_len; num_edescs++) अणु
+		/* One edesc for header and for each piece of the payload. */
+		for (num_edescs++; p_used < p_len; num_edescs++) {
 			/* Advance as needed. */
-			जबतक (f_used >= f_size) अणु
+			while (f_used >= f_size) {
 				f_id++;
 				f_size = skb_frag_size(&sh->frags[f_id]);
 				f_used = 0;
-			पूर्ण
+			}
 
 			/* Use bytes from the current fragment. */
 			n = p_len - p_used;
-			अगर (n > f_size - f_used)
+			if (n > f_size - f_used)
 				n = f_size - f_used;
 			f_used += n;
 			p_used += n;
-		पूर्ण
+		}
 
 		/* The last segment may be less than gso_size. */
 		data_len -= p_len;
-		अगर (data_len < p_len)
+		if (data_len < p_len)
 			p_len = data_len;
-	पूर्ण
+	}
 
-	/* '+ gso_segs' क्रम SQ_HDR_SUDESCs क्रम each segment */
-	वापस num_edescs + sh->gso_segs;
-पूर्ण
+	/* '+ gso_segs' for SQ_HDR_SUDESCs for each segment */
+	return num_edescs + sh->gso_segs;
+}
 
-#घोषणा POST_CQE_DESC_COUNT 2
+#define POST_CQE_DESC_COUNT 2
 
 /* Get the number of SQ descriptors needed to xmit this skb */
-अटल पूर्णांक nicvf_sq_subdesc_required(काष्ठा nicvf *nic, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक subdesc_cnt = MIN_SQ_DESC_PER_PKT_XMIT;
+static int nicvf_sq_subdesc_required(struct nicvf *nic, struct sk_buff *skb)
+{
+	int subdesc_cnt = MIN_SQ_DESC_PER_PKT_XMIT;
 
-	अगर (skb_shinfo(skb)->gso_size && !nic->hw_tso) अणु
+	if (skb_shinfo(skb)->gso_size && !nic->hw_tso) {
 		subdesc_cnt = nicvf_tso_count_subdescs(skb);
-		वापस subdesc_cnt;
-	पूर्ण
+		return subdesc_cnt;
+	}
 
-	/* Dummy descriptors to get TSO pkt completion notअगरication */
-	अगर (nic->t88 && nic->hw_tso && skb_shinfo(skb)->gso_size)
+	/* Dummy descriptors to get TSO pkt completion notification */
+	if (nic->t88 && nic->hw_tso && skb_shinfo(skb)->gso_size)
 		subdesc_cnt += POST_CQE_DESC_COUNT;
 
-	अगर (skb_shinfo(skb)->nr_frags)
+	if (skb_shinfo(skb)->nr_frags)
 		subdesc_cnt += skb_shinfo(skb)->nr_frags;
 
-	वापस subdesc_cnt;
-पूर्ण
+	return subdesc_cnt;
+}
 
 /* Add SQ HEADER subdescriptor.
- * First subdescriptor क्रम every send descriptor.
+ * First subdescriptor for every send descriptor.
  */
-अटल अंतरभूत व्योम
-nicvf_sq_add_hdr_subdesc(काष्ठा nicvf *nic, काष्ठा snd_queue *sq, पूर्णांक qentry,
-			 पूर्णांक subdesc_cnt, काष्ठा sk_buff *skb, पूर्णांक len)
-अणु
-	पूर्णांक proto;
-	काष्ठा sq_hdr_subdesc *hdr;
-	जोड़ अणु
-		काष्ठा iphdr *v4;
-		काष्ठा ipv6hdr *v6;
-		अचिन्हित अक्षर *hdr;
-	पूर्ण ip;
+static inline void
+nicvf_sq_add_hdr_subdesc(struct nicvf *nic, struct snd_queue *sq, int qentry,
+			 int subdesc_cnt, struct sk_buff *skb, int len)
+{
+	int proto;
+	struct sq_hdr_subdesc *hdr;
+	union {
+		struct iphdr *v4;
+		struct ipv6hdr *v6;
+		unsigned char *hdr;
+	} ip;
 
 	ip.hdr = skb_network_header(skb);
-	hdr = (काष्ठा sq_hdr_subdesc *)GET_SQ_DESC(sq, qentry);
-	स_रखो(hdr, 0, SND_QUEUE_DESC_SIZE);
+	hdr = (struct sq_hdr_subdesc *)GET_SQ_DESC(sq, qentry);
+	memset(hdr, 0, SND_QUEUE_DESC_SIZE);
 	hdr->subdesc_type = SQ_DESC_TYPE_HEADER;
 
-	अगर (nic->t88 && nic->hw_tso && skb_shinfo(skb)->gso_size) अणु
-		/* post_cqe = 0, to aव्योम HW posting a CQE क्रम every TSO
+	if (nic->t88 && nic->hw_tso && skb_shinfo(skb)->gso_size) {
+		/* post_cqe = 0, to avoid HW posting a CQE for every TSO
 		 * segment transmitted on 88xx.
 		 */
 		hdr->subdesc_cnt = subdesc_cnt - POST_CQE_DESC_COUNT;
-	पूर्ण अन्यथा अणु
+	} else {
 		sq->skbuff[qentry] = (u64)skb;
-		/* Enable notअगरication via CQE after processing SQE */
+		/* Enable notification via CQE after processing SQE */
 		hdr->post_cqe = 1;
 		/* No of subdescriptors following this */
 		hdr->subdesc_cnt = subdesc_cnt;
-	पूर्ण
+	}
 	hdr->tot_len = len;
 
 	/* Offload checksum calculation to HW */
-	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
-		अगर (ip.v4->version == 4)
+	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+		if (ip.v4->version == 4)
 			hdr->csum_l3 = 1; /* Enable IP csum calculation */
 		hdr->l3_offset = skb_network_offset(skb);
 		hdr->l4_offset = skb_transport_offset(skb);
@@ -1367,141 +1366,141 @@ nicvf_sq_add_hdr_subdesc(काष्ठा nicvf *nic, काष्ठा snd_q
 		proto = (ip.v4->version == 4) ? ip.v4->protocol :
 			ip.v6->nexthdr;
 
-		चयन (proto) अणु
-		हाल IPPROTO_TCP:
+		switch (proto) {
+		case IPPROTO_TCP:
 			hdr->csum_l4 = SEND_L4_CSUM_TCP;
-			अवरोध;
-		हाल IPPROTO_UDP:
+			break;
+		case IPPROTO_UDP:
 			hdr->csum_l4 = SEND_L4_CSUM_UDP;
-			अवरोध;
-		हाल IPPROTO_SCTP:
+			break;
+		case IPPROTO_SCTP:
 			hdr->csum_l4 = SEND_L4_CSUM_SCTP;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (nic->hw_tso && skb_shinfo(skb)->gso_size) अणु
+	if (nic->hw_tso && skb_shinfo(skb)->gso_size) {
 		hdr->tso = 1;
 		hdr->tso_start = skb_transport_offset(skb) + tcp_hdrlen(skb);
 		hdr->tso_max_paysize = skb_shinfo(skb)->gso_size;
-		/* For non-tunneled pkts, poपूर्णांक this to L2 ethertype */
+		/* For non-tunneled pkts, point this to L2 ethertype */
 		hdr->inner_l3_offset = skb_network_offset(skb) - 2;
 		this_cpu_inc(nic->pnicvf->drv_stats->tx_tso);
-	पूर्ण
+	}
 
-	/* Check अगर बारtamp is requested */
-	अगर (!(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) अणु
-		skb_tx_बारtamp(skb);
-		वापस;
-	पूर्ण
+	/* Check if timestamp is requested */
+	if (!(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) {
+		skb_tx_timestamp(skb);
+		return;
+	}
 
-	/* Tx बारtamping not supported aदीर्घ with TSO, so ignore request */
-	अगर (skb_shinfo(skb)->gso_size)
-		वापस;
+	/* Tx timestamping not supported along with TSO, so ignore request */
+	if (skb_shinfo(skb)->gso_size)
+		return;
 
-	/* HW supports only a single outstanding packet to बारtamp */
-	अगर (!atomic_add_unless(&nic->pnicvf->tx_ptp_skbs, 1, 1))
-		वापस;
+	/* HW supports only a single outstanding packet to timestamp */
+	if (!atomic_add_unless(&nic->pnicvf->tx_ptp_skbs, 1, 1))
+		return;
 
-	/* Mark the SKB क्रम later reference */
+	/* Mark the SKB for later reference */
 	skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 
-	/* Finally enable बारtamp generation
+	/* Finally enable timestamp generation
 	 * Since 'post_cqe' is also set, two CQEs will be posted
-	 * क्रम this packet i.e CQE_TYPE_SEND and CQE_TYPE_SEND_PTP.
+	 * for this packet i.e CQE_TYPE_SEND and CQE_TYPE_SEND_PTP.
 	 */
-	hdr->tsपंचांगp = 1;
-पूर्ण
+	hdr->tstmp = 1;
+}
 
 /* SQ GATHER subdescriptor
  * Must follow HDR descriptor
  */
-अटल अंतरभूत व्योम nicvf_sq_add_gather_subdesc(काष्ठा snd_queue *sq, पूर्णांक qentry,
-					       पूर्णांक size, u64 data)
-अणु
-	काष्ठा sq_gather_subdesc *gather;
+static inline void nicvf_sq_add_gather_subdesc(struct snd_queue *sq, int qentry,
+					       int size, u64 data)
+{
+	struct sq_gather_subdesc *gather;
 
 	qentry &= (sq->dmem.q_len - 1);
-	gather = (काष्ठा sq_gather_subdesc *)GET_SQ_DESC(sq, qentry);
+	gather = (struct sq_gather_subdesc *)GET_SQ_DESC(sq, qentry);
 
-	स_रखो(gather, 0, SND_QUEUE_DESC_SIZE);
+	memset(gather, 0, SND_QUEUE_DESC_SIZE);
 	gather->subdesc_type = SQ_DESC_TYPE_GATHER;
 	gather->ld_type = NIC_SEND_LD_TYPE_E_LDD;
 	gather->size = size;
 	gather->addr = data;
-पूर्ण
+}
 
 /* Add HDR + IMMEDIATE subdescriptors right after descriptors of a TSO
- * packet so that a CQE is posted as a notअगरation क्रम transmission of
+ * packet so that a CQE is posted as a notifation for transmission of
  * TSO packet.
  */
-अटल अंतरभूत व्योम nicvf_sq_add_cqe_subdesc(काष्ठा snd_queue *sq, पूर्णांक qentry,
-					    पूर्णांक tso_sqe, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sq_imm_subdesc *imm;
-	काष्ठा sq_hdr_subdesc *hdr;
+static inline void nicvf_sq_add_cqe_subdesc(struct snd_queue *sq, int qentry,
+					    int tso_sqe, struct sk_buff *skb)
+{
+	struct sq_imm_subdesc *imm;
+	struct sq_hdr_subdesc *hdr;
 
 	sq->skbuff[qentry] = (u64)skb;
 
-	hdr = (काष्ठा sq_hdr_subdesc *)GET_SQ_DESC(sq, qentry);
-	स_रखो(hdr, 0, SND_QUEUE_DESC_SIZE);
+	hdr = (struct sq_hdr_subdesc *)GET_SQ_DESC(sq, qentry);
+	memset(hdr, 0, SND_QUEUE_DESC_SIZE);
 	hdr->subdesc_type = SQ_DESC_TYPE_HEADER;
-	/* Enable notअगरication via CQE after processing SQE */
+	/* Enable notification via CQE after processing SQE */
 	hdr->post_cqe = 1;
 	/* There is no packet to transmit here */
-	hdr->करोnt_send = 1;
+	hdr->dont_send = 1;
 	hdr->subdesc_cnt = POST_CQE_DESC_COUNT - 1;
 	hdr->tot_len = 1;
-	/* Actual TSO header SQE index, needed क्रम cleanup */
+	/* Actual TSO header SQE index, needed for cleanup */
 	hdr->rsvd2 = tso_sqe;
 
 	qentry = nicvf_get_nxt_sqentry(sq, qentry);
-	imm = (काष्ठा sq_imm_subdesc *)GET_SQ_DESC(sq, qentry);
-	स_रखो(imm, 0, SND_QUEUE_DESC_SIZE);
+	imm = (struct sq_imm_subdesc *)GET_SQ_DESC(sq, qentry);
+	memset(imm, 0, SND_QUEUE_DESC_SIZE);
 	imm->subdesc_type = SQ_DESC_TYPE_IMMEDIATE;
 	imm->len = 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nicvf_sq_करोorbell(काष्ठा nicvf *nic, काष्ठा sk_buff *skb,
-				     पूर्णांक sq_num, पूर्णांक desc_cnt)
-अणु
-	काष्ठा netdev_queue *txq;
+static inline void nicvf_sq_doorbell(struct nicvf *nic, struct sk_buff *skb,
+				     int sq_num, int desc_cnt)
+{
+	struct netdev_queue *txq;
 
 	txq = netdev_get_tx_queue(nic->pnicvf->netdev,
 				  skb_get_queue_mapping(skb));
 
 	netdev_tx_sent_queue(txq, skb->len);
 
-	/* make sure all memory stores are करोne beक्रमe ringing करोorbell */
+	/* make sure all memory stores are done before ringing doorbell */
 	smp_wmb();
 
-	/* Inक्रमm HW to xmit all TSO segments */
-	nicvf_queue_reg_ग_लिखो(nic, NIC_QSET_SQ_0_7_DOOR,
+	/* Inform HW to xmit all TSO segments */
+	nicvf_queue_reg_write(nic, NIC_QSET_SQ_0_7_DOOR,
 			      sq_num, desc_cnt);
-पूर्ण
+}
 
-/* Segment a TSO packet पूर्णांकo 'gso_size' segments and append
- * them to SQ क्रम transfer
+/* Segment a TSO packet into 'gso_size' segments and append
+ * them to SQ for transfer
  */
-अटल पूर्णांक nicvf_sq_append_tso(काष्ठा nicvf *nic, काष्ठा snd_queue *sq,
-			       पूर्णांक sq_num, पूर्णांक qentry, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा tso_t tso;
-	पूर्णांक seg_subdescs = 0, desc_cnt = 0;
-	पूर्णांक seg_len, total_len, data_left;
-	पूर्णांक hdr_qentry = qentry;
-	पूर्णांक hdr_len;
+static int nicvf_sq_append_tso(struct nicvf *nic, struct snd_queue *sq,
+			       int sq_num, int qentry, struct sk_buff *skb)
+{
+	struct tso_t tso;
+	int seg_subdescs = 0, desc_cnt = 0;
+	int seg_len, total_len, data_left;
+	int hdr_qentry = qentry;
+	int hdr_len;
 
 	hdr_len = tso_start(skb, &tso);
 
 	total_len = skb->len - hdr_len;
-	जबतक (total_len > 0) अणु
-		अक्षर *hdr;
+	while (total_len > 0) {
+		char *hdr;
 
-		/* Save Qentry क्रम adding HDR_SUBDESC at the end */
+		/* Save Qentry for adding HDR_SUBDESC at the end */
 		hdr_qentry = qentry;
 
-		data_left = min_t(पूर्णांक, skb_shinfo(skb)->gso_size, total_len);
+		data_left = min_t(int, skb_shinfo(skb)->gso_size, total_len);
 		total_len -= data_left;
 
 		/* Add segment's header */
@@ -1516,10 +1515,10 @@ nicvf_sq_add_hdr_subdesc(काष्ठा nicvf *nic, काष्ठा snd_q
 		seg_len = hdr_len;
 
 		/* Add segment's payload fragments */
-		जबतक (data_left > 0) अणु
-			पूर्णांक size;
+		while (data_left > 0) {
+			int size;
 
-			size = min_t(पूर्णांक, tso.size, data_left);
+			size = min_t(int, tso.size, data_left);
 
 			qentry = nicvf_get_nxt_sqentry(sq, qentry);
 			nicvf_sq_add_gather_subdesc(sq, qentry, size,
@@ -1529,41 +1528,41 @@ nicvf_sq_add_hdr_subdesc(काष्ठा nicvf *nic, काष्ठा snd_q
 
 			data_left -= size;
 			tso_build_data(skb, &tso, size);
-		पूर्ण
+		}
 		nicvf_sq_add_hdr_subdesc(nic, sq, hdr_qentry,
 					 seg_subdescs - 1, skb, seg_len);
-		sq->skbuff[hdr_qentry] = (u64)शून्य;
+		sq->skbuff[hdr_qentry] = (u64)NULL;
 		qentry = nicvf_get_nxt_sqentry(sq, qentry);
 
 		desc_cnt += seg_subdescs;
-	पूर्ण
-	/* Save SKB in the last segment क्रम मुक्तing */
+	}
+	/* Save SKB in the last segment for freeing */
 	sq->skbuff[hdr_qentry] = (u64)skb;
 
-	nicvf_sq_करोorbell(nic, skb, sq_num, desc_cnt);
+	nicvf_sq_doorbell(nic, skb, sq_num, desc_cnt);
 
 	this_cpu_inc(nic->pnicvf->drv_stats->tx_tso);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Append an skb to a SQ क्रम packet transfer. */
-पूर्णांक nicvf_sq_append_skb(काष्ठा nicvf *nic, काष्ठा snd_queue *sq,
-			काष्ठा sk_buff *skb, u8 sq_num)
-अणु
-	पूर्णांक i, size;
-	पूर्णांक subdesc_cnt, hdr_sqe = 0;
-	पूर्णांक qentry;
+/* Append an skb to a SQ for packet transfer. */
+int nicvf_sq_append_skb(struct nicvf *nic, struct snd_queue *sq,
+			struct sk_buff *skb, u8 sq_num)
+{
+	int i, size;
+	int subdesc_cnt, hdr_sqe = 0;
+	int qentry;
 	u64 dma_addr;
 
 	subdesc_cnt = nicvf_sq_subdesc_required(nic, skb);
-	अगर (subdesc_cnt > atomic_पढ़ो(&sq->मुक्त_cnt))
-		जाओ append_fail;
+	if (subdesc_cnt > atomic_read(&sq->free_cnt))
+		goto append_fail;
 
 	qentry = nicvf_get_sq_desc(sq, subdesc_cnt);
 
-	/* Check अगर its a TSO packet */
-	अगर (skb_shinfo(skb)->gso_size && !nic->hw_tso)
-		वापस nicvf_sq_append_tso(nic, sq, sq_num, qentry, skb);
+	/* Check if its a TSO packet */
+	if (skb_shinfo(skb)->gso_size && !nic->hw_tso)
+		return nicvf_sq_append_tso(nic, sq, sq_num, qentry, skb);
 
 	/* Add SQ header subdesc */
 	nicvf_sq_add_hdr_subdesc(nic, sq, qentry, subdesc_cnt - 1,
@@ -1577,19 +1576,19 @@ nicvf_sq_add_hdr_subdesc(काष्ठा nicvf *nic, काष्ठा snd_q
 	dma_addr = dma_map_page_attrs(&nic->pdev->dev, virt_to_page(skb->data),
 				      offset_in_page(skb->data), size,
 				      DMA_TO_DEVICE, DMA_ATTR_SKIP_CPU_SYNC);
-	अगर (dma_mapping_error(&nic->pdev->dev, dma_addr)) अणु
+	if (dma_mapping_error(&nic->pdev->dev, dma_addr)) {
 		nicvf_rollback_sq_desc(sq, qentry, subdesc_cnt);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	nicvf_sq_add_gather_subdesc(sq, qentry, size, dma_addr);
 
-	/* Check क्रम scattered buffer */
-	अगर (!skb_is_nonlinear(skb))
-		जाओ करोorbell;
+	/* Check for scattered buffer */
+	if (!skb_is_nonlinear(skb))
+		goto doorbell;
 
-	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
-		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 
 		qentry = nicvf_get_nxt_sqentry(sq, qentry);
 		size = skb_frag_size(frag);
@@ -1598,103 +1597,103 @@ nicvf_sq_add_hdr_subdesc(काष्ठा nicvf *nic, काष्ठा snd_q
 					      skb_frag_off(frag), size,
 					      DMA_TO_DEVICE,
 					      DMA_ATTR_SKIP_CPU_SYNC);
-		अगर (dma_mapping_error(&nic->pdev->dev, dma_addr)) अणु
+		if (dma_mapping_error(&nic->pdev->dev, dma_addr)) {
 			/* Free entire chain of mapped buffers
 			 * here 'i' = frags mapped + above mapped skb->data
 			 */
 			nicvf_unmap_sndq_buffers(nic, sq, hdr_sqe, i);
 			nicvf_rollback_sq_desc(sq, qentry, subdesc_cnt);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		nicvf_sq_add_gather_subdesc(sq, qentry, size, dma_addr);
-	पूर्ण
+	}
 
-करोorbell:
-	अगर (nic->t88 && skb_shinfo(skb)->gso_size) अणु
+doorbell:
+	if (nic->t88 && skb_shinfo(skb)->gso_size) {
 		qentry = nicvf_get_nxt_sqentry(sq, qentry);
 		nicvf_sq_add_cqe_subdesc(sq, qentry, hdr_sqe, skb);
-	पूर्ण
+	}
 
-	nicvf_sq_करोorbell(nic, skb, sq_num, subdesc_cnt);
+	nicvf_sq_doorbell(nic, skb, sq_num, subdesc_cnt);
 
-	वापस 1;
+	return 1;
 
 append_fail:
-	/* Use original PCI dev क्रम debug log */
+	/* Use original PCI dev for debug log */
 	nic = nic->pnicvf;
 	netdev_dbg(nic->netdev, "Not enough SQ descriptors to xmit pkt\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित frag_num(अचिन्हित i)
-अणु
-#अगर_घोषित __BIG_ENDIAN
-	वापस (i & ~3) + 3 - (i & 3);
-#अन्यथा
-	वापस i;
-#पूर्ण_अगर
-पूर्ण
+static inline unsigned frag_num(unsigned i)
+{
+#ifdef __BIG_ENDIAN
+	return (i & ~3) + 3 - (i & 3);
+#else
+	return i;
+#endif
+}
 
-अटल व्योम nicvf_unmap_rcv_buffer(काष्ठा nicvf *nic, u64 dma_addr,
+static void nicvf_unmap_rcv_buffer(struct nicvf *nic, u64 dma_addr,
 				   u64 buf_addr, bool xdp)
-अणु
-	काष्ठा page *page = शून्य;
-	पूर्णांक len = RCV_FRAG_LEN;
+{
+	struct page *page = NULL;
+	int len = RCV_FRAG_LEN;
 
-	अगर (xdp) अणु
+	if (xdp) {
 		page = virt_to_page(phys_to_virt(buf_addr));
-		/* Check अगर it's a recycled page, अगर not
+		/* Check if it's a recycled page, if not
 		 * unmap the DMA mapping.
 		 *
 		 * Recycled page holds an extra reference.
 		 */
-		अगर (page_ref_count(page) != 1)
-			वापस;
+		if (page_ref_count(page) != 1)
+			return;
 
 		len += XDP_PACKET_HEADROOM;
 		/* Receive buffers in XDP mode are mapped from page start */
 		dma_addr &= PAGE_MASK;
-	पूर्ण
+	}
 	dma_unmap_page_attrs(&nic->pdev->dev, dma_addr, len,
 			     DMA_FROM_DEVICE, DMA_ATTR_SKIP_CPU_SYNC);
-पूर्ण
+}
 
-/* Returns SKB क्रम a received packet */
-काष्ठा sk_buff *nicvf_get_rcv_skb(काष्ठा nicvf *nic,
-				  काष्ठा cqe_rx_t *cqe_rx, bool xdp)
-अणु
-	पूर्णांक frag;
-	पूर्णांक payload_len = 0;
-	काष्ठा sk_buff *skb = शून्य;
-	काष्ठा page *page;
-	पूर्णांक offset;
-	u16 *rb_lens = शून्य;
-	u64 *rb_ptrs = शून्य;
+/* Returns SKB for a received packet */
+struct sk_buff *nicvf_get_rcv_skb(struct nicvf *nic,
+				  struct cqe_rx_t *cqe_rx, bool xdp)
+{
+	int frag;
+	int payload_len = 0;
+	struct sk_buff *skb = NULL;
+	struct page *page;
+	int offset;
+	u16 *rb_lens = NULL;
+	u64 *rb_ptrs = NULL;
 	u64 phys_addr;
 
-	rb_lens = (व्योम *)cqe_rx + (3 * माप(u64));
+	rb_lens = (void *)cqe_rx + (3 * sizeof(u64));
 	/* Except 88xx pass1 on all other chips CQE_RX2_S is added to
-	 * CQE_RX at word6, hence buffer poपूर्णांकers move by word
+	 * CQE_RX at word6, hence buffer pointers move by word
 	 *
-	 * Use existing 'hw_tso' flag which will be set क्रम all chips
+	 * Use existing 'hw_tso' flag which will be set for all chips
 	 * except 88xx pass1 instead of a additional cache line
 	 * access (or miss) by using pci dev's revision.
 	 */
-	अगर (!nic->hw_tso)
-		rb_ptrs = (व्योम *)cqe_rx + (6 * माप(u64));
-	अन्यथा
-		rb_ptrs = (व्योम *)cqe_rx + (7 * माप(u64));
+	if (!nic->hw_tso)
+		rb_ptrs = (void *)cqe_rx + (6 * sizeof(u64));
+	else
+		rb_ptrs = (void *)cqe_rx + (7 * sizeof(u64));
 
-	क्रम (frag = 0; frag < cqe_rx->rb_cnt; frag++) अणु
+	for (frag = 0; frag < cqe_rx->rb_cnt; frag++) {
 		payload_len = rb_lens[frag_num(frag)];
 		phys_addr = nicvf_iova_to_phys(nic, *rb_ptrs);
-		अगर (!phys_addr) अणु
-			अगर (skb)
-				dev_kमुक्त_skb_any(skb);
-			वापस शून्य;
-		पूर्ण
+		if (!phys_addr) {
+			if (skb)
+				dev_kfree_skb_any(skb);
+			return NULL;
+		}
 
-		अगर (!frag) अणु
+		if (!frag) {
 			/* First fragment */
 			nicvf_unmap_rcv_buffer(nic,
 					       *rb_ptrs - cqe_rx->align_pad,
@@ -1702,271 +1701,271 @@ append_fail:
 			skb = nicvf_rb_ptr_to_skb(nic,
 						  phys_addr - cqe_rx->align_pad,
 						  payload_len);
-			अगर (!skb)
-				वापस शून्य;
+			if (!skb)
+				return NULL;
 			skb_reserve(skb, cqe_rx->align_pad);
 			skb_put(skb, payload_len);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Add fragments */
 			nicvf_unmap_rcv_buffer(nic, *rb_ptrs, phys_addr, xdp);
 			page = virt_to_page(phys_to_virt(phys_addr));
 			offset = phys_to_virt(phys_addr) - page_address(page);
 			skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, page,
 					offset, payload_len, RCV_FRAG_LEN);
-		पूर्ण
-		/* Next buffer poपूर्णांकer */
+		}
+		/* Next buffer pointer */
 		rb_ptrs++;
-	पूर्ण
-	वापस skb;
-पूर्ण
+	}
+	return skb;
+}
 
-अटल u64 nicvf_पूर्णांक_type_to_mask(पूर्णांक पूर्णांक_type, पूर्णांक q_idx)
-अणु
+static u64 nicvf_int_type_to_mask(int int_type, int q_idx)
+{
 	u64 reg_val;
 
-	चयन (पूर्णांक_type) अणु
-	हाल NICVF_INTR_CQ:
+	switch (int_type) {
+	case NICVF_INTR_CQ:
 		reg_val = ((1ULL << q_idx) << NICVF_INTR_CQ_SHIFT);
-		अवरोध;
-	हाल NICVF_INTR_SQ:
+		break;
+	case NICVF_INTR_SQ:
 		reg_val = ((1ULL << q_idx) << NICVF_INTR_SQ_SHIFT);
-		अवरोध;
-	हाल NICVF_INTR_RBDR:
+		break;
+	case NICVF_INTR_RBDR:
 		reg_val = ((1ULL << q_idx) << NICVF_INTR_RBDR_SHIFT);
-		अवरोध;
-	हाल NICVF_INTR_PKT_DROP:
+		break;
+	case NICVF_INTR_PKT_DROP:
 		reg_val = (1ULL << NICVF_INTR_PKT_DROP_SHIFT);
-		अवरोध;
-	हाल NICVF_INTR_TCP_TIMER:
+		break;
+	case NICVF_INTR_TCP_TIMER:
 		reg_val = (1ULL << NICVF_INTR_TCP_TIMER_SHIFT);
-		अवरोध;
-	हाल NICVF_INTR_MBOX:
+		break;
+	case NICVF_INTR_MBOX:
 		reg_val = (1ULL << NICVF_INTR_MBOX_SHIFT);
-		अवरोध;
-	हाल NICVF_INTR_QS_ERR:
+		break;
+	case NICVF_INTR_QS_ERR:
 		reg_val = (1ULL << NICVF_INTR_QS_ERR_SHIFT);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		reg_val = 0;
-	पूर्ण
+	}
 
-	वापस reg_val;
-पूर्ण
+	return reg_val;
+}
 
-/* Enable पूर्णांकerrupt */
-व्योम nicvf_enable_पूर्णांकr(काष्ठा nicvf *nic, पूर्णांक पूर्णांक_type, पूर्णांक q_idx)
-अणु
-	u64 mask = nicvf_पूर्णांक_type_to_mask(पूर्णांक_type, q_idx);
+/* Enable interrupt */
+void nicvf_enable_intr(struct nicvf *nic, int int_type, int q_idx)
+{
+	u64 mask = nicvf_int_type_to_mask(int_type, q_idx);
 
-	अगर (!mask) अणु
+	if (!mask) {
 		netdev_dbg(nic->netdev,
 			   "Failed to enable interrupt: unknown type\n");
-		वापस;
-	पूर्ण
-	nicvf_reg_ग_लिखो(nic, NIC_VF_ENA_W1S,
-			nicvf_reg_पढ़ो(nic, NIC_VF_ENA_W1S) | mask);
-पूर्ण
+		return;
+	}
+	nicvf_reg_write(nic, NIC_VF_ENA_W1S,
+			nicvf_reg_read(nic, NIC_VF_ENA_W1S) | mask);
+}
 
-/* Disable पूर्णांकerrupt */
-व्योम nicvf_disable_पूर्णांकr(काष्ठा nicvf *nic, पूर्णांक पूर्णांक_type, पूर्णांक q_idx)
-अणु
-	u64 mask = nicvf_पूर्णांक_type_to_mask(पूर्णांक_type, q_idx);
+/* Disable interrupt */
+void nicvf_disable_intr(struct nicvf *nic, int int_type, int q_idx)
+{
+	u64 mask = nicvf_int_type_to_mask(int_type, q_idx);
 
-	अगर (!mask) अणु
+	if (!mask) {
 		netdev_dbg(nic->netdev,
 			   "Failed to disable interrupt: unknown type\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	nicvf_reg_ग_लिखो(nic, NIC_VF_ENA_W1C, mask);
-पूर्ण
+	nicvf_reg_write(nic, NIC_VF_ENA_W1C, mask);
+}
 
-/* Clear पूर्णांकerrupt */
-व्योम nicvf_clear_पूर्णांकr(काष्ठा nicvf *nic, पूर्णांक पूर्णांक_type, पूर्णांक q_idx)
-अणु
-	u64 mask = nicvf_पूर्णांक_type_to_mask(पूर्णांक_type, q_idx);
+/* Clear interrupt */
+void nicvf_clear_intr(struct nicvf *nic, int int_type, int q_idx)
+{
+	u64 mask = nicvf_int_type_to_mask(int_type, q_idx);
 
-	अगर (!mask) अणु
+	if (!mask) {
 		netdev_dbg(nic->netdev,
 			   "Failed to clear interrupt: unknown type\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	nicvf_reg_ग_लिखो(nic, NIC_VF_INT, mask);
-पूर्ण
+	nicvf_reg_write(nic, NIC_VF_INT, mask);
+}
 
-/* Check अगर पूर्णांकerrupt is enabled */
-पूर्णांक nicvf_is_पूर्णांकr_enabled(काष्ठा nicvf *nic, पूर्णांक पूर्णांक_type, पूर्णांक q_idx)
-अणु
-	u64 mask = nicvf_पूर्णांक_type_to_mask(पूर्णांक_type, q_idx);
-	/* If पूर्णांकerrupt type is unknown, we treat it disabled. */
-	अगर (!mask) अणु
+/* Check if interrupt is enabled */
+int nicvf_is_intr_enabled(struct nicvf *nic, int int_type, int q_idx)
+{
+	u64 mask = nicvf_int_type_to_mask(int_type, q_idx);
+	/* If interrupt type is unknown, we treat it disabled. */
+	if (!mask) {
 		netdev_dbg(nic->netdev,
 			   "Failed to check interrupt enable: unknown type\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस mask & nicvf_reg_पढ़ो(nic, NIC_VF_ENA_W1S);
-पूर्ण
+	return mask & nicvf_reg_read(nic, NIC_VF_ENA_W1S);
+}
 
-व्योम nicvf_update_rq_stats(काष्ठा nicvf *nic, पूर्णांक rq_idx)
-अणु
-	काष्ठा rcv_queue *rq;
+void nicvf_update_rq_stats(struct nicvf *nic, int rq_idx)
+{
+	struct rcv_queue *rq;
 
-#घोषणा GET_RQ_STATS(reg) \
-	nicvf_reg_पढ़ो(nic, NIC_QSET_RQ_0_7_STAT_0_1 |\
+#define GET_RQ_STATS(reg) \
+	nicvf_reg_read(nic, NIC_QSET_RQ_0_7_STAT_0_1 |\
 			    (rq_idx << NIC_Q_NUM_SHIFT) | (reg << 3))
 
 	rq = &nic->qs->rq[rq_idx];
 	rq->stats.bytes = GET_RQ_STATS(RQ_SQ_STATS_OCTS);
 	rq->stats.pkts = GET_RQ_STATS(RQ_SQ_STATS_PKTS);
-पूर्ण
+}
 
-व्योम nicvf_update_sq_stats(काष्ठा nicvf *nic, पूर्णांक sq_idx)
-अणु
-	काष्ठा snd_queue *sq;
+void nicvf_update_sq_stats(struct nicvf *nic, int sq_idx)
+{
+	struct snd_queue *sq;
 
-#घोषणा GET_SQ_STATS(reg) \
-	nicvf_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_STAT_0_1 |\
+#define GET_SQ_STATS(reg) \
+	nicvf_reg_read(nic, NIC_QSET_SQ_0_7_STAT_0_1 |\
 			    (sq_idx << NIC_Q_NUM_SHIFT) | (reg << 3))
 
 	sq = &nic->qs->sq[sq_idx];
 	sq->stats.bytes = GET_SQ_STATS(RQ_SQ_STATS_OCTS);
 	sq->stats.pkts = GET_SQ_STATS(RQ_SQ_STATS_PKTS);
-पूर्ण
+}
 
-/* Check क्रम errors in the receive cmp.queue entry */
-पूर्णांक nicvf_check_cqe_rx_errs(काष्ठा nicvf *nic, काष्ठा cqe_rx_t *cqe_rx)
-अणु
-	netअगर_err(nic, rx_err, nic->netdev,
+/* Check for errors in the receive cmp.queue entry */
+int nicvf_check_cqe_rx_errs(struct nicvf *nic, struct cqe_rx_t *cqe_rx)
+{
+	netif_err(nic, rx_err, nic->netdev,
 		  "RX error CQE err_level 0x%x err_opcode 0x%x\n",
 		  cqe_rx->err_level, cqe_rx->err_opcode);
 
-	चयन (cqe_rx->err_opcode) अणु
-	हाल CQ_RX_ERROP_RE_PARTIAL:
+	switch (cqe_rx->err_opcode) {
+	case CQ_RX_ERROP_RE_PARTIAL:
 		this_cpu_inc(nic->drv_stats->rx_bgx_truncated_pkts);
-		अवरोध;
-	हाल CQ_RX_ERROP_RE_JABBER:
+		break;
+	case CQ_RX_ERROP_RE_JABBER:
 		this_cpu_inc(nic->drv_stats->rx_jabber_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_RE_FCS:
+		break;
+	case CQ_RX_ERROP_RE_FCS:
 		this_cpu_inc(nic->drv_stats->rx_fcs_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_RE_RX_CTL:
+		break;
+	case CQ_RX_ERROP_RE_RX_CTL:
 		this_cpu_inc(nic->drv_stats->rx_bgx_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_PREL2_ERR:
+		break;
+	case CQ_RX_ERROP_PREL2_ERR:
 		this_cpu_inc(nic->drv_stats->rx_prel2_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_L2_MAL:
-		this_cpu_inc(nic->drv_stats->rx_l2_hdr_malक्रमmed);
-		अवरोध;
-	हाल CQ_RX_ERROP_L2_OVERSIZE:
+		break;
+	case CQ_RX_ERROP_L2_MAL:
+		this_cpu_inc(nic->drv_stats->rx_l2_hdr_malformed);
+		break;
+	case CQ_RX_ERROP_L2_OVERSIZE:
 		this_cpu_inc(nic->drv_stats->rx_oversize);
-		अवरोध;
-	हाल CQ_RX_ERROP_L2_UNDERSIZE:
+		break;
+	case CQ_RX_ERROP_L2_UNDERSIZE:
 		this_cpu_inc(nic->drv_stats->rx_undersize);
-		अवरोध;
-	हाल CQ_RX_ERROP_L2_LENMISM:
+		break;
+	case CQ_RX_ERROP_L2_LENMISM:
 		this_cpu_inc(nic->drv_stats->rx_l2_len_mismatch);
-		अवरोध;
-	हाल CQ_RX_ERROP_L2_PCLP:
+		break;
+	case CQ_RX_ERROP_L2_PCLP:
 		this_cpu_inc(nic->drv_stats->rx_l2_pclp);
-		अवरोध;
-	हाल CQ_RX_ERROP_IP_NOT:
+		break;
+	case CQ_RX_ERROP_IP_NOT:
 		this_cpu_inc(nic->drv_stats->rx_ip_ver_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_IP_CSUM_ERR:
+		break;
+	case CQ_RX_ERROP_IP_CSUM_ERR:
 		this_cpu_inc(nic->drv_stats->rx_ip_csum_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_IP_MAL:
-		this_cpu_inc(nic->drv_stats->rx_ip_hdr_malक्रमmed);
-		अवरोध;
-	हाल CQ_RX_ERROP_IP_MALD:
-		this_cpu_inc(nic->drv_stats->rx_ip_payload_malक्रमmed);
-		अवरोध;
-	हाल CQ_RX_ERROP_IP_HOP:
+		break;
+	case CQ_RX_ERROP_IP_MAL:
+		this_cpu_inc(nic->drv_stats->rx_ip_hdr_malformed);
+		break;
+	case CQ_RX_ERROP_IP_MALD:
+		this_cpu_inc(nic->drv_stats->rx_ip_payload_malformed);
+		break;
+	case CQ_RX_ERROP_IP_HOP:
 		this_cpu_inc(nic->drv_stats->rx_ip_ttl_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_L3_PCLP:
+		break;
+	case CQ_RX_ERROP_L3_PCLP:
 		this_cpu_inc(nic->drv_stats->rx_l3_pclp);
-		अवरोध;
-	हाल CQ_RX_ERROP_L4_MAL:
-		this_cpu_inc(nic->drv_stats->rx_l4_malक्रमmed);
-		अवरोध;
-	हाल CQ_RX_ERROP_L4_CHK:
+		break;
+	case CQ_RX_ERROP_L4_MAL:
+		this_cpu_inc(nic->drv_stats->rx_l4_malformed);
+		break;
+	case CQ_RX_ERROP_L4_CHK:
 		this_cpu_inc(nic->drv_stats->rx_l4_csum_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_UDP_LEN:
+		break;
+	case CQ_RX_ERROP_UDP_LEN:
 		this_cpu_inc(nic->drv_stats->rx_udp_len_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_L4_PORT:
+		break;
+	case CQ_RX_ERROP_L4_PORT:
 		this_cpu_inc(nic->drv_stats->rx_l4_port_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_TCP_FLAG:
+		break;
+	case CQ_RX_ERROP_TCP_FLAG:
 		this_cpu_inc(nic->drv_stats->rx_tcp_flag_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_TCP_OFFSET:
+		break;
+	case CQ_RX_ERROP_TCP_OFFSET:
 		this_cpu_inc(nic->drv_stats->rx_tcp_offset_errs);
-		अवरोध;
-	हाल CQ_RX_ERROP_L4_PCLP:
+		break;
+	case CQ_RX_ERROP_L4_PCLP:
 		this_cpu_inc(nic->drv_stats->rx_l4_pclp);
-		अवरोध;
-	हाल CQ_RX_ERROP_RBDR_TRUNC:
+		break;
+	case CQ_RX_ERROP_RBDR_TRUNC:
 		this_cpu_inc(nic->drv_stats->rx_truncated_pkts);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-/* Check क्रम errors in the send cmp.queue entry */
-पूर्णांक nicvf_check_cqe_tx_errs(काष्ठा nicvf *nic, काष्ठा cqe_send_t *cqe_tx)
-अणु
-	चयन (cqe_tx->send_status) अणु
-	हाल CQ_TX_ERROP_DESC_FAULT:
+/* Check for errors in the send cmp.queue entry */
+int nicvf_check_cqe_tx_errs(struct nicvf *nic, struct cqe_send_t *cqe_tx)
+{
+	switch (cqe_tx->send_status) {
+	case CQ_TX_ERROP_DESC_FAULT:
 		this_cpu_inc(nic->drv_stats->tx_desc_fault);
-		अवरोध;
-	हाल CQ_TX_ERROP_HDR_CONS_ERR:
+		break;
+	case CQ_TX_ERROP_HDR_CONS_ERR:
 		this_cpu_inc(nic->drv_stats->tx_hdr_cons_err);
-		अवरोध;
-	हाल CQ_TX_ERROP_SUBDC_ERR:
+		break;
+	case CQ_TX_ERROP_SUBDC_ERR:
 		this_cpu_inc(nic->drv_stats->tx_subdesc_err);
-		अवरोध;
-	हाल CQ_TX_ERROP_MAX_SIZE_VIOL:
+		break;
+	case CQ_TX_ERROP_MAX_SIZE_VIOL:
 		this_cpu_inc(nic->drv_stats->tx_max_size_exceeded);
-		अवरोध;
-	हाल CQ_TX_ERROP_IMM_SIZE_OFLOW:
+		break;
+	case CQ_TX_ERROP_IMM_SIZE_OFLOW:
 		this_cpu_inc(nic->drv_stats->tx_imm_size_oflow);
-		अवरोध;
-	हाल CQ_TX_ERROP_DATA_SEQUENCE_ERR:
+		break;
+	case CQ_TX_ERROP_DATA_SEQUENCE_ERR:
 		this_cpu_inc(nic->drv_stats->tx_data_seq_err);
-		अवरोध;
-	हाल CQ_TX_ERROP_MEM_SEQUENCE_ERR:
+		break;
+	case CQ_TX_ERROP_MEM_SEQUENCE_ERR:
 		this_cpu_inc(nic->drv_stats->tx_mem_seq_err);
-		अवरोध;
-	हाल CQ_TX_ERROP_LOCK_VIOL:
+		break;
+	case CQ_TX_ERROP_LOCK_VIOL:
 		this_cpu_inc(nic->drv_stats->tx_lock_viol);
-		अवरोध;
-	हाल CQ_TX_ERROP_DATA_FAULT:
+		break;
+	case CQ_TX_ERROP_DATA_FAULT:
 		this_cpu_inc(nic->drv_stats->tx_data_fault);
-		अवरोध;
-	हाल CQ_TX_ERROP_TSTMP_CONFLICT:
-		this_cpu_inc(nic->drv_stats->tx_tsपंचांगp_conflict);
-		अवरोध;
-	हाल CQ_TX_ERROP_TSTMP_TIMEOUT:
-		this_cpu_inc(nic->drv_stats->tx_tsपंचांगp_समयout);
-		अवरोध;
-	हाल CQ_TX_ERROP_MEM_FAULT:
+		break;
+	case CQ_TX_ERROP_TSTMP_CONFLICT:
+		this_cpu_inc(nic->drv_stats->tx_tstmp_conflict);
+		break;
+	case CQ_TX_ERROP_TSTMP_TIMEOUT:
+		this_cpu_inc(nic->drv_stats->tx_tstmp_timeout);
+		break;
+	case CQ_TX_ERROP_MEM_FAULT:
 		this_cpu_inc(nic->drv_stats->tx_mem_fault);
-		अवरोध;
-	हाल CQ_TX_ERROP_CK_OVERLAP:
+		break;
+	case CQ_TX_ERROP_CK_OVERLAP:
 		this_cpu_inc(nic->drv_stats->tx_csum_overlap);
-		अवरोध;
-	हाल CQ_TX_ERROP_CK_OFLOW:
+		break;
+	case CQ_TX_ERROP_CK_OFLOW:
 		this_cpu_inc(nic->drv_stats->tx_csum_overflow);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}

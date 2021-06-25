@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#समावेश <sched.h>
-#समावेश <संकेत.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
+#include <sched.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#समावेश "ebb.h"
+#include "ebb.h"
 
 
 /*
- * Test that the kernel properly handles PMAE across context चयनes.
+ * Test that the kernel properly handles PMAE across context switches.
  *
- * We test this by calling पूर्णांकo the kernel inside our EBB handler, where PMAE
- * is clear. A cpu eater companion thपढ़ो is running on the same CPU as us to
- * encourage the scheduler to चयन us.
+ * We test this by calling into the kernel inside our EBB handler, where PMAE
+ * is clear. A cpu eater companion thread is running on the same CPU as us to
+ * encourage the scheduler to switch us.
  *
- * The kernel must make sure that when it context चयनes us back in, it
+ * The kernel must make sure that when it context switches us back in, it
  * honours the fact that we had PMAE clear.
  *
- * Observed to hit the failing हाल on the first EBB with a broken kernel.
+ * Observed to hit the failing case on the first EBB with a broken kernel.
  */
 
-अटल bool mmcr0_mismatch;
-अटल uपूर्णांक64_t beक्रमe, after;
+static bool mmcr0_mismatch;
+static uint64_t before, after;
 
-अटल व्योम syscall_ebb_callee(व्योम)
-अणु
-	uपूर्णांक64_t val;
+static void syscall_ebb_callee(void)
+{
+	uint64_t val;
 
 	val = mfspr(SPRN_BESCR);
-	अगर (!(val & BESCR_PMEO)) अणु
+	if (!(val & BESCR_PMEO)) {
 		ebb_state.stats.spurious++;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ebb_state.stats.ebb_count++;
 	count_pmc(1, sample_period);
 
-	beक्रमe = mfspr(SPRN_MMCR0);
+	before = mfspr(SPRN_MMCR0);
 
-	/* Try and get ourselves scheduled, to क्रमce a PMU context चयन */
+	/* Try and get ourselves scheduled, to force a PMU context switch */
 	sched_yield();
 
 	after = mfspr(SPRN_MMCR0);
-	अगर (beक्रमe != after)
+	if (before != after)
 		mmcr0_mismatch = true;
 
 out:
 	reset_ebb();
-पूर्ण
+}
 
-अटल पूर्णांक test_body(व्योम)
-अणु
-	काष्ठा event event;
+static int test_body(void)
+{
+	struct event event;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -68,7 +67,7 @@ out:
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_खोलो(&event));
+	FAIL_IF(event_open(&event));
 
 	setup_ebb_handler(syscall_ebb_callee);
 	ebb_global_enable();
@@ -77,31 +76,31 @@ out:
 
 	mtspr(SPRN_PMC1, pmc_sample_period(sample_period));
 
-	जबतक (ebb_state.stats.ebb_count < 20 && !mmcr0_mismatch)
+	while (ebb_state.stats.ebb_count < 20 && !mmcr0_mismatch)
 		FAIL_IF(core_busy_loop());
 
 	ebb_global_disable();
-	ebb_मुक्तze_pmcs();
+	ebb_freeze_pmcs();
 
 	dump_ebb_state();
 
-	अगर (mmcr0_mismatch)
-		म_लिखो("Saw MMCR0 before 0x%lx after 0x%lx\n", beक्रमe, after);
+	if (mmcr0_mismatch)
+		printf("Saw MMCR0 before 0x%lx after 0x%lx\n", before, after);
 
-	event_बंद(&event);
+	event_close(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0);
 	FAIL_IF(mmcr0_mismatch);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक pmae_handling(व्योम)
-अणु
-	वापस eat_cpu(test_body);
-पूर्ण
+int pmae_handling(void)
+{
+	return eat_cpu(test_body);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(pmae_handling, "pmae_handling");
-पूर्ण
+int main(void)
+{
+	return test_harness(pmae_handling, "pmae_handling");
+}

@@ -1,89 +1,88 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Freescale MPC5200 Audio DMA driver
  */
 
-#अगर_अघोषित __SOUND_SOC_FSL_MPC5200_DMA_H__
-#घोषणा __SOUND_SOC_FSL_MPC5200_DMA_H__
+#ifndef __SOUND_SOC_FSL_MPC5200_DMA_H__
+#define __SOUND_SOC_FSL_MPC5200_DMA_H__
 
-#घोषणा PSC_STREAM_NAME_LEN 32
+#define PSC_STREAM_NAME_LEN 32
 
 /**
- * psc_ac97_stream - Data specअगरic to a single stream (playback or capture)
- * @active:		flag indicating अगर the stream is active
- * @psc_dma:		poपूर्णांकer back to parent psc_dma data काष्ठाure
- * @bcom_task:		bestcomm task काष्ठाure
- * @irq:		irq number क्रम bestcomm task
+ * psc_ac97_stream - Data specific to a single stream (playback or capture)
+ * @active:		flag indicating if the stream is active
+ * @psc_dma:		pointer back to parent psc_dma data structure
+ * @bcom_task:		bestcomm task structure
+ * @irq:		irq number for bestcomm task
  * @period_end:		physical address of end of DMA region
  * @period_next_pt:	physical address of next DMA buffer to enqueue
  * @period_bytes:	size of DMA period in bytes
- * @ac97_slot_bits:	Enable bits क्रम turning on the correct AC97 slot
+ * @ac97_slot_bits:	Enable bits for turning on the correct AC97 slot
  */
-काष्ठा psc_dma_stream अणु
-	काष्ठा snd_pcm_runसमय *runसमय;
-	पूर्णांक active;
-	काष्ठा psc_dma *psc_dma;
-	काष्ठा bcom_task *bcom_task;
-	पूर्णांक irq;
-	काष्ठा snd_pcm_substream *stream;
-	पूर्णांक period_next;
-	पूर्णांक period_current;
-	पूर्णांक period_bytes;
-	पूर्णांक period_count;
+struct psc_dma_stream {
+	struct snd_pcm_runtime *runtime;
+	int active;
+	struct psc_dma *psc_dma;
+	struct bcom_task *bcom_task;
+	int irq;
+	struct snd_pcm_substream *stream;
+	int period_next;
+	int period_current;
+	int period_bytes;
+	int period_count;
 
 	/* AC97 state */
 	u32 ac97_slot_bits;
-पूर्ण;
+};
 
 /**
  * psc_dma - Private driver data
- * @name: लघु name क्रम this device ("PSC0", "PSC1", etc)
- * @psc_regs: poपूर्णांकer to the PSC's रेजिस्टरs
- * @fअगरo_regs: poपूर्णांकer to the PSC's FIFO रेजिस्टरs
+ * @name: short name for this device ("PSC0", "PSC1", etc)
+ * @psc_regs: pointer to the PSC's registers
+ * @fifo_regs: pointer to the PSC's FIFO registers
  * @irq: IRQ of this PSC
- * @dev: काष्ठा device poपूर्णांकer
- * @dai: the CPU DAI क्रम this device
- * @sicr: Base value used in serial पूर्णांकerface control रेजिस्टर; mode is ORed
+ * @dev: struct device pointer
+ * @dai: the CPU DAI for this device
+ * @sicr: Base value used in serial interface control register; mode is ORed
  *        with this value.
  * @playback: Playback stream context data
  * @capture: Capture stream context data
  */
-काष्ठा psc_dma अणु
-	अक्षर name[32];
-	काष्ठा mpc52xx_psc __iomem *psc_regs;
-	काष्ठा mpc52xx_psc_fअगरo __iomem *fअगरo_regs;
-	अचिन्हित पूर्णांक irq;
-	काष्ठा device *dev;
+struct psc_dma {
+	char name[32];
+	struct mpc52xx_psc __iomem *psc_regs;
+	struct mpc52xx_psc_fifo __iomem *fifo_regs;
+	unsigned int irq;
+	struct device *dev;
 	spinlock_t lock;
-	काष्ठा mutex mutex;
+	struct mutex mutex;
 	u32 sicr;
-	uपूर्णांक sysclk;
-	पूर्णांक imr;
-	पूर्णांक id;
-	अचिन्हित पूर्णांक slots;
+	uint sysclk;
+	int imr;
+	int id;
+	unsigned int slots;
 
 	/* per-stream data */
-	काष्ठा psc_dma_stream playback;
-	काष्ठा psc_dma_stream capture;
+	struct psc_dma_stream playback;
+	struct psc_dma_stream capture;
 
 	/* Statistics */
-	काष्ठा अणु
-		अचिन्हित दीर्घ overrun_count;
-		अचिन्हित दीर्घ underrun_count;
-	पूर्ण stats;
-पूर्ण;
+	struct {
+		unsigned long overrun_count;
+		unsigned long underrun_count;
+	} stats;
+};
 
-/* Utility क्रम retrieving psc_dma_stream काष्ठाure from a substream */
-अटल अंतरभूत काष्ठा psc_dma_stream *
-to_psc_dma_stream(काष्ठा snd_pcm_substream *substream, काष्ठा psc_dma *psc_dma)
-अणु
-	अगर (substream->pstr->stream == SNDRV_PCM_STREAM_CAPTURE)
-		वापस &psc_dma->capture;
-	वापस &psc_dma->playback;
-पूर्ण
+/* Utility for retrieving psc_dma_stream structure from a substream */
+static inline struct psc_dma_stream *
+to_psc_dma_stream(struct snd_pcm_substream *substream, struct psc_dma *psc_dma)
+{
+	if (substream->pstr->stream == SNDRV_PCM_STREAM_CAPTURE)
+		return &psc_dma->capture;
+	return &psc_dma->playback;
+}
 
-पूर्णांक mpc5200_audio_dma_create(काष्ठा platक्रमm_device *op);
-पूर्णांक mpc5200_audio_dma_destroy(काष्ठा platक्रमm_device *op);
+int mpc5200_audio_dma_create(struct platform_device *op);
+int mpc5200_audio_dma_destroy(struct platform_device *op);
 
-#पूर्ण_अगर /* __SOUND_SOC_FSL_MPC5200_DMA_H__ */
+#endif /* __SOUND_SOC_FSL_MPC5200_DMA_H__ */

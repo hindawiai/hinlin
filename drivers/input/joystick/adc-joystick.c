@@ -1,264 +1,263 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Input driver क्रम joysticks connected over ADC.
+ * Input driver for joysticks connected over ADC.
  * Copyright (c) 2019-2020 Artur Rojek <contact@artur-rojek.eu>
  */
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/input.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/property.h>
+#include <linux/ctype.h>
+#include <linux/input.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/consumer.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/property.h>
 
-#समावेश <यंत्र/unaligned.h>
+#include <asm/unaligned.h>
 
-काष्ठा adc_joystick_axis अणु
+struct adc_joystick_axis {
 	u32 code;
 	s32 range[2];
 	s32 fuzz;
 	s32 flat;
-पूर्ण;
+};
 
-काष्ठा adc_joystick अणु
-	काष्ठा input_dev *input;
-	काष्ठा iio_cb_buffer *buffer;
-	काष्ठा adc_joystick_axis *axes;
-	काष्ठा iio_channel *chans;
-	पूर्णांक num_chans;
-पूर्ण;
+struct adc_joystick {
+	struct input_dev *input;
+	struct iio_cb_buffer *buffer;
+	struct adc_joystick_axis *axes;
+	struct iio_channel *chans;
+	int num_chans;
+};
 
-अटल पूर्णांक adc_joystick_handle(स्थिर व्योम *data, व्योम *निजी)
-अणु
-	काष्ठा adc_joystick *joy = निजी;
-	क्रमागत iio_endian endianness;
-	पूर्णांक bytes, msb, val, idx, i;
-	स्थिर u16 *data_u16;
+static int adc_joystick_handle(const void *data, void *private)
+{
+	struct adc_joystick *joy = private;
+	enum iio_endian endianness;
+	int bytes, msb, val, idx, i;
+	const u16 *data_u16;
 	bool sign;
 
 	bytes = joy->chans[0].channel->scan_type.storagebits >> 3;
 
-	क्रम (i = 0; i < joy->num_chans; ++i) अणु
+	for (i = 0; i < joy->num_chans; ++i) {
 		idx = joy->chans[i].channel->scan_index;
 		endianness = joy->chans[i].channel->scan_type.endianness;
 		msb = joy->chans[i].channel->scan_type.realbits - 1;
-		sign = छोटे(joy->chans[i].channel->scan_type.sign) == 's';
+		sign = tolower(joy->chans[i].channel->scan_type.sign) == 's';
 
-		चयन (bytes) अणु
-		हाल 1:
-			val = ((स्थिर u8 *)data)[idx];
-			अवरोध;
-		हाल 2:
-			data_u16 = (स्थिर u16 *)data + idx;
+		switch (bytes) {
+		case 1:
+			val = ((const u8 *)data)[idx];
+			break;
+		case 2:
+			data_u16 = (const u16 *)data + idx;
 
 			/*
 			 * Data is aligned to the sample size by IIO core.
 			 * Call `get_unaligned_xe16` to hide type casting.
 			 */
-			अगर (endianness == IIO_BE)
+			if (endianness == IIO_BE)
 				val = get_unaligned_be16(data_u16);
-			अन्यथा अगर (endianness == IIO_LE)
+			else if (endianness == IIO_LE)
 				val = get_unaligned_le16(data_u16);
-			अन्यथा /* IIO_CPU */
+			else /* IIO_CPU */
 				val = *data_u16;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
-		val >>= joy->chans[i].channel->scan_type.shअगरt;
-		अगर (sign)
+		val >>= joy->chans[i].channel->scan_type.shift;
+		if (sign)
 			val = sign_extend32(val, msb);
-		अन्यथा
+		else
 			val &= GENMASK(msb, 0);
-		input_report_असल(joy->input, joy->axes[i].code, val);
-	पूर्ण
+		input_report_abs(joy->input, joy->axes[i].code, val);
+	}
 
 	input_sync(joy->input);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adc_joystick_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा adc_joystick *joy = input_get_drvdata(dev);
-	काष्ठा device *devp = &dev->dev;
-	पूर्णांक ret;
+static int adc_joystick_open(struct input_dev *dev)
+{
+	struct adc_joystick *joy = input_get_drvdata(dev);
+	struct device *devp = &dev->dev;
+	int ret;
 
 	ret = iio_channel_start_all_cb(joy->buffer);
-	अगर (ret)
+	if (ret)
 		dev_err(devp, "Unable to start callback buffer: %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम adc_joystick_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा adc_joystick *joy = input_get_drvdata(dev);
+static void adc_joystick_close(struct input_dev *dev)
+{
+	struct adc_joystick *joy = input_get_drvdata(dev);
 
 	iio_channel_stop_all_cb(joy->buffer);
-पूर्ण
+}
 
-अटल व्योम adc_joystick_cleanup(व्योम *data)
-अणु
+static void adc_joystick_cleanup(void *data)
+{
 	iio_channel_release_all_cb(data);
-पूर्ण
+}
 
-अटल पूर्णांक adc_joystick_set_axes(काष्ठा device *dev, काष्ठा adc_joystick *joy)
-अणु
-	काष्ठा adc_joystick_axis *axes;
-	काष्ठा fwnode_handle *child;
-	पूर्णांक num_axes, error, i;
+static int adc_joystick_set_axes(struct device *dev, struct adc_joystick *joy)
+{
+	struct adc_joystick_axis *axes;
+	struct fwnode_handle *child;
+	int num_axes, error, i;
 
 	num_axes = device_get_child_node_count(dev);
-	अगर (!num_axes) अणु
+	if (!num_axes) {
 		dev_err(dev, "Unable to find child nodes\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (num_axes != joy->num_chans) अणु
+	if (num_axes != joy->num_chans) {
 		dev_err(dev, "Got %d child nodes for %d channels\n",
 			num_axes, joy->num_chans);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	axes = devm_kदो_स्मृति_array(dev, num_axes, माप(*axes), GFP_KERNEL);
-	अगर (!axes)
-		वापस -ENOMEM;
+	axes = devm_kmalloc_array(dev, num_axes, sizeof(*axes), GFP_KERNEL);
+	if (!axes)
+		return -ENOMEM;
 
-	device_क्रम_each_child_node(dev, child) अणु
-		error = fwnode_property_पढ़ो_u32(child, "reg", &i);
-		अगर (error) अणु
+	device_for_each_child_node(dev, child) {
+		error = fwnode_property_read_u32(child, "reg", &i);
+		if (error) {
 			dev_err(dev, "reg invalid or missing\n");
-			जाओ err_fwnode_put;
-		पूर्ण
+			goto err_fwnode_put;
+		}
 
-		अगर (i >= num_axes) अणु
+		if (i >= num_axes) {
 			error = -EINVAL;
 			dev_err(dev, "No matching axis for reg %d\n", i);
-			जाओ err_fwnode_put;
-		पूर्ण
+			goto err_fwnode_put;
+		}
 
-		error = fwnode_property_पढ़ो_u32(child, "linux,code",
+		error = fwnode_property_read_u32(child, "linux,code",
 						 &axes[i].code);
-		अगर (error) अणु
+		if (error) {
 			dev_err(dev, "linux,code invalid or missing\n");
-			जाओ err_fwnode_put;
-		पूर्ण
+			goto err_fwnode_put;
+		}
 
-		error = fwnode_property_पढ़ो_u32_array(child, "abs-range",
+		error = fwnode_property_read_u32_array(child, "abs-range",
 						       axes[i].range, 2);
-		अगर (error) अणु
+		if (error) {
 			dev_err(dev, "abs-range invalid or missing\n");
-			जाओ err_fwnode_put;
-		पूर्ण
+			goto err_fwnode_put;
+		}
 
-		fwnode_property_पढ़ो_u32(child, "abs-fuzz", &axes[i].fuzz);
-		fwnode_property_पढ़ो_u32(child, "abs-flat", &axes[i].flat);
+		fwnode_property_read_u32(child, "abs-fuzz", &axes[i].fuzz);
+		fwnode_property_read_u32(child, "abs-flat", &axes[i].flat);
 
-		input_set_असल_params(joy->input, axes[i].code,
+		input_set_abs_params(joy->input, axes[i].code,
 				     axes[i].range[0], axes[i].range[1],
 				     axes[i].fuzz, axes[i].flat);
 		input_set_capability(joy->input, EV_ABS, axes[i].code);
-	पूर्ण
+	}
 
 	joy->axes = axes;
 
-	वापस 0;
+	return 0;
 
 err_fwnode_put:
 	fwnode_handle_put(child);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक adc_joystick_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा adc_joystick *joy;
-	काष्ठा input_dev *input;
-	पूर्णांक error;
-	पूर्णांक bits;
-	पूर्णांक i;
+static int adc_joystick_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct adc_joystick *joy;
+	struct input_dev *input;
+	int error;
+	int bits;
+	int i;
 
-	joy = devm_kzalloc(dev, माप(*joy), GFP_KERNEL);
-	अगर (!joy)
-		वापस -ENOMEM;
+	joy = devm_kzalloc(dev, sizeof(*joy), GFP_KERNEL);
+	if (!joy)
+		return -ENOMEM;
 
 	joy->chans = devm_iio_channel_get_all(dev);
-	अगर (IS_ERR(joy->chans)) अणु
+	if (IS_ERR(joy->chans)) {
 		error = PTR_ERR(joy->chans);
-		अगर (error != -EPROBE_DEFER)
+		if (error != -EPROBE_DEFER)
 			dev_err(dev, "Unable to get IIO channels");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	/* Count how many channels we got. शून्य terminated. */
-	क्रम (i = 0; joy->chans[i].indio_dev; i++) अणु
+	/* Count how many channels we got. NULL terminated. */
+	for (i = 0; joy->chans[i].indio_dev; i++) {
 		bits = joy->chans[i].channel->scan_type.storagebits;
-		अगर (!bits || bits > 16) अणु
+		if (!bits || bits > 16) {
 			dev_err(dev, "Unsupported channel storage size\n");
-			वापस -EINVAL;
-		पूर्ण
-		अगर (bits != joy->chans[0].channel->scan_type.storagebits) अणु
+			return -EINVAL;
+		}
+		if (bits != joy->chans[0].channel->scan_type.storagebits) {
 			dev_err(dev, "Channels must have equal storage size\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	joy->num_chans = i;
 
 	input = devm_input_allocate_device(dev);
-	अगर (!input) अणु
+	if (!input) {
 		dev_err(dev, "Unable to allocate input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	joy->input = input;
 	input->name = pdev->name;
 	input->id.bustype = BUS_HOST;
-	input->खोलो = adc_joystick_खोलो;
-	input->बंद = adc_joystick_बंद;
+	input->open = adc_joystick_open;
+	input->close = adc_joystick_close;
 
 	error = adc_joystick_set_axes(dev, joy);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	input_set_drvdata(input, joy);
-	error = input_रेजिस्टर_device(input);
-	अगर (error) अणु
+	error = input_register_device(input);
+	if (error) {
 		dev_err(dev, "Unable to register input device\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	joy->buffer = iio_channel_get_all_cb(dev, adc_joystick_handle, joy);
-	अगर (IS_ERR(joy->buffer)) अणु
+	if (IS_ERR(joy->buffer)) {
 		dev_err(dev, "Unable to allocate callback buffer\n");
-		वापस PTR_ERR(joy->buffer);
-	पूर्ण
+		return PTR_ERR(joy->buffer);
+	}
 
 	error = devm_add_action_or_reset(dev, adc_joystick_cleanup, joy->buffer);
-	अगर (error)  अणु
+	if (error)  {
 		dev_err(dev, "Unable to add action\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id adc_joystick_of_match[] = अणु
-	अणु .compatible = "adc-joystick", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id adc_joystick_of_match[] = {
+	{ .compatible = "adc-joystick", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, adc_joystick_of_match);
 
-अटल काष्ठा platक्रमm_driver adc_joystick_driver = अणु
-	.driver = अणु
+static struct platform_driver adc_joystick_driver = {
+	.driver = {
 		.name = "adc-joystick",
 		.of_match_table = adc_joystick_of_match,
-	पूर्ण,
+	},
 	.probe = adc_joystick_probe,
-पूर्ण;
-module_platक्रमm_driver(adc_joystick_driver);
+};
+module_platform_driver(adc_joystick_driver);
 
 MODULE_DESCRIPTION("Input driver for joysticks connected over ADC");
 MODULE_AUTHOR("Artur Rojek <contact@artur-rojek.eu>");

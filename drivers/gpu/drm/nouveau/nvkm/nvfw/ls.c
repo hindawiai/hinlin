@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,14 +19,14 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश <core/subdev.h>
-#समावेश <nvfw/ls.h>
+#include <core/subdev.h>
+#include <nvfw/ls.h>
 
-अटल व्योम
-nvfw_ls_desc_head(काष्ठा nvkm_subdev *subdev,
-		  स्थिर काष्ठा nvfw_ls_desc_head *hdr)
-अणु
-	अक्षर *date;
+static void
+nvfw_ls_desc_head(struct nvkm_subdev *subdev,
+		  const struct nvfw_ls_desc_head *hdr)
+{
+	char *date;
 
 	nvkm_debug(subdev, "lsUcodeImgDesc:\n");
 	nvkm_debug(subdev, "\tdescriptorSize       : %d\n",
@@ -37,9 +36,9 @@ nvfw_ls_desc_head(काष्ठा nvkm_subdev *subdev,
 			   hdr->tools_version);
 	nvkm_debug(subdev, "\tappVersion           : 0x%x\n", hdr->app_version);
 
-	date = kstrndup(hdr->date, माप(hdr->date), GFP_KERNEL);
+	date = kstrndup(hdr->date, sizeof(hdr->date), GFP_KERNEL);
 	nvkm_debug(subdev, "\tdate                 : %s\n", date);
-	kमुक्त(date);
+	kfree(date);
 
 	nvkm_debug(subdev, "\tbootloaderStartOffset: 0x%x\n",
 			   hdr->bootloader_start_offset);
@@ -48,7 +47,7 @@ nvfw_ls_desc_head(काष्ठा nvkm_subdev *subdev,
 	nvkm_debug(subdev, "\tbootloaderImemOffset : 0x%x\n",
 			   hdr->bootloader_imem_offset);
 	nvkm_debug(subdev, "\tbootloaderEntryPoint : 0x%x\n",
-			   hdr->bootloader_entry_poपूर्णांक);
+			   hdr->bootloader_entry_point);
 
 	nvkm_debug(subdev, "\tappStartOffset       : 0x%x\n",
 			   hdr->app_start_offset);
@@ -67,31 +66,31 @@ nvfw_ls_desc_head(काष्ठा nvkm_subdev *subdev,
 			   hdr->app_resident_data_offset);
 	nvkm_debug(subdev, "\tappResidentDataSize  : 0x%x\n",
 			   hdr->app_resident_data_size);
-पूर्ण
+}
 
-स्थिर काष्ठा nvfw_ls_desc *
-nvfw_ls_desc(काष्ठा nvkm_subdev *subdev, स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nvfw_ls_desc *hdr = data;
-	पूर्णांक i;
+const struct nvfw_ls_desc *
+nvfw_ls_desc(struct nvkm_subdev *subdev, const void *data)
+{
+	const struct nvfw_ls_desc *hdr = data;
+	int i;
 
 	nvfw_ls_desc_head(subdev, &hdr->head);
 
 	nvkm_debug(subdev, "\tnbOverlays           : %d\n", hdr->nb_overlays);
-	क्रम (i = 0; i < ARRAY_SIZE(hdr->load_ovl); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(hdr->load_ovl); i++) {
 		nvkm_debug(subdev, "\tloadOvl[%d]          : 0x%x %d\n", i,
 			   hdr->load_ovl[i].start, hdr->load_ovl[i].size);
-	पूर्ण
+	}
 	nvkm_debug(subdev, "\tcompressed           : %d\n", hdr->compressed);
 
-	वापस hdr;
-पूर्ण
+	return hdr;
+}
 
-स्थिर काष्ठा nvfw_ls_desc_v1 *
-nvfw_ls_desc_v1(काष्ठा nvkm_subdev *subdev, स्थिर व्योम *data)
-अणु
-	स्थिर काष्ठा nvfw_ls_desc_v1 *hdr = data;
-	पूर्णांक i;
+const struct nvfw_ls_desc_v1 *
+nvfw_ls_desc_v1(struct nvkm_subdev *subdev, const void *data)
+{
+	const struct nvfw_ls_desc_v1 *hdr = data;
+	int i;
 
 	nvfw_ls_desc_head(subdev, &hdr->head);
 
@@ -99,11 +98,11 @@ nvfw_ls_desc_v1(काष्ठा nvkm_subdev *subdev, स्थिर व्�
 			   hdr->nb_imem_overlays);
 	nvkm_debug(subdev, "\tnbDmemOverlays       : %d\n",
 			   hdr->nb_imem_overlays);
-	क्रम (i = 0; i < ARRAY_SIZE(hdr->load_ovl); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(hdr->load_ovl); i++) {
 		nvkm_debug(subdev, "\tloadOvl[%2d]          : 0x%x %d\n", i,
 			   hdr->load_ovl[i].start, hdr->load_ovl[i].size);
-	पूर्ण
+	}
 	nvkm_debug(subdev, "\tcompressed           : %d\n", hdr->compressed);
 
-	वापस hdr;
-पूर्ण
+	return hdr;
+}

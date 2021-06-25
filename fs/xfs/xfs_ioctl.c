@@ -1,414 +1,413 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_rtalloc.h"
-#समावेश "xfs_iwalk.h"
-#समावेश "xfs_itable.h"
-#समावेश "xfs_error.h"
-#समावेश "xfs_attr.h"
-#समावेश "xfs_bmap.h"
-#समावेश "xfs_bmap_util.h"
-#समावेश "xfs_fsops.h"
-#समावेश "xfs_discard.h"
-#समावेश "xfs_quota.h"
-#समावेश "xfs_export.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_icache.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_acl.h"
-#समावेश "xfs_btree.h"
-#समावेश <linux/fsmap.h>
-#समावेश "xfs_fsmap.h"
-#समावेश "scrub/xfs_scrub.h"
-#समावेश "xfs_sb.h"
-#समावेश "xfs_ag.h"
-#समावेश "xfs_health.h"
-#समावेश "xfs_reflink.h"
-#समावेश "xfs_ioctl.h"
-#समावेश "xfs_da_format.h"
-#समावेश "xfs_da_btree.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_inode.h"
+#include "xfs_rtalloc.h"
+#include "xfs_iwalk.h"
+#include "xfs_itable.h"
+#include "xfs_error.h"
+#include "xfs_attr.h"
+#include "xfs_bmap.h"
+#include "xfs_bmap_util.h"
+#include "xfs_fsops.h"
+#include "xfs_discard.h"
+#include "xfs_quota.h"
+#include "xfs_export.h"
+#include "xfs_trace.h"
+#include "xfs_icache.h"
+#include "xfs_trans.h"
+#include "xfs_acl.h"
+#include "xfs_btree.h"
+#include <linux/fsmap.h>
+#include "xfs_fsmap.h"
+#include "scrub/xfs_scrub.h"
+#include "xfs_sb.h"
+#include "xfs_ag.h"
+#include "xfs_health.h"
+#include "xfs_reflink.h"
+#include "xfs_ioctl.h"
+#include "xfs_da_format.h"
+#include "xfs_da_btree.h"
 
-#समावेश <linux/mount.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/fileattr.h>
+#include <linux/mount.h>
+#include <linux/namei.h>
+#include <linux/fileattr.h>
 
 /*
- * xfs_find_handle maps from userspace xfs_fsop_handlereq काष्ठाure to
+ * xfs_find_handle maps from userspace xfs_fsop_handlereq structure to
  * a file or fs handle.
  *
  * XFS_IOC_PATH_TO_FSHANDLE
- *    वापसs fs handle क्रम a mount poपूर्णांक or path within that mount poपूर्णांक
+ *    returns fs handle for a mount point or path within that mount point
  * XFS_IOC_FD_TO_HANDLE
- *    वापसs full handle क्रम a FD खोलोed in user space
+ *    returns full handle for a FD opened in user space
  * XFS_IOC_PATH_TO_HANDLE
- *    वापसs full handle क्रम a path
+ *    returns full handle for a path
  */
-पूर्णांक
+int
 xfs_find_handle(
-	अचिन्हित पूर्णांक		cmd,
+	unsigned int		cmd,
 	xfs_fsop_handlereq_t	*hreq)
-अणु
-	पूर्णांक			hsize;
+{
+	int			hsize;
 	xfs_handle_t		handle;
-	काष्ठा inode		*inode;
-	काष्ठा fd		f = अणुशून्यपूर्ण;
-	काष्ठा path		path;
-	पूर्णांक			error;
-	काष्ठा xfs_inode	*ip;
+	struct inode		*inode;
+	struct fd		f = {NULL};
+	struct path		path;
+	int			error;
+	struct xfs_inode	*ip;
 
-	अगर (cmd == XFS_IOC_FD_TO_HANDLE) अणु
+	if (cmd == XFS_IOC_FD_TO_HANDLE) {
 		f = fdget(hreq->fd);
-		अगर (!f.file)
-			वापस -EBADF;
+		if (!f.file)
+			return -EBADF;
 		inode = file_inode(f.file);
-	पूर्ण अन्यथा अणु
+	} else {
 		error = user_path_at(AT_FDCWD, hreq->path, 0, &path);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 		inode = d_inode(path.dentry);
-	पूर्ण
+	}
 	ip = XFS_I(inode);
 
 	/*
-	 * We can only generate handles क्रम inodes residing on a XFS fileप्रणाली,
-	 * and only क्रम regular files, directories or symbolic links.
+	 * We can only generate handles for inodes residing on a XFS filesystem,
+	 * and only for regular files, directories or symbolic links.
 	 */
 	error = -EINVAL;
-	अगर (inode->i_sb->s_magic != XFS_SB_MAGIC)
-		जाओ out_put;
+	if (inode->i_sb->s_magic != XFS_SB_MAGIC)
+		goto out_put;
 
 	error = -EBADF;
-	अगर (!S_ISREG(inode->i_mode) &&
-	    !S_ISसूची(inode->i_mode) &&
+	if (!S_ISREG(inode->i_mode) &&
+	    !S_ISDIR(inode->i_mode) &&
 	    !S_ISLNK(inode->i_mode))
-		जाओ out_put;
+		goto out_put;
 
 
-	स_नकल(&handle.ha_fsid, ip->i_mount->m_fixedfsid, माप(xfs_fsid_t));
+	memcpy(&handle.ha_fsid, ip->i_mount->m_fixedfsid, sizeof(xfs_fsid_t));
 
-	अगर (cmd == XFS_IOC_PATH_TO_FSHANDLE) अणु
+	if (cmd == XFS_IOC_PATH_TO_FSHANDLE) {
 		/*
 		 * This handle only contains an fsid, zero the rest.
 		 */
-		स_रखो(&handle.ha_fid, 0, माप(handle.ha_fid));
-		hsize = माप(xfs_fsid_t);
-	पूर्ण अन्यथा अणु
-		handle.ha_fid.fid_len = माप(xfs_fid_t) -
-					माप(handle.ha_fid.fid_len);
+		memset(&handle.ha_fid, 0, sizeof(handle.ha_fid));
+		hsize = sizeof(xfs_fsid_t);
+	} else {
+		handle.ha_fid.fid_len = sizeof(xfs_fid_t) -
+					sizeof(handle.ha_fid.fid_len);
 		handle.ha_fid.fid_pad = 0;
 		handle.ha_fid.fid_gen = inode->i_generation;
 		handle.ha_fid.fid_ino = ip->i_ino;
-		hsize = माप(xfs_handle_t);
-	पूर्ण
+		hsize = sizeof(xfs_handle_t);
+	}
 
 	error = -EFAULT;
-	अगर (copy_to_user(hreq->ohandle, &handle, hsize) ||
-	    copy_to_user(hreq->ohandlen, &hsize, माप(__s32)))
-		जाओ out_put;
+	if (copy_to_user(hreq->ohandle, &handle, hsize) ||
+	    copy_to_user(hreq->ohandlen, &hsize, sizeof(__s32)))
+		goto out_put;
 
 	error = 0;
 
  out_put:
-	अगर (cmd == XFS_IOC_FD_TO_HANDLE)
+	if (cmd == XFS_IOC_FD_TO_HANDLE)
 		fdput(f);
-	अन्यथा
+	else
 		path_put(&path);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * No need to करो permission checks on the various pathname components
+ * No need to do permission checks on the various pathname components
  * as the handle operations are privileged.
  */
-STATIC पूर्णांक
+STATIC int
 xfs_handle_acceptable(
-	व्योम			*context,
-	काष्ठा dentry		*dentry)
-अणु
-	वापस 1;
-पूर्ण
+	void			*context,
+	struct dentry		*dentry)
+{
+	return 1;
+}
 
 /*
- * Convert userspace handle data पूर्णांकo a dentry.
+ * Convert userspace handle data into a dentry.
  */
-काष्ठा dentry *
+struct dentry *
 xfs_handle_to_dentry(
-	काष्ठा file		*parfilp,
-	व्योम __user		*uhandle,
+	struct file		*parfilp,
+	void __user		*uhandle,
 	u32			hlen)
-अणु
+{
 	xfs_handle_t		handle;
-	काष्ठा xfs_fid64	fid;
+	struct xfs_fid64	fid;
 
 	/*
-	 * Only allow handle खोलोs under a directory.
+	 * Only allow handle opens under a directory.
 	 */
-	अगर (!S_ISसूची(file_inode(parfilp)->i_mode))
-		वापस ERR_PTR(-ENOTसूची);
+	if (!S_ISDIR(file_inode(parfilp)->i_mode))
+		return ERR_PTR(-ENOTDIR);
 
-	अगर (hlen != माप(xfs_handle_t))
-		वापस ERR_PTR(-EINVAL);
-	अगर (copy_from_user(&handle, uhandle, hlen))
-		वापस ERR_PTR(-EFAULT);
-	अगर (handle.ha_fid.fid_len !=
-	    माप(handle.ha_fid) - माप(handle.ha_fid.fid_len))
-		वापस ERR_PTR(-EINVAL);
+	if (hlen != sizeof(xfs_handle_t))
+		return ERR_PTR(-EINVAL);
+	if (copy_from_user(&handle, uhandle, hlen))
+		return ERR_PTR(-EFAULT);
+	if (handle.ha_fid.fid_len !=
+	    sizeof(handle.ha_fid) - sizeof(handle.ha_fid.fid_len))
+		return ERR_PTR(-EINVAL);
 
-	स_रखो(&fid, 0, माप(काष्ठा fid));
+	memset(&fid, 0, sizeof(struct fid));
 	fid.ino = handle.ha_fid.fid_ino;
 	fid.gen = handle.ha_fid.fid_gen;
 
-	वापस exportfs_decode_fh(parfilp->f_path.mnt, (काष्ठा fid *)&fid, 3,
-			खाताID_INO32_GEN | XFS_खाताID_TYPE_64FLAG,
-			xfs_handle_acceptable, शून्य);
-पूर्ण
+	return exportfs_decode_fh(parfilp->f_path.mnt, (struct fid *)&fid, 3,
+			FILEID_INO32_GEN | XFS_FILEID_TYPE_64FLAG,
+			xfs_handle_acceptable, NULL);
+}
 
-STATIC काष्ठा dentry *
+STATIC struct dentry *
 xfs_handlereq_to_dentry(
-	काष्ठा file		*parfilp,
+	struct file		*parfilp,
 	xfs_fsop_handlereq_t	*hreq)
-अणु
-	वापस xfs_handle_to_dentry(parfilp, hreq->ihandle, hreq->ihandlen);
-पूर्ण
+{
+	return xfs_handle_to_dentry(parfilp, hreq->ihandle, hreq->ihandlen);
+}
 
-पूर्णांक
-xfs_खोलो_by_handle(
-	काष्ठा file		*parfilp,
+int
+xfs_open_by_handle(
+	struct file		*parfilp,
 	xfs_fsop_handlereq_t	*hreq)
-अणु
-	स्थिर काष्ठा cred	*cred = current_cred();
-	पूर्णांक			error;
-	पूर्णांक			fd;
-	पूर्णांक			permflag;
-	काष्ठा file		*filp;
-	काष्ठा inode		*inode;
-	काष्ठा dentry		*dentry;
-	भ_शेषe_t			भ_शेषe;
-	काष्ठा path		path;
+{
+	const struct cred	*cred = current_cred();
+	int			error;
+	int			fd;
+	int			permflag;
+	struct file		*filp;
+	struct inode		*inode;
+	struct dentry		*dentry;
+	fmode_t			fmode;
+	struct path		path;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
 	dentry = xfs_handlereq_to_dentry(parfilp, hreq);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 	inode = d_inode(dentry);
 
-	/* Restrict xfs_खोलो_by_handle to directories & regular files. */
-	अगर (!(S_ISREG(inode->i_mode) || S_ISसूची(inode->i_mode))) अणु
+	/* Restrict xfs_open_by_handle to directories & regular files. */
+	if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode))) {
 		error = -EPERM;
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
-#अगर BITS_PER_LONG != 32
-	hreq->oflags |= O_LARGEखाता;
-#पूर्ण_अगर
+#if BITS_PER_LONG != 32
+	hreq->oflags |= O_LARGEFILE;
+#endif
 
 	permflag = hreq->oflags;
-	भ_शेषe = OPEN_FMODE(permflag);
-	अगर ((!(permflag & O_APPEND) || (permflag & O_TRUNC)) &&
-	    (भ_शेषe & FMODE_WRITE) && IS_APPEND(inode)) अणु
+	fmode = OPEN_FMODE(permflag);
+	if ((!(permflag & O_APPEND) || (permflag & O_TRUNC)) &&
+	    (fmode & FMODE_WRITE) && IS_APPEND(inode)) {
 		error = -EPERM;
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
-	अगर ((भ_शेषe & FMODE_WRITE) && IS_IMMUTABLE(inode)) अणु
+	if ((fmode & FMODE_WRITE) && IS_IMMUTABLE(inode)) {
 		error = -EPERM;
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
-	/* Can't ग_लिखो directories. */
-	अगर (S_ISसूची(inode->i_mode) && (भ_शेषe & FMODE_WRITE)) अणु
-		error = -EISसूची;
-		जाओ out_dput;
-	पूर्ण
+	/* Can't write directories. */
+	if (S_ISDIR(inode->i_mode) && (fmode & FMODE_WRITE)) {
+		error = -EISDIR;
+		goto out_dput;
+	}
 
 	fd = get_unused_fd_flags(0);
-	अगर (fd < 0) अणु
+	if (fd < 0) {
 		error = fd;
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
 	path.mnt = parfilp->f_path.mnt;
 	path.dentry = dentry;
-	filp = dentry_खोलो(&path, hreq->oflags, cred);
+	filp = dentry_open(&path, hreq->oflags, cred);
 	dput(dentry);
-	अगर (IS_ERR(filp)) अणु
+	if (IS_ERR(filp)) {
 		put_unused_fd(fd);
-		वापस PTR_ERR(filp);
-	पूर्ण
+		return PTR_ERR(filp);
+	}
 
-	अगर (S_ISREG(inode->i_mode)) अणु
+	if (S_ISREG(inode->i_mode)) {
 		filp->f_flags |= O_NOATIME;
 		filp->f_mode |= FMODE_NOCMTIME;
-	पूर्ण
+	}
 
 	fd_install(fd, filp);
-	वापस fd;
+	return fd;
 
  out_dput:
 	dput(dentry);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
-xfs_पढ़ोlink_by_handle(
-	काष्ठा file		*parfilp,
+int
+xfs_readlink_by_handle(
+	struct file		*parfilp,
 	xfs_fsop_handlereq_t	*hreq)
-अणु
-	काष्ठा dentry		*dentry;
+{
+	struct dentry		*dentry;
 	__u32			olen;
-	पूर्णांक			error;
+	int			error;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
 	dentry = xfs_handlereq_to_dentry(parfilp, hreq);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
 	/* Restrict this handle operation to symlinks only. */
-	अगर (!d_is_symlink(dentry)) अणु
+	if (!d_is_symlink(dentry)) {
 		error = -EINVAL;
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
-	अगर (copy_from_user(&olen, hreq->ohandlen, माप(__u32))) अणु
+	if (copy_from_user(&olen, hreq->ohandlen, sizeof(__u32))) {
 		error = -EFAULT;
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
-	error = vfs_पढ़ोlink(dentry, hreq->ohandle, olen);
+	error = vfs_readlink(dentry, hreq->ohandle, olen);
 
  out_dput:
 	dput(dentry);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Format an attribute and copy it out to the user's buffer.
  * Take care to check values and protect against them changing later,
- * we may be पढ़ोing them directly out of a user buffer.
+ * we may be reading them directly out of a user buffer.
  */
-अटल व्योम
+static void
 xfs_ioc_attr_put_listent(
-	काष्ठा xfs_attr_list_context *context,
-	पूर्णांक			flags,
-	अचिन्हित अक्षर		*name,
-	पूर्णांक			namelen,
-	पूर्णांक			valuelen)
-अणु
-	काष्ठा xfs_attrlist	*alist = context->buffer;
-	काष्ठा xfs_attrlist_ent	*aep;
-	पूर्णांक			arraytop;
+	struct xfs_attr_list_context *context,
+	int			flags,
+	unsigned char		*name,
+	int			namelen,
+	int			valuelen)
+{
+	struct xfs_attrlist	*alist = context->buffer;
+	struct xfs_attrlist_ent	*aep;
+	int			arraytop;
 
 	ASSERT(!context->seen_enough);
 	ASSERT(context->count >= 0);
 	ASSERT(context->count < (ATTR_MAX_VALUELEN/8));
-	ASSERT(context->firstu >= माप(*alist));
+	ASSERT(context->firstu >= sizeof(*alist));
 	ASSERT(context->firstu <= context->bufsize);
 
 	/*
 	 * Only list entries in the right namespace.
 	 */
-	अगर (context->attr_filter != (flags & XFS_ATTR_NSP_ONDISK_MASK))
-		वापस;
+	if (context->attr_filter != (flags & XFS_ATTR_NSP_ONDISK_MASK))
+		return;
 
-	arraytop = माप(*alist) +
-			context->count * माप(alist->al_offset[0]);
+	arraytop = sizeof(*alist) +
+			context->count * sizeof(alist->al_offset[0]);
 
 	/* decrement by the actual bytes used by the attr */
-	context->firstu -= round_up(दुरत्व(काष्ठा xfs_attrlist_ent, a_name) +
-			namelen + 1, माप(uपूर्णांक32_t));
-	अगर (context->firstu < arraytop) अणु
+	context->firstu -= round_up(offsetof(struct xfs_attrlist_ent, a_name) +
+			namelen + 1, sizeof(uint32_t));
+	if (context->firstu < arraytop) {
 		trace_xfs_attr_list_full(context);
 		alist->al_more = 1;
 		context->seen_enough = 1;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	aep = context->buffer + context->firstu;
 	aep->a_valuelen = valuelen;
-	स_नकल(aep->a_name, name, namelen);
+	memcpy(aep->a_name, name, namelen);
 	aep->a_name[namelen] = 0;
 	alist->al_offset[context->count++] = context->firstu;
 	alist->al_count = context->count;
 	trace_xfs_attr_list_add(context);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक
+static unsigned int
 xfs_attr_filter(
 	u32			ioc_flags)
-अणु
-	अगर (ioc_flags & XFS_IOC_ATTR_ROOT)
-		वापस XFS_ATTR_ROOT;
-	अगर (ioc_flags & XFS_IOC_ATTR_SECURE)
-		वापस XFS_ATTR_SECURE;
-	वापस 0;
-पूर्ण
+{
+	if (ioc_flags & XFS_IOC_ATTR_ROOT)
+		return XFS_ATTR_ROOT;
+	if (ioc_flags & XFS_IOC_ATTR_SECURE)
+		return XFS_ATTR_SECURE;
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक
+static unsigned int
 xfs_attr_flags(
 	u32			ioc_flags)
-अणु
-	अगर (ioc_flags & XFS_IOC_ATTR_CREATE)
-		वापस XATTR_CREATE;
-	अगर (ioc_flags & XFS_IOC_ATTR_REPLACE)
-		वापस XATTR_REPLACE;
-	वापस 0;
-पूर्ण
+{
+	if (ioc_flags & XFS_IOC_ATTR_CREATE)
+		return XATTR_CREATE;
+	if (ioc_flags & XFS_IOC_ATTR_REPLACE)
+		return XATTR_REPLACE;
+	return 0;
+}
 
-पूर्णांक
+int
 xfs_ioc_attr_list(
-	काष्ठा xfs_inode		*dp,
-	व्योम __user			*ubuf,
-	पूर्णांक				bufsize,
-	पूर्णांक				flags,
-	काष्ठा xfs_attrlist_cursor __user *ucursor)
-अणु
-	काष्ठा xfs_attr_list_context	context = अणु पूर्ण;
-	काष्ठा xfs_attrlist		*alist;
-	व्योम				*buffer;
-	पूर्णांक				error;
+	struct xfs_inode		*dp,
+	void __user			*ubuf,
+	int				bufsize,
+	int				flags,
+	struct xfs_attrlist_cursor __user *ucursor)
+{
+	struct xfs_attr_list_context	context = { };
+	struct xfs_attrlist		*alist;
+	void				*buffer;
+	int				error;
 
-	अगर (bufsize < माप(काष्ठा xfs_attrlist) ||
+	if (bufsize < sizeof(struct xfs_attrlist) ||
 	    bufsize > XFS_XATTR_LIST_MAX)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	/*
 	 * Reject flags, only allow namespaces.
 	 */
-	अगर (flags & ~(XFS_IOC_ATTR_ROOT | XFS_IOC_ATTR_SECURE))
-		वापस -EINVAL;
-	अगर (flags == (XFS_IOC_ATTR_ROOT | XFS_IOC_ATTR_SECURE))
-		वापस -EINVAL;
+	if (flags & ~(XFS_IOC_ATTR_ROOT | XFS_IOC_ATTR_SECURE))
+		return -EINVAL;
+	if (flags == (XFS_IOC_ATTR_ROOT | XFS_IOC_ATTR_SECURE))
+		return -EINVAL;
 
 	/*
 	 * Validate the cursor.
 	 */
-	अगर (copy_from_user(&context.cursor, ucursor, माप(context.cursor)))
-		वापस -EFAULT;
-	अगर (context.cursor.pad1 || context.cursor.pad2)
-		वापस -EINVAL;
-	अगर (!context.cursor.initted &&
+	if (copy_from_user(&context.cursor, ucursor, sizeof(context.cursor)))
+		return -EFAULT;
+	if (context.cursor.pad1 || context.cursor.pad2)
+		return -EINVAL;
+	if (!context.cursor.initted &&
 	    (context.cursor.hashval || context.cursor.blkno ||
 	     context.cursor.offset))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	buffer = kvzalloc(bufsize, GFP_KERNEL);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	if (!buffer)
+		return -ENOMEM;
 
 	/*
 	 * Initialize the output buffer.
@@ -417,7 +416,7 @@ xfs_ioc_attr_list(
 	context.resynch = 1;
 	context.attr_filter = xfs_attr_filter(flags);
 	context.buffer = buffer;
-	context.bufsize = round_करोwn(bufsize, माप(uपूर्णांक32_t));
+	context.bufsize = round_down(bufsize, sizeof(uint32_t));
 	context.firstu = context.bufsize;
 	context.put_listent = xfs_ioc_attr_put_listent;
 
@@ -427,350 +426,350 @@ xfs_ioc_attr_list(
 	alist->al_offset[0] = context.bufsize;
 
 	error = xfs_attr_list(&context);
-	अगर (error)
-		जाओ out_मुक्त;
+	if (error)
+		goto out_free;
 
-	अगर (copy_to_user(ubuf, buffer, bufsize) ||
-	    copy_to_user(ucursor, &context.cursor, माप(context.cursor)))
+	if (copy_to_user(ubuf, buffer, bufsize) ||
+	    copy_to_user(ucursor, &context.cursor, sizeof(context.cursor)))
 		error = -EFAULT;
-out_मुक्त:
-	kmem_मुक्त(buffer);
-	वापस error;
-पूर्ण
+out_free:
+	kmem_free(buffer);
+	return error;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_attrlist_by_handle(
-	काष्ठा file		*parfilp,
-	काष्ठा xfs_fsop_attrlist_handlereq __user *p)
-अणु
-	काष्ठा xfs_fsop_attrlist_handlereq al_hreq;
-	काष्ठा dentry		*dentry;
-	पूर्णांक			error = -ENOMEM;
+	struct file		*parfilp,
+	struct xfs_fsop_attrlist_handlereq __user *p)
+{
+	struct xfs_fsop_attrlist_handlereq al_hreq;
+	struct dentry		*dentry;
+	int			error = -ENOMEM;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
-	अगर (copy_from_user(&al_hreq, p, माप(al_hreq)))
-		वापस -EFAULT;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	if (copy_from_user(&al_hreq, p, sizeof(al_hreq)))
+		return -EFAULT;
 
 	dentry = xfs_handlereq_to_dentry(parfilp, &al_hreq.hreq);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
 	error = xfs_ioc_attr_list(XFS_I(d_inode(dentry)), al_hreq.buffer,
 				  al_hreq.buflen, al_hreq.flags, &p->pos);
 	dput(dentry);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक
+static int
 xfs_attrmulti_attr_get(
-	काष्ठा inode		*inode,
-	अचिन्हित अक्षर		*name,
-	अचिन्हित अक्षर		__user *ubuf,
-	uपूर्णांक32_t		*len,
-	uपूर्णांक32_t		flags)
-अणु
-	काष्ठा xfs_da_args	args = अणु
+	struct inode		*inode,
+	unsigned char		*name,
+	unsigned char		__user *ubuf,
+	uint32_t		*len,
+	uint32_t		flags)
+{
+	struct xfs_da_args	args = {
 		.dp		= XFS_I(inode),
 		.attr_filter	= xfs_attr_filter(flags),
 		.attr_flags	= xfs_attr_flags(flags),
 		.name		= name,
-		.namelen	= म_माप(name),
+		.namelen	= strlen(name),
 		.valuelen	= *len,
-	पूर्ण;
-	पूर्णांक			error;
+	};
+	int			error;
 
-	अगर (*len > XFS_XATTR_SIZE_MAX)
-		वापस -EINVAL;
+	if (*len > XFS_XATTR_SIZE_MAX)
+		return -EINVAL;
 
 	error = xfs_attr_get(&args);
-	अगर (error)
-		जाओ out_kमुक्त;
+	if (error)
+		goto out_kfree;
 
 	*len = args.valuelen;
-	अगर (copy_to_user(ubuf, args.value, args.valuelen))
+	if (copy_to_user(ubuf, args.value, args.valuelen))
 		error = -EFAULT;
 
-out_kमुक्त:
-	kmem_मुक्त(args.value);
-	वापस error;
-पूर्ण
+out_kfree:
+	kmem_free(args.value);
+	return error;
+}
 
-अटल पूर्णांक
+static int
 xfs_attrmulti_attr_set(
-	काष्ठा inode		*inode,
-	अचिन्हित अक्षर		*name,
-	स्थिर अचिन्हित अक्षर	__user *ubuf,
-	uपूर्णांक32_t		len,
-	uपूर्णांक32_t		flags)
-अणु
-	काष्ठा xfs_da_args	args = अणु
+	struct inode		*inode,
+	unsigned char		*name,
+	const unsigned char	__user *ubuf,
+	uint32_t		len,
+	uint32_t		flags)
+{
+	struct xfs_da_args	args = {
 		.dp		= XFS_I(inode),
 		.attr_filter	= xfs_attr_filter(flags),
 		.attr_flags	= xfs_attr_flags(flags),
 		.name		= name,
-		.namelen	= म_माप(name),
-	पूर्ण;
-	पूर्णांक			error;
+		.namelen	= strlen(name),
+	};
+	int			error;
 
-	अगर (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-		वापस -EPERM;
+	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+		return -EPERM;
 
-	अगर (ubuf) अणु
-		अगर (len > XFS_XATTR_SIZE_MAX)
-			वापस -EINVAL;
+	if (ubuf) {
+		if (len > XFS_XATTR_SIZE_MAX)
+			return -EINVAL;
 		args.value = memdup_user(ubuf, len);
-		अगर (IS_ERR(args.value))
-			वापस PTR_ERR(args.value);
+		if (IS_ERR(args.value))
+			return PTR_ERR(args.value);
 		args.valuelen = len;
-	पूर्ण
+	}
 
 	error = xfs_attr_set(&args);
-	अगर (!error && (flags & XFS_IOC_ATTR_ROOT))
-		xfs_क्रमget_acl(inode, name);
-	kमुक्त(args.value);
-	वापस error;
-पूर्ण
+	if (!error && (flags & XFS_IOC_ATTR_ROOT))
+		xfs_forget_acl(inode, name);
+	kfree(args.value);
+	return error;
+}
 
-पूर्णांक
+int
 xfs_ioc_attrmulti_one(
-	काष्ठा file		*parfilp,
-	काष्ठा inode		*inode,
-	uपूर्णांक32_t		opcode,
-	व्योम __user		*uname,
-	व्योम __user		*value,
-	uपूर्णांक32_t		*len,
-	uपूर्णांक32_t		flags)
-अणु
-	अचिन्हित अक्षर		*name;
-	पूर्णांक			error;
+	struct file		*parfilp,
+	struct inode		*inode,
+	uint32_t		opcode,
+	void __user		*uname,
+	void __user		*value,
+	uint32_t		*len,
+	uint32_t		flags)
+{
+	unsigned char		*name;
+	int			error;
 
-	अगर ((flags & XFS_IOC_ATTR_ROOT) && (flags & XFS_IOC_ATTR_SECURE))
-		वापस -EINVAL;
+	if ((flags & XFS_IOC_ATTR_ROOT) && (flags & XFS_IOC_ATTR_SECURE))
+		return -EINVAL;
 
 	name = strndup_user(uname, MAXNAMELEN);
-	अगर (IS_ERR(name))
-		वापस PTR_ERR(name);
+	if (IS_ERR(name))
+		return PTR_ERR(name);
 
-	चयन (opcode) अणु
-	हाल ATTR_OP_GET:
+	switch (opcode) {
+	case ATTR_OP_GET:
 		error = xfs_attrmulti_attr_get(inode, name, value, len, flags);
-		अवरोध;
-	हाल ATTR_OP_REMOVE:
-		value = शून्य;
+		break;
+	case ATTR_OP_REMOVE:
+		value = NULL;
 		*len = 0;
 		/* fall through */
-	हाल ATTR_OP_SET:
-		error = mnt_want_ग_लिखो_file(parfilp);
-		अगर (error)
-			अवरोध;
+	case ATTR_OP_SET:
+		error = mnt_want_write_file(parfilp);
+		if (error)
+			break;
 		error = xfs_attrmulti_attr_set(inode, name, value, *len, flags);
-		mnt_drop_ग_लिखो_file(parfilp);
-		अवरोध;
-	शेष:
+		mnt_drop_write_file(parfilp);
+		break;
+	default:
 		error = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	kमुक्त(name);
-	वापस error;
-पूर्ण
+	kfree(name);
+	return error;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_attrmulti_by_handle(
-	काष्ठा file		*parfilp,
-	व्योम			__user *arg)
-अणु
-	पूर्णांक			error;
+	struct file		*parfilp,
+	void			__user *arg)
+{
+	int			error;
 	xfs_attr_multiop_t	*ops;
 	xfs_fsop_attrmulti_handlereq_t am_hreq;
-	काष्ठा dentry		*dentry;
-	अचिन्हित पूर्णांक		i, size;
+	struct dentry		*dentry;
+	unsigned int		i, size;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
-	अगर (copy_from_user(&am_hreq, arg, माप(xfs_fsop_attrmulti_handlereq_t)))
-		वापस -EFAULT;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	if (copy_from_user(&am_hreq, arg, sizeof(xfs_fsop_attrmulti_handlereq_t)))
+		return -EFAULT;
 
 	/* overflow check */
-	अगर (am_hreq.opcount >= पूर्णांक_उच्च / माप(xfs_attr_multiop_t))
-		वापस -E2BIG;
+	if (am_hreq.opcount >= INT_MAX / sizeof(xfs_attr_multiop_t))
+		return -E2BIG;
 
 	dentry = xfs_handlereq_to_dentry(parfilp, &am_hreq.hreq);
-	अगर (IS_ERR(dentry))
-		वापस PTR_ERR(dentry);
+	if (IS_ERR(dentry))
+		return PTR_ERR(dentry);
 
 	error = -E2BIG;
-	size = am_hreq.opcount * माप(xfs_attr_multiop_t);
-	अगर (!size || size > 16 * PAGE_SIZE)
-		जाओ out_dput;
+	size = am_hreq.opcount * sizeof(xfs_attr_multiop_t);
+	if (!size || size > 16 * PAGE_SIZE)
+		goto out_dput;
 
 	ops = memdup_user(am_hreq.ops, size);
-	अगर (IS_ERR(ops)) अणु
+	if (IS_ERR(ops)) {
 		error = PTR_ERR(ops);
-		जाओ out_dput;
-	पूर्ण
+		goto out_dput;
+	}
 
 	error = 0;
-	क्रम (i = 0; i < am_hreq.opcount; i++) अणु
+	for (i = 0; i < am_hreq.opcount; i++) {
 		ops[i].am_error = xfs_ioc_attrmulti_one(parfilp,
 				d_inode(dentry), ops[i].am_opcode,
 				ops[i].am_attrname, ops[i].am_attrvalue,
 				&ops[i].am_length, ops[i].am_flags);
-	पूर्ण
+	}
 
-	अगर (copy_to_user(am_hreq.ops, ops, size))
+	if (copy_to_user(am_hreq.ops, ops, size))
 		error = -EFAULT;
 
-	kमुक्त(ops);
+	kfree(ops);
  out_dput:
 	dput(dentry);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
+int
 xfs_ioc_space(
-	काष्ठा file		*filp,
+	struct file		*filp,
 	xfs_flock64_t		*bf)
-अणु
-	काष्ठा inode		*inode = file_inode(filp);
-	काष्ठा xfs_inode	*ip = XFS_I(inode);
-	काष्ठा iattr		iattr;
-	क्रमागत xfs_pपुनः_स्मृति_flags	flags = XFS_PREALLOC_CLEAR;
-	uपूर्णांक			iolock = XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL;
-	पूर्णांक			error;
+{
+	struct inode		*inode = file_inode(filp);
+	struct xfs_inode	*ip = XFS_I(inode);
+	struct iattr		iattr;
+	enum xfs_prealloc_flags	flags = XFS_PREALLOC_CLEAR;
+	uint			iolock = XFS_IOLOCK_EXCL | XFS_MMAPLOCK_EXCL;
+	int			error;
 
-	अगर (inode->i_flags & (S_IMMUTABLE|S_APPEND))
-		वापस -EPERM;
+	if (inode->i_flags & (S_IMMUTABLE|S_APPEND))
+		return -EPERM;
 
-	अगर (!(filp->f_mode & FMODE_WRITE))
-		वापस -EBADF;
+	if (!(filp->f_mode & FMODE_WRITE))
+		return -EBADF;
 
-	अगर (!S_ISREG(inode->i_mode))
-		वापस -EINVAL;
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
 
-	अगर (xfs_is_always_cow_inode(ip))
-		वापस -EOPNOTSUPP;
+	if (xfs_is_always_cow_inode(ip))
+		return -EOPNOTSUPP;
 
-	अगर (filp->f_flags & O_DSYNC)
+	if (filp->f_flags & O_DSYNC)
 		flags |= XFS_PREALLOC_SYNC;
-	अगर (filp->f_mode & FMODE_NOCMTIME)
+	if (filp->f_mode & FMODE_NOCMTIME)
 		flags |= XFS_PREALLOC_INVISIBLE;
 
-	error = mnt_want_ग_लिखो_file(filp);
-	अगर (error)
-		वापस error;
+	error = mnt_want_write_file(filp);
+	if (error)
+		return error;
 
 	xfs_ilock(ip, iolock);
-	error = xfs_अवरोध_layouts(inode, &iolock, BREAK_UNMAP);
-	अगर (error)
-		जाओ out_unlock;
-	inode_dio_रुको(inode);
+	error = xfs_break_layouts(inode, &iolock, BREAK_UNMAP);
+	if (error)
+		goto out_unlock;
+	inode_dio_wait(inode);
 
-	चयन (bf->l_whence) अणु
-	हाल 0: /*शुरू_से*/
-		अवरोध;
-	हाल 1: /*प्रस्तुत_से*/
+	switch (bf->l_whence) {
+	case 0: /*SEEK_SET*/
+		break;
+	case 1: /*SEEK_CUR*/
 		bf->l_start += filp->f_pos;
-		अवरोध;
-	हाल 2: /*अंत_से*/
+		break;
+	case 2: /*SEEK_END*/
 		bf->l_start += XFS_ISIZE(ip);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		error = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (bf->l_start < 0 || bf->l_start > inode->i_sb->s_maxbytes) अणु
+	if (bf->l_start < 0 || bf->l_start > inode->i_sb->s_maxbytes) {
 		error = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	अगर (bf->l_start > XFS_ISIZE(ip)) अणु
+	if (bf->l_start > XFS_ISIZE(ip)) {
 		error = xfs_alloc_file_space(ip, XFS_ISIZE(ip),
 				bf->l_start - XFS_ISIZE(ip), 0);
-		अगर (error)
-			जाओ out_unlock;
-	पूर्ण
+		if (error)
+			goto out_unlock;
+	}
 
 	iattr.ia_valid = ATTR_SIZE;
 	iattr.ia_size = bf->l_start;
 	error = xfs_vn_setattr_size(file_mnt_user_ns(filp), file_dentry(filp),
 				    &iattr);
-	अगर (error)
-		जाओ out_unlock;
+	if (error)
+		goto out_unlock;
 
-	error = xfs_update_pपुनः_स्मृति_flags(ip, flags);
+	error = xfs_update_prealloc_flags(ip, flags);
 
 out_unlock:
 	xfs_iunlock(ip, iolock);
-	mnt_drop_ग_लिखो_file(filp);
-	वापस error;
-पूर्ण
+	mnt_drop_write_file(filp);
+	return error;
+}
 
 /* Return 0 on success or positive error */
-पूर्णांक
+int
 xfs_fsbulkstat_one_fmt(
-	काष्ठा xfs_ibulk		*breq,
-	स्थिर काष्ठा xfs_bulkstat	*bstat)
-अणु
-	काष्ठा xfs_bstat		bs1;
+	struct xfs_ibulk		*breq,
+	const struct xfs_bulkstat	*bstat)
+{
+	struct xfs_bstat		bs1;
 
 	xfs_bulkstat_to_bstat(breq->mp, &bs1, bstat);
-	अगर (copy_to_user(breq->ubuffer, &bs1, माप(bs1)))
-		वापस -EFAULT;
-	वापस xfs_ibulk_advance(breq, माप(काष्ठा xfs_bstat));
-पूर्ण
+	if (copy_to_user(breq->ubuffer, &bs1, sizeof(bs1)))
+		return -EFAULT;
+	return xfs_ibulk_advance(breq, sizeof(struct xfs_bstat));
+}
 
-पूर्णांक
+int
 xfs_fsinumbers_fmt(
-	काष्ठा xfs_ibulk		*breq,
-	स्थिर काष्ठा xfs_inumbers	*igrp)
-अणु
-	काष्ठा xfs_inogrp		ig1;
+	struct xfs_ibulk		*breq,
+	const struct xfs_inumbers	*igrp)
+{
+	struct xfs_inogrp		ig1;
 
 	xfs_inumbers_to_inogrp(&ig1, igrp);
-	अगर (copy_to_user(breq->ubuffer, &ig1, माप(काष्ठा xfs_inogrp)))
-		वापस -EFAULT;
-	वापस xfs_ibulk_advance(breq, माप(काष्ठा xfs_inogrp));
-पूर्ण
+	if (copy_to_user(breq->ubuffer, &ig1, sizeof(struct xfs_inogrp)))
+		return -EFAULT;
+	return xfs_ibulk_advance(breq, sizeof(struct xfs_inogrp));
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_fsbulkstat(
-	काष्ठा file		*file,
-	अचिन्हित पूर्णांक		cmd,
-	व्योम			__user *arg)
-अणु
-	काष्ठा xfs_mount	*mp = XFS_I(file_inode(file))->i_mount;
-	काष्ठा xfs_fsop_bulkreq	bulkreq;
-	काष्ठा xfs_ibulk	breq = अणु
+	struct file		*file,
+	unsigned int		cmd,
+	void			__user *arg)
+{
+	struct xfs_mount	*mp = XFS_I(file_inode(file))->i_mount;
+	struct xfs_fsop_bulkreq	bulkreq;
+	struct xfs_ibulk	breq = {
 		.mp		= mp,
 		.mnt_userns	= file_mnt_user_ns(file),
 		.ocount		= 0,
-	पूर्ण;
+	};
 	xfs_ino_t		lastino;
-	पूर्णांक			error;
+	int			error;
 
-	/* करोne = 1 अगर there are more stats to get and अगर bulkstat */
+	/* done = 1 if there are more stats to get and if bulkstat */
 	/* should be called again (unused here, but used in dmapi) */
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (XFS_FORCED_SHUTDOWN(mp))
-		वापस -EIO;
+	if (XFS_FORCED_SHUTDOWN(mp))
+		return -EIO;
 
-	अगर (copy_from_user(&bulkreq, arg, माप(काष्ठा xfs_fsop_bulkreq)))
-		वापस -EFAULT;
+	if (copy_from_user(&bulkreq, arg, sizeof(struct xfs_fsop_bulkreq)))
+		return -EFAULT;
 
-	अगर (copy_from_user(&lastino, bulkreq.lastip, माप(__s64)))
-		वापस -EFAULT;
+	if (copy_from_user(&lastino, bulkreq.lastip, sizeof(__s64)))
+		return -EFAULT;
 
-	अगर (bulkreq.icount <= 0)
-		वापस -EINVAL;
+	if (bulkreq.icount <= 0)
+		return -EINVAL;
 
-	अगर (bulkreq.ubuffer == शून्य)
-		वापस -EINVAL;
+	if (bulkreq.ubuffer == NULL)
+		return -EINVAL;
 
 	breq.ubuffer = bulkreq.ubuffer;
 	breq.icount = bulkreq.icount;
@@ -779,69 +778,69 @@ xfs_ioc_fsbulkstat(
 	 * FSBULKSTAT_SINGLE expects that *lastip contains the inode number
 	 * that we want to stat.  However, FSINUMBERS and FSBULKSTAT expect
 	 * that *lastip contains either zero or the number of the last inode to
-	 * be examined by the previous call and वापस results starting with
+	 * be examined by the previous call and return results starting with
 	 * the next inode after that.  The new bulk request back end functions
 	 * take the inode to start with, so we have to compute the startino
-	 * parameter from lastino to मुख्यtain correct function.  lastino == 0
-	 * is a special हाल because it has traditionally meant "first inode
-	 * in fileप्रणाली".
+	 * parameter from lastino to maintain correct function.  lastino == 0
+	 * is a special case because it has traditionally meant "first inode
+	 * in filesystem".
 	 */
-	अगर (cmd == XFS_IOC_FSINUMBERS) अणु
+	if (cmd == XFS_IOC_FSINUMBERS) {
 		breq.startino = lastino ? lastino + 1 : 0;
 		error = xfs_inumbers(&breq, xfs_fsinumbers_fmt);
 		lastino = breq.startino - 1;
-	पूर्ण अन्यथा अगर (cmd == XFS_IOC_FSBULKSTAT_SINGLE) अणु
+	} else if (cmd == XFS_IOC_FSBULKSTAT_SINGLE) {
 		breq.startino = lastino;
 		breq.icount = 1;
 		error = xfs_bulkstat_one(&breq, xfs_fsbulkstat_one_fmt);
-	पूर्ण अन्यथा अणु	/* XFS_IOC_FSBULKSTAT */
+	} else {	/* XFS_IOC_FSBULKSTAT */
 		breq.startino = lastino ? lastino + 1 : 0;
 		error = xfs_bulkstat(&breq, xfs_fsbulkstat_one_fmt);
 		lastino = breq.startino - 1;
-	पूर्ण
+	}
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (bulkreq.lastip != शून्य &&
-	    copy_to_user(bulkreq.lastip, &lastino, माप(xfs_ino_t)))
-		वापस -EFAULT;
+	if (bulkreq.lastip != NULL &&
+	    copy_to_user(bulkreq.lastip, &lastino, sizeof(xfs_ino_t)))
+		return -EFAULT;
 
-	अगर (bulkreq.ocount != शून्य &&
-	    copy_to_user(bulkreq.ocount, &breq.ocount, माप(__s32)))
-		वापस -EFAULT;
+	if (bulkreq.ocount != NULL &&
+	    copy_to_user(bulkreq.ocount, &breq.ocount, sizeof(__s32)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Return 0 on success or positive error */
-अटल पूर्णांक
+static int
 xfs_bulkstat_fmt(
-	काष्ठा xfs_ibulk		*breq,
-	स्थिर काष्ठा xfs_bulkstat	*bstat)
-अणु
-	अगर (copy_to_user(breq->ubuffer, bstat, माप(काष्ठा xfs_bulkstat)))
-		वापस -EFAULT;
-	वापस xfs_ibulk_advance(breq, माप(काष्ठा xfs_bulkstat));
-पूर्ण
+	struct xfs_ibulk		*breq,
+	const struct xfs_bulkstat	*bstat)
+{
+	if (copy_to_user(breq->ubuffer, bstat, sizeof(struct xfs_bulkstat)))
+		return -EFAULT;
+	return xfs_ibulk_advance(breq, sizeof(struct xfs_bulkstat));
+}
 
 /*
  * Check the incoming bulk request @hdr from userspace and initialize the
- * पूर्णांकernal @breq bulk request appropriately.  Returns 0 अगर the bulk request
- * should proceed; -ECANCELED अगर there's nothing to करो; or the usual
+ * internal @breq bulk request appropriately.  Returns 0 if the bulk request
+ * should proceed; -ECANCELED if there's nothing to do; or the usual
  * negative error code.
  */
-अटल पूर्णांक
+static int
 xfs_bulk_ireq_setup(
-	काष्ठा xfs_mount	*mp,
-	काष्ठा xfs_bulk_ireq	*hdr,
-	काष्ठा xfs_ibulk	*breq,
-	व्योम __user		*ubuffer)
-अणु
-	अगर (hdr->icount == 0 ||
+	struct xfs_mount	*mp,
+	struct xfs_bulk_ireq	*hdr,
+	struct xfs_ibulk	*breq,
+	void __user		*ubuffer)
+{
+	if (hdr->icount == 0 ||
 	    (hdr->flags & ~XFS_BULK_IREQ_FLAGS_ALL) ||
-	    स_प्रथम_inv(hdr->reserved, 0, माप(hdr->reserved)))
-		वापस -EINVAL;
+	    memchr_inv(hdr->reserved, 0, sizeof(hdr->reserved)))
+		return -EINVAL;
 
 	breq->startino = hdr->ino;
 	breq->ubuffer = ubuffer;
@@ -851,1014 +850,1014 @@ xfs_bulk_ireq_setup(
 
 	/*
 	 * The @ino parameter is a special value, so we must look it up here.
-	 * We're not allowed to have IREQ_AGNO, and we only वापस one inode
+	 * We're not allowed to have IREQ_AGNO, and we only return one inode
 	 * worth of data.
 	 */
-	अगर (hdr->flags & XFS_BULK_IREQ_SPECIAL) अणु
-		अगर (hdr->flags & XFS_BULK_IREQ_AGNO)
-			वापस -EINVAL;
+	if (hdr->flags & XFS_BULK_IREQ_SPECIAL) {
+		if (hdr->flags & XFS_BULK_IREQ_AGNO)
+			return -EINVAL;
 
-		चयन (hdr->ino) अणु
-		हाल XFS_BULK_IREQ_SPECIAL_ROOT:
+		switch (hdr->ino) {
+		case XFS_BULK_IREQ_SPECIAL_ROOT:
 			hdr->ino = mp->m_sb.sb_rootino;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 		breq->icount = 1;
-	पूर्ण
+	}
 
 	/*
 	 * The IREQ_AGNO flag means that we only want results from a given AG.
 	 * If @hdr->ino is zero, we start iterating in that AG.  If @hdr->ino is
-	 * beyond the specअगरied AG then we वापस no results.
+	 * beyond the specified AG then we return no results.
 	 */
-	अगर (hdr->flags & XFS_BULK_IREQ_AGNO) अणु
-		अगर (hdr->agno >= mp->m_sb.sb_agcount)
-			वापस -EINVAL;
+	if (hdr->flags & XFS_BULK_IREQ_AGNO) {
+		if (hdr->agno >= mp->m_sb.sb_agcount)
+			return -EINVAL;
 
-		अगर (breq->startino == 0)
+		if (breq->startino == 0)
 			breq->startino = XFS_AGINO_TO_INO(mp, hdr->agno, 0);
-		अन्यथा अगर (XFS_INO_TO_AGNO(mp, breq->startino) < hdr->agno)
-			वापस -EINVAL;
+		else if (XFS_INO_TO_AGNO(mp, breq->startino) < hdr->agno)
+			return -EINVAL;
 
 		breq->flags |= XFS_IBULK_SAME_AG;
 
-		/* Asking क्रम an inode past the end of the AG?  We're करोne! */
-		अगर (XFS_INO_TO_AGNO(mp, breq->startino) > hdr->agno)
-			वापस -ECANCELED;
-	पूर्ण अन्यथा अगर (hdr->agno)
-		वापस -EINVAL;
+		/* Asking for an inode past the end of the AG?  We're done! */
+		if (XFS_INO_TO_AGNO(mp, breq->startino) > hdr->agno)
+			return -ECANCELED;
+	} else if (hdr->agno)
+		return -EINVAL;
 
-	/* Asking क्रम an inode past the end of the FS?  We're करोne! */
-	अगर (XFS_INO_TO_AGNO(mp, breq->startino) >= mp->m_sb.sb_agcount)
-		वापस -ECANCELED;
+	/* Asking for an inode past the end of the FS?  We're done! */
+	if (XFS_INO_TO_AGNO(mp, breq->startino) >= mp->m_sb.sb_agcount)
+		return -ECANCELED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Update the userspace bulk request @hdr to reflect the end state of the
- * पूर्णांकernal bulk request @breq.
+ * internal bulk request @breq.
  */
-अटल व्योम
-xfs_bulk_ireq_tearकरोwn(
-	काष्ठा xfs_bulk_ireq	*hdr,
-	काष्ठा xfs_ibulk	*breq)
-अणु
+static void
+xfs_bulk_ireq_teardown(
+	struct xfs_bulk_ireq	*hdr,
+	struct xfs_ibulk	*breq)
+{
 	hdr->ino = breq->startino;
 	hdr->ocount = breq->ocount;
-पूर्ण
+}
 
 /* Handle the v5 bulkstat ioctl. */
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_bulkstat(
-	काष्ठा file			*file,
-	अचिन्हित पूर्णांक			cmd,
-	काष्ठा xfs_bulkstat_req __user	*arg)
-अणु
-	काष्ठा xfs_mount		*mp = XFS_I(file_inode(file))->i_mount;
-	काष्ठा xfs_bulk_ireq		hdr;
-	काष्ठा xfs_ibulk		breq = अणु
+	struct file			*file,
+	unsigned int			cmd,
+	struct xfs_bulkstat_req __user	*arg)
+{
+	struct xfs_mount		*mp = XFS_I(file_inode(file))->i_mount;
+	struct xfs_bulk_ireq		hdr;
+	struct xfs_ibulk		breq = {
 		.mp			= mp,
 		.mnt_userns		= file_mnt_user_ns(file),
-	पूर्ण;
-	पूर्णांक				error;
+	};
+	int				error;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (XFS_FORCED_SHUTDOWN(mp))
-		वापस -EIO;
+	if (XFS_FORCED_SHUTDOWN(mp))
+		return -EIO;
 
-	अगर (copy_from_user(&hdr, &arg->hdr, माप(hdr)))
-		वापस -EFAULT;
+	if (copy_from_user(&hdr, &arg->hdr, sizeof(hdr)))
+		return -EFAULT;
 
 	error = xfs_bulk_ireq_setup(mp, &hdr, &breq, arg->bulkstat);
-	अगर (error == -ECANCELED)
-		जाओ out_tearकरोwn;
-	अगर (error < 0)
-		वापस error;
+	if (error == -ECANCELED)
+		goto out_teardown;
+	if (error < 0)
+		return error;
 
 	error = xfs_bulkstat(&breq, xfs_bulkstat_fmt);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-out_tearकरोwn:
-	xfs_bulk_ireq_tearकरोwn(&hdr, &breq);
-	अगर (copy_to_user(&arg->hdr, &hdr, माप(hdr)))
-		वापस -EFAULT;
+out_teardown:
+	xfs_bulk_ireq_teardown(&hdr, &breq);
+	if (copy_to_user(&arg->hdr, &hdr, sizeof(hdr)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_inumbers_fmt(
-	काष्ठा xfs_ibulk		*breq,
-	स्थिर काष्ठा xfs_inumbers	*igrp)
-अणु
-	अगर (copy_to_user(breq->ubuffer, igrp, माप(काष्ठा xfs_inumbers)))
-		वापस -EFAULT;
-	वापस xfs_ibulk_advance(breq, माप(काष्ठा xfs_inumbers));
-पूर्ण
+	struct xfs_ibulk		*breq,
+	const struct xfs_inumbers	*igrp)
+{
+	if (copy_to_user(breq->ubuffer, igrp, sizeof(struct xfs_inumbers)))
+		return -EFAULT;
+	return xfs_ibulk_advance(breq, sizeof(struct xfs_inumbers));
+}
 
 /* Handle the v5 inumbers ioctl. */
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_inumbers(
-	काष्ठा xfs_mount		*mp,
-	अचिन्हित पूर्णांक			cmd,
-	काष्ठा xfs_inumbers_req __user	*arg)
-अणु
-	काष्ठा xfs_bulk_ireq		hdr;
-	काष्ठा xfs_ibulk		breq = अणु
+	struct xfs_mount		*mp,
+	unsigned int			cmd,
+	struct xfs_inumbers_req __user	*arg)
+{
+	struct xfs_bulk_ireq		hdr;
+	struct xfs_ibulk		breq = {
 		.mp			= mp,
-	पूर्ण;
-	पूर्णांक				error;
+	};
+	int				error;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (XFS_FORCED_SHUTDOWN(mp))
-		वापस -EIO;
+	if (XFS_FORCED_SHUTDOWN(mp))
+		return -EIO;
 
-	अगर (copy_from_user(&hdr, &arg->hdr, माप(hdr)))
-		वापस -EFAULT;
+	if (copy_from_user(&hdr, &arg->hdr, sizeof(hdr)))
+		return -EFAULT;
 
 	error = xfs_bulk_ireq_setup(mp, &hdr, &breq, arg->inumbers);
-	अगर (error == -ECANCELED)
-		जाओ out_tearकरोwn;
-	अगर (error < 0)
-		वापस error;
+	if (error == -ECANCELED)
+		goto out_teardown;
+	if (error < 0)
+		return error;
 
 	error = xfs_inumbers(&breq, xfs_inumbers_fmt);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-out_tearकरोwn:
-	xfs_bulk_ireq_tearकरोwn(&hdr, &breq);
-	अगर (copy_to_user(&arg->hdr, &hdr, माप(hdr)))
-		वापस -EFAULT;
+out_teardown:
+	xfs_bulk_ireq_teardown(&hdr, &breq);
+	if (copy_to_user(&arg->hdr, &hdr, sizeof(hdr)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_fsgeometry(
-	काष्ठा xfs_mount	*mp,
-	व्योम			__user *arg,
-	पूर्णांक			काष्ठा_version)
-अणु
-	काष्ठा xfs_fsop_geom	fsgeo;
-	माप_प्रकार			len;
+	struct xfs_mount	*mp,
+	void			__user *arg,
+	int			struct_version)
+{
+	struct xfs_fsop_geom	fsgeo;
+	size_t			len;
 
-	xfs_fs_geometry(&mp->m_sb, &fsgeo, काष्ठा_version);
+	xfs_fs_geometry(&mp->m_sb, &fsgeo, struct_version);
 
-	अगर (काष्ठा_version <= 3)
-		len = माप(काष्ठा xfs_fsop_geom_v1);
-	अन्यथा अगर (काष्ठा_version == 4)
-		len = माप(काष्ठा xfs_fsop_geom_v4);
-	अन्यथा अणु
+	if (struct_version <= 3)
+		len = sizeof(struct xfs_fsop_geom_v1);
+	else if (struct_version == 4)
+		len = sizeof(struct xfs_fsop_geom_v4);
+	else {
 		xfs_fsop_geom_health(mp, &fsgeo);
-		len = माप(fsgeo);
-	पूर्ण
+		len = sizeof(fsgeo);
+	}
 
-	अगर (copy_to_user(arg, &fsgeo, len))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(arg, &fsgeo, len))
+		return -EFAULT;
+	return 0;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_ag_geometry(
-	काष्ठा xfs_mount	*mp,
-	व्योम			__user *arg)
-अणु
-	काष्ठा xfs_ag_geometry	ageo;
-	पूर्णांक			error;
+	struct xfs_mount	*mp,
+	void			__user *arg)
+{
+	struct xfs_ag_geometry	ageo;
+	int			error;
 
-	अगर (copy_from_user(&ageo, arg, माप(ageo)))
-		वापस -EFAULT;
-	अगर (ageo.ag_flags)
-		वापस -EINVAL;
-	अगर (स_प्रथम_inv(&ageo.ag_reserved, 0, माप(ageo.ag_reserved)))
-		वापस -EINVAL;
+	if (copy_from_user(&ageo, arg, sizeof(ageo)))
+		return -EFAULT;
+	if (ageo.ag_flags)
+		return -EINVAL;
+	if (memchr_inv(&ageo.ag_reserved, 0, sizeof(ageo.ag_reserved)))
+		return -EINVAL;
 
 	error = xfs_ag_get_geometry(mp, ageo.ag_number, &ageo);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (copy_to_user(arg, &ageo, माप(ageo)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(arg, &ageo, sizeof(ageo)))
+		return -EFAULT;
+	return 0;
+}
 
 /*
- * Linux extended inode flags पूर्णांकerface.
+ * Linux extended inode flags interface.
  */
 
-अटल व्योम
+static void
 xfs_fill_fsxattr(
-	काष्ठा xfs_inode	*ip,
-	पूर्णांक			whichविभाजन,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा xfs_अगरork	*अगरp = XFS_IFORK_PTR(ip, whichविभाजन);
+	struct xfs_inode	*ip,
+	int			whichfork,
+	struct fileattr		*fa)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_ifork	*ifp = XFS_IFORK_PTR(ip, whichfork);
 
 	fileattr_fill_xflags(fa, xfs_ip2xflags(ip));
 
 	fa->fsx_extsize = XFS_FSB_TO_B(mp, ip->i_extsize);
-	अगर (ip->i_dअगरlags2 & XFS_DIFLAG2_COWEXTSIZE)
+	if (ip->i_diflags2 & XFS_DIFLAG2_COWEXTSIZE)
 		fa->fsx_cowextsize = XFS_FSB_TO_B(mp, ip->i_cowextsize);
 	fa->fsx_projid = ip->i_projid;
-	अगर (अगरp && !xfs_need_iपढ़ो_extents(अगरp))
-		fa->fsx_nextents = xfs_iext_count(अगरp);
-	अन्यथा
-		fa->fsx_nextents = xfs_अगरork_nextents(अगरp);
-पूर्ण
+	if (ifp && !xfs_need_iread_extents(ifp))
+		fa->fsx_nextents = xfs_iext_count(ifp);
+	else
+		fa->fsx_nextents = xfs_ifork_nextents(ifp);
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_fsgetxattra(
 	xfs_inode_t		*ip,
-	व्योम			__user *arg)
-अणु
-	काष्ठा fileattr		fa;
+	void			__user *arg)
+{
+	struct fileattr		fa;
 
 	xfs_ilock(ip, XFS_ILOCK_SHARED);
 	xfs_fill_fsxattr(ip, XFS_ATTR_FORK, &fa);
 	xfs_iunlock(ip, XFS_ILOCK_SHARED);
 
-	वापस copy_fsxattr_to_user(&fa, arg);
-पूर्ण
+	return copy_fsxattr_to_user(&fa, arg);
+}
 
-पूर्णांक
+int
 xfs_fileattr_get(
-	काष्ठा dentry		*dentry,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_inode	*ip = XFS_I(d_inode(dentry));
+	struct dentry		*dentry,
+	struct fileattr		*fa)
+{
+	struct xfs_inode	*ip = XFS_I(d_inode(dentry));
 
-	अगर (d_is_special(dentry))
-		वापस -ENOTTY;
+	if (d_is_special(dentry))
+		return -ENOTTY;
 
 	xfs_ilock(ip, XFS_ILOCK_SHARED);
 	xfs_fill_fsxattr(ip, XFS_DATA_FORK, fa);
 	xfs_iunlock(ip, XFS_ILOCK_SHARED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-STATIC uपूर्णांक16_t
-xfs_flags2dअगरlags(
-	काष्ठा xfs_inode	*ip,
-	अचिन्हित पूर्णांक		xflags)
-अणु
+STATIC uint16_t
+xfs_flags2diflags(
+	struct xfs_inode	*ip,
+	unsigned int		xflags)
+{
 	/* can't set PREALLOC this way, just preserve it */
-	uपूर्णांक16_t		di_flags =
-		(ip->i_dअगरlags & XFS_DIFLAG_PREALLOC);
+	uint16_t		di_flags =
+		(ip->i_diflags & XFS_DIFLAG_PREALLOC);
 
-	अगर (xflags & FS_XFLAG_IMMUTABLE)
+	if (xflags & FS_XFLAG_IMMUTABLE)
 		di_flags |= XFS_DIFLAG_IMMUTABLE;
-	अगर (xflags & FS_XFLAG_APPEND)
+	if (xflags & FS_XFLAG_APPEND)
 		di_flags |= XFS_DIFLAG_APPEND;
-	अगर (xflags & FS_XFLAG_SYNC)
+	if (xflags & FS_XFLAG_SYNC)
 		di_flags |= XFS_DIFLAG_SYNC;
-	अगर (xflags & FS_XFLAG_NOATIME)
+	if (xflags & FS_XFLAG_NOATIME)
 		di_flags |= XFS_DIFLAG_NOATIME;
-	अगर (xflags & FS_XFLAG_NODUMP)
+	if (xflags & FS_XFLAG_NODUMP)
 		di_flags |= XFS_DIFLAG_NODUMP;
-	अगर (xflags & FS_XFLAG_NODEFRAG)
+	if (xflags & FS_XFLAG_NODEFRAG)
 		di_flags |= XFS_DIFLAG_NODEFRAG;
-	अगर (xflags & FS_XFLAG_खाताSTREAM)
-		di_flags |= XFS_DIFLAG_खाताSTREAM;
-	अगर (S_ISसूची(VFS_I(ip)->i_mode)) अणु
-		अगर (xflags & FS_XFLAG_RTINHERIT)
+	if (xflags & FS_XFLAG_FILESTREAM)
+		di_flags |= XFS_DIFLAG_FILESTREAM;
+	if (S_ISDIR(VFS_I(ip)->i_mode)) {
+		if (xflags & FS_XFLAG_RTINHERIT)
 			di_flags |= XFS_DIFLAG_RTINHERIT;
-		अगर (xflags & FS_XFLAG_NOSYMLINKS)
+		if (xflags & FS_XFLAG_NOSYMLINKS)
 			di_flags |= XFS_DIFLAG_NOSYMLINKS;
-		अगर (xflags & FS_XFLAG_EXTSZINHERIT)
+		if (xflags & FS_XFLAG_EXTSZINHERIT)
 			di_flags |= XFS_DIFLAG_EXTSZINHERIT;
-		अगर (xflags & FS_XFLAG_PROJINHERIT)
+		if (xflags & FS_XFLAG_PROJINHERIT)
 			di_flags |= XFS_DIFLAG_PROJINHERIT;
-	पूर्ण अन्यथा अगर (S_ISREG(VFS_I(ip)->i_mode)) अणु
-		अगर (xflags & FS_XFLAG_REALTIME)
+	} else if (S_ISREG(VFS_I(ip)->i_mode)) {
+		if (xflags & FS_XFLAG_REALTIME)
 			di_flags |= XFS_DIFLAG_REALTIME;
-		अगर (xflags & FS_XFLAG_EXTSIZE)
+		if (xflags & FS_XFLAG_EXTSIZE)
 			di_flags |= XFS_DIFLAG_EXTSIZE;
-	पूर्ण
+	}
 
-	वापस di_flags;
-पूर्ण
+	return di_flags;
+}
 
-STATIC uपूर्णांक64_t
-xfs_flags2dअगरlags2(
-	काष्ठा xfs_inode	*ip,
-	अचिन्हित पूर्णांक		xflags)
-अणु
-	uपूर्णांक64_t		di_flags2 =
-		(ip->i_dअगरlags2 & (XFS_DIFLAG2_REFLINK |
+STATIC uint64_t
+xfs_flags2diflags2(
+	struct xfs_inode	*ip,
+	unsigned int		xflags)
+{
+	uint64_t		di_flags2 =
+		(ip->i_diflags2 & (XFS_DIFLAG2_REFLINK |
 				   XFS_DIFLAG2_BIGTIME));
 
-	अगर (xflags & FS_XFLAG_DAX)
+	if (xflags & FS_XFLAG_DAX)
 		di_flags2 |= XFS_DIFLAG2_DAX;
-	अगर (xflags & FS_XFLAG_COWEXTSIZE)
+	if (xflags & FS_XFLAG_COWEXTSIZE)
 		di_flags2 |= XFS_DIFLAG2_COWEXTSIZE;
 
-	वापस di_flags2;
-पूर्ण
+	return di_flags2;
+}
 
-अटल पूर्णांक
+static int
 xfs_ioctl_setattr_xflags(
-	काष्ठा xfs_trans	*tp,
-	काष्ठा xfs_inode	*ip,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	uपूर्णांक64_t		i_flags2;
+	struct xfs_trans	*tp,
+	struct xfs_inode	*ip,
+	struct fileattr		*fa)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	uint64_t		i_flags2;
 
-	/* Can't change realसमय flag अगर any extents are allocated. */
-	अगर ((ip->i_df.अगर_nextents || ip->i_delayed_blks) &&
+	/* Can't change realtime flag if any extents are allocated. */
+	if ((ip->i_df.if_nextents || ip->i_delayed_blks) &&
 	    XFS_IS_REALTIME_INODE(ip) != (fa->fsx_xflags & FS_XFLAG_REALTIME))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* If realसमय flag is set then must have realसमय device */
-	अगर (fa->fsx_xflags & FS_XFLAG_REALTIME) अणु
-		अगर (mp->m_sb.sb_rblocks == 0 || mp->m_sb.sb_rextsize == 0 ||
+	/* If realtime flag is set then must have realtime device */
+	if (fa->fsx_xflags & FS_XFLAG_REALTIME) {
+		if (mp->m_sb.sb_rblocks == 0 || mp->m_sb.sb_rextsize == 0 ||
 		    (ip->i_extsize % mp->m_sb.sb_rextsize))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
-	/* Clear reflink अगर we are actually able to set the rt flag. */
-	अगर ((fa->fsx_xflags & FS_XFLAG_REALTIME) && xfs_is_reflink_inode(ip))
-		ip->i_dअगरlags2 &= ~XFS_DIFLAG2_REFLINK;
+	/* Clear reflink if we are actually able to set the rt flag. */
+	if ((fa->fsx_xflags & FS_XFLAG_REALTIME) && xfs_is_reflink_inode(ip))
+		ip->i_diflags2 &= ~XFS_DIFLAG2_REFLINK;
 
-	/* Don't allow us to set DAX mode क्रम a reflinked file क्रम now. */
-	अगर ((fa->fsx_xflags & FS_XFLAG_DAX) && xfs_is_reflink_inode(ip))
-		वापस -EINVAL;
+	/* Don't allow us to set DAX mode for a reflinked file for now. */
+	if ((fa->fsx_xflags & FS_XFLAG_DAX) && xfs_is_reflink_inode(ip))
+		return -EINVAL;
 
-	/* dअगरlags2 only valid क्रम v3 inodes. */
-	i_flags2 = xfs_flags2dअगरlags2(ip, fa->fsx_xflags);
-	अगर (i_flags2 && !xfs_sb_version_has_v3inode(&mp->m_sb))
-		वापस -EINVAL;
+	/* diflags2 only valid for v3 inodes. */
+	i_flags2 = xfs_flags2diflags2(ip, fa->fsx_xflags);
+	if (i_flags2 && !xfs_sb_version_has_v3inode(&mp->m_sb))
+		return -EINVAL;
 
-	ip->i_dअगरlags = xfs_flags2dअगरlags(ip, fa->fsx_xflags);
-	ip->i_dअगरlags2 = i_flags2;
+	ip->i_diflags = xfs_flags2diflags(ip, fa->fsx_xflags);
+	ip->i_diflags2 = i_flags2;
 
-	xfs_dअगरlags_to_अगरlags(ip, false);
-	xfs_trans_ichgसमय(tp, ip, XFS_ICHGTIME_CHG);
+	xfs_diflags_to_iflags(ip, false);
+	xfs_trans_ichgtime(tp, ip, XFS_ICHGTIME_CHG);
 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
 	XFS_STATS_INC(mp, xs_ig_attrchg);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
+static void
 xfs_ioctl_setattr_prepare_dax(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा inode            *inode = VFS_I(ip);
+	struct xfs_inode	*ip,
+	struct fileattr		*fa)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct inode            *inode = VFS_I(ip);
 
-	अगर (S_ISसूची(inode->i_mode))
-		वापस;
+	if (S_ISDIR(inode->i_mode))
+		return;
 
-	अगर ((mp->m_flags & XFS_MOUNT_DAX_ALWAYS) ||
+	if ((mp->m_flags & XFS_MOUNT_DAX_ALWAYS) ||
 	    (mp->m_flags & XFS_MOUNT_DAX_NEVER))
-		वापस;
+		return;
 
-	अगर (((fa->fsx_xflags & FS_XFLAG_DAX) &&
-	    !(ip->i_dअगरlags2 & XFS_DIFLAG2_DAX)) ||
+	if (((fa->fsx_xflags & FS_XFLAG_DAX) &&
+	    !(ip->i_diflags2 & XFS_DIFLAG2_DAX)) ||
 	    (!(fa->fsx_xflags & FS_XFLAG_DAX) &&
-	     (ip->i_dअगरlags2 & XFS_DIFLAG2_DAX)))
-		d_mark_करोntcache(inode);
-पूर्ण
+	     (ip->i_diflags2 & XFS_DIFLAG2_DAX)))
+		d_mark_dontcache(inode);
+}
 
 /*
- * Set up the transaction काष्ठाure क्रम the setattr operation, checking that we
- * have permission to करो so. On success, वापस a clean transaction and the
- * inode locked exclusively पढ़ोy क्रम further operation specअगरic checks. On
- * failure, वापस an error without modअगरying or locking the inode.
+ * Set up the transaction structure for the setattr operation, checking that we
+ * have permission to do so. On success, return a clean transaction and the
+ * inode locked exclusively ready for further operation specific checks. On
+ * failure, return an error without modifying or locking the inode.
  */
-अटल काष्ठा xfs_trans *
+static struct xfs_trans *
 xfs_ioctl_setattr_get_trans(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा xfs_dquot	*pdqp)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा xfs_trans	*tp;
-	पूर्णांक			error = -EROFS;
+	struct xfs_inode	*ip,
+	struct xfs_dquot	*pdqp)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_trans	*tp;
+	int			error = -EROFS;
 
-	अगर (mp->m_flags & XFS_MOUNT_RDONLY)
-		जाओ out_error;
+	if (mp->m_flags & XFS_MOUNT_RDONLY)
+		goto out_error;
 	error = -EIO;
-	अगर (XFS_FORCED_SHUTDOWN(mp))
-		जाओ out_error;
+	if (XFS_FORCED_SHUTDOWN(mp))
+		goto out_error;
 
-	error = xfs_trans_alloc_ichange(ip, शून्य, शून्य, pdqp,
+	error = xfs_trans_alloc_ichange(ip, NULL, NULL, pdqp,
 			capable(CAP_FOWNER), &tp);
-	अगर (error)
-		जाओ out_error;
+	if (error)
+		goto out_error;
 
-	अगर (mp->m_flags & XFS_MOUNT_WSYNC)
+	if (mp->m_flags & XFS_MOUNT_WSYNC)
 		xfs_trans_set_sync(tp);
 
-	वापस tp;
+	return tp;
 
 out_error:
-	वापस ERR_PTR(error);
-पूर्ण
+	return ERR_PTR(error);
+}
 
 /*
- * Validate a proposed extent size hपूर्णांक.  For regular files, the hपूर्णांक can only
- * be changed अगर no extents are allocated.
+ * Validate a proposed extent size hint.  For regular files, the hint can only
+ * be changed if no extents are allocated.
  */
-अटल पूर्णांक
+static int
 xfs_ioctl_setattr_check_extsize(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
+	struct xfs_inode	*ip,
+	struct fileattr		*fa)
+{
+	struct xfs_mount	*mp = ip->i_mount;
 	xfs_failaddr_t		failaddr;
-	uपूर्णांक16_t		new_dअगरlags;
+	uint16_t		new_diflags;
 
-	अगर (!fa->fsx_valid)
-		वापस 0;
+	if (!fa->fsx_valid)
+		return 0;
 
-	अगर (S_ISREG(VFS_I(ip)->i_mode) && ip->i_df.अगर_nextents &&
+	if (S_ISREG(VFS_I(ip)->i_mode) && ip->i_df.if_nextents &&
 	    XFS_FSB_TO_B(mp, ip->i_extsize) != fa->fsx_extsize)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (fa->fsx_extsize & mp->m_blockmask)
-		वापस -EINVAL;
+	if (fa->fsx_extsize & mp->m_blockmask)
+		return -EINVAL;
 
-	new_dअगरlags = xfs_flags2dअगरlags(ip, fa->fsx_xflags);
+	new_diflags = xfs_flags2diflags(ip, fa->fsx_xflags);
 
 	/*
-	 * Inode verअगरiers on older kernels करोn't check that the extent size
-	 * hपूर्णांक is an पूर्णांकeger multiple of the rt extent size on a directory
+	 * Inode verifiers on older kernels don't check that the extent size
+	 * hint is an integer multiple of the rt extent size on a directory
 	 * with both rtinherit and extszinherit flags set.  Don't let sysadmins
 	 * misconfigure directories.
 	 */
-	अगर ((new_dअगरlags & XFS_DIFLAG_RTINHERIT) &&
-	    (new_dअगरlags & XFS_DIFLAG_EXTSZINHERIT)) अणु
-		अचिन्हित पूर्णांक	rtextsize_bytes;
+	if ((new_diflags & XFS_DIFLAG_RTINHERIT) &&
+	    (new_diflags & XFS_DIFLAG_EXTSZINHERIT)) {
+		unsigned int	rtextsize_bytes;
 
 		rtextsize_bytes = XFS_FSB_TO_B(mp, mp->m_sb.sb_rextsize);
-		अगर (fa->fsx_extsize % rtextsize_bytes)
-			वापस -EINVAL;
-	पूर्ण
+		if (fa->fsx_extsize % rtextsize_bytes)
+			return -EINVAL;
+	}
 
 	failaddr = xfs_inode_validate_extsize(ip->i_mount,
 			XFS_B_TO_FSB(mp, fa->fsx_extsize),
-			VFS_I(ip)->i_mode, new_dअगरlags);
-	वापस failaddr != शून्य ? -EINVAL : 0;
-पूर्ण
+			VFS_I(ip)->i_mode, new_diflags);
+	return failaddr != NULL ? -EINVAL : 0;
+}
 
-अटल पूर्णांक
+static int
 xfs_ioctl_setattr_check_cowextsize(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_mount	*mp = ip->i_mount;
+	struct xfs_inode	*ip,
+	struct fileattr		*fa)
+{
+	struct xfs_mount	*mp = ip->i_mount;
 	xfs_failaddr_t		failaddr;
-	uपूर्णांक64_t		new_dअगरlags2;
-	uपूर्णांक16_t		new_dअगरlags;
+	uint64_t		new_diflags2;
+	uint16_t		new_diflags;
 
-	अगर (!fa->fsx_valid)
-		वापस 0;
+	if (!fa->fsx_valid)
+		return 0;
 
-	अगर (fa->fsx_cowextsize & mp->m_blockmask)
-		वापस -EINVAL;
+	if (fa->fsx_cowextsize & mp->m_blockmask)
+		return -EINVAL;
 
-	new_dअगरlags = xfs_flags2dअगरlags(ip, fa->fsx_xflags);
-	new_dअगरlags2 = xfs_flags2dअगरlags2(ip, fa->fsx_xflags);
+	new_diflags = xfs_flags2diflags(ip, fa->fsx_xflags);
+	new_diflags2 = xfs_flags2diflags2(ip, fa->fsx_xflags);
 
 	failaddr = xfs_inode_validate_cowextsize(ip->i_mount,
 			XFS_B_TO_FSB(mp, fa->fsx_cowextsize),
-			VFS_I(ip)->i_mode, new_dअगरlags, new_dअगरlags2);
-	वापस failaddr != शून्य ? -EINVAL : 0;
-पूर्ण
+			VFS_I(ip)->i_mode, new_diflags, new_diflags2);
+	return failaddr != NULL ? -EINVAL : 0;
+}
 
-अटल पूर्णांक
+static int
 xfs_ioctl_setattr_check_projid(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा fileattr		*fa)
-अणु
-	अगर (!fa->fsx_valid)
-		वापस 0;
+	struct xfs_inode	*ip,
+	struct fileattr		*fa)
+{
+	if (!fa->fsx_valid)
+		return 0;
 
-	/* Disallow 32bit project ids अगर projid32bit feature is not enabled. */
-	अगर (fa->fsx_projid > (uपूर्णांक16_t)-1 &&
+	/* Disallow 32bit project ids if projid32bit feature is not enabled. */
+	if (fa->fsx_projid > (uint16_t)-1 &&
 	    !xfs_sb_version_hasprojid32bit(&ip->i_mount->m_sb))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	return 0;
+}
 
-पूर्णांक
+int
 xfs_fileattr_set(
-	काष्ठा user_namespace	*mnt_userns,
-	काष्ठा dentry		*dentry,
-	काष्ठा fileattr		*fa)
-अणु
-	काष्ठा xfs_inode	*ip = XFS_I(d_inode(dentry));
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	काष्ठा xfs_trans	*tp;
-	काष्ठा xfs_dquot	*pdqp = शून्य;
-	काष्ठा xfs_dquot	*olddquot = शून्य;
-	पूर्णांक			error;
+	struct user_namespace	*mnt_userns,
+	struct dentry		*dentry,
+	struct fileattr		*fa)
+{
+	struct xfs_inode	*ip = XFS_I(d_inode(dentry));
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_trans	*tp;
+	struct xfs_dquot	*pdqp = NULL;
+	struct xfs_dquot	*olddquot = NULL;
+	int			error;
 
 	trace_xfs_ioctl_setattr(ip);
 
-	अगर (d_is_special(dentry))
-		वापस -ENOTTY;
+	if (d_is_special(dentry))
+		return -ENOTTY;
 
-	अगर (!fa->fsx_valid) अणु
-		अगर (fa->flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL |
+	if (!fa->fsx_valid) {
+		if (fa->flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL |
 				  FS_NOATIME_FL | FS_NODUMP_FL |
 				  FS_SYNC_FL | FS_DAX_FL | FS_PROJINHERIT_FL))
-			वापस -EOPNOTSUPP;
-	पूर्ण
+			return -EOPNOTSUPP;
+	}
 
 	error = xfs_ioctl_setattr_check_projid(ip, fa);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	/*
-	 * If disk quotas is on, we make sure that the dquots करो exist on disk,
-	 * beक्रमe we start any other transactions. Trying to करो this later
-	 * is messy. We करोn't care to take a पढ़ोlock to look at the ids
+	 * If disk quotas is on, we make sure that the dquots do exist on disk,
+	 * before we start any other transactions. Trying to do this later
+	 * is messy. We don't care to take a readlock to look at the ids
 	 * in inode here, because we can't hold it across the trans_reserve.
-	 * If the IDs करो change beक्रमe we take the ilock, we're covered
+	 * If the IDs do change before we take the ilock, we're covered
 	 * because the i_*dquot fields will get updated anyway.
 	 */
-	अगर (fa->fsx_valid && XFS_IS_QUOTA_ON(mp)) अणु
+	if (fa->fsx_valid && XFS_IS_QUOTA_ON(mp)) {
 		error = xfs_qm_vop_dqalloc(ip, VFS_I(ip)->i_uid,
 				VFS_I(ip)->i_gid, fa->fsx_projid,
-				XFS_QMOPT_PQUOTA, शून्य, शून्य, &pdqp);
-		अगर (error)
-			वापस error;
-	पूर्ण
+				XFS_QMOPT_PQUOTA, NULL, NULL, &pdqp);
+		if (error)
+			return error;
+	}
 
 	xfs_ioctl_setattr_prepare_dax(ip, fa);
 
 	tp = xfs_ioctl_setattr_get_trans(ip, pdqp);
-	अगर (IS_ERR(tp)) अणु
+	if (IS_ERR(tp)) {
 		error = PTR_ERR(tp);
-		जाओ error_मुक्त_dquots;
-	पूर्ण
+		goto error_free_dquots;
+	}
 
 	error = xfs_ioctl_setattr_check_extsize(ip, fa);
-	अगर (error)
-		जाओ error_trans_cancel;
+	if (error)
+		goto error_trans_cancel;
 
 	error = xfs_ioctl_setattr_check_cowextsize(ip, fa);
-	अगर (error)
-		जाओ error_trans_cancel;
+	if (error)
+		goto error_trans_cancel;
 
 	error = xfs_ioctl_setattr_xflags(tp, ip, fa);
-	अगर (error)
-		जाओ error_trans_cancel;
+	if (error)
+		goto error_trans_cancel;
 
-	अगर (!fa->fsx_valid)
-		जाओ skip_xattr;
+	if (!fa->fsx_valid)
+		goto skip_xattr;
 	/*
 	 * Change file ownership.  Must be the owner or privileged.  CAP_FSETID
 	 * overrides the following restrictions:
 	 *
 	 * The set-user-ID and set-group-ID bits of a file will be cleared upon
-	 * successful वापस from chown()
+	 * successful return from chown()
 	 */
 
-	अगर ((VFS_I(ip)->i_mode & (S_ISUID|S_ISGID)) &&
+	if ((VFS_I(ip)->i_mode & (S_ISUID|S_ISGID)) &&
 	    !capable_wrt_inode_uidgid(mnt_userns, VFS_I(ip), CAP_FSETID))
 		VFS_I(ip)->i_mode &= ~(S_ISUID|S_ISGID);
 
-	/* Change the ownerships and रेजिस्टर project quota modअगरications */
-	अगर (ip->i_projid != fa->fsx_projid) अणु
-		अगर (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_PQUOTA_ON(mp)) अणु
+	/* Change the ownerships and register project quota modifications */
+	if (ip->i_projid != fa->fsx_projid) {
+		if (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_PQUOTA_ON(mp)) {
 			olddquot = xfs_qm_vop_chown(tp, ip,
 						&ip->i_pdquot, pdqp);
-		पूर्ण
+		}
 		ip->i_projid = fa->fsx_projid;
-	पूर्ण
+	}
 
 	/*
-	 * Only set the extent size hपूर्णांक अगर we've alपढ़ोy determined that the
-	 * extent size hपूर्णांक should be set on the inode. If no extent size flags
-	 * are set on the inode then unconditionally clear the extent size hपूर्णांक.
+	 * Only set the extent size hint if we've already determined that the
+	 * extent size hint should be set on the inode. If no extent size flags
+	 * are set on the inode then unconditionally clear the extent size hint.
 	 */
-	अगर (ip->i_dअगरlags & (XFS_DIFLAG_EXTSIZE | XFS_DIFLAG_EXTSZINHERIT))
+	if (ip->i_diflags & (XFS_DIFLAG_EXTSIZE | XFS_DIFLAG_EXTSZINHERIT))
 		ip->i_extsize = XFS_B_TO_FSB(mp, fa->fsx_extsize);
-	अन्यथा
+	else
 		ip->i_extsize = 0;
 
-	अगर (xfs_sb_version_has_v3inode(&mp->m_sb)) अणु
-		अगर (ip->i_dअगरlags2 & XFS_DIFLAG2_COWEXTSIZE)
+	if (xfs_sb_version_has_v3inode(&mp->m_sb)) {
+		if (ip->i_diflags2 & XFS_DIFLAG2_COWEXTSIZE)
 			ip->i_cowextsize = XFS_B_TO_FSB(mp, fa->fsx_cowextsize);
-		अन्यथा
+		else
 			ip->i_cowextsize = 0;
-	पूर्ण
+	}
 
 skip_xattr:
 	error = xfs_trans_commit(tp);
 
 	/*
-	 * Release any dquot(s) the inode had kept beक्रमe chown.
+	 * Release any dquot(s) the inode had kept before chown.
 	 */
 	xfs_qm_dqrele(olddquot);
 	xfs_qm_dqrele(pdqp);
 
-	वापस error;
+	return error;
 
 error_trans_cancel:
 	xfs_trans_cancel(tp);
-error_मुक्त_dquots:
+error_free_dquots:
 	xfs_qm_dqrele(pdqp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल bool
-xfs_getbmap_क्रमmat(
-	काष्ठा kgetbmap		*p,
-	काष्ठा getbmapx __user	*u,
-	माप_प्रकार			recsize)
-अणु
-	अगर (put_user(p->bmv_offset, &u->bmv_offset) ||
+static bool
+xfs_getbmap_format(
+	struct kgetbmap		*p,
+	struct getbmapx __user	*u,
+	size_t			recsize)
+{
+	if (put_user(p->bmv_offset, &u->bmv_offset) ||
 	    put_user(p->bmv_block, &u->bmv_block) ||
 	    put_user(p->bmv_length, &u->bmv_length) ||
 	    put_user(0, &u->bmv_count) ||
 	    put_user(0, &u->bmv_entries))
-		वापस false;
-	अगर (recsize < माप(काष्ठा getbmapx))
-		वापस true;
-	अगर (put_user(0, &u->bmv_अगरlags) ||
+		return false;
+	if (recsize < sizeof(struct getbmapx))
+		return true;
+	if (put_user(0, &u->bmv_iflags) ||
 	    put_user(p->bmv_oflags, &u->bmv_oflags) ||
 	    put_user(0, &u->bmv_unused1) ||
 	    put_user(0, &u->bmv_unused2))
-		वापस false;
-	वापस true;
-पूर्ण
+		return false;
+	return true;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_getbmap(
-	काष्ठा file		*file,
-	अचिन्हित पूर्णांक		cmd,
-	व्योम			__user *arg)
-अणु
-	काष्ठा getbmapx		bmx = अणु 0 पूर्ण;
-	काष्ठा kgetbmap		*buf;
-	माप_प्रकार			recsize;
-	पूर्णांक			error, i;
+	struct file		*file,
+	unsigned int		cmd,
+	void			__user *arg)
+{
+	struct getbmapx		bmx = { 0 };
+	struct kgetbmap		*buf;
+	size_t			recsize;
+	int			error, i;
 
-	चयन (cmd) अणु
-	हाल XFS_IOC_GETBMAPA:
-		bmx.bmv_अगरlags = BMV_IF_ATTRFORK;
+	switch (cmd) {
+	case XFS_IOC_GETBMAPA:
+		bmx.bmv_iflags = BMV_IF_ATTRFORK;
 		/*FALLTHRU*/
-	हाल XFS_IOC_GETBMAP:
-		/* काष्ठा getbmap is a strict subset of काष्ठा getbmapx. */
-		recsize = माप(काष्ठा getbmap);
-		अवरोध;
-	हाल XFS_IOC_GETBMAPX:
-		recsize = माप(काष्ठा getbmapx);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	case XFS_IOC_GETBMAP:
+		/* struct getbmap is a strict subset of struct getbmapx. */
+		recsize = sizeof(struct getbmap);
+		break;
+	case XFS_IOC_GETBMAPX:
+		recsize = sizeof(struct getbmapx);
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (copy_from_user(&bmx, arg, recsize))
-		वापस -EFAULT;
+	if (copy_from_user(&bmx, arg, recsize))
+		return -EFAULT;
 
-	अगर (bmx.bmv_count < 2)
-		वापस -EINVAL;
-	अगर (bmx.bmv_count > अच_दीर्घ_उच्च / recsize)
-		वापस -ENOMEM;
+	if (bmx.bmv_count < 2)
+		return -EINVAL;
+	if (bmx.bmv_count > ULONG_MAX / recsize)
+		return -ENOMEM;
 
-	buf = kvzalloc(bmx.bmv_count * माप(*buf), GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = kvzalloc(bmx.bmv_count * sizeof(*buf), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	error = xfs_getbmap(XFS_I(file_inode(file)), &bmx, buf);
-	अगर (error)
-		जाओ out_मुक्त_buf;
+	if (error)
+		goto out_free_buf;
 
 	error = -EFAULT;
-	अगर (copy_to_user(arg, &bmx, recsize))
-		जाओ out_मुक्त_buf;
+	if (copy_to_user(arg, &bmx, recsize))
+		goto out_free_buf;
 	arg += recsize;
 
-	क्रम (i = 0; i < bmx.bmv_entries; i++) अणु
-		अगर (!xfs_getbmap_क्रमmat(buf + i, arg, recsize))
-			जाओ out_मुक्त_buf;
+	for (i = 0; i < bmx.bmv_entries; i++) {
+		if (!xfs_getbmap_format(buf + i, arg, recsize))
+			goto out_free_buf;
 		arg += recsize;
-	पूर्ण
+	}
 
 	error = 0;
-out_मुक्त_buf:
-	kmem_मुक्त(buf);
-	वापस error;
-पूर्ण
+out_free_buf:
+	kmem_free(buf);
+	return error;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_getfsmap(
-	काष्ठा xfs_inode	*ip,
-	काष्ठा fsmap_head	__user *arg)
-अणु
-	काष्ठा xfs_fsmap_head	xhead = अणु0पूर्ण;
-	काष्ठा fsmap_head	head;
-	काष्ठा fsmap		*recs;
-	अचिन्हित पूर्णांक		count;
+	struct xfs_inode	*ip,
+	struct fsmap_head	__user *arg)
+{
+	struct xfs_fsmap_head	xhead = {0};
+	struct fsmap_head	head;
+	struct fsmap		*recs;
+	unsigned int		count;
 	__u32			last_flags = 0;
-	bool			करोne = false;
-	पूर्णांक			error;
+	bool			done = false;
+	int			error;
 
-	अगर (copy_from_user(&head, arg, माप(काष्ठा fsmap_head)))
-		वापस -EFAULT;
-	अगर (स_प्रथम_inv(head.fmh_reserved, 0, माप(head.fmh_reserved)) ||
-	    स_प्रथम_inv(head.fmh_keys[0].fmr_reserved, 0,
-		       माप(head.fmh_keys[0].fmr_reserved)) ||
-	    स_प्रथम_inv(head.fmh_keys[1].fmr_reserved, 0,
-		       माप(head.fmh_keys[1].fmr_reserved)))
-		वापस -EINVAL;
+	if (copy_from_user(&head, arg, sizeof(struct fsmap_head)))
+		return -EFAULT;
+	if (memchr_inv(head.fmh_reserved, 0, sizeof(head.fmh_reserved)) ||
+	    memchr_inv(head.fmh_keys[0].fmr_reserved, 0,
+		       sizeof(head.fmh_keys[0].fmr_reserved)) ||
+	    memchr_inv(head.fmh_keys[1].fmr_reserved, 0,
+		       sizeof(head.fmh_keys[1].fmr_reserved)))
+		return -EINVAL;
 
 	/*
-	 * Use an पूर्णांकernal memory buffer so that we करोn't have to copy fsmap
-	 * data to userspace जबतक holding locks.  Start by trying to allocate
-	 * up to 128k क्रम the buffer, but fall back to a single page अगर needed.
+	 * Use an internal memory buffer so that we don't have to copy fsmap
+	 * data to userspace while holding locks.  Start by trying to allocate
+	 * up to 128k for the buffer, but fall back to a single page if needed.
 	 */
-	count = min_t(अचिन्हित पूर्णांक, head.fmh_count,
-			131072 / माप(काष्ठा fsmap));
-	recs = kvzalloc(count * माप(काष्ठा fsmap), GFP_KERNEL);
-	अगर (!recs) अणु
-		count = min_t(अचिन्हित पूर्णांक, head.fmh_count,
-				PAGE_SIZE / माप(काष्ठा fsmap));
-		recs = kvzalloc(count * माप(काष्ठा fsmap), GFP_KERNEL);
-		अगर (!recs)
-			वापस -ENOMEM;
-	पूर्ण
+	count = min_t(unsigned int, head.fmh_count,
+			131072 / sizeof(struct fsmap));
+	recs = kvzalloc(count * sizeof(struct fsmap), GFP_KERNEL);
+	if (!recs) {
+		count = min_t(unsigned int, head.fmh_count,
+				PAGE_SIZE / sizeof(struct fsmap));
+		recs = kvzalloc(count * sizeof(struct fsmap), GFP_KERNEL);
+		if (!recs)
+			return -ENOMEM;
+	}
 
-	xhead.fmh_अगरlags = head.fmh_अगरlags;
-	xfs_fsmap_to_पूर्णांकernal(&xhead.fmh_keys[0], &head.fmh_keys[0]);
-	xfs_fsmap_to_पूर्णांकernal(&xhead.fmh_keys[1], &head.fmh_keys[1]);
+	xhead.fmh_iflags = head.fmh_iflags;
+	xfs_fsmap_to_internal(&xhead.fmh_keys[0], &head.fmh_keys[0]);
+	xfs_fsmap_to_internal(&xhead.fmh_keys[1], &head.fmh_keys[1]);
 
 	trace_xfs_getfsmap_low_key(ip->i_mount, &xhead.fmh_keys[0]);
 	trace_xfs_getfsmap_high_key(ip->i_mount, &xhead.fmh_keys[1]);
 
 	head.fmh_entries = 0;
-	करो अणु
-		काष्ठा fsmap __user	*user_recs;
-		काष्ठा fsmap		*last_rec;
+	do {
+		struct fsmap __user	*user_recs;
+		struct fsmap		*last_rec;
 
 		user_recs = &arg->fmh_recs[head.fmh_entries];
 		xhead.fmh_entries = 0;
-		xhead.fmh_count = min_t(अचिन्हित पूर्णांक, count,
+		xhead.fmh_count = min_t(unsigned int, count,
 					head.fmh_count - head.fmh_entries);
 
 		/* Run query, record how many entries we got. */
 		error = xfs_getfsmap(ip->i_mount, &xhead, recs);
-		चयन (error) अणु
-		हाल 0:
+		switch (error) {
+		case 0:
 			/*
 			 * There are no more records in the result set.  Copy
-			 * whatever we got to userspace and अवरोध out.
+			 * whatever we got to userspace and break out.
 			 */
-			करोne = true;
-			अवरोध;
-		हाल -ECANCELED:
+			done = true;
+			break;
+		case -ECANCELED:
 			/*
-			 * The पूर्णांकernal memory buffer is full.  Copy whatever
-			 * records we got to userspace and go again अगर we have
+			 * The internal memory buffer is full.  Copy whatever
+			 * records we got to userspace and go again if we have
 			 * not yet filled the userspace buffer.
 			 */
 			error = 0;
-			अवरोध;
-		शेष:
-			जाओ out_मुक्त;
-		पूर्ण
+			break;
+		default:
+			goto out_free;
+		}
 		head.fmh_entries += xhead.fmh_entries;
 		head.fmh_oflags = xhead.fmh_oflags;
 
 		/*
 		 * If the caller wanted a record count or there aren't any
-		 * new records to वापस, we're करोne.
+		 * new records to return, we're done.
 		 */
-		अगर (head.fmh_count == 0 || xhead.fmh_entries == 0)
-			अवरोध;
+		if (head.fmh_count == 0 || xhead.fmh_entries == 0)
+			break;
 
 		/* Copy all the records we got out to userspace. */
-		अगर (copy_to_user(user_recs, recs,
-				 xhead.fmh_entries * माप(काष्ठा fsmap))) अणु
+		if (copy_to_user(user_recs, recs,
+				 xhead.fmh_entries * sizeof(struct fsmap))) {
 			error = -EFAULT;
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
 		/* Remember the last record flags we copied to userspace. */
 		last_rec = &recs[xhead.fmh_entries - 1];
 		last_flags = last_rec->fmr_flags;
 
-		/* Set up the low key क्रम the next iteration. */
-		xfs_fsmap_to_पूर्णांकernal(&xhead.fmh_keys[0], last_rec);
+		/* Set up the low key for the next iteration. */
+		xfs_fsmap_to_internal(&xhead.fmh_keys[0], last_rec);
 		trace_xfs_getfsmap_low_key(ip->i_mount, &xhead.fmh_keys[0]);
-	पूर्ण जबतक (!करोne && head.fmh_entries < head.fmh_count);
+	} while (!done && head.fmh_entries < head.fmh_count);
 
 	/*
 	 * If there are no more records in the query result set and we're not
-	 * in counting mode, mark the last record वापसed with the LAST flag.
+	 * in counting mode, mark the last record returned with the LAST flag.
 	 */
-	अगर (करोne && head.fmh_count > 0 && head.fmh_entries > 0) अणु
-		काष्ठा fsmap __user	*user_rec;
+	if (done && head.fmh_count > 0 && head.fmh_entries > 0) {
+		struct fsmap __user	*user_rec;
 
 		last_flags |= FMR_OF_LAST;
 		user_rec = &arg->fmh_recs[head.fmh_entries - 1];
 
-		अगर (copy_to_user(&user_rec->fmr_flags, &last_flags,
-					माप(last_flags))) अणु
+		if (copy_to_user(&user_rec->fmr_flags, &last_flags,
+					sizeof(last_flags))) {
 			error = -EFAULT;
-			जाओ out_मुक्त;
-		पूर्ण
-	पूर्ण
+			goto out_free;
+		}
+	}
 
 	/* copy back header */
-	अगर (copy_to_user(arg, &head, माप(काष्ठा fsmap_head))) अणु
+	if (copy_to_user(arg, &head, sizeof(struct fsmap_head))) {
 		error = -EFAULT;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-out_मुक्त:
-	kmem_मुक्त(recs);
-	वापस error;
-पूर्ण
+out_free:
+	kmem_free(recs);
+	return error;
+}
 
-STATIC पूर्णांक
+STATIC int
 xfs_ioc_scrub_metadata(
-	काष्ठा file			*file,
-	व्योम				__user *arg)
-अणु
-	काष्ठा xfs_scrub_metadata	scrub;
-	पूर्णांक				error;
+	struct file			*file,
+	void				__user *arg)
+{
+	struct xfs_scrub_metadata	scrub;
+	int				error;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
-	अगर (copy_from_user(&scrub, arg, माप(scrub)))
-		वापस -EFAULT;
+	if (copy_from_user(&scrub, arg, sizeof(scrub)))
+		return -EFAULT;
 
 	error = xfs_scrub_metadata(file, &scrub);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (copy_to_user(arg, &scrub, माप(scrub)))
-		वापस -EFAULT;
+	if (copy_to_user(arg, &scrub, sizeof(scrub)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
+int
 xfs_ioc_swapext(
 	xfs_swapext_t	*sxp)
-अणु
+{
 	xfs_inode_t     *ip, *tip;
-	काष्ठा fd	f, पंचांगp;
-	पूर्णांक		error = 0;
+	struct fd	f, tmp;
+	int		error = 0;
 
-	/* Pull inक्रमmation क्रम the target fd */
-	f = fdget((पूर्णांक)sxp->sx_fdtarget);
-	अगर (!f.file) अणु
+	/* Pull information for the target fd */
+	f = fdget((int)sxp->sx_fdtarget);
+	if (!f.file) {
 		error = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(f.file->f_mode & FMODE_WRITE) ||
+	if (!(f.file->f_mode & FMODE_WRITE) ||
 	    !(f.file->f_mode & FMODE_READ) ||
-	    (f.file->f_flags & O_APPEND)) अणु
+	    (f.file->f_flags & O_APPEND)) {
 		error = -EBADF;
-		जाओ out_put_file;
-	पूर्ण
+		goto out_put_file;
+	}
 
-	पंचांगp = fdget((पूर्णांक)sxp->sx_fdपंचांगp);
-	अगर (!पंचांगp.file) अणु
+	tmp = fdget((int)sxp->sx_fdtmp);
+	if (!tmp.file) {
 		error = -EINVAL;
-		जाओ out_put_file;
-	पूर्ण
+		goto out_put_file;
+	}
 
-	अगर (!(पंचांगp.file->f_mode & FMODE_WRITE) ||
-	    !(पंचांगp.file->f_mode & FMODE_READ) ||
-	    (पंचांगp.file->f_flags & O_APPEND)) अणु
+	if (!(tmp.file->f_mode & FMODE_WRITE) ||
+	    !(tmp.file->f_mode & FMODE_READ) ||
+	    (tmp.file->f_flags & O_APPEND)) {
 		error = -EBADF;
-		जाओ out_put_पंचांगp_file;
-	पूर्ण
+		goto out_put_tmp_file;
+	}
 
-	अगर (IS_SWAPखाता(file_inode(f.file)) ||
-	    IS_SWAPखाता(file_inode(पंचांगp.file))) अणु
+	if (IS_SWAPFILE(file_inode(f.file)) ||
+	    IS_SWAPFILE(file_inode(tmp.file))) {
 		error = -EINVAL;
-		जाओ out_put_पंचांगp_file;
-	पूर्ण
+		goto out_put_tmp_file;
+	}
 
 	/*
-	 * We need to ensure that the fds passed in poपूर्णांक to XFS inodes
-	 * beक्रमe we cast and access them as XFS काष्ठाures as we have no
+	 * We need to ensure that the fds passed in point to XFS inodes
+	 * before we cast and access them as XFS structures as we have no
 	 * control over what the user passes us here.
 	 */
-	अगर (f.file->f_op != &xfs_file_operations ||
-	    पंचांगp.file->f_op != &xfs_file_operations) अणु
+	if (f.file->f_op != &xfs_file_operations ||
+	    tmp.file->f_op != &xfs_file_operations) {
 		error = -EINVAL;
-		जाओ out_put_पंचांगp_file;
-	पूर्ण
+		goto out_put_tmp_file;
+	}
 
 	ip = XFS_I(file_inode(f.file));
-	tip = XFS_I(file_inode(पंचांगp.file));
+	tip = XFS_I(file_inode(tmp.file));
 
-	अगर (ip->i_mount != tip->i_mount) अणु
+	if (ip->i_mount != tip->i_mount) {
 		error = -EINVAL;
-		जाओ out_put_पंचांगp_file;
-	पूर्ण
+		goto out_put_tmp_file;
+	}
 
-	अगर (ip->i_ino == tip->i_ino) अणु
+	if (ip->i_ino == tip->i_ino) {
 		error = -EINVAL;
-		जाओ out_put_पंचांगp_file;
-	पूर्ण
+		goto out_put_tmp_file;
+	}
 
-	अगर (XFS_FORCED_SHUTDOWN(ip->i_mount)) अणु
+	if (XFS_FORCED_SHUTDOWN(ip->i_mount)) {
 		error = -EIO;
-		जाओ out_put_पंचांगp_file;
-	पूर्ण
+		goto out_put_tmp_file;
+	}
 
 	error = xfs_swap_extents(ip, tip, sxp);
 
- out_put_पंचांगp_file:
-	fdput(पंचांगp);
+ out_put_tmp_file:
+	fdput(tmp);
  out_put_file:
 	fdput(f);
  out:
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक
+static int
 xfs_ioc_getlabel(
-	काष्ठा xfs_mount	*mp,
-	अक्षर			__user *user_label)
-अणु
-	काष्ठा xfs_sb		*sbp = &mp->m_sb;
-	अक्षर			label[XFSLABEL_MAX + 1];
+	struct xfs_mount	*mp,
+	char			__user *user_label)
+{
+	struct xfs_sb		*sbp = &mp->m_sb;
+	char			label[XFSLABEL_MAX + 1];
 
 	/* Paranoia */
-	BUILD_BUG_ON(माप(sbp->sb_fname) > FSLABEL_MAX);
+	BUILD_BUG_ON(sizeof(sbp->sb_fname) > FSLABEL_MAX);
 
-	/* 1 larger than sb_fname, so this ensures a trailing NUL अक्षर */
-	स_रखो(label, 0, माप(label));
+	/* 1 larger than sb_fname, so this ensures a trailing NUL char */
+	memset(label, 0, sizeof(label));
 	spin_lock(&mp->m_sb_lock);
-	म_नकलन(label, sbp->sb_fname, XFSLABEL_MAX);
+	strncpy(label, sbp->sb_fname, XFSLABEL_MAX);
 	spin_unlock(&mp->m_sb_lock);
 
-	अगर (copy_to_user(user_label, label, माप(label)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(user_label, label, sizeof(label)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 xfs_ioc_setlabel(
-	काष्ठा file		*filp,
-	काष्ठा xfs_mount	*mp,
-	अक्षर			__user *newlabel)
-अणु
-	काष्ठा xfs_sb		*sbp = &mp->m_sb;
-	अक्षर			label[XFSLABEL_MAX + 1];
-	माप_प्रकार			len;
-	पूर्णांक			error;
+	struct file		*filp,
+	struct xfs_mount	*mp,
+	char			__user *newlabel)
+{
+	struct xfs_sb		*sbp = &mp->m_sb;
+	char			label[XFSLABEL_MAX + 1];
+	size_t			len;
+	int			error;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 	/*
-	 * The generic ioctl allows up to FSLABEL_MAX अक्षरs, but XFS is much
+	 * The generic ioctl allows up to FSLABEL_MAX chars, but XFS is much
 	 * smaller, at 12 bytes.  We copy one more to be sure we find the
-	 * (required) शून्य अक्षरacter to test the incoming label length.
-	 * NB: The on disk label करोesn't need to be null terminated.
+	 * (required) NULL character to test the incoming label length.
+	 * NB: The on disk label doesn't need to be null terminated.
 	 */
-	अगर (copy_from_user(label, newlabel, XFSLABEL_MAX + 1))
-		वापस -EFAULT;
+	if (copy_from_user(label, newlabel, XFSLABEL_MAX + 1))
+		return -EFAULT;
 	len = strnlen(label, XFSLABEL_MAX + 1);
-	अगर (len > माप(sbp->sb_fname))
-		वापस -EINVAL;
+	if (len > sizeof(sbp->sb_fname))
+		return -EINVAL;
 
-	error = mnt_want_ग_लिखो_file(filp);
-	अगर (error)
-		वापस error;
+	error = mnt_want_write_file(filp);
+	if (error)
+		return error;
 
 	spin_lock(&mp->m_sb_lock);
-	स_रखो(sbp->sb_fname, 0, माप(sbp->sb_fname));
-	स_नकल(sbp->sb_fname, label, len);
+	memset(sbp->sb_fname, 0, sizeof(sbp->sb_fname));
+	memcpy(sbp->sb_fname, label, len);
 	spin_unlock(&mp->m_sb_lock);
 
 	/*
-	 * Now we करो several things to satisfy userspace.
+	 * Now we do several things to satisfy userspace.
 	 * In addition to normal logging of the primary superblock, we also
-	 * immediately ग_लिखो these changes to sector zero क्रम the primary, then
-	 * update all backup supers (as xfs_db करोes क्रम a label change), then
+	 * immediately write these changes to sector zero for the primary, then
+	 * update all backup supers (as xfs_db does for a label change), then
 	 * invalidate the block device page cache.  This is so that any prior
-	 * buffered पढ़ोs from userspace (i.e. from blkid) are invalidated,
+	 * buffered reads from userspace (i.e. from blkid) are invalidated,
 	 * and userspace will see the newly-written label.
 	 */
 	error = xfs_sync_sb_buf(mp);
-	अगर (error)
-		जाओ out;
+	if (error)
+		goto out;
 	/*
 	 * growfs also updates backup supers so lock against that.
 	 */
@@ -1869,327 +1868,327 @@ xfs_ioc_setlabel(
 	invalidate_bdev(mp->m_ddev_targp->bt_bdev);
 
 out:
-	mnt_drop_ग_लिखो_file(filp);
-	वापस error;
-पूर्ण
+	mnt_drop_write_file(filp);
+	return error;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 xfs_fs_eofblocks_from_user(
-	काष्ठा xfs_fs_eofblocks		*src,
-	काष्ठा xfs_eofblocks		*dst)
-अणु
-	अगर (src->eof_version != XFS_खातापूर्णBLOCKS_VERSION)
-		वापस -EINVAL;
+	struct xfs_fs_eofblocks		*src,
+	struct xfs_eofblocks		*dst)
+{
+	if (src->eof_version != XFS_EOFBLOCKS_VERSION)
+		return -EINVAL;
 
-	अगर (src->eof_flags & ~XFS_खातापूर्ण_FLAGS_VALID)
-		वापस -EINVAL;
+	if (src->eof_flags & ~XFS_EOF_FLAGS_VALID)
+		return -EINVAL;
 
-	अगर (स_प्रथम_inv(&src->pad32, 0, माप(src->pad32)) ||
-	    स_प्रथम_inv(src->pad64, 0, माप(src->pad64)))
-		वापस -EINVAL;
+	if (memchr_inv(&src->pad32, 0, sizeof(src->pad32)) ||
+	    memchr_inv(src->pad64, 0, sizeof(src->pad64)))
+		return -EINVAL;
 
 	dst->eof_flags = src->eof_flags;
 	dst->eof_prid = src->eof_prid;
 	dst->eof_min_file_size = src->eof_min_file_size;
 
 	dst->eof_uid = INVALID_UID;
-	अगर (src->eof_flags & XFS_खातापूर्ण_FLAGS_UID) अणु
+	if (src->eof_flags & XFS_EOF_FLAGS_UID) {
 		dst->eof_uid = make_kuid(current_user_ns(), src->eof_uid);
-		अगर (!uid_valid(dst->eof_uid))
-			वापस -EINVAL;
-	पूर्ण
+		if (!uid_valid(dst->eof_uid))
+			return -EINVAL;
+	}
 
 	dst->eof_gid = INVALID_GID;
-	अगर (src->eof_flags & XFS_खातापूर्ण_FLAGS_GID) अणु
+	if (src->eof_flags & XFS_EOF_FLAGS_GID) {
 		dst->eof_gid = make_kgid(current_user_ns(), src->eof_gid);
-		अगर (!gid_valid(dst->eof_gid))
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!gid_valid(dst->eof_gid))
+			return -EINVAL;
+	}
+	return 0;
+}
 
 /*
- * Note: some of the ioctl's वापस positive numbers as a
- * byte count indicating success, such as पढ़ोlink_by_handle.
- * So we करोn't "sign flip" like most other routines.  This means
- * true errors need to be वापसed as a negative value.
+ * Note: some of the ioctl's return positive numbers as a
+ * byte count indicating success, such as readlink_by_handle.
+ * So we don't "sign flip" like most other routines.  This means
+ * true errors need to be returned as a negative value.
  */
-दीर्घ
+long
 xfs_file_ioctl(
-	काष्ठा file		*filp,
-	अचिन्हित पूर्णांक		cmd,
-	अचिन्हित दीर्घ		p)
-अणु
-	काष्ठा inode		*inode = file_inode(filp);
-	काष्ठा xfs_inode	*ip = XFS_I(inode);
-	काष्ठा xfs_mount	*mp = ip->i_mount;
-	व्योम			__user *arg = (व्योम __user *)p;
-	पूर्णांक			error;
+	struct file		*filp,
+	unsigned int		cmd,
+	unsigned long		p)
+{
+	struct inode		*inode = file_inode(filp);
+	struct xfs_inode	*ip = XFS_I(inode);
+	struct xfs_mount	*mp = ip->i_mount;
+	void			__user *arg = (void __user *)p;
+	int			error;
 
 	trace_xfs_file_ioctl(ip);
 
-	चयन (cmd) अणु
-	हाल FITRIM:
-		वापस xfs_ioc_trim(mp, arg);
-	हाल FS_IOC_GETFSLABEL:
-		वापस xfs_ioc_getlabel(mp, arg);
-	हाल FS_IOC_SETFSLABEL:
-		वापस xfs_ioc_setlabel(filp, mp, arg);
-	हाल XFS_IOC_ALLOCSP:
-	हाल XFS_IOC_FREESP:
-	हाल XFS_IOC_ALLOCSP64:
-	हाल XFS_IOC_FREESP64: अणु
+	switch (cmd) {
+	case FITRIM:
+		return xfs_ioc_trim(mp, arg);
+	case FS_IOC_GETFSLABEL:
+		return xfs_ioc_getlabel(mp, arg);
+	case FS_IOC_SETFSLABEL:
+		return xfs_ioc_setlabel(filp, mp, arg);
+	case XFS_IOC_ALLOCSP:
+	case XFS_IOC_FREESP:
+	case XFS_IOC_ALLOCSP64:
+	case XFS_IOC_FREESP64: {
 		xfs_flock64_t		bf;
 
-		अगर (copy_from_user(&bf, arg, माप(bf)))
-			वापस -EFAULT;
-		वापस xfs_ioc_space(filp, &bf);
-	पूर्ण
-	हाल XFS_IOC_DIOINFO: अणु
-		काष्ठा xfs_buftarg	*target = xfs_inode_buftarg(ip);
-		काष्ठा dioattr		da;
+		if (copy_from_user(&bf, arg, sizeof(bf)))
+			return -EFAULT;
+		return xfs_ioc_space(filp, &bf);
+	}
+	case XFS_IOC_DIOINFO: {
+		struct xfs_buftarg	*target = xfs_inode_buftarg(ip);
+		struct dioattr		da;
 
 		da.d_mem =  da.d_miniosz = target->bt_logical_sectorsize;
-		da.d_maxiosz = पूर्णांक_उच्च & ~(da.d_miniosz - 1);
+		da.d_maxiosz = INT_MAX & ~(da.d_miniosz - 1);
 
-		अगर (copy_to_user(arg, &da, माप(da)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+		if (copy_to_user(arg, &da, sizeof(da)))
+			return -EFAULT;
+		return 0;
+	}
 
-	हाल XFS_IOC_FSBULKSTAT_SINGLE:
-	हाल XFS_IOC_FSBULKSTAT:
-	हाल XFS_IOC_FSINUMBERS:
-		वापस xfs_ioc_fsbulkstat(filp, cmd, arg);
+	case XFS_IOC_FSBULKSTAT_SINGLE:
+	case XFS_IOC_FSBULKSTAT:
+	case XFS_IOC_FSINUMBERS:
+		return xfs_ioc_fsbulkstat(filp, cmd, arg);
 
-	हाल XFS_IOC_BULKSTAT:
-		वापस xfs_ioc_bulkstat(filp, cmd, arg);
-	हाल XFS_IOC_INUMBERS:
-		वापस xfs_ioc_inumbers(mp, cmd, arg);
+	case XFS_IOC_BULKSTAT:
+		return xfs_ioc_bulkstat(filp, cmd, arg);
+	case XFS_IOC_INUMBERS:
+		return xfs_ioc_inumbers(mp, cmd, arg);
 
-	हाल XFS_IOC_FSGEOMETRY_V1:
-		वापस xfs_ioc_fsgeometry(mp, arg, 3);
-	हाल XFS_IOC_FSGEOMETRY_V4:
-		वापस xfs_ioc_fsgeometry(mp, arg, 4);
-	हाल XFS_IOC_FSGEOMETRY:
-		वापस xfs_ioc_fsgeometry(mp, arg, 5);
+	case XFS_IOC_FSGEOMETRY_V1:
+		return xfs_ioc_fsgeometry(mp, arg, 3);
+	case XFS_IOC_FSGEOMETRY_V4:
+		return xfs_ioc_fsgeometry(mp, arg, 4);
+	case XFS_IOC_FSGEOMETRY:
+		return xfs_ioc_fsgeometry(mp, arg, 5);
 
-	हाल XFS_IOC_AG_GEOMETRY:
-		वापस xfs_ioc_ag_geometry(mp, arg);
+	case XFS_IOC_AG_GEOMETRY:
+		return xfs_ioc_ag_geometry(mp, arg);
 
-	हाल XFS_IOC_GETVERSION:
-		वापस put_user(inode->i_generation, (पूर्णांक __user *)arg);
+	case XFS_IOC_GETVERSION:
+		return put_user(inode->i_generation, (int __user *)arg);
 
-	हाल XFS_IOC_FSGETXATTRA:
-		वापस xfs_ioc_fsgetxattra(ip, arg);
+	case XFS_IOC_FSGETXATTRA:
+		return xfs_ioc_fsgetxattra(ip, arg);
 
-	हाल XFS_IOC_GETBMAP:
-	हाल XFS_IOC_GETBMAPA:
-	हाल XFS_IOC_GETBMAPX:
-		वापस xfs_ioc_getbmap(filp, cmd, arg);
+	case XFS_IOC_GETBMAP:
+	case XFS_IOC_GETBMAPA:
+	case XFS_IOC_GETBMAPX:
+		return xfs_ioc_getbmap(filp, cmd, arg);
 
-	हाल FS_IOC_GETFSMAP:
-		वापस xfs_ioc_getfsmap(ip, arg);
+	case FS_IOC_GETFSMAP:
+		return xfs_ioc_getfsmap(ip, arg);
 
-	हाल XFS_IOC_SCRUB_METADATA:
-		वापस xfs_ioc_scrub_metadata(filp, arg);
+	case XFS_IOC_SCRUB_METADATA:
+		return xfs_ioc_scrub_metadata(filp, arg);
 
-	हाल XFS_IOC_FD_TO_HANDLE:
-	हाल XFS_IOC_PATH_TO_HANDLE:
-	हाल XFS_IOC_PATH_TO_FSHANDLE: अणु
+	case XFS_IOC_FD_TO_HANDLE:
+	case XFS_IOC_PATH_TO_HANDLE:
+	case XFS_IOC_PATH_TO_FSHANDLE: {
 		xfs_fsop_handlereq_t	hreq;
 
-		अगर (copy_from_user(&hreq, arg, माप(hreq)))
-			वापस -EFAULT;
-		वापस xfs_find_handle(cmd, &hreq);
-	पूर्ण
-	हाल XFS_IOC_OPEN_BY_HANDLE: अणु
+		if (copy_from_user(&hreq, arg, sizeof(hreq)))
+			return -EFAULT;
+		return xfs_find_handle(cmd, &hreq);
+	}
+	case XFS_IOC_OPEN_BY_HANDLE: {
 		xfs_fsop_handlereq_t	hreq;
 
-		अगर (copy_from_user(&hreq, arg, माप(xfs_fsop_handlereq_t)))
-			वापस -EFAULT;
-		वापस xfs_खोलो_by_handle(filp, &hreq);
-	पूर्ण
+		if (copy_from_user(&hreq, arg, sizeof(xfs_fsop_handlereq_t)))
+			return -EFAULT;
+		return xfs_open_by_handle(filp, &hreq);
+	}
 
-	हाल XFS_IOC_READLINK_BY_HANDLE: अणु
+	case XFS_IOC_READLINK_BY_HANDLE: {
 		xfs_fsop_handlereq_t	hreq;
 
-		अगर (copy_from_user(&hreq, arg, माप(xfs_fsop_handlereq_t)))
-			वापस -EFAULT;
-		वापस xfs_पढ़ोlink_by_handle(filp, &hreq);
-	पूर्ण
-	हाल XFS_IOC_ATTRLIST_BY_HANDLE:
-		वापस xfs_attrlist_by_handle(filp, arg);
+		if (copy_from_user(&hreq, arg, sizeof(xfs_fsop_handlereq_t)))
+			return -EFAULT;
+		return xfs_readlink_by_handle(filp, &hreq);
+	}
+	case XFS_IOC_ATTRLIST_BY_HANDLE:
+		return xfs_attrlist_by_handle(filp, arg);
 
-	हाल XFS_IOC_ATTRMULTI_BY_HANDLE:
-		वापस xfs_attrmulti_by_handle(filp, arg);
+	case XFS_IOC_ATTRMULTI_BY_HANDLE:
+		return xfs_attrmulti_by_handle(filp, arg);
 
-	हाल XFS_IOC_SWAPEXT: अणु
-		काष्ठा xfs_swapext	sxp;
+	case XFS_IOC_SWAPEXT: {
+		struct xfs_swapext	sxp;
 
-		अगर (copy_from_user(&sxp, arg, माप(xfs_swapext_t)))
-			वापस -EFAULT;
-		error = mnt_want_ग_लिखो_file(filp);
-		अगर (error)
-			वापस error;
+		if (copy_from_user(&sxp, arg, sizeof(xfs_swapext_t)))
+			return -EFAULT;
+		error = mnt_want_write_file(filp);
+		if (error)
+			return error;
 		error = xfs_ioc_swapext(&sxp);
-		mnt_drop_ग_लिखो_file(filp);
-		वापस error;
-	पूर्ण
+		mnt_drop_write_file(filp);
+		return error;
+	}
 
-	हाल XFS_IOC_FSCOUNTS: अणु
+	case XFS_IOC_FSCOUNTS: {
 		xfs_fsop_counts_t out;
 
 		xfs_fs_counts(mp, &out);
 
-		अगर (copy_to_user(arg, &out, माप(out)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+		if (copy_to_user(arg, &out, sizeof(out)))
+			return -EFAULT;
+		return 0;
+	}
 
-	हाल XFS_IOC_SET_RESBLKS: अणु
+	case XFS_IOC_SET_RESBLKS: {
 		xfs_fsop_resblks_t inout;
-		uपूर्णांक64_t	   in;
+		uint64_t	   in;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		अगर (mp->m_flags & XFS_MOUNT_RDONLY)
-			वापस -EROFS;
+		if (mp->m_flags & XFS_MOUNT_RDONLY)
+			return -EROFS;
 
-		अगर (copy_from_user(&inout, arg, माप(inout)))
-			वापस -EFAULT;
+		if (copy_from_user(&inout, arg, sizeof(inout)))
+			return -EFAULT;
 
-		error = mnt_want_ग_लिखो_file(filp);
-		अगर (error)
-			वापस error;
+		error = mnt_want_write_file(filp);
+		if (error)
+			return error;
 
-		/* input parameter is passed in resblks field of काष्ठाure */
+		/* input parameter is passed in resblks field of structure */
 		in = inout.resblks;
 		error = xfs_reserve_blocks(mp, &in, &inout);
-		mnt_drop_ग_लिखो_file(filp);
-		अगर (error)
-			वापस error;
+		mnt_drop_write_file(filp);
+		if (error)
+			return error;
 
-		अगर (copy_to_user(arg, &inout, माप(inout)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+		if (copy_to_user(arg, &inout, sizeof(inout)))
+			return -EFAULT;
+		return 0;
+	}
 
-	हाल XFS_IOC_GET_RESBLKS: अणु
+	case XFS_IOC_GET_RESBLKS: {
 		xfs_fsop_resblks_t out;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		error = xfs_reserve_blocks(mp, शून्य, &out);
-		अगर (error)
-			वापस error;
+		error = xfs_reserve_blocks(mp, NULL, &out);
+		if (error)
+			return error;
 
-		अगर (copy_to_user(arg, &out, माप(out)))
-			वापस -EFAULT;
+		if (copy_to_user(arg, &out, sizeof(out)))
+			return -EFAULT;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	हाल XFS_IOC_FSGROWFSDATA: अणु
-		काष्ठा xfs_growfs_data in;
+	case XFS_IOC_FSGROWFSDATA: {
+		struct xfs_growfs_data in;
 
-		अगर (copy_from_user(&in, arg, माप(in)))
-			वापस -EFAULT;
+		if (copy_from_user(&in, arg, sizeof(in)))
+			return -EFAULT;
 
-		error = mnt_want_ग_लिखो_file(filp);
-		अगर (error)
-			वापस error;
+		error = mnt_want_write_file(filp);
+		if (error)
+			return error;
 		error = xfs_growfs_data(mp, &in);
-		mnt_drop_ग_लिखो_file(filp);
-		वापस error;
-	पूर्ण
+		mnt_drop_write_file(filp);
+		return error;
+	}
 
-	हाल XFS_IOC_FSGROWFSLOG: अणु
-		काष्ठा xfs_growfs_log in;
+	case XFS_IOC_FSGROWFSLOG: {
+		struct xfs_growfs_log in;
 
-		अगर (copy_from_user(&in, arg, माप(in)))
-			वापस -EFAULT;
+		if (copy_from_user(&in, arg, sizeof(in)))
+			return -EFAULT;
 
-		error = mnt_want_ग_लिखो_file(filp);
-		अगर (error)
-			वापस error;
+		error = mnt_want_write_file(filp);
+		if (error)
+			return error;
 		error = xfs_growfs_log(mp, &in);
-		mnt_drop_ग_लिखो_file(filp);
-		वापस error;
-	पूर्ण
+		mnt_drop_write_file(filp);
+		return error;
+	}
 
-	हाल XFS_IOC_FSGROWFSRT: अणु
+	case XFS_IOC_FSGROWFSRT: {
 		xfs_growfs_rt_t in;
 
-		अगर (copy_from_user(&in, arg, माप(in)))
-			वापस -EFAULT;
+		if (copy_from_user(&in, arg, sizeof(in)))
+			return -EFAULT;
 
-		error = mnt_want_ग_लिखो_file(filp);
-		अगर (error)
-			वापस error;
+		error = mnt_want_write_file(filp);
+		if (error)
+			return error;
 		error = xfs_growfs_rt(mp, &in);
-		mnt_drop_ग_लिखो_file(filp);
-		वापस error;
-	पूर्ण
+		mnt_drop_write_file(filp);
+		return error;
+	}
 
-	हाल XFS_IOC_GOINGDOWN: अणु
-		uपूर्णांक32_t in;
+	case XFS_IOC_GOINGDOWN: {
+		uint32_t in;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		अगर (get_user(in, (uपूर्णांक32_t __user *)arg))
-			वापस -EFAULT;
+		if (get_user(in, (uint32_t __user *)arg))
+			return -EFAULT;
 
-		वापस xfs_fs_goingकरोwn(mp, in);
-	पूर्ण
+		return xfs_fs_goingdown(mp, in);
+	}
 
-	हाल XFS_IOC_ERROR_INJECTION: अणु
+	case XFS_IOC_ERROR_INJECTION: {
 		xfs_error_injection_t in;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		अगर (copy_from_user(&in, arg, माप(in)))
-			वापस -EFAULT;
+		if (copy_from_user(&in, arg, sizeof(in)))
+			return -EFAULT;
 
-		वापस xfs_errortag_add(mp, in.errtag);
-	पूर्ण
+		return xfs_errortag_add(mp, in.errtag);
+	}
 
-	हाल XFS_IOC_ERROR_CLEARALL:
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+	case XFS_IOC_ERROR_CLEARALL:
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		वापस xfs_errortag_clearall(mp);
+		return xfs_errortag_clearall(mp);
 
-	हाल XFS_IOC_FREE_खातापूर्णBLOCKS: अणु
-		काष्ठा xfs_fs_eofblocks eofb;
-		काष्ठा xfs_eofblocks keofb;
+	case XFS_IOC_FREE_EOFBLOCKS: {
+		struct xfs_fs_eofblocks eofb;
+		struct xfs_eofblocks keofb;
 
-		अगर (!capable(CAP_SYS_ADMIN))
-			वापस -EPERM;
+		if (!capable(CAP_SYS_ADMIN))
+			return -EPERM;
 
-		अगर (mp->m_flags & XFS_MOUNT_RDONLY)
-			वापस -EROFS;
+		if (mp->m_flags & XFS_MOUNT_RDONLY)
+			return -EROFS;
 
-		अगर (copy_from_user(&eofb, arg, माप(eofb)))
-			वापस -EFAULT;
+		if (copy_from_user(&eofb, arg, sizeof(eofb)))
+			return -EFAULT;
 
 		error = xfs_fs_eofblocks_from_user(&eofb, &keofb);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
-		trace_xfs_ioc_मुक्त_eofblocks(mp, &keofb, _RET_IP_);
+		trace_xfs_ioc_free_eofblocks(mp, &keofb, _RET_IP_);
 
-		sb_start_ग_लिखो(mp->m_super);
-		error = xfs_blockgc_मुक्त_space(mp, &keofb);
-		sb_end_ग_लिखो(mp->m_super);
-		वापस error;
-	पूर्ण
+		sb_start_write(mp->m_super);
+		error = xfs_blockgc_free_space(mp, &keofb);
+		sb_end_write(mp->m_super);
+		return error;
+	}
 
-	शेष:
-		वापस -ENOTTY;
-	पूर्ण
-पूर्ण
+	default:
+		return -ENOTTY;
+	}
+}

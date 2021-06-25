@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
-/* NFS FS-Cache index काष्ठाure definition
+// SPDX-License-Identifier: GPL-2.0-or-later
+/* NFS FS-Cache index structure definition
  *
  * Copyright (C) 2008 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/nfs_fs.h>
-#समावेश <linux/nfs_fs_sb.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/iversion.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/mm.h>
+#include <linux/nfs_fs.h>
+#include <linux/nfs_fs_sb.h>
+#include <linux/in6.h>
+#include <linux/iversion.h>
 
-#समावेश "internal.h"
-#समावेश "fscache.h"
+#include "internal.h"
+#include "fscache.h"
 
-#घोषणा NFSDBG_FACILITY		NFSDBG_FSCACHE
+#define NFSDBG_FACILITY		NFSDBG_FSCACHE
 
 /*
- * Define the NFS fileप्रणाली क्रम FS-Cache.  Upon registration FS-Cache sticks
- * the cookie क्रम the top-level index object क्रम NFS पूर्णांकo here.  The top-level
- * index can than have other cache objects inserted पूर्णांकo it.
+ * Define the NFS filesystem for FS-Cache.  Upon registration FS-Cache sticks
+ * the cookie for the top-level index object for NFS into here.  The top-level
+ * index can than have other cache objects inserted into it.
  */
-काष्ठा fscache_netfs nfs_fscache_netfs = अणु
+struct fscache_netfs nfs_fscache_netfs = {
 	.name		= "nfs",
 	.version	= 0,
-पूर्ण;
+};
 
 /*
- * Register NFS क्रम caching
+ * Register NFS for caching
  */
-पूर्णांक nfs_fscache_रेजिस्टर(व्योम)
-अणु
-	वापस fscache_रेजिस्टर_netfs(&nfs_fscache_netfs);
-पूर्ण
+int nfs_fscache_register(void)
+{
+	return fscache_register_netfs(&nfs_fscache_netfs);
+}
 
 /*
- * Unरेजिस्टर NFS क्रम caching
+ * Unregister NFS for caching
  */
-व्योम nfs_fscache_unरेजिस्टर(व्योम)
-अणु
-	fscache_unरेजिस्टर_netfs(&nfs_fscache_netfs);
-पूर्ण
+void nfs_fscache_unregister(void)
+{
+	fscache_unregister_netfs(&nfs_fscache_netfs);
+}
 
 /*
- * Define the server object क्रम FS-Cache.  This is used to describe a server
+ * Define the server object for FS-Cache.  This is used to describe a server
  * object to fscache_acquire_cookie().  It is keyed by the NFS protocol and
  * server address parameters.
  */
-स्थिर काष्ठा fscache_cookie_def nfs_fscache_server_index_def = अणु
+const struct fscache_cookie_def nfs_fscache_server_index_def = {
 	.name		= "NFS.server",
 	.type 		= FSCACHE_COOKIE_TYPE_INDEX,
-पूर्ण;
+};
 
 /*
- * Define the superblock object क्रम FS-Cache.  This is used to describe a
+ * Define the superblock object for FS-Cache.  This is used to describe a
  * superblock object to fscache_acquire_cookie().  It is keyed by all the NFS
  * parameters that might cause a separate superblock.
  */
-स्थिर काष्ठा fscache_cookie_def nfs_fscache_super_index_def = अणु
+const struct fscache_cookie_def nfs_fscache_super_index_def = {
 	.name		= "NFS.super",
 	.type 		= FSCACHE_COOKIE_TYPE_INDEX,
-पूर्ण;
+};
 
 /*
  * Consult the netfs about the state of an object
- * - This function can be असलent अगर the index carries no state data
+ * - This function can be absent if the index carries no state data
  * - The netfs data from the cookie being used as the target is
  *   presented, as is the auxiliary data
  */
-अटल
-क्रमागत fscache_checkaux nfs_fscache_inode_check_aux(व्योम *cookie_netfs_data,
-						  स्थिर व्योम *data,
-						  uपूर्णांक16_t datalen,
+static
+enum fscache_checkaux nfs_fscache_inode_check_aux(void *cookie_netfs_data,
+						  const void *data,
+						  uint16_t datalen,
 						  loff_t object_size)
-अणु
-	काष्ठा nfs_fscache_inode_auxdata auxdata;
-	काष्ठा nfs_inode *nfsi = cookie_netfs_data;
+{
+	struct nfs_fscache_inode_auxdata auxdata;
+	struct nfs_inode *nfsi = cookie_netfs_data;
 
-	अगर (datalen != माप(auxdata))
-		वापस FSCACHE_CHECKAUX_OBSOLETE;
+	if (datalen != sizeof(auxdata))
+		return FSCACHE_CHECKAUX_OBSOLETE;
 
-	स_रखो(&auxdata, 0, माप(auxdata));
-	auxdata.mसमय_sec  = nfsi->vfs_inode.i_mसमय.tv_sec;
-	auxdata.mसमय_nsec = nfsi->vfs_inode.i_mसमय.tv_nsec;
-	auxdata.स_समय_sec  = nfsi->vfs_inode.i_स_समय.tv_sec;
-	auxdata.स_समय_nsec = nfsi->vfs_inode.i_स_समय.tv_nsec;
+	memset(&auxdata, 0, sizeof(auxdata));
+	auxdata.mtime_sec  = nfsi->vfs_inode.i_mtime.tv_sec;
+	auxdata.mtime_nsec = nfsi->vfs_inode.i_mtime.tv_nsec;
+	auxdata.ctime_sec  = nfsi->vfs_inode.i_ctime.tv_sec;
+	auxdata.ctime_nsec = nfsi->vfs_inode.i_ctime.tv_nsec;
 
-	अगर (NFS_SERVER(&nfsi->vfs_inode)->nfs_client->rpc_ops->version == 4)
+	if (NFS_SERVER(&nfsi->vfs_inode)->nfs_client->rpc_ops->version == 4)
 		auxdata.change_attr = inode_peek_iversion_raw(&nfsi->vfs_inode);
 
-	अगर (स_भेद(data, &auxdata, datalen) != 0)
-		वापस FSCACHE_CHECKAUX_OBSOLETE;
+	if (memcmp(data, &auxdata, datalen) != 0)
+		return FSCACHE_CHECKAUX_OBSOLETE;
 
-	वापस FSCACHE_CHECKAUX_OKAY;
-पूर्ण
+	return FSCACHE_CHECKAUX_OKAY;
+}
 
 /*
- * Get an extra reference on a पढ़ो context.
- * - This function can be असलent अगर the completion function करोesn't require a
+ * Get an extra reference on a read context.
+ * - This function can be absent if the completion function doesn't require a
  *   context.
- * - The पढ़ो context is passed back to NFS in the event that a data पढ़ो on the
- *   cache fails with EIO - in which हाल the server must be contacted to
- *   retrieve the data, which requires the पढ़ो context क्रम security.
+ * - The read context is passed back to NFS in the event that a data read on the
+ *   cache fails with EIO - in which case the server must be contacted to
+ *   retrieve the data, which requires the read context for security.
  */
-अटल व्योम nfs_fh_get_context(व्योम *cookie_netfs_data, व्योम *context)
-अणु
-	get_nfs_खोलो_context(context);
-पूर्ण
+static void nfs_fh_get_context(void *cookie_netfs_data, void *context)
+{
+	get_nfs_open_context(context);
+}
 
 /*
- * Release an extra reference on a पढ़ो context.
- * - This function can be असलent अगर the completion function करोesn't require a
+ * Release an extra reference on a read context.
+ * - This function can be absent if the completion function doesn't require a
  *   context.
  */
-अटल व्योम nfs_fh_put_context(व्योम *cookie_netfs_data, व्योम *context)
-अणु
-	अगर (context)
-		put_nfs_खोलो_context(context);
-पूर्ण
+static void nfs_fh_put_context(void *cookie_netfs_data, void *context)
+{
+	if (context)
+		put_nfs_open_context(context);
+}
 
 /*
- * Define the inode object क्रम FS-Cache.  This is used to describe an inode
- * object to fscache_acquire_cookie().  It is keyed by the NFS file handle क्रम
+ * Define the inode object for FS-Cache.  This is used to describe an inode
+ * object to fscache_acquire_cookie().  It is keyed by the NFS file handle for
  * an inode.
  *
- * Coherency is managed by comparing the copies of i_size, i_mसमय and i_स_समय
- * held in the cache auxiliary data क्रम the data storage object with those in
- * the inode काष्ठा in memory.
+ * Coherency is managed by comparing the copies of i_size, i_mtime and i_ctime
+ * held in the cache auxiliary data for the data storage object with those in
+ * the inode struct in memory.
  */
-स्थिर काष्ठा fscache_cookie_def nfs_fscache_inode_object_def = अणु
+const struct fscache_cookie_def nfs_fscache_inode_object_def = {
 	.name		= "NFS.fh",
-	.type		= FSCACHE_COOKIE_TYPE_DATAखाता,
+	.type		= FSCACHE_COOKIE_TYPE_DATAFILE,
 	.check_aux	= nfs_fscache_inode_check_aux,
 	.get_context	= nfs_fh_get_context,
 	.put_context	= nfs_fh_put_context,
-पूर्ण;
+};

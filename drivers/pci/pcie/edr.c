@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * PCI Error Disconnect Recover support
- * Author: Kuppuswamy Sathyanarayanan <sathyanarayanan.kuppuswamy@linux.पूर्णांकel.com>
+ * Author: Kuppuswamy Sathyanarayanan <sathyanarayanan.kuppuswamy@linux.intel.com>
  *
  * Copyright (C) 2020 Intel Corp.
  */
 
-#घोषणा dev_fmt(fmt) "EDR: " fmt
+#define dev_fmt(fmt) "EDR: " fmt
 
-#समावेश <linux/pci.h>
-#समावेश <linux/pci-acpi.h>
+#include <linux/pci.h>
+#include <linux/pci-acpi.h>
 
-#समावेश "portdrv.h"
-#समावेश "../pci.h"
+#include "portdrv.h"
+#include "../pci.h"
 
-#घोषणा EDR_PORT_DPC_ENABLE_DSM		0x0C
-#घोषणा EDR_PORT_LOCATE_DSM		0x0D
-#घोषणा EDR_OST_SUCCESS			0x80
-#घोषणा EDR_OST_FAILED			0x81
+#define EDR_PORT_DPC_ENABLE_DSM		0x0C
+#define EDR_PORT_LOCATE_DSM		0x0D
+#define EDR_OST_SUCCESS			0x80
+#define EDR_OST_FAILED			0x81
 
 /*
  * _DSM wrapper function to enable/disable DPC
- * @pdev   : PCI device काष्ठाure
+ * @pdev   : PCI device structure
  *
- * वापसs 0 on success or त्रुटि_सं on failure.
+ * returns 0 on success or errno on failure.
  */
-अटल पूर्णांक acpi_enable_dpc(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
-	जोड़ acpi_object *obj, argv4, req;
-	पूर्णांक status = 0;
+static int acpi_enable_dpc(struct pci_dev *pdev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+	union acpi_object *obj, argv4, req;
+	int status = 0;
 
 	/*
 	 * Behavior when calling unsupported _DSM functions is undefined,
 	 * so check whether EDR_PORT_DPC_ENABLE_DSM is supported.
 	 */
-	अगर (!acpi_check_dsm(adev->handle, &pci_acpi_dsm_guid, 5,
+	if (!acpi_check_dsm(adev->handle, &pci_acpi_dsm_guid, 5,
 			    1ULL << EDR_PORT_DPC_ENABLE_DSM))
-		वापस 0;
+		return 0;
 
 	req.type = ACPI_TYPE_INTEGER;
-	req.पूर्णांकeger.value = 1;
+	req.integer.value = 1;
 
 	argv4.type = ACPI_TYPE_PACKAGE;
 	argv4.package.count = 1;
@@ -49,74 +48,74 @@
 
 	/*
 	 * Per Downstream Port Containment Related Enhancements ECN to PCI
-	 * Firmware Specअगरication r3.2, sec 4.6.12, EDR_PORT_DPC_ENABLE_DSM is
-	 * optional.  Return success अगर it's not implemented.
+	 * Firmware Specification r3.2, sec 4.6.12, EDR_PORT_DPC_ENABLE_DSM is
+	 * optional.  Return success if it's not implemented.
 	 */
 	obj = acpi_evaluate_dsm(adev->handle, &pci_acpi_dsm_guid, 5,
 				EDR_PORT_DPC_ENABLE_DSM, &argv4);
-	अगर (!obj)
-		वापस 0;
+	if (!obj)
+		return 0;
 
-	अगर (obj->type != ACPI_TYPE_INTEGER) अणु
+	if (obj->type != ACPI_TYPE_INTEGER) {
 		pci_err(pdev, FW_BUG "Enable DPC _DSM returned non integer\n");
 		status = -EIO;
-	पूर्ण
+	}
 
-	अगर (obj->पूर्णांकeger.value != 1) अणु
+	if (obj->integer.value != 1) {
 		pci_err(pdev, "Enable DPC _DSM failed to enable DPC\n");
 		status = -EIO;
-	पूर्ण
+	}
 
 	ACPI_FREE(obj);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /*
  * _DSM wrapper function to locate DPC port
  * @pdev   : Device which received EDR event
  *
- * Returns pci_dev or शून्य.  Caller is responsible क्रम dropping a reference
- * on the वापसed pci_dev with pci_dev_put().
+ * Returns pci_dev or NULL.  Caller is responsible for dropping a reference
+ * on the returned pci_dev with pci_dev_put().
  */
-अटल काष्ठा pci_dev *acpi_dpc_port_get(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
-	जोड़ acpi_object *obj;
+static struct pci_dev *acpi_dpc_port_get(struct pci_dev *pdev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+	union acpi_object *obj;
 	u16 port;
 
 	/*
 	 * Behavior when calling unsupported _DSM functions is undefined,
 	 * so check whether EDR_PORT_DPC_ENABLE_DSM is supported.
 	 */
-	अगर (!acpi_check_dsm(adev->handle, &pci_acpi_dsm_guid, 5,
+	if (!acpi_check_dsm(adev->handle, &pci_acpi_dsm_guid, 5,
 			    1ULL << EDR_PORT_LOCATE_DSM))
-		वापस pci_dev_get(pdev);
+		return pci_dev_get(pdev);
 
 	obj = acpi_evaluate_dsm(adev->handle, &pci_acpi_dsm_guid, 5,
-				EDR_PORT_LOCATE_DSM, शून्य);
-	अगर (!obj)
-		वापस pci_dev_get(pdev);
+				EDR_PORT_LOCATE_DSM, NULL);
+	if (!obj)
+		return pci_dev_get(pdev);
 
-	अगर (obj->type != ACPI_TYPE_INTEGER) अणु
+	if (obj->type != ACPI_TYPE_INTEGER) {
 		ACPI_FREE(obj);
 		pci_err(pdev, FW_BUG "Locate Port _DSM returned non integer\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
-	 * Firmware वापसs DPC port BDF details in following क्रमmat:
+	 * Firmware returns DPC port BDF details in following format:
 	 *	15:8 = bus
 	 *	 7:3 = device
 	 *	 2:0 = function
 	 */
-	port = obj->पूर्णांकeger.value;
+	port = obj->integer.value;
 
 	ACPI_FREE(obj);
 
-	वापस pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr(pdev->bus),
+	return pci_get_domain_bus_and_slot(pci_domain_nr(pdev->bus),
 					   PCI_BUS_NUM(port), port & 0xff);
-पूर्ण
+}
 
 /*
  * _OST wrapper function to let firmware know the status of EDR event
@@ -124,10 +123,10 @@
  * @edev   : Device which experienced EDR event
  * @status : Status of EDR event
  */
-अटल पूर्णांक acpi_send_edr_status(काष्ठा pci_dev *pdev, काष्ठा pci_dev *edev,
+static int acpi_send_edr_status(struct pci_dev *pdev, struct pci_dev *edev,
 				u16 status)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
 	u32 ost_status;
 
 	pci_dbg(pdev, "Status for %s: %#x\n", pci_name(edev), status);
@@ -136,55 +135,55 @@
 	ost_status |= status;
 
 	status = acpi_evaluate_ost(adev->handle, ACPI_NOTIFY_DISCONNECT_RECOVER,
-				   ost_status, शून्य);
-	अगर (ACPI_FAILURE(status))
-		वापस -EINVAL;
+				   ost_status, NULL);
+	if (ACPI_FAILURE(status))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम edr_handle_event(acpi_handle handle, u32 event, व्योम *data)
-अणु
-	काष्ठा pci_dev *pdev = data, *edev;
+static void edr_handle_event(acpi_handle handle, u32 event, void *data)
+{
+	struct pci_dev *pdev = data, *edev;
 	pci_ers_result_t estate = PCI_ERS_RESULT_DISCONNECT;
 	u16 status;
 
-	अगर (event != ACPI_NOTIFY_DISCONNECT_RECOVER)
-		वापस;
+	if (event != ACPI_NOTIFY_DISCONNECT_RECOVER)
+		return;
 
 	pci_info(pdev, "EDR event received\n");
 
 	/* Locate the port which issued EDR event */
 	edev = acpi_dpc_port_get(pdev);
-	अगर (!edev) अणु
+	if (!edev) {
 		pci_err(pdev, "Firmware failed to locate DPC port\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	pci_dbg(pdev, "Reported EDR dev: %s\n", pci_name(edev));
 
-	/* If port करोes not support DPC, just send the OST */
-	अगर (!edev->dpc_cap) अणु
+	/* If port does not support DPC, just send the OST */
+	if (!edev->dpc_cap) {
 		pci_err(edev, FW_BUG "This device doesn't support DPC\n");
-		जाओ send_ost;
-	पूर्ण
+		goto send_ost;
+	}
 
-	/* Check अगर there is a valid DPC trigger */
-	pci_पढ़ो_config_word(edev, edev->dpc_cap + PCI_EXP_DPC_STATUS, &status);
-	अगर (!(status & PCI_EXP_DPC_STATUS_TRIGGER)) अणु
+	/* Check if there is a valid DPC trigger */
+	pci_read_config_word(edev, edev->dpc_cap + PCI_EXP_DPC_STATUS, &status);
+	if (!(status & PCI_EXP_DPC_STATUS_TRIGGER)) {
 		pci_err(edev, "Invalid DPC trigger %#010x\n", status);
-		जाओ send_ost;
-	पूर्ण
+		goto send_ost;
+	}
 
 	dpc_process_error(edev);
 	pci_aer_raw_clear_status(edev);
 
 	/*
 	 * Irrespective of whether the DPC event is triggered by ERR_FATAL
-	 * or ERR_NONFATAL, since the link is alपढ़ोy करोwn, use the FATAL
-	 * error recovery path क्रम both हालs.
+	 * or ERR_NONFATAL, since the link is already down, use the FATAL
+	 * error recovery path for both cases.
 	 */
-	estate = pcie_करो_recovery(edev, pci_channel_io_frozen, dpc_reset_link);
+	estate = pcie_do_recovery(edev, pci_channel_io_frozen, dpc_reset_link);
 
 send_ost:
 
@@ -192,49 +191,49 @@ send_ost:
 	 * If recovery is successful, send _OST(0xF, BDF << 16 | 0x80)
 	 * to firmware. If not successful, send _OST(0xF, BDF << 16 | 0x81).
 	 */
-	अगर (estate == PCI_ERS_RESULT_RECOVERED) अणु
+	if (estate == PCI_ERS_RESULT_RECOVERED) {
 		pci_dbg(edev, "DPC port successfully recovered\n");
 		acpi_send_edr_status(pdev, edev, EDR_OST_SUCCESS);
-	पूर्ण अन्यथा अणु
+	} else {
 		pci_dbg(edev, "DPC port recovery failed\n");
 		acpi_send_edr_status(pdev, edev, EDR_OST_FAILED);
-	पूर्ण
+	}
 
 	pci_dev_put(edev);
-पूर्ण
+}
 
-व्योम pci_acpi_add_edr_notअगरier(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+void pci_acpi_add_edr_notifier(struct pci_dev *pdev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
 	acpi_status status;
 
-	अगर (!adev) अणु
+	if (!adev) {
 		pci_dbg(pdev, "No valid ACPI node, skipping EDR init\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	status = acpi_install_notअगरy_handler(adev->handle, ACPI_SYSTEM_NOTIFY,
+	status = acpi_install_notify_handler(adev->handle, ACPI_SYSTEM_NOTIFY,
 					     edr_handle_event, pdev);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		pci_err(pdev, "Failed to install notify handler\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (acpi_enable_dpc(pdev))
-		acpi_हटाओ_notअगरy_handler(adev->handle, ACPI_SYSTEM_NOTIFY,
+	if (acpi_enable_dpc(pdev))
+		acpi_remove_notify_handler(adev->handle, ACPI_SYSTEM_NOTIFY,
 					   edr_handle_event);
-	अन्यथा
+	else
 		pci_dbg(pdev, "Notify handler installed\n");
-पूर्ण
+}
 
-व्योम pci_acpi_हटाओ_edr_notअगरier(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+void pci_acpi_remove_edr_notifier(struct pci_dev *pdev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
 
-	अगर (!adev)
-		वापस;
+	if (!adev)
+		return;
 
-	acpi_हटाओ_notअगरy_handler(adev->handle, ACPI_SYSTEM_NOTIFY,
+	acpi_remove_notify_handler(adev->handle, ACPI_SYSTEM_NOTIFY,
 				   edr_handle_event);
 	pci_dbg(pdev, "Notify handler removed\n");
-पूर्ण
+}

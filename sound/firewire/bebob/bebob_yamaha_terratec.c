@@ -1,65 +1,64 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * bebob_yamaha.c - a part of driver क्रम BeBoB based devices
+ * bebob_yamaha.c - a part of driver for BeBoB based devices
  *
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
 
-#समावेश "./bebob.h"
+#include "./bebob.h"
 
 /*
  * NOTE:
- * Yamaha GO44 is not deचिन्हित to be used as stand-alone mixer. So any streams
+ * Yamaha GO44 is not designed to be used as stand-alone mixer. So any streams
  * must be accompanied. If changing the state, a LED on the device starts to
  * blink and its sync status is false. In this state, the device sounds nothing
- * even अगर streaming. To start streaming at the current sampling rate is only
- * way to recover this state. GO46 is better क्रम stand-alone mixer.
+ * even if streaming. To start streaming at the current sampling rate is only
+ * way to recover this state. GO46 is better for stand-alone mixer.
  *
  * Both of them have a capability to change its sampling rate up to 192.0kHz.
  * At 192.0kHz, the device reports 4 PCM-in, 1 MIDI-in, 6 PCM-out, 1 MIDI-out.
  * But Yamaha's driver reduce 2 PCM-in, 1 MIDI-in, 2 PCM-out, 1 MIDI-out to use
  * 'Extended Stream Format Information Command - Single Request' in 'Additional
  * AVC commands' defined by BridgeCo.
- * This ALSA driver करोn't करो this because a bit tiresome. Then isochronous
+ * This ALSA driver don't do this because a bit tiresome. Then isochronous
  * streaming with many asynchronous transactions brings sounds with noises.
- * Unक्रमtunately current 'ffado-mixer' generated many asynchronous transaction
- * to observe device's state, मुख्यly check cmp connection and संकेत क्रमmat. I
- * recommend users to बंद ffaकरो-mixer at 192.0kHz अगर mixer is needless.
+ * Unfortunately current 'ffado-mixer' generated many asynchronous transaction
+ * to observe device's state, mainly check cmp connection and signal format. I
+ * recommend users to close ffado-mixer at 192.0kHz if mixer is needless.
  *
- * Terratec PHASE 24 FW and PHASE X24 FW are पूर्णांकernally the same as
- * Yamaha GO 44 and GO 46. Yamaha and Terratec had cooperated क्रम these models.
+ * Terratec PHASE 24 FW and PHASE X24 FW are internally the same as
+ * Yamaha GO 44 and GO 46. Yamaha and Terratec had cooperated for these models.
  */
 
-अटल स्थिर क्रमागत snd_bebob_घड़ी_प्रकारype clk_src_types[] = अणु
+static const enum snd_bebob_clock_type clk_src_types[] = {
 	SND_BEBOB_CLOCK_TYPE_INTERNAL,
 	SND_BEBOB_CLOCK_TYPE_EXTERNAL,	/* S/PDIF */
-पूर्ण;
-अटल पूर्णांक
-clk_src_get(काष्ठा snd_bebob *bebob, अचिन्हित पूर्णांक *id)
-अणु
-	पूर्णांक err;
+};
+static int
+clk_src_get(struct snd_bebob *bebob, unsigned int *id)
+{
+	int err;
 
 	err = avc_audio_get_selector(bebob->unit, 0, 4, id);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (*id >= ARRAY_SIZE(clk_src_types))
-		वापस -EIO;
+	if (*id >= ARRAY_SIZE(clk_src_types))
+		return -EIO;
 
-	वापस 0;
-पूर्ण
-अटल स्थिर काष्ठा snd_bebob_घड़ी_spec घड़ी_spec = अणु
+	return 0;
+}
+static const struct snd_bebob_clock_spec clock_spec = {
 	.num	= ARRAY_SIZE(clk_src_types),
 	.types	= clk_src_types,
 	.get	= &clk_src_get,
-पूर्ण;
-अटल स्थिर काष्ठा snd_bebob_rate_spec rate_spec = अणु
+};
+static const struct snd_bebob_rate_spec rate_spec = {
 	.get	= &snd_bebob_stream_get_rate,
 	.set	= &snd_bebob_stream_set_rate,
-पूर्ण;
-स्थिर काष्ठा snd_bebob_spec yamaha_terratec_spec = अणु
-	.घड़ी	= &घड़ी_spec,
+};
+const struct snd_bebob_spec yamaha_terratec_spec = {
+	.clock	= &clock_spec,
 	.rate	= &rate_spec,
-	.meter	= शून्य
-पूर्ण;
+	.meter	= NULL
+};

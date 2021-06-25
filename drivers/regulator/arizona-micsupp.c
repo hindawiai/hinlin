@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
-// arizona-micsupp.c  --  Microphone supply क्रम Arizona devices
+// arizona-micsupp.c  --  Microphone supply for Arizona devices
 //
 // Copyright 2012 Wolfson Microelectronics PLC.
 //
-// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/err.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/machine.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/workqueue.h>
-#समावेश <sound/soc.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/bitops.h>
+#include <linux/err.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/machine.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/slab.h>
+#include <linux/workqueue.h>
+#include <sound/soc.h>
 
-#समावेश <linux/mfd/arizona/core.h>
-#समावेश <linux/mfd/arizona/pdata.h>
-#समावेश <linux/mfd/arizona/रेजिस्टरs.h>
+#include <linux/mfd/arizona/core.h>
+#include <linux/mfd/arizona/pdata.h>
+#include <linux/mfd/arizona/registers.h>
 
-#समावेश <linux/mfd/madera/core.h>
-#समावेश <linux/mfd/madera/pdata.h>
-#समावेश <linux/mfd/madera/रेजिस्टरs.h>
+#include <linux/mfd/madera/core.h>
+#include <linux/mfd/madera/pdata.h>
+#include <linux/mfd/madera/registers.h>
 
-#समावेश <linux/regulator/arizona-micsupp.h>
+#include <linux/regulator/arizona-micsupp.h>
 
-काष्ठा arizona_micsupp अणु
-	काष्ठा regulator_dev *regulator;
-	काष्ठा regmap *regmap;
-	काष्ठा snd_soc_dapm_context **dapm;
-	अचिन्हित पूर्णांक enable_reg;
-	काष्ठा device *dev;
+struct arizona_micsupp {
+	struct regulator_dev *regulator;
+	struct regmap *regmap;
+	struct snd_soc_dapm_context **dapm;
+	unsigned int enable_reg;
+	struct device *dev;
 
-	काष्ठा regulator_consumer_supply supply;
-	काष्ठा regulator_init_data init_data;
+	struct regulator_consumer_supply supply;
+	struct regulator_init_data init_data;
 
-	काष्ठा work_काष्ठा check_cp_work;
-पूर्ण;
+	struct work_struct check_cp_work;
+};
 
-अटल व्योम arizona_micsupp_check_cp(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा arizona_micsupp *micsupp =
-		container_of(work, काष्ठा arizona_micsupp, check_cp_work);
-	काष्ठा snd_soc_dapm_context *dapm = *micsupp->dapm;
-	काष्ठा snd_soc_component *component;
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret;
+static void arizona_micsupp_check_cp(struct work_struct *work)
+{
+	struct arizona_micsupp *micsupp =
+		container_of(work, struct arizona_micsupp, check_cp_work);
+	struct snd_soc_dapm_context *dapm = *micsupp->dapm;
+	struct snd_soc_component *component;
+	unsigned int val;
+	int ret;
 
-	ret = regmap_पढ़ो(micsupp->regmap, micsupp->enable_reg, &val);
-	अगर (ret != 0) अणु
+	ret = regmap_read(micsupp->regmap, micsupp->enable_reg, &val);
+	if (ret != 0) {
 		dev_err(micsupp->dev,
 			"Failed to read CP state: %d\n", ret);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dapm) अणु
+	if (dapm) {
 		component = snd_soc_dapm_to_component(dapm);
 
-		अगर ((val & (ARIZONA_CPMIC_ENA | ARIZONA_CPMIC_BYPASS)) ==
+		if ((val & (ARIZONA_CPMIC_ENA | ARIZONA_CPMIC_BYPASS)) ==
 		    ARIZONA_CPMIC_ENA)
-			snd_soc_component_क्रमce_enable_pin(component,
+			snd_soc_component_force_enable_pin(component,
 							   "MICSUPP");
-		अन्यथा
+		else
 			snd_soc_component_disable_pin(component, "MICSUPP");
 
 		snd_soc_dapm_sync(dapm);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक arizona_micsupp_enable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा arizona_micsupp *micsupp = rdev_get_drvdata(rdev);
-	पूर्णांक ret;
+static int arizona_micsupp_enable(struct regulator_dev *rdev)
+{
+	struct arizona_micsupp *micsupp = rdev_get_drvdata(rdev);
+	int ret;
 
 	ret = regulator_enable_regmap(rdev);
 
-	अगर (ret == 0)
+	if (ret == 0)
 		schedule_work(&micsupp->check_cp_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक arizona_micsupp_disable(काष्ठा regulator_dev *rdev)
-अणु
-	काष्ठा arizona_micsupp *micsupp = rdev_get_drvdata(rdev);
-	पूर्णांक ret;
+static int arizona_micsupp_disable(struct regulator_dev *rdev)
+{
+	struct arizona_micsupp *micsupp = rdev_get_drvdata(rdev);
+	int ret;
 
 	ret = regulator_disable_regmap(rdev);
-	अगर (ret == 0)
+	if (ret == 0)
 		schedule_work(&micsupp->check_cp_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक arizona_micsupp_set_bypass(काष्ठा regulator_dev *rdev, bool ena)
-अणु
-	काष्ठा arizona_micsupp *micsupp = rdev_get_drvdata(rdev);
-	पूर्णांक ret;
+static int arizona_micsupp_set_bypass(struct regulator_dev *rdev, bool ena)
+{
+	struct arizona_micsupp *micsupp = rdev_get_drvdata(rdev);
+	int ret;
 
 	ret = regulator_set_bypass_regmap(rdev, ena);
-	अगर (ret == 0)
+	if (ret == 0)
 		schedule_work(&micsupp->check_cp_work);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा regulator_ops arizona_micsupp_ops = अणु
+static const struct regulator_ops arizona_micsupp_ops = {
 	.enable = arizona_micsupp_enable,
 	.disable = arizona_micsupp_disable,
 	.is_enabled = regulator_is_enabled_regmap,
@@ -124,14 +123,14 @@
 
 	.get_bypass = regulator_get_bypass_regmap,
 	.set_bypass = arizona_micsupp_set_bypass,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा linear_range arizona_micsupp_ranges[] = अणु
+static const struct linear_range arizona_micsupp_ranges[] = {
 	REGULATOR_LINEAR_RANGE(1700000, 0,    0x1e, 50000),
 	REGULATOR_LINEAR_RANGE(3300000, 0x1f, 0x1f, 0),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_desc arizona_micsupp = अणु
+static const struct regulator_desc arizona_micsupp = {
 	.name = "MICVDD",
 	.supply_name = "CPVDD",
 	.type = REGULATOR_VOLTAGE,
@@ -148,17 +147,17 @@
 	.linear_ranges = arizona_micsupp_ranges,
 	.n_linear_ranges = ARRAY_SIZE(arizona_micsupp_ranges),
 
-	.enable_समय = 3000,
+	.enable_time = 3000,
 
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा linear_range arizona_micsupp_ext_ranges[] = अणु
+static const struct linear_range arizona_micsupp_ext_ranges[] = {
 	REGULATOR_LINEAR_RANGE(900000,  0,    0x14, 25000),
 	REGULATOR_LINEAR_RANGE(1500000, 0x15, 0x27, 100000),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_desc arizona_micsupp_ext = अणु
+static const struct regulator_desc arizona_micsupp_ext = {
 	.name = "MICVDD",
 	.supply_name = "CPVDD",
 	.type = REGULATOR_VOLTAGE,
@@ -175,36 +174,36 @@
 	.linear_ranges = arizona_micsupp_ext_ranges,
 	.n_linear_ranges = ARRAY_SIZE(arizona_micsupp_ext_ranges),
 
-	.enable_समय = 3000,
+	.enable_time = 3000,
 
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_init_data arizona_micsupp_शेष = अणु
-	.स्थिरraपूर्णांकs = अणु
+static const struct regulator_init_data arizona_micsupp_default = {
+	.constraints = {
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS |
 				REGULATOR_CHANGE_VOLTAGE |
 				REGULATOR_CHANGE_BYPASS,
 		.min_uV = 1700000,
 		.max_uV = 3300000,
-	पूर्ण,
+	},
 
 	.num_consumer_supplies = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_init_data arizona_micsupp_ext_शेष = अणु
-	.स्थिरraपूर्णांकs = अणु
+static const struct regulator_init_data arizona_micsupp_ext_default = {
+	.constraints = {
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS |
 				REGULATOR_CHANGE_VOLTAGE |
 				REGULATOR_CHANGE_BYPASS,
 		.min_uV = 900000,
 		.max_uV = 3300000,
-	पूर्ण,
+	},
 
 	.num_consumer_supplies = 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_desc madera_micsupp = अणु
+static const struct regulator_desc madera_micsupp = {
 	.name = "MICVDD",
 	.supply_name = "CPVDD1",
 	.type = REGULATOR_VOLTAGE,
@@ -221,44 +220,44 @@
 	.linear_ranges = arizona_micsupp_ext_ranges,
 	.n_linear_ranges = ARRAY_SIZE(arizona_micsupp_ext_ranges),
 
-	.enable_समय = 3000,
+	.enable_time = 3000,
 
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक arizona_micsupp_of_get_pdata(काष्ठा arizona_micsupp_pdata *pdata,
-					काष्ठा regulator_config *config,
-					स्थिर काष्ठा regulator_desc *desc)
-अणु
-	काष्ठा arizona_micsupp *micsupp = config->driver_data;
-	काष्ठा device_node *np;
-	काष्ठा regulator_init_data *init_data;
+static int arizona_micsupp_of_get_pdata(struct arizona_micsupp_pdata *pdata,
+					struct regulator_config *config,
+					const struct regulator_desc *desc)
+{
+	struct arizona_micsupp *micsupp = config->driver_data;
+	struct device_node *np;
+	struct regulator_init_data *init_data;
 
 	np = of_get_child_by_name(config->dev->of_node, "micvdd");
 
-	अगर (np) अणु
+	if (np) {
 		config->of_node = np;
 
 		init_data = of_get_regulator_init_data(config->dev, np, desc);
 
-		अगर (init_data) अणु
+		if (init_data) {
 			init_data->consumer_supplies = &micsupp->supply;
 			init_data->num_consumer_supplies = 1;
 
 			pdata->init_data = init_data;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arizona_micsupp_common_init(काष्ठा platक्रमm_device *pdev,
-				       काष्ठा arizona_micsupp *micsupp,
-				       स्थिर काष्ठा regulator_desc *desc,
-				       काष्ठा arizona_micsupp_pdata *pdata)
-अणु
-	काष्ठा regulator_config config = अणु पूर्ण;
-	पूर्णांक ret;
+static int arizona_micsupp_common_init(struct platform_device *pdev,
+				       struct arizona_micsupp *micsupp,
+				       const struct regulator_desc *desc,
+				       struct arizona_micsupp_pdata *pdata)
+{
+	struct regulator_config config = { };
+	int ret;
 
 	INIT_WORK(&micsupp->check_cp_work, arizona_micsupp_check_cp);
 
@@ -271,51 +270,51 @@
 	config.driver_data = micsupp;
 	config.regmap = micsupp->regmap;
 
-	अगर (IS_ENABLED(CONFIG_OF)) अणु
-		अगर (!dev_get_platdata(micsupp->dev)) अणु
+	if (IS_ENABLED(CONFIG_OF)) {
+		if (!dev_get_platdata(micsupp->dev)) {
 			ret = arizona_micsupp_of_get_pdata(pdata, &config,
 							   desc);
-			अगर (ret < 0)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret < 0)
+				return ret;
+		}
+	}
 
-	अगर (pdata->init_data)
+	if (pdata->init_data)
 		config.init_data = pdata->init_data;
-	अन्यथा
+	else
 		config.init_data = &micsupp->init_data;
 
 	/* Default to regulated mode */
 	regmap_update_bits(micsupp->regmap, micsupp->enable_reg,
 			   ARIZONA_CPMIC_BYPASS, 0);
 
-	micsupp->regulator = devm_regulator_रेजिस्टर(&pdev->dev,
+	micsupp->regulator = devm_regulator_register(&pdev->dev,
 						     desc,
 						     &config);
 
 	of_node_put(config.of_node);
 
-	अगर (IS_ERR(micsupp->regulator)) अणु
+	if (IS_ERR(micsupp->regulator)) {
 		ret = PTR_ERR(micsupp->regulator);
 		dev_err(micsupp->dev, "Failed to register mic supply: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, micsupp);
+	platform_set_drvdata(pdev, micsupp);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक arizona_micsupp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा arizona *arizona = dev_get_drvdata(pdev->dev.parent);
-	स्थिर काष्ठा regulator_desc *desc;
-	काष्ठा arizona_micsupp *micsupp;
+static int arizona_micsupp_probe(struct platform_device *pdev)
+{
+	struct arizona *arizona = dev_get_drvdata(pdev->dev.parent);
+	const struct regulator_desc *desc;
+	struct arizona_micsupp *micsupp;
 
-	micsupp = devm_kzalloc(&pdev->dev, माप(*micsupp), GFP_KERNEL);
-	अगर (!micsupp)
-		वापस -ENOMEM;
+	micsupp = devm_kzalloc(&pdev->dev, sizeof(*micsupp), GFP_KERNEL);
+	if (!micsupp)
+		return -ENOMEM;
 
 	micsupp->regmap = arizona->regmap;
 	micsupp->dapm = &arizona->dapm;
@@ -323,77 +322,77 @@
 
 	/*
 	 * Since the chip usually supplies itself we provide some
-	 * शेष init_data क्रम it.  This will be overridden with
-	 * platक्रमm data अगर provided.
+	 * default init_data for it.  This will be overridden with
+	 * platform data if provided.
 	 */
-	चयन (arizona->type) अणु
-	हाल WM5110:
-	हाल WM8280:
+	switch (arizona->type) {
+	case WM5110:
+	case WM8280:
 		desc = &arizona_micsupp_ext;
-		micsupp->init_data = arizona_micsupp_ext_शेष;
-		अवरोध;
-	शेष:
+		micsupp->init_data = arizona_micsupp_ext_default;
+		break;
+	default:
 		desc = &arizona_micsupp;
-		micsupp->init_data = arizona_micsupp_शेष;
-		अवरोध;
-	पूर्ण
+		micsupp->init_data = arizona_micsupp_default;
+		break;
+	}
 
-	वापस arizona_micsupp_common_init(pdev, micsupp, desc,
+	return arizona_micsupp_common_init(pdev, micsupp, desc,
 					   &arizona->pdata.micvdd);
-पूर्ण
+}
 
-अटल पूर्णांक madera_micsupp_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा madera *madera = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा arizona_micsupp *micsupp;
+static int madera_micsupp_probe(struct platform_device *pdev)
+{
+	struct madera *madera = dev_get_drvdata(pdev->dev.parent);
+	struct arizona_micsupp *micsupp;
 
-	micsupp = devm_kzalloc(&pdev->dev, माप(*micsupp), GFP_KERNEL);
-	अगर (!micsupp)
-		वापस -ENOMEM;
+	micsupp = devm_kzalloc(&pdev->dev, sizeof(*micsupp), GFP_KERNEL);
+	if (!micsupp)
+		return -ENOMEM;
 
 	micsupp->regmap = madera->regmap;
 	micsupp->dapm = &madera->dapm;
 	micsupp->dev = madera->dev;
-	micsupp->init_data = arizona_micsupp_ext_शेष;
+	micsupp->init_data = arizona_micsupp_ext_default;
 
-	वापस arizona_micsupp_common_init(pdev, micsupp, &madera_micsupp,
+	return arizona_micsupp_common_init(pdev, micsupp, &madera_micsupp,
 					   &madera->pdata.micvdd);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver arizona_micsupp_driver = अणु
+static struct platform_driver arizona_micsupp_driver = {
 	.probe = arizona_micsupp_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "arizona-micsupp",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_driver madera_micsupp_driver = अणु
+static struct platform_driver madera_micsupp_driver = {
 	.probe = madera_micsupp_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "madera-micsupp",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_driver * स्थिर arizona_micsupp_drivers[] = अणु
+static struct platform_driver * const arizona_micsupp_drivers[] = {
 	&arizona_micsupp_driver,
 	&madera_micsupp_driver,
-पूर्ण;
+};
 
-अटल पूर्णांक __init arizona_micsupp_init(व्योम)
-अणु
-	वापस platक्रमm_रेजिस्टर_drivers(arizona_micsupp_drivers,
+static int __init arizona_micsupp_init(void)
+{
+	return platform_register_drivers(arizona_micsupp_drivers,
 					 ARRAY_SIZE(arizona_micsupp_drivers));
-पूर्ण
+}
 module_init(arizona_micsupp_init);
 
-अटल व्योम __निकास arizona_micsupp_निकास(व्योम)
-अणु
-	platक्रमm_unरेजिस्टर_drivers(arizona_micsupp_drivers,
+static void __exit arizona_micsupp_exit(void)
+{
+	platform_unregister_drivers(arizona_micsupp_drivers,
 				    ARRAY_SIZE(arizona_micsupp_drivers));
-पूर्ण
-module_निकास(arizona_micsupp_निकास);
+}
+module_exit(arizona_micsupp_exit);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("Arizona microphone supply driver");
 MODULE_LICENSE("GPL");

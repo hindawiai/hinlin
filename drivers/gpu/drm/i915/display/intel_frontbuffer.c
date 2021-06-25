@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2014 Intel Corporation
+ * Copyright © 2014 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -31,38 +30,38 @@
  * Many features require us to track changes to the currently active
  * frontbuffer, especially rendering targeted at the frontbuffer.
  *
- * To be able to करो so we track frontbuffers using a biपंचांगask क्रम all possible
- * frontbuffer slots through पूर्णांकel_frontbuffer_track(). The functions in this
+ * To be able to do so we track frontbuffers using a bitmask for all possible
+ * frontbuffer slots through intel_frontbuffer_track(). The functions in this
  * file are then called when the contents of the frontbuffer are invalidated,
  * when frontbuffer rendering has stopped again to flush out all the changes
- * and when the frontbuffer is exchanged with a flip. Subप्रणालीs पूर्णांकerested in
+ * and when the frontbuffer is exchanged with a flip. Subsystems interested in
  * frontbuffer changes (e.g. PSR, FBC, DRRS) should directly put their callbacks
- * पूर्णांकo the relevant places and filter क्रम the frontbuffer slots that they are
- * पूर्णांकerested पूर्णांक.
+ * into the relevant places and filter for the frontbuffer slots that they are
+ * interested int.
  *
- * On a high level there are two types of घातersaving features. The first one
- * work like a special cache (FBC and PSR) and are पूर्णांकerested when they should
- * stop caching and when to restart caching. This is करोne by placing callbacks
- * पूर्णांकo the invalidate and the flush functions: At invalidate the caching must
- * be stopped and at flush समय it can be restarted. And maybe they need to know
- * when the frontbuffer changes (e.g. when the hw करोesn't initiate an invalidate
- * and flush on its own) which can be achieved with placing callbacks पूर्णांकo the
+ * On a high level there are two types of powersaving features. The first one
+ * work like a special cache (FBC and PSR) and are interested when they should
+ * stop caching and when to restart caching. This is done by placing callbacks
+ * into the invalidate and the flush functions: At invalidate the caching must
+ * be stopped and at flush time it can be restarted. And maybe they need to know
+ * when the frontbuffer changes (e.g. when the hw doesn't initiate an invalidate
+ * and flush on its own) which can be achieved with placing callbacks into the
  * flip functions.
  *
- * The other type of display घातer saving feature only cares about busyness
- * (e.g. DRRS). In that हाल all three (invalidate, flush and flip) indicate
- * busyness. There is no direct way to detect idleness. Instead an idle समयr
+ * The other type of display power saving feature only cares about busyness
+ * (e.g. DRRS). In that case all three (invalidate, flush and flip) indicate
+ * busyness. There is no direct way to detect idleness. Instead an idle timer
  * work delayed work should be started from the flush and flip functions and
  * cancelled as soon as busyness is detected.
  */
 
-#समावेश "display/intel_dp.h"
+#include "display/intel_dp.h"
 
-#समावेश "i915_drv.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_fbc.h"
-#समावेश "intel_frontbuffer.h"
-#समावेश "intel_psr.h"
+#include "i915_drv.h"
+#include "intel_display_types.h"
+#include "intel_fbc.h"
+#include "intel_frontbuffer.h"
+#include "intel_psr.h"
 
 /**
  * frontbuffer_flush - flush frontbuffer
@@ -70,253 +69,253 @@
  * @frontbuffer_bits: frontbuffer plane tracking bits
  * @origin: which operation caused the flush
  *
- * This function माला_लो called every समय rendering on the given planes has
+ * This function gets called every time rendering on the given planes has
  * completed and frontbuffer caching can be started again. Flushes will get
- * delayed अगर they're blocked by some outstanding asynchronous rendering.
+ * delayed if they're blocked by some outstanding asynchronous rendering.
  *
  * Can be called without any locks held.
  */
-अटल व्योम frontbuffer_flush(काष्ठा drm_i915_निजी *i915,
-			      अचिन्हित पूर्णांक frontbuffer_bits,
-			      क्रमागत fb_op_origin origin)
-अणु
+static void frontbuffer_flush(struct drm_i915_private *i915,
+			      unsigned int frontbuffer_bits,
+			      enum fb_op_origin origin)
+{
 	/* Delay flushing when rings are still busy.*/
 	spin_lock(&i915->fb_tracking.lock);
 	frontbuffer_bits &= ~i915->fb_tracking.busy_bits;
 	spin_unlock(&i915->fb_tracking.lock);
 
-	अगर (!frontbuffer_bits)
-		वापस;
+	if (!frontbuffer_bits)
+		return;
 
 	might_sleep();
-	पूर्णांकel_edp_drrs_flush(i915, frontbuffer_bits);
-	पूर्णांकel_psr_flush(i915, frontbuffer_bits, origin);
-	पूर्णांकel_fbc_flush(i915, frontbuffer_bits, origin);
-पूर्ण
+	intel_edp_drrs_flush(i915, frontbuffer_bits);
+	intel_psr_flush(i915, frontbuffer_bits, origin);
+	intel_fbc_flush(i915, frontbuffer_bits, origin);
+}
 
 /**
- * पूर्णांकel_frontbuffer_flip_prepare - prepare asynchronous frontbuffer flip
+ * intel_frontbuffer_flip_prepare - prepare asynchronous frontbuffer flip
  * @i915: i915 device
  * @frontbuffer_bits: frontbuffer plane tracking bits
  *
- * This function माला_लो called after scheduling a flip on @obj. The actual
- * frontbuffer flushing will be delayed until completion is संकेतled with
- * पूर्णांकel_frontbuffer_flip_complete. If an invalidate happens in between this
+ * This function gets called after scheduling a flip on @obj. The actual
+ * frontbuffer flushing will be delayed until completion is signalled with
+ * intel_frontbuffer_flip_complete. If an invalidate happens in between this
  * flush will be cancelled.
  *
  * Can be called without any locks held.
  */
-व्योम पूर्णांकel_frontbuffer_flip_prepare(काष्ठा drm_i915_निजी *i915,
-				    अचिन्हित frontbuffer_bits)
-अणु
+void intel_frontbuffer_flip_prepare(struct drm_i915_private *i915,
+				    unsigned frontbuffer_bits)
+{
 	spin_lock(&i915->fb_tracking.lock);
 	i915->fb_tracking.flip_bits |= frontbuffer_bits;
 	/* Remove stale busy bits due to the old buffer. */
 	i915->fb_tracking.busy_bits &= ~frontbuffer_bits;
 	spin_unlock(&i915->fb_tracking.lock);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_frontbuffer_flip_complete - complete asynchronous frontbuffer flip
+ * intel_frontbuffer_flip_complete - complete asynchronous frontbuffer flip
  * @i915: i915 device
  * @frontbuffer_bits: frontbuffer plane tracking bits
  *
- * This function माला_लो called after the flip has been latched and will complete
- * on the next vblank. It will execute the flush अगर it hasn't been cancelled yet.
+ * This function gets called after the flip has been latched and will complete
+ * on the next vblank. It will execute the flush if it hasn't been cancelled yet.
  *
  * Can be called without any locks held.
  */
-व्योम पूर्णांकel_frontbuffer_flip_complete(काष्ठा drm_i915_निजी *i915,
-				     अचिन्हित frontbuffer_bits)
-अणु
+void intel_frontbuffer_flip_complete(struct drm_i915_private *i915,
+				     unsigned frontbuffer_bits)
+{
 	spin_lock(&i915->fb_tracking.lock);
 	/* Mask any cancelled flips. */
 	frontbuffer_bits &= i915->fb_tracking.flip_bits;
 	i915->fb_tracking.flip_bits &= ~frontbuffer_bits;
 	spin_unlock(&i915->fb_tracking.lock);
 
-	अगर (frontbuffer_bits)
+	if (frontbuffer_bits)
 		frontbuffer_flush(i915, frontbuffer_bits, ORIGIN_FLIP);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_frontbuffer_flip - synchronous frontbuffer flip
+ * intel_frontbuffer_flip - synchronous frontbuffer flip
  * @i915: i915 device
  * @frontbuffer_bits: frontbuffer plane tracking bits
  *
- * This function माला_लो called after scheduling a flip on @obj. This is क्रम
+ * This function gets called after scheduling a flip on @obj. This is for
  * synchronous plane updates which will happen on the next vblank and which will
  * not get delayed by pending gpu rendering.
  *
  * Can be called without any locks held.
  */
-व्योम पूर्णांकel_frontbuffer_flip(काष्ठा drm_i915_निजी *i915,
-			    अचिन्हित frontbuffer_bits)
-अणु
+void intel_frontbuffer_flip(struct drm_i915_private *i915,
+			    unsigned frontbuffer_bits)
+{
 	spin_lock(&i915->fb_tracking.lock);
 	/* Remove stale busy bits due to the old buffer. */
 	i915->fb_tracking.busy_bits &= ~frontbuffer_bits;
 	spin_unlock(&i915->fb_tracking.lock);
 
 	frontbuffer_flush(i915, frontbuffer_bits, ORIGIN_FLIP);
-पूर्ण
+}
 
-व्योम __पूर्णांकel_fb_invalidate(काष्ठा पूर्णांकel_frontbuffer *front,
-			   क्रमागत fb_op_origin origin,
-			   अचिन्हित पूर्णांक frontbuffer_bits)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(front->obj->base.dev);
+void __intel_fb_invalidate(struct intel_frontbuffer *front,
+			   enum fb_op_origin origin,
+			   unsigned int frontbuffer_bits)
+{
+	struct drm_i915_private *i915 = to_i915(front->obj->base.dev);
 
-	अगर (origin == ORIGIN_CS) अणु
+	if (origin == ORIGIN_CS) {
 		spin_lock(&i915->fb_tracking.lock);
 		i915->fb_tracking.busy_bits |= frontbuffer_bits;
 		i915->fb_tracking.flip_bits &= ~frontbuffer_bits;
 		spin_unlock(&i915->fb_tracking.lock);
-	पूर्ण
+	}
 
 	might_sleep();
-	पूर्णांकel_psr_invalidate(i915, frontbuffer_bits, origin);
-	पूर्णांकel_edp_drrs_invalidate(i915, frontbuffer_bits);
-	पूर्णांकel_fbc_invalidate(i915, frontbuffer_bits, origin);
-पूर्ण
+	intel_psr_invalidate(i915, frontbuffer_bits, origin);
+	intel_edp_drrs_invalidate(i915, frontbuffer_bits);
+	intel_fbc_invalidate(i915, frontbuffer_bits, origin);
+}
 
-व्योम __पूर्णांकel_fb_flush(काष्ठा पूर्णांकel_frontbuffer *front,
-		      क्रमागत fb_op_origin origin,
-		      अचिन्हित पूर्णांक frontbuffer_bits)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(front->obj->base.dev);
+void __intel_fb_flush(struct intel_frontbuffer *front,
+		      enum fb_op_origin origin,
+		      unsigned int frontbuffer_bits)
+{
+	struct drm_i915_private *i915 = to_i915(front->obj->base.dev);
 
-	अगर (origin == ORIGIN_CS) अणु
+	if (origin == ORIGIN_CS) {
 		spin_lock(&i915->fb_tracking.lock);
 		/* Filter out new bits since rendering started. */
 		frontbuffer_bits &= i915->fb_tracking.busy_bits;
 		i915->fb_tracking.busy_bits &= ~frontbuffer_bits;
 		spin_unlock(&i915->fb_tracking.lock);
-	पूर्ण
+	}
 
-	अगर (frontbuffer_bits)
+	if (frontbuffer_bits)
 		frontbuffer_flush(i915, frontbuffer_bits, origin);
-पूर्ण
+}
 
-अटल पूर्णांक frontbuffer_active(काष्ठा i915_active *ref)
-अणु
-	काष्ठा पूर्णांकel_frontbuffer *front =
-		container_of(ref, typeof(*front), ग_लिखो);
+static int frontbuffer_active(struct i915_active *ref)
+{
+	struct intel_frontbuffer *front =
+		container_of(ref, typeof(*front), write);
 
 	kref_get(&front->ref);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __i915_active_call
-अटल व्योम frontbuffer_retire(काष्ठा i915_active *ref)
-अणु
-	काष्ठा पूर्णांकel_frontbuffer *front =
-		container_of(ref, typeof(*front), ग_लिखो);
+static void frontbuffer_retire(struct i915_active *ref)
+{
+	struct intel_frontbuffer *front =
+		container_of(ref, typeof(*front), write);
 
-	पूर्णांकel_frontbuffer_flush(front, ORIGIN_CS);
-	पूर्णांकel_frontbuffer_put(front);
-पूर्ण
+	intel_frontbuffer_flush(front, ORIGIN_CS);
+	intel_frontbuffer_put(front);
+}
 
-अटल व्योम frontbuffer_release(काष्ठा kref *ref)
+static void frontbuffer_release(struct kref *ref)
 	__releases(&to_i915(front->obj->base.dev)->fb_tracking.lock)
-अणु
-	काष्ठा पूर्णांकel_frontbuffer *front =
+{
+	struct intel_frontbuffer *front =
 		container_of(ref, typeof(*front), ref);
-	काष्ठा drm_i915_gem_object *obj = front->obj;
-	काष्ठा i915_vma *vma;
+	struct drm_i915_gem_object *obj = front->obj;
+	struct i915_vma *vma;
 
-	drm_WARN_ON(obj->base.dev, atomic_पढ़ो(&front->bits));
+	drm_WARN_ON(obj->base.dev, atomic_read(&front->bits));
 
 	spin_lock(&obj->vma.lock);
-	क्रम_each_ggtt_vma(vma, obj) अणु
+	for_each_ggtt_vma(vma, obj) {
 		i915_vma_clear_scanout(vma);
 		vma->display_alignment = I915_GTT_MIN_ALIGNMENT;
-	पूर्ण
+	}
 	spin_unlock(&obj->vma.lock);
 
-	RCU_INIT_POINTER(obj->frontbuffer, शून्य);
+	RCU_INIT_POINTER(obj->frontbuffer, NULL);
 	spin_unlock(&to_i915(obj->base.dev)->fb_tracking.lock);
 
-	i915_active_fini(&front->ग_लिखो);
+	i915_active_fini(&front->write);
 
 	i915_gem_object_put(obj);
-	kमुक्त_rcu(front, rcu);
-पूर्ण
+	kfree_rcu(front, rcu);
+}
 
-काष्ठा पूर्णांकel_frontbuffer *
-पूर्णांकel_frontbuffer_get(काष्ठा drm_i915_gem_object *obj)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(obj->base.dev);
-	काष्ठा पूर्णांकel_frontbuffer *front;
+struct intel_frontbuffer *
+intel_frontbuffer_get(struct drm_i915_gem_object *obj)
+{
+	struct drm_i915_private *i915 = to_i915(obj->base.dev);
+	struct intel_frontbuffer *front;
 
-	front = __पूर्णांकel_frontbuffer_get(obj);
-	अगर (front)
-		वापस front;
+	front = __intel_frontbuffer_get(obj);
+	if (front)
+		return front;
 
-	front = kदो_स्मृति(माप(*front), GFP_KERNEL);
-	अगर (!front)
-		वापस शून्य;
+	front = kmalloc(sizeof(*front), GFP_KERNEL);
+	if (!front)
+		return NULL;
 
 	front->obj = obj;
 	kref_init(&front->ref);
 	atomic_set(&front->bits, 0);
-	i915_active_init(&front->ग_लिखो,
+	i915_active_init(&front->write,
 			 frontbuffer_active,
 			 i915_active_may_sleep(frontbuffer_retire));
 
 	spin_lock(&i915->fb_tracking.lock);
-	अगर (rcu_access_poपूर्णांकer(obj->frontbuffer)) अणु
-		kमुक्त(front);
-		front = rcu_dereference_रक्षित(obj->frontbuffer, true);
+	if (rcu_access_pointer(obj->frontbuffer)) {
+		kfree(front);
+		front = rcu_dereference_protected(obj->frontbuffer, true);
 		kref_get(&front->ref);
-	पूर्ण अन्यथा अणु
+	} else {
 		i915_gem_object_get(obj);
-		rcu_assign_poपूर्णांकer(obj->frontbuffer, front);
-	पूर्ण
+		rcu_assign_pointer(obj->frontbuffer, front);
+	}
 	spin_unlock(&i915->fb_tracking.lock);
 
-	वापस front;
-पूर्ण
+	return front;
+}
 
-व्योम पूर्णांकel_frontbuffer_put(काष्ठा पूर्णांकel_frontbuffer *front)
-अणु
+void intel_frontbuffer_put(struct intel_frontbuffer *front)
+{
 	kref_put_lock(&front->ref,
 		      frontbuffer_release,
 		      &to_i915(front->obj->base.dev)->fb_tracking.lock);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_frontbuffer_track - update frontbuffer tracking
- * @old: current buffer क्रम the frontbuffer slots
- * @new: new buffer क्रम the frontbuffer slots
- * @frontbuffer_bits: biपंचांगask of frontbuffer slots
+ * intel_frontbuffer_track - update frontbuffer tracking
+ * @old: current buffer for the frontbuffer slots
+ * @new: new buffer for the frontbuffer slots
+ * @frontbuffer_bits: bitmask of frontbuffer slots
  *
  * This updates the frontbuffer tracking bits @frontbuffer_bits by clearing them
- * from @old and setting them in @new. Both @old and @new can be शून्य.
+ * from @old and setting them in @new. Both @old and @new can be NULL.
  */
-व्योम पूर्णांकel_frontbuffer_track(काष्ठा पूर्णांकel_frontbuffer *old,
-			     काष्ठा पूर्णांकel_frontbuffer *new,
-			     अचिन्हित पूर्णांक frontbuffer_bits)
-अणु
+void intel_frontbuffer_track(struct intel_frontbuffer *old,
+			     struct intel_frontbuffer *new,
+			     unsigned int frontbuffer_bits)
+{
 	/*
-	 * Control of inभागidual bits within the mask are guarded by
+	 * Control of individual bits within the mask are guarded by
 	 * the owning plane->mutex, i.e. we can never see concurrent
-	 * manipulation of inभागidual bits. But since the bitfield as a whole
+	 * manipulation of individual bits. But since the bitfield as a whole
 	 * is updated using RMW, we need to use atomics in order to update
 	 * the bits.
 	 */
 	BUILD_BUG_ON(INTEL_FRONTBUFFER_BITS_PER_PIPE * I915_MAX_PIPES >
 		     BITS_PER_TYPE(atomic_t));
 
-	अगर (old) अणु
+	if (old) {
 		drm_WARN_ON(old->obj->base.dev,
-			    !(atomic_पढ़ो(&old->bits) & frontbuffer_bits));
+			    !(atomic_read(&old->bits) & frontbuffer_bits));
 		atomic_andnot(frontbuffer_bits, &old->bits);
-	पूर्ण
+	}
 
-	अगर (new) अणु
+	if (new) {
 		drm_WARN_ON(new->obj->base.dev,
-			    atomic_पढ़ो(&new->bits) & frontbuffer_bits);
+			    atomic_read(&new->bits) & frontbuffer_bits);
 		atomic_or(frontbuffer_bits, &new->bits);
-	पूर्ण
-पूर्ण
+	}
+}

@@ -1,99 +1,98 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
-#समावेश <test_progs.h>
-#समावेश <sys/epoll.h>
-#समावेश "test_ringbuf_multi.skel.h"
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
+#include <test_progs.h>
+#include <sys/epoll.h>
+#include "test_ringbuf_multi.skel.h"
 
-अटल पूर्णांक duration = 0;
+static int duration = 0;
 
-काष्ठा sample अणु
-	पूर्णांक pid;
-	पूर्णांक seq;
-	दीर्घ value;
-	अक्षर comm[16];
-पूर्ण;
+struct sample {
+	int pid;
+	int seq;
+	long value;
+	char comm[16];
+};
 
-अटल पूर्णांक process_sample(व्योम *ctx, व्योम *data, माप_प्रकार len)
-अणु
-	पूर्णांक ring = (अचिन्हित दीर्घ)ctx;
-	काष्ठा sample *s = data;
+static int process_sample(void *ctx, void *data, size_t len)
+{
+	int ring = (unsigned long)ctx;
+	struct sample *s = data;
 
-	चयन (s->seq) अणु
-	हाल 0:
+	switch (s->seq) {
+	case 0:
 		CHECK(ring != 1, "sample1_ring", "exp %d, got %d\n", 1, ring);
 		CHECK(s->value != 333, "sample1_value", "exp %ld, got %ld\n",
 		      333L, s->value);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		CHECK(ring != 2, "sample2_ring", "exp %d, got %d\n", 2, ring);
 		CHECK(s->value != 777, "sample2_value", "exp %ld, got %ld\n",
 		      777L, s->value);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		CHECK(true, "extra_sample", "unexpected sample seq %d, val %ld\n",
 		      s->seq, s->value);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम test_ringbuf_multi(व्योम)
-अणु
-	काष्ठा test_ringbuf_multi *skel;
-	काष्ठा ring_buffer *ringbuf = शून्य;
-	पूर्णांक err;
-	पूर्णांक page_size = getpagesize();
-	पूर्णांक proto_fd = -1;
+void test_ringbuf_multi(void)
+{
+	struct test_ringbuf_multi *skel;
+	struct ring_buffer *ringbuf = NULL;
+	int err;
+	int page_size = getpagesize();
+	int proto_fd = -1;
 
-	skel = test_ringbuf_multi__खोलो();
-	अगर (CHECK(!skel, "skel_open", "skeleton open failed\n"))
-		वापस;
+	skel = test_ringbuf_multi__open();
+	if (CHECK(!skel, "skel_open", "skeleton open failed\n"))
+		return;
 
 	err = bpf_map__set_max_entries(skel->maps.ringbuf1, page_size);
-	अगर (CHECK(err != 0, "bpf_map__set_max_entries", "bpf_map__set_max_entries failed\n"))
-		जाओ cleanup;
+	if (CHECK(err != 0, "bpf_map__set_max_entries", "bpf_map__set_max_entries failed\n"))
+		goto cleanup;
 
 	err = bpf_map__set_max_entries(skel->maps.ringbuf2, page_size);
-	अगर (CHECK(err != 0, "bpf_map__set_max_entries", "bpf_map__set_max_entries failed\n"))
-		जाओ cleanup;
+	if (CHECK(err != 0, "bpf_map__set_max_entries", "bpf_map__set_max_entries failed\n"))
+		goto cleanup;
 
 	err = bpf_map__set_max_entries(bpf_map__inner_map(skel->maps.ringbuf_arr), page_size);
-	अगर (CHECK(err != 0, "bpf_map__set_max_entries", "bpf_map__set_max_entries failed\n"))
-		जाओ cleanup;
+	if (CHECK(err != 0, "bpf_map__set_max_entries", "bpf_map__set_max_entries failed\n"))
+		goto cleanup;
 
 	proto_fd = bpf_create_map(BPF_MAP_TYPE_RINGBUF, 0, 0, page_size, 0);
-	अगर (CHECK(proto_fd == -1, "bpf_create_map", "bpf_create_map failed\n"))
-		जाओ cleanup;
+	if (CHECK(proto_fd == -1, "bpf_create_map", "bpf_create_map failed\n"))
+		goto cleanup;
 
 	err = bpf_map__set_inner_map_fd(skel->maps.ringbuf_hash, proto_fd);
-	अगर (CHECK(err != 0, "bpf_map__set_inner_map_fd", "bpf_map__set_inner_map_fd failed\n"))
-		जाओ cleanup;
+	if (CHECK(err != 0, "bpf_map__set_inner_map_fd", "bpf_map__set_inner_map_fd failed\n"))
+		goto cleanup;
 
 	err = test_ringbuf_multi__load(skel);
-	अगर (CHECK(err != 0, "skel_load", "skeleton load failed\n"))
-		जाओ cleanup;
+	if (CHECK(err != 0, "skel_load", "skeleton load failed\n"))
+		goto cleanup;
 
-	बंद(proto_fd);
+	close(proto_fd);
 	proto_fd = -1;
 
-	/* only trigger BPF program क्रम current process */
+	/* only trigger BPF program for current process */
 	skel->bss->pid = getpid();
 
 	ringbuf = ring_buffer__new(bpf_map__fd(skel->maps.ringbuf1),
-				   process_sample, (व्योम *)(दीर्घ)1, शून्य);
-	अगर (CHECK(!ringbuf, "ringbuf_create", "failed to create ringbuf\n"))
-		जाओ cleanup;
+				   process_sample, (void *)(long)1, NULL);
+	if (CHECK(!ringbuf, "ringbuf_create", "failed to create ringbuf\n"))
+		goto cleanup;
 
 	err = ring_buffer__add(ringbuf, bpf_map__fd(skel->maps.ringbuf2),
-			      process_sample, (व्योम *)(दीर्घ)2);
-	अगर (CHECK(err, "ringbuf_add", "failed to add another ring\n"))
-		जाओ cleanup;
+			      process_sample, (void *)(long)2);
+	if (CHECK(err, "ringbuf_add", "failed to add another ring\n"))
+		goto cleanup;
 
 	err = test_ringbuf_multi__attach(skel);
-	अगर (CHECK(err, "skel_attach", "skeleton attachment failed: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err, "skel_attach", "skeleton attachment failed: %d\n", err))
+		goto cleanup;
 
 	/* trigger few samples, some will be skipped */
 	skel->bss->target_ring = 0;
@@ -109,15 +108,15 @@
 	skel->bss->value = 777;
 	syscall(__NR_getpgid);
 
-	/* poll क्रम samples, should get 2 ringbufs back */
+	/* poll for samples, should get 2 ringbufs back */
 	err = ring_buffer__poll(ringbuf, -1);
-	अगर (CHECK(err != 2, "poll_res", "expected 2 records, got %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err != 2, "poll_res", "expected 2 records, got %d\n", err))
+		goto cleanup;
 
-	/* expect extra polling to वापस nothing */
+	/* expect extra polling to return nothing */
 	err = ring_buffer__poll(ringbuf, 0);
-	अगर (CHECK(err < 0, "extra_samples", "poll result: %d\n", err))
-		जाओ cleanup;
+	if (CHECK(err < 0, "extra_samples", "poll result: %d\n", err))
+		goto cleanup;
 
 	CHECK(skel->bss->dropped != 0, "err_dropped", "exp %ld, got %ld\n",
 	      0L, skel->bss->dropped);
@@ -127,8 +126,8 @@
 	      2L, skel->bss->total);
 
 cleanup:
-	अगर (proto_fd >= 0)
-		बंद(proto_fd);
-	ring_buffer__मुक्त(ringbuf);
+	if (proto_fd >= 0)
+		close(proto_fd);
+	ring_buffer__free(ringbuf);
 	test_ringbuf_multi__destroy(skel);
-पूर्ण
+}

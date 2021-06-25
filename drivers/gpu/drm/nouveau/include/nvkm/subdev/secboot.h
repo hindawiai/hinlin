@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,12 +20,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __NVKM_SECURE_BOOT_H__
-#घोषणा __NVKM_SECURE_BOOT_H__
+#ifndef __NVKM_SECURE_BOOT_H__
+#define __NVKM_SECURE_BOOT_H__
 
-#समावेश <core/subdev.h>
+#include <core/subdev.h>
 
-क्रमागत nvkm_secboot_falcon अणु
+enum nvkm_secboot_falcon {
 	NVKM_SECBOOT_FALCON_PMU = 0,
 	NVKM_SECBOOT_FALCON_RESERVED = 1,
 	NVKM_SECBOOT_FALCON_FECS = 2,
@@ -34,34 +33,34 @@
 	NVKM_SECBOOT_FALCON_SEC2 = 7,
 	NVKM_SECBOOT_FALCON_END = 8,
 	NVKM_SECBOOT_FALCON_INVALID = 0xffffffff,
-पूर्ण;
+};
 
-बाह्य स्थिर अक्षर *nvkm_secboot_falcon_name[];
+extern const char *nvkm_secboot_falcon_name[];
 
 /**
  * @wpr_set: whether the WPR region is currently set
 */
-काष्ठा nvkm_secboot अणु
-	स्थिर काष्ठा nvkm_secboot_func *func;
-	काष्ठा nvkm_acr *acr;
-	काष्ठा nvkm_subdev subdev;
-	काष्ठा nvkm_falcon *boot_falcon;
-	काष्ठा nvkm_falcon *halt_falcon;
+struct nvkm_secboot {
+	const struct nvkm_secboot_func *func;
+	struct nvkm_acr *acr;
+	struct nvkm_subdev subdev;
+	struct nvkm_falcon *boot_falcon;
+	struct nvkm_falcon *halt_falcon;
 
 	u64 wpr_addr;
 	u32 wpr_size;
 
 	bool wpr_set;
-पूर्ण;
-#घोषणा nvkm_secboot(p) container_of((p), काष्ठा nvkm_secboot, subdev)
+};
+#define nvkm_secboot(p) container_of((p), struct nvkm_secboot, subdev)
 
-bool nvkm_secboot_is_managed(काष्ठा nvkm_secboot *, क्रमागत nvkm_secboot_falcon);
-पूर्णांक nvkm_secboot_reset(काष्ठा nvkm_secboot *, अचिन्हित दीर्घ);
+bool nvkm_secboot_is_managed(struct nvkm_secboot *, enum nvkm_secboot_falcon);
+int nvkm_secboot_reset(struct nvkm_secboot *, unsigned long);
 
-पूर्णांक gm200_secboot_new(काष्ठा nvkm_device *, पूर्णांक, काष्ठा nvkm_secboot **);
-पूर्णांक gm20b_secboot_new(काष्ठा nvkm_device *, पूर्णांक, काष्ठा nvkm_secboot **);
-पूर्णांक gp102_secboot_new(काष्ठा nvkm_device *, पूर्णांक, काष्ठा nvkm_secboot **);
-पूर्णांक gp108_secboot_new(काष्ठा nvkm_device *, पूर्णांक, काष्ठा nvkm_secboot **);
-पूर्णांक gp10b_secboot_new(काष्ठा nvkm_device *, पूर्णांक, काष्ठा nvkm_secboot **);
+int gm200_secboot_new(struct nvkm_device *, int, struct nvkm_secboot **);
+int gm20b_secboot_new(struct nvkm_device *, int, struct nvkm_secboot **);
+int gp102_secboot_new(struct nvkm_device *, int, struct nvkm_secboot **);
+int gp108_secboot_new(struct nvkm_device *, int, struct nvkm_secboot **);
+int gp10b_secboot_new(struct nvkm_device *, int, struct nvkm_secboot **);
 
-#पूर्ण_अगर
+#endif

@@ -1,92 +1,91 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 //
 // Copyright 2016 Freescale Semiconductor, Inc.
 
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/thermal.h>
-#समावेश <linux/units.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/sizes.h>
+#include <linux/thermal.h>
+#include <linux/units.h>
 
-#समावेश "thermal_core.h"
-#समावेश "thermal_hwmon.h"
+#include "thermal_core.h"
+#include "thermal_hwmon.h"
 
-#घोषणा SITES_MAX		16
-#घोषणा TMR_DISABLE		0x0
-#घोषणा TMR_ME			0x80000000
-#घोषणा TMR_ALPF		0x0c000000
-#घोषणा TMR_ALPF_V2		0x03000000
-#घोषणा TMTMIR_DEFAULT	0x0000000f
-#घोषणा TIER_DISABLE	0x0
-#घोषणा TEUMR0_V2		0x51009c00
-#घोषणा TMSARA_V2		0xe
-#घोषणा TMU_VER1		0x1
-#घोषणा TMU_VER2		0x2
+#define SITES_MAX		16
+#define TMR_DISABLE		0x0
+#define TMR_ME			0x80000000
+#define TMR_ALPF		0x0c000000
+#define TMR_ALPF_V2		0x03000000
+#define TMTMIR_DEFAULT	0x0000000f
+#define TIER_DISABLE	0x0
+#define TEUMR0_V2		0x51009c00
+#define TMSARA_V2		0xe
+#define TMU_VER1		0x1
+#define TMU_VER2		0x2
 
-#घोषणा REGS_TMR	0x000	/* Mode Register */
-#घोषणा TMR_DISABLE	0x0
-#घोषणा TMR_ME		0x80000000
-#घोषणा TMR_ALPF	0x0c000000
-#घोषणा TMR_MSITE_ALL	GENMASK(15, 0)
+#define REGS_TMR	0x000	/* Mode Register */
+#define TMR_DISABLE	0x0
+#define TMR_ME		0x80000000
+#define TMR_ALPF	0x0c000000
+#define TMR_MSITE_ALL	GENMASK(15, 0)
 
-#घोषणा REGS_TMTMIR	0x008	/* Temperature measurement पूर्णांकerval Register */
-#घोषणा TMTMIR_DEFAULT	0x0000000f
+#define REGS_TMTMIR	0x008	/* Temperature measurement interval Register */
+#define TMTMIR_DEFAULT	0x0000000f
 
-#घोषणा REGS_V2_TMSR	0x008	/* monitor site रेजिस्टर */
+#define REGS_V2_TMSR	0x008	/* monitor site register */
 
-#घोषणा REGS_V2_TMTMIR	0x00c	/* Temperature measurement पूर्णांकerval Register */
+#define REGS_V2_TMTMIR	0x00c	/* Temperature measurement interval Register */
 
-#घोषणा REGS_TIER	0x020	/* Interrupt Enable Register */
-#घोषणा TIER_DISABLE	0x0
+#define REGS_TIER	0x020	/* Interrupt Enable Register */
+#define TIER_DISABLE	0x0
 
 
-#घोषणा REGS_TTCFGR	0x080	/* Temperature Configuration Register */
-#घोषणा REGS_TSCFGR	0x084	/* Sensor Configuration Register */
+#define REGS_TTCFGR	0x080	/* Temperature Configuration Register */
+#define REGS_TSCFGR	0x084	/* Sensor Configuration Register */
 
-#घोषणा REGS_TRITSR(n)	(0x100 + 16 * (n)) /* Immediate Temperature
+#define REGS_TRITSR(n)	(0x100 + 16 * (n)) /* Immediate Temperature
 					    * Site Register
 					    */
-#घोषणा TRITSR_V	BIT(31)
-#घोषणा REGS_V2_TMSAR(n)	(0x304 + 16 * (n))	/* TMU monitoring
-						* site adjusपंचांगent रेजिस्टर
+#define TRITSR_V	BIT(31)
+#define REGS_V2_TMSAR(n)	(0x304 + 16 * (n))	/* TMU monitoring
+						* site adjustment register
 						*/
-#घोषणा REGS_TTRnCR(n)	(0xf10 + 4 * (n)) /* Temperature Range n
+#define REGS_TTRnCR(n)	(0xf10 + 4 * (n)) /* Temperature Range n
 					   * Control Register
 					   */
-#घोषणा REGS_IPBRR(n)		(0xbf8 + 4 * (n)) /* IP Block Revision
+#define REGS_IPBRR(n)		(0xbf8 + 4 * (n)) /* IP Block Revision
 						   * Register n
 						   */
-#घोषणा REGS_V2_TEUMR(n)	(0xf00 + 4 * (n))
+#define REGS_V2_TEUMR(n)	(0xf00 + 4 * (n))
 
 /*
  * Thermal zone data
  */
-काष्ठा qoriq_sensor अणु
-	पूर्णांक				id;
-पूर्ण;
+struct qoriq_sensor {
+	int				id;
+};
 
-काष्ठा qoriq_पंचांगu_data अणु
-	पूर्णांक ver;
-	काष्ठा regmap *regmap;
-	काष्ठा clk *clk;
-	काष्ठा qoriq_sensor	sensor[SITES_MAX];
-पूर्ण;
+struct qoriq_tmu_data {
+	int ver;
+	struct regmap *regmap;
+	struct clk *clk;
+	struct qoriq_sensor	sensor[SITES_MAX];
+};
 
-अटल काष्ठा qoriq_पंचांगu_data *qoriq_sensor_to_data(काष्ठा qoriq_sensor *s)
-अणु
-	वापस container_of(s, काष्ठा qoriq_पंचांगu_data, sensor[s->id]);
-पूर्ण
+static struct qoriq_tmu_data *qoriq_sensor_to_data(struct qoriq_sensor *s)
+{
+	return container_of(s, struct qoriq_tmu_data, sensor[s->id]);
+}
 
-अटल पूर्णांक पंचांगu_get_temp(व्योम *p, पूर्णांक *temp)
-अणु
-	काष्ठा qoriq_sensor *qsensor = p;
-	काष्ठा qoriq_पंचांगu_data *qdata = qoriq_sensor_to_data(qsensor);
+static int tmu_get_temp(void *p, int *temp)
+{
+	struct qoriq_sensor *qsensor = p;
+	struct qoriq_tmu_data *qdata = qoriq_sensor_to_data(qsensor);
 	u32 val;
 	/*
 	 * REGS_TRITSR(id) has the following layout:
@@ -95,7 +94,7 @@
 	 * 31  ... 7 6 5 4 3 2 1 0
 	 *  V          TEMP
 	 *
-	 * Where V bit signअगरies अगर the measurement is पढ़ोy and is
+	 * Where V bit signifies if the measurement is ready and is
 	 * within sensor range. TEMP is an 8 bit value representing
 	 * temperature in Celsius.
 
@@ -103,286 +102,286 @@
 	 * 31  ... 8 7 6 5 4 3 2 1 0
 	 *  V          TEMP
 	 *
-	 * Where V bit signअगरies अगर the measurement is पढ़ोy and is
+	 * Where V bit signifies if the measurement is ready and is
 	 * within sensor range. TEMP is an 9 bit value representing
 	 * temperature in KelVin.
 	 */
-	अगर (regmap_पढ़ो_poll_समयout(qdata->regmap,
+	if (regmap_read_poll_timeout(qdata->regmap,
 				     REGS_TRITSR(qsensor->id),
 				     val,
 				     val & TRITSR_V,
 				     USEC_PER_MSEC,
 				     10 * USEC_PER_MSEC))
-		वापस -ENODATA;
+		return -ENODATA;
 
-	अगर (qdata->ver == TMU_VER1)
+	if (qdata->ver == TMU_VER1)
 		*temp = (val & GENMASK(7, 0)) * MILLIDEGREE_PER_DEGREE;
-	अन्यथा
+	else
 		*temp = kelvin_to_millicelsius(val & GENMASK(8, 0));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops पंचांगu_tz_ops = अणु
-	.get_temp = पंचांगu_get_temp,
-पूर्ण;
+static const struct thermal_zone_of_device_ops tmu_tz_ops = {
+	.get_temp = tmu_get_temp,
+};
 
-अटल पूर्णांक qoriq_पंचांगu_रेजिस्टर_पंचांगu_zone(काष्ठा device *dev,
-				       काष्ठा qoriq_पंचांगu_data *qdata)
-अणु
-	पूर्णांक id;
+static int qoriq_tmu_register_tmu_zone(struct device *dev,
+				       struct qoriq_tmu_data *qdata)
+{
+	int id;
 
-	अगर (qdata->ver == TMU_VER1) अणु
-		regmap_ग_लिखो(qdata->regmap, REGS_TMR,
+	if (qdata->ver == TMU_VER1) {
+		regmap_write(qdata->regmap, REGS_TMR,
 			     TMR_MSITE_ALL | TMR_ME | TMR_ALPF);
-	पूर्ण अन्यथा अणु
-		regmap_ग_लिखो(qdata->regmap, REGS_V2_TMSR, TMR_MSITE_ALL);
-		regmap_ग_लिखो(qdata->regmap, REGS_TMR, TMR_ME | TMR_ALPF_V2);
-	पूर्ण
+	} else {
+		regmap_write(qdata->regmap, REGS_V2_TMSR, TMR_MSITE_ALL);
+		regmap_write(qdata->regmap, REGS_TMR, TMR_ME | TMR_ALPF_V2);
+	}
 
-	क्रम (id = 0; id < SITES_MAX; id++) अणु
-		काष्ठा thermal_zone_device *tzd;
-		काष्ठा qoriq_sensor *sensor = &qdata->sensor[id];
-		पूर्णांक ret;
+	for (id = 0; id < SITES_MAX; id++) {
+		struct thermal_zone_device *tzd;
+		struct qoriq_sensor *sensor = &qdata->sensor[id];
+		int ret;
 
 		sensor->id = id;
 
-		tzd = devm_thermal_zone_of_sensor_रेजिस्टर(dev, id,
+		tzd = devm_thermal_zone_of_sensor_register(dev, id,
 							   sensor,
-							   &पंचांगu_tz_ops);
+							   &tmu_tz_ops);
 		ret = PTR_ERR_OR_ZERO(tzd);
-		अगर (ret) अणु
-			अगर (ret == -ENODEV)
-				जारी;
+		if (ret) {
+			if (ret == -ENODEV)
+				continue;
 
-			regmap_ग_लिखो(qdata->regmap, REGS_TMR, TMR_DISABLE);
-			वापस ret;
-		पूर्ण
+			regmap_write(qdata->regmap, REGS_TMR, TMR_DISABLE);
+			return ret;
+		}
 
-		अगर (devm_thermal_add_hwmon_sysfs(tzd))
+		if (devm_thermal_add_hwmon_sysfs(tzd))
 			dev_warn(dev,
 				 "Failed to add hwmon sysfs attributes\n");
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक qoriq_पंचांगu_calibration(काष्ठा device *dev,
-				 काष्ठा qoriq_पंचांगu_data *data)
-अणु
-	पूर्णांक i, val, len;
+static int qoriq_tmu_calibration(struct device *dev,
+				 struct qoriq_tmu_data *data)
+{
+	int i, val, len;
 	u32 range[4];
-	स्थिर u32 *calibration;
-	काष्ठा device_node *np = dev->of_node;
+	const u32 *calibration;
+	struct device_node *np = dev->of_node;
 
 	len = of_property_count_u32_elems(np, "fsl,tmu-range");
-	अगर (len < 0 || len > 4) अणु
+	if (len < 0 || len > 4) {
 		dev_err(dev, "invalid range data.\n");
-		वापस len;
-	पूर्ण
+		return len;
+	}
 
-	val = of_property_पढ़ो_u32_array(np, "fsl,tmu-range", range, len);
-	अगर (val != 0) अणु
+	val = of_property_read_u32_array(np, "fsl,tmu-range", range, len);
+	if (val != 0) {
 		dev_err(dev, "failed to read range data.\n");
-		वापस val;
-	पूर्ण
+		return val;
+	}
 
-	/* Init temperature range रेजिस्टरs */
-	क्रम (i = 0; i < len; i++)
-		regmap_ग_लिखो(data->regmap, REGS_TTRnCR(i), range[i]);
+	/* Init temperature range registers */
+	for (i = 0; i < len; i++)
+		regmap_write(data->regmap, REGS_TTRnCR(i), range[i]);
 
 	calibration = of_get_property(np, "fsl,tmu-calibration", &len);
-	अगर (calibration == शून्य || len % 8) अणु
+	if (calibration == NULL || len % 8) {
 		dev_err(dev, "invalid calibration data.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	क्रम (i = 0; i < len; i += 8, calibration += 2) अणु
-		val = of_पढ़ो_number(calibration, 1);
-		regmap_ग_लिखो(data->regmap, REGS_TTCFGR, val);
-		val = of_पढ़ो_number(calibration + 1, 1);
-		regmap_ग_लिखो(data->regmap, REGS_TSCFGR, val);
-	पूर्ण
+	for (i = 0; i < len; i += 8, calibration += 2) {
+		val = of_read_number(calibration, 1);
+		regmap_write(data->regmap, REGS_TTCFGR, val);
+		val = of_read_number(calibration + 1, 1);
+		regmap_write(data->regmap, REGS_TSCFGR, val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम qoriq_पंचांगu_init_device(काष्ठा qoriq_पंचांगu_data *data)
-अणु
-	पूर्णांक i;
+static void qoriq_tmu_init_device(struct qoriq_tmu_data *data)
+{
+	int i;
 
-	/* Disable पूर्णांकerrupt, using polling instead */
-	regmap_ग_लिखो(data->regmap, REGS_TIER, TIER_DISABLE);
+	/* Disable interrupt, using polling instead */
+	regmap_write(data->regmap, REGS_TIER, TIER_DISABLE);
 
-	/* Set update_पूर्णांकerval */
+	/* Set update_interval */
 
-	अगर (data->ver == TMU_VER1) अणु
-		regmap_ग_लिखो(data->regmap, REGS_TMTMIR, TMTMIR_DEFAULT);
-	पूर्ण अन्यथा अणु
-		regmap_ग_लिखो(data->regmap, REGS_V2_TMTMIR, TMTMIR_DEFAULT);
-		regmap_ग_लिखो(data->regmap, REGS_V2_TEUMR(0), TEUMR0_V2);
-		क्रम (i = 0; i < SITES_MAX; i++)
-			regmap_ग_लिखो(data->regmap, REGS_V2_TMSAR(i), TMSARA_V2);
-	पूर्ण
+	if (data->ver == TMU_VER1) {
+		regmap_write(data->regmap, REGS_TMTMIR, TMTMIR_DEFAULT);
+	} else {
+		regmap_write(data->regmap, REGS_V2_TMTMIR, TMTMIR_DEFAULT);
+		regmap_write(data->regmap, REGS_V2_TEUMR(0), TEUMR0_V2);
+		for (i = 0; i < SITES_MAX; i++)
+			regmap_write(data->regmap, REGS_V2_TMSAR(i), TMSARA_V2);
+	}
 
 	/* Disable monitoring */
-	regmap_ग_लिखो(data->regmap, REGS_TMR, TMR_DISABLE);
-पूर्ण
+	regmap_write(data->regmap, REGS_TMR, TMR_DISABLE);
+}
 
-अटल स्थिर काष्ठा regmap_range qoriq_yes_ranges[] = अणु
+static const struct regmap_range qoriq_yes_ranges[] = {
 	regmap_reg_range(REGS_TMR, REGS_TSCFGR),
 	regmap_reg_range(REGS_TTRnCR(0), REGS_TTRnCR(3)),
 	regmap_reg_range(REGS_V2_TEUMR(0), REGS_V2_TEUMR(2)),
 	regmap_reg_range(REGS_V2_TMSAR(0), REGS_V2_TMSAR(15)),
 	regmap_reg_range(REGS_IPBRR(0), REGS_IPBRR(1)),
-	/* Read only रेजिस्टरs below */
+	/* Read only registers below */
 	regmap_reg_range(REGS_TRITSR(0), REGS_TRITSR(15)),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table qoriq_wr_table = अणु
+static const struct regmap_access_table qoriq_wr_table = {
 	.yes_ranges	= qoriq_yes_ranges,
 	.n_yes_ranges	= ARRAY_SIZE(qoriq_yes_ranges) - 1,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regmap_access_table qoriq_rd_table = अणु
+static const struct regmap_access_table qoriq_rd_table = {
 	.yes_ranges	= qoriq_yes_ranges,
 	.n_yes_ranges	= ARRAY_SIZE(qoriq_yes_ranges),
-पूर्ण;
+};
 
-अटल व्योम qoriq_पंचांगu_action(व्योम *p)
-अणु
-	काष्ठा qoriq_पंचांगu_data *data = p;
+static void qoriq_tmu_action(void *p)
+{
+	struct qoriq_tmu_data *data = p;
 
-	regmap_ग_लिखो(data->regmap, REGS_TMR, TMR_DISABLE);
+	regmap_write(data->regmap, REGS_TMR, TMR_DISABLE);
 	clk_disable_unprepare(data->clk);
-पूर्ण
+}
 
-अटल पूर्णांक qoriq_पंचांगu_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret;
+static int qoriq_tmu_probe(struct platform_device *pdev)
+{
+	int ret;
 	u32 ver;
-	काष्ठा qoriq_पंचांगu_data *data;
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा device *dev = &pdev->dev;
-	स्थिर bool little_endian = of_property_पढ़ो_bool(np, "little-endian");
-	स्थिर क्रमागत regmap_endian क्रमmat_endian =
+	struct qoriq_tmu_data *data;
+	struct device_node *np = pdev->dev.of_node;
+	struct device *dev = &pdev->dev;
+	const bool little_endian = of_property_read_bool(np, "little-endian");
+	const enum regmap_endian format_endian =
 		little_endian ? REGMAP_ENDIAN_LITTLE : REGMAP_ENDIAN_BIG;
-	स्थिर काष्ठा regmap_config regmap_config = अणु
+	const struct regmap_config regmap_config = {
 		.reg_bits		= 32,
 		.val_bits		= 32,
 		.reg_stride		= 4,
 		.rd_table		= &qoriq_rd_table,
 		.wr_table		= &qoriq_wr_table,
-		.val_क्रमmat_endian	= क्रमmat_endian,
-		.max_रेजिस्टर		= SZ_4K,
-	पूर्ण;
-	व्योम __iomem *base;
+		.val_format_endian	= format_endian,
+		.max_register		= SZ_4K,
+	};
+	void __iomem *base;
 
-	data = devm_kzalloc(dev, माप(काष्ठा qoriq_पंचांगu_data),
+	data = devm_kzalloc(dev, sizeof(struct qoriq_tmu_data),
 			    GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	base = devm_platform_ioremap_resource(pdev, 0);
 	ret = PTR_ERR_OR_ZERO(base);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to get memory region\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	data->regmap = devm_regmap_init_mmio(dev, base, &regmap_config);
 	ret = PTR_ERR_OR_ZERO(data->regmap);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to init regmap (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	data->clk = devm_clk_get_optional(dev, शून्य);
-	अगर (IS_ERR(data->clk))
-		वापस PTR_ERR(data->clk);
+	data->clk = devm_clk_get_optional(dev, NULL);
+	if (IS_ERR(data->clk))
+		return PTR_ERR(data->clk);
 
 	ret = clk_prepare_enable(data->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to enable clock\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = devm_add_action_or_reset(dev, qoriq_पंचांगu_action, data);
-	अगर (ret)
-		वापस ret;
+	ret = devm_add_action_or_reset(dev, qoriq_tmu_action, data);
+	if (ret)
+		return ret;
 
-	/* version रेजिस्टर offset at: 0xbf8 on both v1 and v2 */
-	ret = regmap_पढ़ो(data->regmap, REGS_IPBRR(0), &ver);
-	अगर (ret) अणु
+	/* version register offset at: 0xbf8 on both v1 and v2 */
+	ret = regmap_read(data->regmap, REGS_IPBRR(0), &ver);
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to read IP block version\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	data->ver = (ver >> 8) & 0xff;
 
-	qoriq_पंचांगu_init_device(data);	/* TMU initialization */
+	qoriq_tmu_init_device(data);	/* TMU initialization */
 
-	ret = qoriq_पंचांगu_calibration(dev, data);	/* TMU calibration */
-	अगर (ret < 0)
-		वापस ret;
+	ret = qoriq_tmu_calibration(dev, data);	/* TMU calibration */
+	if (ret < 0)
+		return ret;
 
-	ret = qoriq_पंचांगu_रेजिस्टर_पंचांगu_zone(dev, data);
-	अगर (ret < 0) अणु
+	ret = qoriq_tmu_register_tmu_zone(dev, data);
+	if (ret < 0) {
 		dev_err(dev, "Failed to register sensors\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused qoriq_पंचांगu_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा qoriq_पंचांगu_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused qoriq_tmu_suspend(struct device *dev)
+{
+	struct qoriq_tmu_data *data = dev_get_drvdata(dev);
+	int ret;
 
 	ret = regmap_update_bits(data->regmap, REGS_TMR, TMR_ME, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clk_disable_unprepare(data->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused qoriq_पंचांगu_resume(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा qoriq_पंचांगu_data *data = dev_get_drvdata(dev);
+static int __maybe_unused qoriq_tmu_resume(struct device *dev)
+{
+	int ret;
+	struct qoriq_tmu_data *data = dev_get_drvdata(dev);
 
 	ret = clk_prepare_enable(data->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Enable monitoring */
-	वापस regmap_update_bits(data->regmap, REGS_TMR, TMR_ME, TMR_ME);
-पूर्ण
+	return regmap_update_bits(data->regmap, REGS_TMR, TMR_ME, TMR_ME);
+}
 
-अटल SIMPLE_DEV_PM_OPS(qoriq_पंचांगu_pm_ops,
-			 qoriq_पंचांगu_suspend, qoriq_पंचांगu_resume);
+static SIMPLE_DEV_PM_OPS(qoriq_tmu_pm_ops,
+			 qoriq_tmu_suspend, qoriq_tmu_resume);
 
-अटल स्थिर काष्ठा of_device_id qoriq_पंचांगu_match[] = अणु
-	अणु .compatible = "fsl,qoriq-tmu", पूर्ण,
-	अणु .compatible = "fsl,imx8mq-tmu", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
-MODULE_DEVICE_TABLE(of, qoriq_पंचांगu_match);
+static const struct of_device_id qoriq_tmu_match[] = {
+	{ .compatible = "fsl,qoriq-tmu", },
+	{ .compatible = "fsl,imx8mq-tmu", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, qoriq_tmu_match);
 
-अटल काष्ठा platक्रमm_driver qoriq_पंचांगu = अणु
-	.driver	= अणु
+static struct platform_driver qoriq_tmu = {
+	.driver	= {
 		.name		= "qoriq_thermal",
-		.pm		= &qoriq_पंचांगu_pm_ops,
-		.of_match_table	= qoriq_पंचांगu_match,
-	पूर्ण,
-	.probe	= qoriq_पंचांगu_probe,
-पूर्ण;
-module_platक्रमm_driver(qoriq_पंचांगu);
+		.pm		= &qoriq_tmu_pm_ops,
+		.of_match_table	= qoriq_tmu_match,
+	},
+	.probe	= qoriq_tmu_probe,
+};
+module_platform_driver(qoriq_tmu);
 
 MODULE_AUTHOR("Jia Hongtao <hongtao.jia@nxp.com>");
 MODULE_DESCRIPTION("QorIQ Thermal Monitoring Unit driver");

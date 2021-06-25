@@ -1,144 +1,143 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * A hwmon driver क्रम the IBM System Director Active Energy Manager (AEM)
- * temperature/घातer/energy sensors and capping functionality.
+ * A hwmon driver for the IBM System Director Active Energy Manager (AEM)
+ * temperature/power/energy sensors and capping functionality.
  * Copyright (C) 2008 IBM
  *
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/ipmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/hwmon-sysfs.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/math64.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/err.h>
+#include <linux/ipmi.h>
+#include <linux/module.h>
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/jiffies.h>
+#include <linux/mutex.h>
+#include <linux/kdev_t.h>
+#include <linux/spinlock.h>
+#include <linux/idr.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/platform_device.h>
+#include <linux/math64.h>
+#include <linux/time.h>
+#include <linux/err.h>
 
-#घोषणा REFRESH_INTERVAL	(HZ)
-#घोषणा IPMI_TIMEOUT		(30 * HZ)
-#घोषणा DRVNAME			"aem"
+#define REFRESH_INTERVAL	(HZ)
+#define IPMI_TIMEOUT		(30 * HZ)
+#define DRVNAME			"aem"
 
-#घोषणा AEM_NETFN		0x2E
+#define AEM_NETFN		0x2E
 
-#घोषणा AEM_FIND_FW_CMD		0x80
-#घोषणा AEM_ELEMENT_CMD		0x81
-#घोषणा AEM_FW_INSTANCE_CMD	0x82
+#define AEM_FIND_FW_CMD		0x80
+#define AEM_ELEMENT_CMD		0x81
+#define AEM_FW_INSTANCE_CMD	0x82
 
-#घोषणा AEM_READ_ELEMENT_CFG	0x80
-#घोषणा AEM_READ_BUFFER		0x81
-#घोषणा AEM_READ_REGISTER	0x82
-#घोषणा AEM_WRITE_REGISTER	0x83
-#घोषणा AEM_SET_REG_MASK	0x84
-#घोषणा AEM_CLEAR_REG_MASK	0x85
-#घोषणा AEM_READ_ELEMENT_CFG2	0x86
+#define AEM_READ_ELEMENT_CFG	0x80
+#define AEM_READ_BUFFER		0x81
+#define AEM_READ_REGISTER	0x82
+#define AEM_WRITE_REGISTER	0x83
+#define AEM_SET_REG_MASK	0x84
+#define AEM_CLEAR_REG_MASK	0x85
+#define AEM_READ_ELEMENT_CFG2	0x86
 
-#घोषणा AEM_CONTROL_ELEMENT	0
-#घोषणा AEM_ENERGY_ELEMENT	1
-#घोषणा AEM_CLOCK_ELEMENT	4
-#घोषणा AEM_POWER_CAP_ELEMENT	7
-#घोषणा AEM_EXHAUST_ELEMENT	9
-#घोषणा AEM_POWER_ELEMENT	10
+#define AEM_CONTROL_ELEMENT	0
+#define AEM_ENERGY_ELEMENT	1
+#define AEM_CLOCK_ELEMENT	4
+#define AEM_POWER_CAP_ELEMENT	7
+#define AEM_EXHAUST_ELEMENT	9
+#define AEM_POWER_ELEMENT	10
 
-#घोषणा AEM_MODULE_TYPE_ID	0x0001
+#define AEM_MODULE_TYPE_ID	0x0001
 
-#घोषणा AEM2_NUM_ENERGY_REGS	2
-#घोषणा AEM2_NUM_PCAP_REGS	6
-#घोषणा AEM2_NUM_TEMP_REGS	2
-#घोषणा AEM2_NUM_SENSORS	14
+#define AEM2_NUM_ENERGY_REGS	2
+#define AEM2_NUM_PCAP_REGS	6
+#define AEM2_NUM_TEMP_REGS	2
+#define AEM2_NUM_SENSORS	14
 
-#घोषणा AEM1_NUM_ENERGY_REGS	1
-#घोषणा AEM1_NUM_SENSORS	3
+#define AEM1_NUM_ENERGY_REGS	1
+#define AEM1_NUM_SENSORS	3
 
-/* AEM 2.x has more energy रेजिस्टरs */
-#घोषणा AEM_NUM_ENERGY_REGS	AEM2_NUM_ENERGY_REGS
+/* AEM 2.x has more energy registers */
+#define AEM_NUM_ENERGY_REGS	AEM2_NUM_ENERGY_REGS
 /* AEM 2.x needs more sensor files */
-#घोषणा AEM_NUM_SENSORS		AEM2_NUM_SENSORS
+#define AEM_NUM_SENSORS		AEM2_NUM_SENSORS
 
-#घोषणा POWER_CAP		0
-#घोषणा POWER_CAP_MAX_HOTPLUG	1
-#घोषणा POWER_CAP_MAX		2
-#घोषणा	POWER_CAP_MIN_WARNING	3
-#घोषणा POWER_CAP_MIN		4
-#घोषणा	POWER_AUX		5
+#define POWER_CAP		0
+#define POWER_CAP_MAX_HOTPLUG	1
+#define POWER_CAP_MAX		2
+#define	POWER_CAP_MIN_WARNING	3
+#define POWER_CAP_MIN		4
+#define	POWER_AUX		5
 
-#घोषणा AEM_DEFAULT_POWER_INTERVAL 1000
-#घोषणा AEM_MIN_POWER_INTERVAL	200
-#घोषणा UJ_PER_MJ		1000L
+#define AEM_DEFAULT_POWER_INTERVAL 1000
+#define AEM_MIN_POWER_INTERVAL	200
+#define UJ_PER_MJ		1000L
 
-अटल DEFINE_IDA(aem_ida);
+static DEFINE_IDA(aem_ida);
 
-अटल काष्ठा platक्रमm_driver aem_driver = अणु
-	.driver = अणु
+static struct platform_driver aem_driver = {
+	.driver = {
 		.name = DRVNAME,
-		.bus = &platक्रमm_bus_type,
-	पूर्ण
-पूर्ण;
+		.bus = &platform_bus_type,
+	}
+};
 
-काष्ठा aem_ipmi_data अणु
-	काष्ठा completion	पढ़ो_complete;
-	काष्ठा ipmi_addr	address;
-	काष्ठा ipmi_user	*user;
-	पूर्णांक			पूर्णांकerface;
+struct aem_ipmi_data {
+	struct completion	read_complete;
+	struct ipmi_addr	address;
+	struct ipmi_user	*user;
+	int			interface;
 
-	काष्ठा kernel_ipmi_msg	tx_message;
-	दीर्घ			tx_msgid;
+	struct kernel_ipmi_msg	tx_message;
+	long			tx_msgid;
 
-	व्योम			*rx_msg_data;
-	अचिन्हित लघु		rx_msg_len;
-	अचिन्हित अक्षर		rx_result;
-	पूर्णांक			rx_recv_type;
+	void			*rx_msg_data;
+	unsigned short		rx_msg_len;
+	unsigned char		rx_result;
+	int			rx_recv_type;
 
-	काष्ठा device		*bmc_device;
-पूर्ण;
+	struct device		*bmc_device;
+};
 
-काष्ठा aem_ro_sensor_ढाँचा अणु
-	अक्षर *label;
-	sमाप_प्रकार (*show)(काष्ठा device *dev,
-			काष्ठा device_attribute *devattr,
-			अक्षर *buf);
-	पूर्णांक index;
-पूर्ण;
+struct aem_ro_sensor_template {
+	char *label;
+	ssize_t (*show)(struct device *dev,
+			struct device_attribute *devattr,
+			char *buf);
+	int index;
+};
 
-काष्ठा aem_rw_sensor_ढाँचा अणु
-	अक्षर *label;
-	sमाप_प्रकार (*show)(काष्ठा device *dev,
-			काष्ठा device_attribute *devattr,
-			अक्षर *buf);
-	sमाप_प्रकार (*set)(काष्ठा device *dev,
-		       काष्ठा device_attribute *devattr,
-		       स्थिर अक्षर *buf, माप_प्रकार count);
-	पूर्णांक index;
-पूर्ण;
+struct aem_rw_sensor_template {
+	char *label;
+	ssize_t (*show)(struct device *dev,
+			struct device_attribute *devattr,
+			char *buf);
+	ssize_t (*set)(struct device *dev,
+		       struct device_attribute *devattr,
+		       const char *buf, size_t count);
+	int index;
+};
 
-काष्ठा aem_data अणु
-	काष्ठा list_head	list;
+struct aem_data {
+	struct list_head	list;
 
-	काष्ठा device		*hwmon_dev;
-	काष्ठा platक्रमm_device	*pdev;
-	काष्ठा mutex		lock;
-	अक्षर			valid;
-	अचिन्हित दीर्घ		last_updated;	/* In jअगरfies */
+	struct device		*hwmon_dev;
+	struct platform_device	*pdev;
+	struct mutex		lock;
+	char			valid;
+	unsigned long		last_updated;	/* In jiffies */
 	u8			ver_major;
 	u8			ver_minor;
 	u8			module_handle;
-	पूर्णांक			id;
-	काष्ठा aem_ipmi_data	ipmi;
+	int			id;
+	struct aem_ipmi_data	ipmi;
 
 	/* Function and buffer to update sensors */
-	व्योम (*update)(काष्ठा aem_data *data);
-	काष्ठा aem_पढ़ो_sensor_resp *rs_resp;
+	void (*update)(struct aem_data *data);
+	struct aem_read_sensor_resp *rs_resp;
 
 	/*
 	 * AEM 1.x sensors:
@@ -148,226 +147,226 @@
 	 *
 	 * AEM 2.x sensors:
 	 * Two energy meters
-	 * Two घातer meters
+	 * Two power meters
 	 * Two temperature sensors
-	 * Six घातer cap रेजिस्टरs
+	 * Six power cap registers
 	 */
 
 	/* sysfs attrs */
-	काष्ठा sensor_device_attribute	sensors[AEM_NUM_SENSORS];
+	struct sensor_device_attribute	sensors[AEM_NUM_SENSORS];
 
 	/* energy use in mJ */
 	u64			energy[AEM_NUM_ENERGY_REGS];
 
-	/* घातer sampling पूर्णांकerval in ms */
-	अचिन्हित दीर्घ		घातer_period[AEM_NUM_ENERGY_REGS];
+	/* power sampling interval in ms */
+	unsigned long		power_period[AEM_NUM_ENERGY_REGS];
 
-	/* Everything past here is क्रम AEM2 only */
+	/* Everything past here is for AEM2 only */
 
-	/* घातer caps in dW */
+	/* power caps in dW */
 	u16			pcap[AEM2_NUM_PCAP_REGS];
 
 	/* exhaust temperature in C */
 	u8			temp[AEM2_NUM_TEMP_REGS];
-पूर्ण;
+};
 
-/* Data काष्ठाures वापसed by the AEM firmware */
-काष्ठा aem_iana_id अणु
+/* Data structures returned by the AEM firmware */
+struct aem_iana_id {
 	u8			bytes[3];
-पूर्ण;
-अटल काष्ठा aem_iana_id प्रणाली_x_id = अणु
-	.bytes = अणु0x4D, 0x4F, 0x00पूर्ण
-पूर्ण;
+};
+static struct aem_iana_id system_x_id = {
+	.bytes = {0x4D, 0x4F, 0x00}
+};
 
 /* These are used to find AEM1 instances */
-काष्ठा aem_find_firmware_req अणु
-	काष्ठा aem_iana_id	id;
+struct aem_find_firmware_req {
+	struct aem_iana_id	id;
 	u8			rsvd;
 	__be16			index;
 	__be16			module_type_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा aem_find_firmware_resp अणु
-	काष्ठा aem_iana_id	id;
+struct aem_find_firmware_resp {
+	struct aem_iana_id	id;
 	u8			num_instances;
-पूर्ण __packed;
+} __packed;
 
 /* These are used to find AEM2 instances */
-काष्ठा aem_find_instance_req अणु
-	काष्ठा aem_iana_id	id;
+struct aem_find_instance_req {
+	struct aem_iana_id	id;
 	u8			instance_number;
 	__be16			module_type_id;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा aem_find_instance_resp अणु
-	काष्ठा aem_iana_id	id;
+struct aem_find_instance_resp {
+	struct aem_iana_id	id;
 	u8			num_instances;
 	u8			major;
 	u8			minor;
 	u8			module_handle;
 	u16			record_id;
-पूर्ण __packed;
+} __packed;
 
 /* These are used to query sensors */
-काष्ठा aem_पढ़ो_sensor_req अणु
-	काष्ठा aem_iana_id	id;
+struct aem_read_sensor_req {
+	struct aem_iana_id	id;
 	u8			module_handle;
 	u8			element;
 	u8			subcommand;
 	u8			reg;
 	u8			rx_buf_size;
-पूर्ण __packed;
+} __packed;
 
-काष्ठा aem_पढ़ो_sensor_resp अणु
-	काष्ठा aem_iana_id	id;
+struct aem_read_sensor_resp {
+	struct aem_iana_id	id;
 	u8			bytes[];
-पूर्ण __packed;
+} __packed;
 
-/* Data काष्ठाures to talk to the IPMI layer */
-काष्ठा aem_driver_data अणु
-	काष्ठा list_head	aem_devices;
-	काष्ठा ipmi_smi_watcher	bmc_events;
-	काष्ठा ipmi_user_hndl	ipmi_hndlrs;
-पूर्ण;
+/* Data structures to talk to the IPMI layer */
+struct aem_driver_data {
+	struct list_head	aem_devices;
+	struct ipmi_smi_watcher	bmc_events;
+	struct ipmi_user_hndl	ipmi_hndlrs;
+};
 
-अटल व्योम aem_रेजिस्टर_bmc(पूर्णांक अगरace, काष्ठा device *dev);
-अटल व्योम aem_bmc_gone(पूर्णांक अगरace);
-अटल व्योम aem_msg_handler(काष्ठा ipmi_recv_msg *msg, व्योम *user_msg_data);
+static void aem_register_bmc(int iface, struct device *dev);
+static void aem_bmc_gone(int iface);
+static void aem_msg_handler(struct ipmi_recv_msg *msg, void *user_msg_data);
 
-अटल व्योम aem_हटाओ_sensors(काष्ठा aem_data *data);
-अटल पूर्णांक aem1_find_sensors(काष्ठा aem_data *data);
-अटल पूर्णांक aem2_find_sensors(काष्ठा aem_data *data);
-अटल व्योम update_aem1_sensors(काष्ठा aem_data *data);
-अटल व्योम update_aem2_sensors(काष्ठा aem_data *data);
+static void aem_remove_sensors(struct aem_data *data);
+static int aem1_find_sensors(struct aem_data *data);
+static int aem2_find_sensors(struct aem_data *data);
+static void update_aem1_sensors(struct aem_data *data);
+static void update_aem2_sensors(struct aem_data *data);
 
-अटल काष्ठा aem_driver_data driver_data = अणु
+static struct aem_driver_data driver_data = {
 	.aem_devices = LIST_HEAD_INIT(driver_data.aem_devices),
-	.bmc_events = अणु
+	.bmc_events = {
 		.owner = THIS_MODULE,
-		.new_smi = aem_रेजिस्टर_bmc,
+		.new_smi = aem_register_bmc,
 		.smi_gone = aem_bmc_gone,
-	पूर्ण,
-	.ipmi_hndlrs = अणु
+	},
+	.ipmi_hndlrs = {
 		.ipmi_recv_hndl = aem_msg_handler,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* Functions to talk to the IPMI layer */
 
 /* Initialize IPMI address, message buffers and user data */
-अटल पूर्णांक aem_init_ipmi_data(काष्ठा aem_ipmi_data *data, पूर्णांक अगरace,
-			      काष्ठा device *bmc)
-अणु
-	पूर्णांक err;
+static int aem_init_ipmi_data(struct aem_ipmi_data *data, int iface,
+			      struct device *bmc)
+{
+	int err;
 
-	init_completion(&data->पढ़ो_complete);
+	init_completion(&data->read_complete);
 	data->bmc_device = bmc;
 
 	/* Initialize IPMI address */
 	data->address.addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 	data->address.channel = IPMI_BMC_CHANNEL;
 	data->address.data[0] = 0;
-	data->पूर्णांकerface = अगरace;
+	data->interface = iface;
 
 	/* Initialize message buffers */
 	data->tx_msgid = 0;
 	data->tx_message.netfn = AEM_NETFN;
 
-	/* Create IPMI messaging पूर्णांकerface user */
-	err = ipmi_create_user(data->पूर्णांकerface, &driver_data.ipmi_hndlrs,
+	/* Create IPMI messaging interface user */
+	err = ipmi_create_user(data->interface, &driver_data.ipmi_hndlrs,
 			       data, &data->user);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(bmc,
 			"Unable to register user with IPMI interface %d\n",
-			data->पूर्णांकerface);
-		वापस err;
-	पूर्ण
+			data->interface);
+		return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Send an IPMI command */
-अटल पूर्णांक aem_send_message(काष्ठा aem_ipmi_data *data)
-अणु
-	पूर्णांक err;
+static int aem_send_message(struct aem_ipmi_data *data)
+{
+	int err;
 
-	err = ipmi_validate_addr(&data->address, माप(data->address));
-	अगर (err)
-		जाओ out;
+	err = ipmi_validate_addr(&data->address, sizeof(data->address));
+	if (err)
+		goto out;
 
 	data->tx_msgid++;
-	err = ipmi_request_समय_रखो(data->user, &data->address, data->tx_msgid,
+	err = ipmi_request_settime(data->user, &data->address, data->tx_msgid,
 				   &data->tx_message, data, 0, 0, 0);
-	अगर (err)
-		जाओ out1;
+	if (err)
+		goto out1;
 
-	वापस 0;
+	return 0;
 out1:
 	dev_err(data->bmc_device, "request_settime=%x\n", err);
-	वापस err;
+	return err;
 out:
 	dev_err(data->bmc_device, "validate_addr=%x\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Dispatch IPMI messages to callers */
-अटल व्योम aem_msg_handler(काष्ठा ipmi_recv_msg *msg, व्योम *user_msg_data)
-अणु
-	अचिन्हित लघु rx_len;
-	काष्ठा aem_ipmi_data *data = user_msg_data;
+static void aem_msg_handler(struct ipmi_recv_msg *msg, void *user_msg_data)
+{
+	unsigned short rx_len;
+	struct aem_ipmi_data *data = user_msg_data;
 
-	अगर (msg->msgid != data->tx_msgid) अणु
+	if (msg->msgid != data->tx_msgid) {
 		dev_err(data->bmc_device,
 			"Mismatch between received msgid (%02x) and transmitted msgid (%02x)!\n",
-			(पूर्णांक)msg->msgid,
-			(पूर्णांक)data->tx_msgid);
-		ipmi_मुक्त_recv_msg(msg);
-		वापस;
-	पूर्ण
+			(int)msg->msgid,
+			(int)data->tx_msgid);
+		ipmi_free_recv_msg(msg);
+		return;
+	}
 
 	data->rx_recv_type = msg->recv_type;
-	अगर (msg->msg.data_len > 0)
+	if (msg->msg.data_len > 0)
 		data->rx_result = msg->msg.data[0];
-	अन्यथा
+	else
 		data->rx_result = IPMI_UNKNOWN_ERR_COMPLETION_CODE;
 
-	अगर (msg->msg.data_len > 1) अणु
+	if (msg->msg.data_len > 1) {
 		rx_len = msg->msg.data_len - 1;
-		अगर (data->rx_msg_len < rx_len)
+		if (data->rx_msg_len < rx_len)
 			rx_len = data->rx_msg_len;
 		data->rx_msg_len = rx_len;
-		स_नकल(data->rx_msg_data, msg->msg.data + 1, data->rx_msg_len);
-	पूर्ण अन्यथा
+		memcpy(data->rx_msg_data, msg->msg.data + 1, data->rx_msg_len);
+	} else
 		data->rx_msg_len = 0;
 
-	ipmi_मुक्त_recv_msg(msg);
-	complete(&data->पढ़ो_complete);
-पूर्ण
+	ipmi_free_recv_msg(msg);
+	complete(&data->read_complete);
+}
 
 /* Sensor support functions */
 
 /* Read a sensor value; must be called with data->lock held */
-अटल पूर्णांक aem_पढ़ो_sensor(काष्ठा aem_data *data, u8 elt, u8 reg,
-			   व्योम *buf, माप_प्रकार size)
-अणु
-	पूर्णांक rs_size, res;
-	काष्ठा aem_पढ़ो_sensor_req rs_req;
-	/* Use pपुनः_स्मृतिated rx buffer */
-	काष्ठा aem_पढ़ो_sensor_resp *rs_resp = data->rs_resp;
-	काष्ठा aem_ipmi_data *ipmi = &data->ipmi;
+static int aem_read_sensor(struct aem_data *data, u8 elt, u8 reg,
+			   void *buf, size_t size)
+{
+	int rs_size, res;
+	struct aem_read_sensor_req rs_req;
+	/* Use preallocated rx buffer */
+	struct aem_read_sensor_resp *rs_resp = data->rs_resp;
+	struct aem_ipmi_data *ipmi = &data->ipmi;
 
-	/* AEM रेजिस्टरs are 1, 2, 4 or 8 bytes */
-	चयन (size) अणु
-	हाल 1:
-	हाल 2:
-	हाल 4:
-	हाल 8:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	/* AEM registers are 1, 2, 4 or 8 bytes */
+	switch (size) {
+	case 1:
+	case 2:
+	case 4:
+	case 8:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	rs_req.id = प्रणाली_x_id;
+	rs_req.id = system_x_id;
 	rs_req.module_handle = data->module_handle;
 	rs_req.element = elt;
 	rs_req.subcommand = AEM_READ_REGISTER;
@@ -375,213 +374,213 @@ out:
 	rs_req.rx_buf_size = size;
 
 	ipmi->tx_message.cmd = AEM_ELEMENT_CMD;
-	ipmi->tx_message.data = (अक्षर *)&rs_req;
-	ipmi->tx_message.data_len = माप(rs_req);
+	ipmi->tx_message.data = (char *)&rs_req;
+	ipmi->tx_message.data_len = sizeof(rs_req);
 
-	rs_size = माप(*rs_resp) + size;
+	rs_size = sizeof(*rs_resp) + size;
 	ipmi->rx_msg_data = rs_resp;
 	ipmi->rx_msg_len = rs_size;
 
 	aem_send_message(ipmi);
 
-	res = रुको_क्रम_completion_समयout(&ipmi->पढ़ो_complete, IPMI_TIMEOUT);
-	अगर (!res) अणु
+	res = wait_for_completion_timeout(&ipmi->read_complete, IPMI_TIMEOUT);
+	if (!res) {
 		res = -ETIMEDOUT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ipmi->rx_result || ipmi->rx_msg_len != rs_size ||
-	    स_भेद(&rs_resp->id, &प्रणाली_x_id, माप(प्रणाली_x_id))) अणु
+	if (ipmi->rx_result || ipmi->rx_msg_len != rs_size ||
+	    memcmp(&rs_resp->id, &system_x_id, sizeof(system_x_id))) {
 		res = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (size) अणु
-	हाल 1: अणु
+	switch (size) {
+	case 1: {
 		u8 *x = buf;
 		*x = rs_resp->bytes[0];
-		अवरोध;
-	पूर्ण
-	हाल 2: अणु
+		break;
+	}
+	case 2: {
 		u16 *x = buf;
 		*x = be16_to_cpup((__be16 *)rs_resp->bytes);
-		अवरोध;
-	पूर्ण
-	हाल 4: अणु
+		break;
+	}
+	case 4: {
 		u32 *x = buf;
 		*x = be32_to_cpup((__be32 *)rs_resp->bytes);
-		अवरोध;
-	पूर्ण
-	हाल 8: अणु
+		break;
+	}
+	case 8: {
 		u64 *x = buf;
 		*x = be64_to_cpup((__be64 *)rs_resp->bytes);
-		अवरोध;
-	पूर्ण
-	पूर्ण
+		break;
+	}
+	}
 	res = 0;
 
 out:
-	वापस res;
-पूर्ण
+	return res;
+}
 
-/* Update AEM energy रेजिस्टरs */
-अटल व्योम update_aem_energy_one(काष्ठा aem_data *data, पूर्णांक which)
-अणु
-	aem_पढ़ो_sensor(data, AEM_ENERGY_ELEMENT, which,
+/* Update AEM energy registers */
+static void update_aem_energy_one(struct aem_data *data, int which)
+{
+	aem_read_sensor(data, AEM_ENERGY_ELEMENT, which,
 			&data->energy[which], 8);
-पूर्ण
+}
 
-अटल व्योम update_aem_energy(काष्ठा aem_data *data)
-अणु
+static void update_aem_energy(struct aem_data *data)
+{
 	update_aem_energy_one(data, 0);
-	अगर (data->ver_major < 2)
-		वापस;
+	if (data->ver_major < 2)
+		return;
 	update_aem_energy_one(data, 1);
-पूर्ण
+}
 
 /* Update all AEM1 sensors */
-अटल व्योम update_aem1_sensors(काष्ठा aem_data *data)
-अणु
+static void update_aem1_sensors(struct aem_data *data)
+{
 	mutex_lock(&data->lock);
-	अगर (समय_beक्रमe(jअगरfies, data->last_updated + REFRESH_INTERVAL) &&
+	if (time_before(jiffies, data->last_updated + REFRESH_INTERVAL) &&
 	    data->valid)
-		जाओ out;
+		goto out;
 
 	update_aem_energy(data);
 out:
 	mutex_unlock(&data->lock);
-पूर्ण
+}
 
 /* Update all AEM2 sensors */
-अटल व्योम update_aem2_sensors(काष्ठा aem_data *data)
-अणु
-	पूर्णांक i;
+static void update_aem2_sensors(struct aem_data *data)
+{
+	int i;
 
 	mutex_lock(&data->lock);
-	अगर (समय_beक्रमe(jअगरfies, data->last_updated + REFRESH_INTERVAL) &&
+	if (time_before(jiffies, data->last_updated + REFRESH_INTERVAL) &&
 	    data->valid)
-		जाओ out;
+		goto out;
 
 	update_aem_energy(data);
-	aem_पढ़ो_sensor(data, AEM_EXHAUST_ELEMENT, 0, &data->temp[0], 1);
-	aem_पढ़ो_sensor(data, AEM_EXHAUST_ELEMENT, 1, &data->temp[1], 1);
+	aem_read_sensor(data, AEM_EXHAUST_ELEMENT, 0, &data->temp[0], 1);
+	aem_read_sensor(data, AEM_EXHAUST_ELEMENT, 1, &data->temp[1], 1);
 
-	क्रम (i = POWER_CAP; i <= POWER_AUX; i++)
-		aem_पढ़ो_sensor(data, AEM_POWER_CAP_ELEMENT, i,
+	for (i = POWER_CAP; i <= POWER_AUX; i++)
+		aem_read_sensor(data, AEM_POWER_CAP_ELEMENT, i,
 				&data->pcap[i], 2);
 out:
 	mutex_unlock(&data->lock);
-पूर्ण
+}
 
 /* Delete an AEM instance */
-अटल व्योम aem_delete(काष्ठा aem_data *data)
-अणु
+static void aem_delete(struct aem_data *data)
+{
 	list_del(&data->list);
-	aem_हटाओ_sensors(data);
-	kमुक्त(data->rs_resp);
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	aem_remove_sensors(data);
+	kfree(data->rs_resp);
+	hwmon_device_unregister(data->hwmon_dev);
 	ipmi_destroy_user(data->ipmi.user);
-	platक्रमm_set_drvdata(data->pdev, शून्य);
-	platक्रमm_device_unरेजिस्टर(data->pdev);
-	ida_simple_हटाओ(&aem_ida, data->id);
-	kमुक्त(data);
-पूर्ण
+	platform_set_drvdata(data->pdev, NULL);
+	platform_device_unregister(data->pdev);
+	ida_simple_remove(&aem_ida, data->id);
+	kfree(data);
+}
 
-/* Probe functions क्रम AEM1 devices */
+/* Probe functions for AEM1 devices */
 
-/* Retrieve version and module handle क्रम an AEM1 instance */
-अटल पूर्णांक aem_find_aem1_count(काष्ठा aem_ipmi_data *data)
-अणु
-	पूर्णांक res;
-	काष्ठा aem_find_firmware_req	ff_req;
-	काष्ठा aem_find_firmware_resp	ff_resp;
+/* Retrieve version and module handle for an AEM1 instance */
+static int aem_find_aem1_count(struct aem_ipmi_data *data)
+{
+	int res;
+	struct aem_find_firmware_req	ff_req;
+	struct aem_find_firmware_resp	ff_resp;
 
-	ff_req.id = प्रणाली_x_id;
+	ff_req.id = system_x_id;
 	ff_req.index = 0;
 	ff_req.module_type_id = cpu_to_be16(AEM_MODULE_TYPE_ID);
 
 	data->tx_message.cmd = AEM_FIND_FW_CMD;
-	data->tx_message.data = (अक्षर *)&ff_req;
-	data->tx_message.data_len = माप(ff_req);
+	data->tx_message.data = (char *)&ff_req;
+	data->tx_message.data_len = sizeof(ff_req);
 
 	data->rx_msg_data = &ff_resp;
-	data->rx_msg_len = माप(ff_resp);
+	data->rx_msg_len = sizeof(ff_resp);
 
 	aem_send_message(data);
 
-	res = रुको_क्रम_completion_समयout(&data->पढ़ो_complete, IPMI_TIMEOUT);
-	अगर (!res)
-		वापस -ETIMEDOUT;
+	res = wait_for_completion_timeout(&data->read_complete, IPMI_TIMEOUT);
+	if (!res)
+		return -ETIMEDOUT;
 
-	अगर (data->rx_result || data->rx_msg_len != माप(ff_resp) ||
-	    स_भेद(&ff_resp.id, &प्रणाली_x_id, माप(प्रणाली_x_id)))
-		वापस -ENOENT;
+	if (data->rx_result || data->rx_msg_len != sizeof(ff_resp) ||
+	    memcmp(&ff_resp.id, &system_x_id, sizeof(system_x_id)))
+		return -ENOENT;
 
-	वापस ff_resp.num_instances;
-पूर्ण
+	return ff_resp.num_instances;
+}
 
 /* Find and initialize one AEM1 instance */
-अटल पूर्णांक aem_init_aem1_inst(काष्ठा aem_ipmi_data *probe, u8 module_handle)
-अणु
-	काष्ठा aem_data *data;
-	पूर्णांक i;
-	पूर्णांक res = -ENOMEM;
+static int aem_init_aem1_inst(struct aem_ipmi_data *probe, u8 module_handle)
+{
+	struct aem_data *data;
+	int i;
+	int res = -ENOMEM;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस res;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return res;
 	mutex_init(&data->lock);
 
 	/* Copy instance data */
 	data->ver_major = 1;
 	data->ver_minor = 0;
 	data->module_handle = module_handle;
-	क्रम (i = 0; i < AEM1_NUM_ENERGY_REGS; i++)
-		data->घातer_period[i] = AEM_DEFAULT_POWER_INTERVAL;
+	for (i = 0; i < AEM1_NUM_ENERGY_REGS; i++)
+		data->power_period[i] = AEM_DEFAULT_POWER_INTERVAL;
 
-	/* Create sub-device क्रम this fw instance */
+	/* Create sub-device for this fw instance */
 	data->id = ida_simple_get(&aem_ida, 0, 0, GFP_KERNEL);
-	अगर (data->id < 0)
-		जाओ id_err;
+	if (data->id < 0)
+		goto id_err;
 
-	data->pdev = platक्रमm_device_alloc(DRVNAME, data->id);
-	अगर (!data->pdev)
-		जाओ dev_err;
+	data->pdev = platform_device_alloc(DRVNAME, data->id);
+	if (!data->pdev)
+		goto dev_err;
 	data->pdev->dev.driver = &aem_driver.driver;
 
-	res = platक्रमm_device_add(data->pdev);
-	अगर (res)
-		जाओ ipmi_err;
+	res = platform_device_add(data->pdev);
+	if (res)
+		goto ipmi_err;
 
-	platक्रमm_set_drvdata(data->pdev, data);
+	platform_set_drvdata(data->pdev, data);
 
-	/* Set up IPMI पूर्णांकerface */
-	res = aem_init_ipmi_data(&data->ipmi, probe->पूर्णांकerface,
+	/* Set up IPMI interface */
+	res = aem_init_ipmi_data(&data->ipmi, probe->interface,
 				 probe->bmc_device);
-	अगर (res)
-		जाओ ipmi_err;
+	if (res)
+		goto ipmi_err;
 
 	/* Register with hwmon */
-	data->hwmon_dev = hwmon_device_रेजिस्टर(&data->pdev->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(&data->pdev->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		dev_err(&data->pdev->dev,
 			"Unable to register hwmon device for IPMI interface %d\n",
-			probe->पूर्णांकerface);
+			probe->interface);
 		res = PTR_ERR(data->hwmon_dev);
-		जाओ hwmon_reg_err;
-	पूर्ण
+		goto hwmon_reg_err;
+	}
 
 	data->update = update_aem1_sensors;
-	data->rs_resp = kzalloc(माप(*(data->rs_resp)) + 8, GFP_KERNEL);
-	अगर (!data->rs_resp) अणु
+	data->rs_resp = kzalloc(sizeof(*(data->rs_resp)) + 8, GFP_KERNEL);
+	if (!data->rs_resp) {
 		res = -ENOMEM;
-		जाओ alloc_resp_err;
-	पूर्ण
+		goto alloc_resp_err;
+	}
 
 	/* Find sensors */
 	res = aem1_find_sensors(data);
-	अगर (res)
-		जाओ sensor_err;
+	if (res)
+		goto sensor_err;
 
 	/* Add to our list of AEM devices */
 	list_add_tail(&data->list, &driver_data.aem_devices);
@@ -589,139 +588,139 @@ out:
 	dev_info(data->ipmi.bmc_device, "Found AEM v%d.%d at 0x%X\n",
 		 data->ver_major, data->ver_minor,
 		 data->module_handle);
-	वापस 0;
+	return 0;
 
 sensor_err:
-	kमुक्त(data->rs_resp);
+	kfree(data->rs_resp);
 alloc_resp_err:
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 hwmon_reg_err:
 	ipmi_destroy_user(data->ipmi.user);
 ipmi_err:
-	platक्रमm_set_drvdata(data->pdev, शून्य);
-	platक्रमm_device_unरेजिस्टर(data->pdev);
+	platform_set_drvdata(data->pdev, NULL);
+	platform_device_unregister(data->pdev);
 dev_err:
-	ida_simple_हटाओ(&aem_ida, data->id);
+	ida_simple_remove(&aem_ida, data->id);
 id_err:
-	kमुक्त(data);
+	kfree(data);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /* Find and initialize all AEM1 instances */
-अटल व्योम aem_init_aem1(काष्ठा aem_ipmi_data *probe)
-अणु
-	पूर्णांक num, i, err;
+static void aem_init_aem1(struct aem_ipmi_data *probe)
+{
+	int num, i, err;
 
 	num = aem_find_aem1_count(probe);
-	क्रम (i = 0; i < num; i++) अणु
+	for (i = 0; i < num; i++) {
 		err = aem_init_aem1_inst(probe, i);
-		अगर (err) अणु
+		if (err) {
 			dev_err(probe->bmc_device,
 				"Error %d initializing AEM1 0x%X\n",
 				err, i);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* Probe functions क्रम AEM2 devices */
+/* Probe functions for AEM2 devices */
 
-/* Retrieve version and module handle क्रम an AEM2 instance */
-अटल पूर्णांक aem_find_aem2(काष्ठा aem_ipmi_data *data,
-			    काष्ठा aem_find_instance_resp *fi_resp,
-			    पूर्णांक instance_num)
-अणु
-	पूर्णांक res;
-	काष्ठा aem_find_instance_req fi_req;
+/* Retrieve version and module handle for an AEM2 instance */
+static int aem_find_aem2(struct aem_ipmi_data *data,
+			    struct aem_find_instance_resp *fi_resp,
+			    int instance_num)
+{
+	int res;
+	struct aem_find_instance_req fi_req;
 
-	fi_req.id = प्रणाली_x_id;
+	fi_req.id = system_x_id;
 	fi_req.instance_number = instance_num;
 	fi_req.module_type_id = cpu_to_be16(AEM_MODULE_TYPE_ID);
 
 	data->tx_message.cmd = AEM_FW_INSTANCE_CMD;
-	data->tx_message.data = (अक्षर *)&fi_req;
-	data->tx_message.data_len = माप(fi_req);
+	data->tx_message.data = (char *)&fi_req;
+	data->tx_message.data_len = sizeof(fi_req);
 
 	data->rx_msg_data = fi_resp;
-	data->rx_msg_len = माप(*fi_resp);
+	data->rx_msg_len = sizeof(*fi_resp);
 
 	aem_send_message(data);
 
-	res = रुको_क्रम_completion_समयout(&data->पढ़ो_complete, IPMI_TIMEOUT);
-	अगर (!res)
-		वापस -ETIMEDOUT;
+	res = wait_for_completion_timeout(&data->read_complete, IPMI_TIMEOUT);
+	if (!res)
+		return -ETIMEDOUT;
 
-	अगर (data->rx_result || data->rx_msg_len != माप(*fi_resp) ||
-	    स_भेद(&fi_resp->id, &प्रणाली_x_id, माप(प्रणाली_x_id)) ||
+	if (data->rx_result || data->rx_msg_len != sizeof(*fi_resp) ||
+	    memcmp(&fi_resp->id, &system_x_id, sizeof(system_x_id)) ||
 	    fi_resp->num_instances <= instance_num)
-		वापस -ENOENT;
+		return -ENOENT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Find and initialize one AEM2 instance */
-अटल पूर्णांक aem_init_aem2_inst(काष्ठा aem_ipmi_data *probe,
-			      काष्ठा aem_find_instance_resp *fi_resp)
-अणु
-	काष्ठा aem_data *data;
-	पूर्णांक i;
-	पूर्णांक res = -ENOMEM;
+static int aem_init_aem2_inst(struct aem_ipmi_data *probe,
+			      struct aem_find_instance_resp *fi_resp)
+{
+	struct aem_data *data;
+	int i;
+	int res = -ENOMEM;
 
-	data = kzalloc(माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस res;
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return res;
 	mutex_init(&data->lock);
 
 	/* Copy instance data */
 	data->ver_major = fi_resp->major;
 	data->ver_minor = fi_resp->minor;
 	data->module_handle = fi_resp->module_handle;
-	क्रम (i = 0; i < AEM2_NUM_ENERGY_REGS; i++)
-		data->घातer_period[i] = AEM_DEFAULT_POWER_INTERVAL;
+	for (i = 0; i < AEM2_NUM_ENERGY_REGS; i++)
+		data->power_period[i] = AEM_DEFAULT_POWER_INTERVAL;
 
-	/* Create sub-device क्रम this fw instance */
+	/* Create sub-device for this fw instance */
 	data->id = ida_simple_get(&aem_ida, 0, 0, GFP_KERNEL);
-	अगर (data->id < 0)
-		जाओ id_err;
+	if (data->id < 0)
+		goto id_err;
 
-	data->pdev = platक्रमm_device_alloc(DRVNAME, data->id);
-	अगर (!data->pdev)
-		जाओ dev_err;
+	data->pdev = platform_device_alloc(DRVNAME, data->id);
+	if (!data->pdev)
+		goto dev_err;
 	data->pdev->dev.driver = &aem_driver.driver;
 
-	res = platक्रमm_device_add(data->pdev);
-	अगर (res)
-		जाओ ipmi_err;
+	res = platform_device_add(data->pdev);
+	if (res)
+		goto ipmi_err;
 
-	platक्रमm_set_drvdata(data->pdev, data);
+	platform_set_drvdata(data->pdev, data);
 
-	/* Set up IPMI पूर्णांकerface */
-	res = aem_init_ipmi_data(&data->ipmi, probe->पूर्णांकerface,
+	/* Set up IPMI interface */
+	res = aem_init_ipmi_data(&data->ipmi, probe->interface,
 				 probe->bmc_device);
-	अगर (res)
-		जाओ ipmi_err;
+	if (res)
+		goto ipmi_err;
 
 	/* Register with hwmon */
-	data->hwmon_dev = hwmon_device_रेजिस्टर(&data->pdev->dev);
-	अगर (IS_ERR(data->hwmon_dev)) अणु
+	data->hwmon_dev = hwmon_device_register(&data->pdev->dev);
+	if (IS_ERR(data->hwmon_dev)) {
 		dev_err(&data->pdev->dev,
 			"Unable to register hwmon device for IPMI interface %d\n",
-			probe->पूर्णांकerface);
+			probe->interface);
 		res = PTR_ERR(data->hwmon_dev);
-		जाओ hwmon_reg_err;
-	पूर्ण
+		goto hwmon_reg_err;
+	}
 
 	data->update = update_aem2_sensors;
-	data->rs_resp = kzalloc(माप(*(data->rs_resp)) + 8, GFP_KERNEL);
-	अगर (!data->rs_resp) अणु
+	data->rs_resp = kzalloc(sizeof(*(data->rs_resp)) + 8, GFP_KERNEL);
+	if (!data->rs_resp) {
 		res = -ENOMEM;
-		जाओ alloc_resp_err;
-	पूर्ण
+		goto alloc_resp_err;
+	}
 
 	/* Find sensors */
 	res = aem2_find_sensors(data);
-	अगर (res)
-		जाओ sensor_err;
+	if (res)
+		goto sensor_err;
 
 	/* Add to our list of AEM devices */
 	list_add_tail(&data->list, &driver_data.aem_devices);
@@ -729,193 +728,193 @@ id_err:
 	dev_info(data->ipmi.bmc_device, "Found AEM v%d.%d at 0x%X\n",
 		 data->ver_major, data->ver_minor,
 		 data->module_handle);
-	वापस 0;
+	return 0;
 
 sensor_err:
-	kमुक्त(data->rs_resp);
+	kfree(data->rs_resp);
 alloc_resp_err:
-	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	hwmon_device_unregister(data->hwmon_dev);
 hwmon_reg_err:
 	ipmi_destroy_user(data->ipmi.user);
 ipmi_err:
-	platक्रमm_set_drvdata(data->pdev, शून्य);
-	platक्रमm_device_unरेजिस्टर(data->pdev);
+	platform_set_drvdata(data->pdev, NULL);
+	platform_device_unregister(data->pdev);
 dev_err:
-	ida_simple_हटाओ(&aem_ida, data->id);
+	ida_simple_remove(&aem_ida, data->id);
 id_err:
-	kमुक्त(data);
+	kfree(data);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /* Find and initialize all AEM2 instances */
-अटल व्योम aem_init_aem2(काष्ठा aem_ipmi_data *probe)
-अणु
-	काष्ठा aem_find_instance_resp fi_resp;
-	पूर्णांक err;
-	पूर्णांक i = 0;
+static void aem_init_aem2(struct aem_ipmi_data *probe)
+{
+	struct aem_find_instance_resp fi_resp;
+	int err;
+	int i = 0;
 
-	जबतक (!aem_find_aem2(probe, &fi_resp, i)) अणु
-		अगर (fi_resp.major != 2) अणु
+	while (!aem_find_aem2(probe, &fi_resp, i)) {
+		if (fi_resp.major != 2) {
 			dev_err(probe->bmc_device,
 				"Unknown AEM v%d; please report this to the maintainer.\n",
 				fi_resp.major);
 			i++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		err = aem_init_aem2_inst(probe, &fi_resp);
-		अगर (err) अणु
+		if (err) {
 			dev_err(probe->bmc_device,
 				"Error %d initializing AEM2 0x%X\n",
 				err, fi_resp.module_handle);
-		पूर्ण
+		}
 		i++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Probe a BMC क्रम AEM firmware instances */
-अटल व्योम aem_रेजिस्टर_bmc(पूर्णांक अगरace, काष्ठा device *dev)
-अणु
-	काष्ठा aem_ipmi_data probe;
+/* Probe a BMC for AEM firmware instances */
+static void aem_register_bmc(int iface, struct device *dev)
+{
+	struct aem_ipmi_data probe;
 
-	अगर (aem_init_ipmi_data(&probe, अगरace, dev))
-		वापस;
+	if (aem_init_ipmi_data(&probe, iface, dev))
+		return;
 
 	/* Ignore probe errors; they won't cause problems */
 	aem_init_aem1(&probe);
 	aem_init_aem2(&probe);
 
 	ipmi_destroy_user(probe.user);
-पूर्ण
+}
 
 /* Handle BMC deletion */
-अटल व्योम aem_bmc_gone(पूर्णांक अगरace)
-अणु
-	काष्ठा aem_data *p1, *next1;
+static void aem_bmc_gone(int iface)
+{
+	struct aem_data *p1, *next1;
 
-	list_क्रम_each_entry_safe(p1, next1, &driver_data.aem_devices, list)
-		अगर (p1->ipmi.पूर्णांकerface == अगरace)
+	list_for_each_entry_safe(p1, next1, &driver_data.aem_devices, list)
+		if (p1->ipmi.interface == iface)
 			aem_delete(p1);
-पूर्ण
+}
 
 /* sysfs support functions */
 
 /* AEM device name */
-अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *devattr,
-			 अक्षर *buf)
-अणु
-	काष्ठा aem_data *data = dev_get_drvdata(dev);
+static ssize_t name_show(struct device *dev, struct device_attribute *devattr,
+			 char *buf)
+{
+	struct aem_data *data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%s%d\n", DRVNAME, data->ver_major);
-पूर्ण
-अटल SENSOR_DEVICE_ATTR_RO(name, name, 0);
+	return sprintf(buf, "%s%d\n", DRVNAME, data->ver_major);
+}
+static SENSOR_DEVICE_ATTR_RO(name, name, 0);
 
 /* AEM device version */
-अटल sमाप_प्रकार version_show(काष्ठा device *dev,
-			    काष्ठा device_attribute *devattr, अक्षर *buf)
-अणु
-	काष्ठा aem_data *data = dev_get_drvdata(dev);
+static ssize_t version_show(struct device *dev,
+			    struct device_attribute *devattr, char *buf)
+{
+	struct aem_data *data = dev_get_drvdata(dev);
 
-	वापस प्र_लिखो(buf, "%d.%d\n", data->ver_major, data->ver_minor);
-पूर्ण
-अटल SENSOR_DEVICE_ATTR_RO(version, version, 0);
+	return sprintf(buf, "%d.%d\n", data->ver_major, data->ver_minor);
+}
+static SENSOR_DEVICE_ATTR_RO(version, version, 0);
 
-/* Display घातer use */
-अटल sमाप_प्रकार aem_show_घातer(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr,
-			      अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा aem_data *data = dev_get_drvdata(dev);
-	u64 beक्रमe, after, delta, समय;
-	चिन्हित दीर्घ leftover;
+/* Display power use */
+static ssize_t aem_show_power(struct device *dev,
+			      struct device_attribute *devattr,
+			      char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct aem_data *data = dev_get_drvdata(dev);
+	u64 before, after, delta, time;
+	signed long leftover;
 
 	mutex_lock(&data->lock);
 	update_aem_energy_one(data, attr->index);
-	समय = kसमय_get_ns();
-	beक्रमe = data->energy[attr->index];
+	time = ktime_get_ns();
+	before = data->energy[attr->index];
 
-	leftover = schedule_समयout_पूर्णांकerruptible(
-			msecs_to_jअगरfies(data->घातer_period[attr->index])
+	leftover = schedule_timeout_interruptible(
+			msecs_to_jiffies(data->power_period[attr->index])
 		   );
-	अगर (leftover) अणु
+	if (leftover) {
 		mutex_unlock(&data->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	update_aem_energy_one(data, attr->index);
-	समय = kसमय_get_ns() - समय;
+	time = ktime_get_ns() - time;
 	after = data->energy[attr->index];
 	mutex_unlock(&data->lock);
 
-	delta = (after - beक्रमe) * UJ_PER_MJ;
+	delta = (after - before) * UJ_PER_MJ;
 
-	वापस प्र_लिखो(buf, "%llu\n",
-		(अचिन्हित दीर्घ दीर्घ)भाग64_u64(delta * NSEC_PER_SEC, समय));
-पूर्ण
+	return sprintf(buf, "%llu\n",
+		(unsigned long long)div64_u64(delta * NSEC_PER_SEC, time));
+}
 
 /* Display energy use */
-अटल sमाप_प्रकार aem_show_energy(काष्ठा device *dev,
-			       काष्ठा device_attribute *devattr,
-			       अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा aem_data *a = dev_get_drvdata(dev);
+static ssize_t aem_show_energy(struct device *dev,
+			       struct device_attribute *devattr,
+			       char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct aem_data *a = dev_get_drvdata(dev);
 	mutex_lock(&a->lock);
 	update_aem_energy_one(a, attr->index);
 	mutex_unlock(&a->lock);
 
-	वापस प्र_लिखो(buf, "%llu\n",
-			(अचिन्हित दीर्घ दीर्घ)a->energy[attr->index] * 1000);
-पूर्ण
+	return sprintf(buf, "%llu\n",
+			(unsigned long long)a->energy[attr->index] * 1000);
+}
 
-/* Display घातer पूर्णांकerval रेजिस्टरs */
-अटल sमाप_प्रकार aem_show_घातer_period(काष्ठा device *dev,
-				     काष्ठा device_attribute *devattr,
-				     अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा aem_data *a = dev_get_drvdata(dev);
+/* Display power interval registers */
+static ssize_t aem_show_power_period(struct device *dev,
+				     struct device_attribute *devattr,
+				     char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct aem_data *a = dev_get_drvdata(dev);
 	a->update(a);
 
-	वापस प्र_लिखो(buf, "%lu\n", a->घातer_period[attr->index]);
-पूर्ण
+	return sprintf(buf, "%lu\n", a->power_period[attr->index]);
+}
 
-/* Set घातer पूर्णांकerval रेजिस्टरs */
-अटल sमाप_प्रकार aem_set_घातer_period(काष्ठा device *dev,
-				    काष्ठा device_attribute *devattr,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा aem_data *a = dev_get_drvdata(dev);
-	अचिन्हित दीर्घ temp;
-	पूर्णांक res;
+/* Set power interval registers */
+static ssize_t aem_set_power_period(struct device *dev,
+				    struct device_attribute *devattr,
+				    const char *buf, size_t count)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct aem_data *a = dev_get_drvdata(dev);
+	unsigned long temp;
+	int res;
 
-	res = kम_से_अदीर्घ(buf, 10, &temp);
-	अगर (res)
-		वापस res;
+	res = kstrtoul(buf, 10, &temp);
+	if (res)
+		return res;
 
-	अगर (temp < AEM_MIN_POWER_INTERVAL)
-		वापस -EINVAL;
+	if (temp < AEM_MIN_POWER_INTERVAL)
+		return -EINVAL;
 
 	mutex_lock(&a->lock);
-	a->घातer_period[attr->index] = temp;
+	a->power_period[attr->index] = temp;
 	mutex_unlock(&a->lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /* Discover sensors on an AEM device */
-अटल पूर्णांक aem_रेजिस्टर_sensors(काष्ठा aem_data *data,
-				स्थिर काष्ठा aem_ro_sensor_ढाँचा *ro,
-				स्थिर काष्ठा aem_rw_sensor_ढाँचा *rw)
-अणु
-	काष्ठा device *dev = &data->pdev->dev;
-	काष्ठा sensor_device_attribute *sensors = data->sensors;
-	पूर्णांक err;
+static int aem_register_sensors(struct aem_data *data,
+				const struct aem_ro_sensor_template *ro,
+				const struct aem_rw_sensor_template *rw)
+{
+	struct device *dev = &data->pdev->dev;
+	struct sensor_device_attribute *sensors = data->sensors;
+	int err;
 
-	/* Set up पढ़ो-only sensors */
-	जबतक (ro->label) अणु
+	/* Set up read-only sensors */
+	while (ro->label) {
 		sysfs_attr_init(&sensors->dev_attr.attr);
 		sensors->dev_attr.attr.name = ro->label;
 		sensors->dev_attr.attr.mode = 0444;
@@ -923,16 +922,16 @@ id_err:
 		sensors->index = ro->index;
 
 		err = device_create_file(dev, &sensors->dev_attr);
-		अगर (err) अणु
-			sensors->dev_attr.attr.name = शून्य;
-			जाओ error;
-		पूर्ण
+		if (err) {
+			sensors->dev_attr.attr.name = NULL;
+			goto error;
+		}
 		sensors++;
 		ro++;
-	पूर्ण
+	}
 
-	/* Set up पढ़ो-ग_लिखो sensors */
-	जबतक (rw->label) अणु
+	/* Set up read-write sensors */
+	while (rw->label) {
 		sysfs_attr_init(&sensors->dev_attr.attr);
 		sensors->dev_attr.attr.name = rw->label;
 		sensors->dev_attr.attr.mode = 0644;
@@ -941,159 +940,159 @@ id_err:
 		sensors->index = rw->index;
 
 		err = device_create_file(dev, &sensors->dev_attr);
-		अगर (err) अणु
-			sensors->dev_attr.attr.name = शून्य;
-			जाओ error;
-		पूर्ण
+		if (err) {
+			sensors->dev_attr.attr.name = NULL;
+			goto error;
+		}
 		sensors++;
 		rw++;
-	पूर्ण
+	}
 
 	err = device_create_file(dev, &sensor_dev_attr_name.dev_attr);
-	अगर (err)
-		जाओ error;
+	if (err)
+		goto error;
 	err = device_create_file(dev, &sensor_dev_attr_version.dev_attr);
-	वापस err;
+	return err;
 
 error:
-	aem_हटाओ_sensors(data);
-	वापस err;
-पूर्ण
+	aem_remove_sensors(data);
+	return err;
+}
 
-/* sysfs support functions क्रम AEM2 sensors */
+/* sysfs support functions for AEM2 sensors */
 
 /* Display temperature use */
-अटल sमाप_प्रकार aem2_show_temp(काष्ठा device *dev,
-			      काष्ठा device_attribute *devattr,
-			      अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा aem_data *a = dev_get_drvdata(dev);
+static ssize_t aem2_show_temp(struct device *dev,
+			      struct device_attribute *devattr,
+			      char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct aem_data *a = dev_get_drvdata(dev);
 	a->update(a);
 
-	वापस प्र_लिखो(buf, "%u\n", a->temp[attr->index] * 1000);
-पूर्ण
+	return sprintf(buf, "%u\n", a->temp[attr->index] * 1000);
+}
 
-/* Display घातer-capping रेजिस्टरs */
-अटल sमाप_प्रकार aem2_show_pcap_value(काष्ठा device *dev,
-				    काष्ठा device_attribute *devattr,
-				    अक्षर *buf)
-अणु
-	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	काष्ठा aem_data *a = dev_get_drvdata(dev);
+/* Display power-capping registers */
+static ssize_t aem2_show_pcap_value(struct device *dev,
+				    struct device_attribute *devattr,
+				    char *buf)
+{
+	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	struct aem_data *a = dev_get_drvdata(dev);
 	a->update(a);
 
-	वापस प्र_लिखो(buf, "%u\n", a->pcap[attr->index] * 100000);
-पूर्ण
+	return sprintf(buf, "%u\n", a->pcap[attr->index] * 100000);
+}
 
 /* Remove sensors attached to an AEM device */
-अटल व्योम aem_हटाओ_sensors(काष्ठा aem_data *data)
-अणु
-	पूर्णांक i;
+static void aem_remove_sensors(struct aem_data *data)
+{
+	int i;
 
-	क्रम (i = 0; i < AEM_NUM_SENSORS; i++) अणु
-		अगर (!data->sensors[i].dev_attr.attr.name)
-			जारी;
-		device_हटाओ_file(&data->pdev->dev,
+	for (i = 0; i < AEM_NUM_SENSORS; i++) {
+		if (!data->sensors[i].dev_attr.attr.name)
+			continue;
+		device_remove_file(&data->pdev->dev,
 				   &data->sensors[i].dev_attr);
-	पूर्ण
+	}
 
-	device_हटाओ_file(&data->pdev->dev,
+	device_remove_file(&data->pdev->dev,
 			   &sensor_dev_attr_name.dev_attr);
-	device_हटाओ_file(&data->pdev->dev,
+	device_remove_file(&data->pdev->dev,
 			   &sensor_dev_attr_version.dev_attr);
-पूर्ण
+}
 
 /* Sensor probe functions */
 
 /* Description of AEM1 sensors */
-अटल स्थिर काष्ठा aem_ro_sensor_ढाँचा aem1_ro_sensors[] = अणु
-अणु"energy1_input",  aem_show_energy, 0पूर्ण,
-अणु"power1_average", aem_show_घातer,  0पूर्ण,
-अणुशून्य,		   शून्य,	    0पूर्ण,
-पूर्ण;
+static const struct aem_ro_sensor_template aem1_ro_sensors[] = {
+{"energy1_input",  aem_show_energy, 0},
+{"power1_average", aem_show_power,  0},
+{NULL,		   NULL,	    0},
+};
 
-अटल स्थिर काष्ठा aem_rw_sensor_ढाँचा aem1_rw_sensors[] = अणु
-अणु"power1_average_interval", aem_show_घातer_period, aem_set_घातer_period, 0पूर्ण,
-अणुशून्य,			    शून्य,                  शून्य,                 0पूर्ण,
-पूर्ण;
+static const struct aem_rw_sensor_template aem1_rw_sensors[] = {
+{"power1_average_interval", aem_show_power_period, aem_set_power_period, 0},
+{NULL,			    NULL,                  NULL,                 0},
+};
 
 /* Description of AEM2 sensors */
-अटल स्थिर काष्ठा aem_ro_sensor_ढाँचा aem2_ro_sensors[] = अणु
-अणु"energy1_input",	  aem_show_energy,	0पूर्ण,
-अणु"energy2_input",	  aem_show_energy,	1पूर्ण,
-अणु"power1_average",	  aem_show_घातer,	0पूर्ण,
-अणु"power2_average",	  aem_show_घातer,	1पूर्ण,
-अणु"temp1_input",		  aem2_show_temp,	0पूर्ण,
-अणु"temp2_input",		  aem2_show_temp,	1पूर्ण,
+static const struct aem_ro_sensor_template aem2_ro_sensors[] = {
+{"energy1_input",	  aem_show_energy,	0},
+{"energy2_input",	  aem_show_energy,	1},
+{"power1_average",	  aem_show_power,	0},
+{"power2_average",	  aem_show_power,	1},
+{"temp1_input",		  aem2_show_temp,	0},
+{"temp2_input",		  aem2_show_temp,	1},
 
-अणु"power4_average",	  aem2_show_pcap_value,	POWER_CAP_MAX_HOTPLUGपूर्ण,
-अणु"power5_average",	  aem2_show_pcap_value,	POWER_CAP_MAXपूर्ण,
-अणु"power6_average",	  aem2_show_pcap_value,	POWER_CAP_MIN_WARNINGपूर्ण,
-अणु"power7_average",	  aem2_show_pcap_value,	POWER_CAP_MINपूर्ण,
+{"power4_average",	  aem2_show_pcap_value,	POWER_CAP_MAX_HOTPLUG},
+{"power5_average",	  aem2_show_pcap_value,	POWER_CAP_MAX},
+{"power6_average",	  aem2_show_pcap_value,	POWER_CAP_MIN_WARNING},
+{"power7_average",	  aem2_show_pcap_value,	POWER_CAP_MIN},
 
-अणु"power3_average",	  aem2_show_pcap_value,	POWER_AUXपूर्ण,
-अणु"power_cap",		  aem2_show_pcap_value,	POWER_CAPपूर्ण,
-अणुशून्य,                    शून्य,                 0पूर्ण,
-पूर्ण;
+{"power3_average",	  aem2_show_pcap_value,	POWER_AUX},
+{"power_cap",		  aem2_show_pcap_value,	POWER_CAP},
+{NULL,                    NULL,                 0},
+};
 
-अटल स्थिर काष्ठा aem_rw_sensor_ढाँचा aem2_rw_sensors[] = अणु
-अणु"power1_average_interval", aem_show_घातer_period, aem_set_घातer_period, 0पूर्ण,
-अणु"power2_average_interval", aem_show_घातer_period, aem_set_घातer_period, 1पूर्ण,
-अणुशून्य,			    शून्य,                  शून्य,                 0पूर्ण,
-पूर्ण;
+static const struct aem_rw_sensor_template aem2_rw_sensors[] = {
+{"power1_average_interval", aem_show_power_period, aem_set_power_period, 0},
+{"power2_average_interval", aem_show_power_period, aem_set_power_period, 1},
+{NULL,			    NULL,                  NULL,                 0},
+};
 
 /* Set up AEM1 sensor attrs */
-अटल पूर्णांक aem1_find_sensors(काष्ठा aem_data *data)
-अणु
-	वापस aem_रेजिस्टर_sensors(data, aem1_ro_sensors, aem1_rw_sensors);
-पूर्ण
+static int aem1_find_sensors(struct aem_data *data)
+{
+	return aem_register_sensors(data, aem1_ro_sensors, aem1_rw_sensors);
+}
 
 /* Set up AEM2 sensor attrs */
-अटल पूर्णांक aem2_find_sensors(काष्ठा aem_data *data)
-अणु
-	वापस aem_रेजिस्टर_sensors(data, aem2_ro_sensors, aem2_rw_sensors);
-पूर्ण
+static int aem2_find_sensors(struct aem_data *data)
+{
+	return aem_register_sensors(data, aem2_ro_sensors, aem2_rw_sensors);
+}
 
-/* Module init/निकास routines */
+/* Module init/exit routines */
 
-अटल पूर्णांक __init aem_init(व्योम)
-अणु
-	पूर्णांक res;
+static int __init aem_init(void)
+{
+	int res;
 
-	res = driver_रेजिस्टर(&aem_driver.driver);
-	अगर (res) अणु
+	res = driver_register(&aem_driver.driver);
+	if (res) {
 		pr_err("Can't register aem driver\n");
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	res = ipmi_smi_watcher_रेजिस्टर(&driver_data.bmc_events);
-	अगर (res)
-		जाओ ipmi_reg_err;
-	वापस 0;
+	res = ipmi_smi_watcher_register(&driver_data.bmc_events);
+	if (res)
+		goto ipmi_reg_err;
+	return 0;
 
 ipmi_reg_err:
-	driver_unरेजिस्टर(&aem_driver.driver);
-	वापस res;
+	driver_unregister(&aem_driver.driver);
+	return res;
 
-पूर्ण
+}
 
-अटल व्योम __निकास aem_निकास(व्योम)
-अणु
-	काष्ठा aem_data *p1, *next1;
+static void __exit aem_exit(void)
+{
+	struct aem_data *p1, *next1;
 
-	ipmi_smi_watcher_unरेजिस्टर(&driver_data.bmc_events);
-	driver_unरेजिस्टर(&aem_driver.driver);
-	list_क्रम_each_entry_safe(p1, next1, &driver_data.aem_devices, list)
+	ipmi_smi_watcher_unregister(&driver_data.bmc_events);
+	driver_unregister(&aem_driver.driver);
+	list_for_each_entry_safe(p1, next1, &driver_data.aem_devices, list)
 		aem_delete(p1);
-पूर्ण
+}
 
 MODULE_AUTHOR("Darrick J. Wong <darrick.wong@oracle.com>");
 MODULE_DESCRIPTION("IBM AEM power/temp/energy sensor driver");
 MODULE_LICENSE("GPL");
 
 module_init(aem_init);
-module_निकास(aem_निकास);
+module_exit(aem_exit);
 
 MODULE_ALIAS("dmi:bvnIBM:*:pnIBMSystemx3350-*");
 MODULE_ALIAS("dmi:bvnIBM:*:pnIBMSystemx3550-*");

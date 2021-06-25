@@ -1,11 +1,10 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#घोषणा QLA_MODEL_NAMES		0x5C
+/* SPDX-License-Identifier: GPL-2.0 */
+#define QLA_MODEL_NAMES		0x5C
 
 /*
  * Adapter model names and descriptions.
  */
-अटल अक्षर *qla2x00_model_name[QLA_MODEL_NAMES*2] = अणु
+static char *qla2x00_model_name[QLA_MODEL_NAMES*2] = {
 	"QLA2340",	"133MHz PCI-X to 2Gb FC, Single Channel",	/* 0x100 */
 	"QLA2342",	"133MHz PCI-X to 2Gb FC, Dual Channel",		/* 0x101 */
 	"QLA2344",	"133MHz PCI-X to 2Gb FC, Quad Channel",		/* 0x102 */
@@ -98,4 +97,4 @@
 	" ",		" ",						/* 0x159 */
 	" ",		" ",						/* 0x15a */
 	"QME2472",	"Dell BS PCI-Express to 4Gb FC, Dual Channel",	/* 0x15b */
-पूर्ण;
+};

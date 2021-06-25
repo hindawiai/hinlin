@@ -1,272 +1,271 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Loopback bridge driver क्रम the Greybus loopback module.
+ * Loopback bridge driver for the Greybus loopback module.
  *
  * Copyright 2014 Google Inc.
  * Copyright 2014 Linaro Ltd.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/cdev.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/kfअगरo.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/list_sort.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/greybus.h>
-#समावेश <यंत्र/भाग64.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/random.h>
+#include <linux/sizes.h>
+#include <linux/cdev.h>
+#include <linux/fs.h>
+#include <linux/kfifo.h>
+#include <linux/debugfs.h>
+#include <linux/list_sort.h>
+#include <linux/spinlock.h>
+#include <linux/workqueue.h>
+#include <linux/atomic.h>
+#include <linux/pm_runtime.h>
+#include <linux/greybus.h>
+#include <asm/div64.h>
 
-#घोषणा NSEC_PER_DAY 86400000000000ULL
+#define NSEC_PER_DAY 86400000000000ULL
 
-काष्ठा gb_loopback_stats अणु
+struct gb_loopback_stats {
 	u32 min;
 	u32 max;
 	u64 sum;
 	u32 count;
-पूर्ण;
+};
 
-काष्ठा gb_loopback_device अणु
-	काष्ठा dentry *root;
+struct gb_loopback_device {
+	struct dentry *root;
 	u32 count;
-	माप_प्रकार size_max;
+	size_t size_max;
 
 	/* We need to take a lock in atomic context */
 	spinlock_t lock;
-	रुको_queue_head_t wq;
-पूर्ण;
+	wait_queue_head_t wq;
+};
 
-अटल काष्ठा gb_loopback_device gb_dev;
+static struct gb_loopback_device gb_dev;
 
-काष्ठा gb_loopback_async_operation अणु
-	काष्ठा gb_loopback *gb;
-	काष्ठा gb_operation *operation;
-	kसमय_प्रकार ts;
-	पूर्णांक (*completion)(काष्ठा gb_loopback_async_operation *op_async);
-पूर्ण;
+struct gb_loopback_async_operation {
+	struct gb_loopback *gb;
+	struct gb_operation *operation;
+	ktime_t ts;
+	int (*completion)(struct gb_loopback_async_operation *op_async);
+};
 
-काष्ठा gb_loopback अणु
-	काष्ठा gb_connection *connection;
+struct gb_loopback {
+	struct gb_connection *connection;
 
-	काष्ठा dentry *file;
-	काष्ठा kfअगरo kfअगरo_lat;
-	काष्ठा mutex mutex;
-	काष्ठा task_काष्ठा *task;
-	काष्ठा device *dev;
-	रुको_queue_head_t wq;
-	रुको_queue_head_t wq_completion;
+	struct dentry *file;
+	struct kfifo kfifo_lat;
+	struct mutex mutex;
+	struct task_struct *task;
+	struct device *dev;
+	wait_queue_head_t wq;
+	wait_queue_head_t wq_completion;
 	atomic_t outstanding_operations;
 
 	/* Per connection stats */
-	kसमय_प्रकार ts;
-	काष्ठा gb_loopback_stats latency;
-	काष्ठा gb_loopback_stats throughput;
-	काष्ठा gb_loopback_stats requests_per_second;
-	काष्ठा gb_loopback_stats apbridge_unipro_latency;
-	काष्ठा gb_loopback_stats gbphy_firmware_latency;
+	ktime_t ts;
+	struct gb_loopback_stats latency;
+	struct gb_loopback_stats throughput;
+	struct gb_loopback_stats requests_per_second;
+	struct gb_loopback_stats apbridge_unipro_latency;
+	struct gb_loopback_stats gbphy_firmware_latency;
 
-	पूर्णांक type;
-	पूर्णांक async;
-	पूर्णांक id;
+	int type;
+	int async;
+	int id;
 	u32 size;
 	u32 iteration_max;
 	u32 iteration_count;
-	पूर्णांक us_रुको;
+	int us_wait;
 	u32 error;
 	u32 requests_completed;
-	u32 requests_समयकरोut;
-	u32 समयout;
-	u32 jअगरfy_समयout;
-	u32 समयout_min;
-	u32 समयout_max;
+	u32 requests_timedout;
+	u32 timeout;
+	u32 jiffy_timeout;
+	u32 timeout_min;
+	u32 timeout_max;
 	u32 outstanding_operations_max;
 	u64 elapsed_nsecs;
 	u32 apbridge_latency_ts;
 	u32 gbphy_latency_ts;
 
 	u32 send_count;
-पूर्ण;
+};
 
-अटल काष्ठा class loopback_class = अणु
+static struct class loopback_class = {
 	.name		= "gb_loopback",
 	.owner		= THIS_MODULE,
-पूर्ण;
-अटल DEFINE_IDA(loopback_ida);
+};
+static DEFINE_IDA(loopback_ida);
 
-/* Min/max values in jअगरfies */
-#घोषणा GB_LOOPBACK_TIMEOUT_MIN				1
-#घोषणा GB_LOOPBACK_TIMEOUT_MAX				10000
+/* Min/max values in jiffies */
+#define GB_LOOPBACK_TIMEOUT_MIN				1
+#define GB_LOOPBACK_TIMEOUT_MAX				10000
 
-#घोषणा GB_LOOPBACK_FIFO_DEFAULT			8192
+#define GB_LOOPBACK_FIFO_DEFAULT			8192
 
-अटल अचिन्हित पूर्णांक kfअगरo_depth = GB_LOOPBACK_FIFO_DEFAULT;
-module_param(kfअगरo_depth, uपूर्णांक, 0444);
+static unsigned int kfifo_depth = GB_LOOPBACK_FIFO_DEFAULT;
+module_param(kfifo_depth, uint, 0444);
 
 /* Maximum size of any one send data buffer we support */
-#घोषणा MAX_PACKET_SIZE (PAGE_SIZE * 2)
+#define MAX_PACKET_SIZE (PAGE_SIZE * 2)
 
-#घोषणा GB_LOOPBACK_US_WAIT_MAX				1000000
+#define GB_LOOPBACK_US_WAIT_MAX				1000000
 
-/* पूर्णांकerface sysfs attributes */
-#घोषणा gb_loopback_ro_attr(field)				\
-अटल sमाप_प्रकार field##_show(काष्ठा device *dev,			\
-			    काष्ठा device_attribute *attr,		\
-			    अक्षर *buf)					\
-अणु									\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
-	वापस प्र_लिखो(buf, "%u\n", gb->field);			\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(field)
+/* interface sysfs attributes */
+#define gb_loopback_ro_attr(field)				\
+static ssize_t field##_show(struct device *dev,			\
+			    struct device_attribute *attr,		\
+			    char *buf)					\
+{									\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
+	return sprintf(buf, "%u\n", gb->field);			\
+}									\
+static DEVICE_ATTR_RO(field)
 
-#घोषणा gb_loopback_ro_stats_attr(name, field, type)		\
-अटल sमाप_प्रकार name##_##field##_show(काष्ठा device *dev,	\
-			    काष्ठा device_attribute *attr,		\
-			    अक्षर *buf)					\
-अणु									\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
-	/* Report 0 क्रम min and max अगर no transfer succeeded */		\
-	अगर (!gb->requests_completed)					\
-		वापस प्र_लिखो(buf, "0\n");				\
-	वापस प्र_लिखो(buf, "%" #type "\n", gb->name.field);		\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name##_##field)
+#define gb_loopback_ro_stats_attr(name, field, type)		\
+static ssize_t name##_##field##_show(struct device *dev,	\
+			    struct device_attribute *attr,		\
+			    char *buf)					\
+{									\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
+	/* Report 0 for min and max if no transfer succeeded */		\
+	if (!gb->requests_completed)					\
+		return sprintf(buf, "0\n");				\
+	return sprintf(buf, "%" #type "\n", gb->name.field);		\
+}									\
+static DEVICE_ATTR_RO(name##_##field)
 
-#घोषणा gb_loopback_ro_avg_attr(name)			\
-अटल sमाप_प्रकार name##_avg_show(काष्ठा device *dev,		\
-			    काष्ठा device_attribute *attr,		\
-			    अक्षर *buf)					\
-अणु									\
-	काष्ठा gb_loopback_stats *stats;				\
-	काष्ठा gb_loopback *gb;						\
+#define gb_loopback_ro_avg_attr(name)			\
+static ssize_t name##_avg_show(struct device *dev,		\
+			    struct device_attribute *attr,		\
+			    char *buf)					\
+{									\
+	struct gb_loopback_stats *stats;				\
+	struct gb_loopback *gb;						\
 	u64 avg, rem;							\
 	u32 count;							\
 	gb = dev_get_drvdata(dev);			\
 	stats = &gb->name;					\
 	count = stats->count ? stats->count : 1;			\
-	avg = stats->sum + count / 2000000; /* round बंदst */		\
-	rem = करो_भाग(avg, count);					\
+	avg = stats->sum + count / 2000000; /* round closest */		\
+	rem = do_div(avg, count);					\
 	rem *= 1000000;							\
-	करो_भाग(rem, count);						\
-	वापस प्र_लिखो(buf, "%llu.%06u\n", avg, (u32)rem);		\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(name##_avg)
+	do_div(rem, count);						\
+	return sprintf(buf, "%llu.%06u\n", avg, (u32)rem);		\
+}									\
+static DEVICE_ATTR_RO(name##_avg)
 
-#घोषणा gb_loopback_stats_attrs(field)				\
+#define gb_loopback_stats_attrs(field)				\
 	gb_loopback_ro_stats_attr(field, min, u);		\
 	gb_loopback_ro_stats_attr(field, max, u);		\
 	gb_loopback_ro_avg_attr(field)
 
-#घोषणा gb_loopback_attr(field, type)					\
-अटल sमाप_प्रकार field##_show(काष्ठा device *dev,				\
-			    काष्ठा device_attribute *attr,		\
-			    अक्षर *buf)					\
-अणु									\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
-	वापस प्र_लिखो(buf, "%" #type "\n", gb->field);			\
-पूर्ण									\
-अटल sमाप_प्रकार field##_store(काष्ठा device *dev,			\
-			    काष्ठा device_attribute *attr,		\
-			    स्थिर अक्षर *buf,				\
-			    माप_प्रकार len)					\
-अणु									\
-	पूर्णांक ret;							\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
+#define gb_loopback_attr(field, type)					\
+static ssize_t field##_show(struct device *dev,				\
+			    struct device_attribute *attr,		\
+			    char *buf)					\
+{									\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
+	return sprintf(buf, "%" #type "\n", gb->field);			\
+}									\
+static ssize_t field##_store(struct device *dev,			\
+			    struct device_attribute *attr,		\
+			    const char *buf,				\
+			    size_t len)					\
+{									\
+	int ret;							\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
 	mutex_lock(&gb->mutex);						\
-	ret = माला_पूछो(buf, "%"#type, &gb->field);			\
-	अगर (ret != 1)							\
+	ret = sscanf(buf, "%"#type, &gb->field);			\
+	if (ret != 1)							\
 		len = -EINVAL;						\
-	अन्यथा								\
+	else								\
 		gb_loopback_check_attr(gb, bundle);			\
 	mutex_unlock(&gb->mutex);					\
-	वापस len;							\
-पूर्ण									\
-अटल DEVICE_ATTR_RW(field)
+	return len;							\
+}									\
+static DEVICE_ATTR_RW(field)
 
-#घोषणा gb_dev_loopback_ro_attr(field, conn)				\
-अटल sमाप_प्रकार field##_show(काष्ठा device *dev,		\
-			    काष्ठा device_attribute *attr,		\
-			    अक्षर *buf)					\
-अणु									\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
-	वापस प्र_लिखो(buf, "%u\n", gb->field);				\
-पूर्ण									\
-अटल DEVICE_ATTR_RO(field)
+#define gb_dev_loopback_ro_attr(field, conn)				\
+static ssize_t field##_show(struct device *dev,		\
+			    struct device_attribute *attr,		\
+			    char *buf)					\
+{									\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
+	return sprintf(buf, "%u\n", gb->field);				\
+}									\
+static DEVICE_ATTR_RO(field)
 
-#घोषणा gb_dev_loopback_rw_attr(field, type)				\
-अटल sमाप_प्रकार field##_show(काष्ठा device *dev,				\
-			    काष्ठा device_attribute *attr,		\
-			    अक्षर *buf)					\
-अणु									\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
-	वापस प्र_लिखो(buf, "%" #type "\n", gb->field);			\
-पूर्ण									\
-अटल sमाप_प्रकार field##_store(काष्ठा device *dev,			\
-			    काष्ठा device_attribute *attr,		\
-			    स्थिर अक्षर *buf,				\
-			    माप_प्रकार len)					\
-अणु									\
-	पूर्णांक ret;							\
-	काष्ठा gb_loopback *gb = dev_get_drvdata(dev);			\
+#define gb_dev_loopback_rw_attr(field, type)				\
+static ssize_t field##_show(struct device *dev,				\
+			    struct device_attribute *attr,		\
+			    char *buf)					\
+{									\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
+	return sprintf(buf, "%" #type "\n", gb->field);			\
+}									\
+static ssize_t field##_store(struct device *dev,			\
+			    struct device_attribute *attr,		\
+			    const char *buf,				\
+			    size_t len)					\
+{									\
+	int ret;							\
+	struct gb_loopback *gb = dev_get_drvdata(dev);			\
 	mutex_lock(&gb->mutex);						\
-	ret = माला_पूछो(buf, "%"#type, &gb->field);			\
-	अगर (ret != 1)							\
+	ret = sscanf(buf, "%"#type, &gb->field);			\
+	if (ret != 1)							\
 		len = -EINVAL;						\
-	अन्यथा								\
+	else								\
 		gb_loopback_check_attr(gb);		\
 	mutex_unlock(&gb->mutex);					\
-	वापस len;							\
-पूर्ण									\
-अटल DEVICE_ATTR_RW(field)
+	return len;							\
+}									\
+static DEVICE_ATTR_RW(field)
 
-अटल व्योम gb_loopback_reset_stats(काष्ठा gb_loopback *gb);
-अटल व्योम gb_loopback_check_attr(काष्ठा gb_loopback *gb)
-अणु
-	अगर (gb->us_रुको > GB_LOOPBACK_US_WAIT_MAX)
-		gb->us_रुको = GB_LOOPBACK_US_WAIT_MAX;
-	अगर (gb->size > gb_dev.size_max)
+static void gb_loopback_reset_stats(struct gb_loopback *gb);
+static void gb_loopback_check_attr(struct gb_loopback *gb)
+{
+	if (gb->us_wait > GB_LOOPBACK_US_WAIT_MAX)
+		gb->us_wait = GB_LOOPBACK_US_WAIT_MAX;
+	if (gb->size > gb_dev.size_max)
 		gb->size = gb_dev.size_max;
-	gb->requests_समयकरोut = 0;
+	gb->requests_timedout = 0;
 	gb->requests_completed = 0;
 	gb->iteration_count = 0;
 	gb->send_count = 0;
 	gb->error = 0;
 
-	अगर (kfअगरo_depth < gb->iteration_max) अणु
+	if (kfifo_depth < gb->iteration_max) {
 		dev_warn(gb->dev,
 			 "cannot log bytes %u kfifo_depth %u\n",
-			 gb->iteration_max, kfअगरo_depth);
-	पूर्ण
-	kfअगरo_reset_out(&gb->kfअगरo_lat);
+			 gb->iteration_max, kfifo_depth);
+	}
+	kfifo_reset_out(&gb->kfifo_lat);
 
-	चयन (gb->type) अणु
-	हाल GB_LOOPBACK_TYPE_PING:
-	हाल GB_LOOPBACK_TYPE_TRANSFER:
-	हाल GB_LOOPBACK_TYPE_SINK:
-		gb->jअगरfy_समयout = usecs_to_jअगरfies(gb->समयout);
-		अगर (!gb->jअगरfy_समयout)
-			gb->jअगरfy_समयout = GB_LOOPBACK_TIMEOUT_MIN;
-		अन्यथा अगर (gb->jअगरfy_समयout > GB_LOOPBACK_TIMEOUT_MAX)
-			gb->jअगरfy_समयout = GB_LOOPBACK_TIMEOUT_MAX;
+	switch (gb->type) {
+	case GB_LOOPBACK_TYPE_PING:
+	case GB_LOOPBACK_TYPE_TRANSFER:
+	case GB_LOOPBACK_TYPE_SINK:
+		gb->jiffy_timeout = usecs_to_jiffies(gb->timeout);
+		if (!gb->jiffy_timeout)
+			gb->jiffy_timeout = GB_LOOPBACK_TIMEOUT_MIN;
+		else if (gb->jiffy_timeout > GB_LOOPBACK_TIMEOUT_MAX)
+			gb->jiffy_timeout = GB_LOOPBACK_TIMEOUT_MAX;
 		gb_loopback_reset_stats(gb);
 		wake_up(&gb->wq);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		gb->type = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /* Time to send and receive one message */
 gb_loopback_stats_attrs(latency);
@@ -283,38 +282,38 @@ gb_loopback_stats_attrs(gbphy_firmware_latency);
 gb_loopback_ro_attr(error);
 /* Number of requests successfully completed async */
 gb_loopback_ro_attr(requests_completed);
-/* Number of requests समयd out async */
-gb_loopback_ro_attr(requests_समयकरोut);
+/* Number of requests timed out async */
+gb_loopback_ro_attr(requests_timedout);
 /* Timeout minimum in useconds */
-gb_loopback_ro_attr(समयout_min);
+gb_loopback_ro_attr(timeout_min);
 /* Timeout minimum in useconds */
-gb_loopback_ro_attr(समयout_max);
+gb_loopback_ro_attr(timeout_max);
 
 /*
  * Type of loopback message to send based on protocol type definitions
  * 0 => Don't send message
  * 2 => Send ping message continuously (message without payload)
  * 3 => Send transfer message continuously (message with payload,
- *					   payload वापसed in response)
+ *					   payload returned in response)
  * 4 => Send a sink message (message with payload, no payload in response)
  */
 gb_dev_loopback_rw_attr(type, d);
 /* Size of transfer message payload: 0-4096 bytes */
 gb_dev_loopback_rw_attr(size, u);
-/* Time to रुको between two messages: 0-1000 ms */
-gb_dev_loopback_rw_attr(us_रुको, d);
-/* Maximum iterations क्रम a given operation: 1-(2^32-1), 0 implies infinite */
+/* Time to wait between two messages: 0-1000 ms */
+gb_dev_loopback_rw_attr(us_wait, d);
+/* Maximum iterations for a given operation: 1-(2^32-1), 0 implies infinite */
 gb_dev_loopback_rw_attr(iteration_max, u);
-/* The current index of the क्रम (i = 0; i < iteration_max; i++) loop */
+/* The current index of the for (i = 0; i < iteration_max; i++) loop */
 gb_dev_loopback_ro_attr(iteration_count, false);
 /* A flag to indicate synchronous or asynchronous operations */
 gb_dev_loopback_rw_attr(async, u);
-/* Timeout of an inभागidual asynchronous request */
-gb_dev_loopback_rw_attr(समयout, u);
-/* Maximum number of in-flight operations beक्रमe back-off */
+/* Timeout of an individual asynchronous request */
+gb_dev_loopback_rw_attr(timeout, u);
+/* Maximum number of in-flight operations before back-off */
 gb_dev_loopback_rw_attr(outstanding_operations_max, u);
 
-अटल काष्ठा attribute *loopback_attrs[] = अणु
+static struct attribute *loopback_attrs[] = {
 	&dev_attr_latency_min.attr,
 	&dev_attr_latency_max.attr,
 	&dev_attr_latency_avg.attr,
@@ -332,119 +331,119 @@ gb_dev_loopback_rw_attr(outstanding_operations_max, u);
 	&dev_attr_gbphy_firmware_latency_avg.attr,
 	&dev_attr_type.attr,
 	&dev_attr_size.attr,
-	&dev_attr_us_रुको.attr,
+	&dev_attr_us_wait.attr,
 	&dev_attr_iteration_count.attr,
 	&dev_attr_iteration_max.attr,
 	&dev_attr_async.attr,
 	&dev_attr_error.attr,
 	&dev_attr_requests_completed.attr,
-	&dev_attr_requests_समयकरोut.attr,
-	&dev_attr_समयout.attr,
+	&dev_attr_requests_timedout.attr,
+	&dev_attr_timeout.attr,
 	&dev_attr_outstanding_operations_max.attr,
-	&dev_attr_समयout_min.attr,
-	&dev_attr_समयout_max.attr,
-	शून्य,
-पूर्ण;
+	&dev_attr_timeout_min.attr,
+	&dev_attr_timeout_max.attr,
+	NULL,
+};
 ATTRIBUTE_GROUPS(loopback);
 
-अटल व्योम gb_loopback_calculate_stats(काष्ठा gb_loopback *gb, bool error);
+static void gb_loopback_calculate_stats(struct gb_loopback *gb, bool error);
 
-अटल u32 gb_loopback_nsec_to_usec_latency(u64 elapsed_nsecs)
-अणु
-	करो_भाग(elapsed_nsecs, NSEC_PER_USEC);
-	वापस elapsed_nsecs;
-पूर्ण
+static u32 gb_loopback_nsec_to_usec_latency(u64 elapsed_nsecs)
+{
+	do_div(elapsed_nsecs, NSEC_PER_USEC);
+	return elapsed_nsecs;
+}
 
-अटल u64 __gb_loopback_calc_latency(u64 t1, u64 t2)
-अणु
-	अगर (t2 > t1)
-		वापस t2 - t1;
-	अन्यथा
-		वापस NSEC_PER_DAY - t2 + t1;
-पूर्ण
+static u64 __gb_loopback_calc_latency(u64 t1, u64 t2)
+{
+	if (t2 > t1)
+		return t2 - t1;
+	else
+		return NSEC_PER_DAY - t2 + t1;
+}
 
-अटल u64 gb_loopback_calc_latency(kसमय_प्रकार ts, kसमय_प्रकार te)
-अणु
-	वापस __gb_loopback_calc_latency(kसमय_प्रकारo_ns(ts), kसमय_प्रकारo_ns(te));
-पूर्ण
+static u64 gb_loopback_calc_latency(ktime_t ts, ktime_t te)
+{
+	return __gb_loopback_calc_latency(ktime_to_ns(ts), ktime_to_ns(te));
+}
 
-अटल पूर्णांक gb_loopback_operation_sync(काष्ठा gb_loopback *gb, पूर्णांक type,
-				      व्योम *request, पूर्णांक request_size,
-				      व्योम *response, पूर्णांक response_size)
-अणु
-	काष्ठा gb_operation *operation;
-	kसमय_प्रकार ts, te;
-	पूर्णांक ret;
+static int gb_loopback_operation_sync(struct gb_loopback *gb, int type,
+				      void *request, int request_size,
+				      void *response, int response_size)
+{
+	struct gb_operation *operation;
+	ktime_t ts, te;
+	int ret;
 
-	ts = kसमय_get();
+	ts = ktime_get();
 	operation = gb_operation_create(gb->connection, type, request_size,
 					response_size, GFP_KERNEL);
-	अगर (!operation)
-		वापस -ENOMEM;
+	if (!operation)
+		return -ENOMEM;
 
-	अगर (request_size)
-		स_नकल(operation->request->payload, request, request_size);
+	if (request_size)
+		memcpy(operation->request->payload, request, request_size);
 
 	ret = gb_operation_request_send_sync(operation);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&gb->connection->bundle->dev,
 			"synchronous operation failed: %d\n", ret);
-		जाओ out_put_operation;
-	पूर्ण अन्यथा अणु
-		अगर (response_size == operation->response->payload_size) अणु
-			स_नकल(response, operation->response->payload,
+		goto out_put_operation;
+	} else {
+		if (response_size == operation->response->payload_size) {
+			memcpy(response, operation->response->payload,
 			       response_size);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_err(&gb->connection->bundle->dev,
 				"response size %zu expected %d\n",
 				operation->response->payload_size,
 				response_size);
 			ret = -EINVAL;
-			जाओ out_put_operation;
-		पूर्ण
-	पूर्ण
+			goto out_put_operation;
+		}
+	}
 
-	te = kसमय_get();
+	te = ktime_get();
 
-	/* Calculate the total समय the message took */
+	/* Calculate the total time the message took */
 	gb->elapsed_nsecs = gb_loopback_calc_latency(ts, te);
 
 out_put_operation:
 	gb_operation_put(operation);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम gb_loopback_async_रुको_all(काष्ठा gb_loopback *gb)
-अणु
-	रुको_event(gb->wq_completion,
-		   !atomic_पढ़ो(&gb->outstanding_operations));
-पूर्ण
+static void gb_loopback_async_wait_all(struct gb_loopback *gb)
+{
+	wait_event(gb->wq_completion,
+		   !atomic_read(&gb->outstanding_operations));
+}
 
-अटल व्योम gb_loopback_async_operation_callback(काष्ठा gb_operation *operation)
-अणु
-	काष्ठा gb_loopback_async_operation *op_async;
-	काष्ठा gb_loopback *gb;
-	kसमय_प्रकार te;
-	पूर्णांक result;
+static void gb_loopback_async_operation_callback(struct gb_operation *operation)
+{
+	struct gb_loopback_async_operation *op_async;
+	struct gb_loopback *gb;
+	ktime_t te;
+	int result;
 
-	te = kसमय_get();
+	te = ktime_get();
 	result = gb_operation_result(operation);
 	op_async = gb_operation_get_data(operation);
 	gb = op_async->gb;
 
 	mutex_lock(&gb->mutex);
 
-	अगर (!result && op_async->completion)
+	if (!result && op_async->completion)
 		result = op_async->completion(op_async);
 
-	अगर (!result) अणु
+	if (!result) {
 		gb->elapsed_nsecs = gb_loopback_calc_latency(op_async->ts, te);
-	पूर्ण अन्यथा अणु
+	} else {
 		gb->error++;
-		अगर (result == -ETIMEDOUT)
-			gb->requests_समयकरोut++;
-	पूर्ण
+		if (result == -ETIMEDOUT)
+			gb->requests_timedout++;
+	}
 
 	gb->iteration_count++;
 	gb_loopback_calculate_stats(gb, result);
@@ -454,37 +453,37 @@ out_put_operation:
 	dev_dbg(&gb->connection->bundle->dev, "complete operation %d\n",
 		operation->id);
 
-	/* Wake up रुकोers */
+	/* Wake up waiters */
 	atomic_dec(&op_async->gb->outstanding_operations);
 	wake_up(&gb->wq_completion);
 
 	/* Release resources */
 	gb_operation_put(operation);
-	kमुक्त(op_async);
-पूर्ण
+	kfree(op_async);
+}
 
-अटल पूर्णांक gb_loopback_async_operation(काष्ठा gb_loopback *gb, पूर्णांक type,
-				       व्योम *request, पूर्णांक request_size,
-				       पूर्णांक response_size,
-				       व्योम *completion)
-अणु
-	काष्ठा gb_loopback_async_operation *op_async;
-	काष्ठा gb_operation *operation;
-	पूर्णांक ret;
+static int gb_loopback_async_operation(struct gb_loopback *gb, int type,
+				       void *request, int request_size,
+				       int response_size,
+				       void *completion)
+{
+	struct gb_loopback_async_operation *op_async;
+	struct gb_operation *operation;
+	int ret;
 
-	op_async = kzalloc(माप(*op_async), GFP_KERNEL);
-	अगर (!op_async)
-		वापस -ENOMEM;
+	op_async = kzalloc(sizeof(*op_async), GFP_KERNEL);
+	if (!op_async)
+		return -ENOMEM;
 
 	operation = gb_operation_create(gb->connection, type, request_size,
 					response_size, GFP_KERNEL);
-	अगर (!operation) अणु
-		kमुक्त(op_async);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!operation) {
+		kfree(op_async);
+		return -ENOMEM;
+	}
 
-	अगर (request_size)
-		स_नकल(operation->request->payload, request, request_size);
+	if (request_size)
+		memcpy(operation->request->payload, request, request_size);
 
 	gb_operation_set_data(operation, op_async);
 
@@ -492,112 +491,112 @@ out_put_operation:
 	op_async->operation = operation;
 	op_async->completion = completion;
 
-	op_async->ts = kसमय_get();
+	op_async->ts = ktime_get();
 
 	atomic_inc(&gb->outstanding_operations);
 	ret = gb_operation_request_send(operation,
 					gb_loopback_async_operation_callback,
-					jअगरfies_to_msecs(gb->jअगरfy_समयout),
+					jiffies_to_msecs(gb->jiffy_timeout),
 					GFP_KERNEL);
-	अगर (ret) अणु
+	if (ret) {
 		atomic_dec(&gb->outstanding_operations);
 		gb_operation_put(operation);
-		kमुक्त(op_async);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		kfree(op_async);
+	}
+	return ret;
+}
 
-अटल पूर्णांक gb_loopback_sync_sink(काष्ठा gb_loopback *gb, u32 len)
-अणु
-	काष्ठा gb_loopback_transfer_request *request;
-	पूर्णांक retval;
+static int gb_loopback_sync_sink(struct gb_loopback *gb, u32 len)
+{
+	struct gb_loopback_transfer_request *request;
+	int retval;
 
-	request = kदो_स्मृति(len + माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kmalloc(len + sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	request->len = cpu_to_le32(len);
 	retval = gb_loopback_operation_sync(gb, GB_LOOPBACK_TYPE_SINK,
-					    request, len + माप(*request),
-					    शून्य, 0);
-	kमुक्त(request);
-	वापस retval;
-पूर्ण
+					    request, len + sizeof(*request),
+					    NULL, 0);
+	kfree(request);
+	return retval;
+}
 
-अटल पूर्णांक gb_loopback_sync_transfer(काष्ठा gb_loopback *gb, u32 len)
-अणु
-	काष्ठा gb_loopback_transfer_request *request;
-	काष्ठा gb_loopback_transfer_response *response;
-	पूर्णांक retval;
+static int gb_loopback_sync_transfer(struct gb_loopback *gb, u32 len)
+{
+	struct gb_loopback_transfer_request *request;
+	struct gb_loopback_transfer_response *response;
+	int retval;
 
 	gb->apbridge_latency_ts = 0;
 	gb->gbphy_latency_ts = 0;
 
-	request = kदो_स्मृति(len + माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
-	response = kदो_स्मृति(len + माप(*response), GFP_KERNEL);
-	अगर (!response) अणु
-		kमुक्त(request);
-		वापस -ENOMEM;
-	पूर्ण
+	request = kmalloc(len + sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
+	response = kmalloc(len + sizeof(*response), GFP_KERNEL);
+	if (!response) {
+		kfree(request);
+		return -ENOMEM;
+	}
 
-	स_रखो(request->data, 0x5A, len);
+	memset(request->data, 0x5A, len);
 
 	request->len = cpu_to_le32(len);
 	retval = gb_loopback_operation_sync(gb, GB_LOOPBACK_TYPE_TRANSFER,
-					    request, len + माप(*request),
-					    response, len + माप(*response));
-	अगर (retval)
-		जाओ gb_error;
+					    request, len + sizeof(*request),
+					    response, len + sizeof(*response));
+	if (retval)
+		goto gb_error;
 
-	अगर (स_भेद(request->data, response->data, len)) अणु
+	if (memcmp(request->data, response->data, len)) {
 		dev_err(&gb->connection->bundle->dev,
 			"Loopback Data doesn't match\n");
 		retval = -EREMOTEIO;
-	पूर्ण
+	}
 	gb->apbridge_latency_ts = (u32)__le32_to_cpu(response->reserved0);
 	gb->gbphy_latency_ts = (u32)__le32_to_cpu(response->reserved1);
 
 gb_error:
-	kमुक्त(request);
-	kमुक्त(response);
+	kfree(request);
+	kfree(response);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक gb_loopback_sync_ping(काष्ठा gb_loopback *gb)
-अणु
-	वापस gb_loopback_operation_sync(gb, GB_LOOPBACK_TYPE_PING,
-					  शून्य, 0, शून्य, 0);
-पूर्ण
+static int gb_loopback_sync_ping(struct gb_loopback *gb)
+{
+	return gb_loopback_operation_sync(gb, GB_LOOPBACK_TYPE_PING,
+					  NULL, 0, NULL, 0);
+}
 
-अटल पूर्णांक gb_loopback_async_sink(काष्ठा gb_loopback *gb, u32 len)
-अणु
-	काष्ठा gb_loopback_transfer_request *request;
-	पूर्णांक retval;
+static int gb_loopback_async_sink(struct gb_loopback *gb, u32 len)
+{
+	struct gb_loopback_transfer_request *request;
+	int retval;
 
-	request = kदो_स्मृति(len + माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kmalloc(len + sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	request->len = cpu_to_le32(len);
 	retval = gb_loopback_async_operation(gb, GB_LOOPBACK_TYPE_SINK,
-					     request, len + माप(*request),
-					     0, शून्य);
-	kमुक्त(request);
-	वापस retval;
-पूर्ण
+					     request, len + sizeof(*request),
+					     0, NULL);
+	kfree(request);
+	return retval;
+}
 
-अटल पूर्णांक gb_loopback_async_transfer_complete(
-				काष्ठा gb_loopback_async_operation *op_async)
-अणु
-	काष्ठा gb_loopback *gb;
-	काष्ठा gb_operation *operation;
-	काष्ठा gb_loopback_transfer_request *request;
-	काष्ठा gb_loopback_transfer_response *response;
-	माप_प्रकार len;
-	पूर्णांक retval = 0;
+static int gb_loopback_async_transfer_complete(
+				struct gb_loopback_async_operation *op_async)
+{
+	struct gb_loopback *gb;
+	struct gb_operation *operation;
+	struct gb_loopback_transfer_request *request;
+	struct gb_loopback_transfer_response *response;
+	size_t len;
+	int retval = 0;
 
 	gb = op_async->gb;
 	operation = op_async->operation;
@@ -605,179 +604,179 @@ gb_error:
 	response = operation->response->payload;
 	len = le32_to_cpu(request->len);
 
-	अगर (स_भेद(request->data, response->data, len)) अणु
+	if (memcmp(request->data, response->data, len)) {
 		dev_err(&gb->connection->bundle->dev,
 			"Loopback Data doesn't match operation id %d\n",
 			operation->id);
 		retval = -EREMOTEIO;
-	पूर्ण अन्यथा अणु
+	} else {
 		gb->apbridge_latency_ts =
 			(u32)__le32_to_cpu(response->reserved0);
 		gb->gbphy_latency_ts =
 			(u32)__le32_to_cpu(response->reserved1);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक gb_loopback_async_transfer(काष्ठा gb_loopback *gb, u32 len)
-अणु
-	काष्ठा gb_loopback_transfer_request *request;
-	पूर्णांक retval, response_len;
+static int gb_loopback_async_transfer(struct gb_loopback *gb, u32 len)
+{
+	struct gb_loopback_transfer_request *request;
+	int retval, response_len;
 
-	request = kदो_स्मृति(len + माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kmalloc(len + sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
-	स_रखो(request->data, 0x5A, len);
+	memset(request->data, 0x5A, len);
 
 	request->len = cpu_to_le32(len);
-	response_len = माप(काष्ठा gb_loopback_transfer_response);
+	response_len = sizeof(struct gb_loopback_transfer_response);
 	retval = gb_loopback_async_operation(gb, GB_LOOPBACK_TYPE_TRANSFER,
-					     request, len + माप(*request),
+					     request, len + sizeof(*request),
 					     len + response_len,
 					     gb_loopback_async_transfer_complete);
-	अगर (retval)
-		जाओ gb_error;
+	if (retval)
+		goto gb_error;
 
 gb_error:
-	kमुक्त(request);
-	वापस retval;
-पूर्ण
+	kfree(request);
+	return retval;
+}
 
-अटल पूर्णांक gb_loopback_async_ping(काष्ठा gb_loopback *gb)
-अणु
-	वापस gb_loopback_async_operation(gb, GB_LOOPBACK_TYPE_PING,
-					   शून्य, 0, 0, शून्य);
-पूर्ण
+static int gb_loopback_async_ping(struct gb_loopback *gb)
+{
+	return gb_loopback_async_operation(gb, GB_LOOPBACK_TYPE_PING,
+					   NULL, 0, 0, NULL);
+}
 
-अटल पूर्णांक gb_loopback_request_handler(काष्ठा gb_operation *operation)
-अणु
-	काष्ठा gb_connection *connection = operation->connection;
-	काष्ठा gb_loopback_transfer_request *request;
-	काष्ठा gb_loopback_transfer_response *response;
-	काष्ठा device *dev = &connection->bundle->dev;
-	माप_प्रकार len;
+static int gb_loopback_request_handler(struct gb_operation *operation)
+{
+	struct gb_connection *connection = operation->connection;
+	struct gb_loopback_transfer_request *request;
+	struct gb_loopback_transfer_response *response;
+	struct device *dev = &connection->bundle->dev;
+	size_t len;
 
 	/* By convention, the AP initiates the version operation */
-	चयन (operation->type) अणु
-	हाल GB_LOOPBACK_TYPE_PING:
-	हाल GB_LOOPBACK_TYPE_SINK:
-		वापस 0;
-	हाल GB_LOOPBACK_TYPE_TRANSFER:
-		अगर (operation->request->payload_size < माप(*request)) अणु
+	switch (operation->type) {
+	case GB_LOOPBACK_TYPE_PING:
+	case GB_LOOPBACK_TYPE_SINK:
+		return 0;
+	case GB_LOOPBACK_TYPE_TRANSFER:
+		if (operation->request->payload_size < sizeof(*request)) {
 			dev_err(dev, "transfer request too small (%zu < %zu)\n",
 				operation->request->payload_size,
-				माप(*request));
-			वापस -EINVAL;	/* -EMSGSIZE */
-		पूर्ण
+				sizeof(*request));
+			return -EINVAL;	/* -EMSGSIZE */
+		}
 		request = operation->request->payload;
 		len = le32_to_cpu(request->len);
-		अगर (len > gb_dev.size_max) अणु
+		if (len > gb_dev.size_max) {
 			dev_err(dev, "transfer request too large (%zu > %zu)\n",
 				len, gb_dev.size_max);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (!gb_operation_response_alloc(operation,
-				len + माप(*response), GFP_KERNEL)) अणु
+		if (!gb_operation_response_alloc(operation,
+				len + sizeof(*response), GFP_KERNEL)) {
 			dev_err(dev, "error allocating response\n");
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		response = operation->response->payload;
 		response->len = cpu_to_le32(len);
-		अगर (len)
-			स_नकल(response->data, request->data, len);
+		if (len)
+			memcpy(response->data, request->data, len);
 
-		वापस 0;
-	शेष:
+		return 0;
+	default:
 		dev_err(dev, "unsupported request: %u\n", operation->type);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-अटल व्योम gb_loopback_reset_stats(काष्ठा gb_loopback *gb)
-अणु
-	काष्ठा gb_loopback_stats reset = अणु
+static void gb_loopback_reset_stats(struct gb_loopback *gb)
+{
+	struct gb_loopback_stats reset = {
 		.min = U32_MAX,
-	पूर्ण;
+	};
 
 	/* Reset per-connection stats */
-	स_नकल(&gb->latency, &reset,
-	       माप(काष्ठा gb_loopback_stats));
-	स_नकल(&gb->throughput, &reset,
-	       माप(काष्ठा gb_loopback_stats));
-	स_नकल(&gb->requests_per_second, &reset,
-	       माप(काष्ठा gb_loopback_stats));
-	स_नकल(&gb->apbridge_unipro_latency, &reset,
-	       माप(काष्ठा gb_loopback_stats));
-	स_नकल(&gb->gbphy_firmware_latency, &reset,
-	       माप(काष्ठा gb_loopback_stats));
+	memcpy(&gb->latency, &reset,
+	       sizeof(struct gb_loopback_stats));
+	memcpy(&gb->throughput, &reset,
+	       sizeof(struct gb_loopback_stats));
+	memcpy(&gb->requests_per_second, &reset,
+	       sizeof(struct gb_loopback_stats));
+	memcpy(&gb->apbridge_unipro_latency, &reset,
+	       sizeof(struct gb_loopback_stats));
+	memcpy(&gb->gbphy_firmware_latency, &reset,
+	       sizeof(struct gb_loopback_stats));
 
 	/* Should be initialized at least once per transaction set */
 	gb->apbridge_latency_ts = 0;
 	gb->gbphy_latency_ts = 0;
-	gb->ts = kसमय_set(0, 0);
-पूर्ण
+	gb->ts = ktime_set(0, 0);
+}
 
-अटल व्योम gb_loopback_update_stats(काष्ठा gb_loopback_stats *stats, u32 val)
-अणु
-	अगर (stats->min > val)
+static void gb_loopback_update_stats(struct gb_loopback_stats *stats, u32 val)
+{
+	if (stats->min > val)
 		stats->min = val;
-	अगर (stats->max < val)
+	if (stats->max < val)
 		stats->max = val;
 	stats->sum += val;
 	stats->count++;
-पूर्ण
+}
 
-अटल व्योम gb_loopback_update_stats_winकरोw(काष्ठा gb_loopback_stats *stats,
+static void gb_loopback_update_stats_window(struct gb_loopback_stats *stats,
 					    u64 val, u32 count)
-अणु
+{
 	stats->sum += val;
 	stats->count += count;
 
-	करो_भाग(val, count);
-	अगर (stats->min > val)
+	do_div(val, count);
+	if (stats->min > val)
 		stats->min = val;
-	अगर (stats->max < val)
+	if (stats->max < val)
 		stats->max = val;
-पूर्ण
+}
 
-अटल व्योम gb_loopback_requests_update(काष्ठा gb_loopback *gb, u32 latency)
-अणु
+static void gb_loopback_requests_update(struct gb_loopback *gb, u32 latency)
+{
 	u64 req = gb->requests_completed * USEC_PER_SEC;
 
-	gb_loopback_update_stats_winकरोw(&gb->requests_per_second, req, latency);
-पूर्ण
+	gb_loopback_update_stats_window(&gb->requests_per_second, req, latency);
+}
 
-अटल व्योम gb_loopback_throughput_update(काष्ठा gb_loopback *gb, u32 latency)
-अणु
-	u64 aggregate_size = माप(काष्ठा gb_operation_msg_hdr) * 2;
+static void gb_loopback_throughput_update(struct gb_loopback *gb, u32 latency)
+{
+	u64 aggregate_size = sizeof(struct gb_operation_msg_hdr) * 2;
 
-	चयन (gb->type) अणु
-	हाल GB_LOOPBACK_TYPE_PING:
-		अवरोध;
-	हाल GB_LOOPBACK_TYPE_SINK:
-		aggregate_size += माप(काष्ठा gb_loopback_transfer_request) +
+	switch (gb->type) {
+	case GB_LOOPBACK_TYPE_PING:
+		break;
+	case GB_LOOPBACK_TYPE_SINK:
+		aggregate_size += sizeof(struct gb_loopback_transfer_request) +
 				  gb->size;
-		अवरोध;
-	हाल GB_LOOPBACK_TYPE_TRANSFER:
-		aggregate_size += माप(काष्ठा gb_loopback_transfer_request) +
-				  माप(काष्ठा gb_loopback_transfer_response) +
+		break;
+	case GB_LOOPBACK_TYPE_TRANSFER:
+		aggregate_size += sizeof(struct gb_loopback_transfer_request) +
+				  sizeof(struct gb_loopback_transfer_response) +
 				  gb->size * 2;
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
 	aggregate_size *= gb->requests_completed;
 	aggregate_size *= USEC_PER_SEC;
-	gb_loopback_update_stats_winकरोw(&gb->throughput, aggregate_size,
+	gb_loopback_update_stats_window(&gb->throughput, aggregate_size,
 					latency);
-पूर्ण
+}
 
-अटल व्योम gb_loopback_calculate_latency_stats(काष्ठा gb_loopback *gb)
-अणु
+static void gb_loopback_calculate_latency_stats(struct gb_loopback *gb)
+{
 	u32 lat;
 
 	/* Express latency in terms of microseconds */
@@ -786,283 +785,283 @@ gb_error:
 	/* Log latency stastic */
 	gb_loopback_update_stats(&gb->latency, lat);
 
-	/* Raw latency log on a per thपढ़ो basis */
-	kfअगरo_in(&gb->kfअगरo_lat, (अचिन्हित अक्षर *)&lat, माप(lat));
+	/* Raw latency log on a per thread basis */
+	kfifo_in(&gb->kfifo_lat, (unsigned char *)&lat, sizeof(lat));
 
 	/* Log the firmware supplied latency values */
 	gb_loopback_update_stats(&gb->apbridge_unipro_latency,
 				 gb->apbridge_latency_ts);
 	gb_loopback_update_stats(&gb->gbphy_firmware_latency,
 				 gb->gbphy_latency_ts);
-पूर्ण
+}
 
-अटल व्योम gb_loopback_calculate_stats(काष्ठा gb_loopback *gb, bool error)
-अणु
+static void gb_loopback_calculate_stats(struct gb_loopback *gb, bool error)
+{
 	u64 nlat;
 	u32 lat;
-	kसमय_प्रकार te;
+	ktime_t te;
 
-	अगर (!error) अणु
+	if (!error) {
 		gb->requests_completed++;
 		gb_loopback_calculate_latency_stats(gb);
-	पूर्ण
+	}
 
-	te = kसमय_get();
+	te = ktime_get();
 	nlat = gb_loopback_calc_latency(gb->ts, te);
-	अगर (nlat >= NSEC_PER_SEC || gb->iteration_count == gb->iteration_max) अणु
+	if (nlat >= NSEC_PER_SEC || gb->iteration_count == gb->iteration_max) {
 		lat = gb_loopback_nsec_to_usec_latency(nlat);
 
 		gb_loopback_throughput_update(gb, lat);
 		gb_loopback_requests_update(gb, lat);
 
-		अगर (gb->iteration_count != gb->iteration_max) अणु
+		if (gb->iteration_count != gb->iteration_max) {
 			gb->ts = te;
 			gb->requests_completed = 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम gb_loopback_async_रुको_to_send(काष्ठा gb_loopback *gb)
-अणु
-	अगर (!(gb->async && gb->outstanding_operations_max))
-		वापस;
-	रुको_event_पूर्णांकerruptible(gb->wq_completion,
-				 (atomic_पढ़ो(&gb->outstanding_operations) <
+static void gb_loopback_async_wait_to_send(struct gb_loopback *gb)
+{
+	if (!(gb->async && gb->outstanding_operations_max))
+		return;
+	wait_event_interruptible(gb->wq_completion,
+				 (atomic_read(&gb->outstanding_operations) <
 				  gb->outstanding_operations_max) ||
-				  kthपढ़ो_should_stop());
-पूर्ण
+				  kthread_should_stop());
+}
 
-अटल पूर्णांक gb_loopback_fn(व्योम *data)
-अणु
-	पूर्णांक error = 0;
-	पूर्णांक us_रुको = 0;
-	पूर्णांक type;
-	पूर्णांक ret;
+static int gb_loopback_fn(void *data)
+{
+	int error = 0;
+	int us_wait = 0;
+	int type;
+	int ret;
 	u32 size;
 
-	काष्ठा gb_loopback *gb = data;
-	काष्ठा gb_bundle *bundle = gb->connection->bundle;
+	struct gb_loopback *gb = data;
+	struct gb_bundle *bundle = gb->connection->bundle;
 
-	ret = gb_pm_runसमय_get_sync(bundle);
-	अगर (ret)
-		वापस ret;
+	ret = gb_pm_runtime_get_sync(bundle);
+	if (ret)
+		return ret;
 
-	जबतक (1) अणु
-		अगर (!gb->type) अणु
-			gb_pm_runसमय_put_स्वतःsuspend(bundle);
-			रुको_event_पूर्णांकerruptible(gb->wq, gb->type ||
-						 kthपढ़ो_should_stop());
-			ret = gb_pm_runसमय_get_sync(bundle);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
+	while (1) {
+		if (!gb->type) {
+			gb_pm_runtime_put_autosuspend(bundle);
+			wait_event_interruptible(gb->wq, gb->type ||
+						 kthread_should_stop());
+			ret = gb_pm_runtime_get_sync(bundle);
+			if (ret)
+				return ret;
+		}
 
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		if (kthread_should_stop())
+			break;
 
 		/* Limit the maximum number of in-flight async operations */
-		gb_loopback_async_रुको_to_send(gb);
-		अगर (kthपढ़ो_should_stop())
-			अवरोध;
+		gb_loopback_async_wait_to_send(gb);
+		if (kthread_should_stop())
+			break;
 
 		mutex_lock(&gb->mutex);
 
 		/* Optionally terminate */
-		अगर (gb->send_count == gb->iteration_max) अणु
+		if (gb->send_count == gb->iteration_max) {
 			mutex_unlock(&gb->mutex);
 
-			/* Wait क्रम synchronous and asynchronus completion */
-			gb_loopback_async_रुको_all(gb);
+			/* Wait for synchronous and asynchronus completion */
+			gb_loopback_async_wait_all(gb);
 
 			/* Mark complete unless user-space has poked us */
 			mutex_lock(&gb->mutex);
-			अगर (gb->iteration_count == gb->iteration_max) अणु
+			if (gb->iteration_count == gb->iteration_max) {
 				gb->type = 0;
 				gb->send_count = 0;
-				sysfs_notअगरy(&gb->dev->kobj,  शून्य,
+				sysfs_notify(&gb->dev->kobj,  NULL,
 					     "iteration_count");
 				dev_dbg(&bundle->dev, "load test complete\n");
-			पूर्ण अन्यथा अणु
+			} else {
 				dev_dbg(&bundle->dev,
 					"continuing on with new test set\n");
-			पूर्ण
+			}
 			mutex_unlock(&gb->mutex);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		size = gb->size;
-		us_रुको = gb->us_रुको;
+		us_wait = gb->us_wait;
 		type = gb->type;
-		अगर (kसमय_प्रकारo_ns(gb->ts) == 0)
-			gb->ts = kसमय_get();
+		if (ktime_to_ns(gb->ts) == 0)
+			gb->ts = ktime_get();
 
-		/* Else operations to perक्रमm */
-		अगर (gb->async) अणु
-			अगर (type == GB_LOOPBACK_TYPE_PING)
+		/* Else operations to perform */
+		if (gb->async) {
+			if (type == GB_LOOPBACK_TYPE_PING)
 				error = gb_loopback_async_ping(gb);
-			अन्यथा अगर (type == GB_LOOPBACK_TYPE_TRANSFER)
+			else if (type == GB_LOOPBACK_TYPE_TRANSFER)
 				error = gb_loopback_async_transfer(gb, size);
-			अन्यथा अगर (type == GB_LOOPBACK_TYPE_SINK)
+			else if (type == GB_LOOPBACK_TYPE_SINK)
 				error = gb_loopback_async_sink(gb, size);
 
-			अगर (error) अणु
+			if (error) {
 				gb->error++;
 				gb->iteration_count++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* We are effectively single thपढ़ोed here */
-			अगर (type == GB_LOOPBACK_TYPE_PING)
+			}
+		} else {
+			/* We are effectively single threaded here */
+			if (type == GB_LOOPBACK_TYPE_PING)
 				error = gb_loopback_sync_ping(gb);
-			अन्यथा अगर (type == GB_LOOPBACK_TYPE_TRANSFER)
+			else if (type == GB_LOOPBACK_TYPE_TRANSFER)
 				error = gb_loopback_sync_transfer(gb, size);
-			अन्यथा अगर (type == GB_LOOPBACK_TYPE_SINK)
+			else if (type == GB_LOOPBACK_TYPE_SINK)
 				error = gb_loopback_sync_sink(gb, size);
 
-			अगर (error)
+			if (error)
 				gb->error++;
 			gb->iteration_count++;
 			gb_loopback_calculate_stats(gb, !!error);
-		पूर्ण
+		}
 		gb->send_count++;
 		mutex_unlock(&gb->mutex);
 
-		अगर (us_रुको) अणु
-			अगर (us_रुको < 20000)
-				usleep_range(us_रुको, us_रुको + 100);
-			अन्यथा
-				msleep(us_रुको / 1000);
-		पूर्ण
-	पूर्ण
+		if (us_wait) {
+			if (us_wait < 20000)
+				usleep_range(us_wait, us_wait + 100);
+			else
+				msleep(us_wait / 1000);
+		}
+	}
 
-	gb_pm_runसमय_put_स्वतःsuspend(bundle);
+	gb_pm_runtime_put_autosuspend(bundle);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gb_loopback_dbgfs_latency_show_common(काष्ठा seq_file *s,
-						 काष्ठा kfअगरo *kfअगरo,
-						 काष्ठा mutex *mutex)
-अणु
+static int gb_loopback_dbgfs_latency_show_common(struct seq_file *s,
+						 struct kfifo *kfifo,
+						 struct mutex *mutex)
+{
 	u32 latency;
-	पूर्णांक retval;
+	int retval;
 
-	अगर (kfअगरo_len(kfअगरo) == 0) अणु
+	if (kfifo_len(kfifo) == 0) {
 		retval = -EAGAIN;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	mutex_lock(mutex);
-	retval = kfअगरo_out(kfअगरo, &latency, माप(latency));
-	अगर (retval > 0) अणु
-		seq_म_लिखो(s, "%u", latency);
+	retval = kfifo_out(kfifo, &latency, sizeof(latency));
+	if (retval > 0) {
+		seq_printf(s, "%u", latency);
 		retval = 0;
-	पूर्ण
+	}
 	mutex_unlock(mutex);
-करोne:
-	वापस retval;
-पूर्ण
+done:
+	return retval;
+}
 
-अटल पूर्णांक gb_loopback_dbgfs_latency_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	काष्ठा gb_loopback *gb = s->निजी;
+static int gb_loopback_dbgfs_latency_show(struct seq_file *s, void *unused)
+{
+	struct gb_loopback *gb = s->private;
 
-	वापस gb_loopback_dbgfs_latency_show_common(s, &gb->kfअगरo_lat,
+	return gb_loopback_dbgfs_latency_show_common(s, &gb->kfifo_lat,
 						     &gb->mutex);
-पूर्ण
+}
 DEFINE_SHOW_ATTRIBUTE(gb_loopback_dbgfs_latency);
 
-#घोषणा DEBUGFS_NAMELEN 32
+#define DEBUGFS_NAMELEN 32
 
-अटल पूर्णांक gb_loopback_probe(काष्ठा gb_bundle *bundle,
-			     स्थिर काष्ठा greybus_bundle_id *id)
-अणु
-	काष्ठा greybus_descriptor_cport *cport_desc;
-	काष्ठा gb_connection *connection;
-	काष्ठा gb_loopback *gb;
-	काष्ठा device *dev;
-	पूर्णांक retval;
-	अक्षर name[DEBUGFS_NAMELEN];
-	अचिन्हित दीर्घ flags;
+static int gb_loopback_probe(struct gb_bundle *bundle,
+			     const struct greybus_bundle_id *id)
+{
+	struct greybus_descriptor_cport *cport_desc;
+	struct gb_connection *connection;
+	struct gb_loopback *gb;
+	struct device *dev;
+	int retval;
+	char name[DEBUGFS_NAMELEN];
+	unsigned long flags;
 
-	अगर (bundle->num_cports != 1)
-		वापस -ENODEV;
+	if (bundle->num_cports != 1)
+		return -ENODEV;
 
 	cport_desc = &bundle->cport_desc[0];
-	अगर (cport_desc->protocol_id != GREYBUS_PROTOCOL_LOOPBACK)
-		वापस -ENODEV;
+	if (cport_desc->protocol_id != GREYBUS_PROTOCOL_LOOPBACK)
+		return -ENODEV;
 
-	gb = kzalloc(माप(*gb), GFP_KERNEL);
-	अगर (!gb)
-		वापस -ENOMEM;
+	gb = kzalloc(sizeof(*gb), GFP_KERNEL);
+	if (!gb)
+		return -ENOMEM;
 
 	connection = gb_connection_create(bundle, le16_to_cpu(cport_desc->id),
 					  gb_loopback_request_handler);
-	अगर (IS_ERR(connection)) अणु
+	if (IS_ERR(connection)) {
 		retval = PTR_ERR(connection);
-		जाओ out_kzalloc;
-	पूर्ण
+		goto out_kzalloc;
+	}
 
 	gb->connection = connection;
 	greybus_set_drvdata(bundle, gb);
 
-	init_रुकोqueue_head(&gb->wq);
-	init_रुकोqueue_head(&gb->wq_completion);
+	init_waitqueue_head(&gb->wq);
+	init_waitqueue_head(&gb->wq_completion);
 	atomic_set(&gb->outstanding_operations, 0);
 	gb_loopback_reset_stats(gb);
 
-	/* Reported values to user-space क्रम min/max समयouts */
-	gb->समयout_min = jअगरfies_to_usecs(GB_LOOPBACK_TIMEOUT_MIN);
-	gb->समयout_max = jअगरfies_to_usecs(GB_LOOPBACK_TIMEOUT_MAX);
+	/* Reported values to user-space for min/max timeouts */
+	gb->timeout_min = jiffies_to_usecs(GB_LOOPBACK_TIMEOUT_MIN);
+	gb->timeout_max = jiffies_to_usecs(GB_LOOPBACK_TIMEOUT_MAX);
 
-	अगर (!gb_dev.count) अणु
+	if (!gb_dev.count) {
 		/* Calculate maximum payload */
 		gb_dev.size_max = gb_operation_get_payload_size_max(connection);
-		अगर (gb_dev.size_max <=
-			माप(काष्ठा gb_loopback_transfer_request)) अणु
+		if (gb_dev.size_max <=
+			sizeof(struct gb_loopback_transfer_request)) {
 			retval = -EINVAL;
-			जाओ out_connection_destroy;
-		पूर्ण
-		gb_dev.size_max -= माप(काष्ठा gb_loopback_transfer_request);
-	पूर्ण
+			goto out_connection_destroy;
+		}
+		gb_dev.size_max -= sizeof(struct gb_loopback_transfer_request);
+	}
 
-	/* Create per-connection sysfs and debugfs data-poपूर्णांकs */
-	snम_लिखो(name, माप(name), "raw_latency_%s",
+	/* Create per-connection sysfs and debugfs data-points */
+	snprintf(name, sizeof(name), "raw_latency_%s",
 		 dev_name(&connection->bundle->dev));
 	gb->file = debugfs_create_file(name, S_IFREG | 0444, gb_dev.root, gb,
 				       &gb_loopback_dbgfs_latency_fops);
 
 	gb->id = ida_simple_get(&loopback_ida, 0, 0, GFP_KERNEL);
-	अगर (gb->id < 0) अणु
+	if (gb->id < 0) {
 		retval = gb->id;
-		जाओ out_debugfs_हटाओ;
-	पूर्ण
+		goto out_debugfs_remove;
+	}
 
 	retval = gb_connection_enable(connection);
-	अगर (retval)
-		जाओ out_ida_हटाओ;
+	if (retval)
+		goto out_ida_remove;
 
 	dev = device_create_with_groups(&loopback_class,
 					&connection->bundle->dev,
 					MKDEV(0, 0), gb, loopback_groups,
 					"gb_loopback%d", gb->id);
-	अगर (IS_ERR(dev)) अणु
+	if (IS_ERR(dev)) {
 		retval = PTR_ERR(dev);
-		जाओ out_connection_disable;
-	पूर्ण
+		goto out_connection_disable;
+	}
 	gb->dev = dev;
 
-	/* Allocate kfअगरo */
-	अगर (kfअगरo_alloc(&gb->kfअगरo_lat, kfअगरo_depth * माप(u32),
-			GFP_KERNEL)) अणु
+	/* Allocate kfifo */
+	if (kfifo_alloc(&gb->kfifo_lat, kfifo_depth * sizeof(u32),
+			GFP_KERNEL)) {
 		retval = -ENOMEM;
-		जाओ out_conn;
-	पूर्ण
-	/* Fork worker thपढ़ो */
+		goto out_conn;
+	}
+	/* Fork worker thread */
 	mutex_init(&gb->mutex);
-	gb->task = kthपढ़ो_run(gb_loopback_fn, gb, "gb_loopback");
-	अगर (IS_ERR(gb->task)) अणु
+	gb->task = kthread_run(gb_loopback_fn, gb, "gb_loopback");
+	if (IS_ERR(gb->task)) {
 		retval = PTR_ERR(gb->task);
-		जाओ out_kfअगरo;
-	पूर्ण
+		goto out_kfifo;
+	}
 
 	spin_lock_irqsave(&gb_dev.lock, flags);
 	gb_dev.count++;
@@ -1070,110 +1069,110 @@ DEFINE_SHOW_ATTRIBUTE(gb_loopback_dbgfs_latency);
 
 	gb_connection_latency_tag_enable(connection);
 
-	gb_pm_runसमय_put_स्वतःsuspend(bundle);
+	gb_pm_runtime_put_autosuspend(bundle);
 
-	वापस 0;
+	return 0;
 
-out_kfअगरo:
-	kfअगरo_मुक्त(&gb->kfअगरo_lat);
+out_kfifo:
+	kfifo_free(&gb->kfifo_lat);
 out_conn:
-	device_unरेजिस्टर(dev);
+	device_unregister(dev);
 out_connection_disable:
 	gb_connection_disable(connection);
-out_ida_हटाओ:
-	ida_simple_हटाओ(&loopback_ida, gb->id);
-out_debugfs_हटाओ:
-	debugfs_हटाओ(gb->file);
+out_ida_remove:
+	ida_simple_remove(&loopback_ida, gb->id);
+out_debugfs_remove:
+	debugfs_remove(gb->file);
 out_connection_destroy:
 	gb_connection_destroy(connection);
 out_kzalloc:
-	kमुक्त(gb);
+	kfree(gb);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम gb_loopback_disconnect(काष्ठा gb_bundle *bundle)
-अणु
-	काष्ठा gb_loopback *gb = greybus_get_drvdata(bundle);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static void gb_loopback_disconnect(struct gb_bundle *bundle)
+{
+	struct gb_loopback *gb = greybus_get_drvdata(bundle);
+	unsigned long flags;
+	int ret;
 
-	ret = gb_pm_runसमय_get_sync(bundle);
-	अगर (ret)
-		gb_pm_runसमय_get_noresume(bundle);
+	ret = gb_pm_runtime_get_sync(bundle);
+	if (ret)
+		gb_pm_runtime_get_noresume(bundle);
 
 	gb_connection_disable(gb->connection);
 
-	अगर (!IS_ERR_OR_शून्य(gb->task))
-		kthपढ़ो_stop(gb->task);
+	if (!IS_ERR_OR_NULL(gb->task))
+		kthread_stop(gb->task);
 
-	kfअगरo_मुक्त(&gb->kfअगरo_lat);
+	kfifo_free(&gb->kfifo_lat);
 	gb_connection_latency_tag_disable(gb->connection);
-	debugfs_हटाओ(gb->file);
+	debugfs_remove(gb->file);
 
 	/*
-	 * FIXME: gb_loopback_async_रुको_all() is redundant now, as connection
+	 * FIXME: gb_loopback_async_wait_all() is redundant now, as connection
 	 * is disabled at the beginning and so we can't have any more
 	 * incoming/outgoing requests.
 	 */
-	gb_loopback_async_रुको_all(gb);
+	gb_loopback_async_wait_all(gb);
 
 	spin_lock_irqsave(&gb_dev.lock, flags);
 	gb_dev.count--;
 	spin_unlock_irqrestore(&gb_dev.lock, flags);
 
-	device_unरेजिस्टर(gb->dev);
-	ida_simple_हटाओ(&loopback_ida, gb->id);
+	device_unregister(gb->dev);
+	ida_simple_remove(&loopback_ida, gb->id);
 
 	gb_connection_destroy(gb->connection);
-	kमुक्त(gb);
-पूर्ण
+	kfree(gb);
+}
 
-अटल स्थिर काष्ठा greybus_bundle_id gb_loopback_id_table[] = अणु
-	अणु GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_LOOPBACK) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct greybus_bundle_id gb_loopback_id_table[] = {
+	{ GREYBUS_DEVICE_CLASS(GREYBUS_CLASS_LOOPBACK) },
+	{ }
+};
 MODULE_DEVICE_TABLE(greybus, gb_loopback_id_table);
 
-अटल काष्ठा greybus_driver gb_loopback_driver = अणु
+static struct greybus_driver gb_loopback_driver = {
 	.name		= "loopback",
 	.probe		= gb_loopback_probe,
 	.disconnect	= gb_loopback_disconnect,
 	.id_table	= gb_loopback_id_table,
-पूर्ण;
+};
 
-अटल पूर्णांक loopback_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int loopback_init(void)
+{
+	int retval;
 
 	spin_lock_init(&gb_dev.lock);
-	gb_dev.root = debugfs_create_dir("gb_loopback", शून्य);
+	gb_dev.root = debugfs_create_dir("gb_loopback", NULL);
 
-	retval = class_रेजिस्टर(&loopback_class);
-	अगर (retval)
-		जाओ err;
+	retval = class_register(&loopback_class);
+	if (retval)
+		goto err;
 
-	retval = greybus_रेजिस्टर(&gb_loopback_driver);
-	अगर (retval)
-		जाओ err_unरेजिस्टर;
+	retval = greybus_register(&gb_loopback_driver);
+	if (retval)
+		goto err_unregister;
 
-	वापस 0;
+	return 0;
 
-err_unरेजिस्टर:
-	class_unरेजिस्टर(&loopback_class);
+err_unregister:
+	class_unregister(&loopback_class);
 err:
-	debugfs_हटाओ_recursive(gb_dev.root);
-	वापस retval;
-पूर्ण
+	debugfs_remove_recursive(gb_dev.root);
+	return retval;
+}
 module_init(loopback_init);
 
-अटल व्योम __निकास loopback_निकास(व्योम)
-अणु
-	debugfs_हटाओ_recursive(gb_dev.root);
-	greybus_deरेजिस्टर(&gb_loopback_driver);
-	class_unरेजिस्टर(&loopback_class);
+static void __exit loopback_exit(void)
+{
+	debugfs_remove_recursive(gb_dev.root);
+	greybus_deregister(&gb_loopback_driver);
+	class_unregister(&loopback_class);
 	ida_destroy(&loopback_ida);
-पूर्ण
-module_निकास(loopback_निकास);
+}
+module_exit(loopback_exit);
 
 MODULE_LICENSE("GPL v2");

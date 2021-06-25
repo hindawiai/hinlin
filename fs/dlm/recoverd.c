@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -10,51 +9,51 @@
 *******************************************************************************
 ******************************************************************************/
 
-#समावेश "dlm_internal.h"
-#समावेश "lockspace.h"
-#समावेश "member.h"
-#समावेश "dir.h"
-#समावेश "ast.h"
-#समावेश "recover.h"
-#समावेश "lowcomms.h"
-#समावेश "lock.h"
-#समावेश "requestqueue.h"
-#समावेश "recoverd.h"
+#include "dlm_internal.h"
+#include "lockspace.h"
+#include "member.h"
+#include "dir.h"
+#include "ast.h"
+#include "recover.h"
+#include "lowcomms.h"
+#include "lock.h"
+#include "requestqueue.h"
+#include "recoverd.h"
 
 
-/* If the start क्रम which we're re-enabling locking (seq) has been superseded
+/* If the start for which we're re-enabling locking (seq) has been superseded
    by a newer stop (ls_recover_seq), we need to leave locking disabled.
 
-   We suspend dlm_recv thपढ़ोs here to aव्योम the race where dlm_recv a) sees
+   We suspend dlm_recv threads here to avoid the race where dlm_recv a) sees
    locking stopped and b) adds a message to the requestqueue, but dlm_recoverd
    enables locking and clears the requestqueue between a and b. */
 
-अटल पूर्णांक enable_locking(काष्ठा dlm_ls *ls, uपूर्णांक64_t seq)
-अणु
-	पूर्णांक error = -EINTR;
+static int enable_locking(struct dlm_ls *ls, uint64_t seq)
+{
+	int error = -EINTR;
 
-	करोwn_ग_लिखो(&ls->ls_recv_active);
+	down_write(&ls->ls_recv_active);
 
 	spin_lock(&ls->ls_recover_lock);
-	अगर (ls->ls_recover_seq == seq) अणु
+	if (ls->ls_recover_seq == seq) {
 		set_bit(LSFL_RUNNING, &ls->ls_flags);
-		/* unblocks processes रुकोing to enter the dlm */
-		up_ग_लिखो(&ls->ls_in_recovery);
+		/* unblocks processes waiting to enter the dlm */
+		up_write(&ls->ls_in_recovery);
 		clear_bit(LSFL_RECOVER_LOCK, &ls->ls_flags);
 		error = 0;
-	पूर्ण
+	}
 	spin_unlock(&ls->ls_recover_lock);
 
-	up_ग_लिखो(&ls->ls_recv_active);
-	वापस error;
-पूर्ण
+	up_write(&ls->ls_recv_active);
+	return error;
+}
 
-अटल पूर्णांक ls_recover(काष्ठा dlm_ls *ls, काष्ठा dlm_recover *rv)
-अणु
-	अचिन्हित दीर्घ start;
-	पूर्णांक error, neg = 0;
+static int ls_recover(struct dlm_ls *ls, struct dlm_recover *rv)
+{
+	unsigned long start;
+	int error, neg = 0;
 
-	log_rinfo(ls, "dlm_recover %llu", (अचिन्हित दीर्घ दीर्घ)rv->seq);
+	log_rinfo(ls, "dlm_recover %llu", (unsigned long long)rv->seq);
 
 	mutex_lock(&ls->ls_recoverd_active);
 
@@ -70,14 +69,14 @@
 	dlm_create_root_list(ls);
 
 	/*
-	 * Add or हटाओ nodes from the lockspace's ls_nodes list.
+	 * Add or remove nodes from the lockspace's ls_nodes list.
 	 */
 
 	error = dlm_recover_members(ls, rv, &neg);
-	अगर (error) अणु
+	if (error) {
 		log_rinfo(ls, "dlm_recover_members error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	dlm_recover_dir_nodeid(ls);
 
@@ -87,13 +86,13 @@
 
 	dlm_set_recover_status(ls, DLM_RS_NODES);
 
-	error = dlm_recover_members_रुको(ls);
-	अगर (error) अणु
+	error = dlm_recover_members_wait(ls);
+	if (error) {
 		log_rinfo(ls, "dlm_recover_members_wait error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	start = jअगरfies;
+	start = jiffies;
 
 	/*
 	 * Rebuild our own share of the directory by collecting from all other
@@ -101,37 +100,37 @@
 	 */
 
 	error = dlm_recover_directory(ls);
-	अगर (error) अणु
+	if (error) {
 		log_rinfo(ls, "dlm_recover_directory error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	dlm_set_recover_status(ls, DLM_RS_सूची);
+	dlm_set_recover_status(ls, DLM_RS_DIR);
 
-	error = dlm_recover_directory_रुको(ls);
-	अगर (error) अणु
+	error = dlm_recover_directory_wait(ls);
+	if (error) {
 		log_rinfo(ls, "dlm_recover_directory_wait error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	log_rinfo(ls, "dlm_recover_directory %u out %u messages",
 		  ls->ls_recover_dir_sent_res, ls->ls_recover_dir_sent_msg);
 
 	/*
-	 * We may have outstanding operations that are रुकोing क्रम a reply from
+	 * We may have outstanding operations that are waiting for a reply from
 	 * a failed node.  Mark these to be resent after recovery.  Unlock and
 	 * cancel ops can just be completed.
 	 */
 
-	dlm_recover_रुकोers_pre(ls);
+	dlm_recover_waiters_pre(ls);
 
 	error = dlm_recovery_stopped(ls);
-	अगर (error)
-		जाओ fail;
+	if (error)
+		goto fail;
 
-	अगर (neg || dlm_no_directory(ls)) अणु
+	if (neg || dlm_no_directory(ls)) {
 		/*
-		 * Clear lkb's क्रम departed nodes.
+		 * Clear lkb's for departed nodes.
 		 */
 
 		dlm_recover_purge(ls);
@@ -142,28 +141,28 @@
 		 */
 
 		error = dlm_recover_masters(ls);
-		अगर (error) अणु
+		if (error) {
 			log_rinfo(ls, "dlm_recover_masters error %d", error);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		/*
 		 * Send our locks on remastered rsb's to the new masters.
 		 */
 
 		error = dlm_recover_locks(ls);
-		अगर (error) अणु
+		if (error) {
 			log_rinfo(ls, "dlm_recover_locks error %d", error);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		dlm_set_recover_status(ls, DLM_RS_LOCKS);
 
-		error = dlm_recover_locks_रुको(ls);
-		अगर (error) अणु
+		error = dlm_recover_locks_wait(ls);
+		if (error) {
 			log_rinfo(ls, "dlm_recover_locks_wait error %d", error);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		log_rinfo(ls, "dlm_recover_locks %u in",
 			  ls->ls_recover_locks_in);
@@ -175,26 +174,26 @@
 		 */
 
 		dlm_recover_rsbs(ls);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Other lockspace members may be going through the "neg" steps
-		 * जबतक also adding us to the lockspace, in which हाल they'll
-		 * be करोing the recover_locks (RS_LOCKS) barrier.
+		 * while also adding us to the lockspace, in which case they'll
+		 * be doing the recover_locks (RS_LOCKS) barrier.
 		 */
 		dlm_set_recover_status(ls, DLM_RS_LOCKS);
 
-		error = dlm_recover_locks_रुको(ls);
-		अगर (error) अणु
+		error = dlm_recover_locks_wait(ls);
+		if (error) {
 			log_rinfo(ls, "dlm_recover_locks_wait error %d", error);
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 	dlm_release_root_list(ls);
 
 	/*
 	 * Purge directory-related requests that are saved in requestqueue.
-	 * All dir requests from beक्रमe recovery are invalid now due to the dir
+	 * All dir requests from before recovery are invalid now due to the dir
 	 * rebuild and will be resent by the requesting nodes.
 	 */
 
@@ -202,152 +201,152 @@
 
 	dlm_set_recover_status(ls, DLM_RS_DONE);
 
-	error = dlm_recover_करोne_रुको(ls);
-	अगर (error) अणु
+	error = dlm_recover_done_wait(ls);
+	if (error) {
 		log_rinfo(ls, "dlm_recover_done_wait error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	dlm_clear_members_gone(ls);
 
-	dlm_adjust_समयouts(ls);
+	dlm_adjust_timeouts(ls);
 
 	dlm_callback_resume(ls);
 
 	error = enable_locking(ls, rv->seq);
-	अगर (error) अणु
+	if (error) {
 		log_rinfo(ls, "enable_locking error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	error = dlm_process_requestqueue(ls);
-	अगर (error) अणु
+	if (error) {
 		log_rinfo(ls, "dlm_process_requestqueue error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
-	error = dlm_recover_रुकोers_post(ls);
-	अगर (error) अणु
+	error = dlm_recover_waiters_post(ls);
+	if (error) {
 		log_rinfo(ls, "dlm_recover_waiters_post error %d", error);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	dlm_recover_grant(ls);
 
 	log_rinfo(ls, "dlm_recover %llu generation %u done: %u ms",
-		  (अचिन्हित दीर्घ दीर्घ)rv->seq, ls->ls_generation,
-		  jअगरfies_to_msecs(jअगरfies - start));
+		  (unsigned long long)rv->seq, ls->ls_generation,
+		  jiffies_to_msecs(jiffies - start));
 	mutex_unlock(&ls->ls_recoverd_active);
 
-	dlm_lsop_recover_करोne(ls);
-	वापस 0;
+	dlm_lsop_recover_done(ls);
+	return 0;
 
  fail:
 	dlm_release_root_list(ls);
 	log_rinfo(ls, "dlm_recover %llu error %d",
-		  (अचिन्हित दीर्घ दीर्घ)rv->seq, error);
+		  (unsigned long long)rv->seq, error);
 	mutex_unlock(&ls->ls_recoverd_active);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* The dlm_ls_start() that created the rv we take here may alपढ़ोy have been
-   stopped via dlm_ls_stop(); in that हाल we need to leave the RECOVERY_STOP
+/* The dlm_ls_start() that created the rv we take here may already have been
+   stopped via dlm_ls_stop(); in that case we need to leave the RECOVERY_STOP
    flag set. */
 
-अटल व्योम करो_ls_recovery(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा dlm_recover *rv = शून्य;
+static void do_ls_recovery(struct dlm_ls *ls)
+{
+	struct dlm_recover *rv = NULL;
 
 	spin_lock(&ls->ls_recover_lock);
 	rv = ls->ls_recover_args;
-	ls->ls_recover_args = शून्य;
-	अगर (rv && ls->ls_recover_seq == rv->seq)
+	ls->ls_recover_args = NULL;
+	if (rv && ls->ls_recover_seq == rv->seq)
 		clear_bit(LSFL_RECOVER_STOP, &ls->ls_flags);
 	spin_unlock(&ls->ls_recover_lock);
 
-	अगर (rv) अणु
+	if (rv) {
 		ls_recover(ls, rv);
-		kमुक्त(rv->nodes);
-		kमुक्त(rv);
-	पूर्ण
-पूर्ण
+		kfree(rv->nodes);
+		kfree(rv);
+	}
+}
 
-अटल पूर्णांक dlm_recoverd(व्योम *arg)
-अणु
-	काष्ठा dlm_ls *ls;
+static int dlm_recoverd(void *arg)
+{
+	struct dlm_ls *ls;
 
 	ls = dlm_find_lockspace_local(arg);
-	अगर (!ls) अणु
-		log_prपूर्णांक("dlm_recoverd: no lockspace %p", arg);
-		वापस -1;
-	पूर्ण
+	if (!ls) {
+		log_print("dlm_recoverd: no lockspace %p", arg);
+		return -1;
+	}
 
-	करोwn_ग_लिखो(&ls->ls_in_recovery);
+	down_write(&ls->ls_in_recovery);
 	set_bit(LSFL_RECOVER_LOCK, &ls->ls_flags);
-	wake_up(&ls->ls_recover_lock_रुको);
+	wake_up(&ls->ls_recover_lock_wait);
 
-	जबतक (1) अणु
+	while (1) {
 		/*
-		 * We call kthपढ़ो_should_stop() after set_current_state().
-		 * This is because it works correctly अगर kthपढ़ो_stop() is
-		 * called just beक्रमe set_current_state().
+		 * We call kthread_should_stop() after set_current_state().
+		 * This is because it works correctly if kthread_stop() is
+		 * called just before set_current_state().
 		 */
 		set_current_state(TASK_INTERRUPTIBLE);
-		अगर (kthपढ़ो_should_stop()) अणु
+		if (kthread_should_stop()) {
 			set_current_state(TASK_RUNNING);
-			अवरोध;
-		पूर्ण
-		अगर (!test_bit(LSFL_RECOVER_WORK, &ls->ls_flags) &&
-		    !test_bit(LSFL_RECOVER_DOWN, &ls->ls_flags)) अणु
-			अगर (kthपढ़ो_should_stop())
-				अवरोध;
+			break;
+		}
+		if (!test_bit(LSFL_RECOVER_WORK, &ls->ls_flags) &&
+		    !test_bit(LSFL_RECOVER_DOWN, &ls->ls_flags)) {
+			if (kthread_should_stop())
+				break;
 			schedule();
-		पूर्ण
+		}
 		set_current_state(TASK_RUNNING);
 
-		अगर (test_and_clear_bit(LSFL_RECOVER_DOWN, &ls->ls_flags)) अणु
-			करोwn_ग_लिखो(&ls->ls_in_recovery);
+		if (test_and_clear_bit(LSFL_RECOVER_DOWN, &ls->ls_flags)) {
+			down_write(&ls->ls_in_recovery);
 			set_bit(LSFL_RECOVER_LOCK, &ls->ls_flags);
-			wake_up(&ls->ls_recover_lock_रुको);
-		पूर्ण
+			wake_up(&ls->ls_recover_lock_wait);
+		}
 
-		अगर (test_and_clear_bit(LSFL_RECOVER_WORK, &ls->ls_flags))
-			करो_ls_recovery(ls);
-	पूर्ण
+		if (test_and_clear_bit(LSFL_RECOVER_WORK, &ls->ls_flags))
+			do_ls_recovery(ls);
+	}
 
-	अगर (test_bit(LSFL_RECOVER_LOCK, &ls->ls_flags))
-		up_ग_लिखो(&ls->ls_in_recovery);
+	if (test_bit(LSFL_RECOVER_LOCK, &ls->ls_flags))
+		up_write(&ls->ls_in_recovery);
 
 	dlm_put_lockspace(ls);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक dlm_recoverd_start(काष्ठा dlm_ls *ls)
-अणु
-	काष्ठा task_काष्ठा *p;
-	पूर्णांक error = 0;
+int dlm_recoverd_start(struct dlm_ls *ls)
+{
+	struct task_struct *p;
+	int error = 0;
 
-	p = kthपढ़ो_run(dlm_recoverd, ls, "dlm_recoverd");
-	अगर (IS_ERR(p))
+	p = kthread_run(dlm_recoverd, ls, "dlm_recoverd");
+	if (IS_ERR(p))
 		error = PTR_ERR(p);
-	अन्यथा
+	else
                 ls->ls_recoverd_task = p;
-	वापस error;
-पूर्ण
+	return error;
+}
 
-व्योम dlm_recoverd_stop(काष्ठा dlm_ls *ls)
-अणु
-	kthपढ़ो_stop(ls->ls_recoverd_task);
-पूर्ण
+void dlm_recoverd_stop(struct dlm_ls *ls)
+{
+	kthread_stop(ls->ls_recoverd_task);
+}
 
-व्योम dlm_recoverd_suspend(काष्ठा dlm_ls *ls)
-अणु
-	wake_up(&ls->ls_रुको_general);
+void dlm_recoverd_suspend(struct dlm_ls *ls)
+{
+	wake_up(&ls->ls_wait_general);
 	mutex_lock(&ls->ls_recoverd_active);
-पूर्ण
+}
 
-व्योम dlm_recoverd_resume(काष्ठा dlm_ls *ls)
-अणु
+void dlm_recoverd_resume(struct dlm_ls *ls)
+{
 	mutex_unlock(&ls->ls_recoverd_active);
-पूर्ण
+}
 

@@ -1,1033 +1,1032 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#समावेश "dtc.h"
-#समावेश "srcpos.h"
+#include "dtc.h"
+#include "srcpos.h"
 
 /*
  * Tree building functions
  */
 
-व्योम add_label(काष्ठा label **labels, अक्षर *label)
-अणु
-	काष्ठा label *new;
+void add_label(struct label **labels, char *label)
+{
+	struct label *new;
 
-	/* Make sure the label isn't alपढ़ोy there */
-	क्रम_each_label_withdel(*labels, new)
-		अगर (streq(new->label, label)) अणु
+	/* Make sure the label isn't already there */
+	for_each_label_withdel(*labels, new)
+		if (streq(new->label, label)) {
 			new->deleted = 0;
-			वापस;
-		पूर्ण
+			return;
+		}
 
-	new = xदो_स्मृति(माप(*new));
-	स_रखो(new, 0, माप(*new));
+	new = xmalloc(sizeof(*new));
+	memset(new, 0, sizeof(*new));
 	new->label = label;
 	new->next = *labels;
 	*labels = new;
-पूर्ण
+}
 
-व्योम delete_labels(काष्ठा label **labels)
-अणु
-	काष्ठा label *label;
+void delete_labels(struct label **labels)
+{
+	struct label *label;
 
-	क्रम_each_label(*labels, label)
+	for_each_label(*labels, label)
 		label->deleted = 1;
-पूर्ण
+}
 
-काष्ठा property *build_property(अक्षर *name, काष्ठा data val,
-				काष्ठा srcpos *srcpos)
-अणु
-	काष्ठा property *new = xदो_स्मृति(माप(*new));
+struct property *build_property(char *name, struct data val,
+				struct srcpos *srcpos)
+{
+	struct property *new = xmalloc(sizeof(*new));
 
-	स_रखो(new, 0, माप(*new));
+	memset(new, 0, sizeof(*new));
 
 	new->name = name;
 	new->val = val;
 	new->srcpos = srcpos_copy(srcpos);
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा property *build_property_delete(अक्षर *name)
-अणु
-	काष्ठा property *new = xदो_स्मृति(माप(*new));
+struct property *build_property_delete(char *name)
+{
+	struct property *new = xmalloc(sizeof(*new));
 
-	स_रखो(new, 0, माप(*new));
+	memset(new, 0, sizeof(*new));
 
 	new->name = name;
 	new->deleted = 1;
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा property *chain_property(काष्ठा property *first, काष्ठा property *list)
-अणु
-	निश्चित(first->next == शून्य);
+struct property *chain_property(struct property *first, struct property *list)
+{
+	assert(first->next == NULL);
 
 	first->next = list;
-	वापस first;
-पूर्ण
+	return first;
+}
 
-काष्ठा property *reverse_properties(काष्ठा property *first)
-अणु
-	काष्ठा property *p = first;
-	काष्ठा property *head = शून्य;
-	काष्ठा property *next;
+struct property *reverse_properties(struct property *first)
+{
+	struct property *p = first;
+	struct property *head = NULL;
+	struct property *next;
 
-	जबतक (p) अणु
+	while (p) {
 		next = p->next;
 		p->next = head;
 		head = p;
 		p = next;
-	पूर्ण
-	वापस head;
-पूर्ण
+	}
+	return head;
+}
 
-काष्ठा node *build_node(काष्ठा property *proplist, काष्ठा node *children,
-			काष्ठा srcpos *srcpos)
-अणु
-	काष्ठा node *new = xदो_स्मृति(माप(*new));
-	काष्ठा node *child;
+struct node *build_node(struct property *proplist, struct node *children,
+			struct srcpos *srcpos)
+{
+	struct node *new = xmalloc(sizeof(*new));
+	struct node *child;
 
-	स_रखो(new, 0, माप(*new));
+	memset(new, 0, sizeof(*new));
 
 	new->proplist = reverse_properties(proplist);
 	new->children = children;
 	new->srcpos = srcpos_copy(srcpos);
 
-	क्रम_each_child(new, child) अणु
+	for_each_child(new, child) {
 		child->parent = new;
-	पूर्ण
+	}
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा node *build_node_delete(काष्ठा srcpos *srcpos)
-अणु
-	काष्ठा node *new = xदो_स्मृति(माप(*new));
+struct node *build_node_delete(struct srcpos *srcpos)
+{
+	struct node *new = xmalloc(sizeof(*new));
 
-	स_रखो(new, 0, माप(*new));
+	memset(new, 0, sizeof(*new));
 
 	new->deleted = 1;
 	new->srcpos = srcpos_copy(srcpos);
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा node *name_node(काष्ठा node *node, अक्षर *name)
-अणु
-	निश्चित(node->name == शून्य);
+struct node *name_node(struct node *node, char *name)
+{
+	assert(node->name == NULL);
 
 	node->name = name;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-काष्ठा node *omit_node_अगर_unused(काष्ठा node *node)
-अणु
-	node->omit_अगर_unused = 1;
+struct node *omit_node_if_unused(struct node *node)
+{
+	node->omit_if_unused = 1;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-काष्ठा node *reference_node(काष्ठा node *node)
-अणु
+struct node *reference_node(struct node *node)
+{
 	node->is_referenced = 1;
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-काष्ठा node *merge_nodes(काष्ठा node *old_node, काष्ठा node *new_node)
-अणु
-	काष्ठा property *new_prop, *old_prop;
-	काष्ठा node *new_child, *old_child;
-	काष्ठा label *l;
+struct node *merge_nodes(struct node *old_node, struct node *new_node)
+{
+	struct property *new_prop, *old_prop;
+	struct node *new_child, *old_child;
+	struct label *l;
 
 	old_node->deleted = 0;
 
 	/* Add new node labels to old node */
-	क्रम_each_label_withdel(new_node->labels, l)
+	for_each_label_withdel(new_node->labels, l)
 		add_label(&old_node->labels, l->label);
 
 	/* Move properties from the new node to the old node.  If there
 	 * is a collision, replace the old value with the new */
-	जबतक (new_node->proplist) अणु
+	while (new_node->proplist) {
 		/* Pop the property off the list */
 		new_prop = new_node->proplist;
 		new_node->proplist = new_prop->next;
-		new_prop->next = शून्य;
+		new_prop->next = NULL;
 
-		अगर (new_prop->deleted) अणु
+		if (new_prop->deleted) {
 			delete_property_by_name(old_node, new_prop->name);
-			मुक्त(new_prop);
-			जारी;
-		पूर्ण
+			free(new_prop);
+			continue;
+		}
 
-		/* Look क्रम a collision, set new value अगर there is */
-		क्रम_each_property_withdel(old_node, old_prop) अणु
-			अगर (streq(old_prop->name, new_prop->name)) अणु
+		/* Look for a collision, set new value if there is */
+		for_each_property_withdel(old_node, old_prop) {
+			if (streq(old_prop->name, new_prop->name)) {
 				/* Add new labels to old property */
-				क्रम_each_label_withdel(new_prop->labels, l)
+				for_each_label_withdel(new_prop->labels, l)
 					add_label(&old_prop->labels, l->label);
 
 				old_prop->val = new_prop->val;
 				old_prop->deleted = 0;
-				मुक्त(old_prop->srcpos);
+				free(old_prop->srcpos);
 				old_prop->srcpos = new_prop->srcpos;
-				मुक्त(new_prop);
-				new_prop = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				free(new_prop);
+				new_prop = NULL;
+				break;
+			}
+		}
 
-		/* अगर no collision occurred, add property to the old node. */
-		अगर (new_prop)
+		/* if no collision occurred, add property to the old node. */
+		if (new_prop)
 			add_property(old_node, new_prop);
-	पूर्ण
+	}
 
-	/* Move the override child nodes पूर्णांकo the primary node.  If
+	/* Move the override child nodes into the primary node.  If
 	 * there is a collision, then merge the nodes. */
-	जबतक (new_node->children) अणु
+	while (new_node->children) {
 		/* Pop the child node off the list */
 		new_child = new_node->children;
 		new_node->children = new_child->next_sibling;
-		new_child->parent = शून्य;
-		new_child->next_sibling = शून्य;
+		new_child->parent = NULL;
+		new_child->next_sibling = NULL;
 
-		अगर (new_child->deleted) अणु
+		if (new_child->deleted) {
 			delete_node_by_name(old_node, new_child->name);
-			मुक्त(new_child);
-			जारी;
-		पूर्ण
+			free(new_child);
+			continue;
+		}
 
-		/* Search क्रम a collision.  Merge अगर there is */
-		क्रम_each_child_withdel(old_node, old_child) अणु
-			अगर (streq(old_child->name, new_child->name)) अणु
+		/* Search for a collision.  Merge if there is */
+		for_each_child_withdel(old_node, old_child) {
+			if (streq(old_child->name, new_child->name)) {
 				merge_nodes(old_child, new_child);
-				new_child = शून्य;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				new_child = NULL;
+				break;
+			}
+		}
 
-		/* अगर no collision occurred, add child to the old node. */
-		अगर (new_child)
+		/* if no collision occurred, add child to the old node. */
+		if (new_child)
 			add_child(old_node, new_child);
-	पूर्ण
+	}
 
 	old_node->srcpos = srcpos_extend(old_node->srcpos, new_node->srcpos);
 
-	/* The new node contents are now merged पूर्णांकo the old node.  Free
+	/* The new node contents are now merged into the old node.  Free
 	 * the new node. */
-	मुक्त(new_node);
+	free(new_node);
 
-	वापस old_node;
-पूर्ण
+	return old_node;
+}
 
-काष्ठा node * add_orphan_node(काष्ठा node *dt, काष्ठा node *new_node, अक्षर *ref)
-अणु
-	अटल अचिन्हित पूर्णांक next_orphan_fragment = 0;
-	काष्ठा node *node;
-	काष्ठा property *p;
-	काष्ठा data d = empty_data;
-	अक्षर *name;
+struct node * add_orphan_node(struct node *dt, struct node *new_node, char *ref)
+{
+	static unsigned int next_orphan_fragment = 0;
+	struct node *node;
+	struct property *p;
+	struct data d = empty_data;
+	char *name;
 
-	अगर (ref[0] == '/') अणु
+	if (ref[0] == '/') {
 		d = data_add_marker(d, TYPE_STRING, ref);
-		d = data_append_data(d, ref, म_माप(ref) + 1);
+		d = data_append_data(d, ref, strlen(ref) + 1);
 
-		p = build_property("target-path", d, शून्य);
-	पूर्ण अन्यथा अणु
+		p = build_property("target-path", d, NULL);
+	} else {
 		d = data_add_marker(d, REF_PHANDLE, ref);
-		d = data_append_पूर्णांकeger(d, 0xffffffff, 32);
+		d = data_append_integer(d, 0xffffffff, 32);
 
-		p = build_property("target", d, शून्य);
-	पूर्ण
+		p = build_property("target", d, NULL);
+	}
 
-	xaप्र_लिखो(&name, "fragment@%u",
+	xasprintf(&name, "fragment@%u",
 			next_orphan_fragment++);
 	name_node(new_node, "__overlay__");
-	node = build_node(p, new_node, शून्य);
+	node = build_node(p, new_node, NULL);
 	name_node(node, name);
 
 	add_child(dt, node);
-	वापस dt;
-पूर्ण
+	return dt;
+}
 
-काष्ठा node *chain_node(काष्ठा node *first, काष्ठा node *list)
-अणु
-	निश्चित(first->next_sibling == शून्य);
+struct node *chain_node(struct node *first, struct node *list)
+{
+	assert(first->next_sibling == NULL);
 
 	first->next_sibling = list;
-	वापस first;
-पूर्ण
+	return first;
+}
 
-व्योम add_property(काष्ठा node *node, काष्ठा property *prop)
-अणु
-	काष्ठा property **p;
+void add_property(struct node *node, struct property *prop)
+{
+	struct property **p;
 
-	prop->next = शून्य;
+	prop->next = NULL;
 
 	p = &node->proplist;
-	जबतक (*p)
+	while (*p)
 		p = &((*p)->next);
 
 	*p = prop;
-पूर्ण
+}
 
-व्योम delete_property_by_name(काष्ठा node *node, अक्षर *name)
-अणु
-	काष्ठा property *prop = node->proplist;
+void delete_property_by_name(struct node *node, char *name)
+{
+	struct property *prop = node->proplist;
 
-	जबतक (prop) अणु
-		अगर (streq(prop->name, name)) अणु
+	while (prop) {
+		if (streq(prop->name, name)) {
 			delete_property(prop);
-			वापस;
-		पूर्ण
+			return;
+		}
 		prop = prop->next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम delete_property(काष्ठा property *prop)
-अणु
+void delete_property(struct property *prop)
+{
 	prop->deleted = 1;
 	delete_labels(&prop->labels);
-पूर्ण
+}
 
-व्योम add_child(काष्ठा node *parent, काष्ठा node *child)
-अणु
-	काष्ठा node **p;
+void add_child(struct node *parent, struct node *child)
+{
+	struct node **p;
 
-	child->next_sibling = शून्य;
+	child->next_sibling = NULL;
 	child->parent = parent;
 
 	p = &parent->children;
-	जबतक (*p)
+	while (*p)
 		p = &((*p)->next_sibling);
 
 	*p = child;
-पूर्ण
+}
 
-व्योम delete_node_by_name(काष्ठा node *parent, अक्षर *name)
-अणु
-	काष्ठा node *node = parent->children;
+void delete_node_by_name(struct node *parent, char *name)
+{
+	struct node *node = parent->children;
 
-	जबतक (node) अणु
-		अगर (streq(node->name, name)) अणु
+	while (node) {
+		if (streq(node->name, name)) {
 			delete_node(node);
-			वापस;
-		पूर्ण
+			return;
+		}
 		node = node->next_sibling;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम delete_node(काष्ठा node *node)
-अणु
-	काष्ठा property *prop;
-	काष्ठा node *child;
+void delete_node(struct node *node)
+{
+	struct property *prop;
+	struct node *child;
 
 	node->deleted = 1;
-	क्रम_each_child(node, child)
+	for_each_child(node, child)
 		delete_node(child);
-	क्रम_each_property(node, prop)
+	for_each_property(node, prop)
 		delete_property(prop);
 	delete_labels(&node->labels);
-पूर्ण
+}
 
-व्योम append_to_property(काष्ठा node *node,
-			अक्षर *name, स्थिर व्योम *data, पूर्णांक len,
-			क्रमागत markertype type)
-अणु
-	काष्ठा data d;
-	काष्ठा property *p;
+void append_to_property(struct node *node,
+			char *name, const void *data, int len,
+			enum markertype type)
+{
+	struct data d;
+	struct property *p;
 
 	p = get_property(node, name);
-	अगर (p) अणु
+	if (p) {
 		d = data_add_marker(p->val, type, name);
 		d = data_append_data(d, data, len);
 		p->val = d;
-	पूर्ण अन्यथा अणु
+	} else {
 		d = data_add_marker(empty_data, type, name);
 		d = data_append_data(d, data, len);
-		p = build_property(name, d, शून्य);
+		p = build_property(name, d, NULL);
 		add_property(node, p);
-	पूर्ण
-पूर्ण
+	}
+}
 
-काष्ठा reserve_info *build_reserve_entry(uपूर्णांक64_t address, uपूर्णांक64_t size)
-अणु
-	काष्ठा reserve_info *new = xदो_स्मृति(माप(*new));
+struct reserve_info *build_reserve_entry(uint64_t address, uint64_t size)
+{
+	struct reserve_info *new = xmalloc(sizeof(*new));
 
-	स_रखो(new, 0, माप(*new));
+	memset(new, 0, sizeof(*new));
 
 	new->address = address;
 	new->size = size;
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
-काष्ठा reserve_info *chain_reserve_entry(काष्ठा reserve_info *first,
-					काष्ठा reserve_info *list)
-अणु
-	निश्चित(first->next == शून्य);
+struct reserve_info *chain_reserve_entry(struct reserve_info *first,
+					struct reserve_info *list)
+{
+	assert(first->next == NULL);
 
 	first->next = list;
-	वापस first;
-पूर्ण
+	return first;
+}
 
-काष्ठा reserve_info *add_reserve_entry(काष्ठा reserve_info *list,
-				      काष्ठा reserve_info *new)
-अणु
-	काष्ठा reserve_info *last;
+struct reserve_info *add_reserve_entry(struct reserve_info *list,
+				      struct reserve_info *new)
+{
+	struct reserve_info *last;
 
-	new->next = शून्य;
+	new->next = NULL;
 
-	अगर (! list)
-		वापस new;
+	if (! list)
+		return new;
 
-	क्रम (last = list; last->next; last = last->next)
+	for (last = list; last->next; last = last->next)
 		;
 
 	last->next = new;
 
-	वापस list;
-पूर्ण
+	return list;
+}
 
-काष्ठा dt_info *build_dt_info(अचिन्हित पूर्णांक dtsflags,
-			      काष्ठा reserve_info *reservelist,
-			      काष्ठा node *tree, uपूर्णांक32_t boot_cpuid_phys)
-अणु
-	काष्ठा dt_info *dti;
+struct dt_info *build_dt_info(unsigned int dtsflags,
+			      struct reserve_info *reservelist,
+			      struct node *tree, uint32_t boot_cpuid_phys)
+{
+	struct dt_info *dti;
 
-	dti = xदो_स्मृति(माप(*dti));
+	dti = xmalloc(sizeof(*dti));
 	dti->dtsflags = dtsflags;
 	dti->reservelist = reservelist;
 	dti->dt = tree;
 	dti->boot_cpuid_phys = boot_cpuid_phys;
 
-	वापस dti;
-पूर्ण
+	return dti;
+}
 
 /*
  * Tree accessor functions
  */
 
-स्थिर अक्षर *get_unitname(काष्ठा node *node)
-अणु
-	अगर (node->name[node->basenamelen] == '\0')
-		वापस "";
-	अन्यथा
-		वापस node->name + node->basenamelen + 1;
-पूर्ण
+const char *get_unitname(struct node *node)
+{
+	if (node->name[node->basenamelen] == '\0')
+		return "";
+	else
+		return node->name + node->basenamelen + 1;
+}
 
-काष्ठा property *get_property(काष्ठा node *node, स्थिर अक्षर *propname)
-अणु
-	काष्ठा property *prop;
+struct property *get_property(struct node *node, const char *propname)
+{
+	struct property *prop;
 
-	क्रम_each_property(node, prop)
-		अगर (streq(prop->name, propname))
-			वापस prop;
+	for_each_property(node, prop)
+		if (streq(prop->name, propname))
+			return prop;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-cell_t propval_cell(काष्ठा property *prop)
-अणु
-	निश्चित(prop->val.len == माप(cell_t));
-	वापस fdt32_to_cpu(*((fdt32_t *)prop->val.val));
-पूर्ण
+cell_t propval_cell(struct property *prop)
+{
+	assert(prop->val.len == sizeof(cell_t));
+	return fdt32_to_cpu(*((fdt32_t *)prop->val.val));
+}
 
-cell_t propval_cell_n(काष्ठा property *prop, अचिन्हित पूर्णांक n)
-अणु
-	निश्चित(prop->val.len / माप(cell_t) >= n);
-	वापस fdt32_to_cpu(*((fdt32_t *)prop->val.val + n));
-पूर्ण
+cell_t propval_cell_n(struct property *prop, unsigned int n)
+{
+	assert(prop->val.len / sizeof(cell_t) >= n);
+	return fdt32_to_cpu(*((fdt32_t *)prop->val.val + n));
+}
 
-काष्ठा property *get_property_by_label(काष्ठा node *tree, स्थिर अक्षर *label,
-				       काष्ठा node **node)
-अणु
-	काष्ठा property *prop;
-	काष्ठा node *c;
+struct property *get_property_by_label(struct node *tree, const char *label,
+				       struct node **node)
+{
+	struct property *prop;
+	struct node *c;
 
 	*node = tree;
 
-	क्रम_each_property(tree, prop) अणु
-		काष्ठा label *l;
+	for_each_property(tree, prop) {
+		struct label *l;
 
-		क्रम_each_label(prop->labels, l)
-			अगर (streq(l->label, label))
-				वापस prop;
-	पूर्ण
+		for_each_label(prop->labels, l)
+			if (streq(l->label, label))
+				return prop;
+	}
 
-	क्रम_each_child(tree, c) अणु
+	for_each_child(tree, c) {
 		prop = get_property_by_label(c, label, node);
-		अगर (prop)
-			वापस prop;
-	पूर्ण
+		if (prop)
+			return prop;
+	}
 
-	*node = शून्य;
-	वापस शून्य;
-पूर्ण
+	*node = NULL;
+	return NULL;
+}
 
-काष्ठा marker *get_marker_label(काष्ठा node *tree, स्थिर अक्षर *label,
-				काष्ठा node **node, काष्ठा property **prop)
-अणु
-	काष्ठा marker *m;
-	काष्ठा property *p;
-	काष्ठा node *c;
+struct marker *get_marker_label(struct node *tree, const char *label,
+				struct node **node, struct property **prop)
+{
+	struct marker *m;
+	struct property *p;
+	struct node *c;
 
 	*node = tree;
 
-	क्रम_each_property(tree, p) अणु
+	for_each_property(tree, p) {
 		*prop = p;
 		m = p->val.markers;
-		क्रम_each_marker_of_type(m, LABEL)
-			अगर (streq(m->ref, label))
-				वापस m;
-	पूर्ण
+		for_each_marker_of_type(m, LABEL)
+			if (streq(m->ref, label))
+				return m;
+	}
 
-	क्रम_each_child(tree, c) अणु
+	for_each_child(tree, c) {
 		m = get_marker_label(c, label, node, prop);
-		अगर (m)
-			वापस m;
-	पूर्ण
+		if (m)
+			return m;
+	}
 
-	*prop = शून्य;
-	*node = शून्य;
-	वापस शून्य;
-पूर्ण
+	*prop = NULL;
+	*node = NULL;
+	return NULL;
+}
 
-काष्ठा node *get_subnode(काष्ठा node *node, स्थिर अक्षर *nodename)
-अणु
-	काष्ठा node *child;
+struct node *get_subnode(struct node *node, const char *nodename)
+{
+	struct node *child;
 
-	क्रम_each_child(node, child)
-		अगर (streq(child->name, nodename))
-			वापस child;
+	for_each_child(node, child)
+		if (streq(child->name, nodename))
+			return child;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा node *get_node_by_path(काष्ठा node *tree, स्थिर अक्षर *path)
-अणु
-	स्थिर अक्षर *p;
-	काष्ठा node *child;
+struct node *get_node_by_path(struct node *tree, const char *path)
+{
+	const char *p;
+	struct node *child;
 
-	अगर (!path || ! (*path)) अणु
-		अगर (tree->deleted)
-			वापस शून्य;
-		वापस tree;
-	पूर्ण
+	if (!path || ! (*path)) {
+		if (tree->deleted)
+			return NULL;
+		return tree;
+	}
 
-	जबतक (path[0] == '/')
+	while (path[0] == '/')
 		path++;
 
-	p = म_अक्षर(path, '/');
+	p = strchr(path, '/');
 
-	क्रम_each_child(tree, child) अणु
-		अगर (p && strprefixeq(path, p - path, child->name))
-			वापस get_node_by_path(child, p+1);
-		अन्यथा अगर (!p && streq(path, child->name))
-			वापस child;
-	पूर्ण
+	for_each_child(tree, child) {
+		if (p && strprefixeq(path, p - path, child->name))
+			return get_node_by_path(child, p+1);
+		else if (!p && streq(path, child->name))
+			return child;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा node *get_node_by_label(काष्ठा node *tree, स्थिर अक्षर *label)
-अणु
-	काष्ठा node *child, *node;
-	काष्ठा label *l;
+struct node *get_node_by_label(struct node *tree, const char *label)
+{
+	struct node *child, *node;
+	struct label *l;
 
-	निश्चित(label && (म_माप(label) > 0));
+	assert(label && (strlen(label) > 0));
 
-	क्रम_each_label(tree->labels, l)
-		अगर (streq(l->label, label))
-			वापस tree;
+	for_each_label(tree->labels, l)
+		if (streq(l->label, label))
+			return tree;
 
-	क्रम_each_child(tree, child) अणु
+	for_each_child(tree, child) {
 		node = get_node_by_label(child, label);
-		अगर (node)
-			वापस node;
-	पूर्ण
+		if (node)
+			return node;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा node *get_node_by_phandle(काष्ठा node *tree, cell_t phandle)
-अणु
-	काष्ठा node *child, *node;
+struct node *get_node_by_phandle(struct node *tree, cell_t phandle)
+{
+	struct node *child, *node;
 
-	अगर ((phandle == 0) || (phandle == -1)) अणु
-		निश्चित(generate_fixups);
-		वापस शून्य;
-	पूर्ण
+	if ((phandle == 0) || (phandle == -1)) {
+		assert(generate_fixups);
+		return NULL;
+	}
 
-	अगर (tree->phandle == phandle) अणु
-		अगर (tree->deleted)
-			वापस शून्य;
-		वापस tree;
-	पूर्ण
+	if (tree->phandle == phandle) {
+		if (tree->deleted)
+			return NULL;
+		return tree;
+	}
 
-	क्रम_each_child(tree, child) अणु
+	for_each_child(tree, child) {
 		node = get_node_by_phandle(child, phandle);
-		अगर (node)
-			वापस node;
-	पूर्ण
+		if (node)
+			return node;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-काष्ठा node *get_node_by_ref(काष्ठा node *tree, स्थिर अक्षर *ref)
-अणु
-	अगर (streq(ref, "/"))
-		वापस tree;
-	अन्यथा अगर (ref[0] == '/')
-		वापस get_node_by_path(tree, ref);
-	अन्यथा
-		वापस get_node_by_label(tree, ref);
-पूर्ण
+struct node *get_node_by_ref(struct node *tree, const char *ref)
+{
+	if (streq(ref, "/"))
+		return tree;
+	else if (ref[0] == '/')
+		return get_node_by_path(tree, ref);
+	else
+		return get_node_by_label(tree, ref);
+}
 
-cell_t get_node_phandle(काष्ठा node *root, काष्ठा node *node)
-अणु
-	अटल cell_t phandle = 1; /* FIXME: ick, अटल local */
-	काष्ठा data d = empty_data;
+cell_t get_node_phandle(struct node *root, struct node *node)
+{
+	static cell_t phandle = 1; /* FIXME: ick, static local */
+	struct data d = empty_data;
 
-	अगर ((node->phandle != 0) && (node->phandle != -1))
-		वापस node->phandle;
+	if ((node->phandle != 0) && (node->phandle != -1))
+		return node->phandle;
 
-	जबतक (get_node_by_phandle(root, phandle))
+	while (get_node_by_phandle(root, phandle))
 		phandle++;
 
 	node->phandle = phandle;
 
-	d = data_add_marker(d, TYPE_UINT32, शून्य);
+	d = data_add_marker(d, TYPE_UINT32, NULL);
 	d = data_append_cell(d, phandle);
 
-	अगर (!get_property(node, "linux,phandle")
-	    && (phandle_क्रमmat & PHANDLE_LEGACY))
-		add_property(node, build_property("linux,phandle", d, शून्य));
+	if (!get_property(node, "linux,phandle")
+	    && (phandle_format & PHANDLE_LEGACY))
+		add_property(node, build_property("linux,phandle", d, NULL));
 
-	अगर (!get_property(node, "phandle")
-	    && (phandle_क्रमmat & PHANDLE_EPAPR))
-		add_property(node, build_property("phandle", d, शून्य));
+	if (!get_property(node, "phandle")
+	    && (phandle_format & PHANDLE_EPAPR))
+		add_property(node, build_property("phandle", d, NULL));
 
-	/* If the node *करोes* have a phandle property, we must
+	/* If the node *does* have a phandle property, we must
 	 * be dealing with a self-referencing phandle, which will be
 	 * fixed up momentarily in the caller */
 
-	वापस node->phandle;
-पूर्ण
+	return node->phandle;
+}
 
-uपूर्णांक32_t guess_boot_cpuid(काष्ठा node *tree)
-अणु
-	काष्ठा node *cpus, *bootcpu;
-	काष्ठा property *reg;
+uint32_t guess_boot_cpuid(struct node *tree)
+{
+	struct node *cpus, *bootcpu;
+	struct property *reg;
 
 	cpus = get_node_by_path(tree, "/cpus");
-	अगर (!cpus)
-		वापस 0;
+	if (!cpus)
+		return 0;
 
 
 	bootcpu = cpus->children;
-	अगर (!bootcpu)
-		वापस 0;
+	if (!bootcpu)
+		return 0;
 
 	reg = get_property(bootcpu, "reg");
-	अगर (!reg || (reg->val.len != माप(uपूर्णांक32_t)))
-		वापस 0;
+	if (!reg || (reg->val.len != sizeof(uint32_t)))
+		return 0;
 
 	/* FIXME: Sanity check node? */
 
-	वापस propval_cell(reg);
-पूर्ण
+	return propval_cell(reg);
+}
 
-अटल पूर्णांक cmp_reserve_info(स्थिर व्योम *ax, स्थिर व्योम *bx)
-अणु
-	स्थिर काष्ठा reserve_info *a, *b;
+static int cmp_reserve_info(const void *ax, const void *bx)
+{
+	const struct reserve_info *a, *b;
 
-	a = *((स्थिर काष्ठा reserve_info * स्थिर *)ax);
-	b = *((स्थिर काष्ठा reserve_info * स्थिर *)bx);
+	a = *((const struct reserve_info * const *)ax);
+	b = *((const struct reserve_info * const *)bx);
 
-	अगर (a->address < b->address)
-		वापस -1;
-	अन्यथा अगर (a->address > b->address)
-		वापस 1;
-	अन्यथा अगर (a->size < b->size)
-		वापस -1;
-	अन्यथा अगर (a->size > b->size)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (a->address < b->address)
+		return -1;
+	else if (a->address > b->address)
+		return 1;
+	else if (a->size < b->size)
+		return -1;
+	else if (a->size > b->size)
+		return 1;
+	else
+		return 0;
+}
 
-अटल व्योम sort_reserve_entries(काष्ठा dt_info *dti)
-अणु
-	काष्ठा reserve_info *ri, **tbl;
-	पूर्णांक n = 0, i = 0;
+static void sort_reserve_entries(struct dt_info *dti)
+{
+	struct reserve_info *ri, **tbl;
+	int n = 0, i = 0;
 
-	क्रम (ri = dti->reservelist;
+	for (ri = dti->reservelist;
 	     ri;
 	     ri = ri->next)
 		n++;
 
-	अगर (n == 0)
-		वापस;
+	if (n == 0)
+		return;
 
-	tbl = xदो_स्मृति(n * माप(*tbl));
+	tbl = xmalloc(n * sizeof(*tbl));
 
-	क्रम (ri = dti->reservelist;
+	for (ri = dti->reservelist;
 	     ri;
 	     ri = ri->next)
 		tbl[i++] = ri;
 
-	क्विक(tbl, n, माप(*tbl), cmp_reserve_info);
+	qsort(tbl, n, sizeof(*tbl), cmp_reserve_info);
 
 	dti->reservelist = tbl[0];
-	क्रम (i = 0; i < (n-1); i++)
+	for (i = 0; i < (n-1); i++)
 		tbl[i]->next = tbl[i+1];
-	tbl[n-1]->next = शून्य;
+	tbl[n-1]->next = NULL;
 
-	मुक्त(tbl);
-पूर्ण
+	free(tbl);
+}
 
-अटल पूर्णांक cmp_prop(स्थिर व्योम *ax, स्थिर व्योम *bx)
-अणु
-	स्थिर काष्ठा property *a, *b;
+static int cmp_prop(const void *ax, const void *bx)
+{
+	const struct property *a, *b;
 
-	a = *((स्थिर काष्ठा property * स्थिर *)ax);
-	b = *((स्थिर काष्ठा property * स्थिर *)bx);
+	a = *((const struct property * const *)ax);
+	b = *((const struct property * const *)bx);
 
-	वापस म_भेद(a->name, b->name);
-पूर्ण
+	return strcmp(a->name, b->name);
+}
 
-अटल व्योम sort_properties(काष्ठा node *node)
-अणु
-	पूर्णांक n = 0, i = 0;
-	काष्ठा property *prop, **tbl;
+static void sort_properties(struct node *node)
+{
+	int n = 0, i = 0;
+	struct property *prop, **tbl;
 
-	क्रम_each_property_withdel(node, prop)
+	for_each_property_withdel(node, prop)
 		n++;
 
-	अगर (n == 0)
-		वापस;
+	if (n == 0)
+		return;
 
-	tbl = xदो_स्मृति(n * माप(*tbl));
+	tbl = xmalloc(n * sizeof(*tbl));
 
-	क्रम_each_property_withdel(node, prop)
+	for_each_property_withdel(node, prop)
 		tbl[i++] = prop;
 
-	क्विक(tbl, n, माप(*tbl), cmp_prop);
+	qsort(tbl, n, sizeof(*tbl), cmp_prop);
 
 	node->proplist = tbl[0];
-	क्रम (i = 0; i < (n-1); i++)
+	for (i = 0; i < (n-1); i++)
 		tbl[i]->next = tbl[i+1];
-	tbl[n-1]->next = शून्य;
+	tbl[n-1]->next = NULL;
 
-	मुक्त(tbl);
-पूर्ण
+	free(tbl);
+}
 
-अटल पूर्णांक cmp_subnode(स्थिर व्योम *ax, स्थिर व्योम *bx)
-अणु
-	स्थिर काष्ठा node *a, *b;
+static int cmp_subnode(const void *ax, const void *bx)
+{
+	const struct node *a, *b;
 
-	a = *((स्थिर काष्ठा node * स्थिर *)ax);
-	b = *((स्थिर काष्ठा node * स्थिर *)bx);
+	a = *((const struct node * const *)ax);
+	b = *((const struct node * const *)bx);
 
-	वापस म_भेद(a->name, b->name);
-पूर्ण
+	return strcmp(a->name, b->name);
+}
 
-अटल व्योम sort_subnodes(काष्ठा node *node)
-अणु
-	पूर्णांक n = 0, i = 0;
-	काष्ठा node *subnode, **tbl;
+static void sort_subnodes(struct node *node)
+{
+	int n = 0, i = 0;
+	struct node *subnode, **tbl;
 
-	क्रम_each_child_withdel(node, subnode)
+	for_each_child_withdel(node, subnode)
 		n++;
 
-	अगर (n == 0)
-		वापस;
+	if (n == 0)
+		return;
 
-	tbl = xदो_स्मृति(n * माप(*tbl));
+	tbl = xmalloc(n * sizeof(*tbl));
 
-	क्रम_each_child_withdel(node, subnode)
+	for_each_child_withdel(node, subnode)
 		tbl[i++] = subnode;
 
-	क्विक(tbl, n, माप(*tbl), cmp_subnode);
+	qsort(tbl, n, sizeof(*tbl), cmp_subnode);
 
 	node->children = tbl[0];
-	क्रम (i = 0; i < (n-1); i++)
+	for (i = 0; i < (n-1); i++)
 		tbl[i]->next_sibling = tbl[i+1];
-	tbl[n-1]->next_sibling = शून्य;
+	tbl[n-1]->next_sibling = NULL;
 
-	मुक्त(tbl);
-पूर्ण
+	free(tbl);
+}
 
-अटल व्योम sort_node(काष्ठा node *node)
-अणु
-	काष्ठा node *c;
+static void sort_node(struct node *node)
+{
+	struct node *c;
 
 	sort_properties(node);
 	sort_subnodes(node);
-	क्रम_each_child_withdel(node, c)
+	for_each_child_withdel(node, c)
 		sort_node(c);
-पूर्ण
+}
 
-व्योम sort_tree(काष्ठा dt_info *dti)
-अणु
+void sort_tree(struct dt_info *dti)
+{
 	sort_reserve_entries(dti);
 	sort_node(dti->dt);
-पूर्ण
+}
 
-/* utility helper to aव्योम code duplication */
-अटल काष्ठा node *build_and_name_child_node(काष्ठा node *parent, अक्षर *name)
-अणु
-	काष्ठा node *node;
+/* utility helper to avoid code duplication */
+static struct node *build_and_name_child_node(struct node *parent, char *name)
+{
+	struct node *node;
 
-	node = build_node(शून्य, शून्य, शून्य);
+	node = build_node(NULL, NULL, NULL);
 	name_node(node, xstrdup(name));
 	add_child(parent, node);
 
-	वापस node;
-पूर्ण
+	return node;
+}
 
-अटल काष्ठा node *build_root_node(काष्ठा node *dt, अक्षर *name)
-अणु
-	काष्ठा node *an;
+static struct node *build_root_node(struct node *dt, char *name)
+{
+	struct node *an;
 
 	an = get_subnode(dt, name);
-	अगर (!an)
+	if (!an)
 		an = build_and_name_child_node(dt, name);
 
-	अगर (!an)
+	if (!an)
 		die("Could not build root node /%s\n", name);
 
-	वापस an;
-पूर्ण
+	return an;
+}
 
-अटल bool any_label_tree(काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा node *c;
+static bool any_label_tree(struct dt_info *dti, struct node *node)
+{
+	struct node *c;
 
-	अगर (node->labels)
-		वापस true;
+	if (node->labels)
+		return true;
 
-	क्रम_each_child(node, c)
-		अगर (any_label_tree(dti, c))
-			वापस true;
+	for_each_child(node, c)
+		if (any_label_tree(dti, c))
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम generate_label_tree_पूर्णांकernal(काष्ठा dt_info *dti,
-					 काष्ठा node *an, काष्ठा node *node,
+static void generate_label_tree_internal(struct dt_info *dti,
+					 struct node *an, struct node *node,
 					 bool allocph)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा node *c;
-	काष्ठा property *p;
-	काष्ठा label *l;
+{
+	struct node *dt = dti->dt;
+	struct node *c;
+	struct property *p;
+	struct label *l;
 
-	/* अगर there are labels */
-	अगर (node->labels) अणु
+	/* if there are labels */
+	if (node->labels) {
 
 		/* now add the label in the node */
-		क्रम_each_label(node->labels, l) अणु
+		for_each_label(node->labels, l) {
 
-			/* check whether the label alपढ़ोy exists */
+			/* check whether the label already exists */
 			p = get_property(an, l->label);
-			अगर (p) अणु
-				ख_लिखो(मानक_त्रुटि, "WARNING: label %s already"
+			if (p) {
+				fprintf(stderr, "WARNING: label %s already"
 					" exists in /%s", l->label,
 					an->name);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			/* insert it */
 			p = build_property(l->label,
 				data_copy_escape_string(node->fullpath,
-						म_माप(node->fullpath)),
-				शून्य);
+						strlen(node->fullpath)),
+				NULL);
 			add_property(an, p);
-		पूर्ण
+		}
 
-		/* क्रमce allocation of a phandle क्रम this node */
-		अगर (allocph)
-			(व्योम)get_node_phandle(dt, node);
-	पूर्ण
+		/* force allocation of a phandle for this node */
+		if (allocph)
+			(void)get_node_phandle(dt, node);
+	}
 
-	क्रम_each_child(node, c)
-		generate_label_tree_पूर्णांकernal(dti, an, c, allocph);
-पूर्ण
+	for_each_child(node, c)
+		generate_label_tree_internal(dti, an, c, allocph);
+}
 
-अटल bool any_fixup_tree(काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा node *c;
-	काष्ठा property *prop;
-	काष्ठा marker *m;
+static bool any_fixup_tree(struct dt_info *dti, struct node *node)
+{
+	struct node *c;
+	struct property *prop;
+	struct marker *m;
 
-	क्रम_each_property(node, prop) अणु
+	for_each_property(node, prop) {
 		m = prop->val.markers;
-		क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
-			अगर (!get_node_by_ref(dti->dt, m->ref))
-				वापस true;
-		पूर्ण
-	पूर्ण
+		for_each_marker_of_type(m, REF_PHANDLE) {
+			if (!get_node_by_ref(dti->dt, m->ref))
+				return true;
+		}
+	}
 
-	क्रम_each_child(node, c) अणु
-		अगर (any_fixup_tree(dti, c))
-			वापस true;
-	पूर्ण
+	for_each_child(node, c) {
+		if (any_fixup_tree(dti, c))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम add_fixup_entry(काष्ठा dt_info *dti, काष्ठा node *fn,
-			    काष्ठा node *node, काष्ठा property *prop,
-			    काष्ठा marker *m)
-अणु
-	अक्षर *entry;
+static void add_fixup_entry(struct dt_info *dti, struct node *fn,
+			    struct node *node, struct property *prop,
+			    struct marker *m)
+{
+	char *entry;
 
 	/* m->ref can only be a REF_PHANDLE, but check anyway */
-	निश्चित(m->type == REF_PHANDLE);
+	assert(m->type == REF_PHANDLE);
 
 	/* there shouldn't be any ':' in the arguments */
-	अगर (म_अक्षर(node->fullpath, ':') || strchr(prop->name, ':'))
+	if (strchr(node->fullpath, ':') || strchr(prop->name, ':'))
 		die("arguments should not contain ':'\n");
 
-	xaप्र_लिखो(&entry, "%s:%s:%u",
+	xasprintf(&entry, "%s:%s:%u",
 			node->fullpath, prop->name, m->offset);
-	append_to_property(fn, m->ref, entry, म_माप(entry) + 1, TYPE_STRING);
+	append_to_property(fn, m->ref, entry, strlen(entry) + 1, TYPE_STRING);
 
-	मुक्त(entry);
-पूर्ण
+	free(entry);
+}
 
-अटल व्योम generate_fixups_tree_पूर्णांकernal(काष्ठा dt_info *dti,
-					  काष्ठा node *fn,
-					  काष्ठा node *node)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा node *c;
-	काष्ठा property *prop;
-	काष्ठा marker *m;
-	काष्ठा node *refnode;
+static void generate_fixups_tree_internal(struct dt_info *dti,
+					  struct node *fn,
+					  struct node *node)
+{
+	struct node *dt = dti->dt;
+	struct node *c;
+	struct property *prop;
+	struct marker *m;
+	struct node *refnode;
 
-	क्रम_each_property(node, prop) अणु
+	for_each_property(node, prop) {
 		m = prop->val.markers;
-		क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
+		for_each_marker_of_type(m, REF_PHANDLE) {
 			refnode = get_node_by_ref(dt, m->ref);
-			अगर (!refnode)
+			if (!refnode)
 				add_fixup_entry(dti, fn, node, prop, m);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_child(node, c)
-		generate_fixups_tree_पूर्णांकernal(dti, fn, c);
-पूर्ण
+	for_each_child(node, c)
+		generate_fixups_tree_internal(dti, fn, c);
+}
 
-अटल bool any_local_fixup_tree(काष्ठा dt_info *dti, काष्ठा node *node)
-अणु
-	काष्ठा node *c;
-	काष्ठा property *prop;
-	काष्ठा marker *m;
+static bool any_local_fixup_tree(struct dt_info *dti, struct node *node)
+{
+	struct node *c;
+	struct property *prop;
+	struct marker *m;
 
-	क्रम_each_property(node, prop) अणु
+	for_each_property(node, prop) {
 		m = prop->val.markers;
-		क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
-			अगर (get_node_by_ref(dti->dt, m->ref))
-				वापस true;
-		पूर्ण
-	पूर्ण
+		for_each_marker_of_type(m, REF_PHANDLE) {
+			if (get_node_by_ref(dti->dt, m->ref))
+				return true;
+		}
+	}
 
-	क्रम_each_child(node, c) अणु
-		अगर (any_local_fixup_tree(dti, c))
-			वापस true;
-	पूर्ण
+	for_each_child(node, c) {
+		if (any_local_fixup_tree(dti, c))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम add_local_fixup_entry(काष्ठा dt_info *dti,
-		काष्ठा node *lfn, काष्ठा node *node,
-		काष्ठा property *prop, काष्ठा marker *m,
-		काष्ठा node *refnode)
-अणु
-	काष्ठा node *wn, *nwn;	/* local fixup node, walk node, new */
+static void add_local_fixup_entry(struct dt_info *dti,
+		struct node *lfn, struct node *node,
+		struct property *prop, struct marker *m,
+		struct node *refnode)
+{
+	struct node *wn, *nwn;	/* local fixup node, walk node, new */
 	fdt32_t value_32;
-	अक्षर **compp;
-	पूर्णांक i, depth;
+	char **compp;
+	int i, depth;
 
 	/* walk back retrieving depth */
 	depth = 0;
-	क्रम (wn = node; wn; wn = wn->parent)
+	for (wn = node; wn; wn = wn->parent)
 		depth++;
 
 	/* allocate name array */
-	compp = xदो_स्मृति(माप(*compp) * depth);
+	compp = xmalloc(sizeof(*compp) * depth);
 
 	/* store names in the array */
-	क्रम (wn = node, i = depth - 1; wn; wn = wn->parent, i--)
+	for (wn = node, i = depth - 1; wn; wn = wn->parent, i--)
 		compp[i] = wn->name;
 
-	/* walk the path components creating nodes अगर they करोn't exist */
-	क्रम (wn = lfn, i = 1; i < depth; i++, wn = nwn) अणु
-		/* अगर no node exists, create it */
+	/* walk the path components creating nodes if they don't exist */
+	for (wn = lfn, i = 1; i < depth; i++, wn = nwn) {
+		/* if no node exists, create it */
 		nwn = get_subnode(wn, compp[i]);
-		अगर (!nwn)
+		if (!nwn)
 			nwn = build_and_name_child_node(wn, compp[i]);
-	पूर्ण
+	}
 
-	मुक्त(compp);
+	free(compp);
 
 	value_32 = cpu_to_fdt32(m->offset);
-	append_to_property(wn, prop->name, &value_32, माप(value_32), TYPE_UINT32);
-पूर्ण
+	append_to_property(wn, prop->name, &value_32, sizeof(value_32), TYPE_UINT32);
+}
 
-अटल व्योम generate_local_fixups_tree_पूर्णांकernal(काष्ठा dt_info *dti,
-						काष्ठा node *lfn,
-						काष्ठा node *node)
-अणु
-	काष्ठा node *dt = dti->dt;
-	काष्ठा node *c;
-	काष्ठा property *prop;
-	काष्ठा marker *m;
-	काष्ठा node *refnode;
+static void generate_local_fixups_tree_internal(struct dt_info *dti,
+						struct node *lfn,
+						struct node *node)
+{
+	struct node *dt = dti->dt;
+	struct node *c;
+	struct property *prop;
+	struct marker *m;
+	struct node *refnode;
 
-	क्रम_each_property(node, prop) अणु
+	for_each_property(node, prop) {
 		m = prop->val.markers;
-		क्रम_each_marker_of_type(m, REF_PHANDLE) अणु
+		for_each_marker_of_type(m, REF_PHANDLE) {
 			refnode = get_node_by_ref(dt, m->ref);
-			अगर (refnode)
+			if (refnode)
 				add_local_fixup_entry(dti, lfn, node, prop, m, refnode);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_child(node, c)
-		generate_local_fixups_tree_पूर्णांकernal(dti, lfn, c);
-पूर्ण
+	for_each_child(node, c)
+		generate_local_fixups_tree_internal(dti, lfn, c);
+}
 
-व्योम generate_label_tree(काष्ठा dt_info *dti, अक्षर *name, bool allocph)
-अणु
-	अगर (!any_label_tree(dti, dti->dt))
-		वापस;
-	generate_label_tree_पूर्णांकernal(dti, build_root_node(dti->dt, name),
+void generate_label_tree(struct dt_info *dti, char *name, bool allocph)
+{
+	if (!any_label_tree(dti, dti->dt))
+		return;
+	generate_label_tree_internal(dti, build_root_node(dti->dt, name),
 				     dti->dt, allocph);
-पूर्ण
+}
 
-व्योम generate_fixups_tree(काष्ठा dt_info *dti, अक्षर *name)
-अणु
-	अगर (!any_fixup_tree(dti, dti->dt))
-		वापस;
-	generate_fixups_tree_पूर्णांकernal(dti, build_root_node(dti->dt, name),
+void generate_fixups_tree(struct dt_info *dti, char *name)
+{
+	if (!any_fixup_tree(dti, dti->dt))
+		return;
+	generate_fixups_tree_internal(dti, build_root_node(dti->dt, name),
 				      dti->dt);
-पूर्ण
+}
 
-व्योम generate_local_fixups_tree(काष्ठा dt_info *dti, अक्षर *name)
-अणु
-	अगर (!any_local_fixup_tree(dti, dti->dt))
-		वापस;
-	generate_local_fixups_tree_पूर्णांकernal(dti, build_root_node(dti->dt, name),
+void generate_local_fixups_tree(struct dt_info *dti, char *name)
+{
+	if (!any_local_fixup_tree(dti, dti->dt))
+		return;
+	generate_local_fixups_tree_internal(dti, build_root_node(dti->dt, name),
 					    dti->dt);
-पूर्ण
+}

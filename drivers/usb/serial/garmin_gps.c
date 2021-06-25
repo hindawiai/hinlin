@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Garmin GPS driver
  *
  * Copyright (C) 2006-2011 Hermann Kneissel herkne@gmx.de
  *
  * The latest version of the driver can be found at
- * http://sourceक्रमge.net/projects/garmin-gps/
+ * http://sourceforge.net/projects/garmin-gps/
  *
  * This driver has been derived from v2.1 of the visor driver.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/module.h>
+#include <linux/spinlock.h>
+#include <linux/uaccess.h>
+#include <linux/atomic.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
 
-/* the mode to be set when the port ist खोलोed */
-अटल पूर्णांक initial_mode = 1;
+/* the mode to be set when the port ist opened */
+static int initial_mode = 1;
 
-#घोषणा GARMIN_VENDOR_ID             0x091E
+#define GARMIN_VENDOR_ID             0x091E
 
 /*
- * Version Inक्रमmation
+ * Version Information
  */
 
-#घोषणा VERSION_MAJOR	0
-#घोषणा VERSION_MINOR	36
+#define VERSION_MAJOR	0
+#define VERSION_MINOR	36
 
-#घोषणा _STR(s) #s
-#घोषणा _DRIVER_VERSION(a, b) "v" _STR(a) "." _STR(b)
-#घोषणा DRIVER_VERSION _DRIVER_VERSION(VERSION_MAJOR, VERSION_MINOR)
-#घोषणा DRIVER_AUTHOR "hermann kneissel"
-#घोषणा DRIVER_DESC "garmin gps driver"
+#define _STR(s) #s
+#define _DRIVER_VERSION(a, b) "v" _STR(a) "." _STR(b)
+#define DRIVER_VERSION _DRIVER_VERSION(VERSION_MAJOR, VERSION_MINOR)
+#define DRIVER_AUTHOR "hermann kneissel"
+#define DRIVER_DESC "garmin gps driver"
 
-/* error codes वापसed by the driver */
-#घोषणा EINVPKT	1000	/* invalid packet काष्ठाure */
+/* error codes returned by the driver */
+#define EINVPKT	1000	/* invalid packet structure */
 
 
 /* size of the header of a packet using the usb protocol */
-#घोषणा GARMIN_PKTHDR_LENGTH	12
+#define GARMIN_PKTHDR_LENGTH	12
 
 /* max. possible size of a packet using the serial protocol */
-#घोषणा MAX_SERIAL_PKT_SIZ (3 + 255 + 3)
+#define MAX_SERIAL_PKT_SIZ (3 + 255 + 3)
 
-/*  max. possible size of a packet with worst हाल stuffing */
-#घोषणा MAX_SERIAL_PKT_SIZ_STUFFED (MAX_SERIAL_PKT_SIZ + 256)
+/*  max. possible size of a packet with worst case stuffing */
+#define MAX_SERIAL_PKT_SIZ_STUFFED (MAX_SERIAL_PKT_SIZ + 256)
 
 /* size of a buffer able to hold a complete (no stuffing) packet
- * (the करोcument protocol करोes not contain packets with a larger
- *  size, but in theory a packet may be 64k+12 bytes - अगर in
+ * (the document protocol does not contain packets with a larger
+ *  size, but in theory a packet may be 64k+12 bytes - if in
  *  later protocol versions larger packet sizes occur, this value
  *  should be increased accordingly, so the input buffer is always
  *  large enough the store a complete packet inclusive header) */
-#घोषणा GPS_IN_बफ_मान  (GARMIN_PKTHDR_LENGTH+MAX_SERIAL_PKT_SIZ)
+#define GPS_IN_BUFSIZ  (GARMIN_PKTHDR_LENGTH+MAX_SERIAL_PKT_SIZ)
 
 /* size of a buffer able to hold a complete (incl. stuffing) packet */
-#घोषणा GPS_OUT_बफ_मान (GARMIN_PKTHDR_LENGTH+MAX_SERIAL_PKT_SIZ_STUFFED)
+#define GPS_OUT_BUFSIZ (GARMIN_PKTHDR_LENGTH+MAX_SERIAL_PKT_SIZ_STUFFED)
 
 /* where to place the packet id of a serial packet, so we can
  * prepend the usb-packet header without the need to move the
  * packets data */
-#घोषणा GSP_INITIAL_OFFSET (GARMIN_PKTHDR_LENGTH-2)
+#define GSP_INITIAL_OFFSET (GARMIN_PKTHDR_LENGTH-2)
 
-/* max. size of incoming निजी packets (header+1 param) */
-#घोषणा PRIVPKTSIZ (GARMIN_PKTHDR_LENGTH+4)
+/* max. size of incoming private packets (header+1 param) */
+#define PRIVPKTSIZ (GARMIN_PKTHDR_LENGTH+4)
 
-#घोषणा GARMIN_LAYERID_TRANSPORT  0
-#घोषणा GARMIN_LAYERID_APPL      20
-/* our own layer-id to use क्रम some control mechanisms */
-#घोषणा GARMIN_LAYERID_PRIVATE	0x01106E4B
+#define GARMIN_LAYERID_TRANSPORT  0
+#define GARMIN_LAYERID_APPL      20
+/* our own layer-id to use for some control mechanisms */
+#define GARMIN_LAYERID_PRIVATE	0x01106E4B
 
-#घोषणा GARMIN_PKTID_PVT_DATA	51
-#घोषणा GARMIN_PKTID_L001_COMMAND_DATA 10
+#define GARMIN_PKTID_PVT_DATA	51
+#define GARMIN_PKTID_L001_COMMAND_DATA 10
 
-#घोषणा CMND_ABORT_TRANSFER 0
+#define CMND_ABORT_TRANSFER 0
 
-/* packet ids used in निजी layer */
-#घोषणा PRIV_PKTID_SET_DEBUG	1
-#घोषणा PRIV_PKTID_SET_MODE	2
-#घोषणा PRIV_PKTID_INFO_REQ	3
-#घोषणा PRIV_PKTID_INFO_RESP	4
-#घोषणा PRIV_PKTID_RESET_REQ	5
-#घोषणा PRIV_PKTID_SET_DEF_MODE	6
+/* packet ids used in private layer */
+#define PRIV_PKTID_SET_DEBUG	1
+#define PRIV_PKTID_SET_MODE	2
+#define PRIV_PKTID_INFO_REQ	3
+#define PRIV_PKTID_INFO_RESP	4
+#define PRIV_PKTID_RESET_REQ	5
+#define PRIV_PKTID_SET_DEF_MODE	6
 
 
-#घोषणा ETX	0x03
-#घोषणा DLE	0x10
-#घोषणा ACK	0x06
-#घोषणा NAK	0x15
+#define ETX	0x03
+#define DLE	0x10
+#define ACK	0x06
+#define NAK	0x15
 
-/* काष्ठाure used to queue incoming packets */
-काष्ठा garmin_packet अणु
-	काष्ठा list_head  list;
-	पूर्णांक               seq;
+/* structure used to queue incoming packets */
+struct garmin_packet {
+	struct list_head  list;
+	int               seq;
 	/* the real size of the data array, always > 0 */
-	पूर्णांक               size;
+	int               size;
 	__u8              data[];
-पूर्ण;
+};
 
-/* काष्ठाure used to keep the current state of the driver */
-काष्ठा garmin_data अणु
+/* structure used to keep the current state of the driver */
+struct garmin_data {
 	__u8   state;
 	__u16  flags;
 	__u8   mode;
 	__u8   count;
 	__u8   pkt_id;
 	__u32  serial_num;
-	काष्ठा समयr_list समयr;
-	काष्ठा usb_serial_port *port;
-	पूर्णांक    seq_counter;
-	पूर्णांक    insize;
-	पूर्णांक    outsize;
-	__u8   inbuffer [GPS_IN_बफ_मान];  /* tty -> usb */
-	__u8   outbuffer[GPS_OUT_बफ_मान]; /* usb -> tty */
+	struct timer_list timer;
+	struct usb_serial_port *port;
+	int    seq_counter;
+	int    insize;
+	int    outsize;
+	__u8   inbuffer [GPS_IN_BUFSIZ];  /* tty -> usb */
+	__u8   outbuffer[GPS_OUT_BUFSIZ]; /* usb -> tty */
 	__u8   privpkt[4*6];
 	spinlock_t lock;
-	काष्ठा list_head pktlist;
-	काष्ठा usb_anchor ग_लिखो_urbs;
-पूर्ण;
+	struct list_head pktlist;
+	struct usb_anchor write_urbs;
+};
 
 
-#घोषणा STATE_NEW            0
-#घोषणा STATE_INITIAL_DELAY  1
-#घोषणा STATE_TIMEOUT        2
-#घोषणा STATE_SESSION_REQ1   3
-#घोषणा STATE_SESSION_REQ2   4
-#घोषणा STATE_ACTIVE         5
+#define STATE_NEW            0
+#define STATE_INITIAL_DELAY  1
+#define STATE_TIMEOUT        2
+#define STATE_SESSION_REQ1   3
+#define STATE_SESSION_REQ2   4
+#define STATE_ACTIVE         5
 
-#घोषणा STATE_RESET	     8
-#घोषणा STATE_DISCONNECTED   9
-#घोषणा STATE_WAIT_TTY_ACK  10
-#घोषणा STATE_GSP_WAIT_DATA 11
+#define STATE_RESET	     8
+#define STATE_DISCONNECTED   9
+#define STATE_WAIT_TTY_ACK  10
+#define STATE_GSP_WAIT_DATA 11
 
-#घोषणा MODE_NATIVE          0
-#घोषणा MODE_GARMIN_SERIAL   1
+#define MODE_NATIVE          0
+#define MODE_GARMIN_SERIAL   1
 
 /* Flags used in garmin_data.flags: */
-#घोषणा FLAGS_SESSION_REPLY_MASK  0x00C0
-#घोषणा FLAGS_SESSION_REPLY1_SEEN 0x0080
-#घोषणा FLAGS_SESSION_REPLY2_SEEN 0x0040
-#घोषणा FLAGS_BULK_IN_ACTIVE      0x0020
-#घोषणा FLAGS_BULK_IN_RESTART     0x0010
-#घोषणा FLAGS_THROTTLED           0x0008
-#घोषणा APP_REQ_SEEN              0x0004
-#घोषणा APP_RESP_SEEN             0x0002
-#घोषणा CLEAR_HALT_REQUIRED       0x0001
+#define FLAGS_SESSION_REPLY_MASK  0x00C0
+#define FLAGS_SESSION_REPLY1_SEEN 0x0080
+#define FLAGS_SESSION_REPLY2_SEEN 0x0040
+#define FLAGS_BULK_IN_ACTIVE      0x0020
+#define FLAGS_BULK_IN_RESTART     0x0010
+#define FLAGS_THROTTLED           0x0008
+#define APP_REQ_SEEN              0x0004
+#define APP_RESP_SEEN             0x0002
+#define CLEAR_HALT_REQUIRED       0x0001
 
-#घोषणा FLAGS_QUEUING             0x0100
-#घोषणा FLAGS_DROP_DATA           0x0800
+#define FLAGS_QUEUING             0x0100
+#define FLAGS_DROP_DATA           0x0800
 
-#घोषणा FLAGS_GSP_SKIP            0x1000
-#घोषणा FLAGS_GSP_DLESEEN         0x2000
+#define FLAGS_GSP_SKIP            0x1000
+#define FLAGS_GSP_DLESEEN         0x2000
 
 
 
@@ -168,87 +167,87 @@
 
 
 /* function prototypes */
-अटल पूर्णांक gsp_next_packet(काष्ठा garmin_data *garmin_data_p);
-अटल पूर्णांक garmin_ग_लिखो_bulk(काष्ठा usb_serial_port *port,
-			     स्थिर अचिन्हित अक्षर *buf, पूर्णांक count,
-			     पूर्णांक dismiss_ack);
+static int gsp_next_packet(struct garmin_data *garmin_data_p);
+static int garmin_write_bulk(struct usb_serial_port *port,
+			     const unsigned char *buf, int count,
+			     int dismiss_ack);
 
 /* some special packets to be send or received */
-अटल अचिन्हित अक्षर स्थिर GARMIN_START_SESSION_REQ[]
-	= अणु 0, 0, 0, 0,  5, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर GARMIN_START_SESSION_REPLY[]
-	= अणु 0, 0, 0, 0,  6, 0, 0, 0, 4, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर GARMIN_BULK_IN_AVAIL_REPLY[]
-	= अणु 0, 0, 0, 0,  2, 0, 0, 0, 0, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर GARMIN_STOP_TRANSFER_REQ[]
-	= अणु 20, 0, 0, 0,  10, 0, 0, 0, 2, 0, 0, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर GARMIN_STOP_TRANSFER_REQ_V2[]
-	= अणु 20, 0, 0, 0,  10, 0, 0, 0, 1, 0, 0, 0, 0 पूर्ण;
+static unsigned char const GARMIN_START_SESSION_REQ[]
+	= { 0, 0, 0, 0,  5, 0, 0, 0, 0, 0, 0, 0 };
+static unsigned char const GARMIN_START_SESSION_REPLY[]
+	= { 0, 0, 0, 0,  6, 0, 0, 0, 4, 0, 0, 0 };
+static unsigned char const GARMIN_BULK_IN_AVAIL_REPLY[]
+	= { 0, 0, 0, 0,  2, 0, 0, 0, 0, 0, 0, 0 };
+static unsigned char const GARMIN_STOP_TRANSFER_REQ[]
+	= { 20, 0, 0, 0,  10, 0, 0, 0, 2, 0, 0, 0, 0, 0 };
+static unsigned char const GARMIN_STOP_TRANSFER_REQ_V2[]
+	= { 20, 0, 0, 0,  10, 0, 0, 0, 1, 0, 0, 0, 0 };
 
-/* packets currently unused, left as करोcumentation */
-#अगर 0
-अटल अचिन्हित अक्षर स्थिर GARMIN_APP_LAYER_REPLY[]
-	= अणु 0x14, 0, 0, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर GARMIN_START_PVT_REQ[]
-	= अणु 20, 0, 0, 0,  10, 0, 0, 0, 2, 0, 0, 0, 49, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर GARMIN_STOP_PVT_REQ[]
-	= अणु 20, 0, 0, 0,  10, 0, 0, 0, 2, 0, 0, 0, 50, 0 पूर्ण;
-अटल अचिन्हित अक्षर स्थिर PRIVATE_REQ[]
-	=    अणु 0x4B, 0x6E, 0x10, 0x01,  0xFF, 0, 0, 0, 0xFF, 0, 0, 0 पूर्ण;
-#पूर्ण_अगर
+/* packets currently unused, left as documentation */
+#if 0
+static unsigned char const GARMIN_APP_LAYER_REPLY[]
+	= { 0x14, 0, 0, 0 };
+static unsigned char const GARMIN_START_PVT_REQ[]
+	= { 20, 0, 0, 0,  10, 0, 0, 0, 2, 0, 0, 0, 49, 0 };
+static unsigned char const GARMIN_STOP_PVT_REQ[]
+	= { 20, 0, 0, 0,  10, 0, 0, 0, 2, 0, 0, 0, 50, 0 };
+static unsigned char const PRIVATE_REQ[]
+	=    { 0x4B, 0x6E, 0x10, 0x01,  0xFF, 0, 0, 0, 0xFF, 0, 0, 0 };
+#endif
 
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+static const struct usb_device_id id_table[] = {
 	/* the same device id seems to be used by all
 	   usb enabled GPS devices */
-	अणु USB_DEVICE(GARMIN_VENDOR_ID, 3) पूर्ण,
-	अणु पूर्ण					/* Terminating entry */
-पूर्ण;
+	{ USB_DEVICE(GARMIN_VENDOR_ID, 3) },
+	{ }					/* Terminating entry */
+};
 MODULE_DEVICE_TABLE(usb, id_table);
 
 
-अटल अंतरभूत पूर्णांक getLayerId(स्थिर __u8 *usbPacket)
-अणु
-	वापस __le32_to_cpup((__le32 *)(usbPacket));
-पूर्ण
+static inline int getLayerId(const __u8 *usbPacket)
+{
+	return __le32_to_cpup((__le32 *)(usbPacket));
+}
 
-अटल अंतरभूत पूर्णांक getPacketId(स्थिर __u8 *usbPacket)
-अणु
-	वापस __le32_to_cpup((__le32 *)(usbPacket+4));
-पूर्ण
+static inline int getPacketId(const __u8 *usbPacket)
+{
+	return __le32_to_cpup((__le32 *)(usbPacket+4));
+}
 
-अटल अंतरभूत पूर्णांक getDataLength(स्थिर __u8 *usbPacket)
-अणु
-	वापस __le32_to_cpup((__le32 *)(usbPacket+8));
-पूर्ण
+static inline int getDataLength(const __u8 *usbPacket)
+{
+	return __le32_to_cpup((__le32 *)(usbPacket+8));
+}
 
 
 /*
- * check अगर the usb-packet in buf contains an पात-transfer command.
- * (अगर yes, all queued data will be dropped)
+ * check if the usb-packet in buf contains an abort-transfer command.
+ * (if yes, all queued data will be dropped)
  */
-अटल अंतरभूत पूर्णांक isAbortTrfCmnd(स्थिर अचिन्हित अक्षर *buf)
-अणु
-	अगर (स_भेद(buf, GARMIN_STOP_TRANSFER_REQ,
-			माप(GARMIN_STOP_TRANSFER_REQ)) == 0 ||
-	    स_भेद(buf, GARMIN_STOP_TRANSFER_REQ_V2,
-			माप(GARMIN_STOP_TRANSFER_REQ_V2)) == 0)
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+static inline int isAbortTrfCmnd(const unsigned char *buf)
+{
+	if (memcmp(buf, GARMIN_STOP_TRANSFER_REQ,
+			sizeof(GARMIN_STOP_TRANSFER_REQ)) == 0 ||
+	    memcmp(buf, GARMIN_STOP_TRANSFER_REQ_V2,
+			sizeof(GARMIN_STOP_TRANSFER_REQ_V2)) == 0)
+		return 1;
+	else
+		return 0;
+}
 
 
 
-अटल व्योम send_to_tty(काष्ठा usb_serial_port *port,
-			अक्षर *data, अचिन्हित पूर्णांक actual_length)
-अणु
-	अगर (actual_length) अणु
+static void send_to_tty(struct usb_serial_port *port,
+			char *data, unsigned int actual_length)
+{
+	if (actual_length) {
 		usb_serial_debug_data(&port->dev, __func__, actual_length, data);
 		tty_insert_flip_string(&port->port, data, actual_length);
 		tty_flip_buffer_push(&port->port);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /******************************************************************************
@@ -256,25 +255,25 @@ MODULE_DEVICE_TABLE(usb, id_table);
  ******************************************************************************/
 
 /*
- * queue a received (usb-)packet क्रम later processing
+ * queue a received (usb-)packet for later processing
  */
-अटल पूर्णांक pkt_add(काष्ठा garmin_data *garmin_data_p,
-		   अचिन्हित अक्षर *data, अचिन्हित पूर्णांक data_length)
-अणु
-	पूर्णांक state = 0;
-	पूर्णांक result = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा garmin_packet *pkt;
+static int pkt_add(struct garmin_data *garmin_data_p,
+		   unsigned char *data, unsigned int data_length)
+{
+	int state = 0;
+	int result = 0;
+	unsigned long flags;
+	struct garmin_packet *pkt;
 
 	/* process only packets containing data ... */
-	अगर (data_length) अणु
-		pkt = kदो_स्मृति(माप(काष्ठा garmin_packet)+data_length,
+	if (data_length) {
+		pkt = kmalloc(sizeof(struct garmin_packet)+data_length,
 								GFP_ATOMIC);
-		अगर (!pkt)
-			वापस 0;
+		if (!pkt)
+			return 0;
 
 		pkt->size = data_length;
-		स_नकल(pkt->data, data, data_length);
+		memcpy(pkt->data, data, data_length);
 
 		spin_lock_irqsave(&garmin_data_p->lock, flags);
 		garmin_data_p->flags |= FLAGS_QUEUING;
@@ -288,45 +287,45 @@ MODULE_DEVICE_TABLE(usb, id_table);
 			"%s - added: pkt: %d - %d bytes\n", __func__,
 			pkt->seq, data_length);
 
-		/* in serial mode, अगर someone is रुकोing क्रम data from
+		/* in serial mode, if someone is waiting for data from
 		   the device, convert and send the next packet to tty. */
-		अगर (result && (state == STATE_GSP_WAIT_DATA))
+		if (result && (state == STATE_GSP_WAIT_DATA))
 			gsp_next_packet(garmin_data_p);
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
 
 /* get the next pending packet */
-अटल काष्ठा garmin_packet *pkt_pop(काष्ठा garmin_data *garmin_data_p)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा garmin_packet *result = शून्य;
+static struct garmin_packet *pkt_pop(struct garmin_data *garmin_data_p)
+{
+	unsigned long flags;
+	struct garmin_packet *result = NULL;
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
-	अगर (!list_empty(&garmin_data_p->pktlist)) अणु
-		result = (काष्ठा garmin_packet *)garmin_data_p->pktlist.next;
+	if (!list_empty(&garmin_data_p->pktlist)) {
+		result = (struct garmin_packet *)garmin_data_p->pktlist.next;
 		list_del(&result->list);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
-	वापस result;
-पूर्ण
+	return result;
+}
 
 
-/* मुक्त up all queued data */
-अटल व्योम pkt_clear(काष्ठा garmin_data *garmin_data_p)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा garmin_packet *result = शून्य;
+/* free up all queued data */
+static void pkt_clear(struct garmin_data *garmin_data_p)
+{
+	unsigned long flags;
+	struct garmin_packet *result = NULL;
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
-	जबतक (!list_empty(&garmin_data_p->pktlist)) अणु
-		result = (काष्ठा garmin_packet *)garmin_data_p->pktlist.next;
+	while (!list_empty(&garmin_data_p->pktlist)) {
+		result = (struct garmin_packet *)garmin_data_p->pktlist.next;
 		list_del(&result->list);
-		kमुक्त(result);
-	पूर्ण
+		kfree(result);
+	}
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
-पूर्ण
+}
 
 
 /******************************************************************************
@@ -334,12 +333,12 @@ MODULE_DEVICE_TABLE(usb, id_table);
  ******************************************************************************/
 
 /* send an ack packet back to the tty */
-अटल पूर्णांक gsp_send_ack(काष्ठा garmin_data *garmin_data_p, __u8 pkt_id)
-अणु
+static int gsp_send_ack(struct garmin_data *garmin_data_p, __u8 pkt_id)
+{
 	__u8 pkt[10];
 	__u8 cksum = 0;
 	__u8 *ptr = pkt;
-	अचिन्हित  l = 0;
+	unsigned  l = 0;
 
 	dev_dbg(&garmin_data_p->port->dev, "%s - pkt-id: 0x%X.\n", __func__,
 			pkt_id);
@@ -354,7 +353,7 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	*ptr++ = pkt_id;
 	cksum += pkt_id;
 
-	अगर (pkt_id == DLE)
+	if (pkt_id == DLE)
 		*ptr++ = DLE;
 
 	*ptr++ = 0;
@@ -365,116 +364,116 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	l = ptr-pkt;
 
 	send_to_tty(garmin_data_p->port, pkt, l);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /*
- * called क्रम a complete packet received from tty layer
+ * called for a complete packet received from tty layer
  *
  * the complete packet (pktid ... cksum) is in garmin_data_p->inbuf starting
  * at GSP_INITIAL_OFFSET.
  *
- * count - number of bytes in the input buffer including space reserved क्रम
+ * count - number of bytes in the input buffer including space reserved for
  *         the usb header: GSP_INITIAL_OFFSET + number of bytes in packet
  *         (including pkt-id, data-length a. cksum)
  */
-अटल पूर्णांक gsp_rec_packet(काष्ठा garmin_data *garmin_data_p, पूर्णांक count)
-अणु
-	काष्ठा device *dev = &garmin_data_p->port->dev;
-	अचिन्हित दीर्घ flags;
-	स्थिर __u8 *recpkt = garmin_data_p->inbuffer+GSP_INITIAL_OFFSET;
+static int gsp_rec_packet(struct garmin_data *garmin_data_p, int count)
+{
+	struct device *dev = &garmin_data_p->port->dev;
+	unsigned long flags;
+	const __u8 *recpkt = garmin_data_p->inbuffer+GSP_INITIAL_OFFSET;
 	__le32 *usbdata = (__le32 *) garmin_data_p->inbuffer;
-	पूर्णांक cksum = 0;
-	पूर्णांक n = 0;
-	पूर्णांक pktid = recpkt[0];
-	पूर्णांक size = recpkt[1];
+	int cksum = 0;
+	int n = 0;
+	int pktid = recpkt[0];
+	int size = recpkt[1];
 
 	usb_serial_debug_data(&garmin_data_p->port->dev, __func__,
 			      count-GSP_INITIAL_OFFSET, recpkt);
 
-	अगर (size != (count-GSP_INITIAL_OFFSET-3)) अणु
+	if (size != (count-GSP_INITIAL_OFFSET-3)) {
 		dev_dbg(dev, "%s - invalid size, expected %d bytes, got %d\n",
 			__func__, size, (count-GSP_INITIAL_OFFSET-3));
-		वापस -EINVPKT;
-	पूर्ण
+		return -EINVPKT;
+	}
 
 	cksum += *recpkt++;
 	cksum += *recpkt++;
 
-	/* sanity check, हटाओ after test ... */
-	अगर ((__u8 *)&(usbdata[3]) != recpkt) अणु
+	/* sanity check, remove after test ... */
+	if ((__u8 *)&(usbdata[3]) != recpkt) {
 		dev_dbg(dev, "%s - ptr mismatch %p - %p\n", __func__,
 			&(usbdata[4]), recpkt);
-		वापस -EINVPKT;
-	पूर्ण
+		return -EINVPKT;
+	}
 
-	जबतक (n < size) अणु
+	while (n < size) {
 		cksum += *recpkt++;
 		n++;
-	पूर्ण
+	}
 
-	अगर (((cksum + *recpkt) & 0xff) != 0) अणु
+	if (((cksum + *recpkt) & 0xff) != 0) {
 		dev_dbg(dev, "%s - invalid checksum, expected %02x, got %02x\n",
 			__func__, -cksum & 0xff, *recpkt);
-		वापस -EINVPKT;
-	पूर्ण
+		return -EINVPKT;
+	}
 
 	usbdata[0] = __cpu_to_le32(GARMIN_LAYERID_APPL);
 	usbdata[1] = __cpu_to_le32(pktid);
 	usbdata[2] = __cpu_to_le32(size);
 
-	garmin_ग_लिखो_bulk(garmin_data_p->port, garmin_data_p->inbuffer,
+	garmin_write_bulk(garmin_data_p->port, garmin_data_p->inbuffer,
 			   GARMIN_PKTHDR_LENGTH+size, 0);
 
-	/* अगर this was an पात-transfer command, flush all
+	/* if this was an abort-transfer command, flush all
 	   queued data. */
-	अगर (isAbortTrfCmnd(garmin_data_p->inbuffer)) अणु
+	if (isAbortTrfCmnd(garmin_data_p->inbuffer)) {
 		spin_lock_irqsave(&garmin_data_p->lock, flags);
 		garmin_data_p->flags |= FLAGS_DROP_DATA;
 		spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 		pkt_clear(garmin_data_p);
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 
 
 /*
- * Called क्रम data received from tty
+ * Called for data received from tty
  *
- * buf contains the data पढ़ो, it may span more than one packet or even
+ * buf contains the data read, it may span more than one packet or even
  * incomplete packets
  *
  * input record should be a serial-record, but it may not be complete.
- * Copy it पूर्णांकo our local buffer, until an etx is seen (or an error
+ * Copy it into our local buffer, until an etx is seen (or an error
  * occurs).
- * Once the record is complete, convert पूर्णांकo a usb packet and send it
+ * Once the record is complete, convert into a usb packet and send it
  * to the bulk pipe, send an ack back to the tty.
  *
  * If the input is an ack, just send the last queued packet to the
  * tty layer.
  *
- * अगर the input is an पात command, drop all queued data.
+ * if the input is an abort command, drop all queued data.
  */
 
-अटल पूर्णांक gsp_receive(काष्ठा garmin_data *garmin_data_p,
-		       स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा device *dev = &garmin_data_p->port->dev;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक offs = 0;
-	पूर्णांक ack_or_nak_seen = 0;
+static int gsp_receive(struct garmin_data *garmin_data_p,
+		       const unsigned char *buf, int count)
+{
+	struct device *dev = &garmin_data_p->port->dev;
+	unsigned long flags;
+	int offs = 0;
+	int ack_or_nak_seen = 0;
 	__u8 *dest;
-	पूर्णांक size;
-	/* dleSeen: set अगर last byte पढ़ो was a DLE */
-	पूर्णांक dleSeen;
-	/* skip: अगर set, skip incoming data until possible start of
+	int size;
+	/* dleSeen: set if last byte read was a DLE */
+	int dleSeen;
+	/* skip: if set, skip incoming data until possible start of
 	 *       new packet
 	 */
-	पूर्णांक skip;
+	int skip;
 	__u8 data;
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
@@ -487,92 +486,92 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	/* dev_dbg(dev, "%s - dle=%d skip=%d size=%d count=%d\n",
 		__func__, dleSeen, skip, size, count); */
 
-	अगर (size == 0)
+	if (size == 0)
 		size = GSP_INITIAL_OFFSET;
 
-	जबतक (offs < count) अणु
+	while (offs < count) {
 
 		data = *(buf+offs);
 		offs++;
 
-		अगर (data == DLE) अणु
-			अगर (skip) अणु /* start of a new pkt */
+		if (data == DLE) {
+			if (skip) { /* start of a new pkt */
 				skip = 0;
 				size = GSP_INITIAL_OFFSET;
 				dleSeen = 1;
-			पूर्ण अन्यथा अगर (dleSeen) अणु
+			} else if (dleSeen) {
 				dest[size++] = data;
 				dleSeen = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				dleSeen = 1;
-			पूर्ण
-		पूर्ण अन्यथा अगर (data == ETX) अणु
-			अगर (dleSeen) अणु
+			}
+		} else if (data == ETX) {
+			if (dleSeen) {
 				/* packet complete */
 
 				data = dest[GSP_INITIAL_OFFSET];
 
-				अगर (data == ACK) अणु
+				if (data == ACK) {
 					ack_or_nak_seen = ACK;
 					dev_dbg(dev, "ACK packet complete.\n");
-				पूर्ण अन्यथा अगर (data == NAK) अणु
+				} else if (data == NAK) {
 					ack_or_nak_seen = NAK;
 					dev_dbg(dev, "NAK packet complete.\n");
-				पूर्ण अन्यथा अणु
+				} else {
 					dev_dbg(dev, "packet complete - id=0x%X.\n",
 							data);
 					gsp_rec_packet(garmin_data_p, size);
-				पूर्ण
+				}
 
 				skip = 1;
 				size = GSP_INITIAL_OFFSET;
 				dleSeen = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				dest[size++] = data;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!skip) अणु
+			}
+		} else if (!skip) {
 
-			अगर (dleSeen) अणु
+			if (dleSeen) {
 				size = GSP_INITIAL_OFFSET;
 				dleSeen = 0;
-			पूर्ण
+			}
 
 			dest[size++] = data;
-		पूर्ण
+		}
 
-		अगर (size >= GPS_IN_बफ_मान) अणु
+		if (size >= GPS_IN_BUFSIZ) {
 			dev_dbg(dev, "%s - packet too large.\n", __func__);
 			skip = 1;
 			size = GSP_INITIAL_OFFSET;
 			dleSeen = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
 
 	garmin_data_p->insize = size;
 
-	/* copy flags back to काष्ठाure */
-	अगर (skip)
+	/* copy flags back to structure */
+	if (skip)
 		garmin_data_p->flags |= FLAGS_GSP_SKIP;
-	अन्यथा
+	else
 		garmin_data_p->flags &= ~FLAGS_GSP_SKIP;
 
-	अगर (dleSeen)
+	if (dleSeen)
 		garmin_data_p->flags |= FLAGS_GSP_DLESEEN;
-	अन्यथा
+	else
 		garmin_data_p->flags &= ~FLAGS_GSP_DLESEEN;
 
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-	अगर (ack_or_nak_seen) अणु
-		अगर (gsp_next_packet(garmin_data_p) > 0)
+	if (ack_or_nak_seen) {
+		if (gsp_next_packet(garmin_data_p) > 0)
 			garmin_data_p->state = STATE_ACTIVE;
-		अन्यथा
+		else
 			garmin_data_p->state = STATE_GSP_WAIT_DATA;
-	पूर्ण
-	वापस count;
-पूर्ण
+	}
+	return count;
+}
 
 
 
@@ -581,43 +580,43 @@ MODULE_DEVICE_TABLE(usb, id_table);
  *
  * Assumes, that all packages and at an usb-packet boundary.
  *
- * वापस <0 on error, 0 अगर packet is incomplete or > 0 अगर packet was sent
+ * return <0 on error, 0 if packet is incomplete or > 0 if packet was sent
  */
-अटल पूर्णांक gsp_send(काष्ठा garmin_data *garmin_data_p,
-		    स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा device *dev = &garmin_data_p->port->dev;
-	स्थिर अचिन्हित अक्षर *src;
-	अचिन्हित अक्षर *dst;
-	पूर्णांक pktid = 0;
-	पूर्णांक datalen = 0;
-	पूर्णांक cksum = 0;
-	पूर्णांक i = 0;
-	पूर्णांक k;
+static int gsp_send(struct garmin_data *garmin_data_p,
+		    const unsigned char *buf, int count)
+{
+	struct device *dev = &garmin_data_p->port->dev;
+	const unsigned char *src;
+	unsigned char *dst;
+	int pktid = 0;
+	int datalen = 0;
+	int cksum = 0;
+	int i = 0;
+	int k;
 
 	dev_dbg(dev, "%s - state %d - %d bytes.\n", __func__,
 		garmin_data_p->state, count);
 
 	k = garmin_data_p->outsize;
-	अगर ((k+count) > GPS_OUT_बफ_मान) अणु
+	if ((k+count) > GPS_OUT_BUFSIZ) {
 		dev_dbg(dev, "packet too large\n");
 		garmin_data_p->outsize = 0;
-		वापस -4;
-	पूर्ण
+		return -4;
+	}
 
-	स_नकल(garmin_data_p->outbuffer+k, buf, count);
+	memcpy(garmin_data_p->outbuffer+k, buf, count);
 	k += count;
 	garmin_data_p->outsize = k;
 
-	अगर (k >= GARMIN_PKTHDR_LENGTH) अणु
+	if (k >= GARMIN_PKTHDR_LENGTH) {
 		pktid  = getPacketId(garmin_data_p->outbuffer);
 		datalen = getDataLength(garmin_data_p->outbuffer);
 		i = GARMIN_PKTHDR_LENGTH + datalen;
-		अगर (k < i)
-			वापस 0;
-	पूर्ण अन्यथा अणु
-		वापस 0;
-	पूर्ण
+		if (k < i)
+			return 0;
+	} else {
+		return 0;
+	}
 
 	dev_dbg(dev, "%s - %d bytes in buffer, %d bytes in pkt.\n", __func__, k, i);
 
@@ -628,39 +627,39 @@ MODULE_DEVICE_TABLE(usb, id_table);
 
 	garmin_data_p->outsize = 0;
 
-	अगर (getLayerId(garmin_data_p->outbuffer) != GARMIN_LAYERID_APPL) अणु
+	if (getLayerId(garmin_data_p->outbuffer) != GARMIN_LAYERID_APPL) {
 		dev_dbg(dev, "not an application packet (%d)\n",
 				getLayerId(garmin_data_p->outbuffer));
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (pktid > 255) अणु
+	if (pktid > 255) {
 		dev_dbg(dev, "packet-id %d too large\n", pktid);
-		वापस -2;
-	पूर्ण
+		return -2;
+	}
 
-	अगर (datalen > 255) अणु
+	if (datalen > 255) {
 		dev_dbg(dev, "packet-size %d too large\n", datalen);
-		वापस -3;
-	पूर्ण
+		return -3;
+	}
 
 	/* the serial protocol should be able to handle this packet */
 
 	k = 0;
 	src = garmin_data_p->outbuffer+GARMIN_PKTHDR_LENGTH;
-	क्रम (i = 0; i < datalen; i++) अणु
-		अगर (*src++ == DLE)
+	for (i = 0; i < datalen; i++) {
+		if (*src++ == DLE)
 			k++;
-	पूर्ण
+	}
 
 	src = garmin_data_p->outbuffer+GARMIN_PKTHDR_LENGTH;
-	अगर (k > (GARMIN_PKTHDR_LENGTH-2)) अणु
+	if (k > (GARMIN_PKTHDR_LENGTH-2)) {
 		/* can't add stuffing DLEs in place, move data to end
 		   of buffer ... */
-		dst = garmin_data_p->outbuffer+GPS_OUT_बफ_मान-datalen;
-		स_नकल(dst, src, datalen);
+		dst = garmin_data_p->outbuffer+GPS_OUT_BUFSIZ-datalen;
+		memcpy(dst, src, datalen);
 		src = dst;
-	पूर्ण
+	}
 
 	dst = garmin_data_p->outbuffer;
 
@@ -669,20 +668,20 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	cksum += pktid;
 	*dst++ = datalen;
 	cksum += datalen;
-	अगर (datalen == DLE)
+	if (datalen == DLE)
 		*dst++ = DLE;
 
-	क्रम (i = 0; i < datalen; i++) अणु
+	for (i = 0; i < datalen; i++) {
 		__u8 c = *src++;
 		*dst++ = c;
 		cksum += c;
-		अगर (c == DLE)
+		if (c == DLE)
 			*dst++ = DLE;
-	पूर्ण
+	}
 
 	cksum = -cksum & 0xFF;
 	*dst++ = cksum;
-	अगर (cksum == DLE)
+	if (cksum == DLE)
 		*dst++ = DLE;
 	*dst++ = DLE;
 	*dst++ = ETX;
@@ -694,29 +693,29 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	garmin_data_p->pkt_id = pktid;
 	garmin_data_p->state  = STATE_WAIT_TTY_ACK;
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
 
 /*
- * Process the next pending data packet - अगर there is one
+ * Process the next pending data packet - if there is one
  */
-अटल पूर्णांक gsp_next_packet(काष्ठा garmin_data *garmin_data_p)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा garmin_packet *pkt = शून्य;
+static int gsp_next_packet(struct garmin_data *garmin_data_p)
+{
+	int result = 0;
+	struct garmin_packet *pkt = NULL;
 
-	जबतक ((pkt = pkt_pop(garmin_data_p)) != शून्य) अणु
+	while ((pkt = pkt_pop(garmin_data_p)) != NULL) {
 		dev_dbg(&garmin_data_p->port->dev, "%s - next pkt: %d\n", __func__, pkt->seq);
 		result = gsp_send(garmin_data_p, pkt->data, pkt->size);
-		अगर (result > 0) अणु
-			kमुक्त(pkt);
-			वापस result;
-		पूर्ण
-		kमुक्त(pkt);
-	पूर्ण
-	वापस result;
-पूर्ण
+		if (result > 0) {
+			kfree(pkt);
+			return result;
+		}
+		kfree(pkt);
+	}
+	return result;
+}
 
 
 
@@ -726,31 +725,31 @@ MODULE_DEVICE_TABLE(usb, id_table);
 
 
 /*
- * Called क्रम data received from tty
+ * Called for data received from tty
  *
- * The input data is expected to be in garmin usb-packet क्रमmat.
+ * The input data is expected to be in garmin usb-packet format.
  *
- * buf contains the data पढ़ो, it may span more than one packet
+ * buf contains the data read, it may span more than one packet
  * or even incomplete packets
  */
-अटल पूर्णांक nat_receive(काष्ठा garmin_data *garmin_data_p,
-		       स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	अचिन्हित दीर्घ flags;
+static int nat_receive(struct garmin_data *garmin_data_p,
+		       const unsigned char *buf, int count)
+{
+	unsigned long flags;
 	__u8 *dest;
-	पूर्णांक offs = 0;
-	पूर्णांक result = count;
-	पूर्णांक len;
+	int offs = 0;
+	int result = count;
+	int len;
 
-	जबतक (offs < count) अणु
-		/* अगर buffer contains header, copy rest of data */
-		अगर (garmin_data_p->insize >= GARMIN_PKTHDR_LENGTH)
+	while (offs < count) {
+		/* if buffer contains header, copy rest of data */
+		if (garmin_data_p->insize >= GARMIN_PKTHDR_LENGTH)
 			len = GARMIN_PKTHDR_LENGTH
 			      +getDataLength(garmin_data_p->inbuffer);
-		अन्यथा
+		else
 			len = GARMIN_PKTHDR_LENGTH;
 
-		अगर (len >= GPS_IN_बफ_मान) अणु
+		if (len >= GPS_IN_BUFSIZ) {
 			/* seems to be an invalid packet, ignore rest
 			   of input */
 			dev_dbg(&garmin_data_p->port->dev,
@@ -759,53 +758,53 @@ MODULE_DEVICE_TABLE(usb, id_table);
 			garmin_data_p->insize = 0;
 			count = 0;
 			result = -EINVPKT;
-		पूर्ण अन्यथा अणु
+		} else {
 			len -= garmin_data_p->insize;
-			अगर (len > (count-offs))
+			if (len > (count-offs))
 				len = (count-offs);
-			अगर (len > 0) अणु
+			if (len > 0) {
 				dest = garmin_data_p->inbuffer
 						+ garmin_data_p->insize;
-				स_नकल(dest, buf+offs, len);
+				memcpy(dest, buf+offs, len);
 				garmin_data_p->insize += len;
 				offs += len;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* करो we have a complete packet ? */
-		अगर (garmin_data_p->insize >= GARMIN_PKTHDR_LENGTH) अणु
+		/* do we have a complete packet ? */
+		if (garmin_data_p->insize >= GARMIN_PKTHDR_LENGTH) {
 			len = GARMIN_PKTHDR_LENGTH+
 			   getDataLength(garmin_data_p->inbuffer);
-			अगर (garmin_data_p->insize >= len) अणु
-				garmin_ग_लिखो_bulk(garmin_data_p->port,
+			if (garmin_data_p->insize >= len) {
+				garmin_write_bulk(garmin_data_p->port,
 						   garmin_data_p->inbuffer,
 						   len, 0);
 				garmin_data_p->insize = 0;
 
-				/* अगर this was an पात-transfer command,
+				/* if this was an abort-transfer command,
 				   flush all queued data. */
-				अगर (isAbortTrfCmnd(garmin_data_p->inbuffer)) अणु
+				if (isAbortTrfCmnd(garmin_data_p->inbuffer)) {
 					spin_lock_irqsave(&garmin_data_p->lock,
 									flags);
 					garmin_data_p->flags |= FLAGS_DROP_DATA;
 					spin_unlock_irqrestore(
 						&garmin_data_p->lock, flags);
 					pkt_clear(garmin_data_p);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस result;
-पूर्ण
+				}
+			}
+		}
+	}
+	return result;
+}
 
 
 /******************************************************************************
- * निजी packets
+ * private packets
  ******************************************************************************/
 
-अटल व्योम priv_status_resp(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static void priv_status_resp(struct usb_serial_port *port)
+{
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 	__le32 *pkt = (__le32 *)garmin_data_p->privpkt;
 
 	pkt[0] = __cpu_to_le32(GARMIN_LAYERID_PRIVATE);
@@ -816,18 +815,18 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	pkt[5] = __cpu_to_le32(garmin_data_p->serial_num);
 
 	send_to_tty(port, (__u8 *)pkt, 6 * 4);
-पूर्ण
+}
 
 
 /******************************************************************************
- * Garmin specअगरic driver functions
+ * Garmin specific driver functions
  ******************************************************************************/
 
-अटल पूर्णांक process_resetdev_request(काष्ठा usb_serial_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक status;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static int process_resetdev_request(struct usb_serial_port *port)
+{
+	unsigned long flags;
+	int status;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
 	garmin_data_p->flags &= ~(CLEAR_HALT_REQUIRED);
@@ -835,23 +834,23 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	garmin_data_p->serial_num = 0;
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+	usb_kill_urb(port->interrupt_in_urb);
 	dev_dbg(&port->dev, "%s - usb_reset_device\n", __func__);
 	status = usb_reset_device(port->serial->dev);
-	अगर (status)
+	if (status)
 		dev_dbg(&port->dev, "%s - usb_reset_device failed: %d\n",
 			__func__, status);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
 
 /*
  * clear all cached data
  */
-अटल पूर्णांक garmin_clear(काष्ठा garmin_data *garmin_data_p)
-अणु
-	अचिन्हित दीर्घ flags;
+static int garmin_clear(struct garmin_data *garmin_data_p)
+{
+	unsigned long flags;
 
 	/* flush all queued data */
 	pkt_clear(garmin_data_p);
@@ -861,24 +860,24 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	garmin_data_p->outsize = 0;
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक garmin_init_session(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
-	पूर्णांक status;
-	पूर्णांक i;
+static int garmin_init_session(struct usb_serial_port *port)
+{
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+	int status;
+	int i;
 
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+	usb_kill_urb(port->interrupt_in_urb);
 
-	status = usb_submit_urb(port->पूर्णांकerrupt_in_urb, GFP_KERNEL);
-	अगर (status) अणु
+	status = usb_submit_urb(port->interrupt_in_urb, GFP_KERNEL);
+	if (status) {
 		dev_err(&port->dev, "failed to submit interrupt urb: %d\n",
 				status);
-		वापस status;
-	पूर्ण
+		return status;
+	}
 
 	/*
 	 * using the initialization method from gpsbabel. See comments in
@@ -887,29 +886,29 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	dev_dbg(&port->dev, "%s - starting session ...\n", __func__);
 	garmin_data_p->state = STATE_ACTIVE;
 
-	क्रम (i = 0; i < 3; i++) अणु
-		status = garmin_ग_लिखो_bulk(port, GARMIN_START_SESSION_REQ,
-				माप(GARMIN_START_SESSION_REQ), 0);
-		अगर (status < 0)
-			जाओ err_समाप्त_urbs;
-	पूर्ण
+	for (i = 0; i < 3; i++) {
+		status = garmin_write_bulk(port, GARMIN_START_SESSION_REQ,
+				sizeof(GARMIN_START_SESSION_REQ), 0);
+		if (status < 0)
+			goto err_kill_urbs;
+	}
 
-	वापस 0;
+	return 0;
 
-err_समाप्त_urbs:
-	usb_समाप्त_anchored_urbs(&garmin_data_p->ग_लिखो_urbs);
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
+err_kill_urbs:
+	usb_kill_anchored_urbs(&garmin_data_p->write_urbs);
+	usb_kill_urb(port->interrupt_in_urb);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
 
-अटल पूर्णांक garmin_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक status = 0;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static int garmin_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	unsigned long flags;
+	int status = 0;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
 	garmin_data_p->mode  = initial_mode;
@@ -917,20 +916,20 @@ err_समाप्त_urbs:
 	garmin_data_p->flags &= FLAGS_SESSION_REPLY1_SEEN;
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-	/* shutकरोwn any bulk पढ़ोs that might be going on */
-	usb_समाप्त_urb(port->पढ़ो_urb);
+	/* shutdown any bulk reads that might be going on */
+	usb_kill_urb(port->read_urb);
 
-	अगर (garmin_data_p->state == STATE_RESET)
+	if (garmin_data_p->state == STATE_RESET)
 		status = garmin_init_session(port);
 
 	garmin_data_p->state = STATE_ACTIVE;
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
-अटल व्योम garmin_बंद(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static void garmin_close(struct usb_serial_port *port)
+{
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 
 	dev_dbg(&port->dev, "%s - mode=%d state=%d flags=0x%X\n",
 		__func__, garmin_data_p->mode, garmin_data_p->state,
@@ -938,137 +937,137 @@ err_समाप्त_urbs:
 
 	garmin_clear(garmin_data_p);
 
-	/* shutकरोwn our urbs */
-	usb_समाप्त_urb(port->पढ़ो_urb);
-	usb_समाप्त_anchored_urbs(&garmin_data_p->ग_लिखो_urbs);
+	/* shutdown our urbs */
+	usb_kill_urb(port->read_urb);
+	usb_kill_anchored_urbs(&garmin_data_p->write_urbs);
 
 	/* keep reset state so we know that we must start a new session */
-	अगर (garmin_data_p->state != STATE_RESET)
+	if (garmin_data_p->state != STATE_RESET)
 		garmin_data_p->state = STATE_DISCONNECTED;
-पूर्ण
+}
 
 
-अटल व्योम garmin_ग_लिखो_bulk_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_serial_port *port = urb->context;
+static void garmin_write_bulk_callback(struct urb *urb)
+{
+	struct usb_serial_port *port = urb->context;
 
-	अगर (port) अणु
-		काष्ठा garmin_data *garmin_data_p =
+	if (port) {
+		struct garmin_data *garmin_data_p =
 					usb_get_serial_port_data(port);
 
-		अगर (getLayerId(urb->transfer_buffer) == GARMIN_LAYERID_APPL) अणु
+		if (getLayerId(urb->transfer_buffer) == GARMIN_LAYERID_APPL) {
 
-			अगर (garmin_data_p->mode == MODE_GARMIN_SERIAL) अणु
+			if (garmin_data_p->mode == MODE_GARMIN_SERIAL) {
 				gsp_send_ack(garmin_data_p,
 					((__u8 *)urb->transfer_buffer)[4]);
-			पूर्ण
-		पूर्ण
-		usb_serial_port_softपूर्णांक(port);
-	पूर्ण
+			}
+		}
+		usb_serial_port_softint(port);
+	}
 
-	/* Ignore errors that resulted from garmin_ग_लिखो_bulk with
+	/* Ignore errors that resulted from garmin_write_bulk with
 	   dismiss_ack = 1 */
 
-	/* मुक्त up the transfer buffer, as usb_मुक्त_urb() करोes not करो this */
-	kमुक्त(urb->transfer_buffer);
-पूर्ण
+	/* free up the transfer buffer, as usb_free_urb() does not do this */
+	kfree(urb->transfer_buffer);
+}
 
 
-अटल पूर्णांक garmin_ग_लिखो_bulk(काष्ठा usb_serial_port *port,
-			      स्थिर अचिन्हित अक्षर *buf, पूर्णांक count,
-			      पूर्णांक dismiss_ack)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_serial *serial = port->serial;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
-	काष्ठा urb *urb;
-	अचिन्हित अक्षर *buffer;
-	पूर्णांक status;
+static int garmin_write_bulk(struct usb_serial_port *port,
+			      const unsigned char *buf, int count,
+			      int dismiss_ack)
+{
+	unsigned long flags;
+	struct usb_serial *serial = port->serial;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+	struct urb *urb;
+	unsigned char *buffer;
+	int status;
 
 	spin_lock_irqsave(&garmin_data_p->lock, flags);
 	garmin_data_p->flags &= ~FLAGS_DROP_DATA;
 	spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-	buffer = kदो_स्मृति(count, GFP_ATOMIC);
-	अगर (!buffer)
-		वापस -ENOMEM;
+	buffer = kmalloc(count, GFP_ATOMIC);
+	if (!buffer)
+		return -ENOMEM;
 
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
-	अगर (!urb) अणु
-		kमुक्त(buffer);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!urb) {
+		kfree(buffer);
+		return -ENOMEM;
+	}
 
-	स_नकल(buffer, buf, count);
+	memcpy(buffer, buf, count);
 
 	usb_serial_debug_data(&port->dev, __func__, count, buffer);
 
 	usb_fill_bulk_urb(urb, serial->dev,
 				usb_sndbulkpipe(serial->dev,
-					port->bulk_out_endpoपूर्णांकAddress),
+					port->bulk_out_endpointAddress),
 				buffer, count,
-				garmin_ग_लिखो_bulk_callback,
-				dismiss_ack ? शून्य : port);
+				garmin_write_bulk_callback,
+				dismiss_ack ? NULL : port);
 	urb->transfer_flags |= URB_ZERO_PACKET;
 
-	अगर (getLayerId(buffer) == GARMIN_LAYERID_APPL) अणु
+	if (getLayerId(buffer) == GARMIN_LAYERID_APPL) {
 
 		spin_lock_irqsave(&garmin_data_p->lock, flags);
 		garmin_data_p->flags |= APP_REQ_SEEN;
 		spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-		अगर (garmin_data_p->mode == MODE_GARMIN_SERIAL)  अणु
+		if (garmin_data_p->mode == MODE_GARMIN_SERIAL)  {
 			pkt_clear(garmin_data_p);
 			garmin_data_p->state = STATE_GSP_WAIT_DATA;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* send it करोwn the pipe */
-	usb_anchor_urb(urb, &garmin_data_p->ग_लिखो_urbs);
+	/* send it down the pipe */
+	usb_anchor_urb(urb, &garmin_data_p->write_urbs);
 	status = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (status) अणु
+	if (status) {
 		dev_err(&port->dev,
 		   "%s - usb_submit_urb(write bulk) failed with status = %d\n",
 				__func__, status);
 		count = status;
 		usb_unanchor_urb(urb);
-		kमुक्त(buffer);
-	पूर्ण
+		kfree(buffer);
+	}
 
-	/* we are करोne with this urb, so let the host driver
-	 * really मुक्त it when it is finished with it */
-	usb_मुक्त_urb(urb);
+	/* we are done with this urb, so let the host driver
+	 * really free it when it is finished with it */
+	usb_free_urb(urb);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक garmin_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
-					 स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
-अणु
-	काष्ठा device *dev = &port->dev;
-	पूर्णांक pktid, pktsiz, len;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static int garmin_write(struct tty_struct *tty, struct usb_serial_port *port,
+					 const unsigned char *buf, int count)
+{
+	struct device *dev = &port->dev;
+	int pktid, pktsiz, len;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 	__le32 *privpkt = (__le32 *)garmin_data_p->privpkt;
 
 	usb_serial_debug_data(dev, __func__, count, buf);
 
-	अगर (garmin_data_p->state == STATE_RESET)
-		वापस -EIO;
+	if (garmin_data_p->state == STATE_RESET)
+		return -EIO;
 
-	/* check क्रम our निजी packets */
-	अगर (count >= GARMIN_PKTHDR_LENGTH) अणु
+	/* check for our private packets */
+	if (count >= GARMIN_PKTHDR_LENGTH) {
 		len = PRIVPKTSIZ;
-		अगर (count < len)
+		if (count < len)
 			len = count;
 
-		स_नकल(garmin_data_p->privpkt, buf, len);
+		memcpy(garmin_data_p->privpkt, buf, len);
 
 		pktsiz = getDataLength(garmin_data_p->privpkt);
 		pktid  = getPacketId(garmin_data_p->privpkt);
 
-		अगर (count == (GARMIN_PKTHDR_LENGTH + pktsiz) &&
+		if (count == (GARMIN_PKTHDR_LENGTH + pktsiz) &&
 				getLayerId(garmin_data_p->privpkt) ==
-						GARMIN_LAYERID_PRIVATE) अणु
+						GARMIN_LAYERID_PRIVATE) {
 
 			dev_dbg(dev, "%s - processing private request %d\n",
 				__func__, pktid);
@@ -1076,197 +1075,197 @@ err_समाप्त_urbs:
 			/* drop all unfinished transfers */
 			garmin_clear(garmin_data_p);
 
-			चयन (pktid) अणु
-			हाल PRIV_PKTID_SET_MODE:
-				अगर (pktsiz != 4)
-					वापस -EINVPKT;
+			switch (pktid) {
+			case PRIV_PKTID_SET_MODE:
+				if (pktsiz != 4)
+					return -EINVPKT;
 				garmin_data_p->mode = __le32_to_cpu(privpkt[3]);
 				dev_dbg(dev, "%s - mode set to %d\n",
 					__func__, garmin_data_p->mode);
-				अवरोध;
+				break;
 
-			हाल PRIV_PKTID_INFO_REQ:
+			case PRIV_PKTID_INFO_REQ:
 				priv_status_resp(port);
-				अवरोध;
+				break;
 
-			हाल PRIV_PKTID_RESET_REQ:
+			case PRIV_PKTID_RESET_REQ:
 				process_resetdev_request(port);
-				अवरोध;
+				break;
 
-			हाल PRIV_PKTID_SET_DEF_MODE:
-				अगर (pktsiz != 4)
-					वापस -EINVPKT;
+			case PRIV_PKTID_SET_DEF_MODE:
+				if (pktsiz != 4)
+					return -EINVPKT;
 				initial_mode = __le32_to_cpu(privpkt[3]);
 				dev_dbg(dev, "%s - initial_mode set to %d\n",
 					__func__,
 					garmin_data_p->mode);
-				अवरोध;
-			पूर्ण
-			वापस count;
-		पूर्ण
-	पूर्ण
+				break;
+			}
+			return count;
+		}
+	}
 
-	अगर (garmin_data_p->mode == MODE_GARMIN_SERIAL) अणु
-		वापस gsp_receive(garmin_data_p, buf, count);
-	पूर्ण अन्यथा अणु	/* MODE_NATIVE */
-		वापस nat_receive(garmin_data_p, buf, count);
-	पूर्ण
-पूर्ण
+	if (garmin_data_p->mode == MODE_GARMIN_SERIAL) {
+		return gsp_receive(garmin_data_p, buf, count);
+	} else {	/* MODE_NATIVE */
+		return nat_receive(garmin_data_p, buf, count);
+	}
+}
 
 
-अटल पूर्णांक garmin_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
+static int garmin_write_room(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
 	/*
 	 * Report back the bytes currently available in the output buffer.
 	 */
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
-	वापस GPS_OUT_बफ_मान-garmin_data_p->outsize;
-पूर्ण
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+	return GPS_OUT_BUFSIZ-garmin_data_p->outsize;
+}
 
 
-अटल व्योम garmin_पढ़ो_process(काष्ठा garmin_data *garmin_data_p,
-				 अचिन्हित अक्षर *data, अचिन्हित data_length,
-				 पूर्णांक bulk_data)
-अणु
-	अचिन्हित दीर्घ flags;
+static void garmin_read_process(struct garmin_data *garmin_data_p,
+				 unsigned char *data, unsigned data_length,
+				 int bulk_data)
+{
+	unsigned long flags;
 
-	अगर (garmin_data_p->flags & FLAGS_DROP_DATA) अणु
-		/* पात-transfer cmd is active */
+	if (garmin_data_p->flags & FLAGS_DROP_DATA) {
+		/* abort-transfer cmd is active */
 		dev_dbg(&garmin_data_p->port->dev, "%s - pkt dropped\n", __func__);
-	पूर्ण अन्यथा अगर (garmin_data_p->state != STATE_DISCONNECTED &&
-		garmin_data_p->state != STATE_RESET) अणु
+	} else if (garmin_data_p->state != STATE_DISCONNECTED &&
+		garmin_data_p->state != STATE_RESET) {
 
-		/* अगर throttling is active or postprecessing is required
+		/* if throttling is active or postprecessing is required
 		   put the received data in the input queue, otherwise
 		   send it directly to the tty port */
-		अगर (garmin_data_p->flags & FLAGS_QUEUING) अणु
+		if (garmin_data_p->flags & FLAGS_QUEUING) {
 			pkt_add(garmin_data_p, data, data_length);
-		पूर्ण अन्यथा अगर (bulk_data || (data_length >= माप(u32) &&
-				getLayerId(data) == GARMIN_LAYERID_APPL)) अणु
+		} else if (bulk_data || (data_length >= sizeof(u32) &&
+				getLayerId(data) == GARMIN_LAYERID_APPL)) {
 
 			spin_lock_irqsave(&garmin_data_p->lock, flags);
 			garmin_data_p->flags |= APP_RESP_SEEN;
 			spin_unlock_irqrestore(&garmin_data_p->lock, flags);
 
-			अगर (garmin_data_p->mode == MODE_GARMIN_SERIAL) अणु
+			if (garmin_data_p->mode == MODE_GARMIN_SERIAL) {
 				pkt_add(garmin_data_p, data, data_length);
-			पूर्ण अन्यथा अणु
+			} else {
 				send_to_tty(garmin_data_p->port, data,
 						data_length);
-			पूर्ण
-		पूर्ण
-		/* ignore प्रणाली layer packets ... */
-	पूर्ण
-पूर्ण
+			}
+		}
+		/* ignore system layer packets ... */
+	}
+}
 
 
-अटल व्योम garmin_पढ़ो_bulk_callback(काष्ठा urb *urb)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर *data = urb->transfer_buffer;
-	पूर्णांक status = urb->status;
-	पूर्णांक retval;
+static void garmin_read_bulk_callback(struct urb *urb)
+{
+	unsigned long flags;
+	struct usb_serial_port *port = urb->context;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+	unsigned char *data = urb->transfer_buffer;
+	int status = urb->status;
+	int retval;
 
-	अगर (status) अणु
+	if (status) {
 		dev_dbg(&urb->dev->dev, "%s - nonzero read bulk status received: %d\n",
 			__func__, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	usb_serial_debug_data(&port->dev, __func__, urb->actual_length, data);
 
-	garmin_पढ़ो_process(garmin_data_p, data, urb->actual_length, 1);
+	garmin_read_process(garmin_data_p, data, urb->actual_length, 1);
 
-	अगर (urb->actual_length == 0 &&
-			(garmin_data_p->flags & FLAGS_BULK_IN_RESTART) != 0) अणु
+	if (urb->actual_length == 0 &&
+			(garmin_data_p->flags & FLAGS_BULK_IN_RESTART) != 0) {
 		spin_lock_irqsave(&garmin_data_p->lock, flags);
 		garmin_data_p->flags &= ~FLAGS_BULK_IN_RESTART;
 		spin_unlock_irqrestore(&garmin_data_p->lock, flags);
-		retval = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
-		अगर (retval)
+		retval = usb_submit_urb(port->read_urb, GFP_ATOMIC);
+		if (retval)
 			dev_err(&port->dev,
 				"%s - failed resubmitting read urb, error %d\n",
 				__func__, retval);
-	पूर्ण अन्यथा अगर (urb->actual_length > 0) अणु
-		/* Continue trying to पढ़ो until nothing more is received  */
-		अगर ((garmin_data_p->flags & FLAGS_THROTTLED) == 0) अणु
-			retval = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
-			अगर (retval)
+	} else if (urb->actual_length > 0) {
+		/* Continue trying to read until nothing more is received  */
+		if ((garmin_data_p->flags & FLAGS_THROTTLED) == 0) {
+			retval = usb_submit_urb(port->read_urb, GFP_ATOMIC);
+			if (retval)
 				dev_err(&port->dev,
 					"%s - failed resubmitting read urb, error %d\n",
 					__func__, retval);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dev_dbg(&port->dev, "%s - end of bulk data\n", __func__);
 		spin_lock_irqsave(&garmin_data_p->lock, flags);
 		garmin_data_p->flags &= ~FLAGS_BULK_IN_ACTIVE;
 		spin_unlock_irqrestore(&garmin_data_p->lock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल व्योम garmin_पढ़ो_पूर्णांक_callback(काष्ठा urb *urb)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval;
-	काष्ठा usb_serial_port *port = urb->context;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
-	अचिन्हित अक्षर *data = urb->transfer_buffer;
-	पूर्णांक status = urb->status;
+static void garmin_read_int_callback(struct urb *urb)
+{
+	unsigned long flags;
+	int retval;
+	struct usb_serial_port *port = urb->context;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+	unsigned char *data = urb->transfer_buffer;
+	int status = urb->status;
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		/* success */
-		अवरोध;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(&urb->dev->dev, "%s - urb shutting down with status: %d\n",
 			__func__, status);
-		वापस;
-	शेष:
+		return;
+	default:
 		dev_dbg(&urb->dev->dev, "%s - nonzero urb status received: %d\n",
 			__func__, status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	usb_serial_debug_data(&port->dev, __func__, urb->actual_length,
 			      urb->transfer_buffer);
 
-	अगर (urb->actual_length == माप(GARMIN_BULK_IN_AVAIL_REPLY) &&
-		स_भेद(data, GARMIN_BULK_IN_AVAIL_REPLY,
-				माप(GARMIN_BULK_IN_AVAIL_REPLY)) == 0) अणु
+	if (urb->actual_length == sizeof(GARMIN_BULK_IN_AVAIL_REPLY) &&
+		memcmp(data, GARMIN_BULK_IN_AVAIL_REPLY,
+				sizeof(GARMIN_BULK_IN_AVAIL_REPLY)) == 0) {
 
 		dev_dbg(&port->dev, "%s - bulk data available.\n", __func__);
 
-		अगर ((garmin_data_p->flags & FLAGS_BULK_IN_ACTIVE) == 0) अणु
+		if ((garmin_data_p->flags & FLAGS_BULK_IN_ACTIVE) == 0) {
 
 			/* bulk data available */
-			retval = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
-			अगर (retval) अणु
+			retval = usb_submit_urb(port->read_urb, GFP_ATOMIC);
+			if (retval) {
 				dev_err(&port->dev,
 				 "%s - failed submitting read urb, error %d\n",
 							__func__, retval);
-			पूर्ण अन्यथा अणु
+			} else {
 				spin_lock_irqsave(&garmin_data_p->lock, flags);
 				garmin_data_p->flags |= FLAGS_BULK_IN_ACTIVE;
 				spin_unlock_irqrestore(&garmin_data_p->lock,
 									flags);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			/* bulk-in transfer still active */
 			spin_lock_irqsave(&garmin_data_p->lock, flags);
 			garmin_data_p->flags |= FLAGS_BULK_IN_RESTART;
 			spin_unlock_irqrestore(&garmin_data_p->lock, flags);
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (urb->actual_length == (4+माप(GARMIN_START_SESSION_REPLY))
-			 && स_भेद(data, GARMIN_START_SESSION_REPLY,
-				 माप(GARMIN_START_SESSION_REPLY)) == 0) अणु
+	} else if (urb->actual_length == (4+sizeof(GARMIN_START_SESSION_REPLY))
+			 && memcmp(data, GARMIN_START_SESSION_REPLY,
+				 sizeof(GARMIN_START_SESSION_REPLY)) == 0) {
 
 		spin_lock_irqsave(&garmin_data_p->lock, flags);
 		garmin_data_p->flags |= FLAGS_SESSION_REPLY1_SEEN;
@@ -1278,166 +1277,166 @@ err_समाप्त_urbs:
 
 		dev_dbg(&port->dev, "%s - start-of-session reply seen - serial %u.\n",
 			__func__, garmin_data_p->serial_num);
-	पूर्ण
+	}
 
-	garmin_पढ़ो_process(garmin_data_p, data, urb->actual_length, 0);
+	garmin_read_process(garmin_data_p, data, urb->actual_length, 0);
 
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (retval)
+	if (retval)
 		dev_err(&urb->dev->dev,
 			"%s - Error %d submitting interrupt urb\n",
 			__func__, retval);
-पूर्ण
+}
 
 
 /*
  * Sends the next queued packt to the tty port (garmin native mode only)
- * and then sets a समयr to call itself again until all queued data
+ * and then sets a timer to call itself again until all queued data
  * is sent.
  */
-अटल पूर्णांक garmin_flush_queue(काष्ठा garmin_data *garmin_data_p)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा garmin_packet *pkt;
+static int garmin_flush_queue(struct garmin_data *garmin_data_p)
+{
+	unsigned long flags;
+	struct garmin_packet *pkt;
 
-	अगर ((garmin_data_p->flags & FLAGS_THROTTLED) == 0) अणु
+	if ((garmin_data_p->flags & FLAGS_THROTTLED) == 0) {
 		pkt = pkt_pop(garmin_data_p);
-		अगर (pkt != शून्य) अणु
+		if (pkt != NULL) {
 			send_to_tty(garmin_data_p->port, pkt->data, pkt->size);
-			kमुक्त(pkt);
-			mod_समयr(&garmin_data_p->समयr, (1)+jअगरfies);
+			kfree(pkt);
+			mod_timer(&garmin_data_p->timer, (1)+jiffies);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			spin_lock_irqsave(&garmin_data_p->lock, flags);
 			garmin_data_p->flags &= ~FLAGS_QUEUING;
 			spin_unlock_irqrestore(&garmin_data_p->lock, flags);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
 
-अटल व्योम garmin_throttle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static void garmin_throttle(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 
-	/* set flag, data received will be put पूर्णांकo a queue
-	   क्रम later processing */
+	/* set flag, data received will be put into a queue
+	   for later processing */
 	spin_lock_irq(&garmin_data_p->lock);
 	garmin_data_p->flags |= FLAGS_QUEUING|FLAGS_THROTTLED;
 	spin_unlock_irq(&garmin_data_p->lock);
-पूर्ण
+}
 
 
-अटल व्योम garmin_unthrottle(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
-	पूर्णांक status;
+static void garmin_unthrottle(struct tty_struct *tty)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+	int status;
 
 	spin_lock_irq(&garmin_data_p->lock);
 	garmin_data_p->flags &= ~FLAGS_THROTTLED;
 	spin_unlock_irq(&garmin_data_p->lock);
 
 	/* in native mode send queued data to tty, in
-	   serial mode nothing needs to be करोne here */
-	अगर (garmin_data_p->mode == MODE_NATIVE)
+	   serial mode nothing needs to be done here */
+	if (garmin_data_p->mode == MODE_NATIVE)
 		garmin_flush_queue(garmin_data_p);
 
-	अगर ((garmin_data_p->flags & FLAGS_BULK_IN_ACTIVE) != 0) अणु
-		status = usb_submit_urb(port->पढ़ो_urb, GFP_KERNEL);
-		अगर (status)
+	if ((garmin_data_p->flags & FLAGS_BULK_IN_ACTIVE) != 0) {
+		status = usb_submit_urb(port->read_urb, GFP_KERNEL);
+		if (status)
 			dev_err(&port->dev,
 				"%s - failed resubmitting read urb, error %d\n",
 				__func__, status);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * The समयr is currently only used to send queued packets to
- * the tty in हालs where the protocol provides no own handshaking
+ * The timer is currently only used to send queued packets to
+ * the tty in cases where the protocol provides no own handshaking
  * to initiate the transfer.
  */
-अटल व्योम समयout_handler(काष्ठा समयr_list *t)
-अणु
-	काष्ठा garmin_data *garmin_data_p = from_समयr(garmin_data_p, t, समयr);
+static void timeout_handler(struct timer_list *t)
+{
+	struct garmin_data *garmin_data_p = from_timer(garmin_data_p, t, timer);
 
 	/* send the next queued packet to the tty port */
-	अगर (garmin_data_p->mode == MODE_NATIVE)
-		अगर (garmin_data_p->flags & FLAGS_QUEUING)
+	if (garmin_data_p->mode == MODE_NATIVE)
+		if (garmin_data_p->flags & FLAGS_QUEUING)
 			garmin_flush_queue(garmin_data_p);
-पूर्ण
+}
 
 
 
-अटल पूर्णांक garmin_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	पूर्णांक status;
-	काष्ठा garmin_data *garmin_data_p;
+static int garmin_port_probe(struct usb_serial_port *port)
+{
+	int status;
+	struct garmin_data *garmin_data_p;
 
-	garmin_data_p = kzalloc(माप(काष्ठा garmin_data), GFP_KERNEL);
-	अगर (!garmin_data_p)
-		वापस -ENOMEM;
+	garmin_data_p = kzalloc(sizeof(struct garmin_data), GFP_KERNEL);
+	if (!garmin_data_p)
+		return -ENOMEM;
 
-	समयr_setup(&garmin_data_p->समयr, समयout_handler, 0);
+	timer_setup(&garmin_data_p->timer, timeout_handler, 0);
 	spin_lock_init(&garmin_data_p->lock);
 	INIT_LIST_HEAD(&garmin_data_p->pktlist);
 	garmin_data_p->port = port;
 	garmin_data_p->state = 0;
 	garmin_data_p->flags = 0;
 	garmin_data_p->count = 0;
-	init_usb_anchor(&garmin_data_p->ग_लिखो_urbs);
+	init_usb_anchor(&garmin_data_p->write_urbs);
 	usb_set_serial_port_data(port, garmin_data_p);
 
 	status = garmin_init_session(port);
-	अगर (status)
-		जाओ err_मुक्त;
+	if (status)
+		goto err_free;
 
-	वापस 0;
-err_मुक्त:
-	kमुक्त(garmin_data_p);
+	return 0;
+err_free:
+	kfree(garmin_data_p);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
 
-अटल व्योम garmin_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा garmin_data *garmin_data_p = usb_get_serial_port_data(port);
+static void garmin_port_remove(struct usb_serial_port *port)
+{
+	struct garmin_data *garmin_data_p = usb_get_serial_port_data(port);
 
-	usb_समाप्त_anchored_urbs(&garmin_data_p->ग_लिखो_urbs);
-	usb_समाप्त_urb(port->पूर्णांकerrupt_in_urb);
-	del_समयr_sync(&garmin_data_p->समयr);
-	kमुक्त(garmin_data_p);
-पूर्ण
+	usb_kill_anchored_urbs(&garmin_data_p->write_urbs);
+	usb_kill_urb(port->interrupt_in_urb);
+	del_timer_sync(&garmin_data_p->timer);
+	kfree(garmin_data_p);
+}
 
 
 /* All of the device info needed */
-अटल काष्ठा usb_serial_driver garmin_device = अणु
-	.driver = अणु
+static struct usb_serial_driver garmin_device = {
+	.driver = {
 		.owner       = THIS_MODULE,
 		.name        = "garmin_gps",
-	पूर्ण,
+	},
 	.description         = "Garmin GPS usb/tty",
 	.id_table            = id_table,
 	.num_ports           = 1,
-	.खोलो                = garmin_खोलो,
-	.बंद               = garmin_बंद,
+	.open                = garmin_open,
+	.close               = garmin_close,
 	.throttle            = garmin_throttle,
 	.unthrottle          = garmin_unthrottle,
 	.port_probe		= garmin_port_probe,
-	.port_हटाओ		= garmin_port_हटाओ,
-	.ग_लिखो               = garmin_ग_लिखो,
-	.ग_लिखो_room          = garmin_ग_लिखो_room,
-	.ग_लिखो_bulk_callback = garmin_ग_लिखो_bulk_callback,
-	.पढ़ो_bulk_callback  = garmin_पढ़ो_bulk_callback,
-	.पढ़ो_पूर्णांक_callback   = garmin_पढ़ो_पूर्णांक_callback,
-पूर्ण;
+	.port_remove		= garmin_port_remove,
+	.write               = garmin_write,
+	.write_room          = garmin_write_room,
+	.write_bulk_callback = garmin_write_bulk_callback,
+	.read_bulk_callback  = garmin_read_bulk_callback,
+	.read_int_callback   = garmin_read_int_callback,
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
-	&garmin_device, शून्य
-पूर्ण;
+static struct usb_serial_driver * const serial_drivers[] = {
+	&garmin_device, NULL
+};
 
 module_usb_serial_driver(serial_drivers, id_table);
 
@@ -1445,5 +1444,5 @@ MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-module_param(initial_mode, पूर्णांक, S_IRUGO);
+module_param(initial_mode, int, S_IRUGO);
 MODULE_PARM_DESC(initial_mode, "Initial mode");

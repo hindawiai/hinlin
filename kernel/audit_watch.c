@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /* audit_watch.c -- watching inodes
  *
  * Copyright 2003-2009 Red Hat, Inc.
@@ -7,164 +6,164 @@
  * Copyright 2005 IBM Corporation
  */
 
-#समावेश <linux/file.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/audit.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/fsnotअगरy_backend.h>
-#समावेश <linux/namei.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/security.h>
-#समावेश "audit.h"
+#include <linux/file.h>
+#include <linux/kernel.h>
+#include <linux/audit.h>
+#include <linux/kthread.h>
+#include <linux/mutex.h>
+#include <linux/fs.h>
+#include <linux/fsnotify_backend.h>
+#include <linux/namei.h>
+#include <linux/netlink.h>
+#include <linux/refcount.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/security.h>
+#include "audit.h"
 
 /*
  * Reference counting:
  *
- * audit_parent: lअगरeसमय is from audit_init_parent() to receipt of an FS_IGNORED
+ * audit_parent: lifetime is from audit_init_parent() to receipt of an FS_IGNORED
  * 	event.  Each audit_watch holds a reference to its associated parent.
  *
- * audit_watch: अगर added to lists, lअगरeसमय is from audit_init_watch() to
- * 	audit_हटाओ_watch().  Additionally, an audit_watch may exist
+ * audit_watch: if added to lists, lifetime is from audit_init_watch() to
+ * 	audit_remove_watch().  Additionally, an audit_watch may exist
  * 	temporarily to assist in searching existing filter data.  Each
  * 	audit_krule holds a reference to its associated watch.
  */
 
-काष्ठा audit_watch अणु
+struct audit_watch {
 	refcount_t		count;	/* reference count */
 	dev_t			dev;	/* associated superblock device */
-	अक्षर			*path;	/* insertion path */
-	अचिन्हित दीर्घ		ino;	/* associated inode number */
-	काष्ठा audit_parent	*parent; /* associated parent */
-	काष्ठा list_head	wlist;	/* entry in parent->watches list */
-	काष्ठा list_head	rules;	/* anchor क्रम krule->rlist */
-पूर्ण;
+	char			*path;	/* insertion path */
+	unsigned long		ino;	/* associated inode number */
+	struct audit_parent	*parent; /* associated parent */
+	struct list_head	wlist;	/* entry in parent->watches list */
+	struct list_head	rules;	/* anchor for krule->rlist */
+};
 
-काष्ठा audit_parent अणु
-	काष्ठा list_head	watches; /* anchor क्रम audit_watch->wlist */
-	काष्ठा fsnotअगरy_mark mark; /* fsnotअगरy mark on the inode */
-पूर्ण;
+struct audit_parent {
+	struct list_head	watches; /* anchor for audit_watch->wlist */
+	struct fsnotify_mark mark; /* fsnotify mark on the inode */
+};
 
-/* fsnotअगरy handle. */
-अटल काष्ठा fsnotअगरy_group *audit_watch_group;
+/* fsnotify handle. */
+static struct fsnotify_group *audit_watch_group;
 
-/* fsnotअगरy events we care about. */
-#घोषणा AUDIT_FS_WATCH (FS_MOVE | FS_CREATE | FS_DELETE | FS_DELETE_SELF |\
+/* fsnotify events we care about. */
+#define AUDIT_FS_WATCH (FS_MOVE | FS_CREATE | FS_DELETE | FS_DELETE_SELF |\
 			FS_MOVE_SELF | FS_UNMOUNT)
 
-अटल व्योम audit_मुक्त_parent(काष्ठा audit_parent *parent)
-अणु
+static void audit_free_parent(struct audit_parent *parent)
+{
 	WARN_ON(!list_empty(&parent->watches));
-	kमुक्त(parent);
-पूर्ण
+	kfree(parent);
+}
 
-अटल व्योम audit_watch_मुक्त_mark(काष्ठा fsnotअगरy_mark *entry)
-अणु
-	काष्ठा audit_parent *parent;
+static void audit_watch_free_mark(struct fsnotify_mark *entry)
+{
+	struct audit_parent *parent;
 
-	parent = container_of(entry, काष्ठा audit_parent, mark);
-	audit_मुक्त_parent(parent);
-पूर्ण
+	parent = container_of(entry, struct audit_parent, mark);
+	audit_free_parent(parent);
+}
 
-अटल व्योम audit_get_parent(काष्ठा audit_parent *parent)
-अणु
-	अगर (likely(parent))
-		fsnotअगरy_get_mark(&parent->mark);
-पूर्ण
+static void audit_get_parent(struct audit_parent *parent)
+{
+	if (likely(parent))
+		fsnotify_get_mark(&parent->mark);
+}
 
-अटल व्योम audit_put_parent(काष्ठा audit_parent *parent)
-अणु
-	अगर (likely(parent))
-		fsnotअगरy_put_mark(&parent->mark);
-पूर्ण
+static void audit_put_parent(struct audit_parent *parent)
+{
+	if (likely(parent))
+		fsnotify_put_mark(&parent->mark);
+}
 
 /*
- * Find and वापस the audit_parent on the given inode.  If found a reference
+ * Find and return the audit_parent on the given inode.  If found a reference
  * is taken on this parent.
  */
-अटल अंतरभूत काष्ठा audit_parent *audit_find_parent(काष्ठा inode *inode)
-अणु
-	काष्ठा audit_parent *parent = शून्य;
-	काष्ठा fsnotअगरy_mark *entry;
+static inline struct audit_parent *audit_find_parent(struct inode *inode)
+{
+	struct audit_parent *parent = NULL;
+	struct fsnotify_mark *entry;
 
-	entry = fsnotअगरy_find_mark(&inode->i_fsnotअगरy_marks, audit_watch_group);
-	अगर (entry)
-		parent = container_of(entry, काष्ठा audit_parent, mark);
+	entry = fsnotify_find_mark(&inode->i_fsnotify_marks, audit_watch_group);
+	if (entry)
+		parent = container_of(entry, struct audit_parent, mark);
 
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
-व्योम audit_get_watch(काष्ठा audit_watch *watch)
-अणु
+void audit_get_watch(struct audit_watch *watch)
+{
 	refcount_inc(&watch->count);
-पूर्ण
+}
 
-व्योम audit_put_watch(काष्ठा audit_watch *watch)
-अणु
-	अगर (refcount_dec_and_test(&watch->count)) अणु
+void audit_put_watch(struct audit_watch *watch)
+{
+	if (refcount_dec_and_test(&watch->count)) {
 		WARN_ON(watch->parent);
 		WARN_ON(!list_empty(&watch->rules));
-		kमुक्त(watch->path);
-		kमुक्त(watch);
-	पूर्ण
-पूर्ण
+		kfree(watch->path);
+		kfree(watch);
+	}
+}
 
-अटल व्योम audit_हटाओ_watch(काष्ठा audit_watch *watch)
-अणु
+static void audit_remove_watch(struct audit_watch *watch)
+{
 	list_del(&watch->wlist);
 	audit_put_parent(watch->parent);
-	watch->parent = शून्य;
+	watch->parent = NULL;
 	audit_put_watch(watch); /* match initial get */
-पूर्ण
+}
 
-अक्षर *audit_watch_path(काष्ठा audit_watch *watch)
-अणु
-	वापस watch->path;
-पूर्ण
+char *audit_watch_path(struct audit_watch *watch)
+{
+	return watch->path;
+}
 
-पूर्णांक audit_watch_compare(काष्ठा audit_watch *watch, अचिन्हित दीर्घ ino, dev_t dev)
-अणु
-	वापस (watch->ino != AUDIT_INO_UNSET) &&
+int audit_watch_compare(struct audit_watch *watch, unsigned long ino, dev_t dev)
+{
+	return (watch->ino != AUDIT_INO_UNSET) &&
 		(watch->ino == ino) &&
 		(watch->dev == dev);
-पूर्ण
+}
 
 /* Initialize a parent watch entry. */
-अटल काष्ठा audit_parent *audit_init_parent(काष्ठा path *path)
-अणु
-	काष्ठा inode *inode = d_backing_inode(path->dentry);
-	काष्ठा audit_parent *parent;
-	पूर्णांक ret;
+static struct audit_parent *audit_init_parent(struct path *path)
+{
+	struct inode *inode = d_backing_inode(path->dentry);
+	struct audit_parent *parent;
+	int ret;
 
-	parent = kzalloc(माप(*parent), GFP_KERNEL);
-	अगर (unlikely(!parent))
-		वापस ERR_PTR(-ENOMEM);
+	parent = kzalloc(sizeof(*parent), GFP_KERNEL);
+	if (unlikely(!parent))
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&parent->watches);
 
-	fsnotअगरy_init_mark(&parent->mark, audit_watch_group);
+	fsnotify_init_mark(&parent->mark, audit_watch_group);
 	parent->mark.mask = AUDIT_FS_WATCH;
-	ret = fsnotअगरy_add_inode_mark(&parent->mark, inode, 0);
-	अगर (ret < 0) अणु
-		audit_मुक्त_parent(parent);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = fsnotify_add_inode_mark(&parent->mark, inode, 0);
+	if (ret < 0) {
+		audit_free_parent(parent);
+		return ERR_PTR(ret);
+	}
 
-	वापस parent;
-पूर्ण
+	return parent;
+}
 
 /* Initialize a watch entry. */
-अटल काष्ठा audit_watch *audit_init_watch(अक्षर *path)
-अणु
-	काष्ठा audit_watch *watch;
+static struct audit_watch *audit_init_watch(char *path)
+{
+	struct audit_watch *watch;
 
-	watch = kzalloc(माप(*watch), GFP_KERNEL);
-	अगर (unlikely(!watch))
-		वापस ERR_PTR(-ENOMEM);
+	watch = kzalloc(sizeof(*watch), GFP_KERNEL);
+	if (unlikely(!watch))
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&watch->rules);
 	refcount_set(&watch->count, 1);
@@ -172,48 +171,48 @@
 	watch->dev = AUDIT_DEV_UNSET;
 	watch->ino = AUDIT_INO_UNSET;
 
-	वापस watch;
-पूर्ण
+	return watch;
+}
 
 /* Translate a watch string to kernel representation. */
-पूर्णांक audit_to_watch(काष्ठा audit_krule *krule, अक्षर *path, पूर्णांक len, u32 op)
-अणु
-	काष्ठा audit_watch *watch;
+int audit_to_watch(struct audit_krule *krule, char *path, int len, u32 op)
+{
+	struct audit_watch *watch;
 
-	अगर (!audit_watch_group)
-		वापस -EOPNOTSUPP;
+	if (!audit_watch_group)
+		return -EOPNOTSUPP;
 
-	अगर (path[0] != '/' || path[len-1] == '/' ||
+	if (path[0] != '/' || path[len-1] == '/' ||
 	    krule->listnr != AUDIT_FILTER_EXIT ||
 	    op != Audit_equal ||
 	    krule->inode_f || krule->watch || krule->tree)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	watch = audit_init_watch(path);
-	अगर (IS_ERR(watch))
-		वापस PTR_ERR(watch);
+	if (IS_ERR(watch))
+		return PTR_ERR(watch);
 
 	krule->watch = watch;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Duplicate the given audit watch.  The new watch's rules list is initialized
  * to an empty list and wlist is undefined. */
-अटल काष्ठा audit_watch *audit_dupe_watch(काष्ठा audit_watch *old)
-अणु
-	अक्षर *path;
-	काष्ठा audit_watch *new;
+static struct audit_watch *audit_dupe_watch(struct audit_watch *old)
+{
+	char *path;
+	struct audit_watch *new;
 
 	path = kstrdup(old->path, GFP_KERNEL);
-	अगर (unlikely(!path))
-		वापस ERR_PTR(-ENOMEM);
+	if (unlikely(!path))
+		return ERR_PTR(-ENOMEM);
 
 	new = audit_init_watch(path);
-	अगर (IS_ERR(new)) अणु
-		kमुक्त(path);
-		जाओ out;
-	पूर्ण
+	if (IS_ERR(new)) {
+		kfree(path);
+		goto out;
+	}
 
 	new->dev = old->dev;
 	new->ino = old->ino;
@@ -221,71 +220,71 @@
 	new->parent = old->parent;
 
 out:
-	वापस new;
-पूर्ण
+	return new;
+}
 
-अटल व्योम audit_watch_log_rule_change(काष्ठा audit_krule *r, काष्ठा audit_watch *w, अक्षर *op)
-अणु
-	काष्ठा audit_buffer *ab;
+static void audit_watch_log_rule_change(struct audit_krule *r, struct audit_watch *w, char *op)
+{
+	struct audit_buffer *ab;
 
-	अगर (!audit_enabled)
-		वापस;
+	if (!audit_enabled)
+		return;
 	ab = audit_log_start(audit_context(), GFP_NOFS, AUDIT_CONFIG_CHANGE);
-	अगर (!ab)
-		वापस;
+	if (!ab)
+		return;
 	audit_log_session_info(ab);
-	audit_log_क्रमmat(ab, "op=%s path=", op);
+	audit_log_format(ab, "op=%s path=", op);
 	audit_log_untrustedstring(ab, w->path);
 	audit_log_key(ab, r->filterkey);
-	audit_log_क्रमmat(ab, " list=%d res=1", r->listnr);
+	audit_log_format(ab, " list=%d res=1", r->listnr);
 	audit_log_end(ab);
-पूर्ण
+}
 
-/* Update inode info in audit rules based on fileप्रणाली event. */
-अटल व्योम audit_update_watch(काष्ठा audit_parent *parent,
-			       स्थिर काष्ठा qstr *dname, dev_t dev,
-			       अचिन्हित दीर्घ ino, अचिन्हित invalidating)
-अणु
-	काष्ठा audit_watch *owatch, *nwatch, *nextw;
-	काष्ठा audit_krule *r, *nextr;
-	काष्ठा audit_entry *oentry, *nentry;
+/* Update inode info in audit rules based on filesystem event. */
+static void audit_update_watch(struct audit_parent *parent,
+			       const struct qstr *dname, dev_t dev,
+			       unsigned long ino, unsigned invalidating)
+{
+	struct audit_watch *owatch, *nwatch, *nextw;
+	struct audit_krule *r, *nextr;
+	struct audit_entry *oentry, *nentry;
 
 	mutex_lock(&audit_filter_mutex);
-	/* Run all of the watches on this parent looking क्रम the one that
+	/* Run all of the watches on this parent looking for the one that
 	 * matches the given dname */
-	list_क्रम_each_entry_safe(owatch, nextw, &parent->watches, wlist) अणु
-		अगर (audit_compare_dname_path(dname, owatch->path,
+	list_for_each_entry_safe(owatch, nextw, &parent->watches, wlist) {
+		if (audit_compare_dname_path(dname, owatch->path,
 					     AUDIT_NAME_FULL))
-			जारी;
+			continue;
 
-		/* If the update involves invalidating rules, करो the inode-based
-		 * filtering now, so we करोn't omit records. */
-		अगर (invalidating && !audit_dummy_context())
+		/* If the update involves invalidating rules, do the inode-based
+		 * filtering now, so we don't omit records. */
+		if (invalidating && !audit_dummy_context())
 			audit_filter_inodes(current, audit_context());
 
 		/* updating ino will likely change which audit_hash_list we
-		 * are on so we need a new watch क्रम the new list */
+		 * are on so we need a new watch for the new list */
 		nwatch = audit_dupe_watch(owatch);
-		अगर (IS_ERR(nwatch)) अणु
+		if (IS_ERR(nwatch)) {
 			mutex_unlock(&audit_filter_mutex);
 			audit_panic("error updating watch, skipping");
-			वापस;
-		पूर्ण
+			return;
+		}
 		nwatch->dev = dev;
 		nwatch->ino = ino;
 
-		list_क्रम_each_entry_safe(r, nextr, &owatch->rules, rlist) अणु
+		list_for_each_entry_safe(r, nextr, &owatch->rules, rlist) {
 
-			oentry = container_of(r, काष्ठा audit_entry, rule);
+			oentry = container_of(r, struct audit_entry, rule);
 			list_del(&oentry->rule.rlist);
 			list_del_rcu(&oentry->list);
 
 			nentry = audit_dupe_rule(&oentry->rule);
-			अगर (IS_ERR(nentry)) अणु
+			if (IS_ERR(nentry)) {
 				list_del(&oentry->rule.list);
 				audit_panic("error updating watch, removing");
-			पूर्ण अन्यथा अणु
-				पूर्णांक h = audit_hash_ino((u32)ino);
+			} else {
+				int h = audit_hash_ino((u32)ino);
 
 				/*
 				 * nentry->rule.watch == oentry->rule.watch so
@@ -299,80 +298,80 @@ out:
 				list_add_rcu(&nentry->list, &audit_inode_hash[h]);
 				list_replace(&oentry->rule.list,
 					     &nentry->rule.list);
-			पूर्ण
-			अगर (oentry->rule.exe)
-				audit_हटाओ_mark(oentry->rule.exe);
+			}
+			if (oentry->rule.exe)
+				audit_remove_mark(oentry->rule.exe);
 
-			call_rcu(&oentry->rcu, audit_मुक्त_rule_rcu);
-		पूर्ण
+			call_rcu(&oentry->rcu, audit_free_rule_rcu);
+		}
 
-		audit_हटाओ_watch(owatch);
-		जाओ add_watch_to_parent; /* event applies to a single watch */
-	पूर्ण
+		audit_remove_watch(owatch);
+		goto add_watch_to_parent; /* event applies to a single watch */
+	}
 	mutex_unlock(&audit_filter_mutex);
-	वापस;
+	return;
 
 add_watch_to_parent:
 	list_add(&nwatch->wlist, &parent->watches);
 	mutex_unlock(&audit_filter_mutex);
-	वापस;
-पूर्ण
+	return;
+}
 
 /* Remove all watches & rules associated with a parent that is going away. */
-अटल व्योम audit_हटाओ_parent_watches(काष्ठा audit_parent *parent)
-अणु
-	काष्ठा audit_watch *w, *nextw;
-	काष्ठा audit_krule *r, *nextr;
-	काष्ठा audit_entry *e;
+static void audit_remove_parent_watches(struct audit_parent *parent)
+{
+	struct audit_watch *w, *nextw;
+	struct audit_krule *r, *nextr;
+	struct audit_entry *e;
 
 	mutex_lock(&audit_filter_mutex);
-	list_क्रम_each_entry_safe(w, nextw, &parent->watches, wlist) अणु
-		list_क्रम_each_entry_safe(r, nextr, &w->rules, rlist) अणु
-			e = container_of(r, काष्ठा audit_entry, rule);
+	list_for_each_entry_safe(w, nextw, &parent->watches, wlist) {
+		list_for_each_entry_safe(r, nextr, &w->rules, rlist) {
+			e = container_of(r, struct audit_entry, rule);
 			audit_watch_log_rule_change(r, w, "remove_rule");
-			अगर (e->rule.exe)
-				audit_हटाओ_mark(e->rule.exe);
+			if (e->rule.exe)
+				audit_remove_mark(e->rule.exe);
 			list_del(&r->rlist);
 			list_del(&r->list);
 			list_del_rcu(&e->list);
-			call_rcu(&e->rcu, audit_मुक्त_rule_rcu);
-		पूर्ण
-		audit_हटाओ_watch(w);
-	पूर्ण
+			call_rcu(&e->rcu, audit_free_rule_rcu);
+		}
+		audit_remove_watch(w);
+	}
 	mutex_unlock(&audit_filter_mutex);
 
-	fsnotअगरy_destroy_mark(&parent->mark, audit_watch_group);
-पूर्ण
+	fsnotify_destroy_mark(&parent->mark, audit_watch_group);
+}
 
-/* Get path inक्रमmation necessary क्रम adding watches. */
-अटल पूर्णांक audit_get_nd(काष्ठा audit_watch *watch, काष्ठा path *parent)
-अणु
-	काष्ठा dentry *d = kern_path_locked(watch->path, parent);
-	अगर (IS_ERR(d))
-		वापस PTR_ERR(d);
-	अगर (d_is_positive(d)) अणु
+/* Get path information necessary for adding watches. */
+static int audit_get_nd(struct audit_watch *watch, struct path *parent)
+{
+	struct dentry *d = kern_path_locked(watch->path, parent);
+	if (IS_ERR(d))
+		return PTR_ERR(d);
+	if (d_is_positive(d)) {
 		/* update watch filter fields */
 		watch->dev = d->d_sb->s_dev;
 		watch->ino = d_backing_inode(d)->i_ino;
-	पूर्ण
+	}
 	inode_unlock(d_backing_inode(parent->dentry));
 	dput(d);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Associate the given rule with an existing parent.
  * Caller must hold audit_filter_mutex. */
-अटल व्योम audit_add_to_parent(काष्ठा audit_krule *krule,
-				काष्ठा audit_parent *parent)
-अणु
-	काष्ठा audit_watch *w, *watch = krule->watch;
-	पूर्णांक watch_found = 0;
+static void audit_add_to_parent(struct audit_krule *krule,
+				struct audit_parent *parent)
+{
+	struct audit_watch *w, *watch = krule->watch;
+	int watch_found = 0;
 
 	BUG_ON(!mutex_is_locked(&audit_filter_mutex));
 
-	list_क्रम_each_entry(w, &parent->watches, wlist) अणु
-		अगर (म_भेद(watch->path, w->path))
-			जारी;
+	list_for_each_entry(w, &parent->watches, wlist) {
+		if (strcmp(watch->path, w->path))
+			continue;
 
 		watch_found = 1;
 
@@ -383,56 +382,56 @@ add_watch_to_parent:
 		krule->watch = watch = w;
 
 		audit_put_parent(parent);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!watch_found) अणु
+	if (!watch_found) {
 		watch->parent = parent;
 
 		audit_get_watch(watch);
 		list_add(&watch->wlist, &parent->watches);
-	पूर्ण
+	}
 	list_add(&krule->rlist, &watch->rules);
-पूर्ण
+}
 
 /* Find a matching watch entry, or add this one.
  * Caller must hold audit_filter_mutex. */
-पूर्णांक audit_add_watch(काष्ठा audit_krule *krule, काष्ठा list_head **list)
-अणु
-	काष्ठा audit_watch *watch = krule->watch;
-	काष्ठा audit_parent *parent;
-	काष्ठा path parent_path;
-	पूर्णांक h, ret = 0;
+int audit_add_watch(struct audit_krule *krule, struct list_head **list)
+{
+	struct audit_watch *watch = krule->watch;
+	struct audit_parent *parent;
+	struct path parent_path;
+	int h, ret = 0;
 
 	/*
 	 * When we will be calling audit_add_to_parent, krule->watch might have
-	 * been updated and watch might have been मुक्तd.
+	 * been updated and watch might have been freed.
 	 * So we need to keep a reference of watch.
 	 */
 	audit_get_watch(watch);
 
 	mutex_unlock(&audit_filter_mutex);
 
-	/* Aव्योम calling path_lookup under audit_filter_mutex. */
+	/* Avoid calling path_lookup under audit_filter_mutex. */
 	ret = audit_get_nd(watch, &parent_path);
 
 	/* caller expects mutex locked */
 	mutex_lock(&audit_filter_mutex);
 
-	अगर (ret) अणु
+	if (ret) {
 		audit_put_watch(watch);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* either find an old parent or attach a new one */
 	parent = audit_find_parent(d_backing_inode(parent_path.dentry));
-	अगर (!parent) अणु
+	if (!parent) {
 		parent = audit_init_parent(&parent_path);
-		अगर (IS_ERR(parent)) अणु
+		if (IS_ERR(parent)) {
 			ret = PTR_ERR(parent);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
 	audit_add_to_parent(krule, parent);
 
@@ -441,98 +440,98 @@ add_watch_to_parent:
 error:
 	path_put(&parent_path);
 	audit_put_watch(watch);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम audit_हटाओ_watch_rule(काष्ठा audit_krule *krule)
-अणु
-	काष्ठा audit_watch *watch = krule->watch;
-	काष्ठा audit_parent *parent = watch->parent;
+void audit_remove_watch_rule(struct audit_krule *krule)
+{
+	struct audit_watch *watch = krule->watch;
+	struct audit_parent *parent = watch->parent;
 
 	list_del(&krule->rlist);
 
-	अगर (list_empty(&watch->rules)) अणु
+	if (list_empty(&watch->rules)) {
 		/*
-		 * audit_हटाओ_watch() drops our reference to 'parent' which
-		 * can get मुक्तd. Grab our own reference to be safe.
+		 * audit_remove_watch() drops our reference to 'parent' which
+		 * can get freed. Grab our own reference to be safe.
 		 */
 		audit_get_parent(parent);
-		audit_हटाओ_watch(watch);
-		अगर (list_empty(&parent->watches))
-			fsnotअगरy_destroy_mark(&parent->mark, audit_watch_group);
+		audit_remove_watch(watch);
+		if (list_empty(&parent->watches))
+			fsnotify_destroy_mark(&parent->mark, audit_watch_group);
 		audit_put_parent(parent);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Update watch data in audit rules based on fsnotअगरy events. */
-अटल पूर्णांक audit_watch_handle_event(काष्ठा fsnotअगरy_mark *inode_mark, u32 mask,
-				    काष्ठा inode *inode, काष्ठा inode *dir,
-				    स्थिर काष्ठा qstr *dname, u32 cookie)
-अणु
-	काष्ठा audit_parent *parent;
+/* Update watch data in audit rules based on fsnotify events. */
+static int audit_watch_handle_event(struct fsnotify_mark *inode_mark, u32 mask,
+				    struct inode *inode, struct inode *dir,
+				    const struct qstr *dname, u32 cookie)
+{
+	struct audit_parent *parent;
 
-	parent = container_of(inode_mark, काष्ठा audit_parent, mark);
+	parent = container_of(inode_mark, struct audit_parent, mark);
 
-	अगर (WARN_ON_ONCE(inode_mark->group != audit_watch_group) ||
+	if (WARN_ON_ONCE(inode_mark->group != audit_watch_group) ||
 	    WARN_ON_ONCE(!inode))
-		वापस 0;
+		return 0;
 
-	अगर (mask & (FS_CREATE|FS_MOVED_TO) && inode)
+	if (mask & (FS_CREATE|FS_MOVED_TO) && inode)
 		audit_update_watch(parent, dname, inode->i_sb->s_dev, inode->i_ino, 0);
-	अन्यथा अगर (mask & (FS_DELETE|FS_MOVED_FROM))
+	else if (mask & (FS_DELETE|FS_MOVED_FROM))
 		audit_update_watch(parent, dname, AUDIT_DEV_UNSET, AUDIT_INO_UNSET, 1);
-	अन्यथा अगर (mask & (FS_DELETE_SELF|FS_UNMOUNT|FS_MOVE_SELF))
-		audit_हटाओ_parent_watches(parent);
+	else if (mask & (FS_DELETE_SELF|FS_UNMOUNT|FS_MOVE_SELF))
+		audit_remove_parent_watches(parent);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा fsnotअगरy_ops audit_watch_fsnotअगरy_ops = अणु
+static const struct fsnotify_ops audit_watch_fsnotify_ops = {
 	.handle_inode_event =	audit_watch_handle_event,
-	.मुक्त_mark =		audit_watch_मुक्त_mark,
-पूर्ण;
+	.free_mark =		audit_watch_free_mark,
+};
 
-अटल पूर्णांक __init audit_watch_init(व्योम)
-अणु
-	audit_watch_group = fsnotअगरy_alloc_group(&audit_watch_fsnotअगरy_ops);
-	अगर (IS_ERR(audit_watch_group)) अणु
-		audit_watch_group = शून्य;
+static int __init audit_watch_init(void)
+{
+	audit_watch_group = fsnotify_alloc_group(&audit_watch_fsnotify_ops);
+	if (IS_ERR(audit_watch_group)) {
+		audit_watch_group = NULL;
 		audit_panic("cannot create audit fsnotify group");
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 device_initcall(audit_watch_init);
 
-पूर्णांक audit_dupe_exe(काष्ठा audit_krule *new, काष्ठा audit_krule *old)
-अणु
-	काष्ठा audit_fsnotअगरy_mark *audit_mark;
-	अक्षर *pathname;
+int audit_dupe_exe(struct audit_krule *new, struct audit_krule *old)
+{
+	struct audit_fsnotify_mark *audit_mark;
+	char *pathname;
 
 	pathname = kstrdup(audit_mark_path(old->exe), GFP_KERNEL);
-	अगर (!pathname)
-		वापस -ENOMEM;
+	if (!pathname)
+		return -ENOMEM;
 
-	audit_mark = audit_alloc_mark(new, pathname, म_माप(pathname));
-	अगर (IS_ERR(audit_mark)) अणु
-		kमुक्त(pathname);
-		वापस PTR_ERR(audit_mark);
-	पूर्ण
+	audit_mark = audit_alloc_mark(new, pathname, strlen(pathname));
+	if (IS_ERR(audit_mark)) {
+		kfree(pathname);
+		return PTR_ERR(audit_mark);
+	}
 	new->exe = audit_mark;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक audit_exe_compare(काष्ठा task_काष्ठा *tsk, काष्ठा audit_fsnotअगरy_mark *mark)
-अणु
-	काष्ठा file *exe_file;
-	अचिन्हित दीर्घ ino;
+int audit_exe_compare(struct task_struct *tsk, struct audit_fsnotify_mark *mark)
+{
+	struct file *exe_file;
+	unsigned long ino;
 	dev_t dev;
 
 	exe_file = get_task_exe_file(tsk);
-	अगर (!exe_file)
-		वापस 0;
+	if (!exe_file)
+		return 0;
 	ino = file_inode(exe_file)->i_ino;
 	dev = file_inode(exe_file)->i_sb->s_dev;
 	fput(exe_file);
-	वापस audit_mark_compare(mark, ino, dev);
-पूर्ण
+	return audit_mark_compare(mark, ino, dev);
+}

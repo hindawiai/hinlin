@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * System Control and Power Interface(SCPI) based hwmon sensor driver
  *
@@ -7,224 +6,224 @@
  * Punit Agrawal <punit.agrawal@arm.com>
  */
 
-#समावेश <linux/hwmon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/scpi_protocol.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/thermal.h>
+#include <linux/hwmon.h>
+#include <linux/module.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/scpi_protocol.h>
+#include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/thermal.h>
 
-काष्ठा sensor_data अणु
-	अचिन्हित पूर्णांक scale;
-	काष्ठा scpi_sensor_info info;
-	काष्ठा device_attribute dev_attr_input;
-	काष्ठा device_attribute dev_attr_label;
-	अक्षर input[20];
-	अक्षर label[20];
-पूर्ण;
+struct sensor_data {
+	unsigned int scale;
+	struct scpi_sensor_info info;
+	struct device_attribute dev_attr_input;
+	struct device_attribute dev_attr_label;
+	char input[20];
+	char label[20];
+};
 
-काष्ठा scpi_thermal_zone अणु
-	पूर्णांक sensor_id;
-	काष्ठा scpi_sensors *scpi_sensors;
-पूर्ण;
+struct scpi_thermal_zone {
+	int sensor_id;
+	struct scpi_sensors *scpi_sensors;
+};
 
-काष्ठा scpi_sensors अणु
-	काष्ठा scpi_ops *scpi_ops;
-	काष्ठा sensor_data *data;
-	काष्ठा list_head thermal_zones;
-	काष्ठा attribute **attrs;
-	काष्ठा attribute_group group;
-	स्थिर काष्ठा attribute_group *groups[2];
-पूर्ण;
+struct scpi_sensors {
+	struct scpi_ops *scpi_ops;
+	struct sensor_data *data;
+	struct list_head thermal_zones;
+	struct attribute **attrs;
+	struct attribute_group group;
+	const struct attribute_group *groups[2];
+};
 
-अटल स्थिर u32 gxbb_scpi_scale[] = अणु
+static const u32 gxbb_scpi_scale[] = {
 	[TEMPERATURE]	= 1,		/* (celsius)		*/
 	[VOLTAGE]	= 1000,		/* (millivolts)		*/
 	[CURRENT]	= 1000,		/* (milliamperes)	*/
 	[POWER]		= 1000000,	/* (microwatts)		*/
 	[ENERGY]	= 1000000,	/* (microjoules)	*/
-पूर्ण;
+};
 
-अटल स्थिर u32 scpi_scale[] = अणु
+static const u32 scpi_scale[] = {
 	[TEMPERATURE]	= 1000,		/* (millicelsius)	*/
 	[VOLTAGE]	= 1000,		/* (millivolts)		*/
 	[CURRENT]	= 1000,		/* (milliamperes)	*/
 	[POWER]		= 1000000,	/* (microwatts)		*/
 	[ENERGY]	= 1000000,	/* (microjoules)	*/
-पूर्ण;
+};
 
-अटल व्योम scpi_scale_पढ़ोing(u64 *value, काष्ठा sensor_data *sensor)
-अणु
-	अगर (scpi_scale[sensor->info.class] != sensor->scale) अणु
+static void scpi_scale_reading(u64 *value, struct sensor_data *sensor)
+{
+	if (scpi_scale[sensor->info.class] != sensor->scale) {
 		*value *= scpi_scale[sensor->info.class];
-		करो_भाग(*value, sensor->scale);
-	पूर्ण
-पूर्ण
+		do_div(*value, sensor->scale);
+	}
+}
 
-अटल पूर्णांक scpi_पढ़ो_temp(व्योम *dev, पूर्णांक *temp)
-अणु
-	काष्ठा scpi_thermal_zone *zone = dev;
-	काष्ठा scpi_sensors *scpi_sensors = zone->scpi_sensors;
-	काष्ठा scpi_ops *scpi_ops = scpi_sensors->scpi_ops;
-	काष्ठा sensor_data *sensor = &scpi_sensors->data[zone->sensor_id];
+static int scpi_read_temp(void *dev, int *temp)
+{
+	struct scpi_thermal_zone *zone = dev;
+	struct scpi_sensors *scpi_sensors = zone->scpi_sensors;
+	struct scpi_ops *scpi_ops = scpi_sensors->scpi_ops;
+	struct sensor_data *sensor = &scpi_sensors->data[zone->sensor_id];
 	u64 value;
-	पूर्णांक ret;
+	int ret;
 
 	ret = scpi_ops->sensor_get_value(sensor->info.sensor_id, &value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	scpi_scale_पढ़ोing(&value, sensor);
+	scpi_scale_reading(&value, sensor);
 
 	*temp = value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* hwmon callback functions */
-अटल sमाप_प्रकार
-scpi_show_sensor(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा scpi_sensors *scpi_sensors = dev_get_drvdata(dev);
-	काष्ठा scpi_ops *scpi_ops = scpi_sensors->scpi_ops;
-	काष्ठा sensor_data *sensor;
+static ssize_t
+scpi_show_sensor(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct scpi_sensors *scpi_sensors = dev_get_drvdata(dev);
+	struct scpi_ops *scpi_ops = scpi_sensors->scpi_ops;
+	struct sensor_data *sensor;
 	u64 value;
-	पूर्णांक ret;
+	int ret;
 
-	sensor = container_of(attr, काष्ठा sensor_data, dev_attr_input);
+	sensor = container_of(attr, struct sensor_data, dev_attr_input);
 
 	ret = scpi_ops->sensor_get_value(sensor->info.sensor_id, &value);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	scpi_scale_पढ़ोing(&value, sensor);
+	scpi_scale_reading(&value, sensor);
 
 	/*
-	 * Temperature sensor values are treated as चिन्हित values based on
-	 * observation even though that is not explicitly specअगरied, and
-	 * because an अचिन्हित u64 temperature करोes not really make practical
+	 * Temperature sensor values are treated as signed values based on
+	 * observation even though that is not explicitly specified, and
+	 * because an unsigned u64 temperature does not really make practical
 	 * sense especially when the temperature is below zero degrees Celsius.
 	 */
-	अगर (sensor->info.class == TEMPERATURE)
-		वापस प्र_लिखो(buf, "%lld\n", (s64)value);
+	if (sensor->info.class == TEMPERATURE)
+		return sprintf(buf, "%lld\n", (s64)value);
 
-	वापस प्र_लिखो(buf, "%llu\n", value);
-पूर्ण
+	return sprintf(buf, "%llu\n", value);
+}
 
-अटल sमाप_प्रकार
-scpi_show_label(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा sensor_data *sensor;
+static ssize_t
+scpi_show_label(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct sensor_data *sensor;
 
-	sensor = container_of(attr, काष्ठा sensor_data, dev_attr_label);
+	sensor = container_of(attr, struct sensor_data, dev_attr_label);
 
-	वापस प्र_लिखो(buf, "%s\n", sensor->info.name);
-पूर्ण
+	return sprintf(buf, "%s\n", sensor->info.name);
+}
 
-अटल स्थिर काष्ठा thermal_zone_of_device_ops scpi_sensor_ops = अणु
-	.get_temp = scpi_पढ़ो_temp,
-पूर्ण;
+static const struct thermal_zone_of_device_ops scpi_sensor_ops = {
+	.get_temp = scpi_read_temp,
+};
 
-अटल स्थिर काष्ठा of_device_id scpi_of_match[] = अणु
-	अणु.compatible = "arm,scpi-sensors", .data = &scpi_scaleपूर्ण,
-	अणु.compatible = "amlogic,meson-gxbb-scpi-sensors", .data = &gxbb_scpi_scaleपूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id scpi_of_match[] = {
+	{.compatible = "arm,scpi-sensors", .data = &scpi_scale},
+	{.compatible = "amlogic,meson-gxbb-scpi-sensors", .data = &gxbb_scpi_scale},
+	{},
+};
 MODULE_DEVICE_TABLE(of, scpi_of_match);
 
-अटल पूर्णांक scpi_hwmon_probe(काष्ठा platक्रमm_device *pdev)
-अणु
+static int scpi_hwmon_probe(struct platform_device *pdev)
+{
 	u16 nr_sensors, i;
-	स्थिर u32 *scale;
-	पूर्णांक num_temp = 0, num_volt = 0, num_current = 0, num_घातer = 0;
-	पूर्णांक num_energy = 0;
-	काष्ठा scpi_ops *scpi_ops;
-	काष्ठा device *hwdev, *dev = &pdev->dev;
-	काष्ठा scpi_sensors *scpi_sensors;
-	स्थिर काष्ठा of_device_id *of_id;
-	पूर्णांक idx, ret;
+	const u32 *scale;
+	int num_temp = 0, num_volt = 0, num_current = 0, num_power = 0;
+	int num_energy = 0;
+	struct scpi_ops *scpi_ops;
+	struct device *hwdev, *dev = &pdev->dev;
+	struct scpi_sensors *scpi_sensors;
+	const struct of_device_id *of_id;
+	int idx, ret;
 
 	scpi_ops = get_scpi_ops();
-	अगर (!scpi_ops)
-		वापस -EPROBE_DEFER;
+	if (!scpi_ops)
+		return -EPROBE_DEFER;
 
 	ret = scpi_ops->sensor_get_capability(&nr_sensors);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!nr_sensors)
-		वापस -ENODEV;
+	if (!nr_sensors)
+		return -ENODEV;
 
-	scpi_sensors = devm_kzalloc(dev, माप(*scpi_sensors), GFP_KERNEL);
-	अगर (!scpi_sensors)
-		वापस -ENOMEM;
+	scpi_sensors = devm_kzalloc(dev, sizeof(*scpi_sensors), GFP_KERNEL);
+	if (!scpi_sensors)
+		return -ENOMEM;
 
-	scpi_sensors->data = devm_kसुस्मृति(dev, nr_sensors,
-				   माप(*scpi_sensors->data), GFP_KERNEL);
-	अगर (!scpi_sensors->data)
-		वापस -ENOMEM;
+	scpi_sensors->data = devm_kcalloc(dev, nr_sensors,
+				   sizeof(*scpi_sensors->data), GFP_KERNEL);
+	if (!scpi_sensors->data)
+		return -ENOMEM;
 
-	scpi_sensors->attrs = devm_kसुस्मृति(dev, (nr_sensors * 2) + 1,
-				   माप(*scpi_sensors->attrs), GFP_KERNEL);
-	अगर (!scpi_sensors->attrs)
-		वापस -ENOMEM;
+	scpi_sensors->attrs = devm_kcalloc(dev, (nr_sensors * 2) + 1,
+				   sizeof(*scpi_sensors->attrs), GFP_KERNEL);
+	if (!scpi_sensors->attrs)
+		return -ENOMEM;
 
 	scpi_sensors->scpi_ops = scpi_ops;
 
 	of_id = of_match_device(scpi_of_match, &pdev->dev);
-	अगर (!of_id) अणु
+	if (!of_id) {
 		dev_err(&pdev->dev, "Unable to initialize scpi-hwmon data\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	scale = of_id->data;
 
-	क्रम (i = 0, idx = 0; i < nr_sensors; i++) अणु
-		काष्ठा sensor_data *sensor = &scpi_sensors->data[idx];
+	for (i = 0, idx = 0; i < nr_sensors; i++) {
+		struct sensor_data *sensor = &scpi_sensors->data[idx];
 
 		ret = scpi_ops->sensor_get_info(i, &sensor->info);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		चयन (sensor->info.class) अणु
-		हाल TEMPERATURE:
-			snम_लिखो(sensor->input, माप(sensor->input),
+		switch (sensor->info.class) {
+		case TEMPERATURE:
+			snprintf(sensor->input, sizeof(sensor->input),
 				 "temp%d_input", num_temp + 1);
-			snम_लिखो(sensor->label, माप(sensor->input),
+			snprintf(sensor->label, sizeof(sensor->input),
 				 "temp%d_label", num_temp + 1);
 			num_temp++;
-			अवरोध;
-		हाल VOLTAGE:
-			snम_लिखो(sensor->input, माप(sensor->input),
+			break;
+		case VOLTAGE:
+			snprintf(sensor->input, sizeof(sensor->input),
 				 "in%d_input", num_volt);
-			snम_लिखो(sensor->label, माप(sensor->input),
+			snprintf(sensor->label, sizeof(sensor->input),
 				 "in%d_label", num_volt);
 			num_volt++;
-			अवरोध;
-		हाल CURRENT:
-			snम_लिखो(sensor->input, माप(sensor->input),
+			break;
+		case CURRENT:
+			snprintf(sensor->input, sizeof(sensor->input),
 				 "curr%d_input", num_current + 1);
-			snम_लिखो(sensor->label, माप(sensor->input),
+			snprintf(sensor->label, sizeof(sensor->input),
 				 "curr%d_label", num_current + 1);
 			num_current++;
-			अवरोध;
-		हाल POWER:
-			snम_लिखो(sensor->input, माप(sensor->input),
-				 "power%d_input", num_घातer + 1);
-			snम_लिखो(sensor->label, माप(sensor->input),
-				 "power%d_label", num_घातer + 1);
-			num_घातer++;
-			अवरोध;
-		हाल ENERGY:
-			snम_लिखो(sensor->input, माप(sensor->input),
+			break;
+		case POWER:
+			snprintf(sensor->input, sizeof(sensor->input),
+				 "power%d_input", num_power + 1);
+			snprintf(sensor->label, sizeof(sensor->input),
+				 "power%d_label", num_power + 1);
+			num_power++;
+			break;
+		case ENERGY:
+			snprintf(sensor->input, sizeof(sensor->input),
 				 "energy%d_input", num_energy + 1);
-			snम_लिखो(sensor->label, माप(sensor->input),
+			snprintf(sensor->label, sizeof(sensor->input),
 				 "energy%d_label", num_energy + 1);
 			num_energy++;
-			अवरोध;
-		शेष:
-			जारी;
-		पूर्ण
+			break;
+		default:
+			continue;
+		}
 
 		sensor->scale = scale[sensor->info.class];
 
@@ -242,67 +241,67 @@ MODULE_DEVICE_TABLE(of, scpi_of_match);
 		sysfs_attr_init(scpi_sensors->attrs[idx << 1]);
 		sysfs_attr_init(scpi_sensors->attrs[(idx << 1) + 1]);
 		idx++;
-	पूर्ण
+	}
 
 	scpi_sensors->group.attrs = scpi_sensors->attrs;
 	scpi_sensors->groups[0] = &scpi_sensors->group;
 
-	platक्रमm_set_drvdata(pdev, scpi_sensors);
+	platform_set_drvdata(pdev, scpi_sensors);
 
-	hwdev = devm_hwmon_device_रेजिस्टर_with_groups(dev,
+	hwdev = devm_hwmon_device_register_with_groups(dev,
 			"scpi_sensors", scpi_sensors, scpi_sensors->groups);
 
-	अगर (IS_ERR(hwdev))
-		वापस PTR_ERR(hwdev);
+	if (IS_ERR(hwdev))
+		return PTR_ERR(hwdev);
 
 	/*
 	 * Register the temperature sensors with the thermal framework
 	 * to allow their usage in setting up the thermal zones from
 	 * device tree.
 	 *
-	 * NOTE: Not all temperature sensors maybe used क्रम thermal
+	 * NOTE: Not all temperature sensors maybe used for thermal
 	 * control
 	 */
 	INIT_LIST_HEAD(&scpi_sensors->thermal_zones);
-	क्रम (i = 0; i < nr_sensors; i++) अणु
-		काष्ठा sensor_data *sensor = &scpi_sensors->data[i];
-		काष्ठा thermal_zone_device *z;
-		काष्ठा scpi_thermal_zone *zone;
+	for (i = 0; i < nr_sensors; i++) {
+		struct sensor_data *sensor = &scpi_sensors->data[i];
+		struct thermal_zone_device *z;
+		struct scpi_thermal_zone *zone;
 
-		अगर (sensor->info.class != TEMPERATURE)
-			जारी;
+		if (sensor->info.class != TEMPERATURE)
+			continue;
 
-		zone = devm_kzalloc(dev, माप(*zone), GFP_KERNEL);
-		अगर (!zone)
-			वापस -ENOMEM;
+		zone = devm_kzalloc(dev, sizeof(*zone), GFP_KERNEL);
+		if (!zone)
+			return -ENOMEM;
 
 		zone->sensor_id = i;
 		zone->scpi_sensors = scpi_sensors;
-		z = devm_thermal_zone_of_sensor_रेजिस्टर(dev,
+		z = devm_thermal_zone_of_sensor_register(dev,
 							 sensor->info.sensor_id,
 							 zone,
 							 &scpi_sensor_ops);
 		/*
-		 * The call to thermal_zone_of_sensor_रेजिस्टर वापसs
-		 * an error क्रम sensors that are not associated with
-		 * any thermal zones or अगर the thermal subप्रणाली is
+		 * The call to thermal_zone_of_sensor_register returns
+		 * an error for sensors that are not associated with
+		 * any thermal zones or if the thermal subsystem is
 		 * not configured.
 		 */
-		अगर (IS_ERR(z))
-			devm_kमुक्त(dev, zone);
-	पूर्ण
+		if (IS_ERR(z))
+			devm_kfree(dev, zone);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver scpi_hwmon_platdrv = अणु
-	.driver = अणु
+static struct platform_driver scpi_hwmon_platdrv = {
+	.driver = {
 		.name	= "scpi-hwmon",
 		.of_match_table = scpi_of_match,
-	पूर्ण,
+	},
 	.probe		= scpi_hwmon_probe,
-पूर्ण;
-module_platक्रमm_driver(scpi_hwmon_platdrv);
+};
+module_platform_driver(scpi_hwmon_platdrv);
 
 MODULE_AUTHOR("Punit Agrawal <punit.agrawal@arm.com>");
 MODULE_DESCRIPTION("ARM SCPI HWMON interface driver");

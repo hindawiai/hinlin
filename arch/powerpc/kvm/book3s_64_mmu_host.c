@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2009 SUSE Linux Products GmbH. All rights reserved.
  *
@@ -8,32 +7,32 @@
  *     Kevin Wolf <mail@kevin-wolf.de>
  */
 
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/pkeys.h>
+#include <linux/kvm_host.h>
+#include <linux/pkeys.h>
 
-#समावेश <यंत्र/kvm_ppc.h>
-#समावेश <यंत्र/kvm_book3s.h>
-#समावेश <यंत्र/book3s/64/mmu-hash.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/hw_irq.h>
-#समावेश "trace_pr.h"
-#समावेश "book3s.h"
+#include <asm/kvm_ppc.h>
+#include <asm/kvm_book3s.h>
+#include <asm/book3s/64/mmu-hash.h>
+#include <asm/machdep.h>
+#include <asm/mmu_context.h>
+#include <asm/hw_irq.h>
+#include "trace_pr.h"
+#include "book3s.h"
 
-#घोषणा PTE_SIZE 12
+#define PTE_SIZE 12
 
-व्योम kvmppc_mmu_invalidate_pte(काष्ठा kvm_vcpu *vcpu, काष्ठा hpte_cache *pte)
-अणु
+void kvmppc_mmu_invalidate_pte(struct kvm_vcpu *vcpu, struct hpte_cache *pte)
+{
 	mmu_hash_ops.hpte_invalidate(pte->slot, pte->host_vpn,
 				     pte->pagesize, pte->pagesize,
 				     MMU_SEGSIZE_256M, false);
-पूर्ण
+}
 
 /* We keep 512 gvsid->hvsid entries, mapping the guest ones to the array using
- * a hash, so we करोn't waste cycles on looping */
-अटल u16 kvmppc_sid_hash(काष्ठा kvm_vcpu *vcpu, u64 gvsid)
-अणु
-	वापस (u16)(((gvsid >> (SID_MAP_BITS * 7)) & SID_MAP_MASK) ^
+ * a hash, so we don't waste cycles on looping */
+static u16 kvmppc_sid_hash(struct kvm_vcpu *vcpu, u64 gvsid)
+{
+	return (u16)(((gvsid >> (SID_MAP_BITS * 7)) & SID_MAP_MASK) ^
 		     ((gvsid >> (SID_MAP_BITS * 6)) & SID_MAP_MASK) ^
 		     ((gvsid >> (SID_MAP_BITS * 5)) & SID_MAP_MASK) ^
 		     ((gvsid >> (SID_MAP_BITS * 4)) & SID_MAP_MASK) ^
@@ -41,156 +40,156 @@
 		     ((gvsid >> (SID_MAP_BITS * 2)) & SID_MAP_MASK) ^
 		     ((gvsid >> (SID_MAP_BITS * 1)) & SID_MAP_MASK) ^
 		     ((gvsid >> (SID_MAP_BITS * 0)) & SID_MAP_MASK));
-पूर्ण
+}
 
 
-अटल काष्ठा kvmppc_sid_map *find_sid_vsid(काष्ठा kvm_vcpu *vcpu, u64 gvsid)
-अणु
-	काष्ठा kvmppc_sid_map *map;
+static struct kvmppc_sid_map *find_sid_vsid(struct kvm_vcpu *vcpu, u64 gvsid)
+{
+	struct kvmppc_sid_map *map;
 	u16 sid_map_mask;
 
-	अगर (kvmppc_get_msr(vcpu) & MSR_PR)
+	if (kvmppc_get_msr(vcpu) & MSR_PR)
 		gvsid |= VSID_PR;
 
 	sid_map_mask = kvmppc_sid_hash(vcpu, gvsid);
 	map = &to_book3s(vcpu)->sid_map[sid_map_mask];
-	अगर (map->valid && (map->guest_vsid == gvsid)) अणु
+	if (map->valid && (map->guest_vsid == gvsid)) {
 		trace_kvm_book3s_slb_found(gvsid, map->host_vsid);
-		वापस map;
-	पूर्ण
+		return map;
+	}
 
 	map = &to_book3s(vcpu)->sid_map[SID_MAP_MASK - sid_map_mask];
-	अगर (map->valid && (map->guest_vsid == gvsid)) अणु
+	if (map->valid && (map->guest_vsid == gvsid)) {
 		trace_kvm_book3s_slb_found(gvsid, map->host_vsid);
-		वापस map;
-	पूर्ण
+		return map;
+	}
 
 	trace_kvm_book3s_slb_fail(sid_map_mask, gvsid);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-पूर्णांक kvmppc_mmu_map_page(काष्ठा kvm_vcpu *vcpu, काष्ठा kvmppc_pte *orig_pte,
-			bool isग_लिखो)
-अणु
-	अचिन्हित दीर्घ vpn;
+int kvmppc_mmu_map_page(struct kvm_vcpu *vcpu, struct kvmppc_pte *orig_pte,
+			bool iswrite)
+{
+	unsigned long vpn;
 	kvm_pfn_t hpaddr;
-	uदीर्घ hash, hpteg;
+	ulong hash, hpteg;
 	u64 vsid;
-	पूर्णांक ret;
-	पूर्णांक rflags = 0x192;
-	पूर्णांक vflags = 0;
-	पूर्णांक attempt = 0;
-	काष्ठा kvmppc_sid_map *map;
-	पूर्णांक r = 0;
-	पूर्णांक hpsize = MMU_PAGE_4K;
+	int ret;
+	int rflags = 0x192;
+	int vflags = 0;
+	int attempt = 0;
+	struct kvmppc_sid_map *map;
+	int r = 0;
+	int hpsize = MMU_PAGE_4K;
 	bool writable;
-	अचिन्हित दीर्घ mmu_seq;
-	काष्ठा kvm *kvm = vcpu->kvm;
-	काष्ठा hpte_cache *cpte;
-	अचिन्हित दीर्घ gfn = orig_pte->raddr >> PAGE_SHIFT;
-	अचिन्हित दीर्घ pfn;
+	unsigned long mmu_seq;
+	struct kvm *kvm = vcpu->kvm;
+	struct hpte_cache *cpte;
+	unsigned long gfn = orig_pte->raddr >> PAGE_SHIFT;
+	unsigned long pfn;
 
-	/* used to check क्रम invalidations in progress */
-	mmu_seq = kvm->mmu_notअगरier_seq;
+	/* used to check for invalidations in progress */
+	mmu_seq = kvm->mmu_notifier_seq;
 	smp_rmb();
 
-	/* Get host physical address क्रम gpa */
-	pfn = kvmppc_gpa_to_pfn(vcpu, orig_pte->raddr, isग_लिखो, &writable);
-	अगर (is_error_noslot_pfn(pfn)) अणु
-		prपूर्णांकk(KERN_INFO "Couldn't get guest page for gpa %lx!\n",
+	/* Get host physical address for gpa */
+	pfn = kvmppc_gpa_to_pfn(vcpu, orig_pte->raddr, iswrite, &writable);
+	if (is_error_noslot_pfn(pfn)) {
+		printk(KERN_INFO "Couldn't get guest page for gpa %lx!\n",
 		       orig_pte->raddr);
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	hpaddr = pfn << PAGE_SHIFT;
 
-	/* and ग_लिखो the mapping ea -> hpa पूर्णांकo the pt */
+	/* and write the mapping ea -> hpa into the pt */
 	vcpu->arch.mmu.esid_to_vsid(vcpu, orig_pte->eaddr >> SID_SHIFT, &vsid);
 	map = find_sid_vsid(vcpu, vsid);
-	अगर (!map) अणु
+	if (!map) {
 		ret = kvmppc_mmu_map_segment(vcpu, orig_pte->eaddr);
 		WARN_ON(ret < 0);
 		map = find_sid_vsid(vcpu, vsid);
-	पूर्ण
-	अगर (!map) अणु
-		prपूर्णांकk(KERN_ERR "KVM: Segment map for 0x%llx (0x%lx) failed\n",
+	}
+	if (!map) {
+		printk(KERN_ERR "KVM: Segment map for 0x%llx (0x%lx) failed\n",
 				vsid, orig_pte->eaddr);
 		WARN_ON(true);
 		r = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	vpn = hpt_vpn(orig_pte->eaddr, map->host_vsid, MMU_SEGSIZE_256M);
 
 	kvm_set_pfn_accessed(pfn);
-	अगर (!orig_pte->may_ग_लिखो || !writable)
+	if (!orig_pte->may_write || !writable)
 		rflags |= PP_RXRX;
-	अन्यथा अणु
+	else {
 		mark_page_dirty(vcpu->kvm, gfn);
 		kvm_set_pfn_dirty(pfn);
-	पूर्ण
+	}
 
-	अगर (!orig_pte->may_execute)
+	if (!orig_pte->may_execute)
 		rflags |= HPTE_R_N;
-	अन्यथा
+	else
 		kvmppc_mmu_flush_icache(pfn);
 
 	rflags |= pte_to_hpte_pkey_bits(0, HPTE_USE_KERNEL_KEY);
 	rflags = (rflags & ~HPTE_R_WIMG) | orig_pte->wimg;
 
 	/*
-	 * Use 64K pages अगर possible; otherwise, on 64K page kernels,
+	 * Use 64K pages if possible; otherwise, on 64K page kernels,
 	 * we need to transfer 4 more bits from guest real to host real addr.
 	 */
-	अगर (vsid & VSID_64K)
+	if (vsid & VSID_64K)
 		hpsize = MMU_PAGE_64K;
-	अन्यथा
+	else
 		hpaddr |= orig_pte->raddr & (~0xfffULL & ~PAGE_MASK);
 
-	hash = hpt_hash(vpn, mmu_psize_defs[hpsize].shअगरt, MMU_SEGSIZE_256M);
+	hash = hpt_hash(vpn, mmu_psize_defs[hpsize].shift, MMU_SEGSIZE_256M);
 
 	cpte = kvmppc_mmu_hpte_cache_next(vcpu);
 
 	spin_lock(&kvm->mmu_lock);
-	अगर (!cpte || mmu_notअगरier_retry(kvm, mmu_seq)) अणु
+	if (!cpte || mmu_notifier_retry(kvm, mmu_seq)) {
 		r = -EAGAIN;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 map_again:
 	hpteg = ((hash & htab_hash_mask) * HPTES_PER_GROUP);
 
-	/* In हाल we tried normal mapping alपढ़ोy, let's nuke old entries */
-	अगर (attempt > 1)
-		अगर (mmu_hash_ops.hpte_हटाओ(hpteg) < 0) अणु
+	/* In case we tried normal mapping already, let's nuke old entries */
+	if (attempt > 1)
+		if (mmu_hash_ops.hpte_remove(hpteg) < 0) {
 			r = -1;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
 	ret = mmu_hash_ops.hpte_insert(hpteg, vpn, hpaddr, rflags, vflags,
 				       hpsize, hpsize, MMU_SEGSIZE_256M);
 
-	अगर (ret == -1) अणु
+	if (ret == -1) {
 		/* If we couldn't map a primary PTE, try a secondary */
 		hash = ~hash;
 		vflags ^= HPTE_V_SECONDARY;
 		attempt++;
-		जाओ map_again;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+		goto map_again;
+	} else if (ret < 0) {
 		r = -EIO;
-		जाओ out_unlock;
-	पूर्ण अन्यथा अणु
+		goto out_unlock;
+	} else {
 		trace_kvm_book3s_64_mmu_map(rflags, hpteg,
 					    vpn, hpaddr, orig_pte);
 
 		/*
 		 * The mmu_hash_ops code may give us a secondary entry even
-		 * though we asked क्रम a primary. Fix up.
+		 * though we asked for a primary. Fix up.
 		 */
-		अगर ((ret & _PTEIDX_SECONDARY) && !(vflags & HPTE_V_SECONDARY)) अणु
+		if ((ret & _PTEIDX_SECONDARY) && !(vflags & HPTE_V_SECONDARY)) {
 			hash = ~hash;
 			hpteg = ((hash & htab_hash_mask) * HPTES_PER_GROUP);
-		पूर्ण
+		}
 
 		cpte->slot = hpteg + (ret & 7);
 		cpte->host_vpn = vpn;
@@ -199,63 +198,63 @@ map_again:
 		cpte->pagesize = hpsize;
 
 		kvmppc_mmu_hpte_cache_map(vcpu, cpte);
-		cpte = शून्य;
-	पूर्ण
+		cpte = NULL;
+	}
 
 out_unlock:
 	spin_unlock(&kvm->mmu_lock);
 	kvm_release_pfn_clean(pfn);
-	अगर (cpte)
-		kvmppc_mmu_hpte_cache_मुक्त(cpte);
+	if (cpte)
+		kvmppc_mmu_hpte_cache_free(cpte);
 
 out:
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम kvmppc_mmu_unmap_page(काष्ठा kvm_vcpu *vcpu, काष्ठा kvmppc_pte *pte)
-अणु
+void kvmppc_mmu_unmap_page(struct kvm_vcpu *vcpu, struct kvmppc_pte *pte)
+{
 	u64 mask = 0xfffffffffULL;
 	u64 vsid;
 
 	vcpu->arch.mmu.esid_to_vsid(vcpu, pte->eaddr >> SID_SHIFT, &vsid);
-	अगर (vsid & VSID_64K)
+	if (vsid & VSID_64K)
 		mask = 0xffffffff0ULL;
 	kvmppc_mmu_pte_vflush(vcpu, pte->vpage, mask);
-पूर्ण
+}
 
-अटल काष्ठा kvmppc_sid_map *create_sid_map(काष्ठा kvm_vcpu *vcpu, u64 gvsid)
-अणु
-	अचिन्हित दीर्घ vsid_bits = VSID_BITS_65_256M;
-	काष्ठा kvmppc_sid_map *map;
-	काष्ठा kvmppc_vcpu_book3s *vcpu_book3s = to_book3s(vcpu);
+static struct kvmppc_sid_map *create_sid_map(struct kvm_vcpu *vcpu, u64 gvsid)
+{
+	unsigned long vsid_bits = VSID_BITS_65_256M;
+	struct kvmppc_sid_map *map;
+	struct kvmppc_vcpu_book3s *vcpu_book3s = to_book3s(vcpu);
 	u16 sid_map_mask;
-	अटल पूर्णांक backwards_map = 0;
+	static int backwards_map = 0;
 
-	अगर (kvmppc_get_msr(vcpu) & MSR_PR)
+	if (kvmppc_get_msr(vcpu) & MSR_PR)
 		gvsid |= VSID_PR;
 
 	/* We might get collisions that trap in preceding order, so let's
-	   map them dअगरferently */
+	   map them differently */
 
 	sid_map_mask = kvmppc_sid_hash(vcpu, gvsid);
-	अगर (backwards_map)
+	if (backwards_map)
 		sid_map_mask = SID_MAP_MASK - sid_map_mask;
 
 	map = &to_book3s(vcpu)->sid_map[sid_map_mask];
 
-	/* Make sure we're taking the other map next समय */
+	/* Make sure we're taking the other map next time */
 	backwards_map = !backwards_map;
 
 	/* Uh-oh ... out of mappings. Let's flush! */
-	अगर (vcpu_book3s->proto_vsid_next == vcpu_book3s->proto_vsid_max) अणु
+	if (vcpu_book3s->proto_vsid_next == vcpu_book3s->proto_vsid_max) {
 		vcpu_book3s->proto_vsid_next = vcpu_book3s->proto_vsid_first;
-		स_रखो(vcpu_book3s->sid_map, 0,
-		       माप(काष्ठा kvmppc_sid_map) * SID_MAP_NUM);
+		memset(vcpu_book3s->sid_map, 0,
+		       sizeof(struct kvmppc_sid_map) * SID_MAP_NUM);
 		kvmppc_mmu_pte_flush(vcpu, 0, 0);
 		kvmppc_mmu_flush_segments(vcpu);
-	पूर्ण
+	}
 
-	अगर (mmu_has_feature(MMU_FTR_68_BIT_VA))
+	if (mmu_has_feature(MMU_FTR_68_BIT_VA))
 		vsid_bits = VSID_BITS_256M;
 
 	map->host_vsid = vsid_scramble(vcpu_book3s->proto_vsid_next++,
@@ -266,40 +265,40 @@ out:
 
 	trace_kvm_book3s_slb_map(sid_map_mask, gvsid, map->host_vsid);
 
-	वापस map;
-पूर्ण
+	return map;
+}
 
-अटल पूर्णांक kvmppc_mmu_next_segment(काष्ठा kvm_vcpu *vcpu, uदीर्घ esid)
-अणु
-	काष्ठा kvmppc_book3s_shaकरोw_vcpu *svcpu = svcpu_get(vcpu);
-	पूर्णांक i;
-	पूर्णांक max_slb_size = 64;
-	पूर्णांक found_inval = -1;
-	पूर्णांक r;
+static int kvmppc_mmu_next_segment(struct kvm_vcpu *vcpu, ulong esid)
+{
+	struct kvmppc_book3s_shadow_vcpu *svcpu = svcpu_get(vcpu);
+	int i;
+	int max_slb_size = 64;
+	int found_inval = -1;
+	int r;
 
 	/* Are we overwriting? */
-	क्रम (i = 0; i < svcpu->slb_max; i++) अणु
-		अगर (!(svcpu->slb[i].esid & SLB_ESID_V))
+	for (i = 0; i < svcpu->slb_max; i++) {
+		if (!(svcpu->slb[i].esid & SLB_ESID_V))
 			found_inval = i;
-		अन्यथा अगर ((svcpu->slb[i].esid & ESID_MASK) == esid) अणु
+		else if ((svcpu->slb[i].esid & ESID_MASK) == esid) {
 			r = i;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	/* Found a spare entry that was invalidated beक्रमe */
-	अगर (found_inval >= 0) अणु
+	/* Found a spare entry that was invalidated before */
+	if (found_inval >= 0) {
 		r = found_inval;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* No spare invalid entry, so create one */
 
-	अगर (mmu_slb_size < 64)
+	if (mmu_slb_size < 64)
 		max_slb_size = mmu_slb_size;
 
 	/* Overflowing -> purge */
-	अगर ((svcpu->slb_max) == max_slb_size)
+	if ((svcpu->slb_max) == max_slb_size)
 		kvmppc_mmu_flush_segments(vcpu);
 
 	r = svcpu->slb_max;
@@ -307,31 +306,31 @@ out:
 
 out:
 	svcpu_put(svcpu);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक kvmppc_mmu_map_segment(काष्ठा kvm_vcpu *vcpu, uदीर्घ eaddr)
-अणु
-	काष्ठा kvmppc_book3s_shaकरोw_vcpu *svcpu = svcpu_get(vcpu);
+int kvmppc_mmu_map_segment(struct kvm_vcpu *vcpu, ulong eaddr)
+{
+	struct kvmppc_book3s_shadow_vcpu *svcpu = svcpu_get(vcpu);
 	u64 esid = eaddr >> SID_SHIFT;
 	u64 slb_esid = (eaddr & ESID_MASK) | SLB_ESID_V;
 	u64 slb_vsid = SLB_VSID_USER;
 	u64 gvsid;
-	पूर्णांक slb_index;
-	काष्ठा kvmppc_sid_map *map;
-	पूर्णांक r = 0;
+	int slb_index;
+	struct kvmppc_sid_map *map;
+	int r = 0;
 
 	slb_index = kvmppc_mmu_next_segment(vcpu, eaddr & ESID_MASK);
 
-	अगर (vcpu->arch.mmu.esid_to_vsid(vcpu, esid, &gvsid)) अणु
+	if (vcpu->arch.mmu.esid_to_vsid(vcpu, esid, &gvsid)) {
 		/* Invalidate an entry */
 		svcpu->slb[slb_index].esid = 0;
 		r = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	map = find_sid_vsid(vcpu, gvsid);
-	अगर (!map)
+	if (!map)
 		map = create_sid_map(vcpu, gvsid);
 
 	map->guest_esid = esid;
@@ -340,11 +339,11 @@ out:
 	slb_vsid &= ~SLB_VSID_KP;
 	slb_esid |= slb_index;
 
-#अगर_घोषित CONFIG_PPC_64K_PAGES
-	/* Set host segment base page size to 64K अगर possible */
-	अगर (gvsid & VSID_64K)
+#ifdef CONFIG_PPC_64K_PAGES
+	/* Set host segment base page size to 64K if possible */
+	if (gvsid & VSID_64K)
 		slb_vsid |= mmu_psize_defs[MMU_PAGE_64K].sllp;
-#पूर्ण_अगर
+#endif
 
 	svcpu->slb[slb_index].esid = slb_esid;
 	svcpu->slb[slb_index].vsid = slb_vsid;
@@ -353,48 +352,48 @@ out:
 
 out:
 	svcpu_put(svcpu);
-	वापस r;
-पूर्ण
+	return r;
+}
 
-व्योम kvmppc_mmu_flush_segment(काष्ठा kvm_vcpu *vcpu, uदीर्घ ea, uदीर्घ seg_size)
-अणु
-	काष्ठा kvmppc_book3s_shaकरोw_vcpu *svcpu = svcpu_get(vcpu);
-	uदीर्घ seg_mask = -seg_size;
-	पूर्णांक i;
+void kvmppc_mmu_flush_segment(struct kvm_vcpu *vcpu, ulong ea, ulong seg_size)
+{
+	struct kvmppc_book3s_shadow_vcpu *svcpu = svcpu_get(vcpu);
+	ulong seg_mask = -seg_size;
+	int i;
 
-	क्रम (i = 0; i < svcpu->slb_max; i++) अणु
-		अगर ((svcpu->slb[i].esid & SLB_ESID_V) &&
-		    (svcpu->slb[i].esid & seg_mask) == ea) अणु
+	for (i = 0; i < svcpu->slb_max; i++) {
+		if ((svcpu->slb[i].esid & SLB_ESID_V) &&
+		    (svcpu->slb[i].esid & seg_mask) == ea) {
 			/* Invalidate this entry */
 			svcpu->slb[i].esid = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	svcpu_put(svcpu);
-पूर्ण
+}
 
-व्योम kvmppc_mmu_flush_segments(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvmppc_book3s_shaकरोw_vcpu *svcpu = svcpu_get(vcpu);
+void kvmppc_mmu_flush_segments(struct kvm_vcpu *vcpu)
+{
+	struct kvmppc_book3s_shadow_vcpu *svcpu = svcpu_get(vcpu);
 	svcpu->slb_max = 0;
 	svcpu->slb[0].esid = 0;
 	svcpu_put(svcpu);
-पूर्ण
+}
 
-व्योम kvmppc_mmu_destroy_pr(काष्ठा kvm_vcpu *vcpu)
-अणु
+void kvmppc_mmu_destroy_pr(struct kvm_vcpu *vcpu)
+{
 	kvmppc_mmu_hpte_destroy(vcpu);
 	__destroy_context(to_book3s(vcpu)->context_id[0]);
-पूर्ण
+}
 
-पूर्णांक kvmppc_mmu_init_pr(काष्ठा kvm_vcpu *vcpu)
-अणु
-	काष्ठा kvmppc_vcpu_book3s *vcpu3s = to_book3s(vcpu);
-	पूर्णांक err;
+int kvmppc_mmu_init_pr(struct kvm_vcpu *vcpu)
+{
+	struct kvmppc_vcpu_book3s *vcpu3s = to_book3s(vcpu);
+	int err;
 
 	err = hash__alloc_context_id();
-	अगर (err < 0)
-		वापस -1;
+	if (err < 0)
+		return -1;
 	vcpu3s->context_id[0] = err;
 
 	vcpu3s->proto_vsid_max = ((u64)(vcpu3s->context_id[0] + 1)
@@ -404,5 +403,5 @@ out:
 
 	kvmppc_mmu_hpte_init(vcpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,186 +1,185 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2014 Linaro Ltd.
  * Copyright (c) 2014 HiSilicon Limited.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/module.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/mfd/syscon.h>
+#include <linux/module.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#घोषणा SATA_PHY0_CTLL		0xa0
-#घोषणा MPLL_MULTIPLIER_SHIFT	1
-#घोषणा MPLL_MULTIPLIER_MASK	0xfe
-#घोषणा MPLL_MULTIPLIER_50M	0x3c
-#घोषणा MPLL_MULTIPLIER_100M	0x1e
-#घोषणा PHY_RESET		BIT(0)
-#घोषणा REF_SSP_EN		BIT(9)
-#घोषणा SSC_EN			BIT(10)
-#घोषणा REF_USE_PAD		BIT(23)
+#define SATA_PHY0_CTLL		0xa0
+#define MPLL_MULTIPLIER_SHIFT	1
+#define MPLL_MULTIPLIER_MASK	0xfe
+#define MPLL_MULTIPLIER_50M	0x3c
+#define MPLL_MULTIPLIER_100M	0x1e
+#define PHY_RESET		BIT(0)
+#define REF_SSP_EN		BIT(9)
+#define SSC_EN			BIT(10)
+#define REF_USE_PAD		BIT(23)
 
-#घोषणा SATA_PORT_PHYCTL	0x174
-#घोषणा SPEED_MODE_MASK		0x6f0000
-#घोषणा HALF_RATE_SHIFT		16
-#घोषणा PHY_CONFIG_SHIFT	18
-#घोषणा GEN2_EN_SHIFT		21
-#घोषणा SPEED_CTRL		BIT(20)
+#define SATA_PORT_PHYCTL	0x174
+#define SPEED_MODE_MASK		0x6f0000
+#define HALF_RATE_SHIFT		16
+#define PHY_CONFIG_SHIFT	18
+#define GEN2_EN_SHIFT		21
+#define SPEED_CTRL		BIT(20)
 
-#घोषणा SATA_PORT_PHYCTL1	0x148
-#घोषणा AMPLITUDE_MASK		0x3ffffe
-#घोषणा AMPLITUDE_GEN3		0x68
-#घोषणा AMPLITUDE_GEN3_SHIFT	15
-#घोषणा AMPLITUDE_GEN2		0x56
-#घोषणा AMPLITUDE_GEN2_SHIFT	8
-#घोषणा AMPLITUDE_GEN1		0x56
-#घोषणा AMPLITUDE_GEN1_SHIFT	1
+#define SATA_PORT_PHYCTL1	0x148
+#define AMPLITUDE_MASK		0x3ffffe
+#define AMPLITUDE_GEN3		0x68
+#define AMPLITUDE_GEN3_SHIFT	15
+#define AMPLITUDE_GEN2		0x56
+#define AMPLITUDE_GEN2_SHIFT	8
+#define AMPLITUDE_GEN1		0x56
+#define AMPLITUDE_GEN1_SHIFT	1
 
-#घोषणा SATA_PORT_PHYCTL2	0x14c
-#घोषणा PREEMPH_MASK		0x3ffff
-#घोषणा PREEMPH_GEN3		0x20
-#घोषणा PREEMPH_GEN3_SHIFT	12
-#घोषणा PREEMPH_GEN2		0x15
-#घोषणा PREEMPH_GEN2_SHIFT	6
-#घोषणा PREEMPH_GEN1		0x5
-#घोषणा PREEMPH_GEN1_SHIFT	0
+#define SATA_PORT_PHYCTL2	0x14c
+#define PREEMPH_MASK		0x3ffff
+#define PREEMPH_GEN3		0x20
+#define PREEMPH_GEN3_SHIFT	12
+#define PREEMPH_GEN2		0x15
+#define PREEMPH_GEN2_SHIFT	6
+#define PREEMPH_GEN1		0x5
+#define PREEMPH_GEN1_SHIFT	0
 
-काष्ठा hix5hd2_priv अणु
-	व्योम __iomem	*base;
-	काष्ठा regmap	*peri_ctrl;
-पूर्ण;
+struct hix5hd2_priv {
+	void __iomem	*base;
+	struct regmap	*peri_ctrl;
+};
 
-क्रमागत phy_speed_mode अणु
+enum phy_speed_mode {
 	SPEED_MODE_GEN1 = 0,
 	SPEED_MODE_GEN2 = 1,
 	SPEED_MODE_GEN3 = 2,
-पूर्ण;
+};
 
-अटल पूर्णांक hix5hd2_sata_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा hix5hd2_priv *priv = phy_get_drvdata(phy);
+static int hix5hd2_sata_phy_init(struct phy *phy)
+{
+	struct hix5hd2_priv *priv = phy_get_drvdata(phy);
 	u32 val, data[2];
-	पूर्णांक ret;
+	int ret;
 
-	अगर (priv->peri_ctrl) अणु
-		ret = of_property_पढ़ो_u32_array(phy->dev.of_node,
+	if (priv->peri_ctrl) {
+		ret = of_property_read_u32_array(phy->dev.of_node,
 						 "hisilicon,power-reg",
 						 &data[0], 2);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&phy->dev, "Fail read hisilicon,power-reg\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		regmap_update_bits(priv->peri_ctrl, data[0],
 				   BIT(data[1]), BIT(data[1]));
-	पूर्ण
+	}
 
 	/* reset phy */
-	val = पढ़ोl_relaxed(priv->base + SATA_PHY0_CTLL);
+	val = readl_relaxed(priv->base + SATA_PHY0_CTLL);
 	val &= ~(MPLL_MULTIPLIER_MASK | REF_USE_PAD);
 	val |= MPLL_MULTIPLIER_50M << MPLL_MULTIPLIER_SHIFT |
 	       REF_SSP_EN | PHY_RESET;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PHY0_CTLL);
+	writel_relaxed(val, priv->base + SATA_PHY0_CTLL);
 	msleep(20);
 	val &= ~PHY_RESET;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PHY0_CTLL);
+	writel_relaxed(val, priv->base + SATA_PHY0_CTLL);
 
-	val = पढ़ोl_relaxed(priv->base + SATA_PORT_PHYCTL1);
+	val = readl_relaxed(priv->base + SATA_PORT_PHYCTL1);
 	val &= ~AMPLITUDE_MASK;
 	val |= AMPLITUDE_GEN3 << AMPLITUDE_GEN3_SHIFT |
 	       AMPLITUDE_GEN2 << AMPLITUDE_GEN2_SHIFT |
 	       AMPLITUDE_GEN1 << AMPLITUDE_GEN1_SHIFT;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PORT_PHYCTL1);
+	writel_relaxed(val, priv->base + SATA_PORT_PHYCTL1);
 
-	val = पढ़ोl_relaxed(priv->base + SATA_PORT_PHYCTL2);
+	val = readl_relaxed(priv->base + SATA_PORT_PHYCTL2);
 	val &= ~PREEMPH_MASK;
 	val |= PREEMPH_GEN3 << PREEMPH_GEN3_SHIFT |
 	       PREEMPH_GEN2 << PREEMPH_GEN2_SHIFT |
 	       PREEMPH_GEN1 << PREEMPH_GEN1_SHIFT;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PORT_PHYCTL2);
+	writel_relaxed(val, priv->base + SATA_PORT_PHYCTL2);
 
 	/* ensure PHYCTRL setting takes effect */
-	val = पढ़ोl_relaxed(priv->base + SATA_PORT_PHYCTL);
+	val = readl_relaxed(priv->base + SATA_PORT_PHYCTL);
 	val &= ~SPEED_MODE_MASK;
 	val |= SPEED_MODE_GEN1 << HALF_RATE_SHIFT |
 	       SPEED_MODE_GEN1 << PHY_CONFIG_SHIFT |
 	       SPEED_MODE_GEN1 << GEN2_EN_SHIFT | SPEED_CTRL;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PORT_PHYCTL);
+	writel_relaxed(val, priv->base + SATA_PORT_PHYCTL);
 
 	msleep(20);
 	val &= ~SPEED_MODE_MASK;
 	val |= SPEED_MODE_GEN3 << HALF_RATE_SHIFT |
 	       SPEED_MODE_GEN3 << PHY_CONFIG_SHIFT |
 	       SPEED_MODE_GEN3 << GEN2_EN_SHIFT | SPEED_CTRL;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PORT_PHYCTL);
+	writel_relaxed(val, priv->base + SATA_PORT_PHYCTL);
 
 	val &= ~(SPEED_MODE_MASK | SPEED_CTRL);
 	val |= SPEED_MODE_GEN2 << HALF_RATE_SHIFT |
 	       SPEED_MODE_GEN2 << PHY_CONFIG_SHIFT |
 	       SPEED_MODE_GEN2 << GEN2_EN_SHIFT;
-	ग_लिखोl_relaxed(val, priv->base + SATA_PORT_PHYCTL);
+	writel_relaxed(val, priv->base + SATA_PORT_PHYCTL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops hix5hd2_sata_phy_ops = अणु
+static const struct phy_ops hix5hd2_sata_phy_ops = {
 	.init		= hix5hd2_sata_phy_init,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक hix5hd2_sata_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा phy_provider *phy_provider;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *res;
-	काष्ठा phy *phy;
-	काष्ठा hix5hd2_priv *priv;
+static int hix5hd2_sata_phy_probe(struct platform_device *pdev)
+{
+	struct phy_provider *phy_provider;
+	struct device *dev = &pdev->dev;
+	struct resource *res;
+	struct phy *phy;
+	struct hix5hd2_priv *priv;
 
-	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -EINVAL;
 
 	priv->base = devm_ioremap(dev, res->start, resource_size(res));
-	अगर (!priv->base)
-		वापस -ENOMEM;
+	if (!priv->base)
+		return -ENOMEM;
 
 	priv->peri_ctrl = syscon_regmap_lookup_by_phandle(dev->of_node,
 					"hisilicon,peripheral-syscon");
-	अगर (IS_ERR(priv->peri_ctrl))
-		priv->peri_ctrl = शून्य;
+	if (IS_ERR(priv->peri_ctrl))
+		priv->peri_ctrl = NULL;
 
-	phy = devm_phy_create(dev, शून्य, &hix5hd2_sata_phy_ops);
-	अगर (IS_ERR(phy)) अणु
+	phy = devm_phy_create(dev, NULL, &hix5hd2_sata_phy_ops);
+	if (IS_ERR(phy)) {
 		dev_err(dev, "failed to create PHY\n");
-		वापस PTR_ERR(phy);
-	पूर्ण
+		return PTR_ERR(phy);
+	}
 
 	phy_set_drvdata(phy, priv);
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल स्थिर काष्ठा of_device_id hix5hd2_sata_phy_of_match[] = अणु
-	अणु.compatible = "hisilicon,hix5hd2-sata-phy",पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id hix5hd2_sata_phy_of_match[] = {
+	{.compatible = "hisilicon,hix5hd2-sata-phy",},
+	{ },
+};
 MODULE_DEVICE_TABLE(of, hix5hd2_sata_phy_of_match);
 
-अटल काष्ठा platक्रमm_driver hix5hd2_sata_phy_driver = अणु
+static struct platform_driver hix5hd2_sata_phy_driver = {
 	.probe	= hix5hd2_sata_phy_probe,
-	.driver = अणु
+	.driver = {
 		.name	= "hix5hd2-sata-phy",
 		.of_match_table	= hix5hd2_sata_phy_of_match,
-	पूर्ण
-पूर्ण;
-module_platक्रमm_driver(hix5hd2_sata_phy_driver);
+	}
+};
+module_platform_driver(hix5hd2_sata_phy_driver);
 
 MODULE_AUTHOR("Jiancheng Xue <xuejiancheng@huawei.com>");
 MODULE_DESCRIPTION("HISILICON HIX5HD2 SATA PHY driver");

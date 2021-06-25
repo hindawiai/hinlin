@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 //
 // imx27 pinctrl driver based on imx pinmux core
 //
@@ -7,26 +6,26 @@
 //
 // Author: Markus Pargmann <mpa@pengutronix.de>
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-imx1.h"
+#include "pinctrl-imx1.h"
 
-#घोषणा PAD_ID(port, pin) (port*32 + pin)
-#घोषणा PA 0
-#घोषणा PB 1
-#घोषणा PC 2
-#घोषणा PD 3
-#घोषणा PE 4
-#घोषणा PF 5
+#define PAD_ID(port, pin) (port*32 + pin)
+#define PA 0
+#define PB 1
+#define PC 2
+#define PD 3
+#define PE 4
+#define PF 5
 
-क्रमागत imx27_pads अणु
+enum imx27_pads {
 	MX27_PAD_USBH2_CLK = PAD_ID(PA, 0),
-	MX27_PAD_USBH2_सूची = PAD_ID(PA, 1),
+	MX27_PAD_USBH2_DIR = PAD_ID(PA, 1),
 	MX27_PAD_USBH2_DATA7 = PAD_ID(PA, 2),
 	MX27_PAD_USBH2_NXT = PAD_ID(PA, 3),
 	MX27_PAD_USBH2_STP = PAD_ID(PA, 4),
@@ -150,7 +149,7 @@
 
 	MX27_PAD_USBOTG_NXT = PAD_ID(PE, 0),
 	MX27_PAD_USBOTG_STP = PAD_ID(PE, 1),
-	MX27_PAD_USBOTG_सूची = PAD_ID(PE, 2),
+	MX27_PAD_USBOTG_DIR = PAD_ID(PE, 2),
 	MX27_PAD_UART2_CTS = PAD_ID(PE, 3),
 	MX27_PAD_UART2_RTS = PAD_ID(PE, 4),
 	MX27_PAD_PWMO = PAD_ID(PE, 5),
@@ -199,12 +198,12 @@
 	MX27_PAD_CS4_B = PAD_ID(PF, 21),
 	MX27_PAD_CS5_B = PAD_ID(PF, 22),
 	MX27_PAD_ATA_DATA15 = PAD_ID(PF, 23),
-पूर्ण;
+};
 
-/* Pad names क्रम the pinmux subप्रणाली */
-अटल स्थिर काष्ठा pinctrl_pin_desc imx27_pinctrl_pads[] = अणु
+/* Pad names for the pinmux subsystem */
+static const struct pinctrl_pin_desc imx27_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX27_PAD_USBH2_CLK),
-	IMX_PINCTRL_PIN(MX27_PAD_USBH2_सूची),
+	IMX_PINCTRL_PIN(MX27_PAD_USBH2_DIR),
 	IMX_PINCTRL_PIN(MX27_PAD_USBH2_DATA7),
 	IMX_PINCTRL_PIN(MX27_PAD_USBH2_NXT),
 	IMX_PINCTRL_PIN(MX27_PAD_USBH2_STP),
@@ -328,7 +327,7 @@
 
 	IMX_PINCTRL_PIN(MX27_PAD_USBOTG_NXT),
 	IMX_PINCTRL_PIN(MX27_PAD_USBOTG_STP),
-	IMX_PINCTRL_PIN(MX27_PAD_USBOTG_सूची),
+	IMX_PINCTRL_PIN(MX27_PAD_USBOTG_DIR),
 	IMX_PINCTRL_PIN(MX27_PAD_UART2_CTS),
 	IMX_PINCTRL_PIN(MX27_PAD_UART2_RTS),
 	IMX_PINCTRL_PIN(MX27_PAD_PWMO),
@@ -377,34 +376,34 @@
 	IMX_PINCTRL_PIN(MX27_PAD_CS4_B),
 	IMX_PINCTRL_PIN(MX27_PAD_CS5_B),
 	IMX_PINCTRL_PIN(MX27_PAD_ATA_DATA15),
-पूर्ण;
+};
 
-अटल काष्ठा imx1_pinctrl_soc_info imx27_pinctrl_info = अणु
+static struct imx1_pinctrl_soc_info imx27_pinctrl_info = {
 	.pins = imx27_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx27_pinctrl_pads),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id imx27_pinctrl_of_match[] = अणु
-	अणु .compatible = "fsl,imx27-iomuxc", पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id imx27_pinctrl_of_match[] = {
+	{ .compatible = "fsl,imx27-iomuxc", },
+	{ /* sentinel */ }
+};
 
-अटल पूर्णांक imx27_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस imx1_pinctrl_core_probe(pdev, &imx27_pinctrl_info);
-पूर्ण
+static int imx27_pinctrl_probe(struct platform_device *pdev)
+{
+	return imx1_pinctrl_core_probe(pdev, &imx27_pinctrl_info);
+}
 
-अटल काष्ठा platक्रमm_driver imx27_pinctrl_driver = अणु
-	.driver = अणु
+static struct platform_driver imx27_pinctrl_driver = {
+	.driver = {
 		.name = "imx27-pinctrl",
 		.of_match_table = imx27_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	पूर्ण,
+	},
 	.probe = imx27_pinctrl_probe,
-पूर्ण;
+};
 
-अटल पूर्णांक __init imx27_pinctrl_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&imx27_pinctrl_driver);
-पूर्ण
+static int __init imx27_pinctrl_init(void)
+{
+	return platform_driver_register(&imx27_pinctrl_driver);
+}
 arch_initcall(imx27_pinctrl_init);

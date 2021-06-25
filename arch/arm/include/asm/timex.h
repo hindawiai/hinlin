@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  arch/arm/include/यंत्र/समयx.h
+ *  arch/arm/include/asm/timex.h
  *
  *  Copyright (C) 1997,1998 Russell King
  *
- *  Architecture Specअगरic TIME specअगरications
+ *  Architecture Specific TIME specifications
  */
-#अगर_अघोषित _ASMARM_TIMEX_H
-#घोषणा _ASMARM_TIMEX_H
+#ifndef _ASMARM_TIMEX_H
+#define _ASMARM_TIMEX_H
 
-प्रकार अचिन्हित दीर्घ cycles_t;
-#घोषणा get_cycles()	(अणु cycles_t c; पढ़ो_current_समयr(&c) ? 0 : c; पूर्ण)
+typedef unsigned long cycles_t;
+#define get_cycles()	({ cycles_t c; read_current_timer(&c) ? 0 : c; })
 
-#पूर्ण_अगर
+#endif

@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SUSPEND_H
-#घोषणा _LINUX_SUSPEND_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SUSPEND_H
+#define _LINUX_SUSPEND_H
 
-#समावेश <linux/swap.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <यंत्र/त्रुटिसं.स>
+#include <linux/swap.h>
+#include <linux/notifier.h>
+#include <linux/init.h>
+#include <linux/pm.h>
+#include <linux/mm.h>
+#include <linux/freezer.h>
+#include <asm/errno.h>
 
-#अगर_घोषित CONFIG_VT
-बाह्य व्योम pm_set_vt_चयन(पूर्णांक);
-#अन्यथा
-अटल अंतरभूत व्योम pm_set_vt_चयन(पूर्णांक करो_चयन)
-अणु
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_VT
+extern void pm_set_vt_switch(int);
+#else
+static inline void pm_set_vt_switch(int do_switch)
+{
+}
+#endif
 
-#अगर_घोषित CONFIG_VT_CONSOLE_SLEEP
-बाह्य व्योम pm_prepare_console(व्योम);
-बाह्य व्योम pm_restore_console(व्योम);
-#अन्यथा
-अटल अंतरभूत व्योम pm_prepare_console(व्योम)
-अणु
-पूर्ण
+#ifdef CONFIG_VT_CONSOLE_SLEEP
+extern void pm_prepare_console(void);
+extern void pm_restore_console(void);
+#else
+static inline void pm_prepare_console(void)
+{
+}
 
-अटल अंतरभूत व्योम pm_restore_console(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void pm_restore_console(void)
+{
+}
+#endif
 
-प्रकार पूर्णांक __bitwise suspend_state_t;
+typedef int __bitwise suspend_state_t;
 
-#घोषणा PM_SUSPEND_ON		((__क्रमce suspend_state_t) 0)
-#घोषणा PM_SUSPEND_TO_IDLE	((__क्रमce suspend_state_t) 1)
-#घोषणा PM_SUSPEND_STANDBY	((__क्रमce suspend_state_t) 2)
-#घोषणा PM_SUSPEND_MEM		((__क्रमce suspend_state_t) 3)
-#घोषणा PM_SUSPEND_MIN		PM_SUSPEND_TO_IDLE
-#घोषणा PM_SUSPEND_MAX		((__क्रमce suspend_state_t) 4)
+#define PM_SUSPEND_ON		((__force suspend_state_t) 0)
+#define PM_SUSPEND_TO_IDLE	((__force suspend_state_t) 1)
+#define PM_SUSPEND_STANDBY	((__force suspend_state_t) 2)
+#define PM_SUSPEND_MEM		((__force suspend_state_t) 3)
+#define PM_SUSPEND_MIN		PM_SUSPEND_TO_IDLE
+#define PM_SUSPEND_MAX		((__force suspend_state_t) 4)
 
-क्रमागत suspend_stat_step अणु
+enum suspend_stat_step {
 	SUSPEND_FREEZE = 1,
 	SUSPEND_PREPARE,
 	SUSPEND_SUSPEND,
@@ -50,533 +49,533 @@
 	SUSPEND_RESUME_NOIRQ,
 	SUSPEND_RESUME_EARLY,
 	SUSPEND_RESUME
-पूर्ण;
+};
 
-काष्ठा suspend_stats अणु
-	पूर्णांक	success;
-	पूर्णांक	fail;
-	पूर्णांक	failed_मुक्तze;
-	पूर्णांक	failed_prepare;
-	पूर्णांक	failed_suspend;
-	पूर्णांक	failed_suspend_late;
-	पूर्णांक	failed_suspend_noirq;
-	पूर्णांक	failed_resume;
-	पूर्णांक	failed_resume_early;
-	पूर्णांक	failed_resume_noirq;
-#घोषणा	REC_FAILED_NUM	2
-	पूर्णांक	last_failed_dev;
-	अक्षर	failed_devs[REC_FAILED_NUM][40];
-	पूर्णांक	last_failed_त्रुटि_सं;
-	पूर्णांक	त्रुटि_सं[REC_FAILED_NUM];
-	पूर्णांक	last_failed_step;
-	क्रमागत suspend_stat_step	failed_steps[REC_FAILED_NUM];
-पूर्ण;
+struct suspend_stats {
+	int	success;
+	int	fail;
+	int	failed_freeze;
+	int	failed_prepare;
+	int	failed_suspend;
+	int	failed_suspend_late;
+	int	failed_suspend_noirq;
+	int	failed_resume;
+	int	failed_resume_early;
+	int	failed_resume_noirq;
+#define	REC_FAILED_NUM	2
+	int	last_failed_dev;
+	char	failed_devs[REC_FAILED_NUM][40];
+	int	last_failed_errno;
+	int	errno[REC_FAILED_NUM];
+	int	last_failed_step;
+	enum suspend_stat_step	failed_steps[REC_FAILED_NUM];
+};
 
-बाह्य काष्ठा suspend_stats suspend_stats;
+extern struct suspend_stats suspend_stats;
 
-अटल अंतरभूत व्योम dpm_save_failed_dev(स्थिर अक्षर *name)
-अणु
+static inline void dpm_save_failed_dev(const char *name)
+{
 	strlcpy(suspend_stats.failed_devs[suspend_stats.last_failed_dev],
 		name,
-		माप(suspend_stats.failed_devs[0]));
+		sizeof(suspend_stats.failed_devs[0]));
 	suspend_stats.last_failed_dev++;
 	suspend_stats.last_failed_dev %= REC_FAILED_NUM;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम dpm_save_failed_त्रुटि_सं(पूर्णांक err)
-अणु
-	suspend_stats.त्रुटि_सं[suspend_stats.last_failed_त्रुटि_सं] = err;
-	suspend_stats.last_failed_त्रुटि_सं++;
-	suspend_stats.last_failed_त्रुटि_सं %= REC_FAILED_NUM;
-पूर्ण
+static inline void dpm_save_failed_errno(int err)
+{
+	suspend_stats.errno[suspend_stats.last_failed_errno] = err;
+	suspend_stats.last_failed_errno++;
+	suspend_stats.last_failed_errno %= REC_FAILED_NUM;
+}
 
-अटल अंतरभूत व्योम dpm_save_failed_step(क्रमागत suspend_stat_step step)
-अणु
+static inline void dpm_save_failed_step(enum suspend_stat_step step)
+{
 	suspend_stats.failed_steps[suspend_stats.last_failed_step] = step;
 	suspend_stats.last_failed_step++;
 	suspend_stats.last_failed_step %= REC_FAILED_NUM;
-पूर्ण
+}
 
 /**
- * काष्ठा platक्रमm_suspend_ops - Callbacks क्रम managing platक्रमm dependent
- *	प्रणाली sleep states.
+ * struct platform_suspend_ops - Callbacks for managing platform dependent
+ *	system sleep states.
  *
- * @valid: Callback to determine अगर given प्रणाली sleep state is supported by
- *	the platक्रमm.
- *	Valid (ie. supported) states are advertised in /sys/घातer/state.  Note
- *	that it still may be impossible to enter given प्रणाली sleep state अगर the
+ * @valid: Callback to determine if given system sleep state is supported by
+ *	the platform.
+ *	Valid (ie. supported) states are advertised in /sys/power/state.  Note
+ *	that it still may be impossible to enter given system sleep state if the
  *	conditions aren't right.
  *	There is the %suspend_valid_only_mem function available that can be
- *	asचिन्हित to this अगर the platक्रमm only supports mem sleep.
+ *	assigned to this if the platform only supports mem sleep.
  *
- * @begin: Initialise a transition to given प्रणाली sleep state.
- *	@begin() is executed right prior to suspending devices.  The inक्रमmation
- *	conveyed to the platक्रमm code by @begin() should be disregarded by it as
- *	soon as @end() is executed.  If @begin() fails (ie. वापसs nonzero),
+ * @begin: Initialise a transition to given system sleep state.
+ *	@begin() is executed right prior to suspending devices.  The information
+ *	conveyed to the platform code by @begin() should be disregarded by it as
+ *	soon as @end() is executed.  If @begin() fails (ie. returns nonzero),
  *	@prepare(), @enter() and @finish() will not be called by the PM core.
- *	This callback is optional.  However, अगर it is implemented, the argument
+ *	This callback is optional.  However, if it is implemented, the argument
  *	passed to @enter() is redundant and should be ignored.
  *
- * @prepare: Prepare the platक्रमm क्रम entering the प्रणाली sleep state indicated
+ * @prepare: Prepare the platform for entering the system sleep state indicated
  *	by @begin().
  *	@prepare() is called right after devices have been suspended (ie. the
- *	appropriate .suspend() method has been executed क्रम each device) and
- *	beक्रमe device drivers' late suspend callbacks are executed.  It वापसs
- *	0 on success or a negative error code otherwise, in which हाल the
- *	प्रणाली cannot enter the desired sleep state (@prepare_late(), @enter(),
- *	and @wake() will not be called in that हाल).
+ *	appropriate .suspend() method has been executed for each device) and
+ *	before device drivers' late suspend callbacks are executed.  It returns
+ *	0 on success or a negative error code otherwise, in which case the
+ *	system cannot enter the desired sleep state (@prepare_late(), @enter(),
+ *	and @wake() will not be called in that case).
  *
- * @prepare_late: Finish preparing the platक्रमm क्रम entering the प्रणाली sleep
+ * @prepare_late: Finish preparing the platform for entering the system sleep
  *	state indicated by @begin().
- *	@prepare_late is called beक्रमe disabling nonboot CPUs and after
- *	device drivers' late suspend callbacks have been executed.  It वापसs
- *	0 on success or a negative error code otherwise, in which हाल the
- *	प्रणाली cannot enter the desired sleep state (@enter() will not be
+ *	@prepare_late is called before disabling nonboot CPUs and after
+ *	device drivers' late suspend callbacks have been executed.  It returns
+ *	0 on success or a negative error code otherwise, in which case the
+ *	system cannot enter the desired sleep state (@enter() will not be
  *	executed).
  *
- * @enter: Enter the प्रणाली sleep state indicated by @begin() or represented by
- *	the argument अगर @begin() is not implemented.
- *	This callback is mandatory.  It वापसs 0 on success or a negative
- *	error code otherwise, in which हाल the प्रणाली cannot enter the desired
+ * @enter: Enter the system sleep state indicated by @begin() or represented by
+ *	the argument if @begin() is not implemented.
+ *	This callback is mandatory.  It returns 0 on success or a negative
+ *	error code otherwise, in which case the system cannot enter the desired
  *	sleep state.
  *
- * @wake: Called when the प्रणाली has just left a sleep state, right after
- *	the nonboot CPUs have been enabled and beक्रमe device drivers' early
+ * @wake: Called when the system has just left a sleep state, right after
+ *	the nonboot CPUs have been enabled and before device drivers' early
  *	resume callbacks are executed.
- *	This callback is optional, but should be implemented by the platक्रमms
+ *	This callback is optional, but should be implemented by the platforms
  *	that implement @prepare_late().  If implemented, it is always called
- *	after @prepare_late and @enter(), even अगर one of them fails.
+ *	after @prepare_late and @enter(), even if one of them fails.
  *
- * @finish: Finish wake-up of the platक्रमm.
+ * @finish: Finish wake-up of the platform.
  *	@finish is called right prior to calling device drivers' regular suspend
  *	callbacks.
- *	This callback is optional, but should be implemented by the platक्रमms
+ *	This callback is optional, but should be implemented by the platforms
  *	that implement @prepare().  If implemented, it is always called after
- *	@enter() and @wake(), even अगर any of them fails.  It is executed after
+ *	@enter() and @wake(), even if any of them fails.  It is executed after
  *	a failing @prepare.
  *
- * @suspend_again: Returns whether the प्रणाली should suspend again (true) or
- *	not (false). If the platक्रमm wants to poll sensors or execute some
+ * @suspend_again: Returns whether the system should suspend again (true) or
+ *	not (false). If the platform wants to poll sensors or execute some
  *	code during suspended without invoking userspace and most of devices,
  *	suspend_again callback is the place assuming that periodic-wakeup or
- *	alarm-wakeup is alपढ़ोy setup. This allows to execute some codes जबतक
+ *	alarm-wakeup is already setup. This allows to execute some codes while
  *	being kept suspended in the view of userland and devices.
  *
  * @end: Called by the PM core right after resuming devices, to indicate to
- *	the platक्रमm that the प्रणाली has वापसed to the working state or
- *	the transition to the sleep state has been पातed.
- *	This callback is optional, but should be implemented by the platक्रमms
- *	that implement @begin().  Accordingly, platक्रमms implementing @begin()
- *	should also provide a @end() which cleans up transitions पातed beक्रमe
+ *	the platform that the system has returned to the working state or
+ *	the transition to the sleep state has been aborted.
+ *	This callback is optional, but should be implemented by the platforms
+ *	that implement @begin().  Accordingly, platforms implementing @begin()
+ *	should also provide a @end() which cleans up transitions aborted before
  *	@enter().
  *
- * @recover: Recover the platक्रमm from a suspend failure.
- *	Called by the PM core अगर the suspending of devices fails.
- *	This callback is optional and should only be implemented by platक्रमms
+ * @recover: Recover the platform from a suspend failure.
+ *	Called by the PM core if the suspending of devices fails.
+ *	This callback is optional and should only be implemented by platforms
  *	which require special recovery actions in that situation.
  */
-काष्ठा platक्रमm_suspend_ops अणु
-	पूर्णांक (*valid)(suspend_state_t state);
-	पूर्णांक (*begin)(suspend_state_t state);
-	पूर्णांक (*prepare)(व्योम);
-	पूर्णांक (*prepare_late)(व्योम);
-	पूर्णांक (*enter)(suspend_state_t state);
-	व्योम (*wake)(व्योम);
-	व्योम (*finish)(व्योम);
-	bool (*suspend_again)(व्योम);
-	व्योम (*end)(व्योम);
-	व्योम (*recover)(व्योम);
-पूर्ण;
+struct platform_suspend_ops {
+	int (*valid)(suspend_state_t state);
+	int (*begin)(suspend_state_t state);
+	int (*prepare)(void);
+	int (*prepare_late)(void);
+	int (*enter)(suspend_state_t state);
+	void (*wake)(void);
+	void (*finish)(void);
+	bool (*suspend_again)(void);
+	void (*end)(void);
+	void (*recover)(void);
+};
 
-काष्ठा platक्रमm_s2idle_ops अणु
-	पूर्णांक (*begin)(व्योम);
-	पूर्णांक (*prepare)(व्योम);
-	पूर्णांक (*prepare_late)(व्योम);
-	bool (*wake)(व्योम);
-	व्योम (*restore_early)(व्योम);
-	व्योम (*restore)(व्योम);
-	व्योम (*end)(व्योम);
-पूर्ण;
+struct platform_s2idle_ops {
+	int (*begin)(void);
+	int (*prepare)(void);
+	int (*prepare_late)(void);
+	bool (*wake)(void);
+	void (*restore_early)(void);
+	void (*restore)(void);
+	void (*end)(void);
+};
 
-#अगर_घोषित CONFIG_SUSPEND
-बाह्य suspend_state_t mem_sleep_current;
-बाह्य suspend_state_t mem_sleep_शेष;
+#ifdef CONFIG_SUSPEND
+extern suspend_state_t mem_sleep_current;
+extern suspend_state_t mem_sleep_default;
 
 /**
- * suspend_set_ops - set platक्रमm dependent suspend operations
+ * suspend_set_ops - set platform dependent suspend operations
  * @ops: The new suspend operations to set.
  */
-बाह्य व्योम suspend_set_ops(स्थिर काष्ठा platक्रमm_suspend_ops *ops);
-बाह्य पूर्णांक suspend_valid_only_mem(suspend_state_t state);
+extern void suspend_set_ops(const struct platform_suspend_ops *ops);
+extern int suspend_valid_only_mem(suspend_state_t state);
 
-बाह्य अचिन्हित पूर्णांक pm_suspend_global_flags;
+extern unsigned int pm_suspend_global_flags;
 
-#घोषणा PM_SUSPEND_FLAG_FW_SUSPEND	BIT(0)
-#घोषणा PM_SUSPEND_FLAG_FW_RESUME	BIT(1)
-#घोषणा PM_SUSPEND_FLAG_NO_PLATFORM	BIT(2)
+#define PM_SUSPEND_FLAG_FW_SUSPEND	BIT(0)
+#define PM_SUSPEND_FLAG_FW_RESUME	BIT(1)
+#define PM_SUSPEND_FLAG_NO_PLATFORM	BIT(2)
 
-अटल अंतरभूत व्योम pm_suspend_clear_flags(व्योम)
-अणु
+static inline void pm_suspend_clear_flags(void)
+{
 	pm_suspend_global_flags = 0;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pm_set_suspend_via_firmware(व्योम)
-अणु
+static inline void pm_set_suspend_via_firmware(void)
+{
 	pm_suspend_global_flags |= PM_SUSPEND_FLAG_FW_SUSPEND;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pm_set_resume_via_firmware(व्योम)
-अणु
+static inline void pm_set_resume_via_firmware(void)
+{
 	pm_suspend_global_flags |= PM_SUSPEND_FLAG_FW_RESUME;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम pm_set_suspend_no_platक्रमm(व्योम)
-अणु
+static inline void pm_set_suspend_no_platform(void)
+{
 	pm_suspend_global_flags |= PM_SUSPEND_FLAG_NO_PLATFORM;
-पूर्ण
+}
 
 /**
- * pm_suspend_via_firmware - Check अगर platक्रमm firmware will suspend the प्रणाली.
+ * pm_suspend_via_firmware - Check if platform firmware will suspend the system.
  *
- * To be called during प्रणाली-wide घातer management transitions to sleep states
- * or during the subsequent प्रणाली-wide transitions back to the working state.
+ * To be called during system-wide power management transitions to sleep states
+ * or during the subsequent system-wide transitions back to the working state.
  *
- * Return 'true' अगर the platक्रमm firmware is going to be invoked at the end of
- * the प्रणाली-wide घातer management transition (to a sleep state) in progress in
- * order to complete it, or अगर the platक्रमm firmware has been invoked in order
- * to complete the last (or preceding) transition of the प्रणाली to a sleep
+ * Return 'true' if the platform firmware is going to be invoked at the end of
+ * the system-wide power management transition (to a sleep state) in progress in
+ * order to complete it, or if the platform firmware has been invoked in order
+ * to complete the last (or preceding) transition of the system to a sleep
  * state.
  *
- * This matters अगर the caller needs or wants to carry out some special actions
- * depending on whether or not control will be passed to the platक्रमm firmware
- * subsequently (क्रम example, the device may need to be reset beक्रमe letting the
- * platक्रमm firmware manipulate it, which is not necessary when the platक्रमm
+ * This matters if the caller needs or wants to carry out some special actions
+ * depending on whether or not control will be passed to the platform firmware
+ * subsequently (for example, the device may need to be reset before letting the
+ * platform firmware manipulate it, which is not necessary when the platform
  * firmware is not going to be invoked) or when such special actions may have
- * been carried out during the preceding transition of the प्रणाली to a sleep
- * state (as they may need to be taken पूर्णांकo account).
+ * been carried out during the preceding transition of the system to a sleep
+ * state (as they may need to be taken into account).
  */
-अटल अंतरभूत bool pm_suspend_via_firmware(व्योम)
-अणु
-	वापस !!(pm_suspend_global_flags & PM_SUSPEND_FLAG_FW_SUSPEND);
-पूर्ण
+static inline bool pm_suspend_via_firmware(void)
+{
+	return !!(pm_suspend_global_flags & PM_SUSPEND_FLAG_FW_SUSPEND);
+}
 
 /**
- * pm_resume_via_firmware - Check अगर platक्रमm firmware has woken up the प्रणाली.
+ * pm_resume_via_firmware - Check if platform firmware has woken up the system.
  *
- * To be called during प्रणाली-wide घातer management transitions from sleep
+ * To be called during system-wide power management transitions from sleep
  * states.
  *
- * Return 'true' अगर the platक्रमm firmware has passed control to the kernel at
- * the beginning of the प्रणाली-wide घातer management transition in progress, so
- * the event that woke up the प्रणाली from sleep has been handled by the platक्रमm
+ * Return 'true' if the platform firmware has passed control to the kernel at
+ * the beginning of the system-wide power management transition in progress, so
+ * the event that woke up the system from sleep has been handled by the platform
  * firmware.
  */
-अटल अंतरभूत bool pm_resume_via_firmware(व्योम)
-अणु
-	वापस !!(pm_suspend_global_flags & PM_SUSPEND_FLAG_FW_RESUME);
-पूर्ण
+static inline bool pm_resume_via_firmware(void)
+{
+	return !!(pm_suspend_global_flags & PM_SUSPEND_FLAG_FW_RESUME);
+}
 
 /**
- * pm_suspend_no_platक्रमm - Check अगर platक्रमm may change device घातer states.
+ * pm_suspend_no_platform - Check if platform may change device power states.
  *
- * To be called during प्रणाली-wide घातer management transitions to sleep states
- * or during the subsequent प्रणाली-wide transitions back to the working state.
+ * To be called during system-wide power management transitions to sleep states
+ * or during the subsequent system-wide transitions back to the working state.
  *
- * Return 'true' अगर the घातer states of devices reमुख्य under full control of the
- * kernel throughout the प्रणाली-wide suspend and resume cycle in progress (that
- * is, अगर a device is put पूर्णांकo a certain घातer state during suspend, it can be
- * expected to reमुख्य in that state during resume).
+ * Return 'true' if the power states of devices remain under full control of the
+ * kernel throughout the system-wide suspend and resume cycle in progress (that
+ * is, if a device is put into a certain power state during suspend, it can be
+ * expected to remain in that state during resume).
  */
-अटल अंतरभूत bool pm_suspend_no_platक्रमm(व्योम)
-अणु
-	वापस !!(pm_suspend_global_flags & PM_SUSPEND_FLAG_NO_PLATFORM);
-पूर्ण
+static inline bool pm_suspend_no_platform(void)
+{
+	return !!(pm_suspend_global_flags & PM_SUSPEND_FLAG_NO_PLATFORM);
+}
 
 /* Suspend-to-idle state machnine. */
-क्रमागत s2idle_states अणु
+enum s2idle_states {
 	S2IDLE_STATE_NONE,      /* Not suspended/suspending. */
 	S2IDLE_STATE_ENTER,     /* Enter suspend-to-idle. */
 	S2IDLE_STATE_WAKE,      /* Wake up from suspend-to-idle. */
-पूर्ण;
+};
 
-बाह्य क्रमागत s2idle_states __पढ़ो_mostly s2idle_state;
+extern enum s2idle_states __read_mostly s2idle_state;
 
-अटल अंतरभूत bool idle_should_enter_s2idle(व्योम)
-अणु
-	वापस unlikely(s2idle_state == S2IDLE_STATE_ENTER);
-पूर्ण
+static inline bool idle_should_enter_s2idle(void)
+{
+	return unlikely(s2idle_state == S2IDLE_STATE_ENTER);
+}
 
-बाह्य bool pm_suspend_शेष_s2idle(व्योम);
-बाह्य व्योम __init pm_states_init(व्योम);
-बाह्य व्योम s2idle_set_ops(स्थिर काष्ठा platक्रमm_s2idle_ops *ops);
-बाह्य व्योम s2idle_wake(व्योम);
+extern bool pm_suspend_default_s2idle(void);
+extern void __init pm_states_init(void);
+extern void s2idle_set_ops(const struct platform_s2idle_ops *ops);
+extern void s2idle_wake(void);
 
 /**
- * arch_suspend_disable_irqs - disable IRQs क्रम suspend
+ * arch_suspend_disable_irqs - disable IRQs for suspend
  *
- * Disables IRQs (in the शेष हाल). This is a weak symbol in the common
- * code and thus allows architectures to override it अगर more needs to be
- * करोne. Not called क्रम suspend to disk.
+ * Disables IRQs (in the default case). This is a weak symbol in the common
+ * code and thus allows architectures to override it if more needs to be
+ * done. Not called for suspend to disk.
  */
-बाह्य व्योम arch_suspend_disable_irqs(व्योम);
+extern void arch_suspend_disable_irqs(void);
 
 /**
  * arch_suspend_enable_irqs - enable IRQs after suspend
  *
- * Enables IRQs (in the शेष हाल). This is a weak symbol in the common
- * code and thus allows architectures to override it अगर more needs to be
- * करोne. Not called क्रम suspend to disk.
+ * Enables IRQs (in the default case). This is a weak symbol in the common
+ * code and thus allows architectures to override it if more needs to be
+ * done. Not called for suspend to disk.
  */
-बाह्य व्योम arch_suspend_enable_irqs(व्योम);
+extern void arch_suspend_enable_irqs(void);
 
-बाह्य पूर्णांक pm_suspend(suspend_state_t state);
-बाह्य bool sync_on_suspend_enabled;
-#अन्यथा /* !CONFIG_SUSPEND */
-#घोषणा suspend_valid_only_mem	शून्य
+extern int pm_suspend(suspend_state_t state);
+extern bool sync_on_suspend_enabled;
+#else /* !CONFIG_SUSPEND */
+#define suspend_valid_only_mem	NULL
 
-अटल अंतरभूत व्योम pm_suspend_clear_flags(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम pm_set_suspend_via_firmware(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम pm_set_resume_via_firmware(व्योम) अणुपूर्ण
-अटल अंतरभूत bool pm_suspend_via_firmware(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool pm_resume_via_firmware(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool pm_suspend_no_platक्रमm(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool pm_suspend_शेष_s2idle(व्योम) अणु वापस false; पूर्ण
+static inline void pm_suspend_clear_flags(void) {}
+static inline void pm_set_suspend_via_firmware(void) {}
+static inline void pm_set_resume_via_firmware(void) {}
+static inline bool pm_suspend_via_firmware(void) { return false; }
+static inline bool pm_resume_via_firmware(void) { return false; }
+static inline bool pm_suspend_no_platform(void) { return false; }
+static inline bool pm_suspend_default_s2idle(void) { return false; }
 
-अटल अंतरभूत व्योम suspend_set_ops(स्थिर काष्ठा platक्रमm_suspend_ops *ops) अणुपूर्ण
-अटल अंतरभूत पूर्णांक pm_suspend(suspend_state_t state) अणु वापस -ENOSYS; पूर्ण
-अटल अंतरभूत bool sync_on_suspend_enabled(व्योम) अणु वापस true; पूर्ण
-अटल अंतरभूत bool idle_should_enter_s2idle(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम __init pm_states_init(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम s2idle_set_ops(स्थिर काष्ठा platक्रमm_s2idle_ops *ops) अणुपूर्ण
-अटल अंतरभूत व्योम s2idle_wake(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* !CONFIG_SUSPEND */
+static inline void suspend_set_ops(const struct platform_suspend_ops *ops) {}
+static inline int pm_suspend(suspend_state_t state) { return -ENOSYS; }
+static inline bool sync_on_suspend_enabled(void) { return true; }
+static inline bool idle_should_enter_s2idle(void) { return false; }
+static inline void __init pm_states_init(void) {}
+static inline void s2idle_set_ops(const struct platform_s2idle_ops *ops) {}
+static inline void s2idle_wake(void) {}
+#endif /* !CONFIG_SUSPEND */
 
-/* काष्ठा pbe is used क्रम creating lists of pages that should be restored
+/* struct pbe is used for creating lists of pages that should be restored
  * atomically during the resume from disk, because the page frames they have
- * occupied beक्रमe the suspend are in use.
+ * occupied before the suspend are in use.
  */
-काष्ठा pbe अणु
-	व्योम *address;		/* address of the copy */
-	व्योम *orig_address;	/* original address of a page */
-	काष्ठा pbe *next;
-पूर्ण;
+struct pbe {
+	void *address;		/* address of the copy */
+	void *orig_address;	/* original address of a page */
+	struct pbe *next;
+};
 
 /* mm/page_alloc.c */
-बाह्य व्योम mark_मुक्त_pages(काष्ठा zone *zone);
+extern void mark_free_pages(struct zone *zone);
 
 /**
- * काष्ठा platक्रमm_hibernation_ops - hibernation platक्रमm support
+ * struct platform_hibernation_ops - hibernation platform support
  *
- * The methods in this काष्ठाure allow a platक्रमm to carry out special
+ * The methods in this structure allow a platform to carry out special
  * operations required by it during a hibernation transition.
  *
- * All the methods below, except क्रम @recover(), must be implemented.
+ * All the methods below, except for @recover(), must be implemented.
  *
- * @begin: Tell the platक्रमm driver that we're starting hibernation.
- *	Called right after shrinking memory and beक्रमe मुक्तzing devices.
+ * @begin: Tell the platform driver that we're starting hibernation.
+ *	Called right after shrinking memory and before freezing devices.
  *
  * @end: Called by the PM core right after resuming devices, to indicate to
- *	the platक्रमm that the प्रणाली has वापसed to the working state.
+ *	the platform that the system has returned to the working state.
  *
- * @pre_snapshot: Prepare the platक्रमm क्रम creating the hibernation image.
- *	Called right after devices have been frozen and beक्रमe the nonboot
+ * @pre_snapshot: Prepare the platform for creating the hibernation image.
+ *	Called right after devices have been frozen and before the nonboot
  *	CPUs are disabled (runs with IRQs on).
  *
- * @finish: Restore the previous state of the platक्रमm after the hibernation
- *	image has been created *or* put the platक्रमm पूर्णांकo the normal operation
- *	mode after the hibernation (the same method is executed in both हालs).
- *	Called right after the nonboot CPUs have been enabled and beक्रमe
+ * @finish: Restore the previous state of the platform after the hibernation
+ *	image has been created *or* put the platform into the normal operation
+ *	mode after the hibernation (the same method is executed in both cases).
+ *	Called right after the nonboot CPUs have been enabled and before
  *	thawing devices (runs with IRQs on).
  *
- * @prepare: Prepare the platक्रमm क्रम entering the low घातer state.
- *	Called right after the hibernation image has been saved and beक्रमe
- *	devices are prepared क्रम entering the low घातer state.
+ * @prepare: Prepare the platform for entering the low power state.
+ *	Called right after the hibernation image has been saved and before
+ *	devices are prepared for entering the low power state.
  *
- * @enter: Put the प्रणाली पूर्णांकo the low घातer state after the hibernation image
+ * @enter: Put the system into the low power state after the hibernation image
  *	has been saved to disk.
  *	Called after the nonboot CPUs have been disabled and all of the low
- *	level devices have been shut करोwn (runs with IRQs off).
+ *	level devices have been shut down (runs with IRQs off).
  *
- * @leave: Perक्रमm the first stage of the cleanup after the प्रणाली sleep state
+ * @leave: Perform the first stage of the cleanup after the system sleep state
  *	indicated by @set_target() has been left.
  *	Called right after the control has been passed from the boot kernel to
- *	the image kernel, beक्रमe the nonboot CPUs are enabled and beक्रमe devices
- *	are resumed.  Executed with पूर्णांकerrupts disabled.
+ *	the image kernel, before the nonboot CPUs are enabled and before devices
+ *	are resumed.  Executed with interrupts disabled.
  *
- * @pre_restore: Prepare प्रणाली क्रम the restoration from a hibernation image.
- *	Called right after devices have been frozen and beक्रमe the nonboot
+ * @pre_restore: Prepare system for the restoration from a hibernation image.
+ *	Called right after devices have been frozen and before the nonboot
  *	CPUs are disabled (runs with IRQs on).
  *
  * @restore_cleanup: Clean up after a failing image restoration.
- *	Called right after the nonboot CPUs have been enabled and beक्रमe
+ *	Called right after the nonboot CPUs have been enabled and before
  *	thawing devices (runs with IRQs on).
  *
- * @recover: Recover the platक्रमm from a failure to suspend devices.
- *	Called by the PM core अगर the suspending of devices during hibernation
+ * @recover: Recover the platform from a failure to suspend devices.
+ *	Called by the PM core if the suspending of devices during hibernation
  *	fails.  This callback is optional and should only be implemented by
- *	platक्रमms which require special recovery actions in that situation.
+ *	platforms which require special recovery actions in that situation.
  */
-काष्ठा platक्रमm_hibernation_ops अणु
-	पूर्णांक (*begin)(pm_message_t stage);
-	व्योम (*end)(व्योम);
-	पूर्णांक (*pre_snapshot)(व्योम);
-	व्योम (*finish)(व्योम);
-	पूर्णांक (*prepare)(व्योम);
-	पूर्णांक (*enter)(व्योम);
-	व्योम (*leave)(व्योम);
-	पूर्णांक (*pre_restore)(व्योम);
-	व्योम (*restore_cleanup)(व्योम);
-	व्योम (*recover)(व्योम);
-पूर्ण;
+struct platform_hibernation_ops {
+	int (*begin)(pm_message_t stage);
+	void (*end)(void);
+	int (*pre_snapshot)(void);
+	void (*finish)(void);
+	int (*prepare)(void);
+	int (*enter)(void);
+	void (*leave)(void);
+	int (*pre_restore)(void);
+	void (*restore_cleanup)(void);
+	void (*recover)(void);
+};
 
-#अगर_घोषित CONFIG_HIBERNATION
-/* kernel/घातer/snapshot.c */
-बाह्य व्योम __रेजिस्टर_nosave_region(अचिन्हित दीर्घ b, अचिन्हित दीर्घ e, पूर्णांक km);
-अटल अंतरभूत व्योम __init रेजिस्टर_nosave_region(अचिन्हित दीर्घ b, अचिन्हित दीर्घ e)
-अणु
-	__रेजिस्टर_nosave_region(b, e, 0);
-पूर्ण
-अटल अंतरभूत व्योम __init रेजिस्टर_nosave_region_late(अचिन्हित दीर्घ b, अचिन्हित दीर्घ e)
-अणु
-	__रेजिस्टर_nosave_region(b, e, 1);
-पूर्ण
-बाह्य पूर्णांक swsusp_page_is_क्रमbidden(काष्ठा page *);
-बाह्य व्योम swsusp_set_page_मुक्त(काष्ठा page *);
-बाह्य व्योम swsusp_unset_page_मुक्त(काष्ठा page *);
-बाह्य अचिन्हित दीर्घ get_safe_page(gfp_t gfp_mask);
-बाह्य यंत्रlinkage पूर्णांक swsusp_arch_suspend(व्योम);
-बाह्य यंत्रlinkage पूर्णांक swsusp_arch_resume(व्योम);
+#ifdef CONFIG_HIBERNATION
+/* kernel/power/snapshot.c */
+extern void __register_nosave_region(unsigned long b, unsigned long e, int km);
+static inline void __init register_nosave_region(unsigned long b, unsigned long e)
+{
+	__register_nosave_region(b, e, 0);
+}
+static inline void __init register_nosave_region_late(unsigned long b, unsigned long e)
+{
+	__register_nosave_region(b, e, 1);
+}
+extern int swsusp_page_is_forbidden(struct page *);
+extern void swsusp_set_page_free(struct page *);
+extern void swsusp_unset_page_free(struct page *);
+extern unsigned long get_safe_page(gfp_t gfp_mask);
+extern asmlinkage int swsusp_arch_suspend(void);
+extern asmlinkage int swsusp_arch_resume(void);
 
-बाह्य व्योम hibernation_set_ops(स्थिर काष्ठा platक्रमm_hibernation_ops *ops);
-बाह्य पूर्णांक hibernate(व्योम);
-बाह्य bool प्रणाली_entering_hibernation(व्योम);
-बाह्य bool hibernation_available(व्योम);
-यंत्रlinkage पूर्णांक swsusp_save(व्योम);
-बाह्य काष्ठा pbe *restore_pblist;
-पूर्णांक pfn_is_nosave(अचिन्हित दीर्घ pfn);
+extern void hibernation_set_ops(const struct platform_hibernation_ops *ops);
+extern int hibernate(void);
+extern bool system_entering_hibernation(void);
+extern bool hibernation_available(void);
+asmlinkage int swsusp_save(void);
+extern struct pbe *restore_pblist;
+int pfn_is_nosave(unsigned long pfn);
 
-पूर्णांक hibernate_quiet_exec(पूर्णांक (*func)(व्योम *data), व्योम *data);
-#अन्यथा /* CONFIG_HIBERNATION */
-अटल अंतरभूत व्योम रेजिस्टर_nosave_region(अचिन्हित दीर्घ b, अचिन्हित दीर्घ e) अणुपूर्ण
-अटल अंतरभूत व्योम रेजिस्टर_nosave_region_late(अचिन्हित दीर्घ b, अचिन्हित दीर्घ e) अणुपूर्ण
-अटल अंतरभूत पूर्णांक swsusp_page_is_क्रमbidden(काष्ठा page *p) अणु वापस 0; पूर्ण
-अटल अंतरभूत व्योम swsusp_set_page_मुक्त(काष्ठा page *p) अणुपूर्ण
-अटल अंतरभूत व्योम swsusp_unset_page_मुक्त(काष्ठा page *p) अणुपूर्ण
+int hibernate_quiet_exec(int (*func)(void *data), void *data);
+#else /* CONFIG_HIBERNATION */
+static inline void register_nosave_region(unsigned long b, unsigned long e) {}
+static inline void register_nosave_region_late(unsigned long b, unsigned long e) {}
+static inline int swsusp_page_is_forbidden(struct page *p) { return 0; }
+static inline void swsusp_set_page_free(struct page *p) {}
+static inline void swsusp_unset_page_free(struct page *p) {}
 
-अटल अंतरभूत व्योम hibernation_set_ops(स्थिर काष्ठा platक्रमm_hibernation_ops *ops) अणुपूर्ण
-अटल अंतरभूत पूर्णांक hibernate(व्योम) अणु वापस -ENOSYS; पूर्ण
-अटल अंतरभूत bool प्रणाली_entering_hibernation(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत bool hibernation_available(व्योम) अणु वापस false; पूर्ण
+static inline void hibernation_set_ops(const struct platform_hibernation_ops *ops) {}
+static inline int hibernate(void) { return -ENOSYS; }
+static inline bool system_entering_hibernation(void) { return false; }
+static inline bool hibernation_available(void) { return false; }
 
-अटल अंतरभूत पूर्णांक hibernate_quiet_exec(पूर्णांक (*func)(व्योम *data), व्योम *data) अणु
-	वापस -ENOTSUPP;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_HIBERNATION */
+static inline int hibernate_quiet_exec(int (*func)(void *data), void *data) {
+	return -ENOTSUPP;
+}
+#endif /* CONFIG_HIBERNATION */
 
-#अगर_घोषित CONFIG_HIBERNATION_SNAPSHOT_DEV
-पूर्णांक is_hibernate_resume_dev(dev_t dev);
-#अन्यथा
-अटल अंतरभूत पूर्णांक is_hibernate_resume_dev(dev_t dev) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_HIBERNATION_SNAPSHOT_DEV
+int is_hibernate_resume_dev(dev_t dev);
+#else
+static inline int is_hibernate_resume_dev(dev_t dev) { return 0; }
+#endif
 
 /* Hibernation and suspend events */
-#घोषणा PM_HIBERNATION_PREPARE	0x0001 /* Going to hibernate */
-#घोषणा PM_POST_HIBERNATION	0x0002 /* Hibernation finished */
-#घोषणा PM_SUSPEND_PREPARE	0x0003 /* Going to suspend the प्रणाली */
-#घोषणा PM_POST_SUSPEND		0x0004 /* Suspend finished */
-#घोषणा PM_RESTORE_PREPARE	0x0005 /* Going to restore a saved image */
-#घोषणा PM_POST_RESTORE		0x0006 /* Restore failed */
+#define PM_HIBERNATION_PREPARE	0x0001 /* Going to hibernate */
+#define PM_POST_HIBERNATION	0x0002 /* Hibernation finished */
+#define PM_SUSPEND_PREPARE	0x0003 /* Going to suspend the system */
+#define PM_POST_SUSPEND		0x0004 /* Suspend finished */
+#define PM_RESTORE_PREPARE	0x0005 /* Going to restore a saved image */
+#define PM_POST_RESTORE		0x0006 /* Restore failed */
 
-बाह्य काष्ठा mutex प्रणाली_transition_mutex;
+extern struct mutex system_transition_mutex;
 
-#अगर_घोषित CONFIG_PM_SLEEP
-व्योम save_processor_state(व्योम);
-व्योम restore_processor_state(व्योम);
+#ifdef CONFIG_PM_SLEEP
+void save_processor_state(void);
+void restore_processor_state(void);
 
-/* kernel/घातer/मुख्य.c */
-बाह्य पूर्णांक रेजिस्टर_pm_notअगरier(काष्ठा notअगरier_block *nb);
-बाह्य पूर्णांक unरेजिस्टर_pm_notअगरier(काष्ठा notअगरier_block *nb);
-बाह्य व्योम ksys_sync_helper(व्योम);
+/* kernel/power/main.c */
+extern int register_pm_notifier(struct notifier_block *nb);
+extern int unregister_pm_notifier(struct notifier_block *nb);
+extern void ksys_sync_helper(void);
 
-#घोषणा pm_notअगरier(fn, pri) अणु				\
-	अटल काष्ठा notअगरier_block fn##_nb =			\
-		अणु .notअगरier_call = fn, .priority = pri पूर्ण;	\
-	रेजिस्टर_pm_notअगरier(&fn##_nb);			\
-पूर्ण
+#define pm_notifier(fn, pri) {				\
+	static struct notifier_block fn##_nb =			\
+		{ .notifier_call = fn, .priority = pri };	\
+	register_pm_notifier(&fn##_nb);			\
+}
 
-/* drivers/base/घातer/wakeup.c */
-बाह्य bool events_check_enabled;
-बाह्य अचिन्हित पूर्णांक pm_wakeup_irq;
-बाह्य suspend_state_t pm_suspend_target_state;
+/* drivers/base/power/wakeup.c */
+extern bool events_check_enabled;
+extern unsigned int pm_wakeup_irq;
+extern suspend_state_t pm_suspend_target_state;
 
-बाह्य bool pm_wakeup_pending(व्योम);
-बाह्य व्योम pm_प्रणाली_wakeup(व्योम);
-बाह्य व्योम pm_प्रणाली_cancel_wakeup(व्योम);
-बाह्य व्योम pm_wakeup_clear(bool reset);
-बाह्य व्योम pm_प्रणाली_irq_wakeup(अचिन्हित पूर्णांक irq_number);
-बाह्य bool pm_get_wakeup_count(अचिन्हित पूर्णांक *count, bool block);
-बाह्य bool pm_save_wakeup_count(अचिन्हित पूर्णांक count);
-बाह्य व्योम pm_wakep_स्वतःsleep_enabled(bool set);
-बाह्य व्योम pm_prपूर्णांक_active_wakeup_sources(व्योम);
+extern bool pm_wakeup_pending(void);
+extern void pm_system_wakeup(void);
+extern void pm_system_cancel_wakeup(void);
+extern void pm_wakeup_clear(bool reset);
+extern void pm_system_irq_wakeup(unsigned int irq_number);
+extern bool pm_get_wakeup_count(unsigned int *count, bool block);
+extern bool pm_save_wakeup_count(unsigned int count);
+extern void pm_wakep_autosleep_enabled(bool set);
+extern void pm_print_active_wakeup_sources(void);
 
-बाह्य व्योम lock_प्रणाली_sleep(व्योम);
-बाह्य व्योम unlock_प्रणाली_sleep(व्योम);
+extern void lock_system_sleep(void);
+extern void unlock_system_sleep(void);
 
-#अन्यथा /* !CONFIG_PM_SLEEP */
+#else /* !CONFIG_PM_SLEEP */
 
-अटल अंतरभूत पूर्णांक रेजिस्टर_pm_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस 0;
-पूर्ण
+static inline int register_pm_notifier(struct notifier_block *nb)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक unरेजिस्टर_pm_notअगरier(काष्ठा notअगरier_block *nb)
-अणु
-	वापस 0;
-पूर्ण
+static inline int unregister_pm_notifier(struct notifier_block *nb)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम ksys_sync_helper(व्योम) अणुपूर्ण
+static inline void ksys_sync_helper(void) {}
 
-#घोषणा pm_notअगरier(fn, pri)	करो अणु (व्योम)(fn); पूर्ण जबतक (0)
+#define pm_notifier(fn, pri)	do { (void)(fn); } while (0)
 
-अटल अंतरभूत bool pm_wakeup_pending(व्योम) अणु वापस false; पूर्ण
-अटल अंतरभूत व्योम pm_प्रणाली_wakeup(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम pm_wakeup_clear(bool reset) अणुपूर्ण
-अटल अंतरभूत व्योम pm_प्रणाली_irq_wakeup(अचिन्हित पूर्णांक irq_number) अणुपूर्ण
+static inline bool pm_wakeup_pending(void) { return false; }
+static inline void pm_system_wakeup(void) {}
+static inline void pm_wakeup_clear(bool reset) {}
+static inline void pm_system_irq_wakeup(unsigned int irq_number) {}
 
-अटल अंतरभूत व्योम lock_प्रणाली_sleep(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम unlock_प्रणाली_sleep(व्योम) अणुपूर्ण
+static inline void lock_system_sleep(void) {}
+static inline void unlock_system_sleep(void) {}
 
-#पूर्ण_अगर /* !CONFIG_PM_SLEEP */
+#endif /* !CONFIG_PM_SLEEP */
 
-#अगर_घोषित CONFIG_PM_SLEEP_DEBUG
-बाह्य bool pm_prपूर्णांक_बार_enabled;
-बाह्य bool pm_debug_messages_on;
-बाह्य __म_लिखो(2, 3) व्योम __pm_pr_dbg(bool defer, स्थिर अक्षर *fmt, ...);
-#अन्यथा
-#घोषणा pm_prपूर्णांक_बार_enabled	(false)
-#घोषणा pm_debug_messages_on	(false)
+#ifdef CONFIG_PM_SLEEP_DEBUG
+extern bool pm_print_times_enabled;
+extern bool pm_debug_messages_on;
+extern __printf(2, 3) void __pm_pr_dbg(bool defer, const char *fmt, ...);
+#else
+#define pm_print_times_enabled	(false)
+#define pm_debug_messages_on	(false)
 
-#समावेश <linux/prपूर्णांकk.h>
+#include <linux/printk.h>
 
-#घोषणा __pm_pr_dbg(defer, fmt, ...) \
-	no_prपूर्णांकk(KERN_DEBUG fmt, ##__VA_ARGS__)
-#पूर्ण_अगर
+#define __pm_pr_dbg(defer, fmt, ...) \
+	no_printk(KERN_DEBUG fmt, ##__VA_ARGS__)
+#endif
 
-#घोषणा pm_pr_dbg(fmt, ...) \
+#define pm_pr_dbg(fmt, ...) \
 	__pm_pr_dbg(false, fmt, ##__VA_ARGS__)
 
-#घोषणा pm_deferred_pr_dbg(fmt, ...) \
+#define pm_deferred_pr_dbg(fmt, ...) \
 	__pm_pr_dbg(true, fmt, ##__VA_ARGS__)
 
-#अगर_घोषित CONFIG_PM_AUTOSLEEP
+#ifdef CONFIG_PM_AUTOSLEEP
 
-/* kernel/घातer/स्वतःsleep.c */
-व्योम queue_up_suspend_work(व्योम);
+/* kernel/power/autosleep.c */
+void queue_up_suspend_work(void);
 
-#अन्यथा /* !CONFIG_PM_AUTOSLEEP */
+#else /* !CONFIG_PM_AUTOSLEEP */
 
-अटल अंतरभूत व्योम queue_up_suspend_work(व्योम) अणुपूर्ण
+static inline void queue_up_suspend_work(void) {}
 
-#पूर्ण_अगर /* !CONFIG_PM_AUTOSLEEP */
+#endif /* !CONFIG_PM_AUTOSLEEP */
 
-#पूर्ण_अगर /* _LINUX_SUSPEND_H */
+#endif /* _LINUX_SUSPEND_H */

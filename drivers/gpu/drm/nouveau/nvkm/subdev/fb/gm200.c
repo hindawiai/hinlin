@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,53 +21,53 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "gf100.h"
-#समावेश "ram.h"
+#include "gf100.h"
+#include "ram.h"
 
-#समावेश <core/memory.h>
+#include <core/memory.h>
 
-पूर्णांक
-gm200_fb_init_page(काष्ठा nvkm_fb *fb)
-अणु
-	काष्ठा nvkm_device *device = fb->subdev.device;
-	चयन (fb->page) अणु
-	हाल 16: nvkm_mask(device, 0x100c80, 0x00001801, 0x00001001); अवरोध;
-	हाल 17: nvkm_mask(device, 0x100c80, 0x00001801, 0x00000000); अवरोध;
-	हाल  0: nvkm_mask(device, 0x100c80, 0x00001800, 0x00001800); अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+int
+gm200_fb_init_page(struct nvkm_fb *fb)
+{
+	struct nvkm_device *device = fb->subdev.device;
+	switch (fb->page) {
+	case 16: nvkm_mask(device, 0x100c80, 0x00001801, 0x00001001); break;
+	case 17: nvkm_mask(device, 0x100c80, 0x00001801, 0x00000000); break;
+	case  0: nvkm_mask(device, 0x100c80, 0x00001800, 0x00001800); break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-व्योम
-gm200_fb_init(काष्ठा nvkm_fb *base)
-अणु
-	काष्ठा gf100_fb *fb = gf100_fb(base);
-	काष्ठा nvkm_device *device = fb->base.subdev.device;
+void
+gm200_fb_init(struct nvkm_fb *base)
+{
+	struct gf100_fb *fb = gf100_fb(base);
+	struct nvkm_device *device = fb->base.subdev.device;
 
-	अगर (fb->r100c10_page)
+	if (fb->r100c10_page)
 		nvkm_wr32(device, 0x100c10, fb->r100c10 >> 8);
 
 	nvkm_wr32(device, 0x100cc8, nvkm_memory_addr(fb->base.mmu_wr) >> 8);
 	nvkm_wr32(device, 0x100ccc, nvkm_memory_addr(fb->base.mmu_rd) >> 8);
 	nvkm_mask(device, 0x100cc4, 0x00060000,
 		  min(nvkm_memory_size(fb->base.mmu_rd) >> 16, (u64)2) << 17);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nvkm_fb_func
-gm200_fb = अणु
+static const struct nvkm_fb_func
+gm200_fb = {
 	.dtor = gf100_fb_dtor,
 	.oneinit = gf100_fb_oneinit,
 	.init = gm200_fb_init,
 	.init_page = gm200_fb_init_page,
-	.पूर्णांकr = gf100_fb_पूर्णांकr,
+	.intr = gf100_fb_intr,
 	.ram_new = gm200_ram_new,
-	.शेष_bigpage = 0 /* per-instance. */,
-पूर्ण;
+	.default_bigpage = 0 /* per-instance. */,
+};
 
-पूर्णांक
-gm200_fb_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
-अणु
-	वापस gf100_fb_new_(&gm200_fb, device, type, inst, pfb);
-पूर्ण
+int
+gm200_fb_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
+{
+	return gf100_fb_new_(&gm200_fb, device, type, inst, pfb);
+}

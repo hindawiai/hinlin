@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * Virtual PTP 1588 घड़ी क्रम use with KVM guests
+ * Virtual PTP 1588 clock for use with KVM guests
  *
  * Copyright (C) 2017 Red Hat Inc.
  */
 
-#अगर_अघोषित _PTP_KVM_H_
-#घोषणा _PTP_KVM_H_
+#ifndef _PTP_KVM_H_
+#define _PTP_KVM_H_
 
-काष्ठा बारpec64;
-काष्ठा घड़ीsource;
+struct timespec64;
+struct clocksource;
 
-पूर्णांक kvm_arch_ptp_init(व्योम);
-पूर्णांक kvm_arch_ptp_get_घड़ी(काष्ठा बारpec64 *ts);
-पूर्णांक kvm_arch_ptp_get_crosststamp(u64 *cycle,
-		काष्ठा बारpec64 *tspec, काष्ठा घड़ीsource **cs);
+int kvm_arch_ptp_init(void);
+int kvm_arch_ptp_get_clock(struct timespec64 *ts);
+int kvm_arch_ptp_get_crosststamp(u64 *cycle,
+		struct timespec64 *tspec, struct clocksource **cs);
 
-#पूर्ण_अगर /* _PTP_KVM_H_ */
+#endif /* _PTP_KVM_H_ */

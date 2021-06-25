@@ -1,42 +1,41 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_SIGNAL_H
-#घोषणा _LINUX_SIGNAL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_SIGNAL_H
+#define _LINUX_SIGNAL_H
 
-#समावेश <linux/bug.h>
-#समावेश <linux/संकेत_types.h>
-#समावेश <linux/माला.स>
+#include <linux/bug.h>
+#include <linux/signal_types.h>
+#include <linux/string.h>
 
-काष्ठा task_काष्ठा;
+struct task_struct;
 
-/* क्रम sysctl */
-बाह्य पूर्णांक prपूर्णांक_fatal_संकेतs;
+/* for sysctl */
+extern int print_fatal_signals;
 
-अटल अंतरभूत व्योम copy_siginfo(kernel_siginfo_t *to,
-				स्थिर kernel_siginfo_t *from)
-अणु
-	स_नकल(to, from, माप(*to));
-पूर्ण
+static inline void copy_siginfo(kernel_siginfo_t *to,
+				const kernel_siginfo_t *from)
+{
+	memcpy(to, from, sizeof(*to));
+}
 
-अटल अंतरभूत व्योम clear_siginfo(kernel_siginfo_t *info)
-अणु
-	स_रखो(info, 0, माप(*info));
-पूर्ण
+static inline void clear_siginfo(kernel_siginfo_t *info)
+{
+	memset(info, 0, sizeof(*info));
+}
 
-#घोषणा SI_EXPANSION_SIZE (माप(काष्ठा siginfo) - माप(काष्ठा kernel_siginfo))
+#define SI_EXPANSION_SIZE (sizeof(struct siginfo) - sizeof(struct kernel_siginfo))
 
-अटल अंतरभूत व्योम copy_siginfo_to_बाह्यal(siginfo_t *to,
-					    स्थिर kernel_siginfo_t *from)
-अणु
-	स_नकल(to, from, माप(*from));
-	स_रखो(((अक्षर *)to) + माप(काष्ठा kernel_siginfo), 0,
+static inline void copy_siginfo_to_external(siginfo_t *to,
+					    const kernel_siginfo_t *from)
+{
+	memcpy(to, from, sizeof(*from));
+	memset(((char *)to) + sizeof(struct kernel_siginfo), 0,
 		SI_EXPANSION_SIZE);
-पूर्ण
+}
 
-पूर्णांक copy_siginfo_to_user(siginfo_t __user *to, स्थिर kernel_siginfo_t *from);
-पूर्णांक copy_siginfo_from_user(kernel_siginfo_t *to, स्थिर siginfo_t __user *from);
+int copy_siginfo_to_user(siginfo_t __user *to, const kernel_siginfo_t *from);
+int copy_siginfo_from_user(kernel_siginfo_t *to, const siginfo_t __user *from);
 
-क्रमागत siginfo_layout अणु
+enum siginfo_layout {
 	SIL_KILL,
 	SIL_TIMER,
 	SIL_POLL,
@@ -49,325 +48,325 @@
 	SIL_CHLD,
 	SIL_RT,
 	SIL_SYS,
-पूर्ण;
+};
 
-क्रमागत siginfo_layout siginfo_layout(अचिन्हित sig, पूर्णांक si_code);
+enum siginfo_layout siginfo_layout(unsigned sig, int si_code);
 
 /*
  * Define some primitives to manipulate sigset_t.
  */
 
-#अगर_अघोषित __HAVE_ARCH_SIG_BITOPS
-#समावेश <linux/bitops.h>
+#ifndef __HAVE_ARCH_SIG_BITOPS
+#include <linux/bitops.h>
 
-/* We करोn't use <linux/bitops.h> क्रम these because there is no need to
+/* We don't use <linux/bitops.h> for these because there is no need to
    be atomic.  */
-अटल अंतरभूत व्योम sigaddset(sigset_t *set, पूर्णांक _sig)
-अणु
-	अचिन्हित दीर्घ sig = _sig - 1;
-	अगर (_NSIG_WORDS == 1)
+static inline void sigaddset(sigset_t *set, int _sig)
+{
+	unsigned long sig = _sig - 1;
+	if (_NSIG_WORDS == 1)
 		set->sig[0] |= 1UL << sig;
-	अन्यथा
+	else
 		set->sig[sig / _NSIG_BPW] |= 1UL << (sig % _NSIG_BPW);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sigdअन्यथाt(sigset_t *set, पूर्णांक _sig)
-अणु
-	अचिन्हित दीर्घ sig = _sig - 1;
-	अगर (_NSIG_WORDS == 1)
+static inline void sigdelset(sigset_t *set, int _sig)
+{
+	unsigned long sig = _sig - 1;
+	if (_NSIG_WORDS == 1)
 		set->sig[0] &= ~(1UL << sig);
-	अन्यथा
+	else
 		set->sig[sig / _NSIG_BPW] &= ~(1UL << (sig % _NSIG_BPW));
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक sigismember(sigset_t *set, पूर्णांक _sig)
-अणु
-	अचिन्हित दीर्घ sig = _sig - 1;
-	अगर (_NSIG_WORDS == 1)
-		वापस 1 & (set->sig[0] >> sig);
-	अन्यथा
-		वापस 1 & (set->sig[sig / _NSIG_BPW] >> (sig % _NSIG_BPW));
-पूर्ण
+static inline int sigismember(sigset_t *set, int _sig)
+{
+	unsigned long sig = _sig - 1;
+	if (_NSIG_WORDS == 1)
+		return 1 & (set->sig[0] >> sig);
+	else
+		return 1 & (set->sig[sig / _NSIG_BPW] >> (sig % _NSIG_BPW));
+}
 
-#पूर्ण_अगर /* __HAVE_ARCH_SIG_BITOPS */
+#endif /* __HAVE_ARCH_SIG_BITOPS */
 
-अटल अंतरभूत पूर्णांक sigisemptyset(sigset_t *set)
-अणु
-	चयन (_NSIG_WORDS) अणु
-	हाल 4:
-		वापस (set->sig[3] | set->sig[2] |
+static inline int sigisemptyset(sigset_t *set)
+{
+	switch (_NSIG_WORDS) {
+	case 4:
+		return (set->sig[3] | set->sig[2] |
 			set->sig[1] | set->sig[0]) == 0;
-	हाल 2:
-		वापस (set->sig[1] | set->sig[0]) == 0;
-	हाल 1:
-		वापस set->sig[0] == 0;
-	शेष:
+	case 2:
+		return (set->sig[1] | set->sig[0]) == 0;
+	case 1:
+		return set->sig[0] == 0;
+	default:
 		BUILD_BUG();
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल अंतरभूत पूर्णांक sigequalsets(स्थिर sigset_t *set1, स्थिर sigset_t *set2)
-अणु
-	चयन (_NSIG_WORDS) अणु
-	हाल 4:
-		वापस	(set1->sig[3] == set2->sig[3]) &&
+static inline int sigequalsets(const sigset_t *set1, const sigset_t *set2)
+{
+	switch (_NSIG_WORDS) {
+	case 4:
+		return	(set1->sig[3] == set2->sig[3]) &&
 			(set1->sig[2] == set2->sig[2]) &&
 			(set1->sig[1] == set2->sig[1]) &&
 			(set1->sig[0] == set2->sig[0]);
-	हाल 2:
-		वापस	(set1->sig[1] == set2->sig[1]) &&
+	case 2:
+		return	(set1->sig[1] == set2->sig[1]) &&
 			(set1->sig[0] == set2->sig[0]);
-	हाल 1:
-		वापस	set1->sig[0] == set2->sig[0];
-	पूर्ण
-	वापस 0;
-पूर्ण
+	case 1:
+		return	set1->sig[0] == set2->sig[0];
+	}
+	return 0;
+}
 
-#घोषणा sigmask(sig)	(1UL << ((sig) - 1))
+#define sigmask(sig)	(1UL << ((sig) - 1))
 
-#अगर_अघोषित __HAVE_ARCH_SIG_SETOPS
-#समावेश <linux/माला.स>
+#ifndef __HAVE_ARCH_SIG_SETOPS
+#include <linux/string.h>
 
-#घोषणा _SIG_SET_BINOP(name, op)					\
-अटल अंतरभूत व्योम name(sigset_t *r, स्थिर sigset_t *a, स्थिर sigset_t *b) \
-अणु									\
-	अचिन्हित दीर्घ a0, a1, a2, a3, b0, b1, b2, b3;			\
+#define _SIG_SET_BINOP(name, op)					\
+static inline void name(sigset_t *r, const sigset_t *a, const sigset_t *b) \
+{									\
+	unsigned long a0, a1, a2, a3, b0, b1, b2, b3;			\
 									\
-	चयन (_NSIG_WORDS) अणु						\
-	हाल 4:								\
+	switch (_NSIG_WORDS) {						\
+	case 4:								\
 		a3 = a->sig[3]; a2 = a->sig[2];				\
 		b3 = b->sig[3]; b2 = b->sig[2];				\
 		r->sig[3] = op(a3, b3);					\
 		r->sig[2] = op(a2, b2);					\
 		fallthrough;						\
-	हाल 2:								\
+	case 2:								\
 		a1 = a->sig[1]; b1 = b->sig[1];				\
 		r->sig[1] = op(a1, b1);					\
 		fallthrough;						\
-	हाल 1:								\
+	case 1:								\
 		a0 = a->sig[0]; b0 = b->sig[0];				\
 		r->sig[0] = op(a0, b0);					\
-		अवरोध;							\
-	शेष:							\
+		break;							\
+	default:							\
 		BUILD_BUG();						\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा _sig_or(x,y)	((x) | (y))
+#define _sig_or(x,y)	((x) | (y))
 _SIG_SET_BINOP(sigorsets, _sig_or)
 
-#घोषणा _sig_and(x,y)	((x) & (y))
+#define _sig_and(x,y)	((x) & (y))
 _SIG_SET_BINOP(sigandsets, _sig_and)
 
-#घोषणा _sig_andn(x,y)	((x) & ~(y))
+#define _sig_andn(x,y)	((x) & ~(y))
 _SIG_SET_BINOP(sigandnsets, _sig_andn)
 
-#अघोषित _SIG_SET_BINOP
-#अघोषित _sig_or
-#अघोषित _sig_and
-#अघोषित _sig_andn
+#undef _SIG_SET_BINOP
+#undef _sig_or
+#undef _sig_and
+#undef _sig_andn
 
-#घोषणा _SIG_SET_OP(name, op)						\
-अटल अंतरभूत व्योम name(sigset_t *set)					\
-अणु									\
-	चयन (_NSIG_WORDS) अणु						\
-	हाल 4:	set->sig[3] = op(set->sig[3]);				\
+#define _SIG_SET_OP(name, op)						\
+static inline void name(sigset_t *set)					\
+{									\
+	switch (_NSIG_WORDS) {						\
+	case 4:	set->sig[3] = op(set->sig[3]);				\
 		set->sig[2] = op(set->sig[2]);				\
 		fallthrough;						\
-	हाल 2:	set->sig[1] = op(set->sig[1]);				\
+	case 2:	set->sig[1] = op(set->sig[1]);				\
 		fallthrough;						\
-	हाल 1:	set->sig[0] = op(set->sig[0]);				\
-		    अवरोध;						\
-	शेष:							\
+	case 1:	set->sig[0] = op(set->sig[0]);				\
+		    break;						\
+	default:							\
 		BUILD_BUG();						\
-	पूर्ण								\
-पूर्ण
+	}								\
+}
 
-#घोषणा _sig_not(x)	(~(x))
+#define _sig_not(x)	(~(x))
 _SIG_SET_OP(signotset, _sig_not)
 
-#अघोषित _SIG_SET_OP
-#अघोषित _sig_not
+#undef _SIG_SET_OP
+#undef _sig_not
 
-अटल अंतरभूत व्योम sigemptyset(sigset_t *set)
-अणु
-	चयन (_NSIG_WORDS) अणु
-	शेष:
-		स_रखो(set, 0, माप(sigset_t));
-		अवरोध;
-	हाल 2: set->sig[1] = 0;
+static inline void sigemptyset(sigset_t *set)
+{
+	switch (_NSIG_WORDS) {
+	default:
+		memset(set, 0, sizeof(sigset_t));
+		break;
+	case 2: set->sig[1] = 0;
 		fallthrough;
-	हाल 1:	set->sig[0] = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case 1:	set->sig[0] = 0;
+		break;
+	}
+}
 
-अटल अंतरभूत व्योम sigfillset(sigset_t *set)
-अणु
-	चयन (_NSIG_WORDS) अणु
-	शेष:
-		स_रखो(set, -1, माप(sigset_t));
-		अवरोध;
-	हाल 2: set->sig[1] = -1;
+static inline void sigfillset(sigset_t *set)
+{
+	switch (_NSIG_WORDS) {
+	default:
+		memset(set, -1, sizeof(sigset_t));
+		break;
+	case 2: set->sig[1] = -1;
 		fallthrough;
-	हाल 1:	set->sig[0] = -1;
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case 1:	set->sig[0] = -1;
+		break;
+	}
+}
 
-/* Some extensions क्रम manipulating the low 32 संकेतs in particular.  */
+/* Some extensions for manipulating the low 32 signals in particular.  */
 
-अटल अंतरभूत व्योम sigaddseपंचांगask(sigset_t *set, अचिन्हित दीर्घ mask)
-अणु
+static inline void sigaddsetmask(sigset_t *set, unsigned long mask)
+{
 	set->sig[0] |= mask;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sigdअन्यथापंचांगask(sigset_t *set, अचिन्हित दीर्घ mask)
-अणु
+static inline void sigdelsetmask(sigset_t *set, unsigned long mask)
+{
 	set->sig[0] &= ~mask;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक sigtestseपंचांगask(sigset_t *set, अचिन्हित दीर्घ mask)
-अणु
-	वापस (set->sig[0] & mask) != 0;
-पूर्ण
+static inline int sigtestsetmask(sigset_t *set, unsigned long mask)
+{
+	return (set->sig[0] & mask) != 0;
+}
 
-अटल अंतरभूत व्योम siginitset(sigset_t *set, अचिन्हित दीर्घ mask)
-अणु
+static inline void siginitset(sigset_t *set, unsigned long mask)
+{
 	set->sig[0] = mask;
-	चयन (_NSIG_WORDS) अणु
-	शेष:
-		स_रखो(&set->sig[1], 0, माप(दीर्घ)*(_NSIG_WORDS-1));
-		अवरोध;
-	हाल 2: set->sig[1] = 0;
-		अवरोध;
-	हाल 1: ;
-	पूर्ण
-पूर्ण
+	switch (_NSIG_WORDS) {
+	default:
+		memset(&set->sig[1], 0, sizeof(long)*(_NSIG_WORDS-1));
+		break;
+	case 2: set->sig[1] = 0;
+		break;
+	case 1: ;
+	}
+}
 
-अटल अंतरभूत व्योम siginitsetinv(sigset_t *set, अचिन्हित दीर्घ mask)
-अणु
+static inline void siginitsetinv(sigset_t *set, unsigned long mask)
+{
 	set->sig[0] = ~mask;
-	चयन (_NSIG_WORDS) अणु
-	शेष:
-		स_रखो(&set->sig[1], -1, माप(दीर्घ)*(_NSIG_WORDS-1));
-		अवरोध;
-	हाल 2: set->sig[1] = -1;
-		अवरोध;
-	हाल 1: ;
-	पूर्ण
-पूर्ण
+	switch (_NSIG_WORDS) {
+	default:
+		memset(&set->sig[1], -1, sizeof(long)*(_NSIG_WORDS-1));
+		break;
+	case 2: set->sig[1] = -1;
+		break;
+	case 1: ;
+	}
+}
 
-#पूर्ण_अगर /* __HAVE_ARCH_SIG_SETOPS */
+#endif /* __HAVE_ARCH_SIG_SETOPS */
 
-अटल अंतरभूत व्योम init_संक_बाकी(काष्ठा संक_बाकी *sig)
-अणु
-	sigemptyset(&sig->संकेत);
+static inline void init_sigpending(struct sigpending *sig)
+{
+	sigemptyset(&sig->signal);
 	INIT_LIST_HEAD(&sig->list);
-पूर्ण
+}
 
-बाह्य व्योम flush_sigqueue(काष्ठा संक_बाकी *queue);
-बाह्य व्योम निकास_task_sigqueue_cache(काष्ठा task_काष्ठा *tsk);
+extern void flush_sigqueue(struct sigpending *queue);
+extern void exit_task_sigqueue_cache(struct task_struct *tsk);
 
-/* Test अगर 'sig' is valid संकेत. Use this instead of testing _NSIG directly */
-अटल अंतरभूत पूर्णांक valid_संकेत(अचिन्हित दीर्घ sig)
-अणु
-	वापस sig <= _NSIG ? 1 : 0;
-पूर्ण
+/* Test if 'sig' is valid signal. Use this instead of testing _NSIG directly */
+static inline int valid_signal(unsigned long sig)
+{
+	return sig <= _NSIG ? 1 : 0;
+}
 
-काष्ठा बारpec;
-काष्ठा pt_regs;
-क्रमागत pid_type;
+struct timespec;
+struct pt_regs;
+enum pid_type;
 
-बाह्य पूर्णांक next_संकेत(काष्ठा संक_बाकी *pending, sigset_t *mask);
-बाह्य पूर्णांक करो_send_sig_info(पूर्णांक sig, काष्ठा kernel_siginfo *info,
-				काष्ठा task_काष्ठा *p, क्रमागत pid_type type);
-बाह्य पूर्णांक group_send_sig_info(पूर्णांक sig, काष्ठा kernel_siginfo *info,
-			       काष्ठा task_काष्ठा *p, क्रमागत pid_type type);
-बाह्य पूर्णांक __group_send_sig_info(पूर्णांक, काष्ठा kernel_siginfo *, काष्ठा task_काष्ठा *);
-बाह्य पूर्णांक sigprocmask(पूर्णांक, sigset_t *, sigset_t *);
-बाह्य व्योम set_current_blocked(sigset_t *);
-बाह्य व्योम __set_current_blocked(स्थिर sigset_t *);
-बाह्य पूर्णांक show_unhandled_संकेतs;
+extern int next_signal(struct sigpending *pending, sigset_t *mask);
+extern int do_send_sig_info(int sig, struct kernel_siginfo *info,
+				struct task_struct *p, enum pid_type type);
+extern int group_send_sig_info(int sig, struct kernel_siginfo *info,
+			       struct task_struct *p, enum pid_type type);
+extern int __group_send_sig_info(int, struct kernel_siginfo *, struct task_struct *);
+extern int sigprocmask(int, sigset_t *, sigset_t *);
+extern void set_current_blocked(sigset_t *);
+extern void __set_current_blocked(const sigset_t *);
+extern int show_unhandled_signals;
 
-बाह्य bool get_संकेत(काष्ठा kसंकेत *ksig);
-बाह्य व्योम संकेत_setup_करोne(पूर्णांक failed, काष्ठा kसंकेत *ksig, पूर्णांक stepping);
-बाह्य व्योम निकास_संकेतs(काष्ठा task_काष्ठा *tsk);
-बाह्य व्योम kernel_sigaction(पूर्णांक, __sighandler_t);
+extern bool get_signal(struct ksignal *ksig);
+extern void signal_setup_done(int failed, struct ksignal *ksig, int stepping);
+extern void exit_signals(struct task_struct *tsk);
+extern void kernel_sigaction(int, __sighandler_t);
 
-#घोषणा SIG_KTHREAD ((__क्रमce __sighandler_t)2)
-#घोषणा SIG_KTHREAD_KERNEL ((__क्रमce __sighandler_t)3)
+#define SIG_KTHREAD ((__force __sighandler_t)2)
+#define SIG_KTHREAD_KERNEL ((__force __sighandler_t)3)
 
-अटल अंतरभूत व्योम allow_संकेत(पूर्णांक sig)
-अणु
+static inline void allow_signal(int sig)
+{
 	/*
-	 * Kernel thपढ़ोs handle their own संकेतs. Let the संकेत code
+	 * Kernel threads handle their own signals. Let the signal code
 	 * know it'll be handled, so that they don't get converted to
 	 * SIGKILL or just silently dropped.
 	 */
 	kernel_sigaction(sig, SIG_KTHREAD);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम allow_kernel_संकेत(पूर्णांक sig)
-अणु
+static inline void allow_kernel_signal(int sig)
+{
 	/*
-	 * Kernel thपढ़ोs handle their own संकेतs. Let the संकेत code
-	 * know संकेतs sent by the kernel will be handled, so that they
-	 * करोn't get silently dropped.
+	 * Kernel threads handle their own signals. Let the signal code
+	 * know signals sent by the kernel will be handled, so that they
+	 * don't get silently dropped.
 	 */
 	kernel_sigaction(sig, SIG_KTHREAD_KERNEL);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम disallow_संकेत(पूर्णांक sig)
-अणु
-	kernel_sigaction(sig, संक_छोड़ो);
-पूर्ण
+static inline void disallow_signal(int sig)
+{
+	kernel_sigaction(sig, SIG_IGN);
+}
 
-बाह्य काष्ठा kmem_cache *sighand_cachep;
+extern struct kmem_cache *sighand_cachep;
 
-बाह्य bool unhandled_संकेत(काष्ठा task_काष्ठा *tsk, पूर्णांक sig);
+extern bool unhandled_signal(struct task_struct *tsk, int sig);
 
 /*
- * In POSIX a संकेत is sent either to a specअगरic thपढ़ो (Linux task)
- * or to the process as a whole (Linux thपढ़ो group).  How the संकेत
- * is sent determines whether it's to one thपढ़ो or the whole group,
- * which determines which संकेत mask(s) are involved in blocking it
- * from being delivered until later.  When the संकेत is delivered,
- * either it's caught or ignored by a user handler or it has a शेष
- * effect that applies to the whole thपढ़ो group (POSIX process).
+ * In POSIX a signal is sent either to a specific thread (Linux task)
+ * or to the process as a whole (Linux thread group).  How the signal
+ * is sent determines whether it's to one thread or the whole group,
+ * which determines which signal mask(s) are involved in blocking it
+ * from being delivered until later.  When the signal is delivered,
+ * either it's caught or ignored by a user handler or it has a default
+ * effect that applies to the whole thread group (POSIX process).
  *
- * The possible effects an unblocked संकेत set to संक_पूर्व can have are:
+ * The possible effects an unblocked signal set to SIG_DFL can have are:
  *   ignore	- Nothing Happens
- *   terminate	- समाप्त the process, i.e. all thपढ़ोs in the group,
- * 		  similar to निकास_group.  The group leader (only) reports
+ *   terminate	- kill the process, i.e. all threads in the group,
+ * 		  similar to exit_group.  The group leader (only) reports
  *		  WIFSIGNALED status to its parent.
- *   coredump	- ग_लिखो a core dump file describing all thपढ़ोs using
- *		  the same mm and then समाप्त all those thपढ़ोs
- *   stop 	- stop all the thपढ़ोs in the group, i.e. TASK_STOPPED state
+ *   coredump	- write a core dump file describing all threads using
+ *		  the same mm and then kill all those threads
+ *   stop 	- stop all the threads in the group, i.e. TASK_STOPPED state
  *
  * SIGKILL and SIGSTOP cannot be caught, blocked, or ignored.
- * Other संकेतs when not blocked and set to संक_पूर्व behaves as follows.
- * The job control संकेतs also have other special effects.
+ * Other signals when not blocked and set to SIG_DFL behaves as follows.
+ * The job control signals also have other special effects.
  *
  *	+--------------------+------------------+
- *	|  POSIX संकेत      |  शेष action  |
+ *	|  POSIX signal      |  default action  |
  *	+--------------------+------------------+
  *	|  SIGHUP            |  terminate	|
- *	|  संक_विघ्न            |	terminate	|
+ *	|  SIGINT            |	terminate	|
  *	|  SIGQUIT           |	coredump 	|
- *	|  संक_अवैध            |	coredump 	|
+ *	|  SIGILL            |	coredump 	|
  *	|  SIGTRAP           |	coredump 	|
  *	|  SIGABRT/SIGIOT    |	coredump 	|
  *	|  SIGBUS            |	coredump 	|
- *	|  संक_भ_त्रुटि            |	coredump 	|
+ *	|  SIGFPE            |	coredump 	|
  *	|  SIGKILL           |	terminate(+)	|
  *	|  SIGUSR1           |	terminate	|
- *	|  संक_अंश           |	coredump 	|
+ *	|  SIGSEGV           |	coredump 	|
  *	|  SIGUSR2           |	terminate	|
  *	|  SIGPIPE           |	terminate	|
  *	|  SIGALRM           |	terminate	|
- *	|  संक_इति           |	terminate	|
+ *	|  SIGTERM           |	terminate	|
  *	|  SIGCHLD           |	ignore   	|
  *	|  SIGCONT           |	ignore(*)	|
  *	|  SIGSTOP           |	stop(*)(+)  	|
@@ -386,105 +385,105 @@ _SIG_SET_OP(signotset, _sig_not)
  *	|  SIGPWR            |	terminate	|
  *	|  SIGRTMIN-SIGRTMAX |	terminate       |
  *	+--------------------+------------------+
- *	|  non-POSIX संकेत  |  शेष action  |
+ *	|  non-POSIX signal  |  default action  |
  *	+--------------------+------------------+
  *	|  SIGEMT            |  coredump	|
  *	+--------------------+------------------+
  *
  * (+) For SIGKILL and SIGSTOP the action is "always", not just "default".
  * (*) Special job control effects:
- * When SIGCONT is sent, it resumes the process (all thपढ़ोs in the group)
- * from TASK_STOPPED state and also clears any pending/queued stop संकेतs
+ * When SIGCONT is sent, it resumes the process (all threads in the group)
+ * from TASK_STOPPED state and also clears any pending/queued stop signals
  * (any of those marked with "stop(*)").  This happens regardless of blocking,
- * catching, or ignoring SIGCONT.  When any stop संकेत is sent, it clears
- * any pending/queued SIGCONT संकेतs; this happens regardless of blocking,
- * catching, or ignored the stop संकेत, though (except क्रम SIGSTOP) the
- * शेष action of stopping the process may happen later or never.
+ * catching, or ignoring SIGCONT.  When any stop signal is sent, it clears
+ * any pending/queued SIGCONT signals; this happens regardless of blocking,
+ * catching, or ignored the stop signal, though (except for SIGSTOP) the
+ * default action of stopping the process may happen later or never.
  */
 
-#अगर_घोषित SIGEMT
-#घोषणा SIGEMT_MASK	rt_sigmask(SIGEMT)
-#अन्यथा
-#घोषणा SIGEMT_MASK	0
-#पूर्ण_अगर
+#ifdef SIGEMT
+#define SIGEMT_MASK	rt_sigmask(SIGEMT)
+#else
+#define SIGEMT_MASK	0
+#endif
 
-#अगर SIGRTMIN > BITS_PER_LONG
-#घोषणा rt_sigmask(sig)	(1ULL << ((sig)-1))
-#अन्यथा
-#घोषणा rt_sigmask(sig)	sigmask(sig)
-#पूर्ण_अगर
+#if SIGRTMIN > BITS_PER_LONG
+#define rt_sigmask(sig)	(1ULL << ((sig)-1))
+#else
+#define rt_sigmask(sig)	sigmask(sig)
+#endif
 
-#घोषणा siginmask(sig, mask) \
+#define siginmask(sig, mask) \
 	((sig) > 0 && (sig) < SIGRTMIN && (rt_sigmask(sig) & (mask)))
 
-#घोषणा SIG_KERNEL_ONLY_MASK (\
+#define SIG_KERNEL_ONLY_MASK (\
 	rt_sigmask(SIGKILL)   |  rt_sigmask(SIGSTOP))
 
-#घोषणा SIG_KERNEL_STOP_MASK (\
+#define SIG_KERNEL_STOP_MASK (\
 	rt_sigmask(SIGSTOP)   |  rt_sigmask(SIGTSTP)   | \
 	rt_sigmask(SIGTTIN)   |  rt_sigmask(SIGTTOU)   )
 
-#घोषणा SIG_KERNEL_COREDUMP_MASK (\
-        rt_sigmask(SIGQUIT)   |  rt_sigmask(संक_अवैध)    | \
+#define SIG_KERNEL_COREDUMP_MASK (\
+        rt_sigmask(SIGQUIT)   |  rt_sigmask(SIGILL)    | \
 	rt_sigmask(SIGTRAP)   |  rt_sigmask(SIGABRT)   | \
-        rt_sigmask(संक_भ_त्रुटि)    |  rt_sigmask(संक_अंश)   | \
+        rt_sigmask(SIGFPE)    |  rt_sigmask(SIGSEGV)   | \
 	rt_sigmask(SIGBUS)    |  rt_sigmask(SIGSYS)    | \
         rt_sigmask(SIGXCPU)   |  rt_sigmask(SIGXFSZ)   | \
 	SIGEMT_MASK				       )
 
-#घोषणा SIG_KERNEL_IGNORE_MASK (\
+#define SIG_KERNEL_IGNORE_MASK (\
         rt_sigmask(SIGCONT)   |  rt_sigmask(SIGCHLD)   | \
 	rt_sigmask(SIGWINCH)  |  rt_sigmask(SIGURG)    )
 
-#घोषणा SIG_SPECIFIC_SICODES_MASK (\
-	rt_sigmask(संक_अवैध)    |  rt_sigmask(संक_भ_त्रुटि)    | \
-	rt_sigmask(संक_अंश)   |  rt_sigmask(SIGBUS)    | \
+#define SIG_SPECIFIC_SICODES_MASK (\
+	rt_sigmask(SIGILL)    |  rt_sigmask(SIGFPE)    | \
+	rt_sigmask(SIGSEGV)   |  rt_sigmask(SIGBUS)    | \
 	rt_sigmask(SIGTRAP)   |  rt_sigmask(SIGCHLD)   | \
 	rt_sigmask(SIGPOLL)   |  rt_sigmask(SIGSYS)    | \
 	SIGEMT_MASK                                    )
 
-#घोषणा sig_kernel_only(sig)		siginmask(sig, SIG_KERNEL_ONLY_MASK)
-#घोषणा sig_kernel_coredump(sig)	siginmask(sig, SIG_KERNEL_COREDUMP_MASK)
-#घोषणा sig_kernel_ignore(sig)		siginmask(sig, SIG_KERNEL_IGNORE_MASK)
-#घोषणा sig_kernel_stop(sig)		siginmask(sig, SIG_KERNEL_STOP_MASK)
-#घोषणा sig_specअगरic_sicodes(sig)	siginmask(sig, SIG_SPECIFIC_SICODES_MASK)
+#define sig_kernel_only(sig)		siginmask(sig, SIG_KERNEL_ONLY_MASK)
+#define sig_kernel_coredump(sig)	siginmask(sig, SIG_KERNEL_COREDUMP_MASK)
+#define sig_kernel_ignore(sig)		siginmask(sig, SIG_KERNEL_IGNORE_MASK)
+#define sig_kernel_stop(sig)		siginmask(sig, SIG_KERNEL_STOP_MASK)
+#define sig_specific_sicodes(sig)	siginmask(sig, SIG_SPECIFIC_SICODES_MASK)
 
-#घोषणा sig_fatal(t, signr) \
+#define sig_fatal(t, signr) \
 	(!siginmask(signr, SIG_KERNEL_IGNORE_MASK|SIG_KERNEL_STOP_MASK) && \
-	 (t)->sighand->action[(signr)-1].sa.sa_handler == संक_पूर्व)
+	 (t)->sighand->action[(signr)-1].sa.sa_handler == SIG_DFL)
 
-व्योम संकेतs_init(व्योम);
+void signals_init(void);
 
-पूर्णांक restore_altstack(स्थिर stack_t __user *);
-पूर्णांक __save_altstack(stack_t __user *, अचिन्हित दीर्घ);
+int restore_altstack(const stack_t __user *);
+int __save_altstack(stack_t __user *, unsigned long);
 
-#घोषणा unsafe_save_altstack(uss, sp, label) करो अणु \
+#define unsafe_save_altstack(uss, sp, label) do { \
 	stack_t __user *__uss = uss; \
-	काष्ठा task_काष्ठा *t = current; \
-	unsafe_put_user((व्योम __user *)t->sas_ss_sp, &__uss->ss_sp, label); \
+	struct task_struct *t = current; \
+	unsafe_put_user((void __user *)t->sas_ss_sp, &__uss->ss_sp, label); \
 	unsafe_put_user(t->sas_ss_flags, &__uss->ss_flags, label); \
 	unsafe_put_user(t->sas_ss_size, &__uss->ss_size, label); \
-	अगर (t->sas_ss_flags & SS_AUTODISARM) \
+	if (t->sas_ss_flags & SS_AUTODISARM) \
 		sas_ss_reset(t); \
-पूर्ण जबतक (0);
+} while (0);
 
-#अगर_घोषित CONFIG_PROC_FS
-काष्ठा seq_file;
-बाह्य व्योम render_sigset_t(काष्ठा seq_file *, स्थिर अक्षर *, sigset_t *);
-#पूर्ण_अगर
+#ifdef CONFIG_PROC_FS
+struct seq_file;
+extern void render_sigset_t(struct seq_file *, const char *, sigset_t *);
+#endif
 
-#अगर_अघोषित arch_untagged_si_addr
+#ifndef arch_untagged_si_addr
 /*
- * Given a fault address and a संकेत and si_code which correspond to the
- * _sigfault जोड़ member, वापसs the address that must appear in si_addr अगर
- * the संकेत handler करोes not have SA_EXPOSE_TAGBITS enabled in sa_flags.
+ * Given a fault address and a signal and si_code which correspond to the
+ * _sigfault union member, returns the address that must appear in si_addr if
+ * the signal handler does not have SA_EXPOSE_TAGBITS enabled in sa_flags.
  */
-अटल अंतरभूत व्योम __user *arch_untagged_si_addr(व्योम __user *addr,
-						 अचिन्हित दीर्घ sig,
-						 अचिन्हित दीर्घ si_code)
-अणु
-	वापस addr;
-पूर्ण
-#पूर्ण_अगर
+static inline void __user *arch_untagged_si_addr(void __user *addr,
+						 unsigned long sig,
+						 unsigned long si_code)
+{
+	return addr;
+}
+#endif
 
-#पूर्ण_अगर /* _LINUX_SIGNAL_H */
+#endif /* _LINUX_SIGNAL_H */

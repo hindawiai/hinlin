@@ -1,80 +1,79 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * arch/sh/kernel/topology.c
  *
  *  Copyright (C) 2007  Paul Mundt
  */
-#समावेश <linux/cpu.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/init.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/topology.h>
-#समावेश <linux/node.h>
-#समावेश <linux/nodemask.h>
-#समावेश <linux/export.h>
+#include <linux/cpu.h>
+#include <linux/cpumask.h>
+#include <linux/init.h>
+#include <linux/percpu.h>
+#include <linux/topology.h>
+#include <linux/node.h>
+#include <linux/nodemask.h>
+#include <linux/export.h>
 
-अटल DEFINE_PER_CPU(काष्ठा cpu, cpu_devices);
+static DEFINE_PER_CPU(struct cpu, cpu_devices);
 
 cpumask_t cpu_core_map[NR_CPUS];
 EXPORT_SYMBOL(cpu_core_map);
 
-अटल cpumask_t cpu_coregroup_map(पूर्णांक cpu)
-अणु
+static cpumask_t cpu_coregroup_map(int cpu)
+{
 	/*
 	 * Presently all SH-X3 SMP cores are multi-cores, so just keep it
-	 * simple until we have a method क्रम determining topology..
+	 * simple until we have a method for determining topology..
 	 */
-	वापस *cpu_possible_mask;
-पूर्ण
+	return *cpu_possible_mask;
+}
 
-स्थिर काष्ठा cpumask *cpu_coregroup_mask(पूर्णांक cpu)
-अणु
-	वापस &cpu_core_map[cpu];
-पूर्ण
+const struct cpumask *cpu_coregroup_mask(int cpu)
+{
+	return &cpu_core_map[cpu];
+}
 
-पूर्णांक arch_update_cpu_topology(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu;
+int arch_update_cpu_topology(void)
+{
+	unsigned int cpu;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		cpu_core_map[cpu] = cpu_coregroup_map(cpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init topology_init(व्योम)
-अणु
-	पूर्णांक i, ret;
+static int __init topology_init(void)
+{
+	int i, ret;
 
-#अगर_घोषित CONFIG_NEED_MULTIPLE_NODES
-	क्रम_each_online_node(i)
-		रेजिस्टर_one_node(i);
-#पूर्ण_अगर
+#ifdef CONFIG_NEED_MULTIPLE_NODES
+	for_each_online_node(i)
+		register_one_node(i);
+#endif
 
-	क्रम_each_present_cpu(i) अणु
-		काष्ठा cpu *c = &per_cpu(cpu_devices, i);
+	for_each_present_cpu(i) {
+		struct cpu *c = &per_cpu(cpu_devices, i);
 
 		c->hotpluggable = 1;
 
-		ret = रेजिस्टर_cpu(c, i);
-		अगर (unlikely(ret))
-			prपूर्णांकk(KERN_WARNING "%s: register_cpu %d failed (%d)\n",
+		ret = register_cpu(c, i);
+		if (unlikely(ret))
+			printk(KERN_WARNING "%s: register_cpu %d failed (%d)\n",
 			       __func__, i, ret);
-	पूर्ण
+	}
 
-#अगर defined(CONFIG_NUMA) && !defined(CONFIG_SMP)
+#if defined(CONFIG_NUMA) && !defined(CONFIG_SMP)
 	/*
-	 * In the UP हाल, make sure the CPU association is still
-	 * रेजिस्टरed under each node. Without this, sysfs fails
+	 * In the UP case, make sure the CPU association is still
+	 * registered under each node. Without this, sysfs fails
 	 * to make the connection between nodes other than node0
 	 * and cpu0.
 	 */
-	क्रम_each_online_node(i)
-		अगर (i != numa_node_id())
-			रेजिस्टर_cpu_under_node(raw_smp_processor_id(), i);
-#पूर्ण_अगर
+	for_each_online_node(i)
+		if (i != numa_node_id())
+			register_cpu_under_node(raw_smp_processor_id(), i);
+#endif
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(topology_init);

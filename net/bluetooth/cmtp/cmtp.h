@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
-   CMTP implementation क्रम Linux Bluetooth stack (BlueZ).
-   Copyright (C) 2002-2003 Marcel Holपंचांगann <marcel@holपंचांगann.org>
+   CMTP implementation for Linux Bluetooth stack (BlueZ).
+   Copyright (C) 2002-2003 Marcel Holtmann <marcel@holtmann.org>
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -11,7 +10,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -21,110 +20,110 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#अगर_अघोषित __CMTP_H
-#घोषणा __CMTP_H
+#ifndef __CMTP_H
+#define __CMTP_H
 
-#समावेश <linux/types.h>
-#समावेश <net/bluetooth/bluetooth.h>
+#include <linux/types.h>
+#include <net/bluetooth/bluetooth.h>
 
-#घोषणा BTNAMSIZ 18
+#define BTNAMSIZ 18
 
 /* CMTP ioctl defines */
-#घोषणा CMTPCONNADD	_IOW('C', 200, पूर्णांक)
-#घोषणा CMTPCONNDEL	_IOW('C', 201, पूर्णांक)
-#घोषणा CMTPGETCONNLIST	_IOR('C', 210, पूर्णांक)
-#घोषणा CMTPGETCONNINFO	_IOR('C', 211, पूर्णांक)
+#define CMTPCONNADD	_IOW('C', 200, int)
+#define CMTPCONNDEL	_IOW('C', 201, int)
+#define CMTPGETCONNLIST	_IOR('C', 210, int)
+#define CMTPGETCONNINFO	_IOR('C', 211, int)
 
-#घोषणा CMTP_LOOPBACK	0
+#define CMTP_LOOPBACK	0
 
-काष्ठा cmtp_connadd_req अणु
-	पूर्णांक   sock;	/* Connected socket */
+struct cmtp_connadd_req {
+	int   sock;	/* Connected socket */
 	__u32 flags;
-पूर्ण;
+};
 
-काष्ठा cmtp_conndel_req अणु
+struct cmtp_conndel_req {
 	bdaddr_t bdaddr;
 	__u32    flags;
-पूर्ण;
+};
 
-काष्ठा cmtp_conninfo अणु
+struct cmtp_conninfo {
 	bdaddr_t bdaddr;
 	__u32    flags;
 	__u16    state;
-	पूर्णांक      num;
-पूर्ण;
+	int      num;
+};
 
-काष्ठा cmtp_connlist_req अणु
+struct cmtp_connlist_req {
 	__u32  cnum;
-	काष्ठा cmtp_conninfo __user *ci;
-पूर्ण;
+	struct cmtp_conninfo __user *ci;
+};
 
-पूर्णांक cmtp_add_connection(काष्ठा cmtp_connadd_req *req, काष्ठा socket *sock);
-पूर्णांक cmtp_del_connection(काष्ठा cmtp_conndel_req *req);
-पूर्णांक cmtp_get_connlist(काष्ठा cmtp_connlist_req *req);
-पूर्णांक cmtp_get_conninfo(काष्ठा cmtp_conninfo *ci);
+int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock);
+int cmtp_del_connection(struct cmtp_conndel_req *req);
+int cmtp_get_connlist(struct cmtp_connlist_req *req);
+int cmtp_get_conninfo(struct cmtp_conninfo *ci);
 
 /* CMTP session defines */
-#घोषणा CMTP_INTEROP_TIMEOUT	(HZ * 5)
-#घोषणा CMTP_INITIAL_MSGNUM	0xff00
+#define CMTP_INTEROP_TIMEOUT	(HZ * 5)
+#define CMTP_INITIAL_MSGNUM	0xff00
 
-काष्ठा cmtp_session अणु
-	काष्ठा list_head list;
+struct cmtp_session {
+	struct list_head list;
 
-	काष्ठा socket *sock;
+	struct socket *sock;
 
 	bdaddr_t bdaddr;
 
-	अचिन्हित दीर्घ state;
-	अचिन्हित दीर्घ flags;
+	unsigned long state;
+	unsigned long flags;
 
-	uपूर्णांक mtu;
+	uint mtu;
 
-	अक्षर name[BTNAMSIZ];
+	char name[BTNAMSIZ];
 
 	atomic_t terminate;
-	काष्ठा task_काष्ठा *task;
+	struct task_struct *task;
 
-	रुको_queue_head_t रुको;
+	wait_queue_head_t wait;
 
-	पूर्णांक ncontroller;
-	पूर्णांक num;
-	काष्ठा capi_ctr ctrl;
+	int ncontroller;
+	int num;
+	struct capi_ctr ctrl;
 
-	काष्ठा list_head applications;
+	struct list_head applications;
 
-	अचिन्हित दीर्घ blockids;
-	पूर्णांक msgnum;
+	unsigned long blockids;
+	int msgnum;
 
-	काष्ठा sk_buff_head transmit;
+	struct sk_buff_head transmit;
 
-	काष्ठा sk_buff *reassembly[16];
-पूर्ण;
+	struct sk_buff *reassembly[16];
+};
 
-काष्ठा cmtp_application अणु
-	काष्ठा list_head list;
+struct cmtp_application {
+	struct list_head list;
 
-	अचिन्हित दीर्घ state;
-	पूर्णांक err;
+	unsigned long state;
+	int err;
 
 	__u16 appl;
 	__u16 mapping;
 
 	__u16 msgnum;
-पूर्ण;
+};
 
-काष्ठा cmtp_scb अणु
-	पूर्णांक id;
-	पूर्णांक data;
-पूर्ण;
+struct cmtp_scb {
+	int id;
+	int data;
+};
 
-पूर्णांक  cmtp_attach_device(काष्ठा cmtp_session *session);
-व्योम cmtp_detach_device(काष्ठा cmtp_session *session);
+int  cmtp_attach_device(struct cmtp_session *session);
+void cmtp_detach_device(struct cmtp_session *session);
 
-व्योम cmtp_recv_capimsg(काष्ठा cmtp_session *session, काष्ठा sk_buff *skb);
+void cmtp_recv_capimsg(struct cmtp_session *session, struct sk_buff *skb);
 
 /* CMTP init defines */
-पूर्णांक cmtp_init_sockets(व्योम);
-व्योम cmtp_cleanup_sockets(व्योम);
+int cmtp_init_sockets(void);
+void cmtp_cleanup_sockets(void);
 
-#पूर्ण_अगर /* __CMTP_H */
+#endif /* __CMTP_H */

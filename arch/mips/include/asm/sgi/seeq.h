@@ -1,22 +1,21 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2007 by Ralf Baechle
  */
-#अगर_अघोषित __ASM_SGI_SEEQ_H
-#घोषणा __ASM_SGI_SEEQ_H
+#ifndef __ASM_SGI_SEEQ_H
+#define __ASM_SGI_SEEQ_H
 
-#समावेश <linux/अगर_ether.h>
+#include <linux/if_ether.h>
 
-#समावेश <यंत्र/sgi/hpc3.h>
+#include <asm/sgi/hpc3.h>
 
-काष्ठा sgiseeq_platक्रमm_data अणु
-	काष्ठा hpc3_regs *hpc;
-	अचिन्हित पूर्णांक irq;
-	अचिन्हित अक्षर mac[ETH_ALEN];
-पूर्ण;
+struct sgiseeq_platform_data {
+	struct hpc3_regs *hpc;
+	unsigned int irq;
+	unsigned char mac[ETH_ALEN];
+};
 
-#पूर्ण_अगर /* __ASM_SGI_SEEQ_H */
+#endif /* __ASM_SGI_SEEQ_H */

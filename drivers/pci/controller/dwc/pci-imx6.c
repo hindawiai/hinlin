@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * PCIe host controller driver क्रम Freescale i.MX6 SoCs
+ * PCIe host controller driver for Freescale i.MX6 SoCs
  *
  * Copyright (C) 2013 Kosagi
  *		https://www.kosagi.com
@@ -9,371 +8,371 @@
  * Author: Sean Cross <xobs@kosagi.com>
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/syscon.h>
-#समावेश <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
-#समावेश <linux/mfd/syscon/imx7-iomuxc-gpr.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_gpपन.स>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/resource.h>
-#समावेश <linux/संकेत.स>
-#समावेश <linux/types.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/bitfield.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/kernel.h>
+#include <linux/mfd/syscon.h>
+#include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
+#include <linux/mfd/syscon/imx7-iomuxc-gpr.h>
+#include <linux/module.h>
+#include <linux/of_gpio.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/pci.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
+#include <linux/resource.h>
+#include <linux/signal.h>
+#include <linux/types.h>
+#include <linux/interrupt.h>
+#include <linux/reset.h>
+#include <linux/pm_domain.h>
+#include <linux/pm_runtime.h>
 
-#समावेश "pcie-designware.h"
+#include "pcie-designware.h"
 
-#घोषणा IMX8MQ_GPR_PCIE_REF_USE_PAD		BIT(9)
-#घोषणा IMX8MQ_GPR_PCIE_CLK_REQ_OVERRIDE_EN	BIT(10)
-#घोषणा IMX8MQ_GPR_PCIE_CLK_REQ_OVERRIDE	BIT(11)
-#घोषणा IMX8MQ_GPR12_PCIE2_CTRL_DEVICE_TYPE	GENMASK(11, 8)
-#घोषणा IMX8MQ_PCIE2_BASE_ADDR			0x33c00000
+#define IMX8MQ_GPR_PCIE_REF_USE_PAD		BIT(9)
+#define IMX8MQ_GPR_PCIE_CLK_REQ_OVERRIDE_EN	BIT(10)
+#define IMX8MQ_GPR_PCIE_CLK_REQ_OVERRIDE	BIT(11)
+#define IMX8MQ_GPR12_PCIE2_CTRL_DEVICE_TYPE	GENMASK(11, 8)
+#define IMX8MQ_PCIE2_BASE_ADDR			0x33c00000
 
-#घोषणा to_imx6_pcie(x)	dev_get_drvdata((x)->dev)
+#define to_imx6_pcie(x)	dev_get_drvdata((x)->dev)
 
-क्रमागत imx6_pcie_variants अणु
+enum imx6_pcie_variants {
 	IMX6Q,
 	IMX6SX,
 	IMX6QP,
 	IMX7D,
 	IMX8MQ,
-पूर्ण;
+};
 
-#घोषणा IMX6_PCIE_FLAG_IMX6_PHY			BIT(0)
-#घोषणा IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE	BIT(1)
-#घोषणा IMX6_PCIE_FLAG_SUPPORTS_SUSPEND		BIT(2)
+#define IMX6_PCIE_FLAG_IMX6_PHY			BIT(0)
+#define IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE	BIT(1)
+#define IMX6_PCIE_FLAG_SUPPORTS_SUSPEND		BIT(2)
 
-काष्ठा imx6_pcie_drvdata अणु
-	क्रमागत imx6_pcie_variants variant;
+struct imx6_pcie_drvdata {
+	enum imx6_pcie_variants variant;
 	u32 flags;
-	पूर्णांक dbi_length;
-पूर्ण;
+	int dbi_length;
+};
 
-काष्ठा imx6_pcie अणु
-	काष्ठा dw_pcie		*pci;
-	पूर्णांक			reset_gpio;
+struct imx6_pcie {
+	struct dw_pcie		*pci;
+	int			reset_gpio;
 	bool			gpio_active_high;
-	काष्ठा clk		*pcie_bus;
-	काष्ठा clk		*pcie_phy;
-	काष्ठा clk		*pcie_inbound_axi;
-	काष्ठा clk		*pcie;
-	काष्ठा clk		*pcie_aux;
-	काष्ठा regmap		*iomuxc_gpr;
+	struct clk		*pcie_bus;
+	struct clk		*pcie_phy;
+	struct clk		*pcie_inbound_axi;
+	struct clk		*pcie;
+	struct clk		*pcie_aux;
+	struct regmap		*iomuxc_gpr;
 	u32			controller_id;
-	काष्ठा reset_control	*pciephy_reset;
-	काष्ठा reset_control	*apps_reset;
-	काष्ठा reset_control	*turnoff_reset;
+	struct reset_control	*pciephy_reset;
+	struct reset_control	*apps_reset;
+	struct reset_control	*turnoff_reset;
 	u32			tx_deemph_gen1;
 	u32			tx_deemph_gen2_3p5db;
 	u32			tx_deemph_gen2_6db;
 	u32			tx_swing_full;
 	u32			tx_swing_low;
-	काष्ठा regulator	*vpcie;
-	व्योम __iomem		*phy_base;
+	struct regulator	*vpcie;
+	void __iomem		*phy_base;
 
-	/* घातer करोमुख्य क्रम pcie */
-	काष्ठा device		*pd_pcie;
-	/* घातer करोमुख्य क्रम pcie phy */
-	काष्ठा device		*pd_pcie_phy;
-	स्थिर काष्ठा imx6_pcie_drvdata *drvdata;
-पूर्ण;
+	/* power domain for pcie */
+	struct device		*pd_pcie;
+	/* power domain for pcie phy */
+	struct device		*pd_pcie_phy;
+	const struct imx6_pcie_drvdata *drvdata;
+};
 
-/* Parameters क्रम the रुकोing क्रम PCIe PHY PLL to lock on i.MX7 */
-#घोषणा PHY_PLL_LOCK_WAIT_USLEEP_MAX	200
-#घोषणा PHY_PLL_LOCK_WAIT_TIMEOUT	(2000 * PHY_PLL_LOCK_WAIT_USLEEP_MAX)
+/* Parameters for the waiting for PCIe PHY PLL to lock on i.MX7 */
+#define PHY_PLL_LOCK_WAIT_USLEEP_MAX	200
+#define PHY_PLL_LOCK_WAIT_TIMEOUT	(2000 * PHY_PLL_LOCK_WAIT_USLEEP_MAX)
 
-/* PCIe Port Logic रेजिस्टरs (memory-mapped) */
-#घोषणा PL_OFFSET 0x700
+/* PCIe Port Logic registers (memory-mapped) */
+#define PL_OFFSET 0x700
 
-#घोषणा PCIE_PHY_CTRL (PL_OFFSET + 0x114)
-#घोषणा PCIE_PHY_CTRL_DATA(x)		FIELD_PREP(GENMASK(15, 0), (x))
-#घोषणा PCIE_PHY_CTRL_CAP_ADR		BIT(16)
-#घोषणा PCIE_PHY_CTRL_CAP_DAT		BIT(17)
-#घोषणा PCIE_PHY_CTRL_WR		BIT(18)
-#घोषणा PCIE_PHY_CTRL_RD		BIT(19)
+#define PCIE_PHY_CTRL (PL_OFFSET + 0x114)
+#define PCIE_PHY_CTRL_DATA(x)		FIELD_PREP(GENMASK(15, 0), (x))
+#define PCIE_PHY_CTRL_CAP_ADR		BIT(16)
+#define PCIE_PHY_CTRL_CAP_DAT		BIT(17)
+#define PCIE_PHY_CTRL_WR		BIT(18)
+#define PCIE_PHY_CTRL_RD		BIT(19)
 
-#घोषणा PCIE_PHY_STAT (PL_OFFSET + 0x110)
-#घोषणा PCIE_PHY_STAT_ACK		BIT(16)
+#define PCIE_PHY_STAT (PL_OFFSET + 0x110)
+#define PCIE_PHY_STAT_ACK		BIT(16)
 
-/* PHY रेजिस्टरs (not memory-mapped) */
-#घोषणा PCIE_PHY_ATEOVRD			0x10
-#घोषणा  PCIE_PHY_ATEOVRD_EN			BIT(2)
-#घोषणा  PCIE_PHY_ATEOVRD_REF_CLKDIV_SHIFT	0
-#घोषणा  PCIE_PHY_ATEOVRD_REF_CLKDIV_MASK	0x1
+/* PHY registers (not memory-mapped) */
+#define PCIE_PHY_ATEOVRD			0x10
+#define  PCIE_PHY_ATEOVRD_EN			BIT(2)
+#define  PCIE_PHY_ATEOVRD_REF_CLKDIV_SHIFT	0
+#define  PCIE_PHY_ATEOVRD_REF_CLKDIV_MASK	0x1
 
-#घोषणा PCIE_PHY_MPLL_OVRD_IN_LO		0x11
-#घोषणा  PCIE_PHY_MPLL_MULTIPLIER_SHIFT		2
-#घोषणा  PCIE_PHY_MPLL_MULTIPLIER_MASK		0x7f
-#घोषणा  PCIE_PHY_MPLL_MULTIPLIER_OVRD		BIT(9)
+#define PCIE_PHY_MPLL_OVRD_IN_LO		0x11
+#define  PCIE_PHY_MPLL_MULTIPLIER_SHIFT		2
+#define  PCIE_PHY_MPLL_MULTIPLIER_MASK		0x7f
+#define  PCIE_PHY_MPLL_MULTIPLIER_OVRD		BIT(9)
 
-#घोषणा PCIE_PHY_RX_ASIC_OUT 0x100D
-#घोषणा PCIE_PHY_RX_ASIC_OUT_VALID	(1 << 0)
+#define PCIE_PHY_RX_ASIC_OUT 0x100D
+#define PCIE_PHY_RX_ASIC_OUT_VALID	(1 << 0)
 
-/* iMX7 PCIe PHY रेजिस्टरs */
-#घोषणा PCIE_PHY_CMN_REG4		0x14
+/* iMX7 PCIe PHY registers */
+#define PCIE_PHY_CMN_REG4		0x14
 /* These are probably the bits that *aren't* DCC_FB_EN */
-#घोषणा PCIE_PHY_CMN_REG4_DCC_FB_EN	0x29
+#define PCIE_PHY_CMN_REG4_DCC_FB_EN	0x29
 
-#घोषणा PCIE_PHY_CMN_REG15	        0x54
-#घोषणा PCIE_PHY_CMN_REG15_DLY_4	BIT(2)
-#घोषणा PCIE_PHY_CMN_REG15_PLL_PD	BIT(5)
-#घोषणा PCIE_PHY_CMN_REG15_OVRD_PLL_PD	BIT(7)
+#define PCIE_PHY_CMN_REG15	        0x54
+#define PCIE_PHY_CMN_REG15_DLY_4	BIT(2)
+#define PCIE_PHY_CMN_REG15_PLL_PD	BIT(5)
+#define PCIE_PHY_CMN_REG15_OVRD_PLL_PD	BIT(7)
 
-#घोषणा PCIE_PHY_CMN_REG24		0x90
-#घोषणा PCIE_PHY_CMN_REG24_RX_EQ	BIT(6)
-#घोषणा PCIE_PHY_CMN_REG24_RX_EQ_SEL	BIT(3)
+#define PCIE_PHY_CMN_REG24		0x90
+#define PCIE_PHY_CMN_REG24_RX_EQ	BIT(6)
+#define PCIE_PHY_CMN_REG24_RX_EQ_SEL	BIT(3)
 
-#घोषणा PCIE_PHY_CMN_REG26		0x98
-#घोषणा PCIE_PHY_CMN_REG26_ATT_MODE	0xBC
+#define PCIE_PHY_CMN_REG26		0x98
+#define PCIE_PHY_CMN_REG26_ATT_MODE	0xBC
 
-#घोषणा PHY_RX_OVRD_IN_LO 0x1005
-#घोषणा PHY_RX_OVRD_IN_LO_RX_DATA_EN		BIT(5)
-#घोषणा PHY_RX_OVRD_IN_LO_RX_PLL_EN		BIT(3)
+#define PHY_RX_OVRD_IN_LO 0x1005
+#define PHY_RX_OVRD_IN_LO_RX_DATA_EN		BIT(5)
+#define PHY_RX_OVRD_IN_LO_RX_PLL_EN		BIT(3)
 
-अटल पूर्णांक pcie_phy_poll_ack(काष्ठा imx6_pcie *imx6_pcie, bool exp_val)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
+static int pcie_phy_poll_ack(struct imx6_pcie *imx6_pcie, bool exp_val)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
 	bool val;
 	u32 max_iterations = 10;
-	u32 रुको_counter = 0;
+	u32 wait_counter = 0;
 
-	करो अणु
-		val = dw_pcie_पढ़ोl_dbi(pci, PCIE_PHY_STAT) &
+	do {
+		val = dw_pcie_readl_dbi(pci, PCIE_PHY_STAT) &
 			PCIE_PHY_STAT_ACK;
-		रुको_counter++;
+		wait_counter++;
 
-		अगर (val == exp_val)
-			वापस 0;
+		if (val == exp_val)
+			return 0;
 
 		udelay(1);
-	पूर्ण जबतक (रुको_counter < max_iterations);
+	} while (wait_counter < max_iterations);
 
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल पूर्णांक pcie_phy_रुको_ack(काष्ठा imx6_pcie *imx6_pcie, पूर्णांक addr)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
+static int pcie_phy_wait_ack(struct imx6_pcie *imx6_pcie, int addr)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	val = PCIE_PHY_CTRL_DATA(addr);
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, val);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, val);
 
 	val |= PCIE_PHY_CTRL_CAP_ADR;
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, val);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, val);
 
 	ret = pcie_phy_poll_ack(imx6_pcie, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	val = PCIE_PHY_CTRL_DATA(addr);
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, val);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, val);
 
-	वापस pcie_phy_poll_ack(imx6_pcie, false);
-पूर्ण
+	return pcie_phy_poll_ack(imx6_pcie, false);
+}
 
-/* Read from the 16-bit PCIe PHY control रेजिस्टरs (not memory-mapped) */
-अटल पूर्णांक pcie_phy_पढ़ो(काष्ठा imx6_pcie *imx6_pcie, पूर्णांक addr, u16 *data)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
+/* Read from the 16-bit PCIe PHY control registers (not memory-mapped) */
+static int pcie_phy_read(struct imx6_pcie *imx6_pcie, int addr, u16 *data)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
 	u32 phy_ctl;
-	पूर्णांक ret;
+	int ret;
 
-	ret = pcie_phy_रुको_ack(imx6_pcie, addr);
-	अगर (ret)
-		वापस ret;
+	ret = pcie_phy_wait_ack(imx6_pcie, addr);
+	if (ret)
+		return ret;
 
-	/* निश्चित Read संकेत */
+	/* assert Read signal */
 	phy_ctl = PCIE_PHY_CTRL_RD;
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, phy_ctl);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, phy_ctl);
 
 	ret = pcie_phy_poll_ack(imx6_pcie, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	*data = dw_pcie_पढ़ोl_dbi(pci, PCIE_PHY_STAT);
+	*data = dw_pcie_readl_dbi(pci, PCIE_PHY_STAT);
 
-	/* deनिश्चित Read संकेत */
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, 0x00);
+	/* deassert Read signal */
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, 0x00);
 
-	वापस pcie_phy_poll_ack(imx6_pcie, false);
-पूर्ण
+	return pcie_phy_poll_ack(imx6_pcie, false);
+}
 
-अटल पूर्णांक pcie_phy_ग_लिखो(काष्ठा imx6_pcie *imx6_pcie, पूर्णांक addr, u16 data)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
+static int pcie_phy_write(struct imx6_pcie *imx6_pcie, int addr, u16 data)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
 	u32 var;
-	पूर्णांक ret;
+	int ret;
 
-	/* ग_लिखो addr */
+	/* write addr */
 	/* cap addr */
-	ret = pcie_phy_रुको_ack(imx6_pcie, addr);
-	अगर (ret)
-		वापस ret;
+	ret = pcie_phy_wait_ack(imx6_pcie, addr);
+	if (ret)
+		return ret;
 
 	var = PCIE_PHY_CTRL_DATA(data);
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, var);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, var);
 
 	/* capture data */
 	var |= PCIE_PHY_CTRL_CAP_DAT;
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, var);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, var);
 
 	ret = pcie_phy_poll_ack(imx6_pcie, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* deनिश्चित cap data */
+	/* deassert cap data */
 	var = PCIE_PHY_CTRL_DATA(data);
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, var);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, var);
 
-	/* रुको क्रम ack de-निश्चितion */
+	/* wait for ack de-assertion */
 	ret = pcie_phy_poll_ack(imx6_pcie, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* निश्चित wr संकेत */
+	/* assert wr signal */
 	var = PCIE_PHY_CTRL_WR;
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, var);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, var);
 
-	/* रुको क्रम ack */
+	/* wait for ack */
 	ret = pcie_phy_poll_ack(imx6_pcie, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* deनिश्चित wr संकेत */
+	/* deassert wr signal */
 	var = PCIE_PHY_CTRL_DATA(data);
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, var);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, var);
 
-	/* रुको क्रम ack de-निश्चितion */
+	/* wait for ack de-assertion */
 	ret = pcie_phy_poll_ack(imx6_pcie, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	dw_pcie_ग_लिखोl_dbi(pci, PCIE_PHY_CTRL, 0x0);
+	dw_pcie_writel_dbi(pci, PCIE_PHY_CTRL, 0x0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imx6_pcie_reset_phy(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	u16 पंचांगp;
+static void imx6_pcie_reset_phy(struct imx6_pcie *imx6_pcie)
+{
+	u16 tmp;
 
-	अगर (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_IMX6_PHY))
-		वापस;
+	if (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_IMX6_PHY))
+		return;
 
-	pcie_phy_पढ़ो(imx6_pcie, PHY_RX_OVRD_IN_LO, &पंचांगp);
-	पंचांगp |= (PHY_RX_OVRD_IN_LO_RX_DATA_EN |
+	pcie_phy_read(imx6_pcie, PHY_RX_OVRD_IN_LO, &tmp);
+	tmp |= (PHY_RX_OVRD_IN_LO_RX_DATA_EN |
 		PHY_RX_OVRD_IN_LO_RX_PLL_EN);
-	pcie_phy_ग_लिखो(imx6_pcie, PHY_RX_OVRD_IN_LO, पंचांगp);
+	pcie_phy_write(imx6_pcie, PHY_RX_OVRD_IN_LO, tmp);
 
 	usleep_range(2000, 3000);
 
-	pcie_phy_पढ़ो(imx6_pcie, PHY_RX_OVRD_IN_LO, &पंचांगp);
-	पंचांगp &= ~(PHY_RX_OVRD_IN_LO_RX_DATA_EN |
+	pcie_phy_read(imx6_pcie, PHY_RX_OVRD_IN_LO, &tmp);
+	tmp &= ~(PHY_RX_OVRD_IN_LO_RX_DATA_EN |
 		  PHY_RX_OVRD_IN_LO_RX_PLL_EN);
-	pcie_phy_ग_लिखो(imx6_pcie, PHY_RX_OVRD_IN_LO, पंचांगp);
-पूर्ण
+	pcie_phy_write(imx6_pcie, PHY_RX_OVRD_IN_LO, tmp);
+}
 
-#अगर_घोषित CONFIG_ARM
-/*  Added क्रम PCI पात handling */
-अटल पूर्णांक imx6q_pcie_पात_handler(अचिन्हित दीर्घ addr,
-		अचिन्हित पूर्णांक fsr, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ pc = inकाष्ठाion_poपूर्णांकer(regs);
-	अचिन्हित दीर्घ instr = *(अचिन्हित दीर्घ *)pc;
-	पूर्णांक reg = (instr >> 12) & 15;
+#ifdef CONFIG_ARM
+/*  Added for PCI abort handling */
+static int imx6q_pcie_abort_handler(unsigned long addr,
+		unsigned int fsr, struct pt_regs *regs)
+{
+	unsigned long pc = instruction_pointer(regs);
+	unsigned long instr = *(unsigned long *)pc;
+	int reg = (instr >> 12) & 15;
 
 	/*
-	 * If the inकाष्ठाion being executed was a पढ़ो,
-	 * make it look like it पढ़ो all-ones.
+	 * If the instruction being executed was a read,
+	 * make it look like it read all-ones.
 	 */
-	अगर ((instr & 0x0c100000) == 0x04100000) अणु
-		अचिन्हित दीर्घ val;
+	if ((instr & 0x0c100000) == 0x04100000) {
+		unsigned long val;
 
-		अगर (instr & 0x00400000)
+		if (instr & 0x00400000)
 			val = 255;
-		अन्यथा
+		else
 			val = -1;
 
 		regs->uregs[reg] = val;
 		regs->ARM_pc += 4;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((instr & 0x0e100090) == 0x00100090) अणु
+	if ((instr & 0x0e100090) == 0x00100090) {
 		regs->uregs[reg] = -1;
 		regs->ARM_pc += 4;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-अटल पूर्णांक imx6_pcie_attach_pd(काष्ठा device *dev)
-अणु
-	काष्ठा imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
-	काष्ठा device_link *link;
+static int imx6_pcie_attach_pd(struct device *dev)
+{
+	struct imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
+	struct device_link *link;
 
-	/* Do nothing when in a single घातer करोमुख्य */
-	अगर (dev->pm_करोमुख्य)
-		वापस 0;
+	/* Do nothing when in a single power domain */
+	if (dev->pm_domain)
+		return 0;
 
-	imx6_pcie->pd_pcie = dev_pm_करोमुख्य_attach_by_name(dev, "pcie");
-	अगर (IS_ERR(imx6_pcie->pd_pcie))
-		वापस PTR_ERR(imx6_pcie->pd_pcie);
-	/* Do nothing when घातer करोमुख्य missing */
-	अगर (!imx6_pcie->pd_pcie)
-		वापस 0;
+	imx6_pcie->pd_pcie = dev_pm_domain_attach_by_name(dev, "pcie");
+	if (IS_ERR(imx6_pcie->pd_pcie))
+		return PTR_ERR(imx6_pcie->pd_pcie);
+	/* Do nothing when power domain missing */
+	if (!imx6_pcie->pd_pcie)
+		return 0;
 	link = device_link_add(dev, imx6_pcie->pd_pcie,
 			DL_FLAG_STATELESS |
 			DL_FLAG_PM_RUNTIME |
 			DL_FLAG_RPM_ACTIVE);
-	अगर (!link) अणु
+	if (!link) {
 		dev_err(dev, "Failed to add device_link to pcie pd.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	imx6_pcie->pd_pcie_phy = dev_pm_करोमुख्य_attach_by_name(dev, "pcie_phy");
-	अगर (IS_ERR(imx6_pcie->pd_pcie_phy))
-		वापस PTR_ERR(imx6_pcie->pd_pcie_phy);
+	imx6_pcie->pd_pcie_phy = dev_pm_domain_attach_by_name(dev, "pcie_phy");
+	if (IS_ERR(imx6_pcie->pd_pcie_phy))
+		return PTR_ERR(imx6_pcie->pd_pcie_phy);
 
 	link = device_link_add(dev, imx6_pcie->pd_pcie_phy,
 			DL_FLAG_STATELESS |
 			DL_FLAG_PM_RUNTIME |
 			DL_FLAG_RPM_ACTIVE);
-	अगर (!link) अणु
+	if (!link) {
 		dev_err(dev, "Failed to add device_link to pcie_phy pd.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imx6_pcie_निश्चित_core_reset(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	काष्ठा device *dev = imx6_pcie->pci->dev;
+static void imx6_pcie_assert_core_reset(struct imx6_pcie *imx6_pcie)
+{
+	struct device *dev = imx6_pcie->pci->dev;
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX7D:
-	हाल IMX8MQ:
-		reset_control_निश्चित(imx6_pcie->pciephy_reset);
-		reset_control_निश्चित(imx6_pcie->apps_reset);
-		अवरोध;
-	हाल IMX6SX:
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX7D:
+	case IMX8MQ:
+		reset_control_assert(imx6_pcie->pciephy_reset);
+		reset_control_assert(imx6_pcie->apps_reset);
+		break;
+	case IMX6SX:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6SX_GPR12_PCIE_TEST_POWERDOWN,
 				   IMX6SX_GPR12_PCIE_TEST_POWERDOWN);
@@ -381,76 +380,76 @@
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR5,
 				   IMX6SX_GPR5_PCIE_BTNRST_RESET,
 				   IMX6SX_GPR5_PCIE_BTNRST_RESET);
-		अवरोध;
-	हाल IMX6QP:
+		break;
+	case IMX6QP:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
 				   IMX6Q_GPR1_PCIE_SW_RST,
 				   IMX6Q_GPR1_PCIE_SW_RST);
-		अवरोध;
-	हाल IMX6Q:
+		break;
+	case IMX6Q:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
 				   IMX6Q_GPR1_PCIE_TEST_PD, 1 << 18);
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
 				   IMX6Q_GPR1_PCIE_REF_CLK_EN, 0 << 16);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (imx6_pcie->vpcie && regulator_is_enabled(imx6_pcie->vpcie) > 0) अणु
-		पूर्णांक ret = regulator_disable(imx6_pcie->vpcie);
+	if (imx6_pcie->vpcie && regulator_is_enabled(imx6_pcie->vpcie) > 0) {
+		int ret = regulator_disable(imx6_pcie->vpcie);
 
-		अगर (ret)
+		if (ret)
 			dev_err(dev, "failed to disable vpcie regulator: %d\n",
 				ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक imx6_pcie_grp_offset(स्थिर काष्ठा imx6_pcie *imx6_pcie)
-अणु
+static unsigned int imx6_pcie_grp_offset(const struct imx6_pcie *imx6_pcie)
+{
 	WARN_ON(imx6_pcie->drvdata->variant != IMX8MQ);
-	वापस imx6_pcie->controller_id == 1 ? IOMUXC_GPR16 : IOMUXC_GPR14;
-पूर्ण
+	return imx6_pcie->controller_id == 1 ? IOMUXC_GPR16 : IOMUXC_GPR14;
+}
 
-अटल पूर्णांक imx6_pcie_enable_ref_clk(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
-	काष्ठा device *dev = pci->dev;
-	अचिन्हित पूर्णांक offset;
-	पूर्णांक ret = 0;
+static int imx6_pcie_enable_ref_clk(struct imx6_pcie *imx6_pcie)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
+	struct device *dev = pci->dev;
+	unsigned int offset;
+	int ret = 0;
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX6SX:
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX6SX:
 		ret = clk_prepare_enable(imx6_pcie->pcie_inbound_axi);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "unable to enable pcie_axi clock\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6SX_GPR12_PCIE_TEST_POWERDOWN, 0);
-		अवरोध;
-	हाल IMX6QP:
-	हाल IMX6Q:
-		/* घातer up core phy and enable ref घड़ी */
+		break;
+	case IMX6QP:
+	case IMX6Q:
+		/* power up core phy and enable ref clock */
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
 				   IMX6Q_GPR1_PCIE_TEST_PD, 0 << 18);
 		/*
-		 * the async reset input need ref घड़ी to sync पूर्णांकernally,
-		 * when the ref घड़ी comes after reset, पूर्णांकernal synced
-		 * reset समय is too लघु, cannot meet the requirement.
+		 * the async reset input need ref clock to sync internally,
+		 * when the ref clock comes after reset, internal synced
+		 * reset time is too short, cannot meet the requirement.
 		 * add one ~10us delay here.
 		 */
 		usleep_range(10, 100);
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
 				   IMX6Q_GPR1_PCIE_REF_CLK_EN, 1 << 16);
-		अवरोध;
-	हाल IMX7D:
-		अवरोध;
-	हाल IMX8MQ:
+		break;
+	case IMX7D:
+		break;
+	case IMX8MQ:
 		ret = clk_prepare_enable(imx6_pcie->pcie_aux);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "unable to enable pcie_aux clock\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		offset = imx6_pcie_grp_offset(imx6_pcie);
 		/*
@@ -463,119 +462,119 @@
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, offset,
 				   IMX8MQ_GPR_PCIE_CLK_REQ_OVERRIDE_EN,
 				   IMX8MQ_GPR_PCIE_CLK_REQ_OVERRIDE_EN);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम imx7d_pcie_रुको_क्रम_phy_pll_lock(काष्ठा imx6_pcie *imx6_pcie)
-अणु
+static void imx7d_pcie_wait_for_phy_pll_lock(struct imx6_pcie *imx6_pcie)
+{
 	u32 val;
-	काष्ठा device *dev = imx6_pcie->pci->dev;
+	struct device *dev = imx6_pcie->pci->dev;
 
-	अगर (regmap_पढ़ो_poll_समयout(imx6_pcie->iomuxc_gpr,
+	if (regmap_read_poll_timeout(imx6_pcie->iomuxc_gpr,
 				     IOMUXC_GPR22, val,
 				     val & IMX7D_GPR22_PCIE_PHY_PLL_LOCKED,
 				     PHY_PLL_LOCK_WAIT_USLEEP_MAX,
 				     PHY_PLL_LOCK_WAIT_TIMEOUT))
 		dev_err(dev, "PCIe PLL lock timeout\n");
-पूर्ण
+}
 
-अटल व्योम imx6_pcie_deनिश्चित_core_reset(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
-	काष्ठा device *dev = pci->dev;
-	पूर्णांक ret;
+static void imx6_pcie_deassert_core_reset(struct imx6_pcie *imx6_pcie)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
+	struct device *dev = pci->dev;
+	int ret;
 
-	अगर (imx6_pcie->vpcie && !regulator_is_enabled(imx6_pcie->vpcie)) अणु
+	if (imx6_pcie->vpcie && !regulator_is_enabled(imx6_pcie->vpcie)) {
 		ret = regulator_enable(imx6_pcie->vpcie);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "failed to enable vpcie regulator: %d\n",
 				ret);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
 	ret = clk_prepare_enable(imx6_pcie->pcie_phy);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to enable pcie_phy clock\n");
-		जाओ err_pcie_phy;
-	पूर्ण
+		goto err_pcie_phy;
+	}
 
 	ret = clk_prepare_enable(imx6_pcie->pcie_bus);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to enable pcie_bus clock\n");
-		जाओ err_pcie_bus;
-	पूर्ण
+		goto err_pcie_bus;
+	}
 
 	ret = clk_prepare_enable(imx6_pcie->pcie);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to enable pcie clock\n");
-		जाओ err_pcie;
-	पूर्ण
+		goto err_pcie;
+	}
 
 	ret = imx6_pcie_enable_ref_clk(imx6_pcie);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to enable pcie ref clock\n");
-		जाओ err_ref_clk;
-	पूर्ण
+		goto err_ref_clk;
+	}
 
-	/* allow the घड़ीs to stabilize */
+	/* allow the clocks to stabilize */
 	usleep_range(200, 500);
 
-	/* Some boards करोn't have PCIe reset GPIO. */
-	अगर (gpio_is_valid(imx6_pcie->reset_gpio)) अणु
+	/* Some boards don't have PCIe reset GPIO. */
+	if (gpio_is_valid(imx6_pcie->reset_gpio)) {
 		gpio_set_value_cansleep(imx6_pcie->reset_gpio,
 					imx6_pcie->gpio_active_high);
 		msleep(100);
 		gpio_set_value_cansleep(imx6_pcie->reset_gpio,
 					!imx6_pcie->gpio_active_high);
-	पूर्ण
+	}
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX8MQ:
-		reset_control_deनिश्चित(imx6_pcie->pciephy_reset);
-		अवरोध;
-	हाल IMX7D:
-		reset_control_deनिश्चित(imx6_pcie->pciephy_reset);
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX8MQ:
+		reset_control_deassert(imx6_pcie->pciephy_reset);
+		break;
+	case IMX7D:
+		reset_control_deassert(imx6_pcie->pciephy_reset);
 
-		/* Workaround क्रम ERR010728, failure of PCI-e PLL VCO to
+		/* Workaround for ERR010728, failure of PCI-e PLL VCO to
 		 * oscillate, especially when cold.  This turns off "Duty-cycle
-		 * Corrector" and other mysterious unकरोcumented things.
+		 * Corrector" and other mysterious undocumented things.
 		 */
-		अगर (likely(imx6_pcie->phy_base)) अणु
-			/* De-निश्चित DCC_FB_EN */
-			ग_लिखोl(PCIE_PHY_CMN_REG4_DCC_FB_EN,
+		if (likely(imx6_pcie->phy_base)) {
+			/* De-assert DCC_FB_EN */
+			writel(PCIE_PHY_CMN_REG4_DCC_FB_EN,
 			       imx6_pcie->phy_base + PCIE_PHY_CMN_REG4);
 			/* Assert RX_EQS and RX_EQS_SEL */
-			ग_लिखोl(PCIE_PHY_CMN_REG24_RX_EQ_SEL
+			writel(PCIE_PHY_CMN_REG24_RX_EQ_SEL
 				| PCIE_PHY_CMN_REG24_RX_EQ,
 			       imx6_pcie->phy_base + PCIE_PHY_CMN_REG24);
 			/* Assert ATT_MODE */
-			ग_लिखोl(PCIE_PHY_CMN_REG26_ATT_MODE,
+			writel(PCIE_PHY_CMN_REG26_ATT_MODE,
 			       imx6_pcie->phy_base + PCIE_PHY_CMN_REG26);
-		पूर्ण अन्यथा अणु
+		} else {
 			dev_warn(dev, "Unable to apply ERR010728 workaround. DT missing fsl,imx7d-pcie-phy phandle ?\n");
-		पूर्ण
+		}
 
-		imx7d_pcie_रुको_क्रम_phy_pll_lock(imx6_pcie);
-		अवरोध;
-	हाल IMX6SX:
+		imx7d_pcie_wait_for_phy_pll_lock(imx6_pcie);
+		break;
+	case IMX6SX:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR5,
 				   IMX6SX_GPR5_PCIE_BTNRST_RESET, 0);
-		अवरोध;
-	हाल IMX6QP:
+		break;
+	case IMX6QP:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
 				   IMX6Q_GPR1_PCIE_SW_RST, 0);
 
 		usleep_range(200, 500);
-		अवरोध;
-	हाल IMX6Q:		/* Nothing to करो */
-		अवरोध;
-	पूर्ण
+		break;
+	case IMX6Q:		/* Nothing to do */
+		break;
+	}
 
-	वापस;
+	return;
 
 err_ref_clk:
 	clk_disable_unprepare(imx6_pcie->pcie);
@@ -584,59 +583,59 @@ err_pcie:
 err_pcie_bus:
 	clk_disable_unprepare(imx6_pcie->pcie_phy);
 err_pcie_phy:
-	अगर (imx6_pcie->vpcie && regulator_is_enabled(imx6_pcie->vpcie) > 0) अणु
+	if (imx6_pcie->vpcie && regulator_is_enabled(imx6_pcie->vpcie) > 0) {
 		ret = regulator_disable(imx6_pcie->vpcie);
-		अगर (ret)
+		if (ret)
 			dev_err(dev, "failed to disable vpcie regulator: %d\n",
 				ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम imx6_pcie_configure_type(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	अचिन्हित पूर्णांक mask, val;
+static void imx6_pcie_configure_type(struct imx6_pcie *imx6_pcie)
+{
+	unsigned int mask, val;
 
-	अगर (imx6_pcie->drvdata->variant == IMX8MQ &&
-	    imx6_pcie->controller_id == 1) अणु
+	if (imx6_pcie->drvdata->variant == IMX8MQ &&
+	    imx6_pcie->controller_id == 1) {
 		mask   = IMX8MQ_GPR12_PCIE2_CTRL_DEVICE_TYPE;
 		val    = FIELD_PREP(IMX8MQ_GPR12_PCIE2_CTRL_DEVICE_TYPE,
 				    PCI_EXP_TYPE_ROOT_PORT);
-	पूर्ण अन्यथा अणु
+	} else {
 		mask = IMX6Q_GPR12_DEVICE_TYPE;
 		val  = FIELD_PREP(IMX6Q_GPR12_DEVICE_TYPE,
 				  PCI_EXP_TYPE_ROOT_PORT);
-	पूर्ण
+	}
 
 	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12, mask, val);
-पूर्ण
+}
 
-अटल व्योम imx6_pcie_init_phy(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX8MQ:
+static void imx6_pcie_init_phy(struct imx6_pcie *imx6_pcie)
+{
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX8MQ:
 		/*
-		 * TODO: Currently this code assumes बाह्यal
+		 * TODO: Currently this code assumes external
 		 * oscillator is being used
 		 */
 		regmap_update_bits(imx6_pcie->iomuxc_gpr,
 				   imx6_pcie_grp_offset(imx6_pcie),
 				   IMX8MQ_GPR_PCIE_REF_USE_PAD,
 				   IMX8MQ_GPR_PCIE_REF_USE_PAD);
-		अवरोध;
-	हाल IMX7D:
+		break;
+	case IMX7D:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX7D_GPR12_PCIE_PHY_REFCLK_SEL, 0);
-		अवरोध;
-	हाल IMX6SX:
+		break;
+	case IMX6SX:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6SX_GPR12_PCIE_RX_EQ_MASK,
 				   IMX6SX_GPR12_PCIE_RX_EQ_2);
 		fallthrough;
-	शेष:
+	default:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6Q_GPR12_PCIE_CTL_2, 0 << 10);
 
-		/* configure स्थिरant input संकेत to the pcie ctrl and phy */
+		/* configure constant input signal to the pcie ctrl and phy */
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6Q_GPR12_LOS_LEVEL, 9 << 4);
 
@@ -655,335 +654,335 @@ err_pcie_phy:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR8,
 				   IMX6Q_GPR8_TX_SWING_LOW,
 				   imx6_pcie->tx_swing_low << 25);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	imx6_pcie_configure_type(imx6_pcie);
-पूर्ण
+}
 
-अटल पूर्णांक imx6_setup_phy_mpll(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	अचिन्हित दीर्घ phy_rate = clk_get_rate(imx6_pcie->pcie_phy);
-	पूर्णांक mult, भाग;
+static int imx6_setup_phy_mpll(struct imx6_pcie *imx6_pcie)
+{
+	unsigned long phy_rate = clk_get_rate(imx6_pcie->pcie_phy);
+	int mult, div;
 	u16 val;
 
-	अगर (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_IMX6_PHY))
-		वापस 0;
+	if (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_IMX6_PHY))
+		return 0;
 
-	चयन (phy_rate) अणु
-	हाल 125000000:
+	switch (phy_rate) {
+	case 125000000:
 		/*
-		 * The शेष settings of the MPLL are क्रम a 125MHz input
-		 * घड़ी, so no need to reconfigure anything in that हाल.
+		 * The default settings of the MPLL are for a 125MHz input
+		 * clock, so no need to reconfigure anything in that case.
 		 */
-		वापस 0;
-	हाल 100000000:
+		return 0;
+	case 100000000:
 		mult = 25;
-		भाग = 0;
-		अवरोध;
-	हाल 200000000:
+		div = 0;
+		break;
+	case 200000000:
 		mult = 25;
-		भाग = 1;
-		अवरोध;
-	शेष:
+		div = 1;
+		break;
+	default:
 		dev_err(imx6_pcie->pci->dev,
 			"Unsupported PHY reference clock rate %lu\n", phy_rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	pcie_phy_पढ़ो(imx6_pcie, PCIE_PHY_MPLL_OVRD_IN_LO, &val);
+	pcie_phy_read(imx6_pcie, PCIE_PHY_MPLL_OVRD_IN_LO, &val);
 	val &= ~(PCIE_PHY_MPLL_MULTIPLIER_MASK <<
 		 PCIE_PHY_MPLL_MULTIPLIER_SHIFT);
 	val |= mult << PCIE_PHY_MPLL_MULTIPLIER_SHIFT;
 	val |= PCIE_PHY_MPLL_MULTIPLIER_OVRD;
-	pcie_phy_ग_लिखो(imx6_pcie, PCIE_PHY_MPLL_OVRD_IN_LO, val);
+	pcie_phy_write(imx6_pcie, PCIE_PHY_MPLL_OVRD_IN_LO, val);
 
-	pcie_phy_पढ़ो(imx6_pcie, PCIE_PHY_ATEOVRD, &val);
+	pcie_phy_read(imx6_pcie, PCIE_PHY_ATEOVRD, &val);
 	val &= ~(PCIE_PHY_ATEOVRD_REF_CLKDIV_MASK <<
 		 PCIE_PHY_ATEOVRD_REF_CLKDIV_SHIFT);
-	val |= भाग << PCIE_PHY_ATEOVRD_REF_CLKDIV_SHIFT;
+	val |= div << PCIE_PHY_ATEOVRD_REF_CLKDIV_SHIFT;
 	val |= PCIE_PHY_ATEOVRD_EN;
-	pcie_phy_ग_लिखो(imx6_pcie, PCIE_PHY_ATEOVRD, val);
+	pcie_phy_write(imx6_pcie, PCIE_PHY_ATEOVRD, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx6_pcie_रुको_क्रम_speed_change(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	काष्ठा dw_pcie *pci = imx6_pcie->pci;
-	काष्ठा device *dev = pci->dev;
-	u32 पंचांगp;
-	अचिन्हित पूर्णांक retries;
+static int imx6_pcie_wait_for_speed_change(struct imx6_pcie *imx6_pcie)
+{
+	struct dw_pcie *pci = imx6_pcie->pci;
+	struct device *dev = pci->dev;
+	u32 tmp;
+	unsigned int retries;
 
-	क्रम (retries = 0; retries < 200; retries++) अणु
-		पंचांगp = dw_pcie_पढ़ोl_dbi(pci, PCIE_LINK_WIDTH_SPEED_CONTROL);
-		/* Test अगर the speed change finished. */
-		अगर (!(पंचांगp & PORT_LOGIC_SPEED_CHANGE))
-			वापस 0;
+	for (retries = 0; retries < 200; retries++) {
+		tmp = dw_pcie_readl_dbi(pci, PCIE_LINK_WIDTH_SPEED_CONTROL);
+		/* Test if the speed change finished. */
+		if (!(tmp & PORT_LOGIC_SPEED_CHANGE))
+			return 0;
 		usleep_range(100, 1000);
-	पूर्ण
+	}
 
 	dev_err(dev, "Speed change timeout\n");
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-अटल व्योम imx6_pcie_ltssm_enable(काष्ठा device *dev)
-अणु
-	काष्ठा imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
+static void imx6_pcie_ltssm_enable(struct device *dev)
+{
+	struct imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX6Q:
-	हाल IMX6SX:
-	हाल IMX6QP:
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX6Q:
+	case IMX6SX:
+	case IMX6QP:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6Q_GPR12_PCIE_CTL_2,
 				   IMX6Q_GPR12_PCIE_CTL_2);
-		अवरोध;
-	हाल IMX7D:
-	हाल IMX8MQ:
-		reset_control_deनिश्चित(imx6_pcie->apps_reset);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case IMX7D:
+	case IMX8MQ:
+		reset_control_deassert(imx6_pcie->apps_reset);
+		break;
+	}
+}
 
-अटल पूर्णांक imx6_pcie_start_link(काष्ठा dw_pcie *pci)
-अणु
-	काष्ठा imx6_pcie *imx6_pcie = to_imx6_pcie(pci);
-	काष्ठा device *dev = pci->dev;
+static int imx6_pcie_start_link(struct dw_pcie *pci)
+{
+	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pci);
+	struct device *dev = pci->dev;
 	u8 offset = dw_pcie_find_capability(pci, PCI_CAP_ID_EXP);
-	u32 पंचांगp;
-	पूर्णांक ret;
+	u32 tmp;
+	int ret;
 
 	/*
-	 * Force Gen1 operation when starting the link.  In हाल the link is
+	 * Force Gen1 operation when starting the link.  In case the link is
 	 * started in Gen2 mode, there is a possibility the devices on the
-	 * bus will not be detected at all.  This happens with PCIe चयनes.
+	 * bus will not be detected at all.  This happens with PCIe switches.
 	 */
-	पंचांगp = dw_pcie_पढ़ोl_dbi(pci, offset + PCI_EXP_LNKCAP);
-	पंचांगp &= ~PCI_EXP_LNKCAP_SLS;
-	पंचांगp |= PCI_EXP_LNKCAP_SLS_2_5GB;
-	dw_pcie_ग_लिखोl_dbi(pci, offset + PCI_EXP_LNKCAP, पंचांगp);
+	tmp = dw_pcie_readl_dbi(pci, offset + PCI_EXP_LNKCAP);
+	tmp &= ~PCI_EXP_LNKCAP_SLS;
+	tmp |= PCI_EXP_LNKCAP_SLS_2_5GB;
+	dw_pcie_writel_dbi(pci, offset + PCI_EXP_LNKCAP, tmp);
 
 	/* Start LTSSM. */
 	imx6_pcie_ltssm_enable(dev);
 
-	ret = dw_pcie_रुको_क्रम_link(pci);
-	अगर (ret)
-		जाओ err_reset_phy;
+	ret = dw_pcie_wait_for_link(pci);
+	if (ret)
+		goto err_reset_phy;
 
-	अगर (pci->link_gen == 2) अणु
+	if (pci->link_gen == 2) {
 		/* Allow Gen2 mode after the link is up. */
-		पंचांगp = dw_pcie_पढ़ोl_dbi(pci, offset + PCI_EXP_LNKCAP);
-		पंचांगp &= ~PCI_EXP_LNKCAP_SLS;
-		पंचांगp |= PCI_EXP_LNKCAP_SLS_5_0GB;
-		dw_pcie_ग_लिखोl_dbi(pci, offset + PCI_EXP_LNKCAP, पंचांगp);
+		tmp = dw_pcie_readl_dbi(pci, offset + PCI_EXP_LNKCAP);
+		tmp &= ~PCI_EXP_LNKCAP_SLS;
+		tmp |= PCI_EXP_LNKCAP_SLS_5_0GB;
+		dw_pcie_writel_dbi(pci, offset + PCI_EXP_LNKCAP, tmp);
 
 		/*
 		 * Start Directed Speed Change so the best possible
 		 * speed both link partners support can be negotiated.
 		 */
-		पंचांगp = dw_pcie_पढ़ोl_dbi(pci, PCIE_LINK_WIDTH_SPEED_CONTROL);
-		पंचांगp |= PORT_LOGIC_SPEED_CHANGE;
-		dw_pcie_ग_लिखोl_dbi(pci, PCIE_LINK_WIDTH_SPEED_CONTROL, पंचांगp);
+		tmp = dw_pcie_readl_dbi(pci, PCIE_LINK_WIDTH_SPEED_CONTROL);
+		tmp |= PORT_LOGIC_SPEED_CHANGE;
+		dw_pcie_writel_dbi(pci, PCIE_LINK_WIDTH_SPEED_CONTROL, tmp);
 
-		अगर (imx6_pcie->drvdata->flags &
-		    IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE) अणु
+		if (imx6_pcie->drvdata->flags &
+		    IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE) {
 			/*
-			 * On i.MX7, सूचीECT_SPEED_CHANGE behaves dअगरferently
+			 * On i.MX7, DIRECT_SPEED_CHANGE behaves differently
 			 * from i.MX6 family when no link speed transition
-			 * occurs and we go Gen1 -> yep, Gen1. The dअगरference
-			 * is that, in such हाल, it will not be cleared by HW
+			 * occurs and we go Gen1 -> yep, Gen1. The difference
+			 * is that, in such case, it will not be cleared by HW
 			 * which will cause the following code to report false
 			 * failure.
 			 */
 
-			ret = imx6_pcie_रुको_क्रम_speed_change(imx6_pcie);
-			अगर (ret) अणु
+			ret = imx6_pcie_wait_for_speed_change(imx6_pcie);
+			if (ret) {
 				dev_err(dev, "Failed to bring link up!\n");
-				जाओ err_reset_phy;
-			पूर्ण
-		पूर्ण
+				goto err_reset_phy;
+			}
+		}
 
 		/* Make sure link training is finished as well! */
-		ret = dw_pcie_रुको_क्रम_link(pci);
-		अगर (ret) अणु
+		ret = dw_pcie_wait_for_link(pci);
+		if (ret) {
 			dev_err(dev, "Failed to bring link up!\n");
-			जाओ err_reset_phy;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto err_reset_phy;
+		}
+	} else {
 		dev_info(dev, "Link: Gen2 disabled\n");
-	पूर्ण
+	}
 
-	पंचांगp = dw_pcie_पढ़ोw_dbi(pci, offset + PCI_EXP_LNKSTA);
-	dev_info(dev, "Link up, Gen%i\n", पंचांगp & PCI_EXP_LNKSTA_CLS);
-	वापस 0;
+	tmp = dw_pcie_readw_dbi(pci, offset + PCI_EXP_LNKSTA);
+	dev_info(dev, "Link up, Gen%i\n", tmp & PCI_EXP_LNKSTA_CLS);
+	return 0;
 
 err_reset_phy:
 	dev_dbg(dev, "PHY DEBUG_R0=0x%08x DEBUG_R1=0x%08x\n",
-		dw_pcie_पढ़ोl_dbi(pci, PCIE_PORT_DEBUG0),
-		dw_pcie_पढ़ोl_dbi(pci, PCIE_PORT_DEBUG1));
+		dw_pcie_readl_dbi(pci, PCIE_PORT_DEBUG0),
+		dw_pcie_readl_dbi(pci, PCIE_PORT_DEBUG1));
 	imx6_pcie_reset_phy(imx6_pcie);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक imx6_pcie_host_init(काष्ठा pcie_port *pp)
-अणु
-	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
-	काष्ठा imx6_pcie *imx6_pcie = to_imx6_pcie(pci);
+static int imx6_pcie_host_init(struct pcie_port *pp)
+{
+	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pci);
 
-	imx6_pcie_निश्चित_core_reset(imx6_pcie);
+	imx6_pcie_assert_core_reset(imx6_pcie);
 	imx6_pcie_init_phy(imx6_pcie);
-	imx6_pcie_deनिश्चित_core_reset(imx6_pcie);
+	imx6_pcie_deassert_core_reset(imx6_pcie);
 	imx6_setup_phy_mpll(imx6_pcie);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dw_pcie_host_ops imx6_pcie_host_ops = अणु
+static const struct dw_pcie_host_ops imx6_pcie_host_ops = {
 	.host_init = imx6_pcie_host_init,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा dw_pcie_ops dw_pcie_ops = अणु
+static const struct dw_pcie_ops dw_pcie_ops = {
 	.start_link = imx6_pcie_start_link,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल व्योम imx6_pcie_ltssm_disable(काष्ठा device *dev)
-अणु
-	काष्ठा imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static void imx6_pcie_ltssm_disable(struct device *dev)
+{
+	struct imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX6SX:
-	हाल IMX6QP:
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX6SX:
+	case IMX6QP:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX6Q_GPR12_PCIE_CTL_2, 0);
-		अवरोध;
-	हाल IMX7D:
-		reset_control_निश्चित(imx6_pcie->apps_reset);
-		अवरोध;
-	शेष:
+		break;
+	case IMX7D:
+		reset_control_assert(imx6_pcie->apps_reset);
+		break;
+	default:
 		dev_err(dev, "ltssm_disable not supported\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम imx6_pcie_pm_turnoff(काष्ठा imx6_pcie *imx6_pcie)
-अणु
-	काष्ठा device *dev = imx6_pcie->pci->dev;
+static void imx6_pcie_pm_turnoff(struct imx6_pcie *imx6_pcie)
+{
+	struct device *dev = imx6_pcie->pci->dev;
 
 	/* Some variants have a turnoff reset in DT */
-	अगर (imx6_pcie->turnoff_reset) अणु
-		reset_control_निश्चित(imx6_pcie->turnoff_reset);
-		reset_control_deनिश्चित(imx6_pcie->turnoff_reset);
-		जाओ pm_turnoff_sleep;
-	पूर्ण
+	if (imx6_pcie->turnoff_reset) {
+		reset_control_assert(imx6_pcie->turnoff_reset);
+		reset_control_deassert(imx6_pcie->turnoff_reset);
+		goto pm_turnoff_sleep;
+	}
 
-	/* Others poke directly at IOMUXC रेजिस्टरs */
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX6SX:
+	/* Others poke directly at IOMUXC registers */
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX6SX:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				IMX6SX_GPR12_PCIE_PM_TURN_OFF,
 				IMX6SX_GPR12_PCIE_PM_TURN_OFF);
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				IMX6SX_GPR12_PCIE_PM_TURN_OFF, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev, "PME_Turn_Off not implemented\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Components with an upstream port must respond to
 	 * PME_Turn_Off with PME_TO_Ack but we can't check.
 	 *
-	 * The standard recommends a 1-10ms समयout after which to
-	 * proceed anyway as अगर acks were received.
+	 * The standard recommends a 1-10ms timeout after which to
+	 * proceed anyway as if acks were received.
 	 */
 pm_turnoff_sleep:
 	usleep_range(1000, 10000);
-पूर्ण
+}
 
-अटल व्योम imx6_pcie_clk_disable(काष्ठा imx6_pcie *imx6_pcie)
-अणु
+static void imx6_pcie_clk_disable(struct imx6_pcie *imx6_pcie)
+{
 	clk_disable_unprepare(imx6_pcie->pcie);
 	clk_disable_unprepare(imx6_pcie->pcie_phy);
 	clk_disable_unprepare(imx6_pcie->pcie_bus);
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX6SX:
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX6SX:
 		clk_disable_unprepare(imx6_pcie->pcie_inbound_axi);
-		अवरोध;
-	हाल IMX7D:
+		break;
+	case IMX7D:
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				   IMX7D_GPR12_PCIE_PHY_REFCLK_SEL,
 				   IMX7D_GPR12_PCIE_PHY_REFCLK_SEL);
-		अवरोध;
-	हाल IMX8MQ:
+		break;
+	case IMX8MQ:
 		clk_disable_unprepare(imx6_pcie->pcie_aux);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक imx6_pcie_suspend_noirq(काष्ठा device *dev)
-अणु
-	काष्ठा imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
+static int imx6_pcie_suspend_noirq(struct device *dev)
+{
+	struct imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
 
-	अगर (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_SUPPORTS_SUSPEND))
-		वापस 0;
+	if (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_SUPPORTS_SUSPEND))
+		return 0;
 
 	imx6_pcie_pm_turnoff(imx6_pcie);
 	imx6_pcie_clk_disable(imx6_pcie);
 	imx6_pcie_ltssm_disable(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक imx6_pcie_resume_noirq(काष्ठा device *dev)
-अणु
-	पूर्णांक ret;
-	काष्ठा imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
-	काष्ठा pcie_port *pp = &imx6_pcie->pci->pp;
+static int imx6_pcie_resume_noirq(struct device *dev)
+{
+	int ret;
+	struct imx6_pcie *imx6_pcie = dev_get_drvdata(dev);
+	struct pcie_port *pp = &imx6_pcie->pci->pp;
 
-	अगर (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_SUPPORTS_SUSPEND))
-		वापस 0;
+	if (!(imx6_pcie->drvdata->flags & IMX6_PCIE_FLAG_SUPPORTS_SUSPEND))
+		return 0;
 
-	imx6_pcie_निश्चित_core_reset(imx6_pcie);
+	imx6_pcie_assert_core_reset(imx6_pcie);
 	imx6_pcie_init_phy(imx6_pcie);
-	imx6_pcie_deनिश्चित_core_reset(imx6_pcie);
+	imx6_pcie_deassert_core_reset(imx6_pcie);
 	dw_pcie_setup_rc(pp);
 
 	ret = imx6_pcie_start_link(imx6_pcie->pci);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_info(dev, "pcie link is down after resume.\n");
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops imx6_pcie_pm_ops = अणु
+static const struct dev_pm_ops imx6_pcie_pm_ops = {
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(imx6_pcie_suspend_noirq,
 				      imx6_pcie_resume_noirq)
-पूर्ण;
+};
 
-अटल पूर्णांक imx6_pcie_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा dw_pcie *pci;
-	काष्ठा imx6_pcie *imx6_pcie;
-	काष्ठा device_node *np;
-	काष्ठा resource *dbi_base;
-	काष्ठा device_node *node = dev->of_node;
-	पूर्णांक ret;
+static int imx6_pcie_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct dw_pcie *pci;
+	struct imx6_pcie *imx6_pcie;
+	struct device_node *np;
+	struct resource *dbi_base;
+	struct device_node *node = dev->of_node;
+	int ret;
 	u16 val;
 
-	imx6_pcie = devm_kzalloc(dev, माप(*imx6_pcie), GFP_KERNEL);
-	अगर (!imx6_pcie)
-		वापस -ENOMEM;
+	imx6_pcie = devm_kzalloc(dev, sizeof(*imx6_pcie), GFP_KERNEL);
+	if (!imx6_pcie)
+		return -ENOMEM;
 
-	pci = devm_kzalloc(dev, माप(*pci), GFP_KERNEL);
-	अगर (!pci)
-		वापस -ENOMEM;
+	pci = devm_kzalloc(dev, sizeof(*pci), GFP_KERNEL);
+	if (!pci)
+		return -ENOMEM;
 
 	pci->dev = dev;
 	pci->ops = &dw_pcie_ops;
@@ -992,266 +991,266 @@ pm_turnoff_sleep:
 	imx6_pcie->pci = pci;
 	imx6_pcie->drvdata = of_device_get_match_data(dev);
 
-	/* Find the PHY अगर one is defined, only imx7d uses it */
+	/* Find the PHY if one is defined, only imx7d uses it */
 	np = of_parse_phandle(node, "fsl,imx7d-pcie-phy", 0);
-	अगर (np) अणु
-		काष्ठा resource res;
+	if (np) {
+		struct resource res;
 
 		ret = of_address_to_resource(np, 0, &res);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "Unable to map PCIe PHY\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		imx6_pcie->phy_base = devm_ioremap_resource(dev, &res);
-		अगर (IS_ERR(imx6_pcie->phy_base)) अणु
+		if (IS_ERR(imx6_pcie->phy_base)) {
 			dev_err(dev, "Unable to map PCIe PHY\n");
-			वापस PTR_ERR(imx6_pcie->phy_base);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(imx6_pcie->phy_base);
+		}
+	}
 
-	dbi_base = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	dbi_base = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	pci->dbi_base = devm_ioremap_resource(dev, dbi_base);
-	अगर (IS_ERR(pci->dbi_base))
-		वापस PTR_ERR(pci->dbi_base);
+	if (IS_ERR(pci->dbi_base))
+		return PTR_ERR(pci->dbi_base);
 
 	/* Fetch GPIOs */
 	imx6_pcie->reset_gpio = of_get_named_gpio(node, "reset-gpio", 0);
-	imx6_pcie->gpio_active_high = of_property_पढ़ो_bool(node,
+	imx6_pcie->gpio_active_high = of_property_read_bool(node,
 						"reset-gpio-active-high");
-	अगर (gpio_is_valid(imx6_pcie->reset_gpio)) अणु
+	if (gpio_is_valid(imx6_pcie->reset_gpio)) {
 		ret = devm_gpio_request_one(dev, imx6_pcie->reset_gpio,
 				imx6_pcie->gpio_active_high ?
 					GPIOF_OUT_INIT_HIGH :
 					GPIOF_OUT_INIT_LOW,
 				"PCIe reset");
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "unable to get reset gpio\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अगर (imx6_pcie->reset_gpio == -EPROBE_DEFER) अणु
-		वापस imx6_pcie->reset_gpio;
-	पूर्ण
+			return ret;
+		}
+	} else if (imx6_pcie->reset_gpio == -EPROBE_DEFER) {
+		return imx6_pcie->reset_gpio;
+	}
 
-	/* Fetch घड़ीs */
+	/* Fetch clocks */
 	imx6_pcie->pcie_phy = devm_clk_get(dev, "pcie_phy");
-	अगर (IS_ERR(imx6_pcie->pcie_phy))
-		वापस dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_phy),
+	if (IS_ERR(imx6_pcie->pcie_phy))
+		return dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_phy),
 				     "pcie_phy clock source missing or invalid\n");
 
 	imx6_pcie->pcie_bus = devm_clk_get(dev, "pcie_bus");
-	अगर (IS_ERR(imx6_pcie->pcie_bus))
-		वापस dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_bus),
+	if (IS_ERR(imx6_pcie->pcie_bus))
+		return dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_bus),
 				     "pcie_bus clock source missing or invalid\n");
 
 	imx6_pcie->pcie = devm_clk_get(dev, "pcie");
-	अगर (IS_ERR(imx6_pcie->pcie))
-		वापस dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie),
+	if (IS_ERR(imx6_pcie->pcie))
+		return dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie),
 				     "pcie clock source missing or invalid\n");
 
-	चयन (imx6_pcie->drvdata->variant) अणु
-	हाल IMX6SX:
+	switch (imx6_pcie->drvdata->variant) {
+	case IMX6SX:
 		imx6_pcie->pcie_inbound_axi = devm_clk_get(dev,
 							   "pcie_inbound_axi");
-		अगर (IS_ERR(imx6_pcie->pcie_inbound_axi))
-			वापस dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_inbound_axi),
+		if (IS_ERR(imx6_pcie->pcie_inbound_axi))
+			return dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_inbound_axi),
 					     "pcie_inbound_axi clock missing or invalid\n");
-		अवरोध;
-	हाल IMX8MQ:
+		break;
+	case IMX8MQ:
 		imx6_pcie->pcie_aux = devm_clk_get(dev, "pcie_aux");
-		अगर (IS_ERR(imx6_pcie->pcie_aux))
-			वापस dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_aux),
+		if (IS_ERR(imx6_pcie->pcie_aux))
+			return dev_err_probe(dev, PTR_ERR(imx6_pcie->pcie_aux),
 					     "pcie_aux clock source missing or invalid\n");
 		fallthrough;
-	हाल IMX7D:
-		अगर (dbi_base->start == IMX8MQ_PCIE2_BASE_ADDR)
+	case IMX7D:
+		if (dbi_base->start == IMX8MQ_PCIE2_BASE_ADDR)
 			imx6_pcie->controller_id = 1;
 
 		imx6_pcie->pciephy_reset = devm_reset_control_get_exclusive(dev,
 									    "pciephy");
-		अगर (IS_ERR(imx6_pcie->pciephy_reset)) अणु
+		if (IS_ERR(imx6_pcie->pciephy_reset)) {
 			dev_err(dev, "Failed to get PCIEPHY reset control\n");
-			वापस PTR_ERR(imx6_pcie->pciephy_reset);
-		पूर्ण
+			return PTR_ERR(imx6_pcie->pciephy_reset);
+		}
 
 		imx6_pcie->apps_reset = devm_reset_control_get_exclusive(dev,
 									 "apps");
-		अगर (IS_ERR(imx6_pcie->apps_reset)) अणु
+		if (IS_ERR(imx6_pcie->apps_reset)) {
 			dev_err(dev, "Failed to get PCIE APPS reset control\n");
-			वापस PTR_ERR(imx6_pcie->apps_reset);
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+			return PTR_ERR(imx6_pcie->apps_reset);
+		}
+		break;
+	default:
+		break;
+	}
 
 	/* Grab turnoff reset */
 	imx6_pcie->turnoff_reset = devm_reset_control_get_optional_exclusive(dev, "turnoff");
-	अगर (IS_ERR(imx6_pcie->turnoff_reset)) अणु
+	if (IS_ERR(imx6_pcie->turnoff_reset)) {
 		dev_err(dev, "Failed to get TURNOFF reset control\n");
-		वापस PTR_ERR(imx6_pcie->turnoff_reset);
-	पूर्ण
+		return PTR_ERR(imx6_pcie->turnoff_reset);
+	}
 
-	/* Grab GPR config रेजिस्टर range */
+	/* Grab GPR config register range */
 	imx6_pcie->iomuxc_gpr =
 		 syscon_regmap_lookup_by_compatible("fsl,imx6q-iomuxc-gpr");
-	अगर (IS_ERR(imx6_pcie->iomuxc_gpr)) अणु
+	if (IS_ERR(imx6_pcie->iomuxc_gpr)) {
 		dev_err(dev, "unable to find iomuxc registers\n");
-		वापस PTR_ERR(imx6_pcie->iomuxc_gpr);
-	पूर्ण
+		return PTR_ERR(imx6_pcie->iomuxc_gpr);
+	}
 
 	/* Grab PCIe PHY Tx Settings */
-	अगर (of_property_पढ़ो_u32(node, "fsl,tx-deemph-gen1",
+	if (of_property_read_u32(node, "fsl,tx-deemph-gen1",
 				 &imx6_pcie->tx_deemph_gen1))
 		imx6_pcie->tx_deemph_gen1 = 0;
 
-	अगर (of_property_पढ़ो_u32(node, "fsl,tx-deemph-gen2-3p5db",
+	if (of_property_read_u32(node, "fsl,tx-deemph-gen2-3p5db",
 				 &imx6_pcie->tx_deemph_gen2_3p5db))
 		imx6_pcie->tx_deemph_gen2_3p5db = 0;
 
-	अगर (of_property_पढ़ो_u32(node, "fsl,tx-deemph-gen2-6db",
+	if (of_property_read_u32(node, "fsl,tx-deemph-gen2-6db",
 				 &imx6_pcie->tx_deemph_gen2_6db))
 		imx6_pcie->tx_deemph_gen2_6db = 20;
 
-	अगर (of_property_पढ़ो_u32(node, "fsl,tx-swing-full",
+	if (of_property_read_u32(node, "fsl,tx-swing-full",
 				 &imx6_pcie->tx_swing_full))
 		imx6_pcie->tx_swing_full = 127;
 
-	अगर (of_property_पढ़ो_u32(node, "fsl,tx-swing-low",
+	if (of_property_read_u32(node, "fsl,tx-swing-low",
 				 &imx6_pcie->tx_swing_low))
 		imx6_pcie->tx_swing_low = 127;
 
 	/* Limit link speed */
 	pci->link_gen = 1;
-	ret = of_property_पढ़ो_u32(node, "fsl,max-link-speed", &pci->link_gen);
+	ret = of_property_read_u32(node, "fsl,max-link-speed", &pci->link_gen);
 
 	imx6_pcie->vpcie = devm_regulator_get_optional(&pdev->dev, "vpcie");
-	अगर (IS_ERR(imx6_pcie->vpcie)) अणु
-		अगर (PTR_ERR(imx6_pcie->vpcie) != -ENODEV)
-			वापस PTR_ERR(imx6_pcie->vpcie);
-		imx6_pcie->vpcie = शून्य;
-	पूर्ण
+	if (IS_ERR(imx6_pcie->vpcie)) {
+		if (PTR_ERR(imx6_pcie->vpcie) != -ENODEV)
+			return PTR_ERR(imx6_pcie->vpcie);
+		imx6_pcie->vpcie = NULL;
+	}
 
-	platक्रमm_set_drvdata(pdev, imx6_pcie);
+	platform_set_drvdata(pdev, imx6_pcie);
 
 	ret = imx6_pcie_attach_pd(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = dw_pcie_host_init(&pci->pp);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (pci_msi_enabled()) अणु
+	if (pci_msi_enabled()) {
 		u8 offset = dw_pcie_find_capability(pci, PCI_CAP_ID_MSI);
-		val = dw_pcie_पढ़ोw_dbi(pci, offset + PCI_MSI_FLAGS);
+		val = dw_pcie_readw_dbi(pci, offset + PCI_MSI_FLAGS);
 		val |= PCI_MSI_FLAGS_ENABLE;
-		dw_pcie_ग_लिखोw_dbi(pci, offset + PCI_MSI_FLAGS, val);
-	पूर्ण
+		dw_pcie_writew_dbi(pci, offset + PCI_MSI_FLAGS, val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम imx6_pcie_shutकरोwn(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा imx6_pcie *imx6_pcie = platक्रमm_get_drvdata(pdev);
+static void imx6_pcie_shutdown(struct platform_device *pdev)
+{
+	struct imx6_pcie *imx6_pcie = platform_get_drvdata(pdev);
 
-	/* bring करोwn link, so bootloader माला_लो clean state in हाल of reboot */
-	imx6_pcie_निश्चित_core_reset(imx6_pcie);
-पूर्ण
+	/* bring down link, so bootloader gets clean state in case of reboot */
+	imx6_pcie_assert_core_reset(imx6_pcie);
+}
 
-अटल स्थिर काष्ठा imx6_pcie_drvdata drvdata[] = अणु
-	[IMX6Q] = अणु
+static const struct imx6_pcie_drvdata drvdata[] = {
+	[IMX6Q] = {
 		.variant = IMX6Q,
 		.flags = IMX6_PCIE_FLAG_IMX6_PHY |
 			 IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE,
 		.dbi_length = 0x200,
-	पूर्ण,
-	[IMX6SX] = अणु
+	},
+	[IMX6SX] = {
 		.variant = IMX6SX,
 		.flags = IMX6_PCIE_FLAG_IMX6_PHY |
 			 IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE |
 			 IMX6_PCIE_FLAG_SUPPORTS_SUSPEND,
-	पूर्ण,
-	[IMX6QP] = अणु
+	},
+	[IMX6QP] = {
 		.variant = IMX6QP,
 		.flags = IMX6_PCIE_FLAG_IMX6_PHY |
 			 IMX6_PCIE_FLAG_IMX6_SPEED_CHANGE,
-	पूर्ण,
-	[IMX7D] = अणु
+	},
+	[IMX7D] = {
 		.variant = IMX7D,
 		.flags = IMX6_PCIE_FLAG_SUPPORTS_SUSPEND,
-	पूर्ण,
-	[IMX8MQ] = अणु
+	},
+	[IMX8MQ] = {
 		.variant = IMX8MQ,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id imx6_pcie_of_match[] = अणु
-	अणु .compatible = "fsl,imx6q-pcie",  .data = &drvdata[IMX6Q],  पूर्ण,
-	अणु .compatible = "fsl,imx6sx-pcie", .data = &drvdata[IMX6SX], पूर्ण,
-	अणु .compatible = "fsl,imx6qp-pcie", .data = &drvdata[IMX6QP], पूर्ण,
-	अणु .compatible = "fsl,imx7d-pcie",  .data = &drvdata[IMX7D],  पूर्ण,
-	अणु .compatible = "fsl,imx8mq-pcie", .data = &drvdata[IMX8MQ], पूर्ण ,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id imx6_pcie_of_match[] = {
+	{ .compatible = "fsl,imx6q-pcie",  .data = &drvdata[IMX6Q],  },
+	{ .compatible = "fsl,imx6sx-pcie", .data = &drvdata[IMX6SX], },
+	{ .compatible = "fsl,imx6qp-pcie", .data = &drvdata[IMX6QP], },
+	{ .compatible = "fsl,imx7d-pcie",  .data = &drvdata[IMX7D],  },
+	{ .compatible = "fsl,imx8mq-pcie", .data = &drvdata[IMX8MQ], } ,
+	{},
+};
 
-अटल काष्ठा platक्रमm_driver imx6_pcie_driver = अणु
-	.driver = अणु
+static struct platform_driver imx6_pcie_driver = {
+	.driver = {
 		.name	= "imx6q-pcie",
 		.of_match_table = imx6_pcie_of_match,
 		.suppress_bind_attrs = true,
 		.pm = &imx6_pcie_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	पूर्ण,
+	},
 	.probe    = imx6_pcie_probe,
-	.shutकरोwn = imx6_pcie_shutकरोwn,
-पूर्ण;
+	.shutdown = imx6_pcie_shutdown,
+};
 
-अटल व्योम imx6_pcie_quirk(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा pci_bus *bus = dev->bus;
-	काष्ठा pcie_port *pp = bus->sysdata;
+static void imx6_pcie_quirk(struct pci_dev *dev)
+{
+	struct pci_bus *bus = dev->bus;
+	struct pcie_port *pp = bus->sysdata;
 
-	/* Bus parent is the PCI bridge, its parent is this platक्रमm driver */
-	अगर (!bus->dev.parent || !bus->dev.parent->parent)
-		वापस;
+	/* Bus parent is the PCI bridge, its parent is this platform driver */
+	if (!bus->dev.parent || !bus->dev.parent->parent)
+		return;
 
 	/* Make sure we only quirk devices associated with this driver */
-	अगर (bus->dev.parent->parent->driver != &imx6_pcie_driver.driver)
-		वापस;
+	if (bus->dev.parent->parent->driver != &imx6_pcie_driver.driver)
+		return;
 
-	अगर (pci_is_root_bus(bus)) अणु
-		काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(pp);
-		काष्ठा imx6_pcie *imx6_pcie = to_imx6_pcie(pci);
+	if (pci_is_root_bus(bus)) {
+		struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+		struct imx6_pcie *imx6_pcie = to_imx6_pcie(pci);
 
 		/*
-		 * Limit config length to aव्योम the kernel पढ़ोing beyond
-		 * the रेजिस्टर set and causing an पात on i.MX 6Quad
+		 * Limit config length to avoid the kernel reading beyond
+		 * the register set and causing an abort on i.MX 6Quad
 		 */
-		अगर (imx6_pcie->drvdata->dbi_length) अणु
+		if (imx6_pcie->drvdata->dbi_length) {
 			dev->cfg_size = imx6_pcie->drvdata->dbi_length;
 			dev_info(&dev->dev, "Limiting cfg_size to %d\n",
 					dev->cfg_size);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 DECLARE_PCI_FIXUP_CLASS_HEADER(PCI_VENDOR_ID_SYNOPSYS, 0xabcd,
 			PCI_CLASS_BRIDGE_PCI, 8, imx6_pcie_quirk);
 
-अटल पूर्णांक __init imx6_pcie_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_ARM
+static int __init imx6_pcie_init(void)
+{
+#ifdef CONFIG_ARM
 	/*
 	 * Since probe() can be deferred we need to make sure that
-	 * hook_fault_code is not called after __init memory is मुक्तd
-	 * by kernel and since imx6q_pcie_पात_handler() is a no-op,
+	 * hook_fault_code is not called after __init memory is freed
+	 * by kernel and since imx6q_pcie_abort_handler() is a no-op,
 	 * we can install the handler here without risking it
 	 * accessing some uninitialized driver state.
 	 */
-	hook_fault_code(8, imx6q_pcie_पात_handler, SIGBUS, 0,
+	hook_fault_code(8, imx6q_pcie_abort_handler, SIGBUS, 0,
 			"external abort on non-linefetch");
-#पूर्ण_अगर
+#endif
 
-	वापस platक्रमm_driver_रेजिस्टर(&imx6_pcie_driver);
-पूर्ण
+	return platform_driver_register(&imx6_pcie_driver);
+}
 device_initcall(imx6_pcie_init);

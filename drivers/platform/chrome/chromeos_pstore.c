@@ -1,58 +1,57 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Driver to instantiate Chromebook ramoops device.
 //
 // Copyright (C) 2013 Google, Inc.
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pstore_ram.h>
+#include <linux/acpi.h>
+#include <linux/dmi.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pstore_ram.h>
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id chromeos_pstore_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id chromeos_pstore_dmi_table[] __initconst = {
+	{
 		/*
 		 * Today all Chromebooks/boxes ship with Google_* as version and
-		 * coreboot as bios venकरोr. No other प्रणालीs with this
+		 * coreboot as bios vendor. No other systems with this
 		 * combination are known to date.
 		 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
 			DMI_MATCH(DMI_BIOS_VERSION, "Google_"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* x86-alex, the first Samsung Chromebook. */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "SAMSUNG ELECTRONICS CO., LTD."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Alex"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* x86-mario, the Cr-48 pilot device from Google. */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "IEC"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Mario"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* x86-zgb, the first Acer Chromebook. */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "ACER"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "ZGB"),
-		पूर्ण,
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+	{ }
+};
 MODULE_DEVICE_TABLE(dmi, chromeos_pstore_dmi_table);
 
 /*
  * On x86 chromebooks/boxes, the firmware will keep the legacy VGA memory
  * range untouched across reboots, so we use that to store our pstore
- * contents क्रम panic logs, etc.
+ * contents for panic logs, etc.
  */
-अटल काष्ठा ramoops_platक्रमm_data chromeos_ramoops_data = अणु
+static struct ramoops_platform_data chromeos_ramoops_data = {
 	.mem_size	= 0x100000,
 	.mem_address	= 0xf00000,
 	.record_size	= 0x40000,
@@ -60,80 +59,80 @@ MODULE_DEVICE_TABLE(dmi, chromeos_pstore_dmi_table);
 	.ftrace_size	= 0x20000,
 	.pmsg_size	= 0x20000,
 	.max_reason	= KMSG_DUMP_OOPS,
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_device chromeos_ramoops = अणु
+static struct platform_device chromeos_ramoops = {
 	.name = "ramoops",
-	.dev = अणु
-		.platक्रमm_data = &chromeos_ramoops_data,
-	पूर्ण,
-पूर्ण;
+	.dev = {
+		.platform_data = &chromeos_ramoops_data,
+	},
+};
 
-#अगर_घोषित CONFIG_ACPI
-अटल स्थिर काष्ठा acpi_device_id cros_ramoops_acpi_match[] = अणु
-	अणु "GOOG9999", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#ifdef CONFIG_ACPI
+static const struct acpi_device_id cros_ramoops_acpi_match[] = {
+	{ "GOOG9999", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, cros_ramoops_acpi_match);
 
-अटल काष्ठा platक्रमm_driver chromeos_ramoops_acpi = अणु
-	.driver		= अणु
+static struct platform_driver chromeos_ramoops_acpi = {
+	.driver		= {
 		.name	= "chromeos_pstore",
 		.acpi_match_table = ACPI_PTR(cros_ramoops_acpi_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init chromeos_probe_acpi(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा resource *res;
-	resource_माप_प्रकार len;
+static int __init chromeos_probe_acpi(struct platform_device *pdev)
+{
+	struct resource *res;
+	resource_size_t len;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -ENOMEM;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -ENOMEM;
 
 	len = resource_size(res);
-	अगर (!res->start || !len)
-		वापस -ENOMEM;
+	if (!res->start || !len)
+		return -ENOMEM;
 
 	pr_info("chromeos ramoops using acpi device.\n");
 
 	chromeos_ramoops_data.mem_size = len;
 	chromeos_ramoops_data.mem_address = res->start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool __init chromeos_check_acpi(व्योम)
-अणु
-	अगर (!platक्रमm_driver_probe(&chromeos_ramoops_acpi, chromeos_probe_acpi))
-		वापस true;
-	वापस false;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत bool chromeos_check_acpi(व्योम) अणु वापस false; पूर्ण
-#पूर्ण_अगर
+static bool __init chromeos_check_acpi(void)
+{
+	if (!platform_driver_probe(&chromeos_ramoops_acpi, chromeos_probe_acpi))
+		return true;
+	return false;
+}
+#else
+static inline bool chromeos_check_acpi(void) { return false; }
+#endif
 
-अटल पूर्णांक __init chromeos_pstore_init(व्योम)
-अणु
+static int __init chromeos_pstore_init(void)
+{
 	bool acpi_dev_found;
 
-	/* First check ACPI क्रम non-hardcoded values from firmware. */
+	/* First check ACPI for non-hardcoded values from firmware. */
 	acpi_dev_found = chromeos_check_acpi();
 
-	अगर (acpi_dev_found || dmi_check_प्रणाली(chromeos_pstore_dmi_table))
-		वापस platक्रमm_device_रेजिस्टर(&chromeos_ramoops);
+	if (acpi_dev_found || dmi_check_system(chromeos_pstore_dmi_table))
+		return platform_device_register(&chromeos_ramoops);
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
-अटल व्योम __निकास chromeos_pstore_निकास(व्योम)
-अणु
-	platक्रमm_device_unरेजिस्टर(&chromeos_ramoops);
-पूर्ण
+static void __exit chromeos_pstore_exit(void)
+{
+	platform_device_unregister(&chromeos_ramoops);
+}
 
 module_init(chromeos_pstore_init);
-module_निकास(chromeos_pstore_निकास);
+module_exit(chromeos_pstore_exit);
 
 MODULE_DESCRIPTION("ChromeOS pstore module");
 MODULE_LICENSE("GPL v2");

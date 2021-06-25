@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-/* routines exported क्रम debugfs handling */
+/* SPDX-License-Identifier: GPL-2.0 */
+/* routines exported for debugfs handling */
 
-#अगर_अघोषित __IEEE80211_DEBUGFS_NETDEV_H
-#घोषणा __IEEE80211_DEBUGFS_NETDEV_H
+#ifndef __IEEE80211_DEBUGFS_NETDEV_H
+#define __IEEE80211_DEBUGFS_NETDEV_H
 
-#समावेश "ieee80211_i.h"
+#include "ieee80211_i.h"
 
-#अगर_घोषित CONFIG_MAC80211_DEBUGFS
-व्योम ieee80211_debugfs_add_netdev(काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_हटाओ_netdev(काष्ठा ieee80211_sub_अगर_data *sdata);
-व्योम ieee80211_debugfs_नाम_netdev(काष्ठा ieee80211_sub_अगर_data *sdata);
-#अन्यथा
-अटल अंतरभूत व्योम ieee80211_debugfs_add_netdev(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_हटाओ_netdev(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-अटल अंतरभूत व्योम ieee80211_debugfs_नाम_netdev(
-	काष्ठा ieee80211_sub_अगर_data *sdata)
-अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MAC80211_DEBUGFS
+void ieee80211_debugfs_add_netdev(struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_remove_netdev(struct ieee80211_sub_if_data *sdata);
+void ieee80211_debugfs_rename_netdev(struct ieee80211_sub_if_data *sdata);
+#else
+static inline void ieee80211_debugfs_add_netdev(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_remove_netdev(
+	struct ieee80211_sub_if_data *sdata)
+{}
+static inline void ieee80211_debugfs_rename_netdev(
+	struct ieee80211_sub_if_data *sdata)
+{}
+#endif
 
-#पूर्ण_अगर /* __IEEE80211_DEBUGFS_NETDEV_H */
+#endif /* __IEEE80211_DEBUGFS_NETDEV_H */

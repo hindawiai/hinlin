@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "ia_css_types.h"
-#समावेश "sh_css_defs.h"
-#समावेश "ia_css_debug.h"
+#include "ia_css_types.h"
+#include "sh_css_defs.h"
+#include "ia_css_debug.h"
 
-#समावेश "ia_css_anr.host.h"
+#include "ia_css_anr.host.h"
 
-स्थिर काष्ठा ia_css_anr_config शेष_anr_config = अणु
+const struct ia_css_anr_config default_anr_config = {
 	10,
-	अणु
+	{
 		0, 3, 1, 2, 3, 6, 4, 5, 1, 4, 2, 3, 2, 5, 3, 4,
 		0, 3, 1, 2, 3, 6, 4, 5, 1, 4, 2, 3, 2, 5, 3, 4,
 		0, 3, 1, 2, 3, 6, 4, 5, 1, 4, 2, 3, 2, 5, 3, 4,
 		0, 3, 1, 2, 3, 6, 4, 5, 1, 4, 2, 3, 2, 5, 3, 4
-	पूर्ण,
-	अणु10, 20, 30पूर्ण
-पूर्ण;
+	},
+	{10, 20, 30}
+};
 
-व्योम
+void
 ia_css_anr_encode(
-    काष्ठा sh_css_isp_anr_params *to,
-    स्थिर काष्ठा ia_css_anr_config *from,
-    अचिन्हित पूर्णांक size)
-अणु
-	(व्योम)size;
+    struct sh_css_isp_anr_params *to,
+    const struct ia_css_anr_config *from,
+    unsigned int size)
+{
+	(void)size;
 	to->threshold = from->threshold;
-पूर्ण
+}
 
-व्योम
+void
 ia_css_anr_dump(
-    स्थिर काष्ठा sh_css_isp_anr_params *anr,
-    अचिन्हित पूर्णांक level)
-अणु
-	अगर (!anr) वापस;
+    const struct sh_css_isp_anr_params *anr,
+    unsigned int level)
+{
+	if (!anr) return;
 	ia_css_debug_dtrace(level, "Advance Noise Reduction:\n");
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "anr_threshold", anr->threshold);
-पूर्ण
+}
 
-व्योम
+void
 ia_css_anr_debug_dtrace(
-    स्थिर काष्ठा ia_css_anr_config *config,
-    अचिन्हित पूर्णांक level)
-अणु
+    const struct ia_css_anr_config *config,
+    unsigned int level)
+{
 	ia_css_debug_dtrace(level,
 			    "config.threshold=%d\n",
 			    config->threshold);
-पूर्ण
+}

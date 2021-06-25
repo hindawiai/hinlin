@@ -1,127 +1,126 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Support क्रम Digigram Lola PCI-e boards
+ *  Support for Digigram Lola PCI-e boards
  *
  *  Copyright (c) 2011 Takashi Iwai <tiwai@suse.de>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/पन.स>
-#समावेश <sound/core.h>
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/tlv.h>
-#समावेश "lola.h"
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/vmalloc.h>
+#include <linux/io.h>
+#include <sound/core.h>
+#include <sound/control.h>
+#include <sound/pcm.h>
+#include <sound/tlv.h>
+#include "lola.h"
 
-अटल पूर्णांक lola_init_pin(काष्ठा lola *chip, काष्ठा lola_pin *pin,
-			 पूर्णांक dir, पूर्णांक nid)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक err;
+static int lola_init_pin(struct lola *chip, struct lola_pin *pin,
+			 int dir, int nid)
+{
+	unsigned int val;
+	int err;
 
 	pin->nid = nid;
-	err = lola_पढ़ो_param(chip, nid, LOLA_PAR_AUDIO_WIDGET_CAP, &val);
-	अगर (err < 0) अणु
+	err = lola_read_param(chip, nid, LOLA_PAR_AUDIO_WIDGET_CAP, &val);
+	if (err < 0) {
 		dev_err(chip->card->dev, "Can't read wcaps for 0x%x\n", nid);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	val &= 0x00f00fff; /* test TYPE and bits 0..11 */
-	अगर (val == 0x00400200)    /* Type = 4, Digital = 1 */
+	if (val == 0x00400200)    /* Type = 4, Digital = 1 */
 		pin->is_analog = false;
-	अन्यथा अगर (val == 0x0040000a && dir == CAPT) /* Dig=0, InAmp/ovrd */
+	else if (val == 0x0040000a && dir == CAPT) /* Dig=0, InAmp/ovrd */
 		pin->is_analog = true;
-	अन्यथा अगर (val == 0x0040000c && dir == PLAY) /* Dig=0, OutAmp/ovrd */
+	else if (val == 0x0040000c && dir == PLAY) /* Dig=0, OutAmp/ovrd */
 		pin->is_analog = true;
-	अन्यथा अणु
+	else {
 		dev_err(chip->card->dev, "Invalid wcaps 0x%x for 0x%x\n", val, nid);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* analog parameters only following, so जारी in हाल of Digital pin
+	/* analog parameters only following, so continue in case of Digital pin
 	 */
-	अगर (!pin->is_analog)
-		वापस 0;
+	if (!pin->is_analog)
+		return 0;
 
-	अगर (dir == PLAY)
-		err = lola_पढ़ो_param(chip, nid, LOLA_PAR_AMP_OUT_CAP, &val);
-	अन्यथा
-		err = lola_पढ़ो_param(chip, nid, LOLA_PAR_AMP_IN_CAP, &val);
-	अगर (err < 0) अणु
+	if (dir == PLAY)
+		err = lola_read_param(chip, nid, LOLA_PAR_AMP_OUT_CAP, &val);
+	else
+		err = lola_read_param(chip, nid, LOLA_PAR_AMP_IN_CAP, &val);
+	if (err < 0) {
 		dev_err(chip->card->dev, "Can't read AMP-caps for 0x%x\n", nid);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	pin->amp_mute = LOLA_AMP_MUTE_CAPABLE(val);
 	pin->amp_step_size = LOLA_AMP_STEP_SIZE(val);
 	pin->amp_num_steps = LOLA_AMP_NUM_STEPS(val);
-	अगर (pin->amp_num_steps) अणु
+	if (pin->amp_num_steps) {
 		/* zero as mute state */
 		pin->amp_num_steps++;
 		pin->amp_step_size++;
-	पूर्ण
+	}
 	pin->amp_offset = LOLA_AMP_OFFSET(val);
 
-	err = lola_codec_पढ़ो(chip, nid, LOLA_VERB_GET_MAX_LEVEL, 0, 0, &val,
-			      शून्य);
-	अगर (err < 0) अणु
+	err = lola_codec_read(chip, nid, LOLA_VERB_GET_MAX_LEVEL, 0, 0, &val,
+			      NULL);
+	if (err < 0) {
 		dev_err(chip->card->dev, "Can't get MAX_LEVEL 0x%x\n", nid);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	pin->max_level = val & 0x3ff;   /* 10 bits */
 
-	pin->config_शेष_reg = 0;
+	pin->config_default_reg = 0;
 	pin->fixed_gain_list_len = 0;
 	pin->cur_gain_step = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lola_init_pins(काष्ठा lola *chip, पूर्णांक dir, पूर्णांक *nidp)
-अणु
-	पूर्णांक i, err, nid;
+int lola_init_pins(struct lola *chip, int dir, int *nidp)
+{
+	int i, err, nid;
 	nid = *nidp;
-	क्रम (i = 0; i < chip->pin[dir].num_pins; i++, nid++) अणु
+	for (i = 0; i < chip->pin[dir].num_pins; i++, nid++) {
 		err = lola_init_pin(chip, &chip->pin[dir].pins[i], dir, nid);
-		अगर (err < 0)
-			वापस err;
-		अगर (chip->pin[dir].pins[i].is_analog)
+		if (err < 0)
+			return err;
+		if (chip->pin[dir].pins[i].is_analog)
 			chip->pin[dir].num_analog_pins++;
-	पूर्ण
+	}
 	*nidp = nid;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम lola_मुक्त_mixer(काष्ठा lola *chip)
-अणु
-	vमुक्त(chip->mixer.array_saved);
-पूर्ण
+void lola_free_mixer(struct lola *chip)
+{
+	vfree(chip->mixer.array_saved);
+}
 
-पूर्णांक lola_init_mixer_widget(काष्ठा lola *chip, पूर्णांक nid)
-अणु
-	अचिन्हित पूर्णांक val;
-	पूर्णांक err;
+int lola_init_mixer_widget(struct lola *chip, int nid)
+{
+	unsigned int val;
+	int err;
 
-	err = lola_पढ़ो_param(chip, nid, LOLA_PAR_AUDIO_WIDGET_CAP, &val);
-	अगर (err < 0) अणु
+	err = lola_read_param(chip, nid, LOLA_PAR_AUDIO_WIDGET_CAP, &val);
+	if (err < 0) {
 		dev_err(chip->card->dev, "Can't read wcaps for 0x%x\n", nid);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर ((val & 0xfff00000) != 0x02f00000) अणु /* test SubType and Type */
+	if ((val & 0xfff00000) != 0x02f00000) { /* test SubType and Type */
 		dev_dbg(chip->card->dev, "No valid mixer widget\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	chip->mixer.nid = nid;
 	chip->mixer.caps = val;
-	chip->mixer.array = (काष्ठा lola_mixer_array __iomem *)
+	chip->mixer.array = (struct lola_mixer_array __iomem *)
 		(chip->bar[BAR1].remap_addr + LOLA_BAR1_SOURCE_GAIN_ENABLE);
 
-	/* reserve memory to copy mixer data क्रम sleep mode transitions */
-	chip->mixer.array_saved = vदो_स्मृति(माप(काष्ठा lola_mixer_array));
+	/* reserve memory to copy mixer data for sleep mode transitions */
+	chip->mixer.array_saved = vmalloc(sizeof(struct lola_mixer_array));
 
 	/* mixer matrix sources are physical input data and play streams */
 	chip->mixer.src_stream_outs = chip->pcm[PLAY].num_streams;
@@ -187,11 +186,11 @@
 	 * |a|  | dest_mix_gain_enable array |
 	 * |y|  +----------------------------+
 	 */
-	अगर (chip->mixer.src_stream_out_ofs > MAX_AUDIO_INOUT_COUNT ||
-	    chip->mixer.dest_phys_out_ofs > MAX_STREAM_IN_COUNT) अणु
+	if (chip->mixer.src_stream_out_ofs > MAX_AUDIO_INOUT_COUNT ||
+	    chip->mixer.dest_phys_out_ofs > MAX_STREAM_IN_COUNT) {
 		dev_err(chip->card->dev, "Invalid mixer widget size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	chip->mixer.src_mask = ((1U << chip->mixer.src_phys_ins) - 1) |
 		(((1U << chip->mixer.src_stream_outs) - 1)
@@ -203,373 +202,373 @@
 	dev_dbg(chip->card->dev, "Mixer src_mask=%x, dest_mask=%x\n",
 		    chip->mixer.src_mask, chip->mixer.dest_mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lola_mixer_set_src_gain(काष्ठा lola *chip, अचिन्हित पूर्णांक id,
-				   अचिन्हित लघु gain, bool on)
-अणु
-	अचिन्हित पूर्णांक oldval, val;
+static int lola_mixer_set_src_gain(struct lola *chip, unsigned int id,
+				   unsigned short gain, bool on)
+{
+	unsigned int oldval, val;
 
-	अगर (!(chip->mixer.src_mask & (1 << id)))
-		वापस -EINVAL;
-	oldval = val = पढ़ोl(&chip->mixer.array->src_gain_enable);
-	अगर (on)
+	if (!(chip->mixer.src_mask & (1 << id)))
+		return -EINVAL;
+	oldval = val = readl(&chip->mixer.array->src_gain_enable);
+	if (on)
 		val |= (1 << id);
-	अन्यथा
+	else
 		val &= ~(1 << id);
-	/* test अगर values unchanged */
-	अगर ((val == oldval) &&
-	    (gain == पढ़ोw(&chip->mixer.array->src_gain[id])))
-		वापस 0;
+	/* test if values unchanged */
+	if ((val == oldval) &&
+	    (gain == readw(&chip->mixer.array->src_gain[id])))
+		return 0;
 
 	dev_dbg(chip->card->dev,
 		"lola_mixer_set_src_gain (id=%d, gain=%d) enable=%x\n",
 			id, gain, val);
-	ग_लिखोw(gain, &chip->mixer.array->src_gain[id]);
-	ग_लिखोl(val, &chip->mixer.array->src_gain_enable);
+	writew(gain, &chip->mixer.array->src_gain[id]);
+	writel(val, &chip->mixer.array->src_gain_enable);
 	lola_codec_flush(chip);
-	/* inक्रमm micro-controller about the new source gain */
-	वापस lola_codec_ग_लिखो(chip, chip->mixer.nid,
+	/* inform micro-controller about the new source gain */
+	return lola_codec_write(chip, chip->mixer.nid,
 				LOLA_VERB_SET_SOURCE_GAIN, id, 0);
-पूर्ण
+}
 
-#अगर 0 /* not used */
-अटल पूर्णांक lola_mixer_set_src_gains(काष्ठा lola *chip, अचिन्हित पूर्णांक mask,
-				    अचिन्हित लघु *gains)
-अणु
-	पूर्णांक i;
+#if 0 /* not used */
+static int lola_mixer_set_src_gains(struct lola *chip, unsigned int mask,
+				    unsigned short *gains)
+{
+	int i;
 
-	अगर ((chip->mixer.src_mask & mask) != mask)
-		वापस -EINVAL;
-	क्रम (i = 0; i < LOLA_MIXER_DIM; i++) अणु
-		अगर (mask & (1 << i)) अणु
-			ग_लिखोw(*gains, &chip->mixer.array->src_gain[i]);
+	if ((chip->mixer.src_mask & mask) != mask)
+		return -EINVAL;
+	for (i = 0; i < LOLA_MIXER_DIM; i++) {
+		if (mask & (1 << i)) {
+			writew(*gains, &chip->mixer.array->src_gain[i]);
 			gains++;
-		पूर्ण
-	पूर्ण
-	ग_लिखोl(mask, &chip->mixer.array->src_gain_enable);
+		}
+	}
+	writel(mask, &chip->mixer.array->src_gain_enable);
 	lola_codec_flush(chip);
-	अगर (chip->mixer.caps & LOLA_PEAK_METER_CAN_AGC_MASK) अणु
-		/* update क्रम all srcs at once */
-		वापस lola_codec_ग_लिखो(chip, chip->mixer.nid,
+	if (chip->mixer.caps & LOLA_PEAK_METER_CAN_AGC_MASK) {
+		/* update for all srcs at once */
+		return lola_codec_write(chip, chip->mixer.nid,
 					LOLA_VERB_SET_SOURCE_GAIN, 0x80, 0);
-	पूर्ण
+	}
 	/* update manually */
-	क्रम (i = 0; i < LOLA_MIXER_DIM; i++) अणु
-		अगर (mask & (1 << i)) अणु
-			lola_codec_ग_लिखो(chip, chip->mixer.nid,
+	for (i = 0; i < LOLA_MIXER_DIM; i++) {
+		if (mask & (1 << i)) {
+			lola_codec_write(chip, chip->mixer.nid,
 					 LOLA_VERB_SET_SOURCE_GAIN, i, 0);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* not used */
+		}
+	}
+	return 0;
+}
+#endif /* not used */
 
-अटल पूर्णांक lola_mixer_set_mapping_gain(काष्ठा lola *chip,
-				       अचिन्हित पूर्णांक src, अचिन्हित पूर्णांक dest,
-				       अचिन्हित लघु gain, bool on)
-अणु
-	अचिन्हित पूर्णांक val;
+static int lola_mixer_set_mapping_gain(struct lola *chip,
+				       unsigned int src, unsigned int dest,
+				       unsigned short gain, bool on)
+{
+	unsigned int val;
 
-	अगर (!(chip->mixer.src_mask & (1 << src)) ||
+	if (!(chip->mixer.src_mask & (1 << src)) ||
 	    !(chip->mixer.dest_mask & (1 << dest)))
-		वापस -EINVAL;
-	अगर (on)
-		ग_लिखोw(gain, &chip->mixer.array->dest_mix_gain[dest][src]);
-	val = पढ़ोl(&chip->mixer.array->dest_mix_gain_enable[dest]);
-	अगर (on)
+		return -EINVAL;
+	if (on)
+		writew(gain, &chip->mixer.array->dest_mix_gain[dest][src]);
+	val = readl(&chip->mixer.array->dest_mix_gain_enable[dest]);
+	if (on)
 		val |= (1 << src);
-	अन्यथा
+	else
 		val &= ~(1 << src);
-	ग_लिखोl(val, &chip->mixer.array->dest_mix_gain_enable[dest]);
+	writel(val, &chip->mixer.array->dest_mix_gain_enable[dest]);
 	lola_codec_flush(chip);
-	वापस lola_codec_ग_लिखो(chip, chip->mixer.nid, LOLA_VERB_SET_MIX_GAIN,
+	return lola_codec_write(chip, chip->mixer.nid, LOLA_VERB_SET_MIX_GAIN,
 				src, dest);
-पूर्ण
+}
 
-#अगर 0 /* not used */
-अटल पूर्णांक lola_mixer_set_dest_gains(काष्ठा lola *chip, अचिन्हित पूर्णांक id,
-				     अचिन्हित पूर्णांक mask, अचिन्हित लघु *gains)
-अणु
-	पूर्णांक i;
+#if 0 /* not used */
+static int lola_mixer_set_dest_gains(struct lola *chip, unsigned int id,
+				     unsigned int mask, unsigned short *gains)
+{
+	int i;
 
-	अगर (!(chip->mixer.dest_mask & (1 << id)) ||
+	if (!(chip->mixer.dest_mask & (1 << id)) ||
 	    (chip->mixer.src_mask & mask) != mask)
-		वापस -EINVAL;
-	क्रम (i = 0; i < LOLA_MIXER_DIM; i++) अणु
-		अगर (mask & (1 << i)) अणु
-			ग_लिखोw(*gains, &chip->mixer.array->dest_mix_gain[id][i]);
+		return -EINVAL;
+	for (i = 0; i < LOLA_MIXER_DIM; i++) {
+		if (mask & (1 << i)) {
+			writew(*gains, &chip->mixer.array->dest_mix_gain[id][i]);
 			gains++;
-		पूर्ण
-	पूर्ण
-	ग_लिखोl(mask, &chip->mixer.array->dest_mix_gain_enable[id]);
+		}
+	}
+	writel(mask, &chip->mixer.array->dest_mix_gain_enable[id]);
 	lola_codec_flush(chip);
-	/* update क्रम all dests at once */
-	वापस lola_codec_ग_लिखो(chip, chip->mixer.nid,
+	/* update for all dests at once */
+	return lola_codec_write(chip, chip->mixer.nid,
 				LOLA_VERB_SET_DESTINATION_GAIN, id, 0);
-पूर्ण
-#पूर्ण_अगर /* not used */
+}
+#endif /* not used */
 
 /*
  */
 
-अटल पूर्णांक set_analog_volume(काष्ठा lola *chip, पूर्णांक dir,
-			     अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक val,
-			     bool बाह्यal_call);
+static int set_analog_volume(struct lola *chip, int dir,
+			     unsigned int idx, unsigned int val,
+			     bool external_call);
 
-पूर्णांक lola_setup_all_analog_gains(काष्ठा lola *chip, पूर्णांक dir, bool mute)
-अणु
-	काष्ठा lola_pin *pin;
-	पूर्णांक idx, max_idx;
+int lola_setup_all_analog_gains(struct lola *chip, int dir, bool mute)
+{
+	struct lola_pin *pin;
+	int idx, max_idx;
 
 	pin = chip->pin[dir].pins;
 	max_idx = chip->pin[dir].num_pins;
-	क्रम (idx = 0; idx < max_idx; idx++) अणु
-		अगर (pin[idx].is_analog) अणु
-			अचिन्हित पूर्णांक val = mute ? 0 : pin[idx].cur_gain_step;
-			/* set volume and करो not save the value */
+	for (idx = 0; idx < max_idx; idx++) {
+		if (pin[idx].is_analog) {
+			unsigned int val = mute ? 0 : pin[idx].cur_gain_step;
+			/* set volume and do not save the value */
 			set_analog_volume(chip, dir, idx, val, false);
-		पूर्ण
-	पूर्ण
-	वापस lola_codec_flush(chip);
-पूर्ण
+		}
+	}
+	return lola_codec_flush(chip);
+}
 
-व्योम lola_save_mixer(काष्ठा lola *chip)
-अणु
+void lola_save_mixer(struct lola *chip)
+{
 	/* mute analog output */
-	अगर (chip->mixer.array_saved) अणु
+	if (chip->mixer.array_saved) {
 		/* store contents of mixer array */
-		स_नकल_fromio(chip->mixer.array_saved, chip->mixer.array,
-			      माप(*chip->mixer.array));
-	पूर्ण
+		memcpy_fromio(chip->mixer.array_saved, chip->mixer.array,
+			      sizeof(*chip->mixer.array));
+	}
 	lola_setup_all_analog_gains(chip, PLAY, true); /* output mute */
-पूर्ण
+}
 
-व्योम lola_restore_mixer(काष्ठा lola *chip)
-अणु
-	पूर्णांक i;
+void lola_restore_mixer(struct lola *chip)
+{
+	int i;
 
 	/*lola_reset_setups(chip);*/
-	अगर (chip->mixer.array_saved) अणु
+	if (chip->mixer.array_saved) {
 		/* restore contents of mixer array */
-		स_नकल_toio(chip->mixer.array, chip->mixer.array_saved,
-			    माप(*chip->mixer.array));
-		/* inक्रमm micro-controller about all restored values
-		 * and ignore वापस values
+		memcpy_toio(chip->mixer.array, chip->mixer.array_saved,
+			    sizeof(*chip->mixer.array));
+		/* inform micro-controller about all restored values
+		 * and ignore return values
 		 */
-		क्रम (i = 0; i < chip->mixer.src_phys_ins; i++)
-			lola_codec_ग_लिखो(chip, chip->mixer.nid,
+		for (i = 0; i < chip->mixer.src_phys_ins; i++)
+			lola_codec_write(chip, chip->mixer.nid,
 					 LOLA_VERB_SET_SOURCE_GAIN,
 					 i, 0);
-		क्रम (i = 0; i < chip->mixer.src_stream_outs; i++)
-			lola_codec_ग_लिखो(chip, chip->mixer.nid,
+		for (i = 0; i < chip->mixer.src_stream_outs; i++)
+			lola_codec_write(chip, chip->mixer.nid,
 					 LOLA_VERB_SET_SOURCE_GAIN,
 					 chip->mixer.src_stream_out_ofs + i, 0);
-		क्रम (i = 0; i < chip->mixer.dest_stream_ins; i++)
-			lola_codec_ग_लिखो(chip, chip->mixer.nid,
+		for (i = 0; i < chip->mixer.dest_stream_ins; i++)
+			lola_codec_write(chip, chip->mixer.nid,
 					 LOLA_VERB_SET_DESTINATION_GAIN,
 					 i, 0);
-		क्रम (i = 0; i < chip->mixer.dest_phys_outs; i++)
-			lola_codec_ग_लिखो(chip, chip->mixer.nid,
+		for (i = 0; i < chip->mixer.dest_phys_outs; i++)
+			lola_codec_write(chip, chip->mixer.nid,
 					 LOLA_VERB_SET_DESTINATION_GAIN,
 					 chip->mixer.dest_phys_out_ofs + i, 0);
 		lola_codec_flush(chip);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  */
 
-अटल पूर्णांक set_analog_volume(काष्ठा lola *chip, पूर्णांक dir,
-			     अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक val,
-			     bool बाह्यal_call)
-अणु
-	काष्ठा lola_pin *pin;
-	पूर्णांक err;
+static int set_analog_volume(struct lola *chip, int dir,
+			     unsigned int idx, unsigned int val,
+			     bool external_call)
+{
+	struct lola_pin *pin;
+	int err;
 
-	अगर (idx >= chip->pin[dir].num_pins)
-		वापस -EINVAL;
+	if (idx >= chip->pin[dir].num_pins)
+		return -EINVAL;
 	pin = &chip->pin[dir].pins[idx];
-	अगर (!pin->is_analog || pin->amp_num_steps <= val)
-		वापस -EINVAL;
-	अगर (बाह्यal_call && pin->cur_gain_step == val)
-		वापस 0;
-	अगर (बाह्यal_call)
+	if (!pin->is_analog || pin->amp_num_steps <= val)
+		return -EINVAL;
+	if (external_call && pin->cur_gain_step == val)
+		return 0;
+	if (external_call)
 		lola_codec_flush(chip);
 	dev_dbg(chip->card->dev,
 		"set_analog_volume (dir=%d idx=%d, volume=%d)\n",
 			dir, idx, val);
-	err = lola_codec_ग_लिखो(chip, pin->nid,
+	err = lola_codec_write(chip, pin->nid,
 			       LOLA_VERB_SET_AMP_GAIN_MUTE, val, 0);
-	अगर (err < 0)
-		वापस err;
-	अगर (बाह्यal_call)
+	if (err < 0)
+		return err;
+	if (external_call)
 		pin->cur_gain_step = val;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक lola_set_src_config(काष्ठा lola *chip, अचिन्हित पूर्णांक src_mask, bool update)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक success = 0;
-	पूर्णांक n, err;
+int lola_set_src_config(struct lola *chip, unsigned int src_mask, bool update)
+{
+	int ret = 0;
+	int success = 0;
+	int n, err;
 
 	/* SRC can be activated and the dwInputSRCMask is valid? */
-	अगर ((chip->input_src_caps_mask & src_mask) != src_mask)
-		वापस -EINVAL;
-	/* handle all even Inमाला_दो - SRC is a stereo setting !!! */
-	क्रम (n = 0; n < chip->pin[CAPT].num_pins; n += 2) अणु
-		अचिन्हित पूर्णांक mask = 3U << n; /* handle the stereo हाल */
-		अचिन्हित पूर्णांक new_src, src_state;
-		अगर (!(chip->input_src_caps_mask & mask))
-			जारी;
-		/* अगर one IO needs SRC, both stereo IO will get SRC */
+	if ((chip->input_src_caps_mask & src_mask) != src_mask)
+		return -EINVAL;
+	/* handle all even Inputs - SRC is a stereo setting !!! */
+	for (n = 0; n < chip->pin[CAPT].num_pins; n += 2) {
+		unsigned int mask = 3U << n; /* handle the stereo case */
+		unsigned int new_src, src_state;
+		if (!(chip->input_src_caps_mask & mask))
+			continue;
+		/* if one IO needs SRC, both stereo IO will get SRC */
 		new_src = (src_mask & mask) != 0;
-		अगर (update) अणु
+		if (update) {
 			src_state = (chip->input_src_mask & mask) != 0;
-			अगर (src_state == new_src)
-				जारी;   /* nothing to change क्रम this IO */
-		पूर्ण
-		err = lola_codec_ग_लिखो(chip, chip->pcm[CAPT].streams[n].nid,
+			if (src_state == new_src)
+				continue;   /* nothing to change for this IO */
+		}
+		err = lola_codec_write(chip, chip->pcm[CAPT].streams[n].nid,
 				       LOLA_VERB_SET_SRC, new_src, 0);
-		अगर (!err)
+		if (!err)
 			success++;
-		अन्यथा
+		else
 			ret = err;
-	पूर्ण
-	अगर (success)
+	}
+	if (success)
 		ret = lola_codec_flush(chip);
-	अगर (!ret)
+	if (!ret)
 		chip->input_src_mask = src_mask;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  */
-अटल पूर्णांक init_mixer_values(काष्ठा lola *chip)
-अणु
-	पूर्णांक i;
+static int init_mixer_values(struct lola *chip)
+{
+	int i;
 
 	/* all sample rate converters on */
 	lola_set_src_config(chip, (1 << chip->pin[CAPT].num_pins) - 1, false);
 
 	/* clear all mixer matrix settings */
-	स_रखो_io(chip->mixer.array, 0, माप(*chip->mixer.array));
-	/* inक्रमm firmware about all updated matrix columns - capture part */
-	क्रम (i = 0; i < chip->mixer.dest_stream_ins; i++)
-		lola_codec_ग_लिखो(chip, chip->mixer.nid,
+	memset_io(chip->mixer.array, 0, sizeof(*chip->mixer.array));
+	/* inform firmware about all updated matrix columns - capture part */
+	for (i = 0; i < chip->mixer.dest_stream_ins; i++)
+		lola_codec_write(chip, chip->mixer.nid,
 				 LOLA_VERB_SET_DESTINATION_GAIN,
 				 i, 0);
-	/* inक्रमm firmware about all updated matrix columns - output part */
-	क्रम (i = 0; i < chip->mixer.dest_phys_outs; i++)
-		lola_codec_ग_लिखो(chip, chip->mixer.nid,
+	/* inform firmware about all updated matrix columns - output part */
+	for (i = 0; i < chip->mixer.dest_phys_outs; i++)
+		lola_codec_write(chip, chip->mixer.nid,
 				 LOLA_VERB_SET_DESTINATION_GAIN,
 				 chip->mixer.dest_phys_out_ofs + i, 0);
 
 	/* set all digital input source (master) gains to 0dB */
-	क्रम (i = 0; i < chip->mixer.src_phys_ins; i++)
+	for (i = 0; i < chip->mixer.src_phys_ins; i++)
 		lola_mixer_set_src_gain(chip, i, 336, true); /* 0dB */
 
 	/* set all digital playback source (master) gains to 0dB */
-	क्रम (i = 0; i < chip->mixer.src_stream_outs; i++)
+	for (i = 0; i < chip->mixer.src_stream_outs; i++)
 		lola_mixer_set_src_gain(chip,
 					i + chip->mixer.src_stream_out_ofs,
 					336, true); /* 0dB */
 	/* set gain value 0dB diagonally in matrix - part INPUT -> CAPTURE */
-	क्रम (i = 0; i < chip->mixer.dest_stream_ins; i++) अणु
-		पूर्णांक src = i % chip->mixer.src_phys_ins;
+	for (i = 0; i < chip->mixer.dest_stream_ins; i++) {
+		int src = i % chip->mixer.src_phys_ins;
 		lola_mixer_set_mapping_gain(chip, src, i, 336, true);
-	पूर्ण
+	}
 	/* set gain value 0dB diagonally in matrix , part PLAYBACK -> OUTPUT
 	 * (LoLa280 : playback channel 0,2,4,6 linked to output channel 0)
 	 * (LoLa280 : playback channel 1,3,5,7 linked to output channel 1)
 	 */
-	क्रम (i = 0; i < chip->mixer.src_stream_outs; i++) अणु
-		पूर्णांक src = chip->mixer.src_stream_out_ofs + i;
-		पूर्णांक dst = chip->mixer.dest_phys_out_ofs +
+	for (i = 0; i < chip->mixer.src_stream_outs; i++) {
+		int src = chip->mixer.src_stream_out_ofs + i;
+		int dst = chip->mixer.dest_phys_out_ofs +
 			i % chip->mixer.dest_phys_outs;
 		lola_mixer_set_mapping_gain(chip, src, dst, 336, true);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /*
  * analog mixer control element
  */
-अटल पूर्णांक lola_analog_vol_info(काष्ठा snd_kcontrol *kcontrol,
-				काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक dir = kcontrol->निजी_value;
+static int lola_analog_vol_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	int dir = kcontrol->private_value;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = chip->pin[dir].num_pins;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = chip->pin[dir].pins[0].amp_num_steps;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = chip->pin[dir].pins[0].amp_num_steps;
+	return 0;
+}
 
-अटल पूर्णांक lola_analog_vol_get(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक dir = kcontrol->निजी_value;
-	पूर्णांक i;
+static int lola_analog_vol_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	int dir = kcontrol->private_value;
+	int i;
 
-	क्रम (i = 0; i < chip->pin[dir].num_pins; i++)
-		ucontrol->value.पूर्णांकeger.value[i] =
+	for (i = 0; i < chip->pin[dir].num_pins; i++)
+		ucontrol->value.integer.value[i] =
 			chip->pin[dir].pins[i].cur_gain_step;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lola_analog_vol_put(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक dir = kcontrol->निजी_value;
-	पूर्णांक i, err;
+static int lola_analog_vol_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	int dir = kcontrol->private_value;
+	int i, err;
 
-	क्रम (i = 0; i < chip->pin[dir].num_pins; i++) अणु
+	for (i = 0; i < chip->pin[dir].num_pins; i++) {
 		err = set_analog_volume(chip, dir, i,
-					ucontrol->value.पूर्णांकeger.value[i],
+					ucontrol->value.integer.value[i],
 					true);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-अटल पूर्णांक lola_analog_vol_tlv(काष्ठा snd_kcontrol *kcontrol, पूर्णांक op_flag,
-			       अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक __user *tlv)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक dir = kcontrol->निजी_value;
-	अचिन्हित पूर्णांक val1, val2;
-	काष्ठा lola_pin *pin;
+static int lola_analog_vol_tlv(struct snd_kcontrol *kcontrol, int op_flag,
+			       unsigned int size, unsigned int __user *tlv)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	int dir = kcontrol->private_value;
+	unsigned int val1, val2;
+	struct lola_pin *pin;
 
-	अगर (size < 4 * माप(अचिन्हित पूर्णांक))
-		वापस -ENOMEM;
+	if (size < 4 * sizeof(unsigned int))
+		return -ENOMEM;
 	pin = &chip->pin[dir].pins[0];
 
 	val2 = pin->amp_step_size * 25;
-	val1 = -1 * (पूर्णांक)pin->amp_offset * (पूर्णांक)val2;
-#अगर_घोषित TLV_DB_SCALE_MUTE
+	val1 = -1 * (int)pin->amp_offset * (int)val2;
+#ifdef TLV_DB_SCALE_MUTE
 	val2 |= TLV_DB_SCALE_MUTE;
-#पूर्ण_अगर
-	अगर (put_user(SNDRV_CTL_TLVT_DB_SCALE, tlv))
-		वापस -EFAULT;
-	अगर (put_user(2 * माप(अचिन्हित पूर्णांक), tlv + 1))
-		वापस -EFAULT;
-	अगर (put_user(val1, tlv + 2))
-		वापस -EFAULT;
-	अगर (put_user(val2, tlv + 3))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+#endif
+	if (put_user(SNDRV_CTL_TLVT_DB_SCALE, tlv))
+		return -EFAULT;
+	if (put_user(2 * sizeof(unsigned int), tlv + 1))
+		return -EFAULT;
+	if (put_user(val1, tlv + 2))
+		return -EFAULT;
+	if (put_user(val2, tlv + 3))
+		return -EFAULT;
+	return 0;
+}
 
-अटल काष्ठा snd_kcontrol_new lola_analog_mixer = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static struct snd_kcontrol_new lola_analog_mixer = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_READ |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_CALLBACK),
@@ -577,308 +576,308 @@
 	.get = lola_analog_vol_get,
 	.put = lola_analog_vol_put,
 	.tlv.c = lola_analog_vol_tlv,
-पूर्ण;
+};
 
-अटल पूर्णांक create_analog_mixer(काष्ठा lola *chip, पूर्णांक dir, अक्षर *name)
-अणु
-	अगर (!chip->pin[dir].num_pins)
-		वापस 0;
+static int create_analog_mixer(struct lola *chip, int dir, char *name)
+{
+	if (!chip->pin[dir].num_pins)
+		return 0;
 	/* no analog volumes on digital only adapters */
-	अगर (chip->pin[dir].num_pins != chip->pin[dir].num_analog_pins)
-		वापस 0;
+	if (chip->pin[dir].num_pins != chip->pin[dir].num_analog_pins)
+		return 0;
 	lola_analog_mixer.name = name;
-	lola_analog_mixer.निजी_value = dir;
-	वापस snd_ctl_add(chip->card,
+	lola_analog_mixer.private_value = dir;
+	return snd_ctl_add(chip->card,
 			   snd_ctl_new1(&lola_analog_mixer, chip));
-पूर्ण
+}
 
 /*
  * Hardware sample rate converter on digital input
  */
-अटल पूर्णांक lola_input_src_info(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
+static int lola_input_src_info(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_info *uinfo)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
 	uinfo->count = chip->pin[CAPT].num_pins;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 1;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 1;
+	return 0;
+}
 
-अटल पूर्णांक lola_input_src_get(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक i;
+static int lola_input_src_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	int i;
 
-	क्रम (i = 0; i < chip->pin[CAPT].num_pins; i++)
-		ucontrol->value.पूर्णांकeger.value[i] =
+	for (i = 0; i < chip->pin[CAPT].num_pins; i++)
+		ucontrol->value.integer.value[i] =
 			!!(chip->input_src_mask & (1 << i));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lola_input_src_put(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	पूर्णांक i;
-	अचिन्हित पूर्णांक mask;
+static int lola_input_src_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	int i;
+	unsigned int mask;
 
 	mask = 0;
-	क्रम (i = 0; i < chip->pin[CAPT].num_pins; i++)
-		अगर (ucontrol->value.पूर्णांकeger.value[i])
+	for (i = 0; i < chip->pin[CAPT].num_pins; i++)
+		if (ucontrol->value.integer.value[i])
 			mask |= 1 << i;
-	वापस lola_set_src_config(chip, mask, true);
-पूर्ण
+	return lola_set_src_config(chip, mask, true);
+}
 
-अटल स्थिर काष्ठा snd_kcontrol_new lola_input_src_mixer = अणु
+static const struct snd_kcontrol_new lola_input_src_mixer = {
 	.name = "Digital SRC Capture Switch",
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.info = lola_input_src_info,
 	.get = lola_input_src_get,
 	.put = lola_input_src_put,
-पूर्ण;
+};
 
 /*
  * Lola16161 or Lola881 can have Hardware sample rate converters
  * on its digital input pins
  */
-अटल पूर्णांक create_input_src_mixer(काष्ठा lola *chip)
-अणु
-	अगर (!chip->input_src_caps_mask)
-		वापस 0;
+static int create_input_src_mixer(struct lola *chip)
+{
+	if (!chip->input_src_caps_mask)
+		return 0;
 
-	वापस snd_ctl_add(chip->card,
+	return snd_ctl_add(chip->card,
 			   snd_ctl_new1(&lola_input_src_mixer, chip));
-पूर्ण
+}
 
 /*
  * src gain mixer
  */
-अटल पूर्णांक lola_src_gain_info(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अचिन्हित पूर्णांक count = (kcontrol->निजी_value >> 8) & 0xff;
+static int lola_src_gain_info(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_info *uinfo)
+{
+	unsigned int count = (kcontrol->private_value >> 8) & 0xff;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = count;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 409;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 409;
+	return 0;
+}
 
-अटल पूर्णांक lola_src_gain_get(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक ofs = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक count = (kcontrol->निजी_value >> 8) & 0xff;
-	अचिन्हित पूर्णांक mask, i;
+static int lola_src_gain_get(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	unsigned int ofs = kcontrol->private_value & 0xff;
+	unsigned int count = (kcontrol->private_value >> 8) & 0xff;
+	unsigned int mask, i;
 
-	mask = पढ़ोl(&chip->mixer.array->src_gain_enable);
-	क्रम (i = 0; i < count; i++) अणु
-		अचिन्हित पूर्णांक idx = ofs + i;
-		अचिन्हित लघु val;
-		अगर (!(chip->mixer.src_mask & (1 << idx)))
-			वापस -EINVAL;
-		अगर (mask & (1 << idx))
-			val = पढ़ोw(&chip->mixer.array->src_gain[idx]) + 1;
-		अन्यथा
+	mask = readl(&chip->mixer.array->src_gain_enable);
+	for (i = 0; i < count; i++) {
+		unsigned int idx = ofs + i;
+		unsigned short val;
+		if (!(chip->mixer.src_mask & (1 << idx)))
+			return -EINVAL;
+		if (mask & (1 << idx))
+			val = readw(&chip->mixer.array->src_gain[idx]) + 1;
+		else
 			val = 0;
-		ucontrol->value.पूर्णांकeger.value[i] = val;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		ucontrol->value.integer.value[i] = val;
+	}
+	return 0;
+}
 
-अटल पूर्णांक lola_src_gain_put(काष्ठा snd_kcontrol *kcontrol,
-			     काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक ofs = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक count = (kcontrol->निजी_value >> 8) & 0xff;
-	पूर्णांक i, err;
+static int lola_src_gain_put(struct snd_kcontrol *kcontrol,
+			     struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	unsigned int ofs = kcontrol->private_value & 0xff;
+	unsigned int count = (kcontrol->private_value >> 8) & 0xff;
+	int i, err;
 
-	क्रम (i = 0; i < count; i++) अणु
-		अचिन्हित पूर्णांक idx = ofs + i;
-		अचिन्हित लघु val = ucontrol->value.पूर्णांकeger.value[i];
-		अगर (val)
+	for (i = 0; i < count; i++) {
+		unsigned int idx = ofs + i;
+		unsigned short val = ucontrol->value.integer.value[i];
+		if (val)
 			val--;
 		err = lola_mixer_set_src_gain(chip, idx, val, !!val);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
 
-/* raw value: 0 = -84dB, 336 = 0dB, 408=18dB, incremented 1 क्रम mute */
-अटल स्थिर DECLARE_TLV_DB_SCALE(lola_src_gain_tlv, -8425, 25, 1);
+/* raw value: 0 = -84dB, 336 = 0dB, 408=18dB, incremented 1 for mute */
+static const DECLARE_TLV_DB_SCALE(lola_src_gain_tlv, -8425, 25, 1);
 
-अटल काष्ठा snd_kcontrol_new lola_src_gain_mixer = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static struct snd_kcontrol_new lola_src_gain_mixer = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	.info = lola_src_gain_info,
 	.get = lola_src_gain_get,
 	.put = lola_src_gain_put,
 	.tlv.p = lola_src_gain_tlv,
-पूर्ण;
+};
 
-अटल पूर्णांक create_src_gain_mixer(काष्ठा lola *chip,
-				 पूर्णांक num, पूर्णांक ofs, अक्षर *name)
-अणु
+static int create_src_gain_mixer(struct lola *chip,
+				 int num, int ofs, char *name)
+{
 	lola_src_gain_mixer.name = name;
-	lola_src_gain_mixer.निजी_value = ofs + (num << 8);
-	वापस snd_ctl_add(chip->card,
+	lola_src_gain_mixer.private_value = ofs + (num << 8);
+	return snd_ctl_add(chip->card,
 			   snd_ctl_new1(&lola_src_gain_mixer, chip));
-पूर्ण
+}
 
-#अगर 0 /* not used */
+#if 0 /* not used */
 /*
  * destination gain (matrix-like) mixer
  */
-अटल पूर्णांक lola_dest_gain_info(काष्ठा snd_kcontrol *kcontrol,
-			       काष्ठा snd_ctl_elem_info *uinfo)
-अणु
-	अचिन्हित पूर्णांक src_num = (kcontrol->निजी_value >> 8) & 0xff;
+static int lola_dest_gain_info(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_info *uinfo)
+{
+	unsigned int src_num = (kcontrol->private_value >> 8) & 0xff;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = src_num;
-	uinfo->value.पूर्णांकeger.min = 0;
-	uinfo->value.पूर्णांकeger.max = 433;
-	वापस 0;
-पूर्ण
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 433;
+	return 0;
+}
 
-अटल पूर्णांक lola_dest_gain_get(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक src_ofs = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक src_num = (kcontrol->निजी_value >> 8) & 0xff;
-	अचिन्हित पूर्णांक dst_ofs = (kcontrol->निजी_value >> 16) & 0xff;
-	अचिन्हित पूर्णांक dst, mask, i;
+static int lola_dest_gain_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	unsigned int src_ofs = kcontrol->private_value & 0xff;
+	unsigned int src_num = (kcontrol->private_value >> 8) & 0xff;
+	unsigned int dst_ofs = (kcontrol->private_value >> 16) & 0xff;
+	unsigned int dst, mask, i;
 
 	dst = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id) + dst_ofs;
-	mask = पढ़ोl(&chip->mixer.array->dest_mix_gain_enable[dst]);
-	क्रम (i = 0; i < src_num; i++) अणु
-		अचिन्हित पूर्णांक src = src_ofs + i;
-		अचिन्हित लघु val;
-		अगर (!(chip->mixer.src_mask & (1 << src)))
-			वापस -EINVAL;
-		अगर (mask & (1 << dst))
-			val = पढ़ोw(&chip->mixer.array->dest_mix_gain[dst][src]) + 1;
-		अन्यथा
+	mask = readl(&chip->mixer.array->dest_mix_gain_enable[dst]);
+	for (i = 0; i < src_num; i++) {
+		unsigned int src = src_ofs + i;
+		unsigned short val;
+		if (!(chip->mixer.src_mask & (1 << src)))
+			return -EINVAL;
+		if (mask & (1 << dst))
+			val = readw(&chip->mixer.array->dest_mix_gain[dst][src]) + 1;
+		else
 			val = 0;
-		ucontrol->value.पूर्णांकeger.value[i] = val;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		ucontrol->value.integer.value[i] = val;
+	}
+	return 0;
+}
 
-अटल पूर्णांक lola_dest_gain_put(काष्ठा snd_kcontrol *kcontrol,
-			      काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा lola *chip = snd_kcontrol_chip(kcontrol);
-	अचिन्हित पूर्णांक src_ofs = kcontrol->निजी_value & 0xff;
-	अचिन्हित पूर्णांक src_num = (kcontrol->निजी_value >> 8) & 0xff;
-	अचिन्हित पूर्णांक dst_ofs = (kcontrol->निजी_value >> 16) & 0xff;
-	अचिन्हित पूर्णांक dst, mask;
-	अचिन्हित लघु gains[MAX_STREAM_COUNT];
-	पूर्णांक i, num;
+static int lola_dest_gain_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	struct lola *chip = snd_kcontrol_chip(kcontrol);
+	unsigned int src_ofs = kcontrol->private_value & 0xff;
+	unsigned int src_num = (kcontrol->private_value >> 8) & 0xff;
+	unsigned int dst_ofs = (kcontrol->private_value >> 16) & 0xff;
+	unsigned int dst, mask;
+	unsigned short gains[MAX_STREAM_COUNT];
+	int i, num;
 
 	mask = 0;
 	num = 0;
-	क्रम (i = 0; i < src_num; i++) अणु
-		अचिन्हित लघु val = ucontrol->value.पूर्णांकeger.value[i];
-		अगर (val) अणु
+	for (i = 0; i < src_num; i++) {
+		unsigned short val = ucontrol->value.integer.value[i];
+		if (val) {
 			gains[num++] = val - 1;
 			mask |= 1 << i;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mask <<= src_ofs;
 	dst = snd_ctl_get_ioffidx(kcontrol, &ucontrol->id) + dst_ofs;
-	वापस lola_mixer_set_dest_gains(chip, dst, mask, gains);
-पूर्ण
+	return lola_mixer_set_dest_gains(chip, dst, mask, gains);
+}
 
-अटल स्थिर DECLARE_TLV_DB_SCALE(lola_dest_gain_tlv, -8425, 25, 1);
+static const DECLARE_TLV_DB_SCALE(lola_dest_gain_tlv, -8425, 25, 1);
 
-अटल काष्ठा snd_kcontrol_new lola_dest_gain_mixer = अणु
-	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
+static struct snd_kcontrol_new lola_dest_gain_mixer = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 		   SNDRV_CTL_ELEM_ACCESS_TLV_READ),
 	.info = lola_dest_gain_info,
 	.get = lola_dest_gain_get,
 	.put = lola_dest_gain_put,
 	.tlv.p = lola_dest_gain_tlv,
-पूर्ण;
+};
 
-अटल पूर्णांक create_dest_gain_mixer(काष्ठा lola *chip,
-				  पूर्णांक src_num, पूर्णांक src_ofs,
-				  पूर्णांक num, पूर्णांक ofs, अक्षर *name)
-अणु
+static int create_dest_gain_mixer(struct lola *chip,
+				  int src_num, int src_ofs,
+				  int num, int ofs, char *name)
+{
 	lola_dest_gain_mixer.count = num;
 	lola_dest_gain_mixer.name = name;
-	lola_dest_gain_mixer.निजी_value =
+	lola_dest_gain_mixer.private_value =
 		src_ofs + (src_num << 8) + (ofs << 16) + (num << 24);
-	वापस snd_ctl_add(chip->card,
+	return snd_ctl_add(chip->card,
 			  snd_ctl_new1(&lola_dest_gain_mixer, chip));
-पूर्ण
-#पूर्ण_अगर /* not used */
+}
+#endif /* not used */
 
 /*
  */
-पूर्णांक lola_create_mixer(काष्ठा lola *chip)
-अणु
-	पूर्णांक err;
+int lola_create_mixer(struct lola *chip)
+{
+	int err;
 
 	err = create_analog_mixer(chip, PLAY, "Analog Playback Volume");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_analog_mixer(chip, CAPT, "Analog Capture Volume");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_input_src_mixer(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_src_gain_mixer(chip, chip->mixer.src_phys_ins, 0,
 				    "Digital Capture Volume");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_src_gain_mixer(chip, chip->mixer.src_stream_outs,
 				    chip->mixer.src_stream_out_ofs,
 				    "Digital Playback Volume");
-	अगर (err < 0)
-		वापस err;
-#अगर 0
+	if (err < 0)
+		return err;
+#if 0
 /* FIXME: buggy mixer matrix handling */
 	err = create_dest_gain_mixer(chip,
 				     chip->mixer.src_phys_ins, 0,
 				     chip->mixer.dest_stream_ins, 0,
 				     "Line Capture Volume");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_dest_gain_mixer(chip,
 				     chip->mixer.src_stream_outs,
 				     chip->mixer.src_stream_out_ofs,
 				     chip->mixer.dest_stream_ins, 0,
 				     "Stream-Loopback Capture Volume");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_dest_gain_mixer(chip,
 				     chip->mixer.src_phys_ins, 0,
 				     chip->mixer.dest_phys_outs,
 				     chip->mixer.dest_phys_out_ofs,
 				     "Line-Loopback Playback Volume");
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 	err = create_dest_gain_mixer(chip,
 				     chip->mixer.src_stream_outs,
 				     chip->mixer.src_stream_out_ofs,
 				     chip->mixer.dest_phys_outs,
 				     chip->mixer.dest_phys_out_ofs,
 				     "Stream Playback Volume");
-	अगर (err < 0)
-		वापस err;
-#पूर्ण_अगर /* FIXME */
-	वापस init_mixer_values(chip);
-पूर्ण
+	if (err < 0)
+		return err;
+#endif /* FIXME */
+	return init_mixer_values(chip);
+}

@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * drivers/media/i2c/lm3560.c
- * General device driver क्रम TI lm3559, lm3560, FLASH LED Driver
+ * General device driver for TI lm3559, lm3560, FLASH LED Driver
  *
  * Copyright (C) 2013 Texas Instruments
  *
@@ -10,280 +9,280 @@
  *			Ldd-Mlp <ldd-mlp@list.ti.com>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/i2c/lm3560.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/mutex.h>
+#include <linux/regmap.h>
+#include <linux/videodev2.h>
+#include <media/i2c/lm3560.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
 
-/* रेजिस्टरs definitions */
-#घोषणा REG_ENABLE		0x10
-#घोषणा REG_TORCH_BR	0xa0
-#घोषणा REG_FLASH_BR	0xb0
-#घोषणा REG_FLASH_TOUT	0xc0
-#घोषणा REG_FLAG		0xd0
-#घोषणा REG_CONFIG1		0xe0
+/* registers definitions */
+#define REG_ENABLE		0x10
+#define REG_TORCH_BR	0xa0
+#define REG_FLASH_BR	0xb0
+#define REG_FLASH_TOUT	0xc0
+#define REG_FLAG		0xd0
+#define REG_CONFIG1		0xe0
 
 /* fault mask */
-#घोषणा FAULT_TIMEOUT	(1<<0)
-#घोषणा FAULT_OVERTEMP	(1<<1)
-#घोषणा FAULT_SHORT_CIRCUIT	(1<<2)
+#define FAULT_TIMEOUT	(1<<0)
+#define FAULT_OVERTEMP	(1<<1)
+#define FAULT_SHORT_CIRCUIT	(1<<2)
 
-क्रमागत led_enable अणु
+enum led_enable {
 	MODE_SHDN = 0x0,
 	MODE_TORCH = 0x2,
 	MODE_FLASH = 0x3,
-पूर्ण;
+};
 
 /**
- * काष्ठा lm3560_flash
+ * struct lm3560_flash
  *
- * @dev: poपूर्णांकer to &काष्ठा device
- * @pdata: platक्रमm data
- * @regmap: reg. map क्रम i2c
- * @lock: muxtex क्रम serial access.
+ * @dev: pointer to &struct device
+ * @pdata: platform data
+ * @regmap: reg. map for i2c
+ * @lock: muxtex for serial access.
  * @led_mode: V4L2 LED mode
  * @ctrls_led: V4L2 controls
  * @subdev_led: V4L2 subdev
  */
-काष्ठा lm3560_flash अणु
-	काष्ठा device *dev;
-	काष्ठा lm3560_platक्रमm_data *pdata;
-	काष्ठा regmap *regmap;
-	काष्ठा mutex lock;
+struct lm3560_flash {
+	struct device *dev;
+	struct lm3560_platform_data *pdata;
+	struct regmap *regmap;
+	struct mutex lock;
 
-	क्रमागत v4l2_flash_led_mode led_mode;
-	काष्ठा v4l2_ctrl_handler ctrls_led[LM3560_LED_MAX];
-	काष्ठा v4l2_subdev subdev_led[LM3560_LED_MAX];
-पूर्ण;
+	enum v4l2_flash_led_mode led_mode;
+	struct v4l2_ctrl_handler ctrls_led[LM3560_LED_MAX];
+	struct v4l2_subdev subdev_led[LM3560_LED_MAX];
+};
 
-#घोषणा to_lm3560_flash(_ctrl, _no)	\
-	container_of(_ctrl->handler, काष्ठा lm3560_flash, ctrls_led[_no])
+#define to_lm3560_flash(_ctrl, _no)	\
+	container_of(_ctrl->handler, struct lm3560_flash, ctrls_led[_no])
 
 /* enable mode control */
-अटल पूर्णांक lm3560_mode_ctrl(काष्ठा lm3560_flash *flash)
-अणु
-	पूर्णांक rval = -EINVAL;
+static int lm3560_mode_ctrl(struct lm3560_flash *flash)
+{
+	int rval = -EINVAL;
 
-	चयन (flash->led_mode) अणु
-	हाल V4L2_FLASH_LED_MODE_NONE:
+	switch (flash->led_mode) {
+	case V4L2_FLASH_LED_MODE_NONE:
 		rval = regmap_update_bits(flash->regmap,
 					  REG_ENABLE, 0x03, MODE_SHDN);
-		अवरोध;
-	हाल V4L2_FLASH_LED_MODE_TORCH:
+		break;
+	case V4L2_FLASH_LED_MODE_TORCH:
 		rval = regmap_update_bits(flash->regmap,
 					  REG_ENABLE, 0x03, MODE_TORCH);
-		अवरोध;
-	हाल V4L2_FLASH_LED_MODE_FLASH:
+		break;
+	case V4L2_FLASH_LED_MODE_FLASH:
 		rval = regmap_update_bits(flash->regmap,
 					  REG_ENABLE, 0x03, MODE_FLASH);
-		अवरोध;
-	पूर्ण
-	वापस rval;
-पूर्ण
+		break;
+	}
+	return rval;
+}
 
 /* led1/2 enable/disable */
-अटल पूर्णांक lm3560_enable_ctrl(काष्ठा lm3560_flash *flash,
-			      क्रमागत lm3560_led_id led_no, bool on)
-अणु
-	पूर्णांक rval;
+static int lm3560_enable_ctrl(struct lm3560_flash *flash,
+			      enum lm3560_led_id led_no, bool on)
+{
+	int rval;
 
-	अगर (led_no == LM3560_LED0) अणु
-		अगर (on)
+	if (led_no == LM3560_LED0) {
+		if (on)
 			rval = regmap_update_bits(flash->regmap,
 						  REG_ENABLE, 0x08, 0x08);
-		अन्यथा
+		else
 			rval = regmap_update_bits(flash->regmap,
 						  REG_ENABLE, 0x08, 0x00);
-	पूर्ण अन्यथा अणु
-		अगर (on)
+	} else {
+		if (on)
 			rval = regmap_update_bits(flash->regmap,
 						  REG_ENABLE, 0x10, 0x10);
-		अन्यथा
+		else
 			rval = regmap_update_bits(flash->regmap,
 						  REG_ENABLE, 0x10, 0x00);
-	पूर्ण
-	वापस rval;
-पूर्ण
+	}
+	return rval;
+}
 
 /* torch1/2 brightness control */
-अटल पूर्णांक lm3560_torch_brt_ctrl(काष्ठा lm3560_flash *flash,
-				 क्रमागत lm3560_led_id led_no, अचिन्हित पूर्णांक brt)
-अणु
-	पूर्णांक rval;
+static int lm3560_torch_brt_ctrl(struct lm3560_flash *flash,
+				 enum lm3560_led_id led_no, unsigned int brt)
+{
+	int rval;
 	u8 br_bits;
 
-	अगर (brt < LM3560_TORCH_BRT_MIN)
-		वापस lm3560_enable_ctrl(flash, led_no, false);
-	अन्यथा
+	if (brt < LM3560_TORCH_BRT_MIN)
+		return lm3560_enable_ctrl(flash, led_no, false);
+	else
 		rval = lm3560_enable_ctrl(flash, led_no, true);
 
 	br_bits = LM3560_TORCH_BRT_uA_TO_REG(brt);
-	अगर (led_no == LM3560_LED0)
+	if (led_no == LM3560_LED0)
 		rval = regmap_update_bits(flash->regmap,
 					  REG_TORCH_BR, 0x07, br_bits);
-	अन्यथा
+	else
 		rval = regmap_update_bits(flash->regmap,
 					  REG_TORCH_BR, 0x38, br_bits << 3);
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /* flash1/2 brightness control */
-अटल पूर्णांक lm3560_flash_brt_ctrl(काष्ठा lm3560_flash *flash,
-				 क्रमागत lm3560_led_id led_no, अचिन्हित पूर्णांक brt)
-अणु
-	पूर्णांक rval;
+static int lm3560_flash_brt_ctrl(struct lm3560_flash *flash,
+				 enum lm3560_led_id led_no, unsigned int brt)
+{
+	int rval;
 	u8 br_bits;
 
-	अगर (brt < LM3560_FLASH_BRT_MIN)
-		वापस lm3560_enable_ctrl(flash, led_no, false);
-	अन्यथा
+	if (brt < LM3560_FLASH_BRT_MIN)
+		return lm3560_enable_ctrl(flash, led_no, false);
+	else
 		rval = lm3560_enable_ctrl(flash, led_no, true);
 
 	br_bits = LM3560_FLASH_BRT_uA_TO_REG(brt);
-	अगर (led_no == LM3560_LED0)
+	if (led_no == LM3560_LED0)
 		rval = regmap_update_bits(flash->regmap,
 					  REG_FLASH_BR, 0x0f, br_bits);
-	अन्यथा
+	else
 		rval = regmap_update_bits(flash->regmap,
 					  REG_FLASH_BR, 0xf0, br_bits << 4);
 
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
 /* v4l2 controls  */
-अटल पूर्णांक lm3560_get_ctrl(काष्ठा v4l2_ctrl *ctrl, क्रमागत lm3560_led_id led_no)
-अणु
-	काष्ठा lm3560_flash *flash = to_lm3560_flash(ctrl, led_no);
-	पूर्णांक rval = -EINVAL;
+static int lm3560_get_ctrl(struct v4l2_ctrl *ctrl, enum lm3560_led_id led_no)
+{
+	struct lm3560_flash *flash = to_lm3560_flash(ctrl, led_no);
+	int rval = -EINVAL;
 
 	mutex_lock(&flash->lock);
 
-	अगर (ctrl->id == V4L2_CID_FLASH_FAULT) अणु
+	if (ctrl->id == V4L2_CID_FLASH_FAULT) {
 		s32 fault = 0;
-		अचिन्हित पूर्णांक reg_val;
-		rval = regmap_पढ़ो(flash->regmap, REG_FLAG, &reg_val);
-		अगर (rval < 0)
-			जाओ out;
-		अगर (reg_val & FAULT_SHORT_CIRCUIT)
+		unsigned int reg_val;
+		rval = regmap_read(flash->regmap, REG_FLAG, &reg_val);
+		if (rval < 0)
+			goto out;
+		if (reg_val & FAULT_SHORT_CIRCUIT)
 			fault |= V4L2_FLASH_FAULT_SHORT_CIRCUIT;
-		अगर (reg_val & FAULT_OVERTEMP)
+		if (reg_val & FAULT_OVERTEMP)
 			fault |= V4L2_FLASH_FAULT_OVER_TEMPERATURE;
-		अगर (reg_val & FAULT_TIMEOUT)
+		if (reg_val & FAULT_TIMEOUT)
 			fault |= V4L2_FLASH_FAULT_TIMEOUT;
 		ctrl->cur.val = fault;
-	पूर्ण
+	}
 
 out:
 	mutex_unlock(&flash->lock);
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-अटल पूर्णांक lm3560_set_ctrl(काष्ठा v4l2_ctrl *ctrl, क्रमागत lm3560_led_id led_no)
-अणु
-	काष्ठा lm3560_flash *flash = to_lm3560_flash(ctrl, led_no);
+static int lm3560_set_ctrl(struct v4l2_ctrl *ctrl, enum lm3560_led_id led_no)
+{
+	struct lm3560_flash *flash = to_lm3560_flash(ctrl, led_no);
 	u8 tout_bits;
-	पूर्णांक rval = -EINVAL;
+	int rval = -EINVAL;
 
 	mutex_lock(&flash->lock);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_FLASH_LED_MODE:
+	switch (ctrl->id) {
+	case V4L2_CID_FLASH_LED_MODE:
 		flash->led_mode = ctrl->val;
-		अगर (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH)
+		if (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH)
 			rval = lm3560_mode_ctrl(flash);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_FLASH_STROBE_SOURCE:
+	case V4L2_CID_FLASH_STROBE_SOURCE:
 		rval = regmap_update_bits(flash->regmap,
 					  REG_CONFIG1, 0x04, (ctrl->val) << 2);
-		अगर (rval < 0)
-			जाओ err_out;
-		अवरोध;
+		if (rval < 0)
+			goto err_out;
+		break;
 
-	हाल V4L2_CID_FLASH_STROBE:
-		अगर (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH) अणु
+	case V4L2_CID_FLASH_STROBE:
+		if (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH) {
 			rval = -EBUSY;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		flash->led_mode = V4L2_FLASH_LED_MODE_FLASH;
 		rval = lm3560_mode_ctrl(flash);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_FLASH_STROBE_STOP:
-		अगर (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH) अणु
+	case V4L2_CID_FLASH_STROBE_STOP:
+		if (flash->led_mode != V4L2_FLASH_LED_MODE_FLASH) {
 			rval = -EBUSY;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		flash->led_mode = V4L2_FLASH_LED_MODE_NONE;
 		rval = lm3560_mode_ctrl(flash);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_FLASH_TIMEOUT:
+	case V4L2_CID_FLASH_TIMEOUT:
 		tout_bits = LM3560_FLASH_TOUT_ms_TO_REG(ctrl->val);
 		rval = regmap_update_bits(flash->regmap,
 					  REG_FLASH_TOUT, 0x1f, tout_bits);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_FLASH_INTENSITY:
+	case V4L2_CID_FLASH_INTENSITY:
 		rval = lm3560_flash_brt_ctrl(flash, led_no, ctrl->val);
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_FLASH_TORCH_INTENSITY:
+	case V4L2_CID_FLASH_TORCH_INTENSITY:
 		rval = lm3560_torch_brt_ctrl(flash, led_no, ctrl->val);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 err_out:
 	mutex_unlock(&flash->lock);
-	वापस rval;
-पूर्ण
+	return rval;
+}
 
-अटल पूर्णांक lm3560_led1_get_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस lm3560_get_ctrl(ctrl, LM3560_LED1);
-पूर्ण
+static int lm3560_led1_get_ctrl(struct v4l2_ctrl *ctrl)
+{
+	return lm3560_get_ctrl(ctrl, LM3560_LED1);
+}
 
-अटल पूर्णांक lm3560_led1_set_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस lm3560_set_ctrl(ctrl, LM3560_LED1);
-पूर्ण
+static int lm3560_led1_set_ctrl(struct v4l2_ctrl *ctrl)
+{
+	return lm3560_set_ctrl(ctrl, LM3560_LED1);
+}
 
-अटल पूर्णांक lm3560_led0_get_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस lm3560_get_ctrl(ctrl, LM3560_LED0);
-पूर्ण
+static int lm3560_led0_get_ctrl(struct v4l2_ctrl *ctrl)
+{
+	return lm3560_get_ctrl(ctrl, LM3560_LED0);
+}
 
-अटल पूर्णांक lm3560_led0_set_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	वापस lm3560_set_ctrl(ctrl, LM3560_LED0);
-पूर्ण
+static int lm3560_led0_set_ctrl(struct v4l2_ctrl *ctrl)
+{
+	return lm3560_set_ctrl(ctrl, LM3560_LED0);
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops lm3560_led_ctrl_ops[LM3560_LED_MAX] = अणु
-	[LM3560_LED0] = अणु
-			 .g_अस्थिर_ctrl = lm3560_led0_get_ctrl,
+static const struct v4l2_ctrl_ops lm3560_led_ctrl_ops[LM3560_LED_MAX] = {
+	[LM3560_LED0] = {
+			 .g_volatile_ctrl = lm3560_led0_get_ctrl,
 			 .s_ctrl = lm3560_led0_set_ctrl,
-			 पूर्ण,
-	[LM3560_LED1] = अणु
-			 .g_अस्थिर_ctrl = lm3560_led1_get_ctrl,
+			 },
+	[LM3560_LED1] = {
+			 .g_volatile_ctrl = lm3560_led1_get_ctrl,
 			 .s_ctrl = lm3560_led1_set_ctrl,
-			 पूर्ण
-पूर्ण;
+			 }
+};
 
-अटल पूर्णांक lm3560_init_controls(काष्ठा lm3560_flash *flash,
-				क्रमागत lm3560_led_id led_no)
-अणु
-	काष्ठा v4l2_ctrl *fault;
+static int lm3560_init_controls(struct lm3560_flash *flash,
+				enum lm3560_led_id led_no)
+{
+	struct v4l2_ctrl *fault;
 	u32 max_flash_brt = flash->pdata->max_flash_brt[led_no];
 	u32 max_torch_brt = flash->pdata->max_torch_brt[led_no];
-	काष्ठा v4l2_ctrl_handler *hdl = &flash->ctrls_led[led_no];
-	स्थिर काष्ठा v4l2_ctrl_ops *ops = &lm3560_led_ctrl_ops[led_no];
+	struct v4l2_ctrl_handler *hdl = &flash->ctrls_led[led_no];
+	const struct v4l2_ctrl_ops *ops = &lm3560_led_ctrl_ops[led_no];
 
 	v4l2_ctrl_handler_init(hdl, 8);
 
@@ -303,12 +302,12 @@ err_out:
 	/* flash strobe stop */
 	v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_STROBE_STOP, 0, 0, 0, 0);
 
-	/* flash strobe समयout */
+	/* flash strobe timeout */
 	v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_TIMEOUT,
 			  LM3560_FLASH_TOUT_MIN,
-			  flash->pdata->max_flash_समयout,
+			  flash->pdata->max_flash_timeout,
 			  LM3560_FLASH_TOUT_STEP,
-			  flash->pdata->max_flash_समयout);
+			  flash->pdata->max_flash_timeout);
 
 	/* flash brt */
 	v4l2_ctrl_new_std(hdl, ops, V4L2_CID_FLASH_INTENSITY,
@@ -326,155 +325,155 @@ err_out:
 				  | V4L2_FLASH_FAULT_OVER_TEMPERATURE
 				  | V4L2_FLASH_FAULT_SHORT_CIRCUIT
 				  | V4L2_FLASH_FAULT_TIMEOUT, 0, 0);
-	अगर (fault != शून्य)
+	if (fault != NULL)
 		fault->flags |= V4L2_CTRL_FLAG_VOLATILE;
 
-	अगर (hdl->error)
-		वापस hdl->error;
+	if (hdl->error)
+		return hdl->error;
 
 	flash->subdev_led[led_no].ctrl_handler = hdl;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* initialize device */
-अटल स्थिर काष्ठा v4l2_subdev_ops lm3560_ops = अणु
-	.core = शून्य,
-पूर्ण;
+static const struct v4l2_subdev_ops lm3560_ops = {
+	.core = NULL,
+};
 
-अटल स्थिर काष्ठा regmap_config lm3560_regmap = अणु
+static const struct regmap_config lm3560_regmap = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_रेजिस्टर = 0xFF,
-पूर्ण;
+	.max_register = 0xFF,
+};
 
-अटल पूर्णांक lm3560_subdev_init(काष्ठा lm3560_flash *flash,
-			      क्रमागत lm3560_led_id led_no, अक्षर *led_name)
-अणु
-	काष्ठा i2c_client *client = to_i2c_client(flash->dev);
-	पूर्णांक rval;
+static int lm3560_subdev_init(struct lm3560_flash *flash,
+			      enum lm3560_led_id led_no, char *led_name)
+{
+	struct i2c_client *client = to_i2c_client(flash->dev);
+	int rval;
 
 	v4l2_i2c_subdev_init(&flash->subdev_led[led_no], client, &lm3560_ops);
 	flash->subdev_led[led_no].flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	strscpy(flash->subdev_led[led_no].name, led_name,
-		माप(flash->subdev_led[led_no].name));
+		sizeof(flash->subdev_led[led_no].name));
 	rval = lm3560_init_controls(flash, led_no);
-	अगर (rval)
-		जाओ err_out;
-	rval = media_entity_pads_init(&flash->subdev_led[led_no].entity, 0, शून्य);
-	अगर (rval < 0)
-		जाओ err_out;
+	if (rval)
+		goto err_out;
+	rval = media_entity_pads_init(&flash->subdev_led[led_no].entity, 0, NULL);
+	if (rval < 0)
+		goto err_out;
 	flash->subdev_led[led_no].entity.function = MEDIA_ENT_F_FLASH;
 
-	वापस rval;
+	return rval;
 
 err_out:
-	v4l2_ctrl_handler_मुक्त(&flash->ctrls_led[led_no]);
-	वापस rval;
-पूर्ण
+	v4l2_ctrl_handler_free(&flash->ctrls_led[led_no]);
+	return rval;
+}
 
-अटल पूर्णांक lm3560_init_device(काष्ठा lm3560_flash *flash)
-अणु
-	पूर्णांक rval;
-	अचिन्हित पूर्णांक reg_val;
+static int lm3560_init_device(struct lm3560_flash *flash)
+{
+	int rval;
+	unsigned int reg_val;
 
 	/* set peak current */
 	rval = regmap_update_bits(flash->regmap,
 				  REG_FLASH_TOUT, 0x60, flash->pdata->peak);
-	अगर (rval < 0)
-		वापस rval;
+	if (rval < 0)
+		return rval;
 	/* output disable */
 	flash->led_mode = V4L2_FLASH_LED_MODE_NONE;
 	rval = lm3560_mode_ctrl(flash);
-	अगर (rval < 0)
-		वापस rval;
+	if (rval < 0)
+		return rval;
 	/* reset faults */
-	rval = regmap_पढ़ो(flash->regmap, REG_FLAG, &reg_val);
-	वापस rval;
-पूर्ण
+	rval = regmap_read(flash->regmap, REG_FLAG, &reg_val);
+	return rval;
+}
 
-अटल पूर्णांक lm3560_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *devid)
-अणु
-	काष्ठा lm3560_flash *flash;
-	काष्ठा lm3560_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
-	पूर्णांक rval;
+static int lm3560_probe(struct i2c_client *client,
+			const struct i2c_device_id *devid)
+{
+	struct lm3560_flash *flash;
+	struct lm3560_platform_data *pdata = dev_get_platdata(&client->dev);
+	int rval;
 
-	flash = devm_kzalloc(&client->dev, माप(*flash), GFP_KERNEL);
-	अगर (flash == शून्य)
-		वापस -ENOMEM;
+	flash = devm_kzalloc(&client->dev, sizeof(*flash), GFP_KERNEL);
+	if (flash == NULL)
+		return -ENOMEM;
 
 	flash->regmap = devm_regmap_init_i2c(client, &lm3560_regmap);
-	अगर (IS_ERR(flash->regmap)) अणु
+	if (IS_ERR(flash->regmap)) {
 		rval = PTR_ERR(flash->regmap);
-		वापस rval;
-	पूर्ण
+		return rval;
+	}
 
-	/* अगर there is no platक्रमm data, use chip शेष value */
-	अगर (pdata == शून्य) अणु
-		pdata = devm_kzalloc(&client->dev, माप(*pdata), GFP_KERNEL);
-		अगर (pdata == शून्य)
-			वापस -ENODEV;
+	/* if there is no platform data, use chip default value */
+	if (pdata == NULL) {
+		pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
+		if (pdata == NULL)
+			return -ENODEV;
 		pdata->peak = LM3560_PEAK_3600mA;
-		pdata->max_flash_समयout = LM3560_FLASH_TOUT_MAX;
+		pdata->max_flash_timeout = LM3560_FLASH_TOUT_MAX;
 		/* led 1 */
 		pdata->max_flash_brt[LM3560_LED0] = LM3560_FLASH_BRT_MAX;
 		pdata->max_torch_brt[LM3560_LED0] = LM3560_TORCH_BRT_MAX;
 		/* led 2 */
 		pdata->max_flash_brt[LM3560_LED1] = LM3560_FLASH_BRT_MAX;
 		pdata->max_torch_brt[LM3560_LED1] = LM3560_TORCH_BRT_MAX;
-	पूर्ण
+	}
 	flash->pdata = pdata;
 	flash->dev = &client->dev;
 	mutex_init(&flash->lock);
 
 	rval = lm3560_subdev_init(flash, LM3560_LED0, "lm3560-led0");
-	अगर (rval < 0)
-		वापस rval;
+	if (rval < 0)
+		return rval;
 
 	rval = lm3560_subdev_init(flash, LM3560_LED1, "lm3560-led1");
-	अगर (rval < 0)
-		वापस rval;
+	if (rval < 0)
+		return rval;
 
 	rval = lm3560_init_device(flash);
-	अगर (rval < 0)
-		वापस rval;
+	if (rval < 0)
+		return rval;
 
 	i2c_set_clientdata(client, flash);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lm3560_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा lm3560_flash *flash = i2c_get_clientdata(client);
-	अचिन्हित पूर्णांक i;
+static int lm3560_remove(struct i2c_client *client)
+{
+	struct lm3560_flash *flash = i2c_get_clientdata(client);
+	unsigned int i;
 
-	क्रम (i = LM3560_LED0; i < LM3560_LED_MAX; i++) अणु
-		v4l2_device_unरेजिस्टर_subdev(&flash->subdev_led[i]);
-		v4l2_ctrl_handler_मुक्त(&flash->ctrls_led[i]);
+	for (i = LM3560_LED0; i < LM3560_LED_MAX; i++) {
+		v4l2_device_unregister_subdev(&flash->subdev_led[i]);
+		v4l2_ctrl_handler_free(&flash->ctrls_led[i]);
 		media_entity_cleanup(&flash->subdev_led[i].entity);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id lm3560_id_table[] = अणु
-	अणुLM3559_NAME, 0पूर्ण,
-	अणुLM3560_NAME, 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id lm3560_id_table[] = {
+	{LM3559_NAME, 0},
+	{LM3560_NAME, 0},
+	{}
+};
 
 MODULE_DEVICE_TABLE(i2c, lm3560_id_table);
 
-अटल काष्ठा i2c_driver lm3560_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver lm3560_i2c_driver = {
+	.driver = {
 		   .name = LM3560_NAME,
-		   .pm = शून्य,
-		   पूर्ण,
+		   .pm = NULL,
+		   },
 	.probe = lm3560_probe,
-	.हटाओ = lm3560_हटाओ,
+	.remove = lm3560_remove,
 	.id_table = lm3560_id_table,
-पूर्ण;
+};
 
 module_i2c_driver(lm3560_i2c_driver);
 

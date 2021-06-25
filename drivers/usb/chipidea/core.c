@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * core.c - ChipIdea USB IP core family device controller
  *
@@ -11,42 +10,42 @@
  *
  * Main Features:
  * - Four transfers are supported, usbtest is passed
- * - USB Certअगरication क्रम gadget: CH9 and Mass Storage are passed
- * - Low घातer mode
+ * - USB Certification for gadget: CH9 and Mass Storage are passed
+ * - Low power mode
  * - USB wakeup
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/extcon.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/pinctrl/consumer.h>
-#समावेश <linux/usb/ch9.h>
-#समावेश <linux/usb/gadget.h>
-#समावेश <linux/usb/otg.h>
-#समावेश <linux/usb/chipidea.h>
-#समावेश <linux/usb/of.h>
-#समावेश <linux/of.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/usb/ehci_def.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/extcon.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/module.h>
+#include <linux/idr.h>
+#include <linux/interrupt.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/pinctrl/consumer.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/otg.h>
+#include <linux/usb/chipidea.h>
+#include <linux/usb/of.h>
+#include <linux/of.h>
+#include <linux/regulator/consumer.h>
+#include <linux/usb/ehci_def.h>
 
-#समावेश "ci.h"
-#समावेश "udc.h"
-#समावेश "bits.h"
-#समावेश "host.h"
-#समावेश "otg.h"
-#समावेश "otg_fsm.h"
+#include "ci.h"
+#include "udc.h"
+#include "bits.h"
+#include "host.h"
+#include "otg.h"
+#include "otg_fsm.h"
 
-/* Controller रेजिस्टर map */
-अटल स्थिर u8 ci_regs_nolpm[] = अणु
+/* Controller register map */
+static const u8 ci_regs_nolpm[] = {
 	[CAP_CAPLENGTH]		= 0x00U,
 	[CAP_HCCPARAMS]		= 0x08U,
 	[CAP_DCCPARAMS]		= 0x24U,
@@ -69,9 +68,9 @@
 	[OP_ENDPTSTAT]		= 0x78U,
 	[OP_ENDPTCOMPLETE]	= 0x7CU,
 	[OP_ENDPTCTRL]		= 0x80U,
-पूर्ण;
+};
 
-अटल स्थिर u8 ci_regs_lpm[] = अणु
+static const u8 ci_regs_lpm[] = {
 	[CAP_CAPLENGTH]		= 0x00U,
 	[CAP_HCCPARAMS]		= 0x08U,
 	[CAP_DCCPARAMS]		= 0x24U,
@@ -94,161 +93,161 @@
 	[OP_ENDPTSTAT]		= 0xE4U,
 	[OP_ENDPTCOMPLETE]	= 0xE8U,
 	[OP_ENDPTCTRL]		= 0xECU,
-पूर्ण;
+};
 
-अटल व्योम hw_alloc_regmap(काष्ठा ci_hdrc *ci, bool is_lpm)
-अणु
-	पूर्णांक i;
+static void hw_alloc_regmap(struct ci_hdrc *ci, bool is_lpm)
+{
+	int i;
 
-	क्रम (i = 0; i < OP_ENDPTCTRL; i++)
+	for (i = 0; i < OP_ENDPTCTRL; i++)
 		ci->hw_bank.regmap[i] =
 			(i <= CAP_LAST ? ci->hw_bank.cap : ci->hw_bank.op) +
 			(is_lpm ? ci_regs_lpm[i] : ci_regs_nolpm[i]);
 
-	क्रम (; i <= OP_LAST; i++)
+	for (; i <= OP_LAST; i++)
 		ci->hw_bank.regmap[i] = ci->hw_bank.op +
 			4 * (i - OP_ENDPTCTRL) +
 			(is_lpm
 			 ? ci_regs_lpm[OP_ENDPTCTRL]
 			 : ci_regs_nolpm[OP_ENDPTCTRL]);
 
-पूर्ण
+}
 
-अटल क्रमागत ci_revision ci_get_revision(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक ver = hw_पढ़ो_id_reg(ci, ID_ID, VERSION) >> __ffs(VERSION);
-	क्रमागत ci_revision rev = CI_REVISION_UNKNOWN;
+static enum ci_revision ci_get_revision(struct ci_hdrc *ci)
+{
+	int ver = hw_read_id_reg(ci, ID_ID, VERSION) >> __ffs(VERSION);
+	enum ci_revision rev = CI_REVISION_UNKNOWN;
 
-	अगर (ver == 0x2) अणु
-		rev = hw_पढ़ो_id_reg(ci, ID_ID, REVISION)
+	if (ver == 0x2) {
+		rev = hw_read_id_reg(ci, ID_ID, REVISION)
 			>> __ffs(REVISION);
 		rev += CI_REVISION_20;
-	पूर्ण अन्यथा अगर (ver == 0x0) अणु
+	} else if (ver == 0x0) {
 		rev = CI_REVISION_1X;
-	पूर्ण
+	}
 
-	वापस rev;
-पूर्ण
+	return rev;
+}
 
 /**
- * hw_पढ़ो_पूर्णांकr_enable: वापसs पूर्णांकerrupt enable रेजिस्टर
+ * hw_read_intr_enable: returns interrupt enable register
  *
  * @ci: the controller
  *
- * This function वापसs रेजिस्टर data
+ * This function returns register data
  */
-u32 hw_पढ़ो_पूर्णांकr_enable(काष्ठा ci_hdrc *ci)
-अणु
-	वापस hw_पढ़ो(ci, OP_USBINTR, ~0);
-पूर्ण
+u32 hw_read_intr_enable(struct ci_hdrc *ci)
+{
+	return hw_read(ci, OP_USBINTR, ~0);
+}
 
 /**
- * hw_पढ़ो_पूर्णांकr_status: वापसs पूर्णांकerrupt status रेजिस्टर
+ * hw_read_intr_status: returns interrupt status register
  *
  * @ci: the controller
  *
- * This function वापसs रेजिस्टर data
+ * This function returns register data
  */
-u32 hw_पढ़ो_पूर्णांकr_status(काष्ठा ci_hdrc *ci)
-अणु
-	वापस hw_पढ़ो(ci, OP_USBSTS, ~0);
-पूर्ण
+u32 hw_read_intr_status(struct ci_hdrc *ci)
+{
+	return hw_read(ci, OP_USBSTS, ~0);
+}
 
 /**
- * hw_port_test_set: ग_लिखोs port test mode (execute without पूर्णांकerruption)
+ * hw_port_test_set: writes port test mode (execute without interruption)
  * @ci: the controller
  * @mode: new value
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-पूर्णांक hw_port_test_set(काष्ठा ci_hdrc *ci, u8 mode)
-अणु
-	स्थिर u8 TEST_MODE_MAX = 7;
+int hw_port_test_set(struct ci_hdrc *ci, u8 mode)
+{
+	const u8 TEST_MODE_MAX = 7;
 
-	अगर (mode > TEST_MODE_MAX)
-		वापस -EINVAL;
+	if (mode > TEST_MODE_MAX)
+		return -EINVAL;
 
-	hw_ग_लिखो(ci, OP_PORTSC, PORTSC_PTC, mode << __ffs(PORTSC_PTC));
-	वापस 0;
-पूर्ण
+	hw_write(ci, OP_PORTSC, PORTSC_PTC, mode << __ffs(PORTSC_PTC));
+	return 0;
+}
 
 /**
- * hw_port_test_get: पढ़ोs port test mode value
+ * hw_port_test_get: reads port test mode value
  *
  * @ci: the controller
  *
- * This function वापसs port test mode value
+ * This function returns port test mode value
  */
-u8 hw_port_test_get(काष्ठा ci_hdrc *ci)
-अणु
-	वापस hw_पढ़ो(ci, OP_PORTSC, PORTSC_PTC) >> __ffs(PORTSC_PTC);
-पूर्ण
+u8 hw_port_test_get(struct ci_hdrc *ci)
+{
+	return hw_read(ci, OP_PORTSC, PORTSC_PTC) >> __ffs(PORTSC_PTC);
+}
 
-अटल व्योम hw_रुको_phy_stable(व्योम)
-अणु
+static void hw_wait_phy_stable(void)
+{
 	/*
 	 * The phy needs some delay to output the stable status from low
-	 * घातer mode. And क्रम OTGSC, the status inमाला_दो are debounced
-	 * using a 1 ms समय स्थिरant, so, delay 2ms क्रम controller to get
-	 * the stable status, like vbus and id when the phy leaves low घातer.
+	 * power mode. And for OTGSC, the status inputs are debounced
+	 * using a 1 ms time constant, so, delay 2ms for controller to get
+	 * the stable status, like vbus and id when the phy leaves low power.
 	 */
 	usleep_range(2000, 2500);
-पूर्ण
+}
 
-/* The PHY enters/leaves low घातer mode */
-अटल व्योम ci_hdrc_enter_lpm_common(काष्ठा ci_hdrc *ci, bool enable)
-अणु
-	क्रमागत ci_hw_regs reg = ci->hw_bank.lpm ? OP_DEVLC : OP_PORTSC;
-	bool lpm = !!(hw_पढ़ो(ci, reg, PORTSC_PHCD(ci->hw_bank.lpm)));
+/* The PHY enters/leaves low power mode */
+static void ci_hdrc_enter_lpm_common(struct ci_hdrc *ci, bool enable)
+{
+	enum ci_hw_regs reg = ci->hw_bank.lpm ? OP_DEVLC : OP_PORTSC;
+	bool lpm = !!(hw_read(ci, reg, PORTSC_PHCD(ci->hw_bank.lpm)));
 
-	अगर (enable && !lpm)
-		hw_ग_लिखो(ci, reg, PORTSC_PHCD(ci->hw_bank.lpm),
+	if (enable && !lpm)
+		hw_write(ci, reg, PORTSC_PHCD(ci->hw_bank.lpm),
 				PORTSC_PHCD(ci->hw_bank.lpm));
-	अन्यथा अगर (!enable && lpm)
-		hw_ग_लिखो(ci, reg, PORTSC_PHCD(ci->hw_bank.lpm),
+	else if (!enable && lpm)
+		hw_write(ci, reg, PORTSC_PHCD(ci->hw_bank.lpm),
 				0);
-पूर्ण
+}
 
-अटल व्योम ci_hdrc_enter_lpm(काष्ठा ci_hdrc *ci, bool enable)
-अणु
-	वापस ci->platdata->enter_lpm(ci, enable);
-पूर्ण
+static void ci_hdrc_enter_lpm(struct ci_hdrc *ci, bool enable)
+{
+	return ci->platdata->enter_lpm(ci, enable);
+}
 
-अटल पूर्णांक hw_device_init(काष्ठा ci_hdrc *ci, व्योम __iomem *base)
-अणु
+static int hw_device_init(struct ci_hdrc *ci, void __iomem *base)
+{
 	u32 reg;
 
 	/* bank is a module variable */
-	ci->hw_bank.असल = base;
+	ci->hw_bank.abs = base;
 
-	ci->hw_bank.cap = ci->hw_bank.असल;
+	ci->hw_bank.cap = ci->hw_bank.abs;
 	ci->hw_bank.cap += ci->platdata->capoffset;
-	ci->hw_bank.op = ci->hw_bank.cap + (ioपढ़ो32(ci->hw_bank.cap) & 0xff);
+	ci->hw_bank.op = ci->hw_bank.cap + (ioread32(ci->hw_bank.cap) & 0xff);
 
 	hw_alloc_regmap(ci, false);
-	reg = hw_पढ़ो(ci, CAP_HCCPARAMS, HCCPARAMS_LEN) >>
+	reg = hw_read(ci, CAP_HCCPARAMS, HCCPARAMS_LEN) >>
 		__ffs(HCCPARAMS_LEN);
 	ci->hw_bank.lpm  = reg;
-	अगर (reg)
+	if (reg)
 		hw_alloc_regmap(ci, !!reg);
-	ci->hw_bank.size = ci->hw_bank.op - ci->hw_bank.असल;
+	ci->hw_bank.size = ci->hw_bank.op - ci->hw_bank.abs;
 	ci->hw_bank.size += OP_LAST;
-	ci->hw_bank.size /= माप(u32);
+	ci->hw_bank.size /= sizeof(u32);
 
-	reg = hw_पढ़ो(ci, CAP_DCCPARAMS, DCCPARAMS_DEN) >>
+	reg = hw_read(ci, CAP_DCCPARAMS, DCCPARAMS_DEN) >>
 		__ffs(DCCPARAMS_DEN);
 	ci->hw_ep_max = reg * 2;   /* cache hw ENDPT_MAX */
 
-	अगर (ci->hw_ep_max > ENDPT_MAX)
-		वापस -ENODEV;
+	if (ci->hw_ep_max > ENDPT_MAX)
+		return -ENODEV;
 
 	ci_hdrc_enter_lpm(ci, false);
 
-	/* Disable all पूर्णांकerrupts bits */
-	hw_ग_लिखो(ci, OP_USBINTR, 0xffffffff, 0);
+	/* Disable all interrupts bits */
+	hw_write(ci, OP_USBINTR, 0xffffffff, 0);
 
-	/* Clear all पूर्णांकerrupts status bits*/
-	hw_ग_लिखो(ci, OP_USBSTS, 0xffffffff, 0xffffffff);
+	/* Clear all interrupts status bits*/
+	hw_write(ci, OP_USBSTS, 0xffffffff, 0xffffffff);
 
 	ci->rev = ci_get_revision(ci);
 
@@ -258,434 +257,434 @@ u8 hw_port_test_get(काष्ठा ci_hdrc *ci)
 
 	/* setup lock mode ? */
 
-	/* ENDPTSETUPSTAT is '0' by शेष */
+	/* ENDPTSETUPSTAT is '0' by default */
 
-	/* HCSPARAMS.bf.ppc SHOULD BE zero क्रम device */
+	/* HCSPARAMS.bf.ppc SHOULD BE zero for device */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hw_phymode_configure(काष्ठा ci_hdrc *ci)
-अणु
+void hw_phymode_configure(struct ci_hdrc *ci)
+{
 	u32 portsc, lpm, sts = 0;
 
-	चयन (ci->platdata->phy_mode) अणु
-	हाल USBPHY_INTERFACE_MODE_UTMI:
+	switch (ci->platdata->phy_mode) {
+	case USBPHY_INTERFACE_MODE_UTMI:
 		portsc = PORTSC_PTS(PTS_UTMI);
 		lpm = DEVLC_PTS(PTS_UTMI);
-		अवरोध;
-	हाल USBPHY_INTERFACE_MODE_UTMIW:
+		break;
+	case USBPHY_INTERFACE_MODE_UTMIW:
 		portsc = PORTSC_PTS(PTS_UTMI) | PORTSC_PTW;
 		lpm = DEVLC_PTS(PTS_UTMI) | DEVLC_PTW;
-		अवरोध;
-	हाल USBPHY_INTERFACE_MODE_ULPI:
+		break;
+	case USBPHY_INTERFACE_MODE_ULPI:
 		portsc = PORTSC_PTS(PTS_ULPI);
 		lpm = DEVLC_PTS(PTS_ULPI);
-		अवरोध;
-	हाल USBPHY_INTERFACE_MODE_SERIAL:
+		break;
+	case USBPHY_INTERFACE_MODE_SERIAL:
 		portsc = PORTSC_PTS(PTS_SERIAL);
 		lpm = DEVLC_PTS(PTS_SERIAL);
 		sts = 1;
-		अवरोध;
-	हाल USBPHY_INTERFACE_MODE_HSIC:
+		break;
+	case USBPHY_INTERFACE_MODE_HSIC:
 		portsc = PORTSC_PTS(PTS_HSIC);
 		lpm = DEVLC_PTS(PTS_HSIC);
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	अगर (ci->hw_bank.lpm) अणु
-		hw_ग_लिखो(ci, OP_DEVLC, DEVLC_PTS(7) | DEVLC_PTW, lpm);
-		अगर (sts)
-			hw_ग_लिखो(ci, OP_DEVLC, DEVLC_STS, DEVLC_STS);
-	पूर्ण अन्यथा अणु
-		hw_ग_लिखो(ci, OP_PORTSC, PORTSC_PTS(7) | PORTSC_PTW, portsc);
-		अगर (sts)
-			hw_ग_लिखो(ci, OP_PORTSC, PORTSC_STS, PORTSC_STS);
-	पूर्ण
-पूर्ण
+	if (ci->hw_bank.lpm) {
+		hw_write(ci, OP_DEVLC, DEVLC_PTS(7) | DEVLC_PTW, lpm);
+		if (sts)
+			hw_write(ci, OP_DEVLC, DEVLC_STS, DEVLC_STS);
+	} else {
+		hw_write(ci, OP_PORTSC, PORTSC_PTS(7) | PORTSC_PTW, portsc);
+		if (sts)
+			hw_write(ci, OP_PORTSC, PORTSC_STS, PORTSC_STS);
+	}
+}
 EXPORT_SYMBOL_GPL(hw_phymode_configure);
 
 /**
  * _ci_usb_phy_init: initialize phy taking in account both phy and usb_phy
- * पूर्णांकerfaces
+ * interfaces
  * @ci: the controller
  *
- * This function वापसs an error code अगर the phy failed to init
+ * This function returns an error code if the phy failed to init
  */
-अटल पूर्णांक _ci_usb_phy_init(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक ret;
+static int _ci_usb_phy_init(struct ci_hdrc *ci)
+{
+	int ret;
 
-	अगर (ci->phy) अणु
+	if (ci->phy) {
 		ret = phy_init(ci->phy);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		ret = phy_घातer_on(ci->phy);
-		अगर (ret) अणु
-			phy_निकास(ci->phy);
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		ret = phy_power_on(ci->phy);
+		if (ret) {
+			phy_exit(ci->phy);
+			return ret;
+		}
+	} else {
 		ret = usb_phy_init(ci->usb_phy);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * _ci_usb_phy_निकास: deinitialize phy taking in account both phy and usb_phy
- * पूर्णांकerfaces
+ * _ci_usb_phy_exit: deinitialize phy taking in account both phy and usb_phy
+ * interfaces
  * @ci: the controller
  */
-अटल व्योम ci_usb_phy_निकास(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (ci->platdata->flags & CI_HDRC_OVERRIDE_PHY_CONTROL)
-		वापस;
+static void ci_usb_phy_exit(struct ci_hdrc *ci)
+{
+	if (ci->platdata->flags & CI_HDRC_OVERRIDE_PHY_CONTROL)
+		return;
 
-	अगर (ci->phy) अणु
-		phy_घातer_off(ci->phy);
-		phy_निकास(ci->phy);
-	पूर्ण अन्यथा अणु
-		usb_phy_shutकरोwn(ci->usb_phy);
-	पूर्ण
-पूर्ण
-
-/**
- * ci_usb_phy_init: initialize phy according to dअगरferent phy type
- * @ci: the controller
- *
- * This function वापसs an error code अगर usb_phy_init has failed
- */
-अटल पूर्णांक ci_usb_phy_init(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक ret;
-
-	अगर (ci->platdata->flags & CI_HDRC_OVERRIDE_PHY_CONTROL)
-		वापस 0;
-
-	चयन (ci->platdata->phy_mode) अणु
-	हाल USBPHY_INTERFACE_MODE_UTMI:
-	हाल USBPHY_INTERFACE_MODE_UTMIW:
-	हाल USBPHY_INTERFACE_MODE_HSIC:
-		ret = _ci_usb_phy_init(ci);
-		अगर (!ret)
-			hw_रुको_phy_stable();
-		अन्यथा
-			वापस ret;
-		hw_phymode_configure(ci);
-		अवरोध;
-	हाल USBPHY_INTERFACE_MODE_ULPI:
-	हाल USBPHY_INTERFACE_MODE_SERIAL:
-		hw_phymode_configure(ci);
-		ret = _ci_usb_phy_init(ci);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	शेष:
-		ret = _ci_usb_phy_init(ci);
-		अगर (!ret)
-			hw_रुको_phy_stable();
-	पूर्ण
-
-	वापस ret;
-पूर्ण
-
+	if (ci->phy) {
+		phy_power_off(ci->phy);
+		phy_exit(ci->phy);
+	} else {
+		usb_phy_shutdown(ci->usb_phy);
+	}
+}
 
 /**
- * ci_platक्रमm_configure: करो controller configure
+ * ci_usb_phy_init: initialize phy according to different phy type
  * @ci: the controller
  *
+ * This function returns an error code if usb_phy_init has failed
  */
-व्योम ci_platक्रमm_configure(काष्ठा ci_hdrc *ci)
-अणु
+static int ci_usb_phy_init(struct ci_hdrc *ci)
+{
+	int ret;
+
+	if (ci->platdata->flags & CI_HDRC_OVERRIDE_PHY_CONTROL)
+		return 0;
+
+	switch (ci->platdata->phy_mode) {
+	case USBPHY_INTERFACE_MODE_UTMI:
+	case USBPHY_INTERFACE_MODE_UTMIW:
+	case USBPHY_INTERFACE_MODE_HSIC:
+		ret = _ci_usb_phy_init(ci);
+		if (!ret)
+			hw_wait_phy_stable();
+		else
+			return ret;
+		hw_phymode_configure(ci);
+		break;
+	case USBPHY_INTERFACE_MODE_ULPI:
+	case USBPHY_INTERFACE_MODE_SERIAL:
+		hw_phymode_configure(ci);
+		ret = _ci_usb_phy_init(ci);
+		if (ret)
+			return ret;
+		break;
+	default:
+		ret = _ci_usb_phy_init(ci);
+		if (!ret)
+			hw_wait_phy_stable();
+	}
+
+	return ret;
+}
+
+
+/**
+ * ci_platform_configure: do controller configure
+ * @ci: the controller
+ *
+ */
+void ci_platform_configure(struct ci_hdrc *ci)
+{
 	bool is_device_mode, is_host_mode;
 
-	is_device_mode = hw_पढ़ो(ci, OP_USBMODE, USBMODE_CM) == USBMODE_CM_DC;
-	is_host_mode = hw_पढ़ो(ci, OP_USBMODE, USBMODE_CM) == USBMODE_CM_HC;
+	is_device_mode = hw_read(ci, OP_USBMODE, USBMODE_CM) == USBMODE_CM_DC;
+	is_host_mode = hw_read(ci, OP_USBMODE, USBMODE_CM) == USBMODE_CM_HC;
 
-	अगर (is_device_mode) अणु
+	if (is_device_mode) {
 		phy_set_mode(ci->phy, PHY_MODE_USB_DEVICE);
 
-		अगर (ci->platdata->flags & CI_HDRC_DISABLE_DEVICE_STREAMING)
-			hw_ग_लिखो(ci, OP_USBMODE, USBMODE_CI_SDIS,
+		if (ci->platdata->flags & CI_HDRC_DISABLE_DEVICE_STREAMING)
+			hw_write(ci, OP_USBMODE, USBMODE_CI_SDIS,
 				 USBMODE_CI_SDIS);
-	पूर्ण
+	}
 
-	अगर (is_host_mode) अणु
+	if (is_host_mode) {
 		phy_set_mode(ci->phy, PHY_MODE_USB_HOST);
 
-		अगर (ci->platdata->flags & CI_HDRC_DISABLE_HOST_STREAMING)
-			hw_ग_लिखो(ci, OP_USBMODE, USBMODE_CI_SDIS,
+		if (ci->platdata->flags & CI_HDRC_DISABLE_HOST_STREAMING)
+			hw_write(ci, OP_USBMODE, USBMODE_CI_SDIS,
 				 USBMODE_CI_SDIS);
-	पूर्ण
+	}
 
-	अगर (ci->platdata->flags & CI_HDRC_FORCE_FULLSPEED) अणु
-		अगर (ci->hw_bank.lpm)
-			hw_ग_लिखो(ci, OP_DEVLC, DEVLC_PFSC, DEVLC_PFSC);
-		अन्यथा
-			hw_ग_लिखो(ci, OP_PORTSC, PORTSC_PFSC, PORTSC_PFSC);
-	पूर्ण
+	if (ci->platdata->flags & CI_HDRC_FORCE_FULLSPEED) {
+		if (ci->hw_bank.lpm)
+			hw_write(ci, OP_DEVLC, DEVLC_PFSC, DEVLC_PFSC);
+		else
+			hw_write(ci, OP_PORTSC, PORTSC_PFSC, PORTSC_PFSC);
+	}
 
-	अगर (ci->platdata->flags & CI_HDRC_SET_NON_ZERO_TTHA)
-		hw_ग_लिखो(ci, OP_TTCTRL, TTCTRL_TTHA_MASK, TTCTRL_TTHA);
+	if (ci->platdata->flags & CI_HDRC_SET_NON_ZERO_TTHA)
+		hw_write(ci, OP_TTCTRL, TTCTRL_TTHA_MASK, TTCTRL_TTHA);
 
-	hw_ग_लिखो(ci, OP_USBCMD, 0xff0000, ci->platdata->itc_setting << 16);
+	hw_write(ci, OP_USBCMD, 0xff0000, ci->platdata->itc_setting << 16);
 
-	अगर (ci->platdata->flags & CI_HDRC_OVERRIDE_AHB_BURST)
-		hw_ग_लिखो_id_reg(ci, ID_SBUSCFG, AHBBRST_MASK,
+	if (ci->platdata->flags & CI_HDRC_OVERRIDE_AHB_BURST)
+		hw_write_id_reg(ci, ID_SBUSCFG, AHBBRST_MASK,
 			ci->platdata->ahb_burst_config);
 
 	/* override burst size, take effect only when ahb_burst_config is 0 */
-	अगर (!hw_पढ़ो_id_reg(ci, ID_SBUSCFG, AHBBRST_MASK)) अणु
-		अगर (ci->platdata->flags & CI_HDRC_OVERRIDE_TX_BURST)
-			hw_ग_लिखो(ci, OP_BURSTSIZE, TX_BURST_MASK,
+	if (!hw_read_id_reg(ci, ID_SBUSCFG, AHBBRST_MASK)) {
+		if (ci->platdata->flags & CI_HDRC_OVERRIDE_TX_BURST)
+			hw_write(ci, OP_BURSTSIZE, TX_BURST_MASK,
 			ci->platdata->tx_burst_size << __ffs(TX_BURST_MASK));
 
-		अगर (ci->platdata->flags & CI_HDRC_OVERRIDE_RX_BURST)
-			hw_ग_लिखो(ci, OP_BURSTSIZE, RX_BURST_MASK,
+		if (ci->platdata->flags & CI_HDRC_OVERRIDE_RX_BURST)
+			hw_write(ci, OP_BURSTSIZE, RX_BURST_MASK,
 				ci->platdata->rx_burst_size);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * hw_controller_reset: करो controller reset
+ * hw_controller_reset: do controller reset
  * @ci: the controller
   *
- * This function वापसs an error code
+ * This function returns an error code
  */
-अटल पूर्णांक hw_controller_reset(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक count = 0;
+static int hw_controller_reset(struct ci_hdrc *ci)
+{
+	int count = 0;
 
-	hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RST, USBCMD_RST);
-	जबतक (hw_पढ़ो(ci, OP_USBCMD, USBCMD_RST)) अणु
+	hw_write(ci, OP_USBCMD, USBCMD_RST, USBCMD_RST);
+	while (hw_read(ci, OP_USBCMD, USBCMD_RST)) {
 		udelay(10);
-		अगर (count++ > 1000)
-			वापस -ETIMEDOUT;
-	पूर्ण
+		if (count++ > 1000)
+			return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * hw_device_reset: resets chip (execute without पूर्णांकerruption)
+ * hw_device_reset: resets chip (execute without interruption)
  * @ci: the controller
  *
- * This function वापसs an error code
+ * This function returns an error code
  */
-पूर्णांक hw_device_reset(काष्ठा ci_hdrc *ci)
-अणु
-	पूर्णांक ret;
+int hw_device_reset(struct ci_hdrc *ci)
+{
+	int ret;
 
-	/* should flush & stop beक्रमe reset */
-	hw_ग_लिखो(ci, OP_ENDPTFLUSH, ~0, ~0);
-	hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RS, 0);
+	/* should flush & stop before reset */
+	hw_write(ci, OP_ENDPTFLUSH, ~0, ~0);
+	hw_write(ci, OP_USBCMD, USBCMD_RS, 0);
 
 	ret = hw_controller_reset(ci);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(ci->dev, "error resetting controller, ret=%d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ci->platdata->notअगरy_event) अणु
-		ret = ci->platdata->notअगरy_event(ci,
+	if (ci->platdata->notify_event) {
+		ret = ci->platdata->notify_event(ci,
 			CI_HDRC_CONTROLLER_RESET_EVENT);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	/* USBMODE should be configured step by step */
-	hw_ग_लिखो(ci, OP_USBMODE, USBMODE_CM, USBMODE_CM_IDLE);
-	hw_ग_लिखो(ci, OP_USBMODE, USBMODE_CM, USBMODE_CM_DC);
+	hw_write(ci, OP_USBMODE, USBMODE_CM, USBMODE_CM_IDLE);
+	hw_write(ci, OP_USBMODE, USBMODE_CM, USBMODE_CM_DC);
 	/* HW >= 2.3 */
-	hw_ग_लिखो(ci, OP_USBMODE, USBMODE_SLOM, USBMODE_SLOM);
+	hw_write(ci, OP_USBMODE, USBMODE_SLOM, USBMODE_SLOM);
 
-	अगर (hw_पढ़ो(ci, OP_USBMODE, USBMODE_CM) != USBMODE_CM_DC) अणु
+	if (hw_read(ci, OP_USBMODE, USBMODE_CM) != USBMODE_CM_DC) {
 		dev_err(ci->dev, "cannot enter in %s device mode\n",
 			ci_role(ci)->name);
 		dev_err(ci->dev, "lpm = %i\n", ci->hw_bank.lpm);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ci_platक्रमm_configure(ci);
+	ci_platform_configure(ci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t ci_irq(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा ci_hdrc *ci = data;
-	irqवापस_t ret = IRQ_NONE;
+static irqreturn_t ci_irq(int irq, void *data)
+{
+	struct ci_hdrc *ci = data;
+	irqreturn_t ret = IRQ_NONE;
 	u32 otgsc = 0;
 
-	अगर (ci->in_lpm) अणु
+	if (ci->in_lpm) {
 		disable_irq_nosync(irq);
-		ci->wakeup_पूर्णांक = true;
-		pm_runसमय_get(ci->dev);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		ci->wakeup_int = true;
+		pm_runtime_get(ci->dev);
+		return IRQ_HANDLED;
+	}
 
-	अगर (ci->is_otg) अणु
-		otgsc = hw_पढ़ो_otgsc(ci, ~0);
-		अगर (ci_otg_is_fsm_mode(ci)) अणु
+	if (ci->is_otg) {
+		otgsc = hw_read_otgsc(ci, ~0);
+		if (ci_otg_is_fsm_mode(ci)) {
 			ret = ci_otg_fsm_irq(ci);
-			अगर (ret == IRQ_HANDLED)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret == IRQ_HANDLED)
+				return ret;
+		}
+	}
 
 	/*
-	 * Handle id change पूर्णांकerrupt, it indicates device/host function
-	 * चयन.
+	 * Handle id change interrupt, it indicates device/host function
+	 * switch.
 	 */
-	अगर (ci->is_otg && (otgsc & OTGSC_IDIE) && (otgsc & OTGSC_IDIS)) अणु
+	if (ci->is_otg && (otgsc & OTGSC_IDIE) && (otgsc & OTGSC_IDIS)) {
 		ci->id_event = true;
 		/* Clear ID change irq status */
-		hw_ग_लिखो_otgsc(ci, OTGSC_IDIS, OTGSC_IDIS);
+		hw_write_otgsc(ci, OTGSC_IDIS, OTGSC_IDIS);
 		ci_otg_queue_work(ci);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	/*
-	 * Handle vbus change पूर्णांकerrupt, it indicates device connection
+	 * Handle vbus change interrupt, it indicates device connection
 	 * and disconnection events.
 	 */
-	अगर (ci->is_otg && (otgsc & OTGSC_BSVIE) && (otgsc & OTGSC_BSVIS)) अणु
+	if (ci->is_otg && (otgsc & OTGSC_BSVIE) && (otgsc & OTGSC_BSVIS)) {
 		ci->b_sess_valid_event = true;
 		/* Clear BSV irq */
-		hw_ग_लिखो_otgsc(ci, OTGSC_BSVIS, OTGSC_BSVIS);
+		hw_write_otgsc(ci, OTGSC_BSVIS, OTGSC_BSVIS);
 		ci_otg_queue_work(ci);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	/* Handle device/host पूर्णांकerrupt */
-	अगर (ci->role != CI_ROLE_END)
+	/* Handle device/host interrupt */
+	if (ci->role != CI_ROLE_END)
 		ret = ci_role(ci)->irq(ci);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ci_cable_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
-			     व्योम *ptr)
-अणु
-	काष्ठा ci_hdrc_cable *cbl = container_of(nb, काष्ठा ci_hdrc_cable, nb);
-	काष्ठा ci_hdrc *ci = cbl->ci;
+static int ci_cable_notifier(struct notifier_block *nb, unsigned long event,
+			     void *ptr)
+{
+	struct ci_hdrc_cable *cbl = container_of(nb, struct ci_hdrc_cable, nb);
+	struct ci_hdrc *ci = cbl->ci;
 
 	cbl->connected = event;
 	cbl->changed = true;
 
 	ci_irq(ci->irq, ci);
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
-अटल क्रमागत usb_role ci_usb_role_चयन_get(काष्ठा usb_role_चयन *sw)
-अणु
-	काष्ठा ci_hdrc *ci = usb_role_चयन_get_drvdata(sw);
-	क्रमागत usb_role role;
-	अचिन्हित दीर्घ flags;
+static enum usb_role ci_usb_role_switch_get(struct usb_role_switch *sw)
+{
+	struct ci_hdrc *ci = usb_role_switch_get_drvdata(sw);
+	enum usb_role role;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ci->lock, flags);
 	role = ci_role_to_usb_role(ci);
 	spin_unlock_irqrestore(&ci->lock, flags);
 
-	वापस role;
-पूर्ण
+	return role;
+}
 
-अटल पूर्णांक ci_usb_role_चयन_set(काष्ठा usb_role_चयन *sw,
-				  क्रमागत usb_role role)
-अणु
-	काष्ठा ci_hdrc *ci = usb_role_चयन_get_drvdata(sw);
-	काष्ठा ci_hdrc_cable *cable = शून्य;
-	क्रमागत usb_role current_role = ci_role_to_usb_role(ci);
-	क्रमागत ci_role ci_role = usb_role_to_ci_role(role);
-	अचिन्हित दीर्घ flags;
+static int ci_usb_role_switch_set(struct usb_role_switch *sw,
+				  enum usb_role role)
+{
+	struct ci_hdrc *ci = usb_role_switch_get_drvdata(sw);
+	struct ci_hdrc_cable *cable = NULL;
+	enum usb_role current_role = ci_role_to_usb_role(ci);
+	enum ci_role ci_role = usb_role_to_ci_role(role);
+	unsigned long flags;
 
-	अगर ((ci_role != CI_ROLE_END && !ci->roles[ci_role]) ||
+	if ((ci_role != CI_ROLE_END && !ci->roles[ci_role]) ||
 	    (current_role == role))
-		वापस 0;
+		return 0;
 
-	pm_runसमय_get_sync(ci->dev);
+	pm_runtime_get_sync(ci->dev);
 	/* Stop current role */
 	spin_lock_irqsave(&ci->lock, flags);
-	अगर (current_role == USB_ROLE_DEVICE)
+	if (current_role == USB_ROLE_DEVICE)
 		cable = &ci->platdata->vbus_extcon;
-	अन्यथा अगर (current_role == USB_ROLE_HOST)
+	else if (current_role == USB_ROLE_HOST)
 		cable = &ci->platdata->id_extcon;
 
-	अगर (cable) अणु
+	if (cable) {
 		cable->changed = true;
 		cable->connected = false;
 		ci_irq(ci->irq, ci);
 		spin_unlock_irqrestore(&ci->lock, flags);
-		अगर (ci->wq && role != USB_ROLE_NONE)
+		if (ci->wq && role != USB_ROLE_NONE)
 			flush_workqueue(ci->wq);
 		spin_lock_irqsave(&ci->lock, flags);
-	पूर्ण
+	}
 
-	cable = शून्य;
+	cable = NULL;
 
 	/* Start target role */
-	अगर (role == USB_ROLE_DEVICE)
+	if (role == USB_ROLE_DEVICE)
 		cable = &ci->platdata->vbus_extcon;
-	अन्यथा अगर (role == USB_ROLE_HOST)
+	else if (role == USB_ROLE_HOST)
 		cable = &ci->platdata->id_extcon;
 
-	अगर (cable) अणु
+	if (cable) {
 		cable->changed = true;
 		cable->connected = true;
 		ci_irq(ci->irq, ci);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&ci->lock, flags);
-	pm_runसमय_put_sync(ci->dev);
+	pm_runtime_put_sync(ci->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_role_चयन_desc ci_role_चयन = अणु
-	.set = ci_usb_role_चयन_set,
-	.get = ci_usb_role_चयन_get,
+static struct usb_role_switch_desc ci_role_switch = {
+	.set = ci_usb_role_switch_set,
+	.get = ci_usb_role_switch_get,
 	.allow_userspace_control = true,
-पूर्ण;
+};
 
-अटल पूर्णांक ci_get_platdata(काष्ठा device *dev,
-		काष्ठा ci_hdrc_platक्रमm_data *platdata)
-अणु
-	काष्ठा extcon_dev *ext_vbus, *ext_id;
-	काष्ठा ci_hdrc_cable *cable;
-	पूर्णांक ret;
+static int ci_get_platdata(struct device *dev,
+		struct ci_hdrc_platform_data *platdata)
+{
+	struct extcon_dev *ext_vbus, *ext_id;
+	struct ci_hdrc_cable *cable;
+	int ret;
 
-	अगर (!platdata->phy_mode)
+	if (!platdata->phy_mode)
 		platdata->phy_mode = of_usb_get_phy_mode(dev->of_node);
 
-	अगर (!platdata->dr_mode)
+	if (!platdata->dr_mode)
 		platdata->dr_mode = usb_get_dr_mode(dev);
 
-	अगर (platdata->dr_mode == USB_DR_MODE_UNKNOWN)
+	if (platdata->dr_mode == USB_DR_MODE_UNKNOWN)
 		platdata->dr_mode = USB_DR_MODE_OTG;
 
-	अगर (platdata->dr_mode != USB_DR_MODE_PERIPHERAL) अणु
+	if (platdata->dr_mode != USB_DR_MODE_PERIPHERAL) {
 		/* Get the vbus regulator */
 		platdata->reg_vbus = devm_regulator_get_optional(dev, "vbus");
-		अगर (PTR_ERR(platdata->reg_vbus) == -EPROBE_DEFER) अणु
-			वापस -EPROBE_DEFER;
-		पूर्ण अन्यथा अगर (PTR_ERR(platdata->reg_vbus) == -ENODEV) अणु
+		if (PTR_ERR(platdata->reg_vbus) == -EPROBE_DEFER) {
+			return -EPROBE_DEFER;
+		} else if (PTR_ERR(platdata->reg_vbus) == -ENODEV) {
 			/* no vbus regulator is needed */
-			platdata->reg_vbus = शून्य;
-		पूर्ण अन्यथा अगर (IS_ERR(platdata->reg_vbus)) अणु
+			platdata->reg_vbus = NULL;
+		} else if (IS_ERR(platdata->reg_vbus)) {
 			dev_err(dev, "Getting regulator error: %ld\n",
 				PTR_ERR(platdata->reg_vbus));
-			वापस PTR_ERR(platdata->reg_vbus);
-		पूर्ण
+			return PTR_ERR(platdata->reg_vbus);
+		}
 		/* Get TPL support */
-		अगर (!platdata->tpl_support)
+		if (!platdata->tpl_support)
 			platdata->tpl_support =
 				of_usb_host_tpl_support(dev->of_node);
-	पूर्ण
+	}
 
-	अगर (platdata->dr_mode == USB_DR_MODE_OTG) अणु
+	if (platdata->dr_mode == USB_DR_MODE_OTG) {
 		/* We can support HNP and SRP of OTG 2.0 */
 		platdata->ci_otg_caps.otg_rev = 0x0200;
 		platdata->ci_otg_caps.hnp_support = true;
@@ -694,762 +693,762 @@ EXPORT_SYMBOL_GPL(hw_phymode_configure);
 		/* Update otg capabilities by DT properties */
 		ret = of_usb_update_otg_caps(dev->of_node,
 					&platdata->ci_otg_caps);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (usb_get_maximum_speed(dev) == USB_SPEED_FULL)
+	if (usb_get_maximum_speed(dev) == USB_SPEED_FULL)
 		platdata->flags |= CI_HDRC_FORCE_FULLSPEED;
 
-	of_property_पढ़ो_u32(dev->of_node, "phy-clkgate-delay-us",
+	of_property_read_u32(dev->of_node, "phy-clkgate-delay-us",
 				     &platdata->phy_clkgate_delay_us);
 
 	platdata->itc_setting = 1;
 
-	of_property_पढ़ो_u32(dev->of_node, "itc-setting",
+	of_property_read_u32(dev->of_node, "itc-setting",
 					&platdata->itc_setting);
 
-	ret = of_property_पढ़ो_u32(dev->of_node, "ahb-burst-config",
+	ret = of_property_read_u32(dev->of_node, "ahb-burst-config",
 				&platdata->ahb_burst_config);
-	अगर (!ret) अणु
+	if (!ret) {
 		platdata->flags |= CI_HDRC_OVERRIDE_AHB_BURST;
-	पूर्ण अन्यथा अगर (ret != -EINVAL) अणु
+	} else if (ret != -EINVAL) {
 		dev_err(dev, "failed to get ahb-burst-config\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32(dev->of_node, "tx-burst-size-dword",
+	ret = of_property_read_u32(dev->of_node, "tx-burst-size-dword",
 				&platdata->tx_burst_size);
-	अगर (!ret) अणु
+	if (!ret) {
 		platdata->flags |= CI_HDRC_OVERRIDE_TX_BURST;
-	पूर्ण अन्यथा अगर (ret != -EINVAL) अणु
+	} else if (ret != -EINVAL) {
 		dev_err(dev, "failed to get tx-burst-size-dword\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32(dev->of_node, "rx-burst-size-dword",
+	ret = of_property_read_u32(dev->of_node, "rx-burst-size-dword",
 				&platdata->rx_burst_size);
-	अगर (!ret) अणु
+	if (!ret) {
 		platdata->flags |= CI_HDRC_OVERRIDE_RX_BURST;
-	पूर्ण अन्यथा अगर (ret != -EINVAL) अणु
+	} else if (ret != -EINVAL) {
 		dev_err(dev, "failed to get rx-burst-size-dword\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (of_find_property(dev->of_node, "non-zero-ttctrl-ttha", शून्य))
+	if (of_find_property(dev->of_node, "non-zero-ttctrl-ttha", NULL))
 		platdata->flags |= CI_HDRC_SET_NON_ZERO_TTHA;
 
 	ext_id = ERR_PTR(-ENODEV);
 	ext_vbus = ERR_PTR(-ENODEV);
-	अगर (of_property_पढ़ो_bool(dev->of_node, "extcon")) अणु
+	if (of_property_read_bool(dev->of_node, "extcon")) {
 		/* Each one of them is not mandatory */
 		ext_vbus = extcon_get_edev_by_phandle(dev, 0);
-		अगर (IS_ERR(ext_vbus) && PTR_ERR(ext_vbus) != -ENODEV)
-			वापस PTR_ERR(ext_vbus);
+		if (IS_ERR(ext_vbus) && PTR_ERR(ext_vbus) != -ENODEV)
+			return PTR_ERR(ext_vbus);
 
 		ext_id = extcon_get_edev_by_phandle(dev, 1);
-		अगर (IS_ERR(ext_id) && PTR_ERR(ext_id) != -ENODEV)
-			वापस PTR_ERR(ext_id);
-	पूर्ण
+		if (IS_ERR(ext_id) && PTR_ERR(ext_id) != -ENODEV)
+			return PTR_ERR(ext_id);
+	}
 
 	cable = &platdata->vbus_extcon;
-	cable->nb.notअगरier_call = ci_cable_notअगरier;
+	cable->nb.notifier_call = ci_cable_notifier;
 	cable->edev = ext_vbus;
 
-	अगर (!IS_ERR(ext_vbus)) अणु
+	if (!IS_ERR(ext_vbus)) {
 		ret = extcon_get_state(cable->edev, EXTCON_USB);
-		अगर (ret)
+		if (ret)
 			cable->connected = true;
-		अन्यथा
+		else
 			cable->connected = false;
-	पूर्ण
+	}
 
 	cable = &platdata->id_extcon;
-	cable->nb.notअगरier_call = ci_cable_notअगरier;
+	cable->nb.notifier_call = ci_cable_notifier;
 	cable->edev = ext_id;
 
-	अगर (!IS_ERR(ext_id)) अणु
+	if (!IS_ERR(ext_id)) {
 		ret = extcon_get_state(cable->edev, EXTCON_USB_HOST);
-		अगर (ret)
+		if (ret)
 			cable->connected = true;
-		अन्यथा
+		else
 			cable->connected = false;
-	पूर्ण
+	}
 
-	अगर (device_property_पढ़ो_bool(dev, "usb-role-switch"))
-		ci_role_चयन.fwnode = dev->fwnode;
+	if (device_property_read_bool(dev, "usb-role-switch"))
+		ci_role_switch.fwnode = dev->fwnode;
 
 	platdata->pctl = devm_pinctrl_get(dev);
-	अगर (!IS_ERR(platdata->pctl)) अणु
-		काष्ठा pinctrl_state *p;
+	if (!IS_ERR(platdata->pctl)) {
+		struct pinctrl_state *p;
 
 		p = pinctrl_lookup_state(platdata->pctl, "default");
-		अगर (!IS_ERR(p))
-			platdata->pins_शेष = p;
+		if (!IS_ERR(p))
+			platdata->pins_default = p;
 
 		p = pinctrl_lookup_state(platdata->pctl, "host");
-		अगर (!IS_ERR(p))
+		if (!IS_ERR(p))
 			platdata->pins_host = p;
 
 		p = pinctrl_lookup_state(platdata->pctl, "device");
-		अगर (!IS_ERR(p))
+		if (!IS_ERR(p))
 			platdata->pins_device = p;
-	पूर्ण
+	}
 
-	अगर (!platdata->enter_lpm)
+	if (!platdata->enter_lpm)
 		platdata->enter_lpm = ci_hdrc_enter_lpm_common;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ci_extcon_रेजिस्टर(काष्ठा ci_hdrc *ci)
-अणु
-	काष्ठा ci_hdrc_cable *id, *vbus;
-	पूर्णांक ret;
+static int ci_extcon_register(struct ci_hdrc *ci)
+{
+	struct ci_hdrc_cable *id, *vbus;
+	int ret;
 
 	id = &ci->platdata->id_extcon;
 	id->ci = ci;
-	अगर (!IS_ERR_OR_शून्य(id->edev)) अणु
-		ret = devm_extcon_रेजिस्टर_notअगरier(ci->dev, id->edev,
+	if (!IS_ERR_OR_NULL(id->edev)) {
+		ret = devm_extcon_register_notifier(ci->dev, id->edev,
 						EXTCON_USB_HOST, &id->nb);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(ci->dev, "register ID failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	vbus = &ci->platdata->vbus_extcon;
 	vbus->ci = ci;
-	अगर (!IS_ERR_OR_शून्य(vbus->edev)) अणु
-		ret = devm_extcon_रेजिस्टर_notअगरier(ci->dev, vbus->edev,
+	if (!IS_ERR_OR_NULL(vbus->edev)) {
+		ret = devm_extcon_register_notifier(ci->dev, vbus->edev,
 						EXTCON_USB, &vbus->nb);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(ci->dev, "register VBUS failed\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल DEFINE_IDA(ci_ida);
+static DEFINE_IDA(ci_ida);
 
-काष्ठा platक्रमm_device *ci_hdrc_add_device(काष्ठा device *dev,
-			काष्ठा resource *res, पूर्णांक nres,
-			काष्ठा ci_hdrc_platक्रमm_data *platdata)
-अणु
-	काष्ठा platक्रमm_device *pdev;
-	पूर्णांक id, ret;
+struct platform_device *ci_hdrc_add_device(struct device *dev,
+			struct resource *res, int nres,
+			struct ci_hdrc_platform_data *platdata)
+{
+	struct platform_device *pdev;
+	int id, ret;
 
 	ret = ci_get_platdata(dev, platdata);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	id = ida_simple_get(&ci_ida, 0, 0, GFP_KERNEL);
-	अगर (id < 0)
-		वापस ERR_PTR(id);
+	if (id < 0)
+		return ERR_PTR(id);
 
-	pdev = platक्रमm_device_alloc("ci_hdrc", id);
-	अगर (!pdev) अणु
+	pdev = platform_device_alloc("ci_hdrc", id);
+	if (!pdev) {
 		ret = -ENOMEM;
-		जाओ put_id;
-	पूर्ण
+		goto put_id;
+	}
 
 	pdev->dev.parent = dev;
 
-	ret = platक्रमm_device_add_resources(pdev, res, nres);
-	अगर (ret)
-		जाओ err;
+	ret = platform_device_add_resources(pdev, res, nres);
+	if (ret)
+		goto err;
 
-	ret = platक्रमm_device_add_data(pdev, platdata, माप(*platdata));
-	अगर (ret)
-		जाओ err;
+	ret = platform_device_add_data(pdev, platdata, sizeof(*platdata));
+	if (ret)
+		goto err;
 
-	ret = platक्रमm_device_add(pdev);
-	अगर (ret)
-		जाओ err;
+	ret = platform_device_add(pdev);
+	if (ret)
+		goto err;
 
-	वापस pdev;
+	return pdev;
 
 err:
-	platक्रमm_device_put(pdev);
+	platform_device_put(pdev);
 put_id:
-	ida_simple_हटाओ(&ci_ida, id);
-	वापस ERR_PTR(ret);
-पूर्ण
+	ida_simple_remove(&ci_ida, id);
+	return ERR_PTR(ret);
+}
 EXPORT_SYMBOL_GPL(ci_hdrc_add_device);
 
-व्योम ci_hdrc_हटाओ_device(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक id = pdev->id;
-	platक्रमm_device_unरेजिस्टर(pdev);
-	ida_simple_हटाओ(&ci_ida, id);
-पूर्ण
-EXPORT_SYMBOL_GPL(ci_hdrc_हटाओ_device);
+void ci_hdrc_remove_device(struct platform_device *pdev)
+{
+	int id = pdev->id;
+	platform_device_unregister(pdev);
+	ida_simple_remove(&ci_ida, id);
+}
+EXPORT_SYMBOL_GPL(ci_hdrc_remove_device);
 
 /**
- * ci_hdrc_query_available_role: get runसमय available operation mode
+ * ci_hdrc_query_available_role: get runtime available operation mode
  *
  * The glue layer can get current operation mode (host/peripheral/otg)
  * This function should be called after ci core device has created.
  *
- * @pdev: the platक्रमm device of ci core.
+ * @pdev: the platform device of ci core.
  *
- * Return runसमय usb_dr_mode.
+ * Return runtime usb_dr_mode.
  */
-क्रमागत usb_dr_mode ci_hdrc_query_available_role(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ci_hdrc *ci = platक्रमm_get_drvdata(pdev);
+enum usb_dr_mode ci_hdrc_query_available_role(struct platform_device *pdev)
+{
+	struct ci_hdrc *ci = platform_get_drvdata(pdev);
 
-	अगर (!ci)
-		वापस USB_DR_MODE_UNKNOWN;
-	अगर (ci->roles[CI_ROLE_HOST] && ci->roles[CI_ROLE_GADGET])
-		वापस USB_DR_MODE_OTG;
-	अन्यथा अगर (ci->roles[CI_ROLE_HOST])
-		वापस USB_DR_MODE_HOST;
-	अन्यथा अगर (ci->roles[CI_ROLE_GADGET])
-		वापस USB_DR_MODE_PERIPHERAL;
-	अन्यथा
-		वापस USB_DR_MODE_UNKNOWN;
-पूर्ण
+	if (!ci)
+		return USB_DR_MODE_UNKNOWN;
+	if (ci->roles[CI_ROLE_HOST] && ci->roles[CI_ROLE_GADGET])
+		return USB_DR_MODE_OTG;
+	else if (ci->roles[CI_ROLE_HOST])
+		return USB_DR_MODE_HOST;
+	else if (ci->roles[CI_ROLE_GADGET])
+		return USB_DR_MODE_PERIPHERAL;
+	else
+		return USB_DR_MODE_UNKNOWN;
+}
 EXPORT_SYMBOL_GPL(ci_hdrc_query_available_role);
 
-अटल अंतरभूत व्योम ci_role_destroy(काष्ठा ci_hdrc *ci)
-अणु
+static inline void ci_role_destroy(struct ci_hdrc *ci)
+{
 	ci_hdrc_gadget_destroy(ci);
 	ci_hdrc_host_destroy(ci);
-	अगर (ci->is_otg && ci->roles[CI_ROLE_GADGET])
+	if (ci->is_otg && ci->roles[CI_ROLE_GADGET])
 		ci_hdrc_otg_destroy(ci);
-पूर्ण
+}
 
-अटल व्योम ci_get_otg_capable(काष्ठा ci_hdrc *ci)
-अणु
-	अगर (ci->platdata->flags & CI_HDRC_DUAL_ROLE_NOT_OTG)
+static void ci_get_otg_capable(struct ci_hdrc *ci)
+{
+	if (ci->platdata->flags & CI_HDRC_DUAL_ROLE_NOT_OTG)
 		ci->is_otg = false;
-	अन्यथा
-		ci->is_otg = (hw_पढ़ो(ci, CAP_DCCPARAMS,
+	else
+		ci->is_otg = (hw_read(ci, CAP_DCCPARAMS,
 				DCCPARAMS_DC | DCCPARAMS_HC)
 					== (DCCPARAMS_DC | DCCPARAMS_HC));
-	अगर (ci->is_otg) अणु
+	if (ci->is_otg) {
 		dev_dbg(ci->dev, "It is OTG capable controller\n");
 		/* Disable and clear all OTG irq */
-		hw_ग_लिखो_otgsc(ci, OTGSC_INT_EN_BITS | OTGSC_INT_STATUS_BITS,
+		hw_write_otgsc(ci, OTGSC_INT_EN_BITS | OTGSC_INT_STATUS_BITS,
 							OTGSC_INT_STATUS_BITS);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल sमाप_प्रकार role_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			  अक्षर *buf)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
+static ssize_t role_show(struct device *dev, struct device_attribute *attr,
+			  char *buf)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
 
-	अगर (ci->role != CI_ROLE_END)
-		वापस प्र_लिखो(buf, "%s\n", ci_role(ci)->name);
+	if (ci->role != CI_ROLE_END)
+		return sprintf(buf, "%s\n", ci_role(ci)->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार role_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार n)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
-	क्रमागत ci_role role;
-	पूर्णांक ret;
+static ssize_t role_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t n)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
+	enum ci_role role;
+	int ret;
 
-	अगर (!(ci->roles[CI_ROLE_HOST] && ci->roles[CI_ROLE_GADGET])) अणु
+	if (!(ci->roles[CI_ROLE_HOST] && ci->roles[CI_ROLE_GADGET])) {
 		dev_warn(dev, "Current configuration is not dual-role, quit\n");
-		वापस -EPERM;
-	पूर्ण
+		return -EPERM;
+	}
 
-	क्रम (role = CI_ROLE_HOST; role < CI_ROLE_END; role++)
-		अगर (!म_भेदन(buf, ci->roles[role]->name,
-			     म_माप(ci->roles[role]->name)))
-			अवरोध;
+	for (role = CI_ROLE_HOST; role < CI_ROLE_END; role++)
+		if (!strncmp(buf, ci->roles[role]->name,
+			     strlen(ci->roles[role]->name)))
+			break;
 
-	अगर (role == CI_ROLE_END || role == ci->role)
-		वापस -EINVAL;
+	if (role == CI_ROLE_END || role == ci->role)
+		return -EINVAL;
 
-	pm_runसमय_get_sync(dev);
+	pm_runtime_get_sync(dev);
 	disable_irq(ci->irq);
 	ci_role_stop(ci);
 	ret = ci_role_start(ci, role);
-	अगर (!ret && ci->role == CI_ROLE_GADGET)
+	if (!ret && ci->role == CI_ROLE_GADGET)
 		ci_handle_vbus_change(ci);
 	enable_irq(ci->irq);
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 
-	वापस (ret == 0) ? n : ret;
-पूर्ण
-अटल DEVICE_ATTR_RW(role);
+	return (ret == 0) ? n : ret;
+}
+static DEVICE_ATTR_RW(role);
 
-अटल काष्ठा attribute *ci_attrs[] = अणु
+static struct attribute *ci_attrs[] = {
 	&dev_attr_role.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 ATTRIBUTE_GROUPS(ci);
 
-अटल पूर्णांक ci_hdrc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device	*dev = &pdev->dev;
-	काष्ठा ci_hdrc	*ci;
-	काष्ठा resource	*res;
-	व्योम __iomem	*base;
-	पूर्णांक		ret;
-	क्रमागत usb_dr_mode dr_mode;
+static int ci_hdrc_probe(struct platform_device *pdev)
+{
+	struct device	*dev = &pdev->dev;
+	struct ci_hdrc	*ci;
+	struct resource	*res;
+	void __iomem	*base;
+	int		ret;
+	enum usb_dr_mode dr_mode;
 
-	अगर (!dev_get_platdata(dev)) अणु
+	if (!dev_get_platdata(dev)) {
 		dev_err(dev, "platform data missing\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(base))
-		वापस PTR_ERR(base);
+	if (IS_ERR(base))
+		return PTR_ERR(base);
 
-	ci = devm_kzalloc(dev, माप(*ci), GFP_KERNEL);
-	अगर (!ci)
-		वापस -ENOMEM;
+	ci = devm_kzalloc(dev, sizeof(*ci), GFP_KERNEL);
+	if (!ci)
+		return -ENOMEM;
 
 	spin_lock_init(&ci->lock);
 	ci->dev = dev;
 	ci->platdata = dev_get_platdata(dev);
-	ci->imx28_ग_लिखो_fix = !!(ci->platdata->flags &
+	ci->imx28_write_fix = !!(ci->platdata->flags &
 		CI_HDRC_IMX28_WRITE_FIX);
-	ci->supports_runसमय_pm = !!(ci->platdata->flags &
+	ci->supports_runtime_pm = !!(ci->platdata->flags &
 		CI_HDRC_SUPPORTS_RUNTIME_PM);
-	platक्रमm_set_drvdata(pdev, ci);
+	platform_set_drvdata(pdev, ci);
 
 	ret = hw_device_init(ci, base);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev, "can't initialize hardware\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = ci_ulpi_init(ci);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ci->platdata->phy) अणु
+	if (ci->platdata->phy) {
 		ci->phy = ci->platdata->phy;
-	पूर्ण अन्यथा अगर (ci->platdata->usb_phy) अणु
+	} else if (ci->platdata->usb_phy) {
 		ci->usb_phy = ci->platdata->usb_phy;
-	पूर्ण अन्यथा अणु
-		/* Look क्रम a generic PHY first */
+	} else {
+		/* Look for a generic PHY first */
 		ci->phy = devm_phy_get(dev->parent, "usb-phy");
 
-		अगर (PTR_ERR(ci->phy) == -EPROBE_DEFER) अणु
+		if (PTR_ERR(ci->phy) == -EPROBE_DEFER) {
 			ret = -EPROBE_DEFER;
-			जाओ ulpi_निकास;
-		पूर्ण अन्यथा अगर (IS_ERR(ci->phy)) अणु
-			ci->phy = शून्य;
-		पूर्ण
+			goto ulpi_exit;
+		} else if (IS_ERR(ci->phy)) {
+			ci->phy = NULL;
+		}
 
-		/* Look क्रम a legacy USB PHY from device-tree next */
-		अगर (!ci->phy) अणु
+		/* Look for a legacy USB PHY from device-tree next */
+		if (!ci->phy) {
 			ci->usb_phy = devm_usb_get_phy_by_phandle(dev->parent,
 								  "phys", 0);
 
-			अगर (PTR_ERR(ci->usb_phy) == -EPROBE_DEFER) अणु
+			if (PTR_ERR(ci->usb_phy) == -EPROBE_DEFER) {
 				ret = -EPROBE_DEFER;
-				जाओ ulpi_निकास;
-			पूर्ण अन्यथा अगर (IS_ERR(ci->usb_phy)) अणु
-				ci->usb_phy = शून्य;
-			पूर्ण
-		पूर्ण
+				goto ulpi_exit;
+			} else if (IS_ERR(ci->usb_phy)) {
+				ci->usb_phy = NULL;
+			}
+		}
 
-		/* Look क्रम any रेजिस्टरed legacy USB PHY as last resort */
-		अगर (!ci->phy && !ci->usb_phy) अणु
+		/* Look for any registered legacy USB PHY as last resort */
+		if (!ci->phy && !ci->usb_phy) {
 			ci->usb_phy = devm_usb_get_phy(dev->parent,
 						       USB_PHY_TYPE_USB2);
 
-			अगर (PTR_ERR(ci->usb_phy) == -EPROBE_DEFER) अणु
+			if (PTR_ERR(ci->usb_phy) == -EPROBE_DEFER) {
 				ret = -EPROBE_DEFER;
-				जाओ ulpi_निकास;
-			पूर्ण अन्यथा अगर (IS_ERR(ci->usb_phy)) अणु
-				ci->usb_phy = शून्य;
-			पूर्ण
-		पूर्ण
+				goto ulpi_exit;
+			} else if (IS_ERR(ci->usb_phy)) {
+				ci->usb_phy = NULL;
+			}
+		}
 
 		/* No USB PHY was found in the end */
-		अगर (!ci->phy && !ci->usb_phy) अणु
+		if (!ci->phy && !ci->usb_phy) {
 			ret = -ENXIO;
-			जाओ ulpi_निकास;
-		पूर्ण
-	पूर्ण
+			goto ulpi_exit;
+		}
+	}
 
 	ret = ci_usb_phy_init(ci);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "unable to init phy: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ci->hw_bank.phys = res->start;
 
-	ci->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (ci->irq < 0) अणु
+	ci->irq = platform_get_irq(pdev, 0);
+	if (ci->irq < 0) {
 		ret = ci->irq;
-		जाओ deinit_phy;
-	पूर्ण
+		goto deinit_phy;
+	}
 
 	ci_get_otg_capable(ci);
 
 	dr_mode = ci->platdata->dr_mode;
-	/* initialize role(s) beक्रमe the पूर्णांकerrupt is requested */
-	अगर (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_HOST) अणु
+	/* initialize role(s) before the interrupt is requested */
+	if (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_HOST) {
 		ret = ci_hdrc_host_init(ci);
-		अगर (ret) अणु
-			अगर (ret == -ENXIO)
+		if (ret) {
+			if (ret == -ENXIO)
 				dev_info(dev, "doesn't support host\n");
-			अन्यथा
-				जाओ deinit_phy;
-		पूर्ण
-	पूर्ण
+			else
+				goto deinit_phy;
+		}
+	}
 
-	अगर (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_PERIPHERAL) अणु
+	if (dr_mode == USB_DR_MODE_OTG || dr_mode == USB_DR_MODE_PERIPHERAL) {
 		ret = ci_hdrc_gadget_init(ci);
-		अगर (ret) अणु
-			अगर (ret == -ENXIO)
+		if (ret) {
+			if (ret == -ENXIO)
 				dev_info(dev, "doesn't support gadget\n");
-			अन्यथा
-				जाओ deinit_host;
-		पूर्ण
-	पूर्ण
+			else
+				goto deinit_host;
+		}
+	}
 
-	अगर (!ci->roles[CI_ROLE_HOST] && !ci->roles[CI_ROLE_GADGET]) अणु
+	if (!ci->roles[CI_ROLE_HOST] && !ci->roles[CI_ROLE_GADGET]) {
 		dev_err(dev, "no supported roles\n");
 		ret = -ENODEV;
-		जाओ deinit_gadget;
-	पूर्ण
+		goto deinit_gadget;
+	}
 
-	अगर (ci->is_otg && ci->roles[CI_ROLE_GADGET]) अणु
+	if (ci->is_otg && ci->roles[CI_ROLE_GADGET]) {
 		ret = ci_hdrc_otg_init(ci);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "init otg fails, ret = %d\n", ret);
-			जाओ deinit_gadget;
-		पूर्ण
-	पूर्ण
+			goto deinit_gadget;
+		}
+	}
 
-	अगर (ci_role_चयन.fwnode) अणु
-		ci_role_चयन.driver_data = ci;
-		ci->role_चयन = usb_role_चयन_रेजिस्टर(dev,
-					&ci_role_चयन);
-		अगर (IS_ERR(ci->role_चयन)) अणु
-			ret = PTR_ERR(ci->role_चयन);
-			जाओ deinit_otg;
-		पूर्ण
-	पूर्ण
+	if (ci_role_switch.fwnode) {
+		ci_role_switch.driver_data = ci;
+		ci->role_switch = usb_role_switch_register(dev,
+					&ci_role_switch);
+		if (IS_ERR(ci->role_switch)) {
+			ret = PTR_ERR(ci->role_switch);
+			goto deinit_otg;
+		}
+	}
 
-	अगर (ci->roles[CI_ROLE_HOST] && ci->roles[CI_ROLE_GADGET]) अणु
-		अगर (ci->is_otg) अणु
+	if (ci->roles[CI_ROLE_HOST] && ci->roles[CI_ROLE_GADGET]) {
+		if (ci->is_otg) {
 			ci->role = ci_otg_role(ci);
 			/* Enable ID change irq */
-			hw_ग_लिखो_otgsc(ci, OTGSC_IDIE, OTGSC_IDIE);
-		पूर्ण अन्यथा अणु
+			hw_write_otgsc(ci, OTGSC_IDIE, OTGSC_IDIE);
+		} else {
 			/*
 			 * If the controller is not OTG capable, but support
-			 * role चयन, the defalt role is gadget, and the
-			 * user can चयन it through debugfs.
+			 * role switch, the defalt role is gadget, and the
+			 * user can switch it through debugfs.
 			 */
 			ci->role = CI_ROLE_GADGET;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		ci->role = ci->roles[CI_ROLE_HOST]
 			? CI_ROLE_HOST
 			: CI_ROLE_GADGET;
-	पूर्ण
+	}
 
-	अगर (!ci_otg_is_fsm_mode(ci)) अणु
-		/* only update vbus status क्रम peripheral */
-		अगर (ci->role == CI_ROLE_GADGET) अणु
-			/* Pull करोwn DP क्रम possible अक्षरger detection */
-			hw_ग_लिखो(ci, OP_USBCMD, USBCMD_RS, 0);
+	if (!ci_otg_is_fsm_mode(ci)) {
+		/* only update vbus status for peripheral */
+		if (ci->role == CI_ROLE_GADGET) {
+			/* Pull down DP for possible charger detection */
+			hw_write(ci, OP_USBCMD, USBCMD_RS, 0);
 			ci_handle_vbus_change(ci);
-		पूर्ण
+		}
 
 		ret = ci_role_start(ci, ci->role);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(dev, "can't start %s role\n",
 						ci_role(ci)->name);
-			जाओ stop;
-		पूर्ण
-	पूर्ण
+			goto stop;
+		}
+	}
 
 	ret = devm_request_irq(dev, ci->irq, ci_irq, IRQF_SHARED,
 			ci->platdata->name, ci);
-	अगर (ret)
-		जाओ stop;
+	if (ret)
+		goto stop;
 
-	ret = ci_extcon_रेजिस्टर(ci);
-	अगर (ret)
-		जाओ stop;
+	ret = ci_extcon_register(ci);
+	if (ret)
+		goto stop;
 
-	अगर (ci->supports_runसमय_pm) अणु
-		pm_runसमय_set_active(&pdev->dev);
-		pm_runसमय_enable(&pdev->dev);
-		pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, 2000);
-		pm_runसमय_mark_last_busy(ci->dev);
-		pm_runसमय_use_स्वतःsuspend(&pdev->dev);
-	पूर्ण
+	if (ci->supports_runtime_pm) {
+		pm_runtime_set_active(&pdev->dev);
+		pm_runtime_enable(&pdev->dev);
+		pm_runtime_set_autosuspend_delay(&pdev->dev, 2000);
+		pm_runtime_mark_last_busy(ci->dev);
+		pm_runtime_use_autosuspend(&pdev->dev);
+	}
 
-	अगर (ci_otg_is_fsm_mode(ci))
+	if (ci_otg_is_fsm_mode(ci))
 		ci_hdrc_otg_fsm_start(ci);
 
 	device_set_wakeup_capable(&pdev->dev, true);
 	dbg_create_files(ci);
 
-	वापस 0;
+	return 0;
 
 stop:
-	अगर (ci->role_चयन)
-		usb_role_चयन_unरेजिस्टर(ci->role_चयन);
+	if (ci->role_switch)
+		usb_role_switch_unregister(ci->role_switch);
 deinit_otg:
-	अगर (ci->is_otg && ci->roles[CI_ROLE_GADGET])
+	if (ci->is_otg && ci->roles[CI_ROLE_GADGET])
 		ci_hdrc_otg_destroy(ci);
 deinit_gadget:
 	ci_hdrc_gadget_destroy(ci);
 deinit_host:
 	ci_hdrc_host_destroy(ci);
 deinit_phy:
-	ci_usb_phy_निकास(ci);
-ulpi_निकास:
-	ci_ulpi_निकास(ci);
+	ci_usb_phy_exit(ci);
+ulpi_exit:
+	ci_ulpi_exit(ci);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ci_hdrc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ci_hdrc *ci = platक्रमm_get_drvdata(pdev);
+static int ci_hdrc_remove(struct platform_device *pdev)
+{
+	struct ci_hdrc *ci = platform_get_drvdata(pdev);
 
-	अगर (ci->role_चयन)
-		usb_role_चयन_unरेजिस्टर(ci->role_चयन);
+	if (ci->role_switch)
+		usb_role_switch_unregister(ci->role_switch);
 
-	अगर (ci->supports_runसमय_pm) अणु
-		pm_runसमय_get_sync(&pdev->dev);
-		pm_runसमय_disable(&pdev->dev);
-		pm_runसमय_put_noidle(&pdev->dev);
-	पूर्ण
+	if (ci->supports_runtime_pm) {
+		pm_runtime_get_sync(&pdev->dev);
+		pm_runtime_disable(&pdev->dev);
+		pm_runtime_put_noidle(&pdev->dev);
+	}
 
-	dbg_हटाओ_files(ci);
+	dbg_remove_files(ci);
 	ci_role_destroy(ci);
 	ci_hdrc_enter_lpm(ci, true);
-	ci_usb_phy_निकास(ci);
-	ci_ulpi_निकास(ci);
+	ci_usb_phy_exit(ci);
+	ci_ulpi_exit(ci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-/* Prepare wakeup by SRP beक्रमe suspend */
-अटल व्योम ci_otg_fsm_suspend_क्रम_srp(काष्ठा ci_hdrc *ci)
-अणु
-	अगर ((ci->fsm.otg->state == OTG_STATE_A_IDLE) &&
-				!hw_पढ़ो_otgsc(ci, OTGSC_ID)) अणु
-		hw_ग_लिखो(ci, OP_PORTSC, PORTSC_W1C_BITS | PORTSC_PP,
+#ifdef CONFIG_PM
+/* Prepare wakeup by SRP before suspend */
+static void ci_otg_fsm_suspend_for_srp(struct ci_hdrc *ci)
+{
+	if ((ci->fsm.otg->state == OTG_STATE_A_IDLE) &&
+				!hw_read_otgsc(ci, OTGSC_ID)) {
+		hw_write(ci, OP_PORTSC, PORTSC_W1C_BITS | PORTSC_PP,
 								PORTSC_PP);
-		hw_ग_लिखो(ci, OP_PORTSC, PORTSC_W1C_BITS | PORTSC_WKCN,
+		hw_write(ci, OP_PORTSC, PORTSC_W1C_BITS | PORTSC_WKCN,
 								PORTSC_WKCN);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Handle SRP when wakeup by data pulse */
-अटल व्योम ci_otg_fsm_wakeup_by_srp(काष्ठा ci_hdrc *ci)
-अणु
-	अगर ((ci->fsm.otg->state == OTG_STATE_A_IDLE) &&
-		(ci->fsm.a_bus_drop == 1) && (ci->fsm.a_bus_req == 0)) अणु
-		अगर (!hw_पढ़ो_otgsc(ci, OTGSC_ID)) अणु
+static void ci_otg_fsm_wakeup_by_srp(struct ci_hdrc *ci)
+{
+	if ((ci->fsm.otg->state == OTG_STATE_A_IDLE) &&
+		(ci->fsm.a_bus_drop == 1) && (ci->fsm.a_bus_req == 0)) {
+		if (!hw_read_otgsc(ci, OTGSC_ID)) {
 			ci->fsm.a_srp_det = 1;
 			ci->fsm.a_bus_drop = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			ci->fsm.id = 1;
-		पूर्ण
+		}
 		ci_otg_queue_work(ci);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ci_controller_suspend(काष्ठा ci_hdrc *ci)
-अणु
+static void ci_controller_suspend(struct ci_hdrc *ci)
+{
 	disable_irq(ci->irq);
 	ci_hdrc_enter_lpm(ci, true);
-	अगर (ci->platdata->phy_clkgate_delay_us)
+	if (ci->platdata->phy_clkgate_delay_us)
 		usleep_range(ci->platdata->phy_clkgate_delay_us,
 			     ci->platdata->phy_clkgate_delay_us + 50);
 	usb_phy_set_suspend(ci->usb_phy, 1);
 	ci->in_lpm = true;
 	enable_irq(ci->irq);
-पूर्ण
+}
 
 /*
- * Handle the wakeup पूर्णांकerrupt triggered by extcon connector
- * We need to call ci_irq again क्रम extcon since the first
- * पूर्णांकerrupt (wakeup पूर्णांक) only let the controller be out of
- * low घातer mode, but not handle any पूर्णांकerrupts.
+ * Handle the wakeup interrupt triggered by extcon connector
+ * We need to call ci_irq again for extcon since the first
+ * interrupt (wakeup int) only let the controller be out of
+ * low power mode, but not handle any interrupts.
  */
-अटल व्योम ci_extcon_wakeup_पूर्णांक(काष्ठा ci_hdrc *ci)
-अणु
-	काष्ठा ci_hdrc_cable *cable_id, *cable_vbus;
-	u32 otgsc = hw_पढ़ो_otgsc(ci, ~0);
+static void ci_extcon_wakeup_int(struct ci_hdrc *ci)
+{
+	struct ci_hdrc_cable *cable_id, *cable_vbus;
+	u32 otgsc = hw_read_otgsc(ci, ~0);
 
 	cable_id = &ci->platdata->id_extcon;
 	cable_vbus = &ci->platdata->vbus_extcon;
 
-	अगर (!IS_ERR(cable_id->edev) && ci->is_otg &&
+	if (!IS_ERR(cable_id->edev) && ci->is_otg &&
 		(otgsc & OTGSC_IDIE) && (otgsc & OTGSC_IDIS))
 		ci_irq(ci->irq, ci);
 
-	अगर (!IS_ERR(cable_vbus->edev) && ci->is_otg &&
+	if (!IS_ERR(cable_vbus->edev) && ci->is_otg &&
 		(otgsc & OTGSC_BSVIE) && (otgsc & OTGSC_BSVIS))
 		ci_irq(ci->irq, ci);
-पूर्ण
+}
 
-अटल पूर्णांक ci_controller_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int ci_controller_resume(struct device *dev)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
+	int ret;
 
 	dev_dbg(dev, "at %s\n", __func__);
 
-	अगर (!ci->in_lpm) अणु
+	if (!ci->in_lpm) {
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ci_hdrc_enter_lpm(ci, false);
 
 	ret = ci_ulpi_resume(ci);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ci->usb_phy) अणु
+	if (ci->usb_phy) {
 		usb_phy_set_suspend(ci->usb_phy, 0);
 		usb_phy_set_wakeup(ci->usb_phy, false);
-		hw_रुको_phy_stable();
-	पूर्ण
+		hw_wait_phy_stable();
+	}
 
 	ci->in_lpm = false;
-	अगर (ci->wakeup_पूर्णांक) अणु
-		ci->wakeup_पूर्णांक = false;
-		pm_runसमय_mark_last_busy(ci->dev);
-		pm_runसमय_put_स्वतःsuspend(ci->dev);
+	if (ci->wakeup_int) {
+		ci->wakeup_int = false;
+		pm_runtime_mark_last_busy(ci->dev);
+		pm_runtime_put_autosuspend(ci->dev);
 		enable_irq(ci->irq);
-		अगर (ci_otg_is_fsm_mode(ci))
+		if (ci_otg_is_fsm_mode(ci))
 			ci_otg_fsm_wakeup_by_srp(ci);
-		ci_extcon_wakeup_पूर्णांक(ci);
-	पूर्ण
+		ci_extcon_wakeup_int(ci);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक ci_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int ci_suspend(struct device *dev)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
 
-	अगर (ci->wq)
+	if (ci->wq)
 		flush_workqueue(ci->wq);
 	/*
 	 * Controller needs to be active during suspend, otherwise the core
-	 * may run resume when the parent is at suspend अगर other driver's
-	 * suspend fails, it occurs beक्रमe parent's suspend has not started,
+	 * may run resume when the parent is at suspend if other driver's
+	 * suspend fails, it occurs before parent's suspend has not started,
 	 * but the core suspend has finished.
 	 */
-	अगर (ci->in_lpm)
-		pm_runसमय_resume(dev);
+	if (ci->in_lpm)
+		pm_runtime_resume(dev);
 
-	अगर (ci->in_lpm) अणु
+	if (ci->in_lpm) {
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (device_may_wakeup(dev)) अणु
-		अगर (ci_otg_is_fsm_mode(ci))
-			ci_otg_fsm_suspend_क्रम_srp(ci);
+	if (device_may_wakeup(dev)) {
+		if (ci_otg_is_fsm_mode(ci))
+			ci_otg_fsm_suspend_for_srp(ci);
 
 		usb_phy_set_wakeup(ci->usb_phy, true);
 		enable_irq_wake(ci->irq);
-	पूर्ण
+	}
 
 	ci_controller_suspend(ci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ci_resume(काष्ठा device *dev)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int ci_resume(struct device *dev)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
+	int ret;
 
-	अगर (device_may_wakeup(dev))
+	if (device_may_wakeup(dev))
 		disable_irq_wake(ci->irq);
 
 	ret = ci_controller_resume(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ci->supports_runसमय_pm) अणु
-		pm_runसमय_disable(dev);
-		pm_runसमय_set_active(dev);
-		pm_runसमय_enable(dev);
-	पूर्ण
+	if (ci->supports_runtime_pm) {
+		pm_runtime_disable(dev);
+		pm_runtime_set_active(dev);
+		pm_runtime_enable(dev);
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return ret;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल पूर्णांक ci_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा ci_hdrc *ci = dev_get_drvdata(dev);
+static int ci_runtime_suspend(struct device *dev)
+{
+	struct ci_hdrc *ci = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "at %s\n", __func__);
 
-	अगर (ci->in_lpm) अणु
+	if (ci->in_lpm) {
 		WARN_ON(1);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ci_otg_is_fsm_mode(ci))
-		ci_otg_fsm_suspend_क्रम_srp(ci);
+	if (ci_otg_is_fsm_mode(ci))
+		ci_otg_fsm_suspend_for_srp(ci);
 
 	usb_phy_set_wakeup(ci->usb_phy, true);
 	ci_controller_suspend(ci);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ci_runसमय_resume(काष्ठा device *dev)
-अणु
-	वापस ci_controller_resume(dev);
-पूर्ण
+static int ci_runtime_resume(struct device *dev)
+{
+	return ci_controller_resume(dev);
+}
 
-#पूर्ण_अगर /* CONFIG_PM */
-अटल स्थिर काष्ठा dev_pm_ops ci_pm_ops = अणु
+#endif /* CONFIG_PM */
+static const struct dev_pm_ops ci_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(ci_suspend, ci_resume)
-	SET_RUNTIME_PM_OPS(ci_runसमय_suspend, ci_runसमय_resume, शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(ci_runtime_suspend, ci_runtime_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver ci_hdrc_driver = अणु
+static struct platform_driver ci_hdrc_driver = {
 	.probe	= ci_hdrc_probe,
-	.हटाओ	= ci_hdrc_हटाओ,
-	.driver	= अणु
+	.remove	= ci_hdrc_remove,
+	.driver	= {
 		.name	= "ci_hdrc",
 		.pm	= &ci_pm_ops,
 		.dev_groups = ci_groups,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init ci_hdrc_platक्रमm_रेजिस्टर(व्योम)
-अणु
+static int __init ci_hdrc_platform_register(void)
+{
 	ci_hdrc_host_driver_init();
-	वापस platक्रमm_driver_रेजिस्टर(&ci_hdrc_driver);
-पूर्ण
-module_init(ci_hdrc_platक्रमm_रेजिस्टर);
+	return platform_driver_register(&ci_hdrc_driver);
+}
+module_init(ci_hdrc_platform_register);
 
-अटल व्योम __निकास ci_hdrc_platक्रमm_unरेजिस्टर(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&ci_hdrc_driver);
-पूर्ण
-module_निकास(ci_hdrc_platक्रमm_unरेजिस्टर);
+static void __exit ci_hdrc_platform_unregister(void)
+{
+	platform_driver_unregister(&ci_hdrc_driver);
+}
+module_exit(ci_hdrc_platform_unregister);
 
 MODULE_ALIAS("platform:ci_hdrc");
 MODULE_LICENSE("GPL v2");

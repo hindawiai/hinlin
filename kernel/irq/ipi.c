@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2015 Imagination Technologies Ltd
  * Author: Qais Yousef <qais.yousef@imgtec.com>
  *
- * This file contains driver APIs to the IPI subप्रणाली.
+ * This file contains driver APIs to the IPI subsystem.
  */
 
-#घोषणा pr_fmt(fmt) "genirq/ipi: " fmt
+#define pr_fmt(fmt) "genirq/ipi: " fmt
 
-#समावेश <linux/irqकरोमुख्य.h>
-#समावेश <linux/irq.h>
+#include <linux/irqdomain.h>
+#include <linux/irq.h>
 
 /**
  * irq_reserve_ipi() - Setup an IPI to destination cpumask
- * @करोमुख्य:	IPI करोमुख्य
+ * @domain:	IPI domain
  * @dest:	cpumask of cpus which can receive the IPI
  *
  * Allocate a virq that can be used to send IPI to any CPU in dest mask.
  *
- * On success it'll वापस linux irq number and error code on failure
+ * On success it'll return linux irq number and error code on failure
  */
-पूर्णांक irq_reserve_ipi(काष्ठा irq_करोमुख्य *करोमुख्य,
-			     स्थिर काष्ठा cpumask *dest)
-अणु
-	अचिन्हित पूर्णांक nr_irqs, offset;
-	काष्ठा irq_data *data;
-	पूर्णांक virq, i;
+int irq_reserve_ipi(struct irq_domain *domain,
+			     const struct cpumask *dest)
+{
+	unsigned int nr_irqs, offset;
+	struct irq_data *data;
+	int virq, i;
 
-	अगर (!करोमुख्य ||!irq_करोमुख्य_is_ipi(करोमुख्य)) अणु
+	if (!domain ||!irq_domain_is_ipi(domain)) {
 		pr_warn("Reservation on a non IPI domain\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!cpumask_subset(dest, cpu_possible_mask)) अणु
+	if (!cpumask_subset(dest, cpu_possible_mask)) {
 		pr_warn("Reservation is not in possible_cpu_mask\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nr_irqs = cpumask_weight(dest);
-	अगर (!nr_irqs) अणु
+	if (!nr_irqs) {
 		pr_warn("Reservation for empty destination mask\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (irq_करोमुख्य_is_ipi_single(करोमुख्य)) अणु
+	if (irq_domain_is_ipi_single(domain)) {
 		/*
 		 * If the underlying implementation uses a single HW irq on
-		 * all cpus then we only need a single Linux irq number क्रम
+		 * all cpus then we only need a single Linux irq number for
 		 * it. We have no restrictions vs. the destination mask. The
 		 * underlying implementation can deal with holes nicely.
 		 */
 		nr_irqs = 1;
 		offset = 0;
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक next;
+	} else {
+		unsigned int next;
 
 		/*
 		 * The IPI requires a separate HW irq on each CPU. We require
@@ -64,238 +63,238 @@
 		 */
 		offset = cpumask_first(dest);
 		/*
-		 * Find a hole and अगर found look क्रम another set bit after the
-		 * hole. For now we करोn't support this scenario.
+		 * Find a hole and if found look for another set bit after the
+		 * hole. For now we don't support this scenario.
 		 */
 		next = cpumask_next_zero(offset, dest);
-		अगर (next < nr_cpu_ids)
+		if (next < nr_cpu_ids)
 			next = cpumask_next(next, dest);
-		अगर (next < nr_cpu_ids) अणु
+		if (next < nr_cpu_ids) {
 			pr_warn("Destination mask has holes\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	virq = irq_करोमुख्य_alloc_descs(-1, nr_irqs, 0, NUMA_NO_NODE, शून्य);
-	अगर (virq <= 0) अणु
+	virq = irq_domain_alloc_descs(-1, nr_irqs, 0, NUMA_NO_NODE, NULL);
+	if (virq <= 0) {
 		pr_warn("Can't reserve IPI, failed to alloc descs\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	virq = __irq_करोमुख्य_alloc_irqs(करोमुख्य, virq, nr_irqs, NUMA_NO_NODE,
-				       (व्योम *) dest, true, शून्य);
+	virq = __irq_domain_alloc_irqs(domain, virq, nr_irqs, NUMA_NO_NODE,
+				       (void *) dest, true, NULL);
 
-	अगर (virq <= 0) अणु
+	if (virq <= 0) {
 		pr_warn("Can't reserve IPI, failed to alloc hw irqs\n");
-		जाओ मुक्त_descs;
-	पूर्ण
+		goto free_descs;
+	}
 
-	क्रम (i = 0; i < nr_irqs; i++) अणु
+	for (i = 0; i < nr_irqs; i++) {
 		data = irq_get_irq_data(virq + i);
 		cpumask_copy(data->common->affinity, dest);
 		data->common->ipi_offset = offset;
 		irq_set_status_flags(virq + i, IRQ_NO_BALANCING);
-	पूर्ण
-	वापस virq;
+	}
+	return virq;
 
-मुक्त_descs:
-	irq_मुक्त_descs(virq, nr_irqs);
-	वापस -EBUSY;
-पूर्ण
+free_descs:
+	irq_free_descs(virq, nr_irqs);
+	return -EBUSY;
+}
 
 /**
  * irq_destroy_ipi() - unreserve an IPI that was previously allocated
  * @irq:	linux irq number to be destroyed
- * @dest:	cpumask of cpus which should have the IPI हटाओd
+ * @dest:	cpumask of cpus which should have the IPI removed
  *
- * The IPIs allocated with irq_reserve_ipi() are वापसed to the प्रणाली
+ * The IPIs allocated with irq_reserve_ipi() are returned to the system
  * destroying all virqs associated with them.
  *
  * Return 0 on success or error code on failure.
  */
-पूर्णांक irq_destroy_ipi(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *dest)
-अणु
-	काष्ठा irq_data *data = irq_get_irq_data(irq);
-	काष्ठा cpumask *ipimask = data ? irq_data_get_affinity_mask(data) : शून्य;
-	काष्ठा irq_करोमुख्य *करोमुख्य;
-	अचिन्हित पूर्णांक nr_irqs;
+int irq_destroy_ipi(unsigned int irq, const struct cpumask *dest)
+{
+	struct irq_data *data = irq_get_irq_data(irq);
+	struct cpumask *ipimask = data ? irq_data_get_affinity_mask(data) : NULL;
+	struct irq_domain *domain;
+	unsigned int nr_irqs;
 
-	अगर (!irq || !data || !ipimask)
-		वापस -EINVAL;
+	if (!irq || !data || !ipimask)
+		return -EINVAL;
 
-	करोमुख्य = data->करोमुख्य;
-	अगर (WARN_ON(करोमुख्य == शून्य))
-		वापस -EINVAL;
+	domain = data->domain;
+	if (WARN_ON(domain == NULL))
+		return -EINVAL;
 
-	अगर (!irq_करोमुख्य_is_ipi(करोमुख्य)) अणु
+	if (!irq_domain_is_ipi(domain)) {
 		pr_warn("Trying to destroy a non IPI domain!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (WARN_ON(!cpumask_subset(dest, ipimask)))
+	if (WARN_ON(!cpumask_subset(dest, ipimask)))
 		/*
 		 * Must be destroying a subset of CPUs to which this IPI
 		 * was set up to target
 		 */
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (irq_करोमुख्य_is_ipi_per_cpu(करोमुख्य)) अणु
+	if (irq_domain_is_ipi_per_cpu(domain)) {
 		irq = irq + cpumask_first(dest) - data->common->ipi_offset;
 		nr_irqs = cpumask_weight(dest);
-	पूर्ण अन्यथा अणु
+	} else {
 		nr_irqs = 1;
-	पूर्ण
+	}
 
-	irq_करोमुख्य_मुक्त_irqs(irq, nr_irqs);
-	वापस 0;
-पूर्ण
+	irq_domain_free_irqs(irq, nr_irqs);
+	return 0;
+}
 
 /**
  * ipi_get_hwirq - Get the hwirq associated with an IPI to a cpu
  * @irq:	linux irq number
  * @cpu:	the target cpu
  *
- * When dealing with coprocessors IPI, we need to inक्रमm the coprocessor of
+ * When dealing with coprocessors IPI, we need to inform the coprocessor of
  * the hwirq it needs to use to receive and send IPIs.
  *
  * Returns hwirq value on success and INVALID_HWIRQ on failure.
  */
-irq_hw_number_t ipi_get_hwirq(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा irq_data *data = irq_get_irq_data(irq);
-	काष्ठा cpumask *ipimask = data ? irq_data_get_affinity_mask(data) : शून्य;
+irq_hw_number_t ipi_get_hwirq(unsigned int irq, unsigned int cpu)
+{
+	struct irq_data *data = irq_get_irq_data(irq);
+	struct cpumask *ipimask = data ? irq_data_get_affinity_mask(data) : NULL;
 
-	अगर (!data || !ipimask || cpu >= nr_cpu_ids)
-		वापस INVALID_HWIRQ;
+	if (!data || !ipimask || cpu >= nr_cpu_ids)
+		return INVALID_HWIRQ;
 
-	अगर (!cpumask_test_cpu(cpu, ipimask))
-		वापस INVALID_HWIRQ;
+	if (!cpumask_test_cpu(cpu, ipimask))
+		return INVALID_HWIRQ;
 
 	/*
-	 * Get the real hardware irq number अगर the underlying implementation
+	 * Get the real hardware irq number if the underlying implementation
 	 * uses a separate irq per cpu. If the underlying implementation uses
-	 * a single hardware irq क्रम all cpus then the IPI send mechanism
+	 * a single hardware irq for all cpus then the IPI send mechanism
 	 * needs to take care of the cpu destinations.
 	 */
-	अगर (irq_करोमुख्य_is_ipi_per_cpu(data->करोमुख्य))
+	if (irq_domain_is_ipi_per_cpu(data->domain))
 		data = irq_get_irq_data(irq + cpu - data->common->ipi_offset);
 
-	वापस data ? irqd_to_hwirq(data) : INVALID_HWIRQ;
-पूर्ण
+	return data ? irqd_to_hwirq(data) : INVALID_HWIRQ;
+}
 EXPORT_SYMBOL_GPL(ipi_get_hwirq);
 
-अटल पूर्णांक ipi_send_verअगरy(काष्ठा irq_chip *chip, काष्ठा irq_data *data,
-			   स्थिर काष्ठा cpumask *dest, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा cpumask *ipimask = irq_data_get_affinity_mask(data);
+static int ipi_send_verify(struct irq_chip *chip, struct irq_data *data,
+			   const struct cpumask *dest, unsigned int cpu)
+{
+	struct cpumask *ipimask = irq_data_get_affinity_mask(data);
 
-	अगर (!chip || !ipimask)
-		वापस -EINVAL;
+	if (!chip || !ipimask)
+		return -EINVAL;
 
-	अगर (!chip->ipi_send_single && !chip->ipi_send_mask)
-		वापस -EINVAL;
+	if (!chip->ipi_send_single && !chip->ipi_send_mask)
+		return -EINVAL;
 
-	अगर (cpu >= nr_cpu_ids)
-		वापस -EINVAL;
+	if (cpu >= nr_cpu_ids)
+		return -EINVAL;
 
-	अगर (dest) अणु
-		अगर (!cpumask_subset(dest, ipimask))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		अगर (!cpumask_test_cpu(cpu, ipimask))
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (dest) {
+		if (!cpumask_subset(dest, ipimask))
+			return -EINVAL;
+	} else {
+		if (!cpumask_test_cpu(cpu, ipimask))
+			return -EINVAL;
+	}
+	return 0;
+}
 
 /**
  * __ipi_send_single - send an IPI to a target Linux SMP CPU
- * @desc:	poपूर्णांकer to irq_desc of the IRQ
+ * @desc:	pointer to irq_desc of the IRQ
  * @cpu:	destination CPU, must in the destination mask passed to
  *		irq_reserve_ipi()
  *
- * This function is क्रम architecture or core code to speed up IPI sending. Not
+ * This function is for architecture or core code to speed up IPI sending. Not
  * usable from driver code.
  *
  * Returns zero on success and negative error number on failure.
  */
-पूर्णांक __ipi_send_single(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
-	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
+int __ipi_send_single(struct irq_desc *desc, unsigned int cpu)
+{
+	struct irq_data *data = irq_desc_get_irq_data(desc);
+	struct irq_chip *chip = irq_data_get_irq_chip(data);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	/*
-	 * Minimise the overhead by omitting the checks क्रम Linux SMP IPIs.
+	 * Minimise the overhead by omitting the checks for Linux SMP IPIs.
 	 * Since the callers should be arch or core code which is generally
-	 * trusted, only check क्रम errors when debugging.
+	 * trusted, only check for errors when debugging.
 	 */
-	अगर (WARN_ON_ONCE(ipi_send_verअगरy(chip, data, शून्य, cpu)))
-		वापस -EINVAL;
-#पूर्ण_अगर
-	अगर (!chip->ipi_send_single) अणु
+	if (WARN_ON_ONCE(ipi_send_verify(chip, data, NULL, cpu)))
+		return -EINVAL;
+#endif
+	if (!chip->ipi_send_single) {
 		chip->ipi_send_mask(data, cpumask_of(cpu));
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* FIXME: Store this inक्रमmation in irqdata flags */
-	अगर (irq_करोमुख्य_is_ipi_per_cpu(data->करोमुख्य) &&
-	    cpu != data->common->ipi_offset) अणु
-		/* use the correct data क्रम that cpu */
-		अचिन्हित irq = data->irq + cpu - data->common->ipi_offset;
+	/* FIXME: Store this information in irqdata flags */
+	if (irq_domain_is_ipi_per_cpu(data->domain) &&
+	    cpu != data->common->ipi_offset) {
+		/* use the correct data for that cpu */
+		unsigned irq = data->irq + cpu - data->common->ipi_offset;
 
 		data = irq_get_irq_data(irq);
-	पूर्ण
+	}
 	chip->ipi_send_single(data, cpu);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * ipi_send_mask - send an IPI to target Linux SMP CPU(s)
- * @desc:	poपूर्णांकer to irq_desc of the IRQ
+ * @desc:	pointer to irq_desc of the IRQ
  * @dest:	dest CPU(s), must be a subset of the mask passed to
  *		irq_reserve_ipi()
  *
- * This function is क्रम architecture or core code to speed up IPI sending. Not
+ * This function is for architecture or core code to speed up IPI sending. Not
  * usable from driver code.
  *
  * Returns zero on success and negative error number on failure.
  */
-पूर्णांक __ipi_send_mask(काष्ठा irq_desc *desc, स्थिर काष्ठा cpumask *dest)
-अणु
-	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
-	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
-	अचिन्हित पूर्णांक cpu;
+int __ipi_send_mask(struct irq_desc *desc, const struct cpumask *dest)
+{
+	struct irq_data *data = irq_desc_get_irq_data(desc);
+	struct irq_chip *chip = irq_data_get_irq_chip(data);
+	unsigned int cpu;
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 	/*
-	 * Minimise the overhead by omitting the checks क्रम Linux SMP IPIs.
+	 * Minimise the overhead by omitting the checks for Linux SMP IPIs.
 	 * Since the callers should be arch or core code which is generally
-	 * trusted, only check क्रम errors when debugging.
+	 * trusted, only check for errors when debugging.
 	 */
-	अगर (WARN_ON_ONCE(ipi_send_verअगरy(chip, data, dest, 0)))
-		वापस -EINVAL;
-#पूर्ण_अगर
-	अगर (chip->ipi_send_mask) अणु
+	if (WARN_ON_ONCE(ipi_send_verify(chip, data, dest, 0)))
+		return -EINVAL;
+#endif
+	if (chip->ipi_send_mask) {
 		chip->ipi_send_mask(data, dest);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (irq_करोमुख्य_is_ipi_per_cpu(data->करोमुख्य)) अणु
-		अचिन्हित पूर्णांक base = data->irq;
+	if (irq_domain_is_ipi_per_cpu(data->domain)) {
+		unsigned int base = data->irq;
 
-		क्रम_each_cpu(cpu, dest) अणु
-			अचिन्हित irq = base + cpu - data->common->ipi_offset;
+		for_each_cpu(cpu, dest) {
+			unsigned irq = base + cpu - data->common->ipi_offset;
 
 			data = irq_get_irq_data(irq);
 			chip->ipi_send_single(data, cpu);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम_each_cpu(cpu, dest)
+		}
+	} else {
+		for_each_cpu(cpu, dest)
 			chip->ipi_send_single(data, cpu);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
  * ipi_send_single - Send an IPI to a single CPU
@@ -305,17 +304,17 @@ EXPORT_SYMBOL_GPL(ipi_get_hwirq);
  *
  * Returns zero on success and negative error number on failure.
  */
-पूर्णांक ipi_send_single(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpu)
-अणु
-	काष्ठा irq_desc *desc = irq_to_desc(virq);
-	काष्ठा irq_data *data = desc ? irq_desc_get_irq_data(desc) : शून्य;
-	काष्ठा irq_chip *chip = data ? irq_data_get_irq_chip(data) : शून्य;
+int ipi_send_single(unsigned int virq, unsigned int cpu)
+{
+	struct irq_desc *desc = irq_to_desc(virq);
+	struct irq_data *data = desc ? irq_desc_get_irq_data(desc) : NULL;
+	struct irq_chip *chip = data ? irq_data_get_irq_chip(data) : NULL;
 
-	अगर (WARN_ON_ONCE(ipi_send_verअगरy(chip, data, शून्य, cpu)))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(ipi_send_verify(chip, data, NULL, cpu)))
+		return -EINVAL;
 
-	वापस __ipi_send_single(desc, cpu);
-पूर्ण
+	return __ipi_send_single(desc, cpu);
+}
 EXPORT_SYMBOL_GPL(ipi_send_single);
 
 /**
@@ -326,15 +325,15 @@ EXPORT_SYMBOL_GPL(ipi_send_single);
  *
  * Returns zero on success and negative error number on failure.
  */
-पूर्णांक ipi_send_mask(अचिन्हित पूर्णांक virq, स्थिर काष्ठा cpumask *dest)
-अणु
-	काष्ठा irq_desc *desc = irq_to_desc(virq);
-	काष्ठा irq_data *data = desc ? irq_desc_get_irq_data(desc) : शून्य;
-	काष्ठा irq_chip *chip = data ? irq_data_get_irq_chip(data) : शून्य;
+int ipi_send_mask(unsigned int virq, const struct cpumask *dest)
+{
+	struct irq_desc *desc = irq_to_desc(virq);
+	struct irq_data *data = desc ? irq_desc_get_irq_data(desc) : NULL;
+	struct irq_chip *chip = data ? irq_data_get_irq_chip(data) : NULL;
 
-	अगर (WARN_ON_ONCE(ipi_send_verअगरy(chip, data, dest, 0)))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(ipi_send_verify(chip, data, dest, 0)))
+		return -EINVAL;
 
-	वापस __ipi_send_mask(desc, dest);
-पूर्ण
+	return __ipi_send_mask(desc, dest);
+}
 EXPORT_SYMBOL_GPL(ipi_send_mask);

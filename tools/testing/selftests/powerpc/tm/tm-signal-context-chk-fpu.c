@@ -1,111 +1,110 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  *
- * Test the kernel's संकेत frame code.
+ * Test the kernel's signal frame code.
  *
- * The kernel sets up two sets of ucontexts अगर the संकेत was to be
- * delivered जबतक the thपढ़ो was in a transaction (referred too as
+ * The kernel sets up two sets of ucontexts if the signal was to be
+ * delivered while the thread was in a transaction (referred too as
  * first and second contexts).
- * Expected behaviour is that the checkpoपूर्णांकed state is in the user
- * context passed to the संकेत handler (first context). The speculated
- * state can be accessed with the uc_link poपूर्णांकer (second context).
+ * Expected behaviour is that the checkpointed state is in the user
+ * context passed to the signal handler (first context). The speculated
+ * state can be accessed with the uc_link pointer (second context).
  *
- * The rationale क्रम this is that अगर TM unaware code (which linked
- * against TM libs) installs a संकेत handler it will not know of the
- * speculative nature of the 'live' रेजिस्टरs and may infer the wrong
+ * The rationale for this is that if TM unaware code (which linked
+ * against TM libs) installs a signal handler it will not know of the
+ * speculative nature of the 'live' registers and may infer the wrong
  * thing.
  */
 
-#समावेश <मानककोष.स>
-#समावेश <मानकपन.स>
-#समावेश <संकेत.स>
-#समावेश <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
-#समावेश <altivec.h>
+#include <altivec.h>
 
-#समावेश "utils.h"
-#समावेश "tm.h"
+#include "utils.h"
+#include "tm.h"
 
-#घोषणा MAX_ATTEMPT 500000
+#define MAX_ATTEMPT 500000
 
-#घोषणा NV_FPU_REGS 18 /* Number of non-अस्थिर FP रेजिस्टरs */
-#घोषणा FPR14 14 /* First non-अस्थिर FP रेजिस्टर to check in f14-31 subset */
+#define NV_FPU_REGS 18 /* Number of non-volatile FP registers */
+#define FPR14 14 /* First non-volatile FP register to check in f14-31 subset */
 
-दीर्घ पंचांग_संकेत_self_context_load(pid_t pid, दीर्घ *gprs, द्विगुन *fps, vector पूर्णांक *vms, vector पूर्णांक *vss);
+long tm_signal_self_context_load(pid_t pid, long *gprs, double *fps, vector int *vms, vector int *vss);
 
-/* Test only non-अस्थिर रेजिस्टरs, i.e. 18 fpr रेजिस्टरs from f14 to f31 */
-अटल द्विगुन fps[] = अणु
+/* Test only non-volatile registers, i.e. 18 fpr registers from f14 to f31 */
+static double fps[] = {
 	/* First context will be set with these values, i.e. non-speculative */
 	 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
 	/* Second context will be set with these values, i.e. speculative */
 	-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12,-13,-14,-15,-16,-17,-18
-पूर्ण;
+};
 
-अटल संक_पूर्ण_प्रकार fail, broken;
+static sig_atomic_t fail, broken;
 
-अटल व्योम संकेत_usr1(पूर्णांक signum, siginfo_t *info, व्योम *uc)
-अणु
-	पूर्णांक i;
+static void signal_usr1(int signum, siginfo_t *info, void *uc)
+{
+	int i;
 	ucontext_t *ucp = uc;
-	ucontext_t *पंचांग_ucp = ucp->uc_link;
+	ucontext_t *tm_ucp = ucp->uc_link;
 
-	क्रम (i = 0; i < NV_FPU_REGS; i++) अणु
-		/* Check first context. Prपूर्णांक all mismatches. */
+	for (i = 0; i < NV_FPU_REGS; i++) {
+		/* Check first context. Print all mismatches. */
 		fail = (ucp->uc_mcontext.fp_regs[FPR14 + i] != fps[i]);
-		अगर (fail) अणु
+		if (fail) {
 			broken = 1;
-			म_लिखो("FPR%d (1st context) == %g instead of %g (expected)\n",
+			printf("FPR%d (1st context) == %g instead of %g (expected)\n",
 				FPR14 + i, ucp->uc_mcontext.fp_regs[FPR14 + i], fps[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i < NV_FPU_REGS; i++) अणु
-		/* Check second context. Prपूर्णांक all mismatches. */
-		fail = (पंचांग_ucp->uc_mcontext.fp_regs[FPR14 + i] != fps[NV_FPU_REGS + i]);
-		अगर (fail) अणु
+	for (i = 0; i < NV_FPU_REGS; i++) {
+		/* Check second context. Print all mismatches. */
+		fail = (tm_ucp->uc_mcontext.fp_regs[FPR14 + i] != fps[NV_FPU_REGS + i]);
+		if (fail) {
 			broken = 1;
-			म_लिखो("FPR%d (2nd context) == %g instead of %g (expected)\n",
-				FPR14 + i, पंचांग_ucp->uc_mcontext.fp_regs[FPR14 + i], fps[NV_FPU_REGS + i]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			printf("FPR%d (2nd context) == %g instead of %g (expected)\n",
+				FPR14 + i, tm_ucp->uc_mcontext.fp_regs[FPR14 + i], fps[NV_FPU_REGS + i]);
+		}
+	}
+}
 
-अटल पूर्णांक पंचांग_संकेत_context_chk_fpu()
-अणु
-	काष्ठा sigaction act;
-	पूर्णांक i;
-	दीर्घ rc;
+static int tm_signal_context_chk_fpu()
+{
+	struct sigaction act;
+	int i;
+	long rc;
 	pid_t pid = getpid();
 
-	SKIP_IF(!have_hपंचांग());
+	SKIP_IF(!have_htm());
 
-	act.sa_sigaction = संकेत_usr1;
+	act.sa_sigaction = signal_usr1;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	अगर (sigaction(SIGUSR1, &act, शून्य) < 0) अणु
-		लिखो_त्रुटि("sigaction sigusr1");
-		निकास(1);
-	पूर्ण
+	if (sigaction(SIGUSR1, &act, NULL) < 0) {
+		perror("sigaction sigusr1");
+		exit(1);
+	}
 
 	i = 0;
-	जबतक (i < MAX_ATTEMPT && !broken) अणु
+	while (i < MAX_ATTEMPT && !broken) {
 		/*
-		 * पंचांग_संकेत_self_context_load will set both first and second
-		 * contexts accordingly to the values passed through non-शून्य
-		 * array poपूर्णांकers to it, in that हाल 'fps', and invoke the
-		 * संकेत handler installed क्रम SIGUSR1.
+		 * tm_signal_self_context_load will set both first and second
+		 * contexts accordingly to the values passed through non-NULL
+		 * array pointers to it, in that case 'fps', and invoke the
+		 * signal handler installed for SIGUSR1.
 		 */
-		rc = पंचांग_संकेत_self_context_load(pid, शून्य, fps, शून्य, शून्य);
+		rc = tm_signal_self_context_load(pid, NULL, fps, NULL, NULL);
 		FAIL_IF(rc != pid);
 		i++;
-	पूर्ण
+	}
 
-	वापस (broken);
-पूर्ण
+	return (broken);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	वापस test_harness(पंचांग_संकेत_context_chk_fpu, "tm_signal_context_chk_fpu");
-पूर्ण
+int main(void)
+{
+	return test_harness(tm_signal_context_chk_fpu, "tm_signal_context_chk_fpu");
+}

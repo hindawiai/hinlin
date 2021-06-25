@@ -1,251 +1,250 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * drivers/net/phy/lxt.c
  *
- * Driver क्रम Intel LXT PHYs
+ * Driver for Intel LXT PHYs
  *
  * Author: Andy Fleming
  *
  * Copyright (c) 2004 Freescale Semiconductor, Inc.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/unistd.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/phy.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/unistd.h>
+#include <linux/interrupt.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/mii.h>
+#include <linux/ethtool.h>
+#include <linux/phy.h>
 
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
 
 /* The Level one LXT970 is used by many boards				     */
 
-#घोषणा MII_LXT970_IER       17  /* Interrupt Enable Register */
+#define MII_LXT970_IER       17  /* Interrupt Enable Register */
 
-#घोषणा MII_LXT970_IER_IEN	0x0002
+#define MII_LXT970_IER_IEN	0x0002
 
-#घोषणा MII_LXT970_ISR       18  /* Interrupt Status Register */
+#define MII_LXT970_ISR       18  /* Interrupt Status Register */
 
-#घोषणा MII_LXT970_IRS_MINT  BIT(15)
+#define MII_LXT970_IRS_MINT  BIT(15)
 
-#घोषणा MII_LXT970_CONFIG    19  /* Configuration Register    */
+#define MII_LXT970_CONFIG    19  /* Configuration Register    */
 
 /* ------------------------------------------------------------------------- */
 /* The Level one LXT971 is used on some of my custom boards                  */
 
-/* रेजिस्टर definitions क्रम the 971 */
-#घोषणा MII_LXT971_IER		18  /* Interrupt Enable Register */
-#घोषणा MII_LXT971_IER_IEN	0x00f2
+/* register definitions for the 971 */
+#define MII_LXT971_IER		18  /* Interrupt Enable Register */
+#define MII_LXT971_IER_IEN	0x00f2
 
-#घोषणा MII_LXT971_ISR		19  /* Interrupt Status Register */
-#घोषणा MII_LXT971_ISR_MASK	0x00f0
+#define MII_LXT971_ISR		19  /* Interrupt Status Register */
+#define MII_LXT971_ISR_MASK	0x00f0
 
-/* रेजिस्टर definitions क्रम the 973 */
-#घोषणा MII_LXT973_PCR 16 /* Port Configuration Register */
-#घोषणा PCR_FIBER_SELECT 1
+/* register definitions for the 973 */
+#define MII_LXT973_PCR 16 /* Port Configuration Register */
+#define PCR_FIBER_SELECT 1
 
 MODULE_DESCRIPTION("Intel LXT PHY driver");
 MODULE_AUTHOR("Andy Fleming");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक lxt970_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int lxt970_ack_interrupt(struct phy_device *phydev)
+{
+	int err;
 
-	err = phy_पढ़ो(phydev, MII_BMSR);
+	err = phy_read(phydev, MII_BMSR);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	err = phy_पढ़ो(phydev, MII_LXT970_ISR);
+	err = phy_read(phydev, MII_LXT970_ISR);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lxt970_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int lxt970_config_intr(struct phy_device *phydev)
+{
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = lxt970_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = lxt970_ack_interrupt(phydev);
+		if (err)
+			return err;
 
-		err = phy_ग_लिखो(phydev, MII_LXT970_IER, MII_LXT970_IER_IEN);
-	पूर्ण अन्यथा अणु
-		err = phy_ग_लिखो(phydev, MII_LXT970_IER, 0);
-		अगर (err)
-			वापस err;
+		err = phy_write(phydev, MII_LXT970_IER, MII_LXT970_IER_IEN);
+	} else {
+		err = phy_write(phydev, MII_LXT970_IER, 0);
+		if (err)
+			return err;
 
-		err = lxt970_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = lxt970_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल irqवापस_t lxt970_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t lxt970_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	/* The पूर्णांकerrupt status रेजिस्टर is cleared by पढ़ोing BMSR
+	/* The interrupt status register is cleared by reading BMSR
 	 * followed by MII_LXT970_ISR
 	 */
-	irq_status = phy_पढ़ो(phydev, MII_BMSR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, MII_BMSR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	irq_status = phy_पढ़ो(phydev, MII_LXT970_ISR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, MII_LXT970_ISR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & MII_LXT970_IRS_MINT))
-		वापस IRQ_NONE;
+	if (!(irq_status & MII_LXT970_IRS_MINT))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक lxt970_config_init(काष्ठा phy_device *phydev)
-अणु
-	वापस phy_ग_लिखो(phydev, MII_LXT970_CONFIG, 0);
-पूर्ण
+static int lxt970_config_init(struct phy_device *phydev)
+{
+	return phy_write(phydev, MII_LXT970_CONFIG, 0);
+}
 
 
-अटल पूर्णांक lxt971_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err = phy_पढ़ो(phydev, MII_LXT971_ISR);
+static int lxt971_ack_interrupt(struct phy_device *phydev)
+{
+	int err = phy_read(phydev, MII_LXT971_ISR);
 
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lxt971_config_पूर्णांकr(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक err;
+static int lxt971_config_intr(struct phy_device *phydev)
+{
+	int err;
 
-	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
-		err = lxt971_ack_पूर्णांकerrupt(phydev);
-		अगर (err)
-			वापस err;
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		err = lxt971_ack_interrupt(phydev);
+		if (err)
+			return err;
 
-		err = phy_ग_लिखो(phydev, MII_LXT971_IER, MII_LXT971_IER_IEN);
-	पूर्ण अन्यथा अणु
-		err = phy_ग_लिखो(phydev, MII_LXT971_IER, 0);
-		अगर (err)
-			वापस err;
+		err = phy_write(phydev, MII_LXT971_IER, MII_LXT971_IER_IEN);
+	} else {
+		err = phy_write(phydev, MII_LXT971_IER, 0);
+		if (err)
+			return err;
 
-		err = lxt971_ack_पूर्णांकerrupt(phydev);
-	पूर्ण
+		err = lxt971_ack_interrupt(phydev);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल irqवापस_t lxt971_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक irq_status;
+static irqreturn_t lxt971_handle_interrupt(struct phy_device *phydev)
+{
+	int irq_status;
 
-	irq_status = phy_पढ़ो(phydev, MII_LXT971_ISR);
-	अगर (irq_status < 0) अणु
+	irq_status = phy_read(phydev, MII_LXT971_ISR);
+	if (irq_status < 0) {
 		phy_error(phydev);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
-	अगर (!(irq_status & MII_LXT971_ISR_MASK))
-		वापस IRQ_NONE;
+	if (!(irq_status & MII_LXT971_ISR_MASK))
+		return IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
- * A2 version of LXT973 chip has an ERRATA: it अक्रमomly वापस the contents
- * of the previous even रेजिस्टर when you पढ़ो a odd रेजिस्टर regularly
+ * A2 version of LXT973 chip has an ERRATA: it randomly return the contents
+ * of the previous even register when you read a odd register regularly
  */
 
-अटल पूर्णांक lxt973a2_update_link(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक status;
-	पूर्णांक control;
-	पूर्णांक retry = 8; /* we try 8 बार */
+static int lxt973a2_update_link(struct phy_device *phydev)
+{
+	int status;
+	int control;
+	int retry = 8; /* we try 8 times */
 
-	/* Do a fake पढ़ो */
-	status = phy_पढ़ो(phydev, MII_BMSR);
+	/* Do a fake read */
+	status = phy_read(phydev, MII_BMSR);
 
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	control = phy_पढ़ो(phydev, MII_BMCR);
-	अगर (control < 0)
-		वापस control;
+	control = phy_read(phydev, MII_BMCR);
+	if (control < 0)
+		return control;
 
-	करो अणु
-		/* Read link and स्वतःnegotiation status */
-		status = phy_पढ़ो(phydev, MII_BMSR);
-	पूर्ण जबतक (status >= 0 && retry-- && status == control);
+	do {
+		/* Read link and autonegotiation status */
+		status = phy_read(phydev, MII_BMSR);
+	} while (status >= 0 && retry-- && status == control);
 
-	अगर (status < 0)
-		वापस status;
+	if (status < 0)
+		return status;
 
-	अगर ((status & BMSR_LSTATUS) == 0)
+	if ((status & BMSR_LSTATUS) == 0)
 		phydev->link = 0;
-	अन्यथा
+	else
 		phydev->link = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lxt973a2_पढ़ो_status(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक adv;
-	पूर्णांक err;
-	पूर्णांक lpa;
+static int lxt973a2_read_status(struct phy_device *phydev)
+{
+	int adv;
+	int err;
+	int lpa;
 
-	/* Update the link, but वापस अगर there was an error */
+	/* Update the link, but return if there was an error */
 	err = lxt973a2_update_link(phydev);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (AUTONEG_ENABLE == phydev->स्वतःneg) अणु
-		पूर्णांक retry = 1;
+	if (AUTONEG_ENABLE == phydev->autoneg) {
+		int retry = 1;
 
-		adv = phy_पढ़ो(phydev, MII_ADVERTISE);
+		adv = phy_read(phydev, MII_ADVERTISE);
 
-		अगर (adv < 0)
-			वापस adv;
+		if (adv < 0)
+			return adv;
 
-		करो अणु
-			lpa = phy_पढ़ो(phydev, MII_LPA);
+		do {
+			lpa = phy_read(phydev, MII_LPA);
 
-			अगर (lpa < 0)
-				वापस lpa;
+			if (lpa < 0)
+				return lpa;
 
-			/* If both रेजिस्टरs are equal, it is suspect but not
+			/* If both registers are equal, it is suspect but not
 			* impossible, hence a new try
 			*/
-		पूर्ण जबतक (lpa == adv && retry--);
+		} while (lpa == adv && retry--);
 
 		mii_lpa_to_linkmode_lpa_t(phydev->lp_advertising, lpa);
 
@@ -253,78 +252,78 @@ MODULE_LICENSE("GPL");
 
 		phydev->speed = SPEED_10;
 		phydev->duplex = DUPLEX_HALF;
-		phydev->छोड़ो = phydev->asym_छोड़ो = 0;
+		phydev->pause = phydev->asym_pause = 0;
 
-		अगर (lpa & (LPA_100FULL | LPA_100HALF)) अणु
+		if (lpa & (LPA_100FULL | LPA_100HALF)) {
 			phydev->speed = SPEED_100;
 
-			अगर (lpa & LPA_100FULL)
+			if (lpa & LPA_100FULL)
 				phydev->duplex = DUPLEX_FULL;
-		पूर्ण अन्यथा अणु
-			अगर (lpa & LPA_10FULL)
+		} else {
+			if (lpa & LPA_10FULL)
 				phydev->duplex = DUPLEX_FULL;
-		पूर्ण
+		}
 
-		phy_resolve_aneg_छोड़ो(phydev);
-	पूर्ण अन्यथा अणु
-		err = genphy_पढ़ो_status_fixed(phydev);
-		अगर (err < 0)
-			वापस err;
+		phy_resolve_aneg_pause(phydev);
+	} else {
+		err = genphy_read_status_fixed(phydev);
+		if (err < 0)
+			return err;
 
-		phydev->छोड़ो = phydev->asym_छोड़ो = 0;
+		phydev->pause = phydev->asym_pause = 0;
 		linkmode_zero(phydev->lp_advertising);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lxt973_probe(काष्ठा phy_device *phydev)
-अणु
-	पूर्णांक val = phy_पढ़ो(phydev, MII_LXT973_PCR);
+static int lxt973_probe(struct phy_device *phydev)
+{
+	int val = phy_read(phydev, MII_LXT973_PCR);
 
-	अगर (val & PCR_FIBER_SELECT) अणु
+	if (val & PCR_FIBER_SELECT) {
 		/*
 		 * If fiber is selected, then the only correct setting
-		 * is 100Mbps, full duplex, and स्वतः negotiation off.
+		 * is 100Mbps, full duplex, and auto negotiation off.
 		 */
-		val = phy_पढ़ो(phydev, MII_BMCR);
+		val = phy_read(phydev, MII_BMCR);
 		val |= (BMCR_SPEED100 | BMCR_FULLDPLX);
 		val &= ~BMCR_ANENABLE;
-		phy_ग_लिखो(phydev, MII_BMCR, val);
+		phy_write(phydev, MII_BMCR, val);
 		/* Remember that the port is in fiber mode. */
 		phydev->priv = lxt973_probe;
 		phydev->port = PORT_FIBRE;
-	पूर्ण अन्यथा अणु
-		phydev->priv = शून्य;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	} else {
+		phydev->priv = NULL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक lxt973_config_aneg(काष्ठा phy_device *phydev)
-अणु
-	/* Do nothing अगर port is in fiber mode. */
-	वापस phydev->priv ? 0 : genphy_config_aneg(phydev);
-पूर्ण
+static int lxt973_config_aneg(struct phy_device *phydev)
+{
+	/* Do nothing if port is in fiber mode. */
+	return phydev->priv ? 0 : genphy_config_aneg(phydev);
+}
 
-अटल काष्ठा phy_driver lxt97x_driver[] = अणु
-अणु
+static struct phy_driver lxt97x_driver[] = {
+{
 	.phy_id		= 0x78100000,
 	.name		= "LXT970",
 	.phy_id_mask	= 0xfffffff0,
 	/* PHY_BASIC_FEATURES */
 	.config_init	= lxt970_config_init,
-	.config_पूर्णांकr	= lxt970_config_पूर्णांकr,
-	.handle_पूर्णांकerrupt = lxt970_handle_पूर्णांकerrupt,
-पूर्ण, अणु
+	.config_intr	= lxt970_config_intr,
+	.handle_interrupt = lxt970_handle_interrupt,
+}, {
 	.phy_id		= 0x001378e0,
 	.name		= "LXT971",
 	.phy_id_mask	= 0xfffffff0,
 	/* PHY_BASIC_FEATURES */
-	.config_पूर्णांकr	= lxt971_config_पूर्णांकr,
-	.handle_पूर्णांकerrupt = lxt971_handle_पूर्णांकerrupt,
+	.config_intr	= lxt971_config_intr,
+	.handle_interrupt = lxt971_handle_interrupt,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-पूर्ण, अणु
+}, {
 	.phy_id		= 0x00137a10,
 	.name		= "LXT973-A2",
 	.phy_id_mask	= 0xffffffff,
@@ -332,10 +331,10 @@ MODULE_LICENSE("GPL");
 	.flags		= 0,
 	.probe		= lxt973_probe,
 	.config_aneg	= lxt973_config_aneg,
-	.पढ़ो_status	= lxt973a2_पढ़ो_status,
+	.read_status	= lxt973a2_read_status,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-पूर्ण, अणु
+}, {
 	.phy_id		= 0x00137a10,
 	.name		= "LXT973",
 	.phy_id_mask	= 0xfffffff0,
@@ -345,15 +344,15 @@ MODULE_LICENSE("GPL");
 	.config_aneg	= lxt973_config_aneg,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-पूर्ण पूर्ण;
+} };
 
 module_phy_driver(lxt97x_driver);
 
-अटल काष्ठा mdio_device_id __maybe_unused lxt_tbl[] = अणु
-	अणु 0x78100000, 0xfffffff0 पूर्ण,
-	अणु 0x001378e0, 0xfffffff0 पूर्ण,
-	अणु 0x00137a10, 0xfffffff0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static struct mdio_device_id __maybe_unused lxt_tbl[] = {
+	{ 0x78100000, 0xfffffff0 },
+	{ 0x001378e0, 0xfffffff0 },
+	{ 0x00137a10, 0xfffffff0 },
+	{ }
+};
 
 MODULE_DEVICE_TABLE(mdio, lxt_tbl);

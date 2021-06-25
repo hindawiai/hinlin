@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
- * \पile drm_dma.c
+ * \file drm_dma.c
  * DMA IOCTL and function support
  *
- * \चuthor Rickard E. (Rik) Faith <faith@valinux.com>
- * \चuthor Gareth Hughes <gareth@valinux.com>
+ * \author Rickard E. (Rik) Faith <faith@valinux.com>
+ * \author Gareth Hughes <gareth@valinux.com>
  */
 
 /*
  * Created: Fri Mar 19 14:30:16 1999 by faith@valinux.com
  *
  * Copyright 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -34,13 +33,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/pci.h>
+#include <linux/export.h>
+#include <linux/pci.h>
 
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_print.h>
 
-#समावेश "drm_legacy.h"
+#include "drm_legacy.h"
 
 /**
  * drm_legacy_dma_setup() - Initialize the DMA data.
@@ -48,126 +47,126 @@
  * @dev: DRM device.
  * Return: zero on success or a negative value on failure.
  *
- * Allocate and initialize a drm_device_dma काष्ठाure.
+ * Allocate and initialize a drm_device_dma structure.
  */
-पूर्णांक drm_legacy_dma_setup(काष्ठा drm_device *dev)
-अणु
-	पूर्णांक i;
+int drm_legacy_dma_setup(struct drm_device *dev)
+{
+	int i;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA) ||
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA) ||
 	    !drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस 0;
+		return 0;
 
 	dev->buf_use = 0;
 	atomic_set(&dev->buf_alloc, 0);
 
-	dev->dma = kzalloc(माप(*dev->dma), GFP_KERNEL);
-	अगर (!dev->dma)
-		वापस -ENOMEM;
+	dev->dma = kzalloc(sizeof(*dev->dma), GFP_KERNEL);
+	if (!dev->dma)
+		return -ENOMEM;
 
-	क्रम (i = 0; i <= DRM_MAX_ORDER; i++)
-		स_रखो(&dev->dma->bufs[i], 0, माप(dev->dma->bufs[0]));
+	for (i = 0; i <= DRM_MAX_ORDER; i++)
+		memset(&dev->dma->bufs[i], 0, sizeof(dev->dma->bufs[0]));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * drm_legacy_dma_takeकरोwn() - Cleanup the DMA resources.
+ * drm_legacy_dma_takedown() - Cleanup the DMA resources.
  *
  * @dev: DRM device.
  *
  * Free all pages associated with DMA buffers, the buffers and pages lists, and
- * finally the drm_device::dma काष्ठाure itself.
+ * finally the drm_device::dma structure itself.
  */
-व्योम drm_legacy_dma_takeकरोwn(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक i, j;
+void drm_legacy_dma_takedown(struct drm_device *dev)
+{
+	struct drm_device_dma *dma = dev->dma;
+	int i, j;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA) ||
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA) ||
 	    !drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस;
+		return;
 
-	अगर (!dma)
-		वापस;
+	if (!dma)
+		return;
 
 	/* Clear dma buffers */
-	क्रम (i = 0; i <= DRM_MAX_ORDER; i++) अणु
-		अगर (dma->bufs[i].seg_count) अणु
+	for (i = 0; i <= DRM_MAX_ORDER; i++) {
+		if (dma->bufs[i].seg_count) {
 			DRM_DEBUG("order %d: buf_count = %d,"
 				  " seg_count = %d\n",
 				  i,
 				  dma->bufs[i].buf_count,
 				  dma->bufs[i].seg_count);
-			क्रम (j = 0; j < dma->bufs[i].seg_count; j++) अणु
-				अगर (dma->bufs[i].seglist[j]) अणु
-					drm_pci_मुक्त(dev, dma->bufs[i].seglist[j]);
-				पूर्ण
-			पूर्ण
-			kमुक्त(dma->bufs[i].seglist);
-		पूर्ण
-		अगर (dma->bufs[i].buf_count) अणु
-			क्रम (j = 0; j < dma->bufs[i].buf_count; j++) अणु
-				kमुक्त(dma->bufs[i].buflist[j].dev_निजी);
-			पूर्ण
-			kमुक्त(dma->bufs[i].buflist);
-		पूर्ण
-	पूर्ण
+			for (j = 0; j < dma->bufs[i].seg_count; j++) {
+				if (dma->bufs[i].seglist[j]) {
+					drm_pci_free(dev, dma->bufs[i].seglist[j]);
+				}
+			}
+			kfree(dma->bufs[i].seglist);
+		}
+		if (dma->bufs[i].buf_count) {
+			for (j = 0; j < dma->bufs[i].buf_count; j++) {
+				kfree(dma->bufs[i].buflist[j].dev_private);
+			}
+			kfree(dma->bufs[i].buflist);
+		}
+	}
 
-	kमुक्त(dma->buflist);
-	kमुक्त(dma->pagelist);
-	kमुक्त(dev->dma);
-	dev->dma = शून्य;
-पूर्ण
+	kfree(dma->buflist);
+	kfree(dma->pagelist);
+	kfree(dev->dma);
+	dev->dma = NULL;
+}
 
 /**
- * drm_legacy_मुक्त_buffer() - Free a buffer.
+ * drm_legacy_free_buffer() - Free a buffer.
  *
  * @dev: DRM device.
- * @buf: buffer to मुक्त.
+ * @buf: buffer to free.
  *
  * Resets the fields of \p buf.
  */
-व्योम drm_legacy_मुक्त_buffer(काष्ठा drm_device *dev, काष्ठा drm_buf * buf)
-अणु
-	अगर (!buf)
-		वापस;
+void drm_legacy_free_buffer(struct drm_device *dev, struct drm_buf * buf)
+{
+	if (!buf)
+		return;
 
-	buf->रुकोing = 0;
+	buf->waiting = 0;
 	buf->pending = 0;
-	buf->file_priv = शून्य;
+	buf->file_priv = NULL;
 	buf->used = 0;
-पूर्ण
+}
 
 /**
  * drm_legacy_reclaim_buffers() - Reclaim the buffers.
  *
  * @dev: DRM device.
- * @file_priv: DRM file निजी.
+ * @file_priv: DRM file private.
  *
- * Frees each buffer associated with \p file_priv not alपढ़ोy on the hardware.
+ * Frees each buffer associated with \p file_priv not already on the hardware.
  */
-व्योम drm_legacy_reclaim_buffers(काष्ठा drm_device *dev,
-				काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक i;
+void drm_legacy_reclaim_buffers(struct drm_device *dev,
+				struct drm_file *file_priv)
+{
+	struct drm_device_dma *dma = dev->dma;
+	int i;
 
-	अगर (!dma)
-		वापस;
-	क्रम (i = 0; i < dma->buf_count; i++) अणु
-		अगर (dma->buflist[i]->file_priv == file_priv) अणु
-			चयन (dma->buflist[i]->list) अणु
-			हाल DRM_LIST_NONE:
-				drm_legacy_मुक्त_buffer(dev, dma->buflist[i]);
-				अवरोध;
-			हाल DRM_LIST_WAIT:
+	if (!dma)
+		return;
+	for (i = 0; i < dma->buf_count; i++) {
+		if (dma->buflist[i]->file_priv == file_priv) {
+			switch (dma->buflist[i]->list) {
+			case DRM_LIST_NONE:
+				drm_legacy_free_buffer(dev, dma->buflist[i]);
+				break;
+			case DRM_LIST_WAIT:
 				dma->buflist[i]->list = DRM_LIST_RECLAIM;
-				अवरोध;
-			शेष:
-				/* Buffer alपढ़ोy on hardware. */
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				break;
+			default:
+				/* Buffer already on hardware. */
+				break;
+			}
+		}
+	}
+}

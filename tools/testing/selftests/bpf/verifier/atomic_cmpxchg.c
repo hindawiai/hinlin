@@ -1,18 +1,17 @@
-<शैली गुरु>
-अणु
+{
 	"atomic compare-and-exchange smoketest - 64bit",
-	.insns = अणु
+	.insns = {
 		/* val = 3; */
 		BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 3),
 		/* old = atomic_cmpxchg(&val, 2, 4); */
 		BPF_MOV64_IMM(BPF_REG_1, 4),
 		BPF_MOV64_IMM(BPF_REG_0, 2),
 		BPF_ATOMIC_OP(BPF_DW, BPF_CMPXCHG, BPF_REG_10, BPF_REG_1, -8),
-		/* अगर (old != 3) निकास(2); */
+		/* if (old != 3) exit(2); */
 		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 3, 2),
 		BPF_MOV64_IMM(BPF_REG_0, 2),
 		BPF_EXIT_INSN(),
-		/* अगर (val != 3) निकास(3); */
+		/* if (val != 3) exit(3); */
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_10, -8),
 		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 3, 2),
 		BPF_MOV64_IMM(BPF_REG_0, 3),
@@ -21,35 +20,35 @@
 		BPF_MOV64_IMM(BPF_REG_1, 4),
 		BPF_MOV64_IMM(BPF_REG_0, 3),
 		BPF_ATOMIC_OP(BPF_DW, BPF_CMPXCHG, BPF_REG_10, BPF_REG_1, -8),
-		/* अगर (old != 3) निकास(4); */
+		/* if (old != 3) exit(4); */
 		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 3, 2),
 		BPF_MOV64_IMM(BPF_REG_0, 4),
 		BPF_EXIT_INSN(),
-		/* अगर (val != 4) निकास(5); */
+		/* if (val != 4) exit(5); */
 		BPF_LDX_MEM(BPF_DW, BPF_REG_0, BPF_REG_10, -8),
 		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 4, 2),
 		BPF_MOV64_IMM(BPF_REG_0, 5),
 		BPF_EXIT_INSN(),
-		/* निकास(0); */
+		/* exit(0); */
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"atomic compare-and-exchange smoketest - 32bit",
-	.insns = अणु
+	.insns = {
 		/* val = 3; */
 		BPF_ST_MEM(BPF_W, BPF_REG_10, -4, 3),
 		/* old = atomic_cmpxchg(&val, 2, 4); */
 		BPF_MOV32_IMM(BPF_REG_1, 4),
 		BPF_MOV32_IMM(BPF_REG_0, 2),
 		BPF_ATOMIC_OP(BPF_W, BPF_CMPXCHG, BPF_REG_10, BPF_REG_1, -4),
-		/* अगर (old != 3) निकास(2); */
+		/* if (old != 3) exit(2); */
 		BPF_JMP32_IMM(BPF_JEQ, BPF_REG_0, 3, 2),
 		BPF_MOV32_IMM(BPF_REG_0, 2),
 		BPF_EXIT_INSN(),
-		/* अगर (val != 3) निकास(3); */
+		/* if (val != 3) exit(3); */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_10, -4),
 		BPF_JMP32_IMM(BPF_JEQ, BPF_REG_0, 3, 2),
 		BPF_MOV32_IMM(BPF_REG_0, 3),
@@ -58,46 +57,46 @@
 		BPF_MOV32_IMM(BPF_REG_1, 4),
 		BPF_MOV32_IMM(BPF_REG_0, 3),
 		BPF_ATOMIC_OP(BPF_W, BPF_CMPXCHG, BPF_REG_10, BPF_REG_1, -4),
-		/* अगर (old != 3) निकास(4); */
+		/* if (old != 3) exit(4); */
 		BPF_JMP32_IMM(BPF_JEQ, BPF_REG_0, 3, 2),
 		BPF_MOV32_IMM(BPF_REG_0, 4),
 		BPF_EXIT_INSN(),
-		/* अगर (val != 4) निकास(5); */
+		/* if (val != 4) exit(5); */
 		BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_10, -4),
 		BPF_JMP32_IMM(BPF_JEQ, BPF_REG_0, 4, 2),
 		BPF_MOV32_IMM(BPF_REG_0, 5),
 		BPF_EXIT_INSN(),
-		/* निकास(0); */
+		/* exit(0); */
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
-अणु
+},
+{
 	"Can't use cmpxchg on uninit src reg",
-	.insns = अणु
+	.insns = {
 		BPF_ST_MEM(BPF_DW, BPF_REG_10, -8, 3),
 		BPF_MOV64_IMM(BPF_REG_0, 3),
 		BPF_ATOMIC_OP(BPF_DW, BPF_CMPXCHG, BPF_REG_10, BPF_REG_2, -8),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "!read_ok",
-पूर्ण,
-अणु
+},
+{
 	"Can't use cmpxchg on uninit memory",
-	.insns = अणु
+	.insns = {
 		BPF_MOV64_IMM(BPF_REG_0, 3),
 		BPF_MOV64_IMM(BPF_REG_2, 4),
 		BPF_ATOMIC_OP(BPF_DW, BPF_CMPXCHG, BPF_REG_10, BPF_REG_2, -8),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = REJECT,
 	.errstr = "invalid read from stack",
-पूर्ण,
-अणु
+},
+{
 	"BPF_W cmpxchg should zero top 32 bits",
-	.insns = अणु
+	.insns = {
 		/* r0 = U64_MAX; */
 		BPF_MOV64_IMM(BPF_REG_0, 0),
 		BPF_ALU64_IMM(BPF_SUB, BPF_REG_0, 1),
@@ -110,13 +109,13 @@
 		BPF_MOV64_IMM(BPF_REG_1, 1),
 		BPF_ALU64_IMM(BPF_LSH, BPF_REG_1, 32),
 		BPF_ALU64_IMM(BPF_SUB, BPF_REG_1, 1),
-		/* अगर (r0 != r1) निकास(1); */
+		/* if (r0 != r1) exit(1); */
 		BPF_JMP_REG(BPF_JEQ, BPF_REG_0, BPF_REG_1, 2),
 		BPF_MOV32_IMM(BPF_REG_0, 1),
 		BPF_EXIT_INSN(),
-		/* निकास(0); */
+		/* exit(0); */
 		BPF_MOV32_IMM(BPF_REG_0, 0),
 		BPF_EXIT_INSN(),
-	पूर्ण,
+	},
 	.result = ACCEPT,
-पूर्ण,
+},

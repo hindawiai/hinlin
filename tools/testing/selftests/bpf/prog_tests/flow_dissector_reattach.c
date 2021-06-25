@@ -1,509 +1,508 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Tests क्रम attaching, detaching, and replacing flow_dissector BPF program.
+ * Tests for attaching, detaching, and replacing flow_dissector BPF program.
  */
 
-#घोषणा _GNU_SOURCE
-#समावेश <त्रुटिसं.स>
-#समावेश <fcntl.h>
-#समावेश <sched.h>
-#समावेश <stdbool.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <unistd.h>
+#define _GNU_SOURCE
+#include <errno.h>
+#include <fcntl.h>
+#include <sched.h>
+#include <stdbool.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf.h>
+#include <linux/bpf.h>
+#include <bpf/bpf.h>
 
-#समावेश "test_progs.h"
+#include "test_progs.h"
 
-अटल पूर्णांक init_net = -1;
+static int init_net = -1;
 
-अटल __u32 query_attached_prog_id(पूर्णांक netns)
-अणु
-	__u32 prog_ids[1] = अणुपूर्ण;
+static __u32 query_attached_prog_id(int netns)
+{
+	__u32 prog_ids[1] = {};
 	__u32 prog_cnt = ARRAY_SIZE(prog_ids);
-	पूर्णांक err;
+	int err;
 
-	err = bpf_prog_query(netns, BPF_FLOW_DISSECTOR, 0, शून्य,
+	err = bpf_prog_query(netns, BPF_FLOW_DISSECTOR, 0, NULL,
 			     prog_ids, &prog_cnt);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_query");
-		वापस 0;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_query");
+		return 0;
+	}
 
-	वापस prog_cnt == 1 ? prog_ids[0] : 0;
-पूर्ण
+	return prog_cnt == 1 ? prog_ids[0] : 0;
+}
 
-अटल bool prog_is_attached(पूर्णांक netns)
-अणु
-	वापस query_attached_prog_id(netns) > 0;
-पूर्ण
+static bool prog_is_attached(int netns)
+{
+	return query_attached_prog_id(netns) > 0;
+}
 
-अटल पूर्णांक load_prog(क्रमागत bpf_prog_type type)
-अणु
-	काष्ठा bpf_insn prog[] = अणु
+static int load_prog(enum bpf_prog_type type)
+{
+	struct bpf_insn prog[] = {
 		BPF_MOV64_IMM(BPF_REG_0, BPF_OK),
 		BPF_EXIT_INSN(),
-	पूर्ण;
-	पूर्णांक fd;
+	};
+	int fd;
 
-	fd = bpf_load_program(type, prog, ARRAY_SIZE(prog), "GPL", 0, शून्य, 0);
-	अगर (CHECK_FAIL(fd < 0))
-		लिखो_त्रुटि("bpf_load_program");
+	fd = bpf_load_program(type, prog, ARRAY_SIZE(prog), "GPL", 0, NULL, 0);
+	if (CHECK_FAIL(fd < 0))
+		perror("bpf_load_program");
 
-	वापस fd;
-पूर्ण
+	return fd;
+}
 
-अटल __u32 query_prog_id(पूर्णांक prog)
-अणु
-	काष्ठा bpf_prog_info info = अणुपूर्ण;
-	__u32 info_len = माप(info);
-	पूर्णांक err;
+static __u32 query_prog_id(int prog)
+{
+	struct bpf_prog_info info = {};
+	__u32 info_len = sizeof(info);
+	int err;
 
 	err = bpf_obj_get_info_by_fd(prog, &info, &info_len);
-	अगर (CHECK_FAIL(err || info_len != माप(info))) अणु
-		लिखो_त्रुटि("bpf_obj_get_info_by_fd");
-		वापस 0;
-	पूर्ण
+	if (CHECK_FAIL(err || info_len != sizeof(info))) {
+		perror("bpf_obj_get_info_by_fd");
+		return 0;
+	}
 
-	वापस info.id;
-पूर्ण
+	return info.id;
+}
 
-अटल पूर्णांक unshare_net(पूर्णांक old_net)
-अणु
-	पूर्णांक err, new_net;
+static int unshare_net(int old_net)
+{
+	int err, new_net;
 
 	err = unshare(CLONE_NEWNET);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("unshare(CLONE_NEWNET)");
-		वापस -1;
-	पूर्ण
-	new_net = खोलो("/proc/self/ns/net", O_RDONLY);
-	अगर (CHECK_FAIL(new_net < 0)) अणु
-		लिखो_त्रुटि("open(/proc/self/ns/net)");
+	if (CHECK_FAIL(err)) {
+		perror("unshare(CLONE_NEWNET)");
+		return -1;
+	}
+	new_net = open("/proc/self/ns/net", O_RDONLY);
+	if (CHECK_FAIL(new_net < 0)) {
+		perror("open(/proc/self/ns/net)");
 		setns(old_net, CLONE_NEWNET);
-		वापस -1;
-	पूर्ण
-	वापस new_net;
-पूर्ण
+		return -1;
+	}
+	return new_net;
+}
 
-अटल व्योम test_prog_attach_prog_attach(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
-	पूर्णांक err;
+static void test_prog_attach_prog_attach(int netns, int prog1, int prog2)
+{
+	int err;
 
 	err = bpf_prog_attach(prog1, 0, BPF_FLOW_DISSECTOR, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_attach(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_attach(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	/* Expect success when attaching a dअगरferent program */
+	/* Expect success when attaching a different program */
 	err = bpf_prog_attach(prog2, 0, BPF_FLOW_DISSECTOR, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_attach(prog2) #1");
-		जाओ out_detach;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_attach(prog2) #1");
+		goto out_detach;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog2));
 
 	/* Expect failure when attaching the same program twice */
 	err = bpf_prog_attach(prog2, 0, BPF_FLOW_DISSECTOR, 0);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EINVAL))
-		लिखो_त्रुटि("bpf_prog_attach(prog2) #2");
+	if (CHECK_FAIL(!err || errno != EINVAL))
+		perror("bpf_prog_attach(prog2) #2");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog2));
 
 out_detach:
 	err = bpf_prog_detach2(prog2, 0, BPF_FLOW_DISSECTOR);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("bpf_prog_detach");
+	if (CHECK_FAIL(err))
+		perror("bpf_prog_detach");
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_create_link_create(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_create_link_create(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, opts);
-	पूर्णांक link1, link2;
+	int link1, link2;
 
 	link1 = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect failure creating link when another link exists */
-	त्रुटि_सं = 0;
+	errno = 0;
 	link2 = bpf_link_create(prog2, netns, BPF_FLOW_DISSECTOR, &opts);
-	अगर (CHECK_FAIL(link2 != -1 || त्रुटि_सं != E2BIG))
-		लिखो_त्रुटि("bpf_prog_attach(prog2) expected E2BIG");
-	अगर (link2 != -1)
-		बंद(link2);
+	if (CHECK_FAIL(link2 != -1 || errno != E2BIG))
+		perror("bpf_prog_attach(prog2) expected E2BIG");
+	if (link2 != -1)
+		close(link2);
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(link1);
+	close(link1);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_prog_attach_link_create(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_prog_attach_link_create(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	err = bpf_prog_attach(prog1, 0, BPF_FLOW_DISSECTOR, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_attach(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_attach(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect failure creating link when prog attached */
-	त्रुटि_सं = 0;
+	errno = 0;
 	link = bpf_link_create(prog2, netns, BPF_FLOW_DISSECTOR, &opts);
-	अगर (CHECK_FAIL(link != -1 || त्रुटि_सं != EEXIST))
-		लिखो_त्रुटि("bpf_link_create(prog2) expected EEXIST");
-	अगर (link != -1)
-		बंद(link);
+	if (CHECK_FAIL(link != -1 || errno != EEXIST))
+		perror("bpf_link_create(prog2) expected EEXIST");
+	if (link != -1)
+		close(link);
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	err = bpf_prog_detach2(prog1, 0, BPF_FLOW_DISSECTOR);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("bpf_prog_detach");
+	if (CHECK_FAIL(err))
+		perror("bpf_prog_detach");
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_create_prog_attach(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_create_prog_attach(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect failure attaching prog when link exists */
-	त्रुटि_सं = 0;
+	errno = 0;
 	err = bpf_prog_attach(prog2, 0, BPF_FLOW_DISSECTOR, 0);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EEXIST))
-		लिखो_त्रुटि("bpf_prog_attach(prog2) expected EEXIST");
+	if (CHECK_FAIL(!err || errno != EEXIST))
+		perror("bpf_prog_attach(prog2) expected EEXIST");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(link);
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_create_prog_detach(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_create_prog_detach(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect failure detaching prog when link exists */
-	त्रुटि_सं = 0;
+	errno = 0;
 	err = bpf_prog_detach2(prog1, 0, BPF_FLOW_DISSECTOR);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EINVAL))
-		लिखो_त्रुटि("bpf_prog_detach expected EINVAL");
+	if (CHECK_FAIL(!err || errno != EINVAL))
+		perror("bpf_prog_detach expected EINVAL");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(link);
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_prog_attach_detach_query(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
-	पूर्णांक err;
+static void test_prog_attach_detach_query(int netns, int prog1, int prog2)
+{
+	int err;
 
 	err = bpf_prog_attach(prog1, 0, BPF_FLOW_DISSECTOR, 0);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_attach(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_attach(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	err = bpf_prog_detach2(prog1, 0, BPF_FLOW_DISSECTOR);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_prog_detach");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_prog_detach");
+		return;
+	}
 
 	/* Expect no prog attached after successful detach */
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_create_बंद_query(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_create_close_query(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, opts);
-	पूर्णांक link;
+	int link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(link);
+	close(link);
 	/* Expect no prog attached after closing last link FD */
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_update_no_old_prog(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_update_no_old_prog(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	/* Expect success replacing the prog when old prog not specअगरied */
+	/* Expect success replacing the prog when old prog not specified */
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("bpf_link_update");
+	if (CHECK_FAIL(err))
+		perror("bpf_link_update");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog2));
 
-	बंद(link);
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_update_replace_old_prog(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_update_replace_old_prog(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	/* Expect success F_REPLACE and old prog specअगरied to succeed */
+	/* Expect success F_REPLACE and old prog specified to succeed */
 	update_opts.flags = BPF_F_REPLACE;
 	update_opts.old_prog_fd = prog1;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("bpf_link_update");
+	if (CHECK_FAIL(err))
+		perror("bpf_link_update");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog2));
 
-	बंद(link);
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_update_same_prog(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_update_same_prog(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect success updating the prog with the same one */
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, prog1, &update_opts);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("bpf_link_update");
+	if (CHECK_FAIL(err))
+		perror("bpf_link_update");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(link);
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_update_invalid_opts(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_update_invalid_opts(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	पूर्णांक err, link;
+	int err, link;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect update to fail w/ old prog FD but w/o F_REPLACE*/
-	त्रुटि_सं = 0;
+	errno = 0;
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = prog1;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EINVAL)) अणु
-		लिखो_त्रुटि("bpf_link_update expected EINVAL");
-		जाओ out_बंद;
-	पूर्ण
+	if (CHECK_FAIL(!err || errno != EINVAL)) {
+		perror("bpf_link_update expected EINVAL");
+		goto out_close;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect update to fail on old prog FD mismatch */
-	त्रुटि_सं = 0;
+	errno = 0;
 	update_opts.flags = BPF_F_REPLACE;
 	update_opts.old_prog_fd = prog2;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EPERM)) अणु
-		लिखो_त्रुटि("bpf_link_update expected EPERM");
-		जाओ out_बंद;
-	पूर्ण
+	if (CHECK_FAIL(!err || errno != EPERM)) {
+		perror("bpf_link_update expected EPERM");
+		goto out_close;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	/* Expect update to fail क्रम invalid old prog FD */
-	त्रुटि_सं = 0;
+	/* Expect update to fail for invalid old prog FD */
+	errno = 0;
 	update_opts.flags = BPF_F_REPLACE;
 	update_opts.old_prog_fd = -1;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EBADF)) अणु
-		लिखो_त्रुटि("bpf_link_update expected EBADF");
-		जाओ out_बंद;
-	पूर्ण
+	if (CHECK_FAIL(!err || errno != EBADF)) {
+		perror("bpf_link_update expected EBADF");
+		goto out_close;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect update to fail with invalid flags */
-	त्रुटि_सं = 0;
+	errno = 0;
 	update_opts.flags = BPF_F_ALLOW_MULTI;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EINVAL))
-		लिखो_त्रुटि("bpf_link_update expected EINVAL");
+	if (CHECK_FAIL(!err || errno != EINVAL))
+		perror("bpf_link_update expected EINVAL");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-out_बंद:
-	बंद(link);
+out_close:
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_update_invalid_prog(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_update_invalid_prog(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	पूर्णांक err, link, prog3;
+	int err, link, prog3;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	/* Expect failure when new prog FD is not valid */
-	त्रुटि_सं = 0;
+	errno = 0;
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, -1, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EBADF)) अणु
-		लिखो_त्रुटि("bpf_link_update expected EINVAL");
-		जाओ out_बंद_link;
-	पूर्ण
+	if (CHECK_FAIL(!err || errno != EBADF)) {
+		perror("bpf_link_update expected EINVAL");
+		goto out_close_link;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
 	prog3 = load_prog(BPF_PROG_TYPE_SOCKET_FILTER);
-	अगर (prog3 < 0)
-		जाओ out_बंद_link;
+	if (prog3 < 0)
+		goto out_close_link;
 
-	/* Expect failure when new prog FD type करोesn't match */
-	त्रुटि_सं = 0;
+	/* Expect failure when new prog FD type doesn't match */
+	errno = 0;
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, prog3, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != EINVAL))
-		लिखो_त्रुटि("bpf_link_update expected EINVAL");
+	if (CHECK_FAIL(!err || errno != EINVAL))
+		perror("bpf_link_update expected EINVAL");
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(prog3);
-out_बंद_link:
-	बंद(link);
+	close(prog3);
+out_close_link:
+	close(link);
 	CHECK_FAIL(prog_is_attached(netns));
-पूर्ण
+}
 
-अटल व्योम test_link_update_netns_gone(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_update_netns_gone(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	पूर्णांक err, link, old_net;
+	int err, link, old_net;
 
 	old_net = netns;
 	netns = unshare_net(old_net);
-	अगर (netns < 0)
-		वापस;
+	if (netns < 0)
+		return;
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		return;
+	}
 	CHECK_FAIL(query_attached_prog_id(netns) != query_prog_id(prog1));
 
-	बंद(netns);
+	close(netns);
 	err = setns(old_net, CLONE_NEWNET);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("setns(CLONE_NEWNET)");
-		बंद(link);
-		वापस;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("setns(CLONE_NEWNET)");
+		close(link);
+		return;
+	}
 
 	/* Expect failure when netns destroyed */
-	त्रुटि_सं = 0;
+	errno = 0;
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(!err || त्रुटि_सं != ENOLINK))
-		लिखो_त्रुटि("bpf_link_update");
+	if (CHECK_FAIL(!err || errno != ENOLINK))
+		perror("bpf_link_update");
 
-	बंद(link);
-पूर्ण
+	close(link);
+}
 
-अटल व्योम test_link_get_info(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2)
-अणु
+static void test_link_get_info(int netns, int prog1, int prog2)
+{
 	DECLARE_LIBBPF_OPTS(bpf_link_create_opts, create_opts);
 	DECLARE_LIBBPF_OPTS(bpf_link_update_opts, update_opts);
-	काष्ठा bpf_link_info info = अणुपूर्ण;
-	काष्ठा stat netns_stat = अणुपूर्ण;
+	struct bpf_link_info info = {};
+	struct stat netns_stat = {};
 	__u32 info_len, link_id;
-	पूर्णांक err, link, old_net;
+	int err, link, old_net;
 
 	old_net = netns;
 	netns = unshare_net(old_net);
-	अगर (netns < 0)
-		वापस;
+	if (netns < 0)
+		return;
 
-	err = ख_स्थिति(netns, &netns_stat);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("stat(netns)");
-		जाओ out_resetns;
-	पूर्ण
+	err = fstat(netns, &netns_stat);
+	if (CHECK_FAIL(err)) {
+		perror("stat(netns)");
+		goto out_resetns;
+	}
 
 	link = bpf_link_create(prog1, netns, BPF_FLOW_DISSECTOR, &create_opts);
-	अगर (CHECK_FAIL(link < 0)) अणु
-		लिखो_त्रुटि("bpf_link_create(prog1)");
-		जाओ out_resetns;
-	पूर्ण
+	if (CHECK_FAIL(link < 0)) {
+		perror("bpf_link_create(prog1)");
+		goto out_resetns;
+	}
 
-	info_len = माप(info);
+	info_len = sizeof(info);
 	err = bpf_obj_get_info_by_fd(link, &info, &info_len);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_obj_get_info");
-		जाओ out_unlink;
-	पूर्ण
-	CHECK_FAIL(info_len != माप(info));
+	if (CHECK_FAIL(err)) {
+		perror("bpf_obj_get_info");
+		goto out_unlink;
+	}
+	CHECK_FAIL(info_len != sizeof(info));
 
 	/* Expect link info to be sane and match prog and netns details */
 	CHECK_FAIL(info.type != BPF_LINK_TYPE_NETNS);
@@ -515,19 +514,19 @@ out_बंद_link:
 	update_opts.flags = 0;
 	update_opts.old_prog_fd = 0;
 	err = bpf_link_update(link, prog2, &update_opts);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_link_update(prog2)");
-		जाओ out_unlink;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("bpf_link_update(prog2)");
+		goto out_unlink;
+	}
 
 	link_id = info.id;
-	info_len = माप(info);
+	info_len = sizeof(info);
 	err = bpf_obj_get_info_by_fd(link, &info, &info_len);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_obj_get_info");
-		जाओ out_unlink;
-	पूर्ण
-	CHECK_FAIL(info_len != माप(info));
+	if (CHECK_FAIL(err)) {
+		perror("bpf_obj_get_info");
+		goto out_unlink;
+	}
+	CHECK_FAIL(info_len != sizeof(info));
 
 	/* Expect no info change after update except in prog id */
 	CHECK_FAIL(info.type != BPF_LINK_TYPE_NETNS);
@@ -536,23 +535,23 @@ out_बंद_link:
 	CHECK_FAIL(info.netns.netns_ino != netns_stat.st_ino);
 	CHECK_FAIL(info.netns.attach_type != BPF_FLOW_DISSECTOR);
 
-	/* Leave netns link is attached to and बंद last FD to it */
+	/* Leave netns link is attached to and close last FD to it */
 	err = setns(old_net, CLONE_NEWNET);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("setns(NEWNET)");
-		जाओ out_unlink;
-	पूर्ण
-	बंद(netns);
+	if (CHECK_FAIL(err)) {
+		perror("setns(NEWNET)");
+		goto out_unlink;
+	}
+	close(netns);
 	old_net = -1;
 	netns = -1;
 
-	info_len = माप(info);
+	info_len = sizeof(info);
 	err = bpf_obj_get_info_by_fd(link, &info, &info_len);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("bpf_obj_get_info");
-		जाओ out_unlink;
-	पूर्ण
-	CHECK_FAIL(info_len != माप(info));
+	if (CHECK_FAIL(err)) {
+		perror("bpf_obj_get_info");
+		goto out_unlink;
+	}
+	CHECK_FAIL(info_len != sizeof(info));
 
 	/* Expect netns_ino to change to 0 */
 	CHECK_FAIL(info.type != BPF_LINK_TYPE_NETNS);
@@ -562,118 +561,118 @@ out_बंद_link:
 	CHECK_FAIL(info.netns.attach_type != BPF_FLOW_DISSECTOR);
 
 out_unlink:
-	बंद(link);
+	close(link);
 out_resetns:
-	अगर (old_net != -1)
+	if (old_net != -1)
 		setns(old_net, CLONE_NEWNET);
-	अगर (netns != -1)
-		बंद(netns);
-पूर्ण
+	if (netns != -1)
+		close(netns);
+}
 
-अटल व्योम run_tests(पूर्णांक netns)
-अणु
-	काष्ठा test अणु
-		स्थिर अक्षर *test_name;
-		व्योम (*test_func)(पूर्णांक netns, पूर्णांक prog1, पूर्णांक prog2);
-	पूर्ण tests[] = अणु
-		अणु "prog attach, prog attach",
-		  test_prog_attach_prog_attach पूर्ण,
-		अणु "link create, link create",
-		  test_link_create_link_create पूर्ण,
-		अणु "prog attach, link create",
-		  test_prog_attach_link_create पूर्ण,
-		अणु "link create, prog attach",
-		  test_link_create_prog_attach पूर्ण,
-		अणु "link create, prog detach",
-		  test_link_create_prog_detach पूर्ण,
-		अणु "prog attach, detach, query",
-		  test_prog_attach_detach_query पूर्ण,
-		अणु "link create, close, query",
-		  test_link_create_बंद_query पूर्ण,
-		अणु "link update no old prog",
-		  test_link_update_no_old_prog पूर्ण,
-		अणु "link update with replace old prog",
-		  test_link_update_replace_old_prog पूर्ण,
-		अणु "link update with same prog",
-		  test_link_update_same_prog पूर्ण,
-		अणु "link update invalid opts",
-		  test_link_update_invalid_opts पूर्ण,
-		अणु "link update invalid prog",
-		  test_link_update_invalid_prog पूर्ण,
-		अणु "link update netns gone",
-		  test_link_update_netns_gone पूर्ण,
-		अणु "link get info",
-		  test_link_get_info पूर्ण,
-	पूर्ण;
-	पूर्णांक i, progs[2] = अणु -1, -1 पूर्ण;
-	अक्षर test_name[80];
+static void run_tests(int netns)
+{
+	struct test {
+		const char *test_name;
+		void (*test_func)(int netns, int prog1, int prog2);
+	} tests[] = {
+		{ "prog attach, prog attach",
+		  test_prog_attach_prog_attach },
+		{ "link create, link create",
+		  test_link_create_link_create },
+		{ "prog attach, link create",
+		  test_prog_attach_link_create },
+		{ "link create, prog attach",
+		  test_link_create_prog_attach },
+		{ "link create, prog detach",
+		  test_link_create_prog_detach },
+		{ "prog attach, detach, query",
+		  test_prog_attach_detach_query },
+		{ "link create, close, query",
+		  test_link_create_close_query },
+		{ "link update no old prog",
+		  test_link_update_no_old_prog },
+		{ "link update with replace old prog",
+		  test_link_update_replace_old_prog },
+		{ "link update with same prog",
+		  test_link_update_same_prog },
+		{ "link update invalid opts",
+		  test_link_update_invalid_opts },
+		{ "link update invalid prog",
+		  test_link_update_invalid_prog },
+		{ "link update netns gone",
+		  test_link_update_netns_gone },
+		{ "link get info",
+		  test_link_get_info },
+	};
+	int i, progs[2] = { -1, -1 };
+	char test_name[80];
 
-	क्रम (i = 0; i < ARRAY_SIZE(progs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(progs); i++) {
 		progs[i] = load_prog(BPF_PROG_TYPE_FLOW_DISSECTOR);
-		अगर (progs[i] < 0)
-			जाओ out_बंद;
-	पूर्ण
+		if (progs[i] < 0)
+			goto out_close;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
-		snम_लिखो(test_name, माप(test_name),
+	for (i = 0; i < ARRAY_SIZE(tests); i++) {
+		snprintf(test_name, sizeof(test_name),
 			 "flow dissector %s%s",
 			 tests[i].test_name,
 			 netns == init_net ? " (init_net)" : "");
-		अगर (test__start_subtest(test_name))
+		if (test__start_subtest(test_name))
 			tests[i].test_func(netns, progs[0], progs[1]);
-	पूर्ण
-out_बंद:
-	क्रम (i = 0; i < ARRAY_SIZE(progs); i++) अणु
-		अगर (progs[i] != -1)
-			CHECK_FAIL(बंद(progs[i]));
-	पूर्ण
-पूर्ण
+	}
+out_close:
+	for (i = 0; i < ARRAY_SIZE(progs); i++) {
+		if (progs[i] != -1)
+			CHECK_FAIL(close(progs[i]));
+	}
+}
 
-व्योम test_flow_dissector_reattach(व्योम)
-अणु
-	पूर्णांक err, new_net, saved_net;
+void test_flow_dissector_reattach(void)
+{
+	int err, new_net, saved_net;
 
-	saved_net = खोलो("/proc/self/ns/net", O_RDONLY);
-	अगर (CHECK_FAIL(saved_net < 0)) अणु
-		लिखो_त्रुटि("open(/proc/self/ns/net");
-		वापस;
-	पूर्ण
+	saved_net = open("/proc/self/ns/net", O_RDONLY);
+	if (CHECK_FAIL(saved_net < 0)) {
+		perror("open(/proc/self/ns/net");
+		return;
+	}
 
-	init_net = खोलो("/proc/1/ns/net", O_RDONLY);
-	अगर (CHECK_FAIL(init_net < 0)) अणु
-		लिखो_त्रुटि("open(/proc/1/ns/net)");
-		जाओ out_बंद;
-	पूर्ण
+	init_net = open("/proc/1/ns/net", O_RDONLY);
+	if (CHECK_FAIL(init_net < 0)) {
+		perror("open(/proc/1/ns/net)");
+		goto out_close;
+	}
 
 	err = setns(init_net, CLONE_NEWNET);
-	अगर (CHECK_FAIL(err)) अणु
-		लिखो_त्रुटि("setns(/proc/1/ns/net)");
-		जाओ out_बंद;
-	पूर्ण
+	if (CHECK_FAIL(err)) {
+		perror("setns(/proc/1/ns/net)");
+		goto out_close;
+	}
 
-	अगर (prog_is_attached(init_net)) अणु
+	if (prog_is_attached(init_net)) {
 		test__skip();
-		म_लिखो("Can't test with flow dissector attached to init_net\n");
-		जाओ out_setns;
-	पूर्ण
+		printf("Can't test with flow dissector attached to init_net\n");
+		goto out_setns;
+	}
 
 	/* First run tests in root network namespace */
 	run_tests(init_net);
 
 	/* Then repeat tests in a non-root namespace */
 	new_net = unshare_net(init_net);
-	अगर (new_net < 0)
-		जाओ out_setns;
+	if (new_net < 0)
+		goto out_setns;
 	run_tests(new_net);
-	बंद(new_net);
+	close(new_net);
 
 out_setns:
 	/* Move back to netns we started in. */
 	err = setns(saved_net, CLONE_NEWNET);
-	अगर (CHECK_FAIL(err))
-		लिखो_त्रुटि("setns(/proc/self/ns/net)");
+	if (CHECK_FAIL(err))
+		perror("setns(/proc/self/ns/net)");
 
-out_बंद:
-	बंद(init_net);
-	बंद(saved_net);
-पूर्ण
+out_close:
+	close(init_net);
+	close(saved_net);
+}

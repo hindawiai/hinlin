@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- *   fs/cअगरs/sess.c
+ *   fs/cifs/sess.c
  *
  *   SMB/CIFS session setup handling routines
  *
  *   Copyright (c) International Business Machines  Corp., 2006, 2009
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is मुक्त software; you can redistribute it and/or modअगरy
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -15,196 +14,196 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License क्रम more details.
+ *   the GNU Lesser General Public License for more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
+ *   along with this library; if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#समावेश "cifspdu.h"
-#समावेश "cifsglob.h"
-#समावेश "cifsproto.h"
-#समावेश "cifs_unicode.h"
-#समावेश "cifs_debug.h"
-#समावेश "ntlmssp.h"
-#समावेश "nterr.h"
-#समावेश <linux/utsname.h>
-#समावेश <linux/slab.h>
-#समावेश "cifs_spnego.h"
-#समावेश "smb2proto.h"
-#समावेश "fs_context.h"
+#include "cifspdu.h"
+#include "cifsglob.h"
+#include "cifsproto.h"
+#include "cifs_unicode.h"
+#include "cifs_debug.h"
+#include "ntlmssp.h"
+#include "nterr.h"
+#include <linux/utsname.h>
+#include <linux/slab.h>
+#include "cifs_spnego.h"
+#include "smb2proto.h"
+#include "fs_context.h"
 
-अटल पूर्णांक
-cअगरs_ses_add_channel(काष्ठा cअगरs_sb_info *cअगरs_sb, काष्ठा cअगरs_ses *ses,
-		     काष्ठा cअगरs_server_अगरace *अगरace);
+static int
+cifs_ses_add_channel(struct cifs_sb_info *cifs_sb, struct cifs_ses *ses,
+		     struct cifs_server_iface *iface);
 
 bool
-is_server_using_अगरace(काष्ठा TCP_Server_Info *server,
-		      काष्ठा cअगरs_server_अगरace *अगरace)
-अणु
-	काष्ठा sockaddr_in *i4 = (काष्ठा sockaddr_in *)&अगरace->sockaddr;
-	काष्ठा sockaddr_in6 *i6 = (काष्ठा sockaddr_in6 *)&अगरace->sockaddr;
-	काष्ठा sockaddr_in *s4 = (काष्ठा sockaddr_in *)&server->dstaddr;
-	काष्ठा sockaddr_in6 *s6 = (काष्ठा sockaddr_in6 *)&server->dstaddr;
+is_server_using_iface(struct TCP_Server_Info *server,
+		      struct cifs_server_iface *iface)
+{
+	struct sockaddr_in *i4 = (struct sockaddr_in *)&iface->sockaddr;
+	struct sockaddr_in6 *i6 = (struct sockaddr_in6 *)&iface->sockaddr;
+	struct sockaddr_in *s4 = (struct sockaddr_in *)&server->dstaddr;
+	struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)&server->dstaddr;
 
-	अगर (server->dstaddr.ss_family != अगरace->sockaddr.ss_family)
-		वापस false;
-	अगर (server->dstaddr.ss_family == AF_INET) अणु
-		अगर (s4->sin_addr.s_addr != i4->sin_addr.s_addr)
-			वापस false;
-	पूर्ण अन्यथा अगर (server->dstaddr.ss_family == AF_INET6) अणु
-		अगर (स_भेद(&s6->sin6_addr, &i6->sin6_addr,
-			   माप(i6->sin6_addr)) != 0)
-			वापस false;
-	पूर्ण अन्यथा अणु
+	if (server->dstaddr.ss_family != iface->sockaddr.ss_family)
+		return false;
+	if (server->dstaddr.ss_family == AF_INET) {
+		if (s4->sin_addr.s_addr != i4->sin_addr.s_addr)
+			return false;
+	} else if (server->dstaddr.ss_family == AF_INET6) {
+		if (memcmp(&s6->sin6_addr, &i6->sin6_addr,
+			   sizeof(i6->sin6_addr)) != 0)
+			return false;
+	} else {
 		/* unknown family.. */
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+		return false;
+	}
+	return true;
+}
 
-bool is_ses_using_अगरace(काष्ठा cअगरs_ses *ses, काष्ठा cअगरs_server_अगरace *अगरace)
-अणु
-	पूर्णांक i;
+bool is_ses_using_iface(struct cifs_ses *ses, struct cifs_server_iface *iface)
+{
+	int i;
 
-	क्रम (i = 0; i < ses->chan_count; i++) अणु
-		अगर (is_server_using_अगरace(ses->chans[i].server, अगरace))
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+	for (i = 0; i < ses->chan_count; i++) {
+		if (is_server_using_iface(ses->chans[i].server, iface))
+			return true;
+	}
+	return false;
+}
 
-/* वापसs number of channels added */
-पूर्णांक cअगरs_try_adding_channels(काष्ठा cअगरs_sb_info *cअगरs_sb, काष्ठा cअगरs_ses *ses)
-अणु
-	पूर्णांक old_chan_count = ses->chan_count;
-	पूर्णांक left = ses->chan_max - ses->chan_count;
-	पूर्णांक i = 0;
-	पूर्णांक rc = 0;
-	पूर्णांक tries = 0;
-	काष्ठा cअगरs_server_अगरace *अगरaces = शून्य;
-	माप_प्रकार अगरace_count;
+/* returns number of channels added */
+int cifs_try_adding_channels(struct cifs_sb_info *cifs_sb, struct cifs_ses *ses)
+{
+	int old_chan_count = ses->chan_count;
+	int left = ses->chan_max - ses->chan_count;
+	int i = 0;
+	int rc = 0;
+	int tries = 0;
+	struct cifs_server_iface *ifaces = NULL;
+	size_t iface_count;
 
-	अगर (left <= 0) अणु
-		cअगरs_dbg(FYI,
+	if (left <= 0) {
+		cifs_dbg(FYI,
 			 "ses already at max_channels (%zu), nothing to open\n",
 			 ses->chan_max);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (ses->server->dialect < SMB30_PROT_ID) अणु
-		cअगरs_dbg(VFS, "multichannel is not supported on this protocol version, use 3.0 or above\n");
-		वापस 0;
-	पूर्ण
+	if (ses->server->dialect < SMB30_PROT_ID) {
+		cifs_dbg(VFS, "multichannel is not supported on this protocol version, use 3.0 or above\n");
+		return 0;
+	}
 
-	अगर (!(ses->server->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)) अणु
-		cअगरs_dbg(VFS, "server %s does not support multichannel\n", ses->server->hostname);
+	if (!(ses->server->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)) {
+		cifs_dbg(VFS, "server %s does not support multichannel\n", ses->server->hostname);
 		ses->chan_max = 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Make a copy of the अगरace list at the समय and use that
-	 * instead so as to not hold the अगरace spinlock क्रम खोलोing
+	 * Make a copy of the iface list at the time and use that
+	 * instead so as to not hold the iface spinlock for opening
 	 * channels
 	 */
-	spin_lock(&ses->अगरace_lock);
-	अगरace_count = ses->अगरace_count;
-	अगर (अगरace_count <= 0) अणु
-		spin_unlock(&ses->अगरace_lock);
-		cअगरs_dbg(VFS, "no iface list available to open channels\n");
-		वापस 0;
-	पूर्ण
-	अगरaces = kmemdup(ses->अगरace_list, अगरace_count*माप(*अगरaces),
+	spin_lock(&ses->iface_lock);
+	iface_count = ses->iface_count;
+	if (iface_count <= 0) {
+		spin_unlock(&ses->iface_lock);
+		cifs_dbg(VFS, "no iface list available to open channels\n");
+		return 0;
+	}
+	ifaces = kmemdup(ses->iface_list, iface_count*sizeof(*ifaces),
 			 GFP_ATOMIC);
-	अगर (!अगरaces) अणु
-		spin_unlock(&ses->अगरace_lock);
-		वापस 0;
-	पूर्ण
-	spin_unlock(&ses->अगरace_lock);
+	if (!ifaces) {
+		spin_unlock(&ses->iface_lock);
+		return 0;
+	}
+	spin_unlock(&ses->iface_lock);
 
 	/*
-	 * Keep connecting to same, fastest, अगरace क्रम all channels as
-	 * दीर्घ as its RSS. Try next fastest one अगर not RSS or channel
+	 * Keep connecting to same, fastest, iface for all channels as
+	 * long as its RSS. Try next fastest one if not RSS or channel
 	 * creation fails.
 	 */
-	जबतक (left > 0) अणु
-		काष्ठा cअगरs_server_अगरace *अगरace;
+	while (left > 0) {
+		struct cifs_server_iface *iface;
 
 		tries++;
-		अगर (tries > 3*ses->chan_max) अणु
-			cअगरs_dbg(FYI, "too many channel open attempts (%d channels left to open)\n",
+		if (tries > 3*ses->chan_max) {
+			cifs_dbg(FYI, "too many channel open attempts (%d channels left to open)\n",
 				 left);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगरace = &अगरaces[i];
-		अगर (is_ses_using_अगरace(ses, अगरace) && !अगरace->rss_capable) अणु
-			i = (i+1) % अगरace_count;
-			जारी;
-		पूर्ण
+		iface = &ifaces[i];
+		if (is_ses_using_iface(ses, iface) && !iface->rss_capable) {
+			i = (i+1) % iface_count;
+			continue;
+		}
 
-		rc = cअगरs_ses_add_channel(cअगरs_sb, ses, अगरace);
-		अगर (rc) अणु
-			cअगरs_dbg(FYI, "failed to open extra channel on iface#%d rc=%d\n",
+		rc = cifs_ses_add_channel(cifs_sb, ses, iface);
+		if (rc) {
+			cifs_dbg(FYI, "failed to open extra channel on iface#%d rc=%d\n",
 				 i, rc);
-			i = (i+1) % अगरace_count;
-			जारी;
-		पूर्ण
+			i = (i+1) % iface_count;
+			continue;
+		}
 
-		cअगरs_dbg(FYI, "successfully opened new channel on iface#%d\n",
+		cifs_dbg(FYI, "successfully opened new channel on iface#%d\n",
 			 i);
 		left--;
-	पूर्ण
+	}
 
-	kमुक्त(अगरaces);
-	वापस ses->chan_count - old_chan_count;
-पूर्ण
+	kfree(ifaces);
+	return ses->chan_count - old_chan_count;
+}
 
 /*
- * If server is a channel of ses, वापस the corresponding enclosing
- * cअगरs_chan otherwise वापस शून्य.
+ * If server is a channel of ses, return the corresponding enclosing
+ * cifs_chan otherwise return NULL.
  */
-काष्ठा cअगरs_chan *
-cअगरs_ses_find_chan(काष्ठा cअगरs_ses *ses, काष्ठा TCP_Server_Info *server)
-अणु
-	पूर्णांक i;
+struct cifs_chan *
+cifs_ses_find_chan(struct cifs_ses *ses, struct TCP_Server_Info *server)
+{
+	int i;
 
-	क्रम (i = 0; i < ses->chan_count; i++) अणु
-		अगर (ses->chans[i].server == server)
-			वापस &ses->chans[i];
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < ses->chan_count; i++) {
+		if (ses->chans[i].server == server)
+			return &ses->chans[i];
+	}
+	return NULL;
+}
 
-अटल पूर्णांक
-cअगरs_ses_add_channel(काष्ठा cअगरs_sb_info *cअगरs_sb, काष्ठा cअगरs_ses *ses,
-		     काष्ठा cअगरs_server_अगरace *अगरace)
-अणु
-	काष्ठा cअगरs_chan *chan;
-	काष्ठा smb3_fs_context ctx = अणुशून्यपूर्ण;
-	अटल स्थिर अक्षर unc_fmt[] = "\\%s\\foo";
-	अक्षर unc[माप(unc_fmt)+SERVER_NAME_LEN_WITH_शून्य] = अणु0पूर्ण;
-	काष्ठा sockaddr_in *ipv4 = (काष्ठा sockaddr_in *)&अगरace->sockaddr;
-	काष्ठा sockaddr_in6 *ipv6 = (काष्ठा sockaddr_in6 *)&अगरace->sockaddr;
-	पूर्णांक rc;
-	अचिन्हित पूर्णांक xid = get_xid();
+static int
+cifs_ses_add_channel(struct cifs_sb_info *cifs_sb, struct cifs_ses *ses,
+		     struct cifs_server_iface *iface)
+{
+	struct cifs_chan *chan;
+	struct smb3_fs_context ctx = {NULL};
+	static const char unc_fmt[] = "\\%s\\foo";
+	char unc[sizeof(unc_fmt)+SERVER_NAME_LEN_WITH_NULL] = {0};
+	struct sockaddr_in *ipv4 = (struct sockaddr_in *)&iface->sockaddr;
+	struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)&iface->sockaddr;
+	int rc;
+	unsigned int xid = get_xid();
 
-	अगर (अगरace->sockaddr.ss_family == AF_INET)
-		cअगरs_dbg(FYI, "adding channel to ses %p (speed:%zu bps rdma:%s ip:%pI4)\n",
-			 ses, अगरace->speed, अगरace->rdma_capable ? "yes" : "no",
+	if (iface->sockaddr.ss_family == AF_INET)
+		cifs_dbg(FYI, "adding channel to ses %p (speed:%zu bps rdma:%s ip:%pI4)\n",
+			 ses, iface->speed, iface->rdma_capable ? "yes" : "no",
 			 &ipv4->sin_addr);
-	अन्यथा
-		cअगरs_dbg(FYI, "adding channel to ses %p (speed:%zu bps rdma:%s ip:%pI4)\n",
-			 ses, अगरace->speed, अगरace->rdma_capable ? "yes" : "no",
+	else
+		cifs_dbg(FYI, "adding channel to ses %p (speed:%zu bps rdma:%s ip:%pI4)\n",
+			 ses, iface->speed, iface->rdma_capable ? "yes" : "no",
 			 &ipv6->sin6_addr);
 
 	/*
 	 * Setup a ctx with mostly the same info as the existing
-	 * session and overग_लिखो it with the requested अगरace data.
+	 * session and overwrite it with the requested iface data.
 	 *
-	 * We need to setup at least the fields used क्रम negprot and
+	 * We need to setup at least the fields used for negprot and
 	 * sesssetup.
 	 *
 	 * We only need the ctx here, so we can reuse memory from
@@ -212,12 +211,12 @@ cअगरs_ses_add_channel(काष्ठा cअगरs_sb_info *cअगरs_
 	 * management.
 	 */
 
-	/* Always make new connection क्रम now (TODO?) */
+	/* Always make new connection for now (TODO?) */
 	ctx.nosharesock = true;
 
 	/* Auth */
-	ctx.करोमुख्यस्वतः = ses->करोमुख्यAuto;
-	ctx.करोमुख्यname = ses->करोमुख्यName;
+	ctx.domainauto = ses->domainAuto;
+	ctx.domainname = ses->domainName;
 	ctx.username = ses->user_name;
 	ctx.password = ses->password;
 	ctx.sectype = ses->sectype;
@@ -225,7 +224,7 @@ cअगरs_ses_add_channel(काष्ठा cअगरs_sb_info *cअगरs_
 
 	/* UNC and paths */
 	/* XXX: Use ses->server->hostname? */
-	प्र_लिखो(unc, unc_fmt, ses->ip_addr);
+	sprintf(unc, unc_fmt, ses->ip_addr);
 	ctx.UNC = unc;
 	ctx.prepath = "";
 
@@ -234,65 +233,65 @@ cअगरs_ses_add_channel(काष्ठा cअगरs_sb_info *cअगरs_
 	ctx.ops = ses->server->ops;
 
 	ctx.noblocksnd = ses->server->noblocksnd;
-	ctx.noस्वतःtune = ses->server->noस्वतःtune;
+	ctx.noautotune = ses->server->noautotune;
 	ctx.sockopt_tcp_nodelay = ses->server->tcp_nodelay;
-	ctx.echo_पूर्णांकerval = ses->server->echo_पूर्णांकerval / HZ;
+	ctx.echo_interval = ses->server->echo_interval / HZ;
 	ctx.max_credits = ses->server->max_credits;
 
 	/*
-	 * This will be used क्रम encoding/decoding user/करोमुख्य/pw
+	 * This will be used for encoding/decoding user/domain/pw
 	 * during sess setup auth.
 	 */
-	ctx.local_nls = cअगरs_sb->local_nls;
+	ctx.local_nls = cifs_sb->local_nls;
 
-	/* Use RDMA अगर possible */
-	ctx.rdma = अगरace->rdma_capable;
-	स_नकल(&ctx.dstaddr, &अगरace->sockaddr, माप(काष्ठा sockaddr_storage));
+	/* Use RDMA if possible */
+	ctx.rdma = iface->rdma_capable;
+	memcpy(&ctx.dstaddr, &iface->sockaddr, sizeof(struct sockaddr_storage));
 
 	/* reuse master con client guid */
-	स_नकल(&ctx.client_guid, ses->server->client_guid,
+	memcpy(&ctx.client_guid, ses->server->client_guid,
 	       SMB2_CLIENT_GUID_SIZE);
 	ctx.use_client_guid = true;
 
 	mutex_lock(&ses->session_mutex);
 
 	chan = ses->binding_chan = &ses->chans[ses->chan_count];
-	chan->server = cअगरs_get_tcp_session(&ctx);
-	अगर (IS_ERR(chan->server)) अणु
+	chan->server = cifs_get_tcp_session(&ctx);
+	if (IS_ERR(chan->server)) {
 		rc = PTR_ERR(chan->server);
-		chan->server = शून्य;
-		जाओ out;
-	पूर्ण
-	spin_lock(&cअगरs_tcp_ses_lock);
+		chan->server = NULL;
+		goto out;
+	}
+	spin_lock(&cifs_tcp_ses_lock);
 	chan->server->is_channel = true;
-	spin_unlock(&cअगरs_tcp_ses_lock);
+	spin_unlock(&cifs_tcp_ses_lock);
 
 	/*
 	 * We need to allocate the server crypto now as we will need
-	 * to sign packets beक्रमe we generate the channel signing key
+	 * to sign packets before we generate the channel signing key
 	 * (we sign with the session key)
 	 */
 	rc = smb311_crypto_shash_allocate(chan->server);
-	अगर (rc) अणु
-		cअगरs_dbg(VFS, "%s: crypto alloc failed\n", __func__);
-		जाओ out;
-	पूर्ण
+	if (rc) {
+		cifs_dbg(VFS, "%s: crypto alloc failed\n", __func__);
+		goto out;
+	}
 
 	ses->binding = true;
-	rc = cअगरs_negotiate_protocol(xid, ses);
-	अगर (rc)
-		जाओ out;
+	rc = cifs_negotiate_protocol(xid, ses);
+	if (rc)
+		goto out;
 
-	rc = cअगरs_setup_session(xid, ses, cअगरs_sb->local_nls);
-	अगर (rc)
-		जाओ out;
+	rc = cifs_setup_session(xid, ses, cifs_sb->local_nls);
+	if (rc)
+		goto out;
 
 	/* success, put it on the list
 	 * XXX: sharing ses between 2 tcp servers is not possible, the
 	 * way "internal" linked lists works in linux makes element
-	 * only able to beदीर्घ to one list
+	 * only able to belong to one list
 	 *
-	 * the binding session is alपढ़ोy established so the rest of
+	 * the binding session is already established so the rest of
 	 * the code should be able to look it up, no need to add the
 	 * ses to the new server.
 	 */
@@ -301,341 +300,341 @@ cअगरs_ses_add_channel(काष्ठा cअगरs_sb_info *cअगरs_
 	atomic_set(&ses->chan_seq, 0);
 out:
 	ses->binding = false;
-	ses->binding_chan = शून्य;
+	ses->binding_chan = NULL;
 	mutex_unlock(&ses->session_mutex);
 
-	अगर (rc && chan->server)
-		cअगरs_put_tcp_session(chan->server, 0);
+	if (rc && chan->server)
+		cifs_put_tcp_session(chan->server, 0);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल __u32 cअगरs_ssetup_hdr(काष्ठा cअगरs_ses *ses, SESSION_SETUP_ANDX *pSMB)
-अणु
+static __u32 cifs_ssetup_hdr(struct cifs_ses *ses, SESSION_SETUP_ANDX *pSMB)
+{
 	__u32 capabilities = 0;
 
 	/* init fields common to all four types of SessSetup */
-	/* Note that offsets क्रम first seven fields in req काष्ठा are same  */
-	/*	in CIFS Specs so करोes not matter which of 3 क्रमms of काष्ठा */
+	/* Note that offsets for first seven fields in req struct are same  */
+	/*	in CIFS Specs so does not matter which of 3 forms of struct */
 	/*	that we use in next few lines                               */
 	/* Note that header is initialized to zero in header_assemble */
 	pSMB->req.AndXCommand = 0xFF;
 	pSMB->req.MaxBufferSize = cpu_to_le16(min_t(u32,
 					CIFSMaxBufSize + MAX_CIFS_HDR_SIZE - 4,
-					अच_लघु_उच्च));
+					USHRT_MAX));
 	pSMB->req.MaxMpxCount = cpu_to_le16(ses->server->maxReq);
 	pSMB->req.VcNumber = cpu_to_le16(1);
 
 	/* Now no need to set SMBFLG_CASELESS or obsolete CANONICAL PATH */
 
-	/* BB verअगरy whether signing required on neg or just on auth frame
-	   (and NTLM हाल) */
+	/* BB verify whether signing required on neg or just on auth frame
+	   (and NTLM case) */
 
-	capabilities = CAP_LARGE_खाताS | CAP_NT_SMBS | CAP_LEVEL_II_OPLOCKS |
+	capabilities = CAP_LARGE_FILES | CAP_NT_SMBS | CAP_LEVEL_II_OPLOCKS |
 			CAP_LARGE_WRITE_X | CAP_LARGE_READ_X;
 
-	अगर (ses->server->sign)
+	if (ses->server->sign)
 		pSMB->req.hdr.Flags2 |= SMBFLG2_SECURITY_SIGNATURE;
 
-	अगर (ses->capabilities & CAP_UNICODE) अणु
+	if (ses->capabilities & CAP_UNICODE) {
 		pSMB->req.hdr.Flags2 |= SMBFLG2_UNICODE;
 		capabilities |= CAP_UNICODE;
-	पूर्ण
-	अगर (ses->capabilities & CAP_STATUS32) अणु
+	}
+	if (ses->capabilities & CAP_STATUS32) {
 		pSMB->req.hdr.Flags2 |= SMBFLG2_ERR_STATUS;
 		capabilities |= CAP_STATUS32;
-	पूर्ण
-	अगर (ses->capabilities & CAP_DFS) अणु
+	}
+	if (ses->capabilities & CAP_DFS) {
 		pSMB->req.hdr.Flags2 |= SMBFLG2_DFS;
 		capabilities |= CAP_DFS;
-	पूर्ण
-	अगर (ses->capabilities & CAP_UNIX)
+	}
+	if (ses->capabilities & CAP_UNIX)
 		capabilities |= CAP_UNIX;
 
-	वापस capabilities;
-पूर्ण
+	return capabilities;
+}
 
-अटल व्योम
-unicode_oslm_strings(अक्षर **pbcc_area, स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	अक्षर *bcc_ptr = *pbcc_area;
-	पूर्णांक bytes_ret = 0;
+static void
+unicode_oslm_strings(char **pbcc_area, const struct nls_table *nls_cp)
+{
+	char *bcc_ptr = *pbcc_area;
+	int bytes_ret = 0;
 
 	/* Copy OS version */
-	bytes_ret = cअगरs_strtoUTF16((__le16 *)bcc_ptr, "Linux version ", 32,
+	bytes_ret = cifs_strtoUTF16((__le16 *)bcc_ptr, "Linux version ", 32,
 				    nls_cp);
 	bcc_ptr += 2 * bytes_ret;
-	bytes_ret = cअगरs_strtoUTF16((__le16 *) bcc_ptr, init_utsname()->release,
+	bytes_ret = cifs_strtoUTF16((__le16 *) bcc_ptr, init_utsname()->release,
 				    32, nls_cp);
 	bcc_ptr += 2 * bytes_ret;
 	bcc_ptr += 2; /* trailing null */
 
-	bytes_ret = cअगरs_strtoUTF16((__le16 *) bcc_ptr, CIFS_NETWORK_OPSYS,
+	bytes_ret = cifs_strtoUTF16((__le16 *) bcc_ptr, CIFS_NETWORK_OPSYS,
 				    32, nls_cp);
 	bcc_ptr += 2 * bytes_ret;
 	bcc_ptr += 2; /* trailing null */
 
 	*pbcc_area = bcc_ptr;
-पूर्ण
+}
 
-अटल व्योम unicode_करोमुख्य_string(अक्षर **pbcc_area, काष्ठा cअगरs_ses *ses,
-				   स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	अक्षर *bcc_ptr = *pbcc_area;
-	पूर्णांक bytes_ret = 0;
+static void unicode_domain_string(char **pbcc_area, struct cifs_ses *ses,
+				   const struct nls_table *nls_cp)
+{
+	char *bcc_ptr = *pbcc_area;
+	int bytes_ret = 0;
 
-	/* copy करोमुख्य */
-	अगर (ses->करोमुख्यName == शून्य) अणु
-		/* Sending null करोमुख्य better than using a bogus करोमुख्य name (as
-		we did briefly in 2.6.18) since server will use its शेष */
+	/* copy domain */
+	if (ses->domainName == NULL) {
+		/* Sending null domain better than using a bogus domain name (as
+		we did briefly in 2.6.18) since server will use its default */
 		*bcc_ptr = 0;
 		*(bcc_ptr+1) = 0;
 		bytes_ret = 0;
-	पूर्ण अन्यथा
-		bytes_ret = cअगरs_strtoUTF16((__le16 *) bcc_ptr, ses->करोमुख्यName,
+	} else
+		bytes_ret = cifs_strtoUTF16((__le16 *) bcc_ptr, ses->domainName,
 					    CIFS_MAX_DOMAINNAME_LEN, nls_cp);
 	bcc_ptr += 2 * bytes_ret;
-	bcc_ptr += 2;  /* account क्रम null terminator */
+	bcc_ptr += 2;  /* account for null terminator */
 
 	*pbcc_area = bcc_ptr;
-पूर्ण
+}
 
 
-अटल व्योम unicode_ssetup_strings(अक्षर **pbcc_area, काष्ठा cअगरs_ses *ses,
-				   स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	अक्षर *bcc_ptr = *pbcc_area;
-	पूर्णांक bytes_ret = 0;
+static void unicode_ssetup_strings(char **pbcc_area, struct cifs_ses *ses,
+				   const struct nls_table *nls_cp)
+{
+	char *bcc_ptr = *pbcc_area;
+	int bytes_ret = 0;
 
 	/* BB FIXME add check that strings total less
 	than 335 or will need to send them as arrays */
 
-	/* unicode strings, must be word aligned beक्रमe the call */
-/*	अगर ((दीर्घ) bcc_ptr % 2)	अणु
+	/* unicode strings, must be word aligned before the call */
+/*	if ((long) bcc_ptr % 2)	{
 		*bcc_ptr = 0;
 		bcc_ptr++;
-	पूर्ण */
+	} */
 	/* copy user */
-	अगर (ses->user_name == शून्य) अणु
+	if (ses->user_name == NULL) {
 		/* null user mount */
 		*bcc_ptr = 0;
 		*(bcc_ptr+1) = 0;
-	पूर्ण अन्यथा अणु
-		bytes_ret = cअगरs_strtoUTF16((__le16 *) bcc_ptr, ses->user_name,
+	} else {
+		bytes_ret = cifs_strtoUTF16((__le16 *) bcc_ptr, ses->user_name,
 					    CIFS_MAX_USERNAME_LEN, nls_cp);
-	पूर्ण
+	}
 	bcc_ptr += 2 * bytes_ret;
-	bcc_ptr += 2; /* account क्रम null termination */
+	bcc_ptr += 2; /* account for null termination */
 
-	unicode_करोमुख्य_string(&bcc_ptr, ses, nls_cp);
+	unicode_domain_string(&bcc_ptr, ses, nls_cp);
 	unicode_oslm_strings(&bcc_ptr, nls_cp);
 
 	*pbcc_area = bcc_ptr;
-पूर्ण
+}
 
-अटल व्योम ascii_ssetup_strings(अक्षर **pbcc_area, काष्ठा cअगरs_ses *ses,
-				 स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	अक्षर *bcc_ptr = *pbcc_area;
-	पूर्णांक len;
+static void ascii_ssetup_strings(char **pbcc_area, struct cifs_ses *ses,
+				 const struct nls_table *nls_cp)
+{
+	char *bcc_ptr = *pbcc_area;
+	int len;
 
 	/* copy user */
-	/* BB what about null user mounts - check that we करो this BB */
+	/* BB what about null user mounts - check that we do this BB */
 	/* copy user */
-	अगर (ses->user_name != शून्य) अणु
+	if (ses->user_name != NULL) {
 		len = strscpy(bcc_ptr, ses->user_name, CIFS_MAX_USERNAME_LEN);
-		अगर (WARN_ON_ONCE(len < 0))
+		if (WARN_ON_ONCE(len < 0))
 			len = CIFS_MAX_USERNAME_LEN - 1;
 		bcc_ptr += len;
-	पूर्ण
-	/* अन्यथा null user mount */
+	}
+	/* else null user mount */
 	*bcc_ptr = 0;
-	bcc_ptr++; /* account क्रम null termination */
+	bcc_ptr++; /* account for null termination */
 
-	/* copy करोमुख्य */
-	अगर (ses->करोमुख्यName != शून्य) अणु
-		len = strscpy(bcc_ptr, ses->करोमुख्यName, CIFS_MAX_DOMAINNAME_LEN);
-		अगर (WARN_ON_ONCE(len < 0))
+	/* copy domain */
+	if (ses->domainName != NULL) {
+		len = strscpy(bcc_ptr, ses->domainName, CIFS_MAX_DOMAINNAME_LEN);
+		if (WARN_ON_ONCE(len < 0))
 			len = CIFS_MAX_DOMAINNAME_LEN - 1;
 		bcc_ptr += len;
-	पूर्ण /* अन्यथा we will send a null करोमुख्य name
-	     so the server will शेष to its own करोमुख्य */
+	} /* else we will send a null domain name
+	     so the server will default to its own domain */
 	*bcc_ptr = 0;
 	bcc_ptr++;
 
-	/* BB check क्रम overflow here */
+	/* BB check for overflow here */
 
-	म_नकल(bcc_ptr, "Linux version ");
-	bcc_ptr += म_माप("Linux version ");
-	म_नकल(bcc_ptr, init_utsname()->release);
-	bcc_ptr += म_माप(init_utsname()->release) + 1;
+	strcpy(bcc_ptr, "Linux version ");
+	bcc_ptr += strlen("Linux version ");
+	strcpy(bcc_ptr, init_utsname()->release);
+	bcc_ptr += strlen(init_utsname()->release) + 1;
 
-	म_नकल(bcc_ptr, CIFS_NETWORK_OPSYS);
-	bcc_ptr += म_माप(CIFS_NETWORK_OPSYS) + 1;
+	strcpy(bcc_ptr, CIFS_NETWORK_OPSYS);
+	bcc_ptr += strlen(CIFS_NETWORK_OPSYS) + 1;
 
 	*pbcc_area = bcc_ptr;
-पूर्ण
+}
 
-अटल व्योम
-decode_unicode_ssetup(अक्षर **pbcc_area, पूर्णांक bleft, काष्ठा cअगरs_ses *ses,
-		      स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	पूर्णांक len;
-	अक्षर *data = *pbcc_area;
+static void
+decode_unicode_ssetup(char **pbcc_area, int bleft, struct cifs_ses *ses,
+		      const struct nls_table *nls_cp)
+{
+	int len;
+	char *data = *pbcc_area;
 
-	cअगरs_dbg(FYI, "bleft %d\n", bleft);
+	cifs_dbg(FYI, "bleft %d\n", bleft);
 
-	kमुक्त(ses->serverOS);
-	ses->serverOS = cअगरs_strndup_from_utf16(data, bleft, true, nls_cp);
-	cअगरs_dbg(FYI, "serverOS=%s\n", ses->serverOS);
-	len = (UniStrnlen((ब_अक्षर_प्रकार *) data, bleft / 2) * 2) + 2;
+	kfree(ses->serverOS);
+	ses->serverOS = cifs_strndup_from_utf16(data, bleft, true, nls_cp);
+	cifs_dbg(FYI, "serverOS=%s\n", ses->serverOS);
+	len = (UniStrnlen((wchar_t *) data, bleft / 2) * 2) + 2;
 	data += len;
 	bleft -= len;
-	अगर (bleft <= 0)
-		वापस;
+	if (bleft <= 0)
+		return;
 
-	kमुक्त(ses->serverNOS);
-	ses->serverNOS = cअगरs_strndup_from_utf16(data, bleft, true, nls_cp);
-	cअगरs_dbg(FYI, "serverNOS=%s\n", ses->serverNOS);
-	len = (UniStrnlen((ब_अक्षर_प्रकार *) data, bleft / 2) * 2) + 2;
+	kfree(ses->serverNOS);
+	ses->serverNOS = cifs_strndup_from_utf16(data, bleft, true, nls_cp);
+	cifs_dbg(FYI, "serverNOS=%s\n", ses->serverNOS);
+	len = (UniStrnlen((wchar_t *) data, bleft / 2) * 2) + 2;
 	data += len;
 	bleft -= len;
-	अगर (bleft <= 0)
-		वापस;
+	if (bleft <= 0)
+		return;
 
-	kमुक्त(ses->serverDoमुख्य);
-	ses->serverDoमुख्य = cअगरs_strndup_from_utf16(data, bleft, true, nls_cp);
-	cअगरs_dbg(FYI, "serverDomain=%s\n", ses->serverDoमुख्य);
+	kfree(ses->serverDomain);
+	ses->serverDomain = cifs_strndup_from_utf16(data, bleft, true, nls_cp);
+	cifs_dbg(FYI, "serverDomain=%s\n", ses->serverDomain);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम decode_ascii_ssetup(अक्षर **pbcc_area, __u16 bleft,
-				काष्ठा cअगरs_ses *ses,
-				स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	पूर्णांक len;
-	अक्षर *bcc_ptr = *pbcc_area;
+static void decode_ascii_ssetup(char **pbcc_area, __u16 bleft,
+				struct cifs_ses *ses,
+				const struct nls_table *nls_cp)
+{
+	int len;
+	char *bcc_ptr = *pbcc_area;
 
-	cअगरs_dbg(FYI, "decode sessetup ascii. bleft %d\n", bleft);
+	cifs_dbg(FYI, "decode sessetup ascii. bleft %d\n", bleft);
 
 	len = strnlen(bcc_ptr, bleft);
-	अगर (len >= bleft)
-		वापस;
+	if (len >= bleft)
+		return;
 
-	kमुक्त(ses->serverOS);
+	kfree(ses->serverOS);
 
-	ses->serverOS = kदो_स्मृति(len + 1, GFP_KERNEL);
-	अगर (ses->serverOS) अणु
-		स_नकल(ses->serverOS, bcc_ptr, len);
+	ses->serverOS = kmalloc(len + 1, GFP_KERNEL);
+	if (ses->serverOS) {
+		memcpy(ses->serverOS, bcc_ptr, len);
 		ses->serverOS[len] = 0;
-		अगर (म_भेदन(ses->serverOS, "OS/2", 4) == 0)
-			cअगरs_dbg(FYI, "OS/2 server\n");
-	पूर्ण
+		if (strncmp(ses->serverOS, "OS/2", 4) == 0)
+			cifs_dbg(FYI, "OS/2 server\n");
+	}
 
 	bcc_ptr += len + 1;
 	bleft -= len + 1;
 
 	len = strnlen(bcc_ptr, bleft);
-	अगर (len >= bleft)
-		वापस;
+	if (len >= bleft)
+		return;
 
-	kमुक्त(ses->serverNOS);
+	kfree(ses->serverNOS);
 
-	ses->serverNOS = kदो_स्मृति(len + 1, GFP_KERNEL);
-	अगर (ses->serverNOS) अणु
-		स_नकल(ses->serverNOS, bcc_ptr, len);
+	ses->serverNOS = kmalloc(len + 1, GFP_KERNEL);
+	if (ses->serverNOS) {
+		memcpy(ses->serverNOS, bcc_ptr, len);
 		ses->serverNOS[len] = 0;
-	पूर्ण
+	}
 
 	bcc_ptr += len + 1;
 	bleft -= len + 1;
 
 	len = strnlen(bcc_ptr, bleft);
-	अगर (len > bleft)
-		वापस;
+	if (len > bleft)
+		return;
 
-	/* No करोमुख्य field in LANMAN हाल. Doमुख्य is
-	   वापसed by old servers in the SMB negprot response */
-	/* BB For newer servers which करो not support Unicode,
-	   but thus करो वापस करोमुख्य here we could add parsing
-	   क्रम it later, but it is not very important */
-	cअगरs_dbg(FYI, "ascii: bytes left %d\n", bleft);
-पूर्ण
+	/* No domain field in LANMAN case. Domain is
+	   returned by old servers in the SMB negprot response */
+	/* BB For newer servers which do not support Unicode,
+	   but thus do return domain here we could add parsing
+	   for it later, but it is not very important */
+	cifs_dbg(FYI, "ascii: bytes left %d\n", bleft);
+}
 
-पूर्णांक decode_ntlmssp_challenge(अक्षर *bcc_ptr, पूर्णांक blob_len,
-				    काष्ठा cअगरs_ses *ses)
-अणु
-	अचिन्हित पूर्णांक tioffset; /* challenge message target info area */
-	अचिन्हित पूर्णांक tilen; /* challenge message target info area length  */
+int decode_ntlmssp_challenge(char *bcc_ptr, int blob_len,
+				    struct cifs_ses *ses)
+{
+	unsigned int tioffset; /* challenge message target info area */
+	unsigned int tilen; /* challenge message target info area length  */
 
 	CHALLENGE_MESSAGE *pblob = (CHALLENGE_MESSAGE *)bcc_ptr;
 
-	अगर (blob_len < माप(CHALLENGE_MESSAGE)) अणु
-		cअगरs_dbg(VFS, "challenge blob len %d too small\n", blob_len);
-		वापस -EINVAL;
-	पूर्ण
+	if (blob_len < sizeof(CHALLENGE_MESSAGE)) {
+		cifs_dbg(VFS, "challenge blob len %d too small\n", blob_len);
+		return -EINVAL;
+	}
 
-	अगर (स_भेद(pblob->Signature, "NTLMSSP", 8)) अणु
-		cअगरs_dbg(VFS, "blob signature incorrect %s\n",
+	if (memcmp(pblob->Signature, "NTLMSSP", 8)) {
+		cifs_dbg(VFS, "blob signature incorrect %s\n",
 			 pblob->Signature);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (pblob->MessageType != NtLmChallenge) अणु
-		cअगरs_dbg(VFS, "Incorrect message type %d\n",
+		return -EINVAL;
+	}
+	if (pblob->MessageType != NtLmChallenge) {
+		cifs_dbg(VFS, "Incorrect message type %d\n",
 			 pblob->MessageType);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(ses->ntlmssp->cryptkey, pblob->Challenge, CIFS_CRYPTO_KEY_SIZE);
+	memcpy(ses->ntlmssp->cryptkey, pblob->Challenge, CIFS_CRYPTO_KEY_SIZE);
 	/* BB we could decode pblob->NegotiateFlags; some may be useful */
 	/* In particular we can examine sign flags */
-	/* BB spec says that अगर AvId field of MsvAvTimestamp is populated then
+	/* BB spec says that if AvId field of MsvAvTimestamp is populated then
 		we must set the MIC field of the AUTHENTICATE_MESSAGE */
 	ses->ntlmssp->server_flags = le32_to_cpu(pblob->NegotiateFlags);
 	tioffset = le32_to_cpu(pblob->TargetInfoArray.BufferOffset);
 	tilen = le16_to_cpu(pblob->TargetInfoArray.Length);
-	अगर (tioffset > blob_len || tioffset + tilen > blob_len) अणु
-		cअगरs_dbg(VFS, "tioffset + tilen too high %u + %u\n",
+	if (tioffset > blob_len || tioffset + tilen > blob_len) {
+		cifs_dbg(VFS, "tioffset + tilen too high %u + %u\n",
 			 tioffset, tilen);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (tilen) अणु
+		return -EINVAL;
+	}
+	if (tilen) {
 		ses->auth_key.response = kmemdup(bcc_ptr + tioffset, tilen,
 						 GFP_KERNEL);
-		अगर (!ses->auth_key.response) अणु
-			cअगरs_dbg(VFS, "Challenge target info alloc failure\n");
-			वापस -ENOMEM;
-		पूर्ण
+		if (!ses->auth_key.response) {
+			cifs_dbg(VFS, "Challenge target info alloc failure\n");
+			return -ENOMEM;
+		}
 		ses->auth_key.len = tilen;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* BB Move to ntlmssp.c eventually */
 
-/* We करो not दो_स्मृति the blob, it is passed in pbuffer, because
+/* We do not malloc the blob, it is passed in pbuffer, because
    it is fixed size, and small, making this approach cleaner */
-व्योम build_ntlmssp_negotiate_blob(अचिन्हित अक्षर *pbuffer,
-					 काष्ठा cअगरs_ses *ses)
-अणु
-	काष्ठा TCP_Server_Info *server = cअगरs_ses_server(ses);
+void build_ntlmssp_negotiate_blob(unsigned char *pbuffer,
+					 struct cifs_ses *ses)
+{
+	struct TCP_Server_Info *server = cifs_ses_server(ses);
 	NEGOTIATE_MESSAGE *sec_blob = (NEGOTIATE_MESSAGE *)pbuffer;
 	__u32 flags;
 
-	स_रखो(pbuffer, 0, माप(NEGOTIATE_MESSAGE));
-	स_नकल(sec_blob->Signature, NTLMSSP_SIGNATURE, 8);
+	memset(pbuffer, 0, sizeof(NEGOTIATE_MESSAGE));
+	memcpy(sec_blob->Signature, NTLMSSP_SIGNATURE, 8);
 	sec_blob->MessageType = NtLmNegotiate;
 
-	/* BB is NTLMV2 session security क्रमmat easier to use here? */
+	/* BB is NTLMV2 session security format easier to use here? */
 	flags = NTLMSSP_NEGOTIATE_56 |	NTLMSSP_REQUEST_TARGET |
 		NTLMSSP_NEGOTIATE_128 | NTLMSSP_NEGOTIATE_UNICODE |
 		NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_NEGOTIATE_EXTENDED_SEC |
 		NTLMSSP_NEGOTIATE_SEAL;
-	अगर (server->sign)
+	if (server->sign)
 		flags |= NTLMSSP_NEGOTIATE_SIGN;
-	अगर (!server->session_estab || ses->ntlmssp->sesskey_per_smbsess)
+	if (!server->session_estab || ses->ntlmssp->sesskey_per_smbsess)
 		flags |= NTLMSSP_NEGOTIATE_KEY_XCH;
 
 	sec_blob->NegotiateFlags = cpu_to_le32(flags);
@@ -644,56 +643,56 @@ decode_unicode_ssetup(अक्षर **pbcc_area, पूर्णांक blef
 	sec_blob->WorkstationName.Length = 0;
 	sec_blob->WorkstationName.MaximumLength = 0;
 
-	/* Doमुख्य name is sent on the Challenge not Negotiate NTLMSSP request */
-	sec_blob->Doमुख्यName.BufferOffset = 0;
-	sec_blob->Doमुख्यName.Length = 0;
-	sec_blob->Doमुख्यName.MaximumLength = 0;
-पूर्ण
+	/* Domain name is sent on the Challenge not Negotiate NTLMSSP request */
+	sec_blob->DomainName.BufferOffset = 0;
+	sec_blob->DomainName.Length = 0;
+	sec_blob->DomainName.MaximumLength = 0;
+}
 
-अटल पूर्णांक size_of_ntlmssp_blob(काष्ठा cअगरs_ses *ses)
-अणु
-	पूर्णांक sz = माप(AUTHENTICATE_MESSAGE) + ses->auth_key.len
+static int size_of_ntlmssp_blob(struct cifs_ses *ses)
+{
+	int sz = sizeof(AUTHENTICATE_MESSAGE) + ses->auth_key.len
 		- CIFS_SESS_KEY_SIZE + CIFS_CPHTXT_SIZE + 2;
 
-	अगर (ses->करोमुख्यName)
-		sz += 2 * strnlen(ses->करोमुख्यName, CIFS_MAX_DOMAINNAME_LEN);
-	अन्यथा
+	if (ses->domainName)
+		sz += 2 * strnlen(ses->domainName, CIFS_MAX_DOMAINNAME_LEN);
+	else
 		sz += 2;
 
-	अगर (ses->user_name)
+	if (ses->user_name)
 		sz += 2 * strnlen(ses->user_name, CIFS_MAX_USERNAME_LEN);
-	अन्यथा
+	else
 		sz += 2;
 
-	वापस sz;
-पूर्ण
+	return sz;
+}
 
-पूर्णांक build_ntlmssp_auth_blob(अचिन्हित अक्षर **pbuffer,
+int build_ntlmssp_auth_blob(unsigned char **pbuffer,
 					u16 *buflen,
-				   काष्ठा cअगरs_ses *ses,
-				   स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	पूर्णांक rc;
+				   struct cifs_ses *ses,
+				   const struct nls_table *nls_cp)
+{
+	int rc;
 	AUTHENTICATE_MESSAGE *sec_blob;
 	__u32 flags;
-	अचिन्हित अक्षर *पंचांगp;
+	unsigned char *tmp;
 
 	rc = setup_ntlmv2_rsp(ses, nls_cp);
-	अगर (rc) अणु
-		cअगरs_dbg(VFS, "Error %d during NTLMSSP authentication\n", rc);
+	if (rc) {
+		cifs_dbg(VFS, "Error %d during NTLMSSP authentication\n", rc);
 		*buflen = 0;
-		जाओ setup_ntlmv2_ret;
-	पूर्ण
-	*pbuffer = kदो_स्मृति(size_of_ntlmssp_blob(ses), GFP_KERNEL);
-	अगर (!*pbuffer) अणु
+		goto setup_ntlmv2_ret;
+	}
+	*pbuffer = kmalloc(size_of_ntlmssp_blob(ses), GFP_KERNEL);
+	if (!*pbuffer) {
 		rc = -ENOMEM;
-		cअगरs_dbg(VFS, "Error %d during NTLMSSP allocation\n", rc);
+		cifs_dbg(VFS, "Error %d during NTLMSSP allocation\n", rc);
 		*buflen = 0;
-		जाओ setup_ntlmv2_ret;
-	पूर्ण
+		goto setup_ntlmv2_ret;
+	}
 	sec_blob = (AUTHENTICATE_MESSAGE *)*pbuffer;
 
-	स_नकल(sec_blob->Signature, NTLMSSP_SIGNATURE, 8);
+	memcpy(sec_blob->Signature, NTLMSSP_SIGNATURE, 8);
 	sec_blob->MessageType = NtLmAuthenticate;
 
 	flags = NTLMSSP_NEGOTIATE_56 |
@@ -701,250 +700,250 @@ decode_unicode_ssetup(अक्षर **pbcc_area, पूर्णांक blef
 		NTLMSSP_NEGOTIATE_128 | NTLMSSP_NEGOTIATE_UNICODE |
 		NTLMSSP_NEGOTIATE_NTLM | NTLMSSP_NEGOTIATE_EXTENDED_SEC |
 		NTLMSSP_NEGOTIATE_SEAL;
-	अगर (ses->server->sign)
+	if (ses->server->sign)
 		flags |= NTLMSSP_NEGOTIATE_SIGN;
-	अगर (!ses->server->session_estab || ses->ntlmssp->sesskey_per_smbsess)
+	if (!ses->server->session_estab || ses->ntlmssp->sesskey_per_smbsess)
 		flags |= NTLMSSP_NEGOTIATE_KEY_XCH;
 
-	पंचांगp = *pbuffer + माप(AUTHENTICATE_MESSAGE);
+	tmp = *pbuffer + sizeof(AUTHENTICATE_MESSAGE);
 	sec_blob->NegotiateFlags = cpu_to_le32(flags);
 
 	sec_blob->LmChallengeResponse.BufferOffset =
-				cpu_to_le32(माप(AUTHENTICATE_MESSAGE));
+				cpu_to_le32(sizeof(AUTHENTICATE_MESSAGE));
 	sec_blob->LmChallengeResponse.Length = 0;
 	sec_blob->LmChallengeResponse.MaximumLength = 0;
 
 	sec_blob->NtChallengeResponse.BufferOffset =
-				cpu_to_le32(पंचांगp - *pbuffer);
-	अगर (ses->user_name != शून्य) अणु
-		स_नकल(पंचांगp, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
+				cpu_to_le32(tmp - *pbuffer);
+	if (ses->user_name != NULL) {
+		memcpy(tmp, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
 				ses->auth_key.len - CIFS_SESS_KEY_SIZE);
-		पंचांगp += ses->auth_key.len - CIFS_SESS_KEY_SIZE;
+		tmp += ses->auth_key.len - CIFS_SESS_KEY_SIZE;
 
 		sec_blob->NtChallengeResponse.Length =
 				cpu_to_le16(ses->auth_key.len - CIFS_SESS_KEY_SIZE);
 		sec_blob->NtChallengeResponse.MaximumLength =
 				cpu_to_le16(ses->auth_key.len - CIFS_SESS_KEY_SIZE);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * करोn't send an NT Response क्रम anonymous access
+		 * don't send an NT Response for anonymous access
 		 */
 		sec_blob->NtChallengeResponse.Length = 0;
 		sec_blob->NtChallengeResponse.MaximumLength = 0;
-	पूर्ण
+	}
 
-	अगर (ses->करोमुख्यName == शून्य) अणु
-		sec_blob->Doमुख्यName.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
-		sec_blob->Doमुख्यName.Length = 0;
-		sec_blob->Doमुख्यName.MaximumLength = 0;
-		पंचांगp += 2;
-	पूर्ण अन्यथा अणु
-		पूर्णांक len;
-		len = cअगरs_strtoUTF16((__le16 *)पंचांगp, ses->करोमुख्यName,
+	if (ses->domainName == NULL) {
+		sec_blob->DomainName.BufferOffset = cpu_to_le32(tmp - *pbuffer);
+		sec_blob->DomainName.Length = 0;
+		sec_blob->DomainName.MaximumLength = 0;
+		tmp += 2;
+	} else {
+		int len;
+		len = cifs_strtoUTF16((__le16 *)tmp, ses->domainName,
 				      CIFS_MAX_DOMAINNAME_LEN, nls_cp);
 		len *= 2; /* unicode is 2 bytes each */
-		sec_blob->Doमुख्यName.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
-		sec_blob->Doमुख्यName.Length = cpu_to_le16(len);
-		sec_blob->Doमुख्यName.MaximumLength = cpu_to_le16(len);
-		पंचांगp += len;
-	पूर्ण
+		sec_blob->DomainName.BufferOffset = cpu_to_le32(tmp - *pbuffer);
+		sec_blob->DomainName.Length = cpu_to_le16(len);
+		sec_blob->DomainName.MaximumLength = cpu_to_le16(len);
+		tmp += len;
+	}
 
-	अगर (ses->user_name == शून्य) अणु
-		sec_blob->UserName.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
+	if (ses->user_name == NULL) {
+		sec_blob->UserName.BufferOffset = cpu_to_le32(tmp - *pbuffer);
 		sec_blob->UserName.Length = 0;
 		sec_blob->UserName.MaximumLength = 0;
-		पंचांगp += 2;
-	पूर्ण अन्यथा अणु
-		पूर्णांक len;
-		len = cअगरs_strtoUTF16((__le16 *)पंचांगp, ses->user_name,
+		tmp += 2;
+	} else {
+		int len;
+		len = cifs_strtoUTF16((__le16 *)tmp, ses->user_name,
 				      CIFS_MAX_USERNAME_LEN, nls_cp);
 		len *= 2; /* unicode is 2 bytes each */
-		sec_blob->UserName.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
+		sec_blob->UserName.BufferOffset = cpu_to_le32(tmp - *pbuffer);
 		sec_blob->UserName.Length = cpu_to_le16(len);
 		sec_blob->UserName.MaximumLength = cpu_to_le16(len);
-		पंचांगp += len;
-	पूर्ण
+		tmp += len;
+	}
 
-	sec_blob->WorkstationName.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
+	sec_blob->WorkstationName.BufferOffset = cpu_to_le32(tmp - *pbuffer);
 	sec_blob->WorkstationName.Length = 0;
 	sec_blob->WorkstationName.MaximumLength = 0;
-	पंचांगp += 2;
+	tmp += 2;
 
-	अगर (((ses->ntlmssp->server_flags & NTLMSSP_NEGOTIATE_KEY_XCH) ||
+	if (((ses->ntlmssp->server_flags & NTLMSSP_NEGOTIATE_KEY_XCH) ||
 		(ses->ntlmssp->server_flags & NTLMSSP_NEGOTIATE_EXTENDED_SEC))
-			&& !calc_seckey(ses)) अणु
-		स_नकल(पंचांगp, ses->ntlmssp->ciphertext, CIFS_CPHTXT_SIZE);
-		sec_blob->SessionKey.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
+			&& !calc_seckey(ses)) {
+		memcpy(tmp, ses->ntlmssp->ciphertext, CIFS_CPHTXT_SIZE);
+		sec_blob->SessionKey.BufferOffset = cpu_to_le32(tmp - *pbuffer);
 		sec_blob->SessionKey.Length = cpu_to_le16(CIFS_CPHTXT_SIZE);
 		sec_blob->SessionKey.MaximumLength =
 				cpu_to_le16(CIFS_CPHTXT_SIZE);
-		पंचांगp += CIFS_CPHTXT_SIZE;
-	पूर्ण अन्यथा अणु
-		sec_blob->SessionKey.BufferOffset = cpu_to_le32(पंचांगp - *pbuffer);
+		tmp += CIFS_CPHTXT_SIZE;
+	} else {
+		sec_blob->SessionKey.BufferOffset = cpu_to_le32(tmp - *pbuffer);
 		sec_blob->SessionKey.Length = 0;
 		sec_blob->SessionKey.MaximumLength = 0;
-	पूर्ण
+	}
 
-	*buflen = पंचांगp - *pbuffer;
+	*buflen = tmp - *pbuffer;
 setup_ntlmv2_ret:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-क्रमागत securityEnum
-cअगरs_select_sectype(काष्ठा TCP_Server_Info *server, क्रमागत securityEnum requested)
-अणु
-	चयन (server->negflavor) अणु
-	हाल CIFS_NEGFLAVOR_EXTENDED:
-		चयन (requested) अणु
-		हाल Kerberos:
-		हाल RawNTLMSSP:
-			वापस requested;
-		हाल Unspecअगरied:
-			अगर (server->sec_ntlmssp &&
+enum securityEnum
+cifs_select_sectype(struct TCP_Server_Info *server, enum securityEnum requested)
+{
+	switch (server->negflavor) {
+	case CIFS_NEGFLAVOR_EXTENDED:
+		switch (requested) {
+		case Kerberos:
+		case RawNTLMSSP:
+			return requested;
+		case Unspecified:
+			if (server->sec_ntlmssp &&
 			    (global_secflags & CIFSSEC_MAY_NTLMSSP))
-				वापस RawNTLMSSP;
-			अगर ((server->sec_kerberos || server->sec_mskerberos) &&
+				return RawNTLMSSP;
+			if ((server->sec_kerberos || server->sec_mskerberos) &&
 			    (global_secflags & CIFSSEC_MAY_KRB5))
-				वापस Kerberos;
+				return Kerberos;
 			fallthrough;
-		शेष:
-			वापस Unspecअगरied;
-		पूर्ण
-	हाल CIFS_NEGFLAVOR_UNENCAP:
-		चयन (requested) अणु
-		हाल NTLM:
-		हाल NTLMv2:
-			वापस requested;
-		हाल Unspecअगरied:
-			अगर (global_secflags & CIFSSEC_MAY_NTLMV2)
-				वापस NTLMv2;
-			अगर (global_secflags & CIFSSEC_MAY_NTLM)
-				वापस NTLM;
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
+		default:
+			return Unspecified;
+		}
+	case CIFS_NEGFLAVOR_UNENCAP:
+		switch (requested) {
+		case NTLM:
+		case NTLMv2:
+			return requested;
+		case Unspecified:
+			if (global_secflags & CIFSSEC_MAY_NTLMV2)
+				return NTLMv2;
+			if (global_secflags & CIFSSEC_MAY_NTLM)
+				return NTLM;
+			break;
+		default:
+			break;
+		}
 		fallthrough;	/* to attempt LANMAN authentication next */
-	हाल CIFS_NEGFLAVOR_LANMAN:
-		चयन (requested) अणु
-		हाल LANMAN:
-			वापस requested;
-		हाल Unspecअगरied:
-			अगर (global_secflags & CIFSSEC_MAY_LANMAN)
-				वापस LANMAN;
+	case CIFS_NEGFLAVOR_LANMAN:
+		switch (requested) {
+		case LANMAN:
+			return requested;
+		case Unspecified:
+			if (global_secflags & CIFSSEC_MAY_LANMAN)
+				return LANMAN;
 			fallthrough;
-		शेष:
-			वापस Unspecअगरied;
-		पूर्ण
-	शेष:
-		वापस Unspecअगरied;
-	पूर्ण
-पूर्ण
+		default:
+			return Unspecified;
+		}
+	default:
+		return Unspecified;
+	}
+}
 
-काष्ठा sess_data अणु
-	अचिन्हित पूर्णांक xid;
-	काष्ठा cअगरs_ses *ses;
-	काष्ठा nls_table *nls_cp;
-	व्योम (*func)(काष्ठा sess_data *);
-	पूर्णांक result;
+struct sess_data {
+	unsigned int xid;
+	struct cifs_ses *ses;
+	struct nls_table *nls_cp;
+	void (*func)(struct sess_data *);
+	int result;
 
 	/* we will send the SMB in three pieces:
 	 * a fixed length beginning part, an optional
 	 * SPNEGO blob (which can be zero length), and a
 	 * last part which will include the strings
-	 * and rest of bcc area. This allows us to aव्योम
+	 * and rest of bcc area. This allows us to avoid
 	 * a large buffer 17K allocation
 	 */
-	पूर्णांक buf0_type;
-	काष्ठा kvec iov[3];
-पूर्ण;
+	int buf0_type;
+	struct kvec iov[3];
+};
 
-अटल पूर्णांक
-sess_alloc_buffer(काष्ठा sess_data *sess_data, पूर्णांक wct)
-अणु
-	पूर्णांक rc;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
-	काष्ठा smb_hdr *smb_buf;
+static int
+sess_alloc_buffer(struct sess_data *sess_data, int wct)
+{
+	int rc;
+	struct cifs_ses *ses = sess_data->ses;
+	struct smb_hdr *smb_buf;
 
 	rc = small_smb_init_no_tc(SMB_COM_SESSION_SETUP_ANDX, wct, ses,
-				  (व्योम **)&smb_buf);
+				  (void **)&smb_buf);
 
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	sess_data->iov[0].iov_base = (अक्षर *)smb_buf;
+	sess_data->iov[0].iov_base = (char *)smb_buf;
 	sess_data->iov[0].iov_len = be32_to_cpu(smb_buf->smb_buf_length) + 4;
 	/*
 	 * This variable will be used to clear the buffer
-	 * allocated above in हाल of any error in the calling function.
+	 * allocated above in case of any error in the calling function.
 	 */
 	sess_data->buf0_type = CIFS_SMALL_BUFFER;
 
-	/* 2000 big enough to fit max user, करोमुख्य, NOS name etc. */
-	sess_data->iov[2].iov_base = kदो_स्मृति(2000, GFP_KERNEL);
-	अगर (!sess_data->iov[2].iov_base) अणु
+	/* 2000 big enough to fit max user, domain, NOS name etc. */
+	sess_data->iov[2].iov_base = kmalloc(2000, GFP_KERNEL);
+	if (!sess_data->iov[2].iov_base) {
 		rc = -ENOMEM;
-		जाओ out_मुक्त_smb_buf;
-	पूर्ण
+		goto out_free_smb_buf;
+	}
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_smb_buf:
-	kमुक्त(smb_buf);
-	sess_data->iov[0].iov_base = शून्य;
+out_free_smb_buf:
+	kfree(smb_buf);
+	sess_data->iov[0].iov_base = NULL;
 	sess_data->iov[0].iov_len = 0;
 	sess_data->buf0_type = CIFS_NO_BUFFER;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम
-sess_मुक्त_buffer(काष्ठा sess_data *sess_data)
-अणु
+static void
+sess_free_buffer(struct sess_data *sess_data)
+{
 
-	मुक्त_rsp_buf(sess_data->buf0_type, sess_data->iov[0].iov_base);
+	free_rsp_buf(sess_data->buf0_type, sess_data->iov[0].iov_base);
 	sess_data->buf0_type = CIFS_NO_BUFFER;
-	kमुक्त(sess_data->iov[2].iov_base);
-पूर्ण
+	kfree(sess_data->iov[2].iov_base);
+}
 
-अटल पूर्णांक
-sess_establish_session(काष्ठा sess_data *sess_data)
-अणु
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
+static int
+sess_establish_session(struct sess_data *sess_data)
+{
+	struct cifs_ses *ses = sess_data->ses;
 
 	mutex_lock(&ses->server->srv_mutex);
-	अगर (!ses->server->session_estab) अणु
-		अगर (ses->server->sign) अणु
+	if (!ses->server->session_estab) {
+		if (ses->server->sign) {
 			ses->server->session_key.response =
 				kmemdup(ses->auth_key.response,
 				ses->auth_key.len, GFP_KERNEL);
-			अगर (!ses->server->session_key.response) अणु
+			if (!ses->server->session_key.response) {
 				mutex_unlock(&ses->server->srv_mutex);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 			ses->server->session_key.len =
 						ses->auth_key.len;
-		पूर्ण
+		}
 		ses->server->sequence_number = 0x2;
 		ses->server->session_estab = true;
-	पूर्ण
+	}
 	mutex_unlock(&ses->server->srv_mutex);
 
-	cअगरs_dbg(FYI, "CIFS session established successfully\n");
+	cifs_dbg(FYI, "CIFS session established successfully\n");
 	spin_lock(&GlobalMid_Lock);
-	ses->status = CअगरsGood;
+	ses->status = CifsGood;
 	ses->need_reconnect = false;
 	spin_unlock(&GlobalMid_Lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-sess_sendreceive(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc;
-	काष्ठा smb_hdr *smb_buf = (काष्ठा smb_hdr *) sess_data->iov[0].iov_base;
+static int
+sess_sendreceive(struct sess_data *sess_data)
+{
+	int rc;
+	struct smb_hdr *smb_buf = (struct smb_hdr *) sess_data->iov[0].iov_base;
 	__u16 count;
-	काष्ठा kvec rsp_iov = अणु शून्य, 0 पूर्ण;
+	struct kvec rsp_iov = { NULL, 0 };
 
 	count = sess_data->iov[1].iov_len + sess_data->iov[2].iov_len;
 	be32_add_cpu(&smb_buf->smb_buf_length, count);
@@ -954,149 +953,149 @@ sess_sendreceive(काष्ठा sess_data *sess_data)
 			  sess_data->iov, 3 /* num_iovecs */,
 			  &sess_data->buf0_type,
 			  CIFS_LOG_ERROR, &rsp_iov);
-	cअगरs_small_buf_release(sess_data->iov[0].iov_base);
-	स_नकल(&sess_data->iov[0], &rsp_iov, माप(काष्ठा kvec));
+	cifs_small_buf_release(sess_data->iov[0].iov_base);
+	memcpy(&sess_data->iov[0], &rsp_iov, sizeof(struct kvec));
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * LANMAN and plaपूर्णांकext are less secure and off by शेष.
+ * LANMAN and plaintext are less secure and off by default.
  * So we make this explicitly be turned on in kconfig (in the
- * build) and turned on at runसमय (changed from the शेष)
- * in proc/fs/cअगरs or via mount parm.  Unक्रमtunately this is
- * needed क्रम old Win (e.g. Win95), some obscure NAS and OS/2
+ * build) and turned on at runtime (changed from the default)
+ * in proc/fs/cifs or via mount parm.  Unfortunately this is
+ * needed for old Win (e.g. Win95), some obscure NAS and OS/2
  */
-#अगर_घोषित CONFIG_CIFS_WEAK_PW_HASH
-अटल व्योम
-sess_auth_lanman(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा smb_hdr *smb_buf;
+#ifdef CONFIG_CIFS_WEAK_PW_HASH
+static void
+sess_auth_lanman(struct sess_data *sess_data)
+{
+	int rc = 0;
+	struct smb_hdr *smb_buf;
 	SESSION_SETUP_ANDX *pSMB;
-	अक्षर *bcc_ptr;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
-	अक्षर lnm_session_key[CIFS_AUTH_RESP_SIZE];
-	__u16 bytes_reमुख्यing;
+	char *bcc_ptr;
+	struct cifs_ses *ses = sess_data->ses;
+	char lnm_session_key[CIFS_AUTH_RESP_SIZE];
+	__u16 bytes_remaining;
 
 	/* lanman 2 style sessionsetup */
 	/* wct = 10 */
 	rc = sess_alloc_buffer(sess_data, 10);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 	bcc_ptr = sess_data->iov[2].iov_base;
-	(व्योम)cअगरs_ssetup_hdr(ses, pSMB);
+	(void)cifs_ssetup_hdr(ses, pSMB);
 
 	pSMB->req.hdr.Flags2 &= ~SMBFLG2_UNICODE;
 
-	अगर (ses->user_name != शून्य) अणु
+	if (ses->user_name != NULL) {
 		/* no capabilities flags in old lanman negotiation */
 		pSMB->old_req.PasswordLength = cpu_to_le16(CIFS_AUTH_RESP_SIZE);
 
-		/* Calculate hash with password and copy पूर्णांकo bcc_ptr.
-		 * Encryption Key (stored as in cryptkey) माला_लो used अगर the
+		/* Calculate hash with password and copy into bcc_ptr.
+		 * Encryption Key (stored as in cryptkey) gets used if the
 		 * security mode bit in Negotiate Protocol response states
 		 * to use challenge/response method (i.e. Password bit is 1).
 		 */
 		rc = calc_lanman_hash(ses->password, ses->server->cryptkey,
 				      ses->server->sec_mode & SECMODE_PW_ENCRYPT ?
 				      true : false, lnm_session_key);
-		अगर (rc)
-			जाओ out;
+		if (rc)
+			goto out;
 
-		स_नकल(bcc_ptr, (अक्षर *)lnm_session_key, CIFS_AUTH_RESP_SIZE);
+		memcpy(bcc_ptr, (char *)lnm_session_key, CIFS_AUTH_RESP_SIZE);
 		bcc_ptr += CIFS_AUTH_RESP_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		pSMB->old_req.PasswordLength = 0;
-	पूर्ण
+	}
 
 	/*
-	 * can not sign अगर LANMAN negotiated so no need
-	 * to calculate signing key? but what अगर server
-	 * changed to करो higher than lanman dialect and
+	 * can not sign if LANMAN negotiated so no need
+	 * to calculate signing key? but what if server
+	 * changed to do higher than lanman dialect and
 	 * we reconnected would we ever calc signing_key?
 	 */
 
-	cअगरs_dbg(FYI, "Negotiating LANMAN setting up strings\n");
-	/* Unicode not allowed क्रम LANMAN dialects */
+	cifs_dbg(FYI, "Negotiating LANMAN setting up strings\n");
+	/* Unicode not allowed for LANMAN dialects */
 	ascii_ssetup_strings(&bcc_ptr, ses, sess_data->nls_cp);
 
-	sess_data->iov[2].iov_len = (दीर्घ) bcc_ptr -
-			(दीर्घ) sess_data->iov[2].iov_base;
+	sess_data->iov[2].iov_len = (long) bcc_ptr -
+			(long) sess_data->iov[2].iov_base;
 
 	rc = sess_sendreceive(sess_data);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)sess_data->iov[0].iov_base;
+	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
 	/* lanman response has a word count of 3 */
-	अगर (smb_buf->WordCount != 3) अणु
+	if (smb_buf->WordCount != 3) {
 		rc = -EIO;
-		cअगरs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		जाओ out;
-	पूर्ण
+		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
+		goto out;
+	}
 
-	अगर (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
-		cअगरs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo काष्ठा? */
+	if (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
+		cifs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo struct? */
 
-	ses->Suid = smb_buf->Uid;   /* UID left in wire क्रमmat (le) */
-	cअगरs_dbg(FYI, "UID = %llu\n", ses->Suid);
+	ses->Suid = smb_buf->Uid;   /* UID left in wire format (le) */
+	cifs_dbg(FYI, "UID = %llu\n", ses->Suid);
 
-	bytes_reमुख्यing = get_bcc(smb_buf);
+	bytes_remaining = get_bcc(smb_buf);
 	bcc_ptr = pByteArea(smb_buf);
 
-	/* BB check अगर Unicode and decode strings */
-	अगर (bytes_reमुख्यing == 0) अणु
-		/* no string area to decode, करो nothing */
-	पूर्ण अन्यथा अगर (smb_buf->Flags2 & SMBFLG2_UNICODE) अणु
+	/* BB check if Unicode and decode strings */
+	if (bytes_remaining == 0) {
+		/* no string area to decode, do nothing */
+	} else if (smb_buf->Flags2 & SMBFLG2_UNICODE) {
 		/* unicode string area must be word-aligned */
-		अगर (((अचिन्हित दीर्घ) bcc_ptr - (अचिन्हित दीर्घ) smb_buf) % 2) अणु
+		if (((unsigned long) bcc_ptr - (unsigned long) smb_buf) % 2) {
 			++bcc_ptr;
-			--bytes_reमुख्यing;
-		पूर्ण
-		decode_unicode_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+			--bytes_remaining;
+		}
+		decode_unicode_ssetup(&bcc_ptr, bytes_remaining, ses,
 				      sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
-		decode_ascii_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+	} else {
+		decode_ascii_ssetup(&bcc_ptr, bytes_remaining, ses,
 				    sess_data->nls_cp);
-	पूर्ण
+	}
 
 	rc = sess_establish_session(sess_data);
 out:
 	sess_data->result = rc;
-	sess_data->func = शून्य;
-	sess_मुक्त_buffer(sess_data);
-पूर्ण
+	sess_data->func = NULL;
+	sess_free_buffer(sess_data);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम
-sess_auth_ntlm(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा smb_hdr *smb_buf;
+static void
+sess_auth_ntlm(struct sess_data *sess_data)
+{
+	int rc = 0;
+	struct smb_hdr *smb_buf;
 	SESSION_SETUP_ANDX *pSMB;
-	अक्षर *bcc_ptr;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	char *bcc_ptr;
+	struct cifs_ses *ses = sess_data->ses;
 	__u32 capabilities;
-	__u16 bytes_reमुख्यing;
+	__u16 bytes_remaining;
 
 	/* old style NTLM sessionsetup */
 	/* wct = 13 */
 	rc = sess_alloc_buffer(sess_data, 13);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 	bcc_ptr = sess_data->iov[2].iov_base;
-	capabilities = cअगरs_ssetup_hdr(ses, pSMB);
+	capabilities = cifs_ssetup_hdr(ses, pSMB);
 
 	pSMB->req_no_secext.Capabilities = cpu_to_le32(capabilities);
-	अगर (ses->user_name != शून्य) अणु
+	if (ses->user_name != NULL) {
 		pSMB->req_no_secext.CaseInsensitivePasswordLength =
 				cpu_to_le16(CIFS_AUTH_RESP_SIZE);
 		pSMB->req_no_secext.CaseSensitivePasswordLength =
@@ -1104,246 +1103,246 @@ sess_auth_ntlm(काष्ठा sess_data *sess_data)
 
 		/* calculate ntlm response and session key */
 		rc = setup_ntlm_response(ses, sess_data->nls_cp);
-		अगर (rc) अणु
-			cअगरs_dbg(VFS, "Error %d during NTLM authentication\n",
+		if (rc) {
+			cifs_dbg(VFS, "Error %d during NTLM authentication\n",
 					 rc);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/* copy ntlm response */
-		स_नकल(bcc_ptr, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
+		memcpy(bcc_ptr, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
 				CIFS_AUTH_RESP_SIZE);
 		bcc_ptr += CIFS_AUTH_RESP_SIZE;
-		स_नकल(bcc_ptr, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
+		memcpy(bcc_ptr, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
 				CIFS_AUTH_RESP_SIZE);
 		bcc_ptr += CIFS_AUTH_RESP_SIZE;
-	पूर्ण अन्यथा अणु
+	} else {
 		pSMB->req_no_secext.CaseInsensitivePasswordLength = 0;
 		pSMB->req_no_secext.CaseSensitivePasswordLength = 0;
-	पूर्ण
+	}
 
-	अगर (ses->capabilities & CAP_UNICODE) अणु
+	if (ses->capabilities & CAP_UNICODE) {
 		/* unicode strings must be word aligned */
-		अगर (sess_data->iov[0].iov_len % 2) अणु
+		if (sess_data->iov[0].iov_len % 2) {
 			*bcc_ptr = 0;
 			bcc_ptr++;
-		पूर्ण
+		}
 		unicode_ssetup_strings(&bcc_ptr, ses, sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
+	} else {
 		ascii_ssetup_strings(&bcc_ptr, ses, sess_data->nls_cp);
-	पूर्ण
+	}
 
 
-	sess_data->iov[2].iov_len = (दीर्घ) bcc_ptr -
-			(दीर्घ) sess_data->iov[2].iov_base;
+	sess_data->iov[2].iov_len = (long) bcc_ptr -
+			(long) sess_data->iov[2].iov_base;
 
 	rc = sess_sendreceive(sess_data);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)sess_data->iov[0].iov_base;
+	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
-	अगर (smb_buf->WordCount != 3) अणु
+	if (smb_buf->WordCount != 3) {
 		rc = -EIO;
-		cअगरs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		जाओ out;
-	पूर्ण
+		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
+		goto out;
+	}
 
-	अगर (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
-		cअगरs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo काष्ठा? */
+	if (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
+		cifs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo struct? */
 
-	ses->Suid = smb_buf->Uid;   /* UID left in wire क्रमmat (le) */
-	cअगरs_dbg(FYI, "UID = %llu\n", ses->Suid);
+	ses->Suid = smb_buf->Uid;   /* UID left in wire format (le) */
+	cifs_dbg(FYI, "UID = %llu\n", ses->Suid);
 
-	bytes_reमुख्यing = get_bcc(smb_buf);
+	bytes_remaining = get_bcc(smb_buf);
 	bcc_ptr = pByteArea(smb_buf);
 
-	/* BB check अगर Unicode and decode strings */
-	अगर (bytes_reमुख्यing == 0) अणु
-		/* no string area to decode, करो nothing */
-	पूर्ण अन्यथा अगर (smb_buf->Flags2 & SMBFLG2_UNICODE) अणु
+	/* BB check if Unicode and decode strings */
+	if (bytes_remaining == 0) {
+		/* no string area to decode, do nothing */
+	} else if (smb_buf->Flags2 & SMBFLG2_UNICODE) {
 		/* unicode string area must be word-aligned */
-		अगर (((अचिन्हित दीर्घ) bcc_ptr - (अचिन्हित दीर्घ) smb_buf) % 2) अणु
+		if (((unsigned long) bcc_ptr - (unsigned long) smb_buf) % 2) {
 			++bcc_ptr;
-			--bytes_reमुख्यing;
-		पूर्ण
-		decode_unicode_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+			--bytes_remaining;
+		}
+		decode_unicode_ssetup(&bcc_ptr, bytes_remaining, ses,
 				      sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
-		decode_ascii_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+	} else {
+		decode_ascii_ssetup(&bcc_ptr, bytes_remaining, ses,
 				    sess_data->nls_cp);
-	पूर्ण
+	}
 
 	rc = sess_establish_session(sess_data);
 out:
 	sess_data->result = rc;
-	sess_data->func = शून्य;
-	sess_मुक्त_buffer(sess_data);
-	kमुक्त(ses->auth_key.response);
-	ses->auth_key.response = शून्य;
-पूर्ण
+	sess_data->func = NULL;
+	sess_free_buffer(sess_data);
+	kfree(ses->auth_key.response);
+	ses->auth_key.response = NULL;
+}
 
-अटल व्योम
-sess_auth_ntlmv2(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा smb_hdr *smb_buf;
+static void
+sess_auth_ntlmv2(struct sess_data *sess_data)
+{
+	int rc = 0;
+	struct smb_hdr *smb_buf;
 	SESSION_SETUP_ANDX *pSMB;
-	अक्षर *bcc_ptr;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	char *bcc_ptr;
+	struct cifs_ses *ses = sess_data->ses;
 	__u32 capabilities;
-	__u16 bytes_reमुख्यing;
+	__u16 bytes_remaining;
 
 	/* old style NTLM sessionsetup */
 	/* wct = 13 */
 	rc = sess_alloc_buffer(sess_data, 13);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 	bcc_ptr = sess_data->iov[2].iov_base;
-	capabilities = cअगरs_ssetup_hdr(ses, pSMB);
+	capabilities = cifs_ssetup_hdr(ses, pSMB);
 
 	pSMB->req_no_secext.Capabilities = cpu_to_le32(capabilities);
 
-	/* LM2 password would be here अगर we supported it */
+	/* LM2 password would be here if we supported it */
 	pSMB->req_no_secext.CaseInsensitivePasswordLength = 0;
 
-	अगर (ses->user_name != शून्य) अणु
+	if (ses->user_name != NULL) {
 		/* calculate nlmv2 response and session key */
 		rc = setup_ntlmv2_rsp(ses, sess_data->nls_cp);
-		अगर (rc) अणु
-			cअगरs_dbg(VFS, "Error %d during NTLMv2 authentication\n", rc);
-			जाओ out;
-		पूर्ण
+		if (rc) {
+			cifs_dbg(VFS, "Error %d during NTLMv2 authentication\n", rc);
+			goto out;
+		}
 
-		स_नकल(bcc_ptr, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
+		memcpy(bcc_ptr, ses->auth_key.response + CIFS_SESS_KEY_SIZE,
 				ses->auth_key.len - CIFS_SESS_KEY_SIZE);
 		bcc_ptr += ses->auth_key.len - CIFS_SESS_KEY_SIZE;
 
-		/* set हाल sensitive password length after tilen may get
-		 * asचिन्हित, tilen is 0 otherwise.
+		/* set case sensitive password length after tilen may get
+		 * assigned, tilen is 0 otherwise.
 		 */
 		pSMB->req_no_secext.CaseSensitivePasswordLength =
 			cpu_to_le16(ses->auth_key.len - CIFS_SESS_KEY_SIZE);
-	पूर्ण अन्यथा अणु
+	} else {
 		pSMB->req_no_secext.CaseSensitivePasswordLength = 0;
-	पूर्ण
+	}
 
-	अगर (ses->capabilities & CAP_UNICODE) अणु
-		अगर (sess_data->iov[0].iov_len % 2) अणु
+	if (ses->capabilities & CAP_UNICODE) {
+		if (sess_data->iov[0].iov_len % 2) {
 			*bcc_ptr = 0;
 			bcc_ptr++;
-		पूर्ण
+		}
 		unicode_ssetup_strings(&bcc_ptr, ses, sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
+	} else {
 		ascii_ssetup_strings(&bcc_ptr, ses, sess_data->nls_cp);
-	पूर्ण
+	}
 
 
-	sess_data->iov[2].iov_len = (दीर्घ) bcc_ptr -
-			(दीर्घ) sess_data->iov[2].iov_base;
+	sess_data->iov[2].iov_len = (long) bcc_ptr -
+			(long) sess_data->iov[2].iov_base;
 
 	rc = sess_sendreceive(sess_data);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)sess_data->iov[0].iov_base;
+	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
-	अगर (smb_buf->WordCount != 3) अणु
+	if (smb_buf->WordCount != 3) {
 		rc = -EIO;
-		cअगरs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		जाओ out;
-	पूर्ण
+		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
+		goto out;
+	}
 
-	अगर (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
-		cअगरs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo काष्ठा? */
+	if (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
+		cifs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo struct? */
 
-	ses->Suid = smb_buf->Uid;   /* UID left in wire क्रमmat (le) */
-	cअगरs_dbg(FYI, "UID = %llu\n", ses->Suid);
+	ses->Suid = smb_buf->Uid;   /* UID left in wire format (le) */
+	cifs_dbg(FYI, "UID = %llu\n", ses->Suid);
 
-	bytes_reमुख्यing = get_bcc(smb_buf);
+	bytes_remaining = get_bcc(smb_buf);
 	bcc_ptr = pByteArea(smb_buf);
 
-	/* BB check अगर Unicode and decode strings */
-	अगर (bytes_reमुख्यing == 0) अणु
-		/* no string area to decode, करो nothing */
-	पूर्ण अन्यथा अगर (smb_buf->Flags2 & SMBFLG2_UNICODE) अणु
+	/* BB check if Unicode and decode strings */
+	if (bytes_remaining == 0) {
+		/* no string area to decode, do nothing */
+	} else if (smb_buf->Flags2 & SMBFLG2_UNICODE) {
 		/* unicode string area must be word-aligned */
-		अगर (((अचिन्हित दीर्घ) bcc_ptr - (अचिन्हित दीर्घ) smb_buf) % 2) अणु
+		if (((unsigned long) bcc_ptr - (unsigned long) smb_buf) % 2) {
 			++bcc_ptr;
-			--bytes_reमुख्यing;
-		पूर्ण
-		decode_unicode_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+			--bytes_remaining;
+		}
+		decode_unicode_ssetup(&bcc_ptr, bytes_remaining, ses,
 				      sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
-		decode_ascii_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+	} else {
+		decode_ascii_ssetup(&bcc_ptr, bytes_remaining, ses,
 				    sess_data->nls_cp);
-	पूर्ण
+	}
 
 	rc = sess_establish_session(sess_data);
 out:
 	sess_data->result = rc;
-	sess_data->func = शून्य;
-	sess_मुक्त_buffer(sess_data);
-	kमुक्त(ses->auth_key.response);
-	ses->auth_key.response = शून्य;
-पूर्ण
+	sess_data->func = NULL;
+	sess_free_buffer(sess_data);
+	kfree(ses->auth_key.response);
+	ses->auth_key.response = NULL;
+}
 
-#अगर_घोषित CONFIG_CIFS_UPCALL
-अटल व्योम
-sess_auth_kerberos(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा smb_hdr *smb_buf;
+#ifdef CONFIG_CIFS_UPCALL
+static void
+sess_auth_kerberos(struct sess_data *sess_data)
+{
+	int rc = 0;
+	struct smb_hdr *smb_buf;
 	SESSION_SETUP_ANDX *pSMB;
-	अक्षर *bcc_ptr;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	char *bcc_ptr;
+	struct cifs_ses *ses = sess_data->ses;
 	__u32 capabilities;
-	__u16 bytes_reमुख्यing;
-	काष्ठा key *spnego_key = शून्य;
-	काष्ठा cअगरs_spnego_msg *msg;
+	__u16 bytes_remaining;
+	struct key *spnego_key = NULL;
+	struct cifs_spnego_msg *msg;
 	u16 blob_len;
 
 	/* extended security */
 	/* wct = 12 */
 	rc = sess_alloc_buffer(sess_data, 12);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 	bcc_ptr = sess_data->iov[2].iov_base;
-	capabilities = cअगरs_ssetup_hdr(ses, pSMB);
+	capabilities = cifs_ssetup_hdr(ses, pSMB);
 
-	spnego_key = cअगरs_get_spnego_key(ses);
-	अगर (IS_ERR(spnego_key)) अणु
+	spnego_key = cifs_get_spnego_key(ses);
+	if (IS_ERR(spnego_key)) {
 		rc = PTR_ERR(spnego_key);
-		spnego_key = शून्य;
-		जाओ out;
-	पूर्ण
+		spnego_key = NULL;
+		goto out;
+	}
 
 	msg = spnego_key->payload.data[0];
 	/*
-	 * check version field to make sure that cअगरs.upcall is
-	 * sending us a response in an expected क्रमm
+	 * check version field to make sure that cifs.upcall is
+	 * sending us a response in an expected form
 	 */
-	अगर (msg->version != CIFS_SPNEGO_UPCALL_VERSION) अणु
-		cअगरs_dbg(VFS, "incorrect version of cifs.upcall (expected %d but got %d)\n",
+	if (msg->version != CIFS_SPNEGO_UPCALL_VERSION) {
+		cifs_dbg(VFS, "incorrect version of cifs.upcall (expected %d but got %d)\n",
 			 CIFS_SPNEGO_UPCALL_VERSION, msg->version);
 		rc = -EKEYREJECTED;
-		जाओ out_put_spnego_key;
-	पूर्ण
+		goto out_put_spnego_key;
+	}
 
 	ses->auth_key.response = kmemdup(msg->data, msg->sesskey_len,
 					 GFP_KERNEL);
-	अगर (!ses->auth_key.response) अणु
-		cअगरs_dbg(VFS, "Kerberos can't allocate (%u bytes) memory\n",
+	if (!ses->auth_key.response) {
+		cifs_dbg(VFS, "Kerberos can't allocate (%u bytes) memory\n",
 			 msg->sesskey_len);
 		rc = -ENOMEM;
-		जाओ out_put_spnego_key;
-	पूर्ण
+		goto out_put_spnego_key;
+	}
 	ses->auth_key.len = msg->sesskey_len;
 
 	pSMB->req.hdr.Flags2 |= SMBFLG2_EXT_SEC;
@@ -1353,70 +1352,70 @@ sess_auth_kerberos(काष्ठा sess_data *sess_data)
 	sess_data->iov[1].iov_len = msg->secblob_len;
 	pSMB->req.SecurityBlobLength = cpu_to_le16(sess_data->iov[1].iov_len);
 
-	अगर (ses->capabilities & CAP_UNICODE) अणु
+	if (ses->capabilities & CAP_UNICODE) {
 		/* unicode strings must be word aligned */
-		अगर ((sess_data->iov[0].iov_len
-			+ sess_data->iov[1].iov_len) % 2) अणु
+		if ((sess_data->iov[0].iov_len
+			+ sess_data->iov[1].iov_len) % 2) {
 			*bcc_ptr = 0;
 			bcc_ptr++;
-		पूर्ण
+		}
 		unicode_oslm_strings(&bcc_ptr, sess_data->nls_cp);
-		unicode_करोमुख्य_string(&bcc_ptr, ses, sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
+		unicode_domain_string(&bcc_ptr, ses, sess_data->nls_cp);
+	} else {
 		/* BB: is this right? */
 		ascii_ssetup_strings(&bcc_ptr, ses, sess_data->nls_cp);
-	पूर्ण
+	}
 
-	sess_data->iov[2].iov_len = (दीर्घ) bcc_ptr -
-			(दीर्घ) sess_data->iov[2].iov_base;
+	sess_data->iov[2].iov_len = (long) bcc_ptr -
+			(long) sess_data->iov[2].iov_base;
 
 	rc = sess_sendreceive(sess_data);
-	अगर (rc)
-		जाओ out_put_spnego_key;
+	if (rc)
+		goto out_put_spnego_key;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)sess_data->iov[0].iov_base;
+	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
-	अगर (smb_buf->WordCount != 4) अणु
+	if (smb_buf->WordCount != 4) {
 		rc = -EIO;
-		cअगरs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		जाओ out_put_spnego_key;
-	पूर्ण
+		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
+		goto out_put_spnego_key;
+	}
 
-	अगर (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
-		cअगरs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo काष्ठा? */
+	if (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
+		cifs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo struct? */
 
-	ses->Suid = smb_buf->Uid;   /* UID left in wire क्रमmat (le) */
-	cअगरs_dbg(FYI, "UID = %llu\n", ses->Suid);
+	ses->Suid = smb_buf->Uid;   /* UID left in wire format (le) */
+	cifs_dbg(FYI, "UID = %llu\n", ses->Suid);
 
-	bytes_reमुख्यing = get_bcc(smb_buf);
+	bytes_remaining = get_bcc(smb_buf);
 	bcc_ptr = pByteArea(smb_buf);
 
 	blob_len = le16_to_cpu(pSMB->resp.SecurityBlobLength);
-	अगर (blob_len > bytes_reमुख्यing) अणु
-		cअगरs_dbg(VFS, "bad security blob length %d\n",
+	if (blob_len > bytes_remaining) {
+		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
 		rc = -EINVAL;
-		जाओ out_put_spnego_key;
-	पूर्ण
+		goto out_put_spnego_key;
+	}
 	bcc_ptr += blob_len;
-	bytes_reमुख्यing -= blob_len;
+	bytes_remaining -= blob_len;
 
-	/* BB check अगर Unicode and decode strings */
-	अगर (bytes_reमुख्यing == 0) अणु
-		/* no string area to decode, करो nothing */
-	पूर्ण अन्यथा अगर (smb_buf->Flags2 & SMBFLG2_UNICODE) अणु
+	/* BB check if Unicode and decode strings */
+	if (bytes_remaining == 0) {
+		/* no string area to decode, do nothing */
+	} else if (smb_buf->Flags2 & SMBFLG2_UNICODE) {
 		/* unicode string area must be word-aligned */
-		अगर (((अचिन्हित दीर्घ) bcc_ptr - (अचिन्हित दीर्घ) smb_buf) % 2) अणु
+		if (((unsigned long) bcc_ptr - (unsigned long) smb_buf) % 2) {
 			++bcc_ptr;
-			--bytes_reमुख्यing;
-		पूर्ण
-		decode_unicode_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+			--bytes_remaining;
+		}
+		decode_unicode_ssetup(&bcc_ptr, bytes_remaining, ses,
 				      sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
-		decode_ascii_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+	} else {
+		decode_ascii_ssetup(&bcc_ptr, bytes_remaining, ses,
 				    sess_data->nls_cp);
-	पूर्ण
+	}
 
 	rc = sess_establish_session(sess_data);
 out_put_spnego_key:
@@ -1424,33 +1423,33 @@ out_put_spnego_key:
 	key_put(spnego_key);
 out:
 	sess_data->result = rc;
-	sess_data->func = शून्य;
-	sess_मुक्त_buffer(sess_data);
-	kमुक्त(ses->auth_key.response);
-	ses->auth_key.response = शून्य;
-पूर्ण
+	sess_data->func = NULL;
+	sess_free_buffer(sess_data);
+	kfree(ses->auth_key.response);
+	ses->auth_key.response = NULL;
+}
 
-#पूर्ण_अगर /* ! CONFIG_CIFS_UPCALL */
+#endif /* ! CONFIG_CIFS_UPCALL */
 
 /*
- * The required kvec buffers have to be allocated beक्रमe calling this
+ * The required kvec buffers have to be allocated before calling this
  * function.
  */
-अटल पूर्णांक
-_sess_auth_rawntlmssp_assemble_req(काष्ठा sess_data *sess_data)
-अणु
+static int
+_sess_auth_rawntlmssp_assemble_req(struct sess_data *sess_data)
+{
 	SESSION_SETUP_ANDX *pSMB;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	struct cifs_ses *ses = sess_data->ses;
 	__u32 capabilities;
-	अक्षर *bcc_ptr;
+	char *bcc_ptr;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 
-	capabilities = cअगरs_ssetup_hdr(ses, pSMB);
-	अगर ((pSMB->req.hdr.Flags2 & SMBFLG2_UNICODE) == 0) अणु
-		cअगरs_dbg(VFS, "NTLMSSP requires Unicode support\n");
-		वापस -ENOSYS;
-	पूर्ण
+	capabilities = cifs_ssetup_hdr(ses, pSMB);
+	if ((pSMB->req.hdr.Flags2 & SMBFLG2_UNICODE) == 0) {
+		cifs_dbg(VFS, "NTLMSSP requires Unicode support\n");
+		return -ENOSYS;
+	}
 
 	pSMB->req.hdr.Flags2 |= SMBFLG2_EXT_SEC;
 	capabilities |= CAP_EXTENDED_SECURITY;
@@ -1458,143 +1457,143 @@ _sess_auth_rawntlmssp_assemble_req(काष्ठा sess_data *sess_data)
 
 	bcc_ptr = sess_data->iov[2].iov_base;
 	/* unicode strings must be word aligned */
-	अगर ((sess_data->iov[0].iov_len + sess_data->iov[1].iov_len) % 2) अणु
+	if ((sess_data->iov[0].iov_len + sess_data->iov[1].iov_len) % 2) {
 		*bcc_ptr = 0;
 		bcc_ptr++;
-	पूर्ण
+	}
 	unicode_oslm_strings(&bcc_ptr, sess_data->nls_cp);
 
-	sess_data->iov[2].iov_len = (दीर्घ) bcc_ptr -
-					(दीर्घ) sess_data->iov[2].iov_base;
+	sess_data->iov[2].iov_len = (long) bcc_ptr -
+					(long) sess_data->iov[2].iov_base;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-sess_auth_rawntlmssp_authenticate(काष्ठा sess_data *sess_data);
+static void
+sess_auth_rawntlmssp_authenticate(struct sess_data *sess_data);
 
-अटल व्योम
-sess_auth_rawntlmssp_negotiate(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc;
-	काष्ठा smb_hdr *smb_buf;
+static void
+sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
+{
+	int rc;
+	struct smb_hdr *smb_buf;
 	SESSION_SETUP_ANDX *pSMB;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
-	__u16 bytes_reमुख्यing;
-	अक्षर *bcc_ptr;
+	struct cifs_ses *ses = sess_data->ses;
+	__u16 bytes_remaining;
+	char *bcc_ptr;
 	u16 blob_len;
 
-	cअगरs_dbg(FYI, "rawntlmssp session setup negotiate phase\n");
+	cifs_dbg(FYI, "rawntlmssp session setup negotiate phase\n");
 
 	/*
-	 * अगर memory allocation is successful, caller of this function
-	 * मुक्तs it.
+	 * if memory allocation is successful, caller of this function
+	 * frees it.
 	 */
-	ses->ntlmssp = kदो_स्मृति(माप(काष्ठा ntlmssp_auth), GFP_KERNEL);
-	अगर (!ses->ntlmssp) अणु
+	ses->ntlmssp = kmalloc(sizeof(struct ntlmssp_auth), GFP_KERNEL);
+	if (!ses->ntlmssp) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ses->ntlmssp->sesskey_per_smbsess = false;
 
 	/* wct = 12 */
 	rc = sess_alloc_buffer(sess_data, 12);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 
-	/* Build security blob beक्रमe we assemble the request */
+	/* Build security blob before we assemble the request */
 	build_ntlmssp_negotiate_blob(pSMB->req.SecurityBlob, ses);
-	sess_data->iov[1].iov_len = माप(NEGOTIATE_MESSAGE);
+	sess_data->iov[1].iov_len = sizeof(NEGOTIATE_MESSAGE);
 	sess_data->iov[1].iov_base = pSMB->req.SecurityBlob;
-	pSMB->req.SecurityBlobLength = cpu_to_le16(माप(NEGOTIATE_MESSAGE));
+	pSMB->req.SecurityBlobLength = cpu_to_le16(sizeof(NEGOTIATE_MESSAGE));
 
 	rc = _sess_auth_rawntlmssp_assemble_req(sess_data);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	rc = sess_sendreceive(sess_data);
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)sess_data->iov[0].iov_base;
+	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
 	/* If true, rc here is expected and not an error */
-	अगर (sess_data->buf0_type != CIFS_NO_BUFFER &&
-	    smb_buf->Status.CअगरsError ==
+	if (sess_data->buf0_type != CIFS_NO_BUFFER &&
+	    smb_buf->Status.CifsError ==
 			cpu_to_le32(NT_STATUS_MORE_PROCESSING_REQUIRED))
 		rc = 0;
 
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	cअगरs_dbg(FYI, "rawntlmssp session setup challenge phase\n");
+	cifs_dbg(FYI, "rawntlmssp session setup challenge phase\n");
 
-	अगर (smb_buf->WordCount != 4) अणु
+	if (smb_buf->WordCount != 4) {
 		rc = -EIO;
-		cअगरs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		जाओ out;
-	पूर्ण
+		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
+		goto out;
+	}
 
-	ses->Suid = smb_buf->Uid;   /* UID left in wire क्रमmat (le) */
-	cअगरs_dbg(FYI, "UID = %llu\n", ses->Suid);
+	ses->Suid = smb_buf->Uid;   /* UID left in wire format (le) */
+	cifs_dbg(FYI, "UID = %llu\n", ses->Suid);
 
-	bytes_reमुख्यing = get_bcc(smb_buf);
+	bytes_remaining = get_bcc(smb_buf);
 	bcc_ptr = pByteArea(smb_buf);
 
 	blob_len = le16_to_cpu(pSMB->resp.SecurityBlobLength);
-	अगर (blob_len > bytes_reमुख्यing) अणु
-		cअगरs_dbg(VFS, "bad security blob length %d\n",
+	if (blob_len > bytes_remaining) {
+		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = decode_ntlmssp_challenge(bcc_ptr, blob_len, ses);
 out:
-	sess_मुक्त_buffer(sess_data);
+	sess_free_buffer(sess_data);
 
-	अगर (!rc) अणु
+	if (!rc) {
 		sess_data->func = sess_auth_rawntlmssp_authenticate;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Else error. Cleanup */
-	kमुक्त(ses->auth_key.response);
-	ses->auth_key.response = शून्य;
-	kमुक्त(ses->ntlmssp);
-	ses->ntlmssp = शून्य;
+	kfree(ses->auth_key.response);
+	ses->auth_key.response = NULL;
+	kfree(ses->ntlmssp);
+	ses->ntlmssp = NULL;
 
-	sess_data->func = शून्य;
+	sess_data->func = NULL;
 	sess_data->result = rc;
-पूर्ण
+}
 
-अटल व्योम
-sess_auth_rawntlmssp_authenticate(काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक rc;
-	काष्ठा smb_hdr *smb_buf;
+static void
+sess_auth_rawntlmssp_authenticate(struct sess_data *sess_data)
+{
+	int rc;
+	struct smb_hdr *smb_buf;
 	SESSION_SETUP_ANDX *pSMB;
-	काष्ठा cअगरs_ses *ses = sess_data->ses;
-	__u16 bytes_reमुख्यing;
-	अक्षर *bcc_ptr;
-	अचिन्हित अक्षर *ntlmsspblob = शून्य;
+	struct cifs_ses *ses = sess_data->ses;
+	__u16 bytes_remaining;
+	char *bcc_ptr;
+	unsigned char *ntlmsspblob = NULL;
 	u16 blob_len;
 
-	cअगरs_dbg(FYI, "rawntlmssp session setup authenticate phase\n");
+	cifs_dbg(FYI, "rawntlmssp session setup authenticate phase\n");
 
 	/* wct = 12 */
 	rc = sess_alloc_buffer(sess_data, 12);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
-	/* Build security blob beक्रमe we assemble the request */
+	/* Build security blob before we assemble the request */
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)pSMB;
+	smb_buf = (struct smb_hdr *)pSMB;
 	rc = build_ntlmssp_auth_blob(&ntlmsspblob,
 					&blob_len, ses, sess_data->nls_cp);
-	अगर (rc)
-		जाओ out_मुक्त_ntlmsspblob;
+	if (rc)
+		goto out_free_ntlmsspblob;
 	sess_data->iov[1].iov_len = blob_len;
 	sess_data->iov[1].iov_base = ntlmsspblob;
 	pSMB->req.SecurityBlobLength = cpu_to_le16(blob_len);
@@ -1606,156 +1605,156 @@ sess_auth_rawntlmssp_authenticate(काष्ठा sess_data *sess_data)
 	smb_buf->Uid = ses->Suid;
 
 	rc = _sess_auth_rawntlmssp_assemble_req(sess_data);
-	अगर (rc)
-		जाओ out_मुक्त_ntlmsspblob;
+	if (rc)
+		goto out_free_ntlmsspblob;
 
 	rc = sess_sendreceive(sess_data);
-	अगर (rc)
-		जाओ out_मुक्त_ntlmsspblob;
+	if (rc)
+		goto out_free_ntlmsspblob;
 
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
-	smb_buf = (काष्ठा smb_hdr *)sess_data->iov[0].iov_base;
-	अगर (smb_buf->WordCount != 4) अणु
+	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
+	if (smb_buf->WordCount != 4) {
 		rc = -EIO;
-		cअगरs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
-		जाओ out_मुक्त_ntlmsspblob;
-	पूर्ण
+		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
+		goto out_free_ntlmsspblob;
+	}
 
-	अगर (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
-		cअगरs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo काष्ठा? */
+	if (le16_to_cpu(pSMB->resp.Action) & GUEST_LOGIN)
+		cifs_dbg(FYI, "Guest login\n"); /* BB mark SesInfo struct? */
 
-	अगर (ses->Suid != smb_buf->Uid) अणु
+	if (ses->Suid != smb_buf->Uid) {
 		ses->Suid = smb_buf->Uid;
-		cअगरs_dbg(FYI, "UID changed! new UID = %llu\n", ses->Suid);
-	पूर्ण
+		cifs_dbg(FYI, "UID changed! new UID = %llu\n", ses->Suid);
+	}
 
-	bytes_reमुख्यing = get_bcc(smb_buf);
+	bytes_remaining = get_bcc(smb_buf);
 	bcc_ptr = pByteArea(smb_buf);
 	blob_len = le16_to_cpu(pSMB->resp.SecurityBlobLength);
-	अगर (blob_len > bytes_reमुख्यing) अणु
-		cअगरs_dbg(VFS, "bad security blob length %d\n",
+	if (blob_len > bytes_remaining) {
+		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
 		rc = -EINVAL;
-		जाओ out_मुक्त_ntlmsspblob;
-	पूर्ण
+		goto out_free_ntlmsspblob;
+	}
 	bcc_ptr += blob_len;
-	bytes_reमुख्यing -= blob_len;
+	bytes_remaining -= blob_len;
 
 
-	/* BB check अगर Unicode and decode strings */
-	अगर (bytes_reमुख्यing == 0) अणु
-		/* no string area to decode, करो nothing */
-	पूर्ण अन्यथा अगर (smb_buf->Flags2 & SMBFLG2_UNICODE) अणु
+	/* BB check if Unicode and decode strings */
+	if (bytes_remaining == 0) {
+		/* no string area to decode, do nothing */
+	} else if (smb_buf->Flags2 & SMBFLG2_UNICODE) {
 		/* unicode string area must be word-aligned */
-		अगर (((अचिन्हित दीर्घ) bcc_ptr - (अचिन्हित दीर्घ) smb_buf) % 2) अणु
+		if (((unsigned long) bcc_ptr - (unsigned long) smb_buf) % 2) {
 			++bcc_ptr;
-			--bytes_reमुख्यing;
-		पूर्ण
-		decode_unicode_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+			--bytes_remaining;
+		}
+		decode_unicode_ssetup(&bcc_ptr, bytes_remaining, ses,
 				      sess_data->nls_cp);
-	पूर्ण अन्यथा अणु
-		decode_ascii_ssetup(&bcc_ptr, bytes_reमुख्यing, ses,
+	} else {
+		decode_ascii_ssetup(&bcc_ptr, bytes_remaining, ses,
 				    sess_data->nls_cp);
-	पूर्ण
+	}
 
-out_मुक्त_ntlmsspblob:
-	kमुक्त(ntlmsspblob);
+out_free_ntlmsspblob:
+	kfree(ntlmsspblob);
 out:
-	sess_मुक्त_buffer(sess_data);
+	sess_free_buffer(sess_data);
 
-	 अगर (!rc)
+	 if (!rc)
 		rc = sess_establish_session(sess_data);
 
 	/* Cleanup */
-	kमुक्त(ses->auth_key.response);
-	ses->auth_key.response = शून्य;
-	kमुक्त(ses->ntlmssp);
-	ses->ntlmssp = शून्य;
+	kfree(ses->auth_key.response);
+	ses->auth_key.response = NULL;
+	kfree(ses->ntlmssp);
+	ses->ntlmssp = NULL;
 
-	sess_data->func = शून्य;
+	sess_data->func = NULL;
 	sess_data->result = rc;
-पूर्ण
+}
 
-अटल पूर्णांक select_sec(काष्ठा cअगरs_ses *ses, काष्ठा sess_data *sess_data)
-अणु
-	पूर्णांक type;
+static int select_sec(struct cifs_ses *ses, struct sess_data *sess_data)
+{
+	int type;
 
-	type = cअगरs_select_sectype(ses->server, ses->sectype);
-	cअगरs_dbg(FYI, "sess setup type %d\n", type);
-	अगर (type == Unspecअगरied) अणु
-		cअगरs_dbg(VFS, "Unable to select appropriate authentication method!\n");
-		वापस -EINVAL;
-	पूर्ण
+	type = cifs_select_sectype(ses->server, ses->sectype);
+	cifs_dbg(FYI, "sess setup type %d\n", type);
+	if (type == Unspecified) {
+		cifs_dbg(VFS, "Unable to select appropriate authentication method!\n");
+		return -EINVAL;
+	}
 
-	चयन (type) अणु
-	हाल LANMAN:
-		/* LANMAN and plaपूर्णांकext are less secure and off by शेष.
+	switch (type) {
+	case LANMAN:
+		/* LANMAN and plaintext are less secure and off by default.
 		 * So we make this explicitly be turned on in kconfig (in the
-		 * build) and turned on at runसमय (changed from the शेष)
-		 * in proc/fs/cअगरs or via mount parm.  Unक्रमtunately this is
-		 * needed क्रम old Win (e.g. Win95), some obscure NAS and OS/2 */
-#अगर_घोषित CONFIG_CIFS_WEAK_PW_HASH
+		 * build) and turned on at runtime (changed from the default)
+		 * in proc/fs/cifs or via mount parm.  Unfortunately this is
+		 * needed for old Win (e.g. Win95), some obscure NAS and OS/2 */
+#ifdef CONFIG_CIFS_WEAK_PW_HASH
 		sess_data->func = sess_auth_lanman;
-		अवरोध;
-#अन्यथा
-		वापस -EOPNOTSUPP;
-#पूर्ण_अगर
-	हाल NTLM:
+		break;
+#else
+		return -EOPNOTSUPP;
+#endif
+	case NTLM:
 		sess_data->func = sess_auth_ntlm;
-		अवरोध;
-	हाल NTLMv2:
+		break;
+	case NTLMv2:
 		sess_data->func = sess_auth_ntlmv2;
-		अवरोध;
-	हाल Kerberos:
-#अगर_घोषित CONFIG_CIFS_UPCALL
+		break;
+	case Kerberos:
+#ifdef CONFIG_CIFS_UPCALL
 		sess_data->func = sess_auth_kerberos;
-		अवरोध;
-#अन्यथा
-		cअगरs_dbg(VFS, "Kerberos negotiated but upcall support disabled!\n");
-		वापस -ENOSYS;
-#पूर्ण_अगर /* CONFIG_CIFS_UPCALL */
-	हाल RawNTLMSSP:
+		break;
+#else
+		cifs_dbg(VFS, "Kerberos negotiated but upcall support disabled!\n");
+		return -ENOSYS;
+#endif /* CONFIG_CIFS_UPCALL */
+	case RawNTLMSSP:
 		sess_data->func = sess_auth_rawntlmssp_negotiate;
-		अवरोध;
-	शेष:
-		cअगरs_dbg(VFS, "secType %d not supported!\n", type);
-		वापस -ENOSYS;
-	पूर्ण
+		break;
+	default:
+		cifs_dbg(VFS, "secType %d not supported!\n", type);
+		return -ENOSYS;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक CIFS_SessSetup(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses,
-		    स्थिर काष्ठा nls_table *nls_cp)
-अणु
-	पूर्णांक rc = 0;
-	काष्ठा sess_data *sess_data;
+int CIFS_SessSetup(const unsigned int xid, struct cifs_ses *ses,
+		    const struct nls_table *nls_cp)
+{
+	int rc = 0;
+	struct sess_data *sess_data;
 
-	अगर (ses == शून्य) अणु
+	if (ses == NULL) {
 		WARN(1, "%s: ses == NULL!", __func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sess_data = kzalloc(माप(काष्ठा sess_data), GFP_KERNEL);
-	अगर (!sess_data)
-		वापस -ENOMEM;
+	sess_data = kzalloc(sizeof(struct sess_data), GFP_KERNEL);
+	if (!sess_data)
+		return -ENOMEM;
 
 	rc = select_sec(ses, sess_data);
-	अगर (rc)
-		जाओ out;
+	if (rc)
+		goto out;
 
 	sess_data->xid = xid;
 	sess_data->ses = ses;
 	sess_data->buf0_type = CIFS_NO_BUFFER;
-	sess_data->nls_cp = (काष्ठा nls_table *) nls_cp;
+	sess_data->nls_cp = (struct nls_table *) nls_cp;
 
-	जबतक (sess_data->func)
+	while (sess_data->func)
 		sess_data->func(sess_data);
 
-	/* Store result beक्रमe we मुक्त sess_data */
+	/* Store result before we free sess_data */
 	rc = sess_data->result;
 
 out:
-	kमुक्त(sess_data);
-	वापस rc;
-पूर्ण
+	kfree(sess_data);
+	return rc;
+}

@@ -1,245 +1,244 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Architecture-specअगरic setup.
+ * Architecture-specific setup.
  *
  * Copyright (C) 1998-2001, 2003-2004 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *	Stephane Eranian <eranian@hpl.hp.com>
  * Copyright (C) 2000, 2004 Intel Corp
- * 	Rohit Seth <rohit.seth@पूर्णांकel.com>
- * 	Suresh Siddha <suresh.b.siddha@पूर्णांकel.com>
- * 	Gorकरोn Jin <gorकरोn.jin@पूर्णांकel.com>
+ * 	Rohit Seth <rohit.seth@intel.com>
+ * 	Suresh Siddha <suresh.b.siddha@intel.com>
+ * 	Gordon Jin <gordon.jin@intel.com>
  * Copyright (C) 1999 VA Linux Systems
  * Copyright (C) 1999 Walt Drummond <drummond@valinux.com>
  *
  * 12/26/04 S.Siddha, G.Jin, R.Seth
- *			Add multi-thपढ़ोing and multi-core detection
+ *			Add multi-threading and multi-core detection
  * 11/12/01 D.Mosberger Convert get_cpuinfo() to seq_file based show_cpuinfo().
- * 04/04/00 D.Mosberger नामd cpu_initialized to cpu_online_map
+ * 04/04/00 D.Mosberger renamed cpu_initialized to cpu_online_map
  * 03/31/00 R.Seth	cpu_initialized and current->processor fixes
  * 02/04/00 D.Mosberger	some more get_cpuinfo fixes...
- * 02/01/00 R.Seth	fixed get_cpuinfo क्रम SMP
- * 01/07/99 S.Eranian	added the support क्रम command line argument
+ * 02/01/00 R.Seth	fixed get_cpuinfo for SMP
+ * 01/07/99 S.Eranian	added the support for command line argument
  * 06/24/99 W.Drummond	added boot_cpu_data.
- * 05/28/05 Z. Menyhart	Dynamic stride size क्रम "flush_icache_range()"
+ * 05/28/05 Z. Menyhart	Dynamic stride size for "flush_icache_range()"
  */
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/pgtable.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/pgtable.h>
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/console.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/sched/task_stack.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/thपढ़ोs.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/root_dev.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/efi.h>
-#समावेश <linux/initrd.h>
-#समावेश <linux/pm.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/kexec.h>
-#समावेश <linux/crash_dump.h>
+#include <linux/acpi.h>
+#include <linux/console.h>
+#include <linux/delay.h>
+#include <linux/cpu.h>
+#include <linux/kdev_t.h>
+#include <linux/kernel.h>
+#include <linux/memblock.h>
+#include <linux/reboot.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/clock.h>
+#include <linux/sched/task_stack.h>
+#include <linux/seq_file.h>
+#include <linux/string.h>
+#include <linux/threads.h>
+#include <linux/screen_info.h>
+#include <linux/dmi.h>
+#include <linux/root_dev.h>
+#include <linux/serial.h>
+#include <linux/serial_core.h>
+#include <linux/efi.h>
+#include <linux/initrd.h>
+#include <linux/pm.h>
+#include <linux/cpufreq.h>
+#include <linux/kexec.h>
+#include <linux/crash_dump.h>
 
-#समावेश <यंत्र/mca.h>
-#समावेश <यंत्र/meminit.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/patch.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/sal.h>
-#समावेश <यंत्र/sections.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/tlbflush.h>
-#समावेश <यंत्र/unistd.h>
-#समावेश <यंत्र/uv/uv.h>
-#समावेश <यंत्र/xtp.h>
+#include <asm/mca.h>
+#include <asm/meminit.h>
+#include <asm/page.h>
+#include <asm/patch.h>
+#include <asm/processor.h>
+#include <asm/sal.h>
+#include <asm/sections.h>
+#include <asm/setup.h>
+#include <asm/smp.h>
+#include <asm/tlbflush.h>
+#include <asm/unistd.h>
+#include <asm/uv/uv.h>
+#include <asm/xtp.h>
 
-#अगर defined(CONFIG_SMP) && (IA64_CPU_SIZE > PAGE_SIZE)
+#if defined(CONFIG_SMP) && (IA64_CPU_SIZE > PAGE_SIZE)
 # error "struct cpuinfo_ia64 too big!"
-#पूर्ण_अगर
+#endif
 
-अक्षर ia64_platक्रमm_name[64];
+char ia64_platform_name[64];
 
-#अगर_घोषित CONFIG_SMP
-अचिन्हित दीर्घ __per_cpu_offset[NR_CPUS];
+#ifdef CONFIG_SMP
+unsigned long __per_cpu_offset[NR_CPUS];
 EXPORT_SYMBOL(__per_cpu_offset);
-#पूर्ण_अगर
+#endif
 
-DEFINE_PER_CPU(काष्ठा cpuinfo_ia64, ia64_cpu_info);
+DEFINE_PER_CPU(struct cpuinfo_ia64, ia64_cpu_info);
 EXPORT_SYMBOL(ia64_cpu_info);
-DEFINE_PER_CPU(अचिन्हित दीर्घ, local_per_cpu_offset);
-#अगर_घोषित CONFIG_SMP
+DEFINE_PER_CPU(unsigned long, local_per_cpu_offset);
+#ifdef CONFIG_SMP
 EXPORT_SYMBOL(local_per_cpu_offset);
-#पूर्ण_अगर
-अचिन्हित दीर्घ ia64_cycles_per_usec;
-काष्ठा ia64_boot_param *ia64_boot_param;
-काष्ठा screen_info screen_info;
-अचिन्हित दीर्घ vga_console_iobase;
-अचिन्हित दीर्घ vga_console_membase;
+#endif
+unsigned long ia64_cycles_per_usec;
+struct ia64_boot_param *ia64_boot_param;
+struct screen_info screen_info;
+unsigned long vga_console_iobase;
+unsigned long vga_console_membase;
 
-अटल काष्ठा resource data_resource = अणु
+static struct resource data_resource = {
 	.name	= "Kernel data",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-पूर्ण;
+};
 
-अटल काष्ठा resource code_resource = अणु
+static struct resource code_resource = {
 	.name	= "Kernel code",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-पूर्ण;
+};
 
-अटल काष्ठा resource bss_resource = अणु
+static struct resource bss_resource = {
 	.name	= "Kernel bss",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-पूर्ण;
+};
 
-अचिन्हित दीर्घ ia64_max_cacheline_size;
+unsigned long ia64_max_cacheline_size;
 
-अचिन्हित दीर्घ ia64_iobase;	/* भव address क्रम I/O accesses */
+unsigned long ia64_iobase;	/* virtual address for I/O accesses */
 EXPORT_SYMBOL(ia64_iobase);
-काष्ठा io_space io_space[MAX_IO_SPACES];
+struct io_space io_space[MAX_IO_SPACES];
 EXPORT_SYMBOL(io_space);
-अचिन्हित पूर्णांक num_io_spaces;
+unsigned int num_io_spaces;
 
 /*
  * "flush_icache_range()" needs to know what processor dependent stride size to use
  * when it makes i-cache(s) coherent with d-caches.
  */
-#घोषणा	I_CACHE_STRIDE_SHIFT	5	/* Safest way to go: 32 bytes by 32 bytes */
-अचिन्हित दीर्घ ia64_i_cache_stride_shअगरt = ~0;
+#define	I_CACHE_STRIDE_SHIFT	5	/* Safest way to go: 32 bytes by 32 bytes */
+unsigned long ia64_i_cache_stride_shift = ~0;
 /*
  * "clflush_cache_range()" needs to know what processor dependent stride size to
  * use when it flushes cache lines including both d-cache and i-cache.
  */
 /* Safest way to go: 32 bytes by 32 bytes */
-#घोषणा	CACHE_STRIDE_SHIFT	5
-अचिन्हित दीर्घ ia64_cache_stride_shअगरt = ~0;
+#define	CACHE_STRIDE_SHIFT	5
+unsigned long ia64_cache_stride_shift = ~0;
 
 /*
- * We use a special marker क्रम the end of memory and it uses the extra (+1) slot
+ * We use a special marker for the end of memory and it uses the extra (+1) slot
  */
-काष्ठा rsvd_region rsvd_region[IA64_MAX_RSVD_REGIONS + 1] __initdata;
-पूर्णांक num_rsvd_regions __initdata;
+struct rsvd_region rsvd_region[IA64_MAX_RSVD_REGIONS + 1] __initdata;
+int num_rsvd_regions __initdata;
 
 
 /*
  * Filter incoming memory segments based on the primitive map created from the boot
- * parameters. Segments contained in the map are हटाओd from the memory ranges. A
- * caller-specअगरied function is called with the memory ranges that reमुख्य after filtering.
- * This routine करोes not assume the incoming segments are sorted.
+ * parameters. Segments contained in the map are removed from the memory ranges. A
+ * caller-specified function is called with the memory ranges that remain after filtering.
+ * This routine does not assume the incoming segments are sorted.
  */
-पूर्णांक __init
-filter_rsvd_memory (u64 start, u64 end, व्योम *arg)
-अणु
+int __init
+filter_rsvd_memory (u64 start, u64 end, void *arg)
+{
 	u64 range_start, range_end, prev_start;
-	व्योम (*func)(अचिन्हित दीर्घ, अचिन्हित दीर्घ, पूर्णांक);
-	पूर्णांक i;
+	void (*func)(unsigned long, unsigned long, int);
+	int i;
 
-#अगर IGNORE_PFN0
-	अगर (start == PAGE_OFFSET) अणु
-		prपूर्णांकk(KERN_WARNING "warning: skipping physical page 0\n");
+#if IGNORE_PFN0
+	if (start == PAGE_OFFSET) {
+		printk(KERN_WARNING "warning: skipping physical page 0\n");
 		start += PAGE_SIZE;
-		अगर (start >= end) वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+		if (start >= end) return 0;
+	}
+#endif
 	/*
-	 * lowest possible address(walker uses भव)
+	 * lowest possible address(walker uses virtual)
 	 */
 	prev_start = PAGE_OFFSET;
 	func = arg;
 
-	क्रम (i = 0; i < num_rsvd_regions; ++i) अणु
+	for (i = 0; i < num_rsvd_regions; ++i) {
 		range_start = max(start, prev_start);
 		range_end   = min(end, rsvd_region[i].start);
 
-		अगर (range_start < range_end)
+		if (range_start < range_end)
 			call_pernode_memory(__pa(range_start), range_end - range_start, func);
 
 		/* nothing more available in this segment */
-		अगर (range_end == end) वापस 0;
+		if (range_end == end) return 0;
 
 		prev_start = rsvd_region[i].end;
-	पूर्ण
+	}
 	/* end of memory marker allows full processing inside loop body */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Similar to "filter_rsvd_memory()", but the reserved memory ranges
  * are not filtered out.
  */
-पूर्णांक __init
-filter_memory(u64 start, u64 end, व्योम *arg)
-अणु
-	व्योम (*func)(अचिन्हित दीर्घ, अचिन्हित दीर्घ, पूर्णांक);
+int __init
+filter_memory(u64 start, u64 end, void *arg)
+{
+	void (*func)(unsigned long, unsigned long, int);
 
-#अगर IGNORE_PFN0
-	अगर (start == PAGE_OFFSET) अणु
-		prपूर्णांकk(KERN_WARNING "warning: skipping physical page 0\n");
+#if IGNORE_PFN0
+	if (start == PAGE_OFFSET) {
+		printk(KERN_WARNING "warning: skipping physical page 0\n");
 		start += PAGE_SIZE;
-		अगर (start >= end)
-			वापस 0;
-	पूर्ण
-#पूर्ण_अगर
+		if (start >= end)
+			return 0;
+	}
+#endif
 	func = arg;
-	अगर (start < end)
+	if (start < end)
 		call_pernode_memory(__pa(start), end - start, func);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init
-sort_regions (काष्ठा rsvd_region *rsvd_region, पूर्णांक max)
-अणु
-	पूर्णांक j;
+static void __init
+sort_regions (struct rsvd_region *rsvd_region, int max)
+{
+	int j;
 
 	/* simple bubble sorting */
-	जबतक (max--) अणु
-		क्रम (j = 0; j < max; ++j) अणु
-			अगर (rsvd_region[j].start > rsvd_region[j+1].start) अणु
-				काष्ठा rsvd_region पंचांगp;
-				पंचांगp = rsvd_region[j];
+	while (max--) {
+		for (j = 0; j < max; ++j) {
+			if (rsvd_region[j].start > rsvd_region[j+1].start) {
+				struct rsvd_region tmp;
+				tmp = rsvd_region[j];
 				rsvd_region[j] = rsvd_region[j + 1];
-				rsvd_region[j + 1] = पंचांगp;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+				rsvd_region[j + 1] = tmp;
+			}
+		}
+	}
+}
 
 /* merge overlaps */
-अटल पूर्णांक __init
-merge_regions (काष्ठा rsvd_region *rsvd_region, पूर्णांक max)
-अणु
-	पूर्णांक i;
-	क्रम (i = 1; i < max; ++i) अणु
-		अगर (rsvd_region[i].start >= rsvd_region[i-1].end)
-			जारी;
-		अगर (rsvd_region[i].end > rsvd_region[i-1].end)
+static int __init
+merge_regions (struct rsvd_region *rsvd_region, int max)
+{
+	int i;
+	for (i = 1; i < max; ++i) {
+		if (rsvd_region[i].start >= rsvd_region[i-1].end)
+			continue;
+		if (rsvd_region[i].end > rsvd_region[i-1].end)
 			rsvd_region[i-1].end = rsvd_region[i].end;
 		--max;
-		स_हटाओ(&rsvd_region[i], &rsvd_region[i+1],
-			(max - i) * माप(काष्ठा rsvd_region));
-	पूर्ण
-	वापस max;
-पूर्ण
+		memmove(&rsvd_region[i], &rsvd_region[i+1],
+			(max - i) * sizeof(struct rsvd_region));
+	}
+	return max;
+}
 
 /*
- * Request address space क्रम all standard resources
+ * Request address space for all standard resources
  */
-अटल पूर्णांक __init रेजिस्टर_memory(व्योम)
-अणु
+static int __init register_memory(void)
+{
 	code_resource.start = ia64_tpa(_text);
 	code_resource.end   = ia64_tpa(_etext) - 1;
 	data_resource.start = ia64_tpa(_etext);
@@ -249,129 +248,129 @@ merge_regions (काष्ठा rsvd_region *rsvd_region, पूर्णा�
 	efi_initialize_iomem_resources(&code_resource, &data_resource,
 			&bss_resource);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__initcall(रेजिस्टर_memory);
+__initcall(register_memory);
 
 
-#अगर_घोषित CONFIG_KEXEC
+#ifdef CONFIG_KEXEC
 
 /*
- * This function checks अगर the reserved crashkernel is allowed on the specअगरic
+ * This function checks if the reserved crashkernel is allowed on the specific
  * IA64 machine flavour. Machines without an IO TLB use swiotlb and require
  * some memory below 4 GB (i.e. in 32 bit area), see the implementation of
  * kernel/dma/swiotlb.c. The hpzx1 architecture has an IO TLB but cannot use that
- * in kdump हाल. See the comment in sba_init() in sba_iommu.c.
+ * in kdump case. See the comment in sba_init() in sba_iommu.c.
  *
  * So, the only machvec that really supports loading the kdump kernel
  * over 4 GB is "uv".
  */
-अटल पूर्णांक __init check_crashkernel_memory(अचिन्हित दीर्घ pbase, माप_प्रकार size)
-अणु
-	अगर (is_uv_प्रणाली())
-		वापस 1;
-	अन्यथा
-		वापस pbase < (1UL << 32);
-पूर्ण
+static int __init check_crashkernel_memory(unsigned long pbase, size_t size)
+{
+	if (is_uv_system())
+		return 1;
+	else
+		return pbase < (1UL << 32);
+}
 
-अटल व्योम __init setup_crashkernel(अचिन्हित दीर्घ total, पूर्णांक *n)
-अणु
-	अचिन्हित दीर्घ दीर्घ base = 0, size = 0;
-	पूर्णांक ret;
+static void __init setup_crashkernel(unsigned long total, int *n)
+{
+	unsigned long long base = 0, size = 0;
+	int ret;
 
 	ret = parse_crashkernel(boot_command_line, total,
 			&size, &base);
-	अगर (ret == 0 && size > 0) अणु
-		अगर (!base) अणु
+	if (ret == 0 && size > 0) {
+		if (!base) {
 			sort_regions(rsvd_region, *n);
 			*n = merge_regions(rsvd_region, *n);
 			base = kdump_find_rsvd_region(size,
 					rsvd_region, *n);
-		पूर्ण
+		}
 
-		अगर (!check_crashkernel_memory(base, size)) अणु
+		if (!check_crashkernel_memory(base, size)) {
 			pr_warn("crashkernel: There would be kdump memory "
 				"at %ld GB but this is unusable because it "
 				"must\nbe below 4 GB. Change the memory "
 				"configuration of the machine.\n",
-				(अचिन्हित दीर्घ)(base >> 30));
-			वापस;
-		पूर्ण
+				(unsigned long)(base >> 30));
+			return;
+		}
 
-		अगर (base != ~0UL) अणु
-			prपूर्णांकk(KERN_INFO "Reserving %ldMB of memory at %ldMB "
+		if (base != ~0UL) {
+			printk(KERN_INFO "Reserving %ldMB of memory at %ldMB "
 					"for crashkernel (System RAM: %ldMB)\n",
-					(अचिन्हित दीर्घ)(size >> 20),
-					(अचिन्हित दीर्घ)(base >> 20),
-					(अचिन्हित दीर्घ)(total >> 20));
+					(unsigned long)(size >> 20),
+					(unsigned long)(base >> 20),
+					(unsigned long)(total >> 20));
 			rsvd_region[*n].start =
-				(अचिन्हित दीर्घ)__va(base);
+				(unsigned long)__va(base);
 			rsvd_region[*n].end =
-				(अचिन्हित दीर्घ)__va(base + size);
+				(unsigned long)__va(base + size);
 			(*n)++;
 			crashk_res.start = base;
 			crashk_res.end = base + size - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	efi_memmap_res.start = ia64_boot_param->efi_memmap;
 	efi_memmap_res.end = efi_memmap_res.start +
 		ia64_boot_param->efi_memmap_size;
 	boot_param_res.start = __pa(ia64_boot_param);
 	boot_param_res.end = boot_param_res.start +
-		माप(*ia64_boot_param);
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम __init setup_crashkernel(अचिन्हित दीर्घ total, पूर्णांक *n)
-अणुपूर्ण
-#पूर्ण_अगर
+		sizeof(*ia64_boot_param);
+}
+#else
+static inline void __init setup_crashkernel(unsigned long total, int *n)
+{}
+#endif
 
 /**
  * reserve_memory - setup reserved memory areas
  *
- * Setup the reserved memory areas set aside क्रम the boot parameters,
+ * Setup the reserved memory areas set aside for the boot parameters,
  * initrd, etc.  There are currently %IA64_MAX_RSVD_REGIONS defined,
- * see arch/ia64/include/यंत्र/meminit.h अगर you need to define more.
+ * see arch/ia64/include/asm/meminit.h if you need to define more.
  */
-व्योम __init
-reserve_memory (व्योम)
-अणु
-	पूर्णांक n = 0;
-	अचिन्हित दीर्घ total_memory;
+void __init
+reserve_memory (void)
+{
+	int n = 0;
+	unsigned long total_memory;
 
 	/*
 	 * none of the entries in this table overlap
 	 */
-	rsvd_region[n].start = (अचिन्हित दीर्घ) ia64_boot_param;
-	rsvd_region[n].end   = rsvd_region[n].start + माप(*ia64_boot_param);
+	rsvd_region[n].start = (unsigned long) ia64_boot_param;
+	rsvd_region[n].end   = rsvd_region[n].start + sizeof(*ia64_boot_param);
 	n++;
 
-	rsvd_region[n].start = (अचिन्हित दीर्घ) __va(ia64_boot_param->efi_memmap);
+	rsvd_region[n].start = (unsigned long) __va(ia64_boot_param->efi_memmap);
 	rsvd_region[n].end   = rsvd_region[n].start + ia64_boot_param->efi_memmap_size;
 	n++;
 
-	rsvd_region[n].start = (अचिन्हित दीर्घ) __va(ia64_boot_param->command_line);
+	rsvd_region[n].start = (unsigned long) __va(ia64_boot_param->command_line);
 	rsvd_region[n].end   = (rsvd_region[n].start
-				+ म_माप(__va(ia64_boot_param->command_line)) + 1);
+				+ strlen(__va(ia64_boot_param->command_line)) + 1);
 	n++;
 
-	rsvd_region[n].start = (अचिन्हित दीर्घ) ia64_imva((व्योम *)KERNEL_START);
-	rsvd_region[n].end   = (अचिन्हित दीर्घ) ia64_imva(_end);
+	rsvd_region[n].start = (unsigned long) ia64_imva((void *)KERNEL_START);
+	rsvd_region[n].end   = (unsigned long) ia64_imva(_end);
 	n++;
 
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अगर (ia64_boot_param->initrd_start) अणु
-		rsvd_region[n].start = (अचिन्हित दीर्घ)__va(ia64_boot_param->initrd_start);
+#ifdef CONFIG_BLK_DEV_INITRD
+	if (ia64_boot_param->initrd_start) {
+		rsvd_region[n].start = (unsigned long)__va(ia64_boot_param->initrd_start);
 		rsvd_region[n].end   = rsvd_region[n].start + ia64_boot_param->initrd_size;
 		n++;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-#अगर_घोषित CONFIG_CRASH_DUMP
-	अगर (reserve_elfcorehdr(&rsvd_region[n].start,
+#ifdef CONFIG_CRASH_DUMP
+	if (reserve_elfcorehdr(&rsvd_region[n].start,
 			       &rsvd_region[n].end) == 0)
 		n++;
-#पूर्ण_अगर
+#endif
 
 	total_memory = efi_memmap_init(&rsvd_region[n].start, &rsvd_region[n].end);
 	n++;
@@ -390,168 +389,168 @@ reserve_memory (व्योम)
 	num_rsvd_regions = merge_regions(rsvd_region, num_rsvd_regions);
 
 	/* reserve all regions except the end of memory marker with memblock */
-	क्रम (n = 0; n < num_rsvd_regions - 1; n++) अणु
-		काष्ठा rsvd_region *region = &rsvd_region[n];
+	for (n = 0; n < num_rsvd_regions - 1; n++) {
+		struct rsvd_region *region = &rsvd_region[n];
 		phys_addr_t addr = __pa(region->start);
 		phys_addr_t size = region->end - region->start;
 
 		memblock_reserve(addr, size);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * find_initrd - get initrd parameters from the boot parameter काष्ठाure
+ * find_initrd - get initrd parameters from the boot parameter structure
  *
- * Grab the initrd start and end from the boot parameter काष्ठा given us by
+ * Grab the initrd start and end from the boot parameter struct given us by
  * the boot loader.
  */
-व्योम __init
-find_initrd (व्योम)
-अणु
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अगर (ia64_boot_param->initrd_start) अणु
-		initrd_start = (अचिन्हित दीर्घ)__va(ia64_boot_param->initrd_start);
+void __init
+find_initrd (void)
+{
+#ifdef CONFIG_BLK_DEV_INITRD
+	if (ia64_boot_param->initrd_start) {
+		initrd_start = (unsigned long)__va(ia64_boot_param->initrd_start);
 		initrd_end   = initrd_start+ia64_boot_param->initrd_size;
 
-		prपूर्णांकk(KERN_INFO "Initial ramdisk at: 0x%lx (%llu bytes)\n",
+		printk(KERN_INFO "Initial ramdisk at: 0x%lx (%llu bytes)\n",
 		       initrd_start, ia64_boot_param->initrd_size);
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम __init
-io_port_init (व्योम)
-अणु
-	अचिन्हित दीर्घ phys_iobase;
+static void __init
+io_port_init (void)
+{
+	unsigned long phys_iobase;
 
 	/*
 	 * Set `iobase' based on the EFI memory map or, failing that, the
 	 * value firmware left in ar.k0.
 	 *
-	 * Note that in ia32 mode, IN/OUT inकाष्ठाions use ar.k0 to compute
-	 * the port's भव address, so ia32_load_state() loads it with a
-	 * user भव address.  But in ia64 mode, glibc uses the
+	 * Note that in ia32 mode, IN/OUT instructions use ar.k0 to compute
+	 * the port's virtual address, so ia32_load_state() loads it with a
+	 * user virtual address.  But in ia64 mode, glibc uses the
 	 * *physical* address in ar.k0 to mmap the appropriate area from
-	 * /dev/mem, and the inX()/outX() पूर्णांकerfaces use MMIO.  In both
-	 * हालs, user-mode can only use the legacy 0-64K I/O port space.
+	 * /dev/mem, and the inX()/outX() interfaces use MMIO.  In both
+	 * cases, user-mode can only use the legacy 0-64K I/O port space.
 	 *
 	 * ar.k0 is not involved in kernel I/O port accesses, which can use
-	 * any of the I/O port spaces and are करोne via MMIO using the
-	 * भव mmio_base from the appropriate io_space[].
+	 * any of the I/O port spaces and are done via MMIO using the
+	 * virtual mmio_base from the appropriate io_space[].
 	 */
 	phys_iobase = efi_get_iobase();
-	अगर (!phys_iobase) अणु
+	if (!phys_iobase) {
 		phys_iobase = ia64_get_kr(IA64_KR_IO_BASE);
-		prपूर्णांकk(KERN_INFO "No I/O port range found in EFI memory map, "
+		printk(KERN_INFO "No I/O port range found in EFI memory map, "
 			"falling back to AR.KR0 (0x%lx)\n", phys_iobase);
-	पूर्ण
-	ia64_iobase = (अचिन्हित दीर्घ) ioremap(phys_iobase, 0);
+	}
+	ia64_iobase = (unsigned long) ioremap(phys_iobase, 0);
 	ia64_set_kr(IA64_KR_IO_BASE, __pa(ia64_iobase));
 
 	/* setup legacy IO port space */
 	io_space[0].mmio_base = ia64_iobase;
 	io_space[0].sparse = 1;
 	num_io_spaces = 1;
-पूर्ण
+}
 
 /**
  * early_console_setup - setup debugging console
  *
  * Consoles started here require little enough setup that we can start using
  * them very early in the boot process, either right after the machine
- * vector initialization, or even beक्रमe अगर the drivers can detect their hw.
+ * vector initialization, or even before if the drivers can detect their hw.
  *
- * Returns non-zero अगर a console couldn't be setup.
+ * Returns non-zero if a console couldn't be setup.
  */
-अटल अंतरभूत पूर्णांक __init
-early_console_setup (अक्षर *cmdline)
-अणु
-#अगर_घोषित CONFIG_EFI_PCDP
-	अगर (!efi_setup_pcdp_console(cmdline))
-		वापस 0;
-#पूर्ण_अगर
-	वापस -1;
-पूर्ण
+static inline int __init
+early_console_setup (char *cmdline)
+{
+#ifdef CONFIG_EFI_PCDP
+	if (!efi_setup_pcdp_console(cmdline))
+		return 0;
+#endif
+	return -1;
+}
 
-अटल व्योम __init
-screen_info_setup(व्योम)
-अणु
-	अचिन्हित पूर्णांक orig_x, orig_y, num_cols, num_rows, font_height;
+static void __init
+screen_info_setup(void)
+{
+	unsigned int orig_x, orig_y, num_cols, num_rows, font_height;
 
-	स_रखो(&screen_info, 0, माप(screen_info));
+	memset(&screen_info, 0, sizeof(screen_info));
 
-	अगर (!ia64_boot_param->console_info.num_rows ||
-	    !ia64_boot_param->console_info.num_cols) अणु
-		prपूर्णांकk(KERN_WARNING "invalid screen-info, guessing 80x25\n");
+	if (!ia64_boot_param->console_info.num_rows ||
+	    !ia64_boot_param->console_info.num_cols) {
+		printk(KERN_WARNING "invalid screen-info, guessing 80x25\n");
 		orig_x = 0;
 		orig_y = 0;
 		num_cols = 80;
 		num_rows = 25;
 		font_height = 16;
-	पूर्ण अन्यथा अणु
+	} else {
 		orig_x = ia64_boot_param->console_info.orig_x;
 		orig_y = ia64_boot_param->console_info.orig_y;
 		num_cols = ia64_boot_param->console_info.num_cols;
 		num_rows = ia64_boot_param->console_info.num_rows;
 		font_height = 400 / num_rows;
-	पूर्ण
+	}
 
 	screen_info.orig_x = orig_x;
 	screen_info.orig_y = orig_y;
 	screen_info.orig_video_cols  = num_cols;
 	screen_info.orig_video_lines = num_rows;
-	screen_info.orig_video_poपूर्णांकs = font_height;
+	screen_info.orig_video_points = font_height;
 	screen_info.orig_video_mode = 3;	/* XXX fake */
 	screen_info.orig_video_isVGA = 1;	/* XXX fake */
 	screen_info.orig_video_ega_bx = 3;	/* XXX fake */
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-mark_bsp_online (व्योम)
-अणु
-#अगर_घोषित CONFIG_SMP
-	/* If we रेजिस्टर an early console, allow CPU 0 to prपूर्णांकk */
+static inline void
+mark_bsp_online (void)
+{
+#ifdef CONFIG_SMP
+	/* If we register an early console, allow CPU 0 to printk */
 	set_cpu_online(smp_processor_id(), true);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल __initdata पूर्णांक nomca;
-अटल __init पूर्णांक setup_nomca(अक्षर *s)
-अणु
+static __initdata int nomca;
+static __init int setup_nomca(char *s)
+{
 	nomca = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("nomca", setup_nomca);
 
-#अगर_घोषित CONFIG_CRASH_DUMP
-पूर्णांक __init reserve_elfcorehdr(u64 *start, u64 *end)
-अणु
+#ifdef CONFIG_CRASH_DUMP
+int __init reserve_elfcorehdr(u64 *start, u64 *end)
+{
 	u64 length;
 
 	/* We get the address using the kernel command line,
 	 * but the size is extracted from the EFI tables.
-	 * Both address and size are required क्रम reservation
+	 * Both address and size are required for reservation
 	 * to work properly.
 	 */
 
-	अगर (!is_vmcore_usable())
-		वापस -EINVAL;
+	if (!is_vmcore_usable())
+		return -EINVAL;
 
-	अगर ((length = vmcore_find_descriptor_size(elfcorehdr_addr)) == 0) अणु
+	if ((length = vmcore_find_descriptor_size(elfcorehdr_addr)) == 0) {
 		vmcore_unusable();
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*start = (अचिन्हित दीर्घ)__va(elfcorehdr_addr);
+	*start = (unsigned long)__va(elfcorehdr_addr);
 	*end = *start + length;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_PROC_VMCORE */
+#endif /* CONFIG_PROC_VMCORE */
 
-व्योम __init
-setup_arch (अक्षर **cmdline_p)
-अणु
+void __init
+setup_arch (char **cmdline_p)
+{
 	unw_init();
 
 	ia64_patch_vtop((u64) __start___vtop_patchlist, (u64) __end___vtop_patchlist);
@@ -562,69 +561,69 @@ setup_arch (अक्षर **cmdline_p)
 	efi_init();
 	io_port_init();
 
-	uv_probe_प्रणाली_type();
+	uv_probe_system_type();
 	parse_early_param();
 
-	अगर (early_console_setup(*cmdline_p) == 0)
+	if (early_console_setup(*cmdline_p) == 0)
 		mark_bsp_online();
 
-	/* Initialize the ACPI boot-समय table parser */
+	/* Initialize the ACPI boot-time table parser */
 	acpi_table_init();
 	early_acpi_boot_init();
-#अगर_घोषित CONFIG_ACPI_NUMA
+#ifdef CONFIG_ACPI_NUMA
 	acpi_numa_init();
 	acpi_numa_fixup();
-#अगर_घोषित CONFIG_ACPI_HOTPLUG_CPU
+#ifdef CONFIG_ACPI_HOTPLUG_CPU
 	prefill_possible_map();
-#पूर्ण_अगर
+#endif
 	per_cpu_scan_finalize((cpumask_weight(&early_cpu_possible_map) == 0 ?
 		32 : cpumask_weight(&early_cpu_possible_map)),
 		additional_cpus > 0 ? additional_cpus : 0);
-#पूर्ण_अगर /* CONFIG_ACPI_NUMA */
+#endif /* CONFIG_ACPI_NUMA */
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	smp_build_cpu_map();
-#पूर्ण_अगर
+#endif
 	find_memory();
 
-	/* process SAL प्रणाली table: */
+	/* process SAL system table: */
 	ia64_sal_init(__va(sal_systab_phys));
 
-#अगर_घोषित CONFIG_ITANIUM
+#ifdef CONFIG_ITANIUM
 	ia64_patch_rse((u64) __start___rse_patchlist, (u64) __end___rse_patchlist);
-#अन्यथा
-	अणु
-		अचिन्हित दीर्घ num_phys_stacked;
+#else
+	{
+		unsigned long num_phys_stacked;
 
-		अगर (ia64_pal_rse_info(&num_phys_stacked, 0) == 0 && num_phys_stacked > 96)
+		if (ia64_pal_rse_info(&num_phys_stacked, 0) == 0 && num_phys_stacked > 96)
 			ia64_patch_rse((u64) __start___rse_patchlist, (u64) __end___rse_patchlist);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	cpu_physical_id(0) = hard_smp_processor_id();
-#पूर्ण_अगर
+#endif
 
 	cpu_init();	/* initialize the bootstrap CPU */
-	mmu_context_init();	/* initialize context_id biपंचांगap */
+	mmu_context_init();	/* initialize context_id bitmap */
 
-#अगर_घोषित CONFIG_VT
-	अगर (!conचयनp) अणु
-# अगर defined(CONFIG_VGA_CONSOLE)
+#ifdef CONFIG_VT
+	if (!conswitchp) {
+# if defined(CONFIG_VGA_CONSOLE)
 		/*
-		 * Non-legacy प्रणालीs may route legacy VGA MMIO range to प्रणाली
+		 * Non-legacy systems may route legacy VGA MMIO range to system
 		 * memory.  vga_con probes the MMIO hole, so memory looks like
-		 * a VGA device to it.  The EFI memory map can tell us अगर it's
-		 * memory so we can aव्योम this problem.
+		 * a VGA device to it.  The EFI memory map can tell us if it's
+		 * memory so we can avoid this problem.
 		 */
-		अगर (efi_mem_type(0xA0000) != EFI_CONVENTIONAL_MEMORY)
-			conचयनp = &vga_con;
-# endअगर
-	पूर्ण
-#पूर्ण_अगर
+		if (efi_mem_type(0xA0000) != EFI_CONVENTIONAL_MEMORY)
+			conswitchp = &vga_con;
+# endif
+	}
+#endif
 
 	/* enable IA-64 Machine Check Abort Handling unless disabled */
-	अगर (!nomca)
+	if (!nomca)
 		ia64_mca_init();
 
 	/*
@@ -632,74 +631,74 @@ setup_arch (अक्षर **cmdline_p)
 	 * is physical disk 1 partition 1 and the Linux root disk is
 	 * physical disk 1 partition 2.
 	 */
-	ROOT_DEV = Root_SDA2;		/* शेष to second partition on first drive */
+	ROOT_DEV = Root_SDA2;		/* default to second partition on first drive */
 
-	अगर (is_uv_प्रणाली())
+	if (is_uv_system())
 		uv_setup(cmdline_p);
-#अगर_घोषित CONFIG_SMP
-	अन्यथा
+#ifdef CONFIG_SMP
+	else
 		init_smp_config();
-#पूर्ण_अगर
+#endif
 
 	screen_info_setup();
 	paging_init();
 
-	clear_sched_घड़ी_stable();
-पूर्ण
+	clear_sched_clock_stable();
+}
 
 /*
- * Display cpu info क्रम all CPUs.
+ * Display cpu info for all CPUs.
  */
-अटल पूर्णांक
-show_cpuinfo (काष्ठा seq_file *m, व्योम *v)
-अणु
-#अगर_घोषित CONFIG_SMP
-#	define lpj	c->loops_per_jअगरfy
+static int
+show_cpuinfo (struct seq_file *m, void *v)
+{
+#ifdef CONFIG_SMP
+#	define lpj	c->loops_per_jiffy
 #	define cpunum	c->cpu
-#अन्यथा
-#	define lpj	loops_per_jअगरfy
+#else
+#	define lpj	loops_per_jiffy
 #	define cpunum	0
-#पूर्ण_अगर
-	अटल काष्ठा अणु
-		अचिन्हित दीर्घ mask;
-		स्थिर अक्षर *feature_name;
-	पूर्ण feature_bits[] = अणु
-		अणु 1UL << 0, "branchlong" पूर्ण,
-		अणु 1UL << 1, "spontaneous deferral"पूर्ण,
-		अणु 1UL << 2, "16-byte atomic ops" पूर्ण
-	पूर्ण;
-	अक्षर features[128], *cp, *sep;
-	काष्ठा cpuinfo_ia64 *c = v;
-	अचिन्हित दीर्घ mask;
-	अचिन्हित दीर्घ proc_freq;
-	पूर्णांक i, size;
+#endif
+	static struct {
+		unsigned long mask;
+		const char *feature_name;
+	} feature_bits[] = {
+		{ 1UL << 0, "branchlong" },
+		{ 1UL << 1, "spontaneous deferral"},
+		{ 1UL << 2, "16-byte atomic ops" }
+	};
+	char features[128], *cp, *sep;
+	struct cpuinfo_ia64 *c = v;
+	unsigned long mask;
+	unsigned long proc_freq;
+	int i, size;
 
 	mask = c->features;
 
 	/* build the feature string: */
-	स_नकल(features, "standard", 9);
+	memcpy(features, "standard", 9);
 	cp = features;
-	size = माप(features);
+	size = sizeof(features);
 	sep = "";
-	क्रम (i = 0; i < ARRAY_SIZE(feature_bits) && size > 1; ++i) अणु
-		अगर (mask & feature_bits[i].mask) अणु
-			cp += snम_लिखो(cp, size, "%s%s", sep,
+	for (i = 0; i < ARRAY_SIZE(feature_bits) && size > 1; ++i) {
+		if (mask & feature_bits[i].mask) {
+			cp += snprintf(cp, size, "%s%s", sep,
 				       feature_bits[i].feature_name),
 			sep = ", ";
 			mask &= ~feature_bits[i].mask;
-			size = माप(features) - (cp - features);
-		पूर्ण
-	पूर्ण
-	अगर (mask && size > 1) अणु
-		/* prपूर्णांक unknown features as a hex value */
-		snम_लिखो(cp, size, "%s0x%lx", sep, mask);
-	पूर्ण
+			size = sizeof(features) - (cp - features);
+		}
+	}
+	if (mask && size > 1) {
+		/* print unknown features as a hex value */
+		snprintf(cp, size, "%s0x%lx", sep, mask);
+	}
 
 	proc_freq = cpufreq_quick_get(cpunum);
-	अगर (!proc_freq)
+	if (!proc_freq)
 		proc_freq = c->proc_freq / 1000;
 
-	seq_म_लिखो(m,
+	seq_printf(m,
 		   "processor  : %d\n"
 		   "vendor     : %s\n"
 		   "arch       : IA-64\n"
@@ -714,137 +713,137 @@ show_cpuinfo (काष्ठा seq_file *m, व्योम *v)
 		   "cpu MHz    : %lu.%03lu\n"
 		   "itc MHz    : %lu.%06lu\n"
 		   "BogoMIPS   : %lu.%02lu\n",
-		   cpunum, c->venकरोr, c->family, c->model,
+		   cpunum, c->vendor, c->family, c->model,
 		   c->model_name, c->revision, c->archrev,
 		   features, c->ppn, c->number,
 		   proc_freq / 1000, proc_freq % 1000,
 		   c->itc_freq / 1000000, c->itc_freq % 1000000,
 		   lpj*HZ/500000, (lpj*HZ/5000) % 100);
-#अगर_घोषित CONFIG_SMP
-	seq_म_लिखो(m, "siblings   : %u\n",
+#ifdef CONFIG_SMP
+	seq_printf(m, "siblings   : %u\n",
 		   cpumask_weight(&cpu_core_map[cpunum]));
-	अगर (c->socket_id != -1)
-		seq_म_लिखो(m, "physical id: %u\n", c->socket_id);
-	अगर (c->thपढ़ोs_per_core > 1 || c->cores_per_socket > 1)
-		seq_म_लिखो(m,
+	if (c->socket_id != -1)
+		seq_printf(m, "physical id: %u\n", c->socket_id);
+	if (c->threads_per_core > 1 || c->cores_per_socket > 1)
+		seq_printf(m,
 			   "core id    : %u\n"
 			   "thread id  : %u\n",
-			   c->core_id, c->thपढ़ो_id);
-#पूर्ण_अगर
-	seq_म_लिखो(m,"\n");
+			   c->core_id, c->thread_id);
+#endif
+	seq_printf(m,"\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-c_start (काष्ठा seq_file *m, loff_t *pos)
-अणु
-#अगर_घोषित CONFIG_SMP
-	जबतक (*pos < nr_cpu_ids && !cpu_online(*pos))
+static void *
+c_start (struct seq_file *m, loff_t *pos)
+{
+#ifdef CONFIG_SMP
+	while (*pos < nr_cpu_ids && !cpu_online(*pos))
 		++*pos;
-#पूर्ण_अगर
-	वापस *pos < nr_cpu_ids ? cpu_data(*pos) : शून्य;
-पूर्ण
+#endif
+	return *pos < nr_cpu_ids ? cpu_data(*pos) : NULL;
+}
 
-अटल व्योम *
-c_next (काष्ठा seq_file *m, व्योम *v, loff_t *pos)
-अणु
+static void *
+c_next (struct seq_file *m, void *v, loff_t *pos)
+{
 	++*pos;
-	वापस c_start(m, pos);
-पूर्ण
+	return c_start(m, pos);
+}
 
-अटल व्योम
-c_stop (काष्ठा seq_file *m, व्योम *v)
-अणु
-पूर्ण
+static void
+c_stop (struct seq_file *m, void *v)
+{
+}
 
-स्थिर काष्ठा seq_operations cpuinfo_op = अणु
+const struct seq_operations cpuinfo_op = {
 	.start =	c_start,
 	.next =		c_next,
 	.stop =		c_stop,
 	.show =		show_cpuinfo
-पूर्ण;
+};
 
-#घोषणा MAX_BRANDS	8
-अटल अक्षर bअक्रमname[MAX_BRANDS][128];
+#define MAX_BRANDS	8
+static char brandname[MAX_BRANDS][128];
 
-अटल अक्षर *
+static char *
 get_model_name(__u8 family, __u8 model)
-अणु
-	अटल पूर्णांक overflow;
-	अक्षर bअक्रम[128];
-	पूर्णांक i;
+{
+	static int overflow;
+	char brand[128];
+	int i;
 
-	स_नकल(bअक्रम, "Unknown", 8);
-	अगर (ia64_pal_get_bअक्रम_info(bअक्रम)) अणु
-		अगर (family == 0x7)
-			स_नकल(bअक्रम, "Merced", 7);
-		अन्यथा अगर (family == 0x1f) चयन (model) अणु
-			हाल 0: स_नकल(bअक्रम, "McKinley", 9); अवरोध;
-			हाल 1: स_नकल(bअक्रम, "Madison", 8); अवरोध;
-			हाल 2: स_नकल(bअक्रम, "Madison up to 9M cache", 23); अवरोध;
-		पूर्ण
-	पूर्ण
-	क्रम (i = 0; i < MAX_BRANDS; i++)
-		अगर (म_भेद(bअक्रमname[i], bअक्रम) == 0)
-			वापस bअक्रमname[i];
-	क्रम (i = 0; i < MAX_BRANDS; i++)
-		अगर (bअक्रमname[i][0] == '\0')
-			वापस म_नकल(bअक्रमname[i], bअक्रम);
-	अगर (overflow++ == 0)
-		prपूर्णांकk(KERN_ERR
+	memcpy(brand, "Unknown", 8);
+	if (ia64_pal_get_brand_info(brand)) {
+		if (family == 0x7)
+			memcpy(brand, "Merced", 7);
+		else if (family == 0x1f) switch (model) {
+			case 0: memcpy(brand, "McKinley", 9); break;
+			case 1: memcpy(brand, "Madison", 8); break;
+			case 2: memcpy(brand, "Madison up to 9M cache", 23); break;
+		}
+	}
+	for (i = 0; i < MAX_BRANDS; i++)
+		if (strcmp(brandname[i], brand) == 0)
+			return brandname[i];
+	for (i = 0; i < MAX_BRANDS; i++)
+		if (brandname[i][0] == '\0')
+			return strcpy(brandname[i], brand);
+	if (overflow++ == 0)
+		printk(KERN_ERR
 		       "%s: Table overflow. Some processor model information will be missing\n",
 		       __func__);
-	वापस "Unknown";
-पूर्ण
+	return "Unknown";
+}
 
-अटल व्योम
-identअगरy_cpu (काष्ठा cpuinfo_ia64 *c)
-अणु
-	जोड़ अणु
-		अचिन्हित दीर्घ bits[5];
-		काष्ठा अणु
+static void
+identify_cpu (struct cpuinfo_ia64 *c)
+{
+	union {
+		unsigned long bits[5];
+		struct {
 			/* id 0 & 1: */
-			अक्षर venकरोr[16];
+			char vendor[16];
 
 			/* id 2 */
 			u64 ppn;		/* processor serial number */
 
 			/* id 3: */
-			अचिन्हित number		:  8;
-			अचिन्हित revision	:  8;
-			अचिन्हित model		:  8;
-			अचिन्हित family		:  8;
-			अचिन्हित archrev	:  8;
-			अचिन्हित reserved	: 24;
+			unsigned number		:  8;
+			unsigned revision	:  8;
+			unsigned model		:  8;
+			unsigned family		:  8;
+			unsigned archrev	:  8;
+			unsigned reserved	: 24;
 
 			/* id 4: */
 			u64 features;
-		पूर्ण field;
-	पूर्ण cpuid;
+		} field;
+	} cpuid;
 	pal_vm_info_1_u_t vm1;
 	pal_vm_info_2_u_t vm2;
 	pal_status_t status;
-	अचिन्हित दीर्घ impl_va_msb = 50, phys_addr_size = 44;	/* Itanium शेषs */
-	पूर्णांक i;
-	क्रम (i = 0; i < 5; ++i)
+	unsigned long impl_va_msb = 50, phys_addr_size = 44;	/* Itanium defaults */
+	int i;
+	for (i = 0; i < 5; ++i)
 		cpuid.bits[i] = ia64_get_cpuid(i);
 
-	स_नकल(c->venकरोr, cpuid.field.venकरोr, 16);
-#अगर_घोषित CONFIG_SMP
+	memcpy(c->vendor, cpuid.field.vendor, 16);
+#ifdef CONFIG_SMP
 	c->cpu = smp_processor_id();
 
-	/* below शेष values will be overwritten  by identअगरy_siblings() 
-	 * क्रम Multi-Thपढ़ोing/Multi-Core capable CPUs
+	/* below default values will be overwritten  by identify_siblings() 
+	 * for Multi-Threading/Multi-Core capable CPUs
 	 */
-	c->thपढ़ोs_per_core = c->cores_per_socket = c->num_log = 1;
+	c->threads_per_core = c->cores_per_socket = c->num_log = 1;
 	c->socket_id = -1;
 
-	identअगरy_siblings(c);
+	identify_siblings(c);
 
-	अगर (c->thपढ़ोs_per_core > smp_num_siblings)
-		smp_num_siblings = c->thपढ़ोs_per_core;
-#पूर्ण_अगर
+	if (c->threads_per_core > smp_num_siblings)
+		smp_num_siblings = c->threads_per_core;
+#endif
 	c->ppn = cpuid.field.ppn;
 	c->number = cpuid.field.number;
 	c->revision = cpuid.field.revision;
@@ -855,163 +854,163 @@ identअगरy_cpu (काष्ठा cpuinfo_ia64 *c)
 	c->model_name = get_model_name(c->family, c->model);
 
 	status = ia64_pal_vm_summary(&vm1, &vm2);
-	अगर (status == PAL_STATUS_SUCCESS) अणु
+	if (status == PAL_STATUS_SUCCESS) {
 		impl_va_msb = vm2.pal_vm_info_2_s.impl_va_msb;
 		phys_addr_size = vm1.pal_vm_info_1_s.phys_add_size;
-	पूर्ण
+	}
 	c->unimpl_va_mask = ~((7L<<61) | ((1L << (impl_va_msb + 1)) - 1));
 	c->unimpl_pa_mask = ~((1L<<63) | ((1L << phys_addr_size) - 1));
-पूर्ण
+}
 
 /*
  * Do the following calculations:
  *
  * 1. the max. cache line size.
- * 2. the minimum of the i-cache stride sizes क्रम "flush_icache_range()".
- * 3. the minimum of the cache stride sizes क्रम "clflush_cache_range()".
+ * 2. the minimum of the i-cache stride sizes for "flush_icache_range()".
+ * 3. the minimum of the cache stride sizes for "clflush_cache_range()".
  */
-अटल व्योम
-get_cache_info(व्योम)
-अणु
-	अचिन्हित दीर्घ line_size, max = 1;
-	अचिन्हित दीर्घ l, levels, unique_caches;
+static void
+get_cache_info(void)
+{
+	unsigned long line_size, max = 1;
+	unsigned long l, levels, unique_caches;
 	pal_cache_config_info_t cci;
-	दीर्घ status;
+	long status;
 
         status = ia64_pal_cache_summary(&levels, &unique_caches);
-        अगर (status != 0) अणु
-                prपूर्णांकk(KERN_ERR "%s: ia64_pal_cache_summary() failed (status=%ld)\n",
+        if (status != 0) {
+                printk(KERN_ERR "%s: ia64_pal_cache_summary() failed (status=%ld)\n",
                        __func__, status);
                 max = SMP_CACHE_BYTES;
-		/* Safest setup क्रम "flush_icache_range()" */
-		ia64_i_cache_stride_shअगरt = I_CACHE_STRIDE_SHIFT;
-		/* Safest setup क्रम "clflush_cache_range()" */
-		ia64_cache_stride_shअगरt = CACHE_STRIDE_SHIFT;
-		जाओ out;
-        पूर्ण
+		/* Safest setup for "flush_icache_range()" */
+		ia64_i_cache_stride_shift = I_CACHE_STRIDE_SHIFT;
+		/* Safest setup for "clflush_cache_range()" */
+		ia64_cache_stride_shift = CACHE_STRIDE_SHIFT;
+		goto out;
+        }
 
-	क्रम (l = 0; l < levels; ++l) अणु
-		/* cache_type (data_or_unअगरied)=2 */
+	for (l = 0; l < levels; ++l) {
+		/* cache_type (data_or_unified)=2 */
 		status = ia64_pal_cache_config_info(l, 2, &cci);
-		अगर (status != 0) अणु
-			prपूर्णांकk(KERN_ERR "%s: ia64_pal_cache_config_info"
+		if (status != 0) {
+			printk(KERN_ERR "%s: ia64_pal_cache_config_info"
 				"(l=%lu, 2) failed (status=%ld)\n",
 				__func__, l, status);
 			max = SMP_CACHE_BYTES;
-			/* The safest setup क्रम "flush_icache_range()" */
+			/* The safest setup for "flush_icache_range()" */
 			cci.pcci_stride = I_CACHE_STRIDE_SHIFT;
-			/* The safest setup क्रम "clflush_cache_range()" */
-			ia64_cache_stride_shअगरt = CACHE_STRIDE_SHIFT;
-			cci.pcci_unअगरied = 1;
-		पूर्ण अन्यथा अणु
-			अगर (cci.pcci_stride < ia64_cache_stride_shअगरt)
-				ia64_cache_stride_shअगरt = cci.pcci_stride;
+			/* The safest setup for "clflush_cache_range()" */
+			ia64_cache_stride_shift = CACHE_STRIDE_SHIFT;
+			cci.pcci_unified = 1;
+		} else {
+			if (cci.pcci_stride < ia64_cache_stride_shift)
+				ia64_cache_stride_shift = cci.pcci_stride;
 
 			line_size = 1 << cci.pcci_line_size;
-			अगर (line_size > max)
+			if (line_size > max)
 				max = line_size;
-		पूर्ण
+		}
 
-		अगर (!cci.pcci_unअगरied) अणु
-			/* cache_type (inकाष्ठाion)=1*/
+		if (!cci.pcci_unified) {
+			/* cache_type (instruction)=1*/
 			status = ia64_pal_cache_config_info(l, 1, &cci);
-			अगर (status != 0) अणु
-				prपूर्णांकk(KERN_ERR "%s: ia64_pal_cache_config_info"
+			if (status != 0) {
+				printk(KERN_ERR "%s: ia64_pal_cache_config_info"
 					"(l=%lu, 1) failed (status=%ld)\n",
 					__func__, l, status);
-				/* The safest setup क्रम flush_icache_range() */
+				/* The safest setup for flush_icache_range() */
 				cci.pcci_stride = I_CACHE_STRIDE_SHIFT;
-			पूर्ण
-		पूर्ण
-		अगर (cci.pcci_stride < ia64_i_cache_stride_shअगरt)
-			ia64_i_cache_stride_shअगरt = cci.pcci_stride;
-	पूर्ण
+			}
+		}
+		if (cci.pcci_stride < ia64_i_cache_stride_shift)
+			ia64_i_cache_stride_shift = cci.pcci_stride;
+	}
   out:
-	अगर (max > ia64_max_cacheline_size)
+	if (max > ia64_max_cacheline_size)
 		ia64_max_cacheline_size = max;
-पूर्ण
+}
 
 /*
  * cpu_init() initializes state that is per-CPU.  This function acts
  * as a 'CPU state barrier', nothing should get across.
  */
-व्योम
-cpu_init (व्योम)
-अणु
-	बाह्य व्योम ia64_mmu_init(व्योम *);
-	अटल अचिन्हित दीर्घ max_num_phys_stacked = IA64_NUM_PHYS_STACK_REG;
-	अचिन्हित दीर्घ num_phys_stacked;
+void
+cpu_init (void)
+{
+	extern void ia64_mmu_init(void *);
+	static unsigned long max_num_phys_stacked = IA64_NUM_PHYS_STACK_REG;
+	unsigned long num_phys_stacked;
 	pal_vm_info_2_u_t vmi;
-	अचिन्हित पूर्णांक max_ctx;
-	काष्ठा cpuinfo_ia64 *cpu_info;
-	व्योम *cpu_data;
+	unsigned int max_ctx;
+	struct cpuinfo_ia64 *cpu_info;
+	void *cpu_data;
 
 	cpu_data = per_cpu_init();
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	/*
-	 * insert boot cpu पूर्णांकo sibling and core mapes
-	 * (must be करोne after per_cpu area is setup)
+	 * insert boot cpu into sibling and core mapes
+	 * (must be done after per_cpu area is setup)
 	 */
-	अगर (smp_processor_id() == 0) अणु
+	if (smp_processor_id() == 0) {
 		cpumask_set_cpu(0, &per_cpu(cpu_sibling_map, 0));
 		cpumask_set_cpu(0, &cpu_core_map[0]);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * Set ar.k3 so that assembly code in MCA handler can compute
 		 * physical addresses of per cpu variables with a simple:
 		 *   phys = ar.k3 + &per_cpu_var
-		 * and the alt-dtlb-miss handler can set per-cpu mapping पूर्णांकo
-		 * the TLB when needed. head.S alपढ़ोy did this क्रम cpu0.
+		 * and the alt-dtlb-miss handler can set per-cpu mapping into
+		 * the TLB when needed. head.S already did this for cpu0.
 		 */
 		ia64_set_kr(IA64_KR_PER_CPU_DATA,
-			    ia64_tpa(cpu_data) - (दीर्घ) __per_cpu_start);
-	पूर्ण
-#पूर्ण_अगर
+			    ia64_tpa(cpu_data) - (long) __per_cpu_start);
+	}
+#endif
 
 	get_cache_info();
 
 	/*
 	 * We can't pass "local_cpu_data" to identify_cpu() because we haven't called
 	 * ia64_mmu_init() yet.  And we can't call ia64_mmu_init() first because it
-	 * depends on the data वापसed by identअगरy_cpu().  We अवरोध the dependency by
+	 * depends on the data returned by identify_cpu().  We break the dependency by
 	 * accessing cpu_data() through the canonical per-CPU address.
 	 */
-	cpu_info = cpu_data + ((अक्षर *) &__ia64_per_cpu_var(ia64_cpu_info) - __per_cpu_start);
-	identअगरy_cpu(cpu_info);
+	cpu_info = cpu_data + ((char *) &__ia64_per_cpu_var(ia64_cpu_info) - __per_cpu_start);
+	identify_cpu(cpu_info);
 
-#अगर_घोषित CONFIG_MCKINLEY
-	अणु
+#ifdef CONFIG_MCKINLEY
+	{
 #		define FEATURE_SET 16
-		काष्ठा ia64_pal_retval iprv;
+		struct ia64_pal_retval iprv;
 
-		अगर (cpu_info->family == 0x1f) अणु
+		if (cpu_info->family == 0x1f) {
 			PAL_CALL_PHYS(iprv, PAL_PROC_GET_FEATURES, 0, FEATURE_SET, 0);
-			अगर ((iprv.status == 0) && (iprv.v0 & 0x80) && (iprv.v2 & 0x80))
+			if ((iprv.status == 0) && (iprv.v0 & 0x80) && (iprv.v2 & 0x80))
 				PAL_CALL_PHYS(iprv, PAL_PROC_SET_FEATURES,
 				              (iprv.v1 | 0x80), FEATURE_SET, 0);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
+		}
+	}
+#endif
 
-	/* Clear the stack memory reserved क्रम pt_regs: */
-	स_रखो(task_pt_regs(current), 0, माप(काष्ठा pt_regs));
+	/* Clear the stack memory reserved for pt_regs: */
+	memset(task_pt_regs(current), 0, sizeof(struct pt_regs));
 
 	ia64_set_kr(IA64_KR_FPU_OWNER, 0);
 
 	/*
-	 * Initialize the page-table base रेजिस्टर to a global
+	 * Initialize the page-table base register to a global
 	 * directory with all zeroes.  This ensure that we can handle
-	 * TLB-misses to user address-space even beक्रमe we created the
+	 * TLB-misses to user address-space even before we created the
 	 * first user address-space.  This may happen, e.g., due to
 	 * aggressive use of lfetch.fault.
 	 */
 	ia64_set_kr(IA64_KR_PT_BASE, __pa(ia64_imva(empty_zero_page)));
 
 	/*
-	 * Initialize शेष control रेजिस्टर to defer speculative faults except
-	 * क्रम those arising from TLB misses, which are not deferred.  The
+	 * Initialize default control register to defer speculative faults except
+	 * for those arising from TLB misses, which are not deferred.  The
 	 * kernel MUST NOT depend on a particular setting of these bits (in other words,
-	 * the kernel must have recovery code क्रम all speculative accesses).  Turn on
+	 * the kernel must have recovery code for all speculative accesses).  Turn on
 	 * dcr.lc as per recommendation by the architecture team.  Most IA-32 apps
 	 * shouldn't be affected by this (moral: keep your ia32 locks aligned and you'll
 	 * be fine).
@@ -1025,63 +1024,63 @@ cpu_init (व्योम)
 	ia64_mmu_init(ia64_imva(cpu_data));
 	ia64_mca_cpu_init(ia64_imva(cpu_data));
 
-	/* Clear ITC to eliminate sched_घड़ी() overflows in human समय.  */
+	/* Clear ITC to eliminate sched_clock() overflows in human time.  */
 	ia64_set_itc(0);
 
-	/* disable all local पूर्णांकerrupt sources: */
+	/* disable all local interrupt sources: */
 	ia64_set_itv(1 << 16);
 	ia64_set_lrr0(1 << 16);
 	ia64_set_lrr1(1 << 16);
 	ia64_setreg(_IA64_REG_CR_PMV, 1 << 16);
 	ia64_setreg(_IA64_REG_CR_CMCV, 1 << 16);
 
-	/* clear TPR & XTP to enable all पूर्णांकerrupt classes: */
+	/* clear TPR & XTP to enable all interrupt classes: */
 	ia64_setreg(_IA64_REG_CR_TPR, 0);
 
-	/* Clear any pending पूर्णांकerrupts left by SAL/EFI */
-	जबतक (ia64_get_ivr() != IA64_SPURIOUS_INT_VECTOR)
+	/* Clear any pending interrupts left by SAL/EFI */
+	while (ia64_get_ivr() != IA64_SPURIOUS_INT_VECTOR)
 		ia64_eoi();
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	normal_xtp();
-#पूर्ण_अगर
+#endif
 
 	/* set ia64_ctx.max_rid to the maximum RID that is supported by all CPUs: */
-	अगर (ia64_pal_vm_summary(शून्य, &vmi) == 0) अणु
+	if (ia64_pal_vm_summary(NULL, &vmi) == 0) {
 		max_ctx = (1U << (vmi.pal_vm_info_2_s.rid_size - 3)) - 1;
 		setup_ptcg_sem(vmi.pal_vm_info_2_s.max_purges, NPTCG_FROM_PAL);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_WARNING "cpu_init: PAL VM summary failed, assuming 18 RID bits\n");
+	} else {
+		printk(KERN_WARNING "cpu_init: PAL VM summary failed, assuming 18 RID bits\n");
 		max_ctx = (1U << 15) - 1;	/* use architected minimum */
-	पूर्ण
-	जबतक (max_ctx < ia64_ctx.max_ctx) अणु
-		अचिन्हित पूर्णांक old = ia64_ctx.max_ctx;
-		अगर (cmpxchg(&ia64_ctx.max_ctx, old, max_ctx) == old)
-			अवरोध;
-	पूर्ण
+	}
+	while (max_ctx < ia64_ctx.max_ctx) {
+		unsigned int old = ia64_ctx.max_ctx;
+		if (cmpxchg(&ia64_ctx.max_ctx, old, max_ctx) == old)
+			break;
+	}
 
-	अगर (ia64_pal_rse_info(&num_phys_stacked, शून्य) != 0) अणु
-		prपूर्णांकk(KERN_WARNING "cpu_init: PAL RSE info failed; assuming 96 physical "
+	if (ia64_pal_rse_info(&num_phys_stacked, NULL) != 0) {
+		printk(KERN_WARNING "cpu_init: PAL RSE info failed; assuming 96 physical "
 		       "stacked regs\n");
 		num_phys_stacked = 96;
-	पूर्ण
-	/* size of physical stacked रेजिस्टर partition plus 8 bytes: */
-	अगर (num_phys_stacked > max_num_phys_stacked) अणु
+	}
+	/* size of physical stacked register partition plus 8 bytes: */
+	if (num_phys_stacked > max_num_phys_stacked) {
 		ia64_patch_phys_stack_reg(num_phys_stacked*8 + 8);
 		max_num_phys_stacked = num_phys_stacked;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम __init
-check_bugs (व्योम)
-अणु
-	ia64_patch_mckinley_e9((अचिन्हित दीर्घ) __start___mckinley_e9_bundles,
-			       (अचिन्हित दीर्घ) __end___mckinley_e9_bundles);
-पूर्ण
+void __init
+check_bugs (void)
+{
+	ia64_patch_mckinley_e9((unsigned long) __start___mckinley_e9_bundles,
+			       (unsigned long) __end___mckinley_e9_bundles);
+}
 
-अटल पूर्णांक __init run_dmi_scan(व्योम)
-अणु
+static int __init run_dmi_scan(void)
+{
 	dmi_setup();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 core_initcall(run_dmi_scan);

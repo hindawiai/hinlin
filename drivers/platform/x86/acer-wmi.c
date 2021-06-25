@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  Acer WMI Laptop Extras
  *
@@ -10,26 +9,26 @@
  *    Copyright (C) 2007-2008	Carlos Corbacho <cathectic@gmail.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/fb.h>
-#समावेश <linux/backlight.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/acpi.h>
-#समावेश <linux/i8042.h>
-#समावेश <linux/rfसमाप्त.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/input/sparse-keymap.h>
-#समावेश <acpi/video.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/dmi.h>
+#include <linux/fb.h>
+#include <linux/backlight.h>
+#include <linux/leds.h>
+#include <linux/platform_device.h>
+#include <linux/acpi.h>
+#include <linux/i8042.h>
+#include <linux/rfkill.h>
+#include <linux/workqueue.h>
+#include <linux/debugfs.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/input/sparse-keymap.h>
+#include <acpi/video.h>
 
 MODULE_AUTHOR("Carlos Corbacho");
 MODULE_DESCRIPTION("Acer Laptop WMI Extras Driver");
@@ -37,117 +36,117 @@ MODULE_LICENSE("GPL");
 
 /*
  * Magic Number
- * Meaning is unknown - this number is required क्रम writing to ACPI क्रम AMW0
+ * Meaning is unknown - this number is required for writing to ACPI for AMW0
  * (it's also used in acerhk when directly accessing the BIOS)
  */
-#घोषणा ACER_AMW0_WRITE	0x9610
+#define ACER_AMW0_WRITE	0x9610
 
 /*
- * Bit masks क्रम the AMW0 पूर्णांकerface
+ * Bit masks for the AMW0 interface
  */
-#घोषणा ACER_AMW0_WIRELESS_MASK  0x35
-#घोषणा ACER_AMW0_BLUETOOTH_MASK 0x34
-#घोषणा ACER_AMW0_MAILLED_MASK   0x31
+#define ACER_AMW0_WIRELESS_MASK  0x35
+#define ACER_AMW0_BLUETOOTH_MASK 0x34
+#define ACER_AMW0_MAILLED_MASK   0x31
 
 /*
- * Method IDs क्रम WMID पूर्णांकerface
+ * Method IDs for WMID interface
  */
-#घोषणा ACER_WMID_GET_WIRELESS_METHODID		1
-#घोषणा ACER_WMID_GET_BLUETOOTH_METHODID	2
-#घोषणा ACER_WMID_GET_BRIGHTNESS_METHODID	3
-#घोषणा ACER_WMID_SET_WIRELESS_METHODID		4
-#घोषणा ACER_WMID_SET_BLUETOOTH_METHODID	5
-#घोषणा ACER_WMID_SET_BRIGHTNESS_METHODID	6
-#घोषणा ACER_WMID_GET_THREEG_METHODID		10
-#घोषणा ACER_WMID_SET_THREEG_METHODID		11
+#define ACER_WMID_GET_WIRELESS_METHODID		1
+#define ACER_WMID_GET_BLUETOOTH_METHODID	2
+#define ACER_WMID_GET_BRIGHTNESS_METHODID	3
+#define ACER_WMID_SET_WIRELESS_METHODID		4
+#define ACER_WMID_SET_BLUETOOTH_METHODID	5
+#define ACER_WMID_SET_BRIGHTNESS_METHODID	6
+#define ACER_WMID_GET_THREEG_METHODID		10
+#define ACER_WMID_SET_THREEG_METHODID		11
 
 /*
  * Acer ACPI method GUIDs
  */
-#घोषणा AMW0_GUID1		"67C3371D-95A3-4C37-BB61-DD47B491DAAB"
-#घोषणा AMW0_GUID2		"431F16ED-0C2B-444C-B267-27DEB140CF9C"
-#घोषणा WMID_GUID1		"6AF4F258-B401-42FD-BE91-3D4AC2D7C0D3"
-#घोषणा WMID_GUID2		"95764E09-FB56-4E83-B31A-37761F60994A"
-#घोषणा WMID_GUID3		"61EF69EA-865C-4BC3-A502-A0DEBA0CB531"
+#define AMW0_GUID1		"67C3371D-95A3-4C37-BB61-DD47B491DAAB"
+#define AMW0_GUID2		"431F16ED-0C2B-444C-B267-27DEB140CF9C"
+#define WMID_GUID1		"6AF4F258-B401-42FD-BE91-3D4AC2D7C0D3"
+#define WMID_GUID2		"95764E09-FB56-4E83-B31A-37761F60994A"
+#define WMID_GUID3		"61EF69EA-865C-4BC3-A502-A0DEBA0CB531"
 
 /*
  * Acer ACPI event GUIDs
  */
-#घोषणा ACERWMID_EVENT_GUID "676AA15E-6A47-4D9F-A2CC-1E6D18D14026"
+#define ACERWMID_EVENT_GUID "676AA15E-6A47-4D9F-A2CC-1E6D18D14026"
 
 MODULE_ALIAS("wmi:67C3371D-95A3-4C37-BB61-DD47B491DAAB");
 MODULE_ALIAS("wmi:6AF4F258-B401-42FD-BE91-3D4AC2D7C0D3");
 MODULE_ALIAS("wmi:676AA15E-6A47-4D9F-A2CC-1E6D18D14026");
 
-क्रमागत acer_wmi_event_ids अणु
+enum acer_wmi_event_ids {
 	WMID_HOTKEY_EVENT = 0x1,
 	WMID_ACCEL_OR_KBD_DOCK_EVENT = 0x5,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा key_entry acer_wmi_keymap[] __initस्थिर = अणु
-	अणुKE_KEY, 0x01, अणुKEY_WLANपूर्ण पूर्ण,     /* WiFi */
-	अणुKE_KEY, 0x03, अणुKEY_WLANपूर्ण पूर्ण,     /* WiFi */
-	अणुKE_KEY, 0x04, अणुKEY_WLANपूर्ण पूर्ण,     /* WiFi */
-	अणुKE_KEY, 0x12, अणुKEY_BLUETOOTHपूर्ण पूर्ण,	/* BT */
-	अणुKE_KEY, 0x21, अणुKEY_PROG1पूर्ण पूर्ण,    /* Backup */
-	अणुKE_KEY, 0x22, अणुKEY_PROG2पूर्ण पूर्ण,    /* Arcade */
-	अणुKE_KEY, 0x23, अणुKEY_PROG3पूर्ण पूर्ण,    /* P_Key */
-	अणुKE_KEY, 0x24, अणुKEY_PROG4पूर्ण पूर्ण,    /* Social networking_Key */
-	अणुKE_KEY, 0x29, अणुKEY_PROG3पूर्ण पूर्ण,    /* P_Key क्रम TM8372 */
-	अणुKE_IGNORE, 0x41, अणुKEY_MUTEपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x42, अणुKEY_PREVIOUSSONGपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x4d, अणुKEY_PREVIOUSSONGपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x43, अणुKEY_NEXTSONGपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x4e, अणुKEY_NEXTSONGपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x44, अणुKEY_PLAYPAUSEपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x4f, अणुKEY_PLAYPAUSEपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x45, अणुKEY_STOPपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x50, अणुKEY_STOPपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x48, अणुKEY_VOLUMEUPपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x49, अणुKEY_VOLUMEDOWNपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x4a, अणुKEY_VOLUMEDOWNपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x61, अणुKEY_SWITCHVIDEOMODEपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x62, अणुKEY_BRIGHTNESSUPपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x63, अणुKEY_BRIGHTNESSDOWNपूर्ण पूर्ण,
-	अणुKE_KEY, 0x64, अणुKEY_SWITCHVIDEOMODEपूर्ण पूर्ण,	/* Display Switch */
-	अणुKE_IGNORE, 0x81, अणुKEY_SLEEPपूर्ण पूर्ण,
-	अणुKE_KEY, 0x82, अणुKEY_TOUCHPAD_TOGGLEपूर्ण पूर्ण,	/* Touch Pad Toggle */
-	अणुKE_IGNORE, 0x84, अणुKEY_KBDILLUMTOGGLEपूर्ण पूर्ण, /* Automatic Keyboard background light toggle */
-	अणुKE_KEY, KEY_TOUCHPAD_ON, अणुKEY_TOUCHPAD_ONपूर्ण पूर्ण,
-	अणुKE_KEY, KEY_TOUCHPAD_OFF, अणुKEY_TOUCHPAD_OFFपूर्ण पूर्ण,
-	अणुKE_IGNORE, 0x83, अणुKEY_TOUCHPAD_TOGGLEपूर्ण पूर्ण,
-	अणुKE_KEY, 0x85, अणुKEY_TOUCHPAD_TOGGLEपूर्ण पूर्ण,
-	अणुKE_KEY, 0x86, अणुKEY_WLANपूर्ण पूर्ण,
-	अणुKE_KEY, 0x87, अणुKEY_POWERपूर्ण पूर्ण,
-	अणुKE_END, 0पूर्ण
-पूर्ण;
+static const struct key_entry acer_wmi_keymap[] __initconst = {
+	{KE_KEY, 0x01, {KEY_WLAN} },     /* WiFi */
+	{KE_KEY, 0x03, {KEY_WLAN} },     /* WiFi */
+	{KE_KEY, 0x04, {KEY_WLAN} },     /* WiFi */
+	{KE_KEY, 0x12, {KEY_BLUETOOTH} },	/* BT */
+	{KE_KEY, 0x21, {KEY_PROG1} },    /* Backup */
+	{KE_KEY, 0x22, {KEY_PROG2} },    /* Arcade */
+	{KE_KEY, 0x23, {KEY_PROG3} },    /* P_Key */
+	{KE_KEY, 0x24, {KEY_PROG4} },    /* Social networking_Key */
+	{KE_KEY, 0x29, {KEY_PROG3} },    /* P_Key for TM8372 */
+	{KE_IGNORE, 0x41, {KEY_MUTE} },
+	{KE_IGNORE, 0x42, {KEY_PREVIOUSSONG} },
+	{KE_IGNORE, 0x4d, {KEY_PREVIOUSSONG} },
+	{KE_IGNORE, 0x43, {KEY_NEXTSONG} },
+	{KE_IGNORE, 0x4e, {KEY_NEXTSONG} },
+	{KE_IGNORE, 0x44, {KEY_PLAYPAUSE} },
+	{KE_IGNORE, 0x4f, {KEY_PLAYPAUSE} },
+	{KE_IGNORE, 0x45, {KEY_STOP} },
+	{KE_IGNORE, 0x50, {KEY_STOP} },
+	{KE_IGNORE, 0x48, {KEY_VOLUMEUP} },
+	{KE_IGNORE, 0x49, {KEY_VOLUMEDOWN} },
+	{KE_IGNORE, 0x4a, {KEY_VOLUMEDOWN} },
+	{KE_IGNORE, 0x61, {KEY_SWITCHVIDEOMODE} },
+	{KE_IGNORE, 0x62, {KEY_BRIGHTNESSUP} },
+	{KE_IGNORE, 0x63, {KEY_BRIGHTNESSDOWN} },
+	{KE_KEY, 0x64, {KEY_SWITCHVIDEOMODE} },	/* Display Switch */
+	{KE_IGNORE, 0x81, {KEY_SLEEP} },
+	{KE_KEY, 0x82, {KEY_TOUCHPAD_TOGGLE} },	/* Touch Pad Toggle */
+	{KE_IGNORE, 0x84, {KEY_KBDILLUMTOGGLE} }, /* Automatic Keyboard background light toggle */
+	{KE_KEY, KEY_TOUCHPAD_ON, {KEY_TOUCHPAD_ON} },
+	{KE_KEY, KEY_TOUCHPAD_OFF, {KEY_TOUCHPAD_OFF} },
+	{KE_IGNORE, 0x83, {KEY_TOUCHPAD_TOGGLE} },
+	{KE_KEY, 0x85, {KEY_TOUCHPAD_TOGGLE} },
+	{KE_KEY, 0x86, {KEY_WLAN} },
+	{KE_KEY, 0x87, {KEY_POWER} },
+	{KE_END, 0}
+};
 
-अटल काष्ठा input_dev *acer_wmi_input_dev;
-अटल काष्ठा input_dev *acer_wmi_accel_dev;
+static struct input_dev *acer_wmi_input_dev;
+static struct input_dev *acer_wmi_accel_dev;
 
-काष्ठा event_वापस_value अणु
+struct event_return_value {
 	u8 function;
 	u8 key_num;
 	u16 device_state;
 	u16 reserved1;
-	u8 kbd_करोck_state;
+	u8 kbd_dock_state;
 	u8 reserved2;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
 /*
  * GUID3 Get Device Status device flags
  */
-#घोषणा ACER_WMID3_GDS_WIRELESS		(1<<0)	/* WiFi */
-#घोषणा ACER_WMID3_GDS_THREEG		(1<<6)	/* 3G */
-#घोषणा ACER_WMID3_GDS_WIMAX		(1<<7)	/* WiMAX */
-#घोषणा ACER_WMID3_GDS_BLUETOOTH	(1<<11)	/* BT */
-#घोषणा ACER_WMID3_GDS_RFBTN		(1<<14)	/* RF Button */
+#define ACER_WMID3_GDS_WIRELESS		(1<<0)	/* WiFi */
+#define ACER_WMID3_GDS_THREEG		(1<<6)	/* 3G */
+#define ACER_WMID3_GDS_WIMAX		(1<<7)	/* WiMAX */
+#define ACER_WMID3_GDS_BLUETOOTH	(1<<11)	/* BT */
+#define ACER_WMID3_GDS_RFBTN		(1<<14)	/* RF Button */
 
-#घोषणा ACER_WMID3_GDS_TOUCHPAD		(1<<1)	/* Touchpad */
+#define ACER_WMID3_GDS_TOUCHPAD		(1<<1)	/* Touchpad */
 
 /* Hotkey Customized Setting and Acer Application Status.
  * Set Device Default Value and Report Acer Application Status.
- * When Acer Application starts, it will run this method to inक्रमm
+ * When Acer Application starts, it will run this method to inform
  * BIOS/EC that Acer Application is on.
  * App Status
  *	Bit[0]: Launch Manager Status
@@ -159,137 +158,137 @@ MODULE_ALIAS("wmi:676AA15E-6A47-4D9F-A2CC-1E6D18D14026");
  *	Bit[6]: Device Default Value Control
  *	Bit[7]: Hall Sensor Application Status
  */
-काष्ठा func_input_params अणु
+struct func_input_params {
 	u8 function_num;        /* Function Number */
-	u16 commun_devices;     /* Communication type devices शेष status */
-	u16 devices;            /* Other type devices शेष status */
+	u16 commun_devices;     /* Communication type devices default status */
+	u16 devices;            /* Other type devices default status */
 	u8 app_status;          /* Acer Device Status. LM, ePM, RF Button... */
 	u8 app_mask;		/* Bit mask to app_status */
 	u8 reserved;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा func_वापस_value अणु
+struct func_return_value {
 	u8 error_code;          /* Error Code */
-	u8 ec_वापस_value;     /* EC Return Value */
+	u8 ec_return_value;     /* EC Return Value */
 	u16 reserved;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा wmid3_gds_set_input_param अणु     /* Set Device Status input parameter */
+struct wmid3_gds_set_input_param {     /* Set Device Status input parameter */
 	u8 function_num;        /* Function Number */
 	u8 hotkey_number;       /* Hotkey Number */
 	u16 devices;            /* Set Device */
 	u8 volume_value;        /* Volume Value */
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा wmid3_gds_get_input_param अणु     /* Get Device Status input parameter */
+struct wmid3_gds_get_input_param {     /* Get Device Status input parameter */
 	u8 function_num;	/* Function Number */
 	u8 hotkey_number;	/* Hotkey Number */
 	u16 devices;		/* Get Device */
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा wmid3_gds_वापस_value अणु	/* Get Device Status वापस value*/
+struct wmid3_gds_return_value {	/* Get Device Status return value*/
 	u8 error_code;		/* Error Code */
-	u8 ec_वापस_value;	/* EC Return Value */
+	u8 ec_return_value;	/* EC Return Value */
 	u16 devices;		/* Current Device Status */
 	u32 reserved;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
-काष्ठा hotkey_function_type_aa अणु
+struct hotkey_function_type_aa {
 	u8 type;
 	u8 length;
 	u16 handle;
-	u16 commun_func_biपंचांगap;
-	u16 application_func_biपंचांगap;
-	u16 media_func_biपंचांगap;
-	u16 display_func_biपंचांगap;
-	u16 others_func_biपंचांगap;
+	u16 commun_func_bitmap;
+	u16 application_func_bitmap;
+	u16 media_func_bitmap;
+	u16 display_func_bitmap;
+	u16 others_func_bitmap;
 	u8 commun_fn_key_number;
-पूर्ण __attribute__((packed));
+} __attribute__((packed));
 
 /*
  * Interface capability flags
  */
-#घोषणा ACER_CAP_MAILLED		BIT(0)
-#घोषणा ACER_CAP_WIRELESS		BIT(1)
-#घोषणा ACER_CAP_BLUETOOTH		BIT(2)
-#घोषणा ACER_CAP_BRIGHTNESS		BIT(3)
-#घोषणा ACER_CAP_THREEG			BIT(4)
-#घोषणा ACER_CAP_SET_FUNCTION_MODE	BIT(5)
-#घोषणा ACER_CAP_KBD_DOCK		BIT(6)
+#define ACER_CAP_MAILLED		BIT(0)
+#define ACER_CAP_WIRELESS		BIT(1)
+#define ACER_CAP_BLUETOOTH		BIT(2)
+#define ACER_CAP_BRIGHTNESS		BIT(3)
+#define ACER_CAP_THREEG			BIT(4)
+#define ACER_CAP_SET_FUNCTION_MODE	BIT(5)
+#define ACER_CAP_KBD_DOCK		BIT(6)
 
 /*
  * Interface type flags
  */
-क्रमागत पूर्णांकerface_flags अणु
+enum interface_flags {
 	ACER_AMW0,
 	ACER_AMW0_V2,
 	ACER_WMID,
 	ACER_WMID_v2,
-पूर्ण;
+};
 
-#घोषणा ACER_DEFAULT_WIRELESS  0
-#घोषणा ACER_DEFAULT_BLUETOOTH 0
-#घोषणा ACER_DEFAULT_MAILLED   0
-#घोषणा ACER_DEFAULT_THREEG    0
+#define ACER_DEFAULT_WIRELESS  0
+#define ACER_DEFAULT_BLUETOOTH 0
+#define ACER_DEFAULT_MAILLED   0
+#define ACER_DEFAULT_THREEG    0
 
-अटल पूर्णांक max_brightness = 0xF;
+static int max_brightness = 0xF;
 
-अटल पूर्णांक mailled = -1;
-अटल पूर्णांक brightness = -1;
-अटल पूर्णांक threeg = -1;
-अटल पूर्णांक क्रमce_series;
-अटल पूर्णांक क्रमce_caps = -1;
-अटल bool ec_raw_mode;
-अटल bool has_type_aa;
-अटल u16 commun_func_biपंचांगap;
-अटल u8 commun_fn_key_number;
+static int mailled = -1;
+static int brightness = -1;
+static int threeg = -1;
+static int force_series;
+static int force_caps = -1;
+static bool ec_raw_mode;
+static bool has_type_aa;
+static u16 commun_func_bitmap;
+static u8 commun_fn_key_number;
 
-module_param(mailled, पूर्णांक, 0444);
-module_param(brightness, पूर्णांक, 0444);
-module_param(threeg, पूर्णांक, 0444);
-module_param(क्रमce_series, पूर्णांक, 0444);
-module_param(क्रमce_caps, पूर्णांक, 0444);
+module_param(mailled, int, 0444);
+module_param(brightness, int, 0444);
+module_param(threeg, int, 0444);
+module_param(force_series, int, 0444);
+module_param(force_caps, int, 0444);
 module_param(ec_raw_mode, bool, 0444);
 MODULE_PARM_DESC(mailled, "Set initial state of Mail LED");
 MODULE_PARM_DESC(brightness, "Set initial LCD backlight brightness");
 MODULE_PARM_DESC(threeg, "Set initial state of 3G hardware");
-MODULE_PARM_DESC(क्रमce_series, "Force a different laptop series");
-MODULE_PARM_DESC(क्रमce_caps, "Force the capability bitmask to this value");
+MODULE_PARM_DESC(force_series, "Force a different laptop series");
+MODULE_PARM_DESC(force_caps, "Force the capability bitmask to this value");
 MODULE_PARM_DESC(ec_raw_mode, "Enable EC raw mode");
 
-काष्ठा acer_data अणु
-	पूर्णांक mailled;
-	पूर्णांक threeg;
-	पूर्णांक brightness;
-पूर्ण;
+struct acer_data {
+	int mailled;
+	int threeg;
+	int brightness;
+};
 
-काष्ठा acer_debug अणु
-	काष्ठा dentry *root;
+struct acer_debug {
+	struct dentry *root;
 	u32 wmid_devices;
-पूर्ण;
+};
 
-अटल काष्ठा rfसमाप्त *wireless_rfसमाप्त;
-अटल काष्ठा rfसमाप्त *bluetooth_rfसमाप्त;
-अटल काष्ठा rfसमाप्त *threeg_rfसमाप्त;
-अटल bool rfसमाप्त_inited;
+static struct rfkill *wireless_rfkill;
+static struct rfkill *bluetooth_rfkill;
+static struct rfkill *threeg_rfkill;
+static bool rfkill_inited;
 
-/* Each low-level पूर्णांकerface must define at least some of the following */
-काष्ठा wmi_पूर्णांकerface अणु
+/* Each low-level interface must define at least some of the following */
+struct wmi_interface {
 	/* The WMI device type */
 	u32 type;
 
-	/* The capabilities this पूर्णांकerface provides */
+	/* The capabilities this interface provides */
 	u32 capability;
 
-	/* Private data क्रम the current पूर्णांकerface */
-	काष्ठा acer_data data;
+	/* Private data for the current interface */
+	struct acer_data data;
 
-	/* debugfs entries associated with this पूर्णांकerface */
-	काष्ठा acer_debug debug;
-पूर्ण;
+	/* debugfs entries associated with this interface */
+	struct acer_debug debug;
+};
 
-/* The अटल पूर्णांकerface poपूर्णांकer, poपूर्णांकs to the currently detected पूर्णांकerface */
-अटल काष्ठा wmi_पूर्णांकerface *पूर्णांकerface;
+/* The static interface pointer, points to the currently detected interface */
+static struct wmi_interface *interface;
 
 /*
  * Embedded Controller quirks
@@ -297,617 +296,617 @@ MODULE_PARM_DESC(ec_raw_mode, "Enable EC raw mode");
  * features that are not available through WMI.
  */
 
-काष्ठा quirk_entry अणु
+struct quirk_entry {
 	u8 wireless;
 	u8 mailled;
 	s8 brightness;
 	u8 bluetooth;
-पूर्ण;
+};
 
-अटल काष्ठा quirk_entry *quirks;
+static struct quirk_entry *quirks;
 
-अटल व्योम __init set_quirks(व्योम)
-अणु
-	अगर (quirks->mailled)
-		पूर्णांकerface->capability |= ACER_CAP_MAILLED;
+static void __init set_quirks(void)
+{
+	if (quirks->mailled)
+		interface->capability |= ACER_CAP_MAILLED;
 
-	अगर (quirks->brightness)
-		पूर्णांकerface->capability |= ACER_CAP_BRIGHTNESS;
-पूर्ण
+	if (quirks->brightness)
+		interface->capability |= ACER_CAP_BRIGHTNESS;
+}
 
-अटल पूर्णांक __init dmi_matched(स्थिर काष्ठा dmi_प्रणाली_id *dmi)
-अणु
+static int __init dmi_matched(const struct dmi_system_id *dmi)
+{
 	quirks = dmi->driver_data;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __init set_क्रमce_caps(स्थिर काष्ठा dmi_प्रणाली_id *dmi)
-अणु
-	अगर (क्रमce_caps == -1) अणु
-		क्रमce_caps = (uपूर्णांकptr_t)dmi->driver_data;
-		pr_info("Found %s, set force_caps to 0x%x\n", dmi->ident, क्रमce_caps);
-	पूर्ण
-	वापस 1;
-पूर्ण
+static int __init set_force_caps(const struct dmi_system_id *dmi)
+{
+	if (force_caps == -1) {
+		force_caps = (uintptr_t)dmi->driver_data;
+		pr_info("Found %s, set force_caps to 0x%x\n", dmi->ident, force_caps);
+	}
+	return 1;
+}
 
-अटल काष्ठा quirk_entry quirk_unknown = अणु
-पूर्ण;
+static struct quirk_entry quirk_unknown = {
+};
 
-अटल काष्ठा quirk_entry quirk_acer_aspire_1520 = अणु
+static struct quirk_entry quirk_acer_aspire_1520 = {
 	.brightness = -1,
-पूर्ण;
+};
 
-अटल काष्ठा quirk_entry quirk_acer_travelmate_2490 = अणु
+static struct quirk_entry quirk_acer_travelmate_2490 = {
 	.mailled = 1,
-पूर्ण;
+};
 
 /* This AMW0 laptop has no bluetooth */
-अटल काष्ठा quirk_entry quirk_medion_md_98300 = अणु
+static struct quirk_entry quirk_medion_md_98300 = {
 	.wireless = 1,
-पूर्ण;
+};
 
-अटल काष्ठा quirk_entry quirk_fujitsu_amilo_li_1718 = अणु
+static struct quirk_entry quirk_fujitsu_amilo_li_1718 = {
 	.wireless = 2,
-पूर्ण;
+};
 
-अटल काष्ठा quirk_entry quirk_lenovo_ideapad_s205 = अणु
+static struct quirk_entry quirk_lenovo_ideapad_s205 = {
 	.wireless = 3,
-पूर्ण;
+};
 
-/* The Aspire One has a dummy ACPI-WMI पूर्णांकerface - disable it */
-अटल स्थिर काष्ठा dmi_प्रणाली_id acer_blacklist[] __initस्थिर = अणु
-	अणु
+/* The Aspire One has a dummy ACPI-WMI interface - disable it */
+static const struct dmi_system_id acer_blacklist[] __initconst = {
+	{
 		.ident = "Acer Aspire One (SSD)",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "AOA110"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "Acer Aspire One (HDD)",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "AOA150"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id amw0_whitelist[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id amw0_whitelist[] __initconst = {
+	{
 		.ident = "Acer",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "Gateway",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Gateway"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.ident = "Packard Bell",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Packard Bell"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 
 /*
- * This quirk table is only क्रम Acer/Gateway/Packard Bell family
+ * This quirk table is only for Acer/Gateway/Packard Bell family
  * that those machines are supported by acer-wmi driver.
  */
-अटल स्थिर काष्ठा dmi_प्रणाली_id acer_quirks[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id acer_quirks[] __initconst = {
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 1360",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 1360"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_aspire_1520,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 1520",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 1520"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_aspire_1520,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 3100",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 3100"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 3610",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 3610"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 5100",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5100"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 5610",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5610"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 5630",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5630"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 5650",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5650"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 5680",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5680"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer Aspire 9110",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 9110"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer TravelMate 2490",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "TravelMate 2490"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Acer TravelMate 4200",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "TravelMate 4200"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_acer_travelmate_2490,
-	पूर्ण,
-	अणु
-		.callback = set_क्रमce_caps,
+	},
+	{
+		.callback = set_force_caps,
 		.ident = "Acer Aspire Switch 10E SW3-016",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire SW3-016"),
-		पूर्ण,
-		.driver_data = (व्योम *)ACER_CAP_KBD_DOCK,
-	पूर्ण,
-	अणु
-		.callback = set_क्रमce_caps,
+		},
+		.driver_data = (void *)ACER_CAP_KBD_DOCK,
+	},
+	{
+		.callback = set_force_caps,
 		.ident = "Acer Aspire Switch 10 SW5-012",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire SW5-012"),
-		पूर्ण,
-		.driver_data = (व्योम *)ACER_CAP_KBD_DOCK,
-	पूर्ण,
-	अणु
-		.callback = set_क्रमce_caps,
+		},
+		.driver_data = (void *)ACER_CAP_KBD_DOCK,
+	},
+	{
+		.callback = set_force_caps,
 		.ident = "Acer One 10 (S1003)",
-		.matches = अणु
+		.matches = {
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "One S1003"),
-		पूर्ण,
-		.driver_data = (व्योम *)ACER_CAP_KBD_DOCK,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+		.driver_data = (void *)ACER_CAP_KBD_DOCK,
+	},
+	{}
+};
 
 /*
- * This quirk list is क्रम those non-acer machines that have AMW0_GUID1
+ * This quirk list is for those non-acer machines that have AMW0_GUID1
  * but supported by acer-wmi in past days. Keeping this quirk list here
- * is only क्रम backward compatible. Please करो not add new machine to
+ * is only for backward compatible. Please do not add new machine to
  * here anymore. Those non-acer machines should be supported by
  * appropriate wmi drivers.
  */
-अटल स्थिर काष्ठा dmi_प्रणाली_id non_acer_quirks[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id non_acer_quirks[] __initconst = {
+	{
 		.callback = dmi_matched,
 		.ident = "Fujitsu Siemens Amilo Li 1718",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "FUJITSU SIEMENS"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "AMILO Li 1718"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_fujitsu_amilo_li_1718,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Medion MD 98300",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "MEDION"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "WAM2030"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_medion_md_98300,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Lenovo Ideapad S205",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "10382LG"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_lenovo_ideapad_s205,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Lenovo Ideapad S205 (Brazos)",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Brazos"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_lenovo_ideapad_s205,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Lenovo 3000 N200",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "0687A31"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_fujitsu_amilo_li_1718,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Lenovo Ideapad S205-10382JG",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "10382JG"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_lenovo_ideapad_s205,
-	पूर्ण,
-	अणु
+	},
+	{
 		.callback = dmi_matched,
 		.ident = "Lenovo Ideapad S205-1038DPG",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "1038DPG"),
-		पूर्ण,
+		},
 		.driver_data = &quirk_lenovo_ideapad_s205,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-अटल पूर्णांक __init
-video_set_backlight_video_venकरोr(स्थिर काष्ठा dmi_प्रणाली_id *d)
-अणु
-	पूर्णांकerface->capability &= ~ACER_CAP_BRIGHTNESS;
+static int __init
+video_set_backlight_video_vendor(const struct dmi_system_id *d)
+{
+	interface->capability &= ~ACER_CAP_BRIGHTNESS;
 	pr_info("Brightness must be controlled by generic video driver\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id video_venकरोr_dmi_table[] __initस्थिर = अणु
-	अणु
-		.callback = video_set_backlight_video_venकरोr,
+static const struct dmi_system_id video_vendor_dmi_table[] __initconst = {
+	{
+		.callback = video_set_backlight_video_vendor,
 		.ident = "Acer TravelMate 4750",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "TravelMate 4750"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.callback = video_set_backlight_video_venकरोr,
+		},
+	},
+	{
+		.callback = video_set_backlight_video_vendor,
 		.ident = "Acer Extensa 5235",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Extensa 5235"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.callback = video_set_backlight_video_venकरोr,
+		},
+	},
+	{
+		.callback = video_set_backlight_video_vendor,
 		.ident = "Acer TravelMate 5760",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "TravelMate 5760"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.callback = video_set_backlight_video_venकरोr,
+		},
+	},
+	{
+		.callback = video_set_backlight_video_vendor,
 		.ident = "Acer Aspire 5750",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5750"),
-		पूर्ण,
-	पूर्ण,
-	अणु
-		.callback = video_set_backlight_video_venकरोr,
+		},
+	},
+	{
+		.callback = video_set_backlight_video_vendor,
 		.ident = "Acer Aspire 5741",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire 5741"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/*
-		 * Note no video_set_backlight_video_venकरोr, we must use the
-		 * acer पूर्णांकerface, as there is no native backlight पूर्णांकerface.
+		 * Note no video_set_backlight_video_vendor, we must use the
+		 * acer interface, as there is no native backlight interface.
 		 */
 		.ident = "Acer KAV80",
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "KAV80"),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 
-/* Find which quirks are needed क्रम a particular venकरोr/ model pair */
-अटल व्योम __init find_quirks(व्योम)
-अणु
-	अगर (!क्रमce_series) अणु
-		dmi_check_प्रणाली(acer_quirks);
-		dmi_check_प्रणाली(non_acer_quirks);
-	पूर्ण अन्यथा अगर (क्रमce_series == 2490) अणु
+/* Find which quirks are needed for a particular vendor/ model pair */
+static void __init find_quirks(void)
+{
+	if (!force_series) {
+		dmi_check_system(acer_quirks);
+		dmi_check_system(non_acer_quirks);
+	} else if (force_series == 2490) {
 		quirks = &quirk_acer_travelmate_2490;
-	पूर्ण
+	}
 
-	अगर (quirks == शून्य)
+	if (quirks == NULL)
 		quirks = &quirk_unknown;
-पूर्ण
+}
 
 /*
- * General पूर्णांकerface convenience methods
+ * General interface convenience methods
  */
 
-अटल bool has_cap(u32 cap)
-अणु
-	वापस पूर्णांकerface->capability & cap;
-पूर्ण
+static bool has_cap(u32 cap)
+{
+	return interface->capability & cap;
+}
 
 /*
- * AMW0 (V1) पूर्णांकerface
+ * AMW0 (V1) interface
  */
-काष्ठा wmab_args अणु
+struct wmab_args {
 	u32 eax;
 	u32 ebx;
 	u32 ecx;
 	u32 edx;
-पूर्ण;
+};
 
-काष्ठा wmab_ret अणु
+struct wmab_ret {
 	u32 eax;
 	u32 ebx;
 	u32 ecx;
 	u32 edx;
 	u32 eex;
-पूर्ण;
+};
 
-अटल acpi_status wmab_execute(काष्ठा wmab_args *regbuf,
-काष्ठा acpi_buffer *result)
-अणु
-	काष्ठा acpi_buffer input;
+static acpi_status wmab_execute(struct wmab_args *regbuf,
+struct acpi_buffer *result)
+{
+	struct acpi_buffer input;
 	acpi_status status;
-	input.length = माप(काष्ठा wmab_args);
-	input.poपूर्णांकer = (u8 *)regbuf;
+	input.length = sizeof(struct wmab_args);
+	input.pointer = (u8 *)regbuf;
 
 	status = wmi_evaluate_method(AMW0_GUID1, 0, 1, &input, result);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल acpi_status AMW0_get_u32(u32 *value, u32 cap)
-अणु
-	पूर्णांक err;
+static acpi_status AMW0_get_u32(u32 *value, u32 cap)
+{
+	int err;
 	u8 result;
 
-	चयन (cap) अणु
-	हाल ACER_CAP_MAILLED:
-		चयन (quirks->mailled) अणु
-		शेष:
-			err = ec_पढ़ो(0xA, &result);
-			अगर (err)
-				वापस AE_ERROR;
+	switch (cap) {
+	case ACER_CAP_MAILLED:
+		switch (quirks->mailled) {
+		default:
+			err = ec_read(0xA, &result);
+			if (err)
+				return AE_ERROR;
 			*value = (result >> 7) & 0x1;
-			वापस AE_OK;
-		पूर्ण
-		अवरोध;
-	हाल ACER_CAP_WIRELESS:
-		चयन (quirks->wireless) अणु
-		हाल 1:
-			err = ec_पढ़ो(0x7B, &result);
-			अगर (err)
-				वापस AE_ERROR;
+			return AE_OK;
+		}
+		break;
+	case ACER_CAP_WIRELESS:
+		switch (quirks->wireless) {
+		case 1:
+			err = ec_read(0x7B, &result);
+			if (err)
+				return AE_ERROR;
 			*value = result & 0x1;
-			वापस AE_OK;
-		हाल 2:
-			err = ec_पढ़ो(0x71, &result);
-			अगर (err)
-				वापस AE_ERROR;
+			return AE_OK;
+		case 2:
+			err = ec_read(0x71, &result);
+			if (err)
+				return AE_ERROR;
 			*value = result & 0x1;
-			वापस AE_OK;
-		हाल 3:
-			err = ec_पढ़ो(0x78, &result);
-			अगर (err)
-				वापस AE_ERROR;
+			return AE_OK;
+		case 3:
+			err = ec_read(0x78, &result);
+			if (err)
+				return AE_ERROR;
 			*value = result & 0x1;
-			वापस AE_OK;
-		शेष:
-			err = ec_पढ़ो(0xA, &result);
-			अगर (err)
-				वापस AE_ERROR;
+			return AE_OK;
+		default:
+			err = ec_read(0xA, &result);
+			if (err)
+				return AE_ERROR;
 			*value = (result >> 2) & 0x1;
-			वापस AE_OK;
-		पूर्ण
-		अवरोध;
-	हाल ACER_CAP_BLUETOOTH:
-		चयन (quirks->bluetooth) अणु
-		शेष:
-			err = ec_पढ़ो(0xA, &result);
-			अगर (err)
-				वापस AE_ERROR;
+			return AE_OK;
+		}
+		break;
+	case ACER_CAP_BLUETOOTH:
+		switch (quirks->bluetooth) {
+		default:
+			err = ec_read(0xA, &result);
+			if (err)
+				return AE_ERROR;
 			*value = (result >> 4) & 0x1;
-			वापस AE_OK;
-		पूर्ण
-		अवरोध;
-	हाल ACER_CAP_BRIGHTNESS:
-		चयन (quirks->brightness) अणु
-		शेष:
-			err = ec_पढ़ो(0x83, &result);
-			अगर (err)
-				वापस AE_ERROR;
+			return AE_OK;
+		}
+		break;
+	case ACER_CAP_BRIGHTNESS:
+		switch (quirks->brightness) {
+		default:
+			err = ec_read(0x83, &result);
+			if (err)
+				return AE_ERROR;
 			*value = result;
-			वापस AE_OK;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस AE_ERROR;
-	पूर्ण
-	वापस AE_OK;
-पूर्ण
+			return AE_OK;
+		}
+		break;
+	default:
+		return AE_ERROR;
+	}
+	return AE_OK;
+}
 
-अटल acpi_status AMW0_set_u32(u32 value, u32 cap)
-अणु
-	काष्ठा wmab_args args;
+static acpi_status AMW0_set_u32(u32 value, u32 cap)
+{
+	struct wmab_args args;
 
 	args.eax = ACER_AMW0_WRITE;
 	args.ebx = value ? (1<<8) : 0;
 	args.ecx = args.edx = 0;
 
-	चयन (cap) अणु
-	हाल ACER_CAP_MAILLED:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
+	switch (cap) {
+	case ACER_CAP_MAILLED:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
 		args.ebx |= ACER_AMW0_MAILLED_MASK;
-		अवरोध;
-	हाल ACER_CAP_WIRELESS:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
+		break;
+	case ACER_CAP_WIRELESS:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
 		args.ebx |= ACER_AMW0_WIRELESS_MASK;
-		अवरोध;
-	हाल ACER_CAP_BLUETOOTH:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
+		break;
+	case ACER_CAP_BLUETOOTH:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
 		args.ebx |= ACER_AMW0_BLUETOOTH_MASK;
-		अवरोध;
-	हाल ACER_CAP_BRIGHTNESS:
-		अगर (value > max_brightness)
-			वापस AE_BAD_PARAMETER;
-		चयन (quirks->brightness) अणु
-		शेष:
-			वापस ec_ग_लिखो(0x83, value);
-		पूर्ण
-	शेष:
-		वापस AE_ERROR;
-	पूर्ण
+		break;
+	case ACER_CAP_BRIGHTNESS:
+		if (value > max_brightness)
+			return AE_BAD_PARAMETER;
+		switch (quirks->brightness) {
+		default:
+			return ec_write(0x83, value);
+		}
+	default:
+		return AE_ERROR;
+	}
 
-	/* Actually करो the set */
-	वापस wmab_execute(&args, शून्य);
-पूर्ण
+	/* Actually do the set */
+	return wmab_execute(&args, NULL);
+}
 
-अटल acpi_status __init AMW0_find_mailled(व्योम)
-अणु
-	काष्ठा wmab_args args;
-	काष्ठा wmab_ret ret;
+static acpi_status __init AMW0_find_mailled(void)
+{
+	struct wmab_args args;
+	struct wmab_ret ret;
 	acpi_status status = AE_OK;
-	काष्ठा acpi_buffer out = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+	struct acpi_buffer out = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 
 	args.eax = 0x86;
 	args.ebx = args.ecx = args.edx = 0;
 
 	status = wmab_execute(&args, &out);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = (जोड़ acpi_object *) out.poपूर्णांकer;
-	अगर (obj && obj->type == ACPI_TYPE_BUFFER &&
-	obj->buffer.length == माप(काष्ठा wmab_ret)) अणु
-		ret = *((काष्ठा wmab_ret *) obj->buffer.poपूर्णांकer);
-	पूर्ण अन्यथा अणु
-		kमुक्त(out.poपूर्णांकer);
-		वापस AE_ERROR;
-	पूर्ण
+	obj = (union acpi_object *) out.pointer;
+	if (obj && obj->type == ACPI_TYPE_BUFFER &&
+	obj->buffer.length == sizeof(struct wmab_ret)) {
+		ret = *((struct wmab_ret *) obj->buffer.pointer);
+	} else {
+		kfree(out.pointer);
+		return AE_ERROR;
+	}
 
-	अगर (ret.eex & 0x1)
-		पूर्णांकerface->capability |= ACER_CAP_MAILLED;
+	if (ret.eex & 0x1)
+		interface->capability |= ACER_CAP_MAILLED;
 
-	kमुक्त(out.poपूर्णांकer);
+	kfree(out.pointer);
 
-	वापस AE_OK;
-पूर्ण
+	return AE_OK;
+}
 
-अटल स्थिर काष्ठा acpi_device_id norfसमाप्त_ids[] __initस्थिर = अणु
-	अणु "VPC2004", 0पूर्ण,
-	अणु "IBM0068", 0पूर्ण,
-	अणु "LEN0068", 0पूर्ण,
-	अणु "SNY5001", 0पूर्ण,	/* sony-laptop in अक्षरge */
-	अणु "HPQ6601", 0पूर्ण,
-	अणु "", 0पूर्ण,
-पूर्ण;
+static const struct acpi_device_id norfkill_ids[] __initconst = {
+	{ "VPC2004", 0},
+	{ "IBM0068", 0},
+	{ "LEN0068", 0},
+	{ "SNY5001", 0},	/* sony-laptop in charge */
+	{ "HPQ6601", 0},
+	{ "", 0},
+};
 
-अटल पूर्णांक __init AMW0_set_cap_acpi_check_device(व्योम)
-अणु
-	स्थिर काष्ठा acpi_device_id *id;
+static int __init AMW0_set_cap_acpi_check_device(void)
+{
+	const struct acpi_device_id *id;
 
-	क्रम (id = norfसमाप्त_ids; id->id[0]; id++)
-		अगर (acpi_dev_found(id->id))
-			वापस true;
+	for (id = norfkill_ids; id->id[0]; id++)
+		if (acpi_dev_found(id->id))
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल acpi_status __init AMW0_set_capabilities(व्योम)
-अणु
-	काष्ठा wmab_args args;
-	काष्ठा wmab_ret ret;
+static acpi_status __init AMW0_set_capabilities(void)
+{
+	struct wmab_args args;
+	struct wmab_ret ret;
 	acpi_status status;
-	काष्ठा acpi_buffer out = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+	struct acpi_buffer out = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 
 	/*
-	 * On laptops with this strange GUID (non Acer), normal probing करोesn't
+	 * On laptops with this strange GUID (non Acer), normal probing doesn't
 	 * work.
 	 */
-	अगर (wmi_has_guid(AMW0_GUID2)) अणु
-		अगर ((quirks != &quirk_unknown) ||
+	if (wmi_has_guid(AMW0_GUID2)) {
+		if ((quirks != &quirk_unknown) ||
 		    !AMW0_set_cap_acpi_check_device())
-			पूर्णांकerface->capability |= ACER_CAP_WIRELESS;
-		वापस AE_OK;
-	पूर्ण
+			interface->capability |= ACER_CAP_WIRELESS;
+		return AE_OK;
+	}
 
 	args.eax = ACER_AMW0_WRITE;
 	args.ecx = args.edx = 0;
@@ -916,1327 +915,1327 @@ video_set_backlight_video_venकरोr(स्थिर काष्ठा dmi_�
 	args.ebx |= ACER_AMW0_WIRELESS_MASK;
 
 	status = wmab_execute(&args, &out);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = out.poपूर्णांकer;
-	अगर (obj && obj->type == ACPI_TYPE_BUFFER &&
-	obj->buffer.length == माप(काष्ठा wmab_ret)) अणु
-		ret = *((काष्ठा wmab_ret *) obj->buffer.poपूर्णांकer);
-	पूर्ण अन्यथा अणु
+	obj = out.pointer;
+	if (obj && obj->type == ACPI_TYPE_BUFFER &&
+	obj->buffer.length == sizeof(struct wmab_ret)) {
+		ret = *((struct wmab_ret *) obj->buffer.pointer);
+	} else {
 		status = AE_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ret.eax & 0x1)
-		पूर्णांकerface->capability |= ACER_CAP_WIRELESS;
+	if (ret.eax & 0x1)
+		interface->capability |= ACER_CAP_WIRELESS;
 
 	args.ebx = 2 << 8;
 	args.ebx |= ACER_AMW0_BLUETOOTH_MASK;
 
 	/*
-	 * It's ok to use existing buffer क्रम next wmab_execute call.
-	 * But we need to kमुक्त(out.poपूर्णांकer) अगर next wmab_execute fail.
+	 * It's ok to use existing buffer for next wmab_execute call.
+	 * But we need to kfree(out.pointer) if next wmab_execute fail.
 	 */
 	status = wmab_execute(&args, &out);
-	अगर (ACPI_FAILURE(status))
-		जाओ out;
+	if (ACPI_FAILURE(status))
+		goto out;
 
-	obj = (जोड़ acpi_object *) out.poपूर्णांकer;
-	अगर (obj && obj->type == ACPI_TYPE_BUFFER
-	&& obj->buffer.length == माप(काष्ठा wmab_ret)) अणु
-		ret = *((काष्ठा wmab_ret *) obj->buffer.poपूर्णांकer);
-	पूर्ण अन्यथा अणु
+	obj = (union acpi_object *) out.pointer;
+	if (obj && obj->type == ACPI_TYPE_BUFFER
+	&& obj->buffer.length == sizeof(struct wmab_ret)) {
+		ret = *((struct wmab_ret *) obj->buffer.pointer);
+	} else {
 		status = AE_ERROR;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ret.eax & 0x1)
-		पूर्णांकerface->capability |= ACER_CAP_BLUETOOTH;
+	if (ret.eax & 0x1)
+		interface->capability |= ACER_CAP_BLUETOOTH;
 
 	/*
 	 * This appears to be safe to enable, since all Wistron based laptops
-	 * appear to use the same EC रेजिस्टर क्रम brightness, even अगर they
-	 * dअगरfer क्रम wireless, etc
+	 * appear to use the same EC register for brightness, even if they
+	 * differ for wireless, etc
 	 */
-	अगर (quirks->brightness >= 0)
-		पूर्णांकerface->capability |= ACER_CAP_BRIGHTNESS;
+	if (quirks->brightness >= 0)
+		interface->capability |= ACER_CAP_BRIGHTNESS;
 
 	status = AE_OK;
 out:
-	kमुक्त(out.poपूर्णांकer);
-	वापस status;
-पूर्ण
+	kfree(out.pointer);
+	return status;
+}
 
-अटल काष्ठा wmi_पूर्णांकerface AMW0_पूर्णांकerface = अणु
+static struct wmi_interface AMW0_interface = {
 	.type = ACER_AMW0,
-पूर्ण;
+};
 
-अटल काष्ठा wmi_पूर्णांकerface AMW0_V2_पूर्णांकerface = अणु
+static struct wmi_interface AMW0_V2_interface = {
 	.type = ACER_AMW0_V2,
-पूर्ण;
+};
 
 /*
- * New पूर्णांकerface (The WMID पूर्णांकerface)
+ * New interface (The WMID interface)
  */
-अटल acpi_status
+static acpi_status
 WMI_execute_u32(u32 method_id, u32 in, u32 *out)
-अणु
-	काष्ठा acpi_buffer input = अणु (acpi_size) माप(u32), (व्योम *)(&in) पूर्ण;
-	काष्ठा acpi_buffer result = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
-	u32 पंचांगp = 0;
+{
+	struct acpi_buffer input = { (acpi_size) sizeof(u32), (void *)(&in) };
+	struct acpi_buffer result = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
+	u32 tmp = 0;
 	acpi_status status;
 
 	status = wmi_evaluate_method(WMID_GUID1, 0, method_id, &input, &result);
 
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = (जोड़ acpi_object *) result.poपूर्णांकer;
-	अगर (obj) अणु
-		अगर (obj->type == ACPI_TYPE_BUFFER &&
-			(obj->buffer.length == माप(u32) ||
-			obj->buffer.length == माप(u64))) अणु
-			पंचांगp = *((u32 *) obj->buffer.poपूर्णांकer);
-		पूर्ण अन्यथा अगर (obj->type == ACPI_TYPE_INTEGER) अणु
-			पंचांगp = (u32) obj->पूर्णांकeger.value;
-		पूर्ण
-	पूर्ण
+	obj = (union acpi_object *) result.pointer;
+	if (obj) {
+		if (obj->type == ACPI_TYPE_BUFFER &&
+			(obj->buffer.length == sizeof(u32) ||
+			obj->buffer.length == sizeof(u64))) {
+			tmp = *((u32 *) obj->buffer.pointer);
+		} else if (obj->type == ACPI_TYPE_INTEGER) {
+			tmp = (u32) obj->integer.value;
+		}
+	}
 
-	अगर (out)
-		*out = पंचांगp;
+	if (out)
+		*out = tmp;
 
-	kमुक्त(result.poपूर्णांकer);
+	kfree(result.pointer);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल acpi_status WMID_get_u32(u32 *value, u32 cap)
-अणु
+static acpi_status WMID_get_u32(u32 *value, u32 cap)
+{
 	acpi_status status;
-	u8 पंचांगp;
+	u8 tmp;
 	u32 result, method_id = 0;
 
-	चयन (cap) अणु
-	हाल ACER_CAP_WIRELESS:
+	switch (cap) {
+	case ACER_CAP_WIRELESS:
 		method_id = ACER_WMID_GET_WIRELESS_METHODID;
-		अवरोध;
-	हाल ACER_CAP_BLUETOOTH:
+		break;
+	case ACER_CAP_BLUETOOTH:
 		method_id = ACER_WMID_GET_BLUETOOTH_METHODID;
-		अवरोध;
-	हाल ACER_CAP_BRIGHTNESS:
+		break;
+	case ACER_CAP_BRIGHTNESS:
 		method_id = ACER_WMID_GET_BRIGHTNESS_METHODID;
-		अवरोध;
-	हाल ACER_CAP_THREEG:
+		break;
+	case ACER_CAP_THREEG:
 		method_id = ACER_WMID_GET_THREEG_METHODID;
-		अवरोध;
-	हाल ACER_CAP_MAILLED:
-		अगर (quirks->mailled == 1) अणु
-			ec_पढ़ो(0x9f, &पंचांगp);
-			*value = पंचांगp & 0x1;
-			वापस 0;
-		पूर्ण
+		break;
+	case ACER_CAP_MAILLED:
+		if (quirks->mailled == 1) {
+			ec_read(0x9f, &tmp);
+			*value = tmp & 0x1;
+			return 0;
+		}
 		fallthrough;
-	शेष:
-		वापस AE_ERROR;
-	पूर्ण
+	default:
+		return AE_ERROR;
+	}
 	status = WMI_execute_u32(method_id, 0, &result);
 
-	अगर (ACPI_SUCCESS(status))
+	if (ACPI_SUCCESS(status))
 		*value = (u8)result;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल acpi_status WMID_set_u32(u32 value, u32 cap)
-अणु
+static acpi_status WMID_set_u32(u32 value, u32 cap)
+{
 	u32 method_id = 0;
-	अक्षर param;
+	char param;
 
-	चयन (cap) अणु
-	हाल ACER_CAP_BRIGHTNESS:
-		अगर (value > max_brightness)
-			वापस AE_BAD_PARAMETER;
+	switch (cap) {
+	case ACER_CAP_BRIGHTNESS:
+		if (value > max_brightness)
+			return AE_BAD_PARAMETER;
 		method_id = ACER_WMID_SET_BRIGHTNESS_METHODID;
-		अवरोध;
-	हाल ACER_CAP_WIRELESS:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
+		break;
+	case ACER_CAP_WIRELESS:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
 		method_id = ACER_WMID_SET_WIRELESS_METHODID;
-		अवरोध;
-	हाल ACER_CAP_BLUETOOTH:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
+		break;
+	case ACER_CAP_BLUETOOTH:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
 		method_id = ACER_WMID_SET_BLUETOOTH_METHODID;
-		अवरोध;
-	हाल ACER_CAP_THREEG:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
+		break;
+	case ACER_CAP_THREEG:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
 		method_id = ACER_WMID_SET_THREEG_METHODID;
-		अवरोध;
-	हाल ACER_CAP_MAILLED:
-		अगर (value > 1)
-			वापस AE_BAD_PARAMETER;
-		अगर (quirks->mailled == 1) अणु
+		break;
+	case ACER_CAP_MAILLED:
+		if (value > 1)
+			return AE_BAD_PARAMETER;
+		if (quirks->mailled == 1) {
 			param = value ? 0x92 : 0x93;
 			i8042_lock_chip();
 			i8042_command(&param, 0x1059);
 			i8042_unlock_chip();
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस AE_ERROR;
-	पूर्ण
-	वापस WMI_execute_u32(method_id, (u32)value, शून्य);
-पूर्ण
+			return 0;
+		}
+		break;
+	default:
+		return AE_ERROR;
+	}
+	return WMI_execute_u32(method_id, (u32)value, NULL);
+}
 
-अटल acpi_status wmid3_get_device_status(u32 *value, u16 device)
-अणु
-	काष्ठा wmid3_gds_वापस_value वापस_value;
+static acpi_status wmid3_get_device_status(u32 *value, u16 device)
+{
+	struct wmid3_gds_return_value return_value;
 	acpi_status status;
-	जोड़ acpi_object *obj;
-	काष्ठा wmid3_gds_get_input_param params = अणु
+	union acpi_object *obj;
+	struct wmid3_gds_get_input_param params = {
 		.function_num = 0x1,
 		.hotkey_number = commun_fn_key_number,
 		.devices = device,
-	पूर्ण;
-	काष्ठा acpi_buffer input = अणु
-		माप(काष्ठा wmid3_gds_get_input_param),
+	};
+	struct acpi_buffer input = {
+		sizeof(struct wmid3_gds_get_input_param),
 		&params
-	पूर्ण;
-	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	};
+	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
 
 	status = wmi_evaluate_method(WMID_GUID3, 0, 0x2, &input, &output);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = output.poपूर्णांकer;
+	obj = output.pointer;
 
-	अगर (!obj)
-		वापस AE_ERROR;
-	अन्यथा अगर (obj->type != ACPI_TYPE_BUFFER) अणु
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
-	अगर (obj->buffer.length != 8) अणु
+	if (!obj)
+		return AE_ERROR;
+	else if (obj->type != ACPI_TYPE_BUFFER) {
+		kfree(obj);
+		return AE_ERROR;
+	}
+	if (obj->buffer.length != 8) {
 		pr_warn("Unknown buffer length %d\n", obj->buffer.length);
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
+		kfree(obj);
+		return AE_ERROR;
+	}
 
-	वापस_value = *((काष्ठा wmid3_gds_वापस_value *)obj->buffer.poपूर्णांकer);
-	kमुक्त(obj);
+	return_value = *((struct wmid3_gds_return_value *)obj->buffer.pointer);
+	kfree(obj);
 
-	अगर (वापस_value.error_code || वापस_value.ec_वापस_value)
+	if (return_value.error_code || return_value.ec_return_value)
 		pr_warn("Get 0x%x Device Status failed: 0x%x - 0x%x\n",
 			device,
-			वापस_value.error_code,
-			वापस_value.ec_वापस_value);
-	अन्यथा
-		*value = !!(वापस_value.devices & device);
+			return_value.error_code,
+			return_value.ec_return_value);
+	else
+		*value = !!(return_value.devices & device);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल acpi_status wmid_v2_get_u32(u32 *value, u32 cap)
-अणु
+static acpi_status wmid_v2_get_u32(u32 *value, u32 cap)
+{
 	u16 device;
 
-	चयन (cap) अणु
-	हाल ACER_CAP_WIRELESS:
+	switch (cap) {
+	case ACER_CAP_WIRELESS:
 		device = ACER_WMID3_GDS_WIRELESS;
-		अवरोध;
-	हाल ACER_CAP_BLUETOOTH:
+		break;
+	case ACER_CAP_BLUETOOTH:
 		device = ACER_WMID3_GDS_BLUETOOTH;
-		अवरोध;
-	हाल ACER_CAP_THREEG:
+		break;
+	case ACER_CAP_THREEG:
 		device = ACER_WMID3_GDS_THREEG;
-		अवरोध;
-	शेष:
-		वापस AE_ERROR;
-	पूर्ण
-	वापस wmid3_get_device_status(value, device);
-पूर्ण
+		break;
+	default:
+		return AE_ERROR;
+	}
+	return wmid3_get_device_status(value, device);
+}
 
-अटल acpi_status wmid3_set_device_status(u32 value, u16 device)
-अणु
-	काष्ठा wmid3_gds_वापस_value वापस_value;
+static acpi_status wmid3_set_device_status(u32 value, u16 device)
+{
+	struct wmid3_gds_return_value return_value;
 	acpi_status status;
-	जोड़ acpi_object *obj;
+	union acpi_object *obj;
 	u16 devices;
-	काष्ठा wmid3_gds_get_input_param get_params = अणु
+	struct wmid3_gds_get_input_param get_params = {
 		.function_num = 0x1,
 		.hotkey_number = commun_fn_key_number,
-		.devices = commun_func_biपंचांगap,
-	पूर्ण;
-	काष्ठा acpi_buffer get_input = अणु
-		माप(काष्ठा wmid3_gds_get_input_param),
+		.devices = commun_func_bitmap,
+	};
+	struct acpi_buffer get_input = {
+		sizeof(struct wmid3_gds_get_input_param),
 		&get_params
-	पूर्ण;
-	काष्ठा wmid3_gds_set_input_param set_params = अणु
+	};
+	struct wmid3_gds_set_input_param set_params = {
 		.function_num = 0x2,
 		.hotkey_number = commun_fn_key_number,
-		.devices = commun_func_biपंचांगap,
-	पूर्ण;
-	काष्ठा acpi_buffer set_input = अणु
-		माप(काष्ठा wmid3_gds_set_input_param),
+		.devices = commun_func_bitmap,
+	};
+	struct acpi_buffer set_input = {
+		sizeof(struct wmid3_gds_set_input_param),
 		&set_params
-	पूर्ण;
-	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	काष्ठा acpi_buffer output2 = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	};
+	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
+	struct acpi_buffer output2 = { ACPI_ALLOCATE_BUFFER, NULL };
 
 	status = wmi_evaluate_method(WMID_GUID3, 0, 0x2, &get_input, &output);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = output.poपूर्णांकer;
+	obj = output.pointer;
 
-	अगर (!obj)
-		वापस AE_ERROR;
-	अन्यथा अगर (obj->type != ACPI_TYPE_BUFFER) अणु
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
-	अगर (obj->buffer.length != 8) अणु
+	if (!obj)
+		return AE_ERROR;
+	else if (obj->type != ACPI_TYPE_BUFFER) {
+		kfree(obj);
+		return AE_ERROR;
+	}
+	if (obj->buffer.length != 8) {
 		pr_warn("Unknown buffer length %d\n", obj->buffer.length);
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
+		kfree(obj);
+		return AE_ERROR;
+	}
 
-	वापस_value = *((काष्ठा wmid3_gds_वापस_value *)obj->buffer.poपूर्णांकer);
-	kमुक्त(obj);
+	return_value = *((struct wmid3_gds_return_value *)obj->buffer.pointer);
+	kfree(obj);
 
-	अगर (वापस_value.error_code || वापस_value.ec_वापस_value) अणु
+	if (return_value.error_code || return_value.ec_return_value) {
 		pr_warn("Get Current Device Status failed: 0x%x - 0x%x\n",
-			वापस_value.error_code,
-			वापस_value.ec_वापस_value);
-		वापस status;
-	पूर्ण
+			return_value.error_code,
+			return_value.ec_return_value);
+		return status;
+	}
 
-	devices = वापस_value.devices;
+	devices = return_value.devices;
 	set_params.devices = (value) ? (devices | device) : (devices & ~device);
 
 	status = wmi_evaluate_method(WMID_GUID3, 0, 0x1, &set_input, &output2);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = output2.poपूर्णांकer;
+	obj = output2.pointer;
 
-	अगर (!obj)
-		वापस AE_ERROR;
-	अन्यथा अगर (obj->type != ACPI_TYPE_BUFFER) अणु
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
-	अगर (obj->buffer.length != 4) अणु
+	if (!obj)
+		return AE_ERROR;
+	else if (obj->type != ACPI_TYPE_BUFFER) {
+		kfree(obj);
+		return AE_ERROR;
+	}
+	if (obj->buffer.length != 4) {
 		pr_warn("Unknown buffer length %d\n", obj->buffer.length);
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
+		kfree(obj);
+		return AE_ERROR;
+	}
 
-	वापस_value = *((काष्ठा wmid3_gds_वापस_value *)obj->buffer.poपूर्णांकer);
-	kमुक्त(obj);
+	return_value = *((struct wmid3_gds_return_value *)obj->buffer.pointer);
+	kfree(obj);
 
-	अगर (वापस_value.error_code || वापस_value.ec_वापस_value)
+	if (return_value.error_code || return_value.ec_return_value)
 		pr_warn("Set Device Status failed: 0x%x - 0x%x\n",
-			वापस_value.error_code,
-			वापस_value.ec_वापस_value);
+			return_value.error_code,
+			return_value.ec_return_value);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल acpi_status wmid_v2_set_u32(u32 value, u32 cap)
-अणु
+static acpi_status wmid_v2_set_u32(u32 value, u32 cap)
+{
 	u16 device;
 
-	चयन (cap) अणु
-	हाल ACER_CAP_WIRELESS:
+	switch (cap) {
+	case ACER_CAP_WIRELESS:
 		device = ACER_WMID3_GDS_WIRELESS;
-		अवरोध;
-	हाल ACER_CAP_BLUETOOTH:
+		break;
+	case ACER_CAP_BLUETOOTH:
 		device = ACER_WMID3_GDS_BLUETOOTH;
-		अवरोध;
-	हाल ACER_CAP_THREEG:
+		break;
+	case ACER_CAP_THREEG:
 		device = ACER_WMID3_GDS_THREEG;
-		अवरोध;
-	शेष:
-		वापस AE_ERROR;
-	पूर्ण
-	वापस wmid3_set_device_status(value, device);
-पूर्ण
+		break;
+	default:
+		return AE_ERROR;
+	}
+	return wmid3_set_device_status(value, device);
+}
 
-अटल व्योम __init type_aa_dmi_decode(स्थिर काष्ठा dmi_header *header, व्योम *d)
-अणु
-	काष्ठा hotkey_function_type_aa *type_aa;
+static void __init type_aa_dmi_decode(const struct dmi_header *header, void *d)
+{
+	struct hotkey_function_type_aa *type_aa;
 
-	/* We are looking क्रम OEM-specअगरic Type AAh */
-	अगर (header->type != 0xAA)
-		वापस;
+	/* We are looking for OEM-specific Type AAh */
+	if (header->type != 0xAA)
+		return;
 
 	has_type_aa = true;
-	type_aa = (काष्ठा hotkey_function_type_aa *) header;
+	type_aa = (struct hotkey_function_type_aa *) header;
 
 	pr_info("Function bitmap for Communication Button: 0x%x\n",
-		type_aa->commun_func_biपंचांगap);
-	commun_func_biपंचांगap = type_aa->commun_func_biपंचांगap;
+		type_aa->commun_func_bitmap);
+	commun_func_bitmap = type_aa->commun_func_bitmap;
 
-	अगर (type_aa->commun_func_biपंचांगap & ACER_WMID3_GDS_WIRELESS)
-		पूर्णांकerface->capability |= ACER_CAP_WIRELESS;
-	अगर (type_aa->commun_func_biपंचांगap & ACER_WMID3_GDS_THREEG)
-		पूर्णांकerface->capability |= ACER_CAP_THREEG;
-	अगर (type_aa->commun_func_biपंचांगap & ACER_WMID3_GDS_BLUETOOTH)
-		पूर्णांकerface->capability |= ACER_CAP_BLUETOOTH;
-	अगर (type_aa->commun_func_biपंचांगap & ACER_WMID3_GDS_RFBTN)
-		commun_func_biपंचांगap &= ~ACER_WMID3_GDS_RFBTN;
+	if (type_aa->commun_func_bitmap & ACER_WMID3_GDS_WIRELESS)
+		interface->capability |= ACER_CAP_WIRELESS;
+	if (type_aa->commun_func_bitmap & ACER_WMID3_GDS_THREEG)
+		interface->capability |= ACER_CAP_THREEG;
+	if (type_aa->commun_func_bitmap & ACER_WMID3_GDS_BLUETOOTH)
+		interface->capability |= ACER_CAP_BLUETOOTH;
+	if (type_aa->commun_func_bitmap & ACER_WMID3_GDS_RFBTN)
+		commun_func_bitmap &= ~ACER_WMID3_GDS_RFBTN;
 
 	commun_fn_key_number = type_aa->commun_fn_key_number;
-पूर्ण
+}
 
-अटल acpi_status __init WMID_set_capabilities(व्योम)
-अणु
-	काष्ठा acpi_buffer out = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
-	जोड़ acpi_object *obj;
+static acpi_status __init WMID_set_capabilities(void)
+{
+	struct acpi_buffer out = {ACPI_ALLOCATE_BUFFER, NULL};
+	union acpi_object *obj;
 	acpi_status status;
 	u32 devices;
 
 	status = wmi_query_block(WMID_GUID2, 0, &out);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = (जोड़ acpi_object *) out.poपूर्णांकer;
-	अगर (obj) अणु
-		अगर (obj->type == ACPI_TYPE_BUFFER &&
-			(obj->buffer.length == माप(u32) ||
-			obj->buffer.length == माप(u64))) अणु
-			devices = *((u32 *) obj->buffer.poपूर्णांकer);
-		पूर्ण अन्यथा अगर (obj->type == ACPI_TYPE_INTEGER) अणु
-			devices = (u32) obj->पूर्णांकeger.value;
-		पूर्ण अन्यथा अणु
-			kमुक्त(out.poपूर्णांकer);
-			वापस AE_ERROR;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		kमुक्त(out.poपूर्णांकer);
-		वापस AE_ERROR;
-	पूर्ण
+	obj = (union acpi_object *) out.pointer;
+	if (obj) {
+		if (obj->type == ACPI_TYPE_BUFFER &&
+			(obj->buffer.length == sizeof(u32) ||
+			obj->buffer.length == sizeof(u64))) {
+			devices = *((u32 *) obj->buffer.pointer);
+		} else if (obj->type == ACPI_TYPE_INTEGER) {
+			devices = (u32) obj->integer.value;
+		} else {
+			kfree(out.pointer);
+			return AE_ERROR;
+		}
+	} else {
+		kfree(out.pointer);
+		return AE_ERROR;
+	}
 
 	pr_info("Function bitmap for Communication Device: 0x%x\n", devices);
-	अगर (devices & 0x07)
-		पूर्णांकerface->capability |= ACER_CAP_WIRELESS;
-	अगर (devices & 0x40)
-		पूर्णांकerface->capability |= ACER_CAP_THREEG;
-	अगर (devices & 0x10)
-		पूर्णांकerface->capability |= ACER_CAP_BLUETOOTH;
+	if (devices & 0x07)
+		interface->capability |= ACER_CAP_WIRELESS;
+	if (devices & 0x40)
+		interface->capability |= ACER_CAP_THREEG;
+	if (devices & 0x10)
+		interface->capability |= ACER_CAP_BLUETOOTH;
 
-	अगर (!(devices & 0x20))
+	if (!(devices & 0x20))
 		max_brightness = 0x9;
 
-	kमुक्त(out.poपूर्णांकer);
-	वापस status;
-पूर्ण
+	kfree(out.pointer);
+	return status;
+}
 
-अटल काष्ठा wmi_पूर्णांकerface wmid_पूर्णांकerface = अणु
+static struct wmi_interface wmid_interface = {
 	.type = ACER_WMID,
-पूर्ण;
+};
 
-अटल काष्ठा wmi_पूर्णांकerface wmid_v2_पूर्णांकerface = अणु
+static struct wmi_interface wmid_v2_interface = {
 	.type = ACER_WMID_v2,
-पूर्ण;
+};
 
 /*
- * Generic Device (पूर्णांकerface-independent)
+ * Generic Device (interface-independent)
  */
 
-अटल acpi_status get_u32(u32 *value, u32 cap)
-अणु
+static acpi_status get_u32(u32 *value, u32 cap)
+{
 	acpi_status status = AE_ERROR;
 
-	चयन (पूर्णांकerface->type) अणु
-	हाल ACER_AMW0:
+	switch (interface->type) {
+	case ACER_AMW0:
 		status = AMW0_get_u32(value, cap);
-		अवरोध;
-	हाल ACER_AMW0_V2:
-		अगर (cap == ACER_CAP_MAILLED) अणु
+		break;
+	case ACER_AMW0_V2:
+		if (cap == ACER_CAP_MAILLED) {
 			status = AMW0_get_u32(value, cap);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		fallthrough;
-	हाल ACER_WMID:
+	case ACER_WMID:
 		status = WMID_get_u32(value, cap);
-		अवरोध;
-	हाल ACER_WMID_v2:
-		अगर (cap & (ACER_CAP_WIRELESS |
+		break;
+	case ACER_WMID_v2:
+		if (cap & (ACER_CAP_WIRELESS |
 			   ACER_CAP_BLUETOOTH |
 			   ACER_CAP_THREEG))
 			status = wmid_v2_get_u32(value, cap);
-		अन्यथा अगर (wmi_has_guid(WMID_GUID2))
+		else if (wmi_has_guid(WMID_GUID2))
 			status = WMID_get_u32(value, cap);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल acpi_status set_u32(u32 value, u32 cap)
-अणु
+static acpi_status set_u32(u32 value, u32 cap)
+{
 	acpi_status status;
 
-	अगर (पूर्णांकerface->capability & cap) अणु
-		चयन (पूर्णांकerface->type) अणु
-		हाल ACER_AMW0:
-			वापस AMW0_set_u32(value, cap);
-		हाल ACER_AMW0_V2:
-			अगर (cap == ACER_CAP_MAILLED)
-				वापस AMW0_set_u32(value, cap);
+	if (interface->capability & cap) {
+		switch (interface->type) {
+		case ACER_AMW0:
+			return AMW0_set_u32(value, cap);
+		case ACER_AMW0_V2:
+			if (cap == ACER_CAP_MAILLED)
+				return AMW0_set_u32(value, cap);
 
 			/*
-			 * On some models, some WMID methods करोn't toggle
-			 * properly. For those हालs, we want to run the AMW0
+			 * On some models, some WMID methods don't toggle
+			 * properly. For those cases, we want to run the AMW0
 			 * method afterwards to be certain we've really toggled
 			 * the device state.
 			 */
-			अगर (cap == ACER_CAP_WIRELESS ||
-				cap == ACER_CAP_BLUETOOTH) अणु
+			if (cap == ACER_CAP_WIRELESS ||
+				cap == ACER_CAP_BLUETOOTH) {
 				status = WMID_set_u32(value, cap);
-				अगर (ACPI_FAILURE(status))
-					वापस status;
+				if (ACPI_FAILURE(status))
+					return status;
 
-				वापस AMW0_set_u32(value, cap);
-			पूर्ण
+				return AMW0_set_u32(value, cap);
+			}
 			fallthrough;
-		हाल ACER_WMID:
-			वापस WMID_set_u32(value, cap);
-		हाल ACER_WMID_v2:
-			अगर (cap & (ACER_CAP_WIRELESS |
+		case ACER_WMID:
+			return WMID_set_u32(value, cap);
+		case ACER_WMID_v2:
+			if (cap & (ACER_CAP_WIRELESS |
 				   ACER_CAP_BLUETOOTH |
 				   ACER_CAP_THREEG))
-				वापस wmid_v2_set_u32(value, cap);
-			अन्यथा अगर (wmi_has_guid(WMID_GUID2))
-				वापस WMID_set_u32(value, cap);
+				return wmid_v2_set_u32(value, cap);
+			else if (wmi_has_guid(WMID_GUID2))
+				return WMID_set_u32(value, cap);
 			fallthrough;
-		शेष:
-			वापस AE_BAD_PARAMETER;
-		पूर्ण
-	पूर्ण
-	वापस AE_BAD_PARAMETER;
-पूर्ण
+		default:
+			return AE_BAD_PARAMETER;
+		}
+	}
+	return AE_BAD_PARAMETER;
+}
 
-अटल व्योम __init acer_commandline_init(व्योम)
-अणु
+static void __init acer_commandline_init(void)
+{
 	/*
-	 * These will all fail silently अगर the value given is invalid, or the
-	 * capability isn't available on the given पूर्णांकerface
+	 * These will all fail silently if the value given is invalid, or the
+	 * capability isn't available on the given interface
 	 */
-	अगर (mailled >= 0)
+	if (mailled >= 0)
 		set_u32(mailled, ACER_CAP_MAILLED);
-	अगर (!has_type_aa && threeg >= 0)
+	if (!has_type_aa && threeg >= 0)
 		set_u32(threeg, ACER_CAP_THREEG);
-	अगर (brightness >= 0)
+	if (brightness >= 0)
 		set_u32(brightness, ACER_CAP_BRIGHTNESS);
-पूर्ण
+}
 
 /*
  * LED device (Mail LED only, no other LEDs known yet)
  */
-अटल व्योम mail_led_set(काष्ठा led_classdev *led_cdev,
-क्रमागत led_brightness value)
-अणु
+static void mail_led_set(struct led_classdev *led_cdev,
+enum led_brightness value)
+{
 	set_u32(value, ACER_CAP_MAILLED);
-पूर्ण
+}
 
-अटल काष्ठा led_classdev mail_led = अणु
+static struct led_classdev mail_led = {
 	.name = "acer-wmi::mail",
 	.brightness_set = mail_led_set,
-पूर्ण;
+};
 
-अटल पूर्णांक acer_led_init(काष्ठा device *dev)
-अणु
-	वापस led_classdev_रेजिस्टर(dev, &mail_led);
-पूर्ण
+static int acer_led_init(struct device *dev)
+{
+	return led_classdev_register(dev, &mail_led);
+}
 
-अटल व्योम acer_led_निकास(व्योम)
-अणु
+static void acer_led_exit(void)
+{
 	set_u32(LED_OFF, ACER_CAP_MAILLED);
-	led_classdev_unरेजिस्टर(&mail_led);
-पूर्ण
+	led_classdev_unregister(&mail_led);
+}
 
 /*
  * Backlight device
  */
-अटल काष्ठा backlight_device *acer_backlight_device;
+static struct backlight_device *acer_backlight_device;
 
-अटल पूर्णांक पढ़ो_brightness(काष्ठा backlight_device *bd)
-अणु
+static int read_brightness(struct backlight_device *bd)
+{
 	u32 value;
 	get_u32(&value, ACER_CAP_BRIGHTNESS);
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल पूर्णांक update_bl_status(काष्ठा backlight_device *bd)
-अणु
-	पूर्णांक पूर्णांकensity = bd->props.brightness;
+static int update_bl_status(struct backlight_device *bd)
+{
+	int intensity = bd->props.brightness;
 
-	अगर (bd->props.घातer != FB_BLANK_UNBLANK)
-		पूर्णांकensity = 0;
-	अगर (bd->props.fb_blank != FB_BLANK_UNBLANK)
-		पूर्णांकensity = 0;
+	if (bd->props.power != FB_BLANK_UNBLANK)
+		intensity = 0;
+	if (bd->props.fb_blank != FB_BLANK_UNBLANK)
+		intensity = 0;
 
-	set_u32(पूर्णांकensity, ACER_CAP_BRIGHTNESS);
+	set_u32(intensity, ACER_CAP_BRIGHTNESS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा backlight_ops acer_bl_ops = अणु
-	.get_brightness = पढ़ो_brightness,
+static const struct backlight_ops acer_bl_ops = {
+	.get_brightness = read_brightness,
 	.update_status = update_bl_status,
-पूर्ण;
+};
 
-अटल पूर्णांक acer_backlight_init(काष्ठा device *dev)
-अणु
-	काष्ठा backlight_properties props;
-	काष्ठा backlight_device *bd;
+static int acer_backlight_init(struct device *dev)
+{
+	struct backlight_properties props;
+	struct backlight_device *bd;
 
-	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
+	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = max_brightness;
-	bd = backlight_device_रेजिस्टर("acer-wmi", dev, शून्य, &acer_bl_ops,
+	bd = backlight_device_register("acer-wmi", dev, NULL, &acer_bl_ops,
 				       &props);
-	अगर (IS_ERR(bd)) अणु
+	if (IS_ERR(bd)) {
 		pr_err("Could not register Acer backlight device\n");
-		acer_backlight_device = शून्य;
-		वापस PTR_ERR(bd);
-	पूर्ण
+		acer_backlight_device = NULL;
+		return PTR_ERR(bd);
+	}
 
 	acer_backlight_device = bd;
 
-	bd->props.घातer = FB_BLANK_UNBLANK;
-	bd->props.brightness = पढ़ो_brightness(bd);
+	bd->props.power = FB_BLANK_UNBLANK;
+	bd->props.brightness = read_brightness(bd);
 	backlight_update_status(bd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम acer_backlight_निकास(व्योम)
-अणु
-	backlight_device_unरेजिस्टर(acer_backlight_device);
-पूर्ण
+static void acer_backlight_exit(void)
+{
+	backlight_device_unregister(acer_backlight_device);
+}
 
 /*
  * Accelerometer device
  */
-अटल acpi_handle gsensor_handle;
+static acpi_handle gsensor_handle;
 
-अटल पूर्णांक acer_gsensor_init(व्योम)
-अणु
+static int acer_gsensor_init(void)
+{
 	acpi_status status;
-	काष्ठा acpi_buffer output;
-	जोड़ acpi_object out_obj;
+	struct acpi_buffer output;
+	union acpi_object out_obj;
 
-	output.length = माप(out_obj);
-	output.poपूर्णांकer = &out_obj;
-	status = acpi_evaluate_object(gsensor_handle, "_INI", शून्य, &output);
-	अगर (ACPI_FAILURE(status))
-		वापस -1;
+	output.length = sizeof(out_obj);
+	output.pointer = &out_obj;
+	status = acpi_evaluate_object(gsensor_handle, "_INI", NULL, &output);
+	if (ACPI_FAILURE(status))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acer_gsensor_खोलो(काष्ठा input_dev *input)
-अणु
-	वापस acer_gsensor_init();
-पूर्ण
+static int acer_gsensor_open(struct input_dev *input)
+{
+	return acer_gsensor_init();
+}
 
-अटल पूर्णांक acer_gsensor_event(व्योम)
-अणु
+static int acer_gsensor_event(void)
+{
 	acpi_status status;
-	काष्ठा acpi_buffer output;
-	जोड़ acpi_object out_obj[5];
+	struct acpi_buffer output;
+	union acpi_object out_obj[5];
 
-	अगर (!acer_wmi_accel_dev)
-		वापस -1;
+	if (!acer_wmi_accel_dev)
+		return -1;
 
-	output.length = माप(out_obj);
-	output.poपूर्णांकer = out_obj;
+	output.length = sizeof(out_obj);
+	output.pointer = out_obj;
 
-	status = acpi_evaluate_object(gsensor_handle, "RDVL", शून्य, &output);
-	अगर (ACPI_FAILURE(status))
-		वापस -1;
+	status = acpi_evaluate_object(gsensor_handle, "RDVL", NULL, &output);
+	if (ACPI_FAILURE(status))
+		return -1;
 
-	अगर (out_obj->package.count != 4)
-		वापस -1;
+	if (out_obj->package.count != 4)
+		return -1;
 
-	input_report_असल(acer_wmi_accel_dev, ABS_X,
-		(s16)out_obj->package.elements[0].पूर्णांकeger.value);
-	input_report_असल(acer_wmi_accel_dev, ABS_Y,
-		(s16)out_obj->package.elements[1].पूर्णांकeger.value);
-	input_report_असल(acer_wmi_accel_dev, ABS_Z,
-		(s16)out_obj->package.elements[2].पूर्णांकeger.value);
+	input_report_abs(acer_wmi_accel_dev, ABS_X,
+		(s16)out_obj->package.elements[0].integer.value);
+	input_report_abs(acer_wmi_accel_dev, ABS_Y,
+		(s16)out_obj->package.elements[1].integer.value);
+	input_report_abs(acer_wmi_accel_dev, ABS_Z,
+		(s16)out_obj->package.elements[2].integer.value);
 	input_sync(acer_wmi_accel_dev);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Switch series keyboard करोck status
+ * Switch series keyboard dock status
  */
-अटल पूर्णांक acer_kbd_करोck_state_to_sw_tablet_mode(u8 kbd_करोck_state)
-अणु
-	चयन (kbd_करोck_state) अणु
-	हाल 0x01: /* Docked, traditional clamshell laptop mode */
-		वापस 0;
-	हाल 0x04: /* Stand-alone tablet */
-	हाल 0x40: /* Docked, tent mode, keyboard not usable */
-		वापस 1;
-	शेष:
-		pr_warn("Unknown kbd_dock_state 0x%02x\n", kbd_करोck_state);
-	पूर्ण
+static int acer_kbd_dock_state_to_sw_tablet_mode(u8 kbd_dock_state)
+{
+	switch (kbd_dock_state) {
+	case 0x01: /* Docked, traditional clamshell laptop mode */
+		return 0;
+	case 0x04: /* Stand-alone tablet */
+	case 0x40: /* Docked, tent mode, keyboard not usable */
+		return 1;
+	default:
+		pr_warn("Unknown kbd_dock_state 0x%02x\n", kbd_dock_state);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम acer_kbd_करोck_get_initial_state(व्योम)
-अणु
-	u8 *output, input[8] = अणु 0x05, 0x00, पूर्ण;
-	काष्ठा acpi_buffer input_buf = अणु माप(input), input पूर्ण;
-	काष्ठा acpi_buffer output_buf = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
+static void acer_kbd_dock_get_initial_state(void)
+{
+	u8 *output, input[8] = { 0x05, 0x00, };
+	struct acpi_buffer input_buf = { sizeof(input), input };
+	struct acpi_buffer output_buf = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
 	acpi_status status;
-	पूर्णांक sw_tablet_mode;
+	int sw_tablet_mode;
 
 	status = wmi_evaluate_method(WMID_GUID3, 0, 0x2, &input_buf, &output_buf);
-	अगर (ACPI_FAILURE(status)) अणु
+	if (ACPI_FAILURE(status)) {
 		pr_err("Error getting keyboard-dock initial status: %s\n",
-		       acpi_क्रमmat_exception(status));
-		वापस;
-	पूर्ण
+		       acpi_format_exception(status));
+		return;
+	}
 
-	obj = output_buf.poपूर्णांकer;
-	अगर (!obj || obj->type != ACPI_TYPE_BUFFER || obj->buffer.length != 8) अणु
+	obj = output_buf.pointer;
+	if (!obj || obj->type != ACPI_TYPE_BUFFER || obj->buffer.length != 8) {
 		pr_err("Unexpected output format getting keyboard-dock initial status\n");
-		जाओ out_मुक्त_obj;
-	पूर्ण
+		goto out_free_obj;
+	}
 
-	output = obj->buffer.poपूर्णांकer;
-	अगर (output[0] != 0x00 || (output[3] != 0x05 && output[3] != 0x45)) अणु
+	output = obj->buffer.pointer;
+	if (output[0] != 0x00 || (output[3] != 0x05 && output[3] != 0x45)) {
 		pr_err("Unexpected output [0]=0x%02x [3]=0x%02x getting keyboard-dock initial status\n",
 		       output[0], output[3]);
-		जाओ out_मुक्त_obj;
-	पूर्ण
+		goto out_free_obj;
+	}
 
-	sw_tablet_mode = acer_kbd_करोck_state_to_sw_tablet_mode(output[4]);
-	input_report_चयन(acer_wmi_input_dev, SW_TABLET_MODE, sw_tablet_mode);
+	sw_tablet_mode = acer_kbd_dock_state_to_sw_tablet_mode(output[4]);
+	input_report_switch(acer_wmi_input_dev, SW_TABLET_MODE, sw_tablet_mode);
 
-out_मुक्त_obj:
-	kमुक्त(obj);
-पूर्ण
+out_free_obj:
+	kfree(obj);
+}
 
-अटल व्योम acer_kbd_करोck_event(स्थिर काष्ठा event_वापस_value *event)
-अणु
-	पूर्णांक sw_tablet_mode;
+static void acer_kbd_dock_event(const struct event_return_value *event)
+{
+	int sw_tablet_mode;
 
-	अगर (!has_cap(ACER_CAP_KBD_DOCK))
-		वापस;
+	if (!has_cap(ACER_CAP_KBD_DOCK))
+		return;
 
-	sw_tablet_mode = acer_kbd_करोck_state_to_sw_tablet_mode(event->kbd_करोck_state);
-	input_report_चयन(acer_wmi_input_dev, SW_TABLET_MODE, sw_tablet_mode);
+	sw_tablet_mode = acer_kbd_dock_state_to_sw_tablet_mode(event->kbd_dock_state);
+	input_report_switch(acer_wmi_input_dev, SW_TABLET_MODE, sw_tablet_mode);
 	input_sync(acer_wmi_input_dev);
-पूर्ण
+}
 
 /*
- * Rfसमाप्त devices
+ * Rfkill devices
  */
-अटल व्योम acer_rfसमाप्त_update(काष्ठा work_काष्ठा *ignored);
-अटल DECLARE_DELAYED_WORK(acer_rfसमाप्त_work, acer_rfसमाप्त_update);
-अटल व्योम acer_rfसमाप्त_update(काष्ठा work_काष्ठा *ignored)
-अणु
+static void acer_rfkill_update(struct work_struct *ignored);
+static DECLARE_DELAYED_WORK(acer_rfkill_work, acer_rfkill_update);
+static void acer_rfkill_update(struct work_struct *ignored)
+{
 	u32 state;
 	acpi_status status;
 
-	अगर (has_cap(ACER_CAP_WIRELESS)) अणु
+	if (has_cap(ACER_CAP_WIRELESS)) {
 		status = get_u32(&state, ACER_CAP_WIRELESS);
-		अगर (ACPI_SUCCESS(status)) अणु
-			अगर (quirks->wireless == 3)
-				rfसमाप्त_set_hw_state(wireless_rfसमाप्त, !state);
-			अन्यथा
-				rfसमाप्त_set_sw_state(wireless_rfसमाप्त, !state);
-		पूर्ण
-	पूर्ण
+		if (ACPI_SUCCESS(status)) {
+			if (quirks->wireless == 3)
+				rfkill_set_hw_state(wireless_rfkill, !state);
+			else
+				rfkill_set_sw_state(wireless_rfkill, !state);
+		}
+	}
 
-	अगर (has_cap(ACER_CAP_BLUETOOTH)) अणु
+	if (has_cap(ACER_CAP_BLUETOOTH)) {
 		status = get_u32(&state, ACER_CAP_BLUETOOTH);
-		अगर (ACPI_SUCCESS(status))
-			rfसमाप्त_set_sw_state(bluetooth_rfसमाप्त, !state);
-	पूर्ण
+		if (ACPI_SUCCESS(status))
+			rfkill_set_sw_state(bluetooth_rfkill, !state);
+	}
 
-	अगर (has_cap(ACER_CAP_THREEG) && wmi_has_guid(WMID_GUID3)) अणु
+	if (has_cap(ACER_CAP_THREEG) && wmi_has_guid(WMID_GUID3)) {
 		status = get_u32(&state, ACER_WMID3_GDS_THREEG);
-		अगर (ACPI_SUCCESS(status))
-			rfसमाप्त_set_sw_state(threeg_rfसमाप्त, !state);
-	पूर्ण
+		if (ACPI_SUCCESS(status))
+			rfkill_set_sw_state(threeg_rfkill, !state);
+	}
 
-	schedule_delayed_work(&acer_rfसमाप्त_work, round_jअगरfies_relative(HZ));
-पूर्ण
+	schedule_delayed_work(&acer_rfkill_work, round_jiffies_relative(HZ));
+}
 
-अटल पूर्णांक acer_rfसमाप्त_set(व्योम *data, bool blocked)
-अणु
+static int acer_rfkill_set(void *data, bool blocked)
+{
 	acpi_status status;
-	u32 cap = (अचिन्हित दीर्घ)data;
+	u32 cap = (unsigned long)data;
 
-	अगर (rfसमाप्त_inited) अणु
+	if (rfkill_inited) {
 		status = set_u32(!blocked, cap);
-		अगर (ACPI_FAILURE(status))
-			वापस -ENODEV;
-	पूर्ण
+		if (ACPI_FAILURE(status))
+			return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rfसमाप्त_ops acer_rfसमाप्त_ops = अणु
-	.set_block = acer_rfसमाप्त_set,
-पूर्ण;
+static const struct rfkill_ops acer_rfkill_ops = {
+	.set_block = acer_rfkill_set,
+};
 
-अटल काष्ठा rfसमाप्त *acer_rfसमाप्त_रेजिस्टर(काष्ठा device *dev,
-					   क्रमागत rfसमाप्त_type type,
-					   अक्षर *name, u32 cap)
-अणु
-	पूर्णांक err;
-	काष्ठा rfसमाप्त *rfसमाप्त_dev;
+static struct rfkill *acer_rfkill_register(struct device *dev,
+					   enum rfkill_type type,
+					   char *name, u32 cap)
+{
+	int err;
+	struct rfkill *rfkill_dev;
 	u32 state;
 	acpi_status status;
 
-	rfसमाप्त_dev = rfसमाप्त_alloc(name, dev, type,
-				  &acer_rfसमाप्त_ops,
-				  (व्योम *)(अचिन्हित दीर्घ)cap);
-	अगर (!rfसमाप्त_dev)
-		वापस ERR_PTR(-ENOMEM);
+	rfkill_dev = rfkill_alloc(name, dev, type,
+				  &acer_rfkill_ops,
+				  (void *)(unsigned long)cap);
+	if (!rfkill_dev)
+		return ERR_PTR(-ENOMEM);
 
 	status = get_u32(&state, cap);
 
-	err = rfसमाप्त_रेजिस्टर(rfसमाप्त_dev);
-	अगर (err) अणु
-		rfसमाप्त_destroy(rfसमाप्त_dev);
-		वापस ERR_PTR(err);
-	पूर्ण
+	err = rfkill_register(rfkill_dev);
+	if (err) {
+		rfkill_destroy(rfkill_dev);
+		return ERR_PTR(err);
+	}
 
-	अगर (ACPI_SUCCESS(status))
-		rfसमाप्त_set_sw_state(rfसमाप्त_dev, !state);
+	if (ACPI_SUCCESS(status))
+		rfkill_set_sw_state(rfkill_dev, !state);
 
-	वापस rfसमाप्त_dev;
-पूर्ण
+	return rfkill_dev;
+}
 
-अटल पूर्णांक acer_rfसमाप्त_init(काष्ठा device *dev)
-अणु
-	पूर्णांक err;
+static int acer_rfkill_init(struct device *dev)
+{
+	int err;
 
-	अगर (has_cap(ACER_CAP_WIRELESS)) अणु
-		wireless_rfसमाप्त = acer_rfसमाप्त_रेजिस्टर(dev, RFKILL_TYPE_WLAN,
+	if (has_cap(ACER_CAP_WIRELESS)) {
+		wireless_rfkill = acer_rfkill_register(dev, RFKILL_TYPE_WLAN,
 			"acer-wireless", ACER_CAP_WIRELESS);
-		अगर (IS_ERR(wireless_rfसमाप्त)) अणु
-			err = PTR_ERR(wireless_rfसमाप्त);
-			जाओ error_wireless;
-		पूर्ण
-	पूर्ण
+		if (IS_ERR(wireless_rfkill)) {
+			err = PTR_ERR(wireless_rfkill);
+			goto error_wireless;
+		}
+	}
 
-	अगर (has_cap(ACER_CAP_BLUETOOTH)) अणु
-		bluetooth_rfसमाप्त = acer_rfसमाप्त_रेजिस्टर(dev,
+	if (has_cap(ACER_CAP_BLUETOOTH)) {
+		bluetooth_rfkill = acer_rfkill_register(dev,
 			RFKILL_TYPE_BLUETOOTH, "acer-bluetooth",
 			ACER_CAP_BLUETOOTH);
-		अगर (IS_ERR(bluetooth_rfसमाप्त)) अणु
-			err = PTR_ERR(bluetooth_rfसमाप्त);
-			जाओ error_bluetooth;
-		पूर्ण
-	पूर्ण
+		if (IS_ERR(bluetooth_rfkill)) {
+			err = PTR_ERR(bluetooth_rfkill);
+			goto error_bluetooth;
+		}
+	}
 
-	अगर (has_cap(ACER_CAP_THREEG)) अणु
-		threeg_rfसमाप्त = acer_rfसमाप्त_रेजिस्टर(dev,
+	if (has_cap(ACER_CAP_THREEG)) {
+		threeg_rfkill = acer_rfkill_register(dev,
 			RFKILL_TYPE_WWAN, "acer-threeg",
 			ACER_CAP_THREEG);
-		अगर (IS_ERR(threeg_rfसमाप्त)) अणु
-			err = PTR_ERR(threeg_rfसमाप्त);
-			जाओ error_threeg;
-		पूर्ण
-	पूर्ण
+		if (IS_ERR(threeg_rfkill)) {
+			err = PTR_ERR(threeg_rfkill);
+			goto error_threeg;
+		}
+	}
 
-	rfसमाप्त_inited = true;
+	rfkill_inited = true;
 
-	अगर ((ec_raw_mode || !wmi_has_guid(ACERWMID_EVENT_GUID)) &&
+	if ((ec_raw_mode || !wmi_has_guid(ACERWMID_EVENT_GUID)) &&
 	    has_cap(ACER_CAP_WIRELESS | ACER_CAP_BLUETOOTH | ACER_CAP_THREEG))
-		schedule_delayed_work(&acer_rfसमाप्त_work,
-			round_jअगरfies_relative(HZ));
+		schedule_delayed_work(&acer_rfkill_work,
+			round_jiffies_relative(HZ));
 
-	वापस 0;
+	return 0;
 
 error_threeg:
-	अगर (has_cap(ACER_CAP_BLUETOOTH)) अणु
-		rfसमाप्त_unरेजिस्टर(bluetooth_rfसमाप्त);
-		rfसमाप्त_destroy(bluetooth_rfसमाप्त);
-	पूर्ण
+	if (has_cap(ACER_CAP_BLUETOOTH)) {
+		rfkill_unregister(bluetooth_rfkill);
+		rfkill_destroy(bluetooth_rfkill);
+	}
 error_bluetooth:
-	अगर (has_cap(ACER_CAP_WIRELESS)) अणु
-		rfसमाप्त_unरेजिस्टर(wireless_rfसमाप्त);
-		rfसमाप्त_destroy(wireless_rfसमाप्त);
-	पूर्ण
+	if (has_cap(ACER_CAP_WIRELESS)) {
+		rfkill_unregister(wireless_rfkill);
+		rfkill_destroy(wireless_rfkill);
+	}
 error_wireless:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम acer_rfसमाप्त_निकास(व्योम)
-अणु
-	अगर ((ec_raw_mode || !wmi_has_guid(ACERWMID_EVENT_GUID)) &&
+static void acer_rfkill_exit(void)
+{
+	if ((ec_raw_mode || !wmi_has_guid(ACERWMID_EVENT_GUID)) &&
 	    has_cap(ACER_CAP_WIRELESS | ACER_CAP_BLUETOOTH | ACER_CAP_THREEG))
-		cancel_delayed_work_sync(&acer_rfसमाप्त_work);
+		cancel_delayed_work_sync(&acer_rfkill_work);
 
-	अगर (has_cap(ACER_CAP_WIRELESS)) अणु
-		rfसमाप्त_unरेजिस्टर(wireless_rfसमाप्त);
-		rfसमाप्त_destroy(wireless_rfसमाप्त);
-	पूर्ण
+	if (has_cap(ACER_CAP_WIRELESS)) {
+		rfkill_unregister(wireless_rfkill);
+		rfkill_destroy(wireless_rfkill);
+	}
 
-	अगर (has_cap(ACER_CAP_BLUETOOTH)) अणु
-		rfसमाप्त_unरेजिस्टर(bluetooth_rfसमाप्त);
-		rfसमाप्त_destroy(bluetooth_rfसमाप्त);
-	पूर्ण
+	if (has_cap(ACER_CAP_BLUETOOTH)) {
+		rfkill_unregister(bluetooth_rfkill);
+		rfkill_destroy(bluetooth_rfkill);
+	}
 
-	अगर (has_cap(ACER_CAP_THREEG)) अणु
-		rfसमाप्त_unरेजिस्टर(threeg_rfसमाप्त);
-		rfसमाप्त_destroy(threeg_rfसमाप्त);
-	पूर्ण
-	वापस;
-पूर्ण
+	if (has_cap(ACER_CAP_THREEG)) {
+		rfkill_unregister(threeg_rfkill);
+		rfkill_destroy(threeg_rfkill);
+	}
+	return;
+}
 
-अटल व्योम acer_wmi_notअगरy(u32 value, व्योम *context)
-अणु
-	काष्ठा acpi_buffer response = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
-	जोड़ acpi_object *obj;
-	काष्ठा event_वापस_value वापस_value;
+static void acer_wmi_notify(u32 value, void *context)
+{
+	struct acpi_buffer response = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
+	struct event_return_value return_value;
 	acpi_status status;
 	u16 device_state;
-	स्थिर काष्ठा key_entry *key;
+	const struct key_entry *key;
 	u32 scancode;
 
 	status = wmi_get_event_data(value, &response);
-	अगर (status != AE_OK) अणु
+	if (status != AE_OK) {
 		pr_warn("bad event status 0x%x\n", status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	obj = (जोड़ acpi_object *)response.poपूर्णांकer;
+	obj = (union acpi_object *)response.pointer;
 
-	अगर (!obj)
-		वापस;
-	अगर (obj->type != ACPI_TYPE_BUFFER) अणु
+	if (!obj)
+		return;
+	if (obj->type != ACPI_TYPE_BUFFER) {
 		pr_warn("Unknown response received %d\n", obj->type);
-		kमुक्त(obj);
-		वापस;
-	पूर्ण
-	अगर (obj->buffer.length != 8) अणु
+		kfree(obj);
+		return;
+	}
+	if (obj->buffer.length != 8) {
 		pr_warn("Unknown buffer length %d\n", obj->buffer.length);
-		kमुक्त(obj);
-		वापस;
-	पूर्ण
+		kfree(obj);
+		return;
+	}
 
-	वापस_value = *((काष्ठा event_वापस_value *)obj->buffer.poपूर्णांकer);
-	kमुक्त(obj);
+	return_value = *((struct event_return_value *)obj->buffer.pointer);
+	kfree(obj);
 
-	चयन (वापस_value.function) अणु
-	हाल WMID_HOTKEY_EVENT:
-		device_state = वापस_value.device_state;
+	switch (return_value.function) {
+	case WMID_HOTKEY_EVENT:
+		device_state = return_value.device_state;
 		pr_debug("device state: 0x%x\n", device_state);
 
 		key = sparse_keymap_entry_from_scancode(acer_wmi_input_dev,
-							वापस_value.key_num);
-		अगर (!key) अणु
+							return_value.key_num);
+		if (!key) {
 			pr_warn("Unknown key number - 0x%x\n",
-				वापस_value.key_num);
-		पूर्ण अन्यथा अणु
-			scancode = वापस_value.key_num;
-			चयन (key->keycode) अणु
-			हाल KEY_WLAN:
-			हाल KEY_BLUETOOTH:
-				अगर (has_cap(ACER_CAP_WIRELESS))
-					rfसमाप्त_set_sw_state(wireless_rfसमाप्त,
+				return_value.key_num);
+		} else {
+			scancode = return_value.key_num;
+			switch (key->keycode) {
+			case KEY_WLAN:
+			case KEY_BLUETOOTH:
+				if (has_cap(ACER_CAP_WIRELESS))
+					rfkill_set_sw_state(wireless_rfkill,
 						!(device_state & ACER_WMID3_GDS_WIRELESS));
-				अगर (has_cap(ACER_CAP_THREEG))
-					rfसमाप्त_set_sw_state(threeg_rfसमाप्त,
+				if (has_cap(ACER_CAP_THREEG))
+					rfkill_set_sw_state(threeg_rfkill,
 						!(device_state & ACER_WMID3_GDS_THREEG));
-				अगर (has_cap(ACER_CAP_BLUETOOTH))
-					rfसमाप्त_set_sw_state(bluetooth_rfसमाप्त,
+				if (has_cap(ACER_CAP_BLUETOOTH))
+					rfkill_set_sw_state(bluetooth_rfkill,
 						!(device_state & ACER_WMID3_GDS_BLUETOOTH));
-				अवरोध;
-			हाल KEY_TOUCHPAD_TOGGLE:
+				break;
+			case KEY_TOUCHPAD_TOGGLE:
 				scancode = (device_state & ACER_WMID3_GDS_TOUCHPAD) ?
 						KEY_TOUCHPAD_ON : KEY_TOUCHPAD_OFF;
-			पूर्ण
+			}
 			sparse_keymap_report_event(acer_wmi_input_dev, scancode, 1, true);
-		पूर्ण
-		अवरोध;
-	हाल WMID_ACCEL_OR_KBD_DOCK_EVENT:
+		}
+		break;
+	case WMID_ACCEL_OR_KBD_DOCK_EVENT:
 		acer_gsensor_event();
-		acer_kbd_करोck_event(&वापस_value);
-		अवरोध;
-	शेष:
+		acer_kbd_dock_event(&return_value);
+		break;
+	default:
 		pr_warn("Unknown function number - %d - %d\n",
-			वापस_value.function, वापस_value.key_num);
-		अवरोध;
-	पूर्ण
-पूर्ण
+			return_value.function, return_value.key_num);
+		break;
+	}
+}
 
-अटल acpi_status __init
-wmid3_set_function_mode(काष्ठा func_input_params *params,
-			काष्ठा func_वापस_value *वापस_value)
-अणु
+static acpi_status __init
+wmid3_set_function_mode(struct func_input_params *params,
+			struct func_return_value *return_value)
+{
 	acpi_status status;
-	जोड़ acpi_object *obj;
+	union acpi_object *obj;
 
-	काष्ठा acpi_buffer input = अणु माप(काष्ठा func_input_params), params पूर्ण;
-	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	struct acpi_buffer input = { sizeof(struct func_input_params), params };
+	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
 
 	status = wmi_evaluate_method(WMID_GUID3, 0, 0x1, &input, &output);
-	अगर (ACPI_FAILURE(status))
-		वापस status;
+	if (ACPI_FAILURE(status))
+		return status;
 
-	obj = output.poपूर्णांकer;
+	obj = output.pointer;
 
-	अगर (!obj)
-		वापस AE_ERROR;
-	अन्यथा अगर (obj->type != ACPI_TYPE_BUFFER) अणु
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
-	अगर (obj->buffer.length != 4) अणु
+	if (!obj)
+		return AE_ERROR;
+	else if (obj->type != ACPI_TYPE_BUFFER) {
+		kfree(obj);
+		return AE_ERROR;
+	}
+	if (obj->buffer.length != 4) {
 		pr_warn("Unknown buffer length %d\n", obj->buffer.length);
-		kमुक्त(obj);
-		वापस AE_ERROR;
-	पूर्ण
+		kfree(obj);
+		return AE_ERROR;
+	}
 
-	*वापस_value = *((काष्ठा func_वापस_value *)obj->buffer.poपूर्णांकer);
-	kमुक्त(obj);
+	*return_value = *((struct func_return_value *)obj->buffer.pointer);
+	kfree(obj);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक __init acer_wmi_enable_ec_raw(व्योम)
-अणु
-	काष्ठा func_वापस_value वापस_value;
+static int __init acer_wmi_enable_ec_raw(void)
+{
+	struct func_return_value return_value;
 	acpi_status status;
-	काष्ठा func_input_params params = अणु
+	struct func_input_params params = {
 		.function_num = 0x1,
 		.commun_devices = 0xFFFF,
 		.devices = 0xFFFF,
 		.app_status = 0x00,		/* Launch Manager Deactive */
 		.app_mask = 0x01,
-	पूर्ण;
+	};
 
-	status = wmid3_set_function_mode(&params, &वापस_value);
+	status = wmid3_set_function_mode(&params, &return_value);
 
-	अगर (वापस_value.error_code || वापस_value.ec_वापस_value)
+	if (return_value.error_code || return_value.ec_return_value)
 		pr_warn("Enabling EC raw mode failed: 0x%x - 0x%x\n",
-			वापस_value.error_code,
-			वापस_value.ec_वापस_value);
-	अन्यथा
+			return_value.error_code,
+			return_value.ec_return_value);
+	else
 		pr_info("Enabled EC raw mode\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक __init acer_wmi_enable_lm(व्योम)
-अणु
-	काष्ठा func_वापस_value वापस_value;
+static int __init acer_wmi_enable_lm(void)
+{
+	struct func_return_value return_value;
 	acpi_status status;
-	काष्ठा func_input_params params = अणु
+	struct func_input_params params = {
 		.function_num = 0x1,
 		.commun_devices = 0xFFFF,
 		.devices = 0xFFFF,
 		.app_status = 0x01,            /* Launch Manager Active */
 		.app_mask = 0x01,
-	पूर्ण;
+	};
 
-	status = wmid3_set_function_mode(&params, &वापस_value);
+	status = wmid3_set_function_mode(&params, &return_value);
 
-	अगर (वापस_value.error_code || वापस_value.ec_वापस_value)
+	if (return_value.error_code || return_value.ec_return_value)
 		pr_warn("Enabling Launch Manager failed: 0x%x - 0x%x\n",
-			वापस_value.error_code,
-			वापस_value.ec_वापस_value);
+			return_value.error_code,
+			return_value.ec_return_value);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक __init acer_wmi_enable_rf_button(व्योम)
-अणु
-	काष्ठा func_वापस_value वापस_value;
+static int __init acer_wmi_enable_rf_button(void)
+{
+	struct func_return_value return_value;
 	acpi_status status;
-	काष्ठा func_input_params params = अणु
+	struct func_input_params params = {
 		.function_num = 0x1,
 		.commun_devices = 0xFFFF,
 		.devices = 0xFFFF,
 		.app_status = 0x10,            /* RF Button Active */
 		.app_mask = 0x10,
-	पूर्ण;
+	};
 
-	status = wmid3_set_function_mode(&params, &वापस_value);
+	status = wmid3_set_function_mode(&params, &return_value);
 
-	अगर (वापस_value.error_code || वापस_value.ec_वापस_value)
+	if (return_value.error_code || return_value.ec_return_value)
 		pr_warn("Enabling RF Button failed: 0x%x - 0x%x\n",
-			वापस_value.error_code,
-			वापस_value.ec_वापस_value);
+			return_value.error_code,
+			return_value.ec_return_value);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक __init acer_wmi_accel_setup(व्योम)
-अणु
-	काष्ठा acpi_device *adev;
-	पूर्णांक err;
+static int __init acer_wmi_accel_setup(void)
+{
+	struct acpi_device *adev;
+	int err;
 
-	adev = acpi_dev_get_first_match_dev("BST0001", शून्य, -1);
-	अगर (!adev)
-		वापस -ENODEV;
+	adev = acpi_dev_get_first_match_dev("BST0001", NULL, -1);
+	if (!adev)
+		return -ENODEV;
 
 	gsensor_handle = acpi_device_handle(adev);
 	acpi_dev_put(adev);
 
 	acer_wmi_accel_dev = input_allocate_device();
-	अगर (!acer_wmi_accel_dev)
-		वापस -ENOMEM;
+	if (!acer_wmi_accel_dev)
+		return -ENOMEM;
 
-	acer_wmi_accel_dev->खोलो = acer_gsensor_खोलो;
+	acer_wmi_accel_dev->open = acer_gsensor_open;
 
 	acer_wmi_accel_dev->name = "Acer BMA150 accelerometer";
 	acer_wmi_accel_dev->phys = "wmi/input1";
 	acer_wmi_accel_dev->id.bustype = BUS_HOST;
 	acer_wmi_accel_dev->evbit[0] = BIT_MASK(EV_ABS);
-	input_set_असल_params(acer_wmi_accel_dev, ABS_X, -16384, 16384, 0, 0);
-	input_set_असल_params(acer_wmi_accel_dev, ABS_Y, -16384, 16384, 0, 0);
-	input_set_असल_params(acer_wmi_accel_dev, ABS_Z, -16384, 16384, 0, 0);
+	input_set_abs_params(acer_wmi_accel_dev, ABS_X, -16384, 16384, 0, 0);
+	input_set_abs_params(acer_wmi_accel_dev, ABS_Y, -16384, 16384, 0, 0);
+	input_set_abs_params(acer_wmi_accel_dev, ABS_Z, -16384, 16384, 0, 0);
 
-	err = input_रेजिस्टर_device(acer_wmi_accel_dev);
-	अगर (err)
-		जाओ err_मुक्त_dev;
+	err = input_register_device(acer_wmi_accel_dev);
+	if (err)
+		goto err_free_dev;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_dev:
-	input_मुक्त_device(acer_wmi_accel_dev);
-	वापस err;
-पूर्ण
+err_free_dev:
+	input_free_device(acer_wmi_accel_dev);
+	return err;
+}
 
-अटल पूर्णांक __init acer_wmi_input_setup(व्योम)
-अणु
+static int __init acer_wmi_input_setup(void)
+{
 	acpi_status status;
-	पूर्णांक err;
+	int err;
 
 	acer_wmi_input_dev = input_allocate_device();
-	अगर (!acer_wmi_input_dev)
-		वापस -ENOMEM;
+	if (!acer_wmi_input_dev)
+		return -ENOMEM;
 
 	acer_wmi_input_dev->name = "Acer WMI hotkeys";
 	acer_wmi_input_dev->phys = "wmi/input0";
 	acer_wmi_input_dev->id.bustype = BUS_HOST;
 
-	err = sparse_keymap_setup(acer_wmi_input_dev, acer_wmi_keymap, शून्य);
-	अगर (err)
-		जाओ err_मुक्त_dev;
+	err = sparse_keymap_setup(acer_wmi_input_dev, acer_wmi_keymap, NULL);
+	if (err)
+		goto err_free_dev;
 
-	अगर (has_cap(ACER_CAP_KBD_DOCK))
+	if (has_cap(ACER_CAP_KBD_DOCK))
 		input_set_capability(acer_wmi_input_dev, EV_SW, SW_TABLET_MODE);
 
-	status = wmi_install_notअगरy_handler(ACERWMID_EVENT_GUID,
-						acer_wmi_notअगरy, शून्य);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = wmi_install_notify_handler(ACERWMID_EVENT_GUID,
+						acer_wmi_notify, NULL);
+	if (ACPI_FAILURE(status)) {
 		err = -EIO;
-		जाओ err_मुक्त_dev;
-	पूर्ण
+		goto err_free_dev;
+	}
 
-	अगर (has_cap(ACER_CAP_KBD_DOCK))
-		acer_kbd_करोck_get_initial_state();
+	if (has_cap(ACER_CAP_KBD_DOCK))
+		acer_kbd_dock_get_initial_state();
 
-	err = input_रेजिस्टर_device(acer_wmi_input_dev);
-	अगर (err)
-		जाओ err_uninstall_notअगरier;
+	err = input_register_device(acer_wmi_input_dev);
+	if (err)
+		goto err_uninstall_notifier;
 
-	वापस 0;
+	return 0;
 
-err_uninstall_notअगरier:
-	wmi_हटाओ_notअगरy_handler(ACERWMID_EVENT_GUID);
-err_मुक्त_dev:
-	input_मुक्त_device(acer_wmi_input_dev);
-	वापस err;
-पूर्ण
+err_uninstall_notifier:
+	wmi_remove_notify_handler(ACERWMID_EVENT_GUID);
+err_free_dev:
+	input_free_device(acer_wmi_input_dev);
+	return err;
+}
 
-अटल व्योम acer_wmi_input_destroy(व्योम)
-अणु
-	wmi_हटाओ_notअगरy_handler(ACERWMID_EVENT_GUID);
-	input_unरेजिस्टर_device(acer_wmi_input_dev);
-पूर्ण
+static void acer_wmi_input_destroy(void)
+{
+	wmi_remove_notify_handler(ACERWMID_EVENT_GUID);
+	input_unregister_device(acer_wmi_input_dev);
+}
 
 /*
  * debugfs functions
  */
-अटल u32 get_wmid_devices(व्योम)
-अणु
-	काष्ठा acpi_buffer out = अणुACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
-	जोड़ acpi_object *obj;
+static u32 get_wmid_devices(void)
+{
+	struct acpi_buffer out = {ACPI_ALLOCATE_BUFFER, NULL};
+	union acpi_object *obj;
 	acpi_status status;
 	u32 devices = 0;
 
 	status = wmi_query_block(WMID_GUID2, 0, &out);
-	अगर (ACPI_FAILURE(status))
-		वापस 0;
+	if (ACPI_FAILURE(status))
+		return 0;
 
-	obj = (जोड़ acpi_object *) out.poपूर्णांकer;
-	अगर (obj) अणु
-		अगर (obj->type == ACPI_TYPE_BUFFER &&
-			(obj->buffer.length == माप(u32) ||
-			obj->buffer.length == माप(u64))) अणु
-			devices = *((u32 *) obj->buffer.poपूर्णांकer);
-		पूर्ण अन्यथा अगर (obj->type == ACPI_TYPE_INTEGER) अणु
-			devices = (u32) obj->पूर्णांकeger.value;
-		पूर्ण
-	पूर्ण
+	obj = (union acpi_object *) out.pointer;
+	if (obj) {
+		if (obj->type == ACPI_TYPE_BUFFER &&
+			(obj->buffer.length == sizeof(u32) ||
+			obj->buffer.length == sizeof(u64))) {
+			devices = *((u32 *) obj->buffer.pointer);
+		} else if (obj->type == ACPI_TYPE_INTEGER) {
+			devices = (u32) obj->integer.value;
+		}
+	}
 
-	kमुक्त(out.poपूर्णांकer);
-	वापस devices;
-पूर्ण
+	kfree(out.pointer);
+	return devices;
+}
 
 /*
- * Platक्रमm device
+ * Platform device
  */
-अटल पूर्णांक acer_platक्रमm_probe(काष्ठा platक्रमm_device *device)
-अणु
-	पूर्णांक err;
+static int acer_platform_probe(struct platform_device *device)
+{
+	int err;
 
-	अगर (has_cap(ACER_CAP_MAILLED)) अणु
+	if (has_cap(ACER_CAP_MAILLED)) {
 		err = acer_led_init(&device->dev);
-		अगर (err)
-			जाओ error_mailled;
-	पूर्ण
+		if (err)
+			goto error_mailled;
+	}
 
-	अगर (has_cap(ACER_CAP_BRIGHTNESS)) अणु
+	if (has_cap(ACER_CAP_BRIGHTNESS)) {
 		err = acer_backlight_init(&device->dev);
-		अगर (err)
-			जाओ error_brightness;
-	पूर्ण
+		if (err)
+			goto error_brightness;
+	}
 
-	err = acer_rfसमाप्त_init(&device->dev);
-	अगर (err)
-		जाओ error_rfसमाप्त;
+	err = acer_rfkill_init(&device->dev);
+	if (err)
+		goto error_rfkill;
 
-	वापस err;
+	return err;
 
-error_rfसमाप्त:
-	अगर (has_cap(ACER_CAP_BRIGHTNESS))
-		acer_backlight_निकास();
+error_rfkill:
+	if (has_cap(ACER_CAP_BRIGHTNESS))
+		acer_backlight_exit();
 error_brightness:
-	अगर (has_cap(ACER_CAP_MAILLED))
-		acer_led_निकास();
+	if (has_cap(ACER_CAP_MAILLED))
+		acer_led_exit();
 error_mailled:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक acer_platक्रमm_हटाओ(काष्ठा platक्रमm_device *device)
-अणु
-	अगर (has_cap(ACER_CAP_MAILLED))
-		acer_led_निकास();
-	अगर (has_cap(ACER_CAP_BRIGHTNESS))
-		acer_backlight_निकास();
+static int acer_platform_remove(struct platform_device *device)
+{
+	if (has_cap(ACER_CAP_MAILLED))
+		acer_led_exit();
+	if (has_cap(ACER_CAP_BRIGHTNESS))
+		acer_backlight_exit();
 
-	acer_rfसमाप्त_निकास();
-	वापस 0;
-पूर्ण
+	acer_rfkill_exit();
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक acer_suspend(काष्ठा device *dev)
-अणु
+#ifdef CONFIG_PM_SLEEP
+static int acer_suspend(struct device *dev)
+{
 	u32 value;
-	काष्ठा acer_data *data = &पूर्णांकerface->data;
+	struct acer_data *data = &interface->data;
 
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	अगर (has_cap(ACER_CAP_MAILLED)) अणु
+	if (has_cap(ACER_CAP_MAILLED)) {
 		get_u32(&value, ACER_CAP_MAILLED);
 		set_u32(LED_OFF, ACER_CAP_MAILLED);
 		data->mailled = value;
-	पूर्ण
+	}
 
-	अगर (has_cap(ACER_CAP_BRIGHTNESS)) अणु
+	if (has_cap(ACER_CAP_BRIGHTNESS)) {
 		get_u32(&value, ACER_CAP_BRIGHTNESS);
 		data->brightness = value;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक acer_resume(काष्ठा device *dev)
-अणु
-	काष्ठा acer_data *data = &पूर्णांकerface->data;
+static int acer_resume(struct device *dev)
+{
+	struct acer_data *data = &interface->data;
 
-	अगर (!data)
-		वापस -ENOMEM;
+	if (!data)
+		return -ENOMEM;
 
-	अगर (has_cap(ACER_CAP_MAILLED))
+	if (has_cap(ACER_CAP_MAILLED))
 		set_u32(data->mailled, ACER_CAP_MAILLED);
 
-	अगर (has_cap(ACER_CAP_BRIGHTNESS))
+	if (has_cap(ACER_CAP_BRIGHTNESS))
 		set_u32(data->brightness, ACER_CAP_BRIGHTNESS);
 
-	अगर (acer_wmi_accel_dev)
+	if (acer_wmi_accel_dev)
 		acer_gsensor_init();
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा acer_suspend	शून्य
-#घोषणा acer_resume	शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define acer_suspend	NULL
+#define acer_resume	NULL
+#endif
 
-अटल SIMPLE_DEV_PM_OPS(acer_pm, acer_suspend, acer_resume);
+static SIMPLE_DEV_PM_OPS(acer_pm, acer_suspend, acer_resume);
 
-अटल व्योम acer_platक्रमm_shutकरोwn(काष्ठा platक्रमm_device *device)
-अणु
-	काष्ठा acer_data *data = &पूर्णांकerface->data;
+static void acer_platform_shutdown(struct platform_device *device)
+{
+	struct acer_data *data = &interface->data;
 
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
-	अगर (has_cap(ACER_CAP_MAILLED))
+	if (has_cap(ACER_CAP_MAILLED))
 		set_u32(LED_OFF, ACER_CAP_MAILLED);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver acer_platक्रमm_driver = अणु
-	.driver = अणु
+static struct platform_driver acer_platform_driver = {
+	.driver = {
 		.name = "acer-wmi",
 		.pm = &acer_pm,
-	पूर्ण,
-	.probe = acer_platक्रमm_probe,
-	.हटाओ = acer_platक्रमm_हटाओ,
-	.shutकरोwn = acer_platक्रमm_shutकरोwn,
-पूर्ण;
+	},
+	.probe = acer_platform_probe,
+	.remove = acer_platform_remove,
+	.shutdown = acer_platform_shutdown,
+};
 
-अटल काष्ठा platक्रमm_device *acer_platक्रमm_device;
+static struct platform_device *acer_platform_device;
 
-अटल व्योम हटाओ_debugfs(व्योम)
-अणु
-	debugfs_हटाओ_recursive(पूर्णांकerface->debug.root);
-पूर्ण
+static void remove_debugfs(void)
+{
+	debugfs_remove_recursive(interface->debug.root);
+}
 
-अटल व्योम __init create_debugfs(व्योम)
-अणु
-	पूर्णांकerface->debug.root = debugfs_create_dir("acer-wmi", शून्य);
+static void __init create_debugfs(void)
+{
+	interface->debug.root = debugfs_create_dir("acer-wmi", NULL);
 
-	debugfs_create_u32("devices", S_IRUGO, पूर्णांकerface->debug.root,
-			   &पूर्णांकerface->debug.wmid_devices);
-पूर्ण
+	debugfs_create_u32("devices", S_IRUGO, interface->debug.root,
+			   &interface->debug.wmid_devices);
+}
 
-अटल पूर्णांक __init acer_wmi_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init acer_wmi_init(void)
+{
+	int err;
 
 	pr_info("Acer Laptop ACPI-WMI Extras\n");
 
-	अगर (dmi_check_प्रणाली(acer_blacklist)) अणु
+	if (dmi_check_system(acer_blacklist)) {
 		pr_info("Blacklisted hardware detected - not loading\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	find_quirks();
 
@@ -2248,155 +2247,155 @@ error_mailled:
 	 * AMW0_GUID1. This behavior is strange because those machines should
 	 * be supported by appropriate wmi drivers. e.g. fujitsu-laptop,
 	 * ideapad-laptop. So, here checks the machine that has AMW0_GUID1
-	 * should be in Acer/Gateway/Packard Bell white list, or it's alपढ़ोy
+	 * should be in Acer/Gateway/Packard Bell white list, or it's already
 	 * in the past quirk list.
 	 */
-	अगर (wmi_has_guid(AMW0_GUID1) &&
-	    !dmi_check_प्रणाली(amw0_whitelist) &&
-	    quirks == &quirk_unknown) अणु
+	if (wmi_has_guid(AMW0_GUID1) &&
+	    !dmi_check_system(amw0_whitelist) &&
+	    quirks == &quirk_unknown) {
 		pr_debug("Unsupported machine has AMW0_GUID1, unable to load\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
-	 * Detect which ACPI-WMI पूर्णांकerface we're using.
+	 * Detect which ACPI-WMI interface we're using.
 	 */
-	अगर (wmi_has_guid(AMW0_GUID1) && wmi_has_guid(WMID_GUID1))
-		पूर्णांकerface = &AMW0_V2_पूर्णांकerface;
+	if (wmi_has_guid(AMW0_GUID1) && wmi_has_guid(WMID_GUID1))
+		interface = &AMW0_V2_interface;
 
-	अगर (!wmi_has_guid(AMW0_GUID1) && wmi_has_guid(WMID_GUID1))
-		पूर्णांकerface = &wmid_पूर्णांकerface;
+	if (!wmi_has_guid(AMW0_GUID1) && wmi_has_guid(WMID_GUID1))
+		interface = &wmid_interface;
 
-	अगर (wmi_has_guid(WMID_GUID3))
-		पूर्णांकerface = &wmid_v2_पूर्णांकerface;
+	if (wmi_has_guid(WMID_GUID3))
+		interface = &wmid_v2_interface;
 
-	अगर (पूर्णांकerface)
-		dmi_walk(type_aa_dmi_decode, शून्य);
+	if (interface)
+		dmi_walk(type_aa_dmi_decode, NULL);
 
-	अगर (wmi_has_guid(WMID_GUID2) && पूर्णांकerface) अणु
-		अगर (!has_type_aa && ACPI_FAILURE(WMID_set_capabilities())) अणु
+	if (wmi_has_guid(WMID_GUID2) && interface) {
+		if (!has_type_aa && ACPI_FAILURE(WMID_set_capabilities())) {
 			pr_err("Unable to detect available WMID devices\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 		/* WMID always provides brightness methods */
-		पूर्णांकerface->capability |= ACER_CAP_BRIGHTNESS;
-	पूर्ण अन्यथा अगर (!wmi_has_guid(WMID_GUID2) && पूर्णांकerface && !has_type_aa && क्रमce_caps == -1) अणु
+		interface->capability |= ACER_CAP_BRIGHTNESS;
+	} else if (!wmi_has_guid(WMID_GUID2) && interface && !has_type_aa && force_caps == -1) {
 		pr_err("No WMID device detection method found\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (wmi_has_guid(AMW0_GUID1) && !wmi_has_guid(WMID_GUID1)) अणु
-		पूर्णांकerface = &AMW0_पूर्णांकerface;
+	if (wmi_has_guid(AMW0_GUID1) && !wmi_has_guid(WMID_GUID1)) {
+		interface = &AMW0_interface;
 
-		अगर (ACPI_FAILURE(AMW0_set_capabilities())) अणु
+		if (ACPI_FAILURE(AMW0_set_capabilities())) {
 			pr_err("Unable to detect available AMW0 devices\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			return -ENODEV;
+		}
+	}
 
-	अगर (wmi_has_guid(AMW0_GUID1))
+	if (wmi_has_guid(AMW0_GUID1))
 		AMW0_find_mailled();
 
-	अगर (!पूर्णांकerface) अणु
+	if (!interface) {
 		pr_err("No or unsupported WMI interface, unable to load\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	set_quirks();
 
-	अगर (dmi_check_प्रणाली(video_venकरोr_dmi_table))
-		acpi_video_set_dmi_backlight_type(acpi_backlight_venकरोr);
+	if (dmi_check_system(video_vendor_dmi_table))
+		acpi_video_set_dmi_backlight_type(acpi_backlight_vendor);
 
-	अगर (acpi_video_get_backlight_type() != acpi_backlight_venकरोr)
-		पूर्णांकerface->capability &= ~ACER_CAP_BRIGHTNESS;
+	if (acpi_video_get_backlight_type() != acpi_backlight_vendor)
+		interface->capability &= ~ACER_CAP_BRIGHTNESS;
 
-	अगर (wmi_has_guid(WMID_GUID3))
-		पूर्णांकerface->capability |= ACER_CAP_SET_FUNCTION_MODE;
+	if (wmi_has_guid(WMID_GUID3))
+		interface->capability |= ACER_CAP_SET_FUNCTION_MODE;
 
-	अगर (क्रमce_caps != -1)
-		पूर्णांकerface->capability = क्रमce_caps;
+	if (force_caps != -1)
+		interface->capability = force_caps;
 
-	अगर (wmi_has_guid(WMID_GUID3) &&
-	    (पूर्णांकerface->capability & ACER_CAP_SET_FUNCTION_MODE)) अणु
-		अगर (ACPI_FAILURE(acer_wmi_enable_rf_button()))
+	if (wmi_has_guid(WMID_GUID3) &&
+	    (interface->capability & ACER_CAP_SET_FUNCTION_MODE)) {
+		if (ACPI_FAILURE(acer_wmi_enable_rf_button()))
 			pr_warn("Cannot enable RF Button Driver\n");
 
-		अगर (ec_raw_mode) अणु
-			अगर (ACPI_FAILURE(acer_wmi_enable_ec_raw())) अणु
+		if (ec_raw_mode) {
+			if (ACPI_FAILURE(acer_wmi_enable_ec_raw())) {
 				pr_err("Cannot enable EC raw mode\n");
-				वापस -ENODEV;
-			पूर्ण
-		पूर्ण अन्यथा अगर (ACPI_FAILURE(acer_wmi_enable_lm())) अणु
+				return -ENODEV;
+			}
+		} else if (ACPI_FAILURE(acer_wmi_enable_lm())) {
 			pr_err("Cannot enable Launch Manager mode\n");
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ec_raw_mode) अणु
+			return -ENODEV;
+		}
+	} else if (ec_raw_mode) {
 		pr_info("No WMID EC raw mode enable method\n");
-	पूर्ण
+	}
 
-	अगर (wmi_has_guid(ACERWMID_EVENT_GUID)) अणु
+	if (wmi_has_guid(ACERWMID_EVENT_GUID)) {
 		err = acer_wmi_input_setup();
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 		err = acer_wmi_accel_setup();
-		अगर (err && err != -ENODEV)
+		if (err && err != -ENODEV)
 			pr_warn("Cannot enable accelerometer\n");
-	पूर्ण
+	}
 
-	err = platक्रमm_driver_रेजिस्टर(&acer_platक्रमm_driver);
-	अगर (err) अणु
+	err = platform_driver_register(&acer_platform_driver);
+	if (err) {
 		pr_err("Unable to register platform driver\n");
-		जाओ error_platक्रमm_रेजिस्टर;
-	पूर्ण
+		goto error_platform_register;
+	}
 
-	acer_platक्रमm_device = platक्रमm_device_alloc("acer-wmi", -1);
-	अगर (!acer_platक्रमm_device) अणु
+	acer_platform_device = platform_device_alloc("acer-wmi", -1);
+	if (!acer_platform_device) {
 		err = -ENOMEM;
-		जाओ error_device_alloc;
-	पूर्ण
+		goto error_device_alloc;
+	}
 
-	err = platक्रमm_device_add(acer_platक्रमm_device);
-	अगर (err)
-		जाओ error_device_add;
+	err = platform_device_add(acer_platform_device);
+	if (err)
+		goto error_device_add;
 
-	अगर (wmi_has_guid(WMID_GUID2)) अणु
-		पूर्णांकerface->debug.wmid_devices = get_wmid_devices();
+	if (wmi_has_guid(WMID_GUID2)) {
+		interface->debug.wmid_devices = get_wmid_devices();
 		create_debugfs();
-	पूर्ण
+	}
 
 	/* Override any initial settings with values from the commandline */
 	acer_commandline_init();
 
-	वापस 0;
+	return 0;
 
 error_device_add:
-	platक्रमm_device_put(acer_platक्रमm_device);
+	platform_device_put(acer_platform_device);
 error_device_alloc:
-	platक्रमm_driver_unरेजिस्टर(&acer_platक्रमm_driver);
-error_platक्रमm_रेजिस्टर:
-	अगर (wmi_has_guid(ACERWMID_EVENT_GUID))
+	platform_driver_unregister(&acer_platform_driver);
+error_platform_register:
+	if (wmi_has_guid(ACERWMID_EVENT_GUID))
 		acer_wmi_input_destroy();
-	अगर (acer_wmi_accel_dev)
-		input_unरेजिस्टर_device(acer_wmi_accel_dev);
+	if (acer_wmi_accel_dev)
+		input_unregister_device(acer_wmi_accel_dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम __निकास acer_wmi_निकास(व्योम)
-अणु
-	अगर (wmi_has_guid(ACERWMID_EVENT_GUID))
+static void __exit acer_wmi_exit(void)
+{
+	if (wmi_has_guid(ACERWMID_EVENT_GUID))
 		acer_wmi_input_destroy();
 
-	अगर (acer_wmi_accel_dev)
-		input_unरेजिस्टर_device(acer_wmi_accel_dev);
+	if (acer_wmi_accel_dev)
+		input_unregister_device(acer_wmi_accel_dev);
 
-	हटाओ_debugfs();
-	platक्रमm_device_unरेजिस्टर(acer_platक्रमm_device);
-	platक्रमm_driver_unरेजिस्टर(&acer_platक्रमm_driver);
+	remove_debugfs();
+	platform_device_unregister(acer_platform_device);
+	platform_driver_unregister(&acer_platform_driver);
 
 	pr_info("Acer Laptop WMI Extras unloaded\n");
-	वापस;
-पूर्ण
+	return;
+}
 
 module_init(acer_wmi_init);
-module_निकास(acer_wmi_निकास);
+module_exit(acer_wmi_exit);

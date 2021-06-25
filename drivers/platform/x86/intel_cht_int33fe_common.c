@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Common code क्रम Intel Cherry Trail ACPI INT33FE pseuकरो device drivers
+ * Common code for Intel Cherry Trail ACPI INT33FE pseudo device drivers
  * (USB Micro-B and Type-C connector variants).
  *
  * Copyright (c) 2019 Yauhen Kharuzhy <jekhor@gmail.com>
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/acpi.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-#समावेश "intel_cht_int33fe_common.h"
+#include "intel_cht_int33fe_common.h"
 
-#घोषणा EXPECTED_PTYPE		4
+#define EXPECTED_PTYPE		4
 
-अटल पूर्णांक cht_पूर्णांक33fe_i2c_res_filter(काष्ठा acpi_resource *ares, व्योम *data)
-अणु
-	काष्ठा acpi_resource_i2c_serialbus *sb;
-	पूर्णांक *count = data;
+static int cht_int33fe_i2c_res_filter(struct acpi_resource *ares, void *data)
+{
+	struct acpi_resource_i2c_serialbus *sb;
+	int *count = data;
 
-	अगर (i2c_acpi_get_i2c_resource(ares, &sb))
+	if (i2c_acpi_get_i2c_resource(ares, &sb))
 		(*count)++;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक cht_पूर्णांक33fe_count_i2c_clients(काष्ठा device *dev)
-अणु
-	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
+static int cht_int33fe_count_i2c_clients(struct device *dev)
+{
+	struct acpi_device *adev = ACPI_COMPANION(dev);
 	LIST_HEAD(resource_list);
-	पूर्णांक count = 0;
-	पूर्णांक ret;
+	int count = 0;
+	int ret;
 
 	ret = acpi_dev_get_resources(adev, &resource_list,
-				     cht_पूर्णांक33fe_i2c_res_filter, &count);
-	acpi_dev_मुक्त_resource_list(&resource_list);
-	अगर (ret < 0)
-		वापस ret;
+				     cht_int33fe_i2c_res_filter, &count);
+	acpi_dev_free_resource_list(&resource_list);
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल पूर्णांक cht_पूर्णांक33fe_check_hw_type(काष्ठा device *dev)
-अणु
-	अचिन्हित दीर्घ दीर्घ ptyp;
+static int cht_int33fe_check_hw_type(struct device *dev)
+{
+	unsigned long long ptyp;
 	acpi_status status;
-	पूर्णांक ret;
+	int ret;
 
-	status = acpi_evaluate_पूर्णांकeger(ACPI_HANDLE(dev), "PTYP", शून्य, &ptyp);
-	अगर (ACPI_FAILURE(status)) अणु
+	status = acpi_evaluate_integer(ACPI_HANDLE(dev), "PTYP", NULL, &ptyp);
+	if (ACPI_FAILURE(status)) {
 		dev_err(dev, "Error getting PTYPE\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/*
-	 * The same ACPI HID is used क्रम dअगरferent configurations check PTYP
+	 * The same ACPI HID is used for different configurations check PTYP
 	 * to ensure that we are dealing with the expected config.
 	 */
-	अगर (ptyp != EXPECTED_PTYPE)
-		वापस -ENODEV;
+	if (ptyp != EXPECTED_PTYPE)
+		return -ENODEV;
 
-	/* Check presence of INT34D3 (hardware-rev 3) expected क्रम ptype == 4 */
-	अगर (!acpi_dev_present("INT34D3", "1", 3)) अणु
+	/* Check presence of INT34D3 (hardware-rev 3) expected for ptype == 4 */
+	if (!acpi_dev_present("INT34D3", "1", 3)) {
 		dev_err(dev, "Error PTYPE == %d, but no INT34D3 device\n",
 			EXPECTED_PTYPE);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = cht_पूर्णांक33fe_count_i2c_clients(dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = cht_int33fe_count_i2c_clients(dev);
+	if (ret < 0)
+		return ret;
 
-	चयन (ret) अणु
-	हाल 2:
-		वापस INT33FE_HW_MICROB;
-	हाल 4:
-		वापस INT33FE_HW_TYPEC;
-	शेष:
-		वापस -ENODEV;
-	पूर्ण
-पूर्ण
+	switch (ret) {
+	case 2:
+		return INT33FE_HW_MICROB;
+	case 4:
+		return INT33FE_HW_TYPEC;
+	default:
+		return -ENODEV;
+	}
+}
 
-अटल पूर्णांक cht_पूर्णांक33fe_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cht_पूर्णांक33fe_data *data;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int cht_int33fe_probe(struct platform_device *pdev)
+{
+	struct cht_int33fe_data *data;
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	ret = cht_पूर्णांक33fe_check_hw_type(dev);
-	अगर (ret < 0)
-		वापस ret;
+	ret = cht_int33fe_check_hw_type(dev);
+	if (ret < 0)
+		return ret;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->dev = dev;
 
-	चयन (ret) अणु
-	हाल INT33FE_HW_MICROB:
-		data->probe = cht_पूर्णांक33fe_microb_probe;
-		data->हटाओ = cht_पूर्णांक33fe_microb_हटाओ;
-		अवरोध;
+	switch (ret) {
+	case INT33FE_HW_MICROB:
+		data->probe = cht_int33fe_microb_probe;
+		data->remove = cht_int33fe_microb_remove;
+		break;
 
-	हाल INT33FE_HW_TYPEC:
-		data->probe = cht_पूर्णांक33fe_typec_probe;
-		data->हटाओ = cht_पूर्णांक33fe_typec_हटाओ;
-		अवरोध;
-	पूर्ण
+	case INT33FE_HW_TYPEC:
+		data->probe = cht_int33fe_typec_probe;
+		data->remove = cht_int33fe_typec_remove;
+		break;
+	}
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	वापस data->probe(data);
-पूर्ण
+	return data->probe(data);
+}
 
-अटल पूर्णांक cht_पूर्णांक33fe_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा cht_पूर्णांक33fe_data *data = platक्रमm_get_drvdata(pdev);
+static int cht_int33fe_remove(struct platform_device *pdev)
+{
+	struct cht_int33fe_data *data = platform_get_drvdata(pdev);
 
-	वापस data->हटाओ(data);
-पूर्ण
+	return data->remove(data);
+}
 
-अटल स्थिर काष्ठा acpi_device_id cht_पूर्णांक33fe_acpi_ids[] = अणु
-	अणु "INT33FE", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(acpi, cht_पूर्णांक33fe_acpi_ids);
+static const struct acpi_device_id cht_int33fe_acpi_ids[] = {
+	{ "INT33FE", },
+	{ }
+};
+MODULE_DEVICE_TABLE(acpi, cht_int33fe_acpi_ids);
 
-अटल काष्ठा platक्रमm_driver cht_पूर्णांक33fe_driver = अणु
-	.driver	= अणु
+static struct platform_driver cht_int33fe_driver = {
+	.driver	= {
 		.name = "Intel Cherry Trail ACPI INT33FE driver",
-		.acpi_match_table = ACPI_PTR(cht_पूर्णांक33fe_acpi_ids),
-	पूर्ण,
-	.probe = cht_पूर्णांक33fe_probe,
-	.हटाओ = cht_पूर्णांक33fe_हटाओ,
-पूर्ण;
+		.acpi_match_table = ACPI_PTR(cht_int33fe_acpi_ids),
+	},
+	.probe = cht_int33fe_probe,
+	.remove = cht_int33fe_remove,
+};
 
-module_platक्रमm_driver(cht_पूर्णांक33fe_driver);
+module_platform_driver(cht_int33fe_driver);
 
 MODULE_DESCRIPTION("Intel Cherry Trail ACPI INT33FE pseudo device driver");
 MODULE_AUTHOR("Yauhen Kharuzhy <jekhor@gmail.com>");

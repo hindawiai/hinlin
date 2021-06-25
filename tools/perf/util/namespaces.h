@@ -1,75 +1,74 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * Copyright (C) 2017 Hari Bathini, IBM Corporation
  */
 
-#अगर_अघोषित __PERF_NAMESPACES_H
-#घोषणा __PERF_NAMESPACES_H
+#ifndef __PERF_NAMESPACES_H
+#define __PERF_NAMESPACES_H
 
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/types.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <linux/stddef.h>
+#include <linux/perf_event.h>
+#include <linux/refcount.h>
+#include <linux/types.h>
 
-#अगर_अघोषित HAVE_SETNS_SUPPORT
-पूर्णांक setns(पूर्णांक fd, पूर्णांक nstype);
-#पूर्ण_अगर
+#ifndef HAVE_SETNS_SUPPORT
+int setns(int fd, int nstype);
+#endif
 
-काष्ठा perf_record_namespaces;
+struct perf_record_namespaces;
 
-काष्ठा namespaces अणु
-	काष्ठा list_head list;
-	u64 end_समय;
-	काष्ठा perf_ns_link_info link_info[];
-पूर्ण;
+struct namespaces {
+	struct list_head list;
+	u64 end_time;
+	struct perf_ns_link_info link_info[];
+};
 
-काष्ठा namespaces *namespaces__new(काष्ठा perf_record_namespaces *event);
-व्योम namespaces__मुक्त(काष्ठा namespaces *namespaces);
+struct namespaces *namespaces__new(struct perf_record_namespaces *event);
+void namespaces__free(struct namespaces *namespaces);
 
-काष्ठा nsinfo अणु
+struct nsinfo {
 	pid_t			pid;
 	pid_t			tgid;
 	pid_t			nstgid;
 	bool			need_setns;
 	bool			in_pidns;
-	अक्षर			*mntns_path;
+	char			*mntns_path;
 	refcount_t		refcnt;
-पूर्ण;
+};
 
-काष्ठा nscookie अणु
-	पूर्णांक			oldns;
-	पूर्णांक			newns;
-	अक्षर			*oldcwd;
-पूर्ण;
+struct nscookie {
+	int			oldns;
+	int			newns;
+	char			*oldcwd;
+};
 
-पूर्णांक nsinfo__init(काष्ठा nsinfo *nsi);
-काष्ठा nsinfo *nsinfo__new(pid_t pid);
-काष्ठा nsinfo *nsinfo__copy(काष्ठा nsinfo *nsi);
-व्योम nsinfo__delete(काष्ठा nsinfo *nsi);
+int nsinfo__init(struct nsinfo *nsi);
+struct nsinfo *nsinfo__new(pid_t pid);
+struct nsinfo *nsinfo__copy(struct nsinfo *nsi);
+void nsinfo__delete(struct nsinfo *nsi);
 
-काष्ठा nsinfo *nsinfo__get(काष्ठा nsinfo *nsi);
-व्योम nsinfo__put(काष्ठा nsinfo *nsi);
+struct nsinfo *nsinfo__get(struct nsinfo *nsi);
+void nsinfo__put(struct nsinfo *nsi);
 
-व्योम nsinfo__mountns_enter(काष्ठा nsinfo *nsi, काष्ठा nscookie *nc);
-व्योम nsinfo__mountns_निकास(काष्ठा nscookie *nc);
+void nsinfo__mountns_enter(struct nsinfo *nsi, struct nscookie *nc);
+void nsinfo__mountns_exit(struct nscookie *nc);
 
-अक्षर *nsinfo__realpath(स्थिर अक्षर *path, काष्ठा nsinfo *nsi);
-पूर्णांक nsinfo__stat(स्थिर अक्षर *filename, काष्ठा stat *st, काष्ठा nsinfo *nsi);
+char *nsinfo__realpath(const char *path, struct nsinfo *nsi);
+int nsinfo__stat(const char *filename, struct stat *st, struct nsinfo *nsi);
 
-अटल अंतरभूत व्योम __nsinfo__zput(काष्ठा nsinfo **nsip)
-अणु
-	अगर (nsip) अणु
+static inline void __nsinfo__zput(struct nsinfo **nsip)
+{
+	if (nsip) {
 		nsinfo__put(*nsip);
-		*nsip = शून्य;
-	पूर्ण
-पूर्ण
+		*nsip = NULL;
+	}
+}
 
-#घोषणा nsinfo__zput(nsi) __nsinfo__zput(&nsi)
+#define nsinfo__zput(nsi) __nsinfo__zput(&nsi)
 
-स्थिर अक्षर *perf_ns__name(अचिन्हित पूर्णांक id);
+const char *perf_ns__name(unsigned int id);
 
-#पूर्ण_अगर  /* __PERF_NAMESPACES_H */
+#endif  /* __PERF_NAMESPACES_H */

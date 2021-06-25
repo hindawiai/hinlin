@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * DECnet       An implementation of the DECnet protocol suite क्रम the LINUX
- *              operating प्रणाली.  DECnet is implemented using the  BSD Socket
- *              पूर्णांकerface as the means of communication with the user level.
+ * DECnet       An implementation of the DECnet protocol suite for the LINUX
+ *              operating system.  DECnet is implemented using the  BSD Socket
+ *              interface as the means of communication with the user level.
  *
- *              DECnet Routing Forwarding Inक्रमmation Base (Routing Tables)
+ *              DECnet Routing Forwarding Information Base (Routing Tables)
  *
  * Author:      Steve Whitehouse <SteveW@ACM.org>
  *              Mostly copied from the IPv4 routing code
@@ -14,859 +13,859 @@
  * Changes:
  *
  */
-#समावेश <linux/माला.स>
-#समावेश <linux/net.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sockios.h>
-#समावेश <linux/init.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/route.h> /* RTF_xxx */
-#समावेश <net/neighbour.h>
-#समावेश <net/netlink.h>
-#समावेश <net/tcp.h>
-#समावेश <net/dst.h>
-#समावेश <net/flow.h>
-#समावेश <net/fib_rules.h>
-#समावेश <net/dn.h>
-#समावेश <net/dn_route.h>
-#समावेश <net/dn_fib.h>
-#समावेश <net/dn_neigh.h>
-#समावेश <net/dn_dev.h>
+#include <linux/string.h>
+#include <linux/net.h>
+#include <linux/socket.h>
+#include <linux/slab.h>
+#include <linux/sockios.h>
+#include <linux/init.h>
+#include <linux/skbuff.h>
+#include <linux/rtnetlink.h>
+#include <linux/proc_fs.h>
+#include <linux/netdevice.h>
+#include <linux/timer.h>
+#include <linux/spinlock.h>
+#include <linux/atomic.h>
+#include <linux/uaccess.h>
+#include <linux/route.h> /* RTF_xxx */
+#include <net/neighbour.h>
+#include <net/netlink.h>
+#include <net/tcp.h>
+#include <net/dst.h>
+#include <net/flow.h>
+#include <net/fib_rules.h>
+#include <net/dn.h>
+#include <net/dn_route.h>
+#include <net/dn_fib.h>
+#include <net/dn_neigh.h>
+#include <net/dn_dev.h>
 
-काष्ठा dn_zone
-अणु
-	काष्ठा dn_zone		*dz_next;
-	काष्ठा dn_fib_node 	**dz_hash;
-	पूर्णांक			dz_nent;
-	पूर्णांक			dz_भागisor;
+struct dn_zone
+{
+	struct dn_zone		*dz_next;
+	struct dn_fib_node 	**dz_hash;
+	int			dz_nent;
+	int			dz_divisor;
 	u32			dz_hashmask;
-#घोषणा DZ_HASHMASK(dz)	((dz)->dz_hashmask)
-	पूर्णांक			dz_order;
+#define DZ_HASHMASK(dz)	((dz)->dz_hashmask)
+	int			dz_order;
 	__le16			dz_mask;
-#घोषणा DZ_MASK(dz)	((dz)->dz_mask)
-पूर्ण;
+#define DZ_MASK(dz)	((dz)->dz_mask)
+};
 
-काष्ठा dn_hash
-अणु
-	काष्ठा dn_zone	*dh_zones[17];
-	काष्ठा dn_zone	*dh_zone_list;
-पूर्ण;
+struct dn_hash
+{
+	struct dn_zone	*dh_zones[17];
+	struct dn_zone	*dh_zone_list;
+};
 
-#घोषणा dz_key_0(key)		((key).datum = 0)
+#define dz_key_0(key)		((key).datum = 0)
 
-#घोषणा क्रम_nexthops(fi) अणु पूर्णांक nhsel; स्थिर काष्ठा dn_fib_nh *nh;\
-	क्रम(nhsel = 0, nh = (fi)->fib_nh; nhsel < (fi)->fib_nhs; nh++, nhsel++)
+#define for_nexthops(fi) { int nhsel; const struct dn_fib_nh *nh;\
+	for(nhsel = 0, nh = (fi)->fib_nh; nhsel < (fi)->fib_nhs; nh++, nhsel++)
 
-#घोषणा endक्रम_nexthops(fi) पूर्ण
+#define endfor_nexthops(fi) }
 
-#घोषणा DN_MAX_DIVISOR 1024
-#घोषणा DN_S_ZOMBIE 1
-#घोषणा DN_S_ACCESSED 2
+#define DN_MAX_DIVISOR 1024
+#define DN_S_ZOMBIE 1
+#define DN_S_ACCESSED 2
 
-#घोषणा DN_FIB_SCAN(f, fp) \
-क्रम( ; ((f) = *(fp)) != शून्य; (fp) = &(f)->fn_next)
+#define DN_FIB_SCAN(f, fp) \
+for( ; ((f) = *(fp)) != NULL; (fp) = &(f)->fn_next)
 
-#घोषणा DN_FIB_SCAN_KEY(f, fp, key) \
-क्रम( ; ((f) = *(fp)) != शून्य && dn_key_eq((f)->fn_key, (key)); (fp) = &(f)->fn_next)
+#define DN_FIB_SCAN_KEY(f, fp, key) \
+for( ; ((f) = *(fp)) != NULL && dn_key_eq((f)->fn_key, (key)); (fp) = &(f)->fn_next)
 
-#घोषणा RT_TABLE_MIN 1
-#घोषणा DN_FIB_TABLE_HASHSZ 256
-अटल काष्ठा hlist_head dn_fib_table_hash[DN_FIB_TABLE_HASHSZ];
-अटल DEFINE_RWLOCK(dn_fib_tables_lock);
+#define RT_TABLE_MIN 1
+#define DN_FIB_TABLE_HASHSZ 256
+static struct hlist_head dn_fib_table_hash[DN_FIB_TABLE_HASHSZ];
+static DEFINE_RWLOCK(dn_fib_tables_lock);
 
-अटल काष्ठा kmem_cache *dn_hash_kmem __पढ़ो_mostly;
-अटल पूर्णांक dn_fib_hash_zombies;
+static struct kmem_cache *dn_hash_kmem __read_mostly;
+static int dn_fib_hash_zombies;
 
-अटल अंतरभूत dn_fib_idx_t dn_hash(dn_fib_key_t key, काष्ठा dn_zone *dz)
-अणु
+static inline dn_fib_idx_t dn_hash(dn_fib_key_t key, struct dn_zone *dz)
+{
 	u16 h = le16_to_cpu(key.datum)>>(16 - dz->dz_order);
 	h ^= (h >> 10);
 	h ^= (h >> 6);
 	h &= DZ_HASHMASK(dz);
-	वापस *(dn_fib_idx_t *)&h;
-पूर्ण
+	return *(dn_fib_idx_t *)&h;
+}
 
-अटल अंतरभूत dn_fib_key_t dz_key(__le16 dst, काष्ठा dn_zone *dz)
-अणु
+static inline dn_fib_key_t dz_key(__le16 dst, struct dn_zone *dz)
+{
 	dn_fib_key_t k;
 	k.datum = dst & DZ_MASK(dz);
-	वापस k;
-पूर्ण
+	return k;
+}
 
-अटल अंतरभूत काष्ठा dn_fib_node **dn_chain_p(dn_fib_key_t key, काष्ठा dn_zone *dz)
-अणु
-	वापस &dz->dz_hash[dn_hash(key, dz).datum];
-पूर्ण
+static inline struct dn_fib_node **dn_chain_p(dn_fib_key_t key, struct dn_zone *dz)
+{
+	return &dz->dz_hash[dn_hash(key, dz).datum];
+}
 
-अटल अंतरभूत काष्ठा dn_fib_node *dz_chain(dn_fib_key_t key, काष्ठा dn_zone *dz)
-अणु
-	वापस dz->dz_hash[dn_hash(key, dz).datum];
-पूर्ण
+static inline struct dn_fib_node *dz_chain(dn_fib_key_t key, struct dn_zone *dz)
+{
+	return dz->dz_hash[dn_hash(key, dz).datum];
+}
 
-अटल अंतरभूत पूर्णांक dn_key_eq(dn_fib_key_t a, dn_fib_key_t b)
-अणु
-	वापस a.datum == b.datum;
-पूर्ण
+static inline int dn_key_eq(dn_fib_key_t a, dn_fib_key_t b)
+{
+	return a.datum == b.datum;
+}
 
-अटल अंतरभूत पूर्णांक dn_key_leq(dn_fib_key_t a, dn_fib_key_t b)
-अणु
-	वापस a.datum <= b.datum;
-पूर्ण
+static inline int dn_key_leq(dn_fib_key_t a, dn_fib_key_t b)
+{
+	return a.datum <= b.datum;
+}
 
-अटल अंतरभूत व्योम dn_rebuild_zone(काष्ठा dn_zone *dz,
-				   काष्ठा dn_fib_node **old_ht,
-				   पूर्णांक old_भागisor)
-अणु
-	काष्ठा dn_fib_node *f, **fp, *next;
-	पूर्णांक i;
+static inline void dn_rebuild_zone(struct dn_zone *dz,
+				   struct dn_fib_node **old_ht,
+				   int old_divisor)
+{
+	struct dn_fib_node *f, **fp, *next;
+	int i;
 
-	क्रम(i = 0; i < old_भागisor; i++) अणु
-		क्रम(f = old_ht[i]; f; f = next) अणु
+	for(i = 0; i < old_divisor; i++) {
+		for(f = old_ht[i]; f; f = next) {
 			next = f->fn_next;
-			क्रम(fp = dn_chain_p(f->fn_key, dz);
+			for(fp = dn_chain_p(f->fn_key, dz);
 				*fp && dn_key_leq((*fp)->fn_key, f->fn_key);
 				fp = &(*fp)->fn_next)
 				/* NOTHING */;
 			f->fn_next = *fp;
 			*fp = f;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम dn_rehash_zone(काष्ठा dn_zone *dz)
-अणु
-	काष्ठा dn_fib_node **ht, **old_ht;
-	पूर्णांक old_भागisor, new_भागisor;
+static void dn_rehash_zone(struct dn_zone *dz)
+{
+	struct dn_fib_node **ht, **old_ht;
+	int old_divisor, new_divisor;
 	u32 new_hashmask;
 
-	old_भागisor = dz->dz_भागisor;
+	old_divisor = dz->dz_divisor;
 
-	चयन (old_भागisor) अणु
-	हाल 16:
-		new_भागisor = 256;
+	switch (old_divisor) {
+	case 16:
+		new_divisor = 256;
 		new_hashmask = 0xFF;
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "DECnet: dn_rehash_zone: BUG! %d\n",
-		       old_भागisor);
+		break;
+	default:
+		printk(KERN_DEBUG "DECnet: dn_rehash_zone: BUG! %d\n",
+		       old_divisor);
 		fallthrough;
-	हाल 256:
-		new_भागisor = 1024;
+	case 256:
+		new_divisor = 1024;
 		new_hashmask = 0x3FF;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	ht = kसुस्मृति(new_भागisor, माप(काष्ठा dn_fib_node*), GFP_KERNEL);
-	अगर (ht == शून्य)
-		वापस;
+	ht = kcalloc(new_divisor, sizeof(struct dn_fib_node*), GFP_KERNEL);
+	if (ht == NULL)
+		return;
 
-	ग_लिखो_lock_bh(&dn_fib_tables_lock);
+	write_lock_bh(&dn_fib_tables_lock);
 	old_ht = dz->dz_hash;
 	dz->dz_hash = ht;
 	dz->dz_hashmask = new_hashmask;
-	dz->dz_भागisor = new_भागisor;
-	dn_rebuild_zone(dz, old_ht, old_भागisor);
-	ग_लिखो_unlock_bh(&dn_fib_tables_lock);
-	kमुक्त(old_ht);
-पूर्ण
+	dz->dz_divisor = new_divisor;
+	dn_rebuild_zone(dz, old_ht, old_divisor);
+	write_unlock_bh(&dn_fib_tables_lock);
+	kfree(old_ht);
+}
 
-अटल व्योम dn_मुक्त_node(काष्ठा dn_fib_node *f)
-अणु
+static void dn_free_node(struct dn_fib_node *f)
+{
 	dn_fib_release_info(DN_FIB_INFO(f));
-	kmem_cache_मुक्त(dn_hash_kmem, f);
-पूर्ण
+	kmem_cache_free(dn_hash_kmem, f);
+}
 
 
-अटल काष्ठा dn_zone *dn_new_zone(काष्ठा dn_hash *table, पूर्णांक z)
-अणु
-	पूर्णांक i;
-	काष्ठा dn_zone *dz = kzalloc(माप(काष्ठा dn_zone), GFP_KERNEL);
-	अगर (!dz)
-		वापस शून्य;
+static struct dn_zone *dn_new_zone(struct dn_hash *table, int z)
+{
+	int i;
+	struct dn_zone *dz = kzalloc(sizeof(struct dn_zone), GFP_KERNEL);
+	if (!dz)
+		return NULL;
 
-	अगर (z) अणु
-		dz->dz_भागisor = 16;
+	if (z) {
+		dz->dz_divisor = 16;
 		dz->dz_hashmask = 0x0F;
-	पूर्ण अन्यथा अणु
-		dz->dz_भागisor = 1;
+	} else {
+		dz->dz_divisor = 1;
 		dz->dz_hashmask = 0;
-	पूर्ण
+	}
 
-	dz->dz_hash = kसुस्मृति(dz->dz_भागisor, माप(काष्ठा dn_fib_node *), GFP_KERNEL);
-	अगर (!dz->dz_hash) अणु
-		kमुक्त(dz);
-		वापस शून्य;
-	पूर्ण
+	dz->dz_hash = kcalloc(dz->dz_divisor, sizeof(struct dn_fib_node *), GFP_KERNEL);
+	if (!dz->dz_hash) {
+		kfree(dz);
+		return NULL;
+	}
 
 	dz->dz_order = z;
 	dz->dz_mask = dnet_make_mask(z);
 
-	क्रम(i = z + 1; i <= 16; i++)
-		अगर (table->dh_zones[i])
-			अवरोध;
+	for(i = z + 1; i <= 16; i++)
+		if (table->dh_zones[i])
+			break;
 
-	ग_लिखो_lock_bh(&dn_fib_tables_lock);
-	अगर (i>16) अणु
+	write_lock_bh(&dn_fib_tables_lock);
+	if (i>16) {
 		dz->dz_next = table->dh_zone_list;
 		table->dh_zone_list = dz;
-	पूर्ण अन्यथा अणु
+	} else {
 		dz->dz_next = table->dh_zones[i]->dz_next;
 		table->dh_zones[i]->dz_next = dz;
-	पूर्ण
+	}
 	table->dh_zones[z] = dz;
-	ग_लिखो_unlock_bh(&dn_fib_tables_lock);
-	वापस dz;
-पूर्ण
+	write_unlock_bh(&dn_fib_tables_lock);
+	return dz;
+}
 
 
-अटल पूर्णांक dn_fib_nh_match(काष्ठा rपंचांगsg *r, काष्ठा nlmsghdr *nlh, काष्ठा nlattr *attrs[], काष्ठा dn_fib_info *fi)
-अणु
-	काष्ठा rtnexthop *nhp;
-	पूर्णांक nhlen;
+static int dn_fib_nh_match(struct rtmsg *r, struct nlmsghdr *nlh, struct nlattr *attrs[], struct dn_fib_info *fi)
+{
+	struct rtnexthop *nhp;
+	int nhlen;
 
-	अगर (attrs[RTA_PRIORITY] &&
+	if (attrs[RTA_PRIORITY] &&
 	    nla_get_u32(attrs[RTA_PRIORITY]) != fi->fib_priority)
-		वापस 1;
+		return 1;
 
-	अगर (attrs[RTA_OIF] || attrs[RTA_GATEWAY]) अणु
-		अगर ((!attrs[RTA_OIF] || nla_get_u32(attrs[RTA_OIF]) == fi->fib_nh->nh_oअगर) &&
+	if (attrs[RTA_OIF] || attrs[RTA_GATEWAY]) {
+		if ((!attrs[RTA_OIF] || nla_get_u32(attrs[RTA_OIF]) == fi->fib_nh->nh_oif) &&
 		    (!attrs[RTA_GATEWAY]  || nla_get_le16(attrs[RTA_GATEWAY]) != fi->fib_nh->nh_gw))
-			वापस 0;
-		वापस 1;
-	पूर्ण
+			return 0;
+		return 1;
+	}
 
-	अगर (!attrs[RTA_MULTIPATH])
-		वापस 0;
+	if (!attrs[RTA_MULTIPATH])
+		return 0;
 
 	nhp = nla_data(attrs[RTA_MULTIPATH]);
 	nhlen = nla_len(attrs[RTA_MULTIPATH]);
 
-	क्रम_nexthops(fi) अणु
-		पूर्णांक attrlen = nhlen - माप(काष्ठा rtnexthop);
+	for_nexthops(fi) {
+		int attrlen = nhlen - sizeof(struct rtnexthop);
 		__le16 gw;
 
-		अगर (attrlen < 0 || (nhlen -= nhp->rtnh_len) < 0)
-			वापस -EINVAL;
-		अगर (nhp->rtnh_अगरindex && nhp->rtnh_अगरindex != nh->nh_oअगर)
-			वापस 1;
-		अगर (attrlen) अणु
-			काष्ठा nlattr *gw_attr;
+		if (attrlen < 0 || (nhlen -= nhp->rtnh_len) < 0)
+			return -EINVAL;
+		if (nhp->rtnh_ifindex && nhp->rtnh_ifindex != nh->nh_oif)
+			return 1;
+		if (attrlen) {
+			struct nlattr *gw_attr;
 
-			gw_attr = nla_find((काष्ठा nlattr *) (nhp + 1), attrlen, RTA_GATEWAY);
+			gw_attr = nla_find((struct nlattr *) (nhp + 1), attrlen, RTA_GATEWAY);
 			gw = gw_attr ? nla_get_le16(gw_attr) : 0;
 
-			अगर (gw && gw != nh->nh_gw)
-				वापस 1;
-		पूर्ण
+			if (gw && gw != nh->nh_gw)
+				return 1;
+		}
 		nhp = RTNH_NEXT(nhp);
-	पूर्ण endक्रम_nexthops(fi);
+	} endfor_nexthops(fi);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत माप_प्रकार dn_fib_nlmsg_size(काष्ठा dn_fib_info *fi)
-अणु
-	माप_प्रकार payload = NLMSG_ALIGN(माप(काष्ठा rपंचांगsg))
+static inline size_t dn_fib_nlmsg_size(struct dn_fib_info *fi)
+{
+	size_t payload = NLMSG_ALIGN(sizeof(struct rtmsg))
 			 + nla_total_size(4) /* RTA_TABLE */
 			 + nla_total_size(2) /* RTA_DST */
 			 + nla_total_size(4) /* RTA_PRIORITY */
 			 + nla_total_size(TCP_CA_NAME_MAX); /* RTAX_CC_ALGO */
 
-	/* space क्रम nested metrics */
+	/* space for nested metrics */
 	payload += nla_total_size((RTAX_MAX * nla_total_size(4)));
 
-	अगर (fi->fib_nhs) अणु
-		/* Also handles the special हाल fib_nhs == 1 */
+	if (fi->fib_nhs) {
+		/* Also handles the special case fib_nhs == 1 */
 
 		/* each nexthop is packed in an attribute */
-		माप_प्रकार nhsize = nla_total_size(माप(काष्ठा rtnexthop));
+		size_t nhsize = nla_total_size(sizeof(struct rtnexthop));
 
 		/* may contain a gateway attribute */
 		nhsize += nla_total_size(4);
 
 		/* all nexthops are packed in a nested attribute */
 		payload += nla_total_size(fi->fib_nhs * nhsize);
-	पूर्ण
+	}
 
-	वापस payload;
-पूर्ण
+	return payload;
+}
 
-अटल पूर्णांक dn_fib_dump_info(काष्ठा sk_buff *skb, u32 portid, u32 seq, पूर्णांक event,
-			u32 tb_id, u8 type, u8 scope, व्योम *dst, पूर्णांक dst_len,
-			काष्ठा dn_fib_info *fi, अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा rपंचांगsg *rपंचांग;
-	काष्ठा nlmsghdr *nlh;
+static int dn_fib_dump_info(struct sk_buff *skb, u32 portid, u32 seq, int event,
+			u32 tb_id, u8 type, u8 scope, void *dst, int dst_len,
+			struct dn_fib_info *fi, unsigned int flags)
+{
+	struct rtmsg *rtm;
+	struct nlmsghdr *nlh;
 
-	nlh = nlmsg_put(skb, portid, seq, event, माप(*rपंचांग), flags);
-	अगर (!nlh)
-		वापस -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*rtm), flags);
+	if (!nlh)
+		return -EMSGSIZE;
 
-	rपंचांग = nlmsg_data(nlh);
-	rपंचांग->rपंचांग_family = AF_DECnet;
-	rपंचांग->rपंचांग_dst_len = dst_len;
-	rपंचांग->rपंचांग_src_len = 0;
-	rपंचांग->rपंचांग_tos = 0;
-	rपंचांग->rपंचांग_table = tb_id;
-	rपंचांग->rपंचांग_flags = fi->fib_flags;
-	rपंचांग->rपंचांग_scope = scope;
-	rपंचांग->rपंचांग_type  = type;
-	rपंचांग->rपंचांग_protocol = fi->fib_protocol;
+	rtm = nlmsg_data(nlh);
+	rtm->rtm_family = AF_DECnet;
+	rtm->rtm_dst_len = dst_len;
+	rtm->rtm_src_len = 0;
+	rtm->rtm_tos = 0;
+	rtm->rtm_table = tb_id;
+	rtm->rtm_flags = fi->fib_flags;
+	rtm->rtm_scope = scope;
+	rtm->rtm_type  = type;
+	rtm->rtm_protocol = fi->fib_protocol;
 
-	अगर (nla_put_u32(skb, RTA_TABLE, tb_id) < 0)
-		जाओ errout;
+	if (nla_put_u32(skb, RTA_TABLE, tb_id) < 0)
+		goto errout;
 
-	अगर (rपंचांग->rपंचांग_dst_len &&
+	if (rtm->rtm_dst_len &&
 	    nla_put(skb, RTA_DST, 2, dst) < 0)
-		जाओ errout;
+		goto errout;
 
-	अगर (fi->fib_priority &&
+	if (fi->fib_priority &&
 	    nla_put_u32(skb, RTA_PRIORITY, fi->fib_priority) < 0)
-		जाओ errout;
+		goto errout;
 
-	अगर (rtnetlink_put_metrics(skb, fi->fib_metrics) < 0)
-		जाओ errout;
+	if (rtnetlink_put_metrics(skb, fi->fib_metrics) < 0)
+		goto errout;
 
-	अगर (fi->fib_nhs == 1) अणु
-		अगर (fi->fib_nh->nh_gw &&
+	if (fi->fib_nhs == 1) {
+		if (fi->fib_nh->nh_gw &&
 		    nla_put_le16(skb, RTA_GATEWAY, fi->fib_nh->nh_gw) < 0)
-			जाओ errout;
+			goto errout;
 
-		अगर (fi->fib_nh->nh_oअगर &&
-		    nla_put_u32(skb, RTA_OIF, fi->fib_nh->nh_oअगर) < 0)
-			जाओ errout;
-	पूर्ण
+		if (fi->fib_nh->nh_oif &&
+		    nla_put_u32(skb, RTA_OIF, fi->fib_nh->nh_oif) < 0)
+			goto errout;
+	}
 
-	अगर (fi->fib_nhs > 1) अणु
-		काष्ठा rtnexthop *nhp;
-		काष्ठा nlattr *mp_head;
+	if (fi->fib_nhs > 1) {
+		struct rtnexthop *nhp;
+		struct nlattr *mp_head;
 
 		mp_head = nla_nest_start_noflag(skb, RTA_MULTIPATH);
-		अगर (!mp_head)
-			जाओ errout;
+		if (!mp_head)
+			goto errout;
 
-		क्रम_nexthops(fi) अणु
-			अगर (!(nhp = nla_reserve_nohdr(skb, माप(*nhp))))
-				जाओ errout;
+		for_nexthops(fi) {
+			if (!(nhp = nla_reserve_nohdr(skb, sizeof(*nhp))))
+				goto errout;
 
 			nhp->rtnh_flags = nh->nh_flags & 0xFF;
 			nhp->rtnh_hops = nh->nh_weight - 1;
-			nhp->rtnh_अगरindex = nh->nh_oअगर;
+			nhp->rtnh_ifindex = nh->nh_oif;
 
-			अगर (nh->nh_gw &&
+			if (nh->nh_gw &&
 			    nla_put_le16(skb, RTA_GATEWAY, nh->nh_gw) < 0)
-				जाओ errout;
+				goto errout;
 
-			nhp->rtnh_len = skb_tail_poपूर्णांकer(skb) - (अचिन्हित अक्षर *)nhp;
-		पूर्ण endक्रम_nexthops(fi);
+			nhp->rtnh_len = skb_tail_pointer(skb) - (unsigned char *)nhp;
+		} endfor_nexthops(fi);
 
 		nla_nest_end(skb, mp_head);
-	पूर्ण
+	}
 
 	nlmsg_end(skb, nlh);
-	वापस 0;
+	return 0;
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
 
-अटल व्योम dn_rपंचांगsg_fib(पूर्णांक event, काष्ठा dn_fib_node *f, पूर्णांक z, u32 tb_id,
-			काष्ठा nlmsghdr *nlh, काष्ठा netlink_skb_parms *req)
-अणु
-	काष्ठा sk_buff *skb;
+static void dn_rtmsg_fib(int event, struct dn_fib_node *f, int z, u32 tb_id,
+			struct nlmsghdr *nlh, struct netlink_skb_parms *req)
+{
+	struct sk_buff *skb;
 	u32 portid = req ? req->portid : 0;
-	पूर्णांक err = -ENOBUFS;
+	int err = -ENOBUFS;
 
 	skb = nlmsg_new(dn_fib_nlmsg_size(DN_FIB_INFO(f)), GFP_KERNEL);
-	अगर (skb == शून्य)
-		जाओ errout;
+	if (skb == NULL)
+		goto errout;
 
 	err = dn_fib_dump_info(skb, portid, nlh->nlmsg_seq, event, tb_id,
 			       f->fn_type, f->fn_scope, &f->fn_key, z,
 			       DN_FIB_INFO(f), 0);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		/* -EMSGSIZE implies BUG in dn_fib_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kमुक्त_skb(skb);
-		जाओ errout;
-	पूर्ण
-	rtnl_notअगरy(skb, &init_net, portid, RTNLGRP_DECnet_ROUTE, nlh, GFP_KERNEL);
-	वापस;
+		kfree_skb(skb);
+		goto errout;
+	}
+	rtnl_notify(skb, &init_net, portid, RTNLGRP_DECnet_ROUTE, nlh, GFP_KERNEL);
+	return;
 errout:
-	अगर (err < 0)
+	if (err < 0)
 		rtnl_set_sk_err(&init_net, RTNLGRP_DECnet_ROUTE, err);
-पूर्ण
+}
 
-अटल __अंतरभूत__ पूर्णांक dn_hash_dump_bucket(काष्ठा sk_buff *skb,
-				काष्ठा netlink_callback *cb,
-				काष्ठा dn_fib_table *tb,
-				काष्ठा dn_zone *dz,
-				काष्ठा dn_fib_node *f)
-अणु
-	पूर्णांक i, s_i;
+static __inline__ int dn_hash_dump_bucket(struct sk_buff *skb,
+				struct netlink_callback *cb,
+				struct dn_fib_table *tb,
+				struct dn_zone *dz,
+				struct dn_fib_node *f)
+{
+	int i, s_i;
 
 	s_i = cb->args[4];
-	क्रम(i = 0; f; i++, f = f->fn_next) अणु
-		अगर (i < s_i)
-			जारी;
-		अगर (f->fn_state & DN_S_ZOMBIE)
-			जारी;
-		अगर (dn_fib_dump_info(skb, NETLINK_CB(cb->skb).portid,
+	for(i = 0; f; i++, f = f->fn_next) {
+		if (i < s_i)
+			continue;
+		if (f->fn_state & DN_S_ZOMBIE)
+			continue;
+		if (dn_fib_dump_info(skb, NETLINK_CB(cb->skb).portid,
 				cb->nlh->nlmsg_seq,
 				RTM_NEWROUTE,
 				tb->n,
 				(f->fn_state & DN_S_ZOMBIE) ? 0 : f->fn_type,
 				f->fn_scope, &f->fn_key, dz->dz_order,
-				f->fn_info, NLM_F_MULTI) < 0) अणु
+				f->fn_info, NLM_F_MULTI) < 0) {
 			cb->args[4] = i;
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 	cb->args[4] = i;
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल __अंतरभूत__ पूर्णांक dn_hash_dump_zone(काष्ठा sk_buff *skb,
-				काष्ठा netlink_callback *cb,
-				काष्ठा dn_fib_table *tb,
-				काष्ठा dn_zone *dz)
-अणु
-	पूर्णांक h, s_h;
+static __inline__ int dn_hash_dump_zone(struct sk_buff *skb,
+				struct netlink_callback *cb,
+				struct dn_fib_table *tb,
+				struct dn_zone *dz)
+{
+	int h, s_h;
 
 	s_h = cb->args[3];
-	क्रम(h = 0; h < dz->dz_भागisor; h++) अणु
-		अगर (h < s_h)
-			जारी;
-		अगर (h > s_h)
-			स_रखो(&cb->args[4], 0, माप(cb->args) - 4*माप(cb->args[0]));
-		अगर (dz->dz_hash == शून्य || dz->dz_hash[h] == शून्य)
-			जारी;
-		अगर (dn_hash_dump_bucket(skb, cb, tb, dz, dz->dz_hash[h]) < 0) अणु
+	for(h = 0; h < dz->dz_divisor; h++) {
+		if (h < s_h)
+			continue;
+		if (h > s_h)
+			memset(&cb->args[4], 0, sizeof(cb->args) - 4*sizeof(cb->args[0]));
+		if (dz->dz_hash == NULL || dz->dz_hash[h] == NULL)
+			continue;
+		if (dn_hash_dump_bucket(skb, cb, tb, dz, dz->dz_hash[h]) < 0) {
 			cb->args[3] = h;
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 	cb->args[3] = h;
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल पूर्णांक dn_fib_table_dump(काष्ठा dn_fib_table *tb, काष्ठा sk_buff *skb,
-				काष्ठा netlink_callback *cb)
-अणु
-	पूर्णांक m, s_m;
-	काष्ठा dn_zone *dz;
-	काष्ठा dn_hash *table = (काष्ठा dn_hash *)tb->data;
+static int dn_fib_table_dump(struct dn_fib_table *tb, struct sk_buff *skb,
+				struct netlink_callback *cb)
+{
+	int m, s_m;
+	struct dn_zone *dz;
+	struct dn_hash *table = (struct dn_hash *)tb->data;
 
 	s_m = cb->args[2];
-	पढ़ो_lock(&dn_fib_tables_lock);
-	क्रम(dz = table->dh_zone_list, m = 0; dz; dz = dz->dz_next, m++) अणु
-		अगर (m < s_m)
-			जारी;
-		अगर (m > s_m)
-			स_रखो(&cb->args[3], 0, माप(cb->args) - 3*माप(cb->args[0]));
+	read_lock(&dn_fib_tables_lock);
+	for(dz = table->dh_zone_list, m = 0; dz; dz = dz->dz_next, m++) {
+		if (m < s_m)
+			continue;
+		if (m > s_m)
+			memset(&cb->args[3], 0, sizeof(cb->args) - 3*sizeof(cb->args[0]));
 
-		अगर (dn_hash_dump_zone(skb, cb, tb, dz) < 0) अणु
+		if (dn_hash_dump_zone(skb, cb, tb, dz) < 0) {
 			cb->args[2] = m;
-			पढ़ो_unlock(&dn_fib_tables_lock);
-			वापस -1;
-		पूर्ण
-	पूर्ण
-	पढ़ो_unlock(&dn_fib_tables_lock);
+			read_unlock(&dn_fib_tables_lock);
+			return -1;
+		}
+	}
+	read_unlock(&dn_fib_tables_lock);
 	cb->args[2] = m;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-पूर्णांक dn_fib_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	अचिन्हित पूर्णांक h, s_h;
-	अचिन्हित पूर्णांक e = 0, s_e;
-	काष्ठा dn_fib_table *tb;
-	पूर्णांक dumped = 0;
+int dn_fib_dump(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	struct net *net = sock_net(skb->sk);
+	unsigned int h, s_h;
+	unsigned int e = 0, s_e;
+	struct dn_fib_table *tb;
+	int dumped = 0;
 
-	अगर (!net_eq(net, &init_net))
-		वापस 0;
+	if (!net_eq(net, &init_net))
+		return 0;
 
-	अगर (nlmsg_len(cb->nlh) >= माप(काष्ठा rपंचांगsg) &&
-		((काष्ठा rपंचांगsg *)nlmsg_data(cb->nlh))->rपंचांग_flags&RTM_F_CLONED)
-			वापस dn_cache_dump(skb, cb);
+	if (nlmsg_len(cb->nlh) >= sizeof(struct rtmsg) &&
+		((struct rtmsg *)nlmsg_data(cb->nlh))->rtm_flags&RTM_F_CLONED)
+			return dn_cache_dump(skb, cb);
 
 	s_h = cb->args[0];
 	s_e = cb->args[1];
 
-	क्रम (h = s_h; h < DN_FIB_TABLE_HASHSZ; h++, s_h = 0) अणु
+	for (h = s_h; h < DN_FIB_TABLE_HASHSZ; h++, s_h = 0) {
 		e = 0;
-		hlist_क्रम_each_entry(tb, &dn_fib_table_hash[h], hlist) अणु
-			अगर (e < s_e)
-				जाओ next;
-			अगर (dumped)
-				स_रखो(&cb->args[2], 0, माप(cb->args) -
-						 2 * माप(cb->args[0]));
-			अगर (tb->dump(tb, skb, cb) < 0)
-				जाओ out;
+		hlist_for_each_entry(tb, &dn_fib_table_hash[h], hlist) {
+			if (e < s_e)
+				goto next;
+			if (dumped)
+				memset(&cb->args[2], 0, sizeof(cb->args) -
+						 2 * sizeof(cb->args[0]));
+			if (tb->dump(tb, skb, cb) < 0)
+				goto out;
 			dumped = 1;
 next:
 			e++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
 	cb->args[1] = e;
 	cb->args[0] = h;
 
-	वापस skb->len;
-पूर्ण
+	return skb->len;
+}
 
-अटल पूर्णांक dn_fib_table_insert(काष्ठा dn_fib_table *tb, काष्ठा rपंचांगsg *r, काष्ठा nlattr *attrs[],
-			       काष्ठा nlmsghdr *n, काष्ठा netlink_skb_parms *req)
-अणु
-	काष्ठा dn_hash *table = (काष्ठा dn_hash *)tb->data;
-	काष्ठा dn_fib_node *new_f, *f, **fp, **del_fp;
-	काष्ठा dn_zone *dz;
-	काष्ठा dn_fib_info *fi;
-	पूर्णांक z = r->rपंचांग_dst_len;
-	पूर्णांक type = r->rपंचांग_type;
+static int dn_fib_table_insert(struct dn_fib_table *tb, struct rtmsg *r, struct nlattr *attrs[],
+			       struct nlmsghdr *n, struct netlink_skb_parms *req)
+{
+	struct dn_hash *table = (struct dn_hash *)tb->data;
+	struct dn_fib_node *new_f, *f, **fp, **del_fp;
+	struct dn_zone *dz;
+	struct dn_fib_info *fi;
+	int z = r->rtm_dst_len;
+	int type = r->rtm_type;
 	dn_fib_key_t key;
-	पूर्णांक err;
+	int err;
 
-	अगर (z > 16)
-		वापस -EINVAL;
+	if (z > 16)
+		return -EINVAL;
 
 	dz = table->dh_zones[z];
-	अगर (!dz && !(dz = dn_new_zone(table, z)))
-		वापस -ENOBUFS;
+	if (!dz && !(dz = dn_new_zone(table, z)))
+		return -ENOBUFS;
 
 	dz_key_0(key);
-	अगर (attrs[RTA_DST]) अणु
+	if (attrs[RTA_DST]) {
 		__le16 dst = nla_get_le16(attrs[RTA_DST]);
-		अगर (dst & ~DZ_MASK(dz))
-			वापस -EINVAL;
+		if (dst & ~DZ_MASK(dz))
+			return -EINVAL;
 		key = dz_key(dst, dz);
-	पूर्ण
+	}
 
-	अगर ((fi = dn_fib_create_info(r, attrs, n, &err)) == शून्य)
-		वापस err;
+	if ((fi = dn_fib_create_info(r, attrs, n, &err)) == NULL)
+		return err;
 
-	अगर (dz->dz_nent > (dz->dz_भागisor << 2) &&
-			dz->dz_भागisor > DN_MAX_DIVISOR &&
-			(z==16 || (1<<z) > dz->dz_भागisor))
+	if (dz->dz_nent > (dz->dz_divisor << 2) &&
+			dz->dz_divisor > DN_MAX_DIVISOR &&
+			(z==16 || (1<<z) > dz->dz_divisor))
 		dn_rehash_zone(dz);
 
 	fp = dn_chain_p(key, dz);
 
-	DN_FIB_SCAN(f, fp) अणु
-		अगर (dn_key_leq(key, f->fn_key))
-			अवरोध;
-	पूर्ण
+	DN_FIB_SCAN(f, fp) {
+		if (dn_key_leq(key, f->fn_key))
+			break;
+	}
 
-	del_fp = शून्य;
+	del_fp = NULL;
 
-	अगर (f && (f->fn_state & DN_S_ZOMBIE) &&
-			dn_key_eq(f->fn_key, key)) अणु
+	if (f && (f->fn_state & DN_S_ZOMBIE) &&
+			dn_key_eq(f->fn_key, key)) {
 		del_fp = fp;
 		fp = &f->fn_next;
 		f = *fp;
-		जाओ create;
-	पूर्ण
+		goto create;
+	}
 
-	DN_FIB_SCAN_KEY(f, fp, key) अणु
-		अगर (fi->fib_priority <= DN_FIB_INFO(f)->fib_priority)
-			अवरोध;
-	पूर्ण
+	DN_FIB_SCAN_KEY(f, fp, key) {
+		if (fi->fib_priority <= DN_FIB_INFO(f)->fib_priority)
+			break;
+	}
 
-	अगर (f && dn_key_eq(f->fn_key, key) &&
-			fi->fib_priority == DN_FIB_INFO(f)->fib_priority) अणु
-		काष्ठा dn_fib_node **ins_fp;
+	if (f && dn_key_eq(f->fn_key, key) &&
+			fi->fib_priority == DN_FIB_INFO(f)->fib_priority) {
+		struct dn_fib_node **ins_fp;
 
 		err = -EEXIST;
-		अगर (n->nlmsg_flags & NLM_F_EXCL)
-			जाओ out;
+		if (n->nlmsg_flags & NLM_F_EXCL)
+			goto out;
 
-		अगर (n->nlmsg_flags & NLM_F_REPLACE) अणु
+		if (n->nlmsg_flags & NLM_F_REPLACE) {
 			del_fp = fp;
 			fp = &f->fn_next;
 			f = *fp;
-			जाओ replace;
-		पूर्ण
+			goto replace;
+		}
 
 		ins_fp = fp;
 		err = -EEXIST;
 
-		DN_FIB_SCAN_KEY(f, fp, key) अणु
-			अगर (fi->fib_priority != DN_FIB_INFO(f)->fib_priority)
-				अवरोध;
-			अगर (f->fn_type == type &&
-			    f->fn_scope == r->rपंचांग_scope &&
+		DN_FIB_SCAN_KEY(f, fp, key) {
+			if (fi->fib_priority != DN_FIB_INFO(f)->fib_priority)
+				break;
+			if (f->fn_type == type &&
+			    f->fn_scope == r->rtm_scope &&
 			    DN_FIB_INFO(f) == fi)
-				जाओ out;
-		पूर्ण
+				goto out;
+		}
 
-		अगर (!(n->nlmsg_flags & NLM_F_APPEND)) अणु
+		if (!(n->nlmsg_flags & NLM_F_APPEND)) {
 			fp = ins_fp;
 			f = *fp;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 create:
 	err = -ENOENT;
-	अगर (!(n->nlmsg_flags & NLM_F_CREATE))
-		जाओ out;
+	if (!(n->nlmsg_flags & NLM_F_CREATE))
+		goto out;
 
 replace:
 	err = -ENOBUFS;
 	new_f = kmem_cache_zalloc(dn_hash_kmem, GFP_KERNEL);
-	अगर (new_f == शून्य)
-		जाओ out;
+	if (new_f == NULL)
+		goto out;
 
 	new_f->fn_key = key;
 	new_f->fn_type = type;
-	new_f->fn_scope = r->rपंचांग_scope;
+	new_f->fn_scope = r->rtm_scope;
 	DN_FIB_INFO(new_f) = fi;
 
 	new_f->fn_next = f;
-	ग_लिखो_lock_bh(&dn_fib_tables_lock);
+	write_lock_bh(&dn_fib_tables_lock);
 	*fp = new_f;
-	ग_लिखो_unlock_bh(&dn_fib_tables_lock);
+	write_unlock_bh(&dn_fib_tables_lock);
 	dz->dz_nent++;
 
-	अगर (del_fp) अणु
+	if (del_fp) {
 		f = *del_fp;
-		ग_लिखो_lock_bh(&dn_fib_tables_lock);
+		write_lock_bh(&dn_fib_tables_lock);
 		*del_fp = f->fn_next;
-		ग_लिखो_unlock_bh(&dn_fib_tables_lock);
+		write_unlock_bh(&dn_fib_tables_lock);
 
-		अगर (!(f->fn_state & DN_S_ZOMBIE))
-			dn_rपंचांगsg_fib(RTM_DELROUTE, f, z, tb->n, n, req);
-		अगर (f->fn_state & DN_S_ACCESSED)
+		if (!(f->fn_state & DN_S_ZOMBIE))
+			dn_rtmsg_fib(RTM_DELROUTE, f, z, tb->n, n, req);
+		if (f->fn_state & DN_S_ACCESSED)
 			dn_rt_cache_flush(-1);
-		dn_मुक्त_node(f);
+		dn_free_node(f);
 		dz->dz_nent--;
-	पूर्ण अन्यथा अणु
+	} else {
 		dn_rt_cache_flush(-1);
-	पूर्ण
+	}
 
-	dn_rपंचांगsg_fib(RTM_NEWROUTE, new_f, z, tb->n, n, req);
+	dn_rtmsg_fib(RTM_NEWROUTE, new_f, z, tb->n, n, req);
 
-	वापस 0;
+	return 0;
 out:
 	dn_fib_release_info(fi);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक dn_fib_table_delete(काष्ठा dn_fib_table *tb, काष्ठा rपंचांगsg *r, काष्ठा nlattr *attrs[],
-			       काष्ठा nlmsghdr *n, काष्ठा netlink_skb_parms *req)
-अणु
-	काष्ठा dn_hash *table = (काष्ठा dn_hash*)tb->data;
-	काष्ठा dn_fib_node **fp, **del_fp, *f;
-	पूर्णांक z = r->rपंचांग_dst_len;
-	काष्ठा dn_zone *dz;
+static int dn_fib_table_delete(struct dn_fib_table *tb, struct rtmsg *r, struct nlattr *attrs[],
+			       struct nlmsghdr *n, struct netlink_skb_parms *req)
+{
+	struct dn_hash *table = (struct dn_hash*)tb->data;
+	struct dn_fib_node **fp, **del_fp, *f;
+	int z = r->rtm_dst_len;
+	struct dn_zone *dz;
 	dn_fib_key_t key;
-	पूर्णांक matched;
+	int matched;
 
 
-	अगर (z > 16)
-		वापस -EINVAL;
+	if (z > 16)
+		return -EINVAL;
 
-	अगर ((dz = table->dh_zones[z]) == शून्य)
-		वापस -ESRCH;
+	if ((dz = table->dh_zones[z]) == NULL)
+		return -ESRCH;
 
 	dz_key_0(key);
-	अगर (attrs[RTA_DST]) अणु
+	if (attrs[RTA_DST]) {
 		__le16 dst = nla_get_le16(attrs[RTA_DST]);
-		अगर (dst & ~DZ_MASK(dz))
-			वापस -EINVAL;
+		if (dst & ~DZ_MASK(dz))
+			return -EINVAL;
 		key = dz_key(dst, dz);
-	पूर्ण
+	}
 
 	fp = dn_chain_p(key, dz);
 
-	DN_FIB_SCAN(f, fp) अणु
-		अगर (dn_key_eq(f->fn_key, key))
-			अवरोध;
-		अगर (dn_key_leq(key, f->fn_key))
-			वापस -ESRCH;
-	पूर्ण
+	DN_FIB_SCAN(f, fp) {
+		if (dn_key_eq(f->fn_key, key))
+			break;
+		if (dn_key_leq(key, f->fn_key))
+			return -ESRCH;
+	}
 
 	matched = 0;
-	del_fp = शून्य;
-	DN_FIB_SCAN_KEY(f, fp, key) अणु
-		काष्ठा dn_fib_info *fi = DN_FIB_INFO(f);
+	del_fp = NULL;
+	DN_FIB_SCAN_KEY(f, fp, key) {
+		struct dn_fib_info *fi = DN_FIB_INFO(f);
 
-		अगर (f->fn_state & DN_S_ZOMBIE)
-			वापस -ESRCH;
+		if (f->fn_state & DN_S_ZOMBIE)
+			return -ESRCH;
 
 		matched++;
 
-		अगर (del_fp == शून्य &&
-				(!r->rपंचांग_type || f->fn_type == r->rपंचांग_type) &&
-				(r->rपंचांग_scope == RT_SCOPE_NOWHERE || f->fn_scope == r->rपंचांग_scope) &&
-				(!r->rपंचांग_protocol ||
-					fi->fib_protocol == r->rपंचांग_protocol) &&
+		if (del_fp == NULL &&
+				(!r->rtm_type || f->fn_type == r->rtm_type) &&
+				(r->rtm_scope == RT_SCOPE_NOWHERE || f->fn_scope == r->rtm_scope) &&
+				(!r->rtm_protocol ||
+					fi->fib_protocol == r->rtm_protocol) &&
 				dn_fib_nh_match(r, n, attrs, fi) == 0)
 			del_fp = fp;
-	पूर्ण
+	}
 
-	अगर (del_fp) अणु
+	if (del_fp) {
 		f = *del_fp;
-		dn_rपंचांगsg_fib(RTM_DELROUTE, f, z, tb->n, n, req);
+		dn_rtmsg_fib(RTM_DELROUTE, f, z, tb->n, n, req);
 
-		अगर (matched != 1) अणु
-			ग_लिखो_lock_bh(&dn_fib_tables_lock);
+		if (matched != 1) {
+			write_lock_bh(&dn_fib_tables_lock);
 			*del_fp = f->fn_next;
-			ग_लिखो_unlock_bh(&dn_fib_tables_lock);
+			write_unlock_bh(&dn_fib_tables_lock);
 
-			अगर (f->fn_state & DN_S_ACCESSED)
+			if (f->fn_state & DN_S_ACCESSED)
 				dn_rt_cache_flush(-1);
-			dn_मुक्त_node(f);
+			dn_free_node(f);
 			dz->dz_nent--;
-		पूर्ण अन्यथा अणु
+		} else {
 			f->fn_state |= DN_S_ZOMBIE;
-			अगर (f->fn_state & DN_S_ACCESSED) अणु
+			if (f->fn_state & DN_S_ACCESSED) {
 				f->fn_state &= ~DN_S_ACCESSED;
 				dn_rt_cache_flush(-1);
-			पूर्ण
-			अगर (++dn_fib_hash_zombies > 128)
+			}
+			if (++dn_fib_hash_zombies > 128)
 				dn_fib_flush();
-		पूर्ण
+		}
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ESRCH;
-पूर्ण
+	return -ESRCH;
+}
 
-अटल अंतरभूत पूर्णांक dn_flush_list(काष्ठा dn_fib_node **fp, पूर्णांक z, काष्ठा dn_hash *table)
-अणु
-	पूर्णांक found = 0;
-	काष्ठा dn_fib_node *f;
+static inline int dn_flush_list(struct dn_fib_node **fp, int z, struct dn_hash *table)
+{
+	int found = 0;
+	struct dn_fib_node *f;
 
-	जबतक((f = *fp) != शून्य) अणु
-		काष्ठा dn_fib_info *fi = DN_FIB_INFO(f);
+	while((f = *fp) != NULL) {
+		struct dn_fib_info *fi = DN_FIB_INFO(f);
 
-		अगर (fi && ((f->fn_state & DN_S_ZOMBIE) || (fi->fib_flags & RTNH_F_DEAD))) अणु
-			ग_लिखो_lock_bh(&dn_fib_tables_lock);
+		if (fi && ((f->fn_state & DN_S_ZOMBIE) || (fi->fib_flags & RTNH_F_DEAD))) {
+			write_lock_bh(&dn_fib_tables_lock);
 			*fp = f->fn_next;
-			ग_लिखो_unlock_bh(&dn_fib_tables_lock);
+			write_unlock_bh(&dn_fib_tables_lock);
 
-			dn_मुक्त_node(f);
+			dn_free_node(f);
 			found++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		fp = &f->fn_next;
-	पूर्ण
+	}
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल पूर्णांक dn_fib_table_flush(काष्ठा dn_fib_table *tb)
-अणु
-	काष्ठा dn_hash *table = (काष्ठा dn_hash *)tb->data;
-	काष्ठा dn_zone *dz;
-	पूर्णांक found = 0;
+static int dn_fib_table_flush(struct dn_fib_table *tb)
+{
+	struct dn_hash *table = (struct dn_hash *)tb->data;
+	struct dn_zone *dz;
+	int found = 0;
 
 	dn_fib_hash_zombies = 0;
-	क्रम(dz = table->dh_zone_list; dz; dz = dz->dz_next) अणु
-		पूर्णांक i;
-		पूर्णांक पंचांगp = 0;
-		क्रम(i = dz->dz_भागisor-1; i >= 0; i--)
-			पंचांगp += dn_flush_list(&dz->dz_hash[i], dz->dz_order, table);
-		dz->dz_nent -= पंचांगp;
-		found += पंचांगp;
-	पूर्ण
+	for(dz = table->dh_zone_list; dz; dz = dz->dz_next) {
+		int i;
+		int tmp = 0;
+		for(i = dz->dz_divisor-1; i >= 0; i--)
+			tmp += dn_flush_list(&dz->dz_hash[i], dz->dz_order, table);
+		dz->dz_nent -= tmp;
+		found += tmp;
+	}
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल पूर्णांक dn_fib_table_lookup(काष्ठा dn_fib_table *tb, स्थिर काष्ठा flowidn *flp, काष्ठा dn_fib_res *res)
-अणु
-	पूर्णांक err;
-	काष्ठा dn_zone *dz;
-	काष्ठा dn_hash *t = (काष्ठा dn_hash *)tb->data;
+static int dn_fib_table_lookup(struct dn_fib_table *tb, const struct flowidn *flp, struct dn_fib_res *res)
+{
+	int err;
+	struct dn_zone *dz;
+	struct dn_hash *t = (struct dn_hash *)tb->data;
 
-	पढ़ो_lock(&dn_fib_tables_lock);
-	क्रम(dz = t->dh_zone_list; dz; dz = dz->dz_next) अणु
-		काष्ठा dn_fib_node *f;
+	read_lock(&dn_fib_tables_lock);
+	for(dz = t->dh_zone_list; dz; dz = dz->dz_next) {
+		struct dn_fib_node *f;
 		dn_fib_key_t k = dz_key(flp->daddr, dz);
 
-		क्रम(f = dz_chain(k, dz); f; f = f->fn_next) अणु
-			अगर (!dn_key_eq(k, f->fn_key)) अणु
-				अगर (dn_key_leq(k, f->fn_key))
-					अवरोध;
-				अन्यथा
-					जारी;
-			पूर्ण
+		for(f = dz_chain(k, dz); f; f = f->fn_next) {
+			if (!dn_key_eq(k, f->fn_key)) {
+				if (dn_key_leq(k, f->fn_key))
+					break;
+				else
+					continue;
+			}
 
 			f->fn_state |= DN_S_ACCESSED;
 
-			अगर (f->fn_state&DN_S_ZOMBIE)
-				जारी;
+			if (f->fn_state&DN_S_ZOMBIE)
+				continue;
 
-			अगर (f->fn_scope < flp->flowidn_scope)
-				जारी;
+			if (f->fn_scope < flp->flowidn_scope)
+				continue;
 
 			err = dn_fib_semantic_match(f->fn_type, DN_FIB_INFO(f), flp, res);
 
-			अगर (err == 0) अणु
+			if (err == 0) {
 				res->type = f->fn_type;
 				res->scope = f->fn_scope;
 				res->prefixlen = dz->dz_order;
-				जाओ out;
-			पूर्ण
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+			if (err < 0)
+				goto out;
+		}
+	}
 	err = 1;
 out:
-	पढ़ो_unlock(&dn_fib_tables_lock);
-	वापस err;
-पूर्ण
+	read_unlock(&dn_fib_tables_lock);
+	return err;
+}
 
 
-काष्ठा dn_fib_table *dn_fib_get_table(u32 n, पूर्णांक create)
-अणु
-	काष्ठा dn_fib_table *t;
-	अचिन्हित पूर्णांक h;
+struct dn_fib_table *dn_fib_get_table(u32 n, int create)
+{
+	struct dn_fib_table *t;
+	unsigned int h;
 
-	अगर (n < RT_TABLE_MIN)
-		वापस शून्य;
+	if (n < RT_TABLE_MIN)
+		return NULL;
 
-	अगर (n > RT_TABLE_MAX)
-		वापस शून्य;
+	if (n > RT_TABLE_MAX)
+		return NULL;
 
 	h = n & (DN_FIB_TABLE_HASHSZ - 1);
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(t, &dn_fib_table_hash[h], hlist) अणु
-		अगर (t->n == n) अणु
-			rcu_पढ़ो_unlock();
-			वापस t;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(t, &dn_fib_table_hash[h], hlist) {
+		if (t->n == n) {
+			rcu_read_unlock();
+			return t;
+		}
+	}
+	rcu_read_unlock();
 
-	अगर (!create)
-		वापस शून्य;
+	if (!create)
+		return NULL;
 
-	अगर (in_पूर्णांकerrupt()) अणु
+	if (in_interrupt()) {
 		net_dbg_ratelimited("DECnet: BUG! Attempt to create routing table from interrupt\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	t = kzalloc(माप(काष्ठा dn_fib_table) + माप(काष्ठा dn_hash),
+	t = kzalloc(sizeof(struct dn_fib_table) + sizeof(struct dn_hash),
 		    GFP_KERNEL);
-	अगर (t == शून्य)
-		वापस शून्य;
+	if (t == NULL)
+		return NULL;
 
 	t->n = n;
 	t->insert = dn_fib_table_insert;
@@ -876,55 +875,55 @@ out:
 	t->dump = dn_fib_table_dump;
 	hlist_add_head_rcu(&t->hlist, &dn_fib_table_hash[h]);
 
-	वापस t;
-पूर्ण
+	return t;
+}
 
-काष्ठा dn_fib_table *dn_fib_empty_table(व्योम)
-अणु
+struct dn_fib_table *dn_fib_empty_table(void)
+{
 	u32 id;
 
-	क्रम(id = RT_TABLE_MIN; id <= RT_TABLE_MAX; id++)
-		अगर (dn_fib_get_table(id, 0) == शून्य)
-			वापस dn_fib_get_table(id, 1);
-	वापस शून्य;
-पूर्ण
+	for(id = RT_TABLE_MIN; id <= RT_TABLE_MAX; id++)
+		if (dn_fib_get_table(id, 0) == NULL)
+			return dn_fib_get_table(id, 1);
+	return NULL;
+}
 
-व्योम dn_fib_flush(व्योम)
-अणु
-	पूर्णांक flushed = 0;
-	काष्ठा dn_fib_table *tb;
-	अचिन्हित पूर्णांक h;
+void dn_fib_flush(void)
+{
+	int flushed = 0;
+	struct dn_fib_table *tb;
+	unsigned int h;
 
-	क्रम (h = 0; h < DN_FIB_TABLE_HASHSZ; h++) अणु
-		hlist_क्रम_each_entry(tb, &dn_fib_table_hash[h], hlist)
+	for (h = 0; h < DN_FIB_TABLE_HASHSZ; h++) {
+		hlist_for_each_entry(tb, &dn_fib_table_hash[h], hlist)
 			flushed += tb->flush(tb);
-	पूर्ण
+	}
 
-	अगर (flushed)
+	if (flushed)
 		dn_rt_cache_flush(-1);
-पूर्ण
+}
 
-व्योम __init dn_fib_table_init(व्योम)
-अणु
+void __init dn_fib_table_init(void)
+{
 	dn_hash_kmem = kmem_cache_create("dn_fib_info_cache",
-					माप(काष्ठा dn_fib_info),
+					sizeof(struct dn_fib_info),
 					0, SLAB_HWCACHE_ALIGN,
-					शून्य);
-पूर्ण
+					NULL);
+}
 
-व्योम __निकास dn_fib_table_cleanup(व्योम)
-अणु
-	काष्ठा dn_fib_table *t;
-	काष्ठा hlist_node *next;
-	अचिन्हित पूर्णांक h;
+void __exit dn_fib_table_cleanup(void)
+{
+	struct dn_fib_table *t;
+	struct hlist_node *next;
+	unsigned int h;
 
-	ग_लिखो_lock(&dn_fib_tables_lock);
-	क्रम (h = 0; h < DN_FIB_TABLE_HASHSZ; h++) अणु
-		hlist_क्रम_each_entry_safe(t, next, &dn_fib_table_hash[h],
-					  hlist) अणु
+	write_lock(&dn_fib_tables_lock);
+	for (h = 0; h < DN_FIB_TABLE_HASHSZ; h++) {
+		hlist_for_each_entry_safe(t, next, &dn_fib_table_hash[h],
+					  hlist) {
 			hlist_del(&t->hlist);
-			kमुक्त(t);
-		पूर्ण
-	पूर्ण
-	ग_लिखो_unlock(&dn_fib_tables_lock);
-पूर्ण
+			kfree(t);
+		}
+	}
+	write_unlock(&dn_fib_tables_lock);
+}

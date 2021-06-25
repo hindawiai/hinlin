@@ -1,283 +1,282 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/fs/pnode.c
  *
  * (C) Copyright IBM Corporation 2005.
  *	Author : Ram Pai (linuxram@us.ibm.com)
  */
-#समावेश <linux/mnt_namespace.h>
-#समावेश <linux/mount.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <uapi/linux/mount.h>
-#समावेश "internal.h"
-#समावेश "pnode.h"
+#include <linux/mnt_namespace.h>
+#include <linux/mount.h>
+#include <linux/fs.h>
+#include <linux/nsproxy.h>
+#include <uapi/linux/mount.h>
+#include "internal.h"
+#include "pnode.h"
 
-/* वापस the next shared peer mount of @p */
-अटल अंतरभूत काष्ठा mount *next_peer(काष्ठा mount *p)
-अणु
-	वापस list_entry(p->mnt_share.next, काष्ठा mount, mnt_share);
-पूर्ण
+/* return the next shared peer mount of @p */
+static inline struct mount *next_peer(struct mount *p)
+{
+	return list_entry(p->mnt_share.next, struct mount, mnt_share);
+}
 
-अटल अंतरभूत काष्ठा mount *first_slave(काष्ठा mount *p)
-अणु
-	वापस list_entry(p->mnt_slave_list.next, काष्ठा mount, mnt_slave);
-पूर्ण
+static inline struct mount *first_slave(struct mount *p)
+{
+	return list_entry(p->mnt_slave_list.next, struct mount, mnt_slave);
+}
 
-अटल अंतरभूत काष्ठा mount *last_slave(काष्ठा mount *p)
-अणु
-	वापस list_entry(p->mnt_slave_list.prev, काष्ठा mount, mnt_slave);
-पूर्ण
+static inline struct mount *last_slave(struct mount *p)
+{
+	return list_entry(p->mnt_slave_list.prev, struct mount, mnt_slave);
+}
 
-अटल अंतरभूत काष्ठा mount *next_slave(काष्ठा mount *p)
-अणु
-	वापस list_entry(p->mnt_slave.next, काष्ठा mount, mnt_slave);
-पूर्ण
+static inline struct mount *next_slave(struct mount *p)
+{
+	return list_entry(p->mnt_slave.next, struct mount, mnt_slave);
+}
 
-अटल काष्ठा mount *get_peer_under_root(काष्ठा mount *mnt,
-					 काष्ठा mnt_namespace *ns,
-					 स्थिर काष्ठा path *root)
-अणु
-	काष्ठा mount *m = mnt;
+static struct mount *get_peer_under_root(struct mount *mnt,
+					 struct mnt_namespace *ns,
+					 const struct path *root)
+{
+	struct mount *m = mnt;
 
-	करो अणु
-		/* Check the namespace first क्रम optimization */
-		अगर (m->mnt_ns == ns && is_path_reachable(m, m->mnt.mnt_root, root))
-			वापस m;
+	do {
+		/* Check the namespace first for optimization */
+		if (m->mnt_ns == ns && is_path_reachable(m, m->mnt.mnt_root, root))
+			return m;
 
 		m = next_peer(m);
-	पूर्ण जबतक (m != mnt);
+	} while (m != mnt);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Get ID of बंदst करोminating peer group having a representative
+ * Get ID of closest dominating peer group having a representative
  * under the given root.
  *
  * Caller must hold namespace_sem
  */
-पूर्णांक get_करोminating_id(काष्ठा mount *mnt, स्थिर काष्ठा path *root)
-अणु
-	काष्ठा mount *m;
+int get_dominating_id(struct mount *mnt, const struct path *root)
+{
+	struct mount *m;
 
-	क्रम (m = mnt->mnt_master; m != शून्य; m = m->mnt_master) अणु
-		काष्ठा mount *d = get_peer_under_root(m, mnt->mnt_ns, root);
-		अगर (d)
-			वापस d->mnt_group_id;
-	पूर्ण
+	for (m = mnt->mnt_master; m != NULL; m = m->mnt_master) {
+		struct mount *d = get_peer_under_root(m, mnt->mnt_ns, root);
+		if (d)
+			return d->mnt_group_id;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_make_slave(काष्ठा mount *mnt)
-अणु
-	काष्ठा mount *master, *slave_mnt;
+static int do_make_slave(struct mount *mnt)
+{
+	struct mount *master, *slave_mnt;
 
-	अगर (list_empty(&mnt->mnt_share)) अणु
-		अगर (IS_MNT_SHARED(mnt)) अणु
+	if (list_empty(&mnt->mnt_share)) {
+		if (IS_MNT_SHARED(mnt)) {
 			mnt_release_group_id(mnt);
 			CLEAR_MNT_SHARED(mnt);
-		पूर्ण
+		}
 		master = mnt->mnt_master;
-		अगर (!master) अणु
-			काष्ठा list_head *p = &mnt->mnt_slave_list;
-			जबतक (!list_empty(p)) अणु
+		if (!master) {
+			struct list_head *p = &mnt->mnt_slave_list;
+			while (!list_empty(p)) {
 				slave_mnt = list_first_entry(p,
-						काष्ठा mount, mnt_slave);
+						struct mount, mnt_slave);
 				list_del_init(&slave_mnt->mnt_slave);
-				slave_mnt->mnt_master = शून्य;
-			पूर्ण
-			वापस 0;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा mount *m;
+				slave_mnt->mnt_master = NULL;
+			}
+			return 0;
+		}
+	} else {
+		struct mount *m;
 		/*
 		 * slave 'mnt' to a peer mount that has the
 		 * same root dentry. If none is available then
 		 * slave it to anything that is available.
 		 */
-		क्रम (m = master = next_peer(mnt); m != mnt; m = next_peer(m)) अणु
-			अगर (m->mnt.mnt_root == mnt->mnt.mnt_root) अणु
+		for (m = master = next_peer(mnt); m != mnt; m = next_peer(m)) {
+			if (m->mnt.mnt_root == mnt->mnt.mnt_root) {
 				master = m;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 		list_del_init(&mnt->mnt_share);
 		mnt->mnt_group_id = 0;
 		CLEAR_MNT_SHARED(mnt);
-	पूर्ण
-	list_क्रम_each_entry(slave_mnt, &mnt->mnt_slave_list, mnt_slave)
+	}
+	list_for_each_entry(slave_mnt, &mnt->mnt_slave_list, mnt_slave)
 		slave_mnt->mnt_master = master;
 	list_move(&mnt->mnt_slave, &master->mnt_slave_list);
 	list_splice(&mnt->mnt_slave_list, master->mnt_slave_list.prev);
 	INIT_LIST_HEAD(&mnt->mnt_slave_list);
 	mnt->mnt_master = master;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * vfsmount lock must be held क्रम ग_लिखो
+ * vfsmount lock must be held for write
  */
-व्योम change_mnt_propagation(काष्ठा mount *mnt, पूर्णांक type)
-अणु
-	अगर (type == MS_SHARED) अणु
+void change_mnt_propagation(struct mount *mnt, int type)
+{
+	if (type == MS_SHARED) {
 		set_mnt_shared(mnt);
-		वापस;
-	पूर्ण
-	करो_make_slave(mnt);
-	अगर (type != MS_SLAVE) अणु
+		return;
+	}
+	do_make_slave(mnt);
+	if (type != MS_SLAVE) {
 		list_del_init(&mnt->mnt_slave);
-		mnt->mnt_master = शून्य;
-		अगर (type == MS_UNBINDABLE)
+		mnt->mnt_master = NULL;
+		if (type == MS_UNBINDABLE)
 			mnt->mnt.mnt_flags |= MNT_UNBINDABLE;
-		अन्यथा
+		else
 			mnt->mnt.mnt_flags &= ~MNT_UNBINDABLE;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * get the next mount in the propagation tree.
  * @m: the mount seen last
  * @origin: the original mount from where the tree walk initiated
  *
- * Note that peer groups क्रमm contiguous segments of slave lists.
- * We rely on that in get_source() to be able to find out अगर
- * vfsmount found जबतक iterating with propagation_next() is
+ * Note that peer groups form contiguous segments of slave lists.
+ * We rely on that in get_source() to be able to find out if
+ * vfsmount found while iterating with propagation_next() is
  * a peer of one we'd found earlier.
  */
-अटल काष्ठा mount *propagation_next(काष्ठा mount *m,
-					 काष्ठा mount *origin)
-अणु
+static struct mount *propagation_next(struct mount *m,
+					 struct mount *origin)
+{
 	/* are there any slaves of this mount? */
-	अगर (!IS_MNT_NEW(m) && !list_empty(&m->mnt_slave_list))
-		वापस first_slave(m);
+	if (!IS_MNT_NEW(m) && !list_empty(&m->mnt_slave_list))
+		return first_slave(m);
 
-	जबतक (1) अणु
-		काष्ठा mount *master = m->mnt_master;
+	while (1) {
+		struct mount *master = m->mnt_master;
 
-		अगर (master == origin->mnt_master) अणु
-			काष्ठा mount *next = next_peer(m);
-			वापस (next == origin) ? शून्य : next;
-		पूर्ण अन्यथा अगर (m->mnt_slave.next != &master->mnt_slave_list)
-			वापस next_slave(m);
+		if (master == origin->mnt_master) {
+			struct mount *next = next_peer(m);
+			return (next == origin) ? NULL : next;
+		} else if (m->mnt_slave.next != &master->mnt_slave_list)
+			return next_slave(m);
 
 		/* back at master */
 		m = master;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा mount *skip_propagation_subtree(काष्ठा mount *m,
-						काष्ठा mount *origin)
-अणु
+static struct mount *skip_propagation_subtree(struct mount *m,
+						struct mount *origin)
+{
 	/*
-	 * Advance m such that propagation_next will not वापस
+	 * Advance m such that propagation_next will not return
 	 * the slaves of m.
 	 */
-	अगर (!IS_MNT_NEW(m) && !list_empty(&m->mnt_slave_list))
+	if (!IS_MNT_NEW(m) && !list_empty(&m->mnt_slave_list))
 		m = last_slave(m);
 
-	वापस m;
-पूर्ण
+	return m;
+}
 
-अटल काष्ठा mount *next_group(काष्ठा mount *m, काष्ठा mount *origin)
-अणु
-	जबतक (1) अणु
-		जबतक (1) अणु
-			काष्ठा mount *next;
-			अगर (!IS_MNT_NEW(m) && !list_empty(&m->mnt_slave_list))
-				वापस first_slave(m);
+static struct mount *next_group(struct mount *m, struct mount *origin)
+{
+	while (1) {
+		while (1) {
+			struct mount *next;
+			if (!IS_MNT_NEW(m) && !list_empty(&m->mnt_slave_list))
+				return first_slave(m);
 			next = next_peer(m);
-			अगर (m->mnt_group_id == origin->mnt_group_id) अणु
-				अगर (next == origin)
-					वापस शून्य;
-			पूर्ण अन्यथा अगर (m->mnt_slave.next != &next->mnt_slave)
-				अवरोध;
+			if (m->mnt_group_id == origin->mnt_group_id) {
+				if (next == origin)
+					return NULL;
+			} else if (m->mnt_slave.next != &next->mnt_slave)
+				break;
 			m = next;
-		पूर्ण
+		}
 		/* m is the last peer */
-		जबतक (1) अणु
-			काष्ठा mount *master = m->mnt_master;
-			अगर (m->mnt_slave.next != &master->mnt_slave_list)
-				वापस next_slave(m);
+		while (1) {
+			struct mount *master = m->mnt_master;
+			if (m->mnt_slave.next != &master->mnt_slave_list)
+				return next_slave(m);
 			m = next_peer(master);
-			अगर (master->mnt_group_id == origin->mnt_group_id)
-				अवरोध;
-			अगर (master->mnt_slave.next == &m->mnt_slave)
-				अवरोध;
+			if (master->mnt_group_id == origin->mnt_group_id)
+				break;
+			if (master->mnt_slave.next == &m->mnt_slave)
+				break;
 			m = master;
-		पूर्ण
-		अगर (m == origin)
-			वापस शून्य;
-	पूर्ण
-पूर्ण
+		}
+		if (m == origin)
+			return NULL;
+	}
+}
 
 /* all accesses are serialized by namespace_sem */
-अटल काष्ठा mount *last_dest, *first_source, *last_source, *dest_master;
-अटल काष्ठा mountpoपूर्णांक *mp;
-अटल काष्ठा hlist_head *list;
+static struct mount *last_dest, *first_source, *last_source, *dest_master;
+static struct mountpoint *mp;
+static struct hlist_head *list;
 
-अटल अंतरभूत bool peers(काष्ठा mount *m1, काष्ठा mount *m2)
-अणु
-	वापस m1->mnt_group_id == m2->mnt_group_id && m1->mnt_group_id;
-पूर्ण
+static inline bool peers(struct mount *m1, struct mount *m2)
+{
+	return m1->mnt_group_id == m2->mnt_group_id && m1->mnt_group_id;
+}
 
-अटल पूर्णांक propagate_one(काष्ठा mount *m)
-अणु
-	काष्ठा mount *child;
-	पूर्णांक type;
+static int propagate_one(struct mount *m)
+{
+	struct mount *child;
+	int type;
 	/* skip ones added by this propagate_mnt() */
-	अगर (IS_MNT_NEW(m))
-		वापस 0;
-	/* skip अगर mountpoपूर्णांक isn't covered by it */
-	अगर (!is_subdir(mp->m_dentry, m->mnt.mnt_root))
-		वापस 0;
-	अगर (peers(m, last_dest)) अणु
+	if (IS_MNT_NEW(m))
+		return 0;
+	/* skip if mountpoint isn't covered by it */
+	if (!is_subdir(mp->m_dentry, m->mnt.mnt_root))
+		return 0;
+	if (peers(m, last_dest)) {
 		type = CL_MAKE_SHARED;
-	पूर्ण अन्यथा अणु
-		काष्ठा mount *n, *p;
-		bool करोne;
-		क्रम (n = m; ; n = p) अणु
+	} else {
+		struct mount *n, *p;
+		bool done;
+		for (n = m; ; n = p) {
 			p = n->mnt_master;
-			अगर (p == dest_master || IS_MNT_MARKED(p))
-				अवरोध;
-		पूर्ण
-		करो अणु
-			काष्ठा mount *parent = last_source->mnt_parent;
-			अगर (last_source == first_source)
-				अवरोध;
-			करोne = parent->mnt_master == p;
-			अगर (करोne && peers(n, parent))
-				अवरोध;
+			if (p == dest_master || IS_MNT_MARKED(p))
+				break;
+		}
+		do {
+			struct mount *parent = last_source->mnt_parent;
+			if (last_source == first_source)
+				break;
+			done = parent->mnt_master == p;
+			if (done && peers(n, parent))
+				break;
 			last_source = last_source->mnt_master;
-		पूर्ण जबतक (!करोne);
+		} while (!done);
 
 		type = CL_SLAVE;
 		/* beginning of peer group among the slaves? */
-		अगर (IS_MNT_SHARED(m))
+		if (IS_MNT_SHARED(m))
 			type |= CL_MAKE_SHARED;
-	पूर्ण
+	}
 		
 	child = copy_tree(last_source, last_source->mnt.mnt_root, type);
-	अगर (IS_ERR(child))
-		वापस PTR_ERR(child);
-	पढ़ो_seqlock_excl(&mount_lock);
-	mnt_set_mountpoपूर्णांक(m, mp, child);
-	अगर (m->mnt_master != dest_master)
+	if (IS_ERR(child))
+		return PTR_ERR(child);
+	read_seqlock_excl(&mount_lock);
+	mnt_set_mountpoint(m, mp, child);
+	if (m->mnt_master != dest_master)
 		SET_MNT_MARK(m->mnt_master);
-	पढ़ो_sequnlock_excl(&mount_lock);
+	read_sequnlock_excl(&mount_lock);
 	last_dest = m;
 	last_source = child;
 	hlist_add_head(&child->mnt_hash, list);
-	वापस count_mounts(m->mnt_ns, child);
-पूर्ण
+	return count_mounts(m->mnt_ns, child);
+}
 
 /*
  * mount 'source_mnt' under the destination 'dest_mnt' at
  * dentry 'dest_dentry'. And propagate that mount to
  * all the peer and slave mounts of 'dest_mnt'.
- * Link all the new mounts पूर्णांकo a propagation tree headed at
+ * Link all the new mounts into a propagation tree headed at
  * source_mnt. Also link all the new mounts using ->mnt_list
  * headed at source_mnt's ->mnt_list
  *
@@ -286,16 +285,16 @@
  * @source_mnt: source mount.
  * @tree_list : list of heads of trees to be attached.
  */
-पूर्णांक propagate_mnt(काष्ठा mount *dest_mnt, काष्ठा mountpoपूर्णांक *dest_mp,
-		    काष्ठा mount *source_mnt, काष्ठा hlist_head *tree_list)
-अणु
-	काष्ठा mount *m, *n;
-	पूर्णांक ret = 0;
+int propagate_mnt(struct mount *dest_mnt, struct mountpoint *dest_mp,
+		    struct mount *source_mnt, struct hlist_head *tree_list)
+{
+	struct mount *m, *n;
+	int ret = 0;
 
 	/*
-	 * we करोn't want to bother passing tons of arguments to
+	 * we don't want to bother passing tons of arguments to
 	 * propagate_one(); everything is serialized by namespace_sem,
-	 * so globals will करो just fine.
+	 * so globals will do just fine.
 	 */
 	last_dest = dest_mnt;
 	first_source = source_mnt;
@@ -305,299 +304,299 @@
 	dest_master = dest_mnt->mnt_master;
 
 	/* all peers of dest_mnt, except dest_mnt itself */
-	क्रम (n = next_peer(dest_mnt); n != dest_mnt; n = next_peer(n)) अणु
+	for (n = next_peer(dest_mnt); n != dest_mnt; n = next_peer(n)) {
 		ret = propagate_one(n);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	/* all slave groups */
-	क्रम (m = next_group(dest_mnt, dest_mnt); m;
-			m = next_group(m, dest_mnt)) अणु
+	for (m = next_group(dest_mnt, dest_mnt); m;
+			m = next_group(m, dest_mnt)) {
 		/* everything in that slave group */
 		n = m;
-		करो अणु
+		do {
 			ret = propagate_one(n);
-			अगर (ret)
-				जाओ out;
+			if (ret)
+				goto out;
 			n = next_peer(n);
-		पूर्ण जबतक (n != m);
-	पूर्ण
+		} while (n != m);
+	}
 out:
-	पढ़ो_seqlock_excl(&mount_lock);
-	hlist_क्रम_each_entry(n, tree_list, mnt_hash) अणु
+	read_seqlock_excl(&mount_lock);
+	hlist_for_each_entry(n, tree_list, mnt_hash) {
 		m = n->mnt_parent;
-		अगर (m->mnt_master != dest_mnt->mnt_master)
+		if (m->mnt_master != dest_mnt->mnt_master)
 			CLEAR_MNT_MARK(m->mnt_master);
-	पूर्ण
-	पढ़ो_sequnlock_excl(&mount_lock);
-	वापस ret;
-पूर्ण
+	}
+	read_sequnlock_excl(&mount_lock);
+	return ret;
+}
 
-अटल काष्ठा mount *find_topper(काष्ठा mount *mnt)
-अणु
-	/* If there is exactly one mount covering mnt completely वापस it. */
-	काष्ठा mount *child;
+static struct mount *find_topper(struct mount *mnt)
+{
+	/* If there is exactly one mount covering mnt completely return it. */
+	struct mount *child;
 
-	अगर (!list_is_singular(&mnt->mnt_mounts))
-		वापस शून्य;
+	if (!list_is_singular(&mnt->mnt_mounts))
+		return NULL;
 
-	child = list_first_entry(&mnt->mnt_mounts, काष्ठा mount, mnt_child);
-	अगर (child->mnt_mountpoपूर्णांक != mnt->mnt.mnt_root)
-		वापस शून्य;
+	child = list_first_entry(&mnt->mnt_mounts, struct mount, mnt_child);
+	if (child->mnt_mountpoint != mnt->mnt.mnt_root)
+		return NULL;
 
-	वापस child;
-पूर्ण
+	return child;
+}
 
 /*
- * वापस true अगर the refcount is greater than count
+ * return true if the refcount is greater than count
  */
-अटल अंतरभूत पूर्णांक करो_refcount_check(काष्ठा mount *mnt, पूर्णांक count)
-अणु
-	वापस mnt_get_count(mnt) > count;
-पूर्ण
+static inline int do_refcount_check(struct mount *mnt, int count)
+{
+	return mnt_get_count(mnt) > count;
+}
 
 /*
- * check अगर the mount 'mnt' can be unmounted successfully.
- * @mnt: the mount to be checked क्रम unmount
+ * check if the mount 'mnt' can be unmounted successfully.
+ * @mnt: the mount to be checked for unmount
  * NOTE: unmounting 'mnt' would naturally propagate to all
  * other mounts its parent propagates to.
- * Check अगर any of these mounts that **करो not have submounts**
- * have more references than 'refcnt'. If so वापस busy.
+ * Check if any of these mounts that **do not have submounts**
+ * have more references than 'refcnt'. If so return busy.
  *
- * vfsmount lock must be held क्रम ग_लिखो
+ * vfsmount lock must be held for write
  */
-पूर्णांक propagate_mount_busy(काष्ठा mount *mnt, पूर्णांक refcnt)
-अणु
-	काष्ठा mount *m, *child, *topper;
-	काष्ठा mount *parent = mnt->mnt_parent;
+int propagate_mount_busy(struct mount *mnt, int refcnt)
+{
+	struct mount *m, *child, *topper;
+	struct mount *parent = mnt->mnt_parent;
 
-	अगर (mnt == parent)
-		वापस करो_refcount_check(mnt, refcnt);
+	if (mnt == parent)
+		return do_refcount_check(mnt, refcnt);
 
 	/*
-	 * quickly check अगर the current mount can be unmounted.
-	 * If not, we करोn't have to go checking क्रम all other
+	 * quickly check if the current mount can be unmounted.
+	 * If not, we don't have to go checking for all other
 	 * mounts
 	 */
-	अगर (!list_empty(&mnt->mnt_mounts) || करो_refcount_check(mnt, refcnt))
-		वापस 1;
+	if (!list_empty(&mnt->mnt_mounts) || do_refcount_check(mnt, refcnt))
+		return 1;
 
-	क्रम (m = propagation_next(parent, parent); m;
-	     		m = propagation_next(m, parent)) अणु
-		पूर्णांक count = 1;
-		child = __lookup_mnt(&m->mnt, mnt->mnt_mountpoपूर्णांक);
-		अगर (!child)
-			जारी;
+	for (m = propagation_next(parent, parent); m;
+	     		m = propagation_next(m, parent)) {
+		int count = 1;
+		child = __lookup_mnt(&m->mnt, mnt->mnt_mountpoint);
+		if (!child)
+			continue;
 
 		/* Is there exactly one mount on the child that covers
 		 * it completely whose reference should be ignored?
 		 */
 		topper = find_topper(child);
-		अगर (topper)
+		if (topper)
 			count += 1;
-		अन्यथा अगर (!list_empty(&child->mnt_mounts))
-			जारी;
+		else if (!list_empty(&child->mnt_mounts))
+			continue;
 
-		अगर (करो_refcount_check(child, count))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (do_refcount_check(child, count))
+			return 1;
+	}
+	return 0;
+}
 
 /*
  * Clear MNT_LOCKED when it can be shown to be safe.
  *
- * mount_lock lock must be held क्रम ग_लिखो
+ * mount_lock lock must be held for write
  */
-व्योम propagate_mount_unlock(काष्ठा mount *mnt)
-अणु
-	काष्ठा mount *parent = mnt->mnt_parent;
-	काष्ठा mount *m, *child;
+void propagate_mount_unlock(struct mount *mnt)
+{
+	struct mount *parent = mnt->mnt_parent;
+	struct mount *m, *child;
 
 	BUG_ON(parent == mnt);
 
-	क्रम (m = propagation_next(parent, parent); m;
-			m = propagation_next(m, parent)) अणु
-		child = __lookup_mnt(&m->mnt, mnt->mnt_mountpoपूर्णांक);
-		अगर (child)
+	for (m = propagation_next(parent, parent); m;
+			m = propagation_next(m, parent)) {
+		child = __lookup_mnt(&m->mnt, mnt->mnt_mountpoint);
+		if (child)
 			child->mnt.mnt_flags &= ~MNT_LOCKED;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम umount_one(काष्ठा mount *mnt, काष्ठा list_head *to_umount)
-अणु
+static void umount_one(struct mount *mnt, struct list_head *to_umount)
+{
 	CLEAR_MNT_MARK(mnt);
 	mnt->mnt.mnt_flags |= MNT_UMOUNT;
 	list_del_init(&mnt->mnt_child);
 	list_del_init(&mnt->mnt_umounting);
 	list_move_tail(&mnt->mnt_list, to_umount);
-पूर्ण
+}
 
 /*
  * NOTE: unmounting 'mnt' naturally propagates to all other mounts its
  * parent propagates to.
  */
-अटल bool __propagate_umount(काष्ठा mount *mnt,
-			       काष्ठा list_head *to_umount,
-			       काष्ठा list_head *to_restore)
-अणु
+static bool __propagate_umount(struct mount *mnt,
+			       struct list_head *to_umount,
+			       struct list_head *to_restore)
+{
 	bool progress = false;
-	काष्ठा mount *child;
+	struct mount *child;
 
 	/*
-	 * The state of the parent won't change अगर this mount is
-	 * alपढ़ोy unmounted or marked as without children.
+	 * The state of the parent won't change if this mount is
+	 * already unmounted or marked as without children.
 	 */
-	अगर (mnt->mnt.mnt_flags & (MNT_UMOUNT | MNT_MARKED))
-		जाओ out;
+	if (mnt->mnt.mnt_flags & (MNT_UMOUNT | MNT_MARKED))
+		goto out;
 
-	/* Verअगरy topper is the only gअक्रमchild that has not been
+	/* Verify topper is the only grandchild that has not been
 	 * speculatively unmounted.
 	 */
-	list_क्रम_each_entry(child, &mnt->mnt_mounts, mnt_child) अणु
-		अगर (child->mnt_mountpoपूर्णांक == mnt->mnt.mnt_root)
-			जारी;
-		अगर (!list_empty(&child->mnt_umounting) && IS_MNT_MARKED(child))
-			जारी;
+	list_for_each_entry(child, &mnt->mnt_mounts, mnt_child) {
+		if (child->mnt_mountpoint == mnt->mnt.mnt_root)
+			continue;
+		if (!list_empty(&child->mnt_umounting) && IS_MNT_MARKED(child))
+			continue;
 		/* Found a mounted child */
-		जाओ children;
-	पूर्ण
+		goto children;
+	}
 
-	/* Mark mounts that can be unmounted अगर not locked */
+	/* Mark mounts that can be unmounted if not locked */
 	SET_MNT_MARK(mnt);
 	progress = true;
 
 	/* If a mount is without children and not locked umount it. */
-	अगर (!IS_MNT_LOCKED(mnt)) अणु
+	if (!IS_MNT_LOCKED(mnt)) {
 		umount_one(mnt, to_umount);
-	पूर्ण अन्यथा अणु
+	} else {
 children:
 		list_move_tail(&mnt->mnt_umounting, to_restore);
-	पूर्ण
+	}
 out:
-	वापस progress;
-पूर्ण
+	return progress;
+}
 
-अटल व्योम umount_list(काष्ठा list_head *to_umount,
-			काष्ठा list_head *to_restore)
-अणु
-	काष्ठा mount *mnt, *child, *पंचांगp;
-	list_क्रम_each_entry(mnt, to_umount, mnt_list) अणु
-		list_क्रम_each_entry_safe(child, पंचांगp, &mnt->mnt_mounts, mnt_child) अणु
+static void umount_list(struct list_head *to_umount,
+			struct list_head *to_restore)
+{
+	struct mount *mnt, *child, *tmp;
+	list_for_each_entry(mnt, to_umount, mnt_list) {
+		list_for_each_entry_safe(child, tmp, &mnt->mnt_mounts, mnt_child) {
 			/* topper? */
-			अगर (child->mnt_mountpoपूर्णांक == mnt->mnt.mnt_root)
+			if (child->mnt_mountpoint == mnt->mnt.mnt_root)
 				list_move_tail(&child->mnt_umounting, to_restore);
-			अन्यथा
+			else
 				umount_one(child, to_umount);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम restore_mounts(काष्ठा list_head *to_restore)
-अणु
+static void restore_mounts(struct list_head *to_restore)
+{
 	/* Restore mounts to a clean working state */
-	जबतक (!list_empty(to_restore)) अणु
-		काष्ठा mount *mnt, *parent;
-		काष्ठा mountpoपूर्णांक *mp;
+	while (!list_empty(to_restore)) {
+		struct mount *mnt, *parent;
+		struct mountpoint *mp;
 
-		mnt = list_first_entry(to_restore, काष्ठा mount, mnt_umounting);
+		mnt = list_first_entry(to_restore, struct mount, mnt_umounting);
 		CLEAR_MNT_MARK(mnt);
 		list_del_init(&mnt->mnt_umounting);
 
 		/* Should this mount be reparented? */
 		mp = mnt->mnt_mp;
 		parent = mnt->mnt_parent;
-		जबतक (parent->mnt.mnt_flags & MNT_UMOUNT) अणु
+		while (parent->mnt.mnt_flags & MNT_UMOUNT) {
 			mp = parent->mnt_mp;
 			parent = parent->mnt_parent;
-		पूर्ण
-		अगर (parent != mnt->mnt_parent)
-			mnt_change_mountpoपूर्णांक(parent, mp, mnt);
-	पूर्ण
-पूर्ण
+		}
+		if (parent != mnt->mnt_parent)
+			mnt_change_mountpoint(parent, mp, mnt);
+	}
+}
 
-अटल व्योम cleanup_umount_visitations(काष्ठा list_head *visited)
-अणु
-	जबतक (!list_empty(visited)) अणु
-		काष्ठा mount *mnt =
-			list_first_entry(visited, काष्ठा mount, mnt_umounting);
+static void cleanup_umount_visitations(struct list_head *visited)
+{
+	while (!list_empty(visited)) {
+		struct mount *mnt =
+			list_first_entry(visited, struct mount, mnt_umounting);
 		list_del_init(&mnt->mnt_umounting);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * collect all mounts that receive propagation from the mount in @list,
- * and वापस these additional mounts in the same list.
+ * and return these additional mounts in the same list.
  * @list: the list of mounts to be unmounted.
  *
- * vfsmount lock must be held क्रम ग_लिखो
+ * vfsmount lock must be held for write
  */
-पूर्णांक propagate_umount(काष्ठा list_head *list)
-अणु
-	काष्ठा mount *mnt;
+int propagate_umount(struct list_head *list)
+{
+	struct mount *mnt;
 	LIST_HEAD(to_restore);
 	LIST_HEAD(to_umount);
 	LIST_HEAD(visited);
 
-	/* Find candidates क्रम unmounting */
-	list_क्रम_each_entry_reverse(mnt, list, mnt_list) अणु
-		काष्ठा mount *parent = mnt->mnt_parent;
-		काष्ठा mount *m;
+	/* Find candidates for unmounting */
+	list_for_each_entry_reverse(mnt, list, mnt_list) {
+		struct mount *parent = mnt->mnt_parent;
+		struct mount *m;
 
 		/*
-		 * If this mount has alपढ़ोy been visited it is known that it's
+		 * If this mount has already been visited it is known that it's
 		 * entire peer group and all of their slaves in the propagation
-		 * tree क्रम the mountpoपूर्णांक has alपढ़ोy been visited and there is
+		 * tree for the mountpoint has already been visited and there is
 		 * no need to visit them again.
 		 */
-		अगर (!list_empty(&mnt->mnt_umounting))
-			जारी;
+		if (!list_empty(&mnt->mnt_umounting))
+			continue;
 
 		list_add_tail(&mnt->mnt_umounting, &visited);
-		क्रम (m = propagation_next(parent, parent); m;
-		     m = propagation_next(m, parent)) अणु
-			काष्ठा mount *child = __lookup_mnt(&m->mnt,
-							   mnt->mnt_mountpoपूर्णांक);
-			अगर (!child)
-				जारी;
+		for (m = propagation_next(parent, parent); m;
+		     m = propagation_next(m, parent)) {
+			struct mount *child = __lookup_mnt(&m->mnt,
+							   mnt->mnt_mountpoint);
+			if (!child)
+				continue;
 
-			अगर (!list_empty(&child->mnt_umounting)) अणु
+			if (!list_empty(&child->mnt_umounting)) {
 				/*
-				 * If the child has alपढ़ोy been visited it is
+				 * If the child has already been visited it is
 				 * know that it's entire peer group and all of
-				 * their slaves in the propgation tree क्रम the
-				 * mountpoपूर्णांक has alपढ़ोy been visited and there
+				 * their slaves in the propgation tree for the
+				 * mountpoint has already been visited and there
 				 * is no need to visit this subtree again.
 				 */
 				m = skip_propagation_subtree(m, parent);
-				जारी;
-			पूर्ण अन्यथा अगर (child->mnt.mnt_flags & MNT_UMOUNT) अणु
+				continue;
+			} else if (child->mnt.mnt_flags & MNT_UMOUNT) {
 				/*
 				 * We have come accross an partially unmounted
 				 * mount in list that has not been visited yet.
-				 * Remember it has been visited and जारी
+				 * Remember it has been visited and continue
 				 * about our merry way.
 				 */
 				list_add_tail(&child->mnt_umounting, &visited);
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			/* Check the child and parents जबतक progress is made */
-			जबतक (__propagate_umount(child,
-						  &to_umount, &to_restore)) अणु
+			/* Check the child and parents while progress is made */
+			while (__propagate_umount(child,
+						  &to_umount, &to_restore)) {
 				/* Is the parent a umount candidate? */
 				child = child->mnt_parent;
-				अगर (list_empty(&child->mnt_umounting))
-					अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (list_empty(&child->mnt_umounting))
+					break;
+			}
+		}
+	}
 
 	umount_list(&to_umount, &to_restore);
 	restore_mounts(&to_restore);
 	cleanup_umount_visitations(&visited);
 	list_splice_tail(&to_umount, list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

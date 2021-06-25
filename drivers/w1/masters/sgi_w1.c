@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * sgi_w1.c - w1 master driver क्रम one wire support in SGI ASICs
+ * sgi_w1.c - w1 master driver for one wire support in SGI ASICs
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/platक्रमm_data/sgi-w1.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/jiffies.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/platform_device.h>
+#include <linux/platform_data/sgi-w1.h>
 
-#समावेश <linux/w1.h>
+#include <linux/w1.h>
 
-#घोषणा MCR_RD_DATA	BIT(0)
-#घोषणा MCR_DONE	BIT(1)
+#define MCR_RD_DATA	BIT(0)
+#define MCR_DONE	BIT(1)
 
-#घोषणा MCR_PACK(pulse, sample) (((pulse) << 10) | ((sample) << 2))
+#define MCR_PACK(pulse, sample) (((pulse) << 10) | ((sample) << 2))
 
-काष्ठा sgi_w1_device अणु
+struct sgi_w1_device {
 	u32 __iomem *mcr;
-	काष्ठा w1_bus_master bus_master;
-	अक्षर dev_id[64];
-पूर्ण;
+	struct w1_bus_master bus_master;
+	char dev_id[64];
+};
 
-अटल u8 sgi_w1_रुको(u32 __iomem *mcr)
-अणु
+static u8 sgi_w1_wait(u32 __iomem *mcr)
+{
 	u32 mcr_val;
 
-	करो अणु
-		mcr_val = पढ़ोl(mcr);
-	पूर्ण जबतक (!(mcr_val & MCR_DONE));
+	do {
+		mcr_val = readl(mcr);
+	} while (!(mcr_val & MCR_DONE));
 
-	वापस (mcr_val & MCR_RD_DATA) ? 1 : 0;
-पूर्ण
+	return (mcr_val & MCR_RD_DATA) ? 1 : 0;
+}
 
 /*
  * this is the low level routine to
- * reset the device on the One Wire पूर्णांकerface
+ * reset the device on the One Wire interface
  * on the hardware
  */
-अटल u8 sgi_w1_reset_bus(व्योम *data)
-अणु
-	काष्ठा sgi_w1_device *dev = data;
+static u8 sgi_w1_reset_bus(void *data)
+{
+	struct sgi_w1_device *dev = data;
 	u8 ret;
 
-	ग_लिखोl(MCR_PACK(520, 65), dev->mcr);
-	ret = sgi_w1_रुको(dev->mcr);
-	udelay(500); /* recovery समय */
-	वापस ret;
-पूर्ण
+	writel(MCR_PACK(520, 65), dev->mcr);
+	ret = sgi_w1_wait(dev->mcr);
+	udelay(500); /* recovery time */
+	return ret;
+}
 
 /*
- * this is the low level routine to पढ़ो/ग_लिखो a bit on the One Wire
- * पूर्णांकerface on the hardware. It करोes ग_लिखो 0 अगर parameter bit is set
- * to 0, otherwise a ग_लिखो 1/पढ़ो.
+ * this is the low level routine to read/write a bit on the One Wire
+ * interface on the hardware. It does write 0 if parameter bit is set
+ * to 0, otherwise a write 1/read.
  */
-अटल u8 sgi_w1_touch_bit(व्योम *data, u8 bit)
-अणु
-	काष्ठा sgi_w1_device *dev = data;
+static u8 sgi_w1_touch_bit(void *data, u8 bit)
+{
+	struct sgi_w1_device *dev = data;
 	u8 ret;
 
-	अगर (bit)
-		ग_लिखोl(MCR_PACK(6, 13), dev->mcr);
-	अन्यथा
-		ग_लिखोl(MCR_PACK(80, 30), dev->mcr);
+	if (bit)
+		writel(MCR_PACK(6, 13), dev->mcr);
+	else
+		writel(MCR_PACK(80, 30), dev->mcr);
 
-	ret = sgi_w1_रुको(dev->mcr);
-	अगर (bit)
+	ret = sgi_w1_wait(dev->mcr);
+	if (bit)
 		udelay(100); /* recovery */
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sgi_w1_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sgi_w1_device *sdev;
-	काष्ठा sgi_w1_platक्रमm_data *pdata;
+static int sgi_w1_probe(struct platform_device *pdev)
+{
+	struct sgi_w1_device *sdev;
+	struct sgi_w1_platform_data *pdata;
 
-	sdev = devm_kzalloc(&pdev->dev, माप(काष्ठा sgi_w1_device),
+	sdev = devm_kzalloc(&pdev->dev, sizeof(struct sgi_w1_device),
 			    GFP_KERNEL);
-	अगर (!sdev)
-		वापस -ENOMEM;
+	if (!sdev)
+		return -ENOMEM;
 
-	sdev->mcr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(sdev->mcr))
-		वापस PTR_ERR(sdev->mcr);
+	sdev->mcr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(sdev->mcr))
+		return PTR_ERR(sdev->mcr);
 
 	sdev->bus_master.data = sdev;
 	sdev->bus_master.reset_bus = sgi_w1_reset_bus;
 	sdev->bus_master.touch_bit = sgi_w1_touch_bit;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (pdata) अणु
-		strlcpy(sdev->dev_id, pdata->dev_id, माप(sdev->dev_id));
+	if (pdata) {
+		strlcpy(sdev->dev_id, pdata->dev_id, sizeof(sdev->dev_id));
 		sdev->bus_master.dev_id = sdev->dev_id;
-	पूर्ण
+	}
 
-	platक्रमm_set_drvdata(pdev, sdev);
+	platform_set_drvdata(pdev, sdev);
 
-	वापस w1_add_master_device(&sdev->bus_master);
-पूर्ण
+	return w1_add_master_device(&sdev->bus_master);
+}
 
 /*
  * disassociate the w1 device from the driver
  */
-अटल पूर्णांक sgi_w1_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sgi_w1_device *sdev = platक्रमm_get_drvdata(pdev);
+static int sgi_w1_remove(struct platform_device *pdev)
+{
+	struct sgi_w1_device *sdev = platform_get_drvdata(pdev);
 
-	w1_हटाओ_master_device(&sdev->bus_master);
+	w1_remove_master_device(&sdev->bus_master);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sgi_w1_driver = अणु
-	.driver = अणु
+static struct platform_driver sgi_w1_driver = {
+	.driver = {
 		.name = "sgi_w1",
-	पूर्ण,
+	},
 	.probe = sgi_w1_probe,
-	.हटाओ = sgi_w1_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(sgi_w1_driver);
+	.remove = sgi_w1_remove,
+};
+module_platform_driver(sgi_w1_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Thomas Bogendoerfer");

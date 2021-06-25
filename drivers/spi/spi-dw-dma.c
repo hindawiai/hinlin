@@ -1,108 +1,107 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Special handling क्रम DW DMA core
+ * Special handling for DW DMA core
  *
  * Copyright (c) 2009, 2014 Intel Corporation.
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/platक्रमm_data/dma-dw.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/types.h>
+#include <linux/completion.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/irqreturn.h>
+#include <linux/jiffies.h>
+#include <linux/pci.h>
+#include <linux/platform_data/dma-dw.h>
+#include <linux/spi/spi.h>
+#include <linux/types.h>
 
-#समावेश "spi-dw.h"
+#include "spi-dw.h"
 
-#घोषणा RX_BUSY		0
-#घोषणा RX_BURST_LEVEL	16
-#घोषणा TX_BUSY		1
-#घोषणा TX_BURST_LEVEL	16
+#define RX_BUSY		0
+#define RX_BURST_LEVEL	16
+#define TX_BUSY		1
+#define TX_BURST_LEVEL	16
 
-अटल bool dw_spi_dma_chan_filter(काष्ठा dma_chan *chan, व्योम *param)
-अणु
-	काष्ठा dw_dma_slave *s = param;
+static bool dw_spi_dma_chan_filter(struct dma_chan *chan, void *param)
+{
+	struct dw_dma_slave *s = param;
 
-	अगर (s->dma_dev != chan->device->dev)
-		वापस false;
+	if (s->dma_dev != chan->device->dev)
+		return false;
 
-	chan->निजी = s;
-	वापस true;
-पूर्ण
+	chan->private = s;
+	return true;
+}
 
-अटल व्योम dw_spi_dma_maxburst_init(काष्ठा dw_spi *dws)
-अणु
-	काष्ठा dma_slave_caps caps;
+static void dw_spi_dma_maxburst_init(struct dw_spi *dws)
+{
+	struct dma_slave_caps caps;
 	u32 max_burst, def_burst;
-	पूर्णांक ret;
+	int ret;
 
-	def_burst = dws->fअगरo_len / 2;
+	def_burst = dws->fifo_len / 2;
 
 	ret = dma_get_slave_caps(dws->rxchan, &caps);
-	अगर (!ret && caps.max_burst)
+	if (!ret && caps.max_burst)
 		max_burst = caps.max_burst;
-	अन्यथा
+	else
 		max_burst = RX_BURST_LEVEL;
 
 	dws->rxburst = min(max_burst, def_burst);
-	dw_ग_लिखोl(dws, DW_SPI_DMARDLR, dws->rxburst - 1);
+	dw_writel(dws, DW_SPI_DMARDLR, dws->rxburst - 1);
 
 	ret = dma_get_slave_caps(dws->txchan, &caps);
-	अगर (!ret && caps.max_burst)
+	if (!ret && caps.max_burst)
 		max_burst = caps.max_burst;
-	अन्यथा
+	else
 		max_burst = TX_BURST_LEVEL;
 
 	/*
 	 * Having a Rx DMA channel serviced with higher priority than a Tx DMA
 	 * channel might not be enough to provide a well balanced DMA-based
-	 * SPI transfer पूर्णांकerface. There might still be moments when the Tx DMA
+	 * SPI transfer interface. There might still be moments when the Tx DMA
 	 * channel is occasionally handled faster than the Rx DMA channel.
-	 * That in its turn will eventually cause the SPI Rx FIFO overflow अगर
-	 * SPI bus speed is high enough to fill the SPI Rx FIFO in beक्रमe it's
+	 * That in its turn will eventually cause the SPI Rx FIFO overflow if
+	 * SPI bus speed is high enough to fill the SPI Rx FIFO in before it's
 	 * cleared by the Rx DMA channel. In order to fix the problem the Tx
-	 * DMA activity is पूर्णांकentionally slowed करोwn by limiting the SPI Tx
+	 * DMA activity is intentionally slowed down by limiting the SPI Tx
 	 * FIFO depth with a value twice bigger than the Tx burst length.
 	 */
 	dws->txburst = min(max_burst, def_burst);
-	dw_ग_लिखोl(dws, DW_SPI_DMATDLR, dws->txburst);
-पूर्ण
+	dw_writel(dws, DW_SPI_DMATDLR, dws->txburst);
+}
 
-अटल व्योम dw_spi_dma_sg_burst_init(काष्ठा dw_spi *dws)
-अणु
-	काष्ठा dma_slave_caps tx = अणु0पूर्ण, rx = अणु0पूर्ण;
+static void dw_spi_dma_sg_burst_init(struct dw_spi *dws)
+{
+	struct dma_slave_caps tx = {0}, rx = {0};
 
 	dma_get_slave_caps(dws->txchan, &tx);
 	dma_get_slave_caps(dws->rxchan, &rx);
 
-	अगर (tx.max_sg_burst > 0 && rx.max_sg_burst > 0)
+	if (tx.max_sg_burst > 0 && rx.max_sg_burst > 0)
 		dws->dma_sg_burst = min(tx.max_sg_burst, rx.max_sg_burst);
-	अन्यथा अगर (tx.max_sg_burst > 0)
+	else if (tx.max_sg_burst > 0)
 		dws->dma_sg_burst = tx.max_sg_burst;
-	अन्यथा अगर (rx.max_sg_burst > 0)
+	else if (rx.max_sg_burst > 0)
 		dws->dma_sg_burst = rx.max_sg_burst;
-	अन्यथा
+	else
 		dws->dma_sg_burst = 0;
-पूर्ण
+}
 
-अटल पूर्णांक dw_spi_dma_init_mfld(काष्ठा device *dev, काष्ठा dw_spi *dws)
-अणु
-	काष्ठा dw_dma_slave dma_tx = अणु .dst_id = 1 पूर्ण, *tx = &dma_tx;
-	काष्ठा dw_dma_slave dma_rx = अणु .src_id = 0 पूर्ण, *rx = &dma_rx;
-	काष्ठा pci_dev *dma_dev;
+static int dw_spi_dma_init_mfld(struct device *dev, struct dw_spi *dws)
+{
+	struct dw_dma_slave dma_tx = { .dst_id = 1 }, *tx = &dma_tx;
+	struct dw_dma_slave dma_rx = { .src_id = 0 }, *rx = &dma_rx;
+	struct pci_dev *dma_dev;
 	dma_cap_mask_t mask;
 
 	/*
-	 * Get pci device क्रम DMA controller, currently it could only
+	 * Get pci device for DMA controller, currently it could only
 	 * be the DMA controller of Medfield
 	 */
-	dma_dev = pci_get_device(PCI_VENDOR_ID_INTEL, 0x0827, शून्य);
-	अगर (!dma_dev)
-		वापस -ENODEV;
+	dma_dev = pci_get_device(PCI_VENDOR_ID_INTEL, 0x0827, NULL);
+	if (!dma_dev)
+		return -ENODEV;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
@@ -110,14 +109,14 @@
 	/* 1. Init rx channel */
 	rx->dma_dev = &dma_dev->dev;
 	dws->rxchan = dma_request_channel(mask, dw_spi_dma_chan_filter, rx);
-	अगर (!dws->rxchan)
-		जाओ err_निकास;
+	if (!dws->rxchan)
+		goto err_exit;
 
 	/* 2. Init tx channel */
 	tx->dma_dev = &dma_dev->dev;
 	dws->txchan = dma_request_channel(mask, dw_spi_dma_chan_filter, tx);
-	अगर (!dws->txchan)
-		जाओ मुक्त_rxchan;
+	if (!dws->txchan)
+		goto free_rxchan;
 
 	dws->master->dma_rx = dws->rxchan;
 	dws->master->dma_tx = dws->txchan;
@@ -128,27 +127,27 @@
 
 	dw_spi_dma_sg_burst_init(dws);
 
-	वापस 0;
+	return 0;
 
-मुक्त_rxchan:
+free_rxchan:
 	dma_release_channel(dws->rxchan);
-	dws->rxchan = शून्य;
-err_निकास:
-	वापस -EBUSY;
-पूर्ण
+	dws->rxchan = NULL;
+err_exit:
+	return -EBUSY;
+}
 
-अटल पूर्णांक dw_spi_dma_init_generic(काष्ठा device *dev, काष्ठा dw_spi *dws)
-अणु
+static int dw_spi_dma_init_generic(struct device *dev, struct dw_spi *dws)
+{
 	dws->rxchan = dma_request_slave_channel(dev, "rx");
-	अगर (!dws->rxchan)
-		वापस -ENODEV;
+	if (!dws->rxchan)
+		return -ENODEV;
 
 	dws->txchan = dma_request_slave_channel(dev, "tx");
-	अगर (!dws->txchan) अणु
+	if (!dws->txchan) {
 		dma_release_channel(dws->rxchan);
-		dws->rxchan = शून्य;
-		वापस -ENODEV;
-	पूर्ण
+		dws->rxchan = NULL;
+		return -ENODEV;
+	}
 
 	dws->master->dma_rx = dws->rxchan;
 	dws->master->dma_tx = dws->txchan;
@@ -159,119 +158,119 @@ err_निकास:
 
 	dw_spi_dma_sg_burst_init(dws);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dw_spi_dma_निकास(काष्ठा dw_spi *dws)
-अणु
-	अगर (dws->txchan) अणु
+static void dw_spi_dma_exit(struct dw_spi *dws)
+{
+	if (dws->txchan) {
 		dmaengine_terminate_sync(dws->txchan);
 		dma_release_channel(dws->txchan);
-	पूर्ण
+	}
 
-	अगर (dws->rxchan) अणु
+	if (dws->rxchan) {
 		dmaengine_terminate_sync(dws->rxchan);
 		dma_release_channel(dws->rxchan);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल irqवापस_t dw_spi_dma_transfer_handler(काष्ठा dw_spi *dws)
-अणु
+static irqreturn_t dw_spi_dma_transfer_handler(struct dw_spi *dws)
+{
 	dw_spi_check_status(dws, false);
 
 	complete(&dws->dma_completion);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल bool dw_spi_can_dma(काष्ठा spi_controller *master,
-			   काष्ठा spi_device *spi, काष्ठा spi_transfer *xfer)
-अणु
-	काष्ठा dw_spi *dws = spi_controller_get_devdata(master);
+static bool dw_spi_can_dma(struct spi_controller *master,
+			   struct spi_device *spi, struct spi_transfer *xfer)
+{
+	struct dw_spi *dws = spi_controller_get_devdata(master);
 
-	वापस xfer->len > dws->fअगरo_len;
-पूर्ण
+	return xfer->len > dws->fifo_len;
+}
 
-अटल क्रमागत dma_slave_buswidth dw_spi_dma_convert_width(u8 n_bytes)
-अणु
-	अगर (n_bytes == 1)
-		वापस DMA_SLAVE_BUSWIDTH_1_BYTE;
-	अन्यथा अगर (n_bytes == 2)
-		वापस DMA_SLAVE_BUSWIDTH_2_BYTES;
+static enum dma_slave_buswidth dw_spi_dma_convert_width(u8 n_bytes)
+{
+	if (n_bytes == 1)
+		return DMA_SLAVE_BUSWIDTH_1_BYTE;
+	else if (n_bytes == 2)
+		return DMA_SLAVE_BUSWIDTH_2_BYTES;
 
-	वापस DMA_SLAVE_BUSWIDTH_UNDEFINED;
-पूर्ण
+	return DMA_SLAVE_BUSWIDTH_UNDEFINED;
+}
 
-अटल पूर्णांक dw_spi_dma_रुको(काष्ठा dw_spi *dws, अचिन्हित पूर्णांक len, u32 speed)
-अणु
-	अचिन्हित दीर्घ दीर्घ ms;
+static int dw_spi_dma_wait(struct dw_spi *dws, unsigned int len, u32 speed)
+{
+	unsigned long long ms;
 
 	ms = len * MSEC_PER_SEC * BITS_PER_BYTE;
-	करो_भाग(ms, speed);
+	do_div(ms, speed);
 	ms += ms + 200;
 
-	अगर (ms > अच_पूर्णांक_उच्च)
-		ms = अच_पूर्णांक_उच्च;
+	if (ms > UINT_MAX)
+		ms = UINT_MAX;
 
-	ms = रुको_क्रम_completion_समयout(&dws->dma_completion,
-					 msecs_to_jअगरfies(ms));
+	ms = wait_for_completion_timeout(&dws->dma_completion,
+					 msecs_to_jiffies(ms));
 
-	अगर (ms == 0) अणु
+	if (ms == 0) {
 		dev_err(&dws->master->cur_msg->spi->dev,
 			"DMA transaction timed out\n");
-		वापस -ETIMEDOUT;
-	पूर्ण
+		return -ETIMEDOUT;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool dw_spi_dma_tx_busy(काष्ठा dw_spi *dws)
-अणु
-	वापस !(dw_पढ़ोl(dws, DW_SPI_SR) & SR_TF_EMPT);
-पूर्ण
+static inline bool dw_spi_dma_tx_busy(struct dw_spi *dws)
+{
+	return !(dw_readl(dws, DW_SPI_SR) & SR_TF_EMPT);
+}
 
-अटल पूर्णांक dw_spi_dma_रुको_tx_करोne(काष्ठा dw_spi *dws,
-				   काष्ठा spi_transfer *xfer)
-अणु
-	पूर्णांक retry = SPI_WAIT_RETRIES;
-	काष्ठा spi_delay delay;
+static int dw_spi_dma_wait_tx_done(struct dw_spi *dws,
+				   struct spi_transfer *xfer)
+{
+	int retry = SPI_WAIT_RETRIES;
+	struct spi_delay delay;
 	u32 nents;
 
-	nents = dw_पढ़ोl(dws, DW_SPI_TXFLR);
+	nents = dw_readl(dws, DW_SPI_TXFLR);
 	delay.unit = SPI_DELAY_UNIT_SCK;
 	delay.value = nents * dws->n_bytes * BITS_PER_BYTE;
 
-	जबतक (dw_spi_dma_tx_busy(dws) && retry--)
+	while (dw_spi_dma_tx_busy(dws) && retry--)
 		spi_delay_exec(&delay, xfer);
 
-	अगर (retry < 0) अणु
+	if (retry < 0) {
 		dev_err(&dws->master->dev, "Tx hanged up\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * dws->dma_chan_busy is set beक्रमe the dma transfer starts, callback क्रम tx
+ * dws->dma_chan_busy is set before the dma transfer starts, callback for tx
  * channel will clear a corresponding bit.
  */
-अटल व्योम dw_spi_dma_tx_करोne(व्योम *arg)
-अणु
-	काष्ठा dw_spi *dws = arg;
+static void dw_spi_dma_tx_done(void *arg)
+{
+	struct dw_spi *dws = arg;
 
 	clear_bit(TX_BUSY, &dws->dma_chan_busy);
-	अगर (test_bit(RX_BUSY, &dws->dma_chan_busy))
-		वापस;
+	if (test_bit(RX_BUSY, &dws->dma_chan_busy))
+		return;
 
 	complete(&dws->dma_completion);
-पूर्ण
+}
 
-अटल पूर्णांक dw_spi_dma_config_tx(काष्ठा dw_spi *dws)
-अणु
-	काष्ठा dma_slave_config txconf;
+static int dw_spi_dma_config_tx(struct dw_spi *dws)
+{
+	struct dma_slave_config txconf;
 
-	स_रखो(&txconf, 0, माप(txconf));
+	memset(&txconf, 0, sizeof(txconf));
 	txconf.direction = DMA_MEM_TO_DEV;
 	txconf.dst_addr = dws->dma_addr;
 	txconf.dst_maxburst = dws->txburst;
@@ -279,100 +278,100 @@ err_निकास:
 	txconf.dst_addr_width = dw_spi_dma_convert_width(dws->n_bytes);
 	txconf.device_fc = false;
 
-	वापस dmaengine_slave_config(dws->txchan, &txconf);
-पूर्ण
+	return dmaengine_slave_config(dws->txchan, &txconf);
+}
 
-अटल पूर्णांक dw_spi_dma_submit_tx(काष्ठा dw_spi *dws, काष्ठा scatterlist *sgl,
-				अचिन्हित पूर्णांक nents)
-अणु
-	काष्ठा dma_async_tx_descriptor *txdesc;
+static int dw_spi_dma_submit_tx(struct dw_spi *dws, struct scatterlist *sgl,
+				unsigned int nents)
+{
+	struct dma_async_tx_descriptor *txdesc;
 	dma_cookie_t cookie;
-	पूर्णांक ret;
+	int ret;
 
 	txdesc = dmaengine_prep_slave_sg(dws->txchan, sgl, nents,
 					 DMA_MEM_TO_DEV,
 					 DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!txdesc)
-		वापस -ENOMEM;
+	if (!txdesc)
+		return -ENOMEM;
 
-	txdesc->callback = dw_spi_dma_tx_करोne;
+	txdesc->callback = dw_spi_dma_tx_done;
 	txdesc->callback_param = dws;
 
 	cookie = dmaengine_submit(txdesc);
 	ret = dma_submit_error(cookie);
-	अगर (ret) अणु
+	if (ret) {
 		dmaengine_terminate_sync(dws->txchan);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	set_bit(TX_BUSY, &dws->dma_chan_busy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool dw_spi_dma_rx_busy(काष्ठा dw_spi *dws)
-अणु
-	वापस !!(dw_पढ़ोl(dws, DW_SPI_SR) & SR_RF_NOT_EMPT);
-पूर्ण
+static inline bool dw_spi_dma_rx_busy(struct dw_spi *dws)
+{
+	return !!(dw_readl(dws, DW_SPI_SR) & SR_RF_NOT_EMPT);
+}
 
-अटल पूर्णांक dw_spi_dma_रुको_rx_करोne(काष्ठा dw_spi *dws)
-अणु
-	पूर्णांक retry = SPI_WAIT_RETRIES;
-	काष्ठा spi_delay delay;
-	अचिन्हित दीर्घ ns, us;
+static int dw_spi_dma_wait_rx_done(struct dw_spi *dws)
+{
+	int retry = SPI_WAIT_RETRIES;
+	struct spi_delay delay;
+	unsigned long ns, us;
 	u32 nents;
 
 	/*
-	 * It's unlikely that DMA engine is still करोing the data fetching, but
-	 * अगर it's let's give it some reasonable समय. The समयout calculation
-	 * is based on the synchronous APB/SSI reference घड़ी rate, on a
-	 * number of data entries left in the Rx FIFO, बार a number of घड़ी
-	 * periods normally needed क्रम a single APB पढ़ो/ग_लिखो transaction
-	 * without PREADY संकेत utilized (which is true क्रम the DW APB SSI
+	 * It's unlikely that DMA engine is still doing the data fetching, but
+	 * if it's let's give it some reasonable time. The timeout calculation
+	 * is based on the synchronous APB/SSI reference clock rate, on a
+	 * number of data entries left in the Rx FIFO, times a number of clock
+	 * periods normally needed for a single APB read/write transaction
+	 * without PREADY signal utilized (which is true for the DW APB SSI
 	 * controller).
 	 */
-	nents = dw_पढ़ोl(dws, DW_SPI_RXFLR);
+	nents = dw_readl(dws, DW_SPI_RXFLR);
 	ns = 4U * NSEC_PER_SEC / dws->max_freq * nents;
-	अगर (ns <= NSEC_PER_USEC) अणु
+	if (ns <= NSEC_PER_USEC) {
 		delay.unit = SPI_DELAY_UNIT_NSECS;
 		delay.value = ns;
-	पूर्ण अन्यथा अणु
+	} else {
 		us = DIV_ROUND_UP(ns, NSEC_PER_USEC);
 		delay.unit = SPI_DELAY_UNIT_USECS;
-		delay.value = clamp_val(us, 0, अच_लघु_उच्च);
-	पूर्ण
+		delay.value = clamp_val(us, 0, USHRT_MAX);
+	}
 
-	जबतक (dw_spi_dma_rx_busy(dws) && retry--)
-		spi_delay_exec(&delay, शून्य);
+	while (dw_spi_dma_rx_busy(dws) && retry--)
+		spi_delay_exec(&delay, NULL);
 
-	अगर (retry < 0) अणु
+	if (retry < 0) {
 		dev_err(&dws->master->dev, "Rx hanged up\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * dws->dma_chan_busy is set beक्रमe the dma transfer starts, callback क्रम rx
+ * dws->dma_chan_busy is set before the dma transfer starts, callback for rx
  * channel will clear a corresponding bit.
  */
-अटल व्योम dw_spi_dma_rx_करोne(व्योम *arg)
-अणु
-	काष्ठा dw_spi *dws = arg;
+static void dw_spi_dma_rx_done(void *arg)
+{
+	struct dw_spi *dws = arg;
 
 	clear_bit(RX_BUSY, &dws->dma_chan_busy);
-	अगर (test_bit(TX_BUSY, &dws->dma_chan_busy))
-		वापस;
+	if (test_bit(TX_BUSY, &dws->dma_chan_busy))
+		return;
 
 	complete(&dws->dma_completion);
-पूर्ण
+}
 
-अटल पूर्णांक dw_spi_dma_config_rx(काष्ठा dw_spi *dws)
-अणु
-	काष्ठा dma_slave_config rxconf;
+static int dw_spi_dma_config_rx(struct dw_spi *dws)
+{
+	struct dma_slave_config rxconf;
 
-	स_रखो(&rxconf, 0, माप(rxconf));
+	memset(&rxconf, 0, sizeof(rxconf));
 	rxconf.direction = DMA_DEV_TO_MEM;
 	rxconf.src_addr = dws->dma_addr;
 	rxconf.src_maxburst = dws->rxburst;
@@ -380,124 +379,124 @@ err_निकास:
 	rxconf.src_addr_width = dw_spi_dma_convert_width(dws->n_bytes);
 	rxconf.device_fc = false;
 
-	वापस dmaengine_slave_config(dws->rxchan, &rxconf);
-पूर्ण
+	return dmaengine_slave_config(dws->rxchan, &rxconf);
+}
 
-अटल पूर्णांक dw_spi_dma_submit_rx(काष्ठा dw_spi *dws, काष्ठा scatterlist *sgl,
-				अचिन्हित पूर्णांक nents)
-अणु
-	काष्ठा dma_async_tx_descriptor *rxdesc;
+static int dw_spi_dma_submit_rx(struct dw_spi *dws, struct scatterlist *sgl,
+				unsigned int nents)
+{
+	struct dma_async_tx_descriptor *rxdesc;
 	dma_cookie_t cookie;
-	पूर्णांक ret;
+	int ret;
 
 	rxdesc = dmaengine_prep_slave_sg(dws->rxchan, sgl, nents,
 					 DMA_DEV_TO_MEM,
 					 DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!rxdesc)
-		वापस -ENOMEM;
+	if (!rxdesc)
+		return -ENOMEM;
 
-	rxdesc->callback = dw_spi_dma_rx_करोne;
+	rxdesc->callback = dw_spi_dma_rx_done;
 	rxdesc->callback_param = dws;
 
 	cookie = dmaengine_submit(rxdesc);
 	ret = dma_submit_error(cookie);
-	अगर (ret) अणु
+	if (ret) {
 		dmaengine_terminate_sync(dws->rxchan);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	set_bit(RX_BUSY, &dws->dma_chan_busy);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_dma_setup(काष्ठा dw_spi *dws, काष्ठा spi_transfer *xfer)
-अणु
+static int dw_spi_dma_setup(struct dw_spi *dws, struct spi_transfer *xfer)
+{
 	u16 imr, dma_ctrl;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!xfer->tx_buf)
-		वापस -EINVAL;
+	if (!xfer->tx_buf)
+		return -EINVAL;
 
 	/* Setup DMA channels */
 	ret = dw_spi_dma_config_tx(dws);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (xfer->rx_buf) अणु
+	if (xfer->rx_buf) {
 		ret = dw_spi_dma_config_rx(dws);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	/* Set the DMA handshaking पूर्णांकerface */
+	/* Set the DMA handshaking interface */
 	dma_ctrl = SPI_DMA_TDMAE;
-	अगर (xfer->rx_buf)
+	if (xfer->rx_buf)
 		dma_ctrl |= SPI_DMA_RDMAE;
-	dw_ग_लिखोl(dws, DW_SPI_DMACR, dma_ctrl);
+	dw_writel(dws, DW_SPI_DMACR, dma_ctrl);
 
-	/* Set the पूर्णांकerrupt mask */
+	/* Set the interrupt mask */
 	imr = SPI_INT_TXOI;
-	अगर (xfer->rx_buf)
+	if (xfer->rx_buf)
 		imr |= SPI_INT_RXUI | SPI_INT_RXOI;
-	spi_umask_पूर्णांकr(dws, imr);
+	spi_umask_intr(dws, imr);
 
 	reinit_completion(&dws->dma_completion);
 
 	dws->transfer_handler = dw_spi_dma_transfer_handler;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dw_spi_dma_transfer_all(काष्ठा dw_spi *dws,
-				   काष्ठा spi_transfer *xfer)
-अणु
-	पूर्णांक ret;
+static int dw_spi_dma_transfer_all(struct dw_spi *dws,
+				   struct spi_transfer *xfer)
+{
+	int ret;
 
 	/* Submit the DMA Tx transfer */
 	ret = dw_spi_dma_submit_tx(dws, xfer->tx_sg.sgl, xfer->tx_sg.nents);
-	अगर (ret)
-		जाओ err_clear_dmac;
+	if (ret)
+		goto err_clear_dmac;
 
-	/* Submit the DMA Rx transfer अगर required */
-	अगर (xfer->rx_buf) अणु
+	/* Submit the DMA Rx transfer if required */
+	if (xfer->rx_buf) {
 		ret = dw_spi_dma_submit_rx(dws, xfer->rx_sg.sgl,
 					   xfer->rx_sg.nents);
-		अगर (ret)
-			जाओ err_clear_dmac;
+		if (ret)
+			goto err_clear_dmac;
 
-		/* rx must be started beक्रमe tx due to spi instinct */
+		/* rx must be started before tx due to spi instinct */
 		dma_async_issue_pending(dws->rxchan);
-	पूर्ण
+	}
 
 	dma_async_issue_pending(dws->txchan);
 
-	ret = dw_spi_dma_रुको(dws, xfer->len, xfer->effective_speed_hz);
+	ret = dw_spi_dma_wait(dws, xfer->len, xfer->effective_speed_hz);
 
 err_clear_dmac:
-	dw_ग_लिखोl(dws, DW_SPI_DMACR, 0);
+	dw_writel(dws, DW_SPI_DMACR, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * In हाल अगर at least one of the requested DMA channels करोesn't support the
+ * In case if at least one of the requested DMA channels doesn't support the
  * hardware accelerated SG list entries traverse, the DMA driver will most
- * likely work that around by perक्रमming the IRQ-based SG list entries
- * resubmission. That might and will cause a problem अगर the DMA Tx channel is
- * reअक्षरged and re-executed beक्रमe the Rx DMA channel. Due to
+ * likely work that around by performing the IRQ-based SG list entries
+ * resubmission. That might and will cause a problem if the DMA Tx channel is
+ * recharged and re-executed before the Rx DMA channel. Due to
  * non-deterministic IRQ-handler execution latency the DMA Tx channel will
- * start pushing data to the SPI bus beक्रमe the Rx DMA channel is even
- * reinitialized with the next inbound SG list entry. By करोing so the DMA Tx
- * channel will implicitly start filling the DW APB SSI Rx FIFO up, which जबतक
- * the DMA Rx channel being reअक्षरged and re-executed will eventually be
+ * start pushing data to the SPI bus before the Rx DMA channel is even
+ * reinitialized with the next inbound SG list entry. By doing so the DMA Tx
+ * channel will implicitly start filling the DW APB SSI Rx FIFO up, which while
+ * the DMA Rx channel being recharged and re-executed will eventually be
  * overflown.
  *
  * In order to solve the problem we have to feed the DMA engine with SG list
  * entries one-by-one. It shall keep the DW APB SSI Tx and Rx FIFOs
  * synchronized and prevent the Rx FIFO overflow. Since in general the tx_sg
- * and rx_sg lists may have dअगरferent number of entries of dअगरferent lengths
- * (though total length should match) let's भवly split the SG-lists to the
+ * and rx_sg lists may have different number of entries of different lengths
+ * (though total length should match) let's virtually split the SG-lists to the
  * set of DMA transfers, which length is a minimum of the ordered SG-entries
  * lengths. An ASCII-sketch of the implemented algo is following:
  *                  xfer->len
@@ -512,146 +511,146 @@ err_clear_dmac:
  * DMA engine supports.
  */
 
-अटल पूर्णांक dw_spi_dma_transfer_one(काष्ठा dw_spi *dws,
-				   काष्ठा spi_transfer *xfer)
-अणु
-	काष्ठा scatterlist *tx_sg = शून्य, *rx_sg = शून्य, tx_पंचांगp, rx_पंचांगp;
-	अचिन्हित पूर्णांक tx_len = 0, rx_len = 0;
-	अचिन्हित पूर्णांक base, len;
-	पूर्णांक ret;
+static int dw_spi_dma_transfer_one(struct dw_spi *dws,
+				   struct spi_transfer *xfer)
+{
+	struct scatterlist *tx_sg = NULL, *rx_sg = NULL, tx_tmp, rx_tmp;
+	unsigned int tx_len = 0, rx_len = 0;
+	unsigned int base, len;
+	int ret;
 
-	sg_init_table(&tx_पंचांगp, 1);
-	sg_init_table(&rx_पंचांगp, 1);
+	sg_init_table(&tx_tmp, 1);
+	sg_init_table(&rx_tmp, 1);
 
-	क्रम (base = 0, len = 0; base < xfer->len; base += len) अणु
+	for (base = 0, len = 0; base < xfer->len; base += len) {
 		/* Fetch next Tx DMA data chunk */
-		अगर (!tx_len) अणु
+		if (!tx_len) {
 			tx_sg = !tx_sg ? &xfer->tx_sg.sgl[0] : sg_next(tx_sg);
-			sg_dma_address(&tx_पंचांगp) = sg_dma_address(tx_sg);
+			sg_dma_address(&tx_tmp) = sg_dma_address(tx_sg);
 			tx_len = sg_dma_len(tx_sg);
-		पूर्ण
+		}
 
 		/* Fetch next Rx DMA data chunk */
-		अगर (!rx_len) अणु
+		if (!rx_len) {
 			rx_sg = !rx_sg ? &xfer->rx_sg.sgl[0] : sg_next(rx_sg);
-			sg_dma_address(&rx_पंचांगp) = sg_dma_address(rx_sg);
+			sg_dma_address(&rx_tmp) = sg_dma_address(rx_sg);
 			rx_len = sg_dma_len(rx_sg);
-		पूर्ण
+		}
 
 		len = min(tx_len, rx_len);
 
-		sg_dma_len(&tx_पंचांगp) = len;
-		sg_dma_len(&rx_पंचांगp) = len;
+		sg_dma_len(&tx_tmp) = len;
+		sg_dma_len(&rx_tmp) = len;
 
 		/* Submit DMA Tx transfer */
-		ret = dw_spi_dma_submit_tx(dws, &tx_पंचांगp, 1);
-		अगर (ret)
-			अवरोध;
+		ret = dw_spi_dma_submit_tx(dws, &tx_tmp, 1);
+		if (ret)
+			break;
 
 		/* Submit DMA Rx transfer */
-		ret = dw_spi_dma_submit_rx(dws, &rx_पंचांगp, 1);
-		अगर (ret)
-			अवरोध;
+		ret = dw_spi_dma_submit_rx(dws, &rx_tmp, 1);
+		if (ret)
+			break;
 
-		/* Rx must be started beक्रमe Tx due to SPI instinct */
+		/* Rx must be started before Tx due to SPI instinct */
 		dma_async_issue_pending(dws->rxchan);
 
 		dma_async_issue_pending(dws->txchan);
 
 		/*
-		 * Here we only need to रुको क्रम the DMA transfer to be
+		 * Here we only need to wait for the DMA transfer to be
 		 * finished since SPI controller is kept enabled during the
 		 * procedure this loop implements and there is no risk to lose
 		 * data left in the Tx/Rx FIFOs.
 		 */
-		ret = dw_spi_dma_रुको(dws, len, xfer->effective_speed_hz);
-		अगर (ret)
-			अवरोध;
+		ret = dw_spi_dma_wait(dws, len, xfer->effective_speed_hz);
+		if (ret)
+			break;
 
 		reinit_completion(&dws->dma_completion);
 
-		sg_dma_address(&tx_पंचांगp) += len;
-		sg_dma_address(&rx_पंचांगp) += len;
+		sg_dma_address(&tx_tmp) += len;
+		sg_dma_address(&rx_tmp) += len;
 		tx_len -= len;
 		rx_len -= len;
-	पूर्ण
+	}
 
-	dw_ग_लिखोl(dws, DW_SPI_DMACR, 0);
+	dw_writel(dws, DW_SPI_DMACR, 0);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dw_spi_dma_transfer(काष्ठा dw_spi *dws, काष्ठा spi_transfer *xfer)
-अणु
-	अचिन्हित पूर्णांक nents;
-	पूर्णांक ret;
+static int dw_spi_dma_transfer(struct dw_spi *dws, struct spi_transfer *xfer)
+{
+	unsigned int nents;
+	int ret;
 
 	nents = max(xfer->tx_sg.nents, xfer->rx_sg.nents);
 
 	/*
 	 * Execute normal DMA-based transfer (which submits the Rx and Tx SG
-	 * lists directly to the DMA engine at once) अगर either full hardware
+	 * lists directly to the DMA engine at once) if either full hardware
 	 * accelerated SG list traverse is supported by both channels, or the
 	 * Tx-only SPI transfer is requested, or the DMA engine is capable to
 	 * handle both SG lists on hardware accelerated basis.
 	 */
-	अगर (!dws->dma_sg_burst || !xfer->rx_buf || nents <= dws->dma_sg_burst)
+	if (!dws->dma_sg_burst || !xfer->rx_buf || nents <= dws->dma_sg_burst)
 		ret = dw_spi_dma_transfer_all(dws, xfer);
-	अन्यथा
+	else
 		ret = dw_spi_dma_transfer_one(dws, xfer);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (dws->master->cur_msg->status == -EINPROGRESS) अणु
-		ret = dw_spi_dma_रुको_tx_करोne(dws, xfer);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (dws->master->cur_msg->status == -EINPROGRESS) {
+		ret = dw_spi_dma_wait_tx_done(dws, xfer);
+		if (ret)
+			return ret;
+	}
 
-	अगर (xfer->rx_buf && dws->master->cur_msg->status == -EINPROGRESS)
-		ret = dw_spi_dma_रुको_rx_करोne(dws);
+	if (xfer->rx_buf && dws->master->cur_msg->status == -EINPROGRESS)
+		ret = dw_spi_dma_wait_rx_done(dws);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dw_spi_dma_stop(काष्ठा dw_spi *dws)
-अणु
-	अगर (test_bit(TX_BUSY, &dws->dma_chan_busy)) अणु
+static void dw_spi_dma_stop(struct dw_spi *dws)
+{
+	if (test_bit(TX_BUSY, &dws->dma_chan_busy)) {
 		dmaengine_terminate_sync(dws->txchan);
 		clear_bit(TX_BUSY, &dws->dma_chan_busy);
-	पूर्ण
-	अगर (test_bit(RX_BUSY, &dws->dma_chan_busy)) अणु
+	}
+	if (test_bit(RX_BUSY, &dws->dma_chan_busy)) {
 		dmaengine_terminate_sync(dws->rxchan);
 		clear_bit(RX_BUSY, &dws->dma_chan_busy);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर काष्ठा dw_spi_dma_ops dw_spi_dma_mfld_ops = अणु
+static const struct dw_spi_dma_ops dw_spi_dma_mfld_ops = {
 	.dma_init	= dw_spi_dma_init_mfld,
-	.dma_निकास	= dw_spi_dma_निकास,
+	.dma_exit	= dw_spi_dma_exit,
 	.dma_setup	= dw_spi_dma_setup,
 	.can_dma	= dw_spi_can_dma,
 	.dma_transfer	= dw_spi_dma_transfer,
 	.dma_stop	= dw_spi_dma_stop,
-पूर्ण;
+};
 
-व्योम dw_spi_dma_setup_mfld(काष्ठा dw_spi *dws)
-अणु
+void dw_spi_dma_setup_mfld(struct dw_spi *dws)
+{
 	dws->dma_ops = &dw_spi_dma_mfld_ops;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dw_spi_dma_setup_mfld);
 
-अटल स्थिर काष्ठा dw_spi_dma_ops dw_spi_dma_generic_ops = अणु
+static const struct dw_spi_dma_ops dw_spi_dma_generic_ops = {
 	.dma_init	= dw_spi_dma_init_generic,
-	.dma_निकास	= dw_spi_dma_निकास,
+	.dma_exit	= dw_spi_dma_exit,
 	.dma_setup	= dw_spi_dma_setup,
 	.can_dma	= dw_spi_can_dma,
 	.dma_transfer	= dw_spi_dma_transfer,
 	.dma_stop	= dw_spi_dma_stop,
-पूर्ण;
+};
 
-व्योम dw_spi_dma_setup_generic(काष्ठा dw_spi *dws)
-अणु
+void dw_spi_dma_setup_generic(struct dw_spi *dws)
+{
 	dws->dma_ops = &dw_spi_dma_generic_ops;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(dw_spi_dma_setup_generic);

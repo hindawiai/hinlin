@@ -1,369 +1,368 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- *  Handling of पूर्णांकernal CCW device requests.
+ *  Handling of internal CCW device requests.
  *
  *    Copyright IBM Corp. 2009, 2011
  *    Author(s): Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#घोषणा KMSG_COMPONENT "cio"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "cio"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/types.h>
-#समावेश <linux/err.h>
-#समावेश <यंत्र/ccwdev.h>
-#समावेश <यंत्र/cपन.स>
+#include <linux/types.h>
+#include <linux/err.h>
+#include <asm/ccwdev.h>
+#include <asm/cio.h>
 
-#समावेश "io_sch.h"
-#समावेश "cio.h"
-#समावेश "device.h"
-#समावेश "cio_debug.h"
+#include "io_sch.h"
+#include "cio.h"
+#include "device.h"
+#include "cio_debug.h"
 
 /**
  * lpm_adjust - adjust path mask
  * @lpm: path mask to adjust
  * @mask: mask of available paths
  *
- * Shअगरt @lpm right until @lpm and @mask have at least one bit in common or
+ * Shift @lpm right until @lpm and @mask have at least one bit in common or
  * until @lpm is zero. Return the resulting lpm.
  */
-पूर्णांक lpm_adjust(पूर्णांक lpm, पूर्णांक mask)
-अणु
-	जबतक (lpm && ((lpm & mask) == 0))
+int lpm_adjust(int lpm, int mask)
+{
+	while (lpm && ((lpm & mask) == 0))
 		lpm >>= 1;
-	वापस lpm;
-पूर्ण
+	return lpm;
+}
 
 /*
  * Adjust path mask to use next path and reset retry count. Return resulting
  * path mask.
  */
-अटल u16 ccwreq_next_path(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा ccw_request *req = &cdev->निजी->req;
+static u16 ccwreq_next_path(struct ccw_device *cdev)
+{
+	struct ccw_request *req = &cdev->private->req;
 
-	अगर (!req->singlepath) अणु
+	if (!req->singlepath) {
 		req->mask = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	req->retries	= req->maxretries;
 	req->mask	= lpm_adjust(req->mask >> 1, req->lpm);
 out:
-	वापस req->mask;
-पूर्ण
+	return req->mask;
+}
 
 /*
  * Clean up device state and report to callback.
  */
-अटल व्योम ccwreq_stop(काष्ठा ccw_device *cdev, पूर्णांक rc)
-अणु
-	काष्ठा ccw_request *req = &cdev->निजी->req;
+static void ccwreq_stop(struct ccw_device *cdev, int rc)
+{
+	struct ccw_request *req = &cdev->private->req;
 
-	अगर (req->करोne)
-		वापस;
-	req->करोne = 1;
-	ccw_device_set_समयout(cdev, 0);
-	स_रखो(&cdev->निजी->dma_area->irb, 0, माप(काष्ठा irb));
-	अगर (rc && rc != -ENODEV && req->drc)
+	if (req->done)
+		return;
+	req->done = 1;
+	ccw_device_set_timeout(cdev, 0);
+	memset(&cdev->private->dma_area->irb, 0, sizeof(struct irb));
+	if (rc && rc != -ENODEV && req->drc)
 		rc = req->drc;
 	req->callback(cdev, req->data, rc);
-पूर्ण
+}
 
 /*
  * (Re-)Start the operation until retries and paths are exhausted.
  */
-अटल व्योम ccwreq_करो(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा ccw_request *req = &cdev->निजी->req;
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
-	काष्ठा ccw1 *cp = req->cp;
-	पूर्णांक rc = -EACCES;
+static void ccwreq_do(struct ccw_device *cdev)
+{
+	struct ccw_request *req = &cdev->private->req;
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
+	struct ccw1 *cp = req->cp;
+	int rc = -EACCES;
 
-	जबतक (req->mask) अणु
-		अगर (req->retries-- == 0) अणु
+	while (req->mask) {
+		if (req->retries-- == 0) {
 			/* Retries exhausted, try next path. */
 			ccwreq_next_path(cdev);
-			जारी;
-		पूर्ण
-		/* Perक्रमm start function. */
-		स_रखो(&cdev->निजी->dma_area->irb, 0, माप(काष्ठा irb));
+			continue;
+		}
+		/* Perform start function. */
+		memset(&cdev->private->dma_area->irb, 0, sizeof(struct irb));
 		rc = cio_start(sch, cp, (u8) req->mask);
-		अगर (rc == 0) अणु
+		if (rc == 0) {
 			/* I/O started successfully. */
-			ccw_device_set_समयout(cdev, req->समयout);
-			वापस;
-		पूर्ण
-		अगर (rc == -ENODEV) अणु
+			ccw_device_set_timeout(cdev, req->timeout);
+			return;
+		}
+		if (rc == -ENODEV) {
 			/* Permanent device error. */
-			अवरोध;
-		पूर्ण
-		अगर (rc == -EACCES) अणु
+			break;
+		}
+		if (rc == -EACCES) {
 			/* Permant path error. */
 			ccwreq_next_path(cdev);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		/* Temporary improper status. */
 		rc = cio_clear(sch);
-		अगर (rc)
-			अवरोध;
-		वापस;
-	पूर्ण
+		if (rc)
+			break;
+		return;
+	}
 	ccwreq_stop(cdev, rc);
-पूर्ण
+}
 
 /**
- * ccw_request_start - perक्रमm I/O request
+ * ccw_request_start - perform I/O request
  * @cdev: ccw device
  *
- * Perक्रमm the I/O request specअगरied by cdev->req.
+ * Perform the I/O request specified by cdev->req.
  */
-व्योम ccw_request_start(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा ccw_request *req = &cdev->निजी->req;
+void ccw_request_start(struct ccw_device *cdev)
+{
+	struct ccw_request *req = &cdev->private->req;
 
-	अगर (req->singlepath) अणु
+	if (req->singlepath) {
 		/* Try all paths twice to counter link flapping. */
 		req->mask = 0x8080;
-	पूर्ण अन्यथा
+	} else
 		req->mask = req->lpm;
 
 	req->retries	= req->maxretries;
 	req->mask	= lpm_adjust(req->mask, req->lpm);
 	req->drc	= 0;
-	req->करोne	= 0;
+	req->done	= 0;
 	req->cancel	= 0;
-	अगर (!req->mask)
-		जाओ out_nopath;
-	ccwreq_करो(cdev);
-	वापस;
+	if (!req->mask)
+		goto out_nopath;
+	ccwreq_do(cdev);
+	return;
 
 out_nopath:
 	ccwreq_stop(cdev, -EACCES);
-पूर्ण
+}
 
 /**
  * ccw_request_cancel - cancel running I/O request
  * @cdev: ccw device
  *
- * Cancel the I/O request specअगरied by cdev->req. Return non-zero अगर request
- * has alपढ़ोy finished, zero otherwise.
+ * Cancel the I/O request specified by cdev->req. Return non-zero if request
+ * has already finished, zero otherwise.
  */
-पूर्णांक ccw_request_cancel(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
-	काष्ठा ccw_request *req = &cdev->निजी->req;
-	पूर्णांक rc;
+int ccw_request_cancel(struct ccw_device *cdev)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
+	struct ccw_request *req = &cdev->private->req;
+	int rc;
 
-	अगर (req->करोne)
-		वापस 1;
+	if (req->done)
+		return 1;
 	req->cancel = 1;
 	rc = cio_clear(sch);
-	अगर (rc)
+	if (rc)
 		ccwreq_stop(cdev, rc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Return the status of the पूर्णांकernal I/O started on the specअगरied ccw device.
- * Perक्रमm BASIC SENSE अगर required.
+ * Return the status of the internal I/O started on the specified ccw device.
+ * Perform BASIC SENSE if required.
  */
-अटल क्रमागत io_status ccwreq_status(काष्ठा ccw_device *cdev, काष्ठा irb *lcirb)
-अणु
-	काष्ठा irb *irb = &cdev->निजी->dma_area->irb;
-	काष्ठा cmd_scsw *scsw = &irb->scsw.cmd;
-	क्रमागत uc_toकरो toकरो;
+static enum io_status ccwreq_status(struct ccw_device *cdev, struct irb *lcirb)
+{
+	struct irb *irb = &cdev->private->dma_area->irb;
+	struct cmd_scsw *scsw = &irb->scsw.cmd;
+	enum uc_todo todo;
 
-	/* Perक्रमm BASIC SENSE अगर needed. */
-	अगर (ccw_device_accumulate_and_sense(cdev, lcirb))
-		वापस IO_RUNNING;
-	/* Check क्रम halt/clear पूर्णांकerrupt. */
-	अगर (scsw->fctl & (SCSW_FCTL_HALT_FUNC | SCSW_FCTL_CLEAR_FUNC))
-		वापस IO_KILLED;
-	/* Check क्रम path error. */
-	अगर (scsw->cc == 3 || scsw->pno)
-		वापस IO_PATH_ERROR;
+	/* Perform BASIC SENSE if needed. */
+	if (ccw_device_accumulate_and_sense(cdev, lcirb))
+		return IO_RUNNING;
+	/* Check for halt/clear interrupt. */
+	if (scsw->fctl & (SCSW_FCTL_HALT_FUNC | SCSW_FCTL_CLEAR_FUNC))
+		return IO_KILLED;
+	/* Check for path error. */
+	if (scsw->cc == 3 || scsw->pno)
+		return IO_PATH_ERROR;
 	/* Handle BASIC SENSE data. */
-	अगर (irb->esw.esw0.erw.cons) अणु
+	if (irb->esw.esw0.erw.cons) {
 		CIO_TRACE_EVENT(2, "sensedata");
-		CIO_HEX_EVENT(2, &cdev->निजी->dev_id,
-			      माप(काष्ठा ccw_dev_id));
-		CIO_HEX_EVENT(2, &cdev->निजी->dma_area->irb.ecw,
+		CIO_HEX_EVENT(2, &cdev->private->dev_id,
+			      sizeof(struct ccw_dev_id));
+		CIO_HEX_EVENT(2, &cdev->private->dma_area->irb.ecw,
 			      SENSE_MAX_COUNT);
-		/* Check क्रम command reject. */
-		अगर (irb->ecw[0] & SNS0_CMD_REJECT)
-			वापस IO_REJECTED;
-		/* Ask the driver what to करो */
-		अगर (cdev->drv && cdev->drv->uc_handler) अणु
-			toकरो = cdev->drv->uc_handler(cdev, lcirb);
+		/* Check for command reject. */
+		if (irb->ecw[0] & SNS0_CMD_REJECT)
+			return IO_REJECTED;
+		/* Ask the driver what to do */
+		if (cdev->drv && cdev->drv->uc_handler) {
+			todo = cdev->drv->uc_handler(cdev, lcirb);
 			CIO_TRACE_EVENT(2, "uc_response");
-			CIO_HEX_EVENT(2, &toकरो, माप(toकरो));
-			चयन (toकरो) अणु
-			हाल UC_TODO_RETRY:
-				वापस IO_STATUS_ERROR;
-			हाल UC_TODO_RETRY_ON_NEW_PATH:
-				वापस IO_PATH_ERROR;
-			हाल UC_TODO_STOP:
-				वापस IO_REJECTED;
-			शेष:
-				वापस IO_STATUS_ERROR;
-			पूर्ण
-		पूर्ण
+			CIO_HEX_EVENT(2, &todo, sizeof(todo));
+			switch (todo) {
+			case UC_TODO_RETRY:
+				return IO_STATUS_ERROR;
+			case UC_TODO_RETRY_ON_NEW_PATH:
+				return IO_PATH_ERROR;
+			case UC_TODO_STOP:
+				return IO_REJECTED;
+			default:
+				return IO_STATUS_ERROR;
+			}
+		}
 		/* Assume that unexpected SENSE data implies an error. */
-		वापस IO_STATUS_ERROR;
-	पूर्ण
-	/* Check क्रम channel errors. */
-	अगर (scsw->cstat != 0)
-		वापस IO_STATUS_ERROR;
-	/* Check क्रम device errors. */
-	अगर (scsw->dstat & ~(DEV_STAT_CHN_END | DEV_STAT_DEV_END))
-		वापस IO_STATUS_ERROR;
-	/* Check क्रम final state. */
-	अगर (!(scsw->dstat & DEV_STAT_DEV_END))
-		वापस IO_RUNNING;
-	/* Check क्रम other improper status. */
-	अगर (scsw->cc == 1 && (scsw->stctl & SCSW_STCTL_ALERT_STATUS))
-		वापस IO_STATUS_ERROR;
-	वापस IO_DONE;
-पूर्ण
+		return IO_STATUS_ERROR;
+	}
+	/* Check for channel errors. */
+	if (scsw->cstat != 0)
+		return IO_STATUS_ERROR;
+	/* Check for device errors. */
+	if (scsw->dstat & ~(DEV_STAT_CHN_END | DEV_STAT_DEV_END))
+		return IO_STATUS_ERROR;
+	/* Check for final state. */
+	if (!(scsw->dstat & DEV_STAT_DEV_END))
+		return IO_RUNNING;
+	/* Check for other improper status. */
+	if (scsw->cc == 1 && (scsw->stctl & SCSW_STCTL_ALERT_STATUS))
+		return IO_STATUS_ERROR;
+	return IO_DONE;
+}
 
 /*
  * Log ccw request status.
  */
-अटल व्योम ccwreq_log_status(काष्ठा ccw_device *cdev, क्रमागत io_status status)
-अणु
-	काष्ठा ccw_request *req = &cdev->निजी->req;
-	काष्ठा अणु
-		काष्ठा ccw_dev_id dev_id;
+static void ccwreq_log_status(struct ccw_device *cdev, enum io_status status)
+{
+	struct ccw_request *req = &cdev->private->req;
+	struct {
+		struct ccw_dev_id dev_id;
 		u16 retries;
 		u8 lpm;
 		u8 status;
-	पूर्ण  __attribute__ ((packed)) data;
-	data.dev_id	= cdev->निजी->dev_id;
+	}  __attribute__ ((packed)) data;
+	data.dev_id	= cdev->private->dev_id;
 	data.retries	= req->retries;
 	data.lpm	= (u8) req->mask;
 	data.status	= (u8) status;
 	CIO_TRACE_EVENT(2, "reqstat");
-	CIO_HEX_EVENT(2, &data, माप(data));
-पूर्ण
+	CIO_HEX_EVENT(2, &data, sizeof(data));
+}
 
 /**
- * ccw_request_handler - पूर्णांकerrupt handler क्रम I/O request procedure.
+ * ccw_request_handler - interrupt handler for I/O request procedure.
  * @cdev: ccw device
  *
- * Handle पूर्णांकerrupt during I/O request procedure.
+ * Handle interrupt during I/O request procedure.
  */
-व्योम ccw_request_handler(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा irb *irb = this_cpu_ptr(&cio_irb);
-	काष्ठा ccw_request *req = &cdev->निजी->req;
-	क्रमागत io_status status;
-	पूर्णांक rc = -EOPNOTSUPP;
+void ccw_request_handler(struct ccw_device *cdev)
+{
+	struct irb *irb = this_cpu_ptr(&cio_irb);
+	struct ccw_request *req = &cdev->private->req;
+	enum io_status status;
+	int rc = -EOPNOTSUPP;
 
 	/* Check status of I/O request. */
 	status = ccwreq_status(cdev, irb);
-	अगर (req->filter)
+	if (req->filter)
 		status = req->filter(cdev, req->data, irb, status);
-	अगर (status != IO_RUNNING)
-		ccw_device_set_समयout(cdev, 0);
-	अगर (status != IO_DONE && status != IO_RUNNING)
+	if (status != IO_RUNNING)
+		ccw_device_set_timeout(cdev, 0);
+	if (status != IO_DONE && status != IO_RUNNING)
 		ccwreq_log_status(cdev, status);
-	चयन (status) अणु
-	हाल IO_DONE:
-		अवरोध;
-	हाल IO_RUNNING:
-		वापस;
-	हाल IO_REJECTED:
-		जाओ err;
-	हाल IO_PATH_ERROR:
-		जाओ out_next_path;
-	हाल IO_STATUS_ERROR:
-		जाओ out_restart;
-	हाल IO_KILLED:
-		/* Check अगर request was cancelled on purpose. */
-		अगर (req->cancel) अणु
+	switch (status) {
+	case IO_DONE:
+		break;
+	case IO_RUNNING:
+		return;
+	case IO_REJECTED:
+		goto err;
+	case IO_PATH_ERROR:
+		goto out_next_path;
+	case IO_STATUS_ERROR:
+		goto out_restart;
+	case IO_KILLED:
+		/* Check if request was cancelled on purpose. */
+		if (req->cancel) {
 			rc = -EIO;
-			जाओ err;
-		पूर्ण
-		जाओ out_restart;
-	पूर्ण
+			goto err;
+		}
+		goto out_restart;
+	}
 	/* Check back with request initiator. */
-	अगर (!req->check)
-		जाओ out;
-	चयन (req->check(cdev, req->data)) अणु
-	हाल 0:
-		अवरोध;
-	हाल -EAGAIN:
-		जाओ out_restart;
-	हाल -EACCES:
-		जाओ out_next_path;
-	शेष:
-		जाओ err;
-	पूर्ण
+	if (!req->check)
+		goto out;
+	switch (req->check(cdev, req->data)) {
+	case 0:
+		break;
+	case -EAGAIN:
+		goto out_restart;
+	case -EACCES:
+		goto out_next_path;
+	default:
+		goto err;
+	}
 out:
 	ccwreq_stop(cdev, 0);
-	वापस;
+	return;
 
 out_next_path:
 	/* Try next path and restart I/O. */
-	अगर (!ccwreq_next_path(cdev)) अणु
+	if (!ccwreq_next_path(cdev)) {
 		rc = -EACCES;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 out_restart:
 	/* Restart. */
-	ccwreq_करो(cdev);
-	वापस;
+	ccwreq_do(cdev);
+	return;
 err:
 	ccwreq_stop(cdev, rc);
-पूर्ण
+}
 
 
 /**
- * ccw_request_समयout - समयout handler क्रम I/O request procedure
+ * ccw_request_timeout - timeout handler for I/O request procedure
  * @cdev: ccw device
  *
- * Handle समयout during I/O request procedure.
+ * Handle timeout during I/O request procedure.
  */
-व्योम ccw_request_समयout(काष्ठा ccw_device *cdev)
-अणु
-	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
-	काष्ठा ccw_request *req = &cdev->निजी->req;
-	पूर्णांक rc = -ENODEV, chp;
+void ccw_request_timeout(struct ccw_device *cdev)
+{
+	struct subchannel *sch = to_subchannel(cdev->dev.parent);
+	struct ccw_request *req = &cdev->private->req;
+	int rc = -ENODEV, chp;
 
-	अगर (cio_update_schib(sch))
-		जाओ err;
+	if (cio_update_schib(sch))
+		goto err;
 
-	क्रम (chp = 0; chp < 8; chp++) अणु
-		अगर ((0x80 >> chp) & sch->schib.pmcw.lpum)
+	for (chp = 0; chp < 8; chp++) {
+		if ((0x80 >> chp) & sch->schib.pmcw.lpum)
 			pr_warn("%s: No interrupt was received within %lus (CS=%02x, DS=%02x, CHPID=%x.%02x)\n",
-				dev_name(&cdev->dev), req->समयout / HZ,
+				dev_name(&cdev->dev), req->timeout / HZ,
 				scsw_cstat(&sch->schib.scsw),
 				scsw_dstat(&sch->schib.scsw),
 				sch->schid.cssid,
 				sch->schib.pmcw.chpid[chp]);
-	पूर्ण
+	}
 
-	अगर (!ccwreq_next_path(cdev)) अणु
-		/* set the final वापस code क्रम this request */
+	if (!ccwreq_next_path(cdev)) {
+		/* set the final return code for this request */
 		req->drc = -ETIME;
-	पूर्ण
+	}
 	rc = cio_clear(sch);
-	अगर (rc)
-		जाओ err;
-	वापस;
+	if (rc)
+		goto err;
+	return;
 
 err:
 	ccwreq_stop(cdev, rc);
-पूर्ण
+}
 
 /**
- * ccw_request_notoper - notoper handler क्रम I/O request procedure
+ * ccw_request_notoper - notoper handler for I/O request procedure
  * @cdev: ccw device
  *
  * Handle notoper during I/O request procedure.
  */
-व्योम ccw_request_notoper(काष्ठा ccw_device *cdev)
-अणु
+void ccw_request_notoper(struct ccw_device *cdev)
+{
 	ccwreq_stop(cdev, -ENODEV);
-पूर्ण
+}

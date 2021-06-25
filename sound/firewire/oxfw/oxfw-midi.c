@@ -1,83 +1,67 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * oxfw_midi.c - a part of driver क्रम OXFW970/971 based devices
+ * oxfw_midi.c - a part of driver for OXFW970/971 based devices
  *
  * Copyright (c) 2014 Takashi Sakamoto
  */
 
-#समावेश "oxfw.h"
+#include "oxfw.h"
 
-अटल पूर्णांक midi_capture_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा snd_oxfw *oxfw = substream->rmidi->निजी_data;
-	पूर्णांक err;
+static int midi_capture_open(struct snd_rawmidi_substream *substream)
+{
+	struct snd_oxfw *oxfw = substream->rmidi->private_data;
+	int err;
 
 	err = snd_oxfw_stream_lock_try(oxfw);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	mutex_lock(&oxfw->mutex);
 
 	err = snd_oxfw_stream_reserve_duplex(oxfw, &oxfw->tx_stream, 0, 0, 0, 0);
-	अगर (err >= 0) अणु
+	if (err >= 0) {
 		++oxfw->substreams_count;
 		err = snd_oxfw_stream_start_duplex(oxfw);
-		अगर (err < 0)
+		if (err < 0)
 			--oxfw->substreams_count;
-	पूर्ण
+	}
 
 	mutex_unlock(&oxfw->mutex);
 
-	अगर (err < 0)
+	if (err < 0)
 		snd_oxfw_stream_lock_release(oxfw);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक midi_playback_खोलो(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा snd_oxfw *oxfw = substream->rmidi->निजी_data;
-	पूर्णांक err;
+static int midi_playback_open(struct snd_rawmidi_substream *substream)
+{
+	struct snd_oxfw *oxfw = substream->rmidi->private_data;
+	int err;
 
 	err = snd_oxfw_stream_lock_try(oxfw);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
 	mutex_lock(&oxfw->mutex);
 
 	err = snd_oxfw_stream_reserve_duplex(oxfw, &oxfw->rx_stream, 0, 0, 0, 0);
-	अगर (err >= 0) अणु
+	if (err >= 0) {
 		++oxfw->substreams_count;
 		err = snd_oxfw_stream_start_duplex(oxfw);
-	पूर्ण
+	}
 
 	mutex_unlock(&oxfw->mutex);
 
-	अगर (err < 0)
+	if (err < 0)
 		snd_oxfw_stream_lock_release(oxfw);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक midi_capture_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा snd_oxfw *oxfw = substream->rmidi->निजी_data;
-
-	mutex_lock(&oxfw->mutex);
-
-	--oxfw->substreams_count;
-	snd_oxfw_stream_stop_duplex(oxfw);
-
-	mutex_unlock(&oxfw->mutex);
-
-	snd_oxfw_stream_lock_release(oxfw);
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक midi_playback_बंद(काष्ठा snd_rawmidi_substream *substream)
-अणु
-	काष्ठा snd_oxfw *oxfw = substream->rmidi->निजी_data;
+static int midi_capture_close(struct snd_rawmidi_substream *substream)
+{
+	struct snd_oxfw *oxfw = substream->rmidi->private_data;
 
 	mutex_lock(&oxfw->mutex);
 
@@ -87,86 +71,101 @@
 	mutex_unlock(&oxfw->mutex);
 
 	snd_oxfw_stream_lock_release(oxfw);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम midi_capture_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
-अणु
-	काष्ठा snd_oxfw *oxfw = substrm->rmidi->निजी_data;
-	अचिन्हित दीर्घ flags;
+static int midi_playback_close(struct snd_rawmidi_substream *substream)
+{
+	struct snd_oxfw *oxfw = substream->rmidi->private_data;
 
-	spin_lock_irqsave(&oxfw->lock, flags);
+	mutex_lock(&oxfw->mutex);
 
-	अगर (up)
-		amdtp_am824_midi_trigger(&oxfw->tx_stream,
-					 substrm->number, substrm);
-	अन्यथा
-		amdtp_am824_midi_trigger(&oxfw->tx_stream,
-					 substrm->number, शून्य);
+	--oxfw->substreams_count;
+	snd_oxfw_stream_stop_duplex(oxfw);
 
-	spin_unlock_irqrestore(&oxfw->lock, flags);
-पूर्ण
+	mutex_unlock(&oxfw->mutex);
 
-अटल व्योम midi_playback_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
-अणु
-	काष्ठा snd_oxfw *oxfw = substrm->rmidi->निजी_data;
-	अचिन्हित दीर्घ flags;
+	snd_oxfw_stream_lock_release(oxfw);
+	return 0;
+}
+
+static void midi_capture_trigger(struct snd_rawmidi_substream *substrm, int up)
+{
+	struct snd_oxfw *oxfw = substrm->rmidi->private_data;
+	unsigned long flags;
 
 	spin_lock_irqsave(&oxfw->lock, flags);
 
-	अगर (up)
-		amdtp_am824_midi_trigger(&oxfw->rx_stream,
+	if (up)
+		amdtp_am824_midi_trigger(&oxfw->tx_stream,
 					 substrm->number, substrm);
-	अन्यथा
-		amdtp_am824_midi_trigger(&oxfw->rx_stream,
-					 substrm->number, शून्य);
+	else
+		amdtp_am824_midi_trigger(&oxfw->tx_stream,
+					 substrm->number, NULL);
 
 	spin_unlock_irqrestore(&oxfw->lock, flags);
-पूर्ण
+}
 
-अटल व्योम set_midi_substream_names(काष्ठा snd_oxfw *oxfw,
-				     काष्ठा snd_rawmidi_str *str)
-अणु
-	काष्ठा snd_rawmidi_substream *subs;
+static void midi_playback_trigger(struct snd_rawmidi_substream *substrm, int up)
+{
+	struct snd_oxfw *oxfw = substrm->rmidi->private_data;
+	unsigned long flags;
 
-	list_क्रम_each_entry(subs, &str->substreams, list) अणु
-		snम_लिखो(subs->name, माप(subs->name),
+	spin_lock_irqsave(&oxfw->lock, flags);
+
+	if (up)
+		amdtp_am824_midi_trigger(&oxfw->rx_stream,
+					 substrm->number, substrm);
+	else
+		amdtp_am824_midi_trigger(&oxfw->rx_stream,
+					 substrm->number, NULL);
+
+	spin_unlock_irqrestore(&oxfw->lock, flags);
+}
+
+static void set_midi_substream_names(struct snd_oxfw *oxfw,
+				     struct snd_rawmidi_str *str)
+{
+	struct snd_rawmidi_substream *subs;
+
+	list_for_each_entry(subs, &str->substreams, list) {
+		snprintf(subs->name, sizeof(subs->name),
 			 "%s MIDI %d",
-			 oxfw->card->लघुname, subs->number + 1);
-	पूर्ण
-पूर्ण
+			 oxfw->card->shortname, subs->number + 1);
+	}
+}
 
-पूर्णांक snd_oxfw_create_midi(काष्ठा snd_oxfw *oxfw)
-अणु
-	अटल स्थिर काष्ठा snd_rawmidi_ops capture_ops = अणु
-		.खोलो		= midi_capture_खोलो,
-		.बंद		= midi_capture_बंद,
+int snd_oxfw_create_midi(struct snd_oxfw *oxfw)
+{
+	static const struct snd_rawmidi_ops capture_ops = {
+		.open		= midi_capture_open,
+		.close		= midi_capture_close,
 		.trigger	= midi_capture_trigger,
-	पूर्ण;
-	अटल स्थिर काष्ठा snd_rawmidi_ops playback_ops = अणु
-		.खोलो		= midi_playback_खोलो,
-		.बंद		= midi_playback_बंद,
+	};
+	static const struct snd_rawmidi_ops playback_ops = {
+		.open		= midi_playback_open,
+		.close		= midi_playback_close,
 		.trigger	= midi_playback_trigger,
-	पूर्ण;
-	काष्ठा snd_rawmidi *rmidi;
-	काष्ठा snd_rawmidi_str *str;
-	पूर्णांक err;
+	};
+	struct snd_rawmidi *rmidi;
+	struct snd_rawmidi_str *str;
+	int err;
 
-	अगर (oxfw->midi_input_ports == 0 && oxfw->midi_output_ports == 0)
-		वापस 0;
+	if (oxfw->midi_input_ports == 0 && oxfw->midi_output_ports == 0)
+		return 0;
 
 	/* create midi ports */
 	err = snd_rawmidi_new(oxfw->card, oxfw->card->driver, 0,
 			      oxfw->midi_output_ports, oxfw->midi_input_ports,
 			      &rmidi);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	snम_लिखो(rmidi->name, माप(rmidi->name),
-		 "%s MIDI", oxfw->card->लघुname);
-	rmidi->निजी_data = oxfw;
+	snprintf(rmidi->name, sizeof(rmidi->name),
+		 "%s MIDI", oxfw->card->shortname);
+	rmidi->private_data = oxfw;
 
-	अगर (oxfw->midi_input_ports > 0) अणु
+	if (oxfw->midi_input_ports > 0) {
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_INPUT;
 
 		snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT,
@@ -175,9 +174,9 @@
 		str = &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT];
 
 		set_midi_substream_names(oxfw, str);
-	पूर्ण
+	}
 
-	अगर (oxfw->midi_output_ports > 0) अणु
+	if (oxfw->midi_output_ports > 0) {
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT;
 
 		snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT,
@@ -186,10 +185,10 @@
 		str = &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT];
 
 		set_midi_substream_names(oxfw, str);
-	पूर्ण
+	}
 
-	अगर ((oxfw->midi_output_ports > 0) && (oxfw->midi_input_ports > 0))
+	if ((oxfw->midi_output_ports > 0) && (oxfw->midi_input_ports > 0))
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_DUPLEX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

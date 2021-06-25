@@ -1,8 +1,7 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * KVM/MIPS MMU handling in the KVM module.
  *
@@ -10,52 +9,52 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/kvm_host.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/pgभाग.स>
+#include <linux/highmem.h>
+#include <linux/kvm_host.h>
+#include <linux/uaccess.h>
+#include <asm/mmu_context.h>
+#include <asm/pgalloc.h>
 
 /*
  * KVM_MMU_CACHE_MIN_PAGES is the number of GPA page table translation levels
- * क्रम which pages need to be cached.
+ * for which pages need to be cached.
  */
-#अगर defined(__PAGETABLE_PMD_FOLDED)
-#घोषणा KVM_MMU_CACHE_MIN_PAGES 1
-#अन्यथा
-#घोषणा KVM_MMU_CACHE_MIN_PAGES 2
-#पूर्ण_अगर
+#if defined(__PAGETABLE_PMD_FOLDED)
+#define KVM_MMU_CACHE_MIN_PAGES 1
+#else
+#define KVM_MMU_CACHE_MIN_PAGES 2
+#endif
 
-व्योम kvm_mmu_मुक्त_memory_caches(काष्ठा kvm_vcpu *vcpu)
-अणु
-	kvm_mmu_मुक्त_memory_cache(&vcpu->arch.mmu_page_cache);
-पूर्ण
+void kvm_mmu_free_memory_caches(struct kvm_vcpu *vcpu)
+{
+	kvm_mmu_free_memory_cache(&vcpu->arch.mmu_page_cache);
+}
 
 /**
  * kvm_pgd_init() - Initialise KVM GPA page directory.
- * @page:	Poपूर्णांकer to page directory (PGD) क्रम KVM GPA.
+ * @page:	Pointer to page directory (PGD) for KVM GPA.
  *
- * Initialise a KVM GPA page directory with poपूर्णांकers to the invalid table, i.e.
+ * Initialise a KVM GPA page directory with pointers to the invalid table, i.e.
  * representing no mappings. This is similar to pgd_init(), however it
- * initialises all the page directory poपूर्णांकers, not just the ones corresponding
- * to the userland address space (since it is क्रम the guest physical address
- * space rather than a भव address space).
+ * initialises all the page directory pointers, not just the ones corresponding
+ * to the userland address space (since it is for the guest physical address
+ * space rather than a virtual address space).
  */
-अटल व्योम kvm_pgd_init(व्योम *page)
-अणु
-	अचिन्हित दीर्घ *p, *end;
-	अचिन्हित दीर्घ entry;
+static void kvm_pgd_init(void *page)
+{
+	unsigned long *p, *end;
+	unsigned long entry;
 
-#अगर_घोषित __PAGETABLE_PMD_FOLDED
-	entry = (अचिन्हित दीर्घ)invalid_pte_table;
-#अन्यथा
-	entry = (अचिन्हित दीर्घ)invalid_pmd_table;
-#पूर्ण_अगर
+#ifdef __PAGETABLE_PMD_FOLDED
+	entry = (unsigned long)invalid_pte_table;
+#else
+	entry = (unsigned long)invalid_pmd_table;
+#endif
 
-	p = (अचिन्हित दीर्घ *)page;
+	p = (unsigned long *)page;
 	end = p + PTRS_PER_PGD;
 
-	करो अणु
+	do {
 		p[0] = entry;
 		p[1] = entry;
 		p[2] = entry;
@@ -65,200 +64,200 @@
 		p[-3] = entry;
 		p[-2] = entry;
 		p[-1] = entry;
-	पूर्ण जबतक (p != end);
-पूर्ण
+	} while (p != end);
+}
 
 /**
  * kvm_pgd_alloc() - Allocate and initialise a KVM GPA page directory.
  *
- * Allocate a blank KVM GPA page directory (PGD) क्रम representing guest physical
+ * Allocate a blank KVM GPA page directory (PGD) for representing guest physical
  * to host physical page mappings.
  *
- * Returns:	Poपूर्णांकer to new KVM GPA page directory.
- *		शून्य on allocation failure.
+ * Returns:	Pointer to new KVM GPA page directory.
+ *		NULL on allocation failure.
  */
-pgd_t *kvm_pgd_alloc(व्योम)
-अणु
+pgd_t *kvm_pgd_alloc(void)
+{
 	pgd_t *ret;
 
-	ret = (pgd_t *)__get_मुक्त_pages(GFP_KERNEL, PGD_ORDER);
-	अगर (ret)
+	ret = (pgd_t *)__get_free_pages(GFP_KERNEL, PGD_ORDER);
+	if (ret)
 		kvm_pgd_init(ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * kvm_mips_walk_pgd() - Walk page table with optional allocation.
- * @pgd:	Page directory poपूर्णांकer.
+ * @pgd:	Page directory pointer.
  * @addr:	Address to index page table using.
- * @cache:	MMU page cache to allocate new page tables from, or शून्य.
+ * @cache:	MMU page cache to allocate new page tables from, or NULL.
  *
- * Walk the page tables poपूर्णांकed to by @pgd to find the PTE corresponding to the
- * address @addr. If page tables करोn't exist क्रम @addr, they will be created
- * from the MMU cache अगर @cache is not शून्य.
+ * Walk the page tables pointed to by @pgd to find the PTE corresponding to the
+ * address @addr. If page tables don't exist for @addr, they will be created
+ * from the MMU cache if @cache is not NULL.
  *
- * Returns:	Poपूर्णांकer to pte_t corresponding to @addr.
- *		शून्य अगर a page table करोesn't exist क्रम @addr and !@cache.
- *		शून्य अगर a page table allocation failed.
+ * Returns:	Pointer to pte_t corresponding to @addr.
+ *		NULL if a page table doesn't exist for @addr and !@cache.
+ *		NULL if a page table allocation failed.
  */
-अटल pte_t *kvm_mips_walk_pgd(pgd_t *pgd, काष्ठा kvm_mmu_memory_cache *cache,
-				अचिन्हित दीर्घ addr)
-अणु
+static pte_t *kvm_mips_walk_pgd(pgd_t *pgd, struct kvm_mmu_memory_cache *cache,
+				unsigned long addr)
+{
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 
 	pgd += pgd_index(addr);
-	अगर (pgd_none(*pgd)) अणु
+	if (pgd_none(*pgd)) {
 		/* Not used on MIPS yet */
 		BUG();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	p4d = p4d_offset(pgd, addr);
 	pud = pud_offset(p4d, addr);
-	अगर (pud_none(*pud)) अणु
+	if (pud_none(*pud)) {
 		pmd_t *new_pmd;
 
-		अगर (!cache)
-			वापस शून्य;
+		if (!cache)
+			return NULL;
 		new_pmd = kvm_mmu_memory_cache_alloc(cache);
-		pmd_init((अचिन्हित दीर्घ)new_pmd,
-			 (अचिन्हित दीर्घ)invalid_pte_table);
-		pud_populate(शून्य, pud, new_pmd);
-	पूर्ण
+		pmd_init((unsigned long)new_pmd,
+			 (unsigned long)invalid_pte_table);
+		pud_populate(NULL, pud, new_pmd);
+	}
 	pmd = pmd_offset(pud, addr);
-	अगर (pmd_none(*pmd)) अणु
+	if (pmd_none(*pmd)) {
 		pte_t *new_pte;
 
-		अगर (!cache)
-			वापस शून्य;
+		if (!cache)
+			return NULL;
 		new_pte = kvm_mmu_memory_cache_alloc(cache);
 		clear_page(new_pte);
-		pmd_populate_kernel(शून्य, pmd, new_pte);
-	पूर्ण
-	वापस pte_offset_kernel(pmd, addr);
-पूर्ण
+		pmd_populate_kernel(NULL, pmd, new_pte);
+	}
+	return pte_offset_kernel(pmd, addr);
+}
 
 /* Caller must hold kvm->mm_lock */
-अटल pte_t *kvm_mips_pte_क्रम_gpa(काष्ठा kvm *kvm,
-				   काष्ठा kvm_mmu_memory_cache *cache,
-				   अचिन्हित दीर्घ addr)
-अणु
-	वापस kvm_mips_walk_pgd(kvm->arch.gpa_mm.pgd, cache, addr);
-पूर्ण
+static pte_t *kvm_mips_pte_for_gpa(struct kvm *kvm,
+				   struct kvm_mmu_memory_cache *cache,
+				   unsigned long addr)
+{
+	return kvm_mips_walk_pgd(kvm->arch.gpa_mm.pgd, cache, addr);
+}
 
 /*
- * kvm_mips_flush_gpa_अणुpte,pmd,pud,pgd,ptपूर्ण.
+ * kvm_mips_flush_gpa_{pte,pmd,pud,pgd,pt}.
  * Flush a range of guest physical address space from the VM's GPA page tables.
  */
 
-अटल bool kvm_mips_flush_gpa_pte(pte_t *pte, अचिन्हित दीर्घ start_gpa,
-				   अचिन्हित दीर्घ end_gpa)
-अणु
-	पूर्णांक i_min = pte_index(start_gpa);
-	पूर्णांक i_max = pte_index(end_gpa);
-	bool safe_to_हटाओ = (i_min == 0 && i_max == PTRS_PER_PTE - 1);
-	पूर्णांक i;
+static bool kvm_mips_flush_gpa_pte(pte_t *pte, unsigned long start_gpa,
+				   unsigned long end_gpa)
+{
+	int i_min = pte_index(start_gpa);
+	int i_max = pte_index(end_gpa);
+	bool safe_to_remove = (i_min == 0 && i_max == PTRS_PER_PTE - 1);
+	int i;
 
-	क्रम (i = i_min; i <= i_max; ++i) अणु
-		अगर (!pte_present(pte[i]))
-			जारी;
+	for (i = i_min; i <= i_max; ++i) {
+		if (!pte_present(pte[i]))
+			continue;
 
 		set_pte(pte + i, __pte(0));
-	पूर्ण
-	वापस safe_to_हटाओ;
-पूर्ण
+	}
+	return safe_to_remove;
+}
 
-अटल bool kvm_mips_flush_gpa_pmd(pmd_t *pmd, अचिन्हित दीर्घ start_gpa,
-				   अचिन्हित दीर्घ end_gpa)
-अणु
+static bool kvm_mips_flush_gpa_pmd(pmd_t *pmd, unsigned long start_gpa,
+				   unsigned long end_gpa)
+{
 	pte_t *pte;
-	अचिन्हित दीर्घ end = ~0ul;
-	पूर्णांक i_min = pmd_index(start_gpa);
-	पूर्णांक i_max = pmd_index(end_gpa);
-	bool safe_to_हटाओ = (i_min == 0 && i_max == PTRS_PER_PMD - 1);
-	पूर्णांक i;
+	unsigned long end = ~0ul;
+	int i_min = pmd_index(start_gpa);
+	int i_max = pmd_index(end_gpa);
+	bool safe_to_remove = (i_min == 0 && i_max == PTRS_PER_PMD - 1);
+	int i;
 
-	क्रम (i = i_min; i <= i_max; ++i, start_gpa = 0) अणु
-		अगर (!pmd_present(pmd[i]))
-			जारी;
+	for (i = i_min; i <= i_max; ++i, start_gpa = 0) {
+		if (!pmd_present(pmd[i]))
+			continue;
 
 		pte = pte_offset_kernel(pmd + i, 0);
-		अगर (i == i_max)
+		if (i == i_max)
 			end = end_gpa;
 
-		अगर (kvm_mips_flush_gpa_pte(pte, start_gpa, end)) अणु
+		if (kvm_mips_flush_gpa_pte(pte, start_gpa, end)) {
 			pmd_clear(pmd + i);
-			pte_मुक्त_kernel(शून्य, pte);
-		पूर्ण अन्यथा अणु
-			safe_to_हटाओ = false;
-		पूर्ण
-	पूर्ण
-	वापस safe_to_हटाओ;
-पूर्ण
+			pte_free_kernel(NULL, pte);
+		} else {
+			safe_to_remove = false;
+		}
+	}
+	return safe_to_remove;
+}
 
-अटल bool kvm_mips_flush_gpa_pud(pud_t *pud, अचिन्हित दीर्घ start_gpa,
-				   अचिन्हित दीर्घ end_gpa)
-अणु
+static bool kvm_mips_flush_gpa_pud(pud_t *pud, unsigned long start_gpa,
+				   unsigned long end_gpa)
+{
 	pmd_t *pmd;
-	अचिन्हित दीर्घ end = ~0ul;
-	पूर्णांक i_min = pud_index(start_gpa);
-	पूर्णांक i_max = pud_index(end_gpa);
-	bool safe_to_हटाओ = (i_min == 0 && i_max == PTRS_PER_PUD - 1);
-	पूर्णांक i;
+	unsigned long end = ~0ul;
+	int i_min = pud_index(start_gpa);
+	int i_max = pud_index(end_gpa);
+	bool safe_to_remove = (i_min == 0 && i_max == PTRS_PER_PUD - 1);
+	int i;
 
-	क्रम (i = i_min; i <= i_max; ++i, start_gpa = 0) अणु
-		अगर (!pud_present(pud[i]))
-			जारी;
+	for (i = i_min; i <= i_max; ++i, start_gpa = 0) {
+		if (!pud_present(pud[i]))
+			continue;
 
 		pmd = pmd_offset(pud + i, 0);
-		अगर (i == i_max)
+		if (i == i_max)
 			end = end_gpa;
 
-		अगर (kvm_mips_flush_gpa_pmd(pmd, start_gpa, end)) अणु
+		if (kvm_mips_flush_gpa_pmd(pmd, start_gpa, end)) {
 			pud_clear(pud + i);
-			pmd_मुक्त(शून्य, pmd);
-		पूर्ण अन्यथा अणु
-			safe_to_हटाओ = false;
-		पूर्ण
-	पूर्ण
-	वापस safe_to_हटाओ;
-पूर्ण
+			pmd_free(NULL, pmd);
+		} else {
+			safe_to_remove = false;
+		}
+	}
+	return safe_to_remove;
+}
 
-अटल bool kvm_mips_flush_gpa_pgd(pgd_t *pgd, अचिन्हित दीर्घ start_gpa,
-				   अचिन्हित दीर्घ end_gpa)
-अणु
+static bool kvm_mips_flush_gpa_pgd(pgd_t *pgd, unsigned long start_gpa,
+				   unsigned long end_gpa)
+{
 	p4d_t *p4d;
 	pud_t *pud;
-	अचिन्हित दीर्घ end = ~0ul;
-	पूर्णांक i_min = pgd_index(start_gpa);
-	पूर्णांक i_max = pgd_index(end_gpa);
-	bool safe_to_हटाओ = (i_min == 0 && i_max == PTRS_PER_PGD - 1);
-	पूर्णांक i;
+	unsigned long end = ~0ul;
+	int i_min = pgd_index(start_gpa);
+	int i_max = pgd_index(end_gpa);
+	bool safe_to_remove = (i_min == 0 && i_max == PTRS_PER_PGD - 1);
+	int i;
 
-	क्रम (i = i_min; i <= i_max; ++i, start_gpa = 0) अणु
-		अगर (!pgd_present(pgd[i]))
-			जारी;
+	for (i = i_min; i <= i_max; ++i, start_gpa = 0) {
+		if (!pgd_present(pgd[i]))
+			continue;
 
 		p4d = p4d_offset(pgd, 0);
 		pud = pud_offset(p4d + i, 0);
-		अगर (i == i_max)
+		if (i == i_max)
 			end = end_gpa;
 
-		अगर (kvm_mips_flush_gpa_pud(pud, start_gpa, end)) अणु
+		if (kvm_mips_flush_gpa_pud(pud, start_gpa, end)) {
 			pgd_clear(pgd + i);
-			pud_मुक्त(शून्य, pud);
-		पूर्ण अन्यथा अणु
-			safe_to_हटाओ = false;
-		पूर्ण
-	पूर्ण
-	वापस safe_to_हटाओ;
-पूर्ण
+			pud_free(NULL, pud);
+		} else {
+			safe_to_remove = false;
+		}
+	}
+	return safe_to_remove;
+}
 
 /**
  * kvm_mips_flush_gpa_pt() - Flush a range of guest physical addresses.
- * @kvm:	KVM poपूर्णांकer.
+ * @kvm:	KVM pointer.
  * @start_gfn:	Guest frame number of first page in GPA range to flush.
  * @end_gfn:	Guest frame number of last page in GPA range to flush.
  *
@@ -266,115 +265,115 @@ pgd_t *kvm_pgd_alloc(व्योम)
  *
  * The caller must hold the @kvm->mmu_lock spinlock.
  *
- * Returns:	Whether its safe to हटाओ the top level page directory because
- *		all lower levels have been हटाओd.
+ * Returns:	Whether its safe to remove the top level page directory because
+ *		all lower levels have been removed.
  */
-bool kvm_mips_flush_gpa_pt(काष्ठा kvm *kvm, gfn_t start_gfn, gfn_t end_gfn)
-अणु
-	वापस kvm_mips_flush_gpa_pgd(kvm->arch.gpa_mm.pgd,
+bool kvm_mips_flush_gpa_pt(struct kvm *kvm, gfn_t start_gfn, gfn_t end_gfn)
+{
+	return kvm_mips_flush_gpa_pgd(kvm->arch.gpa_mm.pgd,
 				      start_gfn << PAGE_SHIFT,
 				      end_gfn << PAGE_SHIFT);
-पूर्ण
+}
 
-#घोषणा BUILD_PTE_RANGE_OP(name, op)					\
-अटल पूर्णांक kvm_mips_##name##_pte(pte_t *pte, अचिन्हित दीर्घ start,	\
-				 अचिन्हित दीर्घ end)			\
-अणु									\
-	पूर्णांक ret = 0;							\
-	पूर्णांक i_min = pte_index(start);				\
-	पूर्णांक i_max = pte_index(end);					\
-	पूर्णांक i;								\
+#define BUILD_PTE_RANGE_OP(name, op)					\
+static int kvm_mips_##name##_pte(pte_t *pte, unsigned long start,	\
+				 unsigned long end)			\
+{									\
+	int ret = 0;							\
+	int i_min = pte_index(start);				\
+	int i_max = pte_index(end);					\
+	int i;								\
 	pte_t old, new;							\
 									\
-	क्रम (i = i_min; i <= i_max; ++i) अणु				\
-		अगर (!pte_present(pte[i]))				\
-			जारी;					\
+	for (i = i_min; i <= i_max; ++i) {				\
+		if (!pte_present(pte[i]))				\
+			continue;					\
 									\
 		old = pte[i];						\
 		new = op(old);						\
-		अगर (pte_val(new) == pte_val(old))			\
-			जारी;					\
+		if (pte_val(new) == pte_val(old))			\
+			continue;					\
 		set_pte(pte + i, new);					\
 		ret = 1;						\
-	पूर्ण								\
-	वापस ret;							\
-पूर्ण									\
+	}								\
+	return ret;							\
+}									\
 									\
-/* वापसs true अगर anything was करोne */					\
-अटल पूर्णांक kvm_mips_##name##_pmd(pmd_t *pmd, अचिन्हित दीर्घ start,	\
-				 अचिन्हित दीर्घ end)			\
-अणु									\
-	पूर्णांक ret = 0;							\
+/* returns true if anything was done */					\
+static int kvm_mips_##name##_pmd(pmd_t *pmd, unsigned long start,	\
+				 unsigned long end)			\
+{									\
+	int ret = 0;							\
 	pte_t *pte;							\
-	अचिन्हित दीर्घ cur_end = ~0ul;					\
-	पूर्णांक i_min = pmd_index(start);				\
-	पूर्णांक i_max = pmd_index(end);					\
-	पूर्णांक i;								\
+	unsigned long cur_end = ~0ul;					\
+	int i_min = pmd_index(start);				\
+	int i_max = pmd_index(end);					\
+	int i;								\
 									\
-	क्रम (i = i_min; i <= i_max; ++i, start = 0) अणु			\
-		अगर (!pmd_present(pmd[i]))				\
-			जारी;					\
+	for (i = i_min; i <= i_max; ++i, start = 0) {			\
+		if (!pmd_present(pmd[i]))				\
+			continue;					\
 									\
 		pte = pte_offset_kernel(pmd + i, 0);				\
-		अगर (i == i_max)						\
+		if (i == i_max)						\
 			cur_end = end;					\
 									\
 		ret |= kvm_mips_##name##_pte(pte, start, cur_end);	\
-	पूर्ण								\
-	वापस ret;							\
-पूर्ण									\
+	}								\
+	return ret;							\
+}									\
 									\
-अटल पूर्णांक kvm_mips_##name##_pud(pud_t *pud, अचिन्हित दीर्घ start,	\
-				 अचिन्हित दीर्घ end)			\
-अणु									\
-	पूर्णांक ret = 0;							\
+static int kvm_mips_##name##_pud(pud_t *pud, unsigned long start,	\
+				 unsigned long end)			\
+{									\
+	int ret = 0;							\
 	pmd_t *pmd;							\
-	अचिन्हित दीर्घ cur_end = ~0ul;					\
-	पूर्णांक i_min = pud_index(start);				\
-	पूर्णांक i_max = pud_index(end);					\
-	पूर्णांक i;								\
+	unsigned long cur_end = ~0ul;					\
+	int i_min = pud_index(start);				\
+	int i_max = pud_index(end);					\
+	int i;								\
 									\
-	क्रम (i = i_min; i <= i_max; ++i, start = 0) अणु			\
-		अगर (!pud_present(pud[i]))				\
-			जारी;					\
+	for (i = i_min; i <= i_max; ++i, start = 0) {			\
+		if (!pud_present(pud[i]))				\
+			continue;					\
 									\
 		pmd = pmd_offset(pud + i, 0);				\
-		अगर (i == i_max)						\
+		if (i == i_max)						\
 			cur_end = end;					\
 									\
 		ret |= kvm_mips_##name##_pmd(pmd, start, cur_end);	\
-	पूर्ण								\
-	वापस ret;							\
-पूर्ण									\
+	}								\
+	return ret;							\
+}									\
 									\
-अटल पूर्णांक kvm_mips_##name##_pgd(pgd_t *pgd, अचिन्हित दीर्घ start,	\
-				 अचिन्हित दीर्घ end)			\
-अणु									\
-	पूर्णांक ret = 0;							\
+static int kvm_mips_##name##_pgd(pgd_t *pgd, unsigned long start,	\
+				 unsigned long end)			\
+{									\
+	int ret = 0;							\
 	p4d_t *p4d;							\
 	pud_t *pud;							\
-	अचिन्हित दीर्घ cur_end = ~0ul;					\
-	पूर्णांक i_min = pgd_index(start);					\
-	पूर्णांक i_max = pgd_index(end);					\
-	पूर्णांक i;								\
+	unsigned long cur_end = ~0ul;					\
+	int i_min = pgd_index(start);					\
+	int i_max = pgd_index(end);					\
+	int i;								\
 									\
-	क्रम (i = i_min; i <= i_max; ++i, start = 0) अणु			\
-		अगर (!pgd_present(pgd[i]))				\
-			जारी;					\
+	for (i = i_min; i <= i_max; ++i, start = 0) {			\
+		if (!pgd_present(pgd[i]))				\
+			continue;					\
 									\
 		p4d = p4d_offset(pgd, 0);				\
 		pud = pud_offset(p4d + i, 0);				\
-		अगर (i == i_max)						\
+		if (i == i_max)						\
 			cur_end = end;					\
 									\
 		ret |= kvm_mips_##name##_pud(pud, start, cur_end);	\
-	पूर्ण								\
-	वापस ret;							\
-पूर्ण
+	}								\
+	return ret;							\
+}
 
 /*
  * kvm_mips_mkclean_gpa_pt.
- * Mark a range of guest physical address space clean (ग_लिखोs fault) in the VM's
+ * Mark a range of guest physical address space clean (writes fault) in the VM's
  * GPA page table to allow dirty page tracking.
  */
 
@@ -382,47 +381,47 @@ BUILD_PTE_RANGE_OP(mkclean, pte_mkclean)
 
 /**
  * kvm_mips_mkclean_gpa_pt() - Make a range of guest physical addresses clean.
- * @kvm:	KVM poपूर्णांकer.
+ * @kvm:	KVM pointer.
  * @start_gfn:	Guest frame number of first page in GPA range to flush.
  * @end_gfn:	Guest frame number of last page in GPA range to flush.
  *
- * Make a range of GPA mappings clean so that guest ग_लिखोs will fault and
+ * Make a range of GPA mappings clean so that guest writes will fault and
  * trigger dirty page logging.
  *
  * The caller must hold the @kvm->mmu_lock spinlock.
  *
- * Returns:	Whether any GPA mappings were modअगरied, which would require
+ * Returns:	Whether any GPA mappings were modified, which would require
  *		derived mappings (GVA page tables & TLB enties) to be
  *		invalidated.
  */
-पूर्णांक kvm_mips_mkclean_gpa_pt(काष्ठा kvm *kvm, gfn_t start_gfn, gfn_t end_gfn)
-अणु
-	वापस kvm_mips_mkclean_pgd(kvm->arch.gpa_mm.pgd,
+int kvm_mips_mkclean_gpa_pt(struct kvm *kvm, gfn_t start_gfn, gfn_t end_gfn)
+{
+	return kvm_mips_mkclean_pgd(kvm->arch.gpa_mm.pgd,
 				    start_gfn << PAGE_SHIFT,
 				    end_gfn << PAGE_SHIFT);
-पूर्ण
+}
 
 /**
- * kvm_arch_mmu_enable_log_dirty_pt_masked() - ग_लिखो protect dirty pages
- * @kvm:	The KVM poपूर्णांकer
+ * kvm_arch_mmu_enable_log_dirty_pt_masked() - write protect dirty pages
+ * @kvm:	The KVM pointer
  * @slot:	The memory slot associated with mask
  * @gfn_offset:	The gfn offset in memory slot
  * @mask:	The mask of dirty pages at offset 'gfn_offset' in this memory
- *		slot to be ग_लिखो रक्षित
+ *		slot to be write protected
  *
- * Walks bits set in mask ग_लिखो protects the associated pte's. Caller must
+ * Walks bits set in mask write protects the associated pte's. Caller must
  * acquire @kvm->mmu_lock.
  */
-व्योम kvm_arch_mmu_enable_log_dirty_pt_masked(काष्ठा kvm *kvm,
-		काष्ठा kvm_memory_slot *slot,
-		gfn_t gfn_offset, अचिन्हित दीर्घ mask)
-अणु
+void kvm_arch_mmu_enable_log_dirty_pt_masked(struct kvm *kvm,
+		struct kvm_memory_slot *slot,
+		gfn_t gfn_offset, unsigned long mask)
+{
 	gfn_t base_gfn = slot->base_gfn + gfn_offset;
 	gfn_t start = base_gfn +  __ffs(mask);
 	gfn_t end = base_gfn + __fls(mask);
 
 	kvm_mips_mkclean_gpa_pt(kvm, start, end);
-पूर्ण
+}
 
 /*
  * kvm_mips_mkold_gpa_pt.
@@ -432,237 +431,237 @@ BUILD_PTE_RANGE_OP(mkclean, pte_mkclean)
 
 BUILD_PTE_RANGE_OP(mkold, pte_mkold)
 
-अटल पूर्णांक kvm_mips_mkold_gpa_pt(काष्ठा kvm *kvm, gfn_t start_gfn,
+static int kvm_mips_mkold_gpa_pt(struct kvm *kvm, gfn_t start_gfn,
 				 gfn_t end_gfn)
-अणु
-	वापस kvm_mips_mkold_pgd(kvm->arch.gpa_mm.pgd,
+{
+	return kvm_mips_mkold_pgd(kvm->arch.gpa_mm.pgd,
 				  start_gfn << PAGE_SHIFT,
 				  end_gfn << PAGE_SHIFT);
-पूर्ण
+}
 
-bool kvm_unmap_gfn_range(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
-अणु
+bool kvm_unmap_gfn_range(struct kvm *kvm, struct kvm_gfn_range *range)
+{
 	kvm_mips_flush_gpa_pt(kvm, range->start, range->end);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-bool kvm_set_spte_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
-अणु
+bool kvm_set_spte_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
+{
 	gpa_t gpa = range->start << PAGE_SHIFT;
 	pte_t hva_pte = range->pte;
-	pte_t *gpa_pte = kvm_mips_pte_क्रम_gpa(kvm, शून्य, gpa);
+	pte_t *gpa_pte = kvm_mips_pte_for_gpa(kvm, NULL, gpa);
 	pte_t old_pte;
 
-	अगर (!gpa_pte)
-		वापस false;
+	if (!gpa_pte)
+		return false;
 
 	/* Mapping may need adjusting depending on memslot flags */
 	old_pte = *gpa_pte;
-	अगर (range->slot->flags & KVM_MEM_LOG_सूचीTY_PAGES && !pte_dirty(old_pte))
+	if (range->slot->flags & KVM_MEM_LOG_DIRTY_PAGES && !pte_dirty(old_pte))
 		hva_pte = pte_mkclean(hva_pte);
-	अन्यथा अगर (range->slot->flags & KVM_MEM_READONLY)
+	else if (range->slot->flags & KVM_MEM_READONLY)
 		hva_pte = pte_wrprotect(hva_pte);
 
 	set_pte(gpa_pte, hva_pte);
 
-	/* Replacing an असलent or old page करोesn't need flushes */
-	अगर (!pte_present(old_pte) || !pte_young(old_pte))
-		वापस false;
+	/* Replacing an absent or old page doesn't need flushes */
+	if (!pte_present(old_pte) || !pte_young(old_pte))
+		return false;
 
 	/* Pages swapped, aged, moved, or cleaned require flushes */
-	वापस !pte_present(hva_pte) ||
+	return !pte_present(hva_pte) ||
 	       !pte_young(hva_pte) ||
 	       pte_pfn(old_pte) != pte_pfn(hva_pte) ||
 	       (pte_dirty(old_pte) && !pte_dirty(hva_pte));
-पूर्ण
+}
 
-bool kvm_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
-अणु
-	वापस kvm_mips_mkold_gpa_pt(kvm, range->start, range->end);
-पूर्ण
+bool kvm_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
+{
+	return kvm_mips_mkold_gpa_pt(kvm, range->start, range->end);
+}
 
-bool kvm_test_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
-अणु
+bool kvm_test_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
+{
 	gpa_t gpa = range->start << PAGE_SHIFT;
-	pte_t *gpa_pte = kvm_mips_pte_क्रम_gpa(kvm, शून्य, gpa);
+	pte_t *gpa_pte = kvm_mips_pte_for_gpa(kvm, NULL, gpa);
 
-	अगर (!gpa_pte)
-		वापस 0;
-	वापस pte_young(*gpa_pte);
-पूर्ण
+	if (!gpa_pte)
+		return 0;
+	return pte_young(*gpa_pte);
+}
 
 /**
  * _kvm_mips_map_page_fast() - Fast path GPA fault handler.
- * @vcpu:		VCPU poपूर्णांकer.
+ * @vcpu:		VCPU pointer.
  * @gpa:		Guest physical address of fault.
- * @ग_लिखो_fault:	Whether the fault was due to a ग_लिखो.
- * @out_entry:		New PTE क्रम @gpa (written on success unless शून्य).
- * @out_buddy:		New PTE क्रम @gpa's buddy (written on success unless
- *			शून्य).
+ * @write_fault:	Whether the fault was due to a write.
+ * @out_entry:		New PTE for @gpa (written on success unless NULL).
+ * @out_buddy:		New PTE for @gpa's buddy (written on success unless
+ *			NULL).
  *
- * Perक्रमm fast path GPA fault handling, करोing all that can be करोne without
- * calling पूर्णांकo KVM. This handles marking old pages young (क्रम idle page
- * tracking), and dirtying of clean pages (क्रम dirty page logging).
+ * Perform fast path GPA fault handling, doing all that can be done without
+ * calling into KVM. This handles marking old pages young (for idle page
+ * tracking), and dirtying of clean pages (for dirty page logging).
  *
- * Returns:	0 on success, in which हाल we can update derived mappings and
+ * Returns:	0 on success, in which case we can update derived mappings and
  *		resume guest execution.
- *		-EFAULT on failure due to असलent GPA mapping or ग_लिखो to
- *		पढ़ो-only page, in which हाल KVM must be consulted.
+ *		-EFAULT on failure due to absent GPA mapping or write to
+ *		read-only page, in which case KVM must be consulted.
  */
-अटल पूर्णांक _kvm_mips_map_page_fast(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ gpa,
-				   bool ग_लिखो_fault,
+static int _kvm_mips_map_page_fast(struct kvm_vcpu *vcpu, unsigned long gpa,
+				   bool write_fault,
 				   pte_t *out_entry, pte_t *out_buddy)
-अणु
-	काष्ठा kvm *kvm = vcpu->kvm;
+{
+	struct kvm *kvm = vcpu->kvm;
 	gfn_t gfn = gpa >> PAGE_SHIFT;
 	pte_t *ptep;
 	kvm_pfn_t pfn = 0;	/* silence bogus GCC warning */
 	bool pfn_valid = false;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	spin_lock(&kvm->mmu_lock);
 
-	/* Fast path - just check GPA page table क्रम an existing entry */
-	ptep = kvm_mips_pte_क्रम_gpa(kvm, शून्य, gpa);
-	अगर (!ptep || !pte_present(*ptep)) अणु
+	/* Fast path - just check GPA page table for an existing entry */
+	ptep = kvm_mips_pte_for_gpa(kvm, NULL, gpa);
+	if (!ptep || !pte_present(*ptep)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Track access to pages marked old */
-	अगर (!pte_young(*ptep)) अणु
+	if (!pte_young(*ptep)) {
 		set_pte(ptep, pte_mkyoung(*ptep));
 		pfn = pte_pfn(*ptep);
 		pfn_valid = true;
 		/* call kvm_set_pfn_accessed() after unlock */
-	पूर्ण
-	अगर (ग_लिखो_fault && !pte_dirty(*ptep)) अणु
-		अगर (!pte_ग_लिखो(*ptep)) अणु
+	}
+	if (write_fault && !pte_dirty(*ptep)) {
+		if (!pte_write(*ptep)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		/* Track dirtying of ग_लिखोable pages */
-		set_pte(ptep, pte_सूची_गढ़ोty(*ptep));
+		/* Track dirtying of writeable pages */
+		set_pte(ptep, pte_mkdirty(*ptep));
 		pfn = pte_pfn(*ptep);
 		mark_page_dirty(kvm, gfn);
 		kvm_set_pfn_dirty(pfn);
-	पूर्ण
+	}
 
-	अगर (out_entry)
+	if (out_entry)
 		*out_entry = *ptep;
-	अगर (out_buddy)
+	if (out_buddy)
 		*out_buddy = *ptep_buddy(ptep);
 
 out:
 	spin_unlock(&kvm->mmu_lock);
-	अगर (pfn_valid)
+	if (pfn_valid)
 		kvm_set_pfn_accessed(pfn);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * kvm_mips_map_page() - Map a guest physical page.
- * @vcpu:		VCPU poपूर्णांकer.
+ * @vcpu:		VCPU pointer.
  * @gpa:		Guest physical address of fault.
- * @ग_लिखो_fault:	Whether the fault was due to a ग_लिखो.
- * @out_entry:		New PTE क्रम @gpa (written on success unless शून्य).
- * @out_buddy:		New PTE क्रम @gpa's buddy (written on success unless
- *			शून्य).
+ * @write_fault:	Whether the fault was due to a write.
+ * @out_entry:		New PTE for @gpa (written on success unless NULL).
+ * @out_buddy:		New PTE for @gpa's buddy (written on success unless
+ *			NULL).
  *
  * Handle GPA faults by creating a new GPA mapping (or updating an existing
  * one).
  *
  * This takes care of marking pages young or dirty (idle/dirty page tracking),
- * asking KVM क्रम the corresponding PFN, and creating a mapping in the GPA page
+ * asking KVM for the corresponding PFN, and creating a mapping in the GPA page
  * tables. Derived mappings (GVA page tables and TLBs) must be handled by the
  * caller.
  *
- * Returns:	0 on success, in which हाल the caller may use the @out_entry
+ * Returns:	0 on success, in which case the caller may use the @out_entry
  *		and @out_buddy PTEs to update derived mappings and resume guest
  *		execution.
- *		-EFAULT अगर there is no memory region at @gpa or a ग_लिखो was
- *		attempted to a पढ़ो-only memory region. This is usually handled
+ *		-EFAULT if there is no memory region at @gpa or a write was
+ *		attempted to a read-only memory region. This is usually handled
  *		as an MMIO access.
  */
-अटल पूर्णांक kvm_mips_map_page(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ gpa,
-			     bool ग_लिखो_fault,
+static int kvm_mips_map_page(struct kvm_vcpu *vcpu, unsigned long gpa,
+			     bool write_fault,
 			     pte_t *out_entry, pte_t *out_buddy)
-अणु
-	काष्ठा kvm *kvm = vcpu->kvm;
-	काष्ठा kvm_mmu_memory_cache *memcache = &vcpu->arch.mmu_page_cache;
+{
+	struct kvm *kvm = vcpu->kvm;
+	struct kvm_mmu_memory_cache *memcache = &vcpu->arch.mmu_page_cache;
 	gfn_t gfn = gpa >> PAGE_SHIFT;
-	पूर्णांक srcu_idx, err;
+	int srcu_idx, err;
 	kvm_pfn_t pfn;
 	pte_t *ptep, entry, old_pte;
-	bool ग_लिखोable;
-	अचिन्हित दीर्घ prot_bits;
-	अचिन्हित दीर्घ mmu_seq;
+	bool writeable;
+	unsigned long prot_bits;
+	unsigned long mmu_seq;
 
 	/* Try the fast path to handle old / clean pages */
-	srcu_idx = srcu_पढ़ो_lock(&kvm->srcu);
-	err = _kvm_mips_map_page_fast(vcpu, gpa, ग_लिखो_fault, out_entry,
+	srcu_idx = srcu_read_lock(&kvm->srcu);
+	err = _kvm_mips_map_page_fast(vcpu, gpa, write_fault, out_entry,
 				      out_buddy);
-	अगर (!err)
-		जाओ out;
+	if (!err)
+		goto out;
 
-	/* We need a minimum of cached pages पढ़ोy क्रम page table creation */
+	/* We need a minimum of cached pages ready for page table creation */
 	err = kvm_mmu_topup_memory_cache(memcache, KVM_MMU_CACHE_MIN_PAGES);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 retry:
 	/*
-	 * Used to check क्रम invalidations in progress, of the pfn that is
-	 * वापसed by pfn_to_pfn_prot below.
+	 * Used to check for invalidations in progress, of the pfn that is
+	 * returned by pfn_to_pfn_prot below.
 	 */
-	mmu_seq = kvm->mmu_notअगरier_seq;
+	mmu_seq = kvm->mmu_notifier_seq;
 	/*
-	 * Ensure the पढ़ो of mmu_notअगरier_seq isn't reordered with PTE पढ़ोs in
-	 * gfn_to_pfn_prot() (which calls get_user_pages()), so that we करोn't
-	 * risk the page we get a reference to getting unmapped beक्रमe we have a
-	 * chance to grab the mmu_lock without mmu_notअगरier_retry() noticing.
+	 * Ensure the read of mmu_notifier_seq isn't reordered with PTE reads in
+	 * gfn_to_pfn_prot() (which calls get_user_pages()), so that we don't
+	 * risk the page we get a reference to getting unmapped before we have a
+	 * chance to grab the mmu_lock without mmu_notifier_retry() noticing.
 	 *
 	 * This smp_rmb() pairs with the effective smp_wmb() of the combination
 	 * of the pte_unmap_unlock() after the PTE is zapped, and the
-	 * spin_lock() in kvm_mmu_notअगरier_invalidate_<page|range_end>() beक्रमe
-	 * mmu_notअगरier_seq is incremented.
+	 * spin_lock() in kvm_mmu_notifier_invalidate_<page|range_end>() before
+	 * mmu_notifier_seq is incremented.
 	 */
 	smp_rmb();
 
 	/* Slow path - ask KVM core whether we can access this GPA */
-	pfn = gfn_to_pfn_prot(kvm, gfn, ग_लिखो_fault, &ग_लिखोable);
-	अगर (is_error_noslot_pfn(pfn)) अणु
+	pfn = gfn_to_pfn_prot(kvm, gfn, write_fault, &writeable);
+	if (is_error_noslot_pfn(pfn)) {
 		err = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	spin_lock(&kvm->mmu_lock);
-	/* Check अगर an invalidation has taken place since we got pfn */
-	अगर (mmu_notअगरier_retry(kvm, mmu_seq)) अणु
+	/* Check if an invalidation has taken place since we got pfn */
+	if (mmu_notifier_retry(kvm, mmu_seq)) {
 		/*
 		 * This can happen when mappings are changed asynchronously, but
-		 * also synchronously अगर a COW is triggered by
+		 * also synchronously if a COW is triggered by
 		 * gfn_to_pfn_prot().
 		 */
 		spin_unlock(&kvm->mmu_lock);
 		kvm_release_pfn_clean(pfn);
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
 	/* Ensure page tables are allocated */
-	ptep = kvm_mips_pte_क्रम_gpa(kvm, memcache, gpa);
+	ptep = kvm_mips_pte_for_gpa(kvm, memcache, gpa);
 
 	/* Set up the PTE */
-	prot_bits = _PAGE_PRESENT | __READABLE | _page_cachable_शेष;
-	अगर (ग_लिखोable) अणु
+	prot_bits = _PAGE_PRESENT | __READABLE | _page_cachable_default;
+	if (writeable) {
 		prot_bits |= _PAGE_WRITE;
-		अगर (ग_लिखो_fault) अणु
+		if (write_fault) {
 			prot_bits |= __WRITEABLE;
 			mark_page_dirty(kvm, gfn);
 			kvm_set_pfn_dirty(pfn);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	entry = pfn_pte(pfn, __pgprot(prot_bits));
 
 	/* Write the PTE */
@@ -670,82 +669,82 @@ retry:
 	set_pte(ptep, entry);
 
 	err = 0;
-	अगर (out_entry)
+	if (out_entry)
 		*out_entry = *ptep;
-	अगर (out_buddy)
+	if (out_buddy)
 		*out_buddy = *ptep_buddy(ptep);
 
 	spin_unlock(&kvm->mmu_lock);
 	kvm_release_pfn_clean(pfn);
 	kvm_set_pfn_accessed(pfn);
 out:
-	srcu_पढ़ो_unlock(&kvm->srcu, srcu_idx);
-	वापस err;
-पूर्ण
+	srcu_read_unlock(&kvm->srcu, srcu_idx);
+	return err;
+}
 
-पूर्णांक kvm_mips_handle_vz_root_tlb_fault(अचिन्हित दीर्घ badvaddr,
-				      काष्ठा kvm_vcpu *vcpu,
-				      bool ग_लिखो_fault)
-अणु
-	पूर्णांक ret;
+int kvm_mips_handle_vz_root_tlb_fault(unsigned long badvaddr,
+				      struct kvm_vcpu *vcpu,
+				      bool write_fault)
+{
+	int ret;
 
-	ret = kvm_mips_map_page(vcpu, badvaddr, ग_लिखो_fault, शून्य, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = kvm_mips_map_page(vcpu, badvaddr, write_fault, NULL, NULL);
+	if (ret)
+		return ret;
 
 	/* Invalidate this entry in the TLB */
-	वापस kvm_vz_host_tlb_inv(vcpu, badvaddr);
-पूर्ण
+	return kvm_vz_host_tlb_inv(vcpu, badvaddr);
+}
 
 /**
- * kvm_mips_migrate_count() - Migrate समयr.
+ * kvm_mips_migrate_count() - Migrate timer.
  * @vcpu:	Virtual CPU.
  *
- * Migrate CP0_Count hrसमयr to the current CPU by cancelling and restarting it
- * अगर it was running prior to being cancelled.
+ * Migrate CP0_Count hrtimer to the current CPU by cancelling and restarting it
+ * if it was running prior to being cancelled.
  *
- * Must be called when the VCPU is migrated to a dअगरferent CPU to ensure that
- * समयr expiry during guest execution पूर्णांकerrupts the guest and causes the
- * पूर्णांकerrupt to be delivered in a समयly manner.
+ * Must be called when the VCPU is migrated to a different CPU to ensure that
+ * timer expiry during guest execution interrupts the guest and causes the
+ * interrupt to be delivered in a timely manner.
  */
-अटल व्योम kvm_mips_migrate_count(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (hrसमयr_cancel(&vcpu->arch.comparecount_समयr))
-		hrसमयr_restart(&vcpu->arch.comparecount_समयr);
-पूर्ण
+static void kvm_mips_migrate_count(struct kvm_vcpu *vcpu)
+{
+	if (hrtimer_cancel(&vcpu->arch.comparecount_timer))
+		hrtimer_restart(&vcpu->arch.comparecount_timer);
+}
 
 /* Restore ASID once we are scheduled back after preemption */
-व्योम kvm_arch_vcpu_load(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu)
-अणु
-	अचिन्हित दीर्घ flags;
+void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
+{
+	unsigned long flags;
 
 	kvm_debug("%s: vcpu %p, cpu: %d\n", __func__, vcpu, cpu);
 
 	local_irq_save(flags);
 
 	vcpu->cpu = cpu;
-	अगर (vcpu->arch.last_sched_cpu != cpu) अणु
+	if (vcpu->arch.last_sched_cpu != cpu) {
 		kvm_debug("[%d->%d]KVM VCPU[%d] switch\n",
 			  vcpu->arch.last_sched_cpu, cpu, vcpu->vcpu_id);
 		/*
-		 * Migrate the समयr पूर्णांकerrupt to the current CPU so that it
-		 * always पूर्णांकerrupts the guest and synchronously triggers a
-		 * guest समयr पूर्णांकerrupt.
+		 * Migrate the timer interrupt to the current CPU so that it
+		 * always interrupts the guest and synchronously triggers a
+		 * guest timer interrupt.
 		 */
 		kvm_mips_migrate_count(vcpu);
-	पूर्ण
+	}
 
-	/* restore guest state to रेजिस्टरs */
+	/* restore guest state to registers */
 	kvm_mips_callbacks->vcpu_load(vcpu, cpu);
 
 	local_irq_restore(flags);
-पूर्ण
+}
 
-/* ASID can change अगर another task is scheduled during preemption */
-व्योम kvm_arch_vcpu_put(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक cpu;
+/* ASID can change if another task is scheduled during preemption */
+void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
+{
+	unsigned long flags;
+	int cpu;
 
 	local_irq_save(flags);
 
@@ -753,8 +752,8 @@ out:
 	vcpu->arch.last_sched_cpu = cpu;
 	vcpu->cpu = -1;
 
-	/* save guest state in रेजिस्टरs */
+	/* save guest state in registers */
 	kvm_mips_callbacks->vcpu_put(vcpu, cpu);
 
 	local_irq_restore(flags);
-पूर्ण
+}

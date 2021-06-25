@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Texas Instruments Ethernet Switch Driver ethtool पूर्णांकf
+ * Texas Instruments Ethernet Switch Driver ethtool intf
  *
  * Copyright (C) 2019 Texas Instruments
  */
 
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/module.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/skbuff.h>
+#include <linux/if_ether.h>
+#include <linux/if_vlan.h>
+#include <linux/kmemleak.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
+#include <linux/net_tstamp.h>
+#include <linux/phy.h>
+#include <linux/pm_runtime.h>
+#include <linux/skbuff.h>
 
-#समावेश "cpsw.h"
-#समावेश "cpts.h"
-#समावेश "cpsw_ale.h"
-#समावेश "cpsw_priv.h"
-#समावेश "davinci_cpdma.h"
+#include "cpsw.h"
+#include "cpts.h"
+#include "cpsw_ale.h"
+#include "cpsw_priv.h"
+#include "davinci_cpdma.h"
 
-काष्ठा cpsw_hw_stats अणु
+struct cpsw_hw_stats {
 	u32	rxgoodframes;
 	u32	rxbroadcastframes;
 	u32	rxmulticastframes;
-	u32	rxछोड़ोframes;
+	u32	rxpauseframes;
 	u32	rxcrcerrors;
 	u32	rxaligncodeerrors;
 	u32	rxoversizedframes;
@@ -38,7 +37,7 @@
 	u32	txgoodframes;
 	u32	txbroadcastframes;
 	u32	txmulticastframes;
-	u32	txछोड़ोframes;
+	u32	txpauseframes;
 	u32	txdeferredframes;
 	u32	txcollisionframes;
 	u32	txsinglecollframes;
@@ -58,331 +57,331 @@
 	u32	rxsofoverruns;
 	u32	rxmofoverruns;
 	u32	rxdmaoverruns;
-पूर्ण;
+};
 
-काष्ठा cpsw_stats अणु
-	अक्षर stat_string[ETH_GSTRING_LEN];
-	पूर्णांक type;
-	पूर्णांक माप_stat;
-	पूर्णांक stat_offset;
-पूर्ण;
+struct cpsw_stats {
+	char stat_string[ETH_GSTRING_LEN];
+	int type;
+	int sizeof_stat;
+	int stat_offset;
+};
 
-क्रमागत अणु
+enum {
 	CPSW_STATS,
 	CPDMA_RX_STATS,
 	CPDMA_TX_STATS,
-पूर्ण;
+};
 
-#घोषणा CPSW_STAT(m)		CPSW_STATS,				\
-				माप_field(काष्ठा cpsw_hw_stats, m), \
-				दुरत्व(काष्ठा cpsw_hw_stats, m)
-#घोषणा CPDMA_RX_STAT(m)	CPDMA_RX_STATS,				   \
-				माप_field(काष्ठा cpdma_chan_stats, m), \
-				दुरत्व(काष्ठा cpdma_chan_stats, m)
-#घोषणा CPDMA_TX_STAT(m)	CPDMA_TX_STATS,				   \
-				माप_field(काष्ठा cpdma_chan_stats, m), \
-				दुरत्व(काष्ठा cpdma_chan_stats, m)
+#define CPSW_STAT(m)		CPSW_STATS,				\
+				sizeof_field(struct cpsw_hw_stats, m), \
+				offsetof(struct cpsw_hw_stats, m)
+#define CPDMA_RX_STAT(m)	CPDMA_RX_STATS,				   \
+				sizeof_field(struct cpdma_chan_stats, m), \
+				offsetof(struct cpdma_chan_stats, m)
+#define CPDMA_TX_STAT(m)	CPDMA_TX_STATS,				   \
+				sizeof_field(struct cpdma_chan_stats, m), \
+				offsetof(struct cpdma_chan_stats, m)
 
-अटल स्थिर काष्ठा cpsw_stats cpsw_gstrings_stats[] = अणु
-	अणु "Good Rx Frames", CPSW_STAT(rxgoodframes) पूर्ण,
-	अणु "Broadcast Rx Frames", CPSW_STAT(rxbroadcastframes) पूर्ण,
-	अणु "Multicast Rx Frames", CPSW_STAT(rxmulticastframes) पूर्ण,
-	अणु "Pause Rx Frames", CPSW_STAT(rxछोड़ोframes) पूर्ण,
-	अणु "Rx CRC Errors", CPSW_STAT(rxcrcerrors) पूर्ण,
-	अणु "Rx Align/Code Errors", CPSW_STAT(rxaligncodeerrors) पूर्ण,
-	अणु "Oversize Rx Frames", CPSW_STAT(rxoversizedframes) पूर्ण,
-	अणु "Rx Jabbers", CPSW_STAT(rxjabberframes) पूर्ण,
-	अणु "Undersize (Short) Rx Frames", CPSW_STAT(rxundersizedframes) पूर्ण,
-	अणु "Rx Fragments", CPSW_STAT(rxfragments) पूर्ण,
-	अणु "Rx Octets", CPSW_STAT(rxoctets) पूर्ण,
-	अणु "Good Tx Frames", CPSW_STAT(txgoodframes) पूर्ण,
-	अणु "Broadcast Tx Frames", CPSW_STAT(txbroadcastframes) पूर्ण,
-	अणु "Multicast Tx Frames", CPSW_STAT(txmulticastframes) पूर्ण,
-	अणु "Pause Tx Frames", CPSW_STAT(txछोड़ोframes) पूर्ण,
-	अणु "Deferred Tx Frames", CPSW_STAT(txdeferredframes) पूर्ण,
-	अणु "Collisions", CPSW_STAT(txcollisionframes) पूर्ण,
-	अणु "Single Collision Tx Frames", CPSW_STAT(txsinglecollframes) पूर्ण,
-	अणु "Multiple Collision Tx Frames", CPSW_STAT(txmultcollframes) पूर्ण,
-	अणु "Excessive Collisions", CPSW_STAT(txexcessivecollisions) पूर्ण,
-	अणु "Late Collisions", CPSW_STAT(txlatecollisions) पूर्ण,
-	अणु "Tx Underrun", CPSW_STAT(txunderrun) पूर्ण,
-	अणु "Carrier Sense Errors", CPSW_STAT(txcarriersenseerrors) पूर्ण,
-	अणु "Tx Octets", CPSW_STAT(txoctets) पूर्ण,
-	अणु "Rx + Tx 64 Octet Frames", CPSW_STAT(octetframes64) पूर्ण,
-	अणु "Rx + Tx 65-127 Octet Frames", CPSW_STAT(octetframes65t127) पूर्ण,
-	अणु "Rx + Tx 128-255 Octet Frames", CPSW_STAT(octetframes128t255) पूर्ण,
-	अणु "Rx + Tx 256-511 Octet Frames", CPSW_STAT(octetframes256t511) पूर्ण,
-	अणु "Rx + Tx 512-1023 Octet Frames", CPSW_STAT(octetframes512t1023) पूर्ण,
-	अणु "Rx + Tx 1024-Up Octet Frames", CPSW_STAT(octetframes1024tup) पूर्ण,
-	अणु "Net Octets", CPSW_STAT(netoctets) पूर्ण,
-	अणु "Rx Start of Frame Overruns", CPSW_STAT(rxsofoverruns) पूर्ण,
-	अणु "Rx Middle of Frame Overruns", CPSW_STAT(rxmofoverruns) पूर्ण,
-	अणु "Rx DMA Overruns", CPSW_STAT(rxdmaoverruns) पूर्ण,
-पूर्ण;
+static const struct cpsw_stats cpsw_gstrings_stats[] = {
+	{ "Good Rx Frames", CPSW_STAT(rxgoodframes) },
+	{ "Broadcast Rx Frames", CPSW_STAT(rxbroadcastframes) },
+	{ "Multicast Rx Frames", CPSW_STAT(rxmulticastframes) },
+	{ "Pause Rx Frames", CPSW_STAT(rxpauseframes) },
+	{ "Rx CRC Errors", CPSW_STAT(rxcrcerrors) },
+	{ "Rx Align/Code Errors", CPSW_STAT(rxaligncodeerrors) },
+	{ "Oversize Rx Frames", CPSW_STAT(rxoversizedframes) },
+	{ "Rx Jabbers", CPSW_STAT(rxjabberframes) },
+	{ "Undersize (Short) Rx Frames", CPSW_STAT(rxundersizedframes) },
+	{ "Rx Fragments", CPSW_STAT(rxfragments) },
+	{ "Rx Octets", CPSW_STAT(rxoctets) },
+	{ "Good Tx Frames", CPSW_STAT(txgoodframes) },
+	{ "Broadcast Tx Frames", CPSW_STAT(txbroadcastframes) },
+	{ "Multicast Tx Frames", CPSW_STAT(txmulticastframes) },
+	{ "Pause Tx Frames", CPSW_STAT(txpauseframes) },
+	{ "Deferred Tx Frames", CPSW_STAT(txdeferredframes) },
+	{ "Collisions", CPSW_STAT(txcollisionframes) },
+	{ "Single Collision Tx Frames", CPSW_STAT(txsinglecollframes) },
+	{ "Multiple Collision Tx Frames", CPSW_STAT(txmultcollframes) },
+	{ "Excessive Collisions", CPSW_STAT(txexcessivecollisions) },
+	{ "Late Collisions", CPSW_STAT(txlatecollisions) },
+	{ "Tx Underrun", CPSW_STAT(txunderrun) },
+	{ "Carrier Sense Errors", CPSW_STAT(txcarriersenseerrors) },
+	{ "Tx Octets", CPSW_STAT(txoctets) },
+	{ "Rx + Tx 64 Octet Frames", CPSW_STAT(octetframes64) },
+	{ "Rx + Tx 65-127 Octet Frames", CPSW_STAT(octetframes65t127) },
+	{ "Rx + Tx 128-255 Octet Frames", CPSW_STAT(octetframes128t255) },
+	{ "Rx + Tx 256-511 Octet Frames", CPSW_STAT(octetframes256t511) },
+	{ "Rx + Tx 512-1023 Octet Frames", CPSW_STAT(octetframes512t1023) },
+	{ "Rx + Tx 1024-Up Octet Frames", CPSW_STAT(octetframes1024tup) },
+	{ "Net Octets", CPSW_STAT(netoctets) },
+	{ "Rx Start of Frame Overruns", CPSW_STAT(rxsofoverruns) },
+	{ "Rx Middle of Frame Overruns", CPSW_STAT(rxmofoverruns) },
+	{ "Rx DMA Overruns", CPSW_STAT(rxdmaoverruns) },
+};
 
-अटल स्थिर काष्ठा cpsw_stats cpsw_gstrings_ch_stats[] = अणु
-	अणु "head_enqueue", CPDMA_RX_STAT(head_enqueue) पूर्ण,
-	अणु "tail_enqueue", CPDMA_RX_STAT(tail_enqueue) पूर्ण,
-	अणु "pad_enqueue", CPDMA_RX_STAT(pad_enqueue) पूर्ण,
-	अणु "misqueued", CPDMA_RX_STAT(misqueued) पूर्ण,
-	अणु "desc_alloc_fail", CPDMA_RX_STAT(desc_alloc_fail) पूर्ण,
-	अणु "pad_alloc_fail", CPDMA_RX_STAT(pad_alloc_fail) पूर्ण,
-	अणु "runt_receive_buf", CPDMA_RX_STAT(runt_receive_buff) पूर्ण,
-	अणु "runt_transmit_buf", CPDMA_RX_STAT(runt_transmit_buff) पूर्ण,
-	अणु "empty_dequeue", CPDMA_RX_STAT(empty_dequeue) पूर्ण,
-	अणु "busy_dequeue", CPDMA_RX_STAT(busy_dequeue) पूर्ण,
-	अणु "good_dequeue", CPDMA_RX_STAT(good_dequeue) पूर्ण,
-	अणु "requeue", CPDMA_RX_STAT(requeue) पूर्ण,
-	अणु "teardown_dequeue", CPDMA_RX_STAT(tearकरोwn_dequeue) पूर्ण,
-पूर्ण;
+static const struct cpsw_stats cpsw_gstrings_ch_stats[] = {
+	{ "head_enqueue", CPDMA_RX_STAT(head_enqueue) },
+	{ "tail_enqueue", CPDMA_RX_STAT(tail_enqueue) },
+	{ "pad_enqueue", CPDMA_RX_STAT(pad_enqueue) },
+	{ "misqueued", CPDMA_RX_STAT(misqueued) },
+	{ "desc_alloc_fail", CPDMA_RX_STAT(desc_alloc_fail) },
+	{ "pad_alloc_fail", CPDMA_RX_STAT(pad_alloc_fail) },
+	{ "runt_receive_buf", CPDMA_RX_STAT(runt_receive_buff) },
+	{ "runt_transmit_buf", CPDMA_RX_STAT(runt_transmit_buff) },
+	{ "empty_dequeue", CPDMA_RX_STAT(empty_dequeue) },
+	{ "busy_dequeue", CPDMA_RX_STAT(busy_dequeue) },
+	{ "good_dequeue", CPDMA_RX_STAT(good_dequeue) },
+	{ "requeue", CPDMA_RX_STAT(requeue) },
+	{ "teardown_dequeue", CPDMA_RX_STAT(teardown_dequeue) },
+};
 
-#घोषणा CPSW_STATS_COMMON_LEN	ARRAY_SIZE(cpsw_gstrings_stats)
-#घोषणा CPSW_STATS_CH_LEN	ARRAY_SIZE(cpsw_gstrings_ch_stats)
+#define CPSW_STATS_COMMON_LEN	ARRAY_SIZE(cpsw_gstrings_stats)
+#define CPSW_STATS_CH_LEN	ARRAY_SIZE(cpsw_gstrings_ch_stats)
 
-u32 cpsw_get_msglevel(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
+u32 cpsw_get_msglevel(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
 
-	वापस priv->msg_enable;
-पूर्ण
+	return priv->msg_enable;
+}
 
-व्योम cpsw_set_msglevel(काष्ठा net_device *ndev, u32 value)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
+void cpsw_set_msglevel(struct net_device *ndev, u32 value)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
 
 	priv->msg_enable = value;
-पूर्ण
+}
 
-पूर्णांक cpsw_get_coalesce(काष्ठा net_device *ndev, काष्ठा ethtool_coalesce *coal)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+int cpsw_get_coalesce(struct net_device *ndev, struct ethtool_coalesce *coal)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 
-	coal->rx_coalesce_usecs = cpsw->coal_पूर्णांकvl;
-	वापस 0;
-पूर्ण
+	coal->rx_coalesce_usecs = cpsw->coal_intvl;
+	return 0;
+}
 
-पूर्णांक cpsw_set_coalesce(काष्ठा net_device *ndev, काष्ठा ethtool_coalesce *coal)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	u32 पूर्णांक_ctrl;
-	u32 num_पूर्णांकerrupts = 0;
+int cpsw_set_coalesce(struct net_device *ndev, struct ethtool_coalesce *coal)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	u32 int_ctrl;
+	u32 num_interrupts = 0;
 	u32 prescale = 0;
 	u32 addnl_dvdr = 1;
-	u32 coal_पूर्णांकvl = 0;
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
+	u32 coal_intvl = 0;
+	struct cpsw_common *cpsw = priv->cpsw;
 
-	coal_पूर्णांकvl = coal->rx_coalesce_usecs;
+	coal_intvl = coal->rx_coalesce_usecs;
 
-	पूर्णांक_ctrl =  पढ़ोl(&cpsw->wr_regs->पूर्णांक_control);
+	int_ctrl =  readl(&cpsw->wr_regs->int_control);
 	prescale = cpsw->bus_freq_mhz * 4;
 
-	अगर (!coal->rx_coalesce_usecs) अणु
-		पूर्णांक_ctrl &= ~(CPSW_INTPRESCALE_MASK | CPSW_INTPACEEN);
-		जाओ update_वापस;
-	पूर्ण
+	if (!coal->rx_coalesce_usecs) {
+		int_ctrl &= ~(CPSW_INTPRESCALE_MASK | CPSW_INTPACEEN);
+		goto update_return;
+	}
 
-	अगर (coal_पूर्णांकvl < CPSW_CMINTMIN_INTVL)
-		coal_पूर्णांकvl = CPSW_CMINTMIN_INTVL;
+	if (coal_intvl < CPSW_CMINTMIN_INTVL)
+		coal_intvl = CPSW_CMINTMIN_INTVL;
 
-	अगर (coal_पूर्णांकvl > CPSW_CMINTMAX_INTVL) अणु
+	if (coal_intvl > CPSW_CMINTMAX_INTVL) {
 		/* Interrupt pacer works with 4us Pulse, we can
 		 * throttle further by dilating the 4us pulse.
 		 */
 		addnl_dvdr = CPSW_INTPRESCALE_MASK / prescale;
 
-		अगर (addnl_dvdr > 1) अणु
+		if (addnl_dvdr > 1) {
 			prescale *= addnl_dvdr;
-			अगर (coal_पूर्णांकvl > (CPSW_CMINTMAX_INTVL * addnl_dvdr))
-				coal_पूर्णांकvl = (CPSW_CMINTMAX_INTVL
+			if (coal_intvl > (CPSW_CMINTMAX_INTVL * addnl_dvdr))
+				coal_intvl = (CPSW_CMINTMAX_INTVL
 						* addnl_dvdr);
-		पूर्ण अन्यथा अणु
+		} else {
 			addnl_dvdr = 1;
-			coal_पूर्णांकvl = CPSW_CMINTMAX_INTVL;
-		पूर्ण
-	पूर्ण
+			coal_intvl = CPSW_CMINTMAX_INTVL;
+		}
+	}
 
-	num_पूर्णांकerrupts = (1000 * addnl_dvdr) / coal_पूर्णांकvl;
-	ग_लिखोl(num_पूर्णांकerrupts, &cpsw->wr_regs->rx_imax);
-	ग_लिखोl(num_पूर्णांकerrupts, &cpsw->wr_regs->tx_imax);
+	num_interrupts = (1000 * addnl_dvdr) / coal_intvl;
+	writel(num_interrupts, &cpsw->wr_regs->rx_imax);
+	writel(num_interrupts, &cpsw->wr_regs->tx_imax);
 
-	पूर्णांक_ctrl |= CPSW_INTPACEEN;
-	पूर्णांक_ctrl &= (~CPSW_INTPRESCALE_MASK);
-	पूर्णांक_ctrl |= (prescale & CPSW_INTPRESCALE_MASK);
+	int_ctrl |= CPSW_INTPACEEN;
+	int_ctrl &= (~CPSW_INTPRESCALE_MASK);
+	int_ctrl |= (prescale & CPSW_INTPRESCALE_MASK);
 
-update_वापस:
-	ग_लिखोl(पूर्णांक_ctrl, &cpsw->wr_regs->पूर्णांक_control);
+update_return:
+	writel(int_ctrl, &cpsw->wr_regs->int_control);
 
-	cpsw_notice(priv, समयr, "Set coalesce to %d usecs.\n", coal_पूर्णांकvl);
-	cpsw->coal_पूर्णांकvl = coal_पूर्णांकvl;
+	cpsw_notice(priv, timer, "Set coalesce to %d usecs.\n", coal_intvl);
+	cpsw->coal_intvl = coal_intvl;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cpsw_get_sset_count(काष्ठा net_device *ndev, पूर्णांक sset)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+int cpsw_get_sset_count(struct net_device *ndev, int sset)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 
-	चयन (sset) अणु
-	हाल ETH_SS_STATS:
-		वापस (CPSW_STATS_COMMON_LEN +
+	switch (sset) {
+	case ETH_SS_STATS:
+		return (CPSW_STATS_COMMON_LEN +
 		       (cpsw->rx_ch_num + cpsw->tx_ch_num) *
 		       CPSW_STATS_CH_LEN);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम cpsw_add_ch_strings(u8 **p, पूर्णांक ch_num, पूर्णांक rx_dir)
-अणु
-	पूर्णांक ch_stats_len;
-	पूर्णांक line;
-	पूर्णांक i;
+static void cpsw_add_ch_strings(u8 **p, int ch_num, int rx_dir)
+{
+	int ch_stats_len;
+	int line;
+	int i;
 
 	ch_stats_len = CPSW_STATS_CH_LEN * ch_num;
-	क्रम (i = 0; i < ch_stats_len; i++) अणु
+	for (i = 0; i < ch_stats_len; i++) {
 		line = i % CPSW_STATS_CH_LEN;
-		snम_लिखो(*p, ETH_GSTRING_LEN,
+		snprintf(*p, ETH_GSTRING_LEN,
 			 "%s DMA chan %ld: %s", rx_dir ? "Rx" : "Tx",
-			 (दीर्घ)(i / CPSW_STATS_CH_LEN),
+			 (long)(i / CPSW_STATS_CH_LEN),
 			 cpsw_gstrings_ch_stats[line].stat_string);
 		*p += ETH_GSTRING_LEN;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम cpsw_get_strings(काष्ठा net_device *ndev, u32 stringset, u8 *data)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+void cpsw_get_strings(struct net_device *ndev, u32 stringset, u8 *data)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 	u8 *p = data;
-	पूर्णांक i;
+	int i;
 
-	चयन (stringset) अणु
-	हाल ETH_SS_STATS:
-		क्रम (i = 0; i < CPSW_STATS_COMMON_LEN; i++) अणु
-			स_नकल(p, cpsw_gstrings_stats[i].stat_string,
+	switch (stringset) {
+	case ETH_SS_STATS:
+		for (i = 0; i < CPSW_STATS_COMMON_LEN; i++) {
+			memcpy(p, cpsw_gstrings_stats[i].stat_string,
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		पूर्ण
+		}
 
 		cpsw_add_ch_strings(&p, cpsw->rx_ch_num, 1);
 		cpsw_add_ch_strings(&p, cpsw->tx_ch_num, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम cpsw_get_ethtool_stats(काष्ठा net_device *ndev,
-			    काष्ठा ethtool_stats *stats, u64 *data)
-अणु
+void cpsw_get_ethtool_stats(struct net_device *ndev,
+			    struct ethtool_stats *stats, u64 *data)
+{
 	u8 *p;
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
-	काष्ठा cpdma_chan_stats ch_stats;
-	पूर्णांक i, l, ch;
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
+	struct cpdma_chan_stats ch_stats;
+	int i, l, ch;
 
-	/* Collect Davinci CPDMA stats क्रम Rx and Tx Channel */
-	क्रम (l = 0; l < CPSW_STATS_COMMON_LEN; l++)
-		data[l] = पढ़ोl(cpsw->hw_stats +
+	/* Collect Davinci CPDMA stats for Rx and Tx Channel */
+	for (l = 0; l < CPSW_STATS_COMMON_LEN; l++)
+		data[l] = readl(cpsw->hw_stats +
 				cpsw_gstrings_stats[l].stat_offset);
 
-	क्रम (ch = 0; ch < cpsw->rx_ch_num; ch++) अणु
+	for (ch = 0; ch < cpsw->rx_ch_num; ch++) {
 		cpdma_chan_get_stats(cpsw->rxv[ch].ch, &ch_stats);
-		क्रम (i = 0; i < CPSW_STATS_CH_LEN; i++, l++) अणु
+		for (i = 0; i < CPSW_STATS_CH_LEN; i++, l++) {
 			p = (u8 *)&ch_stats +
 				cpsw_gstrings_ch_stats[i].stat_offset;
 			data[l] = *(u32 *)p;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (ch = 0; ch < cpsw->tx_ch_num; ch++) अणु
+	for (ch = 0; ch < cpsw->tx_ch_num; ch++) {
 		cpdma_chan_get_stats(cpsw->txv[ch].ch, &ch_stats);
-		क्रम (i = 0; i < CPSW_STATS_CH_LEN; i++, l++) अणु
+		for (i = 0; i < CPSW_STATS_CH_LEN; i++, l++) {
 			p = (u8 *)&ch_stats +
 				cpsw_gstrings_ch_stats[i].stat_offset;
 			data[l] = *(u32 *)p;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम cpsw_get_छोड़ोparam(काष्ठा net_device *ndev,
-			 काष्ठा ethtool_छोड़ोparam *छोड़ो)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
+void cpsw_get_pauseparam(struct net_device *ndev,
+			 struct ethtool_pauseparam *pause)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
 
-	छोड़ो->स्वतःneg = AUTONEG_DISABLE;
-	छोड़ो->rx_छोड़ो = priv->rx_छोड़ो ? true : false;
-	छोड़ो->tx_छोड़ो = priv->tx_छोड़ो ? true : false;
-पूर्ण
+	pause->autoneg = AUTONEG_DISABLE;
+	pause->rx_pause = priv->rx_pause ? true : false;
+	pause->tx_pause = priv->tx_pause ? true : false;
+}
 
-व्योम cpsw_get_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+void cpsw_get_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
 	wol->supported = 0;
 	wol->wolopts = 0;
 
-	अगर (cpsw->slaves[slave_no].phy)
+	if (cpsw->slaves[slave_no].phy)
 		phy_ethtool_get_wol(cpsw->slaves[slave_no].phy, wol);
-पूर्ण
+}
 
-पूर्णांक cpsw_set_wol(काष्ठा net_device *ndev, काष्ठा ethtool_wolinfo *wol)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+int cpsw_set_wol(struct net_device *ndev, struct ethtool_wolinfo *wol)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
-	अगर (cpsw->slaves[slave_no].phy)
-		वापस phy_ethtool_set_wol(cpsw->slaves[slave_no].phy, wol);
-	अन्यथा
-		वापस -EOPNOTSUPP;
-पूर्ण
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_set_wol(cpsw->slaves[slave_no].phy, wol);
+	else
+		return -EOPNOTSUPP;
+}
 
-पूर्णांक cpsw_get_regs_len(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+int cpsw_get_regs_len(struct net_device *ndev)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 
-	वापस cpsw_ale_get_num_entries(cpsw->ale) *
-	       ALE_ENTRY_WORDS * माप(u32);
-पूर्ण
+	return cpsw_ale_get_num_entries(cpsw->ale) *
+	       ALE_ENTRY_WORDS * sizeof(u32);
+}
 
-व्योम cpsw_get_regs(काष्ठा net_device *ndev, काष्ठा ethtool_regs *regs, व्योम *p)
-अणु
+void cpsw_get_regs(struct net_device *ndev, struct ethtool_regs *regs, void *p)
+{
 	u32 *reg = p;
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 
 	/* update CPSW IP version */
 	regs->version = cpsw->version;
 
 	cpsw_ale_dump(cpsw->ale, reg);
-पूर्ण
+}
 
-पूर्णांक cpsw_ethtool_op_begin(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक ret;
+int cpsw_ethtool_op_begin(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int ret;
 
-	ret = pm_runसमय_get_sync(cpsw->dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(cpsw->dev);
+	if (ret < 0) {
 		cpsw_err(priv, drv, "ethtool begin failed %d\n", ret);
-		pm_runसमय_put_noidle(cpsw->dev);
-	पूर्ण
+		pm_runtime_put_noidle(cpsw->dev);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम cpsw_ethtool_op_complete(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	पूर्णांक ret;
+void cpsw_ethtool_op_complete(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	int ret;
 
-	ret = pm_runसमय_put(priv->cpsw->dev);
-	अगर (ret < 0)
+	ret = pm_runtime_put(priv->cpsw->dev);
+	if (ret < 0)
 		cpsw_err(priv, drv, "ethtool complete failed %d\n", ret);
-पूर्ण
+}
 
-व्योम cpsw_get_channels(काष्ठा net_device *ndev, काष्ठा ethtool_channels *ch)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+void cpsw_get_channels(struct net_device *ndev, struct ethtool_channels *ch)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 
 	ch->max_rx = cpsw->quirk_irq ? 1 : CPSW_MAX_QUEUES;
 	ch->max_tx = cpsw->quirk_irq ? 1 : CPSW_MAX_QUEUES;
@@ -392,331 +391,331 @@ update_वापस:
 	ch->rx_count = cpsw->rx_ch_num;
 	ch->tx_count = cpsw->tx_ch_num;
 	ch->combined_count = 0;
-पूर्ण
+}
 
-पूर्णांक cpsw_get_link_ksettings(काष्ठा net_device *ndev,
-			    काष्ठा ethtool_link_ksettings *ecmd)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+int cpsw_get_link_ksettings(struct net_device *ndev,
+			    struct ethtool_link_ksettings *ecmd)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
-	अगर (!cpsw->slaves[slave_no].phy)
-		वापस -EOPNOTSUPP;
+	if (!cpsw->slaves[slave_no].phy)
+		return -EOPNOTSUPP;
 
 	phy_ethtool_ksettings_get(cpsw->slaves[slave_no].phy, ecmd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cpsw_set_link_ksettings(काष्ठा net_device *ndev,
-			    स्थिर काष्ठा ethtool_link_ksettings *ecmd)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+int cpsw_set_link_ksettings(struct net_device *ndev,
+			    const struct ethtool_link_ksettings *ecmd)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
-	अगर (!cpsw->slaves[slave_no].phy)
-		वापस -EOPNOTSUPP;
+	if (!cpsw->slaves[slave_no].phy)
+		return -EOPNOTSUPP;
 
-	वापस phy_ethtool_ksettings_set(cpsw->slaves[slave_no].phy, ecmd);
-पूर्ण
+	return phy_ethtool_ksettings_set(cpsw->slaves[slave_no].phy, ecmd);
+}
 
-पूर्णांक cpsw_get_eee(काष्ठा net_device *ndev, काष्ठा ethtool_eee *edata)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+int cpsw_get_eee(struct net_device *ndev, struct ethtool_eee *edata)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
-	अगर (cpsw->slaves[slave_no].phy)
-		वापस phy_ethtool_get_eee(cpsw->slaves[slave_no].phy, edata);
-	अन्यथा
-		वापस -EOPNOTSUPP;
-पूर्ण
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_get_eee(cpsw->slaves[slave_no].phy, edata);
+	else
+		return -EOPNOTSUPP;
+}
 
-पूर्णांक cpsw_set_eee(काष्ठा net_device *ndev, काष्ठा ethtool_eee *edata)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+int cpsw_set_eee(struct net_device *ndev, struct ethtool_eee *edata)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
-	अगर (cpsw->slaves[slave_no].phy)
-		वापस phy_ethtool_set_eee(cpsw->slaves[slave_no].phy, edata);
-	अन्यथा
-		वापस -EOPNOTSUPP;
-पूर्ण
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_set_eee(cpsw->slaves[slave_no].phy, edata);
+	else
+		return -EOPNOTSUPP;
+}
 
-पूर्णांक cpsw_nway_reset(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक slave_no = cpsw_slave_index(cpsw, priv);
+int cpsw_nway_reset(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
 
-	अगर (cpsw->slaves[slave_no].phy)
-		वापस genphy_restart_aneg(cpsw->slaves[slave_no].phy);
-	अन्यथा
-		वापस -EOPNOTSUPP;
-पूर्ण
+	if (cpsw->slaves[slave_no].phy)
+		return genphy_restart_aneg(cpsw->slaves[slave_no].phy);
+	else
+		return -EOPNOTSUPP;
+}
 
-अटल व्योम cpsw_suspend_data_pass(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
-	पूर्णांक i;
+static void cpsw_suspend_data_pass(struct net_device *ndev)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
+	int i;
 
 	/* Disable NAPI scheduling */
-	cpsw_पूर्णांकr_disable(cpsw);
+	cpsw_intr_disable(cpsw);
 
-	/* Stop all transmit queues क्रम every network device.
+	/* Stop all transmit queues for every network device.
 	 */
-	क्रम (i = 0; i < cpsw->data.slaves; i++) अणु
+	for (i = 0; i < cpsw->data.slaves; i++) {
 		ndev = cpsw->slaves[i].ndev;
-		अगर (!(ndev && netअगर_running(ndev)))
-			जारी;
+		if (!(ndev && netif_running(ndev)))
+			continue;
 
-		netअगर_tx_stop_all_queues(ndev);
+		netif_tx_stop_all_queues(ndev);
 
 		/* Barrier, so that stop_queue visible to other cpus */
 		smp_mb__after_atomic();
-	पूर्ण
+	}
 
 	/* Handle rest of tx packets and stop cpdma channels */
 	cpdma_ctlr_stop(cpsw->dma);
-पूर्ण
+}
 
-अटल पूर्णांक cpsw_resume_data_pass(काष्ठा net_device *ndev)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	पूर्णांक i, ret;
+static int cpsw_resume_data_pass(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int i, ret;
 
 	/* After this receive is started */
-	अगर (cpsw->usage_count) अणु
+	if (cpsw->usage_count) {
 		ret = cpsw_fill_rx_channels(priv);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		cpdma_ctlr_start(cpsw->dma);
-		cpsw_पूर्णांकr_enable(cpsw);
-	पूर्ण
+		cpsw_intr_enable(cpsw);
+	}
 
-	/* Resume transmit क्रम every affected पूर्णांकerface */
-	क्रम (i = 0; i < cpsw->data.slaves; i++) अणु
+	/* Resume transmit for every affected interface */
+	for (i = 0; i < cpsw->data.slaves; i++) {
 		ndev = cpsw->slaves[i].ndev;
-		अगर (ndev && netअगर_running(ndev))
-			netअगर_tx_start_all_queues(ndev);
-	पूर्ण
+		if (ndev && netif_running(ndev))
+			netif_tx_start_all_queues(ndev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpsw_check_ch_settings(काष्ठा cpsw_common *cpsw,
-				  काष्ठा ethtool_channels *ch)
-अणु
-	अगर (cpsw->quirk_irq) अणु
+static int cpsw_check_ch_settings(struct cpsw_common *cpsw,
+				  struct ethtool_channels *ch)
+{
+	if (cpsw->quirk_irq) {
 		dev_err(cpsw->dev, "Maximum one tx/rx queue is allowed");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	अगर (ch->combined_count)
-		वापस -EINVAL;
+	if (ch->combined_count)
+		return -EINVAL;
 
-	/* verअगरy we have at least one channel in each direction */
-	अगर (!ch->rx_count || !ch->tx_count)
-		वापस -EINVAL;
+	/* verify we have at least one channel in each direction */
+	if (!ch->rx_count || !ch->tx_count)
+		return -EINVAL;
 
-	अगर (ch->rx_count > cpsw->data.channels ||
+	if (ch->rx_count > cpsw->data.channels ||
 	    ch->tx_count > cpsw->data.channels)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cpsw_update_channels_res(काष्ठा cpsw_priv *priv, पूर्णांक ch_num, पूर्णांक rx,
+static int cpsw_update_channels_res(struct cpsw_priv *priv, int ch_num, int rx,
 				    cpdma_handler_fn rx_handler)
-अणु
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	व्योम (*handler)(व्योम *, पूर्णांक, पूर्णांक);
-	काष्ठा netdev_queue *queue;
-	काष्ठा cpsw_vector *vec;
-	पूर्णांक ret, *ch, vch;
+{
+	struct cpsw_common *cpsw = priv->cpsw;
+	void (*handler)(void *, int, int);
+	struct netdev_queue *queue;
+	struct cpsw_vector *vec;
+	int ret, *ch, vch;
 
-	अगर (rx) अणु
+	if (rx) {
 		ch = &cpsw->rx_ch_num;
 		vec = cpsw->rxv;
 		handler = rx_handler;
-	पूर्ण अन्यथा अणु
+	} else {
 		ch = &cpsw->tx_ch_num;
 		vec = cpsw->txv;
 		handler = cpsw_tx_handler;
-	पूर्ण
+	}
 
-	जबतक (*ch < ch_num) अणु
+	while (*ch < ch_num) {
 		vch = rx ? *ch : 7 - *ch;
 		vec[*ch].ch = cpdma_chan_create(cpsw->dma, vch, handler, rx);
 		queue = netdev_get_tx_queue(priv->ndev, *ch);
 		queue->tx_maxrate = 0;
 
-		अगर (IS_ERR(vec[*ch].ch))
-			वापस PTR_ERR(vec[*ch].ch);
+		if (IS_ERR(vec[*ch].ch))
+			return PTR_ERR(vec[*ch].ch);
 
-		अगर (!vec[*ch].ch)
-			वापस -EINVAL;
+		if (!vec[*ch].ch)
+			return -EINVAL;
 
-		cpsw_info(priv, अगरup, "created new %d %s channel\n", *ch,
+		cpsw_info(priv, ifup, "created new %d %s channel\n", *ch,
 			  (rx ? "rx" : "tx"));
 		(*ch)++;
-	पूर्ण
+	}
 
-	जबतक (*ch > ch_num) अणु
+	while (*ch > ch_num) {
 		(*ch)--;
 
 		ret = cpdma_chan_destroy(vec[*ch].ch);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		cpsw_info(priv, अगरup, "destroyed %d %s channel\n", *ch,
+		cpsw_info(priv, ifup, "destroyed %d %s channel\n", *ch,
 			  (rx ? "rx" : "tx"));
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cpsw_fail(काष्ठा cpsw_common *cpsw)
-अणु
-	काष्ठा net_device *ndev;
-	पूर्णांक i;
+static void cpsw_fail(struct cpsw_common *cpsw)
+{
+	struct net_device *ndev;
+	int i;
 
-	क्रम (i = 0; i < cpsw->data.slaves; i++) अणु
+	for (i = 0; i < cpsw->data.slaves; i++) {
 		ndev = cpsw->slaves[i].ndev;
-		अगर (ndev)
-			dev_बंद(ndev);
-	पूर्ण
-पूर्ण
+		if (ndev)
+			dev_close(ndev);
+	}
+}
 
-पूर्णांक cpsw_set_channels_common(काष्ठा net_device *ndev,
-			     काष्ठा ethtool_channels *chs,
+int cpsw_set_channels_common(struct net_device *ndev,
+			     struct ethtool_channels *chs,
 			     cpdma_handler_fn rx_handler)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
-	काष्ठा net_device *sl_ndev;
-	पूर्णांक i, new_pools, ret;
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	struct net_device *sl_ndev;
+	int i, new_pools, ret;
 
 	ret = cpsw_check_ch_settings(cpsw, chs);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	cpsw_suspend_data_pass(ndev);
 
 	new_pools = (chs->rx_count != cpsw->rx_ch_num) && cpsw->usage_count;
 
 	ret = cpsw_update_channels_res(priv, chs->rx_count, 1, rx_handler);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	ret = cpsw_update_channels_res(priv, chs->tx_count, 0, rx_handler);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	क्रम (i = 0; i < cpsw->data.slaves; i++) अणु
+	for (i = 0; i < cpsw->data.slaves; i++) {
 		sl_ndev = cpsw->slaves[i].ndev;
-		अगर (!(sl_ndev && netअगर_running(sl_ndev)))
-			जारी;
+		if (!(sl_ndev && netif_running(sl_ndev)))
+			continue;
 
-		/* Inक्रमm stack about new count of queues */
-		ret = netअगर_set_real_num_tx_queues(sl_ndev, cpsw->tx_ch_num);
-		अगर (ret) अणु
+		/* Inform stack about new count of queues */
+		ret = netif_set_real_num_tx_queues(sl_ndev, cpsw->tx_ch_num);
+		if (ret) {
 			dev_err(priv->dev, "cannot set real number of tx queues\n");
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		ret = netअगर_set_real_num_rx_queues(sl_ndev, cpsw->rx_ch_num);
-		अगर (ret) अणु
+		ret = netif_set_real_num_rx_queues(sl_ndev, cpsw->rx_ch_num);
+		if (ret) {
 			dev_err(priv->dev, "cannot set real number of rx queues\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	cpsw_split_res(cpsw);
 
-	अगर (new_pools) अणु
+	if (new_pools) {
 		cpsw_destroy_xdp_rxqs(cpsw);
 		ret = cpsw_create_xdp_rxqs(cpsw);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	ret = cpsw_resume_data_pass(ndev);
-	अगर (!ret)
-		वापस 0;
+	if (!ret)
+		return 0;
 err:
 	dev_err(priv->dev, "cannot update channels number, closing device\n");
 	cpsw_fail(cpsw);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम cpsw_get_ringparam(काष्ठा net_device *ndev,
-			काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा cpsw_priv *priv = netdev_priv(ndev);
-	काष्ठा cpsw_common *cpsw = priv->cpsw;
+void cpsw_get_ringparam(struct net_device *ndev,
+			struct ethtool_ringparam *ering)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
 
 	/* not supported */
 	ering->tx_max_pending = cpsw->descs_pool_size - CPSW_MAX_QUEUES;
 	ering->tx_pending = cpdma_get_num_tx_descs(cpsw->dma);
 	ering->rx_max_pending = cpsw->descs_pool_size - CPSW_MAX_QUEUES;
 	ering->rx_pending = cpdma_get_num_rx_descs(cpsw->dma);
-पूर्ण
+}
 
-पूर्णांक cpsw_set_ringparam(काष्ठा net_device *ndev,
-		       काष्ठा ethtool_ringparam *ering)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
-	पूर्णांक descs_num, ret;
+int cpsw_set_ringparam(struct net_device *ndev,
+		       struct ethtool_ringparam *ering)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
+	int descs_num, ret;
 
-	/* ignore ering->tx_pending - only rx_pending adjusपंचांगent is supported */
+	/* ignore ering->tx_pending - only rx_pending adjustment is supported */
 
-	अगर (ering->rx_mini_pending || ering->rx_jumbo_pending ||
+	if (ering->rx_mini_pending || ering->rx_jumbo_pending ||
 	    ering->rx_pending < CPSW_MAX_QUEUES ||
 	    ering->rx_pending > (cpsw->descs_pool_size - CPSW_MAX_QUEUES))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	descs_num = cpdma_get_num_rx_descs(cpsw->dma);
-	अगर (ering->rx_pending == descs_num)
-		वापस 0;
+	if (ering->rx_pending == descs_num)
+		return 0;
 
 	cpsw_suspend_data_pass(ndev);
 
 	ret = cpdma_set_num_rx_descs(cpsw->dma, ering->rx_pending);
-	अगर (ret) अणु
-		अगर (cpsw_resume_data_pass(ndev))
-			जाओ err;
+	if (ret) {
+		if (cpsw_resume_data_pass(ndev))
+			goto err;
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (cpsw->usage_count) अणु
+	if (cpsw->usage_count) {
 		cpsw_destroy_xdp_rxqs(cpsw);
 		ret = cpsw_create_xdp_rxqs(cpsw);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	ret = cpsw_resume_data_pass(ndev);
-	अगर (!ret)
-		वापस 0;
+	if (!ret)
+		return 0;
 err:
 	cpdma_set_num_rx_descs(cpsw->dma, descs_num);
 	dev_err(cpsw->dev, "cannot set ring params, closing device\n");
 	cpsw_fail(cpsw);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अगर IS_ENABLED(CONFIG_TI_CPTS)
-पूर्णांक cpsw_get_ts_info(काष्ठा net_device *ndev, काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा cpsw_common *cpsw = ndev_to_cpsw(ndev);
+#if IS_ENABLED(CONFIG_TI_CPTS)
+int cpsw_get_ts_info(struct net_device *ndev, struct ethtool_ts_info *info)
+{
+	struct cpsw_common *cpsw = ndev_to_cpsw(ndev);
 
-	info->so_बारtamping =
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_HARDWARE |
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_HARDWARE |
@@ -730,18 +729,18 @@ err:
 	info->rx_filters =
 		(1 << HWTSTAMP_FILTER_NONE) |
 		(1 << HWTSTAMP_FILTER_PTP_V2_EVENT);
-	वापस 0;
-पूर्ण
-#अन्यथा
-पूर्णांक cpsw_get_ts_info(काष्ठा net_device *ndev, काष्ठा ethtool_ts_info *info)
-अणु
-	info->so_बारtamping =
+	return 0;
+}
+#else
+int cpsw_get_ts_info(struct net_device *ndev, struct ethtool_ts_info *info)
+{
+	info->so_timestamping =
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_SOFTWARE |
 		SOF_TIMESTAMPING_SOFTWARE;
 	info->phc_index = -1;
 	info->tx_types = 0;
 	info->rx_filters = 0;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif

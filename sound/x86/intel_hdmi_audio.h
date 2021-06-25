@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2016 Intel Corporation
- *  Authors:	Sailaja Bandarupalli <sailaja.bandarupalli@पूर्णांकel.com>
- *		Ramesh Babu K V	<ramesh.babu@पूर्णांकel.com>
- *		Vaibhav Agarwal <vaibhav.agarwal@पूर्णांकel.com>
- *		Jerome Anand <jerome.anand@पूर्णांकel.com>
+ *  Authors:	Sailaja Bandarupalli <sailaja.bandarupalli@intel.com>
+ *		Ramesh Babu K V	<ramesh.babu@intel.com>
+ *		Vaibhav Agarwal <vaibhav.agarwal@intel.com>
+ *		Jerome Anand <jerome.anand@intel.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
- * a copy of this software and associated करोcumentation files
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files
  * (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modअगरy, merge,
+ * including without limitation the rights to use, copy, modify, merge,
  * publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so,
+ * and to permit persons to whom the Software is furnished to do so,
  * subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -28,15 +27,15 @@
  * SOFTWARE.
  */
 
-#अगर_अघोषित _INTEL_HDMI_AUDIO_H_
-#घोषणा _INTEL_HDMI_AUDIO_H_
+#ifndef _INTEL_HDMI_AUDIO_H_
+#define _INTEL_HDMI_AUDIO_H_
 
-#समावेश "intel_hdmi_lpe_audio.h"
+#include "intel_hdmi_lpe_audio.h"
 
-#घोषणा MAX_PB_STREAMS		1
-#घोषणा MAX_CAP_STREAMS		0
-#घोषणा BYTES_PER_WORD		0x4
-#घोषणा INTEL_HAD		"HdmiLpeAudio"
+#define MAX_PB_STREAMS		1
+#define MAX_CAP_STREAMS		0
+#define BYTES_PER_WORD		0x4
+#define INTEL_HAD		"HdmiLpeAudio"
 
 /*
  *	CEA speaker placement:
@@ -51,7 +50,7 @@
  *	corresponds to CEA RL/RR; The SMPTE channel _assignment_ C/LFE is
  *	swapped to CEA LFE/FC.
  */
-क्रमागत cea_speaker_placement अणु
+enum cea_speaker_placement {
 	FL  = (1 <<  0),        /* Front Left           */
 	FC  = (1 <<  1),        /* Front Center         */
 	FR  = (1 <<  2),        /* Front Right          */
@@ -63,85 +62,85 @@
 	RLC = (1 <<  8),        /* Rear Left Center     */
 	RRC = (1 <<  9),        /* Rear Right Center    */
 	LFE = (1 << 10),        /* Low Frequency Effect */
-पूर्ण;
+};
 
-काष्ठा cea_channel_speaker_allocation अणु
-	पूर्णांक ca_index;
-	पूर्णांक speakers[8];
+struct cea_channel_speaker_allocation {
+	int ca_index;
+	int speakers[8];
 
-	/* derived values, just क्रम convenience */
-	पूर्णांक channels;
-	पूर्णांक spk_mask;
-पूर्ण;
+	/* derived values, just for convenience */
+	int channels;
+	int spk_mask;
+};
 
-काष्ठा channel_map_table अणु
-	अचिन्हित अक्षर map;              /* ALSA API channel map position */
-	अचिन्हित अक्षर cea_slot;         /* CEA slot value */
-	पूर्णांक spk_mask;                   /* speaker position bit mask */
-पूर्ण;
+struct channel_map_table {
+	unsigned char map;              /* ALSA API channel map position */
+	unsigned char cea_slot;         /* CEA slot value */
+	int spk_mask;                   /* speaker position bit mask */
+};
 
-काष्ठा pcm_stream_info अणु
-	काष्ठा snd_pcm_substream *substream;
-	पूर्णांक substream_refcount;
-पूर्ण;
+struct pcm_stream_info {
+	struct snd_pcm_substream *substream;
+	int substream_refcount;
+};
 
 /*
- * काष्ठा snd_पूर्णांकelhad - पूर्णांकelhad driver काष्ठाure
+ * struct snd_intelhad - intelhad driver structure
  *
  * @card: ptr to hold card details
  * @connected: the monitor connection status
- * @stream_info: stream inक्रमmation
+ * @stream_info: stream information
  * @eld: holds ELD info
- * @curr_buf: poपूर्णांकer to hold current active ring buf
- * @valid_buf_cnt: ring buffer count क्रम stream
+ * @curr_buf: pointer to hold current active ring buf
+ * @valid_buf_cnt: ring buffer count for stream
  * @had_spinlock: driver lock
  * @aes_bits: IEC958 status bits
- * @buff_करोne: id of current buffer करोne पूर्णांकr
- * @dev: plम_से_भorm device handle
+ * @buff_done: id of current buffer done intr
+ * @dev: platoform device handle
  * @chmap: holds channel map info
  */
-काष्ठा snd_पूर्णांकelhad अणु
-	काष्ठा snd_पूर्णांकelhad_card *card_ctx;
+struct snd_intelhad {
+	struct snd_intelhad_card *card_ctx;
 	bool		connected;
-	काष्ठा		pcm_stream_info stream_info;
-	अचिन्हित अक्षर	eld[HDMI_MAX_ELD_BYTES];
+	struct		pcm_stream_info stream_info;
+	unsigned char	eld[HDMI_MAX_ELD_BYTES];
 	bool dp_output;
-	अचिन्हित पूर्णांक	aes_bits;
+	unsigned int	aes_bits;
 	spinlock_t had_spinlock;
-	काष्ठा device *dev;
-	काष्ठा snd_pcm_chmap *chmap;
-	पूर्णांक पंचांगds_घड़ी_speed;
-	पूर्णांक link_rate;
-	पूर्णांक port; /* fixed */
-	पूर्णांक pipe; /* can change dynamically */
+	struct device *dev;
+	struct snd_pcm_chmap *chmap;
+	int tmds_clock_speed;
+	int link_rate;
+	int port; /* fixed */
+	int pipe; /* can change dynamically */
 
 	/* ring buffer (BD) position index */
-	अचिन्हित पूर्णांक bd_head;
+	unsigned int bd_head;
 	/* PCM buffer position indices */
-	अचिन्हित पूर्णांक pcmbuf_head;	/* being processed */
-	अचिन्हित पूर्णांक pcmbuf_filled;	/* to be filled */
+	unsigned int pcmbuf_head;	/* being processed */
+	unsigned int pcmbuf_filled;	/* to be filled */
 
-	अचिन्हित पूर्णांक num_bds;		/* number of BDs */
-	अचिन्हित पूर्णांक period_bytes;	/* PCM period size in bytes */
+	unsigned int num_bds;		/* number of BDs */
+	unsigned int period_bytes;	/* PCM period size in bytes */
 
-	/* पूर्णांकernal stuff */
-	जोड़ aud_cfg aud_config;	/* AUD_CONFIG reg value cache */
-	काष्ठा work_काष्ठा hdmi_audio_wq;
-	काष्ठा mutex mutex; /* क्रम protecting chmap and eld */
+	/* internal stuff */
+	union aud_cfg aud_config;	/* AUD_CONFIG reg value cache */
+	struct work_struct hdmi_audio_wq;
+	struct mutex mutex; /* for protecting chmap and eld */
 	bool need_reset;
-	काष्ठा snd_jack *jack;
-पूर्ण;
+	struct snd_jack *jack;
+};
 
-काष्ठा snd_पूर्णांकelhad_card अणु
-	काष्ठा snd_card	*card;
-	काष्ठा device *dev;
+struct snd_intelhad_card {
+	struct snd_card	*card;
+	struct device *dev;
 
-	/* पूर्णांकernal stuff */
-	पूर्णांक irq;
-	व्योम __iomem *mmio_start;
-	पूर्णांक num_pipes;
-	पूर्णांक num_ports;
-	काष्ठा snd_पूर्णांकelhad pcm_ctx[3]; /* one क्रम each port */
-पूर्ण;
+	/* internal stuff */
+	int irq;
+	void __iomem *mmio_start;
+	int num_pipes;
+	int num_ports;
+	struct snd_intelhad pcm_ctx[3]; /* one for each port */
+};
 
-#पूर्ण_अगर /* _INTEL_HDMI_AUDIO_ */
+#endif /* _INTEL_HDMI_AUDIO_ */

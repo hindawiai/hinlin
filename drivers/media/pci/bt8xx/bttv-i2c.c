@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
     bttv-i2c.c  --  all the i2c code is here
@@ -16,299 +15,299 @@
 
 */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/delay.h>
 
-#समावेश "bttvp.h"
-#समावेश <media/v4l2-common.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <यंत्र/पन.स>
+#include "bttvp.h"
+#include <media/v4l2-common.h>
+#include <linux/jiffies.h>
+#include <asm/io.h>
 
-अटल पूर्णांक i2c_debug;
-अटल पूर्णांक i2c_hw;
-अटल पूर्णांक i2c_scan;
-module_param(i2c_debug, पूर्णांक, 0644);
+static int i2c_debug;
+static int i2c_hw;
+static int i2c_scan;
+module_param(i2c_debug, int, 0644);
 MODULE_PARM_DESC(i2c_debug, "configure i2c debug level");
-module_param(i2c_hw,    पूर्णांक, 0444);
+module_param(i2c_hw,    int, 0444);
 MODULE_PARM_DESC(i2c_hw, "force use of hardware i2c support, instead of software bitbang");
-module_param(i2c_scan,  पूर्णांक, 0444);
+module_param(i2c_scan,  int, 0444);
 MODULE_PARM_DESC(i2c_scan,"scan i2c bus at insmod time");
 
-अटल अचिन्हित पूर्णांक i2c_udelay = 5;
-module_param(i2c_udelay, पूर्णांक, 0444);
+static unsigned int i2c_udelay = 5;
+module_param(i2c_udelay, int, 0444);
 MODULE_PARM_DESC(i2c_udelay, "soft i2c delay at insmod time, in usecs (should be 5 or higher). Lower value means higher bus speed.");
 
 /* ----------------------------------------------------------------------- */
 /* I2C functions - bitbanging adapter (software i2c)                       */
 
-अटल व्योम bttv_bit_setscl(व्योम *data, पूर्णांक state)
-अणु
-	काष्ठा bttv *btv = (काष्ठा bttv*)data;
+static void bttv_bit_setscl(void *data, int state)
+{
+	struct bttv *btv = (struct bttv*)data;
 
-	अगर (state)
+	if (state)
 		btv->i2c_state |= 0x02;
-	अन्यथा
+	else
 		btv->i2c_state &= ~0x02;
-	btग_लिखो(btv->i2c_state, BT848_I2C);
-	btपढ़ो(BT848_I2C);
-पूर्ण
+	btwrite(btv->i2c_state, BT848_I2C);
+	btread(BT848_I2C);
+}
 
-अटल व्योम bttv_bit_setsda(व्योम *data, पूर्णांक state)
-अणु
-	काष्ठा bttv *btv = (काष्ठा bttv*)data;
+static void bttv_bit_setsda(void *data, int state)
+{
+	struct bttv *btv = (struct bttv*)data;
 
-	अगर (state)
+	if (state)
 		btv->i2c_state |= 0x01;
-	अन्यथा
+	else
 		btv->i2c_state &= ~0x01;
-	btग_लिखो(btv->i2c_state, BT848_I2C);
-	btपढ़ो(BT848_I2C);
-पूर्ण
+	btwrite(btv->i2c_state, BT848_I2C);
+	btread(BT848_I2C);
+}
 
-अटल पूर्णांक bttv_bit_माला_लोcl(व्योम *data)
-अणु
-	काष्ठा bttv *btv = (काष्ठा bttv*)data;
-	पूर्णांक state;
+static int bttv_bit_getscl(void *data)
+{
+	struct bttv *btv = (struct bttv*)data;
+	int state;
 
-	state = btपढ़ो(BT848_I2C) & 0x02 ? 1 : 0;
-	वापस state;
-पूर्ण
+	state = btread(BT848_I2C) & 0x02 ? 1 : 0;
+	return state;
+}
 
-अटल पूर्णांक bttv_bit_माला_लोda(व्योम *data)
-अणु
-	काष्ठा bttv *btv = (काष्ठा bttv*)data;
-	पूर्णांक state;
+static int bttv_bit_getsda(void *data)
+{
+	struct bttv *btv = (struct bttv*)data;
+	int state;
 
-	state = btपढ़ो(BT848_I2C) & 0x01;
-	वापस state;
-पूर्ण
+	state = btread(BT848_I2C) & 0x01;
+	return state;
+}
 
-अटल स्थिर काष्ठा i2c_algo_bit_data bttv_i2c_algo_bit_ढाँचा = अणु
+static const struct i2c_algo_bit_data bttv_i2c_algo_bit_template = {
 	.setsda  = bttv_bit_setsda,
 	.setscl  = bttv_bit_setscl,
-	.माला_लोda  = bttv_bit_माला_लोda,
-	.माला_लोcl  = bttv_bit_माला_लोcl,
+	.getsda  = bttv_bit_getsda,
+	.getscl  = bttv_bit_getscl,
 	.udelay  = 16,
-	.समयout = 200,
-पूर्ण;
+	.timeout = 200,
+};
 
 /* ----------------------------------------------------------------------- */
 /* I2C functions - hardware i2c                                            */
 
-अटल u32 functionality(काष्ठा i2c_adapter *adap)
-अणु
-	वापस I2C_FUNC_SMBUS_EMUL;
-पूर्ण
+static u32 functionality(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_SMBUS_EMUL;
+}
 
-अटल पूर्णांक
-bttv_i2c_रुको_करोne(काष्ठा bttv *btv)
-अणु
-	पूर्णांक rc = 0;
+static int
+bttv_i2c_wait_done(struct bttv *btv)
+{
+	int rc = 0;
 
-	/* समयout */
-	अगर (रुको_event_पूर्णांकerruptible_समयout(btv->i2c_queue,
-	    btv->i2c_करोne, msecs_to_jअगरfies(85)) == -ERESTARTSYS)
+	/* timeout */
+	if (wait_event_interruptible_timeout(btv->i2c_queue,
+	    btv->i2c_done, msecs_to_jiffies(85)) == -ERESTARTSYS)
 		rc = -EIO;
 
-	अगर (btv->i2c_करोne & BT848_INT_RACK)
+	if (btv->i2c_done & BT848_INT_RACK)
 		rc = 1;
-	btv->i2c_करोne = 0;
-	वापस rc;
-पूर्ण
+	btv->i2c_done = 0;
+	return rc;
+}
 
-#घोषणा I2C_HW (BT878_I2C_MODE  | BT848_I2C_SYNC |\
+#define I2C_HW (BT878_I2C_MODE  | BT848_I2C_SYNC |\
 		BT848_I2C_SCL | BT848_I2C_SDA)
 
-अटल पूर्णांक
-bttv_i2c_sendbytes(काष्ठा bttv *btv, स्थिर काष्ठा i2c_msg *msg, पूर्णांक last)
-अणु
+static int
+bttv_i2c_sendbytes(struct bttv *btv, const struct i2c_msg *msg, int last)
+{
 	u32 xmit;
-	पूर्णांक retval,cnt;
+	int retval,cnt;
 
 	/* sanity checks */
-	अगर (0 == msg->len)
-		वापस -EINVAL;
+	if (0 == msg->len)
+		return -EINVAL;
 
 	/* start, address + first byte */
 	xmit = (msg->addr << 25) | (msg->buf[0] << 16) | I2C_HW;
-	अगर (msg->len > 1 || !last)
+	if (msg->len > 1 || !last)
 		xmit |= BT878_I2C_NOSTOP;
-	btग_लिखो(xmit, BT848_I2C);
-	retval = bttv_i2c_रुको_करोne(btv);
-	अगर (retval < 0)
-		जाओ err;
-	अगर (retval == 0)
-		जाओ eio;
-	अगर (i2c_debug) अणु
+	btwrite(xmit, BT848_I2C);
+	retval = bttv_i2c_wait_done(btv);
+	if (retval < 0)
+		goto err;
+	if (retval == 0)
+		goto eio;
+	if (i2c_debug) {
 		pr_cont(" <W %02x %02x", msg->addr << 1, msg->buf[0]);
-	पूर्ण
+	}
 
-	क्रम (cnt = 1; cnt < msg->len; cnt++ ) अणु
+	for (cnt = 1; cnt < msg->len; cnt++ ) {
 		/* following bytes */
 		xmit = (msg->buf[cnt] << 24) | I2C_HW | BT878_I2C_NOSTART;
-		अगर (cnt < msg->len-1 || !last)
+		if (cnt < msg->len-1 || !last)
 			xmit |= BT878_I2C_NOSTOP;
-		btग_लिखो(xmit, BT848_I2C);
-		retval = bttv_i2c_रुको_करोne(btv);
-		अगर (retval < 0)
-			जाओ err;
-		अगर (retval == 0)
-			जाओ eio;
-		अगर (i2c_debug)
+		btwrite(xmit, BT848_I2C);
+		retval = bttv_i2c_wait_done(btv);
+		if (retval < 0)
+			goto err;
+		if (retval == 0)
+			goto eio;
+		if (i2c_debug)
 			pr_cont(" %02x", msg->buf[cnt]);
-	पूर्ण
-	अगर (i2c_debug && !(xmit & BT878_I2C_NOSTOP))
+	}
+	if (i2c_debug && !(xmit & BT878_I2C_NOSTOP))
 		pr_cont(">\n");
-	वापस msg->len;
+	return msg->len;
 
  eio:
 	retval = -EIO;
  err:
-	अगर (i2c_debug)
+	if (i2c_debug)
 		pr_cont(" ERR: %d\n",retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक
-bttv_i2c_पढ़ोbytes(काष्ठा bttv *btv, स्थिर काष्ठा i2c_msg *msg, पूर्णांक last)
-अणु
+static int
+bttv_i2c_readbytes(struct bttv *btv, const struct i2c_msg *msg, int last)
+{
 	u32 xmit;
 	u32 cnt;
-	पूर्णांक retval;
+	int retval;
 
-	क्रम (cnt = 0; cnt < msg->len; cnt++) अणु
+	for (cnt = 0; cnt < msg->len; cnt++) {
 		xmit = (msg->addr << 25) | (1 << 24) | I2C_HW;
-		अगर (cnt < msg->len-1)
+		if (cnt < msg->len-1)
 			xmit |= BT848_I2C_W3B;
-		अगर (cnt < msg->len-1 || !last)
+		if (cnt < msg->len-1 || !last)
 			xmit |= BT878_I2C_NOSTOP;
-		अगर (cnt)
+		if (cnt)
 			xmit |= BT878_I2C_NOSTART;
 
-		अगर (i2c_debug) अणु
-			अगर (!(xmit & BT878_I2C_NOSTART))
+		if (i2c_debug) {
+			if (!(xmit & BT878_I2C_NOSTART))
 				pr_cont(" <R %02x", (msg->addr << 1) +1);
-		पूर्ण
+		}
 
-		btग_लिखो(xmit, BT848_I2C);
-		retval = bttv_i2c_रुको_करोne(btv);
-		अगर (retval < 0)
-			जाओ err;
-		अगर (retval == 0)
-			जाओ eio;
-		msg->buf[cnt] = ((u32)btपढ़ो(BT848_I2C) >> 8) & 0xff;
-		अगर (i2c_debug) अणु
+		btwrite(xmit, BT848_I2C);
+		retval = bttv_i2c_wait_done(btv);
+		if (retval < 0)
+			goto err;
+		if (retval == 0)
+			goto eio;
+		msg->buf[cnt] = ((u32)btread(BT848_I2C) >> 8) & 0xff;
+		if (i2c_debug) {
 			pr_cont(" =%02x", msg->buf[cnt]);
-		पूर्ण
-		अगर (i2c_debug && !(xmit & BT878_I2C_NOSTOP))
+		}
+		if (i2c_debug && !(xmit & BT878_I2C_NOSTOP))
 			pr_cont(" >\n");
-	पूर्ण
+	}
 
 
-	वापस msg->len;
+	return msg->len;
 
  eio:
 	retval = -EIO;
  err:
-	अगर (i2c_debug)
+	if (i2c_debug)
 		pr_cont(" ERR: %d\n",retval);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक bttv_i2c_xfer(काष्ठा i2c_adapter *i2c_adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
-अणु
-	काष्ठा v4l2_device *v4l2_dev = i2c_get_adapdata(i2c_adap);
-	काष्ठा bttv *btv = to_bttv(v4l2_dev);
-	पूर्णांक retval = 0;
-	पूर्णांक i;
+static int bttv_i2c_xfer(struct i2c_adapter *i2c_adap, struct i2c_msg *msgs, int num)
+{
+	struct v4l2_device *v4l2_dev = i2c_get_adapdata(i2c_adap);
+	struct bttv *btv = to_bttv(v4l2_dev);
+	int retval = 0;
+	int i;
 
-	अगर (i2c_debug)
+	if (i2c_debug)
 		pr_debug("bt-i2c:");
 
-	btग_लिखो(BT848_INT_I2CDONE|BT848_INT_RACK, BT848_INT_STAT);
-	क्रम (i = 0 ; i < num; i++) अणु
-		अगर (msgs[i].flags & I2C_M_RD) अणु
-			/* पढ़ो */
-			retval = bttv_i2c_पढ़ोbytes(btv, &msgs[i], i+1 == num);
-			अगर (retval < 0)
-				जाओ err;
-		पूर्ण अन्यथा अणु
-			/* ग_लिखो */
+	btwrite(BT848_INT_I2CDONE|BT848_INT_RACK, BT848_INT_STAT);
+	for (i = 0 ; i < num; i++) {
+		if (msgs[i].flags & I2C_M_RD) {
+			/* read */
+			retval = bttv_i2c_readbytes(btv, &msgs[i], i+1 == num);
+			if (retval < 0)
+				goto err;
+		} else {
+			/* write */
 			retval = bttv_i2c_sendbytes(btv, &msgs[i], i+1 == num);
-			अगर (retval < 0)
-				जाओ err;
-		पूर्ण
-	पूर्ण
-	वापस num;
+			if (retval < 0)
+				goto err;
+		}
+	}
+	return num;
 
  err:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm bttv_algo = अणु
+static const struct i2c_algorithm bttv_algo = {
 	.master_xfer   = bttv_i2c_xfer,
 	.functionality = functionality,
-पूर्ण;
+};
 
 /* ----------------------------------------------------------------------- */
 /* I2C functions - common stuff                                            */
 
-/* पढ़ो I2C */
-पूर्णांक bttv_I2CRead(काष्ठा bttv *btv, अचिन्हित अक्षर addr, अक्षर *probe_क्रम)
-अणु
-	अचिन्हित अक्षर buffer = 0;
+/* read I2C */
+int bttv_I2CRead(struct bttv *btv, unsigned char addr, char *probe_for)
+{
+	unsigned char buffer = 0;
 
-	अगर (0 != btv->i2c_rc)
-		वापस -1;
-	अगर (bttv_verbose && शून्य != probe_क्रम)
+	if (0 != btv->i2c_rc)
+		return -1;
+	if (bttv_verbose && NULL != probe_for)
 		pr_info("%d: i2c: checking for %s @ 0x%02x... ",
-			btv->c.nr, probe_क्रम, addr);
+			btv->c.nr, probe_for, addr);
 	btv->i2c_client.addr = addr >> 1;
-	अगर (1 != i2c_master_recv(&btv->i2c_client, &buffer, 1)) अणु
-		अगर (शून्य != probe_क्रम) अणु
-			अगर (bttv_verbose)
+	if (1 != i2c_master_recv(&btv->i2c_client, &buffer, 1)) {
+		if (NULL != probe_for) {
+			if (bttv_verbose)
 				pr_cont("not found\n");
-		पूर्ण अन्यथा
+		} else
 			pr_warn("%d: i2c read 0x%x: error\n",
 				btv->c.nr, addr);
-		वापस -1;
-	पूर्ण
-	अगर (bttv_verbose && शून्य != probe_क्रम)
+		return -1;
+	}
+	if (bttv_verbose && NULL != probe_for)
 		pr_cont("found\n");
-	वापस buffer;
-पूर्ण
+	return buffer;
+}
 
-/* ग_लिखो I2C */
-पूर्णांक bttv_I2CWrite(काष्ठा bttv *btv, अचिन्हित अक्षर addr, अचिन्हित अक्षर b1,
-		    अचिन्हित अक्षर b2, पूर्णांक both)
-अणु
-	अचिन्हित अक्षर buffer[2];
-	पूर्णांक bytes = both ? 2 : 1;
+/* write I2C */
+int bttv_I2CWrite(struct bttv *btv, unsigned char addr, unsigned char b1,
+		    unsigned char b2, int both)
+{
+	unsigned char buffer[2];
+	int bytes = both ? 2 : 1;
 
-	अगर (0 != btv->i2c_rc)
-		वापस -1;
+	if (0 != btv->i2c_rc)
+		return -1;
 	btv->i2c_client.addr = addr >> 1;
 	buffer[0] = b1;
 	buffer[1] = b2;
-	अगर (bytes != i2c_master_send(&btv->i2c_client, buffer, bytes))
-		वापस -1;
-	वापस 0;
-पूर्ण
+	if (bytes != i2c_master_send(&btv->i2c_client, buffer, bytes))
+		return -1;
+	return 0;
+}
 
-/* पढ़ो EEPROM content */
-व्योम bttv_पढ़ोee(काष्ठा bttv *btv, अचिन्हित अक्षर *eedata, पूर्णांक addr)
-अणु
-	स_रखो(eedata, 0, 256);
-	अगर (0 != btv->i2c_rc)
-		वापस;
+/* read EEPROM content */
+void bttv_readee(struct bttv *btv, unsigned char *eedata, int addr)
+{
+	memset(eedata, 0, 256);
+	if (0 != btv->i2c_rc)
+		return;
 	btv->i2c_client.addr = addr >> 1;
-	tveeprom_पढ़ो(&btv->i2c_client, eedata, 256);
-पूर्ण
+	tveeprom_read(&btv->i2c_client, eedata, 256);
+}
 
-अटल अक्षर *i2c_devs[128] = अणु
+static char *i2c_devs[128] = {
 	[ 0x1c >> 1 ] = "lgdt330x",
 	[ 0x30 >> 1 ] = "IR (hauppauge)",
 	[ 0x80 >> 1 ] = "msp34xx",
@@ -316,52 +315,52 @@ bttv_i2c_पढ़ोbytes(काष्ठा bttv *btv, स्थिर का�
 	[ 0xa0 >> 1 ] = "eeprom",
 	[ 0xc0 >> 1 ] = "tuner (analog)",
 	[ 0xc2 >> 1 ] = "tuner (analog)",
-पूर्ण;
+};
 
-अटल व्योम करो_i2c_scan(अक्षर *name, काष्ठा i2c_client *c)
-अणु
-	अचिन्हित अक्षर buf;
-	पूर्णांक i,rc;
+static void do_i2c_scan(char *name, struct i2c_client *c)
+{
+	unsigned char buf;
+	int i,rc;
 
-	क्रम (i = 0; i < ARRAY_SIZE(i2c_devs); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(i2c_devs); i++) {
 		c->addr = i;
 		rc = i2c_master_recv(c,&buf,0);
-		अगर (rc < 0)
-			जारी;
+		if (rc < 0)
+			continue;
 		pr_info("%s: i2c scan: found device @ 0x%x  [%s]\n",
 			name, i << 1, i2c_devs[i] ? i2c_devs[i] : "???");
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* init + रेजिस्टर i2c adapter */
-पूर्णांक init_bttv_i2c(काष्ठा bttv *btv)
-अणु
+/* init + register i2c adapter */
+int init_bttv_i2c(struct bttv *btv)
+{
 	strscpy(btv->i2c_client.name, "bttv internal", I2C_NAME_SIZE);
 
-	अगर (i2c_hw)
+	if (i2c_hw)
 		btv->use_i2c_hw = 1;
-	अगर (btv->use_i2c_hw) अणु
+	if (btv->use_i2c_hw) {
 		/* bt878 */
 		strscpy(btv->c.i2c_adap.name, "bt878",
-			माप(btv->c.i2c_adap.name));
+			sizeof(btv->c.i2c_adap.name));
 		btv->c.i2c_adap.algo = &bttv_algo;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* bt848 */
 	/* Prevents usage of invalid delay values */
-		अगर (i2c_udelay<5)
+		if (i2c_udelay<5)
 			i2c_udelay=5;
 
 		strscpy(btv->c.i2c_adap.name, "bttv",
-			माप(btv->c.i2c_adap.name));
-		btv->i2c_algo = bttv_i2c_algo_bit_ढाँचा;
+			sizeof(btv->c.i2c_adap.name));
+		btv->i2c_algo = bttv_i2c_algo_bit_template;
 		btv->i2c_algo.udelay = i2c_udelay;
 		btv->i2c_algo.data = btv;
 		btv->c.i2c_adap.algo_data = &btv->i2c_algo;
-	पूर्ण
+	}
 	btv->c.i2c_adap.owner = THIS_MODULE;
 
 	btv->c.i2c_adap.dev.parent = &btv->c.pci->dev;
-	snम_लिखो(btv->c.i2c_adap.name, माप(btv->c.i2c_adap.name),
+	snprintf(btv->c.i2c_adap.name, sizeof(btv->c.i2c_adap.name),
 		 "bt%d #%d [%s]", btv->id, btv->c.nr,
 		 btv->use_i2c_hw ? "hw" : "sw");
 
@@ -369,23 +368,23 @@ bttv_i2c_पढ़ोbytes(काष्ठा bttv *btv, स्थिर का�
 	btv->i2c_client.adapter = &btv->c.i2c_adap;
 
 
-	अगर (btv->use_i2c_hw) अणु
+	if (btv->use_i2c_hw) {
 		btv->i2c_rc = i2c_add_adapter(&btv->c.i2c_adap);
-	पूर्ण अन्यथा अणु
+	} else {
 		bttv_bit_setscl(btv,1);
 		bttv_bit_setsda(btv,1);
 		btv->i2c_rc = i2c_bit_add_bus(&btv->c.i2c_adap);
-	पूर्ण
-	अगर (0 == btv->i2c_rc && i2c_scan)
-		करो_i2c_scan(btv->c.v4l2_dev.name, &btv->i2c_client);
+	}
+	if (0 == btv->i2c_rc && i2c_scan)
+		do_i2c_scan(btv->c.v4l2_dev.name, &btv->i2c_client);
 
-	वापस btv->i2c_rc;
-पूर्ण
+	return btv->i2c_rc;
+}
 
-पूर्णांक fini_bttv_i2c(काष्ठा bttv *btv)
-अणु
-	अगर (btv->i2c_rc == 0)
+int fini_bttv_i2c(struct bttv *btv)
+{
+	if (btv->i2c_rc == 0)
 		i2c_del_adapter(&btv->c.i2c_adap);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

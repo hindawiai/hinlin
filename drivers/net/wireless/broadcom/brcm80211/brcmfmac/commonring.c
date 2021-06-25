@@ -1,237 +1,236 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/netdevice.h>
+#include <linux/types.h>
+#include <linux/netdevice.h>
 
-#समावेश <brcmu_utils.h>
-#समावेश <brcmu_wअगरi.h>
+#include <brcmu_utils.h>
+#include <brcmu_wifi.h>
 
-#समावेश "core.h"
-#समावेश "commonring.h"
+#include "core.h"
+#include "commonring.h"
 
-व्योम brcmf_commonring_रेजिस्टर_cb(काष्ठा brcmf_commonring *commonring,
-				  पूर्णांक (*cr_ring_bell)(व्योम *ctx),
-				  पूर्णांक (*cr_update_rptr)(व्योम *ctx),
-				  पूर्णांक (*cr_update_wptr)(व्योम *ctx),
-				  पूर्णांक (*cr_ग_लिखो_rptr)(व्योम *ctx),
-				  पूर्णांक (*cr_ग_लिखो_wptr)(व्योम *ctx), व्योम *ctx)
-अणु
+void brcmf_commonring_register_cb(struct brcmf_commonring *commonring,
+				  int (*cr_ring_bell)(void *ctx),
+				  int (*cr_update_rptr)(void *ctx),
+				  int (*cr_update_wptr)(void *ctx),
+				  int (*cr_write_rptr)(void *ctx),
+				  int (*cr_write_wptr)(void *ctx), void *ctx)
+{
 	commonring->cr_ring_bell = cr_ring_bell;
 	commonring->cr_update_rptr = cr_update_rptr;
 	commonring->cr_update_wptr = cr_update_wptr;
-	commonring->cr_ग_लिखो_rptr = cr_ग_लिखो_rptr;
-	commonring->cr_ग_लिखो_wptr = cr_ग_लिखो_wptr;
+	commonring->cr_write_rptr = cr_write_rptr;
+	commonring->cr_write_wptr = cr_write_wptr;
 	commonring->cr_ctx = ctx;
-पूर्ण
+}
 
 
-व्योम brcmf_commonring_config(काष्ठा brcmf_commonring *commonring, u16 depth,
-			     u16 item_len, व्योम *buf_addr)
-अणु
+void brcmf_commonring_config(struct brcmf_commonring *commonring, u16 depth,
+			     u16 item_len, void *buf_addr)
+{
 	commonring->depth = depth;
 	commonring->item_len = item_len;
 	commonring->buf_addr = buf_addr;
-	अगर (!commonring->inited) अणु
+	if (!commonring->inited) {
 		spin_lock_init(&commonring->lock);
 		commonring->inited = true;
-	पूर्ण
+	}
 	commonring->r_ptr = 0;
-	अगर (commonring->cr_ग_लिखो_rptr)
-		commonring->cr_ग_लिखो_rptr(commonring->cr_ctx);
+	if (commonring->cr_write_rptr)
+		commonring->cr_write_rptr(commonring->cr_ctx);
 	commonring->w_ptr = 0;
-	अगर (commonring->cr_ग_लिखो_wptr)
-		commonring->cr_ग_लिखो_wptr(commonring->cr_ctx);
+	if (commonring->cr_write_wptr)
+		commonring->cr_write_wptr(commonring->cr_ctx);
 	commonring->f_ptr = 0;
-पूर्ण
+}
 
 
-व्योम brcmf_commonring_lock(काष्ठा brcmf_commonring *commonring)
+void brcmf_commonring_lock(struct brcmf_commonring *commonring)
 		__acquires(&commonring->lock)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&commonring->lock, flags);
 	commonring->flags = flags;
-पूर्ण
+}
 
 
-व्योम brcmf_commonring_unlock(काष्ठा brcmf_commonring *commonring)
+void brcmf_commonring_unlock(struct brcmf_commonring *commonring)
 		__releases(&commonring->lock)
-अणु
+{
 	spin_unlock_irqrestore(&commonring->lock, commonring->flags);
-पूर्ण
+}
 
 
-bool brcmf_commonring_ग_लिखो_available(काष्ठा brcmf_commonring *commonring)
-अणु
+bool brcmf_commonring_write_available(struct brcmf_commonring *commonring)
+{
 	u16 available;
 	bool retry = true;
 
 again:
-	अगर (commonring->r_ptr <= commonring->w_ptr)
+	if (commonring->r_ptr <= commonring->w_ptr)
 		available = commonring->depth - commonring->w_ptr +
 			    commonring->r_ptr;
-	अन्यथा
+	else
 		available = commonring->r_ptr - commonring->w_ptr;
 
-	अगर (available > 1) अणु
-		अगर (!commonring->was_full)
-			वापस true;
-		अगर (available > commonring->depth / 8) अणु
+	if (available > 1) {
+		if (!commonring->was_full)
+			return true;
+		if (available > commonring->depth / 8) {
 			commonring->was_full = false;
-			वापस true;
-		पूर्ण
-		अगर (retry) अणु
-			अगर (commonring->cr_update_rptr)
+			return true;
+		}
+		if (retry) {
+			if (commonring->cr_update_rptr)
 				commonring->cr_update_rptr(commonring->cr_ctx);
 			retry = false;
-			जाओ again;
-		पूर्ण
-		वापस false;
-	पूर्ण
+			goto again;
+		}
+		return false;
+	}
 
-	अगर (retry) अणु
-		अगर (commonring->cr_update_rptr)
+	if (retry) {
+		if (commonring->cr_update_rptr)
 			commonring->cr_update_rptr(commonring->cr_ctx);
 		retry = false;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	commonring->was_full = true;
-	वापस false;
-पूर्ण
+	return false;
+}
 
 
-व्योम *brcmf_commonring_reserve_क्रम_ग_लिखो(काष्ठा brcmf_commonring *commonring)
-अणु
-	व्योम *ret_ptr;
+void *brcmf_commonring_reserve_for_write(struct brcmf_commonring *commonring)
+{
+	void *ret_ptr;
 	u16 available;
 	bool retry = true;
 
 again:
-	अगर (commonring->r_ptr <= commonring->w_ptr)
+	if (commonring->r_ptr <= commonring->w_ptr)
 		available = commonring->depth - commonring->w_ptr +
 			    commonring->r_ptr;
-	अन्यथा
+	else
 		available = commonring->r_ptr - commonring->w_ptr;
 
-	अगर (available > 1) अणु
+	if (available > 1) {
 		ret_ptr = commonring->buf_addr +
 			  (commonring->w_ptr * commonring->item_len);
 		commonring->w_ptr++;
-		अगर (commonring->w_ptr == commonring->depth)
+		if (commonring->w_ptr == commonring->depth)
 			commonring->w_ptr = 0;
-		वापस ret_ptr;
-	पूर्ण
+		return ret_ptr;
+	}
 
-	अगर (retry) अणु
-		अगर (commonring->cr_update_rptr)
+	if (retry) {
+		if (commonring->cr_update_rptr)
 			commonring->cr_update_rptr(commonring->cr_ctx);
 		retry = false;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	commonring->was_full = true;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
-व्योम *
-brcmf_commonring_reserve_क्रम_ग_लिखो_multiple(काष्ठा brcmf_commonring *commonring,
+void *
+brcmf_commonring_reserve_for_write_multiple(struct brcmf_commonring *commonring,
 					    u16 n_items, u16 *alloced)
-अणु
-	व्योम *ret_ptr;
+{
+	void *ret_ptr;
 	u16 available;
 	bool retry = true;
 
 again:
-	अगर (commonring->r_ptr <= commonring->w_ptr)
+	if (commonring->r_ptr <= commonring->w_ptr)
 		available = commonring->depth - commonring->w_ptr +
 			    commonring->r_ptr;
-	अन्यथा
+	else
 		available = commonring->r_ptr - commonring->w_ptr;
 
-	अगर (available > 1) अणु
+	if (available > 1) {
 		ret_ptr = commonring->buf_addr +
 			  (commonring->w_ptr * commonring->item_len);
 		*alloced = min_t(u16, n_items, available - 1);
-		अगर (*alloced + commonring->w_ptr > commonring->depth)
+		if (*alloced + commonring->w_ptr > commonring->depth)
 			*alloced = commonring->depth - commonring->w_ptr;
 		commonring->w_ptr += *alloced;
-		अगर (commonring->w_ptr == commonring->depth)
+		if (commonring->w_ptr == commonring->depth)
 			commonring->w_ptr = 0;
-		वापस ret_ptr;
-	पूर्ण
+		return ret_ptr;
+	}
 
-	अगर (retry) अणु
-		अगर (commonring->cr_update_rptr)
+	if (retry) {
+		if (commonring->cr_update_rptr)
 			commonring->cr_update_rptr(commonring->cr_ctx);
 		retry = false;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	commonring->was_full = true;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
-पूर्णांक brcmf_commonring_ग_लिखो_complete(काष्ठा brcmf_commonring *commonring)
-अणु
-	अगर (commonring->f_ptr > commonring->w_ptr)
+int brcmf_commonring_write_complete(struct brcmf_commonring *commonring)
+{
+	if (commonring->f_ptr > commonring->w_ptr)
 		commonring->f_ptr = 0;
 
 	commonring->f_ptr = commonring->w_ptr;
 
-	अगर (commonring->cr_ग_लिखो_wptr)
-		commonring->cr_ग_लिखो_wptr(commonring->cr_ctx);
-	अगर (commonring->cr_ring_bell)
-		वापस commonring->cr_ring_bell(commonring->cr_ctx);
+	if (commonring->cr_write_wptr)
+		commonring->cr_write_wptr(commonring->cr_ctx);
+	if (commonring->cr_ring_bell)
+		return commonring->cr_ring_bell(commonring->cr_ctx);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 
-व्योम brcmf_commonring_ग_लिखो_cancel(काष्ठा brcmf_commonring *commonring,
+void brcmf_commonring_write_cancel(struct brcmf_commonring *commonring,
 				   u16 n_items)
-अणु
-	अगर (commonring->w_ptr == 0)
+{
+	if (commonring->w_ptr == 0)
 		commonring->w_ptr = commonring->depth - n_items;
-	अन्यथा
+	else
 		commonring->w_ptr -= n_items;
-पूर्ण
+}
 
 
-व्योम *brcmf_commonring_get_पढ़ो_ptr(काष्ठा brcmf_commonring *commonring,
+void *brcmf_commonring_get_read_ptr(struct brcmf_commonring *commonring,
 				    u16 *n_items)
-अणु
-	अगर (commonring->cr_update_wptr)
+{
+	if (commonring->cr_update_wptr)
 		commonring->cr_update_wptr(commonring->cr_ctx);
 
 	*n_items = (commonring->w_ptr >= commonring->r_ptr) ?
 				(commonring->w_ptr - commonring->r_ptr) :
 				(commonring->depth - commonring->r_ptr);
 
-	अगर (*n_items == 0)
-		वापस शून्य;
+	if (*n_items == 0)
+		return NULL;
 
-	वापस commonring->buf_addr +
+	return commonring->buf_addr +
 	       (commonring->r_ptr * commonring->item_len);
-पूर्ण
+}
 
 
-पूर्णांक brcmf_commonring_पढ़ो_complete(काष्ठा brcmf_commonring *commonring,
+int brcmf_commonring_read_complete(struct brcmf_commonring *commonring,
 				   u16 n_items)
-अणु
+{
 	commonring->r_ptr += n_items;
-	अगर (commonring->r_ptr == commonring->depth)
+	if (commonring->r_ptr == commonring->depth)
 		commonring->r_ptr = 0;
 
-	अगर (commonring->cr_ग_लिखो_rptr)
-		वापस commonring->cr_ग_लिखो_rptr(commonring->cr_ctx);
+	if (commonring->cr_write_rptr)
+		return commonring->cr_write_rptr(commonring->cr_ctx);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}

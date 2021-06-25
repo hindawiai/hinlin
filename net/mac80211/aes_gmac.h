@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2015, Qualcomm Atheros, Inc.
  */
 
-#अगर_अघोषित AES_GMAC_H
-#घोषणा AES_GMAC_H
+#ifndef AES_GMAC_H
+#define AES_GMAC_H
 
-#समावेश <linux/crypto.h>
+#include <linux/crypto.h>
 
-#घोषणा GMAC_AAD_LEN	20
-#घोषणा GMAC_MIC_LEN	16
-#घोषणा GMAC_NONCE_LEN	12
+#define GMAC_AAD_LEN	20
+#define GMAC_MIC_LEN	16
+#define GMAC_NONCE_LEN	12
 
-काष्ठा crypto_aead *ieee80211_aes_gmac_key_setup(स्थिर u8 key[],
-						 माप_प्रकार key_len);
-पूर्णांक ieee80211_aes_gmac(काष्ठा crypto_aead *tfm, स्थिर u8 *aad, u8 *nonce,
-		       स्थिर u8 *data, माप_प्रकार data_len, u8 *mic);
-व्योम ieee80211_aes_gmac_key_मुक्त(काष्ठा crypto_aead *tfm);
+struct crypto_aead *ieee80211_aes_gmac_key_setup(const u8 key[],
+						 size_t key_len);
+int ieee80211_aes_gmac(struct crypto_aead *tfm, const u8 *aad, u8 *nonce,
+		       const u8 *data, size_t data_len, u8 *mic);
+void ieee80211_aes_gmac_key_free(struct crypto_aead *tfm);
 
-#पूर्ण_अगर /* AES_GMAC_H */
+#endif /* AES_GMAC_H */

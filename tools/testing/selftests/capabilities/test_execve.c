@@ -1,463 +1,462 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#घोषणा _GNU_SOURCE
+// SPDX-License-Identifier: GPL-2.0
+#define _GNU_SOURCE
 
-#समावेश <cap-ng.h>
-#समावेश <linux/capability.h>
-#समावेश <stdbool.h>
-#समावेश <माला.स>
-#समावेश <मानकपन.स>
-#समावेश <fcntl.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <मानकतर्क.स>
-#समावेश <sched.h>
-#समावेश <sys/mount.h>
-#समावेश <सीमा.स>
-#समावेश <libgen.h>
-#समावेश <दो_स्मृति.h>
-#समावेश <sys/रुको.h>
-#समावेश <sys/prctl.h>
-#समावेश <sys/स्थिति.स>
+#include <cap-ng.h>
+#include <linux/capability.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <sched.h>
+#include <sys/mount.h>
+#include <limits.h>
+#include <libgen.h>
+#include <malloc.h>
+#include <sys/wait.h>
+#include <sys/prctl.h>
+#include <sys/stat.h>
 
-#समावेश "../kselftest.h"
+#include "../kselftest.h"
 
-#अगर_अघोषित PR_CAP_AMBIENT
-#घोषणा PR_CAP_AMBIENT			47
+#ifndef PR_CAP_AMBIENT
+#define PR_CAP_AMBIENT			47
 # define PR_CAP_AMBIENT_IS_SET		1
 # define PR_CAP_AMBIENT_RAISE		2
 # define PR_CAP_AMBIENT_LOWER		3
 # define PR_CAP_AMBIENT_CLEAR_ALL	4
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक nerrs;
-अटल pid_t mpid;	/*  मुख्य() pid is used to aव्योम duplicate test counts */
+static int nerrs;
+static pid_t mpid;	/*  main() pid is used to avoid duplicate test counts */
 
-अटल व्योम vmaybe_ग_लिखो_file(bool enoent_ok, अक्षर *filename, अक्षर *fmt, बहु_सूची ap)
-अणु
-	अक्षर buf[4096];
-	पूर्णांक fd;
-	sमाप_प्रकार written;
-	पूर्णांक buf_len;
+static void vmaybe_write_file(bool enoent_ok, char *filename, char *fmt, va_list ap)
+{
+	char buf[4096];
+	int fd;
+	ssize_t written;
+	int buf_len;
 
-	buf_len = vsnम_लिखो(buf, माप(buf), fmt, ap);
-	अगर (buf_len < 0)
-		ksft_निकास_fail_msg("vsnprintf failed - %s\n", म_त्रुटि(त्रुटि_सं));
+	buf_len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	if (buf_len < 0)
+		ksft_exit_fail_msg("vsnprintf failed - %s\n", strerror(errno));
 
-	अगर (buf_len >= माप(buf))
-		ksft_निकास_fail_msg("vsnprintf output truncated\n");
+	if (buf_len >= sizeof(buf))
+		ksft_exit_fail_msg("vsnprintf output truncated\n");
 
 
-	fd = खोलो(filename, O_WRONLY);
-	अगर (fd < 0) अणु
-		अगर ((त्रुटि_सं == ENOENT) && enoent_ok)
-			वापस;
-		ksft_निकास_fail_msg("open of %s failed - %s\n",
-					filename, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-	written = ग_लिखो(fd, buf, buf_len);
-	अगर (written != buf_len) अणु
-		अगर (written >= 0) अणु
-			ksft_निकास_fail_msg("short write to %s\n", filename);
-		पूर्ण अन्यथा अणु
-			ksft_निकास_fail_msg("write to %s failed - %s\n",
-						filename, म_त्रुटि(त्रुटि_सं));
-		पूर्ण
-	पूर्ण
-	अगर (बंद(fd) != 0) अणु
-		ksft_निकास_fail_msg("close of %s failed - %s\n",
-					filename, म_त्रुटि(त्रुटि_सं));
-	पूर्ण
-पूर्ण
+	fd = open(filename, O_WRONLY);
+	if (fd < 0) {
+		if ((errno == ENOENT) && enoent_ok)
+			return;
+		ksft_exit_fail_msg("open of %s failed - %s\n",
+					filename, strerror(errno));
+	}
+	written = write(fd, buf, buf_len);
+	if (written != buf_len) {
+		if (written >= 0) {
+			ksft_exit_fail_msg("short write to %s\n", filename);
+		} else {
+			ksft_exit_fail_msg("write to %s failed - %s\n",
+						filename, strerror(errno));
+		}
+	}
+	if (close(fd) != 0) {
+		ksft_exit_fail_msg("close of %s failed - %s\n",
+					filename, strerror(errno));
+	}
+}
 
-अटल व्योम maybe_ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void maybe_write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vmaybe_ग_लिखो_file(true, filename, fmt, ap);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	vmaybe_write_file(true, filename, fmt, ap);
+	va_end(ap);
+}
 
-अटल व्योम ग_लिखो_file(अक्षर *filename, अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
+static void write_file(char *filename, char *fmt, ...)
+{
+	va_list ap;
 
-	बहु_शुरू(ap, fmt);
-	vmaybe_ग_लिखो_file(false, filename, fmt, ap);
-	बहु_पूर्ण(ap);
-पूर्ण
+	va_start(ap, fmt);
+	vmaybe_write_file(false, filename, fmt, ap);
+	va_end(ap);
+}
 
-अटल bool create_and_enter_ns(uid_t inner_uid)
-अणु
+static bool create_and_enter_ns(uid_t inner_uid)
+{
 	uid_t outer_uid;
 	gid_t outer_gid;
-	पूर्णांक i;
+	int i;
 	bool have_outer_privilege;
 
 	outer_uid = getuid();
 	outer_gid = getgid();
 
 	/*
-	 * TODO: If we're alपढ़ोy root, we could skip creating the userns.
+	 * TODO: If we're already root, we could skip creating the userns.
 	 */
 
-	अगर (unshare(CLONE_NEWNS) == 0) अणु
-		ksft_prपूर्णांक_msg("[NOTE]\tUsing global UIDs for tests\n");
-		अगर (prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0) != 0)
-			ksft_निकास_fail_msg("PR_SET_KEEPCAPS - %s\n",
-						म_त्रुटि(त्रुटि_सं));
-		अगर (setresuid(inner_uid, inner_uid, -1) != 0)
-			ksft_निकास_fail_msg("setresuid - %s\n", म_त्रुटि(त्रुटि_सं));
+	if (unshare(CLONE_NEWNS) == 0) {
+		ksft_print_msg("[NOTE]\tUsing global UIDs for tests\n");
+		if (prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0) != 0)
+			ksft_exit_fail_msg("PR_SET_KEEPCAPS - %s\n",
+						strerror(errno));
+		if (setresuid(inner_uid, inner_uid, -1) != 0)
+			ksft_exit_fail_msg("setresuid - %s\n", strerror(errno));
 
 		// Re-enable effective caps
 		capng_get_caps_process();
-		क्रम (i = 0; i < CAP_LAST_CAP; i++)
-			अगर (capng_have_capability(CAPNG_PERMITTED, i))
+		for (i = 0; i < CAP_LAST_CAP; i++)
+			if (capng_have_capability(CAPNG_PERMITTED, i))
 				capng_update(CAPNG_ADD, CAPNG_EFFECTIVE, i);
-		अगर (capng_apply(CAPNG_SELECT_CAPS) != 0)
-			ksft_निकास_fail_msg(
-					"capng_apply - %s\n", म_त्रुटि(त्रुटि_सं));
+		if (capng_apply(CAPNG_SELECT_CAPS) != 0)
+			ksft_exit_fail_msg(
+					"capng_apply - %s\n", strerror(errno));
 
 		have_outer_privilege = true;
-	पूर्ण अन्यथा अगर (unshare(CLONE_NEWUSER | CLONE_NEWNS) == 0) अणु
-		ksft_prपूर्णांक_msg("[NOTE]\tUsing a user namespace for tests\n");
-		maybe_ग_लिखो_file("/proc/self/setgroups", "deny");
-		ग_लिखो_file("/proc/self/uid_map", "%d %d 1", inner_uid, outer_uid);
-		ग_लिखो_file("/proc/self/gid_map", "0 %d 1", outer_gid);
+	} else if (unshare(CLONE_NEWUSER | CLONE_NEWNS) == 0) {
+		ksft_print_msg("[NOTE]\tUsing a user namespace for tests\n");
+		maybe_write_file("/proc/self/setgroups", "deny");
+		write_file("/proc/self/uid_map", "%d %d 1", inner_uid, outer_uid);
+		write_file("/proc/self/gid_map", "0 %d 1", outer_gid);
 
 		have_outer_privilege = false;
-	पूर्ण अन्यथा अणु
-		ksft_निकास_skip("must be root or be able to create a userns\n");
-	पूर्ण
+	} else {
+		ksft_exit_skip("must be root or be able to create a userns\n");
+	}
 
-	अगर (mount("none", "/", शून्य, MS_REC | MS_PRIVATE, शून्य) != 0)
-		ksft_निकास_fail_msg("remount everything private - %s\n",
-					म_त्रुटि(त्रुटि_सं));
+	if (mount("none", "/", NULL, MS_REC | MS_PRIVATE, NULL) != 0)
+		ksft_exit_fail_msg("remount everything private - %s\n",
+					strerror(errno));
 
-	वापस have_outer_privilege;
-पूर्ण
+	return have_outer_privilege;
+}
 
-अटल व्योम स_बदलो_to_पंचांगpfs(व्योम)
-अणु
-	अक्षर cwd[PATH_MAX];
-	अगर (अ_लोwd(cwd, माप(cwd)) != cwd)
-		ksft_निकास_fail_msg("getcwd - %s\n", म_त्रुटि(त्रुटि_सं));
+static void chdir_to_tmpfs(void)
+{
+	char cwd[PATH_MAX];
+	if (getcwd(cwd, sizeof(cwd)) != cwd)
+		ksft_exit_fail_msg("getcwd - %s\n", strerror(errno));
 
-	अगर (mount("private_tmp", ".", "tmpfs", 0, "mode=0777") != 0)
-		ksft_निकास_fail_msg("mount private tmpfs - %s\n",
-					म_त्रुटि(त्रुटि_सं));
+	if (mount("private_tmp", ".", "tmpfs", 0, "mode=0777") != 0)
+		ksft_exit_fail_msg("mount private tmpfs - %s\n",
+					strerror(errno));
 
-	अगर (स_बदलो(cwd) != 0)
-		ksft_निकास_fail_msg("chdir to private tmpfs - %s\n",
-					म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	if (chdir(cwd) != 0)
+		ksft_exit_fail_msg("chdir to private tmpfs - %s\n",
+					strerror(errno));
+}
 
-अटल व्योम copy_fromat_to(पूर्णांक fromfd, स्थिर अक्षर *fromname, स्थिर अक्षर *toname)
-अणु
-	पूर्णांक from = खोलोat(fromfd, fromname, O_RDONLY);
-	अगर (from == -1)
-		ksft_निकास_fail_msg("open copy source - %s\n", म_त्रुटि(त्रुटि_सं));
+static void copy_fromat_to(int fromfd, const char *fromname, const char *toname)
+{
+	int from = openat(fromfd, fromname, O_RDONLY);
+	if (from == -1)
+		ksft_exit_fail_msg("open copy source - %s\n", strerror(errno));
 
-	पूर्णांक to = खोलो(toname, O_CREAT | O_WRONLY | O_EXCL, 0700);
+	int to = open(toname, O_CREAT | O_WRONLY | O_EXCL, 0700);
 
-	जबतक (true) अणु
-		अक्षर buf[4096];
-		sमाप_प्रकार sz = पढ़ो(from, buf, माप(buf));
-		अगर (sz == 0)
-			अवरोध;
-		अगर (sz < 0)
-			ksft_निकास_fail_msg("read - %s\n", म_त्रुटि(त्रुटि_सं));
+	while (true) {
+		char buf[4096];
+		ssize_t sz = read(from, buf, sizeof(buf));
+		if (sz == 0)
+			break;
+		if (sz < 0)
+			ksft_exit_fail_msg("read - %s\n", strerror(errno));
 
-		अगर (ग_लिखो(to, buf, sz) != sz)
-			/* no लघु ग_लिखोs on पंचांगpfs */
-			ksft_निकास_fail_msg("write - %s\n", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+		if (write(to, buf, sz) != sz)
+			/* no short writes on tmpfs */
+			ksft_exit_fail_msg("write - %s\n", strerror(errno));
+	}
 
-	बंद(from);
-	बंद(to);
-पूर्ण
+	close(from);
+	close(to);
+}
 
-अटल bool विभाजन_रुको(व्योम)
-अणु
-	pid_t child = विभाजन();
-	अगर (child == 0) अणु
+static bool fork_wait(void)
+{
+	pid_t child = fork();
+	if (child == 0) {
 		nerrs = 0;
-		वापस true;
-	पूर्ण अन्यथा अगर (child > 0) अणु
-		पूर्णांक status;
-		अगर (रुकोpid(child, &status, 0) != child ||
-		    !WIFEXITED(status)) अणु
-			ksft_prपूर्णांक_msg("Child died\n");
+		return true;
+	} else if (child > 0) {
+		int status;
+		if (waitpid(child, &status, 0) != child ||
+		    !WIFEXITED(status)) {
+			ksft_print_msg("Child died\n");
 			nerrs++;
-		पूर्ण अन्यथा अगर (WEXITSTATUS(status) != 0) अणु
-			ksft_prपूर्णांक_msg("Child failed\n");
+		} else if (WEXITSTATUS(status) != 0) {
+			ksft_print_msg("Child failed\n");
 			nerrs++;
-		पूर्ण अन्यथा अणु
-			/* करोn't prपूर्णांक this message क्रम mpid */
-			अगर (getpid() != mpid)
+		} else {
+			/* don't print this message for mpid */
+			if (getpid() != mpid)
 				ksft_test_result_pass("Passed\n");
-		पूर्ण
-		वापस false;
-	पूर्ण अन्यथा अणु
-		ksft_निकास_fail_msg("fork - %s\n", म_त्रुटि(त्रुटि_सं));
-		वापस false;
-	पूर्ण
-पूर्ण
+		}
+		return false;
+	} else {
+		ksft_exit_fail_msg("fork - %s\n", strerror(errno));
+		return false;
+	}
+}
 
-अटल व्योम exec_other_validate_cap(स्थिर अक्षर *name,
+static void exec_other_validate_cap(const char *name,
 				    bool eff, bool perm, bool inh, bool ambient)
-अणु
+{
 	execl(name, name, (eff ? "1" : "0"),
 	      (perm ? "1" : "0"), (inh ? "1" : "0"), (ambient ? "1" : "0"),
-	      शून्य);
-	ksft_निकास_fail_msg("execl - %s\n", म_त्रुटि(त्रुटि_सं));
-पूर्ण
+	      NULL);
+	ksft_exit_fail_msg("execl - %s\n", strerror(errno));
+}
 
-अटल व्योम exec_validate_cap(bool eff, bool perm, bool inh, bool ambient)
-अणु
+static void exec_validate_cap(bool eff, bool perm, bool inh, bool ambient)
+{
 	exec_other_validate_cap("./validate_cap", eff, perm, inh, ambient);
-पूर्ण
+}
 
-अटल पूर्णांक करो_tests(पूर्णांक uid, स्थिर अक्षर *our_path)
-अणु
+static int do_tests(int uid, const char *our_path)
+{
 	bool have_outer_privilege = create_and_enter_ns(uid);
 
-	पूर्णांक ourpath_fd = खोलो(our_path, O_RDONLY | O_सूचीECTORY);
-	अगर (ourpath_fd == -1)
-		ksft_निकास_fail_msg("open '%s' - %s\n",
-					our_path, म_त्रुटि(त्रुटि_सं));
+	int ourpath_fd = open(our_path, O_RDONLY | O_DIRECTORY);
+	if (ourpath_fd == -1)
+		ksft_exit_fail_msg("open '%s' - %s\n",
+					our_path, strerror(errno));
 
-	स_बदलो_to_पंचांगpfs();
+	chdir_to_tmpfs();
 
 	copy_fromat_to(ourpath_fd, "validate_cap", "validate_cap");
 
-	अगर (have_outer_privilege) अणु
+	if (have_outer_privilege) {
 		uid_t gid = getegid();
 
 		copy_fromat_to(ourpath_fd, "validate_cap",
 			       "validate_cap_suidroot");
-		अगर (chown("validate_cap_suidroot", 0, -1) != 0)
-			ksft_निकास_fail_msg("chown - %s\n", म_त्रुटि(त्रुटि_सं));
-		अगर (chmod("validate_cap_suidroot", S_ISUID | 0700) != 0)
-			ksft_निकास_fail_msg("chmod - %s\n", म_त्रुटि(त्रुटि_सं));
+		if (chown("validate_cap_suidroot", 0, -1) != 0)
+			ksft_exit_fail_msg("chown - %s\n", strerror(errno));
+		if (chmod("validate_cap_suidroot", S_ISUID | 0700) != 0)
+			ksft_exit_fail_msg("chmod - %s\n", strerror(errno));
 
 		copy_fromat_to(ourpath_fd, "validate_cap",
 			       "validate_cap_suidnonroot");
-		अगर (chown("validate_cap_suidnonroot", uid + 1, -1) != 0)
-			ksft_निकास_fail_msg("chown - %s\n", म_त्रुटि(त्रुटि_सं));
-		अगर (chmod("validate_cap_suidnonroot", S_ISUID | 0700) != 0)
-			ksft_निकास_fail_msg("chmod - %s\n", म_त्रुटि(त्रुटि_सं));
+		if (chown("validate_cap_suidnonroot", uid + 1, -1) != 0)
+			ksft_exit_fail_msg("chown - %s\n", strerror(errno));
+		if (chmod("validate_cap_suidnonroot", S_ISUID | 0700) != 0)
+			ksft_exit_fail_msg("chmod - %s\n", strerror(errno));
 
 		copy_fromat_to(ourpath_fd, "validate_cap",
 			       "validate_cap_sgidroot");
-		अगर (chown("validate_cap_sgidroot", -1, 0) != 0)
-			ksft_निकास_fail_msg("chown - %s\n", म_त्रुटि(त्रुटि_सं));
-		अगर (chmod("validate_cap_sgidroot", S_ISGID | 0710) != 0)
-			ksft_निकास_fail_msg("chmod - %s\n", म_त्रुटि(त्रुटि_सं));
+		if (chown("validate_cap_sgidroot", -1, 0) != 0)
+			ksft_exit_fail_msg("chown - %s\n", strerror(errno));
+		if (chmod("validate_cap_sgidroot", S_ISGID | 0710) != 0)
+			ksft_exit_fail_msg("chmod - %s\n", strerror(errno));
 
 		copy_fromat_to(ourpath_fd, "validate_cap",
 			       "validate_cap_sgidnonroot");
-		अगर (chown("validate_cap_sgidnonroot", -1, gid + 1) != 0)
-			ksft_निकास_fail_msg("chown - %s\n", म_त्रुटि(त्रुटि_सं));
-		अगर (chmod("validate_cap_sgidnonroot", S_ISGID | 0710) != 0)
-			ksft_निकास_fail_msg("chmod - %s\n", म_त्रुटि(त्रुटि_सं));
-	पूर्ण
+		if (chown("validate_cap_sgidnonroot", -1, gid + 1) != 0)
+			ksft_exit_fail_msg("chown - %s\n", strerror(errno));
+		if (chmod("validate_cap_sgidnonroot", S_ISGID | 0710) != 0)
+			ksft_exit_fail_msg("chmod - %s\n", strerror(errno));
+	}
 
 	capng_get_caps_process();
 
 	/* Make sure that i starts out clear */
 	capng_update(CAPNG_DROP, CAPNG_INHERITABLE, CAP_NET_BIND_SERVICE);
-	अगर (capng_apply(CAPNG_SELECT_CAPS) != 0)
-		ksft_निकास_fail_msg("capng_apply - %s\n", म_त्रुटि(त्रुटि_सं));
+	if (capng_apply(CAPNG_SELECT_CAPS) != 0)
+		ksft_exit_fail_msg("capng_apply - %s\n", strerror(errno));
 
-	अगर (uid == 0) अणु
-		ksft_prपूर्णांक_msg("[RUN]\tRoot => ep\n");
-		अगर (विभाजन_रुको())
+	if (uid == 0) {
+		ksft_print_msg("[RUN]\tRoot => ep\n");
+		if (fork_wait())
 			exec_validate_cap(true, true, false, false);
-	पूर्ण अन्यथा अणु
-		ksft_prपूर्णांक_msg("[RUN]\tNon-root => no caps\n");
-		अगर (विभाजन_रुको())
+	} else {
+		ksft_print_msg("[RUN]\tNon-root => no caps\n");
+		if (fork_wait())
 			exec_validate_cap(false, false, false, false);
-	पूर्ण
+	}
 
-	ksft_prपूर्णांक_msg("Check cap_ambient manipulation rules\n");
+	ksft_print_msg("Check cap_ambient manipulation rules\n");
 
 	/* We should not be able to add ambient caps yet. */
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != -1 || त्रुटि_सं != EPERM) अणु
-		अगर (त्रुटि_सं == EINVAL)
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != -1 || errno != EPERM) {
+		if (errno == EINVAL)
 			ksft_test_result_fail(
 				"PR_CAP_AMBIENT_RAISE isn't supported\n");
-		अन्यथा
+		else
 			ksft_test_result_fail(
 				"PR_CAP_AMBIENT_RAISE should have failed eith EPERM on a non-inheritable cap\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	ksft_test_result_pass(
 		"PR_CAP_AMBIENT_RAISE failed on non-inheritable cap\n");
 
 	capng_update(CAPNG_ADD, CAPNG_INHERITABLE, CAP_NET_RAW);
 	capng_update(CAPNG_DROP, CAPNG_PERMITTED, CAP_NET_RAW);
 	capng_update(CAPNG_DROP, CAPNG_EFFECTIVE, CAP_NET_RAW);
-	अगर (capng_apply(CAPNG_SELECT_CAPS) != 0)
-		ksft_निकास_fail_msg("capng_apply - %s\n", म_त्रुटि(त्रुटि_सं));
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_RAW, 0, 0, 0) != -1 || त्रुटि_सं != EPERM) अणु
+	if (capng_apply(CAPNG_SELECT_CAPS) != 0)
+		ksft_exit_fail_msg("capng_apply - %s\n", strerror(errno));
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_RAW, 0, 0, 0) != -1 || errno != EPERM) {
 		ksft_test_result_fail(
 			"PR_CAP_AMBIENT_RAISE should have failed on a non-permitted cap\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	ksft_test_result_pass(
 		"PR_CAP_AMBIENT_RAISE failed on non-permitted cap\n");
 
 	capng_update(CAPNG_ADD, CAPNG_INHERITABLE, CAP_NET_BIND_SERVICE);
-	अगर (capng_apply(CAPNG_SELECT_CAPS) != 0)
-		ksft_निकास_fail_msg("capng_apply - %s\n", म_त्रुटि(त्रुटि_सं));
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0) अणु
+	if (capng_apply(CAPNG_SELECT_CAPS) != 0)
+		ksft_exit_fail_msg("capng_apply - %s\n", strerror(errno));
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0) {
 		ksft_test_result_fail(
 			"PR_CAP_AMBIENT_RAISE should have succeeded\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	ksft_test_result_pass("PR_CAP_AMBIENT_RAISE worked\n");
 
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_BIND_SERVICE, 0, 0, 0) != 1) अणु
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_BIND_SERVICE, 0, 0, 0) != 1) {
 		ksft_test_result_fail("PR_CAP_AMBIENT_IS_SET is broken\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0, 0, 0, 0) != 0)
-		ksft_निकास_fail_msg("PR_CAP_AMBIENT_CLEAR_ALL - %s\n",
-					म_त्रुटि(त्रुटि_सं));
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0, 0, 0, 0) != 0)
+		ksft_exit_fail_msg("PR_CAP_AMBIENT_CLEAR_ALL - %s\n",
+					strerror(errno));
 
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0) अणु
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0) {
 		ksft_test_result_fail(
 			"PR_CAP_AMBIENT_CLEAR_ALL didn't work\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0)
-		ksft_निकास_fail_msg("PR_CAP_AMBIENT_RAISE - %s\n",
-					म_त्रुटि(त्रुटि_सं));
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0)
+		ksft_exit_fail_msg("PR_CAP_AMBIENT_RAISE - %s\n",
+					strerror(errno));
 
 	capng_update(CAPNG_DROP, CAPNG_INHERITABLE, CAP_NET_BIND_SERVICE);
-	अगर (capng_apply(CAPNG_SELECT_CAPS) != 0)
-		ksft_निकास_fail_msg("capng_apply - %s\n", म_त्रुटि(त्रुटि_सं));
+	if (capng_apply(CAPNG_SELECT_CAPS) != 0)
+		ksft_exit_fail_msg("capng_apply - %s\n", strerror(errno));
 
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0) अणु
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0) {
 		ksft_test_result_fail("Dropping I should have dropped A\n");
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
 	ksft_test_result_pass("Basic manipulation appears to work\n");
 
 	capng_update(CAPNG_ADD, CAPNG_INHERITABLE, CAP_NET_BIND_SERVICE);
-	अगर (capng_apply(CAPNG_SELECT_CAPS) != 0)
-		ksft_निकास_fail_msg("capng_apply - %s\n", म_त्रुटि(त्रुटि_सं));
-	अगर (uid == 0) अणु
-		ksft_prपूर्णांक_msg("[RUN]\tRoot +i => eip\n");
-		अगर (विभाजन_रुको())
+	if (capng_apply(CAPNG_SELECT_CAPS) != 0)
+		ksft_exit_fail_msg("capng_apply - %s\n", strerror(errno));
+	if (uid == 0) {
+		ksft_print_msg("[RUN]\tRoot +i => eip\n");
+		if (fork_wait())
 			exec_validate_cap(true, true, true, false);
-	पूर्ण अन्यथा अणु
-		ksft_prपूर्णांक_msg("[RUN]\tNon-root +i => i\n");
-		अगर (विभाजन_रुको())
+	} else {
+		ksft_print_msg("[RUN]\tNon-root +i => i\n");
+		if (fork_wait())
 			exec_validate_cap(false, false, true, false);
-	पूर्ण
+	}
 
-	अगर (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0)
-		ksft_निकास_fail_msg("PR_CAP_AMBIENT_RAISE - %s\n",
-					म_त्रुटि(त्रुटि_सं));
+	if (prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0, 0) != 0)
+		ksft_exit_fail_msg("PR_CAP_AMBIENT_RAISE - %s\n",
+					strerror(errno));
 
-	ksft_prपूर्णांक_msg("[RUN]\tUID %d +ia => eipa\n", uid);
-	अगर (विभाजन_रुको())
+	ksft_print_msg("[RUN]\tUID %d +ia => eipa\n", uid);
+	if (fork_wait())
 		exec_validate_cap(true, true, true, true);
 
-	/* The reमुख्यing tests need real privilege */
+	/* The remaining tests need real privilege */
 
-	अगर (!have_outer_privilege) अणु
+	if (!have_outer_privilege) {
 		ksft_test_result_skip("SUID/SGID tests (needs privilege)\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (uid == 0) अणु
-		ksft_prपूर्णांक_msg("[RUN]\tRoot +ia, suidroot => eipa\n");
-		अगर (विभाजन_रुको())
+	if (uid == 0) {
+		ksft_print_msg("[RUN]\tRoot +ia, suidroot => eipa\n");
+		if (fork_wait())
 			exec_other_validate_cap("./validate_cap_suidroot",
 						true, true, true, true);
 
-		ksft_prपूर्णांक_msg("[RUN]\tRoot +ia, suidnonroot => ip\n");
-		अगर (विभाजन_रुको())
+		ksft_print_msg("[RUN]\tRoot +ia, suidnonroot => ip\n");
+		if (fork_wait())
 			exec_other_validate_cap("./validate_cap_suidnonroot",
 						false, true, true, false);
 
-		ksft_prपूर्णांक_msg("[RUN]\tRoot +ia, sgidroot => eipa\n");
-		अगर (विभाजन_रुको())
+		ksft_print_msg("[RUN]\tRoot +ia, sgidroot => eipa\n");
+		if (fork_wait())
 			exec_other_validate_cap("./validate_cap_sgidroot",
 						true, true, true, true);
 
-		अगर (विभाजन_रुको()) अणु
-			ksft_prपूर्णांक_msg(
+		if (fork_wait()) {
+			ksft_print_msg(
 				"[RUN]\tRoot, gid != 0, +ia, sgidroot => eip\n");
-			अगर (setresgid(1, 1, 1) != 0)
-				ksft_निकास_fail_msg("setresgid - %s\n",
-							म_त्रुटि(त्रुटि_सं));
+			if (setresgid(1, 1, 1) != 0)
+				ksft_exit_fail_msg("setresgid - %s\n",
+							strerror(errno));
 			exec_other_validate_cap("./validate_cap_sgidroot",
 						true, true, true, false);
-		पूर्ण
+		}
 
-		ksft_prपूर्णांक_msg("[RUN]\tRoot +ia, sgidnonroot => eip\n");
-		अगर (विभाजन_रुको())
+		ksft_print_msg("[RUN]\tRoot +ia, sgidnonroot => eip\n");
+		if (fork_wait())
 			exec_other_validate_cap("./validate_cap_sgidnonroot",
 						true, true, true, false);
-	पूर्ण अन्यथा अणु
-		ksft_prपूर्णांक_msg("[RUN]\tNon-root +ia, sgidnonroot => i\n");
-		अगर (विभाजन_रुको())
+	} else {
+		ksft_print_msg("[RUN]\tNon-root +ia, sgidnonroot => i\n");
+		if (fork_wait())
 			exec_other_validate_cap("./validate_cap_sgidnonroot",
 					false, false, true, false);
 
-		अगर (विभाजन_रुको()) अणु
-			ksft_prपूर्णांक_msg("[RUN]\tNon-root +ia, sgidroot => i\n");
-			अगर (setresgid(1, 1, 1) != 0)
-				ksft_निकास_fail_msg("setresgid - %s\n",
-							म_त्रुटि(त्रुटि_सं));
+		if (fork_wait()) {
+			ksft_print_msg("[RUN]\tNon-root +ia, sgidroot => i\n");
+			if (setresgid(1, 1, 1) != 0)
+				ksft_exit_fail_msg("setresgid - %s\n",
+							strerror(errno));
 			exec_other_validate_cap("./validate_cap_sgidroot",
 						false, false, true, false);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-करोne:
-	ksft_prपूर्णांक_cnts();
-	वापस nerrs ? 1 : 0;
-पूर्ण
+done:
+	ksft_print_cnts();
+	return nerrs ? 1 : 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	अक्षर *पंचांगp1, *पंचांगp2, *our_path;
+int main(int argc, char **argv)
+{
+	char *tmp1, *tmp2, *our_path;
 
 	/* Find our path */
-	पंचांगp1 = strdup(argv[0]);
-	अगर (!पंचांगp1)
-		ksft_निकास_fail_msg("strdup - %s\n", म_त्रुटि(त्रुटि_सं));
-	पंचांगp2 = स_नाम(पंचांगp1);
-	our_path = strdup(पंचांगp2);
-	अगर (!our_path)
-		ksft_निकास_fail_msg("strdup - %s\n", म_त्रुटि(त्रुटि_सं));
-	मुक्त(पंचांगp1);
+	tmp1 = strdup(argv[0]);
+	if (!tmp1)
+		ksft_exit_fail_msg("strdup - %s\n", strerror(errno));
+	tmp2 = dirname(tmp1);
+	our_path = strdup(tmp2);
+	if (!our_path)
+		ksft_exit_fail_msg("strdup - %s\n", strerror(errno));
+	free(tmp1);
 
 	mpid = getpid();
 
-	अगर (विभाजन_रुको()) अणु
-		ksft_prपूर्णांक_header();
+	if (fork_wait()) {
+		ksft_print_header();
 		ksft_set_plan(12);
-		ksft_prपूर्णांक_msg("[RUN]\t+++ Tests with uid == 0 +++\n");
-		वापस करो_tests(0, our_path);
-	पूर्ण
+		ksft_print_msg("[RUN]\t+++ Tests with uid == 0 +++\n");
+		return do_tests(0, our_path);
+	}
 
-	ksft_prपूर्णांक_msg("==================================================\n");
+	ksft_print_msg("==================================================\n");
 
-	अगर (विभाजन_रुको()) अणु
-		ksft_prपूर्णांक_header();
+	if (fork_wait()) {
+		ksft_print_header();
 		ksft_set_plan(9);
-		ksft_prपूर्णांक_msg("[RUN]\t+++ Tests with uid != 0 +++\n");
-		वापस करो_tests(1, our_path);
-	पूर्ण
+		ksft_print_msg("[RUN]\t+++ Tests with uid != 0 +++\n");
+		return do_tests(1, our_path);
+	}
 
-	वापस nerrs ? 1 : 0;
-पूर्ण
+	return nerrs ? 1 : 0;
+}

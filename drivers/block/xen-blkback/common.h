@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License version 2
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated पूर्णांकo other
+ * separately from the Linux kernel or incorporated into other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modअगरy,
+ * restriction, including without limitation the rights to use, copy, modify,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to करो so, subject to
+ * and to permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -25,468 +24,468 @@
  * IN THE SOFTWARE.
  */
 
-#अगर_अघोषित __XEN_BLKIF__BACKEND__COMMON_H__
-#घोषणा __XEN_BLKIF__BACKEND__COMMON_H__
+#ifndef __XEN_BLKIF__BACKEND__COMMON_H__
+#define __XEN_BLKIF__BACKEND__COMMON_H__
 
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/rbtree.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/hypervisor.h>
-#समावेश <xen/grant_table.h>
-#समावेश <xen/page.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/पूर्णांकerface/io/ring.h>
-#समावेश <xen/पूर्णांकerface/io/blkअगर.h>
-#समावेश <xen/पूर्णांकerface/io/protocols.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
+#include <linux/blkdev.h>
+#include <linux/vmalloc.h>
+#include <linux/wait.h>
+#include <linux/io.h>
+#include <linux/rbtree.h>
+#include <asm/setup.h>
+#include <asm/hypervisor.h>
+#include <xen/grant_table.h>
+#include <xen/page.h>
+#include <xen/xenbus.h>
+#include <xen/interface/io/ring.h>
+#include <xen/interface/io/blkif.h>
+#include <xen/interface/io/protocols.h>
 
-बाह्य अचिन्हित पूर्णांक xen_blkअगर_max_ring_order;
-बाह्य अचिन्हित पूर्णांक xenblk_max_queues;
+extern unsigned int xen_blkif_max_ring_order;
+extern unsigned int xenblk_max_queues;
 /*
  * This is the maximum number of segments that would be allowed in indirect
  * requests. This value will also be passed to the frontend.
  */
-#घोषणा MAX_INसूचीECT_SEGMENTS 256
+#define MAX_INDIRECT_SEGMENTS 256
 
 /*
- * Xen use 4K pages. The guest may use dअगरferent page size (4K or 64K)
+ * Xen use 4K pages. The guest may use different page size (4K or 64K)
  * Number of Xen pages per segment
  */
-#घोषणा XEN_PAGES_PER_SEGMENT   (PAGE_SIZE / XEN_PAGE_SIZE)
+#define XEN_PAGES_PER_SEGMENT   (PAGE_SIZE / XEN_PAGE_SIZE)
 
-#घोषणा XEN_PAGES_PER_INसूचीECT_FRAME \
-	(XEN_PAGE_SIZE/माप(काष्ठा blkअगर_request_segment))
-#घोषणा SEGS_PER_INसूचीECT_FRAME	\
-	(XEN_PAGES_PER_INसूचीECT_FRAME / XEN_PAGES_PER_SEGMENT)
+#define XEN_PAGES_PER_INDIRECT_FRAME \
+	(XEN_PAGE_SIZE/sizeof(struct blkif_request_segment))
+#define SEGS_PER_INDIRECT_FRAME	\
+	(XEN_PAGES_PER_INDIRECT_FRAME / XEN_PAGES_PER_SEGMENT)
 
-#घोषणा MAX_INसूचीECT_PAGES \
-	((MAX_INसूचीECT_SEGMENTS + SEGS_PER_INसूचीECT_FRAME - 1)/SEGS_PER_INसूचीECT_FRAME)
-#घोषणा INसूचीECT_PAGES(_segs) DIV_ROUND_UP(_segs, XEN_PAGES_PER_INसूचीECT_FRAME)
+#define MAX_INDIRECT_PAGES \
+	((MAX_INDIRECT_SEGMENTS + SEGS_PER_INDIRECT_FRAME - 1)/SEGS_PER_INDIRECT_FRAME)
+#define INDIRECT_PAGES(_segs) DIV_ROUND_UP(_segs, XEN_PAGES_PER_INDIRECT_FRAME)
 
-/* Not a real protocol.  Used to generate ring काष्ठाs which contain
+/* Not a real protocol.  Used to generate ring structs which contain
  * the elements common to all protocols only.  This way we get a
- * compiler-checkable way to use common काष्ठा elements, so we can
- * aव्योम using चयन(protocol) in a number of places.  */
-काष्ठा blkअगर_common_request अणु
-	अक्षर dummy;
-पूर्ण;
+ * compiler-checkable way to use common struct elements, so we can
+ * avoid using switch(protocol) in a number of places.  */
+struct blkif_common_request {
+	char dummy;
+};
 
 /* i386 protocol version */
 
-काष्ठा blkअगर_x86_32_request_rw अणु
-	uपूर्णांक8_t        nr_segments;  /* number of segments                   */
-	blkअगर_vdev_t   handle;       /* only क्रम पढ़ो/ग_लिखो requests         */
-	uपूर्णांक64_t       id;           /* निजी guest value, echoed in resp  */
-	blkअगर_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-	काष्ठा blkअगर_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_32_request_rw {
+	uint8_t        nr_segments;  /* number of segments                   */
+	blkif_vdev_t   handle;       /* only for read/write requests         */
+	uint64_t       id;           /* private guest value, echoed in resp  */
+	blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+	struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_32_request_discard अणु
-	uपूर्णांक8_t        flag;         /* BLKIF_DISCARD_SECURE or zero         */
-	blkअगर_vdev_t   _pad1;        /* was "handle" क्रम पढ़ो/ग_लिखो requests */
-	uपूर्णांक64_t       id;           /* निजी guest value, echoed in resp  */
-	blkअगर_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-	uपूर्णांक64_t       nr_sectors;
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_32_request_discard {
+	uint8_t        flag;         /* BLKIF_DISCARD_SECURE or zero         */
+	blkif_vdev_t   _pad1;        /* was "handle" for read/write requests */
+	uint64_t       id;           /* private guest value, echoed in resp  */
+	blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+	uint64_t       nr_sectors;
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_32_request_other अणु
-	uपूर्णांक8_t        _pad1;
-	blkअगर_vdev_t   _pad2;
-	uपूर्णांक64_t       id;           /* निजी guest value, echoed in resp  */
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_32_request_other {
+	uint8_t        _pad1;
+	blkif_vdev_t   _pad2;
+	uint64_t       id;           /* private guest value, echoed in resp  */
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_32_request_indirect अणु
-	uपूर्णांक8_t        indirect_op;
-	uपूर्णांक16_t       nr_segments;
-	uपूर्णांक64_t       id;
-	blkअगर_sector_t sector_number;
-	blkअगर_vdev_t   handle;
-	uपूर्णांक16_t       _pad1;
-	grant_ref_t    indirect_grefs[BLKIF_MAX_INसूचीECT_PAGES_PER_REQUEST];
+struct blkif_x86_32_request_indirect {
+	uint8_t        indirect_op;
+	uint16_t       nr_segments;
+	uint64_t       id;
+	blkif_sector_t sector_number;
+	blkif_vdev_t   handle;
+	uint16_t       _pad1;
+	grant_ref_t    indirect_grefs[BLKIF_MAX_INDIRECT_PAGES_PER_REQUEST];
 	/*
 	 * The maximum number of indirect segments (and pages) that will
-	 * be used is determined by MAX_INसूचीECT_SEGMENTS, this value
+	 * be used is determined by MAX_INDIRECT_SEGMENTS, this value
 	 * is also exported to the guest (via xenstore
 	 * feature-max-indirect-segments entry), so the frontend knows how
 	 * many indirect segments the backend supports.
 	 */
-	uपूर्णांक64_t       _pad2;        /* make it 64 byte aligned */
-पूर्ण __attribute__((__packed__));
+	uint64_t       _pad2;        /* make it 64 byte aligned */
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_32_request अणु
-	uपूर्णांक8_t        operation;    /* BLKIF_OP_???                         */
-	जोड़ अणु
-		काष्ठा blkअगर_x86_32_request_rw rw;
-		काष्ठा blkअगर_x86_32_request_discard discard;
-		काष्ठा blkअगर_x86_32_request_other other;
-		काष्ठा blkअगर_x86_32_request_indirect indirect;
-	पूर्ण u;
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_32_request {
+	uint8_t        operation;    /* BLKIF_OP_???                         */
+	union {
+		struct blkif_x86_32_request_rw rw;
+		struct blkif_x86_32_request_discard discard;
+		struct blkif_x86_32_request_other other;
+		struct blkif_x86_32_request_indirect indirect;
+	} u;
+} __attribute__((__packed__));
 
 /* x86_64 protocol version */
 
-काष्ठा blkअगर_x86_64_request_rw अणु
-	uपूर्णांक8_t        nr_segments;  /* number of segments                   */
-	blkअगर_vdev_t   handle;       /* only क्रम पढ़ो/ग_लिखो requests         */
-	uपूर्णांक32_t       _pad1;        /* दुरत्व(blkअगर_reqest..,u.rw.id)==8  */
-	uपूर्णांक64_t       id;
-	blkअगर_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-	काष्ठा blkअगर_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_64_request_rw {
+	uint8_t        nr_segments;  /* number of segments                   */
+	blkif_vdev_t   handle;       /* only for read/write requests         */
+	uint32_t       _pad1;        /* offsetof(blkif_reqest..,u.rw.id)==8  */
+	uint64_t       id;
+	blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+	struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_64_request_discard अणु
-	uपूर्णांक8_t        flag;         /* BLKIF_DISCARD_SECURE or zero         */
-	blkअगर_vdev_t   _pad1;        /* was "handle" क्रम पढ़ो/ग_लिखो requests */
-        uपूर्णांक32_t       _pad2;        /* दुरत्व(blkअगर_..,u.discard.id)==8   */
-	uपूर्णांक64_t       id;
-	blkअगर_sector_t sector_number;/* start sector idx on disk (r/w only)  */
-	uपूर्णांक64_t       nr_sectors;
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_64_request_discard {
+	uint8_t        flag;         /* BLKIF_DISCARD_SECURE or zero         */
+	blkif_vdev_t   _pad1;        /* was "handle" for read/write requests */
+        uint32_t       _pad2;        /* offsetof(blkif_..,u.discard.id)==8   */
+	uint64_t       id;
+	blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
+	uint64_t       nr_sectors;
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_64_request_other अणु
-	uपूर्णांक8_t        _pad1;
-	blkअगर_vdev_t   _pad2;
-	uपूर्णांक32_t       _pad3;        /* दुरत्व(blkअगर_..,u.discard.id)==8   */
-	uपूर्णांक64_t       id;           /* निजी guest value, echoed in resp  */
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_64_request_other {
+	uint8_t        _pad1;
+	blkif_vdev_t   _pad2;
+	uint32_t       _pad3;        /* offsetof(blkif_..,u.discard.id)==8   */
+	uint64_t       id;           /* private guest value, echoed in resp  */
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_64_request_indirect अणु
-	uपूर्णांक8_t        indirect_op;
-	uपूर्णांक16_t       nr_segments;
-	uपूर्णांक32_t       _pad1;        /* दुरत्व(blkअगर_..,u.indirect.id)==8   */
-	uपूर्णांक64_t       id;
-	blkअगर_sector_t sector_number;
-	blkअगर_vdev_t   handle;
-	uपूर्णांक16_t       _pad2;
-	grant_ref_t    indirect_grefs[BLKIF_MAX_INसूचीECT_PAGES_PER_REQUEST];
+struct blkif_x86_64_request_indirect {
+	uint8_t        indirect_op;
+	uint16_t       nr_segments;
+	uint32_t       _pad1;        /* offsetof(blkif_..,u.indirect.id)==8   */
+	uint64_t       id;
+	blkif_sector_t sector_number;
+	blkif_vdev_t   handle;
+	uint16_t       _pad2;
+	grant_ref_t    indirect_grefs[BLKIF_MAX_INDIRECT_PAGES_PER_REQUEST];
 	/*
 	 * The maximum number of indirect segments (and pages) that will
-	 * be used is determined by MAX_INसूचीECT_SEGMENTS, this value
+	 * be used is determined by MAX_INDIRECT_SEGMENTS, this value
 	 * is also exported to the guest (via xenstore
 	 * feature-max-indirect-segments entry), so the frontend knows how
 	 * many indirect segments the backend supports.
 	 */
-	uपूर्णांक32_t       _pad3;        /* make it 64 byte aligned */
-पूर्ण __attribute__((__packed__));
+	uint32_t       _pad3;        /* make it 64 byte aligned */
+} __attribute__((__packed__));
 
-काष्ठा blkअगर_x86_64_request अणु
-	uपूर्णांक8_t        operation;    /* BLKIF_OP_???                         */
-	जोड़ अणु
-		काष्ठा blkअगर_x86_64_request_rw rw;
-		काष्ठा blkअगर_x86_64_request_discard discard;
-		काष्ठा blkअगर_x86_64_request_other other;
-		काष्ठा blkअगर_x86_64_request_indirect indirect;
-	पूर्ण u;
-पूर्ण __attribute__((__packed__));
+struct blkif_x86_64_request {
+	uint8_t        operation;    /* BLKIF_OP_???                         */
+	union {
+		struct blkif_x86_64_request_rw rw;
+		struct blkif_x86_64_request_discard discard;
+		struct blkif_x86_64_request_other other;
+		struct blkif_x86_64_request_indirect indirect;
+	} u;
+} __attribute__((__packed__));
 
-DEFINE_RING_TYPES(blkअगर_common, काष्ठा blkअगर_common_request,
-		  काष्ठा blkअगर_response);
-DEFINE_RING_TYPES(blkअगर_x86_32, काष्ठा blkअगर_x86_32_request,
-		  काष्ठा blkअगर_response __packed);
-DEFINE_RING_TYPES(blkअगर_x86_64, काष्ठा blkअगर_x86_64_request,
-		  काष्ठा blkअगर_response);
+DEFINE_RING_TYPES(blkif_common, struct blkif_common_request,
+		  struct blkif_response);
+DEFINE_RING_TYPES(blkif_x86_32, struct blkif_x86_32_request,
+		  struct blkif_response __packed);
+DEFINE_RING_TYPES(blkif_x86_64, struct blkif_x86_64_request,
+		  struct blkif_response);
 
-जोड़ blkअगर_back_rings अणु
-	काष्ठा blkअगर_back_ring        native;
-	काष्ठा blkअगर_common_back_ring common;
-	काष्ठा blkअगर_x86_32_back_ring x86_32;
-	काष्ठा blkअगर_x86_64_back_ring x86_64;
-पूर्ण;
+union blkif_back_rings {
+	struct blkif_back_ring        native;
+	struct blkif_common_back_ring common;
+	struct blkif_x86_32_back_ring x86_32;
+	struct blkif_x86_64_back_ring x86_64;
+};
 
-क्रमागत blkअगर_protocol अणु
+enum blkif_protocol {
 	BLKIF_PROTOCOL_NATIVE = 1,
 	BLKIF_PROTOCOL_X86_32 = 2,
 	BLKIF_PROTOCOL_X86_64 = 3,
-पूर्ण;
+};
 
 /*
- * Default protocol अगर the frontend करोesn't specअगरy one.
+ * Default protocol if the frontend doesn't specify one.
  */
-#अगर_घोषित CONFIG_X86
+#ifdef CONFIG_X86
 #  define BLKIF_PROTOCOL_DEFAULT BLKIF_PROTOCOL_X86_32
-#अन्यथा
+#else
 #  define BLKIF_PROTOCOL_DEFAULT BLKIF_PROTOCOL_NATIVE
-#पूर्ण_अगर
+#endif
 
-काष्ठा xen_vbd अणु
-	/* What the करोमुख्य refers to this vbd as. */
-	blkअगर_vdev_t		handle;
-	/* Non-zero -> पढ़ो-only */
-	अचिन्हित अक्षर		पढ़ोonly;
+struct xen_vbd {
+	/* What the domain refers to this vbd as. */
+	blkif_vdev_t		handle;
+	/* Non-zero -> read-only */
+	unsigned char		readonly;
 	/* VDISK_xxx */
-	अचिन्हित अक्षर		type;
+	unsigned char		type;
 	/* phys device that this vbd maps to. */
 	u32			pdevice;
-	काष्ठा block_device	*bdev;
+	struct block_device	*bdev;
 	/* Cached size parameter. */
 	sector_t		size;
-	अचिन्हित पूर्णांक		flush_support:1;
-	अचिन्हित पूर्णांक		discard_secure:1;
-	अचिन्हित पूर्णांक		feature_gnt_persistent:1;
-	अचिन्हित पूर्णांक		overflow_max_grants:1;
-पूर्ण;
+	unsigned int		flush_support:1;
+	unsigned int		discard_secure:1;
+	unsigned int		feature_gnt_persistent:1;
+	unsigned int		overflow_max_grants:1;
+};
 
-काष्ठा backend_info;
+struct backend_info;
 
 /* Number of requests that we can fit in a ring */
-#घोषणा XEN_BLKIF_REQS_PER_PAGE		32
+#define XEN_BLKIF_REQS_PER_PAGE		32
 
-काष्ठा persistent_gnt अणु
-	काष्ठा page *page;
+struct persistent_gnt {
+	struct page *page;
 	grant_ref_t gnt;
 	grant_handle_t handle;
-	अचिन्हित दीर्घ last_used;
+	unsigned long last_used;
 	bool active;
-	काष्ठा rb_node node;
-	काष्ठा list_head हटाओ_node;
-पूर्ण;
+	struct rb_node node;
+	struct list_head remove_node;
+};
 
-/* Per-ring inक्रमmation. */
-काष्ठा xen_blkअगर_ring अणु
-	/* Physical parameters of the comms winकरोw. */
-	अचिन्हित पूर्णांक		irq;
-	जोड़ blkअगर_back_rings	blk_rings;
-	व्योम			*blk_ring;
+/* Per-ring information. */
+struct xen_blkif_ring {
+	/* Physical parameters of the comms window. */
+	unsigned int		irq;
+	union blkif_back_rings	blk_rings;
+	void			*blk_ring;
 	/* Private fields. */
 	spinlock_t		blk_ring_lock;
 
-	रुको_queue_head_t	wq;
+	wait_queue_head_t	wq;
 	atomic_t		inflight;
 	bool			active;
-	/* One thपढ़ो per blkअगर ring. */
-	काष्ठा task_काष्ठा	*xenblkd;
-	अचिन्हित पूर्णांक		रुकोing_reqs;
+	/* One thread per blkif ring. */
+	struct task_struct	*xenblkd;
+	unsigned int		waiting_reqs;
 
 	/* List of all 'pending_req' available */
-	काष्ठा list_head	pending_मुक्त;
+	struct list_head	pending_free;
 	/* And its spinlock. */
-	spinlock_t		pending_मुक्त_lock;
-	रुको_queue_head_t	pending_मुक्त_wq;
+	spinlock_t		pending_free_lock;
+	wait_queue_head_t	pending_free_wq;
 
 	/* Tree to store persistent grants. */
-	काष्ठा rb_root		persistent_gnts;
-	अचिन्हित पूर्णांक		persistent_gnt_c;
+	struct rb_root		persistent_gnts;
+	unsigned int		persistent_gnt_c;
 	atomic_t		persistent_gnt_in_use;
-	अचिन्हित दीर्घ           next_lru;
+	unsigned long           next_lru;
 
 	/* Statistics. */
-	अचिन्हित दीर्घ		st_prपूर्णांक;
-	अचिन्हित दीर्घ दीर्घ	st_rd_req;
-	अचिन्हित दीर्घ दीर्घ	st_wr_req;
-	अचिन्हित दीर्घ दीर्घ	st_oo_req;
-	अचिन्हित दीर्घ दीर्घ	st_f_req;
-	अचिन्हित दीर्घ दीर्घ	st_ds_req;
-	अचिन्हित दीर्घ दीर्घ	st_rd_sect;
-	अचिन्हित दीर्घ दीर्घ	st_wr_sect;
+	unsigned long		st_print;
+	unsigned long long	st_rd_req;
+	unsigned long long	st_wr_req;
+	unsigned long long	st_oo_req;
+	unsigned long long	st_f_req;
+	unsigned long long	st_ds_req;
+	unsigned long long	st_rd_sect;
+	unsigned long long	st_wr_sect;
 
 	/* Used by the kworker that offload work from the persistent purge. */
-	काष्ठा list_head	persistent_purge_list;
-	काष्ठा work_काष्ठा	persistent_purge_work;
+	struct list_head	persistent_purge_list;
+	struct work_struct	persistent_purge_work;
 
-	/* Buffer of मुक्त pages to map grant refs. */
-	काष्ठा gnttab_page_cache मुक्त_pages;
+	/* Buffer of free pages to map grant refs. */
+	struct gnttab_page_cache free_pages;
 
-	काष्ठा work_काष्ठा	मुक्त_work;
-	/* Thपढ़ो shutकरोwn रुको queue. */
-	रुको_queue_head_t	shutकरोwn_wq;
-	काष्ठा xen_blkअगर 	*blkअगर;
-पूर्ण;
+	struct work_struct	free_work;
+	/* Thread shutdown wait queue. */
+	wait_queue_head_t	shutdown_wq;
+	struct xen_blkif 	*blkif;
+};
 
-काष्ठा xen_blkअगर अणु
-	/* Unique identअगरier क्रम this पूर्णांकerface. */
-	करोmid_t			करोmid;
-	अचिन्हित पूर्णांक		handle;
-	/* Comms inक्रमmation. */
-	क्रमागत blkअगर_protocol	blk_protocol;
-	/* The VBD attached to this पूर्णांकerface. */
-	काष्ठा xen_vbd		vbd;
-	/* Back poपूर्णांकer to the backend_info. */
-	काष्ठा backend_info	*be;
+struct xen_blkif {
+	/* Unique identifier for this interface. */
+	domid_t			domid;
+	unsigned int		handle;
+	/* Comms information. */
+	enum blkif_protocol	blk_protocol;
+	/* The VBD attached to this interface. */
+	struct xen_vbd		vbd;
+	/* Back pointer to the backend_info. */
+	struct backend_info	*be;
 	atomic_t		refcnt;
-	/* क्रम barrier (drain) requests */
-	काष्ठा completion	drain_complete;
+	/* for barrier (drain) requests */
+	struct completion	drain_complete;
 	atomic_t		drain;
 
-	काष्ठा work_काष्ठा	मुक्त_work;
-	अचिन्हित पूर्णांक 		nr_ring_pages;
+	struct work_struct	free_work;
+	unsigned int 		nr_ring_pages;
 	bool			multi_ref;
-	/* All rings क्रम this device. */
-	काष्ठा xen_blkअगर_ring	*rings;
-	अचिन्हित पूर्णांक		nr_rings;
-	अचिन्हित दीर्घ		buffer_squeeze_end;
-पूर्ण;
+	/* All rings for this device. */
+	struct xen_blkif_ring	*rings;
+	unsigned int		nr_rings;
+	unsigned long		buffer_squeeze_end;
+};
 
-काष्ठा seg_buf अणु
-	अचिन्हित दीर्घ offset;
-	अचिन्हित पूर्णांक nsec;
-पूर्ण;
+struct seg_buf {
+	unsigned long offset;
+	unsigned int nsec;
+};
 
-काष्ठा grant_page अणु
-	काष्ठा page 		*page;
-	काष्ठा persistent_gnt	*persistent_gnt;
+struct grant_page {
+	struct page 		*page;
+	struct persistent_gnt	*persistent_gnt;
 	grant_handle_t		handle;
 	grant_ref_t		gref;
-पूर्ण;
+};
 
 /*
  * Each outstanding request that we've passed to the lower device layers has a
  * 'pending_req' allocated to it. Each buffer_head that completes decrements
- * the pendcnt towards zero. When it hits zero, the specअगरied करोमुख्य has a
- * response queued क्रम it, with the saved 'id' passed back.
+ * the pendcnt towards zero. When it hits zero, the specified domain has a
+ * response queued for it, with the saved 'id' passed back.
  */
-काष्ठा pending_req अणु
-	काष्ठा xen_blkअगर_ring   *ring;
+struct pending_req {
+	struct xen_blkif_ring   *ring;
 	u64			id;
-	पूर्णांक			nr_segs;
+	int			nr_segs;
 	atomic_t		pendcnt;
-	अचिन्हित लघु		operation;
-	पूर्णांक			status;
-	काष्ठा list_head	मुक्त_list;
-	काष्ठा grant_page	*segments[MAX_INसूचीECT_SEGMENTS];
+	unsigned short		operation;
+	int			status;
+	struct list_head	free_list;
+	struct grant_page	*segments[MAX_INDIRECT_SEGMENTS];
 	/* Indirect descriptors */
-	काष्ठा grant_page	*indirect_pages[MAX_INसूचीECT_PAGES];
-	काष्ठा seg_buf		seg[MAX_INसूचीECT_SEGMENTS];
-	काष्ठा bio		*biolist[MAX_INसूचीECT_SEGMENTS];
-	काष्ठा gnttab_unmap_grant_ref unmap[MAX_INसूचीECT_SEGMENTS];
-	काष्ठा page                   *unmap_pages[MAX_INसूचीECT_SEGMENTS];
-	काष्ठा gntab_unmap_queue_data gnttab_unmap_data;
-पूर्ण;
+	struct grant_page	*indirect_pages[MAX_INDIRECT_PAGES];
+	struct seg_buf		seg[MAX_INDIRECT_SEGMENTS];
+	struct bio		*biolist[MAX_INDIRECT_SEGMENTS];
+	struct gnttab_unmap_grant_ref unmap[MAX_INDIRECT_SEGMENTS];
+	struct page                   *unmap_pages[MAX_INDIRECT_SEGMENTS];
+	struct gntab_unmap_queue_data gnttab_unmap_data;
+};
 
 
-#घोषणा vbd_sz(_v)	bdev_nr_sectors((_v)->bdev)
+#define vbd_sz(_v)	bdev_nr_sectors((_v)->bdev)
 
-#घोषणा xen_blkअगर_get(_b) (atomic_inc(&(_b)->refcnt))
-#घोषणा xen_blkअगर_put(_b)				\
-	करो अणु						\
-		अगर (atomic_dec_and_test(&(_b)->refcnt))	\
-			schedule_work(&(_b)->मुक्त_work);\
-	पूर्ण जबतक (0)
+#define xen_blkif_get(_b) (atomic_inc(&(_b)->refcnt))
+#define xen_blkif_put(_b)				\
+	do {						\
+		if (atomic_dec_and_test(&(_b)->refcnt))	\
+			schedule_work(&(_b)->free_work);\
+	} while (0)
 
-काष्ठा phys_req अणु
-	अचिन्हित लघु		dev;
-	blkअगर_sector_t		nr_sects;
-	काष्ठा block_device	*bdev;
-	blkअगर_sector_t		sector_number;
-पूर्ण;
+struct phys_req {
+	unsigned short		dev;
+	blkif_sector_t		nr_sects;
+	struct block_device	*bdev;
+	blkif_sector_t		sector_number;
+};
 
-पूर्णांक xen_blkअगर_पूर्णांकerface_init(व्योम);
-व्योम xen_blkअगर_पूर्णांकerface_fini(व्योम);
+int xen_blkif_interface_init(void);
+void xen_blkif_interface_fini(void);
 
-पूर्णांक xen_blkअगर_xenbus_init(व्योम);
-व्योम xen_blkअगर_xenbus_fini(व्योम);
+int xen_blkif_xenbus_init(void);
+void xen_blkif_xenbus_fini(void);
 
-irqवापस_t xen_blkअगर_be_पूर्णांक(पूर्णांक irq, व्योम *dev_id);
-पूर्णांक xen_blkअगर_schedule(व्योम *arg);
-पूर्णांक xen_blkअगर_purge_persistent(व्योम *arg);
-व्योम xen_blkbk_मुक्त_caches(काष्ठा xen_blkअगर_ring *ring);
+irqreturn_t xen_blkif_be_int(int irq, void *dev_id);
+int xen_blkif_schedule(void *arg);
+int xen_blkif_purge_persistent(void *arg);
+void xen_blkbk_free_caches(struct xen_blkif_ring *ring);
 
-पूर्णांक xen_blkbk_flush_diskcache(काष्ठा xenbus_transaction xbt,
-			      काष्ठा backend_info *be, पूर्णांक state);
+int xen_blkbk_flush_diskcache(struct xenbus_transaction xbt,
+			      struct backend_info *be, int state);
 
-पूर्णांक xen_blkbk_barrier(काष्ठा xenbus_transaction xbt,
-		      काष्ठा backend_info *be, पूर्णांक state);
-काष्ठा xenbus_device *xen_blkbk_xenbus(काष्ठा backend_info *be);
-व्योम xen_blkbk_unmap_purged_grants(काष्ठा work_काष्ठा *work);
+int xen_blkbk_barrier(struct xenbus_transaction xbt,
+		      struct backend_info *be, int state);
+struct xenbus_device *xen_blkbk_xenbus(struct backend_info *be);
+void xen_blkbk_unmap_purged_grants(struct work_struct *work);
 
-अटल अंतरभूत व्योम blkअगर_get_x86_32_req(काष्ठा blkअगर_request *dst,
-					काष्ठा blkअगर_x86_32_request *src)
-अणु
-	पूर्णांक i, n = BLKIF_MAX_SEGMENTS_PER_REQUEST, j;
+static inline void blkif_get_x86_32_req(struct blkif_request *dst,
+					struct blkif_x86_32_request *src)
+{
+	int i, n = BLKIF_MAX_SEGMENTS_PER_REQUEST, j;
 	dst->operation = READ_ONCE(src->operation);
-	चयन (dst->operation) अणु
-	हाल BLKIF_OP_READ:
-	हाल BLKIF_OP_WRITE:
-	हाल BLKIF_OP_WRITE_BARRIER:
-	हाल BLKIF_OP_FLUSH_DISKCACHE:
+	switch (dst->operation) {
+	case BLKIF_OP_READ:
+	case BLKIF_OP_WRITE:
+	case BLKIF_OP_WRITE_BARRIER:
+	case BLKIF_OP_FLUSH_DISKCACHE:
 		dst->u.rw.nr_segments = src->u.rw.nr_segments;
 		dst->u.rw.handle = src->u.rw.handle;
 		dst->u.rw.id = src->u.rw.id;
 		dst->u.rw.sector_number = src->u.rw.sector_number;
 		barrier();
-		अगर (n > dst->u.rw.nr_segments)
+		if (n > dst->u.rw.nr_segments)
 			n = dst->u.rw.nr_segments;
-		क्रम (i = 0; i < n; i++)
+		for (i = 0; i < n; i++)
 			dst->u.rw.seg[i] = src->u.rw.seg[i];
-		अवरोध;
-	हाल BLKIF_OP_DISCARD:
+		break;
+	case BLKIF_OP_DISCARD:
 		dst->u.discard.flag = src->u.discard.flag;
 		dst->u.discard.id = src->u.discard.id;
 		dst->u.discard.sector_number = src->u.discard.sector_number;
 		dst->u.discard.nr_sectors = src->u.discard.nr_sectors;
-		अवरोध;
-	हाल BLKIF_OP_INसूचीECT:
+		break;
+	case BLKIF_OP_INDIRECT:
 		dst->u.indirect.indirect_op = src->u.indirect.indirect_op;
 		dst->u.indirect.nr_segments = src->u.indirect.nr_segments;
 		dst->u.indirect.handle = src->u.indirect.handle;
 		dst->u.indirect.id = src->u.indirect.id;
 		dst->u.indirect.sector_number = src->u.indirect.sector_number;
 		barrier();
-		j = min(MAX_INसूचीECT_PAGES, INसूचीECT_PAGES(dst->u.indirect.nr_segments));
-		क्रम (i = 0; i < j; i++)
+		j = min(MAX_INDIRECT_PAGES, INDIRECT_PAGES(dst->u.indirect.nr_segments));
+		for (i = 0; i < j; i++)
 			dst->u.indirect.indirect_grefs[i] =
 				src->u.indirect.indirect_grefs[i];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*
 		 * Don't know how to translate this op. Only get the
 		 * ID so failure can be reported to the frontend.
 		 */
 		dst->u.other.id = src->u.other.id;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल अंतरभूत व्योम blkअगर_get_x86_64_req(काष्ठा blkअगर_request *dst,
-					काष्ठा blkअगर_x86_64_request *src)
-अणु
-	पूर्णांक i, n = BLKIF_MAX_SEGMENTS_PER_REQUEST, j;
+static inline void blkif_get_x86_64_req(struct blkif_request *dst,
+					struct blkif_x86_64_request *src)
+{
+	int i, n = BLKIF_MAX_SEGMENTS_PER_REQUEST, j;
 	dst->operation = READ_ONCE(src->operation);
-	चयन (dst->operation) अणु
-	हाल BLKIF_OP_READ:
-	हाल BLKIF_OP_WRITE:
-	हाल BLKIF_OP_WRITE_BARRIER:
-	हाल BLKIF_OP_FLUSH_DISKCACHE:
+	switch (dst->operation) {
+	case BLKIF_OP_READ:
+	case BLKIF_OP_WRITE:
+	case BLKIF_OP_WRITE_BARRIER:
+	case BLKIF_OP_FLUSH_DISKCACHE:
 		dst->u.rw.nr_segments = src->u.rw.nr_segments;
 		dst->u.rw.handle = src->u.rw.handle;
 		dst->u.rw.id = src->u.rw.id;
 		dst->u.rw.sector_number = src->u.rw.sector_number;
 		barrier();
-		अगर (n > dst->u.rw.nr_segments)
+		if (n > dst->u.rw.nr_segments)
 			n = dst->u.rw.nr_segments;
-		क्रम (i = 0; i < n; i++)
+		for (i = 0; i < n; i++)
 			dst->u.rw.seg[i] = src->u.rw.seg[i];
-		अवरोध;
-	हाल BLKIF_OP_DISCARD:
+		break;
+	case BLKIF_OP_DISCARD:
 		dst->u.discard.flag = src->u.discard.flag;
 		dst->u.discard.id = src->u.discard.id;
 		dst->u.discard.sector_number = src->u.discard.sector_number;
 		dst->u.discard.nr_sectors = src->u.discard.nr_sectors;
-		अवरोध;
-	हाल BLKIF_OP_INसूचीECT:
+		break;
+	case BLKIF_OP_INDIRECT:
 		dst->u.indirect.indirect_op = src->u.indirect.indirect_op;
 		dst->u.indirect.nr_segments = src->u.indirect.nr_segments;
 		dst->u.indirect.handle = src->u.indirect.handle;
 		dst->u.indirect.id = src->u.indirect.id;
 		dst->u.indirect.sector_number = src->u.indirect.sector_number;
 		barrier();
-		j = min(MAX_INसूचीECT_PAGES, INसूचीECT_PAGES(dst->u.indirect.nr_segments));
-		क्रम (i = 0; i < j; i++)
+		j = min(MAX_INDIRECT_PAGES, INDIRECT_PAGES(dst->u.indirect.nr_segments));
+		for (i = 0; i < j; i++)
 			dst->u.indirect.indirect_grefs[i] =
 				src->u.indirect.indirect_grefs[i];
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/*
 		 * Don't know how to translate this op. Only get the
 		 * ID so failure can be reported to the frontend.
 		 */
 		dst->u.other.id = src->u.other.id;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-#पूर्ण_अगर /* __XEN_BLKIF__BACKEND__COMMON_H__ */
+#endif /* __XEN_BLKIF__BACKEND__COMMON_H__ */

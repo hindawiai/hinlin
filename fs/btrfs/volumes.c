@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/raid/pq.h>
-#समावेश <linux/semaphore.h>
-#समावेश <linux/uuid.h>
-#समावेश <linux/list_sort.h>
-#समावेश "misc.h"
-#समावेश "ctree.h"
-#समावेश "extent_map.h"
-#समावेश "disk-io.h"
-#समावेश "transaction.h"
-#समावेश "print-tree.h"
-#समावेश "volumes.h"
-#समावेश "raid56.h"
-#समावेश "async-thread.h"
-#समावेश "check-integrity.h"
-#समावेश "rcu-string.h"
-#समावेश "dev-replace.h"
-#समावेश "sysfs.h"
-#समावेश "tree-checker.h"
-#समावेश "space-info.h"
-#समावेश "block-group.h"
-#समावेश "discard.h"
-#समावेश "zoned.h"
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/bio.h>
+#include <linux/slab.h>
+#include <linux/blkdev.h>
+#include <linux/ratelimit.h>
+#include <linux/kthread.h>
+#include <linux/raid/pq.h>
+#include <linux/semaphore.h>
+#include <linux/uuid.h>
+#include <linux/list_sort.h>
+#include "misc.h"
+#include "ctree.h"
+#include "extent_map.h"
+#include "disk-io.h"
+#include "transaction.h"
+#include "print-tree.h"
+#include "volumes.h"
+#include "raid56.h"
+#include "async-thread.h"
+#include "check-integrity.h"
+#include "rcu-string.h"
+#include "dev-replace.h"
+#include "sysfs.h"
+#include "tree-checker.h"
+#include "space-info.h"
+#include "block-group.h"
+#include "discard.h"
+#include "zoned.h"
 
-स्थिर काष्ठा btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = अणु
-	[BTRFS_RAID_RAID10] = अणु
+const struct btrfs_raid_attr btrfs_raid_array[BTRFS_NR_RAID_TYPES] = {
+	[BTRFS_RAID_RAID10] = {
 		.sub_stripes	= 2,
 		.dev_stripes	= 1,
 		.devs_max	= 0,	/* 0 == as many as possible */
@@ -47,8 +46,8 @@
 		.raid_name	= "raid10",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID10,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID10_MIN_NOT_MET,
-	पूर्ण,
-	[BTRFS_RAID_RAID1] = अणु
+	},
+	[BTRFS_RAID_RAID1] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 2,
@@ -60,8 +59,8 @@
 		.raid_name	= "raid1",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID1,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID1_MIN_NOT_MET,
-	पूर्ण,
-	[BTRFS_RAID_RAID1C3] = अणु
+	},
+	[BTRFS_RAID_RAID1C3] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 3,
@@ -73,8 +72,8 @@
 		.raid_name	= "raid1c3",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID1C3,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID1C3_MIN_NOT_MET,
-	पूर्ण,
-	[BTRFS_RAID_RAID1C4] = अणु
+	},
+	[BTRFS_RAID_RAID1C4] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 4,
@@ -86,8 +85,8 @@
 		.raid_name	= "raid1c4",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID1C4,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID1C4_MIN_NOT_MET,
-	पूर्ण,
-	[BTRFS_RAID_DUP] = अणु
+	},
+	[BTRFS_RAID_DUP] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 2,
 		.devs_max	= 1,
@@ -99,8 +98,8 @@
 		.raid_name	= "dup",
 		.bg_flag	= BTRFS_BLOCK_GROUP_DUP,
 		.mindev_error	= 0,
-	पूर्ण,
-	[BTRFS_RAID_RAID0] = अणु
+	},
+	[BTRFS_RAID_RAID0] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 0,
@@ -112,8 +111,8 @@
 		.raid_name	= "raid0",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID0,
 		.mindev_error	= 0,
-	पूर्ण,
-	[BTRFS_RAID_SINGLE] = अणु
+	},
+	[BTRFS_RAID_SINGLE] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 1,
@@ -125,8 +124,8 @@
 		.raid_name	= "single",
 		.bg_flag	= 0,
 		.mindev_error	= 0,
-	पूर्ण,
-	[BTRFS_RAID_RAID5] = अणु
+	},
+	[BTRFS_RAID_RAID5] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 0,
@@ -138,8 +137,8 @@
 		.raid_name	= "raid5",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID5,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID5_MIN_NOT_MET,
-	पूर्ण,
-	[BTRFS_RAID_RAID6] = अणु
+	},
+	[BTRFS_RAID_RAID6] = {
 		.sub_stripes	= 1,
 		.dev_stripes	= 1,
 		.devs_max	= 0,
@@ -151,89 +150,89 @@
 		.raid_name	= "raid6",
 		.bg_flag	= BTRFS_BLOCK_GROUP_RAID6,
 		.mindev_error	= BTRFS_ERROR_DEV_RAID6_MIN_NOT_MET,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-स्थिर अक्षर *btrfs_bg_type_to_raid_name(u64 flags)
-अणु
-	स्थिर पूर्णांक index = btrfs_bg_flags_to_raid_index(flags);
+const char *btrfs_bg_type_to_raid_name(u64 flags)
+{
+	const int index = btrfs_bg_flags_to_raid_index(flags);
 
-	अगर (index >= BTRFS_NR_RAID_TYPES)
-		वापस शून्य;
+	if (index >= BTRFS_NR_RAID_TYPES)
+		return NULL;
 
-	वापस btrfs_raid_array[index].raid_name;
-पूर्ण
+	return btrfs_raid_array[index].raid_name;
+}
 
 /*
  * Fill @buf with textual description of @bg_flags, no more than @size_buf
  * bytes including terminating null byte.
  */
-व्योम btrfs_describe_block_groups(u64 bg_flags, अक्षर *buf, u32 size_buf)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
-	अक्षर *bp = buf;
+void btrfs_describe_block_groups(u64 bg_flags, char *buf, u32 size_buf)
+{
+	int i;
+	int ret;
+	char *bp = buf;
 	u64 flags = bg_flags;
 	u32 size_bp = size_buf;
 
-	अगर (!flags) अणु
-		म_नकल(bp, "NONE");
-		वापस;
-	पूर्ण
+	if (!flags) {
+		strcpy(bp, "NONE");
+		return;
+	}
 
-#घोषणा DESCRIBE_FLAG(flag, desc)						\
-	करो अणु								\
-		अगर (flags & (flag)) अणु					\
-			ret = snम_लिखो(bp, size_bp, "%s|", (desc));	\
-			अगर (ret < 0 || ret >= size_bp)			\
-				जाओ out_overflow;			\
+#define DESCRIBE_FLAG(flag, desc)						\
+	do {								\
+		if (flags & (flag)) {					\
+			ret = snprintf(bp, size_bp, "%s|", (desc));	\
+			if (ret < 0 || ret >= size_bp)			\
+				goto out_overflow;			\
 			size_bp -= ret;					\
 			bp += ret;					\
 			flags &= ~(flag);				\
-		पूर्ण							\
-	पूर्ण जबतक (0)
+		}							\
+	} while (0)
 
 	DESCRIBE_FLAG(BTRFS_BLOCK_GROUP_DATA, "data");
 	DESCRIBE_FLAG(BTRFS_BLOCK_GROUP_SYSTEM, "system");
 	DESCRIBE_FLAG(BTRFS_BLOCK_GROUP_METADATA, "metadata");
 
 	DESCRIBE_FLAG(BTRFS_AVAIL_ALLOC_BIT_SINGLE, "single");
-	क्रम (i = 0; i < BTRFS_NR_RAID_TYPES; i++)
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++)
 		DESCRIBE_FLAG(btrfs_raid_array[i].bg_flag,
 			      btrfs_raid_array[i].raid_name);
-#अघोषित DESCRIBE_FLAG
+#undef DESCRIBE_FLAG
 
-	अगर (flags) अणु
-		ret = snम_लिखो(bp, size_bp, "0x%llx|", flags);
+	if (flags) {
+		ret = snprintf(bp, size_bp, "0x%llx|", flags);
 		size_bp -= ret;
-	पूर्ण
+	}
 
-	अगर (size_bp < size_buf)
-		buf[size_buf - size_bp - 1] = '\0'; /* हटाओ last | */
+	if (size_bp < size_buf)
+		buf[size_buf - size_bp - 1] = '\0'; /* remove last | */
 
 	/*
 	 * The text is trimmed, it's up to the caller to provide sufficiently
 	 * large buffer
 	 */
 out_overflow:;
-पूर्ण
+}
 
-अटल पूर्णांक init_first_rw_device(काष्ठा btrfs_trans_handle *trans);
-अटल पूर्णांक btrfs_relocate_sys_chunks(काष्ठा btrfs_fs_info *fs_info);
-अटल व्योम btrfs_dev_stat_prपूर्णांक_on_error(काष्ठा btrfs_device *dev);
-अटल व्योम btrfs_dev_stat_prपूर्णांक_on_load(काष्ठा btrfs_device *device);
-अटल पूर्णांक __btrfs_map_block(काष्ठा btrfs_fs_info *fs_info,
-			     क्रमागत btrfs_map_op op,
+static int init_first_rw_device(struct btrfs_trans_handle *trans);
+static int btrfs_relocate_sys_chunks(struct btrfs_fs_info *fs_info);
+static void btrfs_dev_stat_print_on_error(struct btrfs_device *dev);
+static void btrfs_dev_stat_print_on_load(struct btrfs_device *device);
+static int __btrfs_map_block(struct btrfs_fs_info *fs_info,
+			     enum btrfs_map_op op,
 			     u64 logical, u64 *length,
-			     काष्ठा btrfs_bio **bbio_ret,
-			     पूर्णांक mirror_num, पूर्णांक need_raid_map);
+			     struct btrfs_bio **bbio_ret,
+			     int mirror_num, int need_raid_map);
 
 /*
  * Device locking
  * ==============
  *
  * There are several mutexes that protect manipulation of devices and low-level
- * काष्ठाures like chunks but not block groups, extents or files
+ * structures like chunks but not block groups, extents or files
  *
  * uuid_mutex (global lock)
  * ------------------------
@@ -241,47 +240,47 @@ out_overflow:;
  * the SCAN_DEV ioctl registration or from mount either implicitly (the first
  * device) or requested by the device= mount option
  *
- * the mutex can be very coarse and can cover दीर्घ-running operations
+ * the mutex can be very coarse and can cover long-running operations
  *
  * protects: updates to fs_devices counters like missing devices, rw devices,
- * seeding, काष्ठाure cloning, खोलोing/closing devices at mount/umount समय
+ * seeding, structure cloning, opening/closing devices at mount/umount time
  *
- * global::fs_devs - add, हटाओ, updates to the global list
+ * global::fs_devs - add, remove, updates to the global list
  *
- * करोes not protect: manipulation of the fs_devices::devices list in general
- * but in mount context it could be used to exclude list modअगरications by eg.
+ * does not protect: manipulation of the fs_devices::devices list in general
+ * but in mount context it could be used to exclude list modifications by eg.
  * scan ioctl
  *
- * btrfs_device::name - नामs (ग_लिखो side), पढ़ो is RCU
+ * btrfs_device::name - renames (write side), read is RCU
  *
  * fs_devices::device_list_mutex (per-fs, with RCU)
  * ------------------------------------------------
  * protects updates to fs_devices::devices, ie. adding and deleting
  *
- * simple list traversal with पढ़ो-only actions can be करोne with RCU protection
+ * simple list traversal with read-only actions can be done with RCU protection
  *
  * may be used to exclude some operations from running concurrently without any
- * modअगरications to the list (see ग_लिखो_all_supers)
+ * modifications to the list (see write_all_supers)
  *
- * Is not required at mount and बंद बार, because our device list is
- * रक्षित by the uuid_mutex at that poपूर्णांक.
+ * Is not required at mount and close times, because our device list is
+ * protected by the uuid_mutex at that point.
  *
  * balance_mutex
  * -------------
- * protects balance काष्ठाures (status, state) and context accessed from
- * several places (पूर्णांकernally, ioctl)
+ * protects balance structures (status, state) and context accessed from
+ * several places (internally, ioctl)
  *
  * chunk_mutex
  * -----------
  * protects chunks, adding or removing during allocation, trim or when a new
- * device is added/हटाओd. Additionally it also protects post_commit_list of
- * inभागidual devices, since they can be added to the transaction's
+ * device is added/removed. Additionally it also protects post_commit_list of
+ * individual devices, since they can be added to the transaction's
  * post_commit_list only with chunk_mutex held.
  *
  * cleaner_mutex
  * -------------
- * a big lock that is held by the cleaner thपढ़ो and prevents running subvolume
- * cleaning together with relocation or delayed iमाला_दो
+ * a big lock that is held by the cleaner thread and prevents running subvolume
+ * cleaning together with relocation or delayed iputs
  *
  *
  * Lock nesting
@@ -296,12 +295,12 @@ out_overflow:;
  * Exclusive operations
  * ====================
  *
- * Maपूर्णांकains the exclusivity of the following operations that apply to the
- * whole fileप्रणाली and cannot run in parallel.
+ * Maintains the exclusivity of the following operations that apply to the
+ * whole filesystem and cannot run in parallel.
  *
  * - Balance (*)
  * - Device add
- * - Device हटाओ
+ * - Device remove
  * - Device replace (*)
  * - Resize
  *
@@ -311,47 +310,47 @@ out_overflow:;
  * - Paused state
  * - Completed state
  *
- * Only device operations marked with (*) can go पूर्णांकo the Paused state क्रम the
+ * Only device operations marked with (*) can go into the Paused state for the
  * following reasons:
  *
  * - ioctl (only Balance can be Paused through ioctl)
- * - fileप्रणाली remounted as पढ़ो-only
- * - fileप्रणाली unmounted and mounted as पढ़ो-only
- * - प्रणाली घातer-cycle and fileप्रणाली mounted as पढ़ो-only
- * - fileप्रणाली or device errors leading to क्रमced पढ़ो-only
+ * - filesystem remounted as read-only
+ * - filesystem unmounted and mounted as read-only
+ * - system power-cycle and filesystem mounted as read-only
+ * - filesystem or device errors leading to forced read-only
  *
  * The status of exclusive operation is set and cleared atomically.
- * During the course of Paused state, fs_info::exclusive_operation reमुख्यs set.
+ * During the course of Paused state, fs_info::exclusive_operation remains set.
  * A device operation in Paused or Running state can be canceled or resumed
- * either by ioctl (Balance only) or when remounted as पढ़ो-ग_लिखो.
+ * either by ioctl (Balance only) or when remounted as read-write.
  * The exclusive status is cleared when the device operation is canceled or
  * completed.
  */
 
 DEFINE_MUTEX(uuid_mutex);
-अटल LIST_HEAD(fs_uuids);
-काष्ठा list_head * __attribute_स्थिर__ btrfs_get_fs_uuids(व्योम)
-अणु
-	वापस &fs_uuids;
-पूर्ण
+static LIST_HEAD(fs_uuids);
+struct list_head * __attribute_const__ btrfs_get_fs_uuids(void)
+{
+	return &fs_uuids;
+}
 
 /*
- * alloc_fs_devices - allocate काष्ठा btrfs_fs_devices
- * @fsid:		अगर not शून्य, copy the UUID to fs_devices::fsid
- * @metadata_fsid:	अगर not शून्य, copy the UUID to fs_devices::metadata_fsid
+ * alloc_fs_devices - allocate struct btrfs_fs_devices
+ * @fsid:		if not NULL, copy the UUID to fs_devices::fsid
+ * @metadata_fsid:	if not NULL, copy the UUID to fs_devices::metadata_fsid
  *
- * Return a poपूर्णांकer to a new काष्ठा btrfs_fs_devices on success, or ERR_PTR().
- * The वापसed काष्ठा is not linked onto any lists and can be destroyed with
- * kमुक्त() right away.
+ * Return a pointer to a new struct btrfs_fs_devices on success, or ERR_PTR().
+ * The returned struct is not linked onto any lists and can be destroyed with
+ * kfree() right away.
  */
-अटल काष्ठा btrfs_fs_devices *alloc_fs_devices(स्थिर u8 *fsid,
-						 स्थिर u8 *metadata_fsid)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devs;
+static struct btrfs_fs_devices *alloc_fs_devices(const u8 *fsid,
+						 const u8 *metadata_fsid)
+{
+	struct btrfs_fs_devices *fs_devs;
 
-	fs_devs = kzalloc(माप(*fs_devs), GFP_KERNEL);
-	अगर (!fs_devs)
-		वापस ERR_PTR(-ENOMEM);
+	fs_devs = kzalloc(sizeof(*fs_devs), GFP_KERNEL);
+	if (!fs_devs)
+		return ERR_PTR(-ENOMEM);
 
 	mutex_init(&fs_devs->device_list_mutex);
 
@@ -359,432 +358,432 @@ DEFINE_MUTEX(uuid_mutex);
 	INIT_LIST_HEAD(&fs_devs->alloc_list);
 	INIT_LIST_HEAD(&fs_devs->fs_list);
 	INIT_LIST_HEAD(&fs_devs->seed_list);
-	अगर (fsid)
-		स_नकल(fs_devs->fsid, fsid, BTRFS_FSID_SIZE);
+	if (fsid)
+		memcpy(fs_devs->fsid, fsid, BTRFS_FSID_SIZE);
 
-	अगर (metadata_fsid)
-		स_नकल(fs_devs->metadata_uuid, metadata_fsid, BTRFS_FSID_SIZE);
-	अन्यथा अगर (fsid)
-		स_नकल(fs_devs->metadata_uuid, fsid, BTRFS_FSID_SIZE);
+	if (metadata_fsid)
+		memcpy(fs_devs->metadata_uuid, metadata_fsid, BTRFS_FSID_SIZE);
+	else if (fsid)
+		memcpy(fs_devs->metadata_uuid, fsid, BTRFS_FSID_SIZE);
 
-	वापस fs_devs;
-पूर्ण
+	return fs_devs;
+}
 
-व्योम btrfs_मुक्त_device(काष्ठा btrfs_device *device)
-अणु
+void btrfs_free_device(struct btrfs_device *device)
+{
 	WARN_ON(!list_empty(&device->post_commit_list));
-	rcu_string_मुक्त(device->name);
+	rcu_string_free(device->name);
 	extent_io_tree_release(&device->alloc_state);
 	bio_put(device->flush_bio);
 	btrfs_destroy_dev_zone_info(device);
-	kमुक्त(device);
-पूर्ण
+	kfree(device);
+}
 
-अटल व्योम मुक्त_fs_devices(काष्ठा btrfs_fs_devices *fs_devices)
-अणु
-	काष्ठा btrfs_device *device;
-	WARN_ON(fs_devices->खोलोed);
-	जबतक (!list_empty(&fs_devices->devices)) अणु
+static void free_fs_devices(struct btrfs_fs_devices *fs_devices)
+{
+	struct btrfs_device *device;
+	WARN_ON(fs_devices->opened);
+	while (!list_empty(&fs_devices->devices)) {
 		device = list_entry(fs_devices->devices.next,
-				    काष्ठा btrfs_device, dev_list);
+				    struct btrfs_device, dev_list);
 		list_del(&device->dev_list);
-		btrfs_मुक्त_device(device);
-	पूर्ण
-	kमुक्त(fs_devices);
-पूर्ण
+		btrfs_free_device(device);
+	}
+	kfree(fs_devices);
+}
 
-व्योम __निकास btrfs_cleanup_fs_uuids(व्योम)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
+void __exit btrfs_cleanup_fs_uuids(void)
+{
+	struct btrfs_fs_devices *fs_devices;
 
-	जबतक (!list_empty(&fs_uuids)) अणु
+	while (!list_empty(&fs_uuids)) {
 		fs_devices = list_entry(fs_uuids.next,
-					काष्ठा btrfs_fs_devices, fs_list);
+					struct btrfs_fs_devices, fs_list);
 		list_del(&fs_devices->fs_list);
-		मुक्त_fs_devices(fs_devices);
-	पूर्ण
-पूर्ण
+		free_fs_devices(fs_devices);
+	}
+}
 
 /*
- * Returns a poपूर्णांकer to a new btrfs_device on success; ERR_PTR() on error.
- * Returned काष्ठा is not linked onto any lists and must be destroyed using
- * btrfs_मुक्त_device.
+ * Returns a pointer to a new btrfs_device on success; ERR_PTR() on error.
+ * Returned struct is not linked onto any lists and must be destroyed using
+ * btrfs_free_device.
  */
-अटल काष्ठा btrfs_device *__alloc_device(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_device *dev;
+static struct btrfs_device *__alloc_device(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_device *dev;
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (!dev)
-		वापस ERR_PTR(-ENOMEM);
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (!dev)
+		return ERR_PTR(-ENOMEM);
 
 	/*
-	 * Pपुनः_स्मृतिate a bio that's always going to be used क्रम flushing device
-	 * barriers and matches the device lअगरespan
+	 * Preallocate a bio that's always going to be used for flushing device
+	 * barriers and matches the device lifespan
 	 */
-	dev->flush_bio = bio_kदो_स्मृति(GFP_KERNEL, 0);
-	अगर (!dev->flush_bio) अणु
-		kमुक्त(dev);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	dev->flush_bio = bio_kmalloc(GFP_KERNEL, 0);
+	if (!dev->flush_bio) {
+		kfree(dev);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	INIT_LIST_HEAD(&dev->dev_list);
 	INIT_LIST_HEAD(&dev->dev_alloc_list);
 	INIT_LIST_HEAD(&dev->post_commit_list);
 
-	atomic_set(&dev->पढ़ोa_in_flight, 0);
+	atomic_set(&dev->reada_in_flight, 0);
 	atomic_set(&dev->dev_stats_ccnt, 0);
 	btrfs_device_data_ordered_init(dev);
-	INIT_RADIX_TREE(&dev->पढ़ोa_zones, GFP_NOFS & ~__GFP_सूचीECT_RECLAIM);
-	INIT_RADIX_TREE(&dev->पढ़ोa_extents, GFP_NOFS & ~__GFP_सूचीECT_RECLAIM);
+	INIT_RADIX_TREE(&dev->reada_zones, GFP_NOFS & ~__GFP_DIRECT_RECLAIM);
+	INIT_RADIX_TREE(&dev->reada_extents, GFP_NOFS & ~__GFP_DIRECT_RECLAIM);
 	extent_io_tree_init(fs_info, &dev->alloc_state,
-			    IO_TREE_DEVICE_ALLOC_STATE, शून्य);
+			    IO_TREE_DEVICE_ALLOC_STATE, NULL);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल noअंतरभूत काष्ठा btrfs_fs_devices *find_fsid(
-		स्थिर u8 *fsid, स्थिर u8 *metadata_fsid)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
+static noinline struct btrfs_fs_devices *find_fsid(
+		const u8 *fsid, const u8 *metadata_fsid)
+{
+	struct btrfs_fs_devices *fs_devices;
 
 	ASSERT(fsid);
 
-	/* Handle non-split brain हालs */
-	list_क्रम_each_entry(fs_devices, &fs_uuids, fs_list) अणु
-		अगर (metadata_fsid) अणु
-			अगर (स_भेद(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0
-			    && स_भेद(metadata_fsid, fs_devices->metadata_uuid,
+	/* Handle non-split brain cases */
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
+		if (metadata_fsid) {
+			if (memcmp(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0
+			    && memcmp(metadata_fsid, fs_devices->metadata_uuid,
 				      BTRFS_FSID_SIZE) == 0)
-				वापस fs_devices;
-		पूर्ण अन्यथा अणु
-			अगर (स_भेद(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0)
-				वापस fs_devices;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+				return fs_devices;
+		} else {
+			if (memcmp(fsid, fs_devices->fsid, BTRFS_FSID_SIZE) == 0)
+				return fs_devices;
+		}
+	}
+	return NULL;
+}
 
-अटल काष्ठा btrfs_fs_devices *find_fsid_with_metadata_uuid(
-				काष्ठा btrfs_super_block *disk_super)
-अणु
+static struct btrfs_fs_devices *find_fsid_with_metadata_uuid(
+				struct btrfs_super_block *disk_super)
+{
 
-	काष्ठा btrfs_fs_devices *fs_devices;
+	struct btrfs_fs_devices *fs_devices;
 
 	/*
 	 * Handle scanned device having completed its fsid change but
-	 * beदीर्घing to a fs_devices that was created by first scanning
+	 * belonging to a fs_devices that was created by first scanning
 	 * a device which didn't have its fsid/metadata_uuid changed
 	 * at all and the CHANGING_FSID_V2 flag set.
 	 */
-	list_क्रम_each_entry(fs_devices, &fs_uuids, fs_list) अणु
-		अगर (fs_devices->fsid_change &&
-		    स_भेद(disk_super->metadata_uuid, fs_devices->fsid,
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
+		if (fs_devices->fsid_change &&
+		    memcmp(disk_super->metadata_uuid, fs_devices->fsid,
 			   BTRFS_FSID_SIZE) == 0 &&
-		    स_भेद(fs_devices->fsid, fs_devices->metadata_uuid,
-			   BTRFS_FSID_SIZE) == 0) अणु
-			वापस fs_devices;
-		पूर्ण
-	पूर्ण
+		    memcmp(fs_devices->fsid, fs_devices->metadata_uuid,
+			   BTRFS_FSID_SIZE) == 0) {
+			return fs_devices;
+		}
+	}
 	/*
 	 * Handle scanned device having completed its fsid change but
-	 * beदीर्घing to a fs_devices that was created by a device that
+	 * belonging to a fs_devices that was created by a device that
 	 * has an outdated pair of fsid/metadata_uuid and
 	 * CHANGING_FSID_V2 flag set.
 	 */
-	list_क्रम_each_entry(fs_devices, &fs_uuids, fs_list) अणु
-		अगर (fs_devices->fsid_change &&
-		    स_भेद(fs_devices->metadata_uuid,
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
+		if (fs_devices->fsid_change &&
+		    memcmp(fs_devices->metadata_uuid,
 			   fs_devices->fsid, BTRFS_FSID_SIZE) != 0 &&
-		    स_भेद(disk_super->metadata_uuid, fs_devices->metadata_uuid,
-			   BTRFS_FSID_SIZE) == 0) अणु
-			वापस fs_devices;
-		पूर्ण
-	पूर्ण
+		    memcmp(disk_super->metadata_uuid, fs_devices->metadata_uuid,
+			   BTRFS_FSID_SIZE) == 0) {
+			return fs_devices;
+		}
+	}
 
-	वापस find_fsid(disk_super->fsid, disk_super->metadata_uuid);
-पूर्ण
+	return find_fsid(disk_super->fsid, disk_super->metadata_uuid);
+}
 
 
-अटल पूर्णांक
-btrfs_get_bdev_and_sb(स्थिर अक्षर *device_path, भ_शेषe_t flags, व्योम *holder,
-		      पूर्णांक flush, काष्ठा block_device **bdev,
-		      काष्ठा btrfs_super_block **disk_super)
-अणु
-	पूर्णांक ret;
+static int
+btrfs_get_bdev_and_sb(const char *device_path, fmode_t flags, void *holder,
+		      int flush, struct block_device **bdev,
+		      struct btrfs_super_block **disk_super)
+{
+	int ret;
 
 	*bdev = blkdev_get_by_path(device_path, flags, holder);
 
-	अगर (IS_ERR(*bdev)) अणु
+	if (IS_ERR(*bdev)) {
 		ret = PTR_ERR(*bdev);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (flush)
-		filemap_ग_लिखो_and_रुको((*bdev)->bd_inode->i_mapping);
+	if (flush)
+		filemap_write_and_wait((*bdev)->bd_inode->i_mapping);
 	ret = set_blocksize(*bdev, BTRFS_BDEV_BLOCKSIZE);
-	अगर (ret) अणु
+	if (ret) {
 		blkdev_put(*bdev, flags);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	invalidate_bdev(*bdev);
-	*disk_super = btrfs_पढ़ो_dev_super(*bdev);
-	अगर (IS_ERR(*disk_super)) अणु
+	*disk_super = btrfs_read_dev_super(*bdev);
+	if (IS_ERR(*disk_super)) {
 		ret = PTR_ERR(*disk_super);
 		blkdev_put(*bdev, flags);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	वापस 0;
+	return 0;
 
 error:
-	*bdev = शून्य;
-	वापस ret;
-पूर्ण
+	*bdev = NULL;
+	return ret;
+}
 
-अटल bool device_path_matched(स्थिर अक्षर *path, काष्ठा btrfs_device *device)
-अणु
-	पूर्णांक found;
+static bool device_path_matched(const char *path, struct btrfs_device *device)
+{
+	int found;
 
-	rcu_पढ़ो_lock();
-	found = म_भेद(rcu_str_deref(device->name), path);
-	rcu_पढ़ो_unlock();
+	rcu_read_lock();
+	found = strcmp(rcu_str_deref(device->name), path);
+	rcu_read_unlock();
 
-	वापस found == 0;
-पूर्ण
+	return found == 0;
+}
 
 /*
- *  Search and हटाओ all stale (devices which are not mounted) devices.
- *  When both inमाला_दो are शून्य, it will search and release all stale devices.
+ *  Search and remove all stale (devices which are not mounted) devices.
+ *  When both inputs are NULL, it will search and release all stale devices.
  *  path:	Optional. When provided will it release all unmounted devices
  *		matching this path only.
- *  skip_dev:	Optional. Will skip this device when searching क्रम the stale
+ *  skip_dev:	Optional. Will skip this device when searching for the stale
  *		devices.
- *  Return:	0 क्रम success or अगर @path is शून्य.
- * 		-EBUSY अगर @path is a mounted device.
- * 		-ENOENT अगर @path करोes not match any device in the list.
+ *  Return:	0 for success or if @path is NULL.
+ * 		-EBUSY if @path is a mounted device.
+ * 		-ENOENT if @path does not match any device in the list.
  */
-अटल पूर्णांक btrfs_मुक्त_stale_devices(स्थिर अक्षर *path,
-				     काष्ठा btrfs_device *skip_device)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices, *पंचांगp_fs_devices;
-	काष्ठा btrfs_device *device, *पंचांगp_device;
-	पूर्णांक ret = 0;
+static int btrfs_free_stale_devices(const char *path,
+				     struct btrfs_device *skip_device)
+{
+	struct btrfs_fs_devices *fs_devices, *tmp_fs_devices;
+	struct btrfs_device *device, *tmp_device;
+	int ret = 0;
 
-	अगर (path)
+	if (path)
 		ret = -ENOENT;
 
-	list_क्रम_each_entry_safe(fs_devices, पंचांगp_fs_devices, &fs_uuids, fs_list) अणु
+	list_for_each_entry_safe(fs_devices, tmp_fs_devices, &fs_uuids, fs_list) {
 
 		mutex_lock(&fs_devices->device_list_mutex);
-		list_क्रम_each_entry_safe(device, पंचांगp_device,
-					 &fs_devices->devices, dev_list) अणु
-			अगर (skip_device && skip_device == device)
-				जारी;
-			अगर (path && !device->name)
-				जारी;
-			अगर (path && !device_path_matched(path, device))
-				जारी;
-			अगर (fs_devices->खोलोed) अणु
-				/* क्रम an alपढ़ोy deleted device वापस 0 */
-				अगर (path && ret != 0)
+		list_for_each_entry_safe(device, tmp_device,
+					 &fs_devices->devices, dev_list) {
+			if (skip_device && skip_device == device)
+				continue;
+			if (path && !device->name)
+				continue;
+			if (path && !device_path_matched(path, device))
+				continue;
+			if (fs_devices->opened) {
+				/* for an already deleted device return 0 */
+				if (path && ret != 0)
 					ret = -EBUSY;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* delete the stale device */
 			fs_devices->num_devices--;
 			list_del(&device->dev_list);
-			btrfs_मुक्त_device(device);
+			btrfs_free_device(device);
 
 			ret = 0;
-		पूर्ण
+		}
 		mutex_unlock(&fs_devices->device_list_mutex);
 
-		अगर (fs_devices->num_devices == 0) अणु
-			btrfs_sysfs_हटाओ_fsid(fs_devices);
+		if (fs_devices->num_devices == 0) {
+			btrfs_sysfs_remove_fsid(fs_devices);
 			list_del(&fs_devices->fs_list);
-			मुक्त_fs_devices(fs_devices);
-		पूर्ण
-	पूर्ण
+			free_fs_devices(fs_devices);
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * This is only used on mount, and we are रक्षित from competing things
- * messing with our fs_devices by the uuid_mutex, thus we करो not need the
+ * This is only used on mount, and we are protected from competing things
+ * messing with our fs_devices by the uuid_mutex, thus we do not need the
  * fs_devices->device_list_mutex here.
  */
-अटल पूर्णांक btrfs_खोलो_one_device(काष्ठा btrfs_fs_devices *fs_devices,
-			काष्ठा btrfs_device *device, भ_शेषe_t flags,
-			व्योम *holder)
-अणु
-	काष्ठा request_queue *q;
-	काष्ठा block_device *bdev;
-	काष्ठा btrfs_super_block *disk_super;
+static int btrfs_open_one_device(struct btrfs_fs_devices *fs_devices,
+			struct btrfs_device *device, fmode_t flags,
+			void *holder)
+{
+	struct request_queue *q;
+	struct block_device *bdev;
+	struct btrfs_super_block *disk_super;
 	u64 devid;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (device->bdev)
-		वापस -EINVAL;
-	अगर (!device->name)
-		वापस -EINVAL;
+	if (device->bdev)
+		return -EINVAL;
+	if (!device->name)
+		return -EINVAL;
 
 	ret = btrfs_get_bdev_and_sb(device->name->str, flags, holder, 1,
 				    &bdev, &disk_super);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	devid = btrfs_stack_device_id(&disk_super->dev_item);
-	अगर (devid != device->devid)
-		जाओ error_मुक्त_page;
+	if (devid != device->devid)
+		goto error_free_page;
 
-	अगर (स_भेद(device->uuid, disk_super->dev_item.uuid, BTRFS_UUID_SIZE))
-		जाओ error_मुक्त_page;
+	if (memcmp(device->uuid, disk_super->dev_item.uuid, BTRFS_UUID_SIZE))
+		goto error_free_page;
 
 	device->generation = btrfs_super_generation(disk_super);
 
-	अगर (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_SEEDING) अणु
-		अगर (btrfs_super_incompat_flags(disk_super) &
-		    BTRFS_FEATURE_INCOMPAT_METADATA_UUID) अणु
+	if (btrfs_super_flags(disk_super) & BTRFS_SUPER_FLAG_SEEDING) {
+		if (btrfs_super_incompat_flags(disk_super) &
+		    BTRFS_FEATURE_INCOMPAT_METADATA_UUID) {
 			pr_err(
 		"BTRFS: Invalid seeding and uuid-changed device detected\n");
-			जाओ error_मुक्त_page;
-		पूर्ण
+			goto error_free_page;
+		}
 
 		clear_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
 		fs_devices->seeding = true;
-	पूर्ण अन्यथा अणु
-		अगर (bdev_पढ़ो_only(bdev))
+	} else {
+		if (bdev_read_only(bdev))
 			clear_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
-		अन्यथा
+		else
 			set_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
-	पूर्ण
+	}
 
 	q = bdev_get_queue(bdev);
-	अगर (!blk_queue_nonrot(q))
+	if (!blk_queue_nonrot(q))
 		fs_devices->rotating = true;
 
 	device->bdev = bdev;
 	clear_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state);
 	device->mode = flags;
 
-	fs_devices->खोलो_devices++;
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
-	    device->devid != BTRFS_DEV_REPLACE_DEVID) अणु
+	fs_devices->open_devices++;
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
+	    device->devid != BTRFS_DEV_REPLACE_DEVID) {
 		fs_devices->rw_devices++;
 		list_add_tail(&device->dev_alloc_list, &fs_devices->alloc_list);
-	पूर्ण
+	}
 	btrfs_release_disk_super(disk_super);
 
-	वापस 0;
+	return 0;
 
-error_मुक्त_page:
+error_free_page:
 	btrfs_release_disk_super(disk_super);
 	blkdev_put(bdev, flags);
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Handle scanned device having its CHANGING_FSID_V2 flag set and the fs_devices
- * being created with a disk that has alपढ़ोy completed its fsid change. Such
- * disk can beदीर्घ to an fs which has its FSID changed or to one which करोesn't.
- * Handle both हालs here.
+ * being created with a disk that has already completed its fsid change. Such
+ * disk can belong to an fs which has its FSID changed or to one which doesn't.
+ * Handle both cases here.
  */
-अटल काष्ठा btrfs_fs_devices *find_fsid_inprogress(
-					काष्ठा btrfs_super_block *disk_super)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
+static struct btrfs_fs_devices *find_fsid_inprogress(
+					struct btrfs_super_block *disk_super)
+{
+	struct btrfs_fs_devices *fs_devices;
 
-	list_क्रम_each_entry(fs_devices, &fs_uuids, fs_list) अणु
-		अगर (स_भेद(fs_devices->metadata_uuid, fs_devices->fsid,
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
+		if (memcmp(fs_devices->metadata_uuid, fs_devices->fsid,
 			   BTRFS_FSID_SIZE) != 0 &&
-		    स_भेद(fs_devices->metadata_uuid, disk_super->fsid,
-			   BTRFS_FSID_SIZE) == 0 && !fs_devices->fsid_change) अणु
-			वापस fs_devices;
-		पूर्ण
-	पूर्ण
+		    memcmp(fs_devices->metadata_uuid, disk_super->fsid,
+			   BTRFS_FSID_SIZE) == 0 && !fs_devices->fsid_change) {
+			return fs_devices;
+		}
+	}
 
-	वापस find_fsid(disk_super->fsid, शून्य);
-पूर्ण
+	return find_fsid(disk_super->fsid, NULL);
+}
 
 
-अटल काष्ठा btrfs_fs_devices *find_fsid_changed(
-					काष्ठा btrfs_super_block *disk_super)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
+static struct btrfs_fs_devices *find_fsid_changed(
+					struct btrfs_super_block *disk_super)
+{
+	struct btrfs_fs_devices *fs_devices;
 
 	/*
-	 * Handles the हाल where scanned device is part of an fs that had
+	 * Handles the case where scanned device is part of an fs that had
 	 * multiple successful changes of FSID but curently device didn't
-	 * observe it. Meaning our fsid will be dअगरferent than theirs. We need
-	 * to handle two subहालs :
-	 *  1 - The fs still जारीs to have dअगरferent METADATA/FSID uuids.
-	 *  2 - The fs is चयनed back to its original FSID (METADATA/FSID
+	 * observe it. Meaning our fsid will be different than theirs. We need
+	 * to handle two subcases :
+	 *  1 - The fs still continues to have different METADATA/FSID uuids.
+	 *  2 - The fs is switched back to its original FSID (METADATA/FSID
 	 *  are equal).
 	 */
-	list_क्रम_each_entry(fs_devices, &fs_uuids, fs_list) अणु
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
 		/* Changed UUIDs */
-		अगर (स_भेद(fs_devices->metadata_uuid, fs_devices->fsid,
+		if (memcmp(fs_devices->metadata_uuid, fs_devices->fsid,
 			   BTRFS_FSID_SIZE) != 0 &&
-		    स_भेद(fs_devices->metadata_uuid, disk_super->metadata_uuid,
+		    memcmp(fs_devices->metadata_uuid, disk_super->metadata_uuid,
 			   BTRFS_FSID_SIZE) == 0 &&
-		    स_भेद(fs_devices->fsid, disk_super->fsid,
+		    memcmp(fs_devices->fsid, disk_super->fsid,
 			   BTRFS_FSID_SIZE) != 0)
-			वापस fs_devices;
+			return fs_devices;
 
 		/* Unchanged UUIDs */
-		अगर (स_भेद(fs_devices->metadata_uuid, fs_devices->fsid,
+		if (memcmp(fs_devices->metadata_uuid, fs_devices->fsid,
 			   BTRFS_FSID_SIZE) == 0 &&
-		    स_भेद(fs_devices->fsid, disk_super->metadata_uuid,
+		    memcmp(fs_devices->fsid, disk_super->metadata_uuid,
 			   BTRFS_FSID_SIZE) == 0)
-			वापस fs_devices;
-	पूर्ण
+			return fs_devices;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा btrfs_fs_devices *find_fsid_reverted_metadata(
-				काष्ठा btrfs_super_block *disk_super)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
+static struct btrfs_fs_devices *find_fsid_reverted_metadata(
+				struct btrfs_super_block *disk_super)
+{
+	struct btrfs_fs_devices *fs_devices;
 
 	/*
-	 * Handle the हाल where the scanned device is part of an fs whose last
+	 * Handle the case where the scanned device is part of an fs whose last
 	 * metadata UUID change reverted it to the original FSID. At the same
-	 * समय * fs_devices was first created by another स्थिरitutent device
+	 * time * fs_devices was first created by another constitutent device
 	 * which didn't fully observe the operation. This results in an
-	 * btrfs_fs_devices created with metadata/fsid dअगरferent AND
+	 * btrfs_fs_devices created with metadata/fsid different AND
 	 * btrfs_fs_devices::fsid_change set AND the metadata_uuid of the
 	 * fs_devices equal to the FSID of the disk.
 	 */
-	list_क्रम_each_entry(fs_devices, &fs_uuids, fs_list) अणु
-		अगर (स_भेद(fs_devices->fsid, fs_devices->metadata_uuid,
+	list_for_each_entry(fs_devices, &fs_uuids, fs_list) {
+		if (memcmp(fs_devices->fsid, fs_devices->metadata_uuid,
 			   BTRFS_FSID_SIZE) != 0 &&
-		    स_भेद(fs_devices->metadata_uuid, disk_super->fsid,
+		    memcmp(fs_devices->metadata_uuid, disk_super->fsid,
 			   BTRFS_FSID_SIZE) == 0 &&
 		    fs_devices->fsid_change)
-			वापस fs_devices;
-	पूर्ण
+			return fs_devices;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 /*
- * Add new device to list of रेजिस्टरed devices
+ * Add new device to list of registered devices
  *
  * Returns:
- * device poपूर्णांकer which was just added or updated when successful
- * error poपूर्णांकer when failed
+ * device pointer which was just added or updated when successful
+ * error pointer when failed
  */
-अटल noअंतरभूत काष्ठा btrfs_device *device_list_add(स्थिर अक्षर *path,
-			   काष्ठा btrfs_super_block *disk_super,
+static noinline struct btrfs_device *device_list_add(const char *path,
+			   struct btrfs_super_block *disk_super,
 			   bool *new_device_added)
-अणु
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_fs_devices *fs_devices = शून्य;
-	काष्ठा rcu_string *name;
+{
+	struct btrfs_device *device;
+	struct btrfs_fs_devices *fs_devices = NULL;
+	struct rcu_string *name;
 	u64 found_transid = btrfs_super_generation(disk_super);
 	u64 devid = btrfs_stack_device_id(&disk_super->dev_item);
 	bool has_metadata_uuid = (btrfs_super_incompat_flags(disk_super) &
@@ -792,84 +791,84 @@ error_मुक्त_page:
 	bool fsid_change_in_progress = (btrfs_super_flags(disk_super) &
 					BTRFS_SUPER_FLAG_CHANGING_FSID_V2);
 
-	अगर (fsid_change_in_progress) अणु
-		अगर (!has_metadata_uuid)
+	if (fsid_change_in_progress) {
+		if (!has_metadata_uuid)
 			fs_devices = find_fsid_inprogress(disk_super);
-		अन्यथा
+		else
 			fs_devices = find_fsid_changed(disk_super);
-	पूर्ण अन्यथा अगर (has_metadata_uuid) अणु
+	} else if (has_metadata_uuid) {
 		fs_devices = find_fsid_with_metadata_uuid(disk_super);
-	पूर्ण अन्यथा अणु
+	} else {
 		fs_devices = find_fsid_reverted_metadata(disk_super);
-		अगर (!fs_devices)
-			fs_devices = find_fsid(disk_super->fsid, शून्य);
-	पूर्ण
+		if (!fs_devices)
+			fs_devices = find_fsid(disk_super->fsid, NULL);
+	}
 
 
-	अगर (!fs_devices) अणु
-		अगर (has_metadata_uuid)
+	if (!fs_devices) {
+		if (has_metadata_uuid)
 			fs_devices = alloc_fs_devices(disk_super->fsid,
 						      disk_super->metadata_uuid);
-		अन्यथा
-			fs_devices = alloc_fs_devices(disk_super->fsid, शून्य);
+		else
+			fs_devices = alloc_fs_devices(disk_super->fsid, NULL);
 
-		अगर (IS_ERR(fs_devices))
-			वापस ERR_CAST(fs_devices);
+		if (IS_ERR(fs_devices))
+			return ERR_CAST(fs_devices);
 
 		fs_devices->fsid_change = fsid_change_in_progress;
 
 		mutex_lock(&fs_devices->device_list_mutex);
 		list_add(&fs_devices->fs_list, &fs_uuids);
 
-		device = शून्य;
-	पूर्ण अन्यथा अणु
+		device = NULL;
+	} else {
 		mutex_lock(&fs_devices->device_list_mutex);
 		device = btrfs_find_device(fs_devices, devid,
-				disk_super->dev_item.uuid, शून्य);
+				disk_super->dev_item.uuid, NULL);
 
 		/*
-		 * If this disk has been pulled पूर्णांकo an fs devices created by
+		 * If this disk has been pulled into an fs devices created by
 		 * a device which had the CHANGING_FSID_V2 flag then replace the
 		 * metadata_uuid/fsid values of the fs_devices.
 		 */
-		अगर (fs_devices->fsid_change &&
-		    found_transid > fs_devices->latest_generation) अणु
-			स_नकल(fs_devices->fsid, disk_super->fsid,
+		if (fs_devices->fsid_change &&
+		    found_transid > fs_devices->latest_generation) {
+			memcpy(fs_devices->fsid, disk_super->fsid,
 					BTRFS_FSID_SIZE);
 
-			अगर (has_metadata_uuid)
-				स_नकल(fs_devices->metadata_uuid,
+			if (has_metadata_uuid)
+				memcpy(fs_devices->metadata_uuid,
 				       disk_super->metadata_uuid,
 				       BTRFS_FSID_SIZE);
-			अन्यथा
-				स_नकल(fs_devices->metadata_uuid,
+			else
+				memcpy(fs_devices->metadata_uuid,
 				       disk_super->fsid, BTRFS_FSID_SIZE);
 
 			fs_devices->fsid_change = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!device) अणु
-		अगर (fs_devices->खोलोed) अणु
+	if (!device) {
+		if (fs_devices->opened) {
 			mutex_unlock(&fs_devices->device_list_mutex);
-			वापस ERR_PTR(-EBUSY);
-		पूर्ण
+			return ERR_PTR(-EBUSY);
+		}
 
-		device = btrfs_alloc_device(शून्य, &devid,
+		device = btrfs_alloc_device(NULL, &devid,
 					    disk_super->dev_item.uuid);
-		अगर (IS_ERR(device)) अणु
+		if (IS_ERR(device)) {
 			mutex_unlock(&fs_devices->device_list_mutex);
 			/* we can safely leave the fs_devices entry around */
-			वापस device;
-		पूर्ण
+			return device;
+		}
 
 		name = rcu_string_strdup(path, GFP_NOFS);
-		अगर (!name) अणु
-			btrfs_मुक्त_device(device);
+		if (!name) {
+			btrfs_free_device(device);
 			mutex_unlock(&fs_devices->device_list_mutex);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-		rcu_assign_poपूर्णांकer(device->name, name);
+			return ERR_PTR(-ENOMEM);
+		}
+		rcu_assign_pointer(device->name, name);
 
 		list_add_rcu(&device->dev_list, &fs_devices->devices);
 		fs_devices->num_devices++;
@@ -877,699 +876,699 @@ error_मुक्त_page:
 		device->fs_devices = fs_devices;
 		*new_device_added = true;
 
-		अगर (disk_super->label[0])
+		if (disk_super->label[0])
 			pr_info(
 	"BTRFS: device label %s devid %llu transid %llu %s scanned by %s (%d)\n",
 				disk_super->label, devid, found_transid, path,
 				current->comm, task_pid_nr(current));
-		अन्यथा
+		else
 			pr_info(
 	"BTRFS: device fsid %pU devid %llu transid %llu %s scanned by %s (%d)\n",
 				disk_super->fsid, devid, found_transid, path,
 				current->comm, task_pid_nr(current));
 
-	पूर्ण अन्यथा अगर (!device->name || म_भेद(device->name->str, path)) अणु
+	} else if (!device->name || strcmp(device->name->str, path)) {
 		/*
-		 * When FS is alपढ़ोy mounted.
-		 * 1. If you are here and अगर the device->name is शून्य that
-		 *    means this device was missing at समय of FS mount.
-		 * 2. If you are here and अगर the device->name is dअगरferent
+		 * When FS is already mounted.
+		 * 1. If you are here and if the device->name is NULL that
+		 *    means this device was missing at time of FS mount.
+		 * 2. If you are here and if the device->name is different
 		 *    from 'path' that means either
 		 *      a. The same device disappeared and reappeared with
-		 *         dअगरferent name. or
+		 *         different name. or
 		 *      b. The missing-disk-which-was-replaced, has
 		 *         reappeared now.
 		 *
 		 * We must allow 1 and 2a above. But 2b would be a spurious
-		 * and unपूर्णांकentional.
+		 * and unintentional.
 		 *
-		 * Further in हाल of 1 and 2a above, the disk at 'path'
+		 * Further in case of 1 and 2a above, the disk at 'path'
 		 * would have missed some transaction when it was away and
-		 * in हाल of 2a the stale bdev has to be updated as well.
-		 * 2b must not be allowed at all समय.
+		 * in case of 2a the stale bdev has to be updated as well.
+		 * 2b must not be allowed at all time.
 		 */
 
 		/*
-		 * For now, we करो allow update to btrfs_fs_device through the
+		 * For now, we do allow update to btrfs_fs_device through the
 		 * btrfs dev scan cli after FS has been mounted.  We're still
-		 * tracking a problem where प्रणालीs fail mount by subvolume id
+		 * tracking a problem where systems fail mount by subvolume id
 		 * when we reject replacement on a mounted FS.
 		 */
-		अगर (!fs_devices->खोलोed && found_transid < device->generation) अणु
+		if (!fs_devices->opened && found_transid < device->generation) {
 			/*
-			 * That is अगर the FS is _not_ mounted and अगर you
+			 * That is if the FS is _not_ mounted and if you
 			 * are here, that means there is more than one
 			 * disk with same uuid and devid.We keep the one
-			 * with larger generation number or the last-in अगर
+			 * with larger generation number or the last-in if
 			 * generation are equal.
 			 */
 			mutex_unlock(&fs_devices->device_list_mutex);
-			वापस ERR_PTR(-EEXIST);
-		पूर्ण
+			return ERR_PTR(-EEXIST);
+		}
 
 		/*
-		 * We are going to replace the device path क्रम a given devid,
-		 * make sure it's the same device अगर the device is mounted
+		 * We are going to replace the device path for a given devid,
+		 * make sure it's the same device if the device is mounted
 		 */
-		अगर (device->bdev) अणु
-			पूर्णांक error;
+		if (device->bdev) {
+			int error;
 			dev_t path_dev;
 
 			error = lookup_bdev(path, &path_dev);
-			अगर (error) अणु
+			if (error) {
 				mutex_unlock(&fs_devices->device_list_mutex);
-				वापस ERR_PTR(error);
-			पूर्ण
+				return ERR_PTR(error);
+			}
 
-			अगर (device->bdev->bd_dev != path_dev) अणु
+			if (device->bdev->bd_dev != path_dev) {
 				mutex_unlock(&fs_devices->device_list_mutex);
 				/*
 				 * device->fs_info may not be reliable here, so
-				 * pass in a शून्य instead. This aव्योमs a
-				 * possible use-after-मुक्त when the fs_info and
-				 * fs_info->sb are alपढ़ोy torn करोwn.
+				 * pass in a NULL instead. This avoids a
+				 * possible use-after-free when the fs_info and
+				 * fs_info->sb are already torn down.
 				 */
-				btrfs_warn_in_rcu(शून्य,
+				btrfs_warn_in_rcu(NULL,
 	"duplicate device %s devid %llu generation %llu scanned by %s (%d)",
 						  path, devid, found_transid,
 						  current->comm,
 						  task_pid_nr(current));
-				वापस ERR_PTR(-EEXIST);
-			पूर्ण
+				return ERR_PTR(-EEXIST);
+			}
 			btrfs_info_in_rcu(device->fs_info,
 	"devid %llu device path %s changed to %s scanned by %s (%d)",
 					  devid, rcu_str_deref(device->name),
 					  path, current->comm,
 					  task_pid_nr(current));
-		पूर्ण
+		}
 
 		name = rcu_string_strdup(path, GFP_NOFS);
-		अगर (!name) अणु
+		if (!name) {
 			mutex_unlock(&fs_devices->device_list_mutex);
-			वापस ERR_PTR(-ENOMEM);
-		पूर्ण
-		rcu_string_मुक्त(device->name);
-		rcu_assign_poपूर्णांकer(device->name, name);
-		अगर (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state)) अणु
+			return ERR_PTR(-ENOMEM);
+		}
+		rcu_string_free(device->name);
+		rcu_assign_pointer(device->name, name);
+		if (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state)) {
 			fs_devices->missing_devices--;
 			clear_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Unmount करोes not मुक्त the btrfs_device काष्ठा but would zero
-	 * generation aदीर्घ with most of the other members. So just update
+	 * Unmount does not free the btrfs_device struct but would zero
+	 * generation along with most of the other members. So just update
 	 * it back. We need it to pick the disk with largest generation
 	 * (as above).
 	 */
-	अगर (!fs_devices->खोलोed) अणु
+	if (!fs_devices->opened) {
 		device->generation = found_transid;
 		fs_devices->latest_generation = max_t(u64, found_transid,
 						fs_devices->latest_generation);
-	पूर्ण
+	}
 
 	fs_devices->total_devices = btrfs_super_num_devices(disk_super);
 
 	mutex_unlock(&fs_devices->device_list_mutex);
-	वापस device;
-पूर्ण
+	return device;
+}
 
-अटल काष्ठा btrfs_fs_devices *clone_fs_devices(काष्ठा btrfs_fs_devices *orig)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_device *orig_dev;
-	पूर्णांक ret = 0;
+static struct btrfs_fs_devices *clone_fs_devices(struct btrfs_fs_devices *orig)
+{
+	struct btrfs_fs_devices *fs_devices;
+	struct btrfs_device *device;
+	struct btrfs_device *orig_dev;
+	int ret = 0;
 
-	fs_devices = alloc_fs_devices(orig->fsid, शून्य);
-	अगर (IS_ERR(fs_devices))
-		वापस fs_devices;
+	fs_devices = alloc_fs_devices(orig->fsid, NULL);
+	if (IS_ERR(fs_devices))
+		return fs_devices;
 
 	mutex_lock(&orig->device_list_mutex);
 	fs_devices->total_devices = orig->total_devices;
 
-	list_क्रम_each_entry(orig_dev, &orig->devices, dev_list) अणु
-		काष्ठा rcu_string *name;
+	list_for_each_entry(orig_dev, &orig->devices, dev_list) {
+		struct rcu_string *name;
 
-		device = btrfs_alloc_device(शून्य, &orig_dev->devid,
+		device = btrfs_alloc_device(NULL, &orig_dev->devid,
 					    orig_dev->uuid);
-		अगर (IS_ERR(device)) अणु
+		if (IS_ERR(device)) {
 			ret = PTR_ERR(device);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		/*
-		 * This is ok to करो without rcu पढ़ो locked because we hold the
+		 * This is ok to do without rcu read locked because we hold the
 		 * uuid mutex so nothing we touch in here is going to disappear.
 		 */
-		अगर (orig_dev->name) अणु
+		if (orig_dev->name) {
 			name = rcu_string_strdup(orig_dev->name->str,
 					GFP_KERNEL);
-			अगर (!name) अणु
-				btrfs_मुक्त_device(device);
+			if (!name) {
+				btrfs_free_device(device);
 				ret = -ENOMEM;
-				जाओ error;
-			पूर्ण
-			rcu_assign_poपूर्णांकer(device->name, name);
-		पूर्ण
+				goto error;
+			}
+			rcu_assign_pointer(device->name, name);
+		}
 
 		list_add(&device->dev_list, &fs_devices->devices);
 		device->fs_devices = fs_devices;
 		fs_devices->num_devices++;
-	पूर्ण
+	}
 	mutex_unlock(&orig->device_list_mutex);
-	वापस fs_devices;
+	return fs_devices;
 error:
 	mutex_unlock(&orig->device_list_mutex);
-	मुक्त_fs_devices(fs_devices);
-	वापस ERR_PTR(ret);
-पूर्ण
+	free_fs_devices(fs_devices);
+	return ERR_PTR(ret);
+}
 
-अटल व्योम __btrfs_मुक्त_extra_devids(काष्ठा btrfs_fs_devices *fs_devices,
-				      काष्ठा btrfs_device **latest_dev)
-अणु
-	काष्ठा btrfs_device *device, *next;
+static void __btrfs_free_extra_devids(struct btrfs_fs_devices *fs_devices,
+				      struct btrfs_device **latest_dev)
+{
+	struct btrfs_device *device, *next;
 
 	/* This is the initialized path, it is safe to release the devices. */
-	list_क्रम_each_entry_safe(device, next, &fs_devices->devices, dev_list) अणु
-		अगर (test_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state)) अणु
-			अगर (!test_bit(BTRFS_DEV_STATE_REPLACE_TGT,
+	list_for_each_entry_safe(device, next, &fs_devices->devices, dev_list) {
+		if (test_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state)) {
+			if (!test_bit(BTRFS_DEV_STATE_REPLACE_TGT,
 				      &device->dev_state) &&
 			    !test_bit(BTRFS_DEV_STATE_MISSING,
 				      &device->dev_state) &&
 			    (!*latest_dev ||
-			     device->generation > (*latest_dev)->generation)) अणु
+			     device->generation > (*latest_dev)->generation)) {
 				*latest_dev = device;
-			पूर्ण
-			जारी;
-		पूर्ण
+			}
+			continue;
+		}
 
 		/*
-		 * We have alपढ़ोy validated the presence of BTRFS_DEV_REPLACE_DEVID,
-		 * in btrfs_init_dev_replace() so just जारी.
+		 * We have already validated the presence of BTRFS_DEV_REPLACE_DEVID,
+		 * in btrfs_init_dev_replace() so just continue.
 		 */
-		अगर (device->devid == BTRFS_DEV_REPLACE_DEVID)
-			जारी;
+		if (device->devid == BTRFS_DEV_REPLACE_DEVID)
+			continue;
 
-		अगर (device->bdev) अणु
+		if (device->bdev) {
 			blkdev_put(device->bdev, device->mode);
-			device->bdev = शून्य;
-			fs_devices->खोलो_devices--;
-		पूर्ण
-		अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) अणु
+			device->bdev = NULL;
+			fs_devices->open_devices--;
+		}
+		if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) {
 			list_del_init(&device->dev_alloc_list);
 			clear_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
-		पूर्ण
+		}
 		list_del_init(&device->dev_list);
 		fs_devices->num_devices--;
-		btrfs_मुक्त_device(device);
-	पूर्ण
+		btrfs_free_device(device);
+	}
 
-पूर्ण
+}
 
 /*
- * After we have पढ़ो the प्रणाली tree and know devids beदीर्घing to this
- * fileप्रणाली, हटाओ the device which करोes not beदीर्घ there.
+ * After we have read the system tree and know devids belonging to this
+ * filesystem, remove the device which does not belong there.
  */
-व्योम btrfs_मुक्त_extra_devids(काष्ठा btrfs_fs_devices *fs_devices)
-अणु
-	काष्ठा btrfs_device *latest_dev = शून्य;
-	काष्ठा btrfs_fs_devices *seed_dev;
+void btrfs_free_extra_devids(struct btrfs_fs_devices *fs_devices)
+{
+	struct btrfs_device *latest_dev = NULL;
+	struct btrfs_fs_devices *seed_dev;
 
 	mutex_lock(&uuid_mutex);
-	__btrfs_मुक्त_extra_devids(fs_devices, &latest_dev);
+	__btrfs_free_extra_devids(fs_devices, &latest_dev);
 
-	list_क्रम_each_entry(seed_dev, &fs_devices->seed_list, seed_list)
-		__btrfs_मुक्त_extra_devids(seed_dev, &latest_dev);
+	list_for_each_entry(seed_dev, &fs_devices->seed_list, seed_list)
+		__btrfs_free_extra_devids(seed_dev, &latest_dev);
 
 	fs_devices->latest_bdev = latest_dev->bdev;
 
 	mutex_unlock(&uuid_mutex);
-पूर्ण
+}
 
-अटल व्योम btrfs_बंद_bdev(काष्ठा btrfs_device *device)
-अणु
-	अगर (!device->bdev)
-		वापस;
+static void btrfs_close_bdev(struct btrfs_device *device)
+{
+	if (!device->bdev)
+		return;
 
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) अणु
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) {
 		sync_blockdev(device->bdev);
 		invalidate_bdev(device->bdev);
-	पूर्ण
+	}
 
 	blkdev_put(device->bdev, device->mode);
-पूर्ण
+}
 
-अटल व्योम btrfs_बंद_one_device(काष्ठा btrfs_device *device)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices = device->fs_devices;
+static void btrfs_close_one_device(struct btrfs_device *device)
+{
+	struct btrfs_fs_devices *fs_devices = device->fs_devices;
 
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
-	    device->devid != BTRFS_DEV_REPLACE_DEVID) अणु
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
+	    device->devid != BTRFS_DEV_REPLACE_DEVID) {
 		list_del_init(&device->dev_alloc_list);
 		fs_devices->rw_devices--;
-	पूर्ण
+	}
 
-	अगर (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state))
+	if (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state))
 		fs_devices->missing_devices--;
 
-	btrfs_बंद_bdev(device);
-	अगर (device->bdev) अणु
-		fs_devices->खोलो_devices--;
-		device->bdev = शून्य;
-	पूर्ण
+	btrfs_close_bdev(device);
+	if (device->bdev) {
+		fs_devices->open_devices--;
+		device->bdev = NULL;
+	}
 	clear_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
 	btrfs_destroy_dev_zone_info(device);
 
-	device->fs_info = शून्य;
+	device->fs_info = NULL;
 	atomic_set(&device->dev_stats_ccnt, 0);
 	extent_io_tree_release(&device->alloc_state);
 
-	/* Verअगरy the device is back in a pristine state  */
+	/* Verify the device is back in a pristine state  */
 	ASSERT(!test_bit(BTRFS_DEV_STATE_FLUSH_SENT, &device->dev_state));
 	ASSERT(!test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state));
 	ASSERT(list_empty(&device->dev_alloc_list));
 	ASSERT(list_empty(&device->post_commit_list));
-	ASSERT(atomic_पढ़ो(&device->पढ़ोa_in_flight) == 0);
-पूर्ण
+	ASSERT(atomic_read(&device->reada_in_flight) == 0);
+}
 
-अटल व्योम बंद_fs_devices(काष्ठा btrfs_fs_devices *fs_devices)
-अणु
-	काष्ठा btrfs_device *device, *पंचांगp;
+static void close_fs_devices(struct btrfs_fs_devices *fs_devices)
+{
+	struct btrfs_device *device, *tmp;
 
-	lockdep_निश्चित_held(&uuid_mutex);
+	lockdep_assert_held(&uuid_mutex);
 
-	अगर (--fs_devices->खोलोed > 0)
-		वापस;
+	if (--fs_devices->opened > 0)
+		return;
 
-	list_क्रम_each_entry_safe(device, पंचांगp, &fs_devices->devices, dev_list)
-		btrfs_बंद_one_device(device);
+	list_for_each_entry_safe(device, tmp, &fs_devices->devices, dev_list)
+		btrfs_close_one_device(device);
 
-	WARN_ON(fs_devices->खोलो_devices);
+	WARN_ON(fs_devices->open_devices);
 	WARN_ON(fs_devices->rw_devices);
-	fs_devices->खोलोed = 0;
+	fs_devices->opened = 0;
 	fs_devices->seeding = false;
-	fs_devices->fs_info = शून्य;
-पूर्ण
+	fs_devices->fs_info = NULL;
+}
 
-व्योम btrfs_बंद_devices(काष्ठा btrfs_fs_devices *fs_devices)
-अणु
+void btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
+{
 	LIST_HEAD(list);
-	काष्ठा btrfs_fs_devices *पंचांगp;
+	struct btrfs_fs_devices *tmp;
 
 	mutex_lock(&uuid_mutex);
-	बंद_fs_devices(fs_devices);
-	अगर (!fs_devices->खोलोed)
+	close_fs_devices(fs_devices);
+	if (!fs_devices->opened)
 		list_splice_init(&fs_devices->seed_list, &list);
 
-	list_क्रम_each_entry_safe(fs_devices, पंचांगp, &list, seed_list) अणु
-		बंद_fs_devices(fs_devices);
+	list_for_each_entry_safe(fs_devices, tmp, &list, seed_list) {
+		close_fs_devices(fs_devices);
 		list_del(&fs_devices->seed_list);
-		मुक्त_fs_devices(fs_devices);
-	पूर्ण
+		free_fs_devices(fs_devices);
+	}
 	mutex_unlock(&uuid_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक खोलो_fs_devices(काष्ठा btrfs_fs_devices *fs_devices,
-				भ_शेषe_t flags, व्योम *holder)
-अणु
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_device *latest_dev = शून्य;
-	काष्ठा btrfs_device *पंचांगp_device;
+static int open_fs_devices(struct btrfs_fs_devices *fs_devices,
+				fmode_t flags, void *holder)
+{
+	struct btrfs_device *device;
+	struct btrfs_device *latest_dev = NULL;
+	struct btrfs_device *tmp_device;
 
 	flags |= FMODE_EXCL;
 
-	list_क्रम_each_entry_safe(device, पंचांगp_device, &fs_devices->devices,
-				 dev_list) अणु
-		पूर्णांक ret;
+	list_for_each_entry_safe(device, tmp_device, &fs_devices->devices,
+				 dev_list) {
+		int ret;
 
-		ret = btrfs_खोलो_one_device(fs_devices, device, flags, holder);
-		अगर (ret == 0 &&
-		    (!latest_dev || device->generation > latest_dev->generation)) अणु
+		ret = btrfs_open_one_device(fs_devices, device, flags, holder);
+		if (ret == 0 &&
+		    (!latest_dev || device->generation > latest_dev->generation)) {
 			latest_dev = device;
-		पूर्ण अन्यथा अगर (ret == -ENODATA) अणु
+		} else if (ret == -ENODATA) {
 			fs_devices->num_devices--;
 			list_del(&device->dev_list);
-			btrfs_मुक्त_device(device);
-		पूर्ण
-	पूर्ण
-	अगर (fs_devices->खोलो_devices == 0)
-		वापस -EINVAL;
+			btrfs_free_device(device);
+		}
+	}
+	if (fs_devices->open_devices == 0)
+		return -EINVAL;
 
-	fs_devices->खोलोed = 1;
+	fs_devices->opened = 1;
 	fs_devices->latest_bdev = latest_dev->bdev;
 	fs_devices->total_rw_bytes = 0;
 	fs_devices->chunk_alloc_policy = BTRFS_CHUNK_ALLOC_REGULAR;
-	fs_devices->पढ़ो_policy = BTRFS_READ_POLICY_PID;
+	fs_devices->read_policy = BTRFS_READ_POLICY_PID;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक devid_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
-		     स्थिर काष्ठा list_head *b)
-अणु
-	काष्ठा btrfs_device *dev1, *dev2;
+static int devid_cmp(void *priv, const struct list_head *a,
+		     const struct list_head *b)
+{
+	struct btrfs_device *dev1, *dev2;
 
-	dev1 = list_entry(a, काष्ठा btrfs_device, dev_list);
-	dev2 = list_entry(b, काष्ठा btrfs_device, dev_list);
+	dev1 = list_entry(a, struct btrfs_device, dev_list);
+	dev2 = list_entry(b, struct btrfs_device, dev_list);
 
-	अगर (dev1->devid < dev2->devid)
-		वापस -1;
-	अन्यथा अगर (dev1->devid > dev2->devid)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (dev1->devid < dev2->devid)
+		return -1;
+	else if (dev1->devid > dev2->devid)
+		return 1;
+	return 0;
+}
 
-पूर्णांक btrfs_खोलो_devices(काष्ठा btrfs_fs_devices *fs_devices,
-		       भ_शेषe_t flags, व्योम *holder)
-अणु
-	पूर्णांक ret;
+int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
+		       fmode_t flags, void *holder)
+{
+	int ret;
 
-	lockdep_निश्चित_held(&uuid_mutex);
+	lockdep_assert_held(&uuid_mutex);
 	/*
-	 * The device_list_mutex cannot be taken here in हाल खोलोing the
+	 * The device_list_mutex cannot be taken here in case opening the
 	 * underlying device takes further locks like bd_mutex.
 	 *
-	 * We also करोn't need the lock here as this is called during mount and
+	 * We also don't need the lock here as this is called during mount and
 	 * exclusion is provided by uuid_mutex
 	 */
 
-	अगर (fs_devices->खोलोed) अणु
-		fs_devices->खोलोed++;
+	if (fs_devices->opened) {
+		fs_devices->opened++;
 		ret = 0;
-	पूर्ण अन्यथा अणु
-		list_sort(शून्य, &fs_devices->devices, devid_cmp);
-		ret = खोलो_fs_devices(fs_devices, flags, holder);
-	पूर्ण
+	} else {
+		list_sort(NULL, &fs_devices->devices, devid_cmp);
+		ret = open_fs_devices(fs_devices, flags, holder);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम btrfs_release_disk_super(काष्ठा btrfs_super_block *super)
-अणु
-	काष्ठा page *page = virt_to_page(super);
+void btrfs_release_disk_super(struct btrfs_super_block *super)
+{
+	struct page *page = virt_to_page(super);
 
 	put_page(page);
-पूर्ण
+}
 
-अटल काष्ठा btrfs_super_block *btrfs_पढ़ो_disk_super(काष्ठा block_device *bdev,
+static struct btrfs_super_block *btrfs_read_disk_super(struct block_device *bdev,
 						       u64 bytenr, u64 bytenr_orig)
-अणु
-	काष्ठा btrfs_super_block *disk_super;
-	काष्ठा page *page;
-	व्योम *p;
+{
+	struct btrfs_super_block *disk_super;
+	struct page *page;
+	void *p;
 	pgoff_t index;
 
 	/* make sure our super fits in the device */
-	अगर (bytenr + PAGE_SIZE >= i_size_पढ़ो(bdev->bd_inode))
-		वापस ERR_PTR(-EINVAL);
+	if (bytenr + PAGE_SIZE >= i_size_read(bdev->bd_inode))
+		return ERR_PTR(-EINVAL);
 
 	/* make sure our super fits in the page */
-	अगर (माप(*disk_super) > PAGE_SIZE)
-		वापस ERR_PTR(-EINVAL);
+	if (sizeof(*disk_super) > PAGE_SIZE)
+		return ERR_PTR(-EINVAL);
 
-	/* make sure our super करोesn't straddle pages on disk */
+	/* make sure our super doesn't straddle pages on disk */
 	index = bytenr >> PAGE_SHIFT;
-	अगर ((bytenr + माप(*disk_super) - 1) >> PAGE_SHIFT != index)
-		वापस ERR_PTR(-EINVAL);
+	if ((bytenr + sizeof(*disk_super) - 1) >> PAGE_SHIFT != index)
+		return ERR_PTR(-EINVAL);
 
 	/* pull in the page with our super */
-	page = पढ़ो_cache_page_gfp(bdev->bd_inode->i_mapping, index, GFP_KERNEL);
+	page = read_cache_page_gfp(bdev->bd_inode->i_mapping, index, GFP_KERNEL);
 
-	अगर (IS_ERR(page))
-		वापस ERR_CAST(page);
+	if (IS_ERR(page))
+		return ERR_CAST(page);
 
 	p = page_address(page);
 
-	/* align our poपूर्णांकer to the offset of the super block */
+	/* align our pointer to the offset of the super block */
 	disk_super = p + offset_in_page(bytenr);
 
-	अगर (btrfs_super_bytenr(disk_super) != bytenr_orig ||
-	    btrfs_super_magic(disk_super) != BTRFS_MAGIC) अणु
+	if (btrfs_super_bytenr(disk_super) != bytenr_orig ||
+	    btrfs_super_magic(disk_super) != BTRFS_MAGIC) {
 		btrfs_release_disk_super(p);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (disk_super->label[0] && disk_super->label[BTRFS_LABEL_SIZE - 1])
+	if (disk_super->label[0] && disk_super->label[BTRFS_LABEL_SIZE - 1])
 		disk_super->label[BTRFS_LABEL_SIZE - 1] = 0;
 
-	वापस disk_super;
-पूर्ण
+	return disk_super;
+}
 
-पूर्णांक btrfs_क्रमget_devices(स्थिर अक्षर *path)
-अणु
-	पूर्णांक ret;
+int btrfs_forget_devices(const char *path)
+{
+	int ret;
 
 	mutex_lock(&uuid_mutex);
-	ret = btrfs_मुक्त_stale_devices(म_माप(path) ? path : शून्य, शून्य);
+	ret = btrfs_free_stale_devices(strlen(path) ? path : NULL, NULL);
 	mutex_unlock(&uuid_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Look क्रम a btrfs signature on a device. This may be called out of the mount path
+ * Look for a btrfs signature on a device. This may be called out of the mount path
  * and we are not allowed to call set_blocksize during the scan. The superblock
- * is पढ़ो via pagecache
+ * is read via pagecache
  */
-काष्ठा btrfs_device *btrfs_scan_one_device(स्थिर अक्षर *path, भ_शेषe_t flags,
-					   व्योम *holder)
-अणु
-	काष्ठा btrfs_super_block *disk_super;
+struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags,
+					   void *holder)
+{
+	struct btrfs_super_block *disk_super;
 	bool new_device_added = false;
-	काष्ठा btrfs_device *device = शून्य;
-	काष्ठा block_device *bdev;
+	struct btrfs_device *device = NULL;
+	struct block_device *bdev;
 	u64 bytenr, bytenr_orig;
-	पूर्णांक ret;
+	int ret;
 
-	lockdep_निश्चित_held(&uuid_mutex);
+	lockdep_assert_held(&uuid_mutex);
 
 	/*
 	 * we would like to check all the supers, but that would make
-	 * a btrfs mount succeed after a mkfs from a dअगरferent FS.
-	 * So, we need to add a special mount option to scan क्रम
+	 * a btrfs mount succeed after a mkfs from a different FS.
+	 * So, we need to add a special mount option to scan for
 	 * later supers, using BTRFS_SUPER_MIRROR_MAX instead
 	 */
 	flags |= FMODE_EXCL;
 
 	bdev = blkdev_get_by_path(path, flags, holder);
-	अगर (IS_ERR(bdev))
-		वापस ERR_CAST(bdev);
+	if (IS_ERR(bdev))
+		return ERR_CAST(bdev);
 
 	bytenr_orig = btrfs_sb_offset(0);
 	ret = btrfs_sb_log_location_bdev(bdev, 0, READ, &bytenr);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	disk_super = btrfs_पढ़ो_disk_super(bdev, bytenr, bytenr_orig);
-	अगर (IS_ERR(disk_super)) अणु
+	disk_super = btrfs_read_disk_super(bdev, bytenr, bytenr_orig);
+	if (IS_ERR(disk_super)) {
 		device = ERR_CAST(disk_super);
-		जाओ error_bdev_put;
-	पूर्ण
+		goto error_bdev_put;
+	}
 
 	device = device_list_add(path, disk_super, &new_device_added);
-	अगर (!IS_ERR(device)) अणु
-		अगर (new_device_added)
-			btrfs_मुक्त_stale_devices(path, device);
-	पूर्ण
+	if (!IS_ERR(device)) {
+		if (new_device_added)
+			btrfs_free_stale_devices(path, device);
+	}
 
 	btrfs_release_disk_super(disk_super);
 
 error_bdev_put:
 	blkdev_put(bdev, flags);
 
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
- * Try to find a chunk that पूर्णांकersects [start, start + len] range and when one
+ * Try to find a chunk that intersects [start, start + len] range and when one
  * such is found, record the end of it in *start
  */
-अटल bool contains_pending_extent(काष्ठा btrfs_device *device, u64 *start,
+static bool contains_pending_extent(struct btrfs_device *device, u64 *start,
 				    u64 len)
-अणु
+{
 	u64 physical_start, physical_end;
 
-	lockdep_निश्चित_held(&device->fs_info->chunk_mutex);
+	lockdep_assert_held(&device->fs_info->chunk_mutex);
 
-	अगर (!find_first_extent_bit(&device->alloc_state, *start,
+	if (!find_first_extent_bit(&device->alloc_state, *start,
 				   &physical_start, &physical_end,
-				   CHUNK_ALLOCATED, शून्य)) अणु
+				   CHUNK_ALLOCATED, NULL)) {
 
-		अगर (in_range(physical_start, *start, len) ||
+		if (in_range(physical_start, *start, len) ||
 		    in_range(*start, physical_start,
-			     physical_end - physical_start)) अणु
+			     physical_end - physical_start)) {
 			*start = physical_end + 1;
-			वापस true;
-		पूर्ण
-	पूर्ण
-	वापस false;
-पूर्ण
+			return true;
+		}
+	}
+	return false;
+}
 
-अटल u64 dev_extent_search_start(काष्ठा btrfs_device *device, u64 start)
-अणु
-	चयन (device->fs_devices->chunk_alloc_policy) अणु
-	हाल BTRFS_CHUNK_ALLOC_REGULAR:
+static u64 dev_extent_search_start(struct btrfs_device *device, u64 start)
+{
+	switch (device->fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
 		/*
-		 * We करोn't want to overग_लिखो the superblock on the drive nor
-		 * any area used by the boot loader (grub क्रम example), so we
+		 * We don't want to overwrite the superblock on the drive nor
+		 * any area used by the boot loader (grub for example), so we
 		 * make sure to start at an offset of at least 1MB.
 		 */
-		वापस max_t(u64, start, SZ_1M);
-	हाल BTRFS_CHUNK_ALLOC_ZONED:
+		return max_t(u64, start, SZ_1M);
+	case BTRFS_CHUNK_ALLOC_ZONED:
 		/*
-		 * We करोn't care about the starting region like regular
+		 * We don't care about the starting region like regular
 		 * allocator, because we anyway use/reserve the first two zones
-		 * क्रम superblock logging.
+		 * for superblock logging.
 		 */
-		वापस ALIGN(start, device->zone_info->zone_size);
-	शेष:
+		return ALIGN(start, device->zone_info->zone_size);
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool dev_extent_hole_check_zoned(काष्ठा btrfs_device *device,
+static bool dev_extent_hole_check_zoned(struct btrfs_device *device,
 					u64 *hole_start, u64 *hole_size,
 					u64 num_bytes)
-अणु
+{
 	u64 zone_size = device->zone_info->zone_size;
 	u64 pos;
-	पूर्णांक ret;
+	int ret;
 	bool changed = false;
 
 	ASSERT(IS_ALIGNED(*hole_start, zone_size));
 
-	जबतक (*hole_size > 0) अणु
+	while (*hole_size > 0) {
 		pos = btrfs_find_allocatable_zones(device, *hole_start,
 						   *hole_start + *hole_size,
 						   num_bytes);
-		अगर (pos != *hole_start) अणु
+		if (pos != *hole_start) {
 			*hole_size = *hole_start + *hole_size - pos;
 			*hole_start = pos;
 			changed = true;
-			अगर (*hole_size < num_bytes)
-				अवरोध;
-		पूर्ण
+			if (*hole_size < num_bytes)
+				break;
+		}
 
 		ret = btrfs_ensure_empty_zones(device, pos, num_bytes);
 
 		/* Range is ensured to be empty */
-		अगर (!ret)
-			वापस changed;
+		if (!ret)
+			return changed;
 
 		/* Given hole range was invalid (outside of device) */
-		अगर (ret == -दुस्फल) अणु
+		if (ret == -ERANGE) {
 			*hole_start += *hole_size;
 			*hole_size = 0;
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
 		*hole_start += zone_size;
 		*hole_size -= zone_size;
 		changed = true;
-	पूर्ण
+	}
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
 /**
- * dev_extent_hole_check - check अगर specअगरied hole is suitable क्रम allocation
+ * dev_extent_hole_check - check if specified hole is suitable for allocation
  * @device:	the device which we have the hole
  * @hole_start: starting position of the hole
  * @hole_size:	the size of the hole
- * @num_bytes:	the size of the मुक्त space that we need
+ * @num_bytes:	the size of the free space that we need
  *
- * This function may modअगरy @hole_start and @hole_size to reflect the suitable
- * position क्रम allocation. Returns 1 अगर hole position is updated, 0 otherwise.
+ * This function may modify @hole_start and @hole_size to reflect the suitable
+ * position for allocation. Returns 1 if hole position is updated, 0 otherwise.
  */
-अटल bool dev_extent_hole_check(काष्ठा btrfs_device *device, u64 *hole_start,
+static bool dev_extent_hole_check(struct btrfs_device *device, u64 *hole_start,
 				  u64 *hole_size, u64 num_bytes)
-अणु
+{
 	bool changed = false;
 	u64 hole_end = *hole_start + *hole_size;
 
-	क्रम (;;) अणु
+	for (;;) {
 		/*
-		 * Check beक्रमe we set max_hole_start, otherwise we could end up
+		 * Check before we set max_hole_start, otherwise we could end up
 		 * sending back this offset anyway.
 		 */
-		अगर (contains_pending_extent(device, hole_start, *hole_size)) अणु
-			अगर (hole_end >= *hole_start)
+		if (contains_pending_extent(device, hole_start, *hole_size)) {
+			if (hole_end >= *hole_start)
 				*hole_size = hole_end - *hole_start;
-			अन्यथा
+			else
 				*hole_size = 0;
 			changed = true;
-		पूर्ण
+		}
 
-		चयन (device->fs_devices->chunk_alloc_policy) अणु
-		हाल BTRFS_CHUNK_ALLOC_REGULAR:
+		switch (device->fs_devices->chunk_alloc_policy) {
+		case BTRFS_CHUNK_ALLOC_REGULAR:
 			/* No extra check */
-			अवरोध;
-		हाल BTRFS_CHUNK_ALLOC_ZONED:
-			अगर (dev_extent_hole_check_zoned(device, hole_start,
-							hole_size, num_bytes)) अणु
+			break;
+		case BTRFS_CHUNK_ALLOC_ZONED:
+			if (dev_extent_hole_check_zoned(device, hole_start,
+							hole_size, num_bytes)) {
 				changed = true;
 				/*
 				 * The changed hole can contain pending extent.
 				 * Loop again to check that.
 				 */
-				जारी;
-			पूर्ण
-			अवरोध;
-		शेष:
+				continue;
+			}
+			break;
+		default:
 			BUG();
-		पूर्ण
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
 /*
- * find_मुक्त_dev_extent_start - find मुक्त space in the specअगरied device
- * @device:	  the device which we search the मुक्त space in
- * @num_bytes:	  the size of the मुक्त space that we need
+ * find_free_dev_extent_start - find free space in the specified device
+ * @device:	  the device which we search the free space in
+ * @num_bytes:	  the size of the free space that we need
  * @search_start: the position from which to begin the search
- * @start:	  store the start of the मुक्त space.
- * @len:	  the size of the मुक्त space. that we find, or the size
- *		  of the max मुक्त space अगर we करोn't find suitable मुक्त space
+ * @start:	  store the start of the free space.
+ * @len:	  the size of the free space. that we find, or the size
+ *		  of the max free space if we don't find suitable free space
  *
  * this uses a pretty simple search, the expectation is that it is
  * called very infrequently and that a given device has a small number
  * of extents
  *
- * @start is used to store the start of the मुक्त space अगर we find. But अगर we
- * करोn't find suitable मुक्त space, it will be used to store the start position
- * of the max मुक्त space.
+ * @start is used to store the start of the free space if we find. But if we
+ * don't find suitable free space, it will be used to store the start position
+ * of the max free space.
  *
- * @len is used to store the size of the मुक्त space that we find.
- * But अगर we करोn't find suitable मुक्त space, it is used to store the size of
- * the max मुक्त space.
+ * @len is used to store the size of the free space that we find.
+ * But if we don't find suitable free space, it is used to store the size of
+ * the max free space.
  *
- * NOTE: This function will search *commit* root of device tree, and करोes extra
- * check to ensure dev extents are not द्विगुन allocated.
+ * NOTE: This function will search *commit* root of device tree, and does extra
+ * check to ensure dev extents are not double allocated.
  * This makes the function safe to allocate dev extents but may not report
- * correct usable device space, as device extent मुक्तd in current transaction
+ * correct usable device space, as device extent freed in current transaction
  * is not reported as avaiable.
  */
-अटल पूर्णांक find_मुक्त_dev_extent_start(काष्ठा btrfs_device *device,
+static int find_free_dev_extent_start(struct btrfs_device *device,
 				u64 num_bytes, u64 search_start, u64 *start,
 				u64 *len)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = device->fs_info;
-	काष्ठा btrfs_root *root = fs_info->dev_root;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_dev_extent *dev_extent;
-	काष्ठा btrfs_path *path;
+{
+	struct btrfs_fs_info *fs_info = device->fs_info;
+	struct btrfs_root *root = fs_info->dev_root;
+	struct btrfs_key key;
+	struct btrfs_dev_extent *dev_extent;
+	struct btrfs_path *path;
 	u64 hole_size;
 	u64 max_hole_start;
 	u64 max_hole_size;
 	u64 extent_end;
 	u64 search_end = device->total_bytes;
-	पूर्णांक ret;
-	पूर्णांक slot;
-	काष्ठा extent_buffer *l;
+	int ret;
+	int slot;
+	struct extent_buffer *l;
 
 	search_start = dev_extent_search_start(device, search_start);
 
@@ -1577,20 +1576,20 @@ error_bdev_put:
 		!IS_ALIGNED(num_bytes, device->zone_info->zone_size));
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	max_hole_start = search_start;
 	max_hole_size = 0;
 
 again:
-	अगर (search_start >= search_end ||
-		test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) अणु
+	if (search_start >= search_end ||
+		test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) {
 		ret = -ENOSPC;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	path->पढ़ोa = READA_FORWARD;
+	path->reada = READA_FORWARD;
 	path->search_commit_root = 1;
 	path->skip_locking = 1;
 
@@ -1598,201 +1597,201 @@ again:
 	key.offset = search_start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 
-	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
-	अगर (ret > 0) अणु
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
+	if (ret > 0) {
 		ret = btrfs_previous_item(root, path, key.objectid, key.type);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		if (ret < 0)
+			goto out;
+	}
 
-	जबतक (1) अणु
+	while (1) {
 		l = path->nodes[0];
 		slot = path->slots[0];
-		अगर (slot >= btrfs_header_nritems(l)) अणु
+		if (slot >= btrfs_header_nritems(l)) {
 			ret = btrfs_next_leaf(root, path);
-			अगर (ret == 0)
-				जारी;
-			अगर (ret < 0)
-				जाओ out;
+			if (ret == 0)
+				continue;
+			if (ret < 0)
+				goto out;
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		btrfs_item_key_to_cpu(l, &key, slot);
 
-		अगर (key.objectid < device->devid)
-			जाओ next;
+		if (key.objectid < device->devid)
+			goto next;
 
-		अगर (key.objectid > device->devid)
-			अवरोध;
+		if (key.objectid > device->devid)
+			break;
 
-		अगर (key.type != BTRFS_DEV_EXTENT_KEY)
-			जाओ next;
+		if (key.type != BTRFS_DEV_EXTENT_KEY)
+			goto next;
 
-		अगर (key.offset > search_start) अणु
+		if (key.offset > search_start) {
 			hole_size = key.offset - search_start;
 			dev_extent_hole_check(device, &search_start, &hole_size,
 					      num_bytes);
 
-			अगर (hole_size > max_hole_size) अणु
+			if (hole_size > max_hole_size) {
 				max_hole_start = search_start;
 				max_hole_size = hole_size;
-			पूर्ण
+			}
 
 			/*
-			 * If this मुक्त space is greater than which we need,
-			 * it must be the max मुक्त space that we have found
-			 * until now, so max_hole_start must poपूर्णांक to the start
-			 * of this मुक्त space and the length of this मुक्त space
-			 * is stored in max_hole_size. Thus, we वापस
+			 * If this free space is greater than which we need,
+			 * it must be the max free space that we have found
+			 * until now, so max_hole_start must point to the start
+			 * of this free space and the length of this free space
+			 * is stored in max_hole_size. Thus, we return
 			 * max_hole_start and max_hole_size and go back to the
 			 * caller.
 			 */
-			अगर (hole_size >= num_bytes) अणु
+			if (hole_size >= num_bytes) {
 				ret = 0;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		dev_extent = btrfs_item_ptr(l, slot, काष्ठा btrfs_dev_extent);
+		dev_extent = btrfs_item_ptr(l, slot, struct btrfs_dev_extent);
 		extent_end = key.offset + btrfs_dev_extent_length(l,
 								  dev_extent);
-		अगर (extent_end > search_start)
+		if (extent_end > search_start)
 			search_start = extent_end;
 next:
 		path->slots[0]++;
 		cond_resched();
-	पूर्ण
+	}
 
 	/*
-	 * At this poपूर्णांक, search_start should be the end of
+	 * At this point, search_start should be the end of
 	 * allocated dev extents, and when shrinking the device,
 	 * search_end may be smaller than search_start.
 	 */
-	अगर (search_end > search_start) अणु
+	if (search_end > search_start) {
 		hole_size = search_end - search_start;
-		अगर (dev_extent_hole_check(device, &search_start, &hole_size,
-					  num_bytes)) अणु
+		if (dev_extent_hole_check(device, &search_start, &hole_size,
+					  num_bytes)) {
 			btrfs_release_path(path);
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
-		अगर (hole_size > max_hole_size) अणु
+		if (hole_size > max_hole_size) {
 			max_hole_start = search_start;
 			max_hole_size = hole_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* See above. */
-	अगर (max_hole_size < num_bytes)
+	if (max_hole_size < num_bytes)
 		ret = -ENOSPC;
-	अन्यथा
+	else
 		ret = 0;
 
 out:
-	btrfs_मुक्त_path(path);
+	btrfs_free_path(path);
 	*start = max_hole_start;
-	अगर (len)
+	if (len)
 		*len = max_hole_size;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक find_मुक्त_dev_extent(काष्ठा btrfs_device *device, u64 num_bytes,
+int find_free_dev_extent(struct btrfs_device *device, u64 num_bytes,
 			 u64 *start, u64 *len)
-अणु
-	/* FIXME use last मुक्त of some kind */
-	वापस find_मुक्त_dev_extent_start(device, num_bytes, 0, start, len);
-पूर्ण
+{
+	/* FIXME use last free of some kind */
+	return find_free_dev_extent_start(device, num_bytes, 0, start, len);
+}
 
-अटल पूर्णांक btrfs_मुक्त_dev_extent(काष्ठा btrfs_trans_handle *trans,
-			  काष्ठा btrfs_device *device,
+static int btrfs_free_dev_extent(struct btrfs_trans_handle *trans,
+			  struct btrfs_device *device,
 			  u64 start, u64 *dev_extent_len)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = device->fs_info;
-	काष्ठा btrfs_root *root = fs_info->dev_root;
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_key found_key;
-	काष्ठा extent_buffer *leaf = शून्य;
-	काष्ठा btrfs_dev_extent *extent = शून्य;
+{
+	struct btrfs_fs_info *fs_info = device->fs_info;
+	struct btrfs_root *root = fs_info->dev_root;
+	int ret;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct extent_buffer *leaf = NULL;
+	struct btrfs_dev_extent *extent = NULL;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = device->devid;
 	key.offset = start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 again:
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		ret = btrfs_previous_item(root, path, key.objectid,
 					  BTRFS_DEV_EXTENT_KEY);
-		अगर (ret)
-			जाओ out;
+		if (ret)
+			goto out;
 		leaf = path->nodes[0];
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 		extent = btrfs_item_ptr(leaf, path->slots[0],
-					काष्ठा btrfs_dev_extent);
+					struct btrfs_dev_extent);
 		BUG_ON(found_key.offset > start || found_key.offset +
 		       btrfs_dev_extent_length(leaf, extent) < start);
 		key = found_key;
 		btrfs_release_path(path);
-		जाओ again;
-	पूर्ण अन्यथा अगर (ret == 0) अणु
+		goto again;
+	} else if (ret == 0) {
 		leaf = path->nodes[0];
 		extent = btrfs_item_ptr(leaf, path->slots[0],
-					काष्ठा btrfs_dev_extent);
-	पूर्ण अन्यथा अणु
+					struct btrfs_dev_extent);
+	} else {
 		btrfs_handle_fs_error(fs_info, ret, "Slot search failed");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	*dev_extent_len = btrfs_dev_extent_length(leaf, extent);
 
 	ret = btrfs_del_item(trans, root, path);
-	अगर (ret) अणु
+	if (ret) {
 		btrfs_handle_fs_error(fs_info, ret,
 				      "Failed to remove dev extent item");
-	पूर्ण अन्यथा अणु
+	} else {
 		set_bit(BTRFS_TRANS_HAVE_FREE_BGS, &trans->transaction->flags);
-	पूर्ण
+	}
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक btrfs_alloc_dev_extent(काष्ठा btrfs_trans_handle *trans,
-				  काष्ठा btrfs_device *device,
+static int btrfs_alloc_dev_extent(struct btrfs_trans_handle *trans,
+				  struct btrfs_device *device,
 				  u64 chunk_offset, u64 start, u64 num_bytes)
-अणु
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_fs_info *fs_info = device->fs_info;
-	काष्ठा btrfs_root *root = fs_info->dev_root;
-	काष्ठा btrfs_dev_extent *extent;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
+{
+	int ret;
+	struct btrfs_path *path;
+	struct btrfs_fs_info *fs_info = device->fs_info;
+	struct btrfs_root *root = fs_info->dev_root;
+	struct btrfs_dev_extent *extent;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
 
 	WARN_ON(!test_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state));
 	WARN_ON(test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state));
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = device->devid;
 	key.offset = start;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 	ret = btrfs_insert_empty_item(trans, root, path, &key,
-				      माप(*extent));
-	अगर (ret)
-		जाओ out;
+				      sizeof(*extent));
+	if (ret)
+		goto out;
 
 	leaf = path->nodes[0];
 	extent = btrfs_item_ptr(leaf, path->slots[0],
-				काष्ठा btrfs_dev_extent);
+				struct btrfs_dev_extent);
 	btrfs_set_dev_extent_chunk_tree(leaf, extent,
 					BTRFS_CHUNK_TREE_OBJECTID);
 	btrfs_set_dev_extent_chunk_objectid(leaf, extent,
@@ -1802,101 +1801,101 @@ out:
 	btrfs_set_dev_extent_length(leaf, extent, num_bytes);
 	btrfs_mark_buffer_dirty(leaf);
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल u64 find_next_chunk(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा extent_map_tree *em_tree;
-	काष्ठा extent_map *em;
-	काष्ठा rb_node *n;
+static u64 find_next_chunk(struct btrfs_fs_info *fs_info)
+{
+	struct extent_map_tree *em_tree;
+	struct extent_map *em;
+	struct rb_node *n;
 	u64 ret = 0;
 
 	em_tree = &fs_info->mapping_tree;
-	पढ़ो_lock(&em_tree->lock);
+	read_lock(&em_tree->lock);
 	n = rb_last(&em_tree->map.rb_root);
-	अगर (n) अणु
-		em = rb_entry(n, काष्ठा extent_map, rb_node);
+	if (n) {
+		em = rb_entry(n, struct extent_map, rb_node);
 		ret = em->start + em->len;
-	पूर्ण
-	पढ़ो_unlock(&em_tree->lock);
+	}
+	read_unlock(&em_tree->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल noअंतरभूत पूर्णांक find_next_devid(काष्ठा btrfs_fs_info *fs_info,
+static noinline int find_next_devid(struct btrfs_fs_info *fs_info,
 				    u64 *devid_ret)
-अणु
-	पूर्णांक ret;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_key found_key;
-	काष्ठा btrfs_path *path;
+{
+	int ret;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct btrfs_path *path;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = (u64)-1;
 
-	ret = btrfs_search_slot(शून्य, fs_info->chunk_root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ error;
+	ret = btrfs_search_slot(NULL, fs_info->chunk_root, &key, path, 0, 0);
+	if (ret < 0)
+		goto error;
 
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/* Corruption */
 		btrfs_err(fs_info, "corrupted chunk tree devid -1 matched");
 		ret = -EUCLEAN;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	ret = btrfs_previous_item(fs_info->chunk_root, path,
 				  BTRFS_DEV_ITEMS_OBJECTID,
 				  BTRFS_DEV_ITEM_KEY);
-	अगर (ret) अणु
+	if (ret) {
 		*devid_ret = 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		btrfs_item_key_to_cpu(path->nodes[0], &found_key,
 				      path->slots[0]);
 		*devid_ret = found_key.offset + 1;
-	पूर्ण
+	}
 	ret = 0;
 error:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
 /*
- * the device inक्रमmation is stored in the chunk root
- * the btrfs_device काष्ठा should be fully filled in
+ * the device information is stored in the chunk root
+ * the btrfs_device struct should be fully filled in
  */
-अटल पूर्णांक btrfs_add_dev_item(काष्ठा btrfs_trans_handle *trans,
-			    काष्ठा btrfs_device *device)
-अणु
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_dev_item *dev_item;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
-	अचिन्हित दीर्घ ptr;
+static int btrfs_add_dev_item(struct btrfs_trans_handle *trans,
+			    struct btrfs_device *device)
+{
+	int ret;
+	struct btrfs_path *path;
+	struct btrfs_dev_item *dev_item;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	unsigned long ptr;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = device->devid;
 
 	ret = btrfs_insert_empty_item(trans, trans->fs_info->chunk_root, path,
-				      &key, माप(*dev_item));
-	अगर (ret)
-		जाओ out;
+				      &key, sizeof(*dev_item));
+	if (ret)
+		goto out;
 
 	leaf = path->nodes[0];
-	dev_item = btrfs_item_ptr(leaf, path->slots[0], काष्ठा btrfs_dev_item);
+	dev_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dev_item);
 
 	btrfs_set_device_id(leaf, dev_item, device->devid);
 	btrfs_set_device_generation(leaf, dev_item, 0);
@@ -1914,300 +1913,300 @@ error:
 	btrfs_set_device_start_offset(leaf, dev_item, 0);
 
 	ptr = btrfs_device_uuid(dev_item);
-	ग_लिखो_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
+	write_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
 	ptr = btrfs_device_fsid(dev_item);
-	ग_लिखो_extent_buffer(leaf, trans->fs_info->fs_devices->metadata_uuid,
+	write_extent_buffer(leaf, trans->fs_info->fs_devices->metadata_uuid,
 			    ptr, BTRFS_FSID_SIZE);
 	btrfs_mark_buffer_dirty(leaf);
 
 	ret = 0;
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
 /*
- * Function to update स_समय/mसमय क्रम a given device path.
- * Mainly used क्रम स_समय/mसमय based probe like libblkid.
+ * Function to update ctime/mtime for a given device path.
+ * Mainly used for ctime/mtime based probe like libblkid.
  */
-अटल व्योम update_dev_समय(स्थिर अक्षर *path_name)
-अणु
-	काष्ठा file *filp;
+static void update_dev_time(const char *path_name)
+{
+	struct file *filp;
 
-	filp = filp_खोलो(path_name, O_RDWR, 0);
-	अगर (IS_ERR(filp))
-		वापस;
-	file_update_समय(filp);
-	filp_बंद(filp, शून्य);
-पूर्ण
+	filp = filp_open(path_name, O_RDWR, 0);
+	if (IS_ERR(filp))
+		return;
+	file_update_time(filp);
+	filp_close(filp, NULL);
+}
 
-अटल पूर्णांक btrfs_rm_dev_item(काष्ठा btrfs_device *device)
-अणु
-	काष्ठा btrfs_root *root = device->fs_info->chunk_root;
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_trans_handle *trans;
+static int btrfs_rm_dev_item(struct btrfs_device *device)
+{
+	struct btrfs_root *root = device->fs_info->chunk_root;
+	int ret;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	struct btrfs_trans_handle *trans;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	trans = btrfs_start_transaction(root, 0);
-	अगर (IS_ERR(trans)) अणु
-		btrfs_मुक्त_path(path);
-		वापस PTR_ERR(trans);
-	पूर्ण
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = device->devid;
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	अगर (ret) अणु
-		अगर (ret > 0)
+	if (ret) {
+		if (ret > 0)
 			ret = -ENOENT;
-		btrfs_पात_transaction(trans, ret);
+		btrfs_abort_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = btrfs_del_item(trans, root, path);
-	अगर (ret) अणु
-		btrfs_पात_transaction(trans, ret);
+	if (ret) {
+		btrfs_abort_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-	पूर्ण
+	}
 
 out:
-	btrfs_मुक्त_path(path);
-	अगर (!ret)
+	btrfs_free_path(path);
+	if (!ret)
 		ret = btrfs_commit_transaction(trans);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Verअगरy that @num_devices satisfies the RAID profile स्थिरraपूर्णांकs in the whole
- * fileप्रणाली. It's up to the caller to adjust that number regarding eg. device
+ * Verify that @num_devices satisfies the RAID profile constraints in the whole
+ * filesystem. It's up to the caller to adjust that number regarding eg. device
  * replace.
  */
-अटल पूर्णांक btrfs_check_raid_min_devices(काष्ठा btrfs_fs_info *fs_info,
+static int btrfs_check_raid_min_devices(struct btrfs_fs_info *fs_info,
 		u64 num_devices)
-अणु
+{
 	u64 all_avail;
-	अचिन्हित seq;
-	पूर्णांक i;
+	unsigned seq;
+	int i;
 
-	करो अणु
-		seq = पढ़ो_seqbegin(&fs_info->profiles_lock);
+	do {
+		seq = read_seqbegin(&fs_info->profiles_lock);
 
 		all_avail = fs_info->avail_data_alloc_bits |
-			    fs_info->avail_प्रणाली_alloc_bits |
+			    fs_info->avail_system_alloc_bits |
 			    fs_info->avail_metadata_alloc_bits;
-	पूर्ण जबतक (पढ़ो_seqretry(&fs_info->profiles_lock, seq));
+	} while (read_seqretry(&fs_info->profiles_lock, seq));
 
-	क्रम (i = 0; i < BTRFS_NR_RAID_TYPES; i++) अणु
-		अगर (!(all_avail & btrfs_raid_array[i].bg_flag))
-			जारी;
+	for (i = 0; i < BTRFS_NR_RAID_TYPES; i++) {
+		if (!(all_avail & btrfs_raid_array[i].bg_flag))
+			continue;
 
-		अगर (num_devices < btrfs_raid_array[i].devs_min) अणु
-			पूर्णांक ret = btrfs_raid_array[i].mindev_error;
+		if (num_devices < btrfs_raid_array[i].devs_min) {
+			int ret = btrfs_raid_array[i].mindev_error;
 
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा btrfs_device * btrfs_find_next_active_device(
-		काष्ठा btrfs_fs_devices *fs_devs, काष्ठा btrfs_device *device)
-अणु
-	काष्ठा btrfs_device *next_device;
+static struct btrfs_device * btrfs_find_next_active_device(
+		struct btrfs_fs_devices *fs_devs, struct btrfs_device *device)
+{
+	struct btrfs_device *next_device;
 
-	list_क्रम_each_entry(next_device, &fs_devs->devices, dev_list) अणु
-		अगर (next_device != device &&
+	list_for_each_entry(next_device, &fs_devs->devices, dev_list) {
+		if (next_device != device &&
 		    !test_bit(BTRFS_DEV_STATE_MISSING, &next_device->dev_state)
 		    && next_device->bdev)
-			वापस next_device;
-	पूर्ण
+			return next_device;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Helper function to check अगर the given device is part of s_bdev / latest_bdev
+ * Helper function to check if the given device is part of s_bdev / latest_bdev
  * and replace it with the provided or the next active device, in the context
  * where this function called, there should be always be another device (or
  * this_dev) which is active.
  */
-व्योम __cold btrfs_assign_next_active_device(काष्ठा btrfs_device *device,
-					    काष्ठा btrfs_device *next_device)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = device->fs_info;
+void __cold btrfs_assign_next_active_device(struct btrfs_device *device,
+					    struct btrfs_device *next_device)
+{
+	struct btrfs_fs_info *fs_info = device->fs_info;
 
-	अगर (!next_device)
+	if (!next_device)
 		next_device = btrfs_find_next_active_device(fs_info->fs_devices,
 							    device);
 	ASSERT(next_device);
 
-	अगर (fs_info->sb->s_bdev &&
+	if (fs_info->sb->s_bdev &&
 			(fs_info->sb->s_bdev == device->bdev))
 		fs_info->sb->s_bdev = next_device->bdev;
 
-	अगर (fs_info->fs_devices->latest_bdev == device->bdev)
+	if (fs_info->fs_devices->latest_bdev == device->bdev)
 		fs_info->fs_devices->latest_bdev = next_device->bdev;
-पूर्ण
+}
 
 /*
  * Return btrfs_fs_devices::num_devices excluding the device that's being
  * currently replaced.
  */
-अटल u64 btrfs_num_devices(काष्ठा btrfs_fs_info *fs_info)
-अणु
+static u64 btrfs_num_devices(struct btrfs_fs_info *fs_info)
+{
 	u64 num_devices = fs_info->fs_devices->num_devices;
 
-	करोwn_पढ़ो(&fs_info->dev_replace.rwsem);
-	अगर (btrfs_dev_replace_is_ongoing(&fs_info->dev_replace)) अणु
+	down_read(&fs_info->dev_replace.rwsem);
+	if (btrfs_dev_replace_is_ongoing(&fs_info->dev_replace)) {
 		ASSERT(num_devices > 1);
 		num_devices--;
-	पूर्ण
-	up_पढ़ो(&fs_info->dev_replace.rwsem);
+	}
+	up_read(&fs_info->dev_replace.rwsem);
 
-	वापस num_devices;
-पूर्ण
+	return num_devices;
+}
 
-व्योम btrfs_scratch_superblocks(काष्ठा btrfs_fs_info *fs_info,
-			       काष्ठा block_device *bdev,
-			       स्थिर अक्षर *device_path)
-अणु
-	काष्ठा btrfs_super_block *disk_super;
-	पूर्णांक copy_num;
+void btrfs_scratch_superblocks(struct btrfs_fs_info *fs_info,
+			       struct block_device *bdev,
+			       const char *device_path)
+{
+	struct btrfs_super_block *disk_super;
+	int copy_num;
 
-	अगर (!bdev)
-		वापस;
+	if (!bdev)
+		return;
 
-	क्रम (copy_num = 0; copy_num < BTRFS_SUPER_MIRROR_MAX; copy_num++) अणु
-		काष्ठा page *page;
-		पूर्णांक ret;
+	for (copy_num = 0; copy_num < BTRFS_SUPER_MIRROR_MAX; copy_num++) {
+		struct page *page;
+		int ret;
 
-		disk_super = btrfs_पढ़ो_dev_one_super(bdev, copy_num);
-		अगर (IS_ERR(disk_super))
-			जारी;
+		disk_super = btrfs_read_dev_one_super(bdev, copy_num);
+		if (IS_ERR(disk_super))
+			continue;
 
-		अगर (bdev_is_zoned(bdev)) अणु
+		if (bdev_is_zoned(bdev)) {
 			btrfs_reset_sb_log_zones(bdev, copy_num);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		स_रखो(&disk_super->magic, 0, माप(disk_super->magic));
+		memset(&disk_super->magic, 0, sizeof(disk_super->magic));
 
 		page = virt_to_page(disk_super);
 		set_page_dirty(page);
 		lock_page(page);
-		/* ग_लिखो_on_page() unlocks the page */
-		ret = ग_लिखो_one_page(page);
-		अगर (ret)
+		/* write_on_page() unlocks the page */
+		ret = write_one_page(page);
+		if (ret)
 			btrfs_warn(fs_info,
 				"error clearing superblock number %d (%d)",
 				copy_num, ret);
 		btrfs_release_disk_super(disk_super);
 
-	पूर्ण
+	}
 
-	/* Notअगरy udev that device has changed */
+	/* Notify udev that device has changed */
 	btrfs_kobject_uevent(bdev, KOBJ_CHANGE);
 
-	/* Update स_समय/mसमय क्रम device path क्रम libblkid */
-	update_dev_समय(device_path);
-पूर्ण
+	/* Update ctime/mtime for device path for libblkid */
+	update_dev_time(device_path);
+}
 
-पूर्णांक btrfs_rm_device(काष्ठा btrfs_fs_info *fs_info, स्थिर अक्षर *device_path,
+int btrfs_rm_device(struct btrfs_fs_info *fs_info, const char *device_path,
 		    u64 devid)
-अणु
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_fs_devices *cur_devices;
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+{
+	struct btrfs_device *device;
+	struct btrfs_fs_devices *cur_devices;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
 	u64 num_devices;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	mutex_lock(&uuid_mutex);
 
 	num_devices = btrfs_num_devices(fs_info);
 
 	ret = btrfs_check_raid_min_devices(fs_info, num_devices - 1);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	device = btrfs_find_device_by_devspec(fs_info, devid, device_path);
 
-	अगर (IS_ERR(device)) अणु
-		अगर (PTR_ERR(device) == -ENOENT &&
-		    म_भेद(device_path, "missing") == 0)
+	if (IS_ERR(device)) {
+		if (PTR_ERR(device) == -ENOENT &&
+		    strcmp(device_path, "missing") == 0)
 			ret = BTRFS_ERROR_DEV_MISSING_NOT_FOUND;
-		अन्यथा
+		else
 			ret = PTR_ERR(device);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (btrfs_pinned_by_swapfile(fs_info, device)) अणु
+	if (btrfs_pinned_by_swapfile(fs_info, device)) {
 		btrfs_warn_in_rcu(fs_info,
 		  "cannot remove device %s (devid %llu) due to active swapfile",
 				  rcu_str_deref(device->name), device->devid);
 		ret = -ETXTBSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) अणु
+	if (test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) {
 		ret = BTRFS_ERROR_DEV_TGT_REPLACE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
-	    fs_info->fs_devices->rw_devices == 1) अणु
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
+	    fs_info->fs_devices->rw_devices == 1) {
 		ret = BTRFS_ERROR_DEV_ONLY_WRITABLE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) अणु
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) {
 		mutex_lock(&fs_info->chunk_mutex);
 		list_del_init(&device->dev_alloc_list);
 		device->fs_devices->rw_devices--;
 		mutex_unlock(&fs_info->chunk_mutex);
-	पूर्ण
+	}
 
 	mutex_unlock(&uuid_mutex);
 	ret = btrfs_shrink_device(device, 0);
-	अगर (!ret)
-		btrfs_पढ़ोa_हटाओ_dev(device);
+	if (!ret)
+		btrfs_reada_remove_dev(device);
 	mutex_lock(&uuid_mutex);
-	अगर (ret)
-		जाओ error_unकरो;
+	if (ret)
+		goto error_undo;
 
 	/*
 	 * TODO: the superblock still includes this device in its num_devices
-	 * counter although ग_लिखो_all_supers() is not locked out. This
-	 * could give a fileप्रणाली state which requires a degraded mount.
+	 * counter although write_all_supers() is not locked out. This
+	 * could give a filesystem state which requires a degraded mount.
 	 */
 	ret = btrfs_rm_dev_item(device);
-	अगर (ret)
-		जाओ error_unकरो;
+	if (ret)
+		goto error_undo;
 
 	clear_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state);
 	btrfs_scrub_cancel_dev(device);
 
 	/*
-	 * the device list mutex makes sure that we करोn't change
-	 * the device list जबतक someone अन्यथा is writing out all
+	 * the device list mutex makes sure that we don't change
+	 * the device list while someone else is writing out all
 	 * the device supers. Whoever is writing all supers, should
-	 * lock the device list mutex beक्रमe getting the number of
+	 * lock the device list mutex before getting the number of
 	 * devices in the super block (super_copy). Conversely,
 	 * whoever updates the number of devices in the super block
 	 * (super_copy) should hold the device list mutex.
 	 */
 
 	/*
-	 * In normal हालs the cur_devices == fs_devices. But in हाल
-	 * of deleting a seed device, the cur_devices should poपूर्णांक to
+	 * In normal cases the cur_devices == fs_devices. But in case
+	 * of deleting a seed device, the cur_devices should point to
 	 * its own fs_devices listed under the fs_devices->seed.
 	 */
 	cur_devices = device->fs_devices;
@@ -2216,253 +2215,253 @@ out:
 
 	cur_devices->num_devices--;
 	cur_devices->total_devices--;
-	/* Update total_devices of the parent fs_devices अगर it's seed */
-	अगर (cur_devices != fs_devices)
+	/* Update total_devices of the parent fs_devices if it's seed */
+	if (cur_devices != fs_devices)
 		fs_devices->total_devices--;
 
-	अगर (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state))
+	if (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state))
 		cur_devices->missing_devices--;
 
-	btrfs_assign_next_active_device(device, शून्य);
+	btrfs_assign_next_active_device(device, NULL);
 
-	अगर (device->bdev) अणु
-		cur_devices->खोलो_devices--;
-		/* हटाओ sysfs entry */
-		btrfs_sysfs_हटाओ_device(device);
-	पूर्ण
+	if (device->bdev) {
+		cur_devices->open_devices--;
+		/* remove sysfs entry */
+		btrfs_sysfs_remove_device(device);
+	}
 
 	num_devices = btrfs_super_num_devices(fs_info->super_copy) - 1;
 	btrfs_set_super_num_devices(fs_info->super_copy, num_devices);
 	mutex_unlock(&fs_devices->device_list_mutex);
 
 	/*
-	 * at this poपूर्णांक, the device is zero sized and detached from
+	 * at this point, the device is zero sized and detached from
 	 * the devices list.  All that's left is to zero out the old
-	 * supers and मुक्त the device.
+	 * supers and free the device.
 	 */
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state))
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state))
 		btrfs_scratch_superblocks(fs_info, device->bdev,
 					  device->name->str);
 
-	btrfs_बंद_bdev(device);
+	btrfs_close_bdev(device);
 	synchronize_rcu();
-	btrfs_मुक्त_device(device);
+	btrfs_free_device(device);
 
-	अगर (cur_devices->खोलो_devices == 0) अणु
+	if (cur_devices->open_devices == 0) {
 		list_del_init(&cur_devices->seed_list);
-		बंद_fs_devices(cur_devices);
-		मुक्त_fs_devices(cur_devices);
-	पूर्ण
+		close_fs_devices(cur_devices);
+		free_fs_devices(cur_devices);
+	}
 
 out:
 	mutex_unlock(&uuid_mutex);
-	वापस ret;
+	return ret;
 
-error_unकरो:
-	btrfs_पढ़ोa_unकरो_हटाओ_dev(device);
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) अणु
+error_undo:
+	btrfs_reada_undo_remove_dev(device);
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) {
 		mutex_lock(&fs_info->chunk_mutex);
 		list_add(&device->dev_alloc_list,
 			 &fs_devices->alloc_list);
 		device->fs_devices->rw_devices++;
 		mutex_unlock(&fs_info->chunk_mutex);
-	पूर्ण
-	जाओ out;
-पूर्ण
+	}
+	goto out;
+}
 
-व्योम btrfs_rm_dev_replace_हटाओ_srcdev(काष्ठा btrfs_device *srcdev)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
+void btrfs_rm_dev_replace_remove_srcdev(struct btrfs_device *srcdev)
+{
+	struct btrfs_fs_devices *fs_devices;
 
-	lockdep_निश्चित_held(&srcdev->fs_info->fs_devices->device_list_mutex);
+	lockdep_assert_held(&srcdev->fs_info->fs_devices->device_list_mutex);
 
 	/*
-	 * in हाल of fs with no seed, srcdev->fs_devices will poपूर्णांक
+	 * in case of fs with no seed, srcdev->fs_devices will point
 	 * to fs_devices of fs_info. However when the dev being replaced is
-	 * a seed dev it will poपूर्णांक to the seed's local fs_devices. In लघु
-	 * srcdev will have its correct fs_devices in both the हालs.
+	 * a seed dev it will point to the seed's local fs_devices. In short
+	 * srcdev will have its correct fs_devices in both the cases.
 	 */
 	fs_devices = srcdev->fs_devices;
 
 	list_del_rcu(&srcdev->dev_list);
 	list_del(&srcdev->dev_alloc_list);
 	fs_devices->num_devices--;
-	अगर (test_bit(BTRFS_DEV_STATE_MISSING, &srcdev->dev_state))
+	if (test_bit(BTRFS_DEV_STATE_MISSING, &srcdev->dev_state))
 		fs_devices->missing_devices--;
 
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &srcdev->dev_state))
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &srcdev->dev_state))
 		fs_devices->rw_devices--;
 
-	अगर (srcdev->bdev)
-		fs_devices->खोलो_devices--;
-पूर्ण
+	if (srcdev->bdev)
+		fs_devices->open_devices--;
+}
 
-व्योम btrfs_rm_dev_replace_मुक्त_srcdev(काष्ठा btrfs_device *srcdev)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices = srcdev->fs_devices;
+void btrfs_rm_dev_replace_free_srcdev(struct btrfs_device *srcdev)
+{
+	struct btrfs_fs_devices *fs_devices = srcdev->fs_devices;
 
 	mutex_lock(&uuid_mutex);
 
-	btrfs_बंद_bdev(srcdev);
+	btrfs_close_bdev(srcdev);
 	synchronize_rcu();
-	btrfs_मुक्त_device(srcdev);
+	btrfs_free_device(srcdev);
 
-	/* अगर this is no devs we rather delete the fs_devices */
-	अगर (!fs_devices->num_devices) अणु
+	/* if this is no devs we rather delete the fs_devices */
+	if (!fs_devices->num_devices) {
 		/*
 		 * On a mounted FS, num_devices can't be zero unless it's a
-		 * seed. In हाल of a seed device being replaced, the replace
+		 * seed. In case of a seed device being replaced, the replace
 		 * target added to the sprout FS, so there will be no more
 		 * device left under the seed FS.
 		 */
 		ASSERT(fs_devices->seeding);
 
 		list_del_init(&fs_devices->seed_list);
-		बंद_fs_devices(fs_devices);
-		मुक्त_fs_devices(fs_devices);
-	पूर्ण
+		close_fs_devices(fs_devices);
+		free_fs_devices(fs_devices);
+	}
 	mutex_unlock(&uuid_mutex);
-पूर्ण
+}
 
-व्योम btrfs_destroy_dev_replace_tgtdev(काष्ठा btrfs_device *tgtdev)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices = tgtdev->fs_info->fs_devices;
+void btrfs_destroy_dev_replace_tgtdev(struct btrfs_device *tgtdev)
+{
+	struct btrfs_fs_devices *fs_devices = tgtdev->fs_info->fs_devices;
 
 	mutex_lock(&fs_devices->device_list_mutex);
 
-	btrfs_sysfs_हटाओ_device(tgtdev);
+	btrfs_sysfs_remove_device(tgtdev);
 
-	अगर (tgtdev->bdev)
-		fs_devices->खोलो_devices--;
+	if (tgtdev->bdev)
+		fs_devices->open_devices--;
 
 	fs_devices->num_devices--;
 
-	btrfs_assign_next_active_device(tgtdev, शून्य);
+	btrfs_assign_next_active_device(tgtdev, NULL);
 
 	list_del_rcu(&tgtdev->dev_list);
 
 	mutex_unlock(&fs_devices->device_list_mutex);
 
 	/*
-	 * The update_dev_समय() with in btrfs_scratch_superblocks()
+	 * The update_dev_time() with in btrfs_scratch_superblocks()
 	 * may lead to a call to btrfs_show_devname() which will try
 	 * to hold device_list_mutex. And here this device
-	 * is alपढ़ोy out of device list, so we करोn't have to hold
+	 * is already out of device list, so we don't have to hold
 	 * the device_list_mutex lock.
 	 */
 	btrfs_scratch_superblocks(tgtdev->fs_info, tgtdev->bdev,
 				  tgtdev->name->str);
 
-	btrfs_बंद_bdev(tgtdev);
+	btrfs_close_bdev(tgtdev);
 	synchronize_rcu();
-	btrfs_मुक्त_device(tgtdev);
-पूर्ण
+	btrfs_free_device(tgtdev);
+}
 
-अटल काष्ठा btrfs_device *btrfs_find_device_by_path(
-		काष्ठा btrfs_fs_info *fs_info, स्थिर अक्षर *device_path)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा btrfs_super_block *disk_super;
+static struct btrfs_device *btrfs_find_device_by_path(
+		struct btrfs_fs_info *fs_info, const char *device_path)
+{
+	int ret = 0;
+	struct btrfs_super_block *disk_super;
 	u64 devid;
 	u8 *dev_uuid;
-	काष्ठा block_device *bdev;
-	काष्ठा btrfs_device *device;
+	struct block_device *bdev;
+	struct btrfs_device *device;
 
 	ret = btrfs_get_bdev_and_sb(device_path, FMODE_READ,
 				    fs_info->bdev_holder, 0, &bdev, &disk_super);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	devid = btrfs_stack_device_id(&disk_super->dev_item);
 	dev_uuid = disk_super->dev_item.uuid;
-	अगर (btrfs_fs_incompat(fs_info, METADATA_UUID))
+	if (btrfs_fs_incompat(fs_info, METADATA_UUID))
 		device = btrfs_find_device(fs_info->fs_devices, devid, dev_uuid,
 					   disk_super->metadata_uuid);
-	अन्यथा
+	else
 		device = btrfs_find_device(fs_info->fs_devices, devid, dev_uuid,
 					   disk_super->fsid);
 
 	btrfs_release_disk_super(disk_super);
-	अगर (!device)
+	if (!device)
 		device = ERR_PTR(-ENOENT);
 	blkdev_put(bdev, FMODE_READ);
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /*
- * Lookup a device given by device id, or the path अगर the id is 0.
+ * Lookup a device given by device id, or the path if the id is 0.
  */
-काष्ठा btrfs_device *btrfs_find_device_by_devspec(
-		काष्ठा btrfs_fs_info *fs_info, u64 devid,
-		स्थिर अक्षर *device_path)
-अणु
-	काष्ठा btrfs_device *device;
+struct btrfs_device *btrfs_find_device_by_devspec(
+		struct btrfs_fs_info *fs_info, u64 devid,
+		const char *device_path)
+{
+	struct btrfs_device *device;
 
-	अगर (devid) अणु
-		device = btrfs_find_device(fs_info->fs_devices, devid, शून्य,
-					   शून्य);
-		अगर (!device)
-			वापस ERR_PTR(-ENOENT);
-		वापस device;
-	पूर्ण
+	if (devid) {
+		device = btrfs_find_device(fs_info->fs_devices, devid, NULL,
+					   NULL);
+		if (!device)
+			return ERR_PTR(-ENOENT);
+		return device;
+	}
 
-	अगर (!device_path || !device_path[0])
-		वापस ERR_PTR(-EINVAL);
+	if (!device_path || !device_path[0])
+		return ERR_PTR(-EINVAL);
 
-	अगर (म_भेद(device_path, "missing") == 0) अणु
+	if (strcmp(device_path, "missing") == 0) {
 		/* Find first missing device */
-		list_क्रम_each_entry(device, &fs_info->fs_devices->devices,
-				    dev_list) अणु
-			अगर (test_bit(BTRFS_DEV_STATE_IN_FS_METADATA,
+		list_for_each_entry(device, &fs_info->fs_devices->devices,
+				    dev_list) {
+			if (test_bit(BTRFS_DEV_STATE_IN_FS_METADATA,
 				     &device->dev_state) && !device->bdev)
-				वापस device;
-		पूर्ण
-		वापस ERR_PTR(-ENOENT);
-	पूर्ण
+				return device;
+		}
+		return ERR_PTR(-ENOENT);
+	}
 
-	वापस btrfs_find_device_by_path(fs_info, device_path);
-पूर्ण
+	return btrfs_find_device_by_path(fs_info, device_path);
+}
 
 /*
- * करोes all the dirty work required क्रम changing file प्रणाली's UUID.
+ * does all the dirty work required for changing file system's UUID.
  */
-अटल पूर्णांक btrfs_prepare_sprout(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
-	काष्ठा btrfs_fs_devices *old_devices;
-	काष्ठा btrfs_fs_devices *seed_devices;
-	काष्ठा btrfs_super_block *disk_super = fs_info->super_copy;
-	काष्ठा btrfs_device *device;
+static int btrfs_prepare_sprout(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+	struct btrfs_fs_devices *old_devices;
+	struct btrfs_fs_devices *seed_devices;
+	struct btrfs_super_block *disk_super = fs_info->super_copy;
+	struct btrfs_device *device;
 	u64 super_flags;
 
-	lockdep_निश्चित_held(&uuid_mutex);
-	अगर (!fs_devices->seeding)
-		वापस -EINVAL;
+	lockdep_assert_held(&uuid_mutex);
+	if (!fs_devices->seeding)
+		return -EINVAL;
 
 	/*
 	 * Private copy of the seed devices, anchored at
 	 * fs_info->fs_devices->seed_list
 	 */
-	seed_devices = alloc_fs_devices(शून्य, शून्य);
-	अगर (IS_ERR(seed_devices))
-		वापस PTR_ERR(seed_devices);
+	seed_devices = alloc_fs_devices(NULL, NULL);
+	if (IS_ERR(seed_devices))
+		return PTR_ERR(seed_devices);
 
 	/*
 	 * It's necessary to retain a copy of the original seed fs_devices in
-	 * fs_uuids so that fileप्रणालीs which have been seeded can successfully
-	 * reference the seed device from खोलो_seed_devices. This also supports
+	 * fs_uuids so that filesystems which have been seeded can successfully
+	 * reference the seed device from open_seed_devices. This also supports
 	 * multiple fs seed.
 	 */
 	old_devices = clone_fs_devices(fs_devices);
-	अगर (IS_ERR(old_devices)) अणु
-		kमुक्त(seed_devices);
-		वापस PTR_ERR(old_devices);
-	पूर्ण
+	if (IS_ERR(old_devices)) {
+		kfree(seed_devices);
+		return PTR_ERR(old_devices);
+	}
 
 	list_add(&old_devices->fs_list, &fs_uuids);
 
-	स_नकल(seed_devices, fs_devices, माप(*seed_devices));
-	seed_devices->खोलोed = 1;
+	memcpy(seed_devices, fs_devices, sizeof(*seed_devices));
+	seed_devices->opened = 1;
 	INIT_LIST_HEAD(&seed_devices->devices);
 	INIT_LIST_HEAD(&seed_devices->alloc_list);
 	mutex_init(&seed_devices->device_list_mutex);
@@ -2470,177 +2469,177 @@ error_unकरो:
 	mutex_lock(&fs_devices->device_list_mutex);
 	list_splice_init_rcu(&fs_devices->devices, &seed_devices->devices,
 			      synchronize_rcu);
-	list_क्रम_each_entry(device, &seed_devices->devices, dev_list)
+	list_for_each_entry(device, &seed_devices->devices, dev_list)
 		device->fs_devices = seed_devices;
 
 	fs_devices->seeding = false;
 	fs_devices->num_devices = 0;
-	fs_devices->खोलो_devices = 0;
+	fs_devices->open_devices = 0;
 	fs_devices->missing_devices = 0;
 	fs_devices->rotating = false;
 	list_add(&seed_devices->seed_list, &fs_devices->seed_list);
 
-	generate_अक्रमom_uuid(fs_devices->fsid);
-	स_नकल(fs_devices->metadata_uuid, fs_devices->fsid, BTRFS_FSID_SIZE);
-	स_नकल(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE);
+	generate_random_uuid(fs_devices->fsid);
+	memcpy(fs_devices->metadata_uuid, fs_devices->fsid, BTRFS_FSID_SIZE);
+	memcpy(disk_super->fsid, fs_devices->fsid, BTRFS_FSID_SIZE);
 	mutex_unlock(&fs_devices->device_list_mutex);
 
 	super_flags = btrfs_super_flags(disk_super) &
 		      ~BTRFS_SUPER_FLAG_SEEDING;
 	btrfs_set_super_flags(disk_super, super_flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Store the expected generation क्रम seed devices in device items.
+ * Store the expected generation for seed devices in device items.
  */
-अटल पूर्णांक btrfs_finish_sprout(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *root = fs_info->chunk_root;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_dev_item *dev_item;
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_key key;
+static int btrfs_finish_sprout(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root = fs_info->chunk_root;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_dev_item *dev_item;
+	struct btrfs_device *device;
+	struct btrfs_key key;
 	u8 fs_uuid[BTRFS_FSID_SIZE];
 	u8 dev_uuid[BTRFS_UUID_SIZE];
 	u64 devid;
-	पूर्णांक ret;
+	int ret;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.offset = 0;
 	key.type = BTRFS_DEV_ITEM_KEY;
 
-	जबतक (1) अणु
+	while (1) {
 		ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-		अगर (ret < 0)
-			जाओ error;
+		if (ret < 0)
+			goto error;
 
 		leaf = path->nodes[0];
 next_slot:
-		अगर (path->slots[0] >= btrfs_header_nritems(leaf)) अणु
+		if (path->slots[0] >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, path);
-			अगर (ret > 0)
-				अवरोध;
-			अगर (ret < 0)
-				जाओ error;
+			if (ret > 0)
+				break;
+			if (ret < 0)
+				goto error;
 			leaf = path->nodes[0];
 			btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
 			btrfs_release_path(path);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
-		अगर (key.objectid != BTRFS_DEV_ITEMS_OBJECTID ||
+		if (key.objectid != BTRFS_DEV_ITEMS_OBJECTID ||
 		    key.type != BTRFS_DEV_ITEM_KEY)
-			अवरोध;
+			break;
 
 		dev_item = btrfs_item_ptr(leaf, path->slots[0],
-					  काष्ठा btrfs_dev_item);
+					  struct btrfs_dev_item);
 		devid = btrfs_device_id(leaf, dev_item);
-		पढ़ो_extent_buffer(leaf, dev_uuid, btrfs_device_uuid(dev_item),
+		read_extent_buffer(leaf, dev_uuid, btrfs_device_uuid(dev_item),
 				   BTRFS_UUID_SIZE);
-		पढ़ो_extent_buffer(leaf, fs_uuid, btrfs_device_fsid(dev_item),
+		read_extent_buffer(leaf, fs_uuid, btrfs_device_fsid(dev_item),
 				   BTRFS_FSID_SIZE);
 		device = btrfs_find_device(fs_info->fs_devices, devid, dev_uuid,
 					   fs_uuid);
 		BUG_ON(!device); /* Logic error */
 
-		अगर (device->fs_devices->seeding) अणु
+		if (device->fs_devices->seeding) {
 			btrfs_set_device_generation(leaf, dev_item,
 						    device->generation);
 			btrfs_mark_buffer_dirty(leaf);
-		पूर्ण
+		}
 
 		path->slots[0]++;
-		जाओ next_slot;
-	पूर्ण
+		goto next_slot;
+	}
 	ret = 0;
 error:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_init_new_device(काष्ठा btrfs_fs_info *fs_info, स्थिर अक्षर *device_path)
-अणु
-	काष्ठा btrfs_root *root = fs_info->dev_root;
-	काष्ठा request_queue *q;
-	काष्ठा btrfs_trans_handle *trans;
-	काष्ठा btrfs_device *device;
-	काष्ठा block_device *bdev;
-	काष्ठा super_block *sb = fs_info->sb;
-	काष्ठा rcu_string *name;
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+int btrfs_init_new_device(struct btrfs_fs_info *fs_info, const char *device_path)
+{
+	struct btrfs_root *root = fs_info->dev_root;
+	struct request_queue *q;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_device *device;
+	struct block_device *bdev;
+	struct super_block *sb = fs_info->sb;
+	struct rcu_string *name;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
 	u64 orig_super_total_bytes;
 	u64 orig_super_num_devices;
-	पूर्णांक seeding_dev = 0;
-	पूर्णांक ret = 0;
+	int seeding_dev = 0;
+	int ret = 0;
 	bool locked = false;
 
-	अगर (sb_rकरोnly(sb) && !fs_devices->seeding)
-		वापस -EROFS;
+	if (sb_rdonly(sb) && !fs_devices->seeding)
+		return -EROFS;
 
 	bdev = blkdev_get_by_path(device_path, FMODE_WRITE | FMODE_EXCL,
 				  fs_info->bdev_holder);
-	अगर (IS_ERR(bdev))
-		वापस PTR_ERR(bdev);
+	if (IS_ERR(bdev))
+		return PTR_ERR(bdev);
 
-	अगर (!btrfs_check_device_zone_type(fs_info, bdev)) अणु
+	if (!btrfs_check_device_zone_type(fs_info, bdev)) {
 		ret = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (fs_devices->seeding) अणु
+	if (fs_devices->seeding) {
 		seeding_dev = 1;
-		करोwn_ग_लिखो(&sb->s_umount);
+		down_write(&sb->s_umount);
 		mutex_lock(&uuid_mutex);
 		locked = true;
-	पूर्ण
+	}
 
 	sync_blockdev(bdev);
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(device, &fs_devices->devices, dev_list) अणु
-		अगर (device->bdev == bdev) अणु
+	rcu_read_lock();
+	list_for_each_entry_rcu(device, &fs_devices->devices, dev_list) {
+		if (device->bdev == bdev) {
 			ret = -EEXIST;
-			rcu_पढ़ो_unlock();
-			जाओ error;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			rcu_read_unlock();
+			goto error;
+		}
+	}
+	rcu_read_unlock();
 
-	device = btrfs_alloc_device(fs_info, शून्य, शून्य);
-	अगर (IS_ERR(device)) अणु
+	device = btrfs_alloc_device(fs_info, NULL, NULL);
+	if (IS_ERR(device)) {
 		/* we can safely leave the fs_devices entry around */
 		ret = PTR_ERR(device);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	name = rcu_string_strdup(device_path, GFP_KERNEL);
-	अगर (!name) अणु
+	if (!name) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_device;
-	पूर्ण
-	rcu_assign_poपूर्णांकer(device->name, name);
+		goto error_free_device;
+	}
+	rcu_assign_pointer(device->name, name);
 
 	device->fs_info = fs_info;
 	device->bdev = bdev;
 
 	ret = btrfs_get_dev_zone_info(device);
-	अगर (ret)
-		जाओ error_मुक्त_device;
+	if (ret)
+		goto error_free_device;
 
 	trans = btrfs_start_transaction(root, 0);
-	अगर (IS_ERR(trans)) अणु
+	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		जाओ error_मुक्त_zone;
-	पूर्ण
+		goto error_free_zone;
+	}
 
 	q = bdev_get_queue(bdev);
 	set_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state);
@@ -2648,7 +2647,7 @@ error:
 	device->io_width = fs_info->sectorsize;
 	device->io_align = fs_info->sectorsize;
 	device->sector_size = fs_info->sectorsize;
-	device->total_bytes = round_करोwn(i_size_पढ़ो(bdev->bd_inode),
+	device->total_bytes = round_down(i_size_read(bdev->bd_inode),
 					 fs_info->sectorsize);
 	device->disk_total_bytes = device->total_bytes;
 	device->commit_total_bytes = device->total_bytes;
@@ -2658,14 +2657,14 @@ error:
 	device->dev_stats_valid = 1;
 	set_blocksize(device->bdev, BTRFS_BDEV_BLOCKSIZE);
 
-	अगर (seeding_dev) अणु
-		btrfs_clear_sb_rकरोnly(sb);
+	if (seeding_dev) {
+		btrfs_clear_sb_rdonly(sb);
 		ret = btrfs_prepare_sprout(fs_info);
-		अगर (ret) अणु
-			btrfs_पात_transaction(trans, ret);
-			जाओ error_trans;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			btrfs_abort_transaction(trans, ret);
+			goto error_trans;
+		}
+	}
 
 	device->fs_devices = fs_devices;
 
@@ -2674,19 +2673,19 @@ error:
 	list_add_rcu(&device->dev_list, &fs_devices->devices);
 	list_add(&device->dev_alloc_list, &fs_devices->alloc_list);
 	fs_devices->num_devices++;
-	fs_devices->खोलो_devices++;
+	fs_devices->open_devices++;
 	fs_devices->rw_devices++;
 	fs_devices->total_devices++;
 	fs_devices->total_rw_bytes += device->total_bytes;
 
-	atomic64_add(device->total_bytes, &fs_info->मुक्त_chunk_space);
+	atomic64_add(device->total_bytes, &fs_info->free_chunk_space);
 
-	अगर (!blk_queue_nonrot(q))
+	if (!blk_queue_nonrot(q))
 		fs_devices->rotating = true;
 
 	orig_super_total_bytes = btrfs_super_total_bytes(fs_info->super_copy);
 	btrfs_set_super_total_bytes(fs_info->super_copy,
-		round_करोwn(orig_super_total_bytes + device->total_bytes,
+		round_down(orig_super_total_bytes + device->total_bytes,
 			   fs_info->sectorsize));
 
 	orig_super_num_devices = btrfs_super_num_devices(fs_info->super_copy);
@@ -2706,87 +2705,87 @@ error:
 
 	mutex_unlock(&fs_devices->device_list_mutex);
 
-	अगर (seeding_dev) अणु
+	if (seeding_dev) {
 		mutex_lock(&fs_info->chunk_mutex);
 		ret = init_first_rw_device(trans);
 		mutex_unlock(&fs_info->chunk_mutex);
-		अगर (ret) अणु
-			btrfs_पात_transaction(trans, ret);
-			जाओ error_sysfs;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			btrfs_abort_transaction(trans, ret);
+			goto error_sysfs;
+		}
+	}
 
 	ret = btrfs_add_dev_item(trans, device);
-	अगर (ret) अणु
-		btrfs_पात_transaction(trans, ret);
-		जाओ error_sysfs;
-	पूर्ण
+	if (ret) {
+		btrfs_abort_transaction(trans, ret);
+		goto error_sysfs;
+	}
 
-	अगर (seeding_dev) अणु
+	if (seeding_dev) {
 		ret = btrfs_finish_sprout(trans);
-		अगर (ret) अणु
-			btrfs_पात_transaction(trans, ret);
-			जाओ error_sysfs;
-		पूर्ण
+		if (ret) {
+			btrfs_abort_transaction(trans, ret);
+			goto error_sysfs;
+		}
 
 		/*
-		 * fs_devices now represents the newly sprouted fileप्रणाली and
+		 * fs_devices now represents the newly sprouted filesystem and
 		 * its fsid has been changed by btrfs_prepare_sprout
 		 */
 		btrfs_sysfs_update_sprout_fsid(fs_devices);
-	पूर्ण
+	}
 
 	ret = btrfs_commit_transaction(trans);
 
-	अगर (seeding_dev) अणु
+	if (seeding_dev) {
 		mutex_unlock(&uuid_mutex);
-		up_ग_लिखो(&sb->s_umount);
+		up_write(&sb->s_umount);
 		locked = false;
 
-		अगर (ret) /* transaction commit */
-			वापस ret;
+		if (ret) /* transaction commit */
+			return ret;
 
 		ret = btrfs_relocate_sys_chunks(fs_info);
-		अगर (ret < 0)
+		if (ret < 0)
 			btrfs_handle_fs_error(fs_info, ret,
 				    "Failed to relocate sys chunks after device initialization. This can be fixed using the \"btrfs balance\" command.");
 		trans = btrfs_attach_transaction(root);
-		अगर (IS_ERR(trans)) अणु
-			अगर (PTR_ERR(trans) == -ENOENT)
-				वापस 0;
+		if (IS_ERR(trans)) {
+			if (PTR_ERR(trans) == -ENOENT)
+				return 0;
 			ret = PTR_ERR(trans);
-			trans = शून्य;
-			जाओ error_sysfs;
-		पूर्ण
+			trans = NULL;
+			goto error_sysfs;
+		}
 		ret = btrfs_commit_transaction(trans);
-	पूर्ण
+	}
 
 	/*
 	 * Now that we have written a new super block to this device, check all
-	 * other fs_devices list अगर device_path alienates any other scanned
+	 * other fs_devices list if device_path alienates any other scanned
 	 * device.
-	 * We can ignore the वापस value as it typically वापसs -EINVAL and
-	 * only succeeds अगर the device was an alien.
+	 * We can ignore the return value as it typically returns -EINVAL and
+	 * only succeeds if the device was an alien.
 	 */
-	btrfs_क्रमget_devices(device_path);
+	btrfs_forget_devices(device_path);
 
-	/* Update स_समय/mसमय क्रम blkid or udev */
-	update_dev_समय(device_path);
+	/* Update ctime/mtime for blkid or udev */
+	update_dev_time(device_path);
 
-	वापस ret;
+	return ret;
 
 error_sysfs:
-	btrfs_sysfs_हटाओ_device(device);
+	btrfs_sysfs_remove_device(device);
 	mutex_lock(&fs_info->fs_devices->device_list_mutex);
 	mutex_lock(&fs_info->chunk_mutex);
 	list_del_rcu(&device->dev_list);
 	list_del(&device->dev_alloc_list);
 	fs_info->fs_devices->num_devices--;
-	fs_info->fs_devices->खोलो_devices--;
+	fs_info->fs_devices->open_devices--;
 	fs_info->fs_devices->rw_devices--;
 	fs_info->fs_devices->total_devices--;
 	fs_info->fs_devices->total_rw_bytes -= device->total_bytes;
-	atomic64_sub(device->total_bytes, &fs_info->मुक्त_chunk_space);
+	atomic64_sub(device->total_bytes, &fs_info->free_chunk_space);
 	btrfs_set_super_total_bytes(fs_info->super_copy,
 				    orig_super_total_bytes);
 	btrfs_set_super_num_devices(fs_info->super_copy,
@@ -2794,52 +2793,52 @@ error_sysfs:
 	mutex_unlock(&fs_info->chunk_mutex);
 	mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 error_trans:
-	अगर (seeding_dev)
-		btrfs_set_sb_rकरोnly(sb);
-	अगर (trans)
+	if (seeding_dev)
+		btrfs_set_sb_rdonly(sb);
+	if (trans)
 		btrfs_end_transaction(trans);
-error_मुक्त_zone:
+error_free_zone:
 	btrfs_destroy_dev_zone_info(device);
-error_मुक्त_device:
-	btrfs_मुक्त_device(device);
+error_free_device:
+	btrfs_free_device(device);
 error:
 	blkdev_put(bdev, FMODE_EXCL);
-	अगर (locked) अणु
+	if (locked) {
 		mutex_unlock(&uuid_mutex);
-		up_ग_लिखो(&sb->s_umount);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		up_write(&sb->s_umount);
+	}
+	return ret;
+}
 
-अटल noअंतरभूत पूर्णांक btrfs_update_device(काष्ठा btrfs_trans_handle *trans,
-					काष्ठा btrfs_device *device)
-अणु
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_root *root = device->fs_info->chunk_root;
-	काष्ठा btrfs_dev_item *dev_item;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
+static noinline int btrfs_update_device(struct btrfs_trans_handle *trans,
+					struct btrfs_device *device)
+{
+	int ret;
+	struct btrfs_path *path;
+	struct btrfs_root *root = device->fs_info->chunk_root;
+	struct btrfs_dev_item *dev_item;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.type = BTRFS_DEV_ITEM_KEY;
 	key.offset = device->devid;
 
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (ret > 0) अणु
+	if (ret > 0) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	leaf = path->nodes[0];
-	dev_item = btrfs_item_ptr(leaf, path->slots[0], काष्ठा btrfs_dev_item);
+	dev_item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_dev_item);
 
 	btrfs_set_device_id(leaf, dev_item, device->devid);
 	btrfs_set_device_type(leaf, dev_item, device->type);
@@ -2853,95 +2852,95 @@ error:
 	btrfs_mark_buffer_dirty(leaf);
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_grow_device(काष्ठा btrfs_trans_handle *trans,
-		      काष्ठा btrfs_device *device, u64 new_size)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = device->fs_info;
-	काष्ठा btrfs_super_block *super_copy = fs_info->super_copy;
+int btrfs_grow_device(struct btrfs_trans_handle *trans,
+		      struct btrfs_device *device, u64 new_size)
+{
+	struct btrfs_fs_info *fs_info = device->fs_info;
+	struct btrfs_super_block *super_copy = fs_info->super_copy;
 	u64 old_total;
-	u64 dअगरf;
+	u64 diff;
 
-	अगर (!test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state))
-		वापस -EACCES;
+	if (!test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state))
+		return -EACCES;
 
-	new_size = round_करोwn(new_size, fs_info->sectorsize);
+	new_size = round_down(new_size, fs_info->sectorsize);
 
 	mutex_lock(&fs_info->chunk_mutex);
 	old_total = btrfs_super_total_bytes(super_copy);
-	dअगरf = round_करोwn(new_size - device->total_bytes, fs_info->sectorsize);
+	diff = round_down(new_size - device->total_bytes, fs_info->sectorsize);
 
-	अगर (new_size <= device->total_bytes ||
-	    test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) अणु
+	if (new_size <= device->total_bytes ||
+	    test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) {
 		mutex_unlock(&fs_info->chunk_mutex);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	btrfs_set_super_total_bytes(super_copy,
-			round_करोwn(old_total + dअगरf, fs_info->sectorsize));
-	device->fs_devices->total_rw_bytes += dअगरf;
+			round_down(old_total + diff, fs_info->sectorsize));
+	device->fs_devices->total_rw_bytes += diff;
 
 	btrfs_device_set_total_bytes(device, new_size);
 	btrfs_device_set_disk_total_bytes(device, new_size);
 	btrfs_clear_space_info_full(device->fs_info);
-	अगर (list_empty(&device->post_commit_list))
+	if (list_empty(&device->post_commit_list))
 		list_add_tail(&device->post_commit_list,
 			      &trans->transaction->dev_update_list);
 	mutex_unlock(&fs_info->chunk_mutex);
 
-	वापस btrfs_update_device(trans, device);
-पूर्ण
+	return btrfs_update_device(trans, device);
+}
 
-अटल पूर्णांक btrfs_मुक्त_chunk(काष्ठा btrfs_trans_handle *trans, u64 chunk_offset)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *root = fs_info->chunk_root;
-	पूर्णांक ret;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
+static int btrfs_free_chunk(struct btrfs_trans_handle *trans, u64 chunk_offset)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *root = fs_info->chunk_root;
+	int ret;
+	struct btrfs_path *path;
+	struct btrfs_key key;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.offset = chunk_offset;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	अगर (ret < 0)
-		जाओ out;
-	अन्यथा अगर (ret > 0) अणु /* Logic error or corruption */
+	if (ret < 0)
+		goto out;
+	else if (ret > 0) { /* Logic error or corruption */
 		btrfs_handle_fs_error(fs_info, -ENOENT,
 				      "Failed lookup while freeing chunk.");
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = btrfs_del_item(trans, root, path);
-	अगर (ret < 0)
+	if (ret < 0)
 		btrfs_handle_fs_error(fs_info, ret,
 				      "Failed to delete chunk item.");
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक btrfs_del_sys_chunk(काष्ठा btrfs_fs_info *fs_info, u64 chunk_offset)
-अणु
-	काष्ठा btrfs_super_block *super_copy = fs_info->super_copy;
-	काष्ठा btrfs_disk_key *disk_key;
-	काष्ठा btrfs_chunk *chunk;
+static int btrfs_del_sys_chunk(struct btrfs_fs_info *fs_info, u64 chunk_offset)
+{
+	struct btrfs_super_block *super_copy = fs_info->super_copy;
+	struct btrfs_disk_key *disk_key;
+	struct btrfs_chunk *chunk;
 	u8 *ptr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u32 num_stripes;
 	u32 array_size;
 	u32 len = 0;
 	u32 cur;
-	काष्ठा btrfs_key key;
+	struct btrfs_key key;
 
 	mutex_lock(&fs_info->chunk_mutex);
 	array_size = btrfs_super_sys_array_size(super_copy);
@@ -2949,33 +2948,33 @@ out:
 	ptr = super_copy->sys_chunk_array;
 	cur = 0;
 
-	जबतक (cur < array_size) अणु
-		disk_key = (काष्ठा btrfs_disk_key *)ptr;
+	while (cur < array_size) {
+		disk_key = (struct btrfs_disk_key *)ptr;
 		btrfs_disk_key_to_cpu(&key, disk_key);
 
-		len = माप(*disk_key);
+		len = sizeof(*disk_key);
 
-		अगर (key.type == BTRFS_CHUNK_ITEM_KEY) अणु
-			chunk = (काष्ठा btrfs_chunk *)(ptr + len);
+		if (key.type == BTRFS_CHUNK_ITEM_KEY) {
+			chunk = (struct btrfs_chunk *)(ptr + len);
 			num_stripes = btrfs_stack_chunk_num_stripes(chunk);
 			len += btrfs_chunk_item_size(num_stripes);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
-		अगर (key.objectid == BTRFS_FIRST_CHUNK_TREE_OBJECTID &&
-		    key.offset == chunk_offset) अणु
-			स_हटाओ(ptr, ptr + len, array_size - (cur + len));
+			break;
+		}
+		if (key.objectid == BTRFS_FIRST_CHUNK_TREE_OBJECTID &&
+		    key.offset == chunk_offset) {
+			memmove(ptr, ptr + len, array_size - (cur + len));
 			array_size -= len;
 			btrfs_set_super_sys_array_size(super_copy, array_size);
-		पूर्ण अन्यथा अणु
+		} else {
 			ptr += len;
 			cur += len;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&fs_info->chunk_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * btrfs_get_chunk_map() - Find the mapping containing the given logical extent.
@@ -2984,57 +2983,57 @@ out:
  *
  * Return: Chunk mapping or ERR_PTR.
  */
-काष्ठा extent_map *btrfs_get_chunk_map(काष्ठा btrfs_fs_info *fs_info,
+struct extent_map *btrfs_get_chunk_map(struct btrfs_fs_info *fs_info,
 				       u64 logical, u64 length)
-अणु
-	काष्ठा extent_map_tree *em_tree;
-	काष्ठा extent_map *em;
+{
+	struct extent_map_tree *em_tree;
+	struct extent_map *em;
 
 	em_tree = &fs_info->mapping_tree;
-	पढ़ो_lock(&em_tree->lock);
+	read_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, logical, length);
-	पढ़ो_unlock(&em_tree->lock);
+	read_unlock(&em_tree->lock);
 
-	अगर (!em) अणु
+	if (!em) {
 		btrfs_crit(fs_info, "unable to find logical %llu length %llu",
 			   logical, length);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	अगर (em->start > logical || em->start + em->len < logical) अणु
+	if (em->start > logical || em->start + em->len < logical) {
 		btrfs_crit(fs_info,
 			   "found a bad mapping, wanted %llu-%llu, found %llu-%llu",
 			   logical, length, em->start, em->start + em->len);
-		मुक्त_extent_map(em);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		free_extent_map(em);
+		return ERR_PTR(-EINVAL);
+	}
 
-	/* callers are responsible क्रम dropping em's ref. */
-	वापस em;
-पूर्ण
+	/* callers are responsible for dropping em's ref. */
+	return em;
+}
 
-पूर्णांक btrfs_हटाओ_chunk(काष्ठा btrfs_trans_handle *trans, u64 chunk_offset)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
+int btrfs_remove_chunk(struct btrfs_trans_handle *trans, u64 chunk_offset)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct extent_map *em;
+	struct map_lookup *map;
 	u64 dev_extent_len = 0;
-	पूर्णांक i, ret = 0;
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+	int i, ret = 0;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
 
 	em = btrfs_get_chunk_map(fs_info, chunk_offset, 1);
-	अगर (IS_ERR(em)) अणु
+	if (IS_ERR(em)) {
 		/*
-		 * This is a logic error, but we करोn't want to just rely on the
-		 * user having built with ASSERT enabled, so अगर ASSERT करोesn't
-		 * करो anything we still error out.
+		 * This is a logic error, but we don't want to just rely on the
+		 * user having built with ASSERT enabled, so if ASSERT doesn't
+		 * do anything we still error out.
 		 */
 		ASSERT(0);
-		वापस PTR_ERR(em);
-	पूर्ण
+		return PTR_ERR(em);
+	}
 	map = em->map_lookup;
 	mutex_lock(&fs_info->chunk_mutex);
-	check_प्रणाली_chunk(trans, map->type);
+	check_system_chunk(trans, map->type);
 	mutex_unlock(&fs_info->chunk_mutex);
 
 	/*
@@ -3043,213 +3042,213 @@ out:
 	 * with map stripes (dev-replace.c:btrfs_dev_replace_finishing()).
 	 */
 	mutex_lock(&fs_devices->device_list_mutex);
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
-		काष्ठा btrfs_device *device = map->stripes[i].dev;
-		ret = btrfs_मुक्त_dev_extent(trans, device,
+	for (i = 0; i < map->num_stripes; i++) {
+		struct btrfs_device *device = map->stripes[i].dev;
+		ret = btrfs_free_dev_extent(trans, device,
 					    map->stripes[i].physical,
 					    &dev_extent_len);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&fs_devices->device_list_mutex);
-			btrfs_पात_transaction(trans, ret);
-			जाओ out;
-		पूर्ण
+			btrfs_abort_transaction(trans, ret);
+			goto out;
+		}
 
-		अगर (device->bytes_used > 0) अणु
+		if (device->bytes_used > 0) {
 			mutex_lock(&fs_info->chunk_mutex);
 			btrfs_device_set_bytes_used(device,
 					device->bytes_used - dev_extent_len);
-			atomic64_add(dev_extent_len, &fs_info->मुक्त_chunk_space);
+			atomic64_add(dev_extent_len, &fs_info->free_chunk_space);
 			btrfs_clear_space_info_full(fs_info);
 			mutex_unlock(&fs_info->chunk_mutex);
-		पूर्ण
+		}
 
 		ret = btrfs_update_device(trans, device);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&fs_devices->device_list_mutex);
-			btrfs_पात_transaction(trans, ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			btrfs_abort_transaction(trans, ret);
+			goto out;
+		}
+	}
 	mutex_unlock(&fs_devices->device_list_mutex);
 
-	ret = btrfs_मुक्त_chunk(trans, chunk_offset);
-	अगर (ret) अणु
-		btrfs_पात_transaction(trans, ret);
-		जाओ out;
-	पूर्ण
+	ret = btrfs_free_chunk(trans, chunk_offset);
+	if (ret) {
+		btrfs_abort_transaction(trans, ret);
+		goto out;
+	}
 
-	trace_btrfs_chunk_मुक्त(fs_info, map, chunk_offset, em->len);
+	trace_btrfs_chunk_free(fs_info, map, chunk_offset, em->len);
 
-	अगर (map->type & BTRFS_BLOCK_GROUP_SYSTEM) अणु
+	if (map->type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		ret = btrfs_del_sys_chunk(fs_info, chunk_offset);
-		अगर (ret) अणु
-			btrfs_पात_transaction(trans, ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (ret) {
+			btrfs_abort_transaction(trans, ret);
+			goto out;
+		}
+	}
 
-	ret = btrfs_हटाओ_block_group(trans, chunk_offset, em);
-	अगर (ret) अणु
-		btrfs_पात_transaction(trans, ret);
-		जाओ out;
-	पूर्ण
+	ret = btrfs_remove_block_group(trans, chunk_offset, em);
+	if (ret) {
+		btrfs_abort_transaction(trans, ret);
+		goto out;
+	}
 
 out:
-	/* once क्रम us */
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+	/* once for us */
+	free_extent_map(em);
+	return ret;
+}
 
-पूर्णांक btrfs_relocate_chunk(काष्ठा btrfs_fs_info *fs_info, u64 chunk_offset)
-अणु
-	काष्ठा btrfs_root *root = fs_info->chunk_root;
-	काष्ठा btrfs_trans_handle *trans;
-	काष्ठा btrfs_block_group *block_group;
+int btrfs_relocate_chunk(struct btrfs_fs_info *fs_info, u64 chunk_offset)
+{
+	struct btrfs_root *root = fs_info->chunk_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_block_group *block_group;
 	u64 length;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Prevent races with स्वतःmatic removal of unused block groups.
-	 * After we relocate and beक्रमe we हटाओ the chunk with offset
-	 * chunk_offset, स्वतःmatic removal of the block group can kick in,
-	 * resulting in a failure when calling btrfs_हटाओ_chunk() below.
+	 * Prevent races with automatic removal of unused block groups.
+	 * After we relocate and before we remove the chunk with offset
+	 * chunk_offset, automatic removal of the block group can kick in,
+	 * resulting in a failure when calling btrfs_remove_chunk() below.
 	 *
-	 * Make sure to acquire this mutex beक्रमe करोing a tree search (dev
-	 * or chunk trees) to find chunks. Otherwise the cleaner kthपढ़ो might
-	 * call btrfs_हटाओ_chunk() (through btrfs_delete_unused_bgs()) after
-	 * we release the path used to search the chunk/dev tree and beक्रमe
+	 * Make sure to acquire this mutex before doing a tree search (dev
+	 * or chunk trees) to find chunks. Otherwise the cleaner kthread might
+	 * call btrfs_remove_chunk() (through btrfs_delete_unused_bgs()) after
+	 * we release the path used to search the chunk/dev tree and before
 	 * the current task acquires this mutex and calls us.
 	 */
-	lockdep_निश्चित_held(&fs_info->reclaim_bgs_lock);
+	lockdep_assert_held(&fs_info->reclaim_bgs_lock);
 
 	/* step one, relocate all the extents inside this chunk */
-	btrfs_scrub_छोड़ो(fs_info);
+	btrfs_scrub_pause(fs_info);
 	ret = btrfs_relocate_block_group(fs_info, chunk_offset);
-	btrfs_scrub_जारी(fs_info);
-	अगर (ret)
-		वापस ret;
+	btrfs_scrub_continue(fs_info);
+	if (ret)
+		return ret;
 
 	block_group = btrfs_lookup_block_group(fs_info, chunk_offset);
-	अगर (!block_group)
-		वापस -ENOENT;
+	if (!block_group)
+		return -ENOENT;
 	btrfs_discard_cancel_work(&fs_info->discard_ctl, block_group);
 	length = block_group->length;
 	btrfs_put_block_group(block_group);
 
 	/*
-	 * On a zoned file प्रणाली, discard the whole block group, this will
+	 * On a zoned file system, discard the whole block group, this will
 	 * trigger a REQ_OP_ZONE_RESET operation on the device zone. If
-	 * resetting the zone fails, करोn't treat it as a fatal problem from the
-	 * fileप्रणाली's poपूर्णांक of view.
+	 * resetting the zone fails, don't treat it as a fatal problem from the
+	 * filesystem's point of view.
 	 */
-	अगर (btrfs_is_zoned(fs_info)) अणु
-		ret = btrfs_discard_extent(fs_info, chunk_offset, length, शून्य);
-		अगर (ret)
+	if (btrfs_is_zoned(fs_info)) {
+		ret = btrfs_discard_extent(fs_info, chunk_offset, length, NULL);
+		if (ret)
 			btrfs_info(fs_info,
 				"failed to reset zone %llu after relocation",
 				chunk_offset);
-	पूर्ण
+	}
 
-	trans = btrfs_start_trans_हटाओ_block_group(root->fs_info,
+	trans = btrfs_start_trans_remove_block_group(root->fs_info,
 						     chunk_offset);
-	अगर (IS_ERR(trans)) अणु
+	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		btrfs_handle_fs_error(root->fs_info, ret, शून्य);
-		वापस ret;
-	पूर्ण
+		btrfs_handle_fs_error(root->fs_info, ret, NULL);
+		return ret;
+	}
 
 	/*
 	 * step two, delete the device extents and the
 	 * chunk tree entries
 	 */
-	ret = btrfs_हटाओ_chunk(trans, chunk_offset);
+	ret = btrfs_remove_chunk(trans, chunk_offset);
 	btrfs_end_transaction(trans);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक btrfs_relocate_sys_chunks(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_root *chunk_root = fs_info->chunk_root;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_chunk *chunk;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_key found_key;
+static int btrfs_relocate_sys_chunks(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *chunk_root = fs_info->chunk_root;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_chunk *chunk;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
 	u64 chunk_type;
 	bool retried = false;
-	पूर्णांक failed = 0;
-	पूर्णांक ret;
+	int failed = 0;
+	int ret;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 again:
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.offset = (u64)-1;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 
-	जबतक (1) अणु
+	while (1) {
 		mutex_lock(&fs_info->reclaim_bgs_lock);
-		ret = btrfs_search_slot(शून्य, chunk_root, &key, path, 0, 0);
-		अगर (ret < 0) अणु
+		ret = btrfs_search_slot(NULL, chunk_root, &key, path, 0, 0);
+		if (ret < 0) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		BUG_ON(ret == 0); /* Corruption */
 
 		ret = btrfs_previous_item(chunk_root, path, key.objectid,
 					  key.type);
-		अगर (ret)
+		if (ret)
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-		अगर (ret < 0)
-			जाओ error;
-		अगर (ret > 0)
-			अवरोध;
+		if (ret < 0)
+			goto error;
+		if (ret > 0)
+			break;
 
 		leaf = path->nodes[0];
 		btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 
 		chunk = btrfs_item_ptr(leaf, path->slots[0],
-				       काष्ठा btrfs_chunk);
+				       struct btrfs_chunk);
 		chunk_type = btrfs_chunk_type(leaf, chunk);
 		btrfs_release_path(path);
 
-		अगर (chunk_type & BTRFS_BLOCK_GROUP_SYSTEM) अणु
+		if (chunk_type & BTRFS_BLOCK_GROUP_SYSTEM) {
 			ret = btrfs_relocate_chunk(fs_info, found_key.offset);
-			अगर (ret == -ENOSPC)
+			if (ret == -ENOSPC)
 				failed++;
-			अन्यथा
+			else
 				BUG_ON(ret);
-		पूर्ण
+		}
 		mutex_unlock(&fs_info->reclaim_bgs_lock);
 
-		अगर (found_key.offset == 0)
-			अवरोध;
+		if (found_key.offset == 0)
+			break;
 		key.offset = found_key.offset - 1;
-	पूर्ण
+	}
 	ret = 0;
-	अगर (failed && !retried) अणु
+	if (failed && !retried) {
 		failed = 0;
 		retried = true;
-		जाओ again;
-	पूर्ण अन्यथा अगर (WARN_ON(failed && retried)) अणु
+		goto again;
+	} else if (WARN_ON(failed && retried)) {
 		ret = -ENOSPC;
-	पूर्ण
+	}
 error:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
 /*
- * वापस 1 : allocate a data chunk successfully,
- * वापस <0: errors during allocating a data chunk,
- * वापस 0 : no need to allocate a data chunk.
+ * return 1 : allocate a data chunk successfully,
+ * return <0: errors during allocating a data chunk,
+ * return 0 : no need to allocate a data chunk.
  */
-अटल पूर्णांक btrfs_may_alloc_data_chunk(काष्ठा btrfs_fs_info *fs_info,
+static int btrfs_may_alloc_data_chunk(struct btrfs_fs_info *fs_info,
 				      u64 chunk_offset)
-अणु
-	काष्ठा btrfs_block_group *cache;
+{
+	struct btrfs_block_group *cache;
 	u64 bytes_used;
 	u64 chunk_type;
 
@@ -3258,66 +3257,66 @@ error:
 	chunk_type = cache->flags;
 	btrfs_put_block_group(cache);
 
-	अगर (!(chunk_type & BTRFS_BLOCK_GROUP_DATA))
-		वापस 0;
+	if (!(chunk_type & BTRFS_BLOCK_GROUP_DATA))
+		return 0;
 
 	spin_lock(&fs_info->data_sinfo->lock);
 	bytes_used = fs_info->data_sinfo->bytes_used;
 	spin_unlock(&fs_info->data_sinfo->lock);
 
-	अगर (!bytes_used) अणु
-		काष्ठा btrfs_trans_handle *trans;
-		पूर्णांक ret;
+	if (!bytes_used) {
+		struct btrfs_trans_handle *trans;
+		int ret;
 
 		trans =	btrfs_join_transaction(fs_info->tree_root);
-		अगर (IS_ERR(trans))
-			वापस PTR_ERR(trans);
+		if (IS_ERR(trans))
+			return PTR_ERR(trans);
 
-		ret = btrfs_क्रमce_chunk_alloc(trans, BTRFS_BLOCK_GROUP_DATA);
+		ret = btrfs_force_chunk_alloc(trans, BTRFS_BLOCK_GROUP_DATA);
 		btrfs_end_transaction(trans);
-		अगर (ret < 0)
-			वापस ret;
-		वापस 1;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक insert_balance_item(काष्ठा btrfs_fs_info *fs_info,
-			       काष्ठा btrfs_balance_control *bctl)
-अणु
-	काष्ठा btrfs_root *root = fs_info->tree_root;
-	काष्ठा btrfs_trans_handle *trans;
-	काष्ठा btrfs_balance_item *item;
-	काष्ठा btrfs_disk_balance_args disk_bargs;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
-	पूर्णांक ret, err;
+static int insert_balance_item(struct btrfs_fs_info *fs_info,
+			       struct btrfs_balance_control *bctl)
+{
+	struct btrfs_root *root = fs_info->tree_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_balance_item *item;
+	struct btrfs_disk_balance_args disk_bargs;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	int ret, err;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	trans = btrfs_start_transaction(root, 0);
-	अगर (IS_ERR(trans)) अणु
-		btrfs_मुक्त_path(path);
-		वापस PTR_ERR(trans);
-	पूर्ण
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
 
 	key.objectid = BTRFS_BALANCE_OBJECTID;
 	key.type = BTRFS_TEMPORARY_ITEM_KEY;
 	key.offset = 0;
 
 	ret = btrfs_insert_empty_item(trans, root, path, &key,
-				      माप(*item));
-	अगर (ret)
-		जाओ out;
+				      sizeof(*item));
+	if (ret)
+		goto out;
 
 	leaf = path->nodes[0];
-	item = btrfs_item_ptr(leaf, path->slots[0], काष्ठा btrfs_balance_item);
+	item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_balance_item);
 
-	memzero_extent_buffer(leaf, (अचिन्हित दीर्घ)item, माप(*item));
+	memzero_extent_buffer(leaf, (unsigned long)item, sizeof(*item));
 
 	btrfs_cpu_balance_args_to_disk(&disk_bargs, &bctl->data);
 	btrfs_set_balance_data(leaf, item, &disk_bargs);
@@ -3330,397 +3329,397 @@ error:
 
 	btrfs_mark_buffer_dirty(leaf);
 out:
-	btrfs_मुक्त_path(path);
+	btrfs_free_path(path);
 	err = btrfs_commit_transaction(trans);
-	अगर (err && !ret)
+	if (err && !ret)
 		ret = err;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक del_balance_item(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_root *root = fs_info->tree_root;
-	काष्ठा btrfs_trans_handle *trans;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
-	पूर्णांक ret, err;
+static int del_balance_item(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root = fs_info->tree_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	int ret, err;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	trans = btrfs_start_transaction_fallback_global_rsv(root, 0);
-	अगर (IS_ERR(trans)) अणु
-		btrfs_मुक्त_path(path);
-		वापस PTR_ERR(trans);
-	पूर्ण
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
 
 	key.objectid = BTRFS_BALANCE_OBJECTID;
 	key.type = BTRFS_TEMPORARY_ITEM_KEY;
 	key.offset = 0;
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
-	अगर (ret < 0)
-		जाओ out;
-	अगर (ret > 0) अणु
+	if (ret < 0)
+		goto out;
+	if (ret > 0) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = btrfs_del_item(trans, root, path);
 out:
-	btrfs_मुक्त_path(path);
+	btrfs_free_path(path);
 	err = btrfs_commit_transaction(trans);
-	अगर (err && !ret)
+	if (err && !ret)
 		ret = err;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * This is a heuristic used to reduce the number of chunks balanced on
- * resume after balance was पूर्णांकerrupted.
+ * resume after balance was interrupted.
  */
-अटल व्योम update_balance_args(काष्ठा btrfs_balance_control *bctl)
-अणु
+static void update_balance_args(struct btrfs_balance_control *bctl)
+{
 	/*
-	 * Turn on soft mode क्रम chunk types that were being converted.
+	 * Turn on soft mode for chunk types that were being converted.
 	 */
-	अगर (bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT)
+	if (bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT)
 		bctl->data.flags |= BTRFS_BALANCE_ARGS_SOFT;
-	अगर (bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT)
+	if (bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT)
 		bctl->sys.flags |= BTRFS_BALANCE_ARGS_SOFT;
-	अगर (bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT)
+	if (bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT)
 		bctl->meta.flags |= BTRFS_BALANCE_ARGS_SOFT;
 
 	/*
-	 * Turn on usage filter अगर is not alपढ़ोy used.  The idea is
-	 * that chunks that we have alपढ़ोy balanced should be
-	 * reasonably full.  Don't करो it क्रम chunks that are being
+	 * Turn on usage filter if is not already used.  The idea is
+	 * that chunks that we have already balanced should be
+	 * reasonably full.  Don't do it for chunks that are being
 	 * converted - that will keep us from relocating unconverted
 	 * (albeit full) chunks.
 	 */
-	अगर (!(bctl->data.flags & BTRFS_BALANCE_ARGS_USAGE) &&
+	if (!(bctl->data.flags & BTRFS_BALANCE_ARGS_USAGE) &&
 	    !(bctl->data.flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) &&
-	    !(bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT)) अणु
+	    !(bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT)) {
 		bctl->data.flags |= BTRFS_BALANCE_ARGS_USAGE;
 		bctl->data.usage = 90;
-	पूर्ण
-	अगर (!(bctl->sys.flags & BTRFS_BALANCE_ARGS_USAGE) &&
+	}
+	if (!(bctl->sys.flags & BTRFS_BALANCE_ARGS_USAGE) &&
 	    !(bctl->sys.flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) &&
-	    !(bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT)) अणु
+	    !(bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT)) {
 		bctl->sys.flags |= BTRFS_BALANCE_ARGS_USAGE;
 		bctl->sys.usage = 90;
-	पूर्ण
-	अगर (!(bctl->meta.flags & BTRFS_BALANCE_ARGS_USAGE) &&
+	}
+	if (!(bctl->meta.flags & BTRFS_BALANCE_ARGS_USAGE) &&
 	    !(bctl->meta.flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) &&
-	    !(bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT)) अणु
+	    !(bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT)) {
 		bctl->meta.flags |= BTRFS_BALANCE_ARGS_USAGE;
 		bctl->meta.usage = 90;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Clear the balance status in fs_info and delete the balance item from disk.
  */
-अटल व्योम reset_balance_state(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_balance_control *bctl = fs_info->balance_ctl;
-	पूर्णांक ret;
+static void reset_balance_state(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_balance_control *bctl = fs_info->balance_ctl;
+	int ret;
 
 	BUG_ON(!fs_info->balance_ctl);
 
 	spin_lock(&fs_info->balance_lock);
-	fs_info->balance_ctl = शून्य;
+	fs_info->balance_ctl = NULL;
 	spin_unlock(&fs_info->balance_lock);
 
-	kमुक्त(bctl);
+	kfree(bctl);
 	ret = del_balance_item(fs_info);
-	अगर (ret)
-		btrfs_handle_fs_error(fs_info, ret, शून्य);
-पूर्ण
+	if (ret)
+		btrfs_handle_fs_error(fs_info, ret, NULL);
+}
 
 /*
- * Balance filters.  Return 1 अगर chunk should be filtered out
+ * Balance filters.  Return 1 if chunk should be filtered out
  * (should not be balanced).
  */
-अटल पूर्णांक chunk_profiles_filter(u64 chunk_type,
-				 काष्ठा btrfs_balance_args *bargs)
-अणु
+static int chunk_profiles_filter(u64 chunk_type,
+				 struct btrfs_balance_args *bargs)
+{
 	chunk_type = chunk_to_extended(chunk_type) &
-				BTRFS_EXTENDED_PROखाता_MASK;
+				BTRFS_EXTENDED_PROFILE_MASK;
 
-	अगर (bargs->profiles & chunk_type)
-		वापस 0;
+	if (bargs->profiles & chunk_type)
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक chunk_usage_range_filter(काष्ठा btrfs_fs_info *fs_info, u64 chunk_offset,
-			      काष्ठा btrfs_balance_args *bargs)
-अणु
-	काष्ठा btrfs_block_group *cache;
+static int chunk_usage_range_filter(struct btrfs_fs_info *fs_info, u64 chunk_offset,
+			      struct btrfs_balance_args *bargs)
+{
+	struct btrfs_block_group *cache;
 	u64 chunk_used;
 	u64 user_thresh_min;
 	u64 user_thresh_max;
-	पूर्णांक ret = 1;
+	int ret = 1;
 
 	cache = btrfs_lookup_block_group(fs_info, chunk_offset);
 	chunk_used = cache->used;
 
-	अगर (bargs->usage_min == 0)
+	if (bargs->usage_min == 0)
 		user_thresh_min = 0;
-	अन्यथा
-		user_thresh_min = भाग_factor_fine(cache->length,
+	else
+		user_thresh_min = div_factor_fine(cache->length,
 						  bargs->usage_min);
 
-	अगर (bargs->usage_max == 0)
+	if (bargs->usage_max == 0)
 		user_thresh_max = 1;
-	अन्यथा अगर (bargs->usage_max > 100)
+	else if (bargs->usage_max > 100)
 		user_thresh_max = cache->length;
-	अन्यथा
-		user_thresh_max = भाग_factor_fine(cache->length,
+	else
+		user_thresh_max = div_factor_fine(cache->length,
 						  bargs->usage_max);
 
-	अगर (user_thresh_min <= chunk_used && chunk_used < user_thresh_max)
+	if (user_thresh_min <= chunk_used && chunk_used < user_thresh_max)
 		ret = 0;
 
 	btrfs_put_block_group(cache);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक chunk_usage_filter(काष्ठा btrfs_fs_info *fs_info,
-		u64 chunk_offset, काष्ठा btrfs_balance_args *bargs)
-अणु
-	काष्ठा btrfs_block_group *cache;
+static int chunk_usage_filter(struct btrfs_fs_info *fs_info,
+		u64 chunk_offset, struct btrfs_balance_args *bargs)
+{
+	struct btrfs_block_group *cache;
 	u64 chunk_used, user_thresh;
-	पूर्णांक ret = 1;
+	int ret = 1;
 
 	cache = btrfs_lookup_block_group(fs_info, chunk_offset);
 	chunk_used = cache->used;
 
-	अगर (bargs->usage_min == 0)
+	if (bargs->usage_min == 0)
 		user_thresh = 1;
-	अन्यथा अगर (bargs->usage > 100)
+	else if (bargs->usage > 100)
 		user_thresh = cache->length;
-	अन्यथा
-		user_thresh = भाग_factor_fine(cache->length, bargs->usage);
+	else
+		user_thresh = div_factor_fine(cache->length, bargs->usage);
 
-	अगर (chunk_used < user_thresh)
+	if (chunk_used < user_thresh)
 		ret = 0;
 
 	btrfs_put_block_group(cache);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक chunk_devid_filter(काष्ठा extent_buffer *leaf,
-			      काष्ठा btrfs_chunk *chunk,
-			      काष्ठा btrfs_balance_args *bargs)
-अणु
-	काष्ठा btrfs_stripe *stripe;
-	पूर्णांक num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
-	पूर्णांक i;
+static int chunk_devid_filter(struct extent_buffer *leaf,
+			      struct btrfs_chunk *chunk,
+			      struct btrfs_balance_args *bargs)
+{
+	struct btrfs_stripe *stripe;
+	int num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
+	int i;
 
-	क्रम (i = 0; i < num_stripes; i++) अणु
+	for (i = 0; i < num_stripes; i++) {
 		stripe = btrfs_stripe_nr(chunk, i);
-		अगर (btrfs_stripe_devid(leaf, stripe) == bargs->devid)
-			वापस 0;
-	पूर्ण
+		if (btrfs_stripe_devid(leaf, stripe) == bargs->devid)
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u64 calc_data_stripes(u64 type, पूर्णांक num_stripes)
-अणु
-	स्थिर पूर्णांक index = btrfs_bg_flags_to_raid_index(type);
-	स्थिर पूर्णांक ncopies = btrfs_raid_array[index].ncopies;
-	स्थिर पूर्णांक nparity = btrfs_raid_array[index].nparity;
+static u64 calc_data_stripes(u64 type, int num_stripes)
+{
+	const int index = btrfs_bg_flags_to_raid_index(type);
+	const int ncopies = btrfs_raid_array[index].ncopies;
+	const int nparity = btrfs_raid_array[index].nparity;
 
-	अगर (nparity)
-		वापस num_stripes - nparity;
-	अन्यथा
-		वापस num_stripes / ncopies;
-पूर्ण
+	if (nparity)
+		return num_stripes - nparity;
+	else
+		return num_stripes / ncopies;
+}
 
 /* [pstart, pend) */
-अटल पूर्णांक chunk_drange_filter(काष्ठा extent_buffer *leaf,
-			       काष्ठा btrfs_chunk *chunk,
-			       काष्ठा btrfs_balance_args *bargs)
-अणु
-	काष्ठा btrfs_stripe *stripe;
-	पूर्णांक num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
+static int chunk_drange_filter(struct extent_buffer *leaf,
+			       struct btrfs_chunk *chunk,
+			       struct btrfs_balance_args *bargs)
+{
+	struct btrfs_stripe *stripe;
+	int num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
 	u64 stripe_offset;
 	u64 stripe_length;
 	u64 type;
-	पूर्णांक factor;
-	पूर्णांक i;
+	int factor;
+	int i;
 
-	अगर (!(bargs->flags & BTRFS_BALANCE_ARGS_DEVID))
-		वापस 0;
+	if (!(bargs->flags & BTRFS_BALANCE_ARGS_DEVID))
+		return 0;
 
 	type = btrfs_chunk_type(leaf, chunk);
 	factor = calc_data_stripes(type, num_stripes);
 
-	क्रम (i = 0; i < num_stripes; i++) अणु
+	for (i = 0; i < num_stripes; i++) {
 		stripe = btrfs_stripe_nr(chunk, i);
-		अगर (btrfs_stripe_devid(leaf, stripe) != bargs->devid)
-			जारी;
+		if (btrfs_stripe_devid(leaf, stripe) != bargs->devid)
+			continue;
 
 		stripe_offset = btrfs_stripe_offset(leaf, stripe);
 		stripe_length = btrfs_chunk_length(leaf, chunk);
-		stripe_length = भाग_u64(stripe_length, factor);
+		stripe_length = div_u64(stripe_length, factor);
 
-		अगर (stripe_offset < bargs->pend &&
+		if (stripe_offset < bargs->pend &&
 		    stripe_offset + stripe_length > bargs->pstart)
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* [vstart, vend) */
-अटल पूर्णांक chunk_vrange_filter(काष्ठा extent_buffer *leaf,
-			       काष्ठा btrfs_chunk *chunk,
+static int chunk_vrange_filter(struct extent_buffer *leaf,
+			       struct btrfs_chunk *chunk,
 			       u64 chunk_offset,
-			       काष्ठा btrfs_balance_args *bargs)
-अणु
-	अगर (chunk_offset < bargs->vend &&
+			       struct btrfs_balance_args *bargs)
+{
+	if (chunk_offset < bargs->vend &&
 	    chunk_offset + btrfs_chunk_length(leaf, chunk) > bargs->vstart)
 		/* at least part of the chunk is inside this vrange */
-		वापस 0;
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक chunk_stripes_range_filter(काष्ठा extent_buffer *leaf,
-			       काष्ठा btrfs_chunk *chunk,
-			       काष्ठा btrfs_balance_args *bargs)
-अणु
-	पूर्णांक num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
+static int chunk_stripes_range_filter(struct extent_buffer *leaf,
+			       struct btrfs_chunk *chunk,
+			       struct btrfs_balance_args *bargs)
+{
+	int num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
 
-	अगर (bargs->stripes_min <= num_stripes
+	if (bargs->stripes_min <= num_stripes
 			&& num_stripes <= bargs->stripes_max)
-		वापस 0;
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक chunk_soft_convert_filter(u64 chunk_type,
-				     काष्ठा btrfs_balance_args *bargs)
-अणु
-	अगर (!(bargs->flags & BTRFS_BALANCE_ARGS_CONVERT))
-		वापस 0;
+static int chunk_soft_convert_filter(u64 chunk_type,
+				     struct btrfs_balance_args *bargs)
+{
+	if (!(bargs->flags & BTRFS_BALANCE_ARGS_CONVERT))
+		return 0;
 
 	chunk_type = chunk_to_extended(chunk_type) &
-				BTRFS_EXTENDED_PROखाता_MASK;
+				BTRFS_EXTENDED_PROFILE_MASK;
 
-	अगर (bargs->target == chunk_type)
-		वापस 1;
+	if (bargs->target == chunk_type)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक should_balance_chunk(काष्ठा extent_buffer *leaf,
-				काष्ठा btrfs_chunk *chunk, u64 chunk_offset)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = leaf->fs_info;
-	काष्ठा btrfs_balance_control *bctl = fs_info->balance_ctl;
-	काष्ठा btrfs_balance_args *bargs = शून्य;
+static int should_balance_chunk(struct extent_buffer *leaf,
+				struct btrfs_chunk *chunk, u64 chunk_offset)
+{
+	struct btrfs_fs_info *fs_info = leaf->fs_info;
+	struct btrfs_balance_control *bctl = fs_info->balance_ctl;
+	struct btrfs_balance_args *bargs = NULL;
 	u64 chunk_type = btrfs_chunk_type(leaf, chunk);
 
 	/* type filter */
-	अगर (!((chunk_type & BTRFS_BLOCK_GROUP_TYPE_MASK) &
-	      (bctl->flags & BTRFS_BALANCE_TYPE_MASK))) अणु
-		वापस 0;
-	पूर्ण
+	if (!((chunk_type & BTRFS_BLOCK_GROUP_TYPE_MASK) &
+	      (bctl->flags & BTRFS_BALANCE_TYPE_MASK))) {
+		return 0;
+	}
 
-	अगर (chunk_type & BTRFS_BLOCK_GROUP_DATA)
+	if (chunk_type & BTRFS_BLOCK_GROUP_DATA)
 		bargs = &bctl->data;
-	अन्यथा अगर (chunk_type & BTRFS_BLOCK_GROUP_SYSTEM)
+	else if (chunk_type & BTRFS_BLOCK_GROUP_SYSTEM)
 		bargs = &bctl->sys;
-	अन्यथा अगर (chunk_type & BTRFS_BLOCK_GROUP_METADATA)
+	else if (chunk_type & BTRFS_BLOCK_GROUP_METADATA)
 		bargs = &bctl->meta;
 
 	/* profiles filter */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_PROखाताS) &&
-	    chunk_profiles_filter(chunk_type, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_PROFILES) &&
+	    chunk_profiles_filter(chunk_type, bargs)) {
+		return 0;
+	}
 
 	/* usage filter */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_USAGE) &&
-	    chunk_usage_filter(fs_info, chunk_offset, bargs)) अणु
-		वापस 0;
-	पूर्ण अन्यथा अगर ((bargs->flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) &&
-	    chunk_usage_range_filter(fs_info, chunk_offset, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_USAGE) &&
+	    chunk_usage_filter(fs_info, chunk_offset, bargs)) {
+		return 0;
+	} else if ((bargs->flags & BTRFS_BALANCE_ARGS_USAGE_RANGE) &&
+	    chunk_usage_range_filter(fs_info, chunk_offset, bargs)) {
+		return 0;
+	}
 
 	/* devid filter */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_DEVID) &&
-	    chunk_devid_filter(leaf, chunk, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_DEVID) &&
+	    chunk_devid_filter(leaf, chunk, bargs)) {
+		return 0;
+	}
 
 	/* drange filter, makes sense only with devid filter */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_DRANGE) &&
-	    chunk_drange_filter(leaf, chunk, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_DRANGE) &&
+	    chunk_drange_filter(leaf, chunk, bargs)) {
+		return 0;
+	}
 
 	/* vrange filter */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_VRANGE) &&
-	    chunk_vrange_filter(leaf, chunk, chunk_offset, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_VRANGE) &&
+	    chunk_vrange_filter(leaf, chunk, chunk_offset, bargs)) {
+		return 0;
+	}
 
 	/* stripes filter */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_STRIPES_RANGE) &&
-	    chunk_stripes_range_filter(leaf, chunk, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_STRIPES_RANGE) &&
+	    chunk_stripes_range_filter(leaf, chunk, bargs)) {
+		return 0;
+	}
 
 	/* soft profile changing mode */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_SOFT) &&
-	    chunk_soft_convert_filter(chunk_type, bargs)) अणु
-		वापस 0;
-	पूर्ण
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_SOFT) &&
+	    chunk_soft_convert_filter(chunk_type, bargs)) {
+		return 0;
+	}
 
 	/*
 	 * limited by count, must be the last filter
 	 */
-	अगर ((bargs->flags & BTRFS_BALANCE_ARGS_LIMIT)) अणु
-		अगर (bargs->limit == 0)
-			वापस 0;
-		अन्यथा
+	if ((bargs->flags & BTRFS_BALANCE_ARGS_LIMIT)) {
+		if (bargs->limit == 0)
+			return 0;
+		else
 			bargs->limit--;
-	पूर्ण अन्यथा अगर ((bargs->flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE)) अणु
+	} else if ((bargs->flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE)) {
 		/*
 		 * Same logic as the 'limit' filter; the minimum cannot be
-		 * determined here because we करो not have the global inक्रमmation
+		 * determined here because we do not have the global information
 		 * about the count of all chunks that satisfy the filters.
 		 */
-		अगर (bargs->limit_max == 0)
-			वापस 0;
-		अन्यथा
+		if (bargs->limit_max == 0)
+			return 0;
+		else
 			bargs->limit_max--;
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल पूर्णांक __btrfs_balance(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_balance_control *bctl = fs_info->balance_ctl;
-	काष्ठा btrfs_root *chunk_root = fs_info->chunk_root;
+static int __btrfs_balance(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_balance_control *bctl = fs_info->balance_ctl;
+	struct btrfs_root *chunk_root = fs_info->chunk_root;
 	u64 chunk_type;
-	काष्ठा btrfs_chunk *chunk;
-	काष्ठा btrfs_path *path = शून्य;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_key found_key;
-	काष्ठा extent_buffer *leaf;
-	पूर्णांक slot;
-	पूर्णांक ret;
-	पूर्णांक enospc_errors = 0;
+	struct btrfs_chunk *chunk;
+	struct btrfs_path *path = NULL;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	struct extent_buffer *leaf;
+	int slot;
+	int ret;
+	int enospc_errors = 0;
 	bool counting = true;
 	/* The single value limit and min/max limits use the same bytes in the */
 	u64 limit_data = bctl->data.limit;
@@ -3729,20 +3728,20 @@ out:
 	u32 count_data = 0;
 	u32 count_meta = 0;
 	u32 count_sys = 0;
-	पूर्णांक chunk_reserved = 0;
+	int chunk_reserved = 0;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/* zero out stat counters */
 	spin_lock(&fs_info->balance_lock);
-	स_रखो(&bctl->stat, 0, माप(bctl->stat));
+	memset(&bctl->stat, 0, sizeof(bctl->stat));
 	spin_unlock(&fs_info->balance_lock);
 again:
-	अगर (!counting) अणु
+	if (!counting) {
 		/*
 		 * The single value limit and min/max limits use the same bytes
 		 * in the
@@ -3750,97 +3749,97 @@ again:
 		bctl->data.limit = limit_data;
 		bctl->meta.limit = limit_meta;
 		bctl->sys.limit = limit_sys;
-	पूर्ण
+	}
 	key.objectid = BTRFS_FIRST_CHUNK_TREE_OBJECTID;
 	key.offset = (u64)-1;
 	key.type = BTRFS_CHUNK_ITEM_KEY;
 
-	जबतक (1) अणु
-		अगर ((!counting && atomic_पढ़ो(&fs_info->balance_छोड़ो_req)) ||
-		    atomic_पढ़ो(&fs_info->balance_cancel_req)) अणु
+	while (1) {
+		if ((!counting && atomic_read(&fs_info->balance_pause_req)) ||
+		    atomic_read(&fs_info->balance_cancel_req)) {
 			ret = -ECANCELED;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		mutex_lock(&fs_info->reclaim_bgs_lock);
-		ret = btrfs_search_slot(शून्य, chunk_root, &key, path, 0, 0);
-		अगर (ret < 0) अणु
+		ret = btrfs_search_slot(NULL, chunk_root, &key, path, 0, 0);
+		if (ret < 0) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		/*
 		 * this shouldn't happen, it means the last relocate
 		 * failed
 		 */
-		अगर (ret == 0)
-			BUG(); /* FIXME अवरोध ? */
+		if (ret == 0)
+			BUG(); /* FIXME break ? */
 
 		ret = btrfs_previous_item(chunk_root, path, 0,
 					  BTRFS_CHUNK_ITEM_KEY);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
 			ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		leaf = path->nodes[0];
 		slot = path->slots[0];
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 
-		अगर (found_key.objectid != key.objectid) अणु
+		if (found_key.objectid != key.objectid) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		chunk = btrfs_item_ptr(leaf, slot, काष्ठा btrfs_chunk);
+		chunk = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
 		chunk_type = btrfs_chunk_type(leaf, chunk);
 
-		अगर (!counting) अणु
+		if (!counting) {
 			spin_lock(&fs_info->balance_lock);
 			bctl->stat.considered++;
 			spin_unlock(&fs_info->balance_lock);
-		पूर्ण
+		}
 
 		ret = should_balance_chunk(leaf, chunk, found_key.offset);
 
 		btrfs_release_path(path);
-		अगर (!ret) अणु
+		if (!ret) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			जाओ loop;
-		पूर्ण
+			goto loop;
+		}
 
-		अगर (counting) अणु
+		if (counting) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
 			spin_lock(&fs_info->balance_lock);
 			bctl->stat.expected++;
 			spin_unlock(&fs_info->balance_lock);
 
-			अगर (chunk_type & BTRFS_BLOCK_GROUP_DATA)
+			if (chunk_type & BTRFS_BLOCK_GROUP_DATA)
 				count_data++;
-			अन्यथा अगर (chunk_type & BTRFS_BLOCK_GROUP_SYSTEM)
+			else if (chunk_type & BTRFS_BLOCK_GROUP_SYSTEM)
 				count_sys++;
-			अन्यथा अगर (chunk_type & BTRFS_BLOCK_GROUP_METADATA)
+			else if (chunk_type & BTRFS_BLOCK_GROUP_METADATA)
 				count_meta++;
 
-			जाओ loop;
-		पूर्ण
+			goto loop;
+		}
 
 		/*
-		 * Apply limit_min filter, no need to check अगर the LIMITS
-		 * filter is used, limit_min is 0 by शेष
+		 * Apply limit_min filter, no need to check if the LIMITS
+		 * filter is used, limit_min is 0 by default
 		 */
-		अगर (((chunk_type & BTRFS_BLOCK_GROUP_DATA) &&
+		if (((chunk_type & BTRFS_BLOCK_GROUP_DATA) &&
 					count_data < bctl->data.limit_min)
 				|| ((chunk_type & BTRFS_BLOCK_GROUP_METADATA) &&
 					count_meta < bctl->meta.limit_min)
 				|| ((chunk_type & BTRFS_BLOCK_GROUP_SYSTEM) &&
-					count_sys < bctl->sys.limit_min)) अणु
+					count_sys < bctl->sys.limit_min)) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			जाओ loop;
-		पूर्ण
+			goto loop;
+		}
 
-		अगर (!chunk_reserved) अणु
+		if (!chunk_reserved) {
 			/*
 			 * We may be relocating the only data chunk we have,
 			 * which could potentially end up with losing data's
@@ -3849,301 +3848,301 @@ again:
 			 */
 			ret = btrfs_may_alloc_data_chunk(fs_info,
 							 found_key.offset);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				mutex_unlock(&fs_info->reclaim_bgs_lock);
-				जाओ error;
-			पूर्ण अन्यथा अगर (ret == 1) अणु
+				goto error;
+			} else if (ret == 1) {
 				chunk_reserved = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		ret = btrfs_relocate_chunk(fs_info, found_key.offset);
 		mutex_unlock(&fs_info->reclaim_bgs_lock);
-		अगर (ret == -ENOSPC) अणु
+		if (ret == -ENOSPC) {
 			enospc_errors++;
-		पूर्ण अन्यथा अगर (ret == -ETXTBSY) अणु
+		} else if (ret == -ETXTBSY) {
 			btrfs_info(fs_info,
 	   "skipping relocation of block group %llu due to active swapfile",
 				   found_key.offset);
 			ret = 0;
-		पूर्ण अन्यथा अगर (ret) अणु
-			जाओ error;
-		पूर्ण अन्यथा अणु
+		} else if (ret) {
+			goto error;
+		} else {
 			spin_lock(&fs_info->balance_lock);
 			bctl->stat.completed++;
 			spin_unlock(&fs_info->balance_lock);
-		पूर्ण
+		}
 loop:
-		अगर (found_key.offset == 0)
-			अवरोध;
+		if (found_key.offset == 0)
+			break;
 		key.offset = found_key.offset - 1;
-	पूर्ण
+	}
 
-	अगर (counting) अणु
+	if (counting) {
 		btrfs_release_path(path);
 		counting = false;
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 error:
-	btrfs_मुक्त_path(path);
-	अगर (enospc_errors) अणु
+	btrfs_free_path(path);
+	if (enospc_errors) {
 		btrfs_info(fs_info, "%d enospc errors during balance",
 			   enospc_errors);
-		अगर (!ret)
+		if (!ret)
 			ret = -ENOSPC;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * alloc_profile_is_valid - see अगर a given profile is valid and reduced
+ * alloc_profile_is_valid - see if a given profile is valid and reduced
  * @flags: profile to validate
- * @extended: अगर true @flags is treated as an extended profile
+ * @extended: if true @flags is treated as an extended profile
  */
-अटल पूर्णांक alloc_profile_is_valid(u64 flags, पूर्णांक extended)
-अणु
-	u64 mask = (extended ? BTRFS_EXTENDED_PROखाता_MASK :
-			       BTRFS_BLOCK_GROUP_PROखाता_MASK);
+static int alloc_profile_is_valid(u64 flags, int extended)
+{
+	u64 mask = (extended ? BTRFS_EXTENDED_PROFILE_MASK :
+			       BTRFS_BLOCK_GROUP_PROFILE_MASK);
 
 	flags &= ~BTRFS_BLOCK_GROUP_TYPE_MASK;
 
 	/* 1) check that all other bits are zeroed */
-	अगर (flags & ~mask)
-		वापस 0;
+	if (flags & ~mask)
+		return 0;
 
-	/* 2) see अगर profile is reduced */
-	अगर (flags == 0)
-		वापस !extended; /* "0" is valid क्रम usual profiles */
+	/* 2) see if profile is reduced */
+	if (flags == 0)
+		return !extended; /* "0" is valid for usual profiles */
 
-	वापस has_single_bit_set(flags);
-पूर्ण
+	return has_single_bit_set(flags);
+}
 
-अटल अंतरभूत पूर्णांक balance_need_बंद(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	/* cancel requested || normal निकास path */
-	वापस atomic_पढ़ो(&fs_info->balance_cancel_req) ||
-		(atomic_पढ़ो(&fs_info->balance_छोड़ो_req) == 0 &&
-		 atomic_पढ़ो(&fs_info->balance_cancel_req) == 0);
-पूर्ण
+static inline int balance_need_close(struct btrfs_fs_info *fs_info)
+{
+	/* cancel requested || normal exit path */
+	return atomic_read(&fs_info->balance_cancel_req) ||
+		(atomic_read(&fs_info->balance_pause_req) == 0 &&
+		 atomic_read(&fs_info->balance_cancel_req) == 0);
+}
 
 /*
- * Validate target profile against allowed profiles and वापस true अगर it's OK.
- * Otherwise prपूर्णांक the error message and वापस false.
+ * Validate target profile against allowed profiles and return true if it's OK.
+ * Otherwise print the error message and return false.
  */
-अटल अंतरभूत पूर्णांक validate_convert_profile(काष्ठा btrfs_fs_info *fs_info,
-		स्थिर काष्ठा btrfs_balance_args *bargs,
-		u64 allowed, स्थिर अक्षर *type)
-अणु
-	अगर (!(bargs->flags & BTRFS_BALANCE_ARGS_CONVERT))
-		वापस true;
+static inline int validate_convert_profile(struct btrfs_fs_info *fs_info,
+		const struct btrfs_balance_args *bargs,
+		u64 allowed, const char *type)
+{
+	if (!(bargs->flags & BTRFS_BALANCE_ARGS_CONVERT))
+		return true;
 
-	/* Profile is valid and करोes not have bits outside of the allowed set */
-	अगर (alloc_profile_is_valid(bargs->target, 1) &&
+	/* Profile is valid and does not have bits outside of the allowed set */
+	if (alloc_profile_is_valid(bargs->target, 1) &&
 	    (bargs->target & ~allowed) == 0)
-		वापस true;
+		return true;
 
 	btrfs_err(fs_info, "balance: invalid convert %s profile %s",
 			type, btrfs_bg_type_to_raid_name(bargs->target));
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /*
  * Fill @buf with textual description of balance filter flags @bargs, up to
- * @size_buf including the terminating null. The output may be trimmed अगर it
- * करोes not fit पूर्णांकo the provided buffer.
+ * @size_buf including the terminating null. The output may be trimmed if it
+ * does not fit into the provided buffer.
  */
-अटल व्योम describe_balance_args(काष्ठा btrfs_balance_args *bargs, अक्षर *buf,
+static void describe_balance_args(struct btrfs_balance_args *bargs, char *buf,
 				 u32 size_buf)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 	u32 size_bp = size_buf;
-	अक्षर *bp = buf;
+	char *bp = buf;
 	u64 flags = bargs->flags;
-	अक्षर पंचांगp_buf[128] = अणु'\0'पूर्ण;
+	char tmp_buf[128] = {'\0'};
 
-	अगर (!flags)
-		वापस;
+	if (!flags)
+		return;
 
-#घोषणा CHECK_APPEND_NOARG(a)						\
-	करो अणु								\
-		ret = snम_लिखो(bp, size_bp, (a));			\
-		अगर (ret < 0 || ret >= size_bp)				\
-			जाओ out_overflow;				\
+#define CHECK_APPEND_NOARG(a)						\
+	do {								\
+		ret = snprintf(bp, size_bp, (a));			\
+		if (ret < 0 || ret >= size_bp)				\
+			goto out_overflow;				\
 		size_bp -= ret;						\
 		bp += ret;						\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा CHECK_APPEND_1ARG(a, v1)					\
-	करो अणु								\
-		ret = snम_लिखो(bp, size_bp, (a), (v1));			\
-		अगर (ret < 0 || ret >= size_bp)				\
-			जाओ out_overflow;				\
+#define CHECK_APPEND_1ARG(a, v1)					\
+	do {								\
+		ret = snprintf(bp, size_bp, (a), (v1));			\
+		if (ret < 0 || ret >= size_bp)				\
+			goto out_overflow;				\
 		size_bp -= ret;						\
 		bp += ret;						\
-	पूर्ण जबतक (0)
+	} while (0)
 
-#घोषणा CHECK_APPEND_2ARG(a, v1, v2)					\
-	करो अणु								\
-		ret = snम_लिखो(bp, size_bp, (a), (v1), (v2));		\
-		अगर (ret < 0 || ret >= size_bp)				\
-			जाओ out_overflow;				\
+#define CHECK_APPEND_2ARG(a, v1, v2)					\
+	do {								\
+		ret = snprintf(bp, size_bp, (a), (v1), (v2));		\
+		if (ret < 0 || ret >= size_bp)				\
+			goto out_overflow;				\
 		size_bp -= ret;						\
 		bp += ret;						\
-	पूर्ण जबतक (0)
+	} while (0)
 
-	अगर (flags & BTRFS_BALANCE_ARGS_CONVERT)
+	if (flags & BTRFS_BALANCE_ARGS_CONVERT)
 		CHECK_APPEND_1ARG("convert=%s,",
 				  btrfs_bg_type_to_raid_name(bargs->target));
 
-	अगर (flags & BTRFS_BALANCE_ARGS_SOFT)
+	if (flags & BTRFS_BALANCE_ARGS_SOFT)
 		CHECK_APPEND_NOARG("soft,");
 
-	अगर (flags & BTRFS_BALANCE_ARGS_PROखाताS) अणु
-		btrfs_describe_block_groups(bargs->profiles, पंचांगp_buf,
-					    माप(पंचांगp_buf));
-		CHECK_APPEND_1ARG("profiles=%s,", पंचांगp_buf);
-	पूर्ण
+	if (flags & BTRFS_BALANCE_ARGS_PROFILES) {
+		btrfs_describe_block_groups(bargs->profiles, tmp_buf,
+					    sizeof(tmp_buf));
+		CHECK_APPEND_1ARG("profiles=%s,", tmp_buf);
+	}
 
-	अगर (flags & BTRFS_BALANCE_ARGS_USAGE)
+	if (flags & BTRFS_BALANCE_ARGS_USAGE)
 		CHECK_APPEND_1ARG("usage=%llu,", bargs->usage);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_USAGE_RANGE)
+	if (flags & BTRFS_BALANCE_ARGS_USAGE_RANGE)
 		CHECK_APPEND_2ARG("usage=%u..%u,",
 				  bargs->usage_min, bargs->usage_max);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_DEVID)
+	if (flags & BTRFS_BALANCE_ARGS_DEVID)
 		CHECK_APPEND_1ARG("devid=%llu,", bargs->devid);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_DRANGE)
+	if (flags & BTRFS_BALANCE_ARGS_DRANGE)
 		CHECK_APPEND_2ARG("drange=%llu..%llu,",
 				  bargs->pstart, bargs->pend);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_VRANGE)
+	if (flags & BTRFS_BALANCE_ARGS_VRANGE)
 		CHECK_APPEND_2ARG("vrange=%llu..%llu,",
 				  bargs->vstart, bargs->vend);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_LIMIT)
+	if (flags & BTRFS_BALANCE_ARGS_LIMIT)
 		CHECK_APPEND_1ARG("limit=%llu,", bargs->limit);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE)
+	if (flags & BTRFS_BALANCE_ARGS_LIMIT_RANGE)
 		CHECK_APPEND_2ARG("limit=%u..%u,",
 				bargs->limit_min, bargs->limit_max);
 
-	अगर (flags & BTRFS_BALANCE_ARGS_STRIPES_RANGE)
+	if (flags & BTRFS_BALANCE_ARGS_STRIPES_RANGE)
 		CHECK_APPEND_2ARG("stripes=%u..%u,",
 				  bargs->stripes_min, bargs->stripes_max);
 
-#अघोषित CHECK_APPEND_2ARG
-#अघोषित CHECK_APPEND_1ARG
-#अघोषित CHECK_APPEND_NOARG
+#undef CHECK_APPEND_2ARG
+#undef CHECK_APPEND_1ARG
+#undef CHECK_APPEND_NOARG
 
 out_overflow:
 
-	अगर (size_bp < size_buf)
-		buf[size_buf - size_bp - 1] = '\0'; /* हटाओ last , */
-	अन्यथा
+	if (size_bp < size_buf)
+		buf[size_buf - size_bp - 1] = '\0'; /* remove last , */
+	else
 		buf[0] = '\0';
-पूर्ण
+}
 
-अटल व्योम describe_balance_start_or_resume(काष्ठा btrfs_fs_info *fs_info)
-अणु
+static void describe_balance_start_or_resume(struct btrfs_fs_info *fs_info)
+{
 	u32 size_buf = 1024;
-	अक्षर पंचांगp_buf[192] = अणु'\0'पूर्ण;
-	अक्षर *buf;
-	अक्षर *bp;
+	char tmp_buf[192] = {'\0'};
+	char *buf;
+	char *bp;
 	u32 size_bp = size_buf;
-	पूर्णांक ret;
-	काष्ठा btrfs_balance_control *bctl = fs_info->balance_ctl;
+	int ret;
+	struct btrfs_balance_control *bctl = fs_info->balance_ctl;
 
 	buf = kzalloc(size_buf, GFP_KERNEL);
-	अगर (!buf)
-		वापस;
+	if (!buf)
+		return;
 
 	bp = buf;
 
-#घोषणा CHECK_APPEND_1ARG(a, v1)					\
-	करो अणु								\
-		ret = snम_लिखो(bp, size_bp, (a), (v1));			\
-		अगर (ret < 0 || ret >= size_bp)				\
-			जाओ out_overflow;				\
+#define CHECK_APPEND_1ARG(a, v1)					\
+	do {								\
+		ret = snprintf(bp, size_bp, (a), (v1));			\
+		if (ret < 0 || ret >= size_bp)				\
+			goto out_overflow;				\
 		size_bp -= ret;						\
 		bp += ret;						\
-	पूर्ण जबतक (0)
+	} while (0)
 
-	अगर (bctl->flags & BTRFS_BALANCE_FORCE)
+	if (bctl->flags & BTRFS_BALANCE_FORCE)
 		CHECK_APPEND_1ARG("%s", "-f ");
 
-	अगर (bctl->flags & BTRFS_BALANCE_DATA) अणु
-		describe_balance_args(&bctl->data, पंचांगp_buf, माप(पंचांगp_buf));
-		CHECK_APPEND_1ARG("-d%s ", पंचांगp_buf);
-	पूर्ण
+	if (bctl->flags & BTRFS_BALANCE_DATA) {
+		describe_balance_args(&bctl->data, tmp_buf, sizeof(tmp_buf));
+		CHECK_APPEND_1ARG("-d%s ", tmp_buf);
+	}
 
-	अगर (bctl->flags & BTRFS_BALANCE_METADATA) अणु
-		describe_balance_args(&bctl->meta, पंचांगp_buf, माप(पंचांगp_buf));
-		CHECK_APPEND_1ARG("-m%s ", पंचांगp_buf);
-	पूर्ण
+	if (bctl->flags & BTRFS_BALANCE_METADATA) {
+		describe_balance_args(&bctl->meta, tmp_buf, sizeof(tmp_buf));
+		CHECK_APPEND_1ARG("-m%s ", tmp_buf);
+	}
 
-	अगर (bctl->flags & BTRFS_BALANCE_SYSTEM) अणु
-		describe_balance_args(&bctl->sys, पंचांगp_buf, माप(पंचांगp_buf));
-		CHECK_APPEND_1ARG("-s%s ", पंचांगp_buf);
-	पूर्ण
+	if (bctl->flags & BTRFS_BALANCE_SYSTEM) {
+		describe_balance_args(&bctl->sys, tmp_buf, sizeof(tmp_buf));
+		CHECK_APPEND_1ARG("-s%s ", tmp_buf);
+	}
 
-#अघोषित CHECK_APPEND_1ARG
+#undef CHECK_APPEND_1ARG
 
 out_overflow:
 
-	अगर (size_bp < size_buf)
-		buf[size_buf - size_bp - 1] = '\0'; /* हटाओ last " " */
+	if (size_bp < size_buf)
+		buf[size_buf - size_bp - 1] = '\0'; /* remove last " " */
 	btrfs_info(fs_info, "balance: %s %s",
 		   (bctl->flags & BTRFS_BALANCE_RESUME) ?
 		   "resume" : "start", buf);
 
-	kमुक्त(buf);
-पूर्ण
+	kfree(buf);
+}
 
 /*
  * Should be called with balance mutexe held
  */
-पूर्णांक btrfs_balance(काष्ठा btrfs_fs_info *fs_info,
-		  काष्ठा btrfs_balance_control *bctl,
-		  काष्ठा btrfs_ioctl_balance_args *bargs)
-अणु
+int btrfs_balance(struct btrfs_fs_info *fs_info,
+		  struct btrfs_balance_control *bctl,
+		  struct btrfs_ioctl_balance_args *bargs)
+{
 	u64 meta_target, data_target;
 	u64 allowed;
-	पूर्णांक mixed = 0;
-	पूर्णांक ret;
+	int mixed = 0;
+	int ret;
 	u64 num_devices;
-	अचिन्हित seq;
+	unsigned seq;
 	bool reducing_redundancy;
-	पूर्णांक i;
+	int i;
 
-	अगर (btrfs_fs_closing(fs_info) ||
-	    atomic_पढ़ो(&fs_info->balance_छोड़ो_req) ||
-	    btrfs_should_cancel_balance(fs_info)) अणु
+	if (btrfs_fs_closing(fs_info) ||
+	    atomic_read(&fs_info->balance_pause_req) ||
+	    btrfs_should_cancel_balance(fs_info)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	allowed = btrfs_super_incompat_flags(fs_info->super_copy);
-	अगर (allowed & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS)
+	if (allowed & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS)
 		mixed = 1;
 
 	/*
-	 * In हाल of mixed groups both data and meta should be picked,
-	 * and identical options should be given क्रम both of them.
+	 * In case of mixed groups both data and meta should be picked,
+	 * and identical options should be given for both of them.
 	 */
 	allowed = BTRFS_BALANCE_DATA | BTRFS_BALANCE_METADATA;
-	अगर (mixed && (bctl->flags & allowed)) अणु
-		अगर (!(bctl->flags & BTRFS_BALANCE_DATA) ||
+	if (mixed && (bctl->flags & allowed)) {
+		if (!(bctl->flags & BTRFS_BALANCE_DATA) ||
 		    !(bctl->flags & BTRFS_BALANCE_METADATA) ||
-		    स_भेद(&bctl->data, &bctl->meta, माप(bctl->data))) अणु
+		    memcmp(&bctl->data, &bctl->meta, sizeof(bctl->data))) {
 			btrfs_err(fs_info,
 	  "balance: mixed groups data and metadata options must be the same");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/*
 	 * rw_devices will not change at the moment, device add/delete/replace
@@ -4153,95 +4152,95 @@ out_overflow:
 
 	/*
 	 * SINGLE profile on-disk has no profile bit, but in-memory we have a
-	 * special bit क्रम it, to make it easier to distinguish.  Thus we need
+	 * special bit for it, to make it easier to distinguish.  Thus we need
 	 * to set it manually, or balance would refuse the profile.
 	 */
 	allowed = BTRFS_AVAIL_ALLOC_BIT_SINGLE;
-	क्रम (i = 0; i < ARRAY_SIZE(btrfs_raid_array); i++)
-		अगर (num_devices >= btrfs_raid_array[i].devs_min)
+	for (i = 0; i < ARRAY_SIZE(btrfs_raid_array); i++)
+		if (num_devices >= btrfs_raid_array[i].devs_min)
 			allowed |= btrfs_raid_array[i].bg_flag;
 
-	अगर (!validate_convert_profile(fs_info, &bctl->data, allowed, "data") ||
+	if (!validate_convert_profile(fs_info, &bctl->data, allowed, "data") ||
 	    !validate_convert_profile(fs_info, &bctl->meta, allowed, "metadata") ||
-	    !validate_convert_profile(fs_info, &bctl->sys,  allowed, "system")) अणु
+	    !validate_convert_profile(fs_info, &bctl->sys,  allowed, "system")) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Allow to reduce metadata or प्रणाली पूर्णांकegrity only अगर क्रमce set क्रम
+	 * Allow to reduce metadata or system integrity only if force set for
 	 * profiles with redundancy (copies, parity)
 	 */
 	allowed = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(btrfs_raid_array); i++) अणु
-		अगर (btrfs_raid_array[i].ncopies >= 2 ||
+	for (i = 0; i < ARRAY_SIZE(btrfs_raid_array); i++) {
+		if (btrfs_raid_array[i].ncopies >= 2 ||
 		    btrfs_raid_array[i].tolerated_failures >= 1)
 			allowed |= btrfs_raid_array[i].bg_flag;
-	पूर्ण
-	करो अणु
-		seq = पढ़ो_seqbegin(&fs_info->profiles_lock);
+	}
+	do {
+		seq = read_seqbegin(&fs_info->profiles_lock);
 
-		अगर (((bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT) &&
-		     (fs_info->avail_प्रणाली_alloc_bits & allowed) &&
+		if (((bctl->sys.flags & BTRFS_BALANCE_ARGS_CONVERT) &&
+		     (fs_info->avail_system_alloc_bits & allowed) &&
 		     !(bctl->sys.target & allowed)) ||
 		    ((bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT) &&
 		     (fs_info->avail_metadata_alloc_bits & allowed) &&
 		     !(bctl->meta.target & allowed)))
 			reducing_redundancy = true;
-		अन्यथा
+		else
 			reducing_redundancy = false;
 
-		/* अगर we're not converting, the target field is uninitialized */
+		/* if we're not converting, the target field is uninitialized */
 		meta_target = (bctl->meta.flags & BTRFS_BALANCE_ARGS_CONVERT) ?
 			bctl->meta.target : fs_info->avail_metadata_alloc_bits;
 		data_target = (bctl->data.flags & BTRFS_BALANCE_ARGS_CONVERT) ?
 			bctl->data.target : fs_info->avail_data_alloc_bits;
-	पूर्ण जबतक (पढ़ो_seqretry(&fs_info->profiles_lock, seq));
+	} while (read_seqretry(&fs_info->profiles_lock, seq));
 
-	अगर (reducing_redundancy) अणु
-		अगर (bctl->flags & BTRFS_BALANCE_FORCE) अणु
+	if (reducing_redundancy) {
+		if (bctl->flags & BTRFS_BALANCE_FORCE) {
 			btrfs_info(fs_info,
 			   "balance: force reducing metadata redundancy");
-		पूर्ण अन्यथा अणु
+		} else {
 			btrfs_err(fs_info,
 	"balance: reduces metadata redundancy, use --force if you want this");
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (btrfs_get_num_tolerated_disk_barrier_failures(meta_target) <
-		btrfs_get_num_tolerated_disk_barrier_failures(data_target)) अणु
+	if (btrfs_get_num_tolerated_disk_barrier_failures(meta_target) <
+		btrfs_get_num_tolerated_disk_barrier_failures(data_target)) {
 		btrfs_warn(fs_info,
 	"balance: metadata profile %s has lower redundancy than data profile %s",
 				btrfs_bg_type_to_raid_name(meta_target),
 				btrfs_bg_type_to_raid_name(data_target));
-	पूर्ण
+	}
 
-	अगर (fs_info->send_in_progress) अणु
+	if (fs_info->send_in_progress) {
 		btrfs_warn_rl(fs_info,
 "cannot run balance while send operations are in progress (%d in progress)",
 			      fs_info->send_in_progress);
 		ret = -EAGAIN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = insert_balance_item(fs_info, bctl);
-	अगर (ret && ret != -EEXIST)
-		जाओ out;
+	if (ret && ret != -EEXIST)
+		goto out;
 
-	अगर (!(bctl->flags & BTRFS_BALANCE_RESUME)) अणु
+	if (!(bctl->flags & BTRFS_BALANCE_RESUME)) {
 		BUG_ON(ret == -EEXIST);
 		BUG_ON(fs_info->balance_ctl);
 		spin_lock(&fs_info->balance_lock);
 		fs_info->balance_ctl = bctl;
 		spin_unlock(&fs_info->balance_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		BUG_ON(ret != -EEXIST);
 		spin_lock(&fs_info->balance_lock);
 		update_balance_args(bctl);
 		spin_unlock(&fs_info->balance_lock);
-	पूर्ण
+	}
 
 	ASSERT(!test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags));
 	set_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags);
@@ -4251,7 +4250,7 @@ out_overflow:
 	ret = __btrfs_balance(fs_info);
 
 	mutex_lock(&fs_info->balance_mutex);
-	अगर (ret == -ECANCELED && atomic_पढ़ो(&fs_info->balance_छोड़ो_req))
+	if (ret == -ECANCELED && atomic_read(&fs_info->balance_pause_req))
 		btrfs_info(fs_info, "balance: paused");
 	/*
 	 * Balance can be canceled by:
@@ -4259,122 +4258,122 @@ out_overflow:
 	 * - Regular cancel request
 	 *   Then ret == -ECANCELED and balance_cancel_req > 0
 	 *
-	 * - Fatal संकेत to "btrfs" process
-	 *   Either the संकेत caught by रुको_reserve_ticket() and callers
+	 * - Fatal signal to "btrfs" process
+	 *   Either the signal caught by wait_reserve_ticket() and callers
 	 *   got -EINTR, or caught by btrfs_should_cancel_balance() and
 	 *   got -ECANCELED.
-	 *   Either way, in this हाल balance_cancel_req = 0, and
+	 *   Either way, in this case balance_cancel_req = 0, and
 	 *   ret == -EINTR or ret == -ECANCELED.
 	 *
-	 * So here we only check the वापस value to catch canceled balance.
+	 * So here we only check the return value to catch canceled balance.
 	 */
-	अन्यथा अगर (ret == -ECANCELED || ret == -EINTR)
+	else if (ret == -ECANCELED || ret == -EINTR)
 		btrfs_info(fs_info, "balance: canceled");
-	अन्यथा
+	else
 		btrfs_info(fs_info, "balance: ended with status: %d", ret);
 
 	clear_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags);
 
-	अगर (bargs) अणु
-		स_रखो(bargs, 0, माप(*bargs));
+	if (bargs) {
+		memset(bargs, 0, sizeof(*bargs));
 		btrfs_update_ioctl_balance_args(fs_info, bargs);
-	पूर्ण
+	}
 
-	अगर ((ret && ret != -ECANCELED && ret != -ENOSPC) ||
-	    balance_need_बंद(fs_info)) अणु
+	if ((ret && ret != -ECANCELED && ret != -ENOSPC) ||
+	    balance_need_close(fs_info)) {
 		reset_balance_state(fs_info);
 		btrfs_exclop_finish(fs_info);
-	पूर्ण
+	}
 
-	wake_up(&fs_info->balance_रुको_q);
+	wake_up(&fs_info->balance_wait_q);
 
-	वापस ret;
+	return ret;
 out:
-	अगर (bctl->flags & BTRFS_BALANCE_RESUME)
+	if (bctl->flags & BTRFS_BALANCE_RESUME)
 		reset_balance_state(fs_info);
-	अन्यथा
-		kमुक्त(bctl);
+	else
+		kfree(bctl);
 	btrfs_exclop_finish(fs_info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक balance_kthपढ़ो(व्योम *data)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = data;
-	पूर्णांक ret = 0;
+static int balance_kthread(void *data)
+{
+	struct btrfs_fs_info *fs_info = data;
+	int ret = 0;
 
 	mutex_lock(&fs_info->balance_mutex);
-	अगर (fs_info->balance_ctl)
-		ret = btrfs_balance(fs_info, fs_info->balance_ctl, शून्य);
+	if (fs_info->balance_ctl)
+		ret = btrfs_balance(fs_info, fs_info->balance_ctl, NULL);
 	mutex_unlock(&fs_info->balance_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_resume_balance_async(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा task_काष्ठा *tsk;
+int btrfs_resume_balance_async(struct btrfs_fs_info *fs_info)
+{
+	struct task_struct *tsk;
 
 	mutex_lock(&fs_info->balance_mutex);
-	अगर (!fs_info->balance_ctl) अणु
+	if (!fs_info->balance_ctl) {
 		mutex_unlock(&fs_info->balance_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	mutex_unlock(&fs_info->balance_mutex);
 
-	अगर (btrfs_test_opt(fs_info, SKIP_BALANCE)) अणु
+	if (btrfs_test_opt(fs_info, SKIP_BALANCE)) {
 		btrfs_info(fs_info, "balance: resume skipped");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * A ro->rw remount sequence should जारी with the छोड़ोd balance
-	 * regardless of who छोड़ोs it, प्रणाली or the user as of now, so set
+	 * A ro->rw remount sequence should continue with the paused balance
+	 * regardless of who pauses it, system or the user as of now, so set
 	 * the resume flag.
 	 */
 	spin_lock(&fs_info->balance_lock);
 	fs_info->balance_ctl->flags |= BTRFS_BALANCE_RESUME;
 	spin_unlock(&fs_info->balance_lock);
 
-	tsk = kthपढ़ो_run(balance_kthपढ़ो, fs_info, "btrfs-balance");
-	वापस PTR_ERR_OR_ZERO(tsk);
-पूर्ण
+	tsk = kthread_run(balance_kthread, fs_info, "btrfs-balance");
+	return PTR_ERR_OR_ZERO(tsk);
+}
 
-पूर्णांक btrfs_recover_balance(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_balance_control *bctl;
-	काष्ठा btrfs_balance_item *item;
-	काष्ठा btrfs_disk_balance_args disk_bargs;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
-	पूर्णांक ret;
+int btrfs_recover_balance(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_balance_control *bctl;
+	struct btrfs_balance_item *item;
+	struct btrfs_disk_balance_args disk_bargs;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	int ret;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	key.objectid = BTRFS_BALANCE_OBJECTID;
 	key.type = BTRFS_TEMPORARY_ITEM_KEY;
 	key.offset = 0;
 
-	ret = btrfs_search_slot(शून्य, fs_info->tree_root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
-	अगर (ret > 0) अणु /* ret = -ENOENT; */
+	ret = btrfs_search_slot(NULL, fs_info->tree_root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
+	if (ret > 0) { /* ret = -ENOENT; */
 		ret = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	bctl = kzalloc(माप(*bctl), GFP_NOFS);
-	अगर (!bctl) अणु
+	bctl = kzalloc(sizeof(*bctl), GFP_NOFS);
+	if (!bctl) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	leaf = path->nodes[0];
-	item = btrfs_item_ptr(leaf, path->slots[0], काष्ठा btrfs_balance_item);
+	item = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_balance_item);
 
 	bctl->flags = btrfs_balance_flags(leaf, item);
 	bctl->flags |= BTRFS_BALANCE_RESUME;
@@ -4387,16 +4386,16 @@ out:
 	btrfs_disk_balance_args_to_cpu(&bctl->sys, &disk_bargs);
 
 	/*
-	 * This should never happen, as the छोड़ोd balance state is recovered
+	 * This should never happen, as the paused balance state is recovered
 	 * during mount without any chance of other exclusive ops to collide.
 	 *
-	 * This gives the exclusive op status to balance and keeps in छोड़ोd
-	 * state until user पूर्णांकervention (cancel or umount). If the ownership
-	 * cannot be asचिन्हित, show a message but करो not fail. The balance
-	 * is in a छोड़ोd state and must have fs_info::balance_ctl properly
+	 * This gives the exclusive op status to balance and keeps in paused
+	 * state until user intervention (cancel or umount). If the ownership
+	 * cannot be assigned, show a message but do not fail. The balance
+	 * is in a paused state and must have fs_info::balance_ctl properly
 	 * set up.
 	 */
-	अगर (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE))
+	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE))
 		btrfs_warn(fs_info,
 	"balance: cannot set exclusive op status, resume manually");
 
@@ -4409,148 +4408,148 @@ out:
 	spin_unlock(&fs_info->balance_lock);
 	mutex_unlock(&fs_info->balance_mutex);
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-पूर्णांक btrfs_छोड़ो_balance(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	पूर्णांक ret = 0;
+int btrfs_pause_balance(struct btrfs_fs_info *fs_info)
+{
+	int ret = 0;
 
 	mutex_lock(&fs_info->balance_mutex);
-	अगर (!fs_info->balance_ctl) अणु
+	if (!fs_info->balance_ctl) {
 		mutex_unlock(&fs_info->balance_mutex);
-		वापस -ENOTCONN;
-	पूर्ण
+		return -ENOTCONN;
+	}
 
-	अगर (test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags)) अणु
-		atomic_inc(&fs_info->balance_छोड़ो_req);
+	if (test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags)) {
+		atomic_inc(&fs_info->balance_pause_req);
 		mutex_unlock(&fs_info->balance_mutex);
 
-		रुको_event(fs_info->balance_रुको_q,
+		wait_event(fs_info->balance_wait_q,
 			   !test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags));
 
 		mutex_lock(&fs_info->balance_mutex);
 		/* we are good with balance_ctl ripped off from under us */
 		BUG_ON(test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags));
-		atomic_dec(&fs_info->balance_छोड़ो_req);
-	पूर्ण अन्यथा अणु
+		atomic_dec(&fs_info->balance_pause_req);
+	} else {
 		ret = -ENOTCONN;
-	पूर्ण
+	}
 
 	mutex_unlock(&fs_info->balance_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_cancel_balance(काष्ठा btrfs_fs_info *fs_info)
-अणु
+int btrfs_cancel_balance(struct btrfs_fs_info *fs_info)
+{
 	mutex_lock(&fs_info->balance_mutex);
-	अगर (!fs_info->balance_ctl) अणु
+	if (!fs_info->balance_ctl) {
 		mutex_unlock(&fs_info->balance_mutex);
-		वापस -ENOTCONN;
-	पूर्ण
+		return -ENOTCONN;
+	}
 
 	/*
-	 * A छोड़ोd balance with the item stored on disk can be resumed at
-	 * mount समय अगर the mount is पढ़ो-ग_लिखो. Otherwise it's still छोड़ोd
+	 * A paused balance with the item stored on disk can be resumed at
+	 * mount time if the mount is read-write. Otherwise it's still paused
 	 * and we must not allow cancelling as it deletes the item.
 	 */
-	अगर (sb_rकरोnly(fs_info->sb)) अणु
+	if (sb_rdonly(fs_info->sb)) {
 		mutex_unlock(&fs_info->balance_mutex);
-		वापस -EROFS;
-	पूर्ण
+		return -EROFS;
+	}
 
 	atomic_inc(&fs_info->balance_cancel_req);
 	/*
-	 * अगर we are running just रुको and वापस, balance item is
-	 * deleted in btrfs_balance in this हाल
+	 * if we are running just wait and return, balance item is
+	 * deleted in btrfs_balance in this case
 	 */
-	अगर (test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags)) अणु
+	if (test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags)) {
 		mutex_unlock(&fs_info->balance_mutex);
-		रुको_event(fs_info->balance_रुको_q,
+		wait_event(fs_info->balance_wait_q,
 			   !test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags));
 		mutex_lock(&fs_info->balance_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_unlock(&fs_info->balance_mutex);
 		/*
-		 * Lock released to allow other रुकोers to जारी, we'll
+		 * Lock released to allow other waiters to continue, we'll
 		 * reexamine the status again.
 		 */
 		mutex_lock(&fs_info->balance_mutex);
 
-		अगर (fs_info->balance_ctl) अणु
+		if (fs_info->balance_ctl) {
 			reset_balance_state(fs_info);
 			btrfs_exclop_finish(fs_info);
 			btrfs_info(fs_info, "balance: canceled");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	BUG_ON(fs_info->balance_ctl ||
 		test_bit(BTRFS_FS_BALANCE_RUNNING, &fs_info->flags));
 	atomic_dec(&fs_info->balance_cancel_req);
 	mutex_unlock(&fs_info->balance_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक btrfs_uuid_scan_kthपढ़ो(व्योम *data)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = data;
-	काष्ठा btrfs_root *root = fs_info->tree_root;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_path *path = शून्य;
-	पूर्णांक ret = 0;
-	काष्ठा extent_buffer *eb;
-	पूर्णांक slot;
-	काष्ठा btrfs_root_item root_item;
+int btrfs_uuid_scan_kthread(void *data)
+{
+	struct btrfs_fs_info *fs_info = data;
+	struct btrfs_root *root = fs_info->tree_root;
+	struct btrfs_key key;
+	struct btrfs_path *path = NULL;
+	int ret = 0;
+	struct extent_buffer *eb;
+	int slot;
+	struct btrfs_root_item root_item;
 	u32 item_size;
-	काष्ठा btrfs_trans_handle *trans = शून्य;
+	struct btrfs_trans_handle *trans = NULL;
 	bool closing = false;
 
 	path = btrfs_alloc_path();
-	अगर (!path) अणु
+	if (!path) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	key.objectid = 0;
 	key.type = BTRFS_ROOT_ITEM_KEY;
 	key.offset = 0;
 
-	जबतक (1) अणु
-		अगर (btrfs_fs_closing(fs_info)) अणु
+	while (1) {
+		if (btrfs_fs_closing(fs_info)) {
 			closing = true;
-			अवरोध;
-		पूर्ण
-		ret = btrfs_search_क्रमward(root, &key, path,
+			break;
+		}
+		ret = btrfs_search_forward(root, &key, path,
 				BTRFS_OLDEST_GENERATION);
-		अगर (ret) अणु
-			अगर (ret > 0)
+		if (ret) {
+			if (ret > 0)
 				ret = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (key.type != BTRFS_ROOT_ITEM_KEY ||
+		if (key.type != BTRFS_ROOT_ITEM_KEY ||
 		    (key.objectid < BTRFS_FIRST_FREE_OBJECTID &&
 		     key.objectid != BTRFS_FS_TREE_OBJECTID) ||
 		    key.objectid > BTRFS_LAST_FREE_OBJECTID)
-			जाओ skip;
+			goto skip;
 
 		eb = path->nodes[0];
 		slot = path->slots[0];
 		item_size = btrfs_item_size_nr(eb, slot);
-		अगर (item_size < माप(root_item))
-			जाओ skip;
+		if (item_size < sizeof(root_item))
+			goto skip;
 
-		पढ़ो_extent_buffer(eb, &root_item,
+		read_extent_buffer(eb, &root_item,
 				   btrfs_item_ptr_offset(eb, slot),
-				   (पूर्णांक)माप(root_item));
-		अगर (btrfs_root_refs(&root_item) == 0)
-			जाओ skip;
+				   (int)sizeof(root_item));
+		if (btrfs_root_refs(&root_item) == 0)
+			goto skip;
 
-		अगर (!btrfs_is_empty_uuid(root_item.uuid) ||
-		    !btrfs_is_empty_uuid(root_item.received_uuid)) अणु
-			अगर (trans)
-				जाओ update_tree;
+		if (!btrfs_is_empty_uuid(root_item.uuid) ||
+		    !btrfs_is_empty_uuid(root_item.received_uuid)) {
+			if (trans)
+				goto update_tree;
 
 			btrfs_release_path(path);
 			/*
@@ -4558,226 +4557,226 @@ out:
 			 * 1 - received_subvol uuid item
 			 */
 			trans = btrfs_start_transaction(fs_info->uuid_root, 2);
-			अगर (IS_ERR(trans)) अणु
+			if (IS_ERR(trans)) {
 				ret = PTR_ERR(trans);
-				अवरोध;
-			पूर्ण
-			जारी;
-		पूर्ण अन्यथा अणु
-			जाओ skip;
-		पूर्ण
+				break;
+			}
+			continue;
+		} else {
+			goto skip;
+		}
 update_tree:
 		btrfs_release_path(path);
-		अगर (!btrfs_is_empty_uuid(root_item.uuid)) अणु
+		if (!btrfs_is_empty_uuid(root_item.uuid)) {
 			ret = btrfs_uuid_tree_add(trans, root_item.uuid,
 						  BTRFS_UUID_KEY_SUBVOL,
 						  key.objectid);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				btrfs_warn(fs_info, "uuid_tree_add failed %d",
 					ret);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!btrfs_is_empty_uuid(root_item.received_uuid)) अणु
+		if (!btrfs_is_empty_uuid(root_item.received_uuid)) {
 			ret = btrfs_uuid_tree_add(trans,
 						  root_item.received_uuid,
 						 BTRFS_UUID_KEY_RECEIVED_SUBVOL,
 						  key.objectid);
-			अगर (ret < 0) अणु
+			if (ret < 0) {
 				btrfs_warn(fs_info, "uuid_tree_add failed %d",
 					ret);
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 skip:
 		btrfs_release_path(path);
-		अगर (trans) अणु
+		if (trans) {
 			ret = btrfs_end_transaction(trans);
-			trans = शून्य;
-			अगर (ret)
-				अवरोध;
-		पूर्ण
+			trans = NULL;
+			if (ret)
+				break;
+		}
 
-		अगर (key.offset < (u64)-1) अणु
+		if (key.offset < (u64)-1) {
 			key.offset++;
-		पूर्ण अन्यथा अगर (key.type < BTRFS_ROOT_ITEM_KEY) अणु
+		} else if (key.type < BTRFS_ROOT_ITEM_KEY) {
 			key.offset = 0;
 			key.type = BTRFS_ROOT_ITEM_KEY;
-		पूर्ण अन्यथा अगर (key.objectid < (u64)-1) अणु
+		} else if (key.objectid < (u64)-1) {
 			key.offset = 0;
 			key.type = BTRFS_ROOT_ITEM_KEY;
 			key.objectid++;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
+		} else {
+			break;
+		}
 		cond_resched();
-	पूर्ण
+	}
 
 out:
-	btrfs_मुक्त_path(path);
-	अगर (trans && !IS_ERR(trans))
+	btrfs_free_path(path);
+	if (trans && !IS_ERR(trans))
 		btrfs_end_transaction(trans);
-	अगर (ret)
+	if (ret)
 		btrfs_warn(fs_info, "btrfs_uuid_scan_kthread failed %d", ret);
-	अन्यथा अगर (!closing)
+	else if (!closing)
 		set_bit(BTRFS_FS_UPDATE_UUID_TREE_GEN, &fs_info->flags);
 	up(&fs_info->uuid_tree_rescan_sem);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक btrfs_create_uuid_tree(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_trans_handle *trans;
-	काष्ठा btrfs_root *tree_root = fs_info->tree_root;
-	काष्ठा btrfs_root *uuid_root;
-	काष्ठा task_काष्ठा *task;
-	पूर्णांक ret;
+int btrfs_create_uuid_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_trans_handle *trans;
+	struct btrfs_root *tree_root = fs_info->tree_root;
+	struct btrfs_root *uuid_root;
+	struct task_struct *task;
+	int ret;
 
 	/*
 	 * 1 - root node
 	 * 1 - root item
 	 */
 	trans = btrfs_start_transaction(tree_root, 2);
-	अगर (IS_ERR(trans))
-		वापस PTR_ERR(trans);
+	if (IS_ERR(trans))
+		return PTR_ERR(trans);
 
 	uuid_root = btrfs_create_tree(trans, BTRFS_UUID_TREE_OBJECTID);
-	अगर (IS_ERR(uuid_root)) अणु
+	if (IS_ERR(uuid_root)) {
 		ret = PTR_ERR(uuid_root);
-		btrfs_पात_transaction(trans, ret);
+		btrfs_abort_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	fs_info->uuid_root = uuid_root;
 
 	ret = btrfs_commit_transaction(trans);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	करोwn(&fs_info->uuid_tree_rescan_sem);
-	task = kthपढ़ो_run(btrfs_uuid_scan_kthपढ़ो, fs_info, "btrfs-uuid");
-	अगर (IS_ERR(task)) अणु
-		/* fs_info->update_uuid_tree_gen reमुख्यs 0 in all error हाल */
+	down(&fs_info->uuid_tree_rescan_sem);
+	task = kthread_run(btrfs_uuid_scan_kthread, fs_info, "btrfs-uuid");
+	if (IS_ERR(task)) {
+		/* fs_info->update_uuid_tree_gen remains 0 in all error case */
 		btrfs_warn(fs_info, "failed to start uuid_scan task");
 		up(&fs_info->uuid_tree_rescan_sem);
-		वापस PTR_ERR(task);
-	पूर्ण
+		return PTR_ERR(task);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * shrinking a device means finding all of the device extents past
  * the new size, and then following the back refs to the chunks.
- * The chunk relocation code actually मुक्तs the device extent
+ * The chunk relocation code actually frees the device extent
  */
-पूर्णांक btrfs_shrink_device(काष्ठा btrfs_device *device, u64 new_size)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = device->fs_info;
-	काष्ठा btrfs_root *root = fs_info->dev_root;
-	काष्ठा btrfs_trans_handle *trans;
-	काष्ठा btrfs_dev_extent *dev_extent = शून्य;
-	काष्ठा btrfs_path *path;
+int btrfs_shrink_device(struct btrfs_device *device, u64 new_size)
+{
+	struct btrfs_fs_info *fs_info = device->fs_info;
+	struct btrfs_root *root = fs_info->dev_root;
+	struct btrfs_trans_handle *trans;
+	struct btrfs_dev_extent *dev_extent = NULL;
+	struct btrfs_path *path;
 	u64 length;
 	u64 chunk_offset;
-	पूर्णांक ret;
-	पूर्णांक slot;
-	पूर्णांक failed = 0;
+	int ret;
+	int slot;
+	int failed = 0;
 	bool retried = false;
-	काष्ठा extent_buffer *l;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_super_block *super_copy = fs_info->super_copy;
+	struct extent_buffer *l;
+	struct btrfs_key key;
+	struct btrfs_super_block *super_copy = fs_info->super_copy;
 	u64 old_total = btrfs_super_total_bytes(super_copy);
 	u64 old_size = btrfs_device_get_total_bytes(device);
-	u64 dअगरf;
+	u64 diff;
 	u64 start;
 
-	new_size = round_करोwn(new_size, fs_info->sectorsize);
+	new_size = round_down(new_size, fs_info->sectorsize);
 	start = new_size;
-	dअगरf = round_करोwn(old_size - new_size, fs_info->sectorsize);
+	diff = round_down(old_size - new_size, fs_info->sectorsize);
 
-	अगर (test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state))
-		वापस -EINVAL;
+	if (test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state))
+		return -EINVAL;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
-	path->पढ़ोa = READA_BACK;
+	path->reada = READA_BACK;
 
 	trans = btrfs_start_transaction(root, 0);
-	अगर (IS_ERR(trans)) अणु
-		btrfs_मुक्त_path(path);
-		वापस PTR_ERR(trans);
-	पूर्ण
+	if (IS_ERR(trans)) {
+		btrfs_free_path(path);
+		return PTR_ERR(trans);
+	}
 
 	mutex_lock(&fs_info->chunk_mutex);
 
 	btrfs_device_set_total_bytes(device, new_size);
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) अणु
-		device->fs_devices->total_rw_bytes -= dअगरf;
-		atomic64_sub(dअगरf, &fs_info->मुक्त_chunk_space);
-	पूर्ण
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) {
+		device->fs_devices->total_rw_bytes -= diff;
+		atomic64_sub(diff, &fs_info->free_chunk_space);
+	}
 
 	/*
 	 * Once the device's size has been set to the new size, ensure all
 	 * in-memory chunks are synced to disk so that the loop below sees them
 	 * and relocates them accordingly.
 	 */
-	अगर (contains_pending_extent(device, &start, dअगरf)) अणु
+	if (contains_pending_extent(device, &start, diff)) {
 		mutex_unlock(&fs_info->chunk_mutex);
 		ret = btrfs_commit_transaction(trans);
-		अगर (ret)
-			जाओ करोne;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto done;
+	} else {
 		mutex_unlock(&fs_info->chunk_mutex);
 		btrfs_end_transaction(trans);
-	पूर्ण
+	}
 
 again:
 	key.objectid = device->devid;
 	key.offset = (u64)-1;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 
-	करो अणु
+	do {
 		mutex_lock(&fs_info->reclaim_bgs_lock);
-		ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-		अगर (ret < 0) अणु
+		ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+		if (ret < 0) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		ret = btrfs_previous_item(root, path, 0, key.type);
-		अगर (ret) अणु
+		if (ret) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			अगर (ret < 0)
-				जाओ करोne;
+			if (ret < 0)
+				goto done;
 			ret = 0;
 			btrfs_release_path(path);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		l = path->nodes[0];
 		slot = path->slots[0];
 		btrfs_item_key_to_cpu(l, &key, path->slots[0]);
 
-		अगर (key.objectid != device->devid) अणु
+		if (key.objectid != device->devid) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
 			btrfs_release_path(path);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		dev_extent = btrfs_item_ptr(l, slot, काष्ठा btrfs_dev_extent);
+		dev_extent = btrfs_item_ptr(l, slot, struct btrfs_dev_extent);
 		length = btrfs_dev_extent_length(l, dev_extent);
 
-		अगर (key.offset + length <= new_size) अणु
+		if (key.offset + length <= new_size) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
 			btrfs_release_path(path);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		chunk_offset = btrfs_dev_extent_chunk_offset(l, dev_extent);
 		btrfs_release_path(path);
@@ -4789,40 +4788,40 @@ again:
 		 * advance.
 		 */
 		ret = btrfs_may_alloc_data_chunk(fs_info, chunk_offset);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			mutex_unlock(&fs_info->reclaim_bgs_lock);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		ret = btrfs_relocate_chunk(fs_info, chunk_offset);
 		mutex_unlock(&fs_info->reclaim_bgs_lock);
-		अगर (ret == -ENOSPC) अणु
+		if (ret == -ENOSPC) {
 			failed++;
-		पूर्ण अन्यथा अगर (ret) अणु
-			अगर (ret == -ETXTBSY) अणु
+		} else if (ret) {
+			if (ret == -ETXTBSY) {
 				btrfs_warn(fs_info,
 		   "could not shrink block group %llu due to active swapfile",
 					   chunk_offset);
-			पूर्ण
-			जाओ करोne;
-		पूर्ण
-	पूर्ण जबतक (key.offset-- > 0);
+			}
+			goto done;
+		}
+	} while (key.offset-- > 0);
 
-	अगर (failed && !retried) अणु
+	if (failed && !retried) {
 		failed = 0;
 		retried = true;
-		जाओ again;
-	पूर्ण अन्यथा अगर (failed && retried) अणु
+		goto again;
+	} else if (failed && retried) {
 		ret = -ENOSPC;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	/* Shrinking succeeded, अन्यथा we would be at "done". */
+	/* Shrinking succeeded, else we would be at "done". */
 	trans = btrfs_start_transaction(root, 0);
-	अगर (IS_ERR(trans)) अणु
+	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	mutex_lock(&fs_info->chunk_mutex);
 	/* Clear all state bits beyond the shrunk device size */
@@ -4830,204 +4829,204 @@ again:
 			  CHUNK_STATE_MASK);
 
 	btrfs_device_set_disk_total_bytes(device, new_size);
-	अगर (list_empty(&device->post_commit_list))
+	if (list_empty(&device->post_commit_list))
 		list_add_tail(&device->post_commit_list,
 			      &trans->transaction->dev_update_list);
 
-	WARN_ON(dअगरf > old_total);
+	WARN_ON(diff > old_total);
 	btrfs_set_super_total_bytes(super_copy,
-			round_करोwn(old_total - dअगरf, fs_info->sectorsize));
+			round_down(old_total - diff, fs_info->sectorsize));
 	mutex_unlock(&fs_info->chunk_mutex);
 
 	/* Now btrfs_update_device() will change the on-disk size. */
 	ret = btrfs_update_device(trans, device);
-	अगर (ret < 0) अणु
-		btrfs_पात_transaction(trans, ret);
+	if (ret < 0) {
+		btrfs_abort_transaction(trans, ret);
 		btrfs_end_transaction(trans);
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = btrfs_commit_transaction(trans);
-	पूर्ण
-करोne:
-	btrfs_मुक्त_path(path);
-	अगर (ret) अणु
+	}
+done:
+	btrfs_free_path(path);
+	if (ret) {
 		mutex_lock(&fs_info->chunk_mutex);
 		btrfs_device_set_total_bytes(device, old_size);
-		अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state))
-			device->fs_devices->total_rw_bytes += dअगरf;
-		atomic64_add(dअगरf, &fs_info->मुक्त_chunk_space);
+		if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state))
+			device->fs_devices->total_rw_bytes += diff;
+		atomic64_add(diff, &fs_info->free_chunk_space);
 		mutex_unlock(&fs_info->chunk_mutex);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक btrfs_add_प्रणाली_chunk(काष्ठा btrfs_fs_info *fs_info,
-			   काष्ठा btrfs_key *key,
-			   काष्ठा btrfs_chunk *chunk, पूर्णांक item_size)
-अणु
-	काष्ठा btrfs_super_block *super_copy = fs_info->super_copy;
-	काष्ठा btrfs_disk_key disk_key;
+static int btrfs_add_system_chunk(struct btrfs_fs_info *fs_info,
+			   struct btrfs_key *key,
+			   struct btrfs_chunk *chunk, int item_size)
+{
+	struct btrfs_super_block *super_copy = fs_info->super_copy;
+	struct btrfs_disk_key disk_key;
 	u32 array_size;
 	u8 *ptr;
 
 	mutex_lock(&fs_info->chunk_mutex);
 	array_size = btrfs_super_sys_array_size(super_copy);
-	अगर (array_size + item_size + माप(disk_key)
-			> BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) अणु
+	if (array_size + item_size + sizeof(disk_key)
+			> BTRFS_SYSTEM_CHUNK_ARRAY_SIZE) {
 		mutex_unlock(&fs_info->chunk_mutex);
-		वापस -EFBIG;
-	पूर्ण
+		return -EFBIG;
+	}
 
 	ptr = super_copy->sys_chunk_array + array_size;
 	btrfs_cpu_key_to_disk(&disk_key, key);
-	स_नकल(ptr, &disk_key, माप(disk_key));
-	ptr += माप(disk_key);
-	स_नकल(ptr, chunk, item_size);
-	item_size += माप(disk_key);
+	memcpy(ptr, &disk_key, sizeof(disk_key));
+	ptr += sizeof(disk_key);
+	memcpy(ptr, chunk, item_size);
+	item_size += sizeof(disk_key);
 	btrfs_set_super_sys_array_size(super_copy, array_size + item_size);
 	mutex_unlock(&fs_info->chunk_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * sort the devices in descending order by max_avail, total_avail
  */
-अटल पूर्णांक btrfs_cmp_device_info(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा btrfs_device_info *di_a = a;
-	स्थिर काष्ठा btrfs_device_info *di_b = b;
+static int btrfs_cmp_device_info(const void *a, const void *b)
+{
+	const struct btrfs_device_info *di_a = a;
+	const struct btrfs_device_info *di_b = b;
 
-	अगर (di_a->max_avail > di_b->max_avail)
-		वापस -1;
-	अगर (di_a->max_avail < di_b->max_avail)
-		वापस 1;
-	अगर (di_a->total_avail > di_b->total_avail)
-		वापस -1;
-	अगर (di_a->total_avail < di_b->total_avail)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (di_a->max_avail > di_b->max_avail)
+		return -1;
+	if (di_a->max_avail < di_b->max_avail)
+		return 1;
+	if (di_a->total_avail > di_b->total_avail)
+		return -1;
+	if (di_a->total_avail < di_b->total_avail)
+		return 1;
+	return 0;
+}
 
-अटल व्योम check_raid56_incompat_flag(काष्ठा btrfs_fs_info *info, u64 type)
-अणु
-	अगर (!(type & BTRFS_BLOCK_GROUP_RAID56_MASK))
-		वापस;
+static void check_raid56_incompat_flag(struct btrfs_fs_info *info, u64 type)
+{
+	if (!(type & BTRFS_BLOCK_GROUP_RAID56_MASK))
+		return;
 
 	btrfs_set_fs_incompat(info, RAID56);
-पूर्ण
+}
 
-अटल व्योम check_raid1c34_incompat_flag(काष्ठा btrfs_fs_info *info, u64 type)
-अणु
-	अगर (!(type & (BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4)))
-		वापस;
+static void check_raid1c34_incompat_flag(struct btrfs_fs_info *info, u64 type)
+{
+	if (!(type & (BTRFS_BLOCK_GROUP_RAID1C3 | BTRFS_BLOCK_GROUP_RAID1C4)))
+		return;
 
 	btrfs_set_fs_incompat(info, RAID1C34);
-पूर्ण
+}
 
 /*
- * Structure used पूर्णांकernally क्रम __btrfs_alloc_chunk() function.
+ * Structure used internally for __btrfs_alloc_chunk() function.
  * Wraps needed parameters.
  */
-काष्ठा alloc_chunk_ctl अणु
+struct alloc_chunk_ctl {
 	u64 start;
 	u64 type;
 	/* Total number of stripes to allocate */
-	पूर्णांक num_stripes;
-	/* sub_stripes info क्रम map */
-	पूर्णांक sub_stripes;
+	int num_stripes;
+	/* sub_stripes info for map */
+	int sub_stripes;
 	/* Stripes per device */
-	पूर्णांक dev_stripes;
+	int dev_stripes;
 	/* Maximum number of devices to use */
-	पूर्णांक devs_max;
+	int devs_max;
 	/* Minimum number of devices to use */
-	पूर्णांक devs_min;
+	int devs_min;
 	/* ndevs has to be a multiple of this */
-	पूर्णांक devs_increment;
+	int devs_increment;
 	/* Number of copies */
-	पूर्णांक ncopies;
-	/* Number of stripes worth of bytes to store parity inक्रमmation */
-	पूर्णांक nparity;
+	int ncopies;
+	/* Number of stripes worth of bytes to store parity information */
+	int nparity;
 	u64 max_stripe_size;
 	u64 max_chunk_size;
 	u64 dev_extent_min;
 	u64 stripe_size;
 	u64 chunk_size;
-	पूर्णांक ndevs;
-पूर्ण;
+	int ndevs;
+};
 
-अटल व्योम init_alloc_chunk_ctl_policy_regular(
-				काष्ठा btrfs_fs_devices *fs_devices,
-				काष्ठा alloc_chunk_ctl *ctl)
-अणु
+static void init_alloc_chunk_ctl_policy_regular(
+				struct btrfs_fs_devices *fs_devices,
+				struct alloc_chunk_ctl *ctl)
+{
 	u64 type = ctl->type;
 
-	अगर (type & BTRFS_BLOCK_GROUP_DATA) अणु
+	if (type & BTRFS_BLOCK_GROUP_DATA) {
 		ctl->max_stripe_size = SZ_1G;
 		ctl->max_chunk_size = BTRFS_MAX_DATA_CHUNK_SIZE;
-	पूर्ण अन्यथा अगर (type & BTRFS_BLOCK_GROUP_METADATA) अणु
-		/* For larger fileप्रणालीs, use larger metadata chunks */
-		अगर (fs_devices->total_rw_bytes > 50ULL * SZ_1G)
+	} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
+		/* For larger filesystems, use larger metadata chunks */
+		if (fs_devices->total_rw_bytes > 50ULL * SZ_1G)
 			ctl->max_stripe_size = SZ_1G;
-		अन्यथा
+		else
 			ctl->max_stripe_size = SZ_256M;
 		ctl->max_chunk_size = ctl->max_stripe_size;
-	पूर्ण अन्यथा अगर (type & BTRFS_BLOCK_GROUP_SYSTEM) अणु
+	} else if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		ctl->max_stripe_size = SZ_32M;
 		ctl->max_chunk_size = 2 * ctl->max_stripe_size;
-		ctl->devs_max = min_t(पूर्णांक, ctl->devs_max,
+		ctl->devs_max = min_t(int, ctl->devs_max,
 				      BTRFS_MAX_DEVS_SYS_CHUNK);
-	पूर्ण अन्यथा अणु
+	} else {
 		BUG();
-	पूर्ण
+	}
 
-	/* We करोn't want a chunk larger than 10% of writable space */
-	ctl->max_chunk_size = min(भाग_factor(fs_devices->total_rw_bytes, 1),
+	/* We don't want a chunk larger than 10% of writable space */
+	ctl->max_chunk_size = min(div_factor(fs_devices->total_rw_bytes, 1),
 				  ctl->max_chunk_size);
 	ctl->dev_extent_min = BTRFS_STRIPE_LEN * ctl->dev_stripes;
-पूर्ण
+}
 
-अटल व्योम init_alloc_chunk_ctl_policy_zoned(
-				      काष्ठा btrfs_fs_devices *fs_devices,
-				      काष्ठा alloc_chunk_ctl *ctl)
-अणु
+static void init_alloc_chunk_ctl_policy_zoned(
+				      struct btrfs_fs_devices *fs_devices,
+				      struct alloc_chunk_ctl *ctl)
+{
 	u64 zone_size = fs_devices->fs_info->zone_size;
 	u64 limit;
-	पूर्णांक min_num_stripes = ctl->devs_min * ctl->dev_stripes;
-	पूर्णांक min_data_stripes = (min_num_stripes - ctl->nparity) / ctl->ncopies;
+	int min_num_stripes = ctl->devs_min * ctl->dev_stripes;
+	int min_data_stripes = (min_num_stripes - ctl->nparity) / ctl->ncopies;
 	u64 min_chunk_size = min_data_stripes * zone_size;
 	u64 type = ctl->type;
 
 	ctl->max_stripe_size = zone_size;
-	अगर (type & BTRFS_BLOCK_GROUP_DATA) अणु
-		ctl->max_chunk_size = round_करोwn(BTRFS_MAX_DATA_CHUNK_SIZE,
+	if (type & BTRFS_BLOCK_GROUP_DATA) {
+		ctl->max_chunk_size = round_down(BTRFS_MAX_DATA_CHUNK_SIZE,
 						 zone_size);
-	पूर्ण अन्यथा अगर (type & BTRFS_BLOCK_GROUP_METADATA) अणु
+	} else if (type & BTRFS_BLOCK_GROUP_METADATA) {
 		ctl->max_chunk_size = ctl->max_stripe_size;
-	पूर्ण अन्यथा अगर (type & BTRFS_BLOCK_GROUP_SYSTEM) अणु
+	} else if (type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		ctl->max_chunk_size = 2 * ctl->max_stripe_size;
-		ctl->devs_max = min_t(पूर्णांक, ctl->devs_max,
+		ctl->devs_max = min_t(int, ctl->devs_max,
 				      BTRFS_MAX_DEVS_SYS_CHUNK);
-	पूर्ण अन्यथा अणु
+	} else {
 		BUG();
-	पूर्ण
+	}
 
-	/* We करोn't want a chunk larger than 10% of writable space */
-	limit = max(round_करोwn(भाग_factor(fs_devices->total_rw_bytes, 1),
+	/* We don't want a chunk larger than 10% of writable space */
+	limit = max(round_down(div_factor(fs_devices->total_rw_bytes, 1),
 			       zone_size),
 		    min_chunk_size);
 	ctl->max_chunk_size = min(limit, ctl->max_chunk_size);
 	ctl->dev_extent_min = zone_size * ctl->dev_stripes;
-पूर्ण
+}
 
-अटल व्योम init_alloc_chunk_ctl(काष्ठा btrfs_fs_devices *fs_devices,
-				 काष्ठा alloc_chunk_ctl *ctl)
-अणु
-	पूर्णांक index = btrfs_bg_flags_to_raid_index(ctl->type);
+static void init_alloc_chunk_ctl(struct btrfs_fs_devices *fs_devices,
+				 struct alloc_chunk_ctl *ctl)
+{
+	int index = btrfs_bg_flags_to_raid_index(ctl->type);
 
 	ctl->sub_stripes = btrfs_raid_array[index].sub_stripes;
 	ctl->dev_stripes = btrfs_raid_array[index].dev_stripes;
 	ctl->devs_max = btrfs_raid_array[index].devs_max;
-	अगर (!ctl->devs_max)
+	if (!ctl->devs_max)
 		ctl->devs_max = BTRFS_MAX_DEVS(fs_devices->fs_info);
 	ctl->devs_min = btrfs_raid_array[index].devs_min;
 	ctl->devs_increment = btrfs_raid_array[index].devs_increment;
@@ -5035,113 +5034,113 @@ again:
 	ctl->nparity = btrfs_raid_array[index].nparity;
 	ctl->ndevs = 0;
 
-	चयन (fs_devices->chunk_alloc_policy) अणु
-	हाल BTRFS_CHUNK_ALLOC_REGULAR:
+	switch (fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
 		init_alloc_chunk_ctl_policy_regular(fs_devices, ctl);
-		अवरोध;
-	हाल BTRFS_CHUNK_ALLOC_ZONED:
+		break;
+	case BTRFS_CHUNK_ALLOC_ZONED:
 		init_alloc_chunk_ctl_policy_zoned(fs_devices, ctl);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक gather_device_info(काष्ठा btrfs_fs_devices *fs_devices,
-			      काष्ठा alloc_chunk_ctl *ctl,
-			      काष्ठा btrfs_device_info *devices_info)
-अणु
-	काष्ठा btrfs_fs_info *info = fs_devices->fs_info;
-	काष्ठा btrfs_device *device;
+static int gather_device_info(struct btrfs_fs_devices *fs_devices,
+			      struct alloc_chunk_ctl *ctl,
+			      struct btrfs_device_info *devices_info)
+{
+	struct btrfs_fs_info *info = fs_devices->fs_info;
+	struct btrfs_device *device;
 	u64 total_avail;
 	u64 dev_extent_want = ctl->max_stripe_size * ctl->dev_stripes;
-	पूर्णांक ret;
-	पूर्णांक ndevs = 0;
+	int ret;
+	int ndevs = 0;
 	u64 max_avail;
 	u64 dev_offset;
 
 	/*
-	 * in the first pass through the devices list, we gather inक्रमmation
+	 * in the first pass through the devices list, we gather information
 	 * about the available holes on each device.
 	 */
-	list_क्रम_each_entry(device, &fs_devices->alloc_list, dev_alloc_list) अणु
-		अगर (!test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) अणु
+	list_for_each_entry(device, &fs_devices->alloc_list, dev_alloc_list) {
+		if (!test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state)) {
 			WARN(1, KERN_ERR
 			       "BTRFS: read-only device in alloc_list\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!test_bit(BTRFS_DEV_STATE_IN_FS_METADATA,
+		if (!test_bit(BTRFS_DEV_STATE_IN_FS_METADATA,
 					&device->dev_state) ||
 		    test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state))
-			जारी;
+			continue;
 
-		अगर (device->total_bytes > device->bytes_used)
+		if (device->total_bytes > device->bytes_used)
 			total_avail = device->total_bytes - device->bytes_used;
-		अन्यथा
+		else
 			total_avail = 0;
 
 		/* If there is no space on this device, skip it. */
-		अगर (total_avail < ctl->dev_extent_min)
-			जारी;
+		if (total_avail < ctl->dev_extent_min)
+			continue;
 
-		ret = find_मुक्त_dev_extent(device, dev_extent_want, &dev_offset,
+		ret = find_free_dev_extent(device, dev_extent_want, &dev_offset,
 					   &max_avail);
-		अगर (ret && ret != -ENOSPC)
-			वापस ret;
+		if (ret && ret != -ENOSPC)
+			return ret;
 
-		अगर (ret == 0)
+		if (ret == 0)
 			max_avail = dev_extent_want;
 
-		अगर (max_avail < ctl->dev_extent_min) अणु
-			अगर (btrfs_test_opt(info, ENOSPC_DEBUG))
+		if (max_avail < ctl->dev_extent_min) {
+			if (btrfs_test_opt(info, ENOSPC_DEBUG))
 				btrfs_debug(info,
 			"%s: devid %llu has no free space, have=%llu want=%llu",
 					    __func__, device->devid, max_avail,
 					    ctl->dev_extent_min);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (ndevs == fs_devices->rw_devices) अणु
+		if (ndevs == fs_devices->rw_devices) {
 			WARN(1, "%s: found more than %llu devices\n",
 			     __func__, fs_devices->rw_devices);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		devices_info[ndevs].dev_offset = dev_offset;
 		devices_info[ndevs].max_avail = max_avail;
 		devices_info[ndevs].total_avail = total_avail;
 		devices_info[ndevs].dev = device;
 		++ndevs;
-	पूर्ण
+	}
 	ctl->ndevs = ndevs;
 
 	/*
 	 * now sort the devices by hole size / available space
 	 */
-	sort(devices_info, ndevs, माप(काष्ठा btrfs_device_info),
-	     btrfs_cmp_device_info, शून्य);
+	sort(devices_info, ndevs, sizeof(struct btrfs_device_info),
+	     btrfs_cmp_device_info, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decide_stripe_size_regular(काष्ठा alloc_chunk_ctl *ctl,
-				      काष्ठा btrfs_device_info *devices_info)
-अणु
-	/* Number of stripes that count क्रम block group size */
-	पूर्णांक data_stripes;
+static int decide_stripe_size_regular(struct alloc_chunk_ctl *ctl,
+				      struct btrfs_device_info *devices_info)
+{
+	/* Number of stripes that count for block group size */
+	int data_stripes;
 
 	/*
 	 * The primary goal is to maximize the number of stripes, so use as
-	 * many devices as possible, even अगर the stripes are not maximum sized.
+	 * many devices as possible, even if the stripes are not maximum sized.
 	 *
 	 * The DUP profile stores more than one stripe per device, the
 	 * max_avail is the total size so we have to adjust.
 	 */
-	ctl->stripe_size = भाग_u64(devices_info[ctl->ndevs - 1].max_avail,
+	ctl->stripe_size = div_u64(devices_info[ctl->ndevs - 1].max_avail,
 				   ctl->dev_stripes);
 	ctl->num_stripes = ctl->ndevs * ctl->dev_stripes;
 
-	/* This will have to be fixed क्रम RAID1 and RAID10 over more drives */
+	/* This will have to be fixed for RAID1 and RAID10 over more drives */
 	data_stripes = (ctl->num_stripes - ctl->nparity) / ctl->ncopies;
 
 	/*
@@ -5150,30 +5149,30 @@ again:
 	 * that answer with the max chunk size. If it's higher, we try to
 	 * reduce stripe_size.
 	 */
-	अगर (ctl->stripe_size * data_stripes > ctl->max_chunk_size) अणु
+	if (ctl->stripe_size * data_stripes > ctl->max_chunk_size) {
 		/*
 		 * Reduce stripe_size, round it up to a 16MB boundary again and
 		 * then use it, unless it ends up being even bigger than the
-		 * previous value we had alपढ़ोy.
+		 * previous value we had already.
 		 */
-		ctl->stripe_size = min(round_up(भाग_u64(ctl->max_chunk_size,
+		ctl->stripe_size = min(round_up(div_u64(ctl->max_chunk_size,
 							data_stripes), SZ_16M),
 				       ctl->stripe_size);
-	पूर्ण
+	}
 
 	/* Align to BTRFS_STRIPE_LEN */
-	ctl->stripe_size = round_करोwn(ctl->stripe_size, BTRFS_STRIPE_LEN);
+	ctl->stripe_size = round_down(ctl->stripe_size, BTRFS_STRIPE_LEN);
 	ctl->chunk_size = ctl->stripe_size * data_stripes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decide_stripe_size_zoned(काष्ठा alloc_chunk_ctl *ctl,
-				    काष्ठा btrfs_device_info *devices_info)
-अणु
+static int decide_stripe_size_zoned(struct alloc_chunk_ctl *ctl,
+				    struct btrfs_device_info *devices_info)
+{
 	u64 zone_size = devices_info[0].dev->zone_info->zone_size;
-	/* Number of stripes that count क्रम block group size */
-	पूर्णांक data_stripes;
+	/* Number of stripes that count for block group size */
+	int data_stripes;
 
 	/*
 	 * It should hold because:
@@ -5186,81 +5185,81 @@ again:
 	data_stripes = (ctl->num_stripes - ctl->nparity) / ctl->ncopies;
 
 	/* stripe_size is fixed in zoned filesysmte. Reduce ndevs instead. */
-	अगर (ctl->stripe_size * data_stripes > ctl->max_chunk_size) अणु
-		ctl->ndevs = भाग_u64(भाग_u64(ctl->max_chunk_size * ctl->ncopies,
+	if (ctl->stripe_size * data_stripes > ctl->max_chunk_size) {
+		ctl->ndevs = div_u64(div_u64(ctl->max_chunk_size * ctl->ncopies,
 					     ctl->stripe_size) + ctl->nparity,
 				     ctl->dev_stripes);
 		ctl->num_stripes = ctl->ndevs * ctl->dev_stripes;
 		data_stripes = (ctl->num_stripes - ctl->nparity) / ctl->ncopies;
 		ASSERT(ctl->stripe_size * data_stripes <= ctl->max_chunk_size);
-	पूर्ण
+	}
 
 	ctl->chunk_size = ctl->stripe_size * data_stripes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक decide_stripe_size(काष्ठा btrfs_fs_devices *fs_devices,
-			      काष्ठा alloc_chunk_ctl *ctl,
-			      काष्ठा btrfs_device_info *devices_info)
-अणु
-	काष्ठा btrfs_fs_info *info = fs_devices->fs_info;
+static int decide_stripe_size(struct btrfs_fs_devices *fs_devices,
+			      struct alloc_chunk_ctl *ctl,
+			      struct btrfs_device_info *devices_info)
+{
+	struct btrfs_fs_info *info = fs_devices->fs_info;
 
 	/*
-	 * Round करोwn to number of usable stripes, devs_increment can be any
-	 * number so we can't use round_करोwn() that requires घातer of 2, जबतक
-	 * roundकरोwn is safe.
+	 * Round down to number of usable stripes, devs_increment can be any
+	 * number so we can't use round_down() that requires power of 2, while
+	 * rounddown is safe.
 	 */
-	ctl->ndevs = roundकरोwn(ctl->ndevs, ctl->devs_increment);
+	ctl->ndevs = rounddown(ctl->ndevs, ctl->devs_increment);
 
-	अगर (ctl->ndevs < ctl->devs_min) अणु
-		अगर (btrfs_test_opt(info, ENOSPC_DEBUG)) अणु
+	if (ctl->ndevs < ctl->devs_min) {
+		if (btrfs_test_opt(info, ENOSPC_DEBUG)) {
 			btrfs_debug(info,
 	"%s: not enough devices with free space: have=%d minimum required=%d",
 				    __func__, ctl->ndevs, ctl->devs_min);
-		पूर्ण
-		वापस -ENOSPC;
-	पूर्ण
+		}
+		return -ENOSPC;
+	}
 
 	ctl->ndevs = min(ctl->ndevs, ctl->devs_max);
 
-	चयन (fs_devices->chunk_alloc_policy) अणु
-	हाल BTRFS_CHUNK_ALLOC_REGULAR:
-		वापस decide_stripe_size_regular(ctl, devices_info);
-	हाल BTRFS_CHUNK_ALLOC_ZONED:
-		वापस decide_stripe_size_zoned(ctl, devices_info);
-	शेष:
+	switch (fs_devices->chunk_alloc_policy) {
+	case BTRFS_CHUNK_ALLOC_REGULAR:
+		return decide_stripe_size_regular(ctl, devices_info);
+	case BTRFS_CHUNK_ALLOC_ZONED:
+		return decide_stripe_size_zoned(ctl, devices_info);
+	default:
 		BUG();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक create_chunk(काष्ठा btrfs_trans_handle *trans,
-			काष्ठा alloc_chunk_ctl *ctl,
-			काष्ठा btrfs_device_info *devices_info)
-अणु
-	काष्ठा btrfs_fs_info *info = trans->fs_info;
-	काष्ठा map_lookup *map = शून्य;
-	काष्ठा extent_map_tree *em_tree;
-	काष्ठा extent_map *em;
+static int create_chunk(struct btrfs_trans_handle *trans,
+			struct alloc_chunk_ctl *ctl,
+			struct btrfs_device_info *devices_info)
+{
+	struct btrfs_fs_info *info = trans->fs_info;
+	struct map_lookup *map = NULL;
+	struct extent_map_tree *em_tree;
+	struct extent_map *em;
 	u64 start = ctl->start;
 	u64 type = ctl->type;
-	पूर्णांक ret;
-	पूर्णांक i;
-	पूर्णांक j;
+	int ret;
+	int i;
+	int j;
 
-	map = kदो_स्मृति(map_lookup_size(ctl->num_stripes), GFP_NOFS);
-	अगर (!map)
-		वापस -ENOMEM;
+	map = kmalloc(map_lookup_size(ctl->num_stripes), GFP_NOFS);
+	if (!map)
+		return -ENOMEM;
 	map->num_stripes = ctl->num_stripes;
 
-	क्रम (i = 0; i < ctl->ndevs; ++i) अणु
-		क्रम (j = 0; j < ctl->dev_stripes; ++j) अणु
-			पूर्णांक s = i * ctl->dev_stripes + j;
+	for (i = 0; i < ctl->ndevs; ++i) {
+		for (j = 0; j < ctl->dev_stripes; ++j) {
+			int s = i * ctl->dev_stripes + j;
 			map->stripes[s].dev = devices_info[i].dev;
 			map->stripes[s].physical = devices_info[i].dev_offset +
 						   j * ctl->stripe_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	map->stripe_len = BTRFS_STRIPE_LEN;
 	map->io_align = BTRFS_STRIPE_LEN;
 	map->io_width = BTRFS_STRIPE_LEN;
@@ -5270,10 +5269,10 @@ again:
 	trace_btrfs_chunk_alloc(info, map, start, ctl->chunk_size);
 
 	em = alloc_extent_map();
-	अगर (!em) अणु
-		kमुक्त(map);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!em) {
+		kfree(map);
+		return -ENOMEM;
+	}
 	set_bit(EXTENT_FLAG_FS_MAPPING, &em->flags);
 	em->map_lookup = map;
 	em->start = start;
@@ -5283,176 +5282,176 @@ again:
 	em->orig_block_len = ctl->stripe_size;
 
 	em_tree = &info->mapping_tree;
-	ग_लिखो_lock(&em_tree->lock);
+	write_lock(&em_tree->lock);
 	ret = add_extent_mapping(em_tree, em, 0);
-	अगर (ret) अणु
-		ग_लिखो_unlock(&em_tree->lock);
-		मुक्त_extent_map(em);
-		वापस ret;
-	पूर्ण
-	ग_लिखो_unlock(&em_tree->lock);
+	if (ret) {
+		write_unlock(&em_tree->lock);
+		free_extent_map(em);
+		return ret;
+	}
+	write_unlock(&em_tree->lock);
 
 	ret = btrfs_make_block_group(trans, 0, type, start, ctl->chunk_size);
-	अगर (ret)
-		जाओ error_del_extent;
+	if (ret)
+		goto error_del_extent;
 
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
-		काष्ठा btrfs_device *dev = map->stripes[i].dev;
+	for (i = 0; i < map->num_stripes; i++) {
+		struct btrfs_device *dev = map->stripes[i].dev;
 
 		btrfs_device_set_bytes_used(dev,
 					    dev->bytes_used + ctl->stripe_size);
-		अगर (list_empty(&dev->post_commit_list))
+		if (list_empty(&dev->post_commit_list))
 			list_add_tail(&dev->post_commit_list,
 				      &trans->transaction->dev_update_list);
-	पूर्ण
+	}
 
 	atomic64_sub(ctl->stripe_size * map->num_stripes,
-		     &info->मुक्त_chunk_space);
+		     &info->free_chunk_space);
 
-	मुक्त_extent_map(em);
+	free_extent_map(em);
 	check_raid56_incompat_flag(info, type);
 	check_raid1c34_incompat_flag(info, type);
 
-	वापस 0;
+	return 0;
 
 error_del_extent:
-	ग_लिखो_lock(&em_tree->lock);
-	हटाओ_extent_mapping(em_tree, em);
-	ग_लिखो_unlock(&em_tree->lock);
+	write_lock(&em_tree->lock);
+	remove_extent_mapping(em_tree, em);
+	write_unlock(&em_tree->lock);
 
-	/* One क्रम our allocation */
-	मुक्त_extent_map(em);
-	/* One क्रम the tree reference */
-	मुक्त_extent_map(em);
+	/* One for our allocation */
+	free_extent_map(em);
+	/* One for the tree reference */
+	free_extent_map(em);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_alloc_chunk(काष्ठा btrfs_trans_handle *trans, u64 type)
-अणु
-	काष्ठा btrfs_fs_info *info = trans->fs_info;
-	काष्ठा btrfs_fs_devices *fs_devices = info->fs_devices;
-	काष्ठा btrfs_device_info *devices_info = शून्य;
-	काष्ठा alloc_chunk_ctl ctl;
-	पूर्णांक ret;
+int btrfs_alloc_chunk(struct btrfs_trans_handle *trans, u64 type)
+{
+	struct btrfs_fs_info *info = trans->fs_info;
+	struct btrfs_fs_devices *fs_devices = info->fs_devices;
+	struct btrfs_device_info *devices_info = NULL;
+	struct alloc_chunk_ctl ctl;
+	int ret;
 
-	lockdep_निश्चित_held(&info->chunk_mutex);
+	lockdep_assert_held(&info->chunk_mutex);
 
-	अगर (!alloc_profile_is_valid(type, 0)) अणु
+	if (!alloc_profile_is_valid(type, 0)) {
 		ASSERT(0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (list_empty(&fs_devices->alloc_list)) अणु
-		अगर (btrfs_test_opt(info, ENOSPC_DEBUG))
+	if (list_empty(&fs_devices->alloc_list)) {
+		if (btrfs_test_opt(info, ENOSPC_DEBUG))
 			btrfs_debug(info, "%s: no writable device", __func__);
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 
-	अगर (!(type & BTRFS_BLOCK_GROUP_TYPE_MASK)) अणु
+	if (!(type & BTRFS_BLOCK_GROUP_TYPE_MASK)) {
 		btrfs_err(info, "invalid chunk type 0x%llx requested", type);
 		ASSERT(0);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ctl.start = find_next_chunk(info);
 	ctl.type = type;
 	init_alloc_chunk_ctl(fs_devices, &ctl);
 
-	devices_info = kसुस्मृति(fs_devices->rw_devices, माप(*devices_info),
+	devices_info = kcalloc(fs_devices->rw_devices, sizeof(*devices_info),
 			       GFP_NOFS);
-	अगर (!devices_info)
-		वापस -ENOMEM;
+	if (!devices_info)
+		return -ENOMEM;
 
 	ret = gather_device_info(fs_devices, &ctl, devices_info);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret = decide_stripe_size(fs_devices, &ctl, devices_info);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	ret = create_chunk(trans, &ctl, devices_info);
 
 out:
-	kमुक्त(devices_info);
-	वापस ret;
-पूर्ण
+	kfree(devices_info);
+	return ret;
+}
 
 /*
- * Chunk allocation falls पूर्णांकo two parts. The first part करोes work
- * that makes the new allocated chunk usable, but करोes not करो any operation
- * that modअगरies the chunk tree. The second part करोes the work that
- * requires modअगरying the chunk tree. This भागision is important क्रम the
+ * Chunk allocation falls into two parts. The first part does work
+ * that makes the new allocated chunk usable, but does not do any operation
+ * that modifies the chunk tree. The second part does the work that
+ * requires modifying the chunk tree. This division is important for the
  * bootstrap process of adding storage to a seed btrfs.
  */
-पूर्णांक btrfs_finish_chunk_alloc(काष्ठा btrfs_trans_handle *trans,
+int btrfs_finish_chunk_alloc(struct btrfs_trans_handle *trans,
 			     u64 chunk_offset, u64 chunk_size)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *extent_root = fs_info->extent_root;
-	काष्ठा btrfs_root *chunk_root = fs_info->chunk_root;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_chunk *chunk;
-	काष्ठा btrfs_stripe *stripe;
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	माप_प्रकार item_size;
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *extent_root = fs_info->extent_root;
+	struct btrfs_root *chunk_root = fs_info->chunk_root;
+	struct btrfs_key key;
+	struct btrfs_device *device;
+	struct btrfs_chunk *chunk;
+	struct btrfs_stripe *stripe;
+	struct extent_map *em;
+	struct map_lookup *map;
+	size_t item_size;
 	u64 dev_offset;
 	u64 stripe_size;
-	पूर्णांक i = 0;
-	पूर्णांक ret = 0;
+	int i = 0;
+	int ret = 0;
 
 	em = btrfs_get_chunk_map(fs_info, chunk_offset, chunk_size);
-	अगर (IS_ERR(em))
-		वापस PTR_ERR(em);
+	if (IS_ERR(em))
+		return PTR_ERR(em);
 
 	map = em->map_lookup;
 	item_size = btrfs_chunk_item_size(map->num_stripes);
 	stripe_size = em->orig_block_len;
 
 	chunk = kzalloc(item_size, GFP_NOFS);
-	अगर (!chunk) अणु
+	if (!chunk) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Take the device list mutex to prevent races with the final phase of
 	 * a device replace operation that replaces the device object associated
 	 * with the map's stripes, because the device object's id can change
-	 * at any समय during that final phase of the device replace operation
+	 * at any time during that final phase of the device replace operation
 	 * (dev-replace.c:btrfs_dev_replace_finishing()).
 	 */
 	mutex_lock(&fs_info->fs_devices->device_list_mutex);
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
+	for (i = 0; i < map->num_stripes; i++) {
 		device = map->stripes[i].dev;
 		dev_offset = map->stripes[i].physical;
 
 		ret = btrfs_update_device(trans, device);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 		ret = btrfs_alloc_dev_extent(trans, device, chunk_offset,
 					     dev_offset, stripe_size);
-		अगर (ret)
-			अवरोध;
-	पूर्ण
-	अगर (ret) अणु
+		if (ret)
+			break;
+	}
+	if (ret) {
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	stripe = &chunk->stripe;
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
+	for (i = 0; i < map->num_stripes; i++) {
 		device = map->stripes[i].dev;
 		dev_offset = map->stripes[i].physical;
 
 		btrfs_set_stack_stripe_devid(stripe, device->devid);
 		btrfs_set_stack_stripe_offset(stripe, dev_offset);
-		स_नकल(stripe->dev_uuid, device->uuid, BTRFS_UUID_SIZE);
+		memcpy(stripe->dev_uuid, device->uuid, BTRFS_UUID_SIZE);
 		stripe++;
-	पूर्ण
+	}
 	mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 
 	btrfs_set_stack_chunk_length(chunk, chunk_size);
@@ -5470,310 +5469,310 @@ out:
 	key.offset = chunk_offset;
 
 	ret = btrfs_insert_item(trans, chunk_root, &key, chunk, item_size);
-	अगर (ret == 0 && map->type & BTRFS_BLOCK_GROUP_SYSTEM) अणु
+	if (ret == 0 && map->type & BTRFS_BLOCK_GROUP_SYSTEM) {
 		/*
-		 * TODO: Cleanup of inserted chunk root in हाल of
+		 * TODO: Cleanup of inserted chunk root in case of
 		 * failure.
 		 */
-		ret = btrfs_add_प्रणाली_chunk(fs_info, &key, chunk, item_size);
-	पूर्ण
+		ret = btrfs_add_system_chunk(fs_info, &key, chunk, item_size);
+	}
 
 out:
-	kमुक्त(chunk);
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+	kfree(chunk);
+	free_extent_map(em);
+	return ret;
+}
 
-अटल noअंतरभूत पूर्णांक init_first_rw_device(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
+static noinline int init_first_rw_device(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
 	u64 alloc_profile;
-	पूर्णांक ret;
+	int ret;
 
 	alloc_profile = btrfs_metadata_alloc_profile(fs_info);
 	ret = btrfs_alloc_chunk(trans, alloc_profile);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	alloc_profile = btrfs_प्रणाली_alloc_profile(fs_info);
+	alloc_profile = btrfs_system_alloc_profile(fs_info);
 	ret = btrfs_alloc_chunk(trans, alloc_profile);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक btrfs_chunk_max_errors(काष्ठा map_lookup *map)
-अणु
-	स्थिर पूर्णांक index = btrfs_bg_flags_to_raid_index(map->type);
+static inline int btrfs_chunk_max_errors(struct map_lookup *map)
+{
+	const int index = btrfs_bg_flags_to_raid_index(map->type);
 
-	वापस btrfs_raid_array[index].tolerated_failures;
-पूर्ण
+	return btrfs_raid_array[index].tolerated_failures;
+}
 
-पूर्णांक btrfs_chunk_पढ़ोonly(काष्ठा btrfs_fs_info *fs_info, u64 chunk_offset)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	पूर्णांक पढ़ोonly = 0;
-	पूर्णांक miss_ndevs = 0;
-	पूर्णांक i;
+int btrfs_chunk_readonly(struct btrfs_fs_info *fs_info, u64 chunk_offset)
+{
+	struct extent_map *em;
+	struct map_lookup *map;
+	int readonly = 0;
+	int miss_ndevs = 0;
+	int i;
 
 	em = btrfs_get_chunk_map(fs_info, chunk_offset, 1);
-	अगर (IS_ERR(em))
-		वापस 1;
+	if (IS_ERR(em))
+		return 1;
 
 	map = em->map_lookup;
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
-		अगर (test_bit(BTRFS_DEV_STATE_MISSING,
-					&map->stripes[i].dev->dev_state)) अणु
+	for (i = 0; i < map->num_stripes; i++) {
+		if (test_bit(BTRFS_DEV_STATE_MISSING,
+					&map->stripes[i].dev->dev_state)) {
 			miss_ndevs++;
-			जारी;
-		पूर्ण
-		अगर (!test_bit(BTRFS_DEV_STATE_WRITEABLE,
-					&map->stripes[i].dev->dev_state)) अणु
-			पढ़ोonly = 1;
-			जाओ end;
-		पूर्ण
-	पूर्ण
+			continue;
+		}
+		if (!test_bit(BTRFS_DEV_STATE_WRITEABLE,
+					&map->stripes[i].dev->dev_state)) {
+			readonly = 1;
+			goto end;
+		}
+	}
 
 	/*
 	 * If the number of missing devices is larger than max errors,
-	 * we can not ग_लिखो the data पूर्णांकo that chunk successfully, so
-	 * set it पढ़ोonly.
+	 * we can not write the data into that chunk successfully, so
+	 * set it readonly.
 	 */
-	अगर (miss_ndevs > btrfs_chunk_max_errors(map))
-		पढ़ोonly = 1;
+	if (miss_ndevs > btrfs_chunk_max_errors(map))
+		readonly = 1;
 end:
-	मुक्त_extent_map(em);
-	वापस पढ़ोonly;
-पूर्ण
+	free_extent_map(em);
+	return readonly;
+}
 
-व्योम btrfs_mapping_tree_मुक्त(काष्ठा extent_map_tree *tree)
-अणु
-	काष्ठा extent_map *em;
+void btrfs_mapping_tree_free(struct extent_map_tree *tree)
+{
+	struct extent_map *em;
 
-	जबतक (1) अणु
-		ग_लिखो_lock(&tree->lock);
+	while (1) {
+		write_lock(&tree->lock);
 		em = lookup_extent_mapping(tree, 0, (u64)-1);
-		अगर (em)
-			हटाओ_extent_mapping(tree, em);
-		ग_लिखो_unlock(&tree->lock);
-		अगर (!em)
-			अवरोध;
-		/* once क्रम us */
-		मुक्त_extent_map(em);
-		/* once क्रम the tree */
-		मुक्त_extent_map(em);
-	पूर्ण
-पूर्ण
+		if (em)
+			remove_extent_mapping(tree, em);
+		write_unlock(&tree->lock);
+		if (!em)
+			break;
+		/* once for us */
+		free_extent_map(em);
+		/* once for the tree */
+		free_extent_map(em);
+	}
+}
 
-पूर्णांक btrfs_num_copies(काष्ठा btrfs_fs_info *fs_info, u64 logical, u64 len)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	पूर्णांक ret;
+int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
+{
+	struct extent_map *em;
+	struct map_lookup *map;
+	int ret;
 
 	em = btrfs_get_chunk_map(fs_info, logical, len);
-	अगर (IS_ERR(em))
+	if (IS_ERR(em))
 		/*
-		 * We could वापस errors क्रम these हालs, but that could get
-		 * ugly and we'd probably करो the same thing which is just not करो
-		 * anything अन्यथा and निकास, so वापस 1 so the callers करोn't try
+		 * We could return errors for these cases, but that could get
+		 * ugly and we'd probably do the same thing which is just not do
+		 * anything else and exit, so return 1 so the callers don't try
 		 * to use other copies.
 		 */
-		वापस 1;
+		return 1;
 
 	map = em->map_lookup;
-	अगर (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1_MASK))
+	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1_MASK))
 		ret = map->num_stripes;
-	अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID10)
+	else if (map->type & BTRFS_BLOCK_GROUP_RAID10)
 		ret = map->sub_stripes;
-	अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID5)
+	else if (map->type & BTRFS_BLOCK_GROUP_RAID5)
 		ret = 2;
-	अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID6)
+	else if (map->type & BTRFS_BLOCK_GROUP_RAID6)
 		/*
 		 * There could be two corrupted data stripes, we need
 		 * to loop retry in order to rebuild the correct data.
 		 *
-		 * Fail a stripe at a समय on every retry except the
-		 * stripe under reस्थिरruction.
+		 * Fail a stripe at a time on every retry except the
+		 * stripe under reconstruction.
 		 */
 		ret = map->num_stripes;
-	अन्यथा
+	else
 		ret = 1;
-	मुक्त_extent_map(em);
+	free_extent_map(em);
 
-	करोwn_पढ़ो(&fs_info->dev_replace.rwsem);
-	अगर (btrfs_dev_replace_is_ongoing(&fs_info->dev_replace) &&
+	down_read(&fs_info->dev_replace.rwsem);
+	if (btrfs_dev_replace_is_ongoing(&fs_info->dev_replace) &&
 	    fs_info->dev_replace.tgtdev)
 		ret++;
-	up_पढ़ो(&fs_info->dev_replace.rwsem);
+	up_read(&fs_info->dev_replace.rwsem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अचिन्हित दीर्घ btrfs_full_stripe_len(काष्ठा btrfs_fs_info *fs_info,
+unsigned long btrfs_full_stripe_len(struct btrfs_fs_info *fs_info,
 				    u64 logical)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	अचिन्हित दीर्घ len = fs_info->sectorsize;
+{
+	struct extent_map *em;
+	struct map_lookup *map;
+	unsigned long len = fs_info->sectorsize;
 
 	em = btrfs_get_chunk_map(fs_info, logical, len);
 
-	अगर (!WARN_ON(IS_ERR(em))) अणु
+	if (!WARN_ON(IS_ERR(em))) {
 		map = em->map_lookup;
-		अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
+		if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
 			len = map->stripe_len * nr_data_stripes(map);
-		मुक्त_extent_map(em);
-	पूर्ण
-	वापस len;
-पूर्ण
+		free_extent_map(em);
+	}
+	return len;
+}
 
-पूर्णांक btrfs_is_parity_mirror(काष्ठा btrfs_fs_info *fs_info, u64 logical, u64 len)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	पूर्णांक ret = 0;
+int btrfs_is_parity_mirror(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
+{
+	struct extent_map *em;
+	struct map_lookup *map;
+	int ret = 0;
 
 	em = btrfs_get_chunk_map(fs_info, logical, len);
 
-	अगर(!WARN_ON(IS_ERR(em))) अणु
+	if(!WARN_ON(IS_ERR(em))) {
 		map = em->map_lookup;
-		अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
+		if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK)
 			ret = 1;
-		मुक्त_extent_map(em);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		free_extent_map(em);
+	}
+	return ret;
+}
 
-अटल पूर्णांक find_live_mirror(काष्ठा btrfs_fs_info *fs_info,
-			    काष्ठा map_lookup *map, पूर्णांक first,
-			    पूर्णांक dev_replace_is_ongoing)
-अणु
-	पूर्णांक i;
-	पूर्णांक num_stripes;
-	पूर्णांक preferred_mirror;
-	पूर्णांक tolerance;
-	काष्ठा btrfs_device *srcdev;
+static int find_live_mirror(struct btrfs_fs_info *fs_info,
+			    struct map_lookup *map, int first,
+			    int dev_replace_is_ongoing)
+{
+	int i;
+	int num_stripes;
+	int preferred_mirror;
+	int tolerance;
+	struct btrfs_device *srcdev;
 
 	ASSERT((map->type &
 		 (BTRFS_BLOCK_GROUP_RAID1_MASK | BTRFS_BLOCK_GROUP_RAID10)));
 
-	अगर (map->type & BTRFS_BLOCK_GROUP_RAID10)
+	if (map->type & BTRFS_BLOCK_GROUP_RAID10)
 		num_stripes = map->sub_stripes;
-	अन्यथा
+	else
 		num_stripes = map->num_stripes;
 
-	चयन (fs_info->fs_devices->पढ़ो_policy) अणु
-	शेष:
+	switch (fs_info->fs_devices->read_policy) {
+	default:
 		/* Shouldn't happen, just warn and use pid instead of failing */
 		btrfs_warn_rl(fs_info,
 			      "unknown read_policy type %u, reset to pid",
-			      fs_info->fs_devices->पढ़ो_policy);
-		fs_info->fs_devices->पढ़ो_policy = BTRFS_READ_POLICY_PID;
+			      fs_info->fs_devices->read_policy);
+		fs_info->fs_devices->read_policy = BTRFS_READ_POLICY_PID;
 		fallthrough;
-	हाल BTRFS_READ_POLICY_PID:
+	case BTRFS_READ_POLICY_PID:
 		preferred_mirror = first + (current->pid % num_stripes);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (dev_replace_is_ongoing &&
-	    fs_info->dev_replace.cont_पढ़ोing_from_srcdev_mode ==
+	if (dev_replace_is_ongoing &&
+	    fs_info->dev_replace.cont_reading_from_srcdev_mode ==
 	     BTRFS_DEV_REPLACE_ITEM_CONT_READING_FROM_SRCDEV_MODE_AVOID)
 		srcdev = fs_info->dev_replace.srcdev;
-	अन्यथा
-		srcdev = शून्य;
+	else
+		srcdev = NULL;
 
 	/*
-	 * try to aव्योम the drive that is the source drive क्रम a
-	 * dev-replace procedure, only choose it अगर no other non-missing
+	 * try to avoid the drive that is the source drive for a
+	 * dev-replace procedure, only choose it if no other non-missing
 	 * mirror is available
 	 */
-	क्रम (tolerance = 0; tolerance < 2; tolerance++) अणु
-		अगर (map->stripes[preferred_mirror].dev->bdev &&
+	for (tolerance = 0; tolerance < 2; tolerance++) {
+		if (map->stripes[preferred_mirror].dev->bdev &&
 		    (tolerance || map->stripes[preferred_mirror].dev != srcdev))
-			वापस preferred_mirror;
-		क्रम (i = first; i < first + num_stripes; i++) अणु
-			अगर (map->stripes[i].dev->bdev &&
+			return preferred_mirror;
+		for (i = first; i < first + num_stripes; i++) {
+			if (map->stripes[i].dev->bdev &&
 			    (tolerance || map->stripes[i].dev != srcdev))
-				वापस i;
-		पूर्ण
-	पूर्ण
+				return i;
+		}
+	}
 
-	/* we couldn't find one that doesn't fail.  Just वापस something
+	/* we couldn't find one that doesn't fail.  Just return something
 	 * and the io error handling code will clean up eventually
 	 */
-	वापस preferred_mirror;
-पूर्ण
+	return preferred_mirror;
+}
 
 /* Bubble-sort the stripe set to put the parity/syndrome stripes last */
-अटल व्योम sort_parity_stripes(काष्ठा btrfs_bio *bbio, पूर्णांक num_stripes)
-अणु
-	पूर्णांक i;
-	पूर्णांक again = 1;
+static void sort_parity_stripes(struct btrfs_bio *bbio, int num_stripes)
+{
+	int i;
+	int again = 1;
 
-	जबतक (again) अणु
+	while (again) {
 		again = 0;
-		क्रम (i = 0; i < num_stripes - 1; i++) अणु
-			/* Swap अगर parity is on a smaller index */
-			अगर (bbio->raid_map[i] > bbio->raid_map[i + 1]) अणु
+		for (i = 0; i < num_stripes - 1; i++) {
+			/* Swap if parity is on a smaller index */
+			if (bbio->raid_map[i] > bbio->raid_map[i + 1]) {
 				swap(bbio->stripes[i], bbio->stripes[i + 1]);
 				swap(bbio->raid_map[i], bbio->raid_map[i + 1]);
 				again = 1;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल काष्ठा btrfs_bio *alloc_btrfs_bio(पूर्णांक total_stripes, पूर्णांक real_stripes)
-अणु
-	काष्ठा btrfs_bio *bbio = kzalloc(
+static struct btrfs_bio *alloc_btrfs_bio(int total_stripes, int real_stripes)
+{
+	struct btrfs_bio *bbio = kzalloc(
 		 /* the size of the btrfs_bio */
-		माप(काष्ठा btrfs_bio) +
-		/* plus the variable array क्रम the stripes */
-		माप(काष्ठा btrfs_bio_stripe) * (total_stripes) +
-		/* plus the variable array क्रम the tgt dev */
-		माप(पूर्णांक) * (real_stripes) +
+		sizeof(struct btrfs_bio) +
+		/* plus the variable array for the stripes */
+		sizeof(struct btrfs_bio_stripe) * (total_stripes) +
+		/* plus the variable array for the tgt dev */
+		sizeof(int) * (real_stripes) +
 		/*
 		 * plus the raid_map, which includes both the tgt dev
 		 * and the stripes
 		 */
-		माप(u64) * (total_stripes),
+		sizeof(u64) * (total_stripes),
 		GFP_NOFS|__GFP_NOFAIL);
 
 	atomic_set(&bbio->error, 0);
 	refcount_set(&bbio->refs, 1);
 
-	bbio->tgtdev_map = (पूर्णांक *)(bbio->stripes + total_stripes);
+	bbio->tgtdev_map = (int *)(bbio->stripes + total_stripes);
 	bbio->raid_map = (u64 *)(bbio->tgtdev_map + real_stripes);
 
-	वापस bbio;
-पूर्ण
+	return bbio;
+}
 
-व्योम btrfs_get_bbio(काष्ठा btrfs_bio *bbio)
-अणु
-	WARN_ON(!refcount_पढ़ो(&bbio->refs));
+void btrfs_get_bbio(struct btrfs_bio *bbio)
+{
+	WARN_ON(!refcount_read(&bbio->refs));
 	refcount_inc(&bbio->refs);
-पूर्ण
+}
 
-व्योम btrfs_put_bbio(काष्ठा btrfs_bio *bbio)
-अणु
-	अगर (!bbio)
-		वापस;
-	अगर (refcount_dec_and_test(&bbio->refs))
-		kमुक्त(bbio);
-पूर्ण
+void btrfs_put_bbio(struct btrfs_bio *bbio)
+{
+	if (!bbio)
+		return;
+	if (refcount_dec_and_test(&bbio->refs))
+		kfree(bbio);
+}
 
 /* can REQ_OP_DISCARD be sent with other REQ like REQ_OP_WRITE? */
 /*
  * Please note that, discard won't be sent to target device of device
  * replace.
  */
-अटल पूर्णांक __btrfs_map_block_क्रम_discard(काष्ठा btrfs_fs_info *fs_info,
+static int __btrfs_map_block_for_discard(struct btrfs_fs_info *fs_info,
 					 u64 logical, u64 *length_ret,
-					 काष्ठा btrfs_bio **bbio_ret)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	काष्ठा btrfs_bio *bbio;
+					 struct btrfs_bio **bbio_ret)
+{
+	struct extent_map *em;
+	struct map_lookup *map;
+	struct btrfs_bio *bbio;
 	u64 length = *length_ret;
 	u64 offset;
 	u64 stripe_nr;
@@ -5787,24 +5786,24 @@ end:
 	u32 factor = 0;
 	u32 sub_stripes = 0;
 	u64 stripes_per_dev = 0;
-	u32 reमुख्यing_stripes = 0;
+	u32 remaining_stripes = 0;
 	u32 last_stripe = 0;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
-	/* discard always वापस a bbio */
+	/* discard always return a bbio */
 	ASSERT(bbio_ret);
 
 	em = btrfs_get_chunk_map(fs_info, logical, length);
-	अगर (IS_ERR(em))
-		वापस PTR_ERR(em);
+	if (IS_ERR(em))
+		return PTR_ERR(em);
 
 	map = em->map_lookup;
-	/* we करोn't discard raid56 yet */
-	अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
+	/* we don't discard raid56 yet */
+	if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
 		ret = -EOPNOTSUPP;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	offset = logical - em->start;
 	length = min_t(u64, em->start + em->len - logical, length);
@@ -5815,13 +5814,13 @@ end:
 	 * stripe_nr counts the total number of stripes we have to stride
 	 * to get to this block
 	 */
-	stripe_nr = भाग64_u64(offset, stripe_len);
+	stripe_nr = div64_u64(offset, stripe_len);
 
 	/* stripe_offset is the offset of this block in its stripe */
 	stripe_offset = offset - stripe_nr * stripe_len;
 
 	stripe_nr_end = round_up(offset + length, map->stripe_len);
-	stripe_nr_end = भाग64_u64(stripe_nr_end, map->stripe_len);
+	stripe_nr_end = div64_u64(stripe_nr_end, map->stripe_len);
 	stripe_cnt = stripe_nr_end - stripe_nr;
 	stripe_end_offset = stripe_nr_end * map->stripe_len -
 			    (offset + length);
@@ -5832,175 +5831,175 @@ end:
 	 */
 	num_stripes = 1;
 	stripe_index = 0;
-	अगर (map->type & (BTRFS_BLOCK_GROUP_RAID0 |
-			 BTRFS_BLOCK_GROUP_RAID10)) अणु
-		अगर (map->type & BTRFS_BLOCK_GROUP_RAID0)
+	if (map->type & (BTRFS_BLOCK_GROUP_RAID0 |
+			 BTRFS_BLOCK_GROUP_RAID10)) {
+		if (map->type & BTRFS_BLOCK_GROUP_RAID0)
 			sub_stripes = 1;
-		अन्यथा
+		else
 			sub_stripes = map->sub_stripes;
 
 		factor = map->num_stripes / sub_stripes;
 		num_stripes = min_t(u64, map->num_stripes,
 				    sub_stripes * stripe_cnt);
-		stripe_nr = भाग_u64_rem(stripe_nr, factor, &stripe_index);
+		stripe_nr = div_u64_rem(stripe_nr, factor, &stripe_index);
 		stripe_index *= sub_stripes;
-		stripes_per_dev = भाग_u64_rem(stripe_cnt, factor,
-					      &reमुख्यing_stripes);
-		भाग_u64_rem(stripe_nr_end - 1, factor, &last_stripe);
+		stripes_per_dev = div_u64_rem(stripe_cnt, factor,
+					      &remaining_stripes);
+		div_u64_rem(stripe_nr_end - 1, factor, &last_stripe);
 		last_stripe *= sub_stripes;
-	पूर्ण अन्यथा अगर (map->type & (BTRFS_BLOCK_GROUP_RAID1_MASK |
-				BTRFS_BLOCK_GROUP_DUP)) अणु
+	} else if (map->type & (BTRFS_BLOCK_GROUP_RAID1_MASK |
+				BTRFS_BLOCK_GROUP_DUP)) {
 		num_stripes = map->num_stripes;
-	पूर्ण अन्यथा अणु
-		stripe_nr = भाग_u64_rem(stripe_nr, map->num_stripes,
+	} else {
+		stripe_nr = div_u64_rem(stripe_nr, map->num_stripes,
 					&stripe_index);
-	पूर्ण
+	}
 
 	bbio = alloc_btrfs_bio(num_stripes, 0);
-	अगर (!bbio) अणु
+	if (!bbio) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < num_stripes; i++) अणु
+	for (i = 0; i < num_stripes; i++) {
 		bbio->stripes[i].physical =
 			map->stripes[stripe_index].physical +
 			stripe_offset + stripe_nr * map->stripe_len;
 		bbio->stripes[i].dev = map->stripes[stripe_index].dev;
 
-		अगर (map->type & (BTRFS_BLOCK_GROUP_RAID0 |
-				 BTRFS_BLOCK_GROUP_RAID10)) अणु
+		if (map->type & (BTRFS_BLOCK_GROUP_RAID0 |
+				 BTRFS_BLOCK_GROUP_RAID10)) {
 			bbio->stripes[i].length = stripes_per_dev *
 				map->stripe_len;
 
-			अगर (i / sub_stripes < reमुख्यing_stripes)
+			if (i / sub_stripes < remaining_stripes)
 				bbio->stripes[i].length +=
 					map->stripe_len;
 
 			/*
-			 * Special क्रम the first stripe and
+			 * Special for the first stripe and
 			 * the last stripe:
 			 *
 			 * |-------|...|-------|
 			 *     |----------|
 			 *    off     end_off
 			 */
-			अगर (i < sub_stripes)
+			if (i < sub_stripes)
 				bbio->stripes[i].length -=
 					stripe_offset;
 
-			अगर (stripe_index >= last_stripe &&
+			if (stripe_index >= last_stripe &&
 			    stripe_index <= (last_stripe +
 					     sub_stripes - 1))
 				bbio->stripes[i].length -=
 					stripe_end_offset;
 
-			अगर (i == sub_stripes - 1)
+			if (i == sub_stripes - 1)
 				stripe_offset = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			bbio->stripes[i].length = length;
-		पूर्ण
+		}
 
 		stripe_index++;
-		अगर (stripe_index == map->num_stripes) अणु
+		if (stripe_index == map->num_stripes) {
 			stripe_index = 0;
 			stripe_nr++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*bbio_ret = bbio;
 	bbio->map_type = map->type;
 	bbio->num_stripes = num_stripes;
 out:
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+	free_extent_map(em);
+	return ret;
+}
 
 /*
- * In dev-replace हाल, क्रम repair हाल (that's the only हाल where the mirror
+ * In dev-replace case, for repair case (that's the only case where the mirror
  * is selected explicitly when calling btrfs_map_block), blocks left of the
- * left cursor can also be पढ़ो from the target drive.
+ * left cursor can also be read from the target drive.
  *
  * For REQ_GET_READ_MIRRORS, the target drive is added as the last one to the
  * array of stripes.
  * For READ, it also needs to be supported using the same mirror number.
  *
- * If the requested block is not left of the left cursor, EIO is वापसed. This
- * can happen because btrfs_num_copies() वापसs one more in the dev-replace
- * हाल.
+ * If the requested block is not left of the left cursor, EIO is returned. This
+ * can happen because btrfs_num_copies() returns one more in the dev-replace
+ * case.
  */
-अटल पूर्णांक get_extra_mirror_from_replace(काष्ठा btrfs_fs_info *fs_info,
+static int get_extra_mirror_from_replace(struct btrfs_fs_info *fs_info,
 					 u64 logical, u64 length,
-					 u64 srcdev_devid, पूर्णांक *mirror_num,
+					 u64 srcdev_devid, int *mirror_num,
 					 u64 *physical)
-अणु
-	काष्ठा btrfs_bio *bbio = शून्य;
-	पूर्णांक num_stripes;
-	पूर्णांक index_srcdev = 0;
-	पूर्णांक found = 0;
+{
+	struct btrfs_bio *bbio = NULL;
+	int num_stripes;
+	int index_srcdev = 0;
+	int found = 0;
 	u64 physical_of_found = 0;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+	int i;
+	int ret = 0;
 
 	ret = __btrfs_map_block(fs_info, BTRFS_MAP_GET_READ_MIRRORS,
 				logical, &length, &bbio, 0, 0);
-	अगर (ret) अणु
-		ASSERT(bbio == शून्य);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		ASSERT(bbio == NULL);
+		return ret;
+	}
 
 	num_stripes = bbio->num_stripes;
-	अगर (*mirror_num > num_stripes) अणु
+	if (*mirror_num > num_stripes) {
 		/*
-		 * BTRFS_MAP_GET_READ_MIRRORS करोes not contain this mirror,
+		 * BTRFS_MAP_GET_READ_MIRRORS does not contain this mirror,
 		 * that means that the requested area is not left of the left
 		 * cursor
 		 */
 		btrfs_put_bbio(bbio);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	/*
 	 * process the rest of the function using the mirror_num of the source
-	 * drive. Thereक्रमe look it up first.  At the end, patch the device
-	 * poपूर्णांकer to the one of the target drive.
+	 * drive. Therefore look it up first.  At the end, patch the device
+	 * pointer to the one of the target drive.
 	 */
-	क्रम (i = 0; i < num_stripes; i++) अणु
-		अगर (bbio->stripes[i].dev->devid != srcdev_devid)
-			जारी;
+	for (i = 0; i < num_stripes; i++) {
+		if (bbio->stripes[i].dev->devid != srcdev_devid)
+			continue;
 
 		/*
-		 * In हाल of DUP, in order to keep it simple, only add the
+		 * In case of DUP, in order to keep it simple, only add the
 		 * mirror with the lowest physical address
 		 */
-		अगर (found &&
+		if (found &&
 		    physical_of_found <= bbio->stripes[i].physical)
-			जारी;
+			continue;
 
 		index_srcdev = i;
 		found = 1;
 		physical_of_found = bbio->stripes[i].physical;
-	पूर्ण
+	}
 
 	btrfs_put_bbio(bbio);
 
 	ASSERT(found);
-	अगर (!found)
-		वापस -EIO;
+	if (!found)
+		return -EIO;
 
 	*mirror_num = index_srcdev + 1;
 	*physical = physical_of_found;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool is_block_group_to_copy(काष्ठा btrfs_fs_info *fs_info, u64 logical)
-अणु
-	काष्ठा btrfs_block_group *cache;
+static bool is_block_group_to_copy(struct btrfs_fs_info *fs_info, u64 logical)
+{
+	struct btrfs_block_group *cache;
 	bool ret;
 
-	/* Non zoned fileप्रणाली करोes not use "to_copy" flag */
-	अगर (!btrfs_is_zoned(fs_info))
-		वापस false;
+	/* Non zoned filesystem does not use "to_copy" flag */
+	if (!btrfs_is_zoned(fs_info))
+		return false;
 
 	cache = btrfs_lookup_block_group(fs_info, logical);
 
@@ -6009,50 +6008,50 @@ out:
 	spin_unlock(&cache->lock);
 
 	btrfs_put_block_group(cache);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम handle_ops_on_dev_replace(क्रमागत btrfs_map_op op,
-				      काष्ठा btrfs_bio **bbio_ret,
-				      काष्ठा btrfs_dev_replace *dev_replace,
+static void handle_ops_on_dev_replace(enum btrfs_map_op op,
+				      struct btrfs_bio **bbio_ret,
+				      struct btrfs_dev_replace *dev_replace,
 				      u64 logical,
-				      पूर्णांक *num_stripes_ret, पूर्णांक *max_errors_ret)
-अणु
-	काष्ठा btrfs_bio *bbio = *bbio_ret;
+				      int *num_stripes_ret, int *max_errors_ret)
+{
+	struct btrfs_bio *bbio = *bbio_ret;
 	u64 srcdev_devid = dev_replace->srcdev->devid;
-	पूर्णांक tgtdev_indexes = 0;
-	पूर्णांक num_stripes = *num_stripes_ret;
-	पूर्णांक max_errors = *max_errors_ret;
-	पूर्णांक i;
+	int tgtdev_indexes = 0;
+	int num_stripes = *num_stripes_ret;
+	int max_errors = *max_errors_ret;
+	int i;
 
-	अगर (op == BTRFS_MAP_WRITE) अणु
-		पूर्णांक index_where_to_add;
+	if (op == BTRFS_MAP_WRITE) {
+		int index_where_to_add;
 
 		/*
 		 * A block group which have "to_copy" set will eventually
-		 * copied by dev-replace process. We can aव्योम cloning IO here.
+		 * copied by dev-replace process. We can avoid cloning IO here.
 		 */
-		अगर (is_block_group_to_copy(dev_replace->srcdev->fs_info, logical))
-			वापस;
+		if (is_block_group_to_copy(dev_replace->srcdev->fs_info, logical))
+			return;
 
 		/*
-		 * duplicate the ग_लिखो operations जबतक the dev replace
+		 * duplicate the write operations while the dev replace
 		 * procedure is running. Since the copying of the old disk to
-		 * the new disk takes place at run समय जबतक the fileप्रणाली is
-		 * mounted writable, the regular ग_लिखो operations to the old
+		 * the new disk takes place at run time while the filesystem is
+		 * mounted writable, the regular write operations to the old
 		 * disk have to be duplicated to go to the new disk as well.
 		 *
 		 * Note that device->missing is handled by the caller, and that
-		 * the ग_लिखो to the old disk is alपढ़ोy set up in the stripes
+		 * the write to the old disk is already set up in the stripes
 		 * array.
 		 */
 		index_where_to_add = num_stripes;
-		क्रम (i = 0; i < num_stripes; i++) अणु
-			अगर (bbio->stripes[i].dev->devid == srcdev_devid) अणु
-				/* ग_लिखो to new disk, too */
-				काष्ठा btrfs_bio_stripe *new =
+		for (i = 0; i < num_stripes; i++) {
+			if (bbio->stripes[i].dev->devid == srcdev_devid) {
+				/* write to new disk, too */
+				struct btrfs_bio_stripe *new =
 					bbio->stripes + index_where_to_add;
-				काष्ठा btrfs_bio_stripe *old =
+				struct btrfs_bio_stripe *old =
 					bbio->stripes + i;
 
 				new->physical = old->physical;
@@ -6062,39 +6061,39 @@ out:
 				index_where_to_add++;
 				max_errors++;
 				tgtdev_indexes++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		num_stripes = index_where_to_add;
-	पूर्ण अन्यथा अगर (op == BTRFS_MAP_GET_READ_MIRRORS) अणु
-		पूर्णांक index_srcdev = 0;
-		पूर्णांक found = 0;
+	} else if (op == BTRFS_MAP_GET_READ_MIRRORS) {
+		int index_srcdev = 0;
+		int found = 0;
 		u64 physical_of_found = 0;
 
 		/*
 		 * During the dev-replace procedure, the target drive can also
-		 * be used to पढ़ो data in हाल it is needed to repair a corrupt
-		 * block अन्यथाwhere. This is possible अगर the requested area is
+		 * be used to read data in case it is needed to repair a corrupt
+		 * block elsewhere. This is possible if the requested area is
 		 * left of the left cursor. In this area, the target drive is a
 		 * full copy of the source drive.
 		 */
-		क्रम (i = 0; i < num_stripes; i++) अणु
-			अगर (bbio->stripes[i].dev->devid == srcdev_devid) अणु
+		for (i = 0; i < num_stripes; i++) {
+			if (bbio->stripes[i].dev->devid == srcdev_devid) {
 				/*
-				 * In हाल of DUP, in order to keep it simple,
+				 * In case of DUP, in order to keep it simple,
 				 * only add the mirror with the lowest physical
 				 * address
 				 */
-				अगर (found &&
+				if (found &&
 				    physical_of_found <=
 				     bbio->stripes[i].physical)
-					जारी;
+					continue;
 				index_srcdev = i;
 				found = 1;
 				physical_of_found = bbio->stripes[i].physical;
-			पूर्ण
-		पूर्ण
-		अगर (found) अणु
-			काष्ठा btrfs_bio_stripe *tgtdev_stripe =
+			}
+		}
+		if (found) {
+			struct btrfs_bio_stripe *tgtdev_stripe =
 				bbio->stripes + num_stripes;
 
 			tgtdev_stripe->physical = physical_of_found;
@@ -6105,46 +6104,46 @@ out:
 
 			tgtdev_indexes++;
 			num_stripes++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*num_stripes_ret = num_stripes;
 	*max_errors_ret = max_errors;
 	bbio->num_tgtdevs = tgtdev_indexes;
 	*bbio_ret = bbio;
-पूर्ण
+}
 
-अटल bool need_full_stripe(क्रमागत btrfs_map_op op)
-अणु
-	वापस (op == BTRFS_MAP_WRITE || op == BTRFS_MAP_GET_READ_MIRRORS);
-पूर्ण
+static bool need_full_stripe(enum btrfs_map_op op)
+{
+	return (op == BTRFS_MAP_WRITE || op == BTRFS_MAP_GET_READ_MIRRORS);
+}
 
 /*
  * Calculate the geometry of a particular (address, len) tuple. This
- * inक्रमmation is used to calculate how big a particular bio can get beक्रमe it
+ * information is used to calculate how big a particular bio can get before it
  * straddles a stripe.
  *
- * @fs_info: the fileप्रणाली
+ * @fs_info: the filesystem
  * @em:      mapping containing the logical extent
- * @op:      type of operation - ग_लिखो or पढ़ो
+ * @op:      type of operation - write or read
  * @logical: address that we want to figure out the geometry of
- * @len:     the length of IO we are going to perक्रमm, starting at @logical
- * @io_geom: poपूर्णांकer used to वापस values
+ * @len:     the length of IO we are going to perform, starting at @logical
+ * @io_geom: pointer used to return values
  *
- * Returns < 0 in हाल a chunk क्रम the given logical address cannot be found,
+ * Returns < 0 in case a chunk for the given logical address cannot be found,
  * usually shouldn't happen unless @logical is corrupted, 0 otherwise.
  */
-पूर्णांक btrfs_get_io_geometry(काष्ठा btrfs_fs_info *fs_info, काष्ठा extent_map *em,
-			  क्रमागत btrfs_map_op op, u64 logical, u64 len,
-			  काष्ठा btrfs_io_geometry *io_geom)
-अणु
-	काष्ठा map_lookup *map;
+int btrfs_get_io_geometry(struct btrfs_fs_info *fs_info, struct extent_map *em,
+			  enum btrfs_map_op op, u64 logical, u64 len,
+			  struct btrfs_io_geometry *io_geom)
+{
+	struct map_lookup *map;
 	u64 offset;
 	u64 stripe_offset;
 	u64 stripe_nr;
 	u64 stripe_len;
 	u64 raid56_full_stripe_start = (u64)-1;
-	पूर्णांक data_stripes;
+	int data_stripes;
 
 	ASSERT(op != BTRFS_MAP_DISCARD);
 
@@ -6154,52 +6153,52 @@ out:
 	/* Len of a stripe in a chunk */
 	stripe_len = map->stripe_len;
 	/* Stripe wher this block falls in */
-	stripe_nr = भाग64_u64(offset, stripe_len);
+	stripe_nr = div64_u64(offset, stripe_len);
 	/* Offset of stripe in the chunk */
 	stripe_offset = stripe_nr * stripe_len;
-	अगर (offset < stripe_offset) अणु
+	if (offset < stripe_offset) {
 		btrfs_crit(fs_info,
 "stripe math has gone wrong, stripe_offset=%llu offset=%llu start=%llu logical=%llu stripe_len=%llu",
 			stripe_offset, offset, em->start, logical, stripe_len);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* stripe_offset is the offset of this block in its stripe */
 	stripe_offset = offset - stripe_offset;
 	data_stripes = nr_data_stripes(map);
 
-	अगर (map->type & BTRFS_BLOCK_GROUP_PROखाता_MASK) अणु
+	if (map->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
 		u64 max_len = stripe_len - stripe_offset;
 
 		/*
-		 * In हाल of raid56, we need to know the stripe aligned start
+		 * In case of raid56, we need to know the stripe aligned start
 		 */
-		अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
-			अचिन्हित दीर्घ full_stripe_len = stripe_len * data_stripes;
+		if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+			unsigned long full_stripe_len = stripe_len * data_stripes;
 			raid56_full_stripe_start = offset;
 
 			/*
-			 * Allow a ग_लिखो of a full stripe, but make sure we
-			 * करोn't allow straddling of stripes
+			 * Allow a write of a full stripe, but make sure we
+			 * don't allow straddling of stripes
 			 */
-			raid56_full_stripe_start = भाग64_u64(raid56_full_stripe_start,
+			raid56_full_stripe_start = div64_u64(raid56_full_stripe_start,
 					full_stripe_len);
 			raid56_full_stripe_start *= full_stripe_len;
 
 			/*
-			 * For ग_लिखोs to RAID[56], allow a full stripeset across
-			 * all disks. For other RAID types and क्रम RAID[56]
-			 * पढ़ोs, just allow a single stripe (on a single disk).
+			 * For writes to RAID[56], allow a full stripeset across
+			 * all disks. For other RAID types and for RAID[56]
+			 * reads, just allow a single stripe (on a single disk).
 			 */
-			अगर (op == BTRFS_MAP_WRITE) अणु
+			if (op == BTRFS_MAP_WRITE) {
 				max_len = stripe_len * data_stripes -
 					  (offset - raid56_full_stripe_start);
-			पूर्ण
-		पूर्ण
+			}
+		}
 		len = min_t(u64, em->len - offset, max_len);
-	पूर्ण अन्यथा अणु
+	} else {
 		len = em->len - offset;
-	पूर्ण
+	}
 
 	io_geom->len = len;
 	io_geom->offset = offset;
@@ -6208,35 +6207,35 @@ out:
 	io_geom->stripe_offset = stripe_offset;
 	io_geom->raid56_stripe_offset = raid56_full_stripe_start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __btrfs_map_block(काष्ठा btrfs_fs_info *fs_info,
-			     क्रमागत btrfs_map_op op,
+static int __btrfs_map_block(struct btrfs_fs_info *fs_info,
+			     enum btrfs_map_op op,
 			     u64 logical, u64 *length,
-			     काष्ठा btrfs_bio **bbio_ret,
-			     पूर्णांक mirror_num, पूर्णांक need_raid_map)
-अणु
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
+			     struct btrfs_bio **bbio_ret,
+			     int mirror_num, int need_raid_map)
+{
+	struct extent_map *em;
+	struct map_lookup *map;
 	u64 stripe_offset;
 	u64 stripe_nr;
 	u64 stripe_len;
 	u32 stripe_index;
-	पूर्णांक data_stripes;
-	पूर्णांक i;
-	पूर्णांक ret = 0;
-	पूर्णांक num_stripes;
-	पूर्णांक max_errors = 0;
-	पूर्णांक tgtdev_indexes = 0;
-	काष्ठा btrfs_bio *bbio = शून्य;
-	काष्ठा btrfs_dev_replace *dev_replace = &fs_info->dev_replace;
-	पूर्णांक dev_replace_is_ongoing = 0;
-	पूर्णांक num_alloc_stripes;
-	पूर्णांक patch_the_first_stripe_क्रम_dev_replace = 0;
+	int data_stripes;
+	int i;
+	int ret = 0;
+	int num_stripes;
+	int max_errors = 0;
+	int tgtdev_indexes = 0;
+	struct btrfs_bio *bbio = NULL;
+	struct btrfs_dev_replace *dev_replace = &fs_info->dev_replace;
+	int dev_replace_is_ongoing = 0;
+	int num_alloc_stripes;
+	int patch_the_first_stripe_for_dev_replace = 0;
 	u64 physical_to_patch_in_first_stripe = 0;
 	u64 raid56_full_stripe_start = (u64)-1;
-	काष्ठा btrfs_io_geometry geom;
+	struct btrfs_io_geometry geom;
 
 	ASSERT(bbio_ret);
 	ASSERT(op != BTRFS_MAP_DISCARD);
@@ -6245,8 +6244,8 @@ out:
 	ASSERT(!IS_ERR(em));
 
 	ret = btrfs_get_io_geometry(fs_info, em, op, logical, *length, &geom);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	map = em->map_lookup;
 
@@ -6257,175 +6256,175 @@ out:
 	raid56_full_stripe_start = geom.raid56_stripe_offset;
 	data_stripes = nr_data_stripes(map);
 
-	करोwn_पढ़ो(&dev_replace->rwsem);
+	down_read(&dev_replace->rwsem);
 	dev_replace_is_ongoing = btrfs_dev_replace_is_ongoing(dev_replace);
 	/*
-	 * Hold the semaphore क्रम पढ़ो during the whole operation, ग_लिखो is
-	 * requested at commit समय but must रुको.
+	 * Hold the semaphore for read during the whole operation, write is
+	 * requested at commit time but must wait.
 	 */
-	अगर (!dev_replace_is_ongoing)
-		up_पढ़ो(&dev_replace->rwsem);
+	if (!dev_replace_is_ongoing)
+		up_read(&dev_replace->rwsem);
 
-	अगर (dev_replace_is_ongoing && mirror_num == map->num_stripes + 1 &&
-	    !need_full_stripe(op) && dev_replace->tgtdev != शून्य) अणु
+	if (dev_replace_is_ongoing && mirror_num == map->num_stripes + 1 &&
+	    !need_full_stripe(op) && dev_replace->tgtdev != NULL) {
 		ret = get_extra_mirror_from_replace(fs_info, logical, *length,
 						    dev_replace->srcdev->devid,
 						    &mirror_num,
 					    &physical_to_patch_in_first_stripe);
-		अगर (ret)
-			जाओ out;
-		अन्यथा
-			patch_the_first_stripe_क्रम_dev_replace = 1;
-	पूर्ण अन्यथा अगर (mirror_num > map->num_stripes) अणु
+		if (ret)
+			goto out;
+		else
+			patch_the_first_stripe_for_dev_replace = 1;
+	} else if (mirror_num > map->num_stripes) {
 		mirror_num = 0;
-	पूर्ण
+	}
 
 	num_stripes = 1;
 	stripe_index = 0;
-	अगर (map->type & BTRFS_BLOCK_GROUP_RAID0) अणु
-		stripe_nr = भाग_u64_rem(stripe_nr, map->num_stripes,
+	if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
+		stripe_nr = div_u64_rem(stripe_nr, map->num_stripes,
 				&stripe_index);
-		अगर (!need_full_stripe(op))
+		if (!need_full_stripe(op))
 			mirror_num = 1;
-	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID1_MASK) अणु
-		अगर (need_full_stripe(op))
+	} else if (map->type & BTRFS_BLOCK_GROUP_RAID1_MASK) {
+		if (need_full_stripe(op))
 			num_stripes = map->num_stripes;
-		अन्यथा अगर (mirror_num)
+		else if (mirror_num)
 			stripe_index = mirror_num - 1;
-		अन्यथा अणु
+		else {
 			stripe_index = find_live_mirror(fs_info, map, 0,
 					    dev_replace_is_ongoing);
 			mirror_num = stripe_index + 1;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_DUP) अणु
-		अगर (need_full_stripe(op)) अणु
+	} else if (map->type & BTRFS_BLOCK_GROUP_DUP) {
+		if (need_full_stripe(op)) {
 			num_stripes = map->num_stripes;
-		पूर्ण अन्यथा अगर (mirror_num) अणु
+		} else if (mirror_num) {
 			stripe_index = mirror_num - 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			mirror_num = 1;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID10) अणु
+	} else if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
 		u32 factor = map->num_stripes / map->sub_stripes;
 
-		stripe_nr = भाग_u64_rem(stripe_nr, factor, &stripe_index);
+		stripe_nr = div_u64_rem(stripe_nr, factor, &stripe_index);
 		stripe_index *= map->sub_stripes;
 
-		अगर (need_full_stripe(op))
+		if (need_full_stripe(op))
 			num_stripes = map->sub_stripes;
-		अन्यथा अगर (mirror_num)
+		else if (mirror_num)
 			stripe_index += mirror_num - 1;
-		अन्यथा अणु
-			पूर्णांक old_stripe_index = stripe_index;
+		else {
+			int old_stripe_index = stripe_index;
 			stripe_index = find_live_mirror(fs_info, map,
 					      stripe_index,
 					      dev_replace_is_ongoing);
 			mirror_num = stripe_index - old_stripe_index + 1;
-		पूर्ण
+		}
 
-	पूर्ण अन्यथा अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) अणु
-		अगर (need_raid_map && (need_full_stripe(op) || mirror_num > 1)) अणु
+	} else if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+		if (need_raid_map && (need_full_stripe(op) || mirror_num > 1)) {
 			/* push stripe_nr back to the start of the full stripe */
-			stripe_nr = भाग64_u64(raid56_full_stripe_start,
+			stripe_nr = div64_u64(raid56_full_stripe_start,
 					stripe_len * data_stripes);
 
-			/* RAID[56] ग_लिखो or recovery. Return all stripes */
+			/* RAID[56] write or recovery. Return all stripes */
 			num_stripes = map->num_stripes;
 			max_errors = nr_parity_stripes(map);
 
 			*length = map->stripe_len;
 			stripe_index = 0;
 			stripe_offset = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * Mirror #0 or #1 means the original data block.
 			 * Mirror #2 is RAID5 parity block.
 			 * Mirror #3 is RAID6 Q block.
 			 */
-			stripe_nr = भाग_u64_rem(stripe_nr,
+			stripe_nr = div_u64_rem(stripe_nr,
 					data_stripes, &stripe_index);
-			अगर (mirror_num > 1)
+			if (mirror_num > 1)
 				stripe_index = data_stripes + mirror_num - 2;
 
 			/* We distribute the parity blocks across stripes */
-			भाग_u64_rem(stripe_nr + stripe_index, map->num_stripes,
+			div_u64_rem(stripe_nr + stripe_index, map->num_stripes,
 					&stripe_index);
-			अगर (!need_full_stripe(op) && mirror_num <= 1)
+			if (!need_full_stripe(op) && mirror_num <= 1)
 				mirror_num = 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/*
 		 * after this, stripe_nr is the number of stripes on this
 		 * device we have to walk to find the data, and stripe_index is
 		 * the number of our device in the stripe array
 		 */
-		stripe_nr = भाग_u64_rem(stripe_nr, map->num_stripes,
+		stripe_nr = div_u64_rem(stripe_nr, map->num_stripes,
 				&stripe_index);
 		mirror_num = stripe_index + 1;
-	पूर्ण
-	अगर (stripe_index >= map->num_stripes) अणु
+	}
+	if (stripe_index >= map->num_stripes) {
 		btrfs_crit(fs_info,
 			   "stripe index math went horribly wrong, got stripe_index=%u, num_stripes=%u",
 			   stripe_index, map->num_stripes);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	num_alloc_stripes = num_stripes;
-	अगर (dev_replace_is_ongoing && dev_replace->tgtdev != शून्य) अणु
-		अगर (op == BTRFS_MAP_WRITE)
+	if (dev_replace_is_ongoing && dev_replace->tgtdev != NULL) {
+		if (op == BTRFS_MAP_WRITE)
 			num_alloc_stripes <<= 1;
-		अगर (op == BTRFS_MAP_GET_READ_MIRRORS)
+		if (op == BTRFS_MAP_GET_READ_MIRRORS)
 			num_alloc_stripes++;
 		tgtdev_indexes = num_stripes;
-	पूर्ण
+	}
 
 	bbio = alloc_btrfs_bio(num_alloc_stripes, tgtdev_indexes);
-	अगर (!bbio) अणु
+	if (!bbio) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < num_stripes; i++) अणु
+	for (i = 0; i < num_stripes; i++) {
 		bbio->stripes[i].physical = map->stripes[stripe_index].physical +
 			stripe_offset + stripe_nr * map->stripe_len;
 		bbio->stripes[i].dev = map->stripes[stripe_index].dev;
 		stripe_index++;
-	पूर्ण
+	}
 
 	/* build raid_map */
-	अगर (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK && need_raid_map &&
-	    (need_full_stripe(op) || mirror_num > 1)) अणु
-		u64 पंचांगp;
-		अचिन्हित rot;
+	if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK && need_raid_map &&
+	    (need_full_stripe(op) || mirror_num > 1)) {
+		u64 tmp;
+		unsigned rot;
 
 		/* Work out the disk rotation on this stripe-set */
-		भाग_u64_rem(stripe_nr, num_stripes, &rot);
+		div_u64_rem(stripe_nr, num_stripes, &rot);
 
 		/* Fill in the logical address of each stripe */
-		पंचांगp = stripe_nr * data_stripes;
-		क्रम (i = 0; i < data_stripes; i++)
+		tmp = stripe_nr * data_stripes;
+		for (i = 0; i < data_stripes; i++)
 			bbio->raid_map[(i+rot) % num_stripes] =
-				em->start + (पंचांगp + i) * map->stripe_len;
+				em->start + (tmp + i) * map->stripe_len;
 
 		bbio->raid_map[(i+rot) % map->num_stripes] = RAID5_P_STRIPE;
-		अगर (map->type & BTRFS_BLOCK_GROUP_RAID6)
+		if (map->type & BTRFS_BLOCK_GROUP_RAID6)
 			bbio->raid_map[(i+rot+1) % num_stripes] =
 				RAID6_Q_STRIPE;
 
 		sort_parity_stripes(bbio, num_stripes);
-	पूर्ण
+	}
 
-	अगर (need_full_stripe(op))
+	if (need_full_stripe(op))
 		max_errors = btrfs_chunk_max_errors(map);
 
-	अगर (dev_replace_is_ongoing && dev_replace->tgtdev != शून्य &&
-	    need_full_stripe(op)) अणु
+	if (dev_replace_is_ongoing && dev_replace->tgtdev != NULL &&
+	    need_full_stripe(op)) {
 		handle_ops_on_dev_replace(op, &bbio, dev_replace, logical,
 					  &num_stripes, &max_errors);
-	पूर्ण
+	}
 
 	*bbio_ret = bbio;
 	bbio->map_type = map->type;
@@ -6434,174 +6433,174 @@ out:
 	bbio->mirror_num = mirror_num;
 
 	/*
-	 * this is the हाल that REQ_READ && dev_replace_is_ongoing &&
+	 * this is the case that REQ_READ && dev_replace_is_ongoing &&
 	 * mirror_num == num_stripes + 1 && dev_replace target drive is
 	 * available as a mirror
 	 */
-	अगर (patch_the_first_stripe_क्रम_dev_replace && num_stripes > 0) अणु
+	if (patch_the_first_stripe_for_dev_replace && num_stripes > 0) {
 		WARN_ON(num_stripes > 1);
 		bbio->stripes[0].dev = dev_replace->tgtdev;
 		bbio->stripes[0].physical = physical_to_patch_in_first_stripe;
 		bbio->mirror_num = map->num_stripes + 1;
-	पूर्ण
+	}
 out:
-	अगर (dev_replace_is_ongoing) अणु
-		lockdep_निश्चित_held(&dev_replace->rwsem);
-		/* Unlock and let रुकोing ग_लिखोrs proceed */
-		up_पढ़ो(&dev_replace->rwsem);
-	पूर्ण
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+	if (dev_replace_is_ongoing) {
+		lockdep_assert_held(&dev_replace->rwsem);
+		/* Unlock and let waiting writers proceed */
+		up_read(&dev_replace->rwsem);
+	}
+	free_extent_map(em);
+	return ret;
+}
 
-पूर्णांक btrfs_map_block(काष्ठा btrfs_fs_info *fs_info, क्रमागत btrfs_map_op op,
+int btrfs_map_block(struct btrfs_fs_info *fs_info, enum btrfs_map_op op,
 		      u64 logical, u64 *length,
-		      काष्ठा btrfs_bio **bbio_ret, पूर्णांक mirror_num)
-अणु
-	अगर (op == BTRFS_MAP_DISCARD)
-		वापस __btrfs_map_block_क्रम_discard(fs_info, logical,
+		      struct btrfs_bio **bbio_ret, int mirror_num)
+{
+	if (op == BTRFS_MAP_DISCARD)
+		return __btrfs_map_block_for_discard(fs_info, logical,
 						     length, bbio_ret);
 
-	वापस __btrfs_map_block(fs_info, op, logical, length, bbio_ret,
+	return __btrfs_map_block(fs_info, op, logical, length, bbio_ret,
 				 mirror_num, 0);
-पूर्ण
+}
 
 /* For Scrub/replace */
-पूर्णांक btrfs_map_sblock(काष्ठा btrfs_fs_info *fs_info, क्रमागत btrfs_map_op op,
+int btrfs_map_sblock(struct btrfs_fs_info *fs_info, enum btrfs_map_op op,
 		     u64 logical, u64 *length,
-		     काष्ठा btrfs_bio **bbio_ret)
-अणु
-	वापस __btrfs_map_block(fs_info, op, logical, length, bbio_ret, 0, 1);
-पूर्ण
+		     struct btrfs_bio **bbio_ret)
+{
+	return __btrfs_map_block(fs_info, op, logical, length, bbio_ret, 0, 1);
+}
 
-अटल अंतरभूत व्योम btrfs_end_bbio(काष्ठा btrfs_bio *bbio, काष्ठा bio *bio)
-अणु
-	bio->bi_निजी = bbio->निजी;
+static inline void btrfs_end_bbio(struct btrfs_bio *bbio, struct bio *bio)
+{
+	bio->bi_private = bbio->private;
 	bio->bi_end_io = bbio->end_io;
 	bio_endio(bio);
 
 	btrfs_put_bbio(bbio);
-पूर्ण
+}
 
-अटल व्योम btrfs_end_bio(काष्ठा bio *bio)
-अणु
-	काष्ठा btrfs_bio *bbio = bio->bi_निजी;
-	पूर्णांक is_orig_bio = 0;
+static void btrfs_end_bio(struct bio *bio)
+{
+	struct btrfs_bio *bbio = bio->bi_private;
+	int is_orig_bio = 0;
 
-	अगर (bio->bi_status) अणु
+	if (bio->bi_status) {
 		atomic_inc(&bbio->error);
-		अगर (bio->bi_status == BLK_STS_IOERR ||
-		    bio->bi_status == BLK_STS_TARGET) अणु
-			काष्ठा btrfs_device *dev = btrfs_io_bio(bio)->device;
+		if (bio->bi_status == BLK_STS_IOERR ||
+		    bio->bi_status == BLK_STS_TARGET) {
+			struct btrfs_device *dev = btrfs_io_bio(bio)->device;
 
 			ASSERT(dev->bdev);
-			अगर (btrfs_op(bio) == BTRFS_MAP_WRITE)
-				btrfs_dev_stat_inc_and_prपूर्णांक(dev,
+			if (btrfs_op(bio) == BTRFS_MAP_WRITE)
+				btrfs_dev_stat_inc_and_print(dev,
 						BTRFS_DEV_STAT_WRITE_ERRS);
-			अन्यथा अगर (!(bio->bi_opf & REQ_RAHEAD))
-				btrfs_dev_stat_inc_and_prपूर्णांक(dev,
+			else if (!(bio->bi_opf & REQ_RAHEAD))
+				btrfs_dev_stat_inc_and_print(dev,
 						BTRFS_DEV_STAT_READ_ERRS);
-			अगर (bio->bi_opf & REQ_PREFLUSH)
-				btrfs_dev_stat_inc_and_prपूर्णांक(dev,
+			if (bio->bi_opf & REQ_PREFLUSH)
+				btrfs_dev_stat_inc_and_print(dev,
 						BTRFS_DEV_STAT_FLUSH_ERRS);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (bio == bbio->orig_bio)
+	if (bio == bbio->orig_bio)
 		is_orig_bio = 1;
 
 	btrfs_bio_counter_dec(bbio->fs_info);
 
-	अगर (atomic_dec_and_test(&bbio->stripes_pending)) अणु
-		अगर (!is_orig_bio) अणु
+	if (atomic_dec_and_test(&bbio->stripes_pending)) {
+		if (!is_orig_bio) {
 			bio_put(bio);
 			bio = bbio->orig_bio;
-		पूर्ण
+		}
 
 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
-		/* only send an error to the higher layers अगर it is
+		/* only send an error to the higher layers if it is
 		 * beyond the tolerance of the btrfs bio
 		 */
-		अगर (atomic_पढ़ो(&bbio->error) > bbio->max_errors) अणु
+		if (atomic_read(&bbio->error) > bbio->max_errors) {
 			bio->bi_status = BLK_STS_IOERR;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * this bio is actually up to date, we didn't
 			 * go over the max number of errors
 			 */
 			bio->bi_status = BLK_STS_OK;
-		पूर्ण
+		}
 
 		btrfs_end_bbio(bbio, bio);
-	पूर्ण अन्यथा अगर (!is_orig_bio) अणु
+	} else if (!is_orig_bio) {
 		bio_put(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम submit_stripe_bio(काष्ठा btrfs_bio *bbio, काष्ठा bio *bio,
-			      u64 physical, काष्ठा btrfs_device *dev)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = bbio->fs_info;
+static void submit_stripe_bio(struct btrfs_bio *bbio, struct bio *bio,
+			      u64 physical, struct btrfs_device *dev)
+{
+	struct btrfs_fs_info *fs_info = bbio->fs_info;
 
-	bio->bi_निजी = bbio;
+	bio->bi_private = bbio;
 	btrfs_io_bio(bio)->device = dev;
 	bio->bi_end_io = btrfs_end_bio;
 	bio->bi_iter.bi_sector = physical >> 9;
 	/*
-	 * For zone append writing, bi_sector must poपूर्णांक the beginning of the
+	 * For zone append writing, bi_sector must point the beginning of the
 	 * zone
 	 */
-	अगर (bio_op(bio) == REQ_OP_ZONE_APPEND) अणु
-		अगर (btrfs_dev_is_sequential(dev, physical)) अणु
-			u64 zone_start = round_करोwn(physical, fs_info->zone_size);
+	if (bio_op(bio) == REQ_OP_ZONE_APPEND) {
+		if (btrfs_dev_is_sequential(dev, physical)) {
+			u64 zone_start = round_down(physical, fs_info->zone_size);
 
 			bio->bi_iter.bi_sector = zone_start >> SECTOR_SHIFT;
-		पूर्ण अन्यथा अणु
+		} else {
 			bio->bi_opf &= ~REQ_OP_ZONE_APPEND;
 			bio->bi_opf |= REQ_OP_WRITE;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	btrfs_debug_in_rcu(fs_info,
 	"btrfs_map_bio: rw %d 0x%x, sector=%llu, dev=%lu (%s id %llu), size=%u",
 		bio_op(bio), bio->bi_opf, bio->bi_iter.bi_sector,
-		(अचिन्हित दीर्घ)dev->bdev->bd_dev, rcu_str_deref(dev->name),
+		(unsigned long)dev->bdev->bd_dev, rcu_str_deref(dev->name),
 		dev->devid, bio->bi_iter.bi_size);
 	bio_set_dev(bio, dev->bdev);
 
 	btrfs_bio_counter_inc_noblocked(fs_info);
 
 	btrfsic_submit_bio(bio);
-पूर्ण
+}
 
-अटल व्योम bbio_error(काष्ठा btrfs_bio *bbio, काष्ठा bio *bio, u64 logical)
-अणु
+static void bbio_error(struct btrfs_bio *bbio, struct bio *bio, u64 logical)
+{
 	atomic_inc(&bbio->error);
-	अगर (atomic_dec_and_test(&bbio->stripes_pending)) अणु
+	if (atomic_dec_and_test(&bbio->stripes_pending)) {
 		/* Should be the original bio. */
 		WARN_ON(bio != bbio->orig_bio);
 
 		btrfs_io_bio(bio)->mirror_num = bbio->mirror_num;
 		bio->bi_iter.bi_sector = logical >> 9;
-		अगर (atomic_पढ़ो(&bbio->error) > bbio->max_errors)
+		if (atomic_read(&bbio->error) > bbio->max_errors)
 			bio->bi_status = BLK_STS_IOERR;
-		अन्यथा
+		else
 			bio->bi_status = BLK_STS_OK;
 		btrfs_end_bbio(bbio, bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष्ठा bio *bio,
-			   पूर्णांक mirror_num)
-अणु
-	काष्ठा btrfs_device *dev;
-	काष्ठा bio *first_bio = bio;
+blk_status_t btrfs_map_bio(struct btrfs_fs_info *fs_info, struct bio *bio,
+			   int mirror_num)
+{
+	struct btrfs_device *dev;
+	struct bio *first_bio = bio;
 	u64 logical = bio->bi_iter.bi_sector << 9;
 	u64 length = 0;
 	u64 map_length;
-	पूर्णांक ret;
-	पूर्णांक dev_nr;
-	पूर्णांक total_devs;
-	काष्ठा btrfs_bio *bbio = शून्य;
+	int ret;
+	int dev_nr;
+	int total_devs;
+	struct btrfs_bio *bbio = NULL;
 
 	length = bio->bi_iter.bi_size;
 	map_length = length;
@@ -6609,119 +6608,119 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 	btrfs_bio_counter_inc_blocked(fs_info);
 	ret = __btrfs_map_block(fs_info, btrfs_op(bio), logical,
 				&map_length, &bbio, mirror_num, 1);
-	अगर (ret) अणु
+	if (ret) {
 		btrfs_bio_counter_dec(fs_info);
-		वापस त्रुटि_सं_to_blk_status(ret);
-	पूर्ण
+		return errno_to_blk_status(ret);
+	}
 
 	total_devs = bbio->num_stripes;
 	bbio->orig_bio = first_bio;
-	bbio->निजी = first_bio->bi_निजी;
+	bbio->private = first_bio->bi_private;
 	bbio->end_io = first_bio->bi_end_io;
 	bbio->fs_info = fs_info;
 	atomic_set(&bbio->stripes_pending, bbio->num_stripes);
 
-	अगर ((bbio->map_type & BTRFS_BLOCK_GROUP_RAID56_MASK) &&
-	    ((btrfs_op(bio) == BTRFS_MAP_WRITE) || (mirror_num > 1))) अणु
-		/* In this हाल, map_length has been set to the length of
-		   a single stripe; not the whole ग_लिखो */
-		अगर (btrfs_op(bio) == BTRFS_MAP_WRITE) अणु
-			ret = raid56_parity_ग_लिखो(fs_info, bio, bbio,
+	if ((bbio->map_type & BTRFS_BLOCK_GROUP_RAID56_MASK) &&
+	    ((btrfs_op(bio) == BTRFS_MAP_WRITE) || (mirror_num > 1))) {
+		/* In this case, map_length has been set to the length of
+		   a single stripe; not the whole write */
+		if (btrfs_op(bio) == BTRFS_MAP_WRITE) {
+			ret = raid56_parity_write(fs_info, bio, bbio,
 						  map_length);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = raid56_parity_recover(fs_info, bio, bbio,
 						    map_length, mirror_num, 1);
-		पूर्ण
+		}
 
 		btrfs_bio_counter_dec(fs_info);
-		वापस त्रुटि_सं_to_blk_status(ret);
-	पूर्ण
+		return errno_to_blk_status(ret);
+	}
 
-	अगर (map_length < length) अणु
+	if (map_length < length) {
 		btrfs_crit(fs_info,
 			   "mapping failed logical %llu bio len %llu len %llu",
 			   logical, length, map_length);
 		BUG();
-	पूर्ण
+	}
 
-	क्रम (dev_nr = 0; dev_nr < total_devs; dev_nr++) अणु
+	for (dev_nr = 0; dev_nr < total_devs; dev_nr++) {
 		dev = bbio->stripes[dev_nr].dev;
-		अगर (!dev || !dev->bdev || test_bit(BTRFS_DEV_STATE_MISSING,
+		if (!dev || !dev->bdev || test_bit(BTRFS_DEV_STATE_MISSING,
 						   &dev->dev_state) ||
 		    (btrfs_op(first_bio) == BTRFS_MAP_WRITE &&
-		    !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state))) अणु
+		    !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state))) {
 			bbio_error(bbio, first_bio, logical);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (dev_nr < total_devs - 1)
+		if (dev_nr < total_devs - 1)
 			bio = btrfs_bio_clone(first_bio);
-		अन्यथा
+		else
 			bio = first_bio;
 
 		submit_stripe_bio(bbio, bio, bbio->stripes[dev_nr].physical, dev);
-	पूर्ण
+	}
 	btrfs_bio_counter_dec(fs_info);
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
 /*
- * Find a device specअगरied by @devid or @uuid in the list of @fs_devices, or
- * वापस शून्य.
+ * Find a device specified by @devid or @uuid in the list of @fs_devices, or
+ * return NULL.
  *
- * If devid and uuid are both specअगरied, the match must be exact, otherwise
+ * If devid and uuid are both specified, the match must be exact, otherwise
  * only devid is used.
  *
  * If @seed is true, traverse through the seed devices.
  */
-काष्ठा btrfs_device *btrfs_find_device(काष्ठा btrfs_fs_devices *fs_devices,
+struct btrfs_device *btrfs_find_device(struct btrfs_fs_devices *fs_devices,
 				       u64 devid, u8 *uuid, u8 *fsid)
-अणु
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_fs_devices *seed_devs;
+{
+	struct btrfs_device *device;
+	struct btrfs_fs_devices *seed_devs;
 
-	अगर (!fsid || !स_भेद(fs_devices->metadata_uuid, fsid, BTRFS_FSID_SIZE)) अणु
-		list_क्रम_each_entry(device, &fs_devices->devices, dev_list) अणु
-			अगर (device->devid == devid &&
-			    (!uuid || स_भेद(device->uuid, uuid,
+	if (!fsid || !memcmp(fs_devices->metadata_uuid, fsid, BTRFS_FSID_SIZE)) {
+		list_for_each_entry(device, &fs_devices->devices, dev_list) {
+			if (device->devid == devid &&
+			    (!uuid || memcmp(device->uuid, uuid,
 					     BTRFS_UUID_SIZE) == 0))
-				वापस device;
-		पूर्ण
-	पूर्ण
+				return device;
+		}
+	}
 
-	list_क्रम_each_entry(seed_devs, &fs_devices->seed_list, seed_list) अणु
-		अगर (!fsid ||
-		    !स_भेद(seed_devs->metadata_uuid, fsid, BTRFS_FSID_SIZE)) अणु
-			list_क्रम_each_entry(device, &seed_devs->devices,
-					    dev_list) अणु
-				अगर (device->devid == devid &&
-				    (!uuid || स_भेद(device->uuid, uuid,
+	list_for_each_entry(seed_devs, &fs_devices->seed_list, seed_list) {
+		if (!fsid ||
+		    !memcmp(seed_devs->metadata_uuid, fsid, BTRFS_FSID_SIZE)) {
+			list_for_each_entry(device, &seed_devs->devices,
+					    dev_list) {
+				if (device->devid == devid &&
+				    (!uuid || memcmp(device->uuid, uuid,
 						     BTRFS_UUID_SIZE) == 0))
-					वापस device;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+					return device;
+			}
+		}
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा btrfs_device *add_missing_dev(काष्ठा btrfs_fs_devices *fs_devices,
+static struct btrfs_device *add_missing_dev(struct btrfs_fs_devices *fs_devices,
 					    u64 devid, u8 *dev_uuid)
-अणु
-	काष्ठा btrfs_device *device;
-	अचिन्हित पूर्णांक nofs_flag;
+{
+	struct btrfs_device *device;
+	unsigned int nofs_flag;
 
 	/*
-	 * We call this under the chunk_mutex, so we want to use NOFS क्रम this
-	 * allocation, however we करोn't want to change btrfs_alloc_device() to
-	 * always करो NOFS because we use it in a lot of other GFP_KERNEL safe
+	 * We call this under the chunk_mutex, so we want to use NOFS for this
+	 * allocation, however we don't want to change btrfs_alloc_device() to
+	 * always do NOFS because we use it in a lot of other GFP_KERNEL safe
 	 * places.
 	 */
-	nofs_flag = meदो_स्मृति_nofs_save();
-	device = btrfs_alloc_device(शून्य, &devid, dev_uuid);
-	meदो_स्मृति_nofs_restore(nofs_flag);
-	अगर (IS_ERR(device))
-		वापस device;
+	nofs_flag = memalloc_nofs_save();
+	device = btrfs_alloc_device(NULL, &devid, dev_uuid);
+	memalloc_nofs_restore(nofs_flag);
+	if (IS_ERR(device))
+		return device;
 
 	list_add(&device->dev_list, &fs_devices->devices);
 	device->fs_devices = fs_devices;
@@ -6730,181 +6729,181 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 	set_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state);
 	fs_devices->missing_devices++;
 
-	वापस device;
-पूर्ण
+	return device;
+}
 
 /**
- * btrfs_alloc_device - allocate काष्ठा btrfs_device
- * @fs_info:	used only क्रम generating a new devid, can be शून्य अगर
- *		devid is provided (i.e. @devid != शून्य).
- * @devid:	a poपूर्णांकer to devid क्रम this device.  If शून्य a new devid
+ * btrfs_alloc_device - allocate struct btrfs_device
+ * @fs_info:	used only for generating a new devid, can be NULL if
+ *		devid is provided (i.e. @devid != NULL).
+ * @devid:	a pointer to devid for this device.  If NULL a new devid
  *		is generated.
- * @uuid:	a poपूर्णांकer to UUID क्रम this device.  If शून्य a new UUID
+ * @uuid:	a pointer to UUID for this device.  If NULL a new UUID
  *		is generated.
  *
- * Return: a poपूर्णांकer to a new &काष्ठा btrfs_device on success; ERR_PTR()
- * on error.  Returned काष्ठा is not linked onto any lists and must be
- * destroyed with btrfs_मुक्त_device.
+ * Return: a pointer to a new &struct btrfs_device on success; ERR_PTR()
+ * on error.  Returned struct is not linked onto any lists and must be
+ * destroyed with btrfs_free_device.
  */
-काष्ठा btrfs_device *btrfs_alloc_device(काष्ठा btrfs_fs_info *fs_info,
-					स्थिर u64 *devid,
-					स्थिर u8 *uuid)
-अणु
-	काष्ठा btrfs_device *dev;
-	u64 पंचांगp;
+struct btrfs_device *btrfs_alloc_device(struct btrfs_fs_info *fs_info,
+					const u64 *devid,
+					const u8 *uuid)
+{
+	struct btrfs_device *dev;
+	u64 tmp;
 
-	अगर (WARN_ON(!devid && !fs_info))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON(!devid && !fs_info))
+		return ERR_PTR(-EINVAL);
 
 	dev = __alloc_device(fs_info);
-	अगर (IS_ERR(dev))
-		वापस dev;
+	if (IS_ERR(dev))
+		return dev;
 
-	अगर (devid)
-		पंचांगp = *devid;
-	अन्यथा अणु
-		पूर्णांक ret;
+	if (devid)
+		tmp = *devid;
+	else {
+		int ret;
 
-		ret = find_next_devid(fs_info, &पंचांगp);
-		अगर (ret) अणु
-			btrfs_मुक्त_device(dev);
-			वापस ERR_PTR(ret);
-		पूर्ण
-	पूर्ण
-	dev->devid = पंचांगp;
+		ret = find_next_devid(fs_info, &tmp);
+		if (ret) {
+			btrfs_free_device(dev);
+			return ERR_PTR(ret);
+		}
+	}
+	dev->devid = tmp;
 
-	अगर (uuid)
-		स_नकल(dev->uuid, uuid, BTRFS_UUID_SIZE);
-	अन्यथा
-		generate_अक्रमom_uuid(dev->uuid);
+	if (uuid)
+		memcpy(dev->uuid, uuid, BTRFS_UUID_SIZE);
+	else
+		generate_random_uuid(dev->uuid);
 
-	वापस dev;
-पूर्ण
+	return dev;
+}
 
-अटल व्योम btrfs_report_missing_device(काष्ठा btrfs_fs_info *fs_info,
+static void btrfs_report_missing_device(struct btrfs_fs_info *fs_info,
 					u64 devid, u8 *uuid, bool error)
-अणु
-	अगर (error)
+{
+	if (error)
 		btrfs_err_rl(fs_info, "devid %llu uuid %pU is missing",
 			      devid, uuid);
-	अन्यथा
+	else
 		btrfs_warn_rl(fs_info, "devid %llu uuid %pU is missing",
 			      devid, uuid);
-पूर्ण
+}
 
-अटल u64 calc_stripe_length(u64 type, u64 chunk_len, पूर्णांक num_stripes)
-अणु
-	पूर्णांक index = btrfs_bg_flags_to_raid_index(type);
-	पूर्णांक ncopies = btrfs_raid_array[index].ncopies;
-	स्थिर पूर्णांक nparity = btrfs_raid_array[index].nparity;
-	पूर्णांक data_stripes;
+static u64 calc_stripe_length(u64 type, u64 chunk_len, int num_stripes)
+{
+	int index = btrfs_bg_flags_to_raid_index(type);
+	int ncopies = btrfs_raid_array[index].ncopies;
+	const int nparity = btrfs_raid_array[index].nparity;
+	int data_stripes;
 
-	अगर (nparity)
+	if (nparity)
 		data_stripes = num_stripes - nparity;
-	अन्यथा
+	else
 		data_stripes = num_stripes / ncopies;
 
-	वापस भाग_u64(chunk_len, data_stripes);
-पूर्ण
+	return div_u64(chunk_len, data_stripes);
+}
 
-#अगर BITS_PER_LONG == 32
+#if BITS_PER_LONG == 32
 /*
- * Due to page cache limit, metadata beyond BTRFS_32BIT_MAX_खाता_SIZE
- * can't be accessed on 32bit प्रणालीs.
+ * Due to page cache limit, metadata beyond BTRFS_32BIT_MAX_FILE_SIZE
+ * can't be accessed on 32bit systems.
  *
- * This function करो mount समय check to reject the fs अगर it alपढ़ोy has
+ * This function do mount time check to reject the fs if it already has
  * metadata chunk beyond that limit.
  */
-अटल पूर्णांक check_32bit_meta_chunk(काष्ठा btrfs_fs_info *fs_info,
+static int check_32bit_meta_chunk(struct btrfs_fs_info *fs_info,
 				  u64 logical, u64 length, u64 type)
-अणु
-	अगर (!(type & BTRFS_BLOCK_GROUP_METADATA))
-		वापस 0;
+{
+	if (!(type & BTRFS_BLOCK_GROUP_METADATA))
+		return 0;
 
-	अगर (logical + length < MAX_LFS_खाताSIZE)
-		वापस 0;
+	if (logical + length < MAX_LFS_FILESIZE)
+		return 0;
 
 	btrfs_err_32bit_limit(fs_info);
-	वापस -EOVERFLOW;
-पूर्ण
+	return -EOVERFLOW;
+}
 
 /*
- * This is to give early warning क्रम any metadata chunk reaching
+ * This is to give early warning for any metadata chunk reaching
  * BTRFS_32BIT_EARLY_WARN_THRESHOLD.
  * Although we can still access the metadata, it's not going to be possible
  * once the limit is reached.
  */
-अटल व्योम warn_32bit_meta_chunk(काष्ठा btrfs_fs_info *fs_info,
+static void warn_32bit_meta_chunk(struct btrfs_fs_info *fs_info,
 				  u64 logical, u64 length, u64 type)
-अणु
-	अगर (!(type & BTRFS_BLOCK_GROUP_METADATA))
-		वापस;
+{
+	if (!(type & BTRFS_BLOCK_GROUP_METADATA))
+		return;
 
-	अगर (logical + length < BTRFS_32BIT_EARLY_WARN_THRESHOLD)
-		वापस;
+	if (logical + length < BTRFS_32BIT_EARLY_WARN_THRESHOLD)
+		return;
 
 	btrfs_warn_32bit_limit(fs_info);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल पूर्णांक पढ़ो_one_chunk(काष्ठा btrfs_key *key, काष्ठा extent_buffer *leaf,
-			  काष्ठा btrfs_chunk *chunk)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = leaf->fs_info;
-	काष्ठा extent_map_tree *map_tree = &fs_info->mapping_tree;
-	काष्ठा map_lookup *map;
-	काष्ठा extent_map *em;
+static int read_one_chunk(struct btrfs_key *key, struct extent_buffer *leaf,
+			  struct btrfs_chunk *chunk)
+{
+	struct btrfs_fs_info *fs_info = leaf->fs_info;
+	struct extent_map_tree *map_tree = &fs_info->mapping_tree;
+	struct map_lookup *map;
+	struct extent_map *em;
 	u64 logical;
 	u64 length;
 	u64 devid;
 	u64 type;
 	u8 uuid[BTRFS_UUID_SIZE];
-	पूर्णांक num_stripes;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int num_stripes;
+	int ret;
+	int i;
 
 	logical = key->offset;
 	length = btrfs_chunk_length(leaf, chunk);
 	type = btrfs_chunk_type(leaf, chunk);
 	num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
 
-#अगर BITS_PER_LONG == 32
+#if BITS_PER_LONG == 32
 	ret = check_32bit_meta_chunk(fs_info, logical, length, type);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 	warn_32bit_meta_chunk(fs_info, logical, length, type);
-#पूर्ण_अगर
+#endif
 
 	/*
-	 * Only need to verअगरy chunk item अगर we're पढ़ोing from sys chunk array,
-	 * as chunk item in tree block is alपढ़ोy verअगरied by tree-checker.
+	 * Only need to verify chunk item if we're reading from sys chunk array,
+	 * as chunk item in tree block is already verified by tree-checker.
 	 */
-	अगर (leaf->start == BTRFS_SUPER_INFO_OFFSET) अणु
+	if (leaf->start == BTRFS_SUPER_INFO_OFFSET) {
 		ret = btrfs_check_chunk_valid(leaf, chunk, logical);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	पढ़ो_lock(&map_tree->lock);
+	read_lock(&map_tree->lock);
 	em = lookup_extent_mapping(map_tree, logical, 1);
-	पढ़ो_unlock(&map_tree->lock);
+	read_unlock(&map_tree->lock);
 
-	/* alपढ़ोy mapped? */
-	अगर (em && em->start <= logical && em->start + em->len > logical) अणु
-		मुक्त_extent_map(em);
-		वापस 0;
-	पूर्ण अन्यथा अगर (em) अणु
-		मुक्त_extent_map(em);
-	पूर्ण
+	/* already mapped? */
+	if (em && em->start <= logical && em->start + em->len > logical) {
+		free_extent_map(em);
+		return 0;
+	} else if (em) {
+		free_extent_map(em);
+	}
 
 	em = alloc_extent_map();
-	अगर (!em)
-		वापस -ENOMEM;
-	map = kदो_स्मृति(map_lookup_size(num_stripes), GFP_NOFS);
-	अगर (!map) अणु
-		मुक्त_extent_map(em);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!em)
+		return -ENOMEM;
+	map = kmalloc(map_lookup_size(num_stripes), GFP_NOFS);
+	if (!map) {
+		free_extent_map(em);
+		return -ENOMEM;
+	}
 
 	set_bit(EXTENT_FLAG_FS_MAPPING, &em->flags);
 	em->map_lookup = map;
@@ -6920,60 +6919,60 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 	map->stripe_len = btrfs_chunk_stripe_len(leaf, chunk);
 	map->type = type;
 	map->sub_stripes = btrfs_chunk_sub_stripes(leaf, chunk);
-	map->verअगरied_stripes = 0;
+	map->verified_stripes = 0;
 	em->orig_block_len = calc_stripe_length(type, em->len,
 						map->num_stripes);
-	क्रम (i = 0; i < num_stripes; i++) अणु
+	for (i = 0; i < num_stripes; i++) {
 		map->stripes[i].physical =
 			btrfs_stripe_offset_nr(leaf, chunk, i);
 		devid = btrfs_stripe_devid_nr(leaf, chunk, i);
-		पढ़ो_extent_buffer(leaf, uuid, (अचिन्हित दीर्घ)
+		read_extent_buffer(leaf, uuid, (unsigned long)
 				   btrfs_stripe_dev_uuid_nr(chunk, i),
 				   BTRFS_UUID_SIZE);
 		map->stripes[i].dev = btrfs_find_device(fs_info->fs_devices,
-							devid, uuid, शून्य);
-		अगर (!map->stripes[i].dev &&
-		    !btrfs_test_opt(fs_info, DEGRADED)) अणु
-			मुक्त_extent_map(em);
+							devid, uuid, NULL);
+		if (!map->stripes[i].dev &&
+		    !btrfs_test_opt(fs_info, DEGRADED)) {
+			free_extent_map(em);
 			btrfs_report_missing_device(fs_info, devid, uuid, true);
-			वापस -ENOENT;
-		पूर्ण
-		अगर (!map->stripes[i].dev) अणु
+			return -ENOENT;
+		}
+		if (!map->stripes[i].dev) {
 			map->stripes[i].dev =
 				add_missing_dev(fs_info->fs_devices, devid,
 						uuid);
-			अगर (IS_ERR(map->stripes[i].dev)) अणु
-				मुक्त_extent_map(em);
+			if (IS_ERR(map->stripes[i].dev)) {
+				free_extent_map(em);
 				btrfs_err(fs_info,
 					"failed to init missing dev %llu: %ld",
 					devid, PTR_ERR(map->stripes[i].dev));
-				वापस PTR_ERR(map->stripes[i].dev);
-			पूर्ण
+				return PTR_ERR(map->stripes[i].dev);
+			}
 			btrfs_report_missing_device(fs_info, devid, uuid, false);
-		पूर्ण
+		}
 		set_bit(BTRFS_DEV_STATE_IN_FS_METADATA,
 				&(map->stripes[i].dev->dev_state));
 
-	पूर्ण
+	}
 
-	ग_लिखो_lock(&map_tree->lock);
+	write_lock(&map_tree->lock);
 	ret = add_extent_mapping(map_tree, em, 0);
-	ग_लिखो_unlock(&map_tree->lock);
-	अगर (ret < 0) अणु
+	write_unlock(&map_tree->lock);
+	if (ret < 0) {
 		btrfs_err(fs_info,
 			  "failed to add chunk map, start=%llu len=%llu: %d",
 			  em->start, em->len, ret);
-	पूर्ण
-	मुक्त_extent_map(em);
+	}
+	free_extent_map(em);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम fill_device_from_item(काष्ठा extent_buffer *leaf,
-				 काष्ठा btrfs_dev_item *dev_item,
-				 काष्ठा btrfs_device *device)
-अणु
-	अचिन्हित दीर्घ ptr;
+static void fill_device_from_item(struct extent_buffer *leaf,
+				 struct btrfs_dev_item *dev_item,
+				 struct btrfs_device *device)
+{
+	unsigned long ptr;
 
 	device->devid = btrfs_device_id(leaf, dev_item);
 	device->disk_total_bytes = btrfs_device_total_bytes(leaf, dev_item);
@@ -6989,128 +6988,128 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 	clear_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state);
 
 	ptr = btrfs_device_uuid(dev_item);
-	पढ़ो_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
-पूर्ण
+	read_extent_buffer(leaf, device->uuid, ptr, BTRFS_UUID_SIZE);
+}
 
-अटल काष्ठा btrfs_fs_devices *खोलो_seed_devices(काष्ठा btrfs_fs_info *fs_info,
+static struct btrfs_fs_devices *open_seed_devices(struct btrfs_fs_info *fs_info,
 						  u8 *fsid)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices;
-	पूर्णांक ret;
+{
+	struct btrfs_fs_devices *fs_devices;
+	int ret;
 
-	lockdep_निश्चित_held(&uuid_mutex);
+	lockdep_assert_held(&uuid_mutex);
 	ASSERT(fsid);
 
-	/* This will match only क्रम multi-device seed fs */
-	list_क्रम_each_entry(fs_devices, &fs_info->fs_devices->seed_list, seed_list)
-		अगर (!स_भेद(fs_devices->fsid, fsid, BTRFS_FSID_SIZE))
-			वापस fs_devices;
+	/* This will match only for multi-device seed fs */
+	list_for_each_entry(fs_devices, &fs_info->fs_devices->seed_list, seed_list)
+		if (!memcmp(fs_devices->fsid, fsid, BTRFS_FSID_SIZE))
+			return fs_devices;
 
 
-	fs_devices = find_fsid(fsid, शून्य);
-	अगर (!fs_devices) अणु
-		अगर (!btrfs_test_opt(fs_info, DEGRADED))
-			वापस ERR_PTR(-ENOENT);
+	fs_devices = find_fsid(fsid, NULL);
+	if (!fs_devices) {
+		if (!btrfs_test_opt(fs_info, DEGRADED))
+			return ERR_PTR(-ENOENT);
 
-		fs_devices = alloc_fs_devices(fsid, शून्य);
-		अगर (IS_ERR(fs_devices))
-			वापस fs_devices;
+		fs_devices = alloc_fs_devices(fsid, NULL);
+		if (IS_ERR(fs_devices))
+			return fs_devices;
 
 		fs_devices->seeding = true;
-		fs_devices->खोलोed = 1;
-		वापस fs_devices;
-	पूर्ण
+		fs_devices->opened = 1;
+		return fs_devices;
+	}
 
 	/*
-	 * Upon first call क्रम a seed fs fsid, just create a निजी copy of the
+	 * Upon first call for a seed fs fsid, just create a private copy of the
 	 * respective fs_devices and anchor it at fs_info->fs_devices->seed_list
 	 */
 	fs_devices = clone_fs_devices(fs_devices);
-	अगर (IS_ERR(fs_devices))
-		वापस fs_devices;
+	if (IS_ERR(fs_devices))
+		return fs_devices;
 
-	ret = खोलो_fs_devices(fs_devices, FMODE_READ, fs_info->bdev_holder);
-	अगर (ret) अणु
-		मुक्त_fs_devices(fs_devices);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = open_fs_devices(fs_devices, FMODE_READ, fs_info->bdev_holder);
+	if (ret) {
+		free_fs_devices(fs_devices);
+		return ERR_PTR(ret);
+	}
 
-	अगर (!fs_devices->seeding) अणु
-		बंद_fs_devices(fs_devices);
-		मुक्त_fs_devices(fs_devices);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+	if (!fs_devices->seeding) {
+		close_fs_devices(fs_devices);
+		free_fs_devices(fs_devices);
+		return ERR_PTR(-EINVAL);
+	}
 
 	list_add(&fs_devices->seed_list, &fs_info->fs_devices->seed_list);
 
-	वापस fs_devices;
-पूर्ण
+	return fs_devices;
+}
 
-अटल पूर्णांक पढ़ो_one_dev(काष्ठा extent_buffer *leaf,
-			काष्ठा btrfs_dev_item *dev_item)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = leaf->fs_info;
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
-	काष्ठा btrfs_device *device;
+static int read_one_dev(struct extent_buffer *leaf,
+			struct btrfs_dev_item *dev_item)
+{
+	struct btrfs_fs_info *fs_info = leaf->fs_info;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+	struct btrfs_device *device;
 	u64 devid;
-	पूर्णांक ret;
+	int ret;
 	u8 fs_uuid[BTRFS_FSID_SIZE];
 	u8 dev_uuid[BTRFS_UUID_SIZE];
 
 	devid = btrfs_device_id(leaf, dev_item);
-	पढ़ो_extent_buffer(leaf, dev_uuid, btrfs_device_uuid(dev_item),
+	read_extent_buffer(leaf, dev_uuid, btrfs_device_uuid(dev_item),
 			   BTRFS_UUID_SIZE);
-	पढ़ो_extent_buffer(leaf, fs_uuid, btrfs_device_fsid(dev_item),
+	read_extent_buffer(leaf, fs_uuid, btrfs_device_fsid(dev_item),
 			   BTRFS_FSID_SIZE);
 
-	अगर (स_भेद(fs_uuid, fs_devices->metadata_uuid, BTRFS_FSID_SIZE)) अणु
-		fs_devices = खोलो_seed_devices(fs_info, fs_uuid);
-		अगर (IS_ERR(fs_devices))
-			वापस PTR_ERR(fs_devices);
-	पूर्ण
+	if (memcmp(fs_uuid, fs_devices->metadata_uuid, BTRFS_FSID_SIZE)) {
+		fs_devices = open_seed_devices(fs_info, fs_uuid);
+		if (IS_ERR(fs_devices))
+			return PTR_ERR(fs_devices);
+	}
 
 	device = btrfs_find_device(fs_info->fs_devices, devid, dev_uuid,
 				   fs_uuid);
-	अगर (!device) अणु
-		अगर (!btrfs_test_opt(fs_info, DEGRADED)) अणु
+	if (!device) {
+		if (!btrfs_test_opt(fs_info, DEGRADED)) {
 			btrfs_report_missing_device(fs_info, devid,
 							dev_uuid, true);
-			वापस -ENOENT;
-		पूर्ण
+			return -ENOENT;
+		}
 
 		device = add_missing_dev(fs_devices, devid, dev_uuid);
-		अगर (IS_ERR(device)) अणु
+		if (IS_ERR(device)) {
 			btrfs_err(fs_info,
 				"failed to add missing dev %llu: %ld",
 				devid, PTR_ERR(device));
-			वापस PTR_ERR(device);
-		पूर्ण
+			return PTR_ERR(device);
+		}
 		btrfs_report_missing_device(fs_info, devid, dev_uuid, false);
-	पूर्ण अन्यथा अणु
-		अगर (!device->bdev) अणु
-			अगर (!btrfs_test_opt(fs_info, DEGRADED)) अणु
+	} else {
+		if (!device->bdev) {
+			if (!btrfs_test_opt(fs_info, DEGRADED)) {
 				btrfs_report_missing_device(fs_info,
 						devid, dev_uuid, true);
-				वापस -ENOENT;
-			पूर्ण
+				return -ENOENT;
+			}
 			btrfs_report_missing_device(fs_info, devid,
 							dev_uuid, false);
-		पूर्ण
+		}
 
-		अगर (!device->bdev &&
-		    !test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state)) अणु
+		if (!device->bdev &&
+		    !test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state)) {
 			/*
 			 * this happens when a device that was properly setup
 			 * in the device info lists suddenly goes bad.
-			 * device->bdev is शून्य, and so we have to set
+			 * device->bdev is NULL, and so we have to set
 			 * device->missing to one here
 			 */
 			device->fs_devices->missing_devices++;
 			set_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state);
-		पूर्ण
+		}
 
 		/* Move the device to its own fs_devices */
-		अगर (device->fs_devices != fs_devices) अणु
+		if (device->fs_devices != fs_devices) {
 			ASSERT(test_bit(BTRFS_DEV_STATE_MISSING,
 							&device->dev_state));
 
@@ -7122,54 +7121,54 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 			fs_devices->missing_devices++;
 
 			device->fs_devices = fs_devices;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (device->fs_devices != fs_info->fs_devices) अणु
+	if (device->fs_devices != fs_info->fs_devices) {
 		BUG_ON(test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state));
-		अगर (device->generation !=
+		if (device->generation !=
 		    btrfs_device_generation(leaf, dev_item))
-			वापस -EINVAL;
-	पूर्ण
+			return -EINVAL;
+	}
 
 	fill_device_from_item(leaf, dev_item, device);
-	अगर (device->bdev) अणु
-		u64 max_total_bytes = i_size_पढ़ो(device->bdev->bd_inode);
+	if (device->bdev) {
+		u64 max_total_bytes = i_size_read(device->bdev->bd_inode);
 
-		अगर (device->total_bytes > max_total_bytes) अणु
+		if (device->total_bytes > max_total_bytes) {
 			btrfs_err(fs_info,
 			"device total_bytes should be at most %llu but found %llu",
 				  max_total_bytes, device->total_bytes);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 	set_bit(BTRFS_DEV_STATE_IN_FS_METADATA, &device->dev_state);
-	अगर (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
-	   !test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) अणु
+	if (test_bit(BTRFS_DEV_STATE_WRITEABLE, &device->dev_state) &&
+	   !test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &device->dev_state)) {
 		device->fs_devices->total_rw_bytes += device->total_bytes;
 		atomic64_add(device->total_bytes - device->bytes_used,
-				&fs_info->मुक्त_chunk_space);
-	पूर्ण
+				&fs_info->free_chunk_space);
+	}
 	ret = 0;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_पढ़ो_sys_array(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_root *root = fs_info->tree_root;
-	काष्ठा btrfs_super_block *super_copy = fs_info->super_copy;
-	काष्ठा extent_buffer *sb;
-	काष्ठा btrfs_disk_key *disk_key;
-	काष्ठा btrfs_chunk *chunk;
+int btrfs_read_sys_array(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root = fs_info->tree_root;
+	struct btrfs_super_block *super_copy = fs_info->super_copy;
+	struct extent_buffer *sb;
+	struct btrfs_disk_key *disk_key;
+	struct btrfs_chunk *chunk;
 	u8 *array_ptr;
-	अचिन्हित दीर्घ sb_array_offset;
-	पूर्णांक ret = 0;
+	unsigned long sb_array_offset;
+	int ret = 0;
 	u32 num_stripes;
 	u32 array_size;
 	u32 len = 0;
 	u32 cur_offset;
 	u64 type;
-	काष्ठा btrfs_key key;
+	struct btrfs_key key;
 
 	ASSERT(BTRFS_SUPER_INFO_SIZE <= fs_info->nodesize);
 	/*
@@ -7179,36 +7178,36 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 	 */
 	sb = btrfs_find_create_tree_block(fs_info, BTRFS_SUPER_INFO_OFFSET,
 					  root->root_key.objectid, 0);
-	अगर (IS_ERR(sb))
-		वापस PTR_ERR(sb);
+	if (IS_ERR(sb))
+		return PTR_ERR(sb);
 	set_extent_buffer_uptodate(sb);
 	/*
-	 * The sb extent buffer is artअगरicial and just used to पढ़ो the प्रणाली array.
-	 * set_extent_buffer_uptodate() call करोes not properly mark all it's
-	 * pages up-to-date when the page is larger: extent करोes not cover the
-	 * whole page and consequently check_page_uptodate करोes not find all
+	 * The sb extent buffer is artificial and just used to read the system array.
+	 * set_extent_buffer_uptodate() call does not properly mark all it's
+	 * pages up-to-date when the page is larger: extent does not cover the
+	 * whole page and consequently check_page_uptodate does not find all
 	 * the page's extents up-to-date (the hole beyond sb),
-	 * ग_लिखो_extent_buffer then triggers a WARN_ON.
+	 * write_extent_buffer then triggers a WARN_ON.
 	 *
-	 * Regular लघु extents go through mark_extent_buffer_dirty/ग_लिखोback cycle,
+	 * Regular short extents go through mark_extent_buffer_dirty/writeback cycle,
 	 * but sb spans only this function. Add an explicit SetPageUptodate call
 	 * to silence the warning eg. on PowerPC 64.
 	 */
-	अगर (PAGE_SIZE > BTRFS_SUPER_INFO_SIZE)
+	if (PAGE_SIZE > BTRFS_SUPER_INFO_SIZE)
 		SetPageUptodate(sb->pages[0]);
 
-	ग_लिखो_extent_buffer(sb, super_copy, 0, BTRFS_SUPER_INFO_SIZE);
+	write_extent_buffer(sb, super_copy, 0, BTRFS_SUPER_INFO_SIZE);
 	array_size = btrfs_super_sys_array_size(super_copy);
 
 	array_ptr = super_copy->sys_chunk_array;
-	sb_array_offset = दुरत्व(काष्ठा btrfs_super_block, sys_chunk_array);
+	sb_array_offset = offsetof(struct btrfs_super_block, sys_chunk_array);
 	cur_offset = 0;
 
-	जबतक (cur_offset < array_size) अणु
-		disk_key = (काष्ठा btrfs_disk_key *)array_ptr;
-		len = माप(*disk_key);
-		अगर (cur_offset + len > array_size)
-			जाओ out_लघु_पढ़ो;
+	while (cur_offset < array_size) {
+		disk_key = (struct btrfs_disk_key *)array_ptr;
+		len = sizeof(*disk_key);
+		if (cur_offset + len > array_size)
+			goto out_short_read;
 
 		btrfs_disk_key_to_cpu(&key, disk_key);
 
@@ -7216,873 +7215,873 @@ blk_status_t btrfs_map_bio(काष्ठा btrfs_fs_info *fs_info, काष�
 		sb_array_offset += len;
 		cur_offset += len;
 
-		अगर (key.type != BTRFS_CHUNK_ITEM_KEY) अणु
+		if (key.type != BTRFS_CHUNK_ITEM_KEY) {
 			btrfs_err(fs_info,
 			    "unexpected item type %u in sys_array at offset %u",
 				  (u32)key.type, cur_offset);
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		chunk = (काष्ठा btrfs_chunk *)sb_array_offset;
+		chunk = (struct btrfs_chunk *)sb_array_offset;
 		/*
 		 * At least one btrfs_chunk with one stripe must be present,
 		 * exact stripe count check comes afterwards
 		 */
 		len = btrfs_chunk_item_size(1);
-		अगर (cur_offset + len > array_size)
-			जाओ out_लघु_पढ़ो;
+		if (cur_offset + len > array_size)
+			goto out_short_read;
 
 		num_stripes = btrfs_chunk_num_stripes(sb, chunk);
-		अगर (!num_stripes) अणु
+		if (!num_stripes) {
 			btrfs_err(fs_info,
 			"invalid number of stripes %u in sys_array at offset %u",
 				  num_stripes, cur_offset);
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		type = btrfs_chunk_type(sb, chunk);
-		अगर ((type & BTRFS_BLOCK_GROUP_SYSTEM) == 0) अणु
+		if ((type & BTRFS_BLOCK_GROUP_SYSTEM) == 0) {
 			btrfs_err(fs_info,
 			"invalid chunk type %llu in sys_array at offset %u",
 				  type, cur_offset);
 			ret = -EIO;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		len = btrfs_chunk_item_size(num_stripes);
-		अगर (cur_offset + len > array_size)
-			जाओ out_लघु_पढ़ो;
+		if (cur_offset + len > array_size)
+			goto out_short_read;
 
-		ret = पढ़ो_one_chunk(&key, sb, chunk);
-		अगर (ret)
-			अवरोध;
+		ret = read_one_chunk(&key, sb, chunk);
+		if (ret)
+			break;
 
 		array_ptr += len;
 		sb_array_offset += len;
 		cur_offset += len;
-	पूर्ण
+	}
 	clear_extent_buffer_uptodate(sb);
-	मुक्त_extent_buffer_stale(sb);
-	वापस ret;
+	free_extent_buffer_stale(sb);
+	return ret;
 
-out_लघु_पढ़ो:
+out_short_read:
 	btrfs_err(fs_info, "sys_array too short to read %u bytes at offset %u",
 			len, cur_offset);
 	clear_extent_buffer_uptodate(sb);
-	मुक्त_extent_buffer_stale(sb);
-	वापस -EIO;
-पूर्ण
+	free_extent_buffer_stale(sb);
+	return -EIO;
+}
 
 /*
- * Check अगर all chunks in the fs are OK क्रम पढ़ो-ग_लिखो degraded mount
+ * Check if all chunks in the fs are OK for read-write degraded mount
  *
- * If the @failing_dev is specअगरied, it's accounted as missing.
+ * If the @failing_dev is specified, it's accounted as missing.
  *
- * Return true अगर all chunks meet the minimal RW mount requirements.
- * Return false अगर any chunk करोesn't meet the minimal RW mount requirements.
+ * Return true if all chunks meet the minimal RW mount requirements.
+ * Return false if any chunk doesn't meet the minimal RW mount requirements.
  */
-bool btrfs_check_rw_degradable(काष्ठा btrfs_fs_info *fs_info,
-					काष्ठा btrfs_device *failing_dev)
-अणु
-	काष्ठा extent_map_tree *map_tree = &fs_info->mapping_tree;
-	काष्ठा extent_map *em;
+bool btrfs_check_rw_degradable(struct btrfs_fs_info *fs_info,
+					struct btrfs_device *failing_dev)
+{
+	struct extent_map_tree *map_tree = &fs_info->mapping_tree;
+	struct extent_map *em;
 	u64 next_start = 0;
 	bool ret = true;
 
-	पढ़ो_lock(&map_tree->lock);
+	read_lock(&map_tree->lock);
 	em = lookup_extent_mapping(map_tree, 0, (u64)-1);
-	पढ़ो_unlock(&map_tree->lock);
+	read_unlock(&map_tree->lock);
 	/* No chunk at all? Return false anyway */
-	अगर (!em) अणु
+	if (!em) {
 		ret = false;
-		जाओ out;
-	पूर्ण
-	जबतक (em) अणु
-		काष्ठा map_lookup *map;
-		पूर्णांक missing = 0;
-		पूर्णांक max_tolerated;
-		पूर्णांक i;
+		goto out;
+	}
+	while (em) {
+		struct map_lookup *map;
+		int missing = 0;
+		int max_tolerated;
+		int i;
 
 		map = em->map_lookup;
 		max_tolerated =
 			btrfs_get_num_tolerated_disk_barrier_failures(
 					map->type);
-		क्रम (i = 0; i < map->num_stripes; i++) अणु
-			काष्ठा btrfs_device *dev = map->stripes[i].dev;
+		for (i = 0; i < map->num_stripes; i++) {
+			struct btrfs_device *dev = map->stripes[i].dev;
 
-			अगर (!dev || !dev->bdev ||
+			if (!dev || !dev->bdev ||
 			    test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) ||
 			    dev->last_flush_error)
 				missing++;
-			अन्यथा अगर (failing_dev && failing_dev == dev)
+			else if (failing_dev && failing_dev == dev)
 				missing++;
-		पूर्ण
-		अगर (missing > max_tolerated) अणु
-			अगर (!failing_dev)
+		}
+		if (missing > max_tolerated) {
+			if (!failing_dev)
 				btrfs_warn(fs_info,
 	"chunk %llu missing %d devices, max tolerance is %d for writable mount",
 				   em->start, missing, max_tolerated);
-			मुक्त_extent_map(em);
+			free_extent_map(em);
 			ret = false;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		next_start = extent_map_end(em);
-		मुक्त_extent_map(em);
+		free_extent_map(em);
 
-		पढ़ो_lock(&map_tree->lock);
+		read_lock(&map_tree->lock);
 		em = lookup_extent_mapping(map_tree, next_start,
 					   (u64)(-1) - next_start);
-		पढ़ो_unlock(&map_tree->lock);
-	पूर्ण
+		read_unlock(&map_tree->lock);
+	}
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम पढ़ोahead_tree_node_children(काष्ठा extent_buffer *node)
-अणु
-	पूर्णांक i;
-	स्थिर पूर्णांक nr_items = btrfs_header_nritems(node);
+static void readahead_tree_node_children(struct extent_buffer *node)
+{
+	int i;
+	const int nr_items = btrfs_header_nritems(node);
 
-	क्रम (i = 0; i < nr_items; i++)
-		btrfs_पढ़ोahead_node_child(node, i);
-पूर्ण
+	for (i = 0; i < nr_items; i++)
+		btrfs_readahead_node_child(node, i);
+}
 
-पूर्णांक btrfs_पढ़ो_chunk_tree(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_root *root = fs_info->chunk_root;
-	काष्ठा btrfs_path *path;
-	काष्ठा extent_buffer *leaf;
-	काष्ठा btrfs_key key;
-	काष्ठा btrfs_key found_key;
-	पूर्णांक ret;
-	पूर्णांक slot;
+int btrfs_read_chunk_tree(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_root *root = fs_info->chunk_root;
+	struct btrfs_path *path;
+	struct extent_buffer *leaf;
+	struct btrfs_key key;
+	struct btrfs_key found_key;
+	int ret;
+	int slot;
 	u64 total_dev = 0;
 	u64 last_ra_node = 0;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	/*
-	 * uuid_mutex is needed only अगर we are mounting a sprout FS
-	 * otherwise we करोn't need it.
+	 * uuid_mutex is needed only if we are mounting a sprout FS
+	 * otherwise we don't need it.
 	 */
 	mutex_lock(&uuid_mutex);
 
 	/*
-	 * It is possible क्रम mount and umount to race in such a way that
-	 * we execute this code path, but खोलो_fs_devices failed to clear
-	 * total_rw_bytes. We certainly want it cleared beक्रमe पढ़ोing the
+	 * It is possible for mount and umount to race in such a way that
+	 * we execute this code path, but open_fs_devices failed to clear
+	 * total_rw_bytes. We certainly want it cleared before reading the
 	 * device items, so clear it here.
 	 */
 	fs_info->fs_devices->total_rw_bytes = 0;
 
 	/*
 	 * Read all device items, and then all the chunk items. All
-	 * device items are found beक्रमe any chunk item (their object id
-	 * is smaller than the lowest possible object id क्रम a chunk
+	 * device items are found before any chunk item (their object id
+	 * is smaller than the lowest possible object id for a chunk
 	 * item - BTRFS_FIRST_CHUNK_TREE_OBJECTID).
 	 */
 	key.objectid = BTRFS_DEV_ITEMS_OBJECTID;
 	key.offset = 0;
 	key.type = 0;
-	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ error;
-	जबतक (1) अणु
-		काष्ठा extent_buffer *node;
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto error;
+	while (1) {
+		struct extent_buffer *node;
 
 		leaf = path->nodes[0];
 		slot = path->slots[0];
-		अगर (slot >= btrfs_header_nritems(leaf)) अणु
+		if (slot >= btrfs_header_nritems(leaf)) {
 			ret = btrfs_next_leaf(root, path);
-			अगर (ret == 0)
-				जारी;
-			अगर (ret < 0)
-				जाओ error;
-			अवरोध;
-		पूर्ण
+			if (ret == 0)
+				continue;
+			if (ret < 0)
+				goto error;
+			break;
+		}
 		/*
-		 * The nodes on level 1 are not locked but we करोn't need to करो
-		 * that during mount समय as nothing अन्यथा can access the tree
+		 * The nodes on level 1 are not locked but we don't need to do
+		 * that during mount time as nothing else can access the tree
 		 */
 		node = path->nodes[1];
-		अगर (node) अणु
-			अगर (last_ra_node != node->start) अणु
-				पढ़ोahead_tree_node_children(node);
+		if (node) {
+			if (last_ra_node != node->start) {
+				readahead_tree_node_children(node);
 				last_ra_node = node->start;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
-		अगर (found_key.type == BTRFS_DEV_ITEM_KEY) अणु
-			काष्ठा btrfs_dev_item *dev_item;
+		if (found_key.type == BTRFS_DEV_ITEM_KEY) {
+			struct btrfs_dev_item *dev_item;
 			dev_item = btrfs_item_ptr(leaf, slot,
-						  काष्ठा btrfs_dev_item);
-			ret = पढ़ो_one_dev(leaf, dev_item);
-			अगर (ret)
-				जाओ error;
+						  struct btrfs_dev_item);
+			ret = read_one_dev(leaf, dev_item);
+			if (ret)
+				goto error;
 			total_dev++;
-		पूर्ण अन्यथा अगर (found_key.type == BTRFS_CHUNK_ITEM_KEY) अणु
-			काष्ठा btrfs_chunk *chunk;
-			chunk = btrfs_item_ptr(leaf, slot, काष्ठा btrfs_chunk);
+		} else if (found_key.type == BTRFS_CHUNK_ITEM_KEY) {
+			struct btrfs_chunk *chunk;
+			chunk = btrfs_item_ptr(leaf, slot, struct btrfs_chunk);
 			mutex_lock(&fs_info->chunk_mutex);
-			ret = पढ़ो_one_chunk(&found_key, leaf, chunk);
+			ret = read_one_chunk(&found_key, leaf, chunk);
 			mutex_unlock(&fs_info->chunk_mutex);
-			अगर (ret)
-				जाओ error;
-		पूर्ण
+			if (ret)
+				goto error;
+		}
 		path->slots[0]++;
-	पूर्ण
+	}
 
 	/*
-	 * After loading chunk tree, we've got all device inक्रमmation,
-	 * करो another round of validation checks.
+	 * After loading chunk tree, we've got all device information,
+	 * do another round of validation checks.
 	 */
-	अगर (total_dev != fs_info->fs_devices->total_devices) अणु
+	if (total_dev != fs_info->fs_devices->total_devices) {
 		btrfs_err(fs_info,
 	   "super_num_devices %llu mismatch with num_devices %llu found here",
 			  btrfs_super_num_devices(fs_info->super_copy),
 			  total_dev);
 		ret = -EINVAL;
-		जाओ error;
-	पूर्ण
-	अगर (btrfs_super_total_bytes(fs_info->super_copy) <
-	    fs_info->fs_devices->total_rw_bytes) अणु
+		goto error;
+	}
+	if (btrfs_super_total_bytes(fs_info->super_copy) <
+	    fs_info->fs_devices->total_rw_bytes) {
 		btrfs_err(fs_info,
 	"super_total_bytes %llu mismatch with fs_devices total_rw_bytes %llu",
 			  btrfs_super_total_bytes(fs_info->super_copy),
 			  fs_info->fs_devices->total_rw_bytes);
 		ret = -EINVAL;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	ret = 0;
 error:
 	mutex_unlock(&uuid_mutex);
 
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-व्योम btrfs_init_devices_late(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices, *seed_devs;
-	काष्ठा btrfs_device *device;
+void btrfs_init_devices_late(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices, *seed_devs;
+	struct btrfs_device *device;
 
 	fs_devices->fs_info = fs_info;
 
 	mutex_lock(&fs_devices->device_list_mutex);
-	list_क्रम_each_entry(device, &fs_devices->devices, dev_list)
+	list_for_each_entry(device, &fs_devices->devices, dev_list)
 		device->fs_info = fs_info;
 
-	list_क्रम_each_entry(seed_devs, &fs_devices->seed_list, seed_list) अणु
-		list_क्रम_each_entry(device, &seed_devs->devices, dev_list)
+	list_for_each_entry(seed_devs, &fs_devices->seed_list, seed_list) {
+		list_for_each_entry(device, &seed_devs->devices, dev_list)
 			device->fs_info = fs_info;
 
 		seed_devs->fs_info = fs_info;
-	पूर्ण
+	}
 	mutex_unlock(&fs_devices->device_list_mutex);
-पूर्ण
+}
 
-अटल u64 btrfs_dev_stats_value(स्थिर काष्ठा extent_buffer *eb,
-				 स्थिर काष्ठा btrfs_dev_stats_item *ptr,
-				 पूर्णांक index)
-अणु
+static u64 btrfs_dev_stats_value(const struct extent_buffer *eb,
+				 const struct btrfs_dev_stats_item *ptr,
+				 int index)
+{
 	u64 val;
 
-	पढ़ो_extent_buffer(eb, &val,
-			   दुरत्व(काष्ठा btrfs_dev_stats_item, values) +
-			    ((अचिन्हित दीर्घ)ptr) + (index * माप(u64)),
-			   माप(val));
-	वापस val;
-पूर्ण
+	read_extent_buffer(eb, &val,
+			   offsetof(struct btrfs_dev_stats_item, values) +
+			    ((unsigned long)ptr) + (index * sizeof(u64)),
+			   sizeof(val));
+	return val;
+}
 
-अटल व्योम btrfs_set_dev_stats_value(काष्ठा extent_buffer *eb,
-				      काष्ठा btrfs_dev_stats_item *ptr,
-				      पूर्णांक index, u64 val)
-अणु
-	ग_लिखो_extent_buffer(eb, &val,
-			    दुरत्व(काष्ठा btrfs_dev_stats_item, values) +
-			     ((अचिन्हित दीर्घ)ptr) + (index * माप(u64)),
-			    माप(val));
-पूर्ण
+static void btrfs_set_dev_stats_value(struct extent_buffer *eb,
+				      struct btrfs_dev_stats_item *ptr,
+				      int index, u64 val)
+{
+	write_extent_buffer(eb, &val,
+			    offsetof(struct btrfs_dev_stats_item, values) +
+			     ((unsigned long)ptr) + (index * sizeof(u64)),
+			    sizeof(val));
+}
 
-अटल पूर्णांक btrfs_device_init_dev_stats(काष्ठा btrfs_device *device,
-				       काष्ठा btrfs_path *path)
-अणु
-	काष्ठा btrfs_dev_stats_item *ptr;
-	काष्ठा extent_buffer *eb;
-	काष्ठा btrfs_key key;
-	पूर्णांक item_size;
-	पूर्णांक i, ret, slot;
+static int btrfs_device_init_dev_stats(struct btrfs_device *device,
+				       struct btrfs_path *path)
+{
+	struct btrfs_dev_stats_item *ptr;
+	struct extent_buffer *eb;
+	struct btrfs_key key;
+	int item_size;
+	int i, ret, slot;
 
-	अगर (!device->fs_info->dev_root)
-		वापस 0;
+	if (!device->fs_info->dev_root)
+		return 0;
 
 	key.objectid = BTRFS_DEV_STATS_OBJECTID;
 	key.type = BTRFS_PERSISTENT_ITEM_KEY;
 	key.offset = device->devid;
-	ret = btrfs_search_slot(शून्य, device->fs_info->dev_root, &key, path, 0, 0);
-	अगर (ret) अणु
-		क्रम (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
+	ret = btrfs_search_slot(NULL, device->fs_info->dev_root, &key, path, 0, 0);
+	if (ret) {
+		for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
 			btrfs_dev_stat_set(device, i, 0);
 		device->dev_stats_valid = 1;
 		btrfs_release_path(path);
-		वापस ret < 0 ? ret : 0;
-	पूर्ण
+		return ret < 0 ? ret : 0;
+	}
 	slot = path->slots[0];
 	eb = path->nodes[0];
 	item_size = btrfs_item_size_nr(eb, slot);
 
-	ptr = btrfs_item_ptr(eb, slot, काष्ठा btrfs_dev_stats_item);
+	ptr = btrfs_item_ptr(eb, slot, struct btrfs_dev_stats_item);
 
-	क्रम (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++) अणु
-		अगर (item_size >= (1 + i) * माप(__le64))
+	for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++) {
+		if (item_size >= (1 + i) * sizeof(__le64))
 			btrfs_dev_stat_set(device, i,
 					   btrfs_dev_stats_value(eb, ptr, i));
-		अन्यथा
+		else
 			btrfs_dev_stat_set(device, i, 0);
-	पूर्ण
+	}
 
 	device->dev_stats_valid = 1;
-	btrfs_dev_stat_prपूर्णांक_on_load(device);
+	btrfs_dev_stat_print_on_load(device);
 	btrfs_release_path(path);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक btrfs_init_dev_stats(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices, *seed_devs;
-	काष्ठा btrfs_device *device;
-	काष्ठा btrfs_path *path = शून्य;
-	पूर्णांक ret = 0;
+int btrfs_init_dev_stats(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices, *seed_devs;
+	struct btrfs_device *device;
+	struct btrfs_path *path = NULL;
+	int ret = 0;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
 	mutex_lock(&fs_devices->device_list_mutex);
-	list_क्रम_each_entry(device, &fs_devices->devices, dev_list) अणु
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
 		ret = btrfs_device_init_dev_stats(device, path);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
-	list_क्रम_each_entry(seed_devs, &fs_devices->seed_list, seed_list) अणु
-		list_क्रम_each_entry(device, &seed_devs->devices, dev_list) अणु
+		if (ret)
+			goto out;
+	}
+	list_for_each_entry(seed_devs, &fs_devices->seed_list, seed_list) {
+		list_for_each_entry(device, &seed_devs->devices, dev_list) {
 			ret = btrfs_device_init_dev_stats(device, path);
-			अगर (ret)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (ret)
+				goto out;
+		}
+	}
 out:
 	mutex_unlock(&fs_devices->device_list_mutex);
 
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
-अटल पूर्णांक update_dev_stat_item(काष्ठा btrfs_trans_handle *trans,
-				काष्ठा btrfs_device *device)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_root *dev_root = fs_info->dev_root;
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_key key;
-	काष्ठा extent_buffer *eb;
-	काष्ठा btrfs_dev_stats_item *ptr;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int update_dev_stat_item(struct btrfs_trans_handle *trans,
+				struct btrfs_device *device)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_root *dev_root = fs_info->dev_root;
+	struct btrfs_path *path;
+	struct btrfs_key key;
+	struct extent_buffer *eb;
+	struct btrfs_dev_stats_item *ptr;
+	int ret;
+	int i;
 
 	key.objectid = BTRFS_DEV_STATS_OBJECTID;
 	key.type = BTRFS_PERSISTENT_ITEM_KEY;
 	key.offset = device->devid;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 	ret = btrfs_search_slot(trans, dev_root, &key, path, -1, 1);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		btrfs_warn_in_rcu(fs_info,
 			"error %d while searching for dev_stats item for device %s",
 			      ret, rcu_str_deref(device->name));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (ret == 0 &&
-	    btrfs_item_size_nr(path->nodes[0], path->slots[0]) < माप(*ptr)) अणु
+	if (ret == 0 &&
+	    btrfs_item_size_nr(path->nodes[0], path->slots[0]) < sizeof(*ptr)) {
 		/* need to delete old one and insert a new one */
 		ret = btrfs_del_item(trans, dev_root, path);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			btrfs_warn_in_rcu(fs_info,
 				"delete too small dev_stats item for device %s failed %d",
 				      rcu_str_deref(device->name), ret);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		ret = 1;
-	पूर्ण
+	}
 
-	अगर (ret == 1) अणु
+	if (ret == 1) {
 		/* need to insert a new item */
 		btrfs_release_path(path);
 		ret = btrfs_insert_empty_item(trans, dev_root, path,
-					      &key, माप(*ptr));
-		अगर (ret < 0) अणु
+					      &key, sizeof(*ptr));
+		if (ret < 0) {
 			btrfs_warn_in_rcu(fs_info,
 				"insert dev_stats item for device %s failed %d",
 				rcu_str_deref(device->name), ret);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	eb = path->nodes[0];
-	ptr = btrfs_item_ptr(eb, path->slots[0], काष्ठा btrfs_dev_stats_item);
-	क्रम (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
+	ptr = btrfs_item_ptr(eb, path->slots[0], struct btrfs_dev_stats_item);
+	for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
 		btrfs_set_dev_stats_value(eb, ptr, i,
-					  btrfs_dev_stat_पढ़ो(device, i));
+					  btrfs_dev_stat_read(device, i));
 	btrfs_mark_buffer_dirty(eb);
 
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
 /*
  * called from commit_transaction. Writes all changed device stats to disk.
  */
-पूर्णांक btrfs_run_dev_stats(काष्ठा btrfs_trans_handle *trans)
-अणु
-	काष्ठा btrfs_fs_info *fs_info = trans->fs_info;
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
-	काष्ठा btrfs_device *device;
-	पूर्णांक stats_cnt;
-	पूर्णांक ret = 0;
+int btrfs_run_dev_stats(struct btrfs_trans_handle *trans)
+{
+	struct btrfs_fs_info *fs_info = trans->fs_info;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+	struct btrfs_device *device;
+	int stats_cnt;
+	int ret = 0;
 
 	mutex_lock(&fs_devices->device_list_mutex);
-	list_क्रम_each_entry(device, &fs_devices->devices, dev_list) अणु
-		stats_cnt = atomic_पढ़ो(&device->dev_stats_ccnt);
-		अगर (!device->dev_stats_valid || stats_cnt == 0)
-			जारी;
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+		stats_cnt = atomic_read(&device->dev_stats_ccnt);
+		if (!device->dev_stats_valid || stats_cnt == 0)
+			continue;
 
 
 		/*
 		 * There is a LOAD-LOAD control dependency between the value of
 		 * dev_stats_ccnt and updating the on-disk values which requires
-		 * पढ़ोing the in-memory counters. Such control dependencies
-		 * require explicit पढ़ो memory barriers.
+		 * reading the in-memory counters. Such control dependencies
+		 * require explicit read memory barriers.
 		 *
-		 * This memory barriers pairs with smp_mb__beक्रमe_atomic in
+		 * This memory barriers pairs with smp_mb__before_atomic in
 		 * btrfs_dev_stat_inc/btrfs_dev_stat_set and with the full
 		 * barrier implied by atomic_xchg in
-		 * btrfs_dev_stats_पढ़ो_and_reset
+		 * btrfs_dev_stats_read_and_reset
 		 */
 		smp_rmb();
 
 		ret = update_dev_stat_item(trans, device);
-		अगर (!ret)
+		if (!ret)
 			atomic_sub(stats_cnt, &device->dev_stats_ccnt);
-	पूर्ण
+	}
 	mutex_unlock(&fs_devices->device_list_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम btrfs_dev_stat_inc_and_prपूर्णांक(काष्ठा btrfs_device *dev, पूर्णांक index)
-अणु
+void btrfs_dev_stat_inc_and_print(struct btrfs_device *dev, int index)
+{
 	btrfs_dev_stat_inc(dev, index);
-	btrfs_dev_stat_prपूर्णांक_on_error(dev);
-पूर्ण
+	btrfs_dev_stat_print_on_error(dev);
+}
 
-अटल व्योम btrfs_dev_stat_prपूर्णांक_on_error(काष्ठा btrfs_device *dev)
-अणु
-	अगर (!dev->dev_stats_valid)
-		वापस;
+static void btrfs_dev_stat_print_on_error(struct btrfs_device *dev)
+{
+	if (!dev->dev_stats_valid)
+		return;
 	btrfs_err_rl_in_rcu(dev->fs_info,
 		"bdev %s errs: wr %u, rd %u, flush %u, corrupt %u, gen %u",
 			   rcu_str_deref(dev->name),
-			   btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_WRITE_ERRS),
-			   btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_READ_ERRS),
-			   btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_FLUSH_ERRS),
-			   btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_CORRUPTION_ERRS),
-			   btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_GENERATION_ERRS));
-पूर्ण
+			   btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_WRITE_ERRS),
+			   btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_READ_ERRS),
+			   btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_FLUSH_ERRS),
+			   btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_CORRUPTION_ERRS),
+			   btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_GENERATION_ERRS));
+}
 
-अटल व्योम btrfs_dev_stat_prपूर्णांक_on_load(काष्ठा btrfs_device *dev)
-अणु
-	पूर्णांक i;
+static void btrfs_dev_stat_print_on_load(struct btrfs_device *dev)
+{
+	int i;
 
-	क्रम (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
-		अगर (btrfs_dev_stat_पढ़ो(dev, i) != 0)
-			अवरोध;
-	अगर (i == BTRFS_DEV_STAT_VALUES_MAX)
-		वापस; /* all values == 0, suppress message */
+	for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
+		if (btrfs_dev_stat_read(dev, i) != 0)
+			break;
+	if (i == BTRFS_DEV_STAT_VALUES_MAX)
+		return; /* all values == 0, suppress message */
 
 	btrfs_info_in_rcu(dev->fs_info,
 		"bdev %s errs: wr %u, rd %u, flush %u, corrupt %u, gen %u",
 	       rcu_str_deref(dev->name),
-	       btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_WRITE_ERRS),
-	       btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_READ_ERRS),
-	       btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_FLUSH_ERRS),
-	       btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_CORRUPTION_ERRS),
-	       btrfs_dev_stat_पढ़ो(dev, BTRFS_DEV_STAT_GENERATION_ERRS));
-पूर्ण
+	       btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_WRITE_ERRS),
+	       btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_READ_ERRS),
+	       btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_FLUSH_ERRS),
+	       btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_CORRUPTION_ERRS),
+	       btrfs_dev_stat_read(dev, BTRFS_DEV_STAT_GENERATION_ERRS));
+}
 
-पूर्णांक btrfs_get_dev_stats(काष्ठा btrfs_fs_info *fs_info,
-			काष्ठा btrfs_ioctl_get_dev_stats *stats)
-अणु
-	काष्ठा btrfs_device *dev;
-	काष्ठा btrfs_fs_devices *fs_devices = fs_info->fs_devices;
-	पूर्णांक i;
+int btrfs_get_dev_stats(struct btrfs_fs_info *fs_info,
+			struct btrfs_ioctl_get_dev_stats *stats)
+{
+	struct btrfs_device *dev;
+	struct btrfs_fs_devices *fs_devices = fs_info->fs_devices;
+	int i;
 
 	mutex_lock(&fs_devices->device_list_mutex);
-	dev = btrfs_find_device(fs_info->fs_devices, stats->devid, शून्य, शून्य);
+	dev = btrfs_find_device(fs_info->fs_devices, stats->devid, NULL, NULL);
 	mutex_unlock(&fs_devices->device_list_mutex);
 
-	अगर (!dev) अणु
+	if (!dev) {
 		btrfs_warn(fs_info, "get dev_stats failed, device not found");
-		वापस -ENODEV;
-	पूर्ण अन्यथा अगर (!dev->dev_stats_valid) अणु
+		return -ENODEV;
+	} else if (!dev->dev_stats_valid) {
 		btrfs_warn(fs_info, "get dev_stats failed, not yet valid");
-		वापस -ENODEV;
-	पूर्ण अन्यथा अगर (stats->flags & BTRFS_DEV_STATS_RESET) अणु
-		क्रम (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++) अणु
-			अगर (stats->nr_items > i)
+		return -ENODEV;
+	} else if (stats->flags & BTRFS_DEV_STATS_RESET) {
+		for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++) {
+			if (stats->nr_items > i)
 				stats->values[i] =
-					btrfs_dev_stat_पढ़ो_and_reset(dev, i);
-			अन्यथा
+					btrfs_dev_stat_read_and_reset(dev, i);
+			else
 				btrfs_dev_stat_set(dev, i, 0);
-		पूर्ण
+		}
 		btrfs_info(fs_info, "device stats zeroed by %s (%d)",
 			   current->comm, task_pid_nr(current));
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
-			अगर (stats->nr_items > i)
-				stats->values[i] = btrfs_dev_stat_पढ़ो(dev, i);
-	पूर्ण
-	अगर (stats->nr_items > BTRFS_DEV_STAT_VALUES_MAX)
+	} else {
+		for (i = 0; i < BTRFS_DEV_STAT_VALUES_MAX; i++)
+			if (stats->nr_items > i)
+				stats->values[i] = btrfs_dev_stat_read(dev, i);
+	}
+	if (stats->nr_items > BTRFS_DEV_STAT_VALUES_MAX)
 		stats->nr_items = BTRFS_DEV_STAT_VALUES_MAX;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Update the size and bytes used क्रम each device where it changed.  This is
- * delayed since we would otherwise get errors जबतक writing out the
+ * Update the size and bytes used for each device where it changed.  This is
+ * delayed since we would otherwise get errors while writing out the
  * superblocks.
  *
  * Must be invoked during transaction commit.
  */
-व्योम btrfs_commit_device_sizes(काष्ठा btrfs_transaction *trans)
-अणु
-	काष्ठा btrfs_device *curr, *next;
+void btrfs_commit_device_sizes(struct btrfs_transaction *trans)
+{
+	struct btrfs_device *curr, *next;
 
 	ASSERT(trans->state == TRANS_STATE_COMMIT_DOING);
 
-	अगर (list_empty(&trans->dev_update_list))
-		वापस;
+	if (list_empty(&trans->dev_update_list))
+		return;
 
 	/*
-	 * We करोn't need the device_list_mutex here.  This list is owned by the
-	 * transaction and the transaction must complete beक्रमe the device is
+	 * We don't need the device_list_mutex here.  This list is owned by the
+	 * transaction and the transaction must complete before the device is
 	 * released.
 	 */
 	mutex_lock(&trans->fs_info->chunk_mutex);
-	list_क्रम_each_entry_safe(curr, next, &trans->dev_update_list,
-				 post_commit_list) अणु
+	list_for_each_entry_safe(curr, next, &trans->dev_update_list,
+				 post_commit_list) {
 		list_del_init(&curr->post_commit_list);
 		curr->commit_total_bytes = curr->disk_total_bytes;
 		curr->commit_bytes_used = curr->bytes_used;
-	पूर्ण
+	}
 	mutex_unlock(&trans->fs_info->chunk_mutex);
-पूर्ण
+}
 
 /*
- * Multiplicity factor क्रम simple profiles: DUP, RAID1-like and RAID10.
+ * Multiplicity factor for simple profiles: DUP, RAID1-like and RAID10.
  */
-पूर्णांक btrfs_bg_type_to_factor(u64 flags)
-अणु
-	स्थिर पूर्णांक index = btrfs_bg_flags_to_raid_index(flags);
+int btrfs_bg_type_to_factor(u64 flags)
+{
+	const int index = btrfs_bg_flags_to_raid_index(flags);
 
-	वापस btrfs_raid_array[index].ncopies;
-पूर्ण
+	return btrfs_raid_array[index].ncopies;
+}
 
 
 
-अटल पूर्णांक verअगरy_one_dev_extent(काष्ठा btrfs_fs_info *fs_info,
+static int verify_one_dev_extent(struct btrfs_fs_info *fs_info,
 				 u64 chunk_offset, u64 devid,
 				 u64 physical_offset, u64 physical_len)
-अणु
-	काष्ठा extent_map_tree *em_tree = &fs_info->mapping_tree;
-	काष्ठा extent_map *em;
-	काष्ठा map_lookup *map;
-	काष्ठा btrfs_device *dev;
+{
+	struct extent_map_tree *em_tree = &fs_info->mapping_tree;
+	struct extent_map *em;
+	struct map_lookup *map;
+	struct btrfs_device *dev;
 	u64 stripe_len;
 	bool found = false;
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
-	पढ़ो_lock(&em_tree->lock);
+	read_lock(&em_tree->lock);
 	em = lookup_extent_mapping(em_tree, chunk_offset, 1);
-	पढ़ो_unlock(&em_tree->lock);
+	read_unlock(&em_tree->lock);
 
-	अगर (!em) अणु
+	if (!em) {
 		btrfs_err(fs_info,
 "dev extent physical offset %llu on devid %llu doesn't have corresponding chunk",
 			  physical_offset, devid);
 		ret = -EUCLEAN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	map = em->map_lookup;
 	stripe_len = calc_stripe_length(map->type, em->len, map->num_stripes);
-	अगर (physical_len != stripe_len) अणु
+	if (physical_len != stripe_len) {
 		btrfs_err(fs_info,
 "dev extent physical offset %llu on devid %llu length doesn't match chunk %llu, have %llu expect %llu",
 			  physical_offset, devid, em->start, physical_len,
 			  stripe_len);
 		ret = -EUCLEAN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < map->num_stripes; i++) अणु
-		अगर (map->stripes[i].dev->devid == devid &&
-		    map->stripes[i].physical == physical_offset) अणु
+	for (i = 0; i < map->num_stripes; i++) {
+		if (map->stripes[i].dev->devid == devid &&
+		    map->stripes[i].physical == physical_offset) {
 			found = true;
-			अगर (map->verअगरied_stripes >= map->num_stripes) अणु
+			if (map->verified_stripes >= map->num_stripes) {
 				btrfs_err(fs_info,
 				"too many dev extents for chunk %llu found",
 					  em->start);
 				ret = -EUCLEAN;
-				जाओ out;
-			पूर्ण
-			map->verअगरied_stripes++;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!found) अणु
+				goto out;
+			}
+			map->verified_stripes++;
+			break;
+		}
+	}
+	if (!found) {
 		btrfs_err(fs_info,
 	"dev extent physical offset %llu devid %llu has no corresponding chunk",
 			physical_offset, devid);
 		ret = -EUCLEAN;
-	पूर्ण
+	}
 
 	/* Make sure no dev extent is beyond device bondary */
-	dev = btrfs_find_device(fs_info->fs_devices, devid, शून्य, शून्य);
-	अगर (!dev) अणु
+	dev = btrfs_find_device(fs_info->fs_devices, devid, NULL, NULL);
+	if (!dev) {
 		btrfs_err(fs_info, "failed to find devid %llu", devid);
 		ret = -EUCLEAN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (physical_offset + physical_len > dev->disk_total_bytes) अणु
+	if (physical_offset + physical_len > dev->disk_total_bytes) {
 		btrfs_err(fs_info,
 "dev extent devid %llu physical offset %llu len %llu is beyond device boundary %llu",
 			  devid, physical_offset, physical_len,
 			  dev->disk_total_bytes);
 		ret = -EUCLEAN;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dev->zone_info) अणु
+	if (dev->zone_info) {
 		u64 zone_size = dev->zone_info->zone_size;
 
-		अगर (!IS_ALIGNED(physical_offset, zone_size) ||
-		    !IS_ALIGNED(physical_len, zone_size)) अणु
+		if (!IS_ALIGNED(physical_offset, zone_size) ||
+		    !IS_ALIGNED(physical_len, zone_size)) {
 			btrfs_err(fs_info,
 "zoned: dev extent devid %llu physical offset %llu len %llu is not aligned to device zone",
 				  devid, physical_offset, physical_len);
 			ret = -EUCLEAN;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 out:
-	मुक्त_extent_map(em);
-	वापस ret;
-पूर्ण
+	free_extent_map(em);
+	return ret;
+}
 
-अटल पूर्णांक verअगरy_chunk_dev_extent_mapping(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा extent_map_tree *em_tree = &fs_info->mapping_tree;
-	काष्ठा extent_map *em;
-	काष्ठा rb_node *node;
-	पूर्णांक ret = 0;
+static int verify_chunk_dev_extent_mapping(struct btrfs_fs_info *fs_info)
+{
+	struct extent_map_tree *em_tree = &fs_info->mapping_tree;
+	struct extent_map *em;
+	struct rb_node *node;
+	int ret = 0;
 
-	पढ़ो_lock(&em_tree->lock);
-	क्रम (node = rb_first_cached(&em_tree->map); node; node = rb_next(node)) अणु
-		em = rb_entry(node, काष्ठा extent_map, rb_node);
-		अगर (em->map_lookup->num_stripes !=
-		    em->map_lookup->verअगरied_stripes) अणु
+	read_lock(&em_tree->lock);
+	for (node = rb_first_cached(&em_tree->map); node; node = rb_next(node)) {
+		em = rb_entry(node, struct extent_map, rb_node);
+		if (em->map_lookup->num_stripes !=
+		    em->map_lookup->verified_stripes) {
 			btrfs_err(fs_info,
 			"chunk %llu has missing dev extent, have %d expect %d",
-				  em->start, em->map_lookup->verअगरied_stripes,
+				  em->start, em->map_lookup->verified_stripes,
 				  em->map_lookup->num_stripes);
 			ret = -EUCLEAN;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 out:
-	पढ़ो_unlock(&em_tree->lock);
-	वापस ret;
-पूर्ण
+	read_unlock(&em_tree->lock);
+	return ret;
+}
 
 /*
  * Ensure that all dev extents are mapped to correct chunk, otherwise
- * later chunk allocation/मुक्त would cause unexpected behavior.
+ * later chunk allocation/free would cause unexpected behavior.
  *
  * NOTE: This will iterate through the whole device tree, which should be of
- * the same size level as the chunk tree.  This slightly increases mount समय.
+ * the same size level as the chunk tree.  This slightly increases mount time.
  */
-पूर्णांक btrfs_verअगरy_dev_extents(काष्ठा btrfs_fs_info *fs_info)
-अणु
-	काष्ठा btrfs_path *path;
-	काष्ठा btrfs_root *root = fs_info->dev_root;
-	काष्ठा btrfs_key key;
+int btrfs_verify_dev_extents(struct btrfs_fs_info *fs_info)
+{
+	struct btrfs_path *path;
+	struct btrfs_root *root = fs_info->dev_root;
+	struct btrfs_key key;
 	u64 prev_devid = 0;
 	u64 prev_dev_ext_end = 0;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	/*
-	 * We करोn't have a dev_root because we mounted with ignorebadroots and
-	 * failed to load the root, so we want to skip the verअगरication in this
-	 * हाल क्रम sure.
+	 * We don't have a dev_root because we mounted with ignorebadroots and
+	 * failed to load the root, so we want to skip the verification in this
+	 * case for sure.
 	 *
-	 * However अगर the dev root is fine, but the tree itself is corrupted
-	 * we'd still fail to mount.  This verअगरication is only to make sure
-	 * ग_लिखोs can happen safely, so instead just bypass this check
-	 * completely in the हाल of IGNOREBADROOTS.
+	 * However if the dev root is fine, but the tree itself is corrupted
+	 * we'd still fail to mount.  This verification is only to make sure
+	 * writes can happen safely, so instead just bypass this check
+	 * completely in the case of IGNOREBADROOTS.
 	 */
-	अगर (btrfs_test_opt(fs_info, IGNOREBADROOTS))
-		वापस 0;
+	if (btrfs_test_opt(fs_info, IGNOREBADROOTS))
+		return 0;
 
 	key.objectid = 1;
 	key.type = BTRFS_DEV_EXTENT_KEY;
 	key.offset = 0;
 
 	path = btrfs_alloc_path();
-	अगर (!path)
-		वापस -ENOMEM;
+	if (!path)
+		return -ENOMEM;
 
-	path->पढ़ोa = READA_FORWARD;
-	ret = btrfs_search_slot(शून्य, root, &key, path, 0, 0);
-	अगर (ret < 0)
-		जाओ out;
+	path->reada = READA_FORWARD;
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto out;
 
-	अगर (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) अणु
+	if (path->slots[0] >= btrfs_header_nritems(path->nodes[0])) {
 		ret = btrfs_next_item(root, path);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		/* No dev extents at all? Not good */
-		अगर (ret > 0) अणु
+		if (ret > 0) {
 			ret = -EUCLEAN;
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	जबतक (1) अणु
-		काष्ठा extent_buffer *leaf = path->nodes[0];
-		काष्ठा btrfs_dev_extent *dext;
-		पूर्णांक slot = path->slots[0];
+			goto out;
+		}
+	}
+	while (1) {
+		struct extent_buffer *leaf = path->nodes[0];
+		struct btrfs_dev_extent *dext;
+		int slot = path->slots[0];
 		u64 chunk_offset;
 		u64 physical_offset;
 		u64 physical_len;
 		u64 devid;
 
 		btrfs_item_key_to_cpu(leaf, &key, slot);
-		अगर (key.type != BTRFS_DEV_EXTENT_KEY)
-			अवरोध;
+		if (key.type != BTRFS_DEV_EXTENT_KEY)
+			break;
 		devid = key.objectid;
 		physical_offset = key.offset;
 
-		dext = btrfs_item_ptr(leaf, slot, काष्ठा btrfs_dev_extent);
+		dext = btrfs_item_ptr(leaf, slot, struct btrfs_dev_extent);
 		chunk_offset = btrfs_dev_extent_chunk_offset(leaf, dext);
 		physical_len = btrfs_dev_extent_length(leaf, dext);
 
-		/* Check अगर this dev extent overlaps with the previous one */
-		अगर (devid == prev_devid && physical_offset < prev_dev_ext_end) अणु
+		/* Check if this dev extent overlaps with the previous one */
+		if (devid == prev_devid && physical_offset < prev_dev_ext_end) {
 			btrfs_err(fs_info,
 "dev extent devid %llu physical offset %llu overlap with previous dev extent end %llu",
 				  devid, physical_offset, prev_dev_ext_end);
 			ret = -EUCLEAN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		ret = verअगरy_one_dev_extent(fs_info, chunk_offset, devid,
+		ret = verify_one_dev_extent(fs_info, chunk_offset, devid,
 					    physical_offset, physical_len);
-		अगर (ret < 0)
-			जाओ out;
+		if (ret < 0)
+			goto out;
 		prev_devid = devid;
 		prev_dev_ext_end = physical_offset + physical_len;
 
 		ret = btrfs_next_item(root, path);
-		अगर (ret < 0)
-			जाओ out;
-		अगर (ret > 0) अणु
+		if (ret < 0)
+			goto out;
+		if (ret > 0) {
 			ret = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Ensure all chunks have corresponding dev extents */
-	ret = verअगरy_chunk_dev_extent_mapping(fs_info);
+	ret = verify_chunk_dev_extent_mapping(fs_info);
 out:
-	btrfs_मुक्त_path(path);
-	वापस ret;
-पूर्ण
+	btrfs_free_path(path);
+	return ret;
+}
 
 /*
  * Check whether the given block group or device is pinned by any inode being
  * used as a swapfile.
  */
-bool btrfs_pinned_by_swapfile(काष्ठा btrfs_fs_info *fs_info, व्योम *ptr)
-अणु
-	काष्ठा btrfs_swapfile_pin *sp;
-	काष्ठा rb_node *node;
+bool btrfs_pinned_by_swapfile(struct btrfs_fs_info *fs_info, void *ptr)
+{
+	struct btrfs_swapfile_pin *sp;
+	struct rb_node *node;
 
 	spin_lock(&fs_info->swapfile_pins_lock);
 	node = fs_info->swapfile_pins.rb_node;
-	जबतक (node) अणु
-		sp = rb_entry(node, काष्ठा btrfs_swapfile_pin, node);
-		अगर (ptr < sp->ptr)
+	while (node) {
+		sp = rb_entry(node, struct btrfs_swapfile_pin, node);
+		if (ptr < sp->ptr)
 			node = node->rb_left;
-		अन्यथा अगर (ptr > sp->ptr)
+		else if (ptr > sp->ptr)
 			node = node->rb_right;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 	spin_unlock(&fs_info->swapfile_pins_lock);
-	वापस node != शून्य;
-पूर्ण
+	return node != NULL;
+}
 
-अटल पूर्णांक relocating_repair_kthपढ़ो(व्योम *data)
-अणु
-	काष्ठा btrfs_block_group *cache = (काष्ठा btrfs_block_group *)data;
-	काष्ठा btrfs_fs_info *fs_info = cache->fs_info;
+static int relocating_repair_kthread(void *data)
+{
+	struct btrfs_block_group *cache = (struct btrfs_block_group *)data;
+	struct btrfs_fs_info *fs_info = cache->fs_info;
 	u64 target;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	target = cache->start;
 	btrfs_put_block_group(cache);
 
-	अगर (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE)) अणु
+	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_BALANCE)) {
 		btrfs_info(fs_info,
 			   "zoned: skip relocating block group %llu to repair: EBUSY",
 			   target);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
 	mutex_lock(&fs_info->reclaim_bgs_lock);
 
 	/* Ensure block group still exists */
 	cache = btrfs_lookup_block_group(fs_info, target);
-	अगर (!cache)
-		जाओ out;
+	if (!cache)
+		goto out;
 
-	अगर (!cache->relocating_repair)
-		जाओ out;
+	if (!cache->relocating_repair)
+		goto out;
 
 	ret = btrfs_may_alloc_data_chunk(fs_info, target);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
 	btrfs_info(fs_info,
 		   "zoned: relocating block group %llu to repair IO failure",
@@ -8090,37 +8089,37 @@ bool btrfs_pinned_by_swapfile(काष्ठा btrfs_fs_info *fs_info, व्�
 	ret = btrfs_relocate_chunk(fs_info, target);
 
 out:
-	अगर (cache)
+	if (cache)
 		btrfs_put_block_group(cache);
 	mutex_unlock(&fs_info->reclaim_bgs_lock);
 	btrfs_exclop_finish(fs_info);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक btrfs_repair_one_zone(काष्ठा btrfs_fs_info *fs_info, u64 logical)
-अणु
-	काष्ठा btrfs_block_group *cache;
+int btrfs_repair_one_zone(struct btrfs_fs_info *fs_info, u64 logical)
+{
+	struct btrfs_block_group *cache;
 
 	/* Do not attempt to repair in degraded state */
-	अगर (btrfs_test_opt(fs_info, DEGRADED))
-		वापस 0;
+	if (btrfs_test_opt(fs_info, DEGRADED))
+		return 0;
 
 	cache = btrfs_lookup_block_group(fs_info, logical);
-	अगर (!cache)
-		वापस 0;
+	if (!cache)
+		return 0;
 
 	spin_lock(&cache->lock);
-	अगर (cache->relocating_repair) अणु
+	if (cache->relocating_repair) {
 		spin_unlock(&cache->lock);
 		btrfs_put_block_group(cache);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	cache->relocating_repair = 1;
 	spin_unlock(&cache->lock);
 
-	kthपढ़ो_run(relocating_repair_kthपढ़ो, cache,
+	kthread_run(relocating_repair_kthread, cache,
 		    "btrfs-relocating-repair");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

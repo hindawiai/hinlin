@@ -1,66 +1,65 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
+// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#समावेश "dr_types.h"
+#include "dr_types.h"
 
-अटल bool dr_mask_is_smac_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->smac_47_16 || spec->smac_15_0);
-पूर्ण
+static bool dr_mask_is_smac_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->smac_47_16 || spec->smac_15_0);
+}
 
-अटल bool dr_mask_is_dmac_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->dmac_47_16 || spec->dmac_15_0);
-पूर्ण
+static bool dr_mask_is_dmac_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->dmac_47_16 || spec->dmac_15_0);
+}
 
-अटल bool dr_mask_is_src_addr_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->src_ip_127_96 || spec->src_ip_95_64 ||
+static bool dr_mask_is_src_addr_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->src_ip_127_96 || spec->src_ip_95_64 ||
 		spec->src_ip_63_32 || spec->src_ip_31_0);
-पूर्ण
+}
 
-अटल bool dr_mask_is_dst_addr_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->dst_ip_127_96 || spec->dst_ip_95_64 ||
+static bool dr_mask_is_dst_addr_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->dst_ip_127_96 || spec->dst_ip_95_64 ||
 		spec->dst_ip_63_32 || spec->dst_ip_31_0);
-पूर्ण
+}
 
-अटल bool dr_mask_is_l3_base_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->ip_protocol || spec->frag || spec->tcp_flags ||
+static bool dr_mask_is_l3_base_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->ip_protocol || spec->frag || spec->tcp_flags ||
 		spec->ip_ecn || spec->ip_dscp);
-पूर्ण
+}
 
-अटल bool dr_mask_is_tcp_udp_base_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->tcp_sport || spec->tcp_dport ||
+static bool dr_mask_is_tcp_udp_base_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->tcp_sport || spec->tcp_dport ||
 		spec->udp_sport || spec->udp_dport);
-पूर्ण
+}
 
-अटल bool dr_mask_is_ipv4_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (spec->dst_ip_31_0 || spec->src_ip_31_0);
-पूर्ण
+static bool dr_mask_is_ipv4_set(struct mlx5dr_match_spec *spec)
+{
+	return (spec->dst_ip_31_0 || spec->src_ip_31_0);
+}
 
-अटल bool dr_mask_is_ipv4_5_tuple_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस (dr_mask_is_l3_base_set(spec) ||
+static bool dr_mask_is_ipv4_5_tuple_set(struct mlx5dr_match_spec *spec)
+{
+	return (dr_mask_is_l3_base_set(spec) ||
 		dr_mask_is_tcp_udp_base_set(spec) ||
 		dr_mask_is_ipv4_set(spec));
-पूर्ण
+}
 
-अटल bool dr_mask_is_eth_l2_tnl_set(काष्ठा mlx5dr_match_misc *misc)
-अणु
-	वापस misc->vxlan_vni;
-पूर्ण
+static bool dr_mask_is_eth_l2_tnl_set(struct mlx5dr_match_misc *misc)
+{
+	return misc->vxlan_vni;
+}
 
-अटल bool dr_mask_is_ttl_set(काष्ठा mlx5dr_match_spec *spec)
-अणु
-	वापस spec->ttl_hoplimit;
-पूर्ण
+static bool dr_mask_is_ttl_set(struct mlx5dr_match_spec *spec)
+{
+	return spec->ttl_hoplimit;
+}
 
-#घोषणा DR_MASK_IS_L2_DST(_spec, _misc, _inner_outer) (_spec.first_vid || \
+#define DR_MASK_IS_L2_DST(_spec, _misc, _inner_outer) (_spec.first_vid || \
 	(_spec).first_cfi || (_spec).first_prio || (_spec).cvlan_tag || \
 	(_spec).svlan_tag || (_spec).dmac_47_16 || (_spec).dmac_15_0 || \
 	(_spec).ethertype || (_spec).ip_version || \
@@ -70,163 +69,163 @@
 	(_misc)._inner_outer##_second_cvlan_tag || \
 	(_misc)._inner_outer##_second_svlan_tag)
 
-#घोषणा DR_MASK_IS_ETH_L4_SET(_spec, _misc, _inner_outer) ( \
+#define DR_MASK_IS_ETH_L4_SET(_spec, _misc, _inner_outer) ( \
 	dr_mask_is_l3_base_set(&(_spec)) || \
 	dr_mask_is_tcp_udp_base_set(&(_spec)) || \
 	dr_mask_is_ttl_set(&(_spec)) || \
 	(_misc)._inner_outer##_ipv6_flow_label)
 
-#घोषणा DR_MASK_IS_ETH_L4_MISC_SET(_misc3, _inner_outer) ( \
+#define DR_MASK_IS_ETH_L4_MISC_SET(_misc3, _inner_outer) ( \
 	(_misc3)._inner_outer##_tcp_seq_num || \
 	(_misc3)._inner_outer##_tcp_ack_num)
 
-#घोषणा DR_MASK_IS_FIRST_MPLS_SET(_misc2, _inner_outer) ( \
+#define DR_MASK_IS_FIRST_MPLS_SET(_misc2, _inner_outer) ( \
 	(_misc2)._inner_outer##_first_mpls_label || \
 	(_misc2)._inner_outer##_first_mpls_exp || \
 	(_misc2)._inner_outer##_first_mpls_s_bos || \
 	(_misc2)._inner_outer##_first_mpls_ttl)
 
-अटल bool dr_mask_is_tnl_gre_set(काष्ठा mlx5dr_match_misc *misc)
-अणु
-	वापस (misc->gre_key_h || misc->gre_key_l ||
+static bool dr_mask_is_tnl_gre_set(struct mlx5dr_match_misc *misc)
+{
+	return (misc->gre_key_h || misc->gre_key_l ||
 		misc->gre_protocol || misc->gre_c_present ||
 		misc->gre_k_present || misc->gre_s_present);
-पूर्ण
+}
 
-#घोषणा DR_MASK_IS_OUTER_MPLS_OVER_GRE_SET(_misc) (\
+#define DR_MASK_IS_OUTER_MPLS_OVER_GRE_SET(_misc) (\
 	(_misc)->outer_first_mpls_over_gre_label || \
 	(_misc)->outer_first_mpls_over_gre_exp || \
 	(_misc)->outer_first_mpls_over_gre_s_bos || \
 	(_misc)->outer_first_mpls_over_gre_ttl)
 
-#घोषणा DR_MASK_IS_OUTER_MPLS_OVER_UDP_SET(_misc) (\
+#define DR_MASK_IS_OUTER_MPLS_OVER_UDP_SET(_misc) (\
 	(_misc)->outer_first_mpls_over_udp_label || \
 	(_misc)->outer_first_mpls_over_udp_exp || \
 	(_misc)->outer_first_mpls_over_udp_s_bos || \
 	(_misc)->outer_first_mpls_over_udp_ttl)
 
-अटल bool
-dr_mask_is_vxlan_gpe_set(काष्ठा mlx5dr_match_misc3 *misc3)
-अणु
-	वापस (misc3->outer_vxlan_gpe_vni ||
+static bool
+dr_mask_is_vxlan_gpe_set(struct mlx5dr_match_misc3 *misc3)
+{
+	return (misc3->outer_vxlan_gpe_vni ||
 		misc3->outer_vxlan_gpe_next_protocol ||
 		misc3->outer_vxlan_gpe_flags);
-पूर्ण
+}
 
-अटल bool
-dr_matcher_supp_vxlan_gpe(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस (caps->sw_क्रमmat_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
+static bool
+dr_matcher_supp_vxlan_gpe(struct mlx5dr_cmd_caps *caps)
+{
+	return (caps->sw_format_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
 	       (caps->flex_protocols & MLX5_FLEX_PARSER_VXLAN_GPE_ENABLED);
-पूर्ण
+}
 
-अटल bool
-dr_mask_is_tnl_vxlan_gpe(काष्ठा mlx5dr_match_param *mask,
-			 काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस dr_mask_is_vxlan_gpe_set(&mask->misc3) &&
+static bool
+dr_mask_is_tnl_vxlan_gpe(struct mlx5dr_match_param *mask,
+			 struct mlx5dr_domain *dmn)
+{
+	return dr_mask_is_vxlan_gpe_set(&mask->misc3) &&
 	       dr_matcher_supp_vxlan_gpe(&dmn->info.caps);
-पूर्ण
+}
 
-अटल bool dr_mask_is_tnl_geneve_set(काष्ठा mlx5dr_match_misc *misc)
-अणु
-	वापस misc->geneve_vni ||
+static bool dr_mask_is_tnl_geneve_set(struct mlx5dr_match_misc *misc)
+{
+	return misc->geneve_vni ||
 	       misc->geneve_oam ||
 	       misc->geneve_protocol_type ||
 	       misc->geneve_opt_len;
-पूर्ण
+}
 
-अटल bool dr_mask_is_tnl_geneve_tlv_opt(काष्ठा mlx5dr_match_misc3 *misc3)
-अणु
-	वापस misc3->geneve_tlv_option_0_data;
-पूर्ण
+static bool dr_mask_is_tnl_geneve_tlv_opt(struct mlx5dr_match_misc3 *misc3)
+{
+	return misc3->geneve_tlv_option_0_data;
+}
 
-अटल bool
-dr_matcher_supp_tnl_geneve(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस (caps->sw_क्रमmat_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
+static bool
+dr_matcher_supp_tnl_geneve(struct mlx5dr_cmd_caps *caps)
+{
+	return (caps->sw_format_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
 	       (caps->flex_protocols & MLX5_FLEX_PARSER_GENEVE_ENABLED);
-पूर्ण
+}
 
-अटल bool
-dr_mask_is_tnl_geneve(काष्ठा mlx5dr_match_param *mask,
-		      काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस dr_mask_is_tnl_geneve_set(&mask->misc) &&
+static bool
+dr_mask_is_tnl_geneve(struct mlx5dr_match_param *mask,
+		      struct mlx5dr_domain *dmn)
+{
+	return dr_mask_is_tnl_geneve_set(&mask->misc) &&
 	       dr_matcher_supp_tnl_geneve(&dmn->info.caps);
-पूर्ण
+}
 
-अटल bool dr_mask_is_tnl_gtpu_set(काष्ठा mlx5dr_match_misc3 *misc3)
-अणु
-	वापस misc3->gtpu_msg_flags || misc3->gtpu_msg_type || misc3->gtpu_teid;
-पूर्ण
+static bool dr_mask_is_tnl_gtpu_set(struct mlx5dr_match_misc3 *misc3)
+{
+	return misc3->gtpu_msg_flags || misc3->gtpu_msg_type || misc3->gtpu_teid;
+}
 
-अटल bool dr_matcher_supp_tnl_gtpu(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_ENABLED;
-पूर्ण
+static bool dr_matcher_supp_tnl_gtpu(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_gtpu(काष्ठा mlx5dr_match_param *mask,
-				काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस dr_mask_is_tnl_gtpu_set(&mask->misc3) &&
+static bool dr_mask_is_tnl_gtpu(struct mlx5dr_match_param *mask,
+				struct mlx5dr_domain *dmn)
+{
+	return dr_mask_is_tnl_gtpu_set(&mask->misc3) &&
 	       dr_matcher_supp_tnl_gtpu(&dmn->info.caps);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_tnl_gtpu_dw_0(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_DW_0_ENABLED;
-पूर्ण
+static int dr_matcher_supp_tnl_gtpu_dw_0(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_DW_0_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_gtpu_dw_0(काष्ठा mlx5dr_match_param *mask,
-				     काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस mask->misc3.gtpu_dw_0 &&
+static bool dr_mask_is_tnl_gtpu_dw_0(struct mlx5dr_match_param *mask,
+				     struct mlx5dr_domain *dmn)
+{
+	return mask->misc3.gtpu_dw_0 &&
 	       dr_matcher_supp_tnl_gtpu_dw_0(&dmn->info.caps);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_tnl_gtpu_teid(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_TEID_ENABLED;
-पूर्ण
+static int dr_matcher_supp_tnl_gtpu_teid(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_TEID_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_gtpu_teid(काष्ठा mlx5dr_match_param *mask,
-				     काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस mask->misc3.gtpu_teid &&
+static bool dr_mask_is_tnl_gtpu_teid(struct mlx5dr_match_param *mask,
+				     struct mlx5dr_domain *dmn)
+{
+	return mask->misc3.gtpu_teid &&
 	       dr_matcher_supp_tnl_gtpu_teid(&dmn->info.caps);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_tnl_gtpu_dw_2(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_DW_2_ENABLED;
-पूर्ण
+static int dr_matcher_supp_tnl_gtpu_dw_2(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_DW_2_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_gtpu_dw_2(काष्ठा mlx5dr_match_param *mask,
-				     काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस mask->misc3.gtpu_dw_2 &&
+static bool dr_mask_is_tnl_gtpu_dw_2(struct mlx5dr_match_param *mask,
+				     struct mlx5dr_domain *dmn)
+{
+	return mask->misc3.gtpu_dw_2 &&
 	       dr_matcher_supp_tnl_gtpu_dw_2(&dmn->info.caps);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_tnl_gtpu_first_ext(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_FIRST_EXT_DW_0_ENABLED;
-पूर्ण
+static int dr_matcher_supp_tnl_gtpu_first_ext(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & MLX5_FLEX_PARSER_GTPU_FIRST_EXT_DW_0_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_gtpu_first_ext(काष्ठा mlx5dr_match_param *mask,
-					  काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस mask->misc3.gtpu_first_ext_dw_0 &&
+static bool dr_mask_is_tnl_gtpu_first_ext(struct mlx5dr_match_param *mask,
+					  struct mlx5dr_domain *dmn)
+{
+	return mask->misc3.gtpu_first_ext_dw_0 &&
 	       dr_matcher_supp_tnl_gtpu_first_ext(&dmn->info.caps);
-पूर्ण
+}
 
-अटल bool dr_mask_is_tnl_gtpu_flex_parser_0(काष्ठा mlx5dr_match_param *mask,
-					      काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	काष्ठा mlx5dr_cmd_caps *caps = &dmn->info.caps;
+static bool dr_mask_is_tnl_gtpu_flex_parser_0(struct mlx5dr_match_param *mask,
+					      struct mlx5dr_domain *dmn)
+{
+	struct mlx5dr_cmd_caps *caps = &dmn->info.caps;
 
-	वापस (dr_is_flex_parser_0_id(caps->flex_parser_id_gtpu_dw_0) &&
+	return (dr_is_flex_parser_0_id(caps->flex_parser_id_gtpu_dw_0) &&
 		dr_mask_is_tnl_gtpu_dw_0(mask, dmn)) ||
 	       (dr_is_flex_parser_0_id(caps->flex_parser_id_gtpu_teid) &&
 		dr_mask_is_tnl_gtpu_teid(mask, dmn)) ||
@@ -234,14 +233,14 @@ dr_mask_is_tnl_geneve(काष्ठा mlx5dr_match_param *mask,
 		dr_mask_is_tnl_gtpu_dw_2(mask, dmn)) ||
 	       (dr_is_flex_parser_0_id(caps->flex_parser_id_gtpu_first_ext_dw_0) &&
 		dr_mask_is_tnl_gtpu_first_ext(mask, dmn));
-पूर्ण
+}
 
-अटल bool dr_mask_is_tnl_gtpu_flex_parser_1(काष्ठा mlx5dr_match_param *mask,
-					      काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	काष्ठा mlx5dr_cmd_caps *caps = &dmn->info.caps;
+static bool dr_mask_is_tnl_gtpu_flex_parser_1(struct mlx5dr_match_param *mask,
+					      struct mlx5dr_domain *dmn)
+{
+	struct mlx5dr_cmd_caps *caps = &dmn->info.caps;
 
-	वापस (dr_is_flex_parser_1_id(caps->flex_parser_id_gtpu_dw_0) &&
+	return (dr_is_flex_parser_1_id(caps->flex_parser_id_gtpu_dw_0) &&
 		dr_mask_is_tnl_gtpu_dw_0(mask, dmn)) ||
 	       (dr_is_flex_parser_1_id(caps->flex_parser_id_gtpu_teid) &&
 		dr_mask_is_tnl_gtpu_teid(mask, dmn)) ||
@@ -249,80 +248,80 @@ dr_mask_is_tnl_geneve(काष्ठा mlx5dr_match_param *mask,
 		dr_mask_is_tnl_gtpu_dw_2(mask, dmn)) ||
 	       (dr_is_flex_parser_1_id(caps->flex_parser_id_gtpu_first_ext_dw_0) &&
 		dr_mask_is_tnl_gtpu_first_ext(mask, dmn));
-पूर्ण
+}
 
-अटल bool dr_mask_is_tnl_gtpu_any(काष्ठा mlx5dr_match_param *mask,
-				    काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस dr_mask_is_tnl_gtpu_flex_parser_0(mask, dmn) ||
+static bool dr_mask_is_tnl_gtpu_any(struct mlx5dr_match_param *mask,
+				    struct mlx5dr_domain *dmn)
+{
+	return dr_mask_is_tnl_gtpu_flex_parser_0(mask, dmn) ||
 	       dr_mask_is_tnl_gtpu_flex_parser_1(mask, dmn) ||
 	       dr_mask_is_tnl_gtpu(mask, dmn);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_icmp_v4(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस (caps->sw_क्रमmat_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
+static int dr_matcher_supp_icmp_v4(struct mlx5dr_cmd_caps *caps)
+{
+	return (caps->sw_format_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
 	       (caps->flex_protocols & MLX5_FLEX_PARSER_ICMP_V4_ENABLED);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_icmp_v6(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस (caps->sw_क्रमmat_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
+static int dr_matcher_supp_icmp_v6(struct mlx5dr_cmd_caps *caps)
+{
+	return (caps->sw_format_ver == MLX5_STEERING_FORMAT_CONNECTX_6DX) ||
 	       (caps->flex_protocols & MLX5_FLEX_PARSER_ICMP_V6_ENABLED);
-पूर्ण
+}
 
-अटल bool dr_mask_is_icmpv6_set(काष्ठा mlx5dr_match_misc3 *misc3)
-अणु
-	वापस (misc3->icmpv6_type || misc3->icmpv6_code ||
+static bool dr_mask_is_icmpv6_set(struct mlx5dr_match_misc3 *misc3)
+{
+	return (misc3->icmpv6_type || misc3->icmpv6_code ||
 		misc3->icmpv6_header_data);
-पूर्ण
+}
 
-अटल bool dr_mask_is_icmp(काष्ठा mlx5dr_match_param *mask,
-			    काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	अगर (DR_MASK_IS_ICMPV4_SET(&mask->misc3))
-		वापस dr_matcher_supp_icmp_v4(&dmn->info.caps);
-	अन्यथा अगर (dr_mask_is_icmpv6_set(&mask->misc3))
-		वापस dr_matcher_supp_icmp_v6(&dmn->info.caps);
+static bool dr_mask_is_icmp(struct mlx5dr_match_param *mask,
+			    struct mlx5dr_domain *dmn)
+{
+	if (DR_MASK_IS_ICMPV4_SET(&mask->misc3))
+		return dr_matcher_supp_icmp_v4(&dmn->info.caps);
+	else if (dr_mask_is_icmpv6_set(&mask->misc3))
+		return dr_matcher_supp_icmp_v6(&dmn->info.caps);
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool dr_mask_is_wqe_metadata_set(काष्ठा mlx5dr_match_misc2 *misc2)
-अणु
-	वापस misc2->metadata_reg_a;
-पूर्ण
+static bool dr_mask_is_wqe_metadata_set(struct mlx5dr_match_misc2 *misc2)
+{
+	return misc2->metadata_reg_a;
+}
 
-अटल bool dr_mask_is_reg_c_0_3_set(काष्ठा mlx5dr_match_misc2 *misc2)
-अणु
-	वापस (misc2->metadata_reg_c_0 || misc2->metadata_reg_c_1 ||
+static bool dr_mask_is_reg_c_0_3_set(struct mlx5dr_match_misc2 *misc2)
+{
+	return (misc2->metadata_reg_c_0 || misc2->metadata_reg_c_1 ||
 		misc2->metadata_reg_c_2 || misc2->metadata_reg_c_3);
-पूर्ण
+}
 
-अटल bool dr_mask_is_reg_c_4_7_set(काष्ठा mlx5dr_match_misc2 *misc2)
-अणु
-	वापस (misc2->metadata_reg_c_4 || misc2->metadata_reg_c_5 ||
+static bool dr_mask_is_reg_c_4_7_set(struct mlx5dr_match_misc2 *misc2)
+{
+	return (misc2->metadata_reg_c_4 || misc2->metadata_reg_c_5 ||
 		misc2->metadata_reg_c_6 || misc2->metadata_reg_c_7);
-पूर्ण
+}
 
-अटल bool dr_mask_is_gvmi_or_qpn_set(काष्ठा mlx5dr_match_misc *misc)
-अणु
-	वापस (misc->source_sqn || misc->source_port);
-पूर्ण
+static bool dr_mask_is_gvmi_or_qpn_set(struct mlx5dr_match_misc *misc)
+{
+	return (misc->source_sqn || misc->source_port);
+}
 
-अटल bool dr_mask_is_flex_parser_id_0_3_set(u32 flex_parser_id,
+static bool dr_mask_is_flex_parser_id_0_3_set(u32 flex_parser_id,
 					      u32 flex_parser_value)
-अणु
-	अगर (flex_parser_id)
-		वापस flex_parser_id <= DR_STE_MAX_FLEX_0_ID;
+{
+	if (flex_parser_id)
+		return flex_parser_id <= DR_STE_MAX_FLEX_0_ID;
 
 	/* Using flex_parser 0 means that id is zero, thus value must be set. */
-	वापस flex_parser_value;
-पूर्ण
+	return flex_parser_value;
+}
 
-अटल bool dr_mask_is_flex_parser_0_3_set(काष्ठा mlx5dr_match_misc4 *misc4)
-अणु
-	वापस (dr_mask_is_flex_parser_id_0_3_set(misc4->prog_sample_field_id_0,
+static bool dr_mask_is_flex_parser_0_3_set(struct mlx5dr_match_misc4 *misc4)
+{
+	return (dr_mask_is_flex_parser_id_0_3_set(misc4->prog_sample_field_id_0,
 						  misc4->prog_sample_field_value_0) ||
 		dr_mask_is_flex_parser_id_0_3_set(misc4->prog_sample_field_id_1,
 						  misc4->prog_sample_field_value_1) ||
@@ -330,342 +329,342 @@ dr_mask_is_tnl_geneve(काष्ठा mlx5dr_match_param *mask,
 						  misc4->prog_sample_field_value_2) ||
 		dr_mask_is_flex_parser_id_0_3_set(misc4->prog_sample_field_id_3,
 						  misc4->prog_sample_field_value_3));
-पूर्ण
+}
 
-अटल bool dr_mask_is_flex_parser_id_4_7_set(u32 flex_parser_id)
-अणु
-	वापस flex_parser_id > DR_STE_MAX_FLEX_0_ID &&
+static bool dr_mask_is_flex_parser_id_4_7_set(u32 flex_parser_id)
+{
+	return flex_parser_id > DR_STE_MAX_FLEX_0_ID &&
 	       flex_parser_id <= DR_STE_MAX_FLEX_1_ID;
-पूर्ण
+}
 
-अटल bool dr_mask_is_flex_parser_4_7_set(काष्ठा mlx5dr_match_misc4 *misc4)
-अणु
-	वापस (dr_mask_is_flex_parser_id_4_7_set(misc4->prog_sample_field_id_0) ||
+static bool dr_mask_is_flex_parser_4_7_set(struct mlx5dr_match_misc4 *misc4)
+{
+	return (dr_mask_is_flex_parser_id_4_7_set(misc4->prog_sample_field_id_0) ||
 		dr_mask_is_flex_parser_id_4_7_set(misc4->prog_sample_field_id_1) ||
 		dr_mask_is_flex_parser_id_4_7_set(misc4->prog_sample_field_id_2) ||
 		dr_mask_is_flex_parser_id_4_7_set(misc4->prog_sample_field_id_3));
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_tnl_mpls_over_gre(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & MLX5_FLEX_PARSER_MPLS_OVER_GRE_ENABLED;
-पूर्ण
+static int dr_matcher_supp_tnl_mpls_over_gre(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & MLX5_FLEX_PARSER_MPLS_OVER_GRE_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_mpls_over_gre(काष्ठा mlx5dr_match_param *mask,
-					 काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस DR_MASK_IS_OUTER_MPLS_OVER_GRE_SET(&mask->misc2) &&
+static bool dr_mask_is_tnl_mpls_over_gre(struct mlx5dr_match_param *mask,
+					 struct mlx5dr_domain *dmn)
+{
+	return DR_MASK_IS_OUTER_MPLS_OVER_GRE_SET(&mask->misc2) &&
 	       dr_matcher_supp_tnl_mpls_over_gre(&dmn->info.caps);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_supp_tnl_mpls_over_udp(काष्ठा mlx5dr_cmd_caps *caps)
-अणु
-	वापस caps->flex_protocols & mlx5_FLEX_PARSER_MPLS_OVER_UDP_ENABLED;
-पूर्ण
+static int dr_matcher_supp_tnl_mpls_over_udp(struct mlx5dr_cmd_caps *caps)
+{
+	return caps->flex_protocols & mlx5_FLEX_PARSER_MPLS_OVER_UDP_ENABLED;
+}
 
-अटल bool dr_mask_is_tnl_mpls_over_udp(काष्ठा mlx5dr_match_param *mask,
-					 काष्ठा mlx5dr_करोमुख्य *dmn)
-अणु
-	वापस DR_MASK_IS_OUTER_MPLS_OVER_UDP_SET(&mask->misc2) &&
+static bool dr_mask_is_tnl_mpls_over_udp(struct mlx5dr_match_param *mask,
+					 struct mlx5dr_domain *dmn)
+{
+	return DR_MASK_IS_OUTER_MPLS_OVER_UDP_SET(&mask->misc2) &&
 	       dr_matcher_supp_tnl_mpls_over_udp(&dmn->info.caps);
-पूर्ण
-पूर्णांक mlx5dr_matcher_select_builders(काष्ठा mlx5dr_matcher *matcher,
-				   काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
-				   क्रमागत mlx5dr_ipv outer_ipv,
-				   क्रमागत mlx5dr_ipv inner_ipv)
-अणु
+}
+int mlx5dr_matcher_select_builders(struct mlx5dr_matcher *matcher,
+				   struct mlx5dr_matcher_rx_tx *nic_matcher,
+				   enum mlx5dr_ipv outer_ipv,
+				   enum mlx5dr_ipv inner_ipv)
+{
 	nic_matcher->ste_builder =
 		nic_matcher->ste_builder_arr[outer_ipv][inner_ipv];
 	nic_matcher->num_of_builders =
 		nic_matcher->num_of_builders_arr[outer_ipv][inner_ipv];
 
-	अगर (!nic_matcher->num_of_builders) अणु
+	if (!nic_matcher->num_of_builders) {
 		mlx5dr_dbg(matcher->tbl->dmn,
 			   "Rule not supported on this matcher due to IP related fields\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dr_matcher_set_ste_builders(काष्ठा mlx5dr_matcher *matcher,
-				       काष्ठा mlx5dr_matcher_rx_tx *nic_matcher,
-				       क्रमागत mlx5dr_ipv outer_ipv,
-				       क्रमागत mlx5dr_ipv inner_ipv)
-अणु
-	काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn = nic_matcher->nic_tbl->nic_dmn;
-	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
-	काष्ठा mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
-	काष्ठा mlx5dr_match_param mask = अणुपूर्ण;
-	काष्ठा mlx5dr_ste_build *sb;
+static int dr_matcher_set_ste_builders(struct mlx5dr_matcher *matcher,
+				       struct mlx5dr_matcher_rx_tx *nic_matcher,
+				       enum mlx5dr_ipv outer_ipv,
+				       enum mlx5dr_ipv inner_ipv)
+{
+	struct mlx5dr_domain_rx_tx *nic_dmn = nic_matcher->nic_tbl->nic_dmn;
+	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
+	struct mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
+	struct mlx5dr_match_param mask = {};
+	struct mlx5dr_ste_build *sb;
 	bool inner, rx;
-	पूर्णांक idx = 0;
-	पूर्णांक ret, i;
+	int idx = 0;
+	int ret, i;
 
 	sb = nic_matcher->ste_builder_arr[outer_ipv][inner_ipv];
 	rx = nic_dmn->ste_type == MLX5DR_STE_TYPE_RX;
 
 	/* Create a temporary mask to track and clear used mask fields */
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_OUTER)
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_OUTER)
 		mask.outer = matcher->mask.outer;
 
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC)
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC)
 		mask.misc = matcher->mask.misc;
 
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_INNER)
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_INNER)
 		mask.inner = matcher->mask.inner;
 
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC2)
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC2)
 		mask.misc2 = matcher->mask.misc2;
 
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC3)
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC3)
 		mask.misc3 = matcher->mask.misc3;
 
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC4)
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC4)
 		mask.misc4 = matcher->mask.misc4;
 
 	ret = mlx5dr_ste_build_pre_check(dmn, matcher->match_criteria,
-					 &matcher->mask, शून्य);
-	अगर (ret)
-		वापस ret;
+					 &matcher->mask, NULL);
+	if (ret)
+		return ret;
 
 	/* Outer */
-	अगर (matcher->match_criteria & (DR_MATCHER_CRITERIA_OUTER |
+	if (matcher->match_criteria & (DR_MATCHER_CRITERIA_OUTER |
 				       DR_MATCHER_CRITERIA_MISC |
 				       DR_MATCHER_CRITERIA_MISC2 |
-				       DR_MATCHER_CRITERIA_MISC3)) अणु
+				       DR_MATCHER_CRITERIA_MISC3)) {
 		inner = false;
 
-		अगर (dr_mask_is_wqe_metadata_set(&mask.misc2))
+		if (dr_mask_is_wqe_metadata_set(&mask.misc2))
 			mlx5dr_ste_build_general_purpose(ste_ctx, &sb[idx++],
 							 &mask, inner, rx);
 
-		अगर (dr_mask_is_reg_c_0_3_set(&mask.misc2))
-			mlx5dr_ste_build_रेजिस्टर_0(ste_ctx, &sb[idx++],
+		if (dr_mask_is_reg_c_0_3_set(&mask.misc2))
+			mlx5dr_ste_build_register_0(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (dr_mask_is_reg_c_4_7_set(&mask.misc2))
-			mlx5dr_ste_build_रेजिस्टर_1(ste_ctx, &sb[idx++],
+		if (dr_mask_is_reg_c_4_7_set(&mask.misc2))
+			mlx5dr_ste_build_register_1(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (dr_mask_is_gvmi_or_qpn_set(&mask.misc) &&
+		if (dr_mask_is_gvmi_or_qpn_set(&mask.misc) &&
 		    (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
-		     dmn->type == MLX5DR_DOMAIN_TYPE_NIC_RX)) अणु
+		     dmn->type == MLX5DR_DOMAIN_TYPE_NIC_RX)) {
 			mlx5dr_ste_build_src_gvmi_qpn(ste_ctx, &sb[idx++],
 						      &mask, dmn, inner, rx);
-		पूर्ण
+		}
 
-		अगर (dr_mask_is_smac_set(&mask.outer) &&
-		    dr_mask_is_dmac_set(&mask.outer)) अणु
+		if (dr_mask_is_smac_set(&mask.outer) &&
+		    dr_mask_is_dmac_set(&mask.outer)) {
 			mlx5dr_ste_build_eth_l2_src_dst(ste_ctx, &sb[idx++],
 							&mask, inner, rx);
-		पूर्ण
+		}
 
-		अगर (dr_mask_is_smac_set(&mask.outer))
+		if (dr_mask_is_smac_set(&mask.outer))
 			mlx5dr_ste_build_eth_l2_src(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (DR_MASK_IS_L2_DST(mask.outer, mask.misc, outer))
+		if (DR_MASK_IS_L2_DST(mask.outer, mask.misc, outer))
 			mlx5dr_ste_build_eth_l2_dst(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (outer_ipv == DR_RULE_IPV6) अणु
-			अगर (dr_mask_is_dst_addr_set(&mask.outer))
+		if (outer_ipv == DR_RULE_IPV6) {
+			if (dr_mask_is_dst_addr_set(&mask.outer))
 				mlx5dr_ste_build_eth_l3_ipv6_dst(ste_ctx, &sb[idx++],
 								 &mask, inner, rx);
 
-			अगर (dr_mask_is_src_addr_set(&mask.outer))
+			if (dr_mask_is_src_addr_set(&mask.outer))
 				mlx5dr_ste_build_eth_l3_ipv6_src(ste_ctx, &sb[idx++],
 								 &mask, inner, rx);
 
-			अगर (DR_MASK_IS_ETH_L4_SET(mask.outer, mask.misc, outer))
+			if (DR_MASK_IS_ETH_L4_SET(mask.outer, mask.misc, outer))
 				mlx5dr_ste_build_eth_ipv6_l3_l4(ste_ctx, &sb[idx++],
 								&mask, inner, rx);
-		पूर्ण अन्यथा अणु
-			अगर (dr_mask_is_ipv4_5_tuple_set(&mask.outer))
+		} else {
+			if (dr_mask_is_ipv4_5_tuple_set(&mask.outer))
 				mlx5dr_ste_build_eth_l3_ipv4_5_tuple(ste_ctx, &sb[idx++],
 								     &mask, inner, rx);
 
-			अगर (dr_mask_is_ttl_set(&mask.outer))
+			if (dr_mask_is_ttl_set(&mask.outer))
 				mlx5dr_ste_build_eth_l3_ipv4_misc(ste_ctx, &sb[idx++],
 								  &mask, inner, rx);
-		पूर्ण
+		}
 
-		अगर (dr_mask_is_tnl_vxlan_gpe(&mask, dmn))
+		if (dr_mask_is_tnl_vxlan_gpe(&mask, dmn))
 			mlx5dr_ste_build_tnl_vxlan_gpe(ste_ctx, &sb[idx++],
 						       &mask, inner, rx);
-		अन्यथा अगर (dr_mask_is_tnl_geneve(&mask, dmn)) अणु
+		else if (dr_mask_is_tnl_geneve(&mask, dmn)) {
 			mlx5dr_ste_build_tnl_geneve(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
-			अगर (dr_mask_is_tnl_geneve_tlv_opt(&mask.misc3))
+			if (dr_mask_is_tnl_geneve_tlv_opt(&mask.misc3))
 				mlx5dr_ste_build_tnl_geneve_tlv_opt(ste_ctx, &sb[idx++],
 								    &mask, &dmn->info.caps,
 								    inner, rx);
-		पूर्ण अन्यथा अगर (dr_mask_is_tnl_gtpu_any(&mask, dmn)) अणु
-			अगर (dr_mask_is_tnl_gtpu_flex_parser_0(&mask, dmn))
+		} else if (dr_mask_is_tnl_gtpu_any(&mask, dmn)) {
+			if (dr_mask_is_tnl_gtpu_flex_parser_0(&mask, dmn))
 				mlx5dr_ste_build_tnl_gtpu_flex_parser_0(ste_ctx, &sb[idx++],
 									&mask, &dmn->info.caps,
 									inner, rx);
 
-			अगर (dr_mask_is_tnl_gtpu_flex_parser_1(&mask, dmn))
+			if (dr_mask_is_tnl_gtpu_flex_parser_1(&mask, dmn))
 				mlx5dr_ste_build_tnl_gtpu_flex_parser_1(ste_ctx, &sb[idx++],
 									&mask, &dmn->info.caps,
 									inner, rx);
 
-			अगर (dr_mask_is_tnl_gtpu(&mask, dmn))
+			if (dr_mask_is_tnl_gtpu(&mask, dmn))
 				mlx5dr_ste_build_tnl_gtpu(ste_ctx, &sb[idx++],
 							  &mask, inner, rx);
-		पूर्ण
+		}
 
-		अगर (DR_MASK_IS_ETH_L4_MISC_SET(mask.misc3, outer))
+		if (DR_MASK_IS_ETH_L4_MISC_SET(mask.misc3, outer))
 			mlx5dr_ste_build_eth_l4_misc(ste_ctx, &sb[idx++],
 						     &mask, inner, rx);
 
-		अगर (DR_MASK_IS_FIRST_MPLS_SET(mask.misc2, outer))
+		if (DR_MASK_IS_FIRST_MPLS_SET(mask.misc2, outer))
 			mlx5dr_ste_build_mpls(ste_ctx, &sb[idx++],
 					      &mask, inner, rx);
 
-		अगर (dr_mask_is_tnl_mpls_over_gre(&mask, dmn))
+		if (dr_mask_is_tnl_mpls_over_gre(&mask, dmn))
 			mlx5dr_ste_build_tnl_mpls_over_gre(ste_ctx, &sb[idx++],
 							   &mask, &dmn->info.caps,
 							   inner, rx);
-		अन्यथा अगर (dr_mask_is_tnl_mpls_over_udp(&mask, dmn))
+		else if (dr_mask_is_tnl_mpls_over_udp(&mask, dmn))
 			mlx5dr_ste_build_tnl_mpls_over_udp(ste_ctx, &sb[idx++],
 							   &mask, &dmn->info.caps,
 							   inner, rx);
 
-		अगर (dr_mask_is_icmp(&mask, dmn))
+		if (dr_mask_is_icmp(&mask, dmn))
 			mlx5dr_ste_build_icmp(ste_ctx, &sb[idx++],
 					      &mask, &dmn->info.caps,
 					      inner, rx);
 
-		अगर (dr_mask_is_tnl_gre_set(&mask.misc))
+		if (dr_mask_is_tnl_gre_set(&mask.misc))
 			mlx5dr_ste_build_tnl_gre(ste_ctx, &sb[idx++],
 						 &mask, inner, rx);
-	पूर्ण
+	}
 
 	/* Inner */
-	अगर (matcher->match_criteria & (DR_MATCHER_CRITERIA_INNER |
+	if (matcher->match_criteria & (DR_MATCHER_CRITERIA_INNER |
 				       DR_MATCHER_CRITERIA_MISC |
 				       DR_MATCHER_CRITERIA_MISC2 |
-				       DR_MATCHER_CRITERIA_MISC3)) अणु
+				       DR_MATCHER_CRITERIA_MISC3)) {
 		inner = true;
 
-		अगर (dr_mask_is_eth_l2_tnl_set(&mask.misc))
+		if (dr_mask_is_eth_l2_tnl_set(&mask.misc))
 			mlx5dr_ste_build_eth_l2_tnl(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (dr_mask_is_smac_set(&mask.inner) &&
-		    dr_mask_is_dmac_set(&mask.inner)) अणु
+		if (dr_mask_is_smac_set(&mask.inner) &&
+		    dr_mask_is_dmac_set(&mask.inner)) {
 			mlx5dr_ste_build_eth_l2_src_dst(ste_ctx, &sb[idx++],
 							&mask, inner, rx);
-		पूर्ण
+		}
 
-		अगर (dr_mask_is_smac_set(&mask.inner))
+		if (dr_mask_is_smac_set(&mask.inner))
 			mlx5dr_ste_build_eth_l2_src(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (DR_MASK_IS_L2_DST(mask.inner, mask.misc, inner))
+		if (DR_MASK_IS_L2_DST(mask.inner, mask.misc, inner))
 			mlx5dr_ste_build_eth_l2_dst(ste_ctx, &sb[idx++],
 						    &mask, inner, rx);
 
-		अगर (inner_ipv == DR_RULE_IPV6) अणु
-			अगर (dr_mask_is_dst_addr_set(&mask.inner))
+		if (inner_ipv == DR_RULE_IPV6) {
+			if (dr_mask_is_dst_addr_set(&mask.inner))
 				mlx5dr_ste_build_eth_l3_ipv6_dst(ste_ctx, &sb[idx++],
 								 &mask, inner, rx);
 
-			अगर (dr_mask_is_src_addr_set(&mask.inner))
+			if (dr_mask_is_src_addr_set(&mask.inner))
 				mlx5dr_ste_build_eth_l3_ipv6_src(ste_ctx, &sb[idx++],
 								 &mask, inner, rx);
 
-			अगर (DR_MASK_IS_ETH_L4_SET(mask.inner, mask.misc, inner))
+			if (DR_MASK_IS_ETH_L4_SET(mask.inner, mask.misc, inner))
 				mlx5dr_ste_build_eth_ipv6_l3_l4(ste_ctx, &sb[idx++],
 								&mask, inner, rx);
-		पूर्ण अन्यथा अणु
-			अगर (dr_mask_is_ipv4_5_tuple_set(&mask.inner))
+		} else {
+			if (dr_mask_is_ipv4_5_tuple_set(&mask.inner))
 				mlx5dr_ste_build_eth_l3_ipv4_5_tuple(ste_ctx, &sb[idx++],
 								     &mask, inner, rx);
 
-			अगर (dr_mask_is_ttl_set(&mask.inner))
+			if (dr_mask_is_ttl_set(&mask.inner))
 				mlx5dr_ste_build_eth_l3_ipv4_misc(ste_ctx, &sb[idx++],
 								  &mask, inner, rx);
-		पूर्ण
+		}
 
-		अगर (DR_MASK_IS_ETH_L4_MISC_SET(mask.misc3, inner))
+		if (DR_MASK_IS_ETH_L4_MISC_SET(mask.misc3, inner))
 			mlx5dr_ste_build_eth_l4_misc(ste_ctx, &sb[idx++],
 						     &mask, inner, rx);
 
-		अगर (DR_MASK_IS_FIRST_MPLS_SET(mask.misc2, inner))
+		if (DR_MASK_IS_FIRST_MPLS_SET(mask.misc2, inner))
 			mlx5dr_ste_build_mpls(ste_ctx, &sb[idx++],
 					      &mask, inner, rx);
 
-		अगर (dr_mask_is_tnl_mpls_over_gre(&mask, dmn))
+		if (dr_mask_is_tnl_mpls_over_gre(&mask, dmn))
 			mlx5dr_ste_build_tnl_mpls_over_gre(ste_ctx, &sb[idx++],
 							   &mask, &dmn->info.caps,
 							   inner, rx);
-		अन्यथा अगर (dr_mask_is_tnl_mpls_over_udp(&mask, dmn))
+		else if (dr_mask_is_tnl_mpls_over_udp(&mask, dmn))
 			mlx5dr_ste_build_tnl_mpls_over_udp(ste_ctx, &sb[idx++],
 							   &mask, &dmn->info.caps,
 							   inner, rx);
-	पूर्ण
+	}
 
-	अगर (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC4) अणु
-		अगर (dr_mask_is_flex_parser_0_3_set(&mask.misc4))
+	if (matcher->match_criteria & DR_MATCHER_CRITERIA_MISC4) {
+		if (dr_mask_is_flex_parser_0_3_set(&mask.misc4))
 			mlx5dr_ste_build_flex_parser_0(ste_ctx, &sb[idx++],
 						       &mask, false, rx);
 
-		अगर (dr_mask_is_flex_parser_4_7_set(&mask.misc4))
+		if (dr_mask_is_flex_parser_4_7_set(&mask.misc4))
 			mlx5dr_ste_build_flex_parser_1(ste_ctx, &sb[idx++],
 						       &mask, false, rx);
-	पूर्ण
+	}
 
 	/* Empty matcher, takes all */
-	अगर (matcher->match_criteria == DR_MATCHER_CRITERIA_EMPTY)
+	if (matcher->match_criteria == DR_MATCHER_CRITERIA_EMPTY)
 		mlx5dr_ste_build_empty_always_hit(&sb[idx++], rx);
 
-	अगर (idx == 0) अणु
+	if (idx == 0) {
 		mlx5dr_err(dmn, "Cannot generate any valid rules from mask\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Check that all mask fields were consumed */
-	क्रम (i = 0; i < माप(काष्ठा mlx5dr_match_param); i++) अणु
-		अगर (((u8 *)&mask)[i] != 0) अणु
+	for (i = 0; i < sizeof(struct mlx5dr_match_param); i++) {
+		if (((u8 *)&mask)[i] != 0) {
 			mlx5dr_dbg(dmn, "Mask contains unsupported parameters\n");
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	पूर्ण
+			return -EOPNOTSUPP;
+		}
+	}
 
 	nic_matcher->ste_builder = sb;
 	nic_matcher->num_of_builders_arr[outer_ipv][inner_ipv] = idx;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dr_matcher_connect(काष्ठा mlx5dr_करोमुख्य *dmn,
-			      काष्ठा mlx5dr_matcher_rx_tx *curr_nic_matcher,
-			      काष्ठा mlx5dr_matcher_rx_tx *next_nic_matcher,
-			      काष्ठा mlx5dr_matcher_rx_tx *prev_nic_matcher)
-अणु
-	काष्ठा mlx5dr_table_rx_tx *nic_tbl = curr_nic_matcher->nic_tbl;
-	काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn = nic_tbl->nic_dmn;
-	काष्ठा mlx5dr_htbl_connect_info info;
-	काष्ठा mlx5dr_ste_htbl *prev_htbl;
-	पूर्णांक ret;
+static int dr_matcher_connect(struct mlx5dr_domain *dmn,
+			      struct mlx5dr_matcher_rx_tx *curr_nic_matcher,
+			      struct mlx5dr_matcher_rx_tx *next_nic_matcher,
+			      struct mlx5dr_matcher_rx_tx *prev_nic_matcher)
+{
+	struct mlx5dr_table_rx_tx *nic_tbl = curr_nic_matcher->nic_tbl;
+	struct mlx5dr_domain_rx_tx *nic_dmn = nic_tbl->nic_dmn;
+	struct mlx5dr_htbl_connect_info info;
+	struct mlx5dr_ste_htbl *prev_htbl;
+	int ret;
 
-	/* Connect end anchor hash table to next_htbl or to the शेष address */
-	अगर (next_nic_matcher) अणु
+	/* Connect end anchor hash table to next_htbl or to the default address */
+	if (next_nic_matcher) {
 		info.type = CONNECT_HIT;
 		info.hit_next_htbl = next_nic_matcher->s_htbl;
-	पूर्ण अन्यथा अणु
+	} else {
 		info.type = CONNECT_MISS;
-		info.miss_icm_addr = nic_tbl->शेष_icm_addr;
-	पूर्ण
+		info.miss_icm_addr = nic_tbl->default_icm_addr;
+	}
 	ret = mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn,
 						curr_nic_matcher->e_anchor,
 						&info, info.type == CONNECT_HIT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Connect start hash table to end anchor */
 	info.type = CONNECT_MISS;
@@ -673,251 +672,251 @@ dr_mask_is_tnl_geneve(काष्ठा mlx5dr_match_param *mask,
 	ret = mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn,
 						curr_nic_matcher->s_htbl,
 						&info, false);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Connect previous hash table to matcher start hash table */
-	अगर (prev_nic_matcher)
+	if (prev_nic_matcher)
 		prev_htbl = prev_nic_matcher->e_anchor;
-	अन्यथा
+	else
 		prev_htbl = nic_tbl->s_anchor;
 
 	info.type = CONNECT_HIT;
 	info.hit_next_htbl = curr_nic_matcher->s_htbl;
 	ret = mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn, prev_htbl,
 						&info, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Update the poपूर्णांकing ste and next hash table */
-	curr_nic_matcher->s_htbl->poपूर्णांकing_ste = prev_htbl->ste_arr;
+	/* Update the pointing ste and next hash table */
+	curr_nic_matcher->s_htbl->pointing_ste = prev_htbl->ste_arr;
 	prev_htbl->ste_arr[0].next_htbl = curr_nic_matcher->s_htbl;
 
-	अगर (next_nic_matcher) अणु
-		next_nic_matcher->s_htbl->poपूर्णांकing_ste = curr_nic_matcher->e_anchor->ste_arr;
+	if (next_nic_matcher) {
+		next_nic_matcher->s_htbl->pointing_ste = curr_nic_matcher->e_anchor->ste_arr;
 		curr_nic_matcher->e_anchor->ste_arr[0].next_htbl = next_nic_matcher->s_htbl;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dr_matcher_add_to_tbl(काष्ठा mlx5dr_matcher *matcher)
-अणु
-	काष्ठा mlx5dr_matcher *next_matcher, *prev_matcher, *पंचांगp_matcher;
-	काष्ठा mlx5dr_table *tbl = matcher->tbl;
-	काष्ठा mlx5dr_करोमुख्य *dmn = tbl->dmn;
+static int dr_matcher_add_to_tbl(struct mlx5dr_matcher *matcher)
+{
+	struct mlx5dr_matcher *next_matcher, *prev_matcher, *tmp_matcher;
+	struct mlx5dr_table *tbl = matcher->tbl;
+	struct mlx5dr_domain *dmn = tbl->dmn;
 	bool first = true;
-	पूर्णांक ret;
+	int ret;
 
-	next_matcher = शून्य;
-	list_क्रम_each_entry(पंचांगp_matcher, &tbl->matcher_list, matcher_list) अणु
-		अगर (पंचांगp_matcher->prio >= matcher->prio) अणु
-			next_matcher = पंचांगp_matcher;
-			अवरोध;
-		पूर्ण
+	next_matcher = NULL;
+	list_for_each_entry(tmp_matcher, &tbl->matcher_list, matcher_list) {
+		if (tmp_matcher->prio >= matcher->prio) {
+			next_matcher = tmp_matcher;
+			break;
+		}
 		first = false;
-	पूर्ण
+	}
 
-	prev_matcher = शून्य;
-	अगर (next_matcher && !first)
+	prev_matcher = NULL;
+	if (next_matcher && !first)
 		prev_matcher = list_prev_entry(next_matcher, matcher_list);
-	अन्यथा अगर (!first)
+	else if (!first)
 		prev_matcher = list_last_entry(&tbl->matcher_list,
-					       काष्ठा mlx5dr_matcher,
+					       struct mlx5dr_matcher,
 					       matcher_list);
 
-	अगर (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
-	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_RX) अणु
+	if (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
+	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_RX) {
 		ret = dr_matcher_connect(dmn, &matcher->rx,
-					 next_matcher ? &next_matcher->rx : शून्य,
-					 prev_matcher ?	&prev_matcher->rx : शून्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+					 next_matcher ? &next_matcher->rx : NULL,
+					 prev_matcher ?	&prev_matcher->rx : NULL);
+		if (ret)
+			return ret;
+	}
 
-	अगर (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
-	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_TX) अणु
+	if (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
+	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_TX) {
 		ret = dr_matcher_connect(dmn, &matcher->tx,
-					 next_matcher ? &next_matcher->tx : शून्य,
-					 prev_matcher ?	&prev_matcher->tx : शून्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+					 next_matcher ? &next_matcher->tx : NULL,
+					 prev_matcher ?	&prev_matcher->tx : NULL);
+		if (ret)
+			return ret;
+	}
 
-	अगर (prev_matcher)
+	if (prev_matcher)
 		list_add(&matcher->matcher_list, &prev_matcher->matcher_list);
-	अन्यथा अगर (next_matcher)
+	else if (next_matcher)
 		list_add_tail(&matcher->matcher_list,
 			      &next_matcher->matcher_list);
-	अन्यथा
+	else
 		list_add(&matcher->matcher_list, &tbl->matcher_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dr_matcher_uninit_nic(काष्ठा mlx5dr_matcher_rx_tx *nic_matcher)
-अणु
+static void dr_matcher_uninit_nic(struct mlx5dr_matcher_rx_tx *nic_matcher)
+{
 	mlx5dr_htbl_put(nic_matcher->s_htbl);
 	mlx5dr_htbl_put(nic_matcher->e_anchor);
-पूर्ण
+}
 
-अटल व्योम dr_matcher_uninit_fdb(काष्ठा mlx5dr_matcher *matcher)
-अणु
+static void dr_matcher_uninit_fdb(struct mlx5dr_matcher *matcher)
+{
 	dr_matcher_uninit_nic(&matcher->rx);
 	dr_matcher_uninit_nic(&matcher->tx);
-पूर्ण
+}
 
-अटल व्योम dr_matcher_uninit(काष्ठा mlx5dr_matcher *matcher)
-अणु
-	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
+static void dr_matcher_uninit(struct mlx5dr_matcher *matcher)
+{
+	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
 
-	चयन (dmn->type) अणु
-	हाल MLX5DR_DOMAIN_TYPE_NIC_RX:
+	switch (dmn->type) {
+	case MLX5DR_DOMAIN_TYPE_NIC_RX:
 		dr_matcher_uninit_nic(&matcher->rx);
-		अवरोध;
-	हाल MLX5DR_DOMAIN_TYPE_NIC_TX:
+		break;
+	case MLX5DR_DOMAIN_TYPE_NIC_TX:
 		dr_matcher_uninit_nic(&matcher->tx);
-		अवरोध;
-	हाल MLX5DR_DOMAIN_TYPE_FDB:
+		break;
+	case MLX5DR_DOMAIN_TYPE_FDB:
 		dr_matcher_uninit_fdb(matcher);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(true);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल पूर्णांक dr_matcher_set_all_ste_builders(काष्ठा mlx5dr_matcher *matcher,
-					   काष्ठा mlx5dr_matcher_rx_tx *nic_matcher)
-अणु
-	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
+static int dr_matcher_set_all_ste_builders(struct mlx5dr_matcher *matcher,
+					   struct mlx5dr_matcher_rx_tx *nic_matcher)
+{
+	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
 
 	dr_matcher_set_ste_builders(matcher, nic_matcher, DR_RULE_IPV4, DR_RULE_IPV4);
 	dr_matcher_set_ste_builders(matcher, nic_matcher, DR_RULE_IPV4, DR_RULE_IPV6);
 	dr_matcher_set_ste_builders(matcher, nic_matcher, DR_RULE_IPV6, DR_RULE_IPV4);
 	dr_matcher_set_ste_builders(matcher, nic_matcher, DR_RULE_IPV6, DR_RULE_IPV6);
 
-	अगर (!nic_matcher->ste_builder) अणु
+	if (!nic_matcher->ste_builder) {
 		mlx5dr_err(dmn, "Cannot generate IPv4 or IPv6 rules with given mask\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dr_matcher_init_nic(काष्ठा mlx5dr_matcher *matcher,
-			       काष्ठा mlx5dr_matcher_rx_tx *nic_matcher)
-अणु
-	काष्ठा mlx5dr_करोमुख्य *dmn = matcher->tbl->dmn;
-	पूर्णांक ret;
+static int dr_matcher_init_nic(struct mlx5dr_matcher *matcher,
+			       struct mlx5dr_matcher_rx_tx *nic_matcher)
+{
+	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
+	int ret;
 
 	ret = dr_matcher_set_all_ste_builders(matcher, nic_matcher);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nic_matcher->e_anchor = mlx5dr_ste_htbl_alloc(dmn->ste_icm_pool,
 						      DR_CHUNK_SIZE_1,
 						      MLX5DR_STE_LU_TYPE_DONT_CARE,
 						      0);
-	अगर (!nic_matcher->e_anchor)
-		वापस -ENOMEM;
+	if (!nic_matcher->e_anchor)
+		return -ENOMEM;
 
 	nic_matcher->s_htbl = mlx5dr_ste_htbl_alloc(dmn->ste_icm_pool,
 						    DR_CHUNK_SIZE_1,
 						    nic_matcher->ste_builder[0].lu_type,
 						    nic_matcher->ste_builder[0].byte_mask);
-	अगर (!nic_matcher->s_htbl) अणु
+	if (!nic_matcher->s_htbl) {
 		ret = -ENOMEM;
-		जाओ मुक्त_e_htbl;
-	पूर्ण
+		goto free_e_htbl;
+	}
 
-	/* make sure the tables exist जबतक empty */
+	/* make sure the tables exist while empty */
 	mlx5dr_htbl_get(nic_matcher->s_htbl);
 	mlx5dr_htbl_get(nic_matcher->e_anchor);
 
-	वापस 0;
+	return 0;
 
-मुक्त_e_htbl:
-	mlx5dr_ste_htbl_मुक्त(nic_matcher->e_anchor);
-	वापस ret;
-पूर्ण
+free_e_htbl:
+	mlx5dr_ste_htbl_free(nic_matcher->e_anchor);
+	return ret;
+}
 
-अटल पूर्णांक dr_matcher_init_fdb(काष्ठा mlx5dr_matcher *matcher)
-अणु
-	पूर्णांक ret;
+static int dr_matcher_init_fdb(struct mlx5dr_matcher *matcher)
+{
+	int ret;
 
 	ret = dr_matcher_init_nic(matcher, &matcher->rx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = dr_matcher_init_nic(matcher, &matcher->tx);
-	अगर (ret)
-		जाओ uninit_nic_rx;
+	if (ret)
+		goto uninit_nic_rx;
 
-	वापस 0;
+	return 0;
 
 uninit_nic_rx:
 	dr_matcher_uninit_nic(&matcher->rx);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dr_matcher_init(काष्ठा mlx5dr_matcher *matcher,
-			   काष्ठा mlx5dr_match_parameters *mask)
-अणु
-	काष्ठा mlx5dr_table *tbl = matcher->tbl;
-	काष्ठा mlx5dr_करोमुख्य *dmn = tbl->dmn;
-	पूर्णांक ret;
+static int dr_matcher_init(struct mlx5dr_matcher *matcher,
+			   struct mlx5dr_match_parameters *mask)
+{
+	struct mlx5dr_table *tbl = matcher->tbl;
+	struct mlx5dr_domain *dmn = tbl->dmn;
+	int ret;
 
-	अगर (matcher->match_criteria >= DR_MATCHER_CRITERIA_MAX) अणु
+	if (matcher->match_criteria >= DR_MATCHER_CRITERIA_MAX) {
 		mlx5dr_err(dmn, "Invalid match criteria attribute\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (mask) अणु
-		अगर (mask->match_sz > DR_SZ_MATCH_PARAM) अणु
+	if (mask) {
+		if (mask->match_sz > DR_SZ_MATCH_PARAM) {
 			mlx5dr_err(dmn, "Invalid match size attribute\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		mlx5dr_ste_copy_param(matcher->match_criteria,
 				      &matcher->mask, mask);
-	पूर्ण
+	}
 
-	चयन (dmn->type) अणु
-	हाल MLX5DR_DOMAIN_TYPE_NIC_RX:
+	switch (dmn->type) {
+	case MLX5DR_DOMAIN_TYPE_NIC_RX:
 		matcher->rx.nic_tbl = &tbl->rx;
 		ret = dr_matcher_init_nic(matcher, &matcher->rx);
-		अवरोध;
-	हाल MLX5DR_DOMAIN_TYPE_NIC_TX:
+		break;
+	case MLX5DR_DOMAIN_TYPE_NIC_TX:
 		matcher->tx.nic_tbl = &tbl->tx;
 		ret = dr_matcher_init_nic(matcher, &matcher->tx);
-		अवरोध;
-	हाल MLX5DR_DOMAIN_TYPE_FDB:
+		break;
+	case MLX5DR_DOMAIN_TYPE_FDB:
 		matcher->rx.nic_tbl = &tbl->rx;
 		matcher->tx.nic_tbl = &tbl->tx;
 		ret = dr_matcher_init_fdb(matcher);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON(true);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा mlx5dr_matcher *
-mlx5dr_matcher_create(काष्ठा mlx5dr_table *tbl,
+struct mlx5dr_matcher *
+mlx5dr_matcher_create(struct mlx5dr_table *tbl,
 		      u32 priority,
 		      u8 match_criteria_enable,
-		      काष्ठा mlx5dr_match_parameters *mask)
-अणु
-	काष्ठा mlx5dr_matcher *matcher;
-	पूर्णांक ret;
+		      struct mlx5dr_match_parameters *mask)
+{
+	struct mlx5dr_matcher *matcher;
+	int ret;
 
 	refcount_inc(&tbl->refcount);
 
-	matcher = kzalloc(माप(*matcher), GFP_KERNEL);
-	अगर (!matcher)
-		जाओ dec_ref;
+	matcher = kzalloc(sizeof(*matcher), GFP_KERNEL);
+	if (!matcher)
+		goto dec_ref;
 
 	matcher->tbl = tbl;
 	matcher->prio = priority;
@@ -925,115 +924,115 @@ mlx5dr_matcher_create(काष्ठा mlx5dr_table *tbl,
 	refcount_set(&matcher->refcount, 1);
 	INIT_LIST_HEAD(&matcher->matcher_list);
 
-	mlx5dr_करोमुख्य_lock(tbl->dmn);
+	mlx5dr_domain_lock(tbl->dmn);
 
 	ret = dr_matcher_init(matcher, mask);
-	अगर (ret)
-		जाओ मुक्त_matcher;
+	if (ret)
+		goto free_matcher;
 
 	ret = dr_matcher_add_to_tbl(matcher);
-	अगर (ret)
-		जाओ matcher_uninit;
+	if (ret)
+		goto matcher_uninit;
 
-	mlx5dr_करोमुख्य_unlock(tbl->dmn);
+	mlx5dr_domain_unlock(tbl->dmn);
 
-	वापस matcher;
+	return matcher;
 
 matcher_uninit:
 	dr_matcher_uninit(matcher);
-मुक्त_matcher:
-	mlx5dr_करोमुख्य_unlock(tbl->dmn);
-	kमुक्त(matcher);
+free_matcher:
+	mlx5dr_domain_unlock(tbl->dmn);
+	kfree(matcher);
 dec_ref:
 	refcount_dec(&tbl->refcount);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक dr_matcher_disconnect(काष्ठा mlx5dr_करोमुख्य *dmn,
-				 काष्ठा mlx5dr_table_rx_tx *nic_tbl,
-				 काष्ठा mlx5dr_matcher_rx_tx *next_nic_matcher,
-				 काष्ठा mlx5dr_matcher_rx_tx *prev_nic_matcher)
-अणु
-	काष्ठा mlx5dr_करोमुख्य_rx_tx *nic_dmn = nic_tbl->nic_dmn;
-	काष्ठा mlx5dr_htbl_connect_info info;
-	काष्ठा mlx5dr_ste_htbl *prev_anchor;
+static int dr_matcher_disconnect(struct mlx5dr_domain *dmn,
+				 struct mlx5dr_table_rx_tx *nic_tbl,
+				 struct mlx5dr_matcher_rx_tx *next_nic_matcher,
+				 struct mlx5dr_matcher_rx_tx *prev_nic_matcher)
+{
+	struct mlx5dr_domain_rx_tx *nic_dmn = nic_tbl->nic_dmn;
+	struct mlx5dr_htbl_connect_info info;
+	struct mlx5dr_ste_htbl *prev_anchor;
 
-	अगर (prev_nic_matcher)
+	if (prev_nic_matcher)
 		prev_anchor = prev_nic_matcher->e_anchor;
-	अन्यथा
+	else
 		prev_anchor = nic_tbl->s_anchor;
 
-	/* Connect previous anchor hash table to next matcher or to the शेष address */
-	अगर (next_nic_matcher) अणु
+	/* Connect previous anchor hash table to next matcher or to the default address */
+	if (next_nic_matcher) {
 		info.type = CONNECT_HIT;
 		info.hit_next_htbl = next_nic_matcher->s_htbl;
-		next_nic_matcher->s_htbl->poपूर्णांकing_ste = prev_anchor->ste_arr;
+		next_nic_matcher->s_htbl->pointing_ste = prev_anchor->ste_arr;
 		prev_anchor->ste_arr[0].next_htbl = next_nic_matcher->s_htbl;
-	पूर्ण अन्यथा अणु
+	} else {
 		info.type = CONNECT_MISS;
-		info.miss_icm_addr = nic_tbl->शेष_icm_addr;
-		prev_anchor->ste_arr[0].next_htbl = शून्य;
-	पूर्ण
+		info.miss_icm_addr = nic_tbl->default_icm_addr;
+		prev_anchor->ste_arr[0].next_htbl = NULL;
+	}
 
-	वापस mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn, prev_anchor,
+	return mlx5dr_ste_htbl_init_and_postsend(dmn, nic_dmn, prev_anchor,
 						 &info, true);
-पूर्ण
+}
 
-अटल पूर्णांक dr_matcher_हटाओ_from_tbl(काष्ठा mlx5dr_matcher *matcher)
-अणु
-	काष्ठा mlx5dr_matcher *prev_matcher, *next_matcher;
-	काष्ठा mlx5dr_table *tbl = matcher->tbl;
-	काष्ठा mlx5dr_करोमुख्य *dmn = tbl->dmn;
-	पूर्णांक ret = 0;
+static int dr_matcher_remove_from_tbl(struct mlx5dr_matcher *matcher)
+{
+	struct mlx5dr_matcher *prev_matcher, *next_matcher;
+	struct mlx5dr_table *tbl = matcher->tbl;
+	struct mlx5dr_domain *dmn = tbl->dmn;
+	int ret = 0;
 
-	अगर (list_is_last(&matcher->matcher_list, &tbl->matcher_list))
-		next_matcher = शून्य;
-	अन्यथा
+	if (list_is_last(&matcher->matcher_list, &tbl->matcher_list))
+		next_matcher = NULL;
+	else
 		next_matcher = list_next_entry(matcher, matcher_list);
 
-	अगर (matcher->matcher_list.prev == &tbl->matcher_list)
-		prev_matcher = शून्य;
-	अन्यथा
+	if (matcher->matcher_list.prev == &tbl->matcher_list)
+		prev_matcher = NULL;
+	else
 		prev_matcher = list_prev_entry(matcher, matcher_list);
 
-	अगर (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
-	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_RX) अणु
+	if (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
+	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_RX) {
 		ret = dr_matcher_disconnect(dmn, &tbl->rx,
-					    next_matcher ? &next_matcher->rx : शून्य,
-					    prev_matcher ? &prev_matcher->rx : शून्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+					    next_matcher ? &next_matcher->rx : NULL,
+					    prev_matcher ? &prev_matcher->rx : NULL);
+		if (ret)
+			return ret;
+	}
 
-	अगर (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
-	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_TX) अणु
+	if (dmn->type == MLX5DR_DOMAIN_TYPE_FDB ||
+	    dmn->type == MLX5DR_DOMAIN_TYPE_NIC_TX) {
 		ret = dr_matcher_disconnect(dmn, &tbl->tx,
-					    next_matcher ? &next_matcher->tx : शून्य,
-					    prev_matcher ? &prev_matcher->tx : शून्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+					    next_matcher ? &next_matcher->tx : NULL,
+					    prev_matcher ? &prev_matcher->tx : NULL);
+		if (ret)
+			return ret;
+	}
 
 	list_del(&matcher->matcher_list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mlx5dr_matcher_destroy(काष्ठा mlx5dr_matcher *matcher)
-अणु
-	काष्ठा mlx5dr_table *tbl = matcher->tbl;
+int mlx5dr_matcher_destroy(struct mlx5dr_matcher *matcher)
+{
+	struct mlx5dr_table *tbl = matcher->tbl;
 
-	अगर (refcount_पढ़ो(&matcher->refcount) > 1)
-		वापस -EBUSY;
+	if (refcount_read(&matcher->refcount) > 1)
+		return -EBUSY;
 
-	mlx5dr_करोमुख्य_lock(tbl->dmn);
+	mlx5dr_domain_lock(tbl->dmn);
 
-	dr_matcher_हटाओ_from_tbl(matcher);
+	dr_matcher_remove_from_tbl(matcher);
 	dr_matcher_uninit(matcher);
 	refcount_dec(&matcher->tbl->refcount);
 
-	mlx5dr_करोमुख्य_unlock(tbl->dmn);
-	kमुक्त(matcher);
+	mlx5dr_domain_unlock(tbl->dmn);
+	kfree(matcher);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

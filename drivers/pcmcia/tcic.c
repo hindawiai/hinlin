@@ -1,7 +1,6 @@
-<शैली गुरु>
 /*======================================================================
 
-    Device driver क्रम Databook TCIC-2 PCMCIA controller
+    Device driver for Databook TCIC-2 PCMCIA controller
 
     tcic.c 1.111 2000/02/15 04:13:12
 
@@ -12,45 +11,45 @@
 
     Software distributed under the License is distributed on an "AS
     IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
-    implied. See the License क्रम the specअगरic language governing
+    implied. See the License for the specific language governing
     rights and limitations under the License.
 
     The initial developer of the original code is David A. Hinds
-    <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
+    <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
     are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
 
     Alternatively, the contents of this file may be used under the
     terms of the GNU General Public License version 2 (the "GPL"), in which
-    हाल the provisions of the GPL are applicable instead of the
+    case the provisions of the GPL are applicable instead of the
     above.  If you wish to allow the use of your version of this file
     only under the terms of the GPL and not to allow others to use
     your version of this file under the MPL, indicate your decision
     by deleting the provisions above and replace them with the notice
-    and other provisions required by the GPL.  If you करो not delete
+    and other provisions required by the GPL.  If you do not delete
     the provisions above, a recipient may use your version of this
     file under either the MPL or the GPL.
     
 ======================================================================*/
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/types.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/bitops.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/timer.h>
+#include <linux/ioport.h>
+#include <linux/delay.h>
+#include <linux/workqueue.h>
+#include <linux/platform_device.h>
+#include <linux/bitops.h>
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-#समावेश <pcmcia/ss.h>
-#समावेश "tcic.h"
+#include <pcmcia/ss.h>
+#include "tcic.h"
 
 MODULE_AUTHOR("David Hinds <dahinds@users.sourceforge.net>");
 MODULE_DESCRIPTION("Databook TCIC-2 PCMCIA socket driver");
@@ -61,242 +60,242 @@ MODULE_LICENSE("Dual MPL/GPL");
 /* Parameters that can be set with 'insmod' */
 
 /* The base port address of the TCIC-2 chip */
-अटल अचिन्हित दीर्घ tcic_base = TCIC_BASE;
+static unsigned long tcic_base = TCIC_BASE;
 
-/* Specअगरy a socket number to ignore */
-अटल पूर्णांक ignore = -1;
+/* Specify a socket number to ignore */
+static int ignore = -1;
 
-/* Probe क्रम safe पूर्णांकerrupts? */
-अटल पूर्णांक करो_scan = 1;
+/* Probe for safe interrupts? */
+static int do_scan = 1;
 
-/* Bit map of पूर्णांकerrupts to choose from */
-अटल u_पूर्णांक irq_mask = 0xffff;
-अटल पूर्णांक irq_list[16];
-अटल अचिन्हित पूर्णांक irq_list_count;
+/* Bit map of interrupts to choose from */
+static u_int irq_mask = 0xffff;
+static int irq_list[16];
+static unsigned int irq_list_count;
 
-/* The card status change पूर्णांकerrupt -- 0 means स्वतःselect */
-अटल पूर्णांक cs_irq;
+/* The card status change interrupt -- 0 means autoselect */
+static int cs_irq;
 
-/* Poll status पूर्णांकerval -- 0 means शेष to पूर्णांकerrupt */
-अटल पूर्णांक poll_पूर्णांकerval;
+/* Poll status interval -- 0 means default to interrupt */
+static int poll_interval;
 
-/* Delay क्रम card status द्विगुन-checking */
-अटल पूर्णांक poll_quick = HZ/20;
+/* Delay for card status double-checking */
+static int poll_quick = HZ/20;
 
-/* CCLK बाह्यal घड़ी समय, in nanoseconds.  70 ns = 14.31818 MHz */
-अटल पूर्णांक cycle_समय = 70;
+/* CCLK external clock time, in nanoseconds.  70 ns = 14.31818 MHz */
+static int cycle_time = 70;
 
-module_param_hw(tcic_base, uदीर्घ, ioport, 0444);
-module_param(ignore, पूर्णांक, 0444);
-module_param(करो_scan, पूर्णांक, 0444);
-module_param_hw(irq_mask, पूर्णांक, other, 0444);
-module_param_hw_array(irq_list, पूर्णांक, irq, &irq_list_count, 0444);
-module_param_hw(cs_irq, पूर्णांक, irq, 0444);
-module_param(poll_पूर्णांकerval, पूर्णांक, 0444);
-module_param(poll_quick, पूर्णांक, 0444);
-module_param(cycle_समय, पूर्णांक, 0444);
-
-/*====================================================================*/
-
-अटल irqवापस_t tcic_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev);
-अटल व्योम tcic_समयr(काष्ठा समयr_list *unused);
-अटल काष्ठा pccard_operations tcic_operations;
-
-काष्ठा tcic_socket अणु
-    u_लघु	psock;
-    u_अक्षर	last_sstat;
-    u_अक्षर	id;
-    काष्ठा pcmcia_socket	socket;
-पूर्ण;
-
-अटल काष्ठा समयr_list poll_समयr;
-अटल पूर्णांक tcic_समयr_pending;
-
-अटल पूर्णांक sockets;
-अटल काष्ठा tcic_socket socket_table[2];
+module_param_hw(tcic_base, ulong, ioport, 0444);
+module_param(ignore, int, 0444);
+module_param(do_scan, int, 0444);
+module_param_hw(irq_mask, int, other, 0444);
+module_param_hw_array(irq_list, int, irq, &irq_list_count, 0444);
+module_param_hw(cs_irq, int, irq, 0444);
+module_param(poll_interval, int, 0444);
+module_param(poll_quick, int, 0444);
+module_param(cycle_time, int, 0444);
 
 /*====================================================================*/
 
-/* Trick when selecting पूर्णांकerrupts: the TCIC sktirq pin is supposed
-   to map to irq 11, but is coded as 0 or 1 in the irq रेजिस्टरs. */
-#घोषणा TCIC_IRQ(x) ((x) ? (((x) == 11) ? 1 : (x)) : 15)
+static irqreturn_t tcic_interrupt(int irq, void *dev);
+static void tcic_timer(struct timer_list *unused);
+static struct pccard_operations tcic_operations;
 
-#अगर_घोषित DEBUG_X
-अटल u_अक्षर tcic_getb(u_अक्षर reg)
-अणु
-    u_अक्षर val = inb(tcic_base+reg);
-    prपूर्णांकk(KERN_DEBUG "tcic_getb(%#lx) = %#x\n", tcic_base+reg, val);
-    वापस val;
-पूर्ण
+struct tcic_socket {
+    u_short	psock;
+    u_char	last_sstat;
+    u_char	id;
+    struct pcmcia_socket	socket;
+};
 
-अटल u_लघु tcic_getw(u_अक्षर reg)
-अणु
-    u_लघु val = inw(tcic_base+reg);
-    prपूर्णांकk(KERN_DEBUG "tcic_getw(%#lx) = %#x\n", tcic_base+reg, val);
-    वापस val;
-पूर्ण
+static struct timer_list poll_timer;
+static int tcic_timer_pending;
 
-अटल व्योम tcic_setb(u_अक्षर reg, u_अक्षर data)
-अणु
-    prपूर्णांकk(KERN_DEBUG "tcic_setb(%#lx, %#x)\n", tcic_base+reg, data);
+static int sockets;
+static struct tcic_socket socket_table[2];
+
+/*====================================================================*/
+
+/* Trick when selecting interrupts: the TCIC sktirq pin is supposed
+   to map to irq 11, but is coded as 0 or 1 in the irq registers. */
+#define TCIC_IRQ(x) ((x) ? (((x) == 11) ? 1 : (x)) : 15)
+
+#ifdef DEBUG_X
+static u_char tcic_getb(u_char reg)
+{
+    u_char val = inb(tcic_base+reg);
+    printk(KERN_DEBUG "tcic_getb(%#lx) = %#x\n", tcic_base+reg, val);
+    return val;
+}
+
+static u_short tcic_getw(u_char reg)
+{
+    u_short val = inw(tcic_base+reg);
+    printk(KERN_DEBUG "tcic_getw(%#lx) = %#x\n", tcic_base+reg, val);
+    return val;
+}
+
+static void tcic_setb(u_char reg, u_char data)
+{
+    printk(KERN_DEBUG "tcic_setb(%#lx, %#x)\n", tcic_base+reg, data);
     outb(data, tcic_base+reg);
-पूर्ण
+}
 
-अटल व्योम tcic_setw(u_अक्षर reg, u_लघु data)
-अणु
-    prपूर्णांकk(KERN_DEBUG "tcic_setw(%#lx, %#x)\n", tcic_base+reg, data);
+static void tcic_setw(u_char reg, u_short data)
+{
+    printk(KERN_DEBUG "tcic_setw(%#lx, %#x)\n", tcic_base+reg, data);
     outw(data, tcic_base+reg);
-पूर्ण
-#अन्यथा
-#घोषणा tcic_getb(reg) inb(tcic_base+reg)
-#घोषणा tcic_getw(reg) inw(tcic_base+reg)
-#घोषणा tcic_setb(reg, data) outb(data, tcic_base+reg)
-#घोषणा tcic_setw(reg, data) outw(data, tcic_base+reg)
-#पूर्ण_अगर
+}
+#else
+#define tcic_getb(reg) inb(tcic_base+reg)
+#define tcic_getw(reg) inw(tcic_base+reg)
+#define tcic_setb(reg, data) outb(data, tcic_base+reg)
+#define tcic_setw(reg, data) outw(data, tcic_base+reg)
+#endif
 
-अटल व्योम tcic_setl(u_अक्षर reg, u_पूर्णांक data)
-अणु
-#अगर_घोषित DEBUG_X
-    prपूर्णांकk(KERN_DEBUG "tcic_setl(%#x, %#lx)\n", tcic_base+reg, data);
-#पूर्ण_अगर
+static void tcic_setl(u_char reg, u_int data)
+{
+#ifdef DEBUG_X
+    printk(KERN_DEBUG "tcic_setl(%#x, %#lx)\n", tcic_base+reg, data);
+#endif
     outw(data & 0xffff, tcic_base+reg);
     outw(data >> 16, tcic_base+reg+2);
-पूर्ण
+}
 
-अटल व्योम tcic_aux_setb(u_लघु reg, u_अक्षर data)
-अणु
-    u_अक्षर mode = (tcic_getb(TCIC_MODE) & TCIC_MODE_PGMMASK) | reg;
+static void tcic_aux_setb(u_short reg, u_char data)
+{
+    u_char mode = (tcic_getb(TCIC_MODE) & TCIC_MODE_PGMMASK) | reg;
     tcic_setb(TCIC_MODE, mode);
     tcic_setb(TCIC_AUX, data);
-पूर्ण
+}
 
-अटल u_लघु tcic_aux_getw(u_लघु reg)
-अणु
-    u_अक्षर mode = (tcic_getb(TCIC_MODE) & TCIC_MODE_PGMMASK) | reg;
+static u_short tcic_aux_getw(u_short reg)
+{
+    u_char mode = (tcic_getb(TCIC_MODE) & TCIC_MODE_PGMMASK) | reg;
     tcic_setb(TCIC_MODE, mode);
-    वापस tcic_getw(TCIC_AUX);
-पूर्ण
+    return tcic_getw(TCIC_AUX);
+}
 
-अटल व्योम tcic_aux_setw(u_लघु reg, u_लघु data)
-अणु
-    u_अक्षर mode = (tcic_getb(TCIC_MODE) & TCIC_MODE_PGMMASK) | reg;
+static void tcic_aux_setw(u_short reg, u_short data)
+{
+    u_char mode = (tcic_getb(TCIC_MODE) & TCIC_MODE_PGMMASK) | reg;
     tcic_setb(TCIC_MODE, mode);
     tcic_setw(TCIC_AUX, data);
-पूर्ण
+}
 
 /*====================================================================*/
 
 /* Time conversion functions */
 
-अटल पूर्णांक to_cycles(पूर्णांक ns)
-अणु
-    अगर (ns < 14)
-	वापस 0;
-    अन्यथा
-	वापस 2*(ns-14)/cycle_समय;
-पूर्ण
+static int to_cycles(int ns)
+{
+    if (ns < 14)
+	return 0;
+    else
+	return 2*(ns-14)/cycle_time;
+}
 
 /*====================================================================*/
 
-अटल अस्थिर u_पूर्णांक irq_hits;
+static volatile u_int irq_hits;
 
-अटल irqवापस_t __init tcic_irq_count(पूर्णांक irq, व्योम *dev)
-अणु
+static irqreturn_t __init tcic_irq_count(int irq, void *dev)
+{
     irq_hits++;
-    वापस IRQ_HANDLED;
-पूर्ण
+    return IRQ_HANDLED;
+}
 
-अटल u_पूर्णांक __init try_irq(पूर्णांक irq)
-अणु
-    u_लघु cfg;
+static u_int __init try_irq(int irq)
+{
+    u_short cfg;
 
     irq_hits = 0;
-    अगर (request_irq(irq, tcic_irq_count, 0, "irq scan", tcic_irq_count) != 0)
-	वापस -1;
+    if (request_irq(irq, tcic_irq_count, 0, "irq scan", tcic_irq_count) != 0)
+	return -1;
     mdelay(10);
-    अगर (irq_hits) अणु
-	मुक्त_irq(irq, tcic_irq_count);
-	वापस -1;
-    पूर्ण
+    if (irq_hits) {
+	free_irq(irq, tcic_irq_count);
+	return -1;
+    }
 
-    /* Generate one पूर्णांकerrupt */
+    /* Generate one interrupt */
     cfg = TCIC_SYSCFG_AUTOBUSY | 0x0a00;
     tcic_aux_setw(TCIC_AUX_SYSCFG, cfg | TCIC_IRQ(irq));
     tcic_setb(TCIC_IENA, TCIC_IENA_ERR | TCIC_IENA_CFG_HIGH);
     tcic_setb(TCIC_ICSR, TCIC_ICSR_ERR | TCIC_ICSR_JAM);
 
     udelay(1000);
-    मुक्त_irq(irq, tcic_irq_count);
+    free_irq(irq, tcic_irq_count);
 
-    /* Turn off पूर्णांकerrupts */
+    /* Turn off interrupts */
     tcic_setb(TCIC_IENA, TCIC_IENA_CFG_OFF);
-    जबतक (tcic_getb(TCIC_ICSR))
+    while (tcic_getb(TCIC_ICSR))
 	tcic_setb(TCIC_ICSR, TCIC_ICSR_JAM);
     tcic_aux_setw(TCIC_AUX_SYSCFG, cfg);
     
-    वापस (irq_hits != 1);
-पूर्ण
+    return (irq_hits != 1);
+}
 
-अटल u_पूर्णांक __init irq_scan(u_पूर्णांक mask0)
-अणु
-    u_पूर्णांक mask1;
-    पूर्णांक i;
+static u_int __init irq_scan(u_int mask0)
+{
+    u_int mask1;
+    int i;
 
-#अगर_घोषित __alpha__
-#घोषणा PIC 0x4d0
-    /* Don't probe level-triggered पूर्णांकerrupts -- reserved क्रम PCI */
-    पूर्णांक level_mask = inb_p(PIC) | (inb_p(PIC+1) << 8);
-    अगर (level_mask)
+#ifdef __alpha__
+#define PIC 0x4d0
+    /* Don't probe level-triggered interrupts -- reserved for PCI */
+    int level_mask = inb_p(PIC) | (inb_p(PIC+1) << 8);
+    if (level_mask)
 	mask0 &= ~level_mask;
-#पूर्ण_अगर
+#endif
 
     mask1 = 0;
-    अगर (करो_scan) अणु
-	क्रम (i = 0; i < 16; i++)
-	    अगर ((mask0 & (1 << i)) && (try_irq(i) == 0))
+    if (do_scan) {
+	for (i = 0; i < 16; i++)
+	    if ((mask0 & (1 << i)) && (try_irq(i) == 0))
 		mask1 |= (1 << i);
-	क्रम (i = 0; i < 16; i++)
-	    अगर ((mask1 & (1 << i)) && (try_irq(i) != 0)) अणु
+	for (i = 0; i < 16; i++)
+	    if ((mask1 & (1 << i)) && (try_irq(i) != 0)) {
 		mask1 ^= (1 << i);
-	    पूर्ण
-    पूर्ण
+	    }
+    }
     
-    अगर (mask1) अणु
-	prपूर्णांकk("scanned");
-    पूर्ण अन्यथा अणु
-	/* Fallback: just find पूर्णांकerrupts that aren't in use */
-	क्रम (i = 0; i < 16; i++)
-	    अगर ((mask0 & (1 << i)) &&
-		(request_irq(i, tcic_irq_count, 0, "x", tcic_irq_count) == 0)) अणु
+    if (mask1) {
+	printk("scanned");
+    } else {
+	/* Fallback: just find interrupts that aren't in use */
+	for (i = 0; i < 16; i++)
+	    if ((mask0 & (1 << i)) &&
+		(request_irq(i, tcic_irq_count, 0, "x", tcic_irq_count) == 0)) {
 		mask1 |= (1 << i);
-		मुक्त_irq(i, tcic_irq_count);
-	    पूर्ण
-	prपूर्णांकk("default");
-    पूर्ण
+		free_irq(i, tcic_irq_count);
+	    }
+	printk("default");
+    }
     
-    prपूर्णांकk(") = ");
-    क्रम (i = 0; i < 16; i++)
-	अगर (mask1 & (1<<i))
-	    prपूर्णांकk("%s%d", ((mask1 & ((1<<i)-1)) ? "," : ""), i);
-    prपूर्णांकk(" ");
+    printk(") = ");
+    for (i = 0; i < 16; i++)
+	if (mask1 & (1<<i))
+	    printk("%s%d", ((mask1 & ((1<<i)-1)) ? "," : ""), i);
+    printk(" ");
     
-    वापस mask1;
-पूर्ण
+    return mask1;
+}
 
 /*======================================================================
 
-    See अगर a card is present, घातered up, in IO mode, and alपढ़ोy
+    See if a card is present, powered up, in IO mode, and already
     bound to a (non-PCMCIA) Linux driver.
 
-    We make an exception क्रम cards that look like serial devices.
+    We make an exception for cards that look like serial devices.
     
 ======================================================================*/
 
-अटल पूर्णांक __init is_active(पूर्णांक s)
-अणु
-    u_लघु scf1, ioctl, base, num;
-    u_अक्षर pwr, sstat;
-    u_पूर्णांक addr;
+static int __init is_active(int s)
+{
+    u_short scf1, ioctl, base, num;
+    u_char pwr, sstat;
+    u_int addr;
     
     tcic_setl(TCIC_ADDR, (s << TCIC_ADDR_SS_SHFT)
 	      | TCIC_ADDR_INDREG | TCIC_SCF1(s));
@@ -309,319 +308,319 @@ module_param(cycle_समय, पूर्णांक, 0444);
     tcic_setw(TCIC_ADDR, addr + TCIC_ICTL_X);
     ioctl = tcic_getw(TCIC_DATA);
 
-    अगर (ioctl & TCIC_ICTL_TINY)
+    if (ioctl & TCIC_ICTL_TINY)
 	num = 1;
-    अन्यथा अणु
+    else {
 	num = (base ^ (base-1));
 	base = base & (base-1);
-    पूर्ण
+    }
 
-    अगर ((sstat & TCIC_SSTAT_CD) && (pwr & TCIC_PWR_VCC(s)) &&
+    if ((sstat & TCIC_SSTAT_CD) && (pwr & TCIC_PWR_VCC(s)) &&
 	(scf1 & TCIC_SCF1_IOSTS) && (ioctl & TCIC_ICTL_ENA) &&
-	((base & 0xfeef) != 0x02e8)) अणु
-	काष्ठा resource *res = request_region(base, num, "tcic-2");
-	अगर (!res) /* region is busy */
-	    वापस 1;
+	((base & 0xfeef) != 0x02e8)) {
+	struct resource *res = request_region(base, num, "tcic-2");
+	if (!res) /* region is busy */
+	    return 1;
 	release_region(base, num);
-    पूर्ण
+    }
 
-    वापस 0;
-पूर्ण
+    return 0;
+}
 
 /*======================================================================
 
-    This वापसs the revision code क्रम the specअगरied socket.
+    This returns the revision code for the specified socket.
     
 ======================================================================*/
 
-अटल पूर्णांक __init get_tcic_id(व्योम)
-अणु
-    u_लघु id;
+static int __init get_tcic_id(void)
+{
+    u_short id;
     
     tcic_aux_setw(TCIC_AUX_TEST, TCIC_TEST_DIAG);
     id = tcic_aux_getw(TCIC_AUX_ILOCK);
     id = (id & TCIC_ILOCKTEST_ID_MASK) >> TCIC_ILOCKTEST_ID_SH;
     tcic_aux_setw(TCIC_AUX_TEST, 0);
-    वापस id;
-पूर्ण
+    return id;
+}
 
 /*====================================================================*/
 
-अटल काष्ठा platक्रमm_driver tcic_driver = अणु
-	.driver = अणु
+static struct platform_driver tcic_driver = {
+	.driver = {
 		.name = "tcic-pcmcia",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल काष्ठा platक्रमm_device tcic_device = अणु
+static struct platform_device tcic_device = {
 	.name = "tcic-pcmcia",
 	.id = 0,
-पूर्ण;
+};
 
 
-अटल पूर्णांक __init init_tcic(व्योम)
-अणु
-    पूर्णांक i, sock, ret = 0;
-    u_पूर्णांक mask, scan;
+static int __init init_tcic(void)
+{
+    int i, sock, ret = 0;
+    u_int mask, scan;
 
-    अगर (platक्रमm_driver_रेजिस्टर(&tcic_driver))
-	वापस -1;
+    if (platform_driver_register(&tcic_driver))
+	return -1;
     
-    prपूर्णांकk(KERN_INFO "Databook TCIC-2 PCMCIA probe: ");
+    printk(KERN_INFO "Databook TCIC-2 PCMCIA probe: ");
     sock = 0;
 
-    अगर (!request_region(tcic_base, 16, "tcic-2")) अणु
-	prपूर्णांकk("could not allocate ports,\n ");
-	platक्रमm_driver_unरेजिस्टर(&tcic_driver);
-	वापस -ENODEV;
-    पूर्ण
-    अन्यथा अणु
+    if (!request_region(tcic_base, 16, "tcic-2")) {
+	printk("could not allocate ports,\n ");
+	platform_driver_unregister(&tcic_driver);
+	return -ENODEV;
+    }
+    else {
 	tcic_setw(TCIC_ADDR, 0);
-	अगर (tcic_getw(TCIC_ADDR) == 0) अणु
+	if (tcic_getw(TCIC_ADDR) == 0) {
 	    tcic_setw(TCIC_ADDR, 0xc3a5);
-	    अगर (tcic_getw(TCIC_ADDR) == 0xc3a5) sock = 2;
-	पूर्ण
-	अगर (sock == 0) अणु
-	    /* See अगर resetting the controller करोes any good */
+	    if (tcic_getw(TCIC_ADDR) == 0xc3a5) sock = 2;
+	}
+	if (sock == 0) {
+	    /* See if resetting the controller does any good */
 	    tcic_setb(TCIC_SCTRL, TCIC_SCTRL_RESET);
 	    tcic_setb(TCIC_SCTRL, 0);
 	    tcic_setw(TCIC_ADDR, 0);
-	    अगर (tcic_getw(TCIC_ADDR) == 0) अणु
+	    if (tcic_getw(TCIC_ADDR) == 0) {
 		tcic_setw(TCIC_ADDR, 0xc3a5);
-		अगर (tcic_getw(TCIC_ADDR) == 0xc3a5) sock = 2;
-	    पूर्ण
-	पूर्ण
-    पूर्ण
-    अगर (sock == 0) अणु
-	prपूर्णांकk("not found.\n");
+		if (tcic_getw(TCIC_ADDR) == 0xc3a5) sock = 2;
+	    }
+	}
+    }
+    if (sock == 0) {
+	printk("not found.\n");
 	release_region(tcic_base, 16);
-	platक्रमm_driver_unरेजिस्टर(&tcic_driver);
-	वापस -ENODEV;
-    पूर्ण
+	platform_driver_unregister(&tcic_driver);
+	return -ENODEV;
+    }
 
     sockets = 0;
-    क्रम (i = 0; i < sock; i++) अणु
-	अगर ((i == ignore) || is_active(i)) जारी;
+    for (i = 0; i < sock; i++) {
+	if ((i == ignore) || is_active(i)) continue;
 	socket_table[sockets].psock = i;
 	socket_table[sockets].id = get_tcic_id();
 
 	socket_table[sockets].socket.owner = THIS_MODULE;
-	/* only 16-bit cards, memory winकरोws must be size-aligned */
+	/* only 16-bit cards, memory windows must be size-aligned */
 	/* No PCI or CardBus support */
 	socket_table[sockets].socket.features = SS_CAP_PCCARD | SS_CAP_MEM_ALIGN;
 	/* irq 14, 11, 10, 7, 6, 5, 4, 3 */
 	socket_table[sockets].socket.irq_mask = 0x4cf8;
-	/* 4K minimum winकरोw size */
+	/* 4K minimum window size */
 	socket_table[sockets].socket.map_size = 0x1000;		
 	sockets++;
-    पूर्ण
+    }
 
-    चयन (socket_table[0].id) अणु
-    हाल TCIC_ID_DB86082:
-	prपूर्णांकk("DB86082"); अवरोध;
-    हाल TCIC_ID_DB86082A:
-	prपूर्णांकk("DB86082A"); अवरोध;
-    हाल TCIC_ID_DB86084:
-	prपूर्णांकk("DB86084"); अवरोध;
-    हाल TCIC_ID_DB86084A:
-	prपूर्णांकk("DB86084A"); अवरोध;
-    हाल TCIC_ID_DB86072:
-	prपूर्णांकk("DB86072"); अवरोध;
-    हाल TCIC_ID_DB86184:
-	prपूर्णांकk("DB86184"); अवरोध;
-    हाल TCIC_ID_DB86082B:
-	prपूर्णांकk("DB86082B"); अवरोध;
-    शेष:
-	prपूर्णांकk("Unknown ID 0x%02x", socket_table[0].id);
-    पूर्ण
+    switch (socket_table[0].id) {
+    case TCIC_ID_DB86082:
+	printk("DB86082"); break;
+    case TCIC_ID_DB86082A:
+	printk("DB86082A"); break;
+    case TCIC_ID_DB86084:
+	printk("DB86084"); break;
+    case TCIC_ID_DB86084A:
+	printk("DB86084A"); break;
+    case TCIC_ID_DB86072:
+	printk("DB86072"); break;
+    case TCIC_ID_DB86184:
+	printk("DB86184"); break;
+    case TCIC_ID_DB86082B:
+	printk("DB86082B"); break;
+    default:
+	printk("Unknown ID 0x%02x", socket_table[0].id);
+    }
     
     /* Set up polling */
-    समयr_setup(&poll_समयr, &tcic_समयr, 0);
+    timer_setup(&poll_timer, &tcic_timer, 0);
 
-    /* Build पूर्णांकerrupt mask */
-    prपूर्णांकk(KERN_CONT ", %d sockets\n", sockets);
-    prपूर्णांकk(KERN_INFO "  irq list (");
-    अगर (irq_list_count == 0)
+    /* Build interrupt mask */
+    printk(KERN_CONT ", %d sockets\n", sockets);
+    printk(KERN_INFO "  irq list (");
+    if (irq_list_count == 0)
 	mask = irq_mask;
-    अन्यथा
-	क्रम (i = mask = 0; i < irq_list_count; i++)
+    else
+	for (i = mask = 0; i < irq_list_count; i++)
 	    mask |= (1<<irq_list[i]);
 
     /* irq 14, 11, 10, 7, 6, 5, 4, 3 */
     mask &= 0x4cf8;
-    /* Scan पूर्णांकerrupts */
+    /* Scan interrupts */
     mask = irq_scan(mask);
-    क्रम (i=0;i<sockets;i++)
+    for (i=0;i<sockets;i++)
 	    socket_table[i].socket.irq_mask = mask;
     
-    /* Check क्रम only two पूर्णांकerrupts available */
+    /* Check for only two interrupts available */
     scan = (mask & (mask-1));
-    अगर (((scan & (scan-1)) == 0) && (poll_पूर्णांकerval == 0))
-	poll_पूर्णांकerval = HZ;
+    if (((scan & (scan-1)) == 0) && (poll_interval == 0))
+	poll_interval = HZ;
     
-    अगर (poll_पूर्णांकerval == 0) अणु
-	/* Aव्योम irq 12 unless it is explicitly requested */
-	u_पूर्णांक cs_mask = mask & ((cs_irq) ? (1<<cs_irq) : ~(1<<12));
-	क्रम (i = 15; i > 0; i--)
-	    अगर ((cs_mask & (1 << i)) &&
-		(request_irq(i, tcic_पूर्णांकerrupt, 0, "tcic",
-			     tcic_पूर्णांकerrupt) == 0))
-		अवरोध;
+    if (poll_interval == 0) {
+	/* Avoid irq 12 unless it is explicitly requested */
+	u_int cs_mask = mask & ((cs_irq) ? (1<<cs_irq) : ~(1<<12));
+	for (i = 15; i > 0; i--)
+	    if ((cs_mask & (1 << i)) &&
+		(request_irq(i, tcic_interrupt, 0, "tcic",
+			     tcic_interrupt) == 0))
+		break;
 	cs_irq = i;
-	अगर (cs_irq == 0) poll_पूर्णांकerval = HZ;
-    पूर्ण
+	if (cs_irq == 0) poll_interval = HZ;
+    }
     
-    अगर (socket_table[0].socket.irq_mask & (1 << 11))
-	prपूर्णांकk("sktirq is irq 11, ");
-    अगर (cs_irq != 0)
-	prपूर्णांकk("status change on irq %d\n", cs_irq);
-    अन्यथा
-	prपूर्णांकk("polled status, interval = %d ms\n",
-	       poll_पूर्णांकerval * 1000 / HZ);
+    if (socket_table[0].socket.irq_mask & (1 << 11))
+	printk("sktirq is irq 11, ");
+    if (cs_irq != 0)
+	printk("status change on irq %d\n", cs_irq);
+    else
+	printk("polled status, interval = %d ms\n",
+	       poll_interval * 1000 / HZ);
     
-    क्रम (i = 0; i < sockets; i++) अणु
+    for (i = 0; i < sockets; i++) {
 	tcic_setw(TCIC_ADDR+2, socket_table[i].psock << TCIC_SS_SHFT);
 	socket_table[i].last_sstat = tcic_getb(TCIC_SSTAT);
-    पूर्ण
+    }
     
-    /* jump start पूर्णांकerrupt handler, अगर needed */
-    tcic_पूर्णांकerrupt(0, शून्य);
+    /* jump start interrupt handler, if needed */
+    tcic_interrupt(0, NULL);
 
-    platक्रमm_device_रेजिस्टर(&tcic_device);
+    platform_device_register(&tcic_device);
 
-    क्रम (i = 0; i < sockets; i++) अणु
+    for (i = 0; i < sockets; i++) {
 	    socket_table[i].socket.ops = &tcic_operations;
-	    socket_table[i].socket.resource_ops = &pccard_nonअटल_ops;
+	    socket_table[i].socket.resource_ops = &pccard_nonstatic_ops;
 	    socket_table[i].socket.dev.parent = &tcic_device.dev;
-	    ret = pcmcia_रेजिस्टर_socket(&socket_table[i].socket);
-	    अगर (ret && i)
-		    pcmcia_unरेजिस्टर_socket(&socket_table[0].socket);
-    पूर्ण
+	    ret = pcmcia_register_socket(&socket_table[i].socket);
+	    if (ret && i)
+		    pcmcia_unregister_socket(&socket_table[0].socket);
+    }
     
-    वापस ret;
+    return ret;
 
-    वापस 0;
+    return 0;
     
-पूर्ण /* init_tcic */
+} /* init_tcic */
 
 /*====================================================================*/
 
-अटल व्योम __निकास निकास_tcic(व्योम)
-अणु
-    पूर्णांक i;
+static void __exit exit_tcic(void)
+{
+    int i;
 
-    del_समयr_sync(&poll_समयr);
-    अगर (cs_irq != 0) अणु
+    del_timer_sync(&poll_timer);
+    if (cs_irq != 0) {
 	tcic_aux_setw(TCIC_AUX_SYSCFG, TCIC_SYSCFG_AUTOBUSY|0x0a00);
-	मुक्त_irq(cs_irq, tcic_पूर्णांकerrupt);
-    पूर्ण
+	free_irq(cs_irq, tcic_interrupt);
+    }
     release_region(tcic_base, 16);
 
-    क्रम (i = 0; i < sockets; i++) अणु
-	    pcmcia_unरेजिस्टर_socket(&socket_table[i].socket);	    
-    पूर्ण
+    for (i = 0; i < sockets; i++) {
+	    pcmcia_unregister_socket(&socket_table[i].socket);	    
+    }
 
-    platक्रमm_device_unरेजिस्टर(&tcic_device);
-    platक्रमm_driver_unरेजिस्टर(&tcic_driver);
-पूर्ण /* निकास_tcic */
+    platform_device_unregister(&tcic_device);
+    platform_driver_unregister(&tcic_driver);
+} /* exit_tcic */
 
 /*====================================================================*/
 
-अटल irqवापस_t tcic_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev)
-अणु
-    पूर्णांक i, quick = 0;
-    u_अक्षर latch, sstat;
-    u_लघु psock;
-    u_पूर्णांक events;
-    अटल अस्थिर पूर्णांक active = 0;
+static irqreturn_t tcic_interrupt(int irq, void *dev)
+{
+    int i, quick = 0;
+    u_char latch, sstat;
+    u_short psock;
+    u_int events;
+    static volatile int active = 0;
 
-    अगर (active) अणु
-	prपूर्णांकk(KERN_NOTICE "tcic: reentered interrupt handler!\n");
-	वापस IRQ_NONE;
-    पूर्ण अन्यथा
+    if (active) {
+	printk(KERN_NOTICE "tcic: reentered interrupt handler!\n");
+	return IRQ_NONE;
+    } else
 	active = 1;
 
     pr_debug("tcic_interrupt()\n");
     
-    क्रम (i = 0; i < sockets; i++) अणु
+    for (i = 0; i < sockets; i++) {
 	psock = socket_table[i].psock;
 	tcic_setl(TCIC_ADDR, (psock << TCIC_ADDR_SS_SHFT)
 		  | TCIC_ADDR_INDREG | TCIC_SCF1(psock));
 	sstat = tcic_getb(TCIC_SSTAT);
 	latch = sstat ^ socket_table[psock].last_sstat;
 	socket_table[i].last_sstat = sstat;
-	अगर (tcic_getb(TCIC_ICSR) & TCIC_ICSR_CDCHG) अणु
+	if (tcic_getb(TCIC_ICSR) & TCIC_ICSR_CDCHG) {
 	    tcic_setb(TCIC_ICSR, TCIC_ICSR_CLEAR);
 	    quick = 1;
-	पूर्ण
-	अगर (latch == 0)
-	    जारी;
+	}
+	if (latch == 0)
+	    continue;
 	events = (latch & TCIC_SSTAT_CD) ? SS_DETECT : 0;
 	events |= (latch & TCIC_SSTAT_WP) ? SS_WRPROT : 0;
-	अगर (tcic_getw(TCIC_DATA) & TCIC_SCF1_IOSTS) अणु
+	if (tcic_getw(TCIC_DATA) & TCIC_SCF1_IOSTS) {
 	    events |= (latch & TCIC_SSTAT_LBAT1) ? SS_STSCHG : 0;
-	पूर्ण अन्यथा अणु
+	} else {
 	    events |= (latch & TCIC_SSTAT_RDY) ? SS_READY : 0;
 	    events |= (latch & TCIC_SSTAT_LBAT1) ? SS_BATDEAD : 0;
 	    events |= (latch & TCIC_SSTAT_LBAT2) ? SS_BATWARN : 0;
-	पूर्ण
-	अगर (events) अणु
+	}
+	if (events) {
 		pcmcia_parse_events(&socket_table[i].socket, events);
-	पूर्ण
-    पूर्ण
+	}
+    }
 
-    /* Schedule next poll, अगर needed */
-    अगर (((cs_irq == 0) || quick) && (!tcic_समयr_pending)) अणु
-	poll_समयr.expires = jअगरfies + (quick ? poll_quick : poll_पूर्णांकerval);
-	add_समयr(&poll_समयr);
-	tcic_समयr_pending = 1;
-    पूर्ण
+    /* Schedule next poll, if needed */
+    if (((cs_irq == 0) || quick) && (!tcic_timer_pending)) {
+	poll_timer.expires = jiffies + (quick ? poll_quick : poll_interval);
+	add_timer(&poll_timer);
+	tcic_timer_pending = 1;
+    }
     active = 0;
     
     pr_debug("interrupt done\n");
-    वापस IRQ_HANDLED;
-पूर्ण /* tcic_पूर्णांकerrupt */
+    return IRQ_HANDLED;
+} /* tcic_interrupt */
 
-अटल व्योम tcic_समयr(काष्ठा समयr_list *unused)
-अणु
+static void tcic_timer(struct timer_list *unused)
+{
     pr_debug("tcic_timer()\n");
-    tcic_समयr_pending = 0;
-    tcic_पूर्णांकerrupt(0, शून्य);
-पूर्ण /* tcic_समयr */
+    tcic_timer_pending = 0;
+    tcic_interrupt(0, NULL);
+} /* tcic_timer */
 
 /*====================================================================*/
 
-अटल पूर्णांक tcic_get_status(काष्ठा pcmcia_socket *sock, u_पूर्णांक *value)
-अणु
-    u_लघु psock = container_of(sock, काष्ठा tcic_socket, socket)->psock;
-    u_अक्षर reg;
+static int tcic_get_status(struct pcmcia_socket *sock, u_int *value)
+{
+    u_short psock = container_of(sock, struct tcic_socket, socket)->psock;
+    u_char reg;
 
     tcic_setl(TCIC_ADDR, (psock << TCIC_ADDR_SS_SHFT)
 	      | TCIC_ADDR_INDREG | TCIC_SCF1(psock));
     reg = tcic_getb(TCIC_SSTAT);
     *value  = (reg & TCIC_SSTAT_CD) ? SS_DETECT : 0;
     *value |= (reg & TCIC_SSTAT_WP) ? SS_WRPROT : 0;
-    अगर (tcic_getw(TCIC_DATA) & TCIC_SCF1_IOSTS) अणु
+    if (tcic_getw(TCIC_DATA) & TCIC_SCF1_IOSTS) {
 	*value |= (reg & TCIC_SSTAT_LBAT1) ? SS_STSCHG : 0;
-    पूर्ण अन्यथा अणु
+    } else {
 	*value |= (reg & TCIC_SSTAT_RDY) ? SS_READY : 0;
 	*value |= (reg & TCIC_SSTAT_LBAT1) ? SS_BATDEAD : 0;
 	*value |= (reg & TCIC_SSTAT_LBAT2) ? SS_BATWARN : 0;
-    पूर्ण
+    }
     reg = tcic_getb(TCIC_PWR);
-    अगर (reg & (TCIC_PWR_VCC(psock)|TCIC_PWR_VPP(psock)))
+    if (reg & (TCIC_PWR_VCC(psock)|TCIC_PWR_VPP(psock)))
 	*value |= SS_POWERON;
     dev_dbg(&sock->dev, "GetStatus(%d) = %#2.2x\n", psock, *value);
-    वापस 0;
-पूर्ण /* tcic_get_status */
+    return 0;
+} /* tcic_get_status */
 
 /*====================================================================*/
 
-अटल पूर्णांक tcic_set_socket(काष्ठा pcmcia_socket *sock, socket_state_t *state)
-अणु
-    u_लघु psock = container_of(sock, काष्ठा tcic_socket, socket)->psock;
-    u_अक्षर reg;
-    u_लघु scf1, scf2;
+static int tcic_set_socket(struct pcmcia_socket *sock, socket_state_t *state)
+{
+    u_short psock = container_of(sock, struct tcic_socket, socket)->psock;
+    u_char reg;
+    u_short scf1, scf2;
 
     dev_dbg(&sock->dev, "SetSocket(%d, flags %#3.3x, Vcc %d, Vpp %d, "
 	  "io_irq %d, csc_mask %#2.2x)\n", psock, state->flags,
@@ -631,84 +630,84 @@ module_param(cycle_समय, पूर्णांक, 0444);
     reg = tcic_getb(TCIC_PWR);
     reg &= ~(TCIC_PWR_VCC(psock) | TCIC_PWR_VPP(psock));
 
-    अगर (state->Vcc == 50) अणु
-	चयन (state->Vpp) अणु
-	हाल 0:   reg |= TCIC_PWR_VCC(psock) | TCIC_PWR_VPP(psock); अवरोध;
-	हाल 50:  reg |= TCIC_PWR_VCC(psock); अवरोध;
-	हाल 120: reg |= TCIC_PWR_VPP(psock); अवरोध;
-	शेष:  वापस -EINVAL;
-	पूर्ण
-    पूर्ण अन्यथा अगर (state->Vcc != 0)
-	वापस -EINVAL;
+    if (state->Vcc == 50) {
+	switch (state->Vpp) {
+	case 0:   reg |= TCIC_PWR_VCC(psock) | TCIC_PWR_VPP(psock); break;
+	case 50:  reg |= TCIC_PWR_VCC(psock); break;
+	case 120: reg |= TCIC_PWR_VPP(psock); break;
+	default:  return -EINVAL;
+	}
+    } else if (state->Vcc != 0)
+	return -EINVAL;
 
-    अगर (reg != tcic_getb(TCIC_PWR))
+    if (reg != tcic_getb(TCIC_PWR))
 	tcic_setb(TCIC_PWR, reg);
 
     reg = TCIC_ILOCK_HOLD_CCLK | TCIC_ILOCK_CWAIT;
-    अगर (state->flags & SS_OUTPUT_ENA) अणु
+    if (state->flags & SS_OUTPUT_ENA) {
 	tcic_setb(TCIC_SCTRL, TCIC_SCTRL_ENA);
 	reg |= TCIC_ILOCK_CRESENA;
-    पूर्ण अन्यथा
+    } else
 	tcic_setb(TCIC_SCTRL, 0);
-    अगर (state->flags & SS_RESET)
+    if (state->flags & SS_RESET)
 	reg |= TCIC_ILOCK_CRESET;
     tcic_aux_setb(TCIC_AUX_ILOCK, reg);
     
     tcic_setw(TCIC_ADDR, TCIC_SCF1(psock));
     scf1 = TCIC_SCF1_FINPACK;
     scf1 |= TCIC_IRQ(state->io_irq);
-    अगर (state->flags & SS_IOCARD) अणु
+    if (state->flags & SS_IOCARD) {
 	scf1 |= TCIC_SCF1_IOSTS;
-	अगर (state->flags & SS_SPKR_ENA)
+	if (state->flags & SS_SPKR_ENA)
 	    scf1 |= TCIC_SCF1_SPKR;
-	अगर (state->flags & SS_DMA_MODE)
+	if (state->flags & SS_DMA_MODE)
 	    scf1 |= TCIC_SCF1_DREQ2 << TCIC_SCF1_DMA_SHIFT;
-    पूर्ण
+    }
     tcic_setw(TCIC_DATA, scf1);
 
-    /* Some general setup stuff, and configure status पूर्णांकerrupt */
+    /* Some general setup stuff, and configure status interrupt */
     reg = TCIC_WAIT_ASYNC | TCIC_WAIT_SENSE | to_cycles(250);
     tcic_aux_setb(TCIC_AUX_WCTL, reg);
     tcic_aux_setw(TCIC_AUX_SYSCFG, TCIC_SYSCFG_AUTOBUSY|0x0a00|
 		  TCIC_IRQ(cs_irq));
     
-    /* Card status change पूर्णांकerrupt mask */
+    /* Card status change interrupt mask */
     tcic_setw(TCIC_ADDR, TCIC_SCF2(psock));
     scf2 = TCIC_SCF2_MALL;
-    अगर (state->csc_mask & SS_DETECT) scf2 &= ~TCIC_SCF2_MCD;
-    अगर (state->flags & SS_IOCARD) अणु
-	अगर (state->csc_mask & SS_STSCHG) reg &= ~TCIC_SCF2_MLBAT1;
-    पूर्ण अन्यथा अणु
-	अगर (state->csc_mask & SS_BATDEAD) reg &= ~TCIC_SCF2_MLBAT1;
-	अगर (state->csc_mask & SS_BATWARN) reg &= ~TCIC_SCF2_MLBAT2;
-	अगर (state->csc_mask & SS_READY) reg &= ~TCIC_SCF2_MRDY;
-    पूर्ण
+    if (state->csc_mask & SS_DETECT) scf2 &= ~TCIC_SCF2_MCD;
+    if (state->flags & SS_IOCARD) {
+	if (state->csc_mask & SS_STSCHG) reg &= ~TCIC_SCF2_MLBAT1;
+    } else {
+	if (state->csc_mask & SS_BATDEAD) reg &= ~TCIC_SCF2_MLBAT1;
+	if (state->csc_mask & SS_BATWARN) reg &= ~TCIC_SCF2_MLBAT2;
+	if (state->csc_mask & SS_READY) reg &= ~TCIC_SCF2_MRDY;
+    }
     tcic_setw(TCIC_DATA, scf2);
     /* For the ISA bus, the irq should be active-high totem-pole */
     tcic_setb(TCIC_IENA, TCIC_IENA_CDCHG | TCIC_IENA_CFG_HIGH);
 
-    वापस 0;
-पूर्ण /* tcic_set_socket */
+    return 0;
+} /* tcic_set_socket */
   
 /*====================================================================*/
 
-अटल पूर्णांक tcic_set_io_map(काष्ठा pcmcia_socket *sock, काष्ठा pccard_io_map *io)
-अणु
-    u_लघु psock = container_of(sock, काष्ठा tcic_socket, socket)->psock;
-    u_पूर्णांक addr;
-    u_लघु base, len, ioctl;
+static int tcic_set_io_map(struct pcmcia_socket *sock, struct pccard_io_map *io)
+{
+    u_short psock = container_of(sock, struct tcic_socket, socket)->psock;
+    u_int addr;
+    u_short base, len, ioctl;
     
     dev_dbg(&sock->dev, "SetIOMap(%d, %d, %#2.2x, %d ns, "
 	  "%#llx-%#llx)\n", psock, io->map, io->flags, io->speed,
-	  (अचिन्हित दीर्घ दीर्घ)io->start, (अचिन्हित दीर्घ दीर्घ)io->stop);
-    अगर ((io->map > 1) || (io->start > 0xffff) || (io->stop > 0xffff) ||
-	(io->stop < io->start)) वापस -EINVAL;
+	  (unsigned long long)io->start, (unsigned long long)io->stop);
+    if ((io->map > 1) || (io->start > 0xffff) || (io->stop > 0xffff) ||
+	(io->stop < io->start)) return -EINVAL;
     tcic_setw(TCIC_ADDR+2, TCIC_ADR2_INDREG | (psock << TCIC_SS_SHFT));
     addr = TCIC_IWIN(psock, io->map);
 
     base = io->start; len = io->stop - io->start;
-    /* Check to see that len+1 is घातer of two, etc */
-    अगर ((len & (len+1)) || (base & len)) वापस -EINVAL;
+    /* Check to see that len+1 is power of two, etc */
+    if ((len & (len+1)) || (base & len)) return -EINVAL;
     base |= (len+1)>>1;
     tcic_setw(TCIC_ADDR, addr + TCIC_IBASE_X);
     tcic_setw(TCIC_DATA, base);
@@ -717,47 +716,47 @@ module_param(cycle_समय, पूर्णांक, 0444);
     ioctl |= (len == 0) ? TCIC_ICTL_TINY : 0;
     ioctl |= (io->flags & MAP_ACTIVE) ? TCIC_ICTL_ENA : 0;
     ioctl |= to_cycles(io->speed) & TCIC_ICTL_WSCNT_MASK;
-    अगर (!(io->flags & MAP_AUTOSZ)) अणु
+    if (!(io->flags & MAP_AUTOSZ)) {
 	ioctl |= TCIC_ICTL_QUIET;
 	ioctl |= (io->flags & MAP_16BIT) ? TCIC_ICTL_BW_16 : TCIC_ICTL_BW_8;
-    पूर्ण
+    }
     tcic_setw(TCIC_ADDR, addr + TCIC_ICTL_X);
     tcic_setw(TCIC_DATA, ioctl);
     
-    वापस 0;
-पूर्ण /* tcic_set_io_map */
+    return 0;
+} /* tcic_set_io_map */
 
 /*====================================================================*/
 
-अटल पूर्णांक tcic_set_mem_map(काष्ठा pcmcia_socket *sock, काष्ठा pccard_mem_map *mem)
-अणु
-    u_लघु psock = container_of(sock, काष्ठा tcic_socket, socket)->psock;
-    u_लघु addr, ctl;
-    u_दीर्घ base, len, mmap;
+static int tcic_set_mem_map(struct pcmcia_socket *sock, struct pccard_mem_map *mem)
+{
+    u_short psock = container_of(sock, struct tcic_socket, socket)->psock;
+    u_short addr, ctl;
+    u_long base, len, mmap;
 
     dev_dbg(&sock->dev, "SetMemMap(%d, %d, %#2.2x, %d ns, "
 	  "%#llx-%#llx, %#x)\n", psock, mem->map, mem->flags,
-	  mem->speed, (अचिन्हित दीर्घ दीर्घ)mem->res->start,
-	  (अचिन्हित दीर्घ दीर्घ)mem->res->end, mem->card_start);
-    अगर ((mem->map > 3) || (mem->card_start > 0x3ffffff) ||
+	  mem->speed, (unsigned long long)mem->res->start,
+	  (unsigned long long)mem->res->end, mem->card_start);
+    if ((mem->map > 3) || (mem->card_start > 0x3ffffff) ||
 	(mem->res->start > 0xffffff) || (mem->res->end > 0xffffff) ||
 	(mem->res->start > mem->res->end) || (mem->speed > 1000))
-	वापस -EINVAL;
+	return -EINVAL;
     tcic_setw(TCIC_ADDR+2, TCIC_ADR2_INDREG | (psock << TCIC_SS_SHFT));
     addr = TCIC_MWIN(psock, mem->map);
 
     base = mem->res->start; len = mem->res->end - mem->res->start;
-    अगर ((len & (len+1)) || (base & len)) वापस -EINVAL;
-    अगर (len == 0x0fff)
+    if ((len & (len+1)) || (base & len)) return -EINVAL;
+    if (len == 0x0fff)
 	base = (base >> TCIC_MBASE_HA_SHFT) | TCIC_MBASE_4K_BIT;
-    अन्यथा
+    else
 	base = (base | (len+1)>>1) >> TCIC_MBASE_HA_SHFT;
     tcic_setw(TCIC_ADDR, addr + TCIC_MBASE_X);
     tcic_setw(TCIC_DATA, base);
     
     mmap = mem->card_start - mem->res->start;
     mmap = (mmap >> TCIC_MMAP_CA_SHFT) & TCIC_MMAP_CA_MASK;
-    अगर (mem->flags & MAP_ATTRIB) mmap |= TCIC_MMAP_REG;
+    if (mem->flags & MAP_ATTRIB) mmap |= TCIC_MMAP_REG;
     tcic_setw(TCIC_ADDR, addr + TCIC_MMAP_X);
     tcic_setw(TCIC_DATA, mmap);
 
@@ -769,38 +768,38 @@ module_param(cycle_समय, पूर्णांक, 0444);
     tcic_setw(TCIC_ADDR, addr + TCIC_MCTL_X);
     tcic_setw(TCIC_DATA, ctl);
     
-    वापस 0;
-पूर्ण /* tcic_set_mem_map */
+    return 0;
+} /* tcic_set_mem_map */
 
 /*====================================================================*/
 
-अटल पूर्णांक tcic_init(काष्ठा pcmcia_socket *s)
-अणु
-	पूर्णांक i;
-	काष्ठा resource res = अणु .start = 0, .end = 0x1000 पूर्ण;
-	pccard_io_map io = अणु 0, 0, 0, 0, 1 पूर्ण;
-	pccard_mem_map mem = अणु .res = &res, पूर्ण;
+static int tcic_init(struct pcmcia_socket *s)
+{
+	int i;
+	struct resource res = { .start = 0, .end = 0x1000 };
+	pccard_io_map io = { 0, 0, 0, 0, 1 };
+	pccard_mem_map mem = { .res = &res, };
 
-	क्रम (i = 0; i < 2; i++) अणु
+	for (i = 0; i < 2; i++) {
 		io.map = i;
 		tcic_set_io_map(s, &io);
-	पूर्ण
-	क्रम (i = 0; i < 5; i++) अणु
+	}
+	for (i = 0; i < 5; i++) {
 		mem.map = i;
 		tcic_set_mem_map(s, &mem);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल काष्ठा pccard_operations tcic_operations = अणु
+static struct pccard_operations tcic_operations = {
 	.init		   = tcic_init,
 	.get_status	   = tcic_get_status,
 	.set_socket	   = tcic_set_socket,
 	.set_io_map	   = tcic_set_io_map,
 	.set_mem_map	   = tcic_set_mem_map,
-पूर्ण;
+};
 
 /*====================================================================*/
 
 module_init(init_tcic);
-module_निकास(निकास_tcic);
+module_exit(exit_tcic);

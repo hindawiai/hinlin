@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Device driver क्रम the i2c thermostat found on the iBook G4, Albook G4
+ * Device driver for the i2c thermostat found on the iBook G4, Albook G4
  *
- * Copyright (C) 2003, 2004 Colin Leroy, Rयंत्रus Rohde, Benjamin Herrenschmidt
+ * Copyright (C) 2003, 2004 Colin Leroy, Rasmus Rohde, Benjamin Herrenschmidt
  *
  * Documentation from 115254175ADT7467_pra.pdf and 3686221171167ADT7460_b.pdf
- * https://www.onsemi.com/PowerSolutions/product.करो?id=ADT7467
- * https://www.onsemi.com/PowerSolutions/product.करो?id=ADT7460
+ * https://www.onsemi.com/PowerSolutions/product.do?id=ADT7467
+ * https://www.onsemi.com/PowerSolutions/product.do?id=ADT7460
  *
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/module.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/init.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/suspend.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/of_platक्रमm.h>
+#include <linux/types.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/init.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/suspend.h>
+#include <linux/kthread.h>
+#include <linux/moduleparam.h>
+#include <linux/freezer.h>
+#include <linux/of_platform.h>
 
-#समावेश <यंत्र/prom.h>
-#समावेश <यंत्र/machdep.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/sections.h>
+#include <asm/prom.h>
+#include <asm/machdep.h>
+#include <asm/io.h>
+#include <asm/sections.h>
 
-#अघोषित DEBUG
+#undef DEBUG
 
-#घोषणा CONFIG_REG   0x40
-#घोषणा MANUAL_MASK  0xe0
-#घोषणा AUTO_MASK    0x20
-#घोषणा INVERT_MASK  0x10
+#define CONFIG_REG   0x40
+#define MANUAL_MASK  0xe0
+#define AUTO_MASK    0x20
+#define INVERT_MASK  0x10
 
-अटल u8 TEMP_REG[3]    = अणु0x26, 0x25, 0x27पूर्ण; /* local, sensor1, sensor2 */
-अटल u8 LIMIT_REG[3]   = अणु0x6b, 0x6a, 0x6cपूर्ण; /* local, sensor1, sensor2 */
-अटल u8 MANUAL_MODE[2] = अणु0x5c, 0x5dपूर्ण;       
-अटल u8 REM_CONTROL[2] = अणु0x00, 0x40पूर्ण;
-अटल u8 FAN_SPEED[2]   = अणु0x28, 0x2aपूर्ण;
-अटल u8 FAN_SPD_SET[2] = अणु0x30, 0x31पूर्ण;
+static u8 TEMP_REG[3]    = {0x26, 0x25, 0x27}; /* local, sensor1, sensor2 */
+static u8 LIMIT_REG[3]   = {0x6b, 0x6a, 0x6c}; /* local, sensor1, sensor2 */
+static u8 MANUAL_MODE[2] = {0x5c, 0x5d};       
+static u8 REM_CONTROL[2] = {0x00, 0x40};
+static u8 FAN_SPEED[2]   = {0x28, 0x2a};
+static u8 FAN_SPD_SET[2] = {0x30, 0x31};
 
-अटल u8 शेष_limits_local[3] = अणु70, 50, 70पूर्ण;    /* local, sensor1, sensor2 */
-अटल u8 शेष_limits_chip[3] = अणु80, 65, 80पूर्ण;    /* local, sensor1, sensor2 */
-अटल स्थिर अक्षर *sensor_location[3] = अणु "?", "?", "?" पूर्ण;
+static u8 default_limits_local[3] = {70, 50, 70};    /* local, sensor1, sensor2 */
+static u8 default_limits_chip[3] = {80, 65, 80};    /* local, sensor1, sensor2 */
+static const char *sensor_location[3] = { "?", "?", "?" };
 
-अटल पूर्णांक limit_adjust;
-अटल पूर्णांक fan_speed = -1;
-अटल bool verbose;
+static int limit_adjust;
+static int fan_speed = -1;
+static bool verbose;
 
 MODULE_AUTHOR("Colin Leroy <colin@colino.net>");
 MODULE_DESCRIPTION("Driver for ADT746x thermostat in iBook G4 and "
 		   "Powerbook G4 Alu");
 MODULE_LICENSE("GPL");
 
-module_param(limit_adjust, पूर्णांक, 0644);
+module_param(limit_adjust, int, 0644);
 MODULE_PARM_DESC(limit_adjust,"Adjust maximum temperatures (50 sensor1, 70 sensor2) "
 		 "by N degrees.");
 
-module_param(fan_speed, पूर्णांक, 0644);
+module_param(fan_speed, int, 0644);
 MODULE_PARM_DESC(fan_speed,"Specify starting fan speed (0-255) "
 		 "(default 64)");
 
@@ -72,316 +71,316 @@ module_param(verbose, bool, 0);
 MODULE_PARM_DESC(verbose,"Verbose log operations "
 		 "(default 0)");
 
-काष्ठा thermostat अणु
-	काष्ठा i2c_client	*clt;
+struct thermostat {
+	struct i2c_client	*clt;
 	u8			temps[3];
 	u8			cached_temp[3];
 	u8			initial_limits[3];
 	u8			limits[3];
-	पूर्णांक			last_speed[2];
-	पूर्णांक			last_var[2];
-	पूर्णांक			pwm_inv[2];
-	काष्ठा task_काष्ठा	*thपढ़ो;
-	काष्ठा platक्रमm_device	*pdev;
-	क्रमागत अणु
+	int			last_speed[2];
+	int			last_var[2];
+	int			pwm_inv[2];
+	struct task_struct	*thread;
+	struct platform_device	*pdev;
+	enum {
 		ADT7460,
 		ADT7467
-	पूर्ण			type;
-पूर्ण;
+	}			type;
+};
 
-अटल व्योम ग_लिखो_both_fan_speed(काष्ठा thermostat *th, पूर्णांक speed);
-अटल व्योम ग_लिखो_fan_speed(काष्ठा thermostat *th, पूर्णांक speed, पूर्णांक fan);
+static void write_both_fan_speed(struct thermostat *th, int speed);
+static void write_fan_speed(struct thermostat *th, int speed, int fan);
 
-अटल पूर्णांक
-ग_लिखो_reg(काष्ठा thermostat* th, पूर्णांक reg, u8 data)
-अणु
-	u8 पंचांगp[2];
-	पूर्णांक rc;
+static int
+write_reg(struct thermostat* th, int reg, u8 data)
+{
+	u8 tmp[2];
+	int rc;
 	
-	पंचांगp[0] = reg;
-	पंचांगp[1] = data;
-	rc = i2c_master_send(th->clt, (स्थिर अक्षर *)पंचांगp, 2);
-	अगर (rc < 0)
-		वापस rc;
-	अगर (rc != 2)
-		वापस -ENODEV;
-	वापस 0;
-पूर्ण
+	tmp[0] = reg;
+	tmp[1] = data;
+	rc = i2c_master_send(th->clt, (const char *)tmp, 2);
+	if (rc < 0)
+		return rc;
+	if (rc != 2)
+		return -ENODEV;
+	return 0;
+}
 
-अटल पूर्णांक
-पढ़ो_reg(काष्ठा thermostat* th, पूर्णांक reg)
-अणु
+static int
+read_reg(struct thermostat* th, int reg)
+{
 	u8 reg_addr, data;
-	पूर्णांक rc;
+	int rc;
 
 	reg_addr = (u8)reg;
 	rc = i2c_master_send(th->clt, &reg_addr, 1);
-	अगर (rc < 0)
-		वापस rc;
-	अगर (rc != 1)
-		वापस -ENODEV;
-	rc = i2c_master_recv(th->clt, (अक्षर *)&data, 1);
-	अगर (rc < 0)
-		वापस rc;
-	वापस data;
-पूर्ण
+	if (rc < 0)
+		return rc;
+	if (rc != 1)
+		return -ENODEV;
+	rc = i2c_master_recv(th->clt, (char *)&data, 1);
+	if (rc < 0)
+		return rc;
+	return data;
+}
 
-अटल पूर्णांक पढ़ो_fan_speed(काष्ठा thermostat *th, u8 addr)
-अणु
-	u8 पंचांगp[2];
+static int read_fan_speed(struct thermostat *th, u8 addr)
+{
+	u8 tmp[2];
 	u16 res;
 	
 	/* should start with low byte */
-	पंचांगp[1] = पढ़ो_reg(th, addr);
-	पंचांगp[0] = पढ़ो_reg(th, addr + 1);
+	tmp[1] = read_reg(th, addr);
+	tmp[0] = read_reg(th, addr + 1);
 	
-	res = पंचांगp[1] + (पंचांगp[0] << 8);
+	res = tmp[1] + (tmp[0] << 8);
 	/* "a value of 0xffff means that the fan has stopped" */
-	वापस (res == 0xffff ? 0 : (90000*60)/res);
-पूर्ण
+	return (res == 0xffff ? 0 : (90000*60)/res);
+}
 
-अटल व्योम ग_लिखो_both_fan_speed(काष्ठा thermostat *th, पूर्णांक speed)
-अणु
-	ग_लिखो_fan_speed(th, speed, 0);
-	अगर (th->type == ADT7460)
-		ग_लिखो_fan_speed(th, speed, 1);
-पूर्ण
+static void write_both_fan_speed(struct thermostat *th, int speed)
+{
+	write_fan_speed(th, speed, 0);
+	if (th->type == ADT7460)
+		write_fan_speed(th, speed, 1);
+}
 
-अटल व्योम ग_लिखो_fan_speed(काष्ठा thermostat *th, पूर्णांक speed, पूर्णांक fan)
-अणु
+static void write_fan_speed(struct thermostat *th, int speed, int fan)
+{
 	u8 manual;
 	
-	अगर (speed > 0xff) 
+	if (speed > 0xff) 
 		speed = 0xff;
-	अन्यथा अगर (speed < -1) 
+	else if (speed < -1) 
 		speed = 0;
 	
-	अगर (th->type == ADT7467 && fan == 1)
-		वापस;
+	if (th->type == ADT7467 && fan == 1)
+		return;
 	
-	अगर (th->last_speed[fan] != speed) अणु
-		अगर (verbose) अणु
-			अगर (speed == -1)
-				prपूर्णांकk(KERN_DEBUG "adt746x: Setting speed to automatic "
+	if (th->last_speed[fan] != speed) {
+		if (verbose) {
+			if (speed == -1)
+				printk(KERN_DEBUG "adt746x: Setting speed to automatic "
 					"for %s fan.\n", sensor_location[fan+1]);
-			अन्यथा
-				prपूर्णांकk(KERN_DEBUG "adt746x: Setting speed to %d "
+			else
+				printk(KERN_DEBUG "adt746x: Setting speed to %d "
 					"for %s fan.\n", speed, sensor_location[fan+1]);
-		पूर्ण
-	पूर्ण अन्यथा
-		वापस;
+		}
+	} else
+		return;
 	
-	अगर (speed >= 0) अणु
-		manual = पढ़ो_reg(th, MANUAL_MODE[fan]);
+	if (speed >= 0) {
+		manual = read_reg(th, MANUAL_MODE[fan]);
 		manual &= ~INVERT_MASK;
-		ग_लिखो_reg(th, MANUAL_MODE[fan],
+		write_reg(th, MANUAL_MODE[fan],
 			manual | MANUAL_MASK | th->pwm_inv[fan]);
-		ग_लिखो_reg(th, FAN_SPD_SET[fan], speed);
-	पूर्ण अन्यथा अणु
-		/* back to स्वतःmatic */
-		अगर(th->type == ADT7460) अणु
-			manual = पढ़ो_reg(th,
+		write_reg(th, FAN_SPD_SET[fan], speed);
+	} else {
+		/* back to automatic */
+		if(th->type == ADT7460) {
+			manual = read_reg(th,
 				MANUAL_MODE[fan]) & (~MANUAL_MASK);
 			manual &= ~INVERT_MASK;
 			manual |= th->pwm_inv[fan];
-			ग_लिखो_reg(th,
+			write_reg(th,
 				MANUAL_MODE[fan], manual|REM_CONTROL[fan]);
-		पूर्ण अन्यथा अणु
-			manual = पढ़ो_reg(th, MANUAL_MODE[fan]);
+		} else {
+			manual = read_reg(th, MANUAL_MODE[fan]);
 			manual &= ~INVERT_MASK;
 			manual |= th->pwm_inv[fan];
-			ग_लिखो_reg(th, MANUAL_MODE[fan], manual&(~AUTO_MASK));
-		पूर्ण
-	पूर्ण
+			write_reg(th, MANUAL_MODE[fan], manual&(~AUTO_MASK));
+		}
+	}
 	
 	th->last_speed[fan] = speed;			
-पूर्ण
+}
 
-अटल व्योम पढ़ो_sensors(काष्ठा thermostat *th)
-अणु
-	पूर्णांक i = 0;
+static void read_sensors(struct thermostat *th)
+{
+	int i = 0;
 
-	क्रम (i = 0; i < 3; i++)
-		th->temps[i]  = पढ़ो_reg(th, TEMP_REG[i]);
-पूर्ण
+	for (i = 0; i < 3; i++)
+		th->temps[i]  = read_reg(th, TEMP_REG[i]);
+}
 
-#अगर_घोषित DEBUG
-अटल व्योम display_stats(काष्ठा thermostat *th)
-अणु
-	अगर (th->temps[0] != th->cached_temp[0]
+#ifdef DEBUG
+static void display_stats(struct thermostat *th)
+{
+	if (th->temps[0] != th->cached_temp[0]
 	||  th->temps[1] != th->cached_temp[1]
-	||  th->temps[2] != th->cached_temp[2]) अणु
-		prपूर्णांकk(KERN_INFO "adt746x: Temperature infos:"
+	||  th->temps[2] != th->cached_temp[2]) {
+		printk(KERN_INFO "adt746x: Temperature infos:"
 				 " thermostats: %d,%d,%d;"
 				 " limits: %d,%d,%d;"
 				 " fan speed: %d RPM\n",
 				 th->temps[0], th->temps[1], th->temps[2],
 				 th->limits[0],  th->limits[1],  th->limits[2],
-				 पढ़ो_fan_speed(th, FAN_SPEED[0]));
-	पूर्ण
+				 read_fan_speed(th, FAN_SPEED[0]));
+	}
 	th->cached_temp[0] = th->temps[0];
 	th->cached_temp[1] = th->temps[1];
 	th->cached_temp[2] = th->temps[2];
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम update_fans_speed (काष्ठा thermostat *th)
-अणु
-	पूर्णांक lastvar = 0; /* last variation, क्रम iBook */
-	पूर्णांक i = 0;
+static void update_fans_speed (struct thermostat *th)
+{
+	int lastvar = 0; /* last variation, for iBook */
+	int i = 0;
 
-	/* we करोn't care about local sensor, so we start at sensor 1 */
-	क्रम (i = 1; i < 3; i++) अणु
+	/* we don't care about local sensor, so we start at sensor 1 */
+	for (i = 1; i < 3; i++) {
 		bool started = false;
-		पूर्णांक fan_number = (th->type == ADT7460 && i == 2);
-		पूर्णांक var = th->temps[i] - th->limits[i];
+		int fan_number = (th->type == ADT7460 && i == 2);
+		int var = th->temps[i] - th->limits[i];
 
-		अगर (var > -1) अणु
-			पूर्णांक step = (255 - fan_speed) / 7;
-			पूर्णांक new_speed = 0;
+		if (var > -1) {
+			int step = (255 - fan_speed) / 7;
+			int new_speed = 0;
 
-			/* hysteresis : change fan speed only अगर variation is
+			/* hysteresis : change fan speed only if variation is
 			 * more than two degrees */
-			अगर (असल(var - th->last_var[fan_number]) < 2)
-				जारी;
+			if (abs(var - th->last_var[fan_number]) < 2)
+				continue;
 
 			started = true;
 			new_speed = fan_speed + ((var-1)*step);
 
-			अगर (new_speed < fan_speed)
+			if (new_speed < fan_speed)
 				new_speed = fan_speed;
-			अगर (new_speed > 255)
+			if (new_speed > 255)
 				new_speed = 255;
 
-			अगर (verbose)
-				prपूर्णांकk(KERN_DEBUG "adt746x: Setting fans speed to %d "
+			if (verbose)
+				printk(KERN_DEBUG "adt746x: Setting fans speed to %d "
 						 "(limit exceeded by %d on %s)\n",
 						new_speed, var,
 						sensor_location[fan_number+1]);
-			ग_लिखो_both_fan_speed(th, new_speed);
+			write_both_fan_speed(th, new_speed);
 			th->last_var[fan_number] = var;
-		पूर्ण अन्यथा अगर (var < -2) अणु
-			/* करोn't stop fan अगर sensor2 is cold and sensor1 is not
+		} else if (var < -2) {
+			/* don't stop fan if sensor2 is cold and sensor1 is not
 			 * so cold (lastvar >= -1) */
-			अगर (i == 2 && lastvar < -1) अणु
-				अगर (th->last_speed[fan_number] != 0)
-					अगर (verbose)
-						prपूर्णांकk(KERN_DEBUG "adt746x: Stopping "
+			if (i == 2 && lastvar < -1) {
+				if (th->last_speed[fan_number] != 0)
+					if (verbose)
+						printk(KERN_DEBUG "adt746x: Stopping "
 							"fans.\n");
-				ग_लिखो_both_fan_speed(th, 0);
-			पूर्ण
-		पूर्ण
+				write_both_fan_speed(th, 0);
+			}
+		}
 
 		lastvar = var;
 
-		अगर (started)
-			वापस; /* we करोn't want to re-stop the fan
-				* अगर sensor1 is heating and sensor2 is not */
-	पूर्ण
-पूर्ण
+		if (started)
+			return; /* we don't want to re-stop the fan
+				* if sensor1 is heating and sensor2 is not */
+	}
+}
 
-अटल पूर्णांक monitor_task(व्योम *arg)
-अणु
-	काष्ठा thermostat* th = arg;
+static int monitor_task(void *arg)
+{
+	struct thermostat* th = arg;
 
-	set_मुक्तzable();
-	जबतक(!kthपढ़ो_should_stop()) अणु
-		try_to_मुक्तze();
-		msleep_पूर्णांकerruptible(2000);
+	set_freezable();
+	while(!kthread_should_stop()) {
+		try_to_freeze();
+		msleep_interruptible(2000);
 
-#अगर_अघोषित DEBUG
-		अगर (fan_speed != -1)
-			पढ़ो_sensors(th);
-#अन्यथा
-		पढ़ो_sensors(th);
-#पूर्ण_अगर		
+#ifndef DEBUG
+		if (fan_speed != -1)
+			read_sensors(th);
+#else
+		read_sensors(th);
+#endif		
 
-		अगर (fan_speed != -1)
+		if (fan_speed != -1)
 			update_fans_speed(th);
 
-#अगर_घोषित DEBUG
+#ifdef DEBUG
 		display_stats(th);
-#पूर्ण_अगर
+#endif
 
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_limit(काष्ठा thermostat *th, पूर्णांक i)
-अणु
-	/* Set sensor1 limit higher to aव्योम घातerकरोwns */
-	th->limits[i] = शेष_limits_chip[i] + limit_adjust;
-	ग_लिखो_reg(th, LIMIT_REG[i], th->limits[i]);
+static void set_limit(struct thermostat *th, int i)
+{
+	/* Set sensor1 limit higher to avoid powerdowns */
+	th->limits[i] = default_limits_chip[i] + limit_adjust;
+	write_reg(th, LIMIT_REG[i], th->limits[i]);
 		
 	/* set our limits to normal */
-	th->limits[i] = शेष_limits_local[i] + limit_adjust;
-पूर्ण
+	th->limits[i] = default_limits_local[i] + limit_adjust;
+}
 
-#घोषणा BUILD_SHOW_FUNC_INT(name, data)				\
-अटल sमाप_प्रकार show_##name(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु								\
-	काष्ठा thermostat *th = dev_get_drvdata(dev);		\
-	वापस प्र_लिखो(buf, "%d\n", data);			\
-पूर्ण
+#define BUILD_SHOW_FUNC_INT(name, data)				\
+static ssize_t show_##name(struct device *dev, struct device_attribute *attr, char *buf)	\
+{								\
+	struct thermostat *th = dev_get_drvdata(dev);		\
+	return sprintf(buf, "%d\n", data);			\
+}
 
-#घोषणा BUILD_SHOW_FUNC_INT_LITE(name, data)				\
-अटल sमाप_प्रकार show_##name(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)	\
-अणु								\
-	वापस प्र_लिखो(buf, "%d\n", data);			\
-पूर्ण
+#define BUILD_SHOW_FUNC_INT_LITE(name, data)				\
+static ssize_t show_##name(struct device *dev, struct device_attribute *attr, char *buf)	\
+{								\
+	return sprintf(buf, "%d\n", data);			\
+}
 
-#घोषणा BUILD_SHOW_FUNC_STR(name, data)				\
-अटल sमाप_प्रकार show_##name(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)       \
-अणु								\
-	वापस प्र_लिखो(buf, "%s\n", data);			\
-पूर्ण
+#define BUILD_SHOW_FUNC_STR(name, data)				\
+static ssize_t show_##name(struct device *dev, struct device_attribute *attr, char *buf)       \
+{								\
+	return sprintf(buf, "%s\n", data);			\
+}
 
-#घोषणा BUILD_SHOW_FUNC_FAN(name, data)				\
-अटल sमाप_प्रकार show_##name(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)       \
-अणु								\
-	काष्ठा thermostat *th = dev_get_drvdata(dev);		\
-	वापस प्र_लिखो(buf, "%d (%d rpm)\n", 			\
+#define BUILD_SHOW_FUNC_FAN(name, data)				\
+static ssize_t show_##name(struct device *dev, struct device_attribute *attr, char *buf)       \
+{								\
+	struct thermostat *th = dev_get_drvdata(dev);		\
+	return sprintf(buf, "%d (%d rpm)\n", 			\
 		th->last_speed[data],				\
-		पढ़ो_fan_speed(th, FAN_SPEED[data])		\
+		read_fan_speed(th, FAN_SPEED[data])		\
 		);						\
-पूर्ण
+}
 
-#घोषणा BUILD_STORE_FUNC_DEG(name, data)			\
-अटल sमाप_प्रकार store_##name(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार n) \
-अणु								\
-	काष्ठा thermostat *th = dev_get_drvdata(dev);		\
-	पूर्णांक val;						\
-	पूर्णांक i;							\
-	val = simple_म_से_दीर्घ(buf, शून्य, 10);			\
-	prपूर्णांकk(KERN_INFO "Adjusting limits by %d degrees\n", val);	\
+#define BUILD_STORE_FUNC_DEG(name, data)			\
+static ssize_t store_##name(struct device *dev, struct device_attribute *attr, const char *buf, size_t n) \
+{								\
+	struct thermostat *th = dev_get_drvdata(dev);		\
+	int val;						\
+	int i;							\
+	val = simple_strtol(buf, NULL, 10);			\
+	printk(KERN_INFO "Adjusting limits by %d degrees\n", val);	\
 	limit_adjust = val;					\
-	क्रम (i=0; i < 3; i++)					\
+	for (i=0; i < 3; i++)					\
 		set_limit(th, i);				\
-	वापस n;						\
-पूर्ण
+	return n;						\
+}
 
-#घोषणा BUILD_STORE_FUNC_INT(name, data)			\
-अटल sमाप_प्रकार store_##name(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार n) \
-अणु								\
-	पूर्णांक val;						\
-	val = simple_म_से_दीर्घ(buf, शून्य, 10);			\
-	अगर (val < 0 || val > 255)				\
-		वापस -EINVAL;					\
-	prपूर्णांकk(KERN_INFO "Setting specified fan speed to %d\n", val);	\
+#define BUILD_STORE_FUNC_INT(name, data)			\
+static ssize_t store_##name(struct device *dev, struct device_attribute *attr, const char *buf, size_t n) \
+{								\
+	int val;						\
+	val = simple_strtol(buf, NULL, 10);			\
+	if (val < 0 || val > 255)				\
+		return -EINVAL;					\
+	printk(KERN_INFO "Setting specified fan speed to %d\n", val);	\
 	data = val;						\
-	वापस n;						\
-पूर्ण
+	return n;						\
+}
 
-BUILD_SHOW_FUNC_INT(sensor1_temperature,	 (पढ़ो_reg(th, TEMP_REG[1])))
-BUILD_SHOW_FUNC_INT(sensor2_temperature,	 (पढ़ो_reg(th, TEMP_REG[2])))
+BUILD_SHOW_FUNC_INT(sensor1_temperature,	 (read_reg(th, TEMP_REG[1])))
+BUILD_SHOW_FUNC_INT(sensor2_temperature,	 (read_reg(th, TEMP_REG[2])))
 BUILD_SHOW_FUNC_INT(sensor1_limit,		 th->limits[1])
 BUILD_SHOW_FUNC_INT(sensor2_limit,		 th->limits[2])
 BUILD_SHOW_FUNC_STR(sensor1_location,		 sensor_location[1])
 BUILD_SHOW_FUNC_STR(sensor2_location,		 sensor_location[2])
 
-BUILD_SHOW_FUNC_INT_LITE(specअगरied_fan_speed, fan_speed)
-BUILD_STORE_FUNC_INT(specअगरied_fan_speed,fan_speed)
+BUILD_SHOW_FUNC_INT_LITE(specified_fan_speed, fan_speed)
+BUILD_STORE_FUNC_INT(specified_fan_speed,fan_speed)
 
 BUILD_SHOW_FUNC_FAN(sensor1_fan_speed,	 0)
 BUILD_SHOW_FUNC_FAN(sensor2_fan_speed,	 1)
@@ -389,43 +388,43 @@ BUILD_SHOW_FUNC_FAN(sensor2_fan_speed,	 1)
 BUILD_SHOW_FUNC_INT_LITE(limit_adjust,	 limit_adjust)
 BUILD_STORE_FUNC_DEG(limit_adjust,	 th)
 		
-अटल DEVICE_ATTR(sensor1_temperature,	S_IRUGO,
-		   show_sensor1_temperature,शून्य);
-अटल DEVICE_ATTR(sensor2_temperature,	S_IRUGO,
-		   show_sensor2_temperature,शून्य);
-अटल DEVICE_ATTR(sensor1_limit, S_IRUGO,
-		   show_sensor1_limit,	शून्य);
-अटल DEVICE_ATTR(sensor2_limit, S_IRUGO,
-		   show_sensor2_limit,	शून्य);
-अटल DEVICE_ATTR(sensor1_location, S_IRUGO,
-		   show_sensor1_location, शून्य);
-अटल DEVICE_ATTR(sensor2_location, S_IRUGO,
-		   show_sensor2_location, शून्य);
+static DEVICE_ATTR(sensor1_temperature,	S_IRUGO,
+		   show_sensor1_temperature,NULL);
+static DEVICE_ATTR(sensor2_temperature,	S_IRUGO,
+		   show_sensor2_temperature,NULL);
+static DEVICE_ATTR(sensor1_limit, S_IRUGO,
+		   show_sensor1_limit,	NULL);
+static DEVICE_ATTR(sensor2_limit, S_IRUGO,
+		   show_sensor2_limit,	NULL);
+static DEVICE_ATTR(sensor1_location, S_IRUGO,
+		   show_sensor1_location, NULL);
+static DEVICE_ATTR(sensor2_location, S_IRUGO,
+		   show_sensor2_location, NULL);
 
-अटल DEVICE_ATTR(specअगरied_fan_speed,	S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
-		   show_specअगरied_fan_speed,store_specअगरied_fan_speed);
+static DEVICE_ATTR(specified_fan_speed,	S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
+		   show_specified_fan_speed,store_specified_fan_speed);
 
-अटल DEVICE_ATTR(sensor1_fan_speed,	S_IRUGO,
-		   show_sensor1_fan_speed,	शून्य);
-अटल DEVICE_ATTR(sensor2_fan_speed,	S_IRUGO,
-		   show_sensor2_fan_speed,	शून्य);
+static DEVICE_ATTR(sensor1_fan_speed,	S_IRUGO,
+		   show_sensor1_fan_speed,	NULL);
+static DEVICE_ATTR(sensor2_fan_speed,	S_IRUGO,
+		   show_sensor2_fan_speed,	NULL);
 
-अटल DEVICE_ATTR(limit_adjust,	S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
+static DEVICE_ATTR(limit_adjust,	S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH,
 		   show_limit_adjust,	store_limit_adjust);
 
-अटल व्योम thermostat_create_files(काष्ठा thermostat *th)
-अणु
-	काष्ठा device_node *np = th->clt->dev.of_node;
-	काष्ठा device *dev;
-	पूर्णांक err;
+static void thermostat_create_files(struct thermostat *th)
+{
+	struct device_node *np = th->clt->dev.of_node;
+	struct device *dev;
+	int err;
 
-	/* To मुख्यtain ABI compatibility with userspace, create
-	 * the old style platक्रमm driver and attach the attributes
+	/* To maintain ABI compatibility with userspace, create
+	 * the old style platform driver and attach the attributes
 	 * to it here
 	 */
-	th->pdev = of_platक्रमm_device_create(np, "temperatures", शून्य);
-	अगर (!th->pdev)
-		वापस;
+	th->pdev = of_platform_device_create(np, "temperatures", NULL);
+	if (!th->pdev)
+		return;
 	dev = &th->pdev->dev;
 	dev_set_drvdata(dev, th);
 	err = device_create_file(dev, &dev_attr_sensor1_temperature);
@@ -435,191 +434,191 @@ BUILD_STORE_FUNC_DEG(limit_adjust,	 th)
 	err |= device_create_file(dev, &dev_attr_sensor1_location);
 	err |= device_create_file(dev, &dev_attr_sensor2_location);
 	err |= device_create_file(dev, &dev_attr_limit_adjust);
-	err |= device_create_file(dev, &dev_attr_specअगरied_fan_speed);
+	err |= device_create_file(dev, &dev_attr_specified_fan_speed);
 	err |= device_create_file(dev, &dev_attr_sensor1_fan_speed);
-	अगर(th->type == ADT7460)
+	if(th->type == ADT7460)
 		err |= device_create_file(dev, &dev_attr_sensor2_fan_speed);
-	अगर (err)
-		prपूर्णांकk(KERN_WARNING
+	if (err)
+		printk(KERN_WARNING
 			"Failed to create temperature attribute file(s).\n");
-पूर्ण
+}
 
-अटल व्योम thermostat_हटाओ_files(काष्ठा thermostat *th)
-अणु
-	काष्ठा device *dev;
+static void thermostat_remove_files(struct thermostat *th)
+{
+	struct device *dev;
 
-	अगर (!th->pdev)
-		वापस;
+	if (!th->pdev)
+		return;
 	dev = &th->pdev->dev;
-	device_हटाओ_file(dev, &dev_attr_sensor1_temperature);
-	device_हटाओ_file(dev, &dev_attr_sensor2_temperature);
-	device_हटाओ_file(dev, &dev_attr_sensor1_limit);
-	device_हटाओ_file(dev, &dev_attr_sensor2_limit);
-	device_हटाओ_file(dev, &dev_attr_sensor1_location);
-	device_हटाओ_file(dev, &dev_attr_sensor2_location);
-	device_हटाओ_file(dev, &dev_attr_limit_adjust);
-	device_हटाओ_file(dev, &dev_attr_specअगरied_fan_speed);
-	device_हटाओ_file(dev, &dev_attr_sensor1_fan_speed);	
-	अगर (th->type == ADT7460)
-		device_हटाओ_file(dev, &dev_attr_sensor2_fan_speed);
-	of_device_unरेजिस्टर(th->pdev);
+	device_remove_file(dev, &dev_attr_sensor1_temperature);
+	device_remove_file(dev, &dev_attr_sensor2_temperature);
+	device_remove_file(dev, &dev_attr_sensor1_limit);
+	device_remove_file(dev, &dev_attr_sensor2_limit);
+	device_remove_file(dev, &dev_attr_sensor1_location);
+	device_remove_file(dev, &dev_attr_sensor2_location);
+	device_remove_file(dev, &dev_attr_limit_adjust);
+	device_remove_file(dev, &dev_attr_specified_fan_speed);
+	device_remove_file(dev, &dev_attr_sensor1_fan_speed);	
+	if (th->type == ADT7460)
+		device_remove_file(dev, &dev_attr_sensor2_fan_speed);
+	of_device_unregister(th->pdev);
 
-पूर्ण
+}
 
-अटल पूर्णांक probe_thermostat(काष्ठा i2c_client *client,
-			    स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा device_node *np = client->dev.of_node;
-	काष्ठा thermostat* th;
-	स्थिर __be32 *prop;
-	पूर्णांक i, rc, vers, offset = 0;
+static int probe_thermostat(struct i2c_client *client,
+			    const struct i2c_device_id *id)
+{
+	struct device_node *np = client->dev.of_node;
+	struct thermostat* th;
+	const __be32 *prop;
+	int i, rc, vers, offset = 0;
 
-	अगर (!np)
-		वापस -ENXIO;
-	prop = of_get_property(np, "hwsensor-params-version", शून्य);
-	अगर (!prop)
-		वापस -ENXIO;
+	if (!np)
+		return -ENXIO;
+	prop = of_get_property(np, "hwsensor-params-version", NULL);
+	if (!prop)
+		return -ENXIO;
 	vers = be32_to_cpup(prop);
-	prपूर्णांकk(KERN_INFO "adt746x: version %d (%ssupported)\n",
+	printk(KERN_INFO "adt746x: version %d (%ssupported)\n",
 	       vers, vers == 1 ? "" : "un");
-	अगर (vers != 1)
-		वापस -ENXIO;
+	if (vers != 1)
+		return -ENXIO;
 
-	अगर (of_get_property(np, "hwsensor-location", शून्य)) अणु
-		क्रम (i = 0; i < 3; i++) अणु
+	if (of_get_property(np, "hwsensor-location", NULL)) {
+		for (i = 0; i < 3; i++) {
 			sensor_location[i] = of_get_property(np,
-					"hwsensor-location", शून्य) + offset;
+					"hwsensor-location", NULL) + offset;
 
-			अगर (sensor_location[i] == शून्य)
+			if (sensor_location[i] == NULL)
 				sensor_location[i] = "";
 
-			prपूर्णांकk(KERN_INFO "sensor %d: %s\n", i, sensor_location[i]);
-			offset += म_माप(sensor_location[i]) + 1;
-		पूर्ण
-	पूर्ण
+			printk(KERN_INFO "sensor %d: %s\n", i, sensor_location[i]);
+			offset += strlen(sensor_location[i]) + 1;
+		}
+	}
 
-	th = kzalloc(माप(काष्ठा thermostat), GFP_KERNEL);
-	अगर (!th)
-		वापस -ENOMEM;
+	th = kzalloc(sizeof(struct thermostat), GFP_KERNEL);
+	if (!th)
+		return -ENOMEM;
 
 	i2c_set_clientdata(client, th);
 	th->clt = client;
 	th->type = id->driver_data;
 
-	rc = पढ़ो_reg(th, CONFIG_REG);
-	अगर (rc < 0) अणु
+	rc = read_reg(th, CONFIG_REG);
+	if (rc < 0) {
 		dev_err(&client->dev, "Thermostat failed to read config!\n");
-		kमुक्त(th);
-		वापस -ENODEV;
-	पूर्ण
+		kfree(th);
+		return -ENODEV;
+	}
 
-	/* क्रमce manual control to start the fan quieter */
-	अगर (fan_speed == -1)
+	/* force manual control to start the fan quieter */
+	if (fan_speed == -1)
 		fan_speed = 64;
 	
-	अगर (th->type == ADT7460) अणु
-		prपूर्णांकk(KERN_INFO "adt746x: ADT7460 initializing\n");
+	if (th->type == ADT7460) {
+		printk(KERN_INFO "adt746x: ADT7460 initializing\n");
 		/* The 7460 needs to be started explicitly */
-		ग_लिखो_reg(th, CONFIG_REG, 1);
-	पूर्ण अन्यथा
-		prपूर्णांकk(KERN_INFO "adt746x: ADT7467 initializing\n");
+		write_reg(th, CONFIG_REG, 1);
+	} else
+		printk(KERN_INFO "adt746x: ADT7467 initializing\n");
 
-	क्रम (i = 0; i < 3; i++) अणु
-		th->initial_limits[i] = पढ़ो_reg(th, LIMIT_REG[i]);
+	for (i = 0; i < 3; i++) {
+		th->initial_limits[i] = read_reg(th, LIMIT_REG[i]);
 		set_limit(th, i);
-	पूर्ण
+	}
 
-	prपूर्णांकk(KERN_INFO "adt746x: Lowering max temperatures from %d, %d, %d"
+	printk(KERN_INFO "adt746x: Lowering max temperatures from %d, %d, %d"
 			 " to %d, %d, %d\n",
 			 th->initial_limits[0], th->initial_limits[1],
 			 th->initial_limits[2], th->limits[0], th->limits[1],
 			 th->limits[2]);
 
 	/* record invert bit status because fw can corrupt it after suspend */
-	th->pwm_inv[0] = पढ़ो_reg(th, MANUAL_MODE[0]) & INVERT_MASK;
-	th->pwm_inv[1] = पढ़ो_reg(th, MANUAL_MODE[1]) & INVERT_MASK;
+	th->pwm_inv[0] = read_reg(th, MANUAL_MODE[0]) & INVERT_MASK;
+	th->pwm_inv[1] = read_reg(th, MANUAL_MODE[1]) & INVERT_MASK;
 
-	/* be sure to really ग_लिखो fan speed the first समय */
+	/* be sure to really write fan speed the first time */
 	th->last_speed[0] = -2;
 	th->last_speed[1] = -2;
 	th->last_var[0] = -80;
 	th->last_var[1] = -80;
 
-	अगर (fan_speed != -1) अणु
+	if (fan_speed != -1) {
 		/* manual mode, stop fans */
-		ग_लिखो_both_fan_speed(th, 0);
-	पूर्ण अन्यथा अणु
-		/* स्वतःmatic mode */
-		ग_लिखो_both_fan_speed(th, -1);
-	पूर्ण
+		write_both_fan_speed(th, 0);
+	} else {
+		/* automatic mode */
+		write_both_fan_speed(th, -1);
+	}
 	
-	th->thपढ़ो = kthपढ़ो_run(monitor_task, th, "kfand");
-	अगर (th->thपढ़ो == ERR_PTR(-ENOMEM)) अणु
-		prपूर्णांकk(KERN_INFO "adt746x: Kthread creation failed\n");
-		th->thपढ़ो = शून्य;
-		वापस -ENOMEM;
-	पूर्ण
+	th->thread = kthread_run(monitor_task, th, "kfand");
+	if (th->thread == ERR_PTR(-ENOMEM)) {
+		printk(KERN_INFO "adt746x: Kthread creation failed\n");
+		th->thread = NULL;
+		return -ENOMEM;
+	}
 
 	thermostat_create_files(th);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक हटाओ_thermostat(काष्ठा i2c_client *client)
-अणु
-	काष्ठा thermostat *th = i2c_get_clientdata(client);
-	पूर्णांक i;
+static int remove_thermostat(struct i2c_client *client)
+{
+	struct thermostat *th = i2c_get_clientdata(client);
+	int i;
 	
-	thermostat_हटाओ_files(th);
+	thermostat_remove_files(th);
 
-	अगर (th->thपढ़ो != शून्य)
-		kthपढ़ो_stop(th->thपढ़ो);
+	if (th->thread != NULL)
+		kthread_stop(th->thread);
 
-	prपूर्णांकk(KERN_INFO "adt746x: Putting max temperatures back from "
+	printk(KERN_INFO "adt746x: Putting max temperatures back from "
 			 "%d, %d, %d to %d, %d, %d\n",
 		th->limits[0], th->limits[1], th->limits[2],
 		th->initial_limits[0], th->initial_limits[1],
 		th->initial_limits[2]);
 
-	क्रम (i = 0; i < 3; i++)
-		ग_लिखो_reg(th, LIMIT_REG[i], th->initial_limits[i]);
+	for (i = 0; i < 3; i++)
+		write_reg(th, LIMIT_REG[i], th->initial_limits[i]);
 
-	ग_लिखो_both_fan_speed(th, -1);
+	write_both_fan_speed(th, -1);
 
-	kमुक्त(th);
+	kfree(th);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id therm_adt746x_id[] = अणु
-	अणु "MAC,adt7460", ADT7460 पूर्ण,
-	अणु "MAC,adt7467", ADT7467 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id therm_adt746x_id[] = {
+	{ "MAC,adt7460", ADT7460 },
+	{ "MAC,adt7467", ADT7467 },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, therm_adt746x_id);
 
-अटल काष्ठा i2c_driver thermostat_driver = अणु
-	.driver = अणु
+static struct i2c_driver thermostat_driver = {
+	.driver = {
 		.name	= "therm_adt746x",
-	पूर्ण,
+	},
 	.probe = probe_thermostat,
-	.हटाओ = हटाओ_thermostat,
+	.remove = remove_thermostat,
 	.id_table = therm_adt746x_id,
-पूर्ण;
+};
 
-अटल पूर्णांक __init thermostat_init(व्योम)
-अणु
-#अगर_अघोषित CONFIG_I2C_POWERMAC
+static int __init thermostat_init(void)
+{
+#ifndef CONFIG_I2C_POWERMAC
 	request_module("i2c-powermac");
-#पूर्ण_अगर
+#endif
 
-	वापस i2c_add_driver(&thermostat_driver);
-पूर्ण
+	return i2c_add_driver(&thermostat_driver);
+}
 
-अटल व्योम __निकास thermostat_निकास(व्योम)
-अणु
+static void __exit thermostat_exit(void)
+{
 	i2c_del_driver(&thermostat_driver);
-पूर्ण
+}
 
 module_init(thermostat_init);
-module_निकास(thermostat_निकास);
+module_exit(thermostat_exit);

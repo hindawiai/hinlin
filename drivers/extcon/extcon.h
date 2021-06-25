@@ -1,67 +1,66 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __LINUX_EXTCON_INTERNAL_H__
-#घोषणा __LINUX_EXTCON_INTERNAL_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __LINUX_EXTCON_INTERNAL_H__
+#define __LINUX_EXTCON_INTERNAL_H__
 
-#समावेश <linux/extcon-provider.h>
+#include <linux/extcon-provider.h>
 
 /**
- * काष्ठा extcon_dev - An extcon device represents one बाह्यal connector.
+ * struct extcon_dev - An extcon device represents one external connector.
  * @name:		The name of this extcon device. Parent device name is
- *			used अगर शून्य.
+ *			used if NULL.
  * @supported_cable:	Array of supported cable names ending with EXTCON_NONE.
- *			If supported_cable is शून्य, cable name related APIs
+ *			If supported_cable is NULL, cable name related APIs
  *			are disabled.
  * @mutually_exclusive:	Array of mutually exclusive set of cables that cannot
  *			be attached simultaneously. The array should be
- *			ending with शून्य or be शून्य (no mutually exclusive
- *			cables). For example, अगर it is अणु 0x7, 0x30, 0पूर्ण, then,
- *			अणु0, 1पूर्ण, अणु0, 1, 2पूर्ण, अणु0, 2पूर्ण, अणु1, 2पूर्ण, or अणु4, 5पूर्ण cannot
- *			be attached simulataneously. अणु0x7, 0पूर्ण is equivalent to
- *			अणु0x3, 0x6, 0x5, 0पूर्ण. If it is अणु0xFFFFFFFF, 0पूर्ण, there
+ *			ending with NULL or be NULL (no mutually exclusive
+ *			cables). For example, if it is { 0x7, 0x30, 0}, then,
+ *			{0, 1}, {0, 1, 2}, {0, 2}, {1, 2}, or {4, 5} cannot
+ *			be attached simulataneously. {0x7, 0} is equivalent to
+ *			{0x3, 0x6, 0x5, 0}. If it is {0xFFFFFFFF, 0}, there
  *			can be no simultaneous connections.
  * @dev:		Device of this extcon.
  * @state:		Attach/detach state of this extcon. Do not provide at
- *			रेजिस्टर-समय.
- * @nh_all:		Notअगरier क्रम the state change events क्रम all supported
- *			बाह्यal connectors from this extcon.
- * @nh:			Notअगरier क्रम the state change events from this extcon
+ *			register-time.
+ * @nh_all:		Notifier for the state change events for all supported
+ *			external connectors from this extcon.
+ * @nh:			Notifier for the state change events from this extcon
  * @entry:		To support list of extcon devices so that users can
- *			search क्रम extcon devices based on the extcon name.
+ *			search for extcon devices based on the extcon name.
  * @lock:
  * @max_supported:	Internal value to store the number of cables.
- * @extcon_dev_type:	Device_type काष्ठा to provide attribute_groups
- *			customized क्रम each extcon device.
+ * @extcon_dev_type:	Device_type struct to provide attribute_groups
+ *			customized for each extcon device.
  * @cables:		Sysfs subdirectories. Each represents one cable.
  *
- * In most हालs, users only need to provide "User initializing data" of
- * this काष्ठा when रेजिस्टरing an extcon. In some exceptional हालs,
+ * In most cases, users only need to provide "User initializing data" of
+ * this struct when registering an extcon. In some exceptional cases,
  * optional callbacks may be needed. However, the values in "internal data"
- * are overwritten by रेजिस्टर function.
+ * are overwritten by register function.
  */
-काष्ठा extcon_dev अणु
+struct extcon_dev {
 	/* Optional user initializing data */
-	स्थिर अक्षर *name;
-	स्थिर अचिन्हित पूर्णांक *supported_cable;
-	स्थिर u32 *mutually_exclusive;
+	const char *name;
+	const unsigned int *supported_cable;
+	const u32 *mutually_exclusive;
 
-	/* Internal data. Please करो not set. */
-	काष्ठा device dev;
-	काष्ठा raw_notअगरier_head nh_all;
-	काष्ठा raw_notअगरier_head *nh;
-	काष्ठा list_head entry;
-	पूर्णांक max_supported;
+	/* Internal data. Please do not set. */
+	struct device dev;
+	struct raw_notifier_head nh_all;
+	struct raw_notifier_head *nh;
+	struct list_head entry;
+	int max_supported;
 	spinlock_t lock;	/* could be called by irq handler */
 	u32 state;
 
 	/* /sys/class/extcon/.../cable.n/... */
-	काष्ठा device_type extcon_dev_type;
-	काष्ठा extcon_cable *cables;
+	struct device_type extcon_dev_type;
+	struct extcon_cable *cables;
 
 	/* /sys/class/extcon/.../mutually_exclusive/... */
-	काष्ठा attribute_group attr_g_muex;
-	काष्ठा attribute **attrs_muex;
-	काष्ठा device_attribute *d_attrs_muex;
-पूर्ण;
+	struct attribute_group attr_g_muex;
+	struct attribute **attrs_muex;
+	struct device_attribute *d_attrs_muex;
+};
 
-#पूर्ण_अगर /* __LINUX_EXTCON_INTERNAL_H__ */
+#endif /* __LINUX_EXTCON_INTERNAL_H__ */

@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ABI_REG_OPS_H
-#घोषणा __ABI_REG_OPS_H
-#समावेश <यंत्र/reg_ops.h>
+#ifndef __ABI_REG_OPS_H
+#define __ABI_REG_OPS_H
+#include <asm/reg_ops.h>
 
-#घोषणा cprcr(reg)					\
-(अणु							\
-	अचिन्हित पूर्णांक पंचांगp;				\
-	यंत्र अस्थिर("cprcr %0, "reg"\n":"=b"(पंचांगp));	\
-	पंचांगp;						\
-पूर्ण)
+#define cprcr(reg)					\
+({							\
+	unsigned int tmp;				\
+	asm volatile("cprcr %0, "reg"\n":"=b"(tmp));	\
+	tmp;						\
+})
 
-#घोषणा cpwcr(reg, val)					\
-(अणु							\
-	यंत्र अस्थिर("cpwcr %0, "reg"\n"::"b"(val));	\
-पूर्ण)
+#define cpwcr(reg, val)					\
+({							\
+	asm volatile("cpwcr %0, "reg"\n"::"b"(val));	\
+})
 
-अटल अंतरभूत अचिन्हित पूर्णांक mfcr_hपूर्णांक(व्योम)
-अणु
-	वापस mfcr("cr30");
-पूर्ण
+static inline unsigned int mfcr_hint(void)
+{
+	return mfcr("cr30");
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक mfcr_ccr2(व्योम) अणु वापस 0; पूर्ण
+static inline unsigned int mfcr_ccr2(void) { return 0; }
 
-#पूर्ण_अगर /* __ABI_REG_OPS_H */
+#endif /* __ABI_REG_OPS_H */

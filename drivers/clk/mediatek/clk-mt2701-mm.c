@@ -1,49 +1,48 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Shunli Wang <shunli.wang@mediatek.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/clk-provider.h>
+#include <linux/platform_device.h>
 
-#समावेश "clk-mtk.h"
-#समावेश "clk-gate.h"
+#include "clk-mtk.h"
+#include "clk-gate.h"
 
-#समावेश <dt-bindings/घड़ी/mt2701-clk.h>
+#include <dt-bindings/clock/mt2701-clk.h>
 
-अटल स्थिर काष्ठा mtk_gate_regs disp0_cg_regs = अणु
+static const struct mtk_gate_regs disp0_cg_regs = {
 	.set_ofs = 0x0104,
 	.clr_ofs = 0x0108,
 	.sta_ofs = 0x0100,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mtk_gate_regs disp1_cg_regs = अणु
+static const struct mtk_gate_regs disp1_cg_regs = {
 	.set_ofs = 0x0114,
 	.clr_ofs = 0x0118,
 	.sta_ofs = 0x0110,
-पूर्ण;
+};
 
-#घोषणा GATE_DISP0(_id, _name, _parent, _shअगरt) अणु	\
+#define GATE_DISP0(_id, _name, _parent, _shift) {	\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &disp0_cg_regs,			\
-		.shअगरt = _shअगरt,			\
+		.shift = _shift,			\
 		.ops = &mtk_clk_gate_ops_setclr,	\
-	पूर्ण
+	}
 
-#घोषणा GATE_DISP1(_id, _name, _parent, _shअगरt) अणु	\
+#define GATE_DISP1(_id, _name, _parent, _shift) {	\
 		.id = _id,				\
 		.name = _name,				\
 		.parent_name = _parent,			\
 		.regs = &disp1_cg_regs,			\
-		.shअगरt = _shअगरt,			\
+		.shift = _shift,			\
 		.ops = &mtk_clk_gate_ops_setclr,	\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा mtk_gate mm_clks[] = अणु
+static const struct mtk_gate mm_clks[] = {
 	GATE_DISP0(CLK_MM_SMI_COMMON, "mm_smi_comm", "mm_sel", 0),
 	GATE_DISP0(CLK_MM_SMI_LARB0, "mm_smi_larb0", "mm_sel", 1),
 	GATE_DISP0(CLK_MM_CMDQ, "mm_cmdq", "mm_sel", 2),
@@ -78,34 +77,34 @@
 	GATE_DISP1(CLK_MM_HDMI_AUDIO, "mm_hdmi_audio", "apll_sel", 10),
 	GATE_DISP1(CLK_MM_HDMI_SPDIF, "mm_hdmi_spdif", "apll_sel", 11),
 	GATE_DISP1(CLK_MM_TVE_FMM, "mm_tve_fmm", "mm_sel", 14),
-पूर्ण;
+};
 
-अटल पूर्णांक clk_mt2701_mm_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *node = dev->parent->of_node;
-	काष्ठा clk_onecell_data *clk_data;
-	पूर्णांक r;
+static int clk_mt2701_mm_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->parent->of_node;
+	struct clk_onecell_data *clk_data;
+	int r;
 
 	clk_data = mtk_alloc_clk_data(CLK_MM_NR);
 
-	mtk_clk_रेजिस्टर_gates(node, mm_clks, ARRAY_SIZE(mm_clks),
+	mtk_clk_register_gates(node, mm_clks, ARRAY_SIZE(mm_clks),
 						clk_data);
 
 	r = of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-	अगर (r)
+	if (r)
 		dev_err(&pdev->dev,
 			"could not register clock provider: %s: %d\n",
 			pdev->name, r);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल काष्ठा platक्रमm_driver clk_mt2701_mm_drv = अणु
+static struct platform_driver clk_mt2701_mm_drv = {
 	.probe = clk_mt2701_mm_probe,
-	.driver = अणु
+	.driver = {
 		.name = "clk-mt2701-mm",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-builtin_platक्रमm_driver(clk_mt2701_mm_drv);
+builtin_platform_driver(clk_mt2701_mm_drv);

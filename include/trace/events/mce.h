@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM mce
+/* SPDX-License-Identifier: GPL-2.0 */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM mce
 
-#अगर !defined(_TRACE_MCE_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_MCE_H
+#if !defined(_TRACE_MCE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_MCE_H
 
-#समावेश <linux/kसमय.स>
-#समावेश <linux/tracepoपूर्णांक.h>
-#समावेश <यंत्र/mce.h>
+#include <linux/ktime.h>
+#include <linux/tracepoint.h>
+#include <asm/mce.h>
 
 TRACE_EVENT(mce_record,
 
-	TP_PROTO(काष्ठा mce *m),
+	TP_PROTO(struct mce *m),
 
 	TP_ARGS(m),
 
@@ -26,14 +25,14 @@ TRACE_EVENT(mce_record,
 		__field(	u64,		ipid		)
 		__field(	u64,		ip		)
 		__field(	u64,		tsc		)
-		__field(	u64,		wallसमय	)
+		__field(	u64,		walltime	)
 		__field(	u32,		cpu		)
 		__field(	u32,		cpuid		)
 		__field(	u32,		apicid		)
 		__field(	u32,		socketid	)
 		__field(	u8,		cs		)
 		__field(	u8,		bank		)
-		__field(	u8,		cpuvenकरोr	)
+		__field(	u8,		cpuvendor	)
 	),
 
 	TP_fast_assign(
@@ -46,17 +45,17 @@ TRACE_EVENT(mce_record,
 		__entry->ipid		= m->ipid;
 		__entry->ip		= m->ip;
 		__entry->tsc		= m->tsc;
-		__entry->wallसमय	= m->समय;
+		__entry->walltime	= m->time;
 		__entry->cpu		= m->extcpu;
 		__entry->cpuid		= m->cpuid;
 		__entry->apicid		= m->apicid;
 		__entry->socketid	= m->socketid;
 		__entry->cs		= m->cs;
 		__entry->bank		= m->bank;
-		__entry->cpuvenकरोr	= m->cpuvenकरोr;
+		__entry->cpuvendor	= m->cpuvendor;
 	),
 
-	TP_prपूर्णांकk("CPU: %d, MCGc/s: %llx/%llx, MC%d: %016Lx, IPID: %016Lx, ADDR/MISC/SYND: %016Lx/%016Lx/%016Lx, RIP: %02x:<%016Lx>, TSC: %llx, PROCESSOR: %u:%x, TIME: %llu, SOCKET: %u, APIC: %x",
+	TP_printk("CPU: %d, MCGc/s: %llx/%llx, MC%d: %016Lx, IPID: %016Lx, ADDR/MISC/SYND: %016Lx/%016Lx/%016Lx, RIP: %02x:<%016Lx>, TSC: %llx, PROCESSOR: %u:%x, TIME: %llu, SOCKET: %u, APIC: %x",
 		__entry->cpu,
 		__entry->mcgcap, __entry->mcgstatus,
 		__entry->bank, __entry->status,
@@ -64,13 +63,13 @@ TRACE_EVENT(mce_record,
 		__entry->addr, __entry->misc, __entry->synd,
 		__entry->cs, __entry->ip,
 		__entry->tsc,
-		__entry->cpuvenकरोr, __entry->cpuid,
-		__entry->wallसमय,
+		__entry->cpuvendor, __entry->cpuid,
+		__entry->walltime,
 		__entry->socketid,
 		__entry->apicid)
 );
 
-#पूर्ण_अगर /* _TRACE_MCE_H */
+#endif /* _TRACE_MCE_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

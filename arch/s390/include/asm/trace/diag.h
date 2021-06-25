@@ -1,45 +1,44 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Tracepoपूर्णांक header क्रम s390 diagnose calls
+ * Tracepoint header for s390 diagnose calls
  *
  * Copyright IBM Corp. 2015
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#अघोषित TRACE_SYSTEM
-#घोषणा TRACE_SYSTEM s390
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM s390
 
-#अगर !defined(_TRACE_S390_DIAG_H) || defined(TRACE_HEADER_MULTI_READ)
-#घोषणा _TRACE_S390_DIAG_H
+#if !defined(_TRACE_S390_DIAG_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_S390_DIAG_H
 
-#समावेश <linux/tracepoपूर्णांक.h>
+#include <linux/tracepoint.h>
 
-#अघोषित TRACE_INCLUDE_PATH
-#अघोषित TRACE_INCLUDE_खाता
+#undef TRACE_INCLUDE_PATH
+#undef TRACE_INCLUDE_FILE
 
-#घोषणा TRACE_INCLUDE_PATH यंत्र/trace
-#घोषणा TRACE_INCLUDE_खाता diag
+#define TRACE_INCLUDE_PATH asm/trace
+#define TRACE_INCLUDE_FILE diag
 
 TRACE_EVENT(s390_diagnose,
-	TP_PROTO(अचिन्हित लघु nr),
+	TP_PROTO(unsigned short nr),
 	TP_ARGS(nr),
 	TP_STRUCT__entry(
-		__field(अचिन्हित लघु, nr)
+		__field(unsigned short, nr)
 	),
 	TP_fast_assign(
 		__entry->nr = nr;
 	),
-	TP_prपूर्णांकk("nr=0x%x", __entry->nr)
+	TP_printk("nr=0x%x", __entry->nr)
 );
 
-#अगर_घोषित CONFIG_TRACEPOINTS
-व्योम trace_s390_diagnose_norecursion(पूर्णांक diag_nr);
-#अन्यथा
-अटल अंतरभूत व्योम trace_s390_diagnose_norecursion(पूर्णांक diag_nr) अणु पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_TRACEPOINTS
+void trace_s390_diagnose_norecursion(int diag_nr);
+#else
+static inline void trace_s390_diagnose_norecursion(int diag_nr) { }
+#endif
 
-#पूर्ण_अगर /* _TRACE_S390_DIAG_H */
+#endif /* _TRACE_S390_DIAG_H */
 
 /* This part must be outside protection */
-#समावेश <trace/define_trace.h>
+#include <trace/define_trace.h>

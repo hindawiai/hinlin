@@ -1,147 +1,146 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * Copyright (C) 2011 Novell Inc.
  * Copyright (C) 2016 Red Hat, Inc.
  */
 
-काष्ठा ovl_config अणु
-	अक्षर *lowerdir;
-	अक्षर *upperdir;
-	अक्षर *workdir;
-	bool शेष_permissions;
+struct ovl_config {
+	char *lowerdir;
+	char *upperdir;
+	char *workdir;
+	bool default_permissions;
 	bool redirect_dir;
 	bool redirect_follow;
-	स्थिर अक्षर *redirect_mode;
+	const char *redirect_mode;
 	bool index;
 	bool uuid;
 	bool nfs_export;
-	पूर्णांक xino;
+	int xino;
 	bool metacopy;
 	bool userxattr;
-	bool ovl_अस्थिर;
-पूर्ण;
+	bool ovl_volatile;
+};
 
-काष्ठा ovl_sb अणु
-	काष्ठा super_block *sb;
-	dev_t pseuकरो_dev;
+struct ovl_sb {
+	struct super_block *sb;
+	dev_t pseudo_dev;
 	/* Unusable (conflicting) uuid */
 	bool bad_uuid;
 	/* Used as a lower layer (but maybe also as upper) */
 	bool is_lower;
-पूर्ण;
+};
 
-काष्ठा ovl_layer अणु
-	काष्ठा vfsmount *mnt;
+struct ovl_layer {
+	struct vfsmount *mnt;
 	/* Trap in ovl inode cache */
-	काष्ठा inode *trap;
-	काष्ठा ovl_sb *fs;
+	struct inode *trap;
+	struct ovl_sb *fs;
 	/* Index of this layer in fs root (upper idx == 0) */
-	पूर्णांक idx;
+	int idx;
 	/* One fsid per unique underlying sb (upper fsid == 0) */
-	पूर्णांक fsid;
-पूर्ण;
+	int fsid;
+};
 
-काष्ठा ovl_path अणु
-	स्थिर काष्ठा ovl_layer *layer;
-	काष्ठा dentry *dentry;
-पूर्ण;
+struct ovl_path {
+	const struct ovl_layer *layer;
+	struct dentry *dentry;
+};
 
-/* निजी inक्रमmation held क्रम overlayfs's superblock */
-काष्ठा ovl_fs अणु
-	अचिन्हित पूर्णांक numlayer;
+/* private information held for overlayfs's superblock */
+struct ovl_fs {
+	unsigned int numlayer;
 	/* Number of unique fs among layers including upper fs */
-	अचिन्हित पूर्णांक numfs;
-	स्थिर काष्ठा ovl_layer *layers;
-	काष्ठा ovl_sb *fs;
+	unsigned int numfs;
+	const struct ovl_layer *layers;
+	struct ovl_sb *fs;
 	/* workbasedir is the path at workdir= mount option */
-	काष्ठा dentry *workbasedir;
+	struct dentry *workbasedir;
 	/* workdir is the 'work' directory under workbasedir */
-	काष्ठा dentry *workdir;
+	struct dentry *workdir;
 	/* index directory listing overlay inodes by origin file handle */
-	काष्ठा dentry *indexdir;
-	दीर्घ namelen;
-	/* pathnames of lower and upper dirs, क्रम show_options */
-	काष्ठा ovl_config config;
-	/* creds of process who क्रमced instantiation of super block */
-	स्थिर काष्ठा cred *creator_cred;
-	bool क्षणिक_ख;
+	struct dentry *indexdir;
+	long namelen;
+	/* pathnames of lower and upper dirs, for show_options */
+	struct ovl_config config;
+	/* creds of process who forced instantiation of super block */
+	const struct cred *creator_cred;
+	bool tmpfile;
 	bool noxattr;
 	/* Did we take the inuse lock? */
 	bool upperdir_locked;
 	bool workdir_locked;
 	bool share_whiteout;
 	/* Traps in ovl inode cache */
-	काष्ठा inode *workbasedir_trap;
-	काष्ठा inode *workdir_trap;
-	काष्ठा inode *indexdir_trap;
+	struct inode *workbasedir_trap;
+	struct inode *workdir_trap;
+	struct inode *indexdir_trap;
 	/* -1: disabled, 0: same fs, 1..32: number of unused ino bits */
-	पूर्णांक xino_mode;
+	int xino_mode;
 	/* For allocation of non-persistent inode numbers */
-	atomic_दीर्घ_t last_ino;
+	atomic_long_t last_ino;
 	/* Whiteout dentry cache */
-	काष्ठा dentry *whiteout;
-	/* r/o snapshot of upperdir sb's only taken on अस्थिर mounts */
+	struct dentry *whiteout;
+	/* r/o snapshot of upperdir sb's only taken on volatile mounts */
 	errseq_t errseq;
-पूर्ण;
+};
 
-अटल अंतरभूत काष्ठा vfsmount *ovl_upper_mnt(काष्ठा ovl_fs *ofs)
-अणु
-	वापस ofs->layers[0].mnt;
-पूर्ण
+static inline struct vfsmount *ovl_upper_mnt(struct ovl_fs *ofs)
+{
+	return ofs->layers[0].mnt;
+}
 
-अटल अंतरभूत काष्ठा ovl_fs *OVL_FS(काष्ठा super_block *sb)
-अणु
-	वापस (काष्ठा ovl_fs *)sb->s_fs_info;
-पूर्ण
+static inline struct ovl_fs *OVL_FS(struct super_block *sb)
+{
+	return (struct ovl_fs *)sb->s_fs_info;
+}
 
-अटल अंतरभूत bool ovl_should_sync(काष्ठा ovl_fs *ofs)
-अणु
-	वापस !ofs->config.ovl_अस्थिर;
-पूर्ण
+static inline bool ovl_should_sync(struct ovl_fs *ofs)
+{
+	return !ofs->config.ovl_volatile;
+}
 
-/* निजी inक्रमmation held क्रम every overlayfs dentry */
-काष्ठा ovl_entry अणु
-	जोड़ अणु
-		काष्ठा अणु
-			अचिन्हित दीर्घ flags;
-		पूर्ण;
-		काष्ठा rcu_head rcu;
-	पूर्ण;
-	अचिन्हित numlower;
-	काष्ठा ovl_path lowerstack[];
-पूर्ण;
+/* private information held for every overlayfs dentry */
+struct ovl_entry {
+	union {
+		struct {
+			unsigned long flags;
+		};
+		struct rcu_head rcu;
+	};
+	unsigned numlower;
+	struct ovl_path lowerstack[];
+};
 
-काष्ठा ovl_entry *ovl_alloc_entry(अचिन्हित पूर्णांक numlower);
+struct ovl_entry *ovl_alloc_entry(unsigned int numlower);
 
-अटल अंतरभूत काष्ठा ovl_entry *OVL_E(काष्ठा dentry *dentry)
-अणु
-	वापस (काष्ठा ovl_entry *) dentry->d_fsdata;
-पूर्ण
+static inline struct ovl_entry *OVL_E(struct dentry *dentry)
+{
+	return (struct ovl_entry *) dentry->d_fsdata;
+}
 
-काष्ठा ovl_inode अणु
-	जोड़ अणु
-		काष्ठा ovl_dir_cache *cache;	/* directory */
-		काष्ठा inode *lowerdata;	/* regular file */
-	पूर्ण;
-	स्थिर अक्षर *redirect;
+struct ovl_inode {
+	union {
+		struct ovl_dir_cache *cache;	/* directory */
+		struct inode *lowerdata;	/* regular file */
+	};
+	const char *redirect;
 	u64 version;
-	अचिन्हित दीर्घ flags;
-	काष्ठा inode vfs_inode;
-	काष्ठा dentry *__upperdentry;
-	काष्ठा inode *lower;
+	unsigned long flags;
+	struct inode vfs_inode;
+	struct dentry *__upperdentry;
+	struct inode *lower;
 
 	/* synchronize copy up and more */
-	काष्ठा mutex lock;
-पूर्ण;
+	struct mutex lock;
+};
 
-अटल अंतरभूत काष्ठा ovl_inode *OVL_I(काष्ठा inode *inode)
-अणु
-	वापस container_of(inode, काष्ठा ovl_inode, vfs_inode);
-पूर्ण
+static inline struct ovl_inode *OVL_I(struct inode *inode)
+{
+	return container_of(inode, struct ovl_inode, vfs_inode);
+}
 
-अटल अंतरभूत काष्ठा dentry *ovl_upperdentry_dereference(काष्ठा ovl_inode *oi)
-अणु
-	वापस READ_ONCE(oi->__upperdentry);
-पूर्ण
+static inline struct dentry *ovl_upperdentry_dereference(struct ovl_inode *oi)
+{
+	return READ_ONCE(oi->__upperdentry);
+}

@@ -1,329 +1,328 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Freescale/Motorola Coldfire Queued SPI driver
  *
  * Copyright 2010 Steven King <sfking@fdwdc.com>
 */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/interrupt.h>
+#include <linux/errno.h>
+#include <linux/platform_device.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/spi/spi.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/mcfqspi.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/mcfqspi.h>
 
-#घोषणा	DRIVER_NAME "mcfqspi"
+#define	DRIVER_NAME "mcfqspi"
 
-#घोषणा	MCFQSPI_BUSCLK			(MCF_BUSCLK / 2)
+#define	MCFQSPI_BUSCLK			(MCF_BUSCLK / 2)
 
-#घोषणा	MCFQSPI_QMR			0x00
-#घोषणा		MCFQSPI_QMR_MSTR	0x8000
-#घोषणा		MCFQSPI_QMR_CPOL	0x0200
-#घोषणा		MCFQSPI_QMR_CPHA	0x0100
-#घोषणा	MCFQSPI_QDLYR			0x04
-#घोषणा		MCFQSPI_QDLYR_SPE	0x8000
-#घोषणा	MCFQSPI_QWR			0x08
-#घोषणा		MCFQSPI_QWR_HALT	0x8000
-#घोषणा		MCFQSPI_QWR_WREN	0x4000
-#घोषणा		MCFQSPI_QWR_CSIV	0x1000
-#घोषणा	MCFQSPI_QIR			0x0C
-#घोषणा		MCFQSPI_QIR_WCEFB	0x8000
-#घोषणा		MCFQSPI_QIR_ABRTB	0x4000
-#घोषणा		MCFQSPI_QIR_ABRTL	0x1000
-#घोषणा		MCFQSPI_QIR_WCEFE	0x0800
-#घोषणा		MCFQSPI_QIR_ABRTE	0x0400
-#घोषणा		MCFQSPI_QIR_SPIFE	0x0100
-#घोषणा		MCFQSPI_QIR_WCEF	0x0008
-#घोषणा		MCFQSPI_QIR_ABRT	0x0004
-#घोषणा		MCFQSPI_QIR_SPIF	0x0001
-#घोषणा	MCFQSPI_QAR			0x010
-#घोषणा		MCFQSPI_QAR_TXBUF	0x00
-#घोषणा		MCFQSPI_QAR_RXBUF	0x10
-#घोषणा		MCFQSPI_QAR_CMDBUF	0x20
-#घोषणा	MCFQSPI_QDR			0x014
-#घोषणा	MCFQSPI_QCR			0x014
-#घोषणा		MCFQSPI_QCR_CONT	0x8000
-#घोषणा		MCFQSPI_QCR_BITSE	0x4000
-#घोषणा		MCFQSPI_QCR_DT		0x2000
+#define	MCFQSPI_QMR			0x00
+#define		MCFQSPI_QMR_MSTR	0x8000
+#define		MCFQSPI_QMR_CPOL	0x0200
+#define		MCFQSPI_QMR_CPHA	0x0100
+#define	MCFQSPI_QDLYR			0x04
+#define		MCFQSPI_QDLYR_SPE	0x8000
+#define	MCFQSPI_QWR			0x08
+#define		MCFQSPI_QWR_HALT	0x8000
+#define		MCFQSPI_QWR_WREN	0x4000
+#define		MCFQSPI_QWR_CSIV	0x1000
+#define	MCFQSPI_QIR			0x0C
+#define		MCFQSPI_QIR_WCEFB	0x8000
+#define		MCFQSPI_QIR_ABRTB	0x4000
+#define		MCFQSPI_QIR_ABRTL	0x1000
+#define		MCFQSPI_QIR_WCEFE	0x0800
+#define		MCFQSPI_QIR_ABRTE	0x0400
+#define		MCFQSPI_QIR_SPIFE	0x0100
+#define		MCFQSPI_QIR_WCEF	0x0008
+#define		MCFQSPI_QIR_ABRT	0x0004
+#define		MCFQSPI_QIR_SPIF	0x0001
+#define	MCFQSPI_QAR			0x010
+#define		MCFQSPI_QAR_TXBUF	0x00
+#define		MCFQSPI_QAR_RXBUF	0x10
+#define		MCFQSPI_QAR_CMDBUF	0x20
+#define	MCFQSPI_QDR			0x014
+#define	MCFQSPI_QCR			0x014
+#define		MCFQSPI_QCR_CONT	0x8000
+#define		MCFQSPI_QCR_BITSE	0x4000
+#define		MCFQSPI_QCR_DT		0x2000
 
-काष्ठा mcfqspi अणु
-	व्योम __iomem *iobase;
-	पूर्णांक irq;
-	काष्ठा clk *clk;
-	काष्ठा mcfqspi_cs_control *cs_control;
+struct mcfqspi {
+	void __iomem *iobase;
+	int irq;
+	struct clk *clk;
+	struct mcfqspi_cs_control *cs_control;
 
-	रुको_queue_head_t रुकोq;
-पूर्ण;
+	wait_queue_head_t waitq;
+};
 
-अटल व्योम mcfqspi_wr_qmr(काष्ठा mcfqspi *mcfqspi, u16 val)
-अणु
-	ग_लिखोw(val, mcfqspi->iobase + MCFQSPI_QMR);
-पूर्ण
+static void mcfqspi_wr_qmr(struct mcfqspi *mcfqspi, u16 val)
+{
+	writew(val, mcfqspi->iobase + MCFQSPI_QMR);
+}
 
-अटल व्योम mcfqspi_wr_qdlyr(काष्ठा mcfqspi *mcfqspi, u16 val)
-अणु
-	ग_लिखोw(val, mcfqspi->iobase + MCFQSPI_QDLYR);
-पूर्ण
+static void mcfqspi_wr_qdlyr(struct mcfqspi *mcfqspi, u16 val)
+{
+	writew(val, mcfqspi->iobase + MCFQSPI_QDLYR);
+}
 
-अटल u16 mcfqspi_rd_qdlyr(काष्ठा mcfqspi *mcfqspi)
-अणु
-	वापस पढ़ोw(mcfqspi->iobase + MCFQSPI_QDLYR);
-पूर्ण
+static u16 mcfqspi_rd_qdlyr(struct mcfqspi *mcfqspi)
+{
+	return readw(mcfqspi->iobase + MCFQSPI_QDLYR);
+}
 
-अटल व्योम mcfqspi_wr_qwr(काष्ठा mcfqspi *mcfqspi, u16 val)
-अणु
-	ग_लिखोw(val, mcfqspi->iobase + MCFQSPI_QWR);
-पूर्ण
+static void mcfqspi_wr_qwr(struct mcfqspi *mcfqspi, u16 val)
+{
+	writew(val, mcfqspi->iobase + MCFQSPI_QWR);
+}
 
-अटल व्योम mcfqspi_wr_qir(काष्ठा mcfqspi *mcfqspi, u16 val)
-अणु
-	ग_लिखोw(val, mcfqspi->iobase + MCFQSPI_QIR);
-पूर्ण
+static void mcfqspi_wr_qir(struct mcfqspi *mcfqspi, u16 val)
+{
+	writew(val, mcfqspi->iobase + MCFQSPI_QIR);
+}
 
-अटल व्योम mcfqspi_wr_qar(काष्ठा mcfqspi *mcfqspi, u16 val)
-अणु
-	ग_लिखोw(val, mcfqspi->iobase + MCFQSPI_QAR);
-पूर्ण
+static void mcfqspi_wr_qar(struct mcfqspi *mcfqspi, u16 val)
+{
+	writew(val, mcfqspi->iobase + MCFQSPI_QAR);
+}
 
-अटल व्योम mcfqspi_wr_qdr(काष्ठा mcfqspi *mcfqspi, u16 val)
-अणु
-	ग_लिखोw(val, mcfqspi->iobase + MCFQSPI_QDR);
-पूर्ण
+static void mcfqspi_wr_qdr(struct mcfqspi *mcfqspi, u16 val)
+{
+	writew(val, mcfqspi->iobase + MCFQSPI_QDR);
+}
 
-अटल u16 mcfqspi_rd_qdr(काष्ठा mcfqspi *mcfqspi)
-अणु
-	वापस पढ़ोw(mcfqspi->iobase + MCFQSPI_QDR);
-पूर्ण
+static u16 mcfqspi_rd_qdr(struct mcfqspi *mcfqspi)
+{
+	return readw(mcfqspi->iobase + MCFQSPI_QDR);
+}
 
-अटल व्योम mcfqspi_cs_select(काष्ठा mcfqspi *mcfqspi, u8 chip_select,
+static void mcfqspi_cs_select(struct mcfqspi *mcfqspi, u8 chip_select,
 			    bool cs_high)
-अणु
+{
 	mcfqspi->cs_control->select(mcfqspi->cs_control, chip_select, cs_high);
-पूर्ण
+}
 
-अटल व्योम mcfqspi_cs_deselect(काष्ठा mcfqspi *mcfqspi, u8 chip_select,
+static void mcfqspi_cs_deselect(struct mcfqspi *mcfqspi, u8 chip_select,
 				bool cs_high)
-अणु
+{
 	mcfqspi->cs_control->deselect(mcfqspi->cs_control, chip_select, cs_high);
-पूर्ण
+}
 
-अटल पूर्णांक mcfqspi_cs_setup(काष्ठा mcfqspi *mcfqspi)
-अणु
-	वापस (mcfqspi->cs_control->setup) ?
+static int mcfqspi_cs_setup(struct mcfqspi *mcfqspi)
+{
+	return (mcfqspi->cs_control->setup) ?
 		mcfqspi->cs_control->setup(mcfqspi->cs_control) : 0;
-पूर्ण
+}
 
-अटल व्योम mcfqspi_cs_tearकरोwn(काष्ठा mcfqspi *mcfqspi)
-अणु
-	अगर (mcfqspi->cs_control->tearकरोwn)
-		mcfqspi->cs_control->tearकरोwn(mcfqspi->cs_control);
-पूर्ण
+static void mcfqspi_cs_teardown(struct mcfqspi *mcfqspi)
+{
+	if (mcfqspi->cs_control->teardown)
+		mcfqspi->cs_control->teardown(mcfqspi->cs_control);
+}
 
-अटल u8 mcfqspi_qmr_baud(u32 speed_hz)
-अणु
-	वापस clamp((MCFQSPI_BUSCLK + speed_hz - 1) / speed_hz, 2u, 255u);
-पूर्ण
+static u8 mcfqspi_qmr_baud(u32 speed_hz)
+{
+	return clamp((MCFQSPI_BUSCLK + speed_hz - 1) / speed_hz, 2u, 255u);
+}
 
-अटल bool mcfqspi_qdlyr_spe(काष्ठा mcfqspi *mcfqspi)
-अणु
-	वापस mcfqspi_rd_qdlyr(mcfqspi) & MCFQSPI_QDLYR_SPE;
-पूर्ण
+static bool mcfqspi_qdlyr_spe(struct mcfqspi *mcfqspi)
+{
+	return mcfqspi_rd_qdlyr(mcfqspi) & MCFQSPI_QDLYR_SPE;
+}
 
-अटल irqवापस_t mcfqspi_irq_handler(पूर्णांक this_irq, व्योम *dev_id)
-अणु
-	काष्ठा mcfqspi *mcfqspi = dev_id;
+static irqreturn_t mcfqspi_irq_handler(int this_irq, void *dev_id)
+{
+	struct mcfqspi *mcfqspi = dev_id;
 
-	/* clear पूर्णांकerrupt */
+	/* clear interrupt */
 	mcfqspi_wr_qir(mcfqspi, MCFQSPI_QIR_SPIFE | MCFQSPI_QIR_SPIF);
-	wake_up(&mcfqspi->रुकोq);
+	wake_up(&mcfqspi->waitq);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम mcfqspi_transfer_msg8(काष्ठा mcfqspi *mcfqspi, अचिन्हित count,
-				  स्थिर u8 *txbuf, u8 *rxbuf)
-अणु
-	अचिन्हित i, n, offset = 0;
+static void mcfqspi_transfer_msg8(struct mcfqspi *mcfqspi, unsigned count,
+				  const u8 *txbuf, u8 *rxbuf)
+{
+	unsigned i, n, offset = 0;
 
 	n = min(count, 16u);
 
 	mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_CMDBUF);
-	क्रम (i = 0; i < n; ++i)
+	for (i = 0; i < n; ++i)
 		mcfqspi_wr_qdr(mcfqspi, MCFQSPI_QCR_BITSE);
 
 	mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_TXBUF);
-	अगर (txbuf)
-		क्रम (i = 0; i < n; ++i)
+	if (txbuf)
+		for (i = 0; i < n; ++i)
 			mcfqspi_wr_qdr(mcfqspi, *txbuf++);
-	अन्यथा
-		क्रम (i = 0; i < count; ++i)
+	else
+		for (i = 0; i < count; ++i)
 			mcfqspi_wr_qdr(mcfqspi, 0);
 
 	count -= n;
-	अगर (count) अणु
+	if (count) {
 		u16 qwr = 0xf08;
 		mcfqspi_wr_qwr(mcfqspi, 0x700);
 		mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
 
-		करो अणु
-			रुको_event(mcfqspi->रुकोq, !mcfqspi_qdlyr_spe(mcfqspi));
+		do {
+			wait_event(mcfqspi->waitq, !mcfqspi_qdlyr_spe(mcfqspi));
 			mcfqspi_wr_qwr(mcfqspi, qwr);
 			mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
-			अगर (rxbuf) अणु
+			if (rxbuf) {
 				mcfqspi_wr_qar(mcfqspi,
 					       MCFQSPI_QAR_RXBUF + offset);
-				क्रम (i = 0; i < 8; ++i)
+				for (i = 0; i < 8; ++i)
 					*rxbuf++ = mcfqspi_rd_qdr(mcfqspi);
-			पूर्ण
+			}
 			n = min(count, 8u);
-			अगर (txbuf) अणु
+			if (txbuf) {
 				mcfqspi_wr_qar(mcfqspi,
 					       MCFQSPI_QAR_TXBUF + offset);
-				क्रम (i = 0; i < n; ++i)
+				for (i = 0; i < n; ++i)
 					mcfqspi_wr_qdr(mcfqspi, *txbuf++);
-			पूर्ण
+			}
 			qwr = (offset ? 0x808 : 0) + ((n - 1) << 8);
 			offset ^= 8;
 			count -= n;
-		पूर्ण जबतक (count);
-		रुको_event(mcfqspi->रुकोq, !mcfqspi_qdlyr_spe(mcfqspi));
+		} while (count);
+		wait_event(mcfqspi->waitq, !mcfqspi_qdlyr_spe(mcfqspi));
 		mcfqspi_wr_qwr(mcfqspi, qwr);
 		mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
-		अगर (rxbuf) अणु
+		if (rxbuf) {
 			mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_RXBUF + offset);
-			क्रम (i = 0; i < 8; ++i)
+			for (i = 0; i < 8; ++i)
 				*rxbuf++ = mcfqspi_rd_qdr(mcfqspi);
 			offset ^= 8;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		mcfqspi_wr_qwr(mcfqspi, (n - 1) << 8);
 		mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
-	पूर्ण
-	रुको_event(mcfqspi->रुकोq, !mcfqspi_qdlyr_spe(mcfqspi));
-	अगर (rxbuf) अणु
+	}
+	wait_event(mcfqspi->waitq, !mcfqspi_qdlyr_spe(mcfqspi));
+	if (rxbuf) {
 		mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_RXBUF + offset);
-		क्रम (i = 0; i < n; ++i)
+		for (i = 0; i < n; ++i)
 			*rxbuf++ = mcfqspi_rd_qdr(mcfqspi);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mcfqspi_transfer_msg16(काष्ठा mcfqspi *mcfqspi, अचिन्हित count,
-				   स्थिर u16 *txbuf, u16 *rxbuf)
-अणु
-	अचिन्हित i, n, offset = 0;
+static void mcfqspi_transfer_msg16(struct mcfqspi *mcfqspi, unsigned count,
+				   const u16 *txbuf, u16 *rxbuf)
+{
+	unsigned i, n, offset = 0;
 
 	n = min(count, 16u);
 
 	mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_CMDBUF);
-	क्रम (i = 0; i < n; ++i)
+	for (i = 0; i < n; ++i)
 		mcfqspi_wr_qdr(mcfqspi, MCFQSPI_QCR_BITSE);
 
 	mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_TXBUF);
-	अगर (txbuf)
-		क्रम (i = 0; i < n; ++i)
+	if (txbuf)
+		for (i = 0; i < n; ++i)
 			mcfqspi_wr_qdr(mcfqspi, *txbuf++);
-	अन्यथा
-		क्रम (i = 0; i < count; ++i)
+	else
+		for (i = 0; i < count; ++i)
 			mcfqspi_wr_qdr(mcfqspi, 0);
 
 	count -= n;
-	अगर (count) अणु
+	if (count) {
 		u16 qwr = 0xf08;
 		mcfqspi_wr_qwr(mcfqspi, 0x700);
 		mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
 
-		करो अणु
-			रुको_event(mcfqspi->रुकोq, !mcfqspi_qdlyr_spe(mcfqspi));
+		do {
+			wait_event(mcfqspi->waitq, !mcfqspi_qdlyr_spe(mcfqspi));
 			mcfqspi_wr_qwr(mcfqspi, qwr);
 			mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
-			अगर (rxbuf) अणु
+			if (rxbuf) {
 				mcfqspi_wr_qar(mcfqspi,
 					       MCFQSPI_QAR_RXBUF + offset);
-				क्रम (i = 0; i < 8; ++i)
+				for (i = 0; i < 8; ++i)
 					*rxbuf++ = mcfqspi_rd_qdr(mcfqspi);
-			पूर्ण
+			}
 			n = min(count, 8u);
-			अगर (txbuf) अणु
+			if (txbuf) {
 				mcfqspi_wr_qar(mcfqspi,
 					       MCFQSPI_QAR_TXBUF + offset);
-				क्रम (i = 0; i < n; ++i)
+				for (i = 0; i < n; ++i)
 					mcfqspi_wr_qdr(mcfqspi, *txbuf++);
-			पूर्ण
+			}
 			qwr = (offset ? 0x808 : 0x000) + ((n - 1) << 8);
 			offset ^= 8;
 			count -= n;
-		पूर्ण जबतक (count);
-		रुको_event(mcfqspi->रुकोq, !mcfqspi_qdlyr_spe(mcfqspi));
+		} while (count);
+		wait_event(mcfqspi->waitq, !mcfqspi_qdlyr_spe(mcfqspi));
 		mcfqspi_wr_qwr(mcfqspi, qwr);
 		mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
-		अगर (rxbuf) अणु
+		if (rxbuf) {
 			mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_RXBUF + offset);
-			क्रम (i = 0; i < 8; ++i)
+			for (i = 0; i < 8; ++i)
 				*rxbuf++ = mcfqspi_rd_qdr(mcfqspi);
 			offset ^= 8;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		mcfqspi_wr_qwr(mcfqspi, (n - 1) << 8);
 		mcfqspi_wr_qdlyr(mcfqspi, MCFQSPI_QDLYR_SPE);
-	पूर्ण
-	रुको_event(mcfqspi->रुकोq, !mcfqspi_qdlyr_spe(mcfqspi));
-	अगर (rxbuf) अणु
+	}
+	wait_event(mcfqspi->waitq, !mcfqspi_qdlyr_spe(mcfqspi));
+	if (rxbuf) {
 		mcfqspi_wr_qar(mcfqspi, MCFQSPI_QAR_RXBUF + offset);
-		क्रम (i = 0; i < n; ++i)
+		for (i = 0; i < n; ++i)
 			*rxbuf++ = mcfqspi_rd_qdr(mcfqspi);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम mcfqspi_set_cs(काष्ठा spi_device *spi, bool enable)
-अणु
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(spi->master);
+static void mcfqspi_set_cs(struct spi_device *spi, bool enable)
+{
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(spi->master);
 	bool cs_high = spi->mode & SPI_CS_HIGH;
 
-	अगर (enable)
+	if (enable)
 		mcfqspi_cs_select(mcfqspi, spi->chip_select, cs_high);
-	अन्यथा
+	else
 		mcfqspi_cs_deselect(mcfqspi, spi->chip_select, cs_high);
-पूर्ण
+}
 
-अटल पूर्णांक mcfqspi_transfer_one(काष्ठा spi_master *master,
-				काष्ठा spi_device *spi,
-				काष्ठा spi_transfer *t)
-अणु
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(master);
+static int mcfqspi_transfer_one(struct spi_master *master,
+				struct spi_device *spi,
+				struct spi_transfer *t)
+{
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(master);
 	u16 qmr = MCFQSPI_QMR_MSTR;
 
 	qmr |= t->bits_per_word << 10;
-	अगर (spi->mode & SPI_CPHA)
+	if (spi->mode & SPI_CPHA)
 		qmr |= MCFQSPI_QMR_CPHA;
-	अगर (spi->mode & SPI_CPOL)
+	if (spi->mode & SPI_CPOL)
 		qmr |= MCFQSPI_QMR_CPOL;
 	qmr |= mcfqspi_qmr_baud(t->speed_hz);
 	mcfqspi_wr_qmr(mcfqspi, qmr);
 
 	mcfqspi_wr_qir(mcfqspi, MCFQSPI_QIR_SPIFE);
-	अगर (t->bits_per_word == 8)
+	if (t->bits_per_word == 8)
 		mcfqspi_transfer_msg8(mcfqspi, t->len, t->tx_buf, t->rx_buf);
-	अन्यथा
+	else
 		mcfqspi_transfer_msg16(mcfqspi, t->len / 2, t->tx_buf,
 				       t->rx_buf);
 	mcfqspi_wr_qir(mcfqspi, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mcfqspi_setup(काष्ठा spi_device *spi)
-अणु
+static int mcfqspi_setup(struct spi_device *spi)
+{
 	mcfqspi_cs_deselect(spi_master_get_devdata(spi->master),
 			    spi->chip_select, spi->mode & SPI_CS_HIGH);
 
@@ -333,61 +332,61 @@
 			(MCFQSPI_BUSCLK / mcfqspi_qmr_baud(spi->max_speed_hz))
 			/ 1000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mcfqspi_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_master *master;
-	काष्ठा mcfqspi *mcfqspi;
-	काष्ठा mcfqspi_platक्रमm_data *pdata;
-	पूर्णांक status;
+static int mcfqspi_probe(struct platform_device *pdev)
+{
+	struct spi_master *master;
+	struct mcfqspi *mcfqspi;
+	struct mcfqspi_platform_data *pdata;
+	int status;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	अगर (!pdata) अणु
+	if (!pdata) {
 		dev_dbg(&pdev->dev, "platform data is missing\n");
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (!pdata->cs_control) अणु
+	if (!pdata->cs_control) {
 		dev_dbg(&pdev->dev, "pdata->cs_control is NULL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	master = spi_alloc_master(&pdev->dev, माप(*mcfqspi));
-	अगर (master == शून्य) अणु
+	master = spi_alloc_master(&pdev->dev, sizeof(*mcfqspi));
+	if (master == NULL) {
 		dev_dbg(&pdev->dev, "spi_alloc_master failed\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	mcfqspi = spi_master_get_devdata(master);
 
-	mcfqspi->iobase = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mcfqspi->iobase)) अणु
+	mcfqspi->iobase = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mcfqspi->iobase)) {
 		status = PTR_ERR(mcfqspi->iobase);
-		जाओ fail0;
-	पूर्ण
+		goto fail0;
+	}
 
-	mcfqspi->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (mcfqspi->irq < 0) अणु
+	mcfqspi->irq = platform_get_irq(pdev, 0);
+	if (mcfqspi->irq < 0) {
 		dev_dbg(&pdev->dev, "platform_get_irq failed\n");
 		status = -ENXIO;
-		जाओ fail0;
-	पूर्ण
+		goto fail0;
+	}
 
 	status = devm_request_irq(&pdev->dev, mcfqspi->irq, mcfqspi_irq_handler,
 				0, pdev->name, mcfqspi);
-	अगर (status) अणु
+	if (status) {
 		dev_dbg(&pdev->dev, "request_irq failed\n");
-		जाओ fail0;
-	पूर्ण
+		goto fail0;
+	}
 
 	mcfqspi->clk = devm_clk_get(&pdev->dev, "qspi_clk");
-	अगर (IS_ERR(mcfqspi->clk)) अणु
+	if (IS_ERR(mcfqspi->clk)) {
 		dev_dbg(&pdev->dev, "clk_get failed\n");
 		status = PTR_ERR(mcfqspi->clk);
-		जाओ fail0;
-	पूर्ण
+		goto fail0;
+	}
 	clk_prepare_enable(mcfqspi->clk);
 
 	master->bus_num = pdata->bus_num;
@@ -395,36 +394,36 @@
 
 	mcfqspi->cs_control = pdata->cs_control;
 	status = mcfqspi_cs_setup(mcfqspi);
-	अगर (status) अणु
+	if (status) {
 		dev_dbg(&pdev->dev, "error initializing cs_control\n");
-		जाओ fail1;
-	पूर्ण
+		goto fail1;
+	}
 
-	init_रुकोqueue_head(&mcfqspi->रुकोq);
+	init_waitqueue_head(&mcfqspi->waitq);
 
 	master->mode_bits = SPI_CS_HIGH | SPI_CPOL | SPI_CPHA;
 	master->bits_per_word_mask = SPI_BPW_RANGE_MASK(8, 16);
 	master->setup = mcfqspi_setup;
 	master->set_cs = mcfqspi_set_cs;
 	master->transfer_one = mcfqspi_transfer_one;
-	master->स्वतः_runसमय_pm = true;
+	master->auto_runtime_pm = true;
 
-	platक्रमm_set_drvdata(pdev, master);
-	pm_runसमय_enable(&pdev->dev);
+	platform_set_drvdata(pdev, master);
+	pm_runtime_enable(&pdev->dev);
 
-	status = devm_spi_रेजिस्टर_master(&pdev->dev, master);
-	अगर (status) अणु
+	status = devm_spi_register_master(&pdev->dev, master);
+	if (status) {
 		dev_dbg(&pdev->dev, "spi_register_master failed\n");
-		जाओ fail2;
-	पूर्ण
+		goto fail2;
+	}
 
 	dev_info(&pdev->dev, "Coldfire QSPI bus driver\n");
 
-	वापस 0;
+	return 0;
 
 fail2:
-	pm_runसमय_disable(&pdev->dev);
-	mcfqspi_cs_tearकरोwn(mcfqspi);
+	pm_runtime_disable(&pdev->dev);
+	mcfqspi_cs_teardown(mcfqspi);
 fail1:
 	clk_disable_unprepare(mcfqspi->clk);
 fail0:
@@ -432,87 +431,87 @@ fail0:
 
 	dev_dbg(&pdev->dev, "Coldfire QSPI probe failed\n");
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक mcfqspi_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(master);
+static int mcfqspi_remove(struct platform_device *pdev)
+{
+	struct spi_master *master = platform_get_drvdata(pdev);
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(master);
 
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 	/* disable the hardware (set the baud rate to 0) */
 	mcfqspi_wr_qmr(mcfqspi, MCFQSPI_QMR_MSTR);
 
-	mcfqspi_cs_tearकरोwn(mcfqspi);
+	mcfqspi_cs_teardown(mcfqspi);
 	clk_disable(mcfqspi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mcfqspi_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा spi_master *master = dev_get_drvdata(dev);
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(master);
-	पूर्णांक ret;
+#ifdef CONFIG_PM_SLEEP
+static int mcfqspi_suspend(struct device *dev)
+{
+	struct spi_master *master = dev_get_drvdata(dev);
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(master);
+	int ret;
 
 	ret = spi_master_suspend(master);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	clk_disable(mcfqspi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mcfqspi_resume(काष्ठा device *dev)
-अणु
-	काष्ठा spi_master *master = dev_get_drvdata(dev);
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(master);
+static int mcfqspi_resume(struct device *dev)
+{
+	struct spi_master *master = dev_get_drvdata(dev);
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(master);
 
 	clk_enable(mcfqspi->clk);
 
-	वापस spi_master_resume(master);
-पूर्ण
-#पूर्ण_अगर
+	return spi_master_resume(master);
+}
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक mcfqspi_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा spi_master *master = dev_get_drvdata(dev);
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(master);
+#ifdef CONFIG_PM
+static int mcfqspi_runtime_suspend(struct device *dev)
+{
+	struct spi_master *master = dev_get_drvdata(dev);
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(master);
 
 	clk_disable(mcfqspi->clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mcfqspi_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा spi_master *master = dev_get_drvdata(dev);
-	काष्ठा mcfqspi *mcfqspi = spi_master_get_devdata(master);
+static int mcfqspi_runtime_resume(struct device *dev)
+{
+	struct spi_master *master = dev_get_drvdata(dev);
+	struct mcfqspi *mcfqspi = spi_master_get_devdata(master);
 
 	clk_enable(mcfqspi->clk);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops mcfqspi_pm = अणु
+static const struct dev_pm_ops mcfqspi_pm = {
 	SET_SYSTEM_SLEEP_PM_OPS(mcfqspi_suspend, mcfqspi_resume)
-	SET_RUNTIME_PM_OPS(mcfqspi_runसमय_suspend, mcfqspi_runसमय_resume,
-			शून्य)
-पूर्ण;
+	SET_RUNTIME_PM_OPS(mcfqspi_runtime_suspend, mcfqspi_runtime_resume,
+			NULL)
+};
 
-अटल काष्ठा platक्रमm_driver mcfqspi_driver = अणु
+static struct platform_driver mcfqspi_driver = {
 	.driver.name	= DRIVER_NAME,
 	.driver.owner	= THIS_MODULE,
 	.driver.pm	= &mcfqspi_pm,
 	.probe		= mcfqspi_probe,
-	.हटाओ		= mcfqspi_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(mcfqspi_driver);
+	.remove		= mcfqspi_remove,
+};
+module_platform_driver(mcfqspi_driver);
 
 MODULE_AUTHOR("Steven King <sfking@fdwdc.com>");
 MODULE_DESCRIPTION("Coldfire QSPI Controller Driver");

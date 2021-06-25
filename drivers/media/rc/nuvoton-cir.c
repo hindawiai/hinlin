@@ -1,322 +1,321 @@
-<शैली गुरु>
 /*
- * Driver क्रम Nuvoton Technology Corporation w83667hg/w83677hg-i CIR
+ * Driver for Nuvoton Technology Corporation w83667hg/w83677hg-i CIR
  *
  * Copyright (C) 2010 Jarod Wilson <jarod@redhat.com>
  * Copyright (C) 2009 Nuvoton PS Team
  *
- * Special thanks to Nuvoton क्रम providing hardware, spec sheets and
+ * Special thanks to Nuvoton for providing hardware, spec sheets and
  * sample code upon which portions of this driver are based. Indirect
  * thanks also to Maxim Levitsky, whose ene_ir driver this driver is
  * modeled after.
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pnp.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <media/rc-core.h>
-#समावेश <linux/pci_ids.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pnp.h>
+#include <linux/io.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <media/rc-core.h>
+#include <linux/pci_ids.h>
 
-#समावेश "nuvoton-cir.h"
+#include "nuvoton-cir.h"
 
-अटल व्योम nvt_clear_cir_wake_fअगरo(काष्ठा nvt_dev *nvt);
+static void nvt_clear_cir_wake_fifo(struct nvt_dev *nvt);
 
-अटल स्थिर काष्ठा nvt_chip nvt_chips[] = अणु
-	अणु "w83667hg", NVT_W83667HG पूर्ण,
-	अणु "NCT6775F", NVT_6775F पूर्ण,
-	अणु "NCT6776F", NVT_6776F पूर्ण,
-	अणु "NCT6779D", NVT_6779D पूर्ण,
-पूर्ण;
+static const struct nvt_chip nvt_chips[] = {
+	{ "w83667hg", NVT_W83667HG },
+	{ "NCT6775F", NVT_6775F },
+	{ "NCT6776F", NVT_6776F },
+	{ "NCT6779D", NVT_6779D },
+};
 
-अटल अंतरभूत काष्ठा device *nvt_get_dev(स्थिर काष्ठा nvt_dev *nvt)
-अणु
-	वापस nvt->rdev->dev.parent;
-पूर्ण
+static inline struct device *nvt_get_dev(const struct nvt_dev *nvt)
+{
+	return nvt->rdev->dev.parent;
+}
 
-अटल अंतरभूत bool is_w83667hg(काष्ठा nvt_dev *nvt)
-अणु
-	वापस nvt->chip_ver == NVT_W83667HG;
-पूर्ण
+static inline bool is_w83667hg(struct nvt_dev *nvt)
+{
+	return nvt->chip_ver == NVT_W83667HG;
+}
 
-/* ग_लिखो val to config reg */
-अटल अंतरभूत व्योम nvt_cr_ग_लिखो(काष्ठा nvt_dev *nvt, u8 val, u8 reg)
-अणु
+/* write val to config reg */
+static inline void nvt_cr_write(struct nvt_dev *nvt, u8 val, u8 reg)
+{
 	outb(reg, nvt->cr_efir);
 	outb(val, nvt->cr_efdr);
-पूर्ण
+}
 
-/* पढ़ो val from config reg */
-अटल अंतरभूत u8 nvt_cr_पढ़ो(काष्ठा nvt_dev *nvt, u8 reg)
-अणु
+/* read val from config reg */
+static inline u8 nvt_cr_read(struct nvt_dev *nvt, u8 reg)
+{
 	outb(reg, nvt->cr_efir);
-	वापस inb(nvt->cr_efdr);
-पूर्ण
+	return inb(nvt->cr_efdr);
+}
 
-/* update config रेजिस्टर bit without changing other bits */
-अटल अंतरभूत व्योम nvt_set_reg_bit(काष्ठा nvt_dev *nvt, u8 val, u8 reg)
-अणु
-	u8 पंचांगp = nvt_cr_पढ़ो(nvt, reg) | val;
-	nvt_cr_ग_लिखो(nvt, पंचांगp, reg);
-पूर्ण
+/* update config register bit without changing other bits */
+static inline void nvt_set_reg_bit(struct nvt_dev *nvt, u8 val, u8 reg)
+{
+	u8 tmp = nvt_cr_read(nvt, reg) | val;
+	nvt_cr_write(nvt, tmp, reg);
+}
 
 /* enter extended function mode */
-अटल अंतरभूत पूर्णांक nvt_efm_enable(काष्ठा nvt_dev *nvt)
-अणु
-	अगर (!request_muxed_region(nvt->cr_efir, 2, NVT_DRIVER_NAME))
-		वापस -EBUSY;
+static inline int nvt_efm_enable(struct nvt_dev *nvt)
+{
+	if (!request_muxed_region(nvt->cr_efir, 2, NVT_DRIVER_NAME))
+		return -EBUSY;
 
 	/* Enabling Extended Function Mode explicitly requires writing 2x */
 	outb(EFER_EFM_ENABLE, nvt->cr_efir);
 	outb(EFER_EFM_ENABLE, nvt->cr_efir);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* निकास extended function mode */
-अटल अंतरभूत व्योम nvt_efm_disable(काष्ठा nvt_dev *nvt)
-अणु
+/* exit extended function mode */
+static inline void nvt_efm_disable(struct nvt_dev *nvt)
+{
 	outb(EFER_EFM_DISABLE, nvt->cr_efir);
 
 	release_region(nvt->cr_efir, 2);
-पूर्ण
+}
 
 /*
- * When you want to address a specअगरic logical device, ग_लिखो its logical
+ * When you want to address a specific logical device, write its logical
  * device number to CR_LOGICAL_DEV_SEL, then enable/disable by writing
  * 0x1/0x0 respectively to CR_LOGICAL_DEV_EN.
  */
-अटल अंतरभूत व्योम nvt_select_logical_dev(काष्ठा nvt_dev *nvt, u8 ldev)
-अणु
-	nvt_cr_ग_लिखो(nvt, ldev, CR_LOGICAL_DEV_SEL);
-पूर्ण
+static inline void nvt_select_logical_dev(struct nvt_dev *nvt, u8 ldev)
+{
+	nvt_cr_write(nvt, ldev, CR_LOGICAL_DEV_SEL);
+}
 
 /* select and enable logical device with setting EFM mode*/
-अटल अंतरभूत व्योम nvt_enable_logical_dev(काष्ठा nvt_dev *nvt, u8 ldev)
-अणु
+static inline void nvt_enable_logical_dev(struct nvt_dev *nvt, u8 ldev)
+{
 	nvt_efm_enable(nvt);
 	nvt_select_logical_dev(nvt, ldev);
-	nvt_cr_ग_लिखो(nvt, LOGICAL_DEV_ENABLE, CR_LOGICAL_DEV_EN);
+	nvt_cr_write(nvt, LOGICAL_DEV_ENABLE, CR_LOGICAL_DEV_EN);
 	nvt_efm_disable(nvt);
-पूर्ण
+}
 
 /* select and disable logical device with setting EFM mode*/
-अटल अंतरभूत व्योम nvt_disable_logical_dev(काष्ठा nvt_dev *nvt, u8 ldev)
-अणु
+static inline void nvt_disable_logical_dev(struct nvt_dev *nvt, u8 ldev)
+{
 	nvt_efm_enable(nvt);
 	nvt_select_logical_dev(nvt, ldev);
-	nvt_cr_ग_लिखो(nvt, LOGICAL_DEV_DISABLE, CR_LOGICAL_DEV_EN);
+	nvt_cr_write(nvt, LOGICAL_DEV_DISABLE, CR_LOGICAL_DEV_EN);
 	nvt_efm_disable(nvt);
-पूर्ण
+}
 
-/* ग_लिखो val to cir config रेजिस्टर */
-अटल अंतरभूत व्योम nvt_cir_reg_ग_लिखो(काष्ठा nvt_dev *nvt, u8 val, u8 offset)
-अणु
+/* write val to cir config register */
+static inline void nvt_cir_reg_write(struct nvt_dev *nvt, u8 val, u8 offset)
+{
 	outb(val, nvt->cir_addr + offset);
-पूर्ण
+}
 
-/* पढ़ो val from cir config रेजिस्टर */
-अटल u8 nvt_cir_reg_पढ़ो(काष्ठा nvt_dev *nvt, u8 offset)
-अणु
-	वापस inb(nvt->cir_addr + offset);
-पूर्ण
+/* read val from cir config register */
+static u8 nvt_cir_reg_read(struct nvt_dev *nvt, u8 offset)
+{
+	return inb(nvt->cir_addr + offset);
+}
 
-/* ग_लिखो val to cir wake रेजिस्टर */
-अटल अंतरभूत व्योम nvt_cir_wake_reg_ग_लिखो(काष्ठा nvt_dev *nvt,
+/* write val to cir wake register */
+static inline void nvt_cir_wake_reg_write(struct nvt_dev *nvt,
 					  u8 val, u8 offset)
-अणु
+{
 	outb(val, nvt->cir_wake_addr + offset);
-पूर्ण
+}
 
-/* पढ़ो val from cir wake config रेजिस्टर */
-अटल u8 nvt_cir_wake_reg_पढ़ो(काष्ठा nvt_dev *nvt, u8 offset)
-अणु
-	वापस inb(nvt->cir_wake_addr + offset);
-पूर्ण
+/* read val from cir wake config register */
+static u8 nvt_cir_wake_reg_read(struct nvt_dev *nvt, u8 offset)
+{
+	return inb(nvt->cir_wake_addr + offset);
+}
 
-/* करोn't override io address अगर one is set alपढ़ोy */
-अटल व्योम nvt_set_ioaddr(काष्ठा nvt_dev *nvt, अचिन्हित दीर्घ *ioaddr)
-अणु
-	अचिन्हित दीर्घ old_addr;
+/* don't override io address if one is set already */
+static void nvt_set_ioaddr(struct nvt_dev *nvt, unsigned long *ioaddr)
+{
+	unsigned long old_addr;
 
-	old_addr = nvt_cr_पढ़ो(nvt, CR_CIR_BASE_ADDR_HI) << 8;
-	old_addr |= nvt_cr_पढ़ो(nvt, CR_CIR_BASE_ADDR_LO);
+	old_addr = nvt_cr_read(nvt, CR_CIR_BASE_ADDR_HI) << 8;
+	old_addr |= nvt_cr_read(nvt, CR_CIR_BASE_ADDR_LO);
 
-	अगर (old_addr)
+	if (old_addr)
 		*ioaddr = old_addr;
-	अन्यथा अणु
-		nvt_cr_ग_लिखो(nvt, *ioaddr >> 8, CR_CIR_BASE_ADDR_HI);
-		nvt_cr_ग_लिखो(nvt, *ioaddr & 0xff, CR_CIR_BASE_ADDR_LO);
-	पूर्ण
-पूर्ण
+	else {
+		nvt_cr_write(nvt, *ioaddr >> 8, CR_CIR_BASE_ADDR_HI);
+		nvt_cr_write(nvt, *ioaddr & 0xff, CR_CIR_BASE_ADDR_LO);
+	}
+}
 
-अटल व्योम nvt_ग_लिखो_wakeup_codes(काष्ठा rc_dev *dev,
-				   स्थिर u8 *wbuf, पूर्णांक count)
-अणु
+static void nvt_write_wakeup_codes(struct rc_dev *dev,
+				   const u8 *wbuf, int count)
+{
 	u8 tolerance, config;
-	काष्ठा nvt_dev *nvt = dev->priv;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+	struct nvt_dev *nvt = dev->priv;
+	unsigned long flags;
+	int i;
 
 	/* hardcode the tolerance to 10% */
 	tolerance = DIV_ROUND_UP(count, 10);
 
 	spin_lock_irqsave(&nvt->lock, flags);
 
-	nvt_clear_cir_wake_fअगरo(nvt);
-	nvt_cir_wake_reg_ग_लिखो(nvt, count, CIR_WAKE_FIFO_CMP_DEEP);
-	nvt_cir_wake_reg_ग_लिखो(nvt, tolerance, CIR_WAKE_FIFO_CMP_TOL);
+	nvt_clear_cir_wake_fifo(nvt);
+	nvt_cir_wake_reg_write(nvt, count, CIR_WAKE_FIFO_CMP_DEEP);
+	nvt_cir_wake_reg_write(nvt, tolerance, CIR_WAKE_FIFO_CMP_TOL);
 
-	config = nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_IRCON);
+	config = nvt_cir_wake_reg_read(nvt, CIR_WAKE_IRCON);
 
-	/* enable ग_लिखोs to wake fअगरo */
-	nvt_cir_wake_reg_ग_लिखो(nvt, config | CIR_WAKE_IRCON_MODE1,
+	/* enable writes to wake fifo */
+	nvt_cir_wake_reg_write(nvt, config | CIR_WAKE_IRCON_MODE1,
 			       CIR_WAKE_IRCON);
 
-	अगर (count)
+	if (count)
 		pr_info("Wake samples (%d) =", count);
-	अन्यथा
+	else
 		pr_info("Wake sample fifo cleared");
 
-	क्रम (i = 0; i < count; i++)
-		nvt_cir_wake_reg_ग_लिखो(nvt, wbuf[i], CIR_WAKE_WR_FIFO_DATA);
+	for (i = 0; i < count; i++)
+		nvt_cir_wake_reg_write(nvt, wbuf[i], CIR_WAKE_WR_FIFO_DATA);
 
-	nvt_cir_wake_reg_ग_लिखो(nvt, config, CIR_WAKE_IRCON);
+	nvt_cir_wake_reg_write(nvt, config, CIR_WAKE_IRCON);
 
 	spin_unlock_irqrestore(&nvt->lock, flags);
-पूर्ण
+}
 
-अटल sमाप_प्रकार wakeup_data_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr,
-				अक्षर *buf)
-अणु
-	काष्ठा rc_dev *rc_dev = to_rc_dev(dev);
-	काष्ठा nvt_dev *nvt = rc_dev->priv;
-	पूर्णांक fअगरo_len, duration;
-	अचिन्हित दीर्घ flags;
-	sमाप_प्रकार buf_len = 0;
-	पूर्णांक i;
+static ssize_t wakeup_data_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct rc_dev *rc_dev = to_rc_dev(dev);
+	struct nvt_dev *nvt = rc_dev->priv;
+	int fifo_len, duration;
+	unsigned long flags;
+	ssize_t buf_len = 0;
+	int i;
 
 	spin_lock_irqsave(&nvt->lock, flags);
 
-	fअगरo_len = nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFO_COUNT);
-	fअगरo_len = min(fअगरo_len, WAKEUP_MAX_SIZE);
+	fifo_len = nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFO_COUNT);
+	fifo_len = min(fifo_len, WAKEUP_MAX_SIZE);
 
-	/* go to first element to be पढ़ो */
-	जबतक (nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_RD_FIFO_ONLY_IDX))
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_RD_FIFO_ONLY);
+	/* go to first element to be read */
+	while (nvt_cir_wake_reg_read(nvt, CIR_WAKE_RD_FIFO_ONLY_IDX))
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_RD_FIFO_ONLY);
 
-	क्रम (i = 0; i < fअगरo_len; i++) अणु
-		duration = nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_RD_FIFO_ONLY);
+	for (i = 0; i < fifo_len; i++) {
+		duration = nvt_cir_wake_reg_read(nvt, CIR_WAKE_RD_FIFO_ONLY);
 		duration = (duration & BUF_LEN_MASK) * SAMPLE_PERIOD;
-		buf_len += scnम_लिखो(buf + buf_len, PAGE_SIZE - buf_len,
+		buf_len += scnprintf(buf + buf_len, PAGE_SIZE - buf_len,
 				    "%d ", duration);
-	पूर्ण
-	buf_len += scnम_लिखो(buf + buf_len, PAGE_SIZE - buf_len, "\n");
+	}
+	buf_len += scnprintf(buf + buf_len, PAGE_SIZE - buf_len, "\n");
 
 	spin_unlock_irqrestore(&nvt->lock, flags);
 
-	वापस buf_len;
-पूर्ण
+	return buf_len;
+}
 
-अटल sमाप_प्रकार wakeup_data_store(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr,
-				 स्थिर अक्षर *buf, माप_प्रकार len)
-अणु
-	काष्ठा rc_dev *rc_dev = to_rc_dev(dev);
+static ssize_t wakeup_data_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t len)
+{
+	struct rc_dev *rc_dev = to_rc_dev(dev);
 	u8 wake_buf[WAKEUP_MAX_SIZE];
-	अक्षर **argv;
-	पूर्णांक i, count;
-	अचिन्हित पूर्णांक val;
-	sमाप_प्रकार ret;
+	char **argv;
+	int i, count;
+	unsigned int val;
+	ssize_t ret;
 
 	argv = argv_split(GFP_KERNEL, buf, &count);
-	अगर (!argv)
-		वापस -ENOMEM;
-	अगर (!count || count > WAKEUP_MAX_SIZE) अणु
+	if (!argv)
+		return -ENOMEM;
+	if (!count || count > WAKEUP_MAX_SIZE) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (i = 0; i < count; i++) अणु
-		ret = kstrtouपूर्णांक(argv[i], 10, &val);
-		अगर (ret)
-			जाओ out;
+	for (i = 0; i < count; i++) {
+		ret = kstrtouint(argv[i], 10, &val);
+		if (ret)
+			goto out;
 		val = DIV_ROUND_CLOSEST(val, SAMPLE_PERIOD);
-		अगर (!val || val > 0x7f) अणु
+		if (!val || val > 0x7f) {
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		wake_buf[i] = val;
 		/* sequence must start with a pulse */
-		अगर (i % 2 == 0)
+		if (i % 2 == 0)
 			wake_buf[i] |= BUF_PULSE_BIT;
-	पूर्ण
+	}
 
-	nvt_ग_लिखो_wakeup_codes(rc_dev, wake_buf, count);
+	nvt_write_wakeup_codes(rc_dev, wake_buf, count);
 
 	ret = len;
 out:
-	argv_मुक्त(argv);
-	वापस ret;
-पूर्ण
-अटल DEVICE_ATTR_RW(wakeup_data);
+	argv_free(argv);
+	return ret;
+}
+static DEVICE_ATTR_RW(wakeup_data);
 
-/* dump current cir रेजिस्टर contents */
-अटल व्योम cir_dump_regs(काष्ठा nvt_dev *nvt)
-अणु
+/* dump current cir register contents */
+static void cir_dump_regs(struct nvt_dev *nvt)
+{
 	nvt_efm_enable(nvt);
 	nvt_select_logical_dev(nvt, LOGICAL_DEV_CIR);
 
 	pr_info("%s: Dump CIR logical device registers:\n", NVT_DRIVER_NAME);
 	pr_info(" * CR CIR ACTIVE :   0x%x\n",
-		nvt_cr_पढ़ो(nvt, CR_LOGICAL_DEV_EN));
+		nvt_cr_read(nvt, CR_LOGICAL_DEV_EN));
 	pr_info(" * CR CIR BASE ADDR: 0x%x\n",
-		(nvt_cr_पढ़ो(nvt, CR_CIR_BASE_ADDR_HI) << 8) |
-		nvt_cr_पढ़ो(nvt, CR_CIR_BASE_ADDR_LO));
+		(nvt_cr_read(nvt, CR_CIR_BASE_ADDR_HI) << 8) |
+		nvt_cr_read(nvt, CR_CIR_BASE_ADDR_LO));
 	pr_info(" * CR CIR IRQ NUM:   0x%x\n",
-		nvt_cr_पढ़ो(nvt, CR_CIR_IRQ_RSRC));
+		nvt_cr_read(nvt, CR_CIR_IRQ_RSRC));
 
 	nvt_efm_disable(nvt);
 
 	pr_info("%s: Dump CIR registers:\n", NVT_DRIVER_NAME);
-	pr_info(" * IRCON:     0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_IRCON));
-	pr_info(" * IRSTS:     0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_IRSTS));
-	pr_info(" * IREN:      0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_IREN));
-	pr_info(" * RXFCONT:   0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_RXFCONT));
-	pr_info(" * CP:        0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_CP));
-	pr_info(" * CC:        0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_CC));
-	pr_info(" * SLCH:      0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_SLCH));
-	pr_info(" * SLCL:      0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_SLCL));
-	pr_info(" * FIFOCON:   0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_FIFOCON));
-	pr_info(" * IRFIFOSTS: 0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_IRFIFOSTS));
-	pr_info(" * SRXFIFO:   0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_SRXFIFO));
-	pr_info(" * TXFCONT:   0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_TXFCONT));
-	pr_info(" * STXFIFO:   0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_STXFIFO));
-	pr_info(" * FCCH:      0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_FCCH));
-	pr_info(" * FCCL:      0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_FCCL));
-	pr_info(" * IRFSM:     0x%x\n", nvt_cir_reg_पढ़ो(nvt, CIR_IRFSM));
-पूर्ण
+	pr_info(" * IRCON:     0x%x\n", nvt_cir_reg_read(nvt, CIR_IRCON));
+	pr_info(" * IRSTS:     0x%x\n", nvt_cir_reg_read(nvt, CIR_IRSTS));
+	pr_info(" * IREN:      0x%x\n", nvt_cir_reg_read(nvt, CIR_IREN));
+	pr_info(" * RXFCONT:   0x%x\n", nvt_cir_reg_read(nvt, CIR_RXFCONT));
+	pr_info(" * CP:        0x%x\n", nvt_cir_reg_read(nvt, CIR_CP));
+	pr_info(" * CC:        0x%x\n", nvt_cir_reg_read(nvt, CIR_CC));
+	pr_info(" * SLCH:      0x%x\n", nvt_cir_reg_read(nvt, CIR_SLCH));
+	pr_info(" * SLCL:      0x%x\n", nvt_cir_reg_read(nvt, CIR_SLCL));
+	pr_info(" * FIFOCON:   0x%x\n", nvt_cir_reg_read(nvt, CIR_FIFOCON));
+	pr_info(" * IRFIFOSTS: 0x%x\n", nvt_cir_reg_read(nvt, CIR_IRFIFOSTS));
+	pr_info(" * SRXFIFO:   0x%x\n", nvt_cir_reg_read(nvt, CIR_SRXFIFO));
+	pr_info(" * TXFCONT:   0x%x\n", nvt_cir_reg_read(nvt, CIR_TXFCONT));
+	pr_info(" * STXFIFO:   0x%x\n", nvt_cir_reg_read(nvt, CIR_STXFIFO));
+	pr_info(" * FCCH:      0x%x\n", nvt_cir_reg_read(nvt, CIR_FCCH));
+	pr_info(" * FCCL:      0x%x\n", nvt_cir_reg_read(nvt, CIR_FCCL));
+	pr_info(" * IRFSM:     0x%x\n", nvt_cir_reg_read(nvt, CIR_IRFSM));
+}
 
-/* dump current cir wake रेजिस्टर contents */
-अटल व्योम cir_wake_dump_regs(काष्ठा nvt_dev *nvt)
-अणु
-	u8 i, fअगरo_len;
+/* dump current cir wake register contents */
+static void cir_wake_dump_regs(struct nvt_dev *nvt)
+{
+	u8 i, fifo_len;
 
 	nvt_efm_enable(nvt);
 	nvt_select_logical_dev(nvt, LOGICAL_DEV_CIR_WAKE);
@@ -324,155 +323,155 @@ out:
 	pr_info("%s: Dump CIR WAKE logical device registers:\n",
 		NVT_DRIVER_NAME);
 	pr_info(" * CR CIR WAKE ACTIVE :   0x%x\n",
-		nvt_cr_पढ़ो(nvt, CR_LOGICAL_DEV_EN));
+		nvt_cr_read(nvt, CR_LOGICAL_DEV_EN));
 	pr_info(" * CR CIR WAKE BASE ADDR: 0x%x\n",
-		(nvt_cr_पढ़ो(nvt, CR_CIR_BASE_ADDR_HI) << 8) |
-		nvt_cr_पढ़ो(nvt, CR_CIR_BASE_ADDR_LO));
+		(nvt_cr_read(nvt, CR_CIR_BASE_ADDR_HI) << 8) |
+		nvt_cr_read(nvt, CR_CIR_BASE_ADDR_LO));
 	pr_info(" * CR CIR WAKE IRQ NUM:   0x%x\n",
-		nvt_cr_पढ़ो(nvt, CR_CIR_IRQ_RSRC));
+		nvt_cr_read(nvt, CR_CIR_IRQ_RSRC));
 
 	nvt_efm_disable(nvt);
 
 	pr_info("%s: Dump CIR WAKE registers\n", NVT_DRIVER_NAME);
 	pr_info(" * IRCON:          0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_IRCON));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_IRCON));
 	pr_info(" * IRSTS:          0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_IRSTS));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_IRSTS));
 	pr_info(" * IREN:           0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_IREN));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_IREN));
 	pr_info(" * FIFO CMP DEEP:  0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFO_CMP_DEEP));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFO_CMP_DEEP));
 	pr_info(" * FIFO CMP TOL:   0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFO_CMP_TOL));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFO_CMP_TOL));
 	pr_info(" * FIFO COUNT:     0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFO_COUNT));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFO_COUNT));
 	pr_info(" * SLCH:           0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_SLCH));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_SLCH));
 	pr_info(" * SLCL:           0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_SLCL));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_SLCL));
 	pr_info(" * FIFOCON:        0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFOCON));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFOCON));
 	pr_info(" * SRXFSTS:        0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_SRXFSTS));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_SRXFSTS));
 	pr_info(" * SAMPLE RX FIFO: 0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_SAMPLE_RX_FIFO));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_SAMPLE_RX_FIFO));
 	pr_info(" * WR FIFO DATA:   0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_WR_FIFO_DATA));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_WR_FIFO_DATA));
 	pr_info(" * RD FIFO ONLY:   0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_RD_FIFO_ONLY));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_RD_FIFO_ONLY));
 	pr_info(" * RD FIFO ONLY IDX: 0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_RD_FIFO_ONLY_IDX));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_RD_FIFO_ONLY_IDX));
 	pr_info(" * FIFO IGNORE:    0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFO_IGNORE));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFO_IGNORE));
 	pr_info(" * IRFSM:          0x%x\n",
-		nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_IRFSM));
+		nvt_cir_wake_reg_read(nvt, CIR_WAKE_IRFSM));
 
-	fअगरo_len = nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFO_COUNT);
-	pr_info("%s: Dump CIR WAKE FIFO (len %d)\n", NVT_DRIVER_NAME, fअगरo_len);
+	fifo_len = nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFO_COUNT);
+	pr_info("%s: Dump CIR WAKE FIFO (len %d)\n", NVT_DRIVER_NAME, fifo_len);
 	pr_info("* Contents =");
-	क्रम (i = 0; i < fअगरo_len; i++)
+	for (i = 0; i < fifo_len; i++)
 		pr_cont(" %02x",
-			nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_RD_FIFO_ONLY));
+			nvt_cir_wake_reg_read(nvt, CIR_WAKE_RD_FIFO_ONLY));
 	pr_cont("\n");
-पूर्ण
+}
 
-अटल अंतरभूत स्थिर अक्षर *nvt_find_chip(काष्ठा nvt_dev *nvt, पूर्णांक id)
-अणु
-	पूर्णांक i;
+static inline const char *nvt_find_chip(struct nvt_dev *nvt, int id)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(nvt_chips); i++)
-		अगर ((id & SIO_ID_MASK) == nvt_chips[i].chip_ver) अणु
+	for (i = 0; i < ARRAY_SIZE(nvt_chips); i++)
+		if ((id & SIO_ID_MASK) == nvt_chips[i].chip_ver) {
 			nvt->chip_ver = nvt_chips[i].chip_ver;
-			वापस nvt_chips[i].name;
-		पूर्ण
+			return nvt_chips[i].name;
+		}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
 /* detect hardware features */
-अटल पूर्णांक nvt_hw_detect(काष्ठा nvt_dev *nvt)
-अणु
-	काष्ठा device *dev = nvt_get_dev(nvt);
-	स्थिर अक्षर *chip_name;
-	पूर्णांक chip_id;
+static int nvt_hw_detect(struct nvt_dev *nvt)
+{
+	struct device *dev = nvt_get_dev(nvt);
+	const char *chip_name;
+	int chip_id;
 
 	nvt_efm_enable(nvt);
 
-	/* Check अगर we're wired क्रम the alternate EFER setup */
-	nvt->chip_major = nvt_cr_पढ़ो(nvt, CR_CHIP_ID_HI);
-	अगर (nvt->chip_major == 0xff) अणु
+	/* Check if we're wired for the alternate EFER setup */
+	nvt->chip_major = nvt_cr_read(nvt, CR_CHIP_ID_HI);
+	if (nvt->chip_major == 0xff) {
 		nvt_efm_disable(nvt);
 		nvt->cr_efir = CR_EFIR2;
 		nvt->cr_efdr = CR_EFDR2;
 		nvt_efm_enable(nvt);
-		nvt->chip_major = nvt_cr_पढ़ो(nvt, CR_CHIP_ID_HI);
-	पूर्ण
-	nvt->chip_minor = nvt_cr_पढ़ो(nvt, CR_CHIP_ID_LO);
+		nvt->chip_major = nvt_cr_read(nvt, CR_CHIP_ID_HI);
+	}
+	nvt->chip_minor = nvt_cr_read(nvt, CR_CHIP_ID_LO);
 
 	nvt_efm_disable(nvt);
 
 	chip_id = nvt->chip_major << 8 | nvt->chip_minor;
-	अगर (chip_id == NVT_INVALID) अणु
+	if (chip_id == NVT_INVALID) {
 		dev_err(dev, "No device found on either EFM port\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	chip_name = nvt_find_chip(nvt, chip_id);
 
-	/* warn, but still let the driver load, अगर we करोn't know this chip */
-	अगर (!chip_name)
+	/* warn, but still let the driver load, if we don't know this chip */
+	if (!chip_name)
 		dev_warn(dev,
 			 "unknown chip, id: 0x%02x 0x%02x, it may not work...",
 			 nvt->chip_major, nvt->chip_minor);
-	अन्यथा
+	else
 		dev_info(dev, "found %s or compatible: chip id: 0x%02x 0x%02x",
 			 chip_name, nvt->chip_major, nvt->chip_minor);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvt_cir_ldev_init(काष्ठा nvt_dev *nvt)
-अणु
+static void nvt_cir_ldev_init(struct nvt_dev *nvt)
+{
 	u8 val, psreg, psmask, psval;
 
-	अगर (is_w83667hg(nvt)) अणु
+	if (is_w83667hg(nvt)) {
 		psreg = CR_MULTIFUNC_PIN_SEL;
 		psmask = MULTIFUNC_PIN_SEL_MASK;
 		psval = MULTIFUNC_ENABLE_CIR | MULTIFUNC_ENABLE_CIRWB;
-	पूर्ण अन्यथा अणु
+	} else {
 		psreg = CR_OUTPUT_PIN_SEL;
 		psmask = OUTPUT_PIN_SEL_MASK;
 		psval = OUTPUT_ENABLE_CIR | OUTPUT_ENABLE_CIRWB;
-	पूर्ण
+	}
 
 	/* output pin selection: enable CIR, with WB sensor enabled */
-	val = nvt_cr_पढ़ो(nvt, psreg);
+	val = nvt_cr_read(nvt, psreg);
 	val &= psmask;
 	val |= psval;
-	nvt_cr_ग_लिखो(nvt, val, psreg);
+	nvt_cr_write(nvt, val, psreg);
 
 	/* Select CIR logical device */
 	nvt_select_logical_dev(nvt, LOGICAL_DEV_CIR);
 
 	nvt_set_ioaddr(nvt, &nvt->cir_addr);
 
-	nvt_cr_ग_लिखो(nvt, nvt->cir_irq, CR_CIR_IRQ_RSRC);
+	nvt_cr_write(nvt, nvt->cir_irq, CR_CIR_IRQ_RSRC);
 
 	nvt_dbg("CIR initialized, base io port address: 0x%lx, irq: %d",
 		nvt->cir_addr, nvt->cir_irq);
-पूर्ण
+}
 
-अटल व्योम nvt_cir_wake_ldev_init(काष्ठा nvt_dev *nvt)
-अणु
+static void nvt_cir_wake_ldev_init(struct nvt_dev *nvt)
+{
 	/* Select ACPI logical device and anable it */
 	nvt_select_logical_dev(nvt, LOGICAL_DEV_ACPI);
-	nvt_cr_ग_लिखो(nvt, LOGICAL_DEV_ENABLE, CR_LOGICAL_DEV_EN);
+	nvt_cr_write(nvt, LOGICAL_DEV_ENABLE, CR_LOGICAL_DEV_EN);
 
 	/* Enable CIR Wake via PSOUT# (Pin60) */
 	nvt_set_reg_bit(nvt, CIR_WAKE_ENABLE_BIT, CR_ACPI_CIR_WAKE);
 
-	/* enable pme पूर्णांकerrupt of cir wakeup event */
+	/* enable pme interrupt of cir wakeup event */
 	nvt_set_reg_bit(nvt, PME_INTR_CIR_PASS_BIT, CR_ACPI_IRQ_EVENTS2);
 
 	/* Select CIR Wake logical device */
@@ -482,90 +481,90 @@ out:
 
 	nvt_dbg("CIR Wake initialized, base io port address: 0x%lx",
 		nvt->cir_wake_addr);
-पूर्ण
+}
 
-/* clear out the hardware's cir rx fअगरo */
-अटल व्योम nvt_clear_cir_fअगरo(काष्ठा nvt_dev *nvt)
-अणु
-	u8 val = nvt_cir_reg_पढ़ो(nvt, CIR_FIFOCON);
-	nvt_cir_reg_ग_लिखो(nvt, val | CIR_FIFOCON_RXFIFOCLR, CIR_FIFOCON);
-पूर्ण
+/* clear out the hardware's cir rx fifo */
+static void nvt_clear_cir_fifo(struct nvt_dev *nvt)
+{
+	u8 val = nvt_cir_reg_read(nvt, CIR_FIFOCON);
+	nvt_cir_reg_write(nvt, val | CIR_FIFOCON_RXFIFOCLR, CIR_FIFOCON);
+}
 
-/* clear out the hardware's cir wake rx fअगरo */
-अटल व्योम nvt_clear_cir_wake_fअगरo(काष्ठा nvt_dev *nvt)
-अणु
+/* clear out the hardware's cir wake rx fifo */
+static void nvt_clear_cir_wake_fifo(struct nvt_dev *nvt)
+{
 	u8 val, config;
 
-	config = nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_IRCON);
+	config = nvt_cir_wake_reg_read(nvt, CIR_WAKE_IRCON);
 
-	/* clearing wake fअगरo works in learning mode only */
-	nvt_cir_wake_reg_ग_लिखो(nvt, config & ~CIR_WAKE_IRCON_MODE0,
+	/* clearing wake fifo works in learning mode only */
+	nvt_cir_wake_reg_write(nvt, config & ~CIR_WAKE_IRCON_MODE0,
 			       CIR_WAKE_IRCON);
 
-	val = nvt_cir_wake_reg_पढ़ो(nvt, CIR_WAKE_FIFOCON);
-	nvt_cir_wake_reg_ग_लिखो(nvt, val | CIR_WAKE_FIFOCON_RXFIFOCLR,
+	val = nvt_cir_wake_reg_read(nvt, CIR_WAKE_FIFOCON);
+	nvt_cir_wake_reg_write(nvt, val | CIR_WAKE_FIFOCON_RXFIFOCLR,
 			       CIR_WAKE_FIFOCON);
 
-	nvt_cir_wake_reg_ग_लिखो(nvt, config, CIR_WAKE_IRCON);
-पूर्ण
+	nvt_cir_wake_reg_write(nvt, config, CIR_WAKE_IRCON);
+}
 
-/* clear out the hardware's cir tx fअगरo */
-अटल व्योम nvt_clear_tx_fअगरo(काष्ठा nvt_dev *nvt)
-अणु
+/* clear out the hardware's cir tx fifo */
+static void nvt_clear_tx_fifo(struct nvt_dev *nvt)
+{
 	u8 val;
 
-	val = nvt_cir_reg_पढ़ो(nvt, CIR_FIFOCON);
-	nvt_cir_reg_ग_लिखो(nvt, val | CIR_FIFOCON_TXFIFOCLR, CIR_FIFOCON);
-पूर्ण
+	val = nvt_cir_reg_read(nvt, CIR_FIFOCON);
+	nvt_cir_reg_write(nvt, val | CIR_FIFOCON_TXFIFOCLR, CIR_FIFOCON);
+}
 
-/* enable RX Trigger Level Reach and Packet End पूर्णांकerrupts */
-अटल व्योम nvt_set_cir_iren(काष्ठा nvt_dev *nvt)
-अणु
+/* enable RX Trigger Level Reach and Packet End interrupts */
+static void nvt_set_cir_iren(struct nvt_dev *nvt)
+{
 	u8 iren;
 
 	iren = CIR_IREN_RTR | CIR_IREN_PE | CIR_IREN_RFO;
-	nvt_cir_reg_ग_लिखो(nvt, iren, CIR_IREN);
-पूर्ण
+	nvt_cir_reg_write(nvt, iren, CIR_IREN);
+}
 
-अटल व्योम nvt_cir_regs_init(काष्ठा nvt_dev *nvt)
-अणु
+static void nvt_cir_regs_init(struct nvt_dev *nvt)
+{
 	nvt_enable_logical_dev(nvt, LOGICAL_DEV_CIR);
 
-	/* set sample limit count (PE पूर्णांकerrupt उठाओd when reached) */
-	nvt_cir_reg_ग_लिखो(nvt, CIR_RX_LIMIT_COUNT >> 8, CIR_SLCH);
-	nvt_cir_reg_ग_लिखो(nvt, CIR_RX_LIMIT_COUNT & 0xff, CIR_SLCL);
+	/* set sample limit count (PE interrupt raised when reached) */
+	nvt_cir_reg_write(nvt, CIR_RX_LIMIT_COUNT >> 8, CIR_SLCH);
+	nvt_cir_reg_write(nvt, CIR_RX_LIMIT_COUNT & 0xff, CIR_SLCL);
 
-	/* set fअगरo irq trigger levels */
-	nvt_cir_reg_ग_लिखो(nvt, CIR_FIFOCON_TX_TRIGGER_LEV |
+	/* set fifo irq trigger levels */
+	nvt_cir_reg_write(nvt, CIR_FIFOCON_TX_TRIGGER_LEV |
 			  CIR_FIFOCON_RX_TRIGGER_LEV, CIR_FIFOCON);
 
-	/* clear hardware rx and tx fअगरos */
-	nvt_clear_cir_fअगरo(nvt);
-	nvt_clear_tx_fअगरo(nvt);
+	/* clear hardware rx and tx fifos */
+	nvt_clear_cir_fifo(nvt);
+	nvt_clear_tx_fifo(nvt);
 
 	nvt_disable_logical_dev(nvt, LOGICAL_DEV_CIR);
-पूर्ण
+}
 
-अटल व्योम nvt_cir_wake_regs_init(काष्ठा nvt_dev *nvt)
-अणु
+static void nvt_cir_wake_regs_init(struct nvt_dev *nvt)
+{
 	nvt_enable_logical_dev(nvt, LOGICAL_DEV_CIR_WAKE);
 
 	/*
-	 * Disable RX, set specअगरic carrier on = low, off = high,
+	 * Disable RX, set specific carrier on = low, off = high,
 	 * and sample period (currently 50us)
 	 */
-	nvt_cir_wake_reg_ग_लिखो(nvt, CIR_WAKE_IRCON_MODE0 |
+	nvt_cir_wake_reg_write(nvt, CIR_WAKE_IRCON_MODE0 |
 			       CIR_WAKE_IRCON_R | CIR_WAKE_IRCON_RXINV |
 			       CIR_WAKE_IRCON_SAMPLE_PERIOD_SEL,
 			       CIR_WAKE_IRCON);
 
-	/* clear any and all stray पूर्णांकerrupts */
-	nvt_cir_wake_reg_ग_लिखो(nvt, 0xff, CIR_WAKE_IRSTS);
-पूर्ण
+	/* clear any and all stray interrupts */
+	nvt_cir_wake_reg_write(nvt, 0xff, CIR_WAKE_IRSTS);
+}
 
-अटल व्योम nvt_enable_wake(काष्ठा nvt_dev *nvt)
-अणु
-	अचिन्हित दीर्घ flags;
+static void nvt_enable_wake(struct nvt_dev *nvt)
+{
+	unsigned long flags;
 
 	nvt_efm_enable(nvt);
 
@@ -574,150 +573,150 @@ out:
 	nvt_set_reg_bit(nvt, PME_INTR_CIR_PASS_BIT, CR_ACPI_IRQ_EVENTS2);
 
 	nvt_select_logical_dev(nvt, LOGICAL_DEV_CIR_WAKE);
-	nvt_cr_ग_लिखो(nvt, LOGICAL_DEV_ENABLE, CR_LOGICAL_DEV_EN);
+	nvt_cr_write(nvt, LOGICAL_DEV_ENABLE, CR_LOGICAL_DEV_EN);
 
 	nvt_efm_disable(nvt);
 
 	spin_lock_irqsave(&nvt->lock, flags);
 
-	nvt_cir_wake_reg_ग_लिखो(nvt, CIR_WAKE_IRCON_MODE0 | CIR_WAKE_IRCON_RXEN |
+	nvt_cir_wake_reg_write(nvt, CIR_WAKE_IRCON_MODE0 | CIR_WAKE_IRCON_RXEN |
 			       CIR_WAKE_IRCON_R | CIR_WAKE_IRCON_RXINV |
 			       CIR_WAKE_IRCON_SAMPLE_PERIOD_SEL,
 			       CIR_WAKE_IRCON);
-	nvt_cir_wake_reg_ग_लिखो(nvt, 0xff, CIR_WAKE_IRSTS);
-	nvt_cir_wake_reg_ग_लिखो(nvt, 0, CIR_WAKE_IREN);
+	nvt_cir_wake_reg_write(nvt, 0xff, CIR_WAKE_IRSTS);
+	nvt_cir_wake_reg_write(nvt, 0, CIR_WAKE_IREN);
 
 	spin_unlock_irqrestore(&nvt->lock, flags);
-पूर्ण
+}
 
-#अगर 0 /* Currently unused */
+#if 0 /* Currently unused */
 /* rx carrier detect only works in learning mode, must be called w/lock */
-अटल u32 nvt_rx_carrier_detect(काष्ठा nvt_dev *nvt)
-अणु
+static u32 nvt_rx_carrier_detect(struct nvt_dev *nvt)
+{
 	u32 count, carrier, duration = 0;
-	पूर्णांक i;
+	int i;
 
-	count = nvt_cir_reg_पढ़ो(nvt, CIR_FCCL) |
-		nvt_cir_reg_पढ़ो(nvt, CIR_FCCH) << 8;
+	count = nvt_cir_reg_read(nvt, CIR_FCCL) |
+		nvt_cir_reg_read(nvt, CIR_FCCH) << 8;
 
-	क्रम (i = 0; i < nvt->pkts; i++) अणु
-		अगर (nvt->buf[i] & BUF_PULSE_BIT)
+	for (i = 0; i < nvt->pkts; i++) {
+		if (nvt->buf[i] & BUF_PULSE_BIT)
 			duration += nvt->buf[i] & BUF_LEN_MASK;
-	पूर्ण
+	}
 
 	duration *= SAMPLE_PERIOD;
 
-	अगर (!count || !duration) अणु
+	if (!count || !duration) {
 		dev_notice(nvt_get_dev(nvt),
 			   "Unable to determine carrier! (c:%u, d:%u)",
 			   count, duration);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	carrier = MS_TO_NS(count) / duration;
 
-	अगर ((carrier > MAX_CARRIER) || (carrier < MIN_CARRIER))
+	if ((carrier > MAX_CARRIER) || (carrier < MIN_CARRIER))
 		nvt_dbg("WTF? Carrier frequency out of range!");
 
 	nvt_dbg("Carrier frequency: %u (count %u, duration %u)",
 		carrier, count, duration);
 
-	वापस carrier;
-पूर्ण
-#पूर्ण_अगर
+	return carrier;
+}
+#endif
 
-अटल पूर्णांक nvt_ir_raw_set_wakeup_filter(काष्ठा rc_dev *dev,
-					काष्ठा rc_scancode_filter *sc_filter)
-अणु
+static int nvt_ir_raw_set_wakeup_filter(struct rc_dev *dev,
+					struct rc_scancode_filter *sc_filter)
+{
 	u8 buf_val;
-	पूर्णांक i, ret, count;
-	अचिन्हित पूर्णांक val;
-	काष्ठा ir_raw_event *raw;
+	int i, ret, count;
+	unsigned int val;
+	struct ir_raw_event *raw;
 	u8 wake_buf[WAKEUP_MAX_SIZE];
 	bool complete;
 
 	/* Require mask to be set */
-	अगर (!sc_filter->mask)
-		वापस 0;
+	if (!sc_filter->mask)
+		return 0;
 
-	raw = kदो_स्मृति_array(WAKEUP_MAX_SIZE, माप(*raw), GFP_KERNEL);
-	अगर (!raw)
-		वापस -ENOMEM;
+	raw = kmalloc_array(WAKEUP_MAX_SIZE, sizeof(*raw), GFP_KERNEL);
+	if (!raw)
+		return -ENOMEM;
 
 	ret = ir_raw_encode_scancode(dev->wakeup_protocol, sc_filter->data,
 				     raw, WAKEUP_MAX_SIZE);
 	complete = (ret != -ENOBUFS);
-	अगर (!complete)
+	if (!complete)
 		ret = WAKEUP_MAX_SIZE;
-	अन्यथा अगर (ret < 0)
-		जाओ out_raw;
+	else if (ret < 0)
+		goto out_raw;
 
 	/* Inspect the ir samples */
-	क्रम (i = 0, count = 0; i < ret && count < WAKEUP_MAX_SIZE; ++i) अणु
+	for (i = 0, count = 0; i < ret && count < WAKEUP_MAX_SIZE; ++i) {
 		val = raw[i].duration / SAMPLE_PERIOD;
 
-		/* Split too large values पूर्णांकo several smaller ones */
-		जबतक (val > 0 && count < WAKEUP_MAX_SIZE) अणु
-			/* Skip last value क्रम better comparison tolerance */
-			अगर (complete && i == ret - 1 && val < BUF_LEN_MASK)
-				अवरोध;
+		/* Split too large values into several smaller ones */
+		while (val > 0 && count < WAKEUP_MAX_SIZE) {
+			/* Skip last value for better comparison tolerance */
+			if (complete && i == ret - 1 && val < BUF_LEN_MASK)
+				break;
 
 			/* Clamp values to BUF_LEN_MASK at most */
 			buf_val = (val > BUF_LEN_MASK) ? BUF_LEN_MASK : val;
 
 			wake_buf[count] = buf_val;
 			val -= buf_val;
-			अगर ((raw[i]).pulse)
+			if ((raw[i]).pulse)
 				wake_buf[count] |= BUF_PULSE_BIT;
 			count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	nvt_ग_लिखो_wakeup_codes(dev, wake_buf, count);
+	nvt_write_wakeup_codes(dev, wake_buf, count);
 	ret = 0;
 out_raw:
-	kमुक्त(raw);
+	kfree(raw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* dump contents of the last rx buffer we got from the hw rx fअगरo */
-अटल व्योम nvt_dump_rx_buf(काष्ठा nvt_dev *nvt)
-अणु
-	पूर्णांक i;
+/* dump contents of the last rx buffer we got from the hw rx fifo */
+static void nvt_dump_rx_buf(struct nvt_dev *nvt)
+{
+	int i;
 
-	prपूर्णांकk(KERN_DEBUG "%s (len %d): ", __func__, nvt->pkts);
-	क्रम (i = 0; (i < nvt->pkts) && (i < RX_BUF_LEN); i++)
-		prपूर्णांकk(KERN_CONT "0x%02x ", nvt->buf[i]);
-	prपूर्णांकk(KERN_CONT "\n");
-पूर्ण
+	printk(KERN_DEBUG "%s (len %d): ", __func__, nvt->pkts);
+	for (i = 0; (i < nvt->pkts) && (i < RX_BUF_LEN); i++)
+		printk(KERN_CONT "0x%02x ", nvt->buf[i]);
+	printk(KERN_CONT "\n");
+}
 
 /*
- * Process raw data in rx driver buffer, store it in raw IR event kfअगरo,
+ * Process raw data in rx driver buffer, store it in raw IR event kfifo,
  * trigger decode when appropriate.
  *
- * We get IR data samples one byte at a समय. If the msb is set, its a pulse,
+ * We get IR data samples one byte at a time. If the msb is set, its a pulse,
  * otherwise its a space. The lower 7 bits are the count of SAMPLE_PERIOD
- * (शेष 50us) पूर्णांकervals क्रम that pulse/space. A discrete संकेत is
+ * (default 50us) intervals for that pulse/space. A discrete signal is
  * followed by a series of 0x7f packets, then either 0x7<something> or 0x80
- * to संकेत more IR coming (repeats) or end of IR, respectively. We store
- * sample data in the raw event kfअगरo until we see 0x7<something> (except f)
- * or 0x80, at which समय, we trigger a decode operation.
+ * to signal more IR coming (repeats) or end of IR, respectively. We store
+ * sample data in the raw event kfifo until we see 0x7<something> (except f)
+ * or 0x80, at which time, we trigger a decode operation.
  */
-अटल व्योम nvt_process_rx_ir_data(काष्ठा nvt_dev *nvt)
-अणु
-	काष्ठा ir_raw_event rawir = अणुपूर्ण;
+static void nvt_process_rx_ir_data(struct nvt_dev *nvt)
+{
+	struct ir_raw_event rawir = {};
 	u8 sample;
-	पूर्णांक i;
+	int i;
 
 	nvt_dbg_verbose("%s firing", __func__);
 
-	अगर (debug)
+	if (debug)
 		nvt_dump_rx_buf(nvt);
 
 	nvt_dbg_verbose("Processing buffer of len %d", nvt->pkts);
 
-	क्रम (i = 0; i < nvt->pkts; i++) अणु
+	for (i = 0; i < nvt->pkts; i++) {
 		sample = nvt->buf[i];
 
 		rawir.pulse = ((sample & BUF_PULSE_BIT) != 0);
@@ -727,7 +726,7 @@ out_raw:
 			rawir.pulse ? "pulse" : "space", rawir.duration);
 
 		ir_raw_event_store_with_filter(nvt->rdev, &rawir);
-	पूर्ण
+	}
 
 	nvt->pkts = 0;
 
@@ -735,40 +734,40 @@ out_raw:
 	ir_raw_event_handle(nvt->rdev);
 
 	nvt_dbg_verbose("%s done", __func__);
-पूर्ण
+}
 
-अटल व्योम nvt_handle_rx_fअगरo_overrun(काष्ठा nvt_dev *nvt)
-अणु
+static void nvt_handle_rx_fifo_overrun(struct nvt_dev *nvt)
+{
 	dev_warn(nvt_get_dev(nvt), "RX FIFO overrun detected, flushing data!");
 
 	nvt->pkts = 0;
-	nvt_clear_cir_fअगरo(nvt);
+	nvt_clear_cir_fifo(nvt);
 	ir_raw_event_reset(nvt->rdev);
-पूर्ण
+}
 
-/* copy data from hardware rx fअगरo पूर्णांकo driver buffer */
-अटल व्योम nvt_get_rx_ir_data(काष्ठा nvt_dev *nvt)
-अणु
-	u8 fअगरocount;
-	पूर्णांक i;
+/* copy data from hardware rx fifo into driver buffer */
+static void nvt_get_rx_ir_data(struct nvt_dev *nvt)
+{
+	u8 fifocount;
+	int i;
 
-	/* Get count of how many bytes to पढ़ो from RX FIFO */
-	fअगरocount = nvt_cir_reg_पढ़ो(nvt, CIR_RXFCONT);
+	/* Get count of how many bytes to read from RX FIFO */
+	fifocount = nvt_cir_reg_read(nvt, CIR_RXFCONT);
 
-	nvt_dbg("attempting to fetch %u bytes from hw rx fifo", fअगरocount);
+	nvt_dbg("attempting to fetch %u bytes from hw rx fifo", fifocount);
 
-	/* Read fअगरocount bytes from CIR Sample RX FIFO रेजिस्टर */
-	क्रम (i = 0; i < fअगरocount; i++)
-		nvt->buf[i] = nvt_cir_reg_पढ़ो(nvt, CIR_SRXFIFO);
+	/* Read fifocount bytes from CIR Sample RX FIFO register */
+	for (i = 0; i < fifocount; i++)
+		nvt->buf[i] = nvt_cir_reg_read(nvt, CIR_SRXFIFO);
 
-	nvt->pkts = fअगरocount;
+	nvt->pkts = fifocount;
 	nvt_dbg("%s: pkts now %d", __func__, nvt->pkts);
 
 	nvt_process_rx_ir_data(nvt);
-पूर्ण
+}
 
-अटल व्योम nvt_cir_log_irqs(u8 status, u8 iren)
-अणु
+static void nvt_cir_log_irqs(u8 status, u8 iren)
+{
 	nvt_dbg("IRQ 0x%02x (IREN 0x%02x) :%s%s%s%s%s%s%s%s%s",
 		status, iren,
 		status & CIR_IRSTS_RDR	? " RDR"	: "",
@@ -782,12 +781,12 @@ out_raw:
 		status & ~(CIR_IRSTS_RDR | CIR_IRSTS_RTR | CIR_IRSTS_PE |
 			   CIR_IRSTS_RFO | CIR_IRSTS_TE | CIR_IRSTS_TTR |
 			   CIR_IRSTS_TFU | CIR_IRSTS_GH) ? " ?" : "");
-पूर्ण
+}
 
-/* पूर्णांकerrupt service routine क्रम incoming and outgoing CIR data */
-अटल irqवापस_t nvt_cir_isr(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा nvt_dev *nvt = data;
+/* interrupt service routine for incoming and outgoing CIR data */
+static irqreturn_t nvt_cir_isr(int irq, void *data)
+{
+	struct nvt_dev *nvt = data;
 	u8 status, iren;
 
 	nvt_dbg_verbose("%s firing", __func__);
@@ -795,7 +794,7 @@ out_raw:
 	spin_lock(&nvt->lock);
 
 	/*
-	 * Get IR Status रेजिस्टर contents. Write 1 to ack/clear
+	 * Get IR Status register contents. Write 1 to ack/clear
 	 *
 	 * bit: reg name      - description
 	 *   7: CIR_IRSTS_RDR - RX Data Ready
@@ -807,47 +806,47 @@ out_raw:
 	 *   1: CIR_IRSTS_TFU - TX FIFO Underrun
 	 *   0: CIR_IRSTS_GH  - Min Length Detected
 	 */
-	status = nvt_cir_reg_पढ़ो(nvt, CIR_IRSTS);
-	iren = nvt_cir_reg_पढ़ो(nvt, CIR_IREN);
+	status = nvt_cir_reg_read(nvt, CIR_IRSTS);
+	iren = nvt_cir_reg_read(nvt, CIR_IREN);
 
-	/* At least NCT6779D creates a spurious पूर्णांकerrupt when the
+	/* At least NCT6779D creates a spurious interrupt when the
 	 * logical device is being disabled.
 	 */
-	अगर (status == 0xff && iren == 0xff) अणु
+	if (status == 0xff && iren == 0xff) {
 		spin_unlock(&nvt->lock);
 		nvt_dbg_verbose("Spurious interrupt detected");
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
-	/* IRQ may be shared with CIR WAKE, thereक्रमe check क्रम each
-	 * status bit whether the related पूर्णांकerrupt source is enabled
+	/* IRQ may be shared with CIR WAKE, therefore check for each
+	 * status bit whether the related interrupt source is enabled
 	 */
-	अगर (!(status & iren)) अणु
+	if (!(status & iren)) {
 		spin_unlock(&nvt->lock);
 		nvt_dbg_verbose("%s exiting, IRSTS 0x0", __func__);
-		वापस IRQ_NONE;
-	पूर्ण
+		return IRQ_NONE;
+	}
 
 	/* ack/clear all irq flags we've got */
-	nvt_cir_reg_ग_लिखो(nvt, status, CIR_IRSTS);
-	nvt_cir_reg_ग_लिखो(nvt, 0, CIR_IRSTS);
+	nvt_cir_reg_write(nvt, status, CIR_IRSTS);
+	nvt_cir_reg_write(nvt, 0, CIR_IRSTS);
 
 	nvt_cir_log_irqs(status, iren);
 
-	अगर (status & CIR_IRSTS_RFO)
-		nvt_handle_rx_fअगरo_overrun(nvt);
-	अन्यथा अगर (status & (CIR_IRSTS_RTR | CIR_IRSTS_PE))
+	if (status & CIR_IRSTS_RFO)
+		nvt_handle_rx_fifo_overrun(nvt);
+	else if (status & (CIR_IRSTS_RTR | CIR_IRSTS_PE))
 		nvt_get_rx_ir_data(nvt);
 
 	spin_unlock(&nvt->lock);
 
 	nvt_dbg_verbose("%s done", __func__);
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम nvt_enable_cir(काष्ठा nvt_dev *nvt)
-अणु
-	अचिन्हित दीर्घ flags;
+static void nvt_enable_cir(struct nvt_dev *nvt)
+{
+	unsigned long flags;
 
 	/* enable the CIR logical device */
 	nvt_enable_logical_dev(nvt, LOGICAL_DEV_CIR);
@@ -855,104 +854,104 @@ out_raw:
 	spin_lock_irqsave(&nvt->lock, flags);
 
 	/*
-	 * Enable TX and RX, specअगरy carrier on = low, off = high, and set
+	 * Enable TX and RX, specify carrier on = low, off = high, and set
 	 * sample period (currently 50us)
 	 */
-	nvt_cir_reg_ग_लिखो(nvt, CIR_IRCON_TXEN | CIR_IRCON_RXEN |
+	nvt_cir_reg_write(nvt, CIR_IRCON_TXEN | CIR_IRCON_RXEN |
 			  CIR_IRCON_RXINV | CIR_IRCON_SAMPLE_PERIOD_SEL,
 			  CIR_IRCON);
 
-	/* clear all pending पूर्णांकerrupts */
-	nvt_cir_reg_ग_लिखो(nvt, 0xff, CIR_IRSTS);
+	/* clear all pending interrupts */
+	nvt_cir_reg_write(nvt, 0xff, CIR_IRSTS);
 
-	/* enable पूर्णांकerrupts */
+	/* enable interrupts */
 	nvt_set_cir_iren(nvt);
 
 	spin_unlock_irqrestore(&nvt->lock, flags);
-पूर्ण
+}
 
-अटल व्योम nvt_disable_cir(काष्ठा nvt_dev *nvt)
-अणु
-	अचिन्हित दीर्घ flags;
+static void nvt_disable_cir(struct nvt_dev *nvt)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&nvt->lock, flags);
 
-	/* disable CIR पूर्णांकerrupts */
-	nvt_cir_reg_ग_लिखो(nvt, 0, CIR_IREN);
+	/* disable CIR interrupts */
+	nvt_cir_reg_write(nvt, 0, CIR_IREN);
 
-	/* clear any and all pending पूर्णांकerrupts */
-	nvt_cir_reg_ग_लिखो(nvt, 0xff, CIR_IRSTS);
+	/* clear any and all pending interrupts */
+	nvt_cir_reg_write(nvt, 0xff, CIR_IRSTS);
 
 	/* clear all function enable flags */
-	nvt_cir_reg_ग_लिखो(nvt, 0, CIR_IRCON);
+	nvt_cir_reg_write(nvt, 0, CIR_IRCON);
 
-	/* clear hardware rx and tx fअगरos */
-	nvt_clear_cir_fअगरo(nvt);
-	nvt_clear_tx_fअगरo(nvt);
+	/* clear hardware rx and tx fifos */
+	nvt_clear_cir_fifo(nvt);
+	nvt_clear_tx_fifo(nvt);
 
 	spin_unlock_irqrestore(&nvt->lock, flags);
 
 	/* disable the CIR logical device */
 	nvt_disable_logical_dev(nvt, LOGICAL_DEV_CIR);
-पूर्ण
+}
 
-अटल पूर्णांक nvt_खोलो(काष्ठा rc_dev *dev)
-अणु
-	काष्ठा nvt_dev *nvt = dev->priv;
+static int nvt_open(struct rc_dev *dev)
+{
+	struct nvt_dev *nvt = dev->priv;
 
 	nvt_enable_cir(nvt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvt_बंद(काष्ठा rc_dev *dev)
-अणु
-	काष्ठा nvt_dev *nvt = dev->priv;
+static void nvt_close(struct rc_dev *dev)
+{
+	struct nvt_dev *nvt = dev->priv;
 
 	nvt_disable_cir(nvt);
-पूर्ण
+}
 
 /* Allocate memory, probe hardware, and initialize everything */
-अटल पूर्णांक nvt_probe(काष्ठा pnp_dev *pdev, स्थिर काष्ठा pnp_device_id *dev_id)
-अणु
-	काष्ठा nvt_dev *nvt;
-	काष्ठा rc_dev *rdev;
-	पूर्णांक ret;
+static int nvt_probe(struct pnp_dev *pdev, const struct pnp_device_id *dev_id)
+{
+	struct nvt_dev *nvt;
+	struct rc_dev *rdev;
+	int ret;
 
-	nvt = devm_kzalloc(&pdev->dev, माप(काष्ठा nvt_dev), GFP_KERNEL);
-	अगर (!nvt)
-		वापस -ENOMEM;
+	nvt = devm_kzalloc(&pdev->dev, sizeof(struct nvt_dev), GFP_KERNEL);
+	if (!nvt)
+		return -ENOMEM;
 
-	/* input device क्रम IR remote */
+	/* input device for IR remote */
 	nvt->rdev = devm_rc_allocate_device(&pdev->dev, RC_DRIVER_IR_RAW);
-	अगर (!nvt->rdev)
-		वापस -ENOMEM;
+	if (!nvt->rdev)
+		return -ENOMEM;
 	rdev = nvt->rdev;
 
 	/* activate pnp device */
 	ret = pnp_activate_dev(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Could not activate PNP device!\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* validate pnp resources */
-	अगर (!pnp_port_valid(pdev, 0) ||
-	    pnp_port_len(pdev, 0) < CIR_IOREG_LENGTH) अणु
+	if (!pnp_port_valid(pdev, 0) ||
+	    pnp_port_len(pdev, 0) < CIR_IOREG_LENGTH) {
 		dev_err(&pdev->dev, "IR PNP Port not valid!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pnp_irq_valid(pdev, 0)) अणु
+	if (!pnp_irq_valid(pdev, 0)) {
 		dev_err(&pdev->dev, "PNP IRQ not valid!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!pnp_port_valid(pdev, 1) ||
-	    pnp_port_len(pdev, 1) < CIR_IOREG_LENGTH) अणु
+	if (!pnp_port_valid(pdev, 1) ||
+	    pnp_port_len(pdev, 1) < CIR_IOREG_LENGTH) {
 		dev_err(&pdev->dev, "Wake PNP Port not valid!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nvt->cir_addr = pnp_port_start(pdev, 0);
 	nvt->cir_irq  = pnp_irq(pdev, 0);
@@ -967,8 +966,8 @@ out_raw:
 	pnp_set_drvdata(pdev, nvt);
 
 	ret = nvt_hw_detect(nvt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Initialize CIR & CIR Wake Logical Devices */
 	nvt_efm_enable(nvt);
@@ -988,89 +987,89 @@ out_raw:
 	rdev->allowed_protocols = RC_PROTO_BIT_ALL_IR_DECODER;
 	rdev->allowed_wakeup_protocols = RC_PROTO_BIT_ALL_IR_ENCODER;
 	rdev->encode_wakeup = true;
-	rdev->खोलो = nvt_खोलो;
-	rdev->बंद = nvt_बंद;
+	rdev->open = nvt_open;
+	rdev->close = nvt_close;
 	rdev->s_wakeup_filter = nvt_ir_raw_set_wakeup_filter;
 	rdev->device_name = "Nuvoton w836x7hg Infrared Remote Transceiver";
 	rdev->input_phys = "nuvoton/cir0";
 	rdev->input_id.bustype = BUS_HOST;
-	rdev->input_id.venकरोr = PCI_VENDOR_ID_WINBOND2;
+	rdev->input_id.vendor = PCI_VENDOR_ID_WINBOND2;
 	rdev->input_id.product = nvt->chip_major;
 	rdev->input_id.version = nvt->chip_minor;
 	rdev->driver_name = NVT_DRIVER_NAME;
 	rdev->map_name = RC_MAP_RC6_MCE;
-	rdev->समयout = MS_TO_US(100);
-	/* rx resolution is hardwired to 50us aपंचांग, 1, 25, 100 also possible */
+	rdev->timeout = MS_TO_US(100);
+	/* rx resolution is hardwired to 50us atm, 1, 25, 100 also possible */
 	rdev->rx_resolution = CIR_SAMPLE_PERIOD;
-#अगर 0
-	rdev->min_समयout = XYZ;
-	rdev->max_समयout = XYZ;
-#पूर्ण_अगर
-	ret = devm_rc_रेजिस्टर_device(&pdev->dev, rdev);
-	अगर (ret)
-		वापस ret;
+#if 0
+	rdev->min_timeout = XYZ;
+	rdev->max_timeout = XYZ;
+#endif
+	ret = devm_rc_register_device(&pdev->dev, rdev);
+	if (ret)
+		return ret;
 
 	/* now claim resources */
-	अगर (!devm_request_region(&pdev->dev, nvt->cir_addr,
+	if (!devm_request_region(&pdev->dev, nvt->cir_addr,
 			    CIR_IOREG_LENGTH, NVT_DRIVER_NAME))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	ret = devm_request_irq(&pdev->dev, nvt->cir_irq, nvt_cir_isr,
 			       IRQF_SHARED, NVT_DRIVER_NAME, nvt);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!devm_request_region(&pdev->dev, nvt->cir_wake_addr,
+	if (!devm_request_region(&pdev->dev, nvt->cir_wake_addr,
 			    CIR_IOREG_LENGTH, NVT_DRIVER_NAME "-wake"))
-		वापस -EBUSY;
+		return -EBUSY;
 
 	ret = device_create_file(&rdev->dev, &dev_attr_wakeup_data);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	device_init_wakeup(&pdev->dev, true);
 
 	dev_notice(&pdev->dev, "driver has been successfully loaded\n");
-	अगर (debug) अणु
+	if (debug) {
 		cir_dump_regs(nvt);
 		cir_wake_dump_regs(nvt);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvt_हटाओ(काष्ठा pnp_dev *pdev)
-अणु
-	काष्ठा nvt_dev *nvt = pnp_get_drvdata(pdev);
+static void nvt_remove(struct pnp_dev *pdev)
+{
+	struct nvt_dev *nvt = pnp_get_drvdata(pdev);
 
-	device_हटाओ_file(&nvt->rdev->dev, &dev_attr_wakeup_data);
+	device_remove_file(&nvt->rdev->dev, &dev_attr_wakeup_data);
 
 	nvt_disable_cir(nvt);
 
-	/* enable CIR Wake (क्रम IR घातer-on) */
+	/* enable CIR Wake (for IR power-on) */
 	nvt_enable_wake(nvt);
-पूर्ण
+}
 
-अटल पूर्णांक nvt_suspend(काष्ठा pnp_dev *pdev, pm_message_t state)
-अणु
-	काष्ठा nvt_dev *nvt = pnp_get_drvdata(pdev);
+static int nvt_suspend(struct pnp_dev *pdev, pm_message_t state)
+{
+	struct nvt_dev *nvt = pnp_get_drvdata(pdev);
 
 	nvt_dbg("%s called", __func__);
 
 	mutex_lock(&nvt->rdev->lock);
-	अगर (nvt->rdev->users)
+	if (nvt->rdev->users)
 		nvt_disable_cir(nvt);
 	mutex_unlock(&nvt->rdev->lock);
 
 	/* make sure wake is enabled */
 	nvt_enable_wake(nvt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvt_resume(काष्ठा pnp_dev *pdev)
-अणु
-	काष्ठा nvt_dev *nvt = pnp_get_drvdata(pdev);
+static int nvt_resume(struct pnp_dev *pdev)
+{
+	struct nvt_dev *nvt = pnp_get_drvdata(pdev);
 
 	nvt_dbg("%s called", __func__);
 
@@ -1078,38 +1077,38 @@ out_raw:
 	nvt_cir_wake_regs_init(nvt);
 
 	mutex_lock(&nvt->rdev->lock);
-	अगर (nvt->rdev->users)
+	if (nvt->rdev->users)
 		nvt_enable_cir(nvt);
 	mutex_unlock(&nvt->rdev->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvt_shutकरोwn(काष्ठा pnp_dev *pdev)
-अणु
-	काष्ठा nvt_dev *nvt = pnp_get_drvdata(pdev);
+static void nvt_shutdown(struct pnp_dev *pdev)
+{
+	struct nvt_dev *nvt = pnp_get_drvdata(pdev);
 
 	nvt_enable_wake(nvt);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा pnp_device_id nvt_ids[] = अणु
-	अणु "WEC0530", 0 पूर्ण,   /* CIR */
-	अणु "NTN0530", 0 पूर्ण,   /* CIR क्रम new chip's pnp id*/
-	अणु "", 0 पूर्ण,
-पूर्ण;
+static const struct pnp_device_id nvt_ids[] = {
+	{ "WEC0530", 0 },   /* CIR */
+	{ "NTN0530", 0 },   /* CIR for new chip's pnp id*/
+	{ "", 0 },
+};
 
-अटल काष्ठा pnp_driver nvt_driver = अणु
+static struct pnp_driver nvt_driver = {
 	.name		= NVT_DRIVER_NAME,
 	.id_table	= nvt_ids,
 	.flags		= PNP_DRIVER_RES_DO_NOT_CHANGE,
 	.probe		= nvt_probe,
-	.हटाओ		= nvt_हटाओ,
+	.remove		= nvt_remove,
 	.suspend	= nvt_suspend,
 	.resume		= nvt_resume,
-	.shutकरोwn	= nvt_shutकरोwn,
-पूर्ण;
+	.shutdown	= nvt_shutdown,
+};
 
-module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
+module_param(debug, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "Enable debugging output");
 
 MODULE_DEVICE_TABLE(pnp, nvt_ids);

@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
-#अगर_अघोषित __NVKM_XTENSA_H__
-#घोषणा __NVKM_XTENSA_H__
-#घोषणा nvkm_xtensa(p) container_of((p), काष्ठा nvkm_xtensa, engine)
-#समावेश <core/engine.h>
+/* SPDX-License-Identifier: MIT */
+#ifndef __NVKM_XTENSA_H__
+#define __NVKM_XTENSA_H__
+#define nvkm_xtensa(p) container_of((p), struct nvkm_xtensa, engine)
+#include <core/engine.h>
 
-काष्ठा nvkm_xtensa अणु
-	स्थिर काष्ठा nvkm_xtensa_func *func;
+struct nvkm_xtensa {
+	const struct nvkm_xtensa_func *func;
 	u32 addr;
-	काष्ठा nvkm_engine engine;
+	struct nvkm_engine engine;
 
-	काष्ठा nvkm_memory *gpu_fw;
-पूर्ण;
+	struct nvkm_memory *gpu_fw;
+};
 
-पूर्णांक nvkm_xtensa_new_(स्थिर काष्ठा nvkm_xtensa_func *, काष्ठा nvkm_device *,
-		     क्रमागत nvkm_subdev_type, पूर्णांक, bool enable, u32 addr, काष्ठा nvkm_engine **);
+int nvkm_xtensa_new_(const struct nvkm_xtensa_func *, struct nvkm_device *,
+		     enum nvkm_subdev_type, int, bool enable, u32 addr, struct nvkm_engine **);
 
-काष्ठा nvkm_xtensa_func अणु
-	u32 fअगरo_val;
+struct nvkm_xtensa_func {
+	u32 fifo_val;
 	u32 unkd28;
-	काष्ठा nvkm_sclass sclass[];
-पूर्ण;
-#पूर्ण_अगर
+	struct nvkm_sclass sclass[];
+};
+#endif

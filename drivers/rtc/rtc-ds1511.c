@@ -1,29 +1,28 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * An rtc driver क्रम the Dallas DS1511
+ * An rtc driver for the Dallas DS1511
  *
  * Copyright (C) 2006 Atsushi Nemoto <anemo@mba.ocn.ne.jp>
  * Copyright (C) 2007 Andrew Sharp <andy.sharp@lsi.com>
  *
- * Real समय घड़ी driver क्रम the Dallas 1511 chip, which also
- * contains a watchकरोg समयr.  There is a tiny amount of code that
- * platक्रमm code could use to mess with the watchकरोg device a little
- * bit, but not a full watchकरोg driver.
+ * Real time clock driver for the Dallas 1511 chip, which also
+ * contains a watchdog timer.  There is a tiny amount of code that
+ * platform code could use to mess with the watchdog device a little
+ * bit, but not a full watchdog driver.
  */
 
-#समावेश <linux/bcd.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/rtc.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
+#include <linux/bcd.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/gfp.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/rtc.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/module.h>
 
-क्रमागत ds1511reg अणु
+enum ds1511reg {
 	DS1511_SEC = 0x0,
 	DS1511_MIN = 0x1,
 	DS1511_HOUR = 0x2,
@@ -42,170 +41,170 @@
 	DS1511_CONTROL_B = 0xf,
 	DS1511_RAMADDR_LSB = 0x10,
 	DS1511_RAMDATA = 0x13
-पूर्ण;
+};
 
-#घोषणा DS1511_BLF1	0x80
-#घोषणा DS1511_BLF2	0x40
-#घोषणा DS1511_PRS	0x20
-#घोषणा DS1511_PAB	0x10
-#घोषणा DS1511_TDF	0x08
-#घोषणा DS1511_KSF	0x04
-#घोषणा DS1511_WDF	0x02
-#घोषणा DS1511_IRQF	0x01
-#घोषणा DS1511_TE	0x80
-#घोषणा DS1511_CS	0x40
-#घोषणा DS1511_BME	0x20
-#घोषणा DS1511_TPE	0x10
-#घोषणा DS1511_TIE	0x08
-#घोषणा DS1511_KIE	0x04
-#घोषणा DS1511_WDE	0x02
-#घोषणा DS1511_WDS	0x01
-#घोषणा DS1511_RAM_MAX	0x100
+#define DS1511_BLF1	0x80
+#define DS1511_BLF2	0x40
+#define DS1511_PRS	0x20
+#define DS1511_PAB	0x10
+#define DS1511_TDF	0x08
+#define DS1511_KSF	0x04
+#define DS1511_WDF	0x02
+#define DS1511_IRQF	0x01
+#define DS1511_TE	0x80
+#define DS1511_CS	0x40
+#define DS1511_BME	0x20
+#define DS1511_TPE	0x10
+#define DS1511_TIE	0x08
+#define DS1511_KIE	0x04
+#define DS1511_WDE	0x02
+#define DS1511_WDS	0x01
+#define DS1511_RAM_MAX	0x100
 
-#घोषणा RTC_CMD		DS1511_CONTROL_B
-#घोषणा RTC_CMD1	DS1511_CONTROL_A
+#define RTC_CMD		DS1511_CONTROL_B
+#define RTC_CMD1	DS1511_CONTROL_A
 
-#घोषणा RTC_ALARM_SEC	DS1511_AM1_SEC
-#घोषणा RTC_ALARM_MIN	DS1511_AM2_MIN
-#घोषणा RTC_ALARM_HOUR	DS1511_AM3_HOUR
-#घोषणा RTC_ALARM_DATE	DS1511_AM4_DATE
+#define RTC_ALARM_SEC	DS1511_AM1_SEC
+#define RTC_ALARM_MIN	DS1511_AM2_MIN
+#define RTC_ALARM_HOUR	DS1511_AM3_HOUR
+#define RTC_ALARM_DATE	DS1511_AM4_DATE
 
-#घोषणा RTC_SEC		DS1511_SEC
-#घोषणा RTC_MIN		DS1511_MIN
-#घोषणा RTC_HOUR	DS1511_HOUR
-#घोषणा RTC_DOW		DS1511_DOW
-#घोषणा RTC_DOM		DS1511_DOM
-#घोषणा RTC_MON		DS1511_MONTH
-#घोषणा RTC_YEAR	DS1511_YEAR
-#घोषणा RTC_CENTURY	DS1511_CENTURY
+#define RTC_SEC		DS1511_SEC
+#define RTC_MIN		DS1511_MIN
+#define RTC_HOUR	DS1511_HOUR
+#define RTC_DOW		DS1511_DOW
+#define RTC_DOM		DS1511_DOM
+#define RTC_MON		DS1511_MONTH
+#define RTC_YEAR	DS1511_YEAR
+#define RTC_CENTURY	DS1511_CENTURY
 
-#घोषणा RTC_TIE	DS1511_TIE
-#घोषणा RTC_TE	DS1511_TE
+#define RTC_TIE	DS1511_TIE
+#define RTC_TE	DS1511_TE
 
-काष्ठा rtc_plat_data अणु
-	काष्ठा rtc_device *rtc;
-	व्योम __iomem *ioaddr;		/* भव base address */
-	पूर्णांक irq;
-	अचिन्हित पूर्णांक irqen;
-	पूर्णांक alrm_sec;
-	पूर्णांक alrm_min;
-	पूर्णांक alrm_hour;
-	पूर्णांक alrm_mday;
+struct rtc_plat_data {
+	struct rtc_device *rtc;
+	void __iomem *ioaddr;		/* virtual base address */
+	int irq;
+	unsigned int irqen;
+	int alrm_sec;
+	int alrm_min;
+	int alrm_hour;
+	int alrm_mday;
 	spinlock_t lock;
-पूर्ण;
+};
 
-अटल DEFINE_SPINLOCK(ds1511_lock);
+static DEFINE_SPINLOCK(ds1511_lock);
 
-अटल __iomem अक्षर *ds1511_base;
-अटल u32 reg_spacing = 1;
+static __iomem char *ds1511_base;
+static u32 reg_spacing = 1;
 
-अटल noअंतरभूत व्योम
-rtc_ग_लिखो(uपूर्णांक8_t val, uपूर्णांक32_t reg)
-अणु
-	ग_लिखोb(val, ds1511_base + (reg * reg_spacing));
-पूर्ण
+static noinline void
+rtc_write(uint8_t val, uint32_t reg)
+{
+	writeb(val, ds1511_base + (reg * reg_spacing));
+}
 
-अटल noअंतरभूत uपूर्णांक8_t
-rtc_पढ़ो(क्रमागत ds1511reg reg)
-अणु
-	वापस पढ़ोb(ds1511_base + (reg * reg_spacing));
-पूर्ण
+static noinline uint8_t
+rtc_read(enum ds1511reg reg)
+{
+	return readb(ds1511_base + (reg * reg_spacing));
+}
 
-अटल अंतरभूत व्योम
-rtc_disable_update(व्योम)
-अणु
-	rtc_ग_लिखो((rtc_पढ़ो(RTC_CMD) & ~RTC_TE), RTC_CMD);
-पूर्ण
+static inline void
+rtc_disable_update(void)
+{
+	rtc_write((rtc_read(RTC_CMD) & ~RTC_TE), RTC_CMD);
+}
 
-अटल व्योम
-rtc_enable_update(व्योम)
-अणु
-	rtc_ग_लिखो((rtc_पढ़ो(RTC_CMD) | RTC_TE), RTC_CMD);
-पूर्ण
+static void
+rtc_enable_update(void)
+{
+	rtc_write((rtc_read(RTC_CMD) | RTC_TE), RTC_CMD);
+}
 
 /*
- * #घोषणा DS1511_WDOG_RESET_SUPPORT
+ * #define DS1511_WDOG_RESET_SUPPORT
  *
- * Uncomment this अगर you want to use these routines in
- * some platक्रमm code.
+ * Uncomment this if you want to use these routines in
+ * some platform code.
  */
-#अगर_घोषित DS1511_WDOG_RESET_SUPPORT
+#ifdef DS1511_WDOG_RESET_SUPPORT
 /*
- * just enough code to set the watchकरोg समयr so that it
- * will reboot the प्रणाली
+ * just enough code to set the watchdog timer so that it
+ * will reboot the system
  */
-व्योम
-ds1511_wकरोg_set(अचिन्हित दीर्घ deciseconds)
-अणु
+void
+ds1511_wdog_set(unsigned long deciseconds)
+{
 	/*
-	 * the wकरोg समयr can take 99.99 seconds
+	 * the wdog timer can take 99.99 seconds
 	 */
 	deciseconds %= 10000;
 	/*
-	 * set the wकरोg values in the wकरोg रेजिस्टरs
+	 * set the wdog values in the wdog registers
 	 */
-	rtc_ग_लिखो(bin2bcd(deciseconds % 100), DS1511_WD_MSEC);
-	rtc_ग_लिखो(bin2bcd(deciseconds / 100), DS1511_WD_SEC);
+	rtc_write(bin2bcd(deciseconds % 100), DS1511_WD_MSEC);
+	rtc_write(bin2bcd(deciseconds / 100), DS1511_WD_SEC);
 	/*
-	 * set wकरोg enable and wकरोg 'steering' bit to issue a reset
+	 * set wdog enable and wdog 'steering' bit to issue a reset
 	 */
-	rtc_ग_लिखो(rtc_पढ़ो(RTC_CMD) | DS1511_WDE | DS1511_WDS, RTC_CMD);
-पूर्ण
+	rtc_write(rtc_read(RTC_CMD) | DS1511_WDE | DS1511_WDS, RTC_CMD);
+}
 
-व्योम
-ds1511_wकरोg_disable(व्योम)
-अणु
+void
+ds1511_wdog_disable(void)
+{
 	/*
-	 * clear wकरोg enable and wकरोg 'steering' bits
+	 * clear wdog enable and wdog 'steering' bits
 	 */
-	rtc_ग_लिखो(rtc_पढ़ो(RTC_CMD) & ~(DS1511_WDE | DS1511_WDS), RTC_CMD);
+	rtc_write(rtc_read(RTC_CMD) & ~(DS1511_WDE | DS1511_WDS), RTC_CMD);
 	/*
-	 * clear the wकरोg counter
+	 * clear the wdog counter
 	 */
-	rtc_ग_लिखो(0, DS1511_WD_MSEC);
-	rtc_ग_लिखो(0, DS1511_WD_SEC);
-पूर्ण
-#पूर्ण_अगर
+	rtc_write(0, DS1511_WD_MSEC);
+	rtc_write(0, DS1511_WD_SEC);
+}
+#endif
 
 /*
- * set the rtc chip's idea of the समय.
+ * set the rtc chip's idea of the time.
  * stupidly, some callers call with year unmolested;
  * and some call with  year = year - 1900.  thanks.
  */
-अटल पूर्णांक ds1511_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
-अणु
-	u8 mon, day, करोw, hrs, min, sec, yrs, cen;
-	अचिन्हित दीर्घ flags;
+static int ds1511_rtc_set_time(struct device *dev, struct rtc_time *rtc_tm)
+{
+	u8 mon, day, dow, hrs, min, sec, yrs, cen;
+	unsigned long flags;
 
 	/*
-	 * won't have to change this क्रम a जबतक
+	 * won't have to change this for a while
 	 */
-	अगर (rtc_पंचांग->पंचांग_year < 1900)
-		rtc_पंचांग->पंचांग_year += 1900;
+	if (rtc_tm->tm_year < 1900)
+		rtc_tm->tm_year += 1900;
 
-	अगर (rtc_पंचांग->पंचांग_year < 1970)
-		वापस -EINVAL;
+	if (rtc_tm->tm_year < 1970)
+		return -EINVAL;
 
-	yrs = rtc_पंचांग->पंचांग_year % 100;
-	cen = rtc_पंचांग->पंचांग_year / 100;
-	mon = rtc_पंचांग->पंचांग_mon + 1;   /* पंचांग_mon starts at zero */
-	day = rtc_पंचांग->पंचांग_mday;
-	करोw = rtc_पंचांग->पंचांग_wday & 0x7; /* स्वतःmatic BCD */
-	hrs = rtc_पंचांग->पंचांग_hour;
-	min = rtc_पंचांग->पंचांग_min;
-	sec = rtc_पंचांग->पंचांग_sec;
+	yrs = rtc_tm->tm_year % 100;
+	cen = rtc_tm->tm_year / 100;
+	mon = rtc_tm->tm_mon + 1;   /* tm_mon starts at zero */
+	day = rtc_tm->tm_mday;
+	dow = rtc_tm->tm_wday & 0x7; /* automatic BCD */
+	hrs = rtc_tm->tm_hour;
+	min = rtc_tm->tm_min;
+	sec = rtc_tm->tm_sec;
 
-	अगर ((mon > 12) || (day == 0))
-		वापस -EINVAL;
+	if ((mon > 12) || (day == 0))
+		return -EINVAL;
 
-	अगर (day > rtc_month_days(rtc_पंचांग->पंचांग_mon, rtc_पंचांग->पंचांग_year))
-		वापस -EINVAL;
+	if (day > rtc_month_days(rtc_tm->tm_mon, rtc_tm->tm_year))
+		return -EINVAL;
 
-	अगर ((hrs >= 24) || (min >= 60) || (sec >= 60))
-		वापस -EINVAL;
+	if ((hrs >= 24) || (min >= 60) || (sec >= 60))
+		return -EINVAL;
 
 	/*
-	 * each रेजिस्टर is a dअगरferent number of valid bits
+	 * each register is a different number of valid bits
 	 */
 	sec = bin2bcd(sec) & 0x7f;
 	min = bin2bcd(min) & 0x7f;
@@ -217,284 +216,284 @@ ds1511_wकरोg_disable(व्योम)
 
 	spin_lock_irqsave(&ds1511_lock, flags);
 	rtc_disable_update();
-	rtc_ग_लिखो(cen, RTC_CENTURY);
-	rtc_ग_लिखो(yrs, RTC_YEAR);
-	rtc_ग_लिखो((rtc_पढ़ो(RTC_MON) & 0xe0) | mon, RTC_MON);
-	rtc_ग_लिखो(day, RTC_DOM);
-	rtc_ग_लिखो(hrs, RTC_HOUR);
-	rtc_ग_लिखो(min, RTC_MIN);
-	rtc_ग_लिखो(sec, RTC_SEC);
-	rtc_ग_लिखो(करोw, RTC_DOW);
+	rtc_write(cen, RTC_CENTURY);
+	rtc_write(yrs, RTC_YEAR);
+	rtc_write((rtc_read(RTC_MON) & 0xe0) | mon, RTC_MON);
+	rtc_write(day, RTC_DOM);
+	rtc_write(hrs, RTC_HOUR);
+	rtc_write(min, RTC_MIN);
+	rtc_write(sec, RTC_SEC);
+	rtc_write(dow, RTC_DOW);
 	rtc_enable_update();
 	spin_unlock_irqrestore(&ds1511_lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds1511_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *rtc_पंचांग)
-अणु
-	अचिन्हित पूर्णांक century;
-	अचिन्हित दीर्घ flags;
+static int ds1511_rtc_read_time(struct device *dev, struct rtc_time *rtc_tm)
+{
+	unsigned int century;
+	unsigned long flags;
 
 	spin_lock_irqsave(&ds1511_lock, flags);
 	rtc_disable_update();
 
-	rtc_पंचांग->पंचांग_sec = rtc_पढ़ो(RTC_SEC) & 0x7f;
-	rtc_पंचांग->पंचांग_min = rtc_पढ़ो(RTC_MIN) & 0x7f;
-	rtc_पंचांग->पंचांग_hour = rtc_पढ़ो(RTC_HOUR) & 0x3f;
-	rtc_पंचांग->पंचांग_mday = rtc_पढ़ो(RTC_DOM) & 0x3f;
-	rtc_पंचांग->पंचांग_wday = rtc_पढ़ो(RTC_DOW) & 0x7;
-	rtc_पंचांग->पंचांग_mon = rtc_पढ़ो(RTC_MON) & 0x1f;
-	rtc_पंचांग->पंचांग_year = rtc_पढ़ो(RTC_YEAR) & 0x7f;
-	century = rtc_पढ़ो(RTC_CENTURY);
+	rtc_tm->tm_sec = rtc_read(RTC_SEC) & 0x7f;
+	rtc_tm->tm_min = rtc_read(RTC_MIN) & 0x7f;
+	rtc_tm->tm_hour = rtc_read(RTC_HOUR) & 0x3f;
+	rtc_tm->tm_mday = rtc_read(RTC_DOM) & 0x3f;
+	rtc_tm->tm_wday = rtc_read(RTC_DOW) & 0x7;
+	rtc_tm->tm_mon = rtc_read(RTC_MON) & 0x1f;
+	rtc_tm->tm_year = rtc_read(RTC_YEAR) & 0x7f;
+	century = rtc_read(RTC_CENTURY);
 
 	rtc_enable_update();
 	spin_unlock_irqrestore(&ds1511_lock, flags);
 
-	rtc_पंचांग->पंचांग_sec = bcd2bin(rtc_पंचांग->पंचांग_sec);
-	rtc_पंचांग->पंचांग_min = bcd2bin(rtc_पंचांग->पंचांग_min);
-	rtc_पंचांग->पंचांग_hour = bcd2bin(rtc_पंचांग->पंचांग_hour);
-	rtc_पंचांग->पंचांग_mday = bcd2bin(rtc_पंचांग->पंचांग_mday);
-	rtc_पंचांग->पंचांग_wday = bcd2bin(rtc_पंचांग->पंचांग_wday);
-	rtc_पंचांग->पंचांग_mon = bcd2bin(rtc_पंचांग->पंचांग_mon);
-	rtc_पंचांग->पंचांग_year = bcd2bin(rtc_पंचांग->पंचांग_year);
+	rtc_tm->tm_sec = bcd2bin(rtc_tm->tm_sec);
+	rtc_tm->tm_min = bcd2bin(rtc_tm->tm_min);
+	rtc_tm->tm_hour = bcd2bin(rtc_tm->tm_hour);
+	rtc_tm->tm_mday = bcd2bin(rtc_tm->tm_mday);
+	rtc_tm->tm_wday = bcd2bin(rtc_tm->tm_wday);
+	rtc_tm->tm_mon = bcd2bin(rtc_tm->tm_mon);
+	rtc_tm->tm_year = bcd2bin(rtc_tm->tm_year);
 	century = bcd2bin(century) * 100;
 
 	/*
-	 * Account क्रम dअगरferences between how the RTC uses the values
-	 * and how they are defined in a काष्ठा rtc_समय;
+	 * Account for differences between how the RTC uses the values
+	 * and how they are defined in a struct rtc_time;
 	 */
-	century += rtc_पंचांग->पंचांग_year;
-	rtc_पंचांग->पंचांग_year = century - 1900;
+	century += rtc_tm->tm_year;
+	rtc_tm->tm_year = century - 1900;
 
-	rtc_पंचांग->पंचांग_mon--;
+	rtc_tm->tm_mon--;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * ग_लिखो the alarm रेजिस्टर settings
+ * write the alarm register settings
  *
- * we only have the use to पूर्णांकerrupt every second, otherwise
- * known as the update पूर्णांकerrupt, or the पूर्णांकerrupt अगर the whole
+ * we only have the use to interrupt every second, otherwise
+ * known as the update interrupt, or the interrupt if the whole
  * date/hours/mins/secs matches.  the ds1511 has many more
- * permutations, but the kernel करोesn't.
+ * permutations, but the kernel doesn't.
  */
-अटल व्योम
-ds1511_rtc_update_alarm(काष्ठा rtc_plat_data *pdata)
-अणु
-	अचिन्हित दीर्घ flags;
+static void
+ds1511_rtc_update_alarm(struct rtc_plat_data *pdata)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&pdata->lock, flags);
-	rtc_ग_लिखो(pdata->alrm_mday < 0 || (pdata->irqen & RTC_UF) ?
+	rtc_write(pdata->alrm_mday < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_mday) & 0x3f,
 	       RTC_ALARM_DATE);
-	rtc_ग_लिखो(pdata->alrm_hour < 0 || (pdata->irqen & RTC_UF) ?
+	rtc_write(pdata->alrm_hour < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_hour) & 0x3f,
 	       RTC_ALARM_HOUR);
-	rtc_ग_लिखो(pdata->alrm_min < 0 || (pdata->irqen & RTC_UF) ?
+	rtc_write(pdata->alrm_min < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_min) & 0x7f,
 	       RTC_ALARM_MIN);
-	rtc_ग_लिखो(pdata->alrm_sec < 0 || (pdata->irqen & RTC_UF) ?
+	rtc_write(pdata->alrm_sec < 0 || (pdata->irqen & RTC_UF) ?
 	       0x80 : bin2bcd(pdata->alrm_sec) & 0x7f,
 	       RTC_ALARM_SEC);
-	rtc_ग_लिखो(rtc_पढ़ो(RTC_CMD) | (pdata->irqen ? RTC_TIE : 0), RTC_CMD);
-	rtc_पढ़ो(RTC_CMD1);	/* clear पूर्णांकerrupts */
+	rtc_write(rtc_read(RTC_CMD) | (pdata->irqen ? RTC_TIE : 0), RTC_CMD);
+	rtc_read(RTC_CMD1);	/* clear interrupts */
 	spin_unlock_irqrestore(&pdata->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक
-ds1511_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
+static int
+ds1511_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
 
-	अगर (pdata->irq <= 0)
-		वापस -EINVAL;
+	if (pdata->irq <= 0)
+		return -EINVAL;
 
-	pdata->alrm_mday = alrm->समय.पंचांग_mday;
-	pdata->alrm_hour = alrm->समय.पंचांग_hour;
-	pdata->alrm_min = alrm->समय.पंचांग_min;
-	pdata->alrm_sec = alrm->समय.पंचांग_sec;
-	अगर (alrm->enabled)
+	pdata->alrm_mday = alrm->time.tm_mday;
+	pdata->alrm_hour = alrm->time.tm_hour;
+	pdata->alrm_min = alrm->time.tm_min;
+	pdata->alrm_sec = alrm->time.tm_sec;
+	if (alrm->enabled)
 		pdata->irqen |= RTC_AF;
 
 	ds1511_rtc_update_alarm(pdata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ds1511_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
-अणु
-	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
+static int
+ds1511_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
 
-	अगर (pdata->irq <= 0)
-		वापस -EINVAL;
+	if (pdata->irq <= 0)
+		return -EINVAL;
 
-	alrm->समय.पंचांग_mday = pdata->alrm_mday < 0 ? 0 : pdata->alrm_mday;
-	alrm->समय.पंचांग_hour = pdata->alrm_hour < 0 ? 0 : pdata->alrm_hour;
-	alrm->समय.पंचांग_min = pdata->alrm_min < 0 ? 0 : pdata->alrm_min;
-	alrm->समय.पंचांग_sec = pdata->alrm_sec < 0 ? 0 : pdata->alrm_sec;
+	alrm->time.tm_mday = pdata->alrm_mday < 0 ? 0 : pdata->alrm_mday;
+	alrm->time.tm_hour = pdata->alrm_hour < 0 ? 0 : pdata->alrm_hour;
+	alrm->time.tm_min = pdata->alrm_min < 0 ? 0 : pdata->alrm_min;
+	alrm->time.tm_sec = pdata->alrm_sec < 0 ? 0 : pdata->alrm_sec;
 	alrm->enabled = (pdata->irqen & RTC_AF) ? 1 : 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t
-ds1511_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा platक्रमm_device *pdev = dev_id;
-	काष्ठा rtc_plat_data *pdata = platक्रमm_get_drvdata(pdev);
-	अचिन्हित दीर्घ events = 0;
+static irqreturn_t
+ds1511_interrupt(int irq, void *dev_id)
+{
+	struct platform_device *pdev = dev_id;
+	struct rtc_plat_data *pdata = platform_get_drvdata(pdev);
+	unsigned long events = 0;
 
 	spin_lock(&pdata->lock);
 	/*
-	 * पढ़ो and clear पूर्णांकerrupt
+	 * read and clear interrupt
 	 */
-	अगर (rtc_पढ़ो(RTC_CMD1) & DS1511_IRQF) अणु
+	if (rtc_read(RTC_CMD1) & DS1511_IRQF) {
 		events = RTC_IRQF;
-		अगर (rtc_पढ़ो(RTC_ALARM_SEC) & 0x80)
+		if (rtc_read(RTC_ALARM_SEC) & 0x80)
 			events |= RTC_UF;
-		अन्यथा
+		else
 			events |= RTC_AF;
 		rtc_update_irq(pdata->rtc, 1, events);
-	पूर्ण
+	}
 	spin_unlock(&pdata->lock);
-	वापस events ? IRQ_HANDLED : IRQ_NONE;
-पूर्ण
+	return events ? IRQ_HANDLED : IRQ_NONE;
+}
 
-अटल पूर्णांक ds1511_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
-अणु
-	काष्ठा rtc_plat_data *pdata = dev_get_drvdata(dev);
+static int ds1511_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	struct rtc_plat_data *pdata = dev_get_drvdata(dev);
 
-	अगर (pdata->irq <= 0)
-		वापस -EINVAL;
-	अगर (enabled)
+	if (pdata->irq <= 0)
+		return -EINVAL;
+	if (enabled)
 		pdata->irqen |= RTC_AF;
-	अन्यथा
+	else
 		pdata->irqen &= ~RTC_AF;
 	ds1511_rtc_update_alarm(pdata);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rtc_class_ops ds1511_rtc_ops = अणु
-	.पढ़ो_समय		= ds1511_rtc_पढ़ो_समय,
-	.set_समय		= ds1511_rtc_set_समय,
-	.पढ़ो_alarm		= ds1511_rtc_पढ़ो_alarm,
+static const struct rtc_class_ops ds1511_rtc_ops = {
+	.read_time		= ds1511_rtc_read_time,
+	.set_time		= ds1511_rtc_set_time,
+	.read_alarm		= ds1511_rtc_read_alarm,
 	.set_alarm		= ds1511_rtc_set_alarm,
 	.alarm_irq_enable	= ds1511_rtc_alarm_irq_enable,
-पूर्ण;
+};
 
-अटल पूर्णांक ds1511_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *buf,
-			     माप_प्रकार size)
-अणु
-	पूर्णांक i;
+static int ds1511_nvram_read(void *priv, unsigned int pos, void *buf,
+			     size_t size)
+{
+	int i;
 
-	rtc_ग_लिखो(pos, DS1511_RAMADDR_LSB);
-	क्रम (i = 0; i < size; i++)
-		*(अक्षर *)buf++ = rtc_पढ़ो(DS1511_RAMDATA);
+	rtc_write(pos, DS1511_RAMADDR_LSB);
+	for (i = 0; i < size; i++)
+		*(char *)buf++ = rtc_read(DS1511_RAMDATA);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds1511_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक pos, व्योम *buf,
-			      माप_प्रकार size)
-अणु
-	पूर्णांक i;
+static int ds1511_nvram_write(void *priv, unsigned int pos, void *buf,
+			      size_t size)
+{
+	int i;
 
-	rtc_ग_लिखो(pos, DS1511_RAMADDR_LSB);
-	क्रम (i = 0; i < size; i++)
-		rtc_ग_लिखो(*(अक्षर *)buf++, DS1511_RAMDATA);
+	rtc_write(pos, DS1511_RAMADDR_LSB);
+	for (i = 0; i < size; i++)
+		rtc_write(*(char *)buf++, DS1511_RAMDATA);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ds1511_rtc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा rtc_plat_data *pdata;
-	पूर्णांक ret = 0;
-	काष्ठा nvmem_config ds1511_nvmem_cfg = अणु
+static int ds1511_rtc_probe(struct platform_device *pdev)
+{
+	struct rtc_plat_data *pdata;
+	int ret = 0;
+	struct nvmem_config ds1511_nvmem_cfg = {
 		.name = "ds1511_nvram",
 		.word_size = 1,
 		.stride = 1,
 		.size = DS1511_RAM_MAX,
-		.reg_पढ़ो = ds1511_nvram_पढ़ो,
-		.reg_ग_लिखो = ds1511_nvram_ग_लिखो,
+		.reg_read = ds1511_nvram_read,
+		.reg_write = ds1511_nvram_write,
 		.priv = &pdev->dev,
-	पूर्ण;
+	};
 
-	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस -ENOMEM;
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
 
-	ds1511_base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(ds1511_base))
-		वापस PTR_ERR(ds1511_base);
+	ds1511_base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(ds1511_base))
+		return PTR_ERR(ds1511_base);
 	pdata->ioaddr = ds1511_base;
-	pdata->irq = platक्रमm_get_irq(pdev, 0);
+	pdata->irq = platform_get_irq(pdev, 0);
 
 	/*
-	 * turn on the घड़ी and the crystal, etc.
+	 * turn on the clock and the crystal, etc.
 	 */
-	rtc_ग_लिखो(DS1511_BME, RTC_CMD);
-	rtc_ग_लिखो(0, RTC_CMD1);
+	rtc_write(DS1511_BME, RTC_CMD);
+	rtc_write(0, RTC_CMD1);
 	/*
-	 * clear the wकरोg counter
+	 * clear the wdog counter
 	 */
-	rtc_ग_लिखो(0, DS1511_WD_MSEC);
-	rtc_ग_लिखो(0, DS1511_WD_SEC);
+	rtc_write(0, DS1511_WD_MSEC);
+	rtc_write(0, DS1511_WD_SEC);
 	/*
-	 * start the घड़ी
+	 * start the clock
 	 */
 	rtc_enable_update();
 
 	/*
-	 * check क्रम a dying bat-tree
+	 * check for a dying bat-tree
 	 */
-	अगर (rtc_पढ़ो(RTC_CMD1) & DS1511_BLF1)
+	if (rtc_read(RTC_CMD1) & DS1511_BLF1)
 		dev_warn(&pdev->dev, "voltage-low detected.\n");
 
 	spin_lock_init(&pdata->lock);
-	platक्रमm_set_drvdata(pdev, pdata);
+	platform_set_drvdata(pdev, pdata);
 
 	pdata->rtc = devm_rtc_allocate_device(&pdev->dev);
-	अगर (IS_ERR(pdata->rtc))
-		वापस PTR_ERR(pdata->rtc);
+	if (IS_ERR(pdata->rtc))
+		return PTR_ERR(pdata->rtc);
 
 	pdata->rtc->ops = &ds1511_rtc_ops;
 
-	ret = devm_rtc_रेजिस्टर_device(pdata->rtc);
-	अगर (ret)
-		वापस ret;
+	ret = devm_rtc_register_device(pdata->rtc);
+	if (ret)
+		return ret;
 
-	devm_rtc_nvmem_रेजिस्टर(pdata->rtc, &ds1511_nvmem_cfg);
+	devm_rtc_nvmem_register(pdata->rtc, &ds1511_nvmem_cfg);
 
 	/*
-	 * अगर the platक्रमm has an पूर्णांकerrupt in mind क्रम this device,
+	 * if the platform has an interrupt in mind for this device,
 	 * then by all means, set it
 	 */
-	अगर (pdata->irq > 0) अणु
-		rtc_पढ़ो(RTC_CMD1);
-		अगर (devm_request_irq(&pdev->dev, pdata->irq, ds1511_पूर्णांकerrupt,
-			IRQF_SHARED, pdev->name, pdev) < 0) अणु
+	if (pdata->irq > 0) {
+		rtc_read(RTC_CMD1);
+		if (devm_request_irq(&pdev->dev, pdata->irq, ds1511_interrupt,
+			IRQF_SHARED, pdev->name, pdev) < 0) {
 
 			dev_warn(&pdev->dev, "interrupt not available.\n");
 			pdata->irq = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* work with hotplug and coldplug */
 MODULE_ALIAS("platform:ds1511");
 
-अटल काष्ठा platक्रमm_driver ds1511_rtc_driver = अणु
+static struct platform_driver ds1511_rtc_driver = {
 	.probe		= ds1511_rtc_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "ds1511",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(ds1511_rtc_driver);
+module_platform_driver(ds1511_rtc_driver);
 
 MODULE_AUTHOR("Andrew Sharp <andy.sharp@lsi.com>");
 MODULE_DESCRIPTION("Dallas DS1511 RTC driver");

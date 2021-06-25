@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-// Trace events क्रम the ChromeOS Embedded Controller
+// SPDX-License-Identifier: GPL-2.0
+// Trace events for the ChromeOS Embedded Controller
 //
 // Copyright 2019 Google LLC.
 
-#घोषणा TRACE_SYMBOL(a) अणुa, #aपूर्ण
+#define TRACE_SYMBOL(a) {a, #a}
 
 // Generate the list using the following script:
-// sed -n 's/^#define \(EC_CMD_[[:alnum:]_]*\)\s.*/\tTRACE_SYMBOL(\1), \\/p' include/linux/platक्रमm_data/cros_ec_commands.h
-#घोषणा EC_CMDS \
+// sed -n 's/^#define \(EC_CMD_[[:alnum:]_]*\)\s.*/\tTRACE_SYMBOL(\1), \\/p' include/linux/platform_data/cros_ec_commands.h
+#define EC_CMDS \
 	TRACE_SYMBOL(EC_CMD_ACPI_READ), \
 	TRACE_SYMBOL(EC_CMD_ACPI_WRITE), \
 	TRACE_SYMBOL(EC_CMD_ACPI_BURST_ENABLE), \
@@ -188,8 +187,8 @@
 	TRACE_SYMBOL(EC_CMD_BOARD_SPECIFIC_BASE), \
 	TRACE_SYMBOL(EC_CMD_BOARD_SPECIFIC_LAST)
 
-/* See the क्रमागत ec_status in include/linux/platक्रमm_data/cros_ec_commands.h */
-#घोषणा EC_RESULT \
+/* See the enum ec_status in include/linux/platform_data/cros_ec_commands.h */
+#define EC_RESULT \
 	TRACE_SYMBOL(EC_RES_SUCCESS), \
 	TRACE_SYMBOL(EC_RES_INVALID_COMMAND), \
 	TRACE_SYMBOL(EC_RES_ERROR), \
@@ -212,5 +211,5 @@
 	TRACE_SYMBOL(EC_RES_INVALID_DATA_CRC), \
 	TRACE_SYMBOL(EC_RES_DUP_UNAVAILABLE)
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "cros_ec_trace.h"
+#define CREATE_TRACE_POINTS
+#include "cros_ec_trace.h"

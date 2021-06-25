@@ -1,126 +1,125 @@
-<शैली गुरु>
 /*
- * Copyright (c) 2016 Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Copyright (c) 2016 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *
- * Permission to use, copy, modअगरy, distribute, and sell this software and its
- * करोcumentation क्रम any purpose is hereby granted without fee, provided that
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting करोcumentation, and
+ * notice and this permission notice appear in supporting documentation, and
  * that the name of the copyright holders not be used in advertising or
- * खुलाity pertaining to distribution of the software without specअगरic,
+ * publicity pertaining to distribution of the software without specific,
  * written prior permission.  The copyright holders make no representations
- * about the suitability of this software क्रम any purpose.  It is provided "as
+ * about the suitability of this software for any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
  * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
+ * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
-#अगर_अघोषित __DRM_FOURCC_H__
-#घोषणा __DRM_FOURCC_H__
+#ifndef __DRM_FOURCC_H__
+#define __DRM_FOURCC_H__
 
-#समावेश <linux/types.h>
-#समावेश <uapi/drm/drm_fourcc.h>
+#include <linux/types.h>
+#include <uapi/drm/drm_fourcc.h>
 
 /*
- * DRM क्रमmats are little endian.  Define host endian variants क्रम the
- * most common क्रमmats here, to reduce the #अगर_घोषितs needed in drivers.
+ * DRM formats are little endian.  Define host endian variants for the
+ * most common formats here, to reduce the #ifdefs needed in drivers.
  *
  * Note that the DRM_FORMAT_BIG_ENDIAN flag should only be used in
- * हाल the क्रमmat can't be specified otherwise, so we don't end up
- * with two values describing the same क्रमmat.
+ * case the format can't be specified otherwise, so we don't end up
+ * with two values describing the same format.
  */
-#अगर_घोषित __BIG_ENDIAN
+#ifdef __BIG_ENDIAN
 # define DRM_FORMAT_HOST_XRGB1555     (DRM_FORMAT_XRGB1555         |	\
 				       DRM_FORMAT_BIG_ENDIAN)
 # define DRM_FORMAT_HOST_RGB565       (DRM_FORMAT_RGB565           |	\
 				       DRM_FORMAT_BIG_ENDIAN)
 # define DRM_FORMAT_HOST_XRGB8888     DRM_FORMAT_BGRX8888
 # define DRM_FORMAT_HOST_ARGB8888     DRM_FORMAT_BGRA8888
-#अन्यथा
+#else
 # define DRM_FORMAT_HOST_XRGB1555     DRM_FORMAT_XRGB1555
 # define DRM_FORMAT_HOST_RGB565       DRM_FORMAT_RGB565
 # define DRM_FORMAT_HOST_XRGB8888     DRM_FORMAT_XRGB8888
 # define DRM_FORMAT_HOST_ARGB8888     DRM_FORMAT_ARGB8888
-#पूर्ण_अगर
+#endif
 
-काष्ठा drm_device;
-काष्ठा drm_mode_fb_cmd2;
+struct drm_device;
+struct drm_mode_fb_cmd2;
 
 /**
- * काष्ठा drm_क्रमmat_info - inक्रमmation about a DRM क्रमmat
+ * struct drm_format_info - information about a DRM format
  */
-काष्ठा drm_क्रमmat_info अणु
-	/** @क्रमmat: 4CC क्रमmat identअगरier (DRM_FORMAT_*) */
-	u32 क्रमmat;
+struct drm_format_info {
+	/** @format: 4CC format identifier (DRM_FORMAT_*) */
+	u32 format;
 
 	/**
 	 * @depth:
 	 *
 	 * Color depth (number of bits per pixel excluding padding bits),
-	 * valid क्रम a subset of RGB क्रमmats only. This is a legacy field, करो
-	 * not use in new code and set to 0 क्रम new क्रमmats.
+	 * valid for a subset of RGB formats only. This is a legacy field, do
+	 * not use in new code and set to 0 for new formats.
 	 */
 	u8 depth;
 
 	/** @num_planes: Number of color planes (1 to 3) */
 	u8 num_planes;
 
-	जोड़ अणु
+	union {
 		/**
 		 * @cpp:
 		 *
 		 * Number of bytes per pixel (per plane), this is aliased with
-		 * @अक्षर_per_block. It is deprecated in favour of using the
-		 * triplet @अक्षर_per_block, @block_w, @block_h क्रम better
-		 * describing the pixel क्रमmat.
+		 * @char_per_block. It is deprecated in favour of using the
+		 * triplet @char_per_block, @block_w, @block_h for better
+		 * describing the pixel format.
 		 */
 		u8 cpp[4];
 
 		/**
-		 * @अक्षर_per_block:
+		 * @char_per_block:
 		 *
 		 * Number of bytes per block (per plane), where blocks are
 		 * defined as a rectangle of pixels which are stored next to
 		 * each other in a byte aligned memory region. Together with
 		 * @block_w and @block_h this is used to properly describe tiles
-		 * in tiled क्रमmats or to describe groups of pixels in packed
-		 * क्रमmats क्रम which the memory needed क्रम a single pixel is not
+		 * in tiled formats or to describe groups of pixels in packed
+		 * formats for which the memory needed for a single pixel is not
 		 * byte aligned.
 		 *
-		 * @cpp has been kept क्रम historical reasons because there are
-		 * a lot of places in drivers where it's used. In drm core क्रम
+		 * @cpp has been kept for historical reasons because there are
+		 * a lot of places in drivers where it's used. In drm core for
 		 * generic code paths the preferred way is to use
-		 * @अक्षर_per_block, drm_क्रमmat_info_block_width() and
-		 * drm_क्रमmat_info_block_height() which allows handling both
-		 * block and non-block क्रमmats in the same way.
+		 * @char_per_block, drm_format_info_block_width() and
+		 * drm_format_info_block_height() which allows handling both
+		 * block and non-block formats in the same way.
 		 *
-		 * For क्रमmats that are पूर्णांकended to be used only with non-linear
-		 * modअगरiers both @cpp and @अक्षर_per_block must be 0 in the
-		 * generic क्रमmat table. Drivers could supply accurate
-		 * inक्रमmation from their drm_mode_config.get_क्रमmat_info hook
-		 * अगर they want the core to be validating the pitch.
+		 * For formats that are intended to be used only with non-linear
+		 * modifiers both @cpp and @char_per_block must be 0 in the
+		 * generic format table. Drivers could supply accurate
+		 * information from their drm_mode_config.get_format_info hook
+		 * if they want the core to be validating the pitch.
 		 */
-		u8 अक्षर_per_block[4];
-	पूर्ण;
+		u8 char_per_block[4];
+	};
 
 	/**
 	 * @block_w:
 	 *
-	 * Block width in pixels, this is पूर्णांकended to be accessed through
-	 * drm_क्रमmat_info_block_width()
+	 * Block width in pixels, this is intended to be accessed through
+	 * drm_format_info_block_width()
 	 */
 	u8 block_w[4];
 
 	/**
 	 * @block_h:
 	 *
-	 * Block height in pixels, this is पूर्णांकended to be accessed through
-	 * drm_क्रमmat_info_block_height()
+	 * Block height in pixels, this is intended to be accessed through
+	 * drm_format_info_block_height()
 	 */
 	u8 block_h[4];
 
@@ -129,196 +128,196 @@
 	/** @vsub: Vertical chroma subsampling factor */
 	u8 vsub;
 
-	/** @has_alpha: Does the क्रमmat embeds an alpha component? */
+	/** @has_alpha: Does the format embeds an alpha component? */
 	bool has_alpha;
 
-	/** @is_yuv: Is it a YUV क्रमmat? */
+	/** @is_yuv: Is it a YUV format? */
 	bool is_yuv;
-पूर्ण;
+};
 
 /**
- * काष्ठा drm_क्रमmat_name_buf - name of a DRM क्रमmat
- * @str: string buffer containing the क्रमmat name
+ * struct drm_format_name_buf - name of a DRM format
+ * @str: string buffer containing the format name
  */
-काष्ठा drm_क्रमmat_name_buf अणु
-	अक्षर str[32];
-पूर्ण;
+struct drm_format_name_buf {
+	char str[32];
+};
 
 /**
- * drm_क्रमmat_info_is_yuv_packed - check that the क्रमmat info matches a YUV
- * क्रमmat with data laid in a single plane
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_packed - check that the format info matches a YUV
+ * format with data laid in a single plane
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a packed YUV क्रमmat.
+ * A boolean indicating whether the format info matches a packed YUV format.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_packed(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->num_planes == 1;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_packed(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->num_planes == 1;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_semiplanar - check that the क्रमmat info matches a YUV
- * क्रमmat with data laid in two planes (luminance and chrominance)
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_semiplanar - check that the format info matches a YUV
+ * format with data laid in two planes (luminance and chrominance)
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a semiplanar YUV क्रमmat.
+ * A boolean indicating whether the format info matches a semiplanar YUV format.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_semiplanar(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->num_planes == 2;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_semiplanar(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->num_planes == 2;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_planar - check that the क्रमmat info matches a YUV
- * क्रमmat with data laid in three planes (one क्रम each YUV component)
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_planar - check that the format info matches a YUV
+ * format with data laid in three planes (one for each YUV component)
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a planar YUV क्रमmat.
+ * A boolean indicating whether the format info matches a planar YUV format.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_planar(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->num_planes == 3;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_planar(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->num_planes == 3;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_sampling_410 - check that the क्रमmat info matches a
- * YUV क्रमmat with 4:1:0 sub-sampling
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_sampling_410 - check that the format info matches a
+ * YUV format with 4:1:0 sub-sampling
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a YUV क्रमmat with 4:1:0
+ * A boolean indicating whether the format info matches a YUV format with 4:1:0
  * sub-sampling.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_sampling_410(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->hsub == 4 && info->vsub == 4;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_sampling_410(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->hsub == 4 && info->vsub == 4;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_sampling_411 - check that the क्रमmat info matches a
- * YUV क्रमmat with 4:1:1 sub-sampling
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_sampling_411 - check that the format info matches a
+ * YUV format with 4:1:1 sub-sampling
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a YUV क्रमmat with 4:1:1
+ * A boolean indicating whether the format info matches a YUV format with 4:1:1
  * sub-sampling.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_sampling_411(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->hsub == 4 && info->vsub == 1;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_sampling_411(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->hsub == 4 && info->vsub == 1;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_sampling_420 - check that the क्रमmat info matches a
- * YUV क्रमmat with 4:2:0 sub-sampling
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_sampling_420 - check that the format info matches a
+ * YUV format with 4:2:0 sub-sampling
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a YUV क्रमmat with 4:2:0
+ * A boolean indicating whether the format info matches a YUV format with 4:2:0
  * sub-sampling.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_sampling_420(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->hsub == 2 && info->vsub == 2;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_sampling_420(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->hsub == 2 && info->vsub == 2;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_sampling_422 - check that the क्रमmat info matches a
- * YUV क्रमmat with 4:2:2 sub-sampling
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_sampling_422 - check that the format info matches a
+ * YUV format with 4:2:2 sub-sampling
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a YUV क्रमmat with 4:2:2
+ * A boolean indicating whether the format info matches a YUV format with 4:2:2
  * sub-sampling.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_sampling_422(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->hsub == 2 && info->vsub == 1;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_sampling_422(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->hsub == 2 && info->vsub == 1;
+}
 
 /**
- * drm_क्रमmat_info_is_yuv_sampling_444 - check that the क्रमmat info matches a
- * YUV क्रमmat with 4:4:4 sub-sampling
- * @info: क्रमmat info
+ * drm_format_info_is_yuv_sampling_444 - check that the format info matches a
+ * YUV format with 4:4:4 sub-sampling
+ * @info: format info
  *
  * Returns:
- * A boolean indicating whether the क्रमmat info matches a YUV क्रमmat with 4:4:4
+ * A boolean indicating whether the format info matches a YUV format with 4:4:4
  * sub-sampling.
  */
-अटल अंतरभूत bool
-drm_क्रमmat_info_is_yuv_sampling_444(स्थिर काष्ठा drm_क्रमmat_info *info)
-अणु
-	वापस info->is_yuv && info->hsub == 1 && info->vsub == 1;
-पूर्ण
+static inline bool
+drm_format_info_is_yuv_sampling_444(const struct drm_format_info *info)
+{
+	return info->is_yuv && info->hsub == 1 && info->vsub == 1;
+}
 
 /**
- * drm_क्रमmat_info_plane_width - width of the plane given the first plane
- * @info: pixel क्रमmat info
+ * drm_format_info_plane_width - width of the plane given the first plane
+ * @info: pixel format info
  * @width: width of the first plane
  * @plane: plane index
  *
  * Returns:
  * The width of @plane, given that the width of the first plane is @width.
  */
-अटल अंतरभूत
-पूर्णांक drm_क्रमmat_info_plane_width(स्थिर काष्ठा drm_क्रमmat_info *info, पूर्णांक width,
-				पूर्णांक plane)
-अणु
-	अगर (!info || plane >= info->num_planes)
-		वापस 0;
+static inline
+int drm_format_info_plane_width(const struct drm_format_info *info, int width,
+				int plane)
+{
+	if (!info || plane >= info->num_planes)
+		return 0;
 
-	अगर (plane == 0)
-		वापस width;
+	if (plane == 0)
+		return width;
 
-	वापस width / info->hsub;
-पूर्ण
+	return width / info->hsub;
+}
 
 /**
- * drm_क्रमmat_info_plane_height - height of the plane given the first plane
- * @info: pixel क्रमmat info
+ * drm_format_info_plane_height - height of the plane given the first plane
+ * @info: pixel format info
  * @height: height of the first plane
  * @plane: plane index
  *
  * Returns:
  * The height of @plane, given that the height of the first plane is @height.
  */
-अटल अंतरभूत
-पूर्णांक drm_क्रमmat_info_plane_height(स्थिर काष्ठा drm_क्रमmat_info *info, पूर्णांक height,
-				 पूर्णांक plane)
-अणु
-	अगर (!info || plane >= info->num_planes)
-		वापस 0;
+static inline
+int drm_format_info_plane_height(const struct drm_format_info *info, int height,
+				 int plane)
+{
+	if (!info || plane >= info->num_planes)
+		return 0;
 
-	अगर (plane == 0)
-		वापस height;
+	if (plane == 0)
+		return height;
 
-	वापस height / info->vsub;
-पूर्ण
+	return height / info->vsub;
+}
 
-स्थिर काष्ठा drm_क्रमmat_info *__drm_क्रमmat_info(u32 क्रमmat);
-स्थिर काष्ठा drm_क्रमmat_info *drm_क्रमmat_info(u32 क्रमmat);
-स्थिर काष्ठा drm_क्रमmat_info *
-drm_get_क्रमmat_info(काष्ठा drm_device *dev,
-		    स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd);
-uपूर्णांक32_t drm_mode_legacy_fb_क्रमmat(uपूर्णांक32_t bpp, uपूर्णांक32_t depth);
-uपूर्णांक32_t drm_driver_legacy_fb_क्रमmat(काष्ठा drm_device *dev,
-				     uपूर्णांक32_t bpp, uपूर्णांक32_t depth);
-अचिन्हित पूर्णांक drm_क्रमmat_info_block_width(स्थिर काष्ठा drm_क्रमmat_info *info,
-					 पूर्णांक plane);
-अचिन्हित पूर्णांक drm_क्रमmat_info_block_height(स्थिर काष्ठा drm_क्रमmat_info *info,
-					  पूर्णांक plane);
-uपूर्णांक64_t drm_क्रमmat_info_min_pitch(स्थिर काष्ठा drm_क्रमmat_info *info,
-				   पूर्णांक plane, अचिन्हित पूर्णांक buffer_width);
-स्थिर अक्षर *drm_get_क्रमmat_name(uपूर्णांक32_t क्रमmat, काष्ठा drm_क्रमmat_name_buf *buf);
+const struct drm_format_info *__drm_format_info(u32 format);
+const struct drm_format_info *drm_format_info(u32 format);
+const struct drm_format_info *
+drm_get_format_info(struct drm_device *dev,
+		    const struct drm_mode_fb_cmd2 *mode_cmd);
+uint32_t drm_mode_legacy_fb_format(uint32_t bpp, uint32_t depth);
+uint32_t drm_driver_legacy_fb_format(struct drm_device *dev,
+				     uint32_t bpp, uint32_t depth);
+unsigned int drm_format_info_block_width(const struct drm_format_info *info,
+					 int plane);
+unsigned int drm_format_info_block_height(const struct drm_format_info *info,
+					  int plane);
+uint64_t drm_format_info_min_pitch(const struct drm_format_info *info,
+				   int plane, unsigned int buffer_width);
+const char *drm_get_format_name(uint32_t format, struct drm_format_name_buf *buf);
 
-#पूर्ण_अगर /* __DRM_FOURCC_H__ */
+#endif /* __DRM_FOURCC_H__ */

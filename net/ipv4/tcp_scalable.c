@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* Tom Kelly's Scalable TCP
  *
  * See http://www.deneholme.net/tom/scalable/
@@ -7,59 +6,59 @@
  * John Heffner <jheffner@sc.edu>
  */
 
-#समावेश <linux/module.h>
-#समावेश <net/tcp.h>
+#include <linux/module.h>
+#include <net/tcp.h>
 
 /* These factors derived from the recommended values in the aer:
  * .01 and 7/8.
  */
-#घोषणा TCP_SCALABLE_AI_CNT	100U
-#घोषणा TCP_SCALABLE_MD_SCALE	3
+#define TCP_SCALABLE_AI_CNT	100U
+#define TCP_SCALABLE_MD_SCALE	3
 
-अटल व्योम tcp_scalable_cong_aव्योम(काष्ठा sock *sk, u32 ack, u32 acked)
-अणु
-	काष्ठा tcp_sock *tp = tcp_sk(sk);
+static void tcp_scalable_cong_avoid(struct sock *sk, u32 ack, u32 acked)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
 
-	अगर (!tcp_is_cwnd_limited(sk))
-		वापस;
+	if (!tcp_is_cwnd_limited(sk))
+		return;
 
-	अगर (tcp_in_slow_start(tp)) अणु
+	if (tcp_in_slow_start(tp)) {
 		acked = tcp_slow_start(tp, acked);
-		अगर (!acked)
-			वापस;
-	पूर्ण
-	tcp_cong_aव्योम_ai(tp, min(tp->snd_cwnd, TCP_SCALABLE_AI_CNT),
+		if (!acked)
+			return;
+	}
+	tcp_cong_avoid_ai(tp, min(tp->snd_cwnd, TCP_SCALABLE_AI_CNT),
 			  acked);
-पूर्ण
+}
 
-अटल u32 tcp_scalable_ssthresh(काष्ठा sock *sk)
-अणु
-	स्थिर काष्ठा tcp_sock *tp = tcp_sk(sk);
+static u32 tcp_scalable_ssthresh(struct sock *sk)
+{
+	const struct tcp_sock *tp = tcp_sk(sk);
 
-	वापस max(tp->snd_cwnd - (tp->snd_cwnd>>TCP_SCALABLE_MD_SCALE), 2U);
-पूर्ण
+	return max(tp->snd_cwnd - (tp->snd_cwnd>>TCP_SCALABLE_MD_SCALE), 2U);
+}
 
-अटल काष्ठा tcp_congestion_ops tcp_scalable __पढ़ो_mostly = अणु
+static struct tcp_congestion_ops tcp_scalable __read_mostly = {
 	.ssthresh	= tcp_scalable_ssthresh,
-	.unकरो_cwnd	= tcp_reno_unकरो_cwnd,
-	.cong_aव्योम	= tcp_scalable_cong_aव्योम,
+	.undo_cwnd	= tcp_reno_undo_cwnd,
+	.cong_avoid	= tcp_scalable_cong_avoid,
 
 	.owner		= THIS_MODULE,
 	.name		= "scalable",
-पूर्ण;
+};
 
-अटल पूर्णांक __init tcp_scalable_रेजिस्टर(व्योम)
-अणु
-	वापस tcp_रेजिस्टर_congestion_control(&tcp_scalable);
-पूर्ण
+static int __init tcp_scalable_register(void)
+{
+	return tcp_register_congestion_control(&tcp_scalable);
+}
 
-अटल व्योम __निकास tcp_scalable_unरेजिस्टर(व्योम)
-अणु
-	tcp_unरेजिस्टर_congestion_control(&tcp_scalable);
-पूर्ण
+static void __exit tcp_scalable_unregister(void)
+{
+	tcp_unregister_congestion_control(&tcp_scalable);
+}
 
-module_init(tcp_scalable_रेजिस्टर);
-module_निकास(tcp_scalable_unरेजिस्टर);
+module_init(tcp_scalable_register);
+module_exit(tcp_scalable_unregister);
 
 MODULE_AUTHOR("John Heffner");
 MODULE_LICENSE("GPL");

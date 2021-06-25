@@ -1,48 +1,47 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * arch/arm/probes/kprobes/checkers.h
  *
  * Copyright (C) 2014 Huawei Inc.
  */
-#अगर_अघोषित _ARM_KERNEL_PROBES_CHECKERS_H
-#घोषणा _ARM_KERNEL_PROBES_CHECKERS_H
+#ifndef _ARM_KERNEL_PROBES_CHECKERS_H
+#define _ARM_KERNEL_PROBES_CHECKERS_H
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश "../decode.h"
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include "../decode.h"
 
-बाह्य probes_check_t checker_stack_use_none;
-बाह्य probes_check_t checker_stack_use_unknown;
-#अगर_घोषित CONFIG_THUMB2_KERNEL
-बाह्य probes_check_t checker_stack_use_imm_0xx;
-#अन्यथा
-बाह्य probes_check_t checker_stack_use_imm_x0x;
-#पूर्ण_अगर
-बाह्य probes_check_t checker_stack_use_imm_xxx;
-बाह्य probes_check_t checker_stack_use_sपंचांगdx;
+extern probes_check_t checker_stack_use_none;
+extern probes_check_t checker_stack_use_unknown;
+#ifdef CONFIG_THUMB2_KERNEL
+extern probes_check_t checker_stack_use_imm_0xx;
+#else
+extern probes_check_t checker_stack_use_imm_x0x;
+#endif
+extern probes_check_t checker_stack_use_imm_xxx;
+extern probes_check_t checker_stack_use_stmdx;
 
-क्रमागत अणु
+enum {
 	STACK_USE_NONE,
 	STACK_USE_UNKNOWN,
-#अगर_घोषित CONFIG_THUMB2_KERNEL
+#ifdef CONFIG_THUMB2_KERNEL
 	STACK_USE_FIXED_0XX,
 	STACK_USE_T32STRD,
-#अन्यथा
+#else
 	STACK_USE_FIXED_X0X,
-#पूर्ण_अगर
+#endif
 	STACK_USE_FIXED_XXX,
 	STACK_USE_STMDX,
 	NUM_STACK_USE_TYPES
-पूर्ण;
+};
 
-बाह्य स्थिर जोड़ decode_action stack_check_actions[];
+extern const union decode_action stack_check_actions[];
 
-#अगर_अघोषित CONFIG_THUMB2_KERNEL
-बाह्य स्थिर काष्ठा decode_checker arm_stack_checker[];
-बाह्य स्थिर काष्ठा decode_checker arm_regs_checker[];
-#अन्यथा
-#पूर्ण_अगर
-बाह्य स्थिर काष्ठा decode_checker t32_stack_checker[];
-बाह्य स्थिर काष्ठा decode_checker t16_stack_checker[];
-#पूर्ण_अगर
+#ifndef CONFIG_THUMB2_KERNEL
+extern const struct decode_checker arm_stack_checker[];
+extern const struct decode_checker arm_regs_checker[];
+#else
+#endif
+extern const struct decode_checker t32_stack_checker[];
+extern const struct decode_checker t16_stack_checker[];
+#endif

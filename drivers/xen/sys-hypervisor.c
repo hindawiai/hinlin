@@ -1,611 +1,610 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  copyright (c) 2006 IBM Corporation
  *  Authored by: Mike D. Day <ncmike@us.ibm.com>
  */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/err.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/kobject.h>
+#include <linux/err.h>
 
-#समावेश <यंत्र/xen/hypervisor.h>
-#समावेश <यंत्र/xen/hypercall.h>
+#include <asm/xen/hypervisor.h>
+#include <asm/xen/hypercall.h>
 
-#समावेश <xen/xen.h>
-#समावेश <xen/xenbus.h>
-#समावेश <xen/पूर्णांकerface/xen.h>
-#समावेश <xen/पूर्णांकerface/version.h>
-#अगर_घोषित CONFIG_XEN_HAVE_VPMU
-#समावेश <xen/पूर्णांकerface/xenpmu.h>
-#पूर्ण_अगर
+#include <xen/xen.h>
+#include <xen/xenbus.h>
+#include <xen/interface/xen.h>
+#include <xen/interface/version.h>
+#ifdef CONFIG_XEN_HAVE_VPMU
+#include <xen/interface/xenpmu.h>
+#endif
 
-#घोषणा HYPERVISOR_ATTR_RO(_name) \
-अटल काष्ठा hyp_sysfs_attr  _name##_attr = __ATTR_RO(_name)
+#define HYPERVISOR_ATTR_RO(_name) \
+static struct hyp_sysfs_attr  _name##_attr = __ATTR_RO(_name)
 
-#घोषणा HYPERVISOR_ATTR_RW(_name) \
-अटल काष्ठा hyp_sysfs_attr _name##_attr = \
+#define HYPERVISOR_ATTR_RW(_name) \
+static struct hyp_sysfs_attr _name##_attr = \
 	__ATTR(_name, 0644, _name##_show, _name##_store)
 
-काष्ठा hyp_sysfs_attr अणु
-	काष्ठा attribute attr;
-	sमाप_प्रकार (*show)(काष्ठा hyp_sysfs_attr *, अक्षर *);
-	sमाप_प्रकार (*store)(काष्ठा hyp_sysfs_attr *, स्थिर अक्षर *, माप_प्रकार);
-	व्योम *hyp_attr_data;
-पूर्ण;
+struct hyp_sysfs_attr {
+	struct attribute attr;
+	ssize_t (*show)(struct hyp_sysfs_attr *, char *);
+	ssize_t (*store)(struct hyp_sysfs_attr *, const char *, size_t);
+	void *hyp_attr_data;
+};
 
-अटल sमाप_प्रकार type_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	वापस प्र_लिखो(buffer, "xen\n");
-पूर्ण
+static ssize_t type_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	return sprintf(buffer, "xen\n");
+}
 
 HYPERVISOR_ATTR_RO(type);
 
-अटल पूर्णांक __init xen_sysfs_type_init(व्योम)
-अणु
-	वापस sysfs_create_file(hypervisor_kobj, &type_attr.attr);
-पूर्ण
+static int __init xen_sysfs_type_init(void)
+{
+	return sysfs_create_file(hypervisor_kobj, &type_attr.attr);
+}
 
-अटल sमाप_प्रकार guest_type_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	स्थिर अक्षर *type;
+static ssize_t guest_type_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	const char *type;
 
-	चयन (xen_करोमुख्य_type) अणु
-	हाल XEN_NATIVE:
+	switch (xen_domain_type) {
+	case XEN_NATIVE:
 		/* ARM only. */
 		type = "Xen";
-		अवरोध;
-	हाल XEN_PV_DOMAIN:
+		break;
+	case XEN_PV_DOMAIN:
 		type = "PV";
-		अवरोध;
-	हाल XEN_HVM_DOMAIN:
-		type = xen_pvh_करोमुख्य() ? "PVH" : "HVM";
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	case XEN_HVM_DOMAIN:
+		type = xen_pvh_domain() ? "PVH" : "HVM";
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस प्र_लिखो(buffer, "%s\n", type);
-पूर्ण
+	return sprintf(buffer, "%s\n", type);
+}
 
 HYPERVISOR_ATTR_RO(guest_type);
 
-अटल पूर्णांक __init xen_sysfs_guest_type_init(व्योम)
-अणु
-	वापस sysfs_create_file(hypervisor_kobj, &guest_type_attr.attr);
-पूर्ण
+static int __init xen_sysfs_guest_type_init(void)
+{
+	return sysfs_create_file(hypervisor_kobj, &guest_type_attr.attr);
+}
 
 /* xen version attributes */
-अटल sमाप_प्रकार major_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक version = HYPERVISOR_xen_version(XENVER_version, शून्य);
-	अगर (version)
-		वापस प्र_लिखो(buffer, "%d\n", version >> 16);
-	वापस -ENODEV;
-पूर्ण
+static ssize_t major_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int version = HYPERVISOR_xen_version(XENVER_version, NULL);
+	if (version)
+		return sprintf(buffer, "%d\n", version >> 16);
+	return -ENODEV;
+}
 
 HYPERVISOR_ATTR_RO(major);
 
-अटल sमाप_प्रकार minor_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक version = HYPERVISOR_xen_version(XENVER_version, शून्य);
-	अगर (version)
-		वापस प्र_लिखो(buffer, "%d\n", version & 0xff);
-	वापस -ENODEV;
-पूर्ण
+static ssize_t minor_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int version = HYPERVISOR_xen_version(XENVER_version, NULL);
+	if (version)
+		return sprintf(buffer, "%d\n", version & 0xff);
+	return -ENODEV;
+}
 
 HYPERVISOR_ATTR_RO(minor);
 
-अटल sमाप_प्रकार extra_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	अक्षर *extra;
+static ssize_t extra_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	char *extra;
 
-	extra = kदो_स्मृति(XEN_EXTRAVERSION_LEN, GFP_KERNEL);
-	अगर (extra) अणु
+	extra = kmalloc(XEN_EXTRAVERSION_LEN, GFP_KERNEL);
+	if (extra) {
 		ret = HYPERVISOR_xen_version(XENVER_extraversion, extra);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%s\n", extra);
-		kमुक्त(extra);
-	पूर्ण
+		if (!ret)
+			ret = sprintf(buffer, "%s\n", extra);
+		kfree(extra);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(extra);
 
-अटल काष्ठा attribute *version_attrs[] = अणु
+static struct attribute *version_attrs[] = {
 	&major_attr.attr,
 	&minor_attr.attr,
 	&extra_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group version_group = अणु
+static const struct attribute_group version_group = {
 	.name = "version",
 	.attrs = version_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xen_sysfs_version_init(व्योम)
-अणु
-	वापस sysfs_create_group(hypervisor_kobj, &version_group);
-पूर्ण
+static int __init xen_sysfs_version_init(void)
+{
+	return sysfs_create_group(hypervisor_kobj, &version_group);
+}
 
 /* UUID */
 
-अटल sमाप_प्रकार uuid_show_fallback(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	अक्षर *vm, *val;
-	पूर्णांक ret;
-	बाह्य पूर्णांक xenstored_पढ़ोy;
+static ssize_t uuid_show_fallback(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	char *vm, *val;
+	int ret;
+	extern int xenstored_ready;
 
-	अगर (!xenstored_पढ़ोy)
-		वापस -EBUSY;
+	if (!xenstored_ready)
+		return -EBUSY;
 
-	vm = xenbus_पढ़ो(XBT_NIL, "vm", "", शून्य);
-	अगर (IS_ERR(vm))
-		वापस PTR_ERR(vm);
-	val = xenbus_पढ़ो(XBT_NIL, vm, "uuid", शून्य);
-	kमुक्त(vm);
-	अगर (IS_ERR(val))
-		वापस PTR_ERR(val);
-	ret = प्र_लिखो(buffer, "%s\n", val);
-	kमुक्त(val);
-	वापस ret;
-पूर्ण
+	vm = xenbus_read(XBT_NIL, "vm", "", NULL);
+	if (IS_ERR(vm))
+		return PTR_ERR(vm);
+	val = xenbus_read(XBT_NIL, vm, "uuid", NULL);
+	kfree(vm);
+	if (IS_ERR(val))
+		return PTR_ERR(val);
+	ret = sprintf(buffer, "%s\n", val);
+	kfree(val);
+	return ret;
+}
 
-अटल sमाप_प्रकार uuid_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	xen_करोमुख्य_handle_t uuid;
-	पूर्णांक ret;
+static ssize_t uuid_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	xen_domain_handle_t uuid;
+	int ret;
 	ret = HYPERVISOR_xen_version(XENVER_guest_handle, uuid);
-	अगर (ret)
-		वापस uuid_show_fallback(attr, buffer);
-	ret = प्र_लिखो(buffer, "%pU\n", uuid);
-	वापस ret;
-पूर्ण
+	if (ret)
+		return uuid_show_fallback(attr, buffer);
+	ret = sprintf(buffer, "%pU\n", uuid);
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(uuid);
 
-अटल पूर्णांक __init xen_sysfs_uuid_init(व्योम)
-अणु
-	वापस sysfs_create_file(hypervisor_kobj, &uuid_attr.attr);
-पूर्ण
+static int __init xen_sysfs_uuid_init(void)
+{
+	return sysfs_create_file(hypervisor_kobj, &uuid_attr.attr);
+}
 
 /* xen compilation attributes */
 
-अटल sमाप_प्रकार compiler_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा xen_compile_info *info;
+static ssize_t compiler_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	struct xen_compile_info *info;
 
-	info = kदो_स्मृति(माप(काष्ठा xen_compile_info), GFP_KERNEL);
-	अगर (info) अणु
+	info = kmalloc(sizeof(struct xen_compile_info), GFP_KERNEL);
+	if (info) {
 		ret = HYPERVISOR_xen_version(XENVER_compile_info, info);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%s\n", info->compiler);
-		kमुक्त(info);
-	पूर्ण
+		if (!ret)
+			ret = sprintf(buffer, "%s\n", info->compiler);
+		kfree(info);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(compiler);
 
-अटल sमाप_प्रकार compiled_by_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा xen_compile_info *info;
+static ssize_t compiled_by_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	struct xen_compile_info *info;
 
-	info = kदो_स्मृति(माप(काष्ठा xen_compile_info), GFP_KERNEL);
-	अगर (info) अणु
+	info = kmalloc(sizeof(struct xen_compile_info), GFP_KERNEL);
+	if (info) {
 		ret = HYPERVISOR_xen_version(XENVER_compile_info, info);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%s\n", info->compile_by);
-		kमुक्त(info);
-	पूर्ण
+		if (!ret)
+			ret = sprintf(buffer, "%s\n", info->compile_by);
+		kfree(info);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(compiled_by);
 
-अटल sमाप_प्रकार compile_date_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा xen_compile_info *info;
+static ssize_t compile_date_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	struct xen_compile_info *info;
 
-	info = kदो_स्मृति(माप(काष्ठा xen_compile_info), GFP_KERNEL);
-	अगर (info) अणु
+	info = kmalloc(sizeof(struct xen_compile_info), GFP_KERNEL);
+	if (info) {
 		ret = HYPERVISOR_xen_version(XENVER_compile_info, info);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%s\n", info->compile_date);
-		kमुक्त(info);
-	पूर्ण
+		if (!ret)
+			ret = sprintf(buffer, "%s\n", info->compile_date);
+		kfree(info);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(compile_date);
 
-अटल काष्ठा attribute *xen_compile_attrs[] = अणु
+static struct attribute *xen_compile_attrs[] = {
 	&compiler_attr.attr,
 	&compiled_by_attr.attr,
 	&compile_date_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group xen_compilation_group = अणु
+static const struct attribute_group xen_compilation_group = {
 	.name = "compilation",
 	.attrs = xen_compile_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xen_sysfs_compilation_init(व्योम)
-अणु
-	वापस sysfs_create_group(hypervisor_kobj, &xen_compilation_group);
-पूर्ण
+static int __init xen_sysfs_compilation_init(void)
+{
+	return sysfs_create_group(hypervisor_kobj, &xen_compilation_group);
+}
 
 /* xen properties info */
 
-अटल sमाप_प्रकार capabilities_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	अक्षर *caps;
+static ssize_t capabilities_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	char *caps;
 
-	caps = kदो_स्मृति(XEN_CAPABILITIES_INFO_LEN, GFP_KERNEL);
-	अगर (caps) अणु
+	caps = kmalloc(XEN_CAPABILITIES_INFO_LEN, GFP_KERNEL);
+	if (caps) {
 		ret = HYPERVISOR_xen_version(XENVER_capabilities, caps);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%s\n", caps);
-		kमुक्त(caps);
-	पूर्ण
+		if (!ret)
+			ret = sprintf(buffer, "%s\n", caps);
+		kfree(caps);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(capabilities);
 
-अटल sमाप_प्रकार changeset_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	अक्षर *cset;
+static ssize_t changeset_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	char *cset;
 
-	cset = kदो_स्मृति(XEN_CHANGESET_INFO_LEN, GFP_KERNEL);
-	अगर (cset) अणु
+	cset = kmalloc(XEN_CHANGESET_INFO_LEN, GFP_KERNEL);
+	if (cset) {
 		ret = HYPERVISOR_xen_version(XENVER_changeset, cset);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%s\n", cset);
-		kमुक्त(cset);
-	पूर्ण
+		if (!ret)
+			ret = sprintf(buffer, "%s\n", cset);
+		kfree(cset);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(changeset);
 
-अटल sमाप_प्रकार भव_start_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret = -ENOMEM;
-	काष्ठा xen_platक्रमm_parameters *parms;
+static ssize_t virtual_start_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret = -ENOMEM;
+	struct xen_platform_parameters *parms;
 
-	parms = kदो_स्मृति(माप(काष्ठा xen_platक्रमm_parameters), GFP_KERNEL);
-	अगर (parms) अणु
-		ret = HYPERVISOR_xen_version(XENVER_platक्रमm_parameters,
+	parms = kmalloc(sizeof(struct xen_platform_parameters), GFP_KERNEL);
+	if (parms) {
+		ret = HYPERVISOR_xen_version(XENVER_platform_parameters,
 					     parms);
-		अगर (!ret)
-			ret = प्र_लिखो(buffer, "%"PRI_xen_uदीर्घ"\n",
+		if (!ret)
+			ret = sprintf(buffer, "%"PRI_xen_ulong"\n",
 				      parms->virt_start);
-		kमुक्त(parms);
-	पूर्ण
+		kfree(parms);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-HYPERVISOR_ATTR_RO(भव_start);
+HYPERVISOR_ATTR_RO(virtual_start);
 
-अटल sमाप_प्रकार pagesize_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret;
+static ssize_t pagesize_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret;
 
-	ret = HYPERVISOR_xen_version(XENVER_pagesize, शून्य);
-	अगर (ret > 0)
-		ret = प्र_लिखो(buffer, "%x\n", ret);
+	ret = HYPERVISOR_xen_version(XENVER_pagesize, NULL);
+	if (ret > 0)
+		ret = sprintf(buffer, "%x\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(pagesize);
 
-अटल sमाप_प्रकार xen_feature_show(पूर्णांक index, अक्षर *buffer)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा xen_feature_info info;
+static ssize_t xen_feature_show(int index, char *buffer)
+{
+	ssize_t ret;
+	struct xen_feature_info info;
 
 	info.submap_idx = index;
 	ret = HYPERVISOR_xen_version(XENVER_get_features, &info);
-	अगर (!ret)
-		ret = प्र_लिखो(buffer, "%08x", info.submap);
+	if (!ret)
+		ret = sprintf(buffer, "%08x", info.submap);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार features_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	sमाप_प्रकार len;
-	पूर्णांक i;
+static ssize_t features_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	ssize_t len;
+	int i;
 
 	len = 0;
-	क्रम (i = XENFEAT_NR_SUBMAPS-1; i >= 0; i--) अणु
-		पूर्णांक ret = xen_feature_show(i, buffer + len);
-		अगर (ret < 0) अणु
-			अगर (len == 0)
+	for (i = XENFEAT_NR_SUBMAPS-1; i >= 0; i--) {
+		int ret = xen_feature_show(i, buffer + len);
+		if (ret < 0) {
+			if (len == 0)
 				len = ret;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		len += ret;
-	पूर्ण
-	अगर (len > 0)
+	}
+	if (len > 0)
 		buffer[len++] = '\n';
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 HYPERVISOR_ATTR_RO(features);
 
-अटल sमाप_प्रकार buildid_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	sमाप_प्रकार ret;
-	काष्ठा xen_build_id *buildid;
+static ssize_t buildid_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	ssize_t ret;
+	struct xen_build_id *buildid;
 
-	ret = HYPERVISOR_xen_version(XENVER_build_id, शून्य);
-	अगर (ret < 0) अणु
-		अगर (ret == -EPERM)
-			ret = प्र_लिखो(buffer, "<denied>");
-		वापस ret;
-	पूर्ण
+	ret = HYPERVISOR_xen_version(XENVER_build_id, NULL);
+	if (ret < 0) {
+		if (ret == -EPERM)
+			ret = sprintf(buffer, "<denied>");
+		return ret;
+	}
 
-	buildid = kदो_स्मृति(माप(*buildid) + ret, GFP_KERNEL);
-	अगर (!buildid)
-		वापस -ENOMEM;
+	buildid = kmalloc(sizeof(*buildid) + ret, GFP_KERNEL);
+	if (!buildid)
+		return -ENOMEM;
 
 	buildid->len = ret;
 	ret = HYPERVISOR_xen_version(XENVER_build_id, buildid);
-	अगर (ret > 0)
-		ret = प्र_लिखो(buffer, "%s", buildid->buf);
-	kमुक्त(buildid);
+	if (ret > 0)
+		ret = sprintf(buffer, "%s", buildid->buf);
+	kfree(buildid);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 HYPERVISOR_ATTR_RO(buildid);
 
-अटल काष्ठा attribute *xen_properties_attrs[] = अणु
+static struct attribute *xen_properties_attrs[] = {
 	&capabilities_attr.attr,
 	&changeset_attr.attr,
-	&भव_start_attr.attr,
+	&virtual_start_attr.attr,
 	&pagesize_attr.attr,
 	&features_attr.attr,
 	&buildid_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group xen_properties_group = अणु
+static const struct attribute_group xen_properties_group = {
 	.name = "properties",
 	.attrs = xen_properties_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xen_sysfs_properties_init(व्योम)
-अणु
-	वापस sysfs_create_group(hypervisor_kobj, &xen_properties_group);
-पूर्ण
+static int __init xen_sysfs_properties_init(void)
+{
+	return sysfs_create_group(hypervisor_kobj, &xen_properties_group);
+}
 
-#अगर_घोषित CONFIG_XEN_HAVE_VPMU
-काष्ठा pmu_mode अणु
-	स्थिर अक्षर *name;
-	uपूर्णांक32_t mode;
-पूर्ण;
+#ifdef CONFIG_XEN_HAVE_VPMU
+struct pmu_mode {
+	const char *name;
+	uint32_t mode;
+};
 
-अटल काष्ठा pmu_mode pmu_modes[] = अणु
-	अणु"off", XENPMU_MODE_OFFपूर्ण,
-	अणु"self", XENPMU_MODE_SELFपूर्ण,
-	अणु"hv", XENPMU_MODE_HVपूर्ण,
-	अणु"all", XENPMU_MODE_ALLपूर्ण
-पूर्ण;
+static struct pmu_mode pmu_modes[] = {
+	{"off", XENPMU_MODE_OFF},
+	{"self", XENPMU_MODE_SELF},
+	{"hv", XENPMU_MODE_HV},
+	{"all", XENPMU_MODE_ALL}
+};
 
-अटल sमाप_प्रकार pmu_mode_store(काष्ठा hyp_sysfs_attr *attr,
-			      स्थिर अक्षर *buffer, माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	काष्ठा xen_pmu_params xp;
-	पूर्णांक i;
+static ssize_t pmu_mode_store(struct hyp_sysfs_attr *attr,
+			      const char *buffer, size_t len)
+{
+	int ret;
+	struct xen_pmu_params xp;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(pmu_modes); i++) अणु
-		अगर (म_भेदन(buffer, pmu_modes[i].name, len - 1) == 0) अणु
+	for (i = 0; i < ARRAY_SIZE(pmu_modes); i++) {
+		if (strncmp(buffer, pmu_modes[i].name, len - 1) == 0) {
 			xp.val = pmu_modes[i].mode;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i == ARRAY_SIZE(pmu_modes))
-		वापस -EINVAL;
+	if (i == ARRAY_SIZE(pmu_modes))
+		return -EINVAL;
 
 	xp.version.maj = XENPMU_VER_MAJ;
 	xp.version.min = XENPMU_VER_MIN;
 	ret = HYPERVISOR_xenpmu_op(XENPMU_mode_set, &xp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार pmu_mode_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret;
-	काष्ठा xen_pmu_params xp;
-	पूर्णांक i;
-	uपूर्णांक32_t mode;
+static ssize_t pmu_mode_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret;
+	struct xen_pmu_params xp;
+	int i;
+	uint32_t mode;
 
 	xp.version.maj = XENPMU_VER_MAJ;
 	xp.version.min = XENPMU_VER_MIN;
 	ret = HYPERVISOR_xenpmu_op(XENPMU_mode_get, &xp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	mode = (uपूर्णांक32_t)xp.val;
-	क्रम (i = 0; i < ARRAY_SIZE(pmu_modes); i++) अणु
-		अगर (mode == pmu_modes[i].mode)
-			वापस प्र_लिखो(buffer, "%s\n", pmu_modes[i].name);
-	पूर्ण
+	mode = (uint32_t)xp.val;
+	for (i = 0; i < ARRAY_SIZE(pmu_modes); i++) {
+		if (mode == pmu_modes[i].mode)
+			return sprintf(buffer, "%s\n", pmu_modes[i].name);
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 HYPERVISOR_ATTR_RW(pmu_mode);
 
-अटल sमाप_प्रकार pmu_features_store(काष्ठा hyp_sysfs_attr *attr,
-				  स्थिर अक्षर *buffer, माप_प्रकार len)
-अणु
-	पूर्णांक ret;
-	uपूर्णांक32_t features;
-	काष्ठा xen_pmu_params xp;
+static ssize_t pmu_features_store(struct hyp_sysfs_attr *attr,
+				  const char *buffer, size_t len)
+{
+	int ret;
+	uint32_t features;
+	struct xen_pmu_params xp;
 
 	ret = kstrtou32(buffer, 0, &features);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	xp.val = features;
 	xp.version.maj = XENPMU_VER_MAJ;
 	xp.version.min = XENPMU_VER_MIN;
 	ret = HYPERVISOR_xenpmu_op(XENPMU_feature_set, &xp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार pmu_features_show(काष्ठा hyp_sysfs_attr *attr, अक्षर *buffer)
-अणु
-	पूर्णांक ret;
-	काष्ठा xen_pmu_params xp;
+static ssize_t pmu_features_show(struct hyp_sysfs_attr *attr, char *buffer)
+{
+	int ret;
+	struct xen_pmu_params xp;
 
 	xp.version.maj = XENPMU_VER_MAJ;
 	xp.version.min = XENPMU_VER_MIN;
 	ret = HYPERVISOR_xenpmu_op(XENPMU_feature_get, &xp);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस प्र_लिखो(buffer, "0x%x\n", (uपूर्णांक32_t)xp.val);
-पूर्ण
+	return sprintf(buffer, "0x%x\n", (uint32_t)xp.val);
+}
 HYPERVISOR_ATTR_RW(pmu_features);
 
-अटल काष्ठा attribute *xen_pmu_attrs[] = अणु
+static struct attribute *xen_pmu_attrs[] = {
 	&pmu_mode_attr.attr,
 	&pmu_features_attr.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group xen_pmu_group = अणु
+static const struct attribute_group xen_pmu_group = {
 	.name = "pmu",
 	.attrs = xen_pmu_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init xen_sysfs_pmu_init(व्योम)
-अणु
-	वापस sysfs_create_group(hypervisor_kobj, &xen_pmu_group);
-पूर्ण
-#पूर्ण_अगर
+static int __init xen_sysfs_pmu_init(void)
+{
+	return sysfs_create_group(hypervisor_kobj, &xen_pmu_group);
+}
+#endif
 
-अटल पूर्णांक __init hyper_sysfs_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init hyper_sysfs_init(void)
+{
+	int ret;
 
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+	if (!xen_domain())
+		return -ENODEV;
 
 	ret = xen_sysfs_type_init();
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 	ret = xen_sysfs_guest_type_init();
-	अगर (ret)
-		जाओ guest_type_out;
+	if (ret)
+		goto guest_type_out;
 	ret = xen_sysfs_version_init();
-	अगर (ret)
-		जाओ version_out;
+	if (ret)
+		goto version_out;
 	ret = xen_sysfs_compilation_init();
-	अगर (ret)
-		जाओ comp_out;
+	if (ret)
+		goto comp_out;
 	ret = xen_sysfs_uuid_init();
-	अगर (ret)
-		जाओ uuid_out;
+	if (ret)
+		goto uuid_out;
 	ret = xen_sysfs_properties_init();
-	अगर (ret)
-		जाओ prop_out;
-#अगर_घोषित CONFIG_XEN_HAVE_VPMU
-	अगर (xen_initial_करोमुख्य()) अणु
+	if (ret)
+		goto prop_out;
+#ifdef CONFIG_XEN_HAVE_VPMU
+	if (xen_initial_domain()) {
 		ret = xen_sysfs_pmu_init();
-		अगर (ret) अणु
-			sysfs_हटाओ_group(hypervisor_kobj,
+		if (ret) {
+			sysfs_remove_group(hypervisor_kobj,
 					   &xen_properties_group);
-			जाओ prop_out;
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	जाओ out;
+			goto prop_out;
+		}
+	}
+#endif
+	goto out;
 
 prop_out:
-	sysfs_हटाओ_file(hypervisor_kobj, &uuid_attr.attr);
+	sysfs_remove_file(hypervisor_kobj, &uuid_attr.attr);
 uuid_out:
-	sysfs_हटाओ_group(hypervisor_kobj, &xen_compilation_group);
+	sysfs_remove_group(hypervisor_kobj, &xen_compilation_group);
 comp_out:
-	sysfs_हटाओ_group(hypervisor_kobj, &version_group);
+	sysfs_remove_group(hypervisor_kobj, &version_group);
 version_out:
-	sysfs_हटाओ_file(hypervisor_kobj, &guest_type_attr.attr);
+	sysfs_remove_file(hypervisor_kobj, &guest_type_attr.attr);
 guest_type_out:
-	sysfs_हटाओ_file(hypervisor_kobj, &type_attr.attr);
+	sysfs_remove_file(hypervisor_kobj, &type_attr.attr);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 device_initcall(hyper_sysfs_init);
 
-अटल sमाप_प्रकार hyp_sysfs_show(काष्ठा kobject *kobj,
-			      काष्ठा attribute *attr,
-			      अक्षर *buffer)
-अणु
-	काष्ठा hyp_sysfs_attr *hyp_attr;
-	hyp_attr = container_of(attr, काष्ठा hyp_sysfs_attr, attr);
-	अगर (hyp_attr->show)
-		वापस hyp_attr->show(hyp_attr, buffer);
-	वापस 0;
-पूर्ण
+static ssize_t hyp_sysfs_show(struct kobject *kobj,
+			      struct attribute *attr,
+			      char *buffer)
+{
+	struct hyp_sysfs_attr *hyp_attr;
+	hyp_attr = container_of(attr, struct hyp_sysfs_attr, attr);
+	if (hyp_attr->show)
+		return hyp_attr->show(hyp_attr, buffer);
+	return 0;
+}
 
-अटल sमाप_प्रकार hyp_sysfs_store(काष्ठा kobject *kobj,
-			       काष्ठा attribute *attr,
-			       स्थिर अक्षर *buffer,
-			       माप_प्रकार len)
-अणु
-	काष्ठा hyp_sysfs_attr *hyp_attr;
-	hyp_attr = container_of(attr, काष्ठा hyp_sysfs_attr, attr);
-	अगर (hyp_attr->store)
-		वापस hyp_attr->store(hyp_attr, buffer, len);
-	वापस 0;
-पूर्ण
+static ssize_t hyp_sysfs_store(struct kobject *kobj,
+			       struct attribute *attr,
+			       const char *buffer,
+			       size_t len)
+{
+	struct hyp_sysfs_attr *hyp_attr;
+	hyp_attr = container_of(attr, struct hyp_sysfs_attr, attr);
+	if (hyp_attr->store)
+		return hyp_attr->store(hyp_attr, buffer, len);
+	return 0;
+}
 
-अटल स्थिर काष्ठा sysfs_ops hyp_sysfs_ops = अणु
+static const struct sysfs_ops hyp_sysfs_ops = {
 	.show = hyp_sysfs_show,
 	.store = hyp_sysfs_store,
-पूर्ण;
+};
 
-अटल काष्ठा kobj_type hyp_sysfs_kobj_type = अणु
+static struct kobj_type hyp_sysfs_kobj_type = {
 	.sysfs_ops = &hyp_sysfs_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init hypervisor_subsys_init(व्योम)
-अणु
-	अगर (!xen_करोमुख्य())
-		वापस -ENODEV;
+static int __init hypervisor_subsys_init(void)
+{
+	if (!xen_domain())
+		return -ENODEV;
 
 	hypervisor_kobj->ktype = &hyp_sysfs_kobj_type;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 device_initcall(hypervisor_subsys_init);

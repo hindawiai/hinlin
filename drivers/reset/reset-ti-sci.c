@@ -1,235 +1,234 @@
-<शैली गुरु>
 /*
  * Texas Instrument's System Control Interface (TI-SCI) reset driver
  *
  * Copyright (C) 2015-2017 Texas Instruments Incorporated - https://www.ti.com/
  *	Andrew F. Davis <afd@ti.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/idr.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
-#समावेश <linux/soc/ti/ti_sci_protocol.h>
+#include <linux/idr.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
+#include <linux/soc/ti/ti_sci_protocol.h>
 
 /**
- * काष्ठा ti_sci_reset_control - reset control काष्ठाure
- * @dev_id: SoC-specअगरic device identअगरier
- * @reset_mask: reset mask to use क्रम toggling reset
- * @lock: synchronize reset_mask पढ़ो-modअगरy-ग_लिखोs
+ * struct ti_sci_reset_control - reset control structure
+ * @dev_id: SoC-specific device identifier
+ * @reset_mask: reset mask to use for toggling reset
+ * @lock: synchronize reset_mask read-modify-writes
  */
-काष्ठा ti_sci_reset_control अणु
+struct ti_sci_reset_control {
 	u32 dev_id;
 	u32 reset_mask;
-	काष्ठा mutex lock;
-पूर्ण;
+	struct mutex lock;
+};
 
 /**
- * काष्ठा ti_sci_reset_data - reset controller inक्रमmation काष्ठाure
+ * struct ti_sci_reset_data - reset controller information structure
  * @rcdev: reset controller entity
- * @dev: reset controller device poपूर्णांकer
- * @sci: TI SCI handle used क्रम communication with प्रणाली controller
- * @idr: idr काष्ठाure क्रम mapping ids to reset control काष्ठाures
+ * @dev: reset controller device pointer
+ * @sci: TI SCI handle used for communication with system controller
+ * @idr: idr structure for mapping ids to reset control structures
  */
-काष्ठा ti_sci_reset_data अणु
-	काष्ठा reset_controller_dev rcdev;
-	काष्ठा device *dev;
-	स्थिर काष्ठा ti_sci_handle *sci;
-	काष्ठा idr idr;
-पूर्ण;
+struct ti_sci_reset_data {
+	struct reset_controller_dev rcdev;
+	struct device *dev;
+	const struct ti_sci_handle *sci;
+	struct idr idr;
+};
 
-#घोषणा to_ti_sci_reset_data(p)	\
-	container_of((p), काष्ठा ti_sci_reset_data, rcdev)
+#define to_ti_sci_reset_data(p)	\
+	container_of((p), struct ti_sci_reset_data, rcdev)
 
 /**
  * ti_sci_reset_set() - program a device's reset
  * @rcdev: reset controller entity
  * @id: ID of the reset to toggle
- * @निश्चित: boolean flag to indicate निश्चित or deनिश्चित
+ * @assert: boolean flag to indicate assert or deassert
  *
- * This is a common पूर्णांकernal function used to निश्चित or deनिश्चित a device's
- * reset using the TI SCI protocol. The device's reset is निश्चितed अगर the
- * @निश्चित argument is true, or deनिश्चितed अगर @निश्चित argument is false.
- * The mechanism itself is a पढ़ो-modअगरy-ग_लिखो procedure, the current device
- * reset रेजिस्टर is पढ़ो using a TI SCI device operation, the new value is
+ * This is a common internal function used to assert or deassert a device's
+ * reset using the TI SCI protocol. The device's reset is asserted if the
+ * @assert argument is true, or deasserted if @assert argument is false.
+ * The mechanism itself is a read-modify-write procedure, the current device
+ * reset register is read using a TI SCI device operation, the new value is
  * set or un-set using the reset's mask, and the new reset value written by
  * using another TI SCI device operation.
  *
- * Return: 0 क्रम successful request, अन्यथा a corresponding error value
+ * Return: 0 for successful request, else a corresponding error value
  */
-अटल पूर्णांक ti_sci_reset_set(काष्ठा reset_controller_dev *rcdev,
-			    अचिन्हित दीर्घ id, bool निश्चित)
-अणु
-	काष्ठा ti_sci_reset_data *data = to_ti_sci_reset_data(rcdev);
-	स्थिर काष्ठा ti_sci_handle *sci = data->sci;
-	स्थिर काष्ठा ti_sci_dev_ops *dev_ops = &sci->ops.dev_ops;
-	काष्ठा ti_sci_reset_control *control;
+static int ti_sci_reset_set(struct reset_controller_dev *rcdev,
+			    unsigned long id, bool assert)
+{
+	struct ti_sci_reset_data *data = to_ti_sci_reset_data(rcdev);
+	const struct ti_sci_handle *sci = data->sci;
+	const struct ti_sci_dev_ops *dev_ops = &sci->ops.dev_ops;
+	struct ti_sci_reset_control *control;
 	u32 reset_state;
-	पूर्णांक ret;
+	int ret;
 
 	control = idr_find(&data->idr, id);
-	अगर (!control)
-		वापस -EINVAL;
+	if (!control)
+		return -EINVAL;
 
 	mutex_lock(&control->lock);
 
 	ret = dev_ops->get_device_resets(sci, control->dev_id, &reset_state);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (निश्चित)
+	if (assert)
 		reset_state |= control->reset_mask;
-	अन्यथा
+	else
 		reset_state &= ~control->reset_mask;
 
 	ret = dev_ops->set_device_resets(sci, control->dev_id, reset_state);
 out:
 	mutex_unlock(&control->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * ti_sci_reset_निश्चित() - निश्चित device reset
+ * ti_sci_reset_assert() - assert device reset
  * @rcdev: reset controller entity
- * @id: ID of the reset to be निश्चितed
+ * @id: ID of the reset to be asserted
  *
- * This function implements the reset driver op to निश्चित a device's reset
+ * This function implements the reset driver op to assert a device's reset
  * using the TI SCI protocol. This invokes the function ti_sci_reset_set()
- * with the corresponding parameters as passed in, but with the @निश्चित
- * argument set to true क्रम निश्चितing the reset.
+ * with the corresponding parameters as passed in, but with the @assert
+ * argument set to true for asserting the reset.
  *
- * Return: 0 क्रम successful request, अन्यथा a corresponding error value
+ * Return: 0 for successful request, else a corresponding error value
  */
-अटल पूर्णांक ti_sci_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	वापस ti_sci_reset_set(rcdev, id, true);
-पूर्ण
+static int ti_sci_reset_assert(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	return ti_sci_reset_set(rcdev, id, true);
+}
 
 /**
- * ti_sci_reset_deनिश्चित() - deनिश्चित device reset
+ * ti_sci_reset_deassert() - deassert device reset
  * @rcdev: reset controller entity
- * @id: ID of the reset to be deनिश्चितed
+ * @id: ID of the reset to be deasserted
  *
- * This function implements the reset driver op to deनिश्चित a device's reset
+ * This function implements the reset driver op to deassert a device's reset
  * using the TI SCI protocol. This invokes the function ti_sci_reset_set()
- * with the corresponding parameters as passed in, but with the @निश्चित
- * argument set to false क्रम deनिश्चितing the reset.
+ * with the corresponding parameters as passed in, but with the @assert
+ * argument set to false for deasserting the reset.
  *
- * Return: 0 क्रम successful request, अन्यथा a corresponding error value
+ * Return: 0 for successful request, else a corresponding error value
  */
-अटल पूर्णांक ti_sci_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				 अचिन्हित दीर्घ id)
-अणु
-	वापस ti_sci_reset_set(rcdev, id, false);
-पूर्ण
+static int ti_sci_reset_deassert(struct reset_controller_dev *rcdev,
+				 unsigned long id)
+{
+	return ti_sci_reset_set(rcdev, id, false);
+}
 
 /**
  * ti_sci_reset_status() - check device reset status
  * @rcdev: reset controller entity
  * @id: ID of reset to be checked
  *
- * This function implements the reset driver op to वापस the status of a
- * device's reset using the TI SCI protocol. The reset रेजिस्टर value is पढ़ो
+ * This function implements the reset driver op to return the status of a
+ * device's reset using the TI SCI protocol. The reset register value is read
  * by invoking the TI SCI device operation .get_device_resets(), and the
- * status of the specअगरic reset is extracted and वापसed using this reset's
+ * status of the specific reset is extracted and returned using this reset's
  * reset mask.
  *
- * Return: 0 अगर reset is deनिश्चितed, or a non-zero value अगर reset is निश्चितed
+ * Return: 0 if reset is deasserted, or a non-zero value if reset is asserted
  */
-अटल पूर्णांक ti_sci_reset_status(काष्ठा reset_controller_dev *rcdev,
-			       अचिन्हित दीर्घ id)
-अणु
-	काष्ठा ti_sci_reset_data *data = to_ti_sci_reset_data(rcdev);
-	स्थिर काष्ठा ti_sci_handle *sci = data->sci;
-	स्थिर काष्ठा ti_sci_dev_ops *dev_ops = &sci->ops.dev_ops;
-	काष्ठा ti_sci_reset_control *control;
+static int ti_sci_reset_status(struct reset_controller_dev *rcdev,
+			       unsigned long id)
+{
+	struct ti_sci_reset_data *data = to_ti_sci_reset_data(rcdev);
+	const struct ti_sci_handle *sci = data->sci;
+	const struct ti_sci_dev_ops *dev_ops = &sci->ops.dev_ops;
+	struct ti_sci_reset_control *control;
 	u32 reset_state;
-	पूर्णांक ret;
+	int ret;
 
 	control = idr_find(&data->idr, id);
-	अगर (!control)
-		वापस -EINVAL;
+	if (!control)
+		return -EINVAL;
 
 	ret = dev_ops->get_device_resets(sci, control->dev_id, &reset_state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस reset_state & control->reset_mask;
-पूर्ण
+	return reset_state & control->reset_mask;
+}
 
-अटल स्थिर काष्ठा reset_control_ops ti_sci_reset_ops = अणु
-	.निश्चित		= ti_sci_reset_निश्चित,
-	.deनिश्चित	= ti_sci_reset_deनिश्चित,
+static const struct reset_control_ops ti_sci_reset_ops = {
+	.assert		= ti_sci_reset_assert,
+	.deassert	= ti_sci_reset_deassert,
 	.status		= ti_sci_reset_status,
-पूर्ण;
+};
 
 /**
  * ti_sci_reset_of_xlate() - translate a set of OF arguments to a reset ID
  * @rcdev: reset controller entity
- * @reset_spec: OF reset argument specअगरier
+ * @reset_spec: OF reset argument specifier
  *
- * This function perक्रमms the translation of the reset argument specअगरier
+ * This function performs the translation of the reset argument specifier
  * values defined in a reset consumer device node. The function allocates a
- * reset control काष्ठाure क्रम that device reset, and will be used by the
- * driver क्रम perक्रमming any reset functions on that reset. An idr काष्ठाure
- * is allocated and used to map to the reset control काष्ठाure. This idr
- * is used by the driver to करो reset lookups.
+ * reset control structure for that device reset, and will be used by the
+ * driver for performing any reset functions on that reset. An idr structure
+ * is allocated and used to map to the reset control structure. This idr
+ * is used by the driver to do reset lookups.
  *
- * Return: 0 क्रम successful request, अन्यथा a corresponding error value
+ * Return: 0 for successful request, else a corresponding error value
  */
-अटल पूर्णांक ti_sci_reset_of_xlate(काष्ठा reset_controller_dev *rcdev,
-				 स्थिर काष्ठा of_phandle_args *reset_spec)
-अणु
-	काष्ठा ti_sci_reset_data *data = to_ti_sci_reset_data(rcdev);
-	काष्ठा ti_sci_reset_control *control;
+static int ti_sci_reset_of_xlate(struct reset_controller_dev *rcdev,
+				 const struct of_phandle_args *reset_spec)
+{
+	struct ti_sci_reset_data *data = to_ti_sci_reset_data(rcdev);
+	struct ti_sci_reset_control *control;
 
-	अगर (WARN_ON(reset_spec->args_count != rcdev->of_reset_n_cells))
-		वापस -EINVAL;
+	if (WARN_ON(reset_spec->args_count != rcdev->of_reset_n_cells))
+		return -EINVAL;
 
-	control = devm_kzalloc(data->dev, माप(*control), GFP_KERNEL);
-	अगर (!control)
-		वापस -ENOMEM;
+	control = devm_kzalloc(data->dev, sizeof(*control), GFP_KERNEL);
+	if (!control)
+		return -ENOMEM;
 
 	control->dev_id = reset_spec->args[0];
 	control->reset_mask = reset_spec->args[1];
 	mutex_init(&control->lock);
 
-	वापस idr_alloc(&data->idr, control, 0, 0, GFP_KERNEL);
-पूर्ण
+	return idr_alloc(&data->idr, control, 0, 0, GFP_KERNEL);
+}
 
-अटल स्थिर काष्ठा of_device_id ti_sci_reset_of_match[] = अणु
-	अणु .compatible = "ti,sci-reset", पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id ti_sci_reset_of_match[] = {
+	{ .compatible = "ti,sci-reset", },
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, ti_sci_reset_of_match);
 
-अटल पूर्णांक ti_sci_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ti_sci_reset_data *data;
+static int ti_sci_reset_probe(struct platform_device *pdev)
+{
+	struct ti_sci_reset_data *data;
 
-	अगर (!pdev->dev.of_node)
-		वापस -ENODEV;
+	if (!pdev->dev.of_node)
+		return -ENODEV;
 
-	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->sci = devm_ti_sci_get_handle(&pdev->dev);
-	अगर (IS_ERR(data->sci))
-		वापस PTR_ERR(data->sci);
+	if (IS_ERR(data->sci))
+		return PTR_ERR(data->sci);
 
 	data->rcdev.ops = &ti_sci_reset_ops;
 	data->rcdev.owner = THIS_MODULE;
@@ -239,31 +238,31 @@ MODULE_DEVICE_TABLE(of, ti_sci_reset_of_match);
 	data->dev = &pdev->dev;
 	idr_init(&data->idr);
 
-	platक्रमm_set_drvdata(pdev, data);
+	platform_set_drvdata(pdev, data);
 
-	वापस reset_controller_रेजिस्टर(&data->rcdev);
-पूर्ण
+	return reset_controller_register(&data->rcdev);
+}
 
-अटल पूर्णांक ti_sci_reset_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा ti_sci_reset_data *data = platक्रमm_get_drvdata(pdev);
+static int ti_sci_reset_remove(struct platform_device *pdev)
+{
+	struct ti_sci_reset_data *data = platform_get_drvdata(pdev);
 
-	reset_controller_unरेजिस्टर(&data->rcdev);
+	reset_controller_unregister(&data->rcdev);
 
 	idr_destroy(&data->idr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver ti_sci_reset_driver = अणु
+static struct platform_driver ti_sci_reset_driver = {
 	.probe = ti_sci_reset_probe,
-	.हटाओ = ti_sci_reset_हटाओ,
-	.driver = अणु
+	.remove = ti_sci_reset_remove,
+	.driver = {
 		.name = "ti-sci-reset",
 		.of_match_table = ti_sci_reset_of_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(ti_sci_reset_driver);
+	},
+};
+module_platform_driver(ti_sci_reset_driver);
 
 MODULE_AUTHOR("Andrew F. Davis <afd@ti.com>");
 MODULE_DESCRIPTION("TI System Control Interface (TI SCI) Reset driver");

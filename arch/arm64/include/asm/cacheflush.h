@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Based on arch/arm/include/यंत्र/cacheflush.h
+ * Based on arch/arm/include/asm/cacheflush.h
  *
  * Copyright (C) 1999-2002 Russell King.
  * Copyright (C) 2012 ARM Ltd.
  */
-#अगर_अघोषित __ASM_CACHEFLUSH_H
-#घोषणा __ASM_CACHEFLUSH_H
+#ifndef __ASM_CACHEFLUSH_H
+#define __ASM_CACHEFLUSH_H
 
-#समावेश <linux/kgdb.h>
-#समावेश <linux/mm.h>
+#include <linux/kgdb.h>
+#include <linux/mm.h>
 
 /*
- * This flag is used to indicate that the page poपूर्णांकed to by a pte is clean
- * and करोes not require cleaning beक्रमe वापसing it to the user.
+ * This flag is used to indicate that the page pointed to by a pte is clean
+ * and does not require cleaning before returning it to the user.
  */
-#घोषणा PG_dcache_clean PG_arch_1
+#define PG_dcache_clean PG_arch_1
 
 /*
  *	MM Cache Management
@@ -25,9 +24,9 @@
  *	The arch/arm64/mm/cache.S implements these methods.
  *
  *	Start addresses are inclusive and end addresses are exclusive; start
- *	addresses should be rounded करोwn, end addresses up.
+ *	addresses should be rounded down, end addresses up.
  *
- *	See Documentation/core-api/cachetlb.rst क्रम more inक्रमmation. Please note that
+ *	See Documentation/core-api/cachetlb.rst for more information. Please note that
  *	the implementation assumes non-aliasing VIPT D-cache and (aliasing)
  *	VIPT I-cache.
  *
@@ -35,21 +34,21 @@
  *
  *		Ensure coherency between the I-cache and the D-cache in the
  *		region described by start, end.
- *		- start  - भव start address
- *		- end    - भव end address
+ *		- start  - virtual start address
+ *		- end    - virtual end address
  *
  *	invalidate_icache_range(start, end)
  *
  *		Invalidate the I-cache in the region described by start, end.
- *		- start  - भव start address
- *		- end    - भव end address
+ *		- start  - virtual start address
+ *		- end    - virtual end address
  *
  *	__flush_cache_user_range(start, end)
  *
  *		Ensure coherency between the I-cache and the D-cache in the
  *		region described by start, end.
- *		- start  - भव start address
- *		- end    - भव end address
+ *		- start  - virtual start address
+ *		- end    - virtual end address
  *
  *	__flush_dcache_area(kaddr, size)
  *
@@ -57,87 +56,87 @@
  *		- kaddr  - page address
  *		- size   - region size
  */
-बाह्य व्योम __flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-बाह्य पूर्णांक  invalidate_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-बाह्य व्योम __flush_dcache_area(व्योम *addr, माप_प्रकार len);
-बाह्य व्योम __inval_dcache_area(व्योम *addr, माप_प्रकार len);
-बाह्य व्योम __clean_dcache_area_poc(व्योम *addr, माप_प्रकार len);
-बाह्य व्योम __clean_dcache_area_pop(व्योम *addr, माप_प्रकार len);
-बाह्य व्योम __clean_dcache_area_pou(व्योम *addr, माप_प्रकार len);
-बाह्य दीर्घ __flush_cache_user_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
-बाह्य व्योम sync_icache_aliases(व्योम *kaddr, अचिन्हित दीर्घ len);
+extern void __flush_icache_range(unsigned long start, unsigned long end);
+extern int  invalidate_icache_range(unsigned long start, unsigned long end);
+extern void __flush_dcache_area(void *addr, size_t len);
+extern void __inval_dcache_area(void *addr, size_t len);
+extern void __clean_dcache_area_poc(void *addr, size_t len);
+extern void __clean_dcache_area_pop(void *addr, size_t len);
+extern void __clean_dcache_area_pou(void *addr, size_t len);
+extern long __flush_cache_user_range(unsigned long start, unsigned long end);
+extern void sync_icache_aliases(void *kaddr, unsigned long len);
 
-अटल अंतरभूत व्योम flush_icache_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
+static inline void flush_icache_range(unsigned long start, unsigned long end)
+{
 	__flush_icache_range(start, end);
 
 	/*
 	 * IPI all online CPUs so that they undergo a context synchronization
-	 * event and are क्रमced to refetch the new inकाष्ठाions.
+	 * event and are forced to refetch the new instructions.
 	 */
 
 	/*
-	 * KGDB perक्रमms cache मुख्यtenance with पूर्णांकerrupts disabled, so we
+	 * KGDB performs cache maintenance with interrupts disabled, so we
 	 * will deadlock trying to IPI the secondary CPUs. In theory, we can
-	 * set CACHE_FLUSH_IS_SAFE to 0 to aव्योम this known issue, but that
-	 * just means that KGDB will elide the मुख्यtenance altogether! As it
+	 * set CACHE_FLUSH_IS_SAFE to 0 to avoid this known issue, but that
+	 * just means that KGDB will elide the maintenance altogether! As it
 	 * turns out, KGDB uses IPIs to round-up the secondary CPUs during
-	 * the patching operation, so we करोn't need extra IPIs here anyway.
-	 * In which हाल, add a KGDB-specअगरic bodge and वापस early.
+	 * the patching operation, so we don't need extra IPIs here anyway.
+	 * In which case, add a KGDB-specific bodge and return early.
 	 */
-	अगर (in_dbg_master())
-		वापस;
+	if (in_dbg_master())
+		return;
 
 	kick_all_cpus_sync();
-पूर्ण
-#घोषणा flush_icache_range flush_icache_range
+}
+#define flush_icache_range flush_icache_range
 
 /*
- * Cache मुख्यtenance functions used by the DMA API. No to be used directly.
+ * Cache maintenance functions used by the DMA API. No to be used directly.
  */
-बाह्य व्योम __dma_map_area(स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य व्योम __dma_unmap_area(स्थिर व्योम *, माप_प्रकार, पूर्णांक);
-बाह्य व्योम __dma_flush_area(स्थिर व्योम *, माप_प्रकार);
+extern void __dma_map_area(const void *, size_t, int);
+extern void __dma_unmap_area(const void *, size_t, int);
+extern void __dma_flush_area(const void *, size_t);
 
 /*
- * Copy user data from/to a page which is mapped पूर्णांकo a dअगरferent
+ * Copy user data from/to a page which is mapped into a different
  * processes address space.  Really, we want to allow our "user
  * space" model to handle this.
  */
-बाह्य व्योम copy_to_user_page(काष्ठा vm_area_काष्ठा *, काष्ठा page *,
-	अचिन्हित दीर्घ, व्योम *, स्थिर व्योम *, अचिन्हित दीर्घ);
-#घोषणा copy_to_user_page copy_to_user_page
+extern void copy_to_user_page(struct vm_area_struct *, struct page *,
+	unsigned long, void *, const void *, unsigned long);
+#define copy_to_user_page copy_to_user_page
 
 /*
  * flush_dcache_page is used when the kernel has written to the page
- * cache page at भव address page->भव.
+ * cache page at virtual address page->virtual.
  *
- * If this page isn't mapped (ie, page_mapping == शून्य), or it might
+ * If this page isn't mapped (ie, page_mapping == NULL), or it might
  * have userspace mappings, then we _must_ always clean + invalidate
  * the dcache entries associated with the kernel mapping.
  *
  * Otherwise we can defer the operation, and clean the cache when we are
  * about to change to user space.  This is the same method as used on SPARC64.
- * See update_mmu_cache क्रम the user space part.
+ * See update_mmu_cache for the user space part.
  */
-#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
-बाह्य व्योम flush_dcache_page(काष्ठा page *);
+#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+extern void flush_dcache_page(struct page *);
 
-अटल __always_अंतरभूत व्योम __flush_icache_all(व्योम)
-अणु
-	अगर (cpus_have_स्थिर_cap(ARM64_HAS_CACHE_DIC))
-		वापस;
+static __always_inline void __flush_icache_all(void)
+{
+	if (cpus_have_const_cap(ARM64_HAS_CACHE_DIC))
+		return;
 
-	यंत्र("ic	ialluis");
+	asm("ic	ialluis");
 	dsb(ish);
-पूर्ण
+}
 
-पूर्णांक set_memory_valid(अचिन्हित दीर्घ addr, पूर्णांक numpages, पूर्णांक enable);
+int set_memory_valid(unsigned long addr, int numpages, int enable);
 
-पूर्णांक set_direct_map_invalid_noflush(काष्ठा page *page);
-पूर्णांक set_direct_map_शेष_noflush(काष्ठा page *page);
-bool kernel_page_present(काष्ठा page *page);
+int set_direct_map_invalid_noflush(struct page *page);
+int set_direct_map_default_noflush(struct page *page);
+bool kernel_page_present(struct page *page);
 
-#समावेश <यंत्र-generic/cacheflush.h>
+#include <asm-generic/cacheflush.h>
 
-#पूर्ण_अगर /* __ASM_CACHEFLUSH_H */
+#endif /* __ASM_CACHEFLUSH_H */

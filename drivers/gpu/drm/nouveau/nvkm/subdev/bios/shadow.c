@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,222 +21,222 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश "priv.h"
+#include "priv.h"
 
-#समावेश <core/option.h>
-#समावेश <subdev/मूलप्रण.स>
-#समावेश <subdev/bios/image.h>
+#include <core/option.h>
+#include <subdev/bios.h>
+#include <subdev/bios/image.h>
 
-काष्ठा shaकरोw अणु
+struct shadow {
 	u32 skip;
-	स्थिर काष्ठा nvbios_source *func;
-	व्योम *data;
+	const struct nvbios_source *func;
+	void *data;
 	u32 size;
-	पूर्णांक score;
-पूर्ण;
+	int score;
+};
 
-अटल bool
-shaकरोw_fetch(काष्ठा nvkm_bios *bios, काष्ठा shaकरोw *mthd, u32 upto)
-अणु
-	स्थिर u32 limit = (upto + 3) & ~3;
-	स्थिर u32 start = bios->size;
-	व्योम *data = mthd->data;
-	अगर (nvbios_extend(bios, limit) > 0) अणु
-		u32 पढ़ो = mthd->func->पढ़ो(data, start, limit - start, bios);
-		bios->size = start + पढ़ो;
-	पूर्ण
-	वापस bios->size >= upto;
-पूर्ण
+static bool
+shadow_fetch(struct nvkm_bios *bios, struct shadow *mthd, u32 upto)
+{
+	const u32 limit = (upto + 3) & ~3;
+	const u32 start = bios->size;
+	void *data = mthd->data;
+	if (nvbios_extend(bios, limit) > 0) {
+		u32 read = mthd->func->read(data, start, limit - start, bios);
+		bios->size = start + read;
+	}
+	return bios->size >= upto;
+}
 
-अटल पूर्णांक
-shaकरोw_image(काष्ठा nvkm_bios *bios, पूर्णांक idx, u32 offset, काष्ठा shaकरोw *mthd)
-अणु
-	काष्ठा nvkm_subdev *subdev = &bios->subdev;
-	काष्ठा nvbios_image image;
-	पूर्णांक score = 1;
+static int
+shadow_image(struct nvkm_bios *bios, int idx, u32 offset, struct shadow *mthd)
+{
+	struct nvkm_subdev *subdev = &bios->subdev;
+	struct nvbios_image image;
+	int score = 1;
 
-	अगर (mthd->func->no_pcir) अणु
+	if (mthd->func->no_pcir) {
 		image.base = 0;
 		image.type = 0;
 		image.size = mthd->func->size(mthd->data);
 		image.last = 1;
-	पूर्ण अन्यथा अणु
-		अगर (!shaकरोw_fetch(bios, mthd, offset + 0x1000)) अणु
+	} else {
+		if (!shadow_fetch(bios, mthd, offset + 0x1000)) {
 			nvkm_debug(subdev, "%08x: header fetch failed\n",
 				   offset);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (!nvbios_image(bios, idx, &image)) अणु
+		if (!nvbios_image(bios, idx, &image)) {
 			nvkm_debug(subdev, "image %d invalid\n", idx);
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 	nvkm_debug(subdev, "%08x: type %02x, %d bytes\n",
 		   image.base, image.type, image.size);
 
-	अगर (!shaकरोw_fetch(bios, mthd, image.base + image.size)) अणु
+	if (!shadow_fetch(bios, mthd, image.base + image.size)) {
 		nvkm_debug(subdev, "%08x: fetch failed\n", image.base);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (image.type) अणु
-	हाल 0x00:
-		अगर (!mthd->func->ignore_checksum &&
-		    nvbios_checksum(&bios->data[image.base], image.size)) अणु
+	switch (image.type) {
+	case 0x00:
+		if (!mthd->func->ignore_checksum &&
+		    nvbios_checksum(&bios->data[image.base], image.size)) {
 			nvkm_debug(subdev, "%08x: checksum failed\n",
 				   image.base);
-			अगर (!mthd->func->require_checksum) अणु
-				अगर (mthd->func->rw)
+			if (!mthd->func->require_checksum) {
+				if (mthd->func->rw)
 					score += 1;
 				score += 1;
-			पूर्ण अन्यथा
-				वापस 0;
-		पूर्ण अन्यथा अणु
+			} else
+				return 0;
+		} else {
 			score += 3;
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		score += 3;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!image.last)
-		score += shaकरोw_image(bios, idx + 1, offset + image.size, mthd);
-	वापस score;
-पूर्ण
+	if (!image.last)
+		score += shadow_image(bios, idx + 1, offset + image.size, mthd);
+	return score;
+}
 
-अटल पूर्णांक
-shaकरोw_method(काष्ठा nvkm_bios *bios, काष्ठा shaकरोw *mthd, स्थिर अक्षर *name)
-अणु
-	स्थिर काष्ठा nvbios_source *func = mthd->func;
-	काष्ठा nvkm_subdev *subdev = &bios->subdev;
-	अगर (func->name) अणु
+static int
+shadow_method(struct nvkm_bios *bios, struct shadow *mthd, const char *name)
+{
+	const struct nvbios_source *func = mthd->func;
+	struct nvkm_subdev *subdev = &bios->subdev;
+	if (func->name) {
 		nvkm_debug(subdev, "trying %s...\n", name ? name : func->name);
-		अगर (func->init) अणु
+		if (func->init) {
 			mthd->data = func->init(bios, name);
-			अगर (IS_ERR(mthd->data)) अणु
-				mthd->data = शून्य;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-		mthd->score = shaकरोw_image(bios, 0, 0, mthd);
-		अगर (func->fini)
+			if (IS_ERR(mthd->data)) {
+				mthd->data = NULL;
+				return 0;
+			}
+		}
+		mthd->score = shadow_image(bios, 0, 0, mthd);
+		if (func->fini)
 			func->fini(mthd->data);
 		nvkm_debug(subdev, "scored %d\n", mthd->score);
 		mthd->data = bios->data;
 		mthd->size = bios->size;
-		bios->data  = शून्य;
+		bios->data  = NULL;
 		bios->size  = 0;
-	पूर्ण
-	वापस mthd->score;
-पूर्ण
+	}
+	return mthd->score;
+}
 
-अटल u32
-shaकरोw_fw_पढ़ो(व्योम *data, u32 offset, u32 length, काष्ठा nvkm_bios *bios)
-अणु
-	स्थिर काष्ठा firmware *fw = data;
-	अगर (offset + length <= fw->size) अणु
-		स_नकल(bios->data + offset, fw->data + offset, length);
-		वापस length;
-	पूर्ण
-	वापस 0;
-पूर्ण
+static u32
+shadow_fw_read(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
+{
+	const struct firmware *fw = data;
+	if (offset + length <= fw->size) {
+		memcpy(bios->data + offset, fw->data + offset, length);
+		return length;
+	}
+	return 0;
+}
 
-अटल व्योम *
-shaकरोw_fw_init(काष्ठा nvkm_bios *bios, स्थिर अक्षर *name)
-अणु
-	काष्ठा device *dev = bios->subdev.device->dev;
-	स्थिर काष्ठा firmware *fw;
-	पूर्णांक ret = request_firmware(&fw, name, dev);
-	अगर (ret)
-		वापस ERR_PTR(-ENOENT);
-	वापस (व्योम *)fw;
-पूर्ण
+static void *
+shadow_fw_init(struct nvkm_bios *bios, const char *name)
+{
+	struct device *dev = bios->subdev.device->dev;
+	const struct firmware *fw;
+	int ret = request_firmware(&fw, name, dev);
+	if (ret)
+		return ERR_PTR(-ENOENT);
+	return (void *)fw;
+}
 
-अटल स्थिर काष्ठा nvbios_source
-shaकरोw_fw = अणु
+static const struct nvbios_source
+shadow_fw = {
 	.name = "firmware",
-	.init = shaकरोw_fw_init,
-	.fini = (व्योम(*)(व्योम *))release_firmware,
-	.पढ़ो = shaकरोw_fw_पढ़ो,
+	.init = shadow_fw_init,
+	.fini = (void(*)(void *))release_firmware,
+	.read = shadow_fw_read,
 	.rw = false,
-पूर्ण;
+};
 
-पूर्णांक
-nvbios_shaकरोw(काष्ठा nvkm_bios *bios)
-अणु
-	काष्ठा nvkm_subdev *subdev = &bios->subdev;
-	काष्ठा nvkm_device *device = subdev->device;
-	काष्ठा shaकरोw mthds[] = अणु
-		अणु 0, &nvbios_of पूर्ण,
-		अणु 0, &nvbios_ramin पूर्ण,
-		अणु 0, &nvbios_rom पूर्ण,
-		अणु 0, &nvbios_acpi_fast पूर्ण,
-		अणु 4, &nvbios_acpi_slow पूर्ण,
-		अणु 1, &nvbios_pcirom पूर्ण,
-		अणु 1, &nvbios_platक्रमm पूर्ण,
-		अणुपूर्ण
-	पूर्ण, *mthd, *best = शून्य;
-	स्थिर अक्षर *optarg;
-	अक्षर *source;
-	पूर्णांक optlen;
+int
+nvbios_shadow(struct nvkm_bios *bios)
+{
+	struct nvkm_subdev *subdev = &bios->subdev;
+	struct nvkm_device *device = subdev->device;
+	struct shadow mthds[] = {
+		{ 0, &nvbios_of },
+		{ 0, &nvbios_ramin },
+		{ 0, &nvbios_rom },
+		{ 0, &nvbios_acpi_fast },
+		{ 4, &nvbios_acpi_slow },
+		{ 1, &nvbios_pcirom },
+		{ 1, &nvbios_platform },
+		{}
+	}, *mthd, *best = NULL;
+	const char *optarg;
+	char *source;
+	int optlen;
 
-	/* handle user-specअगरied bios source */
+	/* handle user-specified bios source */
 	optarg = nvkm_stropt(device->cfgopt, "NvBios", &optlen);
-	source = optarg ? kstrndup(optarg, optlen, GFP_KERNEL) : शून्य;
-	अगर (source) अणु
+	source = optarg ? kstrndup(optarg, optlen, GFP_KERNEL) : NULL;
+	if (source) {
 		/* try to match one of the built-in methods */
-		क्रम (mthd = mthds; mthd->func; mthd++) अणु
-			अगर (mthd->func->name &&
-			    !strहालcmp(source, mthd->func->name)) अणु
+		for (mthd = mthds; mthd->func; mthd++) {
+			if (mthd->func->name &&
+			    !strcasecmp(source, mthd->func->name)) {
 				best = mthd;
-				अगर (shaकरोw_method(bios, mthd, शून्य))
-					अवरोध;
-			पूर्ण
-		पूर्ण
+				if (shadow_method(bios, mthd, NULL))
+					break;
+			}
+		}
 
 		/* otherwise, attempt to load as firmware */
-		अगर (!best && (best = mthd)) अणु
-			mthd->func = &shaकरोw_fw;
-			shaकरोw_method(bios, mthd, source);
-			mthd->func = शून्य;
-		पूर्ण
+		if (!best && (best = mthd)) {
+			mthd->func = &shadow_fw;
+			shadow_method(bios, mthd, source);
+			mthd->func = NULL;
+		}
 
-		अगर (!best->score) अणु
+		if (!best->score) {
 			nvkm_error(subdev, "%s invalid\n", source);
-			kमुक्त(source);
-			source = शून्य;
-		पूर्ण
-	पूर्ण
+			kfree(source);
+			source = NULL;
+		}
+	}
 
-	/* scan all potential bios sources, looking क्रम best image */
-	अगर (!best || !best->score) अणु
-		क्रम (mthd = mthds, best = mthd; mthd->func; mthd++) अणु
-			अगर (!mthd->skip || best->score < mthd->skip) अणु
-				अगर (shaकरोw_method(bios, mthd, शून्य)) अणु
-					अगर (mthd->score > best->score)
+	/* scan all potential bios sources, looking for best image */
+	if (!best || !best->score) {
+		for (mthd = mthds, best = mthd; mthd->func; mthd++) {
+			if (!mthd->skip || best->score < mthd->skip) {
+				if (shadow_method(bios, mthd, NULL)) {
+					if (mthd->score > best->score)
 						best = mthd;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
 	/* cleanup the ones we didn't use */
-	क्रम (mthd = mthds; mthd->func; mthd++) अणु
-		अगर (mthd != best)
-			kमुक्त(mthd->data);
-	पूर्ण
+	for (mthd = mthds; mthd->func; mthd++) {
+		if (mthd != best)
+			kfree(mthd->data);
+	}
 
-	अगर (!best->score) अणु
+	if (!best->score) {
 		nvkm_error(subdev, "unable to locate usable image\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nvkm_debug(subdev, "using image from %s\n", best->func ?
 		   best->func->name : source);
 	bios->data = best->data;
 	bios->size = best->size;
-	kमुक्त(source);
-	वापस 0;
-पूर्ण
+	kfree(source);
+	return 0;
+}

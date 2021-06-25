@@ -1,88 +1,87 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *  linux/drivers/mmc/core/host.h
  *
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  *  Copyright 2007 Pierre Ossman
  */
-#अगर_अघोषित _MMC_CORE_HOST_H
-#घोषणा _MMC_CORE_HOST_H
+#ifndef _MMC_CORE_HOST_H
+#define _MMC_CORE_HOST_H
 
-#समावेश <linux/mmc/host.h>
+#include <linux/mmc/host.h>
 
-पूर्णांक mmc_रेजिस्टर_host_class(व्योम);
-व्योम mmc_unरेजिस्टर_host_class(व्योम);
+int mmc_register_host_class(void);
+void mmc_unregister_host_class(void);
 
-व्योम mmc_retune_enable(काष्ठा mmc_host *host);
-व्योम mmc_retune_disable(काष्ठा mmc_host *host);
-व्योम mmc_retune_hold(काष्ठा mmc_host *host);
-व्योम mmc_retune_release(काष्ठा mmc_host *host);
-पूर्णांक mmc_retune(काष्ठा mmc_host *host);
-व्योम mmc_retune_छोड़ो(काष्ठा mmc_host *host);
-व्योम mmc_retune_unछोड़ो(काष्ठा mmc_host *host);
+void mmc_retune_enable(struct mmc_host *host);
+void mmc_retune_disable(struct mmc_host *host);
+void mmc_retune_hold(struct mmc_host *host);
+void mmc_retune_release(struct mmc_host *host);
+int mmc_retune(struct mmc_host *host);
+void mmc_retune_pause(struct mmc_host *host);
+void mmc_retune_unpause(struct mmc_host *host);
 
-अटल अंतरभूत व्योम mmc_retune_hold_now(काष्ठा mmc_host *host)
-अणु
+static inline void mmc_retune_hold_now(struct mmc_host *host)
+{
 	host->retune_now = 0;
 	host->hold_retune += 1;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम mmc_retune_recheck(काष्ठा mmc_host *host)
-अणु
-	अगर (host->hold_retune <= 1)
+static inline void mmc_retune_recheck(struct mmc_host *host)
+{
+	if (host->hold_retune <= 1)
 		host->retune_now = 1;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक mmc_host_cmd23(काष्ठा mmc_host *host)
-अणु
-	वापस host->caps & MMC_CAP_CMD23;
-पूर्ण
+static inline int mmc_host_cmd23(struct mmc_host *host)
+{
+	return host->caps & MMC_CAP_CMD23;
+}
 
-अटल अंतरभूत bool mmc_host_करोne_complete(काष्ठा mmc_host *host)
-अणु
-	वापस host->caps & MMC_CAP_DONE_COMPLETE;
-पूर्ण
+static inline bool mmc_host_done_complete(struct mmc_host *host)
+{
+	return host->caps & MMC_CAP_DONE_COMPLETE;
+}
 
-अटल अंतरभूत पूर्णांक mmc_boot_partition_access(काष्ठा mmc_host *host)
-अणु
-	वापस !(host->caps2 & MMC_CAP2_BOOTPART_NOACC);
-पूर्ण
+static inline int mmc_boot_partition_access(struct mmc_host *host)
+{
+	return !(host->caps2 & MMC_CAP2_BOOTPART_NOACC);
+}
 
-अटल अंतरभूत पूर्णांक mmc_host_uhs(काष्ठा mmc_host *host)
-अणु
-	वापस host->caps &
+static inline int mmc_host_uhs(struct mmc_host *host)
+{
+	return host->caps &
 		(MMC_CAP_UHS_SDR12 | MMC_CAP_UHS_SDR25 |
 		 MMC_CAP_UHS_SDR50 | MMC_CAP_UHS_SDR104 |
 		 MMC_CAP_UHS_DDR50) &&
 	       host->caps & MMC_CAP_4_BIT_DATA;
-पूर्ण
+}
 
-अटल अंतरभूत bool mmc_card_hs200(काष्ठा mmc_card *card)
-अणु
-	वापस card->host->ios.timing == MMC_TIMING_MMC_HS200;
-पूर्ण
+static inline bool mmc_card_hs200(struct mmc_card *card)
+{
+	return card->host->ios.timing == MMC_TIMING_MMC_HS200;
+}
 
-अटल अंतरभूत bool mmc_card_ddr52(काष्ठा mmc_card *card)
-अणु
-	वापस card->host->ios.timing == MMC_TIMING_MMC_DDR52;
-पूर्ण
+static inline bool mmc_card_ddr52(struct mmc_card *card)
+{
+	return card->host->ios.timing == MMC_TIMING_MMC_DDR52;
+}
 
-अटल अंतरभूत bool mmc_card_hs400(काष्ठा mmc_card *card)
-अणु
-	वापस card->host->ios.timing == MMC_TIMING_MMC_HS400;
-पूर्ण
+static inline bool mmc_card_hs400(struct mmc_card *card)
+{
+	return card->host->ios.timing == MMC_TIMING_MMC_HS400;
+}
 
-अटल अंतरभूत bool mmc_card_hs400es(काष्ठा mmc_card *card)
-अणु
-	वापस card->host->ios.enhanced_strobe;
-पूर्ण
+static inline bool mmc_card_hs400es(struct mmc_card *card)
+{
+	return card->host->ios.enhanced_strobe;
+}
 
-अटल अंतरभूत bool mmc_card_sd_express(काष्ठा mmc_host *host)
-अणु
-	वापस host->ios.timing == MMC_TIMING_SD_EXP ||
+static inline bool mmc_card_sd_express(struct mmc_host *host)
+{
+	return host->ios.timing == MMC_TIMING_SD_EXP ||
 		host->ios.timing == MMC_TIMING_SD_EXP_1_2V;
-पूर्ण
+}
 
-#पूर्ण_अगर
+#endif
 

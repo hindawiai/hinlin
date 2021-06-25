@@ -1,16 +1,15 @@
-<शैली गुरु>
 /* Copyright 2008-2016 Freescale Semiconductor, Inc.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *	 notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *	 notice, this list of conditions and the following disclaimer in the
- *	 करोcumentation and/or other materials provided with the distribution.
+ *	 documentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *	 names of its contributors may be used to enकरोrse or promote products
- *	 derived from this software without specअगरic prior written permission.
+ *	 names of its contributors may be used to endorse or promote products
+ *	 derived from this software without specific prior written permission.
  *
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
@@ -22,7 +21,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -30,17 +29,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/माला.स>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/net_tstamp.h>
-#समावेश <linux/fsl/ptp_qoriq.h>
+#include <linux/string.h>
+#include <linux/of_platform.h>
+#include <linux/net_tstamp.h>
+#include <linux/fsl/ptp_qoriq.h>
 
-#समावेश "dpaa_eth.h"
-#समावेश "mac.h"
+#include "dpaa_eth.h"
+#include "mac.h"
 
-अटल स्थिर अक्षर dpaa_stats_percpu[][ETH_GSTRING_LEN] = अणु
+static const char dpaa_stats_percpu[][ETH_GSTRING_LEN] = {
 	"interrupts",
 	"rx packets",
 	"tx packets",
@@ -50,9 +49,9 @@
 	"rx error",
 	"rx dropped",
 	"tx dropped",
-पूर्ण;
+};
 
-अटल अक्षर dpaa_stats_global[][ETH_GSTRING_LEN] = अणु
+static char dpaa_stats_global[][ETH_GSTRING_LEN] = {
 	/* dpa rx errors */
 	"rx dma error",
 	"rx frame physical error",
@@ -73,160 +72,160 @@
 	"congestion time (ms)",
 	"entered congestion",
 	"congested (0/1)"
-पूर्ण;
+};
 
-#घोषणा DPAA_STATS_PERCPU_LEN ARRAY_SIZE(dpaa_stats_percpu)
-#घोषणा DPAA_STATS_GLOBAL_LEN ARRAY_SIZE(dpaa_stats_global)
+#define DPAA_STATS_PERCPU_LEN ARRAY_SIZE(dpaa_stats_percpu)
+#define DPAA_STATS_GLOBAL_LEN ARRAY_SIZE(dpaa_stats_global)
 
-अटल पूर्णांक dpaa_get_link_ksettings(काष्ठा net_device *net_dev,
-				   काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	अगर (!net_dev->phydev)
-		वापस 0;
+static int dpaa_get_link_ksettings(struct net_device *net_dev,
+				   struct ethtool_link_ksettings *cmd)
+{
+	if (!net_dev->phydev)
+		return 0;
 
 	phy_ethtool_ksettings_get(net_dev->phydev, cmd);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpaa_set_link_ksettings(काष्ठा net_device *net_dev,
-				   स्थिर काष्ठा ethtool_link_ksettings *cmd)
-अणु
-	पूर्णांक err;
+static int dpaa_set_link_ksettings(struct net_device *net_dev,
+				   const struct ethtool_link_ksettings *cmd)
+{
+	int err;
 
-	अगर (!net_dev->phydev)
-		वापस -ENODEV;
+	if (!net_dev->phydev)
+		return -ENODEV;
 
 	err = phy_ethtool_ksettings_set(net_dev->phydev, cmd);
-	अगर (err < 0)
+	if (err < 0)
 		netdev_err(net_dev, "phy_ethtool_ksettings_set() = %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम dpaa_get_drvinfo(काष्ठा net_device *net_dev,
-			     काष्ठा ethtool_drvinfo *drvinfo)
-अणु
+static void dpaa_get_drvinfo(struct net_device *net_dev,
+			     struct ethtool_drvinfo *drvinfo)
+{
 	strlcpy(drvinfo->driver, KBUILD_MODNAME,
-		माप(drvinfo->driver));
+		sizeof(drvinfo->driver));
 	strlcpy(drvinfo->bus_info, dev_name(net_dev->dev.parent->parent),
-		माप(drvinfo->bus_info));
-पूर्ण
+		sizeof(drvinfo->bus_info));
+}
 
-अटल u32 dpaa_get_msglevel(काष्ठा net_device *net_dev)
-अणु
-	वापस ((काष्ठा dpaa_priv *)netdev_priv(net_dev))->msg_enable;
-पूर्ण
+static u32 dpaa_get_msglevel(struct net_device *net_dev)
+{
+	return ((struct dpaa_priv *)netdev_priv(net_dev))->msg_enable;
+}
 
-अटल व्योम dpaa_set_msglevel(काष्ठा net_device *net_dev,
+static void dpaa_set_msglevel(struct net_device *net_dev,
 			      u32 msg_enable)
-अणु
-	((काष्ठा dpaa_priv *)netdev_priv(net_dev))->msg_enable = msg_enable;
-पूर्ण
+{
+	((struct dpaa_priv *)netdev_priv(net_dev))->msg_enable = msg_enable;
+}
 
-अटल पूर्णांक dpaa_nway_reset(काष्ठा net_device *net_dev)
-अणु
-	पूर्णांक err;
+static int dpaa_nway_reset(struct net_device *net_dev)
+{
+	int err;
 
-	अगर (!net_dev->phydev)
-		वापस -ENODEV;
+	if (!net_dev->phydev)
+		return -ENODEV;
 
 	err = 0;
-	अगर (net_dev->phydev->स्वतःneg) अणु
+	if (net_dev->phydev->autoneg) {
 		err = phy_start_aneg(net_dev->phydev);
-		अगर (err < 0)
+		if (err < 0)
 			netdev_err(net_dev, "phy_start_aneg() = %d\n",
 				   err);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम dpaa_get_छोड़ोparam(काष्ठा net_device *net_dev,
-				काष्ठा ethtool_छोड़ोparam *eछोड़ो)
-अणु
-	काष्ठा mac_device *mac_dev;
-	काष्ठा dpaa_priv *priv;
+static void dpaa_get_pauseparam(struct net_device *net_dev,
+				struct ethtool_pauseparam *epause)
+{
+	struct mac_device *mac_dev;
+	struct dpaa_priv *priv;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
 
-	अगर (!net_dev->phydev)
-		वापस;
+	if (!net_dev->phydev)
+		return;
 
-	eछोड़ो->स्वतःneg = mac_dev->स्वतःneg_छोड़ो;
-	eछोड़ो->rx_छोड़ो = mac_dev->rx_छोड़ो_active;
-	eछोड़ो->tx_छोड़ो = mac_dev->tx_छोड़ो_active;
-पूर्ण
+	epause->autoneg = mac_dev->autoneg_pause;
+	epause->rx_pause = mac_dev->rx_pause_active;
+	epause->tx_pause = mac_dev->tx_pause_active;
+}
 
-अटल पूर्णांक dpaa_set_छोड़ोparam(काष्ठा net_device *net_dev,
-			       काष्ठा ethtool_छोड़ोparam *eछोड़ो)
-अणु
-	काष्ठा mac_device *mac_dev;
-	काष्ठा phy_device *phydev;
-	bool rx_छोड़ो, tx_छोड़ो;
-	काष्ठा dpaa_priv *priv;
-	पूर्णांक err;
+static int dpaa_set_pauseparam(struct net_device *net_dev,
+			       struct ethtool_pauseparam *epause)
+{
+	struct mac_device *mac_dev;
+	struct phy_device *phydev;
+	bool rx_pause, tx_pause;
+	struct dpaa_priv *priv;
+	int err;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
 
 	phydev = net_dev->phydev;
-	अगर (!phydev) अणु
+	if (!phydev) {
 		netdev_err(net_dev, "phy device not initialized\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (!phy_validate_छोड़ो(phydev, eछोड़ो))
-		वापस -EINVAL;
+	if (!phy_validate_pause(phydev, epause))
+		return -EINVAL;
 
-	/* The MAC should know how to handle PAUSE frame स्वतःnegotiation beक्रमe
-	 * adjust_link is triggered by a क्रमced renegotiation of sym/asym PAUSE
+	/* The MAC should know how to handle PAUSE frame autonegotiation before
+	 * adjust_link is triggered by a forced renegotiation of sym/asym PAUSE
 	 * settings.
 	 */
-	mac_dev->स्वतःneg_छोड़ो = !!eछोड़ो->स्वतःneg;
-	mac_dev->rx_छोड़ो_req = !!eछोड़ो->rx_छोड़ो;
-	mac_dev->tx_छोड़ो_req = !!eछोड़ो->tx_छोड़ो;
+	mac_dev->autoneg_pause = !!epause->autoneg;
+	mac_dev->rx_pause_req = !!epause->rx_pause;
+	mac_dev->tx_pause_req = !!epause->tx_pause;
 
 	/* Determine the sym/asym advertised PAUSE capabilities from the desired
-	 * rx/tx छोड़ो settings.
+	 * rx/tx pause settings.
 	 */
 
-	phy_set_asym_छोड़ो(phydev, eछोड़ो->rx_छोड़ो, eछोड़ो->tx_छोड़ो);
+	phy_set_asym_pause(phydev, epause->rx_pause, epause->tx_pause);
 
-	fman_get_छोड़ो_cfg(mac_dev, &rx_छोड़ो, &tx_छोड़ो);
-	err = fman_set_mac_active_छोड़ो(mac_dev, rx_छोड़ो, tx_छोड़ो);
-	अगर (err < 0)
+	fman_get_pause_cfg(mac_dev, &rx_pause, &tx_pause);
+	err = fman_set_mac_active_pause(mac_dev, rx_pause, tx_pause);
+	if (err < 0)
 		netdev_err(net_dev, "set_mac_active_pause() = %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक dpaa_get_sset_count(काष्ठा net_device *net_dev, पूर्णांक type)
-अणु
-	अचिन्हित पूर्णांक total_stats, num_stats;
+static int dpaa_get_sset_count(struct net_device *net_dev, int type)
+{
+	unsigned int total_stats, num_stats;
 
 	num_stats   = num_online_cpus() + 1;
 	total_stats = num_stats * (DPAA_STATS_PERCPU_LEN + 1) +
 			DPAA_STATS_GLOBAL_LEN;
 
-	चयन (type) अणु
-	हाल ETH_SS_STATS:
-		वापस total_stats;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (type) {
+	case ETH_SS_STATS:
+		return total_stats;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल व्योम copy_stats(काष्ठा dpaa_percpu_priv *percpu_priv, पूर्णांक num_cpus,
-		       पूर्णांक crr_cpu, u64 bp_count, u64 *data)
-अणु
-	पूर्णांक num_values = num_cpus + 1;
-	पूर्णांक crr = 0;
+static void copy_stats(struct dpaa_percpu_priv *percpu_priv, int num_cpus,
+		       int crr_cpu, u64 bp_count, u64 *data)
+{
+	int num_values = num_cpus + 1;
+	int crr = 0;
 
 	/* update current CPU's stats and also add them to the total values */
-	data[crr * num_values + crr_cpu] = percpu_priv->in_पूर्णांकerrupt;
-	data[crr++ * num_values + num_cpus] += percpu_priv->in_पूर्णांकerrupt;
+	data[crr * num_values + crr_cpu] = percpu_priv->in_interrupt;
+	data[crr++ * num_values + num_cpus] += percpu_priv->in_interrupt;
 
 	data[crr * num_values + crr_cpu] = percpu_priv->stats.rx_packets;
 	data[crr++ * num_values + num_cpus] += percpu_priv->stats.rx_packets;
@@ -254,35 +253,35 @@
 
 	data[crr * num_values + crr_cpu] = bp_count;
 	data[crr++ * num_values + num_cpus] += bp_count;
-पूर्ण
+}
 
-अटल व्योम dpaa_get_ethtool_stats(काष्ठा net_device *net_dev,
-				   काष्ठा ethtool_stats *stats, u64 *data)
-अणु
-	काष्ठा dpaa_percpu_priv *percpu_priv;
-	काष्ठा dpaa_rx_errors rx_errors;
-	अचिन्हित पूर्णांक num_cpus, offset;
-	u64 bp_count, cg_समय, cg_num;
-	काष्ठा dpaa_ern_cnt ern_cnt;
-	काष्ठा dpaa_bp *dpaa_bp;
-	काष्ठा dpaa_priv *priv;
-	पूर्णांक total_stats, i;
+static void dpaa_get_ethtool_stats(struct net_device *net_dev,
+				   struct ethtool_stats *stats, u64 *data)
+{
+	struct dpaa_percpu_priv *percpu_priv;
+	struct dpaa_rx_errors rx_errors;
+	unsigned int num_cpus, offset;
+	u64 bp_count, cg_time, cg_num;
+	struct dpaa_ern_cnt ern_cnt;
+	struct dpaa_bp *dpaa_bp;
+	struct dpaa_priv *priv;
+	int total_stats, i;
 	bool cg_status;
 
 	total_stats = dpaa_get_sset_count(net_dev, ETH_SS_STATS);
 	priv     = netdev_priv(net_dev);
 	num_cpus = num_online_cpus();
 
-	स_रखो(&bp_count, 0, माप(bp_count));
-	स_रखो(&rx_errors, 0, माप(काष्ठा dpaa_rx_errors));
-	स_रखो(&ern_cnt, 0, माप(काष्ठा dpaa_ern_cnt));
-	स_रखो(data, 0, total_stats * माप(u64));
+	memset(&bp_count, 0, sizeof(bp_count));
+	memset(&rx_errors, 0, sizeof(struct dpaa_rx_errors));
+	memset(&ern_cnt, 0, sizeof(struct dpaa_ern_cnt));
+	memset(data, 0, total_stats * sizeof(u64));
 
-	क्रम_each_online_cpu(i) अणु
+	for_each_online_cpu(i) {
 		percpu_priv = per_cpu_ptr(priv->percpu_priv, i);
 		dpaa_bp = priv->dpaa_bp;
-		अगर (!dpaa_bp->percpu_count)
-			जारी;
+		if (!dpaa_bp->percpu_count)
+			continue;
 		bp_count = *(per_cpu_ptr(dpaa_bp->percpu_count, i));
 		rx_errors.dme += percpu_priv->rx_errors.dme;
 		rx_errors.fpe += percpu_priv->rx_errors.fpe;
@@ -292,133 +291,133 @@
 		ern_cnt.cg_tdrop     += percpu_priv->ern_cnt.cg_tdrop;
 		ern_cnt.wred         += percpu_priv->ern_cnt.wred;
 		ern_cnt.err_cond     += percpu_priv->ern_cnt.err_cond;
-		ern_cnt.early_winकरोw += percpu_priv->ern_cnt.early_winकरोw;
-		ern_cnt.late_winकरोw  += percpu_priv->ern_cnt.late_winकरोw;
+		ern_cnt.early_window += percpu_priv->ern_cnt.early_window;
+		ern_cnt.late_window  += percpu_priv->ern_cnt.late_window;
 		ern_cnt.fq_tdrop     += percpu_priv->ern_cnt.fq_tdrop;
 		ern_cnt.fq_retired   += percpu_priv->ern_cnt.fq_retired;
 		ern_cnt.orp_zero     += percpu_priv->ern_cnt.orp_zero;
 
 		copy_stats(percpu_priv, num_cpus, i, bp_count, data);
-	पूर्ण
+	}
 
 	offset = (num_cpus + 1) * (DPAA_STATS_PERCPU_LEN + 1);
-	स_नकल(data + offset, &rx_errors, माप(काष्ठा dpaa_rx_errors));
+	memcpy(data + offset, &rx_errors, sizeof(struct dpaa_rx_errors));
 
-	offset += माप(काष्ठा dpaa_rx_errors) / माप(u64);
-	स_नकल(data + offset, &ern_cnt, माप(काष्ठा dpaa_ern_cnt));
+	offset += sizeof(struct dpaa_rx_errors) / sizeof(u64);
+	memcpy(data + offset, &ern_cnt, sizeof(struct dpaa_ern_cnt));
 
 	/* gather congestion related counters */
 	cg_num    = 0;
 	cg_status = false;
-	cg_समय   = jअगरfies_to_msecs(priv->cgr_data.congested_jअगरfies);
-	अगर (qman_query_cgr_congested(&priv->cgr_data.cgr, &cg_status) == 0) अणु
+	cg_time   = jiffies_to_msecs(priv->cgr_data.congested_jiffies);
+	if (qman_query_cgr_congested(&priv->cgr_data.cgr, &cg_status) == 0) {
 		cg_num    = priv->cgr_data.cgr_congested_count;
 
-		/* reset congestion stats (like QMan API करोes */
-		priv->cgr_data.congested_jअगरfies   = 0;
+		/* reset congestion stats (like QMan API does */
+		priv->cgr_data.congested_jiffies   = 0;
 		priv->cgr_data.cgr_congested_count = 0;
-	पूर्ण
+	}
 
-	offset += माप(काष्ठा dpaa_ern_cnt) / माप(u64);
-	data[offset++] = cg_समय;
+	offset += sizeof(struct dpaa_ern_cnt) / sizeof(u64);
+	data[offset++] = cg_time;
 	data[offset++] = cg_num;
 	data[offset++] = cg_status;
-पूर्ण
+}
 
-अटल व्योम dpaa_get_strings(काष्ठा net_device *net_dev, u32 stringset,
+static void dpaa_get_strings(struct net_device *net_dev, u32 stringset,
 			     u8 *data)
-अणु
-	अचिन्हित पूर्णांक i, j, num_cpus, size;
-	अक्षर string_cpu[ETH_GSTRING_LEN];
+{
+	unsigned int i, j, num_cpus, size;
+	char string_cpu[ETH_GSTRING_LEN];
 	u8 *strings;
 
-	स_रखो(string_cpu, 0, माप(string_cpu));
+	memset(string_cpu, 0, sizeof(string_cpu));
 	strings   = data;
 	num_cpus  = num_online_cpus();
 	size      = DPAA_STATS_GLOBAL_LEN * ETH_GSTRING_LEN;
 
-	क्रम (i = 0; i < DPAA_STATS_PERCPU_LEN; i++) अणु
-		क्रम (j = 0; j < num_cpus; j++) अणु
-			snम_लिखो(string_cpu, ETH_GSTRING_LEN, "%s [CPU %d]",
+	for (i = 0; i < DPAA_STATS_PERCPU_LEN; i++) {
+		for (j = 0; j < num_cpus; j++) {
+			snprintf(string_cpu, ETH_GSTRING_LEN, "%s [CPU %d]",
 				 dpaa_stats_percpu[i], j);
-			स_नकल(strings, string_cpu, ETH_GSTRING_LEN);
+			memcpy(strings, string_cpu, ETH_GSTRING_LEN);
 			strings += ETH_GSTRING_LEN;
-		पूर्ण
-		snम_लिखो(string_cpu, ETH_GSTRING_LEN, "%s [TOTAL]",
+		}
+		snprintf(string_cpu, ETH_GSTRING_LEN, "%s [TOTAL]",
 			 dpaa_stats_percpu[i]);
-		स_नकल(strings, string_cpu, ETH_GSTRING_LEN);
+		memcpy(strings, string_cpu, ETH_GSTRING_LEN);
 		strings += ETH_GSTRING_LEN;
-	पूर्ण
-	क्रम (j = 0; j < num_cpus; j++) अणु
-		snम_लिखो(string_cpu, ETH_GSTRING_LEN,
+	}
+	for (j = 0; j < num_cpus; j++) {
+		snprintf(string_cpu, ETH_GSTRING_LEN,
 			 "bpool [CPU %d]", j);
-		स_नकल(strings, string_cpu, ETH_GSTRING_LEN);
+		memcpy(strings, string_cpu, ETH_GSTRING_LEN);
 		strings += ETH_GSTRING_LEN;
-	पूर्ण
-	snम_लिखो(string_cpu, ETH_GSTRING_LEN, "bpool [TOTAL]");
-	स_नकल(strings, string_cpu, ETH_GSTRING_LEN);
+	}
+	snprintf(string_cpu, ETH_GSTRING_LEN, "bpool [TOTAL]");
+	memcpy(strings, string_cpu, ETH_GSTRING_LEN);
 	strings += ETH_GSTRING_LEN;
 
-	स_नकल(strings, dpaa_stats_global, size);
-पूर्ण
+	memcpy(strings, dpaa_stats_global, size);
+}
 
-अटल पूर्णांक dpaa_get_hash_opts(काष्ठा net_device *dev,
-			      काष्ठा ethtool_rxnfc *cmd)
-अणु
-	काष्ठा dpaa_priv *priv = netdev_priv(dev);
+static int dpaa_get_hash_opts(struct net_device *dev,
+			      struct ethtool_rxnfc *cmd)
+{
+	struct dpaa_priv *priv = netdev_priv(dev);
 
 	cmd->data = 0;
 
-	चयन (cmd->flow_type) अणु
-	हाल TCP_V4_FLOW:
-	हाल TCP_V6_FLOW:
-	हाल UDP_V4_FLOW:
-	हाल UDP_V6_FLOW:
-		अगर (priv->keygen_in_use)
+	switch (cmd->flow_type) {
+	case TCP_V4_FLOW:
+	case TCP_V6_FLOW:
+	case UDP_V4_FLOW:
+	case UDP_V6_FLOW:
+		if (priv->keygen_in_use)
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	हाल IPV4_FLOW:
-	हाल IPV6_FLOW:
-	हाल SCTP_V4_FLOW:
-	हाल SCTP_V6_FLOW:
-	हाल AH_ESP_V4_FLOW:
-	हाल AH_ESP_V6_FLOW:
-	हाल AH_V4_FLOW:
-	हाल AH_V6_FLOW:
-	हाल ESP_V4_FLOW:
-	हाल ESP_V6_FLOW:
-		अगर (priv->keygen_in_use)
+	case IPV4_FLOW:
+	case IPV6_FLOW:
+	case SCTP_V4_FLOW:
+	case SCTP_V6_FLOW:
+	case AH_ESP_V4_FLOW:
+	case AH_ESP_V6_FLOW:
+	case AH_V4_FLOW:
+	case AH_V6_FLOW:
+	case ESP_V4_FLOW:
+	case ESP_V6_FLOW:
+		if (priv->keygen_in_use)
 			cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		cmd->data = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpaa_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
+static int dpaa_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
 			  u32 *unused)
-अणु
-	पूर्णांक ret = -EOPNOTSUPP;
+{
+	int ret = -EOPNOTSUPP;
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_GRXFH:
+	switch (cmd->cmd) {
+	case ETHTOOL_GRXFH:
 		ret = dpaa_get_hash_opts(dev, cmd);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dpaa_set_hash(काष्ठा net_device *net_dev, bool enable)
-अणु
-	काष्ठा mac_device *mac_dev;
-	काष्ठा fman_port *rxport;
-	काष्ठा dpaa_priv *priv;
+static void dpaa_set_hash(struct net_device *net_dev, bool enable)
+{
+	struct mac_device *mac_dev;
+	struct fman_port *rxport;
+	struct dpaa_priv *priv;
 
 	priv = netdev_priv(net_dev);
 	mac_dev = priv->mac_dev;
@@ -426,83 +425,83 @@
 
 	fman_port_use_kg_hash(rxport, enable);
 	priv->keygen_in_use = enable;
-पूर्ण
+}
 
-अटल पूर्णांक dpaa_set_hash_opts(काष्ठा net_device *dev,
-			      काष्ठा ethtool_rxnfc *nfc)
-अणु
-	पूर्णांक ret = -EINVAL;
+static int dpaa_set_hash_opts(struct net_device *dev,
+			      struct ethtool_rxnfc *nfc)
+{
+	int ret = -EINVAL;
 
 	/* we support hashing on IPv4/v6 src/dest IP and L4 src/dest port */
-	अगर (nfc->data &
+	if (nfc->data &
 	    ~(RXH_IP_SRC | RXH_IP_DST | RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (nfc->flow_type) अणु
-	हाल TCP_V4_FLOW:
-	हाल TCP_V6_FLOW:
-	हाल UDP_V4_FLOW:
-	हाल UDP_V6_FLOW:
-	हाल IPV4_FLOW:
-	हाल IPV6_FLOW:
-	हाल SCTP_V4_FLOW:
-	हाल SCTP_V6_FLOW:
-	हाल AH_ESP_V4_FLOW:
-	हाल AH_ESP_V6_FLOW:
-	हाल AH_V4_FLOW:
-	हाल AH_V6_FLOW:
-	हाल ESP_V4_FLOW:
-	हाल ESP_V6_FLOW:
+	switch (nfc->flow_type) {
+	case TCP_V4_FLOW:
+	case TCP_V6_FLOW:
+	case UDP_V4_FLOW:
+	case UDP_V6_FLOW:
+	case IPV4_FLOW:
+	case IPV6_FLOW:
+	case SCTP_V4_FLOW:
+	case SCTP_V6_FLOW:
+	case AH_ESP_V4_FLOW:
+	case AH_ESP_V6_FLOW:
+	case AH_V4_FLOW:
+	case AH_V6_FLOW:
+	case ESP_V4_FLOW:
+	case ESP_V6_FLOW:
 		dpaa_set_hash(dev, !!nfc->data);
 		ret = 0;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dpaa_set_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd)
-अणु
-	पूर्णांक ret = -EOPNOTSUPP;
+static int dpaa_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
+{
+	int ret = -EOPNOTSUPP;
 
-	चयन (cmd->cmd) अणु
-	हाल ETHTOOL_SRXFH:
+	switch (cmd->cmd) {
+	case ETHTOOL_SRXFH:
 		ret = dpaa_set_hash_opts(dev, cmd);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक dpaa_get_ts_info(काष्ठा net_device *net_dev,
-			    काष्ठा ethtool_ts_info *info)
-अणु
-	काष्ठा device *dev = net_dev->dev.parent;
-	काष्ठा device_node *mac_node = dev->of_node;
-	काष्ठा device_node *fman_node = शून्य, *ptp_node = शून्य;
-	काष्ठा platक्रमm_device *ptp_dev = शून्य;
-	काष्ठा ptp_qoriq *ptp = शून्य;
+static int dpaa_get_ts_info(struct net_device *net_dev,
+			    struct ethtool_ts_info *info)
+{
+	struct device *dev = net_dev->dev.parent;
+	struct device_node *mac_node = dev->of_node;
+	struct device_node *fman_node = NULL, *ptp_node = NULL;
+	struct platform_device *ptp_dev = NULL;
+	struct ptp_qoriq *ptp = NULL;
 
 	info->phc_index = -1;
 
 	fman_node = of_get_parent(mac_node);
-	अगर (fman_node)
+	if (fman_node)
 		ptp_node = of_parse_phandle(fman_node, "ptimer-handle", 0);
 
-	अगर (ptp_node)
+	if (ptp_node)
 		ptp_dev = of_find_device_by_node(ptp_node);
 
-	अगर (ptp_dev)
-		ptp = platक्रमm_get_drvdata(ptp_dev);
+	if (ptp_dev)
+		ptp = platform_get_drvdata(ptp_dev);
 
-	अगर (ptp)
+	if (ptp)
 		info->phc_index = ptp->phc_index;
 
-	info->so_बारtamping = SOF_TIMESTAMPING_TX_HARDWARE |
+	info->so_timestamping = SOF_TIMESTAMPING_TX_HARDWARE |
 				SOF_TIMESTAMPING_RX_HARDWARE |
 				SOF_TIMESTAMPING_RAW_HARDWARE;
 	info->tx_types = (1 << HWTSTAMP_TX_OFF) |
@@ -510,13 +509,13 @@
 	info->rx_filters = (1 << HWTSTAMP_FILTER_NONE) |
 			   (1 << HWTSTAMP_FILTER_ALL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpaa_get_coalesce(काष्ठा net_device *dev,
-			     काष्ठा ethtool_coalesce *c)
-अणु
-	काष्ठा qman_portal *portal;
+static int dpaa_get_coalesce(struct net_device *dev,
+			     struct ethtool_coalesce *c)
+{
+	struct qman_portal *portal;
 	u32 period;
 	u8 thresh;
 
@@ -527,18 +526,18 @@
 	c->rx_coalesce_usecs = period;
 	c->rx_max_coalesced_frames = thresh;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpaa_set_coalesce(काष्ठा net_device *dev,
-			     काष्ठा ethtool_coalesce *c)
-अणु
-	स्थिर cpumask_t *cpus = qman_affine_cpus();
-	bool needs_revert[NR_CPUS] = अणुfalseपूर्ण;
-	काष्ठा qman_portal *portal;
+static int dpaa_set_coalesce(struct net_device *dev,
+			     struct ethtool_coalesce *c)
+{
+	const cpumask_t *cpus = qman_affine_cpus();
+	bool needs_revert[NR_CPUS] = {false};
+	struct qman_portal *portal;
 	u32 period, prev_period;
 	u8 thresh, prev_thresh;
-	पूर्णांक cpu, res;
+	int cpu, res;
 
 	period = c->rx_coalesce_usecs;
 	thresh = c->rx_max_coalesced_frames;
@@ -549,44 +548,44 @@
 	qman_dqrr_get_ithresh(portal, &prev_thresh);
 
 	/* set new values */
-	क्रम_each_cpu_and(cpu, cpus, cpu_online_mask) अणु
+	for_each_cpu_and(cpu, cpus, cpu_online_mask) {
 		portal = qman_get_affine_portal(cpu);
 		res = qman_portal_set_iperiod(portal, period);
-		अगर (res)
-			जाओ revert_values;
+		if (res)
+			goto revert_values;
 		res = qman_dqrr_set_ithresh(portal, thresh);
-		अगर (res) अणु
+		if (res) {
 			qman_portal_set_iperiod(portal, prev_period);
-			जाओ revert_values;
-		पूर्ण
+			goto revert_values;
+		}
 		needs_revert[cpu] = true;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 revert_values:
 	/* restore previous values */
-	क्रम_each_cpu_and(cpu, cpus, cpu_online_mask) अणु
-		अगर (!needs_revert[cpu])
-			जारी;
+	for_each_cpu_and(cpu, cpus, cpu_online_mask) {
+		if (!needs_revert[cpu])
+			continue;
 		portal = qman_get_affine_portal(cpu);
-		/* previous values will not fail, ignore वापस value */
+		/* previous values will not fail, ignore return value */
 		qman_portal_set_iperiod(portal, prev_period);
 		qman_dqrr_set_ithresh(portal, prev_thresh);
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-स्थिर काष्ठा ethtool_ops dpaa_ethtool_ops = अणु
+const struct ethtool_ops dpaa_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_RX_USECS |
 				     ETHTOOL_COALESCE_RX_MAX_FRAMES,
 	.get_drvinfo = dpaa_get_drvinfo,
 	.get_msglevel = dpaa_get_msglevel,
 	.set_msglevel = dpaa_set_msglevel,
 	.nway_reset = dpaa_nway_reset,
-	.get_छोड़ोparam = dpaa_get_छोड़ोparam,
-	.set_छोड़ोparam = dpaa_set_छोड़ोparam,
+	.get_pauseparam = dpaa_get_pauseparam,
+	.set_pauseparam = dpaa_set_pauseparam,
 	.get_link = ethtool_op_get_link,
 	.get_sset_count = dpaa_get_sset_count,
 	.get_ethtool_stats = dpaa_get_ethtool_stats,
@@ -598,4 +597,4 @@ revert_values:
 	.get_ts_info = dpaa_get_ts_info,
 	.get_coalesce = dpaa_get_coalesce,
 	.set_coalesce = dpaa_set_coalesce,
-पूर्ण;
+};

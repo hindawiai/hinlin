@@ -1,178 +1,177 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /**
  * tusb1210.c - TUSB1210 USB ULPI PHY driver
  *
  * Copyright (C) 2015 Intel Corporation
  *
- * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
-#समावेश <linux/module.h>
-#समावेश <linux/bitfield.h>
-#समावेश <linux/ulpi/driver.h>
-#समावेश <linux/ulpi/regs.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/phy/ulpi_phy.h>
+#include <linux/module.h>
+#include <linux/bitfield.h>
+#include <linux/ulpi/driver.h>
+#include <linux/ulpi/regs.h>
+#include <linux/gpio/consumer.h>
+#include <linux/phy/ulpi_phy.h>
 
-#घोषणा TUSB1210_VENDOR_SPECIFIC2		0x80
-#घोषणा TUSB1210_VENDOR_SPECIFIC2_IHSTX_MASK	GENMASK(3, 0)
-#घोषणा TUSB1210_VENDOR_SPECIFIC2_ZHSDRV_MASK	GENMASK(5, 4)
-#घोषणा TUSB1210_VENDOR_SPECIFIC2_DP_MASK	BIT(6)
+#define TUSB1210_VENDOR_SPECIFIC2		0x80
+#define TUSB1210_VENDOR_SPECIFIC2_IHSTX_MASK	GENMASK(3, 0)
+#define TUSB1210_VENDOR_SPECIFIC2_ZHSDRV_MASK	GENMASK(5, 4)
+#define TUSB1210_VENDOR_SPECIFIC2_DP_MASK	BIT(6)
 
-काष्ठा tusb1210 अणु
-	काष्ठा ulpi *ulpi;
-	काष्ठा phy *phy;
-	काष्ठा gpio_desc *gpio_reset;
-	काष्ठा gpio_desc *gpio_cs;
-	u8 venकरोr_specअगरic2;
-पूर्ण;
+struct tusb1210 {
+	struct ulpi *ulpi;
+	struct phy *phy;
+	struct gpio_desc *gpio_reset;
+	struct gpio_desc *gpio_cs;
+	u8 vendor_specific2;
+};
 
-अटल पूर्णांक tusb1210_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा tusb1210 *tusb = phy_get_drvdata(phy);
+static int tusb1210_power_on(struct phy *phy)
+{
+	struct tusb1210 *tusb = phy_get_drvdata(phy);
 
 	gpiod_set_value_cansleep(tusb->gpio_reset, 1);
 	gpiod_set_value_cansleep(tusb->gpio_cs, 1);
 
 	/* Restore the optional eye diagram optimization value */
-	अगर (tusb->venकरोr_specअगरic2)
-		ulpi_ग_लिखो(tusb->ulpi, TUSB1210_VENDOR_SPECIFIC2,
-			   tusb->venकरोr_specअगरic2);
+	if (tusb->vendor_specific2)
+		ulpi_write(tusb->ulpi, TUSB1210_VENDOR_SPECIFIC2,
+			   tusb->vendor_specific2);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tusb1210_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा tusb1210 *tusb = phy_get_drvdata(phy);
+static int tusb1210_power_off(struct phy *phy)
+{
+	struct tusb1210 *tusb = phy_get_drvdata(phy);
 
 	gpiod_set_value_cansleep(tusb->gpio_reset, 0);
 	gpiod_set_value_cansleep(tusb->gpio_cs, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tusb1210_set_mode(काष्ठा phy *phy, क्रमागत phy_mode mode, पूर्णांक submode)
-अणु
-	काष्ठा tusb1210 *tusb = phy_get_drvdata(phy);
-	पूर्णांक ret;
+static int tusb1210_set_mode(struct phy *phy, enum phy_mode mode, int submode)
+{
+	struct tusb1210 *tusb = phy_get_drvdata(phy);
+	int ret;
 
-	ret = ulpi_पढ़ो(tusb->ulpi, ULPI_OTG_CTRL);
-	अगर (ret < 0)
-		वापस ret;
+	ret = ulpi_read(tusb->ulpi, ULPI_OTG_CTRL);
+	if (ret < 0)
+		return ret;
 
-	चयन (mode) अणु
-	हाल PHY_MODE_USB_HOST:
+	switch (mode) {
+	case PHY_MODE_USB_HOST:
 		ret |= (ULPI_OTG_CTRL_DRVVBUS_EXT
 			| ULPI_OTG_CTRL_ID_PULLUP
 			| ULPI_OTG_CTRL_DP_PULLDOWN
 			| ULPI_OTG_CTRL_DM_PULLDOWN);
-		ulpi_ग_लिखो(tusb->ulpi, ULPI_OTG_CTRL, ret);
+		ulpi_write(tusb->ulpi, ULPI_OTG_CTRL, ret);
 		ret |= ULPI_OTG_CTRL_DRVVBUS;
-		अवरोध;
-	हाल PHY_MODE_USB_DEVICE:
+		break;
+	case PHY_MODE_USB_DEVICE:
 		ret &= ~(ULPI_OTG_CTRL_DRVVBUS
 			 | ULPI_OTG_CTRL_DP_PULLDOWN
 			 | ULPI_OTG_CTRL_DM_PULLDOWN);
-		ulpi_ग_लिखो(tusb->ulpi, ULPI_OTG_CTRL, ret);
+		ulpi_write(tusb->ulpi, ULPI_OTG_CTRL, ret);
 		ret &= ~ULPI_OTG_CTRL_DRVVBUS_EXT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* nothing */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस ulpi_ग_लिखो(tusb->ulpi, ULPI_OTG_CTRL, ret);
-पूर्ण
+	return ulpi_write(tusb->ulpi, ULPI_OTG_CTRL, ret);
+}
 
-अटल स्थिर काष्ठा phy_ops phy_ops = अणु
-	.घातer_on = tusb1210_घातer_on,
-	.घातer_off = tusb1210_घातer_off,
+static const struct phy_ops phy_ops = {
+	.power_on = tusb1210_power_on,
+	.power_off = tusb1210_power_off,
 	.set_mode = tusb1210_set_mode,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक tusb1210_probe(काष्ठा ulpi *ulpi)
-अणु
-	काष्ठा tusb1210 *tusb;
+static int tusb1210_probe(struct ulpi *ulpi)
+{
+	struct tusb1210 *tusb;
 	u8 val, reg;
 
-	tusb = devm_kzalloc(&ulpi->dev, माप(*tusb), GFP_KERNEL);
-	अगर (!tusb)
-		वापस -ENOMEM;
+	tusb = devm_kzalloc(&ulpi->dev, sizeof(*tusb), GFP_KERNEL);
+	if (!tusb)
+		return -ENOMEM;
 
 	tusb->gpio_reset = devm_gpiod_get_optional(&ulpi->dev, "reset",
 						   GPIOD_OUT_LOW);
-	अगर (IS_ERR(tusb->gpio_reset))
-		वापस PTR_ERR(tusb->gpio_reset);
+	if (IS_ERR(tusb->gpio_reset))
+		return PTR_ERR(tusb->gpio_reset);
 
 	gpiod_set_value_cansleep(tusb->gpio_reset, 1);
 
 	tusb->gpio_cs = devm_gpiod_get_optional(&ulpi->dev, "cs",
 						GPIOD_OUT_LOW);
-	अगर (IS_ERR(tusb->gpio_cs))
-		वापस PTR_ERR(tusb->gpio_cs);
+	if (IS_ERR(tusb->gpio_cs))
+		return PTR_ERR(tusb->gpio_cs);
 
 	gpiod_set_value_cansleep(tusb->gpio_cs, 1);
 
 	/*
-	 * VENDOR_SPECIFIC2 रेजिस्टर in TUSB1210 can be used क्रम configuring eye
+	 * VENDOR_SPECIFIC2 register in TUSB1210 can be used for configuring eye
 	 * diagram optimization and DP/DM swap.
 	 */
 
-	reg = ulpi_पढ़ो(ulpi, TUSB1210_VENDOR_SPECIFIC2);
+	reg = ulpi_read(ulpi, TUSB1210_VENDOR_SPECIFIC2);
 
 	/* High speed output drive strength configuration */
-	अगर (!device_property_पढ़ो_u8(&ulpi->dev, "ihstx", &val))
+	if (!device_property_read_u8(&ulpi->dev, "ihstx", &val))
 		u8p_replace_bits(&reg, val, (u8)TUSB1210_VENDOR_SPECIFIC2_IHSTX_MASK);
 
 	/* High speed output impedance configuration */
-	अगर (!device_property_पढ़ो_u8(&ulpi->dev, "zhsdrv", &val))
+	if (!device_property_read_u8(&ulpi->dev, "zhsdrv", &val))
 		u8p_replace_bits(&reg, val, (u8)TUSB1210_VENDOR_SPECIFIC2_ZHSDRV_MASK);
 
 	/* DP/DM swap control */
-	अगर (!device_property_पढ़ो_u8(&ulpi->dev, "datapolarity", &val))
+	if (!device_property_read_u8(&ulpi->dev, "datapolarity", &val))
 		u8p_replace_bits(&reg, val, (u8)TUSB1210_VENDOR_SPECIFIC2_DP_MASK);
 
-	ulpi_ग_लिखो(ulpi, TUSB1210_VENDOR_SPECIFIC2, reg);
-	tusb->venकरोr_specअगरic2 = reg;
+	ulpi_write(ulpi, TUSB1210_VENDOR_SPECIFIC2, reg);
+	tusb->vendor_specific2 = reg;
 
 	tusb->phy = ulpi_phy_create(ulpi, &phy_ops);
-	अगर (IS_ERR(tusb->phy))
-		वापस PTR_ERR(tusb->phy);
+	if (IS_ERR(tusb->phy))
+		return PTR_ERR(tusb->phy);
 
 	tusb->ulpi = ulpi;
 
 	phy_set_drvdata(tusb->phy, tusb);
 	ulpi_set_drvdata(ulpi, tusb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tusb1210_हटाओ(काष्ठा ulpi *ulpi)
-अणु
-	काष्ठा tusb1210 *tusb = ulpi_get_drvdata(ulpi);
+static void tusb1210_remove(struct ulpi *ulpi)
+{
+	struct tusb1210 *tusb = ulpi_get_drvdata(ulpi);
 
 	ulpi_phy_destroy(ulpi, tusb->phy);
-पूर्ण
+}
 
-#घोषणा TI_VENDOR_ID 0x0451
+#define TI_VENDOR_ID 0x0451
 
-अटल स्थिर काष्ठा ulpi_device_id tusb1210_ulpi_id[] = अणु
-	अणु TI_VENDOR_ID, 0x1507, पूर्ण,  /* TUSB1210 */
-	अणु TI_VENDOR_ID, 0x1508, पूर्ण,  /* TUSB1211 */
-	अणु पूर्ण,
-पूर्ण;
+static const struct ulpi_device_id tusb1210_ulpi_id[] = {
+	{ TI_VENDOR_ID, 0x1507, },  /* TUSB1210 */
+	{ TI_VENDOR_ID, 0x1508, },  /* TUSB1211 */
+	{ },
+};
 MODULE_DEVICE_TABLE(ulpi, tusb1210_ulpi_id);
 
-अटल काष्ठा ulpi_driver tusb1210_driver = अणु
+static struct ulpi_driver tusb1210_driver = {
 	.id_table = tusb1210_ulpi_id,
 	.probe = tusb1210_probe,
-	.हटाओ = tusb1210_हटाओ,
-	.driver = अणु
+	.remove = tusb1210_remove,
+	.driver = {
 		.name = "tusb1210",
 		.owner = THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 module_ulpi_driver(tusb1210_driver);
 

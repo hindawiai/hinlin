@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#समावेश "iavf_status.h"
-#समावेश "iavf_type.h"
-#समावेश "iavf_register.h"
-#समावेश "iavf_adminq.h"
-#समावेश "iavf_prototype.h"
+#include "iavf_status.h"
+#include "iavf_type.h"
+#include "iavf_register.h"
+#include "iavf_adminq.h"
+#include "iavf_prototype.h"
 
 /**
- *  iavf_adminq_init_regs - Initialize AdminQ रेजिस्टरs
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_adminq_init_regs - Initialize AdminQ registers
+ *  @hw: pointer to the hardware structure
  *
- *  This assumes the alloc_asq and alloc_arq functions have alपढ़ोy been called
+ *  This assumes the alloc_asq and alloc_arq functions have already been called
  **/
-अटल व्योम iavf_adminq_init_regs(काष्ठा iavf_hw *hw)
-अणु
-	/* set head and tail रेजिस्टरs in our local काष्ठा */
+static void iavf_adminq_init_regs(struct iavf_hw *hw)
+{
+	/* set head and tail registers in our local struct */
 	hw->aq.asq.tail = IAVF_VF_ATQT1;
 	hw->aq.asq.head = IAVF_VF_ATQH1;
 	hw->aq.asq.len  = IAVF_VF_ATQLEN1;
@@ -27,272 +26,272 @@
 	hw->aq.arq.len  = IAVF_VF_ARQLEN1;
 	hw->aq.arq.bal  = IAVF_VF_ARQBAL1;
 	hw->aq.arq.bah  = IAVF_VF_ARQBAH1;
-पूर्ण
+}
 
 /**
  *  iavf_alloc_adminq_asq_ring - Allocate Admin Queue send rings
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  @hw: pointer to the hardware structure
  **/
-अटल क्रमागत iavf_status iavf_alloc_adminq_asq_ring(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code;
+static enum iavf_status iavf_alloc_adminq_asq_ring(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code;
 
 	ret_code = iavf_allocate_dma_mem(hw, &hw->aq.asq.desc_buf,
 					 iavf_mem_atq_ring,
 					 (hw->aq.num_asq_entries *
-					 माप(काष्ठा iavf_aq_desc)),
+					 sizeof(struct iavf_aq_desc)),
 					 IAVF_ADMINQ_DESC_ALIGNMENT);
-	अगर (ret_code)
-		वापस ret_code;
+	if (ret_code)
+		return ret_code;
 
 	ret_code = iavf_allocate_virt_mem(hw, &hw->aq.asq.cmd_buf,
 					  (hw->aq.num_asq_entries *
-					  माप(काष्ठा iavf_asq_cmd_details)));
-	अगर (ret_code) अणु
-		iavf_मुक्त_dma_mem(hw, &hw->aq.asq.desc_buf);
-		वापस ret_code;
-	पूर्ण
+					  sizeof(struct iavf_asq_cmd_details)));
+	if (ret_code) {
+		iavf_free_dma_mem(hw, &hw->aq.asq.desc_buf);
+		return ret_code;
+	}
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
  *  iavf_alloc_adminq_arq_ring - Allocate Admin Queue receive rings
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  @hw: pointer to the hardware structure
  **/
-अटल क्रमागत iavf_status iavf_alloc_adminq_arq_ring(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code;
+static enum iavf_status iavf_alloc_adminq_arq_ring(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code;
 
 	ret_code = iavf_allocate_dma_mem(hw, &hw->aq.arq.desc_buf,
 					 iavf_mem_arq_ring,
 					 (hw->aq.num_arq_entries *
-					 माप(काष्ठा iavf_aq_desc)),
+					 sizeof(struct iavf_aq_desc)),
 					 IAVF_ADMINQ_DESC_ALIGNMENT);
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_मुक्त_adminq_asq - Free Admin Queue send rings
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_free_adminq_asq - Free Admin Queue send rings
+ *  @hw: pointer to the hardware structure
  *
- *  This assumes the posted send buffers have alपढ़ोy been cleaned
+ *  This assumes the posted send buffers have already been cleaned
  *  and de-allocated
  **/
-अटल व्योम iavf_मुक्त_adminq_asq(काष्ठा iavf_hw *hw)
-अणु
-	iavf_मुक्त_dma_mem(hw, &hw->aq.asq.desc_buf);
-पूर्ण
+static void iavf_free_adminq_asq(struct iavf_hw *hw)
+{
+	iavf_free_dma_mem(hw, &hw->aq.asq.desc_buf);
+}
 
 /**
- *  iavf_मुक्त_adminq_arq - Free Admin Queue receive rings
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_free_adminq_arq - Free Admin Queue receive rings
+ *  @hw: pointer to the hardware structure
  *
- *  This assumes the posted receive buffers have alपढ़ोy been cleaned
+ *  This assumes the posted receive buffers have already been cleaned
  *  and de-allocated
  **/
-अटल व्योम iavf_मुक्त_adminq_arq(काष्ठा iavf_hw *hw)
-अणु
-	iavf_मुक्त_dma_mem(hw, &hw->aq.arq.desc_buf);
-पूर्ण
+static void iavf_free_adminq_arq(struct iavf_hw *hw)
+{
+	iavf_free_dma_mem(hw, &hw->aq.arq.desc_buf);
+}
 
 /**
- *  iavf_alloc_arq_bufs - Allocate pre-posted buffers क्रम the receive queue
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_alloc_arq_bufs - Allocate pre-posted buffers for the receive queue
+ *  @hw: pointer to the hardware structure
  **/
-अटल क्रमागत iavf_status iavf_alloc_arq_bufs(काष्ठा iavf_hw *hw)
-अणु
-	काष्ठा iavf_aq_desc *desc;
-	काष्ठा iavf_dma_mem *bi;
-	क्रमागत iavf_status ret_code;
-	पूर्णांक i;
+static enum iavf_status iavf_alloc_arq_bufs(struct iavf_hw *hw)
+{
+	struct iavf_aq_desc *desc;
+	struct iavf_dma_mem *bi;
+	enum iavf_status ret_code;
+	int i;
 
 	/* We'll be allocating the buffer info memory first, then we can
-	 * allocate the mapped buffers क्रम the event processing
+	 * allocate the mapped buffers for the event processing
 	 */
 
-	/* buffer_info काष्ठाures करो not need alignment */
+	/* buffer_info structures do not need alignment */
 	ret_code = iavf_allocate_virt_mem(hw, &hw->aq.arq.dma_head,
 					  (hw->aq.num_arq_entries *
-					   माप(काष्ठा iavf_dma_mem)));
-	अगर (ret_code)
-		जाओ alloc_arq_bufs;
-	hw->aq.arq.r.arq_bi = (काष्ठा iavf_dma_mem *)hw->aq.arq.dma_head.va;
+					   sizeof(struct iavf_dma_mem)));
+	if (ret_code)
+		goto alloc_arq_bufs;
+	hw->aq.arq.r.arq_bi = (struct iavf_dma_mem *)hw->aq.arq.dma_head.va;
 
 	/* allocate the mapped buffers */
-	क्रम (i = 0; i < hw->aq.num_arq_entries; i++) अणु
+	for (i = 0; i < hw->aq.num_arq_entries; i++) {
 		bi = &hw->aq.arq.r.arq_bi[i];
 		ret_code = iavf_allocate_dma_mem(hw, bi,
 						 iavf_mem_arq_buf,
 						 hw->aq.arq_buf_size,
 						 IAVF_ADMINQ_DESC_ALIGNMENT);
-		अगर (ret_code)
-			जाओ unwind_alloc_arq_bufs;
+		if (ret_code)
+			goto unwind_alloc_arq_bufs;
 
-		/* now configure the descriptors क्रम use */
+		/* now configure the descriptors for use */
 		desc = IAVF_ADMINQ_DESC(hw->aq.arq, i);
 
 		desc->flags = cpu_to_le16(IAVF_AQ_FLAG_BUF);
-		अगर (hw->aq.arq_buf_size > IAVF_AQ_LARGE_BUF)
+		if (hw->aq.arq_buf_size > IAVF_AQ_LARGE_BUF)
 			desc->flags |= cpu_to_le16(IAVF_AQ_FLAG_LB);
 		desc->opcode = 0;
 		/* This is in accordance with Admin queue design, there is no
-		 * रेजिस्टर क्रम buffer size configuration
+		 * register for buffer size configuration
 		 */
 		desc->datalen = cpu_to_le16((u16)bi->size);
 		desc->retval = 0;
 		desc->cookie_high = 0;
 		desc->cookie_low = 0;
-		desc->params.बाह्यal.addr_high =
+		desc->params.external.addr_high =
 			cpu_to_le32(upper_32_bits(bi->pa));
-		desc->params.बाह्यal.addr_low =
+		desc->params.external.addr_low =
 			cpu_to_le32(lower_32_bits(bi->pa));
-		desc->params.बाह्यal.param0 = 0;
-		desc->params.बाह्यal.param1 = 0;
-	पूर्ण
+		desc->params.external.param0 = 0;
+		desc->params.external.param1 = 0;
+	}
 
 alloc_arq_bufs:
-	वापस ret_code;
+	return ret_code;
 
 unwind_alloc_arq_bufs:
-	/* करोn't try to मुक्त the one that failed... */
+	/* don't try to free the one that failed... */
 	i--;
-	क्रम (; i >= 0; i--)
-		iavf_मुक्त_dma_mem(hw, &hw->aq.arq.r.arq_bi[i]);
-	iavf_मुक्त_virt_mem(hw, &hw->aq.arq.dma_head);
+	for (; i >= 0; i--)
+		iavf_free_dma_mem(hw, &hw->aq.arq.r.arq_bi[i]);
+	iavf_free_virt_mem(hw, &hw->aq.arq.dma_head);
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_alloc_asq_bufs - Allocate empty buffer काष्ठाs क्रम the send queue
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_alloc_asq_bufs - Allocate empty buffer structs for the send queue
+ *  @hw: pointer to the hardware structure
  **/
-अटल क्रमागत iavf_status iavf_alloc_asq_bufs(काष्ठा iavf_hw *hw)
-अणु
-	काष्ठा iavf_dma_mem *bi;
-	क्रमागत iavf_status ret_code;
-	पूर्णांक i;
+static enum iavf_status iavf_alloc_asq_bufs(struct iavf_hw *hw)
+{
+	struct iavf_dma_mem *bi;
+	enum iavf_status ret_code;
+	int i;
 
-	/* No mapped memory needed yet, just the buffer info काष्ठाures */
+	/* No mapped memory needed yet, just the buffer info structures */
 	ret_code = iavf_allocate_virt_mem(hw, &hw->aq.asq.dma_head,
 					  (hw->aq.num_asq_entries *
-					   माप(काष्ठा iavf_dma_mem)));
-	अगर (ret_code)
-		जाओ alloc_asq_bufs;
-	hw->aq.asq.r.asq_bi = (काष्ठा iavf_dma_mem *)hw->aq.asq.dma_head.va;
+					   sizeof(struct iavf_dma_mem)));
+	if (ret_code)
+		goto alloc_asq_bufs;
+	hw->aq.asq.r.asq_bi = (struct iavf_dma_mem *)hw->aq.asq.dma_head.va;
 
 	/* allocate the mapped buffers */
-	क्रम (i = 0; i < hw->aq.num_asq_entries; i++) अणु
+	for (i = 0; i < hw->aq.num_asq_entries; i++) {
 		bi = &hw->aq.asq.r.asq_bi[i];
 		ret_code = iavf_allocate_dma_mem(hw, bi,
 						 iavf_mem_asq_buf,
 						 hw->aq.asq_buf_size,
 						 IAVF_ADMINQ_DESC_ALIGNMENT);
-		अगर (ret_code)
-			जाओ unwind_alloc_asq_bufs;
-	पूर्ण
+		if (ret_code)
+			goto unwind_alloc_asq_bufs;
+	}
 alloc_asq_bufs:
-	वापस ret_code;
+	return ret_code;
 
 unwind_alloc_asq_bufs:
-	/* करोn't try to मुक्त the one that failed... */
+	/* don't try to free the one that failed... */
 	i--;
-	क्रम (; i >= 0; i--)
-		iavf_मुक्त_dma_mem(hw, &hw->aq.asq.r.asq_bi[i]);
-	iavf_मुक्त_virt_mem(hw, &hw->aq.asq.dma_head);
+	for (; i >= 0; i--)
+		iavf_free_dma_mem(hw, &hw->aq.asq.r.asq_bi[i]);
+	iavf_free_virt_mem(hw, &hw->aq.asq.dma_head);
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_मुक्त_arq_bufs - Free receive queue buffer info elements
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_free_arq_bufs - Free receive queue buffer info elements
+ *  @hw: pointer to the hardware structure
  **/
-अटल व्योम iavf_मुक्त_arq_bufs(काष्ठा iavf_hw *hw)
-अणु
-	पूर्णांक i;
+static void iavf_free_arq_bufs(struct iavf_hw *hw)
+{
+	int i;
 
-	/* मुक्त descriptors */
-	क्रम (i = 0; i < hw->aq.num_arq_entries; i++)
-		iavf_मुक्त_dma_mem(hw, &hw->aq.arq.r.arq_bi[i]);
+	/* free descriptors */
+	for (i = 0; i < hw->aq.num_arq_entries; i++)
+		iavf_free_dma_mem(hw, &hw->aq.arq.r.arq_bi[i]);
 
-	/* मुक्त the descriptor memory */
-	iavf_मुक्त_dma_mem(hw, &hw->aq.arq.desc_buf);
+	/* free the descriptor memory */
+	iavf_free_dma_mem(hw, &hw->aq.arq.desc_buf);
 
-	/* मुक्त the dma header */
-	iavf_मुक्त_virt_mem(hw, &hw->aq.arq.dma_head);
-पूर्ण
+	/* free the dma header */
+	iavf_free_virt_mem(hw, &hw->aq.arq.dma_head);
+}
 
 /**
- *  iavf_मुक्त_asq_bufs - Free send queue buffer info elements
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_free_asq_bufs - Free send queue buffer info elements
+ *  @hw: pointer to the hardware structure
  **/
-अटल व्योम iavf_मुक्त_asq_bufs(काष्ठा iavf_hw *hw)
-अणु
-	पूर्णांक i;
+static void iavf_free_asq_bufs(struct iavf_hw *hw)
+{
+	int i;
 
-	/* only unmap अगर the address is non-शून्य */
-	क्रम (i = 0; i < hw->aq.num_asq_entries; i++)
-		अगर (hw->aq.asq.r.asq_bi[i].pa)
-			iavf_मुक्त_dma_mem(hw, &hw->aq.asq.r.asq_bi[i]);
+	/* only unmap if the address is non-NULL */
+	for (i = 0; i < hw->aq.num_asq_entries; i++)
+		if (hw->aq.asq.r.asq_bi[i].pa)
+			iavf_free_dma_mem(hw, &hw->aq.asq.r.asq_bi[i]);
 
-	/* मुक्त the buffer info list */
-	iavf_मुक्त_virt_mem(hw, &hw->aq.asq.cmd_buf);
+	/* free the buffer info list */
+	iavf_free_virt_mem(hw, &hw->aq.asq.cmd_buf);
 
-	/* मुक्त the descriptor memory */
-	iavf_मुक्त_dma_mem(hw, &hw->aq.asq.desc_buf);
+	/* free the descriptor memory */
+	iavf_free_dma_mem(hw, &hw->aq.asq.desc_buf);
 
-	/* मुक्त the dma header */
-	iavf_मुक्त_virt_mem(hw, &hw->aq.asq.dma_head);
-पूर्ण
+	/* free the dma header */
+	iavf_free_virt_mem(hw, &hw->aq.asq.dma_head);
+}
 
 /**
- *  iavf_config_asq_regs - configure ASQ रेजिस्टरs
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_config_asq_regs - configure ASQ registers
+ *  @hw: pointer to the hardware structure
  *
- *  Configure base address and length रेजिस्टरs क्रम the transmit queue
+ *  Configure base address and length registers for the transmit queue
  **/
-अटल क्रमागत iavf_status iavf_config_asq_regs(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+static enum iavf_status iavf_config_asq_regs(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 	u32 reg = 0;
 
 	/* Clear Head and Tail */
 	wr32(hw, hw->aq.asq.head, 0);
 	wr32(hw, hw->aq.asq.tail, 0);
 
-	/* set starting poपूर्णांक */
+	/* set starting point */
 	wr32(hw, hw->aq.asq.len, (hw->aq.num_asq_entries |
 				  IAVF_VF_ATQLEN1_ATQENABLE_MASK));
 	wr32(hw, hw->aq.asq.bal, lower_32_bits(hw->aq.asq.desc_buf.pa));
 	wr32(hw, hw->aq.asq.bah, upper_32_bits(hw->aq.asq.desc_buf.pa));
 
-	/* Check one रेजिस्टर to verअगरy that config was applied */
+	/* Check one register to verify that config was applied */
 	reg = rd32(hw, hw->aq.asq.bal);
-	अगर (reg != lower_32_bits(hw->aq.asq.desc_buf.pa))
+	if (reg != lower_32_bits(hw->aq.asq.desc_buf.pa))
 		ret_code = IAVF_ERR_ADMIN_QUEUE_ERROR;
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_config_arq_regs - ARQ रेजिस्टर configuration
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_config_arq_regs - ARQ register configuration
+ *  @hw: pointer to the hardware structure
  *
- * Configure base address and length रेजिस्टरs क्रम the receive (event queue)
+ * Configure base address and length registers for the receive (event queue)
  **/
-अटल क्रमागत iavf_status iavf_config_arq_regs(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+static enum iavf_status iavf_config_arq_regs(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 	u32 reg = 0;
 
 	/* Clear Head and Tail */
 	wr32(hw, hw->aq.arq.head, 0);
 	wr32(hw, hw->aq.arq.tail, 0);
 
-	/* set starting poपूर्णांक */
+	/* set starting point */
 	wr32(hw, hw->aq.arq.len, (hw->aq.num_arq_entries |
 				  IAVF_VF_ARQLEN1_ARQENABLE_MASK));
 	wr32(hw, hw->aq.arq.bal, lower_32_bits(hw->aq.arq.desc_buf.pa));
@@ -301,148 +300,148 @@ unwind_alloc_asq_bufs:
 	/* Update tail in the HW to post pre-allocated buffers */
 	wr32(hw, hw->aq.arq.tail, hw->aq.num_arq_entries - 1);
 
-	/* Check one रेजिस्टर to verअगरy that config was applied */
+	/* Check one register to verify that config was applied */
 	reg = rd32(hw, hw->aq.arq.bal);
-	अगर (reg != lower_32_bits(hw->aq.arq.desc_buf.pa))
+	if (reg != lower_32_bits(hw->aq.arq.desc_buf.pa))
 		ret_code = IAVF_ERR_ADMIN_QUEUE_ERROR;
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_init_asq - मुख्य initialization routine क्रम ASQ
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_init_asq - main initialization routine for ASQ
+ *  @hw: pointer to the hardware structure
  *
- *  This is the मुख्य initialization routine क्रम the Admin Send Queue
+ *  This is the main initialization routine for the Admin Send Queue
  *  Prior to calling this function, drivers *MUST* set the following fields
- *  in the hw->aq काष्ठाure:
+ *  in the hw->aq structure:
  *     - hw->aq.num_asq_entries
  *     - hw->aq.arq_buf_size
  *
  *  Do *NOT* hold the lock when calling this as the memory allocation routines
  *  called are not going to be atomic context safe
  **/
-अटल क्रमागत iavf_status iavf_init_asq(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+static enum iavf_status iavf_init_asq(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 
-	अगर (hw->aq.asq.count > 0) अणु
-		/* queue alपढ़ोy initialized */
+	if (hw->aq.asq.count > 0) {
+		/* queue already initialized */
 		ret_code = IAVF_ERR_NOT_READY;
-		जाओ init_adminq_निकास;
-	पूर्ण
+		goto init_adminq_exit;
+	}
 
-	/* verअगरy input क्रम valid configuration */
-	अगर ((hw->aq.num_asq_entries == 0) ||
-	    (hw->aq.asq_buf_size == 0)) अणु
+	/* verify input for valid configuration */
+	if ((hw->aq.num_asq_entries == 0) ||
+	    (hw->aq.asq_buf_size == 0)) {
 		ret_code = IAVF_ERR_CONFIG;
-		जाओ init_adminq_निकास;
-	पूर्ण
+		goto init_adminq_exit;
+	}
 
 	hw->aq.asq.next_to_use = 0;
 	hw->aq.asq.next_to_clean = 0;
 
 	/* allocate the ring memory */
 	ret_code = iavf_alloc_adminq_asq_ring(hw);
-	अगर (ret_code)
-		जाओ init_adminq_निकास;
+	if (ret_code)
+		goto init_adminq_exit;
 
 	/* allocate buffers in the rings */
 	ret_code = iavf_alloc_asq_bufs(hw);
-	अगर (ret_code)
-		जाओ init_adminq_मुक्त_rings;
+	if (ret_code)
+		goto init_adminq_free_rings;
 
-	/* initialize base रेजिस्टरs */
+	/* initialize base registers */
 	ret_code = iavf_config_asq_regs(hw);
-	अगर (ret_code)
-		जाओ init_adminq_मुक्त_rings;
+	if (ret_code)
+		goto init_adminq_free_rings;
 
 	/* success! */
 	hw->aq.asq.count = hw->aq.num_asq_entries;
-	जाओ init_adminq_निकास;
+	goto init_adminq_exit;
 
-init_adminq_मुक्त_rings:
-	iavf_मुक्त_adminq_asq(hw);
+init_adminq_free_rings:
+	iavf_free_adminq_asq(hw);
 
-init_adminq_निकास:
-	वापस ret_code;
-पूर्ण
+init_adminq_exit:
+	return ret_code;
+}
 
 /**
  *  iavf_init_arq - initialize ARQ
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  @hw: pointer to the hardware structure
  *
- *  The मुख्य initialization routine क्रम the Admin Receive (Event) Queue.
+ *  The main initialization routine for the Admin Receive (Event) Queue.
  *  Prior to calling this function, drivers *MUST* set the following fields
- *  in the hw->aq काष्ठाure:
+ *  in the hw->aq structure:
  *     - hw->aq.num_asq_entries
  *     - hw->aq.arq_buf_size
  *
  *  Do *NOT* hold the lock when calling this as the memory allocation routines
  *  called are not going to be atomic context safe
  **/
-अटल क्रमागत iavf_status iavf_init_arq(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+static enum iavf_status iavf_init_arq(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 
-	अगर (hw->aq.arq.count > 0) अणु
-		/* queue alपढ़ोy initialized */
+	if (hw->aq.arq.count > 0) {
+		/* queue already initialized */
 		ret_code = IAVF_ERR_NOT_READY;
-		जाओ init_adminq_निकास;
-	पूर्ण
+		goto init_adminq_exit;
+	}
 
-	/* verअगरy input क्रम valid configuration */
-	अगर ((hw->aq.num_arq_entries == 0) ||
-	    (hw->aq.arq_buf_size == 0)) अणु
+	/* verify input for valid configuration */
+	if ((hw->aq.num_arq_entries == 0) ||
+	    (hw->aq.arq_buf_size == 0)) {
 		ret_code = IAVF_ERR_CONFIG;
-		जाओ init_adminq_निकास;
-	पूर्ण
+		goto init_adminq_exit;
+	}
 
 	hw->aq.arq.next_to_use = 0;
 	hw->aq.arq.next_to_clean = 0;
 
 	/* allocate the ring memory */
 	ret_code = iavf_alloc_adminq_arq_ring(hw);
-	अगर (ret_code)
-		जाओ init_adminq_निकास;
+	if (ret_code)
+		goto init_adminq_exit;
 
 	/* allocate buffers in the rings */
 	ret_code = iavf_alloc_arq_bufs(hw);
-	अगर (ret_code)
-		जाओ init_adminq_मुक्त_rings;
+	if (ret_code)
+		goto init_adminq_free_rings;
 
-	/* initialize base रेजिस्टरs */
+	/* initialize base registers */
 	ret_code = iavf_config_arq_regs(hw);
-	अगर (ret_code)
-		जाओ init_adminq_मुक्त_rings;
+	if (ret_code)
+		goto init_adminq_free_rings;
 
 	/* success! */
 	hw->aq.arq.count = hw->aq.num_arq_entries;
-	जाओ init_adminq_निकास;
+	goto init_adminq_exit;
 
-init_adminq_मुक्त_rings:
-	iavf_मुक्त_adminq_arq(hw);
+init_adminq_free_rings:
+	iavf_free_adminq_arq(hw);
 
-init_adminq_निकास:
-	वापस ret_code;
-पूर्ण
+init_adminq_exit:
+	return ret_code;
+}
 
 /**
- *  iavf_shutकरोwn_asq - shutकरोwn the ASQ
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_shutdown_asq - shutdown the ASQ
+ *  @hw: pointer to the hardware structure
  *
- *  The मुख्य shutकरोwn routine क्रम the Admin Send Queue
+ *  The main shutdown routine for the Admin Send Queue
  **/
-अटल क्रमागत iavf_status iavf_shutकरोwn_asq(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+static enum iavf_status iavf_shutdown_asq(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 
 	mutex_lock(&hw->aq.asq_mutex);
 
-	अगर (hw->aq.asq.count == 0) अणु
+	if (hw->aq.asq.count == 0) {
 		ret_code = IAVF_ERR_NOT_READY;
-		जाओ shutकरोwn_asq_out;
-	पूर्ण
+		goto shutdown_asq_out;
+	}
 
 	/* Stop firmware AdminQ processing */
 	wr32(hw, hw->aq.asq.head, 0);
@@ -453,30 +452,30 @@ init_adminq_निकास:
 
 	hw->aq.asq.count = 0; /* to indicate uninitialized queue */
 
-	/* मुक्त ring buffers */
-	iavf_मुक्त_asq_bufs(hw);
+	/* free ring buffers */
+	iavf_free_asq_bufs(hw);
 
-shutकरोwn_asq_out:
+shutdown_asq_out:
 	mutex_unlock(&hw->aq.asq_mutex);
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_shutकरोwn_arq - shutकरोwn ARQ
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_shutdown_arq - shutdown ARQ
+ *  @hw: pointer to the hardware structure
  *
- *  The मुख्य shutकरोwn routine क्रम the Admin Receive Queue
+ *  The main shutdown routine for the Admin Receive Queue
  **/
-अटल क्रमागत iavf_status iavf_shutकरोwn_arq(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+static enum iavf_status iavf_shutdown_arq(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 
 	mutex_lock(&hw->aq.arq_mutex);
 
-	अगर (hw->aq.arq.count == 0) अणु
+	if (hw->aq.arq.count == 0) {
 		ret_code = IAVF_ERR_NOT_READY;
-		जाओ shutकरोwn_arq_out;
-	पूर्ण
+		goto shutdown_arq_out;
+	}
 
 	/* Stop firmware AdminQ processing */
 	wr32(hw, hw->aq.arq.head, 0);
@@ -487,420 +486,420 @@ shutकरोwn_asq_out:
 
 	hw->aq.arq.count = 0; /* to indicate uninitialized queue */
 
-	/* मुक्त ring buffers */
-	iavf_मुक्त_arq_bufs(hw);
+	/* free ring buffers */
+	iavf_free_arq_bufs(hw);
 
-shutकरोwn_arq_out:
+shutdown_arq_out:
 	mutex_unlock(&hw->aq.arq_mutex);
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
- *  iavf_init_adminq - मुख्य initialization routine क्रम Admin Queue
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_init_adminq - main initialization routine for Admin Queue
+ *  @hw: pointer to the hardware structure
  *
  *  Prior to calling this function, drivers *MUST* set the following fields
- *  in the hw->aq काष्ठाure:
+ *  in the hw->aq structure:
  *     - hw->aq.num_asq_entries
  *     - hw->aq.num_arq_entries
  *     - hw->aq.arq_buf_size
  *     - hw->aq.asq_buf_size
  **/
-क्रमागत iavf_status iavf_init_adminq(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code;
+enum iavf_status iavf_init_adminq(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code;
 
-	/* verअगरy input क्रम valid configuration */
-	अगर ((hw->aq.num_arq_entries == 0) ||
+	/* verify input for valid configuration */
+	if ((hw->aq.num_arq_entries == 0) ||
 	    (hw->aq.num_asq_entries == 0) ||
 	    (hw->aq.arq_buf_size == 0) ||
-	    (hw->aq.asq_buf_size == 0)) अणु
+	    (hw->aq.asq_buf_size == 0)) {
 		ret_code = IAVF_ERR_CONFIG;
-		जाओ init_adminq_निकास;
-	पूर्ण
+		goto init_adminq_exit;
+	}
 
-	/* Set up रेजिस्टर offsets */
+	/* Set up register offsets */
 	iavf_adminq_init_regs(hw);
 
-	/* setup ASQ command ग_लिखो back समयout */
-	hw->aq.asq_cmd_समयout = IAVF_ASQ_CMD_TIMEOUT;
+	/* setup ASQ command write back timeout */
+	hw->aq.asq_cmd_timeout = IAVF_ASQ_CMD_TIMEOUT;
 
 	/* allocate the ASQ */
 	ret_code = iavf_init_asq(hw);
-	अगर (ret_code)
-		जाओ init_adminq_destroy_locks;
+	if (ret_code)
+		goto init_adminq_destroy_locks;
 
 	/* allocate the ARQ */
 	ret_code = iavf_init_arq(hw);
-	अगर (ret_code)
-		जाओ init_adminq_मुक्त_asq;
+	if (ret_code)
+		goto init_adminq_free_asq;
 
 	/* success! */
-	जाओ init_adminq_निकास;
+	goto init_adminq_exit;
 
-init_adminq_मुक्त_asq:
-	iavf_shutकरोwn_asq(hw);
+init_adminq_free_asq:
+	iavf_shutdown_asq(hw);
 init_adminq_destroy_locks:
 
-init_adminq_निकास:
-	वापस ret_code;
-पूर्ण
+init_adminq_exit:
+	return ret_code;
+}
 
 /**
- *  iavf_shutकरोwn_adminq - shutकरोwn routine क्रम the Admin Queue
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  iavf_shutdown_adminq - shutdown routine for the Admin Queue
+ *  @hw: pointer to the hardware structure
  **/
-क्रमागत iavf_status iavf_shutकरोwn_adminq(काष्ठा iavf_hw *hw)
-अणु
-	क्रमागत iavf_status ret_code = 0;
+enum iavf_status iavf_shutdown_adminq(struct iavf_hw *hw)
+{
+	enum iavf_status ret_code = 0;
 
-	अगर (iavf_check_asq_alive(hw))
-		iavf_aq_queue_shutकरोwn(hw, true);
+	if (iavf_check_asq_alive(hw))
+		iavf_aq_queue_shutdown(hw, true);
 
-	iavf_shutकरोwn_asq(hw);
-	iavf_shutकरोwn_arq(hw);
+	iavf_shutdown_asq(hw);
+	iavf_shutdown_arq(hw);
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}
 
 /**
  *  iavf_clean_asq - cleans Admin send queue
- *  @hw: poपूर्णांकer to the hardware काष्ठाure
+ *  @hw: pointer to the hardware structure
  *
- *  वापसs the number of मुक्त desc
+ *  returns the number of free desc
  **/
-अटल u16 iavf_clean_asq(काष्ठा iavf_hw *hw)
-अणु
-	काष्ठा iavf_adminq_ring *asq = &hw->aq.asq;
-	काष्ठा iavf_asq_cmd_details *details;
+static u16 iavf_clean_asq(struct iavf_hw *hw)
+{
+	struct iavf_adminq_ring *asq = &hw->aq.asq;
+	struct iavf_asq_cmd_details *details;
 	u16 ntc = asq->next_to_clean;
-	काष्ठा iavf_aq_desc desc_cb;
-	काष्ठा iavf_aq_desc *desc;
+	struct iavf_aq_desc desc_cb;
+	struct iavf_aq_desc *desc;
 
 	desc = IAVF_ADMINQ_DESC(*asq, ntc);
 	details = IAVF_ADMINQ_DETAILS(*asq, ntc);
-	जबतक (rd32(hw, hw->aq.asq.head) != ntc) अणु
+	while (rd32(hw, hw->aq.asq.head) != ntc) {
 		iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 			   "ntc %d head %d.\n", ntc, rd32(hw, hw->aq.asq.head));
 
-		अगर (details->callback) अणु
+		if (details->callback) {
 			IAVF_ADMINQ_CALLBACK cb_func =
 					(IAVF_ADMINQ_CALLBACK)details->callback;
 			desc_cb = *desc;
 			cb_func(hw, &desc_cb);
-		पूर्ण
-		स_रखो((व्योम *)desc, 0, माप(काष्ठा iavf_aq_desc));
-		स_रखो((व्योम *)details, 0,
-		       माप(काष्ठा iavf_asq_cmd_details));
+		}
+		memset((void *)desc, 0, sizeof(struct iavf_aq_desc));
+		memset((void *)details, 0,
+		       sizeof(struct iavf_asq_cmd_details));
 		ntc++;
-		अगर (ntc == asq->count)
+		if (ntc == asq->count)
 			ntc = 0;
 		desc = IAVF_ADMINQ_DESC(*asq, ntc);
 		details = IAVF_ADMINQ_DETAILS(*asq, ntc);
-	पूर्ण
+	}
 
 	asq->next_to_clean = ntc;
 
-	वापस IAVF_DESC_UNUSED(asq);
-पूर्ण
+	return IAVF_DESC_UNUSED(asq);
+}
 
 /**
- *  iavf_asq_करोne - check अगर FW has processed the Admin Send Queue
- *  @hw: poपूर्णांकer to the hw काष्ठा
+ *  iavf_asq_done - check if FW has processed the Admin Send Queue
+ *  @hw: pointer to the hw struct
  *
- *  Returns true अगर the firmware has processed all descriptors on the
- *  admin send queue. Returns false अगर there are still requests pending.
+ *  Returns true if the firmware has processed all descriptors on the
+ *  admin send queue. Returns false if there are still requests pending.
  **/
-bool iavf_asq_करोne(काष्ठा iavf_hw *hw)
-अणु
-	/* AQ designers suggest use of head क्रम better
+bool iavf_asq_done(struct iavf_hw *hw)
+{
+	/* AQ designers suggest use of head for better
 	 * timing reliability than DD bit
 	 */
-	वापस rd32(hw, hw->aq.asq.head) == hw->aq.asq.next_to_use;
-पूर्ण
+	return rd32(hw, hw->aq.asq.head) == hw->aq.asq.next_to_use;
+}
 
 /**
  *  iavf_asq_send_command - send command to Admin Queue
- *  @hw: poपूर्णांकer to the hw काष्ठा
+ *  @hw: pointer to the hw struct
  *  @desc: prefilled descriptor describing the command (non DMA mem)
- *  @buff: buffer to use क्रम indirect commands
- *  @buff_size: size of buffer क्रम indirect commands
- *  @cmd_details: poपूर्णांकer to command details काष्ठाure
+ *  @buff: buffer to use for indirect commands
+ *  @buff_size: size of buffer for indirect commands
+ *  @cmd_details: pointer to command details structure
  *
- *  This is the मुख्य send command driver routine क्रम the Admin Queue send
+ *  This is the main send command driver routine for the Admin Queue send
  *  queue.  It runs the queue, cleans the queue, etc
  **/
-क्रमागत iavf_status iavf_asq_send_command(काष्ठा iavf_hw *hw,
-				       काष्ठा iavf_aq_desc *desc,
-				       व्योम *buff, /* can be शून्य */
+enum iavf_status iavf_asq_send_command(struct iavf_hw *hw,
+				       struct iavf_aq_desc *desc,
+				       void *buff, /* can be NULL */
 				       u16  buff_size,
-				       काष्ठा iavf_asq_cmd_details *cmd_details)
-अणु
-	काष्ठा iavf_dma_mem *dma_buff = शून्य;
-	काष्ठा iavf_asq_cmd_details *details;
-	काष्ठा iavf_aq_desc *desc_on_ring;
+				       struct iavf_asq_cmd_details *cmd_details)
+{
+	struct iavf_dma_mem *dma_buff = NULL;
+	struct iavf_asq_cmd_details *details;
+	struct iavf_aq_desc *desc_on_ring;
 	bool cmd_completed = false;
-	क्रमागत iavf_status status = 0;
+	enum iavf_status status = 0;
 	u16  retval = 0;
 	u32  val = 0;
 
 	mutex_lock(&hw->aq.asq_mutex);
 
-	अगर (hw->aq.asq.count == 0) अणु
+	if (hw->aq.asq.count == 0) {
 		iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 			   "AQTX: Admin queue not initialized.\n");
 		status = IAVF_ERR_QUEUE_EMPTY;
-		जाओ asq_send_command_error;
-	पूर्ण
+		goto asq_send_command_error;
+	}
 
 	hw->aq.asq_last_status = IAVF_AQ_RC_OK;
 
 	val = rd32(hw, hw->aq.asq.head);
-	अगर (val >= hw->aq.num_asq_entries) अणु
+	if (val >= hw->aq.num_asq_entries) {
 		iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 			   "AQTX: head overrun at %d\n", val);
 		status = IAVF_ERR_QUEUE_EMPTY;
-		जाओ asq_send_command_error;
-	पूर्ण
+		goto asq_send_command_error;
+	}
 
 	details = IAVF_ADMINQ_DETAILS(hw->aq.asq, hw->aq.asq.next_to_use);
-	अगर (cmd_details) अणु
+	if (cmd_details) {
 		*details = *cmd_details;
 
 		/* If the cmd_details are defined copy the cookie.  The
 		 * cpu_to_le32 is not needed here because the data is ignored
 		 * by the FW, only used by the driver
 		 */
-		अगर (details->cookie) अणु
+		if (details->cookie) {
 			desc->cookie_high =
 				cpu_to_le32(upper_32_bits(details->cookie));
 			desc->cookie_low =
 				cpu_to_le32(lower_32_bits(details->cookie));
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		स_रखो(details, 0, माप(काष्ठा iavf_asq_cmd_details));
-	पूर्ण
+		}
+	} else {
+		memset(details, 0, sizeof(struct iavf_asq_cmd_details));
+	}
 
-	/* clear requested flags and then set additional flags अगर defined */
+	/* clear requested flags and then set additional flags if defined */
 	desc->flags &= ~cpu_to_le16(details->flags_dis);
 	desc->flags |= cpu_to_le16(details->flags_ena);
 
-	अगर (buff_size > hw->aq.asq_buf_size) अणु
+	if (buff_size > hw->aq.asq_buf_size) {
 		iavf_debug(hw,
 			   IAVF_DEBUG_AQ_MESSAGE,
 			   "AQTX: Invalid buffer size: %d.\n",
 			   buff_size);
 		status = IAVF_ERR_INVALID_SIZE;
-		जाओ asq_send_command_error;
-	पूर्ण
+		goto asq_send_command_error;
+	}
 
-	अगर (details->postpone && !details->async) अणु
+	if (details->postpone && !details->async) {
 		iavf_debug(hw,
 			   IAVF_DEBUG_AQ_MESSAGE,
 			   "AQTX: Async flag not set along with postpone flag");
 		status = IAVF_ERR_PARAM;
-		जाओ asq_send_command_error;
-	पूर्ण
+		goto asq_send_command_error;
+	}
 
 	/* call clean and check queue available function to reclaim the
-	 * descriptors that were processed by FW, the function वापसs the
+	 * descriptors that were processed by FW, the function returns the
 	 * number of desc available
 	 */
-	/* the clean function called here could be called in a separate thपढ़ो
-	 * in हाल of asynchronous completions
+	/* the clean function called here could be called in a separate thread
+	 * in case of asynchronous completions
 	 */
-	अगर (iavf_clean_asq(hw) == 0) अणु
+	if (iavf_clean_asq(hw) == 0) {
 		iavf_debug(hw,
 			   IAVF_DEBUG_AQ_MESSAGE,
 			   "AQTX: Error queue is full.\n");
 		status = IAVF_ERR_ADMIN_QUEUE_FULL;
-		जाओ asq_send_command_error;
-	पूर्ण
+		goto asq_send_command_error;
+	}
 
-	/* initialize the temp desc poपूर्णांकer with the right desc */
+	/* initialize the temp desc pointer with the right desc */
 	desc_on_ring = IAVF_ADMINQ_DESC(hw->aq.asq, hw->aq.asq.next_to_use);
 
-	/* अगर the desc is available copy the temp desc to the right place */
+	/* if the desc is available copy the temp desc to the right place */
 	*desc_on_ring = *desc;
 
-	/* अगर buff is not शून्य assume indirect command */
-	अगर (buff) अणु
+	/* if buff is not NULL assume indirect command */
+	if (buff) {
 		dma_buff = &hw->aq.asq.r.asq_bi[hw->aq.asq.next_to_use];
-		/* copy the user buff पूर्णांकo the respective DMA buff */
-		स_नकल(dma_buff->va, buff, buff_size);
+		/* copy the user buff into the respective DMA buff */
+		memcpy(dma_buff->va, buff, buff_size);
 		desc_on_ring->datalen = cpu_to_le16(buff_size);
 
 		/* Update the address values in the desc with the pa value
-		 * क्रम respective buffer
+		 * for respective buffer
 		 */
-		desc_on_ring->params.बाह्यal.addr_high =
+		desc_on_ring->params.external.addr_high =
 				cpu_to_le32(upper_32_bits(dma_buff->pa));
-		desc_on_ring->params.बाह्यal.addr_low =
+		desc_on_ring->params.external.addr_low =
 				cpu_to_le32(lower_32_bits(dma_buff->pa));
-	पूर्ण
+	}
 
 	/* bump the tail */
 	iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE, "AQTX: desc and buffer:\n");
-	iavf_debug_aq(hw, IAVF_DEBUG_AQ_COMMAND, (व्योम *)desc_on_ring,
+	iavf_debug_aq(hw, IAVF_DEBUG_AQ_COMMAND, (void *)desc_on_ring,
 		      buff, buff_size);
 	(hw->aq.asq.next_to_use)++;
-	अगर (hw->aq.asq.next_to_use == hw->aq.asq.count)
+	if (hw->aq.asq.next_to_use == hw->aq.asq.count)
 		hw->aq.asq.next_to_use = 0;
-	अगर (!details->postpone)
+	if (!details->postpone)
 		wr32(hw, hw->aq.asq.tail, hw->aq.asq.next_to_use);
 
-	/* अगर cmd_details are not defined or async flag is not set,
-	 * we need to रुको क्रम desc ग_लिखो back
+	/* if cmd_details are not defined or async flag is not set,
+	 * we need to wait for desc write back
 	 */
-	अगर (!details->async && !details->postpone) अणु
+	if (!details->async && !details->postpone) {
 		u32 total_delay = 0;
 
-		करो अणु
-			/* AQ designers suggest use of head क्रम better
+		do {
+			/* AQ designers suggest use of head for better
 			 * timing reliability than DD bit
 			 */
-			अगर (iavf_asq_करोne(hw))
-				अवरोध;
+			if (iavf_asq_done(hw))
+				break;
 			udelay(50);
 			total_delay += 50;
-		पूर्ण जबतक (total_delay < hw->aq.asq_cmd_समयout);
-	पूर्ण
+		} while (total_delay < hw->aq.asq_cmd_timeout);
+	}
 
-	/* अगर पढ़ोy, copy the desc back to temp */
-	अगर (iavf_asq_करोne(hw)) अणु
+	/* if ready, copy the desc back to temp */
+	if (iavf_asq_done(hw)) {
 		*desc = *desc_on_ring;
-		अगर (buff)
-			स_नकल(buff, dma_buff->va, buff_size);
+		if (buff)
+			memcpy(buff, dma_buff->va, buff_size);
 		retval = le16_to_cpu(desc->retval);
-		अगर (retval != 0) अणु
+		if (retval != 0) {
 			iavf_debug(hw,
 				   IAVF_DEBUG_AQ_MESSAGE,
 				   "AQTX: Command completed with error 0x%X.\n",
 				   retval);
 
-			/* strip off FW पूर्णांकernal code */
+			/* strip off FW internal code */
 			retval &= 0xff;
-		पूर्ण
+		}
 		cmd_completed = true;
-		अगर ((क्रमागत iavf_admin_queue_err)retval == IAVF_AQ_RC_OK)
+		if ((enum iavf_admin_queue_err)retval == IAVF_AQ_RC_OK)
 			status = 0;
-		अन्यथा अगर ((क्रमागत iavf_admin_queue_err)retval == IAVF_AQ_RC_EBUSY)
+		else if ((enum iavf_admin_queue_err)retval == IAVF_AQ_RC_EBUSY)
 			status = IAVF_ERR_NOT_READY;
-		अन्यथा
+		else
 			status = IAVF_ERR_ADMIN_QUEUE_ERROR;
-		hw->aq.asq_last_status = (क्रमागत iavf_admin_queue_err)retval;
-	पूर्ण
+		hw->aq.asq_last_status = (enum iavf_admin_queue_err)retval;
+	}
 
 	iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 		   "AQTX: desc and buffer writeback:\n");
-	iavf_debug_aq(hw, IAVF_DEBUG_AQ_COMMAND, (व्योम *)desc, buff, buff_size);
+	iavf_debug_aq(hw, IAVF_DEBUG_AQ_COMMAND, (void *)desc, buff, buff_size);
 
-	/* save ग_लिखोback aq अगर requested */
-	अगर (details->wb_desc)
+	/* save writeback aq if requested */
+	if (details->wb_desc)
 		*details->wb_desc = *desc_on_ring;
 
-	/* update the error अगर समय out occurred */
-	अगर ((!cmd_completed) &&
-	    (!details->async && !details->postpone)) अणु
-		अगर (rd32(hw, hw->aq.asq.len) & IAVF_VF_ATQLEN1_ATQCRIT_MASK) अणु
+	/* update the error if time out occurred */
+	if ((!cmd_completed) &&
+	    (!details->async && !details->postpone)) {
+		if (rd32(hw, hw->aq.asq.len) & IAVF_VF_ATQLEN1_ATQCRIT_MASK) {
 			iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 				   "AQTX: AQ Critical error.\n");
 			status = IAVF_ERR_ADMIN_QUEUE_CRITICAL_ERROR;
-		पूर्ण अन्यथा अणु
+		} else {
 			iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 				   "AQTX: Writeback timeout.\n");
 			status = IAVF_ERR_ADMIN_QUEUE_TIMEOUT;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 asq_send_command_error:
 	mutex_unlock(&hw->aq.asq_mutex);
-	वापस status;
-पूर्ण
+	return status;
+}
 
 /**
- *  iavf_fill_शेष_direct_cmd_desc - AQ descriptor helper function
- *  @desc:     poपूर्णांकer to the temp descriptor (non DMA mem)
+ *  iavf_fill_default_direct_cmd_desc - AQ descriptor helper function
+ *  @desc:     pointer to the temp descriptor (non DMA mem)
  *  @opcode:   the opcode can be used to decide which flags to turn off or on
  *
- *  Fill the desc with शेष values
+ *  Fill the desc with default values
  **/
-व्योम iavf_fill_शेष_direct_cmd_desc(काष्ठा iavf_aq_desc *desc, u16 opcode)
-अणु
+void iavf_fill_default_direct_cmd_desc(struct iavf_aq_desc *desc, u16 opcode)
+{
 	/* zero out the desc */
-	स_रखो((व्योम *)desc, 0, माप(काष्ठा iavf_aq_desc));
+	memset((void *)desc, 0, sizeof(struct iavf_aq_desc));
 	desc->opcode = cpu_to_le16(opcode);
 	desc->flags = cpu_to_le16(IAVF_AQ_FLAG_SI);
-पूर्ण
+}
 
 /**
  *  iavf_clean_arq_element
- *  @hw: poपूर्णांकer to the hw काष्ठा
+ *  @hw: pointer to the hw struct
  *  @e: event info from the receive descriptor, includes any buffers
  *  @pending: number of events that could be left to process
  *
- *  This function cleans one Admin Receive Queue element and वापसs
- *  the contents through e.  It can also वापस how many events are
+ *  This function cleans one Admin Receive Queue element and returns
+ *  the contents through e.  It can also return how many events are
  *  left to process through 'pending'
  **/
-क्रमागत iavf_status iavf_clean_arq_element(काष्ठा iavf_hw *hw,
-					काष्ठा iavf_arq_event_info *e,
+enum iavf_status iavf_clean_arq_element(struct iavf_hw *hw,
+					struct iavf_arq_event_info *e,
 					u16 *pending)
-अणु
+{
 	u16 ntc = hw->aq.arq.next_to_clean;
-	काष्ठा iavf_aq_desc *desc;
-	क्रमागत iavf_status ret_code = 0;
-	काष्ठा iavf_dma_mem *bi;
+	struct iavf_aq_desc *desc;
+	enum iavf_status ret_code = 0;
+	struct iavf_dma_mem *bi;
 	u16 desc_idx;
 	u16 datalen;
 	u16 flags;
 	u16 ntu;
 
 	/* pre-clean the event info */
-	स_रखो(&e->desc, 0, माप(e->desc));
+	memset(&e->desc, 0, sizeof(e->desc));
 
-	/* take the lock beक्रमe we start messing with the ring */
+	/* take the lock before we start messing with the ring */
 	mutex_lock(&hw->aq.arq_mutex);
 
-	अगर (hw->aq.arq.count == 0) अणु
+	if (hw->aq.arq.count == 0) {
 		iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE,
 			   "AQRX: Admin queue not initialized.\n");
 		ret_code = IAVF_ERR_QUEUE_EMPTY;
-		जाओ clean_arq_element_err;
-	पूर्ण
+		goto clean_arq_element_err;
+	}
 
 	/* set next_to_use to head */
 	ntu = rd32(hw, hw->aq.arq.head) & IAVF_VF_ARQH1_ARQH_MASK;
-	अगर (ntu == ntc) अणु
-		/* nothing to करो - shouldn't need to update ring's values */
+	if (ntu == ntc) {
+		/* nothing to do - shouldn't need to update ring's values */
 		ret_code = IAVF_ERR_ADMIN_QUEUE_NO_WORK;
-		जाओ clean_arq_element_out;
-	पूर्ण
+		goto clean_arq_element_out;
+	}
 
 	/* now clean the next descriptor */
 	desc = IAVF_ADMINQ_DESC(hw->aq.arq, ntc);
 	desc_idx = ntc;
 
 	hw->aq.arq_last_status =
-		(क्रमागत iavf_admin_queue_err)le16_to_cpu(desc->retval);
+		(enum iavf_admin_queue_err)le16_to_cpu(desc->retval);
 	flags = le16_to_cpu(desc->flags);
-	अगर (flags & IAVF_AQ_FLAG_ERR) अणु
+	if (flags & IAVF_AQ_FLAG_ERR) {
 		ret_code = IAVF_ERR_ADMIN_QUEUE_ERROR;
 		iavf_debug(hw,
 			   IAVF_DEBUG_AQ_MESSAGE,
 			   "AQRX: Event received with error 0x%X.\n",
 			   hw->aq.arq_last_status);
-	पूर्ण
+	}
 
 	e->desc = *desc;
 	datalen = le16_to_cpu(desc->datalen);
 	e->msg_len = min(datalen, e->buf_len);
-	अगर (e->msg_buf && (e->msg_len != 0))
-		स_नकल(e->msg_buf, hw->aq.arq.r.arq_bi[desc_idx].va,
+	if (e->msg_buf && (e->msg_len != 0))
+		memcpy(e->msg_buf, hw->aq.arq.r.arq_bi[desc_idx].va,
 		       e->msg_len);
 
 	iavf_debug(hw, IAVF_DEBUG_AQ_MESSAGE, "AQRX: desc and buffer:\n");
-	iavf_debug_aq(hw, IAVF_DEBUG_AQ_COMMAND, (व्योम *)desc, e->msg_buf,
+	iavf_debug_aq(hw, IAVF_DEBUG_AQ_COMMAND, (void *)desc, e->msg_buf,
 		      hw->aq.arq_buf_size);
 
 	/* Restore the original datalen and buffer address in the desc,
@@ -908,31 +907,31 @@ asq_send_command_error:
 	 * size
 	 */
 	bi = &hw->aq.arq.r.arq_bi[ntc];
-	स_रखो((व्योम *)desc, 0, माप(काष्ठा iavf_aq_desc));
+	memset((void *)desc, 0, sizeof(struct iavf_aq_desc));
 
 	desc->flags = cpu_to_le16(IAVF_AQ_FLAG_BUF);
-	अगर (hw->aq.arq_buf_size > IAVF_AQ_LARGE_BUF)
+	if (hw->aq.arq_buf_size > IAVF_AQ_LARGE_BUF)
 		desc->flags |= cpu_to_le16(IAVF_AQ_FLAG_LB);
 	desc->datalen = cpu_to_le16((u16)bi->size);
-	desc->params.बाह्यal.addr_high = cpu_to_le32(upper_32_bits(bi->pa));
-	desc->params.बाह्यal.addr_low = cpu_to_le32(lower_32_bits(bi->pa));
+	desc->params.external.addr_high = cpu_to_le32(upper_32_bits(bi->pa));
+	desc->params.external.addr_low = cpu_to_le32(lower_32_bits(bi->pa));
 
 	/* set tail = the last cleaned desc index. */
 	wr32(hw, hw->aq.arq.tail, ntc);
 	/* ntc is updated to tail + 1 */
 	ntc++;
-	अगर (ntc == hw->aq.num_arq_entries)
+	if (ntc == hw->aq.num_arq_entries)
 		ntc = 0;
 	hw->aq.arq.next_to_clean = ntc;
 	hw->aq.arq.next_to_use = ntu;
 
 clean_arq_element_out:
-	/* Set pending अगर needed, unlock and वापस */
-	अगर (pending)
+	/* Set pending if needed, unlock and return */
+	if (pending)
 		*pending = (ntc > ntu ? hw->aq.arq.count : 0) + (ntu - ntc);
 
 clean_arq_element_err:
 	mutex_unlock(&hw->aq.arq_mutex);
 
-	वापस ret_code;
-पूर्ण
+	return ret_code;
+}

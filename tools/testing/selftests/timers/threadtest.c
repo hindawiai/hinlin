@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* thपढ़ोtest.c
+/* threadtest.c
  *		by: john stultz (johnstul@us.ibm.com)
  *		(C) Copyright IBM 2004, 2005, 2006, 2012
  *		Licensed under the GPLv2
  *
  *  To build:
- *	$ gcc thपढ़ोtest.c -o thपढ़ोtest -lrt
+ *	$ gcc threadtest.c -o threadtest -lrt
  *
- *   This program is मुक्त software: you can redistribute it and/or modअगरy
+ *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -15,180 +14,180 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License क्रम more details.
+ *   GNU General Public License for more details.
  */
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <मानककोष.स>
-#समावेश <sys/समय.स>
-#समावेश <pthपढ़ो.h>
-#समावेश "../kselftest.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include "../kselftest.h"
 
 /* serializes shared list access */
-pthपढ़ो_mutex_t list_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t list_lock = PTHREAD_MUTEX_INITIALIZER;
 /* serializes console output */
-pthपढ़ो_mutex_t prपूर्णांक_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t print_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
-#घोषणा MAX_THREADS 128
-#घोषणा LISTSIZE 128
+#define MAX_THREADS 128
+#define LISTSIZE 128
 
-पूर्णांक करोne = 0;
+int done = 0;
 
-काष्ठा बारpec global_list[LISTSIZE];
-पूर्णांक listcount = 0;
+struct timespec global_list[LISTSIZE];
+int listcount = 0;
 
 
-व्योम checklist(काष्ठा बारpec *list, पूर्णांक size)
-अणु
-	पूर्णांक i, j;
-	काष्ठा बारpec *a, *b;
+void checklist(struct timespec *list, int size)
+{
+	int i, j;
+	struct timespec *a, *b;
 
 	/* scan the list */
-	क्रम (i = 0; i < size-1; i++) अणु
+	for (i = 0; i < size-1; i++) {
 		a = &list[i];
 		b = &list[i+1];
 
-		/* look क्रम any समय inconsistencies */
-		अगर ((b->tv_sec <= a->tv_sec) &&
-			(b->tv_nsec < a->tv_nsec)) अणु
+		/* look for any time inconsistencies */
+		if ((b->tv_sec <= a->tv_sec) &&
+			(b->tv_nsec < a->tv_nsec)) {
 
-			/* flag other thपढ़ोs */
-			करोne = 1;
+			/* flag other threads */
+			done = 1;
 
-			/*serialize prपूर्णांकing to aव्योम junky output*/
-			pthपढ़ो_mutex_lock(&prपूर्णांक_lock);
+			/*serialize printing to avoid junky output*/
+			pthread_mutex_lock(&print_lock);
 
 			/* dump the list */
-			म_लिखो("\n");
-			क्रम (j = 0; j < size; j++) अणु
-				अगर (j == i)
-					म_लिखो("---------------\n");
-				म_लिखो("%lu:%lu\n", list[j].tv_sec, list[j].tv_nsec);
-				अगर (j == i+1)
-					म_लिखो("---------------\n");
-			पूर्ण
-			म_लिखो("[FAILED]\n");
+			printf("\n");
+			for (j = 0; j < size; j++) {
+				if (j == i)
+					printf("---------------\n");
+				printf("%lu:%lu\n", list[j].tv_sec, list[j].tv_nsec);
+				if (j == i+1)
+					printf("---------------\n");
+			}
+			printf("[FAILED]\n");
 
-			pthपढ़ो_mutex_unlock(&prपूर्णांक_lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			pthread_mutex_unlock(&print_lock);
+		}
+	}
+}
 
-/* The shared thपढ़ो shares a global list
- * that each thपढ़ो fills जबतक holding the lock.
- * This stresses घड़ी synchronization across cpus.
+/* The shared thread shares a global list
+ * that each thread fills while holding the lock.
+ * This stresses clock synchronization across cpus.
  */
-व्योम *shared_thपढ़ो(व्योम *arg)
-अणु
-	जबतक (!करोne) अणु
+void *shared_thread(void *arg)
+{
+	while (!done) {
 		/* protect the list */
-		pthपढ़ो_mutex_lock(&list_lock);
+		pthread_mutex_lock(&list_lock);
 
-		/* see अगर we're पढ़ोy to check the list */
-		अगर (listcount >= LISTSIZE) अणु
+		/* see if we're ready to check the list */
+		if (listcount >= LISTSIZE) {
 			checklist(global_list, LISTSIZE);
 			listcount = 0;
-		पूर्ण
-		घड़ी_समय_लो(CLOCK_MONOTONIC, &global_list[listcount++]);
+		}
+		clock_gettime(CLOCK_MONOTONIC, &global_list[listcount++]);
 
-		pthपढ़ो_mutex_unlock(&list_lock);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+		pthread_mutex_unlock(&list_lock);
+	}
+	return NULL;
+}
 
 
-/* Each independent thपढ़ो fills in its own
- * list. This stresses घड़ी_समय_लो() lock contention.
+/* Each independent thread fills in its own
+ * list. This stresses clock_gettime() lock contention.
  */
-व्योम *independent_thपढ़ो(व्योम *arg)
-अणु
-	काष्ठा बारpec my_list[LISTSIZE];
-	पूर्णांक count;
+void *independent_thread(void *arg)
+{
+	struct timespec my_list[LISTSIZE];
+	int count;
 
-	जबतक (!करोne) अणु
+	while (!done) {
 		/* fill the list */
-		क्रम (count = 0; count < LISTSIZE; count++)
-			घड़ी_समय_लो(CLOCK_MONOTONIC, &my_list[count]);
+		for (count = 0; count < LISTSIZE; count++)
+			clock_gettime(CLOCK_MONOTONIC, &my_list[count]);
 		checklist(my_list, LISTSIZE);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}
 
-#घोषणा DEFAULT_THREAD_COUNT 8
-#घोषणा DEFAULT_RUNTIME 30
+#define DEFAULT_THREAD_COUNT 8
+#define DEFAULT_RUNTIME 30
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक thपढ़ो_count, i;
-	समय_प्रकार start, now, runसमय;
-	अक्षर buf[255];
-	pthपढ़ो_t pth[MAX_THREADS];
-	पूर्णांक opt;
-	व्योम *tret;
-	पूर्णांक ret = 0;
-	व्योम *(*thपढ़ो)(व्योम *) = shared_thपढ़ो;
+int main(int argc, char **argv)
+{
+	int thread_count, i;
+	time_t start, now, runtime;
+	char buf[255];
+	pthread_t pth[MAX_THREADS];
+	int opt;
+	void *tret;
+	int ret = 0;
+	void *(*thread)(void *) = shared_thread;
 
-	thपढ़ो_count = DEFAULT_THREAD_COUNT;
-	runसमय = DEFAULT_RUNTIME;
+	thread_count = DEFAULT_THREAD_COUNT;
+	runtime = DEFAULT_RUNTIME;
 
 	/* Process arguments */
-	जबतक ((opt = getopt(argc, argv, "t:n:i")) != -1) अणु
-		चयन (opt) अणु
-		हाल 't':
-			runसमय = म_से_प(optarg);
-			अवरोध;
-		हाल 'n':
-			thपढ़ो_count = म_से_प(optarg);
-			अवरोध;
-		हाल 'i':
-			thपढ़ो = independent_thपढ़ो;
-			म_लिखो("using independent threads\n");
-			अवरोध;
-		शेष:
-			म_लिखो("Usage: %s [-t <secs>] [-n <numthreads>] [-i]\n", argv[0]);
-			म_लिखो("	-t: time to run\n");
-			म_लिखो("	-n: number of threads\n");
-			म_लिखो("	-i: use independent threads\n");
-			वापस -1;
-		पूर्ण
-	पूर्ण
+	while ((opt = getopt(argc, argv, "t:n:i")) != -1) {
+		switch (opt) {
+		case 't':
+			runtime = atoi(optarg);
+			break;
+		case 'n':
+			thread_count = atoi(optarg);
+			break;
+		case 'i':
+			thread = independent_thread;
+			printf("using independent threads\n");
+			break;
+		default:
+			printf("Usage: %s [-t <secs>] [-n <numthreads>] [-i]\n", argv[0]);
+			printf("	-t: time to run\n");
+			printf("	-n: number of threads\n");
+			printf("	-i: use independent threads\n");
+			return -1;
+		}
+	}
 
-	अगर (thपढ़ो_count > MAX_THREADS)
-		thपढ़ो_count = MAX_THREADS;
+	if (thread_count > MAX_THREADS)
+		thread_count = MAX_THREADS;
 
 
-	रखो_बफ(मानक_निकास, शून्य);
+	setbuf(stdout, NULL);
 
-	start = समय(0);
-	स_माला(buf, 255, "%a, %d %b %Y %T %z", स_स्थानीय(&start));
-	म_लिखो("%s\n", buf);
-	म_लिखो("Testing consistency with %i threads for %ld seconds: ", thपढ़ो_count, runसमय);
-	ख_साफ(मानक_निकास);
+	start = time(0);
+	strftime(buf, 255, "%a, %d %b %Y %T %z", localtime(&start));
+	printf("%s\n", buf);
+	printf("Testing consistency with %i threads for %ld seconds: ", thread_count, runtime);
+	fflush(stdout);
 
 	/* spawn */
-	क्रम (i = 0; i < thपढ़ो_count; i++)
-		pthपढ़ो_create(&pth[i], 0, thपढ़ो, 0);
+	for (i = 0; i < thread_count; i++)
+		pthread_create(&pth[i], 0, thread, 0);
 
-	जबतक (समय(&now) < start + runसमय) अणु
+	while (time(&now) < start + runtime) {
 		sleep(1);
-		अगर (करोne) अणु
+		if (done) {
 			ret = 1;
-			स_माला(buf, 255, "%a, %d %b %Y %T %z", स_स्थानीय(&now));
-			म_लिखो("%s\n", buf);
-			जाओ out;
-		पूर्ण
-	पूर्ण
-	म_लिखो("[OK]\n");
-	करोne = 1;
+			strftime(buf, 255, "%a, %d %b %Y %T %z", localtime(&now));
+			printf("%s\n", buf);
+			goto out;
+		}
+	}
+	printf("[OK]\n");
+	done = 1;
 
 out:
-	/* रुको */
-	क्रम (i = 0; i < thपढ़ो_count; i++)
-		pthपढ़ो_join(pth[i], &tret);
+	/* wait */
+	for (i = 0; i < thread_count; i++)
+		pthread_join(pth[i], &tret);
 
 	/* die */
-	अगर (ret)
-		ksft_निकास_fail();
-	वापस ksft_निकास_pass();
-पूर्ण
+	if (ret)
+		ksft_exit_fail();
+	return ksft_exit_pass();
+}

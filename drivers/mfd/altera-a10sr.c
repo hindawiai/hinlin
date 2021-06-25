@@ -1,124 +1,123 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Altera Arria10 DevKit System Resource MFD Driver
  *
- * Author: Thor Thayer <tthayer@खोलोsource.altera.com>
+ * Author: Thor Thayer <tthayer@opensource.altera.com>
  *
  * Copyright Intel Corporation (C) 2014-2016. All Rights Reserved
  *
- * SPI access क्रम Altera Arria10 MAX5 System Resource Chip
+ * SPI access for Altera Arria10 MAX5 System Resource Chip
  *
  * Adapted from DA9052
  */
 
-#समावेश <linux/mfd/altera-a10sr.h>
-#समावेश <linux/mfd/core.h>
-#समावेश <linux/init.h>
-#समावेश <linux/of.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/mfd/altera-a10sr.h>
+#include <linux/mfd/core.h>
+#include <linux/init.h>
+#include <linux/of.h>
+#include <linux/spi/spi.h>
 
-अटल स्थिर काष्ठा mfd_cell altr_a10sr_subdev_info[] = अणु
-	अणु
+static const struct mfd_cell altr_a10sr_subdev_info[] = {
+	{
 		.name = "altr_a10sr_gpio",
 		.of_compatible = "altr,a10sr-gpio",
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "altr_a10sr_reset",
 		.of_compatible = "altr,a10sr-reset",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल bool altr_a10sr_reg_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल ALTR_A10SR_VERSION_READ:
-	हाल ALTR_A10SR_LED_REG:
-	हाल ALTR_A10SR_PBDSW_REG:
-	हाल ALTR_A10SR_PBDSW_IRQ_REG:
-	हाल ALTR_A10SR_PWR_GOOD1_REG:
-	हाल ALTR_A10SR_PWR_GOOD2_REG:
-	हाल ALTR_A10SR_PWR_GOOD3_REG:
-	हाल ALTR_A10SR_FMCAB_REG:
-	हाल ALTR_A10SR_HPS_RST_REG:
-	हाल ALTR_A10SR_USB_QSPI_REG:
-	हाल ALTR_A10SR_SFPA_REG:
-	हाल ALTR_A10SR_SFPB_REG:
-	हाल ALTR_A10SR_I2C_M_REG:
-	हाल ALTR_A10SR_WARM_RST_REG:
-	हाल ALTR_A10SR_WR_KEY_REG:
-	हाल ALTR_A10SR_PMBUS_REG:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool altr_a10sr_reg_readable(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case ALTR_A10SR_VERSION_READ:
+	case ALTR_A10SR_LED_REG:
+	case ALTR_A10SR_PBDSW_REG:
+	case ALTR_A10SR_PBDSW_IRQ_REG:
+	case ALTR_A10SR_PWR_GOOD1_REG:
+	case ALTR_A10SR_PWR_GOOD2_REG:
+	case ALTR_A10SR_PWR_GOOD3_REG:
+	case ALTR_A10SR_FMCAB_REG:
+	case ALTR_A10SR_HPS_RST_REG:
+	case ALTR_A10SR_USB_QSPI_REG:
+	case ALTR_A10SR_SFPA_REG:
+	case ALTR_A10SR_SFPB_REG:
+	case ALTR_A10SR_I2C_M_REG:
+	case ALTR_A10SR_WARM_RST_REG:
+	case ALTR_A10SR_WR_KEY_REG:
+	case ALTR_A10SR_PMBUS_REG:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool altr_a10sr_reg_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल ALTR_A10SR_LED_REG:
-	हाल ALTR_A10SR_PBDSW_IRQ_REG:
-	हाल ALTR_A10SR_FMCAB_REG:
-	हाल ALTR_A10SR_HPS_RST_REG:
-	हाल ALTR_A10SR_USB_QSPI_REG:
-	हाल ALTR_A10SR_SFPA_REG:
-	हाल ALTR_A10SR_SFPB_REG:
-	हाल ALTR_A10SR_WARM_RST_REG:
-	हाल ALTR_A10SR_WR_KEY_REG:
-	हाल ALTR_A10SR_PMBUS_REG:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool altr_a10sr_reg_writeable(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case ALTR_A10SR_LED_REG:
+	case ALTR_A10SR_PBDSW_IRQ_REG:
+	case ALTR_A10SR_FMCAB_REG:
+	case ALTR_A10SR_HPS_RST_REG:
+	case ALTR_A10SR_USB_QSPI_REG:
+	case ALTR_A10SR_SFPA_REG:
+	case ALTR_A10SR_SFPB_REG:
+	case ALTR_A10SR_WARM_RST_REG:
+	case ALTR_A10SR_WR_KEY_REG:
+	case ALTR_A10SR_PMBUS_REG:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool altr_a10sr_reg_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल ALTR_A10SR_PBDSW_REG:
-	हाल ALTR_A10SR_PBDSW_IRQ_REG:
-	हाल ALTR_A10SR_PWR_GOOD1_REG:
-	हाल ALTR_A10SR_PWR_GOOD2_REG:
-	हाल ALTR_A10SR_PWR_GOOD3_REG:
-	हाल ALTR_A10SR_HPS_RST_REG:
-	हाल ALTR_A10SR_I2C_M_REG:
-	हाल ALTR_A10SR_WARM_RST_REG:
-	हाल ALTR_A10SR_WR_KEY_REG:
-	हाल ALTR_A10SR_PMBUS_REG:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool altr_a10sr_reg_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case ALTR_A10SR_PBDSW_REG:
+	case ALTR_A10SR_PBDSW_IRQ_REG:
+	case ALTR_A10SR_PWR_GOOD1_REG:
+	case ALTR_A10SR_PWR_GOOD2_REG:
+	case ALTR_A10SR_PWR_GOOD3_REG:
+	case ALTR_A10SR_HPS_RST_REG:
+	case ALTR_A10SR_I2C_M_REG:
+	case ALTR_A10SR_WARM_RST_REG:
+	case ALTR_A10SR_WR_KEY_REG:
+	case ALTR_A10SR_PMBUS_REG:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config altr_a10sr_regmap_config = अणु
+static const struct regmap_config altr_a10sr_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
 	.cache_type = REGCACHE_NONE,
 
-	.use_single_पढ़ो = true,
-	.use_single_ग_लिखो = true,
-	.पढ़ो_flag_mask = 1,
-	.ग_लिखो_flag_mask = 0,
+	.use_single_read = true,
+	.use_single_write = true,
+	.read_flag_mask = 1,
+	.write_flag_mask = 0,
 
-	.max_रेजिस्टर = ALTR_A10SR_WR_KEY_REG,
-	.पढ़ोable_reg = altr_a10sr_reg_पढ़ोable,
-	.ग_लिखोable_reg = altr_a10sr_reg_ग_लिखोable,
-	.अस्थिर_reg = altr_a10sr_reg_अस्थिर,
+	.max_register = ALTR_A10SR_WR_KEY_REG,
+	.readable_reg = altr_a10sr_reg_readable,
+	.writeable_reg = altr_a10sr_reg_writeable,
+	.volatile_reg = altr_a10sr_reg_volatile,
 
-पूर्ण;
+};
 
-अटल पूर्णांक altr_a10sr_spi_probe(काष्ठा spi_device *spi)
-अणु
-	पूर्णांक ret;
-	काष्ठा altr_a10sr *a10sr;
+static int altr_a10sr_spi_probe(struct spi_device *spi)
+{
+	int ret;
+	struct altr_a10sr *a10sr;
 
-	a10sr = devm_kzalloc(&spi->dev, माप(*a10sr),
+	a10sr = devm_kzalloc(&spi->dev, sizeof(*a10sr),
 			     GFP_KERNEL);
-	अगर (!a10sr)
-		वापस -ENOMEM;
+	if (!a10sr)
+		return -ENOMEM;
 
 	spi->mode = SPI_MODE_3;
 	spi->bits_per_word = 8;
@@ -129,34 +128,34 @@
 	spi_set_drvdata(spi, a10sr);
 
 	a10sr->regmap = devm_regmap_init_spi(spi, &altr_a10sr_regmap_config);
-	अगर (IS_ERR(a10sr->regmap)) अणु
+	if (IS_ERR(a10sr->regmap)) {
 		ret = PTR_ERR(a10sr->regmap);
 		dev_err(&spi->dev, "Failed to allocate register map: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_mfd_add_devices(a10sr->dev, PLATFORM_DEVID_AUTO,
 				   altr_a10sr_subdev_info,
 				   ARRAY_SIZE(altr_a10sr_subdev_info),
-				   शून्य, 0, शून्य);
-	अगर (ret)
+				   NULL, 0, NULL);
+	if (ret)
 		dev_err(a10sr->dev, "Failed to register sub-devices: %d\n",
 			ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा of_device_id altr_a10sr_spi_of_match[] = अणु
-	अणु .compatible = "altr,a10sr" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id altr_a10sr_spi_of_match[] = {
+	{ .compatible = "altr,a10sr" },
+	{ },
+};
 
-अटल काष्ठा spi_driver altr_a10sr_spi_driver = अणु
+static struct spi_driver altr_a10sr_spi_driver = {
 	.probe = altr_a10sr_spi_probe,
-	.driver = अणु
+	.driver = {
 		.name = "altr_a10sr",
 		.of_match_table = of_match_ptr(altr_a10sr_spi_of_match),
-	पूर्ण,
-पूर्ण;
-builtin_driver(altr_a10sr_spi_driver, spi_रेजिस्टर_driver)
+	},
+};
+builtin_driver(altr_a10sr_spi_driver, spi_register_driver)

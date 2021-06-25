@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * VFIO based AP device driver
  *
@@ -9,126 +8,126 @@
  *	      Pierre Morel <pmorel@linux.ibm.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <यंत्र/facility.h>
-#समावेश "vfio_ap_private.h"
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <asm/facility.h>
+#include "vfio_ap_private.h"
 
-#घोषणा VFIO_AP_ROOT_NAME "vfio_ap"
-#घोषणा VFIO_AP_DEV_NAME "matrix"
+#define VFIO_AP_ROOT_NAME "vfio_ap"
+#define VFIO_AP_DEV_NAME "matrix"
 
 MODULE_AUTHOR("IBM Corporation");
 MODULE_DESCRIPTION("VFIO AP device driver, Copyright IBM Corp. 2018");
 MODULE_LICENSE("GPL v2");
 
-अटल काष्ठा ap_driver vfio_ap_drv;
+static struct ap_driver vfio_ap_drv;
 
-काष्ठा ap_matrix_dev *matrix_dev;
+struct ap_matrix_dev *matrix_dev;
 
 /* Only type 10 adapters (CEX4 and later) are supported
  * by the AP matrix device driver
  */
-अटल काष्ठा ap_device_id ap_queue_ids[] = अणु
-	अणु .dev_type = AP_DEVICE_TYPE_CEX4,
-	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE पूर्ण,
-	अणु .dev_type = AP_DEVICE_TYPE_CEX5,
-	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE पूर्ण,
-	अणु .dev_type = AP_DEVICE_TYPE_CEX6,
-	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE पूर्ण,
-	अणु .dev_type = AP_DEVICE_TYPE_CEX7,
-	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE पूर्ण,
-	अणु /* end of sibling */ पूर्ण,
-पूर्ण;
+static struct ap_device_id ap_queue_ids[] = {
+	{ .dev_type = AP_DEVICE_TYPE_CEX4,
+	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE },
+	{ .dev_type = AP_DEVICE_TYPE_CEX5,
+	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE },
+	{ .dev_type = AP_DEVICE_TYPE_CEX6,
+	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE },
+	{ .dev_type = AP_DEVICE_TYPE_CEX7,
+	  .match_flags = AP_DEVICE_ID_MATCH_QUEUE_TYPE },
+	{ /* end of sibling */ },
+};
 
 MODULE_DEVICE_TABLE(vfio_ap, ap_queue_ids);
 
 /**
  * vfio_ap_queue_dev_probe:
  *
- * Allocate a vfio_ap_queue काष्ठाure and associate it
+ * Allocate a vfio_ap_queue structure and associate it
  * with the device as driver_data.
  */
-अटल पूर्णांक vfio_ap_queue_dev_probe(काष्ठा ap_device *apdev)
-अणु
-	काष्ठा vfio_ap_queue *q;
+static int vfio_ap_queue_dev_probe(struct ap_device *apdev)
+{
+	struct vfio_ap_queue *q;
 
-	q = kzalloc(माप(*q), GFP_KERNEL);
-	अगर (!q)
-		वापस -ENOMEM;
+	q = kzalloc(sizeof(*q), GFP_KERNEL);
+	if (!q)
+		return -ENOMEM;
 	dev_set_drvdata(&apdev->device, q);
 	q->apqn = to_ap_queue(&apdev->device)->qid;
 	q->saved_isc = VFIO_AP_ISC_INVALID;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vfio_ap_queue_dev_हटाओ:
+ * vfio_ap_queue_dev_remove:
  *
- * Takes the matrix lock to aव्योम actions on this device जबतक removing
- * Free the associated vfio_ap_queue काष्ठाure
+ * Takes the matrix lock to avoid actions on this device while removing
+ * Free the associated vfio_ap_queue structure
  */
-अटल व्योम vfio_ap_queue_dev_हटाओ(काष्ठा ap_device *apdev)
-अणु
-	काष्ठा vfio_ap_queue *q;
+static void vfio_ap_queue_dev_remove(struct ap_device *apdev)
+{
+	struct vfio_ap_queue *q;
 
 	mutex_lock(&matrix_dev->lock);
 	q = dev_get_drvdata(&apdev->device);
 	vfio_ap_mdev_reset_queue(q, 1);
-	dev_set_drvdata(&apdev->device, शून्य);
-	kमुक्त(q);
+	dev_set_drvdata(&apdev->device, NULL);
+	kfree(q);
 	mutex_unlock(&matrix_dev->lock);
-पूर्ण
+}
 
-अटल व्योम vfio_ap_matrix_dev_release(काष्ठा device *dev)
-अणु
-	काष्ठा ap_matrix_dev *matrix_dev = dev_get_drvdata(dev);
+static void vfio_ap_matrix_dev_release(struct device *dev)
+{
+	struct ap_matrix_dev *matrix_dev = dev_get_drvdata(dev);
 
-	kमुक्त(matrix_dev);
-पूर्ण
+	kfree(matrix_dev);
+}
 
-अटल पूर्णांक matrix_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
-अणु
-	वापस 1;
-पूर्ण
+static int matrix_bus_match(struct device *dev, struct device_driver *drv)
+{
+	return 1;
+}
 
-अटल काष्ठा bus_type matrix_bus = अणु
+static struct bus_type matrix_bus = {
 	.name = "matrix",
 	.match = &matrix_bus_match,
-पूर्ण;
+};
 
-अटल काष्ठा device_driver matrix_driver = अणु
+static struct device_driver matrix_driver = {
 	.name = "vfio_ap",
 	.bus = &matrix_bus,
 	.suppress_bind_attrs = true,
-पूर्ण;
+};
 
-अटल पूर्णांक vfio_ap_matrix_dev_create(व्योम)
-अणु
-	पूर्णांक ret;
-	काष्ठा device *root_device;
+static int vfio_ap_matrix_dev_create(void)
+{
+	int ret;
+	struct device *root_device;
 
-	root_device = root_device_रेजिस्टर(VFIO_AP_ROOT_NAME);
-	अगर (IS_ERR(root_device))
-		वापस PTR_ERR(root_device);
+	root_device = root_device_register(VFIO_AP_ROOT_NAME);
+	if (IS_ERR(root_device))
+		return PTR_ERR(root_device);
 
-	ret = bus_रेजिस्टर(&matrix_bus);
-	अगर (ret)
-		जाओ bus_रेजिस्टर_err;
+	ret = bus_register(&matrix_bus);
+	if (ret)
+		goto bus_register_err;
 
-	matrix_dev = kzalloc(माप(*matrix_dev), GFP_KERNEL);
-	अगर (!matrix_dev) अणु
+	matrix_dev = kzalloc(sizeof(*matrix_dev), GFP_KERNEL);
+	if (!matrix_dev) {
 		ret = -ENOMEM;
-		जाओ matrix_alloc_err;
-	पूर्ण
+		goto matrix_alloc_err;
+	}
 
-	/* Fill in config info via PQAP(QCI), अगर available */
-	अगर (test_facility(12)) अणु
+	/* Fill in config info via PQAP(QCI), if available */
+	if (test_facility(12)) {
 		ret = ap_qci(&matrix_dev->info);
-		अगर (ret)
-			जाओ matrix_alloc_err;
-	पूर्ण
+		if (ret)
+			goto matrix_alloc_err;
+	}
 
 	mutex_init(&matrix_dev->lock);
 	INIT_LIST_HEAD(&matrix_dev->mdev_list);
@@ -139,77 +138,77 @@ MODULE_DEVICE_TABLE(vfio_ap, ap_queue_ids);
 	matrix_dev->device.release = vfio_ap_matrix_dev_release;
 	matrix_dev->vfio_ap_drv = &vfio_ap_drv;
 
-	ret = device_रेजिस्टर(&matrix_dev->device);
-	अगर (ret)
-		जाओ matrix_reg_err;
+	ret = device_register(&matrix_dev->device);
+	if (ret)
+		goto matrix_reg_err;
 
-	ret = driver_रेजिस्टर(&matrix_driver);
-	अगर (ret)
-		जाओ matrix_drv_err;
+	ret = driver_register(&matrix_driver);
+	if (ret)
+		goto matrix_drv_err;
 
-	वापस 0;
+	return 0;
 
 matrix_drv_err:
-	device_unरेजिस्टर(&matrix_dev->device);
+	device_unregister(&matrix_dev->device);
 matrix_reg_err:
 	put_device(&matrix_dev->device);
 matrix_alloc_err:
-	bus_unरेजिस्टर(&matrix_bus);
-bus_रेजिस्टर_err:
-	root_device_unरेजिस्टर(root_device);
-	वापस ret;
-पूर्ण
+	bus_unregister(&matrix_bus);
+bus_register_err:
+	root_device_unregister(root_device);
+	return ret;
+}
 
-अटल व्योम vfio_ap_matrix_dev_destroy(व्योम)
-अणु
-	काष्ठा device *root_device = matrix_dev->device.parent;
+static void vfio_ap_matrix_dev_destroy(void)
+{
+	struct device *root_device = matrix_dev->device.parent;
 
-	driver_unरेजिस्टर(&matrix_driver);
-	device_unरेजिस्टर(&matrix_dev->device);
-	bus_unरेजिस्टर(&matrix_bus);
-	root_device_unरेजिस्टर(root_device);
-पूर्ण
+	driver_unregister(&matrix_driver);
+	device_unregister(&matrix_dev->device);
+	bus_unregister(&matrix_bus);
+	root_device_unregister(root_device);
+}
 
-अटल पूर्णांक __init vfio_ap_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init vfio_ap_init(void)
+{
+	int ret;
 
-	/* If there are no AP inकाष्ठाions, there is nothing to pass through. */
-	अगर (!ap_inकाष्ठाions_available())
-		वापस -ENODEV;
+	/* If there are no AP instructions, there is nothing to pass through. */
+	if (!ap_instructions_available())
+		return -ENODEV;
 
 	ret = vfio_ap_matrix_dev_create();
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	स_रखो(&vfio_ap_drv, 0, माप(vfio_ap_drv));
+	memset(&vfio_ap_drv, 0, sizeof(vfio_ap_drv));
 	vfio_ap_drv.probe = vfio_ap_queue_dev_probe;
-	vfio_ap_drv.हटाओ = vfio_ap_queue_dev_हटाओ;
+	vfio_ap_drv.remove = vfio_ap_queue_dev_remove;
 	vfio_ap_drv.ids = ap_queue_ids;
 
-	ret = ap_driver_रेजिस्टर(&vfio_ap_drv, THIS_MODULE, VFIO_AP_DRV_NAME);
-	अगर (ret) अणु
+	ret = ap_driver_register(&vfio_ap_drv, THIS_MODULE, VFIO_AP_DRV_NAME);
+	if (ret) {
 		vfio_ap_matrix_dev_destroy();
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = vfio_ap_mdev_रेजिस्टर();
-	अगर (ret) अणु
-		ap_driver_unरेजिस्टर(&vfio_ap_drv);
+	ret = vfio_ap_mdev_register();
+	if (ret) {
+		ap_driver_unregister(&vfio_ap_drv);
 		vfio_ap_matrix_dev_destroy();
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास vfio_ap_निकास(व्योम)
-अणु
-	vfio_ap_mdev_unरेजिस्टर();
-	ap_driver_unरेजिस्टर(&vfio_ap_drv);
+static void __exit vfio_ap_exit(void)
+{
+	vfio_ap_mdev_unregister();
+	ap_driver_unregister(&vfio_ap_drv);
 	vfio_ap_matrix_dev_destroy();
-पूर्ण
+}
 
 module_init(vfio_ap_init);
-module_निकास(vfio_ap_निकास);
+module_exit(vfio_ap_exit);

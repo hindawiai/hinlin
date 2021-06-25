@@ -1,41 +1,40 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#समावेश "ia_css_rmgr.h"
+#include "ia_css_rmgr.h"
 
-पूर्णांक ia_css_rmgr_init(व्योम)
-अणु
-	पूर्णांक err = 0;
+int ia_css_rmgr_init(void)
+{
+	int err = 0;
 
 	err = ia_css_rmgr_init_vbuf(vbuf_ref);
-	अगर (!err)
-		err = ia_css_rmgr_init_vbuf(vbuf_ग_लिखो);
-	अगर (!err)
+	if (!err)
+		err = ia_css_rmgr_init_vbuf(vbuf_write);
+	if (!err)
 		err = ia_css_rmgr_init_vbuf(hmm_buffer_pool);
-	अगर (err)
+	if (err)
 		ia_css_rmgr_uninit();
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * @brief Uninitialize resource pool (host)
  */
-व्योम ia_css_rmgr_uninit(व्योम)
-अणु
+void ia_css_rmgr_uninit(void)
+{
 	ia_css_rmgr_uninit_vbuf(hmm_buffer_pool);
-	ia_css_rmgr_uninit_vbuf(vbuf_ग_लिखो);
+	ia_css_rmgr_uninit_vbuf(vbuf_write);
 	ia_css_rmgr_uninit_vbuf(vbuf_ref);
-पूर्ण
+}

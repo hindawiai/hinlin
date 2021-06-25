@@ -1,23 +1,22 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2001 - 2013 Tensilica Inc.
  */
 
-#अगर_अघोषित _XTENSA_MMU_H
-#घोषणा _XTENSA_MMU_H
+#ifndef _XTENSA_MMU_H
+#define _XTENSA_MMU_H
 
-#अगर_अघोषित CONFIG_MMU
-#समावेश <यंत्र-generic/mmu.h>
-#अन्यथा
+#ifndef CONFIG_MMU
+#include <asm-generic/mmu.h>
+#else
 
-प्रकार काष्ठा अणु
-	अचिन्हित दीर्घ asid[NR_CPUS];
-	अचिन्हित पूर्णांक cpu;
-पूर्ण mm_context_t;
+typedef struct {
+	unsigned long asid[NR_CPUS];
+	unsigned int cpu;
+} mm_context_t;
 
-#पूर्ण_अगर /* CONFIG_MMU */
-#पूर्ण_अगर	/* _XTENSA_MMU_H */
+#endif /* CONFIG_MMU */
+#endif	/* _XTENSA_MMU_H */

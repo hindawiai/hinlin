@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Mellanox Technologies. All rights reserved.
@@ -7,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the मुख्य directory of this source tree, or the
+ * COPYING in the main directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary क्रमms, with or
- *     without modअगरication, are permitted provided that the following
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary क्रमm must reproduce the above
+ *      - Redistributions in binary form must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the करोcumentation and/or other materials
+ *        disclaimer in the documentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -33,23 +32,23 @@
  * SOFTWARE.
  */
 
-#समावेश <linux/completion.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <rdma/ib_mad.h>
+#include <linux/completion.h>
+#include <linux/pci.h>
+#include <linux/errno.h>
+#include <linux/sched.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <asm/io.h>
+#include <rdma/ib_mad.h>
 
-#समावेश "mthca_dev.h"
-#समावेश "mthca_config_reg.h"
-#समावेश "mthca_cmd.h"
-#समावेश "mthca_memfree.h"
+#include "mthca_dev.h"
+#include "mthca_config_reg.h"
+#include "mthca_cmd.h"
+#include "mthca_memfree.h"
 
-#घोषणा CMD_POLL_TOKEN 0xffff
+#define CMD_POLL_TOKEN 0xffff
 
-क्रमागत अणु
+enum {
 	HCR_IN_PARAM_OFFSET    = 0x00,
 	HCR_IN_MODIFIER_OFFSET = 0x08,
 	HCR_OUT_PARAM_OFFSET   = 0x0c,
@@ -59,9 +58,9 @@
 	HCR_OPMOD_SHIFT        = 12,
 	HCA_E_BIT              = 22,
 	HCR_GO_BIT             = 23
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	/* initialization and general commands */
 	CMD_SYS_EN          = 0x1,
 	CMD_SYS_DIS         = 0x2,
@@ -145,162 +144,162 @@
 	/* debug commands */
 	CMD_QUERY_DEBUG_MSG = 0x2a,
 	CMD_SET_DEBUG_MSG   = 0x2b,
-पूर्ण;
+};
 
 /*
  * According to Mellanox code, FW may be starved and never complete
- * commands.  So we can't use strict समयouts described in PRM -- we
- * just arbitrarily select 60 seconds क्रम now.
+ * commands.  So we can't use strict timeouts described in PRM -- we
+ * just arbitrarily select 60 seconds for now.
  */
-#अगर 0
+#if 0
 /*
- * Round up and add 1 to make sure we get the full रुको समय (since we
- * will be starting in the middle of a jअगरfy)
+ * Round up and add 1 to make sure we get the full wait time (since we
+ * will be starting in the middle of a jiffy)
  */
-क्रमागत अणु
+enum {
 	CMD_TIME_CLASS_A = (HZ + 999) / 1000 + 1,
 	CMD_TIME_CLASS_B = (HZ +  99) /  100 + 1,
 	CMD_TIME_CLASS_C = (HZ +   9) /   10 + 1,
 	CMD_TIME_CLASS_D = 60 * HZ
-पूर्ण;
-#अन्यथा
-क्रमागत अणु
+};
+#else
+enum {
 	CMD_TIME_CLASS_A = 60 * HZ,
 	CMD_TIME_CLASS_B = 60 * HZ,
 	CMD_TIME_CLASS_C = 60 * HZ,
 	CMD_TIME_CLASS_D = 60 * HZ
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-क्रमागत अणु
+enum {
 	GO_BIT_TIMEOUT = HZ * 10
-पूर्ण;
+};
 
-काष्ठा mthca_cmd_context अणु
-	काष्ठा completion करोne;
-	पूर्णांक               result;
-	पूर्णांक               next;
+struct mthca_cmd_context {
+	struct completion done;
+	int               result;
+	int               next;
 	u64               out_param;
 	u16               token;
 	u8                status;
-पूर्ण;
+};
 
-अटल पूर्णांक fw_cmd_करोorbell = 0;
-module_param(fw_cmd_करोorbell, पूर्णांक, 0644);
-MODULE_PARM_DESC(fw_cmd_करोorbell, "post FW commands through doorbell page if nonzero "
+static int fw_cmd_doorbell = 0;
+module_param(fw_cmd_doorbell, int, 0644);
+MODULE_PARM_DESC(fw_cmd_doorbell, "post FW commands through doorbell page if nonzero "
 		 "(and supported by FW)");
 
-अटल अंतरभूत पूर्णांक go_bit(काष्ठा mthca_dev *dev)
-अणु
-	वापस पढ़ोl(dev->hcr + HCR_STATUS_OFFSET) &
+static inline int go_bit(struct mthca_dev *dev)
+{
+	return readl(dev->hcr + HCR_STATUS_OFFSET) &
 		swab32(1 << HCR_GO_BIT);
-पूर्ण
+}
 
-अटल व्योम mthca_cmd_post_dbell(काष्ठा mthca_dev *dev,
+static void mthca_cmd_post_dbell(struct mthca_dev *dev,
 				 u64 in_param,
 				 u64 out_param,
-				 u32 in_modअगरier,
-				 u8 op_modअगरier,
+				 u32 in_modifier,
+				 u8 op_modifier,
 				 u16 op,
 				 u16 token)
-अणु
-	व्योम __iomem *ptr = dev->cmd.dbell_map;
+{
+	void __iomem *ptr = dev->cmd.dbell_map;
 	u16 *offs = dev->cmd.dbell_offsets;
 
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(in_param >> 32),           ptr + offs[0]);
+	__raw_writel((__force u32) cpu_to_be32(in_param >> 32),           ptr + offs[0]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(in_param & 0xfffffffful),  ptr + offs[1]);
+	__raw_writel((__force u32) cpu_to_be32(in_param & 0xfffffffful),  ptr + offs[1]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(in_modअगरier),              ptr + offs[2]);
+	__raw_writel((__force u32) cpu_to_be32(in_modifier),              ptr + offs[2]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(out_param >> 32),          ptr + offs[3]);
+	__raw_writel((__force u32) cpu_to_be32(out_param >> 32),          ptr + offs[3]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(out_param & 0xfffffffful), ptr + offs[4]);
+	__raw_writel((__force u32) cpu_to_be32(out_param & 0xfffffffful), ptr + offs[4]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(token << 16),              ptr + offs[5]);
+	__raw_writel((__force u32) cpu_to_be32(token << 16),              ptr + offs[5]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32((1 << HCR_GO_BIT)                |
+	__raw_writel((__force u32) cpu_to_be32((1 << HCR_GO_BIT)                |
 					       (1 << HCA_E_BIT)                 |
-					       (op_modअगरier << HCR_OPMOD_SHIFT) |
+					       (op_modifier << HCR_OPMOD_SHIFT) |
 						op),			  ptr + offs[6]);
 	wmb();
-	__raw_ग_लिखोl((__क्रमce u32) 0,                                     ptr + offs[7]);
+	__raw_writel((__force u32) 0,                                     ptr + offs[7]);
 	wmb();
-पूर्ण
+}
 
-अटल पूर्णांक mthca_cmd_post_hcr(काष्ठा mthca_dev *dev,
+static int mthca_cmd_post_hcr(struct mthca_dev *dev,
 			      u64 in_param,
 			      u64 out_param,
-			      u32 in_modअगरier,
-			      u8 op_modअगरier,
+			      u32 in_modifier,
+			      u8 op_modifier,
 			      u16 op,
 			      u16 token,
-			      पूर्णांक event)
-अणु
-	अगर (event) अणु
-		अचिन्हित दीर्घ end = jअगरfies + GO_BIT_TIMEOUT;
+			      int event)
+{
+	if (event) {
+		unsigned long end = jiffies + GO_BIT_TIMEOUT;
 
-		जबतक (go_bit(dev) && समय_beक्रमe(jअगरfies, end)) अणु
+		while (go_bit(dev) && time_before(jiffies, end)) {
 			set_current_state(TASK_RUNNING);
 			schedule();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (go_bit(dev))
-		वापस -EAGAIN;
+	if (go_bit(dev))
+		return -EAGAIN;
 
 	/*
-	 * We use ग_लिखोl (instead of something like स_नकल_toio)
-	 * because ग_लिखोs of less than 32 bits to the HCR करोn't work
-	 * (and some architectures such as ia64 implement स_नकल_toio
-	 * in terms of ग_लिखोb).
+	 * We use writel (instead of something like memcpy_toio)
+	 * because writes of less than 32 bits to the HCR don't work
+	 * (and some architectures such as ia64 implement memcpy_toio
+	 * in terms of writeb).
 	 */
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(in_param >> 32),           dev->hcr + 0 * 4);
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(in_param & 0xfffffffful),  dev->hcr + 1 * 4);
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(in_modअगरier),              dev->hcr + 2 * 4);
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(out_param >> 32),          dev->hcr + 3 * 4);
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(out_param & 0xfffffffful), dev->hcr + 4 * 4);
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32(token << 16),              dev->hcr + 5 * 4);
+	__raw_writel((__force u32) cpu_to_be32(in_param >> 32),           dev->hcr + 0 * 4);
+	__raw_writel((__force u32) cpu_to_be32(in_param & 0xfffffffful),  dev->hcr + 1 * 4);
+	__raw_writel((__force u32) cpu_to_be32(in_modifier),              dev->hcr + 2 * 4);
+	__raw_writel((__force u32) cpu_to_be32(out_param >> 32),          dev->hcr + 3 * 4);
+	__raw_writel((__force u32) cpu_to_be32(out_param & 0xfffffffful), dev->hcr + 4 * 4);
+	__raw_writel((__force u32) cpu_to_be32(token << 16),              dev->hcr + 5 * 4);
 
-	/* __raw_ग_लिखोl may not order ग_लिखोs. */
+	/* __raw_writel may not order writes. */
 	wmb();
 
-	__raw_ग_लिखोl((__क्रमce u32) cpu_to_be32((1 << HCR_GO_BIT)                |
+	__raw_writel((__force u32) cpu_to_be32((1 << HCR_GO_BIT)                |
 					       (event ? (1 << HCA_E_BIT) : 0)   |
-					       (op_modअगरier << HCR_OPMOD_SHIFT) |
+					       (op_modifier << HCR_OPMOD_SHIFT) |
 					       op),                       dev->hcr + 6 * 4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mthca_cmd_post(काष्ठा mthca_dev *dev,
+static int mthca_cmd_post(struct mthca_dev *dev,
 			  u64 in_param,
 			  u64 out_param,
-			  u32 in_modअगरier,
-			  u8 op_modअगरier,
+			  u32 in_modifier,
+			  u8 op_modifier,
 			  u16 op,
 			  u16 token,
-			  पूर्णांक event)
-अणु
-	पूर्णांक err = 0;
+			  int event)
+{
+	int err = 0;
 
 	mutex_lock(&dev->cmd.hcr_mutex);
 
-	अगर (event && dev->cmd.flags & MTHCA_CMD_POST_DOORBELLS && fw_cmd_करोorbell)
-		mthca_cmd_post_dbell(dev, in_param, out_param, in_modअगरier,
-					   op_modअगरier, op, token);
-	अन्यथा
-		err = mthca_cmd_post_hcr(dev, in_param, out_param, in_modअगरier,
-					 op_modअगरier, op, token, event);
+	if (event && dev->cmd.flags & MTHCA_CMD_POST_DOORBELLS && fw_cmd_doorbell)
+		mthca_cmd_post_dbell(dev, in_param, out_param, in_modifier,
+					   op_modifier, op, token);
+	else
+		err = mthca_cmd_post_hcr(dev, in_param, out_param, in_modifier,
+					 op_modifier, op, token, event);
 
 	mutex_unlock(&dev->cmd.hcr_mutex);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक mthca_status_to_त्रुटि_सं(u8 status)
-अणु
-	अटल स्थिर पूर्णांक trans_table[] = अणु
+static int mthca_status_to_errno(u8 status)
+{
+	static const int trans_table[] = {
 		[MTHCA_CMD_STAT_INTERNAL_ERR]   = -EIO,
 		[MTHCA_CMD_STAT_BAD_OP]         = -EPERM,
 		[MTHCA_CMD_STAT_BAD_PARAM]      = -EINVAL,
@@ -318,266 +317,266 @@ MODULE_PARM_DESC(fw_cmd_करोorbell, "post FW commands through doorbell page
 		[MTHCA_CMD_STAT_LAM_NOT_PRE]    = -EAGAIN,
 		[MTHCA_CMD_STAT_BAD_PKT]        = -EBADMSG,
 		[MTHCA_CMD_STAT_BAD_SIZE]       = -ENOMEM,
-	पूर्ण;
+	};
 
-	अगर (status >= ARRAY_SIZE(trans_table) ||
+	if (status >= ARRAY_SIZE(trans_table) ||
 			(status != MTHCA_CMD_STAT_OK
 			 && trans_table[status] == 0))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस trans_table[status];
-पूर्ण
+	return trans_table[status];
+}
 
 
-अटल पूर्णांक mthca_cmd_poll(काष्ठा mthca_dev *dev,
+static int mthca_cmd_poll(struct mthca_dev *dev,
 			  u64 in_param,
 			  u64 *out_param,
-			  पूर्णांक out_is_imm,
-			  u32 in_modअगरier,
-			  u8 op_modअगरier,
+			  int out_is_imm,
+			  u32 in_modifier,
+			  u8 op_modifier,
 			  u16 op,
-			  अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक err = 0;
-	अचिन्हित दीर्घ end;
+			  unsigned long timeout)
+{
+	int err = 0;
+	unsigned long end;
 	u8 status;
 
-	करोwn(&dev->cmd.poll_sem);
+	down(&dev->cmd.poll_sem);
 
 	err = mthca_cmd_post(dev, in_param,
 			     out_param ? *out_param : 0,
-			     in_modअगरier, op_modअगरier,
+			     in_modifier, op_modifier,
 			     op, CMD_POLL_TOKEN, 0);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	end = समयout + jअगरfies;
-	जबतक (go_bit(dev) && समय_beक्रमe(jअगरfies, end)) अणु
+	end = timeout + jiffies;
+	while (go_bit(dev) && time_before(jiffies, end)) {
 		set_current_state(TASK_RUNNING);
 		schedule();
-	पूर्ण
+	}
 
-	अगर (go_bit(dev)) अणु
+	if (go_bit(dev)) {
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (out_is_imm && out_param) अणु
+	if (out_is_imm && out_param) {
 		*out_param =
-			(u64) be32_to_cpu((__क्रमce __be32)
-					  __raw_पढ़ोl(dev->hcr + HCR_OUT_PARAM_OFFSET)) << 32 |
-			(u64) be32_to_cpu((__क्रमce __be32)
-					  __raw_पढ़ोl(dev->hcr + HCR_OUT_PARAM_OFFSET + 4));
-	पूर्ण अन्यथा अगर (out_is_imm) अणु
+			(u64) be32_to_cpu((__force __be32)
+					  __raw_readl(dev->hcr + HCR_OUT_PARAM_OFFSET)) << 32 |
+			(u64) be32_to_cpu((__force __be32)
+					  __raw_readl(dev->hcr + HCR_OUT_PARAM_OFFSET + 4));
+	} else if (out_is_imm) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	status = be32_to_cpu((__क्रमce __be32) __raw_पढ़ोl(dev->hcr + HCR_STATUS_OFFSET)) >> 24;
-	अगर (status) अणु
+	status = be32_to_cpu((__force __be32) __raw_readl(dev->hcr + HCR_STATUS_OFFSET)) >> 24;
+	if (status) {
 		mthca_dbg(dev, "Command %02x completed with status %02x\n",
 			  op, status);
-		err = mthca_status_to_त्रुटि_सं(status);
-	पूर्ण
+		err = mthca_status_to_errno(status);
+	}
 
 out:
 	up(&dev->cmd.poll_sem);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mthca_cmd_event(काष्ठा mthca_dev *dev,
+void mthca_cmd_event(struct mthca_dev *dev,
 		     u16 token,
 		     u8  status,
 		     u64 out_param)
-अणु
-	काष्ठा mthca_cmd_context *context =
+{
+	struct mthca_cmd_context *context =
 		&dev->cmd.context[token & dev->cmd.token_mask];
 
-	/* previously समयd out command completing at दीर्घ last */
-	अगर (token != context->token)
-		वापस;
+	/* previously timed out command completing at long last */
+	if (token != context->token)
+		return;
 
 	context->result    = 0;
 	context->status    = status;
 	context->out_param = out_param;
 
-	complete(&context->करोne);
-पूर्ण
+	complete(&context->done);
+}
 
-अटल पूर्णांक mthca_cmd_रुको(काष्ठा mthca_dev *dev,
+static int mthca_cmd_wait(struct mthca_dev *dev,
 			  u64 in_param,
 			  u64 *out_param,
-			  पूर्णांक out_is_imm,
-			  u32 in_modअगरier,
-			  u8 op_modअगरier,
+			  int out_is_imm,
+			  u32 in_modifier,
+			  u8 op_modifier,
 			  u16 op,
-			  अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक err = 0;
-	काष्ठा mthca_cmd_context *context;
+			  unsigned long timeout)
+{
+	int err = 0;
+	struct mthca_cmd_context *context;
 
-	करोwn(&dev->cmd.event_sem);
+	down(&dev->cmd.event_sem);
 
 	spin_lock(&dev->cmd.context_lock);
-	BUG_ON(dev->cmd.मुक्त_head < 0);
-	context = &dev->cmd.context[dev->cmd.मुक्त_head];
+	BUG_ON(dev->cmd.free_head < 0);
+	context = &dev->cmd.context[dev->cmd.free_head];
 	context->token += dev->cmd.token_mask + 1;
-	dev->cmd.मुक्त_head = context->next;
+	dev->cmd.free_head = context->next;
 	spin_unlock(&dev->cmd.context_lock);
 
-	init_completion(&context->करोne);
+	init_completion(&context->done);
 
 	err = mthca_cmd_post(dev, in_param,
 			     out_param ? *out_param : 0,
-			     in_modअगरier, op_modअगरier,
+			     in_modifier, op_modifier,
 			     op, context->token, 1);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (!रुको_क्रम_completion_समयout(&context->करोne, समयout)) अणु
+	if (!wait_for_completion_timeout(&context->done, timeout)) {
 		err = -EBUSY;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = context->result;
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (context->status) अणु
+	if (context->status) {
 		mthca_dbg(dev, "Command %02x completed with status %02x\n",
 			  op, context->status);
-		err = mthca_status_to_त्रुटि_सं(context->status);
-	पूर्ण
+		err = mthca_status_to_errno(context->status);
+	}
 
-	अगर (out_is_imm && out_param) अणु
+	if (out_is_imm && out_param) {
 		*out_param = context->out_param;
-	पूर्ण अन्यथा अगर (out_is_imm) अणु
+	} else if (out_is_imm) {
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
 	spin_lock(&dev->cmd.context_lock);
-	context->next = dev->cmd.मुक्त_head;
-	dev->cmd.मुक्त_head = context - dev->cmd.context;
+	context->next = dev->cmd.free_head;
+	dev->cmd.free_head = context - dev->cmd.context;
 	spin_unlock(&dev->cmd.context_lock);
 
 	up(&dev->cmd.event_sem);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Invoke a command with an output mailbox */
-अटल पूर्णांक mthca_cmd_box(काष्ठा mthca_dev *dev,
+static int mthca_cmd_box(struct mthca_dev *dev,
 			 u64 in_param,
 			 u64 out_param,
-			 u32 in_modअगरier,
-			 u8 op_modअगरier,
+			 u32 in_modifier,
+			 u8 op_modifier,
 			 u16 op,
-			 अचिन्हित दीर्घ समयout)
-अणु
-	अगर (dev->cmd.flags & MTHCA_CMD_USE_EVENTS)
-		वापस mthca_cmd_रुको(dev, in_param, &out_param, 0,
-				      in_modअगरier, op_modअगरier, op,
-				      समयout);
-	अन्यथा
-		वापस mthca_cmd_poll(dev, in_param, &out_param, 0,
-				      in_modअगरier, op_modअगरier, op,
-				      समयout);
-पूर्ण
+			 unsigned long timeout)
+{
+	if (dev->cmd.flags & MTHCA_CMD_USE_EVENTS)
+		return mthca_cmd_wait(dev, in_param, &out_param, 0,
+				      in_modifier, op_modifier, op,
+				      timeout);
+	else
+		return mthca_cmd_poll(dev, in_param, &out_param, 0,
+				      in_modifier, op_modifier, op,
+				      timeout);
+}
 
 /* Invoke a command with no output parameter */
-अटल पूर्णांक mthca_cmd(काष्ठा mthca_dev *dev,
+static int mthca_cmd(struct mthca_dev *dev,
 		     u64 in_param,
-		     u32 in_modअगरier,
-		     u8 op_modअगरier,
+		     u32 in_modifier,
+		     u8 op_modifier,
 		     u16 op,
-		     अचिन्हित दीर्घ समयout)
-अणु
-	वापस mthca_cmd_box(dev, in_param, 0, in_modअगरier,
-			     op_modअगरier, op, समयout);
-पूर्ण
+		     unsigned long timeout)
+{
+	return mthca_cmd_box(dev, in_param, 0, in_modifier,
+			     op_modifier, op, timeout);
+}
 
 /*
  * Invoke a command with an immediate output parameter (and copy the
- * output पूर्णांकo the caller's out_param poपूर्णांकer after the command
+ * output into the caller's out_param pointer after the command
  * executes).
  */
-अटल पूर्णांक mthca_cmd_imm(काष्ठा mthca_dev *dev,
+static int mthca_cmd_imm(struct mthca_dev *dev,
 			 u64 in_param,
 			 u64 *out_param,
-			 u32 in_modअगरier,
-			 u8 op_modअगरier,
+			 u32 in_modifier,
+			 u8 op_modifier,
 			 u16 op,
-			 अचिन्हित दीर्घ समयout)
-अणु
-	अगर (dev->cmd.flags & MTHCA_CMD_USE_EVENTS)
-		वापस mthca_cmd_रुको(dev, in_param, out_param, 1,
-				      in_modअगरier, op_modअगरier, op,
-				      समयout);
-	अन्यथा
-		वापस mthca_cmd_poll(dev, in_param, out_param, 1,
-				      in_modअगरier, op_modअगरier, op,
-				      समयout);
-पूर्ण
+			 unsigned long timeout)
+{
+	if (dev->cmd.flags & MTHCA_CMD_USE_EVENTS)
+		return mthca_cmd_wait(dev, in_param, out_param, 1,
+				      in_modifier, op_modifier, op,
+				      timeout);
+	else
+		return mthca_cmd_poll(dev, in_param, out_param, 1,
+				      in_modifier, op_modifier, op,
+				      timeout);
+}
 
-पूर्णांक mthca_cmd_init(काष्ठा mthca_dev *dev)
-अणु
+int mthca_cmd_init(struct mthca_dev *dev)
+{
 	mutex_init(&dev->cmd.hcr_mutex);
 	sema_init(&dev->cmd.poll_sem, 1);
 	dev->cmd.flags = 0;
 
 	dev->hcr = ioremap(pci_resource_start(dev->pdev, 0) + MTHCA_HCR_BASE,
 			   MTHCA_HCR_SIZE);
-	अगर (!dev->hcr) अणु
+	if (!dev->hcr) {
 		mthca_err(dev, "Couldn't map command register.");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dev->cmd.pool = dma_pool_create("mthca_cmd", &dev->pdev->dev,
 					MTHCA_MAILBOX_SIZE,
 					MTHCA_MAILBOX_SIZE, 0);
-	अगर (!dev->cmd.pool) अणु
+	if (!dev->cmd.pool) {
 		iounmap(dev->hcr);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम mthca_cmd_cleanup(काष्ठा mthca_dev *dev)
-अणु
+void mthca_cmd_cleanup(struct mthca_dev *dev)
+{
 	dma_pool_destroy(dev->cmd.pool);
 	iounmap(dev->hcr);
-	अगर (dev->cmd.flags & MTHCA_CMD_POST_DOORBELLS)
+	if (dev->cmd.flags & MTHCA_CMD_POST_DOORBELLS)
 		iounmap(dev->cmd.dbell_map);
-पूर्ण
+}
 
 /*
  * Switch to using events to issue FW commands (should be called after
  * event queue to command events has been initialized).
  */
-पूर्णांक mthca_cmd_use_events(काष्ठा mthca_dev *dev)
-अणु
-	पूर्णांक i;
+int mthca_cmd_use_events(struct mthca_dev *dev)
+{
+	int i;
 
-	dev->cmd.context = kदो_स्मृति_array(dev->cmd.max_cmds,
-					 माप(काष्ठा mthca_cmd_context),
+	dev->cmd.context = kmalloc_array(dev->cmd.max_cmds,
+					 sizeof(struct mthca_cmd_context),
 					 GFP_KERNEL);
-	अगर (!dev->cmd.context)
-		वापस -ENOMEM;
+	if (!dev->cmd.context)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < dev->cmd.max_cmds; ++i) अणु
+	for (i = 0; i < dev->cmd.max_cmds; ++i) {
 		dev->cmd.context[i].token = i;
 		dev->cmd.context[i].next = i + 1;
-	पूर्ण
+	}
 
 	dev->cmd.context[dev->cmd.max_cmds - 1].next = -1;
-	dev->cmd.मुक्त_head = 0;
+	dev->cmd.free_head = 0;
 
 	sema_init(&dev->cmd.event_sem, dev->cmd.max_cmds);
 	spin_lock_init(&dev->cmd.context_lock);
 
-	क्रम (dev->cmd.token_mask = 1;
+	for (dev->cmd.token_mask = 1;
 	     dev->cmd.token_mask < dev->cmd.max_cmds;
 	     dev->cmd.token_mask <<= 1)
 		; /* nothing */
@@ -585,116 +584,116 @@ out:
 
 	dev->cmd.flags |= MTHCA_CMD_USE_EVENTS;
 
-	करोwn(&dev->cmd.poll_sem);
+	down(&dev->cmd.poll_sem);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Switch back to polling (used when shutting करोwn the device)
+ * Switch back to polling (used when shutting down the device)
  */
-व्योम mthca_cmd_use_polling(काष्ठा mthca_dev *dev)
-अणु
-	पूर्णांक i;
+void mthca_cmd_use_polling(struct mthca_dev *dev)
+{
+	int i;
 
 	dev->cmd.flags &= ~MTHCA_CMD_USE_EVENTS;
 
-	क्रम (i = 0; i < dev->cmd.max_cmds; ++i)
-		करोwn(&dev->cmd.event_sem);
+	for (i = 0; i < dev->cmd.max_cmds; ++i)
+		down(&dev->cmd.event_sem);
 
-	kमुक्त(dev->cmd.context);
+	kfree(dev->cmd.context);
 
 	up(&dev->cmd.poll_sem);
-पूर्ण
+}
 
-काष्ठा mthca_mailbox *mthca_alloc_mailbox(काष्ठा mthca_dev *dev,
+struct mthca_mailbox *mthca_alloc_mailbox(struct mthca_dev *dev,
 					  gfp_t gfp_mask)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+{
+	struct mthca_mailbox *mailbox;
 
-	mailbox = kदो_स्मृति(माप *mailbox, gfp_mask);
-	अगर (!mailbox)
-		वापस ERR_PTR(-ENOMEM);
+	mailbox = kmalloc(sizeof *mailbox, gfp_mask);
+	if (!mailbox)
+		return ERR_PTR(-ENOMEM);
 
 	mailbox->buf = dma_pool_alloc(dev->cmd.pool, gfp_mask, &mailbox->dma);
-	अगर (!mailbox->buf) अणु
-		kमुक्त(mailbox);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (!mailbox->buf) {
+		kfree(mailbox);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	वापस mailbox;
-पूर्ण
+	return mailbox;
+}
 
-व्योम mthca_मुक्त_mailbox(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox)
-अणु
-	अगर (!mailbox)
-		वापस;
+void mthca_free_mailbox(struct mthca_dev *dev, struct mthca_mailbox *mailbox)
+{
+	if (!mailbox)
+		return;
 
-	dma_pool_मुक्त(dev->cmd.pool, mailbox->buf, mailbox->dma);
-	kमुक्त(mailbox);
-पूर्ण
+	dma_pool_free(dev->cmd.pool, mailbox->buf, mailbox->dma);
+	kfree(mailbox);
+}
 
-पूर्णांक mthca_SYS_EN(काष्ठा mthca_dev *dev)
-अणु
+int mthca_SYS_EN(struct mthca_dev *dev)
+{
 	u64 out;
-	पूर्णांक ret;
+	int ret;
 
 	ret = mthca_cmd_imm(dev, 0, &out, 0, 0, CMD_SYS_EN, CMD_TIME_CLASS_D);
 
-	अगर (ret == -ENOMEM)
+	if (ret == -ENOMEM)
 		mthca_warn(dev, "SYS_EN DDR error: syn=%x, sock=%d, "
 			   "sladdr=%d, SPD source=%s\n",
-			   (पूर्णांक) (out >> 6) & 0xf, (पूर्णांक) (out >> 4) & 3,
-			   (पूर्णांक) (out >> 1) & 7, (पूर्णांक) out & 1 ? "NVMEM" : "DIMM");
+			   (int) (out >> 6) & 0xf, (int) (out >> 4) & 3,
+			   (int) (out >> 1) & 7, (int) out & 1 ? "NVMEM" : "DIMM");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक mthca_SYS_DIS(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0, 0, CMD_SYS_DIS, CMD_TIME_CLASS_C);
-पूर्ण
+int mthca_SYS_DIS(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0, 0, CMD_SYS_DIS, CMD_TIME_CLASS_C);
+}
 
-अटल पूर्णांक mthca_map_cmd(काष्ठा mthca_dev *dev, u16 op, काष्ठा mthca_icm *icm,
+static int mthca_map_cmd(struct mthca_dev *dev, u16 op, struct mthca_icm *icm,
 			 u64 virt)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
-	काष्ठा mthca_icm_iter iter;
+{
+	struct mthca_mailbox *mailbox;
+	struct mthca_icm_iter iter;
 	__be64 *pages;
-	पूर्णांक lg;
-	पूर्णांक nent = 0;
-	पूर्णांक i;
-	पूर्णांक err = 0;
-	पूर्णांक ts = 0, tc = 0;
+	int lg;
+	int nent = 0;
+	int i;
+	int err = 0;
+	int ts = 0, tc = 0;
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
-	स_रखो(mailbox->buf, 0, MTHCA_MAILBOX_SIZE);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
+	memset(mailbox->buf, 0, MTHCA_MAILBOX_SIZE);
 	pages = mailbox->buf;
 
-	क्रम (mthca_icm_first(icm, &iter);
+	for (mthca_icm_first(icm, &iter);
 	     !mthca_icm_last(&iter);
-	     mthca_icm_next(&iter)) अणु
+	     mthca_icm_next(&iter)) {
 		/*
 		 * We have to pass pages that are aligned to their
-		 * size, so find the least signअगरicant 1 in the
+		 * size, so find the least significant 1 in the
 		 * address or size and use that as our log2 size.
 		 */
 		lg = ffs(mthca_icm_addr(&iter) | mthca_icm_size(&iter)) - 1;
-		अगर (lg < MTHCA_ICM_PAGE_SHIFT) अणु
+		if (lg < MTHCA_ICM_PAGE_SHIFT) {
 			mthca_warn(dev, "Got FW area not aligned to %d (%llx/%lx).\n",
 				   MTHCA_ICM_PAGE_SIZE,
-				   (अचिन्हित दीर्घ दीर्घ) mthca_icm_addr(&iter),
+				   (unsigned long long) mthca_icm_addr(&iter),
 				   mthca_icm_size(&iter));
 			err = -EINVAL;
-			जाओ out;
-		पूर्ण
-		क्रम (i = 0; i < mthca_icm_size(&iter) >> lg; ++i) अणु
-			अगर (virt != -1) अणु
+			goto out;
+		}
+		for (i = 0; i < mthca_icm_size(&iter) >> lg; ++i) {
+			if (virt != -1) {
 				pages[nent * 2] = cpu_to_be64(virt);
 				virt += 1ULL << lg;
-			पूर्ण
+			}
 
 			pages[nent * 2 + 1] =
 				cpu_to_be64((mthca_icm_addr(&iter) + (i << lg)) |
@@ -702,121 +701,121 @@ out:
 			ts += 1 << (lg - 10);
 			++tc;
 
-			अगर (++nent == MTHCA_MAILBOX_SIZE / 16) अणु
+			if (++nent == MTHCA_MAILBOX_SIZE / 16) {
 				err = mthca_cmd(dev, mailbox->dma, nent, 0, op,
 						CMD_TIME_CLASS_B);
-				अगर (err)
-					जाओ out;
+				if (err)
+					goto out;
 				nent = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	अगर (nent)
+	if (nent)
 		err = mthca_cmd(dev, mailbox->dma, nent, 0, op,
 				CMD_TIME_CLASS_B);
 
-	चयन (op) अणु
-	हाल CMD_MAP_FA:
+	switch (op) {
+	case CMD_MAP_FA:
 		mthca_dbg(dev, "Mapped %d chunks/%d KB for FW.\n", tc, ts);
-		अवरोध;
-	हाल CMD_MAP_ICM_AUX:
+		break;
+	case CMD_MAP_ICM_AUX:
 		mthca_dbg(dev, "Mapped %d chunks/%d KB for ICM aux.\n", tc, ts);
-		अवरोध;
-	हाल CMD_MAP_ICM:
+		break;
+	case CMD_MAP_ICM:
 		mthca_dbg(dev, "Mapped %d chunks/%d KB at %llx for ICM.\n",
-			  tc, ts, (अचिन्हित दीर्घ दीर्घ) virt - (ts << 10));
-		अवरोध;
-	पूर्ण
+			  tc, ts, (unsigned long long) virt - (ts << 10));
+		break;
+	}
 
 out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_MAP_FA(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm)
-अणु
-	वापस mthca_map_cmd(dev, CMD_MAP_FA, icm, -1);
-पूर्ण
+int mthca_MAP_FA(struct mthca_dev *dev, struct mthca_icm *icm)
+{
+	return mthca_map_cmd(dev, CMD_MAP_FA, icm, -1);
+}
 
-पूर्णांक mthca_UNMAP_FA(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0, 0, CMD_UNMAP_FA, CMD_TIME_CLASS_B);
-पूर्ण
+int mthca_UNMAP_FA(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0, 0, CMD_UNMAP_FA, CMD_TIME_CLASS_B);
+}
 
-पूर्णांक mthca_RUN_FW(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0, 0, CMD_RUN_FW, CMD_TIME_CLASS_A);
-पूर्ण
+int mthca_RUN_FW(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0, 0, CMD_RUN_FW, CMD_TIME_CLASS_A);
+}
 
-अटल व्योम mthca_setup_cmd_करोorbells(काष्ठा mthca_dev *dev, u64 base)
-अणु
+static void mthca_setup_cmd_doorbells(struct mthca_dev *dev, u64 base)
+{
 	phys_addr_t addr;
 	u16 max_off = 0;
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < 8; ++i)
+	for (i = 0; i < 8; ++i)
 		max_off = max(max_off, dev->cmd.dbell_offsets[i]);
 
-	अगर ((base & PAGE_MASK) != ((base + max_off) & PAGE_MASK)) अणु
+	if ((base & PAGE_MASK) != ((base + max_off) & PAGE_MASK)) {
 		mthca_warn(dev, "Firmware doorbell region at 0x%016llx, "
 			   "length 0x%x crosses a page boundary\n",
-			   (अचिन्हित दीर्घ दीर्घ) base, max_off);
-		वापस;
-	पूर्ण
+			   (unsigned long long) base, max_off);
+		return;
+	}
 
 	addr = pci_resource_start(dev->pdev, 2) +
 		((pci_resource_len(dev->pdev, 2) - 1) & base);
-	dev->cmd.dbell_map = ioremap(addr, max_off + माप(u32));
-	अगर (!dev->cmd.dbell_map)
-		वापस;
+	dev->cmd.dbell_map = ioremap(addr, max_off + sizeof(u32));
+	if (!dev->cmd.dbell_map)
+		return;
 
 	dev->cmd.flags |= MTHCA_CMD_POST_DOORBELLS;
 	mthca_dbg(dev, "Mapped doorbell page for posting FW commands\n");
-पूर्ण
+}
 
-पूर्णांक mthca_QUERY_FW(काष्ठा mthca_dev *dev)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_QUERY_FW(struct mthca_dev *dev)
+{
+	struct mthca_mailbox *mailbox;
 	u32 *outbox;
 	u64 base;
-	u32 पंचांगp;
-	पूर्णांक err = 0;
+	u32 tmp;
+	int err = 0;
 	u8 lg;
-	पूर्णांक i;
+	int i;
 
-#घोषणा QUERY_FW_OUT_SIZE             0x100
-#घोषणा QUERY_FW_VER_OFFSET            0x00
-#घोषणा QUERY_FW_MAX_CMD_OFFSET        0x0f
-#घोषणा QUERY_FW_ERR_START_OFFSET      0x30
-#घोषणा QUERY_FW_ERR_SIZE_OFFSET       0x38
+#define QUERY_FW_OUT_SIZE             0x100
+#define QUERY_FW_VER_OFFSET            0x00
+#define QUERY_FW_MAX_CMD_OFFSET        0x0f
+#define QUERY_FW_ERR_START_OFFSET      0x30
+#define QUERY_FW_ERR_SIZE_OFFSET       0x38
 
-#घोषणा QUERY_FW_CMD_DB_EN_OFFSET      0x10
-#घोषणा QUERY_FW_CMD_DB_OFFSET         0x50
-#घोषणा QUERY_FW_CMD_DB_BASE           0x60
+#define QUERY_FW_CMD_DB_EN_OFFSET      0x10
+#define QUERY_FW_CMD_DB_OFFSET         0x50
+#define QUERY_FW_CMD_DB_BASE           0x60
 
-#घोषणा QUERY_FW_START_OFFSET          0x20
-#घोषणा QUERY_FW_END_OFFSET            0x28
+#define QUERY_FW_START_OFFSET          0x20
+#define QUERY_FW_END_OFFSET            0x28
 
-#घोषणा QUERY_FW_SIZE_OFFSET           0x00
-#घोषणा QUERY_FW_CLR_INT_BASE_OFFSET   0x20
-#घोषणा QUERY_FW_EQ_ARM_BASE_OFFSET    0x40
-#घोषणा QUERY_FW_EQ_SET_CI_BASE_OFFSET 0x48
+#define QUERY_FW_SIZE_OFFSET           0x00
+#define QUERY_FW_CLR_INT_BASE_OFFSET   0x20
+#define QUERY_FW_EQ_ARM_BASE_OFFSET    0x40
+#define QUERY_FW_EQ_SET_CI_BASE_OFFSET 0x48
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	outbox = mailbox->buf;
 
 	err = mthca_cmd_box(dev, 0, mailbox->dma, 0, 0, CMD_QUERY_FW,
 			    CMD_TIME_CLASS_A);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	MTHCA_GET(dev->fw_ver,   outbox, QUERY_FW_VER_OFFSET);
 	/*
-	 * FW subminor version is at more signअगरicant bits than minor
+	 * FW subminor version is at more significant bits than minor
 	 * version, so swap here.
 	 */
 	dev->fw_ver = (dev->fw_ver & 0xffff00000000ull) |
@@ -827,35 +826,35 @@ out:
 	dev->cmd.max_cmds = 1 << lg;
 
 	mthca_dbg(dev, "FW version %012llx, max commands %d\n",
-		  (अचिन्हित दीर्घ दीर्घ) dev->fw_ver, dev->cmd.max_cmds);
+		  (unsigned long long) dev->fw_ver, dev->cmd.max_cmds);
 
 	MTHCA_GET(dev->catas_err.addr, outbox, QUERY_FW_ERR_START_OFFSET);
 	MTHCA_GET(dev->catas_err.size, outbox, QUERY_FW_ERR_SIZE_OFFSET);
 
 	mthca_dbg(dev, "Catastrophic error buffer at 0x%llx, size 0x%x\n",
-		  (अचिन्हित दीर्घ दीर्घ) dev->catas_err.addr, dev->catas_err.size);
+		  (unsigned long long) dev->catas_err.addr, dev->catas_err.size);
 
-	MTHCA_GET(पंचांगp, outbox, QUERY_FW_CMD_DB_EN_OFFSET);
-	अगर (पंचांगp & 0x1) अणु
+	MTHCA_GET(tmp, outbox, QUERY_FW_CMD_DB_EN_OFFSET);
+	if (tmp & 0x1) {
 		mthca_dbg(dev, "FW supports commands through doorbells\n");
 
 		MTHCA_GET(base, outbox, QUERY_FW_CMD_DB_BASE);
-		क्रम (i = 0; i < MTHCA_CMD_NUM_DBELL_DWORDS; ++i)
+		for (i = 0; i < MTHCA_CMD_NUM_DBELL_DWORDS; ++i)
 			MTHCA_GET(dev->cmd.dbell_offsets[i], outbox,
 				  QUERY_FW_CMD_DB_OFFSET + (i << 1));
 
-		mthca_setup_cmd_करोorbells(dev, base);
-	पूर्ण
+		mthca_setup_cmd_doorbells(dev, base);
+	}
 
-	अगर (mthca_is_memमुक्त(dev)) अणु
+	if (mthca_is_memfree(dev)) {
 		MTHCA_GET(dev->fw.arbel.fw_pages,       outbox, QUERY_FW_SIZE_OFFSET);
-		MTHCA_GET(dev->fw.arbel.clr_पूर्णांक_base,   outbox, QUERY_FW_CLR_INT_BASE_OFFSET);
+		MTHCA_GET(dev->fw.arbel.clr_int_base,   outbox, QUERY_FW_CLR_INT_BASE_OFFSET);
 		MTHCA_GET(dev->fw.arbel.eq_arm_base,    outbox, QUERY_FW_EQ_ARM_BASE_OFFSET);
 		MTHCA_GET(dev->fw.arbel.eq_set_ci_base, outbox, QUERY_FW_EQ_SET_CI_BASE_OFFSET);
 		mthca_dbg(dev, "FW size %d KB\n", dev->fw.arbel.fw_pages << 2);
 
 		/*
-		 * Round up number of प्रणाली pages needed in हाल
+		 * Round up number of system pages needed in case
 		 * MTHCA_ICM_PAGE_SIZE < PAGE_SIZE.
 		 */
 		dev->fw.arbel.fw_pages =
@@ -863,210 +862,210 @@ out:
 				(PAGE_SHIFT - MTHCA_ICM_PAGE_SHIFT);
 
 		mthca_dbg(dev, "Clear int @ %llx, EQ arm @ %llx, EQ set CI @ %llx\n",
-			  (अचिन्हित दीर्घ दीर्घ) dev->fw.arbel.clr_पूर्णांक_base,
-			  (अचिन्हित दीर्घ दीर्घ) dev->fw.arbel.eq_arm_base,
-			  (अचिन्हित दीर्घ दीर्घ) dev->fw.arbel.eq_set_ci_base);
-	पूर्ण अन्यथा अणु
+			  (unsigned long long) dev->fw.arbel.clr_int_base,
+			  (unsigned long long) dev->fw.arbel.eq_arm_base,
+			  (unsigned long long) dev->fw.arbel.eq_set_ci_base);
+	} else {
 		MTHCA_GET(dev->fw.tavor.fw_start, outbox, QUERY_FW_START_OFFSET);
 		MTHCA_GET(dev->fw.tavor.fw_end,   outbox, QUERY_FW_END_OFFSET);
 
 		mthca_dbg(dev, "FW size %d KB (start %llx, end %llx)\n",
-			  (पूर्णांक) ((dev->fw.tavor.fw_end - dev->fw.tavor.fw_start) >> 10),
-			  (अचिन्हित दीर्घ दीर्घ) dev->fw.tavor.fw_start,
-			  (अचिन्हित दीर्घ दीर्घ) dev->fw.tavor.fw_end);
-	पूर्ण
+			  (int) ((dev->fw.tavor.fw_end - dev->fw.tavor.fw_start) >> 10),
+			  (unsigned long long) dev->fw.tavor.fw_start,
+			  (unsigned long long) dev->fw.tavor.fw_end);
+	}
 
 out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_ENABLE_LAM(काष्ठा mthca_dev *dev)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_ENABLE_LAM(struct mthca_dev *dev)
+{
+	struct mthca_mailbox *mailbox;
 	u8 info;
 	u32 *outbox;
-	पूर्णांक err = 0;
+	int err = 0;
 
-#घोषणा ENABLE_LAM_OUT_SIZE         0x100
-#घोषणा ENABLE_LAM_START_OFFSET     0x00
-#घोषणा ENABLE_LAM_END_OFFSET       0x08
-#घोषणा ENABLE_LAM_INFO_OFFSET      0x13
+#define ENABLE_LAM_OUT_SIZE         0x100
+#define ENABLE_LAM_START_OFFSET     0x00
+#define ENABLE_LAM_END_OFFSET       0x08
+#define ENABLE_LAM_INFO_OFFSET      0x13
 
-#घोषणा ENABLE_LAM_INFO_HIDDEN_FLAG (1 << 4)
-#घोषणा ENABLE_LAM_INFO_ECC_MASK    0x3
+#define ENABLE_LAM_INFO_HIDDEN_FLAG (1 << 4)
+#define ENABLE_LAM_INFO_ECC_MASK    0x3
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	outbox = mailbox->buf;
 
 	err = mthca_cmd_box(dev, 0, mailbox->dma, 0, 0, CMD_ENABLE_LAM,
 			    CMD_TIME_CLASS_C);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	MTHCA_GET(dev->ddr_start, outbox, ENABLE_LAM_START_OFFSET);
 	MTHCA_GET(dev->ddr_end,   outbox, ENABLE_LAM_END_OFFSET);
 	MTHCA_GET(info,           outbox, ENABLE_LAM_INFO_OFFSET);
 
-	अगर (!!(info & ENABLE_LAM_INFO_HIDDEN_FLAG) !=
-	    !!(dev->mthca_flags & MTHCA_FLAG_DDR_HIDDEN)) अणु
+	if (!!(info & ENABLE_LAM_INFO_HIDDEN_FLAG) !=
+	    !!(dev->mthca_flags & MTHCA_FLAG_DDR_HIDDEN)) {
 		mthca_info(dev, "FW reports that HCA-attached memory "
 			   "is %s hidden; does not match PCI config\n",
 			   (info & ENABLE_LAM_INFO_HIDDEN_FLAG) ?
 			   "" : "not");
-	पूर्ण
-	अगर (info & ENABLE_LAM_INFO_HIDDEN_FLAG)
+	}
+	if (info & ENABLE_LAM_INFO_HIDDEN_FLAG)
 		mthca_dbg(dev, "HCA-attached memory is hidden.\n");
 
 	mthca_dbg(dev, "HCA memory size %d KB (start %llx, end %llx)\n",
-		  (पूर्णांक) ((dev->ddr_end - dev->ddr_start) >> 10),
-		  (अचिन्हित दीर्घ दीर्घ) dev->ddr_start,
-		  (अचिन्हित दीर्घ दीर्घ) dev->ddr_end);
+		  (int) ((dev->ddr_end - dev->ddr_start) >> 10),
+		  (unsigned long long) dev->ddr_start,
+		  (unsigned long long) dev->ddr_end);
 
 out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_DISABLE_LAM(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0, 0, CMD_SYS_DIS, CMD_TIME_CLASS_C);
-पूर्ण
+int mthca_DISABLE_LAM(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0, 0, CMD_SYS_DIS, CMD_TIME_CLASS_C);
+}
 
-पूर्णांक mthca_QUERY_DDR(काष्ठा mthca_dev *dev)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_QUERY_DDR(struct mthca_dev *dev)
+{
+	struct mthca_mailbox *mailbox;
 	u8 info;
 	u32 *outbox;
-	पूर्णांक err = 0;
+	int err = 0;
 
-#घोषणा QUERY_DDR_OUT_SIZE         0x100
-#घोषणा QUERY_DDR_START_OFFSET     0x00
-#घोषणा QUERY_DDR_END_OFFSET       0x08
-#घोषणा QUERY_DDR_INFO_OFFSET      0x13
+#define QUERY_DDR_OUT_SIZE         0x100
+#define QUERY_DDR_START_OFFSET     0x00
+#define QUERY_DDR_END_OFFSET       0x08
+#define QUERY_DDR_INFO_OFFSET      0x13
 
-#घोषणा QUERY_DDR_INFO_HIDDEN_FLAG (1 << 4)
-#घोषणा QUERY_DDR_INFO_ECC_MASK    0x3
+#define QUERY_DDR_INFO_HIDDEN_FLAG (1 << 4)
+#define QUERY_DDR_INFO_ECC_MASK    0x3
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	outbox = mailbox->buf;
 
 	err = mthca_cmd_box(dev, 0, mailbox->dma, 0, 0, CMD_QUERY_DDR,
 			    CMD_TIME_CLASS_A);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	MTHCA_GET(dev->ddr_start, outbox, QUERY_DDR_START_OFFSET);
 	MTHCA_GET(dev->ddr_end,   outbox, QUERY_DDR_END_OFFSET);
 	MTHCA_GET(info,           outbox, QUERY_DDR_INFO_OFFSET);
 
-	अगर (!!(info & QUERY_DDR_INFO_HIDDEN_FLAG) !=
-	    !!(dev->mthca_flags & MTHCA_FLAG_DDR_HIDDEN)) अणु
+	if (!!(info & QUERY_DDR_INFO_HIDDEN_FLAG) !=
+	    !!(dev->mthca_flags & MTHCA_FLAG_DDR_HIDDEN)) {
 		mthca_info(dev, "FW reports that HCA-attached memory "
 			   "is %s hidden; does not match PCI config\n",
 			   (info & QUERY_DDR_INFO_HIDDEN_FLAG) ?
 			   "" : "not");
-	पूर्ण
-	अगर (info & QUERY_DDR_INFO_HIDDEN_FLAG)
+	}
+	if (info & QUERY_DDR_INFO_HIDDEN_FLAG)
 		mthca_dbg(dev, "HCA-attached memory is hidden.\n");
 
 	mthca_dbg(dev, "HCA memory size %d KB (start %llx, end %llx)\n",
-		  (पूर्णांक) ((dev->ddr_end - dev->ddr_start) >> 10),
-		  (अचिन्हित दीर्घ दीर्घ) dev->ddr_start,
-		  (अचिन्हित दीर्घ दीर्घ) dev->ddr_end);
+		  (int) ((dev->ddr_end - dev->ddr_start) >> 10),
+		  (unsigned long long) dev->ddr_start,
+		  (unsigned long long) dev->ddr_end);
 
 out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_QUERY_DEV_LIM(काष्ठा mthca_dev *dev,
-			काष्ठा mthca_dev_lim *dev_lim)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_QUERY_DEV_LIM(struct mthca_dev *dev,
+			struct mthca_dev_lim *dev_lim)
+{
+	struct mthca_mailbox *mailbox;
 	u32 *outbox;
 	u8 field;
 	u16 size;
 	u16 stat_rate;
-	पूर्णांक err;
+	int err;
 
-#घोषणा QUERY_DEV_LIM_OUT_SIZE             0x100
-#घोषणा QUERY_DEV_LIM_MAX_SRQ_SZ_OFFSET     0x10
-#घोषणा QUERY_DEV_LIM_MAX_QP_SZ_OFFSET      0x11
-#घोषणा QUERY_DEV_LIM_RSVD_QP_OFFSET        0x12
-#घोषणा QUERY_DEV_LIM_MAX_QP_OFFSET         0x13
-#घोषणा QUERY_DEV_LIM_RSVD_SRQ_OFFSET       0x14
-#घोषणा QUERY_DEV_LIM_MAX_SRQ_OFFSET        0x15
-#घोषणा QUERY_DEV_LIM_RSVD_EEC_OFFSET       0x16
-#घोषणा QUERY_DEV_LIM_MAX_EEC_OFFSET        0x17
-#घोषणा QUERY_DEV_LIM_MAX_CQ_SZ_OFFSET      0x19
-#घोषणा QUERY_DEV_LIM_RSVD_CQ_OFFSET        0x1a
-#घोषणा QUERY_DEV_LIM_MAX_CQ_OFFSET         0x1b
-#घोषणा QUERY_DEV_LIM_MAX_MPT_OFFSET        0x1d
-#घोषणा QUERY_DEV_LIM_RSVD_EQ_OFFSET        0x1e
-#घोषणा QUERY_DEV_LIM_MAX_EQ_OFFSET         0x1f
-#घोषणा QUERY_DEV_LIM_RSVD_MTT_OFFSET       0x20
-#घोषणा QUERY_DEV_LIM_MAX_MRW_SZ_OFFSET     0x21
-#घोषणा QUERY_DEV_LIM_RSVD_MRW_OFFSET       0x22
-#घोषणा QUERY_DEV_LIM_MAX_MTT_SEG_OFFSET    0x23
-#घोषणा QUERY_DEV_LIM_MAX_AV_OFFSET         0x27
-#घोषणा QUERY_DEV_LIM_MAX_REQ_QP_OFFSET     0x29
-#घोषणा QUERY_DEV_LIM_MAX_RES_QP_OFFSET     0x2b
-#घोषणा QUERY_DEV_LIM_MAX_RDMA_OFFSET       0x2f
-#घोषणा QUERY_DEV_LIM_RSZ_SRQ_OFFSET        0x33
-#घोषणा QUERY_DEV_LIM_ACK_DELAY_OFFSET      0x35
-#घोषणा QUERY_DEV_LIM_MTU_WIDTH_OFFSET      0x36
-#घोषणा QUERY_DEV_LIM_VL_PORT_OFFSET        0x37
-#घोषणा QUERY_DEV_LIM_MAX_GID_OFFSET        0x3b
-#घोषणा QUERY_DEV_LIM_RATE_SUPPORT_OFFSET   0x3c
-#घोषणा QUERY_DEV_LIM_MAX_PKEY_OFFSET       0x3f
-#घोषणा QUERY_DEV_LIM_FLAGS_OFFSET          0x44
-#घोषणा QUERY_DEV_LIM_RSVD_UAR_OFFSET       0x48
-#घोषणा QUERY_DEV_LIM_UAR_SZ_OFFSET         0x49
-#घोषणा QUERY_DEV_LIM_PAGE_SZ_OFFSET        0x4b
-#घोषणा QUERY_DEV_LIM_MAX_SG_OFFSET         0x51
-#घोषणा QUERY_DEV_LIM_MAX_DESC_SZ_OFFSET    0x52
-#घोषणा QUERY_DEV_LIM_MAX_SG_RQ_OFFSET      0x55
-#घोषणा QUERY_DEV_LIM_MAX_DESC_SZ_RQ_OFFSET 0x56
-#घोषणा QUERY_DEV_LIM_MAX_QP_MCG_OFFSET     0x61
-#घोषणा QUERY_DEV_LIM_RSVD_MCG_OFFSET       0x62
-#घोषणा QUERY_DEV_LIM_MAX_MCG_OFFSET        0x63
-#घोषणा QUERY_DEV_LIM_RSVD_PD_OFFSET        0x64
-#घोषणा QUERY_DEV_LIM_MAX_PD_OFFSET         0x65
-#घोषणा QUERY_DEV_LIM_RSVD_RDD_OFFSET       0x66
-#घोषणा QUERY_DEV_LIM_MAX_RDD_OFFSET        0x67
-#घोषणा QUERY_DEV_LIM_EEC_ENTRY_SZ_OFFSET   0x80
-#घोषणा QUERY_DEV_LIM_QPC_ENTRY_SZ_OFFSET   0x82
-#घोषणा QUERY_DEV_LIM_EEEC_ENTRY_SZ_OFFSET  0x84
-#घोषणा QUERY_DEV_LIM_EQPC_ENTRY_SZ_OFFSET  0x86
-#घोषणा QUERY_DEV_LIM_EQC_ENTRY_SZ_OFFSET   0x88
-#घोषणा QUERY_DEV_LIM_CQC_ENTRY_SZ_OFFSET   0x8a
-#घोषणा QUERY_DEV_LIM_SRQ_ENTRY_SZ_OFFSET   0x8c
-#घोषणा QUERY_DEV_LIM_UAR_ENTRY_SZ_OFFSET   0x8e
-#घोषणा QUERY_DEV_LIM_MTT_ENTRY_SZ_OFFSET   0x90
-#घोषणा QUERY_DEV_LIM_MPT_ENTRY_SZ_OFFSET   0x92
-#घोषणा QUERY_DEV_LIM_PBL_SZ_OFFSET         0x96
-#घोषणा QUERY_DEV_LIM_BMME_FLAGS_OFFSET     0x97
-#घोषणा QUERY_DEV_LIM_RSVD_LKEY_OFFSET      0x98
-#घोषणा QUERY_DEV_LIM_LAMR_OFFSET           0x9f
-#घोषणा QUERY_DEV_LIM_MAX_ICM_SZ_OFFSET     0xa0
+#define QUERY_DEV_LIM_OUT_SIZE             0x100
+#define QUERY_DEV_LIM_MAX_SRQ_SZ_OFFSET     0x10
+#define QUERY_DEV_LIM_MAX_QP_SZ_OFFSET      0x11
+#define QUERY_DEV_LIM_RSVD_QP_OFFSET        0x12
+#define QUERY_DEV_LIM_MAX_QP_OFFSET         0x13
+#define QUERY_DEV_LIM_RSVD_SRQ_OFFSET       0x14
+#define QUERY_DEV_LIM_MAX_SRQ_OFFSET        0x15
+#define QUERY_DEV_LIM_RSVD_EEC_OFFSET       0x16
+#define QUERY_DEV_LIM_MAX_EEC_OFFSET        0x17
+#define QUERY_DEV_LIM_MAX_CQ_SZ_OFFSET      0x19
+#define QUERY_DEV_LIM_RSVD_CQ_OFFSET        0x1a
+#define QUERY_DEV_LIM_MAX_CQ_OFFSET         0x1b
+#define QUERY_DEV_LIM_MAX_MPT_OFFSET        0x1d
+#define QUERY_DEV_LIM_RSVD_EQ_OFFSET        0x1e
+#define QUERY_DEV_LIM_MAX_EQ_OFFSET         0x1f
+#define QUERY_DEV_LIM_RSVD_MTT_OFFSET       0x20
+#define QUERY_DEV_LIM_MAX_MRW_SZ_OFFSET     0x21
+#define QUERY_DEV_LIM_RSVD_MRW_OFFSET       0x22
+#define QUERY_DEV_LIM_MAX_MTT_SEG_OFFSET    0x23
+#define QUERY_DEV_LIM_MAX_AV_OFFSET         0x27
+#define QUERY_DEV_LIM_MAX_REQ_QP_OFFSET     0x29
+#define QUERY_DEV_LIM_MAX_RES_QP_OFFSET     0x2b
+#define QUERY_DEV_LIM_MAX_RDMA_OFFSET       0x2f
+#define QUERY_DEV_LIM_RSZ_SRQ_OFFSET        0x33
+#define QUERY_DEV_LIM_ACK_DELAY_OFFSET      0x35
+#define QUERY_DEV_LIM_MTU_WIDTH_OFFSET      0x36
+#define QUERY_DEV_LIM_VL_PORT_OFFSET        0x37
+#define QUERY_DEV_LIM_MAX_GID_OFFSET        0x3b
+#define QUERY_DEV_LIM_RATE_SUPPORT_OFFSET   0x3c
+#define QUERY_DEV_LIM_MAX_PKEY_OFFSET       0x3f
+#define QUERY_DEV_LIM_FLAGS_OFFSET          0x44
+#define QUERY_DEV_LIM_RSVD_UAR_OFFSET       0x48
+#define QUERY_DEV_LIM_UAR_SZ_OFFSET         0x49
+#define QUERY_DEV_LIM_PAGE_SZ_OFFSET        0x4b
+#define QUERY_DEV_LIM_MAX_SG_OFFSET         0x51
+#define QUERY_DEV_LIM_MAX_DESC_SZ_OFFSET    0x52
+#define QUERY_DEV_LIM_MAX_SG_RQ_OFFSET      0x55
+#define QUERY_DEV_LIM_MAX_DESC_SZ_RQ_OFFSET 0x56
+#define QUERY_DEV_LIM_MAX_QP_MCG_OFFSET     0x61
+#define QUERY_DEV_LIM_RSVD_MCG_OFFSET       0x62
+#define QUERY_DEV_LIM_MAX_MCG_OFFSET        0x63
+#define QUERY_DEV_LIM_RSVD_PD_OFFSET        0x64
+#define QUERY_DEV_LIM_MAX_PD_OFFSET         0x65
+#define QUERY_DEV_LIM_RSVD_RDD_OFFSET       0x66
+#define QUERY_DEV_LIM_MAX_RDD_OFFSET        0x67
+#define QUERY_DEV_LIM_EEC_ENTRY_SZ_OFFSET   0x80
+#define QUERY_DEV_LIM_QPC_ENTRY_SZ_OFFSET   0x82
+#define QUERY_DEV_LIM_EEEC_ENTRY_SZ_OFFSET  0x84
+#define QUERY_DEV_LIM_EQPC_ENTRY_SZ_OFFSET  0x86
+#define QUERY_DEV_LIM_EQC_ENTRY_SZ_OFFSET   0x88
+#define QUERY_DEV_LIM_CQC_ENTRY_SZ_OFFSET   0x8a
+#define QUERY_DEV_LIM_SRQ_ENTRY_SZ_OFFSET   0x8c
+#define QUERY_DEV_LIM_UAR_ENTRY_SZ_OFFSET   0x8e
+#define QUERY_DEV_LIM_MTT_ENTRY_SZ_OFFSET   0x90
+#define QUERY_DEV_LIM_MPT_ENTRY_SZ_OFFSET   0x92
+#define QUERY_DEV_LIM_PBL_SZ_OFFSET         0x96
+#define QUERY_DEV_LIM_BMME_FLAGS_OFFSET     0x97
+#define QUERY_DEV_LIM_RSVD_LKEY_OFFSET      0x98
+#define QUERY_DEV_LIM_LAMR_OFFSET           0x9f
+#define QUERY_DEV_LIM_MAX_ICM_SZ_OFFSET     0xa0
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	outbox = mailbox->buf;
 
 	err = mthca_cmd_box(dev, 0, mailbox->dma, 0, 0, CMD_QUERY_DEV_LIM,
 			    CMD_TIME_CLASS_A);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	MTHCA_GET(field, outbox, QUERY_DEV_LIM_RSVD_QP_OFFSET);
 	dev_lim->reserved_qps = 1 << (field & 0xf);
@@ -1093,10 +1092,10 @@ out:
 	MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_EQ_OFFSET);
 	dev_lim->max_eqs = 1 << (field & 0x7);
 	MTHCA_GET(field, outbox, QUERY_DEV_LIM_RSVD_MTT_OFFSET);
-	अगर (mthca_is_memमुक्त(dev))
-		dev_lim->reserved_mtts = ALIGN((1 << (field >> 4)) * माप(u64),
+	if (mthca_is_memfree(dev))
+		dev_lim->reserved_mtts = ALIGN((1 << (field >> 4)) * sizeof(u64),
 					       dev->limits.mtt_seg_size) / dev->limits.mtt_seg_size;
-	अन्यथा
+	else
 		dev_lim->reserved_mtts = 1 << (field >> 4);
 	MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_MRW_SZ_OFFSET);
 	dev_lim->max_mrw_sz = 1 << field;
@@ -1169,7 +1168,7 @@ out:
 	MTHCA_GET(size, outbox, QUERY_DEV_LIM_UAR_ENTRY_SZ_OFFSET);
 	dev_lim->uar_scratch_entry_sz = size;
 
-	अगर (mthca_is_memमुक्त(dev)) अणु
+	if (mthca_is_memfree(dev)) {
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_SRQ_SZ_OFFSET);
 		dev_lim->max_srq_sz = 1 << field;
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_QP_SZ_OFFSET);
@@ -1177,9 +1176,9 @@ out:
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_RSZ_SRQ_OFFSET);
 		dev_lim->hca.arbel.resize_srq = field & 1;
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_SG_RQ_OFFSET);
-		dev_lim->max_sg = min_t(पूर्णांक, field, dev_lim->max_sg);
+		dev_lim->max_sg = min_t(int, field, dev_lim->max_sg);
 		MTHCA_GET(size, outbox, QUERY_DEV_LIM_MAX_DESC_SZ_RQ_OFFSET);
-		dev_lim->max_desc_sz = min_t(पूर्णांक, size, dev_lim->max_desc_sz);
+		dev_lim->max_desc_sz = min_t(int, size, dev_lim->max_desc_sz);
 		MTHCA_GET(size, outbox, QUERY_DEV_LIM_MPT_ENTRY_SZ_OFFSET);
 		dev_lim->mpt_entry_sz = size;
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_PBL_SZ_OFFSET);
@@ -1193,18 +1192,18 @@ out:
 		MTHCA_GET(dev_lim->hca.arbel.max_icm_sz, outbox,
 			  QUERY_DEV_LIM_MAX_ICM_SZ_OFFSET);
 
-		अगर (dev_lim->hca.arbel.bmme_flags & 1)
+		if (dev_lim->hca.arbel.bmme_flags & 1)
 			mthca_dbg(dev, "Base MM extensions: yes "
 				  "(flags %d, max PBL %d, rsvd L_Key %08x)\n",
 				  dev_lim->hca.arbel.bmme_flags,
 				  dev_lim->hca.arbel.max_pbl_sz,
 				  dev_lim->hca.arbel.reserved_lkey);
-		अन्यथा
+		else
 			mthca_dbg(dev, "Base MM extensions: no\n");
 
 		mthca_dbg(dev, "Max ICM size %lld MB\n",
-			  (अचिन्हित दीर्घ दीर्घ) dev_lim->hca.arbel.max_icm_sz >> 20);
-	पूर्ण अन्यथा अणु
+			  (unsigned long long) dev_lim->hca.arbel.max_icm_sz >> 20);
+	} else {
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_SRQ_SZ_OFFSET);
 		dev_lim->max_srq_sz = (1 << field) - 1;
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_QP_SZ_OFFSET);
@@ -1212,7 +1211,7 @@ out:
 		MTHCA_GET(field, outbox, QUERY_DEV_LIM_MAX_AV_OFFSET);
 		dev_lim->hca.tavor.max_avs = 1 << (field & 0x3f);
 		dev_lim->mpt_entry_sz = MTHCA_MPT_ENTRY_SIZE;
-	पूर्ण
+	}
 
 	mthca_dbg(dev, "Max QPs: %d, reserved QPs: %d, entry size: %d\n",
 		  dev_lim->max_qps, dev_lim->reserved_qps, dev_lim->qpc_entry_sz);
@@ -1234,151 +1233,151 @@ out:
 	mthca_dbg(dev, "Flags: %08x\n", dev_lim->flags);
 
 out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-अटल व्योम get_board_id(व्योम *vsd, अक्षर *board_id)
-अणु
-	पूर्णांक i;
+static void get_board_id(void *vsd, char *board_id)
+{
+	int i;
 
-#घोषणा VSD_OFFSET_SIG1		0x00
-#घोषणा VSD_OFFSET_SIG2		0xde
-#घोषणा VSD_OFFSET_MLX_BOARD_ID	0xd0
-#घोषणा VSD_OFFSET_TS_BOARD_ID	0x20
+#define VSD_OFFSET_SIG1		0x00
+#define VSD_OFFSET_SIG2		0xde
+#define VSD_OFFSET_MLX_BOARD_ID	0xd0
+#define VSD_OFFSET_TS_BOARD_ID	0x20
 
-#घोषणा VSD_SIGNATURE_TOPSPIN	0x5ad
+#define VSD_SIGNATURE_TOPSPIN	0x5ad
 
-	स_रखो(board_id, 0, MTHCA_BOARD_ID_LEN);
+	memset(board_id, 0, MTHCA_BOARD_ID_LEN);
 
-	अगर (be16_to_cpup(vsd + VSD_OFFSET_SIG1) == VSD_SIGNATURE_TOPSPIN &&
-	    be16_to_cpup(vsd + VSD_OFFSET_SIG2) == VSD_SIGNATURE_TOPSPIN) अणु
+	if (be16_to_cpup(vsd + VSD_OFFSET_SIG1) == VSD_SIGNATURE_TOPSPIN &&
+	    be16_to_cpup(vsd + VSD_OFFSET_SIG2) == VSD_SIGNATURE_TOPSPIN) {
 		strlcpy(board_id, vsd + VSD_OFFSET_TS_BOARD_ID, MTHCA_BOARD_ID_LEN);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * The board ID is a string but the firmware byte
-		 * swaps each 4-byte word beक्रमe passing it back to
-		 * us.  Thereक्रमe we need to swab it beक्रमe prपूर्णांकing.
+		 * swaps each 4-byte word before passing it back to
+		 * us.  Therefore we need to swab it before printing.
 		 */
-		क्रम (i = 0; i < 4; ++i)
+		for (i = 0; i < 4; ++i)
 			((u32 *) board_id)[i] =
 				swab32(*(u32 *) (vsd + VSD_OFFSET_MLX_BOARD_ID + i * 4));
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mthca_QUERY_ADAPTER(काष्ठा mthca_dev *dev,
-			काष्ठा mthca_adapter *adapter)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_QUERY_ADAPTER(struct mthca_dev *dev,
+			struct mthca_adapter *adapter)
+{
+	struct mthca_mailbox *mailbox;
 	u32 *outbox;
-	पूर्णांक err;
+	int err;
 
-#घोषणा QUERY_ADAPTER_OUT_SIZE             0x100
-#घोषणा QUERY_ADAPTER_VENDOR_ID_OFFSET     0x00
-#घोषणा QUERY_ADAPTER_DEVICE_ID_OFFSET     0x04
-#घोषणा QUERY_ADAPTER_REVISION_ID_OFFSET   0x08
-#घोषणा QUERY_ADAPTER_INTA_PIN_OFFSET      0x10
-#घोषणा QUERY_ADAPTER_VSD_OFFSET           0x20
+#define QUERY_ADAPTER_OUT_SIZE             0x100
+#define QUERY_ADAPTER_VENDOR_ID_OFFSET     0x00
+#define QUERY_ADAPTER_DEVICE_ID_OFFSET     0x04
+#define QUERY_ADAPTER_REVISION_ID_OFFSET   0x08
+#define QUERY_ADAPTER_INTA_PIN_OFFSET      0x10
+#define QUERY_ADAPTER_VSD_OFFSET           0x20
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	outbox = mailbox->buf;
 
 	err = mthca_cmd_box(dev, 0, mailbox->dma, 0, 0, CMD_QUERY_ADAPTER,
 			    CMD_TIME_CLASS_A);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (!mthca_is_memमुक्त(dev)) अणु
-		MTHCA_GET(adapter->venकरोr_id, outbox,
+	if (!mthca_is_memfree(dev)) {
+		MTHCA_GET(adapter->vendor_id, outbox,
 			  QUERY_ADAPTER_VENDOR_ID_OFFSET);
 		MTHCA_GET(adapter->device_id, outbox,
 			  QUERY_ADAPTER_DEVICE_ID_OFFSET);
 		MTHCA_GET(adapter->revision_id, outbox,
 			  QUERY_ADAPTER_REVISION_ID_OFFSET);
-	पूर्ण
-	MTHCA_GET(adapter->पूर्णांकa_pin, outbox,    QUERY_ADAPTER_INTA_PIN_OFFSET);
+	}
+	MTHCA_GET(adapter->inta_pin, outbox,    QUERY_ADAPTER_INTA_PIN_OFFSET);
 
 	get_board_id(outbox + QUERY_ADAPTER_VSD_OFFSET / 4,
 		     adapter->board_id);
 
 out:
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_INIT_HCA(काष्ठा mthca_dev *dev,
-		   काष्ठा mthca_init_hca_param *param)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_INIT_HCA(struct mthca_dev *dev,
+		   struct mthca_init_hca_param *param)
+{
+	struct mthca_mailbox *mailbox;
 	__be32 *inbox;
-	पूर्णांक err;
+	int err;
 
-#घोषणा INIT_HCA_IN_SIZE             	 0x200
-#घोषणा INIT_HCA_FLAGS1_OFFSET           0x00c
-#घोषणा INIT_HCA_FLAGS2_OFFSET           0x014
-#घोषणा INIT_HCA_QPC_OFFSET          	 0x020
-#घोषणा  INIT_HCA_QPC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x10)
-#घोषणा  INIT_HCA_LOG_QP_OFFSET      	 (INIT_HCA_QPC_OFFSET + 0x17)
-#घोषणा  INIT_HCA_EEC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x20)
-#घोषणा  INIT_HCA_LOG_EEC_OFFSET     	 (INIT_HCA_QPC_OFFSET + 0x27)
-#घोषणा  INIT_HCA_SRQC_BASE_OFFSET   	 (INIT_HCA_QPC_OFFSET + 0x28)
-#घोषणा  INIT_HCA_LOG_SRQ_OFFSET     	 (INIT_HCA_QPC_OFFSET + 0x2f)
-#घोषणा  INIT_HCA_CQC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x30)
-#घोषणा  INIT_HCA_LOG_CQ_OFFSET      	 (INIT_HCA_QPC_OFFSET + 0x37)
-#घोषणा  INIT_HCA_EQPC_BASE_OFFSET   	 (INIT_HCA_QPC_OFFSET + 0x40)
-#घोषणा  INIT_HCA_EEEC_BASE_OFFSET   	 (INIT_HCA_QPC_OFFSET + 0x50)
-#घोषणा  INIT_HCA_EQC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x60)
-#घोषणा  INIT_HCA_LOG_EQ_OFFSET      	 (INIT_HCA_QPC_OFFSET + 0x67)
-#घोषणा  INIT_HCA_RDB_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x70)
-#घोषणा INIT_HCA_UDAV_OFFSET         	 0x0b0
-#घोषणा  INIT_HCA_UDAV_LKEY_OFFSET   	 (INIT_HCA_UDAV_OFFSET + 0x0)
-#घोषणा  INIT_HCA_UDAV_PD_OFFSET     	 (INIT_HCA_UDAV_OFFSET + 0x4)
-#घोषणा INIT_HCA_MCAST_OFFSET        	 0x0c0
-#घोषणा  INIT_HCA_MC_BASE_OFFSET         (INIT_HCA_MCAST_OFFSET + 0x00)
-#घोषणा  INIT_HCA_LOG_MC_ENTRY_SZ_OFFSET (INIT_HCA_MCAST_OFFSET + 0x12)
-#घोषणा  INIT_HCA_MC_HASH_SZ_OFFSET      (INIT_HCA_MCAST_OFFSET + 0x16)
-#घोषणा  INIT_HCA_LOG_MC_TABLE_SZ_OFFSET (INIT_HCA_MCAST_OFFSET + 0x1b)
-#घोषणा INIT_HCA_TPT_OFFSET              0x0f0
-#घोषणा  INIT_HCA_MPT_BASE_OFFSET        (INIT_HCA_TPT_OFFSET + 0x00)
-#घोषणा  INIT_HCA_MTT_SEG_SZ_OFFSET      (INIT_HCA_TPT_OFFSET + 0x09)
-#घोषणा  INIT_HCA_LOG_MPT_SZ_OFFSET      (INIT_HCA_TPT_OFFSET + 0x0b)
-#घोषणा  INIT_HCA_MTT_BASE_OFFSET        (INIT_HCA_TPT_OFFSET + 0x10)
-#घोषणा INIT_HCA_UAR_OFFSET              0x120
-#घोषणा  INIT_HCA_UAR_BASE_OFFSET        (INIT_HCA_UAR_OFFSET + 0x00)
-#घोषणा  INIT_HCA_UARC_SZ_OFFSET         (INIT_HCA_UAR_OFFSET + 0x09)
-#घोषणा  INIT_HCA_LOG_UAR_SZ_OFFSET      (INIT_HCA_UAR_OFFSET + 0x0a)
-#घोषणा  INIT_HCA_UAR_PAGE_SZ_OFFSET     (INIT_HCA_UAR_OFFSET + 0x0b)
-#घोषणा  INIT_HCA_UAR_SCATCH_BASE_OFFSET (INIT_HCA_UAR_OFFSET + 0x10)
-#घोषणा  INIT_HCA_UAR_CTX_BASE_OFFSET    (INIT_HCA_UAR_OFFSET + 0x18)
+#define INIT_HCA_IN_SIZE             	 0x200
+#define INIT_HCA_FLAGS1_OFFSET           0x00c
+#define INIT_HCA_FLAGS2_OFFSET           0x014
+#define INIT_HCA_QPC_OFFSET          	 0x020
+#define  INIT_HCA_QPC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x10)
+#define  INIT_HCA_LOG_QP_OFFSET      	 (INIT_HCA_QPC_OFFSET + 0x17)
+#define  INIT_HCA_EEC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x20)
+#define  INIT_HCA_LOG_EEC_OFFSET     	 (INIT_HCA_QPC_OFFSET + 0x27)
+#define  INIT_HCA_SRQC_BASE_OFFSET   	 (INIT_HCA_QPC_OFFSET + 0x28)
+#define  INIT_HCA_LOG_SRQ_OFFSET     	 (INIT_HCA_QPC_OFFSET + 0x2f)
+#define  INIT_HCA_CQC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x30)
+#define  INIT_HCA_LOG_CQ_OFFSET      	 (INIT_HCA_QPC_OFFSET + 0x37)
+#define  INIT_HCA_EQPC_BASE_OFFSET   	 (INIT_HCA_QPC_OFFSET + 0x40)
+#define  INIT_HCA_EEEC_BASE_OFFSET   	 (INIT_HCA_QPC_OFFSET + 0x50)
+#define  INIT_HCA_EQC_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x60)
+#define  INIT_HCA_LOG_EQ_OFFSET      	 (INIT_HCA_QPC_OFFSET + 0x67)
+#define  INIT_HCA_RDB_BASE_OFFSET    	 (INIT_HCA_QPC_OFFSET + 0x70)
+#define INIT_HCA_UDAV_OFFSET         	 0x0b0
+#define  INIT_HCA_UDAV_LKEY_OFFSET   	 (INIT_HCA_UDAV_OFFSET + 0x0)
+#define  INIT_HCA_UDAV_PD_OFFSET     	 (INIT_HCA_UDAV_OFFSET + 0x4)
+#define INIT_HCA_MCAST_OFFSET        	 0x0c0
+#define  INIT_HCA_MC_BASE_OFFSET         (INIT_HCA_MCAST_OFFSET + 0x00)
+#define  INIT_HCA_LOG_MC_ENTRY_SZ_OFFSET (INIT_HCA_MCAST_OFFSET + 0x12)
+#define  INIT_HCA_MC_HASH_SZ_OFFSET      (INIT_HCA_MCAST_OFFSET + 0x16)
+#define  INIT_HCA_LOG_MC_TABLE_SZ_OFFSET (INIT_HCA_MCAST_OFFSET + 0x1b)
+#define INIT_HCA_TPT_OFFSET              0x0f0
+#define  INIT_HCA_MPT_BASE_OFFSET        (INIT_HCA_TPT_OFFSET + 0x00)
+#define  INIT_HCA_MTT_SEG_SZ_OFFSET      (INIT_HCA_TPT_OFFSET + 0x09)
+#define  INIT_HCA_LOG_MPT_SZ_OFFSET      (INIT_HCA_TPT_OFFSET + 0x0b)
+#define  INIT_HCA_MTT_BASE_OFFSET        (INIT_HCA_TPT_OFFSET + 0x10)
+#define INIT_HCA_UAR_OFFSET              0x120
+#define  INIT_HCA_UAR_BASE_OFFSET        (INIT_HCA_UAR_OFFSET + 0x00)
+#define  INIT_HCA_UARC_SZ_OFFSET         (INIT_HCA_UAR_OFFSET + 0x09)
+#define  INIT_HCA_LOG_UAR_SZ_OFFSET      (INIT_HCA_UAR_OFFSET + 0x0a)
+#define  INIT_HCA_UAR_PAGE_SZ_OFFSET     (INIT_HCA_UAR_OFFSET + 0x0b)
+#define  INIT_HCA_UAR_SCATCH_BASE_OFFSET (INIT_HCA_UAR_OFFSET + 0x10)
+#define  INIT_HCA_UAR_CTX_BASE_OFFSET    (INIT_HCA_UAR_OFFSET + 0x18)
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	inbox = mailbox->buf;
 
-	स_रखो(inbox, 0, INIT_HCA_IN_SIZE);
+	memset(inbox, 0, INIT_HCA_IN_SIZE);
 
-	अगर (dev->mthca_flags & MTHCA_FLAG_SINAI_OPT)
+	if (dev->mthca_flags & MTHCA_FLAG_SINAI_OPT)
 		MTHCA_PUT(inbox, 0x1, INIT_HCA_FLAGS1_OFFSET);
 
-#अगर defined(__LITTLE_ENDIAN)
+#if defined(__LITTLE_ENDIAN)
 	*(inbox + INIT_HCA_FLAGS2_OFFSET / 4) &= ~cpu_to_be32(1 << 1);
-#या_अगर defined(__BIG_ENDIAN)
+#elif defined(__BIG_ENDIAN)
 	*(inbox + INIT_HCA_FLAGS2_OFFSET / 4) |= cpu_to_be32(1 << 1);
-#अन्यथा
-#त्रुटि Host endianness not defined
-#पूर्ण_अगर
-	/* Check port क्रम UD address vector: */
+#else
+#error Host endianness not defined
+#endif
+	/* Check port for UD address vector: */
 	*(inbox + INIT_HCA_FLAGS2_OFFSET / 4) |= cpu_to_be32(1);
 
-	/* Enable IPoIB checksumming अगर we can: */
-	अगर (dev->device_cap_flags & IB_DEVICE_UD_IP_CSUM)
+	/* Enable IPoIB checksumming if we can: */
+	if (dev->device_cap_flags & IB_DEVICE_UD_IP_CSUM)
 		*(inbox + INIT_HCA_FLAGS2_OFFSET / 4) |= cpu_to_be32(7 << 3);
 
-	/* We leave wqe_quota, responder_exu, etc as 0 (शेष) */
+	/* We leave wqe_quota, responder_exu, etc as 0 (default) */
 
 	/* QPC/EEC/CQC/EQC/RDB attributes */
 
@@ -1408,61 +1407,61 @@ out:
 	/* TPT attributes */
 
 	MTHCA_PUT(inbox, param->mpt_base,   INIT_HCA_MPT_BASE_OFFSET);
-	अगर (!mthca_is_memमुक्त(dev))
+	if (!mthca_is_memfree(dev))
 		MTHCA_PUT(inbox, param->mtt_seg_sz, INIT_HCA_MTT_SEG_SZ_OFFSET);
 	MTHCA_PUT(inbox, param->log_mpt_sz, INIT_HCA_LOG_MPT_SZ_OFFSET);
 	MTHCA_PUT(inbox, param->mtt_base,   INIT_HCA_MTT_BASE_OFFSET);
 
 	/* UAR attributes */
-	अणु
+	{
 		u8 uar_page_sz = PAGE_SHIFT - 12;
 		MTHCA_PUT(inbox, uar_page_sz, INIT_HCA_UAR_PAGE_SZ_OFFSET);
-	पूर्ण
+	}
 
 	MTHCA_PUT(inbox, param->uar_scratch_base, INIT_HCA_UAR_SCATCH_BASE_OFFSET);
 
-	अगर (mthca_is_memमुक्त(dev)) अणु
+	if (mthca_is_memfree(dev)) {
 		MTHCA_PUT(inbox, param->log_uarc_sz, INIT_HCA_UARC_SZ_OFFSET);
 		MTHCA_PUT(inbox, param->log_uar_sz,  INIT_HCA_LOG_UAR_SZ_OFFSET);
 		MTHCA_PUT(inbox, param->uarc_base,   INIT_HCA_UAR_CTX_BASE_OFFSET);
-	पूर्ण
+	}
 
 	err = mthca_cmd(dev, mailbox->dma, 0, 0,
 			CMD_INIT_HCA, CMD_TIME_CLASS_D);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_INIT_IB(काष्ठा mthca_dev *dev,
-		  काष्ठा mthca_init_ib_param *param,
-		  पूर्णांक port)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_INIT_IB(struct mthca_dev *dev,
+		  struct mthca_init_ib_param *param,
+		  int port)
+{
+	struct mthca_mailbox *mailbox;
 	u32 *inbox;
-	पूर्णांक err;
+	int err;
 	u32 flags;
 
-#घोषणा INIT_IB_IN_SIZE          56
-#घोषणा INIT_IB_FLAGS_OFFSET     0x00
-#घोषणा INIT_IB_FLAG_SIG         (1 << 18)
-#घोषणा INIT_IB_FLAG_NG          (1 << 17)
-#घोषणा INIT_IB_FLAG_G0          (1 << 16)
-#घोषणा INIT_IB_VL_SHIFT         4
-#घोषणा INIT_IB_PORT_WIDTH_SHIFT 8
-#घोषणा INIT_IB_MTU_SHIFT        12
-#घोषणा INIT_IB_MAX_GID_OFFSET   0x06
-#घोषणा INIT_IB_MAX_PKEY_OFFSET  0x0a
-#घोषणा INIT_IB_GUID0_OFFSET     0x10
-#घोषणा INIT_IB_NODE_GUID_OFFSET 0x18
-#घोषणा INIT_IB_SI_GUID_OFFSET   0x20
+#define INIT_IB_IN_SIZE          56
+#define INIT_IB_FLAGS_OFFSET     0x00
+#define INIT_IB_FLAG_SIG         (1 << 18)
+#define INIT_IB_FLAG_NG          (1 << 17)
+#define INIT_IB_FLAG_G0          (1 << 16)
+#define INIT_IB_VL_SHIFT         4
+#define INIT_IB_PORT_WIDTH_SHIFT 8
+#define INIT_IB_MTU_SHIFT        12
+#define INIT_IB_MAX_GID_OFFSET   0x06
+#define INIT_IB_MAX_PKEY_OFFSET  0x0a
+#define INIT_IB_GUID0_OFFSET     0x10
+#define INIT_IB_NODE_GUID_OFFSET 0x18
+#define INIT_IB_SI_GUID_OFFSET   0x20
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	inbox = mailbox->buf;
 
-	स_रखो(inbox, 0, INIT_IB_IN_SIZE);
+	memset(inbox, 0, INIT_IB_IN_SIZE);
 
 	flags = 0;
 	flags |= param->set_guid0     ? INIT_IB_FLAG_G0  : 0;
@@ -1482,41 +1481,41 @@ out:
 	err = mthca_cmd(dev, mailbox->dma, port, 0, CMD_INIT_IB,
 			CMD_TIME_CLASS_A);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_CLOSE_IB(काष्ठा mthca_dev *dev, पूर्णांक port)
-अणु
-	वापस mthca_cmd(dev, 0, port, 0, CMD_CLOSE_IB, CMD_TIME_CLASS_A);
-पूर्ण
+int mthca_CLOSE_IB(struct mthca_dev *dev, int port)
+{
+	return mthca_cmd(dev, 0, port, 0, CMD_CLOSE_IB, CMD_TIME_CLASS_A);
+}
 
-पूर्णांक mthca_CLOSE_HCA(काष्ठा mthca_dev *dev, पूर्णांक panic)
-अणु
-	वापस mthca_cmd(dev, 0, 0, panic, CMD_CLOSE_HCA, CMD_TIME_CLASS_C);
-पूर्ण
+int mthca_CLOSE_HCA(struct mthca_dev *dev, int panic)
+{
+	return mthca_cmd(dev, 0, 0, panic, CMD_CLOSE_HCA, CMD_TIME_CLASS_C);
+}
 
-पूर्णांक mthca_SET_IB(काष्ठा mthca_dev *dev, काष्ठा mthca_set_ib_param *param,
-		 पूर्णांक port)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_SET_IB(struct mthca_dev *dev, struct mthca_set_ib_param *param,
+		 int port)
+{
+	struct mthca_mailbox *mailbox;
 	u32 *inbox;
-	पूर्णांक err;
+	int err;
 	u32 flags = 0;
 
-#घोषणा SET_IB_IN_SIZE         0x40
-#घोषणा SET_IB_FLAGS_OFFSET    0x00
-#घोषणा SET_IB_FLAG_SIG        (1 << 18)
-#घोषणा SET_IB_FLAG_RQK        (1 <<  0)
-#घोषणा SET_IB_CAP_MASK_OFFSET 0x04
-#घोषणा SET_IB_SI_GUID_OFFSET  0x08
+#define SET_IB_IN_SIZE         0x40
+#define SET_IB_FLAGS_OFFSET    0x00
+#define SET_IB_FLAG_SIG        (1 << 18)
+#define SET_IB_FLAG_RQK        (1 <<  0)
+#define SET_IB_CAP_MASK_OFFSET 0x04
+#define SET_IB_SI_GUID_OFFSET  0x08
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	inbox = mailbox->buf;
 
-	स_रखो(inbox, 0, SET_IB_IN_SIZE);
+	memset(inbox, 0, SET_IB_IN_SIZE);
 
 	flags |= param->set_si_guid     ? SET_IB_FLAG_SIG : 0;
 	flags |= param->reset_qkey_viol ? SET_IB_FLAG_RQK : 0;
@@ -1528,24 +1527,24 @@ out:
 	err = mthca_cmd(dev, mailbox->dma, port, 0, CMD_SET_IB,
 			CMD_TIME_CLASS_B);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_MAP_ICM(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm, u64 virt)
-अणु
-	वापस mthca_map_cmd(dev, CMD_MAP_ICM, icm, virt);
-पूर्ण
+int mthca_MAP_ICM(struct mthca_dev *dev, struct mthca_icm *icm, u64 virt)
+{
+	return mthca_map_cmd(dev, CMD_MAP_ICM, icm, virt);
+}
 
-पूर्णांक mthca_MAP_ICM_page(काष्ठा mthca_dev *dev, u64 dma_addr, u64 virt)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_MAP_ICM_page(struct mthca_dev *dev, u64 dma_addr, u64 virt)
+{
+	struct mthca_mailbox *mailbox;
 	__be64 *inbox;
-	पूर्णांक err;
+	int err;
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	inbox = mailbox->buf;
 
 	inbox[0] = cpu_to_be64(virt);
@@ -1554,138 +1553,138 @@ out:
 	err = mthca_cmd(dev, mailbox->dma, 1, 0, CMD_MAP_ICM,
 			CMD_TIME_CLASS_B);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
+	mthca_free_mailbox(dev, mailbox);
 
-	अगर (!err)
+	if (!err)
 		mthca_dbg(dev, "Mapped page at %llx to %llx for ICM.\n",
-			  (अचिन्हित दीर्घ दीर्घ) dma_addr, (अचिन्हित दीर्घ दीर्घ) virt);
+			  (unsigned long long) dma_addr, (unsigned long long) virt);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mthca_UNMAP_ICM(काष्ठा mthca_dev *dev, u64 virt, u32 page_count)
-अणु
+int mthca_UNMAP_ICM(struct mthca_dev *dev, u64 virt, u32 page_count)
+{
 	mthca_dbg(dev, "Unmapping %d pages at %llx from ICM.\n",
-		  page_count, (अचिन्हित दीर्घ दीर्घ) virt);
+		  page_count, (unsigned long long) virt);
 
-	वापस mthca_cmd(dev, virt, page_count, 0,
+	return mthca_cmd(dev, virt, page_count, 0,
 			CMD_UNMAP_ICM, CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_MAP_ICM_AUX(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm)
-अणु
-	वापस mthca_map_cmd(dev, CMD_MAP_ICM_AUX, icm, -1);
-पूर्ण
+int mthca_MAP_ICM_AUX(struct mthca_dev *dev, struct mthca_icm *icm)
+{
+	return mthca_map_cmd(dev, CMD_MAP_ICM_AUX, icm, -1);
+}
 
-पूर्णांक mthca_UNMAP_ICM_AUX(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0, 0, CMD_UNMAP_ICM_AUX, CMD_TIME_CLASS_B);
-पूर्ण
+int mthca_UNMAP_ICM_AUX(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0, 0, CMD_UNMAP_ICM_AUX, CMD_TIME_CLASS_B);
+}
 
-पूर्णांक mthca_SET_ICM_SIZE(काष्ठा mthca_dev *dev, u64 icm_size, u64 *aux_pages)
-अणु
-	पूर्णांक ret = mthca_cmd_imm(dev, icm_size, aux_pages, 0,
+int mthca_SET_ICM_SIZE(struct mthca_dev *dev, u64 icm_size, u64 *aux_pages)
+{
+	int ret = mthca_cmd_imm(dev, icm_size, aux_pages, 0,
 			0, CMD_SET_ICM_SIZE, CMD_TIME_CLASS_A);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * Round up number of प्रणाली pages needed in हाल
+	 * Round up number of system pages needed in case
 	 * MTHCA_ICM_PAGE_SIZE < PAGE_SIZE.
 	 */
 	*aux_pages = ALIGN(*aux_pages, PAGE_SIZE / MTHCA_ICM_PAGE_SIZE) >>
 		(PAGE_SHIFT - MTHCA_ICM_PAGE_SHIFT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक mthca_SW2HW_MPT(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		    पूर्णांक mpt_index)
-अणु
-	वापस mthca_cmd(dev, mailbox->dma, mpt_index, 0, CMD_SW2HW_MPT,
+int mthca_SW2HW_MPT(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		    int mpt_index)
+{
+	return mthca_cmd(dev, mailbox->dma, mpt_index, 0, CMD_SW2HW_MPT,
 			 CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_HW2SW_MPT(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		    पूर्णांक mpt_index)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox ? mailbox->dma : 0, mpt_index,
+int mthca_HW2SW_MPT(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		    int mpt_index)
+{
+	return mthca_cmd_box(dev, 0, mailbox ? mailbox->dma : 0, mpt_index,
 			     !mailbox, CMD_HW2SW_MPT,
 			     CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_WRITE_MTT(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		    पूर्णांक num_mtt)
-अणु
-	वापस mthca_cmd(dev, mailbox->dma, num_mtt, 0, CMD_WRITE_MTT,
+int mthca_WRITE_MTT(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		    int num_mtt)
+{
+	return mthca_cmd(dev, mailbox->dma, num_mtt, 0, CMD_WRITE_MTT,
 			 CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_SYNC_TPT(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0, 0, CMD_SYNC_TPT, CMD_TIME_CLASS_B);
-पूर्ण
+int mthca_SYNC_TPT(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0, 0, CMD_SYNC_TPT, CMD_TIME_CLASS_B);
+}
 
-पूर्णांक mthca_MAP_EQ(काष्ठा mthca_dev *dev, u64 event_mask, पूर्णांक unmap,
-		 पूर्णांक eq_num)
-अणु
+int mthca_MAP_EQ(struct mthca_dev *dev, u64 event_mask, int unmap,
+		 int eq_num)
+{
 	mthca_dbg(dev, "%s mask %016llx for eqn %d\n",
 		  unmap ? "Clearing" : "Setting",
-		  (अचिन्हित दीर्घ दीर्घ) event_mask, eq_num);
-	वापस mthca_cmd(dev, event_mask, (unmap << 31) | eq_num,
+		  (unsigned long long) event_mask, eq_num);
+	return mthca_cmd(dev, event_mask, (unmap << 31) | eq_num,
 			 0, CMD_MAP_EQ, CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_SW2HW_EQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		   पूर्णांक eq_num)
-अणु
-	वापस mthca_cmd(dev, mailbox->dma, eq_num, 0, CMD_SW2HW_EQ,
+int mthca_SW2HW_EQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		   int eq_num)
+{
+	return mthca_cmd(dev, mailbox->dma, eq_num, 0, CMD_SW2HW_EQ,
 			 CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_HW2SW_EQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		   पूर्णांक eq_num)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox->dma, eq_num, 0,
+int mthca_HW2SW_EQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		   int eq_num)
+{
+	return mthca_cmd_box(dev, 0, mailbox->dma, eq_num, 0,
 			     CMD_HW2SW_EQ,
 			     CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_SW2HW_CQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		   पूर्णांक cq_num)
-अणु
-	वापस mthca_cmd(dev, mailbox->dma, cq_num, 0, CMD_SW2HW_CQ,
+int mthca_SW2HW_CQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		   int cq_num)
+{
+	return mthca_cmd(dev, mailbox->dma, cq_num, 0, CMD_SW2HW_CQ,
 			CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_HW2SW_CQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		   पूर्णांक cq_num)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox->dma, cq_num, 0,
+int mthca_HW2SW_CQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		   int cq_num)
+{
+	return mthca_cmd_box(dev, 0, mailbox->dma, cq_num, 0,
 			     CMD_HW2SW_CQ,
 			     CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_RESIZE_CQ(काष्ठा mthca_dev *dev, पूर्णांक cq_num, u32 lkey, u8 log_size)
-अणु
-	काष्ठा mthca_mailbox *mailbox;
+int mthca_RESIZE_CQ(struct mthca_dev *dev, int cq_num, u32 lkey, u8 log_size)
+{
+	struct mthca_mailbox *mailbox;
 	__be32 *inbox;
-	पूर्णांक err;
+	int err;
 
-#घोषणा RESIZE_CQ_IN_SIZE		0x40
-#घोषणा RESIZE_CQ_LOG_SIZE_OFFSET	0x0c
-#घोषणा RESIZE_CQ_LKEY_OFFSET		0x1c
+#define RESIZE_CQ_IN_SIZE		0x40
+#define RESIZE_CQ_LOG_SIZE_OFFSET	0x0c
+#define RESIZE_CQ_LKEY_OFFSET		0x1c
 
 	mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(mailbox))
-		वापस PTR_ERR(mailbox);
+	if (IS_ERR(mailbox))
+		return PTR_ERR(mailbox);
 	inbox = mailbox->buf;
 
-	स_रखो(inbox, 0, RESIZE_CQ_IN_SIZE);
+	memset(inbox, 0, RESIZE_CQ_IN_SIZE);
 	/*
 	 * Leave start address fields zeroed out -- mthca assumes that
-	 * MRs क्रम CQs always start at भव address 0.
+	 * MRs for CQs always start at virtual address 0.
 	 */
 	MTHCA_PUT(inbox, log_size, RESIZE_CQ_LOG_SIZE_OFFSET);
 	MTHCA_PUT(inbox, lkey,     RESIZE_CQ_LKEY_OFFSET);
@@ -1693,218 +1692,218 @@ out:
 	err = mthca_cmd(dev, mailbox->dma, cq_num, 1, CMD_RESIZE_CQ,
 			CMD_TIME_CLASS_B);
 
-	mthca_मुक्त_mailbox(dev, mailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, mailbox);
+	return err;
+}
 
-पूर्णांक mthca_SW2HW_SRQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		    पूर्णांक srq_num)
-अणु
-	वापस mthca_cmd(dev, mailbox->dma, srq_num, 0, CMD_SW2HW_SRQ,
+int mthca_SW2HW_SRQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		    int srq_num)
+{
+	return mthca_cmd(dev, mailbox->dma, srq_num, 0, CMD_SW2HW_SRQ,
 			CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_HW2SW_SRQ(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
-		    पूर्णांक srq_num)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox->dma, srq_num, 0,
+int mthca_HW2SW_SRQ(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
+		    int srq_num)
+{
+	return mthca_cmd_box(dev, 0, mailbox->dma, srq_num, 0,
 			     CMD_HW2SW_SRQ,
 			     CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_QUERY_SRQ(काष्ठा mthca_dev *dev, u32 num,
-		    काष्ठा mthca_mailbox *mailbox)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox->dma, num, 0,
+int mthca_QUERY_SRQ(struct mthca_dev *dev, u32 num,
+		    struct mthca_mailbox *mailbox)
+{
+	return mthca_cmd_box(dev, 0, mailbox->dma, num, 0,
 			     CMD_QUERY_SRQ, CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_ARM_SRQ(काष्ठा mthca_dev *dev, पूर्णांक srq_num, पूर्णांक limit)
-अणु
-	वापस mthca_cmd(dev, limit, srq_num, 0, CMD_ARM_SRQ,
+int mthca_ARM_SRQ(struct mthca_dev *dev, int srq_num, int limit)
+{
+	return mthca_cmd(dev, limit, srq_num, 0, CMD_ARM_SRQ,
 			 CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_MODIFY_QP(काष्ठा mthca_dev *dev, क्रमागत ib_qp_state cur,
-		    क्रमागत ib_qp_state next, u32 num, पूर्णांक is_ee,
-		    काष्ठा mthca_mailbox *mailbox, u32 opपंचांगask)
-अणु
-	अटल स्थिर u16 op[IB_QPS_ERR + 1][IB_QPS_ERR + 1] = अणु
-		[IB_QPS_RESET] = अणु
+int mthca_MODIFY_QP(struct mthca_dev *dev, enum ib_qp_state cur,
+		    enum ib_qp_state next, u32 num, int is_ee,
+		    struct mthca_mailbox *mailbox, u32 optmask)
+{
+	static const u16 op[IB_QPS_ERR + 1][IB_QPS_ERR + 1] = {
+		[IB_QPS_RESET] = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
 			[IB_QPS_INIT]	= CMD_RST2INIT_QPEE,
-		पूर्ण,
-		[IB_QPS_INIT]  = अणु
+		},
+		[IB_QPS_INIT]  = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
 			[IB_QPS_INIT]	= CMD_INIT2INIT_QPEE,
 			[IB_QPS_RTR]	= CMD_INIT2RTR_QPEE,
-		पूर्ण,
-		[IB_QPS_RTR]   = अणु
+		},
+		[IB_QPS_RTR]   = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
 			[IB_QPS_RTS]	= CMD_RTR2RTS_QPEE,
-		पूर्ण,
-		[IB_QPS_RTS]   = अणु
+		},
+		[IB_QPS_RTS]   = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
 			[IB_QPS_RTS]	= CMD_RTS2RTS_QPEE,
 			[IB_QPS_SQD]	= CMD_RTS2SQD_QPEE,
-		पूर्ण,
-		[IB_QPS_SQD] = अणु
+		},
+		[IB_QPS_SQD] = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
 			[IB_QPS_RTS]	= CMD_SQD2RTS_QPEE,
 			[IB_QPS_SQD]	= CMD_SQD2SQD_QPEE,
-		पूर्ण,
-		[IB_QPS_SQE] = अणु
+		},
+		[IB_QPS_SQE] = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
 			[IB_QPS_RTS]	= CMD_SQERR2RTS_QPEE,
-		पूर्ण,
-		[IB_QPS_ERR] = अणु
+		},
+		[IB_QPS_ERR] = {
 			[IB_QPS_RESET]	= CMD_ERR2RST_QPEE,
 			[IB_QPS_ERR]	= CMD_2ERR_QPEE,
-		पूर्ण
-	पूर्ण;
+		}
+	};
 
 	u8 op_mod = 0;
-	पूर्णांक my_mailbox = 0;
-	पूर्णांक err;
+	int my_mailbox = 0;
+	int err;
 
-	अगर (op[cur][next] == CMD_ERR2RST_QPEE) अणु
-		op_mod = 3;	/* करोn't ग_लिखो outbox, any->reset */
+	if (op[cur][next] == CMD_ERR2RST_QPEE) {
+		op_mod = 3;	/* don't write outbox, any->reset */
 
 		/* For debugging */
-		अगर (!mailbox) अणु
+		if (!mailbox) {
 			mailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-			अगर (!IS_ERR(mailbox)) अणु
+			if (!IS_ERR(mailbox)) {
 				my_mailbox = 1;
-				op_mod     = 2;	/* ग_लिखो outbox, any->reset */
-			पूर्ण अन्यथा
-				mailbox = शून्य;
-		पूर्ण
+				op_mod     = 2;	/* write outbox, any->reset */
+			} else
+				mailbox = NULL;
+		}
 
 		err = mthca_cmd_box(dev, 0, mailbox ? mailbox->dma : 0,
 				    (!!is_ee << 24) | num, op_mod,
 				    op[cur][next], CMD_TIME_CLASS_C);
 
-		अगर (0 && mailbox) अणु
-			पूर्णांक i;
+		if (0 && mailbox) {
+			int i;
 			mthca_dbg(dev, "Dumping QP context:\n");
-			prपूर्णांकk(" %08x\n", be32_to_cpup(mailbox->buf));
-			क्रम (i = 0; i < 0x100 / 4; ++i) अणु
-				अगर (i % 8 == 0)
-					prपूर्णांकk("[%02x] ", i * 4);
-				prपूर्णांकk(" %08x",
+			printk(" %08x\n", be32_to_cpup(mailbox->buf));
+			for (i = 0; i < 0x100 / 4; ++i) {
+				if (i % 8 == 0)
+					printk("[%02x] ", i * 4);
+				printk(" %08x",
 				       be32_to_cpu(((__be32 *) mailbox->buf)[i + 2]));
-				अगर ((i + 1) % 8 == 0)
-					prपूर्णांकk("\n");
-			पूर्ण
-		पूर्ण
+				if ((i + 1) % 8 == 0)
+					printk("\n");
+			}
+		}
 
-		अगर (my_mailbox)
-			mthca_मुक्त_mailbox(dev, mailbox);
-	पूर्ण अन्यथा अणु
-		अगर (0) अणु
-			पूर्णांक i;
+		if (my_mailbox)
+			mthca_free_mailbox(dev, mailbox);
+	} else {
+		if (0) {
+			int i;
 			mthca_dbg(dev, "Dumping QP context:\n");
-			prपूर्णांकk("  opt param mask: %08x\n", be32_to_cpup(mailbox->buf));
-			क्रम (i = 0; i < 0x100 / 4; ++i) अणु
-				अगर (i % 8 == 0)
-					prपूर्णांकk("  [%02x] ", i * 4);
-				prपूर्णांकk(" %08x",
+			printk("  opt param mask: %08x\n", be32_to_cpup(mailbox->buf));
+			for (i = 0; i < 0x100 / 4; ++i) {
+				if (i % 8 == 0)
+					printk("  [%02x] ", i * 4);
+				printk(" %08x",
 				       be32_to_cpu(((__be32 *) mailbox->buf)[i + 2]));
-				अगर ((i + 1) % 8 == 0)
-					prपूर्णांकk("\n");
-			पूर्ण
-		पूर्ण
+				if ((i + 1) % 8 == 0)
+					printk("\n");
+			}
+		}
 
-		err = mthca_cmd(dev, mailbox->dma, opपंचांगask | (!!is_ee << 24) | num,
+		err = mthca_cmd(dev, mailbox->dma, optmask | (!!is_ee << 24) | num,
 				op_mod, op[cur][next], CMD_TIME_CLASS_C);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mthca_QUERY_QP(काष्ठा mthca_dev *dev, u32 num, पूर्णांक is_ee,
-		   काष्ठा mthca_mailbox *mailbox)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox->dma, (!!is_ee << 24) | num, 0,
+int mthca_QUERY_QP(struct mthca_dev *dev, u32 num, int is_ee,
+		   struct mthca_mailbox *mailbox)
+{
+	return mthca_cmd_box(dev, 0, mailbox->dma, (!!is_ee << 24) | num, 0,
 			     CMD_QUERY_QPEE, CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_CONF_SPECIAL_QP(काष्ठा mthca_dev *dev, पूर्णांक type, u32 qpn)
-अणु
+int mthca_CONF_SPECIAL_QP(struct mthca_dev *dev, int type, u32 qpn)
+{
 	u8 op_mod;
 
-	चयन (type) अणु
-	हाल IB_QPT_SMI:
+	switch (type) {
+	case IB_QPT_SMI:
 		op_mod = 0;
-		अवरोध;
-	हाल IB_QPT_GSI:
+		break;
+	case IB_QPT_GSI:
 		op_mod = 1;
-		अवरोध;
-	हाल IB_QPT_RAW_IPV6:
+		break;
+	case IB_QPT_RAW_IPV6:
 		op_mod = 2;
-		अवरोध;
-	हाल IB_QPT_RAW_ETHERTYPE:
+		break;
+	case IB_QPT_RAW_ETHERTYPE:
 		op_mod = 3;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस mthca_cmd(dev, 0, qpn, op_mod, CMD_CONF_SPECIAL_QP,
+	return mthca_cmd(dev, 0, qpn, op_mod, CMD_CONF_SPECIAL_QP,
 			 CMD_TIME_CLASS_B);
-पूर्ण
+}
 
-पूर्णांक mthca_MAD_IFC(काष्ठा mthca_dev *dev, पूर्णांक ignore_mkey, पूर्णांक ignore_bkey,
-		  पूर्णांक port, स्थिर काष्ठा ib_wc *in_wc, स्थिर काष्ठा ib_grh *in_grh,
-		  स्थिर व्योम *in_mad, व्योम *response_mad)
-अणु
-	काष्ठा mthca_mailbox *inmailbox, *ouपंचांगailbox;
-	व्योम *inbox;
-	पूर्णांक err;
-	u32 in_modअगरier = port;
-	u8 op_modअगरier = 0;
+int mthca_MAD_IFC(struct mthca_dev *dev, int ignore_mkey, int ignore_bkey,
+		  int port, const struct ib_wc *in_wc, const struct ib_grh *in_grh,
+		  const void *in_mad, void *response_mad)
+{
+	struct mthca_mailbox *inmailbox, *outmailbox;
+	void *inbox;
+	int err;
+	u32 in_modifier = port;
+	u8 op_modifier = 0;
 
-#घोषणा MAD_IFC_BOX_SIZE      0x400
-#घोषणा MAD_IFC_MY_QPN_OFFSET 0x100
-#घोषणा MAD_IFC_RQPN_OFFSET   0x108
-#घोषणा MAD_IFC_SL_OFFSET     0x10c
-#घोषणा MAD_IFC_G_PATH_OFFSET 0x10d
-#घोषणा MAD_IFC_RLID_OFFSET   0x10e
-#घोषणा MAD_IFC_PKEY_OFFSET   0x112
-#घोषणा MAD_IFC_GRH_OFFSET    0x140
+#define MAD_IFC_BOX_SIZE      0x400
+#define MAD_IFC_MY_QPN_OFFSET 0x100
+#define MAD_IFC_RQPN_OFFSET   0x108
+#define MAD_IFC_SL_OFFSET     0x10c
+#define MAD_IFC_G_PATH_OFFSET 0x10d
+#define MAD_IFC_RLID_OFFSET   0x10e
+#define MAD_IFC_PKEY_OFFSET   0x112
+#define MAD_IFC_GRH_OFFSET    0x140
 
 	inmailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(inmailbox))
-		वापस PTR_ERR(inmailbox);
+	if (IS_ERR(inmailbox))
+		return PTR_ERR(inmailbox);
 	inbox = inmailbox->buf;
 
-	ouपंचांगailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
-	अगर (IS_ERR(ouपंचांगailbox)) अणु
-		mthca_मुक्त_mailbox(dev, inmailbox);
-		वापस PTR_ERR(ouपंचांगailbox);
-	पूर्ण
+	outmailbox = mthca_alloc_mailbox(dev, GFP_KERNEL);
+	if (IS_ERR(outmailbox)) {
+		mthca_free_mailbox(dev, inmailbox);
+		return PTR_ERR(outmailbox);
+	}
 
-	स_नकल(inbox, in_mad, 256);
+	memcpy(inbox, in_mad, 256);
 
 	/*
 	 * Key check traps can't be generated unless we have in_wc to
 	 * tell us where to send the trap.
 	 */
-	अगर (ignore_mkey || !in_wc)
-		op_modअगरier |= 0x1;
-	अगर (ignore_bkey || !in_wc)
-		op_modअगरier |= 0x2;
+	if (ignore_mkey || !in_wc)
+		op_modifier |= 0x1;
+	if (ignore_bkey || !in_wc)
+		op_modifier |= 0x2;
 
-	अगर (in_wc) अणु
+	if (in_wc) {
 		u8 val;
 
-		स_रखो(inbox + 256, 0, 256);
+		memset(inbox + 256, 0, 256);
 
 		MTHCA_PUT(inbox, in_wc->qp->qp_num, MAD_IFC_MY_QPN_OFFSET);
 		MTHCA_PUT(inbox, in_wc->src_qp,     MAD_IFC_RQPN_OFFSET);
@@ -1919,54 +1918,54 @@ out:
 		MTHCA_PUT(inbox, ib_lid_cpu16(in_wc->slid), MAD_IFC_RLID_OFFSET);
 		MTHCA_PUT(inbox, in_wc->pkey_index, MAD_IFC_PKEY_OFFSET);
 
-		अगर (in_grh)
-			स_नकल(inbox + MAD_IFC_GRH_OFFSET, in_grh, 40);
+		if (in_grh)
+			memcpy(inbox + MAD_IFC_GRH_OFFSET, in_grh, 40);
 
-		op_modअगरier |= 0x4;
+		op_modifier |= 0x4;
 
-		in_modअगरier |= ib_lid_cpu16(in_wc->slid) << 16;
-	पूर्ण
+		in_modifier |= ib_lid_cpu16(in_wc->slid) << 16;
+	}
 
-	err = mthca_cmd_box(dev, inmailbox->dma, ouपंचांगailbox->dma,
-			    in_modअगरier, op_modअगरier,
+	err = mthca_cmd_box(dev, inmailbox->dma, outmailbox->dma,
+			    in_modifier, op_modifier,
 			    CMD_MAD_IFC, CMD_TIME_CLASS_C);
 
-	अगर (!err)
-		स_नकल(response_mad, ouपंचांगailbox->buf, 256);
+	if (!err)
+		memcpy(response_mad, outmailbox->buf, 256);
 
-	mthca_मुक्त_mailbox(dev, inmailbox);
-	mthca_मुक्त_mailbox(dev, ouपंचांगailbox);
-	वापस err;
-पूर्ण
+	mthca_free_mailbox(dev, inmailbox);
+	mthca_free_mailbox(dev, outmailbox);
+	return err;
+}
 
-पूर्णांक mthca_READ_MGM(काष्ठा mthca_dev *dev, पूर्णांक index,
-		   काष्ठा mthca_mailbox *mailbox)
-अणु
-	वापस mthca_cmd_box(dev, 0, mailbox->dma, index, 0,
+int mthca_READ_MGM(struct mthca_dev *dev, int index,
+		   struct mthca_mailbox *mailbox)
+{
+	return mthca_cmd_box(dev, 0, mailbox->dma, index, 0,
 			     CMD_READ_MGM, CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_WRITE_MGM(काष्ठा mthca_dev *dev, पूर्णांक index,
-		    काष्ठा mthca_mailbox *mailbox)
-अणु
-	वापस mthca_cmd(dev, mailbox->dma, index, 0, CMD_WRITE_MGM,
+int mthca_WRITE_MGM(struct mthca_dev *dev, int index,
+		    struct mthca_mailbox *mailbox)
+{
+	return mthca_cmd(dev, mailbox->dma, index, 0, CMD_WRITE_MGM,
 			 CMD_TIME_CLASS_A);
-पूर्ण
+}
 
-पूर्णांक mthca_MGID_HASH(काष्ठा mthca_dev *dev, काष्ठा mthca_mailbox *mailbox,
+int mthca_MGID_HASH(struct mthca_dev *dev, struct mthca_mailbox *mailbox,
 		    u16 *hash)
-अणु
+{
 	u64 imm;
-	पूर्णांक err;
+	int err;
 
 	err = mthca_cmd_imm(dev, mailbox->dma, &imm, 0, 0, CMD_MGID_HASH,
 			    CMD_TIME_CLASS_A);
 
 	*hash = imm;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक mthca_NOP(काष्ठा mthca_dev *dev)
-अणु
-	वापस mthca_cmd(dev, 0, 0x1f, 0, CMD_NOP, msecs_to_jअगरfies(100));
-पूर्ण
+int mthca_NOP(struct mthca_dev *dev)
+{
+	return mthca_cmd(dev, 0, 0x1f, 0, CMD_NOP, msecs_to_jiffies(100));
+}

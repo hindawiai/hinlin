@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,28 +21,28 @@
  *
  * Authors: Ben Skeggs
  */
-#समावेश "ramnv40.h"
+#include "ramnv40.h"
 
-पूर्णांक
-nv41_ram_new(काष्ठा nvkm_fb *fb, काष्ठा nvkm_ram **pram)
-अणु
-	काष्ठा nvkm_device *device = fb->subdev.device;
+int
+nv41_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
+{
+	struct nvkm_device *device = fb->subdev.device;
 	u32  size = nvkm_rd32(device, 0x10020c) & 0xff000000;
 	u32 fb474 = nvkm_rd32(device, 0x100474);
-	क्रमागत nvkm_ram_type type = NVKM_RAM_TYPE_UNKNOWN;
-	पूर्णांक ret;
+	enum nvkm_ram_type type = NVKM_RAM_TYPE_UNKNOWN;
+	int ret;
 
-	अगर (fb474 & 0x00000004)
+	if (fb474 & 0x00000004)
 		type = NVKM_RAM_TYPE_GDDR3;
-	अगर (fb474 & 0x00000002)
+	if (fb474 & 0x00000002)
 		type = NVKM_RAM_TYPE_DDR2;
-	अगर (fb474 & 0x00000001)
+	if (fb474 & 0x00000001)
 		type = NVKM_RAM_TYPE_DDR1;
 
 	ret = nv40_ram_new_(fb, type, size, pram);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	(*pram)->parts = (nvkm_rd32(device, 0x100200) & 0x00000003) + 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}

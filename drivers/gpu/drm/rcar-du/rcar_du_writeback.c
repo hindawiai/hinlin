@@ -1,187 +1,186 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * rcar_du_ग_लिखोback.c  --  R-Car Display Unit Writeback Support
+ * rcar_du_writeback.c  --  R-Car Display Unit Writeback Support
  *
- * Copyright (C) 2019 Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Copyright (C) 2019 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_probe_helper.h>
-#समावेश <drm/drm_ग_लिखोback.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_device.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_writeback.h>
 
-#समावेश "rcar_du_crtc.h"
-#समावेश "rcar_du_drv.h"
-#समावेश "rcar_du_kms.h"
-#समावेश "rcar_du_writeback.h"
+#include "rcar_du_crtc.h"
+#include "rcar_du_drv.h"
+#include "rcar_du_kms.h"
+#include "rcar_du_writeback.h"
 
 /**
- * काष्ठा rcar_du_wb_conn_state - Driver-specअगरic ग_लिखोback connector state
+ * struct rcar_du_wb_conn_state - Driver-specific writeback connector state
  * @state: base DRM connector state
- * @क्रमmat: क्रमmat of the ग_लिखोback framebuffer
+ * @format: format of the writeback framebuffer
  */
-काष्ठा rcar_du_wb_conn_state अणु
-	काष्ठा drm_connector_state state;
-	स्थिर काष्ठा rcar_du_क्रमmat_info *क्रमmat;
-पूर्ण;
+struct rcar_du_wb_conn_state {
+	struct drm_connector_state state;
+	const struct rcar_du_format_info *format;
+};
 
-#घोषणा to_rcar_wb_conn_state(s) \
-	container_of(s, काष्ठा rcar_du_wb_conn_state, state)
+#define to_rcar_wb_conn_state(s) \
+	container_of(s, struct rcar_du_wb_conn_state, state)
 
 /**
- * काष्ठा rcar_du_wb_job - Driver-निजी data क्रम ग_लिखोback jobs
- * @sg_tables: scatter-gather tables क्रम the framebuffer memory
+ * struct rcar_du_wb_job - Driver-private data for writeback jobs
+ * @sg_tables: scatter-gather tables for the framebuffer memory
  */
-काष्ठा rcar_du_wb_job अणु
-	काष्ठा sg_table sg_tables[3];
-पूर्ण;
+struct rcar_du_wb_job {
+	struct sg_table sg_tables[3];
+};
 
-अटल पूर्णांक rcar_du_wb_conn_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
+static int rcar_du_wb_conn_get_modes(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
 
-	वापस drm_add_modes_noedid(connector, dev->mode_config.max_width,
+	return drm_add_modes_noedid(connector, dev->mode_config.max_width,
 				    dev->mode_config.max_height);
-पूर्ण
+}
 
-अटल पूर्णांक rcar_du_wb_prepare_job(काष्ठा drm_ग_लिखोback_connector *connector,
-				  काष्ठा drm_ग_लिखोback_job *job)
-अणु
-	काष्ठा rcar_du_crtc *rcrtc = wb_to_rcar_crtc(connector);
-	काष्ठा rcar_du_wb_job *rjob;
-	पूर्णांक ret;
+static int rcar_du_wb_prepare_job(struct drm_writeback_connector *connector,
+				  struct drm_writeback_job *job)
+{
+	struct rcar_du_crtc *rcrtc = wb_to_rcar_crtc(connector);
+	struct rcar_du_wb_job *rjob;
+	int ret;
 
-	अगर (!job->fb)
-		वापस 0;
+	if (!job->fb)
+		return 0;
 
-	rjob = kzalloc(माप(*rjob), GFP_KERNEL);
-	अगर (!rjob)
-		वापस -ENOMEM;
+	rjob = kzalloc(sizeof(*rjob), GFP_KERNEL);
+	if (!rjob)
+		return -ENOMEM;
 
 	/* Map the framebuffer to the VSP. */
 	ret = rcar_du_vsp_map_fb(rcrtc->vsp, job->fb, rjob->sg_tables);
-	अगर (ret < 0) अणु
-		kमुक्त(rjob);
-		वापस ret;
-	पूर्ण
+	if (ret < 0) {
+		kfree(rjob);
+		return ret;
+	}
 
 	job->priv = rjob;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम rcar_du_wb_cleanup_job(काष्ठा drm_ग_लिखोback_connector *connector,
-				   काष्ठा drm_ग_लिखोback_job *job)
-अणु
-	काष्ठा rcar_du_crtc *rcrtc = wb_to_rcar_crtc(connector);
-	काष्ठा rcar_du_wb_job *rjob = job->priv;
+static void rcar_du_wb_cleanup_job(struct drm_writeback_connector *connector,
+				   struct drm_writeback_job *job)
+{
+	struct rcar_du_crtc *rcrtc = wb_to_rcar_crtc(connector);
+	struct rcar_du_wb_job *rjob = job->priv;
 
-	अगर (!job->fb)
-		वापस;
+	if (!job->fb)
+		return;
 
 	rcar_du_vsp_unmap_fb(rcrtc->vsp, job->fb, rjob->sg_tables);
-	kमुक्त(rjob);
-पूर्ण
+	kfree(rjob);
+}
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs rcar_du_wb_conn_helper_funcs = अणु
+static const struct drm_connector_helper_funcs rcar_du_wb_conn_helper_funcs = {
 	.get_modes = rcar_du_wb_conn_get_modes,
-	.prepare_ग_लिखोback_job = rcar_du_wb_prepare_job,
-	.cleanup_ग_लिखोback_job = rcar_du_wb_cleanup_job,
-पूर्ण;
+	.prepare_writeback_job = rcar_du_wb_prepare_job,
+	.cleanup_writeback_job = rcar_du_wb_cleanup_job,
+};
 
-अटल काष्ठा drm_connector_state *
-rcar_du_wb_conn_duplicate_state(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा rcar_du_wb_conn_state *copy;
+static struct drm_connector_state *
+rcar_du_wb_conn_duplicate_state(struct drm_connector *connector)
+{
+	struct rcar_du_wb_conn_state *copy;
 
-	अगर (WARN_ON(!connector->state))
-		वापस शून्य;
+	if (WARN_ON(!connector->state))
+		return NULL;
 
-	copy = kzalloc(माप(*copy), GFP_KERNEL);
-	अगर (!copy)
-		वापस शून्य;
+	copy = kzalloc(sizeof(*copy), GFP_KERNEL);
+	if (!copy)
+		return NULL;
 
 	__drm_atomic_helper_connector_duplicate_state(connector, &copy->state);
 
-	वापस &copy->state;
-पूर्ण
+	return &copy->state;
+}
 
-अटल व्योम rcar_du_wb_conn_destroy_state(काष्ठा drm_connector *connector,
-					  काष्ठा drm_connector_state *state)
-अणु
+static void rcar_du_wb_conn_destroy_state(struct drm_connector *connector,
+					  struct drm_connector_state *state)
+{
 	__drm_atomic_helper_connector_destroy_state(state);
-	kमुक्त(to_rcar_wb_conn_state(state));
-पूर्ण
+	kfree(to_rcar_wb_conn_state(state));
+}
 
-अटल व्योम rcar_du_wb_conn_reset(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा rcar_du_wb_conn_state *state;
+static void rcar_du_wb_conn_reset(struct drm_connector *connector)
+{
+	struct rcar_du_wb_conn_state *state;
 
-	अगर (connector->state) अणु
+	if (connector->state) {
 		rcar_du_wb_conn_destroy_state(connector, connector->state);
-		connector->state = शून्य;
-	पूर्ण
+		connector->state = NULL;
+	}
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (state == शून्य)
-		वापस;
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (state == NULL)
+		return;
 
 	__drm_atomic_helper_connector_reset(connector, &state->state);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा drm_connector_funcs rcar_du_wb_conn_funcs = अणु
+static const struct drm_connector_funcs rcar_du_wb_conn_funcs = {
 	.reset = rcar_du_wb_conn_reset,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = drm_connector_cleanup,
 	.atomic_duplicate_state = rcar_du_wb_conn_duplicate_state,
 	.atomic_destroy_state = rcar_du_wb_conn_destroy_state,
-पूर्ण;
+};
 
-अटल पूर्णांक rcar_du_wb_enc_atomic_check(काष्ठा drm_encoder *encoder,
-				       काष्ठा drm_crtc_state *crtc_state,
-				       काष्ठा drm_connector_state *conn_state)
-अणु
-	काष्ठा rcar_du_wb_conn_state *wb_state =
+static int rcar_du_wb_enc_atomic_check(struct drm_encoder *encoder,
+				       struct drm_crtc_state *crtc_state,
+				       struct drm_connector_state *conn_state)
+{
+	struct rcar_du_wb_conn_state *wb_state =
 		to_rcar_wb_conn_state(conn_state);
-	स्थिर काष्ठा drm_display_mode *mode = &crtc_state->mode;
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा drm_framebuffer *fb;
+	const struct drm_display_mode *mode = &crtc_state->mode;
+	struct drm_device *dev = encoder->dev;
+	struct drm_framebuffer *fb;
 
-	अगर (!conn_state->ग_लिखोback_job)
-		वापस 0;
+	if (!conn_state->writeback_job)
+		return 0;
 
-	fb = conn_state->ग_लिखोback_job->fb;
+	fb = conn_state->writeback_job->fb;
 
 	/*
-	 * Verअगरy that the framebuffer क्रमmat is supported and that its size
+	 * Verify that the framebuffer format is supported and that its size
 	 * matches the current mode.
 	 */
-	अगर (fb->width != mode->hdisplay || fb->height != mode->vdisplay) अणु
+	if (fb->width != mode->hdisplay || fb->height != mode->vdisplay) {
 		dev_dbg(dev->dev, "%s: invalid framebuffer size %ux%u\n",
 			__func__, fb->width, fb->height);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	wb_state->क्रमmat = rcar_du_क्रमmat_info(fb->क्रमmat->क्रमmat);
-	अगर (wb_state->क्रमmat == शून्य) अणु
+	wb_state->format = rcar_du_format_info(fb->format->format);
+	if (wb_state->format == NULL) {
 		dev_dbg(dev->dev, "%s: unsupported format %08x\n", __func__,
-			fb->क्रमmat->क्रमmat);
-		वापस -EINVAL;
-	पूर्ण
+			fb->format->format);
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs rcar_du_wb_enc_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs rcar_du_wb_enc_helper_funcs = {
 	.atomic_check = rcar_du_wb_enc_atomic_check,
-पूर्ण;
+};
 
 /*
- * Only RGB क्रमmats are currently supported as the VSP outमाला_दो RGB to the DU
- * and can't convert to YUV separately क्रम ग_लिखोback.
+ * Only RGB formats are currently supported as the VSP outputs RGB to the DU
+ * and can't convert to YUV separately for writeback.
  */
-अटल स्थिर u32 ग_लिखोback_क्रमmats[] = अणु
+static const u32 writeback_formats[] = {
 	DRM_FORMAT_RGB332,
 	DRM_FORMAT_ARGB4444,
 	DRM_FORMAT_XRGB4444,
@@ -194,52 +193,52 @@ rcar_du_wb_conn_duplicate_state(काष्ठा drm_connector *connector)
 	DRM_FORMAT_BGRX8888,
 	DRM_FORMAT_ARGB8888,
 	DRM_FORMAT_XRGB8888,
-पूर्ण;
+};
 
-पूर्णांक rcar_du_ग_लिखोback_init(काष्ठा rcar_du_device *rcdu,
-			   काष्ठा rcar_du_crtc *rcrtc)
-अणु
-	काष्ठा drm_ग_लिखोback_connector *wb_conn = &rcrtc->ग_लिखोback;
+int rcar_du_writeback_init(struct rcar_du_device *rcdu,
+			   struct rcar_du_crtc *rcrtc)
+{
+	struct drm_writeback_connector *wb_conn = &rcrtc->writeback;
 
 	wb_conn->encoder.possible_crtcs = 1 << drm_crtc_index(&rcrtc->crtc);
 	drm_connector_helper_add(&wb_conn->base,
 				 &rcar_du_wb_conn_helper_funcs);
 
-	वापस drm_ग_लिखोback_connector_init(&rcdu->ddev, wb_conn,
+	return drm_writeback_connector_init(&rcdu->ddev, wb_conn,
 					    &rcar_du_wb_conn_funcs,
 					    &rcar_du_wb_enc_helper_funcs,
-					    ग_लिखोback_क्रमmats,
-					    ARRAY_SIZE(ग_लिखोback_क्रमmats));
-पूर्ण
+					    writeback_formats,
+					    ARRAY_SIZE(writeback_formats));
+}
 
-व्योम rcar_du_ग_लिखोback_setup(काष्ठा rcar_du_crtc *rcrtc,
-			     काष्ठा vsp1_du_ग_लिखोback_config *cfg)
-अणु
-	काष्ठा rcar_du_wb_conn_state *wb_state;
-	काष्ठा drm_connector_state *state;
-	काष्ठा rcar_du_wb_job *rjob;
-	काष्ठा drm_framebuffer *fb;
-	अचिन्हित पूर्णांक i;
+void rcar_du_writeback_setup(struct rcar_du_crtc *rcrtc,
+			     struct vsp1_du_writeback_config *cfg)
+{
+	struct rcar_du_wb_conn_state *wb_state;
+	struct drm_connector_state *state;
+	struct rcar_du_wb_job *rjob;
+	struct drm_framebuffer *fb;
+	unsigned int i;
 
-	state = rcrtc->ग_लिखोback.base.state;
-	अगर (!state || !state->ग_लिखोback_job)
-		वापस;
+	state = rcrtc->writeback.base.state;
+	if (!state || !state->writeback_job)
+		return;
 
-	fb = state->ग_लिखोback_job->fb;
-	rjob = state->ग_लिखोback_job->priv;
+	fb = state->writeback_job->fb;
+	rjob = state->writeback_job->priv;
 	wb_state = to_rcar_wb_conn_state(state);
 
-	cfg->pixelक्रमmat = wb_state->क्रमmat->v4l2;
+	cfg->pixelformat = wb_state->format->v4l2;
 	cfg->pitch = fb->pitches[0];
 
-	क्रम (i = 0; i < wb_state->क्रमmat->planes; ++i)
+	for (i = 0; i < wb_state->format->planes; ++i)
 		cfg->mem[i] = sg_dma_address(rjob->sg_tables[i].sgl)
 			    + fb->offsets[i];
 
-	drm_ग_लिखोback_queue_job(&rcrtc->ग_लिखोback, state);
-पूर्ण
+	drm_writeback_queue_job(&rcrtc->writeback, state);
+}
 
-व्योम rcar_du_ग_लिखोback_complete(काष्ठा rcar_du_crtc *rcrtc)
-अणु
-	drm_ग_लिखोback_संकेत_completion(&rcrtc->ग_लिखोback, 0);
-पूर्ण
+void rcar_du_writeback_complete(struct rcar_du_crtc *rcrtc)
+{
+	drm_writeback_signal_completion(&rcrtc->writeback, 0);
+}

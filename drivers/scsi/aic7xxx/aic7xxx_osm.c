@@ -1,14 +1,13 @@
-<शैली गुरु>
 
 /*
- * Adaptec AIC7xxx device driver क्रम Linux.
+ * Adaptec AIC7xxx device driver for Linux.
  *
  * $Id: //depot/aic7xxx/linux/drivers/scsi/aic7xxx/aic7xxx_osm.c#235 $
  *
  * Copyright (c) 1994 John Aycock
- *   The University of Calgary Deparपंचांगent of Computer Science.
+ *   The University of Calgary Department of Computer Science.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
@@ -16,26 +15,26 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * aदीर्घ with this program; see the file COPYING.  If not, ग_लिखो to
+ * along with this program; see the file COPYING.  If not, write to
  * the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * Sources include the Adaptec 1740 driver (aha1740.c), the Ultrastor 24F
  * driver (ultrastor.c), various Linux kernel source, the Adaptec EISA
  * config file (!adp7771.cfg), the Adaptec AHA-2740A Series User's Guide,
- * the Linux Kernel Hacker's Guide, Writing a SCSI Device Driver क्रम Linux,
+ * the Linux Kernel Hacker's Guide, Writing a SCSI Device Driver for Linux,
  * the Adaptec 1542 driver (aha1542.c), the Adaptec EISA overlay file
  * (adp7770.ovl), the Adaptec AHA-2740 Series Technical Reference Manual,
- * the Adaptec AIC-7770 Data Book, the ANSI SCSI specअगरication, the
- * ANSI SCSI-2 specअगरication (draft 10c), ...
+ * the Adaptec AIC-7770 Data Book, the ANSI SCSI specification, the
+ * ANSI SCSI-2 specification (draft 10c), ...
  *
  * --------------------------------------------------------------------------
  *
- *  Modअगरications by Daniel M. Eischen (deischen@iworks.InterWorks.org):
+ *  Modifications by Daniel M. Eischen (deischen@iworks.InterWorks.org):
  *
- *  Substantially modअगरied to include support क्रम wide and twin bus
+ *  Substantially modified to include support for wide and twin bus
  *  adapters, DMAing of SCBs, tagged queueing, IRQ sharing, bug fixes,
  *  SCB paging, and other rework of the code.
  *
@@ -44,20 +43,20 @@
  * Copyright (c) 2000-2001 Adaptec Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modअगरication.
- * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement क्रम further
+ *    including a substantially similar Disclaimer requirement for further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -82,10 +81,10 @@
  *
  *    Rory Bolt     - Sequencer bug fixes
  *    Jay Estabrook - Initial DEC Alpha support
- *    Doug Ledक्रमd  - Much needed पात/reset bug fixes
+ *    Doug Ledford  - Much needed abort/reset bug fixes
  *    Kai Makisara  - DMAing of SCBs
  *
- *  A Boot समय option was also added क्रम not resetting the scsi bus.
+ *  A Boot time option was also added for not resetting the scsi bus.
  *
  *    Form:  aic7xxx=extended
  *           aic7xxx=no_reset
@@ -97,120 +96,120 @@
  */
 
 /*
- * Further driver modअगरications made by Doug Ledक्रमd <dledक्रमd@redhat.com>
+ * Further driver modifications made by Doug Ledford <dledford@redhat.com>
  *
- * Copyright (c) 1997-1999 Doug Ledक्रमd
+ * Copyright (c) 1997-1999 Doug Ledford
  *
  * These changes are released under the same licensing terms as the FreeBSD
  * driver written by Justin Gibbs.  Please see his Copyright notice above
- * क्रम the exact terms and conditions covering my changes as well as the
+ * for the exact terms and conditions covering my changes as well as the
  * warranty statement.
  *
- * Modअगरications made to the aic7xxx.c,v 4.1 driver from Dan Eischen include
+ * Modifications made to the aic7xxx.c,v 4.1 driver from Dan Eischen include
  * but are not limited to:
  *
- *  1: Import of the latest FreeBSD sequencer code क्रम this driver
- *  2: Modअगरication of kernel code to accommodate dअगरferent sequencer semantics
+ *  1: Import of the latest FreeBSD sequencer code for this driver
+ *  2: Modification of kernel code to accommodate different sequencer semantics
  *  3: Extensive changes throughout kernel portion of driver to improve
- *     पात/reset processing and error hanndling
+ *     abort/reset processing and error hanndling
  *  4: Other work contributed by various people on the Internet
- *  5: Changes to prपूर्णांकk inक्रमmation and verbosity selection code
+ *  5: Changes to printk information and verbosity selection code
  *  6: General reliability related changes, especially in IRQ management
- *  7: Modअगरications to the शेष probe/attach order क्रम supported cards
- *  8: SMP मित्रliness has been improved
+ *  7: Modifications to the default probe/attach order for supported cards
+ *  8: SMP friendliness has been improved
  *
  */
 
-#समावेश "aic7xxx_osm.h"
-#समावेश "aic7xxx_inline.h"
-#समावेश <scsi/scsicam.h>
+#include "aic7xxx_osm.h"
+#include "aic7xxx_inline.h"
+#include <scsi/scsicam.h>
 
-अटल काष्ठा scsi_transport_ढाँचा *ahc_linux_transport_ढाँचा = शून्य;
+static struct scsi_transport_template *ahc_linux_transport_template = NULL;
 
-#समावेश <linux/init.h>		/* __setup */
-#समावेश <linux/mm.h>		/* For fetching प्रणाली memory size */
-#समावेश <linux/blkdev.h>		/* For block_size() */
-#समावेश <linux/delay.h>	/* For ssleep/msleep */
-#समावेश <linux/slab.h>
+#include <linux/init.h>		/* __setup */
+#include <linux/mm.h>		/* For fetching system memory size */
+#include <linux/blkdev.h>		/* For block_size() */
+#include <linux/delay.h>	/* For ssleep/msleep */
+#include <linux/slab.h>
 
 
 /*
  * Set this to the delay in seconds after SCSI bus reset.
- * Note, we honor this only क्रम the initial bus reset.
- * The scsi error recovery code perक्रमms its own bus settle
- * delay handling क्रम error recovery actions.
+ * Note, we honor this only for the initial bus reset.
+ * The scsi error recovery code performs its own bus settle
+ * delay handling for error recovery actions.
  */
-#अगर_घोषित CONFIG_AIC7XXX_RESET_DELAY_MS
-#घोषणा AIC7XXX_RESET_DELAY CONFIG_AIC7XXX_RESET_DELAY_MS
-#अन्यथा
-#घोषणा AIC7XXX_RESET_DELAY 5000
-#पूर्ण_अगर
+#ifdef CONFIG_AIC7XXX_RESET_DELAY_MS
+#define AIC7XXX_RESET_DELAY CONFIG_AIC7XXX_RESET_DELAY_MS
+#else
+#define AIC7XXX_RESET_DELAY 5000
+#endif
 
 /*
- * To change the शेष number of tagged transactions allowed per-device,
+ * To change the default number of tagged transactions allowed per-device,
  * add a line to the lilo.conf file like:
  * append="aic7xxx=verbose,tag_info:{{32,32,32,32},{32,32,32,32}}"
  * which will result in the first four devices on the first two
  * controllers being set to a tagged queue depth of 32.
  *
- * The tag_commands is an array of 16 to allow क्रम wide and twin adapters.
- * Twin adapters will use indexes 0-7 क्रम channel 0, and indexes 8-15
- * क्रम channel 1.
+ * The tag_commands is an array of 16 to allow for wide and twin adapters.
+ * Twin adapters will use indexes 0-7 for channel 0, and indexes 8-15
+ * for channel 1.
  */
-प्रकार काष्ठा अणु
-	uपूर्णांक8_t tag_commands[16];	/* Allow क्रम wide/twin adapters. */
-पूर्ण adapter_tag_info_t;
+typedef struct {
+	uint8_t tag_commands[16];	/* Allow for wide/twin adapters. */
+} adapter_tag_info_t;
 
 /*
- * Modअगरy this as you see fit क्रम your प्रणाली.
+ * Modify this as you see fit for your system.
  *
  * 0			tagged queuing disabled
  * 1 <= n <= 253	n == max tags ever dispatched.
  *
  * The driver will throttle the number of commands dispatched to a
- * device अगर it वापसs queue full.  For devices with a fixed maximum
+ * device if it returns queue full.  For devices with a fixed maximum
  * queue depth, the driver will eventually determine this depth and
- * lock it in (a console message is prपूर्णांकed to indicate that a lock
- * has occurred).  On some devices, queue full is वापसed क्रम a temporary
- * resource लघुage.  These devices will वापस queue full at varying
+ * lock it in (a console message is printed to indicate that a lock
+ * has occurred).  On some devices, queue full is returned for a temporary
+ * resource shortage.  These devices will return queue full at varying
  * depths.  The driver will throttle back when the queue fulls occur and
- * attempt to slowly increase the depth over समय as the device recovers
- * from the resource लघुage.
+ * attempt to slowly increase the depth over time as the device recovers
+ * from the resource shortage.
  *
- * In this example, the first line will disable tagged queueing क्रम all
+ * In this example, the first line will disable tagged queueing for all
  * the devices on the first probed aic7xxx adapter.
  *
- * The second line enables tagged queueing with 4 commands/LUN क्रम IDs
- * (0, 2-11, 13-15), disables tagged queueing क्रम ID 12, and tells the
- * driver to attempt to use up to 64 tags क्रम ID 1.
+ * The second line enables tagged queueing with 4 commands/LUN for IDs
+ * (0, 2-11, 13-15), disables tagged queueing for ID 12, and tells the
+ * driver to attempt to use up to 64 tags for ID 1.
  *
  * The third line is the same as the first line.
  *
- * The fourth line disables tagged queueing क्रम devices 0 and 3.  It
- * enables tagged queueing क्रम the other IDs, with 16 commands/LUN
- * क्रम IDs 1 and 4, 127 commands/LUN क्रम ID 8, and 4 commands/LUN क्रम
+ * The fourth line disables tagged queueing for devices 0 and 3.  It
+ * enables tagged queueing for the other IDs, with 16 commands/LUN
+ * for IDs 1 and 4, 127 commands/LUN for ID 8, and 4 commands/LUN for
  * IDs 2, 5-7, and 9-15.
  */
 
 /*
- * NOTE: The below काष्ठाure is क्रम reference only, the actual काष्ठाure
- *       to modअगरy in order to change things is just below this comment block.
+ * NOTE: The below structure is for reference only, the actual structure
+ *       to modify in order to change things is just below this comment block.
 adapter_tag_info_t aic7xxx_tag_info[] =
-अणु
-	अणुअणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्णपूर्ण,
-	अणुअणु4, 64, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 4, 4पूर्णपूर्ण,
-	अणुअणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्णपूर्ण,
-	अणुअणु0, 16, 4, 0, 16, 4, 4, 4, 127, 4, 4, 4, 4, 4, 4, 4पूर्णपूर्ण
-पूर्ण;
+{
+	{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+	{{4, 64, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 4, 4, 4}},
+	{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+	{{0, 16, 4, 0, 16, 4, 4, 4, 127, 4, 4, 4, 4, 4, 4, 4}}
+};
 */
 
-#अगर_घोषित CONFIG_AIC7XXX_CMDS_PER_DEVICE
-#घोषणा AIC7XXX_CMDS_PER_DEVICE CONFIG_AIC7XXX_CMDS_PER_DEVICE
-#अन्यथा
-#घोषणा AIC7XXX_CMDS_PER_DEVICE AHC_MAX_QUEUE
-#पूर्ण_अगर
+#ifdef CONFIG_AIC7XXX_CMDS_PER_DEVICE
+#define AIC7XXX_CMDS_PER_DEVICE CONFIG_AIC7XXX_CMDS_PER_DEVICE
+#else
+#define AIC7XXX_CMDS_PER_DEVICE AHC_MAX_QUEUE
+#endif
 
-#घोषणा AIC7XXX_CONFIGED_TAG_COMMANDS अणु					\
+#define AIC7XXX_CONFIGED_TAG_COMMANDS {					\
 	AIC7XXX_CMDS_PER_DEVICE, AIC7XXX_CMDS_PER_DEVICE,		\
 	AIC7XXX_CMDS_PER_DEVICE, AIC7XXX_CMDS_PER_DEVICE,		\
 	AIC7XXX_CMDS_PER_DEVICE, AIC7XXX_CMDS_PER_DEVICE,		\
@@ -219,67 +218,67 @@ adapter_tag_info_t aic7xxx_tag_info[] =
 	AIC7XXX_CMDS_PER_DEVICE, AIC7XXX_CMDS_PER_DEVICE,		\
 	AIC7XXX_CMDS_PER_DEVICE, AIC7XXX_CMDS_PER_DEVICE,		\
 	AIC7XXX_CMDS_PER_DEVICE, AIC7XXX_CMDS_PER_DEVICE		\
-पूर्ण
+}
 
 /*
- * By शेष, use the number of commands specअगरied by
+ * By default, use the number of commands specified by
  * the users kernel configuration.
  */
-अटल adapter_tag_info_t aic7xxx_tag_info[] =
-अणु
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण,
-	अणुAIC7XXX_CONFIGED_TAG_COMMANDSपूर्ण
-पूर्ण;
+static adapter_tag_info_t aic7xxx_tag_info[] =
+{
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS},
+	{AIC7XXX_CONFIGED_TAG_COMMANDS}
+};
 
 /*
- * There should be a specअगरic वापस value क्रम this in scsi.h, but
+ * There should be a specific return value for this in scsi.h, but
  * it seems that most drivers ignore it.
  */
-#घोषणा DID_UNDERFLOW   DID_ERROR
+#define DID_UNDERFLOW   DID_ERROR
 
-व्योम
-ahc_prपूर्णांक_path(काष्ठा ahc_softc *ahc, काष्ठा scb *scb)
-अणु
-	prपूर्णांकk("(scsi%d:%c:%d:%d): ",
-	       ahc->platक्रमm_data->host->host_no,
-	       scb != शून्य ? SCB_GET_CHANNEL(ahc, scb) : 'X',
-	       scb != शून्य ? SCB_GET_TARGET(ahc, scb) : -1,
-	       scb != शून्य ? SCB_GET_LUN(scb) : -1);
-पूर्ण
+void
+ahc_print_path(struct ahc_softc *ahc, struct scb *scb)
+{
+	printk("(scsi%d:%c:%d:%d): ",
+	       ahc->platform_data->host->host_no,
+	       scb != NULL ? SCB_GET_CHANNEL(ahc, scb) : 'X',
+	       scb != NULL ? SCB_GET_TARGET(ahc, scb) : -1,
+	       scb != NULL ? SCB_GET_LUN(scb) : -1);
+}
 
 /*
  * XXX - these options apply unilaterally to _all_ 274x/284x/294x
- *       cards in the प्रणाली.  This should be fixed.  Exceptions to this
+ *       cards in the system.  This should be fixed.  Exceptions to this
  *       rule are noted in the comments.
  */
 
 /*
  * Skip the scsi bus reset.  Non 0 make us skip the reset at startup.  This
  * has no effect on any later resets that might occur due to things like
- * SCSI bus समयouts.
+ * SCSI bus timeouts.
  */
-अटल uपूर्णांक32_t aic7xxx_no_reset;
+static uint32_t aic7xxx_no_reset;
 
 /*
- * Should we क्रमce EXTENDED translation on a controller.
- *     0 == Use whatever is in the SEEPROM or शेष to off
- *     1 == Use whatever is in the SEEPROM or शेष to on
+ * Should we force EXTENDED translation on a controller.
+ *     0 == Use whatever is in the SEEPROM or default to off
+ *     1 == Use whatever is in the SEEPROM or default to on
  */
-अटल uपूर्णांक32_t aic7xxx_extended;
+static uint32_t aic7xxx_extended;
 
 /*
  * PCI bus parity checking of the Adaptec controllers.  This is somewhat
@@ -287,52 +286,52 @@ ahc_prपूर्णांक_path(काष्ठा ahc_softc *ahc, काष
  * solved a PCI parity problem, but on certain machines with broken PCI
  * chipset configurations where stray PCI transactions with bad parity are
  * the norm rather than the exception, the error messages can be overwhelming.
- * It's included in the driver क्रम completeness.
+ * It's included in the driver for completeness.
  *   0	   = Shut off PCI parity check
  *   non-0 = reverse polarity pci parity checking
  */
-अटल uपूर्णांक32_t aic7xxx_pci_parity = ~0;
+static uint32_t aic7xxx_pci_parity = ~0;
 
 /*
  * There are lots of broken chipsets in the world.  Some of them will
- * violate the PCI spec when we issue byte sized memory ग_लिखोs to our
- * controller.  I/O mapped रेजिस्टर access, अगर allowed by the given
- * platक्रमm, will work in almost all हालs.
+ * violate the PCI spec when we issue byte sized memory writes to our
+ * controller.  I/O mapped register access, if allowed by the given
+ * platform, will work in almost all cases.
  */
-uपूर्णांक32_t aic7xxx_allow_memio = ~0;
+uint32_t aic7xxx_allow_memio = ~0;
 
 /*
- * So that we can set how दीर्घ each device is given as a selection समयout.
+ * So that we can set how long each device is given as a selection timeout.
  * The table of values goes like this:
  *   0 - 256ms
  *   1 - 128ms
  *   2 - 64ms
  *   3 - 32ms
- * We शेष to 256ms because some older devices need a दीर्घer समय
+ * We default to 256ms because some older devices need a longer time
  * to respond to initial selection.
  */
-अटल uपूर्णांक32_t aic7xxx_selसमय;
+static uint32_t aic7xxx_seltime;
 
 /*
- * Certain devices करो not perक्रमm any aging on commands.  Should the
+ * Certain devices do not perform any aging on commands.  Should the
  * device be saturated by commands in one portion of the disk, it is
- * possible क्रम transactions on far away sectors to never be serviced.
+ * possible for transactions on far away sectors to never be serviced.
  * To handle these devices, we can periodically send an ordered tag to
- * क्रमce all outstanding transactions to be serviced prior to a new
+ * force all outstanding transactions to be serviced prior to a new
  * transaction.
  */
-अटल uपूर्णांक32_t aic7xxx_periodic_otag;
+static uint32_t aic7xxx_periodic_otag;
 
 /*
- * Module inक्रमmation and settable options.
+ * Module information and settable options.
  */
-अटल अक्षर *aic7xxx = शून्य;
+static char *aic7xxx = NULL;
 
 MODULE_AUTHOR("Maintainer: Hannes Reinecke <hare@suse.de>");
 MODULE_DESCRIPTION("Adaptec AIC77XX/78XX SCSI Host Bus Adapter driver");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_VERSION(AIC7XXX_DRIVER_VERSION);
-module_param(aic7xxx, अक्षरp, 0444);
+module_param(aic7xxx, charp, 0444);
 MODULE_PARM_DESC(aic7xxx,
 "period-delimited options string:\n"
 "	verbose			Enable verbose/diagnostic logging\n"
@@ -360,301 +359,301 @@ MODULE_PARM_DESC(aic7xxx,
 "	options aic7xxx 'aic7xxx=probe_eisa_vl.tag_info:{{}.{.10}}.seltime:1'\n"
 );
 
-अटल व्योम ahc_linux_handle_scsi_status(काष्ठा ahc_softc *,
-					 काष्ठा scsi_device *,
-					 काष्ठा scb *);
-अटल व्योम ahc_linux_queue_cmd_complete(काष्ठा ahc_softc *ahc,
-					 काष्ठा scsi_cmnd *cmd);
-अटल व्योम ahc_linux_मुक्तze_simq(काष्ठा ahc_softc *ahc);
-अटल व्योम ahc_linux_release_simq(काष्ठा ahc_softc *ahc);
-अटल पूर्णांक  ahc_linux_queue_recovery_cmd(काष्ठा scsi_cmnd *cmd, scb_flag flag);
-अटल व्योम ahc_linux_initialize_scsi_bus(काष्ठा ahc_softc *ahc);
-अटल u_पूर्णांक ahc_linux_user_tagdepth(काष्ठा ahc_softc *ahc,
-				     काष्ठा ahc_devinfo *devinfo);
-अटल व्योम ahc_linux_device_queue_depth(काष्ठा scsi_device *);
-अटल पूर्णांक ahc_linux_run_command(काष्ठा ahc_softc*,
-				 काष्ठा ahc_linux_device *,
-				 काष्ठा scsi_cmnd *);
-अटल व्योम ahc_linux_setup_tag_info_global(अक्षर *p);
-अटल पूर्णांक  aic7xxx_setup(अक्षर *s);
+static void ahc_linux_handle_scsi_status(struct ahc_softc *,
+					 struct scsi_device *,
+					 struct scb *);
+static void ahc_linux_queue_cmd_complete(struct ahc_softc *ahc,
+					 struct scsi_cmnd *cmd);
+static void ahc_linux_freeze_simq(struct ahc_softc *ahc);
+static void ahc_linux_release_simq(struct ahc_softc *ahc);
+static int  ahc_linux_queue_recovery_cmd(struct scsi_cmnd *cmd, scb_flag flag);
+static void ahc_linux_initialize_scsi_bus(struct ahc_softc *ahc);
+static u_int ahc_linux_user_tagdepth(struct ahc_softc *ahc,
+				     struct ahc_devinfo *devinfo);
+static void ahc_linux_device_queue_depth(struct scsi_device *);
+static int ahc_linux_run_command(struct ahc_softc*,
+				 struct ahc_linux_device *,
+				 struct scsi_cmnd *);
+static void ahc_linux_setup_tag_info_global(char *p);
+static int  aic7xxx_setup(char *s);
 
-अटल पूर्णांक ahc_linux_unit;
+static int ahc_linux_unit;
 
 
 /************************** OS Utility Wrappers *******************************/
-व्योम
-ahc_delay(दीर्घ usec)
-अणु
+void
+ahc_delay(long usec)
+{
 	/*
-	 * udelay on Linux can have problems क्रम
-	 * multi-millisecond रुकोs.  Wait at most
+	 * udelay on Linux can have problems for
+	 * multi-millisecond waits.  Wait at most
 	 * 1024us per call.
 	 */
-	जबतक (usec > 0) अणु
+	while (usec > 0) {
 		udelay(usec % 1024);
 		usec -= 1024;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /***************************** Low Level I/O **********************************/
-uपूर्णांक8_t
-ahc_inb(काष्ठा ahc_softc * ahc, दीर्घ port)
-अणु
-	uपूर्णांक8_t x;
+uint8_t
+ahc_inb(struct ahc_softc * ahc, long port)
+{
+	uint8_t x;
 
-	अगर (ahc->tag == BUS_SPACE_MEMIO) अणु
-		x = पढ़ोb(ahc->bsh.maddr + port);
-	पूर्ण अन्यथा अणु
+	if (ahc->tag == BUS_SPACE_MEMIO) {
+		x = readb(ahc->bsh.maddr + port);
+	} else {
 		x = inb(ahc->bsh.ioport + port);
-	पूर्ण
+	}
 	mb();
-	वापस (x);
-पूर्ण
+	return (x);
+}
 
-व्योम
-ahc_outb(काष्ठा ahc_softc * ahc, दीर्घ port, uपूर्णांक8_t val)
-अणु
-	अगर (ahc->tag == BUS_SPACE_MEMIO) अणु
-		ग_लिखोb(val, ahc->bsh.maddr + port);
-	पूर्ण अन्यथा अणु
+void
+ahc_outb(struct ahc_softc * ahc, long port, uint8_t val)
+{
+	if (ahc->tag == BUS_SPACE_MEMIO) {
+		writeb(val, ahc->bsh.maddr + port);
+	} else {
 		outb(val, ahc->bsh.ioport + port);
-	पूर्ण
+	}
 	mb();
-पूर्ण
+}
 
-व्योम
-ahc_outsb(काष्ठा ahc_softc * ahc, दीर्घ port, uपूर्णांक8_t *array, पूर्णांक count)
-अणु
-	पूर्णांक i;
+void
+ahc_outsb(struct ahc_softc * ahc, long port, uint8_t *array, int count)
+{
+	int i;
 
 	/*
-	 * There is probably a more efficient way to करो this on Linux
-	 * but we करोn't use this क्रम anything speed critical and this
+	 * There is probably a more efficient way to do this on Linux
+	 * but we don't use this for anything speed critical and this
 	 * should work.
 	 */
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		ahc_outb(ahc, port, *array++);
-पूर्ण
+}
 
-व्योम
-ahc_insb(काष्ठा ahc_softc * ahc, दीर्घ port, uपूर्णांक8_t *array, पूर्णांक count)
-अणु
-	पूर्णांक i;
+void
+ahc_insb(struct ahc_softc * ahc, long port, uint8_t *array, int count)
+{
+	int i;
 
 	/*
-	 * There is probably a more efficient way to करो this on Linux
-	 * but we करोn't use this क्रम anything speed critical and this
+	 * There is probably a more efficient way to do this on Linux
+	 * but we don't use this for anything speed critical and this
 	 * should work.
 	 */
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		*array++ = ahc_inb(ahc, port);
-पूर्ण
+}
 
 /********************************* Inlines ************************************/
-अटल व्योम ahc_linux_unmap_scb(काष्ठा ahc_softc*, काष्ठा scb*);
+static void ahc_linux_unmap_scb(struct ahc_softc*, struct scb*);
 
-अटल पूर्णांक ahc_linux_map_seg(काष्ठा ahc_softc *ahc, काष्ठा scb *scb,
-				      काष्ठा ahc_dma_seg *sg,
-				      dma_addr_t addr, bus_माप_प्रकार len);
+static int ahc_linux_map_seg(struct ahc_softc *ahc, struct scb *scb,
+				      struct ahc_dma_seg *sg,
+				      dma_addr_t addr, bus_size_t len);
 
-अटल व्योम
-ahc_linux_unmap_scb(काष्ठा ahc_softc *ahc, काष्ठा scb *scb)
-अणु
-	काष्ठा scsi_cmnd *cmd;
+static void
+ahc_linux_unmap_scb(struct ahc_softc *ahc, struct scb *scb)
+{
+	struct scsi_cmnd *cmd;
 
 	cmd = scb->io_ctx;
 	ahc_sync_sglist(ahc, scb, BUS_DMASYNC_POSTWRITE);
 
 	scsi_dma_unmap(cmd);
-पूर्ण
+}
 
-अटल पूर्णांक
-ahc_linux_map_seg(काष्ठा ahc_softc *ahc, काष्ठा scb *scb,
-		  काष्ठा ahc_dma_seg *sg, dma_addr_t addr, bus_माप_प्रकार len)
-अणु
-	पूर्णांक	 consumed;
+static int
+ahc_linux_map_seg(struct ahc_softc *ahc, struct scb *scb,
+		  struct ahc_dma_seg *sg, dma_addr_t addr, bus_size_t len)
+{
+	int	 consumed;
 
-	अगर ((scb->sg_count + 1) > AHC_NSEG)
+	if ((scb->sg_count + 1) > AHC_NSEG)
 		panic("Too few segs for dma mapping.  "
 		      "Increase AHC_NSEG\n");
 
 	consumed = 1;
 	sg->addr = ahc_htole32(addr & 0xFFFFFFFF);
-	scb->platक्रमm_data->xfer_len += len;
+	scb->platform_data->xfer_len += len;
 
-	अगर (माप(dma_addr_t) > 4
+	if (sizeof(dma_addr_t) > 4
 	 && (ahc->flags & AHC_39BIT_ADDRESSING) != 0)
 		len |= (addr >> 8) & AHC_SG_HIGH_ADDR_MASK;
 
 	sg->len = ahc_htole32(len);
-	वापस (consumed);
-पूर्ण
+	return (consumed);
+}
 
 /*
  * Return a string describing the driver.
  */
-अटल स्थिर अक्षर *
-ahc_linux_info(काष्ठा Scsi_Host *host)
-अणु
-	अटल अक्षर buffer[512];
-	अक्षर	ahc_info[256];
-	अक्षर   *bp;
-	काष्ठा ahc_softc *ahc;
+static const char *
+ahc_linux_info(struct Scsi_Host *host)
+{
+	static char buffer[512];
+	char	ahc_info[256];
+	char   *bp;
+	struct ahc_softc *ahc;
 
 	bp = &buffer[0];
-	ahc = *(काष्ठा ahc_softc **)host->hostdata;
-	स_रखो(bp, 0, माप(buffer));
-	म_नकल(bp, "Adaptec AIC7XXX EISA/VLB/PCI SCSI HBA DRIVER, Rev " AIC7XXX_DRIVER_VERSION "\n"
+	ahc = *(struct ahc_softc **)host->hostdata;
+	memset(bp, 0, sizeof(buffer));
+	strcpy(bp, "Adaptec AIC7XXX EISA/VLB/PCI SCSI HBA DRIVER, Rev " AIC7XXX_DRIVER_VERSION "\n"
 			"        <");
-	म_जोड़ो(bp, ahc->description);
-	म_जोड़ो(bp, ">\n"
+	strcat(bp, ahc->description);
+	strcat(bp, ">\n"
 			"        ");
 	ahc_controller_info(ahc, ahc_info);
-	म_जोड़ो(bp, ahc_info);
-	म_जोड़ो(bp, "\n");
+	strcat(bp, ahc_info);
+	strcat(bp, "\n");
 
-	वापस (bp);
-पूर्ण
+	return (bp);
+}
 
 /*
  * Queue an SCB to the controller.
  */
-अटल पूर्णांक
-ahc_linux_queue_lck(काष्ठा scsi_cmnd * cmd, व्योम (*scsi_करोne) (काष्ठा scsi_cmnd *))
-अणु
-	काष्ठा	 ahc_softc *ahc;
-	काष्ठा	 ahc_linux_device *dev = scsi_transport_device_data(cmd->device);
-	पूर्णांक rtn = SCSI_MLQUEUE_HOST_BUSY;
-	अचिन्हित दीर्घ flags;
+static int
+ahc_linux_queue_lck(struct scsi_cmnd * cmd, void (*scsi_done) (struct scsi_cmnd *))
+{
+	struct	 ahc_softc *ahc;
+	struct	 ahc_linux_device *dev = scsi_transport_device_data(cmd->device);
+	int rtn = SCSI_MLQUEUE_HOST_BUSY;
+	unsigned long flags;
 
-	ahc = *(काष्ठा ahc_softc **)cmd->device->host->hostdata;
+	ahc = *(struct ahc_softc **)cmd->device->host->hostdata;
 
 	ahc_lock(ahc, &flags);
-	अगर (ahc->platक्रमm_data->qfrozen == 0) अणु
-		cmd->scsi_करोne = scsi_करोne;
+	if (ahc->platform_data->qfrozen == 0) {
+		cmd->scsi_done = scsi_done;
 		cmd->result = CAM_REQ_INPROG << 16;
 		rtn = ahc_linux_run_command(ahc, dev, cmd);
-	पूर्ण
+	}
 	ahc_unlock(ahc, &flags);
 
-	वापस rtn;
-पूर्ण
+	return rtn;
+}
 
-अटल DEF_SCSI_QCMD(ahc_linux_queue)
+static DEF_SCSI_QCMD(ahc_linux_queue)
 
-अटल अंतरभूत काष्ठा scsi_target **
-ahc_linux_target_in_softc(काष्ठा scsi_target *starget)
-अणु
-	काष्ठा	ahc_softc *ahc =
-		*((काष्ठा ahc_softc **)dev_to_shost(&starget->dev)->hostdata);
-	अचिन्हित पूर्णांक target_offset;
-
-	target_offset = starget->id;
-	अगर (starget->channel != 0)
-		target_offset += 8;
-
-	वापस &ahc->platक्रमm_data->starget[target_offset];
-पूर्ण
-
-अटल पूर्णांक
-ahc_linux_target_alloc(काष्ठा scsi_target *starget)
-अणु
-	काष्ठा	ahc_softc *ahc =
-		*((काष्ठा ahc_softc **)dev_to_shost(&starget->dev)->hostdata);
-	काष्ठा seeprom_config *sc = ahc->seep_config;
-	अचिन्हित दीर्घ flags;
-	काष्ठा scsi_target **ahc_targp = ahc_linux_target_in_softc(starget);
-	अचिन्हित लघु scsirate;
-	काष्ठा ahc_devinfo devinfo;
-	अक्षर channel = starget->channel + 'A';
-	अचिन्हित पूर्णांक our_id = ahc->our_id;
-	अचिन्हित पूर्णांक target_offset;
+static inline struct scsi_target **
+ahc_linux_target_in_softc(struct scsi_target *starget)
+{
+	struct	ahc_softc *ahc =
+		*((struct ahc_softc **)dev_to_shost(&starget->dev)->hostdata);
+	unsigned int target_offset;
 
 	target_offset = starget->id;
-	अगर (starget->channel != 0)
+	if (starget->channel != 0)
 		target_offset += 8;
 
-	अगर (starget->channel)
+	return &ahc->platform_data->starget[target_offset];
+}
+
+static int
+ahc_linux_target_alloc(struct scsi_target *starget)
+{
+	struct	ahc_softc *ahc =
+		*((struct ahc_softc **)dev_to_shost(&starget->dev)->hostdata);
+	struct seeprom_config *sc = ahc->seep_config;
+	unsigned long flags;
+	struct scsi_target **ahc_targp = ahc_linux_target_in_softc(starget);
+	unsigned short scsirate;
+	struct ahc_devinfo devinfo;
+	char channel = starget->channel + 'A';
+	unsigned int our_id = ahc->our_id;
+	unsigned int target_offset;
+
+	target_offset = starget->id;
+	if (starget->channel != 0)
+		target_offset += 8;
+
+	if (starget->channel)
 		our_id = ahc->our_id_b;
 
 	ahc_lock(ahc, &flags);
 
-	BUG_ON(*ahc_targp != शून्य);
+	BUG_ON(*ahc_targp != NULL);
 
 	*ahc_targp = starget;
 
-	अगर (sc) अणु
-		पूर्णांक maxsync = AHC_SYNCRATE_DT;
-		पूर्णांक ultra = 0;
-		पूर्णांक flags = sc->device_flags[target_offset];
+	if (sc) {
+		int maxsync = AHC_SYNCRATE_DT;
+		int ultra = 0;
+		int flags = sc->device_flags[target_offset];
 
-		अगर (ahc->flags & AHC_NEWEEPROM_FMT) अणु
-		    अगर (flags & CFSYNCHISULTRA)
+		if (ahc->flags & AHC_NEWEEPROM_FMT) {
+		    if (flags & CFSYNCHISULTRA)
 			ultra = 1;
-		पूर्ण अन्यथा अगर (flags & CFULTRAEN)
+		} else if (flags & CFULTRAEN)
 			ultra = 1;
-		/* AIC nutहाल; 10MHz appears as ultra = 1, CFXFER = 0x04
+		/* AIC nutcase; 10MHz appears as ultra = 1, CFXFER = 0x04
 		 * change it to ultra=0, CFXFER = 0 */
-		अगर(ultra && (flags & CFXFER) == 0x04) अणु
+		if(ultra && (flags & CFXFER) == 0x04) {
 			ultra = 0;
 			flags &= ~CFXFER;
-		पूर्ण
+		}
 
-		अगर ((ahc->features & AHC_ULTRA2) != 0) अणु
+		if ((ahc->features & AHC_ULTRA2) != 0) {
 			scsirate = (flags & CFXFER) | (ultra ? 0x8 : 0);
-		पूर्ण अन्यथा अणु
+		} else {
 			scsirate = (flags & CFXFER) << 4;
 			maxsync = ultra ? AHC_SYNCRATE_ULTRA :
 				AHC_SYNCRATE_FAST;
-		पूर्ण
+		}
 		spi_max_width(starget) = (flags & CFWIDEB) ? 1 : 0;
-		अगर (!(flags & CFSYNCH))
+		if (!(flags & CFSYNCH))
 			spi_max_offset(starget) = 0;
 		spi_min_period(starget) =
 			ahc_find_period(ahc, scsirate, maxsync);
-	पूर्ण
+	}
 	ahc_compile_devinfo(&devinfo, our_id, starget->id,
 			    CAM_LUN_WILDCARD, channel,
 			    ROLE_INITIATOR);
-	ahc_set_syncrate(ahc, &devinfo, शून्य, 0, 0, 0,
-			 AHC_TRANS_GOAL, /*छोड़ोd*/FALSE);
+	ahc_set_syncrate(ahc, &devinfo, NULL, 0, 0, 0,
+			 AHC_TRANS_GOAL, /*paused*/FALSE);
 	ahc_set_width(ahc, &devinfo, MSG_EXT_WDTR_BUS_8_BIT,
-		      AHC_TRANS_GOAL, /*छोड़ोd*/FALSE);
+		      AHC_TRANS_GOAL, /*paused*/FALSE);
 	ahc_unlock(ahc, &flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-ahc_linux_target_destroy(काष्ठा scsi_target *starget)
-अणु
-	काष्ठा scsi_target **ahc_targp = ahc_linux_target_in_softc(starget);
+static void
+ahc_linux_target_destroy(struct scsi_target *starget)
+{
+	struct scsi_target **ahc_targp = ahc_linux_target_in_softc(starget);
 
-	*ahc_targp = शून्य;
-पूर्ण
+	*ahc_targp = NULL;
+}
 
-अटल पूर्णांक
-ahc_linux_slave_alloc(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा	ahc_softc *ahc =
-		*((काष्ठा ahc_softc **)sdev->host->hostdata);
-	काष्ठा scsi_target *starget = sdev->sdev_target;
-	काष्ठा ahc_linux_device *dev;
+static int
+ahc_linux_slave_alloc(struct scsi_device *sdev)
+{
+	struct	ahc_softc *ahc =
+		*((struct ahc_softc **)sdev->host->hostdata);
+	struct scsi_target *starget = sdev->sdev_target;
+	struct ahc_linux_device *dev;
 
-	अगर (bootverbose)
-		prपूर्णांकk("%s: Slave Alloc %d\n", ahc_name(ahc), sdev->id);
+	if (bootverbose)
+		printk("%s: Slave Alloc %d\n", ahc_name(ahc), sdev->id);
 
 	dev = scsi_transport_device_data(sdev);
-	स_रखो(dev, 0, माप(*dev));
+	memset(dev, 0, sizeof(*dev));
 
 	/*
-	 * We start out lअगरe using untagged
+	 * We start out life using untagged
 	 * transactions of which we allow one.
 	 */
-	dev->खोलोings = 1;
+	dev->openings = 1;
 
 	/*
-	 * Set maxtags to 0.  This will be changed अगर we
+	 * Set maxtags to 0.  This will be changed if we
 	 * later determine that we are dealing with
 	 * a tagged queuing capable device.
 	 */
@@ -662,133 +661,133 @@ ahc_linux_slave_alloc(काष्ठा scsi_device *sdev)
 
 	spi_period(starget) = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-ahc_linux_slave_configure(काष्ठा scsi_device *sdev)
-अणु
-	अगर (bootverbose)
-		sdev_prपूर्णांकk(KERN_INFO, sdev, "Slave Configure\n");
+static int
+ahc_linux_slave_configure(struct scsi_device *sdev)
+{
+	if (bootverbose)
+		sdev_printk(KERN_INFO, sdev, "Slave Configure\n");
 
 	ahc_linux_device_queue_depth(sdev);
 
-	/* Initial Doमुख्य Validation */
-	अगर (!spi_initial_dv(sdev->sdev_target))
+	/* Initial Domain Validation */
+	if (!spi_initial_dv(sdev->sdev_target))
 		spi_dv_device(sdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर defined(__i386__)
+#if defined(__i386__)
 /*
- * Return the disk geometry क्रम the given SCSI device.
+ * Return the disk geometry for the given SCSI device.
  */
-अटल पूर्णांक
-ahc_linux_biosparam(काष्ठा scsi_device *sdev, काष्ठा block_device *bdev,
-		    sector_t capacity, पूर्णांक geom[])
-अणु
-	पूर्णांक	 heads;
-	पूर्णांक	 sectors;
-	पूर्णांक	 cylinders;
-	पूर्णांक	 extended;
-	काष्ठा	 ahc_softc *ahc;
-	u_पूर्णांक	 channel;
+static int
+ahc_linux_biosparam(struct scsi_device *sdev, struct block_device *bdev,
+		    sector_t capacity, int geom[])
+{
+	int	 heads;
+	int	 sectors;
+	int	 cylinders;
+	int	 extended;
+	struct	 ahc_softc *ahc;
+	u_int	 channel;
 
-	ahc = *((काष्ठा ahc_softc **)sdev->host->hostdata);
+	ahc = *((struct ahc_softc **)sdev->host->hostdata);
 	channel = sdev_channel(sdev);
 
-	अगर (scsi_partsize(bdev, capacity, geom))
-		वापस 0;
+	if (scsi_partsize(bdev, capacity, geom))
+		return 0;
 
 	heads = 64;
 	sectors = 32;
-	cylinders = aic_sector_भाग(capacity, heads, sectors);
+	cylinders = aic_sector_div(capacity, heads, sectors);
 
-	अगर (aic7xxx_extended != 0)
+	if (aic7xxx_extended != 0)
 		extended = 1;
-	अन्यथा अगर (channel == 0)
+	else if (channel == 0)
 		extended = (ahc->flags & AHC_EXTENDED_TRANS_A) != 0;
-	अन्यथा
+	else
 		extended = (ahc->flags & AHC_EXTENDED_TRANS_B) != 0;
-	अगर (extended && cylinders >= 1024) अणु
+	if (extended && cylinders >= 1024) {
 		heads = 255;
 		sectors = 63;
-		cylinders = aic_sector_भाग(capacity, heads, sectors);
-	पूर्ण
+		cylinders = aic_sector_div(capacity, heads, sectors);
+	}
 	geom[0] = heads;
 	geom[1] = sectors;
 	geom[2] = cylinders;
-	वापस (0);
-पूर्ण
-#पूर्ण_अगर
+	return (0);
+}
+#endif
 
 /*
  * Abort the current SCSI command(s).
  */
-अटल पूर्णांक
-ahc_linux_पात(काष्ठा scsi_cmnd *cmd)
-अणु
-	पूर्णांक error;
+static int
+ahc_linux_abort(struct scsi_cmnd *cmd)
+{
+	int error;
 
 	error = ahc_linux_queue_recovery_cmd(cmd, SCB_ABORT);
-	अगर (error != SUCCESS)
-		prपूर्णांकk("aic7xxx_abort returns 0x%x\n", error);
-	वापस (error);
-पूर्ण
+	if (error != SUCCESS)
+		printk("aic7xxx_abort returns 0x%x\n", error);
+	return (error);
+}
 
 /*
- * Attempt to send a target reset message to the device that समयd out.
+ * Attempt to send a target reset message to the device that timed out.
  */
-अटल पूर्णांक
-ahc_linux_dev_reset(काष्ठा scsi_cmnd *cmd)
-अणु
-	पूर्णांक error;
+static int
+ahc_linux_dev_reset(struct scsi_cmnd *cmd)
+{
+	int error;
 
 	error = ahc_linux_queue_recovery_cmd(cmd, SCB_DEVICE_RESET);
-	अगर (error != SUCCESS)
-		prपूर्णांकk("aic7xxx_dev_reset returns 0x%x\n", error);
-	वापस (error);
-पूर्ण
+	if (error != SUCCESS)
+		printk("aic7xxx_dev_reset returns 0x%x\n", error);
+	return (error);
+}
 
 /*
  * Reset the SCSI bus.
  */
-अटल पूर्णांक
-ahc_linux_bus_reset(काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा ahc_softc *ahc;
-	पूर्णांक    found;
-	अचिन्हित दीर्घ flags;
+static int
+ahc_linux_bus_reset(struct scsi_cmnd *cmd)
+{
+	struct ahc_softc *ahc;
+	int    found;
+	unsigned long flags;
 
-	ahc = *(काष्ठा ahc_softc **)cmd->device->host->hostdata;
+	ahc = *(struct ahc_softc **)cmd->device->host->hostdata;
 
 	ahc_lock(ahc, &flags);
 	found = ahc_reset_channel(ahc, scmd_channel(cmd) + 'A',
 				  /*initiate reset*/TRUE);
 	ahc_unlock(ahc, &flags);
 
-	अगर (bootverbose)
-		prपूर्णांकk("%s: SCSI bus reset delivered. "
+	if (bootverbose)
+		printk("%s: SCSI bus reset delivered. "
 		       "%d SCBs aborted.\n", ahc_name(ahc), found);
 
-	वापस SUCCESS;
-पूर्ण
+	return SUCCESS;
+}
 
-काष्ठा scsi_host_ढाँचा aic7xxx_driver_ढाँचा = अणु
+struct scsi_host_template aic7xxx_driver_template = {
 	.module			= THIS_MODULE,
 	.name			= "aic7xxx",
 	.proc_name		= "aic7xxx",
 	.show_info		= ahc_linux_show_info,
-	.ग_लिखो_info		= ahc_proc_ग_लिखो_seeprom,
+	.write_info		= ahc_proc_write_seeprom,
 	.info			= ahc_linux_info,
 	.queuecommand		= ahc_linux_queue,
-	.eh_पात_handler	= ahc_linux_पात,
+	.eh_abort_handler	= ahc_linux_abort,
 	.eh_device_reset_handler = ahc_linux_dev_reset,
 	.eh_bus_reset_handler	= ahc_linux_bus_reset,
-#अगर defined(__i386__)
+#if defined(__i386__)
 	.bios_param		= ahc_linux_biosparam,
-#पूर्ण_अगर
+#endif
 	.can_queue		= AHC_MAX_QUEUE,
 	.this_id		= -1,
 	.max_sectors		= 8192,
@@ -797,298 +796,298 @@ ahc_linux_bus_reset(काष्ठा scsi_cmnd *cmd)
 	.slave_configure	= ahc_linux_slave_configure,
 	.target_alloc		= ahc_linux_target_alloc,
 	.target_destroy		= ahc_linux_target_destroy,
-पूर्ण;
+};
 
 /**************************** Tasklet Handler *********************************/
 
 /******************************** Macros **************************************/
-#घोषणा BUILD_SCSIID(ahc, cmd)						    \
+#define BUILD_SCSIID(ahc, cmd)						    \
 	((((cmd)->device->id << TID_SHIFT) & TID)			    \
 	| (((cmd)->device->channel == 0) ? (ahc)->our_id : (ahc)->our_id_b) \
 	| (((cmd)->device->channel == 0) ? 0 : TWIN_CHNLB))
 
 /******************************** Bus DMA *************************************/
-पूर्णांक
-ahc_dma_tag_create(काष्ठा ahc_softc *ahc, bus_dma_tag_t parent,
-		   bus_माप_प्रकार alignment, bus_माप_प्रकार boundary,
+int
+ahc_dma_tag_create(struct ahc_softc *ahc, bus_dma_tag_t parent,
+		   bus_size_t alignment, bus_size_t boundary,
 		   dma_addr_t lowaddr, dma_addr_t highaddr,
-		   bus_dma_filter_t *filter, व्योम *filterarg,
-		   bus_माप_प्रकार maxsize, पूर्णांक nsegments,
-		   bus_माप_प्रकार maxsegsz, पूर्णांक flags, bus_dma_tag_t *ret_tag)
-अणु
+		   bus_dma_filter_t *filter, void *filterarg,
+		   bus_size_t maxsize, int nsegments,
+		   bus_size_t maxsegsz, int flags, bus_dma_tag_t *ret_tag)
+{
 	bus_dma_tag_t dmat;
 
-	dmat = kदो_स्मृति(माप(*dmat), GFP_ATOMIC);
-	अगर (dmat == शून्य)
-		वापस (ENOMEM);
+	dmat = kmalloc(sizeof(*dmat), GFP_ATOMIC);
+	if (dmat == NULL)
+		return (ENOMEM);
 
 	/*
-	 * Linux is very simplistic about DMA memory.  For now करोn't
-	 * मुख्यtain all specअगरication inक्रमmation.  Once Linux supplies
-	 * better facilities क्रम करोing these operations, or the
-	 * needs of this particular driver change, we might need to करो
+	 * Linux is very simplistic about DMA memory.  For now don't
+	 * maintain all specification information.  Once Linux supplies
+	 * better facilities for doing these operations, or the
+	 * needs of this particular driver change, we might need to do
 	 * more here.
 	 */
 	dmat->alignment = alignment;
 	dmat->boundary = boundary;
 	dmat->maxsize = maxsize;
 	*ret_tag = dmat;
-	वापस (0);
-पूर्ण
+	return (0);
+}
 
-व्योम
-ahc_dma_tag_destroy(काष्ठा ahc_softc *ahc, bus_dma_tag_t dmat)
-अणु
-	kमुक्त(dmat);
-पूर्ण
+void
+ahc_dma_tag_destroy(struct ahc_softc *ahc, bus_dma_tag_t dmat)
+{
+	kfree(dmat);
+}
 
-पूर्णांक
-ahc_dmamem_alloc(काष्ठा ahc_softc *ahc, bus_dma_tag_t dmat, व्योम** vaddr,
-		 पूर्णांक flags, bus_dmamap_t *mapp)
-अणु
-	/* XXX: check अगर we really need the GFP_ATOMIC and unwind this mess! */
+int
+ahc_dmamem_alloc(struct ahc_softc *ahc, bus_dma_tag_t dmat, void** vaddr,
+		 int flags, bus_dmamap_t *mapp)
+{
+	/* XXX: check if we really need the GFP_ATOMIC and unwind this mess! */
 	*vaddr = dma_alloc_coherent(ahc->dev, dmat->maxsize, mapp, GFP_ATOMIC);
-	अगर (*vaddr == शून्य)
-		वापस ENOMEM;
-	वापस 0;
-पूर्ण
+	if (*vaddr == NULL)
+		return ENOMEM;
+	return 0;
+}
 
-व्योम
-ahc_dmamem_मुक्त(काष्ठा ahc_softc *ahc, bus_dma_tag_t dmat,
-		व्योम* vaddr, bus_dmamap_t map)
-अणु
-	dma_मुक्त_coherent(ahc->dev, dmat->maxsize, vaddr, map);
-पूर्ण
+void
+ahc_dmamem_free(struct ahc_softc *ahc, bus_dma_tag_t dmat,
+		void* vaddr, bus_dmamap_t map)
+{
+	dma_free_coherent(ahc->dev, dmat->maxsize, vaddr, map);
+}
 
-पूर्णांक
-ahc_dmamap_load(काष्ठा ahc_softc *ahc, bus_dma_tag_t dmat, bus_dmamap_t map,
-		व्योम *buf, bus_माप_प्रकार buflen, bus_dmamap_callback_t *cb,
-		व्योम *cb_arg, पूर्णांक flags)
-अणु
+int
+ahc_dmamap_load(struct ahc_softc *ahc, bus_dma_tag_t dmat, bus_dmamap_t map,
+		void *buf, bus_size_t buflen, bus_dmamap_callback_t *cb,
+		void *cb_arg, int flags)
+{
 	/*
-	 * Assume क्रम now that this will only be used during
-	 * initialization and not क्रम per-transaction buffer mapping.
+	 * Assume for now that this will only be used during
+	 * initialization and not for per-transaction buffer mapping.
 	 */
 	bus_dma_segment_t stack_sg;
 
 	stack_sg.ds_addr = map;
 	stack_sg.ds_len = dmat->maxsize;
 	cb(cb_arg, &stack_sg, /*nseg*/1, /*error*/0);
-	वापस (0);
-पूर्ण
+	return (0);
+}
 
-व्योम
-ahc_dmamap_destroy(काष्ठा ahc_softc *ahc, bus_dma_tag_t dmat, bus_dmamap_t map)
-अणु
-पूर्ण
+void
+ahc_dmamap_destroy(struct ahc_softc *ahc, bus_dma_tag_t dmat, bus_dmamap_t map)
+{
+}
 
-पूर्णांक
-ahc_dmamap_unload(काष्ठा ahc_softc *ahc, bus_dma_tag_t dmat, bus_dmamap_t map)
-अणु
-	/* Nothing to करो */
-	वापस (0);
-पूर्ण
+int
+ahc_dmamap_unload(struct ahc_softc *ahc, bus_dma_tag_t dmat, bus_dmamap_t map)
+{
+	/* Nothing to do */
+	return (0);
+}
 
-अटल व्योम
-ahc_linux_setup_tag_info_global(अक्षर *p)
-अणु
-	पूर्णांक tags, i, j;
+static void
+ahc_linux_setup_tag_info_global(char *p)
+{
+	int tags, i, j;
 
-	tags = simple_म_से_अदीर्घ(p + 1, शून्य, 0) & 0xff;
-	prपूर्णांकk("Setting Global Tags= %d\n", tags);
+	tags = simple_strtoul(p + 1, NULL, 0) & 0xff;
+	printk("Setting Global Tags= %d\n", tags);
 
-	क्रम (i = 0; i < ARRAY_SIZE(aic7xxx_tag_info); i++) अणु
-		क्रम (j = 0; j < AHC_NUM_TARGETS; j++) अणु
+	for (i = 0; i < ARRAY_SIZE(aic7xxx_tag_info); i++) {
+		for (j = 0; j < AHC_NUM_TARGETS; j++) {
 			aic7xxx_tag_info[i].tag_commands[j] = tags;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-ahc_linux_setup_tag_info(u_दीर्घ arg, पूर्णांक instance, पूर्णांक targ, पूर्णांक32_t value)
-अणु
+static void
+ahc_linux_setup_tag_info(u_long arg, int instance, int targ, int32_t value)
+{
 
-	अगर ((instance >= 0) && (targ >= 0)
+	if ((instance >= 0) && (targ >= 0)
 	 && (instance < ARRAY_SIZE(aic7xxx_tag_info))
-	 && (targ < AHC_NUM_TARGETS)) अणु
+	 && (targ < AHC_NUM_TARGETS)) {
 		aic7xxx_tag_info[instance].tag_commands[targ] = value & 0xff;
-		अगर (bootverbose)
-			prपूर्णांकk("tag_info[%d:%d] = %d\n", instance, targ, value);
-	पूर्ण
-पूर्ण
+		if (bootverbose)
+			printk("tag_info[%d:%d] = %d\n", instance, targ, value);
+	}
+}
 
-अटल अक्षर *
-ahc_parse_brace_option(अक्षर *opt_name, अक्षर *opt_arg, अक्षर *end, पूर्णांक depth,
-		       व्योम (*callback)(u_दीर्घ, पूर्णांक, पूर्णांक, पूर्णांक32_t),
-		       u_दीर्घ callback_arg)
-अणु
-	अक्षर	*tok_end;
-	अक्षर	*tok_end2;
-	पूर्णांक      i;
-	पूर्णांक      instance;
-	पूर्णांक	 targ;
-	पूर्णांक	 करोne;
-	अक्षर	 tok_list[] = अणु'.', ',', '{', '}', '\0'पूर्ण;
+static char *
+ahc_parse_brace_option(char *opt_name, char *opt_arg, char *end, int depth,
+		       void (*callback)(u_long, int, int, int32_t),
+		       u_long callback_arg)
+{
+	char	*tok_end;
+	char	*tok_end2;
+	int      i;
+	int      instance;
+	int	 targ;
+	int	 done;
+	char	 tok_list[] = {'.', ',', '{', '}', '\0'};
 
 	/* All options use a ':' name/arg separator */
-	अगर (*opt_arg != ':')
-		वापस (opt_arg);
+	if (*opt_arg != ':')
+		return (opt_arg);
 	opt_arg++;
 	instance = -1;
 	targ = -1;
-	करोne = FALSE;
+	done = FALSE;
 	/*
 	 * Restore separator that may be in
 	 * the middle of our option argument.
 	 */
-	tok_end = म_अक्षर(opt_arg, '\0');
-	अगर (tok_end < end)
+	tok_end = strchr(opt_arg, '\0');
+	if (tok_end < end)
 		*tok_end = ',';
-	जबतक (!करोne) अणु
-		चयन (*opt_arg) अणु
-		हाल '{':
-			अगर (instance == -1) अणु
+	while (!done) {
+		switch (*opt_arg) {
+		case '{':
+			if (instance == -1) {
 				instance = 0;
-			पूर्ण अन्यथा अणु
-				अगर (depth > 1) अणु
-					अगर (targ == -1)
+			} else {
+				if (depth > 1) {
+					if (targ == -1)
 						targ = 0;
-				पूर्ण अन्यथा अणु
-					prपूर्णांकk("Malformed Option %s\n",
+				} else {
+					printk("Malformed Option %s\n",
 					       opt_name);
-					करोne = TRUE;
-				पूर्ण
-			पूर्ण
+					done = TRUE;
+				}
+			}
 			opt_arg++;
-			अवरोध;
-		हाल '}':
-			अगर (targ != -1)
+			break;
+		case '}':
+			if (targ != -1)
 				targ = -1;
-			अन्यथा अगर (instance != -1)
+			else if (instance != -1)
 				instance = -1;
 			opt_arg++;
-			अवरोध;
-		हाल ',':
-		हाल '.':
-			अगर (instance == -1)
-				करोne = TRUE;
-			अन्यथा अगर (targ >= 0)
+			break;
+		case ',':
+		case '.':
+			if (instance == -1)
+				done = TRUE;
+			else if (targ >= 0)
 				targ++;
-			अन्यथा अगर (instance >= 0)
+			else if (instance >= 0)
 				instance++;
 			opt_arg++;
-			अवरोध;
-		हाल '\0':
-			करोne = TRUE;
-			अवरोध;
-		शेष:
+			break;
+		case '\0':
+			done = TRUE;
+			break;
+		default:
 			tok_end = end;
-			क्रम (i = 0; tok_list[i]; i++) अणु
-				tok_end2 = म_अक्षर(opt_arg, tok_list[i]);
-				अगर ((tok_end2) && (tok_end2 < tok_end))
+			for (i = 0; tok_list[i]; i++) {
+				tok_end2 = strchr(opt_arg, tok_list[i]);
+				if ((tok_end2) && (tok_end2 < tok_end))
 					tok_end = tok_end2;
-			पूर्ण
+			}
 			callback(callback_arg, instance, targ,
-				 simple_म_से_दीर्घ(opt_arg, शून्य, 0));
+				 simple_strtol(opt_arg, NULL, 0));
 			opt_arg = tok_end;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस (opt_arg);
-पूर्ण
+			break;
+		}
+	}
+	return (opt_arg);
+}
 
 /*
- * Handle Linux boot parameters. This routine allows क्रम assigning a value
+ * Handle Linux boot parameters. This routine allows for assigning a value
  * to a parameter with a ':' between the parameter and the value.
  * ie. aic7xxx=stpwlev:1,extended
  */
-अटल पूर्णांक
-aic7xxx_setup(अक्षर *s)
-अणु
-	पूर्णांक	i, n;
-	अक्षर   *p;
-	अक्षर   *end;
+static int
+aic7xxx_setup(char *s)
+{
+	int	i, n;
+	char   *p;
+	char   *end;
 
-	अटल स्थिर काष्ठा अणु
-		स्थिर अक्षर *name;
-		uपूर्णांक32_t *flag;
-	पूर्ण options[] = अणु
-		अणु "extended", &aic7xxx_extended पूर्ण,
-		अणु "no_reset", &aic7xxx_no_reset पूर्ण,
-		अणु "verbose", &aic7xxx_verbose पूर्ण,
-		अणु "allow_memio", &aic7xxx_allow_memioपूर्ण,
-#अगर_घोषित AHC_DEBUG
-		अणु "debug", &ahc_debug पूर्ण,
-#पूर्ण_अगर
-		अणु "periodic_otag", &aic7xxx_periodic_otag पूर्ण,
-		अणु "pci_parity", &aic7xxx_pci_parity पूर्ण,
-		अणु "seltime", &aic7xxx_selसमय पूर्ण,
-		अणु "tag_info", शून्य पूर्ण,
-		अणु "global_tag_depth", शून्य पूर्ण,
-		अणु "dv", शून्य पूर्ण
-	पूर्ण;
+	static const struct {
+		const char *name;
+		uint32_t *flag;
+	} options[] = {
+		{ "extended", &aic7xxx_extended },
+		{ "no_reset", &aic7xxx_no_reset },
+		{ "verbose", &aic7xxx_verbose },
+		{ "allow_memio", &aic7xxx_allow_memio},
+#ifdef AHC_DEBUG
+		{ "debug", &ahc_debug },
+#endif
+		{ "periodic_otag", &aic7xxx_periodic_otag },
+		{ "pci_parity", &aic7xxx_pci_parity },
+		{ "seltime", &aic7xxx_seltime },
+		{ "tag_info", NULL },
+		{ "global_tag_depth", NULL },
+		{ "dv", NULL }
+	};
 
-	end = म_अक्षर(s, '\0');
+	end = strchr(s, '\0');
 
 	/*
 	 * XXX ia64 gcc isn't smart enough to know that ARRAY_SIZE
-	 * will never be 0 in this हाल.
+	 * will never be 0 in this case.
 	 */
 	n = 0;
 
-	जबतक ((p = strsep(&s, ",.")) != शून्य) अणु
-		अगर (*p == '\0')
-			जारी;
-		क्रम (i = 0; i < ARRAY_SIZE(options); i++) अणु
+	while ((p = strsep(&s, ",.")) != NULL) {
+		if (*p == '\0')
+			continue;
+		for (i = 0; i < ARRAY_SIZE(options); i++) {
 
-			n = म_माप(options[i].name);
-			अगर (म_भेदन(options[i].name, p, n) == 0)
-				अवरोध;
-		पूर्ण
-		अगर (i == ARRAY_SIZE(options))
-			जारी;
+			n = strlen(options[i].name);
+			if (strncmp(options[i].name, p, n) == 0)
+				break;
+		}
+		if (i == ARRAY_SIZE(options))
+			continue;
 
-		अगर (म_भेदन(p, "global_tag_depth", n) == 0) अणु
+		if (strncmp(p, "global_tag_depth", n) == 0) {
 			ahc_linux_setup_tag_info_global(p + n);
-		पूर्ण अन्यथा अगर (म_भेदन(p, "tag_info", n) == 0) अणु
+		} else if (strncmp(p, "tag_info", n) == 0) {
 			s = ahc_parse_brace_option("tag_info", p + n, end,
 			    2, ahc_linux_setup_tag_info, 0);
-		पूर्ण अन्यथा अगर (p[n] == ':') अणु
-			*(options[i].flag) = simple_म_से_अदीर्घ(p + n + 1, शून्य, 0);
-		पूर्ण अन्यथा अगर (म_भेदन(p, "verbose", n) == 0) अणु
+		} else if (p[n] == ':') {
+			*(options[i].flag) = simple_strtoul(p + n + 1, NULL, 0);
+		} else if (strncmp(p, "verbose", n) == 0) {
 			*(options[i].flag) = 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			*(options[i].flag) ^= 0xFFFFFFFF;
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+		}
+	}
+	return 1;
+}
 
 __setup("aic7xxx=", aic7xxx_setup);
 
-uपूर्णांक32_t aic7xxx_verbose;
+uint32_t aic7xxx_verbose;
 
-पूर्णांक
-ahc_linux_रेजिस्टर_host(काष्ठा ahc_softc *ahc, काष्ठा scsi_host_ढाँचा *ढाँचा)
-अणु
-	अक्षर	buf[80];
-	काष्ठा	Scsi_Host *host;
-	अक्षर	*new_name;
-	u_दीर्घ	s;
-	पूर्णांक	retval;
+int
+ahc_linux_register_host(struct ahc_softc *ahc, struct scsi_host_template *template)
+{
+	char	buf[80];
+	struct	Scsi_Host *host;
+	char	*new_name;
+	u_long	s;
+	int	retval;
 
-	ढाँचा->name = ahc->description;
-	host = scsi_host_alloc(ढाँचा, माप(काष्ठा ahc_softc *));
-	अगर (host == शून्य)
-		वापस (ENOMEM);
+	template->name = ahc->description;
+	host = scsi_host_alloc(template, sizeof(struct ahc_softc *));
+	if (host == NULL)
+		return (ENOMEM);
 
-	*((काष्ठा ahc_softc **)host->hostdata) = ahc;
-	ahc->platक्रमm_data->host = host;
+	*((struct ahc_softc **)host->hostdata) = ahc;
+	ahc->platform_data->host = host;
 	host->can_queue = AHC_MAX_QUEUE;
 	host->cmd_per_lun = 2;
-	/* XXX No way to communicate the ID क्रम multiple channels */
+	/* XXX No way to communicate the ID for multiple channels */
 	host->this_id = ahc->our_id;
-	host->irq = ahc->platक्रमm_data->irq;
+	host->irq = ahc->platform_data->irq;
 	host->max_id = (ahc->features & AHC_WIDE) ? 16 : 8;
 	host->max_lun = AHC_NUM_LUNS;
 	host->max_channel = (ahc->features & AHC_TWIN) ? 1 : 0;
@@ -1096,289 +1095,289 @@ ahc_linux_रेजिस्टर_host(काष्ठा ahc_softc *ahc, क�
 	ahc_lock(ahc, &s);
 	ahc_set_unit(ahc, ahc_linux_unit++);
 	ahc_unlock(ahc, &s);
-	प्र_लिखो(buf, "scsi%d", host->host_no);
-	new_name = kदो_स्मृति(म_माप(buf) + 1, GFP_ATOMIC);
-	अगर (new_name != शून्य) अणु
-		म_नकल(new_name, buf);
+	sprintf(buf, "scsi%d", host->host_no);
+	new_name = kmalloc(strlen(buf) + 1, GFP_ATOMIC);
+	if (new_name != NULL) {
+		strcpy(new_name, buf);
 		ahc_set_name(ahc, new_name);
-	पूर्ण
+	}
 	host->unique_id = ahc->unit;
 	ahc_linux_initialize_scsi_bus(ahc);
-	ahc_पूर्णांकr_enable(ahc, TRUE);
+	ahc_intr_enable(ahc, TRUE);
 
-	host->transportt = ahc_linux_transport_ढाँचा;
+	host->transportt = ahc_linux_transport_template;
 
 	retval = scsi_add_host(host, ahc->dev);
-	अगर (retval) अणु
-		prपूर्णांकk(KERN_WARNING "aic7xxx: scsi_add_host failed\n");
+	if (retval) {
+		printk(KERN_WARNING "aic7xxx: scsi_add_host failed\n");
 		scsi_host_put(host);
-		वापस retval;
-	पूर्ण
+		return retval;
+	}
 
 	scsi_scan_host(host);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Place the SCSI bus पूर्णांकo a known state by either resetting it,
- * or क्रमcing transfer negotiations on the next command to any
+ * Place the SCSI bus into a known state by either resetting it,
+ * or forcing transfer negotiations on the next command to any
  * target.
  */
-अटल व्योम
-ahc_linux_initialize_scsi_bus(काष्ठा ahc_softc *ahc)
-अणु
-	पूर्णांक i;
-	पूर्णांक numtarg;
-	अचिन्हित दीर्घ s;
+static void
+ahc_linux_initialize_scsi_bus(struct ahc_softc *ahc)
+{
+	int i;
+	int numtarg;
+	unsigned long s;
 
 	i = 0;
 	numtarg = 0;
 
 	ahc_lock(ahc, &s);
 
-	अगर (aic7xxx_no_reset != 0)
+	if (aic7xxx_no_reset != 0)
 		ahc->flags &= ~(AHC_RESET_BUS_A|AHC_RESET_BUS_B);
 
-	अगर ((ahc->flags & AHC_RESET_BUS_A) != 0)
+	if ((ahc->flags & AHC_RESET_BUS_A) != 0)
 		ahc_reset_channel(ahc, 'A', /*initiate_reset*/TRUE);
-	अन्यथा
+	else
 		numtarg = (ahc->features & AHC_WIDE) ? 16 : 8;
 
-	अगर ((ahc->features & AHC_TWIN) != 0) अणु
+	if ((ahc->features & AHC_TWIN) != 0) {
 
-		अगर ((ahc->flags & AHC_RESET_BUS_B) != 0) अणु
+		if ((ahc->flags & AHC_RESET_BUS_B) != 0) {
 			ahc_reset_channel(ahc, 'B', /*initiate_reset*/TRUE);
-		पूर्ण अन्यथा अणु
-			अगर (numtarg == 0)
+		} else {
+			if (numtarg == 0)
 				i = 8;
 			numtarg += 8;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Force negotiation to async क्रम all tarमाला_लो that
+	 * Force negotiation to async for all targets that
 	 * will not see an initial bus reset.
 	 */
-	क्रम (; i < numtarg; i++) अणु
-		काष्ठा ahc_devinfo devinfo;
-		काष्ठा ahc_initiator_tinfo *tinfo;
-		काष्ठा ahc_पंचांगode_tstate *tstate;
-		u_पूर्णांक our_id;
-		u_पूर्णांक target_id;
-		अक्षर channel;
+	for (; i < numtarg; i++) {
+		struct ahc_devinfo devinfo;
+		struct ahc_initiator_tinfo *tinfo;
+		struct ahc_tmode_tstate *tstate;
+		u_int our_id;
+		u_int target_id;
+		char channel;
 
 		channel = 'A';
 		our_id = ahc->our_id;
 		target_id = i;
-		अगर (i > 7 && (ahc->features & AHC_TWIN) != 0) अणु
+		if (i > 7 && (ahc->features & AHC_TWIN) != 0) {
 			channel = 'B';
 			our_id = ahc->our_id_b;
 			target_id = i % 8;
-		पूर्ण
+		}
 		tinfo = ahc_fetch_transinfo(ahc, channel, our_id,
 					    target_id, &tstate);
 		ahc_compile_devinfo(&devinfo, our_id, target_id,
 				    CAM_LUN_WILDCARD, channel, ROLE_INITIATOR);
 		ahc_update_neg_request(ahc, &devinfo, tstate,
 				       tinfo, AHC_NEG_ALWAYS);
-	पूर्ण
+	}
 	ahc_unlock(ahc, &s);
-	/* Give the bus some समय to recover */
-	अगर ((ahc->flags & (AHC_RESET_BUS_A|AHC_RESET_BUS_B)) != 0) अणु
-		ahc_linux_मुक्तze_simq(ahc);
+	/* Give the bus some time to recover */
+	if ((ahc->flags & (AHC_RESET_BUS_A|AHC_RESET_BUS_B)) != 0) {
+		ahc_linux_freeze_simq(ahc);
 		msleep(AIC7XXX_RESET_DELAY);
 		ahc_linux_release_simq(ahc);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक
-ahc_platक्रमm_alloc(काष्ठा ahc_softc *ahc, व्योम *platक्रमm_arg)
-अणु
+int
+ahc_platform_alloc(struct ahc_softc *ahc, void *platform_arg)
+{
 
-	ahc->platक्रमm_data =
-	    kzalloc(माप(काष्ठा ahc_platक्रमm_data), GFP_ATOMIC);
-	अगर (ahc->platक्रमm_data == शून्य)
-		वापस (ENOMEM);
-	ahc->platक्रमm_data->irq = AHC_LINUX_NOIRQ;
+	ahc->platform_data =
+	    kzalloc(sizeof(struct ahc_platform_data), GFP_ATOMIC);
+	if (ahc->platform_data == NULL)
+		return (ENOMEM);
+	ahc->platform_data->irq = AHC_LINUX_NOIRQ;
 	ahc_lockinit(ahc);
-	ahc->selसमय = (aic7xxx_selसमय & 0x3) << 4;
-	ahc->selसमय_b = (aic7xxx_selसमय & 0x3) << 4;
-	अगर (aic7xxx_pci_parity == 0)
+	ahc->seltime = (aic7xxx_seltime & 0x3) << 4;
+	ahc->seltime_b = (aic7xxx_seltime & 0x3) << 4;
+	if (aic7xxx_pci_parity == 0)
 		ahc->flags |= AHC_DISABLE_PCI_PERR;
 
-	वापस (0);
-पूर्ण
+	return (0);
+}
 
-व्योम
-ahc_platक्रमm_मुक्त(काष्ठा ahc_softc *ahc)
-अणु
-	काष्ठा scsi_target *starget;
-	पूर्णांक i;
+void
+ahc_platform_free(struct ahc_softc *ahc)
+{
+	struct scsi_target *starget;
+	int i;
 
-	अगर (ahc->platक्रमm_data != शून्य) अणु
+	if (ahc->platform_data != NULL) {
 		/* destroy all of the device and target objects */
-		क्रम (i = 0; i < AHC_NUM_TARGETS; i++) अणु
-			starget = ahc->platक्रमm_data->starget[i];
-			अगर (starget != शून्य) अणु
-				ahc->platक्रमm_data->starget[i] = शून्य;
-			पूर्ण
-		पूर्ण
+		for (i = 0; i < AHC_NUM_TARGETS; i++) {
+			starget = ahc->platform_data->starget[i];
+			if (starget != NULL) {
+				ahc->platform_data->starget[i] = NULL;
+			}
+		}
 
-		अगर (ahc->platक्रमm_data->irq != AHC_LINUX_NOIRQ)
-			मुक्त_irq(ahc->platक्रमm_data->irq, ahc);
-		अगर (ahc->tag == BUS_SPACE_PIO
+		if (ahc->platform_data->irq != AHC_LINUX_NOIRQ)
+			free_irq(ahc->platform_data->irq, ahc);
+		if (ahc->tag == BUS_SPACE_PIO
 		 && ahc->bsh.ioport != 0)
 			release_region(ahc->bsh.ioport, 256);
-		अगर (ahc->tag == BUS_SPACE_MEMIO
-		 && ahc->bsh.maddr != शून्य) अणु
+		if (ahc->tag == BUS_SPACE_MEMIO
+		 && ahc->bsh.maddr != NULL) {
 			iounmap(ahc->bsh.maddr);
-			release_mem_region(ahc->platक्रमm_data->mem_busaddr,
+			release_mem_region(ahc->platform_data->mem_busaddr,
 					   0x1000);
-		पूर्ण
+		}
 
-		अगर (ahc->platक्रमm_data->host)
-			scsi_host_put(ahc->platक्रमm_data->host);
+		if (ahc->platform_data->host)
+			scsi_host_put(ahc->platform_data->host);
 
-		kमुक्त(ahc->platक्रमm_data);
-	पूर्ण
-पूर्ण
+		kfree(ahc->platform_data);
+	}
+}
 
-व्योम
-ahc_platक्रमm_मुक्तze_devq(काष्ठा ahc_softc *ahc, काष्ठा scb *scb)
-अणु
-	ahc_platक्रमm_पात_scbs(ahc, SCB_GET_TARGET(ahc, scb),
+void
+ahc_platform_freeze_devq(struct ahc_softc *ahc, struct scb *scb)
+{
+	ahc_platform_abort_scbs(ahc, SCB_GET_TARGET(ahc, scb),
 				SCB_GET_CHANNEL(ahc, scb),
-				SCB_GET_LUN(scb), SCB_LIST_शून्य,
+				SCB_GET_LUN(scb), SCB_LIST_NULL,
 				ROLE_UNKNOWN, CAM_REQUEUE_REQ);
-पूर्ण
+}
 
-व्योम
-ahc_platक्रमm_set_tags(काष्ठा ahc_softc *ahc, काष्ठा scsi_device *sdev,
-		      काष्ठा ahc_devinfo *devinfo, ahc_queue_alg alg)
-अणु
-	काष्ठा ahc_linux_device *dev;
-	पूर्णांक was_queuing;
-	पूर्णांक now_queuing;
+void
+ahc_platform_set_tags(struct ahc_softc *ahc, struct scsi_device *sdev,
+		      struct ahc_devinfo *devinfo, ahc_queue_alg alg)
+{
+	struct ahc_linux_device *dev;
+	int was_queuing;
+	int now_queuing;
 
-	अगर (sdev == शून्य)
-		वापस;
+	if (sdev == NULL)
+		return;
 	dev = scsi_transport_device_data(sdev);
 
 	was_queuing = dev->flags & (AHC_DEV_Q_BASIC|AHC_DEV_Q_TAGGED);
-	चयन (alg) अणु
-	शेष:
-	हाल AHC_QUEUE_NONE:
+	switch (alg) {
+	default:
+	case AHC_QUEUE_NONE:
 		now_queuing = 0;
-		अवरोध;
-	हाल AHC_QUEUE_BASIC:
+		break;
+	case AHC_QUEUE_BASIC:
 		now_queuing = AHC_DEV_Q_BASIC;
-		अवरोध;
-	हाल AHC_QUEUE_TAGGED:
+		break;
+	case AHC_QUEUE_TAGGED:
 		now_queuing = AHC_DEV_Q_TAGGED;
-		अवरोध;
-	पूर्ण
-	अगर ((dev->flags & AHC_DEV_FREEZE_TIL_EMPTY) == 0
+		break;
+	}
+	if ((dev->flags & AHC_DEV_FREEZE_TIL_EMPTY) == 0
 	 && (was_queuing != now_queuing)
-	 && (dev->active != 0)) अणु
+	 && (dev->active != 0)) {
 		dev->flags |= AHC_DEV_FREEZE_TIL_EMPTY;
 		dev->qfrozen++;
-	पूर्ण
+	}
 
 	dev->flags &= ~(AHC_DEV_Q_BASIC|AHC_DEV_Q_TAGGED|AHC_DEV_PERIODIC_OTAG);
-	अगर (now_queuing) अणु
-		u_पूर्णांक usertags;
+	if (now_queuing) {
+		u_int usertags;
 
 		usertags = ahc_linux_user_tagdepth(ahc, devinfo);
-		अगर (!was_queuing) अणु
+		if (!was_queuing) {
 			/*
 			 * Start out aggressively and allow our
 			 * dynamic queue depth algorithm to take
 			 * care of the rest.
 			 */
 			dev->maxtags = usertags;
-			dev->खोलोings = dev->maxtags - dev->active;
-		पूर्ण
-		अगर (dev->maxtags == 0) अणु
+			dev->openings = dev->maxtags - dev->active;
+		}
+		if (dev->maxtags == 0) {
 			/*
 			 * Queueing is disabled by the user.
 			 */
-			dev->खोलोings = 1;
-		पूर्ण अन्यथा अगर (alg == AHC_QUEUE_TAGGED) अणु
+			dev->openings = 1;
+		} else if (alg == AHC_QUEUE_TAGGED) {
 			dev->flags |= AHC_DEV_Q_TAGGED;
-			अगर (aic7xxx_periodic_otag != 0)
+			if (aic7xxx_periodic_otag != 0)
 				dev->flags |= AHC_DEV_PERIODIC_OTAG;
-		पूर्ण अन्यथा
+		} else
 			dev->flags |= AHC_DEV_Q_BASIC;
-	पूर्ण अन्यथा अणु
-		/* We can only have one खोलोing. */
+	} else {
+		/* We can only have one opening. */
 		dev->maxtags = 0;
-		dev->खोलोings =  1 - dev->active;
-	पूर्ण
-	चयन ((dev->flags & (AHC_DEV_Q_BASIC|AHC_DEV_Q_TAGGED))) अणु
-	हाल AHC_DEV_Q_BASIC:
-	हाल AHC_DEV_Q_TAGGED:
+		dev->openings =  1 - dev->active;
+	}
+	switch ((dev->flags & (AHC_DEV_Q_BASIC|AHC_DEV_Q_TAGGED))) {
+	case AHC_DEV_Q_BASIC:
+	case AHC_DEV_Q_TAGGED:
 		scsi_change_queue_depth(sdev,
-				dev->खोलोings + dev->active);
-		अवरोध;
-	शेष:
+				dev->openings + dev->active);
+		break;
+	default:
 		/*
 		 * We allow the OS to queue 2 untagged transactions to
-		 * us at any समय even though we can only execute them
+		 * us at any time even though we can only execute them
 		 * serially on the controller/device.  This should
-		 * हटाओ some latency.
+		 * remove some latency.
 		 */
 		scsi_change_queue_depth(sdev, 2);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-पूर्णांक
-ahc_platक्रमm_पात_scbs(काष्ठा ahc_softc *ahc, पूर्णांक target, अक्षर channel,
-			पूर्णांक lun, u_पूर्णांक tag, role_t role, uपूर्णांक32_t status)
-अणु
-	वापस 0;
-पूर्ण
+int
+ahc_platform_abort_scbs(struct ahc_softc *ahc, int target, char channel,
+			int lun, u_int tag, role_t role, uint32_t status)
+{
+	return 0;
+}
 
-अटल u_पूर्णांक
-ahc_linux_user_tagdepth(काष्ठा ahc_softc *ahc, काष्ठा ahc_devinfo *devinfo)
-अणु
-	अटल पूर्णांक warned_user;
-	u_पूर्णांक tags;
+static u_int
+ahc_linux_user_tagdepth(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
+{
+	static int warned_user;
+	u_int tags;
 
 	tags = 0;
-	अगर ((ahc->user_discenable & devinfo->target_mask) != 0) अणु
-		अगर (ahc->unit >= ARRAY_SIZE(aic7xxx_tag_info)) अणु
-			अगर (warned_user == 0) अणु
+	if ((ahc->user_discenable & devinfo->target_mask) != 0) {
+		if (ahc->unit >= ARRAY_SIZE(aic7xxx_tag_info)) {
+			if (warned_user == 0) {
 
-				prपूर्णांकk(KERN_WARNING
+				printk(KERN_WARNING
 "aic7xxx: WARNING: Insufficient tag_info instances\n"
 "aic7xxx: for installed controllers. Using defaults\n"
 "aic7xxx: Please update the aic7xxx_tag_info array in\n"
 "aic7xxx: the aic7xxx_osm..c source file.\n");
 				warned_user++;
-			पूर्ण
+			}
 			tags = AHC_MAX_QUEUE;
-		पूर्ण अन्यथा अणु
+		} else {
 			adapter_tag_info_t *tag_info;
 
 			tag_info = &aic7xxx_tag_info[ahc->unit];
 			tags = tag_info->tag_commands[devinfo->target_offset];
-			अगर (tags > AHC_MAX_QUEUE)
+			if (tags > AHC_MAX_QUEUE)
 				tags = AHC_MAX_QUEUE;
-		पूर्ण
-	पूर्ण
-	वापस (tags);
-पूर्ण
+		}
+	}
+	return (tags);
+}
 
 /*
- * Determines the queue depth क्रम a given device.
+ * Determines the queue depth for a given device.
  */
-अटल व्योम
-ahc_linux_device_queue_depth(काष्ठा scsi_device *sdev)
-अणु
-	काष्ठा	ahc_devinfo devinfo;
-	u_पूर्णांक	tags;
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)sdev->host->hostdata);
+static void
+ahc_linux_device_queue_depth(struct scsi_device *sdev)
+{
+	struct	ahc_devinfo devinfo;
+	u_int	tags;
+	struct ahc_softc *ahc = *((struct ahc_softc **)sdev->host->hostdata);
 
 	ahc_compile_devinfo(&devinfo,
 			    sdev->sdev_target->channel == 0
@@ -1387,38 +1386,38 @@ ahc_linux_device_queue_depth(काष्ठा scsi_device *sdev)
 			    sdev->sdev_target->channel == 0 ? 'A' : 'B',
 			    ROLE_INITIATOR);
 	tags = ahc_linux_user_tagdepth(ahc, &devinfo);
-	अगर (tags != 0 && sdev->tagged_supported != 0) अणु
+	if (tags != 0 && sdev->tagged_supported != 0) {
 
-		ahc_platक्रमm_set_tags(ahc, sdev, &devinfo, AHC_QUEUE_TAGGED);
+		ahc_platform_set_tags(ahc, sdev, &devinfo, AHC_QUEUE_TAGGED);
 		ahc_send_async(ahc, devinfo.channel, devinfo.target,
 			       devinfo.lun, AC_TRANSFER_NEG);
-		ahc_prपूर्णांक_devinfo(ahc, &devinfo);
-		prपूर्णांकk("Tagged Queuing enabled.  Depth %d\n", tags);
-	पूर्ण अन्यथा अणु
-		ahc_platक्रमm_set_tags(ahc, sdev, &devinfo, AHC_QUEUE_NONE);
+		ahc_print_devinfo(ahc, &devinfo);
+		printk("Tagged Queuing enabled.  Depth %d\n", tags);
+	} else {
+		ahc_platform_set_tags(ahc, sdev, &devinfo, AHC_QUEUE_NONE);
 		ahc_send_async(ahc, devinfo.channel, devinfo.target,
 			       devinfo.lun, AC_TRANSFER_NEG);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक
-ahc_linux_run_command(काष्ठा ahc_softc *ahc, काष्ठा ahc_linux_device *dev,
-		      काष्ठा scsi_cmnd *cmd)
-अणु
-	काष्ठा	 scb *scb;
-	काष्ठा	 hardware_scb *hscb;
-	काष्ठा	 ahc_initiator_tinfo *tinfo;
-	काष्ठा	 ahc_पंचांगode_tstate *tstate;
-	uपूर्णांक16_t mask;
-	काष्ठा scb_tailq *untagged_q = शून्य;
-	पूर्णांक nseg;
+static int
+ahc_linux_run_command(struct ahc_softc *ahc, struct ahc_linux_device *dev,
+		      struct scsi_cmnd *cmd)
+{
+	struct	 scb *scb;
+	struct	 hardware_scb *hscb;
+	struct	 ahc_initiator_tinfo *tinfo;
+	struct	 ahc_tmode_tstate *tstate;
+	uint16_t mask;
+	struct scb_tailq *untagged_q = NULL;
+	int nseg;
 
 	/*
 	 * Schedule us to run later.  The only reason we are not
 	 * running is because the whole controller Q is frozen.
 	 */
-	अगर (ahc->platक्रमm_data->qfrozen != 0)
-		वापस SCSI_MLQUEUE_HOST_BUSY;
+	if (ahc->platform_data->qfrozen != 0)
+		return SCSI_MLQUEUE_HOST_BUSY;
 
 	/*
 	 * We only allow one untagged transaction
@@ -1426,35 +1425,35 @@ ahc_linux_run_command(काष्ठा ahc_softc *ahc, काष्ठा ahc_
 	 * we are storing a full busy target *lun*
 	 * table in SCB space.
 	 */
-	अगर (!(cmd->flags & SCMD_TAGGED)
-	    && (ahc->features & AHC_SCB_BTT) == 0) अणु
-		पूर्णांक target_offset;
+	if (!(cmd->flags & SCMD_TAGGED)
+	    && (ahc->features & AHC_SCB_BTT) == 0) {
+		int target_offset;
 
 		target_offset = cmd->device->id + cmd->device->channel * 8;
 		untagged_q = &(ahc->untagged_queues[target_offset]);
-		अगर (!TAILQ_EMPTY(untagged_q))
-			/* अगर we're alपढ़ोy executing an untagged command
+		if (!TAILQ_EMPTY(untagged_q))
+			/* if we're already executing an untagged command
 			 * we're busy to another */
-			वापस SCSI_MLQUEUE_DEVICE_BUSY;
-	पूर्ण
+			return SCSI_MLQUEUE_DEVICE_BUSY;
+	}
 
 	nseg = scsi_dma_map(cmd);
-	अगर (nseg < 0)
-		वापस SCSI_MLQUEUE_HOST_BUSY;
+	if (nseg < 0)
+		return SCSI_MLQUEUE_HOST_BUSY;
 
 	/*
 	 * Get an scb to use.
 	 */
 	scb = ahc_get_scb(ahc);
-	अगर (!scb) अणु
+	if (!scb) {
 		scsi_dma_unmap(cmd);
-		वापस SCSI_MLQUEUE_HOST_BUSY;
-	पूर्ण
+		return SCSI_MLQUEUE_HOST_BUSY;
+	}
 
 	scb->io_ctx = cmd;
-	scb->platक्रमm_data->dev = dev;
+	scb->platform_data->dev = dev;
 	hscb = scb->hscb;
-	cmd->host_scribble = (अक्षर *)scb;
+	cmd->host_scribble = (char *)scb;
 
 	/*
 	 * Fill out basics of the HSCB.
@@ -1468,55 +1467,55 @@ ahc_linux_run_command(काष्ठा ahc_softc *ahc, काष्ठा ahc_
 				    SCB_GET_TARGET(ahc, scb), &tstate);
 	hscb->scsirate = tinfo->scsirate;
 	hscb->scsioffset = tinfo->curr.offset;
-	अगर ((tstate->ultraenb & mask) != 0)
+	if ((tstate->ultraenb & mask) != 0)
 		hscb->control |= ULTRAENB;
 
-	अगर ((ahc->user_discenable & mask) != 0)
+	if ((ahc->user_discenable & mask) != 0)
 		hscb->control |= DISCENB;
 
-	अगर ((tstate->स्वतः_negotiate & mask) != 0) अणु
+	if ((tstate->auto_negotiate & mask) != 0) {
 		scb->flags |= SCB_AUTO_NEGOTIATE;
 		scb->hscb->control |= MK_MESSAGE;
-	पूर्ण
+	}
 
-	अगर ((dev->flags & (AHC_DEV_Q_TAGGED|AHC_DEV_Q_BASIC)) != 0) अणु
-		अगर (dev->commands_since_idle_or_otag == AHC_OTAG_THRESH
-				&& (dev->flags & AHC_DEV_Q_TAGGED) != 0) अणु
+	if ((dev->flags & (AHC_DEV_Q_TAGGED|AHC_DEV_Q_BASIC)) != 0) {
+		if (dev->commands_since_idle_or_otag == AHC_OTAG_THRESH
+				&& (dev->flags & AHC_DEV_Q_TAGGED) != 0) {
 			hscb->control |= ORDERED_QUEUE_TAG;
 			dev->commands_since_idle_or_otag = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			hscb->control |= SIMPLE_QUEUE_TAG;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	hscb->cdb_len = cmd->cmd_len;
-	अगर (hscb->cdb_len <= 12) अणु
-		स_नकल(hscb->shared_data.cdb, cmd->cmnd, hscb->cdb_len);
-	पूर्ण अन्यथा अणु
-		स_नकल(hscb->cdb32, cmd->cmnd, hscb->cdb_len);
+	if (hscb->cdb_len <= 12) {
+		memcpy(hscb->shared_data.cdb, cmd->cmnd, hscb->cdb_len);
+	} else {
+		memcpy(hscb->cdb32, cmd->cmnd, hscb->cdb_len);
 		scb->flags |= SCB_CDB32_PTR;
-	पूर्ण
+	}
 
-	scb->platक्रमm_data->xfer_len = 0;
+	scb->platform_data->xfer_len = 0;
 	ahc_set_residual(scb, 0);
 	ahc_set_sense_residual(scb, 0);
 	scb->sg_count = 0;
 
-	अगर (nseg > 0) अणु
-		काष्ठा	ahc_dma_seg *sg;
-		काष्ठा	scatterlist *cur_seg;
-		पूर्णांक i;
+	if (nseg > 0) {
+		struct	ahc_dma_seg *sg;
+		struct	scatterlist *cur_seg;
+		int i;
 
-		/* Copy the segments पूर्णांकo the SG list. */
+		/* Copy the segments into the SG list. */
 		sg = scb->sg_list;
 		/*
-		 * The sg_count may be larger than nseg अगर
+		 * The sg_count may be larger than nseg if
 		 * a transfer crosses a 32bit page.
 		 */
-		scsi_क्रम_each_sg(cmd, cur_seg, nseg, i) अणु
+		scsi_for_each_sg(cmd, cur_seg, nseg, i) {
 			dma_addr_t addr;
-			bus_माप_प्रकार len;
-			पूर्णांक consumed;
+			bus_size_t len;
+			int consumed;
 
 			addr = sg_dma_address(cur_seg);
 			len = sg_dma_len(cur_seg);
@@ -1524,80 +1523,80 @@ ahc_linux_run_command(काष्ठा ahc_softc *ahc, काष्ठा ahc_
 						     sg, addr, len);
 			sg += consumed;
 			scb->sg_count += consumed;
-		पूर्ण
+		}
 		sg--;
 		sg->len |= ahc_htole32(AHC_DMA_LAST_SEG);
 
 		/*
-		 * Reset the sg list poपूर्णांकer.
+		 * Reset the sg list pointer.
 		 */
 		scb->hscb->sgptr =
 			ahc_htole32(scb->sg_list_phys | SG_FULL_RESID);
 
 		/*
-		 * Copy the first SG पूर्णांकo the "current"
-		 * data poपूर्णांकer area.
+		 * Copy the first SG into the "current"
+		 * data pointer area.
 		 */
 		scb->hscb->dataptr = scb->sg_list->addr;
 		scb->hscb->datacnt = scb->sg_list->len;
-	पूर्ण अन्यथा अणु
-		scb->hscb->sgptr = ahc_htole32(SG_LIST_शून्य);
+	} else {
+		scb->hscb->sgptr = ahc_htole32(SG_LIST_NULL);
 		scb->hscb->dataptr = 0;
 		scb->hscb->datacnt = 0;
 		scb->sg_count = 0;
-	पूर्ण
+	}
 
 	LIST_INSERT_HEAD(&ahc->pending_scbs, scb, pending_links);
-	dev->खोलोings--;
+	dev->openings--;
 	dev->active++;
 	dev->commands_issued++;
-	अगर ((dev->flags & AHC_DEV_PERIODIC_OTAG) != 0)
+	if ((dev->flags & AHC_DEV_PERIODIC_OTAG) != 0)
 		dev->commands_since_idle_or_otag++;
 
 	scb->flags |= SCB_ACTIVE;
-	अगर (untagged_q) अणु
+	if (untagged_q) {
 		TAILQ_INSERT_TAIL(untagged_q, scb, links.tqe);
 		scb->flags |= SCB_UNTAGGEDQ;
-	पूर्ण
+	}
 	ahc_queue_scb(ahc, scb);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * SCSI controller पूर्णांकerrupt handler.
+ * SCSI controller interrupt handler.
  */
-irqवापस_t
-ahc_linux_isr(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा	ahc_softc *ahc;
-	u_दीर्घ	flags;
-	पूर्णांक	ours;
+irqreturn_t
+ahc_linux_isr(int irq, void *dev_id)
+{
+	struct	ahc_softc *ahc;
+	u_long	flags;
+	int	ours;
 
-	ahc = (काष्ठा ahc_softc *) dev_id;
+	ahc = (struct ahc_softc *) dev_id;
 	ahc_lock(ahc, &flags);
-	ours = ahc_पूर्णांकr(ahc);
+	ours = ahc_intr(ahc);
 	ahc_unlock(ahc, &flags);
-	वापस IRQ_RETVAL(ours);
-पूर्ण
+	return IRQ_RETVAL(ours);
+}
 
-व्योम
-ahc_platक्रमm_flushwork(काष्ठा ahc_softc *ahc)
-अणु
+void
+ahc_platform_flushwork(struct ahc_softc *ahc)
+{
 
-पूर्ण
+}
 
-व्योम
-ahc_send_async(काष्ठा ahc_softc *ahc, अक्षर channel,
-	       u_पूर्णांक target, u_पूर्णांक lun, ac_code code)
-अणु
-	चयन (code) अणु
-	हाल AC_TRANSFER_NEG:
-	अणु
-		काष्ठा	scsi_target *starget;
-		काष्ठा	ahc_initiator_tinfo *tinfo;
-		काष्ठा	ahc_पंचांगode_tstate *tstate;
-		पूर्णांक	target_offset;
-		अचिन्हित पूर्णांक target_ppr_options;
+void
+ahc_send_async(struct ahc_softc *ahc, char channel,
+	       u_int target, u_int lun, ac_code code)
+{
+	switch (code) {
+	case AC_TRANSFER_NEG:
+	{
+		struct	scsi_target *starget;
+		struct	ahc_initiator_tinfo *tinfo;
+		struct	ahc_tmode_tstate *tstate;
+		int	target_offset;
+		unsigned int target_ppr_options;
 
 		BUG_ON(target == CAM_TARGET_WILDCARD);
 
@@ -1607,38 +1606,38 @@ ahc_send_async(काष्ठा ahc_softc *ahc, अक्षर channel,
 						target, &tstate);
 
 		/*
-		 * Don't bother reporting results जबतक
+		 * Don't bother reporting results while
 		 * negotiations are still pending.
 		 */
-		अगर (tinfo->curr.period != tinfo->goal.period
+		if (tinfo->curr.period != tinfo->goal.period
 		 || tinfo->curr.width != tinfo->goal.width
 		 || tinfo->curr.offset != tinfo->goal.offset
 		 || tinfo->curr.ppr_options != tinfo->goal.ppr_options)
-			अगर (bootverbose == 0)
-				अवरोध;
+			if (bootverbose == 0)
+				break;
 
 		/*
 		 * Don't bother reporting results that
 		 * are identical to those last reported.
 		 */
 		target_offset = target;
-		अगर (channel == 'B')
+		if (channel == 'B')
 			target_offset += 8;
-		starget = ahc->platक्रमm_data->starget[target_offset];
-		अगर (starget == शून्य)
-			अवरोध;
+		starget = ahc->platform_data->starget[target_offset];
+		if (starget == NULL)
+			break;
 
 		target_ppr_options =
 			(spi_dt(starget) ? MSG_EXT_PPR_DT_REQ : 0)
 			+ (spi_qas(starget) ? MSG_EXT_PPR_QAS_REQ : 0)
 			+ (spi_iu(starget) ?  MSG_EXT_PPR_IU_REQ : 0);
 
-		अगर (tinfo->curr.period == spi_period(starget)
+		if (tinfo->curr.period == spi_period(starget)
 		    && tinfo->curr.width == spi_width(starget)
 		    && tinfo->curr.offset == spi_offset(starget)
 		 && tinfo->curr.ppr_options == target_ppr_options)
-			अगर (bootverbose == 0)
-				अवरोध;
+			if (bootverbose == 0)
+				break;
 
 		spi_period(starget) = tinfo->curr.period;
 		spi_width(starget) = tinfo->curr.width;
@@ -1647,157 +1646,157 @@ ahc_send_async(काष्ठा ahc_softc *ahc, अक्षर channel,
 		spi_qas(starget) = tinfo->curr.ppr_options & MSG_EXT_PPR_QAS_REQ ? 1 : 0;
 		spi_iu(starget) = tinfo->curr.ppr_options & MSG_EXT_PPR_IU_REQ ? 1 : 0;
 		spi_display_xfer_agreement(starget);
-		अवरोध;
-	पूर्ण
-	हाल AC_SENT_BDR:
-	अणु
+		break;
+	}
+	case AC_SENT_BDR:
+	{
 		WARN_ON(lun != CAM_LUN_WILDCARD);
-		scsi_report_device_reset(ahc->platक्रमm_data->host,
+		scsi_report_device_reset(ahc->platform_data->host,
 					 channel - 'A', target);
-		अवरोध;
-	पूर्ण
-	हाल AC_BUS_RESET:
-		अगर (ahc->platक्रमm_data->host != शून्य) अणु
-			scsi_report_bus_reset(ahc->platक्रमm_data->host,
+		break;
+	}
+	case AC_BUS_RESET:
+		if (ahc->platform_data->host != NULL) {
+			scsi_report_bus_reset(ahc->platform_data->host,
 					      channel - 'A');
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		panic("ahc_send_async: Unexpected async event");
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Calls the higher level scsi करोne function and मुक्तs the scb.
+ * Calls the higher level scsi done function and frees the scb.
  */
-व्योम
-ahc_करोne(काष्ठा ahc_softc *ahc, काष्ठा scb *scb)
-अणु
-	काष्ठा scsi_cmnd *cmd;
-	काष्ठा	   ahc_linux_device *dev;
+void
+ahc_done(struct ahc_softc *ahc, struct scb *scb)
+{
+	struct scsi_cmnd *cmd;
+	struct	   ahc_linux_device *dev;
 
 	LIST_REMOVE(scb, pending_links);
-	अगर ((scb->flags & SCB_UNTAGGEDQ) != 0) अणु
-		काष्ठा scb_tailq *untagged_q;
-		पूर्णांक target_offset;
+	if ((scb->flags & SCB_UNTAGGEDQ) != 0) {
+		struct scb_tailq *untagged_q;
+		int target_offset;
 
 		target_offset = SCB_GET_TARGET_OFFSET(ahc, scb);
 		untagged_q = &(ahc->untagged_queues[target_offset]);
 		TAILQ_REMOVE(untagged_q, scb, links.tqe);
 		BUG_ON(!TAILQ_EMPTY(untagged_q));
-	पूर्ण अन्यथा अगर ((scb->flags & SCB_ACTIVE) == 0) अणु
+	} else if ((scb->flags & SCB_ACTIVE) == 0) {
 		/*
-		 * Transactions पातed from the untagged queue may
+		 * Transactions aborted from the untagged queue may
 		 * not have been dispatched to the controller, so
-		 * only check the SCB_ACTIVE flag क्रम tagged transactions.
+		 * only check the SCB_ACTIVE flag for tagged transactions.
 		 */
-		prपूर्णांकk("SCB %d done'd twice\n", scb->hscb->tag);
+		printk("SCB %d done'd twice\n", scb->hscb->tag);
 		ahc_dump_card_state(ahc);
 		panic("Stopping for safety");
-	पूर्ण
+	}
 	cmd = scb->io_ctx;
-	dev = scb->platक्रमm_data->dev;
+	dev = scb->platform_data->dev;
 	dev->active--;
-	dev->खोलोings++;
-	अगर ((cmd->result & (CAM_DEV_QFRZN << 16)) != 0) अणु
+	dev->openings++;
+	if ((cmd->result & (CAM_DEV_QFRZN << 16)) != 0) {
 		cmd->result &= ~(CAM_DEV_QFRZN << 16);
 		dev->qfrozen--;
-	पूर्ण
+	}
 	ahc_linux_unmap_scb(ahc, scb);
 
 	/*
 	 * Guard against stale sense data.
 	 * The Linux mid-layer assumes that sense
-	 * was retrieved anyसमय the first byte of
+	 * was retrieved anytime the first byte of
 	 * the sense buffer looks "sane".
 	 */
 	cmd->sense_buffer[0] = 0;
-	अगर (ahc_get_transaction_status(scb) == CAM_REQ_INPROG) अणु
-#अगर_घोषित AHC_REPORT_UNDERFLOWS
-		uपूर्णांक32_t amount_xferred;
+	if (ahc_get_transaction_status(scb) == CAM_REQ_INPROG) {
+#ifdef AHC_REPORT_UNDERFLOWS
+		uint32_t amount_xferred;
 
 		amount_xferred =
 		    ahc_get_transfer_length(scb) - ahc_get_residual(scb);
-#पूर्ण_अगर
-		अगर ((scb->flags & SCB_TRANSMISSION_ERROR) != 0) अणु
-#अगर_घोषित AHC_DEBUG
-			अगर ((ahc_debug & AHC_SHOW_MISC) != 0) अणु
-				ahc_prपूर्णांक_path(ahc, scb);
-				prपूर्णांकk("Set CAM_UNCOR_PARITY\n");
-			पूर्ण
-#पूर्ण_अगर
+#endif
+		if ((scb->flags & SCB_TRANSMISSION_ERROR) != 0) {
+#ifdef AHC_DEBUG
+			if ((ahc_debug & AHC_SHOW_MISC) != 0) {
+				ahc_print_path(ahc, scb);
+				printk("Set CAM_UNCOR_PARITY\n");
+			}
+#endif
 			ahc_set_transaction_status(scb, CAM_UNCOR_PARITY);
-#अगर_घोषित AHC_REPORT_UNDERFLOWS
+#ifdef AHC_REPORT_UNDERFLOWS
 		/*
-		 * This code is disabled by शेष as some
-		 * clients of the SCSI प्रणाली करो not properly
+		 * This code is disabled by default as some
+		 * clients of the SCSI system do not properly
 		 * initialize the underflow parameter.  This
 		 * results in spurious termination of commands
 		 * that complete as expected (e.g. underflow is
-		 * allowed as command can वापस variable amounts
+		 * allowed as command can return variable amounts
 		 * of data.
 		 */
-		पूर्ण अन्यथा अगर (amount_xferred < scb->io_ctx->underflow) अणु
-			u_पूर्णांक i;
+		} else if (amount_xferred < scb->io_ctx->underflow) {
+			u_int i;
 
-			ahc_prपूर्णांक_path(ahc, scb);
-			prपूर्णांकk("CDB:");
-			क्रम (i = 0; i < scb->io_ctx->cmd_len; i++)
-				prपूर्णांकk(" 0x%x", scb->io_ctx->cmnd[i]);
-			prपूर्णांकk("\n");
-			ahc_prपूर्णांक_path(ahc, scb);
-			prपूर्णांकk("Saw underflow (%ld of %ld bytes). "
+			ahc_print_path(ahc, scb);
+			printk("CDB:");
+			for (i = 0; i < scb->io_ctx->cmd_len; i++)
+				printk(" 0x%x", scb->io_ctx->cmnd[i]);
+			printk("\n");
+			ahc_print_path(ahc, scb);
+			printk("Saw underflow (%ld of %ld bytes). "
 			       "Treated as error\n",
 				ahc_get_residual(scb),
 				ahc_get_transfer_length(scb));
 			ahc_set_transaction_status(scb, CAM_DATA_RUN_ERR);
-#पूर्ण_अगर
-		पूर्ण अन्यथा अणु
+#endif
+		} else {
 			ahc_set_transaction_status(scb, CAM_REQ_CMP);
-		पूर्ण
-	पूर्ण अन्यथा अगर (ahc_get_transaction_status(scb) == CAM_SCSI_STATUS_ERROR) अणु
+		}
+	} else if (ahc_get_transaction_status(scb) == CAM_SCSI_STATUS_ERROR) {
 		ahc_linux_handle_scsi_status(ahc, cmd->device, scb);
-	पूर्ण
+	}
 
-	अगर (dev->खोलोings == 1
+	if (dev->openings == 1
 	 && ahc_get_transaction_status(scb) == CAM_REQ_CMP
 	 && ahc_get_scsi_status(scb) != SAM_STAT_TASK_SET_FULL)
 		dev->tag_success_count++;
 	/*
-	 * Some devices deal with temporary पूर्णांकernal resource
-	 * लघुages by वापसing queue full.  When the queue
+	 * Some devices deal with temporary internal resource
+	 * shortages by returning queue full.  When the queue
 	 * full occurrs, we throttle back.  Slowly try to get
 	 * back to our previous queue depth.
 	 */
-	अगर ((dev->खोलोings + dev->active) < dev->maxtags
-	 && dev->tag_success_count > AHC_TAG_SUCCESS_INTERVAL) अणु
+	if ((dev->openings + dev->active) < dev->maxtags
+	 && dev->tag_success_count > AHC_TAG_SUCCESS_INTERVAL) {
 		dev->tag_success_count = 0;
-		dev->खोलोings++;
-	पूर्ण
+		dev->openings++;
+	}
 
-	अगर (dev->active == 0)
+	if (dev->active == 0)
 		dev->commands_since_idle_or_otag = 0;
 
-	अगर ((scb->flags & SCB_RECOVERY_SCB) != 0) अणु
-		prपूर्णांकk("Recovery SCB completes\n");
-		अगर (ahc_get_transaction_status(scb) == CAM_BDR_SENT
+	if ((scb->flags & SCB_RECOVERY_SCB) != 0) {
+		printk("Recovery SCB completes\n");
+		if (ahc_get_transaction_status(scb) == CAM_BDR_SENT
 		 || ahc_get_transaction_status(scb) == CAM_REQ_ABORTED)
 			ahc_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 
-		अगर (ahc->platक्रमm_data->eh_करोne)
-			complete(ahc->platक्रमm_data->eh_करोne);
-	पूर्ण
+		if (ahc->platform_data->eh_done)
+			complete(ahc->platform_data->eh_done);
+	}
 
-	ahc_मुक्त_scb(ahc, scb);
+	ahc_free_scb(ahc, scb);
 	ahc_linux_queue_cmd_complete(ahc, cmd);
-पूर्ण
+}
 
-अटल व्योम
-ahc_linux_handle_scsi_status(काष्ठा ahc_softc *ahc,
-			     काष्ठा scsi_device *sdev, काष्ठा scb *scb)
-अणु
-	काष्ठा	ahc_devinfo devinfo;
-	काष्ठा ahc_linux_device *dev = scsi_transport_device_data(sdev);
+static void
+ahc_linux_handle_scsi_status(struct ahc_softc *ahc,
+			     struct scsi_device *sdev, struct scb *scb)
+{
+	struct	ahc_devinfo devinfo;
+	struct ahc_linux_device *dev = scsi_transport_device_data(sdev);
 
 	ahc_compile_devinfo(&devinfo,
 			    ahc->our_id,
@@ -1806,79 +1805,79 @@ ahc_linux_handle_scsi_status(काष्ठा ahc_softc *ahc,
 			    ROLE_INITIATOR);
 
 	/*
-	 * We करोn't currently trust the mid-layer to
+	 * We don't currently trust the mid-layer to
 	 * properly deal with queue full or busy.  So,
 	 * when one occurs, we tell the mid-layer to
 	 * unconditionally requeue the command to us
 	 * so that we can retry it ourselves.  We also
 	 * implement our own throttling mechanism so
-	 * we करोn't clobber the device with too many
+	 * we don't clobber the device with too many
 	 * commands.
 	 */
-	चयन (ahc_get_scsi_status(scb)) अणु
-	शेष:
-		अवरोध;
-	हाल SAM_STAT_CHECK_CONDITION:
-	हाल SAM_STAT_COMMAND_TERMINATED:
-	अणु
-		काष्ठा scsi_cmnd *cmd;
+	switch (ahc_get_scsi_status(scb)) {
+	default:
+		break;
+	case SAM_STAT_CHECK_CONDITION:
+	case SAM_STAT_COMMAND_TERMINATED:
+	{
+		struct scsi_cmnd *cmd;
 
 		/*
-		 * Copy sense inक्रमmation to the OS's cmd
-		 * काष्ठाure अगर it is available.
+		 * Copy sense information to the OS's cmd
+		 * structure if it is available.
 		 */
 		cmd = scb->io_ctx;
-		अगर (scb->flags & SCB_SENSE) अणु
-			u_पूर्णांक sense_size;
+		if (scb->flags & SCB_SENSE) {
+			u_int sense_size;
 
-			sense_size = min(माप(काष्ठा scsi_sense_data)
+			sense_size = min(sizeof(struct scsi_sense_data)
 				       - ahc_get_sense_residual(scb),
-					 (u_दीर्घ)SCSI_SENSE_BUFFERSIZE);
-			स_नकल(cmd->sense_buffer,
+					 (u_long)SCSI_SENSE_BUFFERSIZE);
+			memcpy(cmd->sense_buffer,
 			       ahc_get_sense_buf(ahc, scb), sense_size);
-			अगर (sense_size < SCSI_SENSE_BUFFERSIZE)
-				स_रखो(&cmd->sense_buffer[sense_size], 0,
+			if (sense_size < SCSI_SENSE_BUFFERSIZE)
+				memset(&cmd->sense_buffer[sense_size], 0,
 				       SCSI_SENSE_BUFFERSIZE - sense_size);
 			cmd->result |= (DRIVER_SENSE << 24);
-#अगर_घोषित AHC_DEBUG
-			अगर (ahc_debug & AHC_SHOW_SENSE) अणु
-				पूर्णांक i;
+#ifdef AHC_DEBUG
+			if (ahc_debug & AHC_SHOW_SENSE) {
+				int i;
 
-				prपूर्णांकk("Copied %d bytes of sense data:",
+				printk("Copied %d bytes of sense data:",
 				       sense_size);
-				क्रम (i = 0; i < sense_size; i++) अणु
-					अगर ((i & 0xF) == 0)
-						prपूर्णांकk("\n");
-					prपूर्णांकk("0x%x ", cmd->sense_buffer[i]);
-				पूर्ण
-				prपूर्णांकk("\n");
-			पूर्ण
-#पूर्ण_अगर
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल SAM_STAT_TASK_SET_FULL:
-	अणु
+				for (i = 0; i < sense_size; i++) {
+					if ((i & 0xF) == 0)
+						printk("\n");
+					printk("0x%x ", cmd->sense_buffer[i]);
+				}
+				printk("\n");
+			}
+#endif
+		}
+		break;
+	}
+	case SAM_STAT_TASK_SET_FULL:
+	{
 		/*
-		 * By the समय the core driver has वापसed this
+		 * By the time the core driver has returned this
 		 * command, all other commands that were queued
-		 * to us but not the device have been वापसed.
+		 * to us but not the device have been returned.
 		 * This ensures that dev->active is equal to
 		 * the number of commands actually queued to
 		 * the device.
 		 */
 		dev->tag_success_count = 0;
-		अगर (dev->active != 0) अणु
+		if (dev->active != 0) {
 			/*
-			 * Drop our खोलोing count to the number
+			 * Drop our opening count to the number
 			 * of commands currently outstanding.
 			 */
-			dev->खोलोings = 0;
+			dev->openings = 0;
 /*
-			ahc_prपूर्णांक_path(ahc, scb);
-			prपूर्णांकk("Dropping tag count to %d\n", dev->active);
+			ahc_print_path(ahc, scb);
+			printk("Dropping tag count to %d\n", dev->active);
  */
-			अगर (dev->active == dev->tags_on_last_queuefull) अणु
+			if (dev->active == dev->tags_on_last_queuefull) {
 
 				dev->last_queuefull_same_count++;
 				/*
@@ -1889,306 +1888,306 @@ ahc_linux_handle_scsi_status(काष्ठा ahc_softc *ahc,
 				 * so we stop seeing queue fulls from
 				 * this device.
 				 */
-				अगर (dev->last_queuefull_same_count
-				 == AHC_LOCK_TAGS_COUNT) अणु
+				if (dev->last_queuefull_same_count
+				 == AHC_LOCK_TAGS_COUNT) {
 					dev->maxtags = dev->active;
-					ahc_prपूर्णांक_path(ahc, scb);
-					prपूर्णांकk("Locking max tag count at %d\n",
+					ahc_print_path(ahc, scb);
+					printk("Locking max tag count at %d\n",
 					       dev->active);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				dev->tags_on_last_queuefull = dev->active;
 				dev->last_queuefull_same_count = 0;
-			पूर्ण
+			}
 			ahc_set_transaction_status(scb, CAM_REQUEUE_REQ);
 			ahc_set_scsi_status(scb, SAM_STAT_GOOD);
-			ahc_platक्रमm_set_tags(ahc, sdev, &devinfo,
+			ahc_platform_set_tags(ahc, sdev, &devinfo,
 				     (dev->flags & AHC_DEV_Q_BASIC)
 				   ? AHC_QUEUE_BASIC : AHC_QUEUE_TAGGED);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/*
-		 * Drop करोwn to a single खोलोing, and treat this
-		 * as अगर the target वापसed BUSY SCSI status.
+		 * Drop down to a single opening, and treat this
+		 * as if the target returned BUSY SCSI status.
 		 */
-		dev->खोलोings = 1;
+		dev->openings = 1;
 		ahc_set_scsi_status(scb, SAM_STAT_BUSY);
-		ahc_platक्रमm_set_tags(ahc, sdev, &devinfo,
+		ahc_platform_set_tags(ahc, sdev, &devinfo,
 			     (dev->flags & AHC_DEV_Q_BASIC)
 			   ? AHC_QUEUE_BASIC : AHC_QUEUE_TAGGED);
-		अवरोध;
-	पूर्ण
-	पूर्ण
-पूर्ण
+		break;
+	}
+	}
+}
 
-अटल व्योम
-ahc_linux_queue_cmd_complete(काष्ठा ahc_softc *ahc, काष्ठा scsi_cmnd *cmd)
-अणु
+static void
+ahc_linux_queue_cmd_complete(struct ahc_softc *ahc, struct scsi_cmnd *cmd)
+{
 	/*
-	 * Map CAM error codes पूर्णांकo Linux Error codes.  We
-	 * aव्योम the conversion so that the DV code has the
-	 * full error inक्रमmation available when making
+	 * Map CAM error codes into Linux Error codes.  We
+	 * avoid the conversion so that the DV code has the
+	 * full error information available when making
 	 * state change decisions.
 	 */
-	अणु
-		u_पूर्णांक new_status;
+	{
+		u_int new_status;
 
-		चयन (ahc_cmd_get_transaction_status(cmd)) अणु
-		हाल CAM_REQ_INPROG:
-		हाल CAM_REQ_CMP:
-		हाल CAM_SCSI_STATUS_ERROR:
+		switch (ahc_cmd_get_transaction_status(cmd)) {
+		case CAM_REQ_INPROG:
+		case CAM_REQ_CMP:
+		case CAM_SCSI_STATUS_ERROR:
 			new_status = DID_OK;
-			अवरोध;
-		हाल CAM_REQ_ABORTED:
+			break;
+		case CAM_REQ_ABORTED:
 			new_status = DID_ABORT;
-			अवरोध;
-		हाल CAM_BUSY:
+			break;
+		case CAM_BUSY:
 			new_status = DID_BUS_BUSY;
-			अवरोध;
-		हाल CAM_REQ_INVALID:
-		हाल CAM_PATH_INVALID:
+			break;
+		case CAM_REQ_INVALID:
+		case CAM_PATH_INVALID:
 			new_status = DID_BAD_TARGET;
-			अवरोध;
-		हाल CAM_SEL_TIMEOUT:
+			break;
+		case CAM_SEL_TIMEOUT:
 			new_status = DID_NO_CONNECT;
-			अवरोध;
-		हाल CAM_SCSI_BUS_RESET:
-		हाल CAM_BDR_SENT:
+			break;
+		case CAM_SCSI_BUS_RESET:
+		case CAM_BDR_SENT:
 			new_status = DID_RESET;
-			अवरोध;
-		हाल CAM_UNCOR_PARITY:
+			break;
+		case CAM_UNCOR_PARITY:
 			new_status = DID_PARITY;
-			अवरोध;
-		हाल CAM_CMD_TIMEOUT:
+			break;
+		case CAM_CMD_TIMEOUT:
 			new_status = DID_TIME_OUT;
-			अवरोध;
-		हाल CAM_UA_ABORT:
-		हाल CAM_REQ_CMP_ERR:
-		हाल CAM_AUTOSENSE_FAIL:
-		हाल CAM_NO_HBA:
-		हाल CAM_DATA_RUN_ERR:
-		हाल CAM_UNEXP_BUSFREE:
-		हाल CAM_SEQUENCE_FAIL:
-		हाल CAM_CCB_LEN_ERR:
-		हाल CAM_PROVIDE_FAIL:
-		हाल CAM_REQ_TERMIO:
-		हाल CAM_UNREC_HBA_ERROR:
-		हाल CAM_REQ_TOO_BIG:
+			break;
+		case CAM_UA_ABORT:
+		case CAM_REQ_CMP_ERR:
+		case CAM_AUTOSENSE_FAIL:
+		case CAM_NO_HBA:
+		case CAM_DATA_RUN_ERR:
+		case CAM_UNEXP_BUSFREE:
+		case CAM_SEQUENCE_FAIL:
+		case CAM_CCB_LEN_ERR:
+		case CAM_PROVIDE_FAIL:
+		case CAM_REQ_TERMIO:
+		case CAM_UNREC_HBA_ERROR:
+		case CAM_REQ_TOO_BIG:
 			new_status = DID_ERROR;
-			अवरोध;
-		हाल CAM_REQUEUE_REQ:
+			break;
+		case CAM_REQUEUE_REQ:
 			new_status = DID_REQUEUE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/* We should never get here */
 			new_status = DID_ERROR;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ahc_cmd_set_transaction_status(cmd, new_status);
-	पूर्ण
+	}
 
-	cmd->scsi_करोne(cmd);
-पूर्ण
+	cmd->scsi_done(cmd);
+}
 
-अटल व्योम
-ahc_linux_मुक्तze_simq(काष्ठा ahc_softc *ahc)
-अणु
-	अचिन्हित दीर्घ s;
+static void
+ahc_linux_freeze_simq(struct ahc_softc *ahc)
+{
+	unsigned long s;
 
 	ahc_lock(ahc, &s);
-	ahc->platक्रमm_data->qfrozen++;
-	अगर (ahc->platक्रमm_data->qfrozen == 1) अणु
-		scsi_block_requests(ahc->platक्रमm_data->host);
+	ahc->platform_data->qfrozen++;
+	if (ahc->platform_data->qfrozen == 1) {
+		scsi_block_requests(ahc->platform_data->host);
 
 		/* XXX What about Twin channels? */
-		ahc_platक्रमm_पात_scbs(ahc, CAM_TARGET_WILDCARD, ALL_CHANNELS,
-					CAM_LUN_WILDCARD, SCB_LIST_शून्य,
+		ahc_platform_abort_scbs(ahc, CAM_TARGET_WILDCARD, ALL_CHANNELS,
+					CAM_LUN_WILDCARD, SCB_LIST_NULL,
 					ROLE_INITIATOR, CAM_REQUEUE_REQ);
-	पूर्ण
+	}
 	ahc_unlock(ahc, &s);
-पूर्ण
+}
 
-अटल व्योम
-ahc_linux_release_simq(काष्ठा ahc_softc *ahc)
-अणु
-	u_दीर्घ s;
-	पूर्णांक    unblock_reqs;
+static void
+ahc_linux_release_simq(struct ahc_softc *ahc)
+{
+	u_long s;
+	int    unblock_reqs;
 
 	unblock_reqs = 0;
 	ahc_lock(ahc, &s);
-	अगर (ahc->platक्रमm_data->qfrozen > 0)
-		ahc->platक्रमm_data->qfrozen--;
-	अगर (ahc->platक्रमm_data->qfrozen == 0)
+	if (ahc->platform_data->qfrozen > 0)
+		ahc->platform_data->qfrozen--;
+	if (ahc->platform_data->qfrozen == 0)
 		unblock_reqs = 1;
 	ahc_unlock(ahc, &s);
 	/*
 	 * There is still a race here.  The mid-layer
-	 * should keep its own मुक्तze count and use
+	 * should keep its own freeze count and use
 	 * a bottom half handler to run the queues
 	 * so we can unblock with our own lock held.
 	 */
-	अगर (unblock_reqs)
-		scsi_unblock_requests(ahc->platक्रमm_data->host);
-पूर्ण
+	if (unblock_reqs)
+		scsi_unblock_requests(ahc->platform_data->host);
+}
 
-अटल पूर्णांक
-ahc_linux_queue_recovery_cmd(काष्ठा scsi_cmnd *cmd, scb_flag flag)
-अणु
-	काष्ठा ahc_softc *ahc;
-	काष्ठा ahc_linux_device *dev;
-	काष्ठा scb *pending_scb;
-	u_पूर्णांक  saved_scbptr;
-	u_पूर्णांक  active_scb_index;
-	u_पूर्णांक  last_phase;
-	u_पूर्णांक  saved_scsiid;
-	u_पूर्णांक  cdb_byte;
-	पूर्णांक    retval;
-	पूर्णांक    was_छोड़ोd;
-	पूर्णांक    छोड़ोd;
-	पूर्णांक    रुको;
-	पूर्णांक    disconnected;
-	अचिन्हित दीर्घ flags;
+static int
+ahc_linux_queue_recovery_cmd(struct scsi_cmnd *cmd, scb_flag flag)
+{
+	struct ahc_softc *ahc;
+	struct ahc_linux_device *dev;
+	struct scb *pending_scb;
+	u_int  saved_scbptr;
+	u_int  active_scb_index;
+	u_int  last_phase;
+	u_int  saved_scsiid;
+	u_int  cdb_byte;
+	int    retval;
+	int    was_paused;
+	int    paused;
+	int    wait;
+	int    disconnected;
+	unsigned long flags;
 
-	pending_scb = शून्य;
-	छोड़ोd = FALSE;
-	रुको = FALSE;
-	ahc = *(काष्ठा ahc_softc **)cmd->device->host->hostdata;
+	pending_scb = NULL;
+	paused = FALSE;
+	wait = FALSE;
+	ahc = *(struct ahc_softc **)cmd->device->host->hostdata;
 
-	scmd_prपूर्णांकk(KERN_INFO, cmd, "Attempting to queue a%s message\n",
+	scmd_printk(KERN_INFO, cmd, "Attempting to queue a%s message\n",
 	       flag == SCB_ABORT ? "n ABORT" : " TARGET RESET");
 
-	prपूर्णांकk("CDB:");
-	क्रम (cdb_byte = 0; cdb_byte < cmd->cmd_len; cdb_byte++)
-		prपूर्णांकk(" 0x%x", cmd->cmnd[cdb_byte]);
-	prपूर्णांकk("\n");
+	printk("CDB:");
+	for (cdb_byte = 0; cdb_byte < cmd->cmd_len; cdb_byte++)
+		printk(" 0x%x", cmd->cmnd[cdb_byte]);
+	printk("\n");
 
 	ahc_lock(ahc, &flags);
 
 	/*
-	 * First determine अगर we currently own this command.
+	 * First determine if we currently own this command.
 	 * Start by searching the device queue.  If not found
 	 * there, check the pending_scb list.  If not found
-	 * at all, and the प्रणाली wanted us to just पात the
-	 * command, वापस success.
+	 * at all, and the system wanted us to just abort the
+	 * command, return success.
 	 */
 	dev = scsi_transport_device_data(cmd->device);
 
-	अगर (dev == शून्य) अणु
+	if (dev == NULL) {
 		/*
-		 * No target device क्रम this command exists,
+		 * No target device for this command exists,
 		 * so we must not still own the command.
 		 */
-		prपूर्णांकk("%s:%d:%d:%d: Is not an active device\n",
+		printk("%s:%d:%d:%d: Is not an active device\n",
 		       ahc_name(ahc), cmd->device->channel, cmd->device->id,
 		       (u8)cmd->device->lun);
 		retval = SUCCESS;
-		जाओ no_cmd;
-	पूर्ण
+		goto no_cmd;
+	}
 
-	अगर ((dev->flags & (AHC_DEV_Q_BASIC|AHC_DEV_Q_TAGGED)) == 0
+	if ((dev->flags & (AHC_DEV_Q_BASIC|AHC_DEV_Q_TAGGED)) == 0
 	 && ahc_search_untagged_queues(ahc, cmd, cmd->device->id,
 				       cmd->device->channel + 'A',
 				       (u8)cmd->device->lun,
-				       CAM_REQ_ABORTED, SEARCH_COMPLETE) != 0) अणु
-		prपूर्णांकk("%s:%d:%d:%d: Command found on untagged queue\n",
+				       CAM_REQ_ABORTED, SEARCH_COMPLETE) != 0) {
+		printk("%s:%d:%d:%d: Command found on untagged queue\n",
 		       ahc_name(ahc), cmd->device->channel, cmd->device->id,
 		       (u8)cmd->device->lun);
 		retval = SUCCESS;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/*
-	 * See अगर we can find a matching cmd in the pending list.
+	 * See if we can find a matching cmd in the pending list.
 	 */
-	LIST_FOREACH(pending_scb, &ahc->pending_scbs, pending_links) अणु
-		अगर (pending_scb->io_ctx == cmd)
-			अवरोध;
-	पूर्ण
+	LIST_FOREACH(pending_scb, &ahc->pending_scbs, pending_links) {
+		if (pending_scb->io_ctx == cmd)
+			break;
+	}
 
-	अगर (pending_scb == शून्य && flag == SCB_DEVICE_RESET) अणु
+	if (pending_scb == NULL && flag == SCB_DEVICE_RESET) {
 
-		/* Any SCB क्रम this device will करो क्रम a target reset */
-		LIST_FOREACH(pending_scb, &ahc->pending_scbs, pending_links) अणु
-			अगर (ahc_match_scb(ahc, pending_scb, scmd_id(cmd),
+		/* Any SCB for this device will do for a target reset */
+		LIST_FOREACH(pending_scb, &ahc->pending_scbs, pending_links) {
+			if (ahc_match_scb(ahc, pending_scb, scmd_id(cmd),
 					  scmd_channel(cmd) + 'A',
 					  CAM_LUN_WILDCARD,
-					  SCB_LIST_शून्य, ROLE_INITIATOR))
-				अवरोध;
-		पूर्ण
-	पूर्ण
+					  SCB_LIST_NULL, ROLE_INITIATOR))
+				break;
+		}
+	}
 
-	अगर (pending_scb == शून्य) अणु
-		scmd_prपूर्णांकk(KERN_INFO, cmd, "Command not found\n");
-		जाओ no_cmd;
-	पूर्ण
+	if (pending_scb == NULL) {
+		scmd_printk(KERN_INFO, cmd, "Command not found\n");
+		goto no_cmd;
+	}
 
-	अगर ((pending_scb->flags & SCB_RECOVERY_SCB) != 0) अणु
+	if ((pending_scb->flags & SCB_RECOVERY_SCB) != 0) {
 		/*
 		 * We can't queue two recovery actions using the same SCB
 		 */
 		retval = FAILED;
-		जाओ  करोne;
-	पूर्ण
+		goto  done;
+	}
 
 	/*
-	 * Ensure that the card करोesn't करो anything
+	 * Ensure that the card doesn't do anything
 	 * behind our back and that we didn't "just" miss
-	 * an पूर्णांकerrupt that would affect this cmd.
+	 * an interrupt that would affect this cmd.
 	 */
-	was_छोड़ोd = ahc_is_छोड़ोd(ahc);
-	ahc_छोड़ो_and_flushwork(ahc);
-	छोड़ोd = TRUE;
+	was_paused = ahc_is_paused(ahc);
+	ahc_pause_and_flushwork(ahc);
+	paused = TRUE;
 
-	अगर ((pending_scb->flags & SCB_ACTIVE) == 0) अणु
-		scmd_prपूर्णांकk(KERN_INFO, cmd, "Command already completed\n");
-		जाओ no_cmd;
-	पूर्ण
+	if ((pending_scb->flags & SCB_ACTIVE) == 0) {
+		scmd_printk(KERN_INFO, cmd, "Command already completed\n");
+		goto no_cmd;
+	}
 
-	prपूर्णांकk("%s: At time of recovery, card was %spaused\n",
-	       ahc_name(ahc), was_छोड़ोd ? "" : "not ");
+	printk("%s: At time of recovery, card was %spaused\n",
+	       ahc_name(ahc), was_paused ? "" : "not ");
 	ahc_dump_card_state(ahc);
 
 	disconnected = TRUE;
-	अगर (flag == SCB_ABORT) अणु
-		अगर (ahc_search_qinfअगरo(ahc, cmd->device->id,
+	if (flag == SCB_ABORT) {
+		if (ahc_search_qinfifo(ahc, cmd->device->id,
 				       cmd->device->channel + 'A',
 				       cmd->device->lun,
 				       pending_scb->hscb->tag,
 				       ROLE_INITIATOR, CAM_REQ_ABORTED,
-				       SEARCH_COMPLETE) > 0) अणु
-			prपूर्णांकk("%s:%d:%d:%d: Cmd aborted from QINFIFO\n",
+				       SEARCH_COMPLETE) > 0) {
+			printk("%s:%d:%d:%d: Cmd aborted from QINFIFO\n",
 			       ahc_name(ahc), cmd->device->channel,
 			       cmd->device->id, (u8)cmd->device->lun);
 			retval = SUCCESS;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण अन्यथा अगर (ahc_search_qinfअगरo(ahc, cmd->device->id,
+			goto done;
+		}
+	} else if (ahc_search_qinfifo(ahc, cmd->device->id,
 				      cmd->device->channel + 'A',
 				      cmd->device->lun,
 				      pending_scb->hscb->tag,
 				      ROLE_INITIATOR, /*status*/0,
-				      SEARCH_COUNT) > 0) अणु
+				      SEARCH_COUNT) > 0) {
 		disconnected = FALSE;
-	पूर्ण
+	}
 
-	अगर (disconnected && (ahc_inb(ahc, SEQ_FLAGS) & NOT_IDENTIFIED) == 0) अणु
-		काष्ठा scb *bus_scb;
+	if (disconnected && (ahc_inb(ahc, SEQ_FLAGS) & NOT_IDENTIFIED) == 0) {
+		struct scb *bus_scb;
 
 		bus_scb = ahc_lookup_scb(ahc, ahc_inb(ahc, SCB_TAG));
-		अगर (bus_scb == pending_scb)
+		if (bus_scb == pending_scb)
 			disconnected = FALSE;
-		अन्यथा अगर (flag != SCB_ABORT
+		else if (flag != SCB_ABORT
 		      && ahc_inb(ahc, SAVED_SCSIID) == pending_scb->hscb->scsiid
 		      && ahc_inb(ahc, SAVED_LUN) == SCB_GET_LUN(pending_scb))
 			disconnected = FALSE;
-	पूर्ण
+	}
 
 	/*
-	 * At this poपूर्णांक, pending_scb is the scb associated with the
+	 * At this point, pending_scb is the scb associated with the
 	 * passed in command.  That command is currently active on the
 	 * bus, is in the disconnected state, or we're hoping to find
-	 * a command क्रम the same target active on the bus to abuse to
+	 * a command for the same target active on the bus to abuse to
 	 * send a BDR.  Queue the appropriate message based on which of
 	 * these states we are in.
 	 */
@@ -2196,37 +2195,37 @@ ahc_linux_queue_recovery_cmd(काष्ठा scsi_cmnd *cmd, scb_flag flag)
 	saved_scbptr = ahc_inb(ahc, SCBPTR);
 	active_scb_index = ahc_inb(ahc, SCB_TAG);
 	saved_scsiid = ahc_inb(ahc, SAVED_SCSIID);
-	अगर (last_phase != P_BUSFREE
+	if (last_phase != P_BUSFREE
 	 && (pending_scb->hscb->tag == active_scb_index
 	  || (flag == SCB_DEVICE_RESET
-	   && SCSIID_TARGET(ahc, saved_scsiid) == scmd_id(cmd)))) अणु
+	   && SCSIID_TARGET(ahc, saved_scsiid) == scmd_id(cmd)))) {
 
 		/*
-		 * We're active on the bus, so निश्चित ATN
+		 * We're active on the bus, so assert ATN
 		 * and hope that the target responds.
 		 */
 		pending_scb = ahc_lookup_scb(ahc, active_scb_index);
 		pending_scb->flags |= SCB_RECOVERY_SCB|flag;
 		ahc_outb(ahc, MSG_OUT, HOST_MSG);
 		ahc_outb(ahc, SCSISIGO, last_phase|ATNO);
-		scmd_prपूर्णांकk(KERN_INFO, cmd, "Device is active, asserting ATN\n");
-		रुको = TRUE;
-	पूर्ण अन्यथा अगर (disconnected) अणु
+		scmd_printk(KERN_INFO, cmd, "Device is active, asserting ATN\n");
+		wait = TRUE;
+	} else if (disconnected) {
 
 		/*
 		 * Actually re-queue this SCB in an attempt
-		 * to select the device beक्रमe it reconnects.
-		 * In either हाल (selection or reselection),
+		 * to select the device before it reconnects.
+		 * In either case (selection or reselection),
 		 * we will now issue the approprate message
-		 * to the समयd-out device.
+		 * to the timed-out device.
 		 *
 		 * Set the MK_MESSAGE control bit indicating
 		 * that we desire to send a message.  We
 		 * also set the disconnected flag since
-		 * in the paging हाल there is no guarantee
+		 * in the paging case there is no guarantee
 		 * that our SCB control byte matches the
-		 * version on the card.  We करोn't want the
-		 * sequencer to पात the command thinking
+		 * version on the card.  We don't want the
+		 * sequencer to abort the command thinking
 		 * an unsolicited reselection occurred.
 		 */
 		pending_scb->hscb->control |= MK_MESSAGE|DISCONNECTED;
@@ -2234,134 +2233,134 @@ ahc_linux_queue_recovery_cmd(काष्ठा scsi_cmnd *cmd, scb_flag flag)
 
 		/*
 		 * Remove any cached copy of this SCB in the
-		 * disconnected list in preparation क्रम the
-		 * queuing of our पात SCB.  We use the
-		 * same element in the SCB, SCB_NEXT, क्रम
-		 * both the qinfअगरo and the disconnected list.
+		 * disconnected list in preparation for the
+		 * queuing of our abort SCB.  We use the
+		 * same element in the SCB, SCB_NEXT, for
+		 * both the qinfifo and the disconnected list.
 		 */
 		ahc_search_disc_list(ahc, cmd->device->id,
 				     cmd->device->channel + 'A',
 				     cmd->device->lun, pending_scb->hscb->tag,
 				     /*stop_on_first*/TRUE,
-				     /*हटाओ*/TRUE,
+				     /*remove*/TRUE,
 				     /*save_state*/FALSE);
 
 		/*
-		 * In the non-paging हाल, the sequencer will
+		 * In the non-paging case, the sequencer will
 		 * never re-reference the in-core SCB.
-		 * To make sure we are notअगरied during
+		 * To make sure we are notified during
 		 * reselection, set the MK_MESSAGE flag in
 		 * the card's copy of the SCB.
 		 */
-		अगर ((ahc->flags & AHC_PAGESCBS) == 0) अणु
+		if ((ahc->flags & AHC_PAGESCBS) == 0) {
 			ahc_outb(ahc, SCBPTR, pending_scb->hscb->tag);
 			ahc_outb(ahc, SCB_CONTROL,
 				 ahc_inb(ahc, SCB_CONTROL)|MK_MESSAGE);
-		पूर्ण
+		}
 
 		/*
 		 * Clear out any entries in the QINFIFO first
-		 * so we are the next SCB क्रम this target
+		 * so we are the next SCB for this target
 		 * to run.
 		 */
-		ahc_search_qinfअगरo(ahc, cmd->device->id,
+		ahc_search_qinfifo(ahc, cmd->device->id,
 				   cmd->device->channel + 'A',
-				   cmd->device->lun, SCB_LIST_शून्य,
+				   cmd->device->lun, SCB_LIST_NULL,
 				   ROLE_INITIATOR, CAM_REQUEUE_REQ,
 				   SEARCH_COMPLETE);
-		ahc_qinfअगरo_requeue_tail(ahc, pending_scb);
+		ahc_qinfifo_requeue_tail(ahc, pending_scb);
 		ahc_outb(ahc, SCBPTR, saved_scbptr);
-		ahc_prपूर्णांक_path(ahc, pending_scb);
-		prपूर्णांकk("Device is disconnected, re-queuing SCB\n");
-		रुको = TRUE;
-	पूर्ण अन्यथा अणु
-		scmd_prपूर्णांकk(KERN_INFO, cmd, "Unable to deliver message\n");
+		ahc_print_path(ahc, pending_scb);
+		printk("Device is disconnected, re-queuing SCB\n");
+		wait = TRUE;
+	} else {
+		scmd_printk(KERN_INFO, cmd, "Unable to deliver message\n");
 		retval = FAILED;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 no_cmd:
 	/*
-	 * Our assumption is that अगर we करोn't have the command, no
-	 * recovery action was required, so we वापस success.  Again,
+	 * Our assumption is that if we don't have the command, no
+	 * recovery action was required, so we return success.  Again,
 	 * the semantics of the mid-layer recovery engine are not
-	 * well defined, so this may change in समय.
+	 * well defined, so this may change in time.
 	 */
 	retval = SUCCESS;
-करोne:
-	अगर (छोड़ोd)
-		ahc_unछोड़ो(ahc);
-	अगर (रुको) अणु
-		DECLARE_COMPLETION_ONSTACK(करोne);
+done:
+	if (paused)
+		ahc_unpause(ahc);
+	if (wait) {
+		DECLARE_COMPLETION_ONSTACK(done);
 
-		ahc->platक्रमm_data->eh_करोne = &करोne;
+		ahc->platform_data->eh_done = &done;
 		ahc_unlock(ahc, &flags);
 
-		prपूर्णांकk("Recovery code sleeping\n");
-		अगर (!रुको_क्रम_completion_समयout(&करोne, 5 * HZ)) अणु
+		printk("Recovery code sleeping\n");
+		if (!wait_for_completion_timeout(&done, 5 * HZ)) {
 			ahc_lock(ahc, &flags);
-			ahc->platक्रमm_data->eh_करोne = शून्य;
+			ahc->platform_data->eh_done = NULL;
 			ahc_unlock(ahc, &flags);
 
-			prपूर्णांकk("Timer Expired\n");
+			printk("Timer Expired\n");
 			retval = FAILED;
-		पूर्ण
-		prपूर्णांकk("Recovery code awake\n");
-	पूर्ण अन्यथा
+		}
+		printk("Recovery code awake\n");
+	} else
 		ahc_unlock(ahc, &flags);
-	वापस (retval);
-पूर्ण
+	return (retval);
+}
 
-अटल व्योम ahc_linux_set_width(काष्ठा scsi_target *starget, पूर्णांक width)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)shost->hostdata);
-	काष्ठा ahc_devinfo devinfo;
-	अचिन्हित दीर्घ flags;
+static void ahc_linux_set_width(struct scsi_target *starget, int width)
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct ahc_softc *ahc = *((struct ahc_softc **)shost->hostdata);
+	struct ahc_devinfo devinfo;
+	unsigned long flags;
 
 	ahc_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
 			    starget->channel + 'A', ROLE_INITIATOR);
 	ahc_lock(ahc, &flags);
 	ahc_set_width(ahc, &devinfo, width, AHC_TRANS_GOAL, FALSE);
 	ahc_unlock(ahc, &flags);
-पूर्ण
+}
 
-अटल व्योम ahc_linux_set_period(काष्ठा scsi_target *starget, पूर्णांक period)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)shost->hostdata);
-	काष्ठा ahc_पंचांगode_tstate *tstate;
-	काष्ठा ahc_initiator_tinfo *tinfo
+static void ahc_linux_set_period(struct scsi_target *starget, int period)
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct ahc_softc *ahc = *((struct ahc_softc **)shost->hostdata);
+	struct ahc_tmode_tstate *tstate;
+	struct ahc_initiator_tinfo *tinfo
 		= ahc_fetch_transinfo(ahc,
 				      starget->channel + 'A',
 				      shost->this_id, starget->id, &tstate);
-	काष्ठा ahc_devinfo devinfo;
-	अचिन्हित पूर्णांक ppr_options = tinfo->goal.ppr_options;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ offset = tinfo->goal.offset;
-	स्थिर काष्ठा ahc_syncrate *syncrate;
+	struct ahc_devinfo devinfo;
+	unsigned int ppr_options = tinfo->goal.ppr_options;
+	unsigned long flags;
+	unsigned long offset = tinfo->goal.offset;
+	const struct ahc_syncrate *syncrate;
 
-	अगर (offset == 0)
+	if (offset == 0)
 		offset = MAX_OFFSET;
 
-	अगर (period < 9)
+	if (period < 9)
 		period = 9;	/* 12.5ns is our minimum */
-	अगर (period == 9) अणु
-		अगर (spi_max_width(starget))
+	if (period == 9) {
+		if (spi_max_width(starget))
 			ppr_options |= MSG_EXT_PPR_DT_REQ;
-		अन्यथा
-			/* need wide क्रम DT and need DT क्रम 12.5 ns */
+		else
+			/* need wide for DT and need DT for 12.5 ns */
 			period = 10;
-	पूर्ण
+	}
 
 	ahc_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
 			    starget->channel + 'A', ROLE_INITIATOR);
 
 	/* all PPR requests apart from QAS require wide transfers */
-	अगर (ppr_options & ~MSG_EXT_PPR_QAS_REQ) अणु
-		अगर (spi_width(starget) == 0)
+	if (ppr_options & ~MSG_EXT_PPR_QAS_REQ) {
+		if (spi_width(starget) == 0)
 			ppr_options &= MSG_EXT_PPR_QAS_REQ;
-	पूर्ण
+	}
 
 	syncrate = ahc_find_syncrate(ahc, &period, &ppr_options,
 				     AHC_SYNCRATE_DT);
@@ -2369,60 +2368,60 @@ no_cmd:
 	ahc_set_syncrate(ahc, &devinfo, syncrate, period, offset,
 			 ppr_options, AHC_TRANS_GOAL, FALSE);
 	ahc_unlock(ahc, &flags);
-पूर्ण
+}
 
-अटल व्योम ahc_linux_set_offset(काष्ठा scsi_target *starget, पूर्णांक offset)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)shost->hostdata);
-	काष्ठा ahc_पंचांगode_tstate *tstate;
-	काष्ठा ahc_initiator_tinfo *tinfo
+static void ahc_linux_set_offset(struct scsi_target *starget, int offset)
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct ahc_softc *ahc = *((struct ahc_softc **)shost->hostdata);
+	struct ahc_tmode_tstate *tstate;
+	struct ahc_initiator_tinfo *tinfo
 		= ahc_fetch_transinfo(ahc,
 				      starget->channel + 'A',
 				      shost->this_id, starget->id, &tstate);
-	काष्ठा ahc_devinfo devinfo;
-	अचिन्हित पूर्णांक ppr_options = 0;
-	अचिन्हित पूर्णांक period = 0;
-	अचिन्हित दीर्घ flags;
-	स्थिर काष्ठा ahc_syncrate *syncrate = शून्य;
+	struct ahc_devinfo devinfo;
+	unsigned int ppr_options = 0;
+	unsigned int period = 0;
+	unsigned long flags;
+	const struct ahc_syncrate *syncrate = NULL;
 
 	ahc_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
 			    starget->channel + 'A', ROLE_INITIATOR);
-	अगर (offset != 0) अणु
+	if (offset != 0) {
 		syncrate = ahc_find_syncrate(ahc, &period, &ppr_options,
 					     AHC_SYNCRATE_DT);
 		period = tinfo->goal.period;
 		ppr_options = tinfo->goal.ppr_options;
-	पूर्ण
+	}
 	ahc_lock(ahc, &flags);
 	ahc_set_syncrate(ahc, &devinfo, syncrate, period, offset,
 			 ppr_options, AHC_TRANS_GOAL, FALSE);
 	ahc_unlock(ahc, &flags);
-पूर्ण
+}
 
-अटल व्योम ahc_linux_set_dt(काष्ठा scsi_target *starget, पूर्णांक dt)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)shost->hostdata);
-	काष्ठा ahc_पंचांगode_tstate *tstate;
-	काष्ठा ahc_initiator_tinfo *tinfo
+static void ahc_linux_set_dt(struct scsi_target *starget, int dt)
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct ahc_softc *ahc = *((struct ahc_softc **)shost->hostdata);
+	struct ahc_tmode_tstate *tstate;
+	struct ahc_initiator_tinfo *tinfo
 		= ahc_fetch_transinfo(ahc,
 				      starget->channel + 'A',
 				      shost->this_id, starget->id, &tstate);
-	काष्ठा ahc_devinfo devinfo;
-	अचिन्हित पूर्णांक ppr_options = tinfo->goal.ppr_options
+	struct ahc_devinfo devinfo;
+	unsigned int ppr_options = tinfo->goal.ppr_options
 		& ~MSG_EXT_PPR_DT_REQ;
-	अचिन्हित पूर्णांक period = tinfo->goal.period;
-	अचिन्हित पूर्णांक width = tinfo->goal.width;
-	अचिन्हित दीर्घ flags;
-	स्थिर काष्ठा ahc_syncrate *syncrate;
+	unsigned int period = tinfo->goal.period;
+	unsigned int width = tinfo->goal.width;
+	unsigned long flags;
+	const struct ahc_syncrate *syncrate;
 
-	अगर (dt && spi_max_width(starget)) अणु
+	if (dt && spi_max_width(starget)) {
 		ppr_options |= MSG_EXT_PPR_DT_REQ;
-		अगर (!width)
+		if (!width)
 			ahc_linux_set_width(starget, 1);
-	पूर्ण अन्यथा अगर (period == 9)
-		period = 10;	/* अगर resetting DT, period must be >= 25ns */
+	} else if (period == 9)
+		period = 10;	/* if resetting DT, period must be >= 25ns */
 
 	ahc_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
 			    starget->channel + 'A', ROLE_INITIATOR);
@@ -2432,30 +2431,30 @@ no_cmd:
 	ahc_set_syncrate(ahc, &devinfo, syncrate, period, tinfo->goal.offset,
 			 ppr_options, AHC_TRANS_GOAL, FALSE);
 	ahc_unlock(ahc, &flags);
-पूर्ण
+}
 
-#अगर 0
+#if 0
 /* FIXME: This code claims to support IU and QAS.  However, the actual
- * sequencer code and aic7xxx_core have no support क्रम these parameters and
- * will get पूर्णांकo a bad state अगर they're negotiated.  Do not enable this
- * unless you know what you're करोing */
-अटल व्योम ahc_linux_set_qas(काष्ठा scsi_target *starget, पूर्णांक qas)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)shost->hostdata);
-	काष्ठा ahc_पंचांगode_tstate *tstate;
-	काष्ठा ahc_initiator_tinfo *tinfo
+ * sequencer code and aic7xxx_core have no support for these parameters and
+ * will get into a bad state if they're negotiated.  Do not enable this
+ * unless you know what you're doing */
+static void ahc_linux_set_qas(struct scsi_target *starget, int qas)
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct ahc_softc *ahc = *((struct ahc_softc **)shost->hostdata);
+	struct ahc_tmode_tstate *tstate;
+	struct ahc_initiator_tinfo *tinfo
 		= ahc_fetch_transinfo(ahc,
 				      starget->channel + 'A',
 				      shost->this_id, starget->id, &tstate);
-	काष्ठा ahc_devinfo devinfo;
-	अचिन्हित पूर्णांक ppr_options = tinfo->goal.ppr_options
+	struct ahc_devinfo devinfo;
+	unsigned int ppr_options = tinfo->goal.ppr_options
 		& ~MSG_EXT_PPR_QAS_REQ;
-	अचिन्हित पूर्णांक period = tinfo->goal.period;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ahc_syncrate *syncrate;
+	unsigned int period = tinfo->goal.period;
+	unsigned long flags;
+	struct ahc_syncrate *syncrate;
 
-	अगर (qas)
+	if (qas)
 		ppr_options |= MSG_EXT_PPR_QAS_REQ;
 
 	ahc_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
@@ -2466,25 +2465,25 @@ no_cmd:
 	ahc_set_syncrate(ahc, &devinfo, syncrate, period, tinfo->goal.offset,
 			 ppr_options, AHC_TRANS_GOAL, FALSE);
 	ahc_unlock(ahc, &flags);
-पूर्ण
+}
 
-अटल व्योम ahc_linux_set_iu(काष्ठा scsi_target *starget, पूर्णांक iu)
-अणु
-	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	काष्ठा ahc_softc *ahc = *((काष्ठा ahc_softc **)shost->hostdata);
-	काष्ठा ahc_पंचांगode_tstate *tstate;
-	काष्ठा ahc_initiator_tinfo *tinfo
+static void ahc_linux_set_iu(struct scsi_target *starget, int iu)
+{
+	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	struct ahc_softc *ahc = *((struct ahc_softc **)shost->hostdata);
+	struct ahc_tmode_tstate *tstate;
+	struct ahc_initiator_tinfo *tinfo
 		= ahc_fetch_transinfo(ahc,
 				      starget->channel + 'A',
 				      shost->this_id, starget->id, &tstate);
-	काष्ठा ahc_devinfo devinfo;
-	अचिन्हित पूर्णांक ppr_options = tinfo->goal.ppr_options
+	struct ahc_devinfo devinfo;
+	unsigned int ppr_options = tinfo->goal.ppr_options
 		& ~MSG_EXT_PPR_IU_REQ;
-	अचिन्हित पूर्णांक period = tinfo->goal.period;
-	अचिन्हित दीर्घ flags;
-	काष्ठा ahc_syncrate *syncrate;
+	unsigned int period = tinfo->goal.period;
+	unsigned long flags;
+	struct ahc_syncrate *syncrate;
 
-	अगर (iu)
+	if (iu)
 		ppr_options |= MSG_EXT_PPR_IU_REQ;
 
 	ahc_compile_devinfo(&devinfo, shost->this_id, starget->id, 0,
@@ -2495,39 +2494,39 @@ no_cmd:
 	ahc_set_syncrate(ahc, &devinfo, syncrate, period, tinfo->goal.offset,
 			 ppr_options, AHC_TRANS_GOAL, FALSE);
 	ahc_unlock(ahc, &flags);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम ahc_linux_get_संकेतling(काष्ठा Scsi_Host *shost)
-अणु
-	काष्ठा ahc_softc *ahc = *(काष्ठा ahc_softc **)shost->hostdata;
-	अचिन्हित दीर्घ flags;
+static void ahc_linux_get_signalling(struct Scsi_Host *shost)
+{
+	struct ahc_softc *ahc = *(struct ahc_softc **)shost->hostdata;
+	unsigned long flags;
 	u8 mode;
 
-	अगर (!(ahc->features & AHC_ULTRA2)) अणु
+	if (!(ahc->features & AHC_ULTRA2)) {
 		/* non-LVD chipset, may not have SBLKCTL reg */
-		spi_संकेतling(shost) =
+		spi_signalling(shost) =
 			ahc->features & AHC_HVD ?
 			SPI_SIGNAL_HVD :
 			SPI_SIGNAL_SE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ahc_lock(ahc, &flags);
-	ahc_छोड़ो(ahc);
+	ahc_pause(ahc);
 	mode = ahc_inb(ahc, SBLKCTL);
-	ahc_unछोड़ो(ahc);
+	ahc_unpause(ahc);
 	ahc_unlock(ahc, &flags);
 
-	अगर (mode & ENAB40)
-		spi_संकेतling(shost) = SPI_SIGNAL_LVD;
-	अन्यथा अगर (mode & ENAB20)
-		spi_संकेतling(shost) = SPI_SIGNAL_SE;
-	अन्यथा
-		spi_संकेतling(shost) = SPI_SIGNAL_UNKNOWN;
-पूर्ण
+	if (mode & ENAB40)
+		spi_signalling(shost) = SPI_SIGNAL_LVD;
+	else if (mode & ENAB20)
+		spi_signalling(shost) = SPI_SIGNAL_SE;
+	else
+		spi_signalling(shost) = SPI_SIGNAL_UNKNOWN;
+}
 
-अटल काष्ठा spi_function_ढाँचा ahc_linux_transport_functions = अणु
+static struct spi_function_template ahc_linux_transport_functions = {
 	.set_offset	= ahc_linux_set_offset,
 	.show_offset	= 1,
 	.set_period	= ahc_linux_set_period,
@@ -2536,46 +2535,46 @@ no_cmd:
 	.show_width	= 1,
 	.set_dt		= ahc_linux_set_dt,
 	.show_dt	= 1,
-#अगर 0
+#if 0
 	.set_iu		= ahc_linux_set_iu,
 	.show_iu	= 1,
 	.set_qas	= ahc_linux_set_qas,
 	.show_qas	= 1,
-#पूर्ण_अगर
-	.get_संकेतling	= ahc_linux_get_संकेतling,
-पूर्ण;
+#endif
+	.get_signalling	= ahc_linux_get_signalling,
+};
 
 
 
-अटल पूर्णांक __init
-ahc_linux_init(व्योम)
-अणु
+static int __init
+ahc_linux_init(void)
+{
 	/*
 	 * If we've been passed any parameters, process them now.
 	 */
-	अगर (aic7xxx)
+	if (aic7xxx)
 		aic7xxx_setup(aic7xxx);
 
-	ahc_linux_transport_ढाँचा =
+	ahc_linux_transport_template =
 		spi_attach_transport(&ahc_linux_transport_functions);
-	अगर (!ahc_linux_transport_ढाँचा)
-		वापस -ENODEV;
+	if (!ahc_linux_transport_template)
+		return -ENODEV;
 
-	scsi_transport_reserve_device(ahc_linux_transport_ढाँचा,
-				      माप(काष्ठा ahc_linux_device));
+	scsi_transport_reserve_device(ahc_linux_transport_template,
+				      sizeof(struct ahc_linux_device));
 
 	ahc_linux_pci_init();
 	ahc_linux_eisa_init();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम
-ahc_linux_निकास(व्योम)
-अणु
-	ahc_linux_pci_निकास();
-	ahc_linux_eisa_निकास();
-	spi_release_transport(ahc_linux_transport_ढाँचा);
-पूर्ण
+static void
+ahc_linux_exit(void)
+{
+	ahc_linux_pci_exit();
+	ahc_linux_eisa_exit();
+	spi_release_transport(ahc_linux_transport_template);
+}
 
 module_init(ahc_linux_init);
-module_निकास(ahc_linux_निकास);
+module_exit(ahc_linux_exit);

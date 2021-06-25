@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित PERF_SRCLINE_H
-#घोषणा PERF_SRCLINE_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef PERF_SRCLINE_H
+#define PERF_SRCLINE_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/types.h>
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include <linux/types.h>
 
-काष्ठा dso;
-काष्ठा symbol;
+struct dso;
+struct symbol;
 
-बाह्य bool srcline_full_filename;
-अक्षर *get_srcline(काष्ठा dso *dso, u64 addr, काष्ठा symbol *sym,
+extern bool srcline_full_filename;
+char *get_srcline(struct dso *dso, u64 addr, struct symbol *sym,
 		  bool show_sym, bool show_addr, u64 ip);
-अक्षर *__get_srcline(काष्ठा dso *dso, u64 addr, काष्ठा symbol *sym,
-		  bool show_sym, bool show_addr, bool unwind_अंतरभूतs,
+char *__get_srcline(struct dso *dso, u64 addr, struct symbol *sym,
+		  bool show_sym, bool show_addr, bool unwind_inlines,
 		  u64 ip);
-व्योम मुक्त_srcline(अक्षर *srcline);
-अक्षर *get_srcline_split(काष्ठा dso *dso, u64 addr, अचिन्हित *line);
+void free_srcline(char *srcline);
+char *get_srcline_split(struct dso *dso, u64 addr, unsigned *line);
 
-/* insert the srcline पूर्णांकo the DSO, which will take ownership */
-व्योम srcline__tree_insert(काष्ठा rb_root_cached *tree, u64 addr, अक्षर *srcline);
+/* insert the srcline into the DSO, which will take ownership */
+void srcline__tree_insert(struct rb_root_cached *tree, u64 addr, char *srcline);
 /* find previously inserted srcline */
-अक्षर *srcline__tree_find(काष्ठा rb_root_cached *tree, u64 addr);
+char *srcline__tree_find(struct rb_root_cached *tree, u64 addr);
 /* delete all srclines within the tree */
-व्योम srcline__tree_delete(काष्ठा rb_root_cached *tree);
+void srcline__tree_delete(struct rb_root_cached *tree);
 
-#घोषणा SRCLINE_UNKNOWN  ((अक्षर *) "??:0")
+#define SRCLINE_UNKNOWN  ((char *) "??:0")
 
-काष्ठा अंतरभूत_list अणु
-	काष्ठा symbol		*symbol;
-	अक्षर			*srcline;
-	काष्ठा list_head	list;
-पूर्ण;
+struct inline_list {
+	struct symbol		*symbol;
+	char			*srcline;
+	struct list_head	list;
+};
 
-काष्ठा अंतरभूत_node अणु
+struct inline_node {
 	u64			addr;
-	काष्ठा list_head	val;
-	काष्ठा rb_node		rb_node;
-पूर्ण;
+	struct list_head	val;
+	struct rb_node		rb_node;
+};
 
-/* parse अंतरभूतd frames क्रम the given address */
-काष्ठा अंतरभूत_node *dso__parse_addr_अंतरभूतs(काष्ठा dso *dso, u64 addr,
-					    काष्ठा symbol *sym);
-/* मुक्त resources associated to the अंतरभूत node list */
-व्योम अंतरभूत_node__delete(काष्ठा अंतरभूत_node *node);
+/* parse inlined frames for the given address */
+struct inline_node *dso__parse_addr_inlines(struct dso *dso, u64 addr,
+					    struct symbol *sym);
+/* free resources associated to the inline node list */
+void inline_node__delete(struct inline_node *node);
 
-/* insert the अंतरभूत node list पूर्णांकo the DSO, which will take ownership */
-व्योम अंतरभूतs__tree_insert(काष्ठा rb_root_cached *tree,
-			  काष्ठा अंतरभूत_node *अंतरभूतs);
-/* find previously inserted अंतरभूत node list */
-काष्ठा अंतरभूत_node *अंतरभूतs__tree_find(काष्ठा rb_root_cached *tree, u64 addr);
-/* delete all nodes within the tree of अंतरभूत_node s */
-व्योम अंतरभूतs__tree_delete(काष्ठा rb_root_cached *tree);
+/* insert the inline node list into the DSO, which will take ownership */
+void inlines__tree_insert(struct rb_root_cached *tree,
+			  struct inline_node *inlines);
+/* find previously inserted inline node list */
+struct inline_node *inlines__tree_find(struct rb_root_cached *tree, u64 addr);
+/* delete all nodes within the tree of inline_node s */
+void inlines__tree_delete(struct rb_root_cached *tree);
 
-#पूर्ण_अगर /* PERF_SRCLINE_H */
+#endif /* PERF_SRCLINE_H */

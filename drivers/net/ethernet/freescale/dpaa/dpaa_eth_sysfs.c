@@ -1,16 +1,15 @@
-<शैली गुरु>
 /* Copyright 2008-2016 Freescale Semiconductor Inc.
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *	 notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary क्रमm must reproduce the above copyright
+ *     * Redistributions in binary form must reproduce the above copyright
  *	 notice, this list of conditions and the following disclaimer in the
- *	 करोcumentation and/or other materials provided with the distribution.
+ *	 documentation and/or other materials provided with the distribution.
  *     * Neither the name of Freescale Semiconductor nor the
- *	 names of its contributors may be used to enकरोrse or promote products
- *	 derived from this software without specअगरic prior written permission.
+ *	 names of its contributors may be used to endorse or promote products
+ *	 derived from this software without specific prior written permission.
  *
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
@@ -22,7 +21,7 @@
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL Freescale Semiconductor BE LIABLE FOR ANY
- * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -30,138 +29,138 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of_net.h>
-#समावेश "dpaa_eth.h"
-#समावेश "mac.h"
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/of_net.h>
+#include "dpaa_eth.h"
+#include "mac.h"
 
-अटल sमाप_प्रकार dpaa_eth_show_addr(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dpaa_priv *priv = netdev_priv(to_net_dev(dev));
-	काष्ठा mac_device *mac_dev = priv->mac_dev;
+static ssize_t dpaa_eth_show_addr(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct dpaa_priv *priv = netdev_priv(to_net_dev(dev));
+	struct mac_device *mac_dev = priv->mac_dev;
 
-	अगर (mac_dev)
-		वापस प्र_लिखो(buf, "%llx",
-				(अचिन्हित दीर्घ दीर्घ)mac_dev->res->start);
-	अन्यथा
-		वापस प्र_लिखो(buf, "none");
-पूर्ण
+	if (mac_dev)
+		return sprintf(buf, "%llx",
+				(unsigned long long)mac_dev->res->start);
+	else
+		return sprintf(buf, "none");
+}
 
-अटल sमाप_प्रकार dpaa_eth_show_fqids(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dpaa_priv *priv = netdev_priv(to_net_dev(dev));
-	काष्ठा dpaa_fq *prev = शून्य;
-	अक्षर *prevstr = शून्य;
-	काष्ठा dpaa_fq *पंचांगp;
-	काष्ठा dpaa_fq *fq;
+static ssize_t dpaa_eth_show_fqids(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct dpaa_priv *priv = netdev_priv(to_net_dev(dev));
+	struct dpaa_fq *prev = NULL;
+	char *prevstr = NULL;
+	struct dpaa_fq *tmp;
+	struct dpaa_fq *fq;
 	u32 first_fqid = 0;
 	u32 last_fqid = 0;
-	sमाप_प्रकार bytes = 0;
-	अक्षर *str;
-	पूर्णांक i = 0;
+	ssize_t bytes = 0;
+	char *str;
+	int i = 0;
 
-	list_क्रम_each_entry_safe(fq, पंचांगp, &priv->dpaa_fq_list, list) अणु
-		चयन (fq->fq_type) अणु
-		हाल FQ_TYPE_RX_DEFAULT:
+	list_for_each_entry_safe(fq, tmp, &priv->dpaa_fq_list, list) {
+		switch (fq->fq_type) {
+		case FQ_TYPE_RX_DEFAULT:
 			str = "Rx default";
-			अवरोध;
-		हाल FQ_TYPE_RX_ERROR:
+			break;
+		case FQ_TYPE_RX_ERROR:
 			str = "Rx error";
-			अवरोध;
-		हाल FQ_TYPE_RX_PCD:
+			break;
+		case FQ_TYPE_RX_PCD:
 			str = "Rx PCD";
-			अवरोध;
-		हाल FQ_TYPE_TX_CONFIRM:
+			break;
+		case FQ_TYPE_TX_CONFIRM:
 			str = "Tx default confirmation";
-			अवरोध;
-		हाल FQ_TYPE_TX_CONF_MQ:
+			break;
+		case FQ_TYPE_TX_CONF_MQ:
 			str = "Tx confirmation (mq)";
-			अवरोध;
-		हाल FQ_TYPE_TX_ERROR:
+			break;
+		case FQ_TYPE_TX_ERROR:
 			str = "Tx error";
-			अवरोध;
-		हाल FQ_TYPE_TX:
+			break;
+		case FQ_TYPE_TX:
 			str = "Tx";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			str = "Unknown";
-		पूर्ण
+		}
 
-		अगर (prev && (असल(fq->fqid - prev->fqid) != 1 ||
-			     str != prevstr)) अणु
-			अगर (last_fqid == first_fqid)
-				bytes += प्र_लिखो(buf + bytes,
+		if (prev && (abs(fq->fqid - prev->fqid) != 1 ||
+			     str != prevstr)) {
+			if (last_fqid == first_fqid)
+				bytes += sprintf(buf + bytes,
 					"%s: %d\n", prevstr, prev->fqid);
-			अन्यथा
-				bytes += प्र_लिखो(buf + bytes,
+			else
+				bytes += sprintf(buf + bytes,
 					"%s: %d - %d\n", prevstr,
 					first_fqid, last_fqid);
-		पूर्ण
+		}
 
-		अगर (prev && असल(fq->fqid - prev->fqid) == 1 &&
-		    str == prevstr) अणु
+		if (prev && abs(fq->fqid - prev->fqid) == 1 &&
+		    str == prevstr) {
 			last_fqid = fq->fqid;
-		पूर्ण अन्यथा अणु
+		} else {
 			first_fqid = fq->fqid;
 			last_fqid = fq->fqid;
-		पूर्ण
+		}
 
 		prev = fq;
 		prevstr = str;
 		i++;
-	पूर्ण
+	}
 
-	अगर (prev) अणु
-		अगर (last_fqid == first_fqid)
-			bytes += प्र_लिखो(buf + bytes, "%s: %d\n", prevstr,
+	if (prev) {
+		if (last_fqid == first_fqid)
+			bytes += sprintf(buf + bytes, "%s: %d\n", prevstr,
 					prev->fqid);
-		अन्यथा
-			bytes += प्र_लिखो(buf + bytes, "%s: %d - %d\n", prevstr,
+		else
+			bytes += sprintf(buf + bytes, "%s: %d - %d\n", prevstr,
 					first_fqid, last_fqid);
-	पूर्ण
+	}
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-अटल sमाप_प्रकार dpaa_eth_show_bpids(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा dpaa_priv *priv = netdev_priv(to_net_dev(dev));
-	sमाप_प्रकार bytes = 0;
+static ssize_t dpaa_eth_show_bpids(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct dpaa_priv *priv = netdev_priv(to_net_dev(dev));
+	ssize_t bytes = 0;
 
-	bytes += snम_लिखो(buf + bytes, PAGE_SIZE - bytes, "%u\n",
+	bytes += snprintf(buf + bytes, PAGE_SIZE - bytes, "%u\n",
 				  priv->dpaa_bp->bpid);
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-अटल काष्ठा device_attribute dpaa_eth_attrs[] = अणु
-	__ATTR(device_addr, 0444, dpaa_eth_show_addr, शून्य),
-	__ATTR(fqids, 0444, dpaa_eth_show_fqids, शून्य),
-	__ATTR(bpids, 0444, dpaa_eth_show_bpids, शून्य),
-पूर्ण;
+static struct device_attribute dpaa_eth_attrs[] = {
+	__ATTR(device_addr, 0444, dpaa_eth_show_addr, NULL),
+	__ATTR(fqids, 0444, dpaa_eth_show_fqids, NULL),
+	__ATTR(bpids, 0444, dpaa_eth_show_bpids, NULL),
+};
 
-व्योम dpaa_eth_sysfs_init(काष्ठा device *dev)
-अणु
-	पूर्णांक i;
+void dpaa_eth_sysfs_init(struct device *dev)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dpaa_eth_attrs); i++)
-		अगर (device_create_file(dev, &dpaa_eth_attrs[i])) अणु
+	for (i = 0; i < ARRAY_SIZE(dpaa_eth_attrs); i++)
+		if (device_create_file(dev, &dpaa_eth_attrs[i])) {
 			dev_err(dev, "Error creating sysfs file\n");
-			जबतक (i > 0)
-				device_हटाओ_file(dev, &dpaa_eth_attrs[--i]);
-			वापस;
-		पूर्ण
-पूर्ण
+			while (i > 0)
+				device_remove_file(dev, &dpaa_eth_attrs[--i]);
+			return;
+		}
+}
 
-व्योम dpaa_eth_sysfs_हटाओ(काष्ठा device *dev)
-अणु
-	पूर्णांक i;
+void dpaa_eth_sysfs_remove(struct device *dev)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(dpaa_eth_attrs); i++)
-		device_हटाओ_file(dev, &dpaa_eth_attrs[i]);
-पूर्ण
+	for (i = 0; i < ARRAY_SIZE(dpaa_eth_attrs); i++)
+		device_remove_file(dev, &dpaa_eth_attrs[i]);
+}

@@ -1,221 +1,220 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  linux/drivers/mmc/core/sdio_io.c
  *
  *  Copyright 2007-2008 Pierre Ossman
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/card.h>
-#समावेश <linux/mmc/sdपन.स>
-#समावेश <linux/mmc/sdio_func.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/card.h>
+#include <linux/mmc/sdio.h>
+#include <linux/mmc/sdio_func.h>
 
-#समावेश "sdio_ops.h"
-#समावेश "core.h"
-#समावेश "card.h"
-#समावेश "host.h"
+#include "sdio_ops.h"
+#include "core.h"
+#include "card.h"
+#include "host.h"
 
 /**
- *	sdio_claim_host - exclusively claim a bus क्रम a certain SDIO function
+ *	sdio_claim_host - exclusively claim a bus for a certain SDIO function
  *	@func: SDIO function that will be accessed
  *
- *	Claim a bus क्रम a set of operations. The SDIO function given
+ *	Claim a bus for a set of operations. The SDIO function given
  *	is used to figure out which bus is relevant.
  */
-व्योम sdio_claim_host(काष्ठा sdio_func *func)
-अणु
-	अगर (WARN_ON(!func))
-		वापस;
+void sdio_claim_host(struct sdio_func *func)
+{
+	if (WARN_ON(!func))
+		return;
 
 	mmc_claim_host(func->card->host);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdio_claim_host);
 
 /**
- *	sdio_release_host - release a bus क्रम a certain SDIO function
+ *	sdio_release_host - release a bus for a certain SDIO function
  *	@func: SDIO function that was accessed
  *
- *	Release a bus, allowing others to claim the bus क्रम their
+ *	Release a bus, allowing others to claim the bus for their
  *	operations.
  */
-व्योम sdio_release_host(काष्ठा sdio_func *func)
-अणु
-	अगर (WARN_ON(!func))
-		वापस;
+void sdio_release_host(struct sdio_func *func)
+{
+	if (WARN_ON(!func))
+		return;
 
 	mmc_release_host(func->card->host);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdio_release_host);
 
 /**
- *	sdio_enable_func - enables a SDIO function क्रम usage
+ *	sdio_enable_func - enables a SDIO function for usage
  *	@func: SDIO function to enable
  *
- *	Powers up and activates a SDIO function so that रेजिस्टर
+ *	Powers up and activates a SDIO function so that register
  *	access is possible.
  */
-पूर्णांक sdio_enable_func(काष्ठा sdio_func *func)
-अणु
-	पूर्णांक ret;
-	अचिन्हित अक्षर reg;
-	अचिन्हित दीर्घ समयout;
+int sdio_enable_func(struct sdio_func *func)
+{
+	int ret;
+	unsigned char reg;
+	unsigned long timeout;
 
-	अगर (!func)
-		वापस -EINVAL;
+	if (!func)
+		return -EINVAL;
 
 	pr_debug("SDIO: Enabling device %s...\n", sdio_func_id(func));
 
 	ret = mmc_io_rw_direct(func->card, 0, 0, SDIO_CCCR_IOEx, 0, &reg);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	reg |= 1 << func->num;
 
-	ret = mmc_io_rw_direct(func->card, 1, 0, SDIO_CCCR_IOEx, reg, शून्य);
-	अगर (ret)
-		जाओ err;
+	ret = mmc_io_rw_direct(func->card, 1, 0, SDIO_CCCR_IOEx, reg, NULL);
+	if (ret)
+		goto err;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(func->enable_समयout);
+	timeout = jiffies + msecs_to_jiffies(func->enable_timeout);
 
-	जबतक (1) अणु
+	while (1) {
 		ret = mmc_io_rw_direct(func->card, 0, 0, SDIO_CCCR_IORx, 0, &reg);
-		अगर (ret)
-			जाओ err;
-		अगर (reg & (1 << func->num))
-			अवरोध;
+		if (ret)
+			goto err;
+		if (reg & (1 << func->num))
+			break;
 		ret = -ETIME;
-		अगर (समय_after(jअगरfies, समयout))
-			जाओ err;
-	पूर्ण
+		if (time_after(jiffies, timeout))
+			goto err;
+	}
 
 	pr_debug("SDIO: Enabled device %s\n", sdio_func_id(func));
 
-	वापस 0;
+	return 0;
 
 err:
 	pr_debug("SDIO: Failed to enable device %s\n", sdio_func_id(func));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sdio_enable_func);
 
 /**
  *	sdio_disable_func - disable a SDIO function
  *	@func: SDIO function to disable
  *
- *	Powers करोwn and deactivates a SDIO function. Register access
+ *	Powers down and deactivates a SDIO function. Register access
  *	to this function will fail until the function is reenabled.
  */
-पूर्णांक sdio_disable_func(काष्ठा sdio_func *func)
-अणु
-	पूर्णांक ret;
-	अचिन्हित अक्षर reg;
+int sdio_disable_func(struct sdio_func *func)
+{
+	int ret;
+	unsigned char reg;
 
-	अगर (!func)
-		वापस -EINVAL;
+	if (!func)
+		return -EINVAL;
 
 	pr_debug("SDIO: Disabling device %s...\n", sdio_func_id(func));
 
 	ret = mmc_io_rw_direct(func->card, 0, 0, SDIO_CCCR_IOEx, 0, &reg);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
 	reg &= ~(1 << func->num);
 
-	ret = mmc_io_rw_direct(func->card, 1, 0, SDIO_CCCR_IOEx, reg, शून्य);
-	अगर (ret)
-		जाओ err;
+	ret = mmc_io_rw_direct(func->card, 1, 0, SDIO_CCCR_IOEx, reg, NULL);
+	if (ret)
+		goto err;
 
 	pr_debug("SDIO: Disabled device %s\n", sdio_func_id(func));
 
-	वापस 0;
+	return 0;
 
 err:
 	pr_debug("SDIO: Failed to disable device %s\n", sdio_func_id(func));
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(sdio_disable_func);
 
 /**
  *	sdio_set_block_size - set the block size of an SDIO function
  *	@func: SDIO function to change
- *	@blksz: new block size or 0 to use the शेष.
+ *	@blksz: new block size or 0 to use the default.
  *
- *	The शेष block size is the largest supported by both the function
+ *	The default block size is the largest supported by both the function
  *	and the host, with a maximum of 512 to ensure that arbitrarily sized
  *	data transfer use the optimal (least) number of commands.
  *
- *	A driver may call this to override the शेष block size set by the
+ *	A driver may call this to override the default block size set by the
  *	core. This can be used to set a block size greater than the maximum
  *	that reported by the card; it is the driver's responsibility to ensure
  *	it uses a value that the card supports.
  *
- *	Returns 0 on success, -EINVAL अगर the host करोes not support the
- *	requested block size, or -EIO (etc.) अगर one of the resultant FBR block
- *	size रेजिस्टर ग_लिखोs failed.
+ *	Returns 0 on success, -EINVAL if the host does not support the
+ *	requested block size, or -EIO (etc.) if one of the resultant FBR block
+ *	size register writes failed.
  *
  */
-पूर्णांक sdio_set_block_size(काष्ठा sdio_func *func, अचिन्हित blksz)
-अणु
-	पूर्णांक ret;
+int sdio_set_block_size(struct sdio_func *func, unsigned blksz)
+{
+	int ret;
 
-	अगर (blksz > func->card->host->max_blk_size)
-		वापस -EINVAL;
+	if (blksz > func->card->host->max_blk_size)
+		return -EINVAL;
 
-	अगर (blksz == 0) अणु
+	if (blksz == 0) {
 		blksz = min(func->max_blksize, func->card->host->max_blk_size);
 		blksz = min(blksz, 512u);
-	पूर्ण
+	}
 
 	ret = mmc_io_rw_direct(func->card, 1, 0,
 		SDIO_FBR_BASE(func->num) + SDIO_FBR_BLKSIZE,
-		blksz & 0xff, शून्य);
-	अगर (ret)
-		वापस ret;
+		blksz & 0xff, NULL);
+	if (ret)
+		return ret;
 	ret = mmc_io_rw_direct(func->card, 1, 0,
 		SDIO_FBR_BASE(func->num) + SDIO_FBR_BLKSIZE + 1,
-		(blksz >> 8) & 0xff, शून्य);
-	अगर (ret)
-		वापस ret;
+		(blksz >> 8) & 0xff, NULL);
+	if (ret)
+		return ret;
 	func->cur_blksize = blksz;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(sdio_set_block_size);
 
 /*
  * Calculate the maximum byte mode transfer size
  */
-अटल अंतरभूत अचिन्हित पूर्णांक sdio_max_byte_size(काष्ठा sdio_func *func)
-अणु
-	अचिन्हित mval =	func->card->host->max_blk_size;
+static inline unsigned int sdio_max_byte_size(struct sdio_func *func)
+{
+	unsigned mval =	func->card->host->max_blk_size;
 
-	अगर (mmc_blksz_क्रम_byte_mode(func->card))
+	if (mmc_blksz_for_byte_mode(func->card))
 		mval = min(mval, func->cur_blksize);
-	अन्यथा
+	else
 		mval = min(mval, func->max_blksize);
 
-	अगर (mmc_card_broken_byte_mode_512(func->card))
-		वापस min(mval, 511u);
+	if (mmc_card_broken_byte_mode_512(func->card))
+		return min(mval, 511u);
 
-	वापस min(mval, 512u); /* maximum size क्रम byte mode */
-पूर्ण
+	return min(mval, 512u); /* maximum size for byte mode */
+}
 
 /*
  * This is legacy code, which needs to be re-worked some day. Basically we need
- * to take पूर्णांकo account the properties of the host, as to enable the SDIO func
+ * to take into account the properties of the host, as to enable the SDIO func
  * driver layer to allocate optimal buffers.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक _sdio_align_size(अचिन्हित पूर्णांक sz)
-अणु
+static inline unsigned int _sdio_align_size(unsigned int sz)
+{
 	/*
-	 * FIXME: We करोn't have a प्रणाली क्रम the controller to tell
-	 * the core about its problems yet, so क्रम now we just 32-bit
+	 * FIXME: We don't have a system for the controller to tell
+	 * the core about its problems yet, so for now we just 32-bit
 	 * align the size.
 	 */
-	वापस ALIGN(sz, 4);
-पूर्ण
+	return ALIGN(sz, 4);
+}
 
 /**
  *	sdio_align_size - pads a transfer size to a more optimal value
@@ -223,519 +222,519 @@ EXPORT_SYMBOL_GPL(sdio_set_block_size);
  *	@sz: original transfer size
  *
  *	Pads the original data size with a number of extra bytes in
- *	order to aव्योम controller bugs and/or perक्रमmance hits
- *	(e.g. some controllers revert to PIO क्रम certain sizes).
+ *	order to avoid controller bugs and/or performance hits
+ *	(e.g. some controllers revert to PIO for certain sizes).
  *
  *	If possible, it will also adjust the size so that it can be
  *	handled in just a single request.
  *
- *	Returns the improved size, which might be unmodअगरied.
+ *	Returns the improved size, which might be unmodified.
  */
-अचिन्हित पूर्णांक sdio_align_size(काष्ठा sdio_func *func, अचिन्हित पूर्णांक sz)
-अणु
-	अचिन्हित पूर्णांक orig_sz;
-	अचिन्हित पूर्णांक blk_sz, byte_sz;
-	अचिन्हित chunk_sz;
+unsigned int sdio_align_size(struct sdio_func *func, unsigned int sz)
+{
+	unsigned int orig_sz;
+	unsigned int blk_sz, byte_sz;
+	unsigned chunk_sz;
 
 	orig_sz = sz;
 
 	/*
-	 * Do a first check with the controller, in हाल it
-	 * wants to increase the size up to a poपूर्णांक where it
+	 * Do a first check with the controller, in case it
+	 * wants to increase the size up to a point where it
 	 * might need more than one block.
 	 */
 	sz = _sdio_align_size(sz);
 
 	/*
-	 * If we can still करो this with just a byte transfer, then
-	 * we're करोne.
+	 * If we can still do this with just a byte transfer, then
+	 * we're done.
 	 */
-	अगर (sz <= sdio_max_byte_size(func))
-		वापस sz;
+	if (sz <= sdio_max_byte_size(func))
+		return sz;
 
-	अगर (func->card->cccr.multi_block) अणु
+	if (func->card->cccr.multi_block) {
 		/*
-		 * Check अगर the transfer is alपढ़ोy block aligned
+		 * Check if the transfer is already block aligned
 		 */
-		अगर ((sz % func->cur_blksize) == 0)
-			वापस sz;
+		if ((sz % func->cur_blksize) == 0)
+			return sz;
 
 		/*
-		 * Realign it so that it can be करोne with one request,
-		 * and recheck अगर the controller still likes it.
+		 * Realign it so that it can be done with one request,
+		 * and recheck if the controller still likes it.
 		 */
 		blk_sz = ((sz + func->cur_blksize - 1) /
 			func->cur_blksize) * func->cur_blksize;
 		blk_sz = _sdio_align_size(blk_sz);
 
 		/*
-		 * This value is only good अगर it is still just
+		 * This value is only good if it is still just
 		 * one request.
 		 */
-		अगर ((blk_sz % func->cur_blksize) == 0)
-			वापस blk_sz;
+		if ((blk_sz % func->cur_blksize) == 0)
+			return blk_sz;
 
 		/*
-		 * We failed to करो one request, but at least try to
-		 * pad the reमुख्यder properly.
+		 * We failed to do one request, but at least try to
+		 * pad the remainder properly.
 		 */
 		byte_sz = _sdio_align_size(sz % func->cur_blksize);
-		अगर (byte_sz <= sdio_max_byte_size(func)) अणु
+		if (byte_sz <= sdio_max_byte_size(func)) {
 			blk_sz = sz / func->cur_blksize;
-			वापस blk_sz * func->cur_blksize + byte_sz;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return blk_sz * func->cur_blksize + byte_sz;
+		}
+	} else {
 		/*
 		 * We need multiple requests, so first check that the
 		 * controller can handle the chunk size;
 		 */
 		chunk_sz = _sdio_align_size(sdio_max_byte_size(func));
-		अगर (chunk_sz == sdio_max_byte_size(func)) अणु
+		if (chunk_sz == sdio_max_byte_size(func)) {
 			/*
-			 * Fix up the size of the reमुख्यder (अगर any)
+			 * Fix up the size of the remainder (if any)
 			 */
 			byte_sz = orig_sz % chunk_sz;
-			अगर (byte_sz) अणु
+			if (byte_sz) {
 				byte_sz = _sdio_align_size(byte_sz);
-			पूर्ण
+			}
 
-			वापस (orig_sz / chunk_sz) * chunk_sz + byte_sz;
-		पूर्ण
-	पूर्ण
+			return (orig_sz / chunk_sz) * chunk_sz + byte_sz;
+		}
+	}
 
 	/*
 	 * The controller is simply incapable of transferring the size
-	 * we want in decent manner, so just वापस the original size.
+	 * we want in decent manner, so just return the original size.
 	 */
-	वापस orig_sz;
-पूर्ण
+	return orig_sz;
+}
 EXPORT_SYMBOL_GPL(sdio_align_size);
 
-/* Split an arbitrarily sized data transfer पूर्णांकo several
+/* Split an arbitrarily sized data transfer into several
  * IO_RW_EXTENDED commands. */
-अटल पूर्णांक sdio_io_rw_ext_helper(काष्ठा sdio_func *func, पूर्णांक ग_लिखो,
-	अचिन्हित addr, पूर्णांक incr_addr, u8 *buf, अचिन्हित size)
-अणु
-	अचिन्हित reमुख्यder = size;
-	अचिन्हित max_blocks;
-	पूर्णांक ret;
+static int sdio_io_rw_ext_helper(struct sdio_func *func, int write,
+	unsigned addr, int incr_addr, u8 *buf, unsigned size)
+{
+	unsigned remainder = size;
+	unsigned max_blocks;
+	int ret;
 
-	अगर (!func || (func->num > 7))
-		वापस -EINVAL;
+	if (!func || (func->num > 7))
+		return -EINVAL;
 
-	/* Do the bulk of the transfer using block mode (अगर supported). */
-	अगर (func->card->cccr.multi_block && (size > sdio_max_byte_size(func))) अणु
+	/* Do the bulk of the transfer using block mode (if supported). */
+	if (func->card->cccr.multi_block && (size > sdio_max_byte_size(func))) {
 		/* Blocks per command is limited by host count, host transfer
-		 * size and the maximum क्रम IO_RW_EXTENDED of 511 blocks. */
+		 * size and the maximum for IO_RW_EXTENDED of 511 blocks. */
 		max_blocks = min(func->card->host->max_blk_count, 511u);
 
-		जबतक (reमुख्यder >= func->cur_blksize) अणु
-			अचिन्हित blocks;
+		while (remainder >= func->cur_blksize) {
+			unsigned blocks;
 
-			blocks = reमुख्यder / func->cur_blksize;
-			अगर (blocks > max_blocks)
+			blocks = remainder / func->cur_blksize;
+			if (blocks > max_blocks)
 				blocks = max_blocks;
 			size = blocks * func->cur_blksize;
 
-			ret = mmc_io_rw_extended(func->card, ग_लिखो,
+			ret = mmc_io_rw_extended(func->card, write,
 				func->num, addr, incr_addr, buf,
 				blocks, func->cur_blksize);
-			अगर (ret)
-				वापस ret;
+			if (ret)
+				return ret;
 
-			reमुख्यder -= size;
+			remainder -= size;
 			buf += size;
-			अगर (incr_addr)
+			if (incr_addr)
 				addr += size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Write the reमुख्यder using byte mode. */
-	जबतक (reमुख्यder > 0) अणु
-		size = min(reमुख्यder, sdio_max_byte_size(func));
+	/* Write the remainder using byte mode. */
+	while (remainder > 0) {
+		size = min(remainder, sdio_max_byte_size(func));
 
 		/* Indicate byte mode by setting "blocks" = 0 */
-		ret = mmc_io_rw_extended(func->card, ग_लिखो, func->num, addr,
+		ret = mmc_io_rw_extended(func->card, write, func->num, addr,
 			 incr_addr, buf, 0, size);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		reमुख्यder -= size;
+		remainder -= size;
 		buf += size;
-		अगर (incr_addr)
+		if (incr_addr)
 			addr += size;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- *	sdio_पढ़ोb - पढ़ो a single byte from a SDIO function
+ *	sdio_readb - read a single byte from a SDIO function
  *	@func: SDIO function to access
- *	@addr: address to पढ़ो
+ *	@addr: address to read
  *	@err_ret: optional status value from transfer
  *
  *	Reads a single byte from the address space of a given SDIO
- *	function. If there is a problem पढ़ोing the address, 0xff
- *	is वापसed and @err_ret will contain the error code.
+ *	function. If there is a problem reading the address, 0xff
+ *	is returned and @err_ret will contain the error code.
  */
-u8 sdio_पढ़ोb(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+u8 sdio_readb(struct sdio_func *func, unsigned int addr, int *err_ret)
+{
+	int ret;
 	u8 val;
 
-	अगर (!func) अणु
-		अगर (err_ret)
+	if (!func) {
+		if (err_ret)
 			*err_ret = -EINVAL;
-		वापस 0xFF;
-	पूर्ण
+		return 0xFF;
+	}
 
 	ret = mmc_io_rw_direct(func->card, 0, func->num, addr, 0, &val);
-	अगर (err_ret)
+	if (err_ret)
 		*err_ret = ret;
-	अगर (ret)
-		वापस 0xFF;
+	if (ret)
+		return 0xFF;
 
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_पढ़ोb);
+	return val;
+}
+EXPORT_SYMBOL_GPL(sdio_readb);
 
 /**
- *	sdio_ग_लिखोb - ग_लिखो a single byte to a SDIO function
+ *	sdio_writeb - write a single byte to a SDIO function
  *	@func: SDIO function to access
- *	@b: byte to ग_लिखो
- *	@addr: address to ग_लिखो to
+ *	@b: byte to write
+ *	@addr: address to write to
  *	@err_ret: optional status value from transfer
  *
  *	Writes a single byte to the address space of a given SDIO
  *	function. @err_ret will contain the status of the actual
  *	transfer.
  */
-व्योम sdio_ग_लिखोb(काष्ठा sdio_func *func, u8 b, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+void sdio_writeb(struct sdio_func *func, u8 b, unsigned int addr, int *err_ret)
+{
+	int ret;
 
-	अगर (!func) अणु
-		अगर (err_ret)
+	if (!func) {
+		if (err_ret)
 			*err_ret = -EINVAL;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = mmc_io_rw_direct(func->card, 1, func->num, addr, b, शून्य);
-	अगर (err_ret)
+	ret = mmc_io_rw_direct(func->card, 1, func->num, addr, b, NULL);
+	if (err_ret)
 		*err_ret = ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_ग_लिखोb);
+}
+EXPORT_SYMBOL_GPL(sdio_writeb);
 
 /**
- *	sdio_ग_लिखोb_पढ़ोb - ग_लिखो and पढ़ो a byte from SDIO function
+ *	sdio_writeb_readb - write and read a byte from SDIO function
  *	@func: SDIO function to access
- *	@ग_लिखो_byte: byte to ग_लिखो
- *	@addr: address to ग_लिखो to
+ *	@write_byte: byte to write
+ *	@addr: address to write to
  *	@err_ret: optional status value from transfer
  *
- *	Perक्रमms a RAW (Read after Write) operation as defined by SDIO spec -
+ *	Performs a RAW (Read after Write) operation as defined by SDIO spec -
  *	single byte is written to address space of a given SDIO function and
- *	response is पढ़ो back from the same address, both using single request.
- *	If there is a problem with the operation, 0xff is वापसed and
+ *	response is read back from the same address, both using single request.
+ *	If there is a problem with the operation, 0xff is returned and
  *	@err_ret will contain the error code.
  */
-u8 sdio_ग_लिखोb_पढ़ोb(काष्ठा sdio_func *func, u8 ग_लिखो_byte,
-	अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+u8 sdio_writeb_readb(struct sdio_func *func, u8 write_byte,
+	unsigned int addr, int *err_ret)
+{
+	int ret;
 	u8 val;
 
 	ret = mmc_io_rw_direct(func->card, 1, func->num, addr,
-			ग_लिखो_byte, &val);
-	अगर (err_ret)
+			write_byte, &val);
+	if (err_ret)
 		*err_ret = ret;
-	अगर (ret)
-		वापस 0xff;
+	if (ret)
+		return 0xff;
 
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_ग_लिखोb_पढ़ोb);
+	return val;
+}
+EXPORT_SYMBOL_GPL(sdio_writeb_readb);
 
 /**
- *	sdio_स_नकल_fromio - पढ़ो a chunk of memory from a SDIO function
+ *	sdio_memcpy_fromio - read a chunk of memory from a SDIO function
  *	@func: SDIO function to access
  *	@dst: buffer to store the data
- *	@addr: address to begin पढ़ोing from
- *	@count: number of bytes to पढ़ो
+ *	@addr: address to begin reading from
+ *	@count: number of bytes to read
  *
  *	Reads from the address space of a given SDIO function. Return
- *	value indicates अगर the transfer succeeded or not.
+ *	value indicates if the transfer succeeded or not.
  */
-पूर्णांक sdio_स_नकल_fromio(काष्ठा sdio_func *func, व्योम *dst,
-	अचिन्हित पूर्णांक addr, पूर्णांक count)
-अणु
-	वापस sdio_io_rw_ext_helper(func, 0, addr, 1, dst, count);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_स_नकल_fromio);
+int sdio_memcpy_fromio(struct sdio_func *func, void *dst,
+	unsigned int addr, int count)
+{
+	return sdio_io_rw_ext_helper(func, 0, addr, 1, dst, count);
+}
+EXPORT_SYMBOL_GPL(sdio_memcpy_fromio);
 
 /**
- *	sdio_स_नकल_toio - ग_लिखो a chunk of memory to a SDIO function
+ *	sdio_memcpy_toio - write a chunk of memory to a SDIO function
  *	@func: SDIO function to access
  *	@addr: address to start writing to
- *	@src: buffer that contains the data to ग_लिखो
- *	@count: number of bytes to ग_लिखो
+ *	@src: buffer that contains the data to write
+ *	@count: number of bytes to write
  *
  *	Writes to the address space of a given SDIO function. Return
- *	value indicates अगर the transfer succeeded or not.
+ *	value indicates if the transfer succeeded or not.
  */
-पूर्णांक sdio_स_नकल_toio(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr,
-	व्योम *src, पूर्णांक count)
-अणु
-	वापस sdio_io_rw_ext_helper(func, 1, addr, 1, src, count);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_स_नकल_toio);
+int sdio_memcpy_toio(struct sdio_func *func, unsigned int addr,
+	void *src, int count)
+{
+	return sdio_io_rw_ext_helper(func, 1, addr, 1, src, count);
+}
+EXPORT_SYMBOL_GPL(sdio_memcpy_toio);
 
 /**
- *	sdio_पढ़ोsb - पढ़ो from a FIFO on a SDIO function
+ *	sdio_readsb - read from a FIFO on a SDIO function
  *	@func: SDIO function to access
  *	@dst: buffer to store the data
  *	@addr: address of (single byte) FIFO
- *	@count: number of bytes to पढ़ो
+ *	@count: number of bytes to read
  *
- *	Reads from the specअगरied FIFO of a given SDIO function. Return
- *	value indicates अगर the transfer succeeded or not.
+ *	Reads from the specified FIFO of a given SDIO function. Return
+ *	value indicates if the transfer succeeded or not.
  */
-पूर्णांक sdio_पढ़ोsb(काष्ठा sdio_func *func, व्योम *dst, अचिन्हित पूर्णांक addr,
-	पूर्णांक count)
-अणु
-	वापस sdio_io_rw_ext_helper(func, 0, addr, 0, dst, count);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_पढ़ोsb);
+int sdio_readsb(struct sdio_func *func, void *dst, unsigned int addr,
+	int count)
+{
+	return sdio_io_rw_ext_helper(func, 0, addr, 0, dst, count);
+}
+EXPORT_SYMBOL_GPL(sdio_readsb);
 
 /**
- *	sdio_ग_लिखोsb - ग_लिखो to a FIFO of a SDIO function
+ *	sdio_writesb - write to a FIFO of a SDIO function
  *	@func: SDIO function to access
  *	@addr: address of (single byte) FIFO
- *	@src: buffer that contains the data to ग_लिखो
- *	@count: number of bytes to ग_लिखो
+ *	@src: buffer that contains the data to write
+ *	@count: number of bytes to write
  *
- *	Writes to the specअगरied FIFO of a given SDIO function. Return
- *	value indicates अगर the transfer succeeded or not.
+ *	Writes to the specified FIFO of a given SDIO function. Return
+ *	value indicates if the transfer succeeded or not.
  */
-पूर्णांक sdio_ग_लिखोsb(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, व्योम *src,
-	पूर्णांक count)
-अणु
-	वापस sdio_io_rw_ext_helper(func, 1, addr, 0, src, count);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_ग_लिखोsb);
+int sdio_writesb(struct sdio_func *func, unsigned int addr, void *src,
+	int count)
+{
+	return sdio_io_rw_ext_helper(func, 1, addr, 0, src, count);
+}
+EXPORT_SYMBOL_GPL(sdio_writesb);
 
 /**
- *	sdio_पढ़ोw - पढ़ो a 16 bit पूर्णांकeger from a SDIO function
+ *	sdio_readw - read a 16 bit integer from a SDIO function
  *	@func: SDIO function to access
- *	@addr: address to पढ़ो
+ *	@addr: address to read
  *	@err_ret: optional status value from transfer
  *
- *	Reads a 16 bit पूर्णांकeger from the address space of a given SDIO
- *	function. If there is a problem पढ़ोing the address, 0xffff
- *	is वापसed and @err_ret will contain the error code.
+ *	Reads a 16 bit integer from the address space of a given SDIO
+ *	function. If there is a problem reading the address, 0xffff
+ *	is returned and @err_ret will contain the error code.
  */
-u16 sdio_पढ़ोw(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+u16 sdio_readw(struct sdio_func *func, unsigned int addr, int *err_ret)
+{
+	int ret;
 
-	ret = sdio_स_नकल_fromio(func, func->पंचांगpbuf, addr, 2);
-	अगर (err_ret)
+	ret = sdio_memcpy_fromio(func, func->tmpbuf, addr, 2);
+	if (err_ret)
 		*err_ret = ret;
-	अगर (ret)
-		वापस 0xFFFF;
+	if (ret)
+		return 0xFFFF;
 
-	वापस le16_to_cpup((__le16 *)func->पंचांगpbuf);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_पढ़ोw);
+	return le16_to_cpup((__le16 *)func->tmpbuf);
+}
+EXPORT_SYMBOL_GPL(sdio_readw);
 
 /**
- *	sdio_ग_लिखोw - ग_लिखो a 16 bit पूर्णांकeger to a SDIO function
+ *	sdio_writew - write a 16 bit integer to a SDIO function
  *	@func: SDIO function to access
- *	@b: पूर्णांकeger to ग_लिखो
- *	@addr: address to ग_लिखो to
+ *	@b: integer to write
+ *	@addr: address to write to
  *	@err_ret: optional status value from transfer
  *
- *	Writes a 16 bit पूर्णांकeger to the address space of a given SDIO
+ *	Writes a 16 bit integer to the address space of a given SDIO
  *	function. @err_ret will contain the status of the actual
  *	transfer.
  */
-व्योम sdio_ग_लिखोw(काष्ठा sdio_func *func, u16 b, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+void sdio_writew(struct sdio_func *func, u16 b, unsigned int addr, int *err_ret)
+{
+	int ret;
 
-	*(__le16 *)func->पंचांगpbuf = cpu_to_le16(b);
+	*(__le16 *)func->tmpbuf = cpu_to_le16(b);
 
-	ret = sdio_स_नकल_toio(func, addr, func->पंचांगpbuf, 2);
-	अगर (err_ret)
+	ret = sdio_memcpy_toio(func, addr, func->tmpbuf, 2);
+	if (err_ret)
 		*err_ret = ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_ग_लिखोw);
+}
+EXPORT_SYMBOL_GPL(sdio_writew);
 
 /**
- *	sdio_पढ़ोl - पढ़ो a 32 bit पूर्णांकeger from a SDIO function
+ *	sdio_readl - read a 32 bit integer from a SDIO function
  *	@func: SDIO function to access
- *	@addr: address to पढ़ो
+ *	@addr: address to read
  *	@err_ret: optional status value from transfer
  *
- *	Reads a 32 bit पूर्णांकeger from the address space of a given SDIO
- *	function. If there is a problem पढ़ोing the address,
- *	0xffffffff is वापसed and @err_ret will contain the error
+ *	Reads a 32 bit integer from the address space of a given SDIO
+ *	function. If there is a problem reading the address,
+ *	0xffffffff is returned and @err_ret will contain the error
  *	code.
  */
-u32 sdio_पढ़ोl(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+u32 sdio_readl(struct sdio_func *func, unsigned int addr, int *err_ret)
+{
+	int ret;
 
-	ret = sdio_स_नकल_fromio(func, func->पंचांगpbuf, addr, 4);
-	अगर (err_ret)
+	ret = sdio_memcpy_fromio(func, func->tmpbuf, addr, 4);
+	if (err_ret)
 		*err_ret = ret;
-	अगर (ret)
-		वापस 0xFFFFFFFF;
+	if (ret)
+		return 0xFFFFFFFF;
 
-	वापस le32_to_cpup((__le32 *)func->पंचांगpbuf);
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_पढ़ोl);
+	return le32_to_cpup((__le32 *)func->tmpbuf);
+}
+EXPORT_SYMBOL_GPL(sdio_readl);
 
 /**
- *	sdio_ग_लिखोl - ग_लिखो a 32 bit पूर्णांकeger to a SDIO function
+ *	sdio_writel - write a 32 bit integer to a SDIO function
  *	@func: SDIO function to access
- *	@b: पूर्णांकeger to ग_लिखो
- *	@addr: address to ग_लिखो to
+ *	@b: integer to write
+ *	@addr: address to write to
  *	@err_ret: optional status value from transfer
  *
- *	Writes a 32 bit पूर्णांकeger to the address space of a given SDIO
+ *	Writes a 32 bit integer to the address space of a given SDIO
  *	function. @err_ret will contain the status of the actual
  *	transfer.
  */
-व्योम sdio_ग_लिखोl(काष्ठा sdio_func *func, u32 b, अचिन्हित पूर्णांक addr, पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+void sdio_writel(struct sdio_func *func, u32 b, unsigned int addr, int *err_ret)
+{
+	int ret;
 
-	*(__le32 *)func->पंचांगpbuf = cpu_to_le32(b);
+	*(__le32 *)func->tmpbuf = cpu_to_le32(b);
 
-	ret = sdio_स_नकल_toio(func, addr, func->पंचांगpbuf, 4);
-	अगर (err_ret)
+	ret = sdio_memcpy_toio(func, addr, func->tmpbuf, 4);
+	if (err_ret)
 		*err_ret = ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_ग_लिखोl);
+}
+EXPORT_SYMBOL_GPL(sdio_writel);
 
 /**
- *	sdio_f0_पढ़ोb - पढ़ो a single byte from SDIO function 0
+ *	sdio_f0_readb - read a single byte from SDIO function 0
  *	@func: an SDIO function of the card
- *	@addr: address to पढ़ो
+ *	@addr: address to read
  *	@err_ret: optional status value from transfer
  *
  *	Reads a single byte from the address space of SDIO function 0.
- *	If there is a problem पढ़ोing the address, 0xff is वापसed
+ *	If there is a problem reading the address, 0xff is returned
  *	and @err_ret will contain the error code.
  */
-अचिन्हित अक्षर sdio_f0_पढ़ोb(काष्ठा sdio_func *func, अचिन्हित पूर्णांक addr,
-	पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
-	अचिन्हित अक्षर val;
+unsigned char sdio_f0_readb(struct sdio_func *func, unsigned int addr,
+	int *err_ret)
+{
+	int ret;
+	unsigned char val;
 
-	अगर (!func) अणु
-		अगर (err_ret)
+	if (!func) {
+		if (err_ret)
 			*err_ret = -EINVAL;
-		वापस 0xFF;
-	पूर्ण
+		return 0xFF;
+	}
 
 	ret = mmc_io_rw_direct(func->card, 0, 0, addr, 0, &val);
-	अगर (err_ret)
+	if (err_ret)
 		*err_ret = ret;
-	अगर (ret)
-		वापस 0xFF;
+	if (ret)
+		return 0xFF;
 
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_f0_पढ़ोb);
+	return val;
+}
+EXPORT_SYMBOL_GPL(sdio_f0_readb);
 
 /**
- *	sdio_f0_ग_लिखोb - ग_लिखो a single byte to SDIO function 0
+ *	sdio_f0_writeb - write a single byte to SDIO function 0
  *	@func: an SDIO function of the card
- *	@b: byte to ग_लिखो
- *	@addr: address to ग_लिखो to
+ *	@b: byte to write
+ *	@addr: address to write to
  *	@err_ret: optional status value from transfer
  *
  *	Writes a single byte to the address space of SDIO function 0.
  *	@err_ret will contain the status of the actual transfer.
  *
- *	Only ग_लिखोs to the venकरोr specअगरic CCCR रेजिस्टरs (0xF0 -
- *	0xFF) are permiited; @err_ret will be set to -EINVAL क्रम *
- *	ग_लिखोs outside this range.
+ *	Only writes to the vendor specific CCCR registers (0xF0 -
+ *	0xFF) are permiited; @err_ret will be set to -EINVAL for *
+ *	writes outside this range.
  */
-व्योम sdio_f0_ग_लिखोb(काष्ठा sdio_func *func, अचिन्हित अक्षर b, अचिन्हित पूर्णांक addr,
-	पूर्णांक *err_ret)
-अणु
-	पूर्णांक ret;
+void sdio_f0_writeb(struct sdio_func *func, unsigned char b, unsigned int addr,
+	int *err_ret)
+{
+	int ret;
 
-	अगर (!func) अणु
-		अगर (err_ret)
+	if (!func) {
+		if (err_ret)
 			*err_ret = -EINVAL;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((addr < 0xF0 || addr > 0xFF) && (!mmc_card_lenient_fn0(func->card))) अणु
-		अगर (err_ret)
+	if ((addr < 0xF0 || addr > 0xFF) && (!mmc_card_lenient_fn0(func->card))) {
+		if (err_ret)
 			*err_ret = -EINVAL;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ret = mmc_io_rw_direct(func->card, 1, 0, addr, b, शून्य);
-	अगर (err_ret)
+	ret = mmc_io_rw_direct(func->card, 1, 0, addr, b, NULL);
+	if (err_ret)
 		*err_ret = ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(sdio_f0_ग_लिखोb);
+}
+EXPORT_SYMBOL_GPL(sdio_f0_writeb);
 
 /**
- *	sdio_get_host_pm_caps - get host घातer management capabilities
+ *	sdio_get_host_pm_caps - get host power management capabilities
  *	@func: SDIO function attached to host
  *
- *	Returns a capability biपंचांगask corresponding to घातer management
+ *	Returns a capability bitmask corresponding to power management
  *	features supported by the host controller that the card function
- *	might rely upon during a प्रणाली suspend.  The host करोesn't need
- *	to be claimed, nor the function active, क्रम this inक्रमmation to be
+ *	might rely upon during a system suspend.  The host doesn't need
+ *	to be claimed, nor the function active, for this information to be
  *	obtained.
  */
-mmc_pm_flag_t sdio_get_host_pm_caps(काष्ठा sdio_func *func)
-अणु
-	अगर (!func)
-		वापस 0;
+mmc_pm_flag_t sdio_get_host_pm_caps(struct sdio_func *func)
+{
+	if (!func)
+		return 0;
 
-	वापस func->card->host->pm_caps;
-पूर्ण
+	return func->card->host->pm_caps;
+}
 EXPORT_SYMBOL_GPL(sdio_get_host_pm_caps);
 
 /**
- *	sdio_set_host_pm_flags - set wanted host घातer management capabilities
+ *	sdio_set_host_pm_flags - set wanted host power management capabilities
  *	@func: SDIO function attached to host
  *	@flags: Power Management flags to set
  *
- *	Set a capability biपंचांगask corresponding to wanted host controller
- *	घातer management features क्रम the upcoming suspend state.
- *	This must be called, अगर needed, each समय the suspend method of
+ *	Set a capability bitmask corresponding to wanted host controller
+ *	power management features for the upcoming suspend state.
+ *	This must be called, if needed, each time the suspend method of
  *	the function driver is called, and must contain only bits that
- *	were वापसed by sdio_get_host_pm_caps().
- *	The host करोesn't need to be claimed, nor the function active,
- *	क्रम this inक्रमmation to be set.
+ *	were returned by sdio_get_host_pm_caps().
+ *	The host doesn't need to be claimed, nor the function active,
+ *	for this information to be set.
  */
-पूर्णांक sdio_set_host_pm_flags(काष्ठा sdio_func *func, mmc_pm_flag_t flags)
-अणु
-	काष्ठा mmc_host *host;
+int sdio_set_host_pm_flags(struct sdio_func *func, mmc_pm_flag_t flags)
+{
+	struct mmc_host *host;
 
-	अगर (!func)
-		वापस -EINVAL;
+	if (!func)
+		return -EINVAL;
 
 	host = func->card->host;
 
-	अगर (flags & ~host->pm_caps)
-		वापस -EINVAL;
+	if (flags & ~host->pm_caps)
+		return -EINVAL;
 
 	/* function suspend methods are serialized, hence no lock needed */
 	host->pm_flags |= flags;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(sdio_set_host_pm_flags);
 
 /**
@@ -743,24 +742,24 @@ EXPORT_SYMBOL_GPL(sdio_set_host_pm_flags);
  *	@func: SDIO function attached to host
  *
  *	If the SDIO card is known to be in a state where it might produce
- *	CRC errors on the bus in response to commands (like अगर we know it is
- *	transitioning between घातer states), an SDIO function driver can
+ *	CRC errors on the bus in response to commands (like if we know it is
+ *	transitioning between power states), an SDIO function driver can
  *	call this function to temporarily disable the SD/MMC core behavior of
- *	triggering an स्वतःmatic retuning.
+ *	triggering an automatic retuning.
  *
- *	This function should be called जबतक the host is claimed and the host
- *	should reमुख्य claimed until sdio_retune_crc_enable() is called.
- *	Specअगरically, the expected sequence of calls is:
+ *	This function should be called while the host is claimed and the host
+ *	should remain claimed until sdio_retune_crc_enable() is called.
+ *	Specifically, the expected sequence of calls is:
  *	- sdio_claim_host()
  *	- sdio_retune_crc_disable()
- *	- some number of calls like sdio_ग_लिखोb() and sdio_पढ़ोb()
+ *	- some number of calls like sdio_writeb() and sdio_readb()
  *	- sdio_retune_crc_enable()
  *	- sdio_release_host()
  */
-व्योम sdio_retune_crc_disable(काष्ठा sdio_func *func)
-अणु
+void sdio_retune_crc_disable(struct sdio_func *func)
+{
 	func->card->host->retune_crc_disable = true;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdio_retune_crc_disable);
 
 /**
@@ -769,47 +768,47 @@ EXPORT_SYMBOL_GPL(sdio_retune_crc_disable);
  *
  *	This is the compement to sdio_retune_crc_disable().
  */
-व्योम sdio_retune_crc_enable(काष्ठा sdio_func *func)
-अणु
+void sdio_retune_crc_enable(struct sdio_func *func)
+{
 	func->card->host->retune_crc_disable = false;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdio_retune_crc_enable);
 
 /**
  *	sdio_retune_hold_now - start deferring retuning requests till release
  *	@func: SDIO function attached to host
  *
- *	This function can be called अगर it's currently a bad समय to करो
- *	a retune of the SDIO card.  Retune requests made during this समय
- *	will be held and we'll actually करो the retune someसमय after the
+ *	This function can be called if it's currently a bad time to do
+ *	a retune of the SDIO card.  Retune requests made during this time
+ *	will be held and we'll actually do the retune sometime after the
  *	release.
  *
- *	This function could be useful अगर an SDIO card is in a घातer state
- *	where it can respond to a small subset of commands that करोesn't
+ *	This function could be useful if an SDIO card is in a power state
+ *	where it can respond to a small subset of commands that doesn't
  *	include the retuning command.  Care should be taken when using
  *	this function since (presumably) the retuning request we might be
- *	deferring was made क्रम a good reason.
+ *	deferring was made for a good reason.
  *
- *	This function should be called जबतक the host is claimed.
+ *	This function should be called while the host is claimed.
  */
-व्योम sdio_retune_hold_now(काष्ठा sdio_func *func)
-अणु
+void sdio_retune_hold_now(struct sdio_func *func)
+{
 	mmc_retune_hold_now(func->card->host);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdio_retune_hold_now);
 
 /**
- *	sdio_retune_release - संकेत that it's OK to retune now
+ *	sdio_retune_release - signal that it's OK to retune now
  *	@func: SDIO function attached to host
  *
  *	This is the complement to sdio_retune_hold_now().  Calling this
  *	function won't make a retune happen right away but will allow
  *	them to be scheduled normally.
  *
- *	This function should be called जबतक the host is claimed.
+ *	This function should be called while the host is claimed.
  */
-व्योम sdio_retune_release(काष्ठा sdio_func *func)
-अणु
+void sdio_retune_release(struct sdio_func *func)
+{
 	mmc_retune_release(func->card->host);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(sdio_retune_release);

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,44 +19,44 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#समावेश "curs.h"
-#समावेश "atom.h"
+#include "curs.h"
+#include "atom.h"
 
-#समावेश <nvhw/class/clc37a.h>
+#include <nvhw/class/clc37a.h>
 
-अटल पूर्णांक
-cursc37a_update(काष्ठा nv50_wndw *wndw, u32 *पूर्णांकerlock)
-अणु
-	काष्ठा nvअगर_object *user = &wndw->wimm.base.user;
-	पूर्णांक ret = nvअगर_chan_रुको(&wndw->wimm, 1);
-	अगर (ret == 0)
+static int
+cursc37a_update(struct nv50_wndw *wndw, u32 *interlock)
+{
+	struct nvif_object *user = &wndw->wimm.base.user;
+	int ret = nvif_chan_wait(&wndw->wimm, 1);
+	if (ret == 0)
 		NVIF_WR32(user, NVC37A, UPDATE, 0x00000001);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक
-cursc37a_poपूर्णांक(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
-अणु
-	काष्ठा nvअगर_object *user = &wndw->wimm.base.user;
-	पूर्णांक ret = nvअगर_chan_रुको(&wndw->wimm, 1);
-	अगर (ret == 0) अणु
+static int
+cursc37a_point(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
+{
+	struct nvif_object *user = &wndw->wimm.base.user;
+	int ret = nvif_chan_wait(&wndw->wimm, 1);
+	if (ret == 0) {
 		NVIF_WR32(user, NVC37A, SET_CURSOR_HOT_SPOT_POINT_OUT(0),
-			  NVVAL(NVC37A, SET_CURSOR_HOT_SPOT_POINT_OUT, X, asyw->poपूर्णांक.x) |
-			  NVVAL(NVC37A, SET_CURSOR_HOT_SPOT_POINT_OUT, Y, asyw->poपूर्णांक.y));
-	पूर्ण
-	वापस ret;
-पूर्ण
+			  NVVAL(NVC37A, SET_CURSOR_HOT_SPOT_POINT_OUT, X, asyw->point.x) |
+			  NVVAL(NVC37A, SET_CURSOR_HOT_SPOT_POINT_OUT, Y, asyw->point.y));
+	}
+	return ret;
+}
 
-अटल स्थिर काष्ठा nv50_wimm_func
-cursc37a = अणु
-	.poपूर्णांक = cursc37a_poपूर्णांक,
+static const struct nv50_wimm_func
+cursc37a = {
+	.point = cursc37a_point,
 	.update = cursc37a_update,
-पूर्ण;
+};
 
-पूर्णांक
-cursc37a_new(काष्ठा nouveau_drm *drm, पूर्णांक head, s32 oclass,
-	     काष्ठा nv50_wndw **pwndw)
-अणु
-	वापस curs507a_new_(&cursc37a, drm, head, oclass,
+int
+cursc37a_new(struct nouveau_drm *drm, int head, s32 oclass,
+	     struct nv50_wndw **pwndw)
+{
+	return curs507a_new_(&cursc37a, drm, head, oclass,
 			     0x00000001 << head, pwndw);
-पूर्ण
+}

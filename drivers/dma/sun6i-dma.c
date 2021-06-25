@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2013-2014 Allwinner Tech Co., Ltd
  * Author: Sugar <shuge@allwinnertech.com>
  *
  * Copyright (C) 2014 Maxime Ripard
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/dmapool.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_dma.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/dmapool.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/of_dma.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश "virt-dma.h"
+#include "virt-dma.h"
 
 /*
- * Common रेजिस्टरs
+ * Common registers
  */
-#घोषणा DMA_IRQ_EN(x)		((x) * 0x04)
-#घोषणा DMA_IRQ_HALF			BIT(0)
-#घोषणा DMA_IRQ_PKG			BIT(1)
-#घोषणा DMA_IRQ_QUEUE			BIT(2)
+#define DMA_IRQ_EN(x)		((x) * 0x04)
+#define DMA_IRQ_HALF			BIT(0)
+#define DMA_IRQ_PKG			BIT(1)
+#define DMA_IRQ_QUEUE			BIT(2)
 
-#घोषणा DMA_IRQ_CHAN_NR			8
-#घोषणा DMA_IRQ_CHAN_WIDTH		4
+#define DMA_IRQ_CHAN_NR			8
+#define DMA_IRQ_CHAN_WIDTH		4
 
 
-#घोषणा DMA_IRQ_STAT(x)		((x) * 0x04 + 0x10)
+#define DMA_IRQ_STAT(x)		((x) * 0x04 + 0x10)
 
-#घोषणा DMA_STAT		0x30
+#define DMA_STAT		0x30
 
 /* Offset between DMA_IRQ_EN and DMA_IRQ_STAT limits number of channels */
-#घोषणा DMA_MAX_CHANNELS	(DMA_IRQ_CHAN_NR * 0x10 / 4)
+#define DMA_MAX_CHANNELS	(DMA_IRQ_CHAN_NR * 0x10 / 4)
 
 /*
- * sun8i specअगरic रेजिस्टरs
+ * sun8i specific registers
  */
-#घोषणा SUN8I_DMA_GATE		0x20
-#घोषणा SUN8I_DMA_GATE_ENABLE	0x4
+#define SUN8I_DMA_GATE		0x20
+#define SUN8I_DMA_GATE_ENABLE	0x4
 
-#घोषणा SUNXI_H3_SECURE_REG		0x20
-#घोषणा SUNXI_H3_DMA_GATE		0x28
-#घोषणा SUNXI_H3_DMA_GATE_ENABLE	0x4
+#define SUNXI_H3_SECURE_REG		0x20
+#define SUNXI_H3_DMA_GATE		0x28
+#define SUNXI_H3_DMA_GATE_ENABLE	0x4
 /*
- * Channels specअगरic रेजिस्टरs
+ * Channels specific registers
  */
-#घोषणा DMA_CHAN_ENABLE		0x00
-#घोषणा DMA_CHAN_ENABLE_START		BIT(0)
-#घोषणा DMA_CHAN_ENABLE_STOP		0
+#define DMA_CHAN_ENABLE		0x00
+#define DMA_CHAN_ENABLE_START		BIT(0)
+#define DMA_CHAN_ENABLE_STOP		0
 
-#घोषणा DMA_CHAN_PAUSE		0x04
-#घोषणा DMA_CHAN_PAUSE_PAUSE		BIT(1)
-#घोषणा DMA_CHAN_PAUSE_RESUME		0
+#define DMA_CHAN_PAUSE		0x04
+#define DMA_CHAN_PAUSE_PAUSE		BIT(1)
+#define DMA_CHAN_PAUSE_RESUME		0
 
-#घोषणा DMA_CHAN_LLI_ADDR	0x08
+#define DMA_CHAN_LLI_ADDR	0x08
 
-#घोषणा DMA_CHAN_CUR_CFG	0x0c
-#घोषणा DMA_CHAN_MAX_DRQ_A31		0x1f
-#घोषणा DMA_CHAN_MAX_DRQ_H6		0x3f
-#घोषणा DMA_CHAN_CFG_SRC_DRQ_A31(x)	((x) & DMA_CHAN_MAX_DRQ_A31)
-#घोषणा DMA_CHAN_CFG_SRC_DRQ_H6(x)	((x) & DMA_CHAN_MAX_DRQ_H6)
-#घोषणा DMA_CHAN_CFG_SRC_MODE_A31(x)	(((x) & 0x1) << 5)
-#घोषणा DMA_CHAN_CFG_SRC_MODE_H6(x)	(((x) & 0x1) << 8)
-#घोषणा DMA_CHAN_CFG_SRC_BURST_A31(x)	(((x) & 0x3) << 7)
-#घोषणा DMA_CHAN_CFG_SRC_BURST_H3(x)	(((x) & 0x3) << 6)
-#घोषणा DMA_CHAN_CFG_SRC_WIDTH(x)	(((x) & 0x3) << 9)
+#define DMA_CHAN_CUR_CFG	0x0c
+#define DMA_CHAN_MAX_DRQ_A31		0x1f
+#define DMA_CHAN_MAX_DRQ_H6		0x3f
+#define DMA_CHAN_CFG_SRC_DRQ_A31(x)	((x) & DMA_CHAN_MAX_DRQ_A31)
+#define DMA_CHAN_CFG_SRC_DRQ_H6(x)	((x) & DMA_CHAN_MAX_DRQ_H6)
+#define DMA_CHAN_CFG_SRC_MODE_A31(x)	(((x) & 0x1) << 5)
+#define DMA_CHAN_CFG_SRC_MODE_H6(x)	(((x) & 0x1) << 8)
+#define DMA_CHAN_CFG_SRC_BURST_A31(x)	(((x) & 0x3) << 7)
+#define DMA_CHAN_CFG_SRC_BURST_H3(x)	(((x) & 0x3) << 6)
+#define DMA_CHAN_CFG_SRC_WIDTH(x)	(((x) & 0x3) << 9)
 
-#घोषणा DMA_CHAN_CFG_DST_DRQ_A31(x)	(DMA_CHAN_CFG_SRC_DRQ_A31(x) << 16)
-#घोषणा DMA_CHAN_CFG_DST_DRQ_H6(x)	(DMA_CHAN_CFG_SRC_DRQ_H6(x) << 16)
-#घोषणा DMA_CHAN_CFG_DST_MODE_A31(x)	(DMA_CHAN_CFG_SRC_MODE_A31(x) << 16)
-#घोषणा DMA_CHAN_CFG_DST_MODE_H6(x)	(DMA_CHAN_CFG_SRC_MODE_H6(x) << 16)
-#घोषणा DMA_CHAN_CFG_DST_BURST_A31(x)	(DMA_CHAN_CFG_SRC_BURST_A31(x) << 16)
-#घोषणा DMA_CHAN_CFG_DST_BURST_H3(x)	(DMA_CHAN_CFG_SRC_BURST_H3(x) << 16)
-#घोषणा DMA_CHAN_CFG_DST_WIDTH(x)	(DMA_CHAN_CFG_SRC_WIDTH(x) << 16)
+#define DMA_CHAN_CFG_DST_DRQ_A31(x)	(DMA_CHAN_CFG_SRC_DRQ_A31(x) << 16)
+#define DMA_CHAN_CFG_DST_DRQ_H6(x)	(DMA_CHAN_CFG_SRC_DRQ_H6(x) << 16)
+#define DMA_CHAN_CFG_DST_MODE_A31(x)	(DMA_CHAN_CFG_SRC_MODE_A31(x) << 16)
+#define DMA_CHAN_CFG_DST_MODE_H6(x)	(DMA_CHAN_CFG_SRC_MODE_H6(x) << 16)
+#define DMA_CHAN_CFG_DST_BURST_A31(x)	(DMA_CHAN_CFG_SRC_BURST_A31(x) << 16)
+#define DMA_CHAN_CFG_DST_BURST_H3(x)	(DMA_CHAN_CFG_SRC_BURST_H3(x) << 16)
+#define DMA_CHAN_CFG_DST_WIDTH(x)	(DMA_CHAN_CFG_SRC_WIDTH(x) << 16)
 
-#घोषणा DMA_CHAN_CUR_SRC	0x10
+#define DMA_CHAN_CUR_SRC	0x10
 
-#घोषणा DMA_CHAN_CUR_DST	0x14
+#define DMA_CHAN_CUR_DST	0x14
 
-#घोषणा DMA_CHAN_CUR_CNT	0x18
+#define DMA_CHAN_CUR_CNT	0x18
 
-#घोषणा DMA_CHAN_CUR_PARA	0x1c
+#define DMA_CHAN_CUR_PARA	0x1c
 
 
 /*
  * Various hardware related defines
  */
-#घोषणा LLI_LAST_ITEM	0xfffff800
-#घोषणा NORMAL_WAIT	8
-#घोषणा DRQ_SDRAM	1
-#घोषणा LINEAR_MODE     0
-#घोषणा IO_MODE         1
+#define LLI_LAST_ITEM	0xfffff800
+#define NORMAL_WAIT	8
+#define DRQ_SDRAM	1
+#define LINEAR_MODE     0
+#define IO_MODE         1
 
-/* क्रमward declaration */
-काष्ठा sun6i_dma_dev;
+/* forward declaration */
+struct sun6i_dma_dev;
 
 /*
  * Hardware channels / ports representation
  *
- * The hardware is used in several SoCs, with dअगरfering numbers
- * of channels and endpoपूर्णांकs. This काष्ठाure ties those numbers
+ * The hardware is used in several SoCs, with differing numbers
+ * of channels and endpoints. This structure ties those numbers
  * to a certain compatible string.
  */
-काष्ठा sun6i_dma_config अणु
+struct sun6i_dma_config {
 	u32 nr_max_channels;
 	u32 nr_max_requests;
 	u32 nr_max_vchans;
 	/*
 	 * In the datasheets/user manuals of newer Allwinner SoCs, a special
-	 * bit (bit 2 at रेजिस्टर 0x20) is present.
+	 * bit (bit 2 at register 0x20) is present.
 	 * It's named "DMA MCLK interface circuit auto gating bit" in the
-	 * करोcuments, and the footnote of this रेजिस्टर says that this bit
+	 * documents, and the footnote of this register says that this bit
 	 * should be set up when initializing the DMA controller.
-	 * Allwinner A23/A33 user manuals करो not have this bit करोcumented,
+	 * Allwinner A23/A33 user manuals do not have this bit documented,
 	 * however these SoCs really have and need this bit, as seen in the
 	 * BSP kernel source code.
 	 */
-	व्योम (*घड़ी_स्वतःgate_enable)(काष्ठा sun6i_dma_dev *);
-	व्योम (*set_burst_length)(u32 *p_cfg, s8 src_burst, s8 dst_burst);
-	व्योम (*set_drq)(u32 *p_cfg, s8 src_drq, s8 dst_drq);
-	व्योम (*set_mode)(u32 *p_cfg, s8 src_mode, s8 dst_mode);
+	void (*clock_autogate_enable)(struct sun6i_dma_dev *);
+	void (*set_burst_length)(u32 *p_cfg, s8 src_burst, s8 dst_burst);
+	void (*set_drq)(u32 *p_cfg, s8 src_drq, s8 dst_drq);
+	void (*set_mode)(u32 *p_cfg, s8 src_mode, s8 dst_mode);
 	u32 src_burst_lengths;
 	u32 dst_burst_lengths;
 	u32 src_addr_widths;
 	u32 dst_addr_widths;
 	bool has_mbus_clk;
-पूर्ण;
+};
 
 /*
  * Hardware representation of the LLI
  *
- * The hardware will be fed the physical address of this काष्ठाure,
- * and पढ़ो its content in order to start the transfer.
+ * The hardware will be fed the physical address of this structure,
+ * and read its content in order to start the transfer.
  */
-काष्ठा sun6i_dma_lli अणु
+struct sun6i_dma_lli {
 	u32			cfg;
 	u32			src;
 	u32			dst;
@@ -152,96 +151,96 @@
 
 	/*
 	 * This field is not used by the DMA controller, but will be
-	 * used by the CPU to go through the list (mostly क्रम dumping
-	 * or मुक्तing it).
+	 * used by the CPU to go through the list (mostly for dumping
+	 * or freeing it).
 	 */
-	काष्ठा sun6i_dma_lli	*v_lli_next;
-पूर्ण;
+	struct sun6i_dma_lli	*v_lli_next;
+};
 
 
-काष्ठा sun6i_desc अणु
-	काष्ठा virt_dma_desc	vd;
+struct sun6i_desc {
+	struct virt_dma_desc	vd;
 	dma_addr_t		p_lli;
-	काष्ठा sun6i_dma_lli	*v_lli;
-पूर्ण;
+	struct sun6i_dma_lli	*v_lli;
+};
 
-काष्ठा sun6i_pchan अणु
+struct sun6i_pchan {
 	u32			idx;
-	व्योम __iomem		*base;
-	काष्ठा sun6i_vchan	*vchan;
-	काष्ठा sun6i_desc	*desc;
-	काष्ठा sun6i_desc	*करोne;
-पूर्ण;
+	void __iomem		*base;
+	struct sun6i_vchan	*vchan;
+	struct sun6i_desc	*desc;
+	struct sun6i_desc	*done;
+};
 
-काष्ठा sun6i_vchan अणु
-	काष्ठा virt_dma_chan	vc;
-	काष्ठा list_head	node;
-	काष्ठा dma_slave_config	cfg;
-	काष्ठा sun6i_pchan	*phy;
+struct sun6i_vchan {
+	struct virt_dma_chan	vc;
+	struct list_head	node;
+	struct dma_slave_config	cfg;
+	struct sun6i_pchan	*phy;
 	u8			port;
 	u8			irq_type;
 	bool			cyclic;
-पूर्ण;
+};
 
-काष्ठा sun6i_dma_dev अणु
-	काष्ठा dma_device	slave;
-	व्योम __iomem		*base;
-	काष्ठा clk		*clk;
-	काष्ठा clk		*clk_mbus;
-	पूर्णांक			irq;
+struct sun6i_dma_dev {
+	struct dma_device	slave;
+	void __iomem		*base;
+	struct clk		*clk;
+	struct clk		*clk_mbus;
+	int			irq;
 	spinlock_t		lock;
-	काष्ठा reset_control	*rstc;
-	काष्ठा tasklet_काष्ठा	task;
-	atomic_t		tasklet_shutकरोwn;
-	काष्ठा list_head	pending;
-	काष्ठा dma_pool		*pool;
-	काष्ठा sun6i_pchan	*pchans;
-	काष्ठा sun6i_vchan	*vchans;
-	स्थिर काष्ठा sun6i_dma_config *cfg;
+	struct reset_control	*rstc;
+	struct tasklet_struct	task;
+	atomic_t		tasklet_shutdown;
+	struct list_head	pending;
+	struct dma_pool		*pool;
+	struct sun6i_pchan	*pchans;
+	struct sun6i_vchan	*vchans;
+	const struct sun6i_dma_config *cfg;
 	u32			num_pchans;
 	u32			num_vchans;
 	u32			max_request;
-पूर्ण;
+};
 
-अटल काष्ठा device *chan2dev(काष्ठा dma_chan *chan)
-अणु
-	वापस &chan->dev->device;
-पूर्ण
+static struct device *chan2dev(struct dma_chan *chan)
+{
+	return &chan->dev->device;
+}
 
-अटल अंतरभूत काष्ठा sun6i_dma_dev *to_sun6i_dma_dev(काष्ठा dma_device *d)
-अणु
-	वापस container_of(d, काष्ठा sun6i_dma_dev, slave);
-पूर्ण
+static inline struct sun6i_dma_dev *to_sun6i_dma_dev(struct dma_device *d)
+{
+	return container_of(d, struct sun6i_dma_dev, slave);
+}
 
-अटल अंतरभूत काष्ठा sun6i_vchan *to_sun6i_vchan(काष्ठा dma_chan *chan)
-अणु
-	वापस container_of(chan, काष्ठा sun6i_vchan, vc.chan);
-पूर्ण
+static inline struct sun6i_vchan *to_sun6i_vchan(struct dma_chan *chan)
+{
+	return container_of(chan, struct sun6i_vchan, vc.chan);
+}
 
-अटल अंतरभूत काष्ठा sun6i_desc *
-to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
-अणु
-	वापस container_of(tx, काष्ठा sun6i_desc, vd.tx);
-पूर्ण
+static inline struct sun6i_desc *
+to_sun6i_desc(struct dma_async_tx_descriptor *tx)
+{
+	return container_of(tx, struct sun6i_desc, vd.tx);
+}
 
-अटल अंतरभूत व्योम sun6i_dma_dump_com_regs(काष्ठा sun6i_dma_dev *sdev)
-अणु
+static inline void sun6i_dma_dump_com_regs(struct sun6i_dma_dev *sdev)
+{
 	dev_dbg(sdev->slave.dev, "Common register:\n"
 		"\tmask0(%04x): 0x%08x\n"
 		"\tmask1(%04x): 0x%08x\n"
 		"\tpend0(%04x): 0x%08x\n"
 		"\tpend1(%04x): 0x%08x\n"
 		"\tstats(%04x): 0x%08x\n",
-		DMA_IRQ_EN(0), पढ़ोl(sdev->base + DMA_IRQ_EN(0)),
-		DMA_IRQ_EN(1), पढ़ोl(sdev->base + DMA_IRQ_EN(1)),
-		DMA_IRQ_STAT(0), पढ़ोl(sdev->base + DMA_IRQ_STAT(0)),
-		DMA_IRQ_STAT(1), पढ़ोl(sdev->base + DMA_IRQ_STAT(1)),
-		DMA_STAT, पढ़ोl(sdev->base + DMA_STAT));
-पूर्ण
+		DMA_IRQ_EN(0), readl(sdev->base + DMA_IRQ_EN(0)),
+		DMA_IRQ_EN(1), readl(sdev->base + DMA_IRQ_EN(1)),
+		DMA_IRQ_STAT(0), readl(sdev->base + DMA_IRQ_STAT(0)),
+		DMA_IRQ_STAT(1), readl(sdev->base + DMA_IRQ_STAT(1)),
+		DMA_STAT, readl(sdev->base + DMA_STAT));
+}
 
-अटल अंतरभूत व्योम sun6i_dma_dump_chan_regs(काष्ठा sun6i_dma_dev *sdev,
-					    काष्ठा sun6i_pchan *pchan)
-अणु
+static inline void sun6i_dma_dump_chan_regs(struct sun6i_dma_dev *sdev,
+					    struct sun6i_pchan *pchan)
+{
 	phys_addr_t reg = virt_to_phys(pchan->base);
 
 	dev_dbg(sdev->slave.dev, "Chan %d reg: %pa\n"
@@ -255,139 +254,139 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 		"\t_para(%04x): \t0x%08x\n\n",
 		pchan->idx, &reg,
 		DMA_CHAN_ENABLE,
-		पढ़ोl(pchan->base + DMA_CHAN_ENABLE),
+		readl(pchan->base + DMA_CHAN_ENABLE),
 		DMA_CHAN_PAUSE,
-		पढ़ोl(pchan->base + DMA_CHAN_PAUSE),
+		readl(pchan->base + DMA_CHAN_PAUSE),
 		DMA_CHAN_LLI_ADDR,
-		पढ़ोl(pchan->base + DMA_CHAN_LLI_ADDR),
+		readl(pchan->base + DMA_CHAN_LLI_ADDR),
 		DMA_CHAN_CUR_CFG,
-		पढ़ोl(pchan->base + DMA_CHAN_CUR_CFG),
+		readl(pchan->base + DMA_CHAN_CUR_CFG),
 		DMA_CHAN_CUR_SRC,
-		पढ़ोl(pchan->base + DMA_CHAN_CUR_SRC),
+		readl(pchan->base + DMA_CHAN_CUR_SRC),
 		DMA_CHAN_CUR_DST,
-		पढ़ोl(pchan->base + DMA_CHAN_CUR_DST),
+		readl(pchan->base + DMA_CHAN_CUR_DST),
 		DMA_CHAN_CUR_CNT,
-		पढ़ोl(pchan->base + DMA_CHAN_CUR_CNT),
+		readl(pchan->base + DMA_CHAN_CUR_CNT),
 		DMA_CHAN_CUR_PARA,
-		पढ़ोl(pchan->base + DMA_CHAN_CUR_PARA));
-पूर्ण
+		readl(pchan->base + DMA_CHAN_CUR_PARA));
+}
 
-अटल अंतरभूत s8 convert_burst(u32 maxburst)
-अणु
-	चयन (maxburst) अणु
-	हाल 1:
-		वापस 0;
-	हाल 4:
-		वापस 1;
-	हाल 8:
-		वापस 2;
-	हाल 16:
-		वापस 3;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+static inline s8 convert_burst(u32 maxburst)
+{
+	switch (maxburst) {
+	case 1:
+		return 0;
+	case 4:
+		return 1;
+	case 8:
+		return 2;
+	case 16:
+		return 3;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल अंतरभूत s8 convert_buswidth(क्रमागत dma_slave_buswidth addr_width)
-अणु
-	वापस ilog2(addr_width);
-पूर्ण
+static inline s8 convert_buswidth(enum dma_slave_buswidth addr_width)
+{
+	return ilog2(addr_width);
+}
 
-अटल व्योम sun6i_enable_घड़ी_स्वतःgate_a23(काष्ठा sun6i_dma_dev *sdev)
-अणु
-	ग_लिखोl(SUN8I_DMA_GATE_ENABLE, sdev->base + SUN8I_DMA_GATE);
-पूर्ण
+static void sun6i_enable_clock_autogate_a23(struct sun6i_dma_dev *sdev)
+{
+	writel(SUN8I_DMA_GATE_ENABLE, sdev->base + SUN8I_DMA_GATE);
+}
 
-अटल व्योम sun6i_enable_घड़ी_स्वतःgate_h3(काष्ठा sun6i_dma_dev *sdev)
-अणु
-	ग_लिखोl(SUNXI_H3_DMA_GATE_ENABLE, sdev->base + SUNXI_H3_DMA_GATE);
-पूर्ण
+static void sun6i_enable_clock_autogate_h3(struct sun6i_dma_dev *sdev)
+{
+	writel(SUNXI_H3_DMA_GATE_ENABLE, sdev->base + SUNXI_H3_DMA_GATE);
+}
 
-अटल व्योम sun6i_set_burst_length_a31(u32 *p_cfg, s8 src_burst, s8 dst_burst)
-अणु
+static void sun6i_set_burst_length_a31(u32 *p_cfg, s8 src_burst, s8 dst_burst)
+{
 	*p_cfg |= DMA_CHAN_CFG_SRC_BURST_A31(src_burst) |
 		  DMA_CHAN_CFG_DST_BURST_A31(dst_burst);
-पूर्ण
+}
 
-अटल व्योम sun6i_set_burst_length_h3(u32 *p_cfg, s8 src_burst, s8 dst_burst)
-अणु
+static void sun6i_set_burst_length_h3(u32 *p_cfg, s8 src_burst, s8 dst_burst)
+{
 	*p_cfg |= DMA_CHAN_CFG_SRC_BURST_H3(src_burst) |
 		  DMA_CHAN_CFG_DST_BURST_H3(dst_burst);
-पूर्ण
+}
 
-अटल व्योम sun6i_set_drq_a31(u32 *p_cfg, s8 src_drq, s8 dst_drq)
-अणु
+static void sun6i_set_drq_a31(u32 *p_cfg, s8 src_drq, s8 dst_drq)
+{
 	*p_cfg |= DMA_CHAN_CFG_SRC_DRQ_A31(src_drq) |
 		  DMA_CHAN_CFG_DST_DRQ_A31(dst_drq);
-पूर्ण
+}
 
-अटल व्योम sun6i_set_drq_h6(u32 *p_cfg, s8 src_drq, s8 dst_drq)
-अणु
+static void sun6i_set_drq_h6(u32 *p_cfg, s8 src_drq, s8 dst_drq)
+{
 	*p_cfg |= DMA_CHAN_CFG_SRC_DRQ_H6(src_drq) |
 		  DMA_CHAN_CFG_DST_DRQ_H6(dst_drq);
-पूर्ण
+}
 
-अटल व्योम sun6i_set_mode_a31(u32 *p_cfg, s8 src_mode, s8 dst_mode)
-अणु
+static void sun6i_set_mode_a31(u32 *p_cfg, s8 src_mode, s8 dst_mode)
+{
 	*p_cfg |= DMA_CHAN_CFG_SRC_MODE_A31(src_mode) |
 		  DMA_CHAN_CFG_DST_MODE_A31(dst_mode);
-पूर्ण
+}
 
-अटल व्योम sun6i_set_mode_h6(u32 *p_cfg, s8 src_mode, s8 dst_mode)
-अणु
+static void sun6i_set_mode_h6(u32 *p_cfg, s8 src_mode, s8 dst_mode)
+{
 	*p_cfg |= DMA_CHAN_CFG_SRC_MODE_H6(src_mode) |
 		  DMA_CHAN_CFG_DST_MODE_H6(dst_mode);
-पूर्ण
+}
 
-अटल माप_प्रकार sun6i_get_chan_size(काष्ठा sun6i_pchan *pchan)
-अणु
-	काष्ठा sun6i_desc *txd = pchan->desc;
-	काष्ठा sun6i_dma_lli *lli;
-	माप_प्रकार bytes;
+static size_t sun6i_get_chan_size(struct sun6i_pchan *pchan)
+{
+	struct sun6i_desc *txd = pchan->desc;
+	struct sun6i_dma_lli *lli;
+	size_t bytes;
 	dma_addr_t pos;
 
-	pos = पढ़ोl(pchan->base + DMA_CHAN_LLI_ADDR);
-	bytes = पढ़ोl(pchan->base + DMA_CHAN_CUR_CNT);
+	pos = readl(pchan->base + DMA_CHAN_LLI_ADDR);
+	bytes = readl(pchan->base + DMA_CHAN_CUR_CNT);
 
-	अगर (pos == LLI_LAST_ITEM)
-		वापस bytes;
+	if (pos == LLI_LAST_ITEM)
+		return bytes;
 
-	क्रम (lli = txd->v_lli; lli; lli = lli->v_lli_next) अणु
-		अगर (lli->p_lli_next == pos) अणु
-			क्रम (lli = lli->v_lli_next; lli; lli = lli->v_lli_next)
+	for (lli = txd->v_lli; lli; lli = lli->v_lli_next) {
+		if (lli->p_lli_next == pos) {
+			for (lli = lli->v_lli_next; lli; lli = lli->v_lli_next)
 				bytes += lli->len;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस bytes;
-पूर्ण
+	return bytes;
+}
 
-अटल व्योम *sun6i_dma_lli_add(काष्ठा sun6i_dma_lli *prev,
-			       काष्ठा sun6i_dma_lli *next,
+static void *sun6i_dma_lli_add(struct sun6i_dma_lli *prev,
+			       struct sun6i_dma_lli *next,
 			       dma_addr_t next_phy,
-			       काष्ठा sun6i_desc *txd)
-अणु
-	अगर ((!prev && !txd) || !next)
-		वापस शून्य;
+			       struct sun6i_desc *txd)
+{
+	if ((!prev && !txd) || !next)
+		return NULL;
 
-	अगर (!prev) अणु
+	if (!prev) {
 		txd->p_lli = next_phy;
 		txd->v_lli = next;
-	पूर्ण अन्यथा अणु
+	} else {
 		prev->p_lli_next = next_phy;
 		prev->v_lli_next = next;
-	पूर्ण
+	}
 
 	next->p_lli_next = LLI_LAST_ITEM;
-	next->v_lli_next = शून्य;
+	next->v_lli_next = NULL;
 
-	वापस next;
-पूर्ण
+	return next;
+}
 
-अटल अंतरभूत व्योम sun6i_dma_dump_lli(काष्ठा sun6i_vchan *vchan,
-				      काष्ठा sun6i_dma_lli *lli)
-अणु
+static inline void sun6i_dma_dump_lli(struct sun6i_vchan *vchan,
+				      struct sun6i_dma_lli *lli)
+{
 	phys_addr_t p_lli = virt_to_phys(lli);
 
 	dev_dbg(chan2dev(&vchan->vc.chan),
@@ -397,54 +396,54 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 		&p_lli, lli,
 		lli->cfg, lli->src, lli->dst,
 		lli->len, lli->para, lli->p_lli_next);
-पूर्ण
+}
 
-अटल व्योम sun6i_dma_मुक्त_desc(काष्ठा virt_dma_desc *vd)
-अणु
-	काष्ठा sun6i_desc *txd = to_sun6i_desc(&vd->tx);
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(vd->tx.chan->device);
-	काष्ठा sun6i_dma_lli *v_lli, *v_next;
+static void sun6i_dma_free_desc(struct virt_dma_desc *vd)
+{
+	struct sun6i_desc *txd = to_sun6i_desc(&vd->tx);
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(vd->tx.chan->device);
+	struct sun6i_dma_lli *v_lli, *v_next;
 	dma_addr_t p_lli, p_next;
 
-	अगर (unlikely(!txd))
-		वापस;
+	if (unlikely(!txd))
+		return;
 
 	p_lli = txd->p_lli;
 	v_lli = txd->v_lli;
 
-	जबतक (v_lli) अणु
+	while (v_lli) {
 		v_next = v_lli->v_lli_next;
 		p_next = v_lli->p_lli_next;
 
-		dma_pool_मुक्त(sdev->pool, v_lli, p_lli);
+		dma_pool_free(sdev->pool, v_lli, p_lli);
 
 		v_lli = v_next;
 		p_lli = p_next;
-	पूर्ण
+	}
 
-	kमुक्त(txd);
-पूर्ण
+	kfree(txd);
+}
 
-अटल पूर्णांक sun6i_dma_start_desc(काष्ठा sun6i_vchan *vchan)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(vchan->vc.chan.device);
-	काष्ठा virt_dma_desc *desc = vchan_next_desc(&vchan->vc);
-	काष्ठा sun6i_pchan *pchan = vchan->phy;
+static int sun6i_dma_start_desc(struct sun6i_vchan *vchan)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(vchan->vc.chan.device);
+	struct virt_dma_desc *desc = vchan_next_desc(&vchan->vc);
+	struct sun6i_pchan *pchan = vchan->phy;
 	u32 irq_val, irq_reg, irq_offset;
 
-	अगर (!pchan)
-		वापस -EAGAIN;
+	if (!pchan)
+		return -EAGAIN;
 
-	अगर (!desc) अणु
-		pchan->desc = शून्य;
-		pchan->करोne = शून्य;
-		वापस -EAGAIN;
-	पूर्ण
+	if (!desc) {
+		pchan->desc = NULL;
+		pchan->done = NULL;
+		return -EAGAIN;
+	}
 
 	list_del(&desc->node);
 
 	pchan->desc = to_sun6i_desc(&desc->tx);
-	pchan->करोne = शून्य;
+	pchan->done = NULL;
 
 	sun6i_dma_dump_lli(vchan, pchan->desc->v_lli);
 
@@ -453,59 +452,59 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 
 	vchan->irq_type = vchan->cyclic ? DMA_IRQ_PKG : DMA_IRQ_QUEUE;
 
-	irq_val = पढ़ोl(sdev->base + DMA_IRQ_EN(irq_reg));
+	irq_val = readl(sdev->base + DMA_IRQ_EN(irq_reg));
 	irq_val &= ~((DMA_IRQ_HALF | DMA_IRQ_PKG | DMA_IRQ_QUEUE) <<
 			(irq_offset * DMA_IRQ_CHAN_WIDTH));
 	irq_val |= vchan->irq_type << (irq_offset * DMA_IRQ_CHAN_WIDTH);
-	ग_लिखोl(irq_val, sdev->base + DMA_IRQ_EN(irq_reg));
+	writel(irq_val, sdev->base + DMA_IRQ_EN(irq_reg));
 
-	ग_लिखोl(pchan->desc->p_lli, pchan->base + DMA_CHAN_LLI_ADDR);
-	ग_लिखोl(DMA_CHAN_ENABLE_START, pchan->base + DMA_CHAN_ENABLE);
+	writel(pchan->desc->p_lli, pchan->base + DMA_CHAN_LLI_ADDR);
+	writel(DMA_CHAN_ENABLE_START, pchan->base + DMA_CHAN_ENABLE);
 
 	sun6i_dma_dump_com_regs(sdev);
 	sun6i_dma_dump_chan_regs(sdev, pchan);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sun6i_dma_tasklet(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = from_tasklet(sdev, t, task);
-	काष्ठा sun6i_vchan *vchan;
-	काष्ठा sun6i_pchan *pchan;
-	अचिन्हित पूर्णांक pchan_alloc = 0;
-	अचिन्हित पूर्णांक pchan_idx;
+static void sun6i_dma_tasklet(struct tasklet_struct *t)
+{
+	struct sun6i_dma_dev *sdev = from_tasklet(sdev, t, task);
+	struct sun6i_vchan *vchan;
+	struct sun6i_pchan *pchan;
+	unsigned int pchan_alloc = 0;
+	unsigned int pchan_idx;
 
-	list_क्रम_each_entry(vchan, &sdev->slave.channels, vc.chan.device_node) अणु
+	list_for_each_entry(vchan, &sdev->slave.channels, vc.chan.device_node) {
 		spin_lock_irq(&vchan->vc.lock);
 
 		pchan = vchan->phy;
 
-		अगर (pchan && pchan->करोne) अणु
-			अगर (sun6i_dma_start_desc(vchan)) अणु
+		if (pchan && pchan->done) {
+			if (sun6i_dma_start_desc(vchan)) {
 				/*
 				 * No current txd associated with this channel
 				 */
 				dev_dbg(sdev->slave.dev, "pchan %u: free\n",
 					pchan->idx);
 
-				/* Mark this channel मुक्त */
-				vchan->phy = शून्य;
-				pchan->vchan = शून्य;
-			पूर्ण
-		पूर्ण
+				/* Mark this channel free */
+				vchan->phy = NULL;
+				pchan->vchan = NULL;
+			}
+		}
 		spin_unlock_irq(&vchan->vc.lock);
-	पूर्ण
+	}
 
 	spin_lock_irq(&sdev->lock);
-	क्रम (pchan_idx = 0; pchan_idx < sdev->num_pchans; pchan_idx++) अणु
+	for (pchan_idx = 0; pchan_idx < sdev->num_pchans; pchan_idx++) {
 		pchan = &sdev->pchans[pchan_idx];
 
-		अगर (pchan->vchan || list_empty(&sdev->pending))
-			जारी;
+		if (pchan->vchan || list_empty(&sdev->pending))
+			continue;
 
 		vchan = list_first_entry(&sdev->pending,
-					 काष्ठा sun6i_vchan, node);
+					 struct sun6i_vchan, node);
 
 		/* Remove from pending channels */
 		list_del_init(&vchan->node);
@@ -516,72 +515,72 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 		vchan->phy = pchan;
 		dev_dbg(sdev->slave.dev, "pchan %u: alloc vchan %p\n",
 			pchan->idx, &vchan->vc);
-	पूर्ण
+	}
 	spin_unlock_irq(&sdev->lock);
 
-	क्रम (pchan_idx = 0; pchan_idx < sdev->num_pchans; pchan_idx++) अणु
-		अगर (!(pchan_alloc & BIT(pchan_idx)))
-			जारी;
+	for (pchan_idx = 0; pchan_idx < sdev->num_pchans; pchan_idx++) {
+		if (!(pchan_alloc & BIT(pchan_idx)))
+			continue;
 
 		pchan = sdev->pchans + pchan_idx;
 		vchan = pchan->vchan;
-		अगर (vchan) अणु
+		if (vchan) {
 			spin_lock_irq(&vchan->vc.lock);
 			sun6i_dma_start_desc(vchan);
 			spin_unlock_irq(&vchan->vc.lock);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल irqवापस_t sun6i_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = dev_id;
-	काष्ठा sun6i_vchan *vchan;
-	काष्ठा sun6i_pchan *pchan;
-	पूर्णांक i, j, ret = IRQ_NONE;
+static irqreturn_t sun6i_dma_interrupt(int irq, void *dev_id)
+{
+	struct sun6i_dma_dev *sdev = dev_id;
+	struct sun6i_vchan *vchan;
+	struct sun6i_pchan *pchan;
+	int i, j, ret = IRQ_NONE;
 	u32 status;
 
-	क्रम (i = 0; i < sdev->num_pchans / DMA_IRQ_CHAN_NR; i++) अणु
-		status = पढ़ोl(sdev->base + DMA_IRQ_STAT(i));
-		अगर (!status)
-			जारी;
+	for (i = 0; i < sdev->num_pchans / DMA_IRQ_CHAN_NR; i++) {
+		status = readl(sdev->base + DMA_IRQ_STAT(i));
+		if (!status)
+			continue;
 
 		dev_dbg(sdev->slave.dev, "DMA irq status %s: 0x%x\n",
 			i ? "high" : "low", status);
 
-		ग_लिखोl(status, sdev->base + DMA_IRQ_STAT(i));
+		writel(status, sdev->base + DMA_IRQ_STAT(i));
 
-		क्रम (j = 0; (j < DMA_IRQ_CHAN_NR) && status; j++) अणु
+		for (j = 0; (j < DMA_IRQ_CHAN_NR) && status; j++) {
 			pchan = sdev->pchans + j;
 			vchan = pchan->vchan;
-			अगर (vchan && (status & vchan->irq_type)) अणु
-				अगर (vchan->cyclic) अणु
+			if (vchan && (status & vchan->irq_type)) {
+				if (vchan->cyclic) {
 					vchan_cyclic_callback(&pchan->desc->vd);
-				पूर्ण अन्यथा अणु
+				} else {
 					spin_lock(&vchan->vc.lock);
 					vchan_cookie_complete(&pchan->desc->vd);
-					pchan->करोne = pchan->desc;
+					pchan->done = pchan->desc;
 					spin_unlock(&vchan->vc.lock);
-				पूर्ण
-			पूर्ण
+				}
+			}
 
 			status = status >> DMA_IRQ_CHAN_WIDTH;
-		पूर्ण
+		}
 
-		अगर (!atomic_पढ़ो(&sdev->tasklet_shutकरोwn))
+		if (!atomic_read(&sdev->tasklet_shutdown))
 			tasklet_schedule(&sdev->task);
 		ret = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक set_config(काष्ठा sun6i_dma_dev *sdev,
-			काष्ठा dma_slave_config *sconfig,
-			क्रमागत dma_transfer_direction direction,
+static int set_config(struct sun6i_dma_dev *sdev,
+			struct dma_slave_config *sconfig,
+			enum dma_transfer_direction direction,
 			u32 *p_cfg)
-अणु
-	क्रमागत dma_slave_buswidth src_addr_width, dst_addr_width;
+{
+	enum dma_slave_buswidth src_addr_width, dst_addr_width;
 	u32 src_maxburst, dst_maxburst;
 	s8 src_width, dst_width, src_burst, dst_burst;
 
@@ -590,29 +589,29 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 	src_maxburst = sconfig->src_maxburst;
 	dst_maxburst = sconfig->dst_maxburst;
 
-	चयन (direction) अणु
-	हाल DMA_MEM_TO_DEV:
-		अगर (src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+	switch (direction) {
+	case DMA_MEM_TO_DEV:
+		if (src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 			src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		src_maxburst = src_maxburst ? src_maxburst : 8;
-		अवरोध;
-	हाल DMA_DEV_TO_MEM:
-		अगर (dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+		break;
+	case DMA_DEV_TO_MEM:
+		if (dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 			dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 		dst_maxburst = dst_maxburst ? dst_maxburst : 8;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (!(BIT(src_addr_width) & sdev->slave.src_addr_widths))
-		वापस -EINVAL;
-	अगर (!(BIT(dst_addr_width) & sdev->slave.dst_addr_widths))
-		वापस -EINVAL;
-	अगर (!(BIT(src_maxburst) & sdev->cfg->src_burst_lengths))
-		वापस -EINVAL;
-	अगर (!(BIT(dst_maxburst) & sdev->cfg->dst_burst_lengths))
-		वापस -EINVAL;
+	if (!(BIT(src_addr_width) & sdev->slave.src_addr_widths))
+		return -EINVAL;
+	if (!(BIT(dst_addr_width) & sdev->slave.dst_addr_widths))
+		return -EINVAL;
+	if (!(BIT(src_maxburst) & sdev->cfg->src_burst_lengths))
+		return -EINVAL;
+	if (!(BIT(dst_maxburst) & sdev->cfg->dst_burst_lengths))
+		return -EINVAL;
 
 	src_width = convert_buswidth(src_addr_width);
 	dst_width = convert_buswidth(dst_addr_width);
@@ -624,17 +623,17 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 
 	sdev->cfg->set_burst_length(p_cfg, src_burst, dst_burst);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *sun6i_dma_prep_dma_स_नकल(
-		काष्ठा dma_chan *chan, dma_addr_t dest, dma_addr_t src,
-		माप_प्रकार len, अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा sun6i_dma_lli *v_lli;
-	काष्ठा sun6i_desc *txd;
+static struct dma_async_tx_descriptor *sun6i_dma_prep_dma_memcpy(
+		struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
+		size_t len, unsigned long flags)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct sun6i_dma_lli *v_lli;
+	struct sun6i_desc *txd;
 	dma_addr_t p_lli;
 	s8 burst, width;
 
@@ -642,18 +641,18 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 		"%s; chan: %d, dest: %pad, src: %pad, len: %zu. flags: 0x%08lx\n",
 		__func__, vchan->vc.chan.chan_id, &dest, &src, len, flags);
 
-	अगर (!len)
-		वापस शून्य;
+	if (!len)
+		return NULL;
 
-	txd = kzalloc(माप(*txd), GFP_NOWAIT);
-	अगर (!txd)
-		वापस शून्य;
+	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
+	if (!txd)
+		return NULL;
 
 	v_lli = dma_pool_alloc(sdev->pool, GFP_NOWAIT, &p_lli);
-	अगर (!v_lli) अणु
+	if (!v_lli) {
 		dev_err(sdev->slave.dev, "Failed to alloc lli memory\n");
-		जाओ err_txd_मुक्त;
-	पूर्ण
+		goto err_txd_free;
+	}
 
 	v_lli->src = src;
 	v_lli->dst = dest;
@@ -669,54 +668,54 @@ to_sun6i_desc(काष्ठा dma_async_tx_descriptor *tx)
 	sdev->cfg->set_drq(&v_lli->cfg, DRQ_SDRAM, DRQ_SDRAM);
 	sdev->cfg->set_mode(&v_lli->cfg, LINEAR_MODE, LINEAR_MODE);
 
-	sun6i_dma_lli_add(शून्य, v_lli, p_lli, txd);
+	sun6i_dma_lli_add(NULL, v_lli, p_lli, txd);
 
 	sun6i_dma_dump_lli(vchan, v_lli);
 
-	वापस vchan_tx_prep(&vchan->vc, &txd->vd, flags);
+	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 
-err_txd_मुक्त:
-	kमुक्त(txd);
-	वापस शून्य;
-पूर्ण
+err_txd_free:
+	kfree(txd);
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *sun6i_dma_prep_slave_sg(
-		काष्ठा dma_chan *chan, काष्ठा scatterlist *sgl,
-		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction dir,
-		अचिन्हित दीर्घ flags, व्योम *context)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
-	काष्ठा sun6i_dma_lli *v_lli, *prev = शून्य;
-	काष्ठा sun6i_desc *txd;
-	काष्ठा scatterlist *sg;
+static struct dma_async_tx_descriptor *sun6i_dma_prep_slave_sg(
+		struct dma_chan *chan, struct scatterlist *sgl,
+		unsigned int sg_len, enum dma_transfer_direction dir,
+		unsigned long flags, void *context)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct dma_slave_config *sconfig = &vchan->cfg;
+	struct sun6i_dma_lli *v_lli, *prev = NULL;
+	struct sun6i_desc *txd;
+	struct scatterlist *sg;
 	dma_addr_t p_lli;
 	u32 lli_cfg;
-	पूर्णांक i, ret;
+	int i, ret;
 
-	अगर (!sgl)
-		वापस शून्य;
+	if (!sgl)
+		return NULL;
 
 	ret = set_config(sdev, sconfig, dir, &lli_cfg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chan2dev(chan), "Invalid DMA configuration\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	txd = kzalloc(माप(*txd), GFP_NOWAIT);
-	अगर (!txd)
-		वापस शून्य;
+	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
+	if (!txd)
+		return NULL;
 
-	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+	for_each_sg(sgl, sg, sg_len, i) {
 		v_lli = dma_pool_alloc(sdev->pool, GFP_NOWAIT, &p_lli);
-		अगर (!v_lli)
-			जाओ err_lli_मुक्त;
+		if (!v_lli)
+			goto err_lli_free;
 
 		v_lli->len = sg_dma_len(sg);
 		v_lli->para = NORMAL_WAIT;
 
-		अगर (dir == DMA_MEM_TO_DEV) अणु
+		if (dir == DMA_MEM_TO_DEV) {
 			v_lli->src = sg_dma_address(sg);
 			v_lli->dst = sconfig->dst_addr;
 			v_lli->cfg = lli_cfg;
@@ -729,7 +728,7 @@ err_txd_मुक्त:
 				&sconfig->dst_addr, &sg_dma_address(sg),
 				sg_dma_len(sg), flags);
 
-		पूर्ण अन्यथा अणु
+		} else {
 			v_lli->src = sconfig->src_addr;
 			v_lli->dst = sg_dma_address(sg);
 			v_lli->cfg = lli_cfg;
@@ -741,153 +740,153 @@ err_txd_मुक्त:
 				__func__, vchan->vc.chan.chan_id,
 				&sg_dma_address(sg), &sconfig->src_addr,
 				sg_dma_len(sg), flags);
-		पूर्ण
+		}
 
 		prev = sun6i_dma_lli_add(prev, v_lli, p_lli, txd);
-	पूर्ण
+	}
 
 	dev_dbg(chan2dev(chan), "First: %pad\n", &txd->p_lli);
-	क्रम (prev = txd->v_lli; prev; prev = prev->v_lli_next)
+	for (prev = txd->v_lli; prev; prev = prev->v_lli_next)
 		sun6i_dma_dump_lli(vchan, prev);
 
-	वापस vchan_tx_prep(&vchan->vc, &txd->vd, flags);
+	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 
-err_lli_मुक्त:
-	क्रम (prev = txd->v_lli; prev; prev = prev->v_lli_next)
-		dma_pool_मुक्त(sdev->pool, prev, virt_to_phys(prev));
-	kमुक्त(txd);
-	वापस शून्य;
-पूर्ण
+err_lli_free:
+	for (prev = txd->v_lli; prev; prev = prev->v_lli_next)
+		dma_pool_free(sdev->pool, prev, virt_to_phys(prev));
+	kfree(txd);
+	return NULL;
+}
 
-अटल काष्ठा dma_async_tx_descriptor *sun6i_dma_prep_dma_cyclic(
-					काष्ठा dma_chan *chan,
+static struct dma_async_tx_descriptor *sun6i_dma_prep_dma_cyclic(
+					struct dma_chan *chan,
 					dma_addr_t buf_addr,
-					माप_प्रकार buf_len,
-					माप_प्रकार period_len,
-					क्रमागत dma_transfer_direction dir,
-					अचिन्हित दीर्घ flags)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा dma_slave_config *sconfig = &vchan->cfg;
-	काष्ठा sun6i_dma_lli *v_lli, *prev = शून्य;
-	काष्ठा sun6i_desc *txd;
+					size_t buf_len,
+					size_t period_len,
+					enum dma_transfer_direction dir,
+					unsigned long flags)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct dma_slave_config *sconfig = &vchan->cfg;
+	struct sun6i_dma_lli *v_lli, *prev = NULL;
+	struct sun6i_desc *txd;
 	dma_addr_t p_lli;
 	u32 lli_cfg;
-	अचिन्हित पूर्णांक i, periods = buf_len / period_len;
-	पूर्णांक ret;
+	unsigned int i, periods = buf_len / period_len;
+	int ret;
 
 	ret = set_config(sdev, sconfig, dir, &lli_cfg);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(chan2dev(chan), "Invalid DMA configuration\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	txd = kzalloc(माप(*txd), GFP_NOWAIT);
-	अगर (!txd)
-		वापस शून्य;
+	txd = kzalloc(sizeof(*txd), GFP_NOWAIT);
+	if (!txd)
+		return NULL;
 
-	क्रम (i = 0; i < periods; i++) अणु
+	for (i = 0; i < periods; i++) {
 		v_lli = dma_pool_alloc(sdev->pool, GFP_NOWAIT, &p_lli);
-		अगर (!v_lli) अणु
+		if (!v_lli) {
 			dev_err(sdev->slave.dev, "Failed to alloc lli memory\n");
-			जाओ err_lli_मुक्त;
-		पूर्ण
+			goto err_lli_free;
+		}
 
 		v_lli->len = period_len;
 		v_lli->para = NORMAL_WAIT;
 
-		अगर (dir == DMA_MEM_TO_DEV) अणु
+		if (dir == DMA_MEM_TO_DEV) {
 			v_lli->src = buf_addr + period_len * i;
 			v_lli->dst = sconfig->dst_addr;
 			v_lli->cfg = lli_cfg;
 			sdev->cfg->set_drq(&v_lli->cfg, DRQ_SDRAM, vchan->port);
 			sdev->cfg->set_mode(&v_lli->cfg, LINEAR_MODE, IO_MODE);
-		पूर्ण अन्यथा अणु
+		} else {
 			v_lli->src = sconfig->src_addr;
 			v_lli->dst = buf_addr + period_len * i;
 			v_lli->cfg = lli_cfg;
 			sdev->cfg->set_drq(&v_lli->cfg, vchan->port, DRQ_SDRAM);
 			sdev->cfg->set_mode(&v_lli->cfg, IO_MODE, LINEAR_MODE);
-		पूर्ण
+		}
 
 		prev = sun6i_dma_lli_add(prev, v_lli, p_lli, txd);
-	पूर्ण
+	}
 
 	prev->p_lli_next = txd->p_lli;		/* cyclic list */
 
 	vchan->cyclic = true;
 
-	वापस vchan_tx_prep(&vchan->vc, &txd->vd, flags);
+	return vchan_tx_prep(&vchan->vc, &txd->vd, flags);
 
-err_lli_मुक्त:
-	क्रम (prev = txd->v_lli; prev; prev = prev->v_lli_next)
-		dma_pool_मुक्त(sdev->pool, prev, virt_to_phys(prev));
-	kमुक्त(txd);
-	वापस शून्य;
-पूर्ण
+err_lli_free:
+	for (prev = txd->v_lli; prev; prev = prev->v_lli_next)
+		dma_pool_free(sdev->pool, prev, virt_to_phys(prev));
+	kfree(txd);
+	return NULL;
+}
 
-अटल पूर्णांक sun6i_dma_config(काष्ठा dma_chan *chan,
-			    काष्ठा dma_slave_config *config)
-अणु
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
+static int sun6i_dma_config(struct dma_chan *chan,
+			    struct dma_slave_config *config)
+{
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
 
-	स_नकल(&vchan->cfg, config, माप(*config));
+	memcpy(&vchan->cfg, config, sizeof(*config));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun6i_dma_छोड़ो(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा sun6i_pchan *pchan = vchan->phy;
+static int sun6i_dma_pause(struct dma_chan *chan)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct sun6i_pchan *pchan = vchan->phy;
 
 	dev_dbg(chan2dev(chan), "vchan %p: pause\n", &vchan->vc);
 
-	अगर (pchan) अणु
-		ग_लिखोl(DMA_CHAN_PAUSE_PAUSE,
+	if (pchan) {
+		writel(DMA_CHAN_PAUSE_PAUSE,
 		       pchan->base + DMA_CHAN_PAUSE);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock(&sdev->lock);
 		list_del_init(&vchan->node);
 		spin_unlock(&sdev->lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun6i_dma_resume(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा sun6i_pchan *pchan = vchan->phy;
-	अचिन्हित दीर्घ flags;
+static int sun6i_dma_resume(struct dma_chan *chan)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct sun6i_pchan *pchan = vchan->phy;
+	unsigned long flags;
 
 	dev_dbg(chan2dev(chan), "vchan %p: resume\n", &vchan->vc);
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
-	अगर (pchan) अणु
-		ग_लिखोl(DMA_CHAN_PAUSE_RESUME,
+	if (pchan) {
+		writel(DMA_CHAN_PAUSE_RESUME,
 		       pchan->base + DMA_CHAN_PAUSE);
-	पूर्ण अन्यथा अगर (!list_empty(&vchan->vc.desc_issued)) अणु
+	} else if (!list_empty(&vchan->vc.desc_issued)) {
 		spin_lock(&sdev->lock);
 		list_add_tail(&vchan->node, &sdev->pending);
 		spin_unlock(&sdev->lock);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sun6i_dma_terminate_all(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा sun6i_pchan *pchan = vchan->phy;
-	अचिन्हित दीर्घ flags;
+static int sun6i_dma_terminate_all(struct dma_chan *chan)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct sun6i_pchan *pchan = vchan->phy;
+	unsigned long flags;
 	LIST_HEAD(head);
 
 	spin_lock(&sdev->lock);
@@ -896,179 +895,179 @@ err_lli_मुक्त:
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
-	अगर (vchan->cyclic) अणु
+	if (vchan->cyclic) {
 		vchan->cyclic = false;
-		अगर (pchan && pchan->desc) अणु
-			काष्ठा virt_dma_desc *vd = &pchan->desc->vd;
-			काष्ठा virt_dma_chan *vc = &vchan->vc;
+		if (pchan && pchan->desc) {
+			struct virt_dma_desc *vd = &pchan->desc->vd;
+			struct virt_dma_chan *vc = &vchan->vc;
 
 			list_add_tail(&vd->node, &vc->desc_completed);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	vchan_get_all_descriptors(&vchan->vc, &head);
 
-	अगर (pchan) अणु
-		ग_लिखोl(DMA_CHAN_ENABLE_STOP, pchan->base + DMA_CHAN_ENABLE);
-		ग_लिखोl(DMA_CHAN_PAUSE_RESUME, pchan->base + DMA_CHAN_PAUSE);
+	if (pchan) {
+		writel(DMA_CHAN_ENABLE_STOP, pchan->base + DMA_CHAN_ENABLE);
+		writel(DMA_CHAN_PAUSE_RESUME, pchan->base + DMA_CHAN_PAUSE);
 
-		vchan->phy = शून्य;
-		pchan->vchan = शून्य;
-		pchan->desc = शून्य;
-		pchan->करोne = शून्य;
-	पूर्ण
+		vchan->phy = NULL;
+		pchan->vchan = NULL;
+		pchan->desc = NULL;
+		pchan->done = NULL;
+	}
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
-	vchan_dma_desc_मुक्त_list(&vchan->vc, &head);
+	vchan_dma_desc_free_list(&vchan->vc, &head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत dma_status sun6i_dma_tx_status(काष्ठा dma_chan *chan,
+static enum dma_status sun6i_dma_tx_status(struct dma_chan *chan,
 					   dma_cookie_t cookie,
-					   काष्ठा dma_tx_state *state)
-अणु
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	काष्ठा sun6i_pchan *pchan = vchan->phy;
-	काष्ठा sun6i_dma_lli *lli;
-	काष्ठा virt_dma_desc *vd;
-	काष्ठा sun6i_desc *txd;
-	क्रमागत dma_status ret;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार bytes = 0;
+					   struct dma_tx_state *state)
+{
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	struct sun6i_pchan *pchan = vchan->phy;
+	struct sun6i_dma_lli *lli;
+	struct virt_dma_desc *vd;
+	struct sun6i_desc *txd;
+	enum dma_status ret;
+	unsigned long flags;
+	size_t bytes = 0;
 
 	ret = dma_cookie_status(chan, cookie, state);
-	अगर (ret == DMA_COMPLETE || !state)
-		वापस ret;
+	if (ret == DMA_COMPLETE || !state)
+		return ret;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
 	vd = vchan_find_desc(&vchan->vc, cookie);
 	txd = to_sun6i_desc(&vd->tx);
 
-	अगर (vd) अणु
-		क्रम (lli = txd->v_lli; lli != शून्य; lli = lli->v_lli_next)
+	if (vd) {
+		for (lli = txd->v_lli; lli != NULL; lli = lli->v_lli_next)
 			bytes += lli->len;
-	पूर्ण अन्यथा अगर (!pchan || !pchan->desc) अणु
+	} else if (!pchan || !pchan->desc) {
 		bytes = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		bytes = sun6i_get_chan_size(pchan);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
 
 	dma_set_residue(state, bytes);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sun6i_dma_issue_pending(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	अचिन्हित दीर्घ flags;
+static void sun6i_dma_issue_pending(struct dma_chan *chan)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&vchan->vc.lock, flags);
 
-	अगर (vchan_issue_pending(&vchan->vc)) अणु
+	if (vchan_issue_pending(&vchan->vc)) {
 		spin_lock(&sdev->lock);
 
-		अगर (!vchan->phy && list_empty(&vchan->node)) अणु
+		if (!vchan->phy && list_empty(&vchan->node)) {
 			list_add_tail(&vchan->node, &sdev->pending);
 			tasklet_schedule(&sdev->task);
 			dev_dbg(chan2dev(chan), "vchan %p: issued\n",
 				&vchan->vc);
-		पूर्ण
+		}
 
 		spin_unlock(&sdev->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(chan2dev(chan), "vchan %p: nothing to issue\n",
 			&vchan->vc);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&vchan->vc.lock, flags);
-पूर्ण
+}
 
-अटल व्योम sun6i_dma_मुक्त_chan_resources(काष्ठा dma_chan *chan)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
-	काष्ठा sun6i_vchan *vchan = to_sun6i_vchan(chan);
-	अचिन्हित दीर्घ flags;
+static void sun6i_dma_free_chan_resources(struct dma_chan *chan)
+{
+	struct sun6i_dma_dev *sdev = to_sun6i_dma_dev(chan->device);
+	struct sun6i_vchan *vchan = to_sun6i_vchan(chan);
+	unsigned long flags;
 
 	spin_lock_irqsave(&sdev->lock, flags);
 	list_del_init(&vchan->node);
 	spin_unlock_irqrestore(&sdev->lock, flags);
 
-	vchan_मुक्त_chan_resources(&vchan->vc);
-पूर्ण
+	vchan_free_chan_resources(&vchan->vc);
+}
 
-अटल काष्ठा dma_chan *sun6i_dma_of_xlate(काष्ठा of_phandle_args *dma_spec,
-					   काष्ठा of_dma *ofdma)
-अणु
-	काष्ठा sun6i_dma_dev *sdev = ofdma->of_dma_data;
-	काष्ठा sun6i_vchan *vchan;
-	काष्ठा dma_chan *chan;
+static struct dma_chan *sun6i_dma_of_xlate(struct of_phandle_args *dma_spec,
+					   struct of_dma *ofdma)
+{
+	struct sun6i_dma_dev *sdev = ofdma->of_dma_data;
+	struct sun6i_vchan *vchan;
+	struct dma_chan *chan;
 	u8 port = dma_spec->args[0];
 
-	अगर (port > sdev->max_request)
-		वापस शून्य;
+	if (port > sdev->max_request)
+		return NULL;
 
 	chan = dma_get_any_slave_channel(&sdev->slave);
-	अगर (!chan)
-		वापस शून्य;
+	if (!chan)
+		return NULL;
 
 	vchan = to_sun6i_vchan(chan);
 	vchan->port = port;
 
-	वापस chan;
-पूर्ण
+	return chan;
+}
 
-अटल अंतरभूत व्योम sun6i_समाप्त_tasklet(काष्ठा sun6i_dma_dev *sdev)
-अणु
-	/* Disable all पूर्णांकerrupts from DMA */
-	ग_लिखोl(0, sdev->base + DMA_IRQ_EN(0));
-	ग_लिखोl(0, sdev->base + DMA_IRQ_EN(1));
+static inline void sun6i_kill_tasklet(struct sun6i_dma_dev *sdev)
+{
+	/* Disable all interrupts from DMA */
+	writel(0, sdev->base + DMA_IRQ_EN(0));
+	writel(0, sdev->base + DMA_IRQ_EN(1));
 
-	/* Prevent spurious पूर्णांकerrupts from scheduling the tasklet */
-	atomic_inc(&sdev->tasklet_shutकरोwn);
+	/* Prevent spurious interrupts from scheduling the tasklet */
+	atomic_inc(&sdev->tasklet_shutdown);
 
-	/* Make sure we won't have any further पूर्णांकerrupts */
-	devm_मुक्त_irq(sdev->slave.dev, sdev->irq, sdev);
+	/* Make sure we won't have any further interrupts */
+	devm_free_irq(sdev->slave.dev, sdev->irq, sdev);
 
 	/* Actually prevent the tasklet from being scheduled */
-	tasklet_समाप्त(&sdev->task);
-पूर्ण
+	tasklet_kill(&sdev->task);
+}
 
-अटल अंतरभूत व्योम sun6i_dma_मुक्त(काष्ठा sun6i_dma_dev *sdev)
-अणु
-	पूर्णांक i;
+static inline void sun6i_dma_free(struct sun6i_dma_dev *sdev)
+{
+	int i;
 
-	क्रम (i = 0; i < sdev->num_vchans; i++) अणु
-		काष्ठा sun6i_vchan *vchan = &sdev->vchans[i];
+	for (i = 0; i < sdev->num_vchans; i++) {
+		struct sun6i_vchan *vchan = &sdev->vchans[i];
 
 		list_del(&vchan->vc.chan.device_node);
-		tasklet_समाप्त(&vchan->vc.task);
-	पूर्ण
-पूर्ण
+		tasklet_kill(&vchan->vc.task);
+	}
+}
 
 /*
  * For A31:
  *
  * There's 16 physical channels that can work in parallel.
  *
- * However we have 30 dअगरferent endpoपूर्णांकs क्रम our requests.
+ * However we have 30 different endpoints for our requests.
  *
  * Since the channels are able to handle only an unidirectional
- * transfer, we need to allocate more भव channels so that
+ * transfer, we need to allocate more virtual channels so that
  * everyone can grab one channel.
  *
  * Some devices can't work in both direction (mostly because it
- * wouldn't make sense), so we have a bit fewer भव channels than
- * 2 channels per endpoपूर्णांकs.
+ * wouldn't make sense), so we have a bit fewer virtual channels than
+ * 2 channels per endpoints.
  */
 
-अटल काष्ठा sun6i_dma_config sun6i_a31_dma_cfg = अणु
+static struct sun6i_dma_config sun6i_a31_dma_cfg = {
 	.nr_max_channels = 16,
 	.nr_max_requests = 30,
 	.nr_max_vchans   = 53,
@@ -1083,18 +1082,18 @@ err_lli_मुक्त:
 	.dst_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
 			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
-पूर्ण;
+};
 
 /*
  * The A23 only has 8 physical channels, a maximum DRQ port id of 24,
- * and a total of 37 usable source and destination endpoपूर्णांकs.
+ * and a total of 37 usable source and destination endpoints.
  */
 
-अटल काष्ठा sun6i_dma_config sun8i_a23_dma_cfg = अणु
+static struct sun6i_dma_config sun8i_a23_dma_cfg = {
 	.nr_max_channels = 8,
 	.nr_max_requests = 24,
 	.nr_max_vchans   = 37,
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_a23,
+	.clock_autogate_enable = sun6i_enable_clock_autogate_a23,
 	.set_burst_length = sun6i_set_burst_length_a31,
 	.set_drq          = sun6i_set_drq_a31,
 	.set_mode         = sun6i_set_mode_a31,
@@ -1106,13 +1105,13 @@ err_lli_मुक्त:
 	.dst_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
 			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
-पूर्ण;
+};
 
-अटल काष्ठा sun6i_dma_config sun8i_a83t_dma_cfg = अणु
+static struct sun6i_dma_config sun8i_a83t_dma_cfg = {
 	.nr_max_channels = 8,
 	.nr_max_requests = 28,
 	.nr_max_vchans   = 39,
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_a23,
+	.clock_autogate_enable = sun6i_enable_clock_autogate_a23,
 	.set_burst_length = sun6i_set_burst_length_a31,
 	.set_drq          = sun6i_set_drq_a31,
 	.set_mode         = sun6i_set_mode_a31,
@@ -1124,20 +1123,20 @@ err_lli_मुक्त:
 	.dst_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
 			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
-पूर्ण;
+};
 
 /*
  * The H3 has 12 physical channels, a maximum DRQ port id of 27,
- * and a total of 34 usable source and destination endpoपूर्णांकs.
+ * and a total of 34 usable source and destination endpoints.
  * It also supports additional burst lengths and bus widths,
- * and the burst length fields have dअगरferent offsets.
+ * and the burst length fields have different offsets.
  */
 
-अटल काष्ठा sun6i_dma_config sun8i_h3_dma_cfg = अणु
+static struct sun6i_dma_config sun8i_h3_dma_cfg = {
 	.nr_max_channels = 12,
 	.nr_max_requests = 27,
 	.nr_max_vchans   = 34,
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_h3,
+	.clock_autogate_enable = sun6i_enable_clock_autogate_h3,
 	.set_burst_length = sun6i_set_burst_length_h3,
 	.set_drq          = sun6i_set_drq_a31,
 	.set_mode         = sun6i_set_mode_a31,
@@ -1151,14 +1150,14 @@ err_lli_मुक्त:
 			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_8_BYTES),
-पूर्ण;
+};
 
 /*
  * The A64 binding uses the number of dma channels from the
  * device tree node.
  */
-अटल काष्ठा sun6i_dma_config sun50i_a64_dma_cfg = अणु
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_h3,
+static struct sun6i_dma_config sun50i_a64_dma_cfg = {
+	.clock_autogate_enable = sun6i_enable_clock_autogate_h3,
 	.set_burst_length = sun6i_set_burst_length_h3,
 	.set_drq          = sun6i_set_drq_a31,
 	.set_mode         = sun6i_set_mode_a31,
@@ -1172,16 +1171,16 @@ err_lli_मुक्त:
 			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_8_BYTES),
-पूर्ण;
+};
 
 /*
- * TODO: Add support क्रम more than 4g physical addressing.
+ * TODO: Add support for more than 4g physical addressing.
  *
  * The A100 binding uses the number of dma channels from the
  * device tree node.
  */
-अटल काष्ठा sun6i_dma_config sun50i_a100_dma_cfg = अणु
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_h3,
+static struct sun6i_dma_config sun50i_a100_dma_cfg = {
+	.clock_autogate_enable = sun6i_enable_clock_autogate_h3,
 	.set_burst_length = sun6i_set_burst_length_h3,
 	.set_drq          = sun6i_set_drq_h6,
 	.set_mode         = sun6i_set_mode_h6,
@@ -1196,14 +1195,14 @@ err_lli_मुक्त:
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_8_BYTES),
 	.has_mbus_clk = true,
-पूर्ण;
+};
 
 /*
  * The H6 binding uses the number of dma channels from the
  * device tree node.
  */
-अटल काष्ठा sun6i_dma_config sun50i_h6_dma_cfg = अणु
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_h3,
+static struct sun6i_dma_config sun50i_h6_dma_cfg = {
+	.clock_autogate_enable = sun6i_enable_clock_autogate_h3,
 	.set_burst_length = sun6i_set_burst_length_h3,
 	.set_drq          = sun6i_set_drq_h6,
 	.set_mode         = sun6i_set_mode_h6,
@@ -1218,18 +1217,18 @@ err_lli_मुक्त:
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_8_BYTES),
 	.has_mbus_clk = true,
-पूर्ण;
+};
 
 /*
  * The V3s have only 8 physical channels, a maximum DRQ port id of 23,
- * and a total of 24 usable source and destination endpoपूर्णांकs.
+ * and a total of 24 usable source and destination endpoints.
  */
 
-अटल काष्ठा sun6i_dma_config sun8i_v3s_dma_cfg = अणु
+static struct sun6i_dma_config sun8i_v3s_dma_cfg = {
 	.nr_max_channels = 8,
 	.nr_max_requests = 23,
 	.nr_max_vchans   = 24,
-	.घड़ी_स्वतःgate_enable = sun6i_enable_घड़ी_स्वतःgate_a23,
+	.clock_autogate_enable = sun6i_enable_clock_autogate_a23,
 	.set_burst_length = sun6i_set_burst_length_a31,
 	.set_drq          = sun6i_set_drq_a31,
 	.set_mode         = sun6i_set_mode_a31,
@@ -1241,73 +1240,73 @@ err_lli_मुक्त:
 	.dst_addr_widths   = BIT(DMA_SLAVE_BUSWIDTH_1_BYTE) |
 			     BIT(DMA_SLAVE_BUSWIDTH_2_BYTES) |
 			     BIT(DMA_SLAVE_BUSWIDTH_4_BYTES),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sun6i_dma_match[] = अणु
-	अणु .compatible = "allwinner,sun6i-a31-dma", .data = &sun6i_a31_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun8i-a23-dma", .data = &sun8i_a23_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun8i-a83t-dma", .data = &sun8i_a83t_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun8i-h3-dma", .data = &sun8i_h3_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun8i-v3s-dma", .data = &sun8i_v3s_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun50i-a64-dma", .data = &sun50i_a64_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun50i-a100-dma", .data = &sun50i_a100_dma_cfg पूर्ण,
-	अणु .compatible = "allwinner,sun50i-h6-dma", .data = &sun50i_h6_dma_cfg पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id sun6i_dma_match[] = {
+	{ .compatible = "allwinner,sun6i-a31-dma", .data = &sun6i_a31_dma_cfg },
+	{ .compatible = "allwinner,sun8i-a23-dma", .data = &sun8i_a23_dma_cfg },
+	{ .compatible = "allwinner,sun8i-a83t-dma", .data = &sun8i_a83t_dma_cfg },
+	{ .compatible = "allwinner,sun8i-h3-dma", .data = &sun8i_h3_dma_cfg },
+	{ .compatible = "allwinner,sun8i-v3s-dma", .data = &sun8i_v3s_dma_cfg },
+	{ .compatible = "allwinner,sun50i-a64-dma", .data = &sun50i_a64_dma_cfg },
+	{ .compatible = "allwinner,sun50i-a100-dma", .data = &sun50i_a100_dma_cfg },
+	{ .compatible = "allwinner,sun50i-h6-dma", .data = &sun50i_h6_dma_cfg },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, sun6i_dma_match);
 
-अटल पूर्णांक sun6i_dma_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *np = pdev->dev.of_node;
-	काष्ठा sun6i_dma_dev *sdc;
-	काष्ठा resource *res;
-	पूर्णांक ret, i;
+static int sun6i_dma_probe(struct platform_device *pdev)
+{
+	struct device_node *np = pdev->dev.of_node;
+	struct sun6i_dma_dev *sdc;
+	struct resource *res;
+	int ret, i;
 
-	sdc = devm_kzalloc(&pdev->dev, माप(*sdc), GFP_KERNEL);
-	अगर (!sdc)
-		वापस -ENOMEM;
+	sdc = devm_kzalloc(&pdev->dev, sizeof(*sdc), GFP_KERNEL);
+	if (!sdc)
+		return -ENOMEM;
 
 	sdc->cfg = of_device_get_match_data(&pdev->dev);
-	अगर (!sdc->cfg)
-		वापस -ENODEV;
+	if (!sdc->cfg)
+		return -ENODEV;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	sdc->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(sdc->base))
-		वापस PTR_ERR(sdc->base);
+	if (IS_ERR(sdc->base))
+		return PTR_ERR(sdc->base);
 
-	sdc->irq = platक्रमm_get_irq(pdev, 0);
-	अगर (sdc->irq < 0)
-		वापस sdc->irq;
+	sdc->irq = platform_get_irq(pdev, 0);
+	if (sdc->irq < 0)
+		return sdc->irq;
 
-	sdc->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(sdc->clk)) अणु
+	sdc->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(sdc->clk)) {
 		dev_err(&pdev->dev, "No clock specified\n");
-		वापस PTR_ERR(sdc->clk);
-	पूर्ण
+		return PTR_ERR(sdc->clk);
+	}
 
-	अगर (sdc->cfg->has_mbus_clk) अणु
+	if (sdc->cfg->has_mbus_clk) {
 		sdc->clk_mbus = devm_clk_get(&pdev->dev, "mbus");
-		अगर (IS_ERR(sdc->clk_mbus)) अणु
+		if (IS_ERR(sdc->clk_mbus)) {
 			dev_err(&pdev->dev, "No mbus clock specified\n");
-			वापस PTR_ERR(sdc->clk_mbus);
-		पूर्ण
-	पूर्ण
+			return PTR_ERR(sdc->clk_mbus);
+		}
+	}
 
-	sdc->rstc = devm_reset_control_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(sdc->rstc)) अणु
+	sdc->rstc = devm_reset_control_get(&pdev->dev, NULL);
+	if (IS_ERR(sdc->rstc)) {
 		dev_err(&pdev->dev, "No reset controller specified\n");
-		वापस PTR_ERR(sdc->rstc);
-	पूर्ण
+		return PTR_ERR(sdc->rstc);
+	}
 
 	sdc->pool = dmam_pool_create(dev_name(&pdev->dev), &pdev->dev,
-				     माप(काष्ठा sun6i_dma_lli), 4, 0);
-	अगर (!sdc->pool) अणु
+				     sizeof(struct sun6i_dma_lli), 4, 0);
+	if (!sdc->pool) {
 		dev_err(&pdev->dev, "No memory for descriptors dma pool\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	platक्रमm_set_drvdata(pdev, sdc);
+	platform_set_drvdata(pdev, sdc);
 	INIT_LIST_HEAD(&sdc->pending);
 	spin_lock_init(&sdc->lock);
 
@@ -1317,15 +1316,15 @@ MODULE_DEVICE_TABLE(of, sun6i_dma_match);
 	dma_cap_set(DMA_CYCLIC, sdc->slave.cap_mask);
 
 	INIT_LIST_HEAD(&sdc->slave.channels);
-	sdc->slave.device_मुक्त_chan_resources	= sun6i_dma_मुक्त_chan_resources;
+	sdc->slave.device_free_chan_resources	= sun6i_dma_free_chan_resources;
 	sdc->slave.device_tx_status		= sun6i_dma_tx_status;
 	sdc->slave.device_issue_pending		= sun6i_dma_issue_pending;
 	sdc->slave.device_prep_slave_sg		= sun6i_dma_prep_slave_sg;
-	sdc->slave.device_prep_dma_स_नकल	= sun6i_dma_prep_dma_स_नकल;
+	sdc->slave.device_prep_dma_memcpy	= sun6i_dma_prep_dma_memcpy;
 	sdc->slave.device_prep_dma_cyclic	= sun6i_dma_prep_dma_cyclic;
 	sdc->slave.copy_align			= DMAENGINE_ALIGN_4_BYTES;
 	sdc->slave.device_config		= sun6i_dma_config;
-	sdc->slave.device_छोड़ो			= sun6i_dma_छोड़ो;
+	sdc->slave.device_pause			= sun6i_dma_pause;
 	sdc->slave.device_resume		= sun6i_dma_resume;
 	sdc->slave.device_terminate_all		= sun6i_dma_terminate_all;
 	sdc->slave.src_addr_widths		= sdc->cfg->src_addr_widths;
@@ -1339,140 +1338,140 @@ MODULE_DEVICE_TABLE(of, sun6i_dma_match);
 	sdc->num_vchans = sdc->cfg->nr_max_vchans;
 	sdc->max_request = sdc->cfg->nr_max_requests;
 
-	ret = of_property_पढ़ो_u32(np, "dma-channels", &sdc->num_pchans);
-	अगर (ret && !sdc->num_pchans) अणु
+	ret = of_property_read_u32(np, "dma-channels", &sdc->num_pchans);
+	if (ret && !sdc->num_pchans) {
 		dev_err(&pdev->dev, "Can't get dma-channels.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = of_property_पढ़ो_u32(np, "dma-requests", &sdc->max_request);
-	अगर (ret && !sdc->max_request) अणु
+	ret = of_property_read_u32(np, "dma-requests", &sdc->max_request);
+	if (ret && !sdc->max_request) {
 		dev_info(&pdev->dev, "Missing dma-requests, using %u.\n",
 			 DMA_CHAN_MAX_DRQ_A31);
 		sdc->max_request = DMA_CHAN_MAX_DRQ_A31;
-	पूर्ण
+	}
 
 	/*
-	 * If the number of vchans is not specअगरied, derive it from the
+	 * If the number of vchans is not specified, derive it from the
 	 * highest port number, at most one channel per port and direction.
 	 */
-	अगर (!sdc->num_vchans)
+	if (!sdc->num_vchans)
 		sdc->num_vchans = 2 * (sdc->max_request + 1);
 
-	sdc->pchans = devm_kसुस्मृति(&pdev->dev, sdc->num_pchans,
-				   माप(काष्ठा sun6i_pchan), GFP_KERNEL);
-	अगर (!sdc->pchans)
-		वापस -ENOMEM;
+	sdc->pchans = devm_kcalloc(&pdev->dev, sdc->num_pchans,
+				   sizeof(struct sun6i_pchan), GFP_KERNEL);
+	if (!sdc->pchans)
+		return -ENOMEM;
 
-	sdc->vchans = devm_kसुस्मृति(&pdev->dev, sdc->num_vchans,
-				   माप(काष्ठा sun6i_vchan), GFP_KERNEL);
-	अगर (!sdc->vchans)
-		वापस -ENOMEM;
+	sdc->vchans = devm_kcalloc(&pdev->dev, sdc->num_vchans,
+				   sizeof(struct sun6i_vchan), GFP_KERNEL);
+	if (!sdc->vchans)
+		return -ENOMEM;
 
 	tasklet_setup(&sdc->task, sun6i_dma_tasklet);
 
-	क्रम (i = 0; i < sdc->num_pchans; i++) अणु
-		काष्ठा sun6i_pchan *pchan = &sdc->pchans[i];
+	for (i = 0; i < sdc->num_pchans; i++) {
+		struct sun6i_pchan *pchan = &sdc->pchans[i];
 
 		pchan->idx = i;
 		pchan->base = sdc->base + 0x100 + i * 0x40;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < sdc->num_vchans; i++) अणु
-		काष्ठा sun6i_vchan *vchan = &sdc->vchans[i];
+	for (i = 0; i < sdc->num_vchans; i++) {
+		struct sun6i_vchan *vchan = &sdc->vchans[i];
 
 		INIT_LIST_HEAD(&vchan->node);
-		vchan->vc.desc_मुक्त = sun6i_dma_मुक्त_desc;
+		vchan->vc.desc_free = sun6i_dma_free_desc;
 		vchan_init(&vchan->vc, &sdc->slave);
-	पूर्ण
+	}
 
-	ret = reset_control_deनिश्चित(sdc->rstc);
-	अगर (ret) अणु
+	ret = reset_control_deassert(sdc->rstc);
+	if (ret) {
 		dev_err(&pdev->dev, "Couldn't deassert the device from reset\n");
-		जाओ err_chan_मुक्त;
-	पूर्ण
+		goto err_chan_free;
+	}
 
 	ret = clk_prepare_enable(sdc->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Couldn't enable the clock\n");
-		जाओ err_reset_निश्चित;
-	पूर्ण
+		goto err_reset_assert;
+	}
 
-	अगर (sdc->cfg->has_mbus_clk) अणु
+	if (sdc->cfg->has_mbus_clk) {
 		ret = clk_prepare_enable(sdc->clk_mbus);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev, "Couldn't enable mbus clock\n");
-			जाओ err_clk_disable;
-		पूर्ण
-	पूर्ण
+			goto err_clk_disable;
+		}
+	}
 
-	ret = devm_request_irq(&pdev->dev, sdc->irq, sun6i_dma_पूर्णांकerrupt, 0,
+	ret = devm_request_irq(&pdev->dev, sdc->irq, sun6i_dma_interrupt, 0,
 			       dev_name(&pdev->dev), sdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Cannot request IRQ\n");
-		जाओ err_mbus_clk_disable;
-	पूर्ण
+		goto err_mbus_clk_disable;
+	}
 
-	ret = dma_async_device_रेजिस्टर(&sdc->slave);
-	अगर (ret) अणु
+	ret = dma_async_device_register(&sdc->slave);
+	if (ret) {
 		dev_warn(&pdev->dev, "Failed to register DMA engine device\n");
-		जाओ err_irq_disable;
-	पूर्ण
+		goto err_irq_disable;
+	}
 
-	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node, sun6i_dma_of_xlate,
+	ret = of_dma_controller_register(pdev->dev.of_node, sun6i_dma_of_xlate,
 					 sdc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "of_dma_controller_register failed\n");
-		जाओ err_dma_unरेजिस्टर;
-	पूर्ण
+		goto err_dma_unregister;
+	}
 
-	अगर (sdc->cfg->घड़ी_स्वतःgate_enable)
-		sdc->cfg->घड़ी_स्वतःgate_enable(sdc);
+	if (sdc->cfg->clock_autogate_enable)
+		sdc->cfg->clock_autogate_enable(sdc);
 
-	वापस 0;
+	return 0;
 
-err_dma_unरेजिस्टर:
-	dma_async_device_unरेजिस्टर(&sdc->slave);
+err_dma_unregister:
+	dma_async_device_unregister(&sdc->slave);
 err_irq_disable:
-	sun6i_समाप्त_tasklet(sdc);
+	sun6i_kill_tasklet(sdc);
 err_mbus_clk_disable:
 	clk_disable_unprepare(sdc->clk_mbus);
 err_clk_disable:
 	clk_disable_unprepare(sdc->clk);
-err_reset_निश्चित:
-	reset_control_निश्चित(sdc->rstc);
-err_chan_मुक्त:
-	sun6i_dma_मुक्त(sdc);
-	वापस ret;
-पूर्ण
+err_reset_assert:
+	reset_control_assert(sdc->rstc);
+err_chan_free:
+	sun6i_dma_free(sdc);
+	return ret;
+}
 
-अटल पूर्णांक sun6i_dma_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sun6i_dma_dev *sdc = platक्रमm_get_drvdata(pdev);
+static int sun6i_dma_remove(struct platform_device *pdev)
+{
+	struct sun6i_dma_dev *sdc = platform_get_drvdata(pdev);
 
-	of_dma_controller_मुक्त(pdev->dev.of_node);
-	dma_async_device_unरेजिस्टर(&sdc->slave);
+	of_dma_controller_free(pdev->dev.of_node);
+	dma_async_device_unregister(&sdc->slave);
 
-	sun6i_समाप्त_tasklet(sdc);
+	sun6i_kill_tasklet(sdc);
 
 	clk_disable_unprepare(sdc->clk_mbus);
 	clk_disable_unprepare(sdc->clk);
-	reset_control_निश्चित(sdc->rstc);
+	reset_control_assert(sdc->rstc);
 
-	sun6i_dma_मुक्त(sdc);
+	sun6i_dma_free(sdc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver sun6i_dma_driver = अणु
+static struct platform_driver sun6i_dma_driver = {
 	.probe		= sun6i_dma_probe,
-	.हटाओ		= sun6i_dma_हटाओ,
-	.driver = अणु
+	.remove		= sun6i_dma_remove,
+	.driver = {
 		.name		= "sun6i-dma",
 		.of_match_table	= sun6i_dma_match,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(sun6i_dma_driver);
+	},
+};
+module_platform_driver(sun6i_dma_driver);
 
 MODULE_DESCRIPTION("Allwinner A31 DMA Controller Driver");
 MODULE_AUTHOR("Sugar <shuge@allwinnertech.com>");

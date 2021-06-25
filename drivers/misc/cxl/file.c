@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2014 IBM Corp.
  */
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/module.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/poll.h>
-#समावेश <linux/pid.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/mmu_context.h>
-#समावेश <यंत्र/cputable.h>
-#समावेश <यंत्र/current.h>
-#समावेश <यंत्र/copro.h>
+#include <linux/spinlock.h>
+#include <linux/module.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#include <linux/bitmap.h>
+#include <linux/sched/signal.h>
+#include <linux/poll.h>
+#include <linux/pid.h>
+#include <linux/fs.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/sched/mm.h>
+#include <linux/mmu_context.h>
+#include <asm/cputable.h>
+#include <asm/current.h>
+#include <asm/copro.h>
 
-#समावेश "cxl.h"
-#समावेश "trace.h"
+#include "cxl.h"
+#include "trace.h"
 
-#घोषणा CXL_NUM_MINORS 256 /* Total to reserve */
+#define CXL_NUM_MINORS 256 /* Total to reserve */
 
-#घोषणा CXL_AFU_MINOR_D(afu) (CXL_CARD_MINOR(afu->adapter) + 1 + (3 * afu->slice))
-#घोषणा CXL_AFU_MINOR_M(afu) (CXL_AFU_MINOR_D(afu) + 1)
-#घोषणा CXL_AFU_MINOR_S(afu) (CXL_AFU_MINOR_D(afu) + 2)
-#घोषणा CXL_AFU_MKDEV_D(afu) MKDEV(MAJOR(cxl_dev), CXL_AFU_MINOR_D(afu))
-#घोषणा CXL_AFU_MKDEV_M(afu) MKDEV(MAJOR(cxl_dev), CXL_AFU_MINOR_M(afu))
-#घोषणा CXL_AFU_MKDEV_S(afu) MKDEV(MAJOR(cxl_dev), CXL_AFU_MINOR_S(afu))
+#define CXL_AFU_MINOR_D(afu) (CXL_CARD_MINOR(afu->adapter) + 1 + (3 * afu->slice))
+#define CXL_AFU_MINOR_M(afu) (CXL_AFU_MINOR_D(afu) + 1)
+#define CXL_AFU_MINOR_S(afu) (CXL_AFU_MINOR_D(afu) + 2)
+#define CXL_AFU_MKDEV_D(afu) MKDEV(MAJOR(cxl_dev), CXL_AFU_MINOR_D(afu))
+#define CXL_AFU_MKDEV_M(afu) MKDEV(MAJOR(cxl_dev), CXL_AFU_MINOR_M(afu))
+#define CXL_AFU_MKDEV_S(afu) MKDEV(MAJOR(cxl_dev), CXL_AFU_MINOR_S(afu))
 
-#घोषणा CXL_DEVT_AFU(dev) ((MINOR(dev) % CXL_DEV_MINORS - 1) / 3)
+#define CXL_DEVT_AFU(dev) ((MINOR(dev) % CXL_DEV_MINORS - 1) / 3)
 
-#घोषणा CXL_DEVT_IS_CARD(dev) (MINOR(dev) % CXL_DEV_MINORS == 0)
+#define CXL_DEVT_IS_CARD(dev) (MINOR(dev) % CXL_DEV_MINORS == 0)
 
-अटल dev_t cxl_dev;
+static dev_t cxl_dev;
 
-अटल काष्ठा class *cxl_class;
+static struct class *cxl_class;
 
-अटल पूर्णांक __afu_खोलो(काष्ठा inode *inode, काष्ठा file *file, bool master)
-अणु
-	काष्ठा cxl *adapter;
-	काष्ठा cxl_afu *afu;
-	काष्ठा cxl_context *ctx;
-	पूर्णांक adapter_num = CXL_DEVT_ADAPTER(inode->i_rdev);
-	पूर्णांक slice = CXL_DEVT_AFU(inode->i_rdev);
-	पूर्णांक rc = -ENODEV;
+static int __afu_open(struct inode *inode, struct file *file, bool master)
+{
+	struct cxl *adapter;
+	struct cxl_afu *afu;
+	struct cxl_context *ctx;
+	int adapter_num = CXL_DEVT_ADAPTER(inode->i_rdev);
+	int slice = CXL_DEVT_AFU(inode->i_rdev);
+	int rc = -ENODEV;
 
 	pr_devel("afu_open afu%i.%i\n", slice, adapter_num);
 
-	अगर (!(adapter = get_cxl_adapter(adapter_num)))
-		वापस -ENODEV;
+	if (!(adapter = get_cxl_adapter(adapter_num)))
+		return -ENODEV;
 
-	अगर (slice > adapter->slices)
-		जाओ err_put_adapter;
+	if (slice > adapter->slices)
+		goto err_put_adapter;
 
 	spin_lock(&adapter->afu_list_lock);
-	अगर (!(afu = adapter->afu[slice])) अणु
+	if (!(afu = adapter->afu[slice])) {
 		spin_unlock(&adapter->afu_list_lock);
-		जाओ err_put_adapter;
-	पूर्ण
+		goto err_put_adapter;
+	}
 
 	/*
-	 * taking a ref to the afu so that it करोesn't go away
-	 * क्रम rest of the function. This ref is released beक्रमe
-	 * we वापस.
+	 * taking a ref to the afu so that it doesn't go away
+	 * for rest of the function. This ref is released before
+	 * we return.
 	 */
 	cxl_afu_get(afu);
 	spin_unlock(&adapter->afu_list_lock);
 
-	अगर (!afu->current_mode)
-		जाओ err_put_afu;
+	if (!afu->current_mode)
+		goto err_put_afu;
 
-	अगर (!cxl_ops->link_ok(adapter, afu)) अणु
+	if (!cxl_ops->link_ok(adapter, afu)) {
 		rc = -EIO;
-		जाओ err_put_afu;
-	पूर्ण
+		goto err_put_afu;
+	}
 
-	अगर (!(ctx = cxl_context_alloc())) अणु
+	if (!(ctx = cxl_context_alloc())) {
 		rc = -ENOMEM;
-		जाओ err_put_afu;
-	पूर्ण
+		goto err_put_afu;
+	}
 
 	rc = cxl_context_init(ctx, afu, master);
-	अगर (rc)
-		जाओ err_put_afu;
+	if (rc)
+		goto err_put_afu;
 
 	cxl_context_set_mapping(ctx, inode->i_mapping);
 
 	pr_devel("afu_open pe: %i\n", ctx->pe);
-	file->निजी_data = ctx;
+	file->private_data = ctx;
 
 	/* indicate success */
 	rc = 0;
@@ -102,22 +101,22 @@ err_put_afu:
 	cxl_afu_put(afu);
 err_put_adapter:
 	put_device(&adapter->dev);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक afu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस __afu_खोलो(inode, file, false);
-पूर्ण
+int afu_open(struct inode *inode, struct file *file)
+{
+	return __afu_open(inode, file, false);
+}
 
-अटल पूर्णांक afu_master_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस __afu_खोलो(inode, file, true);
-पूर्ण
+static int afu_master_open(struct inode *inode, struct file *file)
+{
+	return __afu_open(inode, file, true);
+}
 
-पूर्णांक afu_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा cxl_context *ctx = file->निजी_data;
+int afu_release(struct inode *inode, struct file *file)
+{
+	struct cxl_context *ctx = file->private_data;
 
 	pr_devel("%s: closing cxl file descriptor. pe: %i\n",
 		 __func__, ctx->pe);
@@ -126,92 +125,92 @@ err_put_adapter:
 
 	/*
 	 * Delete the context's mapping pointer, unless it's created by the
-	 * kernel API, in which हाल leave it so it can be मुक्तd by reclaim_ctx()
+	 * kernel API, in which case leave it so it can be freed by reclaim_ctx()
 	 */
-	अगर (!ctx->kernelapi) अणु
+	if (!ctx->kernelapi) {
 		mutex_lock(&ctx->mapping_lock);
-		ctx->mapping = शून्य;
+		ctx->mapping = NULL;
 		mutex_unlock(&ctx->mapping_lock);
-	पूर्ण
+	}
 
 	/*
-	 * At this this poपूर्णांक all bottom halfs have finished and we should be
-	 * getting no more IRQs from the hardware क्रम this context.  Once it's
-	 * हटाओd from the IDR (and RCU synchronised) it's safe to मुक्त the
+	 * At this this point all bottom halfs have finished and we should be
+	 * getting no more IRQs from the hardware for this context.  Once it's
+	 * removed from the IDR (and RCU synchronised) it's safe to free the
 	 * sstp and context.
 	 */
-	cxl_context_मुक्त(ctx);
+	cxl_context_free(ctx);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ afu_ioctl_start_work(काष्ठा cxl_context *ctx,
-				 काष्ठा cxl_ioctl_start_work __user *uwork)
-अणु
-	काष्ठा cxl_ioctl_start_work work;
+static long afu_ioctl_start_work(struct cxl_context *ctx,
+				 struct cxl_ioctl_start_work __user *uwork)
+{
+	struct cxl_ioctl_start_work work;
 	u64 amr = 0;
-	पूर्णांक rc;
+	int rc;
 
 	pr_devel("%s: pe: %i\n", __func__, ctx->pe);
 
-	/* Do this outside the status_mutex to aव्योम a circular dependency with
+	/* Do this outside the status_mutex to avoid a circular dependency with
 	 * the locking in cxl_mmap_fault() */
-	अगर (copy_from_user(&work, uwork, माप(work)))
-		वापस -EFAULT;
+	if (copy_from_user(&work, uwork, sizeof(work)))
+		return -EFAULT;
 
 	mutex_lock(&ctx->status_mutex);
-	अगर (ctx->status != OPENED) अणु
+	if (ctx->status != OPENED) {
 		rc = -EIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * अगर any of the reserved fields are set or any of the unused
+	 * if any of the reserved fields are set or any of the unused
 	 * flags are set it's invalid
 	 */
-	अगर (work.reserved1 || work.reserved2 || work.reserved3 ||
+	if (work.reserved1 || work.reserved2 || work.reserved3 ||
 	    work.reserved4 || work.reserved5 ||
-	    (work.flags & ~CXL_START_WORK_ALL)) अणु
+	    (work.flags & ~CXL_START_WORK_ALL)) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(work.flags & CXL_START_WORK_NUM_IRQS))
-		work.num_पूर्णांकerrupts = ctx->afu->pp_irqs;
-	अन्यथा अगर ((work.num_पूर्णांकerrupts < ctx->afu->pp_irqs) ||
-		 (work.num_पूर्णांकerrupts > ctx->afu->irqs_max)) अणु
+	if (!(work.flags & CXL_START_WORK_NUM_IRQS))
+		work.num_interrupts = ctx->afu->pp_irqs;
+	else if ((work.num_interrupts < ctx->afu->pp_irqs) ||
+		 (work.num_interrupts > ctx->afu->irqs_max)) {
 		rc =  -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर ((rc = afu_रेजिस्टर_irqs(ctx, work.num_पूर्णांकerrupts)))
-		जाओ out;
+	if ((rc = afu_register_irqs(ctx, work.num_interrupts)))
+		goto out;
 
-	अगर (work.flags & CXL_START_WORK_AMR)
+	if (work.flags & CXL_START_WORK_AMR)
 		amr = work.amr & mfspr(SPRN_UAMOR);
 
-	अगर (work.flags & CXL_START_WORK_TID)
+	if (work.flags & CXL_START_WORK_TID)
 		ctx->assign_tidr = true;
 
 	ctx->mmio_err_ff = !!(work.flags & CXL_START_WORK_ERR_FF);
 
 	/*
-	 * Increment the mapped context count क्रम adapter. This also checks
-	 * अगर adapter_context_lock is taken.
+	 * Increment the mapped context count for adapter. This also checks
+	 * if adapter_context_lock is taken.
 	 */
 	rc = cxl_adapter_context_get(ctx->afu->adapter);
-	अगर (rc) अणु
+	if (rc) {
 		afu_release_irqs(ctx, ctx);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * We grab the PID here and not in the file खोलो to allow क्रम the हाल
-	 * where a process (master, some daemon, etc) has खोलोed the अक्षरdev on
-	 * behalf of another process, so the AFU's mm माला_लो bound to the process
-	 * that perक्रमms this ioctl and not the process that खोलोed the file.
-	 * Also we grab the PID of the group leader so that अगर the task that
-	 * has perक्रमmed the attach operation निकासs the mm context of the
+	 * We grab the PID here and not in the file open to allow for the case
+	 * where a process (master, some daemon, etc) has opened the chardev on
+	 * behalf of another process, so the AFU's mm gets bound to the process
+	 * that performs this ioctl and not the process that opened the file.
+	 * Also we grab the PID of the group leader so that if the task that
+	 * has performed the attach operation exits the mm context of the
 	 * process is still accessible.
 	 */
 	ctx->pid = get_task_pid(current, PIDTYPE_PID);
@@ -219,29 +218,29 @@ err_put_adapter:
 	/* acquire a reference to the task's mm */
 	ctx->mm = get_task_mm(current);
 
-	/* ensure this mm_काष्ठा can't be मुक्तd */
+	/* ensure this mm_struct can't be freed */
 	cxl_context_mm_count_get(ctx);
 
-	अगर (ctx->mm) अणु
+	if (ctx->mm) {
 		/* decrement the use count from above */
 		mmput(ctx->mm);
-		/* make TLBIs क्रम this context global */
+		/* make TLBIs for this context global */
 		mm_context_add_copro(ctx->mm);
-	पूर्ण
+	}
 
 	/*
-	 * Increment driver use count. Enables global TLBIs क्रम hash
+	 * Increment driver use count. Enables global TLBIs for hash
 	 * and callbacks to handle the segment table
 	 */
 	cxl_ctx_get();
 
 	/*
 	 * A barrier is needed to make sure all TLBIs are global
-	 * beक्रमe we attach and the context starts being used by the
+	 * before we attach and the context starts being used by the
 	 * adapter.
 	 *
-	 * Needed after mm_context_add_copro() क्रम radix and
-	 * cxl_ctx_get() क्रम hash/p8.
+	 * Needed after mm_context_add_copro() for radix and
+	 * cxl_ctx_get() for hash/p8.
 	 *
 	 * The barrier should really be mb(), since it involves a
 	 * device. However, it's only useful when we have local
@@ -249,452 +248,452 @@ err_put_adapter:
 	 */
 	smp_mb();
 
-	trace_cxl_attach(ctx, work.work_element_descriptor, work.num_पूर्णांकerrupts, amr);
+	trace_cxl_attach(ctx, work.work_element_descriptor, work.num_interrupts, amr);
 
-	अगर ((rc = cxl_ops->attach_process(ctx, false, work.work_element_descriptor,
-							amr))) अणु
+	if ((rc = cxl_ops->attach_process(ctx, false, work.work_element_descriptor,
+							amr))) {
 		afu_release_irqs(ctx, ctx);
 		cxl_adapter_context_put(ctx->afu->adapter);
 		put_pid(ctx->pid);
-		ctx->pid = शून्य;
+		ctx->pid = NULL;
 		cxl_ctx_put();
 		cxl_context_mm_count_put(ctx);
-		अगर (ctx->mm)
-			mm_context_हटाओ_copro(ctx->mm);
-		जाओ out;
-	पूर्ण
+		if (ctx->mm)
+			mm_context_remove_copro(ctx->mm);
+		goto out;
+	}
 
 	rc = 0;
-	अगर (work.flags & CXL_START_WORK_TID) अणु
+	if (work.flags & CXL_START_WORK_TID) {
 		work.tid = ctx->tidr;
-		अगर (copy_to_user(uwork, &work, माप(work)))
+		if (copy_to_user(uwork, &work, sizeof(work)))
 			rc = -EFAULT;
-	पूर्ण
+	}
 
 	ctx->status = STARTED;
 
 out:
 	mutex_unlock(&ctx->status_mutex);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल दीर्घ afu_ioctl_process_element(काष्ठा cxl_context *ctx,
-				      पूर्णांक __user *upe)
-अणु
+static long afu_ioctl_process_element(struct cxl_context *ctx,
+				      int __user *upe)
+{
 	pr_devel("%s: pe: %i\n", __func__, ctx->pe);
 
-	अगर (copy_to_user(upe, &ctx->बाह्यal_pe, माप(__u32)))
-		वापस -EFAULT;
+	if (copy_to_user(upe, &ctx->external_pe, sizeof(__u32)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ afu_ioctl_get_afu_id(काष्ठा cxl_context *ctx,
-				 काष्ठा cxl_afu_id __user *upafuid)
-अणु
-	काष्ठा cxl_afu_id afuid = अणु 0 पूर्ण;
+static long afu_ioctl_get_afu_id(struct cxl_context *ctx,
+				 struct cxl_afu_id __user *upafuid)
+{
+	struct cxl_afu_id afuid = { 0 };
 
 	afuid.card_id = ctx->afu->adapter->adapter_num;
 	afuid.afu_offset = ctx->afu->slice;
 	afuid.afu_mode = ctx->afu->current_mode;
 
-	/* set the flag bit in हाल the afu is a slave */
-	अगर (ctx->afu->current_mode == CXL_MODE_सूचीECTED && !ctx->master)
+	/* set the flag bit in case the afu is a slave */
+	if (ctx->afu->current_mode == CXL_MODE_DIRECTED && !ctx->master)
 		afuid.flags |= CXL_AFUID_FLAG_SLAVE;
 
-	अगर (copy_to_user(upafuid, &afuid, माप(afuid)))
-		वापस -EFAULT;
+	if (copy_to_user(upafuid, &afuid, sizeof(afuid)))
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-दीर्घ afu_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा cxl_context *ctx = file->निजी_data;
+long afu_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct cxl_context *ctx = file->private_data;
 
-	अगर (ctx->status == CLOSED)
-		वापस -EIO;
+	if (ctx->status == CLOSED)
+		return -EIO;
 
-	अगर (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
-		वापस -EIO;
+	if (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
+		return -EIO;
 
 	pr_devel("afu_ioctl\n");
-	चयन (cmd) अणु
-	हाल CXL_IOCTL_START_WORK:
-		वापस afu_ioctl_start_work(ctx, (काष्ठा cxl_ioctl_start_work __user *)arg);
-	हाल CXL_IOCTL_GET_PROCESS_ELEMENT:
-		वापस afu_ioctl_process_element(ctx, (__u32 __user *)arg);
-	हाल CXL_IOCTL_GET_AFU_ID:
-		वापस afu_ioctl_get_afu_id(ctx, (काष्ठा cxl_afu_id __user *)
+	switch (cmd) {
+	case CXL_IOCTL_START_WORK:
+		return afu_ioctl_start_work(ctx, (struct cxl_ioctl_start_work __user *)arg);
+	case CXL_IOCTL_GET_PROCESS_ELEMENT:
+		return afu_ioctl_process_element(ctx, (__u32 __user *)arg);
+	case CXL_IOCTL_GET_AFU_ID:
+		return afu_ioctl_get_afu_id(ctx, (struct cxl_afu_id __user *)
 					    arg);
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	}
+	return -EINVAL;
+}
 
-अटल दीर्घ afu_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-			     अचिन्हित दीर्घ arg)
-अणु
-	वापस afu_ioctl(file, cmd, arg);
-पूर्ण
+static long afu_compat_ioctl(struct file *file, unsigned int cmd,
+			     unsigned long arg)
+{
+	return afu_ioctl(file, cmd, arg);
+}
 
-पूर्णांक afu_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vm)
-अणु
-	काष्ठा cxl_context *ctx = file->निजी_data;
+int afu_mmap(struct file *file, struct vm_area_struct *vm)
+{
+	struct cxl_context *ctx = file->private_data;
 
-	/* AFU must be started beक्रमe we can MMIO */
-	अगर (ctx->status != STARTED)
-		वापस -EIO;
+	/* AFU must be started before we can MMIO */
+	if (ctx->status != STARTED)
+		return -EIO;
 
-	अगर (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
-		वापस -EIO;
+	if (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
+		return -EIO;
 
-	वापस cxl_context_iomap(ctx, vm);
-पूर्ण
+	return cxl_context_iomap(ctx, vm);
+}
 
-अटल अंतरभूत bool ctx_event_pending(काष्ठा cxl_context *ctx)
-अणु
-	अगर (ctx->pending_irq || ctx->pending_fault || ctx->pending_afu_err)
-		वापस true;
+static inline bool ctx_event_pending(struct cxl_context *ctx)
+{
+	if (ctx->pending_irq || ctx->pending_fault || ctx->pending_afu_err)
+		return true;
 
-	अगर (ctx->afu_driver_ops && atomic_पढ़ो(&ctx->afu_driver_events))
-		वापस true;
+	if (ctx->afu_driver_ops && atomic_read(&ctx->afu_driver_events))
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-__poll_t afu_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *poll)
-अणु
-	काष्ठा cxl_context *ctx = file->निजी_data;
+__poll_t afu_poll(struct file *file, struct poll_table_struct *poll)
+{
+	struct cxl_context *ctx = file->private_data;
 	__poll_t mask = 0;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 
-	poll_रुको(file, &ctx->wq, poll);
+	poll_wait(file, &ctx->wq, poll);
 
 	pr_devel("afu_poll wait done pe: %i\n", ctx->pe);
 
 	spin_lock_irqsave(&ctx->lock, flags);
-	अगर (ctx_event_pending(ctx))
+	if (ctx_event_pending(ctx))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	अन्यथा अगर (ctx->status == CLOSED)
-		/* Only error on बंदd when there are no futher events pending
+	else if (ctx->status == CLOSED)
+		/* Only error on closed when there are no futher events pending
 		 */
 		mask |= EPOLLERR;
 	spin_unlock_irqrestore(&ctx->lock, flags);
 
 	pr_devel("afu_poll pe: %i returning %#x\n", ctx->pe, mask);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल sमाप_प्रकार afu_driver_event_copy(काष्ठा cxl_context *ctx,
-				     अक्षर __user *buf,
-				     काष्ठा cxl_event *event,
-				     काष्ठा cxl_event_afu_driver_reserved *pl)
-अणु
+static ssize_t afu_driver_event_copy(struct cxl_context *ctx,
+				     char __user *buf,
+				     struct cxl_event *event,
+				     struct cxl_event_afu_driver_reserved *pl)
+{
 	/* Check event */
-	अगर (!pl) अणु
+	if (!pl) {
 		ctx->afu_driver_ops->event_delivered(ctx, pl, -EINVAL);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Check event size */
 	event->header.size += pl->data_size;
-	अगर (event->header.size > CXL_READ_MIN_SIZE) अणु
+	if (event->header.size > CXL_READ_MIN_SIZE) {
 		ctx->afu_driver_ops->event_delivered(ctx, pl, -EINVAL);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Copy event header */
-	अगर (copy_to_user(buf, event, माप(काष्ठा cxl_event_header))) अणु
+	if (copy_to_user(buf, event, sizeof(struct cxl_event_header))) {
 		ctx->afu_driver_ops->event_delivered(ctx, pl, -EFAULT);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	/* Copy event data */
-	buf += माप(काष्ठा cxl_event_header);
-	अगर (copy_to_user(buf, &pl->data, pl->data_size)) अणु
+	buf += sizeof(struct cxl_event_header);
+	if (copy_to_user(buf, &pl->data, pl->data_size)) {
 		ctx->afu_driver_ops->event_delivered(ctx, pl, -EFAULT);
-		वापस -EFAULT;
-	पूर्ण
+		return -EFAULT;
+	}
 
 	ctx->afu_driver_ops->event_delivered(ctx, pl, 0); /* Success */
-	वापस event->header.size;
-पूर्ण
+	return event->header.size;
+}
 
-sमाप_प्रकार afu_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
+ssize_t afu_read(struct file *file, char __user *buf, size_t count,
 			loff_t *off)
-अणु
-	काष्ठा cxl_context *ctx = file->निजी_data;
-	काष्ठा cxl_event_afu_driver_reserved *pl = शून्य;
-	काष्ठा cxl_event event;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक rc;
-	DEFINE_WAIT(रुको);
+{
+	struct cxl_context *ctx = file->private_data;
+	struct cxl_event_afu_driver_reserved *pl = NULL;
+	struct cxl_event event;
+	unsigned long flags;
+	int rc;
+	DEFINE_WAIT(wait);
 
-	अगर (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
-		वापस -EIO;
+	if (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu))
+		return -EIO;
 
-	अगर (count < CXL_READ_MIN_SIZE)
-		वापस -EINVAL;
+	if (count < CXL_READ_MIN_SIZE)
+		return -EINVAL;
 
 	spin_lock_irqsave(&ctx->lock, flags);
 
-	क्रम (;;) अणु
-		prepare_to_रुको(&ctx->wq, &रुको, TASK_INTERRUPTIBLE);
-		अगर (ctx_event_pending(ctx) || (ctx->status == CLOSED))
-			अवरोध;
+	for (;;) {
+		prepare_to_wait(&ctx->wq, &wait, TASK_INTERRUPTIBLE);
+		if (ctx_event_pending(ctx) || (ctx->status == CLOSED))
+			break;
 
-		अगर (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu)) अणु
+		if (!cxl_ops->link_ok(ctx->afu->adapter, ctx->afu)) {
 			rc = -EIO;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (file->f_flags & O_NONBLOCK) अणु
+		if (file->f_flags & O_NONBLOCK) {
 			rc = -EAGAIN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (संकेत_pending(current)) अणु
+		if (signal_pending(current)) {
 			rc = -ERESTARTSYS;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		spin_unlock_irqrestore(&ctx->lock, flags);
 		pr_devel("afu_read going to sleep...\n");
 		schedule();
 		pr_devel("afu_read woken up\n");
 		spin_lock_irqsave(&ctx->lock, flags);
-	पूर्ण
+	}
 
-	finish_रुको(&ctx->wq, &रुको);
+	finish_wait(&ctx->wq, &wait);
 
-	स_रखो(&event, 0, माप(event));
+	memset(&event, 0, sizeof(event));
 	event.header.process_element = ctx->pe;
-	event.header.size = माप(काष्ठा cxl_event_header);
-	अगर (ctx->afu_driver_ops && atomic_पढ़ो(&ctx->afu_driver_events)) अणु
+	event.header.size = sizeof(struct cxl_event_header);
+	if (ctx->afu_driver_ops && atomic_read(&ctx->afu_driver_events)) {
 		pr_devel("afu_read delivering AFU driver specific event\n");
 		pl = ctx->afu_driver_ops->fetch_event(ctx);
 		atomic_dec(&ctx->afu_driver_events);
 		event.header.type = CXL_EVENT_AFU_DRIVER;
-	पूर्ण अन्यथा अगर (ctx->pending_irq) अणु
+	} else if (ctx->pending_irq) {
 		pr_devel("afu_read delivering AFU interrupt\n");
-		event.header.size += माप(काष्ठा cxl_event_afu_पूर्णांकerrupt);
+		event.header.size += sizeof(struct cxl_event_afu_interrupt);
 		event.header.type = CXL_EVENT_AFU_INTERRUPT;
-		event.irq.irq = find_first_bit(ctx->irq_biपंचांगap, ctx->irq_count) + 1;
-		clear_bit(event.irq.irq - 1, ctx->irq_biपंचांगap);
-		अगर (biपंचांगap_empty(ctx->irq_biपंचांगap, ctx->irq_count))
+		event.irq.irq = find_first_bit(ctx->irq_bitmap, ctx->irq_count) + 1;
+		clear_bit(event.irq.irq - 1, ctx->irq_bitmap);
+		if (bitmap_empty(ctx->irq_bitmap, ctx->irq_count))
 			ctx->pending_irq = false;
-	पूर्ण अन्यथा अगर (ctx->pending_fault) अणु
+	} else if (ctx->pending_fault) {
 		pr_devel("afu_read delivering data storage fault\n");
-		event.header.size += माप(काष्ठा cxl_event_data_storage);
+		event.header.size += sizeof(struct cxl_event_data_storage);
 		event.header.type = CXL_EVENT_DATA_STORAGE;
 		event.fault.addr = ctx->fault_addr;
 		event.fault.dsisr = ctx->fault_dsisr;
 		ctx->pending_fault = false;
-	पूर्ण अन्यथा अगर (ctx->pending_afu_err) अणु
+	} else if (ctx->pending_afu_err) {
 		pr_devel("afu_read delivering afu error\n");
-		event.header.size += माप(काष्ठा cxl_event_afu_error);
+		event.header.size += sizeof(struct cxl_event_afu_error);
 		event.header.type = CXL_EVENT_AFU_ERROR;
 		event.afu_error.error = ctx->afu_err;
 		ctx->pending_afu_err = false;
-	पूर्ण अन्यथा अगर (ctx->status == CLOSED) अणु
+	} else if (ctx->status == CLOSED) {
 		pr_devel("afu_read fatal error\n");
 		spin_unlock_irqrestore(&ctx->lock, flags);
-		वापस -EIO;
-	पूर्ण अन्यथा
+		return -EIO;
+	} else
 		WARN(1, "afu_read must be buggy\n");
 
 	spin_unlock_irqrestore(&ctx->lock, flags);
 
-	अगर (event.header.type == CXL_EVENT_AFU_DRIVER)
-		वापस afu_driver_event_copy(ctx, buf, &event, pl);
+	if (event.header.type == CXL_EVENT_AFU_DRIVER)
+		return afu_driver_event_copy(ctx, buf, &event, pl);
 
-	अगर (copy_to_user(buf, &event, event.header.size))
-		वापस -EFAULT;
-	वापस event.header.size;
+	if (copy_to_user(buf, &event, event.header.size))
+		return -EFAULT;
+	return event.header.size;
 
 out:
-	finish_रुको(&ctx->wq, &रुको);
+	finish_wait(&ctx->wq, &wait);
 	spin_unlock_irqrestore(&ctx->lock, flags);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* 
- * Note: अगर this is updated, we need to update api.c to patch the new ones in
+ * Note: if this is updated, we need to update api.c to patch the new ones in
  * too
  */
-स्थिर काष्ठा file_operations afu_fops = अणु
+const struct file_operations afu_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो           = afu_खोलो,
+	.open           = afu_open,
 	.poll		= afu_poll,
-	.पढ़ो		= afu_पढ़ो,
+	.read		= afu_read,
 	.release        = afu_release,
 	.unlocked_ioctl = afu_ioctl,
 	.compat_ioctl   = afu_compat_ioctl,
 	.mmap           = afu_mmap,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा file_operations afu_master_fops = अणु
+static const struct file_operations afu_master_fops = {
 	.owner		= THIS_MODULE,
-	.खोलो           = afu_master_खोलो,
+	.open           = afu_master_open,
 	.poll		= afu_poll,
-	.पढ़ो		= afu_पढ़ो,
+	.read		= afu_read,
 	.release        = afu_release,
 	.unlocked_ioctl = afu_ioctl,
 	.compat_ioctl   = afu_compat_ioctl,
 	.mmap           = afu_mmap,
-पूर्ण;
+};
 
 
-अटल अक्षर *cxl_devnode(काष्ठा device *dev, umode_t *mode)
-अणु
-	अगर (cpu_has_feature(CPU_FTR_HVMODE) &&
-	    CXL_DEVT_IS_CARD(dev->devt)) अणु
+static char *cxl_devnode(struct device *dev, umode_t *mode)
+{
+	if (cpu_has_feature(CPU_FTR_HVMODE) &&
+	    CXL_DEVT_IS_CARD(dev->devt)) {
 		/*
 		 * These minor numbers will eventually be used to program the
 		 * PSL and AFUs once we have dynamic reprogramming support
 		 */
-		वापस शून्य;
-	पूर्ण
-	वापस kaप्र_लिखो(GFP_KERNEL, "cxl/%s", dev_name(dev));
-पूर्ण
+		return NULL;
+	}
+	return kasprintf(GFP_KERNEL, "cxl/%s", dev_name(dev));
+}
 
-बाह्य काष्ठा class *cxl_class;
+extern struct class *cxl_class;
 
-अटल पूर्णांक cxl_add_अक्षरdev(काष्ठा cxl_afu *afu, dev_t devt, काष्ठा cdev *cdev,
-			   काष्ठा device **अक्षरdev, अक्षर *postfix, अक्षर *desc,
-			   स्थिर काष्ठा file_operations *fops)
-अणु
-	काष्ठा device *dev;
-	पूर्णांक rc;
+static int cxl_add_chardev(struct cxl_afu *afu, dev_t devt, struct cdev *cdev,
+			   struct device **chardev, char *postfix, char *desc,
+			   const struct file_operations *fops)
+{
+	struct device *dev;
+	int rc;
 
 	cdev_init(cdev, fops);
-	अगर ((rc = cdev_add(cdev, devt, 1))) अणु
+	if ((rc = cdev_add(cdev, devt, 1))) {
 		dev_err(&afu->dev, "Unable to add %s chardev: %i\n", desc, rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	dev = device_create(cxl_class, &afu->dev, devt, afu,
 			"afu%i.%i%s", afu->adapter->adapter_num, afu->slice, postfix);
-	अगर (IS_ERR(dev)) अणु
+	if (IS_ERR(dev)) {
 		dev_err(&afu->dev, "Unable to create %s chardev in sysfs: %i\n", desc, rc);
 		rc = PTR_ERR(dev);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	*अक्षरdev = dev;
+	*chardev = dev;
 
-	वापस 0;
+	return 0;
 err:
 	cdev_del(cdev);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक cxl_अक्षरdev_d_afu_add(काष्ठा cxl_afu *afu)
-अणु
-	वापस cxl_add_अक्षरdev(afu, CXL_AFU_MKDEV_D(afu), &afu->afu_cdev_d,
-			       &afu->अक्षरdev_d, "d", "dedicated",
+int cxl_chardev_d_afu_add(struct cxl_afu *afu)
+{
+	return cxl_add_chardev(afu, CXL_AFU_MKDEV_D(afu), &afu->afu_cdev_d,
+			       &afu->chardev_d, "d", "dedicated",
 			       &afu_master_fops); /* Uses master fops */
-पूर्ण
+}
 
-पूर्णांक cxl_अक्षरdev_m_afu_add(काष्ठा cxl_afu *afu)
-अणु
-	वापस cxl_add_अक्षरdev(afu, CXL_AFU_MKDEV_M(afu), &afu->afu_cdev_m,
-			       &afu->अक्षरdev_m, "m", "master",
+int cxl_chardev_m_afu_add(struct cxl_afu *afu)
+{
+	return cxl_add_chardev(afu, CXL_AFU_MKDEV_M(afu), &afu->afu_cdev_m,
+			       &afu->chardev_m, "m", "master",
 			       &afu_master_fops);
-पूर्ण
+}
 
-पूर्णांक cxl_अक्षरdev_s_afu_add(काष्ठा cxl_afu *afu)
-अणु
-	वापस cxl_add_अक्षरdev(afu, CXL_AFU_MKDEV_S(afu), &afu->afu_cdev_s,
-			       &afu->अक्षरdev_s, "s", "shared",
+int cxl_chardev_s_afu_add(struct cxl_afu *afu)
+{
+	return cxl_add_chardev(afu, CXL_AFU_MKDEV_S(afu), &afu->afu_cdev_s,
+			       &afu->chardev_s, "s", "shared",
 			       &afu_fops);
-पूर्ण
+}
 
-व्योम cxl_अक्षरdev_afu_हटाओ(काष्ठा cxl_afu *afu)
-अणु
-	अगर (afu->अक्षरdev_d) अणु
+void cxl_chardev_afu_remove(struct cxl_afu *afu)
+{
+	if (afu->chardev_d) {
 		cdev_del(&afu->afu_cdev_d);
-		device_unरेजिस्टर(afu->अक्षरdev_d);
-		afu->अक्षरdev_d = शून्य;
-	पूर्ण
-	अगर (afu->अक्षरdev_m) अणु
+		device_unregister(afu->chardev_d);
+		afu->chardev_d = NULL;
+	}
+	if (afu->chardev_m) {
 		cdev_del(&afu->afu_cdev_m);
-		device_unरेजिस्टर(afu->अक्षरdev_m);
-		afu->अक्षरdev_m = शून्य;
-	पूर्ण
-	अगर (afu->अक्षरdev_s) अणु
+		device_unregister(afu->chardev_m);
+		afu->chardev_m = NULL;
+	}
+	if (afu->chardev_s) {
 		cdev_del(&afu->afu_cdev_s);
-		device_unरेजिस्टर(afu->अक्षरdev_s);
-		afu->अक्षरdev_s = शून्य;
-	पूर्ण
-पूर्ण
+		device_unregister(afu->chardev_s);
+		afu->chardev_s = NULL;
+	}
+}
 
-पूर्णांक cxl_रेजिस्टर_afu(काष्ठा cxl_afu *afu)
-अणु
+int cxl_register_afu(struct cxl_afu *afu)
+{
 	afu->dev.class = cxl_class;
 
-	वापस device_रेजिस्टर(&afu->dev);
-पूर्ण
+	return device_register(&afu->dev);
+}
 
-पूर्णांक cxl_रेजिस्टर_adapter(काष्ठा cxl *adapter)
-अणु
+int cxl_register_adapter(struct cxl *adapter)
+{
 	adapter->dev.class = cxl_class;
 
 	/*
 	 * Future: When we support dynamically reprogramming the PSL & AFU we
-	 * will expose the पूर्णांकerface to करो that via a अक्षरdev:
+	 * will expose the interface to do that via a chardev:
 	 * adapter->dev.devt = CXL_CARD_MKDEV(adapter);
 	 */
 
-	वापस device_रेजिस्टर(&adapter->dev);
-पूर्ण
+	return device_register(&adapter->dev);
+}
 
-dev_t cxl_get_dev(व्योम)
-अणु
-	वापस cxl_dev;
-पूर्ण
+dev_t cxl_get_dev(void)
+{
+	return cxl_dev;
+}
 
-पूर्णांक __init cxl_file_init(व्योम)
-अणु
-	पूर्णांक rc;
+int __init cxl_file_init(void)
+{
+	int rc;
 
 	/*
 	 * If these change we really need to update API.  Either change some
 	 * flags or update API version number CXL_API_VERSION.
 	 */
 	BUILD_BUG_ON(CXL_API_VERSION != 3);
-	BUILD_BUG_ON(माप(काष्ठा cxl_ioctl_start_work) != 64);
-	BUILD_BUG_ON(माप(काष्ठा cxl_event_header) != 8);
-	BUILD_BUG_ON(माप(काष्ठा cxl_event_afu_पूर्णांकerrupt) != 8);
-	BUILD_BUG_ON(माप(काष्ठा cxl_event_data_storage) != 32);
-	BUILD_BUG_ON(माप(काष्ठा cxl_event_afu_error) != 16);
+	BUILD_BUG_ON(sizeof(struct cxl_ioctl_start_work) != 64);
+	BUILD_BUG_ON(sizeof(struct cxl_event_header) != 8);
+	BUILD_BUG_ON(sizeof(struct cxl_event_afu_interrupt) != 8);
+	BUILD_BUG_ON(sizeof(struct cxl_event_data_storage) != 32);
+	BUILD_BUG_ON(sizeof(struct cxl_event_afu_error) != 16);
 
-	अगर ((rc = alloc_chrdev_region(&cxl_dev, 0, CXL_NUM_MINORS, "cxl"))) अणु
+	if ((rc = alloc_chrdev_region(&cxl_dev, 0, CXL_NUM_MINORS, "cxl"))) {
 		pr_err("Unable to allocate CXL major number: %i\n", rc);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	pr_devel("CXL device allocated, MAJOR %i\n", MAJOR(cxl_dev));
 
 	cxl_class = class_create(THIS_MODULE, "cxl");
-	अगर (IS_ERR(cxl_class)) अणु
+	if (IS_ERR(cxl_class)) {
 		pr_err("Unable to create CXL class\n");
 		rc = PTR_ERR(cxl_class);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	cxl_class->devnode = cxl_devnode;
 
-	वापस 0;
+	return 0;
 
 err:
-	unरेजिस्टर_chrdev_region(cxl_dev, CXL_NUM_MINORS);
-	वापस rc;
-पूर्ण
+	unregister_chrdev_region(cxl_dev, CXL_NUM_MINORS);
+	return rc;
+}
 
-व्योम cxl_file_निकास(व्योम)
-अणु
-	unरेजिस्टर_chrdev_region(cxl_dev, CXL_NUM_MINORS);
+void cxl_file_exit(void)
+{
+	unregister_chrdev_region(cxl_dev, CXL_NUM_MINORS);
 	class_destroy(cxl_class);
-पूर्ण
+}

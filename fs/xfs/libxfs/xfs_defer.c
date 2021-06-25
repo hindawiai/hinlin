@@ -1,24 +1,23 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#समावेश "xfs.h"
-#समावेश "xfs_fs.h"
-#समावेश "xfs_shared.h"
-#समावेश "xfs_format.h"
-#समावेश "xfs_log_format.h"
-#समावेश "xfs_trans_resv.h"
-#समावेश "xfs_mount.h"
-#समावेश "xfs_defer.h"
-#समावेश "xfs_trans.h"
-#समावेश "xfs_buf_item.h"
-#समावेश "xfs_inode.h"
-#समावेश "xfs_inode_item.h"
-#समावेश "xfs_trace.h"
-#समावेश "xfs_icache.h"
-#समावेश "xfs_log.h"
+#include "xfs.h"
+#include "xfs_fs.h"
+#include "xfs_shared.h"
+#include "xfs_format.h"
+#include "xfs_log_format.h"
+#include "xfs_trans_resv.h"
+#include "xfs_mount.h"
+#include "xfs_defer.h"
+#include "xfs_trans.h"
+#include "xfs_buf_item.h"
+#include "xfs_inode.h"
+#include "xfs_inode_item.h"
+#include "xfs_trace.h"
+#include "xfs_icache.h"
+#include "xfs_log.h"
 
 /*
  * Deferred Operations in XFS
@@ -27,116 +26,116 @@
  * mapping and unmapping, typically) have permanent reservations so that
  * we can roll the transaction to adhere to AG locking order rules and
  * to unlock buffers between metadata updates.  Prior to rmap/reflink,
- * the mapping code had a mechanism to perक्रमm these deferrals क्रम
- * extents that were going to be मुक्तd; this code makes that facility
+ * the mapping code had a mechanism to perform these deferrals for
+ * extents that were going to be freed; this code makes that facility
  * more generic.
  *
  * When adding the reverse mapping and reflink features, it became
- * necessary to perक्रमm complex remapping multi-transactions to comply
- * with AG locking order rules, and to be able to spपढ़ो a single
+ * necessary to perform complex remapping multi-transactions to comply
+ * with AG locking order rules, and to be able to spread a single
  * refcount update operation (an operation on an n-block extent can
  * update as many as n records!) among multiple transactions.  XFS can
  * roll a transaction to facilitate this, but using this facility
- * requires us to log "intent" items in हाल log recovery needs to
- * reकरो the operation, and to log "done" items to indicate that reकरो
+ * requires us to log "intent" items in case log recovery needs to
+ * redo the operation, and to log "done" items to indicate that redo
  * is not necessary.
  *
  * Deferred work is tracked in xfs_defer_pending items.  Each pending
  * item tracks one type of deferred work.  Incoming work items (which
- * have not yet had an पूर्णांकent logged) are attached to a pending item
- * on the करोp_पूर्णांकake list, where they रुको क्रम the caller to finish
+ * have not yet had an intent logged) are attached to a pending item
+ * on the dop_intake list, where they wait for the caller to finish
  * the deferred operations.
  *
  * Finishing a set of deferred operations is an involved process.  To
  * start, we define "rolling a deferred-op transaction" as follows:
  *
- * > For each xfs_defer_pending item on the करोp_पूर्णांकake list,
+ * > For each xfs_defer_pending item on the dop_intake list,
  *   - Sort the work items in AG order.  XFS locking
  *     order rules require us to lock buffers in AG order.
- *   - Create a log पूर्णांकent item क्रम that type.
+ *   - Create a log intent item for that type.
  *   - Attach it to the pending item.
- *   - Move the pending item from the करोp_पूर्णांकake list to the
- *     करोp_pending list.
+ *   - Move the pending item from the dop_intake list to the
+ *     dop_pending list.
  * > Roll the transaction.
  *
- * NOTE: To aव्योम exceeding the transaction reservation, we limit the
+ * NOTE: To avoid exceeding the transaction reservation, we limit the
  * number of items that we attach to a given xfs_defer_pending.
  *
  * The actual finishing process looks like this:
  *
- * > For each xfs_defer_pending in the करोp_pending list,
+ * > For each xfs_defer_pending in the dop_pending list,
  *   - Roll the deferred-op transaction as above.
- *   - Create a log करोne item क्रम that type, and attach it to the
- *     log पूर्णांकent item.
- *   - For each work item attached to the log पूर्णांकent item,
- *     * Perक्रमm the described action.
- *     * Attach the work item to the log करोne item.
- *     * If the result of करोing the work was -EAGAIN, ->finish work
+ *   - Create a log done item for that type, and attach it to the
+ *     log intent item.
+ *   - For each work item attached to the log intent item,
+ *     * Perform the described action.
+ *     * Attach the work item to the log done item.
+ *     * If the result of doing the work was -EAGAIN, ->finish work
  *       wants a new transaction.  See the "Requesting a Fresh
- *       Transaction जबतक Finishing Deferred Work" section below क्रम
+ *       Transaction while Finishing Deferred Work" section below for
  *       details.
  *
- * The key here is that we must log an पूर्णांकent item क्रम all pending
- * work items every समय we roll the transaction, and that we must log
- * a करोne item as soon as the work is completed.  With this mechanism
- * we can perक्रमm complex remapping operations, chaining पूर्णांकent items
+ * The key here is that we must log an intent item for all pending
+ * work items every time we roll the transaction, and that we must log
+ * a done item as soon as the work is completed.  With this mechanism
+ * we can perform complex remapping operations, chaining intent items
  * as needed.
  *
- * Requesting a Fresh Transaction जबतक Finishing Deferred Work
+ * Requesting a Fresh Transaction while Finishing Deferred Work
  *
  * If ->finish_item decides that it needs a fresh transaction to
- * finish the work, it must ask its caller (xfs_defer_finish) क्रम a
+ * finish the work, it must ask its caller (xfs_defer_finish) for a
  * continuation.  The most likely cause of this circumstance are the
  * refcount adjust functions deciding that they've logged enough items
  * to be at risk of exceeding the transaction reservation.
  *
- * To get a fresh transaction, we want to log the existing log करोne
- * item to prevent the log पूर्णांकent item from replaying, immediately log
- * a new log पूर्णांकent item with the unfinished work items, roll the
+ * To get a fresh transaction, we want to log the existing log done
+ * item to prevent the log intent item from replaying, immediately log
+ * a new log intent item with the unfinished work items, roll the
  * transaction, and re-call ->finish_item wherever it left off.  The
- * log करोne item and the new log पूर्णांकent item must be in the same
+ * log done item and the new log intent item must be in the same
  * transaction or atomicity cannot be guaranteed; defer_finish ensures
  * that this happens.
  *
  * This requires some coordination between ->finish_item and
  * defer_finish.  Upon deciding to request a new transaction,
  * ->finish_item should update the current work item to reflect the
- * unfinished work.  Next, it should reset the log करोne item's list
- * count to the number of items finished, and वापस -EAGAIN.
- * defer_finish sees the -EAGAIN, logs the new log पूर्णांकent item
- * with the reमुख्यing work items, and leaves the xfs_defer_pending
- * item at the head of the करोp_work queue.  Then it rolls the
+ * unfinished work.  Next, it should reset the log done item's list
+ * count to the number of items finished, and return -EAGAIN.
+ * defer_finish sees the -EAGAIN, logs the new log intent item
+ * with the remaining work items, and leaves the xfs_defer_pending
+ * item at the head of the dop_work queue.  Then it rolls the
  * transaction and picks up processing where it left off.  It is
  * required that ->finish_item must be careful to leave enough
- * transaction reservation to fit the new log पूर्णांकent item.
+ * transaction reservation to fit the new log intent item.
  *
- * This is an example of remapping the extent (E, E+B) पूर्णांकo file X at
- * offset A and dealing with the extent (C, C+B) alपढ़ोy being mapped
+ * This is an example of remapping the extent (E, E+B) into file X at
+ * offset A and dealing with the extent (C, C+B) already being mapped
  * there:
  * +-------------------------------------------------+
  * | Unmap file X startblock C offset A length B     | t0
- * | Intent to reduce refcount क्रम extent (C, B)     |
- * | Intent to हटाओ rmap (X, C, A, B)              |
- * | Intent to मुक्त extent (D, 1) (bmbt block)       |
+ * | Intent to reduce refcount for extent (C, B)     |
+ * | Intent to remove rmap (X, C, A, B)              |
+ * | Intent to free extent (D, 1) (bmbt block)       |
  * | Intent to map (X, A, B) at startblock E         |
  * +-------------------------------------------------+
  * | Map file X startblock E offset A length B       | t1
  * | Done mapping (X, E, A, B)                       |
- * | Intent to increase refcount क्रम extent (E, B)   |
+ * | Intent to increase refcount for extent (E, B)   |
  * | Intent to add rmap (X, E, A, B)                 |
  * +-------------------------------------------------+
- * | Reduce refcount क्रम extent (C, B)               | t2
- * | Done reducing refcount क्रम extent (C, 9)        |
- * | Intent to reduce refcount क्रम extent (C+9, B-9) |
+ * | Reduce refcount for extent (C, B)               | t2
+ * | Done reducing refcount for extent (C, 9)        |
+ * | Intent to reduce refcount for extent (C+9, B-9) |
  * | (ran out of space after 9 refcount updates)     |
  * +-------------------------------------------------+
- * | Reduce refcount क्रम extent (C+9, B+9)           | t3
- * | Done reducing refcount क्रम extent (C+9, B-9)    |
- * | Increase refcount क्रम extent (E, B)             |
- * | Done increasing refcount क्रम extent (E, B)      |
- * | Intent to मुक्त extent (C, B)                    |
- * | Intent to मुक्त extent (F, 1) (refcountbt block) |
- * | Intent to हटाओ rmap (F, 1, REFC)              |
+ * | Reduce refcount for extent (C+9, B+9)           | t3
+ * | Done reducing refcount for extent (C+9, B-9)    |
+ * | Increase refcount for extent (E, B)             |
+ * | Done increasing refcount for extent (E, B)      |
+ * | Intent to free extent (C, B)                    |
+ * | Intent to free extent (F, 1) (refcountbt block) |
+ * | Intent to remove rmap (F, 1, REFC)              |
  * +-------------------------------------------------+
  * | Remove rmap (X, C, A, B)                        | t4
  * | Done removing rmap (X, C, A, B)                 |
@@ -146,469 +145,469 @@
  * | Done removing rmap (F, 1, REFC)                 |
  * +-------------------------------------------------+
  * | Free extent (C, B)                              | t5
- * | Done मुक्तing extent (C, B)                      |
+ * | Done freeing extent (C, B)                      |
  * | Free extent (D, 1)                              |
- * | Done मुक्तing extent (D, 1)                      |
+ * | Done freeing extent (D, 1)                      |
  * | Free extent (F, 1)                              |
- * | Done मुक्तing extent (F, 1)                      |
+ * | Done freeing extent (F, 1)                      |
  * +-------------------------------------------------+
  *
- * If we should crash beक्रमe t2 commits, log recovery replays
- * the following पूर्णांकent items:
+ * If we should crash before t2 commits, log recovery replays
+ * the following intent items:
  *
- * - Intent to reduce refcount क्रम extent (C, B)
- * - Intent to हटाओ rmap (X, C, A, B)
- * - Intent to मुक्त extent (D, 1) (bmbt block)
- * - Intent to increase refcount क्रम extent (E, B)
+ * - Intent to reduce refcount for extent (C, B)
+ * - Intent to remove rmap (X, C, A, B)
+ * - Intent to free extent (D, 1) (bmbt block)
+ * - Intent to increase refcount for extent (E, B)
  * - Intent to add rmap (X, E, A, B)
  *
  * In the process of recovering, it should also generate and take care
- * of these पूर्णांकent items:
+ * of these intent items:
  *
- * - Intent to मुक्त extent (C, B)
- * - Intent to मुक्त extent (F, 1) (refcountbt block)
- * - Intent to हटाओ rmap (F, 1, REFC)
+ * - Intent to free extent (C, B)
+ * - Intent to free extent (F, 1) (refcountbt block)
+ * - Intent to remove rmap (F, 1, REFC)
  *
  * Note that the continuation requested between t2 and t3 is likely to
  * reoccur.
  */
 
-अटल स्थिर काष्ठा xfs_defer_op_type *defer_op_types[] = अणु
+static const struct xfs_defer_op_type *defer_op_types[] = {
 	[XFS_DEFER_OPS_TYPE_BMAP]	= &xfs_bmap_update_defer_type,
 	[XFS_DEFER_OPS_TYPE_REFCOUNT]	= &xfs_refcount_update_defer_type,
 	[XFS_DEFER_OPS_TYPE_RMAP]	= &xfs_rmap_update_defer_type,
-	[XFS_DEFER_OPS_TYPE_FREE]	= &xfs_extent_मुक्त_defer_type,
-	[XFS_DEFER_OPS_TYPE_AGFL_FREE]	= &xfs_agfl_मुक्त_defer_type,
-पूर्ण;
+	[XFS_DEFER_OPS_TYPE_FREE]	= &xfs_extent_free_defer_type,
+	[XFS_DEFER_OPS_TYPE_AGFL_FREE]	= &xfs_agfl_free_defer_type,
+};
 
-अटल व्योम
-xfs_defer_create_पूर्णांकent(
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_defer_pending	*dfp,
+static void
+xfs_defer_create_intent(
+	struct xfs_trans		*tp,
+	struct xfs_defer_pending	*dfp,
 	bool				sort)
-अणु
-	स्थिर काष्ठा xfs_defer_op_type	*ops = defer_op_types[dfp->dfp_type];
+{
+	const struct xfs_defer_op_type	*ops = defer_op_types[dfp->dfp_type];
 
-	अगर (!dfp->dfp_पूर्णांकent)
-		dfp->dfp_पूर्णांकent = ops->create_पूर्णांकent(tp, &dfp->dfp_work,
+	if (!dfp->dfp_intent)
+		dfp->dfp_intent = ops->create_intent(tp, &dfp->dfp_work,
 						     dfp->dfp_count, sort);
-पूर्ण
+}
 
 /*
- * For each pending item in the पूर्णांकake list, log its पूर्णांकent item and the
- * associated extents, then add the entire पूर्णांकake list to the end of
+ * For each pending item in the intake list, log its intent item and the
+ * associated extents, then add the entire intake list to the end of
  * the pending list.
  */
-STATIC व्योम
-xfs_defer_create_पूर्णांकents(
-	काष्ठा xfs_trans		*tp)
-अणु
-	काष्ठा xfs_defer_pending	*dfp;
+STATIC void
+xfs_defer_create_intents(
+	struct xfs_trans		*tp)
+{
+	struct xfs_defer_pending	*dfp;
 
-	list_क्रम_each_entry(dfp, &tp->t_dfops, dfp_list) अणु
-		trace_xfs_defer_create_पूर्णांकent(tp->t_mountp, dfp);
-		xfs_defer_create_पूर्णांकent(tp, dfp, true);
-	पूर्ण
-पूर्ण
+	list_for_each_entry(dfp, &tp->t_dfops, dfp_list) {
+		trace_xfs_defer_create_intent(tp->t_mountp, dfp);
+		xfs_defer_create_intent(tp, dfp, true);
+	}
+}
 
-/* Abort all the पूर्णांकents that were committed. */
-STATIC व्योम
-xfs_defer_trans_पात(
-	काष्ठा xfs_trans		*tp,
-	काष्ठा list_head		*करोp_pending)
-अणु
-	काष्ठा xfs_defer_pending	*dfp;
-	स्थिर काष्ठा xfs_defer_op_type	*ops;
+/* Abort all the intents that were committed. */
+STATIC void
+xfs_defer_trans_abort(
+	struct xfs_trans		*tp,
+	struct list_head		*dop_pending)
+{
+	struct xfs_defer_pending	*dfp;
+	const struct xfs_defer_op_type	*ops;
 
-	trace_xfs_defer_trans_पात(tp, _RET_IP_);
+	trace_xfs_defer_trans_abort(tp, _RET_IP_);
 
-	/* Abort पूर्णांकent items that करोn't have a करोne item. */
-	list_क्रम_each_entry(dfp, करोp_pending, dfp_list) अणु
+	/* Abort intent items that don't have a done item. */
+	list_for_each_entry(dfp, dop_pending, dfp_list) {
 		ops = defer_op_types[dfp->dfp_type];
-		trace_xfs_defer_pending_पात(tp->t_mountp, dfp);
-		अगर (dfp->dfp_पूर्णांकent && !dfp->dfp_करोne) अणु
-			ops->पात_पूर्णांकent(dfp->dfp_पूर्णांकent);
-			dfp->dfp_पूर्णांकent = शून्य;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		trace_xfs_defer_pending_abort(tp->t_mountp, dfp);
+		if (dfp->dfp_intent && !dfp->dfp_done) {
+			ops->abort_intent(dfp->dfp_intent);
+			dfp->dfp_intent = NULL;
+		}
+	}
+}
 
-/* Roll a transaction so we can करो some deferred op processing. */
-STATIC पूर्णांक
+/* Roll a transaction so we can do some deferred op processing. */
+STATIC int
 xfs_defer_trans_roll(
-	काष्ठा xfs_trans		**tpp)
-अणु
-	काष्ठा xfs_trans		*tp = *tpp;
-	काष्ठा xfs_buf_log_item		*bli;
-	काष्ठा xfs_inode_log_item	*ili;
-	काष्ठा xfs_log_item		*lip;
-	काष्ठा xfs_buf			*bplist[XFS_DEFER_OPS_NR_BUFS];
-	काष्ठा xfs_inode		*iplist[XFS_DEFER_OPS_NR_INODES];
-	अचिन्हित पूर्णांक			ordered = 0; /* biपंचांगap */
-	पूर्णांक				bpcount = 0, ipcount = 0;
-	पूर्णांक				i;
-	पूर्णांक				error;
+	struct xfs_trans		**tpp)
+{
+	struct xfs_trans		*tp = *tpp;
+	struct xfs_buf_log_item		*bli;
+	struct xfs_inode_log_item	*ili;
+	struct xfs_log_item		*lip;
+	struct xfs_buf			*bplist[XFS_DEFER_OPS_NR_BUFS];
+	struct xfs_inode		*iplist[XFS_DEFER_OPS_NR_INODES];
+	unsigned int			ordered = 0; /* bitmap */
+	int				bpcount = 0, ipcount = 0;
+	int				i;
+	int				error;
 
-	BUILD_BUG_ON(NBBY * माप(ordered) < XFS_DEFER_OPS_NR_BUFS);
+	BUILD_BUG_ON(NBBY * sizeof(ordered) < XFS_DEFER_OPS_NR_BUFS);
 
-	list_क्रम_each_entry(lip, &tp->t_items, li_trans) अणु
-		चयन (lip->li_type) अणु
-		हाल XFS_LI_BUF:
-			bli = container_of(lip, काष्ठा xfs_buf_log_item,
+	list_for_each_entry(lip, &tp->t_items, li_trans) {
+		switch (lip->li_type) {
+		case XFS_LI_BUF:
+			bli = container_of(lip, struct xfs_buf_log_item,
 					   bli_item);
-			अगर (bli->bli_flags & XFS_BLI_HOLD) अणु
-				अगर (bpcount >= XFS_DEFER_OPS_NR_BUFS) अणु
+			if (bli->bli_flags & XFS_BLI_HOLD) {
+				if (bpcount >= XFS_DEFER_OPS_NR_BUFS) {
 					ASSERT(0);
-					वापस -EFSCORRUPTED;
-				पूर्ण
-				अगर (bli->bli_flags & XFS_BLI_ORDERED)
+					return -EFSCORRUPTED;
+				}
+				if (bli->bli_flags & XFS_BLI_ORDERED)
 					ordered |= (1U << bpcount);
-				अन्यथा
+				else
 					xfs_trans_dirty_buf(tp, bli->bli_buf);
 				bplist[bpcount++] = bli->bli_buf;
-			पूर्ण
-			अवरोध;
-		हाल XFS_LI_INODE:
-			ili = container_of(lip, काष्ठा xfs_inode_log_item,
+			}
+			break;
+		case XFS_LI_INODE:
+			ili = container_of(lip, struct xfs_inode_log_item,
 					   ili_item);
-			अगर (ili->ili_lock_flags == 0) अणु
-				अगर (ipcount >= XFS_DEFER_OPS_NR_INODES) अणु
+			if (ili->ili_lock_flags == 0) {
+				if (ipcount >= XFS_DEFER_OPS_NR_INODES) {
 					ASSERT(0);
-					वापस -EFSCORRUPTED;
-				पूर्ण
+					return -EFSCORRUPTED;
+				}
 				xfs_trans_log_inode(tp, ili->ili_inode,
 						    XFS_ILOG_CORE);
 				iplist[ipcount++] = ili->ili_inode;
-			पूर्ण
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			}
+			break;
+		default:
+			break;
+		}
+	}
 
 	trace_xfs_defer_trans_roll(tp, _RET_IP_);
 
 	/*
 	 * Roll the transaction.  Rolling always given a new transaction (even
-	 * अगर committing the old one fails!) to hand back to the caller, so we
+	 * if committing the old one fails!) to hand back to the caller, so we
 	 * join the held resources to the new transaction so that we always
-	 * वापस with the held resources joined to @tpp, no matter what
+	 * return with the held resources joined to @tpp, no matter what
 	 * happened.
 	 */
 	error = xfs_trans_roll(tpp);
 	tp = *tpp;
 
 	/* Rejoin the joined inodes. */
-	क्रम (i = 0; i < ipcount; i++)
+	for (i = 0; i < ipcount; i++)
 		xfs_trans_ijoin(tp, iplist[i], 0);
 
-	/* Rejoin the buffers and dirty them so the log moves क्रमward. */
-	क्रम (i = 0; i < bpcount; i++) अणु
+	/* Rejoin the buffers and dirty them so the log moves forward. */
+	for (i = 0; i < bpcount; i++) {
 		xfs_trans_bjoin(tp, bplist[i]);
-		अगर (ordered & (1U << i))
+		if (ordered & (1U << i))
 			xfs_trans_ordered_buf(tp, bplist[i]);
 		xfs_trans_bhold(tp, bplist[i]);
-	पूर्ण
+	}
 
-	अगर (error)
+	if (error)
 		trace_xfs_defer_trans_roll_error(tp, error);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
  * Free up any items left in the list.
  */
-अटल व्योम
+static void
 xfs_defer_cancel_list(
-	काष्ठा xfs_mount		*mp,
-	काष्ठा list_head		*करोp_list)
-अणु
-	काष्ठा xfs_defer_pending	*dfp;
-	काष्ठा xfs_defer_pending	*pli;
-	काष्ठा list_head		*pwi;
-	काष्ठा list_head		*n;
-	स्थिर काष्ठा xfs_defer_op_type	*ops;
+	struct xfs_mount		*mp,
+	struct list_head		*dop_list)
+{
+	struct xfs_defer_pending	*dfp;
+	struct xfs_defer_pending	*pli;
+	struct list_head		*pwi;
+	struct list_head		*n;
+	const struct xfs_defer_op_type	*ops;
 
 	/*
-	 * Free the pending items.  Caller should alपढ़ोy have arranged
-	 * क्रम the पूर्णांकent items to be released.
+	 * Free the pending items.  Caller should already have arranged
+	 * for the intent items to be released.
 	 */
-	list_क्रम_each_entry_safe(dfp, pli, करोp_list, dfp_list) अणु
+	list_for_each_entry_safe(dfp, pli, dop_list, dfp_list) {
 		ops = defer_op_types[dfp->dfp_type];
 		trace_xfs_defer_cancel_list(mp, dfp);
 		list_del(&dfp->dfp_list);
-		list_क्रम_each_safe(pwi, n, &dfp->dfp_work) अणु
+		list_for_each_safe(pwi, n, &dfp->dfp_work) {
 			list_del(pwi);
 			dfp->dfp_count--;
 			ops->cancel_item(pwi);
-		पूर्ण
+		}
 		ASSERT(dfp->dfp_count == 0);
-		kmem_मुक्त(dfp);
-	पूर्ण
-पूर्ण
+		kmem_free(dfp);
+	}
+}
 
 /*
- * Prevent a log पूर्णांकent item from pinning the tail of the log by logging a
- * करोne item to release the पूर्णांकent item; and then log a new पूर्णांकent item.
- * The caller should provide a fresh transaction and roll it after we're करोne.
+ * Prevent a log intent item from pinning the tail of the log by logging a
+ * done item to release the intent item; and then log a new intent item.
+ * The caller should provide a fresh transaction and roll it after we're done.
  */
-अटल पूर्णांक
+static int
 xfs_defer_relog(
-	काष्ठा xfs_trans		**tpp,
-	काष्ठा list_head		*dfops)
-अणु
-	काष्ठा xlog			*log = (*tpp)->t_mountp->m_log;
-	काष्ठा xfs_defer_pending	*dfp;
-	xfs_lsn_t			threshold_lsn = शून्यCOMMITLSN;
+	struct xfs_trans		**tpp,
+	struct list_head		*dfops)
+{
+	struct xlog			*log = (*tpp)->t_mountp->m_log;
+	struct xfs_defer_pending	*dfp;
+	xfs_lsn_t			threshold_lsn = NULLCOMMITLSN;
 
 
 	ASSERT((*tpp)->t_flags & XFS_TRANS_PERM_LOG_RES);
 
-	list_क्रम_each_entry(dfp, dfops, dfp_list) अणु
+	list_for_each_entry(dfp, dfops, dfp_list) {
 		/*
-		 * If the log पूर्णांकent item क्रम this deferred op is not a part of
-		 * the current log checkpoपूर्णांक, relog the पूर्णांकent item to keep
-		 * the log tail moving क्रमward.  We're ok with this being racy
+		 * If the log intent item for this deferred op is not a part of
+		 * the current log checkpoint, relog the intent item to keep
+		 * the log tail moving forward.  We're ok with this being racy
 		 * because an incorrect decision means we'll be a little slower
 		 * at pushing the tail.
 		 */
-		अगर (dfp->dfp_पूर्णांकent == शून्य ||
-		    xfs_log_item_in_current_chkpt(dfp->dfp_पूर्णांकent))
-			जारी;
+		if (dfp->dfp_intent == NULL ||
+		    xfs_log_item_in_current_chkpt(dfp->dfp_intent))
+			continue;
 
 		/*
-		 * Figure out where we need the tail to be in order to मुख्यtain
-		 * the minimum required मुक्त space in the log.  Only sample
+		 * Figure out where we need the tail to be in order to maintain
+		 * the minimum required free space in the log.  Only sample
 		 * the log threshold once per call.
 		 */
-		अगर (threshold_lsn == शून्यCOMMITLSN) अणु
+		if (threshold_lsn == NULLCOMMITLSN) {
 			threshold_lsn = xlog_grant_push_threshold(log, 0);
-			अगर (threshold_lsn == शून्यCOMMITLSN)
-				अवरोध;
-		पूर्ण
-		अगर (XFS_LSN_CMP(dfp->dfp_पूर्णांकent->li_lsn, threshold_lsn) >= 0)
-			जारी;
+			if (threshold_lsn == NULLCOMMITLSN)
+				break;
+		}
+		if (XFS_LSN_CMP(dfp->dfp_intent->li_lsn, threshold_lsn) >= 0)
+			continue;
 
-		trace_xfs_defer_relog_पूर्णांकent((*tpp)->t_mountp, dfp);
+		trace_xfs_defer_relog_intent((*tpp)->t_mountp, dfp);
 		XFS_STATS_INC((*tpp)->t_mountp, defer_relog);
-		dfp->dfp_पूर्णांकent = xfs_trans_item_relog(dfp->dfp_पूर्णांकent, *tpp);
-	पूर्ण
+		dfp->dfp_intent = xfs_trans_item_relog(dfp->dfp_intent, *tpp);
+	}
 
-	अगर ((*tpp)->t_flags & XFS_TRANS_सूचीTY)
-		वापस xfs_defer_trans_roll(tpp);
-	वापस 0;
-पूर्ण
+	if ((*tpp)->t_flags & XFS_TRANS_DIRTY)
+		return xfs_defer_trans_roll(tpp);
+	return 0;
+}
 
 /*
- * Log an पूर्णांकent-करोne item क्रम the first pending पूर्णांकent, and finish the work
+ * Log an intent-done item for the first pending intent, and finish the work
  * items.
  */
-अटल पूर्णांक
+static int
 xfs_defer_finish_one(
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_defer_pending	*dfp)
-अणु
-	स्थिर काष्ठा xfs_defer_op_type	*ops = defer_op_types[dfp->dfp_type];
-	काष्ठा xfs_btree_cur		*state = शून्य;
-	काष्ठा list_head		*li, *n;
-	पूर्णांक				error;
+	struct xfs_trans		*tp,
+	struct xfs_defer_pending	*dfp)
+{
+	const struct xfs_defer_op_type	*ops = defer_op_types[dfp->dfp_type];
+	struct xfs_btree_cur		*state = NULL;
+	struct list_head		*li, *n;
+	int				error;
 
 	trace_xfs_defer_pending_finish(tp->t_mountp, dfp);
 
-	dfp->dfp_करोne = ops->create_करोne(tp, dfp->dfp_पूर्णांकent, dfp->dfp_count);
-	list_क्रम_each_safe(li, n, &dfp->dfp_work) अणु
+	dfp->dfp_done = ops->create_done(tp, dfp->dfp_intent, dfp->dfp_count);
+	list_for_each_safe(li, n, &dfp->dfp_work) {
 		list_del(li);
 		dfp->dfp_count--;
-		error = ops->finish_item(tp, dfp->dfp_करोne, li, &state);
-		अगर (error == -EAGAIN) अणु
+		error = ops->finish_item(tp, dfp->dfp_done, li, &state);
+		if (error == -EAGAIN) {
 			/*
 			 * Caller wants a fresh transaction; put the work item
-			 * back on the list and log a new log पूर्णांकent item to
+			 * back on the list and log a new log intent item to
 			 * replace the old one.  See "Requesting a Fresh
-			 * Transaction जबतक Finishing Deferred Work" above.
+			 * Transaction while Finishing Deferred Work" above.
 			 */
 			list_add(li, &dfp->dfp_work);
 			dfp->dfp_count++;
-			dfp->dfp_करोne = शून्य;
-			dfp->dfp_पूर्णांकent = शून्य;
-			xfs_defer_create_पूर्णांकent(tp, dfp, false);
-		पूर्ण
+			dfp->dfp_done = NULL;
+			dfp->dfp_intent = NULL;
+			xfs_defer_create_intent(tp, dfp, false);
+		}
 
-		अगर (error)
-			जाओ out;
-	पूर्ण
+		if (error)
+			goto out;
+	}
 
-	/* Done with the dfp, मुक्त it. */
+	/* Done with the dfp, free it. */
 	list_del(&dfp->dfp_list);
-	kmem_मुक्त(dfp);
+	kmem_free(dfp);
 out:
-	अगर (ops->finish_cleanup)
+	if (ops->finish_cleanup)
 		ops->finish_cleanup(tp, state, error);
-	वापस error;
-पूर्ण
+	return error;
+}
 
 /*
- * Finish all the pending work.  This involves logging पूर्णांकent items क्रम
- * any work items that wandered in since the last transaction roll (अगर
+ * Finish all the pending work.  This involves logging intent items for
+ * any work items that wandered in since the last transaction roll (if
  * one has even happened), rolling the transaction, and finishing the
  * work items in the first item on the logged-and-pending list.
  *
  * If an inode is provided, relog it to the new transaction.
  */
-पूर्णांक
+int
 xfs_defer_finish_noroll(
-	काष्ठा xfs_trans		**tp)
-अणु
-	काष्ठा xfs_defer_pending	*dfp;
-	पूर्णांक				error = 0;
-	LIST_HEAD(करोp_pending);
+	struct xfs_trans		**tp)
+{
+	struct xfs_defer_pending	*dfp;
+	int				error = 0;
+	LIST_HEAD(dop_pending);
 
 	ASSERT((*tp)->t_flags & XFS_TRANS_PERM_LOG_RES);
 
 	trace_xfs_defer_finish(*tp, _RET_IP_);
 
 	/* Until we run out of pending work to finish... */
-	जबतक (!list_empty(&करोp_pending) || !list_empty(&(*tp)->t_dfops)) अणु
+	while (!list_empty(&dop_pending) || !list_empty(&(*tp)->t_dfops)) {
 		/*
 		 * Deferred items that are created in the process of finishing
 		 * other deferred work items should be queued at the head of
-		 * the pending list, which माला_दो them ahead of the deferred work
+		 * the pending list, which puts them ahead of the deferred work
 		 * that was created by the caller.  This keeps the number of
 		 * pending work items to a minimum, which decreases the amount
-		 * of समय that any one पूर्णांकent item can stick around in memory,
+		 * of time that any one intent item can stick around in memory,
 		 * pinning the log tail.
 		 */
-		xfs_defer_create_पूर्णांकents(*tp);
-		list_splice_init(&(*tp)->t_dfops, &करोp_pending);
+		xfs_defer_create_intents(*tp);
+		list_splice_init(&(*tp)->t_dfops, &dop_pending);
 
 		error = xfs_defer_trans_roll(tp);
-		अगर (error)
-			जाओ out_shutकरोwn;
+		if (error)
+			goto out_shutdown;
 
-		/* Possibly relog पूर्णांकent items to keep the log moving. */
-		error = xfs_defer_relog(tp, &करोp_pending);
-		अगर (error)
-			जाओ out_shutकरोwn;
+		/* Possibly relog intent items to keep the log moving. */
+		error = xfs_defer_relog(tp, &dop_pending);
+		if (error)
+			goto out_shutdown;
 
-		dfp = list_first_entry(&करोp_pending, काष्ठा xfs_defer_pending,
+		dfp = list_first_entry(&dop_pending, struct xfs_defer_pending,
 				       dfp_list);
 		error = xfs_defer_finish_one(*tp, dfp);
-		अगर (error && error != -EAGAIN)
-			जाओ out_shutकरोwn;
-	पूर्ण
+		if (error && error != -EAGAIN)
+			goto out_shutdown;
+	}
 
-	trace_xfs_defer_finish_करोne(*tp, _RET_IP_);
-	वापस 0;
+	trace_xfs_defer_finish_done(*tp, _RET_IP_);
+	return 0;
 
-out_shutकरोwn:
-	xfs_defer_trans_पात(*tp, &करोp_pending);
-	xfs_क्रमce_shutकरोwn((*tp)->t_mountp, SHUTDOWN_CORRUPT_INCORE);
+out_shutdown:
+	xfs_defer_trans_abort(*tp, &dop_pending);
+	xfs_force_shutdown((*tp)->t_mountp, SHUTDOWN_CORRUPT_INCORE);
 	trace_xfs_defer_finish_error(*tp, error);
-	xfs_defer_cancel_list((*tp)->t_mountp, &करोp_pending);
+	xfs_defer_cancel_list((*tp)->t_mountp, &dop_pending);
 	xfs_defer_cancel(*tp);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-पूर्णांक
+int
 xfs_defer_finish(
-	काष्ठा xfs_trans	**tp)
-अणु
-	पूर्णांक			error;
+	struct xfs_trans	**tp)
+{
+	int			error;
 
 	/*
-	 * Finish and roll the transaction once more to aव्योम वापसing to the
+	 * Finish and roll the transaction once more to avoid returning to the
 	 * caller with a dirty transaction.
 	 */
 	error = xfs_defer_finish_noroll(tp);
-	अगर (error)
-		वापस error;
-	अगर ((*tp)->t_flags & XFS_TRANS_सूचीTY) अणु
+	if (error)
+		return error;
+	if ((*tp)->t_flags & XFS_TRANS_DIRTY) {
 		error = xfs_defer_trans_roll(tp);
-		अगर (error) अणु
-			xfs_क्रमce_shutकरोwn((*tp)->t_mountp,
+		if (error) {
+			xfs_force_shutdown((*tp)->t_mountp,
 					   SHUTDOWN_CORRUPT_INCORE);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
 	/* Reset LOWMODE now that we've finished all the dfops. */
 	ASSERT(list_empty(&(*tp)->t_dfops));
 	(*tp)->t_flags &= ~XFS_TRANS_LOWMODE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम
+void
 xfs_defer_cancel(
-	काष्ठा xfs_trans	*tp)
-अणु
-	काष्ठा xfs_mount	*mp = tp->t_mountp;
+	struct xfs_trans	*tp)
+{
+	struct xfs_mount	*mp = tp->t_mountp;
 
 	trace_xfs_defer_cancel(tp, _RET_IP_);
 	xfs_defer_cancel_list(mp, &tp->t_dfops);
-पूर्ण
+}
 
-/* Add an item क्रम later deferred processing. */
-व्योम
+/* Add an item for later deferred processing. */
+void
 xfs_defer_add(
-	काष्ठा xfs_trans		*tp,
-	क्रमागत xfs_defer_ops_type		type,
-	काष्ठा list_head		*li)
-अणु
-	काष्ठा xfs_defer_pending	*dfp = शून्य;
-	स्थिर काष्ठा xfs_defer_op_type	*ops;
+	struct xfs_trans		*tp,
+	enum xfs_defer_ops_type		type,
+	struct list_head		*li)
+{
+	struct xfs_defer_pending	*dfp = NULL;
+	const struct xfs_defer_op_type	*ops;
 
 	ASSERT(tp->t_flags & XFS_TRANS_PERM_LOG_RES);
 	BUILD_BUG_ON(ARRAY_SIZE(defer_op_types) != XFS_DEFER_OPS_TYPE_MAX);
 
 	/*
-	 * Add the item to a pending item at the end of the पूर्णांकake list.
+	 * Add the item to a pending item at the end of the intake list.
 	 * If the last pending item has the same type, reuse it.  Else,
-	 * create a new pending item at the end of the पूर्णांकake list.
+	 * create a new pending item at the end of the intake list.
 	 */
-	अगर (!list_empty(&tp->t_dfops)) अणु
+	if (!list_empty(&tp->t_dfops)) {
 		dfp = list_last_entry(&tp->t_dfops,
-				काष्ठा xfs_defer_pending, dfp_list);
+				struct xfs_defer_pending, dfp_list);
 		ops = defer_op_types[dfp->dfp_type];
-		अगर (dfp->dfp_type != type ||
+		if (dfp->dfp_type != type ||
 		    (ops->max_items && dfp->dfp_count >= ops->max_items))
-			dfp = शून्य;
-	पूर्ण
-	अगर (!dfp) अणु
-		dfp = kmem_alloc(माप(काष्ठा xfs_defer_pending),
+			dfp = NULL;
+	}
+	if (!dfp) {
+		dfp = kmem_alloc(sizeof(struct xfs_defer_pending),
 				KM_NOFS);
 		dfp->dfp_type = type;
-		dfp->dfp_पूर्णांकent = शून्य;
-		dfp->dfp_करोne = शून्य;
+		dfp->dfp_intent = NULL;
+		dfp->dfp_done = NULL;
 		dfp->dfp_count = 0;
 		INIT_LIST_HEAD(&dfp->dfp_work);
 		list_add_tail(&dfp->dfp_list, &tp->t_dfops);
-	पूर्ण
+	}
 
 	list_add_tail(li, &dfp->dfp_work);
 	dfp->dfp_count++;
-पूर्ण
+}
 
 /*
  * Move deferred ops from one transaction to another and reset the source to
- * initial state. This is primarily used to carry state क्रमward across
+ * initial state. This is primarily used to carry state forward across
  * transaction rolls with pending dfops.
  */
-व्योम
+void
 xfs_defer_move(
-	काष्ठा xfs_trans	*dtp,
-	काष्ठा xfs_trans	*stp)
-अणु
+	struct xfs_trans	*dtp,
+	struct xfs_trans	*stp)
+{
 	list_splice_init(&stp->t_dfops, &dtp->t_dfops);
 
 	/*
-	 * Low मुक्त space mode was historically controlled by a dfops field.
+	 * Low free space mode was historically controlled by a dfops field.
 	 * This meant that low mode state potentially carried across multiple
 	 * transaction rolls. Transfer low mode on a dfops move to preserve
 	 * that behavior.
 	 */
 	dtp->t_flags |= (stp->t_flags & XFS_TRANS_LOWMODE);
 	stp->t_flags &= ~XFS_TRANS_LOWMODE;
-पूर्ण
+}
 
 /*
  * Prepare a chain of fresh deferred ops work items to be completed later.  Log
@@ -616,39 +615,39 @@ xfs_defer_move(
  * work so that it can process unfinished items recovered from the log in
  * correct order.
  *
- * Create and log पूर्णांकent items क्रम all the work that we're capturing so that we
- * can be assured that the items will get replayed अगर the प्रणाली goes करोwn
- * beक्रमe log recovery माला_लो a chance to finish the work it put off.  The entire
- * deferred ops state is transferred to the capture काष्ठाure and the
- * transaction is then पढ़ोy क्रम the caller to commit it.  If there are no
- * पूर्णांकent items to capture, this function वापसs शून्य.
+ * Create and log intent items for all the work that we're capturing so that we
+ * can be assured that the items will get replayed if the system goes down
+ * before log recovery gets a chance to finish the work it put off.  The entire
+ * deferred ops state is transferred to the capture structure and the
+ * transaction is then ready for the caller to commit it.  If there are no
+ * intent items to capture, this function returns NULL.
  *
- * If capture_ip is not शून्य, the capture काष्ठाure will obtain an extra
+ * If capture_ip is not NULL, the capture structure will obtain an extra
  * reference to the inode.
  */
-अटल काष्ठा xfs_defer_capture *
+static struct xfs_defer_capture *
 xfs_defer_ops_capture(
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_inode		*capture_ip)
-अणु
-	काष्ठा xfs_defer_capture	*dfc;
+	struct xfs_trans		*tp,
+	struct xfs_inode		*capture_ip)
+{
+	struct xfs_defer_capture	*dfc;
 
-	अगर (list_empty(&tp->t_dfops))
-		वापस शून्य;
+	if (list_empty(&tp->t_dfops))
+		return NULL;
 
 	/* Create an object to capture the defer ops. */
-	dfc = kmem_zalloc(माप(*dfc), KM_NOFS);
+	dfc = kmem_zalloc(sizeof(*dfc), KM_NOFS);
 	INIT_LIST_HEAD(&dfc->dfc_list);
 	INIT_LIST_HEAD(&dfc->dfc_dfops);
 
-	xfs_defer_create_पूर्णांकents(tp);
+	xfs_defer_create_intents(tp);
 
-	/* Move the dfops chain and transaction state to the capture काष्ठा. */
+	/* Move the dfops chain and transaction state to the capture struct. */
 	list_splice_init(&tp->t_dfops, &dfc->dfc_dfops);
 	dfc->dfc_tpflags = tp->t_flags & XFS_TRANS_LOWMODE;
 	tp->t_flags &= ~XFS_TRANS_LOWMODE;
 
-	/* Capture the reमुख्यing block reservations aदीर्घ with the dfops. */
+	/* Capture the remaining block reservations along with the dfops. */
 	dfc->dfc_blkres = tp->t_blk_res - tp->t_blk_res_used;
 	dfc->dfc_rtxres = tp->t_rtx_res - tp->t_rtx_res_used;
 
@@ -657,89 +656,89 @@ xfs_defer_ops_capture(
 
 	/*
 	 * Grab an extra reference to this inode and attach it to the capture
-	 * काष्ठाure.
+	 * structure.
 	 */
-	अगर (capture_ip) अणु
+	if (capture_ip) {
 		ihold(VFS_I(capture_ip));
 		dfc->dfc_capture_ip = capture_ip;
-	पूर्ण
+	}
 
-	वापस dfc;
-पूर्ण
+	return dfc;
+}
 
 /* Release all resources that we used to capture deferred ops. */
-व्योम
+void
 xfs_defer_ops_release(
-	काष्ठा xfs_mount		*mp,
-	काष्ठा xfs_defer_capture	*dfc)
-अणु
+	struct xfs_mount		*mp,
+	struct xfs_defer_capture	*dfc)
+{
 	xfs_defer_cancel_list(mp, &dfc->dfc_dfops);
-	अगर (dfc->dfc_capture_ip)
+	if (dfc->dfc_capture_ip)
 		xfs_irele(dfc->dfc_capture_ip);
-	kmem_मुक्त(dfc);
-पूर्ण
+	kmem_free(dfc);
+}
 
 /*
  * Capture any deferred ops and commit the transaction.  This is the last step
- * needed to finish a log पूर्णांकent item that we recovered from the log.  If any
+ * needed to finish a log intent item that we recovered from the log.  If any
  * of the deferred ops operate on an inode, the caller must pass in that inode
- * so that the reference can be transferred to the capture काष्ठाure.  The
- * caller must hold ILOCK_EXCL on the inode, and must unlock it beक्रमe calling
- * xfs_defer_ops_जारी.
+ * so that the reference can be transferred to the capture structure.  The
+ * caller must hold ILOCK_EXCL on the inode, and must unlock it before calling
+ * xfs_defer_ops_continue.
  */
-पूर्णांक
+int
 xfs_defer_ops_capture_and_commit(
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_inode		*capture_ip,
-	काष्ठा list_head		*capture_list)
-अणु
-	काष्ठा xfs_mount		*mp = tp->t_mountp;
-	काष्ठा xfs_defer_capture	*dfc;
-	पूर्णांक				error;
+	struct xfs_trans		*tp,
+	struct xfs_inode		*capture_ip,
+	struct list_head		*capture_list)
+{
+	struct xfs_mount		*mp = tp->t_mountp;
+	struct xfs_defer_capture	*dfc;
+	int				error;
 
 	ASSERT(!capture_ip || xfs_isilocked(capture_ip, XFS_ILOCK_EXCL));
 
-	/* If we करोn't capture anything, commit transaction and निकास. */
+	/* If we don't capture anything, commit transaction and exit. */
 	dfc = xfs_defer_ops_capture(tp, capture_ip);
-	अगर (!dfc)
-		वापस xfs_trans_commit(tp);
+	if (!dfc)
+		return xfs_trans_commit(tp);
 
-	/* Commit the transaction and add the capture काष्ठाure to the list. */
+	/* Commit the transaction and add the capture structure to the list. */
 	error = xfs_trans_commit(tp);
-	अगर (error) अणु
+	if (error) {
 		xfs_defer_ops_release(mp, dfc);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	list_add_tail(&dfc->dfc_list, capture_list);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Attach a chain of captured deferred ops to a new transaction and मुक्त the
- * capture काष्ठाure.  If an inode was captured, it will be passed back to the
+ * Attach a chain of captured deferred ops to a new transaction and free the
+ * capture structure.  If an inode was captured, it will be passed back to the
  * caller with ILOCK_EXCL held and joined to the transaction with lockflags==0.
  * The caller now owns the inode reference.
  */
-व्योम
-xfs_defer_ops_जारी(
-	काष्ठा xfs_defer_capture	*dfc,
-	काष्ठा xfs_trans		*tp,
-	काष्ठा xfs_inode		**captured_ipp)
-अणु
+void
+xfs_defer_ops_continue(
+	struct xfs_defer_capture	*dfc,
+	struct xfs_trans		*tp,
+	struct xfs_inode		**captured_ipp)
+{
 	ASSERT(tp->t_flags & XFS_TRANS_PERM_LOG_RES);
-	ASSERT(!(tp->t_flags & XFS_TRANS_सूचीTY));
+	ASSERT(!(tp->t_flags & XFS_TRANS_DIRTY));
 
 	/* Lock and join the captured inode to the new transaction. */
-	अगर (dfc->dfc_capture_ip) अणु
+	if (dfc->dfc_capture_ip) {
 		xfs_ilock(dfc->dfc_capture_ip, XFS_ILOCK_EXCL);
 		xfs_trans_ijoin(tp, dfc->dfc_capture_ip, 0);
-	पूर्ण
+	}
 	*captured_ipp = dfc->dfc_capture_ip;
 
 	/* Move captured dfops chain and state to the transaction. */
 	list_splice_init(&dfc->dfc_dfops, &tp->t_dfops);
 	tp->t_flags |= dfc->dfc_tpflags;
 
-	kmem_मुक्त(dfc);
-पूर्ण
+	kmem_free(dfc);
+}

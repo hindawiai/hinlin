@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश <यंत्र/barrier.h>
-#समावेश <linux/perf_event.h>
-#समावेश <linux/ring_buffer.h>
-#समावेश <sys/epoll.h>
-#समावेश <sys/mman.h>
-#समावेश <argp.h>
-#समावेश <मानककोष.स>
-#समावेश "bench.h"
-#समावेश "ringbuf_bench.skel.h"
-#समावेश "perfbuf_bench.skel.h"
+#include <asm/barrier.h>
+#include <linux/perf_event.h>
+#include <linux/ring_buffer.h>
+#include <sys/epoll.h>
+#include <sys/mman.h>
+#include <argp.h>
+#include <stdlib.h>
+#include "bench.h"
+#include "ringbuf_bench.skel.h"
+#include "perfbuf_bench.skel.h"
 
-अटल काष्ठा अणु
+static struct {
 	bool back2back;
-	पूर्णांक batch_cnt;
+	int batch_cnt;
 	bool sampled;
-	पूर्णांक sample_rate;
-	पूर्णांक ringbuf_sz; /* per-ringbuf, in bytes */
+	int sample_rate;
+	int ringbuf_sz; /* per-ringbuf, in bytes */
 	bool ringbuf_use_output; /* use slower output API */
-	पूर्णांक perfbuf_sz; /* per-CPU size, in pages */
-पूर्ण args = अणु
+	int perfbuf_sz; /* per-CPU size, in pages */
+} args = {
 	.back2back = false,
 	.batch_cnt = 500,
 	.sampled = false,
@@ -28,540 +27,540 @@
 	.ringbuf_sz = 512 * 1024,
 	.ringbuf_use_output = false,
 	.perfbuf_sz = 128,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	ARG_RB_BACK2BACK = 2000,
 	ARG_RB_USE_OUTPUT = 2001,
 	ARG_RB_BATCH_CNT = 2002,
 	ARG_RB_SAMPLED = 2003,
 	ARG_RB_SAMPLE_RATE = 2004,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा argp_option opts[] = अणु
-	अणु "rb-b2b", ARG_RB_BACK2BACK, शून्य, 0, "Back-to-back mode"पूर्ण,
-	अणु "rb-use-output", ARG_RB_USE_OUTPUT, शून्य, 0, "Use bpf_ringbuf_output() instead of bpf_ringbuf_reserve()"पूर्ण,
-	अणु "rb-batch-cnt", ARG_RB_BATCH_CNT, "CNT", 0, "Set BPF-side record batch count"पूर्ण,
-	अणु "rb-sampled", ARG_RB_SAMPLED, शून्य, 0, "Notification sampling"पूर्ण,
-	अणु "rb-sample-rate", ARG_RB_SAMPLE_RATE, "RATE", 0, "Notification sample rate"पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct argp_option opts[] = {
+	{ "rb-b2b", ARG_RB_BACK2BACK, NULL, 0, "Back-to-back mode"},
+	{ "rb-use-output", ARG_RB_USE_OUTPUT, NULL, 0, "Use bpf_ringbuf_output() instead of bpf_ringbuf_reserve()"},
+	{ "rb-batch-cnt", ARG_RB_BATCH_CNT, "CNT", 0, "Set BPF-side record batch count"},
+	{ "rb-sampled", ARG_RB_SAMPLED, NULL, 0, "Notification sampling"},
+	{ "rb-sample-rate", ARG_RB_SAMPLE_RATE, "RATE", 0, "Notification sample rate"},
+	{},
+};
 
-अटल error_t parse_arg(पूर्णांक key, अक्षर *arg, काष्ठा argp_state *state)
-अणु
-	चयन (key) अणु
-	हाल ARG_RB_BACK2BACK:
+static error_t parse_arg(int key, char *arg, struct argp_state *state)
+{
+	switch (key) {
+	case ARG_RB_BACK2BACK:
 		args.back2back = true;
-		अवरोध;
-	हाल ARG_RB_USE_OUTPUT:
+		break;
+	case ARG_RB_USE_OUTPUT:
 		args.ringbuf_use_output = true;
-		अवरोध;
-	हाल ARG_RB_BATCH_CNT:
-		args.batch_cnt = म_से_दीर्घ(arg, शून्य, 10);
-		अगर (args.batch_cnt < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "Invalid batch count.");
+		break;
+	case ARG_RB_BATCH_CNT:
+		args.batch_cnt = strtol(arg, NULL, 10);
+		if (args.batch_cnt < 0) {
+			fprintf(stderr, "Invalid batch count.");
 			argp_usage(state);
-		पूर्ण
-		अवरोध;
-	हाल ARG_RB_SAMPLED:
+		}
+		break;
+	case ARG_RB_SAMPLED:
 		args.sampled = true;
-		अवरोध;
-	हाल ARG_RB_SAMPLE_RATE:
-		args.sample_rate = म_से_दीर्घ(arg, शून्य, 10);
-		अगर (args.sample_rate < 0) अणु
-			ख_लिखो(मानक_त्रुटि, "Invalid perfbuf sample rate.");
+		break;
+	case ARG_RB_SAMPLE_RATE:
+		args.sample_rate = strtol(arg, NULL, 10);
+		if (args.sample_rate < 0) {
+			fprintf(stderr, "Invalid perfbuf sample rate.");
 			argp_usage(state);
-		पूर्ण
-		अवरोध;
-	शेष:
-		वापस ARGP_ERR_UNKNOWN;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	}
+	return 0;
+}
 
-/* exported पूर्णांकo benchmark runner */
-स्थिर काष्ठा argp bench_ringbufs_argp = अणु
+/* exported into benchmark runner */
+const struct argp bench_ringbufs_argp = {
 	.options = opts,
 	.parser = parse_arg,
-पूर्ण;
+};
 
 /* RINGBUF-LIBBPF benchmark */
 
-अटल काष्ठा counter buf_hits;
+static struct counter buf_hits;
 
-अटल अंतरभूत व्योम bufs_trigger_batch()
-अणु
-	(व्योम)syscall(__NR_getpgid);
-पूर्ण
+static inline void bufs_trigger_batch()
+{
+	(void)syscall(__NR_getpgid);
+}
 
-अटल व्योम bufs_validate()
-अणु
-	अगर (env.consumer_cnt != 1) अणु
-		ख_लिखो(मानक_त्रुटि, "rb-libbpf benchmark doesn't support multi-consumer!\n");
-		निकास(1);
-	पूर्ण
+static void bufs_validate()
+{
+	if (env.consumer_cnt != 1) {
+		fprintf(stderr, "rb-libbpf benchmark doesn't support multi-consumer!\n");
+		exit(1);
+	}
 
-	अगर (args.back2back && env.producer_cnt > 1) अणु
-		ख_लिखो(मानक_त्रुटि, "back-to-back mode makes sense only for single-producer case!\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (args.back2back && env.producer_cnt > 1) {
+		fprintf(stderr, "back-to-back mode makes sense only for single-producer case!\n");
+		exit(1);
+	}
+}
 
-अटल व्योम *bufs_sample_producer(व्योम *input)
-अणु
-	अगर (args.back2back) अणु
+static void *bufs_sample_producer(void *input)
+{
+	if (args.back2back) {
 		/* initial batch to get everything started */
 		bufs_trigger_batch();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	जबतक (true)
+	while (true)
 		bufs_trigger_batch();
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा ringbuf_libbpf_ctx अणु
-	काष्ठा ringbuf_bench *skel;
-	काष्ठा ring_buffer *ringbuf;
-पूर्ण ringbuf_libbpf_ctx;
+static struct ringbuf_libbpf_ctx {
+	struct ringbuf_bench *skel;
+	struct ring_buffer *ringbuf;
+} ringbuf_libbpf_ctx;
 
-अटल व्योम ringbuf_libbpf_measure(काष्ठा bench_res *res)
-अणु
-	काष्ठा ringbuf_libbpf_ctx *ctx = &ringbuf_libbpf_ctx;
+static void ringbuf_libbpf_measure(struct bench_res *res)
+{
+	struct ringbuf_libbpf_ctx *ctx = &ringbuf_libbpf_ctx;
 
 	res->hits = atomic_swap(&buf_hits.value, 0);
 	res->drops = atomic_swap(&ctx->skel->bss->dropped, 0);
-पूर्ण
+}
 
-अटल काष्ठा ringbuf_bench *ringbuf_setup_skeleton()
-अणु
-	काष्ठा ringbuf_bench *skel;
+static struct ringbuf_bench *ringbuf_setup_skeleton()
+{
+	struct ringbuf_bench *skel;
 
 	setup_libbpf();
 
-	skel = ringbuf_bench__खोलो();
-	अगर (!skel) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to open skeleton\n");
-		निकास(1);
-	पूर्ण
+	skel = ringbuf_bench__open();
+	if (!skel) {
+		fprintf(stderr, "failed to open skeleton\n");
+		exit(1);
+	}
 
 	skel->rodata->batch_cnt = args.batch_cnt;
 	skel->rodata->use_output = args.ringbuf_use_output ? 1 : 0;
 
-	अगर (args.sampled)
+	if (args.sampled)
 		/* record data + header take 16 bytes */
 		skel->rodata->wakeup_data_size = args.sample_rate * 16;
 
 	bpf_map__resize(skel->maps.ringbuf, args.ringbuf_sz);
 
-	अगर (ringbuf_bench__load(skel)) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to load skeleton\n");
-		निकास(1);
-	पूर्ण
+	if (ringbuf_bench__load(skel)) {
+		fprintf(stderr, "failed to load skeleton\n");
+		exit(1);
+	}
 
-	वापस skel;
-पूर्ण
+	return skel;
+}
 
-अटल पूर्णांक buf_process_sample(व्योम *ctx, व्योम *data, माप_प्रकार len)
-अणु
+static int buf_process_sample(void *ctx, void *data, size_t len)
+{
 	atomic_inc(&buf_hits.value);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ringbuf_libbpf_setup()
-अणु
-	काष्ठा ringbuf_libbpf_ctx *ctx = &ringbuf_libbpf_ctx;
-	काष्ठा bpf_link *link;
+static void ringbuf_libbpf_setup()
+{
+	struct ringbuf_libbpf_ctx *ctx = &ringbuf_libbpf_ctx;
+	struct bpf_link *link;
 
 	ctx->skel = ringbuf_setup_skeleton();
 	ctx->ringbuf = ring_buffer__new(bpf_map__fd(ctx->skel->maps.ringbuf),
-					buf_process_sample, शून्य, शून्य);
-	अगर (!ctx->ringbuf) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to create ringbuf\n");
-		निकास(1);
-	पूर्ण
+					buf_process_sample, NULL, NULL);
+	if (!ctx->ringbuf) {
+		fprintf(stderr, "failed to create ringbuf\n");
+		exit(1);
+	}
 
 	link = bpf_program__attach(ctx->skel->progs.bench_ringbuf);
-	अगर (IS_ERR(link)) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to attach program!\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (IS_ERR(link)) {
+		fprintf(stderr, "failed to attach program!\n");
+		exit(1);
+	}
+}
 
-अटल व्योम *ringbuf_libbpf_consumer(व्योम *input)
-अणु
-	काष्ठा ringbuf_libbpf_ctx *ctx = &ringbuf_libbpf_ctx;
+static void *ringbuf_libbpf_consumer(void *input)
+{
+	struct ringbuf_libbpf_ctx *ctx = &ringbuf_libbpf_ctx;
 
-	जबतक (ring_buffer__poll(ctx->ringbuf, -1) >= 0) अणु
-		अगर (args.back2back)
+	while (ring_buffer__poll(ctx->ringbuf, -1) >= 0) {
+		if (args.back2back)
 			bufs_trigger_batch();
-	पूर्ण
-	ख_लिखो(मानक_त्रुटि, "ringbuf polling failed!\n");
-	वापस शून्य;
-पूर्ण
+	}
+	fprintf(stderr, "ringbuf polling failed!\n");
+	return NULL;
+}
 
 /* RINGBUF-CUSTOM benchmark */
-काष्ठा ringbuf_custom अणु
+struct ringbuf_custom {
 	__u64 *consumer_pos;
 	__u64 *producer_pos;
 	__u64 mask;
-	व्योम *data;
-	पूर्णांक map_fd;
-पूर्ण;
+	void *data;
+	int map_fd;
+};
 
-अटल काष्ठा ringbuf_custom_ctx अणु
-	काष्ठा ringbuf_bench *skel;
-	काष्ठा ringbuf_custom ringbuf;
-	पूर्णांक epoll_fd;
-	काष्ठा epoll_event event;
-पूर्ण ringbuf_custom_ctx;
+static struct ringbuf_custom_ctx {
+	struct ringbuf_bench *skel;
+	struct ringbuf_custom ringbuf;
+	int epoll_fd;
+	struct epoll_event event;
+} ringbuf_custom_ctx;
 
-अटल व्योम ringbuf_custom_measure(काष्ठा bench_res *res)
-अणु
-	काष्ठा ringbuf_custom_ctx *ctx = &ringbuf_custom_ctx;
+static void ringbuf_custom_measure(struct bench_res *res)
+{
+	struct ringbuf_custom_ctx *ctx = &ringbuf_custom_ctx;
 
 	res->hits = atomic_swap(&buf_hits.value, 0);
 	res->drops = atomic_swap(&ctx->skel->bss->dropped, 0);
-पूर्ण
+}
 
-अटल व्योम ringbuf_custom_setup()
-अणु
-	काष्ठा ringbuf_custom_ctx *ctx = &ringbuf_custom_ctx;
-	स्थिर माप_प्रकार page_size = getpagesize();
-	काष्ठा bpf_link *link;
-	काष्ठा ringbuf_custom *r;
-	व्योम *पंचांगp;
-	पूर्णांक err;
+static void ringbuf_custom_setup()
+{
+	struct ringbuf_custom_ctx *ctx = &ringbuf_custom_ctx;
+	const size_t page_size = getpagesize();
+	struct bpf_link *link;
+	struct ringbuf_custom *r;
+	void *tmp;
+	int err;
 
 	ctx->skel = ringbuf_setup_skeleton();
 
 	ctx->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
-	अगर (ctx->epoll_fd < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to create epoll fd: %d\n", -त्रुटि_सं);
-		निकास(1);
-	पूर्ण
+	if (ctx->epoll_fd < 0) {
+		fprintf(stderr, "failed to create epoll fd: %d\n", -errno);
+		exit(1);
+	}
 
 	r = &ctx->ringbuf;
 	r->map_fd = bpf_map__fd(ctx->skel->maps.ringbuf);
 	r->mask = args.ringbuf_sz - 1;
 
 	/* Map writable consumer page */
-	पंचांगp = mmap(शून्य, page_size, PROT_READ | PROT_WRITE, MAP_SHARED,
+	tmp = mmap(NULL, page_size, PROT_READ | PROT_WRITE, MAP_SHARED,
 		   r->map_fd, 0);
-	अगर (पंचांगp == MAP_FAILED) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to mmap consumer page: %d\n", -त्रुटि_सं);
-		निकास(1);
-	पूर्ण
-	r->consumer_pos = पंचांगp;
+	if (tmp == MAP_FAILED) {
+		fprintf(stderr, "failed to mmap consumer page: %d\n", -errno);
+		exit(1);
+	}
+	r->consumer_pos = tmp;
 
-	/* Map पढ़ो-only producer page and data pages. */
-	पंचांगp = mmap(शून्य, page_size + 2 * args.ringbuf_sz, PROT_READ, MAP_SHARED,
+	/* Map read-only producer page and data pages. */
+	tmp = mmap(NULL, page_size + 2 * args.ringbuf_sz, PROT_READ, MAP_SHARED,
 		   r->map_fd, page_size);
-	अगर (पंचांगp == MAP_FAILED) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to mmap data pages: %d\n", -त्रुटि_सं);
-		निकास(1);
-	पूर्ण
-	r->producer_pos = पंचांगp;
-	r->data = पंचांगp + page_size;
+	if (tmp == MAP_FAILED) {
+		fprintf(stderr, "failed to mmap data pages: %d\n", -errno);
+		exit(1);
+	}
+	r->producer_pos = tmp;
+	r->data = tmp + page_size;
 
 	ctx->event.events = EPOLLIN;
 	err = epoll_ctl(ctx->epoll_fd, EPOLL_CTL_ADD, r->map_fd, &ctx->event);
-	अगर (err < 0) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to epoll add ringbuf: %d\n", -त्रुटि_सं);
-		निकास(1);
-	पूर्ण
+	if (err < 0) {
+		fprintf(stderr, "failed to epoll add ringbuf: %d\n", -errno);
+		exit(1);
+	}
 
 	link = bpf_program__attach(ctx->skel->progs.bench_ringbuf);
-	अगर (IS_ERR(link)) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to attach program\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (IS_ERR(link)) {
+		fprintf(stderr, "failed to attach program\n");
+		exit(1);
+	}
+}
 
-#घोषणा RINGBUF_BUSY_BIT (1 << 31)
-#घोषणा RINGBUF_DISCARD_BIT (1 << 30)
-#घोषणा RINGBUF_META_LEN 8
+#define RINGBUF_BUSY_BIT (1 << 31)
+#define RINGBUF_DISCARD_BIT (1 << 30)
+#define RINGBUF_META_LEN 8
 
-अटल अंतरभूत पूर्णांक roundup_len(__u32 len)
-अणु
+static inline int roundup_len(__u32 len)
+{
 	/* clear out top 2 bits */
 	len <<= 2;
 	len >>= 2;
 	/* add length prefix */
 	len += RINGBUF_META_LEN;
 	/* round up to 8 byte alignment */
-	वापस (len + 7) / 8 * 8;
-पूर्ण
+	return (len + 7) / 8 * 8;
+}
 
-अटल व्योम ringbuf_custom_process_ring(काष्ठा ringbuf_custom *r)
-अणु
-	अचिन्हित दीर्घ cons_pos, prod_pos;
-	पूर्णांक *len_ptr, len;
+static void ringbuf_custom_process_ring(struct ringbuf_custom *r)
+{
+	unsigned long cons_pos, prod_pos;
+	int *len_ptr, len;
 	bool got_new_data;
 
 	cons_pos = smp_load_acquire(r->consumer_pos);
-	जबतक (true) अणु
+	while (true) {
 		got_new_data = false;
 		prod_pos = smp_load_acquire(r->producer_pos);
-		जबतक (cons_pos < prod_pos) अणु
+		while (cons_pos < prod_pos) {
 			len_ptr = r->data + (cons_pos & r->mask);
 			len = smp_load_acquire(len_ptr);
 
-			/* sample not committed yet, bail out क्रम now */
-			अगर (len & RINGBUF_BUSY_BIT)
-				वापस;
+			/* sample not committed yet, bail out for now */
+			if (len & RINGBUF_BUSY_BIT)
+				return;
 
 			got_new_data = true;
 			cons_pos += roundup_len(len);
 
 			atomic_inc(&buf_hits.value);
-		पूर्ण
-		अगर (got_new_data)
+		}
+		if (got_new_data)
 			smp_store_release(r->consumer_pos, cons_pos);
-		अन्यथा
-			अवरोध;
-	पूर्ण
-पूर्ण
+		else
+			break;
+	}
+}
 
-अटल व्योम *ringbuf_custom_consumer(व्योम *input)
-अणु
-	काष्ठा ringbuf_custom_ctx *ctx = &ringbuf_custom_ctx;
-	पूर्णांक cnt;
+static void *ringbuf_custom_consumer(void *input)
+{
+	struct ringbuf_custom_ctx *ctx = &ringbuf_custom_ctx;
+	int cnt;
 
-	करो अणु
-		अगर (args.back2back)
+	do {
+		if (args.back2back)
 			bufs_trigger_batch();
-		cnt = epoll_रुको(ctx->epoll_fd, &ctx->event, 1, -1);
-		अगर (cnt > 0)
+		cnt = epoll_wait(ctx->epoll_fd, &ctx->event, 1, -1);
+		if (cnt > 0)
 			ringbuf_custom_process_ring(&ctx->ringbuf);
-	पूर्ण जबतक (cnt >= 0);
-	ख_लिखो(मानक_त्रुटि, "ringbuf polling failed!\n");
-	वापस 0;
-पूर्ण
+	} while (cnt >= 0);
+	fprintf(stderr, "ringbuf polling failed!\n");
+	return 0;
+}
 
 /* PERFBUF-LIBBPF benchmark */
-अटल काष्ठा perfbuf_libbpf_ctx अणु
-	काष्ठा perfbuf_bench *skel;
-	काष्ठा perf_buffer *perfbuf;
-पूर्ण perfbuf_libbpf_ctx;
+static struct perfbuf_libbpf_ctx {
+	struct perfbuf_bench *skel;
+	struct perf_buffer *perfbuf;
+} perfbuf_libbpf_ctx;
 
-अटल व्योम perfbuf_measure(काष्ठा bench_res *res)
-अणु
-	काष्ठा perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
+static void perfbuf_measure(struct bench_res *res)
+{
+	struct perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
 
 	res->hits = atomic_swap(&buf_hits.value, 0);
 	res->drops = atomic_swap(&ctx->skel->bss->dropped, 0);
-पूर्ण
+}
 
-अटल काष्ठा perfbuf_bench *perfbuf_setup_skeleton()
-अणु
-	काष्ठा perfbuf_bench *skel;
+static struct perfbuf_bench *perfbuf_setup_skeleton()
+{
+	struct perfbuf_bench *skel;
 
 	setup_libbpf();
 
-	skel = perfbuf_bench__खोलो();
-	अगर (!skel) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to open skeleton\n");
-		निकास(1);
-	पूर्ण
+	skel = perfbuf_bench__open();
+	if (!skel) {
+		fprintf(stderr, "failed to open skeleton\n");
+		exit(1);
+	}
 
 	skel->rodata->batch_cnt = args.batch_cnt;
 
-	अगर (perfbuf_bench__load(skel)) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to load skeleton\n");
-		निकास(1);
-	पूर्ण
+	if (perfbuf_bench__load(skel)) {
+		fprintf(stderr, "failed to load skeleton\n");
+		exit(1);
+	}
 
-	वापस skel;
-पूर्ण
+	return skel;
+}
 
-अटल क्रमागत bpf_perf_event_ret
-perfbuf_process_sample_raw(व्योम *input_ctx, पूर्णांक cpu,
-			   काष्ठा perf_event_header *e)
-अणु
-	चयन (e->type) अणु
-	हाल PERF_RECORD_SAMPLE:
+static enum bpf_perf_event_ret
+perfbuf_process_sample_raw(void *input_ctx, int cpu,
+			   struct perf_event_header *e)
+{
+	switch (e->type) {
+	case PERF_RECORD_SAMPLE:
 		atomic_inc(&buf_hits.value);
-		अवरोध;
-	हाल PERF_RECORD_LOST:
-		अवरोध;
-	शेष:
-		वापस LIBBPF_PERF_EVENT_ERROR;
-	पूर्ण
-	वापस LIBBPF_PERF_EVENT_CONT;
-पूर्ण
+		break;
+	case PERF_RECORD_LOST:
+		break;
+	default:
+		return LIBBPF_PERF_EVENT_ERROR;
+	}
+	return LIBBPF_PERF_EVENT_CONT;
+}
 
-अटल व्योम perfbuf_libbpf_setup()
-अणु
-	काष्ठा perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
-	काष्ठा perf_event_attr attr;
-	काष्ठा perf_buffer_raw_opts pb_opts = अणु
+static void perfbuf_libbpf_setup()
+{
+	struct perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
+	struct perf_event_attr attr;
+	struct perf_buffer_raw_opts pb_opts = {
 		.event_cb = perfbuf_process_sample_raw,
-		.ctx = (व्योम *)(दीर्घ)0,
+		.ctx = (void *)(long)0,
 		.attr = &attr,
-	पूर्ण;
-	काष्ठा bpf_link *link;
+	};
+	struct bpf_link *link;
 
 	ctx->skel = perfbuf_setup_skeleton();
 
-	स_रखो(&attr, 0, माप(attr));
+	memset(&attr, 0, sizeof(attr));
 	attr.config = PERF_COUNT_SW_BPF_OUTPUT,
 	attr.type = PERF_TYPE_SOFTWARE;
 	attr.sample_type = PERF_SAMPLE_RAW;
-	/* notअगरy only every Nth sample */
-	अगर (args.sampled) अणु
+	/* notify only every Nth sample */
+	if (args.sampled) {
 		attr.sample_period = args.sample_rate;
 		attr.wakeup_events = args.sample_rate;
-	पूर्ण अन्यथा अणु
+	} else {
 		attr.sample_period = 1;
 		attr.wakeup_events = 1;
-	पूर्ण
+	}
 
-	अगर (args.sample_rate > args.batch_cnt) अणु
-		ख_लिखो(मानक_त्रुटि, "sample rate %d is too high for given batch count %d\n",
+	if (args.sample_rate > args.batch_cnt) {
+		fprintf(stderr, "sample rate %d is too high for given batch count %d\n",
 			args.sample_rate, args.batch_cnt);
-		निकास(1);
-	पूर्ण
+		exit(1);
+	}
 
 	ctx->perfbuf = perf_buffer__new_raw(bpf_map__fd(ctx->skel->maps.perfbuf),
 					    args.perfbuf_sz, &pb_opts);
-	अगर (!ctx->perfbuf) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to create perfbuf\n");
-		निकास(1);
-	पूर्ण
+	if (!ctx->perfbuf) {
+		fprintf(stderr, "failed to create perfbuf\n");
+		exit(1);
+	}
 
 	link = bpf_program__attach(ctx->skel->progs.bench_perfbuf);
-	अगर (IS_ERR(link)) अणु
-		ख_लिखो(मानक_त्रुटि, "failed to attach program\n");
-		निकास(1);
-	पूर्ण
-पूर्ण
+	if (IS_ERR(link)) {
+		fprintf(stderr, "failed to attach program\n");
+		exit(1);
+	}
+}
 
-अटल व्योम *perfbuf_libbpf_consumer(व्योम *input)
-अणु
-	काष्ठा perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
+static void *perfbuf_libbpf_consumer(void *input)
+{
+	struct perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
 
-	जबतक (perf_buffer__poll(ctx->perfbuf, -1) >= 0) अणु
-		अगर (args.back2back)
+	while (perf_buffer__poll(ctx->perfbuf, -1) >= 0) {
+		if (args.back2back)
 			bufs_trigger_batch();
-	पूर्ण
-	ख_लिखो(मानक_त्रुटि, "perfbuf polling failed!\n");
-	वापस शून्य;
-पूर्ण
+	}
+	fprintf(stderr, "perfbuf polling failed!\n");
+	return NULL;
+}
 
 /* PERFBUF-CUSTOM benchmark */
 
-/* copies of पूर्णांकernal libbpf definitions */
-काष्ठा perf_cpu_buf अणु
-	काष्ठा perf_buffer *pb;
-	व्योम *base; /* mmap()'ed memory */
-	व्योम *buf; /* क्रम reस्थिरructing segmented data */
-	माप_प्रकार buf_size;
-	पूर्णांक fd;
-	पूर्णांक cpu;
-	पूर्णांक map_key;
-पूर्ण;
+/* copies of internal libbpf definitions */
+struct perf_cpu_buf {
+	struct perf_buffer *pb;
+	void *base; /* mmap()'ed memory */
+	void *buf; /* for reconstructing segmented data */
+	size_t buf_size;
+	int fd;
+	int cpu;
+	int map_key;
+};
 
-काष्ठा perf_buffer अणु
+struct perf_buffer {
 	perf_buffer_event_fn event_cb;
 	perf_buffer_sample_fn sample_cb;
 	perf_buffer_lost_fn lost_cb;
-	व्योम *ctx; /* passed पूर्णांकo callbacks */
+	void *ctx; /* passed into callbacks */
 
-	माप_प्रकार page_size;
-	माप_प्रकार mmap_size;
-	काष्ठा perf_cpu_buf **cpu_bufs;
-	काष्ठा epoll_event *events;
-	पूर्णांक cpu_cnt; /* number of allocated CPU buffers */
-	पूर्णांक epoll_fd; /* perf event FD */
-	पूर्णांक map_fd; /* BPF_MAP_TYPE_PERF_EVENT_ARRAY BPF map FD */
-पूर्ण;
+	size_t page_size;
+	size_t mmap_size;
+	struct perf_cpu_buf **cpu_bufs;
+	struct epoll_event *events;
+	int cpu_cnt; /* number of allocated CPU buffers */
+	int epoll_fd; /* perf event FD */
+	int map_fd; /* BPF_MAP_TYPE_PERF_EVENT_ARRAY BPF map FD */
+};
 
-अटल व्योम *perfbuf_custom_consumer(व्योम *input)
-अणु
-	काष्ठा perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
-	काष्ठा perf_buffer *pb = ctx->perfbuf;
-	काष्ठा perf_cpu_buf *cpu_buf;
-	काष्ठा perf_event_mmap_page *header;
-	माप_प्रकार mmap_mask = pb->mmap_size - 1;
-	काष्ठा perf_event_header *ehdr;
+static void *perfbuf_custom_consumer(void *input)
+{
+	struct perfbuf_libbpf_ctx *ctx = &perfbuf_libbpf_ctx;
+	struct perf_buffer *pb = ctx->perfbuf;
+	struct perf_cpu_buf *cpu_buf;
+	struct perf_event_mmap_page *header;
+	size_t mmap_mask = pb->mmap_size - 1;
+	struct perf_event_header *ehdr;
 	__u64 data_head, data_tail;
-	माप_प्रकार ehdr_size;
-	व्योम *base;
-	पूर्णांक i, cnt;
+	size_t ehdr_size;
+	void *base;
+	int i, cnt;
 
-	जबतक (true) अणु
-		अगर (args.back2back)
+	while (true) {
+		if (args.back2back)
 			bufs_trigger_batch();
-		cnt = epoll_रुको(pb->epoll_fd, pb->events, pb->cpu_cnt, -1);
-		अगर (cnt <= 0) अणु
-			ख_लिखो(मानक_त्रुटि, "perf epoll failed: %d\n", -त्रुटि_सं);
-			निकास(1);
-		पूर्ण
+		cnt = epoll_wait(pb->epoll_fd, pb->events, pb->cpu_cnt, -1);
+		if (cnt <= 0) {
+			fprintf(stderr, "perf epoll failed: %d\n", -errno);
+			exit(1);
+		}
 
-		क्रम (i = 0; i < cnt; ++i) अणु
+		for (i = 0; i < cnt; ++i) {
 			cpu_buf = pb->events[i].data.ptr;
 			header = cpu_buf->base;
-			base = ((व्योम *)header) + pb->page_size;
+			base = ((void *)header) + pb->page_size;
 
-			data_head = ring_buffer_पढ़ो_head(header);
+			data_head = ring_buffer_read_head(header);
 			data_tail = header->data_tail;
-			जबतक (data_head != data_tail) अणु
+			while (data_head != data_tail) {
 				ehdr = base + (data_tail & mmap_mask);
 				ehdr_size = ehdr->size;
 
-				अगर (ehdr->type == PERF_RECORD_SAMPLE)
+				if (ehdr->type == PERF_RECORD_SAMPLE)
 					atomic_inc(&buf_hits.value);
 
 				data_tail += ehdr_size;
-			पूर्ण
-			ring_buffer_ग_लिखो_tail(header, data_tail);
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			}
+			ring_buffer_write_tail(header, data_tail);
+		}
+	}
+	return NULL;
+}
 
-स्थिर काष्ठा bench bench_rb_libbpf = अणु
+const struct bench bench_rb_libbpf = {
 	.name = "rb-libbpf",
 	.validate = bufs_validate,
 	.setup = ringbuf_libbpf_setup,
-	.producer_thपढ़ो = bufs_sample_producer,
-	.consumer_thपढ़ो = ringbuf_libbpf_consumer,
+	.producer_thread = bufs_sample_producer,
+	.consumer_thread = ringbuf_libbpf_consumer,
 	.measure = ringbuf_libbpf_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-पूर्ण;
+};
 
-स्थिर काष्ठा bench bench_rb_custom = अणु
+const struct bench bench_rb_custom = {
 	.name = "rb-custom",
 	.validate = bufs_validate,
 	.setup = ringbuf_custom_setup,
-	.producer_thपढ़ो = bufs_sample_producer,
-	.consumer_thपढ़ो = ringbuf_custom_consumer,
+	.producer_thread = bufs_sample_producer,
+	.consumer_thread = ringbuf_custom_consumer,
 	.measure = ringbuf_custom_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-पूर्ण;
+};
 
-स्थिर काष्ठा bench bench_pb_libbpf = अणु
+const struct bench bench_pb_libbpf = {
 	.name = "pb-libbpf",
 	.validate = bufs_validate,
 	.setup = perfbuf_libbpf_setup,
-	.producer_thपढ़ो = bufs_sample_producer,
-	.consumer_thपढ़ो = perfbuf_libbpf_consumer,
+	.producer_thread = bufs_sample_producer,
+	.consumer_thread = perfbuf_libbpf_consumer,
 	.measure = perfbuf_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-पूर्ण;
+};
 
-स्थिर काष्ठा bench bench_pb_custom = अणु
+const struct bench bench_pb_custom = {
 	.name = "pb-custom",
 	.validate = bufs_validate,
 	.setup = perfbuf_libbpf_setup,
-	.producer_thपढ़ो = bufs_sample_producer,
-	.consumer_thपढ़ो = perfbuf_custom_consumer,
+	.producer_thread = bufs_sample_producer,
+	.consumer_thread = perfbuf_custom_consumer,
 	.measure = perfbuf_measure,
 	.report_progress = hits_drops_report_progress,
 	.report_final = hits_drops_report_final,
-पूर्ण;
+};
 

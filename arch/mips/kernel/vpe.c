@@ -1,123 +1,122 @@
-<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 2004, 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  *
- * VPE spport module क्रम loading a MIPS SP program पूर्णांकo VPE1. The SP
+ * VPE spport module for loading a MIPS SP program into VPE1. The SP
  * environment is rather simple since there are no TLBs. It needs
  * to be relocatable (or partiall linked). Initialize your stack in
- * the startup-code. The loader looks क्रम the symbol __start and sets
- * up the execution to resume from there. To load and run, simply करो
+ * the startup-code. The loader looks for the symbol __start and sets
+ * up the execution to resume from there. To load and run, simply do
  * a cat SP 'binary' to the /dev/vpe1 device.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/device.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/list.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/elf.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/moduleloader.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/memblock.h>
-#समावेश <यंत्र/mipsregs.h>
-#समावेश <यंत्र/mipsmtregs.h>
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <linux/atomic.h>
-#समावेश <यंत्र/mips_mt.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/vpe.h>
+#include <linux/kernel.h>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/list.h>
+#include <linux/vmalloc.h>
+#include <linux/elf.h>
+#include <linux/seq_file.h>
+#include <linux/syscalls.h>
+#include <linux/moduleloader.h>
+#include <linux/interrupt.h>
+#include <linux/poll.h>
+#include <linux/memblock.h>
+#include <asm/mipsregs.h>
+#include <asm/mipsmtregs.h>
+#include <asm/cacheflush.h>
+#include <linux/atomic.h>
+#include <asm/mips_mt.h>
+#include <asm/processor.h>
+#include <asm/vpe.h>
 
-#अगर_अघोषित ARCH_SHF_SMALL
-#घोषणा ARCH_SHF_SMALL 0
-#पूर्ण_अगर
+#ifndef ARCH_SHF_SMALL
+#define ARCH_SHF_SMALL 0
+#endif
 
-/* If this is set, the section beदीर्घs in the init part of the module */
-#घोषणा INIT_OFFSET_MASK (1UL << (BITS_PER_LONG-1))
+/* If this is set, the section belongs in the init part of the module */
+#define INIT_OFFSET_MASK (1UL << (BITS_PER_LONG-1))
 
-काष्ठा vpe_control vpecontrol = अणु
+struct vpe_control vpecontrol = {
 	.vpe_list_lock	= __SPIN_LOCK_UNLOCKED(vpe_list_lock),
 	.vpe_list	= LIST_HEAD_INIT(vpecontrol.vpe_list),
 	.tc_list_lock	= __SPIN_LOCK_UNLOCKED(tc_list_lock),
 	.tc_list	= LIST_HEAD_INIT(vpecontrol.tc_list)
-पूर्ण;
+};
 
 /* get the vpe associated with this minor */
-काष्ठा vpe *get_vpe(पूर्णांक minor)
-अणु
-	काष्ठा vpe *res, *v;
+struct vpe *get_vpe(int minor)
+{
+	struct vpe *res, *v;
 
-	अगर (!cpu_has_mipsmt)
-		वापस शून्य;
+	if (!cpu_has_mipsmt)
+		return NULL;
 
-	res = शून्य;
+	res = NULL;
 	spin_lock(&vpecontrol.vpe_list_lock);
-	list_क्रम_each_entry(v, &vpecontrol.vpe_list, list) अणु
-		अगर (v->minor == VPE_MODULE_MINOR) अणु
+	list_for_each_entry(v, &vpecontrol.vpe_list, list) {
+		if (v->minor == VPE_MODULE_MINOR) {
 			res = v;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&vpecontrol.vpe_list_lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /* get the vpe associated with this minor */
-काष्ठा tc *get_tc(पूर्णांक index)
-अणु
-	काष्ठा tc *res, *t;
+struct tc *get_tc(int index)
+{
+	struct tc *res, *t;
 
-	res = शून्य;
+	res = NULL;
 	spin_lock(&vpecontrol.tc_list_lock);
-	list_क्रम_each_entry(t, &vpecontrol.tc_list, list) अणु
-		अगर (t->index == index) अणु
+	list_for_each_entry(t, &vpecontrol.tc_list, list) {
+		if (t->index == index) {
 			res = t;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&vpecontrol.tc_list_lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 /* allocate a vpe and associate it with this minor (or index) */
-काष्ठा vpe *alloc_vpe(पूर्णांक minor)
-अणु
-	काष्ठा vpe *v;
+struct vpe *alloc_vpe(int minor)
+{
+	struct vpe *v;
 
-	v = kzalloc(माप(काष्ठा vpe), GFP_KERNEL);
-	अगर (v == शून्य)
-		जाओ out;
+	v = kzalloc(sizeof(struct vpe), GFP_KERNEL);
+	if (v == NULL)
+		goto out;
 
 	INIT_LIST_HEAD(&v->tc);
 	spin_lock(&vpecontrol.vpe_list_lock);
 	list_add_tail(&v->list, &vpecontrol.vpe_list);
 	spin_unlock(&vpecontrol.vpe_list_lock);
 
-	INIT_LIST_HEAD(&v->notअगरy);
+	INIT_LIST_HEAD(&v->notify);
 	v->minor = VPE_MODULE_MINOR;
 
 out:
-	वापस v;
-पूर्ण
+	return v;
+}
 
 /* allocate a tc. At startup only tc0 is running, all other can be halted. */
-काष्ठा tc *alloc_tc(पूर्णांक index)
-अणु
-	काष्ठा tc *tc;
+struct tc *alloc_tc(int index)
+{
+	struct tc *tc;
 
-	tc = kzalloc(माप(काष्ठा tc), GFP_KERNEL);
-	अगर (tc == शून्य)
-		जाओ out;
+	tc = kzalloc(sizeof(struct tc), GFP_KERNEL);
+	if (tc == NULL)
+		goto out;
 
 	INIT_LIST_HEAD(&tc->tc);
 	tc->index = index;
@@ -127,236 +126,236 @@ out:
 	spin_unlock(&vpecontrol.tc_list_lock);
 
 out:
-	वापस tc;
-पूर्ण
+	return tc;
+}
 
-/* clean up and मुक्त everything */
-व्योम release_vpe(काष्ठा vpe *v)
-अणु
+/* clean up and free everything */
+void release_vpe(struct vpe *v)
+{
 	list_del(&v->list);
-	अगर (v->load_addr)
+	if (v->load_addr)
 		release_progmem(v->load_addr);
-	kमुक्त(v);
-पूर्ण
+	kfree(v);
+}
 
 /* Find some VPE program space */
-व्योम *alloc_progmem(अचिन्हित दीर्घ len)
-अणु
-	व्योम *addr;
+void *alloc_progmem(unsigned long len)
+{
+	void *addr;
 
-#अगर_घोषित CONFIG_MIPS_VPE_LOADER_TOM
+#ifdef CONFIG_MIPS_VPE_LOADER_TOM
 	/*
 	 * This means you must tell Linux to use less memory than you
-	 * physically have, क्रम example by passing a mem= boot argument.
+	 * physically have, for example by passing a mem= boot argument.
 	 */
 	addr = pfn_to_kaddr(max_low_pfn);
-	स_रखो(addr, 0, len);
-#अन्यथा
-	/* simple grab some mem क्रम now */
+	memset(addr, 0, len);
+#else
+	/* simple grab some mem for now */
 	addr = kzalloc(len, GFP_KERNEL);
-#पूर्ण_अगर
+#endif
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-व्योम release_progmem(व्योम *ptr)
-अणु
-#अगर_अघोषित CONFIG_MIPS_VPE_LOADER_TOM
-	kमुक्त(ptr);
-#पूर्ण_अगर
-पूर्ण
+void release_progmem(void *ptr)
+{
+#ifndef CONFIG_MIPS_VPE_LOADER_TOM
+	kfree(ptr);
+#endif
+}
 
-/* Update size with this section: वापस offset. */
-अटल दीर्घ get_offset(अचिन्हित दीर्घ *size, Elf_Shdr *sechdr)
-अणु
-	दीर्घ ret;
+/* Update size with this section: return offset. */
+static long get_offset(unsigned long *size, Elf_Shdr *sechdr)
+{
+	long ret;
 
 	ret = ALIGN(*size, sechdr->sh_addralign ? : 1);
 	*size = ret + sechdr->sh_size;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Lay out the SHF_ALLOC sections in a way not dissimilar to how ld
-   might -- code, पढ़ो-only data, पढ़ो-ग_लिखो data, small data.	Tally
-   sizes, and place the offsets पूर्णांकo sh_entsize fields: high bit means it
-   beदीर्घs in init. */
-अटल व्योम layout_sections(काष्ठा module *mod, स्थिर Elf_Ehdr *hdr,
-			    Elf_Shdr *sechdrs, स्थिर अक्षर *secstrings)
-अणु
-	अटल अचिन्हित दीर्घ स्थिर masks[][2] = अणु
+   might -- code, read-only data, read-write data, small data.	Tally
+   sizes, and place the offsets into sh_entsize fields: high bit means it
+   belongs in init. */
+static void layout_sections(struct module *mod, const Elf_Ehdr *hdr,
+			    Elf_Shdr *sechdrs, const char *secstrings)
+{
+	static unsigned long const masks[][2] = {
 		/* NOTE: all executable code must be the first section
-		 * in this array; otherwise modअगरy the text_size
+		 * in this array; otherwise modify the text_size
 		 * finder in the two loops below */
-		अणुSHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALLपूर्ण,
-		अणुSHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALLपूर्ण,
-		अणुSHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALLपूर्ण,
-		अणुARCH_SHF_SMALL | SHF_ALLOC, 0पूर्ण
-	पूर्ण;
-	अचिन्हित पूर्णांक m, i;
+		{SHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALL},
+		{SHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALL},
+		{SHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALL},
+		{ARCH_SHF_SMALL | SHF_ALLOC, 0}
+	};
+	unsigned int m, i;
 
-	क्रम (i = 0; i < hdr->e_shnum; i++)
+	for (i = 0; i < hdr->e_shnum; i++)
 		sechdrs[i].sh_entsize = ~0UL;
 
-	क्रम (m = 0; m < ARRAY_SIZE(masks); ++m) अणु
-		क्रम (i = 0; i < hdr->e_shnum; ++i) अणु
+	for (m = 0; m < ARRAY_SIZE(masks); ++m) {
+		for (i = 0; i < hdr->e_shnum; ++i) {
 			Elf_Shdr *s = &sechdrs[i];
 
-			अगर ((s->sh_flags & masks[m][0]) != masks[m][0]
+			if ((s->sh_flags & masks[m][0]) != masks[m][0]
 			    || (s->sh_flags & masks[m][1])
 			    || s->sh_entsize != ~0UL)
-				जारी;
+				continue;
 			s->sh_entsize =
-				get_offset((अचिन्हित दीर्घ *)&mod->core_layout.size, s);
-		पूर्ण
+				get_offset((unsigned long *)&mod->core_layout.size, s);
+		}
 
-		अगर (m == 0)
+		if (m == 0)
 			mod->core_layout.text_size = mod->core_layout.size;
 
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* from module-elf32.c, but subverted a little */
 
-काष्ठा mips_hi16 अणु
-	काष्ठा mips_hi16 *next;
+struct mips_hi16 {
+	struct mips_hi16 *next;
 	Elf32_Addr *addr;
 	Elf32_Addr value;
-पूर्ण;
+};
 
-अटल काष्ठा mips_hi16 *mips_hi16_list;
-अटल अचिन्हित पूर्णांक gp_offs, gp_addr;
+static struct mips_hi16 *mips_hi16_list;
+static unsigned int gp_offs, gp_addr;
 
-अटल पूर्णांक apply_r_mips_none(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_none(struct module *me, uint32_t *location,
 			     Elf32_Addr v)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल पूर्णांक apply_r_mips_gprel16(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_gprel16(struct module *me, uint32_t *location,
 				Elf32_Addr v)
-अणु
-	पूर्णांक rel;
+{
+	int rel;
 
-	अगर (!(*location & 0xffff)) अणु
-		rel = (पूर्णांक)v - gp_addr;
-	पूर्ण अन्यथा अणु
+	if (!(*location & 0xffff)) {
+		rel = (int)v - gp_addr;
+	} else {
 		/* .sbss + gp(relative) + offset */
 		/* kludge! */
-		rel =  (पूर्णांक)(लघु)((पूर्णांक)v + gp_offs +
-				    (पूर्णांक)(लघु)(*location & 0xffff) - gp_addr);
-	पूर्ण
+		rel =  (int)(short)((int)v + gp_offs +
+				    (int)(short)(*location & 0xffff) - gp_addr);
+	}
 
-	अगर ((rel > 32768) || (rel < -32768)) अणु
+	if ((rel > 32768) || (rel < -32768)) {
 		pr_debug("VPE loader: apply_r_mips_gprel16: relative address 0x%x out of range of gp register\n",
 			 rel);
-		वापस -ENOEXEC;
-	पूर्ण
+		return -ENOEXEC;
+	}
 
 	*location = (*location & 0xffff0000) | (rel & 0xffff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apply_r_mips_pc16(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_pc16(struct module *me, uint32_t *location,
 			     Elf32_Addr v)
-अणु
-	पूर्णांक rel;
-	rel = (((अचिन्हित पूर्णांक)v - (अचिन्हित पूर्णांक)location));
-	rel >>= 2; /* because the offset is in _inकाष्ठाions_ not bytes. */
-	rel -= 1;  /* and one inकाष्ठाion less due to the branch delay slot. */
+{
+	int rel;
+	rel = (((unsigned int)v - (unsigned int)location));
+	rel >>= 2; /* because the offset is in _instructions_ not bytes. */
+	rel -= 1;  /* and one instruction less due to the branch delay slot. */
 
-	अगर ((rel > 32768) || (rel < -32768)) अणु
+	if ((rel > 32768) || (rel < -32768)) {
 		pr_debug("VPE loader: apply_r_mips_pc16: relative address out of range 0x%x\n",
 			 rel);
-		वापस -ENOEXEC;
-	पूर्ण
+		return -ENOEXEC;
+	}
 
 	*location = (*location & 0xffff0000) | (rel & 0xffff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apply_r_mips_32(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_32(struct module *me, uint32_t *location,
 			   Elf32_Addr v)
-अणु
+{
 	*location += v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apply_r_mips_26(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_26(struct module *me, uint32_t *location,
 			   Elf32_Addr v)
-अणु
-	अगर (v % 4) अणु
+{
+	if (v % 4) {
 		pr_debug("VPE loader: apply_r_mips_26: unaligned relocation\n");
-		वापस -ENOEXEC;
-	पूर्ण
+		return -ENOEXEC;
+	}
 
 /*
  * Not desperately convinced this is a good check of an overflow condition
- * anyway. But it माला_लो in the way of handling undefined weak symbols which
+ * anyway. But it gets in the way of handling undefined weak symbols which
  * we want to set to zero.
- * अगर ((v & 0xf0000000) != (((अचिन्हित दीर्घ)location + 4) & 0xf0000000)) अणु
- * prपूर्णांकk(KERN_ERR
+ * if ((v & 0xf0000000) != (((unsigned long)location + 4) & 0xf0000000)) {
+ * printk(KERN_ERR
  * "module %s: relocation overflow\n",
  * me->name);
- * वापस -ENOEXEC;
- * पूर्ण
+ * return -ENOEXEC;
+ * }
  */
 
 	*location = (*location & ~0x03ffffff) |
 		((*location + (v >> 2)) & 0x03ffffff);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apply_r_mips_hi16(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_hi16(struct module *me, uint32_t *location,
 			     Elf32_Addr v)
-अणु
-	काष्ठा mips_hi16 *n;
+{
+	struct mips_hi16 *n;
 
 	/*
-	 * We cannot relocate this one now because we करोn't know the value of
-	 * the carry we need to add.  Save the inक्रमmation, and let LO16 करो the
+	 * We cannot relocate this one now because we don't know the value of
+	 * the carry we need to add.  Save the information, and let LO16 do the
 	 * actual relocation.
 	 */
-	n = kदो_स्मृति(माप(*n), GFP_KERNEL);
-	अगर (!n)
-		वापस -ENOMEM;
+	n = kmalloc(sizeof(*n), GFP_KERNEL);
+	if (!n)
+		return -ENOMEM;
 
 	n->addr = location;
 	n->value = v;
 	n->next = mips_hi16_list;
 	mips_hi16_list = n;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक apply_r_mips_lo16(काष्ठा module *me, uपूर्णांक32_t *location,
+static int apply_r_mips_lo16(struct module *me, uint32_t *location,
 			     Elf32_Addr v)
-अणु
-	अचिन्हित दीर्घ insnlo = *location;
+{
+	unsigned long insnlo = *location;
 	Elf32_Addr val, vallo;
-	काष्ठा mips_hi16 *l, *next;
+	struct mips_hi16 *l, *next;
 
 	/* Sign extend the addend we extract from the lo insn.	*/
 	vallo = ((insnlo & 0xffff) ^ 0x8000) - 0x8000;
 
-	अगर (mips_hi16_list != शून्य) अणु
+	if (mips_hi16_list != NULL) {
 
 		l = mips_hi16_list;
-		जबतक (l != शून्य) अणु
-			अचिन्हित दीर्घ insn;
+		while (l != NULL) {
+			unsigned long insn;
 
 			/*
-			 * The value क्रम the HI16 had best be the same.
+			 * The value for the HI16 had best be the same.
 			 */
-			अगर (v != l->value) अणु
+			if (v != l->value) {
 				pr_debug("VPE loader: apply_r_mips_lo16/hi16: inconsistent value information\n");
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 
 			/*
-			 * Do the HI16 relocation.  Note that we actually करोn't
+			 * Do the HI16 relocation.  Note that we actually don't
 			 * need to know anything about the LO16 itself, except
 			 * where to find the low 16 bits of the addend needed
 			 * by the LO16.
@@ -366,7 +365,7 @@ out:
 			val += v;
 
 			/*
-			 * Account क्रम the sign extension that will happen in
+			 * Account for the sign extension that will happen in
 			 * the low bits.
 			 */
 			val = ((val >> 16) + ((val & 0x8000) != 0)) & 0xffff;
@@ -375,35 +374,35 @@ out:
 			*l->addr = insn;
 
 			next = l->next;
-			kमुक्त(l);
+			kfree(l);
 			l = next;
-		पूर्ण
+		}
 
-		mips_hi16_list = शून्य;
-	पूर्ण
+		mips_hi16_list = NULL;
+	}
 
 	/*
-	 * Ok, we're करोne with the HI16 relocs.	 Now deal with the LO16.
+	 * Ok, we're done with the HI16 relocs.	 Now deal with the LO16.
 	 */
 	val = v + vallo;
 	insnlo = (insnlo & ~0xffff) | (val & 0xffff);
 	*location = insnlo;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त:
-	जबतक (l != शून्य) अणु
+out_free:
+	while (l != NULL) {
 		next = l->next;
-		kमुक्त(l);
+		kfree(l);
 		l = next;
-	पूर्ण
-	mips_hi16_list = शून्य;
+	}
+	mips_hi16_list = NULL;
 
-	वापस -ENOEXEC;
-पूर्ण
+	return -ENOEXEC;
+}
 
-अटल पूर्णांक (*reloc_handlers[]) (काष्ठा module *me, uपूर्णांक32_t *location,
-				Elf32_Addr v) = अणु
+static int (*reloc_handlers[]) (struct module *me, uint32_t *location,
+				Elf32_Addr v) = {
 	[R_MIPS_NONE]	= apply_r_mips_none,
 	[R_MIPS_32]	= apply_r_mips_32,
 	[R_MIPS_26]	= apply_r_mips_26,
@@ -411,9 +410,9 @@ out_मुक्त:
 	[R_MIPS_LO16]	= apply_r_mips_lo16,
 	[R_MIPS_GPREL16] = apply_r_mips_gprel16,
 	[R_MIPS_PC16] = apply_r_mips_pc16
-पूर्ण;
+};
 
-अटल अक्षर *rstrs[] = अणु
+static char *rstrs[] = {
 	[R_MIPS_NONE]	= "MIPS_NONE",
 	[R_MIPS_32]	= "MIPS_32",
 	[R_MIPS_26]	= "MIPS_26",
@@ -421,83 +420,83 @@ out_मुक्त:
 	[R_MIPS_LO16]	= "MIPS_LO16",
 	[R_MIPS_GPREL16] = "MIPS_GPREL16",
 	[R_MIPS_PC16] = "MIPS_PC16"
-पूर्ण;
+};
 
-अटल पूर्णांक apply_relocations(Elf32_Shdr *sechdrs,
-		      स्थिर अक्षर *strtab,
-		      अचिन्हित पूर्णांक symindex,
-		      अचिन्हित पूर्णांक rअन्यथाc,
-		      काष्ठा module *me)
-अणु
-	Elf32_Rel *rel = (व्योम *) sechdrs[rअन्यथाc].sh_addr;
+static int apply_relocations(Elf32_Shdr *sechdrs,
+		      const char *strtab,
+		      unsigned int symindex,
+		      unsigned int relsec,
+		      struct module *me)
+{
+	Elf32_Rel *rel = (void *) sechdrs[relsec].sh_addr;
 	Elf32_Sym *sym;
-	uपूर्णांक32_t *location;
-	अचिन्हित पूर्णांक i;
+	uint32_t *location;
+	unsigned int i;
 	Elf32_Addr v;
-	पूर्णांक res;
+	int res;
 
-	क्रम (i = 0; i < sechdrs[rअन्यथाc].sh_size / माप(*rel); i++) अणु
+	for (i = 0; i < sechdrs[relsec].sh_size / sizeof(*rel); i++) {
 		Elf32_Word r_info = rel[i].r_info;
 
 		/* This is where to make the change */
-		location = (व्योम *)sechdrs[sechdrs[rअन्यथाc].sh_info].sh_addr
+		location = (void *)sechdrs[sechdrs[relsec].sh_info].sh_addr
 			+ rel[i].r_offset;
 		/* This is the symbol it is referring to */
 		sym = (Elf32_Sym *)sechdrs[symindex].sh_addr
 			+ ELF32_R_SYM(r_info);
 
-		अगर (!sym->st_value) अणु
+		if (!sym->st_value) {
 			pr_debug("%s: undefined weak symbol %s\n",
 				 me->name, strtab + sym->st_name);
-			/* just prपूर्णांक the warning, करोnt barf */
-		पूर्ण
+			/* just print the warning, dont barf */
+		}
 
 		v = sym->st_value;
 
 		res = reloc_handlers[ELF32_R_TYPE(r_info)](me, location, v);
-		अगर (res) अणु
-			अक्षर *r = rstrs[ELF32_R_TYPE(r_info)];
+		if (res) {
+			char *r = rstrs[ELF32_R_TYPE(r_info)];
 			pr_warn("VPE loader: .text+0x%x relocation type %s for symbol \"%s\" failed\n",
 				rel[i].r_offset, r ? r : "UNKNOWN",
 				strtab + sym->st_name);
-			वापस res;
-		पूर्ण
-	पूर्ण
+			return res;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत व्योम save_gp_address(अचिन्हित पूर्णांक secbase, अचिन्हित पूर्णांक rel)
-अणु
+static inline void save_gp_address(unsigned int secbase, unsigned int rel)
+{
 	gp_addr = secbase + rel;
 	gp_offs = gp_addr - (secbase & 0xffff0000);
-पूर्ण
+}
 /* end module-elf32.c */
 
-/* Change all symbols so that sh_value encodes the poपूर्णांकer directly. */
-अटल व्योम simplअगरy_symbols(Elf_Shdr *sechdrs,
-			    अचिन्हित पूर्णांक symindex,
-			    स्थिर अक्षर *strtab,
-			    स्थिर अक्षर *secstrings,
-			    अचिन्हित पूर्णांक nsecs, काष्ठा module *mod)
-अणु
-	Elf_Sym *sym = (व्योम *)sechdrs[symindex].sh_addr;
-	अचिन्हित दीर्घ secbase, bssbase = 0;
-	अचिन्हित पूर्णांक i, n = sechdrs[symindex].sh_size / माप(Elf_Sym);
-	पूर्णांक size;
+/* Change all symbols so that sh_value encodes the pointer directly. */
+static void simplify_symbols(Elf_Shdr *sechdrs,
+			    unsigned int symindex,
+			    const char *strtab,
+			    const char *secstrings,
+			    unsigned int nsecs, struct module *mod)
+{
+	Elf_Sym *sym = (void *)sechdrs[symindex].sh_addr;
+	unsigned long secbase, bssbase = 0;
+	unsigned int i, n = sechdrs[symindex].sh_size / sizeof(Elf_Sym);
+	int size;
 
-	/* find the .bss section क्रम COMMON symbols */
-	क्रम (i = 0; i < nsecs; i++) अणु
-		अगर (म_भेदन(secstrings + sechdrs[i].sh_name, ".bss", 4) == 0) अणु
+	/* find the .bss section for COMMON symbols */
+	for (i = 0; i < nsecs; i++) {
+		if (strncmp(secstrings + sechdrs[i].sh_name, ".bss", 4) == 0) {
 			bssbase = sechdrs[i].sh_addr;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	क्रम (i = 1; i < n; i++) अणु
-		चयन (sym[i].st_shndx) अणु
-		हाल SHN_COMMON:
-			/* Allocate space क्रम the symbol in the .bss section.
+	for (i = 1; i < n; i++) {
+		switch (sym[i].st_shndx) {
+		case SHN_COMMON:
+			/* Allocate space for the symbol in the .bss section.
 			   st_value is currently size.
 			   We want it to have the address of the symbol. */
 
@@ -505,397 +504,397 @@ out_मुक्त:
 			sym[i].st_value = bssbase;
 
 			bssbase += size;
-			अवरोध;
+			break;
 
-		हाल SHN_ABS:
-			/* Don't need to करो anything */
-			अवरोध;
+		case SHN_ABS:
+			/* Don't need to do anything */
+			break;
 
-		हाल SHN_UNDEF:
+		case SHN_UNDEF:
 			/* ret = -ENOENT; */
-			अवरोध;
+			break;
 
-		हाल SHN_MIPS_SCOMMON:
+		case SHN_MIPS_SCOMMON:
 			pr_debug("simplify_symbols: ignoring SHN_MIPS_SCOMMON symbol <%s> st_shndx %d\n",
 				 strtab + sym[i].st_name, sym[i].st_shndx);
 			/* .sbss section */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			secbase = sechdrs[sym[i].st_shndx].sh_addr;
 
-			अगर (म_भेदन(strtab + sym[i].st_name, "_gp", 3) == 0)
+			if (strncmp(strtab + sym[i].st_name, "_gp", 3) == 0)
 				save_gp_address(secbase, sym[i].st_value);
 
 			sym[i].st_value += secbase;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-#अगर_घोषित DEBUG_ELFLOADER
-अटल व्योम dump_elfsymbols(Elf_Shdr *sechdrs, अचिन्हित पूर्णांक symindex,
-			    स्थिर अक्षर *strtab, काष्ठा module *mod)
-अणु
-	Elf_Sym *sym = (व्योम *)sechdrs[symindex].sh_addr;
-	अचिन्हित पूर्णांक i, n = sechdrs[symindex].sh_size / माप(Elf_Sym);
+#ifdef DEBUG_ELFLOADER
+static void dump_elfsymbols(Elf_Shdr *sechdrs, unsigned int symindex,
+			    const char *strtab, struct module *mod)
+{
+	Elf_Sym *sym = (void *)sechdrs[symindex].sh_addr;
+	unsigned int i, n = sechdrs[symindex].sh_size / sizeof(Elf_Sym);
 
 	pr_debug("dump_elfsymbols: n %d\n", n);
-	क्रम (i = 1; i < n; i++) अणु
+	for (i = 1; i < n; i++) {
 		pr_debug(" i %d name <%s> 0x%x\n", i, strtab + sym[i].st_name,
 			 sym[i].st_value);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+	}
+}
+#endif
 
-अटल पूर्णांक find_vpe_symbols(काष्ठा vpe *v, Elf_Shdr *sechdrs,
-				      अचिन्हित पूर्णांक symindex, स्थिर अक्षर *strtab,
-				      काष्ठा module *mod)
-अणु
-	Elf_Sym *sym = (व्योम *)sechdrs[symindex].sh_addr;
-	अचिन्हित पूर्णांक i, n = sechdrs[symindex].sh_size / माप(Elf_Sym);
+static int find_vpe_symbols(struct vpe *v, Elf_Shdr *sechdrs,
+				      unsigned int symindex, const char *strtab,
+				      struct module *mod)
+{
+	Elf_Sym *sym = (void *)sechdrs[symindex].sh_addr;
+	unsigned int i, n = sechdrs[symindex].sh_size / sizeof(Elf_Sym);
 
-	क्रम (i = 1; i < n; i++) अणु
-		अगर (म_भेद(strtab + sym[i].st_name, "__start") == 0)
+	for (i = 1; i < n; i++) {
+		if (strcmp(strtab + sym[i].st_name, "__start") == 0)
 			v->__start = sym[i].st_value;
 
-		अगर (म_भेद(strtab + sym[i].st_name, "vpe_shared") == 0)
-			v->shared_ptr = (व्योम *)sym[i].st_value;
-	पूर्ण
+		if (strcmp(strtab + sym[i].st_name, "vpe_shared") == 0)
+			v->shared_ptr = (void *)sym[i].st_value;
+	}
 
-	अगर ((v->__start == 0) || (v->shared_ptr == शून्य))
-		वापस -1;
+	if ((v->__start == 0) || (v->shared_ptr == NULL))
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Allocates a VPE with some program code space(the load address), copies the
- * contents of the program (p)buffer perक्रमming relocatations/etc, मुक्त's it
+ * contents of the program (p)buffer performing relocatations/etc, free's it
  * when finished.
  */
-अटल पूर्णांक vpe_elfload(काष्ठा vpe *v)
-अणु
+static int vpe_elfload(struct vpe *v)
+{
 	Elf_Ehdr *hdr;
 	Elf_Shdr *sechdrs;
-	दीर्घ err = 0;
-	अक्षर *secstrings, *strtab = शून्य;
-	अचिन्हित पूर्णांक len, i, symindex = 0, strindex = 0, relocate = 0;
-	काष्ठा module mod; /* so we can re-use the relocations code */
+	long err = 0;
+	char *secstrings, *strtab = NULL;
+	unsigned int len, i, symindex = 0, strindex = 0, relocate = 0;
+	struct module mod; /* so we can re-use the relocations code */
 
-	स_रखो(&mod, 0, माप(काष्ठा module));
-	म_नकल(mod.name, "VPE loader");
+	memset(&mod, 0, sizeof(struct module));
+	strcpy(mod.name, "VPE loader");
 
 	hdr = (Elf_Ehdr *) v->pbuffer;
 	len = v->plen;
 
 	/* Sanity checks against insmoding binaries or wrong arch,
 	   weird elf version */
-	अगर (स_भेद(hdr->e_ident, ELFMAG, SELFMAG) != 0
+	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0
 	    || (hdr->e_type != ET_REL && hdr->e_type != ET_EXEC)
 	    || !elf_check_arch(hdr)
-	    || hdr->e_shentsize != माप(*sechdrs)) अणु
+	    || hdr->e_shentsize != sizeof(*sechdrs)) {
 		pr_warn("VPE loader: program wrong arch or weird elf version\n");
 
-		वापस -ENOEXEC;
-	पूर्ण
+		return -ENOEXEC;
+	}
 
-	अगर (hdr->e_type == ET_REL)
+	if (hdr->e_type == ET_REL)
 		relocate = 1;
 
-	अगर (len < hdr->e_shoff + hdr->e_shnum * माप(Elf_Shdr)) अणु
+	if (len < hdr->e_shoff + hdr->e_shnum * sizeof(Elf_Shdr)) {
 		pr_err("VPE loader: program length %u truncated\n", len);
 
-		वापस -ENOEXEC;
-	पूर्ण
+		return -ENOEXEC;
+	}
 
 	/* Convenience variables */
-	sechdrs = (व्योम *)hdr + hdr->e_shoff;
-	secstrings = (व्योम *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
+	sechdrs = (void *)hdr + hdr->e_shoff;
+	secstrings = (void *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
 	sechdrs[0].sh_addr = 0;
 
-	/* And these should exist, but gcc whinges अगर we करोn't init them */
+	/* And these should exist, but gcc whinges if we don't init them */
 	symindex = strindex = 0;
 
-	अगर (relocate) अणु
-		क्रम (i = 1; i < hdr->e_shnum; i++) अणु
-			अगर ((sechdrs[i].sh_type != SHT_NOBITS) &&
-			    (len < sechdrs[i].sh_offset + sechdrs[i].sh_size)) अणु
+	if (relocate) {
+		for (i = 1; i < hdr->e_shnum; i++) {
+			if ((sechdrs[i].sh_type != SHT_NOBITS) &&
+			    (len < sechdrs[i].sh_offset + sechdrs[i].sh_size)) {
 				pr_err("VPE program length %u truncated\n",
 				       len);
-				वापस -ENOEXEC;
-			पूर्ण
+				return -ENOEXEC;
+			}
 
 			/* Mark all sections sh_addr with their address in the
 			   temporary image. */
-			sechdrs[i].sh_addr = (माप_प्रकार) hdr +
+			sechdrs[i].sh_addr = (size_t) hdr +
 				sechdrs[i].sh_offset;
 
 			/* Internal symbols and strings. */
-			अगर (sechdrs[i].sh_type == SHT_SYMTAB) अणु
+			if (sechdrs[i].sh_type == SHT_SYMTAB) {
 				symindex = i;
 				strindex = sechdrs[i].sh_link;
-				strtab = (अक्षर *)hdr +
+				strtab = (char *)hdr +
 					sechdrs[strindex].sh_offset;
-			पूर्ण
-		पूर्ण
+			}
+		}
 		layout_sections(&mod, hdr, sechdrs, secstrings);
-	पूर्ण
+	}
 
 	v->load_addr = alloc_progmem(mod.core_layout.size);
-	अगर (!v->load_addr)
-		वापस -ENOMEM;
+	if (!v->load_addr)
+		return -ENOMEM;
 
 	pr_info("VPE loader: loading to %p\n", v->load_addr);
 
-	अगर (relocate) अणु
-		क्रम (i = 0; i < hdr->e_shnum; i++) अणु
-			व्योम *dest;
+	if (relocate) {
+		for (i = 0; i < hdr->e_shnum; i++) {
+			void *dest;
 
-			अगर (!(sechdrs[i].sh_flags & SHF_ALLOC))
-				जारी;
+			if (!(sechdrs[i].sh_flags & SHF_ALLOC))
+				continue;
 
 			dest = v->load_addr + sechdrs[i].sh_entsize;
 
-			अगर (sechdrs[i].sh_type != SHT_NOBITS)
-				स_नकल(dest, (व्योम *)sechdrs[i].sh_addr,
+			if (sechdrs[i].sh_type != SHT_NOBITS)
+				memcpy(dest, (void *)sechdrs[i].sh_addr,
 				       sechdrs[i].sh_size);
-			/* Update sh_addr to poपूर्णांक to copy in image. */
-			sechdrs[i].sh_addr = (अचिन्हित दीर्घ)dest;
+			/* Update sh_addr to point to copy in image. */
+			sechdrs[i].sh_addr = (unsigned long)dest;
 
 			pr_debug(" section sh_name %s sh_addr 0x%x\n",
 				 secstrings + sechdrs[i].sh_name,
 				 sechdrs[i].sh_addr);
-		पूर्ण
+		}
 
-		/* Fix up syms, so that st_value is a poपूर्णांकer to location. */
-		simplअगरy_symbols(sechdrs, symindex, strtab, secstrings,
+		/* Fix up syms, so that st_value is a pointer to location. */
+		simplify_symbols(sechdrs, symindex, strtab, secstrings,
 				 hdr->e_shnum, &mod);
 
-		/* Now करो relocations. */
-		क्रम (i = 1; i < hdr->e_shnum; i++) अणु
-			स्थिर अक्षर *strtab = (अक्षर *)sechdrs[strindex].sh_addr;
-			अचिन्हित पूर्णांक info = sechdrs[i].sh_info;
+		/* Now do relocations. */
+		for (i = 1; i < hdr->e_shnum; i++) {
+			const char *strtab = (char *)sechdrs[strindex].sh_addr;
+			unsigned int info = sechdrs[i].sh_info;
 
 			/* Not a valid relocation section? */
-			अगर (info >= hdr->e_shnum)
-				जारी;
+			if (info >= hdr->e_shnum)
+				continue;
 
 			/* Don't bother with non-allocated sections */
-			अगर (!(sechdrs[info].sh_flags & SHF_ALLOC))
-				जारी;
+			if (!(sechdrs[info].sh_flags & SHF_ALLOC))
+				continue;
 
-			अगर (sechdrs[i].sh_type == SHT_REL)
+			if (sechdrs[i].sh_type == SHT_REL)
 				err = apply_relocations(sechdrs, strtab,
 							symindex, i, &mod);
-			अन्यथा अगर (sechdrs[i].sh_type == SHT_RELA)
+			else if (sechdrs[i].sh_type == SHT_RELA)
 				err = apply_relocate_add(sechdrs, strtab,
 							 symindex, i, &mod);
-			अगर (err < 0)
-				वापस err;
+			if (err < 0)
+				return err;
 
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा elf_phdr *phdr = (काष्ठा elf_phdr *)
-						((अक्षर *)hdr + hdr->e_phoff);
+		}
+	} else {
+		struct elf_phdr *phdr = (struct elf_phdr *)
+						((char *)hdr + hdr->e_phoff);
 
-		क्रम (i = 0; i < hdr->e_phnum; i++) अणु
-			अगर (phdr->p_type == PT_LOAD) अणु
-				स_नकल((व्योम *)phdr->p_paddr,
-				       (अक्षर *)hdr + phdr->p_offset,
+		for (i = 0; i < hdr->e_phnum; i++) {
+			if (phdr->p_type == PT_LOAD) {
+				memcpy((void *)phdr->p_paddr,
+				       (char *)hdr + phdr->p_offset,
 				       phdr->p_filesz);
-				स_रखो((व्योम *)phdr->p_paddr + phdr->p_filesz,
+				memset((void *)phdr->p_paddr + phdr->p_filesz,
 				       0, phdr->p_memsz - phdr->p_filesz);
-		    पूर्ण
+		    }
 		    phdr++;
-		पूर्ण
+		}
 
-		क्रम (i = 0; i < hdr->e_shnum; i++) अणु
+		for (i = 0; i < hdr->e_shnum; i++) {
 			/* Internal symbols and strings. */
-			अगर (sechdrs[i].sh_type == SHT_SYMTAB) अणु
+			if (sechdrs[i].sh_type == SHT_SYMTAB) {
 				symindex = i;
 				strindex = sechdrs[i].sh_link;
-				strtab = (अक्षर *)hdr +
+				strtab = (char *)hdr +
 					sechdrs[strindex].sh_offset;
 
 				/*
-				 * mark symtab's address क्रम when we try
+				 * mark symtab's address for when we try
 				 * to find the magic symbols
 				 */
-				sechdrs[i].sh_addr = (माप_प्रकार) hdr +
+				sechdrs[i].sh_addr = (size_t) hdr +
 					sechdrs[i].sh_offset;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/* make sure it's physically written out */
-	flush_icache_range((अचिन्हित दीर्घ)v->load_addr,
-			   (अचिन्हित दीर्घ)v->load_addr + v->len);
+	flush_icache_range((unsigned long)v->load_addr,
+			   (unsigned long)v->load_addr + v->len);
 
-	अगर ((find_vpe_symbols(v, sechdrs, symindex, strtab, &mod)) < 0) अणु
-		अगर (v->__start == 0) अणु
+	if ((find_vpe_symbols(v, sechdrs, symindex, strtab, &mod)) < 0) {
+		if (v->__start == 0) {
 			pr_warn("VPE loader: program does not contain a __start symbol\n");
-			वापस -ENOEXEC;
-		पूर्ण
+			return -ENOEXEC;
+		}
 
-		अगर (v->shared_ptr == शून्य)
+		if (v->shared_ptr == NULL)
 			pr_warn("VPE loader: program does not contain vpe_shared symbol.\n"
 				" Unable to use AMVP (AP/SP) facilities.\n");
-	पूर्ण
+	}
 
 	pr_info(" elf loaded\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* checks VPE is unused and माला_लो पढ़ोy to load program	*/
-अटल पूर्णांक vpe_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	क्रमागत vpe_state state;
-	काष्ठा vpe_notअगरications *notअगरier;
-	काष्ठा vpe *v;
+/* checks VPE is unused and gets ready to load program	*/
+static int vpe_open(struct inode *inode, struct file *filp)
+{
+	enum vpe_state state;
+	struct vpe_notifications *notifier;
+	struct vpe *v;
 
-	अगर (VPE_MODULE_MINOR != iminor(inode)) अणु
+	if (VPE_MODULE_MINOR != iminor(inode)) {
 		/* assume only 1 device at the moment. */
 		pr_warn("VPE loader: only vpe1 is supported\n");
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	v = get_vpe(aprp_cpu_index());
-	अगर (v == शून्य) अणु
+	if (v == NULL) {
 		pr_warn("VPE loader: unable to get vpe\n");
 
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	state = xchg(&v->state, VPE_STATE_INUSE);
-	अगर (state != VPE_STATE_UNUSED) अणु
+	if (state != VPE_STATE_UNUSED) {
 		pr_debug("VPE loader: tc in use dumping regs\n");
 
-		list_क्रम_each_entry(notअगरier, &v->notअगरy, list)
-			notअगरier->stop(aprp_cpu_index());
+		list_for_each_entry(notifier, &v->notify, list)
+			notifier->stop(aprp_cpu_index());
 
 		release_progmem(v->load_addr);
 		cleanup_tc(get_tc(aprp_cpu_index()));
-	पूर्ण
+	}
 
-	/* this of-course trashes what was there beक्रमe... */
-	v->pbuffer = vदो_स्मृति(P_SIZE);
-	अगर (!v->pbuffer) अणु
+	/* this of-course trashes what was there before... */
+	v->pbuffer = vmalloc(P_SIZE);
+	if (!v->pbuffer) {
 		pr_warn("VPE loader: unable to allocate memory\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	v->plen = P_SIZE;
-	v->load_addr = शून्य;
+	v->load_addr = NULL;
 	v->len = 0;
-	v->shared_ptr = शून्य;
+	v->shared_ptr = NULL;
 	v->__start = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vpe_release(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-#अगर defined(CONFIG_MIPS_VPE_LOADER_MT) || defined(CONFIG_MIPS_VPE_LOADER_CMP)
-	काष्ठा vpe *v;
+static int vpe_release(struct inode *inode, struct file *filp)
+{
+#if defined(CONFIG_MIPS_VPE_LOADER_MT) || defined(CONFIG_MIPS_VPE_LOADER_CMP)
+	struct vpe *v;
 	Elf_Ehdr *hdr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	v = get_vpe(aprp_cpu_index());
-	अगर (v == शून्य)
-		वापस -ENODEV;
+	if (v == NULL)
+		return -ENODEV;
 
 	hdr = (Elf_Ehdr *) v->pbuffer;
-	अगर (स_भेद(hdr->e_ident, ELFMAG, SELFMAG) == 0) अणु
-		अगर (vpe_elfload(v) >= 0) अणु
+	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) == 0) {
+		if (vpe_elfload(v) >= 0) {
 			vpe_run(v);
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_warn("VPE loader: ELF load failed.\n");
 			ret = -ENOEXEC;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pr_warn("VPE loader: only elf files are supported\n");
 		ret = -ENOEXEC;
-	पूर्ण
+	}
 
-	/* It's good to be able to run the SP and अगर it chokes have a look at
-	   the /dev/rt?. But अगर we reset the poपूर्णांकer to the shared काष्ठा we
-	   lose what has happened. So perhaps अगर garbage is sent to the vpe
-	   device, use it as a trigger क्रम the reset. Hopefully a nice
-	   executable will be aदीर्घ लघुly. */
-	अगर (ret < 0)
-		v->shared_ptr = शून्य;
+	/* It's good to be able to run the SP and if it chokes have a look at
+	   the /dev/rt?. But if we reset the pointer to the shared struct we
+	   lose what has happened. So perhaps if garbage is sent to the vpe
+	   device, use it as a trigger for the reset. Hopefully a nice
+	   executable will be along shortly. */
+	if (ret < 0)
+		v->shared_ptr = NULL;
 
-	vमुक्त(v->pbuffer);
+	vfree(v->pbuffer);
 	v->plen = 0;
 
-	वापस ret;
-#अन्यथा
+	return ret;
+#else
 	pr_warn("VPE loader: ELF load failed.\n");
-	वापस -ENOEXEC;
-#पूर्ण_अगर
-पूर्ण
+	return -ENOEXEC;
+#endif
+}
 
-अटल sमाप_प्रकार vpe_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
-			 माप_प्रकार count, loff_t *ppos)
-अणु
-	माप_प्रकार ret = count;
-	काष्ठा vpe *v;
+static ssize_t vpe_write(struct file *file, const char __user *buffer,
+			 size_t count, loff_t *ppos)
+{
+	size_t ret = count;
+	struct vpe *v;
 
-	अगर (iminor(file_inode(file)) != VPE_MODULE_MINOR)
-		वापस -ENODEV;
+	if (iminor(file_inode(file)) != VPE_MODULE_MINOR)
+		return -ENODEV;
 
 	v = get_vpe(aprp_cpu_index());
 
-	अगर (v == शून्य)
-		वापस -ENODEV;
+	if (v == NULL)
+		return -ENODEV;
 
-	अगर ((count + v->len) > v->plen) अणु
+	if ((count + v->len) > v->plen) {
 		pr_warn("VPE loader: elf size too big. Perhaps strip unneeded symbols\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	count -= copy_from_user(v->pbuffer + v->len, buffer, count);
-	अगर (!count)
-		वापस -EFAULT;
+	if (!count)
+		return -EFAULT;
 
 	v->len += count;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-स्थिर काष्ठा file_operations vpe_fops = अणु
+const struct file_operations vpe_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = vpe_खोलो,
+	.open = vpe_open,
 	.release = vpe_release,
-	.ग_लिखो = vpe_ग_लिखो,
+	.write = vpe_write,
 	.llseek = noop_llseek,
-पूर्ण;
+};
 
-व्योम *vpe_get_shared(पूर्णांक index)
-अणु
-	काष्ठा vpe *v = get_vpe(index);
+void *vpe_get_shared(int index)
+{
+	struct vpe *v = get_vpe(index);
 
-	अगर (v == शून्य)
-		वापस शून्य;
+	if (v == NULL)
+		return NULL;
 
-	वापस v->shared_ptr;
-पूर्ण
+	return v->shared_ptr;
+}
 EXPORT_SYMBOL(vpe_get_shared);
 
-पूर्णांक vpe_notअगरy(पूर्णांक index, काष्ठा vpe_notअगरications *notअगरy)
-अणु
-	काष्ठा vpe *v = get_vpe(index);
+int vpe_notify(int index, struct vpe_notifications *notify)
+{
+	struct vpe *v = get_vpe(index);
 
-	अगर (v == शून्य)
-		वापस -1;
+	if (v == NULL)
+		return -1;
 
-	list_add(&notअगरy->list, &v->notअगरy);
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(vpe_notअगरy);
+	list_add(&notify->list, &v->notify);
+	return 0;
+}
+EXPORT_SYMBOL(vpe_notify);
 
 module_init(vpe_module_init);
-module_निकास(vpe_module_निकास);
+module_exit(vpe_module_exit);
 MODULE_DESCRIPTION("MIPS VPE Loader");
 MODULE_AUTHOR("Elizabeth Oldham, MIPS Technologies, Inc.");
 MODULE_LICENSE("GPL");

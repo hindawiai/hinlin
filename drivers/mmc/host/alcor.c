@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2018 Oleksij Rempel <linux@rempel-privat.de>
  *
- * Driver क्रम Alcor Micro AU6601 and AU6621 controllers
+ * Driver for Alcor Micro AU6601 and AU6621 controllers
  */
 
-/* Note: this driver was created without any करोcumentation. Based
- * on snअगरfing, testing and in some हालs mimic of original driver.
- * As soon as some one with करोcumentation or more experience in SD/MMC, or
+/* Note: this driver was created without any documentation. Based
+ * on sniffing, testing and in some cases mimic of original driver.
+ * As soon as some one with documentation or more experience in SD/MMC, or
  * reverse engineering then me, please review this driver and question every
  * thing what I did. 2018 Oleksij Rempel <linux@rempel-privat.de>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/module.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pm.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/module.h>
+#include <linux/io.h>
+#include <linux/pm.h>
+#include <linux/irq.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/mmc/host.h>
-#समावेश <linux/mmc/mmc.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/mmc.h>
 
-#समावेश <linux/alcor_pci.h>
+#include <linux/alcor_pci.h>
 
-क्रमागत alcor_cookie अणु
+enum alcor_cookie {
 	COOKIE_UNMAPPED,
 	COOKIE_PRE_MAPPED,
 	COOKIE_MAPPED,
-पूर्ण;
+};
 
-काष्ठा alcor_pll_conf अणु
-	अचिन्हित पूर्णांक clk_src_freq;
-	अचिन्हित पूर्णांक clk_src_reg;
-	अचिन्हित पूर्णांक min_भाग;
-	अचिन्हित पूर्णांक max_भाग;
-पूर्ण;
+struct alcor_pll_conf {
+	unsigned int clk_src_freq;
+	unsigned int clk_src_reg;
+	unsigned int min_div;
+	unsigned int max_div;
+};
 
-काष्ठा alcor_sdmmc_host अणु
-	काष्ठा  device *dev;
-	काष्ठा alcor_pci_priv *alcor_pci;
+struct alcor_sdmmc_host {
+	struct  device *dev;
+	struct alcor_pci_priv *alcor_pci;
 
-	काष्ठा mmc_request *mrq;
-	काष्ठा mmc_command *cmd;
-	काष्ठा mmc_data *data;
-	अचिन्हित पूर्णांक dma_on:1;
+	struct mmc_request *mrq;
+	struct mmc_command *cmd;
+	struct mmc_data *data;
+	unsigned int dma_on:1;
 
-	काष्ठा mutex cmd_mutex;
+	struct mutex cmd_mutex;
 
-	काष्ठा delayed_work समयout_work;
+	struct delayed_work timeout_work;
 
-	काष्ठा sg_mapping_iter sg_miter;	/* SG state क्रम PIO */
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक blocks;		/* reमुख्यing PIO blocks */
-	पूर्णांक sg_count;
+	struct sg_mapping_iter sg_miter;	/* SG state for PIO */
+	struct scatterlist *sg;
+	unsigned int blocks;		/* remaining PIO blocks */
+	int sg_count;
 
 	u32			irq_status_sd;
-	अचिन्हित अक्षर		cur_घातer_mode;
-पूर्ण;
+	unsigned char		cur_power_mode;
+};
 
-अटल स्थिर काष्ठा alcor_pll_conf alcor_pll_cfg[] = अणु
-	/* MHZ,		CLK src,		max भाग, min भाग */
-	अणु 31250000,	AU6601_CLK_31_25_MHZ,	1,	511पूर्ण,
-	अणु 48000000,	AU6601_CLK_48_MHZ,	1,	511पूर्ण,
-	अणु125000000,	AU6601_CLK_125_MHZ,	1,	511पूर्ण,
-	अणु384000000,	AU6601_CLK_384_MHZ,	1,	511पूर्ण,
-पूर्ण;
+static const struct alcor_pll_conf alcor_pll_cfg[] = {
+	/* MHZ,		CLK src,		max div, min div */
+	{ 31250000,	AU6601_CLK_31_25_MHZ,	1,	511},
+	{ 48000000,	AU6601_CLK_48_MHZ,	1,	511},
+	{125000000,	AU6601_CLK_125_MHZ,	1,	511},
+	{384000000,	AU6601_CLK_384_MHZ,	1,	511},
+};
 
-अटल अंतरभूत व्योम alcor_rmw8(काष्ठा alcor_sdmmc_host *host, अचिन्हित पूर्णांक addr,
+static inline void alcor_rmw8(struct alcor_sdmmc_host *host, unsigned int addr,
 			       u8 clear, u8 set)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
 	u32 var;
 
-	var = alcor_पढ़ो8(priv, addr);
+	var = alcor_read8(priv, addr);
 	var &= ~clear;
 	var |= set;
-	alcor_ग_लिखो8(priv, var, addr);
-पूर्ण
+	alcor_write8(priv, var, addr);
+}
 
 /* As soon as irqs are masked, some status updates may be missed.
  * Use this with care.
  */
-अटल अंतरभूत व्योम alcor_mask_sd_irqs(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static inline void alcor_mask_sd_irqs(struct alcor_sdmmc_host *host)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
 
-	alcor_ग_लिखो32(priv, 0, AU6601_REG_INT_ENABLE);
-पूर्ण
+	alcor_write32(priv, 0, AU6601_REG_INT_ENABLE);
+}
 
-अटल अंतरभूत व्योम alcor_unmask_sd_irqs(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static inline void alcor_unmask_sd_irqs(struct alcor_sdmmc_host *host)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
 
-	alcor_ग_लिखो32(priv, AU6601_INT_CMD_MASK | AU6601_INT_DATA_MASK |
+	alcor_write32(priv, AU6601_INT_CMD_MASK | AU6601_INT_DATA_MASK |
 		  AU6601_INT_CARD_INSERT | AU6601_INT_CARD_REMOVE |
 		  AU6601_INT_OVER_CURRENT_ERR,
 		  AU6601_REG_INT_ENABLE);
-पूर्ण
+}
 
-अटल व्योम alcor_reset(काष्ठा alcor_sdmmc_host *host, u8 val)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	पूर्णांक i;
+static void alcor_reset(struct alcor_sdmmc_host *host, u8 val)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	int i;
 
-	alcor_ग_लिखो8(priv, val | AU6601_BUF_CTRL_RESET,
+	alcor_write8(priv, val | AU6601_BUF_CTRL_RESET,
 		      AU6601_REG_SW_RESET);
-	क्रम (i = 0; i < 100; i++) अणु
-		अगर (!(alcor_पढ़ो8(priv, AU6601_REG_SW_RESET) & val))
-			वापस;
+	for (i = 0; i < 100; i++) {
+		if (!(alcor_read8(priv, AU6601_REG_SW_RESET) & val))
+			return;
 		udelay(50);
-	पूर्ण
+	}
 	dev_err(host->dev, "%s: timeout\n", __func__);
-पूर्ण
+}
 
 /*
- * Perक्रमm DMA I/O of a single page.
+ * Perform DMA I/O of a single page.
  */
-अटल व्योम alcor_data_set_dma(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static void alcor_data_set_dma(struct alcor_sdmmc_host *host)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
 	u32 addr;
 
-	अगर (!host->sg_count)
-		वापस;
+	if (!host->sg_count)
+		return;
 
-	अगर (!host->sg) अणु
+	if (!host->sg) {
 		dev_err(host->dev, "have blocks, but no SG\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!sg_dma_len(host->sg)) अणु
+	if (!sg_dma_len(host->sg)) {
 		dev_err(host->dev, "DMA SG len == 0\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 
 	addr = (u32)sg_dma_address(host->sg);
 
-	alcor_ग_लिखो32(priv, addr, AU6601_REG_SDMA_ADDR);
+	alcor_write32(priv, addr, AU6601_REG_SDMA_ADDR);
 	host->sg = sg_next(host->sg);
 	host->sg_count--;
-पूर्ण
+}
 
-अटल व्योम alcor_trigger_data_transfer(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	काष्ठा mmc_data *data = host->data;
+static void alcor_trigger_data_transfer(struct alcor_sdmmc_host *host)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	struct mmc_data *data = host->data;
 	u8 ctrl = 0;
 
-	अगर (data->flags & MMC_DATA_WRITE)
+	if (data->flags & MMC_DATA_WRITE)
 		ctrl |= AU6601_DATA_WRITE;
 
-	अगर (data->host_cookie == COOKIE_MAPPED) अणु
+	if (data->host_cookie == COOKIE_MAPPED) {
 		/*
 		 * For DMA transfers, this function is called just once,
 		 * at the start of the operation. The hardware can only
-		 * perक्रमm DMA I/O on a single page at a समय, so here
+		 * perform DMA I/O on a single page at a time, so here
 		 * we kick off the transfer with the first page, and expect
 		 * subsequent pages to be transferred upon IRQ events
 		 * indicating that the single-page DMA was completed.
@@ -167,83 +166,83 @@
 		alcor_data_set_dma(host);
 		ctrl |= AU6601_DATA_DMA_MODE;
 		host->dma_on = 1;
-		alcor_ग_लिखो32(priv, data->sg_count * 0x1000,
+		alcor_write32(priv, data->sg_count * 0x1000,
 			       AU6601_REG_BLOCK_SIZE);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * For PIO transfers, we अवरोध करोwn each operation
-		 * पूर्णांकo several sector-sized transfers. When one sector has
+		 * For PIO transfers, we break down each operation
+		 * into several sector-sized transfers. When one sector has
 		 * complete, the IRQ handler will call this function again
 		 * to kick off the transfer of the next sector.
 		 */
-		alcor_ग_लिखो32(priv, data->blksz, AU6601_REG_BLOCK_SIZE);
-	पूर्ण
+		alcor_write32(priv, data->blksz, AU6601_REG_BLOCK_SIZE);
+	}
 
-	alcor_ग_लिखो8(priv, ctrl | AU6601_DATA_START_XFER,
+	alcor_write8(priv, ctrl | AU6601_DATA_START_XFER,
 		      AU6601_DATA_XFER_CTRL);
-पूर्ण
+}
 
-अटल व्योम alcor_trf_block_pio(काष्ठा alcor_sdmmc_host *host, bool पढ़ो)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	माप_प्रकार blksize, len;
+static void alcor_trf_block_pio(struct alcor_sdmmc_host *host, bool read)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	size_t blksize, len;
 	u8 *buf;
 
-	अगर (!host->blocks)
-		वापस;
+	if (!host->blocks)
+		return;
 
-	अगर (host->dma_on) अणु
+	if (host->dma_on) {
 		dev_err(host->dev, "configured DMA but got PIO request.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!!(host->data->flags & MMC_DATA_READ) != पढ़ो) अणु
+	if (!!(host->data->flags & MMC_DATA_READ) != read) {
 		dev_err(host->dev, "got unexpected direction %i != %i\n",
-			!!(host->data->flags & MMC_DATA_READ), पढ़ो);
-	पूर्ण
+			!!(host->data->flags & MMC_DATA_READ), read);
+	}
 
-	अगर (!sg_miter_next(&host->sg_miter))
-		वापस;
+	if (!sg_miter_next(&host->sg_miter))
+		return;
 
 	blksize = host->data->blksz;
 	len = min(host->sg_miter.length, blksize);
 
 	dev_dbg(host->dev, "PIO, %s block size: 0x%zx\n",
-		पढ़ो ? "read" : "write", blksize);
+		read ? "read" : "write", blksize);
 
 	host->sg_miter.consumed = len;
 	host->blocks--;
 
 	buf = host->sg_miter.addr;
 
-	अगर (पढ़ो)
-		ioपढ़ो32_rep(priv->iobase + AU6601_REG_BUFFER, buf, len >> 2);
-	अन्यथा
-		ioग_लिखो32_rep(priv->iobase + AU6601_REG_BUFFER, buf, len >> 2);
+	if (read)
+		ioread32_rep(priv->iobase + AU6601_REG_BUFFER, buf, len >> 2);
+	else
+		iowrite32_rep(priv->iobase + AU6601_REG_BUFFER, buf, len >> 2);
 
 	sg_miter_stop(&host->sg_miter);
-पूर्ण
+}
 
-अटल व्योम alcor_prepare_sg_miter(काष्ठा alcor_sdmmc_host *host)
-अणु
-	अचिन्हित पूर्णांक flags = SG_MITER_ATOMIC;
-	काष्ठा mmc_data *data = host->data;
+static void alcor_prepare_sg_miter(struct alcor_sdmmc_host *host)
+{
+	unsigned int flags = SG_MITER_ATOMIC;
+	struct mmc_data *data = host->data;
 
-	अगर (data->flags & MMC_DATA_READ)
+	if (data->flags & MMC_DATA_READ)
 		flags |= SG_MITER_TO_SG;
-	अन्यथा
+	else
 		flags |= SG_MITER_FROM_SG;
 	sg_miter_start(&host->sg_miter, data->sg, data->sg_len, flags);
-पूर्ण
+}
 
-अटल व्योम alcor_prepare_data(काष्ठा alcor_sdmmc_host *host,
-			       काष्ठा mmc_command *cmd)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	काष्ठा mmc_data *data = cmd->data;
+static void alcor_prepare_data(struct alcor_sdmmc_host *host,
+			       struct mmc_command *cmd)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	struct mmc_data *data = cmd->data;
 
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
 
 	host->data = data;
@@ -254,17 +253,17 @@
 	dev_dbg(host->dev, "prepare DATA: sg %i, blocks: %i\n",
 			host->sg_count, host->blocks);
 
-	अगर (data->host_cookie != COOKIE_MAPPED)
+	if (data->host_cookie != COOKIE_MAPPED)
 		alcor_prepare_sg_miter(host);
 
-	alcor_ग_लिखो8(priv, 0, AU6601_DATA_XFER_CTRL);
-पूर्ण
+	alcor_write8(priv, 0, AU6601_DATA_XFER_CTRL);
+}
 
-अटल व्योम alcor_send_cmd(काष्ठा alcor_sdmmc_host *host,
-			   काष्ठा mmc_command *cmd, bool set_समयout)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	अचिन्हित दीर्घ समयout = 0;
+static void alcor_send_cmd(struct alcor_sdmmc_host *host,
+			   struct mmc_command *cmd, bool set_timeout)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	unsigned long timeout = 0;
 	u8 ctrl = 0;
 
 	host->cmd = cmd;
@@ -272,683 +271,683 @@
 
 	dev_dbg(host->dev, "send CMD. opcode: 0x%02x, arg; 0x%08x\n",
 		cmd->opcode, cmd->arg);
-	alcor_ग_लिखो8(priv, cmd->opcode | 0x40, AU6601_REG_CMD_OPCODE);
-	alcor_ग_लिखो32be(priv, cmd->arg, AU6601_REG_CMD_ARG);
+	alcor_write8(priv, cmd->opcode | 0x40, AU6601_REG_CMD_OPCODE);
+	alcor_write32be(priv, cmd->arg, AU6601_REG_CMD_ARG);
 
-	चयन (mmc_resp_type(cmd)) अणु
-	हाल MMC_RSP_NONE:
+	switch (mmc_resp_type(cmd)) {
+	case MMC_RSP_NONE:
 		ctrl = AU6601_CMD_NO_RESP;
-		अवरोध;
-	हाल MMC_RSP_R1:
+		break;
+	case MMC_RSP_R1:
 		ctrl = AU6601_CMD_6_BYTE_CRC;
-		अवरोध;
-	हाल MMC_RSP_R1B:
+		break;
+	case MMC_RSP_R1B:
 		ctrl = AU6601_CMD_6_BYTE_CRC | AU6601_CMD_STOP_WAIT_RDY;
-		अवरोध;
-	हाल MMC_RSP_R2:
+		break;
+	case MMC_RSP_R2:
 		ctrl = AU6601_CMD_17_BYTE_CRC;
-		अवरोध;
-	हाल MMC_RSP_R3:
+		break;
+	case MMC_RSP_R3:
 		ctrl = AU6601_CMD_6_BYTE_WO_CRC;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(host->dev, "%s: cmd->flag (0x%02x) is not valid\n",
 			mmc_hostname(mmc_from_priv(host)), mmc_resp_type(cmd));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (set_समयout) अणु
-		अगर (!cmd->data && cmd->busy_समयout)
-			समयout = cmd->busy_समयout;
-		अन्यथा
-			समयout = 10000;
+	if (set_timeout) {
+		if (!cmd->data && cmd->busy_timeout)
+			timeout = cmd->busy_timeout;
+		else
+			timeout = 10000;
 
-		schedule_delayed_work(&host->समयout_work,
-				      msecs_to_jअगरfies(समयout));
-	पूर्ण
+		schedule_delayed_work(&host->timeout_work,
+				      msecs_to_jiffies(timeout));
+	}
 
-	dev_dbg(host->dev, "xfer ctrl: 0x%02x; timeout: %lu\n", ctrl, समयout);
-	alcor_ग_लिखो8(priv, ctrl | AU6601_CMD_START_XFER,
+	dev_dbg(host->dev, "xfer ctrl: 0x%02x; timeout: %lu\n", ctrl, timeout);
+	alcor_write8(priv, ctrl | AU6601_CMD_START_XFER,
 				 AU6601_CMD_XFER_CTRL);
-पूर्ण
+}
 
-अटल व्योम alcor_request_complete(काष्ठा alcor_sdmmc_host *host,
-				   bool cancel_समयout)
-अणु
-	काष्ठा mmc_request *mrq;
+static void alcor_request_complete(struct alcor_sdmmc_host *host,
+				   bool cancel_timeout)
+{
+	struct mmc_request *mrq;
 
 	/*
-	 * If this work माला_लो rescheduled जबतक running, it will
+	 * If this work gets rescheduled while running, it will
 	 * be run again afterwards but without any active request.
 	 */
-	अगर (!host->mrq)
-		वापस;
+	if (!host->mrq)
+		return;
 
-	अगर (cancel_समयout)
-		cancel_delayed_work(&host->समयout_work);
+	if (cancel_timeout)
+		cancel_delayed_work(&host->timeout_work);
 
 	mrq = host->mrq;
 
-	host->mrq = शून्य;
-	host->cmd = शून्य;
-	host->data = शून्य;
+	host->mrq = NULL;
+	host->cmd = NULL;
+	host->data = NULL;
 	host->dma_on = 0;
 
-	mmc_request_करोne(mmc_from_priv(host), mrq);
-पूर्ण
+	mmc_request_done(mmc_from_priv(host), mrq);
+}
 
-अटल व्योम alcor_finish_data(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा mmc_data *data;
+static void alcor_finish_data(struct alcor_sdmmc_host *host)
+{
+	struct mmc_data *data;
 
 	data = host->data;
-	host->data = शून्य;
+	host->data = NULL;
 	host->dma_on = 0;
 
 	/*
-	 * The specअगरication states that the block count रेजिस्टर must
-	 * be updated, but it करोes not specअगरy at what poपूर्णांक in the
-	 * data flow. That makes the रेजिस्टर entirely useless to पढ़ो
+	 * The specification states that the block count register must
+	 * be updated, but it does not specify at what point in the
+	 * data flow. That makes the register entirely useless to read
 	 * back so we have to assume that nothing made it to the card
 	 * in the event of an error.
 	 */
-	अगर (data->error)
+	if (data->error)
 		data->bytes_xfered = 0;
-	अन्यथा
+	else
 		data->bytes_xfered = data->blksz * data->blocks;
 
 	/*
-	 * Need to send CMD12 अगर -
-	 * a) खोलो-ended multiblock transfer (no CMD23)
+	 * Need to send CMD12 if -
+	 * a) open-ended multiblock transfer (no CMD23)
 	 * b) error in multiblock transfer
 	 */
-	अगर (data->stop &&
+	if (data->stop &&
 	    (data->error ||
-	     !host->mrq->sbc)) अणु
+	     !host->mrq->sbc)) {
 
 		/*
-		 * The controller needs a reset of पूर्णांकernal state machines
+		 * The controller needs a reset of internal state machines
 		 * upon error conditions.
 		 */
-		अगर (data->error)
+		if (data->error)
 			alcor_reset(host, AU6601_RESET_CMD | AU6601_RESET_DATA);
 
 		alcor_unmask_sd_irqs(host);
 		alcor_send_cmd(host, data->stop, false);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	alcor_request_complete(host, 1);
-पूर्ण
+}
 
-अटल व्योम alcor_err_irq(काष्ठा alcor_sdmmc_host *host, u32 पूर्णांकmask)
-अणु
-	dev_dbg(host->dev, "ERR IRQ %x\n", पूर्णांकmask);
+static void alcor_err_irq(struct alcor_sdmmc_host *host, u32 intmask)
+{
+	dev_dbg(host->dev, "ERR IRQ %x\n", intmask);
 
-	अगर (host->cmd) अणु
-		अगर (पूर्णांकmask & AU6601_INT_CMD_TIMEOUT_ERR)
+	if (host->cmd) {
+		if (intmask & AU6601_INT_CMD_TIMEOUT_ERR)
 			host->cmd->error = -ETIMEDOUT;
-		अन्यथा
+		else
 			host->cmd->error = -EILSEQ;
-	पूर्ण
+	}
 
-	अगर (host->data) अणु
-		अगर (पूर्णांकmask & AU6601_INT_DATA_TIMEOUT_ERR)
+	if (host->data) {
+		if (intmask & AU6601_INT_DATA_TIMEOUT_ERR)
 			host->data->error = -ETIMEDOUT;
-		अन्यथा
+		else
 			host->data->error = -EILSEQ;
 
 		host->data->bytes_xfered = 0;
-	पूर्ण
+	}
 
 	alcor_reset(host, AU6601_RESET_CMD | AU6601_RESET_DATA);
 	alcor_request_complete(host, 1);
-पूर्ण
+}
 
-अटल पूर्णांक alcor_cmd_irq_करोne(काष्ठा alcor_sdmmc_host *host, u32 पूर्णांकmask)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static int alcor_cmd_irq_done(struct alcor_sdmmc_host *host, u32 intmask)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
 
-	पूर्णांकmask &= AU6601_INT_CMD_END;
+	intmask &= AU6601_INT_CMD_END;
 
-	अगर (!पूर्णांकmask)
-		वापस true;
+	if (!intmask)
+		return true;
 
-	/* got CMD_END but no CMD is in progress, wake thपढ़ो an process the
+	/* got CMD_END but no CMD is in progress, wake thread an process the
 	 * error
 	 */
-	अगर (!host->cmd)
-		वापस false;
+	if (!host->cmd)
+		return false;
 
-	अगर (host->cmd->flags & MMC_RSP_PRESENT) अणु
-		काष्ठा mmc_command *cmd = host->cmd;
+	if (host->cmd->flags & MMC_RSP_PRESENT) {
+		struct mmc_command *cmd = host->cmd;
 
-		cmd->resp[0] = alcor_पढ़ो32be(priv, AU6601_REG_CMD_RSP0);
+		cmd->resp[0] = alcor_read32be(priv, AU6601_REG_CMD_RSP0);
 		dev_dbg(host->dev, "RSP0: 0x%04x\n", cmd->resp[0]);
-		अगर (host->cmd->flags & MMC_RSP_136) अणु
+		if (host->cmd->flags & MMC_RSP_136) {
 			cmd->resp[1] =
-				alcor_पढ़ो32be(priv, AU6601_REG_CMD_RSP1);
+				alcor_read32be(priv, AU6601_REG_CMD_RSP1);
 			cmd->resp[2] =
-				alcor_पढ़ो32be(priv, AU6601_REG_CMD_RSP2);
+				alcor_read32be(priv, AU6601_REG_CMD_RSP2);
 			cmd->resp[3] =
-				alcor_पढ़ो32be(priv, AU6601_REG_CMD_RSP3);
+				alcor_read32be(priv, AU6601_REG_CMD_RSP3);
 			dev_dbg(host->dev, "RSP1,2,3: 0x%04x 0x%04x 0x%04x\n",
 				cmd->resp[1], cmd->resp[2], cmd->resp[3]);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
 	host->cmd->error = 0;
 
 	/* Processed actual command. */
-	अगर (!host->data)
-		वापस false;
+	if (!host->data)
+		return false;
 
 	alcor_trigger_data_transfer(host);
-	host->cmd = शून्य;
-	वापस true;
-पूर्ण
+	host->cmd = NULL;
+	return true;
+}
 
-अटल व्योम alcor_cmd_irq_thपढ़ो(काष्ठा alcor_sdmmc_host *host, u32 पूर्णांकmask)
-अणु
-	पूर्णांकmask &= AU6601_INT_CMD_END;
+static void alcor_cmd_irq_thread(struct alcor_sdmmc_host *host, u32 intmask)
+{
+	intmask &= AU6601_INT_CMD_END;
 
-	अगर (!पूर्णांकmask)
-		वापस;
+	if (!intmask)
+		return;
 
-	अगर (!host->cmd && पूर्णांकmask & AU6601_INT_CMD_END) अणु
+	if (!host->cmd && intmask & AU6601_INT_CMD_END) {
 		dev_dbg(host->dev, "Got command interrupt 0x%08x even though no command operation was in progress.\n",
-			पूर्णांकmask);
-	पूर्ण
+			intmask);
+	}
 
 	/* Processed actual command. */
-	अगर (!host->data)
+	if (!host->data)
 		alcor_request_complete(host, 1);
-	अन्यथा
+	else
 		alcor_trigger_data_transfer(host);
-	host->cmd = शून्य;
-पूर्ण
+	host->cmd = NULL;
+}
 
-अटल पूर्णांक alcor_data_irq_करोne(काष्ठा alcor_sdmmc_host *host, u32 पूर्णांकmask)
-अणु
-	u32 पंचांगp;
+static int alcor_data_irq_done(struct alcor_sdmmc_host *host, u32 intmask)
+{
+	u32 tmp;
 
-	पूर्णांकmask &= AU6601_INT_DATA_MASK;
+	intmask &= AU6601_INT_DATA_MASK;
 
-	/* nothing here to करो */
-	अगर (!पूर्णांकmask)
-		वापस 1;
+	/* nothing here to do */
+	if (!intmask)
+		return 1;
 
 	/* we was too fast and got DATA_END after it was processed?
-	 * lets ignore it क्रम now.
+	 * lets ignore it for now.
 	 */
-	अगर (!host->data && पूर्णांकmask == AU6601_INT_DATA_END)
-		वापस 1;
+	if (!host->data && intmask == AU6601_INT_DATA_END)
+		return 1;
 
 	/* looks like an error, so lets handle it. */
-	अगर (!host->data)
-		वापस 0;
+	if (!host->data)
+		return 0;
 
-	पंचांगp = पूर्णांकmask & (AU6601_INT_READ_BUF_RDY | AU6601_INT_WRITE_BUF_RDY
+	tmp = intmask & (AU6601_INT_READ_BUF_RDY | AU6601_INT_WRITE_BUF_RDY
 			 | AU6601_INT_DMA_END);
-	चयन (पंचांगp) अणु
-	हाल 0:
-		अवरोध;
-	हाल AU6601_INT_READ_BUF_RDY:
+	switch (tmp) {
+	case 0:
+		break;
+	case AU6601_INT_READ_BUF_RDY:
 		alcor_trf_block_pio(host, true);
-		वापस 1;
-	हाल AU6601_INT_WRITE_BUF_RDY:
+		return 1;
+	case AU6601_INT_WRITE_BUF_RDY:
 		alcor_trf_block_pio(host, false);
-		वापस 1;
-	हाल AU6601_INT_DMA_END:
-		अगर (!host->sg_count)
-			अवरोध;
+		return 1;
+	case AU6601_INT_DMA_END:
+		if (!host->sg_count)
+			break;
 
 		alcor_data_set_dma(host);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(host->dev, "Got READ_BUF_RDY and WRITE_BUF_RDY at same time\n");
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (पूर्णांकmask & AU6601_INT_DATA_END) अणु
-		अगर (!host->dma_on && host->blocks) अणु
+	if (intmask & AU6601_INT_DATA_END) {
+		if (!host->dma_on && host->blocks) {
 			alcor_trigger_data_transfer(host);
-			वापस 1;
-		पूर्ण अन्यथा अणु
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 1;
+		} else {
+			return 0;
+		}
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल व्योम alcor_data_irq_thपढ़ो(काष्ठा alcor_sdmmc_host *host, u32 पूर्णांकmask)
-अणु
-	पूर्णांकmask &= AU6601_INT_DATA_MASK;
+static void alcor_data_irq_thread(struct alcor_sdmmc_host *host, u32 intmask)
+{
+	intmask &= AU6601_INT_DATA_MASK;
 
-	अगर (!पूर्णांकmask)
-		वापस;
+	if (!intmask)
+		return;
 
-	अगर (!host->data) अणु
+	if (!host->data) {
 		dev_dbg(host->dev, "Got data interrupt 0x%08x even though no data operation was in progress.\n",
-			पूर्णांकmask);
+			intmask);
 		alcor_reset(host, AU6601_RESET_DATA);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (alcor_data_irq_करोne(host, पूर्णांकmask))
-		वापस;
+	if (alcor_data_irq_done(host, intmask))
+		return;
 
-	अगर ((पूर्णांकmask & AU6601_INT_DATA_END) || !host->blocks ||
+	if ((intmask & AU6601_INT_DATA_END) || !host->blocks ||
 	    (host->dma_on && !host->sg_count))
 		alcor_finish_data(host);
-पूर्ण
+}
 
-अटल व्योम alcor_cd_irq(काष्ठा alcor_sdmmc_host *host, u32 पूर्णांकmask)
-अणु
+static void alcor_cd_irq(struct alcor_sdmmc_host *host, u32 intmask)
+{
 	dev_dbg(host->dev, "card %s\n",
-		पूर्णांकmask & AU6601_INT_CARD_REMOVE ? "removed" : "inserted");
+		intmask & AU6601_INT_CARD_REMOVE ? "removed" : "inserted");
 
-	अगर (host->mrq) अणु
+	if (host->mrq) {
 		dev_dbg(host->dev, "cancel all pending tasks.\n");
 
-		अगर (host->data)
+		if (host->data)
 			host->data->error = -ENOMEDIUM;
 
-		अगर (host->cmd)
+		if (host->cmd)
 			host->cmd->error = -ENOMEDIUM;
-		अन्यथा
+		else
 			host->mrq->cmd->error = -ENOMEDIUM;
 
 		alcor_request_complete(host, 1);
-	पूर्ण
+	}
 
-	mmc_detect_change(mmc_from_priv(host), msecs_to_jअगरfies(1));
-पूर्ण
+	mmc_detect_change(mmc_from_priv(host), msecs_to_jiffies(1));
+}
 
-अटल irqवापस_t alcor_irq_thपढ़ो(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा alcor_sdmmc_host *host = d;
-	irqवापस_t ret = IRQ_HANDLED;
-	u32 पूर्णांकmask, पंचांगp;
+static irqreturn_t alcor_irq_thread(int irq, void *d)
+{
+	struct alcor_sdmmc_host *host = d;
+	irqreturn_t ret = IRQ_HANDLED;
+	u32 intmask, tmp;
 
 	mutex_lock(&host->cmd_mutex);
 
-	पूर्णांकmask = host->irq_status_sd;
+	intmask = host->irq_status_sd;
 
 	/* some thing bad */
-	अगर (unlikely(!पूर्णांकmask || AU6601_INT_ALL_MASK == पूर्णांकmask)) अणु
-		dev_dbg(host->dev, "unexpected IRQ: 0x%04x\n", पूर्णांकmask);
+	if (unlikely(!intmask || AU6601_INT_ALL_MASK == intmask)) {
+		dev_dbg(host->dev, "unexpected IRQ: 0x%04x\n", intmask);
 		ret = IRQ_NONE;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	पंचांगp = पूर्णांकmask & (AU6601_INT_CMD_MASK | AU6601_INT_DATA_MASK);
-	अगर (पंचांगp) अणु
-		अगर (पंचांगp & AU6601_INT_ERROR_MASK)
-			alcor_err_irq(host, पंचांगp);
-		अन्यथा अणु
-			alcor_cmd_irq_thपढ़ो(host, पंचांगp);
-			alcor_data_irq_thपढ़ो(host, पंचांगp);
-		पूर्ण
-		पूर्णांकmask &= ~(AU6601_INT_CMD_MASK | AU6601_INT_DATA_MASK);
-	पूर्ण
+	tmp = intmask & (AU6601_INT_CMD_MASK | AU6601_INT_DATA_MASK);
+	if (tmp) {
+		if (tmp & AU6601_INT_ERROR_MASK)
+			alcor_err_irq(host, tmp);
+		else {
+			alcor_cmd_irq_thread(host, tmp);
+			alcor_data_irq_thread(host, tmp);
+		}
+		intmask &= ~(AU6601_INT_CMD_MASK | AU6601_INT_DATA_MASK);
+	}
 
-	अगर (पूर्णांकmask & (AU6601_INT_CARD_INSERT | AU6601_INT_CARD_REMOVE)) अणु
-		alcor_cd_irq(host, पूर्णांकmask);
-		पूर्णांकmask &= ~(AU6601_INT_CARD_INSERT | AU6601_INT_CARD_REMOVE);
-	पूर्ण
+	if (intmask & (AU6601_INT_CARD_INSERT | AU6601_INT_CARD_REMOVE)) {
+		alcor_cd_irq(host, intmask);
+		intmask &= ~(AU6601_INT_CARD_INSERT | AU6601_INT_CARD_REMOVE);
+	}
 
-	अगर (पूर्णांकmask & AU6601_INT_OVER_CURRENT_ERR) अणु
+	if (intmask & AU6601_INT_OVER_CURRENT_ERR) {
 		dev_warn(host->dev,
 			 "warning: over current detected!\n");
-		पूर्णांकmask &= ~AU6601_INT_OVER_CURRENT_ERR;
-	पूर्ण
+		intmask &= ~AU6601_INT_OVER_CURRENT_ERR;
+	}
 
-	अगर (पूर्णांकmask)
-		dev_dbg(host->dev, "got not handled IRQ: 0x%04x\n", पूर्णांकmask);
+	if (intmask)
+		dev_dbg(host->dev, "got not handled IRQ: 0x%04x\n", intmask);
 
-निकास:
+exit:
 	mutex_unlock(&host->cmd_mutex);
 	alcor_unmask_sd_irqs(host);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल irqवापस_t alcor_irq(पूर्णांक irq, व्योम *d)
-अणु
-	काष्ठा alcor_sdmmc_host *host = d;
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	u32 status, पंचांगp;
-	irqवापस_t ret;
-	पूर्णांक cmd_करोne, data_करोne;
+static irqreturn_t alcor_irq(int irq, void *d)
+{
+	struct alcor_sdmmc_host *host = d;
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	u32 status, tmp;
+	irqreturn_t ret;
+	int cmd_done, data_done;
 
-	status = alcor_पढ़ो32(priv, AU6601_REG_INT_STATUS);
-	अगर (!status)
-		वापस IRQ_NONE;
+	status = alcor_read32(priv, AU6601_REG_INT_STATUS);
+	if (!status)
+		return IRQ_NONE;
 
-	alcor_ग_लिखो32(priv, status, AU6601_REG_INT_STATUS);
+	alcor_write32(priv, status, AU6601_REG_INT_STATUS);
 
-	पंचांगp = status & (AU6601_INT_READ_BUF_RDY | AU6601_INT_WRITE_BUF_RDY
+	tmp = status & (AU6601_INT_READ_BUF_RDY | AU6601_INT_WRITE_BUF_RDY
 			| AU6601_INT_DATA_END | AU6601_INT_DMA_END
 			| AU6601_INT_CMD_END);
-	अगर (पंचांगp == status) अणु
-		cmd_करोne = alcor_cmd_irq_करोne(host, पंचांगp);
-		data_करोne = alcor_data_irq_करोne(host, पंचांगp);
-		/* use fast path क्रम simple tasks */
-		अगर (cmd_करोne && data_करोne) अणु
+	if (tmp == status) {
+		cmd_done = alcor_cmd_irq_done(host, tmp);
+		data_done = alcor_data_irq_done(host, tmp);
+		/* use fast path for simple tasks */
+		if (cmd_done && data_done) {
 			ret = IRQ_HANDLED;
-			जाओ alcor_irq_करोne;
-		पूर्ण
-	पूर्ण
+			goto alcor_irq_done;
+		}
+	}
 
 	host->irq_status_sd = status;
 	ret = IRQ_WAKE_THREAD;
 	alcor_mask_sd_irqs(host);
-alcor_irq_करोne:
-	वापस ret;
-पूर्ण
+alcor_irq_done:
+	return ret;
+}
 
-अटल व्योम alcor_set_घड़ी(काष्ठा alcor_sdmmc_host *host, अचिन्हित पूर्णांक घड़ी)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	पूर्णांक i, dअगरf = 0x7fffffff, पंचांगp_घड़ी = 0;
+static void alcor_set_clock(struct alcor_sdmmc_host *host, unsigned int clock)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	int i, diff = 0x7fffffff, tmp_clock = 0;
 	u16 clk_src = 0;
-	u8 clk_भाग = 0;
+	u8 clk_div = 0;
 
-	अगर (घड़ी == 0) अणु
-		alcor_ग_लिखो16(priv, 0, AU6601_CLK_SELECT);
-		वापस;
-	पूर्ण
+	if (clock == 0) {
+		alcor_write16(priv, 0, AU6601_CLK_SELECT);
+		return;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(alcor_pll_cfg); i++) अणु
-		अचिन्हित पूर्णांक पंचांगp_भाग, पंचांगp_dअगरf;
-		स्थिर काष्ठा alcor_pll_conf *cfg = &alcor_pll_cfg[i];
+	for (i = 0; i < ARRAY_SIZE(alcor_pll_cfg); i++) {
+		unsigned int tmp_div, tmp_diff;
+		const struct alcor_pll_conf *cfg = &alcor_pll_cfg[i];
 
-		पंचांगp_भाग = DIV_ROUND_UP(cfg->clk_src_freq, घड़ी);
-		अगर (cfg->min_भाग > पंचांगp_भाग || पंचांगp_भाग > cfg->max_भाग)
-			जारी;
+		tmp_div = DIV_ROUND_UP(cfg->clk_src_freq, clock);
+		if (cfg->min_div > tmp_div || tmp_div > cfg->max_div)
+			continue;
 
-		पंचांगp_घड़ी = DIV_ROUND_UP(cfg->clk_src_freq, पंचांगp_भाग);
-		पंचांगp_dअगरf = असल(घड़ी - पंचांगp_घड़ी);
+		tmp_clock = DIV_ROUND_UP(cfg->clk_src_freq, tmp_div);
+		tmp_diff = abs(clock - tmp_clock);
 
-		अगर (पंचांगp_dअगरf < dअगरf) अणु
-			dअगरf = पंचांगp_dअगरf;
+		if (tmp_diff < diff) {
+			diff = tmp_diff;
 			clk_src = cfg->clk_src_reg;
-			clk_भाग = पंचांगp_भाग;
-		पूर्ण
-	पूर्ण
+			clk_div = tmp_div;
+		}
+	}
 
-	clk_src |= ((clk_भाग - 1) << 8);
+	clk_src |= ((clk_div - 1) << 8);
 	clk_src |= AU6601_CLK_ENABLE;
 
 	dev_dbg(host->dev, "set freq %d cal freq %d, use div %d, mod %x\n",
-			घड़ी, पंचांगp_घड़ी, clk_भाग, clk_src);
+			clock, tmp_clock, clk_div, clk_src);
 
-	alcor_ग_लिखो16(priv, clk_src, AU6601_CLK_SELECT);
+	alcor_write16(priv, clk_src, AU6601_CLK_SELECT);
 
-पूर्ण
+}
 
-अटल व्योम alcor_set_timing(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
+static void alcor_set_timing(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
 
-	अगर (ios->timing == MMC_TIMING_LEGACY) अणु
+	if (ios->timing == MMC_TIMING_LEGACY) {
 		alcor_rmw8(host, AU6601_CLK_DELAY,
 			    AU6601_CLK_POSITIVE_EDGE_ALL, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		alcor_rmw8(host, AU6601_CLK_DELAY,
 			    0, AU6601_CLK_POSITIVE_EDGE_ALL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alcor_set_bus_width(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static void alcor_set_bus_width(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct alcor_pci_priv *priv = host->alcor_pci;
 
-	अगर (ios->bus_width == MMC_BUS_WIDTH_1) अणु
-		alcor_ग_लिखो8(priv, 0, AU6601_REG_BUS_CTRL);
-	पूर्ण अन्यथा अगर (ios->bus_width == MMC_BUS_WIDTH_4) अणु
-		alcor_ग_लिखो8(priv, AU6601_BUS_WIDTH_4BIT,
+	if (ios->bus_width == MMC_BUS_WIDTH_1) {
+		alcor_write8(priv, 0, AU6601_REG_BUS_CTRL);
+	} else if (ios->bus_width == MMC_BUS_WIDTH_4) {
+		alcor_write8(priv, AU6601_BUS_WIDTH_4BIT,
 			      AU6601_REG_BUS_CTRL);
-	पूर्ण अन्यथा
+	} else
 		dev_err(host->dev, "Unknown BUS mode\n");
 
-पूर्ण
+}
 
-अटल पूर्णांक alcor_card_busy(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static int alcor_card_busy(struct mmc_host *mmc)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct alcor_pci_priv *priv = host->alcor_pci;
 	u8 status;
 
 	/* Check whether dat[0:3] low */
-	status = alcor_पढ़ो8(priv, AU6601_DATA_PIN_STATE);
+	status = alcor_read8(priv, AU6601_DATA_PIN_STATE);
 
-	वापस !(status & AU6601_BUS_STAT_DAT_MASK);
-पूर्ण
+	return !(status & AU6601_BUS_STAT_DAT_MASK);
+}
 
-अटल पूर्णांक alcor_get_cd(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static int alcor_get_cd(struct mmc_host *mmc)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct alcor_pci_priv *priv = host->alcor_pci;
 	u8 detect;
 
-	detect = alcor_पढ़ो8(priv, AU6601_DETECT_STATUS)
+	detect = alcor_read8(priv, AU6601_DETECT_STATUS)
 		& AU6601_DETECT_STATUS_M;
-	/* check अगर card is present then send command and data */
-	वापस (detect == AU6601_SD_DETECTED);
-पूर्ण
+	/* check if card is present then send command and data */
+	return (detect == AU6601_SD_DETECTED);
+}
 
-अटल पूर्णांक alcor_get_ro(काष्ठा mmc_host *mmc)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static int alcor_get_ro(struct mmc_host *mmc)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct alcor_pci_priv *priv = host->alcor_pci;
 	u8 status;
 
-	/* get ग_लिखो protect pin status */
-	status = alcor_पढ़ो8(priv, AU6601_INTERFACE_MODE_CTRL);
+	/* get write protect pin status */
+	status = alcor_read8(priv, AU6601_INTERFACE_MODE_CTRL);
 
-	वापस !!(status & AU6601_SD_CARD_WP);
-पूर्ण
+	return !!(status & AU6601_SD_CARD_WP);
+}
 
-अटल व्योम alcor_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
+static void alcor_request(struct mmc_host *mmc, struct mmc_request *mrq)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
 
 	mutex_lock(&host->cmd_mutex);
 
 	host->mrq = mrq;
 
-	/* check अगर card is present then send command and data */
-	अगर (alcor_get_cd(mmc))
+	/* check if card is present then send command and data */
+	if (alcor_get_cd(mmc))
 		alcor_send_cmd(host, mrq->cmd, true);
-	अन्यथा अणु
+	else {
 		mrq->cmd->error = -ENOMEDIUM;
 		alcor_request_complete(host, 1);
-	पूर्ण
+	}
 
 	mutex_unlock(&host->cmd_mutex);
-पूर्ण
+}
 
-अटल व्योम alcor_pre_req(काष्ठा mmc_host *mmc,
-			   काष्ठा mmc_request *mrq)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा mmc_data *data = mrq->data;
-	काष्ठा mmc_command *cmd = mrq->cmd;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक i, sg_len;
+static void alcor_pre_req(struct mmc_host *mmc,
+			   struct mmc_request *mrq)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct mmc_data *data = mrq->data;
+	struct mmc_command *cmd = mrq->cmd;
+	struct scatterlist *sg;
+	unsigned int i, sg_len;
 
-	अगर (!data || !cmd)
-		वापस;
+	if (!data || !cmd)
+		return;
 
 	data->host_cookie = COOKIE_UNMAPPED;
 
 	/* FIXME: looks like the DMA engine works only with CMD18 */
-	अगर (cmd->opcode != MMC_READ_MULTIPLE_BLOCK
+	if (cmd->opcode != MMC_READ_MULTIPLE_BLOCK
 			&& cmd->opcode != MMC_WRITE_MULTIPLE_BLOCK)
-		वापस;
+		return;
 	/*
-	 * We करोn't करो DMA on "complex" transfers, i.e. with
+	 * We don't do DMA on "complex" transfers, i.e. with
 	 * non-word-aligned buffers or lengths. A future improvement
 	 * could be made to use temporary DMA bounce-buffers when these
 	 * requirements are not met.
 	 *
-	 * Also, we करोn't bother with all the DMA setup overhead क्रम
-	 * लघु transfers.
+	 * Also, we don't bother with all the DMA setup overhead for
+	 * short transfers.
 	 */
-	अगर (data->blocks * data->blksz < AU6601_MAX_DMA_BLOCK_SIZE)
-		वापस;
+	if (data->blocks * data->blksz < AU6601_MAX_DMA_BLOCK_SIZE)
+		return;
 
-	अगर (data->blksz & 3)
-		वापस;
+	if (data->blksz & 3)
+		return;
 
-	क्रम_each_sg(data->sg, sg, data->sg_len, i) अणु
-		अगर (sg->length != AU6601_MAX_DMA_BLOCK_SIZE)
-			वापस;
-		अगर (sg->offset != 0)
-			वापस;
-	पूर्ण
+	for_each_sg(data->sg, sg, data->sg_len, i) {
+		if (sg->length != AU6601_MAX_DMA_BLOCK_SIZE)
+			return;
+		if (sg->offset != 0)
+			return;
+	}
 
-	/* This data might be unmapped at this समय */
+	/* This data might be unmapped at this time */
 
 	sg_len = dma_map_sg(host->dev, data->sg, data->sg_len,
 			    mmc_get_dma_dir(data));
-	अगर (sg_len)
+	if (sg_len)
 		data->host_cookie = COOKIE_MAPPED;
 
 	data->sg_count = sg_len;
-पूर्ण
+}
 
-अटल व्योम alcor_post_req(काष्ठा mmc_host *mmc,
-			    काष्ठा mmc_request *mrq,
-			    पूर्णांक err)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा mmc_data *data = mrq->data;
+static void alcor_post_req(struct mmc_host *mmc,
+			    struct mmc_request *mrq,
+			    int err)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct mmc_data *data = mrq->data;
 
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
-	अगर (data->host_cookie == COOKIE_MAPPED) अणु
+	if (data->host_cookie == COOKIE_MAPPED) {
 		dma_unmap_sg(host->dev,
 			     data->sg,
 			     data->sg_len,
 			     mmc_get_dma_dir(data));
-	पूर्ण
+	}
 
 	data->host_cookie = COOKIE_UNMAPPED;
-पूर्ण
+}
 
-अटल व्योम alcor_set_घातer_mode(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static void alcor_set_power_mode(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
+	struct alcor_pci_priv *priv = host->alcor_pci;
 
-	चयन (ios->घातer_mode) अणु
-	हाल MMC_POWER_OFF:
-		alcor_set_घड़ी(host, ios->घड़ी);
+	switch (ios->power_mode) {
+	case MMC_POWER_OFF:
+		alcor_set_clock(host, ios->clock);
 		/* set all pins to input */
-		alcor_ग_लिखो8(priv, 0, AU6601_OUTPUT_ENABLE);
+		alcor_write8(priv, 0, AU6601_OUTPUT_ENABLE);
 		/* turn of VDD */
-		alcor_ग_लिखो8(priv, 0, AU6601_POWER_CONTROL);
-		अवरोध;
-	हाल MMC_POWER_UP:
-		अवरोध;
-	हाल MMC_POWER_ON:
+		alcor_write8(priv, 0, AU6601_POWER_CONTROL);
+		break;
+	case MMC_POWER_UP:
+		break;
+	case MMC_POWER_ON:
 		/* This is most trickiest part. The order and timings of
-		 * inकाष्ठाions seems to play important role. Any changes may
-		 * confuse पूर्णांकernal state engine अगर this HW.
-		 * FIXME: If we will ever get access to करोcumentation, then this
+		 * instructions seems to play important role. Any changes may
+		 * confuse internal state engine if this HW.
+		 * FIXME: If we will ever get access to documentation, then this
 		 * part should be reviewed again.
 		 */
 
 		/* enable SD card mode */
-		alcor_ग_लिखो8(priv, AU6601_SD_CARD,
+		alcor_write8(priv, AU6601_SD_CARD,
 			      AU6601_ACTIVE_CTRL);
-		/* set संकेत voltage to 3.3V */
-		alcor_ग_लिखो8(priv, 0, AU6601_OPT);
-		/* no करोcumentation about clk delay, क्रम now just try to mimic
+		/* set signal voltage to 3.3V */
+		alcor_write8(priv, 0, AU6601_OPT);
+		/* no documentation about clk delay, for now just try to mimic
 		 * original driver.
 		 */
-		alcor_ग_लिखो8(priv, 0x20, AU6601_CLK_DELAY);
+		alcor_write8(priv, 0x20, AU6601_CLK_DELAY);
 		/* set BUS width to 1 bit */
-		alcor_ग_लिखो8(priv, 0, AU6601_REG_BUS_CTRL);
-		/* set CLK first समय */
-		alcor_set_घड़ी(host, ios->घड़ी);
-		/* घातer on VDD */
-		alcor_ग_लिखो8(priv, AU6601_SD_CARD,
+		alcor_write8(priv, 0, AU6601_REG_BUS_CTRL);
+		/* set CLK first time */
+		alcor_set_clock(host, ios->clock);
+		/* power on VDD */
+		alcor_write8(priv, AU6601_SD_CARD,
 			      AU6601_POWER_CONTROL);
-		/* रुको until the CLK will get stable */
+		/* wait until the CLK will get stable */
 		mdelay(20);
 		/* set CLK again, mimic original driver. */
-		alcor_set_घड़ी(host, ios->घड़ी);
+		alcor_set_clock(host, ios->clock);
 
 		/* enable output */
-		alcor_ग_लिखो8(priv, AU6601_SD_CARD,
+		alcor_write8(priv, AU6601_SD_CARD,
 			      AU6601_OUTPUT_ENABLE);
 		/* The clk will not work on au6621. We need to trigger data
 		 * transfer.
 		 */
-		alcor_ग_लिखो8(priv, AU6601_DATA_WRITE,
+		alcor_write8(priv, AU6601_DATA_WRITE,
 			      AU6601_DATA_XFER_CTRL);
-		/* configure समयout. Not clear what exactly it means. */
-		alcor_ग_लिखो8(priv, 0x7d, AU6601_TIME_OUT_CTRL);
+		/* configure timeout. Not clear what exactly it means. */
+		alcor_write8(priv, 0x7d, AU6601_TIME_OUT_CTRL);
 		mdelay(100);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(host->dev, "Unknown power parameter\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम alcor_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
+static void alcor_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
 
 	mutex_lock(&host->cmd_mutex);
 
 	dev_dbg(host->dev, "set ios. bus width: %x, power mode: %x\n",
-		ios->bus_width, ios->घातer_mode);
+		ios->bus_width, ios->power_mode);
 
-	अगर (ios->घातer_mode != host->cur_घातer_mode) अणु
-		alcor_set_घातer_mode(mmc, ios);
-		host->cur_घातer_mode = ios->घातer_mode;
-	पूर्ण अन्यथा अणु
+	if (ios->power_mode != host->cur_power_mode) {
+		alcor_set_power_mode(mmc, ios);
+		host->cur_power_mode = ios->power_mode;
+	} else {
 		alcor_set_timing(mmc, ios);
 		alcor_set_bus_width(mmc, ios);
-		alcor_set_घड़ी(host, ios->घड़ी);
-	पूर्ण
+		alcor_set_clock(host, ios->clock);
+	}
 
 	mutex_unlock(&host->cmd_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक alcor_संकेत_voltage_चयन(काष्ठा mmc_host *mmc,
-				       काष्ठा mmc_ios *ios)
-अणु
-	काष्ठा alcor_sdmmc_host *host = mmc_priv(mmc);
+static int alcor_signal_voltage_switch(struct mmc_host *mmc,
+				       struct mmc_ios *ios)
+{
+	struct alcor_sdmmc_host *host = mmc_priv(mmc);
 
 	mutex_lock(&host->cmd_mutex);
 
-	चयन (ios->संकेत_voltage) अणु
-	हाल MMC_SIGNAL_VOLTAGE_330:
+	switch (ios->signal_voltage) {
+	case MMC_SIGNAL_VOLTAGE_330:
 		alcor_rmw8(host, AU6601_OPT, AU6601_OPT_SD_18V, 0);
-		अवरोध;
-	हाल MMC_SIGNAL_VOLTAGE_180:
+		break;
+	case MMC_SIGNAL_VOLTAGE_180:
 		alcor_rmw8(host, AU6601_OPT, 0, AU6601_OPT_SD_18V);
-		अवरोध;
-	शेष:
-		/* No संकेत voltage चयन required */
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		/* No signal voltage switch required */
+		break;
+	}
 
 	mutex_unlock(&host->cmd_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mmc_host_ops alcor_sdc_ops = अणु
+static const struct mmc_host_ops alcor_sdc_ops = {
 	.card_busy	= alcor_card_busy,
 	.get_cd		= alcor_get_cd,
 	.get_ro		= alcor_get_ro,
@@ -956,99 +955,99 @@ alcor_irq_करोne:
 	.pre_req	= alcor_pre_req,
 	.request	= alcor_request,
 	.set_ios	= alcor_set_ios,
-	.start_संकेत_voltage_चयन = alcor_संकेत_voltage_चयन,
-पूर्ण;
+	.start_signal_voltage_switch = alcor_signal_voltage_switch,
+};
 
-अटल व्योम alcor_समयout_समयr(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *d = to_delayed_work(work);
-	काष्ठा alcor_sdmmc_host *host = container_of(d, काष्ठा alcor_sdmmc_host,
-						समयout_work);
+static void alcor_timeout_timer(struct work_struct *work)
+{
+	struct delayed_work *d = to_delayed_work(work);
+	struct alcor_sdmmc_host *host = container_of(d, struct alcor_sdmmc_host,
+						timeout_work);
 	mutex_lock(&host->cmd_mutex);
 
 	dev_dbg(host->dev, "triggered timeout\n");
-	अगर (host->mrq) अणु
+	if (host->mrq) {
 		dev_err(host->dev, "Timeout waiting for hardware interrupt.\n");
 
-		अगर (host->data) अणु
+		if (host->data) {
 			host->data->error = -ETIMEDOUT;
-		पूर्ण अन्यथा अणु
-			अगर (host->cmd)
+		} else {
+			if (host->cmd)
 				host->cmd->error = -ETIMEDOUT;
-			अन्यथा
+			else
 				host->mrq->cmd->error = -ETIMEDOUT;
-		पूर्ण
+		}
 
 		alcor_reset(host, AU6601_RESET_CMD | AU6601_RESET_DATA);
 		alcor_request_complete(host, 0);
-	पूर्ण
+	}
 
 	mutex_unlock(&host->cmd_mutex);
-पूर्ण
+}
 
-अटल व्योम alcor_hw_init(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
-	काष्ठा alcor_dev_cfg *cfg = priv->cfg;
+static void alcor_hw_init(struct alcor_sdmmc_host *host)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
+	struct alcor_dev_cfg *cfg = priv->cfg;
 
 	/* FIXME: This part is a mimics HW init of original driver.
-	 * If we will ever get access to करोcumentation, then this part
+	 * If we will ever get access to documentation, then this part
 	 * should be reviewed again.
 	 */
 
 	/* reset command state engine */
 	alcor_reset(host, AU6601_RESET_CMD);
 
-	alcor_ग_लिखो8(priv, 0, AU6601_DMA_BOUNDARY);
+	alcor_write8(priv, 0, AU6601_DMA_BOUNDARY);
 	/* enable sd card mode */
-	alcor_ग_लिखो8(priv, AU6601_SD_CARD, AU6601_ACTIVE_CTRL);
+	alcor_write8(priv, AU6601_SD_CARD, AU6601_ACTIVE_CTRL);
 
 	/* set BUS width to 1 bit */
-	alcor_ग_लिखो8(priv, 0, AU6601_REG_BUS_CTRL);
+	alcor_write8(priv, 0, AU6601_REG_BUS_CTRL);
 
 	/* reset data state engine */
 	alcor_reset(host, AU6601_RESET_DATA);
-	/* Not sure अगर a vooकरोo with AU6601_DMA_BOUNDARY is really needed */
-	alcor_ग_लिखो8(priv, 0, AU6601_DMA_BOUNDARY);
+	/* Not sure if a voodoo with AU6601_DMA_BOUNDARY is really needed */
+	alcor_write8(priv, 0, AU6601_DMA_BOUNDARY);
 
-	alcor_ग_लिखो8(priv, 0, AU6601_INTERFACE_MODE_CTRL);
-	/* not clear what we are करोing here. */
-	alcor_ग_लिखो8(priv, 0x44, AU6601_PAD_DRIVE0);
-	alcor_ग_लिखो8(priv, 0x44, AU6601_PAD_DRIVE1);
-	alcor_ग_लिखो8(priv, 0x00, AU6601_PAD_DRIVE2);
+	alcor_write8(priv, 0, AU6601_INTERFACE_MODE_CTRL);
+	/* not clear what we are doing here. */
+	alcor_write8(priv, 0x44, AU6601_PAD_DRIVE0);
+	alcor_write8(priv, 0x44, AU6601_PAD_DRIVE1);
+	alcor_write8(priv, 0x00, AU6601_PAD_DRIVE2);
 
-	/* क्रम 6601 - dma_boundary; क्रम 6621 - dma_page_cnt
-	 * exact meaning of this रेजिस्टर is not clear.
+	/* for 6601 - dma_boundary; for 6621 - dma_page_cnt
+	 * exact meaning of this register is not clear.
 	 */
-	alcor_ग_लिखो8(priv, cfg->dma, AU6601_DMA_BOUNDARY);
+	alcor_write8(priv, cfg->dma, AU6601_DMA_BOUNDARY);
 
 	/* make sure all pins are set to input and VDD is off */
-	alcor_ग_लिखो8(priv, 0, AU6601_OUTPUT_ENABLE);
-	alcor_ग_लिखो8(priv, 0, AU6601_POWER_CONTROL);
+	alcor_write8(priv, 0, AU6601_OUTPUT_ENABLE);
+	alcor_write8(priv, 0, AU6601_POWER_CONTROL);
 
-	alcor_ग_लिखो8(priv, AU6601_DETECT_EN, AU6601_DETECT_STATUS);
+	alcor_write8(priv, AU6601_DETECT_EN, AU6601_DETECT_STATUS);
 	/* now we should be safe to enable IRQs */
 	alcor_unmask_sd_irqs(host);
-पूर्ण
+}
 
-अटल व्योम alcor_hw_uninit(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा alcor_pci_priv *priv = host->alcor_pci;
+static void alcor_hw_uninit(struct alcor_sdmmc_host *host)
+{
+	struct alcor_pci_priv *priv = host->alcor_pci;
 
 	alcor_mask_sd_irqs(host);
 	alcor_reset(host, AU6601_RESET_CMD | AU6601_RESET_DATA);
 
-	alcor_ग_लिखो8(priv, 0, AU6601_DETECT_STATUS);
+	alcor_write8(priv, 0, AU6601_DETECT_STATUS);
 
-	alcor_ग_लिखो8(priv, 0, AU6601_OUTPUT_ENABLE);
-	alcor_ग_लिखो8(priv, 0, AU6601_POWER_CONTROL);
+	alcor_write8(priv, 0, AU6601_OUTPUT_ENABLE);
+	alcor_write8(priv, 0, AU6601_POWER_CONTROL);
 
-	alcor_ग_लिखो8(priv, 0, AU6601_OPT);
-पूर्ण
+	alcor_write8(priv, 0, AU6601_OPT);
+}
 
-अटल व्योम alcor_init_mmc(काष्ठा alcor_sdmmc_host *host)
-अणु
-	काष्ठा mmc_host *mmc = mmc_from_priv(host);
+static void alcor_init_mmc(struct alcor_sdmmc_host *host)
+{
+	struct mmc_host *mmc = mmc_from_priv(host);
 
 	mmc->f_min = AU6601_MIN_CLOCK;
 	mmc->f_max = AU6601_MAX_CLOCK;
@@ -1059,131 +1058,131 @@ alcor_irq_करोne:
 	mmc->caps2 = MMC_CAP2_NO_SDIO;
 	mmc->ops = &alcor_sdc_ops;
 
-	/* The hardware करोes DMA data transfer of 4096 bytes to/from a single
+	/* The hardware does DMA data transfer of 4096 bytes to/from a single
 	 * buffer address. Scatterlists are not supported at the hardware
 	 * level, however we can work with them at the driver level,
 	 * provided that each segment is exactly 4096 bytes in size.
-	 * Upon DMA completion of a single segment (संकेतled via IRQ), we
+	 * Upon DMA completion of a single segment (signalled via IRQ), we
 	 * immediately proceed to transfer the next segment from the
 	 * scatterlist.
 	 *
 	 * The overall request is limited to 240 sectors, matching the
-	 * original venकरोr driver.
+	 * original vendor driver.
 	 */
 	mmc->max_segs = AU6601_MAX_DMA_SEGMENTS;
 	mmc->max_seg_size = AU6601_MAX_DMA_BLOCK_SIZE;
 	mmc->max_blk_count = 240;
 	mmc->max_req_size = mmc->max_blk_count * mmc->max_blk_size;
 	dma_set_max_seg_size(host->dev, mmc->max_seg_size);
-पूर्ण
+}
 
-अटल पूर्णांक alcor_pci_sdmmc_drv_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा alcor_pci_priv *priv = pdev->dev.platक्रमm_data;
-	काष्ठा mmc_host *mmc;
-	काष्ठा alcor_sdmmc_host *host;
-	पूर्णांक ret;
+static int alcor_pci_sdmmc_drv_probe(struct platform_device *pdev)
+{
+	struct alcor_pci_priv *priv = pdev->dev.platform_data;
+	struct mmc_host *mmc;
+	struct alcor_sdmmc_host *host;
+	int ret;
 
-	mmc = mmc_alloc_host(माप(*host), &pdev->dev);
-	अगर (!mmc) अणु
+	mmc = mmc_alloc_host(sizeof(*host), &pdev->dev);
+	if (!mmc) {
 		dev_err(&pdev->dev, "Can't allocate MMC\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	host = mmc_priv(mmc);
 	host->dev = &pdev->dev;
-	host->cur_घातer_mode = MMC_POWER_UNDEFINED;
+	host->cur_power_mode = MMC_POWER_UNDEFINED;
 	host->alcor_pci = priv;
 
 	/* make sure irqs are disabled */
-	alcor_ग_लिखो32(priv, 0, AU6601_REG_INT_ENABLE);
-	alcor_ग_लिखो32(priv, 0, AU6601_MS_INT_ENABLE);
+	alcor_write32(priv, 0, AU6601_REG_INT_ENABLE);
+	alcor_write32(priv, 0, AU6601_MS_INT_ENABLE);
 
-	ret = devm_request_thपढ़ोed_irq(&pdev->dev, priv->irq,
-			alcor_irq, alcor_irq_thपढ़ो, IRQF_SHARED,
+	ret = devm_request_threaded_irq(&pdev->dev, priv->irq,
+			alcor_irq, alcor_irq_thread, IRQF_SHARED,
 			DRV_NAME_ALCOR_PCI_SDMMC, host);
 
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev, "Failed to get irq for data line\n");
-		जाओ मुक्त_host;
-	पूर्ण
+		goto free_host;
+	}
 
 	mutex_init(&host->cmd_mutex);
-	INIT_DELAYED_WORK(&host->समयout_work, alcor_समयout_समयr);
+	INIT_DELAYED_WORK(&host->timeout_work, alcor_timeout_timer);
 
 	alcor_init_mmc(host);
 	alcor_hw_init(host);
 
 	dev_set_drvdata(&pdev->dev, host);
 	mmc_add_host(mmc);
-	वापस 0;
+	return 0;
 
-मुक्त_host:
-	mmc_मुक्त_host(mmc);
-	वापस ret;
-पूर्ण
+free_host:
+	mmc_free_host(mmc);
+	return ret;
+}
 
-अटल पूर्णांक alcor_pci_sdmmc_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा alcor_sdmmc_host *host = dev_get_drvdata(&pdev->dev);
-	काष्ठा mmc_host *mmc = mmc_from_priv(host);
+static int alcor_pci_sdmmc_drv_remove(struct platform_device *pdev)
+{
+	struct alcor_sdmmc_host *host = dev_get_drvdata(&pdev->dev);
+	struct mmc_host *mmc = mmc_from_priv(host);
 
-	अगर (cancel_delayed_work_sync(&host->समयout_work))
+	if (cancel_delayed_work_sync(&host->timeout_work))
 		alcor_request_complete(host, 0);
 
 	alcor_hw_uninit(host);
-	mmc_हटाओ_host(mmc);
-	mmc_मुक्त_host(mmc);
+	mmc_remove_host(mmc);
+	mmc_free_host(mmc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक alcor_pci_sdmmc_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा alcor_sdmmc_host *host = dev_get_drvdata(dev);
+#ifdef CONFIG_PM_SLEEP
+static int alcor_pci_sdmmc_suspend(struct device *dev)
+{
+	struct alcor_sdmmc_host *host = dev_get_drvdata(dev);
 
-	अगर (cancel_delayed_work_sync(&host->समयout_work))
+	if (cancel_delayed_work_sync(&host->timeout_work))
 		alcor_request_complete(host, 0);
 
 	alcor_hw_uninit(host);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alcor_pci_sdmmc_resume(काष्ठा device *dev)
-अणु
-	काष्ठा alcor_sdmmc_host *host = dev_get_drvdata(dev);
+static int alcor_pci_sdmmc_resume(struct device *dev)
+{
+	struct alcor_sdmmc_host *host = dev_get_drvdata(dev);
 
 	alcor_hw_init(host);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+	return 0;
+}
+#endif /* CONFIG_PM_SLEEP */
 
-अटल SIMPLE_DEV_PM_OPS(alcor_mmc_pm_ops, alcor_pci_sdmmc_suspend,
+static SIMPLE_DEV_PM_OPS(alcor_mmc_pm_ops, alcor_pci_sdmmc_suspend,
 			 alcor_pci_sdmmc_resume);
 
-अटल स्थिर काष्ठा platक्रमm_device_id alcor_pci_sdmmc_ids[] = अणु
-	अणु
+static const struct platform_device_id alcor_pci_sdmmc_ids[] = {
+	{
 		.name = DRV_NAME_ALCOR_PCI_SDMMC,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, alcor_pci_sdmmc_ids);
+	}
+};
+MODULE_DEVICE_TABLE(platform, alcor_pci_sdmmc_ids);
 
-अटल काष्ठा platक्रमm_driver alcor_pci_sdmmc_driver = अणु
+static struct platform_driver alcor_pci_sdmmc_driver = {
 	.probe		= alcor_pci_sdmmc_drv_probe,
-	.हटाओ		= alcor_pci_sdmmc_drv_हटाओ,
+	.remove		= alcor_pci_sdmmc_drv_remove,
 	.id_table	= alcor_pci_sdmmc_ids,
-	.driver		= अणु
+	.driver		= {
 		.name	= DRV_NAME_ALCOR_PCI_SDMMC,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.pm	= &alcor_mmc_pm_ops
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(alcor_pci_sdmmc_driver);
+	},
+};
+module_platform_driver(alcor_pci_sdmmc_driver);
 
 MODULE_AUTHOR("Oleksij Rempel <linux@rempel-privat.de>");
 MODULE_DESCRIPTION("PCI driver for Alcor Micro AU6601 Secure Digital Host Controller Interface");

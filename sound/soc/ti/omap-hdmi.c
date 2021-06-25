@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * omap-hdmi-audio.c -- OMAP4+ DSS HDMI audio support library
  *
@@ -8,82 +7,82 @@
  * Author: Jyri Sarha <jsarha@ti.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <sound/soc.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/dmaengine_pcm.h>
-#समावेश <uapi/sound/asound.h>
-#समावेश <sound/asoundef.h>
-#समावेश <sound/omap-hdmi-audपन.स>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <linux/platform_device.h>
+#include <sound/soc.h>
+#include <sound/pcm_params.h>
+#include <sound/dmaengine_pcm.h>
+#include <uapi/sound/asound.h>
+#include <sound/asoundef.h>
+#include <sound/omap-hdmi-audio.h>
 
-#समावेश "sdma-pcm.h"
+#include "sdma-pcm.h"
 
-#घोषणा DRV_NAME "omap-hdmi-audio"
+#define DRV_NAME "omap-hdmi-audio"
 
-काष्ठा hdmi_audio_data अणु
-	काष्ठा snd_soc_card *card;
+struct hdmi_audio_data {
+	struct snd_soc_card *card;
 
-	स्थिर काष्ठा omap_hdmi_audio_ops *ops;
-	काष्ठा device *dssdev;
-	काष्ठा snd_dmaengine_dai_dma_data dma_data;
-	काष्ठा omap_dss_audio dss_audio;
-	काष्ठा snd_aes_iec958 iec;
-	काष्ठा snd_cea_861_aud_अगर cea;
+	const struct omap_hdmi_audio_ops *ops;
+	struct device *dssdev;
+	struct snd_dmaengine_dai_dma_data dma_data;
+	struct omap_dss_audio dss_audio;
+	struct snd_aes_iec958 iec;
+	struct snd_cea_861_aud_if cea;
 
-	काष्ठा mutex current_stream_lock;
-	काष्ठा snd_pcm_substream *current_stream;
-पूर्ण;
+	struct mutex current_stream_lock;
+	struct snd_pcm_substream *current_stream;
+};
 
-अटल
-काष्ठा hdmi_audio_data *card_drvdata_substream(काष्ठा snd_pcm_substream *ss)
-अणु
-	काष्ठा snd_soc_pcm_runसमय *rtd = ss->निजी_data;
+static
+struct hdmi_audio_data *card_drvdata_substream(struct snd_pcm_substream *ss)
+{
+	struct snd_soc_pcm_runtime *rtd = ss->private_data;
 
-	वापस snd_soc_card_get_drvdata(rtd->card);
-पूर्ण
+	return snd_soc_card_get_drvdata(rtd->card);
+}
 
-अटल व्योम hdmi_dai_पात(काष्ठा device *dev)
-अणु
-	काष्ठा hdmi_audio_data *ad = dev_get_drvdata(dev);
+static void hdmi_dai_abort(struct device *dev)
+{
+	struct hdmi_audio_data *ad = dev_get_drvdata(dev);
 
 	mutex_lock(&ad->current_stream_lock);
-	अगर (ad->current_stream && ad->current_stream->runसमय &&
-	    snd_pcm_running(ad->current_stream)) अणु
+	if (ad->current_stream && ad->current_stream->runtime &&
+	    snd_pcm_running(ad->current_stream)) {
 		dev_err(dev, "HDMI display disabled, aborting playback\n");
 		snd_pcm_stream_lock_irq(ad->current_stream);
 		snd_pcm_stop(ad->current_stream, SNDRV_PCM_STATE_DISCONNECTED);
 		snd_pcm_stream_unlock_irq(ad->current_stream);
-	पूर्ण
+	}
 	mutex_unlock(&ad->current_stream_lock);
-पूर्ण
+}
 
-अटल पूर्णांक hdmi_dai_startup(काष्ठा snd_pcm_substream *substream,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा hdmi_audio_data *ad = card_drvdata_substream(substream);
-	पूर्णांक ret;
+static int hdmi_dai_startup(struct snd_pcm_substream *substream,
+			    struct snd_soc_dai *dai)
+{
+	struct hdmi_audio_data *ad = card_drvdata_substream(substream);
+	int ret;
 	/*
 	 * Make sure that the period bytes are multiple of the DMA packet size.
 	 * Largest packet size we use is 32 32-bit words = 128 bytes
 	 */
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0,
+	ret = snd_pcm_hw_constraint_step(substream->runtime, 0,
 					 SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 128);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dai->dev, "Could not apply period constraint: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
-	ret = snd_pcm_hw_स्थिरraपूर्णांक_step(substream->runसमय, 0,
+		return ret;
+	}
+	ret = snd_pcm_hw_constraint_step(substream->runtime, 0,
 					 SNDRV_PCM_HW_PARAM_BUFFER_BYTES, 128);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dai->dev, "Could not apply buffer constraint: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	snd_soc_dai_set_dma_data(dai, substream, &ad->dma_data);
 
@@ -91,38 +90,38 @@
 	ad->current_stream = substream;
 	mutex_unlock(&ad->current_stream_lock);
 
-	ret = ad->ops->audio_startup(ad->dssdev, hdmi_dai_पात);
+	ret = ad->ops->audio_startup(ad->dssdev, hdmi_dai_abort);
 
-	अगर (ret) अणु
+	if (ret) {
 		mutex_lock(&ad->current_stream_lock);
-		ad->current_stream = शून्य;
+		ad->current_stream = NULL;
 		mutex_unlock(&ad->current_stream_lock);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक hdmi_dai_hw_params(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_pcm_hw_params *params,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा hdmi_audio_data *ad = card_drvdata_substream(substream);
-	काष्ठा snd_aes_iec958 *iec = &ad->iec;
-	काष्ठा snd_cea_861_aud_अगर *cea = &ad->cea;
+static int hdmi_dai_hw_params(struct snd_pcm_substream *substream,
+			      struct snd_pcm_hw_params *params,
+			      struct snd_soc_dai *dai)
+{
+	struct hdmi_audio_data *ad = card_drvdata_substream(substream);
+	struct snd_aes_iec958 *iec = &ad->iec;
+	struct snd_cea_861_aud_if *cea = &ad->cea;
 
 	WARN_ON(ad->current_stream != substream);
 
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		ad->dma_data.maxburst = 16;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		ad->dma_data.maxburst = 32;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dai->dev, "format not supported!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	ad->dss_audio.iec = iec;
 	ad->dss_audio.cea = cea;
@@ -130,12 +129,12 @@
 	 * fill the IEC-60958 channel status word
 	 */
 	/* initialize the word bytes */
-	स_रखो(iec->status, 0, माप(iec->status));
+	memset(iec->status, 0, sizeof(iec->status));
 
-	/* specअगरy IEC-60958-3 (commercial use) */
+	/* specify IEC-60958-3 (commercial use) */
 	iec->status[0] &= ~IEC958_AES0_PROFESSIONAL;
 
-	/* specअगरy that the audio is LPCM*/
+	/* specify that the audio is LPCM*/
 	iec->status[0] &= ~IEC958_AES0_NONAUDIO;
 
 	iec->status[0] |= IEC958_AES0_CON_NOT_COPYRIGHT;
@@ -148,57 +147,57 @@
 
 	iec->status[2] |= IEC958_AES2_CON_CHANNEL_UNSPEC;
 
-	चयन (params_rate(params)) अणु
-	हाल 32000:
+	switch (params_rate(params)) {
+	case 32000:
 		iec->status[3] |= IEC958_AES3_CON_FS_32000;
-		अवरोध;
-	हाल 44100:
+		break;
+	case 44100:
 		iec->status[3] |= IEC958_AES3_CON_FS_44100;
-		अवरोध;
-	हाल 48000:
+		break;
+	case 48000:
 		iec->status[3] |= IEC958_AES3_CON_FS_48000;
-		अवरोध;
-	हाल 88200:
+		break;
+	case 88200:
 		iec->status[3] |= IEC958_AES3_CON_FS_88200;
-		अवरोध;
-	हाल 96000:
+		break;
+	case 96000:
 		iec->status[3] |= IEC958_AES3_CON_FS_96000;
-		अवरोध;
-	हाल 176400:
+		break;
+	case 176400:
 		iec->status[3] |= IEC958_AES3_CON_FS_176400;
-		अवरोध;
-	हाल 192000:
+		break;
+	case 192000:
 		iec->status[3] |= IEC958_AES3_CON_FS_192000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dai->dev, "rate not supported!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* specअगरy the घड़ी accuracy */
+	/* specify the clock accuracy */
 	iec->status[3] |= IEC958_AES3_CON_CLOCK_1000PPM;
 
 	/*
-	 * specअगरy the word length. The same word length value can mean
-	 * two dअगरferent lengths. Hence, we need to specअगरy the maximum
+	 * specify the word length. The same word length value can mean
+	 * two different lengths. Hence, we need to specify the maximum
 	 * word length as well.
 	 */
-	चयन (params_क्रमmat(params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		iec->status[4] |= IEC958_AES4_CON_WORDLEN_20_16;
 		iec->status[4] &= ~IEC958_AES4_CON_MAX_WORDLEN_24;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
 		iec->status[4] |= IEC958_AES4_CON_WORDLEN_24_20;
 		iec->status[4] |= IEC958_AES4_CON_MAX_WORDLEN_24;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dai->dev, "format not supported!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Fill the CEA-861 audio infoframe (see spec क्रम details)
+	 * Fill the CEA-861 audio infoframe (see spec for details)
 	 */
 
 	cea->db1_ct_cc = (params_channels(params) - 1)
@@ -210,120 +209,120 @@
 
 	cea->db3 = 0; /* not used, all zeros */
 
-	अगर (params_channels(params) == 2)
+	if (params_channels(params) == 2)
 		cea->db4_ca = 0x0;
-	अन्यथा अगर (params_channels(params) == 6)
+	else if (params_channels(params) == 6)
 		cea->db4_ca = 0xb;
-	अन्यथा
+	else
 		cea->db4_ca = 0x13;
 
-	अगर (cea->db4_ca == 0x00)
+	if (cea->db4_ca == 0x00)
 		cea->db5_dminh_lsv = CEA861_AUDIO_INFOFRAME_DB5_DM_INH_PERMITTED;
-	अन्यथा
+	else
 		cea->db5_dminh_lsv = CEA861_AUDIO_INFOFRAME_DB5_DM_INH_PROHIBITED;
 
-	/* the expression is trivial but makes clear what we are करोing */
+	/* the expression is trivial but makes clear what we are doing */
 	cea->db5_dminh_lsv |= (0 & CEA861_AUDIO_INFOFRAME_DB5_LSV);
 
-	वापस ad->ops->audio_config(ad->dssdev, &ad->dss_audio);
-पूर्ण
+	return ad->ops->audio_config(ad->dssdev, &ad->dss_audio);
+}
 
-अटल पूर्णांक hdmi_dai_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
-			    काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा hdmi_audio_data *ad = card_drvdata_substream(substream);
-	पूर्णांक err = 0;
+static int hdmi_dai_trigger(struct snd_pcm_substream *substream, int cmd,
+			    struct snd_soc_dai *dai)
+{
+	struct hdmi_audio_data *ad = card_drvdata_substream(substream);
+	int err = 0;
 
 	WARN_ON(ad->current_stream != substream);
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		err = ad->ops->audio_start(ad->dssdev);
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		ad->ops->audio_stop(ad->dssdev);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EINVAL;
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल व्योम hdmi_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा hdmi_audio_data *ad = card_drvdata_substream(substream);
+static void hdmi_dai_shutdown(struct snd_pcm_substream *substream,
+			      struct snd_soc_dai *dai)
+{
+	struct hdmi_audio_data *ad = card_drvdata_substream(substream);
 
 	WARN_ON(ad->current_stream != substream);
 
-	ad->ops->audio_shutकरोwn(ad->dssdev);
+	ad->ops->audio_shutdown(ad->dssdev);
 
 	mutex_lock(&ad->current_stream_lock);
-	ad->current_stream = शून्य;
+	ad->current_stream = NULL;
 	mutex_unlock(&ad->current_stream_lock);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा snd_soc_dai_ops hdmi_dai_ops = अणु
+static const struct snd_soc_dai_ops hdmi_dai_ops = {
 	.startup	= hdmi_dai_startup,
 	.hw_params	= hdmi_dai_hw_params,
 	.trigger	= hdmi_dai_trigger,
-	.shutकरोwn	= hdmi_dai_shutकरोwn,
-पूर्ण;
+	.shutdown	= hdmi_dai_shutdown,
+};
 
-अटल स्थिर काष्ठा snd_soc_component_driver omap_hdmi_component = अणु
+static const struct snd_soc_component_driver omap_hdmi_component = {
 	.name = "omapdss_hdmi",
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver omap5_hdmi_dai = अणु
+static struct snd_soc_dai_driver omap5_hdmi_dai = {
 	.name = "omap5-hdmi-dai",
-	.playback = अणु
+	.playback = {
 		.channels_min = 2,
 		.channels_max = 8,
 		.rates = (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
 			  SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
 			  SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
 			  SNDRV_PCM_RATE_192000),
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
-	पूर्ण,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	},
 	.ops = &hdmi_dai_ops,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver omap4_hdmi_dai = अणु
+static struct snd_soc_dai_driver omap4_hdmi_dai = {
 	.name = "omap4-hdmi-dai",
-	.playback = अणु
+	.playback = {
 		.channels_min = 2,
 		.channels_max = 8,
 		.rates = (SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
 			  SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
 			  SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
 			  SNDRV_PCM_RATE_192000),
-		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
-	पूर्ण,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
+	},
 	.ops = &hdmi_dai_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक omap_hdmi_audio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_hdmi_audio_pdata *ha = pdev->dev.platक्रमm_data;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा hdmi_audio_data *ad;
-	काष्ठा snd_soc_dai_driver *dai_drv;
-	काष्ठा snd_soc_card *card;
-	काष्ठा snd_soc_dai_link_component *compnent;
-	पूर्णांक ret;
+static int omap_hdmi_audio_probe(struct platform_device *pdev)
+{
+	struct omap_hdmi_audio_pdata *ha = pdev->dev.platform_data;
+	struct device *dev = &pdev->dev;
+	struct hdmi_audio_data *ad;
+	struct snd_soc_dai_driver *dai_drv;
+	struct snd_soc_card *card;
+	struct snd_soc_dai_link_component *compnent;
+	int ret;
 
-	अगर (!ha) अणु
+	if (!ha) {
 		dev_err(dev, "No platform data\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ad = devm_kzalloc(dev, माप(*ad), GFP_KERNEL);
-	अगर (!ad)
-		वापस -ENOMEM;
+	ad = devm_kzalloc(dev, sizeof(*ad), GFP_KERNEL);
+	if (!ad)
+		return -ENOMEM;
 	ad->dssdev = ha->dev;
 	ad->ops = ha->ops;
 	ad->dma_data.addr = ha->audio_dma_addr;
@@ -331,90 +330,90 @@
 	ad->dma_data.addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 	mutex_init(&ad->current_stream_lock);
 
-	चयन (ha->version) अणु
-	हाल 4:
+	switch (ha->version) {
+	case 4:
 		dai_drv = &omap4_hdmi_dai;
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		dai_drv = &omap5_hdmi_dai;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	ret = devm_snd_soc_रेजिस्टर_component(ad->dssdev, &omap_hdmi_component,
+		break;
+	default:
+		return -EINVAL;
+	}
+	ret = devm_snd_soc_register_component(ad->dssdev, &omap_hdmi_component,
 					 dai_drv, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = sdma_pcm_platक्रमm_रेजिस्टर(ad->dssdev, "audio_tx", शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = sdma_pcm_platform_register(ad->dssdev, "audio_tx", NULL);
+	if (ret)
+		return ret;
 
-	card = devm_kzalloc(dev, माप(*card), GFP_KERNEL);
-	अगर (!card)
-		वापस -ENOMEM;
+	card = devm_kzalloc(dev, sizeof(*card), GFP_KERNEL);
+	if (!card)
+		return -ENOMEM;
 
-	card->name = devm_kaप्र_लिखो(dev, GFP_KERNEL,
+	card->name = devm_kasprintf(dev, GFP_KERNEL,
 				    "HDMI %s", dev_name(ad->dssdev));
-	अगर (!card->name)
-		वापस -ENOMEM;
+	if (!card->name)
+		return -ENOMEM;
 
 	card->owner = THIS_MODULE;
 	card->dai_link =
-		devm_kzalloc(dev, माप(*(card->dai_link)), GFP_KERNEL);
-	अगर (!card->dai_link)
-		वापस -ENOMEM;
+		devm_kzalloc(dev, sizeof(*(card->dai_link)), GFP_KERNEL);
+	if (!card->dai_link)
+		return -ENOMEM;
 
-	compnent = devm_kzalloc(dev, 3 * माप(*compnent), GFP_KERNEL);
-	अगर (!compnent)
-		वापस -ENOMEM;
+	compnent = devm_kzalloc(dev, 3 * sizeof(*compnent), GFP_KERNEL);
+	if (!compnent)
+		return -ENOMEM;
 	card->dai_link->cpus		= &compnent[0];
 	card->dai_link->num_cpus	= 1;
 	card->dai_link->codecs		= &compnent[1];
 	card->dai_link->num_codecs	= 1;
-	card->dai_link->platक्रमms	= &compnent[2];
-	card->dai_link->num_platक्रमms	= 1;
+	card->dai_link->platforms	= &compnent[2];
+	card->dai_link->num_platforms	= 1;
 
 	card->dai_link->name = card->name;
 	card->dai_link->stream_name = card->name;
 	card->dai_link->cpus->dai_name = dev_name(ad->dssdev);
-	card->dai_link->platक्रमms->name = dev_name(ad->dssdev);
+	card->dai_link->platforms->name = dev_name(ad->dssdev);
 	card->dai_link->codecs->name = "snd-soc-dummy";
 	card->dai_link->codecs->dai_name = "snd-soc-dummy-dai";
 	card->num_links = 1;
 	card->dev = dev;
 
-	ret = snd_soc_रेजिस्टर_card(card);
-	अगर (ret) अणु
+	ret = snd_soc_register_card(card);
+	if (ret) {
 		dev_err(dev, "snd_soc_register_card failed (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ad->card = card;
 	snd_soc_card_set_drvdata(card, ad);
 
 	dev_set_drvdata(dev, ad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_hdmi_audio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा hdmi_audio_data *ad = platक्रमm_get_drvdata(pdev);
+static int omap_hdmi_audio_remove(struct platform_device *pdev)
+{
+	struct hdmi_audio_data *ad = platform_get_drvdata(pdev);
 
-	snd_soc_unरेजिस्टर_card(ad->card);
-	वापस 0;
-पूर्ण
+	snd_soc_unregister_card(ad->card);
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver hdmi_audio_driver = अणु
-	.driver = अणु
+static struct platform_driver hdmi_audio_driver = {
+	.driver = {
 		.name = DRV_NAME,
-	पूर्ण,
+	},
 	.probe = omap_hdmi_audio_probe,
-	.हटाओ = omap_hdmi_audio_हटाओ,
-पूर्ण;
+	.remove = omap_hdmi_audio_remove,
+};
 
-module_platक्रमm_driver(hdmi_audio_driver);
+module_platform_driver(hdmi_audio_driver);
 
 MODULE_AUTHOR("Jyri Sarha <jsarha@ti.com>");
 MODULE_DESCRIPTION("OMAP HDMI Audio Driver");

@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * s390 crypto adapter related sclp functions.
  *
  * Copyright IBM Corp. 2020
  */
-#घोषणा KMSG_COMPONENT "sclp_cmd"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "sclp_cmd"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश <यंत्र/sclp.h>
-#समावेश "sclp.h"
+#include <linux/export.h>
+#include <linux/slab.h>
+#include <asm/sclp.h>
+#include "sclp.h"
 
-#घोषणा SCLP_CMDW_CONFIGURE_AP			0x001f0001
-#घोषणा SCLP_CMDW_DECONFIGURE_AP		0x001e0001
+#define SCLP_CMDW_CONFIGURE_AP			0x001f0001
+#define SCLP_CMDW_DECONFIGURE_AP		0x001e0001
 
-काष्ठा ap_cfg_sccb अणु
-	काष्ठा sccb_header header;
-पूर्ण __packed;
+struct ap_cfg_sccb {
+	struct sccb_header header;
+} __packed;
 
-अटल पूर्णांक करो_ap_configure(sclp_cmdw_t cmd, u32 apid)
-अणु
-	काष्ठा ap_cfg_sccb *sccb;
-	पूर्णांक rc;
+static int do_ap_configure(sclp_cmdw_t cmd, u32 apid)
+{
+	struct ap_cfg_sccb *sccb;
+	int rc;
 
-	अगर (!SCLP_HAS_AP_RECONFIG)
-		वापस -EOPNOTSUPP;
+	if (!SCLP_HAS_AP_RECONFIG)
+		return -EOPNOTSUPP;
 
-	sccb = (काष्ठा ap_cfg_sccb *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	अगर (!sccb)
-		वापस -ENOMEM;
+	sccb = (struct ap_cfg_sccb *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	if (!sccb)
+		return -ENOMEM;
 
 	sccb->header.length = PAGE_SIZE;
 	cmd |= (apid & 0xFF) << 8;
 	rc = sclp_sync_request(cmd, sccb);
-	अगर (rc)
-		जाओ out;
-	चयन (sccb->header.response_code) अणु
-	हाल 0x0020: हाल 0x0120: हाल 0x0440: हाल 0x0450:
-		अवरोध;
-	शेष:
+	if (rc)
+		goto out;
+	switch (sccb->header.response_code) {
+	case 0x0020: case 0x0120: case 0x0440: case 0x0450:
+		break;
+	default:
 		pr_warn("configure AP adapter %u failed: cmd=0x%08x response=0x%04x\n",
 			apid, cmd, sccb->header.response_code);
 		rc = -EIO;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	मुक्त_page((अचिन्हित दीर्घ) sccb);
-	वापस rc;
-पूर्ण
+	free_page((unsigned long) sccb);
+	return rc;
+}
 
-पूर्णांक sclp_ap_configure(u32 apid)
-अणु
-	वापस करो_ap_configure(SCLP_CMDW_CONFIGURE_AP, apid);
-पूर्ण
+int sclp_ap_configure(u32 apid)
+{
+	return do_ap_configure(SCLP_CMDW_CONFIGURE_AP, apid);
+}
 EXPORT_SYMBOL(sclp_ap_configure);
 
-पूर्णांक sclp_ap_deconfigure(u32 apid)
-अणु
-	वापस करो_ap_configure(SCLP_CMDW_DECONFIGURE_AP, apid);
-पूर्ण
+int sclp_ap_deconfigure(u32 apid)
+{
+	return do_ap_configure(SCLP_CMDW_DECONFIGURE_AP, apid);
+}
 EXPORT_SYMBOL(sclp_ap_deconfigure);

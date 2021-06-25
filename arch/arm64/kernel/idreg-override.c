@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Early cpufeature override framework
  *
@@ -7,238 +6,238 @@
  * Author: Marc Zyngier <maz@kernel.org>
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/libfdt.h>
+#include <linux/ctype.h>
+#include <linux/kernel.h>
+#include <linux/libfdt.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/cpufeature.h>
-#समावेश <यंत्र/setup.h>
+#include <asm/cacheflush.h>
+#include <asm/cpufeature.h>
+#include <asm/setup.h>
 
-#घोषणा FTR_DESC_NAME_LEN	20
-#घोषणा FTR_DESC_FIELD_LEN	10
-#घोषणा FTR_ALIAS_NAME_LEN	30
-#घोषणा FTR_ALIAS_OPTION_LEN	80
+#define FTR_DESC_NAME_LEN	20
+#define FTR_DESC_FIELD_LEN	10
+#define FTR_ALIAS_NAME_LEN	30
+#define FTR_ALIAS_OPTION_LEN	80
 
-काष्ठा ftr_set_desc अणु
-	अक्षर 				name[FTR_DESC_NAME_LEN];
-	काष्ठा arm64_ftr_override	*override;
-	काष्ठा अणु
-		अक्षर			name[FTR_DESC_FIELD_LEN];
-		u8			shअगरt;
+struct ftr_set_desc {
+	char 				name[FTR_DESC_NAME_LEN];
+	struct arm64_ftr_override	*override;
+	struct {
+		char			name[FTR_DESC_FIELD_LEN];
+		u8			shift;
 		bool			(*filter)(u64 val);
-	पूर्ण 				fields[];
-पूर्ण;
+	} 				fields[];
+};
 
-अटल bool __init mmfr1_vh_filter(u64 val)
-अणु
+static bool __init mmfr1_vh_filter(u64 val)
+{
 	/*
-	 * If we ever reach this poपूर्णांक जबतक running VHE, we're
+	 * If we ever reach this point while running VHE, we're
 	 * guaranteed to be on one of these funky, VHE-stuck CPUs. If
-	 * the user was trying to क्रमce nVHE on us, proceed with
-	 * attitude adjusपंचांगent.
+	 * the user was trying to force nVHE on us, proceed with
+	 * attitude adjustment.
 	 */
-	वापस !(is_kernel_in_hyp_mode() && val == 0);
-पूर्ण
+	return !(is_kernel_in_hyp_mode() && val == 0);
+}
 
-अटल स्थिर काष्ठा ftr_set_desc mmfr1 __initस्थिर = अणु
+static const struct ftr_set_desc mmfr1 __initconst = {
 	.name		= "id_aa64mmfr1",
 	.override	= &id_aa64mmfr1_override,
-	.fields		= अणु
-		अणु "vh", ID_AA64MMFR1_VHE_SHIFT, mmfr1_vh_filter पूर्ण,
-		अणुपूर्ण
-	पूर्ण,
-पूर्ण;
+	.fields		= {
+		{ "vh", ID_AA64MMFR1_VHE_SHIFT, mmfr1_vh_filter },
+		{}
+	},
+};
 
-अटल स्थिर काष्ठा ftr_set_desc pfr1 __initस्थिर = अणु
+static const struct ftr_set_desc pfr1 __initconst = {
 	.name		= "id_aa64pfr1",
 	.override	= &id_aa64pfr1_override,
-	.fields		= अणु
-	        अणु "bt", ID_AA64PFR1_BT_SHIFT पूर्ण,
-		अणुपूर्ण
-	पूर्ण,
-पूर्ण;
+	.fields		= {
+	        { "bt", ID_AA64PFR1_BT_SHIFT },
+		{}
+	},
+};
 
-अटल स्थिर काष्ठा ftr_set_desc isar1 __initस्थिर = अणु
+static const struct ftr_set_desc isar1 __initconst = {
 	.name		= "id_aa64isar1",
 	.override	= &id_aa64isar1_override,
-	.fields		= अणु
-	        अणु "gpi", ID_AA64ISAR1_GPI_SHIFT पूर्ण,
-	        अणु "gpa", ID_AA64ISAR1_GPA_SHIFT पूर्ण,
-	        अणु "api", ID_AA64ISAR1_API_SHIFT पूर्ण,
-	        अणु "apa", ID_AA64ISAR1_APA_SHIFT पूर्ण,
-		अणुपूर्ण
-	पूर्ण,
-पूर्ण;
+	.fields		= {
+	        { "gpi", ID_AA64ISAR1_GPI_SHIFT },
+	        { "gpa", ID_AA64ISAR1_GPA_SHIFT },
+	        { "api", ID_AA64ISAR1_API_SHIFT },
+	        { "apa", ID_AA64ISAR1_APA_SHIFT },
+		{}
+	},
+};
 
-बाह्य काष्ठा arm64_ftr_override kaslr_feature_override;
+extern struct arm64_ftr_override kaslr_feature_override;
 
-अटल स्थिर काष्ठा ftr_set_desc kaslr __initस्थिर = अणु
+static const struct ftr_set_desc kaslr __initconst = {
 	.name		= "kaslr",
-#अगर_घोषित CONFIG_RANDOMIZE_BASE
+#ifdef CONFIG_RANDOMIZE_BASE
 	.override	= &kaslr_feature_override,
-#पूर्ण_अगर
-	.fields		= अणु
-		अणु "disabled", 0 पूर्ण,
-		अणुपूर्ण
-	पूर्ण,
-पूर्ण;
+#endif
+	.fields		= {
+		{ "disabled", 0 },
+		{}
+	},
+};
 
-अटल स्थिर काष्ठा ftr_set_desc * स्थिर regs[] __initस्थिर = अणु
+static const struct ftr_set_desc * const regs[] __initconst = {
 	&mmfr1,
 	&pfr1,
 	&isar1,
 	&kaslr,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा अणु
-	अक्षर	alias[FTR_ALIAS_NAME_LEN];
-	अक्षर	feature[FTR_ALIAS_OPTION_LEN];
-पूर्ण aliases[] __initस्थिर = अणु
-	अणु "kvm-arm.mode=nvhe",		"id_aa64mmfr1.vh=0" पूर्ण,
-	अणु "kvm-arm.mode=protected",	"id_aa64mmfr1.vh=0" पूर्ण,
-	अणु "arm64.nobti",		"id_aa64pfr1.bt=0" पूर्ण,
-	अणु "arm64.nopauth",
+static const struct {
+	char	alias[FTR_ALIAS_NAME_LEN];
+	char	feature[FTR_ALIAS_OPTION_LEN];
+} aliases[] __initconst = {
+	{ "kvm-arm.mode=nvhe",		"id_aa64mmfr1.vh=0" },
+	{ "kvm-arm.mode=protected",	"id_aa64mmfr1.vh=0" },
+	{ "arm64.nobti",		"id_aa64pfr1.bt=0" },
+	{ "arm64.nopauth",
 	  "id_aa64isar1.gpi=0 id_aa64isar1.gpa=0 "
-	  "id_aa64isar1.api=0 id_aa64isar1.apa=0"	   पूर्ण,
-	अणु "nokaslr",			"kaslr.disabled=1" पूर्ण,
-पूर्ण;
+	  "id_aa64isar1.api=0 id_aa64isar1.apa=0"	   },
+	{ "nokaslr",			"kaslr.disabled=1" },
+};
 
-अटल पूर्णांक __init find_field(स्थिर अक्षर *cmdline,
-			     स्थिर काष्ठा ftr_set_desc *reg, पूर्णांक f, u64 *v)
-अणु
-	अक्षर opt[FTR_DESC_NAME_LEN + FTR_DESC_FIELD_LEN + 2];
-	पूर्णांक len;
+static int __init find_field(const char *cmdline,
+			     const struct ftr_set_desc *reg, int f, u64 *v)
+{
+	char opt[FTR_DESC_NAME_LEN + FTR_DESC_FIELD_LEN + 2];
+	int len;
 
-	len = snम_लिखो(opt, ARRAY_SIZE(opt), "%s.%s=",
+	len = snprintf(opt, ARRAY_SIZE(opt), "%s.%s=",
 		       reg->name, reg->fields[f].name);
 
-	अगर (!parameqn(cmdline, opt, len))
-		वापस -1;
+	if (!parameqn(cmdline, opt, len))
+		return -1;
 
-	वापस kstrtou64(cmdline + len, 0, v);
-पूर्ण
+	return kstrtou64(cmdline + len, 0, v);
+}
 
-अटल व्योम __init match_options(स्थिर अक्षर *cmdline)
-अणु
-	पूर्णांक i;
+static void __init match_options(const char *cmdline)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(regs); i++) अणु
-		पूर्णांक f;
+	for (i = 0; i < ARRAY_SIZE(regs); i++) {
+		int f;
 
-		अगर (!regs[i]->override)
-			जारी;
+		if (!regs[i]->override)
+			continue;
 
-		क्रम (f = 0; म_माप(regs[i]->fields[f].name); f++) अणु
-			u64 shअगरt = regs[i]->fields[f].shअगरt;
-			u64 mask = 0xfUL << shअगरt;
+		for (f = 0; strlen(regs[i]->fields[f].name); f++) {
+			u64 shift = regs[i]->fields[f].shift;
+			u64 mask = 0xfUL << shift;
 			u64 v;
 
-			अगर (find_field(cmdline, regs[i], f, &v))
-				जारी;
+			if (find_field(cmdline, regs[i], f, &v))
+				continue;
 
 			/*
-			 * If an override माला_लो filtered out, advertise
+			 * If an override gets filtered out, advertise
 			 * it by setting the value to 0xf, but
 			 * clearing the mask... Yes, this is fragile.
 			 */
-			अगर (regs[i]->fields[f].filter &&
-			    !regs[i]->fields[f].filter(v)) अणु
+			if (regs[i]->fields[f].filter &&
+			    !regs[i]->fields[f].filter(v)) {
 				regs[i]->override->val  |= mask;
 				regs[i]->override->mask &= ~mask;
-				जारी;
-			पूर्ण
+				continue;
+			}
 
 			regs[i]->override->val  &= ~mask;
-			regs[i]->override->val  |= (v << shअगरt) & mask;
+			regs[i]->override->val  |= (v << shift) & mask;
 			regs[i]->override->mask |= mask;
 
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
-अटल __init व्योम __parse_cmdline(स्थिर अक्षर *cmdline, bool parse_aliases)
-अणु
-	करो अणु
-		अक्षर buf[256];
-		माप_प्रकार len;
-		पूर्णांक i;
+static __init void __parse_cmdline(const char *cmdline, bool parse_aliases)
+{
+	do {
+		char buf[256];
+		size_t len;
+		int i;
 
 		cmdline = skip_spaces(cmdline);
 
-		क्रम (len = 0; cmdline[len] && !है_खाली(cmdline[len]); len++);
-		अगर (!len)
-			वापस;
+		for (len = 0; cmdline[len] && !isspace(cmdline[len]); len++);
+		if (!len)
+			return;
 
 		len = min(len, ARRAY_SIZE(buf) - 1);
-		म_नकलन(buf, cmdline, len);
+		strncpy(buf, cmdline, len);
 		buf[len] = 0;
 
-		अगर (म_भेद(buf, "--") == 0)
-			वापस;
+		if (strcmp(buf, "--") == 0)
+			return;
 
 		cmdline += len;
 
 		match_options(buf);
 
-		क्रम (i = 0; parse_aliases && i < ARRAY_SIZE(aliases); i++)
-			अगर (parameq(buf, aliases[i].alias))
+		for (i = 0; parse_aliases && i < ARRAY_SIZE(aliases); i++)
+			if (parameq(buf, aliases[i].alias))
 				__parse_cmdline(aliases[i].feature, false);
-	पूर्ण जबतक (1);
-पूर्ण
+	} while (1);
+}
 
-अटल __init स्थिर u8 *get_bootargs_cmdline(व्योम)
-अणु
-	स्थिर u8 *prop;
-	व्योम *fdt;
-	पूर्णांक node;
+static __init const u8 *get_bootargs_cmdline(void)
+{
+	const u8 *prop;
+	void *fdt;
+	int node;
 
 	fdt = get_early_fdt_ptr();
-	अगर (!fdt)
-		वापस शून्य;
+	if (!fdt)
+		return NULL;
 
 	node = fdt_path_offset(fdt, "/chosen");
-	अगर (node < 0)
-		वापस शून्य;
+	if (node < 0)
+		return NULL;
 
-	prop = fdt_getprop(fdt, node, "bootargs", शून्य);
-	अगर (!prop)
-		वापस शून्य;
+	prop = fdt_getprop(fdt, node, "bootargs", NULL);
+	if (!prop)
+		return NULL;
 
-	वापस म_माप(prop) ? prop : शून्य;
-पूर्ण
+	return strlen(prop) ? prop : NULL;
+}
 
-अटल __init व्योम parse_cmdline(व्योम)
-अणु
-	स्थिर u8 *prop = get_bootargs_cmdline();
+static __init void parse_cmdline(void)
+{
+	const u8 *prop = get_bootargs_cmdline();
 
-	अगर (IS_ENABLED(CONFIG_CMDLINE_FORCE) || !prop)
+	if (IS_ENABLED(CONFIG_CMDLINE_FORCE) || !prop)
 		__parse_cmdline(CONFIG_CMDLINE, true);
 
-	अगर (!IS_ENABLED(CONFIG_CMDLINE_FORCE) && prop)
+	if (!IS_ENABLED(CONFIG_CMDLINE_FORCE) && prop)
 		__parse_cmdline(prop, true);
-पूर्ण
+}
 
 /* Keep checkers quiet */
-व्योम init_feature_override(व्योम);
+void init_feature_override(void);
 
-यंत्रlinkage व्योम __init init_feature_override(व्योम)
-अणु
-	पूर्णांक i;
+asmlinkage void __init init_feature_override(void)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(regs); i++) अणु
-		अगर (regs[i]->override) अणु
+	for (i = 0; i < ARRAY_SIZE(regs); i++) {
+		if (regs[i]->override) {
 			regs[i]->override->val  = 0;
 			regs[i]->override->mask = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	parse_cmdline();
 
-	क्रम (i = 0; i < ARRAY_SIZE(regs); i++) अणु
-		अगर (regs[i]->override)
+	for (i = 0; i < ARRAY_SIZE(regs); i++) {
+		if (regs[i]->override)
 			__flush_dcache_area(regs[i]->override,
-					    माप(*regs[i]->override));
-	पूर्ण
-पूर्ण
+					    sizeof(*regs[i]->override));
+	}
+}

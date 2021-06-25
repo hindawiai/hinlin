@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/device.h>
-#समावेश <linux/dma-direction.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/list.h>
-#समावेश <linux/mhi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
-#समावेश "internal.h"
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/dma-direction.h>
+#include <linux/dma-mapping.h>
+#include <linux/interrupt.h>
+#include <linux/list.h>
+#include <linux/mhi.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
+#include "internal.h"
 
 /*
- * Not all MHI state transitions are synchronous. Transitions like Linkकरोwn,
- * SYS_ERR, and shutकरोwn can happen anyसमय asynchronously. This function will
- * transition to a new state only अगर we're allowed to.
+ * Not all MHI state transitions are synchronous. Transitions like Linkdown,
+ * SYS_ERR, and shutdown can happen anytime asynchronously. This function will
+ * transition to a new state only if we're allowed to.
  *
- * Priority increases as we go करोwn. For instance, from any state in L0, the
+ * Priority increases as we go down. For instance, from any state in L0, the
  * transition can be made to states in L1, L2 and L3. A notable exception to
  * this rule is state DISABLE.  From DISABLE state we can only transition to
- * POR state. Also, जबतक in L2 state, user cannot jump back to previous
+ * POR state. Also, while in L2 state, user cannot jump back to previous
  * L1 or L0 states.
  *
  * Valid transitions:
@@ -43,180 +42,180 @@
  * L3: LD_ERR_FATAL_DETECT <--> LD_ERR_FATAL_DETECT
  *     LD_ERR_FATAL_DETECT -> DISABLE
  */
-अटल काष्ठा mhi_pm_transitions स्थिर dev_state_transitions[] = अणु
+static struct mhi_pm_transitions const dev_state_transitions[] = {
 	/* L0 States */
-	अणु
+	{
 		MHI_PM_DISABLE,
 		MHI_PM_POR
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_POR,
 		MHI_PM_POR | MHI_PM_DISABLE | MHI_PM_M0 |
 		MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT | MHI_PM_FW_DL_ERR
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_M0,
 		MHI_PM_M0 | MHI_PM_M2 | MHI_PM_M3_ENTER |
 		MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT | MHI_PM_FW_DL_ERR
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_M2,
 		MHI_PM_M0 | MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_M3_ENTER,
 		MHI_PM_M3 | MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_M3,
 		MHI_PM_M3_EXIT | MHI_PM_SYS_ERR_DETECT |
 		MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_M3_EXIT,
 		MHI_PM_M0 | MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_FW_DL_ERR,
 		MHI_PM_FW_DL_ERR | MHI_PM_SYS_ERR_DETECT |
 		MHI_PM_SHUTDOWN_PROCESS | MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
+	},
 	/* L1 States */
-	अणु
+	{
 		MHI_PM_SYS_ERR_DETECT,
 		MHI_PM_SYS_ERR_PROCESS | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
-	अणु
+	},
+	{
 		MHI_PM_SYS_ERR_PROCESS,
 		MHI_PM_POR | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
+	},
 	/* L2 States */
-	अणु
+	{
 		MHI_PM_SHUTDOWN_PROCESS,
 		MHI_PM_DISABLE | MHI_PM_LD_ERR_FATAL_DETECT
-	पूर्ण,
+	},
 	/* L3 States */
-	अणु
+	{
 		MHI_PM_LD_ERR_FATAL_DETECT,
 		MHI_PM_LD_ERR_FATAL_DETECT | MHI_PM_DISABLE
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-क्रमागत mhi_pm_state __must_check mhi_tryset_pm_state(काष्ठा mhi_controller *mhi_cntrl,
-						   क्रमागत mhi_pm_state state)
-अणु
-	अचिन्हित दीर्घ cur_state = mhi_cntrl->pm_state;
-	पूर्णांक index = find_last_bit(&cur_state, 32);
+enum mhi_pm_state __must_check mhi_tryset_pm_state(struct mhi_controller *mhi_cntrl,
+						   enum mhi_pm_state state)
+{
+	unsigned long cur_state = mhi_cntrl->pm_state;
+	int index = find_last_bit(&cur_state, 32);
 
-	अगर (unlikely(index >= ARRAY_SIZE(dev_state_transitions)))
-		वापस cur_state;
+	if (unlikely(index >= ARRAY_SIZE(dev_state_transitions)))
+		return cur_state;
 
-	अगर (unlikely(dev_state_transitions[index].from_state != cur_state))
-		वापस cur_state;
+	if (unlikely(dev_state_transitions[index].from_state != cur_state))
+		return cur_state;
 
-	अगर (unlikely(!(dev_state_transitions[index].to_states & state)))
-		वापस cur_state;
+	if (unlikely(!(dev_state_transitions[index].to_states & state)))
+		return cur_state;
 
 	mhi_cntrl->pm_state = state;
-	वापस mhi_cntrl->pm_state;
-पूर्ण
+	return mhi_cntrl->pm_state;
+}
 
-व्योम mhi_set_mhi_state(काष्ठा mhi_controller *mhi_cntrl, क्रमागत mhi_state state)
-अणु
-	अगर (state == MHI_STATE_RESET) अणु
-		mhi_ग_लिखो_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
+void mhi_set_mhi_state(struct mhi_controller *mhi_cntrl, enum mhi_state state)
+{
+	if (state == MHI_STATE_RESET) {
+		mhi_write_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
 				    MHICTRL_RESET_MASK, MHICTRL_RESET_SHIFT, 1);
-	पूर्ण अन्यथा अणु
-		mhi_ग_लिखो_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
+	} else {
+		mhi_write_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
 				    MHICTRL_MHISTATE_MASK,
 				    MHICTRL_MHISTATE_SHIFT, state);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* NOP क्रम backward compatibility, host allowed to ring DB in M2 state */
-अटल व्योम mhi_toggle_dev_wake_nop(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-पूर्ण
+/* NOP for backward compatibility, host allowed to ring DB in M2 state */
+static void mhi_toggle_dev_wake_nop(struct mhi_controller *mhi_cntrl)
+{
+}
 
-अटल व्योम mhi_toggle_dev_wake(काष्ठा mhi_controller *mhi_cntrl)
-अणु
+static void mhi_toggle_dev_wake(struct mhi_controller *mhi_cntrl)
+{
 	mhi_cntrl->wake_get(mhi_cntrl, false);
 	mhi_cntrl->wake_put(mhi_cntrl, true);
-पूर्ण
+}
 
-/* Handle device पढ़ोy state transition */
-पूर्णांक mhi_पढ़ोy_state_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा mhi_event *mhi_event;
-	क्रमागत mhi_pm_state cur_state;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	u32 पूर्णांकerval_us = 25000; /* poll रेजिस्टर field every 25 milliseconds */
-	पूर्णांक ret, i;
+/* Handle device ready state transition */
+int mhi_ready_state_transition(struct mhi_controller *mhi_cntrl)
+{
+	struct mhi_event *mhi_event;
+	enum mhi_pm_state cur_state;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	u32 interval_us = 25000; /* poll register field every 25 milliseconds */
+	int ret, i;
 
-	/* Check अगर device entered error state */
-	अगर (MHI_PM_IN_FATAL_STATE(mhi_cntrl->pm_state)) अणु
+	/* Check if device entered error state */
+	if (MHI_PM_IN_FATAL_STATE(mhi_cntrl->pm_state)) {
 		dev_err(dev, "Device link is not accessible\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Wait क्रम RESET to be cleared and READY bit to be set by the device */
+	/* Wait for RESET to be cleared and READY bit to be set by the device */
 	ret = mhi_poll_reg_field(mhi_cntrl, mhi_cntrl->regs, MHICTRL,
 				 MHICTRL_RESET_MASK, MHICTRL_RESET_SHIFT, 0,
-				 पूर्णांकerval_us);
-	अगर (ret) अणु
+				 interval_us);
+	if (ret) {
 		dev_err(dev, "Device failed to clear MHI Reset\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = mhi_poll_reg_field(mhi_cntrl, mhi_cntrl->regs, MHISTATUS,
 				 MHISTATUS_READY_MASK, MHISTATUS_READY_SHIFT, 1,
-				 पूर्णांकerval_us);
-	अगर (ret) अणु
+				 interval_us);
+	if (ret) {
 		dev_err(dev, "Device failed to enter MHI Ready\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_dbg(dev, "Device in READY State\n");
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	cur_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_POR);
 	mhi_cntrl->dev_state = MHI_STATE_READY;
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 
-	अगर (cur_state != MHI_PM_POR) अणु
+	if (cur_state != MHI_PM_POR) {
 		dev_err(dev, "Error moving to state %s from %s\n",
 			to_mhi_pm_state_str(MHI_PM_POR),
 			to_mhi_pm_state_str(cur_state));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
-	अगर (!MHI_REG_ACCESS_VALID(mhi_cntrl->pm_state)) अणु
+	read_lock_bh(&mhi_cntrl->pm_lock);
+	if (!MHI_REG_ACCESS_VALID(mhi_cntrl->pm_state)) {
 		dev_err(dev, "Device registers not accessible\n");
-		जाओ error_mmio;
-	पूर्ण
+		goto error_mmio;
+	}
 
-	/* Configure MMIO रेजिस्टरs */
+	/* Configure MMIO registers */
 	ret = mhi_init_mmio(mhi_cntrl);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Error configuring MMIO registers\n");
-		जाओ error_mmio;
-	पूर्ण
+		goto error_mmio;
+	}
 
 	/* Add elements to all SW event rings */
 	mhi_event = mhi_cntrl->mhi_event;
-	क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) अणु
-		काष्ठा mhi_ring *ring = &mhi_event->ring;
+	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
+		struct mhi_ring *ring = &mhi_event->ring;
 
-		/* Skip अगर this is an offload or HW event */
-		अगर (mhi_event->offload_ev || mhi_event->hw_ring)
-			जारी;
+		/* Skip if this is an offload or HW event */
+		if (mhi_event->offload_ev || mhi_event->hw_ring)
+			continue;
 
 		ring->wp = ring->base + ring->len - ring->el_size;
 		*ring->ctxt_wp = ring->iommu_base + ring->len - ring->el_size;
@@ -227,198 +226,198 @@
 		spin_lock_irq(&mhi_event->lock);
 		mhi_ring_er_db(mhi_event);
 		spin_unlock_irq(&mhi_event->lock);
-	पूर्ण
+	}
 
 	/* Set MHI to M0 state */
 	mhi_set_mhi_state(mhi_cntrl, MHI_STATE_M0);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
-	वापस 0;
+	return 0;
 
 error_mmio:
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-पूर्णांक mhi_pm_m0_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	क्रमागत mhi_pm_state cur_state;
-	काष्ठा mhi_chan *mhi_chan;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	पूर्णांक i;
+int mhi_pm_m0_transition(struct mhi_controller *mhi_cntrl)
+{
+	enum mhi_pm_state cur_state;
+	struct mhi_chan *mhi_chan;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	int i;
 
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	mhi_cntrl->dev_state = MHI_STATE_M0;
 	cur_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_M0);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-	अगर (unlikely(cur_state != MHI_PM_M0)) अणु
+	write_unlock_irq(&mhi_cntrl->pm_lock);
+	if (unlikely(cur_state != MHI_PM_M0)) {
 		dev_err(dev, "Unable to transition to M0 state\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mhi_cntrl->M0++;
 
 	/* Wake up the device */
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+	read_lock_bh(&mhi_cntrl->pm_lock);
 	mhi_cntrl->wake_get(mhi_cntrl, true);
 
-	/* Ring all event rings and CMD ring only अगर we're in mission mode */
-	अगर (MHI_IN_MISSION_MODE(mhi_cntrl->ee)) अणु
-		काष्ठा mhi_event *mhi_event = mhi_cntrl->mhi_event;
-		काष्ठा mhi_cmd *mhi_cmd =
+	/* Ring all event rings and CMD ring only if we're in mission mode */
+	if (MHI_IN_MISSION_MODE(mhi_cntrl->ee)) {
+		struct mhi_event *mhi_event = mhi_cntrl->mhi_event;
+		struct mhi_cmd *mhi_cmd =
 			&mhi_cntrl->mhi_cmd[PRIMARY_CMD_RING];
 
-		क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) अणु
-			अगर (mhi_event->offload_ev)
-				जारी;
+		for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
+			if (mhi_event->offload_ev)
+				continue;
 
 			spin_lock_irq(&mhi_event->lock);
 			mhi_ring_er_db(mhi_event);
 			spin_unlock_irq(&mhi_event->lock);
-		पूर्ण
+		}
 
-		/* Only ring primary cmd ring अगर ring is not empty */
+		/* Only ring primary cmd ring if ring is not empty */
 		spin_lock_irq(&mhi_cmd->lock);
-		अगर (mhi_cmd->ring.rp != mhi_cmd->ring.wp)
+		if (mhi_cmd->ring.rp != mhi_cmd->ring.wp)
 			mhi_ring_cmd_db(mhi_cntrl, mhi_cmd);
 		spin_unlock_irq(&mhi_cmd->lock);
-	पूर्ण
+	}
 
-	/* Ring channel DB रेजिस्टरs */
+	/* Ring channel DB registers */
 	mhi_chan = mhi_cntrl->mhi_chan;
-	क्रम (i = 0; i < mhi_cntrl->max_chan; i++, mhi_chan++) अणु
-		काष्ठा mhi_ring *tre_ring = &mhi_chan->tre_ring;
+	for (i = 0; i < mhi_cntrl->max_chan; i++, mhi_chan++) {
+		struct mhi_ring *tre_ring = &mhi_chan->tre_ring;
 
-		अगर (mhi_chan->db_cfg.reset_req) अणु
-			ग_लिखो_lock_irq(&mhi_chan->lock);
+		if (mhi_chan->db_cfg.reset_req) {
+			write_lock_irq(&mhi_chan->lock);
 			mhi_chan->db_cfg.db_mode = true;
-			ग_लिखो_unlock_irq(&mhi_chan->lock);
-		पूर्ण
+			write_unlock_irq(&mhi_chan->lock);
+		}
 
-		पढ़ो_lock_irq(&mhi_chan->lock);
+		read_lock_irq(&mhi_chan->lock);
 
-		/* Only ring DB अगर ring is not empty */
-		अगर (tre_ring->base && tre_ring->wp  != tre_ring->rp)
+		/* Only ring DB if ring is not empty */
+		if (tre_ring->base && tre_ring->wp  != tre_ring->rp)
 			mhi_ring_chan_db(mhi_cntrl, mhi_chan);
-		पढ़ो_unlock_irq(&mhi_chan->lock);
-	पूर्ण
+		read_unlock_irq(&mhi_chan->lock);
+	}
 
 	mhi_cntrl->wake_put(mhi_cntrl, false);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 	wake_up_all(&mhi_cntrl->state_event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * After receiving the MHI state change event from the device indicating the
  * transition to M1 state, the host can transition the device to M2 state
- * क्रम keeping it in low घातer state.
+ * for keeping it in low power state.
  */
-व्योम mhi_pm_m1_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	क्रमागत mhi_pm_state state;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
+void mhi_pm_m1_transition(struct mhi_controller *mhi_cntrl)
+{
+	enum mhi_pm_state state;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
 
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_M2);
-	अगर (state == MHI_PM_M2) अणु
+	if (state == MHI_PM_M2) {
 		mhi_set_mhi_state(mhi_cntrl, MHI_STATE_M2);
 		mhi_cntrl->dev_state = MHI_STATE_M2;
 
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+		write_unlock_irq(&mhi_cntrl->pm_lock);
 
 		mhi_cntrl->M2++;
 		wake_up_all(&mhi_cntrl->state_event);
 
-		/* If there are any pending resources, निकास M2 immediately */
-		अगर (unlikely(atomic_पढ़ो(&mhi_cntrl->pending_pkts) ||
-			     atomic_पढ़ो(&mhi_cntrl->dev_wake))) अणु
+		/* If there are any pending resources, exit M2 immediately */
+		if (unlikely(atomic_read(&mhi_cntrl->pending_pkts) ||
+			     atomic_read(&mhi_cntrl->dev_wake))) {
 			dev_dbg(dev,
 				"Exiting M2, pending_pkts: %d dev_wake: %d\n",
-				atomic_पढ़ो(&mhi_cntrl->pending_pkts),
-				atomic_पढ़ो(&mhi_cntrl->dev_wake));
-			पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+				atomic_read(&mhi_cntrl->pending_pkts),
+				atomic_read(&mhi_cntrl->dev_wake));
+			read_lock_bh(&mhi_cntrl->pm_lock);
 			mhi_cntrl->wake_get(mhi_cntrl, true);
 			mhi_cntrl->wake_put(mhi_cntrl, true);
-			पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
-		पूर्ण अन्यथा अणु
+			read_unlock_bh(&mhi_cntrl->pm_lock);
+		} else {
 			mhi_cntrl->status_cb(mhi_cntrl, MHI_CB_IDLE);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-	पूर्ण
-पूर्ण
+		}
+	} else {
+		write_unlock_irq(&mhi_cntrl->pm_lock);
+	}
+}
 
 /* MHI M3 completion handler */
-पूर्णांक mhi_pm_m3_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	क्रमागत mhi_pm_state state;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
+int mhi_pm_m3_transition(struct mhi_controller *mhi_cntrl)
+{
+	enum mhi_pm_state state;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
 
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	mhi_cntrl->dev_state = MHI_STATE_M3;
 	state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_M3);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-	अगर (state != MHI_PM_M3) अणु
+	write_unlock_irq(&mhi_cntrl->pm_lock);
+	if (state != MHI_PM_M3) {
 		dev_err(dev, "Unable to transition to M3 state\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	mhi_cntrl->M3++;
 	wake_up_all(&mhi_cntrl->state_event);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Handle device Mission Mode transition */
-अटल पूर्णांक mhi_pm_mission_mode_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा mhi_event *mhi_event;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	क्रमागत mhi_ee_type ee = MHI_EE_MAX, current_ee = mhi_cntrl->ee;
-	पूर्णांक i, ret;
+static int mhi_pm_mission_mode_transition(struct mhi_controller *mhi_cntrl)
+{
+	struct mhi_event *mhi_event;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	enum mhi_ee_type ee = MHI_EE_MAX, current_ee = mhi_cntrl->ee;
+	int i, ret;
 
 	dev_dbg(dev, "Processing Mission Mode transition\n");
 
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
-	अगर (MHI_REG_ACCESS_VALID(mhi_cntrl->pm_state))
+	write_lock_irq(&mhi_cntrl->pm_lock);
+	if (MHI_REG_ACCESS_VALID(mhi_cntrl->pm_state))
 		ee = mhi_get_exec_env(mhi_cntrl);
 
-	अगर (!MHI_IN_MISSION_MODE(ee)) अणु
+	if (!MHI_IN_MISSION_MODE(ee)) {
 		mhi_cntrl->pm_state = MHI_PM_LD_ERR_FATAL_DETECT;
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+		write_unlock_irq(&mhi_cntrl->pm_lock);
 		wake_up_all(&mhi_cntrl->state_event);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 	mhi_cntrl->ee = ee;
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 
 	wake_up_all(&mhi_cntrl->state_event);
 
-	device_क्रम_each_child(&mhi_cntrl->mhi_dev->dev, &current_ee,
+	device_for_each_child(&mhi_cntrl->mhi_dev->dev, &current_ee,
 			      mhi_destroy_device);
 	mhi_cntrl->status_cb(mhi_cntrl, MHI_CB_EE_MISSION_MODE);
 
-	/* Force MHI to be in M0 state beक्रमe continuing */
+	/* Force MHI to be in M0 state before continuing */
 	ret = __mhi_device_get_sync(mhi_cntrl);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+	read_lock_bh(&mhi_cntrl->pm_lock);
 
-	अगर (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) अणु
+	if (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
 		ret = -EIO;
-		जाओ error_mission_mode;
-	पूर्ण
+		goto error_mission_mode;
+	}
 
 	/* Add elements to all HW event rings */
 	mhi_event = mhi_cntrl->mhi_event;
-	क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) अणु
-		काष्ठा mhi_ring *ring = &mhi_event->ring;
+	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
+		struct mhi_ring *ring = &mhi_event->ring;
 
-		अगर (mhi_event->offload_ev || !mhi_event->hw_ring)
-			जारी;
+		if (mhi_event->offload_ev || !mhi_event->hw_ring)
+			continue;
 
 		ring->wp = ring->base + ring->len - ring->el_size;
 		*ring->ctxt_wp = ring->iommu_base + ring->len - ring->el_size;
@@ -426,38 +425,38 @@ error_mmio:
 		smp_wmb();
 
 		spin_lock_irq(&mhi_event->lock);
-		अगर (MHI_DB_ACCESS_VALID(mhi_cntrl))
+		if (MHI_DB_ACCESS_VALID(mhi_cntrl))
 			mhi_ring_er_db(mhi_event);
 		spin_unlock_irq(&mhi_event->lock);
-	पूर्ण
+	}
 
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
 	/*
-	 * The MHI devices are only created when the client device चयनes its
+	 * The MHI devices are only created when the client device switches its
 	 * Execution Environment (EE) to either SBL or AMSS states
 	 */
 	mhi_create_devices(mhi_cntrl);
 
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+	read_lock_bh(&mhi_cntrl->pm_lock);
 
 error_mission_mode:
 	mhi_cntrl->wake_put(mhi_cntrl, false);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Handle shutकरोwn transitions */
-अटल व्योम mhi_pm_disable_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	क्रमागत mhi_pm_state cur_state;
-	काष्ठा mhi_event *mhi_event;
-	काष्ठा mhi_cmd_ctxt *cmd_ctxt;
-	काष्ठा mhi_cmd *mhi_cmd;
-	काष्ठा mhi_event_ctxt *er_ctxt;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	पूर्णांक ret, i;
+/* Handle shutdown transitions */
+static void mhi_pm_disable_transition(struct mhi_controller *mhi_cntrl)
+{
+	enum mhi_pm_state cur_state;
+	struct mhi_event *mhi_event;
+	struct mhi_cmd_ctxt *cmd_ctxt;
+	struct mhi_cmd *mhi_cmd;
+	struct mhi_event_ctxt *er_ctxt;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	int ret, i;
 
 	dev_dbg(dev, "Processing disable transition with PM state: %s\n",
 		to_mhi_pm_state_str(mhi_cntrl->pm_state));
@@ -465,89 +464,89 @@ error_mission_mode:
 	mutex_lock(&mhi_cntrl->pm_mutex);
 
 	/* Trigger MHI RESET so that the device will not access host memory */
-	अगर (!MHI_PM_IN_FATAL_STATE(mhi_cntrl->pm_state)) अणु
+	if (!MHI_PM_IN_FATAL_STATE(mhi_cntrl->pm_state)) {
 		u32 in_reset = -1;
-		अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(mhi_cntrl->समयout_ms);
+		unsigned long timeout = msecs_to_jiffies(mhi_cntrl->timeout_ms);
 
 		dev_dbg(dev, "Triggering MHI Reset in device\n");
 		mhi_set_mhi_state(mhi_cntrl, MHI_STATE_RESET);
 
-		/* Wait क्रम the reset bit to be cleared by the device */
-		ret = रुको_event_समयout(mhi_cntrl->state_event,
-					 mhi_पढ़ो_reg_field(mhi_cntrl,
+		/* Wait for the reset bit to be cleared by the device */
+		ret = wait_event_timeout(mhi_cntrl->state_event,
+					 mhi_read_reg_field(mhi_cntrl,
 							    mhi_cntrl->regs,
 							    MHICTRL,
 							    MHICTRL_RESET_MASK,
 							    MHICTRL_RESET_SHIFT,
 							    &in_reset) ||
-					!in_reset, समयout);
-		अगर (!ret || in_reset)
+					!in_reset, timeout);
+		if (!ret || in_reset)
 			dev_err(dev, "Device failed to exit MHI Reset state\n");
 
 		/*
 		 * Device will clear BHI_INTVEC as a part of RESET processing,
 		 * hence re-program it
 		 */
-		mhi_ग_लिखो_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
-	पूर्ण
+		mhi_write_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
+	}
 
 	dev_dbg(dev,
 		 "Waiting for all pending event ring processing to complete\n");
 	mhi_event = mhi_cntrl->mhi_event;
-	क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) अणु
-		अगर (mhi_event->offload_ev)
-			जारी;
-		मुक्त_irq(mhi_cntrl->irq[mhi_event->irq], mhi_event);
-		tasklet_समाप्त(&mhi_event->task);
-	पूर्ण
+	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
+		if (mhi_event->offload_ev)
+			continue;
+		free_irq(mhi_cntrl->irq[mhi_event->irq], mhi_event);
+		tasklet_kill(&mhi_event->task);
+	}
 
-	/* Release lock and रुको क्रम all pending thपढ़ोs to complete */
+	/* Release lock and wait for all pending threads to complete */
 	mutex_unlock(&mhi_cntrl->pm_mutex);
 	dev_dbg(dev, "Waiting for all pending threads to complete\n");
 	wake_up_all(&mhi_cntrl->state_event);
 
 	dev_dbg(dev, "Reset all active channels and remove MHI devices\n");
-	device_क्रम_each_child(&mhi_cntrl->mhi_dev->dev, शून्य, mhi_destroy_device);
+	device_for_each_child(&mhi_cntrl->mhi_dev->dev, NULL, mhi_destroy_device);
 
 	mutex_lock(&mhi_cntrl->pm_mutex);
 
-	WARN_ON(atomic_पढ़ो(&mhi_cntrl->dev_wake));
-	WARN_ON(atomic_पढ़ो(&mhi_cntrl->pending_pkts));
+	WARN_ON(atomic_read(&mhi_cntrl->dev_wake));
+	WARN_ON(atomic_read(&mhi_cntrl->pending_pkts));
 
 	/* Reset the ev rings and cmd rings */
 	dev_dbg(dev, "Resetting EV CTXT and CMD CTXT\n");
 	mhi_cmd = mhi_cntrl->mhi_cmd;
 	cmd_ctxt = mhi_cntrl->mhi_ctxt->cmd_ctxt;
-	क्रम (i = 0; i < NR_OF_CMD_RINGS; i++, mhi_cmd++, cmd_ctxt++) अणु
-		काष्ठा mhi_ring *ring = &mhi_cmd->ring;
+	for (i = 0; i < NR_OF_CMD_RINGS; i++, mhi_cmd++, cmd_ctxt++) {
+		struct mhi_ring *ring = &mhi_cmd->ring;
 
 		ring->rp = ring->base;
 		ring->wp = ring->base;
 		cmd_ctxt->rp = cmd_ctxt->rbase;
 		cmd_ctxt->wp = cmd_ctxt->rbase;
-	पूर्ण
+	}
 
 	mhi_event = mhi_cntrl->mhi_event;
 	er_ctxt = mhi_cntrl->mhi_ctxt->er_ctxt;
-	क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, er_ctxt++,
-		     mhi_event++) अणु
-		काष्ठा mhi_ring *ring = &mhi_event->ring;
+	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, er_ctxt++,
+		     mhi_event++) {
+		struct mhi_ring *ring = &mhi_event->ring;
 
 		/* Skip offload events */
-		अगर (mhi_event->offload_ev)
-			जारी;
+		if (mhi_event->offload_ev)
+			continue;
 
 		ring->rp = ring->base;
 		ring->wp = ring->base;
 		er_ctxt->rp = er_ctxt->rbase;
 		er_ctxt->wp = er_ctxt->rbase;
-	पूर्ण
+	}
 
 	/* Move to disable state */
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	cur_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_DISABLE);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-	अगर (unlikely(cur_state != MHI_PM_DISABLE))
+	write_unlock_irq(&mhi_cntrl->pm_lock);
+	if (unlikely(cur_state != MHI_PM_DISABLE))
 		dev_err(dev, "Error moving from PM state: %s to: %s\n",
 			to_mhi_pm_state_str(cur_state),
 			to_mhi_pm_state_str(MHI_PM_DISABLE));
@@ -557,161 +556,161 @@ error_mission_mode:
 		TO_MHI_STATE_STR(mhi_cntrl->dev_state));
 
 	mutex_unlock(&mhi_cntrl->pm_mutex);
-पूर्ण
+}
 
-/* Handle प्रणाली error transitions */
-अटल व्योम mhi_pm_sys_error_transition(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	क्रमागत mhi_pm_state cur_state, prev_state;
-	क्रमागत dev_st_transition next_state;
-	काष्ठा mhi_event *mhi_event;
-	काष्ठा mhi_cmd_ctxt *cmd_ctxt;
-	काष्ठा mhi_cmd *mhi_cmd;
-	काष्ठा mhi_event_ctxt *er_ctxt;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	पूर्णांक ret, i;
+/* Handle system error transitions */
+static void mhi_pm_sys_error_transition(struct mhi_controller *mhi_cntrl)
+{
+	enum mhi_pm_state cur_state, prev_state;
+	enum dev_st_transition next_state;
+	struct mhi_event *mhi_event;
+	struct mhi_cmd_ctxt *cmd_ctxt;
+	struct mhi_cmd *mhi_cmd;
+	struct mhi_event_ctxt *er_ctxt;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	int ret, i;
 
 	dev_dbg(dev, "Transitioning from PM state: %s to: %s\n",
 		to_mhi_pm_state_str(mhi_cntrl->pm_state),
 		to_mhi_pm_state_str(MHI_PM_SYS_ERR_PROCESS));
 
-	/* We must notअगरy MHI control driver so it can clean up first */
+	/* We must notify MHI control driver so it can clean up first */
 	mhi_cntrl->status_cb(mhi_cntrl, MHI_CB_SYS_ERROR);
 
 	mutex_lock(&mhi_cntrl->pm_mutex);
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	prev_state = mhi_cntrl->pm_state;
 	cur_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_SYS_ERR_PROCESS);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 
-	अगर (cur_state != MHI_PM_SYS_ERR_PROCESS) अणु
+	if (cur_state != MHI_PM_SYS_ERR_PROCESS) {
 		dev_err(dev, "Failed to transition from PM state: %s to: %s\n",
 			to_mhi_pm_state_str(cur_state),
 			to_mhi_pm_state_str(MHI_PM_SYS_ERR_PROCESS));
-		जाओ निकास_sys_error_transition;
-	पूर्ण
+		goto exit_sys_error_transition;
+	}
 
 	mhi_cntrl->ee = MHI_EE_DISABLE_TRANSITION;
 	mhi_cntrl->dev_state = MHI_STATE_RESET;
 
-	/* Wake up thपढ़ोs रुकोing क्रम state transition */
+	/* Wake up threads waiting for state transition */
 	wake_up_all(&mhi_cntrl->state_event);
 
 	/* Trigger MHI RESET so that the device will not access host memory */
-	अगर (MHI_REG_ACCESS_VALID(prev_state)) अणु
+	if (MHI_REG_ACCESS_VALID(prev_state)) {
 		u32 in_reset = -1;
-		अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(mhi_cntrl->समयout_ms);
+		unsigned long timeout = msecs_to_jiffies(mhi_cntrl->timeout_ms);
 
 		dev_dbg(dev, "Triggering MHI Reset in device\n");
 		mhi_set_mhi_state(mhi_cntrl, MHI_STATE_RESET);
 
-		/* Wait क्रम the reset bit to be cleared by the device */
-		ret = रुको_event_समयout(mhi_cntrl->state_event,
-					 mhi_पढ़ो_reg_field(mhi_cntrl,
+		/* Wait for the reset bit to be cleared by the device */
+		ret = wait_event_timeout(mhi_cntrl->state_event,
+					 mhi_read_reg_field(mhi_cntrl,
 							    mhi_cntrl->regs,
 							    MHICTRL,
 							    MHICTRL_RESET_MASK,
 							    MHICTRL_RESET_SHIFT,
 							    &in_reset) ||
-					!in_reset, समयout);
-		अगर (!ret || in_reset) अणु
+					!in_reset, timeout);
+		if (!ret || in_reset) {
 			dev_err(dev, "Device failed to exit MHI Reset state\n");
-			जाओ निकास_sys_error_transition;
-		पूर्ण
+			goto exit_sys_error_transition;
+		}
 
 		/*
 		 * Device will clear BHI_INTVEC as a part of RESET processing,
 		 * hence re-program it
 		 */
-		mhi_ग_लिखो_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
-	पूर्ण
+		mhi_write_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
+	}
 
 	dev_dbg(dev,
 		"Waiting for all pending event ring processing to complete\n");
 	mhi_event = mhi_cntrl->mhi_event;
-	क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) अणु
-		अगर (mhi_event->offload_ev)
-			जारी;
-		tasklet_समाप्त(&mhi_event->task);
-	पूर्ण
+	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
+		if (mhi_event->offload_ev)
+			continue;
+		tasklet_kill(&mhi_event->task);
+	}
 
-	/* Release lock and रुको क्रम all pending thपढ़ोs to complete */
+	/* Release lock and wait for all pending threads to complete */
 	mutex_unlock(&mhi_cntrl->pm_mutex);
 	dev_dbg(dev, "Waiting for all pending threads to complete\n");
 	wake_up_all(&mhi_cntrl->state_event);
 
 	dev_dbg(dev, "Reset all active channels and remove MHI devices\n");
-	device_क्रम_each_child(&mhi_cntrl->mhi_dev->dev, शून्य, mhi_destroy_device);
+	device_for_each_child(&mhi_cntrl->mhi_dev->dev, NULL, mhi_destroy_device);
 
 	mutex_lock(&mhi_cntrl->pm_mutex);
 
-	WARN_ON(atomic_पढ़ो(&mhi_cntrl->dev_wake));
-	WARN_ON(atomic_पढ़ो(&mhi_cntrl->pending_pkts));
+	WARN_ON(atomic_read(&mhi_cntrl->dev_wake));
+	WARN_ON(atomic_read(&mhi_cntrl->pending_pkts));
 
 	/* Reset the ev rings and cmd rings */
 	dev_dbg(dev, "Resetting EV CTXT and CMD CTXT\n");
 	mhi_cmd = mhi_cntrl->mhi_cmd;
 	cmd_ctxt = mhi_cntrl->mhi_ctxt->cmd_ctxt;
-	क्रम (i = 0; i < NR_OF_CMD_RINGS; i++, mhi_cmd++, cmd_ctxt++) अणु
-		काष्ठा mhi_ring *ring = &mhi_cmd->ring;
+	for (i = 0; i < NR_OF_CMD_RINGS; i++, mhi_cmd++, cmd_ctxt++) {
+		struct mhi_ring *ring = &mhi_cmd->ring;
 
 		ring->rp = ring->base;
 		ring->wp = ring->base;
 		cmd_ctxt->rp = cmd_ctxt->rbase;
 		cmd_ctxt->wp = cmd_ctxt->rbase;
-	पूर्ण
+	}
 
 	mhi_event = mhi_cntrl->mhi_event;
 	er_ctxt = mhi_cntrl->mhi_ctxt->er_ctxt;
-	क्रम (i = 0; i < mhi_cntrl->total_ev_rings; i++, er_ctxt++,
-	     mhi_event++) अणु
-		काष्ठा mhi_ring *ring = &mhi_event->ring;
+	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, er_ctxt++,
+	     mhi_event++) {
+		struct mhi_ring *ring = &mhi_event->ring;
 
 		/* Skip offload events */
-		अगर (mhi_event->offload_ev)
-			जारी;
+		if (mhi_event->offload_ev)
+			continue;
 
 		ring->rp = ring->base;
 		ring->wp = ring->base;
 		er_ctxt->rp = er_ctxt->rbase;
 		er_ctxt->wp = er_ctxt->rbase;
-	पूर्ण
+	}
 
 	/* Transition to next state */
-	अगर (MHI_IN_PBL(mhi_get_exec_env(mhi_cntrl))) अणु
-		ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	if (MHI_IN_PBL(mhi_get_exec_env(mhi_cntrl))) {
+		write_lock_irq(&mhi_cntrl->pm_lock);
 		cur_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_POR);
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-		अगर (cur_state != MHI_PM_POR) अणु
+		write_unlock_irq(&mhi_cntrl->pm_lock);
+		if (cur_state != MHI_PM_POR) {
 			dev_err(dev, "Error moving to state %s from %s\n",
 				to_mhi_pm_state_str(MHI_PM_POR),
 				to_mhi_pm_state_str(cur_state));
-			जाओ निकास_sys_error_transition;
-		पूर्ण
+			goto exit_sys_error_transition;
+		}
 		next_state = DEV_ST_TRANSITION_PBL;
-	पूर्ण अन्यथा अणु
+	} else {
 		next_state = DEV_ST_TRANSITION_READY;
-	पूर्ण
+	}
 
 	mhi_queue_state_transition(mhi_cntrl, next_state);
 
-निकास_sys_error_transition:
+exit_sys_error_transition:
 	dev_dbg(dev, "Exiting with PM state: %s, MHI state: %s\n",
 		to_mhi_pm_state_str(mhi_cntrl->pm_state),
 		TO_MHI_STATE_STR(mhi_cntrl->dev_state));
 
 	mutex_unlock(&mhi_cntrl->pm_mutex);
-पूर्ण
+}
 
 /* Queue a new work item and schedule work */
-पूर्णांक mhi_queue_state_transition(काष्ठा mhi_controller *mhi_cntrl,
-			       क्रमागत dev_st_transition state)
-अणु
-	काष्ठा state_transition *item = kदो_स्मृति(माप(*item), GFP_ATOMIC);
-	अचिन्हित दीर्घ flags;
+int mhi_queue_state_transition(struct mhi_controller *mhi_cntrl,
+			       enum dev_st_transition state)
+{
+	struct state_transition *item = kmalloc(sizeof(*item), GFP_ATOMIC);
+	unsigned long flags;
 
-	अगर (!item)
-		वापस -ENOMEM;
+	if (!item)
+		return -ENOMEM;
 
 	item->state = state;
 	spin_lock_irqsave(&mhi_cntrl->transition_lock, flags);
@@ -720,413 +719,413 @@ error_mission_mode:
 
 	queue_work(mhi_cntrl->hiprio_wq, &mhi_cntrl->st_worker);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* SYS_ERR worker */
-व्योम mhi_pm_sys_err_handler(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
+void mhi_pm_sys_err_handler(struct mhi_controller *mhi_cntrl)
+{
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
 
-	/* skip अगर controller supports RDDM */
-	अगर (mhi_cntrl->rddm_image) अणु
+	/* skip if controller supports RDDM */
+	if (mhi_cntrl->rddm_image) {
 		dev_dbg(dev, "Controller supports RDDM, skip SYS_ERROR\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mhi_queue_state_transition(mhi_cntrl, DEV_ST_TRANSITION_SYS_ERR);
-पूर्ण
+}
 
 /* Device State Transition worker */
-व्योम mhi_pm_st_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा state_transition *itr, *पंचांगp;
+void mhi_pm_st_worker(struct work_struct *work)
+{
+	struct state_transition *itr, *tmp;
 	LIST_HEAD(head);
-	काष्ठा mhi_controller *mhi_cntrl = container_of(work,
-							काष्ठा mhi_controller,
+	struct mhi_controller *mhi_cntrl = container_of(work,
+							struct mhi_controller,
 							st_worker);
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
 
 	spin_lock_irq(&mhi_cntrl->transition_lock);
 	list_splice_tail_init(&mhi_cntrl->transition_list, &head);
 	spin_unlock_irq(&mhi_cntrl->transition_lock);
 
-	list_क्रम_each_entry_safe(itr, पंचांगp, &head, node) अणु
+	list_for_each_entry_safe(itr, tmp, &head, node) {
 		list_del(&itr->node);
 		dev_dbg(dev, "Handling state transition: %s\n",
 			TO_DEV_STATE_TRANS_STR(itr->state));
 
-		चयन (itr->state) अणु
-		हाल DEV_ST_TRANSITION_PBL:
-			ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
-			अगर (MHI_REG_ACCESS_VALID(mhi_cntrl->pm_state))
+		switch (itr->state) {
+		case DEV_ST_TRANSITION_PBL:
+			write_lock_irq(&mhi_cntrl->pm_lock);
+			if (MHI_REG_ACCESS_VALID(mhi_cntrl->pm_state))
 				mhi_cntrl->ee = mhi_get_exec_env(mhi_cntrl);
-			ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+			write_unlock_irq(&mhi_cntrl->pm_lock);
 			mhi_fw_load_handler(mhi_cntrl);
-			अवरोध;
-		हाल DEV_ST_TRANSITION_SBL:
-			ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+			break;
+		case DEV_ST_TRANSITION_SBL:
+			write_lock_irq(&mhi_cntrl->pm_lock);
 			mhi_cntrl->ee = MHI_EE_SBL;
-			ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+			write_unlock_irq(&mhi_cntrl->pm_lock);
 			/*
 			 * The MHI devices are only created when the client
-			 * device चयनes its Execution Environment (EE) to
+			 * device switches its Execution Environment (EE) to
 			 * either SBL or AMSS states
 			 */
 			mhi_create_devices(mhi_cntrl);
-			अगर (mhi_cntrl->fbc_करोwnload)
-				mhi_करोwnload_amss_image(mhi_cntrl);
-			अवरोध;
-		हाल DEV_ST_TRANSITION_MISSION_MODE:
+			if (mhi_cntrl->fbc_download)
+				mhi_download_amss_image(mhi_cntrl);
+			break;
+		case DEV_ST_TRANSITION_MISSION_MODE:
 			mhi_pm_mission_mode_transition(mhi_cntrl);
-			अवरोध;
-		हाल DEV_ST_TRANSITION_FP:
-			ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+			break;
+		case DEV_ST_TRANSITION_FP:
+			write_lock_irq(&mhi_cntrl->pm_lock);
 			mhi_cntrl->ee = MHI_EE_FP;
-			ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+			write_unlock_irq(&mhi_cntrl->pm_lock);
 			mhi_create_devices(mhi_cntrl);
-			अवरोध;
-		हाल DEV_ST_TRANSITION_READY:
-			mhi_पढ़ोy_state_transition(mhi_cntrl);
-			अवरोध;
-		हाल DEV_ST_TRANSITION_SYS_ERR:
+			break;
+		case DEV_ST_TRANSITION_READY:
+			mhi_ready_state_transition(mhi_cntrl);
+			break;
+		case DEV_ST_TRANSITION_SYS_ERR:
 			mhi_pm_sys_error_transition(mhi_cntrl);
-			अवरोध;
-		हाल DEV_ST_TRANSITION_DISABLE:
+			break;
+		case DEV_ST_TRANSITION_DISABLE:
 			mhi_pm_disable_transition(mhi_cntrl);
-			अवरोध;
-		शेष:
-			अवरोध;
-		पूर्ण
-		kमुक्त(itr);
-	पूर्ण
-पूर्ण
+			break;
+		default:
+			break;
+		}
+		kfree(itr);
+	}
+}
 
-पूर्णांक mhi_pm_suspend(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा mhi_chan *itr, *पंचांगp;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	क्रमागत mhi_pm_state new_state;
-	पूर्णांक ret;
+int mhi_pm_suspend(struct mhi_controller *mhi_cntrl)
+{
+	struct mhi_chan *itr, *tmp;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	enum mhi_pm_state new_state;
+	int ret;
 
-	अगर (mhi_cntrl->pm_state == MHI_PM_DISABLE)
-		वापस -EINVAL;
+	if (mhi_cntrl->pm_state == MHI_PM_DISABLE)
+		return -EINVAL;
 
-	अगर (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state))
-		वापस -EIO;
+	if (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state))
+		return -EIO;
 
-	/* Return busy अगर there are any pending resources */
-	अगर (atomic_पढ़ो(&mhi_cntrl->dev_wake) ||
-	    atomic_पढ़ो(&mhi_cntrl->pending_pkts))
-		वापस -EBUSY;
+	/* Return busy if there are any pending resources */
+	if (atomic_read(&mhi_cntrl->dev_wake) ||
+	    atomic_read(&mhi_cntrl->pending_pkts))
+		return -EBUSY;
 
 	/* Take MHI out of M2 state */
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+	read_lock_bh(&mhi_cntrl->pm_lock);
 	mhi_cntrl->wake_get(mhi_cntrl, false);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
-	ret = रुको_event_समयout(mhi_cntrl->state_event,
+	ret = wait_event_timeout(mhi_cntrl->state_event,
 				 mhi_cntrl->dev_state == MHI_STATE_M0 ||
 				 mhi_cntrl->dev_state == MHI_STATE_M1 ||
 				 MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state),
-				 msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
+				 msecs_to_jiffies(mhi_cntrl->timeout_ms));
 
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+	read_lock_bh(&mhi_cntrl->pm_lock);
 	mhi_cntrl->wake_put(mhi_cntrl, false);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
-	अगर (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) अणु
+	if (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
 		dev_err(dev,
 			"Could not enter M0/M1 state");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 
-	अगर (atomic_पढ़ो(&mhi_cntrl->dev_wake) ||
-	    atomic_पढ़ो(&mhi_cntrl->pending_pkts)) अणु
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-		वापस -EBUSY;
-	पूर्ण
+	if (atomic_read(&mhi_cntrl->dev_wake) ||
+	    atomic_read(&mhi_cntrl->pending_pkts)) {
+		write_unlock_irq(&mhi_cntrl->pm_lock);
+		return -EBUSY;
+	}
 
 	dev_dbg(dev, "Allowing M3 transition\n");
 	new_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_M3_ENTER);
-	अगर (new_state != MHI_PM_M3_ENTER) अणु
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	if (new_state != MHI_PM_M3_ENTER) {
+		write_unlock_irq(&mhi_cntrl->pm_lock);
 		dev_err(dev,
 			"Error setting to PM state: %s from: %s\n",
 			to_mhi_pm_state_str(MHI_PM_M3_ENTER),
 			to_mhi_pm_state_str(mhi_cntrl->pm_state));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Set MHI to M3 and रुको क्रम completion */
+	/* Set MHI to M3 and wait for completion */
 	mhi_set_mhi_state(mhi_cntrl, MHI_STATE_M3);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 	dev_dbg(dev, "Waiting for M3 completion\n");
 
-	ret = रुको_event_समयout(mhi_cntrl->state_event,
+	ret = wait_event_timeout(mhi_cntrl->state_event,
 				 mhi_cntrl->dev_state == MHI_STATE_M3 ||
 				 MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state),
-				 msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
+				 msecs_to_jiffies(mhi_cntrl->timeout_ms));
 
-	अगर (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) अणु
+	if (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
 		dev_err(dev,
 			"Did not enter M3 state, MHI state: %s, PM state: %s\n",
 			TO_MHI_STATE_STR(mhi_cntrl->dev_state),
 			to_mhi_pm_state_str(mhi_cntrl->pm_state));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Notअगरy clients about entering LPM */
-	list_क्रम_each_entry_safe(itr, पंचांगp, &mhi_cntrl->lpm_chans, node) अणु
+	/* Notify clients about entering LPM */
+	list_for_each_entry_safe(itr, tmp, &mhi_cntrl->lpm_chans, node) {
 		mutex_lock(&itr->mutex);
-		अगर (itr->mhi_dev)
-			mhi_notअगरy(itr->mhi_dev, MHI_CB_LPM_ENTER);
+		if (itr->mhi_dev)
+			mhi_notify(itr->mhi_dev, MHI_CB_LPM_ENTER);
 		mutex_unlock(&itr->mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mhi_pm_suspend);
 
-पूर्णांक mhi_pm_resume(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा mhi_chan *itr, *पंचांगp;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	क्रमागत mhi_pm_state cur_state;
-	पूर्णांक ret;
+int mhi_pm_resume(struct mhi_controller *mhi_cntrl)
+{
+	struct mhi_chan *itr, *tmp;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	enum mhi_pm_state cur_state;
+	int ret;
 
 	dev_dbg(dev, "Entered with PM state: %s, MHI state: %s\n",
 		to_mhi_pm_state_str(mhi_cntrl->pm_state),
 		TO_MHI_STATE_STR(mhi_cntrl->dev_state));
 
-	अगर (mhi_cntrl->pm_state == MHI_PM_DISABLE)
-		वापस 0;
+	if (mhi_cntrl->pm_state == MHI_PM_DISABLE)
+		return 0;
 
-	अगर (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state))
-		वापस -EIO;
+	if (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state))
+		return -EIO;
 
-	अगर (mhi_get_mhi_state(mhi_cntrl) != MHI_STATE_M3)
-		वापस -EINVAL;
+	if (mhi_get_mhi_state(mhi_cntrl) != MHI_STATE_M3)
+		return -EINVAL;
 
-	/* Notअगरy clients about निकासing LPM */
-	list_क्रम_each_entry_safe(itr, पंचांगp, &mhi_cntrl->lpm_chans, node) अणु
+	/* Notify clients about exiting LPM */
+	list_for_each_entry_safe(itr, tmp, &mhi_cntrl->lpm_chans, node) {
 		mutex_lock(&itr->mutex);
-		अगर (itr->mhi_dev)
-			mhi_notअगरy(itr->mhi_dev, MHI_CB_LPM_EXIT);
+		if (itr->mhi_dev)
+			mhi_notify(itr->mhi_dev, MHI_CB_LPM_EXIT);
 		mutex_unlock(&itr->mutex);
-	पूर्ण
+	}
 
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	cur_state = mhi_tryset_pm_state(mhi_cntrl, MHI_PM_M3_EXIT);
-	अगर (cur_state != MHI_PM_M3_EXIT) अणु
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	if (cur_state != MHI_PM_M3_EXIT) {
+		write_unlock_irq(&mhi_cntrl->pm_lock);
 		dev_info(dev,
 			 "Error setting to PM state: %s from: %s\n",
 			 to_mhi_pm_state_str(MHI_PM_M3_EXIT),
 			 to_mhi_pm_state_str(mhi_cntrl->pm_state));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	/* Set MHI to M0 and रुको क्रम completion */
+	/* Set MHI to M0 and wait for completion */
 	mhi_set_mhi_state(mhi_cntrl, MHI_STATE_M0);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 
-	ret = रुको_event_समयout(mhi_cntrl->state_event,
+	ret = wait_event_timeout(mhi_cntrl->state_event,
 				 mhi_cntrl->dev_state == MHI_STATE_M0 ||
 				 MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state),
-				 msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
+				 msecs_to_jiffies(mhi_cntrl->timeout_ms));
 
-	अगर (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) अणु
+	if (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
 		dev_err(dev,
 			"Did not enter M0 state, MHI state: %s, PM state: %s\n",
 			TO_MHI_STATE_STR(mhi_cntrl->dev_state),
 			to_mhi_pm_state_str(mhi_cntrl->pm_state));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mhi_pm_resume);
 
-पूर्णांक __mhi_device_get_sync(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	पूर्णांक ret;
+int __mhi_device_get_sync(struct mhi_controller *mhi_cntrl)
+{
+	int ret;
 
 	/* Wake up the device */
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
-	अगर (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) अणु
-		पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
-		वापस -EIO;
-	पूर्ण
+	read_lock_bh(&mhi_cntrl->pm_lock);
+	if (MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
+		read_unlock_bh(&mhi_cntrl->pm_lock);
+		return -EIO;
+	}
 	mhi_cntrl->wake_get(mhi_cntrl, true);
-	अगर (MHI_PM_IN_SUSPEND_STATE(mhi_cntrl->pm_state))
+	if (MHI_PM_IN_SUSPEND_STATE(mhi_cntrl->pm_state))
 		mhi_trigger_resume(mhi_cntrl);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
-	ret = रुको_event_समयout(mhi_cntrl->state_event,
+	ret = wait_event_timeout(mhi_cntrl->state_event,
 				 mhi_cntrl->pm_state == MHI_PM_M0 ||
 				 MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state),
-				 msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
+				 msecs_to_jiffies(mhi_cntrl->timeout_ms));
 
-	अगर (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) अणु
-		पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
+	if (!ret || MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state)) {
+		read_lock_bh(&mhi_cntrl->pm_lock);
 		mhi_cntrl->wake_put(mhi_cntrl, false);
-		पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
-		वापस -EIO;
-	पूर्ण
+		read_unlock_bh(&mhi_cntrl->pm_lock);
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Assert device wake db */
-अटल व्योम mhi_निश्चित_dev_wake(काष्ठा mhi_controller *mhi_cntrl, bool क्रमce)
-अणु
-	अचिन्हित दीर्घ flags;
+static void mhi_assert_dev_wake(struct mhi_controller *mhi_cntrl, bool force)
+{
+	unsigned long flags;
 
 	/*
-	 * If क्रमce flag is set, then increment the wake count value and
+	 * If force flag is set, then increment the wake count value and
 	 * ring wake db
 	 */
-	अगर (unlikely(क्रमce)) अणु
+	if (unlikely(force)) {
 		spin_lock_irqsave(&mhi_cntrl->wlock, flags);
 		atomic_inc(&mhi_cntrl->dev_wake);
-		अगर (MHI_WAKE_DB_FORCE_SET_VALID(mhi_cntrl->pm_state) &&
-		    !mhi_cntrl->wake_set) अणु
-			mhi_ग_लिखो_db(mhi_cntrl, mhi_cntrl->wake_db, 1);
+		if (MHI_WAKE_DB_FORCE_SET_VALID(mhi_cntrl->pm_state) &&
+		    !mhi_cntrl->wake_set) {
+			mhi_write_db(mhi_cntrl, mhi_cntrl->wake_db, 1);
 			mhi_cntrl->wake_set = true;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&mhi_cntrl->wlock, flags);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * If resources are alपढ़ोy requested, then just increment
-		 * the wake count value and वापस
+		 * If resources are already requested, then just increment
+		 * the wake count value and return
 		 */
-		अगर (likely(atomic_add_unless(&mhi_cntrl->dev_wake, 1, 0)))
-			वापस;
+		if (likely(atomic_add_unless(&mhi_cntrl->dev_wake, 1, 0)))
+			return;
 
 		spin_lock_irqsave(&mhi_cntrl->wlock, flags);
-		अगर ((atomic_inc_वापस(&mhi_cntrl->dev_wake) == 1) &&
+		if ((atomic_inc_return(&mhi_cntrl->dev_wake) == 1) &&
 		    MHI_WAKE_DB_SET_VALID(mhi_cntrl->pm_state) &&
-		    !mhi_cntrl->wake_set) अणु
-			mhi_ग_लिखो_db(mhi_cntrl, mhi_cntrl->wake_db, 1);
+		    !mhi_cntrl->wake_set) {
+			mhi_write_db(mhi_cntrl, mhi_cntrl->wake_db, 1);
 			mhi_cntrl->wake_set = true;
-		पूर्ण
+		}
 		spin_unlock_irqrestore(&mhi_cntrl->wlock, flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* De-निश्चित device wake db */
-अटल व्योम mhi_deनिश्चित_dev_wake(काष्ठा mhi_controller *mhi_cntrl,
+/* De-assert device wake db */
+static void mhi_deassert_dev_wake(struct mhi_controller *mhi_cntrl,
 				  bool override)
-अणु
-	अचिन्हित दीर्घ flags;
+{
+	unsigned long flags;
 
 	/*
-	 * Only जारी अगर there is a single resource, अन्यथा just decrement
-	 * and वापस
+	 * Only continue if there is a single resource, else just decrement
+	 * and return
 	 */
-	अगर (likely(atomic_add_unless(&mhi_cntrl->dev_wake, -1, 1)))
-		वापस;
+	if (likely(atomic_add_unless(&mhi_cntrl->dev_wake, -1, 1)))
+		return;
 
 	spin_lock_irqsave(&mhi_cntrl->wlock, flags);
-	अगर ((atomic_dec_वापस(&mhi_cntrl->dev_wake) == 0) &&
+	if ((atomic_dec_return(&mhi_cntrl->dev_wake) == 0) &&
 	    MHI_WAKE_DB_CLEAR_VALID(mhi_cntrl->pm_state) && !override &&
-	    mhi_cntrl->wake_set) अणु
-		mhi_ग_लिखो_db(mhi_cntrl, mhi_cntrl->wake_db, 0);
+	    mhi_cntrl->wake_set) {
+		mhi_write_db(mhi_cntrl, mhi_cntrl->wake_db, 0);
 		mhi_cntrl->wake_set = false;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&mhi_cntrl->wlock, flags);
-पूर्ण
+}
 
-पूर्णांक mhi_async_घातer_up(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	क्रमागत mhi_state state;
-	क्रमागत mhi_ee_type current_ee;
-	क्रमागत dev_st_transition next_state;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
+int mhi_async_power_up(struct mhi_controller *mhi_cntrl)
+{
+	enum mhi_state state;
+	enum mhi_ee_type current_ee;
+	enum dev_st_transition next_state;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
 	dev_info(dev, "Requested to power ON\n");
 
-	/* Supply शेष wake routines अगर not provided by controller driver */
-	अगर (!mhi_cntrl->wake_get || !mhi_cntrl->wake_put ||
-	    !mhi_cntrl->wake_toggle) अणु
-		mhi_cntrl->wake_get = mhi_निश्चित_dev_wake;
-		mhi_cntrl->wake_put = mhi_deनिश्चित_dev_wake;
+	/* Supply default wake routines if not provided by controller driver */
+	if (!mhi_cntrl->wake_get || !mhi_cntrl->wake_put ||
+	    !mhi_cntrl->wake_toggle) {
+		mhi_cntrl->wake_get = mhi_assert_dev_wake;
+		mhi_cntrl->wake_put = mhi_deassert_dev_wake;
 		mhi_cntrl->wake_toggle = (mhi_cntrl->db_access & MHI_PM_M2) ?
 			mhi_toggle_dev_wake_nop : mhi_toggle_dev_wake;
-	पूर्ण
+	}
 
 	mutex_lock(&mhi_cntrl->pm_mutex);
 	mhi_cntrl->pm_state = MHI_PM_DISABLE;
 
 	ret = mhi_init_irq_setup(mhi_cntrl);
-	अगर (ret)
-		जाओ error_setup_irq;
+	if (ret)
+		goto error_setup_irq;
 
 	/* Setup BHI offset & INTVEC */
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
-	ret = mhi_पढ़ो_reg(mhi_cntrl, mhi_cntrl->regs, BHIOFF, &val);
-	अगर (ret) अणु
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
-		जाओ error_bhi_offset;
-	पूर्ण
+	write_lock_irq(&mhi_cntrl->pm_lock);
+	ret = mhi_read_reg(mhi_cntrl, mhi_cntrl->regs, BHIOFF, &val);
+	if (ret) {
+		write_unlock_irq(&mhi_cntrl->pm_lock);
+		goto error_bhi_offset;
+	}
 
 	mhi_cntrl->bhi = mhi_cntrl->regs + val;
 
 	/* Setup BHIE offset */
-	अगर (mhi_cntrl->fbc_करोwnload) अणु
-		ret = mhi_पढ़ो_reg(mhi_cntrl, mhi_cntrl->regs, BHIखातापूर्णF, &val);
-		अगर (ret) अणु
-			ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	if (mhi_cntrl->fbc_download) {
+		ret = mhi_read_reg(mhi_cntrl, mhi_cntrl->regs, BHIEOFF, &val);
+		if (ret) {
+			write_unlock_irq(&mhi_cntrl->pm_lock);
 			dev_err(dev, "Error reading BHIE offset\n");
-			जाओ error_bhi_offset;
-		पूर्ण
+			goto error_bhi_offset;
+		}
 
 		mhi_cntrl->bhie = mhi_cntrl->regs + val;
-	पूर्ण
+	}
 
-	mhi_ग_लिखो_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
+	mhi_write_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
 	mhi_cntrl->pm_state = MHI_PM_POR;
 	mhi_cntrl->ee = MHI_EE_MAX;
 	current_ee = mhi_get_exec_env(mhi_cntrl);
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 
 	/* Confirm that the device is in valid exec env */
-	अगर (!MHI_IN_PBL(current_ee) && current_ee != MHI_EE_AMSS) अणु
+	if (!MHI_IN_PBL(current_ee) && current_ee != MHI_EE_AMSS) {
 		dev_err(dev, "Not a valid EE for power on\n");
 		ret = -EIO;
-		जाओ error_bhi_offset;
-	पूर्ण
+		goto error_bhi_offset;
+	}
 
 	state = mhi_get_mhi_state(mhi_cntrl);
-	अगर (state == MHI_STATE_SYS_ERR) अणु
+	if (state == MHI_STATE_SYS_ERR) {
 		mhi_set_mhi_state(mhi_cntrl, MHI_STATE_RESET);
-		ret = रुको_event_समयout(mhi_cntrl->state_event,
+		ret = wait_event_timeout(mhi_cntrl->state_event,
 				MHI_PM_IN_FATAL_STATE(mhi_cntrl->pm_state) ||
-					mhi_पढ़ो_reg_field(mhi_cntrl,
+					mhi_read_reg_field(mhi_cntrl,
 							   mhi_cntrl->regs,
 							   MHICTRL,
 							   MHICTRL_RESET_MASK,
 							   MHICTRL_RESET_SHIFT,
 							   &val) ||
 					!val,
-				msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
-		अगर (!ret) अणु
+				msecs_to_jiffies(mhi_cntrl->timeout_ms));
+		if (!ret) {
 			ret = -EIO;
 			dev_info(dev, "Failed to reset MHI due to syserr state\n");
-			जाओ error_bhi_offset;
-		पूर्ण
+			goto error_bhi_offset;
+		}
 
 		/*
 		 * device cleares INTVEC as part of RESET processing,
 		 * re-program it
 		 */
-		mhi_ग_लिखो_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
-	पूर्ण
+		mhi_write_reg(mhi_cntrl, mhi_cntrl->bhi, BHI_INTVEC, 0);
+	}
 
 	/* Transition to next state */
 	next_state = MHI_IN_PBL(current_ee) ?
@@ -1138,143 +1137,143 @@ EXPORT_SYMBOL_GPL(mhi_pm_resume);
 
 	dev_info(dev, "Power on setup success\n");
 
-	वापस 0;
+	return 0;
 
 error_bhi_offset:
-	mhi_deinit_मुक्त_irq(mhi_cntrl);
+	mhi_deinit_free_irq(mhi_cntrl);
 
 error_setup_irq:
 	mhi_cntrl->pm_state = MHI_PM_DISABLE;
 	mutex_unlock(&mhi_cntrl->pm_mutex);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(mhi_async_घातer_up);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(mhi_async_power_up);
 
-व्योम mhi_घातer_करोwn(काष्ठा mhi_controller *mhi_cntrl, bool graceful)
-अणु
-	क्रमागत mhi_pm_state cur_state, transition_state;
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
+void mhi_power_down(struct mhi_controller *mhi_cntrl, bool graceful)
+{
+	enum mhi_pm_state cur_state, transition_state;
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
 
 	mutex_lock(&mhi_cntrl->pm_mutex);
-	ग_लिखो_lock_irq(&mhi_cntrl->pm_lock);
+	write_lock_irq(&mhi_cntrl->pm_lock);
 	cur_state = mhi_cntrl->pm_state;
-	अगर (cur_state == MHI_PM_DISABLE) अणु
-		ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	if (cur_state == MHI_PM_DISABLE) {
+		write_unlock_irq(&mhi_cntrl->pm_lock);
 		mutex_unlock(&mhi_cntrl->pm_mutex);
-		वापस; /* Alपढ़ोy घातered करोwn */
-	पूर्ण
+		return; /* Already powered down */
+	}
 
-	/* If it's not a graceful shutकरोwn, क्रमce MHI to linkकरोwn state */
+	/* If it's not a graceful shutdown, force MHI to linkdown state */
 	transition_state = (graceful) ? MHI_PM_SHUTDOWN_PROCESS :
 			   MHI_PM_LD_ERR_FATAL_DETECT;
 
 	cur_state = mhi_tryset_pm_state(mhi_cntrl, transition_state);
-	अगर (cur_state != transition_state) अणु
+	if (cur_state != transition_state) {
 		dev_err(dev, "Failed to move to state: %s from: %s\n",
 			to_mhi_pm_state_str(transition_state),
 			to_mhi_pm_state_str(mhi_cntrl->pm_state));
-		/* Force link करोwn or error fatal detected state */
+		/* Force link down or error fatal detected state */
 		mhi_cntrl->pm_state = MHI_PM_LD_ERR_FATAL_DETECT;
-	पूर्ण
+	}
 
-	/* mark device inactive to aव्योम any further host processing */
+	/* mark device inactive to avoid any further host processing */
 	mhi_cntrl->ee = MHI_EE_DISABLE_TRANSITION;
 	mhi_cntrl->dev_state = MHI_STATE_RESET;
 
 	wake_up_all(&mhi_cntrl->state_event);
 
-	ग_लिखो_unlock_irq(&mhi_cntrl->pm_lock);
+	write_unlock_irq(&mhi_cntrl->pm_lock);
 	mutex_unlock(&mhi_cntrl->pm_mutex);
 
 	mhi_queue_state_transition(mhi_cntrl, DEV_ST_TRANSITION_DISABLE);
 
-	/* Wait क्रम shutकरोwn to complete */
+	/* Wait for shutdown to complete */
 	flush_work(&mhi_cntrl->st_worker);
 
-	मुक्त_irq(mhi_cntrl->irq[0], mhi_cntrl);
-पूर्ण
-EXPORT_SYMBOL_GPL(mhi_घातer_करोwn);
+	free_irq(mhi_cntrl->irq[0], mhi_cntrl);
+}
+EXPORT_SYMBOL_GPL(mhi_power_down);
 
-पूर्णांक mhi_sync_घातer_up(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	पूर्णांक ret = mhi_async_घातer_up(mhi_cntrl);
+int mhi_sync_power_up(struct mhi_controller *mhi_cntrl)
+{
+	int ret = mhi_async_power_up(mhi_cntrl);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	रुको_event_समयout(mhi_cntrl->state_event,
+	wait_event_timeout(mhi_cntrl->state_event,
 			   MHI_IN_MISSION_MODE(mhi_cntrl->ee) ||
 			   MHI_PM_IN_ERROR_STATE(mhi_cntrl->pm_state),
-			   msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
+			   msecs_to_jiffies(mhi_cntrl->timeout_ms));
 
 	ret = (MHI_IN_MISSION_MODE(mhi_cntrl->ee)) ? 0 : -ETIMEDOUT;
-	अगर (ret)
-		mhi_घातer_करोwn(mhi_cntrl, false);
+	if (ret)
+		mhi_power_down(mhi_cntrl, false);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(mhi_sync_घातer_up);
+	return ret;
+}
+EXPORT_SYMBOL(mhi_sync_power_up);
 
-पूर्णांक mhi_क्रमce_rddm_mode(काष्ठा mhi_controller *mhi_cntrl)
-अणु
-	काष्ठा device *dev = &mhi_cntrl->mhi_dev->dev;
-	पूर्णांक ret;
+int mhi_force_rddm_mode(struct mhi_controller *mhi_cntrl)
+{
+	struct device *dev = &mhi_cntrl->mhi_dev->dev;
+	int ret;
 
-	/* Check अगर device is alपढ़ोy in RDDM */
-	अगर (mhi_cntrl->ee == MHI_EE_RDDM)
-		वापस 0;
+	/* Check if device is already in RDDM */
+	if (mhi_cntrl->ee == MHI_EE_RDDM)
+		return 0;
 
 	dev_dbg(dev, "Triggering SYS_ERR to force RDDM state\n");
 	mhi_set_mhi_state(mhi_cntrl, MHI_STATE_SYS_ERR);
 
-	/* Wait क्रम RDDM event */
-	ret = रुको_event_समयout(mhi_cntrl->state_event,
+	/* Wait for RDDM event */
+	ret = wait_event_timeout(mhi_cntrl->state_event,
 				 mhi_cntrl->ee == MHI_EE_RDDM,
-				 msecs_to_jअगरfies(mhi_cntrl->समयout_ms));
+				 msecs_to_jiffies(mhi_cntrl->timeout_ms));
 	ret = ret ? 0 : -EIO;
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(mhi_क्रमce_rddm_mode);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(mhi_force_rddm_mode);
 
-व्योम mhi_device_get(काष्ठा mhi_device *mhi_dev)
-अणु
-	काष्ठा mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
+void mhi_device_get(struct mhi_device *mhi_dev)
+{
+	struct mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
 
 	mhi_dev->dev_wake++;
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
-	अगर (MHI_PM_IN_SUSPEND_STATE(mhi_cntrl->pm_state))
+	read_lock_bh(&mhi_cntrl->pm_lock);
+	if (MHI_PM_IN_SUSPEND_STATE(mhi_cntrl->pm_state))
 		mhi_trigger_resume(mhi_cntrl);
 
 	mhi_cntrl->wake_get(mhi_cntrl, true);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
-पूर्ण
+	read_unlock_bh(&mhi_cntrl->pm_lock);
+}
 EXPORT_SYMBOL_GPL(mhi_device_get);
 
-पूर्णांक mhi_device_get_sync(काष्ठा mhi_device *mhi_dev)
-अणु
-	काष्ठा mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
-	पूर्णांक ret;
+int mhi_device_get_sync(struct mhi_device *mhi_dev)
+{
+	struct mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
+	int ret;
 
 	ret = __mhi_device_get_sync(mhi_cntrl);
-	अगर (!ret)
+	if (!ret)
 		mhi_dev->dev_wake++;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(mhi_device_get_sync);
 
-व्योम mhi_device_put(काष्ठा mhi_device *mhi_dev)
-अणु
-	काष्ठा mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
+void mhi_device_put(struct mhi_device *mhi_dev)
+{
+	struct mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
 
 	mhi_dev->dev_wake--;
-	पढ़ो_lock_bh(&mhi_cntrl->pm_lock);
-	अगर (MHI_PM_IN_SUSPEND_STATE(mhi_cntrl->pm_state))
+	read_lock_bh(&mhi_cntrl->pm_lock);
+	if (MHI_PM_IN_SUSPEND_STATE(mhi_cntrl->pm_state))
 		mhi_trigger_resume(mhi_cntrl);
 
 	mhi_cntrl->wake_put(mhi_cntrl, false);
-	पढ़ो_unlock_bh(&mhi_cntrl->pm_lock);
-पूर्ण
+	read_unlock_bh(&mhi_cntrl->pm_lock);
+}
 EXPORT_SYMBOL_GPL(mhi_device_put);

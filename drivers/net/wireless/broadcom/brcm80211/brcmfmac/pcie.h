@@ -1,15 +1,14 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: ISC
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2014 Broadcom Corporation
  */
-#अगर_अघोषित BRCMFMAC_PCIE_H
-#घोषणा BRCMFMAC_PCIE_H
+#ifndef BRCMFMAC_PCIE_H
+#define BRCMFMAC_PCIE_H
 
 
-काष्ठा brcmf_pciedev अणु
-	काष्ठा brcmf_bus *bus;
-	काष्ठा brcmf_pciedev_info *devinfo;
-पूर्ण;
+struct brcmf_pciedev {
+	struct brcmf_bus *bus;
+	struct brcmf_pciedev_info *devinfo;
+};
 
-#पूर्ण_अगर /* BRCMFMAC_PCIE_H */
+#endif /* BRCMFMAC_PCIE_H */

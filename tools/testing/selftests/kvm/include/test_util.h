@@ -1,75 +1,74 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * tools/testing/selftests/kvm/include/test_util.h
  *
  * Copyright (C) 2018, Google LLC.
  */
 
-#अगर_अघोषित SELFTEST_KVM_TEST_UTIL_H
-#घोषणा SELFTEST_KVM_TEST_UTIL_H
+#ifndef SELFTEST_KVM_TEST_UTIL_H
+#define SELFTEST_KVM_TEST_UTIL_H
 
-#समावेश <मानककोष.स>
-#समावेश <मानकतर्क.स>
-#समावेश <stdbool.h>
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <unistd.h>
-#समावेश <fcntl.h>
-#समावेश <sys/mman.h>
-#समावेश "kselftest.h"
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include "kselftest.h"
 
-अटल अंतरभूत पूर्णांक _no_म_लिखो(स्थिर अक्षर *क्रमmat, ...) अणु वापस 0; पूर्ण
+static inline int _no_printf(const char *format, ...) { return 0; }
 
-#अगर_घोषित DEBUG
-#घोषणा pr_debug(...) म_लिखो(__VA_ARGS__)
-#अन्यथा
-#घोषणा pr_debug(...) _no_म_लिखो(__VA_ARGS__)
-#पूर्ण_अगर
-#अगर_अघोषित QUIET
-#घोषणा pr_info(...) म_लिखो(__VA_ARGS__)
-#अन्यथा
-#घोषणा pr_info(...) _no_म_लिखो(__VA_ARGS__)
-#पूर्ण_अगर
+#ifdef DEBUG
+#define pr_debug(...) printf(__VA_ARGS__)
+#else
+#define pr_debug(...) _no_printf(__VA_ARGS__)
+#endif
+#ifndef QUIET
+#define pr_info(...) printf(__VA_ARGS__)
+#else
+#define pr_info(...) _no_printf(__VA_ARGS__)
+#endif
 
-व्योम prपूर्णांक_skip(स्थिर अक्षर *fmt, ...) __attribute__((क्रमmat(म_लिखो, 1, 2)));
+void print_skip(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
-sमाप_प्रकार test_ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count);
-sमाप_प्रकार test_पढ़ो(पूर्णांक fd, व्योम *buf, माप_प्रकार count);
-पूर्णांक test_seq_पढ़ो(स्थिर अक्षर *path, अक्षर **bufp, माप_प्रकार *sizep);
+ssize_t test_write(int fd, const void *buf, size_t count);
+ssize_t test_read(int fd, void *buf, size_t count);
+int test_seq_read(const char *path, char **bufp, size_t *sizep);
 
-व्योम test_निश्चित(bool exp, स्थिर अक्षर *exp_str,
-		 स्थिर अक्षर *file, अचिन्हित पूर्णांक line, स्थिर अक्षर *fmt, ...)
-		__attribute__((क्रमmat(म_लिखो, 5, 6)));
+void test_assert(bool exp, const char *exp_str,
+		 const char *file, unsigned int line, const char *fmt, ...)
+		__attribute__((format(printf, 5, 6)));
 
-#घोषणा TEST_ASSERT(e, fmt, ...) \
-	test_निश्चित((e), #e, __खाता__, __LINE__, fmt, ##__VA_ARGS__)
+#define TEST_ASSERT(e, fmt, ...) \
+	test_assert((e), #e, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
 
-#घोषणा ASSERT_EQ(a, b) करो अणु \
+#define ASSERT_EQ(a, b) do { \
 	typeof(a) __a = (a); \
 	typeof(b) __b = (b); \
 	TEST_ASSERT(__a == __b, \
 		    "ASSERT_EQ(%s, %s) failed.\n" \
 		    "\t%s is %#lx\n" \
 		    "\t%s is %#lx", \
-		    #a, #b, #a, (अचिन्हित दीर्घ) __a, #b, (अचिन्हित दीर्घ) __b); \
-पूर्ण जबतक (0)
+		    #a, #b, #a, (unsigned long) __a, #b, (unsigned long) __b); \
+} while (0)
 
-#घोषणा TEST_FAIL(fmt, ...) \
+#define TEST_FAIL(fmt, ...) \
 	TEST_ASSERT(false, fmt, ##__VA_ARGS__)
 
-माप_प्रकार parse_size(स्थिर अक्षर *size);
+size_t parse_size(const char *size);
 
-पूर्णांक64_t बारpec_to_ns(काष्ठा बारpec ts);
-काष्ठा बारpec बारpec_add_ns(काष्ठा बारpec ts, पूर्णांक64_t ns);
-काष्ठा बारpec बारpec_add(काष्ठा बारpec ts1, काष्ठा बारpec ts2);
-काष्ठा बारpec बारpec_sub(काष्ठा बारpec ts1, काष्ठा बारpec ts2);
-काष्ठा बारpec बारpec_elapsed(काष्ठा बारpec start);
-काष्ठा बारpec बारpec_भाग(काष्ठा बारpec ts, पूर्णांक भागisor);
+int64_t timespec_to_ns(struct timespec ts);
+struct timespec timespec_add_ns(struct timespec ts, int64_t ns);
+struct timespec timespec_add(struct timespec ts1, struct timespec ts2);
+struct timespec timespec_sub(struct timespec ts1, struct timespec ts2);
+struct timespec timespec_elapsed(struct timespec start);
+struct timespec timespec_div(struct timespec ts, int divisor);
 
-क्रमागत vm_mem_backing_src_type अणु
+enum vm_mem_backing_src_type {
 	VM_MEM_SRC_ANONYMOUS,
 	VM_MEM_SRC_ANONYMOUS_THP,
 	VM_MEM_SRC_ANONYMOUS_HUGETLB,
@@ -89,28 +88,28 @@ sमाप_प्रकार test_पढ़ो(पूर्णांक fd, व
 	VM_MEM_SRC_SHMEM,
 	VM_MEM_SRC_SHARED_HUGETLB,
 	NUM_SRC_TYPES,
-पूर्ण;
+};
 
-काष्ठा vm_mem_backing_src_alias अणु
-	स्थिर अक्षर *name;
-	uपूर्णांक32_t flag;
-पूर्ण;
+struct vm_mem_backing_src_alias {
+	const char *name;
+	uint32_t flag;
+};
 
-bool thp_configured(व्योम);
-माप_प्रकार get_trans_hugepagesz(व्योम);
-माप_प्रकार get_def_hugetlb_pagesz(व्योम);
-स्थिर काष्ठा vm_mem_backing_src_alias *vm_mem_backing_src_alias(uपूर्णांक32_t i);
-माप_प्रकार get_backing_src_pagesz(uपूर्णांक32_t i);
-व्योम backing_src_help(व्योम);
-क्रमागत vm_mem_backing_src_type parse_backing_src_type(स्थिर अक्षर *type_name);
+bool thp_configured(void);
+size_t get_trans_hugepagesz(void);
+size_t get_def_hugetlb_pagesz(void);
+const struct vm_mem_backing_src_alias *vm_mem_backing_src_alias(uint32_t i);
+size_t get_backing_src_pagesz(uint32_t i);
+void backing_src_help(void);
+enum vm_mem_backing_src_type parse_backing_src_type(const char *type_name);
 
 /*
  * Whether or not the given source type is shared memory (as opposed to
  * anonymous).
  */
-अटल अंतरभूत bool backing_src_is_shared(क्रमागत vm_mem_backing_src_type t)
-अणु
-	वापस vm_mem_backing_src_alias(t)->flag & MAP_SHARED;
-पूर्ण
+static inline bool backing_src_is_shared(enum vm_mem_backing_src_type t)
+{
+	return vm_mem_backing_src_alias(t)->flag & MAP_SHARED;
+}
 
-#पूर्ण_अगर /* SELFTEST_KVM_TEST_UTIL_H */
+#endif /* SELFTEST_KVM_TEST_UTIL_H */

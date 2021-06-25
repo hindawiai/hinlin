@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Memory merging support.
  *
- * This code enables dynamic sharing of identical pages found in dअगरferent
- * memory areas, even अगर they are not shared by विभाजन()
+ * This code enables dynamic sharing of identical pages found in different
+ * memory areas, even if they are not shared by fork()
  *
  * Copyright (C) 2008-2009 Red Hat, Inc.
  * Authors:
@@ -14,596 +13,596 @@
  *	Hugh Dickins
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/mm.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/mm.h>
-#समावेश <linux/sched/coredump.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/rmap.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/xxhash.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/memory.h>
-#समावेश <linux/mmu_notअगरier.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/ksm.h>
-#समावेश <linux/hashtable.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/oom.h>
-#समावेश <linux/numa.h>
+#include <linux/errno.h>
+#include <linux/mm.h>
+#include <linux/fs.h>
+#include <linux/mman.h>
+#include <linux/sched.h>
+#include <linux/sched/mm.h>
+#include <linux/sched/coredump.h>
+#include <linux/rwsem.h>
+#include <linux/pagemap.h>
+#include <linux/rmap.h>
+#include <linux/spinlock.h>
+#include <linux/xxhash.h>
+#include <linux/delay.h>
+#include <linux/kthread.h>
+#include <linux/wait.h>
+#include <linux/slab.h>
+#include <linux/rbtree.h>
+#include <linux/memory.h>
+#include <linux/mmu_notifier.h>
+#include <linux/swap.h>
+#include <linux/ksm.h>
+#include <linux/hashtable.h>
+#include <linux/freezer.h>
+#include <linux/oom.h>
+#include <linux/numa.h>
 
-#समावेश <यंत्र/tlbflush.h>
-#समावेश "internal.h"
+#include <asm/tlbflush.h>
+#include "internal.h"
 
-#अगर_घोषित CONFIG_NUMA
-#घोषणा NUMA(x)		(x)
-#घोषणा DO_NUMA(x)	करो अणु (x); पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा NUMA(x)		(0)
-#घोषणा DO_NUMA(x)	करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#ifdef CONFIG_NUMA
+#define NUMA(x)		(x)
+#define DO_NUMA(x)	do { (x); } while (0)
+#else
+#define NUMA(x)		(0)
+#define DO_NUMA(x)	do { } while (0)
+#endif
 
 /**
  * DOC: Overview
  *
  * A few notes about the KSM scanning process,
- * to make it easier to understand the data काष्ठाures below:
+ * to make it easier to understand the data structures below:
  *
  * In order to reduce excessive scanning, KSM sorts the memory pages by their
- * contents पूर्णांकo a data काष्ठाure that holds poपूर्णांकers to the pages' locations.
+ * contents into a data structure that holds pointers to the pages' locations.
  *
  * Since the contents of the pages may change at any moment, KSM cannot just
- * insert the pages पूर्णांकo a normal sorted tree and expect it to find anything.
- * Thereक्रमe KSM uses two data काष्ठाures - the stable and the unstable tree.
+ * insert the pages into a normal sorted tree and expect it to find anything.
+ * Therefore KSM uses two data structures - the stable and the unstable tree.
  *
- * The stable tree holds poपूर्णांकers to all the merged pages (ksm pages), sorted
- * by their contents.  Because each such page is ग_लिखो-रक्षित, searching on
+ * The stable tree holds pointers to all the merged pages (ksm pages), sorted
+ * by their contents.  Because each such page is write-protected, searching on
  * this tree is fully assured to be working (except when pages are unmapped),
- * and thereक्रमe this tree is called the stable tree.
+ * and therefore this tree is called the stable tree.
  *
- * The stable tree node includes inक्रमmation required क्रम reverse
- * mapping from a KSM page to भव addresses that map this page.
+ * The stable tree node includes information required for reverse
+ * mapping from a KSM page to virtual addresses that map this page.
  *
- * In order to aव्योम large latencies of the rmap walks on KSM pages,
- * KSM मुख्यtains two types of nodes in the stable tree:
+ * In order to avoid large latencies of the rmap walks on KSM pages,
+ * KSM maintains two types of nodes in the stable tree:
  *
- * * the regular nodes that keep the reverse mapping काष्ठाures in a
+ * * the regular nodes that keep the reverse mapping structures in a
  *   linked list
  * * the "chains" that link nodes ("dups") that represent the same
- *   ग_लिखो रक्षित memory content, but each "dup" corresponds to a
- *   dअगरferent KSM page copy of that content
+ *   write protected memory content, but each "dup" corresponds to a
+ *   different KSM page copy of that content
  *
  * Internally, the regular nodes, "dups" and "chains" are represented
- * using the same काष्ठा stable_node काष्ठाure.
+ * using the same struct stable_node structure.
  *
- * In addition to the stable tree, KSM uses a second data काष्ठाure called the
- * unstable tree: this tree holds poपूर्णांकers to pages which have been found to
+ * In addition to the stable tree, KSM uses a second data structure called the
+ * unstable tree: this tree holds pointers to pages which have been found to
  * be "unchanged for a period of time".  The unstable tree sorts these pages
- * by their contents, but since they are not ग_लिखो-रक्षित, KSM cannot rely
+ * by their contents, but since they are not write-protected, KSM cannot rely
  * upon the unstable tree to work correctly - the unstable tree is liable to
- * be corrupted as its contents are modअगरied, and so it is called unstable.
+ * be corrupted as its contents are modified, and so it is called unstable.
  *
  * KSM solves this problem by several techniques:
  *
- * 1) The unstable tree is flushed every समय KSM completes scanning all
+ * 1) The unstable tree is flushed every time KSM completes scanning all
  *    memory areas, and then the tree is rebuilt again from the beginning.
- * 2) KSM will only insert पूर्णांकo the unstable tree, pages whose hash value
+ * 2) KSM will only insert into the unstable tree, pages whose hash value
  *    has not changed since the previous scan of all memory areas.
  * 3) The unstable tree is a RedBlack Tree - so its balancing is based on the
  *    colors of the nodes and not on their contents, assuring that even when
- *    the tree माला_लो "corrupted" it won't get out of balance, so scanning समय
- *    reमुख्यs the same (also, searching and inserting nodes in an rbtree uses
+ *    the tree gets "corrupted" it won't get out of balance, so scanning time
+ *    remains the same (also, searching and inserting nodes in an rbtree uses
  *    the same algorithm, so we have no overhead when we flush and rebuild).
- * 4) KSM never flushes the stable tree, which means that even अगर it were to
+ * 4) KSM never flushes the stable tree, which means that even if it were to
  *    take 10 attempts to find a page in the unstable tree, once it is found,
  *    it is secured in the stable tree.  (When we scan a new page, we first
  *    compare it against the stable tree, and then against the unstable tree.)
  *
- * If the merge_across_nodes tunable is unset, then KSM मुख्यtains multiple
- * stable trees and multiple unstable trees: one of each क्रम each NUMA node.
+ * If the merge_across_nodes tunable is unset, then KSM maintains multiple
+ * stable trees and multiple unstable trees: one of each for each NUMA node.
  */
 
 /**
- * काष्ठा mm_slot - ksm inक्रमmation per mm that is being scanned
+ * struct mm_slot - ksm information per mm that is being scanned
  * @link: link to the mm_slots hash list
- * @mm_list: link पूर्णांकo the mm_slots list, rooted in ksm_mm_head
- * @rmap_list: head क्रम this mm_slot's singly-linked list of rmap_items
- * @mm: the mm that this inक्रमmation is valid क्रम
+ * @mm_list: link into the mm_slots list, rooted in ksm_mm_head
+ * @rmap_list: head for this mm_slot's singly-linked list of rmap_items
+ * @mm: the mm that this information is valid for
  */
-काष्ठा mm_slot अणु
-	काष्ठा hlist_node link;
-	काष्ठा list_head mm_list;
-	काष्ठा rmap_item *rmap_list;
-	काष्ठा mm_काष्ठा *mm;
-पूर्ण;
+struct mm_slot {
+	struct hlist_node link;
+	struct list_head mm_list;
+	struct rmap_item *rmap_list;
+	struct mm_struct *mm;
+};
 
 /**
- * काष्ठा ksm_scan - cursor क्रम scanning
+ * struct ksm_scan - cursor for scanning
  * @mm_slot: the current mm_slot we are scanning
  * @address: the next address inside that to be scanned
  * @rmap_list: link to the next rmap to be scanned in the rmap_list
  * @seqnr: count of completed full scans (needed when removing unstable node)
  *
- * There is only the one ksm_scan instance of this cursor काष्ठाure.
+ * There is only the one ksm_scan instance of this cursor structure.
  */
-काष्ठा ksm_scan अणु
-	काष्ठा mm_slot *mm_slot;
-	अचिन्हित दीर्घ address;
-	काष्ठा rmap_item **rmap_list;
-	अचिन्हित दीर्घ seqnr;
-पूर्ण;
+struct ksm_scan {
+	struct mm_slot *mm_slot;
+	unsigned long address;
+	struct rmap_item **rmap_list;
+	unsigned long seqnr;
+};
 
 /**
- * काष्ठा stable_node - node of the stable rbtree
+ * struct stable_node - node of the stable rbtree
  * @node: rb node of this ksm page in the stable tree
  * @head: (overlaying parent) &migrate_nodes indicates temporarily on that list
- * @hlist_dup: linked पूर्णांकo the stable_node->hlist with a stable_node chain
- * @list: linked पूर्णांकo migrate_nodes, pending placement in the proper node tree
+ * @hlist_dup: linked into the stable_node->hlist with a stable_node chain
+ * @list: linked into migrate_nodes, pending placement in the proper node tree
  * @hlist: hlist head of rmap_items using this ksm page
  * @kpfn: page frame number of this ksm page (perhaps temporarily on wrong nid)
- * @chain_prune_समय: समय of the last full garbage collection
+ * @chain_prune_time: time of the last full garbage collection
  * @rmap_hlist_len: number of rmap_item entries in hlist or STABLE_NODE_CHAIN
  * @nid: NUMA node id of stable tree in which linked (may not match kpfn)
  */
-काष्ठा stable_node अणु
-	जोड़ अणु
-		काष्ठा rb_node node;	/* when node of stable tree */
-		काष्ठा अणु		/* when listed क्रम migration */
-			काष्ठा list_head *head;
-			काष्ठा अणु
-				काष्ठा hlist_node hlist_dup;
-				काष्ठा list_head list;
-			पूर्ण;
-		पूर्ण;
-	पूर्ण;
-	काष्ठा hlist_head hlist;
-	जोड़ अणु
-		अचिन्हित दीर्घ kpfn;
-		अचिन्हित दीर्घ chain_prune_समय;
-	पूर्ण;
+struct stable_node {
+	union {
+		struct rb_node node;	/* when node of stable tree */
+		struct {		/* when listed for migration */
+			struct list_head *head;
+			struct {
+				struct hlist_node hlist_dup;
+				struct list_head list;
+			};
+		};
+	};
+	struct hlist_head hlist;
+	union {
+		unsigned long kpfn;
+		unsigned long chain_prune_time;
+	};
 	/*
 	 * STABLE_NODE_CHAIN can be any negative number in
 	 * rmap_hlist_len negative range, but better not -1 to be able
 	 * to reliably detect underflows.
 	 */
-#घोषणा STABLE_NODE_CHAIN -1024
-	पूर्णांक rmap_hlist_len;
-#अगर_घोषित CONFIG_NUMA
-	पूर्णांक nid;
-#पूर्ण_अगर
-पूर्ण;
+#define STABLE_NODE_CHAIN -1024
+	int rmap_hlist_len;
+#ifdef CONFIG_NUMA
+	int nid;
+#endif
+};
 
 /**
- * काष्ठा rmap_item - reverse mapping item क्रम भव addresses
+ * struct rmap_item - reverse mapping item for virtual addresses
  * @rmap_list: next rmap_item in mm_slot's singly-linked rmap_list
- * @anon_vma: poपूर्णांकer to anon_vma क्रम this mm,address, when in stable tree
+ * @anon_vma: pointer to anon_vma for this mm,address, when in stable tree
  * @nid: NUMA node id of unstable tree in which linked (may not match page)
- * @mm: the memory काष्ठाure this rmap_item is poपूर्णांकing पूर्णांकo
- * @address: the भव address this rmap_item tracks (+ flags in low bits)
- * @oldchecksum: previous checksum of the page at that भव address
+ * @mm: the memory structure this rmap_item is pointing into
+ * @address: the virtual address this rmap_item tracks (+ flags in low bits)
+ * @oldchecksum: previous checksum of the page at that virtual address
  * @node: rb node of this rmap_item in the unstable tree
- * @head: poपूर्णांकer to stable_node heading this list in the stable tree
- * @hlist: link पूर्णांकo hlist of rmap_items hanging off that stable_node
+ * @head: pointer to stable_node heading this list in the stable tree
+ * @hlist: link into hlist of rmap_items hanging off that stable_node
  */
-काष्ठा rmap_item अणु
-	काष्ठा rmap_item *rmap_list;
-	जोड़ अणु
-		काष्ठा anon_vma *anon_vma;	/* when stable */
-#अगर_घोषित CONFIG_NUMA
-		पूर्णांक nid;		/* when node of unstable tree */
-#पूर्ण_अगर
-	पूर्ण;
-	काष्ठा mm_काष्ठा *mm;
-	अचिन्हित दीर्घ address;		/* + low bits used क्रम flags below */
-	अचिन्हित पूर्णांक oldchecksum;	/* when unstable */
-	जोड़ अणु
-		काष्ठा rb_node node;	/* when node of unstable tree */
-		काष्ठा अणु		/* when listed from stable tree */
-			काष्ठा stable_node *head;
-			काष्ठा hlist_node hlist;
-		पूर्ण;
-	पूर्ण;
-पूर्ण;
+struct rmap_item {
+	struct rmap_item *rmap_list;
+	union {
+		struct anon_vma *anon_vma;	/* when stable */
+#ifdef CONFIG_NUMA
+		int nid;		/* when node of unstable tree */
+#endif
+	};
+	struct mm_struct *mm;
+	unsigned long address;		/* + low bits used for flags below */
+	unsigned int oldchecksum;	/* when unstable */
+	union {
+		struct rb_node node;	/* when node of unstable tree */
+		struct {		/* when listed from stable tree */
+			struct stable_node *head;
+			struct hlist_node hlist;
+		};
+	};
+};
 
-#घोषणा SEQNR_MASK	0x0ff	/* low bits of unstable tree seqnr */
-#घोषणा UNSTABLE_FLAG	0x100	/* is a node of the unstable tree */
-#घोषणा STABLE_FLAG	0x200	/* is listed from the stable tree */
+#define SEQNR_MASK	0x0ff	/* low bits of unstable tree seqnr */
+#define UNSTABLE_FLAG	0x100	/* is a node of the unstable tree */
+#define STABLE_FLAG	0x200	/* is listed from the stable tree */
 
 /* The stable and unstable tree heads */
-अटल काष्ठा rb_root one_stable_tree[1] = अणु RB_ROOT पूर्ण;
-अटल काष्ठा rb_root one_unstable_tree[1] = अणु RB_ROOT पूर्ण;
-अटल काष्ठा rb_root *root_stable_tree = one_stable_tree;
-अटल काष्ठा rb_root *root_unstable_tree = one_unstable_tree;
+static struct rb_root one_stable_tree[1] = { RB_ROOT };
+static struct rb_root one_unstable_tree[1] = { RB_ROOT };
+static struct rb_root *root_stable_tree = one_stable_tree;
+static struct rb_root *root_unstable_tree = one_unstable_tree;
 
 /* Recently migrated nodes of stable tree, pending proper placement */
-अटल LIST_HEAD(migrate_nodes);
-#घोषणा STABLE_NODE_DUP_HEAD ((काष्ठा list_head *)&migrate_nodes.prev)
+static LIST_HEAD(migrate_nodes);
+#define STABLE_NODE_DUP_HEAD ((struct list_head *)&migrate_nodes.prev)
 
-#घोषणा MM_SLOTS_HASH_BITS 10
-अटल DEFINE_HASHTABLE(mm_slots_hash, MM_SLOTS_HASH_BITS);
+#define MM_SLOTS_HASH_BITS 10
+static DEFINE_HASHTABLE(mm_slots_hash, MM_SLOTS_HASH_BITS);
 
-अटल काष्ठा mm_slot ksm_mm_head = अणु
+static struct mm_slot ksm_mm_head = {
 	.mm_list = LIST_HEAD_INIT(ksm_mm_head.mm_list),
-पूर्ण;
-अटल काष्ठा ksm_scan ksm_scan = अणु
+};
+static struct ksm_scan ksm_scan = {
 	.mm_slot = &ksm_mm_head,
-पूर्ण;
+};
 
-अटल काष्ठा kmem_cache *rmap_item_cache;
-अटल काष्ठा kmem_cache *stable_node_cache;
-अटल काष्ठा kmem_cache *mm_slot_cache;
+static struct kmem_cache *rmap_item_cache;
+static struct kmem_cache *stable_node_cache;
+static struct kmem_cache *mm_slot_cache;
 
 /* The number of nodes in the stable tree */
-अटल अचिन्हित दीर्घ ksm_pages_shared;
+static unsigned long ksm_pages_shared;
 
 /* The number of page slots additionally sharing those nodes */
-अटल अचिन्हित दीर्घ ksm_pages_sharing;
+static unsigned long ksm_pages_sharing;
 
 /* The number of nodes in the unstable tree */
-अटल अचिन्हित दीर्घ ksm_pages_unshared;
+static unsigned long ksm_pages_unshared;
 
-/* The number of rmap_items in use: to calculate pages_अस्थिर */
-अटल अचिन्हित दीर्घ ksm_rmap_items;
+/* The number of rmap_items in use: to calculate pages_volatile */
+static unsigned long ksm_rmap_items;
 
 /* The number of stable_node chains */
-अटल अचिन्हित दीर्घ ksm_stable_node_chains;
+static unsigned long ksm_stable_node_chains;
 
 /* The number of stable_node dups linked to the stable_node chains */
-अटल अचिन्हित दीर्घ ksm_stable_node_dups;
+static unsigned long ksm_stable_node_dups;
 
 /* Delay in pruning stale stable_node_dups in the stable_node_chains */
-अटल पूर्णांक ksm_stable_node_chains_prune_millisecs = 2000;
+static int ksm_stable_node_chains_prune_millisecs = 2000;
 
 /* Maximum number of page slots sharing a stable node */
-अटल पूर्णांक ksm_max_page_sharing = 256;
+static int ksm_max_page_sharing = 256;
 
 /* Number of pages ksmd should scan in one batch */
-अटल अचिन्हित पूर्णांक ksm_thपढ़ो_pages_to_scan = 100;
+static unsigned int ksm_thread_pages_to_scan = 100;
 
 /* Milliseconds ksmd should sleep between batches */
-अटल अचिन्हित पूर्णांक ksm_thपढ़ो_sleep_millisecs = 20;
+static unsigned int ksm_thread_sleep_millisecs = 20;
 
 /* Checksum of an empty (zeroed) page */
-अटल अचिन्हित पूर्णांक zero_checksum __पढ़ो_mostly;
+static unsigned int zero_checksum __read_mostly;
 
 /* Whether to merge empty (zeroed) pages with actual zero pages */
-अटल bool ksm_use_zero_pages __पढ़ो_mostly;
+static bool ksm_use_zero_pages __read_mostly;
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 /* Zeroed when merging across nodes is not allowed */
-अटल अचिन्हित पूर्णांक ksm_merge_across_nodes = 1;
-अटल पूर्णांक ksm_nr_node_ids = 1;
-#अन्यथा
-#घोषणा ksm_merge_across_nodes	1U
-#घोषणा ksm_nr_node_ids		1
-#पूर्ण_अगर
+static unsigned int ksm_merge_across_nodes = 1;
+static int ksm_nr_node_ids = 1;
+#else
+#define ksm_merge_across_nodes	1U
+#define ksm_nr_node_ids		1
+#endif
 
-#घोषणा KSM_RUN_STOP	0
-#घोषणा KSM_RUN_MERGE	1
-#घोषणा KSM_RUN_UNMERGE	2
-#घोषणा KSM_RUN_OFFLINE	4
-अटल अचिन्हित दीर्घ ksm_run = KSM_RUN_STOP;
-अटल व्योम रुको_जबतक_offlining(व्योम);
+#define KSM_RUN_STOP	0
+#define KSM_RUN_MERGE	1
+#define KSM_RUN_UNMERGE	2
+#define KSM_RUN_OFFLINE	4
+static unsigned long ksm_run = KSM_RUN_STOP;
+static void wait_while_offlining(void);
 
-अटल DECLARE_WAIT_QUEUE_HEAD(ksm_thपढ़ो_रुको);
-अटल DECLARE_WAIT_QUEUE_HEAD(ksm_iter_रुको);
-अटल DEFINE_MUTEX(ksm_thपढ़ो_mutex);
-अटल DEFINE_SPINLOCK(ksm_mmlist_lock);
+static DECLARE_WAIT_QUEUE_HEAD(ksm_thread_wait);
+static DECLARE_WAIT_QUEUE_HEAD(ksm_iter_wait);
+static DEFINE_MUTEX(ksm_thread_mutex);
+static DEFINE_SPINLOCK(ksm_mmlist_lock);
 
-#घोषणा KSM_KMEM_CACHE(__काष्ठा, __flags) kmem_cache_create("ksm_"#__काष्ठा,\
-		माप(काष्ठा __काष्ठा), __alignof__(काष्ठा __काष्ठा),\
-		(__flags), शून्य)
+#define KSM_KMEM_CACHE(__struct, __flags) kmem_cache_create("ksm_"#__struct,\
+		sizeof(struct __struct), __alignof__(struct __struct),\
+		(__flags), NULL)
 
-अटल पूर्णांक __init ksm_slab_init(व्योम)
-अणु
+static int __init ksm_slab_init(void)
+{
 	rmap_item_cache = KSM_KMEM_CACHE(rmap_item, 0);
-	अगर (!rmap_item_cache)
-		जाओ out;
+	if (!rmap_item_cache)
+		goto out;
 
 	stable_node_cache = KSM_KMEM_CACHE(stable_node, 0);
-	अगर (!stable_node_cache)
-		जाओ out_मुक्त1;
+	if (!stable_node_cache)
+		goto out_free1;
 
 	mm_slot_cache = KSM_KMEM_CACHE(mm_slot, 0);
-	अगर (!mm_slot_cache)
-		जाओ out_मुक्त2;
+	if (!mm_slot_cache)
+		goto out_free2;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त2:
+out_free2:
 	kmem_cache_destroy(stable_node_cache);
-out_मुक्त1:
+out_free1:
 	kmem_cache_destroy(rmap_item_cache);
 out:
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल व्योम __init ksm_slab_मुक्त(व्योम)
-अणु
+static void __init ksm_slab_free(void)
+{
 	kmem_cache_destroy(mm_slot_cache);
 	kmem_cache_destroy(stable_node_cache);
 	kmem_cache_destroy(rmap_item_cache);
-	mm_slot_cache = शून्य;
-पूर्ण
+	mm_slot_cache = NULL;
+}
 
-अटल __always_अंतरभूत bool is_stable_node_chain(काष्ठा stable_node *chain)
-अणु
-	वापस chain->rmap_hlist_len == STABLE_NODE_CHAIN;
-पूर्ण
+static __always_inline bool is_stable_node_chain(struct stable_node *chain)
+{
+	return chain->rmap_hlist_len == STABLE_NODE_CHAIN;
+}
 
-अटल __always_अंतरभूत bool is_stable_node_dup(काष्ठा stable_node *dup)
-अणु
-	वापस dup->head == STABLE_NODE_DUP_HEAD;
-पूर्ण
+static __always_inline bool is_stable_node_dup(struct stable_node *dup)
+{
+	return dup->head == STABLE_NODE_DUP_HEAD;
+}
 
-अटल अंतरभूत व्योम stable_node_chain_add_dup(काष्ठा stable_node *dup,
-					     काष्ठा stable_node *chain)
-अणु
+static inline void stable_node_chain_add_dup(struct stable_node *dup,
+					     struct stable_node *chain)
+{
 	VM_BUG_ON(is_stable_node_dup(dup));
 	dup->head = STABLE_NODE_DUP_HEAD;
 	VM_BUG_ON(!is_stable_node_chain(chain));
 	hlist_add_head(&dup->hlist_dup, &chain->hlist);
 	ksm_stable_node_dups++;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __stable_node_dup_del(काष्ठा stable_node *dup)
-अणु
+static inline void __stable_node_dup_del(struct stable_node *dup)
+{
 	VM_BUG_ON(!is_stable_node_dup(dup));
 	hlist_del(&dup->hlist_dup);
 	ksm_stable_node_dups--;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम stable_node_dup_del(काष्ठा stable_node *dup)
-अणु
+static inline void stable_node_dup_del(struct stable_node *dup)
+{
 	VM_BUG_ON(is_stable_node_chain(dup));
-	अगर (is_stable_node_dup(dup))
+	if (is_stable_node_dup(dup))
 		__stable_node_dup_del(dup);
-	अन्यथा
+	else
 		rb_erase(&dup->node, root_stable_tree + NUMA(dup->nid));
-#अगर_घोषित CONFIG_DEBUG_VM
-	dup->head = शून्य;
-#पूर्ण_अगर
-पूर्ण
+#ifdef CONFIG_DEBUG_VM
+	dup->head = NULL;
+#endif
+}
 
-अटल अंतरभूत काष्ठा rmap_item *alloc_rmap_item(व्योम)
-अणु
-	काष्ठा rmap_item *rmap_item;
+static inline struct rmap_item *alloc_rmap_item(void)
+{
+	struct rmap_item *rmap_item;
 
 	rmap_item = kmem_cache_zalloc(rmap_item_cache, GFP_KERNEL |
 						__GFP_NORETRY | __GFP_NOWARN);
-	अगर (rmap_item)
+	if (rmap_item)
 		ksm_rmap_items++;
-	वापस rmap_item;
-पूर्ण
+	return rmap_item;
+}
 
-अटल अंतरभूत व्योम मुक्त_rmap_item(काष्ठा rmap_item *rmap_item)
-अणु
+static inline void free_rmap_item(struct rmap_item *rmap_item)
+{
 	ksm_rmap_items--;
-	rmap_item->mm = शून्य;	/* debug safety */
-	kmem_cache_मुक्त(rmap_item_cache, rmap_item);
-पूर्ण
+	rmap_item->mm = NULL;	/* debug safety */
+	kmem_cache_free(rmap_item_cache, rmap_item);
+}
 
-अटल अंतरभूत काष्ठा stable_node *alloc_stable_node(व्योम)
-अणु
+static inline struct stable_node *alloc_stable_node(void)
+{
 	/*
-	 * The allocation can take too दीर्घ with GFP_KERNEL when memory is under
+	 * The allocation can take too long with GFP_KERNEL when memory is under
 	 * pressure, which may lead to hung task warnings.  Adding __GFP_HIGH
-	 * grants access to memory reserves, helping to aव्योम this problem.
+	 * grants access to memory reserves, helping to avoid this problem.
 	 */
-	वापस kmem_cache_alloc(stable_node_cache, GFP_KERNEL | __GFP_HIGH);
-पूर्ण
+	return kmem_cache_alloc(stable_node_cache, GFP_KERNEL | __GFP_HIGH);
+}
 
-अटल अंतरभूत व्योम मुक्त_stable_node(काष्ठा stable_node *stable_node)
-अणु
+static inline void free_stable_node(struct stable_node *stable_node)
+{
 	VM_BUG_ON(stable_node->rmap_hlist_len &&
 		  !is_stable_node_chain(stable_node));
-	kmem_cache_मुक्त(stable_node_cache, stable_node);
-पूर्ण
+	kmem_cache_free(stable_node_cache, stable_node);
+}
 
-अटल अंतरभूत काष्ठा mm_slot *alloc_mm_slot(व्योम)
-अणु
-	अगर (!mm_slot_cache)	/* initialization failed */
-		वापस शून्य;
-	वापस kmem_cache_zalloc(mm_slot_cache, GFP_KERNEL);
-पूर्ण
+static inline struct mm_slot *alloc_mm_slot(void)
+{
+	if (!mm_slot_cache)	/* initialization failed */
+		return NULL;
+	return kmem_cache_zalloc(mm_slot_cache, GFP_KERNEL);
+}
 
-अटल अंतरभूत व्योम मुक्त_mm_slot(काष्ठा mm_slot *mm_slot)
-अणु
-	kmem_cache_मुक्त(mm_slot_cache, mm_slot);
-पूर्ण
+static inline void free_mm_slot(struct mm_slot *mm_slot)
+{
+	kmem_cache_free(mm_slot_cache, mm_slot);
+}
 
-अटल काष्ठा mm_slot *get_mm_slot(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mm_slot *slot;
+static struct mm_slot *get_mm_slot(struct mm_struct *mm)
+{
+	struct mm_slot *slot;
 
-	hash_क्रम_each_possible(mm_slots_hash, slot, link, (अचिन्हित दीर्घ)mm)
-		अगर (slot->mm == mm)
-			वापस slot;
+	hash_for_each_possible(mm_slots_hash, slot, link, (unsigned long)mm)
+		if (slot->mm == mm)
+			return slot;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम insert_to_mm_slots_hash(काष्ठा mm_काष्ठा *mm,
-				    काष्ठा mm_slot *mm_slot)
-अणु
+static void insert_to_mm_slots_hash(struct mm_struct *mm,
+				    struct mm_slot *mm_slot)
+{
 	mm_slot->mm = mm;
-	hash_add(mm_slots_hash, &mm_slot->link, (अचिन्हित दीर्घ)mm);
-पूर्ण
+	hash_add(mm_slots_hash, &mm_slot->link, (unsigned long)mm);
+}
 
 /*
- * ksmd, and unmerge_and_हटाओ_all_rmap_items(), must not touch an mm's
- * page tables after it has passed through ksm_निकास() - which, अगर necessary,
- * takes mmap_lock briefly to serialize against them.  ksm_निकास() करोes not set
+ * ksmd, and unmerge_and_remove_all_rmap_items(), must not touch an mm's
+ * page tables after it has passed through ksm_exit() - which, if necessary,
+ * takes mmap_lock briefly to serialize against them.  ksm_exit() does not set
  * a special flag: they can just back out as soon as mm_users goes to zero.
- * ksm_test_निकास() is used throughout to make this test क्रम निकास: in some
- * places क्रम correctness, in some places just to aव्योम unnecessary work.
+ * ksm_test_exit() is used throughout to make this test for exit: in some
+ * places for correctness, in some places just to avoid unnecessary work.
  */
-अटल अंतरभूत bool ksm_test_निकास(काष्ठा mm_काष्ठा *mm)
-अणु
-	वापस atomic_पढ़ो(&mm->mm_users) == 0;
-पूर्ण
+static inline bool ksm_test_exit(struct mm_struct *mm)
+{
+	return atomic_read(&mm->mm_users) == 0;
+}
 
 /*
- * We use अवरोध_ksm to अवरोध COW on a ksm page: it's a stripped करोwn
+ * We use break_ksm to break COW on a ksm page: it's a stripped down
  *
- *	अगर (get_user_pages(addr, 1, FOLL_WRITE, &page, शून्य) == 1)
+ *	if (get_user_pages(addr, 1, FOLL_WRITE, &page, NULL) == 1)
  *		put_page(page);
  *
  * but taking great care only to touch a ksm page, in a VM_MERGEABLE vma,
- * in हाल the application has unmapped and remapped mm,addr meanजबतक.
- * Could a ksm page appear anywhere अन्यथा?  Actually yes, in a VM_PFNMAP
+ * in case the application has unmapped and remapped mm,addr meanwhile.
+ * Could a ksm page appear anywhere else?  Actually yes, in a VM_PFNMAP
  * mmap of /dev/mem, where we would not want to touch it.
  *
- * FAULT_FLAG/FOLL_REMOTE are because we करो this outside the context
- * of the process that owns 'vma'.  We also करो not want to enक्रमce
+ * FAULT_FLAG/FOLL_REMOTE are because we do this outside the context
+ * of the process that owns 'vma'.  We also do not want to enforce
  * protection keys here anyway.
  */
-अटल पूर्णांक अवरोध_ksm(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा page *page;
+static int break_ksm(struct vm_area_struct *vma, unsigned long addr)
+{
+	struct page *page;
 	vm_fault_t ret = 0;
 
-	करो अणु
+	do {
 		cond_resched();
 		page = follow_page(vma, addr,
 				FOLL_GET | FOLL_MIGRATION | FOLL_REMOTE);
-		अगर (IS_ERR_OR_शून्य(page))
-			अवरोध;
-		अगर (PageKsm(page))
+		if (IS_ERR_OR_NULL(page))
+			break;
+		if (PageKsm(page))
 			ret = handle_mm_fault(vma, addr,
 					      FAULT_FLAG_WRITE | FAULT_FLAG_REMOTE,
-					      शून्य);
-		अन्यथा
+					      NULL);
+		else
 			ret = VM_FAULT_WRITE;
 		put_page(page);
-	पूर्ण जबतक (!(ret & (VM_FAULT_WRITE | VM_FAULT_SIGBUS | VM_FAULT_संक_अंश | VM_FAULT_OOM)));
+	} while (!(ret & (VM_FAULT_WRITE | VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV | VM_FAULT_OOM)));
 	/*
-	 * We must loop because handle_mm_fault() may back out अगर there's
-	 * any dअगरficulty e.g. अगर pte accessed bit माला_लो updated concurrently.
+	 * We must loop because handle_mm_fault() may back out if there's
+	 * any difficulty e.g. if pte accessed bit gets updated concurrently.
 	 *
-	 * VM_FAULT_WRITE is what we have been hoping क्रम: it indicates that
-	 * COW has been broken, even अगर the vma करोes not permit VM_WRITE;
-	 * but note that a concurrent fault might अवरोध PageKsm क्रम us.
+	 * VM_FAULT_WRITE is what we have been hoping for: it indicates that
+	 * COW has been broken, even if the vma does not permit VM_WRITE;
+	 * but note that a concurrent fault might break PageKsm for us.
 	 *
-	 * VM_FAULT_SIGBUS could occur अगर we race with truncation of the
+	 * VM_FAULT_SIGBUS could occur if we race with truncation of the
 	 * backing file, which also invalidates anonymous pages: that's
-	 * okay, that truncation will have unmapped the PageKsm क्रम us.
+	 * okay, that truncation will have unmapped the PageKsm for us.
 	 *
-	 * VM_FAULT_OOM: at the समय of writing (late July 2009), setting
-	 * aside mem_cgroup limits, VM_FAULT_OOM would only be set अगर the
-	 * current task has TIF_MEMDIE set, and will be OOM समाप्तed on वापस
-	 * to user; and ksmd, having no mm, would never be chosen क्रम that.
+	 * VM_FAULT_OOM: at the time of writing (late July 2009), setting
+	 * aside mem_cgroup limits, VM_FAULT_OOM would only be set if the
+	 * current task has TIF_MEMDIE set, and will be OOM killed on return
+	 * to user; and ksmd, having no mm, would never be chosen for that.
 	 *
-	 * But अगर the mm is in a limited mem_cgroup, then the fault may fail
-	 * with VM_FAULT_OOM even अगर the current task is not TIF_MEMDIE; and
-	 * even ksmd can fail in this way - though it's usually अवरोधing ksm
-	 * just to unकरो a merge it made a moment beक्रमe, so unlikely to oom.
+	 * But if the mm is in a limited mem_cgroup, then the fault may fail
+	 * with VM_FAULT_OOM even if the current task is not TIF_MEMDIE; and
+	 * even ksmd can fail in this way - though it's usually breaking ksm
+	 * just to undo a merge it made a moment before, so unlikely to oom.
 	 *
-	 * That's a pity: we might thereक्रमe have more kernel pages allocated
-	 * than we're counting as nodes in the stable tree; but ksm_करो_scan
-	 * will retry to अवरोध_cow on each pass, so should recover the page
+	 * That's a pity: we might therefore have more kernel pages allocated
+	 * than we're counting as nodes in the stable tree; but ksm_do_scan
+	 * will retry to break_cow on each pass, so should recover the page
 	 * in due course.  The important thing is to not let VM_MERGEABLE
-	 * be cleared जबतक any such pages might reमुख्य in the area.
+	 * be cleared while any such pages might remain in the area.
 	 */
-	वापस (ret & VM_FAULT_OOM) ? -ENOMEM : 0;
-पूर्ण
+	return (ret & VM_FAULT_OOM) ? -ENOMEM : 0;
+}
 
-अटल काष्ठा vm_area_काष्ठा *find_mergeable_vma(काष्ठा mm_काष्ठा *mm,
-		अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा vm_area_काष्ठा *vma;
-	अगर (ksm_test_निकास(mm))
-		वापस शून्य;
+static struct vm_area_struct *find_mergeable_vma(struct mm_struct *mm,
+		unsigned long addr)
+{
+	struct vm_area_struct *vma;
+	if (ksm_test_exit(mm))
+		return NULL;
 	vma = find_vma(mm, addr);
-	अगर (!vma || vma->vm_start > addr)
-		वापस शून्य;
-	अगर (!(vma->vm_flags & VM_MERGEABLE) || !vma->anon_vma)
-		वापस शून्य;
-	वापस vma;
-पूर्ण
+	if (!vma || vma->vm_start > addr)
+		return NULL;
+	if (!(vma->vm_flags & VM_MERGEABLE) || !vma->anon_vma)
+		return NULL;
+	return vma;
+}
 
-अटल व्योम अवरोध_cow(काष्ठा rmap_item *rmap_item)
-अणु
-	काष्ठा mm_काष्ठा *mm = rmap_item->mm;
-	अचिन्हित दीर्घ addr = rmap_item->address;
-	काष्ठा vm_area_काष्ठा *vma;
+static void break_cow(struct rmap_item *rmap_item)
+{
+	struct mm_struct *mm = rmap_item->mm;
+	unsigned long addr = rmap_item->address;
+	struct vm_area_struct *vma;
 
 	/*
-	 * It is not an accident that whenever we want to अवरोध COW
-	 * to unकरो, we also need to drop a reference to the anon_vma.
+	 * It is not an accident that whenever we want to break COW
+	 * to undo, we also need to drop a reference to the anon_vma.
 	 */
 	put_anon_vma(rmap_item->anon_vma);
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	vma = find_mergeable_vma(mm, addr);
-	अगर (vma)
-		अवरोध_ksm(vma, addr);
-	mmap_पढ़ो_unlock(mm);
-पूर्ण
+	if (vma)
+		break_ksm(vma, addr);
+	mmap_read_unlock(mm);
+}
 
-अटल काष्ठा page *get_mergeable_page(काष्ठा rmap_item *rmap_item)
-अणु
-	काष्ठा mm_काष्ठा *mm = rmap_item->mm;
-	अचिन्हित दीर्घ addr = rmap_item->address;
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा page *page;
+static struct page *get_mergeable_page(struct rmap_item *rmap_item)
+{
+	struct mm_struct *mm = rmap_item->mm;
+	unsigned long addr = rmap_item->address;
+	struct vm_area_struct *vma;
+	struct page *page;
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	vma = find_mergeable_vma(mm, addr);
-	अगर (!vma)
-		जाओ out;
+	if (!vma)
+		goto out;
 
 	page = follow_page(vma, addr, FOLL_GET);
-	अगर (IS_ERR_OR_शून्य(page))
-		जाओ out;
-	अगर (PageAnon(page)) अणु
+	if (IS_ERR_OR_NULL(page))
+		goto out;
+	if (PageAnon(page)) {
 		flush_anon_page(vma, page, addr);
 		flush_dcache_page(page);
-	पूर्ण अन्यथा अणु
+	} else {
 		put_page(page);
 out:
-		page = शून्य;
-	पूर्ण
-	mmap_पढ़ो_unlock(mm);
-	वापस page;
-पूर्ण
+		page = NULL;
+	}
+	mmap_read_unlock(mm);
+	return page;
+}
 
 /*
- * This helper is used क्रम getting right index पूर्णांकo array of tree roots.
- * When merge_across_nodes knob is set to 1, there are only two rb-trees क्रम
+ * This helper is used for getting right index into array of tree roots.
+ * When merge_across_nodes knob is set to 1, there are only two rb-trees for
  * stable and unstable pages from all nodes with roots in index 0. Otherwise,
  * every node has its own stable and unstable tree.
  */
-अटल अंतरभूत पूर्णांक get_kpfn_nid(अचिन्हित दीर्घ kpfn)
-अणु
-	वापस ksm_merge_across_nodes ? 0 : NUMA(pfn_to_nid(kpfn));
-पूर्ण
+static inline int get_kpfn_nid(unsigned long kpfn)
+{
+	return ksm_merge_across_nodes ? 0 : NUMA(pfn_to_nid(kpfn));
+}
 
-अटल काष्ठा stable_node *alloc_stable_node_chain(काष्ठा stable_node *dup,
-						   काष्ठा rb_root *root)
-अणु
-	काष्ठा stable_node *chain = alloc_stable_node();
+static struct stable_node *alloc_stable_node_chain(struct stable_node *dup,
+						   struct rb_root *root)
+{
+	struct stable_node *chain = alloc_stable_node();
 	VM_BUG_ON(is_stable_node_chain(dup));
-	अगर (likely(chain)) अणु
+	if (likely(chain)) {
 		INIT_HLIST_HEAD(&chain->hlist);
-		chain->chain_prune_समय = jअगरfies;
+		chain->chain_prune_time = jiffies;
 		chain->rmap_hlist_len = STABLE_NODE_CHAIN;
-#अगर defined (CONFIG_DEBUG_VM) && defined(CONFIG_NUMA)
+#if defined (CONFIG_DEBUG_VM) && defined(CONFIG_NUMA)
 		chain->nid = NUMA_NO_NODE; /* debug */
-#पूर्ण_अगर
+#endif
 		ksm_stable_node_chains++;
 
 		/*
 		 * Put the stable node chain in the first dimension of
-		 * the stable tree and at the same समय हटाओ the old
+		 * the stable tree and at the same time remove the old
 		 * stable node.
 		 */
 		rb_replace_node(&dup->node, &chain->node, root);
@@ -611,808 +610,808 @@ out:
 		/*
 		 * Move the old stable node to the second dimension
 		 * queued in the hlist_dup. The invariant is that all
-		 * dup stable_nodes in the chain->hlist poपूर्णांक to pages
-		 * that are ग_लिखो रक्षित and have the exact same
+		 * dup stable_nodes in the chain->hlist point to pages
+		 * that are write protected and have the exact same
 		 * content.
 		 */
 		stable_node_chain_add_dup(dup, chain);
-	पूर्ण
-	वापस chain;
-पूर्ण
+	}
+	return chain;
+}
 
-अटल अंतरभूत व्योम मुक्त_stable_node_chain(काष्ठा stable_node *chain,
-					  काष्ठा rb_root *root)
-अणु
+static inline void free_stable_node_chain(struct stable_node *chain,
+					  struct rb_root *root)
+{
 	rb_erase(&chain->node, root);
-	मुक्त_stable_node(chain);
+	free_stable_node(chain);
 	ksm_stable_node_chains--;
-पूर्ण
+}
 
-अटल व्योम हटाओ_node_from_stable_tree(काष्ठा stable_node *stable_node)
-अणु
-	काष्ठा rmap_item *rmap_item;
+static void remove_node_from_stable_tree(struct stable_node *stable_node)
+{
+	struct rmap_item *rmap_item;
 
 	/* check it's not STABLE_NODE_CHAIN or negative */
 	BUG_ON(stable_node->rmap_hlist_len < 0);
 
-	hlist_क्रम_each_entry(rmap_item, &stable_node->hlist, hlist) अणु
-		अगर (rmap_item->hlist.next)
+	hlist_for_each_entry(rmap_item, &stable_node->hlist, hlist) {
+		if (rmap_item->hlist.next)
 			ksm_pages_sharing--;
-		अन्यथा
+		else
 			ksm_pages_shared--;
 		VM_BUG_ON(stable_node->rmap_hlist_len <= 0);
 		stable_node->rmap_hlist_len--;
 		put_anon_vma(rmap_item->anon_vma);
 		rmap_item->address &= PAGE_MASK;
 		cond_resched();
-	पूर्ण
+	}
 
 	/*
-	 * We need the second aligned poपूर्णांकer of the migrate_nodes
-	 * list_head to stay clear from the rb_parent_color जोड़
-	 * (aligned and dअगरferent than any node) and also dअगरferent
-	 * from &migrate_nodes. This will verअगरy that future list.h changes
-	 * करोn't अवरोध STABLE_NODE_DUP_HEAD. Only recent gcc can handle it.
+	 * We need the second aligned pointer of the migrate_nodes
+	 * list_head to stay clear from the rb_parent_color union
+	 * (aligned and different than any node) and also different
+	 * from &migrate_nodes. This will verify that future list.h changes
+	 * don't break STABLE_NODE_DUP_HEAD. Only recent gcc can handle it.
 	 */
-#अगर defined(GCC_VERSION) && GCC_VERSION >= 40903
+#if defined(GCC_VERSION) && GCC_VERSION >= 40903
 	BUILD_BUG_ON(STABLE_NODE_DUP_HEAD <= &migrate_nodes);
 	BUILD_BUG_ON(STABLE_NODE_DUP_HEAD >= &migrate_nodes + 1);
-#पूर्ण_अगर
+#endif
 
-	अगर (stable_node->head == &migrate_nodes)
+	if (stable_node->head == &migrate_nodes)
 		list_del(&stable_node->list);
-	अन्यथा
+	else
 		stable_node_dup_del(stable_node);
-	मुक्त_stable_node(stable_node);
-पूर्ण
+	free_stable_node(stable_node);
+}
 
-क्रमागत get_ksm_page_flags अणु
+enum get_ksm_page_flags {
 	GET_KSM_PAGE_NOLOCK,
 	GET_KSM_PAGE_LOCK,
 	GET_KSM_PAGE_TRYLOCK
-पूर्ण;
+};
 
 /*
- * get_ksm_page: checks अगर the page indicated by the stable node
+ * get_ksm_page: checks if the page indicated by the stable node
  * is still its ksm page, despite having held no reference to it.
- * In which हाल we can trust the content of the page, and it
- * वापसs the gotten page; but अगर the page has now been zapped,
- * हटाओ the stale node from the stable tree and वापस शून्य.
+ * In which case we can trust the content of the page, and it
+ * returns the gotten page; but if the page has now been zapped,
+ * remove the stale node from the stable tree and return NULL.
  * But beware, the stable node's page might be being migrated.
  *
  * You would expect the stable_node to hold a reference to the ksm page.
- * But अगर it increments the page's count, swapping out has to रुको क्रम
- * ksmd to come around again beक्रमe it can मुक्त the page, which may take
+ * But if it increments the page's count, swapping out has to wait for
+ * ksmd to come around again before it can free the page, which may take
  * seconds or even minutes: much too unresponsive.  So instead we use a
  * "keyhole reference": access to the ksm page from the stable node peeps
- * out through its keyhole to see अगर that page still holds the right key,
- * poपूर्णांकing back to this stable node.  This relies on मुक्तing a PageAnon
- * page to reset its page->mapping to शून्य, and relies on no other use of
+ * out through its keyhole to see if that page still holds the right key,
+ * pointing back to this stable node.  This relies on freeing a PageAnon
+ * page to reset its page->mapping to NULL, and relies on no other use of
  * a page to put something that might look like our key in page->mapping.
- * is on its way to being मुक्तd; but it is an anomaly to bear in mind.
+ * is on its way to being freed; but it is an anomaly to bear in mind.
  */
-अटल काष्ठा page *get_ksm_page(काष्ठा stable_node *stable_node,
-				 क्रमागत get_ksm_page_flags flags)
-अणु
-	काष्ठा page *page;
-	व्योम *expected_mapping;
-	अचिन्हित दीर्घ kpfn;
+static struct page *get_ksm_page(struct stable_node *stable_node,
+				 enum get_ksm_page_flags flags)
+{
+	struct page *page;
+	void *expected_mapping;
+	unsigned long kpfn;
 
-	expected_mapping = (व्योम *)((अचिन्हित दीर्घ)stable_node |
+	expected_mapping = (void *)((unsigned long)stable_node |
 					PAGE_MAPPING_KSM);
 again:
 	kpfn = READ_ONCE(stable_node->kpfn); /* Address dependency. */
 	page = pfn_to_page(kpfn);
-	अगर (READ_ONCE(page->mapping) != expected_mapping)
-		जाओ stale;
+	if (READ_ONCE(page->mapping) != expected_mapping)
+		goto stale;
 
 	/*
-	 * We cannot करो anything with the page जबतक its refcount is 0.
-	 * Usually 0 means मुक्त, or tail of a higher-order page: in which
-	 * हाल this node is no दीर्घer referenced, and should be मुक्तd;
-	 * however, it might mean that the page is under page_ref_मुक्तze().
-	 * The __हटाओ_mapping() हाल is easy, again the node is now stale;
-	 * the same is in reuse_ksm_page() हाल; but अगर page is swapcache
+	 * We cannot do anything with the page while its refcount is 0.
+	 * Usually 0 means free, or tail of a higher-order page: in which
+	 * case this node is no longer referenced, and should be freed;
+	 * however, it might mean that the page is under page_ref_freeze().
+	 * The __remove_mapping() case is easy, again the node is now stale;
+	 * the same is in reuse_ksm_page() case; but if page is swapcache
 	 * in migrate_page_move_mapping(), it might still be our page,
-	 * in which हाल it's essential to keep the node.
+	 * in which case it's essential to keep the node.
 	 */
-	जबतक (!get_page_unless_zero(page)) अणु
+	while (!get_page_unless_zero(page)) {
 		/*
-		 * Another check क्रम page->mapping != expected_mapping would
+		 * Another check for page->mapping != expected_mapping would
 		 * work here too.  We have chosen the !PageSwapCache test to
-		 * optimize the common हाल, when the page is or is about to
-		 * be मुक्तd: PageSwapCache is cleared (under spin_lock_irq)
-		 * in the ref_मुक्तze section of __हटाओ_mapping(); but Anon
-		 * page->mapping reset to शून्य later, in मुक्त_pages_prepare().
+		 * optimize the common case, when the page is or is about to
+		 * be freed: PageSwapCache is cleared (under spin_lock_irq)
+		 * in the ref_freeze section of __remove_mapping(); but Anon
+		 * page->mapping reset to NULL later, in free_pages_prepare().
 		 */
-		अगर (!PageSwapCache(page))
-			जाओ stale;
+		if (!PageSwapCache(page))
+			goto stale;
 		cpu_relax();
-	पूर्ण
+	}
 
-	अगर (READ_ONCE(page->mapping) != expected_mapping) अणु
+	if (READ_ONCE(page->mapping) != expected_mapping) {
 		put_page(page);
-		जाओ stale;
-	पूर्ण
+		goto stale;
+	}
 
-	अगर (flags == GET_KSM_PAGE_TRYLOCK) अणु
-		अगर (!trylock_page(page)) अणु
+	if (flags == GET_KSM_PAGE_TRYLOCK) {
+		if (!trylock_page(page)) {
 			put_page(page);
-			वापस ERR_PTR(-EBUSY);
-		पूर्ण
-	पूर्ण अन्यथा अगर (flags == GET_KSM_PAGE_LOCK)
+			return ERR_PTR(-EBUSY);
+		}
+	} else if (flags == GET_KSM_PAGE_LOCK)
 		lock_page(page);
 
-	अगर (flags != GET_KSM_PAGE_NOLOCK) अणु
-		अगर (READ_ONCE(page->mapping) != expected_mapping) अणु
+	if (flags != GET_KSM_PAGE_NOLOCK) {
+		if (READ_ONCE(page->mapping) != expected_mapping) {
 			unlock_page(page);
 			put_page(page);
-			जाओ stale;
-		पूर्ण
-	पूर्ण
-	वापस page;
+			goto stale;
+		}
+	}
+	return page;
 
 stale:
 	/*
 	 * We come here from above when page->mapping or !PageSwapCache
 	 * suggests that the node is stale; but it might be under migration.
 	 * We need smp_rmb(), matching the smp_wmb() in ksm_migrate_page(),
-	 * beक्रमe checking whether node->kpfn has been changed.
+	 * before checking whether node->kpfn has been changed.
 	 */
 	smp_rmb();
-	अगर (READ_ONCE(stable_node->kpfn) != kpfn)
-		जाओ again;
-	हटाओ_node_from_stable_tree(stable_node);
-	वापस शून्य;
-पूर्ण
+	if (READ_ONCE(stable_node->kpfn) != kpfn)
+		goto again;
+	remove_node_from_stable_tree(stable_node);
+	return NULL;
+}
 
 /*
  * Removing rmap_item from stable or unstable tree.
- * This function will clean the inक्रमmation from the stable/unstable tree.
+ * This function will clean the information from the stable/unstable tree.
  */
-अटल व्योम हटाओ_rmap_item_from_tree(काष्ठा rmap_item *rmap_item)
-अणु
-	अगर (rmap_item->address & STABLE_FLAG) अणु
-		काष्ठा stable_node *stable_node;
-		काष्ठा page *page;
+static void remove_rmap_item_from_tree(struct rmap_item *rmap_item)
+{
+	if (rmap_item->address & STABLE_FLAG) {
+		struct stable_node *stable_node;
+		struct page *page;
 
 		stable_node = rmap_item->head;
 		page = get_ksm_page(stable_node, GET_KSM_PAGE_LOCK);
-		अगर (!page)
-			जाओ out;
+		if (!page)
+			goto out;
 
 		hlist_del(&rmap_item->hlist);
 		unlock_page(page);
 		put_page(page);
 
-		अगर (!hlist_empty(&stable_node->hlist))
+		if (!hlist_empty(&stable_node->hlist))
 			ksm_pages_sharing--;
-		अन्यथा
+		else
 			ksm_pages_shared--;
 		VM_BUG_ON(stable_node->rmap_hlist_len <= 0);
 		stable_node->rmap_hlist_len--;
 
 		put_anon_vma(rmap_item->anon_vma);
-		rmap_item->head = शून्य;
+		rmap_item->head = NULL;
 		rmap_item->address &= PAGE_MASK;
 
-	पूर्ण अन्यथा अगर (rmap_item->address & UNSTABLE_FLAG) अणु
-		अचिन्हित अक्षर age;
+	} else if (rmap_item->address & UNSTABLE_FLAG) {
+		unsigned char age;
 		/*
 		 * Usually ksmd can and must skip the rb_erase, because
-		 * root_unstable_tree was alपढ़ोy reset to RB_ROOT.
-		 * But be careful when an mm is निकासing: करो the rb_erase
-		 * अगर this rmap_item was inserted by this scan, rather
-		 * than left over from beक्रमe.
+		 * root_unstable_tree was already reset to RB_ROOT.
+		 * But be careful when an mm is exiting: do the rb_erase
+		 * if this rmap_item was inserted by this scan, rather
+		 * than left over from before.
 		 */
-		age = (अचिन्हित अक्षर)(ksm_scan.seqnr - rmap_item->address);
+		age = (unsigned char)(ksm_scan.seqnr - rmap_item->address);
 		BUG_ON(age > 1);
-		अगर (!age)
+		if (!age)
 			rb_erase(&rmap_item->node,
 				 root_unstable_tree + NUMA(rmap_item->nid));
 		ksm_pages_unshared--;
 		rmap_item->address &= PAGE_MASK;
-	पूर्ण
+	}
 out:
-	cond_resched();		/* we're called from many दीर्घ loops */
-पूर्ण
+	cond_resched();		/* we're called from many long loops */
+}
 
-अटल व्योम हटाओ_trailing_rmap_items(काष्ठा rmap_item **rmap_list)
-अणु
-	जबतक (*rmap_list) अणु
-		काष्ठा rmap_item *rmap_item = *rmap_list;
+static void remove_trailing_rmap_items(struct rmap_item **rmap_list)
+{
+	while (*rmap_list) {
+		struct rmap_item *rmap_item = *rmap_list;
 		*rmap_list = rmap_item->rmap_list;
-		हटाओ_rmap_item_from_tree(rmap_item);
-		मुक्त_rmap_item(rmap_item);
-	पूर्ण
-पूर्ण
+		remove_rmap_item_from_tree(rmap_item);
+		free_rmap_item(rmap_item);
+	}
+}
 
 /*
  * Though it's very tempting to unmerge rmap_items from stable tree rather
- * than check every pte of a given vma, the locking करोesn't quite work क्रम
- * that - an rmap_item is asचिन्हित to the stable tree after inserting ksm
- * page and upping mmap_lock.  Nor करोes it fit with the way we skip dup'ing
- * rmap_items from parent to child at विभाजन समय (so as not to waste समय
- * अगर निकास comes beक्रमe the next scan reaches it).
+ * than check every pte of a given vma, the locking doesn't quite work for
+ * that - an rmap_item is assigned to the stable tree after inserting ksm
+ * page and upping mmap_lock.  Nor does it fit with the way we skip dup'ing
+ * rmap_items from parent to child at fork time (so as not to waste time
+ * if exit comes before the next scan reaches it).
  *
- * Similarly, although we'd like to हटाओ rmap_items (so updating counts
- * and मुक्तing memory) when unmerging an area, it's easier to leave that
- * to the next pass of ksmd - consider, क्रम example, how ksmd might be
+ * Similarly, although we'd like to remove rmap_items (so updating counts
+ * and freeing memory) when unmerging an area, it's easier to leave that
+ * to the next pass of ksmd - consider, for example, how ksmd might be
  * in cmp_and_merge_page on one of the rmap_items we would be removing.
  */
-अटल पूर्णांक unmerge_ksm_pages(काष्ठा vm_area_काष्ठा *vma,
-			     अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
-अणु
-	अचिन्हित दीर्घ addr;
-	पूर्णांक err = 0;
+static int unmerge_ksm_pages(struct vm_area_struct *vma,
+			     unsigned long start, unsigned long end)
+{
+	unsigned long addr;
+	int err = 0;
 
-	क्रम (addr = start; addr < end && !err; addr += PAGE_SIZE) अणु
-		अगर (ksm_test_निकास(vma->vm_mm))
-			अवरोध;
-		अगर (संकेत_pending(current))
+	for (addr = start; addr < end && !err; addr += PAGE_SIZE) {
+		if (ksm_test_exit(vma->vm_mm))
+			break;
+		if (signal_pending(current))
 			err = -ERESTARTSYS;
-		अन्यथा
-			err = अवरोध_ksm(vma, addr);
-	पूर्ण
-	वापस err;
-पूर्ण
+		else
+			err = break_ksm(vma, addr);
+	}
+	return err;
+}
 
-अटल अंतरभूत काष्ठा stable_node *page_stable_node(काष्ठा page *page)
-अणु
-	वापस PageKsm(page) ? page_rmapping(page) : शून्य;
-पूर्ण
+static inline struct stable_node *page_stable_node(struct page *page)
+{
+	return PageKsm(page) ? page_rmapping(page) : NULL;
+}
 
-अटल अंतरभूत व्योम set_page_stable_node(काष्ठा page *page,
-					काष्ठा stable_node *stable_node)
-अणु
-	page->mapping = (व्योम *)((अचिन्हित दीर्घ)stable_node | PAGE_MAPPING_KSM);
-पूर्ण
+static inline void set_page_stable_node(struct page *page,
+					struct stable_node *stable_node)
+{
+	page->mapping = (void *)((unsigned long)stable_node | PAGE_MAPPING_KSM);
+}
 
-#अगर_घोषित CONFIG_SYSFS
+#ifdef CONFIG_SYSFS
 /*
- * Only called through the sysfs control पूर्णांकerface:
+ * Only called through the sysfs control interface:
  */
-अटल पूर्णांक हटाओ_stable_node(काष्ठा stable_node *stable_node)
-अणु
-	काष्ठा page *page;
-	पूर्णांक err;
+static int remove_stable_node(struct stable_node *stable_node)
+{
+	struct page *page;
+	int err;
 
 	page = get_ksm_page(stable_node, GET_KSM_PAGE_LOCK);
-	अगर (!page) अणु
+	if (!page) {
 		/*
-		 * get_ksm_page did हटाओ_node_from_stable_tree itself.
+		 * get_ksm_page did remove_node_from_stable_tree itself.
 		 */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
-	 * Page could be still mapped अगर this races with __mmput() running in
-	 * between ksm_निकास() and निकास_mmap(). Just refuse to let
-	 * merge_across_nodes/max_page_sharing be चयनed.
+	 * Page could be still mapped if this races with __mmput() running in
+	 * between ksm_exit() and exit_mmap(). Just refuse to let
+	 * merge_across_nodes/max_page_sharing be switched.
 	 */
 	err = -EBUSY;
-	अगर (!page_mapped(page)) अणु
+	if (!page_mapped(page)) {
 		/*
 		 * The stable node did not yet appear stale to get_ksm_page(),
-		 * since that allows क्रम an unmapped ksm page to be recognized
-		 * right up until it is मुक्तd; but the node is safe to हटाओ.
-		 * This page might be in a pagevec रुकोing to be मुक्तd,
-		 * or it might be PageSwapCache (perhaps under ग_लिखोback),
-		 * or it might have been हटाओd from swapcache a moment ago.
+		 * since that allows for an unmapped ksm page to be recognized
+		 * right up until it is freed; but the node is safe to remove.
+		 * This page might be in a pagevec waiting to be freed,
+		 * or it might be PageSwapCache (perhaps under writeback),
+		 * or it might have been removed from swapcache a moment ago.
 		 */
-		set_page_stable_node(page, शून्य);
-		हटाओ_node_from_stable_tree(stable_node);
+		set_page_stable_node(page, NULL);
+		remove_node_from_stable_tree(stable_node);
 		err = 0;
-	पूर्ण
+	}
 
 	unlock_page(page);
 	put_page(page);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक हटाओ_stable_node_chain(काष्ठा stable_node *stable_node,
-				    काष्ठा rb_root *root)
-अणु
-	काष्ठा stable_node *dup;
-	काष्ठा hlist_node *hlist_safe;
+static int remove_stable_node_chain(struct stable_node *stable_node,
+				    struct rb_root *root)
+{
+	struct stable_node *dup;
+	struct hlist_node *hlist_safe;
 
-	अगर (!is_stable_node_chain(stable_node)) अणु
+	if (!is_stable_node_chain(stable_node)) {
 		VM_BUG_ON(is_stable_node_dup(stable_node));
-		अगर (हटाओ_stable_node(stable_node))
-			वापस true;
-		अन्यथा
-			वापस false;
-	पूर्ण
+		if (remove_stable_node(stable_node))
+			return true;
+		else
+			return false;
+	}
 
-	hlist_क्रम_each_entry_safe(dup, hlist_safe,
-				  &stable_node->hlist, hlist_dup) अणु
+	hlist_for_each_entry_safe(dup, hlist_safe,
+				  &stable_node->hlist, hlist_dup) {
 		VM_BUG_ON(!is_stable_node_dup(dup));
-		अगर (हटाओ_stable_node(dup))
-			वापस true;
-	पूर्ण
+		if (remove_stable_node(dup))
+			return true;
+	}
 	BUG_ON(!hlist_empty(&stable_node->hlist));
-	मुक्त_stable_node_chain(stable_node, root);
-	वापस false;
-पूर्ण
+	free_stable_node_chain(stable_node, root);
+	return false;
+}
 
-अटल पूर्णांक हटाओ_all_stable_nodes(व्योम)
-अणु
-	काष्ठा stable_node *stable_node, *next;
-	पूर्णांक nid;
-	पूर्णांक err = 0;
+static int remove_all_stable_nodes(void)
+{
+	struct stable_node *stable_node, *next;
+	int nid;
+	int err = 0;
 
-	क्रम (nid = 0; nid < ksm_nr_node_ids; nid++) अणु
-		जबतक (root_stable_tree[nid].rb_node) अणु
+	for (nid = 0; nid < ksm_nr_node_ids; nid++) {
+		while (root_stable_tree[nid].rb_node) {
 			stable_node = rb_entry(root_stable_tree[nid].rb_node,
-						काष्ठा stable_node, node);
-			अगर (हटाओ_stable_node_chain(stable_node,
-						     root_stable_tree + nid)) अणु
+						struct stable_node, node);
+			if (remove_stable_node_chain(stable_node,
+						     root_stable_tree + nid)) {
 				err = -EBUSY;
-				अवरोध;	/* proceed to next nid */
-			पूर्ण
+				break;	/* proceed to next nid */
+			}
 			cond_resched();
-		पूर्ण
-	पूर्ण
-	list_क्रम_each_entry_safe(stable_node, next, &migrate_nodes, list) अणु
-		अगर (हटाओ_stable_node(stable_node))
+		}
+	}
+	list_for_each_entry_safe(stable_node, next, &migrate_nodes, list) {
+		if (remove_stable_node(stable_node))
 			err = -EBUSY;
 		cond_resched();
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल पूर्णांक unmerge_and_हटाओ_all_rmap_items(व्योम)
-अणु
-	काष्ठा mm_slot *mm_slot;
-	काष्ठा mm_काष्ठा *mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक err = 0;
+static int unmerge_and_remove_all_rmap_items(void)
+{
+	struct mm_slot *mm_slot;
+	struct mm_struct *mm;
+	struct vm_area_struct *vma;
+	int err = 0;
 
 	spin_lock(&ksm_mmlist_lock);
 	ksm_scan.mm_slot = list_entry(ksm_mm_head.mm_list.next,
-						काष्ठा mm_slot, mm_list);
+						struct mm_slot, mm_list);
 	spin_unlock(&ksm_mmlist_lock);
 
-	क्रम (mm_slot = ksm_scan.mm_slot;
-			mm_slot != &ksm_mm_head; mm_slot = ksm_scan.mm_slot) अणु
+	for (mm_slot = ksm_scan.mm_slot;
+			mm_slot != &ksm_mm_head; mm_slot = ksm_scan.mm_slot) {
 		mm = mm_slot->mm;
-		mmap_पढ़ो_lock(mm);
-		क्रम (vma = mm->mmap; vma; vma = vma->vm_next) अणु
-			अगर (ksm_test_निकास(mm))
-				अवरोध;
-			अगर (!(vma->vm_flags & VM_MERGEABLE) || !vma->anon_vma)
-				जारी;
+		mmap_read_lock(mm);
+		for (vma = mm->mmap; vma; vma = vma->vm_next) {
+			if (ksm_test_exit(mm))
+				break;
+			if (!(vma->vm_flags & VM_MERGEABLE) || !vma->anon_vma)
+				continue;
 			err = unmerge_ksm_pages(vma,
 						vma->vm_start, vma->vm_end);
-			अगर (err)
-				जाओ error;
-		पूर्ण
+			if (err)
+				goto error;
+		}
 
-		हटाओ_trailing_rmap_items(&mm_slot->rmap_list);
-		mmap_पढ़ो_unlock(mm);
+		remove_trailing_rmap_items(&mm_slot->rmap_list);
+		mmap_read_unlock(mm);
 
 		spin_lock(&ksm_mmlist_lock);
 		ksm_scan.mm_slot = list_entry(mm_slot->mm_list.next,
-						काष्ठा mm_slot, mm_list);
-		अगर (ksm_test_निकास(mm)) अणु
+						struct mm_slot, mm_list);
+		if (ksm_test_exit(mm)) {
 			hash_del(&mm_slot->link);
 			list_del(&mm_slot->mm_list);
 			spin_unlock(&ksm_mmlist_lock);
 
-			मुक्त_mm_slot(mm_slot);
+			free_mm_slot(mm_slot);
 			clear_bit(MMF_VM_MERGEABLE, &mm->flags);
 			mmdrop(mm);
-		पूर्ण अन्यथा
+		} else
 			spin_unlock(&ksm_mmlist_lock);
-	पूर्ण
+	}
 
-	/* Clean up stable nodes, but करोn't worry अगर some are still busy */
-	हटाओ_all_stable_nodes();
+	/* Clean up stable nodes, but don't worry if some are still busy */
+	remove_all_stable_nodes();
 	ksm_scan.seqnr = 0;
-	वापस 0;
+	return 0;
 
 error:
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 	spin_lock(&ksm_mmlist_lock);
 	ksm_scan.mm_slot = &ksm_mm_head;
 	spin_unlock(&ksm_mmlist_lock);
-	वापस err;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SYSFS */
+	return err;
+}
+#endif /* CONFIG_SYSFS */
 
-अटल u32 calc_checksum(काष्ठा page *page)
-अणु
+static u32 calc_checksum(struct page *page)
+{
 	u32 checksum;
-	व्योम *addr = kmap_atomic(page);
+	void *addr = kmap_atomic(page);
 	checksum = xxhash(addr, PAGE_SIZE, 0);
 	kunmap_atomic(addr);
-	वापस checksum;
-पूर्ण
+	return checksum;
+}
 
-अटल पूर्णांक ग_लिखो_protect_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
+static int write_protect_page(struct vm_area_struct *vma, struct page *page,
 			      pte_t *orig_pte)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	काष्ठा page_vma_mapped_walk pvmw = अणु
+{
+	struct mm_struct *mm = vma->vm_mm;
+	struct page_vma_mapped_walk pvmw = {
 		.page = page,
 		.vma = vma,
-	पूर्ण;
-	पूर्णांक swapped;
-	पूर्णांक err = -EFAULT;
-	काष्ठा mmu_notअगरier_range range;
+	};
+	int swapped;
+	int err = -EFAULT;
+	struct mmu_notifier_range range;
 
 	pvmw.address = page_address_in_vma(page, vma);
-	अगर (pvmw.address == -EFAULT)
-		जाओ out;
+	if (pvmw.address == -EFAULT)
+		goto out;
 
 	BUG_ON(PageTransCompound(page));
 
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm,
 				pvmw.address,
 				pvmw.address + PAGE_SIZE);
-	mmu_notअगरier_invalidate_range_start(&range);
+	mmu_notifier_invalidate_range_start(&range);
 
-	अगर (!page_vma_mapped_walk(&pvmw))
-		जाओ out_mn;
-	अगर (WARN_ONCE(!pvmw.pte, "Unexpected PMD mapping?"))
-		जाओ out_unlock;
+	if (!page_vma_mapped_walk(&pvmw))
+		goto out_mn;
+	if (WARN_ONCE(!pvmw.pte, "Unexpected PMD mapping?"))
+		goto out_unlock;
 
-	अगर (pte_ग_लिखो(*pvmw.pte) || pte_dirty(*pvmw.pte) ||
-	    (pte_protnone(*pvmw.pte) && pte_savedग_लिखो(*pvmw.pte)) ||
-						mm_tlb_flush_pending(mm)) अणु
+	if (pte_write(*pvmw.pte) || pte_dirty(*pvmw.pte) ||
+	    (pte_protnone(*pvmw.pte) && pte_savedwrite(*pvmw.pte)) ||
+						mm_tlb_flush_pending(mm)) {
 		pte_t entry;
 
 		swapped = PageSwapCache(page);
 		flush_cache_page(vma, pvmw.address, page_to_pfn(page));
 		/*
-		 * Ok this is tricky, when get_user_pages_fast() run it करोesn't
-		 * take any lock, thereक्रमe the check that we are going to make
+		 * Ok this is tricky, when get_user_pages_fast() run it doesn't
+		 * take any lock, therefore the check that we are going to make
 		 * with the pagecount against the mapcount is racy and
-		 * O_सूचीECT can happen right after the check.
-		 * So we clear the pte and flush the tlb beक्रमe the check
-		 * this assure us that no O_सूचीECT can happen after the check
+		 * O_DIRECT can happen right after the check.
+		 * So we clear the pte and flush the tlb before the check
+		 * this assure us that no O_DIRECT can happen after the check
 		 * or in the middle of the check.
 		 *
-		 * No need to notअगरy as we are करोwngrading page table to पढ़ो
-		 * only not changing it to poपूर्णांक to a new page.
+		 * No need to notify as we are downgrading page table to read
+		 * only not changing it to point to a new page.
 		 *
-		 * See Documentation/vm/mmu_notअगरier.rst
+		 * See Documentation/vm/mmu_notifier.rst
 		 */
 		entry = ptep_clear_flush(vma, pvmw.address, pvmw.pte);
 		/*
-		 * Check that no O_सूचीECT or similar I/O is in progress on the
+		 * Check that no O_DIRECT or similar I/O is in progress on the
 		 * page
 		 */
-		अगर (page_mapcount(page) + 1 + swapped != page_count(page)) अणु
+		if (page_mapcount(page) + 1 + swapped != page_count(page)) {
 			set_pte_at(mm, pvmw.address, pvmw.pte, entry);
-			जाओ out_unlock;
-		पूर्ण
-		अगर (pte_dirty(entry))
+			goto out_unlock;
+		}
+		if (pte_dirty(entry))
 			set_page_dirty(page);
 
-		अगर (pte_protnone(entry))
-			entry = pte_mkclean(pte_clear_savedग_लिखो(entry));
-		अन्यथा
+		if (pte_protnone(entry))
+			entry = pte_mkclean(pte_clear_savedwrite(entry));
+		else
 			entry = pte_mkclean(pte_wrprotect(entry));
-		set_pte_at_notअगरy(mm, pvmw.address, pvmw.pte, entry);
-	पूर्ण
+		set_pte_at_notify(mm, pvmw.address, pvmw.pte, entry);
+	}
 	*orig_pte = *pvmw.pte;
 	err = 0;
 
 out_unlock:
-	page_vma_mapped_walk_करोne(&pvmw);
+	page_vma_mapped_walk_done(&pvmw);
 out_mn:
-	mmu_notअगरier_invalidate_range_end(&range);
+	mmu_notifier_invalidate_range_end(&range);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
  * replace_page - replace page in vma by new ksm page
- * @vma:      vma that holds the pte poपूर्णांकing to page
+ * @vma:      vma that holds the pte pointing to page
  * @page:     the page we are replacing by kpage
  * @kpage:    the ksm page we replace page by
  * @orig_pte: the original value of the pte
  *
  * Returns 0 on success, -EFAULT on failure.
  */
-अटल पूर्णांक replace_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
-			काष्ठा page *kpage, pte_t orig_pte)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+static int replace_page(struct vm_area_struct *vma, struct page *page,
+			struct page *kpage, pte_t orig_pte)
+{
+	struct mm_struct *mm = vma->vm_mm;
 	pmd_t *pmd;
 	pte_t *ptep;
 	pte_t newpte;
 	spinlock_t *ptl;
-	अचिन्हित दीर्घ addr;
-	पूर्णांक err = -EFAULT;
-	काष्ठा mmu_notअगरier_range range;
+	unsigned long addr;
+	int err = -EFAULT;
+	struct mmu_notifier_range range;
 
 	addr = page_address_in_vma(page, vma);
-	अगर (addr == -EFAULT)
-		जाओ out;
+	if (addr == -EFAULT)
+		goto out;
 
 	pmd = mm_find_pmd(mm, addr);
-	अगर (!pmd)
-		जाओ out;
+	if (!pmd)
+		goto out;
 
-	mmu_notअगरier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm, addr,
+	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm, addr,
 				addr + PAGE_SIZE);
-	mmu_notअगरier_invalidate_range_start(&range);
+	mmu_notifier_invalidate_range_start(&range);
 
 	ptep = pte_offset_map_lock(mm, pmd, addr, &ptl);
-	अगर (!pte_same(*ptep, orig_pte)) अणु
+	if (!pte_same(*ptep, orig_pte)) {
 		pte_unmap_unlock(ptep, ptl);
-		जाओ out_mn;
-	पूर्ण
+		goto out_mn;
+	}
 
 	/*
 	 * No need to check ksm_use_zero_pages here: we can only have a
-	 * zero_page here अगर ksm_use_zero_pages was enabled alपढ़ोy.
+	 * zero_page here if ksm_use_zero_pages was enabled already.
 	 */
-	अगर (!is_zero_pfn(page_to_pfn(kpage))) अणु
+	if (!is_zero_pfn(page_to_pfn(kpage))) {
 		get_page(kpage);
 		page_add_anon_rmap(kpage, vma, addr, false);
 		newpte = mk_pte(kpage, vma->vm_page_prot);
-	पूर्ण अन्यथा अणु
+	} else {
 		newpte = pte_mkspecial(pfn_pte(page_to_pfn(kpage),
 					       vma->vm_page_prot));
 		/*
 		 * We're replacing an anonymous page with a zero page, which is
-		 * not anonymous. We need to करो proper accounting otherwise we
+		 * not anonymous. We need to do proper accounting otherwise we
 		 * will get wrong values in /proc, and a BUG message in dmesg
-		 * when tearing करोwn the mm.
+		 * when tearing down the mm.
 		 */
 		dec_mm_counter(mm, MM_ANONPAGES);
-	पूर्ण
+	}
 
 	flush_cache_page(vma, addr, pte_pfn(*ptep));
 	/*
-	 * No need to notअगरy as we are replacing a पढ़ो only page with another
-	 * पढ़ो only page with the same content.
+	 * No need to notify as we are replacing a read only page with another
+	 * read only page with the same content.
 	 *
-	 * See Documentation/vm/mmu_notअगरier.rst
+	 * See Documentation/vm/mmu_notifier.rst
 	 */
 	ptep_clear_flush(vma, addr, ptep);
-	set_pte_at_notअगरy(mm, addr, ptep, newpte);
+	set_pte_at_notify(mm, addr, ptep, newpte);
 
-	page_हटाओ_rmap(page, false);
-	अगर (!page_mapped(page))
-		try_to_मुक्त_swap(page);
+	page_remove_rmap(page, false);
+	if (!page_mapped(page))
+		try_to_free_swap(page);
 	put_page(page);
 
 	pte_unmap_unlock(ptep, ptl);
 	err = 0;
 out_mn:
-	mmu_notअगरier_invalidate_range_end(&range);
+	mmu_notifier_invalidate_range_end(&range);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * try_to_merge_one_page - take two pages and merge them पूर्णांकo one
- * @vma: the vma that holds the pte poपूर्णांकing to page
+ * try_to_merge_one_page - take two pages and merge them into one
+ * @vma: the vma that holds the pte pointing to page
  * @page: the PageAnon page that we want to replace with kpage
  * @kpage: the PageKsm page that we want to map instead of page,
- *         or शून्य the first समय when we want to use page as kpage.
+ *         or NULL the first time when we want to use page as kpage.
  *
- * This function वापसs 0 अगर the pages were merged, -EFAULT otherwise.
+ * This function returns 0 if the pages were merged, -EFAULT otherwise.
  */
-अटल पूर्णांक try_to_merge_one_page(काष्ठा vm_area_काष्ठा *vma,
-				 काष्ठा page *page, काष्ठा page *kpage)
-अणु
+static int try_to_merge_one_page(struct vm_area_struct *vma,
+				 struct page *page, struct page *kpage)
+{
 	pte_t orig_pte = __pte(0);
-	पूर्णांक err = -EFAULT;
+	int err = -EFAULT;
 
-	अगर (page == kpage)			/* ksm page विभाजनed */
-		वापस 0;
+	if (page == kpage)			/* ksm page forked */
+		return 0;
 
-	अगर (!PageAnon(page))
-		जाओ out;
+	if (!PageAnon(page))
+		goto out;
 
 	/*
-	 * We need the page lock to पढ़ो a stable PageSwapCache in
-	 * ग_लिखो_protect_page().  We use trylock_page() instead of
-	 * lock_page() because we करोn't want to रुको here - we
-	 * prefer to जारी scanning and merging dअगरferent pages,
+	 * We need the page lock to read a stable PageSwapCache in
+	 * write_protect_page().  We use trylock_page() instead of
+	 * lock_page() because we don't want to wait here - we
+	 * prefer to continue scanning and merging different pages,
 	 * then come back to this page when it is unlocked.
 	 */
-	अगर (!trylock_page(page))
-		जाओ out;
+	if (!trylock_page(page))
+		goto out;
 
-	अगर (PageTransCompound(page)) अणु
-		अगर (split_huge_page(page))
-			जाओ out_unlock;
-	पूर्ण
+	if (PageTransCompound(page)) {
+		if (split_huge_page(page))
+			goto out_unlock;
+	}
 
 	/*
 	 * If this anonymous page is mapped only here, its pte may need
-	 * to be ग_लिखो-रक्षित.  If it's mapped अन्यथाwhere, all of its
-	 * ptes are necessarily alपढ़ोy ग_लिखो-रक्षित.  But in either
-	 * हाल, we need to lock and check page_count is not उठाओd.
+	 * to be write-protected.  If it's mapped elsewhere, all of its
+	 * ptes are necessarily already write-protected.  But in either
+	 * case, we need to lock and check page_count is not raised.
 	 */
-	अगर (ग_लिखो_protect_page(vma, page, &orig_pte) == 0) अणु
-		अगर (!kpage) अणु
+	if (write_protect_page(vma, page, &orig_pte) == 0) {
+		if (!kpage) {
 			/*
 			 * While we hold page lock, upgrade page from
-			 * PageAnon+anon_vma to PageKsm+शून्य stable_node:
+			 * PageAnon+anon_vma to PageKsm+NULL stable_node:
 			 * stable_tree_insert() will update stable_node.
 			 */
-			set_page_stable_node(page, शून्य);
+			set_page_stable_node(page, NULL);
 			mark_page_accessed(page);
 			/*
-			 * Page reclaim just मुक्तs a clean page with no dirty
+			 * Page reclaim just frees a clean page with no dirty
 			 * ptes: make sure that the ksm page would be swapped.
 			 */
-			अगर (!PageDirty(page))
+			if (!PageDirty(page))
 				SetPageDirty(page);
 			err = 0;
-		पूर्ण अन्यथा अगर (pages_identical(page, kpage))
+		} else if (pages_identical(page, kpage))
 			err = replace_page(vma, page, kpage, orig_pte);
-	पूर्ण
+	}
 
-	अगर ((vma->vm_flags & VM_LOCKED) && kpage && !err) अणु
+	if ((vma->vm_flags & VM_LOCKED) && kpage && !err) {
 		munlock_vma_page(page);
-		अगर (!PageMlocked(kpage)) अणु
+		if (!PageMlocked(kpage)) {
 			unlock_page(page);
 			lock_page(kpage);
 			mlock_vma_page(kpage);
-			page = kpage;		/* क्रम final unlock */
-		पूर्ण
-	पूर्ण
+			page = kpage;		/* for final unlock */
+		}
+	}
 
 out_unlock:
 	unlock_page(page);
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
  * try_to_merge_with_ksm_page - like try_to_merge_two_pages,
- * but no new kernel page is allocated: kpage must alपढ़ोy be a ksm page.
+ * but no new kernel page is allocated: kpage must already be a ksm page.
  *
- * This function वापसs 0 अगर the pages were merged, -EFAULT otherwise.
+ * This function returns 0 if the pages were merged, -EFAULT otherwise.
  */
-अटल पूर्णांक try_to_merge_with_ksm_page(काष्ठा rmap_item *rmap_item,
-				      काष्ठा page *page, काष्ठा page *kpage)
-अणु
-	काष्ठा mm_काष्ठा *mm = rmap_item->mm;
-	काष्ठा vm_area_काष्ठा *vma;
-	पूर्णांक err = -EFAULT;
+static int try_to_merge_with_ksm_page(struct rmap_item *rmap_item,
+				      struct page *page, struct page *kpage)
+{
+	struct mm_struct *mm = rmap_item->mm;
+	struct vm_area_struct *vma;
+	int err = -EFAULT;
 
-	mmap_पढ़ो_lock(mm);
+	mmap_read_lock(mm);
 	vma = find_mergeable_vma(mm, rmap_item->address);
-	अगर (!vma)
-		जाओ out;
+	if (!vma)
+		goto out;
 
 	err = try_to_merge_one_page(vma, page, kpage);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	/* Unstable nid is in जोड़ with stable anon_vma: हटाओ first */
-	हटाओ_rmap_item_from_tree(rmap_item);
+	/* Unstable nid is in union with stable anon_vma: remove first */
+	remove_rmap_item_from_tree(rmap_item);
 
-	/* Must get reference to anon_vma जबतक still holding mmap_lock */
+	/* Must get reference to anon_vma while still holding mmap_lock */
 	rmap_item->anon_vma = vma->anon_vma;
 	get_anon_vma(vma->anon_vma);
 out:
-	mmap_पढ़ो_unlock(mm);
-	वापस err;
-पूर्ण
+	mmap_read_unlock(mm);
+	return err;
+}
 
 /*
  * try_to_merge_two_pages - take two identical pages and prepare them
- * to be merged पूर्णांकo one page.
+ * to be merged into one page.
  *
- * This function वापसs the kpage अगर we successfully merged two identical
- * pages पूर्णांकo one ksm page, शून्य otherwise.
+ * This function returns the kpage if we successfully merged two identical
+ * pages into one ksm page, NULL otherwise.
  *
- * Note that this function upgrades page to ksm page: अगर one of the pages
- * is alपढ़ोy a ksm page, try_to_merge_with_ksm_page should be used.
+ * Note that this function upgrades page to ksm page: if one of the pages
+ * is already a ksm page, try_to_merge_with_ksm_page should be used.
  */
-अटल काष्ठा page *try_to_merge_two_pages(काष्ठा rmap_item *rmap_item,
-					   काष्ठा page *page,
-					   काष्ठा rmap_item *tree_rmap_item,
-					   काष्ठा page *tree_page)
-अणु
-	पूर्णांक err;
+static struct page *try_to_merge_two_pages(struct rmap_item *rmap_item,
+					   struct page *page,
+					   struct rmap_item *tree_rmap_item,
+					   struct page *tree_page)
+{
+	int err;
 
-	err = try_to_merge_with_ksm_page(rmap_item, page, शून्य);
-	अगर (!err) अणु
+	err = try_to_merge_with_ksm_page(rmap_item, page, NULL);
+	if (!err) {
 		err = try_to_merge_with_ksm_page(tree_rmap_item,
 							tree_page, page);
 		/*
 		 * If that fails, we have a ksm page with only one pte
-		 * poपूर्णांकing to it: so अवरोध it.
+		 * pointing to it: so break it.
 		 */
-		अगर (err)
-			अवरोध_cow(rmap_item);
-	पूर्ण
-	वापस err ? शून्य : page;
-पूर्ण
+		if (err)
+			break_cow(rmap_item);
+	}
+	return err ? NULL : page;
+}
 
-अटल __always_अंतरभूत
-bool __is_page_sharing_candidate(काष्ठा stable_node *stable_node, पूर्णांक offset)
-अणु
+static __always_inline
+bool __is_page_sharing_candidate(struct stable_node *stable_node, int offset)
+{
 	VM_BUG_ON(stable_node->rmap_hlist_len < 0);
 	/*
 	 * Check that at least one mapping still exists, otherwise
-	 * there's no much poपूर्णांक to merge and share with this
+	 * there's no much point to merge and share with this
 	 * stable_node, as the underlying tree_page of the other
-	 * sharer is going to be मुक्तd soon.
+	 * sharer is going to be freed soon.
 	 */
-	वापस stable_node->rmap_hlist_len &&
+	return stable_node->rmap_hlist_len &&
 		stable_node->rmap_hlist_len + offset < ksm_max_page_sharing;
-पूर्ण
+}
 
-अटल __always_अंतरभूत
-bool is_page_sharing_candidate(काष्ठा stable_node *stable_node)
-अणु
-	वापस __is_page_sharing_candidate(stable_node, 0);
-पूर्ण
+static __always_inline
+bool is_page_sharing_candidate(struct stable_node *stable_node)
+{
+	return __is_page_sharing_candidate(stable_node, 0);
+}
 
-अटल काष्ठा page *stable_node_dup(काष्ठा stable_node **_stable_node_dup,
-				    काष्ठा stable_node **_stable_node,
-				    काष्ठा rb_root *root,
+static struct page *stable_node_dup(struct stable_node **_stable_node_dup,
+				    struct stable_node **_stable_node,
+				    struct rb_root *root,
 				    bool prune_stale_stable_nodes)
-अणु
-	काष्ठा stable_node *dup, *found = शून्य, *stable_node = *_stable_node;
-	काष्ठा hlist_node *hlist_safe;
-	काष्ठा page *_tree_page, *tree_page = शून्य;
-	पूर्णांक nr = 0;
-	पूर्णांक found_rmap_hlist_len;
+{
+	struct stable_node *dup, *found = NULL, *stable_node = *_stable_node;
+	struct hlist_node *hlist_safe;
+	struct page *_tree_page, *tree_page = NULL;
+	int nr = 0;
+	int found_rmap_hlist_len;
 
-	अगर (!prune_stale_stable_nodes ||
-	    समय_beक्रमe(jअगरfies, stable_node->chain_prune_समय +
-			msecs_to_jअगरfies(
+	if (!prune_stale_stable_nodes ||
+	    time_before(jiffies, stable_node->chain_prune_time +
+			msecs_to_jiffies(
 				ksm_stable_node_chains_prune_millisecs)))
 		prune_stale_stable_nodes = false;
-	अन्यथा
-		stable_node->chain_prune_समय = jअगरfies;
+	else
+		stable_node->chain_prune_time = jiffies;
 
-	hlist_क्रम_each_entry_safe(dup, hlist_safe,
-				  &stable_node->hlist, hlist_dup) अणु
+	hlist_for_each_entry_safe(dup, hlist_safe,
+				  &stable_node->hlist, hlist_dup) {
 		cond_resched();
 		/*
 		 * We must walk all stable_node_dup to prune the stale
 		 * stable nodes during lookup.
 		 *
 		 * get_ksm_page can drop the nodes from the
-		 * stable_node->hlist अगर they poपूर्णांक to मुक्तd pages
-		 * (that's why we करो a _safe walk). The "dup"
-		 * stable_node parameter itself will be मुक्तd from
-		 * under us अगर it वापसs शून्य.
+		 * stable_node->hlist if they point to freed pages
+		 * (that's why we do a _safe walk). The "dup"
+		 * stable_node parameter itself will be freed from
+		 * under us if it returns NULL.
 		 */
 		_tree_page = get_ksm_page(dup, GET_KSM_PAGE_NOLOCK);
-		अगर (!_tree_page)
-			जारी;
+		if (!_tree_page)
+			continue;
 		nr += 1;
-		अगर (is_page_sharing_candidate(dup)) अणु
-			अगर (!found ||
-			    dup->rmap_hlist_len > found_rmap_hlist_len) अणु
-				अगर (found)
+		if (is_page_sharing_candidate(dup)) {
+			if (!found ||
+			    dup->rmap_hlist_len > found_rmap_hlist_len) {
+				if (found)
 					put_page(tree_page);
 				found = dup;
 				found_rmap_hlist_len = found->rmap_hlist_len;
 				tree_page = _tree_page;
 
-				/* skip put_page क्रम found dup */
-				अगर (!prune_stale_stable_nodes)
-					अवरोध;
-				जारी;
-			पूर्ण
-		पूर्ण
+				/* skip put_page for found dup */
+				if (!prune_stale_stable_nodes)
+					break;
+				continue;
+			}
+		}
 		put_page(_tree_page);
-	पूर्ण
+	}
 
-	अगर (found) अणु
+	if (found) {
 		/*
-		 * nr is counting all dups in the chain only अगर
+		 * nr is counting all dups in the chain only if
 		 * prune_stale_stable_nodes is true, otherwise we may
-		 * अवरोध the loop at nr == 1 even अगर there are
+		 * break the loop at nr == 1 even if there are
 		 * multiple entries.
 		 */
-		अगर (prune_stale_stable_nodes && nr == 1) अणु
+		if (prune_stale_stable_nodes && nr == 1) {
 			/*
 			 * If there's not just one entry it would
 			 * corrupt memory, better BUG_ON. In KSM
@@ -1427,170 +1426,170 @@ bool is_page_sharing_candidate(काष्ठा stable_node *stable_node)
 			 */
 			rb_replace_node(&stable_node->node, &found->node,
 					root);
-			मुक्त_stable_node(stable_node);
+			free_stable_node(stable_node);
 			ksm_stable_node_chains--;
 			ksm_stable_node_dups--;
 			/*
 			 * NOTE: the caller depends on the stable_node
-			 * to be equal to stable_node_dup अगर the chain
+			 * to be equal to stable_node_dup if the chain
 			 * was collapsed.
 			 */
 			*_stable_node = found;
 			/*
-			 * Just क्रम robustness, as stable_node is
-			 * otherwise left as a stable poपूर्णांकer, the
+			 * Just for robustness, as stable_node is
+			 * otherwise left as a stable pointer, the
 			 * compiler shall optimize it away at build
-			 * समय.
+			 * time.
 			 */
-			stable_node = शून्य;
-		पूर्ण अन्यथा अगर (stable_node->hlist.first != &found->hlist_dup &&
-			   __is_page_sharing_candidate(found, 1)) अणु
+			stable_node = NULL;
+		} else if (stable_node->hlist.first != &found->hlist_dup &&
+			   __is_page_sharing_candidate(found, 1)) {
 			/*
 			 * If the found stable_node dup can accept one
 			 * more future merge (in addition to the one
 			 * that is underway) and is not at the head of
 			 * the chain, put it there so next search will
 			 * be quicker in the !prune_stale_stable_nodes
-			 * हाल.
+			 * case.
 			 *
 			 * NOTE: it would be inaccurate to use nr > 1
-			 * instead of checking the hlist.first poपूर्णांकer
+			 * instead of checking the hlist.first pointer
 			 * directly, because in the
-			 * prune_stale_stable_nodes हाल "nr" isn't
+			 * prune_stale_stable_nodes case "nr" isn't
 			 * the position of the found dup in the chain,
 			 * but the total number of dups in the chain.
 			 */
 			hlist_del(&found->hlist_dup);
 			hlist_add_head(&found->hlist_dup,
 				       &stable_node->hlist);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*_stable_node_dup = found;
-	वापस tree_page;
-पूर्ण
+	return tree_page;
+}
 
-अटल काष्ठा stable_node *stable_node_dup_any(काष्ठा stable_node *stable_node,
-					       काष्ठा rb_root *root)
-अणु
-	अगर (!is_stable_node_chain(stable_node))
-		वापस stable_node;
-	अगर (hlist_empty(&stable_node->hlist)) अणु
-		मुक्त_stable_node_chain(stable_node, root);
-		वापस शून्य;
-	पूर्ण
-	वापस hlist_entry(stable_node->hlist.first,
+static struct stable_node *stable_node_dup_any(struct stable_node *stable_node,
+					       struct rb_root *root)
+{
+	if (!is_stable_node_chain(stable_node))
+		return stable_node;
+	if (hlist_empty(&stable_node->hlist)) {
+		free_stable_node_chain(stable_node, root);
+		return NULL;
+	}
+	return hlist_entry(stable_node->hlist.first,
 			   typeof(*stable_node), hlist_dup);
-पूर्ण
+}
 
 /*
- * Like क्रम get_ksm_page, this function can मुक्त the *_stable_node and
- * *_stable_node_dup अगर the वापसed tree_page is शून्य.
+ * Like for get_ksm_page, this function can free the *_stable_node and
+ * *_stable_node_dup if the returned tree_page is NULL.
  *
- * It can also मुक्त and overग_लिखो *_stable_node with the found
- * stable_node_dup अगर the chain is collapsed (in which हाल
- * *_stable_node will be equal to *_stable_node_dup like अगर the chain
- * never existed). It's up to the caller to verअगरy tree_page is not
- * शून्य beक्रमe dereferencing *_stable_node or *_stable_node_dup.
+ * It can also free and overwrite *_stable_node with the found
+ * stable_node_dup if the chain is collapsed (in which case
+ * *_stable_node will be equal to *_stable_node_dup like if the chain
+ * never existed). It's up to the caller to verify tree_page is not
+ * NULL before dereferencing *_stable_node or *_stable_node_dup.
  *
  * *_stable_node_dup is really a second output parameter of this
- * function and will be overwritten in all हालs, the caller करोesn't
+ * function and will be overwritten in all cases, the caller doesn't
  * need to initialize it.
  */
-अटल काष्ठा page *__stable_node_chain(काष्ठा stable_node **_stable_node_dup,
-					काष्ठा stable_node **_stable_node,
-					काष्ठा rb_root *root,
+static struct page *__stable_node_chain(struct stable_node **_stable_node_dup,
+					struct stable_node **_stable_node,
+					struct rb_root *root,
 					bool prune_stale_stable_nodes)
-अणु
-	काष्ठा stable_node *stable_node = *_stable_node;
-	अगर (!is_stable_node_chain(stable_node)) अणु
-		अगर (is_page_sharing_candidate(stable_node)) अणु
+{
+	struct stable_node *stable_node = *_stable_node;
+	if (!is_stable_node_chain(stable_node)) {
+		if (is_page_sharing_candidate(stable_node)) {
 			*_stable_node_dup = stable_node;
-			वापस get_ksm_page(stable_node, GET_KSM_PAGE_NOLOCK);
-		पूर्ण
+			return get_ksm_page(stable_node, GET_KSM_PAGE_NOLOCK);
+		}
 		/*
-		 * _stable_node_dup set to शून्य means the stable_node
+		 * _stable_node_dup set to NULL means the stable_node
 		 * reached the ksm_max_page_sharing limit.
 		 */
-		*_stable_node_dup = शून्य;
-		वापस शून्य;
-	पूर्ण
-	वापस stable_node_dup(_stable_node_dup, _stable_node, root,
+		*_stable_node_dup = NULL;
+		return NULL;
+	}
+	return stable_node_dup(_stable_node_dup, _stable_node, root,
 			       prune_stale_stable_nodes);
-पूर्ण
+}
 
-अटल __always_अंतरभूत काष्ठा page *chain_prune(काष्ठा stable_node **s_n_d,
-						काष्ठा stable_node **s_n,
-						काष्ठा rb_root *root)
-अणु
-	वापस __stable_node_chain(s_n_d, s_n, root, true);
-पूर्ण
+static __always_inline struct page *chain_prune(struct stable_node **s_n_d,
+						struct stable_node **s_n,
+						struct rb_root *root)
+{
+	return __stable_node_chain(s_n_d, s_n, root, true);
+}
 
-अटल __always_अंतरभूत काष्ठा page *chain(काष्ठा stable_node **s_n_d,
-					  काष्ठा stable_node *s_n,
-					  काष्ठा rb_root *root)
-अणु
-	काष्ठा stable_node *old_stable_node = s_n;
-	काष्ठा page *tree_page;
+static __always_inline struct page *chain(struct stable_node **s_n_d,
+					  struct stable_node *s_n,
+					  struct rb_root *root)
+{
+	struct stable_node *old_stable_node = s_n;
+	struct page *tree_page;
 
 	tree_page = __stable_node_chain(s_n_d, &s_n, root, false);
 	/* not pruning dups so s_n cannot have changed */
 	VM_BUG_ON(s_n != old_stable_node);
-	वापस tree_page;
-पूर्ण
+	return tree_page;
+}
 
 /*
- * stable_tree_search - search क्रम page inside the stable tree
+ * stable_tree_search - search for page inside the stable tree
  *
- * This function checks अगर there is a page inside the stable tree
+ * This function checks if there is a page inside the stable tree
  * with identical content to the page that we are scanning right now.
  *
- * This function वापसs the stable tree node of identical content अगर found,
- * शून्य otherwise.
+ * This function returns the stable tree node of identical content if found,
+ * NULL otherwise.
  */
-अटल काष्ठा page *stable_tree_search(काष्ठा page *page)
-अणु
-	पूर्णांक nid;
-	काष्ठा rb_root *root;
-	काष्ठा rb_node **new;
-	काष्ठा rb_node *parent;
-	काष्ठा stable_node *stable_node, *stable_node_dup, *stable_node_any;
-	काष्ठा stable_node *page_node;
+static struct page *stable_tree_search(struct page *page)
+{
+	int nid;
+	struct rb_root *root;
+	struct rb_node **new;
+	struct rb_node *parent;
+	struct stable_node *stable_node, *stable_node_dup, *stable_node_any;
+	struct stable_node *page_node;
 
 	page_node = page_stable_node(page);
-	अगर (page_node && page_node->head != &migrate_nodes) अणु
-		/* ksm page विभाजनed */
+	if (page_node && page_node->head != &migrate_nodes) {
+		/* ksm page forked */
 		get_page(page);
-		वापस page;
-	पूर्ण
+		return page;
+	}
 
 	nid = get_kpfn_nid(page_to_pfn(page));
 	root = root_stable_tree + nid;
 again:
 	new = &root->rb_node;
-	parent = शून्य;
+	parent = NULL;
 
-	जबतक (*new) अणु
-		काष्ठा page *tree_page;
-		पूर्णांक ret;
+	while (*new) {
+		struct page *tree_page;
+		int ret;
 
 		cond_resched();
-		stable_node = rb_entry(*new, काष्ठा stable_node, node);
-		stable_node_any = शून्य;
+		stable_node = rb_entry(*new, struct stable_node, node);
+		stable_node_any = NULL;
 		tree_page = chain_prune(&stable_node_dup, &stable_node,	root);
 		/*
-		 * NOTE: stable_node may have been मुक्तd by
-		 * chain_prune() अगर the वापसed stable_node_dup is
-		 * not शून्य. stable_node_dup may have been inserted in
+		 * NOTE: stable_node may have been freed by
+		 * chain_prune() if the returned stable_node_dup is
+		 * not NULL. stable_node_dup may have been inserted in
 		 * the rbtree instead as a regular stable_node (in
-		 * order to collapse the stable_node chain अगर a single
-		 * stable_node dup was found in it). In such हाल the
-		 * stable_node is overwritten by the calleee to poपूर्णांक
+		 * order to collapse the stable_node chain if a single
+		 * stable_node dup was found in it). In such case the
+		 * stable_node is overwritten by the calleee to point
 		 * to the stable_node_dup that was collapsed in the
 		 * stable rbtree and stable_node will be equal to
-		 * stable_node_dup like अगर the chain never existed.
+		 * stable_node_dup like if the chain never existed.
 		 */
-		अगर (!stable_node_dup) अणु
+		if (!stable_node_dup) {
 			/*
 			 * Either all stable_node dups were full in
 			 * this stable_node chain, or this chain was
@@ -1598,189 +1597,189 @@ again:
 			 */
 			stable_node_any = stable_node_dup_any(stable_node,
 							      root);
-			अगर (!stable_node_any) अणु
+			if (!stable_node_any) {
 				/* rb_erase just run */
-				जाओ again;
-			पूर्ण
+				goto again;
+			}
 			/*
 			 * Take any of the stable_node dups page of
 			 * this stable_node chain to let the tree walk
-			 * जारी. All KSM pages beदीर्घing to the
+			 * continue. All KSM pages belonging to the
 			 * stable_node dups in a stable_node chain
 			 * have the same content and they're
-			 * ग_लिखो रक्षित at all बार. Any will work
-			 * fine to जारी the walk.
+			 * write protected at all times. Any will work
+			 * fine to continue the walk.
 			 */
 			tree_page = get_ksm_page(stable_node_any,
 						 GET_KSM_PAGE_NOLOCK);
-		पूर्ण
+		}
 		VM_BUG_ON(!stable_node_dup ^ !!stable_node_any);
-		अगर (!tree_page) अणु
+		if (!tree_page) {
 			/*
 			 * If we walked over a stale stable_node,
 			 * get_ksm_page() will call rb_erase() and it
 			 * may rebalance the tree from under us. So
 			 * restart the search from scratch. Returning
-			 * शून्य would be safe too, but we'd generate
+			 * NULL would be safe too, but we'd generate
 			 * false negative insertions just because some
 			 * stable_node was stale.
 			 */
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
-		ret = स_भेद_pages(page, tree_page);
+		ret = memcmp_pages(page, tree_page);
 		put_page(tree_page);
 
 		parent = *new;
-		अगर (ret < 0)
+		if (ret < 0)
 			new = &parent->rb_left;
-		अन्यथा अगर (ret > 0)
+		else if (ret > 0)
 			new = &parent->rb_right;
-		अन्यथा अणु
-			अगर (page_node) अणु
+		else {
+			if (page_node) {
 				VM_BUG_ON(page_node->head != &migrate_nodes);
 				/*
-				 * Test अगर the migrated page should be merged
-				 * पूर्णांकo a stable node dup. If the mapcount is
+				 * Test if the migrated page should be merged
+				 * into a stable node dup. If the mapcount is
 				 * 1 we can migrate it with another KSM page
 				 * without adding it to the chain.
 				 */
-				अगर (page_mapcount(page) > 1)
-					जाओ chain_append;
-			पूर्ण
+				if (page_mapcount(page) > 1)
+					goto chain_append;
+			}
 
-			अगर (!stable_node_dup) अणु
+			if (!stable_node_dup) {
 				/*
 				 * If the stable_node is a chain and
-				 * we got a payload match in स_भेद
+				 * we got a payload match in memcmp
 				 * but we cannot merge the scanned
 				 * page in any of the existing
 				 * stable_node dups because they're
-				 * all full, we need to रुको the
+				 * all full, we need to wait the
 				 * scanned page to find itself a match
 				 * in the unstable tree to create a
-				 * bअक्रम new KSM page to add later to
+				 * brand new KSM page to add later to
 				 * the dups of this stable_node.
 				 */
-				वापस शून्य;
-			पूर्ण
+				return NULL;
+			}
 
 			/*
 			 * Lock and unlock the stable_node's page (which
-			 * might alपढ़ोy have been migrated) so that page
-			 * migration is sure to notice its उठाओd count.
-			 * It would be more elegant to वापस stable_node
+			 * might already have been migrated) so that page
+			 * migration is sure to notice its raised count.
+			 * It would be more elegant to return stable_node
 			 * than kpage, but that involves more changes.
 			 */
 			tree_page = get_ksm_page(stable_node_dup,
 						 GET_KSM_PAGE_TRYLOCK);
 
-			अगर (PTR_ERR(tree_page) == -EBUSY)
-				वापस ERR_PTR(-EBUSY);
+			if (PTR_ERR(tree_page) == -EBUSY)
+				return ERR_PTR(-EBUSY);
 
-			अगर (unlikely(!tree_page))
+			if (unlikely(!tree_page))
 				/*
 				 * The tree may have been rebalanced,
 				 * so re-evaluate parent and new.
 				 */
-				जाओ again;
+				goto again;
 			unlock_page(tree_page);
 
-			अगर (get_kpfn_nid(stable_node_dup->kpfn) !=
-			    NUMA(stable_node_dup->nid)) अणु
+			if (get_kpfn_nid(stable_node_dup->kpfn) !=
+			    NUMA(stable_node_dup->nid)) {
 				put_page(tree_page);
-				जाओ replace;
-			पूर्ण
-			वापस tree_page;
-		पूर्ण
-	पूर्ण
+				goto replace;
+			}
+			return tree_page;
+		}
+	}
 
-	अगर (!page_node)
-		वापस शून्य;
+	if (!page_node)
+		return NULL;
 
 	list_del(&page_node->list);
 	DO_NUMA(page_node->nid = nid);
 	rb_link_node(&page_node->node, parent, new);
 	rb_insert_color(&page_node->node, root);
 out:
-	अगर (is_page_sharing_candidate(page_node)) अणु
+	if (is_page_sharing_candidate(page_node)) {
 		get_page(page);
-		वापस page;
-	पूर्ण अन्यथा
-		वापस शून्य;
+		return page;
+	} else
+		return NULL;
 
 replace:
 	/*
 	 * If stable_node was a chain and chain_prune collapsed it,
 	 * stable_node has been updated to be the new regular
 	 * stable_node. A collapse of the chain is indistinguishable
-	 * from the हाल there was no chain in the stable
+	 * from the case there was no chain in the stable
 	 * rbtree. Otherwise stable_node is the chain and
 	 * stable_node_dup is the dup to replace.
 	 */
-	अगर (stable_node_dup == stable_node) अणु
+	if (stable_node_dup == stable_node) {
 		VM_BUG_ON(is_stable_node_chain(stable_node_dup));
 		VM_BUG_ON(is_stable_node_dup(stable_node_dup));
 		/* there is no chain */
-		अगर (page_node) अणु
+		if (page_node) {
 			VM_BUG_ON(page_node->head != &migrate_nodes);
 			list_del(&page_node->list);
 			DO_NUMA(page_node->nid = nid);
 			rb_replace_node(&stable_node_dup->node,
 					&page_node->node,
 					root);
-			अगर (is_page_sharing_candidate(page_node))
+			if (is_page_sharing_candidate(page_node))
 				get_page(page);
-			अन्यथा
-				page = शून्य;
-		पूर्ण अन्यथा अणु
+			else
+				page = NULL;
+		} else {
 			rb_erase(&stable_node_dup->node, root);
-			page = शून्य;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			page = NULL;
+		}
+	} else {
 		VM_BUG_ON(!is_stable_node_chain(stable_node));
 		__stable_node_dup_del(stable_node_dup);
-		अगर (page_node) अणु
+		if (page_node) {
 			VM_BUG_ON(page_node->head != &migrate_nodes);
 			list_del(&page_node->list);
 			DO_NUMA(page_node->nid = nid);
 			stable_node_chain_add_dup(page_node, stable_node);
-			अगर (is_page_sharing_candidate(page_node))
+			if (is_page_sharing_candidate(page_node))
 				get_page(page);
-			अन्यथा
-				page = शून्य;
-		पूर्ण अन्यथा अणु
-			page = शून्य;
-		पूर्ण
-	पूर्ण
+			else
+				page = NULL;
+		} else {
+			page = NULL;
+		}
+	}
 	stable_node_dup->head = &migrate_nodes;
 	list_add(&stable_node_dup->list, stable_node_dup->head);
-	वापस page;
+	return page;
 
 chain_append:
-	/* stable_node_dup could be null अगर it reached the limit */
-	अगर (!stable_node_dup)
+	/* stable_node_dup could be null if it reached the limit */
+	if (!stable_node_dup)
 		stable_node_dup = stable_node_any;
 	/*
 	 * If stable_node was a chain and chain_prune collapsed it,
 	 * stable_node has been updated to be the new regular
 	 * stable_node. A collapse of the chain is indistinguishable
-	 * from the हाल there was no chain in the stable
+	 * from the case there was no chain in the stable
 	 * rbtree. Otherwise stable_node is the chain and
 	 * stable_node_dup is the dup to replace.
 	 */
-	अगर (stable_node_dup == stable_node) अणु
+	if (stable_node_dup == stable_node) {
 		VM_BUG_ON(is_stable_node_dup(stable_node_dup));
 		/* chain is missing so create it */
 		stable_node = alloc_stable_node_chain(stable_node_dup,
 						      root);
-		अगर (!stable_node)
-			वापस शून्य;
-	पूर्ण
+		if (!stable_node)
+			return NULL;
+	}
 	/*
 	 * Add this stable_node dup that was
 	 * migrated to the stable_node chain
-	 * of the current nid क्रम this page
+	 * of the current nid for this page
 	 * content.
 	 */
 	VM_BUG_ON(!is_stable_node_dup(stable_node_dup));
@@ -1788,42 +1787,42 @@ chain_append:
 	list_del(&page_node->list);
 	DO_NUMA(page_node->nid = nid);
 	stable_node_chain_add_dup(page_node, stable_node);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
 /*
- * stable_tree_insert - insert stable tree node poपूर्णांकing to new ksm page
- * पूर्णांकo the stable tree.
+ * stable_tree_insert - insert stable tree node pointing to new ksm page
+ * into the stable tree.
  *
- * This function वापसs the stable tree node just allocated on success,
- * शून्य otherwise.
+ * This function returns the stable tree node just allocated on success,
+ * NULL otherwise.
  */
-अटल काष्ठा stable_node *stable_tree_insert(काष्ठा page *kpage)
-अणु
-	पूर्णांक nid;
-	अचिन्हित दीर्घ kpfn;
-	काष्ठा rb_root *root;
-	काष्ठा rb_node **new;
-	काष्ठा rb_node *parent;
-	काष्ठा stable_node *stable_node, *stable_node_dup, *stable_node_any;
+static struct stable_node *stable_tree_insert(struct page *kpage)
+{
+	int nid;
+	unsigned long kpfn;
+	struct rb_root *root;
+	struct rb_node **new;
+	struct rb_node *parent;
+	struct stable_node *stable_node, *stable_node_dup, *stable_node_any;
 	bool need_chain = false;
 
 	kpfn = page_to_pfn(kpage);
 	nid = get_kpfn_nid(kpfn);
 	root = root_stable_tree + nid;
 again:
-	parent = शून्य;
+	parent = NULL;
 	new = &root->rb_node;
 
-	जबतक (*new) अणु
-		काष्ठा page *tree_page;
-		पूर्णांक ret;
+	while (*new) {
+		struct page *tree_page;
+		int ret;
 
 		cond_resched();
-		stable_node = rb_entry(*new, काष्ठा stable_node, node);
-		stable_node_any = शून्य;
+		stable_node = rb_entry(*new, struct stable_node, node);
+		stable_node_any = NULL;
 		tree_page = chain(&stable_node_dup, stable_node, root);
-		अगर (!stable_node_dup) अणु
+		if (!stable_node_dup) {
 			/*
 			 * Either all stable_node dups were full in
 			 * this stable_node chain, or this chain was
@@ -1831,148 +1830,148 @@ again:
 			 */
 			stable_node_any = stable_node_dup_any(stable_node,
 							      root);
-			अगर (!stable_node_any) अणु
+			if (!stable_node_any) {
 				/* rb_erase just run */
-				जाओ again;
-			पूर्ण
+				goto again;
+			}
 			/*
 			 * Take any of the stable_node dups page of
 			 * this stable_node chain to let the tree walk
-			 * जारी. All KSM pages beदीर्घing to the
+			 * continue. All KSM pages belonging to the
 			 * stable_node dups in a stable_node chain
 			 * have the same content and they're
-			 * ग_लिखो रक्षित at all बार. Any will work
-			 * fine to जारी the walk.
+			 * write protected at all times. Any will work
+			 * fine to continue the walk.
 			 */
 			tree_page = get_ksm_page(stable_node_any,
 						 GET_KSM_PAGE_NOLOCK);
-		पूर्ण
+		}
 		VM_BUG_ON(!stable_node_dup ^ !!stable_node_any);
-		अगर (!tree_page) अणु
+		if (!tree_page) {
 			/*
 			 * If we walked over a stale stable_node,
 			 * get_ksm_page() will call rb_erase() and it
 			 * may rebalance the tree from under us. So
 			 * restart the search from scratch. Returning
-			 * शून्य would be safe too, but we'd generate
+			 * NULL would be safe too, but we'd generate
 			 * false negative insertions just because some
 			 * stable_node was stale.
 			 */
-			जाओ again;
-		पूर्ण
+			goto again;
+		}
 
-		ret = स_भेद_pages(kpage, tree_page);
+		ret = memcmp_pages(kpage, tree_page);
 		put_page(tree_page);
 
 		parent = *new;
-		अगर (ret < 0)
+		if (ret < 0)
 			new = &parent->rb_left;
-		अन्यथा अगर (ret > 0)
+		else if (ret > 0)
 			new = &parent->rb_right;
-		अन्यथा अणु
+		else {
 			need_chain = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	stable_node_dup = alloc_stable_node();
-	अगर (!stable_node_dup)
-		वापस शून्य;
+	if (!stable_node_dup)
+		return NULL;
 
 	INIT_HLIST_HEAD(&stable_node_dup->hlist);
 	stable_node_dup->kpfn = kpfn;
 	set_page_stable_node(kpage, stable_node_dup);
 	stable_node_dup->rmap_hlist_len = 0;
 	DO_NUMA(stable_node_dup->nid = nid);
-	अगर (!need_chain) अणु
+	if (!need_chain) {
 		rb_link_node(&stable_node_dup->node, parent, new);
 		rb_insert_color(&stable_node_dup->node, root);
-	पूर्ण अन्यथा अणु
-		अगर (!is_stable_node_chain(stable_node)) अणु
-			काष्ठा stable_node *orig = stable_node;
+	} else {
+		if (!is_stable_node_chain(stable_node)) {
+			struct stable_node *orig = stable_node;
 			/* chain is missing so create it */
 			stable_node = alloc_stable_node_chain(orig, root);
-			अगर (!stable_node) अणु
-				मुक्त_stable_node(stable_node_dup);
-				वापस शून्य;
-			पूर्ण
-		पूर्ण
+			if (!stable_node) {
+				free_stable_node(stable_node_dup);
+				return NULL;
+			}
+		}
 		stable_node_chain_add_dup(stable_node_dup, stable_node);
-	पूर्ण
+	}
 
-	वापस stable_node_dup;
-पूर्ण
+	return stable_node_dup;
+}
 
 /*
- * unstable_tree_search_insert - search क्रम identical page,
- * अन्यथा insert rmap_item पूर्णांकo the unstable tree.
+ * unstable_tree_search_insert - search for identical page,
+ * else insert rmap_item into the unstable tree.
  *
- * This function searches क्रम a page in the unstable tree identical to the
- * page currently being scanned; and अगर no identical page is found in the
- * tree, we insert rmap_item as a new object पूर्णांकo the unstable tree.
+ * This function searches for a page in the unstable tree identical to the
+ * page currently being scanned; and if no identical page is found in the
+ * tree, we insert rmap_item as a new object into the unstable tree.
  *
- * This function वापसs poपूर्णांकer to rmap_item found to be identical
- * to the currently scanned page, शून्य otherwise.
+ * This function returns pointer to rmap_item found to be identical
+ * to the currently scanned page, NULL otherwise.
  *
- * This function करोes both searching and inserting, because they share
+ * This function does both searching and inserting, because they share
  * the same walking algorithm in an rbtree.
  */
-अटल
-काष्ठा rmap_item *unstable_tree_search_insert(काष्ठा rmap_item *rmap_item,
-					      काष्ठा page *page,
-					      काष्ठा page **tree_pagep)
-अणु
-	काष्ठा rb_node **new;
-	काष्ठा rb_root *root;
-	काष्ठा rb_node *parent = शून्य;
-	पूर्णांक nid;
+static
+struct rmap_item *unstable_tree_search_insert(struct rmap_item *rmap_item,
+					      struct page *page,
+					      struct page **tree_pagep)
+{
+	struct rb_node **new;
+	struct rb_root *root;
+	struct rb_node *parent = NULL;
+	int nid;
 
 	nid = get_kpfn_nid(page_to_pfn(page));
 	root = root_unstable_tree + nid;
 	new = &root->rb_node;
 
-	जबतक (*new) अणु
-		काष्ठा rmap_item *tree_rmap_item;
-		काष्ठा page *tree_page;
-		पूर्णांक ret;
+	while (*new) {
+		struct rmap_item *tree_rmap_item;
+		struct page *tree_page;
+		int ret;
 
 		cond_resched();
-		tree_rmap_item = rb_entry(*new, काष्ठा rmap_item, node);
+		tree_rmap_item = rb_entry(*new, struct rmap_item, node);
 		tree_page = get_mergeable_page(tree_rmap_item);
-		अगर (!tree_page)
-			वापस शून्य;
+		if (!tree_page)
+			return NULL;
 
 		/*
-		 * Don't substitute a ksm page क्रम a विभाजनed page.
+		 * Don't substitute a ksm page for a forked page.
 		 */
-		अगर (page == tree_page) अणु
+		if (page == tree_page) {
 			put_page(tree_page);
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		ret = स_भेद_pages(page, tree_page);
+		ret = memcmp_pages(page, tree_page);
 
 		parent = *new;
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			put_page(tree_page);
 			new = &parent->rb_left;
-		पूर्ण अन्यथा अगर (ret > 0) अणु
+		} else if (ret > 0) {
 			put_page(tree_page);
 			new = &parent->rb_right;
-		पूर्ण अन्यथा अगर (!ksm_merge_across_nodes &&
-			   page_to_nid(tree_page) != nid) अणु
+		} else if (!ksm_merge_across_nodes &&
+			   page_to_nid(tree_page) != nid) {
 			/*
 			 * If tree_page has been migrated to another NUMA node,
 			 * it will be flushed out and put in the right unstable
-			 * tree next समय: only merge with it when across_nodes.
+			 * tree next time: only merge with it when across_nodes.
 			 */
 			put_page(tree_page);
-			वापस शून्य;
-		पूर्ण अन्यथा अणु
+			return NULL;
+		} else {
 			*tree_pagep = tree_page;
-			वापस tree_rmap_item;
-		पूर्ण
-	पूर्ण
+			return tree_rmap_item;
+		}
+	}
 
 	rmap_item->address |= UNSTABLE_FLAG;
 	rmap_item->address |= (ksm_scan.seqnr & SEQNR_MASK);
@@ -1981,32 +1980,32 @@ again:
 	rb_insert_color(&rmap_item->node, root);
 
 	ksm_pages_unshared++;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
  * stable_tree_append - add another rmap_item to the linked list of
  * rmap_items hanging off a given node of the stable tree, all sharing
  * the same ksm page.
  */
-अटल व्योम stable_tree_append(काष्ठा rmap_item *rmap_item,
-			       काष्ठा stable_node *stable_node,
+static void stable_tree_append(struct rmap_item *rmap_item,
+			       struct stable_node *stable_node,
 			       bool max_page_sharing_bypass)
-अणु
+{
 	/*
 	 * rmap won't find this mapping if we don't insert the
 	 * rmap_item in the right stable_node
-	 * duplicate. page_migration could अवरोध later अगर rmap अवरोधs,
-	 * so we can as well crash here. We really need to check क्रम
+	 * duplicate. page_migration could break later if rmap breaks,
+	 * so we can as well crash here. We really need to check for
 	 * rmap_hlist_len == STABLE_NODE_CHAIN, but we can as well check
-	 * क्रम other negative values as an underflow अगर detected here
-	 * क्रम the first समय (and not when decreasing rmap_hlist_len)
+	 * for other negative values as an underflow if detected here
+	 * for the first time (and not when decreasing rmap_hlist_len)
 	 * would be sign of memory corruption in the stable_node.
 	 */
 	BUG_ON(stable_node->rmap_hlist_len < 0);
 
 	stable_node->rmap_hlist_len++;
-	अगर (!max_page_sharing_bypass)
+	if (!max_page_sharing_bypass)
 		/* possibly non fatal but unexpected overflow, only warn */
 		WARN_ON_ONCE(stable_node->rmap_hlist_len >
 			     ksm_max_page_sharing);
@@ -2015,67 +2014,67 @@ again:
 	rmap_item->address |= STABLE_FLAG;
 	hlist_add_head(&rmap_item->hlist, &stable_node->hlist);
 
-	अगर (rmap_item->hlist.next)
+	if (rmap_item->hlist.next)
 		ksm_pages_sharing++;
-	अन्यथा
+	else
 		ksm_pages_shared++;
-पूर्ण
+}
 
 /*
- * cmp_and_merge_page - first see अगर page can be merged पूर्णांकo the stable tree;
- * अगर not, compare checksum to previous and अगर it's the same, see अगर page can
- * be inserted पूर्णांकo the unstable tree, or merged with a page alपढ़ोy there and
+ * cmp_and_merge_page - first see if page can be merged into the stable tree;
+ * if not, compare checksum to previous and if it's the same, see if page can
+ * be inserted into the unstable tree, or merged with a page already there and
  * both transferred to the stable tree.
  *
  * @page: the page that we are searching identical page to.
- * @rmap_item: the reverse mapping पूर्णांकo the भव address of this page
+ * @rmap_item: the reverse mapping into the virtual address of this page
  */
-अटल व्योम cmp_and_merge_page(काष्ठा page *page, काष्ठा rmap_item *rmap_item)
-अणु
-	काष्ठा mm_काष्ठा *mm = rmap_item->mm;
-	काष्ठा rmap_item *tree_rmap_item;
-	काष्ठा page *tree_page = शून्य;
-	काष्ठा stable_node *stable_node;
-	काष्ठा page *kpage;
-	अचिन्हित पूर्णांक checksum;
-	पूर्णांक err;
+static void cmp_and_merge_page(struct page *page, struct rmap_item *rmap_item)
+{
+	struct mm_struct *mm = rmap_item->mm;
+	struct rmap_item *tree_rmap_item;
+	struct page *tree_page = NULL;
+	struct stable_node *stable_node;
+	struct page *kpage;
+	unsigned int checksum;
+	int err;
 	bool max_page_sharing_bypass = false;
 
 	stable_node = page_stable_node(page);
-	अगर (stable_node) अणु
-		अगर (stable_node->head != &migrate_nodes &&
+	if (stable_node) {
+		if (stable_node->head != &migrate_nodes &&
 		    get_kpfn_nid(READ_ONCE(stable_node->kpfn)) !=
-		    NUMA(stable_node->nid)) अणु
+		    NUMA(stable_node->nid)) {
 			stable_node_dup_del(stable_node);
 			stable_node->head = &migrate_nodes;
 			list_add(&stable_node->list, stable_node->head);
-		पूर्ण
-		अगर (stable_node->head != &migrate_nodes &&
+		}
+		if (stable_node->head != &migrate_nodes &&
 		    rmap_item->head == stable_node)
-			वापस;
+			return;
 		/*
-		 * If it's a KSM विभाजन, allow it to go over the sharing limit
+		 * If it's a KSM fork, allow it to go over the sharing limit
 		 * without warnings.
 		 */
-		अगर (!is_page_sharing_candidate(stable_node))
+		if (!is_page_sharing_candidate(stable_node))
 			max_page_sharing_bypass = true;
-	पूर्ण
+	}
 
 	/* We first start with searching the page inside the stable tree */
 	kpage = stable_tree_search(page);
-	अगर (kpage == page && rmap_item->head == stable_node) अणु
+	if (kpage == page && rmap_item->head == stable_node) {
 		put_page(kpage);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	हटाओ_rmap_item_from_tree(rmap_item);
+	remove_rmap_item_from_tree(rmap_item);
 
-	अगर (kpage) अणु
-		अगर (PTR_ERR(kpage) == -EBUSY)
-			वापस;
+	if (kpage) {
+		if (PTR_ERR(kpage) == -EBUSY)
+			return;
 
 		err = try_to_merge_with_ksm_page(rmap_item, page, kpage);
-		अगर (!err) अणु
+		if (!err) {
 			/*
 			 * The page was successfully merged:
 			 * add its rmap_item to the stable tree.
@@ -2084,63 +2083,63 @@ again:
 			stable_tree_append(rmap_item, page_stable_node(kpage),
 					   max_page_sharing_bypass);
 			unlock_page(kpage);
-		पूर्ण
+		}
 		put_page(kpage);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * If the hash value of the page has changed from the last समय
-	 * we calculated it, this page is changing frequently: thereक्रमe we
-	 * करोn't want to insert it in the unstable tree, and we don't want
-	 * to waste our समय searching क्रम something identical to it there.
+	 * If the hash value of the page has changed from the last time
+	 * we calculated it, this page is changing frequently: therefore we
+	 * don't want to insert it in the unstable tree, and we don't want
+	 * to waste our time searching for something identical to it there.
 	 */
 	checksum = calc_checksum(page);
-	अगर (rmap_item->oldchecksum != checksum) अणु
+	if (rmap_item->oldchecksum != checksum) {
 		rmap_item->oldchecksum = checksum;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Same checksum as an empty page. We attempt to merge it with the
-	 * appropriate zero page अगर the user enabled this via sysfs.
+	 * appropriate zero page if the user enabled this via sysfs.
 	 */
-	अगर (ksm_use_zero_pages && (checksum == zero_checksum)) अणु
-		काष्ठा vm_area_काष्ठा *vma;
+	if (ksm_use_zero_pages && (checksum == zero_checksum)) {
+		struct vm_area_struct *vma;
 
-		mmap_पढ़ो_lock(mm);
+		mmap_read_lock(mm);
 		vma = find_mergeable_vma(mm, rmap_item->address);
-		अगर (vma) अणु
+		if (vma) {
 			err = try_to_merge_one_page(vma, page,
 					ZERO_PAGE(rmap_item->address));
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * If the vma is out of date, we करो not need to
-			 * जारी.
+			 * If the vma is out of date, we do not need to
+			 * continue.
 			 */
 			err = 0;
-		पूर्ण
-		mmap_पढ़ो_unlock(mm);
+		}
+		mmap_read_unlock(mm);
 		/*
-		 * In हाल of failure, the page was not really empty, so we
-		 * need to जारी. Otherwise we're करोne.
+		 * In case of failure, the page was not really empty, so we
+		 * need to continue. Otherwise we're done.
 		 */
-		अगर (!err)
-			वापस;
-	पूर्ण
+		if (!err)
+			return;
+	}
 	tree_rmap_item =
 		unstable_tree_search_insert(rmap_item, page, &tree_page);
-	अगर (tree_rmap_item) अणु
+	if (tree_rmap_item) {
 		bool split;
 
 		kpage = try_to_merge_two_pages(rmap_item, page,
 						tree_rmap_item, tree_page);
 		/*
-		 * If both pages we tried to merge beदीर्घ to the same compound
+		 * If both pages we tried to merge belong to the same compound
 		 * page, then we actually ended up increasing the reference
 		 * count of the same compound page twice, and split_huge_page
 		 * failed.
-		 * Here we set a flag अगर that happened, and we use it later to
+		 * Here we set a flag if that happened, and we use it later to
 		 * try split_huge_page again. Since we call put_page right
 		 * afterwards, the reference count will be correct and
 		 * split_huge_page should succeed.
@@ -2148,99 +2147,99 @@ again:
 		split = PageTransCompound(page)
 			&& compound_head(page) == compound_head(tree_page);
 		put_page(tree_page);
-		अगर (kpage) अणु
+		if (kpage) {
 			/*
 			 * The pages were successfully merged: insert new
 			 * node in the stable tree and add both rmap_items.
 			 */
 			lock_page(kpage);
 			stable_node = stable_tree_insert(kpage);
-			अगर (stable_node) अणु
+			if (stable_node) {
 				stable_tree_append(tree_rmap_item, stable_node,
 						   false);
 				stable_tree_append(rmap_item, stable_node,
 						   false);
-			पूर्ण
+			}
 			unlock_page(kpage);
 
 			/*
-			 * If we fail to insert the page पूर्णांकo the stable tree,
-			 * we will have 2 भव addresses that are poपूर्णांकing
+			 * If we fail to insert the page into the stable tree,
+			 * we will have 2 virtual addresses that are pointing
 			 * to a ksm page left outside the stable tree,
-			 * in which हाल we need to अवरोध_cow on both.
+			 * in which case we need to break_cow on both.
 			 */
-			अगर (!stable_node) अणु
-				अवरोध_cow(tree_rmap_item);
-				अवरोध_cow(rmap_item);
-			पूर्ण
-		पूर्ण अन्यथा अगर (split) अणु
+			if (!stable_node) {
+				break_cow(tree_rmap_item);
+				break_cow(rmap_item);
+			}
+		} else if (split) {
 			/*
-			 * We are here अगर we tried to merge two pages and
-			 * failed because they both beदीर्घed to the same
+			 * We are here if we tried to merge two pages and
+			 * failed because they both belonged to the same
 			 * compound page. We will split the page now, but no
 			 * merging will take place.
-			 * We करो not want to add the cost of a full lock; अगर
+			 * We do not want to add the cost of a full lock; if
 			 * the page is locked, it is better to skip it and
 			 * perhaps try again later.
 			 */
-			अगर (!trylock_page(page))
-				वापस;
+			if (!trylock_page(page))
+				return;
 			split_huge_page(page);
 			unlock_page(page);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल काष्ठा rmap_item *get_next_rmap_item(काष्ठा mm_slot *mm_slot,
-					    काष्ठा rmap_item **rmap_list,
-					    अचिन्हित दीर्घ addr)
-अणु
-	काष्ठा rmap_item *rmap_item;
+static struct rmap_item *get_next_rmap_item(struct mm_slot *mm_slot,
+					    struct rmap_item **rmap_list,
+					    unsigned long addr)
+{
+	struct rmap_item *rmap_item;
 
-	जबतक (*rmap_list) अणु
+	while (*rmap_list) {
 		rmap_item = *rmap_list;
-		अगर ((rmap_item->address & PAGE_MASK) == addr)
-			वापस rmap_item;
-		अगर (rmap_item->address > addr)
-			अवरोध;
+		if ((rmap_item->address & PAGE_MASK) == addr)
+			return rmap_item;
+		if (rmap_item->address > addr)
+			break;
 		*rmap_list = rmap_item->rmap_list;
-		हटाओ_rmap_item_from_tree(rmap_item);
-		मुक्त_rmap_item(rmap_item);
-	पूर्ण
+		remove_rmap_item_from_tree(rmap_item);
+		free_rmap_item(rmap_item);
+	}
 
 	rmap_item = alloc_rmap_item();
-	अगर (rmap_item) अणु
-		/* It has alपढ़ोy been zeroed */
+	if (rmap_item) {
+		/* It has already been zeroed */
 		rmap_item->mm = mm_slot->mm;
 		rmap_item->address = addr;
 		rmap_item->rmap_list = *rmap_list;
 		*rmap_list = rmap_item;
-	पूर्ण
-	वापस rmap_item;
-पूर्ण
+	}
+	return rmap_item;
+}
 
-अटल काष्ठा rmap_item *scan_get_next_rmap_item(काष्ठा page **page)
-अणु
-	काष्ठा mm_काष्ठा *mm;
-	काष्ठा mm_slot *slot;
-	काष्ठा vm_area_काष्ठा *vma;
-	काष्ठा rmap_item *rmap_item;
-	पूर्णांक nid;
+static struct rmap_item *scan_get_next_rmap_item(struct page **page)
+{
+	struct mm_struct *mm;
+	struct mm_slot *slot;
+	struct vm_area_struct *vma;
+	struct rmap_item *rmap_item;
+	int nid;
 
-	अगर (list_empty(&ksm_mm_head.mm_list))
-		वापस शून्य;
+	if (list_empty(&ksm_mm_head.mm_list))
+		return NULL;
 
 	slot = ksm_scan.mm_slot;
-	अगर (slot == &ksm_mm_head) अणु
+	if (slot == &ksm_mm_head) {
 		/*
 		 * A number of pages can hang around indefinitely on per-cpu
-		 * pagevecs, उठाओd page count preventing ग_लिखो_protect_page
-		 * from merging them.  Though it करोesn't really matter much,
-		 * it is puzzling to see some stuck in pages_अस्थिर until
+		 * pagevecs, raised page count preventing write_protect_page
+		 * from merging them.  Though it doesn't really matter much,
+		 * it is puzzling to see some stuck in pages_volatile until
 		 * other activity jostles them out, and they also prevented
 		 * LTP's KSM test from succeeding deterministically; so drain
-		 * them here (here rather than on entry to ksm_करो_scan(),
-		 * so we करोn't IPI too often when pages_to_scan is set low).
+		 * them here (here rather than on entry to ksm_do_scan(),
+		 * so we don't IPI too often when pages_to_scan is set low).
 		 */
 		lru_add_drain_all();
 
@@ -2248,104 +2247,104 @@ again:
 		 * Whereas stale stable_nodes on the stable_tree itself
 		 * get pruned in the regular course of stable_tree_search(),
 		 * those moved out to the migrate_nodes list can accumulate:
-		 * so prune them once beक्रमe each full scan.
+		 * so prune them once before each full scan.
 		 */
-		अगर (!ksm_merge_across_nodes) अणु
-			काष्ठा stable_node *stable_node, *next;
-			काष्ठा page *page;
+		if (!ksm_merge_across_nodes) {
+			struct stable_node *stable_node, *next;
+			struct page *page;
 
-			list_क्रम_each_entry_safe(stable_node, next,
-						 &migrate_nodes, list) अणु
+			list_for_each_entry_safe(stable_node, next,
+						 &migrate_nodes, list) {
 				page = get_ksm_page(stable_node,
 						    GET_KSM_PAGE_NOLOCK);
-				अगर (page)
+				if (page)
 					put_page(page);
 				cond_resched();
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		क्रम (nid = 0; nid < ksm_nr_node_ids; nid++)
+		for (nid = 0; nid < ksm_nr_node_ids; nid++)
 			root_unstable_tree[nid] = RB_ROOT;
 
 		spin_lock(&ksm_mmlist_lock);
-		slot = list_entry(slot->mm_list.next, काष्ठा mm_slot, mm_list);
+		slot = list_entry(slot->mm_list.next, struct mm_slot, mm_list);
 		ksm_scan.mm_slot = slot;
 		spin_unlock(&ksm_mmlist_lock);
 		/*
-		 * Although we tested list_empty() above, a racing __ksm_निकास
-		 * of the last mm on the list may have हटाओd it since then.
+		 * Although we tested list_empty() above, a racing __ksm_exit
+		 * of the last mm on the list may have removed it since then.
 		 */
-		अगर (slot == &ksm_mm_head)
-			वापस शून्य;
+		if (slot == &ksm_mm_head)
+			return NULL;
 next_mm:
 		ksm_scan.address = 0;
 		ksm_scan.rmap_list = &slot->rmap_list;
-	पूर्ण
+	}
 
 	mm = slot->mm;
-	mmap_पढ़ो_lock(mm);
-	अगर (ksm_test_निकास(mm))
-		vma = शून्य;
-	अन्यथा
+	mmap_read_lock(mm);
+	if (ksm_test_exit(mm))
+		vma = NULL;
+	else
 		vma = find_vma(mm, ksm_scan.address);
 
-	क्रम (; vma; vma = vma->vm_next) अणु
-		अगर (!(vma->vm_flags & VM_MERGEABLE))
-			जारी;
-		अगर (ksm_scan.address < vma->vm_start)
+	for (; vma; vma = vma->vm_next) {
+		if (!(vma->vm_flags & VM_MERGEABLE))
+			continue;
+		if (ksm_scan.address < vma->vm_start)
 			ksm_scan.address = vma->vm_start;
-		अगर (!vma->anon_vma)
+		if (!vma->anon_vma)
 			ksm_scan.address = vma->vm_end;
 
-		जबतक (ksm_scan.address < vma->vm_end) अणु
-			अगर (ksm_test_निकास(mm))
-				अवरोध;
+		while (ksm_scan.address < vma->vm_end) {
+			if (ksm_test_exit(mm))
+				break;
 			*page = follow_page(vma, ksm_scan.address, FOLL_GET);
-			अगर (IS_ERR_OR_शून्य(*page)) अणु
+			if (IS_ERR_OR_NULL(*page)) {
 				ksm_scan.address += PAGE_SIZE;
 				cond_resched();
-				जारी;
-			पूर्ण
-			अगर (PageAnon(*page)) अणु
+				continue;
+			}
+			if (PageAnon(*page)) {
 				flush_anon_page(vma, *page, ksm_scan.address);
 				flush_dcache_page(*page);
 				rmap_item = get_next_rmap_item(slot,
 					ksm_scan.rmap_list, ksm_scan.address);
-				अगर (rmap_item) अणु
+				if (rmap_item) {
 					ksm_scan.rmap_list =
 							&rmap_item->rmap_list;
 					ksm_scan.address += PAGE_SIZE;
-				पूर्ण अन्यथा
+				} else
 					put_page(*page);
-				mmap_पढ़ो_unlock(mm);
-				वापस rmap_item;
-			पूर्ण
+				mmap_read_unlock(mm);
+				return rmap_item;
+			}
 			put_page(*page);
 			ksm_scan.address += PAGE_SIZE;
 			cond_resched();
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (ksm_test_निकास(mm)) अणु
+	if (ksm_test_exit(mm)) {
 		ksm_scan.address = 0;
 		ksm_scan.rmap_list = &slot->rmap_list;
-	पूर्ण
+	}
 	/*
 	 * Nuke all the rmap_items that are above this current rmap:
 	 * because there were no VM_MERGEABLE vmas with such addresses.
 	 */
-	हटाओ_trailing_rmap_items(ksm_scan.rmap_list);
+	remove_trailing_rmap_items(ksm_scan.rmap_list);
 
 	spin_lock(&ksm_mmlist_lock);
 	ksm_scan.mm_slot = list_entry(slot->mm_list.next,
-						काष्ठा mm_slot, mm_list);
-	अगर (ksm_scan.address == 0) अणु
+						struct mm_slot, mm_list);
+	if (ksm_scan.address == 0) {
 		/*
 		 * We've completed a full scan of all vmas, holding mmap_lock
-		 * throughout, and found no VM_MERGEABLE: so करो the same as
-		 * __ksm_निकास करोes to हटाओ this mm from all our lists now.
-		 * This applies either when cleaning up after __ksm_निकास
-		 * (but beware: we can reach here even beक्रमe __ksm_निकास),
+		 * throughout, and found no VM_MERGEABLE: so do the same as
+		 * __ksm_exit does to remove this mm from all our lists now.
+		 * This applies either when cleaning up after __ksm_exit
+		 * (but beware: we can reach here even before __ksm_exit),
 		 * or when all VM_MERGEABLE areas have been unmapped (and
 		 * mmap_lock then protects against race with MADV_MERGEABLE).
 		 */
@@ -2353,147 +2352,147 @@ next_mm:
 		list_del(&slot->mm_list);
 		spin_unlock(&ksm_mmlist_lock);
 
-		मुक्त_mm_slot(slot);
+		free_mm_slot(slot);
 		clear_bit(MMF_VM_MERGEABLE, &mm->flags);
-		mmap_पढ़ो_unlock(mm);
+		mmap_read_unlock(mm);
 		mmdrop(mm);
-	पूर्ण अन्यथा अणु
-		mmap_पढ़ो_unlock(mm);
+	} else {
+		mmap_read_unlock(mm);
 		/*
-		 * mmap_पढ़ो_unlock(mm) first because after
+		 * mmap_read_unlock(mm) first because after
 		 * spin_unlock(&ksm_mmlist_lock) run, the "mm" may
-		 * alपढ़ोy have been मुक्तd under us by __ksm_निकास()
+		 * already have been freed under us by __ksm_exit()
 		 * because the "mm_slot" is still hashed and
-		 * ksm_scan.mm_slot करोesn't poपूर्णांक to it anymore.
+		 * ksm_scan.mm_slot doesn't point to it anymore.
 		 */
 		spin_unlock(&ksm_mmlist_lock);
-	पूर्ण
+	}
 
 	/* Repeat until we've completed scanning the whole list */
 	slot = ksm_scan.mm_slot;
-	अगर (slot != &ksm_mm_head)
-		जाओ next_mm;
+	if (slot != &ksm_mm_head)
+		goto next_mm;
 
 	ksm_scan.seqnr++;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * ksm_करो_scan  - the ksm scanner मुख्य worker function.
- * @scan_npages:  number of pages we want to scan beक्रमe we वापस.
+ * ksm_do_scan  - the ksm scanner main worker function.
+ * @scan_npages:  number of pages we want to scan before we return.
  */
-अटल व्योम ksm_करो_scan(अचिन्हित पूर्णांक scan_npages)
-अणु
-	काष्ठा rmap_item *rmap_item;
-	काष्ठा page *page;
+static void ksm_do_scan(unsigned int scan_npages)
+{
+	struct rmap_item *rmap_item;
+	struct page *page;
 
-	जबतक (scan_npages-- && likely(!मुक्तzing(current))) अणु
+	while (scan_npages-- && likely(!freezing(current))) {
 		cond_resched();
 		rmap_item = scan_get_next_rmap_item(&page);
-		अगर (!rmap_item)
-			वापस;
+		if (!rmap_item)
+			return;
 		cmp_and_merge_page(page, rmap_item);
 		put_page(page);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ksmd_should_run(व्योम)
-अणु
-	वापस (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
-पूर्ण
+static int ksmd_should_run(void)
+{
+	return (ksm_run & KSM_RUN_MERGE) && !list_empty(&ksm_mm_head.mm_list);
+}
 
-अटल पूर्णांक ksm_scan_thपढ़ो(व्योम *nothing)
-अणु
-	अचिन्हित पूर्णांक sleep_ms;
+static int ksm_scan_thread(void *nothing)
+{
+	unsigned int sleep_ms;
 
-	set_मुक्तzable();
+	set_freezable();
 	set_user_nice(current, 5);
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		mutex_lock(&ksm_thपढ़ो_mutex);
-		रुको_जबतक_offlining();
-		अगर (ksmd_should_run())
-			ksm_करो_scan(ksm_thपढ़ो_pages_to_scan);
-		mutex_unlock(&ksm_thपढ़ो_mutex);
+	while (!kthread_should_stop()) {
+		mutex_lock(&ksm_thread_mutex);
+		wait_while_offlining();
+		if (ksmd_should_run())
+			ksm_do_scan(ksm_thread_pages_to_scan);
+		mutex_unlock(&ksm_thread_mutex);
 
-		try_to_मुक्तze();
+		try_to_freeze();
 
-		अगर (ksmd_should_run()) अणु
-			sleep_ms = READ_ONCE(ksm_thपढ़ो_sleep_millisecs);
-			रुको_event_पूर्णांकerruptible_समयout(ksm_iter_रुको,
-				sleep_ms != READ_ONCE(ksm_thपढ़ो_sleep_millisecs),
-				msecs_to_jअगरfies(sleep_ms));
-		पूर्ण अन्यथा अणु
-			रुको_event_मुक्तzable(ksm_thपढ़ो_रुको,
-				ksmd_should_run() || kthपढ़ो_should_stop());
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ksmd_should_run()) {
+			sleep_ms = READ_ONCE(ksm_thread_sleep_millisecs);
+			wait_event_interruptible_timeout(ksm_iter_wait,
+				sleep_ms != READ_ONCE(ksm_thread_sleep_millisecs),
+				msecs_to_jiffies(sleep_ms));
+		} else {
+			wait_event_freezable(ksm_thread_wait,
+				ksmd_should_run() || kthread_should_stop());
+		}
+	}
+	return 0;
+}
 
-पूर्णांक ksm_madvise(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
-		अचिन्हित दीर्घ end, पूर्णांक advice, अचिन्हित दीर्घ *vm_flags)
-अणु
-	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
-	पूर्णांक err;
+int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+		unsigned long end, int advice, unsigned long *vm_flags)
+{
+	struct mm_struct *mm = vma->vm_mm;
+	int err;
 
-	चयन (advice) अणु
-	हाल MADV_MERGEABLE:
+	switch (advice) {
+	case MADV_MERGEABLE:
 		/*
-		 * Be somewhat over-protective क्रम now!
+		 * Be somewhat over-protective for now!
 		 */
-		अगर (*vm_flags & (VM_MERGEABLE | VM_SHARED  | VM_MAYSHARE   |
+		if (*vm_flags & (VM_MERGEABLE | VM_SHARED  | VM_MAYSHARE   |
 				 VM_PFNMAP    | VM_IO      | VM_DONTEXPAND |
 				 VM_HUGETLB | VM_MIXEDMAP))
-			वापस 0;		/* just ignore the advice */
+			return 0;		/* just ignore the advice */
 
-		अगर (vma_is_dax(vma))
-			वापस 0;
+		if (vma_is_dax(vma))
+			return 0;
 
-#अगर_घोषित VM_SAO
-		अगर (*vm_flags & VM_SAO)
-			वापस 0;
-#पूर्ण_अगर
-#अगर_घोषित VM_SPARC_ADI
-		अगर (*vm_flags & VM_SPARC_ADI)
-			वापस 0;
-#पूर्ण_अगर
+#ifdef VM_SAO
+		if (*vm_flags & VM_SAO)
+			return 0;
+#endif
+#ifdef VM_SPARC_ADI
+		if (*vm_flags & VM_SPARC_ADI)
+			return 0;
+#endif
 
-		अगर (!test_bit(MMF_VM_MERGEABLE, &mm->flags)) अणु
+		if (!test_bit(MMF_VM_MERGEABLE, &mm->flags)) {
 			err = __ksm_enter(mm);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
 		*vm_flags |= VM_MERGEABLE;
-		अवरोध;
+		break;
 
-	हाल MADV_UNMERGEABLE:
-		अगर (!(*vm_flags & VM_MERGEABLE))
-			वापस 0;		/* just ignore the advice */
+	case MADV_UNMERGEABLE:
+		if (!(*vm_flags & VM_MERGEABLE))
+			return 0;		/* just ignore the advice */
 
-		अगर (vma->anon_vma) अणु
+		if (vma->anon_vma) {
 			err = unmerge_ksm_pages(vma, start, end);
-			अगर (err)
-				वापस err;
-		पूर्ण
+			if (err)
+				return err;
+		}
 
 		*vm_flags &= ~VM_MERGEABLE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(ksm_madvise);
 
-पूर्णांक __ksm_enter(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mm_slot *mm_slot;
-	पूर्णांक needs_wakeup;
+int __ksm_enter(struct mm_struct *mm)
+{
+	struct mm_slot *mm_slot;
+	int needs_wakeup;
 
 	mm_slot = alloc_mm_slot();
-	अगर (!mm_slot)
-		वापस -ENOMEM;
+	if (!mm_slot)
+		return -ENOMEM;
 
 	/* Check ksm_run too?  Would need tighter locking */
 	needs_wakeup = list_empty(&ksm_mm_head.mm_list);
@@ -2503,129 +2502,129 @@ EXPORT_SYMBOL_GPL(ksm_madvise);
 	/*
 	 * When KSM_RUN_MERGE (or KSM_RUN_STOP),
 	 * insert just behind the scanning cursor, to let the area settle
-	 * करोwn a little; when विभाजन is followed by immediate exec, we करोn't
-	 * want ksmd to waste समय setting up and tearing करोwn an rmap_list.
+	 * down a little; when fork is followed by immediate exec, we don't
+	 * want ksmd to waste time setting up and tearing down an rmap_list.
 	 *
 	 * But when KSM_RUN_UNMERGE, it's important to insert ahead of its
-	 * scanning cursor, otherwise KSM pages in newly विभाजनed mms will be
+	 * scanning cursor, otherwise KSM pages in newly forked mms will be
 	 * missed: then we might as well insert at the end of the list.
 	 */
-	अगर (ksm_run & KSM_RUN_UNMERGE)
+	if (ksm_run & KSM_RUN_UNMERGE)
 		list_add_tail(&mm_slot->mm_list, &ksm_mm_head.mm_list);
-	अन्यथा
+	else
 		list_add_tail(&mm_slot->mm_list, &ksm_scan.mm_slot->mm_list);
 	spin_unlock(&ksm_mmlist_lock);
 
 	set_bit(MMF_VM_MERGEABLE, &mm->flags);
 	mmgrab(mm);
 
-	अगर (needs_wakeup)
-		wake_up_पूर्णांकerruptible(&ksm_thपढ़ो_रुको);
+	if (needs_wakeup)
+		wake_up_interruptible(&ksm_thread_wait);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम __ksm_निकास(काष्ठा mm_काष्ठा *mm)
-अणु
-	काष्ठा mm_slot *mm_slot;
-	पूर्णांक easy_to_मुक्त = 0;
+void __ksm_exit(struct mm_struct *mm)
+{
+	struct mm_slot *mm_slot;
+	int easy_to_free = 0;
 
 	/*
-	 * This process is निकासing: अगर it's straightक्रमward (as is the
-	 * हाल when ksmd was never running), मुक्त mm_slot immediately.
-	 * But अगर it's at the cursor or has rmap_items linked to it, use
-	 * mmap_lock to synchronize with any अवरोध_cows beक्रमe pagetables
-	 * are मुक्तd, and leave the mm_slot on the list क्रम ksmd to मुक्त.
-	 * Beware: ksm may alपढ़ोy have noticed it निकासing and मुक्तd the slot.
+	 * This process is exiting: if it's straightforward (as is the
+	 * case when ksmd was never running), free mm_slot immediately.
+	 * But if it's at the cursor or has rmap_items linked to it, use
+	 * mmap_lock to synchronize with any break_cows before pagetables
+	 * are freed, and leave the mm_slot on the list for ksmd to free.
+	 * Beware: ksm may already have noticed it exiting and freed the slot.
 	 */
 
 	spin_lock(&ksm_mmlist_lock);
 	mm_slot = get_mm_slot(mm);
-	अगर (mm_slot && ksm_scan.mm_slot != mm_slot) अणु
-		अगर (!mm_slot->rmap_list) अणु
+	if (mm_slot && ksm_scan.mm_slot != mm_slot) {
+		if (!mm_slot->rmap_list) {
 			hash_del(&mm_slot->link);
 			list_del(&mm_slot->mm_list);
-			easy_to_मुक्त = 1;
-		पूर्ण अन्यथा अणु
+			easy_to_free = 1;
+		} else {
 			list_move(&mm_slot->mm_list,
 				  &ksm_scan.mm_slot->mm_list);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&ksm_mmlist_lock);
 
-	अगर (easy_to_मुक्त) अणु
-		मुक्त_mm_slot(mm_slot);
+	if (easy_to_free) {
+		free_mm_slot(mm_slot);
 		clear_bit(MMF_VM_MERGEABLE, &mm->flags);
 		mmdrop(mm);
-	पूर्ण अन्यथा अगर (mm_slot) अणु
-		mmap_ग_लिखो_lock(mm);
-		mmap_ग_लिखो_unlock(mm);
-	पूर्ण
-पूर्ण
+	} else if (mm_slot) {
+		mmap_write_lock(mm);
+		mmap_write_unlock(mm);
+	}
+}
 
-काष्ठा page *ksm_might_need_to_copy(काष्ठा page *page,
-			काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ address)
-अणु
-	काष्ठा anon_vma *anon_vma = page_anon_vma(page);
-	काष्ठा page *new_page;
+struct page *ksm_might_need_to_copy(struct page *page,
+			struct vm_area_struct *vma, unsigned long address)
+{
+	struct anon_vma *anon_vma = page_anon_vma(page);
+	struct page *new_page;
 
-	अगर (PageKsm(page)) अणु
-		अगर (page_stable_node(page) &&
+	if (PageKsm(page)) {
+		if (page_stable_node(page) &&
 		    !(ksm_run & KSM_RUN_UNMERGE))
-			वापस page;	/* no need to copy it */
-	पूर्ण अन्यथा अगर (!anon_vma) अणु
-		वापस page;		/* no need to copy it */
-	पूर्ण अन्यथा अगर (anon_vma->root == vma->anon_vma->root &&
-		 page->index == linear_page_index(vma, address)) अणु
-		वापस page;		/* still no need to copy it */
-	पूर्ण
-	अगर (!PageUptodate(page))
-		वापस page;		/* let करो_swap_page report the error */
+			return page;	/* no need to copy it */
+	} else if (!anon_vma) {
+		return page;		/* no need to copy it */
+	} else if (anon_vma->root == vma->anon_vma->root &&
+		 page->index == linear_page_index(vma, address)) {
+		return page;		/* still no need to copy it */
+	}
+	if (!PageUptodate(page))
+		return page;		/* let do_swap_page report the error */
 
 	new_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, address);
-	अगर (new_page && mem_cgroup_अक्षरge(new_page, vma->vm_mm, GFP_KERNEL)) अणु
+	if (new_page && mem_cgroup_charge(new_page, vma->vm_mm, GFP_KERNEL)) {
 		put_page(new_page);
-		new_page = शून्य;
-	पूर्ण
-	अगर (new_page) अणु
+		new_page = NULL;
+	}
+	if (new_page) {
 		copy_user_highpage(new_page, page, address, vma);
 
 		SetPageDirty(new_page);
 		__SetPageUptodate(new_page);
 		__SetPageLocked(new_page);
-	पूर्ण
+	}
 
-	वापस new_page;
-पूर्ण
+	return new_page;
+}
 
-व्योम rmap_walk_ksm(काष्ठा page *page, काष्ठा rmap_walk_control *rwc)
-अणु
-	काष्ठा stable_node *stable_node;
-	काष्ठा rmap_item *rmap_item;
-	पूर्णांक search_new_विभाजनs = 0;
+void rmap_walk_ksm(struct page *page, struct rmap_walk_control *rwc)
+{
+	struct stable_node *stable_node;
+	struct rmap_item *rmap_item;
+	int search_new_forks = 0;
 
 	VM_BUG_ON_PAGE(!PageKsm(page), page);
 
 	/*
-	 * Rely on the page lock to protect against concurrent modअगरications
+	 * Rely on the page lock to protect against concurrent modifications
 	 * to that page's node of the stable tree.
 	 */
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 
 	stable_node = page_stable_node(page);
-	अगर (!stable_node)
-		वापस;
+	if (!stable_node)
+		return;
 again:
-	hlist_क्रम_each_entry(rmap_item, &stable_node->hlist, hlist) अणु
-		काष्ठा anon_vma *anon_vma = rmap_item->anon_vma;
-		काष्ठा anon_vma_chain *vmac;
-		काष्ठा vm_area_काष्ठा *vma;
+	hlist_for_each_entry(rmap_item, &stable_node->hlist, hlist) {
+		struct anon_vma *anon_vma = rmap_item->anon_vma;
+		struct anon_vma_chain *vmac;
+		struct vm_area_struct *vma;
 
 		cond_resched();
-		anon_vma_lock_पढ़ो(anon_vma);
-		anon_vma_पूर्णांकerval_tree_क्रमeach(vmac, &anon_vma->rb_root,
-					       0, अच_दीर्घ_उच्च) अणु
-			अचिन्हित दीर्घ addr;
+		anon_vma_lock_read(anon_vma);
+		anon_vma_interval_tree_foreach(vmac, &anon_vma->rb_root,
+					       0, ULONG_MAX) {
+			unsigned long addr;
 
 			cond_resched();
 			vma = vmac->vma;
@@ -2633,569 +2632,569 @@ again:
 			/* Ignore the stable/unstable/sqnr flags */
 			addr = rmap_item->address & PAGE_MASK;
 
-			अगर (addr < vma->vm_start || addr >= vma->vm_end)
-				जारी;
+			if (addr < vma->vm_start || addr >= vma->vm_end)
+				continue;
 			/*
 			 * Initially we examine only the vma which covers this
-			 * rmap_item; but later, अगर there is still work to करो,
-			 * we examine covering vmas in other mms: in हाल they
-			 * were विभाजनed from the original since ksmd passed.
+			 * rmap_item; but later, if there is still work to do,
+			 * we examine covering vmas in other mms: in case they
+			 * were forked from the original since ksmd passed.
 			 */
-			अगर ((rmap_item->mm == vma->vm_mm) == search_new_विभाजनs)
-				जारी;
+			if ((rmap_item->mm == vma->vm_mm) == search_new_forks)
+				continue;
 
-			अगर (rwc->invalid_vma && rwc->invalid_vma(vma, rwc->arg))
-				जारी;
+			if (rwc->invalid_vma && rwc->invalid_vma(vma, rwc->arg))
+				continue;
 
-			अगर (!rwc->rmap_one(page, vma, addr, rwc->arg)) अणु
-				anon_vma_unlock_पढ़ो(anon_vma);
-				वापस;
-			पूर्ण
-			अगर (rwc->करोne && rwc->करोne(page)) अणु
-				anon_vma_unlock_पढ़ो(anon_vma);
-				वापस;
-			पूर्ण
-		पूर्ण
-		anon_vma_unlock_पढ़ो(anon_vma);
-	पूर्ण
-	अगर (!search_new_विभाजनs++)
-		जाओ again;
-पूर्ण
+			if (!rwc->rmap_one(page, vma, addr, rwc->arg)) {
+				anon_vma_unlock_read(anon_vma);
+				return;
+			}
+			if (rwc->done && rwc->done(page)) {
+				anon_vma_unlock_read(anon_vma);
+				return;
+			}
+		}
+		anon_vma_unlock_read(anon_vma);
+	}
+	if (!search_new_forks++)
+		goto again;
+}
 
-#अगर_घोषित CONFIG_MIGRATION
-व्योम ksm_migrate_page(काष्ठा page *newpage, काष्ठा page *oldpage)
-अणु
-	काष्ठा stable_node *stable_node;
+#ifdef CONFIG_MIGRATION
+void ksm_migrate_page(struct page *newpage, struct page *oldpage)
+{
+	struct stable_node *stable_node;
 
 	VM_BUG_ON_PAGE(!PageLocked(oldpage), oldpage);
 	VM_BUG_ON_PAGE(!PageLocked(newpage), newpage);
 	VM_BUG_ON_PAGE(newpage->mapping != oldpage->mapping, newpage);
 
 	stable_node = page_stable_node(newpage);
-	अगर (stable_node) अणु
+	if (stable_node) {
 		VM_BUG_ON_PAGE(stable_node->kpfn != page_to_pfn(oldpage), oldpage);
 		stable_node->kpfn = page_to_pfn(newpage);
 		/*
 		 * newpage->mapping was set in advance; now we need smp_wmb()
 		 * to make sure that the new stable_node->kpfn is visible
-		 * to get_ksm_page() beक्रमe it can see that oldpage->mapping
+		 * to get_ksm_page() before it can see that oldpage->mapping
 		 * has gone stale (or that PageSwapCache has been cleared).
 		 */
 		smp_wmb();
-		set_page_stable_node(oldpage, शून्य);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MIGRATION */
+		set_page_stable_node(oldpage, NULL);
+	}
+}
+#endif /* CONFIG_MIGRATION */
 
-#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
-अटल व्योम रुको_जबतक_offlining(व्योम)
-अणु
-	जबतक (ksm_run & KSM_RUN_OFFLINE) अणु
-		mutex_unlock(&ksm_thपढ़ो_mutex);
-		रुको_on_bit(&ksm_run, ilog2(KSM_RUN_OFFLINE),
+#ifdef CONFIG_MEMORY_HOTREMOVE
+static void wait_while_offlining(void)
+{
+	while (ksm_run & KSM_RUN_OFFLINE) {
+		mutex_unlock(&ksm_thread_mutex);
+		wait_on_bit(&ksm_run, ilog2(KSM_RUN_OFFLINE),
 			    TASK_UNINTERRUPTIBLE);
-		mutex_lock(&ksm_thपढ़ो_mutex);
-	पूर्ण
-पूर्ण
+		mutex_lock(&ksm_thread_mutex);
+	}
+}
 
-अटल bool stable_node_dup_हटाओ_range(काष्ठा stable_node *stable_node,
-					 अचिन्हित दीर्घ start_pfn,
-					 अचिन्हित दीर्घ end_pfn)
-अणु
-	अगर (stable_node->kpfn >= start_pfn &&
-	    stable_node->kpfn < end_pfn) अणु
+static bool stable_node_dup_remove_range(struct stable_node *stable_node,
+					 unsigned long start_pfn,
+					 unsigned long end_pfn)
+{
+	if (stable_node->kpfn >= start_pfn &&
+	    stable_node->kpfn < end_pfn) {
 		/*
-		 * Don't get_ksm_page, page has alपढ़ोy gone:
+		 * Don't get_ksm_page, page has already gone:
 		 * which is why we keep kpfn instead of page*
 		 */
-		हटाओ_node_from_stable_tree(stable_node);
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		remove_node_from_stable_tree(stable_node);
+		return true;
+	}
+	return false;
+}
 
-अटल bool stable_node_chain_हटाओ_range(काष्ठा stable_node *stable_node,
-					   अचिन्हित दीर्घ start_pfn,
-					   अचिन्हित दीर्घ end_pfn,
-					   काष्ठा rb_root *root)
-अणु
-	काष्ठा stable_node *dup;
-	काष्ठा hlist_node *hlist_safe;
+static bool stable_node_chain_remove_range(struct stable_node *stable_node,
+					   unsigned long start_pfn,
+					   unsigned long end_pfn,
+					   struct rb_root *root)
+{
+	struct stable_node *dup;
+	struct hlist_node *hlist_safe;
 
-	अगर (!is_stable_node_chain(stable_node)) अणु
+	if (!is_stable_node_chain(stable_node)) {
 		VM_BUG_ON(is_stable_node_dup(stable_node));
-		वापस stable_node_dup_हटाओ_range(stable_node, start_pfn,
+		return stable_node_dup_remove_range(stable_node, start_pfn,
 						    end_pfn);
-	पूर्ण
+	}
 
-	hlist_क्रम_each_entry_safe(dup, hlist_safe,
-				  &stable_node->hlist, hlist_dup) अणु
+	hlist_for_each_entry_safe(dup, hlist_safe,
+				  &stable_node->hlist, hlist_dup) {
 		VM_BUG_ON(!is_stable_node_dup(dup));
-		stable_node_dup_हटाओ_range(dup, start_pfn, end_pfn);
-	पूर्ण
-	अगर (hlist_empty(&stable_node->hlist)) अणु
-		मुक्त_stable_node_chain(stable_node, root);
-		वापस true; /* notअगरy caller that tree was rebalanced */
-	पूर्ण अन्यथा
-		वापस false;
-पूर्ण
+		stable_node_dup_remove_range(dup, start_pfn, end_pfn);
+	}
+	if (hlist_empty(&stable_node->hlist)) {
+		free_stable_node_chain(stable_node, root);
+		return true; /* notify caller that tree was rebalanced */
+	} else
+		return false;
+}
 
-अटल व्योम ksm_check_stable_tree(अचिन्हित दीर्घ start_pfn,
-				  अचिन्हित दीर्घ end_pfn)
-अणु
-	काष्ठा stable_node *stable_node, *next;
-	काष्ठा rb_node *node;
-	पूर्णांक nid;
+static void ksm_check_stable_tree(unsigned long start_pfn,
+				  unsigned long end_pfn)
+{
+	struct stable_node *stable_node, *next;
+	struct rb_node *node;
+	int nid;
 
-	क्रम (nid = 0; nid < ksm_nr_node_ids; nid++) अणु
+	for (nid = 0; nid < ksm_nr_node_ids; nid++) {
 		node = rb_first(root_stable_tree + nid);
-		जबतक (node) अणु
-			stable_node = rb_entry(node, काष्ठा stable_node, node);
-			अगर (stable_node_chain_हटाओ_range(stable_node,
+		while (node) {
+			stable_node = rb_entry(node, struct stable_node, node);
+			if (stable_node_chain_remove_range(stable_node,
 							   start_pfn, end_pfn,
 							   root_stable_tree +
 							   nid))
 				node = rb_first(root_stable_tree + nid);
-			अन्यथा
+			else
 				node = rb_next(node);
 			cond_resched();
-		पूर्ण
-	पूर्ण
-	list_क्रम_each_entry_safe(stable_node, next, &migrate_nodes, list) अणु
-		अगर (stable_node->kpfn >= start_pfn &&
+		}
+	}
+	list_for_each_entry_safe(stable_node, next, &migrate_nodes, list) {
+		if (stable_node->kpfn >= start_pfn &&
 		    stable_node->kpfn < end_pfn)
-			हटाओ_node_from_stable_tree(stable_node);
+			remove_node_from_stable_tree(stable_node);
 		cond_resched();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक ksm_memory_callback(काष्ठा notअगरier_block *self,
-			       अचिन्हित दीर्घ action, व्योम *arg)
-अणु
-	काष्ठा memory_notअगरy *mn = arg;
+static int ksm_memory_callback(struct notifier_block *self,
+			       unsigned long action, void *arg)
+{
+	struct memory_notify *mn = arg;
 
-	चयन (action) अणु
-	हाल MEM_GOING_OFFLINE:
+	switch (action) {
+	case MEM_GOING_OFFLINE:
 		/*
-		 * Prevent ksm_करो_scan(), unmerge_and_हटाओ_all_rmap_items()
-		 * and हटाओ_all_stable_nodes() जबतक memory is going offline:
-		 * it is unsafe क्रम them to touch the stable tree at this समय.
-		 * But unmerge_ksm_pages(), rmap lookups and other entry poपूर्णांकs
-		 * which करो not need the ksm_thपढ़ो_mutex are all safe.
+		 * Prevent ksm_do_scan(), unmerge_and_remove_all_rmap_items()
+		 * and remove_all_stable_nodes() while memory is going offline:
+		 * it is unsafe for them to touch the stable tree at this time.
+		 * But unmerge_ksm_pages(), rmap lookups and other entry points
+		 * which do not need the ksm_thread_mutex are all safe.
 		 */
-		mutex_lock(&ksm_thपढ़ो_mutex);
+		mutex_lock(&ksm_thread_mutex);
 		ksm_run |= KSM_RUN_OFFLINE;
-		mutex_unlock(&ksm_thपढ़ो_mutex);
-		अवरोध;
+		mutex_unlock(&ksm_thread_mutex);
+		break;
 
-	हाल MEM_OFFLINE:
+	case MEM_OFFLINE:
 		/*
-		 * Most of the work is करोne by page migration; but there might
-		 * be a few stable_nodes left over, still poपूर्णांकing to काष्ठा
+		 * Most of the work is done by page migration; but there might
+		 * be a few stable_nodes left over, still pointing to struct
 		 * pages which have been offlined: prune those from the tree,
 		 * otherwise get_ksm_page() might later try to access a
-		 * non-existent काष्ठा page.
+		 * non-existent struct page.
 		 */
 		ksm_check_stable_tree(mn->start_pfn,
 				      mn->start_pfn + mn->nr_pages);
 		fallthrough;
-	हाल MEM_CANCEL_OFFLINE:
-		mutex_lock(&ksm_thपढ़ो_mutex);
+	case MEM_CANCEL_OFFLINE:
+		mutex_lock(&ksm_thread_mutex);
 		ksm_run &= ~KSM_RUN_OFFLINE;
-		mutex_unlock(&ksm_thपढ़ो_mutex);
+		mutex_unlock(&ksm_thread_mutex);
 
 		smp_mb();	/* wake_up_bit advises this */
 		wake_up_bit(&ksm_run, ilog2(KSM_RUN_OFFLINE));
-		अवरोध;
-	पूर्ण
-	वापस NOTIFY_OK;
-पूर्ण
-#अन्यथा
-अटल व्योम रुको_जबतक_offlining(व्योम)
-अणु
-पूर्ण
-#पूर्ण_अगर /* CONFIG_MEMORY_HOTREMOVE */
+		break;
+	}
+	return NOTIFY_OK;
+}
+#else
+static void wait_while_offlining(void)
+{
+}
+#endif /* CONFIG_MEMORY_HOTREMOVE */
 
-#अगर_घोषित CONFIG_SYSFS
+#ifdef CONFIG_SYSFS
 /*
  * This all compiles without CONFIG_SYSFS, but is a waste of space.
  */
 
-#घोषणा KSM_ATTR_RO(_name) \
-	अटल काष्ठा kobj_attribute _name##_attr = __ATTR_RO(_name)
-#घोषणा KSM_ATTR(_name) \
-	अटल काष्ठा kobj_attribute _name##_attr = \
+#define KSM_ATTR_RO(_name) \
+	static struct kobj_attribute _name##_attr = __ATTR_RO(_name)
+#define KSM_ATTR(_name) \
+	static struct kobj_attribute _name##_attr = \
 		__ATTR(_name, 0644, _name##_show, _name##_store)
 
-अटल sमाप_प्रकार sleep_millisecs_show(काष्ठा kobject *kobj,
-				    काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", ksm_thपढ़ो_sleep_millisecs);
-पूर्ण
+static ssize_t sleep_millisecs_show(struct kobject *kobj,
+				    struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%u\n", ksm_thread_sleep_millisecs);
+}
 
-अटल sमाप_प्रकार sleep_millisecs_store(काष्ठा kobject *kobj,
-				     काष्ठा kobj_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक msecs;
-	पूर्णांक err;
+static ssize_t sleep_millisecs_store(struct kobject *kobj,
+				     struct kobj_attribute *attr,
+				     const char *buf, size_t count)
+{
+	unsigned int msecs;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &msecs);
-	अगर (err)
-		वापस -EINVAL;
+	err = kstrtouint(buf, 10, &msecs);
+	if (err)
+		return -EINVAL;
 
-	ksm_thपढ़ो_sleep_millisecs = msecs;
-	wake_up_पूर्णांकerruptible(&ksm_iter_रुको);
+	ksm_thread_sleep_millisecs = msecs;
+	wake_up_interruptible(&ksm_iter_wait);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 KSM_ATTR(sleep_millisecs);
 
-अटल sमाप_प्रकार pages_to_scan_show(काष्ठा kobject *kobj,
-				  काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", ksm_thपढ़ो_pages_to_scan);
-पूर्ण
+static ssize_t pages_to_scan_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%u\n", ksm_thread_pages_to_scan);
+}
 
-अटल sमाप_प्रकार pages_to_scan_store(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक nr_pages;
-	पूर्णांक err;
+static ssize_t pages_to_scan_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	unsigned int nr_pages;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &nr_pages);
-	अगर (err)
-		वापस -EINVAL;
+	err = kstrtouint(buf, 10, &nr_pages);
+	if (err)
+		return -EINVAL;
 
-	ksm_thपढ़ो_pages_to_scan = nr_pages;
+	ksm_thread_pages_to_scan = nr_pages;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 KSM_ATTR(pages_to_scan);
 
-अटल sमाप_प्रकार run_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_run);
-पूर्ण
+static ssize_t run_show(struct kobject *kobj, struct kobj_attribute *attr,
+			char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_run);
+}
 
-अटल sमाप_प्रकार run_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
-			 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक err;
+static ssize_t run_store(struct kobject *kobj, struct kobj_attribute *attr,
+			 const char *buf, size_t count)
+{
+	unsigned int flags;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &flags);
-	अगर (err)
-		वापस -EINVAL;
-	अगर (flags > KSM_RUN_UNMERGE)
-		वापस -EINVAL;
+	err = kstrtouint(buf, 10, &flags);
+	if (err)
+		return -EINVAL;
+	if (flags > KSM_RUN_UNMERGE)
+		return -EINVAL;
 
 	/*
 	 * KSM_RUN_MERGE sets ksmd running, and 0 stops it running.
 	 * KSM_RUN_UNMERGE stops it running and unmerges all rmap_items,
-	 * अवरोधing COW to मुक्त the pages_shared (but leaves mm_slots
-	 * on the list क्रम when ksmd may be set running again).
+	 * breaking COW to free the pages_shared (but leaves mm_slots
+	 * on the list for when ksmd may be set running again).
 	 */
 
-	mutex_lock(&ksm_thपढ़ो_mutex);
-	रुको_जबतक_offlining();
-	अगर (ksm_run != flags) अणु
+	mutex_lock(&ksm_thread_mutex);
+	wait_while_offlining();
+	if (ksm_run != flags) {
 		ksm_run = flags;
-		अगर (flags & KSM_RUN_UNMERGE) अणु
+		if (flags & KSM_RUN_UNMERGE) {
 			set_current_oom_origin();
-			err = unmerge_and_हटाओ_all_rmap_items();
+			err = unmerge_and_remove_all_rmap_items();
 			clear_current_oom_origin();
-			अगर (err) अणु
+			if (err) {
 				ksm_run = KSM_RUN_STOP;
 				count = err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&ksm_thपढ़ो_mutex);
+			}
+		}
+	}
+	mutex_unlock(&ksm_thread_mutex);
 
-	अगर (flags & KSM_RUN_MERGE)
-		wake_up_पूर्णांकerruptible(&ksm_thपढ़ो_रुको);
+	if (flags & KSM_RUN_MERGE)
+		wake_up_interruptible(&ksm_thread_wait);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 KSM_ATTR(run);
 
-#अगर_घोषित CONFIG_NUMA
-अटल sमाप_प्रकार merge_across_nodes_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", ksm_merge_across_nodes);
-पूर्ण
+#ifdef CONFIG_NUMA
+static ssize_t merge_across_nodes_show(struct kobject *kobj,
+				       struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%u\n", ksm_merge_across_nodes);
+}
 
-अटल sमाप_प्रकार merge_across_nodes_store(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err;
-	अचिन्हित दीर्घ knob;
+static ssize_t merge_across_nodes_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	int err;
+	unsigned long knob;
 
-	err = kम_से_अदीर्घ(buf, 10, &knob);
-	अगर (err)
-		वापस err;
-	अगर (knob > 1)
-		वापस -EINVAL;
+	err = kstrtoul(buf, 10, &knob);
+	if (err)
+		return err;
+	if (knob > 1)
+		return -EINVAL;
 
-	mutex_lock(&ksm_thपढ़ो_mutex);
-	रुको_जबतक_offlining();
-	अगर (ksm_merge_across_nodes != knob) अणु
-		अगर (ksm_pages_shared || हटाओ_all_stable_nodes())
+	mutex_lock(&ksm_thread_mutex);
+	wait_while_offlining();
+	if (ksm_merge_across_nodes != knob) {
+		if (ksm_pages_shared || remove_all_stable_nodes())
 			err = -EBUSY;
-		अन्यथा अगर (root_stable_tree == one_stable_tree) अणु
-			काष्ठा rb_root *buf;
+		else if (root_stable_tree == one_stable_tree) {
+			struct rb_root *buf;
 			/*
-			 * This is the first समय that we चयन away from the
-			 * शेष of merging across nodes: must now allocate
+			 * This is the first time that we switch away from the
+			 * default of merging across nodes: must now allocate
 			 * a buffer to hold as many roots as may be needed.
 			 * Allocate stable and unstable together:
 			 * MAXSMP NODES_SHIFT 10 will use 16kB.
 			 */
-			buf = kसुस्मृति(nr_node_ids + nr_node_ids, माप(*buf),
+			buf = kcalloc(nr_node_ids + nr_node_ids, sizeof(*buf),
 				      GFP_KERNEL);
-			/* Let us assume that RB_ROOT is शून्य is zero */
-			अगर (!buf)
+			/* Let us assume that RB_ROOT is NULL is zero */
+			if (!buf)
 				err = -ENOMEM;
-			अन्यथा अणु
+			else {
 				root_stable_tree = buf;
 				root_unstable_tree = buf + nr_node_ids;
 				/* Stable tree is empty but not the unstable */
 				root_unstable_tree[0] = one_unstable_tree[0];
-			पूर्ण
-		पूर्ण
-		अगर (!err) अणु
+			}
+		}
+		if (!err) {
 			ksm_merge_across_nodes = knob;
 			ksm_nr_node_ids = knob ? 1 : nr_node_ids;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&ksm_thपढ़ो_mutex);
+		}
+	}
+	mutex_unlock(&ksm_thread_mutex);
 
-	वापस err ? err : count;
-पूर्ण
+	return err ? err : count;
+}
 KSM_ATTR(merge_across_nodes);
-#पूर्ण_अगर
+#endif
 
-अटल sमाप_प्रकार use_zero_pages_show(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", ksm_use_zero_pages);
-पूर्ण
-अटल sमाप_प्रकार use_zero_pages_store(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr,
-				   स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err;
+static ssize_t use_zero_pages_show(struct kobject *kobj,
+				   struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%u\n", ksm_use_zero_pages);
+}
+static ssize_t use_zero_pages_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buf, size_t count)
+{
+	int err;
 	bool value;
 
 	err = kstrtobool(buf, &value);
-	अगर (err)
-		वापस -EINVAL;
+	if (err)
+		return -EINVAL;
 
 	ksm_use_zero_pages = value;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 KSM_ATTR(use_zero_pages);
 
-अटल sमाप_प्रकार max_page_sharing_show(काष्ठा kobject *kobj,
-				     काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", ksm_max_page_sharing);
-पूर्ण
+static ssize_t max_page_sharing_show(struct kobject *kobj,
+				     struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%u\n", ksm_max_page_sharing);
+}
 
-अटल sमाप_प्रकार max_page_sharing_store(काष्ठा kobject *kobj,
-				      काष्ठा kobj_attribute *attr,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक err;
-	पूर्णांक knob;
+static ssize_t max_page_sharing_store(struct kobject *kobj,
+				      struct kobj_attribute *attr,
+				      const char *buf, size_t count)
+{
+	int err;
+	int knob;
 
-	err = kstrtoपूर्णांक(buf, 10, &knob);
-	अगर (err)
-		वापस err;
+	err = kstrtoint(buf, 10, &knob);
+	if (err)
+		return err;
 	/*
 	 * When a KSM page is created it is shared by 2 mappings. This
-	 * being a चिन्हित comparison, it implicitly verअगरies it's not
+	 * being a signed comparison, it implicitly verifies it's not
 	 * negative.
 	 */
-	अगर (knob < 2)
-		वापस -EINVAL;
+	if (knob < 2)
+		return -EINVAL;
 
-	अगर (READ_ONCE(ksm_max_page_sharing) == knob)
-		वापस count;
+	if (READ_ONCE(ksm_max_page_sharing) == knob)
+		return count;
 
-	mutex_lock(&ksm_thपढ़ो_mutex);
-	रुको_जबतक_offlining();
-	अगर (ksm_max_page_sharing != knob) अणु
-		अगर (ksm_pages_shared || हटाओ_all_stable_nodes())
+	mutex_lock(&ksm_thread_mutex);
+	wait_while_offlining();
+	if (ksm_max_page_sharing != knob) {
+		if (ksm_pages_shared || remove_all_stable_nodes())
 			err = -EBUSY;
-		अन्यथा
+		else
 			ksm_max_page_sharing = knob;
-	पूर्ण
-	mutex_unlock(&ksm_thपढ़ो_mutex);
+	}
+	mutex_unlock(&ksm_thread_mutex);
 
-	वापस err ? err : count;
-पूर्ण
+	return err ? err : count;
+}
 KSM_ATTR(max_page_sharing);
 
-अटल sमाप_प्रकार pages_shared_show(काष्ठा kobject *kobj,
-				 काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_pages_shared);
-पूर्ण
+static ssize_t pages_shared_show(struct kobject *kobj,
+				 struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_pages_shared);
+}
 KSM_ATTR_RO(pages_shared);
 
-अटल sमाप_प्रकार pages_sharing_show(काष्ठा kobject *kobj,
-				  काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_pages_sharing);
-पूर्ण
+static ssize_t pages_sharing_show(struct kobject *kobj,
+				  struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_pages_sharing);
+}
 KSM_ATTR_RO(pages_sharing);
 
-अटल sमाप_प्रकार pages_unshared_show(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_pages_unshared);
-पूर्ण
+static ssize_t pages_unshared_show(struct kobject *kobj,
+				   struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_pages_unshared);
+}
 KSM_ATTR_RO(pages_unshared);
 
-अटल sमाप_प्रकार pages_अस्थिर_show(काष्ठा kobject *kobj,
-				   काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	दीर्घ ksm_pages_अस्थिर;
+static ssize_t pages_volatile_show(struct kobject *kobj,
+				   struct kobj_attribute *attr, char *buf)
+{
+	long ksm_pages_volatile;
 
-	ksm_pages_अस्थिर = ksm_rmap_items - ksm_pages_shared
+	ksm_pages_volatile = ksm_rmap_items - ksm_pages_shared
 				- ksm_pages_sharing - ksm_pages_unshared;
 	/*
 	 * It was not worth any locking to calculate that statistic,
-	 * but it might thereक्रमe someबार be negative: conceal that.
+	 * but it might therefore sometimes be negative: conceal that.
 	 */
-	अगर (ksm_pages_अस्थिर < 0)
-		ksm_pages_अस्थिर = 0;
-	वापस sysfs_emit(buf, "%ld\n", ksm_pages_अस्थिर);
-पूर्ण
-KSM_ATTR_RO(pages_अस्थिर);
+	if (ksm_pages_volatile < 0)
+		ksm_pages_volatile = 0;
+	return sysfs_emit(buf, "%ld\n", ksm_pages_volatile);
+}
+KSM_ATTR_RO(pages_volatile);
 
-अटल sमाप_प्रकार stable_node_dups_show(काष्ठा kobject *kobj,
-				     काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_stable_node_dups);
-पूर्ण
+static ssize_t stable_node_dups_show(struct kobject *kobj,
+				     struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_stable_node_dups);
+}
 KSM_ATTR_RO(stable_node_dups);
 
-अटल sमाप_प्रकार stable_node_chains_show(काष्ठा kobject *kobj,
-				       काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_stable_node_chains);
-पूर्ण
+static ssize_t stable_node_chains_show(struct kobject *kobj,
+				       struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_stable_node_chains);
+}
 KSM_ATTR_RO(stable_node_chains);
 
-अटल sमाप_प्रकार
-stable_node_chains_prune_millisecs_show(काष्ठा kobject *kobj,
-					काष्ठा kobj_attribute *attr,
-					अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%u\n", ksm_stable_node_chains_prune_millisecs);
-पूर्ण
+static ssize_t
+stable_node_chains_prune_millisecs_show(struct kobject *kobj,
+					struct kobj_attribute *attr,
+					char *buf)
+{
+	return sysfs_emit(buf, "%u\n", ksm_stable_node_chains_prune_millisecs);
+}
 
-अटल sमाप_प्रकार
-stable_node_chains_prune_millisecs_store(काष्ठा kobject *kobj,
-					 काष्ठा kobj_attribute *attr,
-					 स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	अचिन्हित दीर्घ msecs;
-	पूर्णांक err;
+static ssize_t
+stable_node_chains_prune_millisecs_store(struct kobject *kobj,
+					 struct kobj_attribute *attr,
+					 const char *buf, size_t count)
+{
+	unsigned long msecs;
+	int err;
 
-	err = kम_से_अदीर्घ(buf, 10, &msecs);
-	अगर (err || msecs > अच_पूर्णांक_उच्च)
-		वापस -EINVAL;
+	err = kstrtoul(buf, 10, &msecs);
+	if (err || msecs > UINT_MAX)
+		return -EINVAL;
 
 	ksm_stable_node_chains_prune_millisecs = msecs;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 KSM_ATTR(stable_node_chains_prune_millisecs);
 
-अटल sमाप_प्रकार full_scans_show(काष्ठा kobject *kobj,
-			       काष्ठा kobj_attribute *attr, अक्षर *buf)
-अणु
-	वापस sysfs_emit(buf, "%lu\n", ksm_scan.seqnr);
-पूर्ण
+static ssize_t full_scans_show(struct kobject *kobj,
+			       struct kobj_attribute *attr, char *buf)
+{
+	return sysfs_emit(buf, "%lu\n", ksm_scan.seqnr);
+}
 KSM_ATTR_RO(full_scans);
 
-अटल काष्ठा attribute *ksm_attrs[] = अणु
+static struct attribute *ksm_attrs[] = {
 	&sleep_millisecs_attr.attr,
 	&pages_to_scan_attr.attr,
 	&run_attr.attr,
 	&pages_shared_attr.attr,
 	&pages_sharing_attr.attr,
 	&pages_unshared_attr.attr,
-	&pages_अस्थिर_attr.attr,
+	&pages_volatile_attr.attr,
 	&full_scans_attr.attr,
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 	&merge_across_nodes_attr.attr,
-#पूर्ण_अगर
+#endif
 	&max_page_sharing_attr.attr,
 	&stable_node_chains_attr.attr,
 	&stable_node_dups_attr.attr,
 	&stable_node_chains_prune_millisecs_attr.attr,
 	&use_zero_pages_attr.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group ksm_attr_group = अणु
+static const struct attribute_group ksm_attr_group = {
 	.attrs = ksm_attrs,
 	.name = "ksm",
-पूर्ण;
-#पूर्ण_अगर /* CONFIG_SYSFS */
+};
+#endif /* CONFIG_SYSFS */
 
-अटल पूर्णांक __init ksm_init(व्योम)
-अणु
-	काष्ठा task_काष्ठा *ksm_thपढ़ो;
-	पूर्णांक err;
+static int __init ksm_init(void)
+{
+	struct task_struct *ksm_thread;
+	int err;
 
 	/* The correct value depends on page size and endianness */
 	zero_checksum = calc_checksum(ZERO_PAGE(0));
-	/* Default to false क्रम backwards compatibility */
+	/* Default to false for backwards compatibility */
 	ksm_use_zero_pages = false;
 
 	err = ksm_slab_init();
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	ksm_thपढ़ो = kthपढ़ो_run(ksm_scan_thपढ़ो, शून्य, "ksmd");
-	अगर (IS_ERR(ksm_thपढ़ो)) अणु
+	ksm_thread = kthread_run(ksm_scan_thread, NULL, "ksmd");
+	if (IS_ERR(ksm_thread)) {
 		pr_err("ksm: creating kthread failed\n");
-		err = PTR_ERR(ksm_thपढ़ो);
-		जाओ out_मुक्त;
-	पूर्ण
+		err = PTR_ERR(ksm_thread);
+		goto out_free;
+	}
 
-#अगर_घोषित CONFIG_SYSFS
+#ifdef CONFIG_SYSFS
 	err = sysfs_create_group(mm_kobj, &ksm_attr_group);
-	अगर (err) अणु
+	if (err) {
 		pr_err("ksm: register sysfs failed\n");
-		kthपढ़ो_stop(ksm_thपढ़ो);
-		जाओ out_मुक्त;
-	पूर्ण
-#अन्यथा
-	ksm_run = KSM_RUN_MERGE;	/* no way क्रम user to start it */
+		kthread_stop(ksm_thread);
+		goto out_free;
+	}
+#else
+	ksm_run = KSM_RUN_MERGE;	/* no way for user to start it */
 
-#पूर्ण_अगर /* CONFIG_SYSFS */
+#endif /* CONFIG_SYSFS */
 
-#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
-	/* There is no signअगरicance to this priority 100 */
-	hotplug_memory_notअगरier(ksm_memory_callback, 100);
-#पूर्ण_अगर
-	वापस 0;
+#ifdef CONFIG_MEMORY_HOTREMOVE
+	/* There is no significance to this priority 100 */
+	hotplug_memory_notifier(ksm_memory_callback, 100);
+#endif
+	return 0;
 
-out_मुक्त:
-	ksm_slab_मुक्त();
+out_free:
+	ksm_slab_free();
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 subsys_initcall(ksm_init);

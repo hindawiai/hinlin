@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
  * Microsemi Ocelot Switch driver
  *
  * Copyright (c) 2017 Microsemi Corporation
  */
-#समावेश <linux/पन.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/io.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
 
-#समावेश "ocelot.h"
+#include "ocelot.h"
 
-u32 __ocelot_पढ़ो_ix(काष्ठा ocelot *ocelot, u32 reg, u32 offset)
-अणु
+u32 __ocelot_read_ix(struct ocelot *ocelot, u32 reg, u32 offset)
+{
 	u16 target = reg >> TARGET_OFFSET;
 	u32 val;
 
 	WARN_ON(!target);
 
-	regmap_पढ़ो(ocelot->tarमाला_लो[target],
+	regmap_read(ocelot->targets[target],
 		    ocelot->map[target][reg & REG_MASK] + offset, &val);
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL(__ocelot_पढ़ो_ix);
+	return val;
+}
+EXPORT_SYMBOL(__ocelot_read_ix);
 
-व्योम __ocelot_ग_लिखो_ix(काष्ठा ocelot *ocelot, u32 val, u32 reg, u32 offset)
-अणु
+void __ocelot_write_ix(struct ocelot *ocelot, u32 val, u32 reg, u32 offset)
+{
 	u16 target = reg >> TARGET_OFFSET;
 
 	WARN_ON(!target);
 
-	regmap_ग_लिखो(ocelot->tarमाला_लो[target],
+	regmap_write(ocelot->targets[target],
 		     ocelot->map[target][reg & REG_MASK] + offset, val);
-पूर्ण
-EXPORT_SYMBOL(__ocelot_ग_लिखो_ix);
+}
+EXPORT_SYMBOL(__ocelot_write_ix);
 
-व्योम __ocelot_rmw_ix(काष्ठा ocelot *ocelot, u32 val, u32 mask, u32 reg,
+void __ocelot_rmw_ix(struct ocelot *ocelot, u32 val, u32 mask, u32 reg,
 		     u32 offset)
-अणु
+{
 	u16 target = reg >> TARGET_OFFSET;
 
 	WARN_ON(!target);
 
-	regmap_update_bits(ocelot->tarमाला_लो[target],
+	regmap_update_bits(ocelot->targets[target],
 			   ocelot->map[target][reg & REG_MASK] + offset,
 			   mask, val);
-पूर्ण
+}
 EXPORT_SYMBOL(__ocelot_rmw_ix);
 
-u32 ocelot_port_पढ़ोl(काष्ठा ocelot_port *port, u32 reg)
-अणु
-	काष्ठा ocelot *ocelot = port->ocelot;
+u32 ocelot_port_readl(struct ocelot_port *port, u32 reg)
+{
+	struct ocelot *ocelot = port->ocelot;
 	u16 target = reg >> TARGET_OFFSET;
 	u32 val;
 
 	WARN_ON(!target);
 
-	regmap_पढ़ो(port->target, ocelot->map[target][reg & REG_MASK], &val);
-	वापस val;
-पूर्ण
-EXPORT_SYMBOL(ocelot_port_पढ़ोl);
+	regmap_read(port->target, ocelot->map[target][reg & REG_MASK], &val);
+	return val;
+}
+EXPORT_SYMBOL(ocelot_port_readl);
 
-व्योम ocelot_port_ग_लिखोl(काष्ठा ocelot_port *port, u32 val, u32 reg)
-अणु
-	काष्ठा ocelot *ocelot = port->ocelot;
+void ocelot_port_writel(struct ocelot_port *port, u32 val, u32 reg)
+{
+	struct ocelot *ocelot = port->ocelot;
 	u16 target = reg >> TARGET_OFFSET;
 
 	WARN_ON(!target);
 
-	regmap_ग_लिखो(port->target, ocelot->map[target][reg & REG_MASK], val);
-पूर्ण
-EXPORT_SYMBOL(ocelot_port_ग_लिखोl);
+	regmap_write(port->target, ocelot->map[target][reg & REG_MASK], val);
+}
+EXPORT_SYMBOL(ocelot_port_writel);
 
-व्योम ocelot_port_rmwl(काष्ठा ocelot_port *port, u32 val, u32 mask, u32 reg)
-अणु
-	u32 cur = ocelot_port_पढ़ोl(port, reg);
+void ocelot_port_rmwl(struct ocelot_port *port, u32 val, u32 mask, u32 reg)
+{
+	u32 cur = ocelot_port_readl(port, reg);
 
-	ocelot_port_ग_लिखोl(port, (cur & (~mask)) | val, reg);
-पूर्ण
+	ocelot_port_writel(port, (cur & (~mask)) | val, reg);
+}
 EXPORT_SYMBOL(ocelot_port_rmwl);
 
-u32 __ocelot_target_पढ़ो_ix(काष्ठा ocelot *ocelot, क्रमागत ocelot_target target,
+u32 __ocelot_target_read_ix(struct ocelot *ocelot, enum ocelot_target target,
 			    u32 reg, u32 offset)
-अणु
+{
 	u32 val;
 
-	regmap_पढ़ो(ocelot->tarमाला_लो[target],
+	regmap_read(ocelot->targets[target],
 		    ocelot->map[target][reg] + offset, &val);
-	वापस val;
-पूर्ण
+	return val;
+}
 
-व्योम __ocelot_target_ग_लिखो_ix(काष्ठा ocelot *ocelot, क्रमागत ocelot_target target,
+void __ocelot_target_write_ix(struct ocelot *ocelot, enum ocelot_target target,
 			      u32 val, u32 reg, u32 offset)
-अणु
-	regmap_ग_लिखो(ocelot->tarमाला_लो[target],
+{
+	regmap_write(ocelot->targets[target],
 		     ocelot->map[target][reg] + offset, val);
-पूर्ण
+}
 
-पूर्णांक ocelot_regfields_init(काष्ठा ocelot *ocelot,
-			  स्थिर काष्ठा reg_field *स्थिर regfields)
-अणु
-	अचिन्हित पूर्णांक i;
+int ocelot_regfields_init(struct ocelot *ocelot,
+			  const struct reg_field *const regfields)
+{
+	unsigned int i;
 	u16 target;
 
-	क्रम (i = 0; i < REGFIELD_MAX; i++) अणु
-		काष्ठा reg_field regfield = अणुपूर्ण;
+	for (i = 0; i < REGFIELD_MAX; i++) {
+		struct reg_field regfield = {};
 		u32 reg = regfields[i].reg;
 
-		अगर (!reg)
-			जारी;
+		if (!reg)
+			continue;
 
 		target = regfields[i].reg >> TARGET_OFFSET;
 
@@ -120,33 +119,33 @@ u32 __ocelot_target_पढ़ो_ix(काष्ठा ocelot *ocelot, क्र
 
 		ocelot->regfields[i] =
 		devm_regmap_field_alloc(ocelot->dev,
-					ocelot->tarमाला_लो[target],
+					ocelot->targets[target],
 					regfield);
 
-		अगर (IS_ERR(ocelot->regfields[i]))
-			वापस PTR_ERR(ocelot->regfields[i]);
-	पूर्ण
+		if (IS_ERR(ocelot->regfields[i]))
+			return PTR_ERR(ocelot->regfields[i]);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(ocelot_regfields_init);
 
-अटल काष्ठा regmap_config ocelot_regmap_config = अणु
+static struct regmap_config ocelot_regmap_config = {
 	.reg_bits	= 32,
 	.val_bits	= 32,
 	.reg_stride	= 4,
-पूर्ण;
+};
 
-काष्ठा regmap *ocelot_regmap_init(काष्ठा ocelot *ocelot, काष्ठा resource *res)
-अणु
-	व्योम __iomem *regs;
+struct regmap *ocelot_regmap_init(struct ocelot *ocelot, struct resource *res)
+{
+	void __iomem *regs;
 
 	regs = devm_ioremap_resource(ocelot->dev, res);
-	अगर (IS_ERR(regs))
-		वापस ERR_CAST(regs);
+	if (IS_ERR(regs))
+		return ERR_CAST(regs);
 
 	ocelot_regmap_config.name = res->name;
 
-	वापस devm_regmap_init_mmio(ocelot->dev, regs, &ocelot_regmap_config);
-पूर्ण
+	return devm_regmap_init_mmio(ocelot->dev, regs, &ocelot_regmap_config);
+}
 EXPORT_SYMBOL(ocelot_regmap_init);

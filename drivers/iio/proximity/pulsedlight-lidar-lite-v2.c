@@ -1,375 +1,374 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * pulsedlight-lidar-lite-v2.c - Support क्रम PulsedLight LIDAR sensor
+ * pulsedlight-lidar-lite-v2.c - Support for PulsedLight LIDAR sensor
  *
  * Copyright (C) 2015, 2017-2018
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
  *
- * TODO: पूर्णांकerrupt mode, and संकेत strength reporting
+ * TODO: interrupt mode, and signal strength reporting
  */
 
-#समावेश <linux/err.h>
-#समावेश <linux/init.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
+#include <linux/err.h>
+#include <linux/init.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/pm_runtime.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/trigger_consumer.h>
 
-#घोषणा LIDAR_REG_CONTROL		0x00
-#घोषणा LIDAR_REG_CONTROL_ACQUIRE	BIT(2)
+#define LIDAR_REG_CONTROL		0x00
+#define LIDAR_REG_CONTROL_ACQUIRE	BIT(2)
 
-#घोषणा LIDAR_REG_STATUS		0x01
-#घोषणा LIDAR_REG_STATUS_INVALID	BIT(3)
-#घोषणा LIDAR_REG_STATUS_READY		BIT(0)
+#define LIDAR_REG_STATUS		0x01
+#define LIDAR_REG_STATUS_INVALID	BIT(3)
+#define LIDAR_REG_STATUS_READY		BIT(0)
 
-#घोषणा LIDAR_REG_DATA_HBYTE		0x0f
-#घोषणा LIDAR_REG_DATA_LBYTE		0x10
-#घोषणा LIDAR_REG_DATA_WORD_READ	BIT(7)
+#define LIDAR_REG_DATA_HBYTE		0x0f
+#define LIDAR_REG_DATA_LBYTE		0x10
+#define LIDAR_REG_DATA_WORD_READ	BIT(7)
 
-#घोषणा LIDAR_REG_PWR_CONTROL	0x65
+#define LIDAR_REG_PWR_CONTROL	0x65
 
-#घोषणा LIDAR_DRV_NAME "lidar"
+#define LIDAR_DRV_NAME "lidar"
 
-काष्ठा lidar_data अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा i2c_client *client;
+struct lidar_data {
+	struct iio_dev *indio_dev;
+	struct i2c_client *client;
 
-	पूर्णांक (*xfer)(काष्ठा lidar_data *data, u8 reg, u8 *val, पूर्णांक len);
-	पूर्णांक i2c_enabled;
+	int (*xfer)(struct lidar_data *data, u8 reg, u8 *val, int len);
+	int i2c_enabled;
 
-	u16 buffer[8]; /* 2 byte distance + 8 byte बारtamp */
-पूर्ण;
+	u16 buffer[8]; /* 2 byte distance + 8 byte timestamp */
+};
 
-अटल स्थिर काष्ठा iio_chan_spec lidar_channels[] = अणु
-	अणु
+static const struct iio_chan_spec lidar_channels[] = {
+	{
 		.type = IIO_DISTANCE,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = 0,
-		.scan_type = अणु
+		.scan_type = {
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	IIO_CHAN_SOFT_TIMESTAMP(1),
-पूर्ण;
+};
 
-अटल पूर्णांक lidar_i2c_xfer(काष्ठा lidar_data *data, u8 reg, u8 *val, पूर्णांक len)
-अणु
-	काष्ठा i2c_client *client = data->client;
-	काष्ठा i2c_msg msg[2];
-	पूर्णांक ret;
+static int lidar_i2c_xfer(struct lidar_data *data, u8 reg, u8 *val, int len)
+{
+	struct i2c_client *client = data->client;
+	struct i2c_msg msg[2];
+	int ret;
 
 	msg[0].addr = client->addr;
 	msg[0].flags = client->flags | I2C_M_STOP;
 	msg[0].len = 1;
-	msg[0].buf  = (अक्षर *) &reg;
+	msg[0].buf  = (char *) &reg;
 
 	msg[1].addr = client->addr;
 	msg[1].flags = client->flags | I2C_M_RD;
 	msg[1].len = len;
-	msg[1].buf = (अक्षर *) val;
+	msg[1].buf = (char *) val;
 
 	ret = i2c_transfer(client->adapter, msg, 2);
 
-	वापस (ret == 2) ? 0 : -EIO;
-पूर्ण
+	return (ret == 2) ? 0 : -EIO;
+}
 
-अटल पूर्णांक lidar_smbus_xfer(काष्ठा lidar_data *data, u8 reg, u8 *val, पूर्णांक len)
-अणु
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
+static int lidar_smbus_xfer(struct lidar_data *data, u8 reg, u8 *val, int len)
+{
+	struct i2c_client *client = data->client;
+	int ret;
 
 	/*
-	 * Device needs a STOP condition between address ग_लिखो, and data पढ़ो
-	 * so in turn i2c_smbus_पढ़ो_byte_data cannot be used
+	 * Device needs a STOP condition between address write, and data read
+	 * so in turn i2c_smbus_read_byte_data cannot be used
 	 */
 
-	जबतक (len--) अणु
-		ret = i2c_smbus_ग_लिखो_byte(client, reg++);
-		अगर (ret < 0) अणु
+	while (len--) {
+		ret = i2c_smbus_write_byte(client, reg++);
+		if (ret < 0) {
 			dev_err(&client->dev, "cannot write addr value");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		ret = i2c_smbus_पढ़ो_byte(client);
-		अगर (ret < 0) अणु
+		ret = i2c_smbus_read_byte(client);
+		if (ret < 0) {
 			dev_err(&client->dev, "cannot read data value");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		*(val++) = ret;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lidar_पढ़ो_byte(काष्ठा lidar_data *data, u8 reg)
-अणु
-	पूर्णांक ret;
+static int lidar_read_byte(struct lidar_data *data, u8 reg)
+{
+	int ret;
 	u8 val;
 
 	ret = data->xfer(data, reg, &val, 1);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल अंतरभूत पूर्णांक lidar_ग_लिखो_control(काष्ठा lidar_data *data, पूर्णांक val)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(data->client, LIDAR_REG_CONTROL, val);
-पूर्ण
+static inline int lidar_write_control(struct lidar_data *data, int val)
+{
+	return i2c_smbus_write_byte_data(data->client, LIDAR_REG_CONTROL, val);
+}
 
-अटल अंतरभूत पूर्णांक lidar_ग_लिखो_घातer(काष्ठा lidar_data *data, पूर्णांक val)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte_data(data->client,
+static inline int lidar_write_power(struct lidar_data *data, int val)
+{
+	return i2c_smbus_write_byte_data(data->client,
 					 LIDAR_REG_PWR_CONTROL, val);
-पूर्ण
+}
 
-अटल पूर्णांक lidar_पढ़ो_measurement(काष्ठा lidar_data *data, u16 *reg)
-अणु
+static int lidar_read_measurement(struct lidar_data *data, u16 *reg)
+{
 	__be16 value;
-	पूर्णांक ret = data->xfer(data, LIDAR_REG_DATA_HBYTE |
+	int ret = data->xfer(data, LIDAR_REG_DATA_HBYTE |
 			(data->i2c_enabled ? LIDAR_REG_DATA_WORD_READ : 0),
 			(u8 *) &value, 2);
 
-	अगर (!ret)
+	if (!ret)
 		*reg = be16_to_cpu(value);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lidar_get_measurement(काष्ठा lidar_data *data, u16 *reg)
-अणु
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक tries = 10;
-	पूर्णांक ret;
+static int lidar_get_measurement(struct lidar_data *data, u16 *reg)
+{
+	struct i2c_client *client = data->client;
+	int tries = 10;
+	int ret;
 
-	pm_runसमय_get_sync(&client->dev);
+	pm_runtime_get_sync(&client->dev);
 
 	/* start sample */
-	ret = lidar_ग_लिखो_control(data, LIDAR_REG_CONTROL_ACQUIRE);
-	अगर (ret < 0) अणु
+	ret = lidar_write_control(data, LIDAR_REG_CONTROL_ACQUIRE);
+	if (ret < 0) {
 		dev_err(&client->dev, "cannot send start measurement command");
-		pm_runसमय_put_noidle(&client->dev);
-		वापस ret;
-	पूर्ण
+		pm_runtime_put_noidle(&client->dev);
+		return ret;
+	}
 
-	जबतक (tries--) अणु
+	while (tries--) {
 		usleep_range(1000, 2000);
 
-		ret = lidar_पढ़ो_byte(data, LIDAR_REG_STATUS);
-		अगर (ret < 0)
-			अवरोध;
+		ret = lidar_read_byte(data, LIDAR_REG_STATUS);
+		if (ret < 0)
+			break;
 
-		/* वापस -EINVAL since laser is likely poपूर्णांकed out of range */
-		अगर (ret & LIDAR_REG_STATUS_INVALID) अणु
+		/* return -EINVAL since laser is likely pointed out of range */
+		if (ret & LIDAR_REG_STATUS_INVALID) {
 			*reg = 0;
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* sample पढ़ोy to पढ़ो */
-		अगर (!(ret & LIDAR_REG_STATUS_READY)) अणु
-			ret = lidar_पढ़ो_measurement(data, reg);
-			अवरोध;
-		पूर्ण
+		/* sample ready to read */
+		if (!(ret & LIDAR_REG_STATUS_READY)) {
+			ret = lidar_read_measurement(data, reg);
+			break;
+		}
 		ret = -EIO;
-	पूर्ण
-	pm_runसमय_mark_last_busy(&client->dev);
-	pm_runसमय_put_स्वतःsuspend(&client->dev);
+	}
+	pm_runtime_mark_last_busy(&client->dev);
+	pm_runtime_put_autosuspend(&client->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lidar_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			  काष्ठा iio_chan_spec स्थिर *chan,
-			  पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा lidar_data *data = iio_priv(indio_dev);
-	पूर्णांक ret = -EINVAL;
+static int lidar_read_raw(struct iio_dev *indio_dev,
+			  struct iio_chan_spec const *chan,
+			  int *val, int *val2, long mask)
+{
+	struct lidar_data *data = iio_priv(indio_dev);
+	int ret = -EINVAL;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW: अणु
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW: {
 		u16 reg;
 
-		अगर (iio_device_claim_direct_mode(indio_dev))
-			वापस -EBUSY;
+		if (iio_device_claim_direct_mode(indio_dev))
+			return -EBUSY;
 
 		ret = lidar_get_measurement(data, &reg);
-		अगर (!ret) अणु
+		if (!ret) {
 			*val = reg;
 			ret = IIO_VAL_INT;
-		पूर्ण
+		}
 		iio_device_release_direct_mode(indio_dev);
-		अवरोध;
-	पूर्ण
-	हाल IIO_CHAN_INFO_SCALE:
+		break;
+	}
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = 10000;
 		ret = IIO_VAL_INT_PLUS_MICRO;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल irqवापस_t lidar_trigger_handler(पूर्णांक irq, व्योम *निजी)
-अणु
-	काष्ठा iio_poll_func *pf = निजी;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा lidar_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static irqreturn_t lidar_trigger_handler(int irq, void *private)
+{
+	struct iio_poll_func *pf = private;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct lidar_data *data = iio_priv(indio_dev);
+	int ret;
 
 	ret = lidar_get_measurement(data, data->buffer);
-	अगर (!ret) अणु
-		iio_push_to_buffers_with_बारtamp(indio_dev, data->buffer,
-						   iio_get_समय_ns(indio_dev));
-	पूर्ण अन्यथा अगर (ret != -EINVAL) अणु
+	if (!ret) {
+		iio_push_to_buffers_with_timestamp(indio_dev, data->buffer,
+						   iio_get_time_ns(indio_dev));
+	} else if (ret != -EINVAL) {
 		dev_err(&data->client->dev, "cannot read LIDAR measurement");
-	पूर्ण
+	}
 
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा iio_info lidar_info = अणु
-	.पढ़ो_raw = lidar_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info lidar_info = {
+	.read_raw = lidar_read_raw,
+};
 
-अटल पूर्णांक lidar_probe(काष्ठा i2c_client *client,
-		       स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा lidar_data *data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int lidar_probe(struct i2c_client *client,
+		       const struct i2c_device_id *id)
+{
+	struct lidar_data *data;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 	data = iio_priv(indio_dev);
 
-	अगर (i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+	if (i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
 		data->xfer = lidar_i2c_xfer;
 		data->i2c_enabled = 1;
-	पूर्ण अन्यथा अगर (i2c_check_functionality(client->adapter,
+	} else if (i2c_check_functionality(client->adapter,
 				I2C_FUNC_SMBUS_WORD_DATA | I2C_FUNC_SMBUS_BYTE))
 		data->xfer = lidar_smbus_xfer;
-	अन्यथा
-		वापस -EOPNOTSUPP;
+	else
+		return -EOPNOTSUPP;
 
 	indio_dev->info = &lidar_info;
 	indio_dev->name = LIDAR_DRV_NAME;
 	indio_dev->channels = lidar_channels;
 	indio_dev->num_channels = ARRAY_SIZE(lidar_channels);
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	i2c_set_clientdata(client, indio_dev);
 
 	data->client = client;
 	data->indio_dev = indio_dev;
 
-	ret = iio_triggered_buffer_setup(indio_dev, शून्य,
-					 lidar_trigger_handler, शून्य);
-	अगर (ret)
-		वापस ret;
+	ret = iio_triggered_buffer_setup(indio_dev, NULL,
+					 lidar_trigger_handler, NULL);
+	if (ret)
+		return ret;
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret)
-		जाओ error_unreg_buffer;
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto error_unreg_buffer;
 
-	pm_runसमय_set_स्वतःsuspend_delay(&client->dev, 1000);
-	pm_runसमय_use_स्वतःsuspend(&client->dev);
+	pm_runtime_set_autosuspend_delay(&client->dev, 1000);
+	pm_runtime_use_autosuspend(&client->dev);
 
-	ret = pm_runसमय_set_active(&client->dev);
-	अगर (ret)
-		जाओ error_unreg_buffer;
-	pm_runसमय_enable(&client->dev);
-	pm_runसमय_idle(&client->dev);
+	ret = pm_runtime_set_active(&client->dev);
+	if (ret)
+		goto error_unreg_buffer;
+	pm_runtime_enable(&client->dev);
+	pm_runtime_idle(&client->dev);
 
-	वापस 0;
+	return 0;
 
 error_unreg_buffer:
 	iio_triggered_buffer_cleanup(indio_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक lidar_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+static int lidar_remove(struct i2c_client *client)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
 
-	pm_runसमय_disable(&client->dev);
-	pm_runसमय_set_suspended(&client->dev);
+	pm_runtime_disable(&client->dev);
+	pm_runtime_set_suspended(&client->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id lidar_id[] = अणु
-	अणु"lidar-lite-v2", 0पूर्ण,
-	अणु"lidar-lite-v3", 0पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct i2c_device_id lidar_id[] = {
+	{"lidar-lite-v2", 0},
+	{"lidar-lite-v3", 0},
+	{ },
+};
 MODULE_DEVICE_TABLE(i2c, lidar_id);
 
-अटल स्थिर काष्ठा of_device_id lidar_dt_ids[] = अणु
-	अणु .compatible = "pulsedlight,lidar-lite-v2" पूर्ण,
-	अणु .compatible = "grmn,lidar-lite-v3" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id lidar_dt_ids[] = {
+	{ .compatible = "pulsedlight,lidar-lite-v2" },
+	{ .compatible = "grmn,lidar-lite-v3" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, lidar_dt_ids);
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक lidar_pm_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	काष्ठा lidar_data *data = iio_priv(indio_dev);
+#ifdef CONFIG_PM
+static int lidar_pm_runtime_suspend(struct device *dev)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	struct lidar_data *data = iio_priv(indio_dev);
 
-	वापस lidar_ग_लिखो_घातer(data, 0x0f);
-पूर्ण
+	return lidar_write_power(data, 0x0f);
+}
 
-अटल पूर्णांक lidar_pm_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
-	काष्ठा lidar_data *data = iio_priv(indio_dev);
-	पूर्णांक ret = lidar_ग_लिखो_घातer(data, 0);
+static int lidar_pm_runtime_resume(struct device *dev)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
+	struct lidar_data *data = iio_priv(indio_dev);
+	int ret = lidar_write_power(data, 0);
 
-	/* regulator and FPGA needs settling समय */
+	/* regulator and FPGA needs settling time */
 	usleep_range(15000, 20000);
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops lidar_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(lidar_pm_runसमय_suspend,
-			   lidar_pm_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops lidar_pm_ops = {
+	SET_RUNTIME_PM_OPS(lidar_pm_runtime_suspend,
+			   lidar_pm_runtime_resume, NULL)
+};
 
-अटल काष्ठा i2c_driver lidar_driver = अणु
-	.driver = अणु
+static struct i2c_driver lidar_driver = {
+	.driver = {
 		.name	= LIDAR_DRV_NAME,
 		.of_match_table	= lidar_dt_ids,
 		.pm	= &lidar_pm_ops,
-	पूर्ण,
+	},
 	.probe		= lidar_probe,
-	.हटाओ		= lidar_हटाओ,
+	.remove		= lidar_remove,
 	.id_table	= lidar_id,
-पूर्ण;
+};
 module_i2c_driver(lidar_driver);
 
 MODULE_AUTHOR("Matt Ranostay <matt.ranostay@konsulko.com>");

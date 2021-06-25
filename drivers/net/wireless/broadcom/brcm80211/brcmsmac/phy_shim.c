@@ -1,217 +1,216 @@
-<शैली गुरु>
 /*
  * Copyright (c) 2010 Broadcom Corporation
  *
- * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * This is "two-way" पूर्णांकerface, acting as the SHIM layer between driver
+ * This is "two-way" interface, acting as the SHIM layer between driver
  * and PHY layer. The driver can optionally call this translation layer
- * to करो some preprocessing, then reach PHY. On the PHY->driver direction,
- * all calls go through this layer since PHY करोesn't have access to the
- * driver's brcms_hardware poपूर्णांकer.
+ * to do some preprocessing, then reach PHY. On the PHY->driver direction,
+ * all calls go through this layer since PHY doesn't have access to the
+ * driver's brcms_hardware pointer.
  */
-#समावेश <linux/slab.h>
-#समावेश <net/mac80211.h>
+#include <linux/slab.h>
+#include <net/mac80211.h>
 
-#समावेश "main.h"
-#समावेश "mac80211_if.h"
-#समावेश "phy_shim.h"
+#include "main.h"
+#include "mac80211_if.h"
+#include "phy_shim.h"
 
-/* PHY SHIM module specअगरic state */
-काष्ठा phy_shim_info अणु
-	काष्ठा brcms_hardware *wlc_hw;	/* poपूर्णांकer to मुख्य wlc_hw काष्ठाure */
-	काष्ठा brcms_c_info *wlc;	/* poपूर्णांकer to मुख्य wlc काष्ठाure */
-	काष्ठा brcms_info *wl; /* poपूर्णांकer to os-specअगरic निजी state */
-पूर्ण;
+/* PHY SHIM module specific state */
+struct phy_shim_info {
+	struct brcms_hardware *wlc_hw;	/* pointer to main wlc_hw structure */
+	struct brcms_c_info *wlc;	/* pointer to main wlc structure */
+	struct brcms_info *wl; /* pointer to os-specific private state */
+};
 
-काष्ठा phy_shim_info *wlc_phy_shim_attach(काष्ठा brcms_hardware *wlc_hw,
-					  काष्ठा brcms_info *wl,
-					  काष्ठा brcms_c_info *wlc) अणु
-	काष्ठा phy_shim_info *physhim = शून्य;
+struct phy_shim_info *wlc_phy_shim_attach(struct brcms_hardware *wlc_hw,
+					  struct brcms_info *wl,
+					  struct brcms_c_info *wlc) {
+	struct phy_shim_info *physhim = NULL;
 
-	physhim = kzalloc(माप(काष्ठा phy_shim_info), GFP_ATOMIC);
-	अगर (!physhim)
-		वापस शून्य;
+	physhim = kzalloc(sizeof(struct phy_shim_info), GFP_ATOMIC);
+	if (!physhim)
+		return NULL;
 
 	physhim->wlc_hw = wlc_hw;
 	physhim->wlc = wlc;
 	physhim->wl = wl;
 
-	वापस physhim;
-पूर्ण
+	return physhim;
+}
 
-व्योम wlc_phy_shim_detach(काष्ठा phy_shim_info *physhim)
-अणु
-	kमुक्त(physhim);
-पूर्ण
+void wlc_phy_shim_detach(struct phy_shim_info *physhim)
+{
+	kfree(physhim);
+}
 
-काष्ठा wlapi_समयr *wlapi_init_समयr(काष्ठा phy_shim_info *physhim,
-				     व्योम (*fn)(काष्ठा brcms_phy *pi),
-				     व्योम *arg, स्थिर अक्षर *name)
-अणु
-	वापस (काष्ठा wlapi_समयr *)
-			brcms_init_समयr(physhim->wl, (व्योम (*)(व्योम *))fn,
+struct wlapi_timer *wlapi_init_timer(struct phy_shim_info *physhim,
+				     void (*fn)(struct brcms_phy *pi),
+				     void *arg, const char *name)
+{
+	return (struct wlapi_timer *)
+			brcms_init_timer(physhim->wl, (void (*)(void *))fn,
 					 arg, name);
-पूर्ण
+}
 
-व्योम wlapi_मुक्त_समयr(काष्ठा wlapi_समयr *t)
-अणु
-	brcms_मुक्त_समयr((काष्ठा brcms_समयr *)t);
-पूर्ण
+void wlapi_free_timer(struct wlapi_timer *t)
+{
+	brcms_free_timer((struct brcms_timer *)t);
+}
 
-व्योम
-wlapi_add_समयr(काष्ठा wlapi_समयr *t, uपूर्णांक ms, पूर्णांक periodic)
-अणु
-	brcms_add_समयr((काष्ठा brcms_समयr *)t, ms, periodic);
-पूर्ण
+void
+wlapi_add_timer(struct wlapi_timer *t, uint ms, int periodic)
+{
+	brcms_add_timer((struct brcms_timer *)t, ms, periodic);
+}
 
-bool wlapi_del_समयr(काष्ठा wlapi_समयr *t)
-अणु
-	वापस brcms_del_समयr((काष्ठा brcms_समयr *)t);
-पूर्ण
+bool wlapi_del_timer(struct wlapi_timer *t)
+{
+	return brcms_del_timer((struct brcms_timer *)t);
+}
 
-व्योम wlapi_पूर्णांकrson(काष्ठा phy_shim_info *physhim)
-अणु
-	brcms_पूर्णांकrson(physhim->wl);
-पूर्ण
+void wlapi_intrson(struct phy_shim_info *physhim)
+{
+	brcms_intrson(physhim->wl);
+}
 
-u32 wlapi_पूर्णांकrsoff(काष्ठा phy_shim_info *physhim)
-अणु
-	वापस brcms_पूर्णांकrsoff(physhim->wl);
-पूर्ण
+u32 wlapi_intrsoff(struct phy_shim_info *physhim)
+{
+	return brcms_intrsoff(physhim->wl);
+}
 
-व्योम wlapi_पूर्णांकrsrestore(काष्ठा phy_shim_info *physhim, u32 macपूर्णांकmask)
-अणु
-	brcms_पूर्णांकrsrestore(physhim->wl, macपूर्णांकmask);
-पूर्ण
+void wlapi_intrsrestore(struct phy_shim_info *physhim, u32 macintmask)
+{
+	brcms_intrsrestore(physhim->wl, macintmask);
+}
 
-व्योम wlapi_bmac_ग_लिखो_shm(काष्ठा phy_shim_info *physhim, uपूर्णांक offset, u16 v)
-अणु
-	brcms_b_ग_लिखो_shm(physhim->wlc_hw, offset, v);
-पूर्ण
+void wlapi_bmac_write_shm(struct phy_shim_info *physhim, uint offset, u16 v)
+{
+	brcms_b_write_shm(physhim->wlc_hw, offset, v);
+}
 
-u16 wlapi_bmac_पढ़ो_shm(काष्ठा phy_shim_info *physhim, uपूर्णांक offset)
-अणु
-	वापस brcms_b_पढ़ो_shm(physhim->wlc_hw, offset);
-पूर्ण
+u16 wlapi_bmac_read_shm(struct phy_shim_info *physhim, uint offset)
+{
+	return brcms_b_read_shm(physhim->wlc_hw, offset);
+}
 
-व्योम
-wlapi_bmac_mhf(काष्ठा phy_shim_info *physhim, u8 idx, u16 mask,
-	       u16 val, पूर्णांक bands)
-अणु
+void
+wlapi_bmac_mhf(struct phy_shim_info *physhim, u8 idx, u16 mask,
+	       u16 val, int bands)
+{
 	brcms_b_mhf(physhim->wlc_hw, idx, mask, val, bands);
-पूर्ण
+}
 
-व्योम wlapi_bmac_corereset(काष्ठा phy_shim_info *physhim, u32 flags)
-अणु
+void wlapi_bmac_corereset(struct phy_shim_info *physhim, u32 flags)
+{
 	brcms_b_corereset(physhim->wlc_hw, flags);
-पूर्ण
+}
 
-व्योम wlapi_suspend_mac_and_रुको(काष्ठा phy_shim_info *physhim)
-अणु
-	brcms_c_suspend_mac_and_रुको(physhim->wlc);
-पूर्ण
+void wlapi_suspend_mac_and_wait(struct phy_shim_info *physhim)
+{
+	brcms_c_suspend_mac_and_wait(physhim->wlc);
+}
 
-व्योम wlapi_चयन_macfreq(काष्ठा phy_shim_info *physhim, u8 spurmode)
-अणु
-	brcms_b_चयन_macfreq(physhim->wlc_hw, spurmode);
-पूर्ण
+void wlapi_switch_macfreq(struct phy_shim_info *physhim, u8 spurmode)
+{
+	brcms_b_switch_macfreq(physhim->wlc_hw, spurmode);
+}
 
-व्योम wlapi_enable_mac(काष्ठा phy_shim_info *physhim)
-अणु
+void wlapi_enable_mac(struct phy_shim_info *physhim)
+{
 	brcms_c_enable_mac(physhim->wlc);
-पूर्ण
+}
 
-व्योम wlapi_bmac_mctrl(काष्ठा phy_shim_info *physhim, u32 mask, u32 val)
-अणु
+void wlapi_bmac_mctrl(struct phy_shim_info *physhim, u32 mask, u32 val)
+{
 	brcms_b_mctrl(physhim->wlc_hw, mask, val);
-पूर्ण
+}
 
-व्योम wlapi_bmac_phy_reset(काष्ठा phy_shim_info *physhim)
-अणु
+void wlapi_bmac_phy_reset(struct phy_shim_info *physhim)
+{
 	brcms_b_phy_reset(physhim->wlc_hw);
-पूर्ण
+}
 
-व्योम wlapi_bmac_bw_set(काष्ठा phy_shim_info *physhim, u16 bw)
-अणु
+void wlapi_bmac_bw_set(struct phy_shim_info *physhim, u16 bw)
+{
 	brcms_b_bw_set(physhim->wlc_hw, bw);
-पूर्ण
+}
 
-u16 wlapi_bmac_get_txant(काष्ठा phy_shim_info *physhim)
-अणु
-	वापस brcms_b_get_txant(physhim->wlc_hw);
-पूर्ण
+u16 wlapi_bmac_get_txant(struct phy_shim_info *physhim)
+{
+	return brcms_b_get_txant(physhim->wlc_hw);
+}
 
-व्योम wlapi_bmac_phyclk_fgc(काष्ठा phy_shim_info *physhim, bool clk)
-अणु
+void wlapi_bmac_phyclk_fgc(struct phy_shim_info *physhim, bool clk)
+{
 	brcms_b_phyclk_fgc(physhim->wlc_hw, clk);
-पूर्ण
+}
 
-व्योम wlapi_bmac_macphyclk_set(काष्ठा phy_shim_info *physhim, bool clk)
-अणु
+void wlapi_bmac_macphyclk_set(struct phy_shim_info *physhim, bool clk)
+{
 	brcms_b_macphyclk_set(physhim->wlc_hw, clk);
-पूर्ण
+}
 
-व्योम wlapi_bmac_core_phypll_ctl(काष्ठा phy_shim_info *physhim, bool on)
-अणु
+void wlapi_bmac_core_phypll_ctl(struct phy_shim_info *physhim, bool on)
+{
 	brcms_b_core_phypll_ctl(physhim->wlc_hw, on);
-पूर्ण
+}
 
-व्योम wlapi_bmac_core_phypll_reset(काष्ठा phy_shim_info *physhim)
-अणु
+void wlapi_bmac_core_phypll_reset(struct phy_shim_info *physhim)
+{
 	brcms_b_core_phypll_reset(physhim->wlc_hw);
-पूर्ण
+}
 
-व्योम wlapi_bmac_ucode_wake_override_phyreg_set(काष्ठा phy_shim_info *physhim)
-अणु
+void wlapi_bmac_ucode_wake_override_phyreg_set(struct phy_shim_info *physhim)
+{
 	brcms_c_ucode_wake_override_set(physhim->wlc_hw,
 					BRCMS_WAKE_OVERRIDE_PHYREG);
-पूर्ण
+}
 
-व्योम wlapi_bmac_ucode_wake_override_phyreg_clear(काष्ठा phy_shim_info *physhim)
-अणु
+void wlapi_bmac_ucode_wake_override_phyreg_clear(struct phy_shim_info *physhim)
+{
 	brcms_c_ucode_wake_override_clear(physhim->wlc_hw,
 					  BRCMS_WAKE_OVERRIDE_PHYREG);
-पूर्ण
+}
 
-व्योम
-wlapi_bmac_ग_लिखो_ढाँचा_ram(काष्ठा phy_shim_info *physhim, पूर्णांक offset,
-			      पूर्णांक len, व्योम *buf)
-अणु
-	brcms_b_ग_लिखो_ढाँचा_ram(physhim->wlc_hw, offset, len, buf);
-पूर्ण
+void
+wlapi_bmac_write_template_ram(struct phy_shim_info *physhim, int offset,
+			      int len, void *buf)
+{
+	brcms_b_write_template_ram(physhim->wlc_hw, offset, len, buf);
+}
 
-u16 wlapi_bmac_rate_shm_offset(काष्ठा phy_shim_info *physhim, u8 rate)
-अणु
-	वापस brcms_b_rate_shm_offset(physhim->wlc_hw, rate);
-पूर्ण
+u16 wlapi_bmac_rate_shm_offset(struct phy_shim_info *physhim, u8 rate)
+{
+	return brcms_b_rate_shm_offset(physhim->wlc_hw, rate);
+}
 
-व्योम wlapi_ucode_sample_init(काष्ठा phy_shim_info *physhim)
-अणु
-पूर्ण
+void wlapi_ucode_sample_init(struct phy_shim_info *physhim)
+{
+}
 
-व्योम
-wlapi_copyfrom_objmem(काष्ठा phy_shim_info *physhim, uपूर्णांक offset, व्योम *buf,
-		      पूर्णांक len, u32 sel)
-अणु
+void
+wlapi_copyfrom_objmem(struct phy_shim_info *physhim, uint offset, void *buf,
+		      int len, u32 sel)
+{
 	brcms_b_copyfrom_objmem(physhim->wlc_hw, offset, buf, len, sel);
-पूर्ण
+}
 
-व्योम
-wlapi_copyto_objmem(काष्ठा phy_shim_info *physhim, uपूर्णांक offset, स्थिर व्योम *buf,
-		    पूर्णांक l, u32 sel)
-अणु
+void
+wlapi_copyto_objmem(struct phy_shim_info *physhim, uint offset, const void *buf,
+		    int l, u32 sel)
+{
 	brcms_b_copyto_objmem(physhim->wlc_hw, offset, buf, l, sel);
-पूर्ण
+}

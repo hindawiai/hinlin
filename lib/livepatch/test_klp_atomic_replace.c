@@ -1,57 +1,56 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2018 Joe Lawrence <joe.lawrence@redhat.com>
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/livepatch.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/livepatch.h>
 
-अटल पूर्णांक replace;
-module_param(replace, पूर्णांक, 0644);
+static int replace;
+module_param(replace, int, 0644);
 MODULE_PARM_DESC(replace, "replace (default=0)");
 
-#समावेश <linux/seq_file.h>
-अटल पूर्णांक livepatch_meminfo_proc_show(काष्ठा seq_file *m, व्योम *v)
-अणु
-	seq_म_लिखो(m, "%s: %s\n", THIS_MODULE->name,
+#include <linux/seq_file.h>
+static int livepatch_meminfo_proc_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "%s: %s\n", THIS_MODULE->name,
 		   "this has been live patched");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा klp_func funcs[] = अणु
-	अणु
+static struct klp_func funcs[] = {
+	{
 		.old_name = "meminfo_proc_show",
 		.new_func = livepatch_meminfo_proc_show,
-	पूर्ण, अणुपूर्ण
-पूर्ण;
+	}, {}
+};
 
-अटल काष्ठा klp_object objs[] = अणु
-	अणु
-		/* name being शून्य means vmlinux */
+static struct klp_object objs[] = {
+	{
+		/* name being NULL means vmlinux */
 		.funcs = funcs,
-	पूर्ण, अणुपूर्ण
-पूर्ण;
+	}, {}
+};
 
-अटल काष्ठा klp_patch patch = अणु
+static struct klp_patch patch = {
 	.mod = THIS_MODULE,
 	.objs = objs,
-	/* set .replace in the init function below क्रम demo purposes */
-पूर्ण;
+	/* set .replace in the init function below for demo purposes */
+};
 
-अटल पूर्णांक test_klp_atomic_replace_init(व्योम)
-अणु
+static int test_klp_atomic_replace_init(void)
+{
 	patch.replace = replace;
-	वापस klp_enable_patch(&patch);
-पूर्ण
+	return klp_enable_patch(&patch);
+}
 
-अटल व्योम test_klp_atomic_replace_निकास(व्योम)
-अणु
-पूर्ण
+static void test_klp_atomic_replace_exit(void)
+{
+}
 
 module_init(test_klp_atomic_replace_init);
-module_निकास(test_klp_atomic_replace_निकास);
+module_exit(test_klp_atomic_replace_exit);
 MODULE_LICENSE("GPL");
 MODULE_INFO(livepatch, "Y");
 MODULE_AUTHOR("Joe Lawrence <joe.lawrence@redhat.com>");

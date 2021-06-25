@@ -1,76 +1,75 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __RPROC_QCOM_COMMON_H__
-#घोषणा __RPROC_QCOM_COMMON_H__
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __RPROC_QCOM_COMMON_H__
+#define __RPROC_QCOM_COMMON_H__
 
-#समावेश <linux/remoteproc.h>
-#समावेश "remoteproc_internal.h"
-#समावेश <linux/soc/qcom/qmi.h>
+#include <linux/remoteproc.h>
+#include "remoteproc_internal.h"
+#include <linux/soc/qcom/qmi.h>
 
-काष्ठा qcom_sysmon;
+struct qcom_sysmon;
 
-काष्ठा qcom_rproc_glink अणु
-	काष्ठा rproc_subdev subdev;
+struct qcom_rproc_glink {
+	struct rproc_subdev subdev;
 
-	स्थिर अक्षर *ssr_name;
+	const char *ssr_name;
 
-	काष्ठा device *dev;
-	काष्ठा device_node *node;
-	काष्ठा qcom_glink *edge;
-पूर्ण;
+	struct device *dev;
+	struct device_node *node;
+	struct qcom_glink *edge;
+};
 
-काष्ठा qcom_rproc_subdev अणु
-	काष्ठा rproc_subdev subdev;
+struct qcom_rproc_subdev {
+	struct rproc_subdev subdev;
 
-	काष्ठा device *dev;
-	काष्ठा device_node *node;
-	काष्ठा qcom_smd_edge *edge;
-पूर्ण;
+	struct device *dev;
+	struct device_node *node;
+	struct qcom_smd_edge *edge;
+};
 
-काष्ठा qcom_ssr_subप्रणाली;
+struct qcom_ssr_subsystem;
 
-काष्ठा qcom_rproc_ssr अणु
-	काष्ठा rproc_subdev subdev;
-	काष्ठा qcom_ssr_subप्रणाली *info;
-पूर्ण;
+struct qcom_rproc_ssr {
+	struct rproc_subdev subdev;
+	struct qcom_ssr_subsystem *info;
+};
 
-व्योम qcom_minidump(काष्ठा rproc *rproc, अचिन्हित पूर्णांक minidump_id);
+void qcom_minidump(struct rproc *rproc, unsigned int minidump_id);
 
-व्योम qcom_add_glink_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_glink *glink,
-			   स्थिर अक्षर *ssr_name);
-व्योम qcom_हटाओ_glink_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_glink *glink);
+void qcom_add_glink_subdev(struct rproc *rproc, struct qcom_rproc_glink *glink,
+			   const char *ssr_name);
+void qcom_remove_glink_subdev(struct rproc *rproc, struct qcom_rproc_glink *glink);
 
-पूर्णांक qcom_रेजिस्टर_dump_segments(काष्ठा rproc *rproc, स्थिर काष्ठा firmware *fw);
+int qcom_register_dump_segments(struct rproc *rproc, const struct firmware *fw);
 
-व्योम qcom_add_smd_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_subdev *smd);
-व्योम qcom_हटाओ_smd_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_subdev *smd);
+void qcom_add_smd_subdev(struct rproc *rproc, struct qcom_rproc_subdev *smd);
+void qcom_remove_smd_subdev(struct rproc *rproc, struct qcom_rproc_subdev *smd);
 
-व्योम qcom_add_ssr_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_ssr *ssr,
-			 स्थिर अक्षर *ssr_name);
-व्योम qcom_हटाओ_ssr_subdev(काष्ठा rproc *rproc, काष्ठा qcom_rproc_ssr *ssr);
+void qcom_add_ssr_subdev(struct rproc *rproc, struct qcom_rproc_ssr *ssr,
+			 const char *ssr_name);
+void qcom_remove_ssr_subdev(struct rproc *rproc, struct qcom_rproc_ssr *ssr);
 
-#अगर IS_ENABLED(CONFIG_QCOM_SYSMON)
-काष्ठा qcom_sysmon *qcom_add_sysmon_subdev(काष्ठा rproc *rproc,
-					   स्थिर अक्षर *name,
-					   पूर्णांक ssctl_instance);
-व्योम qcom_हटाओ_sysmon_subdev(काष्ठा qcom_sysmon *sysmon);
-bool qcom_sysmon_shutकरोwn_acked(काष्ठा qcom_sysmon *sysmon);
-#अन्यथा
-अटल अंतरभूत काष्ठा qcom_sysmon *qcom_add_sysmon_subdev(काष्ठा rproc *rproc,
-							 स्थिर अक्षर *name,
-							 पूर्णांक ssctl_instance)
-अणु
-	वापस शून्य;
-पूर्ण
+#if IS_ENABLED(CONFIG_QCOM_SYSMON)
+struct qcom_sysmon *qcom_add_sysmon_subdev(struct rproc *rproc,
+					   const char *name,
+					   int ssctl_instance);
+void qcom_remove_sysmon_subdev(struct qcom_sysmon *sysmon);
+bool qcom_sysmon_shutdown_acked(struct qcom_sysmon *sysmon);
+#else
+static inline struct qcom_sysmon *qcom_add_sysmon_subdev(struct rproc *rproc,
+							 const char *name,
+							 int ssctl_instance)
+{
+	return NULL;
+}
 
-अटल अंतरभूत व्योम qcom_हटाओ_sysmon_subdev(काष्ठा qcom_sysmon *sysmon)
-अणु
-पूर्ण
+static inline void qcom_remove_sysmon_subdev(struct qcom_sysmon *sysmon)
+{
+}
 
-अटल अंतरभूत bool qcom_sysmon_shutकरोwn_acked(काष्ठा qcom_sysmon *sysmon)
-अणु
-	वापस false;
-पूर्ण
-#पूर्ण_अगर
+static inline bool qcom_sysmon_shutdown_acked(struct qcom_sysmon *sysmon)
+{
+	return false;
+}
+#endif
 
-#पूर्ण_अगर
+#endif

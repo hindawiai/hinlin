@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
-#अगर_अघोषित _LINUX_TERMIOS_H
-#घोषणा _LINUX_TERMIOS_H
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _LINUX_TERMIOS_H
+#define _LINUX_TERMIOS_H
 
-#समावेश <linux/types.h>
-#समावेश <यंत्र/termios.h>
+#include <linux/types.h>
+#include <asm/termios.h>
 
-#पूर्ण_अगर
+#endif

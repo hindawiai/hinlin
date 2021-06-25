@@ -1,166 +1,165 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018-2020 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#समावेश "api/commands.h"
-#समावेश "debugfs.h"
-#समावेश "dbg.h"
-#समावेश <linux/seq_file.h>
+#include "api/commands.h"
+#include "debugfs.h"
+#include "dbg.h"
+#include <linux/seq_file.h>
 
-#घोषणा FWRT_DEBUGFS_OPEN_WRAPPER(name, buflen, argtype)		\
-काष्ठा dbgfs_##name##_data अणु						\
+#define FWRT_DEBUGFS_OPEN_WRAPPER(name, buflen, argtype)		\
+struct dbgfs_##name##_data {						\
 	argtype *arg;							\
-	bool पढ़ो_करोne;							\
-	sमाप_प्रकार rlen;							\
-	अक्षर rbuf[buflen];						\
-पूर्ण;									\
-अटल पूर्णांक _iwl_dbgfs_##name##_खोलो(काष्ठा inode *inode,		\
-				    काष्ठा file *file)			\
-अणु									\
-	काष्ठा dbgfs_##name##_data *data;				\
+	bool read_done;							\
+	ssize_t rlen;							\
+	char rbuf[buflen];						\
+};									\
+static int _iwl_dbgfs_##name##_open(struct inode *inode,		\
+				    struct file *file)			\
+{									\
+	struct dbgfs_##name##_data *data;				\
 									\
-	data = kzalloc(माप(*data), GFP_KERNEL);			\
-	अगर (!data)							\
-		वापस -ENOMEM;						\
+	data = kzalloc(sizeof(*data), GFP_KERNEL);			\
+	if (!data)							\
+		return -ENOMEM;						\
 									\
-	data->पढ़ो_करोne = false;					\
-	data->arg = inode->i_निजी;					\
-	file->निजी_data = data;					\
+	data->read_done = false;					\
+	data->arg = inode->i_private;					\
+	file->private_data = data;					\
 									\
-	वापस 0;							\
-पूर्ण
+	return 0;							\
+}
 
-#घोषणा FWRT_DEBUGFS_READ_WRAPPER(name)					\
-अटल sमाप_प्रकार _iwl_dbgfs_##name##_पढ़ो(काष्ठा file *file,		\
-					अक्षर __user *user_buf,		\
-					माप_प्रकार count, loff_t *ppos)	\
-अणु									\
-	काष्ठा dbgfs_##name##_data *data = file->निजी_data;		\
+#define FWRT_DEBUGFS_READ_WRAPPER(name)					\
+static ssize_t _iwl_dbgfs_##name##_read(struct file *file,		\
+					char __user *user_buf,		\
+					size_t count, loff_t *ppos)	\
+{									\
+	struct dbgfs_##name##_data *data = file->private_data;		\
 									\
-	अगर (!data->पढ़ो_करोne) अणु						\
-		data->पढ़ो_करोne = true;					\
-		data->rlen = iwl_dbgfs_##name##_पढ़ो(data->arg,		\
-						     माप(data->rbuf),\
+	if (!data->read_done) {						\
+		data->read_done = true;					\
+		data->rlen = iwl_dbgfs_##name##_read(data->arg,		\
+						     sizeof(data->rbuf),\
 						     data->rbuf);	\
-	पूर्ण								\
+	}								\
 									\
-	अगर (data->rlen < 0)						\
-		वापस data->rlen;					\
-	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos,		\
+	if (data->rlen < 0)						\
+		return data->rlen;					\
+	return simple_read_from_buffer(user_buf, count, ppos,		\
 				       data->rbuf, data->rlen);		\
-पूर्ण
+}
 
-अटल पूर्णांक _iwl_dbgfs_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	kमुक्त(file->निजी_data);
+static int _iwl_dbgfs_release(struct inode *inode, struct file *file)
+{
+	kfree(file->private_data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा _FWRT_DEBUGFS_READ_खाता_OPS(name, buflen, argtype)		\
+#define _FWRT_DEBUGFS_READ_FILE_OPS(name, buflen, argtype)		\
 FWRT_DEBUGFS_OPEN_WRAPPER(name, buflen, argtype)			\
 FWRT_DEBUGFS_READ_WRAPPER(name)						\
-अटल स्थिर काष्ठा file_operations iwl_dbgfs_##name##_ops = अणु		\
-	.पढ़ो = _iwl_dbgfs_##name##_पढ़ो,				\
-	.खोलो = _iwl_dbgfs_##name##_खोलो,				\
+static const struct file_operations iwl_dbgfs_##name##_ops = {		\
+	.read = _iwl_dbgfs_##name##_read,				\
+	.open = _iwl_dbgfs_##name##_open,				\
 	.llseek = generic_file_llseek,					\
 	.release = _iwl_dbgfs_release,					\
-पूर्ण
+}
 
-#घोषणा FWRT_DEBUGFS_WRITE_WRAPPER(name, buflen, argtype)		\
-अटल sमाप_प्रकार _iwl_dbgfs_##name##_ग_लिखो(काष्ठा file *file,		\
-					 स्थिर अक्षर __user *user_buf,	\
-					 माप_प्रकार count, loff_t *ppos)	\
-अणु									\
+#define FWRT_DEBUGFS_WRITE_WRAPPER(name, buflen, argtype)		\
+static ssize_t _iwl_dbgfs_##name##_write(struct file *file,		\
+					 const char __user *user_buf,	\
+					 size_t count, loff_t *ppos)	\
+{									\
 	argtype *arg =							\
-		((काष्ठा dbgfs_##name##_data *)file->निजी_data)->arg;\
-	अक्षर buf[buflen] = अणुपूर्ण;						\
-	माप_प्रकार buf_size = min(count, माप(buf) -  1);			\
+		((struct dbgfs_##name##_data *)file->private_data)->arg;\
+	char buf[buflen] = {};						\
+	size_t buf_size = min(count, sizeof(buf) -  1);			\
 									\
-	अगर (copy_from_user(buf, user_buf, buf_size))			\
-		वापस -EFAULT;						\
+	if (copy_from_user(buf, user_buf, buf_size))			\
+		return -EFAULT;						\
 									\
-	वापस iwl_dbgfs_##name##_ग_लिखो(arg, buf, buf_size);		\
-पूर्ण
+	return iwl_dbgfs_##name##_write(arg, buf, buf_size);		\
+}
 
-#घोषणा _FWRT_DEBUGFS_READ_WRITE_खाता_OPS(name, buflen, argtype)	\
+#define _FWRT_DEBUGFS_READ_WRITE_FILE_OPS(name, buflen, argtype)	\
 FWRT_DEBUGFS_OPEN_WRAPPER(name, buflen, argtype)			\
 FWRT_DEBUGFS_WRITE_WRAPPER(name, buflen, argtype)			\
 FWRT_DEBUGFS_READ_WRAPPER(name)						\
-अटल स्थिर काष्ठा file_operations iwl_dbgfs_##name##_ops = अणु		\
-	.ग_लिखो = _iwl_dbgfs_##name##_ग_लिखो,				\
-	.पढ़ो = _iwl_dbgfs_##name##_पढ़ो,				\
-	.खोलो = _iwl_dbgfs_##name##_खोलो,				\
+static const struct file_operations iwl_dbgfs_##name##_ops = {		\
+	.write = _iwl_dbgfs_##name##_write,				\
+	.read = _iwl_dbgfs_##name##_read,				\
+	.open = _iwl_dbgfs_##name##_open,				\
 	.llseek = generic_file_llseek,					\
 	.release = _iwl_dbgfs_release,					\
-पूर्ण
+}
 
-#घोषणा _FWRT_DEBUGFS_WRITE_खाता_OPS(name, buflen, argtype)		\
+#define _FWRT_DEBUGFS_WRITE_FILE_OPS(name, buflen, argtype)		\
 FWRT_DEBUGFS_OPEN_WRAPPER(name, buflen, argtype)			\
 FWRT_DEBUGFS_WRITE_WRAPPER(name, buflen, argtype)			\
-अटल स्थिर काष्ठा file_operations iwl_dbgfs_##name##_ops = अणु		\
-	.ग_लिखो = _iwl_dbgfs_##name##_ग_लिखो,				\
-	.खोलो = _iwl_dbgfs_##name##_खोलो,				\
+static const struct file_operations iwl_dbgfs_##name##_ops = {		\
+	.write = _iwl_dbgfs_##name##_write,				\
+	.open = _iwl_dbgfs_##name##_open,				\
 	.llseek = generic_file_llseek,					\
 	.release = _iwl_dbgfs_release,					\
-पूर्ण
+}
 
-#घोषणा FWRT_DEBUGFS_READ_खाता_OPS(name, bufsz)				\
-	_FWRT_DEBUGFS_READ_खाता_OPS(name, bufsz, काष्ठा iwl_fw_runसमय)
+#define FWRT_DEBUGFS_READ_FILE_OPS(name, bufsz)				\
+	_FWRT_DEBUGFS_READ_FILE_OPS(name, bufsz, struct iwl_fw_runtime)
 
-#घोषणा FWRT_DEBUGFS_WRITE_खाता_OPS(name, bufsz)			\
-	_FWRT_DEBUGFS_WRITE_खाता_OPS(name, bufsz, काष्ठा iwl_fw_runसमय)
+#define FWRT_DEBUGFS_WRITE_FILE_OPS(name, bufsz)			\
+	_FWRT_DEBUGFS_WRITE_FILE_OPS(name, bufsz, struct iwl_fw_runtime)
 
-#घोषणा FWRT_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz)			\
-	_FWRT_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz, काष्ठा iwl_fw_runसमय)
+#define FWRT_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz)			\
+	_FWRT_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz, struct iwl_fw_runtime)
 
-#घोषणा FWRT_DEBUGFS_ADD_खाता_ALIAS(alias, name, parent, mode) करो अणु	\
+#define FWRT_DEBUGFS_ADD_FILE_ALIAS(alias, name, parent, mode) do {	\
 	debugfs_create_file(alias, mode, parent, fwrt,			\
 			    &iwl_dbgfs_##name##_ops);			\
-	पूर्ण जबतक (0)
-#घोषणा FWRT_DEBUGFS_ADD_खाता(name, parent, mode) \
-	FWRT_DEBUGFS_ADD_खाता_ALIAS(#name, name, parent, mode)
+	} while (0)
+#define FWRT_DEBUGFS_ADD_FILE(name, parent, mode) \
+	FWRT_DEBUGFS_ADD_FILE_ALIAS(#name, name, parent, mode)
 
-अटल पूर्णांक iwl_fw_send_बारtamp_marker_cmd(काष्ठा iwl_fw_runसमय *fwrt)
-अणु
-	काष्ठा iwl_mvm_marker marker = अणु
-		.dw_len = माप(काष्ठा iwl_mvm_marker) / 4,
+static int iwl_fw_send_timestamp_marker_cmd(struct iwl_fw_runtime *fwrt)
+{
+	struct iwl_mvm_marker marker = {
+		.dw_len = sizeof(struct iwl_mvm_marker) / 4,
 		.marker_id = MARKER_ID_SYNC_CLOCK,
 
-		/* the real बारtamp is taken from the ftrace घड़ी
-		 * this is क्रम finding the match between fw and kernel logs
+		/* the real timestamp is taken from the ftrace clock
+		 * this is for finding the match between fw and kernel logs
 		 */
-		.बारtamp = cpu_to_le64(fwrt->बारtamp.seq++),
-	पूर्ण;
+		.timestamp = cpu_to_le64(fwrt->timestamp.seq++),
+	};
 
-	काष्ठा iwl_host_cmd hcmd = अणु
+	struct iwl_host_cmd hcmd = {
 		.id = MARKER_CMD,
 		.flags = CMD_ASYNC,
 		.data[0] = &marker,
-		.len[0] = माप(marker),
-	पूर्ण;
+		.len[0] = sizeof(marker),
+	};
 
-	वापस iwl_trans_send_cmd(fwrt->trans, &hcmd);
-पूर्ण
+	return iwl_trans_send_cmd(fwrt->trans, &hcmd);
+}
 
-अटल पूर्णांक iwl_dbgfs_enabled_severities_ग_लिखो(काष्ठा iwl_fw_runसमय *fwrt,
-					      अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा iwl_dbg_host_event_cfg_cmd event_cfg;
-	काष्ठा iwl_host_cmd hcmd = अणु
+static int iwl_dbgfs_enabled_severities_write(struct iwl_fw_runtime *fwrt,
+					      char *buf, size_t count)
+{
+	struct iwl_dbg_host_event_cfg_cmd event_cfg;
+	struct iwl_host_cmd hcmd = {
 		.id = iwl_cmd_id(HOST_EVENT_CFG, DEBUG_GROUP, 0),
 		.flags = CMD_ASYNC,
 		.data[0] = &event_cfg,
-		.len[0] = माप(event_cfg),
-	पूर्ण;
+		.len[0] = sizeof(event_cfg),
+	};
 	u32 enabled_severities;
-	पूर्णांक ret = kstrtou32(buf, 10, &enabled_severities);
+	int ret = kstrtou32(buf, 10, &enabled_severities);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	event_cfg.enabled_severities = cpu_to_le32(enabled_severities);
 
@@ -169,242 +168,242 @@ FWRT_DEBUGFS_WRITE_WRAPPER(name, buflen, argtype)			\
 		 "sent host event cfg with enabled_severities: %u, ret: %d\n",
 		 enabled_severities, ret);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-FWRT_DEBUGFS_WRITE_खाता_OPS(enabled_severities, 16);
+FWRT_DEBUGFS_WRITE_FILE_OPS(enabled_severities, 16);
 
-अटल व्योम iwl_fw_बारtamp_marker_wk(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक ret;
-	काष्ठा iwl_fw_runसमय *fwrt =
-		container_of(work, काष्ठा iwl_fw_runसमय, बारtamp.wk.work);
-	अचिन्हित दीर्घ delay = fwrt->बारtamp.delay;
+static void iwl_fw_timestamp_marker_wk(struct work_struct *work)
+{
+	int ret;
+	struct iwl_fw_runtime *fwrt =
+		container_of(work, struct iwl_fw_runtime, timestamp.wk.work);
+	unsigned long delay = fwrt->timestamp.delay;
 
-	ret = iwl_fw_send_बारtamp_marker_cmd(fwrt);
-	अगर (!ret && delay)
-		schedule_delayed_work(&fwrt->बारtamp.wk,
-				      round_jअगरfies_relative(delay));
-	अन्यथा
+	ret = iwl_fw_send_timestamp_marker_cmd(fwrt);
+	if (!ret && delay)
+		schedule_delayed_work(&fwrt->timestamp.wk,
+				      round_jiffies_relative(delay));
+	else
 		IWL_INFO(fwrt,
 			 "stopping timestamp_marker, ret: %d, delay: %u\n",
-			 ret, jअगरfies_to_msecs(delay) / 1000);
-पूर्ण
+			 ret, jiffies_to_msecs(delay) / 1000);
+}
 
-व्योम iwl_fw_trigger_बारtamp(काष्ठा iwl_fw_runसमय *fwrt, u32 delay)
-अणु
+void iwl_fw_trigger_timestamp(struct iwl_fw_runtime *fwrt, u32 delay)
+{
 	IWL_INFO(fwrt,
 		 "starting timestamp_marker trigger with delay: %us\n",
 		 delay);
 
-	iwl_fw_cancel_बारtamp(fwrt);
+	iwl_fw_cancel_timestamp(fwrt);
 
-	fwrt->बारtamp.delay = msecs_to_jअगरfies(delay * 1000);
+	fwrt->timestamp.delay = msecs_to_jiffies(delay * 1000);
 
-	schedule_delayed_work(&fwrt->बारtamp.wk,
-			      round_jअगरfies_relative(fwrt->बारtamp.delay));
-पूर्ण
+	schedule_delayed_work(&fwrt->timestamp.wk,
+			      round_jiffies_relative(fwrt->timestamp.delay));
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_बारtamp_marker_ग_लिखो(काष्ठा iwl_fw_runसमय *fwrt,
-						अक्षर *buf, माप_प्रकार count)
-अणु
-	पूर्णांक ret;
+static ssize_t iwl_dbgfs_timestamp_marker_write(struct iwl_fw_runtime *fwrt,
+						char *buf, size_t count)
+{
+	int ret;
 	u32 delay;
 
 	ret = kstrtou32(buf, 10, &delay);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	iwl_fw_trigger_बारtamp(fwrt, delay);
+	iwl_fw_trigger_timestamp(fwrt, delay);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार iwl_dbgfs_बारtamp_marker_पढ़ो(काष्ठा iwl_fw_runसमय *fwrt,
-					       माप_प्रकार size, अक्षर *buf)
-अणु
-	u32 delay_secs = jअगरfies_to_msecs(fwrt->बारtamp.delay) / 1000;
+static ssize_t iwl_dbgfs_timestamp_marker_read(struct iwl_fw_runtime *fwrt,
+					       size_t size, char *buf)
+{
+	u32 delay_secs = jiffies_to_msecs(fwrt->timestamp.delay) / 1000;
 
-	वापस scnम_लिखो(buf, size, "%d\n", delay_secs);
-पूर्ण
+	return scnprintf(buf, size, "%d\n", delay_secs);
+}
 
-FWRT_DEBUGFS_READ_WRITE_खाता_OPS(बारtamp_marker, 16);
+FWRT_DEBUGFS_READ_WRITE_FILE_OPS(timestamp_marker, 16);
 
-काष्ठा hcmd_ग_लिखो_data अणु
+struct hcmd_write_data {
 	__be32 cmd_id;
 	__be32 flags;
 	__be16 length;
 	u8 data[];
-पूर्ण __packed;
+} __packed;
 
-अटल sमाप_प्रकार iwl_dbgfs_send_hcmd_ग_लिखो(काष्ठा iwl_fw_runसमय *fwrt, अक्षर *buf,
-					 माप_प्रकार count)
-अणु
-	माप_प्रकार header_size = (माप(u32) * 2 + माप(u16)) * 2;
-	माप_प्रकार data_size = (count - 1) / 2;
-	पूर्णांक ret;
-	काष्ठा hcmd_ग_लिखो_data *data;
-	काष्ठा iwl_host_cmd hcmd = अणु
-		.len = अणु 0, पूर्ण,
-		.data = अणु शून्य, पूर्ण,
-	पूर्ण;
+static ssize_t iwl_dbgfs_send_hcmd_write(struct iwl_fw_runtime *fwrt, char *buf,
+					 size_t count)
+{
+	size_t header_size = (sizeof(u32) * 2 + sizeof(u16)) * 2;
+	size_t data_size = (count - 1) / 2;
+	int ret;
+	struct hcmd_write_data *data;
+	struct iwl_host_cmd hcmd = {
+		.len = { 0, },
+		.data = { NULL, },
+	};
 
-	अगर (fwrt->ops && fwrt->ops->fw_running &&
+	if (fwrt->ops && fwrt->ops->fw_running &&
 	    !fwrt->ops->fw_running(fwrt->ops_ctx))
-		वापस -EIO;
+		return -EIO;
 
-	अगर (count < header_size + 1 || count > 1024 * 4)
-		वापस -EINVAL;
+	if (count < header_size + 1 || count > 1024 * 4)
+		return -EINVAL;
 
-	data = kदो_स्मृति(data_size, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(data_size, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	ret = hex2bin((u8 *)data, buf, data_size);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	hcmd.id = be32_to_cpu(data->cmd_id);
 	hcmd.flags = be32_to_cpu(data->flags);
 	hcmd.len[0] = be16_to_cpu(data->length);
 	hcmd.data[0] = data->data;
 
-	अगर (count != header_size + hcmd.len[0] * 2 + 1) अणु
+	if (count != header_size + hcmd.len[0] * 2 + 1) {
 		IWL_ERR(fwrt,
 			"host command data size does not match header length\n");
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (fwrt->ops && fwrt->ops->send_hcmd)
+	if (fwrt->ops && fwrt->ops->send_hcmd)
 		ret = fwrt->ops->send_hcmd(fwrt->ops_ctx, &hcmd);
-	अन्यथा
+	else
 		ret = -EPERM;
 
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	अगर (hcmd.flags & CMD_WANT_SKB)
-		iwl_मुक्त_resp(&hcmd);
+	if (hcmd.flags & CMD_WANT_SKB)
+		iwl_free_resp(&hcmd);
 out:
-	kमुक्त(data);
-	वापस ret ?: count;
-पूर्ण
+	kfree(data);
+	return ret ?: count;
+}
 
-FWRT_DEBUGFS_WRITE_खाता_OPS(send_hcmd, 512);
+FWRT_DEBUGFS_WRITE_FILE_OPS(send_hcmd, 512);
 
-अटल sमाप_प्रकार iwl_dbgfs_fw_dbg_करोमुख्य_पढ़ो(काष्ठा iwl_fw_runसमय *fwrt,
-					    माप_प्रकार size, अक्षर *buf)
-अणु
-	वापस scnम_लिखो(buf, size, "0x%08x\n",
-			 fwrt->trans->dbg.करोमुख्यs_biपंचांगap);
-पूर्ण
+static ssize_t iwl_dbgfs_fw_dbg_domain_read(struct iwl_fw_runtime *fwrt,
+					    size_t size, char *buf)
+{
+	return scnprintf(buf, size, "0x%08x\n",
+			 fwrt->trans->dbg.domains_bitmap);
+}
 
-FWRT_DEBUGFS_READ_खाता_OPS(fw_dbg_करोमुख्य, 20);
+FWRT_DEBUGFS_READ_FILE_OPS(fw_dbg_domain, 20);
 
-काष्ठा iwl_dbgfs_fw_info_priv अणु
-	काष्ठा iwl_fw_runसमय *fwrt;
-पूर्ण;
+struct iwl_dbgfs_fw_info_priv {
+	struct iwl_fw_runtime *fwrt;
+};
 
-काष्ठा iwl_dbgfs_fw_info_state अणु
+struct iwl_dbgfs_fw_info_state {
 	loff_t pos;
-पूर्ण;
+};
 
-अटल व्योम *iwl_dbgfs_fw_info_seq_next(काष्ठा seq_file *seq,
-					व्योम *v, loff_t *pos)
-अणु
-	काष्ठा iwl_dbgfs_fw_info_state *state = v;
-	काष्ठा iwl_dbgfs_fw_info_priv *priv = seq->निजी;
-	स्थिर काष्ठा iwl_fw *fw = priv->fwrt->fw;
+static void *iwl_dbgfs_fw_info_seq_next(struct seq_file *seq,
+					void *v, loff_t *pos)
+{
+	struct iwl_dbgfs_fw_info_state *state = v;
+	struct iwl_dbgfs_fw_info_priv *priv = seq->private;
+	const struct iwl_fw *fw = priv->fwrt->fw;
 
 	*pos = ++state->pos;
-	अगर (*pos >= fw->ucode_capa.n_cmd_versions)
-		वापस शून्य;
+	if (*pos >= fw->ucode_capa.n_cmd_versions)
+		return NULL;
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अटल व्योम iwl_dbgfs_fw_info_seq_stop(काष्ठा seq_file *seq,
-				       व्योम *v)
-अणु
-	kमुक्त(v);
-पूर्ण
+static void iwl_dbgfs_fw_info_seq_stop(struct seq_file *seq,
+				       void *v)
+{
+	kfree(v);
+}
 
-अटल व्योम *iwl_dbgfs_fw_info_seq_start(काष्ठा seq_file *seq, loff_t *pos)
-अणु
-	काष्ठा iwl_dbgfs_fw_info_priv *priv = seq->निजी;
-	स्थिर काष्ठा iwl_fw *fw = priv->fwrt->fw;
-	काष्ठा iwl_dbgfs_fw_info_state *state;
+static void *iwl_dbgfs_fw_info_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	struct iwl_dbgfs_fw_info_priv *priv = seq->private;
+	const struct iwl_fw *fw = priv->fwrt->fw;
+	struct iwl_dbgfs_fw_info_state *state;
 
-	अगर (*pos >= fw->ucode_capa.n_cmd_versions)
-		वापस शून्य;
+	if (*pos >= fw->ucode_capa.n_cmd_versions)
+		return NULL;
 
-	state = kzalloc(माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस शून्य;
+	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return NULL;
 	state->pos = *pos;
-	वापस state;
-पूर्ण;
+	return state;
+};
 
-अटल पूर्णांक iwl_dbgfs_fw_info_seq_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	काष्ठा iwl_dbgfs_fw_info_state *state = v;
-	काष्ठा iwl_dbgfs_fw_info_priv *priv = seq->निजी;
-	स्थिर काष्ठा iwl_fw *fw = priv->fwrt->fw;
-	स्थिर काष्ठा iwl_fw_cmd_version *ver;
+static int iwl_dbgfs_fw_info_seq_show(struct seq_file *seq, void *v)
+{
+	struct iwl_dbgfs_fw_info_state *state = v;
+	struct iwl_dbgfs_fw_info_priv *priv = seq->private;
+	const struct iwl_fw *fw = priv->fwrt->fw;
+	const struct iwl_fw_cmd_version *ver;
 	u32 cmd_id;
 
-	अगर (!state->pos)
-		seq_माला_दो(seq, "fw_api_ver:\n");
+	if (!state->pos)
+		seq_puts(seq, "fw_api_ver:\n");
 
 	ver = &fw->ucode_capa.cmd_versions[state->pos];
 
 	cmd_id = iwl_cmd_id(ver->cmd, ver->group, 0);
 
-	seq_म_लिखो(seq, "  0x%04x:\n", cmd_id);
-	seq_म_लिखो(seq, "    name: %s\n",
+	seq_printf(seq, "  0x%04x:\n", cmd_id);
+	seq_printf(seq, "    name: %s\n",
 		   iwl_get_cmd_string(priv->fwrt->trans, cmd_id));
-	seq_म_लिखो(seq, "    cmd_ver: %d\n", ver->cmd_ver);
-	seq_म_लिखो(seq, "    notif_ver: %d\n", ver->notअगर_ver);
-	वापस 0;
-पूर्ण
+	seq_printf(seq, "    cmd_ver: %d\n", ver->cmd_ver);
+	seq_printf(seq, "    notif_ver: %d\n", ver->notif_ver);
+	return 0;
+}
 
-अटल स्थिर काष्ठा seq_operations iwl_dbgfs_info_seq_ops = अणु
+static const struct seq_operations iwl_dbgfs_info_seq_ops = {
 	.start = iwl_dbgfs_fw_info_seq_start,
 	.next = iwl_dbgfs_fw_info_seq_next,
 	.stop = iwl_dbgfs_fw_info_seq_stop,
 	.show = iwl_dbgfs_fw_info_seq_show,
-पूर्ण;
+};
 
-अटल पूर्णांक iwl_dbgfs_fw_info_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
-अणु
-	काष्ठा iwl_dbgfs_fw_info_priv *priv;
+static int iwl_dbgfs_fw_info_open(struct inode *inode, struct file *filp)
+{
+	struct iwl_dbgfs_fw_info_priv *priv;
 
-	priv = __seq_खोलो_निजी(filp, &iwl_dbgfs_info_seq_ops,
-				  माप(*priv));
+	priv = __seq_open_private(filp, &iwl_dbgfs_info_seq_ops,
+				  sizeof(*priv));
 
-	अगर (!priv)
-		वापस -ENOMEM;
+	if (!priv)
+		return -ENOMEM;
 
-	priv->fwrt = inode->i_निजी;
-	वापस 0;
-पूर्ण
+	priv->fwrt = inode->i_private;
+	return 0;
+}
 
-अटल स्थिर काष्ठा file_operations iwl_dbgfs_fw_info_ops = अणु
+static const struct file_operations iwl_dbgfs_fw_info_ops = {
 	.owner = THIS_MODULE,
-	.खोलो = iwl_dbgfs_fw_info_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = iwl_dbgfs_fw_info_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
-	.release = seq_release_निजी,
-पूर्ण;
+	.release = seq_release_private,
+};
 
-व्योम iwl_fwrt_dbgfs_रेजिस्टर(काष्ठा iwl_fw_runसमय *fwrt,
-			    काष्ठा dentry *dbgfs_dir)
-अणु
-	INIT_DELAYED_WORK(&fwrt->बारtamp.wk, iwl_fw_बारtamp_marker_wk);
-	FWRT_DEBUGFS_ADD_खाता(बारtamp_marker, dbgfs_dir, 0200);
-	FWRT_DEBUGFS_ADD_खाता(fw_info, dbgfs_dir, 0200);
-	FWRT_DEBUGFS_ADD_खाता(send_hcmd, dbgfs_dir, 0200);
-	FWRT_DEBUGFS_ADD_खाता(enabled_severities, dbgfs_dir, 0200);
-	FWRT_DEBUGFS_ADD_खाता(fw_dbg_करोमुख्य, dbgfs_dir, 0400);
-पूर्ण
+void iwl_fwrt_dbgfs_register(struct iwl_fw_runtime *fwrt,
+			    struct dentry *dbgfs_dir)
+{
+	INIT_DELAYED_WORK(&fwrt->timestamp.wk, iwl_fw_timestamp_marker_wk);
+	FWRT_DEBUGFS_ADD_FILE(timestamp_marker, dbgfs_dir, 0200);
+	FWRT_DEBUGFS_ADD_FILE(fw_info, dbgfs_dir, 0200);
+	FWRT_DEBUGFS_ADD_FILE(send_hcmd, dbgfs_dir, 0200);
+	FWRT_DEBUGFS_ADD_FILE(enabled_severities, dbgfs_dir, 0200);
+	FWRT_DEBUGFS_ADD_FILE(fw_dbg_domain, dbgfs_dir, 0400);
+}

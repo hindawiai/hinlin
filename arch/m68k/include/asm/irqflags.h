@@ -1,81 +1,80 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _M68K_IRQFLAGS_H
-#घोषणा _M68K_IRQFLAGS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _M68K_IRQFLAGS_H
+#define _M68K_IRQFLAGS_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/preempt.h>
-#समावेश <यंत्र/thपढ़ो_info.h>
-#समावेश <यंत्र/entry.h>
+#include <linux/types.h>
+#include <linux/preempt.h>
+#include <asm/thread_info.h>
+#include <asm/entry.h>
 
-अटल अंतरभूत अचिन्हित दीर्घ arch_local_save_flags(व्योम)
-अणु
-	अचिन्हित दीर्घ flags;
-	यंत्र अस्थिर ("movew %%sr,%0" : "=d" (flags) : : "memory");
-	वापस flags;
-पूर्ण
+static inline unsigned long arch_local_save_flags(void)
+{
+	unsigned long flags;
+	asm volatile ("movew %%sr,%0" : "=d" (flags) : : "memory");
+	return flags;
+}
 
-अटल अंतरभूत व्योम arch_local_irq_disable(व्योम)
-अणु
-#अगर_घोषित CONFIG_COLDFIRE
-	यंत्र अस्थिर (
+static inline void arch_local_irq_disable(void)
+{
+#ifdef CONFIG_COLDFIRE
+	asm volatile (
 		"move	%/sr,%%d0	\n\t"
 		"ori.l	#0x0700,%%d0	\n\t"
 		"move	%%d0,%/sr	\n"
-		: /* no outमाला_दो */
+		: /* no outputs */
 		:
 		: "cc", "%d0", "memory");
-#अन्यथा
-	यंत्र अस्थिर ("oriw  #0x0700,%%sr" : : : "memory");
-#पूर्ण_अगर
-पूर्ण
+#else
+	asm volatile ("oriw  #0x0700,%%sr" : : : "memory");
+#endif
+}
 
-अटल अंतरभूत व्योम arch_local_irq_enable(व्योम)
-अणु
-#अगर defined(CONFIG_COLDFIRE)
-	यंत्र अस्थिर (
+static inline void arch_local_irq_enable(void)
+{
+#if defined(CONFIG_COLDFIRE)
+	asm volatile (
 		"move	%/sr,%%d0	\n\t"
 		"andi.l	#0xf8ff,%%d0	\n\t"
 		"move	%%d0,%/sr	\n"
-		: /* no outमाला_दो */
+		: /* no outputs */
 		:
 		: "cc", "%d0", "memory");
-#अन्यथा
-# अगर defined(CONFIG_MMU)
-	अगर (MACH_IS_Q40 || !hardirq_count())
-# endअगर
-		यंत्र अस्थिर (
+#else
+# if defined(CONFIG_MMU)
+	if (MACH_IS_Q40 || !hardirq_count())
+# endif
+		asm volatile (
 			"andiw %0,%%sr"
 			:
 			: "i" (ALLOWINT)
 			: "memory");
-#पूर्ण_अगर
-पूर्ण
+#endif
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ arch_local_irq_save(व्योम)
-अणु
-	अचिन्हित दीर्घ flags = arch_local_save_flags();
+static inline unsigned long arch_local_irq_save(void)
+{
+	unsigned long flags = arch_local_save_flags();
 	arch_local_irq_disable();
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
-अटल अंतरभूत व्योम arch_local_irq_restore(अचिन्हित दीर्घ flags)
-अणु
-	यंत्र अस्थिर ("movew %0,%%sr" : : "d" (flags) : "memory");
-पूर्ण
+static inline void arch_local_irq_restore(unsigned long flags)
+{
+	asm volatile ("movew %0,%%sr" : : "d" (flags) : "memory");
+}
 
-अटल अंतरभूत bool arch_irqs_disabled_flags(अचिन्हित दीर्घ flags)
-अणु
-	अगर (MACH_IS_ATARI) अणु
+static inline bool arch_irqs_disabled_flags(unsigned long flags)
+{
+	if (MACH_IS_ATARI) {
 		/* Ignore HSYNC = ipl 2 on Atari */
-		वापस (flags & ~(ALLOWINT | 0x200)) != 0;
-	पूर्ण
-	वापस (flags & ~ALLOWINT) != 0;
-पूर्ण
+		return (flags & ~(ALLOWINT | 0x200)) != 0;
+	}
+	return (flags & ~ALLOWINT) != 0;
+}
 
-अटल अंतरभूत bool arch_irqs_disabled(व्योम)
-अणु
-	वापस arch_irqs_disabled_flags(arch_local_save_flags());
-पूर्ण
+static inline bool arch_irqs_disabled(void)
+{
+	return arch_irqs_disabled_flags(arch_local_save_flags());
+}
 
-#पूर्ण_अगर /* _M68K_IRQFLAGS_H */
+#endif /* _M68K_IRQFLAGS_H */

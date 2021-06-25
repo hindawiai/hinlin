@@ -1,106 +1,105 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _H8300_BITOPS_H
-#घोषणा _H8300_BITOPS_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _H8300_BITOPS_H
+#define _H8300_BITOPS_H
 
 /*
  * Copyright 1992, Linus Torvalds.
  * Copyright 2002, Yoshinori Sato
  */
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#समावेश <यंत्र-generic/bitops/fls.h>
-#समावेश <यंत्र-generic/bitops/__fls.h>
-#समावेश <यंत्र-generic/bitops/fls64.h>
+#include <asm-generic/bitops/fls.h>
+#include <asm-generic/bitops/__fls.h>
+#include <asm-generic/bitops/fls64.h>
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#अगर_अघोषित _LINUX_BITOPS_H
-#त्रुटि only <linux/bitops.h> can be included directly
-#पूर्ण_अगर
+#ifndef _LINUX_BITOPS_H
+#error only <linux/bitops.h> can be included directly
+#endif
 
 /*
  * Function prototypes to keep gcc -Wall happy
  */
 
 /*
- * ffz = Find First Zero in word. Undefined अगर no zero exists,
+ * ffz = Find First Zero in word. Undefined if no zero exists,
  * so code should check against ~0UL first..
  */
-अटल अंतरभूत अचिन्हित दीर्घ ffz(अचिन्हित दीर्घ word)
-अणु
-	अचिन्हित दीर्घ result;
+static inline unsigned long ffz(unsigned long word)
+{
+	unsigned long result;
 
 	result = -1;
-	__यंत्र__("1:\n\t"
+	__asm__("1:\n\t"
 		"shlr.l %1\n\t"
 		"adds #1,%0\n\t"
 		"bcs 1b"
 		: "=r"(result),"=r"(word)
 		: "0"(result), "1"(word));
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#घोषणा H8300_GEN_BITOP(FNAME, OP)				\
-अटल अंतरभूत व्योम FNAME(पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *addr)	\
-अणु								\
-	अचिन्हित अक्षर *b_addr;					\
-	अचिन्हित अक्षर bit = nr & 7;				\
+#define H8300_GEN_BITOP(FNAME, OP)				\
+static inline void FNAME(int nr, volatile unsigned long *addr)	\
+{								\
+	unsigned char *b_addr;					\
+	unsigned char bit = nr & 7;				\
 								\
-	b_addr = (अचिन्हित अक्षर *)addr + ((nr >> 3) ^ 3);	\
-	अगर (__builtin_स्थिरant_p(nr)) अणु				\
-		__यंत्र__(OP " %1,%0" : "+WU"(*b_addr) : "i"(nr & 7));	\
-	पूर्ण अन्यथा अणु						\
-		__यंत्र__(OP " %s1,%0" : "+WU"(*b_addr) : "r"(bit));	\
-	पूर्ण							\
-पूर्ण
+	b_addr = (unsigned char *)addr + ((nr >> 3) ^ 3);	\
+	if (__builtin_constant_p(nr)) {				\
+		__asm__(OP " %1,%0" : "+WU"(*b_addr) : "i"(nr & 7));	\
+	} else {						\
+		__asm__(OP " %s1,%0" : "+WU"(*b_addr) : "r"(bit));	\
+	}							\
+}
 
 H8300_GEN_BITOP(set_bit,    "bset")
 H8300_GEN_BITOP(clear_bit,  "bclr")
 H8300_GEN_BITOP(change_bit, "bnot")
-#घोषणा __set_bit(nr, addr)    set_bit((nr), (addr))
-#घोषणा __clear_bit(nr, addr)  clear_bit((nr), (addr))
-#घोषणा __change_bit(nr, addr) change_bit((nr), (addr))
+#define __set_bit(nr, addr)    set_bit((nr), (addr))
+#define __clear_bit(nr, addr)  clear_bit((nr), (addr))
+#define __change_bit(nr, addr) change_bit((nr), (addr))
 
-#अघोषित H8300_GEN_BITOP
+#undef H8300_GEN_BITOP
 
-अटल अंतरभूत पूर्णांक test_bit(पूर्णांक nr, स्थिर अस्थिर अचिन्हित दीर्घ *addr)
-अणु
-	पूर्णांक ret = 0;
-	अचिन्हित अक्षर *b_addr;
-	अचिन्हित अक्षर bit = nr & 7;
+static inline int test_bit(int nr, const volatile unsigned long *addr)
+{
+	int ret = 0;
+	unsigned char *b_addr;
+	unsigned char bit = nr & 7;
 
-	b_addr = (अचिन्हित अक्षर *)addr + ((nr >> 3) ^ 3);
-	अगर (__builtin_स्थिरant_p(nr)) अणु
-		__यंत्र__("bld %Z2,%1\n\t"
+	b_addr = (unsigned char *)addr + ((nr >> 3) ^ 3);
+	if (__builtin_constant_p(nr)) {
+		__asm__("bld %Z2,%1\n\t"
 			"rotxl %0\n\t"
 			: "=r"(ret)
 			: "WU"(*b_addr), "i"(nr & 7), "0"(ret) : "cc");
-	पूर्ण अन्यथा अणु
-		__यंत्र__("btst %w2,%1\n\t"
+	} else {
+		__asm__("btst %w2,%1\n\t"
 			"beq 1f\n\t"
 			"inc.l #1,%0\n"
 			"1:"
 			: "=r"(ret)
 			: "WU"(*b_addr), "r"(bit), "0"(ret) : "cc");
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-#घोषणा __test_bit(nr, addr) test_bit(nr, addr)
+#define __test_bit(nr, addr) test_bit(nr, addr)
 
-#घोषणा H8300_GEN_TEST_BITOP(FNNAME, OP)				\
-अटल अंतरभूत पूर्णांक FNNAME(पूर्णांक nr, व्योम *addr)				\
-अणु									\
-	पूर्णांक retval = 0;							\
-	अक्षर ccrsave;							\
-	अचिन्हित अक्षर *b_addr;						\
-	अचिन्हित अक्षर bit = nr & 7;					\
+#define H8300_GEN_TEST_BITOP(FNNAME, OP)				\
+static inline int FNNAME(int nr, void *addr)				\
+{									\
+	int retval = 0;							\
+	char ccrsave;							\
+	unsigned char *b_addr;						\
+	unsigned char bit = nr & 7;					\
 									\
-	b_addr = (अचिन्हित अक्षर *)addr + ((nr >> 3) ^ 3);		\
-	अगर (__builtin_स्थिरant_p(nr)) अणु					\
-		__यंत्र__("stc ccr,%s2\n\t"				\
+	b_addr = (unsigned char *)addr + ((nr >> 3) ^ 3);		\
+	if (__builtin_constant_p(nr)) {					\
+		__asm__("stc ccr,%s2\n\t"				\
 			"orc #0x80,ccr\n\t"				\
 			"bld %4,%1\n\t"					\
 			OP " %4,%1\n\t"					\
@@ -108,8 +107,8 @@ H8300_GEN_BITOP(change_bit, "bnot")
 			"ldc %s2,ccr"					\
 			: "=r"(retval), "+WU" (*b_addr), "=&r"(ccrsave)	\
 			: "0"(retval), "i"(nr & 7) : "cc");		\
-	पूर्ण अन्यथा अणु							\
-		__यंत्र__("stc ccr,%t3\n\t"				\
+	} else {							\
+		__asm__("stc ccr,%t3\n\t"				\
 			"orc #0x80,ccr\n\t"				\
 			"btst %s3,%1\n\t"				\
 			OP " %s3,%1\n\t"				\
@@ -119,63 +118,63 @@ H8300_GEN_BITOP(change_bit, "bnot")
 			"ldc %t3,ccr"					\
 			: "=r"(retval), "+WU" (*b_addr)			\
 			: "0" (retval), "r"(bit) : "cc");		\
-	पूर्ण								\
-	वापस retval;							\
-पूर्ण									\
+	}								\
+	return retval;							\
+}									\
 									\
-अटल अंतरभूत पूर्णांक __ ## FNNAME(पूर्णांक nr, व्योम *addr)			\
-अणु									\
-	पूर्णांक retval = 0;							\
-	अचिन्हित अक्षर *b_addr;						\
-	अचिन्हित अक्षर bit = nr & 7;					\
+static inline int __ ## FNNAME(int nr, void *addr)			\
+{									\
+	int retval = 0;							\
+	unsigned char *b_addr;						\
+	unsigned char bit = nr & 7;					\
 									\
-	b_addr = (अचिन्हित अक्षर *)addr + ((nr >> 3) ^ 3);		\
-	अगर (__builtin_स्थिरant_p(nr)) अणु					\
-		__यंत्र__("bld %3,%1\n\t"					\
+	b_addr = (unsigned char *)addr + ((nr >> 3) ^ 3);		\
+	if (__builtin_constant_p(nr)) {					\
+		__asm__("bld %3,%1\n\t"					\
 			OP " %3,%1\n\t"					\
 			"rotxl.l %0\n\t"				\
 			: "=r"(retval), "+WU"(*b_addr)			\
 			: "0" (retval), "i"(nr & 7));			\
-	पूर्ण अन्यथा अणु							\
-		__यंत्र__("btst %s3,%1\n\t"				\
+	} else {							\
+		__asm__("btst %s3,%1\n\t"				\
 			OP " %s3,%1\n\t"				\
 			"beq 1f\n\t"					\
 			"inc.l #1,%0\n\t"				\
 			"1:"						\
 			: "=r"(retval), "+WU"(*b_addr)			\
 			: "0" (retval), "r"(bit));			\
-	पूर्ण								\
-	वापस retval;							\
-पूर्ण
+	}								\
+	return retval;							\
+}
 
 H8300_GEN_TEST_BITOP(test_and_set_bit,	  "bset")
 H8300_GEN_TEST_BITOP(test_and_clear_bit,  "bclr")
 H8300_GEN_TEST_BITOP(test_and_change_bit, "bnot")
-#अघोषित H8300_GEN_TEST_BITOP
+#undef H8300_GEN_TEST_BITOP
 
-#समावेश <यंत्र-generic/bitops/ffs.h>
+#include <asm-generic/bitops/ffs.h>
 
-अटल अंतरभूत अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ word)
-अणु
-	अचिन्हित दीर्घ result;
+static inline unsigned long __ffs(unsigned long word)
+{
+	unsigned long result;
 
 	result = -1;
-	__यंत्र__("1:\n\t"
+	__asm__("1:\n\t"
 		"shlr.l %1\n\t"
 		"adds #1,%0\n\t"
 		"bcc 1b"
 		: "=r" (result),"=r"(word)
 		: "0"(result), "1"(word));
-	वापस result;
-पूर्ण
+	return result;
+}
 
-#समावेश <यंत्र-generic/bitops/find.h>
-#समावेश <यंत्र-generic/bitops/sched.h>
-#समावेश <यंत्र-generic/bitops/hweight.h>
-#समावेश <यंत्र-generic/bitops/lock.h>
-#समावेश <यंत्र-generic/bitops/le.h>
-#समावेश <यंत्र-generic/bitops/ext2-atomic.h>
+#include <asm-generic/bitops/find.h>
+#include <asm-generic/bitops/sched.h>
+#include <asm-generic/bitops/hweight.h>
+#include <asm-generic/bitops/lock.h>
+#include <asm-generic/bitops/le.h>
+#include <asm-generic/bitops/ext2-atomic.h>
 
-#पूर्ण_अगर /* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#पूर्ण_अगर /* _H8300_BITOPS_H */
+#endif /* _H8300_BITOPS_H */

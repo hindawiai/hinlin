@@ -1,19 +1,18 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_B43_PPR_H_
-#घोषणा LINUX_B43_PPR_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_B43_PPR_H_
+#define LINUX_B43_PPR_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा B43_PPR_CCK_RATES_NUM		4
-#घोषणा B43_PPR_OFDM_RATES_NUM		8
-#घोषणा B43_PPR_MCS_RATES_NUM		8
+#define B43_PPR_CCK_RATES_NUM		4
+#define B43_PPR_OFDM_RATES_NUM		8
+#define B43_PPR_MCS_RATES_NUM		8
 
-#घोषणा B43_PPR_RATES_NUM	(B43_PPR_CCK_RATES_NUM +	\
+#define B43_PPR_RATES_NUM	(B43_PPR_CCK_RATES_NUM +	\
 				 B43_PPR_OFDM_RATES_NUM * 2 +	\
 				 B43_PPR_MCS_RATES_NUM * 4)
 
-काष्ठा b43_ppr_rates अणु
+struct b43_ppr_rates {
 	u8 cck[B43_PPR_CCK_RATES_NUM];
 	u8 ofdm[B43_PPR_OFDM_RATES_NUM];
 	u8 ofdm_20_cdd[B43_PPR_OFDM_RATES_NUM];
@@ -21,27 +20,27 @@
 	u8 mcs_20_cdd[B43_PPR_MCS_RATES_NUM];
 	u8 mcs_20_stbc[B43_PPR_MCS_RATES_NUM];
 	u8 mcs_20_sdm[B43_PPR_MCS_RATES_NUM];
-पूर्ण;
+};
 
-काष्ठा b43_ppr अणु
-	/* All घातers are in qdbm (Q5.2) */
-	जोड़ अणु
+struct b43_ppr {
+	/* All powers are in qdbm (Q5.2) */
+	union {
 		u8 __all_rates[B43_PPR_RATES_NUM];
-		काष्ठा b43_ppr_rates rates;
-	पूर्ण;
-पूर्ण;
+		struct b43_ppr_rates rates;
+	};
+};
 
-काष्ठा b43_wldev;
-क्रमागत b43_band;
+struct b43_wldev;
+enum b43_band;
 
-व्योम b43_ppr_clear(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr);
+void b43_ppr_clear(struct b43_wldev *dev, struct b43_ppr *ppr);
 
-व्योम b43_ppr_add(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr, पूर्णांक dअगरf);
-व्योम b43_ppr_apply_max(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr, u8 max);
-व्योम b43_ppr_apply_min(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr, u8 min);
-u8 b43_ppr_get_max(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr);
+void b43_ppr_add(struct b43_wldev *dev, struct b43_ppr *ppr, int diff);
+void b43_ppr_apply_max(struct b43_wldev *dev, struct b43_ppr *ppr, u8 max);
+void b43_ppr_apply_min(struct b43_wldev *dev, struct b43_ppr *ppr, u8 min);
+u8 b43_ppr_get_max(struct b43_wldev *dev, struct b43_ppr *ppr);
 
-bool b43_ppr_load_max_from_sprom(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr,
-				 क्रमागत b43_band band);
+bool b43_ppr_load_max_from_sprom(struct b43_wldev *dev, struct b43_ppr *ppr,
+				 enum b43_band band);
 
-#पूर्ण_अगर /* LINUX_B43_PPR_H_ */
+#endif /* LINUX_B43_PPR_H_ */

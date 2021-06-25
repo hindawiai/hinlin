@@ -1,98 +1,97 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#समावेश "e1000.h"
+#include "e1000.h"
 
 /**
- *  e1000_calculate_checksum - Calculate checksum क्रम buffer
- *  @buffer: poपूर्णांकer to EEPROM
- *  @length: size of EEPROM to calculate a checksum क्रम
+ *  e1000_calculate_checksum - Calculate checksum for buffer
+ *  @buffer: pointer to EEPROM
+ *  @length: size of EEPROM to calculate a checksum for
  *
- *  Calculates the checksum क्रम some buffer on a specअगरied length.  The
- *  checksum calculated is वापसed.
+ *  Calculates the checksum for some buffer on a specified length.  The
+ *  checksum calculated is returned.
  **/
-अटल u8 e1000_calculate_checksum(u8 *buffer, u32 length)
-अणु
+static u8 e1000_calculate_checksum(u8 *buffer, u32 length)
+{
 	u32 i;
 	u8 sum = 0;
 
-	अगर (!buffer)
-		वापस 0;
+	if (!buffer)
+		return 0;
 
-	क्रम (i = 0; i < length; i++)
+	for (i = 0; i < length; i++)
 		sum += buffer[i];
 
-	वापस (u8)(0 - sum);
-पूर्ण
+	return (u8)(0 - sum);
+}
 
 /**
- *  e1000_mng_enable_host_अगर - Checks host पूर्णांकerface is enabled
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  e1000_mng_enable_host_if - Checks host interface is enabled
+ *  @hw: pointer to the HW structure
  *
- *  Returns 0 upon success, अन्यथा -E1000_ERR_HOST_INTERFACE_COMMAND
+ *  Returns 0 upon success, else -E1000_ERR_HOST_INTERFACE_COMMAND
  *
- *  This function checks whether the HOST IF is enabled क्रम command operation
- *  and also checks whether the previous command is completed.  It busy रुकोs
- *  in हाल of previous command is not completed.
+ *  This function checks whether the HOST IF is enabled for command operation
+ *  and also checks whether the previous command is completed.  It busy waits
+ *  in case of previous command is not completed.
  **/
-अटल s32 e1000_mng_enable_host_अगर(काष्ठा e1000_hw *hw)
-अणु
+static s32 e1000_mng_enable_host_if(struct e1000_hw *hw)
+{
 	u32 hicr;
 	u8 i;
 
-	अगर (!hw->mac.arc_subप्रणाली_valid) अणु
+	if (!hw->mac.arc_subsystem_valid) {
 		e_dbg("ARC subsystem not valid.\n");
-		वापस -E1000_ERR_HOST_INTERFACE_COMMAND;
-	पूर्ण
+		return -E1000_ERR_HOST_INTERFACE_COMMAND;
+	}
 
-	/* Check that the host पूर्णांकerface is enabled. */
+	/* Check that the host interface is enabled. */
 	hicr = er32(HICR);
-	अगर (!(hicr & E1000_HICR_EN)) अणु
+	if (!(hicr & E1000_HICR_EN)) {
 		e_dbg("E1000_HOST_EN bit disabled.\n");
-		वापस -E1000_ERR_HOST_INTERFACE_COMMAND;
-	पूर्ण
+		return -E1000_ERR_HOST_INTERFACE_COMMAND;
+	}
 	/* check the previous command is completed */
-	क्रम (i = 0; i < E1000_MNG_DHCP_COMMAND_TIMEOUT; i++) अणु
+	for (i = 0; i < E1000_MNG_DHCP_COMMAND_TIMEOUT; i++) {
 		hicr = er32(HICR);
-		अगर (!(hicr & E1000_HICR_C))
-			अवरोध;
+		if (!(hicr & E1000_HICR_C))
+			break;
 		mdelay(1);
-	पूर्ण
+	}
 
-	अगर (i == E1000_MNG_DHCP_COMMAND_TIMEOUT) अणु
+	if (i == E1000_MNG_DHCP_COMMAND_TIMEOUT) {
 		e_dbg("Previous command timeout failed.\n");
-		वापस -E1000_ERR_HOST_INTERFACE_COMMAND;
-	पूर्ण
+		return -E1000_ERR_HOST_INTERFACE_COMMAND;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  *  e1000e_check_mng_mode_generic - Generic check management mode
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *
- *  Reads the firmware semaphore रेजिस्टर and वापसs true (>0) अगर
- *  manageability is enabled, अन्यथा false (0).
+ *  Reads the firmware semaphore register and returns true (>0) if
+ *  manageability is enabled, else false (0).
  **/
-bool e1000e_check_mng_mode_generic(काष्ठा e1000_hw *hw)
-अणु
+bool e1000e_check_mng_mode_generic(struct e1000_hw *hw)
+{
 	u32 fwsm = er32(FWSM);
 
-	वापस (fwsm & E1000_FWSM_MODE_MASK) ==
+	return (fwsm & E1000_FWSM_MODE_MASK) ==
 	    (E1000_MNG_IAMT_MODE << E1000_FWSM_MODE_SHIFT);
-पूर्ण
+}
 
 /**
  *  e1000e_enable_tx_pkt_filtering - Enable packet filtering on Tx
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  @hw: pointer to the HW structure
  *
- *  Enables packet filtering on transmit packets अगर manageability is enabled
- *  and host पूर्णांकerface is enabled.
+ *  Enables packet filtering on transmit packets if manageability is enabled
+ *  and host interface is enabled.
  **/
-bool e1000e_enable_tx_pkt_filtering(काष्ठा e1000_hw *hw)
-अणु
-	काष्ठा e1000_host_mng_dhcp_cookie *hdr = &hw->mng_cookie;
+bool e1000e_enable_tx_pkt_filtering(struct e1000_hw *hw)
+{
+	struct e1000_host_mng_dhcp_cookie *hdr = &hw->mng_cookie;
 	u32 *buffer = (u32 *)&hw->mng_cookie;
 	u32 offset;
 	s32 ret_val, hdr_csum, csum;
@@ -101,155 +100,155 @@ bool e1000e_enable_tx_pkt_filtering(काष्ठा e1000_hw *hw)
 	hw->mac.tx_pkt_filtering = true;
 
 	/* No manageability, no filtering */
-	अगर (!hw->mac.ops.check_mng_mode(hw)) अणु
+	if (!hw->mac.ops.check_mng_mode(hw)) {
 		hw->mac.tx_pkt_filtering = false;
-		वापस hw->mac.tx_pkt_filtering;
-	पूर्ण
+		return hw->mac.tx_pkt_filtering;
+	}
 
-	/* If we can't पढ़ो from the host पूर्णांकerface क्रम whatever
+	/* If we can't read from the host interface for whatever
 	 * reason, disable filtering.
 	 */
-	ret_val = e1000_mng_enable_host_अगर(hw);
-	अगर (ret_val) अणु
+	ret_val = e1000_mng_enable_host_if(hw);
+	if (ret_val) {
 		hw->mac.tx_pkt_filtering = false;
-		वापस hw->mac.tx_pkt_filtering;
-	पूर्ण
+		return hw->mac.tx_pkt_filtering;
+	}
 
 	/* Read in the header.  Length and offset are in dwords. */
 	len = E1000_MNG_DHCP_COOKIE_LENGTH >> 2;
 	offset = E1000_MNG_DHCP_COOKIE_OFFSET >> 2;
-	क्रम (i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		*(buffer + i) = E1000_READ_REG_ARRAY(hw, E1000_HOST_IF,
 						     offset + i);
 	hdr_csum = hdr->checksum;
 	hdr->checksum = 0;
 	csum = e1000_calculate_checksum((u8 *)hdr,
 					E1000_MNG_DHCP_COOKIE_LENGTH);
-	/* If either the checksums or signature करोn't match, then
-	 * the cookie area isn't considered valid, in which हाल we
+	/* If either the checksums or signature don't match, then
+	 * the cookie area isn't considered valid, in which case we
 	 * take the safe route of assuming Tx filtering is enabled.
 	 */
-	अगर ((hdr_csum != csum) || (hdr->signature != E1000_IAMT_SIGNATURE)) अणु
+	if ((hdr_csum != csum) || (hdr->signature != E1000_IAMT_SIGNATURE)) {
 		hw->mac.tx_pkt_filtering = true;
-		वापस hw->mac.tx_pkt_filtering;
-	पूर्ण
+		return hw->mac.tx_pkt_filtering;
+	}
 
-	/* Cookie area is valid, make the final check क्रम filtering. */
-	अगर (!(hdr->status & E1000_MNG_DHCP_COOKIE_STATUS_PARSING))
+	/* Cookie area is valid, make the final check for filtering. */
+	if (!(hdr->status & E1000_MNG_DHCP_COOKIE_STATUS_PARSING))
 		hw->mac.tx_pkt_filtering = false;
 
-	वापस hw->mac.tx_pkt_filtering;
-पूर्ण
+	return hw->mac.tx_pkt_filtering;
+}
 
 /**
- *  e1000_mng_ग_लिखो_cmd_header - Writes manageability command header
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @hdr: poपूर्णांकer to the host पूर्णांकerface command header
+ *  e1000_mng_write_cmd_header - Writes manageability command header
+ *  @hw: pointer to the HW structure
+ *  @hdr: pointer to the host interface command header
  *
- *  Writes the command header after करोes the checksum calculation.
+ *  Writes the command header after does the checksum calculation.
  **/
-अटल s32 e1000_mng_ग_लिखो_cmd_header(काष्ठा e1000_hw *hw,
-				      काष्ठा e1000_host_mng_command_header *hdr)
-अणु
-	u16 i, length = माप(काष्ठा e1000_host_mng_command_header);
+static s32 e1000_mng_write_cmd_header(struct e1000_hw *hw,
+				      struct e1000_host_mng_command_header *hdr)
+{
+	u16 i, length = sizeof(struct e1000_host_mng_command_header);
 
-	/* Write the whole command header काष्ठाure with new checksum. */
+	/* Write the whole command header structure with new checksum. */
 
 	hdr->checksum = e1000_calculate_checksum((u8 *)hdr, length);
 
 	length >>= 2;
-	/* Write the relevant command block पूर्णांकo the ram area. */
-	क्रम (i = 0; i < length; i++) अणु
+	/* Write the relevant command block into the ram area. */
+	for (i = 0; i < length; i++) {
 		E1000_WRITE_REG_ARRAY(hw, E1000_HOST_IF, i, *((u32 *)hdr + i));
 		e1e_flush();
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *  e1000_mng_host_अगर_ग_लिखो - Write to the manageability host पूर्णांकerface
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @buffer: poपूर्णांकer to the host पूर्णांकerface buffer
+ *  e1000_mng_host_if_write - Write to the manageability host interface
+ *  @hw: pointer to the HW structure
+ *  @buffer: pointer to the host interface buffer
  *  @length: size of the buffer
- *  @offset: location in the buffer to ग_लिखो to
+ *  @offset: location in the buffer to write to
  *  @sum: sum of the data (not checksum)
  *
- *  This function ग_लिखोs the buffer content at the offset given on the host अगर.
- *  It also करोes alignment considerations to करो the ग_लिखोs in most efficient
+ *  This function writes the buffer content at the offset given on the host if.
+ *  It also does alignment considerations to do the writes in most efficient
  *  way.  Also fills up the sum of the buffer in *buffer parameter.
  **/
-अटल s32 e1000_mng_host_अगर_ग_लिखो(काष्ठा e1000_hw *hw, u8 *buffer,
+static s32 e1000_mng_host_if_write(struct e1000_hw *hw, u8 *buffer,
 				   u16 length, u16 offset, u8 *sum)
-अणु
-	u8 *पंचांगp;
+{
+	u8 *tmp;
 	u8 *bufptr = buffer;
 	u32 data = 0;
-	u16 reमुख्यing, i, j, prev_bytes;
+	u16 remaining, i, j, prev_bytes;
 
 	/* sum = only sum of the data and it is not checksum */
 
-	अगर (length == 0 || offset + length > E1000_HI_MAX_MNG_DATA_LENGTH)
-		वापस -E1000_ERR_PARAM;
+	if (length == 0 || offset + length > E1000_HI_MAX_MNG_DATA_LENGTH)
+		return -E1000_ERR_PARAM;
 
-	पंचांगp = (u8 *)&data;
+	tmp = (u8 *)&data;
 	prev_bytes = offset & 0x3;
 	offset >>= 2;
 
-	अगर (prev_bytes) अणु
+	if (prev_bytes) {
 		data = E1000_READ_REG_ARRAY(hw, E1000_HOST_IF, offset);
-		क्रम (j = prev_bytes; j < माप(u32); j++) अणु
-			*(पंचांगp + j) = *bufptr++;
-			*sum += *(पंचांगp + j);
-		पूर्ण
+		for (j = prev_bytes; j < sizeof(u32); j++) {
+			*(tmp + j) = *bufptr++;
+			*sum += *(tmp + j);
+		}
 		E1000_WRITE_REG_ARRAY(hw, E1000_HOST_IF, offset, data);
 		length -= j - prev_bytes;
 		offset++;
-	पूर्ण
+	}
 
-	reमुख्यing = length & 0x3;
-	length -= reमुख्यing;
+	remaining = length & 0x3;
+	length -= remaining;
 
 	/* Calculate length in DWORDs */
 	length >>= 2;
 
-	/* The device driver ग_लिखोs the relevant command block पूर्णांकo the
+	/* The device driver writes the relevant command block into the
 	 * ram area.
 	 */
-	क्रम (i = 0; i < length; i++) अणु
-		क्रम (j = 0; j < माप(u32); j++) अणु
-			*(पंचांगp + j) = *bufptr++;
-			*sum += *(पंचांगp + j);
-		पूर्ण
+	for (i = 0; i < length; i++) {
+		for (j = 0; j < sizeof(u32); j++) {
+			*(tmp + j) = *bufptr++;
+			*sum += *(tmp + j);
+		}
 
 		E1000_WRITE_REG_ARRAY(hw, E1000_HOST_IF, offset + i, data);
-	पूर्ण
-	अगर (reमुख्यing) अणु
-		क्रम (j = 0; j < माप(u32); j++) अणु
-			अगर (j < reमुख्यing)
-				*(पंचांगp + j) = *bufptr++;
-			अन्यथा
-				*(पंचांगp + j) = 0;
+	}
+	if (remaining) {
+		for (j = 0; j < sizeof(u32); j++) {
+			if (j < remaining)
+				*(tmp + j) = *bufptr++;
+			else
+				*(tmp + j) = 0;
 
-			*sum += *(पंचांगp + j);
-		पूर्ण
+			*sum += *(tmp + j);
+		}
 		E1000_WRITE_REG_ARRAY(hw, E1000_HOST_IF, offset + i, data);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *  e1000e_mng_ग_लिखो_dhcp_info - Writes DHCP info to host पूर्णांकerface
- *  @hw: poपूर्णांकer to the HW काष्ठाure
- *  @buffer: poपूर्णांकer to the host पूर्णांकerface
+ *  e1000e_mng_write_dhcp_info - Writes DHCP info to host interface
+ *  @hw: pointer to the HW structure
+ *  @buffer: pointer to the host interface
  *  @length: size of the buffer
  *
- *  Writes the DHCP inक्रमmation to the host पूर्णांकerface.
+ *  Writes the DHCP information to the host interface.
  **/
-s32 e1000e_mng_ग_लिखो_dhcp_info(काष्ठा e1000_hw *hw, u8 *buffer, u16 length)
-अणु
-	काष्ठा e1000_host_mng_command_header hdr;
+s32 e1000e_mng_write_dhcp_info(struct e1000_hw *hw, u8 *buffer, u16 length)
+{
+	struct e1000_host_mng_command_header hdr;
 	s32 ret_val;
 	u32 hicr;
 
@@ -259,72 +258,72 @@ s32 e1000e_mng_ग_लिखो_dhcp_info(काष्ठा e1000_hw *hw, u8 *b
 	hdr.reserved2 = 0;
 	hdr.checksum = 0;
 
-	/* Enable the host पूर्णांकerface */
-	ret_val = e1000_mng_enable_host_अगर(hw);
-	अगर (ret_val)
-		वापस ret_val;
+	/* Enable the host interface */
+	ret_val = e1000_mng_enable_host_if(hw);
+	if (ret_val)
+		return ret_val;
 
-	/* Populate the host पूर्णांकerface with the contents of "buffer". */
-	ret_val = e1000_mng_host_अगर_ग_लिखो(hw, buffer, length,
-					  माप(hdr), &(hdr.checksum));
-	अगर (ret_val)
-		वापस ret_val;
+	/* Populate the host interface with the contents of "buffer". */
+	ret_val = e1000_mng_host_if_write(hw, buffer, length,
+					  sizeof(hdr), &(hdr.checksum));
+	if (ret_val)
+		return ret_val;
 
 	/* Write the manageability command header */
-	ret_val = e1000_mng_ग_लिखो_cmd_header(hw, &hdr);
-	अगर (ret_val)
-		वापस ret_val;
+	ret_val = e1000_mng_write_cmd_header(hw, &hdr);
+	if (ret_val)
+		return ret_val;
 
 	/* Tell the ARC a new command is pending. */
 	hicr = er32(HICR);
 	ew32(HICR, hicr | E1000_HICR_C);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- *  e1000e_enable_mng_pass_thru - Check अगर management passthrough is needed
- *  @hw: poपूर्णांकer to the HW काष्ठाure
+ *  e1000e_enable_mng_pass_thru - Check if management passthrough is needed
+ *  @hw: pointer to the HW structure
  *
- *  Verअगरies the hardware needs to leave पूर्णांकerface enabled so that frames can
- *  be directed to and from the management पूर्णांकerface.
+ *  Verifies the hardware needs to leave interface enabled so that frames can
+ *  be directed to and from the management interface.
  **/
-bool e1000e_enable_mng_pass_thru(काष्ठा e1000_hw *hw)
-अणु
+bool e1000e_enable_mng_pass_thru(struct e1000_hw *hw)
+{
 	u32 manc;
 	u32 fwsm, factps;
 
 	manc = er32(MANC);
 
-	अगर (!(manc & E1000_MANC_RCV_TCO_EN))
-		वापस false;
+	if (!(manc & E1000_MANC_RCV_TCO_EN))
+		return false;
 
-	अगर (hw->mac.has_fwsm) अणु
+	if (hw->mac.has_fwsm) {
 		fwsm = er32(FWSM);
 		factps = er32(FACTPS);
 
-		अगर (!(factps & E1000_FACTPS_MNGCG) &&
+		if (!(factps & E1000_FACTPS_MNGCG) &&
 		    ((fwsm & E1000_FWSM_MODE_MASK) ==
 		     (e1000_mng_mode_pt << E1000_FWSM_MODE_SHIFT)))
-			वापस true;
-	पूर्ण अन्यथा अगर ((hw->mac.type == e1000_82574) ||
-		   (hw->mac.type == e1000_82583)) अणु
+			return true;
+	} else if ((hw->mac.type == e1000_82574) ||
+		   (hw->mac.type == e1000_82583)) {
 		u16 data;
 		s32 ret_val;
 
 		factps = er32(FACTPS);
-		ret_val = e1000_पढ़ो_nvm(hw, NVM_INIT_CONTROL2_REG, 1, &data);
-		अगर (ret_val)
-			वापस false;
+		ret_val = e1000_read_nvm(hw, NVM_INIT_CONTROL2_REG, 1, &data);
+		if (ret_val)
+			return false;
 
-		अगर (!(factps & E1000_FACTPS_MNGCG) &&
+		if (!(factps & E1000_FACTPS_MNGCG) &&
 		    ((data & E1000_NVM_INIT_CTRL2_MNGM) ==
 		     (e1000_mng_mode_pt << 13)))
-			वापस true;
-	पूर्ण अन्यथा अगर ((manc & E1000_MANC_SMBUS_EN) &&
-		   !(manc & E1000_MANC_ASF_EN)) अणु
-		वापस true;
-	पूर्ण
+			return true;
+	} else if ((manc & E1000_MANC_SMBUS_EN) &&
+		   !(manc & E1000_MANC_ASF_EN)) {
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}

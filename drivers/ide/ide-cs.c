@@ -1,7 +1,6 @@
-<शैली गुरु>
 /*======================================================================
 
-    A driver क्रम PCMCIA IDE/ATA disk cards
+    A driver for PCMCIA IDE/ATA disk cards
 
     The contents of this file are subject to the Mozilla Public
     License Version 1.1 (the "License"); you may not use this file
@@ -10,45 +9,45 @@
 
     Software distributed under the License is distributed on an "AS
     IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
-    implied. See the License क्रम the specअगरic language governing
+    implied. See the License for the specific language governing
     rights and limitations under the License.
 
     The initial developer of the original code is David A. Hinds
-    <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
+    <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
     are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
 
     Alternatively, the contents of this file may be used under the
     terms of the GNU General Public License version 2 (the "GPL"), in
-    which हाल the provisions of the GPL are applicable instead of the
+    which case the provisions of the GPL are applicable instead of the
     above.  If you wish to allow the use of your version of this file
     only under the terms of the GPL and not to allow others to use
     your version of this file under the MPL, indicate your decision
     by deleting the provisions above and replace them with the notice
-    and other provisions required by the GPL.  If you करो not delete
+    and other provisions required by the GPL.  If you do not delete
     the provisions above, a recipient may use your version of this
     file under either the MPL or the GPL.
 
 ======================================================================*/
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/ide.h>
-#समावेश <linux/major.h>
-#समावेश <linux/delay.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/ptrace.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/ioport.h>
+#include <linux/ide.h>
+#include <linux/major.h>
+#include <linux/delay.h>
+#include <asm/io.h>
 
-#समावेश <pcmcia/cistpl.h>
-#समावेश <pcmcia/ds.h>
-#समावेश <pcmcia/cisreg.h>
-#समावेश <pcmcia/ciscode.h>
+#include <pcmcia/cistpl.h>
+#include <pcmcia/ds.h>
+#include <pcmcia/cisreg.h>
+#include <pcmcia/ciscode.h>
 
-#घोषणा DRV_NAME "ide-cs"
+#define DRV_NAME "ide-cs"
 
 /*====================================================================*/
 
@@ -60,27 +59,27 @@ MODULE_LICENSE("Dual MPL/GPL");
 
 /*====================================================================*/
 
-प्रकार काष्ठा ide_info_t अणु
-	काष्ठा pcmcia_device	*p_dev;
-	काष्ठा ide_host		*host;
-	पूर्णांक			ndev;
-पूर्ण ide_info_t;
+typedef struct ide_info_t {
+	struct pcmcia_device	*p_dev;
+	struct ide_host		*host;
+	int			ndev;
+} ide_info_t;
 
-अटल व्योम ide_release(काष्ठा pcmcia_device *);
-अटल पूर्णांक ide_config(काष्ठा pcmcia_device *);
+static void ide_release(struct pcmcia_device *);
+static int ide_config(struct pcmcia_device *);
 
-अटल व्योम ide_detach(काष्ठा pcmcia_device *p_dev);
+static void ide_detach(struct pcmcia_device *p_dev);
 
-अटल पूर्णांक ide_probe(काष्ठा pcmcia_device *link)
-अणु
+static int ide_probe(struct pcmcia_device *link)
+{
     ide_info_t *info;
 
     dev_dbg(&link->dev, "ide_attach()\n");
 
     /* Create new ide device */
-    info = kzalloc(माप(*info), GFP_KERNEL);
-    अगर (!info)
-	वापस -ENOMEM;
+    info = kzalloc(sizeof(*info), GFP_KERNEL);
+    if (!info)
+	return -ENOMEM;
 
     info->p_dev = link;
     link->priv = info;
@@ -88,111 +87,111 @@ MODULE_LICENSE("Dual MPL/GPL");
     link->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_IO |
 	    CONF_AUTO_SET_VPP | CONF_AUTO_CHECK_VCC;
 
-    वापस ide_config(link);
-पूर्ण /* ide_attach */
+    return ide_config(link);
+} /* ide_attach */
 
-अटल व्योम ide_detach(काष्ठा pcmcia_device *link)
-अणु
+static void ide_detach(struct pcmcia_device *link)
+{
     ide_info_t *info = link->priv;
 
     dev_dbg(&link->dev, "ide_detach(0x%p)\n", link);
 
     ide_release(link);
 
-    kमुक्त(info);
-पूर्ण /* ide_detach */
+    kfree(info);
+} /* ide_detach */
 
-अटल स्थिर काष्ठा ide_port_ops idecs_port_ops = अणु
+static const struct ide_port_ops idecs_port_ops = {
 	.quirkproc		= ide_undecoded_slave,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ide_port_info idecs_port_info = अणु
+static const struct ide_port_info idecs_port_info = {
 	.port_ops		= &idecs_port_ops,
 	.host_flags		= IDE_HFLAG_NO_DMA,
 	.irq_flags		= IRQF_SHARED,
 	.chipset		= ide_pci,
-पूर्ण;
+};
 
-अटल काष्ठा ide_host *idecs_रेजिस्टर(अचिन्हित दीर्घ io, अचिन्हित दीर्घ ctl,
-				अचिन्हित दीर्घ irq, काष्ठा pcmcia_device *handle)
-अणु
-    काष्ठा ide_host *host;
-    ide_hwअगर_t *hwअगर;
-    पूर्णांक i, rc;
-    काष्ठा ide_hw hw, *hws[] = अणु &hw पूर्ण;
+static struct ide_host *idecs_register(unsigned long io, unsigned long ctl,
+				unsigned long irq, struct pcmcia_device *handle)
+{
+    struct ide_host *host;
+    ide_hwif_t *hwif;
+    int i, rc;
+    struct ide_hw hw, *hws[] = { &hw };
 
-    अगर (!request_region(io, 8, DRV_NAME)) अणु
-	prपूर्णांकk(KERN_ERR "%s: I/O resource 0x%lX-0x%lX not free.\n",
+    if (!request_region(io, 8, DRV_NAME)) {
+	printk(KERN_ERR "%s: I/O resource 0x%lX-0x%lX not free.\n",
 			DRV_NAME, io, io + 7);
-	वापस शून्य;
-    पूर्ण
+	return NULL;
+    }
 
-    अगर (!request_region(ctl, 1, DRV_NAME)) अणु
-	prपूर्णांकk(KERN_ERR "%s: I/O resource 0x%lX not free.\n",
+    if (!request_region(ctl, 1, DRV_NAME)) {
+	printk(KERN_ERR "%s: I/O resource 0x%lX not free.\n",
 			DRV_NAME, ctl);
 	release_region(io, 8);
-	वापस शून्य;
-    पूर्ण
+	return NULL;
+    }
 
-    स_रखो(&hw, 0, माप(hw));
+    memset(&hw, 0, sizeof(hw));
     ide_std_init_ports(&hw, io, ctl);
     hw.irq = irq;
     hw.dev = &handle->dev;
 
     rc = ide_host_add(&idecs_port_info, hws, 1, &host);
-    अगर (rc)
-	जाओ out_release;
+    if (rc)
+	goto out_release;
 
-    hwअगर = host->ports[0];
+    hwif = host->ports[0];
 
-    अगर (hwअगर->present)
-	वापस host;
+    if (hwif->present)
+	return host;
 
-    /* retry registration in हाल device is still spinning up */
-    क्रम (i = 0; i < 10; i++) अणु
+    /* retry registration in case device is still spinning up */
+    for (i = 0; i < 10; i++) {
 	msleep(100);
-	ide_port_scan(hwअगर);
-	अगर (hwअगर->present)
-	    वापस host;
-    पूर्ण
+	ide_port_scan(hwif);
+	if (hwif->present)
+	    return host;
+    }
 
-    वापस host;
+    return host;
 
 out_release:
     release_region(ctl, 1);
     release_region(io, 8);
-    वापस शून्य;
-पूर्ण
+    return NULL;
+}
 
-अटल पूर्णांक pcmcia_check_one_config(काष्ठा pcmcia_device *pdev, व्योम *priv_data)
-अणु
-	पूर्णांक *is_kme = priv_data;
+static int pcmcia_check_one_config(struct pcmcia_device *pdev, void *priv_data)
+{
+	int *is_kme = priv_data;
 
-	अगर ((pdev->resource[0]->flags & IO_DATA_PATH_WIDTH)
-	    != IO_DATA_PATH_WIDTH_8) अणु
+	if ((pdev->resource[0]->flags & IO_DATA_PATH_WIDTH)
+	    != IO_DATA_PATH_WIDTH_8) {
 		pdev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 		pdev->resource[0]->flags |= IO_DATA_PATH_WIDTH_AUTO;
-	पूर्ण
+	}
 	pdev->resource[1]->flags &= ~IO_DATA_PATH_WIDTH;
 	pdev->resource[1]->flags |= IO_DATA_PATH_WIDTH_8;
 
-	अगर (pdev->resource[1]->end) अणु
+	if (pdev->resource[1]->end) {
 		pdev->resource[0]->end = 8;
 		pdev->resource[1]->end = (*is_kme) ? 2 : 1;
-	पूर्ण अन्यथा अणु
-		अगर (pdev->resource[0]->end < 16)
-			वापस -ENODEV;
-	पूर्ण
+	} else {
+		if (pdev->resource[0]->end < 16)
+			return -ENODEV;
+	}
 
-	वापस pcmcia_request_io(pdev);
-पूर्ण
+	return pcmcia_request_io(pdev);
+}
 
-अटल पूर्णांक ide_config(काष्ठा pcmcia_device *link)
-अणु
+static int ide_config(struct pcmcia_device *link)
+{
     ide_info_t *info = link->priv;
-    पूर्णांक ret = 0, is_kme = 0;
-    अचिन्हित दीर्घ io_base, ctl_base;
-    काष्ठा ide_host *host;
+    int ret = 0, is_kme = 0;
+    unsigned long io_base, ctl_base;
+    struct ide_host *host;
 
     dev_dbg(&link->dev, "ide_config(0x%p)\n", link);
 
@@ -200,40 +199,40 @@ out_release:
 	      ((link->card_id == PRODID_KME_KXLC005_A) ||
 	       (link->card_id == PRODID_KME_KXLC005_B)));
 
-    अगर (pcmcia_loop_config(link, pcmcia_check_one_config, &is_kme)) अणु
+    if (pcmcia_loop_config(link, pcmcia_check_one_config, &is_kme)) {
 	    link->config_flags &= ~CONF_AUTO_CHECK_VCC;
-	    अगर (pcmcia_loop_config(link, pcmcia_check_one_config, &is_kme))
-		    जाओ failed; /* No suitable config found */
-    पूर्ण
+	    if (pcmcia_loop_config(link, pcmcia_check_one_config, &is_kme))
+		    goto failed; /* No suitable config found */
+    }
     io_base = link->resource[0]->start;
-    अगर (link->resource[1]->end)
+    if (link->resource[1]->end)
 	    ctl_base = link->resource[1]->start;
-    अन्यथा
+    else
 	    ctl_base = link->resource[0]->start + 0x0e;
 
-    अगर (!link->irq)
-	    जाओ failed;
+    if (!link->irq)
+	    goto failed;
 
     ret = pcmcia_enable_device(link);
-    अगर (ret)
-	    जाओ failed;
+    if (ret)
+	    goto failed;
 
-    /* disable drive पूर्णांकerrupts during IDE probe */
+    /* disable drive interrupts during IDE probe */
     outb(0x02, ctl_base);
 
-    /* special setup क्रम KXLC005 card */
-    अगर (is_kme)
+    /* special setup for KXLC005 card */
+    if (is_kme)
 	outb(0x81, ctl_base+1);
 
-     host = idecs_रेजिस्टर(io_base, ctl_base, link->irq, link);
-     अगर (host == शून्य && resource_size(link->resource[0]) == 0x20) अणु
+     host = idecs_register(io_base, ctl_base, link->irq, link);
+     if (host == NULL && resource_size(link->resource[0]) == 0x20) {
 	    outb(0x02, ctl_base + 0x10);
-	    host = idecs_रेजिस्टर(io_base + 0x10, ctl_base + 0x10,
+	    host = idecs_register(io_base + 0x10, ctl_base + 0x10,
 				  link->irq, link);
-    पूर्ण
+    }
 
-    अगर (host == शून्य)
-	जाओ failed;
+    if (host == NULL)
+	goto failed;
 
     info->ndev = 1;
     info->host = host;
@@ -241,39 +240,39 @@ out_release:
 	    'a' + host->ports[0]->index * 2,
 	    link->vpp / 10, link->vpp % 10);
 
-    वापस 0;
+    return 0;
 
 failed:
     ide_release(link);
-    वापस -ENODEV;
-पूर्ण /* ide_config */
+    return -ENODEV;
+} /* ide_config */
 
-अटल व्योम ide_release(काष्ठा pcmcia_device *link)
-अणु
+static void ide_release(struct pcmcia_device *link)
+{
     ide_info_t *info = link->priv;
-    काष्ठा ide_host *host = info->host;
+    struct ide_host *host = info->host;
 
     dev_dbg(&link->dev, "ide_release(0x%p)\n", link);
 
-    अगर (info->ndev) अणु
-	ide_hwअगर_t *hwअगर = host->ports[0];
-	अचिन्हित दीर्घ data_addr, ctl_addr;
+    if (info->ndev) {
+	ide_hwif_t *hwif = host->ports[0];
+	unsigned long data_addr, ctl_addr;
 
-	data_addr = hwअगर->io_ports.data_addr;
-	ctl_addr = hwअगर->io_ports.ctl_addr;
+	data_addr = hwif->io_ports.data_addr;
+	ctl_addr = hwif->io_ports.ctl_addr;
 
-	ide_host_हटाओ(host);
+	ide_host_remove(host);
 	info->ndev = 0;
 
 	release_region(ctl_addr, 1);
 	release_region(data_addr, 8);
-    पूर्ण
+    }
 
     pcmcia_disable_device(link);
-पूर्ण /* ide_release */
+} /* ide_release */
 
 
-अटल स्थिर काष्ठा pcmcia_device_id ide_ids[] = अणु
+static const struct pcmcia_device_id ide_ids[] = {
 	PCMCIA_DEVICE_FUNC_ID(4),
 	PCMCIA_DEVICE_MANF_CARD(0x0000, 0x0000),	/* Corsair */
 	PCMCIA_DEVICE_MANF_CARD(0x0007, 0x0000),	/* Hitachi */
@@ -339,27 +338,27 @@ failed:
 	PCMCIA_DEVICE_PROD_ID12("STI", "Flash 5.0", 0xbf2df18d, 0x8cb57a0e),
 	PCMCIA_MFC_DEVICE_PROD_ID12(1, "SanDisk", "ConnectPlus", 0x7a954bd9, 0x74be00c6),
 	PCMCIA_DEVICE_PROD_ID2("Flash Card", 0x5a362506),
-	PCMCIA_DEVICE_शून्य,
-पूर्ण;
+	PCMCIA_DEVICE_NULL,
+};
 MODULE_DEVICE_TABLE(pcmcia, ide_ids);
 
-अटल काष्ठा pcmcia_driver ide_cs_driver = अणु
+static struct pcmcia_driver ide_cs_driver = {
 	.owner		= THIS_MODULE,
 	.name		= "ide-cs",
 	.probe		= ide_probe,
-	.हटाओ		= ide_detach,
+	.remove		= ide_detach,
 	.id_table       = ide_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init init_ide_cs(व्योम)
-अणु
-	वापस pcmcia_रेजिस्टर_driver(&ide_cs_driver);
-पूर्ण
+static int __init init_ide_cs(void)
+{
+	return pcmcia_register_driver(&ide_cs_driver);
+}
 
-अटल व्योम __निकास निकास_ide_cs(व्योम)
-अणु
-	pcmcia_unरेजिस्टर_driver(&ide_cs_driver);
-पूर्ण
+static void __exit exit_ide_cs(void)
+{
+	pcmcia_unregister_driver(&ide_cs_driver);
+}
 
 late_initcall(init_ide_cs);
-module_निकास(निकास_ide_cs);
+module_exit(exit_ide_cs);

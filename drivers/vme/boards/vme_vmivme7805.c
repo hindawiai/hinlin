@@ -1,103 +1,102 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Support क्रम the VMIVME-7805 board access to the Universe II bridge.
+ * Support for the VMIVME-7805 board access to the Universe II bridge.
  *
  * Author: Arthur Benilov <arthur.benilov@iba-group.com>
  * Copyright 2010 Ion Beam Application, Inc.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/pci.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/pci.h>
+#include <linux/poll.h>
+#include <linux/io.h>
 
-#समावेश "vme_vmivme7805.h"
+#include "vme_vmivme7805.h"
 
-अटल पूर्णांक vmic_probe(काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
-अटल व्योम vmic_हटाओ(काष्ठा pci_dev *);
+static int vmic_probe(struct pci_dev *, const struct pci_device_id *);
+static void vmic_remove(struct pci_dev *);
 
-/** Base address to access FPGA रेजिस्टर */
-अटल व्योम __iomem *vmic_base;
+/** Base address to access FPGA register */
+static void __iomem *vmic_base;
 
-अटल स्थिर अक्षर driver_name[] = "vmivme_7805";
+static const char driver_name[] = "vmivme_7805";
 
-अटल स्थिर काष्ठा pci_device_id vmic_ids[] = अणु
-	अणु PCI_DEVICE(PCI_VENDOR_ID_VMIC, PCI_DEVICE_ID_VTIMR) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct pci_device_id vmic_ids[] = {
+	{ PCI_DEVICE(PCI_VENDOR_ID_VMIC, PCI_DEVICE_ID_VTIMR) },
+	{ },
+};
 
-अटल काष्ठा pci_driver vmic_driver = अणु
+static struct pci_driver vmic_driver = {
 	.name = driver_name,
 	.id_table = vmic_ids,
 	.probe = vmic_probe,
-	.हटाओ = vmic_हटाओ,
-पूर्ण;
+	.remove = vmic_remove,
+};
 
-अटल पूर्णांक vmic_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
-अणु
-	पूर्णांक retval;
+static int vmic_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+	int retval;
 	u32 data;
 
 	/* Enable the device */
 	retval = pci_enable_device(pdev);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&pdev->dev, "Unable to enable device\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	/* Map Registers */
 	retval = pci_request_regions(pdev, driver_name);
-	अगर (retval) अणु
+	if (retval) {
 		dev_err(&pdev->dev, "Unable to reserve resources\n");
-		जाओ err_resource;
-	पूर्ण
+		goto err_resource;
+	}
 
-	/* Map रेजिस्टरs in BAR 0 */
+	/* Map registers in BAR 0 */
 	vmic_base = ioremap(pci_resource_start(pdev, 0), 16);
-	अगर (!vmic_base) अणु
+	if (!vmic_base) {
 		dev_err(&pdev->dev, "Unable to remap CRG region\n");
 		retval = -EIO;
-		जाओ err_remap;
-	पूर्ण
+		goto err_remap;
+	}
 
 	/* Clear the FPGA VME IF contents */
-	ioग_लिखो32(0, vmic_base + VME_CONTROL);
+	iowrite32(0, vmic_base + VME_CONTROL);
 
 	/* Clear any initial BERR  */
-	data = ioपढ़ो32(vmic_base + VME_CONTROL) & 0x00000FFF;
+	data = ioread32(vmic_base + VME_CONTROL) & 0x00000FFF;
 	data |= BM_VME_CONTROL_BERRST;
-	ioग_लिखो32(data, vmic_base + VME_CONTROL);
+	iowrite32(data, vmic_base + VME_CONTROL);
 
-	/* Enable the vme पूर्णांकerface and byte swapping */
-	data = ioपढ़ो32(vmic_base + VME_CONTROL) & 0x00000FFF;
+	/* Enable the vme interface and byte swapping */
+	data = ioread32(vmic_base + VME_CONTROL) & 0x00000FFF;
 	data = data | BM_VME_CONTROL_MASTER_ENDIAN |
 			BM_VME_CONTROL_SLAVE_ENDIAN |
 			BM_VME_CONTROL_ABLE |
 			BM_VME_CONTROL_BERRI |
 			BM_VME_CONTROL_BPENA |
 			BM_VME_CONTROL_VBENA;
-	ioग_लिखो32(data, vmic_base + VME_CONTROL);
+	iowrite32(data, vmic_base + VME_CONTROL);
 
-	वापस 0;
+	return 0;
 
 err_remap:
 	pci_release_regions(pdev);
 err_resource:
 	pci_disable_device(pdev);
 err:
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम vmic_हटाओ(काष्ठा pci_dev *pdev)
-अणु
+static void vmic_remove(struct pci_dev *pdev)
+{
 	iounmap(vmic_base);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
 
-पूर्ण
+}
 
 module_pci_driver(vmic_driver);
 

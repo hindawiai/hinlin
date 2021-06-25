@@ -1,333 +1,332 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2019 Arrikto, Inc. All Rights Reserved.
  */
 
-#समावेश <linux/mm.h>
-#समावेश <linux/bपन.स>
-#समावेश <linux/err.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/list.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/dm-पन.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/atomic.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/kdev_t.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/mempool.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/blk_types.h>
-#समावेश <linux/dm-kcopyd.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/backing-dev.h>
-#समावेश <linux/device-mapper.h>
+#include <linux/mm.h>
+#include <linux/bio.h>
+#include <linux/err.h>
+#include <linux/hash.h>
+#include <linux/list.h>
+#include <linux/log2.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/wait.h>
+#include <linux/dm-io.h>
+#include <linux/mutex.h>
+#include <linux/atomic.h>
+#include <linux/bitops.h>
+#include <linux/blkdev.h>
+#include <linux/kdev_t.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/jiffies.h>
+#include <linux/mempool.h>
+#include <linux/spinlock.h>
+#include <linux/blk_types.h>
+#include <linux/dm-kcopyd.h>
+#include <linux/workqueue.h>
+#include <linux/backing-dev.h>
+#include <linux/device-mapper.h>
 
-#समावेश "dm.h"
-#समावेश "dm-clone-metadata.h"
+#include "dm.h"
+#include "dm-clone-metadata.h"
 
-#घोषणा DM_MSG_PREFIX "clone"
+#define DM_MSG_PREFIX "clone"
 
 /*
  * Minimum and maximum allowed region sizes
  */
-#घोषणा MIN_REGION_SIZE (1 << 3)  /* 4KB */
-#घोषणा MAX_REGION_SIZE (1 << 21) /* 1GB */
+#define MIN_REGION_SIZE (1 << 3)  /* 4KB */
+#define MAX_REGION_SIZE (1 << 21) /* 1GB */
 
-#घोषणा MIN_HYDRATIONS 256 /* Size of hydration mempool */
-#घोषणा DEFAULT_HYDRATION_THRESHOLD 1 /* 1 region */
-#घोषणा DEFAULT_HYDRATION_BATCH_SIZE 1 /* Hydrate in batches of 1 region */
+#define MIN_HYDRATIONS 256 /* Size of hydration mempool */
+#define DEFAULT_HYDRATION_THRESHOLD 1 /* 1 region */
+#define DEFAULT_HYDRATION_BATCH_SIZE 1 /* Hydrate in batches of 1 region */
 
-#घोषणा COMMIT_PERIOD HZ /* 1 sec */
+#define COMMIT_PERIOD HZ /* 1 sec */
 
 /*
  * Hydration hash table size: 1 << HASH_TABLE_BITS
  */
-#घोषणा HASH_TABLE_BITS 15
+#define HASH_TABLE_BITS 15
 
 DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(clone_hydration_throttle,
 	"A percentage of time allocated for hydrating regions");
 
-/* Slab cache क्रम काष्ठा dm_clone_region_hydration */
-अटल काष्ठा kmem_cache *_hydration_cache;
+/* Slab cache for struct dm_clone_region_hydration */
+static struct kmem_cache *_hydration_cache;
 
 /* dm-clone metadata modes */
-क्रमागत clone_metadata_mode अणु
+enum clone_metadata_mode {
 	CM_WRITE,		/* metadata may be changed */
 	CM_READ_ONLY,		/* metadata may not be changed */
 	CM_FAIL,		/* all metadata I/O fails */
-पूर्ण;
+};
 
-काष्ठा hash_table_bucket;
+struct hash_table_bucket;
 
-काष्ठा clone अणु
-	काष्ठा dm_target *ti;
+struct clone {
+	struct dm_target *ti;
 
-	काष्ठा dm_dev *metadata_dev;
-	काष्ठा dm_dev *dest_dev;
-	काष्ठा dm_dev *source_dev;
+	struct dm_dev *metadata_dev;
+	struct dm_dev *dest_dev;
+	struct dm_dev *source_dev;
 
-	अचिन्हित दीर्घ nr_regions;
+	unsigned long nr_regions;
 	sector_t region_size;
-	अचिन्हित पूर्णांक region_shअगरt;
+	unsigned int region_shift;
 
 	/*
-	 * A metadata commit and the actions taken in हाल it fails should run
+	 * A metadata commit and the actions taken in case it fails should run
 	 * as a single atomic step.
 	 */
-	काष्ठा mutex commit_lock;
+	struct mutex commit_lock;
 
-	काष्ठा dm_clone_metadata *cmd;
+	struct dm_clone_metadata *cmd;
 
 	/* Region hydration hash table */
-	काष्ठा hash_table_bucket *ht;
+	struct hash_table_bucket *ht;
 
 	atomic_t ios_in_flight;
 
-	रुको_queue_head_t hydration_stopped;
+	wait_queue_head_t hydration_stopped;
 
 	mempool_t hydration_pool;
 
-	अचिन्हित दीर्घ last_commit_jअगरfies;
+	unsigned long last_commit_jiffies;
 
 	/*
-	 * We defer incoming WRITE bios क्रम regions that are not hydrated,
+	 * We defer incoming WRITE bios for regions that are not hydrated,
 	 * until after these regions have been hydrated.
 	 *
 	 * Also, we defer REQ_FUA and REQ_PREFLUSH bios, until after the
 	 * metadata have been committed.
 	 */
 	spinlock_t lock;
-	काष्ठा bio_list deferred_bios;
-	काष्ठा bio_list deferred_discard_bios;
-	काष्ठा bio_list deferred_flush_bios;
-	काष्ठा bio_list deferred_flush_completions;
+	struct bio_list deferred_bios;
+	struct bio_list deferred_discard_bios;
+	struct bio_list deferred_flush_bios;
+	struct bio_list deferred_flush_completions;
 
 	/* Maximum number of regions being copied during background hydration. */
-	अचिन्हित पूर्णांक hydration_threshold;
+	unsigned int hydration_threshold;
 
 	/* Number of regions to batch together during background hydration. */
-	अचिन्हित पूर्णांक hydration_batch_size;
+	unsigned int hydration_batch_size;
 
 	/* Which region to hydrate next */
-	अचिन्हित दीर्घ hydration_offset;
+	unsigned long hydration_offset;
 
 	atomic_t hydrations_in_flight;
 
 	/*
-	 * Save a copy of the table line rather than reस्थिरructing it क्रम the
+	 * Save a copy of the table line rather than reconstructing it for the
 	 * status.
 	 */
-	अचिन्हित पूर्णांक nr_ctr_args;
-	स्थिर अक्षर **ctr_args;
+	unsigned int nr_ctr_args;
+	const char **ctr_args;
 
-	काष्ठा workqueue_काष्ठा *wq;
-	काष्ठा work_काष्ठा worker;
-	काष्ठा delayed_work waker;
+	struct workqueue_struct *wq;
+	struct work_struct worker;
+	struct delayed_work waker;
 
-	काष्ठा dm_kcopyd_client *kcopyd_client;
+	struct dm_kcopyd_client *kcopyd_client;
 
-	क्रमागत clone_metadata_mode mode;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
+	enum clone_metadata_mode mode;
+	unsigned long flags;
+};
 
 /*
  * dm-clone flags
  */
-#घोषणा DM_CLONE_DISCARD_PASSDOWN 0
-#घोषणा DM_CLONE_HYDRATION_ENABLED 1
-#घोषणा DM_CLONE_HYDRATION_SUSPENDED 2
+#define DM_CLONE_DISCARD_PASSDOWN 0
+#define DM_CLONE_HYDRATION_ENABLED 1
+#define DM_CLONE_HYDRATION_SUSPENDED 2
 
 /*---------------------------------------------------------------------------*/
 
 /*
  * Metadata failure handling.
  */
-अटल क्रमागत clone_metadata_mode get_clone_mode(काष्ठा clone *clone)
-अणु
-	वापस READ_ONCE(clone->mode);
-पूर्ण
+static enum clone_metadata_mode get_clone_mode(struct clone *clone)
+{
+	return READ_ONCE(clone->mode);
+}
 
-अटल स्थिर अक्षर *clone_device_name(काष्ठा clone *clone)
-अणु
-	वापस dm_table_device_name(clone->ti->table);
-पूर्ण
+static const char *clone_device_name(struct clone *clone)
+{
+	return dm_table_device_name(clone->ti->table);
+}
 
-अटल व्योम __set_clone_mode(काष्ठा clone *clone, क्रमागत clone_metadata_mode new_mode)
-अणु
-	स्थिर अक्षर *descs[] = अणु
+static void __set_clone_mode(struct clone *clone, enum clone_metadata_mode new_mode)
+{
+	const char *descs[] = {
 		"read-write",
 		"read-only",
 		"fail"
-	पूर्ण;
+	};
 
-	क्रमागत clone_metadata_mode old_mode = get_clone_mode(clone);
+	enum clone_metadata_mode old_mode = get_clone_mode(clone);
 
 	/* Never move out of fail mode */
-	अगर (old_mode == CM_FAIL)
+	if (old_mode == CM_FAIL)
 		new_mode = CM_FAIL;
 
-	चयन (new_mode) अणु
-	हाल CM_FAIL:
-	हाल CM_READ_ONLY:
-		dm_clone_metadata_set_पढ़ो_only(clone->cmd);
-		अवरोध;
+	switch (new_mode) {
+	case CM_FAIL:
+	case CM_READ_ONLY:
+		dm_clone_metadata_set_read_only(clone->cmd);
+		break;
 
-	हाल CM_WRITE:
-		dm_clone_metadata_set_पढ़ो_ग_लिखो(clone->cmd);
-		अवरोध;
-	पूर्ण
+	case CM_WRITE:
+		dm_clone_metadata_set_read_write(clone->cmd);
+		break;
+	}
 
 	WRITE_ONCE(clone->mode, new_mode);
 
-	अगर (new_mode != old_mode) अणु
+	if (new_mode != old_mode) {
 		dm_table_event(clone->ti->table);
 		DMINFO("%s: Switching to %s mode", clone_device_name(clone),
-		       descs[(पूर्णांक)new_mode]);
-	पूर्ण
-पूर्ण
+		       descs[(int)new_mode]);
+	}
+}
 
-अटल व्योम __पात_transaction(काष्ठा clone *clone)
-अणु
-	स्थिर अक्षर *dev_name = clone_device_name(clone);
+static void __abort_transaction(struct clone *clone)
+{
+	const char *dev_name = clone_device_name(clone);
 
-	अगर (get_clone_mode(clone) >= CM_READ_ONLY)
-		वापस;
+	if (get_clone_mode(clone) >= CM_READ_ONLY)
+		return;
 
 	DMERR("%s: Aborting current metadata transaction", dev_name);
-	अगर (dm_clone_metadata_पात(clone->cmd)) अणु
+	if (dm_clone_metadata_abort(clone->cmd)) {
 		DMERR("%s: Failed to abort metadata transaction", dev_name);
 		__set_clone_mode(clone, CM_FAIL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __reload_in_core_bitset(काष्ठा clone *clone)
-अणु
-	स्थिर अक्षर *dev_name = clone_device_name(clone);
+static void __reload_in_core_bitset(struct clone *clone)
+{
+	const char *dev_name = clone_device_name(clone);
 
-	अगर (get_clone_mode(clone) == CM_FAIL)
-		वापस;
+	if (get_clone_mode(clone) == CM_FAIL)
+		return;
 
 	/* Reload the on-disk bitset */
 	DMINFO("%s: Reloading on-disk bitmap", dev_name);
-	अगर (dm_clone_reload_in_core_bitset(clone->cmd)) अणु
+	if (dm_clone_reload_in_core_bitset(clone->cmd)) {
 		DMERR("%s: Failed to reload on-disk bitmap", dev_name);
 		__set_clone_mode(clone, CM_FAIL);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम __metadata_operation_failed(काष्ठा clone *clone, स्थिर अक्षर *op, पूर्णांक r)
-अणु
+static void __metadata_operation_failed(struct clone *clone, const char *op, int r)
+{
 	DMERR("%s: Metadata operation `%s' failed: error = %d",
 	      clone_device_name(clone), op, r);
 
-	__पात_transaction(clone);
+	__abort_transaction(clone);
 	__set_clone_mode(clone, CM_READ_ONLY);
 
 	/*
 	 * dm_clone_reload_in_core_bitset() may run concurrently with either
 	 * dm_clone_set_region_hydrated() or dm_clone_cond_set_range(), but
-	 * it's safe as we have alपढ़ोy set the metadata to पढ़ो-only mode.
+	 * it's safe as we have already set the metadata to read-only mode.
 	 */
 	__reload_in_core_bitset(clone);
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------*/
 
-/* Wake up anyone रुकोing क्रम region hydrations to stop */
-अटल अंतरभूत व्योम wakeup_hydration_रुकोers(काष्ठा clone *clone)
-अणु
+/* Wake up anyone waiting for region hydrations to stop */
+static inline void wakeup_hydration_waiters(struct clone *clone)
+{
 	wake_up_all(&clone->hydration_stopped);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम wake_worker(काष्ठा clone *clone)
-अणु
+static inline void wake_worker(struct clone *clone)
+{
 	queue_work(clone->wq, &clone->worker);
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------*/
 
 /*
  * bio helper functions.
  */
-अटल अंतरभूत व्योम remap_to_source(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
+static inline void remap_to_source(struct clone *clone, struct bio *bio)
+{
 	bio_set_dev(bio, clone->source_dev->bdev);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम remap_to_dest(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
+static inline void remap_to_dest(struct clone *clone, struct bio *bio)
+{
 	bio_set_dev(bio, clone->dest_dev->bdev);
-पूर्ण
+}
 
-अटल bool bio_triggers_commit(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	वापस op_is_flush(bio->bi_opf) &&
+static bool bio_triggers_commit(struct clone *clone, struct bio *bio)
+{
+	return op_is_flush(bio->bi_opf) &&
 		dm_clone_changed_this_transaction(clone->cmd);
-पूर्ण
+}
 
 /* Get the address of the region in sectors */
-अटल अंतरभूत sector_t region_to_sector(काष्ठा clone *clone, अचिन्हित दीर्घ region_nr)
-अणु
-	वापस ((sector_t)region_nr << clone->region_shअगरt);
-पूर्ण
+static inline sector_t region_to_sector(struct clone *clone, unsigned long region_nr)
+{
+	return ((sector_t)region_nr << clone->region_shift);
+}
 
 /* Get the region number of the bio */
-अटल अंतरभूत अचिन्हित दीर्घ bio_to_region(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	वापस (bio->bi_iter.bi_sector >> clone->region_shअगरt);
-पूर्ण
+static inline unsigned long bio_to_region(struct clone *clone, struct bio *bio)
+{
+	return (bio->bi_iter.bi_sector >> clone->region_shift);
+}
 
 /* Get the region range covered by the bio */
-अटल व्योम bio_region_range(काष्ठा clone *clone, काष्ठा bio *bio,
-			     अचिन्हित दीर्घ *rs, अचिन्हित दीर्घ *nr_regions)
-अणु
-	अचिन्हित दीर्घ end;
+static void bio_region_range(struct clone *clone, struct bio *bio,
+			     unsigned long *rs, unsigned long *nr_regions)
+{
+	unsigned long end;
 
-	*rs = dm_sector_भाग_up(bio->bi_iter.bi_sector, clone->region_size);
-	end = bio_end_sector(bio) >> clone->region_shअगरt;
+	*rs = dm_sector_div_up(bio->bi_iter.bi_sector, clone->region_size);
+	end = bio_end_sector(bio) >> clone->region_shift;
 
-	अगर (*rs >= end)
+	if (*rs >= end)
 		*nr_regions = 0;
-	अन्यथा
+	else
 		*nr_regions = end - *rs;
-पूर्ण
+}
 
-/* Check whether a bio overग_लिखोs a region */
-अटल अंतरभूत bool is_overग_लिखो_bio(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	वापस (bio_data_dir(bio) == WRITE && bio_sectors(bio) == clone->region_size);
-पूर्ण
+/* Check whether a bio overwrites a region */
+static inline bool is_overwrite_bio(struct clone *clone, struct bio *bio)
+{
+	return (bio_data_dir(bio) == WRITE && bio_sectors(bio) == clone->region_size);
+}
 
-अटल व्योम fail_bios(काष्ठा bio_list *bios, blk_status_t status)
-अणु
-	काष्ठा bio *bio;
+static void fail_bios(struct bio_list *bios, blk_status_t status)
+{
+	struct bio *bio;
 
-	जबतक ((bio = bio_list_pop(bios))) अणु
+	while ((bio = bio_list_pop(bios))) {
 		bio->bi_status = status;
 		bio_endio(bio);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम submit_bios(काष्ठा bio_list *bios)
-अणु
-	काष्ठा bio *bio;
-	काष्ठा blk_plug plug;
+static void submit_bios(struct bio_list *bios)
+{
+	struct bio *bio;
+	struct blk_plug plug;
 
 	blk_start_plug(&plug);
 
-	जबतक ((bio = bio_list_pop(bios)))
+	while ((bio = bio_list_pop(bios)))
 		submit_bio_noacct(bio);
 
 	blk_finish_plug(&plug);
-पूर्ण
+}
 
 /*
  * Submit bio to the underlying device.
@@ -335,34 +334,34 @@ DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(clone_hydration_throttle,
  * If the bio triggers a commit, delay it, until after the metadata have been
  * committed.
  *
- * NOTE: The bio remapping must be perक्रमmed by the caller.
+ * NOTE: The bio remapping must be performed by the caller.
  */
-अटल व्योम issue_bio(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	अगर (!bio_triggers_commit(clone, bio)) अणु
+static void issue_bio(struct clone *clone, struct bio *bio)
+{
+	if (!bio_triggers_commit(clone, bio)) {
 		submit_bio_noacct(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If the metadata mode is RO or FAIL we won't be able to commit the
 	 * metadata, so we complete the bio with an error.
 	 */
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) अणु
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) {
 		bio_io_error(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Batch together any bios that trigger commits and then issue a single
-	 * commit क्रम them in process_deferred_flush_bios().
+	 * commit for them in process_deferred_flush_bios().
 	 */
 	spin_lock_irq(&clone->lock);
 	bio_list_add(&clone->deferred_flush_bios, bio);
 	spin_unlock_irq(&clone->lock);
 
 	wake_worker(clone);
-पूर्ण
+}
 
 /*
  * Remap bio to the destination device and submit it.
@@ -370,35 +369,35 @@ DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(clone_hydration_throttle,
  * If the bio triggers a commit, delay it, until after the metadata have been
  * committed.
  */
-अटल व्योम remap_and_issue(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
+static void remap_and_issue(struct clone *clone, struct bio *bio)
+{
 	remap_to_dest(clone, bio);
 	issue_bio(clone, bio);
-पूर्ण
+}
 
 /*
  * Issue bios that have been deferred until after their region has finished
  * hydrating.
  *
- * We delegate the bio submission to the worker thपढ़ो, so this is safe to call
- * from पूर्णांकerrupt context.
+ * We delegate the bio submission to the worker thread, so this is safe to call
+ * from interrupt context.
  */
-अटल व्योम issue_deferred_bios(काष्ठा clone *clone, काष्ठा bio_list *bios)
-अणु
-	काष्ठा bio *bio;
-	अचिन्हित दीर्घ flags;
-	काष्ठा bio_list flush_bios = BIO_EMPTY_LIST;
-	काष्ठा bio_list normal_bios = BIO_EMPTY_LIST;
+static void issue_deferred_bios(struct clone *clone, struct bio_list *bios)
+{
+	struct bio *bio;
+	unsigned long flags;
+	struct bio_list flush_bios = BIO_EMPTY_LIST;
+	struct bio_list normal_bios = BIO_EMPTY_LIST;
 
-	अगर (bio_list_empty(bios))
-		वापस;
+	if (bio_list_empty(bios))
+		return;
 
-	जबतक ((bio = bio_list_pop(bios))) अणु
-		अगर (bio_triggers_commit(clone, bio))
+	while ((bio = bio_list_pop(bios))) {
+		if (bio_triggers_commit(clone, bio))
 			bio_list_add(&flush_bios, bio);
-		अन्यथा
+		else
 			bio_list_add(&normal_bios, bio);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&clone->lock, flags);
 	bio_list_merge(&clone->deferred_bios, &normal_bios);
@@ -406,111 +405,111 @@ DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(clone_hydration_throttle,
 	spin_unlock_irqrestore(&clone->lock, flags);
 
 	wake_worker(clone);
-पूर्ण
+}
 
-अटल व्योम complete_overग_लिखो_bio(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	अचिन्हित दीर्घ flags;
+static void complete_overwrite_bio(struct clone *clone, struct bio *bio)
+{
+	unsigned long flags;
 
 	/*
 	 * If the bio has the REQ_FUA flag set we must commit the metadata
-	 * beक्रमe संकेतing its completion.
+	 * before signaling its completion.
 	 *
-	 * complete_overग_लिखो_bio() is only called by hydration_complete(),
-	 * after having successfully updated the metadata. This means we करोn't
-	 * need to call dm_clone_changed_this_transaction() to check अगर the
-	 * metadata has changed and thus we can aव्योम taking the metadata spin
+	 * complete_overwrite_bio() is only called by hydration_complete(),
+	 * after having successfully updated the metadata. This means we don't
+	 * need to call dm_clone_changed_this_transaction() to check if the
+	 * metadata has changed and thus we can avoid taking the metadata spin
 	 * lock.
 	 */
-	अगर (!(bio->bi_opf & REQ_FUA)) अणु
+	if (!(bio->bi_opf & REQ_FUA)) {
 		bio_endio(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If the metadata mode is RO or FAIL we won't be able to commit the
 	 * metadata, so we complete the bio with an error.
 	 */
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) अणु
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) {
 		bio_io_error(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Batch together any bios that trigger commits and then issue a single
-	 * commit क्रम them in process_deferred_flush_bios().
+	 * commit for them in process_deferred_flush_bios().
 	 */
 	spin_lock_irqsave(&clone->lock, flags);
 	bio_list_add(&clone->deferred_flush_completions, bio);
 	spin_unlock_irqrestore(&clone->lock, flags);
 
 	wake_worker(clone);
-पूर्ण
+}
 
-अटल व्योम trim_bio(काष्ठा bio *bio, sector_t sector, अचिन्हित पूर्णांक len)
-अणु
+static void trim_bio(struct bio *bio, sector_t sector, unsigned int len)
+{
 	bio->bi_iter.bi_sector = sector;
 	bio->bi_iter.bi_size = to_bytes(len);
-पूर्ण
+}
 
-अटल व्योम complete_discard_bio(काष्ठा clone *clone, काष्ठा bio *bio, bool success)
-अणु
-	अचिन्हित दीर्घ rs, nr_regions;
+static void complete_discard_bio(struct clone *clone, struct bio *bio, bool success)
+{
+	unsigned long rs, nr_regions;
 
 	/*
 	 * If the destination device supports discards, remap and trim the
-	 * discard bio and pass it करोwn. Otherwise complete the bio
+	 * discard bio and pass it down. Otherwise complete the bio
 	 * immediately.
 	 */
-	अगर (test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags) && success) अणु
+	if (test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags) && success) {
 		remap_to_dest(clone, bio);
 		bio_region_range(clone, bio, &rs, &nr_regions);
 		trim_bio(bio, region_to_sector(clone, rs),
-			 nr_regions << clone->region_shअगरt);
+			 nr_regions << clone->region_shift);
 		submit_bio_noacct(bio);
-	पूर्ण अन्यथा
+	} else
 		bio_endio(bio);
-पूर्ण
+}
 
-अटल व्योम process_discard_bio(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	अचिन्हित दीर्घ rs, nr_regions;
+static void process_discard_bio(struct clone *clone, struct bio *bio)
+{
+	unsigned long rs, nr_regions;
 
 	bio_region_range(clone, bio, &rs, &nr_regions);
-	अगर (!nr_regions) अणु
+	if (!nr_regions) {
 		bio_endio(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (WARN_ON(rs >= clone->nr_regions || (rs + nr_regions) < rs ||
-		    (rs + nr_regions) > clone->nr_regions)) अणु
+	if (WARN_ON(rs >= clone->nr_regions || (rs + nr_regions) < rs ||
+		    (rs + nr_regions) > clone->nr_regions)) {
 		DMERR("%s: Invalid range (%lu + %lu, total regions %lu) for discard (%llu + %u)",
 		      clone_device_name(clone), rs, nr_regions,
 		      clone->nr_regions,
-		      (अचिन्हित दीर्घ दीर्घ)bio->bi_iter.bi_sector,
+		      (unsigned long long)bio->bi_iter.bi_sector,
 		      bio_sectors(bio));
 		bio_endio(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * The covered regions are alपढ़ोy hydrated so we just need to pass
-	 * करोwn the discard.
+	 * The covered regions are already hydrated so we just need to pass
+	 * down the discard.
 	 */
-	अगर (dm_clone_is_range_hydrated(clone->cmd, rs, nr_regions)) अणु
+	if (dm_clone_is_range_hydrated(clone->cmd, rs, nr_regions)) {
 		complete_discard_bio(clone, bio, true);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If the metadata mode is RO or FAIL we won't be able to update the
-	 * metadata क्रम the regions covered by the discard so we just ignore
+	 * metadata for the regions covered by the discard so we just ignore
 	 * it.
 	 */
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) अणु
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) {
 		bio_endio(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Defer discard processing.
@@ -520,149 +519,149 @@ DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(clone_hydration_throttle,
 	spin_unlock_irq(&clone->lock);
 
 	wake_worker(clone);
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------*/
 
 /*
  * dm-clone region hydrations.
  */
-काष्ठा dm_clone_region_hydration अणु
-	काष्ठा clone *clone;
-	अचिन्हित दीर्घ region_nr;
+struct dm_clone_region_hydration {
+	struct clone *clone;
+	unsigned long region_nr;
 
-	काष्ठा bio *overग_लिखो_bio;
-	bio_end_io_t *overग_लिखो_bio_end_io;
+	struct bio *overwrite_bio;
+	bio_end_io_t *overwrite_bio_end_io;
 
-	काष्ठा bio_list deferred_bios;
+	struct bio_list deferred_bios;
 
 	blk_status_t status;
 
 	/* Used by hydration batching */
-	काष्ठा list_head list;
+	struct list_head list;
 
 	/* Used by hydration hash table */
-	काष्ठा hlist_node h;
-पूर्ण;
+	struct hlist_node h;
+};
 
 /*
  * Hydration hash table implementation.
  *
  * Ideally we would like to use list_bl, which uses bit spin locks and employs
- * the least signअगरicant bit of the list head to lock the corresponding bucket,
- * reducing the memory overhead क्रम the locks. But, currently, list_bl and bit
- * spin locks करोn't support IRQ safe versions. Since we have to take the lock
- * in both process and पूर्णांकerrupt context, we must fall back to using regular
+ * the least significant bit of the list head to lock the corresponding bucket,
+ * reducing the memory overhead for the locks. But, currently, list_bl and bit
+ * spin locks don't support IRQ safe versions. Since we have to take the lock
+ * in both process and interrupt context, we must fall back to using regular
  * spin locks; one per hash table bucket.
  */
-काष्ठा hash_table_bucket अणु
-	काष्ठा hlist_head head;
+struct hash_table_bucket {
+	struct hlist_head head;
 
 	/* Spinlock protecting the bucket */
 	spinlock_t lock;
-पूर्ण;
+};
 
-#घोषणा bucket_lock_irqsave(bucket, flags) \
+#define bucket_lock_irqsave(bucket, flags) \
 	spin_lock_irqsave(&(bucket)->lock, flags)
 
-#घोषणा bucket_unlock_irqrestore(bucket, flags) \
+#define bucket_unlock_irqrestore(bucket, flags) \
 	spin_unlock_irqrestore(&(bucket)->lock, flags)
 
-#घोषणा bucket_lock_irq(bucket) \
+#define bucket_lock_irq(bucket) \
 	spin_lock_irq(&(bucket)->lock)
 
-#घोषणा bucket_unlock_irq(bucket) \
+#define bucket_unlock_irq(bucket) \
 	spin_unlock_irq(&(bucket)->lock)
 
-अटल पूर्णांक hash_table_init(काष्ठा clone *clone)
-अणु
-	अचिन्हित पूर्णांक i, sz;
-	काष्ठा hash_table_bucket *bucket;
+static int hash_table_init(struct clone *clone)
+{
+	unsigned int i, sz;
+	struct hash_table_bucket *bucket;
 
 	sz = 1 << HASH_TABLE_BITS;
 
-	clone->ht = kvदो_स्मृति(sz * माप(काष्ठा hash_table_bucket), GFP_KERNEL);
-	अगर (!clone->ht)
-		वापस -ENOMEM;
+	clone->ht = kvmalloc(sz * sizeof(struct hash_table_bucket), GFP_KERNEL);
+	if (!clone->ht)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < sz; i++) अणु
+	for (i = 0; i < sz; i++) {
 		bucket = clone->ht + i;
 
 		INIT_HLIST_HEAD(&bucket->head);
 		spin_lock_init(&bucket->lock);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम hash_table_निकास(काष्ठा clone *clone)
-अणु
-	kvमुक्त(clone->ht);
-पूर्ण
+static void hash_table_exit(struct clone *clone)
+{
+	kvfree(clone->ht);
+}
 
-अटल काष्ठा hash_table_bucket *get_hash_table_bucket(काष्ठा clone *clone,
-						       अचिन्हित दीर्घ region_nr)
-अणु
-	वापस &clone->ht[hash_दीर्घ(region_nr, HASH_TABLE_BITS)];
-पूर्ण
+static struct hash_table_bucket *get_hash_table_bucket(struct clone *clone,
+						       unsigned long region_nr)
+{
+	return &clone->ht[hash_long(region_nr, HASH_TABLE_BITS)];
+}
 
 /*
- * Search hash table क्रम a hydration with hd->region_nr == region_nr
+ * Search hash table for a hydration with hd->region_nr == region_nr
  *
  * NOTE: Must be called with the bucket lock held
  */
-अटल काष्ठा dm_clone_region_hydration *__hash_find(काष्ठा hash_table_bucket *bucket,
-						     अचिन्हित दीर्घ region_nr)
-अणु
-	काष्ठा dm_clone_region_hydration *hd;
+static struct dm_clone_region_hydration *__hash_find(struct hash_table_bucket *bucket,
+						     unsigned long region_nr)
+{
+	struct dm_clone_region_hydration *hd;
 
-	hlist_क्रम_each_entry(hd, &bucket->head, h) अणु
-		अगर (hd->region_nr == region_nr)
-			वापस hd;
-	पूर्ण
+	hlist_for_each_entry(hd, &bucket->head, h) {
+		if (hd->region_nr == region_nr)
+			return hd;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*
- * Insert a hydration पूर्णांकo the hash table.
+ * Insert a hydration into the hash table.
  *
  * NOTE: Must be called with the bucket lock held.
  */
-अटल अंतरभूत व्योम __insert_region_hydration(काष्ठा hash_table_bucket *bucket,
-					     काष्ठा dm_clone_region_hydration *hd)
-अणु
+static inline void __insert_region_hydration(struct hash_table_bucket *bucket,
+					     struct dm_clone_region_hydration *hd)
+{
 	hlist_add_head(&hd->h, &bucket->head);
-पूर्ण
+}
 
 /*
- * This function inserts a hydration पूर्णांकo the hash table, unless someone अन्यथा
- * managed to insert a hydration क्रम the same region first. In the latter हाल
- * it वापसs the existing hydration descriptor क्रम this region.
+ * This function inserts a hydration into the hash table, unless someone else
+ * managed to insert a hydration for the same region first. In the latter case
+ * it returns the existing hydration descriptor for this region.
  *
  * NOTE: Must be called with the hydration hash table lock held.
  */
-अटल काष्ठा dm_clone_region_hydration *
-__find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
-				  काष्ठा dm_clone_region_hydration *hd)
-अणु
-	काष्ठा dm_clone_region_hydration *hd2;
+static struct dm_clone_region_hydration *
+__find_or_insert_region_hydration(struct hash_table_bucket *bucket,
+				  struct dm_clone_region_hydration *hd)
+{
+	struct dm_clone_region_hydration *hd2;
 
 	hd2 = __hash_find(bucket, hd->region_nr);
-	अगर (hd2)
-		वापस hd2;
+	if (hd2)
+		return hd2;
 
 	__insert_region_hydration(bucket, hd);
 
-	वापस hd;
-पूर्ण
+	return hd;
+}
 
 /*---------------------------------------------------------------------------*/
 
 /* Allocate a hydration */
-अटल काष्ठा dm_clone_region_hydration *alloc_hydration(काष्ठा clone *clone)
-अणु
-	काष्ठा dm_clone_region_hydration *hd;
+static struct dm_clone_region_hydration *alloc_hydration(struct clone *clone)
+{
+	struct dm_clone_region_hydration *hd;
 
 	/*
 	 * Allocate a hydration from the hydration mempool.
@@ -671,44 +670,44 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 	hd = mempool_alloc(&clone->hydration_pool, GFP_NOIO);
 	hd->clone = clone;
 
-	वापस hd;
-पूर्ण
+	return hd;
+}
 
-अटल अंतरभूत व्योम मुक्त_hydration(काष्ठा dm_clone_region_hydration *hd)
-अणु
-	mempool_मुक्त(hd, &hd->clone->hydration_pool);
-पूर्ण
+static inline void free_hydration(struct dm_clone_region_hydration *hd)
+{
+	mempool_free(hd, &hd->clone->hydration_pool);
+}
 
 /* Initialize a hydration */
-अटल व्योम hydration_init(काष्ठा dm_clone_region_hydration *hd, अचिन्हित दीर्घ region_nr)
-अणु
+static void hydration_init(struct dm_clone_region_hydration *hd, unsigned long region_nr)
+{
 	hd->region_nr = region_nr;
-	hd->overग_लिखो_bio = शून्य;
+	hd->overwrite_bio = NULL;
 	bio_list_init(&hd->deferred_bios);
 	hd->status = 0;
 
 	INIT_LIST_HEAD(&hd->list);
 	INIT_HLIST_NODE(&hd->h);
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------*/
 
 /*
- * Update dm-clone's metadata after a region has finished hydrating and हटाओ
+ * Update dm-clone's metadata after a region has finished hydrating and remove
  * hydration from the hash table.
  */
-अटल पूर्णांक hydration_update_metadata(काष्ठा dm_clone_region_hydration *hd)
-अणु
-	पूर्णांक r = 0;
-	अचिन्हित दीर्घ flags;
-	काष्ठा hash_table_bucket *bucket;
-	काष्ठा clone *clone = hd->clone;
+static int hydration_update_metadata(struct dm_clone_region_hydration *hd)
+{
+	int r = 0;
+	unsigned long flags;
+	struct hash_table_bucket *bucket;
+	struct clone *clone = hd->clone;
 
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY))
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY))
 		r = -EPERM;
 
 	/* Update the metadata */
-	अगर (likely(!r) && hd->status == BLK_STS_OK)
+	if (likely(!r) && hd->status == BLK_STS_OK)
 		r = dm_clone_set_region_hydrated(clone->cmd, hd->region_nr);
 
 	bucket = get_hash_table_bucket(clone, hd->region_nr);
@@ -718,88 +717,88 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 	hlist_del(&hd->h);
 	bucket_unlock_irqrestore(bucket, flags);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
  * Complete a region's hydration:
  *
  *	1. Update dm-clone's metadata.
  *	2. Remove hydration from hash table.
- *	3. Complete overग_लिखो bio.
+ *	3. Complete overwrite bio.
  *	4. Issue deferred bios.
- *	5. If this was the last hydration, wake up anyone रुकोing क्रम
+ *	5. If this was the last hydration, wake up anyone waiting for
  *	   hydrations to finish.
  */
-अटल व्योम hydration_complete(काष्ठा dm_clone_region_hydration *hd)
-अणु
-	पूर्णांक r;
+static void hydration_complete(struct dm_clone_region_hydration *hd)
+{
+	int r;
 	blk_status_t status;
-	काष्ठा clone *clone = hd->clone;
+	struct clone *clone = hd->clone;
 
 	r = hydration_update_metadata(hd);
 
-	अगर (hd->status == BLK_STS_OK && likely(!r)) अणु
-		अगर (hd->overग_लिखो_bio)
-			complete_overग_लिखो_bio(clone, hd->overग_लिखो_bio);
+	if (hd->status == BLK_STS_OK && likely(!r)) {
+		if (hd->overwrite_bio)
+			complete_overwrite_bio(clone, hd->overwrite_bio);
 
 		issue_deferred_bios(clone, &hd->deferred_bios);
-	पूर्ण अन्यथा अणु
+	} else {
 		status = r ? BLK_STS_IOERR : hd->status;
 
-		अगर (hd->overग_लिखो_bio)
-			bio_list_add(&hd->deferred_bios, hd->overग_लिखो_bio);
+		if (hd->overwrite_bio)
+			bio_list_add(&hd->deferred_bios, hd->overwrite_bio);
 
 		fail_bios(&hd->deferred_bios, status);
-	पूर्ण
+	}
 
-	मुक्त_hydration(hd);
+	free_hydration(hd);
 
-	अगर (atomic_dec_and_test(&clone->hydrations_in_flight))
-		wakeup_hydration_रुकोers(clone);
-पूर्ण
+	if (atomic_dec_and_test(&clone->hydrations_in_flight))
+		wakeup_hydration_waiters(clone);
+}
 
-अटल व्योम hydration_kcopyd_callback(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err, व्योम *context)
-अणु
+static void hydration_kcopyd_callback(int read_err, unsigned long write_err, void *context)
+{
 	blk_status_t status;
 
-	काष्ठा dm_clone_region_hydration *पंचांगp, *hd = context;
-	काष्ठा clone *clone = hd->clone;
+	struct dm_clone_region_hydration *tmp, *hd = context;
+	struct clone *clone = hd->clone;
 
 	LIST_HEAD(batched_hydrations);
 
-	अगर (पढ़ो_err || ग_लिखो_err) अणु
+	if (read_err || write_err) {
 		DMERR_LIMIT("%s: hydration failed", clone_device_name(clone));
 		status = BLK_STS_IOERR;
-	पूर्ण अन्यथा अणु
+	} else {
 		status = BLK_STS_OK;
-	पूर्ण
+	}
 	list_splice_tail(&hd->list, &batched_hydrations);
 
 	hd->status = status;
 	hydration_complete(hd);
 
 	/* Complete batched hydrations */
-	list_क्रम_each_entry_safe(hd, पंचांगp, &batched_hydrations, list) अणु
+	list_for_each_entry_safe(hd, tmp, &batched_hydrations, list) {
 		hd->status = status;
 		hydration_complete(hd);
-	पूर्ण
+	}
 
-	/* Continue background hydration, अगर there is no I/O in-flight */
-	अगर (test_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags) &&
-	    !atomic_पढ़ो(&clone->ios_in_flight))
+	/* Continue background hydration, if there is no I/O in-flight */
+	if (test_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags) &&
+	    !atomic_read(&clone->ios_in_flight))
 		wake_worker(clone);
-पूर्ण
+}
 
-अटल व्योम hydration_copy(काष्ठा dm_clone_region_hydration *hd, अचिन्हित पूर्णांक nr_regions)
-अणु
-	अचिन्हित दीर्घ region_start, region_end;
+static void hydration_copy(struct dm_clone_region_hydration *hd, unsigned int nr_regions)
+{
+	unsigned long region_start, region_end;
 	sector_t tail_size, region_size, total_size;
-	काष्ठा dm_io_region from, to;
-	काष्ठा clone *clone = hd->clone;
+	struct dm_io_region from, to;
+	struct clone *clone = hd->clone;
 
-	अगर (WARN_ON(!nr_regions))
-		वापस;
+	if (WARN_ON(!nr_regions))
+		return;
 
 	region_size = clone->region_size;
 	region_start = hd->region_nr;
@@ -807,17 +806,17 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 
 	total_size = region_to_sector(clone, nr_regions - 1);
 
-	अगर (region_end == clone->nr_regions - 1) अणु
+	if (region_end == clone->nr_regions - 1) {
 		/*
 		 * The last region of the target might be smaller than
 		 * region_size.
 		 */
 		tail_size = clone->ti->len & (region_size - 1);
-		अगर (!tail_size)
+		if (!tail_size)
 			tail_size = region_size;
-	पूर्ण अन्यथा अणु
+	} else {
 		tail_size = region_size;
-	पूर्ण
+	}
 
 	total_size += tail_size;
 
@@ -833,50 +832,50 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 	atomic_add(nr_regions, &clone->hydrations_in_flight);
 	dm_kcopyd_copy(clone->kcopyd_client, &from, 1, &to, 0,
 		       hydration_kcopyd_callback, hd);
-पूर्ण
+}
 
-अटल व्योम overग_लिखो_endio(काष्ठा bio *bio)
-अणु
-	काष्ठा dm_clone_region_hydration *hd = bio->bi_निजी;
+static void overwrite_endio(struct bio *bio)
+{
+	struct dm_clone_region_hydration *hd = bio->bi_private;
 
-	bio->bi_end_io = hd->overग_लिखो_bio_end_io;
+	bio->bi_end_io = hd->overwrite_bio_end_io;
 	hd->status = bio->bi_status;
 
 	hydration_complete(hd);
-पूर्ण
+}
 
-अटल व्योम hydration_overग_लिखो(काष्ठा dm_clone_region_hydration *hd, काष्ठा bio *bio)
-अणु
+static void hydration_overwrite(struct dm_clone_region_hydration *hd, struct bio *bio)
+{
 	/*
-	 * We करोn't need to save and restore bio->bi_निजी because device
-	 * mapper core generates a new bio क्रम us to use, with clean
-	 * bi_निजी.
+	 * We don't need to save and restore bio->bi_private because device
+	 * mapper core generates a new bio for us to use, with clean
+	 * bi_private.
 	 */
-	hd->overग_लिखो_bio = bio;
-	hd->overग_लिखो_bio_end_io = bio->bi_end_io;
+	hd->overwrite_bio = bio;
+	hd->overwrite_bio_end_io = bio->bi_end_io;
 
-	bio->bi_end_io = overग_लिखो_endio;
-	bio->bi_निजी = hd;
+	bio->bi_end_io = overwrite_endio;
+	bio->bi_private = hd;
 
 	atomic_inc(&hd->clone->hydrations_in_flight);
 	submit_bio_noacct(bio);
-पूर्ण
+}
 
 /*
  * Hydrate bio's region.
  *
- * This function starts the hydration of the bio's region and माला_दो the bio in
- * the list of deferred bios क्रम this region. In हाल, by the समय this
+ * This function starts the hydration of the bio's region and puts the bio in
+ * the list of deferred bios for this region. In case, by the time this
  * function is called, the region has finished hydrating it's submitted to the
  * destination device.
  *
- * NOTE: The bio remapping must be perक्रमmed by the caller.
+ * NOTE: The bio remapping must be performed by the caller.
  */
-अटल व्योम hydrate_bio_region(काष्ठा clone *clone, काष्ठा bio *bio)
-अणु
-	अचिन्हित दीर्घ region_nr;
-	काष्ठा hash_table_bucket *bucket;
-	काष्ठा dm_clone_region_hydration *hd, *hd2;
+static void hydrate_bio_region(struct clone *clone, struct bio *bio)
+{
+	unsigned long region_nr;
+	struct hash_table_bucket *bucket;
+	struct dm_clone_region_hydration *hd, *hd2;
 
 	region_nr = bio_to_region(clone, bio);
 	bucket = get_hash_table_bucket(clone, region_nr);
@@ -884,19 +883,19 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 	bucket_lock_irq(bucket);
 
 	hd = __hash_find(bucket, region_nr);
-	अगर (hd) अणु
-		/* Someone अन्यथा is hydrating the region */
+	if (hd) {
+		/* Someone else is hydrating the region */
 		bio_list_add(&hd->deferred_bios, bio);
 		bucket_unlock_irq(bucket);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (dm_clone_is_region_hydrated(clone->cmd, region_nr)) अणु
+	if (dm_clone_is_region_hydrated(clone->cmd, region_nr)) {
 		/* The region has been hydrated */
 		bucket_unlock_irq(bucket);
 		issue_bio(clone, bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * We must allocate a hydration descriptor and start the hydration of
@@ -909,52 +908,52 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 
 	bucket_lock_irq(bucket);
 
-	/* Check अगर the region has been hydrated in the meanसमय. */
-	अगर (dm_clone_is_region_hydrated(clone->cmd, region_nr)) अणु
+	/* Check if the region has been hydrated in the meantime. */
+	if (dm_clone_is_region_hydrated(clone->cmd, region_nr)) {
 		bucket_unlock_irq(bucket);
-		मुक्त_hydration(hd);
+		free_hydration(hd);
 		issue_bio(clone, bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	hd2 = __find_or_insert_region_hydration(bucket, hd);
-	अगर (hd2 != hd) अणु
-		/* Someone अन्यथा started the region's hydration. */
+	if (hd2 != hd) {
+		/* Someone else started the region's hydration. */
 		bio_list_add(&hd2->deferred_bios, bio);
 		bucket_unlock_irq(bucket);
-		मुक्त_hydration(hd);
-		वापस;
-	पूर्ण
+		free_hydration(hd);
+		return;
+	}
 
 	/*
-	 * If the metadata mode is RO or FAIL then there is no poपूर्णांक starting a
+	 * If the metadata mode is RO or FAIL then there is no point starting a
 	 * hydration, since we will not be able to update the metadata when the
 	 * hydration finishes.
 	 */
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) अणु
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) {
 		hlist_del(&hd->h);
 		bucket_unlock_irq(bucket);
-		मुक्त_hydration(hd);
+		free_hydration(hd);
 		bio_io_error(bio);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Start region hydration.
 	 *
-	 * If a bio overग_लिखोs a region, i.e., its size is equal to the
+	 * If a bio overwrites a region, i.e., its size is equal to the
 	 * region's size, then we don't need to copy the region from the source
 	 * to the destination device.
 	 */
-	अगर (is_overग_लिखो_bio(clone, bio)) अणु
+	if (is_overwrite_bio(clone, bio)) {
 		bucket_unlock_irq(bucket);
-		hydration_overग_लिखो(hd, bio);
-	पूर्ण अन्यथा अणु
+		hydration_overwrite(hd, bio);
+	} else {
 		bio_list_add(&hd->deferred_bios, bio);
 		bucket_unlock_irq(bucket);
 		hydration_copy(hd, 1);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*---------------------------------------------------------------------------*/
 
@@ -967,74 +966,74 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
  *
  * To better utilize device bandwidth we batch together the hydration of
  * adjacent regions. This allows us to use small region sizes, e.g., 4KB, which
- * is good क्रम small, अक्रमom ग_लिखो perक्रमmance (because of the overwriting of
- * un-hydrated regions) and at the same समय issue big copy requests to kcopyd
+ * is good for small, random write performance (because of the overwriting of
+ * un-hydrated regions) and at the same time issue big copy requests to kcopyd
  * to achieve high hydration bandwidth.
  */
-काष्ठा batch_info अणु
-	काष्ठा dm_clone_region_hydration *head;
-	अचिन्हित पूर्णांक nr_batched_regions;
-पूर्ण;
+struct batch_info {
+	struct dm_clone_region_hydration *head;
+	unsigned int nr_batched_regions;
+};
 
-अटल व्योम __batch_hydration(काष्ठा batch_info *batch,
-			      काष्ठा dm_clone_region_hydration *hd)
-अणु
-	काष्ठा clone *clone = hd->clone;
-	अचिन्हित पूर्णांक max_batch_size = READ_ONCE(clone->hydration_batch_size);
+static void __batch_hydration(struct batch_info *batch,
+			      struct dm_clone_region_hydration *hd)
+{
+	struct clone *clone = hd->clone;
+	unsigned int max_batch_size = READ_ONCE(clone->hydration_batch_size);
 
-	अगर (batch->head) अणु
+	if (batch->head) {
 		/* Try to extend the current batch */
-		अगर (batch->nr_batched_regions < max_batch_size &&
-		    (batch->head->region_nr + batch->nr_batched_regions) == hd->region_nr) अणु
+		if (batch->nr_batched_regions < max_batch_size &&
+		    (batch->head->region_nr + batch->nr_batched_regions) == hd->region_nr) {
 			list_add_tail(&hd->list, &batch->head->list);
 			batch->nr_batched_regions++;
-			hd = शून्य;
-		पूर्ण
+			hd = NULL;
+		}
 
-		/* Check अगर we should issue the current batch */
-		अगर (batch->nr_batched_regions >= max_batch_size || hd) अणु
+		/* Check if we should issue the current batch */
+		if (batch->nr_batched_regions >= max_batch_size || hd) {
 			hydration_copy(batch->head, batch->nr_batched_regions);
-			batch->head = शून्य;
+			batch->head = NULL;
 			batch->nr_batched_regions = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!hd)
-		वापस;
+	if (!hd)
+		return;
 
 	/* We treat max batch sizes of zero and one equivalently */
-	अगर (max_batch_size <= 1) अणु
+	if (max_batch_size <= 1) {
 		hydration_copy(hd, 1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Start a new batch */
 	BUG_ON(!list_empty(&hd->list));
 	batch->head = hd;
 	batch->nr_batched_regions = 1;
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ __start_next_hydration(काष्ठा clone *clone,
-					    अचिन्हित दीर्घ offset,
-					    काष्ठा batch_info *batch)
-अणु
-	काष्ठा hash_table_bucket *bucket;
-	काष्ठा dm_clone_region_hydration *hd;
-	अचिन्हित दीर्घ nr_regions = clone->nr_regions;
+static unsigned long __start_next_hydration(struct clone *clone,
+					    unsigned long offset,
+					    struct batch_info *batch)
+{
+	struct hash_table_bucket *bucket;
+	struct dm_clone_region_hydration *hd;
+	unsigned long nr_regions = clone->nr_regions;
 
 	hd = alloc_hydration(clone);
 
 	/* Try to find a region to hydrate. */
-	करो अणु
+	do {
 		offset = dm_clone_find_next_unhydrated_region(clone->cmd, offset);
-		अगर (offset == nr_regions)
-			अवरोध;
+		if (offset == nr_regions)
+			break;
 
 		bucket = get_hash_table_bucket(clone, offset);
 		bucket_lock_irq(bucket);
 
-		अगर (!dm_clone_is_region_hydrated(clone->cmd, offset) &&
-		    !__hash_find(bucket, offset)) अणु
+		if (!dm_clone_is_region_hydrated(clone->cmd, offset) &&
+		    !__hash_find(bucket, offset)) {
 			hydration_init(hd, offset);
 			__insert_region_hydration(bucket, hd);
 			bucket_unlock_irq(bucket);
@@ -1042,46 +1041,46 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 			/* Batch hydration */
 			__batch_hydration(batch, hd);
 
-			वापस (offset + 1);
-		पूर्ण
+			return (offset + 1);
+		}
 
 		bucket_unlock_irq(bucket);
 
-	पूर्ण जबतक (++offset < nr_regions);
+	} while (++offset < nr_regions);
 
-	अगर (hd)
-		मुक्त_hydration(hd);
+	if (hd)
+		free_hydration(hd);
 
-	वापस offset;
-पूर्ण
+	return offset;
+}
 
 /*
- * This function searches क्रम regions that still reside in the source device
+ * This function searches for regions that still reside in the source device
  * and starts their hydration.
  */
-अटल व्योम करो_hydration(काष्ठा clone *clone)
-अणु
-	अचिन्हित पूर्णांक current_volume;
-	अचिन्हित दीर्घ offset, nr_regions = clone->nr_regions;
+static void do_hydration(struct clone *clone)
+{
+	unsigned int current_volume;
+	unsigned long offset, nr_regions = clone->nr_regions;
 
-	काष्ठा batch_info batch = अणु
-		.head = शून्य,
+	struct batch_info batch = {
+		.head = NULL,
 		.nr_batched_regions = 0,
-	पूर्ण;
+	};
 
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY))
-		वापस;
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY))
+		return;
 
-	अगर (dm_clone_is_hydration_करोne(clone->cmd))
-		वापस;
+	if (dm_clone_is_hydration_done(clone->cmd))
+		return;
 
 	/*
-	 * Aव्योम race with device suspension.
+	 * Avoid race with device suspension.
 	 */
 	atomic_inc(&clone->hydrations_in_flight);
 
 	/*
-	 * Make sure atomic_inc() is ordered beक्रमe test_bit(), otherwise we
+	 * Make sure atomic_inc() is ordered before test_bit(), otherwise we
 	 * might race with clone_postsuspend() and start a region hydration
 	 * after the target has been suspended.
 	 *
@@ -1091,151 +1090,151 @@ __find_or_insert_region_hydration(काष्ठा hash_table_bucket *bucket,
 	smp_mb__after_atomic();
 
 	offset = clone->hydration_offset;
-	जबतक (likely(!test_bit(DM_CLONE_HYDRATION_SUSPENDED, &clone->flags)) &&
-	       !atomic_पढ़ो(&clone->ios_in_flight) &&
+	while (likely(!test_bit(DM_CLONE_HYDRATION_SUSPENDED, &clone->flags)) &&
+	       !atomic_read(&clone->ios_in_flight) &&
 	       test_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags) &&
-	       offset < nr_regions) अणु
-		current_volume = atomic_पढ़ो(&clone->hydrations_in_flight);
+	       offset < nr_regions) {
+		current_volume = atomic_read(&clone->hydrations_in_flight);
 		current_volume += batch.nr_batched_regions;
 
-		अगर (current_volume > READ_ONCE(clone->hydration_threshold))
-			अवरोध;
+		if (current_volume > READ_ONCE(clone->hydration_threshold))
+			break;
 
 		offset = __start_next_hydration(clone, offset, &batch);
-	पूर्ण
+	}
 
-	अगर (batch.head)
+	if (batch.head)
 		hydration_copy(batch.head, batch.nr_batched_regions);
 
-	अगर (offset >= nr_regions)
+	if (offset >= nr_regions)
 		offset = 0;
 
 	clone->hydration_offset = offset;
 
-	अगर (atomic_dec_and_test(&clone->hydrations_in_flight))
-		wakeup_hydration_रुकोers(clone);
-पूर्ण
+	if (atomic_dec_and_test(&clone->hydrations_in_flight))
+		wakeup_hydration_waiters(clone);
+}
 
 /*---------------------------------------------------------------------------*/
 
-अटल bool need_commit_due_to_समय(काष्ठा clone *clone)
-अणु
-	वापस !समय_in_range(jअगरfies, clone->last_commit_jअगरfies,
-			      clone->last_commit_jअगरfies + COMMIT_PERIOD);
-पूर्ण
+static bool need_commit_due_to_time(struct clone *clone)
+{
+	return !time_in_range(jiffies, clone->last_commit_jiffies,
+			      clone->last_commit_jiffies + COMMIT_PERIOD);
+}
 
 /*
- * A non-zero वापस indicates पढ़ो-only or fail mode.
+ * A non-zero return indicates read-only or fail mode.
  */
-अटल पूर्णांक commit_metadata(काष्ठा clone *clone, bool *dest_dev_flushed)
-अणु
-	पूर्णांक r = 0;
+static int commit_metadata(struct clone *clone, bool *dest_dev_flushed)
+{
+	int r = 0;
 
-	अगर (dest_dev_flushed)
+	if (dest_dev_flushed)
 		*dest_dev_flushed = false;
 
 	mutex_lock(&clone->commit_lock);
 
-	अगर (!dm_clone_changed_this_transaction(clone->cmd))
-		जाओ out;
+	if (!dm_clone_changed_this_transaction(clone->cmd))
+		goto out;
 
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) अणु
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY)) {
 		r = -EPERM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r = dm_clone_metadata_pre_commit(clone->cmd);
-	अगर (unlikely(r)) अणु
+	if (unlikely(r)) {
 		__metadata_operation_failed(clone, "dm_clone_metadata_pre_commit", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	r = blkdev_issue_flush(clone->dest_dev->bdev);
-	अगर (unlikely(r)) अणु
+	if (unlikely(r)) {
 		__metadata_operation_failed(clone, "flush destination device", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dest_dev_flushed)
+	if (dest_dev_flushed)
 		*dest_dev_flushed = true;
 
 	r = dm_clone_metadata_commit(clone->cmd);
-	अगर (unlikely(r)) अणु
+	if (unlikely(r)) {
 		__metadata_operation_failed(clone, "dm_clone_metadata_commit", r);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dm_clone_is_hydration_करोne(clone->cmd))
+	if (dm_clone_is_hydration_done(clone->cmd))
 		dm_table_event(clone->ti->table);
 out:
 	mutex_unlock(&clone->commit_lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम process_deferred_discards(काष्ठा clone *clone)
-अणु
-	पूर्णांक r = -EPERM;
-	काष्ठा bio *bio;
-	काष्ठा blk_plug plug;
-	अचिन्हित दीर्घ rs, nr_regions;
-	काष्ठा bio_list discards = BIO_EMPTY_LIST;
+static void process_deferred_discards(struct clone *clone)
+{
+	int r = -EPERM;
+	struct bio *bio;
+	struct blk_plug plug;
+	unsigned long rs, nr_regions;
+	struct bio_list discards = BIO_EMPTY_LIST;
 
 	spin_lock_irq(&clone->lock);
 	bio_list_merge(&discards, &clone->deferred_discard_bios);
 	bio_list_init(&clone->deferred_discard_bios);
 	spin_unlock_irq(&clone->lock);
 
-	अगर (bio_list_empty(&discards))
-		वापस;
+	if (bio_list_empty(&discards))
+		return;
 
-	अगर (unlikely(get_clone_mode(clone) >= CM_READ_ONLY))
-		जाओ out;
+	if (unlikely(get_clone_mode(clone) >= CM_READ_ONLY))
+		goto out;
 
 	/* Update the metadata */
-	bio_list_क्रम_each(bio, &discards) अणु
+	bio_list_for_each(bio, &discards) {
 		bio_region_range(clone, bio, &rs, &nr_regions);
 		/*
-		 * A discard request might cover regions that have been alपढ़ोy
-		 * hydrated. There is no need to update the metadata क्रम these
+		 * A discard request might cover regions that have been already
+		 * hydrated. There is no need to update the metadata for these
 		 * regions.
 		 */
 		r = dm_clone_cond_set_range(clone->cmd, rs, nr_regions);
-		अगर (unlikely(r))
-			अवरोध;
-	पूर्ण
+		if (unlikely(r))
+			break;
+	}
 out:
 	blk_start_plug(&plug);
-	जबतक ((bio = bio_list_pop(&discards)))
+	while ((bio = bio_list_pop(&discards)))
 		complete_discard_bio(clone, bio, r == 0);
 	blk_finish_plug(&plug);
-पूर्ण
+}
 
-अटल व्योम process_deferred_bios(काष्ठा clone *clone)
-अणु
-	काष्ठा bio_list bios = BIO_EMPTY_LIST;
+static void process_deferred_bios(struct clone *clone)
+{
+	struct bio_list bios = BIO_EMPTY_LIST;
 
 	spin_lock_irq(&clone->lock);
 	bio_list_merge(&bios, &clone->deferred_bios);
 	bio_list_init(&clone->deferred_bios);
 	spin_unlock_irq(&clone->lock);
 
-	अगर (bio_list_empty(&bios))
-		वापस;
+	if (bio_list_empty(&bios))
+		return;
 
 	submit_bios(&bios);
-पूर्ण
+}
 
-अटल व्योम process_deferred_flush_bios(काष्ठा clone *clone)
-अणु
-	काष्ठा bio *bio;
+static void process_deferred_flush_bios(struct clone *clone)
+{
+	struct bio *bio;
 	bool dest_dev_flushed;
-	काष्ठा bio_list bios = BIO_EMPTY_LIST;
-	काष्ठा bio_list bio_completions = BIO_EMPTY_LIST;
+	struct bio_list bios = BIO_EMPTY_LIST;
+	struct bio_list bio_completions = BIO_EMPTY_LIST;
 
 	/*
 	 * If there are any deferred flush bios, we must commit the metadata
-	 * beक्रमe issuing them or संकेतing their completion.
+	 * before issuing them or signaling their completion.
 	 */
 	spin_lock_irq(&clone->lock);
 	bio_list_merge(&bios, &clone->deferred_flush_bios);
@@ -1245,40 +1244,40 @@ out:
 	bio_list_init(&clone->deferred_flush_completions);
 	spin_unlock_irq(&clone->lock);
 
-	अगर (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
-	    !(dm_clone_changed_this_transaction(clone->cmd) && need_commit_due_to_समय(clone)))
-		वापस;
+	if (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
+	    !(dm_clone_changed_this_transaction(clone->cmd) && need_commit_due_to_time(clone)))
+		return;
 
-	अगर (commit_metadata(clone, &dest_dev_flushed)) अणु
+	if (commit_metadata(clone, &dest_dev_flushed)) {
 		bio_list_merge(&bios, &bio_completions);
 
-		जबतक ((bio = bio_list_pop(&bios)))
+		while ((bio = bio_list_pop(&bios)))
 			bio_io_error(bio);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	clone->last_commit_jअगरfies = jअगरfies;
+	clone->last_commit_jiffies = jiffies;
 
-	जबतक ((bio = bio_list_pop(&bio_completions)))
+	while ((bio = bio_list_pop(&bio_completions)))
 		bio_endio(bio);
 
-	जबतक ((bio = bio_list_pop(&bios))) अणु
-		अगर ((bio->bi_opf & REQ_PREFLUSH) && dest_dev_flushed) अणु
+	while ((bio = bio_list_pop(&bios))) {
+		if ((bio->bi_opf & REQ_PREFLUSH) && dest_dev_flushed) {
 			/* We just flushed the destination device as part of
 			 * the metadata commit, so there is no reason to send
 			 * another flush.
 			 */
 			bio_endio(bio);
-		पूर्ण अन्यथा अणु
+		} else {
 			submit_bio_noacct(bio);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम करो_worker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा clone *clone = container_of(work, typeof(*clone), worker);
+static void do_worker(struct work_struct *work)
+{
+	struct clone *clone = container_of(work, typeof(*clone), worker);
 
 	process_deferred_bios(clone);
 	process_deferred_discards(clone);
@@ -1295,60 +1294,60 @@ out:
 	process_deferred_flush_bios(clone);
 
 	/* Background hydration */
-	करो_hydration(clone);
-पूर्ण
+	do_hydration(clone);
+}
 
 /*
  * Commit periodically so that not too much unwritten data builds up.
  *
- * Also, restart background hydration, अगर it has been stopped by in-flight I/O.
+ * Also, restart background hydration, if it has been stopped by in-flight I/O.
  */
-अटल व्योम करो_waker(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा clone *clone = container_of(to_delayed_work(work), काष्ठा clone, waker);
+static void do_waker(struct work_struct *work)
+{
+	struct clone *clone = container_of(to_delayed_work(work), struct clone, waker);
 
 	wake_worker(clone);
 	queue_delayed_work(clone->wq, &clone->waker, COMMIT_PERIOD);
-पूर्ण
+}
 
 /*---------------------------------------------------------------------------*/
 
 /*
  * Target methods
  */
-अटल पूर्णांक clone_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
-अणु
-	काष्ठा clone *clone = ti->निजी;
-	अचिन्हित दीर्घ region_nr;
+static int clone_map(struct dm_target *ti, struct bio *bio)
+{
+	struct clone *clone = ti->private;
+	unsigned long region_nr;
 
 	atomic_inc(&clone->ios_in_flight);
 
-	अगर (unlikely(get_clone_mode(clone) == CM_FAIL))
-		वापस DM_MAPIO_KILL;
+	if (unlikely(get_clone_mode(clone) == CM_FAIL))
+		return DM_MAPIO_KILL;
 
 	/*
 	 * REQ_PREFLUSH bios carry no data:
 	 *
-	 * - Commit metadata, अगर changed
+	 * - Commit metadata, if changed
 	 *
-	 * - Pass करोwn to destination device
+	 * - Pass down to destination device
 	 */
-	अगर (bio->bi_opf & REQ_PREFLUSH) अणु
+	if (bio->bi_opf & REQ_PREFLUSH) {
 		remap_and_issue(clone, bio);
-		वापस DM_MAPIO_SUBMITTED;
-	पूर्ण
+		return DM_MAPIO_SUBMITTED;
+	}
 
 	bio->bi_iter.bi_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
 
 	/*
-	 * dm-clone पूर्णांकerprets discards and perक्रमms a fast hydration of the
+	 * dm-clone interprets discards and performs a fast hydration of the
 	 * discarded regions, i.e., we skip the copy from the source device and
 	 * just mark the regions as hydrated.
 	 */
-	अगर (bio_op(bio) == REQ_OP_DISCARD) अणु
+	if (bio_op(bio) == REQ_OP_DISCARD) {
 		process_discard_bio(clone, bio);
-		वापस DM_MAPIO_SUBMITTED;
-	पूर्ण
+		return DM_MAPIO_SUBMITTED;
+	}
 
 	/*
 	 * If the bio's region is hydrated, redirect it to the destination
@@ -1361,162 +1360,162 @@ out:
 	 * start the region's hydration immediately.
 	 */
 	region_nr = bio_to_region(clone, bio);
-	अगर (dm_clone_is_region_hydrated(clone->cmd, region_nr)) अणु
+	if (dm_clone_is_region_hydrated(clone->cmd, region_nr)) {
 		remap_and_issue(clone, bio);
-		वापस DM_MAPIO_SUBMITTED;
-	पूर्ण अन्यथा अगर (bio_data_dir(bio) == READ) अणु
+		return DM_MAPIO_SUBMITTED;
+	} else if (bio_data_dir(bio) == READ) {
 		remap_to_source(clone, bio);
-		वापस DM_MAPIO_REMAPPED;
-	पूर्ण
+		return DM_MAPIO_REMAPPED;
+	}
 
 	remap_to_dest(clone, bio);
 	hydrate_bio_region(clone, bio);
 
-	वापस DM_MAPIO_SUBMITTED;
-पूर्ण
+	return DM_MAPIO_SUBMITTED;
+}
 
-अटल पूर्णांक clone_endio(काष्ठा dm_target *ti, काष्ठा bio *bio, blk_status_t *error)
-अणु
-	काष्ठा clone *clone = ti->निजी;
+static int clone_endio(struct dm_target *ti, struct bio *bio, blk_status_t *error)
+{
+	struct clone *clone = ti->private;
 
 	atomic_dec(&clone->ios_in_flight);
 
-	वापस DM_ENDIO_DONE;
-पूर्ण
+	return DM_ENDIO_DONE;
+}
 
-अटल व्योम emit_flags(काष्ठा clone *clone, अक्षर *result, अचिन्हित पूर्णांक maxlen,
-		       sमाप_प्रकार *sz_ptr)
-अणु
-	sमाप_प्रकार sz = *sz_ptr;
-	अचिन्हित पूर्णांक count;
+static void emit_flags(struct clone *clone, char *result, unsigned int maxlen,
+		       ssize_t *sz_ptr)
+{
+	ssize_t sz = *sz_ptr;
+	unsigned int count;
 
 	count = !test_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags);
 	count += !test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags);
 
 	DMEMIT("%u ", count);
 
-	अगर (!test_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags))
+	if (!test_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags))
 		DMEMIT("no_hydration ");
 
-	अगर (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags))
+	if (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags))
 		DMEMIT("no_discard_passdown ");
 
 	*sz_ptr = sz;
-पूर्ण
+}
 
-अटल व्योम emit_core_args(काष्ठा clone *clone, अक्षर *result,
-			   अचिन्हित पूर्णांक maxlen, sमाप_प्रकार *sz_ptr)
-अणु
-	sमाप_प्रकार sz = *sz_ptr;
-	अचिन्हित पूर्णांक count = 4;
+static void emit_core_args(struct clone *clone, char *result,
+			   unsigned int maxlen, ssize_t *sz_ptr)
+{
+	ssize_t sz = *sz_ptr;
+	unsigned int count = 4;
 
 	DMEMIT("%u hydration_threshold %u hydration_batch_size %u ", count,
 	       READ_ONCE(clone->hydration_threshold),
 	       READ_ONCE(clone->hydration_batch_size));
 
 	*sz_ptr = sz;
-पूर्ण
+}
 
 /*
- * Status क्रमmat:
+ * Status format:
  *
  * <metadata block size> <#used metadata blocks>/<#total metadata blocks>
  * <clone region size> <#hydrated regions>/<#total regions> <#hydrating regions>
  * <#features> <features>* <#core args> <core args>* <clone metadata mode>
  */
-अटल व्योम clone_status(काष्ठा dm_target *ti, status_type_t type,
-			 अचिन्हित पूर्णांक status_flags, अक्षर *result,
-			 अचिन्हित पूर्णांक maxlen)
-अणु
-	पूर्णांक r;
-	अचिन्हित पूर्णांक i;
-	sमाप_प्रकार sz = 0;
-	dm_block_t nr_मुक्त_metadata_blocks = 0;
+static void clone_status(struct dm_target *ti, status_type_t type,
+			 unsigned int status_flags, char *result,
+			 unsigned int maxlen)
+{
+	int r;
+	unsigned int i;
+	ssize_t sz = 0;
+	dm_block_t nr_free_metadata_blocks = 0;
 	dm_block_t nr_metadata_blocks = 0;
-	अक्षर buf[BDEVNAME_SIZE];
-	काष्ठा clone *clone = ti->निजी;
+	char buf[BDEVNAME_SIZE];
+	struct clone *clone = ti->private;
 
-	चयन (type) अणु
-	हाल STATUSTYPE_INFO:
-		अगर (get_clone_mode(clone) == CM_FAIL) अणु
+	switch (type) {
+	case STATUSTYPE_INFO:
+		if (get_clone_mode(clone) == CM_FAIL) {
 			DMEMIT("Fail");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* Commit to ensure statistics aren't out-of-date */
-		अगर (!(status_flags & DM_STATUS_NOFLUSH_FLAG) && !dm_suspended(ti))
-			(व्योम) commit_metadata(clone, शून्य);
+		if (!(status_flags & DM_STATUS_NOFLUSH_FLAG) && !dm_suspended(ti))
+			(void) commit_metadata(clone, NULL);
 
-		r = dm_clone_get_मुक्त_metadata_block_count(clone->cmd, &nr_मुक्त_metadata_blocks);
+		r = dm_clone_get_free_metadata_block_count(clone->cmd, &nr_free_metadata_blocks);
 
-		अगर (r) अणु
+		if (r) {
 			DMERR("%s: dm_clone_get_free_metadata_block_count returned %d",
 			      clone_device_name(clone), r);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		r = dm_clone_get_metadata_dev_size(clone->cmd, &nr_metadata_blocks);
 
-		अगर (r) अणु
+		if (r) {
 			DMERR("%s: dm_clone_get_metadata_dev_size returned %d",
 			      clone_device_name(clone), r);
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 
 		DMEMIT("%u %llu/%llu %llu %u/%lu %u ",
 		       DM_CLONE_METADATA_BLOCK_SIZE,
-		       (अचिन्हित दीर्घ दीर्घ)(nr_metadata_blocks - nr_मुक्त_metadata_blocks),
-		       (अचिन्हित दीर्घ दीर्घ)nr_metadata_blocks,
-		       (अचिन्हित दीर्घ दीर्घ)clone->region_size,
+		       (unsigned long long)(nr_metadata_blocks - nr_free_metadata_blocks),
+		       (unsigned long long)nr_metadata_blocks,
+		       (unsigned long long)clone->region_size,
 		       dm_clone_nr_of_hydrated_regions(clone->cmd),
 		       clone->nr_regions,
-		       atomic_पढ़ो(&clone->hydrations_in_flight));
+		       atomic_read(&clone->hydrations_in_flight));
 
 		emit_flags(clone, result, maxlen, &sz);
 		emit_core_args(clone, result, maxlen, &sz);
 
-		चयन (get_clone_mode(clone)) अणु
-		हाल CM_WRITE:
+		switch (get_clone_mode(clone)) {
+		case CM_WRITE:
 			DMEMIT("rw");
-			अवरोध;
-		हाल CM_READ_ONLY:
+			break;
+		case CM_READ_ONLY:
 			DMEMIT("ro");
-			अवरोध;
-		हाल CM_FAIL:
+			break;
+		case CM_FAIL:
 			DMEMIT("Fail");
-		पूर्ण
+		}
 
-		अवरोध;
+		break;
 
-	हाल STATUSTYPE_TABLE:
-		क्रमmat_dev_t(buf, clone->metadata_dev->bdev->bd_dev);
+	case STATUSTYPE_TABLE:
+		format_dev_t(buf, clone->metadata_dev->bdev->bd_dev);
 		DMEMIT("%s ", buf);
 
-		क्रमmat_dev_t(buf, clone->dest_dev->bdev->bd_dev);
+		format_dev_t(buf, clone->dest_dev->bdev->bd_dev);
 		DMEMIT("%s ", buf);
 
-		क्रमmat_dev_t(buf, clone->source_dev->bdev->bd_dev);
+		format_dev_t(buf, clone->source_dev->bdev->bd_dev);
 		DMEMIT("%s", buf);
 
-		क्रम (i = 0; i < clone->nr_ctr_args; i++)
+		for (i = 0; i < clone->nr_ctr_args; i++)
 			DMEMIT(" %s", clone->ctr_args[i]);
-	पूर्ण
+	}
 
-	वापस;
+	return;
 
 error:
 	DMEMIT("Error");
-पूर्ण
+}
 
-अटल sector_t get_dev_size(काष्ठा dm_dev *dev)
-अणु
-	वापस i_size_पढ़ो(dev->bdev->bd_inode) >> SECTOR_SHIFT;
-पूर्ण
+static sector_t get_dev_size(struct dm_dev *dev)
+{
+	return i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
+}
 
 /*---------------------------------------------------------------------------*/
 
 /*
- * Conकाष्ठा a clone device mapping:
+ * Construct a clone device mapping:
  *
  * clone <metadata dev> <destination dev> <source dev> <region size>
  *	[<#feature args> [<feature arg>]* [<#core args> [key value]*]]
@@ -1524,270 +1523,270 @@ error:
  * metadata dev: Fast device holding the persistent metadata
  * destination dev: The destination device, which will become a clone of the
  *                  source device
- * source dev: The पढ़ो-only source device that माला_लो cloned
+ * source dev: The read-only source device that gets cloned
  * region size: dm-clone unit size in sectors
  *
  * #feature args: Number of feature arguments passed
- * feature args: E.g. no_hydration, no_discard_passकरोwn
+ * feature args: E.g. no_hydration, no_discard_passdown
  *
  * #core arguments: An even number of core arguments
- * core arguments: Key/value pairs क्रम tuning the core
+ * core arguments: Key/value pairs for tuning the core
  *		   E.g. 'hydration_threshold 256'
  */
-अटल पूर्णांक parse_feature_args(काष्ठा dm_arg_set *as, काष्ठा clone *clone)
-अणु
-	पूर्णांक r;
-	अचिन्हित पूर्णांक argc;
-	स्थिर अक्षर *arg_name;
-	काष्ठा dm_target *ti = clone->ti;
+static int parse_feature_args(struct dm_arg_set *as, struct clone *clone)
+{
+	int r;
+	unsigned int argc;
+	const char *arg_name;
+	struct dm_target *ti = clone->ti;
 
-	स्थिर काष्ठा dm_arg args = अणु
+	const struct dm_arg args = {
 		.min = 0,
 		.max = 2,
 		.error = "Invalid number of feature arguments"
-	पूर्ण;
+	};
 
 	/* No feature arguments supplied */
-	अगर (!as->argc)
-		वापस 0;
+	if (!as->argc)
+		return 0;
 
-	r = dm_पढ़ो_arg_group(&args, as, &argc, &ti->error);
-	अगर (r)
-		वापस r;
+	r = dm_read_arg_group(&args, as, &argc, &ti->error);
+	if (r)
+		return r;
 
-	जबतक (argc) अणु
-		arg_name = dm_shअगरt_arg(as);
+	while (argc) {
+		arg_name = dm_shift_arg(as);
 		argc--;
 
-		अगर (!strहालcmp(arg_name, "no_hydration")) अणु
+		if (!strcasecmp(arg_name, "no_hydration")) {
 			__clear_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags);
-		पूर्ण अन्यथा अगर (!strहालcmp(arg_name, "no_discard_passdown")) अणु
+		} else if (!strcasecmp(arg_name, "no_discard_passdown")) {
 			__clear_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			ti->error = "Invalid feature argument";
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_core_args(काष्ठा dm_arg_set *as, काष्ठा clone *clone)
-अणु
-	पूर्णांक r;
-	अचिन्हित पूर्णांक argc;
-	अचिन्हित पूर्णांक value;
-	स्थिर अक्षर *arg_name;
-	काष्ठा dm_target *ti = clone->ti;
+static int parse_core_args(struct dm_arg_set *as, struct clone *clone)
+{
+	int r;
+	unsigned int argc;
+	unsigned int value;
+	const char *arg_name;
+	struct dm_target *ti = clone->ti;
 
-	स्थिर काष्ठा dm_arg args = अणु
+	const struct dm_arg args = {
 		.min = 0,
 		.max = 4,
 		.error = "Invalid number of core arguments"
-	पूर्ण;
+	};
 
 	/* Initialize core arguments */
 	clone->hydration_batch_size = DEFAULT_HYDRATION_BATCH_SIZE;
 	clone->hydration_threshold = DEFAULT_HYDRATION_THRESHOLD;
 
 	/* No core arguments supplied */
-	अगर (!as->argc)
-		वापस 0;
+	if (!as->argc)
+		return 0;
 
-	r = dm_पढ़ो_arg_group(&args, as, &argc, &ti->error);
-	अगर (r)
-		वापस r;
+	r = dm_read_arg_group(&args, as, &argc, &ti->error);
+	if (r)
+		return r;
 
-	अगर (argc & 1) अणु
+	if (argc & 1) {
 		ti->error = "Number of core arguments must be even";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	जबतक (argc) अणु
-		arg_name = dm_shअगरt_arg(as);
+	while (argc) {
+		arg_name = dm_shift_arg(as);
 		argc -= 2;
 
-		अगर (!strहालcmp(arg_name, "hydration_threshold")) अणु
-			अगर (kstrtouपूर्णांक(dm_shअगरt_arg(as), 10, &value)) अणु
+		if (!strcasecmp(arg_name, "hydration_threshold")) {
+			if (kstrtouint(dm_shift_arg(as), 10, &value)) {
 				ti->error = "Invalid value for argument `hydration_threshold'";
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			clone->hydration_threshold = value;
-		पूर्ण अन्यथा अगर (!strहालcmp(arg_name, "hydration_batch_size")) अणु
-			अगर (kstrtouपूर्णांक(dm_shअगरt_arg(as), 10, &value)) अणु
+		} else if (!strcasecmp(arg_name, "hydration_batch_size")) {
+			if (kstrtouint(dm_shift_arg(as), 10, &value)) {
 				ti->error = "Invalid value for argument `hydration_batch_size'";
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 			clone->hydration_batch_size = value;
-		पूर्ण अन्यथा अणु
+		} else {
 			ti->error = "Invalid core argument";
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_region_size(काष्ठा clone *clone, काष्ठा dm_arg_set *as, अक्षर **error)
-अणु
-	पूर्णांक r;
-	अचिन्हित पूर्णांक region_size;
-	काष्ठा dm_arg arg;
+static int parse_region_size(struct clone *clone, struct dm_arg_set *as, char **error)
+{
+	int r;
+	unsigned int region_size;
+	struct dm_arg arg;
 
 	arg.min = MIN_REGION_SIZE;
 	arg.max = MAX_REGION_SIZE;
 	arg.error = "Invalid region size";
 
-	r = dm_पढ़ो_arg(&arg, as, &region_size, error);
-	अगर (r)
-		वापस r;
+	r = dm_read_arg(&arg, as, &region_size, error);
+	if (r)
+		return r;
 
-	/* Check region size is a घातer of 2 */
-	अगर (!is_घातer_of_2(region_size)) अणु
+	/* Check region size is a power of 2 */
+	if (!is_power_of_2(region_size)) {
 		*error = "Region size is not a power of 2";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Validate the region size against the device logical block size */
-	अगर (region_size % (bdev_logical_block_size(clone->source_dev->bdev) >> 9) ||
-	    region_size % (bdev_logical_block_size(clone->dest_dev->bdev) >> 9)) अणु
+	if (region_size % (bdev_logical_block_size(clone->source_dev->bdev) >> 9) ||
+	    region_size % (bdev_logical_block_size(clone->dest_dev->bdev) >> 9)) {
 		*error = "Region size is not a multiple of device logical block size";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	clone->region_size = region_size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक validate_nr_regions(अचिन्हित दीर्घ n, अक्षर **error)
-अणु
+static int validate_nr_regions(unsigned long n, char **error)
+{
 	/*
 	 * dm_bitset restricts us to 2^32 regions. test_bit & co. restrict us
 	 * further to 2^31 regions.
 	 */
-	अगर (n > (1UL << 31)) अणु
+	if (n > (1UL << 31)) {
 		*error = "Too many regions. Consider increasing the region size";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_metadata_dev(काष्ठा clone *clone, काष्ठा dm_arg_set *as, अक्षर **error)
-अणु
-	पूर्णांक r;
+static int parse_metadata_dev(struct clone *clone, struct dm_arg_set *as, char **error)
+{
+	int r;
 	sector_t metadata_dev_size;
-	अक्षर b[BDEVNAME_SIZE];
+	char b[BDEVNAME_SIZE];
 
-	r = dm_get_device(clone->ti, dm_shअगरt_arg(as), FMODE_READ | FMODE_WRITE,
+	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
 			  &clone->metadata_dev);
-	अगर (r) अणु
+	if (r) {
 		*error = "Error opening metadata device";
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	metadata_dev_size = get_dev_size(clone->metadata_dev);
-	अगर (metadata_dev_size > DM_CLONE_METADATA_MAX_SECTORS_WARNING)
+	if (metadata_dev_size > DM_CLONE_METADATA_MAX_SECTORS_WARNING)
 		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
 		       bdevname(clone->metadata_dev->bdev, b), DM_CLONE_METADATA_MAX_SECTORS);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_dest_dev(काष्ठा clone *clone, काष्ठा dm_arg_set *as, अक्षर **error)
-अणु
-	पूर्णांक r;
+static int parse_dest_dev(struct clone *clone, struct dm_arg_set *as, char **error)
+{
+	int r;
 	sector_t dest_dev_size;
 
-	r = dm_get_device(clone->ti, dm_shअगरt_arg(as), FMODE_READ | FMODE_WRITE,
+	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
 			  &clone->dest_dev);
-	अगर (r) अणु
+	if (r) {
 		*error = "Error opening destination device";
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	dest_dev_size = get_dev_size(clone->dest_dev);
-	अगर (dest_dev_size < clone->ti->len) अणु
+	if (dest_dev_size < clone->ti->len) {
 		dm_put_device(clone->ti, clone->dest_dev);
 		*error = "Device size larger than destination device";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक parse_source_dev(काष्ठा clone *clone, काष्ठा dm_arg_set *as, अक्षर **error)
-अणु
-	पूर्णांक r;
+static int parse_source_dev(struct clone *clone, struct dm_arg_set *as, char **error)
+{
+	int r;
 	sector_t source_dev_size;
 
-	r = dm_get_device(clone->ti, dm_shअगरt_arg(as), FMODE_READ,
+	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ,
 			  &clone->source_dev);
-	अगर (r) अणु
+	if (r) {
 		*error = "Error opening source device";
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
 	source_dev_size = get_dev_size(clone->source_dev);
-	अगर (source_dev_size < clone->ti->len) अणु
+	if (source_dev_size < clone->ti->len) {
 		dm_put_device(clone->ti, clone->source_dev);
 		*error = "Device size larger than source device";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक copy_ctr_args(काष्ठा clone *clone, पूर्णांक argc, स्थिर अक्षर **argv, अक्षर **error)
-अणु
-	अचिन्हित पूर्णांक i;
-	स्थिर अक्षर **copy;
+static int copy_ctr_args(struct clone *clone, int argc, const char **argv, char **error)
+{
+	unsigned int i;
+	const char **copy;
 
-	copy = kसुस्मृति(argc, माप(*copy), GFP_KERNEL);
-	अगर (!copy)
-		जाओ error;
+	copy = kcalloc(argc, sizeof(*copy), GFP_KERNEL);
+	if (!copy)
+		goto error;
 
-	क्रम (i = 0; i < argc; i++) अणु
+	for (i = 0; i < argc; i++) {
 		copy[i] = kstrdup(argv[i], GFP_KERNEL);
 
-		अगर (!copy[i]) अणु
-			जबतक (i--)
-				kमुक्त(copy[i]);
-			kमुक्त(copy);
-			जाओ error;
-		पूर्ण
-	पूर्ण
+		if (!copy[i]) {
+			while (i--)
+				kfree(copy[i]);
+			kfree(copy);
+			goto error;
+		}
+	}
 
 	clone->nr_ctr_args = argc;
 	clone->ctr_args = copy;
-	वापस 0;
+	return 0;
 
 error:
 	*error = "Failed to allocate memory for table line";
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक clone_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक r;
+static int clone_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+{
+	int r;
 	sector_t nr_regions;
-	काष्ठा clone *clone;
-	काष्ठा dm_arg_set as;
+	struct clone *clone;
+	struct dm_arg_set as;
 
-	अगर (argc < 4) अणु
+	if (argc < 4) {
 		ti->error = "Invalid number of arguments";
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	as.argc = argc;
 	as.argv = argv;
 
-	clone = kzalloc(माप(*clone), GFP_KERNEL);
-	अगर (!clone) अणु
+	clone = kzalloc(sizeof(*clone), GFP_KERNEL);
+	if (!clone) {
 		ti->error = "Failed to allocate clone structure";
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	clone->ti = ti;
 
@@ -1797,79 +1796,79 @@ error:
 	__set_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags);
 
 	r = parse_metadata_dev(clone, &as, &ti->error);
-	अगर (r)
-		जाओ out_with_clone;
+	if (r)
+		goto out_with_clone;
 
 	r = parse_dest_dev(clone, &as, &ti->error);
-	अगर (r)
-		जाओ out_with_meta_dev;
+	if (r)
+		goto out_with_meta_dev;
 
 	r = parse_source_dev(clone, &as, &ti->error);
-	अगर (r)
-		जाओ out_with_dest_dev;
+	if (r)
+		goto out_with_dest_dev;
 
 	r = parse_region_size(clone, &as, &ti->error);
-	अगर (r)
-		जाओ out_with_source_dev;
+	if (r)
+		goto out_with_source_dev;
 
-	clone->region_shअगरt = __ffs(clone->region_size);
-	nr_regions = dm_sector_भाग_up(ti->len, clone->region_size);
+	clone->region_shift = __ffs(clone->region_size);
+	nr_regions = dm_sector_div_up(ti->len, clone->region_size);
 
-	/* Check क्रम overflow */
-	अगर (nr_regions != (अचिन्हित दीर्घ)nr_regions) अणु
+	/* Check for overflow */
+	if (nr_regions != (unsigned long)nr_regions) {
 		ti->error = "Too many regions. Consider increasing the region size";
 		r = -EOVERFLOW;
-		जाओ out_with_source_dev;
-	पूर्ण
+		goto out_with_source_dev;
+	}
 
 	clone->nr_regions = nr_regions;
 
 	r = validate_nr_regions(clone->nr_regions, &ti->error);
-	अगर (r)
-		जाओ out_with_source_dev;
+	if (r)
+		goto out_with_source_dev;
 
 	r = dm_set_target_max_io_len(ti, clone->region_size);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Failed to set max io len";
-		जाओ out_with_source_dev;
-	पूर्ण
+		goto out_with_source_dev;
+	}
 
 	r = parse_feature_args(&as, clone);
-	अगर (r)
-		जाओ out_with_source_dev;
+	if (r)
+		goto out_with_source_dev;
 
 	r = parse_core_args(&as, clone);
-	अगर (r)
-		जाओ out_with_source_dev;
+	if (r)
+		goto out_with_source_dev;
 
 	/* Load metadata */
-	clone->cmd = dm_clone_metadata_खोलो(clone->metadata_dev->bdev, ti->len,
+	clone->cmd = dm_clone_metadata_open(clone->metadata_dev->bdev, ti->len,
 					    clone->region_size);
-	अगर (IS_ERR(clone->cmd)) अणु
+	if (IS_ERR(clone->cmd)) {
 		ti->error = "Failed to load metadata";
 		r = PTR_ERR(clone->cmd);
-		जाओ out_with_source_dev;
-	पूर्ण
+		goto out_with_source_dev;
+	}
 
 	__set_clone_mode(clone, CM_WRITE);
 
-	अगर (get_clone_mode(clone) != CM_WRITE) अणु
+	if (get_clone_mode(clone) != CM_WRITE) {
 		ti->error = "Unable to get write access to metadata, please check/repair metadata";
 		r = -EPERM;
-		जाओ out_with_metadata;
-	पूर्ण
+		goto out_with_metadata;
+	}
 
-	clone->last_commit_jअगरfies = jअगरfies;
+	clone->last_commit_jiffies = jiffies;
 
 	/* Allocate hydration hash table */
 	r = hash_table_init(clone);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Failed to allocate hydration hash table";
-		जाओ out_with_metadata;
-	पूर्ण
+		goto out_with_metadata;
+	}
 
 	atomic_set(&clone->ios_in_flight, 0);
-	init_रुकोqueue_head(&clone->hydration_stopped);
+	init_waitqueue_head(&clone->hydration_stopped);
 	spin_lock_init(&clone->lock);
 	bio_list_init(&clone->deferred_bios);
 	bio_list_init(&clone->deferred_discard_bios);
@@ -1879,32 +1878,32 @@ error:
 	atomic_set(&clone->hydrations_in_flight, 0);
 
 	clone->wq = alloc_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM, 0);
-	अगर (!clone->wq) अणु
+	if (!clone->wq) {
 		ti->error = "Failed to allocate workqueue";
 		r = -ENOMEM;
-		जाओ out_with_ht;
-	पूर्ण
+		goto out_with_ht;
+	}
 
-	INIT_WORK(&clone->worker, करो_worker);
-	INIT_DELAYED_WORK(&clone->waker, करो_waker);
+	INIT_WORK(&clone->worker, do_worker);
+	INIT_DELAYED_WORK(&clone->waker, do_waker);
 
 	clone->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
-	अगर (IS_ERR(clone->kcopyd_client)) अणु
+	if (IS_ERR(clone->kcopyd_client)) {
 		r = PTR_ERR(clone->kcopyd_client);
-		जाओ out_with_wq;
-	पूर्ण
+		goto out_with_wq;
+	}
 
 	r = mempool_init_slab_pool(&clone->hydration_pool, MIN_HYDRATIONS,
 				   _hydration_cache);
-	अगर (r) अणु
+	if (r) {
 		ti->error = "Failed to create dm_clone_region_hydration memory pool";
-		जाओ out_with_kcopyd;
-	पूर्ण
+		goto out_with_kcopyd;
+	}
 
 	/* Save a copy of the table line */
-	r = copy_ctr_args(clone, argc - 3, (स्थिर अक्षर **)argv + 3, &ti->error);
-	अगर (r)
-		जाओ out_with_mempool;
+	r = copy_ctr_args(clone, argc - 3, (const char **)argv + 3, &ti->error);
+	if (r)
+		goto out_with_mempool;
 
 	mutex_init(&clone->commit_lock);
 
@@ -1916,20 +1915,20 @@ error:
 	ti->discards_supported = true;
 	ti->num_discard_bios = 1;
 
-	ti->निजी = clone;
+	ti->private = clone;
 
-	वापस 0;
+	return 0;
 
 out_with_mempool:
-	mempool_निकास(&clone->hydration_pool);
+	mempool_exit(&clone->hydration_pool);
 out_with_kcopyd:
 	dm_kcopyd_client_destroy(clone->kcopyd_client);
 out_with_wq:
 	destroy_workqueue(clone->wq);
 out_with_ht:
-	hash_table_निकास(clone);
+	hash_table_exit(clone);
 out_with_metadata:
-	dm_clone_metadata_बंद(clone->cmd);
+	dm_clone_metadata_close(clone->cmd);
 out_with_source_dev:
 	dm_put_device(ti, clone->source_dev);
 out_with_dest_dev:
@@ -1937,50 +1936,50 @@ out_with_dest_dev:
 out_with_meta_dev:
 	dm_put_device(ti, clone->metadata_dev);
 out_with_clone:
-	kमुक्त(clone);
+	kfree(clone);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल व्योम clone_dtr(काष्ठा dm_target *ti)
-अणु
-	अचिन्हित पूर्णांक i;
-	काष्ठा clone *clone = ti->निजी;
+static void clone_dtr(struct dm_target *ti)
+{
+	unsigned int i;
+	struct clone *clone = ti->private;
 
 	mutex_destroy(&clone->commit_lock);
 
-	क्रम (i = 0; i < clone->nr_ctr_args; i++)
-		kमुक्त(clone->ctr_args[i]);
-	kमुक्त(clone->ctr_args);
+	for (i = 0; i < clone->nr_ctr_args; i++)
+		kfree(clone->ctr_args[i]);
+	kfree(clone->ctr_args);
 
-	mempool_निकास(&clone->hydration_pool);
+	mempool_exit(&clone->hydration_pool);
 	dm_kcopyd_client_destroy(clone->kcopyd_client);
 	destroy_workqueue(clone->wq);
-	hash_table_निकास(clone);
-	dm_clone_metadata_बंद(clone->cmd);
+	hash_table_exit(clone);
+	dm_clone_metadata_close(clone->cmd);
 	dm_put_device(ti, clone->source_dev);
 	dm_put_device(ti, clone->dest_dev);
 	dm_put_device(ti, clone->metadata_dev);
 
-	kमुक्त(clone);
-पूर्ण
+	kfree(clone);
+}
 
 /*---------------------------------------------------------------------------*/
 
-अटल व्योम clone_postsuspend(काष्ठा dm_target *ti)
-अणु
-	काष्ठा clone *clone = ti->निजी;
+static void clone_postsuspend(struct dm_target *ti)
+{
+	struct clone *clone = ti->private;
 
 	/*
 	 * To successfully suspend the device:
 	 *
-	 *	- We cancel the delayed work क्रम periodic commits and रुको क्रम
+	 *	- We cancel the delayed work for periodic commits and wait for
 	 *	  it to finish.
 	 *
 	 *	- We stop the background hydration, i.e. we prevent new region
 	 *	  hydrations from starting.
 	 *
-	 *	- We रुको क्रम any in-flight hydrations to finish.
+	 *	- We wait for any in-flight hydrations to finish.
 	 *
 	 *	- We flush the workqueue.
 	 *
@@ -1991,72 +1990,72 @@ out_with_clone:
 	set_bit(DM_CLONE_HYDRATION_SUSPENDED, &clone->flags);
 
 	/*
-	 * Make sure set_bit() is ordered beक्रमe atomic_पढ़ो(), otherwise we
-	 * might race with करो_hydration() and miss some started region
+	 * Make sure set_bit() is ordered before atomic_read(), otherwise we
+	 * might race with do_hydration() and miss some started region
 	 * hydrations.
 	 *
-	 * This is paired with smp_mb__after_atomic() in करो_hydration().
+	 * This is paired with smp_mb__after_atomic() in do_hydration().
 	 */
 	smp_mb__after_atomic();
 
-	रुको_event(clone->hydration_stopped, !atomic_पढ़ो(&clone->hydrations_in_flight));
+	wait_event(clone->hydration_stopped, !atomic_read(&clone->hydrations_in_flight));
 	flush_workqueue(clone->wq);
 
-	(व्योम) commit_metadata(clone, शून्य);
-पूर्ण
+	(void) commit_metadata(clone, NULL);
+}
 
-अटल व्योम clone_resume(काष्ठा dm_target *ti)
-अणु
-	काष्ठा clone *clone = ti->निजी;
+static void clone_resume(struct dm_target *ti)
+{
+	struct clone *clone = ti->private;
 
 	clear_bit(DM_CLONE_HYDRATION_SUSPENDED, &clone->flags);
-	करो_waker(&clone->waker.work);
-पूर्ण
+	do_waker(&clone->waker.work);
+}
 
-अटल bool bdev_supports_discards(काष्ठा block_device *bdev)
-अणु
-	काष्ठा request_queue *q = bdev_get_queue(bdev);
+static bool bdev_supports_discards(struct block_device *bdev)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
 
-	वापस (q && blk_queue_discard(q));
-पूर्ण
+	return (q && blk_queue_discard(q));
+}
 
 /*
- * If discard_passकरोwn was enabled verअगरy that the destination device supports
- * discards. Disable discard_passकरोwn अगर not.
+ * If discard_passdown was enabled verify that the destination device supports
+ * discards. Disable discard_passdown if not.
  */
-अटल व्योम disable_passकरोwn_अगर_not_supported(काष्ठा clone *clone)
-अणु
-	काष्ठा block_device *dest_dev = clone->dest_dev->bdev;
-	काष्ठा queue_limits *dest_limits = &bdev_get_queue(dest_dev)->limits;
-	स्थिर अक्षर *reason = शून्य;
-	अक्षर buf[BDEVNAME_SIZE];
+static void disable_passdown_if_not_supported(struct clone *clone)
+{
+	struct block_device *dest_dev = clone->dest_dev->bdev;
+	struct queue_limits *dest_limits = &bdev_get_queue(dest_dev)->limits;
+	const char *reason = NULL;
+	char buf[BDEVNAME_SIZE];
 
-	अगर (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags))
-		वापस;
+	if (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags))
+		return;
 
-	अगर (!bdev_supports_discards(dest_dev))
+	if (!bdev_supports_discards(dest_dev))
 		reason = "discard unsupported";
-	अन्यथा अगर (dest_limits->max_discard_sectors < clone->region_size)
+	else if (dest_limits->max_discard_sectors < clone->region_size)
 		reason = "max discard sectors smaller than a region";
 
-	अगर (reason) अणु
+	if (reason) {
 		DMWARN("Destination device (%s) %s: Disabling discard passdown.",
 		       bdevname(dest_dev, buf), reason);
 		clear_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम set_discard_limits(काष्ठा clone *clone, काष्ठा queue_limits *limits)
-अणु
-	काष्ठा block_device *dest_bdev = clone->dest_dev->bdev;
-	काष्ठा queue_limits *dest_limits = &bdev_get_queue(dest_bdev)->limits;
+static void set_discard_limits(struct clone *clone, struct queue_limits *limits)
+{
+	struct block_device *dest_bdev = clone->dest_dev->bdev;
+	struct queue_limits *dest_limits = &bdev_get_queue(dest_bdev)->limits;
 
-	अगर (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags)) अणु
-		/* No passकरोwn is करोne so we set our own भव limits */
+	if (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags)) {
+		/* No passdown is done so we set our own virtual limits */
 		limits->discard_granularity = clone->region_size << SECTOR_SHIFT;
-		limits->max_discard_sectors = round_करोwn(अच_पूर्णांक_उच्च >> SECTOR_SHIFT, clone->region_size);
-		वापस;
-	पूर्ण
+		limits->max_discard_sectors = round_down(UINT_MAX >> SECTOR_SHIFT, clone->region_size);
+		return;
+	}
 
 	/*
 	 * clone_iterate_devices() is stacking both the source and destination
@@ -2069,119 +2068,119 @@ out_with_clone:
 	limits->discard_alignment = dest_limits->discard_alignment;
 	limits->discard_misaligned = dest_limits->discard_misaligned;
 	limits->max_discard_segments = dest_limits->max_discard_segments;
-पूर्ण
+}
 
-अटल व्योम clone_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
-अणु
-	काष्ठा clone *clone = ti->निजी;
+static void clone_io_hints(struct dm_target *ti, struct queue_limits *limits)
+{
+	struct clone *clone = ti->private;
 	u64 io_opt_sectors = limits->io_opt >> SECTOR_SHIFT;
 
 	/*
-	 * If the प्रणाली-determined stacked limits are compatible with
-	 * dm-clone's region size (io_opt is a factor) करो not override them.
+	 * If the system-determined stacked limits are compatible with
+	 * dm-clone's region size (io_opt is a factor) do not override them.
 	 */
-	अगर (io_opt_sectors < clone->region_size ||
-	    करो_भाग(io_opt_sectors, clone->region_size)) अणु
+	if (io_opt_sectors < clone->region_size ||
+	    do_div(io_opt_sectors, clone->region_size)) {
 		blk_limits_io_min(limits, clone->region_size << SECTOR_SHIFT);
 		blk_limits_io_opt(limits, clone->region_size << SECTOR_SHIFT);
-	पूर्ण
+	}
 
-	disable_passकरोwn_अगर_not_supported(clone);
+	disable_passdown_if_not_supported(clone);
 	set_discard_limits(clone, limits);
-पूर्ण
+}
 
-अटल पूर्णांक clone_iterate_devices(काष्ठा dm_target *ti,
-				 iterate_devices_callout_fn fn, व्योम *data)
-अणु
-	पूर्णांक ret;
-	काष्ठा clone *clone = ti->निजी;
-	काष्ठा dm_dev *dest_dev = clone->dest_dev;
-	काष्ठा dm_dev *source_dev = clone->source_dev;
+static int clone_iterate_devices(struct dm_target *ti,
+				 iterate_devices_callout_fn fn, void *data)
+{
+	int ret;
+	struct clone *clone = ti->private;
+	struct dm_dev *dest_dev = clone->dest_dev;
+	struct dm_dev *source_dev = clone->source_dev;
 
 	ret = fn(ti, source_dev, 0, ti->len, data);
-	अगर (!ret)
+	if (!ret)
 		ret = fn(ti, dest_dev, 0, ti->len, data);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * dm-clone message functions.
  */
-अटल व्योम set_hydration_threshold(काष्ठा clone *clone, अचिन्हित पूर्णांक nr_regions)
-अणु
+static void set_hydration_threshold(struct clone *clone, unsigned int nr_regions)
+{
 	WRITE_ONCE(clone->hydration_threshold, nr_regions);
 
 	/*
 	 * If user space sets hydration_threshold to zero then the hydration
-	 * will stop. If at a later समय the hydration_threshold is increased
+	 * will stop. If at a later time the hydration_threshold is increased
 	 * we must restart the hydration process by waking up the worker.
 	 */
 	wake_worker(clone);
-पूर्ण
+}
 
-अटल व्योम set_hydration_batch_size(काष्ठा clone *clone, अचिन्हित पूर्णांक nr_regions)
-अणु
+static void set_hydration_batch_size(struct clone *clone, unsigned int nr_regions)
+{
 	WRITE_ONCE(clone->hydration_batch_size, nr_regions);
-पूर्ण
+}
 
-अटल व्योम enable_hydration(काष्ठा clone *clone)
-अणु
-	अगर (!test_and_set_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags))
+static void enable_hydration(struct clone *clone)
+{
+	if (!test_and_set_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags))
 		wake_worker(clone);
-पूर्ण
+}
 
-अटल व्योम disable_hydration(काष्ठा clone *clone)
-अणु
+static void disable_hydration(struct clone *clone)
+{
 	clear_bit(DM_CLONE_HYDRATION_ENABLED, &clone->flags);
-पूर्ण
+}
 
-अटल पूर्णांक clone_message(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv,
-			 अक्षर *result, अचिन्हित पूर्णांक maxlen)
-अणु
-	काष्ठा clone *clone = ti->निजी;
-	अचिन्हित पूर्णांक value;
+static int clone_message(struct dm_target *ti, unsigned int argc, char **argv,
+			 char *result, unsigned int maxlen)
+{
+	struct clone *clone = ti->private;
+	unsigned int value;
 
-	अगर (!argc)
-		वापस -EINVAL;
+	if (!argc)
+		return -EINVAL;
 
-	अगर (!strहालcmp(argv[0], "enable_hydration")) अणु
+	if (!strcasecmp(argv[0], "enable_hydration")) {
 		enable_hydration(clone);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!strहालcmp(argv[0], "disable_hydration")) अणु
+	if (!strcasecmp(argv[0], "disable_hydration")) {
 		disable_hydration(clone);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (argc != 2)
-		वापस -EINVAL;
+	if (argc != 2)
+		return -EINVAL;
 
-	अगर (!strहालcmp(argv[0], "hydration_threshold")) अणु
-		अगर (kstrtouपूर्णांक(argv[1], 10, &value))
-			वापस -EINVAL;
+	if (!strcasecmp(argv[0], "hydration_threshold")) {
+		if (kstrtouint(argv[1], 10, &value))
+			return -EINVAL;
 
 		set_hydration_threshold(clone, value);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!strहालcmp(argv[0], "hydration_batch_size")) अणु
-		अगर (kstrtouपूर्णांक(argv[1], 10, &value))
-			वापस -EINVAL;
+	if (!strcasecmp(argv[0], "hydration_batch_size")) {
+		if (kstrtouint(argv[1], 10, &value))
+			return -EINVAL;
 
 		set_hydration_batch_size(clone, value);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	DMERR("%s: Unsupported message `%s'", clone_device_name(clone), argv[0]);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल काष्ठा target_type clone_target = अणु
+static struct target_type clone_target = {
 	.name = "clone",
-	.version = अणु1, 0, 0पूर्ण,
+	.version = {1, 0, 0},
 	.module = THIS_MODULE,
 	.ctr = clone_ctr,
 	.dtr =  clone_dtr,
@@ -2191,41 +2190,41 @@ out_with_clone:
 	.resume = clone_resume,
 	.status = clone_status,
 	.message = clone_message,
-	.io_hपूर्णांकs = clone_io_hपूर्णांकs,
+	.io_hints = clone_io_hints,
 	.iterate_devices = clone_iterate_devices,
-पूर्ण;
+};
 
 /*---------------------------------------------------------------------------*/
 
 /* Module functions */
-अटल पूर्णांक __init dm_clone_init(व्योम)
-अणु
-	पूर्णांक r;
+static int __init dm_clone_init(void)
+{
+	int r;
 
 	_hydration_cache = KMEM_CACHE(dm_clone_region_hydration, 0);
-	अगर (!_hydration_cache)
-		वापस -ENOMEM;
+	if (!_hydration_cache)
+		return -ENOMEM;
 
-	r = dm_रेजिस्टर_target(&clone_target);
-	अगर (r < 0) अणु
+	r = dm_register_target(&clone_target);
+	if (r < 0) {
 		DMERR("Failed to register clone target");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास dm_clone_निकास(व्योम)
-अणु
-	dm_unरेजिस्टर_target(&clone_target);
+static void __exit dm_clone_exit(void)
+{
+	dm_unregister_target(&clone_target);
 
 	kmem_cache_destroy(_hydration_cache);
-	_hydration_cache = शून्य;
-पूर्ण
+	_hydration_cache = NULL;
+}
 
 /* Module hooks */
 module_init(dm_clone_init);
-module_निकास(dm_clone_निकास);
+module_exit(dm_clone_exit);
 
 MODULE_DESCRIPTION(DM_NAME " clone target");
 MODULE_AUTHOR("Nikos Tsironis <ntsironis@arrikto.com>");

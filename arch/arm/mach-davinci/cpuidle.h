@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * TI DaVinci cpuidle platक्रमm support
+ * TI DaVinci cpuidle platform support
  *
  * 2009 (C) Texas Instruments, Inc. https://www.ti.com/
  *
@@ -8,12 +7,12 @@
  * version 2. This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
-#अगर_अघोषित _MACH_DAVINCI_CPUIDLE_H
-#घोषणा _MACH_DAVINCI_CPUIDLE_H
+#ifndef _MACH_DAVINCI_CPUIDLE_H
+#define _MACH_DAVINCI_CPUIDLE_H
 
-काष्ठा davinci_cpuidle_config अणु
-	u32 ddr2_pकरोwn;
-	व्योम __iomem *ddr2_ctlr_base;
-पूर्ण;
+struct davinci_cpuidle_config {
+	u32 ddr2_pdown;
+	void __iomem *ddr2_ctlr_base;
+};
 
-#पूर्ण_अगर
+#endif

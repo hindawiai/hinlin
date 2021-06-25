@@ -1,242 +1,241 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#अगर_अघोषित __TEGRA_VI_H__
-#घोषणा __TEGRA_VI_H__
+#ifndef __TEGRA_VI_H__
+#define __TEGRA_VI_H__
 
-#समावेश <linux/host1x.h>
-#समावेश <linux/list.h>
+#include <linux/host1x.h>
+#include <linux/list.h>
 
-#समावेश <linux/mutex.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/रुको.h>
+#include <linux/mutex.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
 
-#समावेश <media/media-entity.h>
-#समावेश <media/v4l2-async.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-dev.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/videobuf2-v4l2.h>
+#include <media/media-entity.h>
+#include <media/v4l2-async.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-dev.h>
+#include <media/v4l2-subdev.h>
+#include <media/videobuf2-v4l2.h>
 
-#समावेश "csi.h"
+#include "csi.h"
 
-#घोषणा V4L2_CID_TEGRA_SYNCPT_TIMEOUT_RETRY	(V4L2_CTRL_CLASS_CAMERA | 0x1001)
+#define V4L2_CID_TEGRA_SYNCPT_TIMEOUT_RETRY	(V4L2_CTRL_CLASS_CAMERA | 0x1001)
 
-#घोषणा TEGRA_MIN_WIDTH		32U
-#घोषणा TEGRA_MAX_WIDTH		32768U
-#घोषणा TEGRA_MIN_HEIGHT	32U
-#घोषणा TEGRA_MAX_HEIGHT	32768U
+#define TEGRA_MIN_WIDTH		32U
+#define TEGRA_MAX_WIDTH		32768U
+#define TEGRA_MIN_HEIGHT	32U
+#define TEGRA_MAX_HEIGHT	32768U
 
-#घोषणा TEGRA_DEF_WIDTH		1920
-#घोषणा TEGRA_DEF_HEIGHT	1080
-#घोषणा TEGRA_IMAGE_FORMAT_DEF	32
+#define TEGRA_DEF_WIDTH		1920
+#define TEGRA_DEF_HEIGHT	1080
+#define TEGRA_IMAGE_FORMAT_DEF	32
 
-#घोषणा MAX_FORMAT_NUM		64
-#घोषणा SURFACE_ALIGN_BYTES	64
+#define MAX_FORMAT_NUM		64
+#define SURFACE_ALIGN_BYTES	64
 
-क्रमागत tegra_vi_pg_mode अणु
+enum tegra_vi_pg_mode {
 	TEGRA_VI_PG_DISABLED = 0,
-	TEGRA_VI_PG_सूचीECT,
+	TEGRA_VI_PG_DIRECT,
 	TEGRA_VI_PG_PATCH,
-पूर्ण;
+};
 
 /**
- * काष्ठा tegra_vi_ops - Tegra VI operations
+ * struct tegra_vi_ops - Tegra VI operations
  * @vi_start_streaming: starts media pipeline, subdevice streaming, sets up
- *		VI क्रम capture and runs capture start and capture finish
- *		kthपढ़ोs क्रम capturing frames to buffer and वापसs them back.
- * @vi_stop_streaming: stops media pipeline and subdevice streaming and वापसs
+ *		VI for capture and runs capture start and capture finish
+ *		kthreads for capturing frames to buffer and returns them back.
+ * @vi_stop_streaming: stops media pipeline and subdevice streaming and returns
  *		back any queued buffers.
  */
-काष्ठा tegra_vi_ops अणु
-	पूर्णांक (*vi_start_streaming)(काष्ठा vb2_queue *vq, u32 count);
-	व्योम (*vi_stop_streaming)(काष्ठा vb2_queue *vq);
-पूर्ण;
+struct tegra_vi_ops {
+	int (*vi_start_streaming)(struct vb2_queue *vq, u32 count);
+	void (*vi_stop_streaming)(struct vb2_queue *vq);
+};
 
 /**
- * काष्ठा tegra_vi_soc - NVIDIA Tegra Video Input SoC काष्ठाure
+ * struct tegra_vi_soc - NVIDIA Tegra Video Input SoC structure
  *
- * @video_क्रमmats: supported video क्रमmats
- * @nक्रमmats: total video क्रमmats
+ * @video_formats: supported video formats
+ * @nformats: total video formats
  * @ops: vi operations
  * @hw_revision: VI hw_revision
  * @vi_max_channels: supported max streaming channels
- * @vi_max_clk_hz: VI घड़ी max frequency
+ * @vi_max_clk_hz: VI clock max frequency
  */
-काष्ठा tegra_vi_soc अणु
-	स्थिर काष्ठा tegra_video_क्रमmat *video_क्रमmats;
-	स्थिर अचिन्हित पूर्णांक nक्रमmats;
-	स्थिर काष्ठा tegra_vi_ops *ops;
+struct tegra_vi_soc {
+	const struct tegra_video_format *video_formats;
+	const unsigned int nformats;
+	const struct tegra_vi_ops *ops;
 	u32 hw_revision;
-	अचिन्हित पूर्णांक vi_max_channels;
-	अचिन्हित पूर्णांक vi_max_clk_hz;
-पूर्ण;
+	unsigned int vi_max_channels;
+	unsigned int vi_max_clk_hz;
+};
 
 /**
- * काष्ठा tegra_vi - NVIDIA Tegra Video Input device काष्ठाure
+ * struct tegra_vi - NVIDIA Tegra Video Input device structure
  *
- * @dev: device काष्ठा
- * @client: host1x_client काष्ठा
- * @iomem: रेजिस्टर base
- * @clk: मुख्य घड़ी क्रम VI block
- * @vdd: vdd regulator क्रम VI hardware, normally it is avdd_dsi_csi
- * @soc: poपूर्णांकer to SoC data काष्ठाure
+ * @dev: device struct
+ * @client: host1x_client struct
+ * @iomem: register base
+ * @clk: main clock for VI block
+ * @vdd: vdd regulator for VI hardware, normally it is avdd_dsi_csi
+ * @soc: pointer to SoC data structure
  * @ops: vi operations
- * @vi_chans: list head क्रम VI channels
+ * @vi_chans: list head for VI channels
  */
-काष्ठा tegra_vi अणु
-	काष्ठा device *dev;
-	काष्ठा host1x_client client;
-	व्योम __iomem *iomem;
-	काष्ठा clk *clk;
-	काष्ठा regulator *vdd;
-	स्थिर काष्ठा tegra_vi_soc *soc;
-	स्थिर काष्ठा tegra_vi_ops *ops;
-	काष्ठा list_head vi_chans;
-पूर्ण;
+struct tegra_vi {
+	struct device *dev;
+	struct host1x_client client;
+	void __iomem *iomem;
+	struct clk *clk;
+	struct regulator *vdd;
+	const struct tegra_vi_soc *soc;
+	const struct tegra_vi_ops *ops;
+	struct list_head vi_chans;
+};
 
 /**
- * काष्ठा tegra_vi_graph_entity - Entity in the video graph
+ * struct tegra_vi_graph_entity - Entity in the video graph
  *
- * @asd: subdev asynchronous registration inक्रमmation
+ * @asd: subdev asynchronous registration information
  * @entity: media entity from the corresponding V4L2 subdev
  * @subdev: V4L2 subdev
  */
-काष्ठा tegra_vi_graph_entity अणु
-	काष्ठा v4l2_async_subdev asd;
-	काष्ठा media_entity *entity;
-	काष्ठा v4l2_subdev *subdev;
-पूर्ण;
+struct tegra_vi_graph_entity {
+	struct v4l2_async_subdev asd;
+	struct media_entity *entity;
+	struct v4l2_subdev *subdev;
+};
 
 /**
- * काष्ठा tegra_vi_channel - Tegra video channel
+ * struct tegra_vi_channel - Tegra video channel
  *
- * @list: list head क्रम this entry
+ * @list: list head for this entry
  * @video: V4L2 video device associated with the video channel
- * @video_lock: protects the @क्रमmat and @queue fields
- * @pad: media pad क्रम the video device entity
+ * @video_lock: protects the @format and @queue fields
+ * @pad: media pad for the video device entity
  *
- * @vi: Tegra video input device काष्ठाure
- * @frame_start_sp: host1x syncpoपूर्णांक poपूर्णांकer to synchronize programmed capture
+ * @vi: Tegra video input device structure
+ * @frame_start_sp: host1x syncpoint pointer to synchronize programmed capture
  *		start condition with hardware frame start events through host1x
- *		syncpoपूर्णांक counters.
- * @mw_ack_sp: host1x syncpoपूर्णांक poपूर्णांकer to synchronize programmed memory ग_लिखो
- *		ack trigger condition with hardware memory ग_लिखो करोne at end of
- *		frame through host1x syncpoपूर्णांक counters.
- * @sp_incr_lock: protects cpu syncpoपूर्णांक increment.
+ *		syncpoint counters.
+ * @mw_ack_sp: host1x syncpoint pointer to synchronize programmed memory write
+ *		ack trigger condition with hardware memory write done at end of
+ *		frame through host1x syncpoint counters.
+ * @sp_incr_lock: protects cpu syncpoint increment.
  *
- * @kthपढ़ो_start_capture: kthपढ़ो to start capture of single frame when
- *		vb buffer is available. This thपढ़ो programs VI CSI hardware
- *		क्रम single frame capture and रुकोs क्रम frame start event from
+ * @kthread_start_capture: kthread to start capture of single frame when
+ *		vb buffer is available. This thread programs VI CSI hardware
+ *		for single frame capture and waits for frame start event from
  *		the hardware. On receiving frame start event, it wakes up
- *		kthपढ़ो_finish_capture thपढ़ो to रुको क्रम finishing frame data
- *		ग_लिखो to the memory. In हाल of missing frame start event, this
- *		thपढ़ो वापसs buffer back to vb with VB2_BUF_STATE_ERROR.
- * @start_रुको: रुकोqueue क्रम starting frame capture when buffer is available.
- * @kthपढ़ो_finish_capture: kthपढ़ो to finish the buffer capture and वापस to.
- *		This thपढ़ो is woken up by kthपढ़ो_start_capture on receiving
- *		frame start event from the hardware and this thपढ़ो रुकोs क्रम
+ *		kthread_finish_capture thread to wait for finishing frame data
+ *		write to the memory. In case of missing frame start event, this
+ *		thread returns buffer back to vb with VB2_BUF_STATE_ERROR.
+ * @start_wait: waitqueue for starting frame capture when buffer is available.
+ * @kthread_finish_capture: kthread to finish the buffer capture and return to.
+ *		This thread is woken up by kthread_start_capture on receiving
+ *		frame start event from the hardware and this thread waits for
  *		MW_ACK_DONE event which indicates completion of writing frame
  *		data to the memory. On receiving MW_ACK_DONE event, buffer is
- *		वापसed back to vb with VB2_BUF_STATE_DONE and in हाल of
- *		missing MW_ACK_DONE event, buffer is वापसed back to vb with
+ *		returned back to vb with VB2_BUF_STATE_DONE and in case of
+ *		missing MW_ACK_DONE event, buffer is returned back to vb with
  *		VB2_BUF_STATE_ERROR.
- * @करोne_रुको: रुकोqueue क्रम finishing capture data ग_लिखोs to memory.
+ * @done_wait: waitqueue for finishing capture data writes to memory.
  *
- * @क्रमmat: active V4L2 pixel क्रमmat
- * @fmtinfo: क्रमmat inक्रमmation corresponding to the active @क्रमmat
+ * @format: active V4L2 pixel format
+ * @fmtinfo: format information corresponding to the active @format
  * @queue: vb2 buffers queue
  * @sequence: V4L2 buffers sequence number
  *
- * @capture: list of queued buffers क्रम capture
+ * @capture: list of queued buffers for capture
  * @start_lock: protects the capture queued list
- * @करोne: list of capture करोne queued buffers
- * @करोne_lock: protects the capture करोne queue list
+ * @done: list of capture done queued buffers
+ * @done_lock: protects the capture done queue list
  *
  * @portnos: VI channel port numbers
- * @totalports: total number of ports used क्रम this channel
- * @numgangports: number of ports combined together as a gang क्रम capture
+ * @totalports: total number of ports used for this channel
+ * @numgangports: number of ports combined together as a gang for capture
  * @of_node: device node of VI channel
  *
  * @ctrl_handler: V4L2 control handler of this video channel
- * @syncpt_समयout_retry: syncpt समयout retry count क्रम the capture
- * @fmts_biपंचांगap: a biपंचांगap क्रम supported क्रमmats matching v4l2 subdev क्रमmats
- * @tpg_fmts_biपंचांगap: a biपंचांगap क्रम supported TPG क्रमmats
+ * @syncpt_timeout_retry: syncpt timeout retry count for the capture
+ * @fmts_bitmap: a bitmap for supported formats matching v4l2 subdev formats
+ * @tpg_fmts_bitmap: a bitmap for supported TPG formats
  * @pg_mode: test pattern generator mode (disabled/direct/patch)
- * @notअगरier: V4L2 asynchronous subdevs notअगरier
+ * @notifier: V4L2 asynchronous subdevs notifier
  */
-काष्ठा tegra_vi_channel अणु
-	काष्ठा list_head list;
-	काष्ठा video_device video;
-	/* protects the @क्रमmat and @queue fields */
-	काष्ठा mutex video_lock;
-	काष्ठा media_pad pad;
+struct tegra_vi_channel {
+	struct list_head list;
+	struct video_device video;
+	/* protects the @format and @queue fields */
+	struct mutex video_lock;
+	struct media_pad pad;
 
-	काष्ठा tegra_vi *vi;
-	काष्ठा host1x_syncpt *frame_start_sp[GANG_PORTS_MAX];
-	काष्ठा host1x_syncpt *mw_ack_sp[GANG_PORTS_MAX];
-	/* protects the cpu syncpoपूर्णांक increment */
+	struct tegra_vi *vi;
+	struct host1x_syncpt *frame_start_sp[GANG_PORTS_MAX];
+	struct host1x_syncpt *mw_ack_sp[GANG_PORTS_MAX];
+	/* protects the cpu syncpoint increment */
 	spinlock_t sp_incr_lock[GANG_PORTS_MAX];
 
-	काष्ठा task_काष्ठा *kthपढ़ो_start_capture;
-	रुको_queue_head_t start_रुको;
-	काष्ठा task_काष्ठा *kthपढ़ो_finish_capture;
-	रुको_queue_head_t करोne_रुको;
+	struct task_struct *kthread_start_capture;
+	wait_queue_head_t start_wait;
+	struct task_struct *kthread_finish_capture;
+	wait_queue_head_t done_wait;
 
-	काष्ठा v4l2_pix_क्रमmat क्रमmat;
-	स्थिर काष्ठा tegra_video_क्रमmat *fmtinfo;
-	काष्ठा vb2_queue queue;
+	struct v4l2_pix_format format;
+	const struct tegra_video_format *fmtinfo;
+	struct vb2_queue queue;
 	u32 sequence;
 
-	काष्ठा list_head capture;
+	struct list_head capture;
 	/* protects the capture queued list */
 	spinlock_t start_lock;
-	काष्ठा list_head करोne;
-	/* protects the capture करोne queue list */
-	spinlock_t करोne_lock;
+	struct list_head done;
+	/* protects the capture done queue list */
+	spinlock_t done_lock;
 
-	अचिन्हित अक्षर portnos[GANG_PORTS_MAX];
+	unsigned char portnos[GANG_PORTS_MAX];
 	u8 totalports;
 	u8 numgangports;
-	काष्ठा device_node *of_node;
+	struct device_node *of_node;
 
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
-	अचिन्हित पूर्णांक syncpt_समयout_retry;
-	DECLARE_BITMAP(fmts_biपंचांगap, MAX_FORMAT_NUM);
-	DECLARE_BITMAP(tpg_fmts_biपंचांगap, MAX_FORMAT_NUM);
-	क्रमागत tegra_vi_pg_mode pg_mode;
+	struct v4l2_ctrl_handler ctrl_handler;
+	unsigned int syncpt_timeout_retry;
+	DECLARE_BITMAP(fmts_bitmap, MAX_FORMAT_NUM);
+	DECLARE_BITMAP(tpg_fmts_bitmap, MAX_FORMAT_NUM);
+	enum tegra_vi_pg_mode pg_mode;
 
-	काष्ठा v4l2_async_notअगरier notअगरier;
-पूर्ण;
+	struct v4l2_async_notifier notifier;
+};
 
 /**
- * काष्ठा tegra_channel_buffer - video channel buffer
+ * struct tegra_channel_buffer - video channel buffer
  *
  * @buf: vb2 buffer base object
  * @queue: buffer list entry in the channel queued buffers list
  * @chan: channel that uses the buffer
- * @addr: Tegra IOVA buffer address क्रम VI output
- * @mw_ack_sp_thresh: MW_ACK_DONE syncpoपूर्णांक threshold corresponding
+ * @addr: Tegra IOVA buffer address for VI output
+ * @mw_ack_sp_thresh: MW_ACK_DONE syncpoint threshold corresponding
  *		      to the capture buffer.
  */
-काष्ठा tegra_channel_buffer अणु
-	काष्ठा vb2_v4l2_buffer buf;
-	काष्ठा list_head queue;
-	काष्ठा tegra_vi_channel *chan;
+struct tegra_channel_buffer {
+	struct vb2_v4l2_buffer buf;
+	struct list_head queue;
+	struct tegra_vi_channel *chan;
 	dma_addr_t addr;
 	u32 mw_ack_sp_thresh[GANG_PORTS_MAX];
-पूर्ण;
+};
 
 /*
- * VI channel input data type क्रमागत.
- * These data type क्रमागत value माला_लो programmed पूर्णांकo corresponding Tegra VI
- * channel रेजिस्टर bits.
+ * VI channel input data type enum.
+ * These data type enum value gets programmed into corresponding Tegra VI
+ * channel register bits.
  */
-क्रमागत tegra_image_dt अणु
+enum tegra_image_dt {
 	TEGRA_IMAGE_DT_YUV420_8 = 24,
 	TEGRA_IMAGE_DT_YUV420_10,
 
@@ -256,37 +255,37 @@
 	TEGRA_IMAGE_DT_RAW10,
 	TEGRA_IMAGE_DT_RAW12,
 	TEGRA_IMAGE_DT_RAW14,
-पूर्ण;
+};
 
 /**
- * काष्ठा tegra_video_क्रमmat - Tegra video क्रमmat description
+ * struct tegra_video_format - Tegra video format description
  *
  * @img_dt: image data type
- * @bit_width: क्रमmat width in bits per component
- * @code: media bus क्रमmat code
+ * @bit_width: format width in bits per component
+ * @code: media bus format code
  * @bpp: bytes per pixel (when stored in memory)
- * @img_fmt: image क्रमmat
- * @fourcc: V4L2 pixel क्रमmat FCC identअगरier
+ * @img_fmt: image format
+ * @fourcc: V4L2 pixel format FCC identifier
  */
-काष्ठा tegra_video_क्रमmat अणु
-	क्रमागत tegra_image_dt img_dt;
-	अचिन्हित पूर्णांक bit_width;
-	अचिन्हित पूर्णांक code;
-	अचिन्हित पूर्णांक bpp;
+struct tegra_video_format {
+	enum tegra_image_dt img_dt;
+	unsigned int bit_width;
+	unsigned int code;
+	unsigned int bpp;
 	u32 img_fmt;
 	u32 fourcc;
-पूर्ण;
+};
 
-#अगर defined(CONFIG_ARCH_TEGRA_210_SOC)
-बाह्य स्थिर काष्ठा tegra_vi_soc tegra210_vi_soc;
-#पूर्ण_अगर
+#if defined(CONFIG_ARCH_TEGRA_210_SOC)
+extern const struct tegra_vi_soc tegra210_vi_soc;
+#endif
 
-काष्ठा v4l2_subdev *
-tegra_channel_get_remote_csi_subdev(काष्ठा tegra_vi_channel *chan);
-काष्ठा v4l2_subdev *
-tegra_channel_get_remote_source_subdev(काष्ठा tegra_vi_channel *chan);
-पूर्णांक tegra_channel_set_stream(काष्ठा tegra_vi_channel *chan, bool on);
-व्योम tegra_channel_release_buffers(काष्ठा tegra_vi_channel *chan,
-				   क्रमागत vb2_buffer_state state);
-व्योम tegra_channels_cleanup(काष्ठा tegra_vi *vi);
-#पूर्ण_अगर
+struct v4l2_subdev *
+tegra_channel_get_remote_csi_subdev(struct tegra_vi_channel *chan);
+struct v4l2_subdev *
+tegra_channel_get_remote_source_subdev(struct tegra_vi_channel *chan);
+int tegra_channel_set_stream(struct tegra_vi_channel *chan, bool on);
+void tegra_channel_release_buffers(struct tegra_vi_channel *chan,
+				   enum vb2_buffer_state state);
+void tegra_channels_cleanup(struct tegra_vi *vi);
+#endif

@@ -1,328 +1,327 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  linux/kernel/prपूर्णांकk.c
+ *  linux/kernel/printk.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- * Modअगरied to make sys_syslog() more flexible: added commands to
- * वापस the last 4k of kernel messages, regardless of whether
+ * Modified to make sys_syslog() more flexible: added commands to
+ * return the last 4k of kernel messages, regardless of whether
  * they've been read or not.  Added option to suppress kernel printk's
- * to the console.  Added hook क्रम sending the console messages
- * अन्यथाwhere, in preparation क्रम a serial line console (someday).
+ * to the console.  Added hook for sending the console messages
+ * elsewhere, in preparation for a serial line console (someday).
  * Ted Ts'o, 2/11/93.
- * Modअगरied क्रम sysctl support, 1/8/97, Chris Horn.
+ * Modified for sysctl support, 1/8/97, Chris Horn.
  * Fixed SMP synchronization, 08/08/99, Manfred Spraul
- *     manfred@colorfullअगरe.com
+ *     manfred@colorfullife.com
  * Rewrote bits to get rid of console_lock
  *	01Mar01 Andrew Morton
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_driver.h>
-#समावेश <linux/console.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/security.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/syscalls.h>
-#समावेश <linux/crash_core.h>
-#समावेश <linux/ratelimit.h>
-#समावेश <linux/kmsg_dump.h>
-#समावेश <linux/syslog.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/irq_work.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/uपन.स>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/sched/task_stack.h>
+#include <linux/kernel.h>
+#include <linux/mm.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/console.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/nmi.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/delay.h>
+#include <linux/smp.h>
+#include <linux/security.h>
+#include <linux/memblock.h>
+#include <linux/syscalls.h>
+#include <linux/crash_core.h>
+#include <linux/ratelimit.h>
+#include <linux/kmsg_dump.h>
+#include <linux/syslog.h>
+#include <linux/cpu.h>
+#include <linux/rculist.h>
+#include <linux/poll.h>
+#include <linux/irq_work.h>
+#include <linux/ctype.h>
+#include <linux/uio.h>
+#include <linux/sched/clock.h>
+#include <linux/sched/debug.h>
+#include <linux/sched/task_stack.h>
 
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/sections.h>
+#include <linux/uaccess.h>
+#include <asm/sections.h>
 
-#समावेश <trace/events/initcall.h>
-#घोषणा CREATE_TRACE_POINTS
-#समावेश <trace/events/prपूर्णांकk.h>
+#include <trace/events/initcall.h>
+#define CREATE_TRACE_POINTS
+#include <trace/events/printk.h>
 
-#समावेश "printk_ringbuffer.h"
-#समावेश "console_cmdline.h"
-#समावेश "braille.h"
-#समावेश "internal.h"
+#include "printk_ringbuffer.h"
+#include "console_cmdline.h"
+#include "braille.h"
+#include "internal.h"
 
-पूर्णांक console_prपूर्णांकk[4] = अणु
+int console_printk[4] = {
 	CONSOLE_LOGLEVEL_DEFAULT,	/* console_loglevel */
-	MESSAGE_LOGLEVEL_DEFAULT,	/* शेष_message_loglevel */
+	MESSAGE_LOGLEVEL_DEFAULT,	/* default_message_loglevel */
 	CONSOLE_LOGLEVEL_MIN,		/* minimum_console_loglevel */
-	CONSOLE_LOGLEVEL_DEFAULT,	/* शेष_console_loglevel */
-पूर्ण;
-EXPORT_SYMBOL_GPL(console_prपूर्णांकk);
+	CONSOLE_LOGLEVEL_DEFAULT,	/* default_console_loglevel */
+};
+EXPORT_SYMBOL_GPL(console_printk);
 
-atomic_t ignore_console_lock_warning __पढ़ो_mostly = ATOMIC_INIT(0);
+atomic_t ignore_console_lock_warning __read_mostly = ATOMIC_INIT(0);
 EXPORT_SYMBOL(ignore_console_lock_warning);
 
 /*
- * Low level drivers may need that to know अगर they can schedule in
+ * Low level drivers may need that to know if they can schedule in
  * their unblank() callback or not. So let's export it.
  */
-पूर्णांक oops_in_progress;
+int oops_in_progress;
 EXPORT_SYMBOL(oops_in_progress);
 
 /*
  * console_sem protects the console_drivers list, and also
- * provides serialisation क्रम access to the entire console
- * driver प्रणाली.
+ * provides serialisation for access to the entire console
+ * driver system.
  */
-अटल DEFINE_SEMAPHORE(console_sem);
-काष्ठा console *console_drivers;
+static DEFINE_SEMAPHORE(console_sem);
+struct console *console_drivers;
 EXPORT_SYMBOL_GPL(console_drivers);
 
 /*
- * System may need to suppress prपूर्णांकk message under certain
+ * System may need to suppress printk message under certain
  * circumstances, like after kernel panic happens.
  */
-पूर्णांक __पढ़ो_mostly suppress_prपूर्णांकk;
+int __read_mostly suppress_printk;
 
-#अगर_घोषित CONFIG_LOCKDEP
-अटल काष्ठा lockdep_map console_lock_dep_map = अणु
+#ifdef CONFIG_LOCKDEP
+static struct lockdep_map console_lock_dep_map = {
 	.name = "console_lock"
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-क्रमागत devkmsg_log_bits अणु
+enum devkmsg_log_bits {
 	__DEVKMSG_LOG_BIT_ON = 0,
 	__DEVKMSG_LOG_BIT_OFF,
 	__DEVKMSG_LOG_BIT_LOCK,
-पूर्ण;
+};
 
-क्रमागत devkmsg_log_masks अणु
+enum devkmsg_log_masks {
 	DEVKMSG_LOG_MASK_ON             = BIT(__DEVKMSG_LOG_BIT_ON),
 	DEVKMSG_LOG_MASK_OFF            = BIT(__DEVKMSG_LOG_BIT_OFF),
 	DEVKMSG_LOG_MASK_LOCK           = BIT(__DEVKMSG_LOG_BIT_LOCK),
-पूर्ण;
+};
 
-/* Keep both the 'on' and 'off' bits clear, i.e. ratelimit by शेष: */
-#घोषणा DEVKMSG_LOG_MASK_DEFAULT	0
+/* Keep both the 'on' and 'off' bits clear, i.e. ratelimit by default: */
+#define DEVKMSG_LOG_MASK_DEFAULT	0
 
-अटल अचिन्हित पूर्णांक __पढ़ो_mostly devkmsg_log = DEVKMSG_LOG_MASK_DEFAULT;
+static unsigned int __read_mostly devkmsg_log = DEVKMSG_LOG_MASK_DEFAULT;
 
-अटल पूर्णांक __control_devkmsg(अक्षर *str)
-अणु
-	माप_प्रकार len;
+static int __control_devkmsg(char *str)
+{
+	size_t len;
 
-	अगर (!str)
-		वापस -EINVAL;
+	if (!str)
+		return -EINVAL;
 
 	len = str_has_prefix(str, "on");
-	अगर (len) अणु
+	if (len) {
 		devkmsg_log = DEVKMSG_LOG_MASK_ON;
-		वापस len;
-	पूर्ण
+		return len;
+	}
 
 	len = str_has_prefix(str, "off");
-	अगर (len) अणु
+	if (len) {
 		devkmsg_log = DEVKMSG_LOG_MASK_OFF;
-		वापस len;
-	पूर्ण
+		return len;
+	}
 
 	len = str_has_prefix(str, "ratelimit");
-	अगर (len) अणु
+	if (len) {
 		devkmsg_log = DEVKMSG_LOG_MASK_DEFAULT;
-		वापस len;
-	पूर्ण
+		return len;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक __init control_devkmsg(अक्षर *str)
-अणु
-	अगर (__control_devkmsg(str) < 0)
-		वापस 1;
+static int __init control_devkmsg(char *str)
+{
+	if (__control_devkmsg(str) < 0)
+		return 1;
 
 	/*
 	 * Set sysctl string accordingly:
 	 */
-	अगर (devkmsg_log == DEVKMSG_LOG_MASK_ON)
-		म_नकल(devkmsg_log_str, "on");
-	अन्यथा अगर (devkmsg_log == DEVKMSG_LOG_MASK_OFF)
-		म_नकल(devkmsg_log_str, "off");
-	/* अन्यथा "ratelimit" which is set by शेष. */
+	if (devkmsg_log == DEVKMSG_LOG_MASK_ON)
+		strcpy(devkmsg_log_str, "on");
+	else if (devkmsg_log == DEVKMSG_LOG_MASK_OFF)
+		strcpy(devkmsg_log_str, "off");
+	/* else "ratelimit" which is set by default. */
 
 	/*
 	 * Sysctl cannot change it anymore. The kernel command line setting of
-	 * this parameter is to क्रमce the setting to be permanent throughout the
-	 * runसमय of the प्रणाली. This is a precation measure against userspace
+	 * this parameter is to force the setting to be permanent throughout the
+	 * runtime of the system. This is a precation measure against userspace
 	 * trying to be a smarta** and attempting to change it up on us.
 	 */
 	devkmsg_log |= DEVKMSG_LOG_MASK_LOCK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 __setup("printk.devkmsg=", control_devkmsg);
 
-अक्षर devkmsg_log_str[DEVKMSG_STR_MAX_SIZE] = "ratelimit";
+char devkmsg_log_str[DEVKMSG_STR_MAX_SIZE] = "ratelimit";
 
-पूर्णांक devkmsg_sysctl_set_loglvl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-			      व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	अक्षर old_str[DEVKMSG_STR_MAX_SIZE];
-	अचिन्हित पूर्णांक old;
-	पूर्णांक err;
+int devkmsg_sysctl_set_loglvl(struct ctl_table *table, int write,
+			      void *buffer, size_t *lenp, loff_t *ppos)
+{
+	char old_str[DEVKMSG_STR_MAX_SIZE];
+	unsigned int old;
+	int err;
 
-	अगर (ग_लिखो) अणु
-		अगर (devkmsg_log & DEVKMSG_LOG_MASK_LOCK)
-			वापस -EINVAL;
+	if (write) {
+		if (devkmsg_log & DEVKMSG_LOG_MASK_LOCK)
+			return -EINVAL;
 
 		old = devkmsg_log;
-		म_नकलन(old_str, devkmsg_log_str, DEVKMSG_STR_MAX_SIZE);
-	पूर्ण
+		strncpy(old_str, devkmsg_log_str, DEVKMSG_STR_MAX_SIZE);
+	}
 
-	err = proc_करोstring(table, ग_लिखो, buffer, lenp, ppos);
-	अगर (err)
-		वापस err;
+	err = proc_dostring(table, write, buffer, lenp, ppos);
+	if (err)
+		return err;
 
-	अगर (ग_लिखो) अणु
+	if (write) {
 		err = __control_devkmsg(devkmsg_log_str);
 
 		/*
 		 * Do not accept an unknown string OR a known string with
 		 * trailing crap...
 		 */
-		अगर (err < 0 || (err + 1 != *lenp)) अणु
+		if (err < 0 || (err + 1 != *lenp)) {
 
 			/* ... and restore old setting. */
 			devkmsg_log = old;
-			म_नकलन(devkmsg_log_str, old_str, DEVKMSG_STR_MAX_SIZE);
+			strncpy(devkmsg_log_str, old_str, DEVKMSG_STR_MAX_SIZE);
 
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Number of रेजिस्टरed extended console drivers. */
-अटल पूर्णांक nr_ext_console_drivers;
+/* Number of registered extended console drivers. */
+static int nr_ext_console_drivers;
 
 /*
  * Helper macros to handle lockdep when locking/unlocking console_sem. We use
- * macros instead of functions so that _RET_IP_ contains useful inक्रमmation.
+ * macros instead of functions so that _RET_IP_ contains useful information.
  */
-#घोषणा करोwn_console_sem() करो अणु \
-	करोwn(&console_sem);\
+#define down_console_sem() do { \
+	down(&console_sem);\
 	mutex_acquire(&console_lock_dep_map, 0, 0, _RET_IP_);\
-पूर्ण जबतक (0)
+} while (0)
 
-अटल पूर्णांक __करोwn_trylock_console_sem(अचिन्हित दीर्घ ip)
-अणु
-	पूर्णांक lock_failed;
-	अचिन्हित दीर्घ flags;
+static int __down_trylock_console_sem(unsigned long ip)
+{
+	int lock_failed;
+	unsigned long flags;
 
 	/*
 	 * Here and in __up_console_sem() we need to be in safe mode,
 	 * because spindump/WARN/etc from under console ->lock will
-	 * deadlock in prपूर्णांकk()->करोwn_trylock_console_sem() otherwise.
+	 * deadlock in printk()->down_trylock_console_sem() otherwise.
 	 */
-	prपूर्णांकk_safe_enter_irqsave(flags);
-	lock_failed = करोwn_trylock(&console_sem);
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
+	printk_safe_enter_irqsave(flags);
+	lock_failed = down_trylock(&console_sem);
+	printk_safe_exit_irqrestore(flags);
 
-	अगर (lock_failed)
-		वापस 1;
+	if (lock_failed)
+		return 1;
 	mutex_acquire(&console_lock_dep_map, 0, 1, ip);
-	वापस 0;
-पूर्ण
-#घोषणा करोwn_trylock_console_sem() __करोwn_trylock_console_sem(_RET_IP_)
+	return 0;
+}
+#define down_trylock_console_sem() __down_trylock_console_sem(_RET_IP_)
 
-अटल व्योम __up_console_sem(अचिन्हित दीर्घ ip)
-अणु
-	अचिन्हित दीर्घ flags;
+static void __up_console_sem(unsigned long ip)
+{
+	unsigned long flags;
 
 	mutex_release(&console_lock_dep_map, ip);
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
+	printk_safe_enter_irqsave(flags);
 	up(&console_sem);
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
-पूर्ण
-#घोषणा up_console_sem() __up_console_sem(_RET_IP_)
+	printk_safe_exit_irqrestore(flags);
+}
+#define up_console_sem() __up_console_sem(_RET_IP_)
 
 /*
- * This is used क्रम debugging the mess that is the VT code by
- * keeping track अगर we have the console semaphore held. It's
- * definitely not the perfect debug tool (we करोn't know अगर _WE_
+ * This is used for debugging the mess that is the VT code by
+ * keeping track if we have the console semaphore held. It's
+ * definitely not the perfect debug tool (we don't know if _WE_
  * hold it and are racing, but it helps tracking those weird code
  * paths in the console code where we end up in places I want
  * locked without the console semaphore held).
  */
-अटल पूर्णांक console_locked, console_suspended;
+static int console_locked, console_suspended;
 
 /*
- * If exclusive_console is non-शून्य then only this console is to be prपूर्णांकed to.
+ * If exclusive_console is non-NULL then only this console is to be printed to.
  */
-अटल काष्ठा console *exclusive_console;
+static struct console *exclusive_console;
 
 /*
  *	Array of consoles built from command line options (console=)
  */
 
-#घोषणा MAX_CMDLINECONSOLES 8
+#define MAX_CMDLINECONSOLES 8
 
-अटल काष्ठा console_cmdline console_cmdline[MAX_CMDLINECONSOLES];
+static struct console_cmdline console_cmdline[MAX_CMDLINECONSOLES];
 
-अटल पूर्णांक preferred_console = -1;
-अटल bool has_preferred_console;
-पूर्णांक console_set_on_cmdline;
+static int preferred_console = -1;
+static bool has_preferred_console;
+int console_set_on_cmdline;
 EXPORT_SYMBOL(console_set_on_cmdline);
 
 /* Flag: console code may call schedule() */
-अटल पूर्णांक console_may_schedule;
+static int console_may_schedule;
 
-क्रमागत con_msg_क्रमmat_flags अणु
+enum con_msg_format_flags {
 	MSG_FORMAT_DEFAULT	= 0,
 	MSG_FORMAT_SYSLOG	= (1 << 0),
-पूर्ण;
+};
 
-अटल पूर्णांक console_msg_क्रमmat = MSG_FORMAT_DEFAULT;
+static int console_msg_format = MSG_FORMAT_DEFAULT;
 
 /*
- * The prपूर्णांकk log buffer consists of a sequenced collection of records, each
+ * The printk log buffer consists of a sequenced collection of records, each
  * containing variable length message text. Every record also contains its
  * own meta-data (@info).
  *
- * Every record meta-data carries the बारtamp in microseconds, as well as
+ * Every record meta-data carries the timestamp in microseconds, as well as
  * the standard userspace syslog level and syslog facility. The usual kernel
  * messages use LOG_KERN; userspace-injected messages always carry a matching
- * syslog facility, by शेष LOG_USER. The origin of every message can be
+ * syslog facility, by default LOG_USER. The origin of every message can be
  * reliably determined that way.
  *
- * The human पढ़ोable log message of a record is available in @text, the
+ * The human readable log message of a record is available in @text, the
  * length of the message text in @text_len. The stored message is not
  * terminated.
  *
  * Optionally, a record can carry a dictionary of properties (key/value
- * pairs), to provide userspace with a machine-पढ़ोable message context.
+ * pairs), to provide userspace with a machine-readable message context.
  *
- * Examples क्रम well-defined, commonly used property names are:
- *   DEVICE=b12:8               device identअगरier
+ * Examples for well-defined, commonly used property names are:
+ *   DEVICE=b12:8               device identifier
  *                                b12:8         block dev_t
- *                                c127:3        अक्षर dev_t
- *                                n8            netdev अगरindex
- *                                +sound:card0  subप्रणाली:devname
- *   SUBSYSTEM=pci              driver-core subप्रणाली name
+ *                                c127:3        char dev_t
+ *                                n8            netdev ifindex
+ *                                +sound:card0  subsystem:devname
+ *   SUBSYSTEM=pci              driver-core subsystem name
  *
- * Valid अक्षरacters in property names are [a-zA-Z0-9.-_]. Property names
- * and values are terminated by a '\0' अक्षरacter.
+ * Valid characters in property names are [a-zA-Z0-9.-_]. Property names
+ * and values are terminated by a '\0' character.
  *
  * Example of record values:
  *   record.text_buf                = "it's a line" (unterminated)
@@ -333,605 +332,605 @@ EXPORT_SYMBOL(console_set_on_cmdline);
  *   record.info.flags              = 0
  *   record.info.level              = 3 (LOG_ERR)
  *   record.info.caller_id          = 299 (task 299)
- *   record.info.dev_info.subप्रणाली = "pci" (terminated)
+ *   record.info.dev_info.subsystem = "pci" (terminated)
  *   record.info.dev_info.device    = "+pci:0000:00:01.0" (terminated)
  *
  * The 'struct printk_info' buffer must never be directly exported to
- * userspace, it is a kernel-निजी implementation detail that might
+ * userspace, it is a kernel-private implementation detail that might
  * need to be changed in the future, when the requirements change.
  *
- * /dev/kmsg exports the काष्ठाured data in the following line क्रमmat:
+ * /dev/kmsg exports the structured data in the following line format:
  *   "<level>,<sequnum>,<timestamp>,<contflag>[,additional_values, ... ];<message text>\n"
  *
- * Users of the export क्रमmat should ignore possible additional values
- * separated by ',', and find the message after the ';' अक्षरacter.
+ * Users of the export format should ignore possible additional values
+ * separated by ',', and find the message after the ';' character.
  *
  * The optional key/value pairs are attached as continuation lines starting
- * with a space अक्षरacter and terminated by a newline. All possible
- * non-prinatable अक्षरacters are escaped in the "\xff" notation.
+ * with a space character and terminated by a newline. All possible
+ * non-prinatable characters are escaped in the "\xff" notation.
  */
 
-क्रमागत log_flags अणु
+enum log_flags {
 	LOG_NEWLINE	= 2,	/* text ended with a newline */
 	LOG_CONT	= 8,	/* text is a fragment of a continuation line */
-पूर्ण;
+};
 
-/* syslog_lock protects syslog_* variables and ग_लिखो access to clear_seq. */
-अटल DEFINE_RAW_SPINLOCK(syslog_lock);
+/* syslog_lock protects syslog_* variables and write access to clear_seq. */
+static DEFINE_RAW_SPINLOCK(syslog_lock);
 
-#अगर_घोषित CONFIG_PRINTK
-DECLARE_WAIT_QUEUE_HEAD(log_रुको);
-/* All 3 रक्षित by @syslog_lock. */
-/* the next prपूर्णांकk record to पढ़ो by syslog(READ) or /proc/kmsg */
-अटल u64 syslog_seq;
-अटल माप_प्रकार syslog_partial;
-अटल bool syslog_समय;
+#ifdef CONFIG_PRINTK
+DECLARE_WAIT_QUEUE_HEAD(log_wait);
+/* All 3 protected by @syslog_lock. */
+/* the next printk record to read by syslog(READ) or /proc/kmsg */
+static u64 syslog_seq;
+static size_t syslog_partial;
+static bool syslog_time;
 
-/* All 3 रक्षित by @console_sem. */
-/* the next prपूर्णांकk record to ग_लिखो to the console */
-अटल u64 console_seq;
-अटल u64 exclusive_console_stop_seq;
-अटल अचिन्हित दीर्घ console_dropped;
+/* All 3 protected by @console_sem. */
+/* the next printk record to write to the console */
+static u64 console_seq;
+static u64 exclusive_console_stop_seq;
+static unsigned long console_dropped;
 
-काष्ठा latched_seq अणु
+struct latched_seq {
 	seqcount_latch_t	latch;
 	u64			val[2];
-पूर्ण;
+};
 
 /*
- * The next prपूर्णांकk record to पढ़ो after the last 'clear' command. There are
- * two copies (updated with seqcount_latch) so that पढ़ोs can locklessly
+ * The next printk record to read after the last 'clear' command. There are
+ * two copies (updated with seqcount_latch) so that reads can locklessly
  * access a valid value. Writers are synchronized by @syslog_lock.
  */
-अटल काष्ठा latched_seq clear_seq = अणु
+static struct latched_seq clear_seq = {
 	.latch		= SEQCNT_LATCH_ZERO(clear_seq.latch),
 	.val[0]		= 0,
 	.val[1]		= 0,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_PRINTK_CALLER
-#घोषणा PREFIX_MAX		48
-#अन्यथा
-#घोषणा PREFIX_MAX		32
-#पूर्ण_अगर
+#ifdef CONFIG_PRINTK_CALLER
+#define PREFIX_MAX		48
+#else
+#define PREFIX_MAX		32
+#endif
 
-/* the maximum size of a क्रमmatted record (i.e. with prefix added per line) */
-#घोषणा CONSOLE_LOG_MAX		1024
+/* the maximum size of a formatted record (i.e. with prefix added per line) */
+#define CONSOLE_LOG_MAX		1024
 
-/* the maximum size allowed to be reserved क्रम a record */
-#घोषणा LOG_LINE_MAX		(CONSOLE_LOG_MAX - PREFIX_MAX)
+/* the maximum size allowed to be reserved for a record */
+#define LOG_LINE_MAX		(CONSOLE_LOG_MAX - PREFIX_MAX)
 
-#घोषणा LOG_LEVEL(v)		((v) & 0x07)
-#घोषणा LOG_FACILITY(v)		((v) >> 3 & 0xff)
+#define LOG_LEVEL(v)		((v) & 0x07)
+#define LOG_FACILITY(v)		((v) >> 3 & 0xff)
 
 /* record buffer */
-#घोषणा LOG_ALIGN __alignof__(अचिन्हित दीर्घ)
-#घोषणा __LOG_BUF_LEN (1 << CONFIG_LOG_BUF_SHIFT)
-#घोषणा LOG_BUF_LEN_MAX (u32)(1 << 31)
-अटल अक्षर __log_buf[__LOG_BUF_LEN] __aligned(LOG_ALIGN);
-अटल अक्षर *log_buf = __log_buf;
-अटल u32 log_buf_len = __LOG_BUF_LEN;
+#define LOG_ALIGN __alignof__(unsigned long)
+#define __LOG_BUF_LEN (1 << CONFIG_LOG_BUF_SHIFT)
+#define LOG_BUF_LEN_MAX (u32)(1 << 31)
+static char __log_buf[__LOG_BUF_LEN] __aligned(LOG_ALIGN);
+static char *log_buf = __log_buf;
+static u32 log_buf_len = __LOG_BUF_LEN;
 
 /*
  * Define the average message size. This only affects the number of
  * descriptors that will be available. Underestimating is better than
  * overestimating (too many available descriptors is better than not enough).
  */
-#घोषणा PRB_AVGBITS 5	/* 32 अक्षरacter average length */
+#define PRB_AVGBITS 5	/* 32 character average length */
 
-#अगर CONFIG_LOG_BUF_SHIFT <= PRB_AVGBITS
-#त्रुटि CONFIG_LOG_BUF_SHIFT value too small.
-#पूर्ण_अगर
-_DEFINE_PRINTKRB(prपूर्णांकk_rb_अटल, CONFIG_LOG_BUF_SHIFT - PRB_AVGBITS,
+#if CONFIG_LOG_BUF_SHIFT <= PRB_AVGBITS
+#error CONFIG_LOG_BUF_SHIFT value too small.
+#endif
+_DEFINE_PRINTKRB(printk_rb_static, CONFIG_LOG_BUF_SHIFT - PRB_AVGBITS,
 		 PRB_AVGBITS, &__log_buf[0]);
 
-अटल काष्ठा prपूर्णांकk_ringbuffer prपूर्णांकk_rb_dynamic;
+static struct printk_ringbuffer printk_rb_dynamic;
 
-अटल काष्ठा prपूर्णांकk_ringbuffer *prb = &prपूर्णांकk_rb_अटल;
+static struct printk_ringbuffer *prb = &printk_rb_static;
 
 /*
- * We cannot access per-CPU data (e.g. per-CPU flush irq_work) beक्रमe
+ * We cannot access per-CPU data (e.g. per-CPU flush irq_work) before
  * per_cpu_areas are initialised. This variable is set to true when
  * it's safe to access per-CPU data.
  */
-अटल bool __prपूर्णांकk_percpu_data_पढ़ोy __पढ़ो_mostly;
+static bool __printk_percpu_data_ready __read_mostly;
 
-bool prपूर्णांकk_percpu_data_पढ़ोy(व्योम)
-अणु
-	वापस __prपूर्णांकk_percpu_data_पढ़ोy;
-पूर्ण
+bool printk_percpu_data_ready(void)
+{
+	return __printk_percpu_data_ready;
+}
 
 /* Must be called under syslog_lock. */
-अटल व्योम latched_seq_ग_लिखो(काष्ठा latched_seq *ls, u64 val)
-अणु
-	raw_ग_लिखो_seqcount_latch(&ls->latch);
+static void latched_seq_write(struct latched_seq *ls, u64 val)
+{
+	raw_write_seqcount_latch(&ls->latch);
 	ls->val[0] = val;
-	raw_ग_लिखो_seqcount_latch(&ls->latch);
+	raw_write_seqcount_latch(&ls->latch);
 	ls->val[1] = val;
-पूर्ण
+}
 
 /* Can be called from any context. */
-अटल u64 latched_seq_पढ़ो_nolock(काष्ठा latched_seq *ls)
-अणु
-	अचिन्हित पूर्णांक seq;
-	अचिन्हित पूर्णांक idx;
+static u64 latched_seq_read_nolock(struct latched_seq *ls)
+{
+	unsigned int seq;
+	unsigned int idx;
 	u64 val;
 
-	करो अणु
-		seq = raw_पढ़ो_seqcount_latch(&ls->latch);
+	do {
+		seq = raw_read_seqcount_latch(&ls->latch);
 		idx = seq & 0x1;
 		val = ls->val[idx];
-	पूर्ण जबतक (पढ़ो_seqcount_latch_retry(&ls->latch, seq));
+	} while (read_seqcount_latch_retry(&ls->latch, seq));
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /* Return log buffer address */
-अक्षर *log_buf_addr_get(व्योम)
-अणु
-	वापस log_buf;
-पूर्ण
+char *log_buf_addr_get(void)
+{
+	return log_buf;
+}
 
 /* Return log buffer size */
-u32 log_buf_len_get(व्योम)
-अणु
-	वापस log_buf_len;
-पूर्ण
+u32 log_buf_len_get(void)
+{
+	return log_buf_len;
+}
 
 /*
  * Define how much of the log buffer we could take at maximum. The value
  * must be greater than two. Note that only half of the buffer is available
- * when the index poपूर्णांकs to the middle.
+ * when the index points to the middle.
  */
-#घोषणा MAX_LOG_TAKE_PART 4
-अटल स्थिर अक्षर trunc_msg[] = "<truncated>";
+#define MAX_LOG_TAKE_PART 4
+static const char trunc_msg[] = "<truncated>";
 
-अटल व्योम truncate_msg(u16 *text_len, u16 *trunc_msg_len)
-अणु
+static void truncate_msg(u16 *text_len, u16 *trunc_msg_len)
+{
 	/*
 	 * The message should not take the whole buffer. Otherwise, it might
-	 * get हटाओd too soon.
+	 * get removed too soon.
 	 */
 	u32 max_text_len = log_buf_len / MAX_LOG_TAKE_PART;
 
-	अगर (*text_len > max_text_len)
+	if (*text_len > max_text_len)
 		*text_len = max_text_len;
 
-	/* enable the warning message (अगर there is room) */
-	*trunc_msg_len = म_माप(trunc_msg);
-	अगर (*text_len >= *trunc_msg_len)
+	/* enable the warning message (if there is room) */
+	*trunc_msg_len = strlen(trunc_msg);
+	if (*text_len >= *trunc_msg_len)
 		*text_len -= *trunc_msg_len;
-	अन्यथा
+	else
 		*trunc_msg_len = 0;
-पूर्ण
+}
 
-पूर्णांक dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
+int dmesg_restrict = IS_ENABLED(CONFIG_SECURITY_DMESG_RESTRICT);
 
-अटल पूर्णांक syslog_action_restricted(पूर्णांक type)
-अणु
-	अगर (dmesg_restrict)
-		वापस 1;
+static int syslog_action_restricted(int type)
+{
+	if (dmesg_restrict)
+		return 1;
 	/*
 	 * Unless restricted, we allow "read all" and "get buffer size"
-	 * क्रम everybody.
+	 * for everybody.
 	 */
-	वापस type != SYSLOG_ACTION_READ_ALL &&
+	return type != SYSLOG_ACTION_READ_ALL &&
 	       type != SYSLOG_ACTION_SIZE_BUFFER;
-पूर्ण
+}
 
-अटल पूर्णांक check_syslog_permissions(पूर्णांक type, पूर्णांक source)
-अणु
+static int check_syslog_permissions(int type, int source)
+{
 	/*
 	 * If this is from /proc/kmsg and we've already opened it, then we've
-	 * alपढ़ोy करोne the capabilities checks at खोलो समय.
+	 * already done the capabilities checks at open time.
 	 */
-	अगर (source == SYSLOG_FROM_PROC && type != SYSLOG_ACTION_OPEN)
-		जाओ ok;
+	if (source == SYSLOG_FROM_PROC && type != SYSLOG_ACTION_OPEN)
+		goto ok;
 
-	अगर (syslog_action_restricted(type)) अणु
-		अगर (capable(CAP_SYSLOG))
-			जाओ ok;
+	if (syslog_action_restricted(type)) {
+		if (capable(CAP_SYSLOG))
+			goto ok;
 		/*
 		 * For historical reasons, accept CAP_SYS_ADMIN too, with
 		 * a warning.
 		 */
-		अगर (capable(CAP_SYS_ADMIN)) अणु
+		if (capable(CAP_SYS_ADMIN)) {
 			pr_warn_once("%s (%d): Attempt to access syslog with "
 				     "CAP_SYS_ADMIN but no CAP_SYSLOG "
 				     "(deprecated).\n",
 				 current->comm, task_pid_nr(current));
-			जाओ ok;
-		पूर्ण
-		वापस -EPERM;
-	पूर्ण
+			goto ok;
+		}
+		return -EPERM;
+	}
 ok:
-	वापस security_syslog(type);
-पूर्ण
+	return security_syslog(type);
+}
 
-अटल व्योम append_अक्षर(अक्षर **pp, अक्षर *e, अक्षर c)
-अणु
-	अगर (*pp < e)
+static void append_char(char **pp, char *e, char c)
+{
+	if (*pp < e)
 		*(*pp)++ = c;
-पूर्ण
+}
 
-अटल sमाप_प्रकार info_prपूर्णांक_ext_header(अक्षर *buf, माप_प्रकार size,
-				     काष्ठा prपूर्णांकk_info *info)
-अणु
+static ssize_t info_print_ext_header(char *buf, size_t size,
+				     struct printk_info *info)
+{
 	u64 ts_usec = info->ts_nsec;
-	अक्षर caller[20];
-#अगर_घोषित CONFIG_PRINTK_CALLER
+	char caller[20];
+#ifdef CONFIG_PRINTK_CALLER
 	u32 id = info->caller_id;
 
-	snम_लिखो(caller, माप(caller), ",caller=%c%u",
+	snprintf(caller, sizeof(caller), ",caller=%c%u",
 		 id & 0x80000000 ? 'C' : 'T', id & ~0x80000000);
-#अन्यथा
+#else
 	caller[0] = '\0';
-#पूर्ण_अगर
+#endif
 
-	करो_भाग(ts_usec, 1000);
+	do_div(ts_usec, 1000);
 
-	वापस scnम_लिखो(buf, size, "%u,%llu,%llu,%c%s;",
+	return scnprintf(buf, size, "%u,%llu,%llu,%c%s;",
 			 (info->facility << 3) | info->level, info->seq,
 			 ts_usec, info->flags & LOG_CONT ? 'c' : '-', caller);
-पूर्ण
+}
 
-अटल sमाप_प्रकार msg_add_ext_text(अक्षर *buf, माप_प्रकार size,
-				स्थिर अक्षर *text, माप_प्रकार text_len,
-				अचिन्हित अक्षर endc)
-अणु
-	अक्षर *p = buf, *e = buf + size;
-	माप_प्रकार i;
+static ssize_t msg_add_ext_text(char *buf, size_t size,
+				const char *text, size_t text_len,
+				unsigned char endc)
+{
+	char *p = buf, *e = buf + size;
+	size_t i;
 
-	/* escape non-prपूर्णांकable अक्षरacters */
-	क्रम (i = 0; i < text_len; i++) अणु
-		अचिन्हित अक्षर c = text[i];
+	/* escape non-printable characters */
+	for (i = 0; i < text_len; i++) {
+		unsigned char c = text[i];
 
-		अगर (c < ' ' || c >= 127 || c == '\\')
-			p += scnम_लिखो(p, e - p, "\\x%02x", c);
-		अन्यथा
-			append_अक्षर(&p, e, c);
-	पूर्ण
-	append_अक्षर(&p, e, endc);
+		if (c < ' ' || c >= 127 || c == '\\')
+			p += scnprintf(p, e - p, "\\x%02x", c);
+		else
+			append_char(&p, e, c);
+	}
+	append_char(&p, e, endc);
 
-	वापस p - buf;
-पूर्ण
+	return p - buf;
+}
 
-अटल sमाप_प्रकार msg_add_dict_text(अक्षर *buf, माप_प्रकार size,
-				 स्थिर अक्षर *key, स्थिर अक्षर *val)
-अणु
-	माप_प्रकार val_len = म_माप(val);
-	sमाप_प्रकार len;
+static ssize_t msg_add_dict_text(char *buf, size_t size,
+				 const char *key, const char *val)
+{
+	size_t val_len = strlen(val);
+	ssize_t len;
 
-	अगर (!val_len)
-		वापस 0;
+	if (!val_len)
+		return 0;
 
 	len = msg_add_ext_text(buf, size, "", 0, ' ');	/* dict prefix */
-	len += msg_add_ext_text(buf + len, size - len, key, म_माप(key), '=');
+	len += msg_add_ext_text(buf + len, size - len, key, strlen(key), '=');
 	len += msg_add_ext_text(buf + len, size - len, val, val_len, '\n');
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल sमाप_प्रकार msg_prपूर्णांक_ext_body(अक्षर *buf, माप_प्रकार size,
-				  अक्षर *text, माप_प्रकार text_len,
-				  काष्ठा dev_prपूर्णांकk_info *dev_info)
-अणु
-	sमाप_प्रकार len;
+static ssize_t msg_print_ext_body(char *buf, size_t size,
+				  char *text, size_t text_len,
+				  struct dev_printk_info *dev_info)
+{
+	ssize_t len;
 
 	len = msg_add_ext_text(buf, size, text, text_len, '\n');
 
-	अगर (!dev_info)
-		जाओ out;
+	if (!dev_info)
+		goto out;
 
 	len += msg_add_dict_text(buf + len, size - len, "SUBSYSTEM",
-				 dev_info->subप्रणाली);
+				 dev_info->subsystem);
 	len += msg_add_dict_text(buf + len, size - len, "DEVICE",
 				 dev_info->device);
 out:
-	वापस len;
-पूर्ण
+	return len;
+}
 
-/* /dev/kmsg - userspace message inject/listen पूर्णांकerface */
-काष्ठा devkmsg_user अणु
+/* /dev/kmsg - userspace message inject/listen interface */
+struct devkmsg_user {
 	atomic64_t seq;
-	काष्ठा ratelimit_state rs;
-	काष्ठा mutex lock;
-	अक्षर buf[CONSOLE_EXT_LOG_MAX];
+	struct ratelimit_state rs;
+	struct mutex lock;
+	char buf[CONSOLE_EXT_LOG_MAX];
 
-	काष्ठा prपूर्णांकk_info info;
-	अक्षर text_buf[CONSOLE_EXT_LOG_MAX];
-	काष्ठा prपूर्णांकk_record record;
-पूर्ण;
+	struct printk_info info;
+	char text_buf[CONSOLE_EXT_LOG_MAX];
+	struct printk_record record;
+};
 
-अटल __म_लिखो(3, 4) __cold
-पूर्णांक devkmsg_emit(पूर्णांक facility, पूर्णांक level, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक r;
+static __printf(3, 4) __cold
+int devkmsg_emit(int facility, int level, const char *fmt, ...)
+{
+	va_list args;
+	int r;
 
-	बहु_शुरू(args, fmt);
-	r = vprपूर्णांकk_emit(facility, level, शून्य, fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	r = vprintk_emit(facility, level, NULL, fmt, args);
+	va_end(args);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-अटल sमाप_प्रकार devkmsg_ग_लिखो(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
-अणु
-	अक्षर *buf, *line;
-	पूर्णांक level = शेष_message_loglevel;
-	पूर्णांक facility = 1;	/* LOG_USER */
-	काष्ठा file *file = iocb->ki_filp;
-	काष्ठा devkmsg_user *user = file->निजी_data;
-	माप_प्रकार len = iov_iter_count(from);
-	sमाप_प्रकार ret = len;
+static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
+{
+	char *buf, *line;
+	int level = default_message_loglevel;
+	int facility = 1;	/* LOG_USER */
+	struct file *file = iocb->ki_filp;
+	struct devkmsg_user *user = file->private_data;
+	size_t len = iov_iter_count(from);
+	ssize_t ret = len;
 
-	अगर (!user || len > LOG_LINE_MAX)
-		वापस -EINVAL;
+	if (!user || len > LOG_LINE_MAX)
+		return -EINVAL;
 
 	/* Ignore when user logging is disabled. */
-	अगर (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
-		वापस len;
+	if (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
+		return len;
 
 	/* Ratelimit when not explicitly enabled. */
-	अगर (!(devkmsg_log & DEVKMSG_LOG_MASK_ON)) अणु
-		अगर (!___ratelimit(&user->rs, current->comm))
-			वापस ret;
-	पूर्ण
+	if (!(devkmsg_log & DEVKMSG_LOG_MASK_ON)) {
+		if (!___ratelimit(&user->rs, current->comm))
+			return ret;
+	}
 
-	buf = kदो_स्मृति(len+1, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	buf = kmalloc(len+1, GFP_KERNEL);
+	if (buf == NULL)
+		return -ENOMEM;
 
 	buf[len] = '\0';
-	अगर (!copy_from_iter_full(buf, len, from)) अणु
-		kमुक्त(buf);
-		वापस -EFAULT;
-	पूर्ण
+	if (!copy_from_iter_full(buf, len, from)) {
+		kfree(buf);
+		return -EFAULT;
+	}
 
 	/*
 	 * Extract and skip the syslog prefix <[0-9]*>. Coming from userspace
 	 * the decimal value represents 32bit, the lower 3 bit are the log
 	 * level, the rest are the log facility.
 	 *
-	 * If no prefix or no userspace facility is specअगरied, we
-	 * enक्रमce LOG_USER, to be able to reliably distinguish
+	 * If no prefix or no userspace facility is specified, we
+	 * enforce LOG_USER, to be able to reliably distinguish
 	 * kernel-generated messages from userspace-injected ones.
 	 */
 	line = buf;
-	अगर (line[0] == '<') अणु
-		अक्षर *endp = शून्य;
-		अचिन्हित पूर्णांक u;
+	if (line[0] == '<') {
+		char *endp = NULL;
+		unsigned int u;
 
-		u = simple_म_से_अदीर्घ(line + 1, &endp, 10);
-		अगर (endp && endp[0] == '>') अणु
+		u = simple_strtoul(line + 1, &endp, 10);
+		if (endp && endp[0] == '>') {
 			level = LOG_LEVEL(u);
-			अगर (LOG_FACILITY(u) != 0)
+			if (LOG_FACILITY(u) != 0)
 				facility = LOG_FACILITY(u);
 			endp++;
 			line = endp;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	devkmsg_emit(facility, level, "%s", line);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+	kfree(buf);
+	return ret;
+}
 
-अटल sमाप_प्रकार devkmsg_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			    माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा devkmsg_user *user = file->निजी_data;
-	काष्ठा prपूर्णांकk_record *r = &user->record;
-	माप_प्रकार len;
-	sमाप_प्रकार ret;
+static ssize_t devkmsg_read(struct file *file, char __user *buf,
+			    size_t count, loff_t *ppos)
+{
+	struct devkmsg_user *user = file->private_data;
+	struct printk_record *r = &user->record;
+	size_t len;
+	ssize_t ret;
 
-	अगर (!user)
-		वापस -EBADF;
+	if (!user)
+		return -EBADF;
 
-	ret = mutex_lock_पूर्णांकerruptible(&user->lock);
-	अगर (ret)
-		वापस ret;
+	ret = mutex_lock_interruptible(&user->lock);
+	if (ret)
+		return ret;
 
-	prपूर्णांकk_safe_enter_irq();
-	अगर (!prb_पढ़ो_valid(prb, atomic64_पढ़ो(&user->seq), r)) अणु
-		अगर (file->f_flags & O_NONBLOCK) अणु
+	printk_safe_enter_irq();
+	if (!prb_read_valid(prb, atomic64_read(&user->seq), r)) {
+		if (file->f_flags & O_NONBLOCK) {
 			ret = -EAGAIN;
-			prपूर्णांकk_safe_निकास_irq();
-			जाओ out;
-		पूर्ण
+			printk_safe_exit_irq();
+			goto out;
+		}
 
-		prपूर्णांकk_safe_निकास_irq();
-		ret = रुको_event_पूर्णांकerruptible(log_रुको,
-				prb_पढ़ो_valid(prb, atomic64_पढ़ो(&user->seq), r));
-		अगर (ret)
-			जाओ out;
-		prपूर्णांकk_safe_enter_irq();
-	पूर्ण
+		printk_safe_exit_irq();
+		ret = wait_event_interruptible(log_wait,
+				prb_read_valid(prb, atomic64_read(&user->seq), r));
+		if (ret)
+			goto out;
+		printk_safe_enter_irq();
+	}
 
-	अगर (r->info->seq != atomic64_पढ़ो(&user->seq)) अणु
-		/* our last seen message is gone, वापस error and reset */
+	if (r->info->seq != atomic64_read(&user->seq)) {
+		/* our last seen message is gone, return error and reset */
 		atomic64_set(&user->seq, r->info->seq);
 		ret = -EPIPE;
-		prपूर्णांकk_safe_निकास_irq();
-		जाओ out;
-	पूर्ण
+		printk_safe_exit_irq();
+		goto out;
+	}
 
-	len = info_prपूर्णांक_ext_header(user->buf, माप(user->buf), r->info);
-	len += msg_prपूर्णांक_ext_body(user->buf + len, माप(user->buf) - len,
+	len = info_print_ext_header(user->buf, sizeof(user->buf), r->info);
+	len += msg_print_ext_body(user->buf + len, sizeof(user->buf) - len,
 				  &r->text_buf[0], r->info->text_len,
 				  &r->info->dev_info);
 
 	atomic64_set(&user->seq, r->info->seq + 1);
-	prपूर्णांकk_safe_निकास_irq();
+	printk_safe_exit_irq();
 
-	अगर (len > count) अणु
+	if (len > count) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (copy_to_user(buf, user->buf, len)) अणु
+	if (copy_to_user(buf, user->buf, len)) {
 		ret = -EFAULT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	ret = len;
 out:
 	mutex_unlock(&user->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Be careful when modअगरying this function!!!
+ * Be careful when modifying this function!!!
  *
  * Only few operations are supported because the device works only with the
  * entire variable length messages (records). Non-standard values are
- * वापसed in the other हालs and has been this way क्रम quite some समय.
+ * returned in the other cases and has been this way for quite some time.
  * User space applications might depend on this behavior.
  */
-अटल loff_t devkmsg_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
-अणु
-	काष्ठा devkmsg_user *user = file->निजी_data;
+static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
+{
+	struct devkmsg_user *user = file->private_data;
 	loff_t ret = 0;
 
-	अगर (!user)
-		वापस -EBADF;
-	अगर (offset)
-		वापस -ESPIPE;
+	if (!user)
+		return -EBADF;
+	if (offset)
+		return -ESPIPE;
 
-	prपूर्णांकk_safe_enter_irq();
-	चयन (whence) अणु
-	हाल शुरू_से:
+	printk_safe_enter_irq();
+	switch (whence) {
+	case SEEK_SET:
 		/* the first record */
 		atomic64_set(&user->seq, prb_first_valid_seq(prb));
-		अवरोध;
-	हाल SEEK_DATA:
+		break;
+	case SEEK_DATA:
 		/*
 		 * The first record after the last SYSLOG_ACTION_CLEAR,
 		 * like issued by 'dmesg -c'. Reading /dev/kmsg itself
-		 * changes no global state, and करोes not clear anything.
+		 * changes no global state, and does not clear anything.
 		 */
-		atomic64_set(&user->seq, latched_seq_पढ़ो_nolock(&clear_seq));
-		अवरोध;
-	हाल अंत_से:
+		atomic64_set(&user->seq, latched_seq_read_nolock(&clear_seq));
+		break;
+	case SEEK_END:
 		/* after the last record */
 		atomic64_set(&user->seq, prb_next_seq(prb));
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	prपूर्णांकk_safe_निकास_irq();
-	वापस ret;
-पूर्ण
+	}
+	printk_safe_exit_irq();
+	return ret;
+}
 
-अटल __poll_t devkmsg_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा devkmsg_user *user = file->निजी_data;
-	काष्ठा prपूर्णांकk_info info;
+static __poll_t devkmsg_poll(struct file *file, poll_table *wait)
+{
+	struct devkmsg_user *user = file->private_data;
+	struct printk_info info;
 	__poll_t ret = 0;
 
-	अगर (!user)
-		वापस EPOLLERR|EPOLLNVAL;
+	if (!user)
+		return EPOLLERR|EPOLLNVAL;
 
-	poll_रुको(file, &log_रुको, रुको);
+	poll_wait(file, &log_wait, wait);
 
-	prपूर्णांकk_safe_enter_irq();
-	अगर (prb_पढ़ो_valid_info(prb, atomic64_पढ़ो(&user->seq), &info, शून्य)) अणु
-		/* वापस error when data has vanished underneath us */
-		अगर (info.seq != atomic64_पढ़ो(&user->seq))
+	printk_safe_enter_irq();
+	if (prb_read_valid_info(prb, atomic64_read(&user->seq), &info, NULL)) {
+		/* return error when data has vanished underneath us */
+		if (info.seq != atomic64_read(&user->seq))
 			ret = EPOLLIN|EPOLLRDNORM|EPOLLERR|EPOLLPRI;
-		अन्यथा
+		else
 			ret = EPOLLIN|EPOLLRDNORM;
-	पूर्ण
-	prपूर्णांकk_safe_निकास_irq();
+	}
+	printk_safe_exit_irq();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक devkmsg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा devkmsg_user *user;
-	पूर्णांक err;
+static int devkmsg_open(struct inode *inode, struct file *file)
+{
+	struct devkmsg_user *user;
+	int err;
 
-	अगर (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
-		वापस -EPERM;
+	if (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
+		return -EPERM;
 
-	/* ग_लिखो-only करोes not need any file context */
-	अगर ((file->f_flags & O_ACCMODE) != O_WRONLY) अणु
+	/* write-only does not need any file context */
+	if ((file->f_flags & O_ACCMODE) != O_WRONLY) {
 		err = check_syslog_permissions(SYSLOG_ACTION_READ_ALL,
 					       SYSLOG_FROM_READER);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	user = kदो_स्मृति(माप(काष्ठा devkmsg_user), GFP_KERNEL);
-	अगर (!user)
-		वापस -ENOMEM;
+	user = kmalloc(sizeof(struct devkmsg_user), GFP_KERNEL);
+	if (!user)
+		return -ENOMEM;
 
-	ratelimit_शेष_init(&user->rs);
+	ratelimit_default_init(&user->rs);
 	ratelimit_set_flags(&user->rs, RATELIMIT_MSG_ON_RELEASE);
 
 	mutex_init(&user->lock);
 
 	prb_rec_init_rd(&user->record, &user->info,
-			&user->text_buf[0], माप(user->text_buf));
+			&user->text_buf[0], sizeof(user->text_buf));
 
-	prपूर्णांकk_safe_enter_irq();
+	printk_safe_enter_irq();
 	atomic64_set(&user->seq, prb_first_valid_seq(prb));
-	prपूर्णांकk_safe_निकास_irq();
+	printk_safe_exit_irq();
 
-	file->निजी_data = user;
-	वापस 0;
-पूर्ण
+	file->private_data = user;
+	return 0;
+}
 
-अटल पूर्णांक devkmsg_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा devkmsg_user *user = file->निजी_data;
+static int devkmsg_release(struct inode *inode, struct file *file)
+{
+	struct devkmsg_user *user = file->private_data;
 
-	अगर (!user)
-		वापस 0;
+	if (!user)
+		return 0;
 
-	ratelimit_state_निकास(&user->rs);
+	ratelimit_state_exit(&user->rs);
 
 	mutex_destroy(&user->lock);
-	kमुक्त(user);
-	वापस 0;
-पूर्ण
+	kfree(user);
+	return 0;
+}
 
-स्थिर काष्ठा file_operations kmsg_fops = अणु
-	.खोलो = devkmsg_खोलो,
-	.पढ़ो = devkmsg_पढ़ो,
-	.ग_लिखो_iter = devkmsg_ग_लिखो,
+const struct file_operations kmsg_fops = {
+	.open = devkmsg_open,
+	.read = devkmsg_read,
+	.write_iter = devkmsg_write,
 	.llseek = devkmsg_llseek,
 	.poll = devkmsg_poll,
 	.release = devkmsg_release,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_CRASH_CORE
+#ifdef CONFIG_CRASH_CORE
 /*
  * This appends the listed symbols to /proc/vmcore
  *
  * /proc/vmcore is used by various utilities, like crash and makedumpfile to
- * obtain access to symbols that are otherwise very dअगरficult to locate.  These
- * symbols are specअगरically used so that utilities can access and extract the
+ * obtain access to symbols that are otherwise very difficult to locate.  These
+ * symbols are specifically used so that utilities can access and extract the
  * dmesg log from a vmcore file after a crash.
  */
-व्योम log_buf_vmcoreinfo_setup(व्योम)
-अणु
-	काष्ठा dev_prपूर्णांकk_info *dev_info = शून्य;
+void log_buf_vmcoreinfo_setup(void)
+{
+	struct dev_printk_info *dev_info = NULL;
 
 	VMCOREINFO_SYMBOL(prb);
-	VMCOREINFO_SYMBOL(prपूर्णांकk_rb_अटल);
+	VMCOREINFO_SYMBOL(printk_rb_static);
 	VMCOREINFO_SYMBOL(clear_seq);
 
 	/*
-	 * Export काष्ठा size and field offsets. User space tools can
-	 * parse it and detect any changes to काष्ठाure करोwn the line.
+	 * Export struct size and field offsets. User space tools can
+	 * parse it and detect any changes to structure down the line.
 	 */
 
-	VMCOREINFO_STRUCT_SIZE(prपूर्णांकk_ringbuffer);
-	VMCOREINFO_OFFSET(prपूर्णांकk_ringbuffer, desc_ring);
-	VMCOREINFO_OFFSET(prपूर्णांकk_ringbuffer, text_data_ring);
-	VMCOREINFO_OFFSET(prपूर्णांकk_ringbuffer, fail);
+	VMCOREINFO_STRUCT_SIZE(printk_ringbuffer);
+	VMCOREINFO_OFFSET(printk_ringbuffer, desc_ring);
+	VMCOREINFO_OFFSET(printk_ringbuffer, text_data_ring);
+	VMCOREINFO_OFFSET(printk_ringbuffer, fail);
 
 	VMCOREINFO_STRUCT_SIZE(prb_desc_ring);
 	VMCOREINFO_OFFSET(prb_desc_ring, count_bits);
@@ -948,18 +947,18 @@ out:
 	VMCOREINFO_OFFSET(prb_data_blk_lpos, begin);
 	VMCOREINFO_OFFSET(prb_data_blk_lpos, next);
 
-	VMCOREINFO_STRUCT_SIZE(prपूर्णांकk_info);
-	VMCOREINFO_OFFSET(prपूर्णांकk_info, seq);
-	VMCOREINFO_OFFSET(prपूर्णांकk_info, ts_nsec);
-	VMCOREINFO_OFFSET(prपूर्णांकk_info, text_len);
-	VMCOREINFO_OFFSET(prपूर्णांकk_info, caller_id);
-	VMCOREINFO_OFFSET(prपूर्णांकk_info, dev_info);
+	VMCOREINFO_STRUCT_SIZE(printk_info);
+	VMCOREINFO_OFFSET(printk_info, seq);
+	VMCOREINFO_OFFSET(printk_info, ts_nsec);
+	VMCOREINFO_OFFSET(printk_info, text_len);
+	VMCOREINFO_OFFSET(printk_info, caller_id);
+	VMCOREINFO_OFFSET(printk_info, dev_info);
 
-	VMCOREINFO_STRUCT_SIZE(dev_prपूर्णांकk_info);
-	VMCOREINFO_OFFSET(dev_prपूर्णांकk_info, subप्रणाली);
-	VMCOREINFO_LENGTH(prपूर्णांकk_info_subप्रणाली, माप(dev_info->subप्रणाली));
-	VMCOREINFO_OFFSET(dev_prपूर्णांकk_info, device);
-	VMCOREINFO_LENGTH(prपूर्णांकk_info_device, माप(dev_info->device));
+	VMCOREINFO_STRUCT_SIZE(dev_printk_info);
+	VMCOREINFO_OFFSET(dev_printk_info, subsystem);
+	VMCOREINFO_LENGTH(printk_info_subsystem, sizeof(dev_info->subsystem));
+	VMCOREINFO_OFFSET(dev_printk_info, device);
+	VMCOREINFO_LENGTH(printk_info_device, sizeof(dev_info->device));
 
 	VMCOREINFO_STRUCT_SIZE(prb_data_ring);
 	VMCOREINFO_OFFSET(prb_data_ring, size_bits);
@@ -967,67 +966,67 @@ out:
 	VMCOREINFO_OFFSET(prb_data_ring, head_lpos);
 	VMCOREINFO_OFFSET(prb_data_ring, tail_lpos);
 
-	VMCOREINFO_SIZE(atomic_दीर्घ_t);
-	VMCOREINFO_TYPE_OFFSET(atomic_दीर्घ_t, counter);
+	VMCOREINFO_SIZE(atomic_long_t);
+	VMCOREINFO_TYPE_OFFSET(atomic_long_t, counter);
 
 	VMCOREINFO_STRUCT_SIZE(latched_seq);
 	VMCOREINFO_OFFSET(latched_seq, val);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
 /* requested log_buf_len from kernel cmdline */
-अटल अचिन्हित दीर्घ __initdata new_log_buf_len;
+static unsigned long __initdata new_log_buf_len;
 
-/* we practice scaling the ring buffer by घातers of 2 */
-अटल व्योम __init log_buf_len_update(u64 size)
-अणु
-	अगर (size > (u64)LOG_BUF_LEN_MAX) अणु
+/* we practice scaling the ring buffer by powers of 2 */
+static void __init log_buf_len_update(u64 size)
+{
+	if (size > (u64)LOG_BUF_LEN_MAX) {
 		size = (u64)LOG_BUF_LEN_MAX;
 		pr_err("log_buf over 2G is not supported.\n");
-	पूर्ण
+	}
 
-	अगर (size)
-		size = roundup_घात_of_two(size);
-	अगर (size > log_buf_len)
-		new_log_buf_len = (अचिन्हित दीर्घ)size;
-पूर्ण
+	if (size)
+		size = roundup_pow_of_two(size);
+	if (size > log_buf_len)
+		new_log_buf_len = (unsigned long)size;
+}
 
 /* save requested log_buf_len since it's too early to process it */
-अटल पूर्णांक __init log_buf_len_setup(अक्षर *str)
-अणु
+static int __init log_buf_len_setup(char *str)
+{
 	u64 size;
 
-	अगर (!str)
-		वापस -EINVAL;
+	if (!str)
+		return -EINVAL;
 
 	size = memparse(str, &str);
 
 	log_buf_len_update(size);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("log_buf_len", log_buf_len_setup);
 
-#अगर_घोषित CONFIG_SMP
-#घोषणा __LOG_CPU_MAX_BUF_LEN (1 << CONFIG_LOG_CPU_MAX_BUF_SHIFT)
+#ifdef CONFIG_SMP
+#define __LOG_CPU_MAX_BUF_LEN (1 << CONFIG_LOG_CPU_MAX_BUF_SHIFT)
 
-अटल व्योम __init log_buf_add_cpu(व्योम)
-अणु
-	अचिन्हित पूर्णांक cpu_extra;
+static void __init log_buf_add_cpu(void)
+{
+	unsigned int cpu_extra;
 
 	/*
 	 * archs should set up cpu_possible_bits properly with
 	 * set_cpu_possible() after setup_arch() but just in
-	 * हाल lets ensure this is valid.
+	 * case lets ensure this is valid.
 	 */
-	अगर (num_possible_cpus() == 1)
-		वापस;
+	if (num_possible_cpus() == 1)
+		return;
 
 	cpu_extra = (num_possible_cpus() - 1) * __LOG_CPU_MAX_BUF_LEN;
 
-	/* by शेष this will only जारी through क्रम large > 64 CPUs */
-	अगर (cpu_extra <= __LOG_BUF_LEN / 2)
-		वापस;
+	/* by default this will only continue through for large > 64 CPUs */
+	if (cpu_extra <= __LOG_BUF_LEN / 2)
+		return;
 
 	pr_info("log_buf_len individual max cpu contribution: %d bytes\n",
 		__LOG_CPU_MAX_BUF_LEN);
@@ -1036,360 +1035,360 @@ early_param("log_buf_len", log_buf_len_setup);
 	pr_info("log_buf_len min size: %d bytes\n", __LOG_BUF_LEN);
 
 	log_buf_len_update(cpu_extra + __LOG_BUF_LEN);
-पूर्ण
-#अन्यथा /* !CONFIG_SMP */
-अटल अंतरभूत व्योम log_buf_add_cpu(व्योम) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_SMP */
+}
+#else /* !CONFIG_SMP */
+static inline void log_buf_add_cpu(void) {}
+#endif /* CONFIG_SMP */
 
-अटल व्योम __init set_percpu_data_पढ़ोy(व्योम)
-अणु
-	prपूर्णांकk_safe_init();
-	/* Make sure we set this flag only after prपूर्णांकk_safe() init is करोne */
+static void __init set_percpu_data_ready(void)
+{
+	printk_safe_init();
+	/* Make sure we set this flag only after printk_safe() init is done */
 	barrier();
-	__prपूर्णांकk_percpu_data_पढ़ोy = true;
-पूर्ण
+	__printk_percpu_data_ready = true;
+}
 
-अटल अचिन्हित पूर्णांक __init add_to_rb(काष्ठा prपूर्णांकk_ringbuffer *rb,
-				     काष्ठा prपूर्णांकk_record *r)
-अणु
-	काष्ठा prb_reserved_entry e;
-	काष्ठा prपूर्णांकk_record dest_r;
+static unsigned int __init add_to_rb(struct printk_ringbuffer *rb,
+				     struct printk_record *r)
+{
+	struct prb_reserved_entry e;
+	struct printk_record dest_r;
 
 	prb_rec_init_wr(&dest_r, r->info->text_len);
 
-	अगर (!prb_reserve(&e, rb, &dest_r))
-		वापस 0;
+	if (!prb_reserve(&e, rb, &dest_r))
+		return 0;
 
-	स_नकल(&dest_r.text_buf[0], &r->text_buf[0], r->info->text_len);
+	memcpy(&dest_r.text_buf[0], &r->text_buf[0], r->info->text_len);
 	dest_r.info->text_len = r->info->text_len;
 	dest_r.info->facility = r->info->facility;
 	dest_r.info->level = r->info->level;
 	dest_r.info->flags = r->info->flags;
 	dest_r.info->ts_nsec = r->info->ts_nsec;
 	dest_r.info->caller_id = r->info->caller_id;
-	स_नकल(&dest_r.info->dev_info, &r->info->dev_info, माप(dest_r.info->dev_info));
+	memcpy(&dest_r.info->dev_info, &r->info->dev_info, sizeof(dest_r.info->dev_info));
 
 	prb_final_commit(&e);
 
-	वापस prb_record_text_space(&e);
-पूर्ण
+	return prb_record_text_space(&e);
+}
 
-अटल अक्षर setup_text_buf[LOG_LINE_MAX] __initdata;
+static char setup_text_buf[LOG_LINE_MAX] __initdata;
 
-व्योम __init setup_log_buf(पूर्णांक early)
-अणु
-	काष्ठा prपूर्णांकk_info *new_infos;
-	अचिन्हित पूर्णांक new_descs_count;
-	काष्ठा prb_desc *new_descs;
-	काष्ठा prपूर्णांकk_info info;
-	काष्ठा prपूर्णांकk_record r;
-	माप_प्रकार new_descs_size;
-	माप_प्रकार new_infos_size;
-	अचिन्हित दीर्घ flags;
-	अक्षर *new_log_buf;
-	अचिन्हित पूर्णांक मुक्त;
+void __init setup_log_buf(int early)
+{
+	struct printk_info *new_infos;
+	unsigned int new_descs_count;
+	struct prb_desc *new_descs;
+	struct printk_info info;
+	struct printk_record r;
+	size_t new_descs_size;
+	size_t new_infos_size;
+	unsigned long flags;
+	char *new_log_buf;
+	unsigned int free;
 	u64 seq;
 
 	/*
-	 * Some archs call setup_log_buf() multiple बार - first is very
+	 * Some archs call setup_log_buf() multiple times - first is very
 	 * early, e.g. from setup_arch(), and second - when percpu_areas
 	 * are initialised.
 	 */
-	अगर (!early)
-		set_percpu_data_पढ़ोy();
+	if (!early)
+		set_percpu_data_ready();
 
-	अगर (log_buf != __log_buf)
-		वापस;
+	if (log_buf != __log_buf)
+		return;
 
-	अगर (!early && !new_log_buf_len)
+	if (!early && !new_log_buf_len)
 		log_buf_add_cpu();
 
-	अगर (!new_log_buf_len)
-		वापस;
+	if (!new_log_buf_len)
+		return;
 
 	new_descs_count = new_log_buf_len >> PRB_AVGBITS;
-	अगर (new_descs_count == 0) अणु
+	if (new_descs_count == 0) {
 		pr_err("new_log_buf_len: %lu too small\n", new_log_buf_len);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	new_log_buf = memblock_alloc(new_log_buf_len, LOG_ALIGN);
-	अगर (unlikely(!new_log_buf)) अणु
+	if (unlikely(!new_log_buf)) {
 		pr_err("log_buf_len: %lu text bytes not available\n",
 		       new_log_buf_len);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	new_descs_size = new_descs_count * माप(काष्ठा prb_desc);
+	new_descs_size = new_descs_count * sizeof(struct prb_desc);
 	new_descs = memblock_alloc(new_descs_size, LOG_ALIGN);
-	अगर (unlikely(!new_descs)) अणु
+	if (unlikely(!new_descs)) {
 		pr_err("log_buf_len: %zu desc bytes not available\n",
 		       new_descs_size);
-		जाओ err_मुक्त_log_buf;
-	पूर्ण
+		goto err_free_log_buf;
+	}
 
-	new_infos_size = new_descs_count * माप(काष्ठा prपूर्णांकk_info);
+	new_infos_size = new_descs_count * sizeof(struct printk_info);
 	new_infos = memblock_alloc(new_infos_size, LOG_ALIGN);
-	अगर (unlikely(!new_infos)) अणु
+	if (unlikely(!new_infos)) {
 		pr_err("log_buf_len: %zu info bytes not available\n",
 		       new_infos_size);
-		जाओ err_मुक्त_descs;
-	पूर्ण
+		goto err_free_descs;
+	}
 
-	prb_rec_init_rd(&r, &info, &setup_text_buf[0], माप(setup_text_buf));
+	prb_rec_init_rd(&r, &info, &setup_text_buf[0], sizeof(setup_text_buf));
 
-	prb_init(&prपूर्णांकk_rb_dynamic,
+	prb_init(&printk_rb_dynamic,
 		 new_log_buf, ilog2(new_log_buf_len),
 		 new_descs, ilog2(new_descs_count),
 		 new_infos);
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
+	printk_safe_enter_irqsave(flags);
 
 	log_buf_len = new_log_buf_len;
 	log_buf = new_log_buf;
 	new_log_buf_len = 0;
 
-	मुक्त = __LOG_BUF_LEN;
-	prb_क्रम_each_record(0, &prपूर्णांकk_rb_अटल, seq, &r)
-		मुक्त -= add_to_rb(&prपूर्णांकk_rb_dynamic, &r);
+	free = __LOG_BUF_LEN;
+	prb_for_each_record(0, &printk_rb_static, seq, &r)
+		free -= add_to_rb(&printk_rb_dynamic, &r);
 
 	/*
 	 * This is early enough that everything is still running on the
-	 * boot CPU and पूर्णांकerrupts are disabled. So no new messages will
+	 * boot CPU and interrupts are disabled. So no new messages will
 	 * appear during the transition to the dynamic buffer.
 	 */
-	prb = &prपूर्णांकk_rb_dynamic;
+	prb = &printk_rb_dynamic;
 
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
+	printk_safe_exit_irqrestore(flags);
 
-	अगर (seq != prb_next_seq(&prपूर्णांकk_rb_अटल)) अणु
+	if (seq != prb_next_seq(&printk_rb_static)) {
 		pr_err("dropped %llu messages\n",
-		       prb_next_seq(&prपूर्णांकk_rb_अटल) - seq);
-	पूर्ण
+		       prb_next_seq(&printk_rb_static) - seq);
+	}
 
 	pr_info("log_buf_len: %u bytes\n", log_buf_len);
 	pr_info("early log buf free: %u(%u%%)\n",
-		मुक्त, (मुक्त * 100) / __LOG_BUF_LEN);
-	वापस;
+		free, (free * 100) / __LOG_BUF_LEN);
+	return;
 
-err_मुक्त_descs:
-	memblock_मुक्त(__pa(new_descs), new_descs_size);
-err_मुक्त_log_buf:
-	memblock_मुक्त(__pa(new_log_buf), new_log_buf_len);
-पूर्ण
+err_free_descs:
+	memblock_free(__pa(new_descs), new_descs_size);
+err_free_log_buf:
+	memblock_free(__pa(new_log_buf), new_log_buf_len);
+}
 
-अटल bool __पढ़ो_mostly ignore_loglevel;
+static bool __read_mostly ignore_loglevel;
 
-अटल पूर्णांक __init ignore_loglevel_setup(अक्षर *str)
-अणु
+static int __init ignore_loglevel_setup(char *str)
+{
 	ignore_loglevel = true;
 	pr_info("debug: ignoring loglevel setting.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 early_param("ignore_loglevel", ignore_loglevel_setup);
 module_param(ignore_loglevel, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(ignore_loglevel,
 		 "ignore loglevel setting (prints all kernel messages to the console)");
 
-अटल bool suppress_message_prपूर्णांकing(पूर्णांक level)
-अणु
-	वापस (level >= console_loglevel && !ignore_loglevel);
-पूर्ण
+static bool suppress_message_printing(int level)
+{
+	return (level >= console_loglevel && !ignore_loglevel);
+}
 
-#अगर_घोषित CONFIG_BOOT_PRINTK_DELAY
+#ifdef CONFIG_BOOT_PRINTK_DELAY
 
-अटल पूर्णांक boot_delay; /* msecs delay after each prपूर्णांकk during bootup */
-अटल अचिन्हित दीर्घ दीर्घ loops_per_msec;	/* based on boot_delay */
+static int boot_delay; /* msecs delay after each printk during bootup */
+static unsigned long long loops_per_msec;	/* based on boot_delay */
 
-अटल पूर्णांक __init boot_delay_setup(अक्षर *str)
-अणु
-	अचिन्हित दीर्घ lpj;
+static int __init boot_delay_setup(char *str)
+{
+	unsigned long lpj;
 
 	lpj = preset_lpj ? preset_lpj : 1000000;	/* some guess */
-	loops_per_msec = (अचिन्हित दीर्घ दीर्घ)lpj / 1000 * HZ;
+	loops_per_msec = (unsigned long long)lpj / 1000 * HZ;
 
 	get_option(&str, &boot_delay);
-	अगर (boot_delay > 10 * 1000)
+	if (boot_delay > 10 * 1000)
 		boot_delay = 0;
 
 	pr_debug("boot_delay: %u, preset_lpj: %ld, lpj: %lu, "
 		"HZ: %d, loops_per_msec: %llu\n",
 		boot_delay, preset_lpj, lpj, HZ, loops_per_msec);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 early_param("boot_delay", boot_delay_setup);
 
-अटल व्योम boot_delay_msec(पूर्णांक level)
-अणु
-	अचिन्हित दीर्घ दीर्घ k;
-	अचिन्हित दीर्घ समयout;
+static void boot_delay_msec(int level)
+{
+	unsigned long long k;
+	unsigned long timeout;
 
-	अगर ((boot_delay == 0 || प्रणाली_state >= SYSTEM_RUNNING)
-		|| suppress_message_prपूर्णांकing(level)) अणु
-		वापस;
-	पूर्ण
+	if ((boot_delay == 0 || system_state >= SYSTEM_RUNNING)
+		|| suppress_message_printing(level)) {
+		return;
+	}
 
-	k = (अचिन्हित दीर्घ दीर्घ)loops_per_msec * boot_delay;
+	k = (unsigned long long)loops_per_msec * boot_delay;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(boot_delay);
-	जबतक (k) अणु
+	timeout = jiffies + msecs_to_jiffies(boot_delay);
+	while (k) {
 		k--;
 		cpu_relax();
 		/*
-		 * use (अस्थिर) jअगरfies to prevent
-		 * compiler reduction; loop termination via jअगरfies
+		 * use (volatile) jiffies to prevent
+		 * compiler reduction; loop termination via jiffies
 		 * is secondary and may or may not happen.
 		 */
-		अगर (समय_after(jअगरfies, समयout))
-			अवरोध;
-		touch_nmi_watchकरोg();
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम boot_delay_msec(पूर्णांक level)
-अणु
-पूर्ण
-#पूर्ण_अगर
+		if (time_after(jiffies, timeout))
+			break;
+		touch_nmi_watchdog();
+	}
+}
+#else
+static inline void boot_delay_msec(int level)
+{
+}
+#endif
 
-अटल bool prपूर्णांकk_समय = IS_ENABLED(CONFIG_PRINTK_TIME);
-module_param_named(समय, prपूर्णांकk_समय, bool, S_IRUGO | S_IWUSR);
+static bool printk_time = IS_ENABLED(CONFIG_PRINTK_TIME);
+module_param_named(time, printk_time, bool, S_IRUGO | S_IWUSR);
 
-अटल माप_प्रकार prपूर्णांक_syslog(अचिन्हित पूर्णांक level, अक्षर *buf)
-अणु
-	वापस प्र_लिखो(buf, "<%u>", level);
-पूर्ण
+static size_t print_syslog(unsigned int level, char *buf)
+{
+	return sprintf(buf, "<%u>", level);
+}
 
-अटल माप_प्रकार prपूर्णांक_समय(u64 ts, अक्षर *buf)
-अणु
-	अचिन्हित दीर्घ rem_nsec = करो_भाग(ts, 1000000000);
+static size_t print_time(u64 ts, char *buf)
+{
+	unsigned long rem_nsec = do_div(ts, 1000000000);
 
-	वापस प्र_लिखो(buf, "[%5lu.%06lu]",
-		       (अचिन्हित दीर्घ)ts, rem_nsec / 1000);
-पूर्ण
+	return sprintf(buf, "[%5lu.%06lu]",
+		       (unsigned long)ts, rem_nsec / 1000);
+}
 
-#अगर_घोषित CONFIG_PRINTK_CALLER
-अटल माप_प्रकार prपूर्णांक_caller(u32 id, अक्षर *buf)
-अणु
-	अक्षर caller[12];
+#ifdef CONFIG_PRINTK_CALLER
+static size_t print_caller(u32 id, char *buf)
+{
+	char caller[12];
 
-	snम_लिखो(caller, माप(caller), "%c%u",
+	snprintf(caller, sizeof(caller), "%c%u",
 		 id & 0x80000000 ? 'C' : 'T', id & ~0x80000000);
-	वापस प्र_लिखो(buf, "[%6s]", caller);
-पूर्ण
-#अन्यथा
-#घोषणा prपूर्णांक_caller(id, buf) 0
-#पूर्ण_अगर
+	return sprintf(buf, "[%6s]", caller);
+}
+#else
+#define print_caller(id, buf) 0
+#endif
 
-अटल माप_प्रकार info_prपूर्णांक_prefix(स्थिर काष्ठा prपूर्णांकk_info  *info, bool syslog,
-				bool समय, अक्षर *buf)
-अणु
-	माप_प्रकार len = 0;
+static size_t info_print_prefix(const struct printk_info  *info, bool syslog,
+				bool time, char *buf)
+{
+	size_t len = 0;
 
-	अगर (syslog)
-		len = prपूर्णांक_syslog((info->facility << 3) | info->level, buf);
+	if (syslog)
+		len = print_syslog((info->facility << 3) | info->level, buf);
 
-	अगर (समय)
-		len += prपूर्णांक_समय(info->ts_nsec, buf + len);
+	if (time)
+		len += print_time(info->ts_nsec, buf + len);
 
-	len += prपूर्णांक_caller(info->caller_id, buf + len);
+	len += print_caller(info->caller_id, buf + len);
 
-	अगर (IS_ENABLED(CONFIG_PRINTK_CALLER) || समय) अणु
+	if (IS_ENABLED(CONFIG_PRINTK_CALLER) || time) {
 		buf[len++] = ' ';
 		buf[len] = '\0';
-	पूर्ण
+	}
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * Prepare the record क्रम prपूर्णांकing. The text is shअगरted within the given
- * buffer to aव्योम a need क्रम another one. The following operations are
- * करोne:
+ * Prepare the record for printing. The text is shifted within the given
+ * buffer to avoid a need for another one. The following operations are
+ * done:
  *
- *   - Add prefix क्रम each line.
- *   - Drop truncated lines that no दीर्घer fit पूर्णांकo the buffer.
- *   - Add the trailing newline that has been हटाओd in vprपूर्णांकk_store().
+ *   - Add prefix for each line.
+ *   - Drop truncated lines that no longer fit into the buffer.
+ *   - Add the trailing newline that has been removed in vprintk_store().
  *   - Add a string terminator.
  *
  * Since the produced string is always terminated, the maximum possible
- * वापस value is @r->text_buf_size - 1;
+ * return value is @r->text_buf_size - 1;
  *
  * Return: The length of the updated/prepared text, including the added
  * prefixes and the newline. The terminator is not counted. The dropped
  * line(s) are not counted.
  */
-अटल माप_प्रकार record_prपूर्णांक_text(काष्ठा prपूर्णांकk_record *r, bool syslog,
-				bool समय)
-अणु
-	माप_प्रकार text_len = r->info->text_len;
-	माप_प्रकार buf_size = r->text_buf_size;
-	अक्षर *text = r->text_buf;
-	अक्षर prefix[PREFIX_MAX];
+static size_t record_print_text(struct printk_record *r, bool syslog,
+				bool time)
+{
+	size_t text_len = r->info->text_len;
+	size_t buf_size = r->text_buf_size;
+	char *text = r->text_buf;
+	char prefix[PREFIX_MAX];
 	bool truncated = false;
-	माप_प्रकार prefix_len;
-	माप_प्रकार line_len;
-	माप_प्रकार len = 0;
-	अक्षर *next;
+	size_t prefix_len;
+	size_t line_len;
+	size_t len = 0;
+	char *next;
 
 	/*
 	 * If the message was truncated because the buffer was not large
-	 * enough, treat the available text as अगर it were the full text.
+	 * enough, treat the available text as if it were the full text.
 	 */
-	अगर (text_len > buf_size)
+	if (text_len > buf_size)
 		text_len = buf_size;
 
-	prefix_len = info_prपूर्णांक_prefix(r->info, syslog, समय, prefix);
+	prefix_len = info_print_prefix(r->info, syslog, time, prefix);
 
 	/*
 	 * @text_len: bytes of unprocessed text
 	 * @line_len: bytes of current line _without_ newline
-	 * @text:     poपूर्णांकer to beginning of current line
+	 * @text:     pointer to beginning of current line
 	 * @len:      number of bytes prepared in r->text_buf
 	 */
-	क्रम (;;) अणु
-		next = स_प्रथम(text, '\n', text_len);
-		अगर (next) अणु
+	for (;;) {
+		next = memchr(text, '\n', text_len);
+		if (next) {
 			line_len = next - text;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* Drop truncated line(s). */
-			अगर (truncated)
-				अवरोध;
+			if (truncated)
+				break;
 			line_len = text_len;
-		पूर्ण
+		}
 
 		/*
-		 * Truncate the text अगर there is not enough space to add the
+		 * Truncate the text if there is not enough space to add the
 		 * prefix and a trailing newline and a terminator.
 		 */
-		अगर (len + prefix_len + text_len + 1 + 1 > buf_size) अणु
-			/* Drop even the current line अगर no space. */
-			अगर (len + prefix_len + line_len + 1 + 1 > buf_size)
-				अवरोध;
+		if (len + prefix_len + text_len + 1 + 1 > buf_size) {
+			/* Drop even the current line if no space. */
+			if (len + prefix_len + line_len + 1 + 1 > buf_size)
+				break;
 
 			text_len = buf_size - len - prefix_len - 1 - 1;
 			truncated = true;
-		पूर्ण
+		}
 
-		स_हटाओ(text + prefix_len, text, text_len);
-		स_नकल(text, prefix, prefix_len);
+		memmove(text + prefix_len, text, text_len);
+		memcpy(text, prefix, prefix_len);
 
 		/*
 		 * Increment the prepared length to include the text and
-		 * prefix that were just moved+copied. Also increment क्रम the
+		 * prefix that were just moved+copied. Also increment for the
 		 * newline at the end of this line. If this is the last line,
 		 * there is no newline, but it will be added immediately below.
 		 */
 		len += prefix_len + line_len + 1;
-		अगर (text_len == line_len) अणु
+		if (text_len == line_len) {
 			/*
 			 * This is the last line. Add the trailing newline
-			 * हटाओd in vprपूर्णांकk_store().
+			 * removed in vprintk_store().
 			 */
 			text[prefix_len + line_len] = '\n';
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/*
 		 * Advance beyond the added prefix and the related line with
@@ -1398,494 +1397,494 @@ module_param_named(समय, prपूर्णांकk_समय, bool, S_IRU
 		text += prefix_len + line_len + 1;
 
 		/*
-		 * The reमुख्यing text has only decreased by the line with its
+		 * The remaining text has only decreased by the line with its
 		 * newline.
 		 *
 		 * Note that @text_len can become zero. It happens when @text
 		 * ended with a newline (either due to truncation or the
 		 * original string ending with "\n\n"). The loop is correctly
-		 * repeated and (अगर not truncated) an empty line with a prefix
+		 * repeated and (if not truncated) an empty line with a prefix
 		 * will be prepared.
 		 */
 		text_len -= line_len + 1;
-	पूर्ण
+	}
 
 	/*
-	 * If a buffer was provided, it will be terminated. Space क्रम the
+	 * If a buffer was provided, it will be terminated. Space for the
 	 * string terminator is guaranteed to be available. The terminator is
-	 * not counted in the वापस value.
+	 * not counted in the return value.
 	 */
-	अगर (buf_size > 0)
+	if (buf_size > 0)
 		r->text_buf[len] = 0;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल माप_प्रकार get_record_prपूर्णांक_text_size(काष्ठा prपूर्णांकk_info *info,
-					 अचिन्हित पूर्णांक line_count,
-					 bool syslog, bool समय)
-अणु
-	अक्षर prefix[PREFIX_MAX];
-	माप_प्रकार prefix_len;
+static size_t get_record_print_text_size(struct printk_info *info,
+					 unsigned int line_count,
+					 bool syslog, bool time)
+{
+	char prefix[PREFIX_MAX];
+	size_t prefix_len;
 
-	prefix_len = info_prपूर्णांक_prefix(info, syslog, समय, prefix);
+	prefix_len = info_print_prefix(info, syslog, time, prefix);
 
 	/*
-	 * Each line will be preceded with a prefix. The पूर्णांकermediate
-	 * newlines are alपढ़ोy within the text, but a final trailing
+	 * Each line will be preceded with a prefix. The intermediate
+	 * newlines are already within the text, but a final trailing
 	 * newline will be added.
 	 */
-	वापस ((prefix_len * line_count) + info->text_len + 1);
-पूर्ण
+	return ((prefix_len * line_count) + info->text_len + 1);
+}
 
 /*
  * Beginning with @start_seq, find the first record where it and all following
- * records up to (but not including) @max_seq fit पूर्णांकo @size.
+ * records up to (but not including) @max_seq fit into @size.
  *
- * @max_seq is simply an upper bound and करोes not need to exist. If the caller
- * करोes not require an upper bound, -1 can be used क्रम @max_seq.
+ * @max_seq is simply an upper bound and does not need to exist. If the caller
+ * does not require an upper bound, -1 can be used for @max_seq.
  */
-अटल u64 find_first_fitting_seq(u64 start_seq, u64 max_seq, माप_प्रकार size,
-				  bool syslog, bool समय)
-अणु
-	काष्ठा prपूर्णांकk_info info;
-	अचिन्हित पूर्णांक line_count;
-	माप_प्रकार len = 0;
+static u64 find_first_fitting_seq(u64 start_seq, u64 max_seq, size_t size,
+				  bool syslog, bool time)
+{
+	struct printk_info info;
+	unsigned int line_count;
+	size_t len = 0;
 	u64 seq;
 
 	/* Determine the size of the records up to @max_seq. */
-	prb_क्रम_each_info(start_seq, prb, seq, &info, &line_count) अणु
-		अगर (info.seq >= max_seq)
-			अवरोध;
-		len += get_record_prपूर्णांक_text_size(&info, line_count, syslog, समय);
-	पूर्ण
+	prb_for_each_info(start_seq, prb, seq, &info, &line_count) {
+		if (info.seq >= max_seq)
+			break;
+		len += get_record_print_text_size(&info, line_count, syslog, time);
+	}
 
 	/*
-	 * Adjust the upper bound क्रम the next loop to aव्योम subtracting
+	 * Adjust the upper bound for the next loop to avoid subtracting
 	 * lengths that were never added.
 	 */
-	अगर (seq < max_seq)
+	if (seq < max_seq)
 		max_seq = seq;
 
 	/*
-	 * Move first record क्रमward until length fits पूर्णांकo the buffer. Ignore
+	 * Move first record forward until length fits into the buffer. Ignore
 	 * newest messages that were not counted in the above cycle. Messages
-	 * might appear and get lost in the meanसमय. This is a best efक्रमt
+	 * might appear and get lost in the meantime. This is a best effort
 	 * that prevents an infinite loop that could occur with a retry.
 	 */
-	prb_क्रम_each_info(start_seq, prb, seq, &info, &line_count) अणु
-		अगर (len <= size || info.seq >= max_seq)
-			अवरोध;
-		len -= get_record_prपूर्णांक_text_size(&info, line_count, syslog, समय);
-	पूर्ण
+	prb_for_each_info(start_seq, prb, seq, &info, &line_count) {
+		if (len <= size || info.seq >= max_seq)
+			break;
+		len -= get_record_print_text_size(&info, line_count, syslog, time);
+	}
 
-	वापस seq;
-पूर्ण
+	return seq;
+}
 
-अटल पूर्णांक syslog_prपूर्णांक(अक्षर __user *buf, पूर्णांक size)
-अणु
-	काष्ठा prपूर्णांकk_info info;
-	काष्ठा prपूर्णांकk_record r;
-	अक्षर *text;
-	पूर्णांक len = 0;
+static int syslog_print(char __user *buf, int size)
+{
+	struct printk_info info;
+	struct printk_record r;
+	char *text;
+	int len = 0;
 
-	text = kदो_स्मृति(CONSOLE_LOG_MAX, GFP_KERNEL);
-	अगर (!text)
-		वापस -ENOMEM;
+	text = kmalloc(CONSOLE_LOG_MAX, GFP_KERNEL);
+	if (!text)
+		return -ENOMEM;
 
 	prb_rec_init_rd(&r, &info, text, CONSOLE_LOG_MAX);
 
-	जबतक (size > 0) अणु
-		माप_प्रकार n;
-		माप_प्रकार skip;
+	while (size > 0) {
+		size_t n;
+		size_t skip;
 
-		prपूर्णांकk_safe_enter_irq();
+		printk_safe_enter_irq();
 		raw_spin_lock(&syslog_lock);
-		अगर (!prb_पढ़ो_valid(prb, syslog_seq, &r)) अणु
+		if (!prb_read_valid(prb, syslog_seq, &r)) {
 			raw_spin_unlock(&syslog_lock);
-			prपूर्णांकk_safe_निकास_irq();
-			अवरोध;
-		पूर्ण
-		अगर (r.info->seq != syslog_seq) अणु
+			printk_safe_exit_irq();
+			break;
+		}
+		if (r.info->seq != syslog_seq) {
 			/* message is gone, move to next valid one */
 			syslog_seq = r.info->seq;
 			syslog_partial = 0;
-		पूर्ण
+		}
 
 		/*
-		 * To keep पढ़ोing/counting partial line consistent,
-		 * use prपूर्णांकk_समय value as of the beginning of a line.
+		 * To keep reading/counting partial line consistent,
+		 * use printk_time value as of the beginning of a line.
 		 */
-		अगर (!syslog_partial)
-			syslog_समय = prपूर्णांकk_समय;
+		if (!syslog_partial)
+			syslog_time = printk_time;
 
 		skip = syslog_partial;
-		n = record_prपूर्णांक_text(&r, true, syslog_समय);
-		अगर (n - syslog_partial <= size) अणु
-			/* message fits पूर्णांकo buffer, move क्रमward */
+		n = record_print_text(&r, true, syslog_time);
+		if (n - syslog_partial <= size) {
+			/* message fits into buffer, move forward */
 			syslog_seq = r.info->seq + 1;
 			n -= syslog_partial;
 			syslog_partial = 0;
-		पूर्ण अन्यथा अगर (!len)अणु
-			/* partial पढ़ो(), remember position */
+		} else if (!len){
+			/* partial read(), remember position */
 			n = size;
 			syslog_partial += n;
-		पूर्ण अन्यथा
+		} else
 			n = 0;
 		raw_spin_unlock(&syslog_lock);
-		prपूर्णांकk_safe_निकास_irq();
+		printk_safe_exit_irq();
 
-		अगर (!n)
-			अवरोध;
+		if (!n)
+			break;
 
-		अगर (copy_to_user(buf, text + skip, n)) अणु
-			अगर (!len)
+		if (copy_to_user(buf, text + skip, n)) {
+			if (!len)
 				len = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		len += n;
 		size -= n;
 		buf += n;
-	पूर्ण
+	}
 
-	kमुक्त(text);
-	वापस len;
-पूर्ण
+	kfree(text);
+	return len;
+}
 
-अटल पूर्णांक syslog_prपूर्णांक_all(अक्षर __user *buf, पूर्णांक size, bool clear)
-अणु
-	काष्ठा prपूर्णांकk_info info;
-	काष्ठा prपूर्णांकk_record r;
-	अक्षर *text;
-	पूर्णांक len = 0;
+static int syslog_print_all(char __user *buf, int size, bool clear)
+{
+	struct printk_info info;
+	struct printk_record r;
+	char *text;
+	int len = 0;
 	u64 seq;
-	bool समय;
+	bool time;
 
-	text = kदो_स्मृति(CONSOLE_LOG_MAX, GFP_KERNEL);
-	अगर (!text)
-		वापस -ENOMEM;
+	text = kmalloc(CONSOLE_LOG_MAX, GFP_KERNEL);
+	if (!text)
+		return -ENOMEM;
 
-	समय = prपूर्णांकk_समय;
-	prपूर्णांकk_safe_enter_irq();
+	time = printk_time;
+	printk_safe_enter_irq();
 	/*
 	 * Find first record that fits, including all following records,
-	 * पूर्णांकo the user-provided buffer क्रम this dump.
+	 * into the user-provided buffer for this dump.
 	 */
-	seq = find_first_fitting_seq(latched_seq_पढ़ो_nolock(&clear_seq), -1,
-				     size, true, समय);
+	seq = find_first_fitting_seq(latched_seq_read_nolock(&clear_seq), -1,
+				     size, true, time);
 
 	prb_rec_init_rd(&r, &info, text, CONSOLE_LOG_MAX);
 
 	len = 0;
-	prb_क्रम_each_record(seq, prb, seq, &r) अणु
-		पूर्णांक textlen;
+	prb_for_each_record(seq, prb, seq, &r) {
+		int textlen;
 
-		textlen = record_prपूर्णांक_text(&r, true, समय);
+		textlen = record_print_text(&r, true, time);
 
-		अगर (len + textlen > size) अणु
+		if (len + textlen > size) {
 			seq--;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		prपूर्णांकk_safe_निकास_irq();
-		अगर (copy_to_user(buf + len, text, textlen))
+		printk_safe_exit_irq();
+		if (copy_to_user(buf + len, text, textlen))
 			len = -EFAULT;
-		अन्यथा
+		else
 			len += textlen;
-		prपूर्णांकk_safe_enter_irq();
+		printk_safe_enter_irq();
 
-		अगर (len < 0)
-			अवरोध;
-	पूर्ण
+		if (len < 0)
+			break;
+	}
 
-	अगर (clear) अणु
+	if (clear) {
 		raw_spin_lock(&syslog_lock);
-		latched_seq_ग_लिखो(&clear_seq, seq);
+		latched_seq_write(&clear_seq, seq);
 		raw_spin_unlock(&syslog_lock);
-	पूर्ण
-	prपूर्णांकk_safe_निकास_irq();
+	}
+	printk_safe_exit_irq();
 
-	kमुक्त(text);
-	वापस len;
-पूर्ण
+	kfree(text);
+	return len;
+}
 
-अटल व्योम syslog_clear(व्योम)
-अणु
-	prपूर्णांकk_safe_enter_irq();
+static void syslog_clear(void)
+{
+	printk_safe_enter_irq();
 	raw_spin_lock(&syslog_lock);
-	latched_seq_ग_लिखो(&clear_seq, prb_next_seq(prb));
+	latched_seq_write(&clear_seq, prb_next_seq(prb));
 	raw_spin_unlock(&syslog_lock);
-	prपूर्णांकk_safe_निकास_irq();
-पूर्ण
+	printk_safe_exit_irq();
+}
 
 /* Return a consistent copy of @syslog_seq. */
-अटल u64 पढ़ो_syslog_seq_irq(व्योम)
-अणु
+static u64 read_syslog_seq_irq(void)
+{
 	u64 seq;
 
 	raw_spin_lock_irq(&syslog_lock);
 	seq = syslog_seq;
 	raw_spin_unlock_irq(&syslog_lock);
 
-	वापस seq;
-पूर्ण
+	return seq;
+}
 
-पूर्णांक करो_syslog(पूर्णांक type, अक्षर __user *buf, पूर्णांक len, पूर्णांक source)
-अणु
-	काष्ठा prपूर्णांकk_info info;
+int do_syslog(int type, char __user *buf, int len, int source)
+{
+	struct printk_info info;
 	bool clear = false;
-	अटल पूर्णांक saved_console_loglevel = LOGLEVEL_DEFAULT;
-	पूर्णांक error;
+	static int saved_console_loglevel = LOGLEVEL_DEFAULT;
+	int error;
 
 	error = check_syslog_permissions(type, source);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	चयन (type) अणु
-	हाल SYSLOG_ACTION_CLOSE:	/* Close log */
-		अवरोध;
-	हाल SYSLOG_ACTION_OPEN:	/* Open log */
-		अवरोध;
-	हाल SYSLOG_ACTION_READ:	/* Read from log */
-		अगर (!buf || len < 0)
-			वापस -EINVAL;
-		अगर (!len)
-			वापस 0;
-		अगर (!access_ok(buf, len))
-			वापस -EFAULT;
+	switch (type) {
+	case SYSLOG_ACTION_CLOSE:	/* Close log */
+		break;
+	case SYSLOG_ACTION_OPEN:	/* Open log */
+		break;
+	case SYSLOG_ACTION_READ:	/* Read from log */
+		if (!buf || len < 0)
+			return -EINVAL;
+		if (!len)
+			return 0;
+		if (!access_ok(buf, len))
+			return -EFAULT;
 
-		error = रुको_event_पूर्णांकerruptible(log_रुको,
-				prb_पढ़ो_valid(prb, पढ़ो_syslog_seq_irq(), शून्य));
-		अगर (error)
-			वापस error;
-		error = syslog_prपूर्णांक(buf, len);
-		अवरोध;
+		error = wait_event_interruptible(log_wait,
+				prb_read_valid(prb, read_syslog_seq_irq(), NULL));
+		if (error)
+			return error;
+		error = syslog_print(buf, len);
+		break;
 	/* Read/clear last kernel messages */
-	हाल SYSLOG_ACTION_READ_CLEAR:
+	case SYSLOG_ACTION_READ_CLEAR:
 		clear = true;
 		fallthrough;
 	/* Read last kernel messages */
-	हाल SYSLOG_ACTION_READ_ALL:
-		अगर (!buf || len < 0)
-			वापस -EINVAL;
-		अगर (!len)
-			वापस 0;
-		अगर (!access_ok(buf, len))
-			वापस -EFAULT;
-		error = syslog_prपूर्णांक_all(buf, len, clear);
-		अवरोध;
+	case SYSLOG_ACTION_READ_ALL:
+		if (!buf || len < 0)
+			return -EINVAL;
+		if (!len)
+			return 0;
+		if (!access_ok(buf, len))
+			return -EFAULT;
+		error = syslog_print_all(buf, len, clear);
+		break;
 	/* Clear ring buffer */
-	हाल SYSLOG_ACTION_CLEAR:
+	case SYSLOG_ACTION_CLEAR:
 		syslog_clear();
-		अवरोध;
+		break;
 	/* Disable logging to console */
-	हाल SYSLOG_ACTION_CONSOLE_OFF:
-		अगर (saved_console_loglevel == LOGLEVEL_DEFAULT)
+	case SYSLOG_ACTION_CONSOLE_OFF:
+		if (saved_console_loglevel == LOGLEVEL_DEFAULT)
 			saved_console_loglevel = console_loglevel;
 		console_loglevel = minimum_console_loglevel;
-		अवरोध;
+		break;
 	/* Enable logging to console */
-	हाल SYSLOG_ACTION_CONSOLE_ON:
-		अगर (saved_console_loglevel != LOGLEVEL_DEFAULT) अणु
+	case SYSLOG_ACTION_CONSOLE_ON:
+		if (saved_console_loglevel != LOGLEVEL_DEFAULT) {
 			console_loglevel = saved_console_loglevel;
 			saved_console_loglevel = LOGLEVEL_DEFAULT;
-		पूर्ण
-		अवरोध;
-	/* Set level of messages prपूर्णांकed to console */
-	हाल SYSLOG_ACTION_CONSOLE_LEVEL:
-		अगर (len < 1 || len > 8)
-			वापस -EINVAL;
-		अगर (len < minimum_console_loglevel)
+		}
+		break;
+	/* Set level of messages printed to console */
+	case SYSLOG_ACTION_CONSOLE_LEVEL:
+		if (len < 1 || len > 8)
+			return -EINVAL;
+		if (len < minimum_console_loglevel)
 			len = minimum_console_loglevel;
 		console_loglevel = len;
 		/* Implicitly re-enable logging to console */
 		saved_console_loglevel = LOGLEVEL_DEFAULT;
-		अवरोध;
-	/* Number of अक्षरs in the log buffer */
-	हाल SYSLOG_ACTION_SIZE_UNREAD:
-		prपूर्णांकk_safe_enter_irq();
+		break;
+	/* Number of chars in the log buffer */
+	case SYSLOG_ACTION_SIZE_UNREAD:
+		printk_safe_enter_irq();
 		raw_spin_lock(&syslog_lock);
-		अगर (!prb_पढ़ो_valid_info(prb, syslog_seq, &info, शून्य)) अणु
-			/* No unपढ़ो messages. */
+		if (!prb_read_valid_info(prb, syslog_seq, &info, NULL)) {
+			/* No unread messages. */
 			raw_spin_unlock(&syslog_lock);
-			prपूर्णांकk_safe_निकास_irq();
-			वापस 0;
-		पूर्ण
-		अगर (info.seq != syslog_seq) अणु
+			printk_safe_exit_irq();
+			return 0;
+		}
+		if (info.seq != syslog_seq) {
 			/* messages are gone, move to first one */
 			syslog_seq = info.seq;
 			syslog_partial = 0;
-		पूर्ण
-		अगर (source == SYSLOG_FROM_PROC) अणु
+		}
+		if (source == SYSLOG_FROM_PROC) {
 			/*
-			 * Short-cut क्रम poll(/"proc/kmsg") which simply checks
-			 * क्रम pending data, not the size; वापस the count of
+			 * Short-cut for poll(/"proc/kmsg") which simply checks
+			 * for pending data, not the size; return the count of
 			 * records, not the length.
 			 */
 			error = prb_next_seq(prb) - syslog_seq;
-		पूर्ण अन्यथा अणु
-			bool समय = syslog_partial ? syslog_समय : prपूर्णांकk_समय;
-			अचिन्हित पूर्णांक line_count;
+		} else {
+			bool time = syslog_partial ? syslog_time : printk_time;
+			unsigned int line_count;
 			u64 seq;
 
-			prb_क्रम_each_info(syslog_seq, prb, seq, &info,
-					  &line_count) अणु
-				error += get_record_prपूर्णांक_text_size(&info, line_count,
-								    true, समय);
-				समय = prपूर्णांकk_समय;
-			पूर्ण
+			prb_for_each_info(syslog_seq, prb, seq, &info,
+					  &line_count) {
+				error += get_record_print_text_size(&info, line_count,
+								    true, time);
+				time = printk_time;
+			}
 			error -= syslog_partial;
-		पूर्ण
+		}
 		raw_spin_unlock(&syslog_lock);
-		prपूर्णांकk_safe_निकास_irq();
-		अवरोध;
+		printk_safe_exit_irq();
+		break;
 	/* Size of the log buffer */
-	हाल SYSLOG_ACTION_SIZE_BUFFER:
+	case SYSLOG_ACTION_SIZE_BUFFER:
 		error = log_buf_len;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		error = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-SYSCALL_DEFINE3(syslog, पूर्णांक, type, अक्षर __user *, buf, पूर्णांक, len)
-अणु
-	वापस करो_syslog(type, buf, len, SYSLOG_FROM_READER);
-पूर्ण
+SYSCALL_DEFINE3(syslog, int, type, char __user *, buf, int, len)
+{
+	return do_syslog(type, buf, len, SYSLOG_FROM_READER);
+}
 
 /*
  * Special console_lock variants that help to reduce the risk of soft-lockups.
- * They allow to pass console_lock to another prपूर्णांकk() call using a busy रुको.
+ * They allow to pass console_lock to another printk() call using a busy wait.
  */
 
-#अगर_घोषित CONFIG_LOCKDEP
-अटल काष्ठा lockdep_map console_owner_dep_map = अणु
+#ifdef CONFIG_LOCKDEP
+static struct lockdep_map console_owner_dep_map = {
 	.name = "console_owner"
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल DEFINE_RAW_SPINLOCK(console_owner_lock);
-अटल काष्ठा task_काष्ठा *console_owner;
-अटल bool console_रुकोer;
+static DEFINE_RAW_SPINLOCK(console_owner_lock);
+static struct task_struct *console_owner;
+static bool console_waiter;
 
 /**
  * console_lock_spinning_enable - mark beginning of code where another
- *	thपढ़ो might safely busy रुको
+ *	thread might safely busy wait
  *
- * This basically converts console_lock पूर्णांकo a spinlock. This marks
+ * This basically converts console_lock into a spinlock. This marks
  * the section where the console_lock owner can not sleep, because
- * there may be a रुकोer spinning (like a spinlock). Also it must be
- * पढ़ोy to hand over the lock at the end of the section.
+ * there may be a waiter spinning (like a spinlock). Also it must be
+ * ready to hand over the lock at the end of the section.
  */
-अटल व्योम console_lock_spinning_enable(व्योम)
-अणु
+static void console_lock_spinning_enable(void)
+{
 	raw_spin_lock(&console_owner_lock);
 	console_owner = current;
 	raw_spin_unlock(&console_owner_lock);
 
-	/* The रुकोer may spin on us after setting console_owner */
+	/* The waiter may spin on us after setting console_owner */
 	spin_acquire(&console_owner_dep_map, 0, 0, _THIS_IP_);
-पूर्ण
+}
 
 /**
  * console_lock_spinning_disable_and_check - mark end of code where another
- *	thपढ़ो was able to busy रुको and check अगर there is a रुकोer
+ *	thread was able to busy wait and check if there is a waiter
  *
  * This is called at the end of the section where spinning is allowed.
- * It has two functions. First, it is a संकेत that it is no दीर्घer
- * safe to start busy रुकोing क्रम the lock. Second, it checks अगर
- * there is a busy रुकोer and passes the lock rights to her.
+ * It has two functions. First, it is a signal that it is no longer
+ * safe to start busy waiting for the lock. Second, it checks if
+ * there is a busy waiter and passes the lock rights to her.
  *
- * Important: Callers lose the lock अगर there was a busy रुकोer.
+ * Important: Callers lose the lock if there was a busy waiter.
  *	They must not touch items synchronized by console_lock
- *	in this हाल.
+ *	in this case.
  *
- * Return: 1 अगर the lock rights were passed, 0 otherwise.
+ * Return: 1 if the lock rights were passed, 0 otherwise.
  */
-अटल पूर्णांक console_lock_spinning_disable_and_check(व्योम)
-अणु
-	पूर्णांक रुकोer;
+static int console_lock_spinning_disable_and_check(void)
+{
+	int waiter;
 
 	raw_spin_lock(&console_owner_lock);
-	रुकोer = READ_ONCE(console_रुकोer);
-	console_owner = शून्य;
+	waiter = READ_ONCE(console_waiter);
+	console_owner = NULL;
 	raw_spin_unlock(&console_owner_lock);
 
-	अगर (!रुकोer) अणु
+	if (!waiter) {
 		spin_release(&console_owner_dep_map, _THIS_IP_);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* The रुकोer is now मुक्त to जारी */
-	WRITE_ONCE(console_रुकोer, false);
+	/* The waiter is now free to continue */
+	WRITE_ONCE(console_waiter, false);
 
 	spin_release(&console_owner_dep_map, _THIS_IP_);
 
 	/*
-	 * Hand off console_lock to रुकोer. The रुकोer will perक्रमm
-	 * the up(). After this, the रुकोer is the console_lock owner.
+	 * Hand off console_lock to waiter. The waiter will perform
+	 * the up(). After this, the waiter is the console_lock owner.
 	 */
 	mutex_release(&console_lock_dep_map, _THIS_IP_);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /**
- * console_trylock_spinning - try to get console_lock by busy रुकोing
+ * console_trylock_spinning - try to get console_lock by busy waiting
  *
- * This allows to busy रुको क्रम the console_lock when the current
+ * This allows to busy wait for the console_lock when the current
  * owner is running in specially marked sections. It means that
  * the current owner is running and cannot reschedule until it
- * is पढ़ोy to lose the lock.
+ * is ready to lose the lock.
  *
- * Return: 1 अगर we got the lock, 0 othrewise
+ * Return: 1 if we got the lock, 0 othrewise
  */
-अटल पूर्णांक console_trylock_spinning(व्योम)
-अणु
-	काष्ठा task_काष्ठा *owner = शून्य;
-	bool रुकोer;
+static int console_trylock_spinning(void)
+{
+	struct task_struct *owner = NULL;
+	bool waiter;
 	bool spin = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
-	अगर (console_trylock())
-		वापस 1;
+	if (console_trylock())
+		return 1;
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
+	printk_safe_enter_irqsave(flags);
 
 	raw_spin_lock(&console_owner_lock);
 	owner = READ_ONCE(console_owner);
-	रुकोer = READ_ONCE(console_रुकोer);
-	अगर (!रुकोer && owner && owner != current) अणु
-		WRITE_ONCE(console_रुकोer, true);
+	waiter = READ_ONCE(console_waiter);
+	if (!waiter && owner && owner != current) {
+		WRITE_ONCE(console_waiter, true);
 		spin = true;
-	पूर्ण
+	}
 	raw_spin_unlock(&console_owner_lock);
 
 	/*
-	 * If there is an active prपूर्णांकk() writing to the
-	 * consoles, instead of having it ग_लिखो our data too,
-	 * see अगर we can offload that load from the active
-	 * prपूर्णांकer, and करो some prपूर्णांकing ourselves.
-	 * Go पूर्णांकo a spin only अगर there isn't alपढ़ोy a रुकोer
-	 * spinning, and there is an active prपूर्णांकer, and
-	 * that active prपूर्णांकer isn't us (recursive prपूर्णांकk?).
+	 * If there is an active printk() writing to the
+	 * consoles, instead of having it write our data too,
+	 * see if we can offload that load from the active
+	 * printer, and do some printing ourselves.
+	 * Go into a spin only if there isn't already a waiter
+	 * spinning, and there is an active printer, and
+	 * that active printer isn't us (recursive printk?).
 	 */
-	अगर (!spin) अणु
-		prपूर्णांकk_safe_निकास_irqrestore(flags);
-		वापस 0;
-	पूर्ण
+	if (!spin) {
+		printk_safe_exit_irqrestore(flags);
+		return 0;
+	}
 
-	/* We spin रुकोing क्रम the owner to release us */
+	/* We spin waiting for the owner to release us */
 	spin_acquire(&console_owner_dep_map, 0, 0, _THIS_IP_);
-	/* Owner will clear console_रुकोer on hand off */
-	जबतक (READ_ONCE(console_रुकोer))
+	/* Owner will clear console_waiter on hand off */
+	while (READ_ONCE(console_waiter))
 		cpu_relax();
 	spin_release(&console_owner_dep_map, _THIS_IP_);
 
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
+	printk_safe_exit_irqrestore(flags);
 	/*
 	 * The owner passed the console lock to us.
 	 * Since we did not spin on console lock, annotate
@@ -1894,511 +1893,511 @@ SYSCALL_DEFINE3(syslog, पूर्णांक, type, अक्षर __user *
 	 */
 	mutex_acquire(&console_lock_dep_map, 0, 1, _THIS_IP_);
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * Call the console drivers, asking them to ग_लिखो out
+ * Call the console drivers, asking them to write out
  * log_buf[start] to log_buf[end - 1].
  * The console_lock must be held.
  */
-अटल व्योम call_console_drivers(स्थिर अक्षर *ext_text, माप_प्रकार ext_len,
-				 स्थिर अक्षर *text, माप_प्रकार len)
-अणु
-	अटल अक्षर dropped_text[64];
-	माप_प्रकार dropped_len = 0;
-	काष्ठा console *con;
+static void call_console_drivers(const char *ext_text, size_t ext_len,
+				 const char *text, size_t len)
+{
+	static char dropped_text[64];
+	size_t dropped_len = 0;
+	struct console *con;
 
 	trace_console_rcuidle(text, len);
 
-	अगर (!console_drivers)
-		वापस;
+	if (!console_drivers)
+		return;
 
-	अगर (console_dropped) अणु
-		dropped_len = snम_लिखो(dropped_text, माप(dropped_text),
+	if (console_dropped) {
+		dropped_len = snprintf(dropped_text, sizeof(dropped_text),
 				       "** %lu printk messages dropped **\n",
 				       console_dropped);
 		console_dropped = 0;
-	पूर्ण
+	}
 
-	क्रम_each_console(con) अणु
-		अगर (exclusive_console && con != exclusive_console)
-			जारी;
-		अगर (!(con->flags & CON_ENABLED))
-			जारी;
-		अगर (!con->ग_लिखो)
-			जारी;
-		अगर (!cpu_online(smp_processor_id()) &&
+	for_each_console(con) {
+		if (exclusive_console && con != exclusive_console)
+			continue;
+		if (!(con->flags & CON_ENABLED))
+			continue;
+		if (!con->write)
+			continue;
+		if (!cpu_online(smp_processor_id()) &&
 		    !(con->flags & CON_ANYTIME))
-			जारी;
-		अगर (con->flags & CON_EXTENDED)
-			con->ग_लिखो(con, ext_text, ext_len);
-		अन्यथा अणु
-			अगर (dropped_len)
-				con->ग_लिखो(con, dropped_text, dropped_len);
-			con->ग_लिखो(con, text, len);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			continue;
+		if (con->flags & CON_EXTENDED)
+			con->write(con, ext_text, ext_len);
+		else {
+			if (dropped_len)
+				con->write(con, dropped_text, dropped_len);
+			con->write(con, text, len);
+		}
+	}
+}
 
-पूर्णांक prपूर्णांकk_delay_msec __पढ़ो_mostly;
+int printk_delay_msec __read_mostly;
 
-अटल अंतरभूत व्योम prपूर्णांकk_delay(व्योम)
-अणु
-	अगर (unlikely(prपूर्णांकk_delay_msec)) अणु
-		पूर्णांक m = prपूर्णांकk_delay_msec;
+static inline void printk_delay(void)
+{
+	if (unlikely(printk_delay_msec)) {
+		int m = printk_delay_msec;
 
-		जबतक (m--) अणु
+		while (m--) {
 			mdelay(1);
-			touch_nmi_watchकरोg();
-		पूर्ण
-	पूर्ण
-पूर्ण
+			touch_nmi_watchdog();
+		}
+	}
+}
 
-अटल अंतरभूत u32 prपूर्णांकk_caller_id(व्योम)
-अणु
-	वापस in_task() ? task_pid_nr(current) :
+static inline u32 printk_caller_id(void)
+{
+	return in_task() ? task_pid_nr(current) :
 		0x80000000 + raw_smp_processor_id();
-पूर्ण
+}
 
 /**
  * parse_prefix - Parse level and control flags.
  *
  * @text:     The terminated text message.
- * @level:    A poपूर्णांकer to the current level value, will be updated.
- * @lflags:   A poपूर्णांकer to the current log flags, will be updated.
+ * @level:    A pointer to the current level value, will be updated.
+ * @lflags:   A pointer to the current log flags, will be updated.
  *
- * @level may be शून्य अगर the caller is not पूर्णांकerested in the parsed value.
- * Otherwise the variable poपूर्णांकed to by @level must be set to
+ * @level may be NULL if the caller is not interested in the parsed value.
+ * Otherwise the variable pointed to by @level must be set to
  * LOGLEVEL_DEFAULT in order to be updated with the parsed value.
  *
- * @lflags may be शून्य अगर the caller is not पूर्णांकerested in the parsed value.
- * Otherwise the variable poपूर्णांकed to by @lflags will be OR'd with the parsed
+ * @lflags may be NULL if the caller is not interested in the parsed value.
+ * Otherwise the variable pointed to by @lflags will be OR'd with the parsed
  * value.
  *
  * Return: The length of the parsed level and control flags.
  */
-अटल u16 parse_prefix(अक्षर *text, पूर्णांक *level, क्रमागत log_flags *lflags)
-अणु
+static u16 parse_prefix(char *text, int *level, enum log_flags *lflags)
+{
 	u16 prefix_len = 0;
-	पूर्णांक kern_level;
+	int kern_level;
 
-	जबतक (*text) अणु
-		kern_level = prपूर्णांकk_get_level(text);
-		अगर (!kern_level)
-			अवरोध;
+	while (*text) {
+		kern_level = printk_get_level(text);
+		if (!kern_level)
+			break;
 
-		चयन (kern_level) अणु
-		हाल '0' ... '7':
-			अगर (level && *level == LOGLEVEL_DEFAULT)
+		switch (kern_level) {
+		case '0' ... '7':
+			if (level && *level == LOGLEVEL_DEFAULT)
 				*level = kern_level - '0';
-			अवरोध;
-		हाल 'c':	/* KERN_CONT */
-			अगर (lflags)
+			break;
+		case 'c':	/* KERN_CONT */
+			if (lflags)
 				*lflags |= LOG_CONT;
-		पूर्ण
+		}
 
 		prefix_len += 2;
 		text += 2;
-	पूर्ण
+	}
 
-	वापस prefix_len;
-पूर्ण
+	return prefix_len;
+}
 
-अटल u16 prपूर्णांकk_sprपूर्णांक(अक्षर *text, u16 size, पूर्णांक facility, क्रमागत log_flags *lflags,
-			 स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
+static u16 printk_sprint(char *text, u16 size, int facility, enum log_flags *lflags,
+			 const char *fmt, va_list args)
+{
 	u16 text_len;
 
-	text_len = vscnम_लिखो(text, size, fmt, args);
+	text_len = vscnprintf(text, size, fmt, args);
 
 	/* Mark and strip a trailing newline. */
-	अगर (text_len && text[text_len - 1] == '\n') अणु
+	if (text_len && text[text_len - 1] == '\n') {
 		text_len--;
 		*lflags |= LOG_NEWLINE;
-	पूर्ण
+	}
 
 	/* Strip log level and control flags. */
-	अगर (facility == 0) अणु
+	if (facility == 0) {
 		u16 prefix_len;
 
-		prefix_len = parse_prefix(text, शून्य, शून्य);
-		अगर (prefix_len) अणु
+		prefix_len = parse_prefix(text, NULL, NULL);
+		if (prefix_len) {
 			text_len -= prefix_len;
-			स_हटाओ(text, text + prefix_len, text_len);
-		पूर्ण
-	पूर्ण
+			memmove(text, text + prefix_len, text_len);
+		}
+	}
 
-	वापस text_len;
-पूर्ण
+	return text_len;
+}
 
-__म_लिखो(4, 0)
-पूर्णांक vprपूर्णांकk_store(पूर्णांक facility, पूर्णांक level,
-		  स्थिर काष्ठा dev_prपूर्णांकk_info *dev_info,
-		  स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	स्थिर u32 caller_id = prपूर्णांकk_caller_id();
-	काष्ठा prb_reserved_entry e;
-	क्रमागत log_flags lflags = 0;
-	काष्ठा prपूर्णांकk_record r;
+__printf(4, 0)
+int vprintk_store(int facility, int level,
+		  const struct dev_printk_info *dev_info,
+		  const char *fmt, va_list args)
+{
+	const u32 caller_id = printk_caller_id();
+	struct prb_reserved_entry e;
+	enum log_flags lflags = 0;
+	struct printk_record r;
 	u16 trunc_msg_len = 0;
-	अक्षर prefix_buf[8];
+	char prefix_buf[8];
 	u16 reserve_size;
-	बहु_सूची args2;
+	va_list args2;
 	u16 text_len;
 	u64 ts_nsec;
 
 	/*
-	 * Since the duration of prपूर्णांकk() can vary depending on the message
-	 * and state of the ringbuffer, grab the बारtamp now so that it is
-	 * बंद to the call of prपूर्णांकk(). This provides a more deterministic
-	 * बारtamp with respect to the caller.
+	 * Since the duration of printk() can vary depending on the message
+	 * and state of the ringbuffer, grab the timestamp now so that it is
+	 * close to the call of printk(). This provides a more deterministic
+	 * timestamp with respect to the caller.
 	 */
-	ts_nsec = local_घड़ी();
+	ts_nsec = local_clock();
 
 	/*
-	 * The प्र_लिखो needs to come first since the syslog prefix might be
+	 * The sprintf needs to come first since the syslog prefix might be
 	 * passed in as a parameter. An extra byte must be reserved so that
-	 * later the vscnम_लिखो() पूर्णांकo the reserved buffer has room क्रम the
-	 * terminating '\0', which is not counted by vsnम_लिखो().
+	 * later the vscnprintf() into the reserved buffer has room for the
+	 * terminating '\0', which is not counted by vsnprintf().
 	 */
 	va_copy(args2, args);
-	reserve_size = vsnम_लिखो(&prefix_buf[0], माप(prefix_buf), fmt, args2) + 1;
-	बहु_पूर्ण(args2);
+	reserve_size = vsnprintf(&prefix_buf[0], sizeof(prefix_buf), fmt, args2) + 1;
+	va_end(args2);
 
-	अगर (reserve_size > LOG_LINE_MAX)
+	if (reserve_size > LOG_LINE_MAX)
 		reserve_size = LOG_LINE_MAX;
 
 	/* Extract log level or control flags. */
-	अगर (facility == 0)
+	if (facility == 0)
 		parse_prefix(&prefix_buf[0], &level, &lflags);
 
-	अगर (level == LOGLEVEL_DEFAULT)
-		level = शेष_message_loglevel;
+	if (level == LOGLEVEL_DEFAULT)
+		level = default_message_loglevel;
 
-	अगर (dev_info)
+	if (dev_info)
 		lflags |= LOG_NEWLINE;
 
-	अगर (lflags & LOG_CONT) अणु
+	if (lflags & LOG_CONT) {
 		prb_rec_init_wr(&r, reserve_size);
-		अगर (prb_reserve_in_last(&e, prb, &r, caller_id, LOG_LINE_MAX)) अणु
-			text_len = prपूर्णांकk_sprपूर्णांक(&r.text_buf[r.info->text_len], reserve_size,
+		if (prb_reserve_in_last(&e, prb, &r, caller_id, LOG_LINE_MAX)) {
+			text_len = printk_sprint(&r.text_buf[r.info->text_len], reserve_size,
 						 facility, &lflags, fmt, args);
 			r.info->text_len += text_len;
 
-			अगर (lflags & LOG_NEWLINE) अणु
+			if (lflags & LOG_NEWLINE) {
 				r.info->flags |= LOG_NEWLINE;
 				prb_final_commit(&e);
-			पूर्ण अन्यथा अणु
+			} else {
 				prb_commit(&e);
-			पूर्ण
+			}
 
-			वापस text_len;
-		पूर्ण
-	पूर्ण
+			return text_len;
+		}
+	}
 
 	/*
-	 * Explicitly initialize the record beक्रमe every prb_reserve() call.
+	 * Explicitly initialize the record before every prb_reserve() call.
 	 * prb_reserve_in_last() and prb_reserve() purposely invalidate the
-	 * काष्ठाure when they fail.
+	 * structure when they fail.
 	 */
 	prb_rec_init_wr(&r, reserve_size);
-	अगर (!prb_reserve(&e, prb, &r)) अणु
-		/* truncate the message अगर it is too दीर्घ क्रम empty buffer */
+	if (!prb_reserve(&e, prb, &r)) {
+		/* truncate the message if it is too long for empty buffer */
 		truncate_msg(&reserve_size, &trunc_msg_len);
 
 		prb_rec_init_wr(&r, reserve_size + trunc_msg_len);
-		अगर (!prb_reserve(&e, prb, &r))
-			वापस 0;
-	पूर्ण
+		if (!prb_reserve(&e, prb, &r))
+			return 0;
+	}
 
 	/* fill message */
-	text_len = prपूर्णांकk_sprपूर्णांक(&r.text_buf[0], reserve_size, facility, &lflags, fmt, args);
-	अगर (trunc_msg_len)
-		स_नकल(&r.text_buf[text_len], trunc_msg, trunc_msg_len);
+	text_len = printk_sprint(&r.text_buf[0], reserve_size, facility, &lflags, fmt, args);
+	if (trunc_msg_len)
+		memcpy(&r.text_buf[text_len], trunc_msg, trunc_msg_len);
 	r.info->text_len = text_len + trunc_msg_len;
 	r.info->facility = facility;
 	r.info->level = level & 7;
 	r.info->flags = lflags & 0x1f;
 	r.info->ts_nsec = ts_nsec;
 	r.info->caller_id = caller_id;
-	अगर (dev_info)
-		स_नकल(&r.info->dev_info, dev_info, माप(r.info->dev_info));
+	if (dev_info)
+		memcpy(&r.info->dev_info, dev_info, sizeof(r.info->dev_info));
 
-	/* A message without a trailing newline can be जारीd. */
-	अगर (!(lflags & LOG_NEWLINE))
+	/* A message without a trailing newline can be continued. */
+	if (!(lflags & LOG_NEWLINE))
 		prb_commit(&e);
-	अन्यथा
+	else
 		prb_final_commit(&e);
 
-	वापस (text_len + trunc_msg_len);
-पूर्ण
+	return (text_len + trunc_msg_len);
+}
 
-यंत्रlinkage पूर्णांक vprपूर्णांकk_emit(पूर्णांक facility, पूर्णांक level,
-			    स्थिर काष्ठा dev_prपूर्णांकk_info *dev_info,
-			    स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	पूर्णांक prपूर्णांकed_len;
+asmlinkage int vprintk_emit(int facility, int level,
+			    const struct dev_printk_info *dev_info,
+			    const char *fmt, va_list args)
+{
+	int printed_len;
 	bool in_sched = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	/* Suppress unimportant messages after panic happens */
-	अगर (unlikely(suppress_prपूर्णांकk))
-		वापस 0;
+	if (unlikely(suppress_printk))
+		return 0;
 
-	अगर (level == LOGLEVEL_SCHED) अणु
+	if (level == LOGLEVEL_SCHED) {
 		level = LOGLEVEL_DEFAULT;
 		in_sched = true;
-	पूर्ण
+	}
 
 	boot_delay_msec(level);
-	prपूर्णांकk_delay();
+	printk_delay();
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
-	prपूर्णांकed_len = vprपूर्णांकk_store(facility, level, dev_info, fmt, args);
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
+	printk_safe_enter_irqsave(flags);
+	printed_len = vprintk_store(facility, level, dev_info, fmt, args);
+	printk_safe_exit_irqrestore(flags);
 
 	/* If called from the scheduler, we can not call up(). */
-	अगर (!in_sched) अणु
+	if (!in_sched) {
 		/*
-		 * Disable preemption to aव्योम being preempted जबतक holding
-		 * console_sem which would prevent anyone from prपूर्णांकing to
+		 * Disable preemption to avoid being preempted while holding
+		 * console_sem which would prevent anyone from printing to
 		 * console
 		 */
 		preempt_disable();
 		/*
 		 * Try to acquire and then immediately release the console
-		 * semaphore.  The release will prपूर्णांक out buffers and wake up
+		 * semaphore.  The release will print out buffers and wake up
 		 * /dev/kmsg and syslog() users.
 		 */
-		अगर (console_trylock_spinning())
+		if (console_trylock_spinning())
 			console_unlock();
 		preempt_enable();
-	पूर्ण
+	}
 
 	wake_up_klogd();
-	वापस prपूर्णांकed_len;
-पूर्ण
-EXPORT_SYMBOL(vprपूर्णांकk_emit);
+	return printed_len;
+}
+EXPORT_SYMBOL(vprintk_emit);
 
-पूर्णांक vprपूर्णांकk_शेष(स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	वापस vprपूर्णांकk_emit(0, LOGLEVEL_DEFAULT, शून्य, fmt, args);
-पूर्ण
-EXPORT_SYMBOL_GPL(vprपूर्णांकk_शेष);
+int vprintk_default(const char *fmt, va_list args)
+{
+	return vprintk_emit(0, LOGLEVEL_DEFAULT, NULL, fmt, args);
+}
+EXPORT_SYMBOL_GPL(vprintk_default);
 
 /**
- * prपूर्णांकk - prपूर्णांक a kernel message
- * @fmt: क्रमmat string
+ * printk - print a kernel message
+ * @fmt: format string
  *
- * This is prपूर्णांकk(). It can be called from any context. We want it to work.
+ * This is printk(). It can be called from any context. We want it to work.
  *
  * We try to grab the console_lock. If we succeed, it's easy - we log the
  * output and call the console drivers.  If we fail to get the semaphore, we
- * place the output पूर्णांकo the log buffer and वापस. The current holder of
+ * place the output into the log buffer and return. The current holder of
  * the console_sem will notice the new output in console_unlock(); and will
- * send it to the consoles beक्रमe releasing the lock.
+ * send it to the consoles before releasing the lock.
  *
- * One effect of this deferred prपूर्णांकing is that code which calls prपूर्णांकk() and
- * then changes console_loglevel may अवरोध. This is because console_loglevel
- * is inspected when the actual prपूर्णांकing occurs.
+ * One effect of this deferred printing is that code which calls printk() and
+ * then changes console_loglevel may break. This is because console_loglevel
+ * is inspected when the actual printing occurs.
  *
  * See also:
- * म_लिखो(3)
+ * printf(3)
  *
- * See the vsnम_लिखो() करोcumentation क्रम क्रमmat string extensions over C99.
+ * See the vsnprintf() documentation for format string extensions over C99.
  */
-यंत्रlinkage __visible पूर्णांक prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक r;
+asmlinkage __visible int printk(const char *fmt, ...)
+{
+	va_list args;
+	int r;
 
-	बहु_शुरू(args, fmt);
-	r = vprपूर्णांकk(fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	r = vprintk(fmt, args);
+	va_end(args);
 
-	वापस r;
-पूर्ण
-EXPORT_SYMBOL(prपूर्णांकk);
+	return r;
+}
+EXPORT_SYMBOL(printk);
 
-#अन्यथा /* CONFIG_PRINTK */
+#else /* CONFIG_PRINTK */
 
-#घोषणा CONSOLE_LOG_MAX		0
-#घोषणा prपूर्णांकk_समय		false
+#define CONSOLE_LOG_MAX		0
+#define printk_time		false
 
-#घोषणा prb_पढ़ो_valid(rb, seq, r)	false
-#घोषणा prb_first_valid_seq(rb)		0
+#define prb_read_valid(rb, seq, r)	false
+#define prb_first_valid_seq(rb)		0
 
-अटल u64 syslog_seq;
-अटल u64 console_seq;
-अटल u64 exclusive_console_stop_seq;
-अटल अचिन्हित दीर्घ console_dropped;
+static u64 syslog_seq;
+static u64 console_seq;
+static u64 exclusive_console_stop_seq;
+static unsigned long console_dropped;
 
-अटल माप_प्रकार record_prपूर्णांक_text(स्थिर काष्ठा prपूर्णांकk_record *r,
-				bool syslog, bool समय)
-अणु
-	वापस 0;
-पूर्ण
-अटल sमाप_प्रकार info_prपूर्णांक_ext_header(अक्षर *buf, माप_प्रकार size,
-				     काष्ठा prपूर्णांकk_info *info)
-अणु
-	वापस 0;
-पूर्ण
-अटल sमाप_प्रकार msg_prपूर्णांक_ext_body(अक्षर *buf, माप_प्रकार size,
-				  अक्षर *text, माप_प्रकार text_len,
-				  काष्ठा dev_prपूर्णांकk_info *dev_info) अणु वापस 0; पूर्ण
-अटल व्योम console_lock_spinning_enable(व्योम) अणु पूर्ण
-अटल पूर्णांक console_lock_spinning_disable_and_check(व्योम) अणु वापस 0; पूर्ण
-अटल व्योम call_console_drivers(स्थिर अक्षर *ext_text, माप_प्रकार ext_len,
-				 स्थिर अक्षर *text, माप_प्रकार len) अणुपूर्ण
-अटल bool suppress_message_prपूर्णांकing(पूर्णांक level) अणु वापस false; पूर्ण
+static size_t record_print_text(const struct printk_record *r,
+				bool syslog, bool time)
+{
+	return 0;
+}
+static ssize_t info_print_ext_header(char *buf, size_t size,
+				     struct printk_info *info)
+{
+	return 0;
+}
+static ssize_t msg_print_ext_body(char *buf, size_t size,
+				  char *text, size_t text_len,
+				  struct dev_printk_info *dev_info) { return 0; }
+static void console_lock_spinning_enable(void) { }
+static int console_lock_spinning_disable_and_check(void) { return 0; }
+static void call_console_drivers(const char *ext_text, size_t ext_len,
+				 const char *text, size_t len) {}
+static bool suppress_message_printing(int level) { return false; }
 
-#पूर्ण_अगर /* CONFIG_PRINTK */
+#endif /* CONFIG_PRINTK */
 
-#अगर_घोषित CONFIG_EARLY_PRINTK
-काष्ठा console *early_console;
+#ifdef CONFIG_EARLY_PRINTK
+struct console *early_console;
 
-यंत्रlinkage __visible व्योम early_prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची ap;
-	अक्षर buf[512];
-	पूर्णांक n;
+asmlinkage __visible void early_printk(const char *fmt, ...)
+{
+	va_list ap;
+	char buf[512];
+	int n;
 
-	अगर (!early_console)
-		वापस;
+	if (!early_console)
+		return;
 
-	बहु_शुरू(ap, fmt);
-	n = vscnम_लिखो(buf, माप(buf), fmt, ap);
-	बहु_पूर्ण(ap);
+	va_start(ap, fmt);
+	n = vscnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 
-	early_console->ग_लिखो(early_console, buf, n);
-पूर्ण
-#पूर्ण_अगर
+	early_console->write(early_console, buf, n);
+}
+#endif
 
-अटल पूर्णांक __add_preferred_console(अक्षर *name, पूर्णांक idx, अक्षर *options,
-				   अक्षर *brl_options, bool user_specअगरied)
-अणु
-	काष्ठा console_cmdline *c;
-	पूर्णांक i;
+static int __add_preferred_console(char *name, int idx, char *options,
+				   char *brl_options, bool user_specified)
+{
+	struct console_cmdline *c;
+	int i;
 
 	/*
-	 *	See अगर this tty is not yet रेजिस्टरed, and
-	 *	अगर we have a slot मुक्त.
+	 *	See if this tty is not yet registered, and
+	 *	if we have a slot free.
 	 */
-	क्रम (i = 0, c = console_cmdline;
+	for (i = 0, c = console_cmdline;
 	     i < MAX_CMDLINECONSOLES && c->name[0];
-	     i++, c++) अणु
-		अगर (म_भेद(c->name, name) == 0 && c->index == idx) अणु
-			अगर (!brl_options)
+	     i++, c++) {
+		if (strcmp(c->name, name) == 0 && c->index == idx) {
+			if (!brl_options)
 				preferred_console = i;
-			अगर (user_specअगरied)
-				c->user_specअगरied = true;
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	अगर (i == MAX_CMDLINECONSOLES)
-		वापस -E2BIG;
-	अगर (!brl_options)
+			if (user_specified)
+				c->user_specified = true;
+			return 0;
+		}
+	}
+	if (i == MAX_CMDLINECONSOLES)
+		return -E2BIG;
+	if (!brl_options)
 		preferred_console = i;
-	strlcpy(c->name, name, माप(c->name));
+	strlcpy(c->name, name, sizeof(c->name));
 	c->options = options;
-	c->user_specअगरied = user_specअगरied;
+	c->user_specified = user_specified;
 	braille_set_options(c, brl_options);
 
 	c->index = idx;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __init console_msg_क्रमmat_setup(अक्षर *str)
-अणु
-	अगर (!म_भेद(str, "syslog"))
-		console_msg_क्रमmat = MSG_FORMAT_SYSLOG;
-	अगर (!म_भेद(str, "default"))
-		console_msg_क्रमmat = MSG_FORMAT_DEFAULT;
-	वापस 1;
-पूर्ण
-__setup("console_msg_format=", console_msg_क्रमmat_setup);
+static int __init console_msg_format_setup(char *str)
+{
+	if (!strcmp(str, "syslog"))
+		console_msg_format = MSG_FORMAT_SYSLOG;
+	if (!strcmp(str, "default"))
+		console_msg_format = MSG_FORMAT_DEFAULT;
+	return 1;
+}
+__setup("console_msg_format=", console_msg_format_setup);
 
 /*
- * Set up a console.  Called via करो_early_param() in init/मुख्य.c
- * क्रम each "console=" parameter in the boot command line.
+ * Set up a console.  Called via do_early_param() in init/main.c
+ * for each "console=" parameter in the boot command line.
  */
-अटल पूर्णांक __init console_setup(अक्षर *str)
-अणु
-	अक्षर buf[माप(console_cmdline[0].name) + 4]; /* 4 क्रम "ttyS" */
-	अक्षर *s, *options, *brl_options = शून्य;
-	पूर्णांक idx;
+static int __init console_setup(char *str)
+{
+	char buf[sizeof(console_cmdline[0].name) + 4]; /* 4 for "ttyS" */
+	char *s, *options, *brl_options = NULL;
+	int idx;
 
 	/*
 	 * console="" or console=null have been suggested as a way to
 	 * disable console output. Use ttynull that has been created
-	 * क्रम exactly this purpose.
+	 * for exactly this purpose.
 	 */
-	अगर (str[0] == 0 || म_भेद(str, "null") == 0) अणु
-		__add_preferred_console("ttynull", 0, शून्य, शून्य, true);
-		वापस 1;
-	पूर्ण
+	if (str[0] == 0 || strcmp(str, "null") == 0) {
+		__add_preferred_console("ttynull", 0, NULL, NULL, true);
+		return 1;
+	}
 
-	अगर (_braille_console_setup(&str, &brl_options))
-		वापस 1;
+	if (_braille_console_setup(&str, &brl_options))
+		return 1;
 
 	/*
-	 * Decode str पूर्णांकo name, index, options.
+	 * Decode str into name, index, options.
 	 */
-	अगर (str[0] >= '0' && str[0] <= '9') अणु
-		म_नकल(buf, "ttyS");
-		म_नकलन(buf + 4, str, माप(buf) - 5);
-	पूर्ण अन्यथा अणु
-		म_नकलन(buf, str, माप(buf) - 1);
-	पूर्ण
-	buf[माप(buf) - 1] = 0;
-	options = म_अक्षर(str, ',');
-	अगर (options)
+	if (str[0] >= '0' && str[0] <= '9') {
+		strcpy(buf, "ttyS");
+		strncpy(buf + 4, str, sizeof(buf) - 5);
+	} else {
+		strncpy(buf, str, sizeof(buf) - 1);
+	}
+	buf[sizeof(buf) - 1] = 0;
+	options = strchr(str, ',');
+	if (options)
 		*(options++) = 0;
-#अगर_घोषित __sparc__
-	अगर (!म_भेद(str, "ttya"))
-		म_नकल(buf, "ttyS0");
-	अगर (!म_भेद(str, "ttyb"))
-		म_नकल(buf, "ttyS1");
-#पूर्ण_अगर
-	क्रम (s = buf; *s; s++)
-		अगर (है_अंक(*s) || *s == ',')
-			अवरोध;
-	idx = simple_म_से_अदीर्घ(s, शून्य, 10);
+#ifdef __sparc__
+	if (!strcmp(str, "ttya"))
+		strcpy(buf, "ttyS0");
+	if (!strcmp(str, "ttyb"))
+		strcpy(buf, "ttyS1");
+#endif
+	for (s = buf; *s; s++)
+		if (isdigit(*s) || *s == ',')
+			break;
+	idx = simple_strtoul(s, NULL, 10);
 	*s = 0;
 
 	__add_preferred_console(buf, idx, options, brl_options, true);
 	console_set_on_cmdline = 1;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("console=", console_setup);
 
 /**
  * add_preferred_console - add a device to the list of preferred consoles.
  * @name: device name
  * @idx: device index
- * @options: options क्रम this console
+ * @options: options for this console
  *
- * The last preferred console added will be used क्रम kernel messages
- * and मानक_निवेश/out/err क्रम init.  Normally this is used by console_setup
+ * The last preferred console added will be used for kernel messages
+ * and stdin/out/err for init.  Normally this is used by console_setup
  * above to handle user-supplied console arguments; however it can also
- * be used by arch-specअगरic code either to override the user or more
- * commonly to provide a शेष console (ie from PROM variables) when
+ * be used by arch-specific code either to override the user or more
+ * commonly to provide a default console (ie from PROM variables) when
  * the user has not supplied one.
  */
-पूर्णांक add_preferred_console(अक्षर *name, पूर्णांक idx, अक्षर *options)
-अणु
-	वापस __add_preferred_console(name, idx, options, शून्य, false);
-पूर्ण
+int add_preferred_console(char *name, int idx, char *options)
+{
+	return __add_preferred_console(name, idx, options, NULL, false);
+}
 
 bool console_suspend_enabled = true;
 EXPORT_SYMBOL(console_suspend_enabled);
 
-अटल पूर्णांक __init console_suspend_disable(अक्षर *str)
-अणु
+static int __init console_suspend_disable(char *str)
+{
 	console_suspend_enabled = false;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 __setup("no_console_suspend", console_suspend_disable);
 module_param_named(console_suspend, console_suspend_enabled,
 		bool, S_IRUGO | S_IWUSR);
@@ -2406,310 +2405,310 @@ MODULE_PARM_DESC(console_suspend, "suspend console during suspend"
 	" and hibernate operations");
 
 /**
- * suspend_console - suspend the console subप्रणाली
+ * suspend_console - suspend the console subsystem
  *
- * This disables prपूर्णांकk() जबतक we go पूर्णांकo suspend states
+ * This disables printk() while we go into suspend states
  */
-व्योम suspend_console(व्योम)
-अणु
-	अगर (!console_suspend_enabled)
-		वापस;
+void suspend_console(void)
+{
+	if (!console_suspend_enabled)
+		return;
 	pr_info("Suspending console(s) (use no_console_suspend to debug)\n");
 	console_lock();
 	console_suspended = 1;
 	up_console_sem();
-पूर्ण
+}
 
-व्योम resume_console(व्योम)
-अणु
-	अगर (!console_suspend_enabled)
-		वापस;
-	करोwn_console_sem();
+void resume_console(void)
+{
+	if (!console_suspend_enabled)
+		return;
+	down_console_sem();
 	console_suspended = 0;
 	console_unlock();
-पूर्ण
+}
 
 /**
- * console_cpu_notअगरy - prपूर्णांक deferred console messages after CPU hotplug
+ * console_cpu_notify - print deferred console messages after CPU hotplug
  * @cpu: unused
  *
- * If prपूर्णांकk() is called from a CPU that is not online yet, the messages
- * will be prपूर्णांकed on the console only अगर there are CON_ANYTIME consoles.
+ * If printk() is called from a CPU that is not online yet, the messages
+ * will be printed on the console only if there are CON_ANYTIME consoles.
  * This function is called when a new CPU comes online (or fails to come
  * up) or goes offline.
  */
-अटल पूर्णांक console_cpu_notअगरy(अचिन्हित पूर्णांक cpu)
-अणु
-	अगर (!cpuhp_tasks_frozen) अणु
-		/* If trylock fails, someone अन्यथा is करोing the prपूर्णांकing */
-		अगर (console_trylock())
+static int console_cpu_notify(unsigned int cpu)
+{
+	if (!cpuhp_tasks_frozen) {
+		/* If trylock fails, someone else is doing the printing */
+		if (console_trylock())
 			console_unlock();
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * console_lock - lock the console प्रणाली क्रम exclusive use.
+ * console_lock - lock the console system for exclusive use.
  *
  * Acquires a lock which guarantees that the caller has
- * exclusive access to the console प्रणाली and the console_drivers list.
+ * exclusive access to the console system and the console_drivers list.
  *
- * Can sleep, वापसs nothing.
+ * Can sleep, returns nothing.
  */
-व्योम console_lock(व्योम)
-अणु
+void console_lock(void)
+{
 	might_sleep();
 
-	करोwn_console_sem();
-	अगर (console_suspended)
-		वापस;
+	down_console_sem();
+	if (console_suspended)
+		return;
 	console_locked = 1;
 	console_may_schedule = 1;
-पूर्ण
+}
 EXPORT_SYMBOL(console_lock);
 
 /**
- * console_trylock - try to lock the console प्रणाली क्रम exclusive use.
+ * console_trylock - try to lock the console system for exclusive use.
  *
  * Try to acquire a lock which guarantees that the caller has exclusive
- * access to the console प्रणाली and the console_drivers list.
+ * access to the console system and the console_drivers list.
  *
- * वापसs 1 on success, and 0 on failure to acquire the lock.
+ * returns 1 on success, and 0 on failure to acquire the lock.
  */
-पूर्णांक console_trylock(व्योम)
-अणु
-	अगर (करोwn_trylock_console_sem())
-		वापस 0;
-	अगर (console_suspended) अणु
+int console_trylock(void)
+{
+	if (down_trylock_console_sem())
+		return 0;
+	if (console_suspended) {
 		up_console_sem();
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	console_locked = 1;
 	console_may_schedule = 0;
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL(console_trylock);
 
-पूर्णांक is_console_locked(व्योम)
-अणु
-	वापस console_locked;
-पूर्ण
+int is_console_locked(void)
+{
+	return console_locked;
+}
 EXPORT_SYMBOL(is_console_locked);
 
 /*
- * Check अगर we have any console that is capable of prपूर्णांकing जबतक cpu is
- * booting or shutting करोwn. Requires console_sem.
+ * Check if we have any console that is capable of printing while cpu is
+ * booting or shutting down. Requires console_sem.
  */
-अटल पूर्णांक have_callable_console(व्योम)
-अणु
-	काष्ठा console *con;
+static int have_callable_console(void)
+{
+	struct console *con;
 
-	क्रम_each_console(con)
-		अगर ((con->flags & CON_ENABLED) &&
+	for_each_console(con)
+		if ((con->flags & CON_ENABLED) &&
 				(con->flags & CON_ANYTIME))
-			वापस 1;
+			return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Can we actually use the console at this समय on this cpu?
+ * Can we actually use the console at this time on this cpu?
  *
  * Console drivers may assume that per-cpu resources have been allocated. So
  * unless they're explicitly marked as being able to cope (CON_ANYTIME) don't
  * call them until this CPU is officially up.
  */
-अटल अंतरभूत पूर्णांक can_use_console(व्योम)
-अणु
-	वापस cpu_online(raw_smp_processor_id()) || have_callable_console();
-पूर्ण
+static inline int can_use_console(void)
+{
+	return cpu_online(raw_smp_processor_id()) || have_callable_console();
+}
 
 /**
- * console_unlock - unlock the console प्रणाली
+ * console_unlock - unlock the console system
  *
- * Releases the console_lock which the caller holds on the console प्रणाली
+ * Releases the console_lock which the caller holds on the console system
  * and the console driver list.
  *
  * While the console_lock was held, console output may have been buffered
- * by prपूर्णांकk().  If this is the हाल, console_unlock(); emits
+ * by printk().  If this is the case, console_unlock(); emits
  * the output prior to releasing the lock.
  *
- * If there is output रुकोing, we wake /dev/kmsg and syslog() users.
+ * If there is output waiting, we wake /dev/kmsg and syslog() users.
  *
  * console_unlock(); may be called from any context.
  */
-व्योम console_unlock(व्योम)
-अणु
-	अटल अक्षर ext_text[CONSOLE_EXT_LOG_MAX];
-	अटल अक्षर text[CONSOLE_LOG_MAX];
-	अचिन्हित दीर्घ flags;
-	bool करो_cond_resched, retry;
-	काष्ठा prपूर्णांकk_info info;
-	काष्ठा prपूर्णांकk_record r;
+void console_unlock(void)
+{
+	static char ext_text[CONSOLE_EXT_LOG_MAX];
+	static char text[CONSOLE_LOG_MAX];
+	unsigned long flags;
+	bool do_cond_resched, retry;
+	struct printk_info info;
+	struct printk_record r;
 
-	अगर (console_suspended) अणु
+	if (console_suspended) {
 		up_console_sem();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	prb_rec_init_rd(&r, &info, text, माप(text));
+	prb_rec_init_rd(&r, &info, text, sizeof(text));
 
 	/*
-	 * Console drivers are called with पूर्णांकerrupts disabled, so
-	 * @console_may_schedule should be cleared beक्रमe; however, we may
-	 * end up dumping a lot of lines, क्रम example, अगर called from
+	 * Console drivers are called with interrupts disabled, so
+	 * @console_may_schedule should be cleared before; however, we may
+	 * end up dumping a lot of lines, for example, if called from
 	 * console registration path, and should invoke cond_resched()
-	 * between lines अगर allowable.  Not करोing so can cause a very दीर्घ
+	 * between lines if allowable.  Not doing so can cause a very long
 	 * scheduling stall on a slow console leading to RCU stall and
 	 * softlockup warnings which exacerbate the issue with more
-	 * messages practically incapacitating the प्रणाली.
+	 * messages practically incapacitating the system.
 	 *
 	 * console_trylock() is not able to detect the preemptive
-	 * context reliably. Thereक्रमe the value must be stored beक्रमe
-	 * and cleared after the "again" जाओ label.
+	 * context reliably. Therefore the value must be stored before
+	 * and cleared after the "again" goto label.
 	 */
-	करो_cond_resched = console_may_schedule;
+	do_cond_resched = console_may_schedule;
 again:
 	console_may_schedule = 0;
 
 	/*
-	 * We released the console_sem lock, so we need to recheck अगर
-	 * cpu is online and (अगर not) is there at least one CON_ANYTIME
+	 * We released the console_sem lock, so we need to recheck if
+	 * cpu is online and (if not) is there at least one CON_ANYTIME
 	 * console.
 	 */
-	अगर (!can_use_console()) अणु
+	if (!can_use_console()) {
 		console_locked = 0;
 		up_console_sem();
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (;;) अणु
-		माप_प्रकार ext_len = 0;
-		माप_प्रकार len;
+	for (;;) {
+		size_t ext_len = 0;
+		size_t len;
 
-		prपूर्णांकk_safe_enter_irqsave(flags);
+		printk_safe_enter_irqsave(flags);
 skip:
-		अगर (!prb_पढ़ो_valid(prb, console_seq, &r))
-			अवरोध;
+		if (!prb_read_valid(prb, console_seq, &r))
+			break;
 
-		अगर (console_seq != r.info->seq) अणु
+		if (console_seq != r.info->seq) {
 			console_dropped += r.info->seq - console_seq;
 			console_seq = r.info->seq;
-		पूर्ण
+		}
 
-		अगर (suppress_message_prपूर्णांकing(r.info->level)) अणु
+		if (suppress_message_printing(r.info->level)) {
 			/*
-			 * Skip record we have buffered and alपढ़ोy prपूर्णांकed
+			 * Skip record we have buffered and already printed
 			 * directly to the console when we received it, and
 			 * record that has level above the console loglevel.
 			 */
 			console_seq++;
-			जाओ skip;
-		पूर्ण
+			goto skip;
+		}
 
 		/* Output to all consoles once old messages replayed. */
-		अगर (unlikely(exclusive_console &&
-			     console_seq >= exclusive_console_stop_seq)) अणु
-			exclusive_console = शून्य;
-		पूर्ण
+		if (unlikely(exclusive_console &&
+			     console_seq >= exclusive_console_stop_seq)) {
+			exclusive_console = NULL;
+		}
 
 		/*
 		 * Handle extended console text first because later
-		 * record_prपूर्णांक_text() will modअगरy the record buffer in-place.
+		 * record_print_text() will modify the record buffer in-place.
 		 */
-		अगर (nr_ext_console_drivers) अणु
-			ext_len = info_prपूर्णांक_ext_header(ext_text,
-						माप(ext_text),
+		if (nr_ext_console_drivers) {
+			ext_len = info_print_ext_header(ext_text,
+						sizeof(ext_text),
 						r.info);
-			ext_len += msg_prपूर्णांक_ext_body(ext_text + ext_len,
-						माप(ext_text) - ext_len,
+			ext_len += msg_print_ext_body(ext_text + ext_len,
+						sizeof(ext_text) - ext_len,
 						&r.text_buf[0],
 						r.info->text_len,
 						&r.info->dev_info);
-		पूर्ण
-		len = record_prपूर्णांक_text(&r,
-				console_msg_क्रमmat & MSG_FORMAT_SYSLOG,
-				prपूर्णांकk_समय);
+		}
+		len = record_print_text(&r,
+				console_msg_format & MSG_FORMAT_SYSLOG,
+				printk_time);
 		console_seq++;
 
 		/*
-		 * While actively prपूर्णांकing out messages, अगर another prपूर्णांकk()
-		 * were to occur on another CPU, it may रुको क्रम this one to
-		 * finish. This task can not be preempted अगर there is a
-		 * रुकोer रुकोing to take over.
+		 * While actively printing out messages, if another printk()
+		 * were to occur on another CPU, it may wait for this one to
+		 * finish. This task can not be preempted if there is a
+		 * waiter waiting to take over.
 		 */
 		console_lock_spinning_enable();
 
-		stop_critical_timings();	/* करोn't trace prपूर्णांक latency */
+		stop_critical_timings();	/* don't trace print latency */
 		call_console_drivers(ext_text, ext_len, text, len);
 		start_critical_timings();
 
-		अगर (console_lock_spinning_disable_and_check()) अणु
-			prपूर्णांकk_safe_निकास_irqrestore(flags);
-			वापस;
-		पूर्ण
+		if (console_lock_spinning_disable_and_check()) {
+			printk_safe_exit_irqrestore(flags);
+			return;
+		}
 
-		prपूर्णांकk_safe_निकास_irqrestore(flags);
+		printk_safe_exit_irqrestore(flags);
 
-		अगर (करो_cond_resched)
+		if (do_cond_resched)
 			cond_resched();
-	पूर्ण
+	}
 
 	console_locked = 0;
 
 	up_console_sem();
 
 	/*
-	 * Someone could have filled up the buffer again, so re-check अगर there's
-	 * something to flush. In हाल we cannot trylock the console_sem again,
-	 * there's a new owner and the console_unlock() from them will करो the
+	 * Someone could have filled up the buffer again, so re-check if there's
+	 * something to flush. In case we cannot trylock the console_sem again,
+	 * there's a new owner and the console_unlock() from them will do the
 	 * flush, no worries.
 	 */
-	retry = prb_पढ़ो_valid(prb, console_seq, शून्य);
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
+	retry = prb_read_valid(prb, console_seq, NULL);
+	printk_safe_exit_irqrestore(flags);
 
-	अगर (retry && console_trylock())
-		जाओ again;
-पूर्ण
+	if (retry && console_trylock())
+		goto again;
+}
 EXPORT_SYMBOL(console_unlock);
 
 /**
- * console_conditional_schedule - yield the CPU अगर required
+ * console_conditional_schedule - yield the CPU if required
  *
  * If the console code is currently allowed to sleep, and
- * अगर this CPU should yield the CPU to another task, करो
+ * if this CPU should yield the CPU to another task, do
  * so here.
  *
  * Must be called within console_lock();.
  */
-व्योम __sched console_conditional_schedule(व्योम)
-अणु
-	अगर (console_may_schedule)
+void __sched console_conditional_schedule(void)
+{
+	if (console_may_schedule)
 		cond_resched();
-पूर्ण
+}
 EXPORT_SYMBOL(console_conditional_schedule);
 
-व्योम console_unblank(व्योम)
-अणु
-	काष्ठा console *c;
+void console_unblank(void)
+{
+	struct console *c;
 
 	/*
-	 * console_unblank can no दीर्घer be called in पूर्णांकerrupt context unless
+	 * console_unblank can no longer be called in interrupt context unless
 	 * oops_in_progress is set to 1..
 	 */
-	अगर (oops_in_progress) अणु
-		अगर (करोwn_trylock_console_sem() != 0)
-			वापस;
-	पूर्ण अन्यथा
+	if (oops_in_progress) {
+		if (down_trylock_console_sem() != 0)
+			return;
+	} else
 		console_lock();
 
 	console_locked = 1;
 	console_may_schedule = 0;
-	क्रम_each_console(c)
-		अगर ((c->flags & CON_ENABLED) && c->unblank)
+	for_each_console(c)
+		if ((c->flags & CON_ENABLED) && c->unblank)
 			c->unblank();
 	console_unlock();
-पूर्ण
+}
 
 /**
  * console_flush_on_panic - flush console content on panic
@@ -2717,225 +2716,225 @@ EXPORT_SYMBOL(console_conditional_schedule);
  *
  * Immediately output all pending messages no matter what.
  */
-व्योम console_flush_on_panic(क्रमागत con_flush_mode mode)
-अणु
+void console_flush_on_panic(enum con_flush_mode mode)
+{
 	/*
-	 * If someone अन्यथा is holding the console lock, trylock will fail
+	 * If someone else is holding the console lock, trylock will fail
 	 * and may_schedule may be set.  Ignore and proceed to unlock so
 	 * that messages are flushed out.  As this can be called from any
-	 * context and we करोn't want to get preempted जबतक flushing,
+	 * context and we don't want to get preempted while flushing,
 	 * ensure may_schedule is cleared.
 	 */
 	console_trylock();
 	console_may_schedule = 0;
 
-	अगर (mode == CONSOLE_REPLAY_ALL) अणु
-		अचिन्हित दीर्घ flags;
+	if (mode == CONSOLE_REPLAY_ALL) {
+		unsigned long flags;
 
-		prपूर्णांकk_safe_enter_irqsave(flags);
+		printk_safe_enter_irqsave(flags);
 		console_seq = prb_first_valid_seq(prb);
-		prपूर्णांकk_safe_निकास_irqrestore(flags);
-	पूर्ण
+		printk_safe_exit_irqrestore(flags);
+	}
 	console_unlock();
-पूर्ण
+}
 
 /*
- * Return the console tty driver काष्ठाure and its associated index
+ * Return the console tty driver structure and its associated index
  */
-काष्ठा tty_driver *console_device(पूर्णांक *index)
-अणु
-	काष्ठा console *c;
-	काष्ठा tty_driver *driver = शून्य;
+struct tty_driver *console_device(int *index)
+{
+	struct console *c;
+	struct tty_driver *driver = NULL;
 
 	console_lock();
-	क्रम_each_console(c) अणु
-		अगर (!c->device)
-			जारी;
+	for_each_console(c) {
+		if (!c->device)
+			continue;
 		driver = c->device(c, index);
-		अगर (driver)
-			अवरोध;
-	पूर्ण
+		if (driver)
+			break;
+	}
 	console_unlock();
-	वापस driver;
-पूर्ण
+	return driver;
+}
 
 /*
- * Prevent further output on the passed console device so that (क्रम example)
- * serial drivers can disable console output beक्रमe suspending a port, and can
+ * Prevent further output on the passed console device so that (for example)
+ * serial drivers can disable console output before suspending a port, and can
  * re-enable output afterwards.
  */
-व्योम console_stop(काष्ठा console *console)
-अणु
+void console_stop(struct console *console)
+{
 	console_lock();
 	console->flags &= ~CON_ENABLED;
 	console_unlock();
-पूर्ण
+}
 EXPORT_SYMBOL(console_stop);
 
-व्योम console_start(काष्ठा console *console)
-अणु
+void console_start(struct console *console)
+{
 	console_lock();
 	console->flags |= CON_ENABLED;
 	console_unlock();
-पूर्ण
+}
 EXPORT_SYMBOL(console_start);
 
-अटल पूर्णांक __पढ़ो_mostly keep_bootcon;
+static int __read_mostly keep_bootcon;
 
-अटल पूर्णांक __init keep_bootcon_setup(अक्षर *str)
-अणु
+static int __init keep_bootcon_setup(char *str)
+{
 	keep_bootcon = 1;
 	pr_info("debug: skip boot console de-registration.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 early_param("keep_bootcon", keep_bootcon_setup);
 
 /*
- * This is called by रेजिस्टर_console() to try to match
- * the newly रेजिस्टरed console with any of the ones selected
+ * This is called by register_console() to try to match
+ * the newly registered console with any of the ones selected
  * by either the command line or add_preferred_console() and
  * setup/enable it.
  *
- * Care need to be taken with consoles that are अटलally
+ * Care need to be taken with consoles that are statically
  * enabled such as netconsole
  */
-अटल पूर्णांक try_enable_new_console(काष्ठा console *newcon, bool user_specअगरied)
-अणु
-	काष्ठा console_cmdline *c;
-	पूर्णांक i, err;
+static int try_enable_new_console(struct console *newcon, bool user_specified)
+{
+	struct console_cmdline *c;
+	int i, err;
 
-	क्रम (i = 0, c = console_cmdline;
+	for (i = 0, c = console_cmdline;
 	     i < MAX_CMDLINECONSOLES && c->name[0];
-	     i++, c++) अणु
-		अगर (c->user_specअगरied != user_specअगरied)
-			जारी;
-		अगर (!newcon->match ||
-		    newcon->match(newcon, c->name, c->index, c->options) != 0) अणु
-			/* शेष matching */
-			BUILD_BUG_ON(माप(c->name) != माप(newcon->name));
-			अगर (म_भेद(c->name, newcon->name) != 0)
-				जारी;
-			अगर (newcon->index >= 0 &&
+	     i++, c++) {
+		if (c->user_specified != user_specified)
+			continue;
+		if (!newcon->match ||
+		    newcon->match(newcon, c->name, c->index, c->options) != 0) {
+			/* default matching */
+			BUILD_BUG_ON(sizeof(c->name) != sizeof(newcon->name));
+			if (strcmp(c->name, newcon->name) != 0)
+				continue;
+			if (newcon->index >= 0 &&
 			    newcon->index != c->index)
-				जारी;
-			अगर (newcon->index < 0)
+				continue;
+			if (newcon->index < 0)
 				newcon->index = c->index;
 
-			अगर (_braille_रेजिस्टर_console(newcon, c))
-				वापस 0;
+			if (_braille_register_console(newcon, c))
+				return 0;
 
-			अगर (newcon->setup &&
+			if (newcon->setup &&
 			    (err = newcon->setup(newcon, c->options)) != 0)
-				वापस err;
-		पूर्ण
+				return err;
+		}
 		newcon->flags |= CON_ENABLED;
-		अगर (i == preferred_console) अणु
+		if (i == preferred_console) {
 			newcon->flags |= CON_CONSDEV;
 			has_preferred_console = true;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
 	/*
 	 * Some consoles, such as pstore and netconsole, can be enabled even
 	 * without matching. Accept the pre-enabled consoles only when match()
 	 * and setup() had a chance to be called.
 	 */
-	अगर (newcon->flags & CON_ENABLED && c->user_specअगरied ==	user_specअगरied)
-		वापस 0;
+	if (newcon->flags & CON_ENABLED && c->user_specified ==	user_specified)
+		return 0;
 
-	वापस -ENOENT;
-पूर्ण
+	return -ENOENT;
+}
 
 /*
  * The console driver calls this routine during kernel initialization
- * to रेजिस्टर the console prपूर्णांकing procedure with prपूर्णांकk() and to
- * prपूर्णांक any messages that were prपूर्णांकed by the kernel beक्रमe the
+ * to register the console printing procedure with printk() and to
+ * print any messages that were printed by the kernel before the
  * console driver was initialized.
  *
  * This can happen pretty early during the boot process (because of
- * early_prपूर्णांकk) - someबार beक्रमe setup_arch() completes - be careful
+ * early_printk) - sometimes before setup_arch() completes - be careful
  * of what kernel features are used - they may not be initialised yet.
  *
- * There are two types of consoles - bootconsoles (early_prपूर्णांकk) and
+ * There are two types of consoles - bootconsoles (early_printk) and
  * "real" consoles (everything which is not a bootconsole) which are
- * handled dअगरferently.
- *  - Any number of bootconsoles can be रेजिस्टरed at any समय.
- *  - As soon as a "real" console is रेजिस्टरed, all bootconsoles
- *    will be unरेजिस्टरed स्वतःmatically.
- *  - Once a "real" console is रेजिस्टरed, any attempt to रेजिस्टर a
+ * handled differently.
+ *  - Any number of bootconsoles can be registered at any time.
+ *  - As soon as a "real" console is registered, all bootconsoles
+ *    will be unregistered automatically.
+ *  - Once a "real" console is registered, any attempt to register a
  *    bootconsoles will be rejected
  */
-व्योम रेजिस्टर_console(काष्ठा console *newcon)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा console *bcon = शून्य;
-	पूर्णांक err;
+void register_console(struct console *newcon)
+{
+	unsigned long flags;
+	struct console *bcon = NULL;
+	int err;
 
-	क्रम_each_console(bcon) अणु
-		अगर (WARN(bcon == newcon, "console '%s%d' already registered\n",
+	for_each_console(bcon) {
+		if (WARN(bcon == newcon, "console '%s%d' already registered\n",
 					 bcon->name, bcon->index))
-			वापस;
-	पूर्ण
+			return;
+	}
 
 	/*
-	 * beक्रमe we रेजिस्टर a new CON_BOOT console, make sure we करोn't
-	 * alपढ़ोy have a valid console
+	 * before we register a new CON_BOOT console, make sure we don't
+	 * already have a valid console
 	 */
-	अगर (newcon->flags & CON_BOOT) अणु
-		क्रम_each_console(bcon) अणु
-			अगर (!(bcon->flags & CON_BOOT)) अणु
+	if (newcon->flags & CON_BOOT) {
+		for_each_console(bcon) {
+			if (!(bcon->flags & CON_BOOT)) {
 				pr_info("Too late to register bootconsole %s%d\n",
 					newcon->name, newcon->index);
-				वापस;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return;
+			}
+		}
+	}
 
-	अगर (console_drivers && console_drivers->flags & CON_BOOT)
+	if (console_drivers && console_drivers->flags & CON_BOOT)
 		bcon = console_drivers;
 
-	अगर (!has_preferred_console || bcon || !console_drivers)
+	if (!has_preferred_console || bcon || !console_drivers)
 		has_preferred_console = preferred_console >= 0;
 
 	/*
-	 *	See अगर we want to use this console driver. If we
+	 *	See if we want to use this console driver. If we
 	 *	didn't select a console we take the first one
-	 *	that रेजिस्टरs here.
+	 *	that registers here.
 	 */
-	अगर (!has_preferred_console) अणु
-		अगर (newcon->index < 0)
+	if (!has_preferred_console) {
+		if (newcon->index < 0)
 			newcon->index = 0;
-		अगर (newcon->setup == शून्य ||
-		    newcon->setup(newcon, शून्य) == 0) अणु
+		if (newcon->setup == NULL ||
+		    newcon->setup(newcon, NULL) == 0) {
 			newcon->flags |= CON_ENABLED;
-			अगर (newcon->device) अणु
+			if (newcon->device) {
 				newcon->flags |= CON_CONSDEV;
 				has_preferred_console = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	/* See अगर this console matches one we selected on the command line */
+	/* See if this console matches one we selected on the command line */
 	err = try_enable_new_console(newcon, true);
 
-	/* If not, try to match against the platक्रमm शेष(s) */
-	अगर (err == -ENOENT)
+	/* If not, try to match against the platform default(s) */
+	if (err == -ENOENT)
 		err = try_enable_new_console(newcon, false);
 
-	/* prपूर्णांकk() messages are not prपूर्णांकed to the Braille console. */
-	अगर (err || newcon->flags & CON_BRL)
-		वापस;
+	/* printk() messages are not printed to the Braille console. */
+	if (err || newcon->flags & CON_BRL)
+		return;
 
 	/*
-	 * If we have a bootconsole, and are चयनing to a real console,
-	 * करोn't prपूर्णांक everything out again, since when the boot console, and
+	 * If we have a bootconsole, and are switching to a real console,
+	 * don't print everything out again, since when the boot console, and
 	 * the real console are the same physical device, it's annoying to
 	 * see the beginning boot messages twice
 	 */
-	अगर (bcon && ((newcon->flags & (CON_CONSDEV | CON_BOOT)) == CON_CONSDEV))
+	if (bcon && ((newcon->flags & (CON_CONSDEV | CON_BOOT)) == CON_CONSDEV))
 		newcon->flags &= ~CON_PRINTBUFFER;
 
 	/*
@@ -2943,32 +2942,32 @@ early_param("keep_bootcon", keep_bootcon_setup);
 	 *	preferred driver at the head of the list.
 	 */
 	console_lock();
-	अगर ((newcon->flags & CON_CONSDEV) || console_drivers == शून्य) अणु
+	if ((newcon->flags & CON_CONSDEV) || console_drivers == NULL) {
 		newcon->next = console_drivers;
 		console_drivers = newcon;
-		अगर (newcon->next)
+		if (newcon->next)
 			newcon->next->flags &= ~CON_CONSDEV;
-		/* Ensure this flag is always set क्रम the head of the list */
+		/* Ensure this flag is always set for the head of the list */
 		newcon->flags |= CON_CONSDEV;
-	पूर्ण अन्यथा अणु
+	} else {
 		newcon->next = console_drivers->next;
 		console_drivers->next = newcon;
-	पूर्ण
+	}
 
-	अगर (newcon->flags & CON_EXTENDED)
+	if (newcon->flags & CON_EXTENDED)
 		nr_ext_console_drivers++;
 
-	अगर (newcon->flags & CON_PRINTBUFFER) अणु
+	if (newcon->flags & CON_PRINTBUFFER) {
 		/*
-		 * console_unlock(); will prपूर्णांक out the buffered messages
-		 * क्रम us.
+		 * console_unlock(); will print out the buffered messages
+		 * for us.
 		 *
-		 * We're about to replay the log buffer.  Only करो this to the
-		 * just-रेजिस्टरed console to aव्योम excessive message spam to
-		 * the alपढ़ोy-रेजिस्टरed consoles.
+		 * We're about to replay the log buffer.  Only do this to the
+		 * just-registered console to avoid excessive message spam to
+		 * the already-registered consoles.
 		 *
-		 * Set exclusive_console with disabled पूर्णांकerrupts to reduce
-		 * race winकरोw with eventual console_flush_on_panic() that
+		 * Set exclusive_console with disabled interrupts to reduce
+		 * race window with eventual console_flush_on_panic() that
 		 * ignores console_lock.
 		 */
 		exclusive_console = newcon;
@@ -2978,390 +2977,390 @@ early_param("keep_bootcon", keep_bootcon_setup);
 		raw_spin_lock_irqsave(&syslog_lock, flags);
 		console_seq = syslog_seq;
 		raw_spin_unlock_irqrestore(&syslog_lock, flags);
-	पूर्ण
+	}
 	console_unlock();
-	console_sysfs_notअगरy();
+	console_sysfs_notify();
 
 	/*
-	 * By unरेजिस्टरing the bootconsoles after we enable the real console
+	 * By unregistering the bootconsoles after we enable the real console
 	 * we get the "console xxx enabled" message on all the consoles -
 	 * boot consoles, real consoles, etc - this is to ensure that end
 	 * users know there might be something in the kernel's log buffer that
-	 * went to the bootconsole (that they करो not see on the real console)
+	 * went to the bootconsole (that they do not see on the real console)
 	 */
 	pr_info("%sconsole [%s%d] enabled\n",
 		(newcon->flags & CON_BOOT) ? "boot" : "" ,
 		newcon->name, newcon->index);
-	अगर (bcon &&
+	if (bcon &&
 	    ((newcon->flags & (CON_CONSDEV | CON_BOOT)) == CON_CONSDEV) &&
-	    !keep_bootcon) अणु
+	    !keep_bootcon) {
 		/* We need to iterate through all boot consoles, to make
-		 * sure we prपूर्णांक everything out, beक्रमe we unरेजिस्टर them.
+		 * sure we print everything out, before we unregister them.
 		 */
-		क्रम_each_console(bcon)
-			अगर (bcon->flags & CON_BOOT)
-				unरेजिस्टर_console(bcon);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(रेजिस्टर_console);
+		for_each_console(bcon)
+			if (bcon->flags & CON_BOOT)
+				unregister_console(bcon);
+	}
+}
+EXPORT_SYMBOL(register_console);
 
-पूर्णांक unरेजिस्टर_console(काष्ठा console *console)
-अणु
-	काष्ठा console *con;
-	पूर्णांक res;
+int unregister_console(struct console *console)
+{
+	struct console *con;
+	int res;
 
 	pr_info("%sconsole [%s%d] disabled\n",
 		(console->flags & CON_BOOT) ? "boot" : "" ,
 		console->name, console->index);
 
-	res = _braille_unरेजिस्टर_console(console);
-	अगर (res < 0)
-		वापस res;
-	अगर (res > 0)
-		वापस 0;
+	res = _braille_unregister_console(console);
+	if (res < 0)
+		return res;
+	if (res > 0)
+		return 0;
 
 	res = -ENODEV;
 	console_lock();
-	अगर (console_drivers == console) अणु
+	if (console_drivers == console) {
 		console_drivers=console->next;
 		res = 0;
-	पूर्ण अन्यथा अणु
-		क्रम_each_console(con) अणु
-			अगर (con->next == console) अणु
+	} else {
+		for_each_console(con) {
+			if (con->next == console) {
 				con->next = console->next;
 				res = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (res)
-		जाओ out_disable_unlock;
+	if (res)
+		goto out_disable_unlock;
 
-	अगर (console->flags & CON_EXTENDED)
+	if (console->flags & CON_EXTENDED)
 		nr_ext_console_drivers--;
 
 	/*
 	 * If this isn't the last console and it has CON_CONSDEV set, we
 	 * need to set it on the next preferred console.
 	 */
-	अगर (console_drivers != शून्य && console->flags & CON_CONSDEV)
+	if (console_drivers != NULL && console->flags & CON_CONSDEV)
 		console_drivers->flags |= CON_CONSDEV;
 
 	console->flags &= ~CON_ENABLED;
 	console_unlock();
-	console_sysfs_notअगरy();
+	console_sysfs_notify();
 
-	अगर (console->निकास)
-		res = console->निकास(console);
+	if (console->exit)
+		res = console->exit(console);
 
-	वापस res;
+	return res;
 
 out_disable_unlock:
 	console->flags &= ~CON_ENABLED;
 	console_unlock();
 
-	वापस res;
-पूर्ण
-EXPORT_SYMBOL(unरेजिस्टर_console);
+	return res;
+}
+EXPORT_SYMBOL(unregister_console);
 
 /*
  * Initialize the console device. This is called *early*, so
  * we can't necessarily depend on lots of kernel help here.
- * Just करो some early initializations, and करो the complex setup
+ * Just do some early initializations, and do the complex setup
  * later.
  */
-व्योम __init console_init(व्योम)
-अणु
-	पूर्णांक ret;
+void __init console_init(void)
+{
+	int ret;
 	initcall_t call;
 	initcall_entry_t *ce;
 
-	/* Setup the शेष TTY line discipline. */
+	/* Setup the default TTY line discipline. */
 	n_tty_init();
 
 	/*
 	 * set up the console device so that later boot sequences can
-	 * inक्रमm about problems etc..
+	 * inform about problems etc..
 	 */
 	ce = __con_initcall_start;
 	trace_initcall_level("console");
-	जबतक (ce < __con_initcall_end) अणु
+	while (ce < __con_initcall_end) {
 		call = initcall_from_entry(ce);
 		trace_initcall_start(call);
 		ret = call();
 		trace_initcall_finish(call, ret);
 		ce++;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Some boot consoles access data that is in the init section and which will
  * be discarded after the initcalls have been run. To make sure that no code
- * will access this data, unरेजिस्टर the boot consoles in a late initcall.
+ * will access this data, unregister the boot consoles in a late initcall.
  *
- * If क्रम some reason, such as deferred probe or the driver being a loadable
- * module, the real console hasn't रेजिस्टरed yet at this poपूर्णांक, there will
- * be a brief पूर्णांकerval in which no messages are logged to the console, which
- * makes it dअगरficult to diagnose problems that occur during this समय.
+ * If for some reason, such as deferred probe or the driver being a loadable
+ * module, the real console hasn't registered yet at this point, there will
+ * be a brief interval in which no messages are logged to the console, which
+ * makes it difficult to diagnose problems that occur during this time.
  *
- * To mitigate this problem somewhat, only unरेजिस्टर consoles whose memory
- * पूर्णांकersects with the init section. Note that all other boot consoles will
- * get unरेजिस्टरed when the real preferred console is रेजिस्टरed.
+ * To mitigate this problem somewhat, only unregister consoles whose memory
+ * intersects with the init section. Note that all other boot consoles will
+ * get unregistered when the real preferred console is registered.
  */
-अटल पूर्णांक __init prपूर्णांकk_late_init(व्योम)
-अणु
-	काष्ठा console *con;
-	पूर्णांक ret;
+static int __init printk_late_init(void)
+{
+	struct console *con;
+	int ret;
 
-	क्रम_each_console(con) अणु
-		अगर (!(con->flags & CON_BOOT))
-			जारी;
+	for_each_console(con) {
+		if (!(con->flags & CON_BOOT))
+			continue;
 
-		/* Check addresses that might be used क्रम enabled consoles. */
-		अगर (init_section_पूर्णांकersects(con, माप(*con)) ||
-		    init_section_contains(con->ग_लिखो, 0) ||
-		    init_section_contains(con->पढ़ो, 0) ||
+		/* Check addresses that might be used for enabled consoles. */
+		if (init_section_intersects(con, sizeof(*con)) ||
+		    init_section_contains(con->write, 0) ||
+		    init_section_contains(con->read, 0) ||
 		    init_section_contains(con->device, 0) ||
 		    init_section_contains(con->unblank, 0) ||
-		    init_section_contains(con->data, 0)) अणु
+		    init_section_contains(con->data, 0)) {
 			/*
 			 * Please, consider moving the reported consoles out
 			 * of the init section.
 			 */
 			pr_warn("bootconsole [%s%d] uses init memory and must be disabled even before the real one is ready\n",
 				con->name, con->index);
-			unरेजिस्टर_console(con);
-		पूर्ण
-	पूर्ण
-	ret = cpuhp_setup_state_nocalls(CPUHP_PRINTK_DEAD, "printk:dead", शून्य,
-					console_cpu_notअगरy);
+			unregister_console(con);
+		}
+	}
+	ret = cpuhp_setup_state_nocalls(CPUHP_PRINTK_DEAD, "printk:dead", NULL,
+					console_cpu_notify);
 	WARN_ON(ret < 0);
 	ret = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "printk:online",
-					console_cpu_notअगरy, शून्य);
+					console_cpu_notify, NULL);
 	WARN_ON(ret < 0);
-	वापस 0;
-पूर्ण
-late_initcall(prपूर्णांकk_late_init);
+	return 0;
+}
+late_initcall(printk_late_init);
 
-#अगर defined CONFIG_PRINTK
+#if defined CONFIG_PRINTK
 /*
- * Delayed prपूर्णांकk version, क्रम scheduler-पूर्णांकernal messages:
+ * Delayed printk version, for scheduler-internal messages:
  */
-#घोषणा PRINTK_PENDING_WAKEUP	0x01
-#घोषणा PRINTK_PENDING_OUTPUT	0x02
+#define PRINTK_PENDING_WAKEUP	0x01
+#define PRINTK_PENDING_OUTPUT	0x02
 
-अटल DEFINE_PER_CPU(पूर्णांक, prपूर्णांकk_pending);
+static DEFINE_PER_CPU(int, printk_pending);
 
-अटल व्योम wake_up_klogd_work_func(काष्ठा irq_work *irq_work)
-अणु
-	पूर्णांक pending = __this_cpu_xchg(prपूर्णांकk_pending, 0);
+static void wake_up_klogd_work_func(struct irq_work *irq_work)
+{
+	int pending = __this_cpu_xchg(printk_pending, 0);
 
-	अगर (pending & PRINTK_PENDING_OUTPUT) अणु
-		/* If trylock fails, someone अन्यथा is करोing the prपूर्णांकing */
-		अगर (console_trylock())
+	if (pending & PRINTK_PENDING_OUTPUT) {
+		/* If trylock fails, someone else is doing the printing */
+		if (console_trylock())
 			console_unlock();
-	पूर्ण
+	}
 
-	अगर (pending & PRINTK_PENDING_WAKEUP)
-		wake_up_पूर्णांकerruptible(&log_रुको);
-पूर्ण
+	if (pending & PRINTK_PENDING_WAKEUP)
+		wake_up_interruptible(&log_wait);
+}
 
-अटल DEFINE_PER_CPU(काष्ठा irq_work, wake_up_klogd_work) =
+static DEFINE_PER_CPU(struct irq_work, wake_up_klogd_work) =
 	IRQ_WORK_INIT_LAZY(wake_up_klogd_work_func);
 
-व्योम wake_up_klogd(व्योम)
-अणु
-	अगर (!prपूर्णांकk_percpu_data_पढ़ोy())
-		वापस;
+void wake_up_klogd(void)
+{
+	if (!printk_percpu_data_ready())
+		return;
 
 	preempt_disable();
-	अगर (रुकोqueue_active(&log_रुको)) अणु
-		this_cpu_or(prपूर्णांकk_pending, PRINTK_PENDING_WAKEUP);
+	if (waitqueue_active(&log_wait)) {
+		this_cpu_or(printk_pending, PRINTK_PENDING_WAKEUP);
 		irq_work_queue(this_cpu_ptr(&wake_up_klogd_work));
-	पूर्ण
+	}
 	preempt_enable();
-पूर्ण
+}
 
-व्योम defer_console_output(व्योम)
-अणु
-	अगर (!prपूर्णांकk_percpu_data_पढ़ोy())
-		वापस;
+void defer_console_output(void)
+{
+	if (!printk_percpu_data_ready())
+		return;
 
 	preempt_disable();
-	__this_cpu_or(prपूर्णांकk_pending, PRINTK_PENDING_OUTPUT);
+	__this_cpu_or(printk_pending, PRINTK_PENDING_OUTPUT);
 	irq_work_queue(this_cpu_ptr(&wake_up_klogd_work));
 	preempt_enable();
-पूर्ण
+}
 
-पूर्णांक vprपूर्णांकk_deferred(स्थिर अक्षर *fmt, बहु_सूची args)
-अणु
-	पूर्णांक r;
+int vprintk_deferred(const char *fmt, va_list args)
+{
+	int r;
 
-	r = vprपूर्णांकk_emit(0, LOGLEVEL_SCHED, शून्य, fmt, args);
+	r = vprintk_emit(0, LOGLEVEL_SCHED, NULL, fmt, args);
 	defer_console_output();
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
-पूर्णांक prपूर्णांकk_deferred(स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
-	पूर्णांक r;
+int printk_deferred(const char *fmt, ...)
+{
+	va_list args;
+	int r;
 
-	बहु_शुरू(args, fmt);
-	r = vprपूर्णांकk_deferred(fmt, args);
-	बहु_पूर्ण(args);
+	va_start(args, fmt);
+	r = vprintk_deferred(fmt, args);
+	va_end(args);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /*
- * prपूर्णांकk rate limiting, lअगरted from the networking subप्रणाली.
+ * printk rate limiting, lifted from the networking subsystem.
  *
- * This enक्रमces a rate limit: not more than 10 kernel messages
+ * This enforces a rate limit: not more than 10 kernel messages
  * every 5s to make a denial-of-service attack impossible.
  */
-DEFINE_RATELIMIT_STATE(prपूर्णांकk_ratelimit_state, 5 * HZ, 10);
+DEFINE_RATELIMIT_STATE(printk_ratelimit_state, 5 * HZ, 10);
 
-पूर्णांक __prपूर्णांकk_ratelimit(स्थिर अक्षर *func)
-अणु
-	वापस ___ratelimit(&prपूर्णांकk_ratelimit_state, func);
-पूर्ण
-EXPORT_SYMBOL(__prपूर्णांकk_ratelimit);
+int __printk_ratelimit(const char *func)
+{
+	return ___ratelimit(&printk_ratelimit_state, func);
+}
+EXPORT_SYMBOL(__printk_ratelimit);
 
 /**
- * prपूर्णांकk_समयd_ratelimit - caller-controlled prपूर्णांकk ratelimiting
- * @caller_jअगरfies: poपूर्णांकer to caller's state
- * @पूर्णांकerval_msecs: minimum पूर्णांकerval between prपूर्णांकs
+ * printk_timed_ratelimit - caller-controlled printk ratelimiting
+ * @caller_jiffies: pointer to caller's state
+ * @interval_msecs: minimum interval between prints
  *
- * prपूर्णांकk_समयd_ratelimit() वापसs true अगर more than @पूर्णांकerval_msecs
- * milliseconds have elapsed since the last समय prपूर्णांकk_समयd_ratelimit()
- * वापसed true.
+ * printk_timed_ratelimit() returns true if more than @interval_msecs
+ * milliseconds have elapsed since the last time printk_timed_ratelimit()
+ * returned true.
  */
-bool prपूर्णांकk_समयd_ratelimit(अचिन्हित दीर्घ *caller_jअगरfies,
-			अचिन्हित पूर्णांक पूर्णांकerval_msecs)
-अणु
-	अचिन्हित दीर्घ elapsed = jअगरfies - *caller_jअगरfies;
+bool printk_timed_ratelimit(unsigned long *caller_jiffies,
+			unsigned int interval_msecs)
+{
+	unsigned long elapsed = jiffies - *caller_jiffies;
 
-	अगर (*caller_jअगरfies && elapsed <= msecs_to_jअगरfies(पूर्णांकerval_msecs))
-		वापस false;
+	if (*caller_jiffies && elapsed <= msecs_to_jiffies(interval_msecs))
+		return false;
 
-	*caller_jअगरfies = jअगरfies;
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(prपूर्णांकk_समयd_ratelimit);
+	*caller_jiffies = jiffies;
+	return true;
+}
+EXPORT_SYMBOL(printk_timed_ratelimit);
 
-अटल DEFINE_SPINLOCK(dump_list_lock);
-अटल LIST_HEAD(dump_list);
+static DEFINE_SPINLOCK(dump_list_lock);
+static LIST_HEAD(dump_list);
 
 /**
- * kmsg_dump_रेजिस्टर - रेजिस्टर a kernel log dumper.
- * @dumper: poपूर्णांकer to the kmsg_dumper काष्ठाure
+ * kmsg_dump_register - register a kernel log dumper.
+ * @dumper: pointer to the kmsg_dumper structure
  *
- * Adds a kernel log dumper to the प्रणाली. The dump callback in the
- * काष्ठाure will be called when the kernel oopses or panics and must be
+ * Adds a kernel log dumper to the system. The dump callback in the
+ * structure will be called when the kernel oopses or panics and must be
  * set. Returns zero on success and %-EINVAL or %-EBUSY otherwise.
  */
-पूर्णांक kmsg_dump_रेजिस्टर(काष्ठा kmsg_dumper *dumper)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = -EBUSY;
+int kmsg_dump_register(struct kmsg_dumper *dumper)
+{
+	unsigned long flags;
+	int err = -EBUSY;
 
 	/* The dump callback needs to be set */
-	अगर (!dumper->dump)
-		वापस -EINVAL;
+	if (!dumper->dump)
+		return -EINVAL;
 
 	spin_lock_irqsave(&dump_list_lock, flags);
-	/* Don't allow रेजिस्टरing multiple बार */
-	अगर (!dumper->रेजिस्टरed) अणु
-		dumper->रेजिस्टरed = 1;
+	/* Don't allow registering multiple times */
+	if (!dumper->registered) {
+		dumper->registered = 1;
 		list_add_tail_rcu(&dumper->list, &dump_list);
 		err = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dump_list_lock, flags);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(kmsg_dump_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(kmsg_dump_register);
 
 /**
- * kmsg_dump_unरेजिस्टर - unरेजिस्टर a kmsg dumper.
- * @dumper: poपूर्णांकer to the kmsg_dumper काष्ठाure
+ * kmsg_dump_unregister - unregister a kmsg dumper.
+ * @dumper: pointer to the kmsg_dumper structure
  *
- * Removes a dump device from the प्रणाली. Returns zero on success and
+ * Removes a dump device from the system. Returns zero on success and
  * %-EINVAL otherwise.
  */
-पूर्णांक kmsg_dump_unरेजिस्टर(काष्ठा kmsg_dumper *dumper)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err = -EINVAL;
+int kmsg_dump_unregister(struct kmsg_dumper *dumper)
+{
+	unsigned long flags;
+	int err = -EINVAL;
 
 	spin_lock_irqsave(&dump_list_lock, flags);
-	अगर (dumper->रेजिस्टरed) अणु
-		dumper->रेजिस्टरed = 0;
+	if (dumper->registered) {
+		dumper->registered = 0;
 		list_del_rcu(&dumper->list);
 		err = 0;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dump_list_lock, flags);
 	synchronize_rcu();
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(kmsg_dump_unरेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(kmsg_dump_unregister);
 
-अटल bool always_kmsg_dump;
+static bool always_kmsg_dump;
 module_param_named(always_kmsg_dump, always_kmsg_dump, bool, S_IRUGO | S_IWUSR);
 
-स्थिर अक्षर *kmsg_dump_reason_str(क्रमागत kmsg_dump_reason reason)
-अणु
-	चयन (reason) अणु
-	हाल KMSG_DUMP_PANIC:
-		वापस "Panic";
-	हाल KMSG_DUMP_OOPS:
-		वापस "Oops";
-	हाल KMSG_DUMP_EMERG:
-		वापस "Emergency";
-	हाल KMSG_DUMP_SHUTDOWN:
-		वापस "Shutdown";
-	शेष:
-		वापस "Unknown";
-	पूर्ण
-पूर्ण
+const char *kmsg_dump_reason_str(enum kmsg_dump_reason reason)
+{
+	switch (reason) {
+	case KMSG_DUMP_PANIC:
+		return "Panic";
+	case KMSG_DUMP_OOPS:
+		return "Oops";
+	case KMSG_DUMP_EMERG:
+		return "Emergency";
+	case KMSG_DUMP_SHUTDOWN:
+		return "Shutdown";
+	default:
+		return "Unknown";
+	}
+}
 EXPORT_SYMBOL_GPL(kmsg_dump_reason_str);
 
 /**
  * kmsg_dump - dump kernel log to kernel message dumpers.
- * @reason: the reason (oops, panic etc) क्रम dumping
+ * @reason: the reason (oops, panic etc) for dumping
  *
- * Call each of the रेजिस्टरed dumper's dump() callback, which can
+ * Call each of the registered dumper's dump() callback, which can
  * retrieve the kmsg records with kmsg_dump_get_line() or
  * kmsg_dump_get_buffer().
  */
-व्योम kmsg_dump(क्रमागत kmsg_dump_reason reason)
-अणु
-	काष्ठा kmsg_dumper *dumper;
+void kmsg_dump(enum kmsg_dump_reason reason)
+{
+	struct kmsg_dumper *dumper;
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(dumper, &dump_list, list) अणु
-		क्रमागत kmsg_dump_reason max_reason = dumper->max_reason;
+	rcu_read_lock();
+	list_for_each_entry_rcu(dumper, &dump_list, list) {
+		enum kmsg_dump_reason max_reason = dumper->max_reason;
 
 		/*
-		 * If client has not provided a specअगरic max_reason, शेष
+		 * If client has not provided a specific max_reason, default
 		 * to KMSG_DUMP_OOPS, unless always_kmsg_dump was set.
 		 */
-		अगर (max_reason == KMSG_DUMP_UNDEF) अणु
+		if (max_reason == KMSG_DUMP_UNDEF) {
 			max_reason = always_kmsg_dump ? KMSG_DUMP_MAX :
 							KMSG_DUMP_OOPS;
-		पूर्ण
-		अगर (reason > max_reason)
-			जारी;
+		}
+		if (reason > max_reason)
+			continue;
 
 		/* invoke dumper which will iterate over records */
 		dumper->dump(dumper, reason);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-पूर्ण
+	}
+	rcu_read_unlock();
+}
 
 /**
  * kmsg_dump_get_line - retrieve one kmsg log line
@@ -3369,57 +3368,57 @@ EXPORT_SYMBOL_GPL(kmsg_dump_reason_str);
  * @syslog: include the "<4>" prefixes
  * @line: buffer to copy the line to
  * @size: maximum size of the buffer
- * @len: length of line placed पूर्णांकo buffer
+ * @len: length of line placed into buffer
  *
  * Start at the beginning of the kmsg buffer, with the oldest kmsg
- * record, and copy one record पूर्णांकo the provided buffer.
+ * record, and copy one record into the provided buffer.
  *
- * Consecutive calls will वापस the next available record moving
+ * Consecutive calls will return the next available record moving
  * towards the end of the buffer with the youngest messages.
  *
- * A वापस value of FALSE indicates that there are no more records to
- * पढ़ो.
+ * A return value of FALSE indicates that there are no more records to
+ * read.
  */
-bool kmsg_dump_get_line(काष्ठा kmsg_dump_iter *iter, bool syslog,
-			अक्षर *line, माप_प्रकार size, माप_प्रकार *len)
-अणु
-	u64 min_seq = latched_seq_पढ़ो_nolock(&clear_seq);
-	काष्ठा prपूर्णांकk_info info;
-	अचिन्हित पूर्णांक line_count;
-	काष्ठा prपूर्णांकk_record r;
-	अचिन्हित दीर्घ flags;
-	माप_प्रकार l = 0;
+bool kmsg_dump_get_line(struct kmsg_dump_iter *iter, bool syslog,
+			char *line, size_t size, size_t *len)
+{
+	u64 min_seq = latched_seq_read_nolock(&clear_seq);
+	struct printk_info info;
+	unsigned int line_count;
+	struct printk_record r;
+	unsigned long flags;
+	size_t l = 0;
 	bool ret = false;
 
-	अगर (iter->cur_seq < min_seq)
+	if (iter->cur_seq < min_seq)
 		iter->cur_seq = min_seq;
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
+	printk_safe_enter_irqsave(flags);
 	prb_rec_init_rd(&r, &info, line, size);
 
 	/* Read text or count text lines? */
-	अगर (line) अणु
-		अगर (!prb_पढ़ो_valid(prb, iter->cur_seq, &r))
-			जाओ out;
-		l = record_prपूर्णांक_text(&r, syslog, prपूर्णांकk_समय);
-	पूर्ण अन्यथा अणु
-		अगर (!prb_पढ़ो_valid_info(prb, iter->cur_seq,
-					 &info, &line_count)) अणु
-			जाओ out;
-		पूर्ण
-		l = get_record_prपूर्णांक_text_size(&info, line_count, syslog,
-					       prपूर्णांकk_समय);
+	if (line) {
+		if (!prb_read_valid(prb, iter->cur_seq, &r))
+			goto out;
+		l = record_print_text(&r, syslog, printk_time);
+	} else {
+		if (!prb_read_valid_info(prb, iter->cur_seq,
+					 &info, &line_count)) {
+			goto out;
+		}
+		l = get_record_print_text_size(&info, line_count, syslog,
+					       printk_time);
 
-	पूर्ण
+	}
 
 	iter->cur_seq = r.info->seq + 1;
 	ret = true;
 out:
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
-	अगर (len)
+	printk_safe_exit_irqrestore(flags);
+	if (len)
 		*len = l;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(kmsg_dump_get_line);
 
 /**
@@ -3428,107 +3427,107 @@ EXPORT_SYMBOL_GPL(kmsg_dump_get_line);
  * @syslog: include the "<4>" prefixes
  * @buf: buffer to copy the line to
  * @size: maximum size of the buffer
- * @len_out: length of line placed पूर्णांकo buffer
+ * @len_out: length of line placed into buffer
  *
  * Start at the end of the kmsg buffer and fill the provided buffer
- * with as many of the *youngest* kmsg records that fit पूर्णांकo it.
+ * with as many of the *youngest* kmsg records that fit into it.
  * If the buffer is large enough, all available kmsg records will be
  * copied with a single call.
  *
  * Consecutive calls will fill the buffer with the next block of
  * available older records, not including the earlier retrieved ones.
  *
- * A वापस value of FALSE indicates that there are no more records to
- * पढ़ो.
+ * A return value of FALSE indicates that there are no more records to
+ * read.
  */
-bool kmsg_dump_get_buffer(काष्ठा kmsg_dump_iter *iter, bool syslog,
-			  अक्षर *buf, माप_प्रकार size, माप_प्रकार *len_out)
-अणु
-	u64 min_seq = latched_seq_पढ़ो_nolock(&clear_seq);
-	काष्ठा prपूर्णांकk_info info;
-	काष्ठा prपूर्णांकk_record r;
-	अचिन्हित दीर्घ flags;
+bool kmsg_dump_get_buffer(struct kmsg_dump_iter *iter, bool syslog,
+			  char *buf, size_t size, size_t *len_out)
+{
+	u64 min_seq = latched_seq_read_nolock(&clear_seq);
+	struct printk_info info;
+	struct printk_record r;
+	unsigned long flags;
 	u64 seq;
 	u64 next_seq;
-	माप_प्रकार len = 0;
+	size_t len = 0;
 	bool ret = false;
-	bool समय = prपूर्णांकk_समय;
+	bool time = printk_time;
 
-	अगर (!buf || !size)
-		जाओ out;
+	if (!buf || !size)
+		goto out;
 
-	अगर (iter->cur_seq < min_seq)
+	if (iter->cur_seq < min_seq)
 		iter->cur_seq = min_seq;
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
-	अगर (prb_पढ़ो_valid_info(prb, iter->cur_seq, &info, शून्य)) अणु
-		अगर (info.seq != iter->cur_seq) अणु
+	printk_safe_enter_irqsave(flags);
+	if (prb_read_valid_info(prb, iter->cur_seq, &info, NULL)) {
+		if (info.seq != iter->cur_seq) {
 			/* messages are gone, move to first available one */
 			iter->cur_seq = info.seq;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* last entry */
-	अगर (iter->cur_seq >= iter->next_seq) अणु
-		prपूर्णांकk_safe_निकास_irqrestore(flags);
-		जाओ out;
-	पूर्ण
+	if (iter->cur_seq >= iter->next_seq) {
+		printk_safe_exit_irqrestore(flags);
+		goto out;
+	}
 
 	/*
 	 * Find first record that fits, including all following records,
-	 * पूर्णांकo the user-provided buffer क्रम this dump. Pass in size-1
-	 * because this function (by way of record_prपूर्णांक_text()) will
-	 * not ग_लिखो more than size-1 bytes of text पूर्णांकo @buf.
+	 * into the user-provided buffer for this dump. Pass in size-1
+	 * because this function (by way of record_print_text()) will
+	 * not write more than size-1 bytes of text into @buf.
 	 */
 	seq = find_first_fitting_seq(iter->cur_seq, iter->next_seq,
-				     size - 1, syslog, समय);
+				     size - 1, syslog, time);
 
 	/*
 	 * Next kmsg_dump_get_buffer() invocation will dump block of
-	 * older records stored right beक्रमe this one.
+	 * older records stored right before this one.
 	 */
 	next_seq = seq;
 
 	prb_rec_init_rd(&r, &info, buf, size);
 
 	len = 0;
-	prb_क्रम_each_record(seq, prb, seq, &r) अणु
-		अगर (r.info->seq >= iter->next_seq)
-			अवरोध;
+	prb_for_each_record(seq, prb, seq, &r) {
+		if (r.info->seq >= iter->next_seq)
+			break;
 
-		len += record_prपूर्णांक_text(&r, syslog, समय);
+		len += record_print_text(&r, syslog, time);
 
-		/* Adjust record to store to reमुख्यing buffer space. */
+		/* Adjust record to store to remaining buffer space. */
 		prb_rec_init_rd(&r, &info, buf + len, size - len);
-	पूर्ण
+	}
 
 	iter->next_seq = next_seq;
 	ret = true;
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
+	printk_safe_exit_irqrestore(flags);
 out:
-	अगर (len_out)
+	if (len_out)
 		*len_out = len;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(kmsg_dump_get_buffer);
 
 /**
- * kmsg_dump_शुरुआत - reset the iterator
+ * kmsg_dump_rewind - reset the iterator
  * @iter: kmsg dump iterator
  *
  * Reset the dumper's iterator so that kmsg_dump_get_line() and
  * kmsg_dump_get_buffer() can be called again and used multiple
- * बार within the same dumper.dump() callback.
+ * times within the same dumper.dump() callback.
  */
-व्योम kmsg_dump_शुरुआत(काष्ठा kmsg_dump_iter *iter)
-अणु
-	अचिन्हित दीर्घ flags;
+void kmsg_dump_rewind(struct kmsg_dump_iter *iter)
+{
+	unsigned long flags;
 
-	prपूर्णांकk_safe_enter_irqsave(flags);
-	iter->cur_seq = latched_seq_पढ़ो_nolock(&clear_seq);
+	printk_safe_enter_irqsave(flags);
+	iter->cur_seq = latched_seq_read_nolock(&clear_seq);
 	iter->next_seq = prb_next_seq(prb);
-	prपूर्णांकk_safe_निकास_irqrestore(flags);
-पूर्ण
-EXPORT_SYMBOL_GPL(kmsg_dump_शुरुआत);
+	printk_safe_exit_irqrestore(flags);
+}
+EXPORT_SYMBOL_GPL(kmsg_dump_rewind);
 
-#पूर्ण_अगर
+#endif

@@ -1,22 +1,21 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Driver क्रम the Auvitek USB bridge
+ *  Driver for the Auvitek USB bridge
  *
  *  Copyright (c) 2008 Steven Toth <stoth@linuxtv.org>
  */
 
-#समावेश "au0828.h"
-#समावेश "au8522.h"
+#include "au0828.h"
+#include "au8522.h"
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
-#समावेश <media/v4l2-common.h>
-#समावेश <linux/mutex.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
+#include <media/v4l2-common.h>
+#include <linux/mutex.h>
 
-/* Due to क्रमागत tuner_pad_index */
-#समावेश <media/tuner.h>
+/* Due to enum tuner_pad_index */
+#include <media/tuner.h>
 
 /*
  * 1 = General debug messages
@@ -25,351 +24,351 @@
  * 8 = Bridge related
  * 16 = IR related
  */
-पूर्णांक au0828_debug;
-module_param_named(debug, au0828_debug, पूर्णांक, 0644);
+int au0828_debug;
+module_param_named(debug, au0828_debug, int, 0644);
 MODULE_PARM_DESC(debug,
 		 "set debug bitmask: 1=general, 2=USB, 4=I2C, 8=bridge, 16=IR");
 
-अटल अचिन्हित पूर्णांक disable_usb_speed_check;
-module_param(disable_usb_speed_check, पूर्णांक, 0444);
+static unsigned int disable_usb_speed_check;
+module_param(disable_usb_speed_check, int, 0444);
 MODULE_PARM_DESC(disable_usb_speed_check,
 		 "override min bandwidth requirement of 480M bps");
 
-#घोषणा _AU0828_BULKPIPE 0x03
-#घोषणा _BULKPIPESIZE 0xffff
+#define _AU0828_BULKPIPE 0x03
+#define _BULKPIPESIZE 0xffff
 
-अटल पूर्णांक send_control_msg(काष्ठा au0828_dev *dev, u16 request, u32 value,
+static int send_control_msg(struct au0828_dev *dev, u16 request, u32 value,
 			    u16 index);
-अटल पूर्णांक recv_control_msg(काष्ठा au0828_dev *dev, u16 request, u32 value,
-	u16 index, अचिन्हित अक्षर *cp, u16 size);
+static int recv_control_msg(struct au0828_dev *dev, u16 request, u32 value,
+	u16 index, unsigned char *cp, u16 size);
 
 /* USB Direction */
-#घोषणा CMD_REQUEST_IN		0x00
-#घोषणा CMD_REQUEST_OUT		0x01
+#define CMD_REQUEST_IN		0x00
+#define CMD_REQUEST_OUT		0x01
 
-u32 au0828_पढ़ोreg(काष्ठा au0828_dev *dev, u16 reg)
-अणु
+u32 au0828_readreg(struct au0828_dev *dev, u16 reg)
+{
 	u8 result = 0;
 
 	recv_control_msg(dev, CMD_REQUEST_IN, 0, reg, &result, 1);
-	dprपूर्णांकk(8, "%s(0x%04x) = 0x%02x\n", __func__, reg, result);
+	dprintk(8, "%s(0x%04x) = 0x%02x\n", __func__, reg, result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-u32 au0828_ग_लिखोreg(काष्ठा au0828_dev *dev, u16 reg, u32 val)
-अणु
-	dprपूर्णांकk(8, "%s(0x%04x, 0x%02x)\n", __func__, reg, val);
-	वापस send_control_msg(dev, CMD_REQUEST_OUT, val, reg);
-पूर्ण
+u32 au0828_writereg(struct au0828_dev *dev, u16 reg, u32 val)
+{
+	dprintk(8, "%s(0x%04x, 0x%02x)\n", __func__, reg, val);
+	return send_control_msg(dev, CMD_REQUEST_OUT, val, reg);
+}
 
-अटल पूर्णांक send_control_msg(काष्ठा au0828_dev *dev, u16 request, u32 value,
+static int send_control_msg(struct au0828_dev *dev, u16 request, u32 value,
 	u16 index)
-अणु
-	पूर्णांक status = -ENODEV;
+{
+	int status = -ENODEV;
 
-	अगर (dev->usbdev) अणु
+	if (dev->usbdev) {
 
-		/* cp must be memory that has been allocated by kदो_स्मृति */
+		/* cp must be memory that has been allocated by kmalloc */
 		status = usb_control_msg(dev->usbdev,
 				usb_sndctrlpipe(dev->usbdev, 0),
 				request,
-				USB_सूची_OUT | USB_TYPE_VENDOR |
+				USB_DIR_OUT | USB_TYPE_VENDOR |
 					USB_RECIP_DEVICE,
-				value, index, शून्य, 0, 1000);
+				value, index, NULL, 0, 1000);
 
 		status = min(status, 0);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			pr_err("%s() Failed sending control message, error %d.\n",
 				__func__, status);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल पूर्णांक recv_control_msg(काष्ठा au0828_dev *dev, u16 request, u32 value,
-	u16 index, अचिन्हित अक्षर *cp, u16 size)
-अणु
-	पूर्णांक status = -ENODEV;
+static int recv_control_msg(struct au0828_dev *dev, u16 request, u32 value,
+	u16 index, unsigned char *cp, u16 size)
+{
+	int status = -ENODEV;
 	mutex_lock(&dev->mutex);
-	अगर (dev->usbdev) अणु
+	if (dev->usbdev) {
 		status = usb_control_msg(dev->usbdev,
 				usb_rcvctrlpipe(dev->usbdev, 0),
 				request,
-				USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+				USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 				value, index,
 				dev->ctrlmsg, size, 1000);
 
 		status = min(status, 0);
 
-		अगर (status < 0) अणु
+		if (status < 0) {
 			pr_err("%s() Failed receiving control message, error %d.\n",
 				__func__, status);
-		पूर्ण
+		}
 
 		/* the host controller requires heap allocated memory, which
-		   is why we didn't just pass "cp" पूर्णांकo usb_control_msg */
-		स_नकल(cp, dev->ctrlmsg, size);
-	पूर्ण
+		   is why we didn't just pass "cp" into usb_control_msg */
+		memcpy(cp, dev->ctrlmsg, size);
+	}
 	mutex_unlock(&dev->mutex);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER
-अटल व्योम au0828_media_graph_notअगरy(काष्ठा media_entity *new,
-				      व्योम *notअगरy_data);
-#पूर्ण_अगर
+#ifdef CONFIG_MEDIA_CONTROLLER
+static void au0828_media_graph_notify(struct media_entity *new,
+				      void *notify_data);
+#endif
 
-अटल व्योम au0828_unरेजिस्टर_media_device(काष्ठा au0828_dev *dev)
-अणु
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER
-	काष्ठा media_device *mdev = dev->media_dev;
-	काष्ठा media_entity_notअगरy *notअगरy, *nextp;
+static void au0828_unregister_media_device(struct au0828_dev *dev)
+{
+#ifdef CONFIG_MEDIA_CONTROLLER
+	struct media_device *mdev = dev->media_dev;
+	struct media_entity_notify *notify, *nextp;
 
-	अगर (!mdev || !media_devnode_is_रेजिस्टरed(mdev->devnode))
-		वापस;
+	if (!mdev || !media_devnode_is_registered(mdev->devnode))
+		return;
 
-	/* Remove au0828 entity_notअगरy callbacks */
-	list_क्रम_each_entry_safe(notअगरy, nextp, &mdev->entity_notअगरy, list) अणु
-		अगर (notअगरy->notअगरy != au0828_media_graph_notअगरy)
-			जारी;
-		media_device_unरेजिस्टर_entity_notअगरy(mdev, notअगरy);
-	पूर्ण
+	/* Remove au0828 entity_notify callbacks */
+	list_for_each_entry_safe(notify, nextp, &mdev->entity_notify, list) {
+		if (notify->notify != au0828_media_graph_notify)
+			continue;
+		media_device_unregister_entity_notify(mdev, notify);
+	}
 
 	/* clear enable_source, disable_source */
 	mutex_lock(&mdev->graph_mutex);
-	dev->media_dev->source_priv = शून्य;
-	dev->media_dev->enable_source = शून्य;
-	dev->media_dev->disable_source = शून्य;
+	dev->media_dev->source_priv = NULL;
+	dev->media_dev->enable_source = NULL;
+	dev->media_dev->disable_source = NULL;
 	mutex_unlock(&mdev->graph_mutex);
 
 	media_device_delete(dev->media_dev, KBUILD_MODNAME, THIS_MODULE);
-	dev->media_dev = शून्य;
-#पूर्ण_अगर
-पूर्ण
+	dev->media_dev = NULL;
+#endif
+}
 
-व्योम au0828_usb_release(काष्ठा au0828_dev *dev)
-अणु
-	au0828_unरेजिस्टर_media_device(dev);
+void au0828_usb_release(struct au0828_dev *dev)
+{
+	au0828_unregister_media_device(dev);
 
 	/* I2C */
-	au0828_i2c_unरेजिस्टर(dev);
+	au0828_i2c_unregister(dev);
 
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
-अटल व्योम au0828_usb_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा au0828_dev *dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+static void au0828_usb_disconnect(struct usb_interface *interface)
+{
+	struct au0828_dev *dev = usb_get_intfdata(interface);
 
-	dprपूर्णांकk(1, "%s()\n", __func__);
+	dprintk(1, "%s()\n", __func__);
 
-	/* there is a small winकरोw after disconnect, beक्रमe
-	   dev->usbdev is शून्य, क्रम poll (e.g: IR) try to access
+	/* there is a small window after disconnect, before
+	   dev->usbdev is NULL, for poll (e.g: IR) try to access
 	   the device and fill the dmesg with error messages.
-	   Set the status so poll routines can check and aव्योम
+	   Set the status so poll routines can check and avoid
 	   access after disconnect.
 	*/
 	set_bit(DEV_DISCONNECTED, &dev->dev_state);
 
-	au0828_rc_unरेजिस्टर(dev);
+	au0828_rc_unregister(dev);
 	/* Digital TV */
-	au0828_dvb_unरेजिस्टर(dev);
+	au0828_dvb_unregister(dev);
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	usb_set_intfdata(interface, NULL);
 	mutex_lock(&dev->mutex);
-	dev->usbdev = शून्य;
+	dev->usbdev = NULL;
 	mutex_unlock(&dev->mutex);
-	अगर (au0828_analog_unरेजिस्टर(dev)) अणु
+	if (au0828_analog_unregister(dev)) {
 		/*
-		 * No need to call au0828_usb_release() अगर V4L2 is enabled,
-		 * as this is alपढ़ोy called via au0828_usb_v4l2_release()
+		 * No need to call au0828_usb_release() if V4L2 is enabled,
+		 * as this is already called via au0828_usb_v4l2_release()
 		 */
-		वापस;
-	पूर्ण
+		return;
+	}
 	au0828_usb_release(dev);
-पूर्ण
+}
 
-अटल पूर्णांक au0828_media_device_init(काष्ठा au0828_dev *dev,
-				    काष्ठा usb_device *udev)
-अणु
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER
-	काष्ठा media_device *mdev;
+static int au0828_media_device_init(struct au0828_dev *dev,
+				    struct usb_device *udev)
+{
+#ifdef CONFIG_MEDIA_CONTROLLER
+	struct media_device *mdev;
 
 	mdev = media_device_usb_allocate(udev, KBUILD_MODNAME, THIS_MODULE);
-	अगर (!mdev)
-		वापस -ENOMEM;
+	if (!mdev)
+		return -ENOMEM;
 
 	dev->media_dev = mdev;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER
-अटल व्योम au0828_media_graph_notअगरy(काष्ठा media_entity *new,
-				      व्योम *notअगरy_data)
-अणु
-	काष्ठा au0828_dev *dev = (काष्ठा au0828_dev *) notअगरy_data;
-	पूर्णांक ret;
-	काष्ठा media_entity *entity, *mixer = शून्य, *decoder = शून्य;
+#ifdef CONFIG_MEDIA_CONTROLLER
+static void au0828_media_graph_notify(struct media_entity *new,
+				      void *notify_data)
+{
+	struct au0828_dev *dev = (struct au0828_dev *) notify_data;
+	int ret;
+	struct media_entity *entity, *mixer = NULL, *decoder = NULL;
 
-	अगर (!new) अणु
+	if (!new) {
 		/*
-		 * Called during au0828 probe समय to connect
-		 * entities that were created prior to रेजिस्टरing
-		 * the notअगरy handler. Find mixer and decoder.
+		 * Called during au0828 probe time to connect
+		 * entities that were created prior to registering
+		 * the notify handler. Find mixer and decoder.
 		*/
-		media_device_क्रम_each_entity(entity, dev->media_dev) अणु
-			अगर (entity->function == MEDIA_ENT_F_AUDIO_MIXER)
+		media_device_for_each_entity(entity, dev->media_dev) {
+			if (entity->function == MEDIA_ENT_F_AUDIO_MIXER)
 				mixer = entity;
-			अन्यथा अगर (entity->function == MEDIA_ENT_F_ATV_DECODER)
+			else if (entity->function == MEDIA_ENT_F_ATV_DECODER)
 				decoder = entity;
-		पूर्ण
-		जाओ create_link;
-	पूर्ण
+		}
+		goto create_link;
+	}
 
-	चयन (new->function) अणु
-	हाल MEDIA_ENT_F_AUDIO_MIXER:
+	switch (new->function) {
+	case MEDIA_ENT_F_AUDIO_MIXER:
 		mixer = new;
-		अगर (dev->decoder)
+		if (dev->decoder)
 			decoder = dev->decoder;
-		अवरोध;
-	हाल MEDIA_ENT_F_ATV_DECODER:
-		/* In हाल, Mixer is added first, find mixer and create link */
-		media_device_क्रम_each_entity(entity, dev->media_dev) अणु
-			अगर (entity->function == MEDIA_ENT_F_AUDIO_MIXER)
+		break;
+	case MEDIA_ENT_F_ATV_DECODER:
+		/* In case, Mixer is added first, find mixer and create link */
+		media_device_for_each_entity(entity, dev->media_dev) {
+			if (entity->function == MEDIA_ENT_F_AUDIO_MIXER)
 				mixer = entity;
-		पूर्ण
+		}
 		decoder = new;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
 create_link:
-	अगर (decoder && mixer) अणु
+	if (decoder && mixer) {
 		ret = media_get_pad_index(decoder, false,
 					  PAD_SIGNAL_AUDIO);
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = media_create_pad_link(decoder, ret,
 						    mixer, 0,
 						    MEDIA_LNK_FL_ENABLED);
-		अगर (ret < 0)
+		if (ret < 0)
 			dev_err(&dev->usbdev->dev,
 				"Mixer Pad Link Create Error: %d\n", ret);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool au0828_is_link_shareable(काष्ठा media_entity *owner,
-				     काष्ठा media_entity *entity)
-अणु
+static bool au0828_is_link_shareable(struct media_entity *owner,
+				     struct media_entity *entity)
+{
 	bool shareable = false;
 
 	/* Tuner link can be shared by audio, video, and VBI */
-	चयन (owner->function) अणु
-	हाल MEDIA_ENT_F_IO_V4L:
-	हाल MEDIA_ENT_F_AUDIO_CAPTURE:
-	हाल MEDIA_ENT_F_IO_VBI:
-		अगर (entity->function == MEDIA_ENT_F_IO_V4L ||
+	switch (owner->function) {
+	case MEDIA_ENT_F_IO_V4L:
+	case MEDIA_ENT_F_AUDIO_CAPTURE:
+	case MEDIA_ENT_F_IO_VBI:
+		if (entity->function == MEDIA_ENT_F_IO_V4L ||
 		    entity->function == MEDIA_ENT_F_AUDIO_CAPTURE ||
 		    entity->function == MEDIA_ENT_F_IO_VBI)
 			shareable = true;
-		अवरोध;
-	हाल MEDIA_ENT_F_DTV_DEMOD:
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस shareable;
-पूर्ण
+		break;
+	case MEDIA_ENT_F_DTV_DEMOD:
+	default:
+		break;
+	}
+	return shareable;
+}
 
 /* Callers should hold graph_mutex */
-अटल पूर्णांक au0828_enable_source(काष्ठा media_entity *entity,
-				काष्ठा media_pipeline *pipe)
-अणु
-	काष्ठा media_entity  *source, *find_source;
-	काष्ठा media_entity *sink;
-	काष्ठा media_link *link, *found_link = शून्य;
-	पूर्णांक ret = 0;
-	काष्ठा media_device *mdev = entity->graph_obj.mdev;
-	काष्ठा au0828_dev *dev;
+static int au0828_enable_source(struct media_entity *entity,
+				struct media_pipeline *pipe)
+{
+	struct media_entity  *source, *find_source;
+	struct media_entity *sink;
+	struct media_link *link, *found_link = NULL;
+	int ret = 0;
+	struct media_device *mdev = entity->graph_obj.mdev;
+	struct au0828_dev *dev;
 
-	अगर (!mdev)
-		वापस -ENODEV;
+	if (!mdev)
+		return -ENODEV;
 
 	dev = mdev->source_priv;
 
 	/*
 	 * For Audio and V4L2 entity, find the link to which decoder
-	 * is the sink. Look क्रम an active link between decoder and
-	 * source (tuner/s-video/Composite), अगर one exists, nothing
-	 * to करो. If not, look क्रम any  active links between source
+	 * is the sink. Look for an active link between decoder and
+	 * source (tuner/s-video/Composite), if one exists, nothing
+	 * to do. If not, look for any  active links between source
 	 * and any other entity. If one exists, source is busy. If
-	 * source is मुक्त, setup link and start pipeline from source.
-	 * For DVB FE entity, the source क्रम the link is the tuner.
-	 * Check अगर tuner is available and setup link and start
+	 * source is free, setup link and start pipeline from source.
+	 * For DVB FE entity, the source for the link is the tuner.
+	 * Check if tuner is available and setup link and start
 	 * pipeline.
 	*/
-	अगर (entity->function == MEDIA_ENT_F_DTV_DEMOD) अणु
+	if (entity->function == MEDIA_ENT_F_DTV_DEMOD) {
 		sink = entity;
 		find_source = dev->tuner;
-	पूर्ण अन्यथा अणु
-		/* Analog isn't configured or रेजिस्टर failed */
-		अगर (!dev->decoder) अणु
+	} else {
+		/* Analog isn't configured or register failed */
+		if (!dev->decoder) {
 			ret = -ENODEV;
-			जाओ end;
-		पूर्ण
+			goto end;
+		}
 
 		sink = dev->decoder;
 
 		/*
-		 * Default input is tuner and शेष input_type
+		 * Default input is tuner and default input_type
 		 * is AU0828_VMUX_TELEVISION.
 		 *
 		 * There is a problem when s_input is called to
-		 * change the शेष input. s_input will try to
-		 * enable_source beक्रमe attempting to change the
+		 * change the default input. s_input will try to
+		 * enable_source before attempting to change the
 		 * input on the device, and will end up enabling
-		 * शेष source which is tuner.
+		 * default source which is tuner.
 		 *
 		 * Additional logic is necessary in au0828 to detect
 		 * that the input has changed and enable the right
-		 * source. au0828 handles this हाल in its s_input.
+		 * source. au0828 handles this case in its s_input.
 		 * It will disable the old source and enable the new
 		 * source.
 		 *
 		*/
-		अगर (dev->input_type == AU0828_VMUX_TELEVISION)
+		if (dev->input_type == AU0828_VMUX_TELEVISION)
 			find_source = dev->tuner;
-		अन्यथा अगर (dev->input_type == AU0828_VMUX_SVIDEO ||
+		else if (dev->input_type == AU0828_VMUX_SVIDEO ||
 			 dev->input_type == AU0828_VMUX_COMPOSITE)
 			find_source = &dev->input_ent[dev->input_type];
-		अन्यथा अणु
+		else {
 			/* unknown input - let user select input */
 			ret = 0;
-			जाओ end;
-		पूर्ण
-	पूर्ण
+			goto end;
+		}
+	}
 
 	/* Is there an active link between sink and source */
-	अगर (dev->active_link) अणु
-		अगर (dev->active_link_owner == entity) अणु
+	if (dev->active_link) {
+		if (dev->active_link_owner == entity) {
 			/* This check is necessary to handle multiple
 			 * enable_source calls from v4l_ioctls during
-			 * the course of video/vbi application run-समय.
+			 * the course of video/vbi application run-time.
 			*/
 			pr_debug("%s already owns the tuner\n", entity->name);
 			ret = 0;
-			जाओ end;
-		पूर्ण अन्यथा अगर (au0828_is_link_shareable(dev->active_link_owner,
-			   entity)) अणु
+			goto end;
+		} else if (au0828_is_link_shareable(dev->active_link_owner,
+			   entity)) {
 			/* Either ALSA or Video own tuner. Sink is the same
-			 * क्रम both. Allow sharing the active link between
+			 * for both. Allow sharing the active link between
 			 * their common source (tuner) and sink (decoder).
 			 * Starting pipeline between sharing entity and sink
-			 * will fail with pipe mismatch, जबतक owner has an
+			 * will fail with pipe mismatch, while owner has an
 			 * active pipeline. Switch pipeline ownership from
 			 * user to owner when owner disables the source.
 			 */
@@ -381,48 +380,48 @@ create_link:
 				 dev->active_link_owner->name,
 				 entity->name);
 			ret = 0;
-			जाओ end;
-		पूर्ण अन्यथा अणु
+			goto end;
+		} else {
 			ret = -EBUSY;
-			जाओ end;
-		पूर्ण
-	पूर्ण
+			goto end;
+		}
+	}
 
-	list_क्रम_each_entry(link, &sink->links, list) अणु
+	list_for_each_entry(link, &sink->links, list) {
 		/* Check sink, and source */
-		अगर (link->sink->entity == sink &&
-		    link->source->entity == find_source) अणु
+		if (link->sink->entity == sink &&
+		    link->source->entity == find_source) {
 			found_link = link;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found_link) अणु
+	if (!found_link) {
 		ret = -ENODEV;
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	/* activate link between source and sink and start pipeline */
 	source = found_link->source->entity;
 	ret = __media_entity_setup_link(found_link, MEDIA_LNK_FL_ENABLED);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Activate link from %s->%s. Error %d\n",
 			source->name, sink->name, ret);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	ret = __media_pipeline_start(entity, pipe);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("Start Pipeline: %s->%s Error %d\n",
 			source->name, entity->name, ret);
 		ret = __media_entity_setup_link(found_link, 0);
-		अगर (ret)
+		if (ret)
 			pr_err("Deactivate link Error %d\n", ret);
-		जाओ end;
-	पूर्ण
+		goto end;
+	}
 
 	/* save link state to allow audio and video share the link
-	 * and not disable the link जबतक the other is using it.
+	 * and not disable the link while the other is using it.
 	 * active_link_owner is used to deactivate the link.
 	*/
 	dev->active_link = found_link;
@@ -436,70 +435,70 @@ create_link:
 end:
 	pr_debug("%s end: ent:%s fnc:%d ret %d\n",
 		 __func__, entity->name, entity->function, ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Callers should hold graph_mutex */
-अटल व्योम au0828_disable_source(काष्ठा media_entity *entity)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा media_device *mdev = entity->graph_obj.mdev;
-	काष्ठा au0828_dev *dev;
+static void au0828_disable_source(struct media_entity *entity)
+{
+	int ret = 0;
+	struct media_device *mdev = entity->graph_obj.mdev;
+	struct au0828_dev *dev;
 
-	अगर (!mdev)
-		वापस;
+	if (!mdev)
+		return;
 
 	dev = mdev->source_priv;
 
-	अगर (!dev->active_link)
-		वापस;
+	if (!dev->active_link)
+		return;
 
 	/* link is active - stop pipeline from source
 	 * (tuner/s-video/Composite) to the entity
 	 * When DVB/s-video/Composite owns tuner, it won't be in
 	 * shared state.
 	 */
-	अगर (dev->active_link->sink->entity == dev->active_sink &&
-	    dev->active_link->source->entity == dev->active_source) अणु
+	if (dev->active_link->sink->entity == dev->active_sink &&
+	    dev->active_link->source->entity == dev->active_source) {
 		/*
 		 * Prevent video from deactivating link when audio
 		 * has active pipeline and vice versa. In addition
-		 * handle the हाल when more than one video/vbi
+		 * handle the case when more than one video/vbi
 		 * application is sharing the link.
 		*/
 		bool owner_is_audio = false;
 
-		अगर (dev->active_link_owner->function ==
+		if (dev->active_link_owner->function ==
 		    MEDIA_ENT_F_AUDIO_CAPTURE)
 			owner_is_audio = true;
 
-		अगर (dev->active_link_shared) अणु
+		if (dev->active_link_shared) {
 			pr_debug("Shared link owner %s user %s %d\n",
 				 dev->active_link_owner->name,
 				 entity->name, dev->users);
 
 			/* Handle video device users > 1
 			 * When audio owns the shared link with
-			 * more than one video users, aव्योम
-			 * disabling the source and/or चयनing
+			 * more than one video users, avoid
+			 * disabling the source and/or switching
 			 * the owner until the last disable_source
-			 * call from video _बंद(). Use dev->users to
-			 * determine when to चयन/disable.
+			 * call from video _close(). Use dev->users to
+			 * determine when to switch/disable.
 			 */
-			अगर (dev->active_link_owner != entity) अणु
+			if (dev->active_link_owner != entity) {
 				/* video device has users > 1 */
-				अगर (owner_is_audio && dev->users > 1)
-					वापस;
+				if (owner_is_audio && dev->users > 1)
+					return;
 
-				dev->active_link_user = शून्य;
-				dev->active_link_user_pipe = शून्य;
+				dev->active_link_user = NULL;
+				dev->active_link_user_pipe = NULL;
 				dev->active_link_shared = false;
-				वापस;
-			पूर्ण
+				return;
+			}
 
 			/* video owns the link and has users > 1 */
-			अगर (!owner_is_audio && dev->users > 1)
-				वापस;
+			if (!owner_is_audio && dev->users > 1)
+				return;
 
 			/* stop pipeline */
 			__media_pipeline_stop(dev->active_link_owner);
@@ -509,28 +508,28 @@ end:
 			ret = __media_pipeline_start(
 					dev->active_link_user,
 					dev->active_link_user_pipe);
-			अगर (ret) अणु
+			if (ret) {
 				pr_err("Start Pipeline: %s->%s %d\n",
 					dev->active_source->name,
 					dev->active_link_user->name,
 					ret);
-				जाओ deactivate_link;
-			पूर्ण
+				goto deactivate_link;
+			}
 			/* link user is now the owner */
 			dev->active_link_owner = dev->active_link_user;
-			dev->active_link_user = शून्य;
-			dev->active_link_user_pipe = शून्य;
+			dev->active_link_user = NULL;
+			dev->active_link_user_pipe = NULL;
 			dev->active_link_shared = false;
 
 			pr_debug("Pipeline started for %s\n",
 				dev->active_link_owner->name);
-			वापस;
-		पूर्ण अन्यथा अगर (!owner_is_audio && dev->users > 1)
+			return;
+		} else if (!owner_is_audio && dev->users > 1)
 			/* video/vbi owns the link and has users > 1 */
-			वापस;
+			return;
 
-		अगर (dev->active_link_owner != entity)
-			वापस;
+		if (dev->active_link_owner != entity)
+			return;
 
 		/* stop pipeline */
 		__media_pipeline_stop(dev->active_link_owner);
@@ -539,56 +538,56 @@ end:
 
 deactivate_link:
 		ret = __media_entity_setup_link(dev->active_link, 0);
-		अगर (ret)
+		if (ret)
 			pr_err("Deactivate link Error %d\n", ret);
 
 		pr_info("Disabled Source: %s->%s->%s Ret %d\n",
 			 dev->active_source->name, dev->active_sink->name,
 			 dev->active_link_owner->name, ret);
 
-		dev->active_link = शून्य;
-		dev->active_link_owner = शून्य;
-		dev->active_source = शून्य;
-		dev->active_sink = शून्य;
+		dev->active_link = NULL;
+		dev->active_link_owner = NULL;
+		dev->active_source = NULL;
+		dev->active_sink = NULL;
 		dev->active_link_shared = false;
-		dev->active_link_user = शून्य;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		dev->active_link_user = NULL;
+	}
+}
+#endif
 
-अटल पूर्णांक au0828_media_device_रेजिस्टर(काष्ठा au0828_dev *dev,
-					काष्ठा usb_device *udev)
-अणु
-#अगर_घोषित CONFIG_MEDIA_CONTROLLER
-	पूर्णांक ret;
-	काष्ठा media_entity *entity, *demod = शून्य;
-	काष्ठा media_link *link;
+static int au0828_media_device_register(struct au0828_dev *dev,
+					struct usb_device *udev)
+{
+#ifdef CONFIG_MEDIA_CONTROLLER
+	int ret;
+	struct media_entity *entity, *demod = NULL;
+	struct media_link *link;
 
-	अगर (!dev->media_dev)
-		वापस 0;
+	if (!dev->media_dev)
+		return 0;
 
-	अगर (!media_devnode_is_रेजिस्टरed(dev->media_dev->devnode)) अणु
+	if (!media_devnode_is_registered(dev->media_dev->devnode)) {
 
-		/* रेजिस्टर media device */
-		ret = media_device_रेजिस्टर(dev->media_dev);
-		अगर (ret) अणु
+		/* register media device */
+		ret = media_device_register(dev->media_dev);
+		if (ret) {
 			media_device_delete(dev->media_dev, KBUILD_MODNAME,
 					    THIS_MODULE);
-			dev->media_dev = शून्य;
+			dev->media_dev = NULL;
 			dev_err(&udev->dev,
 				"Media Device Register Error: %d\n", ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return ret;
+		}
+	} else {
 		/*
-		 * Call au0828_media_graph_notअगरy() to connect
-		 * audio graph to our graph. In this हाल, audio
-		 * driver रेजिस्टरed the device and there is no
-		 * entity_notअगरy to be called when new entities
+		 * Call au0828_media_graph_notify() to connect
+		 * audio graph to our graph. In this case, audio
+		 * driver registered the device and there is no
+		 * entity_notify to be called when new entities
 		 * are added. Invoke it now.
 		*/
-		au0828_media_graph_notअगरy(शून्य, (व्योम *) dev);
-	पूर्ण
+		au0828_media_graph_notify(NULL, (void *) dev);
+	}
 
 	/*
 	 * Find tuner, decoder and demod.
@@ -597,90 +596,90 @@ deactivate_link:
 	 *	au0828_enable_source.
 	 *
 	 * It also needs to disable the link between tuner and
-	 * decoder/demod, to aव्योम disable step when tuner is requested
-	 * by video or audio. Note that this step can't be करोne until dvb
-	 * graph is created during dvb रेजिस्टर.
+	 * decoder/demod, to avoid disable step when tuner is requested
+	 * by video or audio. Note that this step can't be done until dvb
+	 * graph is created during dvb register.
 	*/
-	media_device_क्रम_each_entity(entity, dev->media_dev) अणु
-		चयन (entity->function) अणु
-		हाल MEDIA_ENT_F_TUNER:
+	media_device_for_each_entity(entity, dev->media_dev) {
+		switch (entity->function) {
+		case MEDIA_ENT_F_TUNER:
 			dev->tuner = entity;
-			अवरोध;
-		हाल MEDIA_ENT_F_ATV_DECODER:
+			break;
+		case MEDIA_ENT_F_ATV_DECODER:
 			dev->decoder = entity;
-			अवरोध;
-		हाल MEDIA_ENT_F_DTV_DEMOD:
+			break;
+		case MEDIA_ENT_F_DTV_DEMOD:
 			demod = entity;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Disable link between tuner->demod and/or tuner->decoder */
-	अगर (dev->tuner) अणु
-		list_क्रम_each_entry(link, &dev->tuner->links, list) अणु
-			अगर (demod && link->sink->entity == demod)
+	if (dev->tuner) {
+		list_for_each_entry(link, &dev->tuner->links, list) {
+			if (demod && link->sink->entity == demod)
 				media_entity_setup_link(link, 0);
-			अगर (dev->decoder && link->sink->entity == dev->decoder)
+			if (dev->decoder && link->sink->entity == dev->decoder)
 				media_entity_setup_link(link, 0);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* रेजिस्टर entity_notअगरy callback */
-	dev->entity_notअगरy.notअगरy_data = (व्योम *) dev;
-	dev->entity_notअगरy.notअगरy = (व्योम *) au0828_media_graph_notअगरy;
-	ret = media_device_रेजिस्टर_entity_notअगरy(dev->media_dev,
-						  &dev->entity_notअगरy);
-	अगर (ret) अणु
+	/* register entity_notify callback */
+	dev->entity_notify.notify_data = (void *) dev;
+	dev->entity_notify.notify = (void *) au0828_media_graph_notify;
+	ret = media_device_register_entity_notify(dev->media_dev,
+						  &dev->entity_notify);
+	if (ret) {
 		dev_err(&udev->dev,
 			"Media Device register entity_notify Error: %d\n",
 			ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	/* set enable_source */
 	mutex_lock(&dev->media_dev->graph_mutex);
-	dev->media_dev->source_priv = (व्योम *) dev;
+	dev->media_dev->source_priv = (void *) dev;
 	dev->media_dev->enable_source = au0828_enable_source;
 	dev->media_dev->disable_source = au0828_disable_source;
 	mutex_unlock(&dev->media_dev->graph_mutex);
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+#endif
+	return 0;
+}
 
-अटल पूर्णांक au0828_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-	स्थिर काष्ठा usb_device_id *id)
-अणु
-	पूर्णांक अगरnum;
-	पूर्णांक retval = 0;
+static int au0828_usb_probe(struct usb_interface *interface,
+	const struct usb_device_id *id)
+{
+	int ifnum;
+	int retval = 0;
 
-	काष्ठा au0828_dev *dev;
-	काष्ठा usb_device *usbdev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	struct au0828_dev *dev;
+	struct usb_device *usbdev = interface_to_usbdev(interface);
 
-	अगरnum = पूर्णांकerface->altsetting->desc.bInterfaceNumber;
+	ifnum = interface->altsetting->desc.bInterfaceNumber;
 
-	अगर (अगरnum != 0)
-		वापस -ENODEV;
+	if (ifnum != 0)
+		return -ENODEV;
 
-	dprपूर्णांकk(1, "%s() vendor id 0x%x device id 0x%x ifnum:%d\n", __func__,
-		le16_to_cpu(usbdev->descriptor.idVenकरोr),
+	dprintk(1, "%s() vendor id 0x%x device id 0x%x ifnum:%d\n", __func__,
+		le16_to_cpu(usbdev->descriptor.idVendor),
 		le16_to_cpu(usbdev->descriptor.idProduct),
-		अगरnum);
+		ifnum);
 
 	/*
 	 * Make sure we have 480 Mbps of bandwidth, otherwise things like
 	 * video stream wouldn't likely work, since 12 Mbps is generally
-	 * not enough even क्रम most Digital TV streams.
+	 * not enough even for most Digital TV streams.
 	 */
-	अगर (usbdev->speed != USB_SPEED_HIGH && disable_usb_speed_check == 0) अणु
+	if (usbdev->speed != USB_SPEED_HIGH && disable_usb_speed_check == 0) {
 		pr_err("au0828: Device initialization failed.\n");
 		pr_err("au0828: Device must be connected to a high-speed USB 2.0 port.\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	dev = kzalloc(माप(*dev), GFP_KERNEL);
-	अगर (dev == शून्य) अणु
+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+	if (dev == NULL) {
 		pr_err("%s() Unable to allocate memory\n", __func__);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	mutex_init(&dev->lock);
 	mutex_lock(&dev->lock);
@@ -692,79 +691,79 @@ deactivate_link:
 
 	/* Initialize the media controller */
 	retval = au0828_media_device_init(dev, usbdev);
-	अगर (retval) अणु
+	if (retval) {
 		pr_err("%s() au0828_media_device_init failed\n",
 		       __func__);
 		mutex_unlock(&dev->lock);
-		kमुक्त(dev);
-		वापस retval;
-	पूर्ण
+		kfree(dev);
+		return retval;
+	}
 
-	retval = au0828_v4l2_device_रेजिस्टर(पूर्णांकerface, dev);
-	अगर (retval) अणु
+	retval = au0828_v4l2_device_register(interface, dev);
+	if (retval) {
 		au0828_usb_v4l2_media_release(dev);
 		mutex_unlock(&dev->lock);
-		kमुक्त(dev);
-		वापस retval;
-	पूर्ण
+		kfree(dev);
+		return retval;
+	}
 
 	/* Power Up the bridge */
-	au0828_ग_लिखो(dev, REG_600, 1 << 4);
+	au0828_write(dev, REG_600, 1 << 4);
 
 	/* Bring up the GPIO's and supporting devices */
 	au0828_gpio_setup(dev);
 
 	/* I2C */
-	au0828_i2c_रेजिस्टर(dev);
+	au0828_i2c_register(dev);
 
 	/* Setup */
 	au0828_card_setup(dev);
 
 	/*
-	 * Store the poपूर्णांकer to the au0828_dev so it can be accessed in
+	 * Store the pointer to the au0828_dev so it can be accessed in
 	 * au0828_usb_disconnect
 	 */
-	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
+	usb_set_intfdata(interface, dev);
 
 	/* Analog TV */
-	retval = au0828_analog_रेजिस्टर(dev, पूर्णांकerface);
-	अगर (retval) अणु
+	retval = au0828_analog_register(dev, interface);
+	if (retval) {
 		pr_err("%s() au0828_analog_register failed to register on V4L2\n",
 			__func__);
 		mutex_unlock(&dev->lock);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Digital TV */
-	retval = au0828_dvb_रेजिस्टर(dev);
-	अगर (retval)
+	retval = au0828_dvb_register(dev);
+	if (retval)
 		pr_err("%s() au0828_dvb_register failed\n",
 		       __func__);
 
 	/* Remote controller */
-	au0828_rc_रेजिस्टर(dev);
+	au0828_rc_register(dev);
 
 	pr_info("Registered device AU0828 [%s]\n",
-		dev->board.name == शून्य ? "Unset" : dev->board.name);
+		dev->board.name == NULL ? "Unset" : dev->board.name);
 
 	mutex_unlock(&dev->lock);
 
-	retval = au0828_media_device_रेजिस्टर(dev, usbdev);
+	retval = au0828_media_device_register(dev, usbdev);
 
-करोne:
-	अगर (retval < 0)
-		au0828_usb_disconnect(पूर्णांकerface);
+done:
+	if (retval < 0)
+		au0828_usb_disconnect(interface);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक au0828_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+static int au0828_suspend(struct usb_interface *interface,
 				pm_message_t message)
-अणु
-	काष्ठा au0828_dev *dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+{
+	struct au0828_dev *dev = usb_get_intfdata(interface);
 
-	अगर (!dev)
-		वापस 0;
+	if (!dev)
+		return 0;
 
 	pr_info("Suspend\n");
 
@@ -774,19 +773,19 @@ deactivate_link:
 
 	/* FIXME: should suspend also ATV/DTV */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक au0828_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा au0828_dev *dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!dev)
-		वापस 0;
+static int au0828_resume(struct usb_interface *interface)
+{
+	struct au0828_dev *dev = usb_get_intfdata(interface);
+	if (!dev)
+		return 0;
 
 	pr_info("Resume\n");
 
 	/* Power Up the bridge */
-	au0828_ग_लिखो(dev, REG_600, 1 << 4);
+	au0828_write(dev, REG_600, 1 << 4);
 
 	/* Bring up the GPIO's and supporting devices */
 	au0828_gpio_setup(dev);
@@ -797,10 +796,10 @@ deactivate_link:
 
 	/* FIXME: should resume also ATV/DTV */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा usb_driver au0828_usb_driver = अणु
+static struct usb_driver au0828_usb_driver = {
 	.name		= KBUILD_MODNAME,
 	.probe		= au0828_usb_probe,
 	.disconnect	= au0828_usb_disconnect,
@@ -808,45 +807,45 @@ deactivate_link:
 	.suspend	= au0828_suspend,
 	.resume		= au0828_resume,
 	.reset_resume	= au0828_resume,
-पूर्ण;
+};
 
-अटल पूर्णांक __init au0828_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init au0828_init(void)
+{
+	int ret;
 
-	अगर (au0828_debug & 1)
+	if (au0828_debug & 1)
 		pr_info("%s() Debugging is enabled\n", __func__);
 
-	अगर (au0828_debug & 2)
+	if (au0828_debug & 2)
 		pr_info("%s() USB Debugging is enabled\n", __func__);
 
-	अगर (au0828_debug & 4)
+	if (au0828_debug & 4)
 		pr_info("%s() I2C Debugging is enabled\n", __func__);
 
-	अगर (au0828_debug & 8)
+	if (au0828_debug & 8)
 		pr_info("%s() Bridge Debugging is enabled\n",
 		       __func__);
 
-	अगर (au0828_debug & 16)
+	if (au0828_debug & 16)
 		pr_info("%s() IR Debugging is enabled\n",
 		       __func__);
 
 	pr_info("au0828 driver loaded\n");
 
-	ret = usb_रेजिस्टर(&au0828_usb_driver);
-	अगर (ret)
+	ret = usb_register(&au0828_usb_driver);
+	if (ret)
 		pr_err("usb_register failed, error = %d\n", ret);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास au0828_निकास(व्योम)
-अणु
-	usb_deरेजिस्टर(&au0828_usb_driver);
-पूर्ण
+static void __exit au0828_exit(void)
+{
+	usb_deregister(&au0828_usb_driver);
+}
 
 module_init(au0828_init);
-module_निकास(au0828_निकास);
+module_exit(au0828_exit);
 
 MODULE_DESCRIPTION("Driver for Auvitek AU0828 based products");
 MODULE_AUTHOR("Steven Toth <stoth@linuxtv.org>");

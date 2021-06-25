@@ -1,84 +1,83 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 //
-// Spपढ़ोtrum भागider घड़ी driver
+// Spreadtrum divider clock driver
 //
-// Copyright (C) 2017 Spपढ़ोtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
+// Copyright (C) 2017 Spreadtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
 
-#अगर_अघोषित _SPRD_DIV_H_
-#घोषणा _SPRD_DIV_H_
+#ifndef _SPRD_DIV_H_
+#define _SPRD_DIV_H_
 
-#समावेश "common.h"
+#include "common.h"
 
 /**
- * काष्ठा sprd_भाग_पूर्णांकernal - Internal भागider description
- * @shअगरt: Bit offset of the भागider in its रेजिस्टर
- * @width: Width of the भागider field in its रेजिस्टर
+ * struct sprd_div_internal - Internal divider description
+ * @shift: Bit offset of the divider in its register
+ * @width: Width of the divider field in its register
  *
- * That काष्ठाure represents a single भागider, and is meant to be
- * embedded in other काष्ठाures representing the various घड़ी
+ * That structure represents a single divider, and is meant to be
+ * embedded in other structures representing the various clock
  * classes.
  */
-काष्ठा sprd_भाग_पूर्णांकernal अणु
-	u8	shअगरt;
+struct sprd_div_internal {
+	u8	shift;
 	u8	width;
-पूर्ण;
+};
 
-#घोषणा _SPRD_DIV_CLK(_shअगरt, _width)	\
-	अणु				\
-		.shअगरt	= _shअगरt,	\
+#define _SPRD_DIV_CLK(_shift, _width)	\
+	{				\
+		.shift	= _shift,	\
 		.width	= _width,	\
-	पूर्ण
+	}
 
-काष्ठा sprd_भाग अणु
-	काष्ठा sprd_भाग_पूर्णांकernal	भाग;
-	काष्ठा sprd_clk_common	common;
-पूर्ण;
+struct sprd_div {
+	struct sprd_div_internal	div;
+	struct sprd_clk_common	common;
+};
 
-#घोषणा SPRD_DIV_CLK_HW_INIT_FN(_काष्ठा, _name, _parent, _reg,		\
-				_shअगरt, _width, _flags, _fn)		\
-	काष्ठा sprd_भाग _काष्ठा = अणु					\
-		.भाग	= _SPRD_DIV_CLK(_shअगरt, _width),		\
-		.common	= अणु						\
-			.regmap		= शून्य,				\
+#define SPRD_DIV_CLK_HW_INIT_FN(_struct, _name, _parent, _reg,		\
+				_shift, _width, _flags, _fn)		\
+	struct sprd_div _struct = {					\
+		.div	= _SPRD_DIV_CLK(_shift, _width),		\
+		.common	= {						\
+			.regmap		= NULL,				\
 			.reg		= _reg,				\
 			.hw.init	= _fn(_name, _parent,		\
-					      &sprd_भाग_ops, _flags),	\
-		पूर्ण							\
-	पूर्ण
+					      &sprd_div_ops, _flags),	\
+		}							\
+	}
 
-#घोषणा SPRD_DIV_CLK(_काष्ठा, _name, _parent, _reg,			\
-		     _shअगरt, _width, _flags)				\
-	SPRD_DIV_CLK_HW_INIT_FN(_काष्ठा, _name, _parent, _reg,		\
-				_shअगरt, _width, _flags, CLK_HW_INIT)
+#define SPRD_DIV_CLK(_struct, _name, _parent, _reg,			\
+		     _shift, _width, _flags)				\
+	SPRD_DIV_CLK_HW_INIT_FN(_struct, _name, _parent, _reg,		\
+				_shift, _width, _flags, CLK_HW_INIT)
 
-#घोषणा SPRD_DIV_CLK_HW(_काष्ठा, _name, _parent, _reg,			\
-			_shअगरt, _width, _flags)				\
-	SPRD_DIV_CLK_HW_INIT_FN(_काष्ठा, _name, _parent, _reg,		\
-				_shअगरt, _width, _flags, CLK_HW_INIT_HW)
+#define SPRD_DIV_CLK_HW(_struct, _name, _parent, _reg,			\
+			_shift, _width, _flags)				\
+	SPRD_DIV_CLK_HW_INIT_FN(_struct, _name, _parent, _reg,		\
+				_shift, _width, _flags, CLK_HW_INIT_HW)
 
-अटल अंतरभूत काष्ठा sprd_भाग *hw_to_sprd_भाग(स्थिर काष्ठा clk_hw *hw)
-अणु
-	काष्ठा sprd_clk_common *common = hw_to_sprd_clk_common(hw);
+static inline struct sprd_div *hw_to_sprd_div(const struct clk_hw *hw)
+{
+	struct sprd_clk_common *common = hw_to_sprd_clk_common(hw);
 
-	वापस container_of(common, काष्ठा sprd_भाग, common);
-पूर्ण
+	return container_of(common, struct sprd_div, common);
+}
 
-दीर्घ sprd_भाग_helper_round_rate(काष्ठा sprd_clk_common *common,
-				स्थिर काष्ठा sprd_भाग_पूर्णांकernal *भाग,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ *parent_rate);
+long sprd_div_helper_round_rate(struct sprd_clk_common *common,
+				const struct sprd_div_internal *div,
+				unsigned long rate,
+				unsigned long *parent_rate);
 
-अचिन्हित दीर्घ sprd_भाग_helper_recalc_rate(काष्ठा sprd_clk_common *common,
-					  स्थिर काष्ठा sprd_भाग_पूर्णांकernal *भाग,
-					  अचिन्हित दीर्घ parent_rate);
+unsigned long sprd_div_helper_recalc_rate(struct sprd_clk_common *common,
+					  const struct sprd_div_internal *div,
+					  unsigned long parent_rate);
 
-पूर्णांक sprd_भाग_helper_set_rate(स्थिर काष्ठा sprd_clk_common *common,
-			     स्थिर काष्ठा sprd_भाग_पूर्णांकernal *भाग,
-			     अचिन्हित दीर्घ rate,
-			     अचिन्हित दीर्घ parent_rate);
+int sprd_div_helper_set_rate(const struct sprd_clk_common *common,
+			     const struct sprd_div_internal *div,
+			     unsigned long rate,
+			     unsigned long parent_rate);
 
-बाह्य स्थिर काष्ठा clk_ops sprd_भाग_ops;
+extern const struct clk_ops sprd_div_ops;
 
-#पूर्ण_अगर /* _SPRD_DIV_H_ */
+#endif /* _SPRD_DIV_H_ */

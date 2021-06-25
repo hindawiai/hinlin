@@ -1,107 +1,106 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Fault injection क्रम both 32 and 64bit guests.
+ * Fault injection for both 32 and 64bit guests.
  *
  * Copyright (C) 2012,2013 - ARM Ltd
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  *
  * Based on arch/arm/kvm/emulate.c
  * Copyright (C) 2012 - Virtual Open Systems and Columbia University
- * Author: Christoffer Dall <c.dall@भवखोलोप्रणालीs.com>
+ * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
-#समावेश <hyp/adjust_pc.h>
-#समावेश <linux/kvm_host.h>
-#समावेश <यंत्र/kvm_emulate.h>
+#include <hyp/adjust_pc.h>
+#include <linux/kvm_host.h>
+#include <asm/kvm_emulate.h>
 
-#अगर !defined (__KVM_NVHE_HYPERVISOR__) && !defined (__KVM_VHE_HYPERVISOR__)
-#त्रुटि Hypervisor code only!
-#पूर्ण_अगर
+#if !defined (__KVM_NVHE_HYPERVISOR__) && !defined (__KVM_VHE_HYPERVISOR__)
+#error Hypervisor code only!
+#endif
 
-अटल अंतरभूत u64 __vcpu_पढ़ो_sys_reg(स्थिर काष्ठा kvm_vcpu *vcpu, पूर्णांक reg)
-अणु
+static inline u64 __vcpu_read_sys_reg(const struct kvm_vcpu *vcpu, int reg)
+{
 	u64 val;
 
-	अगर (__vcpu_पढ़ो_sys_reg_from_cpu(reg, &val))
-		वापस val;
+	if (__vcpu_read_sys_reg_from_cpu(reg, &val))
+		return val;
 
-	वापस __vcpu_sys_reg(vcpu, reg);
-पूर्ण
+	return __vcpu_sys_reg(vcpu, reg);
+}
 
-अटल अंतरभूत व्योम __vcpu_ग_लिखो_sys_reg(काष्ठा kvm_vcpu *vcpu, u64 val, पूर्णांक reg)
-अणु
-	अगर (__vcpu_ग_लिखो_sys_reg_to_cpu(val, reg))
-		वापस;
+static inline void __vcpu_write_sys_reg(struct kvm_vcpu *vcpu, u64 val, int reg)
+{
+	if (__vcpu_write_sys_reg_to_cpu(val, reg))
+		return;
 
 	 __vcpu_sys_reg(vcpu, reg) = val;
-पूर्ण
+}
 
-अटल व्योम __vcpu_ग_लिखो_spsr(काष्ठा kvm_vcpu *vcpu, u64 val)
-अणु
-	ग_लिखो_sysreg_el1(val, SYS_SPSR);
-पूर्ण
+static void __vcpu_write_spsr(struct kvm_vcpu *vcpu, u64 val)
+{
+	write_sysreg_el1(val, SYS_SPSR);
+}
 
-अटल व्योम __vcpu_ग_लिखो_spsr_abt(काष्ठा kvm_vcpu *vcpu, u64 val)
-अणु
-	अगर (has_vhe())
-		ग_लिखो_sysreg(val, spsr_abt);
-	अन्यथा
+static void __vcpu_write_spsr_abt(struct kvm_vcpu *vcpu, u64 val)
+{
+	if (has_vhe())
+		write_sysreg(val, spsr_abt);
+	else
 		vcpu->arch.ctxt.spsr_abt = val;
-पूर्ण
+}
 
-अटल व्योम __vcpu_ग_लिखो_spsr_und(काष्ठा kvm_vcpu *vcpu, u64 val)
-अणु
-	अगर (has_vhe())
-		ग_लिखो_sysreg(val, spsr_und);
-	अन्यथा
+static void __vcpu_write_spsr_und(struct kvm_vcpu *vcpu, u64 val)
+{
+	if (has_vhe())
+		write_sysreg(val, spsr_und);
+	else
 		vcpu->arch.ctxt.spsr_und = val;
-पूर्ण
+}
 
 /*
- * This perक्रमms the exception entry at a given EL (@target_mode), stashing PC
- * and PSTATE पूर्णांकo ELR and SPSR respectively, and compute the new PC/PSTATE.
+ * This performs the exception entry at a given EL (@target_mode), stashing PC
+ * and PSTATE into ELR and SPSR respectively, and compute the new PC/PSTATE.
  * The EL passed to this function *must* be a non-secure, privileged mode with
  * bit 0 being set (PSTATE.SP == 1).
  *
  * When an exception is taken, most PSTATE fields are left unchanged in the
  * handler. However, some are explicitly overridden (e.g. M[4:0]). Luckily all
  * of the inherited bits have the same position in the AArch64/AArch32 SPSR_ELx
- * layouts, so we करोn't need to shuffle these क्रम exceptions from AArch32 EL0.
+ * layouts, so we don't need to shuffle these for exceptions from AArch32 EL0.
  *
- * For the SPSR_ELx layout क्रम AArch64, see ARM DDI 0487E.a page C5-429.
- * For the SPSR_ELx layout क्रम AArch32, see ARM DDI 0487E.a page C5-426.
+ * For the SPSR_ELx layout for AArch64, see ARM DDI 0487E.a page C5-429.
+ * For the SPSR_ELx layout for AArch32, see ARM DDI 0487E.a page C5-426.
  *
  * Here we manipulate the fields in order of the AArch64 SPSR_ELx layout, from
  * MSB to LSB.
  */
-अटल व्योम enter_exception64(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ target_mode,
-			      क्रमागत exception_type type)
-अणु
-	अचिन्हित दीर्घ sctlr, vbar, old, new, mode;
+static void enter_exception64(struct kvm_vcpu *vcpu, unsigned long target_mode,
+			      enum exception_type type)
+{
+	unsigned long sctlr, vbar, old, new, mode;
 	u64 exc_offset;
 
 	mode = *vcpu_cpsr(vcpu) & (PSR_MODE_MASK | PSR_MODE32_BIT);
 
-	अगर      (mode == target_mode)
+	if      (mode == target_mode)
 		exc_offset = CURRENT_EL_SP_ELx_VECTOR;
-	अन्यथा अगर ((mode | PSR_MODE_THREAD_BIT) == target_mode)
+	else if ((mode | PSR_MODE_THREAD_BIT) == target_mode)
 		exc_offset = CURRENT_EL_SP_EL0_VECTOR;
-	अन्यथा अगर (!(mode & PSR_MODE32_BIT))
+	else if (!(mode & PSR_MODE32_BIT))
 		exc_offset = LOWER_EL_AArch64_VECTOR;
-	अन्यथा
+	else
 		exc_offset = LOWER_EL_AArch32_VECTOR;
 
-	चयन (target_mode) अणु
-	हाल PSR_MODE_EL1h:
-		vbar = __vcpu_पढ़ो_sys_reg(vcpu, VBAR_EL1);
-		sctlr = __vcpu_पढ़ो_sys_reg(vcpu, SCTLR_EL1);
-		__vcpu_ग_लिखो_sys_reg(vcpu, *vcpu_pc(vcpu), ELR_EL1);
-		अवरोध;
-	शेष:
-		/* Don't करो that */
+	switch (target_mode) {
+	case PSR_MODE_EL1h:
+		vbar = __vcpu_read_sys_reg(vcpu, VBAR_EL1);
+		sctlr = __vcpu_read_sys_reg(vcpu, SCTLR_EL1);
+		__vcpu_write_sys_reg(vcpu, *vcpu_pc(vcpu), ELR_EL1);
+		break;
+	default:
+		/* Don't do that */
 		BUG();
-	पूर्ण
+	}
 
 	*vcpu_pc(vcpu) = vbar + exc_offset + type;
 
@@ -113,7 +112,7 @@
 	new |= (old & PSR_C_BIT);
 	new |= (old & PSR_V_BIT);
 
-	// TODO: TCO (अगर/when ARMv8.5-MemTag is exposed to guests)
+	// TODO: TCO (if/when ARMv8.5-MemTag is exposed to guests)
 
 	new |= (old & PSR_DIT_BIT);
 
@@ -124,7 +123,7 @@
 	// SCTLR_ELx.SPAN is RES1 when ARMv8.1-PAN is not implemented
 	// See ARM DDI 0487E.a, page D5-2578.
 	new |= (old & PSR_PAN_BIT);
-	अगर (!(sctlr & SCTLR_EL1_SPAN))
+	if (!(sctlr & SCTLR_EL1_SPAN))
 		new |= PSR_PAN_BIT;
 
 	// PSTATE.SS is set to zero upon any exception to AArch64
@@ -135,7 +134,7 @@
 
 	// PSTATE.SSBS is set to SCTLR_ELx.DSSBS upon any exception to AArch64
 	// See ARM DDI 0487E.a, page D13-3258
-	अगर (sctlr & SCTLR_ELx_DSSBS)
+	if (sctlr & SCTLR_ELx_DSSBS)
 		new |= PSR_SSBS_BIT;
 
 	// PSTATE.BTYPE is set to zero upon any exception to AArch64
@@ -149,31 +148,31 @@
 	new |= target_mode;
 
 	*vcpu_cpsr(vcpu) = new;
-	__vcpu_ग_लिखो_spsr(vcpu, old);
-पूर्ण
+	__vcpu_write_spsr(vcpu, old);
+}
 
 /*
  * When an exception is taken, most CPSR fields are left unchanged in the
  * handler. However, some are explicitly overridden (e.g. M[4:0]).
  *
- * The SPSR/SPSR_ELx layouts dअगरfer, and the below is पूर्णांकended to work with
- * either क्रमmat. Note: SPSR.J bit करोesn't exist in SPSR_ELx, but this bit was
- * obsoleted by the ARMv7 भवization extensions and is RES0.
+ * The SPSR/SPSR_ELx layouts differ, and the below is intended to work with
+ * either format. Note: SPSR.J bit doesn't exist in SPSR_ELx, but this bit was
+ * obsoleted by the ARMv7 virtualization extensions and is RES0.
  *
  * For the SPSR layout seen from AArch32, see:
  * - ARM DDI 0406C.d, page B1-1148
  * - ARM DDI 0487E.a, page G8-6264
  *
- * For the SPSR_ELx layout क्रम AArch32 seen from AArch64, see:
+ * For the SPSR_ELx layout for AArch32 seen from AArch64, see:
  * - ARM DDI 0487E.a, page C5-426
  *
  * Here we manipulate the fields in order of the AArch32 SPSR_ELx layout, from
  * MSB to LSB.
  */
-अटल अचिन्हित दीर्घ get_except32_cpsr(काष्ठा kvm_vcpu *vcpu, u32 mode)
-अणु
-	u32 sctlr = __vcpu_पढ़ो_sys_reg(vcpu, SCTLR_EL1);
-	अचिन्हित दीर्घ old, new;
+static unsigned long get_except32_cpsr(struct kvm_vcpu *vcpu, u32 mode)
+{
+	u32 sctlr = __vcpu_read_sys_reg(vcpu, SCTLR_EL1);
+	unsigned long old, new;
 
 	old = *vcpu_cpsr(vcpu);
 	new = 0;
@@ -192,17 +191,17 @@
 
 	// CPSR.SSBS is set to SCTLR.DSSBS upon any exception
 	// See ARM DDI 0487E.a, page G8-6244
-	अगर (sctlr & BIT(31))
+	if (sctlr & BIT(31))
 		new |= PSR_AA32_SSBS_BIT;
 
 	// CPSR.PAN is unchanged unless SCTLR.SPAN == 0b0
 	// SCTLR.SPAN is RES1 when ARMv8.1-PAN is not implemented
 	// See ARM DDI 0487E.a, page G8-6246
 	new |= (old & PSR_AA32_PAN_BIT);
-	अगर (!(sctlr & BIT(23)))
+	if (!(sctlr & BIT(23)))
 		new |= PSR_AA32_PAN_BIT;
 
-	// SS करोes not exist in AArch32, so ignore
+	// SS does not exist in AArch32, so ignore
 
 	// CPSR.IL is set to zero upon any exception
 	// See ARM DDI 0487E.a, page G1-5527
@@ -215,7 +214,7 @@
 	// CPSR.E is set to SCTLR.EE upon any exception
 	// See ARM DDI 0487E.a, page G8-6245
 	// See ARM DDI 0406C.d, page B4-1701
-	अगर (sctlr & BIT(25))
+	if (sctlr & BIT(25))
 		new |= PSR_AA32_E_BIT;
 
 	// CPSR.A is unchanged upon an exception to Undefined, Supervisor
@@ -223,7 +222,7 @@
 	// See ARM DDI 0487E.a, pages G1-5515 to G1-5516
 	// See ARM DDI 0406C.d, page B1-1182
 	new |= (old & PSR_AA32_A_BIT);
-	अगर (mode != PSR_AA32_MODE_UND && mode != PSR_AA32_MODE_SVC)
+	if (mode != PSR_AA32_MODE_UND && mode != PSR_AA32_MODE_SVC)
 		new |= PSR_AA32_A_BIT;
 
 	// CPSR.I is set upon any exception
@@ -236,113 +235,113 @@
 	// See ARM DDI 0487E.a, pages G1-5515 to G1-5516
 	// See ARM DDI 0406C.d, page B1-1182
 	new |= (old & PSR_AA32_F_BIT);
-	अगर (mode == PSR_AA32_MODE_FIQ)
+	if (mode == PSR_AA32_MODE_FIQ)
 		new |= PSR_AA32_F_BIT;
 
 	// CPSR.T is set to SCTLR.TE upon any exception
 	// See ARM DDI 0487E.a, page G8-5514
 	// See ARM DDI 0406C.d, page B1-1181
-	अगर (sctlr & BIT(30))
+	if (sctlr & BIT(30))
 		new |= PSR_AA32_T_BIT;
 
 	new |= mode;
 
-	वापस new;
-पूर्ण
+	return new;
+}
 
 /*
  * Table taken from ARMv8 ARM DDI0487B-B, table G1-10.
  */
-अटल स्थिर u8 वापस_offsets[8][2] = अणु
-	[0] = अणु 0, 0 पूर्ण,		/* Reset, unused */
-	[1] = अणु 4, 2 पूर्ण,		/* Undefined */
-	[2] = अणु 0, 0 पूर्ण,		/* SVC, unused */
-	[3] = अणु 4, 4 पूर्ण,		/* Prefetch पात */
-	[4] = अणु 8, 8 पूर्ण,		/* Data पात */
-	[5] = अणु 0, 0 पूर्ण,		/* HVC, unused */
-	[6] = अणु 4, 4 पूर्ण,		/* IRQ, unused */
-	[7] = अणु 4, 4 पूर्ण,		/* FIQ, unused */
-पूर्ण;
+static const u8 return_offsets[8][2] = {
+	[0] = { 0, 0 },		/* Reset, unused */
+	[1] = { 4, 2 },		/* Undefined */
+	[2] = { 0, 0 },		/* SVC, unused */
+	[3] = { 4, 4 },		/* Prefetch abort */
+	[4] = { 8, 8 },		/* Data abort */
+	[5] = { 0, 0 },		/* HVC, unused */
+	[6] = { 4, 4 },		/* IRQ, unused */
+	[7] = { 4, 4 },		/* FIQ, unused */
+};
 
-अटल व्योम enter_exception32(काष्ठा kvm_vcpu *vcpu, u32 mode, u32 vect_offset)
-अणु
-	अचिन्हित दीर्घ spsr = *vcpu_cpsr(vcpu);
+static void enter_exception32(struct kvm_vcpu *vcpu, u32 mode, u32 vect_offset)
+{
+	unsigned long spsr = *vcpu_cpsr(vcpu);
 	bool is_thumb = (spsr & PSR_AA32_T_BIT);
-	u32 sctlr = __vcpu_पढ़ो_sys_reg(vcpu, SCTLR_EL1);
-	u32 वापस_address;
+	u32 sctlr = __vcpu_read_sys_reg(vcpu, SCTLR_EL1);
+	u32 return_address;
 
 	*vcpu_cpsr(vcpu) = get_except32_cpsr(vcpu, mode);
-	वापस_address   = *vcpu_pc(vcpu);
-	वापस_address  += वापस_offsets[vect_offset >> 2][is_thumb];
+	return_address   = *vcpu_pc(vcpu);
+	return_address  += return_offsets[vect_offset >> 2][is_thumb];
 
 	/* KVM only enters the ABT and UND modes, so only deal with those */
-	चयन(mode) अणु
-	हाल PSR_AA32_MODE_ABT:
-		__vcpu_ग_लिखो_spsr_abt(vcpu, host_spsr_to_spsr32(spsr));
-		vcpu_gp_regs(vcpu)->compat_lr_abt = वापस_address;
-		अवरोध;
+	switch(mode) {
+	case PSR_AA32_MODE_ABT:
+		__vcpu_write_spsr_abt(vcpu, host_spsr_to_spsr32(spsr));
+		vcpu_gp_regs(vcpu)->compat_lr_abt = return_address;
+		break;
 
-	हाल PSR_AA32_MODE_UND:
-		__vcpu_ग_लिखो_spsr_und(vcpu, host_spsr_to_spsr32(spsr));
-		vcpu_gp_regs(vcpu)->compat_lr_und = वापस_address;
-		अवरोध;
-	पूर्ण
+	case PSR_AA32_MODE_UND:
+		__vcpu_write_spsr_und(vcpu, host_spsr_to_spsr32(spsr));
+		vcpu_gp_regs(vcpu)->compat_lr_und = return_address;
+		break;
+	}
 
 	/* Branch to exception vector */
-	अगर (sctlr & (1 << 13))
+	if (sctlr & (1 << 13))
 		vect_offset += 0xffff0000;
-	अन्यथा /* always have security exceptions */
-		vect_offset += __vcpu_पढ़ो_sys_reg(vcpu, VBAR_EL1);
+	else /* always have security exceptions */
+		vect_offset += __vcpu_read_sys_reg(vcpu, VBAR_EL1);
 
 	*vcpu_pc(vcpu) = vect_offset;
-पूर्ण
+}
 
-अटल व्योम kvm_inject_exception(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (vcpu_el1_is_32bit(vcpu)) अणु
-		चयन (vcpu->arch.flags & KVM_ARM64_EXCEPT_MASK) अणु
-		हाल KVM_ARM64_EXCEPT_AA32_UND:
+static void kvm_inject_exception(struct kvm_vcpu *vcpu)
+{
+	if (vcpu_el1_is_32bit(vcpu)) {
+		switch (vcpu->arch.flags & KVM_ARM64_EXCEPT_MASK) {
+		case KVM_ARM64_EXCEPT_AA32_UND:
 			enter_exception32(vcpu, PSR_AA32_MODE_UND, 4);
-			अवरोध;
-		हाल KVM_ARM64_EXCEPT_AA32_IABT:
+			break;
+		case KVM_ARM64_EXCEPT_AA32_IABT:
 			enter_exception32(vcpu, PSR_AA32_MODE_ABT, 12);
-			अवरोध;
-		हाल KVM_ARM64_EXCEPT_AA32_DABT:
+			break;
+		case KVM_ARM64_EXCEPT_AA32_DABT:
 			enter_exception32(vcpu, PSR_AA32_MODE_ABT, 16);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/* Err... */
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (vcpu->arch.flags & KVM_ARM64_EXCEPT_MASK) अणु
-		हाल (KVM_ARM64_EXCEPT_AA64_ELx_SYNC |
+			break;
+		}
+	} else {
+		switch (vcpu->arch.flags & KVM_ARM64_EXCEPT_MASK) {
+		case (KVM_ARM64_EXCEPT_AA64_ELx_SYNC |
 		      KVM_ARM64_EXCEPT_AA64_EL1):
 			enter_exception64(vcpu, PSR_MODE_EL1h, except_type_sync);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*
-			 * Only EL1_SYNC makes sense so far, EL2_अणुSYNC,IRQपूर्ण
-			 * will be implemented at some poपूर्णांक. Everything
-			 * अन्यथा माला_लो silently ignored.
+			 * Only EL1_SYNC makes sense so far, EL2_{SYNC,IRQ}
+			 * will be implemented at some point. Everything
+			 * else gets silently ignored.
 			 */
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
 /*
  * Adjust the guest PC (and potentially exception state) depending on
  * flags provided by the emulation code.
  */
-व्योम __kvm_adjust_pc(काष्ठा kvm_vcpu *vcpu)
-अणु
-	अगर (vcpu->arch.flags & KVM_ARM64_PENDING_EXCEPTION) अणु
+void __kvm_adjust_pc(struct kvm_vcpu *vcpu)
+{
+	if (vcpu->arch.flags & KVM_ARM64_PENDING_EXCEPTION) {
 		kvm_inject_exception(vcpu);
 		vcpu->arch.flags &= ~(KVM_ARM64_PENDING_EXCEPTION |
 				      KVM_ARM64_EXCEPT_MASK);
-	पूर्ण अन्यथा 	अगर (vcpu->arch.flags & KVM_ARM64_INCREMENT_PC) अणु
+	} else 	if (vcpu->arch.flags & KVM_ARM64_INCREMENT_PC) {
 		kvm_skip_instr(vcpu);
 		vcpu->arch.flags &= ~KVM_ARM64_INCREMENT_PC;
-	पूर्ण
-पूर्ण
+	}
+}

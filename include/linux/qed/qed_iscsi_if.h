@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
+/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#अगर_अघोषित _QED_ISCSI_IF_H
-#घोषणा _QED_ISCSI_IF_H
-#समावेश <linux/types.h>
-#समावेश <linux/qed/qed_अगर.h>
+#ifndef _QED_ISCSI_IF_H
+#define _QED_ISCSI_IF_H
+#include <linux/types.h>
+#include <linux/qed/qed_if.h>
 
-प्रकार पूर्णांक (*iscsi_event_cb_t) (व्योम *context,
-				 u8 fw_event_code, व्योम *fw_handle);
-काष्ठा qed_iscsi_stats अणु
+typedef int (*iscsi_event_cb_t) (void *context,
+				 u8 fw_event_code, void *fw_handle);
+struct qed_iscsi_stats {
 	u64 iscsi_rx_bytes_cnt;
 	u64 iscsi_rx_packet_cnt;
 	u64 iscsi_rx_new_ooo_isle_events_cnt;
@@ -35,34 +34,34 @@
 
 	u64 iscsi_tx_bytes_cnt;
 	u64 iscsi_tx_packet_cnt;
-पूर्ण;
+};
 
-काष्ठा qed_dev_iscsi_info अणु
-	काष्ठा qed_dev_info common;
+struct qed_dev_iscsi_info {
+	struct qed_dev_info common;
 
-	व्योम __iomem *primary_dbq_rq_addr;
-	व्योम __iomem *secondary_bdq_rq_addr;
+	void __iomem *primary_dbq_rq_addr;
+	void __iomem *secondary_bdq_rq_addr;
 
 	u8 num_cqs;
-पूर्ण;
+};
 
-काष्ठा qed_iscsi_id_params अणु
+struct qed_iscsi_id_params {
 	u8 mac[ETH_ALEN];
 	u32 ip[4];
 	u16 port;
-पूर्ण;
+};
 
-काष्ठा qed_iscsi_params_offload अणु
+struct qed_iscsi_params_offload {
 	u8 layer_code;
 	dma_addr_t sq_pbl_addr;
 	u32 initial_ack;
 
-	काष्ठा qed_iscsi_id_params src;
-	काष्ठा qed_iscsi_id_params dst;
+	struct qed_iscsi_id_params src;
+	struct qed_iscsi_id_params dst;
 	u16 vlan_id;
 	u8 tcp_flags;
 	u8 ip_version;
-	u8 शेष_cq;
+	u8 default_cq;
 
 	u8 ka_max_probe_cnt;
 	u8 dup_ack_theshold;
@@ -80,16 +79,16 @@
 	u32 ts_recent;
 	u32 ts_recent_age;
 	u32 total_rt;
-	u32 ka_समयout_delta;
-	u32 rt_समयout_delta;
+	u32 ka_timeout_delta;
+	u32 rt_timeout_delta;
 	u8 dup_ack_cnt;
 	u8 snd_wnd_probe_cnt;
 	u8 ka_probe_cnt;
 	u8 rt_cnt;
 	u32 flow_label;
-	u32 ka_समयout;
-	u32 ka_पूर्णांकerval;
-	u32 max_rt_समय;
+	u32 ka_timeout;
+	u32 ka_interval;
+	u32 max_rt_time;
 	u32 initial_rcv_wnd;
 	u8 ttl;
 	u8 tos_or_tc;
@@ -98,138 +97,138 @@
 	u16 mss;
 	u8 snd_wnd_scale;
 	u8 rcv_wnd_scale;
-	u16 da_समयout_value;
+	u16 da_timeout_value;
 	u8 ack_frequency;
-पूर्ण;
+};
 
-काष्ठा qed_iscsi_params_update अणु
+struct qed_iscsi_params_update {
 	u8 update_flag;
-#घोषणा QED_ISCSI_CONN_HD_EN            BIT(0)
-#घोषणा QED_ISCSI_CONN_DD_EN            BIT(1)
-#घोषणा QED_ISCSI_CONN_INITIAL_R2T      BIT(2)
-#घोषणा QED_ISCSI_CONN_IMMEDIATE_DATA   BIT(3)
+#define QED_ISCSI_CONN_HD_EN            BIT(0)
+#define QED_ISCSI_CONN_DD_EN            BIT(1)
+#define QED_ISCSI_CONN_INITIAL_R2T      BIT(2)
+#define QED_ISCSI_CONN_IMMEDIATE_DATA   BIT(3)
 
 	u32 max_seq_size;
 	u32 max_recv_pdu_length;
 	u32 max_send_pdu_length;
 	u32 first_seq_length;
 	u32 exp_stat_sn;
-पूर्ण;
+};
 
-#घोषणा MAX_TID_BLOCKS_ISCSI (512)
-काष्ठा qed_iscsi_tid अणु
+#define MAX_TID_BLOCKS_ISCSI (512)
+struct qed_iscsi_tid {
 	u32 size;		/* In bytes per task */
 	u32 num_tids_per_block;
 	u8 *blocks[MAX_TID_BLOCKS_ISCSI];
-पूर्ण;
+};
 
-काष्ठा qed_iscsi_cb_ops अणु
-	काष्ठा qed_common_cb_ops common;
-पूर्ण;
+struct qed_iscsi_cb_ops {
+	struct qed_common_cb_ops common;
+};
 
 /**
- * काष्ठा qed_iscsi_ops - qed iSCSI operations.
- * @common:		common operations poपूर्णांकer
- * @ll2:		light L2 operations poपूर्णांकer
- * @fill_dev_info:	fills iSCSI specअगरic inक्रमmation
+ * struct qed_iscsi_ops - qed iSCSI operations.
+ * @common:		common operations pointer
+ * @ll2:		light L2 operations pointer
+ * @fill_dev_info:	fills iSCSI specific information
  *			@param cdev
  *			@param info
- *			@वापस 0 on sucesss, otherwise error value.
- * @रेजिस्टर_ops:	रेजिस्टर iscsi operations
+ *			@return 0 on sucesss, otherwise error value.
+ * @register_ops:	register iscsi operations
  *			@param cdev
- *			@param ops - specअगरied using qed_iscsi_cb_ops
- *			@param cookie - driver निजी
+ *			@param ops - specified using qed_iscsi_cb_ops
+ *			@param cookie - driver private
  * @start:		iscsi in FW
  *			@param cdev
- *			@param tasks - qed will fill inक्रमmation about tasks
- *			वापस 0 on success, otherwise error value.
+ *			@param tasks - qed will fill information about tasks
+ *			return 0 on success, otherwise error value.
  * @stop:		iscsi in FW
  *			@param cdev
- *			वापस 0 on success, otherwise error value.
+ *			return 0 on success, otherwise error value.
  * @acquire_conn:	acquire a new iscsi connection
  *			@param cdev
  *			@param handle - qed will fill handle that should be
- *				used henceक्रमth as identअगरier of the
+ *				used henceforth as identifier of the
  *				connection.
- *			@param p_करोorbell - qed will fill the address of the
- *				करोorbell.
- *			@वापस 0 on sucesss, otherwise error value.
+ *			@param p_doorbell - qed will fill the address of the
+ *				doorbell.
+ *			@return 0 on sucesss, otherwise error value.
  * @release_conn:	release a previously acquired iscsi connection
  *			@param cdev
  *			@param handle - the connection handle.
- *			@वापस 0 on success, otherwise error value.
+ *			@return 0 on success, otherwise error value.
  * @offload_conn:	configures an offloaded connection
  *			@param cdev
  *			@param handle - the connection handle.
- *			@param conn_info - the configuration to use क्रम the
+ *			@param conn_info - the configuration to use for the
  *				offload.
- *			@वापस 0 on success, otherwise error value.
+ *			@return 0 on success, otherwise error value.
  * @update_conn:	updates an offloaded connection
  *			@param cdev
  *			@param handle - the connection handle.
- *			@param conn_info - the configuration to use क्रम the
+ *			@param conn_info - the configuration to use for the
  *				offload.
- *			@वापस 0 on success, otherwise error value.
+ *			@return 0 on success, otherwise error value.
  * @destroy_conn:	stops an offloaded connection
  *			@param cdev
  *			@param handle - the connection handle.
- *			@वापस 0 on success, otherwise error value.
+ *			@return 0 on success, otherwise error value.
  * @clear_sq:		clear all task in sq
  *			@param cdev
  *			@param handle - the connection handle.
- *			@वापस 0 on success, otherwise error value.
+ *			@return 0 on success, otherwise error value.
  * @get_stats:		iSCSI related statistics
  *			@param cdev
- *			@param stats - poपूर्णांकer to struck that would be filled
+ *			@param stats - pointer to struck that would be filled
  *				we stats
- *			@वापस 0 on success, error otherwise.
- * @change_mac		Change MAC of पूर्णांकerface
+ *			@return 0 on success, error otherwise.
+ * @change_mac		Change MAC of interface
  *			@param cdev
  *			@param handle - the connection handle.
  *			@param mac - new MAC to configure.
- *			@वापस 0 on success, otherwise error value.
+ *			@return 0 on success, otherwise error value.
  */
-काष्ठा qed_iscsi_ops अणु
-	स्थिर काष्ठा qed_common_ops *common;
+struct qed_iscsi_ops {
+	const struct qed_common_ops *common;
 
-	स्थिर काष्ठा qed_ll2_ops *ll2;
+	const struct qed_ll2_ops *ll2;
 
-	पूर्णांक (*fill_dev_info)(काष्ठा qed_dev *cdev,
-			     काष्ठा qed_dev_iscsi_info *info);
+	int (*fill_dev_info)(struct qed_dev *cdev,
+			     struct qed_dev_iscsi_info *info);
 
-	व्योम (*रेजिस्टर_ops)(काष्ठा qed_dev *cdev,
-			     काष्ठा qed_iscsi_cb_ops *ops, व्योम *cookie);
+	void (*register_ops)(struct qed_dev *cdev,
+			     struct qed_iscsi_cb_ops *ops, void *cookie);
 
-	पूर्णांक (*start)(काष्ठा qed_dev *cdev,
-		     काष्ठा qed_iscsi_tid *tasks,
-		     व्योम *event_context, iscsi_event_cb_t async_event_cb);
+	int (*start)(struct qed_dev *cdev,
+		     struct qed_iscsi_tid *tasks,
+		     void *event_context, iscsi_event_cb_t async_event_cb);
 
-	पूर्णांक (*stop)(काष्ठा qed_dev *cdev);
+	int (*stop)(struct qed_dev *cdev);
 
-	पूर्णांक (*acquire_conn)(काष्ठा qed_dev *cdev,
+	int (*acquire_conn)(struct qed_dev *cdev,
 			    u32 *handle,
-			    u32 *fw_cid, व्योम __iomem **p_करोorbell);
+			    u32 *fw_cid, void __iomem **p_doorbell);
 
-	पूर्णांक (*release_conn)(काष्ठा qed_dev *cdev, u32 handle);
+	int (*release_conn)(struct qed_dev *cdev, u32 handle);
 
-	पूर्णांक (*offload_conn)(काष्ठा qed_dev *cdev,
+	int (*offload_conn)(struct qed_dev *cdev,
 			    u32 handle,
-			    काष्ठा qed_iscsi_params_offload *conn_info);
+			    struct qed_iscsi_params_offload *conn_info);
 
-	पूर्णांक (*update_conn)(काष्ठा qed_dev *cdev,
+	int (*update_conn)(struct qed_dev *cdev,
 			   u32 handle,
-			   काष्ठा qed_iscsi_params_update *conn_info);
+			   struct qed_iscsi_params_update *conn_info);
 
-	पूर्णांक (*destroy_conn)(काष्ठा qed_dev *cdev, u32 handle, u8 abrt_conn);
+	int (*destroy_conn)(struct qed_dev *cdev, u32 handle, u8 abrt_conn);
 
-	पूर्णांक (*clear_sq)(काष्ठा qed_dev *cdev, u32 handle);
+	int (*clear_sq)(struct qed_dev *cdev, u32 handle);
 
-	पूर्णांक (*get_stats)(काष्ठा qed_dev *cdev,
-			 काष्ठा qed_iscsi_stats *stats);
+	int (*get_stats)(struct qed_dev *cdev,
+			 struct qed_iscsi_stats *stats);
 
-	पूर्णांक (*change_mac)(काष्ठा qed_dev *cdev, u32 handle, स्थिर u8 *mac);
-पूर्ण;
+	int (*change_mac)(struct qed_dev *cdev, u32 handle, const u8 *mac);
+};
 
-स्थिर काष्ठा qed_iscsi_ops *qed_get_iscsi_ops(व्योम);
-व्योम qed_put_iscsi_ops(व्योम);
-#पूर्ण_अगर
+const struct qed_iscsi_ops *qed_get_iscsi_ops(void);
+void qed_put_iscsi_ops(void);
+#endif

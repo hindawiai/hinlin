@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *   ALSA sequencer Timing queue handling
  *   Copyright (c) 1998-1999 by Frank van de Pol <fvdpol@coil.demon.nl>
@@ -8,618 +7,618 @@
  *   Nov. 13, 1999	Takashi Iwai <iwai@ww.uni-erlangen.de>
  *     - Queues are allocated dynamically via ioctl.
  *     - When owner client is deleted, all owned queues are deleted, too.
- *     - Owner of unlocked queue is kept unmodअगरied even अगर it is
+ *     - Owner of unlocked queue is kept unmodified even if it is
  *	 manipulated by other clients.
  *     - Owner field in SET_QUEUE_OWNER ioctl must be identical with the
  *       caller client.  i.e. Changing owner to a third client is not
  *       allowed.
  *
  *  Aug. 30, 2000	Takashi Iwai
- *     - Queues are managed in अटल array again, but with better way.
+ *     - Queues are managed in static array again, but with better way.
  *       The API itself is identical.
- *     - The queue is locked when काष्ठा snd_seq_queue poपूर्णांकer is वापसed via
- *       queueptr().  This poपूर्णांकer *MUST* be released afterward by
- *       queueमुक्त(ptr).
+ *     - The queue is locked when struct snd_seq_queue pointer is returned via
+ *       queueptr().  This pointer *MUST* be released afterward by
+ *       queuefree(ptr).
  *     - Addition of experimental sync support.
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <sound/core.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <sound/core.h>
 
-#समावेश "seq_memory.h"
-#समावेश "seq_queue.h"
-#समावेश "seq_clientmgr.h"
-#समावेश "seq_fifo.h"
-#समावेश "seq_timer.h"
-#समावेश "seq_info.h"
+#include "seq_memory.h"
+#include "seq_queue.h"
+#include "seq_clientmgr.h"
+#include "seq_fifo.h"
+#include "seq_timer.h"
+#include "seq_info.h"
 
 /* list of allocated queues */
-अटल काष्ठा snd_seq_queue *queue_list[SNDRV_SEQ_MAX_QUEUES];
-अटल DEFINE_SPINLOCK(queue_list_lock);
+static struct snd_seq_queue *queue_list[SNDRV_SEQ_MAX_QUEUES];
+static DEFINE_SPINLOCK(queue_list_lock);
 /* number of queues allocated */
-अटल पूर्णांक num_queues;
+static int num_queues;
 
-पूर्णांक snd_seq_queue_get_cur_queues(व्योम)
-अणु
-	वापस num_queues;
-पूर्ण
+int snd_seq_queue_get_cur_queues(void)
+{
+	return num_queues;
+}
 
 /*----------------------------------------------------------------*/
 
 /* assign queue id and insert to list */
-अटल पूर्णांक queue_list_add(काष्ठा snd_seq_queue *q)
-अणु
-	पूर्णांक i;
-	अचिन्हित दीर्घ flags;
+static int queue_list_add(struct snd_seq_queue *q)
+{
+	int i;
+	unsigned long flags;
 
 	spin_lock_irqsave(&queue_list_lock, flags);
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर (! queue_list[i]) अणु
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if (! queue_list[i]) {
 			queue_list[i] = q;
 			q->queue = i;
 			num_queues++;
 			spin_unlock_irqrestore(&queue_list_lock, flags);
-			वापस i;
-		पूर्ण
-	पूर्ण
+			return i;
+		}
+	}
 	spin_unlock_irqrestore(&queue_list_lock, flags);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा snd_seq_queue *queue_list_हटाओ(पूर्णांक id, पूर्णांक client)
-अणु
-	काष्ठा snd_seq_queue *q;
-	अचिन्हित दीर्घ flags;
+static struct snd_seq_queue *queue_list_remove(int id, int client)
+{
+	struct snd_seq_queue *q;
+	unsigned long flags;
 
 	spin_lock_irqsave(&queue_list_lock, flags);
 	q = queue_list[id];
-	अगर (q) अणु
+	if (q) {
 		spin_lock(&q->owner_lock);
-		अगर (q->owner == client) अणु
+		if (q->owner == client) {
 			/* found */
 			q->klocked = 1;
 			spin_unlock(&q->owner_lock);
-			queue_list[id] = शून्य;
+			queue_list[id] = NULL;
 			num_queues--;
 			spin_unlock_irqrestore(&queue_list_lock, flags);
-			वापस q;
-		पूर्ण
+			return q;
+		}
 		spin_unlock(&q->owner_lock);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&queue_list_lock, flags);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /*----------------------------------------------------------------*/
 
-/* create new queue (स्थिरructor) */
-अटल काष्ठा snd_seq_queue *queue_new(पूर्णांक owner, पूर्णांक locked)
-अणु
-	काष्ठा snd_seq_queue *q;
+/* create new queue (constructor) */
+static struct snd_seq_queue *queue_new(int owner, int locked)
+{
+	struct snd_seq_queue *q;
 
-	q = kzalloc(माप(*q), GFP_KERNEL);
-	अगर (!q)
-		वापस शून्य;
+	q = kzalloc(sizeof(*q), GFP_KERNEL);
+	if (!q)
+		return NULL;
 
 	spin_lock_init(&q->owner_lock);
 	spin_lock_init(&q->check_lock);
-	mutex_init(&q->समयr_mutex);
+	mutex_init(&q->timer_mutex);
 	snd_use_lock_init(&q->use_lock);
 	q->queue = -1;
 
 	q->tickq = snd_seq_prioq_new();
-	q->समयq = snd_seq_prioq_new();
-	q->समयr = snd_seq_समयr_new();
-	अगर (q->tickq == शून्य || q->समयq == शून्य || q->समयr == शून्य) अणु
+	q->timeq = snd_seq_prioq_new();
+	q->timer = snd_seq_timer_new();
+	if (q->tickq == NULL || q->timeq == NULL || q->timer == NULL) {
 		snd_seq_prioq_delete(&q->tickq);
-		snd_seq_prioq_delete(&q->समयq);
-		snd_seq_समयr_delete(&q->समयr);
-		kमुक्त(q);
-		वापस शून्य;
-	पूर्ण
+		snd_seq_prioq_delete(&q->timeq);
+		snd_seq_timer_delete(&q->timer);
+		kfree(q);
+		return NULL;
+	}
 
 	q->owner = owner;
 	q->locked = locked;
 	q->klocked = 0;
 
-	वापस q;
-पूर्ण
+	return q;
+}
 
-/* delete queue (deकाष्ठाor) */
-अटल व्योम queue_delete(काष्ठा snd_seq_queue *q)
-अणु
-	/* stop and release the समयr */
-	mutex_lock(&q->समयr_mutex);
-	snd_seq_समयr_stop(q->समयr);
-	snd_seq_समयr_बंद(q);
-	mutex_unlock(&q->समयr_mutex);
-	/* रुको until access मुक्त */
+/* delete queue (destructor) */
+static void queue_delete(struct snd_seq_queue *q)
+{
+	/* stop and release the timer */
+	mutex_lock(&q->timer_mutex);
+	snd_seq_timer_stop(q->timer);
+	snd_seq_timer_close(q);
+	mutex_unlock(&q->timer_mutex);
+	/* wait until access free */
 	snd_use_lock_sync(&q->use_lock);
 	/* release resources... */
 	snd_seq_prioq_delete(&q->tickq);
-	snd_seq_prioq_delete(&q->समयq);
-	snd_seq_समयr_delete(&q->समयr);
+	snd_seq_prioq_delete(&q->timeq);
+	snd_seq_timer_delete(&q->timer);
 
-	kमुक्त(q);
-पूर्ण
+	kfree(q);
+}
 
 
 /*----------------------------------------------------------------*/
 
 /* delete all existing queues */
-व्योम snd_seq_queues_delete(व्योम)
-अणु
-	पूर्णांक i;
+void snd_seq_queues_delete(void)
+{
+	int i;
 
 	/* clear list */
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर (queue_list[i])
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if (queue_list[i])
 			queue_delete(queue_list[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम queue_use(काष्ठा snd_seq_queue *queue, पूर्णांक client, पूर्णांक use);
+static void queue_use(struct snd_seq_queue *queue, int client, int use);
 
 /* allocate a new queue -
- * वापस poपूर्णांकer to new queue or ERR_PTR(-त्रुटि_सं) क्रम error
+ * return pointer to new queue or ERR_PTR(-errno) for error
  * The new queue's use_lock is set to 1. It is the caller's responsibility to
- * call snd_use_lock_मुक्त(&q->use_lock).
+ * call snd_use_lock_free(&q->use_lock).
  */
-काष्ठा snd_seq_queue *snd_seq_queue_alloc(पूर्णांक client, पूर्णांक locked, अचिन्हित पूर्णांक info_flags)
-अणु
-	काष्ठा snd_seq_queue *q;
+struct snd_seq_queue *snd_seq_queue_alloc(int client, int locked, unsigned int info_flags)
+{
+	struct snd_seq_queue *q;
 
 	q = queue_new(client, locked);
-	अगर (q == शून्य)
-		वापस ERR_PTR(-ENOMEM);
+	if (q == NULL)
+		return ERR_PTR(-ENOMEM);
 	q->info_flags = info_flags;
 	queue_use(q, client, 1);
 	snd_use_lock_use(&q->use_lock);
-	अगर (queue_list_add(q) < 0) अणु
-		snd_use_lock_मुक्त(&q->use_lock);
+	if (queue_list_add(q) < 0) {
+		snd_use_lock_free(&q->use_lock);
 		queue_delete(q);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	वापस q;
-पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
+	return q;
+}
 
 /* delete a queue - queue must be owned by the client */
-पूर्णांक snd_seq_queue_delete(पूर्णांक client, पूर्णांक queueid)
-अणु
-	काष्ठा snd_seq_queue *q;
+int snd_seq_queue_delete(int client, int queueid)
+{
+	struct snd_seq_queue *q;
 
-	अगर (queueid < 0 || queueid >= SNDRV_SEQ_MAX_QUEUES)
-		वापस -EINVAL;
-	q = queue_list_हटाओ(queueid, client);
-	अगर (q == शून्य)
-		वापस -EINVAL;
+	if (queueid < 0 || queueid >= SNDRV_SEQ_MAX_QUEUES)
+		return -EINVAL;
+	q = queue_list_remove(queueid, client);
+	if (q == NULL)
+		return -EINVAL;
 	queue_delete(q);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-/* वापस poपूर्णांकer to queue काष्ठाure क्रम specअगरied id */
-काष्ठा snd_seq_queue *queueptr(पूर्णांक queueid)
-अणु
-	काष्ठा snd_seq_queue *q;
-	अचिन्हित दीर्घ flags;
+/* return pointer to queue structure for specified id */
+struct snd_seq_queue *queueptr(int queueid)
+{
+	struct snd_seq_queue *q;
+	unsigned long flags;
 
-	अगर (queueid < 0 || queueid >= SNDRV_SEQ_MAX_QUEUES)
-		वापस शून्य;
+	if (queueid < 0 || queueid >= SNDRV_SEQ_MAX_QUEUES)
+		return NULL;
 	spin_lock_irqsave(&queue_list_lock, flags);
 	q = queue_list[queueid];
-	अगर (q)
+	if (q)
 		snd_use_lock_use(&q->use_lock);
 	spin_unlock_irqrestore(&queue_list_lock, flags);
-	वापस q;
-पूर्ण
+	return q;
+}
 
-/* वापस the (first) queue matching with the specअगरied name */
-काष्ठा snd_seq_queue *snd_seq_queue_find_name(अक्षर *name)
-अणु
-	पूर्णांक i;
-	काष्ठा snd_seq_queue *q;
+/* return the (first) queue matching with the specified name */
+struct snd_seq_queue *snd_seq_queue_find_name(char *name)
+{
+	int i;
+	struct snd_seq_queue *q;
 
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर ((q = queueptr(i)) != शून्य) अणु
-			अगर (म_भेदन(q->name, name, माप(q->name)) == 0)
-				वापस q;
-			queueमुक्त(q);
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if ((q = queueptr(i)) != NULL) {
+			if (strncmp(q->name, name, sizeof(q->name)) == 0)
+				return q;
+			queuefree(q);
+		}
+	}
+	return NULL;
+}
 
 
 /* -------------------------------------------------------- */
 
-व्योम snd_seq_check_queue(काष्ठा snd_seq_queue *q, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा snd_seq_event_cell *cell;
-	snd_seq_tick_समय_प्रकार cur_tick;
-	snd_seq_real_समय_प्रकार cur_समय;
+void snd_seq_check_queue(struct snd_seq_queue *q, int atomic, int hop)
+{
+	unsigned long flags;
+	struct snd_seq_event_cell *cell;
+	snd_seq_tick_time_t cur_tick;
+	snd_seq_real_time_t cur_time;
 
-	अगर (q == शून्य)
-		वापस;
+	if (q == NULL)
+		return;
 
 	/* make this function non-reentrant */
 	spin_lock_irqsave(&q->check_lock, flags);
-	अगर (q->check_blocked) अणु
+	if (q->check_blocked) {
 		q->check_again = 1;
 		spin_unlock_irqrestore(&q->check_lock, flags);
-		वापस;		/* other thपढ़ो is alपढ़ोy checking queues */
-	पूर्ण
+		return;		/* other thread is already checking queues */
+	}
 	q->check_blocked = 1;
 	spin_unlock_irqrestore(&q->check_lock, flags);
 
       __again:
 	/* Process tick queue... */
-	cur_tick = snd_seq_समयr_get_cur_tick(q->समयr);
-	क्रम (;;) अणु
+	cur_tick = snd_seq_timer_get_cur_tick(q->timer);
+	for (;;) {
 		cell = snd_seq_prioq_cell_out(q->tickq, &cur_tick);
-		अगर (!cell)
-			अवरोध;
+		if (!cell)
+			break;
 		snd_seq_dispatch_event(cell, atomic, hop);
-	पूर्ण
+	}
 
-	/* Process समय queue... */
-	cur_समय = snd_seq_समयr_get_cur_समय(q->समयr, false);
-	क्रम (;;) अणु
-		cell = snd_seq_prioq_cell_out(q->समयq, &cur_समय);
-		अगर (!cell)
-			अवरोध;
+	/* Process time queue... */
+	cur_time = snd_seq_timer_get_cur_time(q->timer, false);
+	for (;;) {
+		cell = snd_seq_prioq_cell_out(q->timeq, &cur_time);
+		if (!cell)
+			break;
 		snd_seq_dispatch_event(cell, atomic, hop);
-	पूर्ण
+	}
 
-	/* मुक्त lock */
+	/* free lock */
 	spin_lock_irqsave(&q->check_lock, flags);
-	अगर (q->check_again) अणु
+	if (q->check_again) {
 		q->check_again = 0;
 		spin_unlock_irqrestore(&q->check_lock, flags);
-		जाओ __again;
-	पूर्ण
+		goto __again;
+	}
 	q->check_blocked = 0;
 	spin_unlock_irqrestore(&q->check_lock, flags);
-पूर्ण
+}
 
 
 /* enqueue a event to singe queue */
-पूर्णांक snd_seq_enqueue_event(काष्ठा snd_seq_event_cell *cell, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	पूर्णांक dest, err;
-	काष्ठा snd_seq_queue *q;
+int snd_seq_enqueue_event(struct snd_seq_event_cell *cell, int atomic, int hop)
+{
+	int dest, err;
+	struct snd_seq_queue *q;
 
-	अगर (snd_BUG_ON(!cell))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!cell))
+		return -EINVAL;
 	dest = cell->event.queue;	/* destination queue */
 	q = queueptr(dest);
-	अगर (q == शून्य)
-		वापस -EINVAL;
-	/* handle relative समय stamps, convert them पूर्णांकo असलolute */
-	अगर ((cell->event.flags & SNDRV_SEQ_TIME_MODE_MASK) == SNDRV_SEQ_TIME_MODE_REL) अणु
-		चयन (cell->event.flags & SNDRV_SEQ_TIME_STAMP_MASK) अणु
-		हाल SNDRV_SEQ_TIME_STAMP_TICK:
-			cell->event.समय.tick += q->समयr->tick.cur_tick;
-			अवरोध;
+	if (q == NULL)
+		return -EINVAL;
+	/* handle relative time stamps, convert them into absolute */
+	if ((cell->event.flags & SNDRV_SEQ_TIME_MODE_MASK) == SNDRV_SEQ_TIME_MODE_REL) {
+		switch (cell->event.flags & SNDRV_SEQ_TIME_STAMP_MASK) {
+		case SNDRV_SEQ_TIME_STAMP_TICK:
+			cell->event.time.tick += q->timer->tick.cur_tick;
+			break;
 
-		हाल SNDRV_SEQ_TIME_STAMP_REAL:
-			snd_seq_inc_real_समय(&cell->event.समय.समय,
-					      &q->समयr->cur_समय);
-			अवरोध;
-		पूर्ण
+		case SNDRV_SEQ_TIME_STAMP_REAL:
+			snd_seq_inc_real_time(&cell->event.time.time,
+					      &q->timer->cur_time);
+			break;
+		}
 		cell->event.flags &= ~SNDRV_SEQ_TIME_MODE_MASK;
 		cell->event.flags |= SNDRV_SEQ_TIME_MODE_ABS;
-	पूर्ण
-	/* enqueue event in the real-समय or midi queue */
-	चयन (cell->event.flags & SNDRV_SEQ_TIME_STAMP_MASK) अणु
-	हाल SNDRV_SEQ_TIME_STAMP_TICK:
+	}
+	/* enqueue event in the real-time or midi queue */
+	switch (cell->event.flags & SNDRV_SEQ_TIME_STAMP_MASK) {
+	case SNDRV_SEQ_TIME_STAMP_TICK:
 		err = snd_seq_prioq_cell_in(q->tickq, cell);
-		अवरोध;
+		break;
 
-	हाल SNDRV_SEQ_TIME_STAMP_REAL:
-	शेष:
-		err = snd_seq_prioq_cell_in(q->समयq, cell);
-		अवरोध;
-	पूर्ण
+	case SNDRV_SEQ_TIME_STAMP_REAL:
+	default:
+		err = snd_seq_prioq_cell_in(q->timeq, cell);
+		break;
+	}
 
-	अगर (err < 0) अणु
-		queueमुक्त(q); /* unlock */
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		queuefree(q); /* unlock */
+		return err;
+	}
 
 	/* trigger dispatching */
 	snd_seq_check_queue(q, atomic, hop);
 
-	queueमुक्त(q); /* unlock */
+	queuefree(q); /* unlock */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*----------------------------------------------------------------*/
 
-अटल अंतरभूत पूर्णांक check_access(काष्ठा snd_seq_queue *q, पूर्णांक client)
-अणु
-	वापस (q->owner == client) || (!q->locked && !q->klocked);
-पूर्ण
+static inline int check_access(struct snd_seq_queue *q, int client)
+{
+	return (q->owner == client) || (!q->locked && !q->klocked);
+}
 
-/* check अगर the client has permission to modअगरy queue parameters.
- * अगर it करोes, lock the queue
+/* check if the client has permission to modify queue parameters.
+ * if it does, lock the queue
  */
-अटल पूर्णांक queue_access_lock(काष्ठा snd_seq_queue *q, पूर्णांक client)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक access_ok;
+static int queue_access_lock(struct snd_seq_queue *q, int client)
+{
+	unsigned long flags;
+	int access_ok;
 	
 	spin_lock_irqsave(&q->owner_lock, flags);
 	access_ok = check_access(q, client);
-	अगर (access_ok)
+	if (access_ok)
 		q->klocked = 1;
 	spin_unlock_irqrestore(&q->owner_lock, flags);
-	वापस access_ok;
-पूर्ण
+	return access_ok;
+}
 
 /* unlock the queue */
-अटल अंतरभूत व्योम queue_access_unlock(काष्ठा snd_seq_queue *q)
-अणु
-	अचिन्हित दीर्घ flags;
+static inline void queue_access_unlock(struct snd_seq_queue *q)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&q->owner_lock, flags);
 	q->klocked = 0;
 	spin_unlock_irqrestore(&q->owner_lock, flags);
-पूर्ण
+}
 
 /* exported - only checking permission */
-पूर्णांक snd_seq_queue_check_access(पूर्णांक queueid, पूर्णांक client)
-अणु
-	काष्ठा snd_seq_queue *q = queueptr(queueid);
-	पूर्णांक access_ok;
-	अचिन्हित दीर्घ flags;
+int snd_seq_queue_check_access(int queueid, int client)
+{
+	struct snd_seq_queue *q = queueptr(queueid);
+	int access_ok;
+	unsigned long flags;
 
-	अगर (! q)
-		वापस 0;
+	if (! q)
+		return 0;
 	spin_lock_irqsave(&q->owner_lock, flags);
 	access_ok = check_access(q, client);
 	spin_unlock_irqrestore(&q->owner_lock, flags);
-	queueमुक्त(q);
-	वापस access_ok;
-पूर्ण
+	queuefree(q);
+	return access_ok;
+}
 
 /*----------------------------------------------------------------*/
 
 /*
  * change queue's owner and permission
  */
-पूर्णांक snd_seq_queue_set_owner(पूर्णांक queueid, पूर्णांक client, पूर्णांक locked)
-अणु
-	काष्ठा snd_seq_queue *q = queueptr(queueid);
-	अचिन्हित दीर्घ flags;
+int snd_seq_queue_set_owner(int queueid, int client, int locked)
+{
+	struct snd_seq_queue *q = queueptr(queueid);
+	unsigned long flags;
 
-	अगर (q == शून्य)
-		वापस -EINVAL;
+	if (q == NULL)
+		return -EINVAL;
 
-	अगर (! queue_access_lock(q, client)) अणु
-		queueमुक्त(q);
-		वापस -EPERM;
-	पूर्ण
+	if (! queue_access_lock(q, client)) {
+		queuefree(q);
+		return -EPERM;
+	}
 
 	spin_lock_irqsave(&q->owner_lock, flags);
 	q->locked = locked ? 1 : 0;
 	q->owner = client;
 	spin_unlock_irqrestore(&q->owner_lock, flags);
 	queue_access_unlock(q);
-	queueमुक्त(q);
+	queuefree(q);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*----------------------------------------------------------------*/
 
-/* खोलो समयr -
- * q->use mutex should be करोwn beक्रमe calling this function to aव्योम
+/* open timer -
+ * q->use mutex should be down before calling this function to avoid
  * confliction with snd_seq_queue_use()
  */
-पूर्णांक snd_seq_queue_समयr_खोलो(पूर्णांक queueid)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा snd_seq_queue *queue;
-	काष्ठा snd_seq_समयr *पंचांगr;
+int snd_seq_queue_timer_open(int queueid)
+{
+	int result = 0;
+	struct snd_seq_queue *queue;
+	struct snd_seq_timer *tmr;
 
 	queue = queueptr(queueid);
-	अगर (queue == शून्य)
-		वापस -EINVAL;
-	पंचांगr = queue->समयr;
-	अगर ((result = snd_seq_समयr_खोलो(queue)) < 0) अणु
-		snd_seq_समयr_शेषs(पंचांगr);
-		result = snd_seq_समयr_खोलो(queue);
-	पूर्ण
-	queueमुक्त(queue);
-	वापस result;
-पूर्ण
+	if (queue == NULL)
+		return -EINVAL;
+	tmr = queue->timer;
+	if ((result = snd_seq_timer_open(queue)) < 0) {
+		snd_seq_timer_defaults(tmr);
+		result = snd_seq_timer_open(queue);
+	}
+	queuefree(queue);
+	return result;
+}
 
-/* बंद समयr -
- * q->use mutex should be करोwn beक्रमe calling this function
+/* close timer -
+ * q->use mutex should be down before calling this function
  */
-पूर्णांक snd_seq_queue_समयr_बंद(पूर्णांक queueid)
-अणु
-	काष्ठा snd_seq_queue *queue;
-	पूर्णांक result = 0;
+int snd_seq_queue_timer_close(int queueid)
+{
+	struct snd_seq_queue *queue;
+	int result = 0;
 
 	queue = queueptr(queueid);
-	अगर (queue == शून्य)
-		वापस -EINVAL;
-	snd_seq_समयr_बंद(queue);
-	queueमुक्त(queue);
-	वापस result;
-पूर्ण
+	if (queue == NULL)
+		return -EINVAL;
+	snd_seq_timer_close(queue);
+	queuefree(queue);
+	return result;
+}
 
 /* change queue tempo and ppq */
-पूर्णांक snd_seq_queue_समयr_set_tempo(पूर्णांक queueid, पूर्णांक client,
-				  काष्ठा snd_seq_queue_tempo *info)
-अणु
-	काष्ठा snd_seq_queue *q = queueptr(queueid);
-	पूर्णांक result;
+int snd_seq_queue_timer_set_tempo(int queueid, int client,
+				  struct snd_seq_queue_tempo *info)
+{
+	struct snd_seq_queue *q = queueptr(queueid);
+	int result;
 
-	अगर (q == शून्य)
-		वापस -EINVAL;
-	अगर (! queue_access_lock(q, client)) अणु
-		queueमुक्त(q);
-		वापस -EPERM;
-	पूर्ण
+	if (q == NULL)
+		return -EINVAL;
+	if (! queue_access_lock(q, client)) {
+		queuefree(q);
+		return -EPERM;
+	}
 
-	result = snd_seq_समयr_set_tempo_ppq(q->समयr, info->tempo, info->ppq);
-	अगर (result >= 0 && info->skew_base > 0)
-		result = snd_seq_समयr_set_skew(q->समयr, info->skew_value,
+	result = snd_seq_timer_set_tempo_ppq(q->timer, info->tempo, info->ppq);
+	if (result >= 0 && info->skew_base > 0)
+		result = snd_seq_timer_set_skew(q->timer, info->skew_value,
 						info->skew_base);
 	queue_access_unlock(q);
-	queueमुक्त(q);
-	वापस result;
-पूर्ण
+	queuefree(q);
+	return result;
+}
 
 /* use or unuse this queue */
-अटल व्योम queue_use(काष्ठा snd_seq_queue *queue, पूर्णांक client, पूर्णांक use)
-अणु
-	अगर (use) अणु
-		अगर (!test_and_set_bit(client, queue->clients_biपंचांगap))
+static void queue_use(struct snd_seq_queue *queue, int client, int use)
+{
+	if (use) {
+		if (!test_and_set_bit(client, queue->clients_bitmap))
 			queue->clients++;
-	पूर्ण अन्यथा अणु
-		अगर (test_and_clear_bit(client, queue->clients_biपंचांगap))
+	} else {
+		if (test_and_clear_bit(client, queue->clients_bitmap))
 			queue->clients--;
-	पूर्ण
-	अगर (queue->clients) अणु
-		अगर (use && queue->clients == 1)
-			snd_seq_समयr_शेषs(queue->समयr);
-		snd_seq_समयr_खोलो(queue);
-	पूर्ण अन्यथा अणु
-		snd_seq_समयr_बंद(queue);
-	पूर्ण
-पूर्ण
+	}
+	if (queue->clients) {
+		if (use && queue->clients == 1)
+			snd_seq_timer_defaults(queue->timer);
+		snd_seq_timer_open(queue);
+	} else {
+		snd_seq_timer_close(queue);
+	}
+}
 
 /* use or unuse this queue -
- * अगर it is the first client, starts the समयr.
- * अगर it is not दीर्घer used by any clients, stop the समयr.
+ * if it is the first client, starts the timer.
+ * if it is not longer used by any clients, stop the timer.
  */
-पूर्णांक snd_seq_queue_use(पूर्णांक queueid, पूर्णांक client, पूर्णांक use)
-अणु
-	काष्ठा snd_seq_queue *queue;
+int snd_seq_queue_use(int queueid, int client, int use)
+{
+	struct snd_seq_queue *queue;
 
 	queue = queueptr(queueid);
-	अगर (queue == शून्य)
-		वापस -EINVAL;
-	mutex_lock(&queue->समयr_mutex);
+	if (queue == NULL)
+		return -EINVAL;
+	mutex_lock(&queue->timer_mutex);
 	queue_use(queue, client, use);
-	mutex_unlock(&queue->समयr_mutex);
-	queueमुक्त(queue);
-	वापस 0;
-पूर्ण
+	mutex_unlock(&queue->timer_mutex);
+	queuefree(queue);
+	return 0;
+}
 
 /*
- * check अगर queue is used by the client
- * वापस negative value अगर the queue is invalid.
- * वापस 0 अगर not used, 1 अगर used.
+ * check if queue is used by the client
+ * return negative value if the queue is invalid.
+ * return 0 if not used, 1 if used.
  */
-पूर्णांक snd_seq_queue_is_used(पूर्णांक queueid, पूर्णांक client)
-अणु
-	काष्ठा snd_seq_queue *q;
-	पूर्णांक result;
+int snd_seq_queue_is_used(int queueid, int client)
+{
+	struct snd_seq_queue *q;
+	int result;
 
 	q = queueptr(queueid);
-	अगर (q == शून्य)
-		वापस -EINVAL; /* invalid queue */
-	result = test_bit(client, q->clients_biपंचांगap) ? 1 : 0;
-	queueमुक्त(q);
-	वापस result;
-पूर्ण
+	if (q == NULL)
+		return -EINVAL; /* invalid queue */
+	result = test_bit(client, q->clients_bitmap) ? 1 : 0;
+	queuefree(q);
+	return result;
+}
 
 
 /*----------------------------------------------------------------*/
 
-/* final stage notअगरication -
- * हटाओ cells क्रम no दीर्घer exist client (क्रम non-owned queue)
- * or delete this queue (क्रम owned queue)
+/* final stage notification -
+ * remove cells for no longer exist client (for non-owned queue)
+ * or delete this queue (for owned queue)
  */
-व्योम snd_seq_queue_client_leave(पूर्णांक client)
-अणु
-	पूर्णांक i;
-	काष्ठा snd_seq_queue *q;
+void snd_seq_queue_client_leave(int client)
+{
+	int i;
+	struct snd_seq_queue *q;
 
 	/* delete own queues from queue list */
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर ((q = queue_list_हटाओ(i, client)) != शून्य)
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if ((q = queue_list_remove(i, client)) != NULL)
 			queue_delete(q);
-	पूर्ण
+	}
 
-	/* हटाओ cells from existing queues -
+	/* remove cells from existing queues -
 	 * they are not owned by this client
 	 */
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर ((q = queueptr(i)) == शून्य)
-			जारी;
-		अगर (test_bit(client, q->clients_biपंचांगap)) अणु
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if ((q = queueptr(i)) == NULL)
+			continue;
+		if (test_bit(client, q->clients_bitmap)) {
 			snd_seq_prioq_leave(q->tickq, client, 0);
-			snd_seq_prioq_leave(q->समयq, client, 0);
+			snd_seq_prioq_leave(q->timeq, client, 0);
 			snd_seq_queue_use(q->queue, client, 0);
-		पूर्ण
-		queueमुक्त(q);
-	पूर्ण
-पूर्ण
+		}
+		queuefree(q);
+	}
+}
 
 
 
 /*----------------------------------------------------------------*/
 
-/* हटाओ cells from all queues */
-व्योम snd_seq_queue_client_leave_cells(पूर्णांक client)
-अणु
-	पूर्णांक i;
-	काष्ठा snd_seq_queue *q;
+/* remove cells from all queues */
+void snd_seq_queue_client_leave_cells(int client)
+{
+	int i;
+	struct snd_seq_queue *q;
 
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर ((q = queueptr(i)) == शून्य)
-			जारी;
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if ((q = queueptr(i)) == NULL)
+			continue;
 		snd_seq_prioq_leave(q->tickq, client, 0);
-		snd_seq_prioq_leave(q->समयq, client, 0);
-		queueमुक्त(q);
-	पूर्ण
-पूर्ण
+		snd_seq_prioq_leave(q->timeq, client, 0);
+		queuefree(q);
+	}
+}
 
-/* हटाओ cells based on flush criteria */
-व्योम snd_seq_queue_हटाओ_cells(पूर्णांक client, काष्ठा snd_seq_हटाओ_events *info)
-अणु
-	पूर्णांक i;
-	काष्ठा snd_seq_queue *q;
+/* remove cells based on flush criteria */
+void snd_seq_queue_remove_cells(int client, struct snd_seq_remove_events *info)
+{
+	int i;
+	struct snd_seq_queue *q;
 
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर ((q = queueptr(i)) == शून्य)
-			जारी;
-		अगर (test_bit(client, q->clients_biपंचांगap) &&
-		    (! (info->हटाओ_mode & SNDRV_SEQ_REMOVE_DEST) ||
-		     q->queue == info->queue)) अणु
-			snd_seq_prioq_हटाओ_events(q->tickq, client, info);
-			snd_seq_prioq_हटाओ_events(q->समयq, client, info);
-		पूर्ण
-		queueमुक्त(q);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if ((q = queueptr(i)) == NULL)
+			continue;
+		if (test_bit(client, q->clients_bitmap) &&
+		    (! (info->remove_mode & SNDRV_SEQ_REMOVE_DEST) ||
+		     q->queue == info->queue)) {
+			snd_seq_prioq_remove_events(q->tickq, client, info);
+			snd_seq_prioq_remove_events(q->timeq, client, info);
+		}
+		queuefree(q);
+	}
+}
 
 /*----------------------------------------------------------------*/
 
 /*
  * send events to all subscribed ports
  */
-अटल व्योम queue_broadcast_event(काष्ठा snd_seq_queue *q, काष्ठा snd_seq_event *ev,
-				  पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_seq_event sev;
+static void queue_broadcast_event(struct snd_seq_queue *q, struct snd_seq_event *ev,
+				  int atomic, int hop)
+{
+	struct snd_seq_event sev;
 
 	sev = *ev;
 	
 	sev.flags = SNDRV_SEQ_TIME_STAMP_TICK|SNDRV_SEQ_TIME_MODE_ABS;
-	sev.समय.tick = q->समयr->tick.cur_tick;
+	sev.time.tick = q->timer->tick.cur_tick;
 	sev.queue = q->queue;
 	sev.data.queue.queue = q->queue;
 
@@ -628,110 +627,110 @@
 	sev.source.port = SNDRV_SEQ_PORT_SYSTEM_TIMER;
 	sev.dest.client = SNDRV_SEQ_ADDRESS_SUBSCRIBERS;
 	snd_seq_kernel_client_dispatch(SNDRV_SEQ_CLIENT_SYSTEM, &sev, atomic, hop);
-पूर्ण
+}
 
 /*
  * process a received queue-control event.
- * this function is exported क्रम seq_sync.c.
+ * this function is exported for seq_sync.c.
  */
-अटल व्योम snd_seq_queue_process_event(काष्ठा snd_seq_queue *q,
-					काष्ठा snd_seq_event *ev,
-					पूर्णांक atomic, पूर्णांक hop)
-अणु
-	चयन (ev->type) अणु
-	हाल SNDRV_SEQ_EVENT_START:
+static void snd_seq_queue_process_event(struct snd_seq_queue *q,
+					struct snd_seq_event *ev,
+					int atomic, int hop)
+{
+	switch (ev->type) {
+	case SNDRV_SEQ_EVENT_START:
 		snd_seq_prioq_leave(q->tickq, ev->source.client, 1);
-		snd_seq_prioq_leave(q->समयq, ev->source.client, 1);
-		अगर (! snd_seq_समयr_start(q->समयr))
+		snd_seq_prioq_leave(q->timeq, ev->source.client, 1);
+		if (! snd_seq_timer_start(q->timer))
 			queue_broadcast_event(q, ev, atomic, hop);
-		अवरोध;
+		break;
 
-	हाल SNDRV_SEQ_EVENT_CONTINUE:
-		अगर (! snd_seq_समयr_जारी(q->समयr))
+	case SNDRV_SEQ_EVENT_CONTINUE:
+		if (! snd_seq_timer_continue(q->timer))
 			queue_broadcast_event(q, ev, atomic, hop);
-		अवरोध;
+		break;
 
-	हाल SNDRV_SEQ_EVENT_STOP:
-		snd_seq_समयr_stop(q->समयr);
+	case SNDRV_SEQ_EVENT_STOP:
+		snd_seq_timer_stop(q->timer);
 		queue_broadcast_event(q, ev, atomic, hop);
-		अवरोध;
+		break;
 
-	हाल SNDRV_SEQ_EVENT_TEMPO:
-		snd_seq_समयr_set_tempo(q->समयr, ev->data.queue.param.value);
+	case SNDRV_SEQ_EVENT_TEMPO:
+		snd_seq_timer_set_tempo(q->timer, ev->data.queue.param.value);
 		queue_broadcast_event(q, ev, atomic, hop);
-		अवरोध;
+		break;
 
-	हाल SNDRV_SEQ_EVENT_SETPOS_TICK:
-		अगर (snd_seq_समयr_set_position_tick(q->समयr, ev->data.queue.param.समय.tick) == 0) अणु
+	case SNDRV_SEQ_EVENT_SETPOS_TICK:
+		if (snd_seq_timer_set_position_tick(q->timer, ev->data.queue.param.time.tick) == 0) {
 			queue_broadcast_event(q, ev, atomic, hop);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल SNDRV_SEQ_EVENT_SETPOS_TIME:
-		अगर (snd_seq_समयr_set_position_समय(q->समयr, ev->data.queue.param.समय.समय) == 0) अणु
+	case SNDRV_SEQ_EVENT_SETPOS_TIME:
+		if (snd_seq_timer_set_position_time(q->timer, ev->data.queue.param.time.time) == 0) {
 			queue_broadcast_event(q, ev, atomic, hop);
-		पूर्ण
-		अवरोध;
-	हाल SNDRV_SEQ_EVENT_QUEUE_SKEW:
-		अगर (snd_seq_समयr_set_skew(q->समयr,
+		}
+		break;
+	case SNDRV_SEQ_EVENT_QUEUE_SKEW:
+		if (snd_seq_timer_set_skew(q->timer,
 					   ev->data.queue.param.skew.value,
-					   ev->data.queue.param.skew.base) == 0) अणु
+					   ev->data.queue.param.skew.base) == 0) {
 			queue_broadcast_event(q, ev, atomic, hop);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
 
 /*
- * Queue control via समयr control port:
- * this function is exported as a callback of समयr port.
+ * Queue control via timer control port:
+ * this function is exported as a callback of timer port.
  */
-पूर्णांक snd_seq_control_queue(काष्ठा snd_seq_event *ev, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_seq_queue *q;
+int snd_seq_control_queue(struct snd_seq_event *ev, int atomic, int hop)
+{
+	struct snd_seq_queue *q;
 
-	अगर (snd_BUG_ON(!ev))
-		वापस -EINVAL;
+	if (snd_BUG_ON(!ev))
+		return -EINVAL;
 	q = queueptr(ev->data.queue.queue);
 
-	अगर (q == शून्य)
-		वापस -EINVAL;
+	if (q == NULL)
+		return -EINVAL;
 
-	अगर (! queue_access_lock(q, ev->source.client)) अणु
-		queueमुक्त(q);
-		वापस -EPERM;
-	पूर्ण
+	if (! queue_access_lock(q, ev->source.client)) {
+		queuefree(q);
+		return -EPERM;
+	}
 
 	snd_seq_queue_process_event(q, ev, atomic, hop);
 
 	queue_access_unlock(q);
-	queueमुक्त(q);
-	वापस 0;
-पूर्ण
+	queuefree(q);
+	return 0;
+}
 
 
 /*----------------------------------------------------------------*/
 
-#अगर_घोषित CONFIG_SND_PROC_FS
+#ifdef CONFIG_SND_PROC_FS
 /* exported to seq_info.c */
-व्योम snd_seq_info_queues_पढ़ो(काष्ठा snd_info_entry *entry, 
-			      काष्ठा snd_info_buffer *buffer)
-अणु
-	पूर्णांक i, bpm;
-	काष्ठा snd_seq_queue *q;
-	काष्ठा snd_seq_समयr *पंचांगr;
+void snd_seq_info_queues_read(struct snd_info_entry *entry, 
+			      struct snd_info_buffer *buffer)
+{
+	int i, bpm;
+	struct snd_seq_queue *q;
+	struct snd_seq_timer *tmr;
 	bool locked;
-	पूर्णांक owner;
+	int owner;
 
-	क्रम (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) अणु
-		अगर ((q = queueptr(i)) == शून्य)
-			जारी;
+	for (i = 0; i < SNDRV_SEQ_MAX_QUEUES; i++) {
+		if ((q = queueptr(i)) == NULL)
+			continue;
 
-		पंचांगr = q->समयr;
-		अगर (पंचांगr->tempo)
-			bpm = 60000000 / पंचांगr->tempo;
-		अन्यथा
+		tmr = q->timer;
+		if (tmr->tempo)
+			bpm = 60000000 / tmr->tempo;
+		else
 			bpm = 0;
 
 		spin_lock_irq(&q->owner_lock);
@@ -739,20 +738,20 @@
 		owner = q->owner;
 		spin_unlock_irq(&q->owner_lock);
 
-		snd_iम_लिखो(buffer, "queue %d: [%s]\n", q->queue, q->name);
-		snd_iम_लिखो(buffer, "owned by client    : %d\n", owner);
-		snd_iम_लिखो(buffer, "lock status        : %s\n", locked ? "Locked" : "Free");
-		snd_iम_लिखो(buffer, "queued time events : %d\n", snd_seq_prioq_avail(q->समयq));
-		snd_iम_लिखो(buffer, "queued tick events : %d\n", snd_seq_prioq_avail(q->tickq));
-		snd_iम_लिखो(buffer, "timer state        : %s\n", पंचांगr->running ? "Running" : "Stopped");
-		snd_iम_लिखो(buffer, "timer PPQ          : %d\n", पंचांगr->ppq);
-		snd_iम_लिखो(buffer, "current tempo      : %d\n", पंचांगr->tempo);
-		snd_iम_लिखो(buffer, "current BPM        : %d\n", bpm);
-		snd_iम_लिखो(buffer, "current time       : %d.%09d s\n", पंचांगr->cur_समय.tv_sec, पंचांगr->cur_समय.tv_nsec);
-		snd_iम_लिखो(buffer, "current tick       : %d\n", पंचांगr->tick.cur_tick);
-		snd_iम_लिखो(buffer, "\n");
-		queueमुक्त(q);
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_SND_PROC_FS */
+		snd_iprintf(buffer, "queue %d: [%s]\n", q->queue, q->name);
+		snd_iprintf(buffer, "owned by client    : %d\n", owner);
+		snd_iprintf(buffer, "lock status        : %s\n", locked ? "Locked" : "Free");
+		snd_iprintf(buffer, "queued time events : %d\n", snd_seq_prioq_avail(q->timeq));
+		snd_iprintf(buffer, "queued tick events : %d\n", snd_seq_prioq_avail(q->tickq));
+		snd_iprintf(buffer, "timer state        : %s\n", tmr->running ? "Running" : "Stopped");
+		snd_iprintf(buffer, "timer PPQ          : %d\n", tmr->ppq);
+		snd_iprintf(buffer, "current tempo      : %d\n", tmr->tempo);
+		snd_iprintf(buffer, "current BPM        : %d\n", bpm);
+		snd_iprintf(buffer, "current time       : %d.%09d s\n", tmr->cur_time.tv_sec, tmr->cur_time.tv_nsec);
+		snd_iprintf(buffer, "current tick       : %d\n", tmr->tick.cur_tick);
+		snd_iprintf(buffer, "\n");
+		queuefree(q);
+	}
+}
+#endif /* CONFIG_SND_PROC_FS */
 

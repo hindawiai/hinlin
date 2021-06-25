@@ -1,57 +1,56 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2004-2013 Synopsys, Inc. (www.synopsys.com)
  *
  * Registers and bits definitions of ARC EMAC
  */
 
-#अगर_अघोषित ARC_EMAC_H
-#घोषणा ARC_EMAC_H
+#ifndef ARC_EMAC_H
+#define ARC_EMAC_H
 
-#समावेश <linux/device.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/clk.h>
+#include <linux/device.h>
+#include <linux/dma-mapping.h>
+#include <linux/netdevice.h>
+#include <linux/phy.h>
+#include <linux/clk.h>
 
 /* STATUS and ENABLE Register bit masks */
-#घोषणा TXINT_MASK	(1 << 0)	/* Transmit पूर्णांकerrupt */
-#घोषणा RXINT_MASK	(1 << 1)	/* Receive पूर्णांकerrupt */
-#घोषणा ERR_MASK	(1 << 2)	/* Error पूर्णांकerrupt */
-#घोषणा TXCH_MASK	(1 << 3)	/* Transmit chaining error पूर्णांकerrupt */
-#घोषणा MSER_MASK	(1 << 4)	/* Missed packet counter error */
-#घोषणा RXCR_MASK	(1 << 8)	/* RXCRCERR counter rolled over  */
-#घोषणा RXFR_MASK	(1 << 9)	/* RXFRAMEERR counter rolled over */
-#घोषणा RXFL_MASK	(1 << 10)	/* RXOFLOWERR counter rolled over */
-#घोषणा MDIO_MASK	(1 << 12)	/* MDIO complete पूर्णांकerrupt */
-#घोषणा TXPL_MASK	(1 << 31)	/* Force polling of BD by EMAC */
+#define TXINT_MASK	(1 << 0)	/* Transmit interrupt */
+#define RXINT_MASK	(1 << 1)	/* Receive interrupt */
+#define ERR_MASK	(1 << 2)	/* Error interrupt */
+#define TXCH_MASK	(1 << 3)	/* Transmit chaining error interrupt */
+#define MSER_MASK	(1 << 4)	/* Missed packet counter error */
+#define RXCR_MASK	(1 << 8)	/* RXCRCERR counter rolled over  */
+#define RXFR_MASK	(1 << 9)	/* RXFRAMEERR counter rolled over */
+#define RXFL_MASK	(1 << 10)	/* RXOFLOWERR counter rolled over */
+#define MDIO_MASK	(1 << 12)	/* MDIO complete interrupt */
+#define TXPL_MASK	(1 << 31)	/* Force polling of BD by EMAC */
 
 /* CONTROL Register bit masks */
-#घोषणा EN_MASK		(1 << 0)	/* VMAC enable */
-#घोषणा TXRN_MASK	(1 << 3)	/* TX enable */
-#घोषणा RXRN_MASK	(1 << 4)	/* RX enable */
-#घोषणा DSBC_MASK	(1 << 8)	/* Disable receive broadcast */
-#घोषणा ENFL_MASK	(1 << 10)	/* Enable Full-duplex */
-#घोषणा PROM_MASK	(1 << 11)	/* Promiscuous mode */
+#define EN_MASK		(1 << 0)	/* VMAC enable */
+#define TXRN_MASK	(1 << 3)	/* TX enable */
+#define RXRN_MASK	(1 << 4)	/* RX enable */
+#define DSBC_MASK	(1 << 8)	/* Disable receive broadcast */
+#define ENFL_MASK	(1 << 10)	/* Enable Full-duplex */
+#define PROM_MASK	(1 << 11)	/* Promiscuous mode */
 
 /* Buffer descriptor INFO bit masks */
-#घोषणा OWN_MASK	(1 << 31)	/* 0-CPU or 1-EMAC owns buffer */
-#घोषणा FIRST_MASK	(1 << 16)	/* First buffer in chain */
-#घोषणा LAST_MASK	(1 << 17)	/* Last buffer in chain */
-#घोषणा LEN_MASK	0x000007FF	/* last 11 bits */
-#घोषणा CRLS		(1 << 21)
-#घोषणा DEFR		(1 << 22)
-#घोषणा DROP		(1 << 23)
-#घोषणा RTRY		(1 << 24)
-#घोषणा LTCL		(1 << 28)
-#घोषणा UFLO		(1 << 29)
+#define OWN_MASK	(1 << 31)	/* 0-CPU or 1-EMAC owns buffer */
+#define FIRST_MASK	(1 << 16)	/* First buffer in chain */
+#define LAST_MASK	(1 << 17)	/* Last buffer in chain */
+#define LEN_MASK	0x000007FF	/* last 11 bits */
+#define CRLS		(1 << 21)
+#define DEFR		(1 << 22)
+#define DROP		(1 << 23)
+#define RTRY		(1 << 24)
+#define LTCL		(1 << 28)
+#define UFLO		(1 << 29)
 
-#घोषणा FOR_EMAC	OWN_MASK
-#घोषणा FOR_CPU		0
+#define FOR_EMAC	OWN_MASK
+#define FOR_CPU		0
 
-/* ARC EMAC रेजिस्टर set combines entries क्रम MAC and MDIO */
-क्रमागत अणु
+/* ARC EMAC register set combines entries for MAC and MDIO */
+enum {
 	R_ID = 0,
 	R_STATUS,
 	R_ENABLE,
@@ -66,161 +65,161 @@
 	R_LAFL,
 	R_LAFH,
 	R_MDIO,
-पूर्ण;
+};
 
-#घोषणा TX_TIMEOUT		(400 * HZ / 1000) /* Transmission समयout */
+#define TX_TIMEOUT		(400 * HZ / 1000) /* Transmission timeout */
 
-#घोषणा ARC_EMAC_NAPI_WEIGHT	40		/* Workload क्रम NAPI */
+#define ARC_EMAC_NAPI_WEIGHT	40		/* Workload for NAPI */
 
-#घोषणा EMAC_BUFFER_SIZE	1536		/* EMAC buffer size */
+#define EMAC_BUFFER_SIZE	1536		/* EMAC buffer size */
 
 /**
- * काष्ठा arc_emac_bd - EMAC buffer descriptor (BD).
+ * struct arc_emac_bd - EMAC buffer descriptor (BD).
  *
- * @info:	Contains status inक्रमmation on the buffer itself.
- * @data:	32-bit byte addressable poपूर्णांकer to the packet data.
+ * @info:	Contains status information on the buffer itself.
+ * @data:	32-bit byte addressable pointer to the packet data.
  */
-काष्ठा arc_emac_bd अणु
+struct arc_emac_bd {
 	__le32 info;
 	dma_addr_t data;
-पूर्ण;
+};
 
 /* Number of Rx/Tx BD's */
-#घोषणा RX_BD_NUM	128
-#घोषणा TX_BD_NUM	128
+#define RX_BD_NUM	128
+#define TX_BD_NUM	128
 
-#घोषणा RX_RING_SZ	(RX_BD_NUM * माप(काष्ठा arc_emac_bd))
-#घोषणा TX_RING_SZ	(TX_BD_NUM * माप(काष्ठा arc_emac_bd))
+#define RX_RING_SZ	(RX_BD_NUM * sizeof(struct arc_emac_bd))
+#define TX_RING_SZ	(TX_BD_NUM * sizeof(struct arc_emac_bd))
 
 /**
- * काष्ठा buffer_state - Stores Rx/Tx buffer state.
- * @sk_buff:	Poपूर्णांकer to socket buffer.
+ * struct buffer_state - Stores Rx/Tx buffer state.
+ * @sk_buff:	Pointer to socket buffer.
  * @addr:	Start address of DMA-mapped memory region.
  * @len:	Length of DMA-mapped memory region.
  */
-काष्ठा buffer_state अणु
-	काष्ठा sk_buff *skb;
+struct buffer_state {
+	struct sk_buff *skb;
 	DEFINE_DMA_UNMAP_ADDR(addr);
 	DEFINE_DMA_UNMAP_LEN(len);
-पूर्ण;
+};
 
-काष्ठा arc_emac_mdio_bus_data अणु
-	काष्ठा gpio_desc *reset_gpio;
-	पूर्णांक msec;
-पूर्ण;
+struct arc_emac_mdio_bus_data {
+	struct gpio_desc *reset_gpio;
+	int msec;
+};
 
 /**
- * काष्ठा arc_emac_priv - Storage of EMAC's निजी inक्रमmation.
- * @dev:	Poपूर्णांकer to the current device.
- * @phy_dev:	Poपूर्णांकer to attached PHY device.
- * @bus:	Poपूर्णांकer to the current MII bus.
- * @regs:	Base address of EMAC memory-mapped control रेजिस्टरs.
- * @napi:	Structure क्रम NAPI.
- * @rxbd:	Poपूर्णांकer to Rx BD ring.
- * @txbd:	Poपूर्णांकer to Tx BD ring.
- * @rxbd_dma:	DMA handle क्रम Rx BD ring.
- * @txbd_dma:	DMA handle क्रम Tx BD ring.
- * @rx_buff:	Storage क्रम Rx buffers states.
- * @tx_buff:	Storage क्रम Tx buffers states.
+ * struct arc_emac_priv - Storage of EMAC's private information.
+ * @dev:	Pointer to the current device.
+ * @phy_dev:	Pointer to attached PHY device.
+ * @bus:	Pointer to the current MII bus.
+ * @regs:	Base address of EMAC memory-mapped control registers.
+ * @napi:	Structure for NAPI.
+ * @rxbd:	Pointer to Rx BD ring.
+ * @txbd:	Pointer to Tx BD ring.
+ * @rxbd_dma:	DMA handle for Rx BD ring.
+ * @txbd_dma:	DMA handle for Tx BD ring.
+ * @rx_buff:	Storage for Rx buffers states.
+ * @tx_buff:	Storage for Tx buffers states.
  * @txbd_curr:	Index of Tx BD to use on the next "ndo_start_xmit".
- * @txbd_dirty:	Index of Tx BD to मुक्त on the next Tx पूर्णांकerrupt.
+ * @txbd_dirty:	Index of Tx BD to free on the next Tx interrupt.
  * @last_rx_bd:	Index of the last Rx BD we've got from EMAC.
  * @link:	PHY's last seen link state.
  * @duplex:	PHY's last set duplex mode.
  * @speed:	PHY's last set speed.
  */
-काष्ठा arc_emac_priv अणु
-	स्थिर अक्षर *drv_name;
-	व्योम (*set_mac_speed)(व्योम *priv, अचिन्हित पूर्णांक speed);
+struct arc_emac_priv {
+	const char *drv_name;
+	void (*set_mac_speed)(void *priv, unsigned int speed);
 
 	/* Devices */
-	काष्ठा device *dev;
-	काष्ठा mii_bus *bus;
-	काष्ठा arc_emac_mdio_bus_data bus_data;
+	struct device *dev;
+	struct mii_bus *bus;
+	struct arc_emac_mdio_bus_data bus_data;
 
-	व्योम __iomem *regs;
-	काष्ठा clk *clk;
+	void __iomem *regs;
+	struct clk *clk;
 
-	काष्ठा napi_काष्ठा napi;
+	struct napi_struct napi;
 
-	काष्ठा arc_emac_bd *rxbd;
-	काष्ठा arc_emac_bd *txbd;
+	struct arc_emac_bd *rxbd;
+	struct arc_emac_bd *txbd;
 
 	dma_addr_t rxbd_dma;
 	dma_addr_t txbd_dma;
 
-	काष्ठा buffer_state rx_buff[RX_BD_NUM];
-	काष्ठा buffer_state tx_buff[TX_BD_NUM];
-	अचिन्हित पूर्णांक txbd_curr;
-	अचिन्हित पूर्णांक txbd_dirty;
+	struct buffer_state rx_buff[RX_BD_NUM];
+	struct buffer_state tx_buff[TX_BD_NUM];
+	unsigned int txbd_curr;
+	unsigned int txbd_dirty;
 
-	अचिन्हित पूर्णांक last_rx_bd;
+	unsigned int last_rx_bd;
 
-	अचिन्हित पूर्णांक link;
-	अचिन्हित पूर्णांक duplex;
-	अचिन्हित पूर्णांक speed;
+	unsigned int link;
+	unsigned int duplex;
+	unsigned int speed;
 
-	अचिन्हित पूर्णांक rx_missed_errors;
-पूर्ण;
+	unsigned int rx_missed_errors;
+};
 
 /**
- * arc_reg_set - Sets EMAC रेजिस्टर with provided value.
- * @priv:	Poपूर्णांकer to ARC EMAC निजी data काष्ठाure.
+ * arc_reg_set - Sets EMAC register with provided value.
+ * @priv:	Pointer to ARC EMAC private data structure.
  * @reg:	Register offset from base address.
- * @value:	Value to set in रेजिस्टर.
+ * @value:	Value to set in register.
  */
-अटल अंतरभूत व्योम arc_reg_set(काष्ठा arc_emac_priv *priv, पूर्णांक reg, पूर्णांक value)
-अणु
-	ioग_लिखो32(value, priv->regs + reg * माप(पूर्णांक));
-पूर्ण
+static inline void arc_reg_set(struct arc_emac_priv *priv, int reg, int value)
+{
+	iowrite32(value, priv->regs + reg * sizeof(int));
+}
 
 /**
- * arc_reg_get - Gets value of specअगरied EMAC रेजिस्टर.
- * @priv:	Poपूर्णांकer to ARC EMAC निजी data काष्ठाure.
+ * arc_reg_get - Gets value of specified EMAC register.
+ * @priv:	Pointer to ARC EMAC private data structure.
  * @reg:	Register offset from base address.
  *
- * वापसs:	Value of requested रेजिस्टर.
+ * returns:	Value of requested register.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक arc_reg_get(काष्ठा arc_emac_priv *priv, पूर्णांक reg)
-अणु
-	वापस ioपढ़ो32(priv->regs + reg * माप(पूर्णांक));
-पूर्ण
+static inline unsigned int arc_reg_get(struct arc_emac_priv *priv, int reg)
+{
+	return ioread32(priv->regs + reg * sizeof(int));
+}
 
 /**
- * arc_reg_or - Applies mask to specअगरied EMAC रेजिस्टर - ("reg" | "mask").
- * @priv:	Poपूर्णांकer to ARC EMAC निजी data काष्ठाure.
+ * arc_reg_or - Applies mask to specified EMAC register - ("reg" | "mask").
+ * @priv:	Pointer to ARC EMAC private data structure.
  * @reg:	Register offset from base address.
- * @mask:	Mask to apply to specअगरied रेजिस्टर.
+ * @mask:	Mask to apply to specified register.
  *
- * This function पढ़ोs initial रेजिस्टर value, then applies provided mask
- * to it and then ग_लिखोs रेजिस्टर back.
+ * This function reads initial register value, then applies provided mask
+ * to it and then writes register back.
  */
-अटल अंतरभूत व्योम arc_reg_or(काष्ठा arc_emac_priv *priv, पूर्णांक reg, पूर्णांक mask)
-अणु
-	अचिन्हित पूर्णांक value = arc_reg_get(priv, reg);
+static inline void arc_reg_or(struct arc_emac_priv *priv, int reg, int mask)
+{
+	unsigned int value = arc_reg_get(priv, reg);
 
 	arc_reg_set(priv, reg, value | mask);
-पूर्ण
+}
 
 /**
- * arc_reg_clr - Applies mask to specअगरied EMAC रेजिस्टर - ("reg" & ~"mask").
- * @priv:	Poपूर्णांकer to ARC EMAC निजी data काष्ठाure.
+ * arc_reg_clr - Applies mask to specified EMAC register - ("reg" & ~"mask").
+ * @priv:	Pointer to ARC EMAC private data structure.
  * @reg:	Register offset from base address.
- * @mask:	Mask to apply to specअगरied रेजिस्टर.
+ * @mask:	Mask to apply to specified register.
  *
- * This function पढ़ोs initial रेजिस्टर value, then applies provided mask
- * to it and then ग_लिखोs रेजिस्टर back.
+ * This function reads initial register value, then applies provided mask
+ * to it and then writes register back.
  */
-अटल अंतरभूत व्योम arc_reg_clr(काष्ठा arc_emac_priv *priv, पूर्णांक reg, पूर्णांक mask)
-अणु
-	अचिन्हित पूर्णांक value = arc_reg_get(priv, reg);
+static inline void arc_reg_clr(struct arc_emac_priv *priv, int reg, int mask)
+{
+	unsigned int value = arc_reg_get(priv, reg);
 
 	arc_reg_set(priv, reg, value & ~mask);
-पूर्ण
+}
 
-पूर्णांक arc_mdio_probe(काष्ठा arc_emac_priv *priv);
-पूर्णांक arc_mdio_हटाओ(काष्ठा arc_emac_priv *priv);
-पूर्णांक arc_emac_probe(काष्ठा net_device *ndev, पूर्णांक पूर्णांकerface);
-पूर्णांक arc_emac_हटाओ(काष्ठा net_device *ndev);
+int arc_mdio_probe(struct arc_emac_priv *priv);
+int arc_mdio_remove(struct arc_emac_priv *priv);
+int arc_emac_probe(struct net_device *ndev, int interface);
+int arc_emac_remove(struct net_device *ndev);
 
-#पूर्ण_अगर /* ARC_EMAC_H */
+#endif /* ARC_EMAC_H */

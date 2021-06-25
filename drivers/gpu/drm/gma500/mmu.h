@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /**************************************************************************
  * Copyright (c) 2007-2011, Intel Corporation.
  * All Rights Reserved.
  *
  **************************************************************************/
 
-#अगर_अघोषित __MMU_H
-#घोषणा __MMU_H
+#ifndef __MMU_H
+#define __MMU_H
 
-काष्ठा psb_mmu_driver अणु
-	/* protects driver- and pd काष्ठाures. Always take in पढ़ो mode
-	 * beक्रमe taking the page table spinlock.
+struct psb_mmu_driver {
+	/* protects driver- and pd structures. Always take in read mode
+	 * before taking the page table spinlock.
 	 */
-	काष्ठा rw_semaphore sem;
+	struct rw_semaphore sem;
 
 	/* protects page tables, directory tables and pt tables.
-	 * and pt काष्ठाures.
+	 * and pt structures.
 	 */
 	spinlock_t lock;
 
 	atomic_t needs_tlbflush;
 	atomic_t *msvdx_mmu_invaldc;
-	काष्ठा psb_mmu_pd *शेष_pd;
-	uपूर्णांक32_t bअगर_ctrl;
-	पूर्णांक has_clflush;
-	पूर्णांक clflush_add;
-	अचिन्हित दीर्घ clflush_mask;
+	struct psb_mmu_pd *default_pd;
+	uint32_t bif_ctrl;
+	int has_clflush;
+	int clflush_add;
+	unsigned long clflush_mask;
 
-	काष्ठा drm_device *dev;
-पूर्ण;
+	struct drm_device *dev;
+};
 
-काष्ठा psb_mmu_pd;
+struct psb_mmu_pd;
 
-काष्ठा psb_mmu_pt अणु
-	काष्ठा psb_mmu_pd *pd;
-	uपूर्णांक32_t index;
-	uपूर्णांक32_t count;
-	काष्ठा page *p;
-	uपूर्णांक32_t *v;
-पूर्ण;
+struct psb_mmu_pt {
+	struct psb_mmu_pd *pd;
+	uint32_t index;
+	uint32_t count;
+	struct page *p;
+	uint32_t *v;
+};
 
-काष्ठा psb_mmu_pd अणु
-	काष्ठा psb_mmu_driver *driver;
-	पूर्णांक hw_context;
-	काष्ठा psb_mmu_pt **tables;
-	काष्ठा page *p;
-	काष्ठा page *dummy_pt;
-	काष्ठा page *dummy_page;
-	uपूर्णांक32_t pd_mask;
-	uपूर्णांक32_t invalid_pde;
-	uपूर्णांक32_t invalid_pte;
-पूर्ण;
+struct psb_mmu_pd {
+	struct psb_mmu_driver *driver;
+	int hw_context;
+	struct psb_mmu_pt **tables;
+	struct page *p;
+	struct page *dummy_pt;
+	struct page *dummy_page;
+	uint32_t pd_mask;
+	uint32_t invalid_pde;
+	uint32_t invalid_pte;
+};
 
-बाह्य काष्ठा psb_mmu_driver *psb_mmu_driver_init(काष्ठा drm_device *dev,
-						  पूर्णांक trap_pagefaults,
-						  पूर्णांक invalid_type,
+extern struct psb_mmu_driver *psb_mmu_driver_init(struct drm_device *dev,
+						  int trap_pagefaults,
+						  int invalid_type,
 						  atomic_t *msvdx_mmu_invaldc);
-बाह्य व्योम psb_mmu_driver_takeकरोwn(काष्ठा psb_mmu_driver *driver);
-बाह्य काष्ठा psb_mmu_pd *psb_mmu_get_शेष_pd(काष्ठा psb_mmu_driver
+extern void psb_mmu_driver_takedown(struct psb_mmu_driver *driver);
+extern struct psb_mmu_pd *psb_mmu_get_default_pd(struct psb_mmu_driver
 						 *driver);
-बाह्य काष्ठा psb_mmu_pd *psb_mmu_alloc_pd(काष्ठा psb_mmu_driver *driver,
-					   पूर्णांक trap_pagefaults,
-					   पूर्णांक invalid_type);
-बाह्य व्योम psb_mmu_मुक्त_pagedir(काष्ठा psb_mmu_pd *pd);
-बाह्य व्योम psb_mmu_flush(काष्ठा psb_mmu_driver *driver);
-बाह्य व्योम psb_mmu_हटाओ_pfn_sequence(काष्ठा psb_mmu_pd *pd,
-					अचिन्हित दीर्घ address,
-					uपूर्णांक32_t num_pages);
-बाह्य पूर्णांक psb_mmu_insert_pfn_sequence(काष्ठा psb_mmu_pd *pd,
-				       uपूर्णांक32_t start_pfn,
-				       अचिन्हित दीर्घ address,
-				       uपूर्णांक32_t num_pages, पूर्णांक type);
-बाह्य पूर्णांक psb_mmu_भव_to_pfn(काष्ठा psb_mmu_pd *pd, uपूर्णांक32_t भव,
-				  अचिन्हित दीर्घ *pfn);
-बाह्य व्योम psb_mmu_set_pd_context(काष्ठा psb_mmu_pd *pd, पूर्णांक hw_context);
-बाह्य पूर्णांक psb_mmu_insert_pages(काष्ठा psb_mmu_pd *pd, काष्ठा page **pages,
-				अचिन्हित दीर्घ address, uपूर्णांक32_t num_pages,
-				uपूर्णांक32_t desired_tile_stride,
-				uपूर्णांक32_t hw_tile_stride, पूर्णांक type);
-बाह्य व्योम psb_mmu_हटाओ_pages(काष्ठा psb_mmu_pd *pd,
-				 अचिन्हित दीर्घ address, uपूर्णांक32_t num_pages,
-				 uपूर्णांक32_t desired_tile_stride,
-				 uपूर्णांक32_t hw_tile_stride);
+extern struct psb_mmu_pd *psb_mmu_alloc_pd(struct psb_mmu_driver *driver,
+					   int trap_pagefaults,
+					   int invalid_type);
+extern void psb_mmu_free_pagedir(struct psb_mmu_pd *pd);
+extern void psb_mmu_flush(struct psb_mmu_driver *driver);
+extern void psb_mmu_remove_pfn_sequence(struct psb_mmu_pd *pd,
+					unsigned long address,
+					uint32_t num_pages);
+extern int psb_mmu_insert_pfn_sequence(struct psb_mmu_pd *pd,
+				       uint32_t start_pfn,
+				       unsigned long address,
+				       uint32_t num_pages, int type);
+extern int psb_mmu_virtual_to_pfn(struct psb_mmu_pd *pd, uint32_t virtual,
+				  unsigned long *pfn);
+extern void psb_mmu_set_pd_context(struct psb_mmu_pd *pd, int hw_context);
+extern int psb_mmu_insert_pages(struct psb_mmu_pd *pd, struct page **pages,
+				unsigned long address, uint32_t num_pages,
+				uint32_t desired_tile_stride,
+				uint32_t hw_tile_stride, int type);
+extern void psb_mmu_remove_pages(struct psb_mmu_pd *pd,
+				 unsigned long address, uint32_t num_pages,
+				 uint32_t desired_tile_stride,
+				 uint32_t hw_tile_stride);
 
-#पूर्ण_अगर
+#endif

@@ -1,9 +1,8 @@
-<शैली गुरु>
 /*
  * Freescale Ethernet controllers
  *
  * Copyright (c) 2005 Intracom S.A.
- *  by Pantelis Antoniou <panto@पूर्णांकracom.gr>
+ *  by Pantelis Antoniou <panto@intracom.gr>
  *
  * 2005 (c) MontaVista Software, Inc.
  * Vitaly Bordug <vbordug@ru.mvista.com>
@@ -13,109 +12,109 @@
  * kind, whether express or implied.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/crc32.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mii.h>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_irq.h>
-#समावेश <linux/gfp.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/ptrace.h>
+#include <linux/errno.h>
+#include <linux/crc32.h>
+#include <linux/ioport.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include <linux/netdevice.h>
+#include <linux/etherdevice.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include <linux/mii.h>
+#include <linux/ethtool.h>
+#include <linux/bitops.h>
+#include <linux/fs.h>
+#include <linux/platform_device.h>
+#include <linux/of_address.h>
+#include <linux/of_device.h>
+#include <linux/of_irq.h>
+#include <linux/gfp.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <linux/uaccess.h>
+#include <asm/irq.h>
+#include <linux/uaccess.h>
 
-#समावेश "fs_enet.h"
-#समावेश "fec.h"
+#include "fs_enet.h"
+#include "fec.h"
 
 /*************************************************/
 
-#अगर defined(CONFIG_CPM1)
-/* क्रम a CPM1 __raw_xxx's are sufficient */
-#घोषणा __fs_out32(addr, x)	__raw_ग_लिखोl(x, addr)
-#घोषणा __fs_out16(addr, x)	__raw_ग_लिखोw(x, addr)
-#घोषणा __fs_in32(addr)	__raw_पढ़ोl(addr)
-#घोषणा __fs_in16(addr)	__raw_पढ़ोw(addr)
-#अन्यथा
-/* क्रम others play it safe */
-#घोषणा __fs_out32(addr, x)	out_be32(addr, x)
-#घोषणा __fs_out16(addr, x)	out_be16(addr, x)
-#घोषणा __fs_in32(addr)	in_be32(addr)
-#घोषणा __fs_in16(addr)	in_be16(addr)
-#पूर्ण_अगर
+#if defined(CONFIG_CPM1)
+/* for a CPM1 __raw_xxx's are sufficient */
+#define __fs_out32(addr, x)	__raw_writel(x, addr)
+#define __fs_out16(addr, x)	__raw_writew(x, addr)
+#define __fs_in32(addr)	__raw_readl(addr)
+#define __fs_in16(addr)	__raw_readw(addr)
+#else
+/* for others play it safe */
+#define __fs_out32(addr, x)	out_be32(addr, x)
+#define __fs_out16(addr, x)	out_be16(addr, x)
+#define __fs_in32(addr)	in_be32(addr)
+#define __fs_in16(addr)	in_be16(addr)
+#endif
 
-/* ग_लिखो */
-#घोषणा FW(_fecp, _reg, _v) __fs_out32(&(_fecp)->fec_ ## _reg, (_v))
+/* write */
+#define FW(_fecp, _reg, _v) __fs_out32(&(_fecp)->fec_ ## _reg, (_v))
 
-/* पढ़ो */
-#घोषणा FR(_fecp, _reg)	__fs_in32(&(_fecp)->fec_ ## _reg)
+/* read */
+#define FR(_fecp, _reg)	__fs_in32(&(_fecp)->fec_ ## _reg)
 
 /* set bits */
-#घोषणा FS(_fecp, _reg, _v) FW(_fecp, _reg, FR(_fecp, _reg) | (_v))
+#define FS(_fecp, _reg, _v) FW(_fecp, _reg, FR(_fecp, _reg) | (_v))
 
 /* clear bits */
-#घोषणा FC(_fecp, _reg, _v) FW(_fecp, _reg, FR(_fecp, _reg) & ~(_v))
+#define FC(_fecp, _reg, _v) FW(_fecp, _reg, FR(_fecp, _reg) & ~(_v))
 
 /*
- * Delay to रुको क्रम FEC reset command to complete (in us)
+ * Delay to wait for FEC reset command to complete (in us)
  */
-#घोषणा FEC_RESET_DELAY		50
+#define FEC_RESET_DELAY		50
 
-अटल पूर्णांक whack_reset(काष्ठा fec __iomem *fecp)
-अणु
-	पूर्णांक i;
+static int whack_reset(struct fec __iomem *fecp)
+{
+	int i;
 
 	FW(fecp, ecntrl, FEC_ECNTRL_PINMUX | FEC_ECNTRL_RESET);
-	क्रम (i = 0; i < FEC_RESET_DELAY; i++) अणु
-		अगर ((FR(fecp, ecntrl) & FEC_ECNTRL_RESET) == 0)
-			वापस 0;	/* OK */
+	for (i = 0; i < FEC_RESET_DELAY; i++) {
+		if ((FR(fecp, ecntrl) & FEC_ECNTRL_RESET) == 0)
+			return 0;	/* OK */
 		udelay(1);
-	पूर्ण
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक करो_pd_setup(काष्ठा fs_enet_निजी *fep)
-अणु
-	काष्ठा platक्रमm_device *ofdev = to_platक्रमm_device(fep->dev);
+static int do_pd_setup(struct fs_enet_private *fep)
+{
+	struct platform_device *ofdev = to_platform_device(fep->dev);
 
-	fep->पूर्णांकerrupt = irq_of_parse_and_map(ofdev->dev.of_node, 0);
-	अगर (!fep->पूर्णांकerrupt)
-		वापस -EINVAL;
+	fep->interrupt = irq_of_parse_and_map(ofdev->dev.of_node, 0);
+	if (!fep->interrupt)
+		return -EINVAL;
 
 	fep->fec.fecp = of_iomap(ofdev->dev.of_node, 0);
-	अगर (!fep->fcc.fccp)
-		वापस -EINVAL;
+	if (!fep->fcc.fccp)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा FEC_NAPI_EVENT_MSK	(FEC_ENET_RXF | FEC_ENET_RXB | FEC_ENET_TXF)
-#घोषणा FEC_EVENT		(FEC_ENET_RXF | FEC_ENET_TXF)
-#घोषणा FEC_ERR_EVENT_MSK	(FEC_ENET_HBERR | FEC_ENET_BABR | \
+#define FEC_NAPI_EVENT_MSK	(FEC_ENET_RXF | FEC_ENET_RXB | FEC_ENET_TXF)
+#define FEC_EVENT		(FEC_ENET_RXF | FEC_ENET_TXF)
+#define FEC_ERR_EVENT_MSK	(FEC_ENET_HBERR | FEC_ENET_BABR | \
 				 FEC_ENET_BABT | FEC_ENET_EBERR)
 
-अटल पूर्णांक setup_data(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
+static int setup_data(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
 
-	अगर (करो_pd_setup(fep) != 0)
-		वापस -EINVAL;
+	if (do_pd_setup(fep) != 0)
+		return -EINVAL;
 
 	fep->fec.hthi = 0;
 	fep->fec.htlo = 0;
@@ -124,61 +123,61 @@
 	fep->ev = FEC_EVENT;
 	fep->ev_err = FEC_ERR_EVENT_MSK;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक allocate_bd(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	स्थिर काष्ठा fs_platक्रमm_info *fpi = fep->fpi;
+static int allocate_bd(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	const struct fs_platform_info *fpi = fep->fpi;
 
-	fep->ring_base = (व्योम __क्रमce __iomem *)dma_alloc_coherent(fep->dev,
+	fep->ring_base = (void __force __iomem *)dma_alloc_coherent(fep->dev,
 					    (fpi->tx_ring + fpi->rx_ring) *
-					    माप(cbd_t), &fep->ring_mem_addr,
+					    sizeof(cbd_t), &fep->ring_mem_addr,
 					    GFP_KERNEL);
-	अगर (fep->ring_base == शून्य)
-		वापस -ENOMEM;
+	if (fep->ring_base == NULL)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम मुक्त_bd(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	स्थिर काष्ठा fs_platक्रमm_info *fpi = fep->fpi;
+static void free_bd(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	const struct fs_platform_info *fpi = fep->fpi;
 
-	अगर(fep->ring_base)
-		dma_मुक्त_coherent(fep->dev, (fpi->tx_ring + fpi->rx_ring)
-					* माप(cbd_t),
-					(व्योम __क्रमce *)fep->ring_base,
+	if(fep->ring_base)
+		dma_free_coherent(fep->dev, (fpi->tx_ring + fpi->rx_ring)
+					* sizeof(cbd_t),
+					(void __force *)fep->ring_base,
 					fep->ring_mem_addr);
-पूर्ण
+}
 
-अटल व्योम cleanup_data(काष्ठा net_device *dev)
-अणु
+static void cleanup_data(struct net_device *dev)
+{
 	/* nothing */
-पूर्ण
+}
 
-अटल व्योम set_promiscuous_mode(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void set_promiscuous_mode(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
 	FS(fecp, r_cntrl, FEC_RCNTRL_PROM);
-पूर्ण
+}
 
-अटल व्योम set_multicast_start(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
+static void set_multicast_start(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
 
 	fep->fec.hthi = 0;
 	fep->fec.htlo = 0;
-पूर्ण
+}
 
-अटल व्योम set_multicast_one(काष्ठा net_device *dev, स्थिर u8 *mac)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	पूर्णांक temp, hash_index;
+static void set_multicast_one(struct net_device *dev, const u8 *mac)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	int temp, hash_index;
 	u32 crc, csrVal;
 
 	crc = ether_crc(6, mac);
@@ -190,56 +189,56 @@
 		     ((temp & 0x08) >> 2) |
 		     ((temp & 0x10) >> 4);
 	csrVal = 1 << hash_index;
-	अगर (crc & 1)
+	if (crc & 1)
 		fep->fec.hthi |= csrVal;
-	अन्यथा
+	else
 		fep->fec.htlo |= csrVal;
-पूर्ण
+}
 
-अटल व्योम set_multicast_finish(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void set_multicast_finish(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
-	/* अगर all multi or too many multicasts; just enable all */
-	अगर ((dev->flags & IFF_ALLMULTI) != 0 ||
-	    netdev_mc_count(dev) > FEC_MAX_MULTICAST_ADDRS) अणु
+	/* if all multi or too many multicasts; just enable all */
+	if ((dev->flags & IFF_ALLMULTI) != 0 ||
+	    netdev_mc_count(dev) > FEC_MAX_MULTICAST_ADDRS) {
 		fep->fec.hthi = 0xffffffffU;
 		fep->fec.htlo = 0xffffffffU;
-	पूर्ण
+	}
 
 	FC(fecp, r_cntrl, FEC_RCNTRL_PROM);
 	FW(fecp, grp_hash_table_high, fep->fec.hthi);
 	FW(fecp, grp_hash_table_low, fep->fec.htlo);
-पूर्ण
+}
 
-अटल व्योम set_multicast_list(काष्ठा net_device *dev)
-अणु
-	काष्ठा netdev_hw_addr *ha;
+static void set_multicast_list(struct net_device *dev)
+{
+	struct netdev_hw_addr *ha;
 
-	अगर ((dev->flags & IFF_PROMISC) == 0) अणु
+	if ((dev->flags & IFF_PROMISC) == 0) {
 		set_multicast_start(dev);
-		netdev_क्रम_each_mc_addr(ha, dev)
+		netdev_for_each_mc_addr(ha, dev)
 			set_multicast_one(dev, ha->addr);
 		set_multicast_finish(dev);
-	पूर्ण अन्यथा
+	} else
 		set_promiscuous_mode(dev);
-पूर्ण
+}
 
-अटल व्योम restart(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
-	स्थिर काष्ठा fs_platक्रमm_info *fpi = fep->fpi;
+static void restart(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
+	const struct fs_platform_info *fpi = fep->fpi;
 	dma_addr_t rx_bd_base_phys, tx_bd_base_phys;
-	पूर्णांक r;
+	int r;
 	u32 addrhi, addrlo;
 
-	काष्ठा mii_bus *mii = dev->phydev->mdio.bus;
-	काष्ठा fec_info* fec_inf = mii->priv;
+	struct mii_bus *mii = dev->phydev->mdio.bus;
+	struct fec_info* fec_inf = mii->priv;
 
 	r = whack_reset(fep->fec.fecp);
-	अगर (r != 0)
+	if (r != 0)
 		dev_err(fep->dev, "FEC Reset FAILED!\n");
 	/*
 	 * Set station address.
@@ -263,15 +262,15 @@
 	 * Set maximum receive buffer size.
 	 */
 	FW(fecp, r_buff_size, PKT_MAXBLR_SIZE);
-#अगर_घोषित CONFIG_FS_ENET_MPC5121_FEC
+#ifdef CONFIG_FS_ENET_MPC5121_FEC
 	FW(fecp, r_cntrl, PKT_MAXBUF_SIZE << 16);
-#अन्यथा
+#else
 	FW(fecp, r_hash, PKT_MAXBUF_SIZE);
-#पूर्ण_अगर
+#endif
 
 	/* get physical address */
 	rx_bd_base_phys = fep->ring_mem_addr;
-	tx_bd_base_phys = rx_bd_base_phys + माप(cbd_t) * fpi->rx_ring;
+	tx_bd_base_phys = rx_bd_base_phys + sizeof(cbd_t) * fpi->rx_ring;
 
 	/*
 	 * Set receive and transmit descriptor base.
@@ -282,13 +281,13 @@
 	fs_init_bds(dev);
 
 	/*
-	 * Enable big endian and करोn't care about SDMA FC.
+	 * Enable big endian and don't care about SDMA FC.
 	 */
-#अगर_घोषित CONFIG_FS_ENET_MPC5121_FEC
+#ifdef CONFIG_FS_ENET_MPC5121_FEC
 	FS(fecp, dma_control, 0xC0000000);
-#अन्यथा
+#else
 	FW(fecp, fun_code, 0x78000000);
-#पूर्ण_अगर
+#endif
 
 	/*
 	 * Set MII speed.
@@ -296,37 +295,37 @@
 	FW(fecp, mii_speed, fec_inf->mii_speed);
 
 	/*
-	 * Clear any outstanding पूर्णांकerrupt.
+	 * Clear any outstanding interrupt.
 	 */
 	FW(fecp, ievent, 0xffc0);
-#अगर_अघोषित CONFIG_FS_ENET_MPC5121_FEC
-	FW(fecp, ivec, (virq_to_hw(fep->पूर्णांकerrupt) / 2) << 29);
+#ifndef CONFIG_FS_ENET_MPC5121_FEC
+	FW(fecp, ivec, (virq_to_hw(fep->interrupt) / 2) << 29);
 
 	FW(fecp, r_cntrl, FEC_RCNTRL_MII_MODE);	/* MII enable */
-#अन्यथा
+#else
 	/*
-	 * Only set MII/RMII mode - करो not touch maximum frame length
-	 * configured beक्रमe.
+	 * Only set MII/RMII mode - do not touch maximum frame length
+	 * configured before.
 	 */
 	FS(fecp, r_cntrl, fpi->use_rmii ?
 			FEC_RCNTRL_RMII_MODE : FEC_RCNTRL_MII_MODE);
-#पूर्ण_अगर
+#endif
 	/*
 	 * adjust to duplex mode
 	 */
-	अगर (dev->phydev->duplex) अणु
+	if (dev->phydev->duplex) {
 		FC(fecp, r_cntrl, FEC_RCNTRL_DRT);
 		FS(fecp, x_cntrl, FEC_TCNTRL_FDEN);	/* FD enable */
-	पूर्ण अन्यथा अणु
+	} else {
 		FS(fecp, r_cntrl, FEC_RCNTRL_DRT);
 		FC(fecp, x_cntrl, FEC_TCNTRL_FDEN);	/* FD disable */
-	पूर्ण
+	}
 
 	/* Restore multicast and promiscuous settings */
 	set_multicast_list(dev);
 
 	/*
-	 * Enable पूर्णांकerrupts we wish to service.
+	 * Enable interrupts we wish to service.
 	 */
 	FW(fecp, imask, FEC_ENET_TXF | FEC_ENET_TXB |
 	   FEC_ENET_RXF | FEC_ENET_RXB);
@@ -336,135 +335,135 @@
 	 */
 	FW(fecp, ecntrl, FEC_ECNTRL_PINMUX | FEC_ECNTRL_ETHER_EN);
 	FW(fecp, r_des_active, 0x01000000);
-पूर्ण
+}
 
-अटल व्योम stop(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	स्थिर काष्ठा fs_platक्रमm_info *fpi = fep->fpi;
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void stop(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	const struct fs_platform_info *fpi = fep->fpi;
+	struct fec __iomem *fecp = fep->fec.fecp;
 
-	काष्ठा fec_info *feci = dev->phydev->mdio.bus->priv;
+	struct fec_info *feci = dev->phydev->mdio.bus->priv;
 
-	पूर्णांक i;
+	int i;
 
-	अगर ((FR(fecp, ecntrl) & FEC_ECNTRL_ETHER_EN) == 0)
-		वापस;		/* alपढ़ोy करोwn */
+	if ((FR(fecp, ecntrl) & FEC_ECNTRL_ETHER_EN) == 0)
+		return;		/* already down */
 
 	FW(fecp, x_cntrl, 0x01);	/* Graceful transmit stop */
-	क्रम (i = 0; ((FR(fecp, ievent) & 0x10000000) == 0) &&
+	for (i = 0; ((FR(fecp, ievent) & 0x10000000) == 0) &&
 	     i < FEC_RESET_DELAY; i++)
 		udelay(1);
 
-	अगर (i == FEC_RESET_DELAY)
+	if (i == FEC_RESET_DELAY)
 		dev_warn(fep->dev, "FEC timeout on graceful transmit stop\n");
 	/*
-	 * Disable FEC. Let only MII पूर्णांकerrupts.
+	 * Disable FEC. Let only MII interrupts.
 	 */
 	FW(fecp, imask, 0);
 	FC(fecp, ecntrl, FEC_ECNTRL_ETHER_EN);
 
 	fs_cleanup_bds(dev);
 
-	/* shut करोwn FEC1? that's where the mii bus is */
-	अगर (fpi->has_phy) अणु
+	/* shut down FEC1? that's where the mii bus is */
+	if (fpi->has_phy) {
 		FS(fecp, r_cntrl, fpi->use_rmii ?
 				FEC_RCNTRL_RMII_MODE :
 				FEC_RCNTRL_MII_MODE);	/* MII/RMII enable */
 		FS(fecp, ecntrl, FEC_ECNTRL_PINMUX | FEC_ECNTRL_ETHER_EN);
 		FW(fecp, ievent, FEC_ENET_MII);
 		FW(fecp, mii_speed, feci->mii_speed);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम napi_clear_event_fs(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void napi_clear_event_fs(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
 	FW(fecp, ievent, FEC_NAPI_EVENT_MSK);
-पूर्ण
+}
 
-अटल व्योम napi_enable_fs(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void napi_enable_fs(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
 	FS(fecp, imask, FEC_NAPI_EVENT_MSK);
-पूर्ण
+}
 
-अटल व्योम napi_disable_fs(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void napi_disable_fs(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
 	FC(fecp, imask, FEC_NAPI_EVENT_MSK);
-पूर्ण
+}
 
-अटल व्योम rx_bd_करोne(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void rx_bd_done(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
 	FW(fecp, r_des_active, 0x01000000);
-पूर्ण
+}
 
-अटल व्योम tx_kickstart(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void tx_kickstart(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
 	FW(fecp, x_des_active, 0x01000000);
-पूर्ण
+}
 
-अटल u32 get_पूर्णांक_events(काष्ठा net_device *dev)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static u32 get_int_events(struct net_device *dev)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
-	वापस FR(fecp, ievent) & FR(fecp, imask);
-पूर्ण
+	return FR(fecp, ievent) & FR(fecp, imask);
+}
 
-अटल व्योम clear_पूर्णांक_events(काष्ठा net_device *dev, u32 पूर्णांक_events)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
-	काष्ठा fec __iomem *fecp = fep->fec.fecp;
+static void clear_int_events(struct net_device *dev, u32 int_events)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
+	struct fec __iomem *fecp = fep->fec.fecp;
 
-	FW(fecp, ievent, पूर्णांक_events);
-पूर्ण
+	FW(fecp, ievent, int_events);
+}
 
-अटल व्योम ev_error(काष्ठा net_device *dev, u32 पूर्णांक_events)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
+static void ev_error(struct net_device *dev, u32 int_events)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
 
-	dev_warn(fep->dev, "FEC ERROR(s) 0x%x\n", पूर्णांक_events);
-पूर्ण
+	dev_warn(fep->dev, "FEC ERROR(s) 0x%x\n", int_events);
+}
 
-अटल पूर्णांक get_regs(काष्ठा net_device *dev, व्योम *p, पूर्णांक *sizep)
-अणु
-	काष्ठा fs_enet_निजी *fep = netdev_priv(dev);
+static int get_regs(struct net_device *dev, void *p, int *sizep)
+{
+	struct fs_enet_private *fep = netdev_priv(dev);
 
-	अगर (*sizep < माप(काष्ठा fec))
-		वापस -EINVAL;
+	if (*sizep < sizeof(struct fec))
+		return -EINVAL;
 
-	स_नकल_fromio(p, fep->fec.fecp, माप(काष्ठा fec));
+	memcpy_fromio(p, fep->fec.fecp, sizeof(struct fec));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक get_regs_len(काष्ठा net_device *dev)
-अणु
-	वापस माप(काष्ठा fec);
-पूर्ण
+static int get_regs_len(struct net_device *dev)
+{
+	return sizeof(struct fec);
+}
 
-अटल व्योम tx_restart(काष्ठा net_device *dev)
-अणु
+static void tx_restart(struct net_device *dev)
+{
 	/* nothing */
-पूर्ण
+}
 
 /*************************************************************************/
 
-स्थिर काष्ठा fs_ops fs_fec_ops = अणु
+const struct fs_ops fs_fec_ops = {
 	.setup_data		= setup_data,
 	.cleanup_data		= cleanup_data,
 	.set_multicast_list	= set_multicast_list,
@@ -473,15 +472,15 @@
 	.napi_clear_event	= napi_clear_event_fs,
 	.napi_enable		= napi_enable_fs,
 	.napi_disable		= napi_disable_fs,
-	.rx_bd_करोne		= rx_bd_करोne,
+	.rx_bd_done		= rx_bd_done,
 	.tx_kickstart		= tx_kickstart,
-	.get_पूर्णांक_events		= get_पूर्णांक_events,
-	.clear_पूर्णांक_events	= clear_पूर्णांक_events,
+	.get_int_events		= get_int_events,
+	.clear_int_events	= clear_int_events,
 	.ev_error		= ev_error,
 	.get_regs		= get_regs,
 	.get_regs_len		= get_regs_len,
 	.tx_restart		= tx_restart,
 	.allocate_bd		= allocate_bd,
-	.मुक्त_bd		= मुक्त_bd,
-पूर्ण;
+	.free_bd		= free_bd,
+};
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  *	This is part of rtl8187 OpenSource driver
  *	Copyright (C) Andrea Merello 2004-2005  <andrea.merello@gmail.com>
@@ -18,9 +17,9 @@
 /*This files contains card eeprom (93c46 or 93c56) programming routines*/
 /*memory is addressed by WORDS*/
 
-#समावेश "r8192U.h"
-#समावेश "r8192U_hw.h"
+#include "r8192U.h"
+#include "r8192U_hw.h"
 
-#घोषणा EPROM_DELAY 10
+#define EPROM_DELAY 10
 
-पूर्णांक eprom_पढ़ो(काष्ठा net_device *dev, u32 addr); /* पढ़ोs a 16 bits word */
+int eprom_read(struct net_device *dev, u32 addr); /* reads a 16 bits word */

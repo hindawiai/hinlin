@@ -1,134 +1,133 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _LINUX_NVRAM_H
-#घोषणा _LINUX_NVRAM_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_NVRAM_H
+#define _LINUX_NVRAM_H
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <uapi/linux/nvram.h>
+#include <linux/errno.h>
+#include <uapi/linux/nvram.h>
 
-#अगर_घोषित CONFIG_PPC
-#समावेश <यंत्र/machdep.h>
-#पूर्ण_अगर
+#ifdef CONFIG_PPC
+#include <asm/machdep.h>
+#endif
 
 /**
- * काष्ठा nvram_ops - NVRAM functionality made available to drivers
- * @पढ़ो: validate checksum (अगर any) then load a range of bytes from NVRAM
- * @ग_लिखो: store a range of bytes to NVRAM then update checksum (अगर any)
- * @पढ़ो_byte: load a single byte from NVRAM
- * @ग_लिखो_byte: store a single byte to NVRAM
- * @get_size: वापस the fixed number of bytes in the NVRAM
+ * struct nvram_ops - NVRAM functionality made available to drivers
+ * @read: validate checksum (if any) then load a range of bytes from NVRAM
+ * @write: store a range of bytes to NVRAM then update checksum (if any)
+ * @read_byte: load a single byte from NVRAM
+ * @write_byte: store a single byte to NVRAM
+ * @get_size: return the fixed number of bytes in the NVRAM
  *
- * Architectures which provide an nvram ops काष्ठा need not implement all
+ * Architectures which provide an nvram ops struct need not implement all
  * of these methods. If the NVRAM hardware can be accessed only one byte
- * at a समय then it may be sufficient to provide .पढ़ो_byte and .ग_लिखो_byte.
- * If the NVRAM has a checksum (and it is to be checked) the .पढ़ो and
- * .ग_लिखो methods can be used to implement that efficiently.
+ * at a time then it may be sufficient to provide .read_byte and .write_byte.
+ * If the NVRAM has a checksum (and it is to be checked) the .read and
+ * .write methods can be used to implement that efficiently.
  *
  * Portable drivers may use the wrapper functions defined here.
- * The nvram_पढ़ो() and nvram_ग_लिखो() functions call the .पढ़ो and .ग_लिखो
- * methods when available and fall back on the .पढ़ो_byte and .ग_लिखो_byte
+ * The nvram_read() and nvram_write() functions call the .read and .write
+ * methods when available and fall back on the .read_byte and .write_byte
  * methods otherwise.
  */
 
-काष्ठा nvram_ops अणु
-	sमाप_प्रकार         (*get_size)(व्योम);
-	अचिन्हित अक्षर   (*पढ़ो_byte)(पूर्णांक);
-	व्योम            (*ग_लिखो_byte)(अचिन्हित अक्षर, पूर्णांक);
-	sमाप_प्रकार         (*पढ़ो)(अक्षर *, माप_प्रकार, loff_t *);
-	sमाप_प्रकार         (*ग_लिखो)(अक्षर *, माप_प्रकार, loff_t *);
-#अगर defined(CONFIG_X86) || defined(CONFIG_M68K)
-	दीर्घ            (*initialize)(व्योम);
-	दीर्घ            (*set_checksum)(व्योम);
-#पूर्ण_अगर
-पूर्ण;
+struct nvram_ops {
+	ssize_t         (*get_size)(void);
+	unsigned char   (*read_byte)(int);
+	void            (*write_byte)(unsigned char, int);
+	ssize_t         (*read)(char *, size_t, loff_t *);
+	ssize_t         (*write)(char *, size_t, loff_t *);
+#if defined(CONFIG_X86) || defined(CONFIG_M68K)
+	long            (*initialize)(void);
+	long            (*set_checksum)(void);
+#endif
+};
 
-बाह्य स्थिर काष्ठा nvram_ops arch_nvram_ops;
+extern const struct nvram_ops arch_nvram_ops;
 
-अटल अंतरभूत sमाप_प्रकार nvram_get_size(व्योम)
-अणु
-#अगर_घोषित CONFIG_PPC
-	अगर (ppc_md.nvram_size)
-		वापस ppc_md.nvram_size();
-#अन्यथा
-	अगर (arch_nvram_ops.get_size)
-		वापस arch_nvram_ops.get_size();
-#पूर्ण_अगर
-	वापस -ENODEV;
-पूर्ण
+static inline ssize_t nvram_get_size(void)
+{
+#ifdef CONFIG_PPC
+	if (ppc_md.nvram_size)
+		return ppc_md.nvram_size();
+#else
+	if (arch_nvram_ops.get_size)
+		return arch_nvram_ops.get_size();
+#endif
+	return -ENODEV;
+}
 
-अटल अंतरभूत अचिन्हित अक्षर nvram_पढ़ो_byte(पूर्णांक addr)
-अणु
-#अगर_घोषित CONFIG_PPC
-	अगर (ppc_md.nvram_पढ़ो_val)
-		वापस ppc_md.nvram_पढ़ो_val(addr);
-#अन्यथा
-	अगर (arch_nvram_ops.पढ़ो_byte)
-		वापस arch_nvram_ops.पढ़ो_byte(addr);
-#पूर्ण_अगर
-	वापस 0xFF;
-पूर्ण
+static inline unsigned char nvram_read_byte(int addr)
+{
+#ifdef CONFIG_PPC
+	if (ppc_md.nvram_read_val)
+		return ppc_md.nvram_read_val(addr);
+#else
+	if (arch_nvram_ops.read_byte)
+		return arch_nvram_ops.read_byte(addr);
+#endif
+	return 0xFF;
+}
 
-अटल अंतरभूत व्योम nvram_ग_लिखो_byte(अचिन्हित अक्षर val, पूर्णांक addr)
-अणु
-#अगर_घोषित CONFIG_PPC
-	अगर (ppc_md.nvram_ग_लिखो_val)
-		ppc_md.nvram_ग_लिखो_val(addr, val);
-#अन्यथा
-	अगर (arch_nvram_ops.ग_लिखो_byte)
-		arch_nvram_ops.ग_लिखो_byte(val, addr);
-#पूर्ण_अगर
-पूर्ण
+static inline void nvram_write_byte(unsigned char val, int addr)
+{
+#ifdef CONFIG_PPC
+	if (ppc_md.nvram_write_val)
+		ppc_md.nvram_write_val(addr, val);
+#else
+	if (arch_nvram_ops.write_byte)
+		arch_nvram_ops.write_byte(val, addr);
+#endif
+}
 
-अटल अंतरभूत sमाप_प्रकार nvram_पढ़ो_bytes(अक्षर *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	sमाप_प्रकार nvram_size = nvram_get_size();
+static inline ssize_t nvram_read_bytes(char *buf, size_t count, loff_t *ppos)
+{
+	ssize_t nvram_size = nvram_get_size();
 	loff_t i;
-	अक्षर *p = buf;
+	char *p = buf;
 
-	अगर (nvram_size < 0)
-		वापस nvram_size;
-	क्रम (i = *ppos; count > 0 && i < nvram_size; ++i, ++p, --count)
-		*p = nvram_पढ़ो_byte(i);
+	if (nvram_size < 0)
+		return nvram_size;
+	for (i = *ppos; count > 0 && i < nvram_size; ++i, ++p, --count)
+		*p = nvram_read_byte(i);
 	*ppos = i;
-	वापस p - buf;
-पूर्ण
+	return p - buf;
+}
 
-अटल अंतरभूत sमाप_प्रकार nvram_ग_लिखो_bytes(अक्षर *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-	sमाप_प्रकार nvram_size = nvram_get_size();
+static inline ssize_t nvram_write_bytes(char *buf, size_t count, loff_t *ppos)
+{
+	ssize_t nvram_size = nvram_get_size();
 	loff_t i;
-	अक्षर *p = buf;
+	char *p = buf;
 
-	अगर (nvram_size < 0)
-		वापस nvram_size;
-	क्रम (i = *ppos; count > 0 && i < nvram_size; ++i, ++p, --count)
-		nvram_ग_लिखो_byte(*p, i);
+	if (nvram_size < 0)
+		return nvram_size;
+	for (i = *ppos; count > 0 && i < nvram_size; ++i, ++p, --count)
+		nvram_write_byte(*p, i);
 	*ppos = i;
-	वापस p - buf;
-पूर्ण
+	return p - buf;
+}
 
-अटल अंतरभूत sमाप_प्रकार nvram_पढ़ो(अक्षर *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-#अगर_घोषित CONFIG_PPC
-	अगर (ppc_md.nvram_पढ़ो)
-		वापस ppc_md.nvram_पढ़ो(buf, count, ppos);
-#अन्यथा
-	अगर (arch_nvram_ops.पढ़ो)
-		वापस arch_nvram_ops.पढ़ो(buf, count, ppos);
-#पूर्ण_अगर
-	वापस nvram_पढ़ो_bytes(buf, count, ppos);
-पूर्ण
+static inline ssize_t nvram_read(char *buf, size_t count, loff_t *ppos)
+{
+#ifdef CONFIG_PPC
+	if (ppc_md.nvram_read)
+		return ppc_md.nvram_read(buf, count, ppos);
+#else
+	if (arch_nvram_ops.read)
+		return arch_nvram_ops.read(buf, count, ppos);
+#endif
+	return nvram_read_bytes(buf, count, ppos);
+}
 
-अटल अंतरभूत sमाप_प्रकार nvram_ग_लिखो(अक्षर *buf, माप_प्रकार count, loff_t *ppos)
-अणु
-#अगर_घोषित CONFIG_PPC
-	अगर (ppc_md.nvram_ग_लिखो)
-		वापस ppc_md.nvram_ग_लिखो(buf, count, ppos);
-#अन्यथा
-	अगर (arch_nvram_ops.ग_लिखो)
-		वापस arch_nvram_ops.ग_लिखो(buf, count, ppos);
-#पूर्ण_अगर
-	वापस nvram_ग_लिखो_bytes(buf, count, ppos);
-पूर्ण
+static inline ssize_t nvram_write(char *buf, size_t count, loff_t *ppos)
+{
+#ifdef CONFIG_PPC
+	if (ppc_md.nvram_write)
+		return ppc_md.nvram_write(buf, count, ppos);
+#else
+	if (arch_nvram_ops.write)
+		return arch_nvram_ops.write(buf, count, ppos);
+#endif
+	return nvram_write_bytes(buf, count, ppos);
+}
 
-#पूर्ण_अगर  /* _LINUX_NVRAM_H */
+#endif  /* _LINUX_NVRAM_H */

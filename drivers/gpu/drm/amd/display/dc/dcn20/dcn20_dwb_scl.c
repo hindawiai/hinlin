@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-17 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,31 +23,31 @@
  *
  */
 
-#समावेश "reg_helper.h"
-#समावेश "fixed31_32.h"
-#समावेश "resource.h"
-#समावेश "dwb.h"
-#समावेश "dcn20_dwb.h"
+#include "reg_helper.h"
+#include "fixed31_32.h"
+#include "resource.h"
+#include "dwb.h"
+#include "dcn20_dwb.h"
 
-#घोषणा NUM_PHASES    16
-#घोषणा HORZ_MAX_TAPS 12
-#घोषणा VERT_MAX_TAPS 12
+#define NUM_PHASES    16
+#define HORZ_MAX_TAPS 12
+#define VERT_MAX_TAPS 12
 
-#घोषणा REG(reg)\
+#define REG(reg)\
 	dwbc20->dwbc_regs->reg
 
-#घोषणा CTX \
+#define CTX \
 	dwbc20->base.ctx
 
-#अघोषित FN
-#घोषणा FN(reg_name, field_name) \
-	dwbc20->dwbc_shअगरt->field_name, dwbc20->dwbc_mask->field_name
+#undef FN
+#define FN(reg_name, field_name) \
+	dwbc20->dwbc_shift->field_name, dwbc20->dwbc_mask->field_name
 
-#घोषणा TO_DCN20_DWBC(dwbc_base) \
-	container_of(dwbc_base, काष्ठा dcn20_dwbc, base)
+#define TO_DCN20_DWBC(dwbc_base) \
+	container_of(dwbc_base, struct dcn20_dwbc, base)
 
 
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_upscale[27] = अणु
+static const uint16_t filter_3tap_16p_upscale[27] = {
 	2048, 2048, 0,
 	1708, 2424, 16348,
 	1372, 2796, 16308,
@@ -58,9 +57,9 @@
 	296, 3928, 16252,
 	124, 4052, 16296,
 	0, 4096, 0
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_117[27] = अणु
+static const uint16_t filter_3tap_16p_117[27] = {
 	2048, 2048, 0,
 	1824, 2276, 16376,
 	1600, 2496, 16380,
@@ -70,9 +69,9 @@
 	756, 3144, 192,
 	580, 3212, 296,
 	428, 3236, 428
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_150[27] = अणु
+static const uint16_t filter_3tap_16p_150[27] = {
 	2048, 2048, 0,
 	1872, 2184, 36,
 	1692, 2308, 88,
@@ -82,9 +81,9 @@
 	1004, 2648, 440,
 	844, 2684, 560,
 	696, 2696, 696
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_3tap_16p_183[27] = अणु
+static const uint16_t filter_3tap_16p_183[27] = {
 	2048, 2048, 0,
 	1892, 2104, 92,
 	1744, 2152, 196,
@@ -94,9 +93,9 @@
 	1168, 2276, 648,
 	1032, 2288, 772,
 	900, 2292, 900
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_upscale[36] = अणु
+static const uint16_t filter_4tap_16p_upscale[36] = {
 	0, 4096, 0, 0,
 	16240, 4056, 180, 16380,
 	16136, 3952, 404, 16364,
@@ -106,9 +105,9 @@
 	16052, 2980, 1604, 16224,
 	16084, 2648, 1952, 16176,
 	16128, 2304, 2304, 16128
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_117[36] = अणु
+static const uint16_t filter_4tap_16p_117[36] = {
 	428, 3236, 428, 0,
 	276, 3232, 604, 16364,
 	148, 3184, 800, 16340,
@@ -118,9 +117,9 @@
 	16244, 2648, 1732, 16236,
 	16220, 2440, 1976, 16220,
 	16212, 2216, 2216, 16212
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_150[36] = अणु
+static const uint16_t filter_4tap_16p_150[36] = {
 	696, 2700, 696, 0,
 	560, 2700, 848, 16364,
 	436, 2676, 1008, 16348,
@@ -130,9 +129,9 @@
 	84, 2344, 1716, 16332,
 	28, 2208, 1888, 16348,
 	16376, 2052, 2052, 16376
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_4tap_16p_183[36] = अणु
+static const uint16_t filter_4tap_16p_183[36] = {
 	940, 2208, 940, 0,
 	832, 2200, 1052, 4,
 	728, 2180, 1164, 16,
@@ -142,9 +141,9 @@
 	368, 1976, 1612, 132,
 	296, 1900, 1716, 176,
 	232, 1812, 1812, 232
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_5tap_16p_upscale[45] = अणु
+static const uint16_t filter_5tap_16p_upscale[45] = {
 	15936, 2496, 2496, 15936, 0,
 	15992, 2128, 2832, 15896, 12,
 	16056, 1760, 3140, 15876, 24,
@@ -154,9 +153,9 @@
 	16304, 460, 3980, 16072, 40,
 	16348, 212, 4064, 16208, 24,
 	0, 0, 4096, 0, 0,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_5tap_16p_117[45] = अणु
+static const uint16_t filter_5tap_16p_117[45] = {
 	16056, 2372, 2372, 16056, 0,
 	16052, 2124, 2600, 16076, 0,
 	16060, 1868, 2808, 16120, 0,
@@ -166,9 +165,9 @@
 	16184, 872, 3356, 124, 16320,
 	16220, 656, 3412, 276, 16292,
 	16256, 456, 3428, 456, 16256,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_5tap_16p_150[45] = अणु
+static const uint16_t filter_5tap_16p_150[45] = {
 	16368, 2064, 2064, 16368, 0,
 	16316, 1924, 2204, 44, 16372,
 	16280, 1772, 2328, 116, 16356,
@@ -178,9 +177,9 @@
 	16232, 1132, 2664, 544, 16284,
 	16240, 976, 2700, 680, 16264,
 	16248, 824, 2708, 824, 16248,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_5tap_16p_183[45] = अणु
+static const uint16_t filter_5tap_16p_183[45] = {
 	228, 1816, 1816, 228, 0,
 	168, 1728, 1904, 300, 16372,
 	116, 1632, 1988, 376, 16360,
@@ -190,9 +189,9 @@
 	16368, 1200, 2204, 752, 16332,
 	16352, 1084, 2224, 860, 16332,
 	16340, 972, 2232, 972, 16340,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_6tap_16p_upscale[54] = अणु
+static const uint16_t filter_6tap_16p_upscale[54] = {
 	0, 0, 4092, 0, 0, 0,
 	44, 16188, 4064, 228, 16324, 0,
 	80, 16036, 3980, 492, 16256, 4,
@@ -202,9 +201,9 @@
 	124, 15776, 3144, 1800, 15948, 64,
 	112, 15792, 2836, 2152, 15880, 80,
 	100, 15828, 2504, 2504, 15828, 100,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_6tap_16p_117[54] = अणु
+static const uint16_t filter_6tap_16p_117[54] = {
 	16168, 476, 3568, 476, 16168, 0,
 	16216, 280, 3540, 692, 16116, 8,
 	16264, 104, 3472, 924, 16068, 16,
@@ -214,9 +213,9 @@
 	12, 16036, 2880, 1936, 15940, 48,
 	28, 15984, 2668, 2192, 15936, 48,
 	40, 15952, 2436, 2436, 15952, 40,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_6tap_16p_150[54] = अणु
+static const uint16_t filter_6tap_16p_150[54] = {
 	16148, 920, 2724, 920, 16148, 0,
 	16156, 768, 2712, 1072, 16144, 0,
 	16172, 628, 2684, 1232, 16148, 16380,
@@ -226,9 +225,9 @@
 	16256, 156, 2380, 1856, 16256, 16336,
 	16276, 64, 2268, 2004, 16308, 16320,
 	16300, 16372, 2140, 2140, 16372, 16300,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_6tap_16p_183[54] = अणु
+static const uint16_t filter_6tap_16p_183[54] = {
 	16296, 1032, 2196, 1032, 16296, 0,
 	16284, 924, 2196, 1144, 16320, 16376,
 	16272, 820, 2180, 1256, 16348, 16364,
@@ -238,9 +237,9 @@
 	16272, 436, 2008, 1680, 144, 16316,
 	16280, 352, 1940, 1772, 204, 16304,
 	16292, 276, 1860, 1860, 276, 16292,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_7tap_16p_upscale[63] = अणु
+static const uint16_t filter_7tap_16p_upscale[63] = {
 	176, 15760, 2488, 2488, 15760, 176, 0,
 	160, 15812, 2152, 2816, 15728, 192, 16376,
 	136, 15884, 1812, 3124, 15720, 196, 16368,
@@ -250,9 +249,9 @@
 	32, 16228, 512, 3976, 16012, 116, 16364,
 	12, 16308, 240, 4064, 16180, 60, 16372,
 	0, 0, 0, 4096, 0, 0, 0,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_7tap_16p_117[63] = अणु
+static const uint16_t filter_7tap_16p_117[63] = {
 	92, 15868, 2464, 2464, 15868, 92, 0,
 	108, 15852, 2216, 2700, 15904, 72, 0,
 	112, 15856, 1960, 2916, 15964, 44, 0,
@@ -262,9 +261,9 @@
 	92, 16004, 916, 3496, 64, 16244, 36,
 	80, 16064, 676, 3556, 248, 16184, 48,
 	64, 16124, 452, 3576, 452, 16124, 64,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_7tap_16p_150[63] = अणु
+static const uint16_t filter_7tap_16p_150[63] = {
 	16224, 16380, 2208, 2208, 16380, 16224, 0,
 	16252, 16304, 2072, 2324, 84, 16196, 4,
 	16276, 16240, 1924, 2432, 184, 16172, 8,
@@ -274,9 +273,9 @@
 	16360, 16092, 1296, 2704, 688, 16088, 12,
 	16372, 16080, 1140, 2732, 832, 16080, 8,
 	0, 16076, 984, 2740, 984, 16076, 0,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_7tap_16p_183[63] = अणु
+static const uint16_t filter_7tap_16p_183[63] = {
 	16216, 324, 1884, 1884, 324, 16216, 0,
 	16228, 248, 1804, 1960, 408, 16212, 16380,
 	16240, 176, 1716, 2028, 496, 16208, 16376,
@@ -286,9 +285,9 @@
 	16292, 16344, 1320, 2196, 892, 16232, 16344,
 	16308, 16308, 1212, 2212, 996, 16252, 16332,
 	16320, 16276, 1104, 2216, 1104, 16276, 16320,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_8tap_16p_upscale[72] = अणु
+static const uint16_t filter_8tap_16p_upscale[72] = {
 	0, 0, 0, 4096, 0, 0, 0, 0,
 	16360, 76, 16172, 4064, 244, 16296, 24, 16380,
 	16340, 136, 15996, 3980, 524, 16204, 56, 16380,
@@ -298,9 +297,9 @@
 	16320, 256, 15668, 3156, 1844, 15828, 192, 16348,
 	16324, 256, 15672, 2856, 2192, 15756, 220, 16340,
 	16332, 244, 15704, 2532, 2532, 15704, 244, 16332,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_8tap_16p_117[72] = अणु
+static const uint16_t filter_8tap_16p_117[72] = {
 	116, 16100, 428, 3564, 428, 16100, 116, 0,
 	96, 16168, 220, 3548, 656, 16032, 136, 16376,
 	76, 16236, 32, 3496, 904, 15968, 152, 16372,
@@ -310,9 +309,9 @@
 	4, 76, 15912, 2940, 1972, 15800, 172, 16364,
 	16380, 112, 15848, 2724, 2236, 15792, 160, 16364,
 	16372, 140, 15812, 2488, 2488, 15812, 140, 16372,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_8tap_16p_150[72] = अणु
+static const uint16_t filter_8tap_16p_150[72] = {
 	16380, 16020, 1032, 2756, 1032, 16020, 16380, 0,
 	12, 16020, 876, 2744, 1184, 16032, 16364, 4,
 	24, 16028, 728, 2716, 1344, 16052, 16340, 8,
@@ -322,9 +321,9 @@
 	48, 16108, 204, 2436, 1948, 16232, 16228, 32,
 	44, 16136, 100, 2328, 2084, 16304, 16200, 40,
 	44, 16168, 4, 2212, 2212, 4, 16168, 44,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_8tap_16p_183[72] = अणु
+static const uint16_t filter_8tap_16p_183[72] = {
 	16264, 16264, 1164, 2244, 1164, 16264, 16264, 0,
 	16280, 16232, 1056, 2236, 1268, 16300, 16248, 0,
 	16296, 16204, 948, 2220, 1372, 16348, 16232, 0,
@@ -334,9 +333,9 @@
 	16352, 16156, 544, 2052, 1756, 204, 16176, 16380,
 	16360, 16156, 452, 1988, 1840, 280, 16164, 16376,
 	16368, 16160, 364, 1920, 1920, 364, 16160, 16368,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_9tap_16p_upscale[81] = अणु
+static const uint16_t filter_9tap_16p_upscale[81] = {
 	16284, 296, 15660, 2572, 2572, 15660, 296, 16284, 0,
 	16296, 272, 15712, 2228, 2896, 15632, 304, 16276, 4,
 	16308, 240, 15788, 1876, 3192, 15632, 304, 16276, 4,
@@ -346,9 +345,9 @@
 	16364, 76, 16188, 532, 3988, 15984, 156, 16324, 8,
 	16376, 36, 16288, 252, 4068, 16164, 84, 16352, 4,
 	0, 0, 0, 0, 4096, 0, 0, 0, 0,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_9tap_16p_117[81] = अणु
+static const uint16_t filter_9tap_16p_117[81] = {
 	16356, 172, 15776, 2504, 2504, 15776, 172, 16356, 0,
 	16344, 200, 15756, 2252, 2740, 15816, 136, 16372, 16380,
 	16336, 216, 15756, 1988, 2956, 15884, 92, 8, 16380,
@@ -358,9 +357,9 @@
 	16332, 200, 15928, 916, 3524, 24, 16224, 108, 16356,
 	16336, 184, 15996, 668, 3580, 220, 16148, 132, 16352,
 	16344, 160, 16072, 436, 3600, 436, 16072, 160, 16344,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_9tap_16p_150[81] = अणु
+static const uint16_t filter_9tap_16p_150[81] = {
 	84, 16128, 0, 2216, 2216, 0, 16128, 84, 0,
 	80, 16160, 16296, 2088, 2332, 100, 16092, 84, 0,
 	76, 16196, 16220, 1956, 2432, 208, 16064, 80, 0,
@@ -370,9 +369,9 @@
 	48, 16328, 16020, 1356, 2700, 740, 15984, 36, 20,
 	40, 16356, 15996, 1196, 2728, 888, 15980, 20, 24,
 	32, 0, 15984, 1044, 2736, 1044, 15984, 0, 32,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_9tap_16p_183[81] = अणु
+static const uint16_t filter_9tap_16p_183[81] = {
 	16356, 16112, 388, 1952, 1952, 388, 16112, 16356, 0,
 	16368, 16116, 304, 1876, 2020, 480, 16112, 16344, 4,
 	16376, 16124, 224, 1792, 2080, 576, 16116, 16328, 8,
@@ -382,9 +381,9 @@
 	16, 16180, 16344, 1404, 2232, 980, 16184, 16256, 20,
 	20, 16200, 16296, 1300, 2244, 1088, 16212, 16240, 20,
 	20, 16220, 16252, 1196, 2252, 1196, 16252, 16220, 20,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_10tap_16p_upscale[90] = अणु
+static const uint16_t filter_10tap_16p_upscale[90] = {
 	0, 0, 0, 0, 4096, 0, 0, 0, 0, 0,
 	12, 16344, 88, 16160, 4068, 252, 16280, 44, 16368, 0,
 	24, 16308, 168, 15976, 3988, 540, 16176, 92, 16348, 0,
@@ -394,9 +393,9 @@
 	36, 16240, 336, 15612, 3184, 1880, 15764, 276, 16272, 20,
 	32, 16240, 340, 15608, 2888, 2228, 15688, 308, 16256, 24,
 	28, 16244, 332, 15636, 2568, 2568, 15636, 332, 16244, 28,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_10tap_16p_117[90] = अणु
+static const uint16_t filter_10tap_16p_117[90] = {
 	16308, 196, 16048, 440, 3636, 440, 16048, 196, 16308, 0,
 	16316, 164, 16132, 220, 3612, 676, 15972, 220, 16300, 0,
 	16324, 132, 16212, 20, 3552, 932, 15900, 240, 16296, 4,
@@ -406,9 +405,9 @@
 	16364, 8, 108, 15864, 2972, 2008, 15728, 252, 16312, 4,
 	16372, 16368, 160, 15792, 2756, 2268, 15724, 228, 16328, 0,
 	16380, 16344, 200, 15748, 2520, 2520, 15748, 200, 16344, 16380,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_10tap_16p_150[90] = अणु
+static const uint16_t filter_10tap_16p_150[90] = {
 	64, 0, 15956, 1048, 2716, 1048, 15956, 0, 64, 0,
 	52, 24, 15952, 896, 2708, 1204, 15972, 16356, 72, 16380,
 	44, 48, 15952, 748, 2684, 1360, 16000, 16320, 84, 16380,
@@ -418,9 +417,9 @@
 	8, 108, 16032, 212, 2428, 1956, 16208, 16172, 112, 16376,
 	4, 116, 16060, 100, 2328, 2092, 16288, 16132, 116, 16380,
 	0, 116, 16096, 16380, 2216, 2216, 16380, 16096, 116, 0,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_10tap_16p_183[90] = अणु
+static const uint16_t filter_10tap_16p_183[90] = {
 	40, 16180, 16240, 1216, 2256, 1216, 16240, 16180, 40, 0,
 	44, 16204, 16200, 1112, 2252, 1320, 16288, 16160, 36, 0,
 	44, 16224, 16168, 1004, 2236, 1424, 16344, 16144, 28, 4,
@@ -430,9 +429,9 @@
 	36, 16308, 16088, 592, 2080, 1796, 232, 16088, 16376, 20,
 	32, 16328, 16080, 496, 2020, 1876, 316, 16080, 16360, 24,
 	28, 16344, 16080, 404, 1952, 1952, 404, 16080, 16344, 28,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_11tap_16p_upscale[99] = अणु
+static const uint16_t filter_11tap_16p_upscale[99] = {
 	60, 16216, 356, 15620, 2556, 2556, 15620, 356, 16216, 60, 0,
 	52, 16224, 336, 15672, 2224, 2876, 15592, 368, 16208, 64, 16380,
 	44, 16244, 304, 15744, 1876, 3176, 15596, 364, 16212, 64, 16376,
@@ -442,9 +441,9 @@
 	12, 16336, 104, 16164, 544, 3984, 15968, 180, 16296, 36, 16376,
 	4, 16360, 48, 16276, 256, 4068, 16160, 96, 16336, 16, 16380,
 	0, 0, 0, 0, 0, 4096, 0, 0, 0, 0, 0,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_11tap_16p_117[99] = अणु
+static const uint16_t filter_11tap_16p_117[99] = {
 	16380, 16332, 220, 15728, 2536, 2536, 15728, 220, 16332, 16380, 0,
 	4, 16308, 256, 15704, 2280, 2768, 15772, 176, 16360, 16368, 0,
 	12, 16292, 280, 15704, 2016, 2984, 15848, 120, 8, 16356, 0,
@@ -454,9 +453,9 @@
 	24, 16264, 272, 15880, 932, 3548, 16, 16208, 152, 16296, 16,
 	24, 16268, 248, 15956, 676, 3604, 216, 16120, 188, 16284, 20,
 	24, 16276, 220, 16036, 436, 3624, 436, 16036, 220, 16276, 24,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_11tap_16p_150[99] = अणु
+static const uint16_t filter_11tap_16p_150[99] = {
 	0, 144, 16072, 0, 2212, 2212, 0, 16072, 144, 0, 0,
 	16376, 144, 16112, 16288, 2092, 2324, 104, 16036, 140, 8, 16380,
 	16368, 144, 16152, 16204, 1960, 2424, 216, 16004, 132, 16, 16376,
@@ -466,9 +465,9 @@
 	16360, 116, 16312, 15980, 1372, 2684, 760, 15928, 56, 64, 16364,
 	16360, 104, 16348, 15952, 1216, 2712, 908, 15928, 28, 76, 16364,
 	16360, 92, 0, 15936, 1064, 2720, 1064, 15936, 0, 92, 16360,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_11tap_16p_183[99] = अणु
+static const uint16_t filter_11tap_16p_183[99] = {
 	60, 16336, 16052, 412, 1948, 1948, 412, 16052, 16336, 60, 0,
 	56, 16356, 16052, 324, 1876, 2016, 504, 16056, 16316, 64, 0,
 	48, 16372, 16060, 240, 1796, 2072, 604, 16064, 16292, 64, 0,
@@ -478,9 +477,9 @@
 	28, 40, 16112, 16340, 1428, 2220, 1012, 16152, 16200, 64, 8,
 	24, 52, 16132, 16284, 1328, 2236, 1120, 16192, 16176, 64, 12,
 	16, 56, 16156, 16236, 1224, 2240, 1224, 16236, 16156, 56, 16,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_12tap_16p_upscale[108] = अणु
+static const uint16_t filter_12tap_16p_upscale[108] = {
 	0, 0, 0, 0, 0, 4096, 0, 0, 0, 0, 0, 0,
 	16376, 24, 16332, 100, 16156, 4068, 260, 16272, 56, 16356, 8, 0,
 	16368, 44, 16284, 188, 15964, 3988, 548, 16156, 112, 16328, 20, 16380,
@@ -490,9 +489,9 @@
 	16356, 88, 16184, 384, 15580, 3188, 1888, 15728, 324, 16216, 68, 16368,
 	16360, 88, 16180, 392, 15576, 2892, 2236, 15652, 360, 16200, 80, 16364,
 	16360, 84, 16188, 384, 15600, 2576, 2576, 15600, 384, 16188, 84, 16360,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_12tap_16p_117[108] = अणु
+static const uint16_t filter_12tap_16p_117[108] = {
 	48, 16248, 240, 16028, 436, 3612, 436, 16028, 240, 16248, 48, 0,
 	44, 16260, 208, 16116, 212, 3596, 676, 15944, 272, 16240, 48, 16380,
 	40, 16276, 168, 16204, 12, 3540, 932, 15868, 296, 16240, 48, 16380,
@@ -502,9 +501,9 @@
 	16, 16344, 8, 132, 15836, 2980, 2016, 15688, 300, 16272, 20, 0,
 	12, 16364, 16356, 188, 15760, 2768, 2280, 15688, 272, 16296, 8, 4,
 	8, 16380, 16324, 236, 15712, 2532, 2532, 15712, 236, 16324, 16380, 8,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_12tap_16p_150[108] = अणु
+static const uint16_t filter_12tap_16p_150[108] = {
 	16340, 116, 0, 15916, 1076, 2724, 1076, 15916, 0, 116, 16340, 0,
 	16340, 100, 32, 15908, 920, 2716, 1232, 15936, 16344, 128, 16340, 0,
 	16344, 84, 64, 15908, 772, 2692, 1388, 15968, 16304, 140, 16344, 16380,
@@ -514,9 +513,9 @@
 	16356, 24, 148, 15980, 224, 2436, 1976, 16200, 16132, 172, 16364, 16372,
 	16360, 12, 160, 16012, 108, 2336, 2104, 16288, 16088, 172, 16372, 16368,
 	16364, 0, 168, 16048, 0, 2228, 2228, 0, 16048, 168, 0, 16364,
-पूर्ण;
+};
 
-अटल स्थिर uपूर्णांक16_t filter_12tap_16p_183[108] = अणु
+static const uint16_t filter_12tap_16p_183[108] = {
 	36, 72, 16132, 16228, 1224, 2224, 1224, 16228, 16132, 72, 36, 0,
 	28, 80, 16156, 16184, 1120, 2224, 1328, 16280, 16112, 64, 40, 16380,
 	24, 84, 16180, 16144, 1016, 2208, 1428, 16340, 16092, 52, 48, 16380,
@@ -526,177 +525,177 @@
 	4, 88, 16280, 16048, 608, 2068, 1792, 244, 16036, 16372, 76, 16380,
 	0, 88, 16308, 16036, 512, 2008, 1872, 328, 16032, 16352, 80, 16380,
 	0, 84, 16328, 16032, 416, 1944, 1944, 416, 16032, 16328, 84, 0,
-पूर्ण;
+};
 
-स्थिर uपूर्णांक16_t *wbscl_get_filter_3tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_3tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_3tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_3tap_16p_150;
-	अन्यथा
-		वापस filter_3tap_16p_183;
-पूर्ण
+const uint16_t *wbscl_get_filter_3tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_3tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_3tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_3tap_16p_150;
+	else
+		return filter_3tap_16p_183;
+}
 
-स्थिर uपूर्णांक16_t *wbscl_get_filter_4tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_4tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_4tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_4tap_16p_150;
-	अन्यथा
-		वापस filter_4tap_16p_183;
-पूर्ण
+const uint16_t *wbscl_get_filter_4tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_4tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_4tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_4tap_16p_150;
+	else
+		return filter_4tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_5tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_5tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_5tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_5tap_16p_150;
-	अन्यथा
-		वापस filter_5tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_5tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_5tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_5tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_5tap_16p_150;
+	else
+		return filter_5tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_6tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_6tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_6tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_6tap_16p_150;
-	अन्यथा
-		वापस filter_6tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_6tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_6tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_6tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_6tap_16p_150;
+	else
+		return filter_6tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_7tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_7tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_7tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_7tap_16p_150;
-	अन्यथा
-		वापस filter_7tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_7tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_7tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_7tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_7tap_16p_150;
+	else
+		return filter_7tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_8tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_8tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_8tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_8tap_16p_150;
-	अन्यथा
-		वापस filter_8tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_8tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_8tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_8tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_8tap_16p_150;
+	else
+		return filter_8tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_9tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_9tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_9tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_9tap_16p_150;
-	अन्यथा
-		वापस filter_9tap_16p_183;
-पूर्ण
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_10tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_10tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_10tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_10tap_16p_150;
-	अन्यथा
-		वापस filter_10tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_9tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_9tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_9tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_9tap_16p_150;
+	else
+		return filter_9tap_16p_183;
+}
+static const uint16_t *wbscl_get_filter_10tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_10tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_10tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_10tap_16p_150;
+	else
+		return filter_10tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_11tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_11tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_11tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_11tap_16p_150;
-	अन्यथा
-		वापस filter_11tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_11tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_11tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_11tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_11tap_16p_150;
+	else
+		return filter_11tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_12tap_16p(काष्ठा fixed31_32 ratio)
-अणु
-	अगर (ratio.value < dc_fixpt_one.value)
-		वापस filter_12tap_16p_upscale;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(4, 3).value)
-		वापस filter_12tap_16p_117;
-	अन्यथा अगर (ratio.value < dc_fixpt_from_fraction(5, 3).value)
-		वापस filter_12tap_16p_150;
-	अन्यथा
-		वापस filter_12tap_16p_183;
-पूर्ण
+static const uint16_t *wbscl_get_filter_12tap_16p(struct fixed31_32 ratio)
+{
+	if (ratio.value < dc_fixpt_one.value)
+		return filter_12tap_16p_upscale;
+	else if (ratio.value < dc_fixpt_from_fraction(4, 3).value)
+		return filter_12tap_16p_117;
+	else if (ratio.value < dc_fixpt_from_fraction(5, 3).value)
+		return filter_12tap_16p_150;
+	else
+		return filter_12tap_16p_183;
+}
 
-अटल स्थिर uपूर्णांक16_t *wbscl_get_filter_coeffs_16p(पूर्णांक taps, काष्ठा fixed31_32 ratio)
-अणु
-	अगर (taps == 12)
-		वापस wbscl_get_filter_12tap_16p(ratio);
-	अन्यथा अगर (taps == 11)
-		वापस wbscl_get_filter_11tap_16p(ratio);
-	अन्यथा अगर (taps == 10)
-		वापस wbscl_get_filter_10tap_16p(ratio);
-	अन्यथा अगर (taps == 9)
-		वापस wbscl_get_filter_9tap_16p(ratio);
-	अन्यथा अगर (taps == 8)
-		वापस wbscl_get_filter_8tap_16p(ratio);
-	अन्यथा अगर (taps == 7)
-		वापस wbscl_get_filter_7tap_16p(ratio);
-	अन्यथा अगर (taps == 6)
-		वापस wbscl_get_filter_6tap_16p(ratio);
-	अन्यथा अगर (taps == 5)
-		वापस wbscl_get_filter_5tap_16p(ratio);
-	अन्यथा अगर (taps == 4)
-		वापस wbscl_get_filter_4tap_16p(ratio);
-	अन्यथा अगर (taps == 3)
-		वापस wbscl_get_filter_3tap_16p(ratio);
-	अन्यथा अगर (taps == 2)
-		वापस get_filter_2tap_16p();
-	अन्यथा अगर (taps == 1)
-		वापस शून्य;
-	अन्यथा अणु
+static const uint16_t *wbscl_get_filter_coeffs_16p(int taps, struct fixed31_32 ratio)
+{
+	if (taps == 12)
+		return wbscl_get_filter_12tap_16p(ratio);
+	else if (taps == 11)
+		return wbscl_get_filter_11tap_16p(ratio);
+	else if (taps == 10)
+		return wbscl_get_filter_10tap_16p(ratio);
+	else if (taps == 9)
+		return wbscl_get_filter_9tap_16p(ratio);
+	else if (taps == 8)
+		return wbscl_get_filter_8tap_16p(ratio);
+	else if (taps == 7)
+		return wbscl_get_filter_7tap_16p(ratio);
+	else if (taps == 6)
+		return wbscl_get_filter_6tap_16p(ratio);
+	else if (taps == 5)
+		return wbscl_get_filter_5tap_16p(ratio);
+	else if (taps == 4)
+		return wbscl_get_filter_4tap_16p(ratio);
+	else if (taps == 3)
+		return wbscl_get_filter_3tap_16p(ratio);
+	else if (taps == 2)
+		return get_filter_2tap_16p();
+	else if (taps == 1)
+		return NULL;
+	else {
 		/* should never happen, bug */
 		BREAK_TO_DEBUGGER();
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return NULL;
+	}
+}
 
-अटल व्योम wbscl_set_scaler_filter(
-	काष्ठा dcn20_dwbc *dwbc20,
-	uपूर्णांक32_t taps,
-	क्रमागत wbscl_coef_filter_type_sel filter_type,
-	स्थिर uपूर्णांक16_t *filter)
-अणु
-	स्थिर पूर्णांक tap_pairs = (taps + 1) / 2;
-	पूर्णांक phase;
-	पूर्णांक pair;
-	uपूर्णांक16_t odd_coef, even_coef;
+static void wbscl_set_scaler_filter(
+	struct dcn20_dwbc *dwbc20,
+	uint32_t taps,
+	enum wbscl_coef_filter_type_sel filter_type,
+	const uint16_t *filter)
+{
+	const int tap_pairs = (taps + 1) / 2;
+	int phase;
+	int pair;
+	uint16_t odd_coef, even_coef;
 
-	क्रम (phase = 0; phase < (NUM_PHASES / 2 + 1); phase++) अणु
-		क्रम (pair = 0; pair < tap_pairs; pair++) अणु
+	for (phase = 0; phase < (NUM_PHASES / 2 + 1); phase++) {
+		for (pair = 0; pair < tap_pairs; pair++) {
 			even_coef = filter[phase * taps + 2 * pair];
-			अगर ((pair * 2 + 1) < taps)
+			if ((pair * 2 + 1) < taps)
 				odd_coef = filter[phase * taps + 2 * pair + 1];
-			अन्यथा
+			else
 				odd_coef = 0;
 
 			REG_SET_3(WBSCL_COEF_RAM_SELECT, 0,
@@ -707,46 +706,46 @@
 			REG_SET_4(WBSCL_COEF_RAM_TAP_DATA, 0,
 				/* Even tap coefficient (bits 1:0 fixed to 0) */
 				WBSCL_COEF_RAM_EVEN_TAP_COEF, even_coef,
-				/* Write/पढ़ो control क्रम even coefficient */
+				/* Write/read control for even coefficient */
 				WBSCL_COEF_RAM_EVEN_TAP_COEF_EN, 1,
 				/* Odd tap coefficient (bits 1:0 fixed to 0) */
 				WBSCL_COEF_RAM_ODD_TAP_COEF, odd_coef,
-				/* Write/पढ़ो control क्रम odd coefficient */
+				/* Write/read control for odd coefficient */
 				WBSCL_COEF_RAM_ODD_TAP_COEF_EN, 1);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-bool dwb_program_horz_scalar(काष्ठा dcn20_dwbc *dwbc20,
-		uपूर्णांक32_t src_width,
-		uपूर्णांक32_t dest_width,
-		काष्ठा scaling_taps num_taps)
-अणु
-	uपूर्णांक32_t h_ratio_luma = 1;
-	uपूर्णांक32_t h_taps_luma = num_taps.h_taps;
-	uपूर्णांक32_t h_taps_chroma = num_taps.h_taps_c;
-	पूर्णांक32_t h_init_phase_luma = 0;
-	पूर्णांक32_t h_init_phase_chroma = 0;
-	uपूर्णांक32_t h_init_phase_luma_पूर्णांक = 0;
-	uपूर्णांक32_t h_init_phase_luma_frac = 0;
-	uपूर्णांक32_t h_init_phase_chroma_पूर्णांक = 0;
-	uपूर्णांक32_t h_init_phase_chroma_frac = 0;
-	स्थिर uपूर्णांक16_t *filter_h = शून्य;
-	स्थिर uपूर्णांक16_t *filter_h_c = शून्य;
+bool dwb_program_horz_scalar(struct dcn20_dwbc *dwbc20,
+		uint32_t src_width,
+		uint32_t dest_width,
+		struct scaling_taps num_taps)
+{
+	uint32_t h_ratio_luma = 1;
+	uint32_t h_taps_luma = num_taps.h_taps;
+	uint32_t h_taps_chroma = num_taps.h_taps_c;
+	int32_t h_init_phase_luma = 0;
+	int32_t h_init_phase_chroma = 0;
+	uint32_t h_init_phase_luma_int = 0;
+	uint32_t h_init_phase_luma_frac = 0;
+	uint32_t h_init_phase_chroma_int = 0;
+	uint32_t h_init_phase_chroma_frac = 0;
+	const uint16_t *filter_h = NULL;
+	const uint16_t *filter_h_c = NULL;
 
 
-	काष्ठा fixed31_32 पंचांगp_h_init_phase_luma = dc_fixpt_from_पूर्णांक(0);
-	काष्ठा fixed31_32 पंचांगp_h_init_phase_chroma = dc_fixpt_from_पूर्णांक(0);
+	struct fixed31_32 tmp_h_init_phase_luma = dc_fixpt_from_int(0);
+	struct fixed31_32 tmp_h_init_phase_chroma = dc_fixpt_from_int(0);
 
 
 	/*Calculate ratio*/
-	काष्ठा fixed31_32 पंचांगp_h_ratio_luma = dc_fixpt_from_fraction(
+	struct fixed31_32 tmp_h_ratio_luma = dc_fixpt_from_fraction(
 		src_width, dest_width);
 
-	अगर (dc_fixpt_न्यूनमान(पंचांगp_h_ratio_luma) == 8)
+	if (dc_fixpt_floor(tmp_h_ratio_luma) == 8)
 		h_ratio_luma = -1;
-	अन्यथा
-		h_ratio_luma = dc_fixpt_u3d19(पंचांगp_h_ratio_luma) << 5;
+	else
+		h_ratio_luma = dc_fixpt_u3d19(tmp_h_ratio_luma) << 5;
 
 	/*Program ratio*/
 	REG_UPDATE(WBSCL_HORZ_FILTER_SCALE_RATIO, WBSCL_H_SCALE_RATIO, h_ratio_luma);
@@ -756,35 +755,35 @@ bool dwb_program_horz_scalar(काष्ठा dcn20_dwbc *dwbc20,
 	REG_UPDATE(WBSCL_TAP_CONTROL, WBSCL_H_NUM_OF_TAPS_CBCR, h_taps_chroma - 1);
 
 	/* Calculate phase*/
-	पंचांगp_h_init_phase_luma = dc_fixpt_add_पूर्णांक(पंचांगp_h_ratio_luma, h_taps_luma + 1);
-	पंचांगp_h_init_phase_luma = dc_fixpt_भाग_पूर्णांक(पंचांगp_h_init_phase_luma, 2);
-	पंचांगp_h_init_phase_luma = dc_fixpt_sub_पूर्णांक(पंचांगp_h_init_phase_luma, h_taps_luma);
+	tmp_h_init_phase_luma = dc_fixpt_add_int(tmp_h_ratio_luma, h_taps_luma + 1);
+	tmp_h_init_phase_luma = dc_fixpt_div_int(tmp_h_init_phase_luma, 2);
+	tmp_h_init_phase_luma = dc_fixpt_sub_int(tmp_h_init_phase_luma, h_taps_luma);
 
-	h_init_phase_luma = dc_fixpt_s4d19(पंचांगp_h_init_phase_luma);
-	h_init_phase_luma_पूर्णांक = (h_init_phase_luma >> 19) & 0x1f;
+	h_init_phase_luma = dc_fixpt_s4d19(tmp_h_init_phase_luma);
+	h_init_phase_luma_int = (h_init_phase_luma >> 19) & 0x1f;
 	h_init_phase_luma_frac = (h_init_phase_luma & 0x7ffff) << 5;
 
-	पंचांगp_h_init_phase_chroma = dc_fixpt_mul_पूर्णांक(पंचांगp_h_ratio_luma, 2);
-	पंचांगp_h_init_phase_chroma = dc_fixpt_add_पूर्णांक(पंचांगp_h_init_phase_chroma, h_taps_chroma + 1);
-	पंचांगp_h_init_phase_chroma = dc_fixpt_भाग_पूर्णांक(पंचांगp_h_init_phase_chroma, 2);
-	पंचांगp_h_init_phase_chroma = dc_fixpt_sub_पूर्णांक(पंचांगp_h_init_phase_chroma, h_taps_chroma);
-	पंचांगp_h_init_phase_chroma = dc_fixpt_add(पंचांगp_h_init_phase_chroma, dc_fixpt_from_fraction(1, 4));
+	tmp_h_init_phase_chroma = dc_fixpt_mul_int(tmp_h_ratio_luma, 2);
+	tmp_h_init_phase_chroma = dc_fixpt_add_int(tmp_h_init_phase_chroma, h_taps_chroma + 1);
+	tmp_h_init_phase_chroma = dc_fixpt_div_int(tmp_h_init_phase_chroma, 2);
+	tmp_h_init_phase_chroma = dc_fixpt_sub_int(tmp_h_init_phase_chroma, h_taps_chroma);
+	tmp_h_init_phase_chroma = dc_fixpt_add(tmp_h_init_phase_chroma, dc_fixpt_from_fraction(1, 4));
 
-	h_init_phase_chroma = dc_fixpt_s4d19(पंचांगp_h_init_phase_chroma);
-	h_init_phase_chroma_पूर्णांक = (h_init_phase_chroma >> 19) & 0x1f;
+	h_init_phase_chroma = dc_fixpt_s4d19(tmp_h_init_phase_chroma);
+	h_init_phase_chroma_int = (h_init_phase_chroma >> 19) & 0x1f;
 	h_init_phase_chroma_frac = (h_init_phase_chroma & 0x7ffff) << 5;
 
 	/* Program phase*/
-	REG_UPDATE(WBSCL_HORZ_FILTER_INIT_Y_RGB, WBSCL_H_INIT_INT_Y_RGB, h_init_phase_luma_पूर्णांक);
+	REG_UPDATE(WBSCL_HORZ_FILTER_INIT_Y_RGB, WBSCL_H_INIT_INT_Y_RGB, h_init_phase_luma_int);
 	REG_UPDATE(WBSCL_HORZ_FILTER_INIT_Y_RGB, WBSCL_H_INIT_FRAC_Y_RGB, h_init_phase_luma_frac);
-	REG_UPDATE(WBSCL_HORZ_FILTER_INIT_CBCR, WBSCL_H_INIT_INT_CBCR, h_init_phase_chroma_पूर्णांक);
+	REG_UPDATE(WBSCL_HORZ_FILTER_INIT_CBCR, WBSCL_H_INIT_INT_CBCR, h_init_phase_chroma_int);
 	REG_UPDATE(WBSCL_HORZ_FILTER_INIT_CBCR, WBSCL_H_INIT_FRAC_CBCR, h_init_phase_chroma_frac);
 
 	/* Program LUT coefficients*/
 	filter_h = wbscl_get_filter_coeffs_16p(
-		h_taps_luma, पंचांगp_h_ratio_luma);
+		h_taps_luma, tmp_h_ratio_luma);
 	filter_h_c = wbscl_get_filter_coeffs_16p(
-		h_taps_chroma, dc_fixpt_from_पूर्णांक(h_ratio_luma * 2));
+		h_taps_chroma, dc_fixpt_from_int(h_ratio_luma * 2));
 
 	wbscl_set_scaler_filter(dwbc20, h_taps_luma,
 		WBSCL_COEF_LUMA_HORZ_FILTER, filter_h);
@@ -792,39 +791,39 @@ bool dwb_program_horz_scalar(काष्ठा dcn20_dwbc *dwbc20,
 	wbscl_set_scaler_filter(dwbc20, h_taps_chroma,
 		WBSCL_COEF_CHROMA_HORZ_FILTER, filter_h_c);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool dwb_program_vert_scalar(काष्ठा dcn20_dwbc *dwbc20,
-		uपूर्णांक32_t src_height,
-		uपूर्णांक32_t dest_height,
-		काष्ठा scaling_taps num_taps,
-		क्रमागत dwb_subsample_position subsample_position)
-अणु
-	uपूर्णांक32_t v_ratio_luma = 1;
-	uपूर्णांक32_t v_taps_luma = num_taps.v_taps;
-	uपूर्णांक32_t v_taps_chroma = num_taps.v_taps_c;
-	पूर्णांक32_t v_init_phase_luma = 0;
-	पूर्णांक32_t v_init_phase_chroma = 0;
-	uपूर्णांक32_t v_init_phase_luma_पूर्णांक = 0;
-	uपूर्णांक32_t v_init_phase_luma_frac = 0;
-	uपूर्णांक32_t v_init_phase_chroma_पूर्णांक = 0;
-	uपूर्णांक32_t v_init_phase_chroma_frac = 0;
+bool dwb_program_vert_scalar(struct dcn20_dwbc *dwbc20,
+		uint32_t src_height,
+		uint32_t dest_height,
+		struct scaling_taps num_taps,
+		enum dwb_subsample_position subsample_position)
+{
+	uint32_t v_ratio_luma = 1;
+	uint32_t v_taps_luma = num_taps.v_taps;
+	uint32_t v_taps_chroma = num_taps.v_taps_c;
+	int32_t v_init_phase_luma = 0;
+	int32_t v_init_phase_chroma = 0;
+	uint32_t v_init_phase_luma_int = 0;
+	uint32_t v_init_phase_luma_frac = 0;
+	uint32_t v_init_phase_chroma_int = 0;
+	uint32_t v_init_phase_chroma_frac = 0;
 
-	स्थिर uपूर्णांक16_t *filter_v = शून्य;
-	स्थिर uपूर्णांक16_t *filter_v_c = शून्य;
+	const uint16_t *filter_v = NULL;
+	const uint16_t *filter_v_c = NULL;
 
-	काष्ठा fixed31_32 पंचांगp_v_init_phase_luma = dc_fixpt_from_पूर्णांक(0);
-	काष्ठा fixed31_32 पंचांगp_v_init_phase_chroma = dc_fixpt_from_पूर्णांक(0);
+	struct fixed31_32 tmp_v_init_phase_luma = dc_fixpt_from_int(0);
+	struct fixed31_32 tmp_v_init_phase_chroma = dc_fixpt_from_int(0);
 
 	/*Calculate ratio*/
-	काष्ठा fixed31_32 पंचांगp_v_ratio_luma = dc_fixpt_from_fraction(
+	struct fixed31_32 tmp_v_ratio_luma = dc_fixpt_from_fraction(
 		src_height, dest_height);
 
-	अगर (dc_fixpt_न्यूनमान(पंचांगp_v_ratio_luma) == 8)
+	if (dc_fixpt_floor(tmp_v_ratio_luma) == 8)
 		v_ratio_luma = -1;
-	अन्यथा
-		v_ratio_luma = dc_fixpt_u3d19(पंचांगp_v_ratio_luma) << 5;
+	else
+		v_ratio_luma = dc_fixpt_u3d19(tmp_v_ratio_luma) << 5;
 
 	/*Program ratio*/
 	REG_UPDATE(WBSCL_VERT_FILTER_SCALE_RATIO, WBSCL_V_SCALE_RATIO, v_ratio_luma);
@@ -834,41 +833,41 @@ bool dwb_program_vert_scalar(काष्ठा dcn20_dwbc *dwbc20,
 	REG_UPDATE(WBSCL_TAP_CONTROL, WBSCL_V_NUM_OF_TAPS_CBCR, v_taps_chroma - 1);
 
 	/* Calculate phase*/
-	पंचांगp_v_init_phase_luma = dc_fixpt_add_पूर्णांक(पंचांगp_v_ratio_luma, v_taps_luma + 1);
-	पंचांगp_v_init_phase_luma = dc_fixpt_भाग_पूर्णांक(पंचांगp_v_init_phase_luma, 2);
-	पंचांगp_v_init_phase_luma = dc_fixpt_sub_पूर्णांक(पंचांगp_v_init_phase_luma, v_taps_luma);
+	tmp_v_init_phase_luma = dc_fixpt_add_int(tmp_v_ratio_luma, v_taps_luma + 1);
+	tmp_v_init_phase_luma = dc_fixpt_div_int(tmp_v_init_phase_luma, 2);
+	tmp_v_init_phase_luma = dc_fixpt_sub_int(tmp_v_init_phase_luma, v_taps_luma);
 
-	v_init_phase_luma = dc_fixpt_s4d19(पंचांगp_v_init_phase_luma);
-	v_init_phase_luma_पूर्णांक = (v_init_phase_luma >> 19) & 0x1f;
+	v_init_phase_luma = dc_fixpt_s4d19(tmp_v_init_phase_luma);
+	v_init_phase_luma_int = (v_init_phase_luma >> 19) & 0x1f;
 	v_init_phase_luma_frac = (v_init_phase_luma & 0x7ffff) << 5;
 
-	पंचांगp_v_init_phase_chroma = dc_fixpt_mul_पूर्णांक(पंचांगp_v_ratio_luma, 2);
-	पंचांगp_v_init_phase_chroma = dc_fixpt_add_पूर्णांक(पंचांगp_v_init_phase_chroma, v_taps_chroma + 1);
-	पंचांगp_v_init_phase_chroma = dc_fixpt_भाग_पूर्णांक(पंचांगp_v_init_phase_chroma, 2);
-	पंचांगp_v_init_phase_chroma = dc_fixpt_sub_पूर्णांक(पंचांगp_v_init_phase_chroma, v_taps_chroma);
-	अगर (subsample_position == DWB_COSITED_SUBSAMPLING)
-		पंचांगp_v_init_phase_chroma = dc_fixpt_add(पंचांगp_v_init_phase_chroma, dc_fixpt_from_fraction(1, 4));
+	tmp_v_init_phase_chroma = dc_fixpt_mul_int(tmp_v_ratio_luma, 2);
+	tmp_v_init_phase_chroma = dc_fixpt_add_int(tmp_v_init_phase_chroma, v_taps_chroma + 1);
+	tmp_v_init_phase_chroma = dc_fixpt_div_int(tmp_v_init_phase_chroma, 2);
+	tmp_v_init_phase_chroma = dc_fixpt_sub_int(tmp_v_init_phase_chroma, v_taps_chroma);
+	if (subsample_position == DWB_COSITED_SUBSAMPLING)
+		tmp_v_init_phase_chroma = dc_fixpt_add(tmp_v_init_phase_chroma, dc_fixpt_from_fraction(1, 4));
 
-	v_init_phase_chroma = dc_fixpt_s4d19(पंचांगp_v_init_phase_chroma);
-	v_init_phase_chroma_पूर्णांक = (v_init_phase_chroma >> 19) & 0x1f;
+	v_init_phase_chroma = dc_fixpt_s4d19(tmp_v_init_phase_chroma);
+	v_init_phase_chroma_int = (v_init_phase_chroma >> 19) & 0x1f;
 	v_init_phase_chroma_frac = (v_init_phase_chroma & 0x7ffff) << 5;
 
 	/* Program phase*/
-	REG_UPDATE(WBSCL_VERT_FILTER_INIT_Y_RGB, WBSCL_V_INIT_INT_Y_RGB, v_init_phase_luma_पूर्णांक);
+	REG_UPDATE(WBSCL_VERT_FILTER_INIT_Y_RGB, WBSCL_V_INIT_INT_Y_RGB, v_init_phase_luma_int);
 	REG_UPDATE(WBSCL_VERT_FILTER_INIT_Y_RGB, WBSCL_V_INIT_FRAC_Y_RGB, v_init_phase_luma_frac);
-	REG_UPDATE(WBSCL_VERT_FILTER_INIT_CBCR, WBSCL_V_INIT_INT_CBCR, v_init_phase_chroma_पूर्णांक);
+	REG_UPDATE(WBSCL_VERT_FILTER_INIT_CBCR, WBSCL_V_INIT_INT_CBCR, v_init_phase_chroma_int);
 	REG_UPDATE(WBSCL_VERT_FILTER_INIT_CBCR, WBSCL_V_INIT_FRAC_CBCR, v_init_phase_chroma_frac);
 
 
 	/* Program LUT coefficients*/
 	filter_v  = wbscl_get_filter_coeffs_16p(
-		v_taps_luma, पंचांगp_v_ratio_luma);
+		v_taps_luma, tmp_v_ratio_luma);
 	filter_v_c = wbscl_get_filter_coeffs_16p(
-		v_taps_chroma, dc_fixpt_from_पूर्णांक(v_ratio_luma * 2));
+		v_taps_chroma, dc_fixpt_from_int(v_ratio_luma * 2));
 	wbscl_set_scaler_filter(dwbc20, v_taps_luma,
 		WBSCL_COEF_LUMA_VERT_FILTER, filter_v);
 
 	wbscl_set_scaler_filter(dwbc20, v_taps_chroma,
 		WBSCL_COEF_CHROMA_VERT_FILTER, filter_v_c);
-	वापस true;
-पूर्ण
+	return true;
+}

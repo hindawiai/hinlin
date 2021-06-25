@@ -1,267 +1,266 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _FSM_H_
-#घोषणा _FSM_H_
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _FSM_H_
+#define _FSM_H_
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/types.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/atomic.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/timer.h>
+#include <linux/time.h>
+#include <linux/slab.h>
+#include <linux/sched.h>
+#include <linux/string.h>
+#include <linux/atomic.h>
 
 /**
  * Define this to get debugging messages.
  */
-#घोषणा FSM_DEBUG         0
+#define FSM_DEBUG         0
 
 /**
- * Define this to get debugging massages क्रम
- * समयr handling.
+ * Define this to get debugging massages for
+ * timer handling.
  */
-#घोषणा FSM_TIMER_DEBUG   0
+#define FSM_TIMER_DEBUG   0
 
 /**
  * Define these to record a history of
- * Events/Statechanges and prपूर्णांक it अगर a
+ * Events/Statechanges and print it if a
  * action_function is not found.
  */
-#घोषणा FSM_DEBUG_HISTORY 0
-#घोषणा FSM_HISTORY_SIZE  40
+#define FSM_DEBUG_HISTORY 0
+#define FSM_HISTORY_SIZE  40
 
-काष्ठा fsm_instance_t;
+struct fsm_instance_t;
 
 /**
  * Definition of an action function, called by a FSM
  */
-प्रकार व्योम (*fsm_function_t)(काष्ठा fsm_instance_t *, पूर्णांक, व्योम *);
+typedef void (*fsm_function_t)(struct fsm_instance_t *, int, void *);
 
 /**
- * Internal jump table क्रम a FSM
+ * Internal jump table for a FSM
  */
-प्रकार काष्ठा अणु
+typedef struct {
 	fsm_function_t *jumpmatrix;
-	पूर्णांक nr_events;
-	पूर्णांक nr_states;
-	स्थिर अक्षर **event_names;
-	स्थिर अक्षर **state_names;
-पूर्ण fsm;
+	int nr_events;
+	int nr_states;
+	const char **event_names;
+	const char **state_names;
+} fsm;
 
-#अगर FSM_DEBUG_HISTORY
+#if FSM_DEBUG_HISTORY
 /**
- * Element of State/Event history used क्रम debugging.
+ * Element of State/Event history used for debugging.
  */
-प्रकार काष्ठा अणु
-	पूर्णांक state;
-	पूर्णांक event;
-पूर्ण fsm_history;
-#पूर्ण_अगर
+typedef struct {
+	int state;
+	int event;
+} fsm_history;
+#endif
 
 /**
  * Representation of a FSM
  */
-प्रकार काष्ठा fsm_instance_t अणु
+typedef struct fsm_instance_t {
 	fsm *f;
 	atomic_t state;
-	अक्षर name[16];
-	व्योम *userdata;
-	पूर्णांक userपूर्णांक;
-	रुको_queue_head_t रुको_q;
-#अगर FSM_DEBUG_HISTORY
-	पूर्णांक         history_index;
-	पूर्णांक         history_size;
+	char name[16];
+	void *userdata;
+	int userint;
+	wait_queue_head_t wait_q;
+#if FSM_DEBUG_HISTORY
+	int         history_index;
+	int         history_size;
 	fsm_history history[FSM_HISTORY_SIZE];
-#पूर्ण_अगर
-पूर्ण fsm_instance;
+#endif
+} fsm_instance;
 
 /**
  * Description of a state-event combination
  */
-प्रकार काष्ठा अणु
-	पूर्णांक cond_state;
-	पूर्णांक cond_event;
+typedef struct {
+	int cond_state;
+	int cond_event;
 	fsm_function_t function;
-पूर्ण fsm_node;
+} fsm_node;
 
 /**
  * Description of a FSM Timer.
  */
-प्रकार काष्ठा अणु
+typedef struct {
 	fsm_instance *fi;
-	काष्ठा समयr_list tl;
-	पूर्णांक expire_event;
-	व्योम *event_arg;
-पूर्ण fsm_समयr;
+	struct timer_list tl;
+	int expire_event;
+	void *event_arg;
+} fsm_timer;
 
 /**
  * Creates an FSM
  *
- * @param name        Name of this instance क्रम logging purposes.
- * @param state_names An array of names क्रम all states क्रम logging purposes.
- * @param event_names An array of names क्रम all events क्रम logging purposes.
- * @param nr_states   Number of states क्रम this instance.
- * @param nr_events   Number of events क्रम this instance.
- * @param पंचांगpl        An array of fsm_nodes, describing this FSM.
- * @param पंचांगpl_len    Length of the describing array.
- * @param order       Parameter क्रम allocation of the FSM data काष्ठाs.
+ * @param name        Name of this instance for logging purposes.
+ * @param state_names An array of names for all states for logging purposes.
+ * @param event_names An array of names for all events for logging purposes.
+ * @param nr_states   Number of states for this instance.
+ * @param nr_events   Number of events for this instance.
+ * @param tmpl        An array of fsm_nodes, describing this FSM.
+ * @param tmpl_len    Length of the describing array.
+ * @param order       Parameter for allocation of the FSM data structs.
  */
-बाह्य fsm_instance *
-init_fsm(अक्षर *name, स्थिर अक्षर **state_names,
-	 स्थिर अक्षर **event_names,
-	 पूर्णांक nr_states, पूर्णांक nr_events, स्थिर fsm_node *पंचांगpl,
-	 पूर्णांक पंचांगpl_len, gfp_t order);
+extern fsm_instance *
+init_fsm(char *name, const char **state_names,
+	 const char **event_names,
+	 int nr_states, int nr_events, const fsm_node *tmpl,
+	 int tmpl_len, gfp_t order);
 
 /**
  * Releases an FSM
  *
- * @param fi Poपूर्णांकer to an FSM, previously created with init_fsm.
+ * @param fi Pointer to an FSM, previously created with init_fsm.
  */
-बाह्य व्योम kमुक्त_fsm(fsm_instance *fi);
+extern void kfree_fsm(fsm_instance *fi);
 
-#अगर FSM_DEBUG_HISTORY
-बाह्य व्योम
-fsm_prपूर्णांक_history(fsm_instance *fi);
+#if FSM_DEBUG_HISTORY
+extern void
+fsm_print_history(fsm_instance *fi);
 
-बाह्य व्योम
-fsm_record_history(fsm_instance *fi, पूर्णांक state, पूर्णांक event);
-#पूर्ण_अगर
+extern void
+fsm_record_history(fsm_instance *fi, int state, int event);
+#endif
 
 /**
  * Emits an event to a FSM.
- * If an action function is defined क्रम the current state/event combination,
+ * If an action function is defined for the current state/event combination,
  * this function is called.
  *
- * @param fi    Poपूर्णांकer to FSM which should receive the event.
- * @param event The event करो be delivered.
+ * @param fi    Pointer to FSM which should receive the event.
+ * @param event The event do be delivered.
  * @param arg   A generic argument, handed to the action function.
  *
- * @वापस      0  on success,
- *              1  अगर current state or event is out of range
- *              !0 अगर state and event in range, but no action defined.
+ * @return      0  on success,
+ *              1  if current state or event is out of range
+ *              !0 if state and event in range, but no action defined.
  */
-अटल अंतरभूत पूर्णांक
-fsm_event(fsm_instance *fi, पूर्णांक event, व्योम *arg)
-अणु
+static inline int
+fsm_event(fsm_instance *fi, int event, void *arg)
+{
 	fsm_function_t r;
-	पूर्णांक state = atomic_पढ़ो(&fi->state);
+	int state = atomic_read(&fi->state);
 
-	अगर ((state >= fi->f->nr_states) ||
-	    (event >= fi->f->nr_events)       ) अणु
-		prपूर्णांकk(KERN_ERR "fsm(%s): Invalid state st(%ld/%ld) ev(%d/%ld)\n",
-			fi->name, (दीर्घ)state,(दीर्घ)fi->f->nr_states, event,
-			(दीर्घ)fi->f->nr_events);
-#अगर FSM_DEBUG_HISTORY
-		fsm_prपूर्णांक_history(fi);
-#पूर्ण_अगर
-		वापस 1;
-	पूर्ण
+	if ((state >= fi->f->nr_states) ||
+	    (event >= fi->f->nr_events)       ) {
+		printk(KERN_ERR "fsm(%s): Invalid state st(%ld/%ld) ev(%d/%ld)\n",
+			fi->name, (long)state,(long)fi->f->nr_states, event,
+			(long)fi->f->nr_events);
+#if FSM_DEBUG_HISTORY
+		fsm_print_history(fi);
+#endif
+		return 1;
+	}
 	r = fi->f->jumpmatrix[fi->f->nr_states * event + state];
-	अगर (r) अणु
-#अगर FSM_DEBUG
-		prपूर्णांकk(KERN_DEBUG "fsm(%s): state %s event %s\n",
+	if (r) {
+#if FSM_DEBUG
+		printk(KERN_DEBUG "fsm(%s): state %s event %s\n",
 		       fi->name, fi->f->state_names[state],
 		       fi->f->event_names[event]);
-#पूर्ण_अगर
-#अगर FSM_DEBUG_HISTORY
+#endif
+#if FSM_DEBUG_HISTORY
 		fsm_record_history(fi, state, event);
-#पूर्ण_अगर
+#endif
 		r(fi, event, arg);
-		वापस 0;
-	पूर्ण अन्यथा अणु
-#अगर FSM_DEBUG || FSM_DEBUG_HISTORY
-		prपूर्णांकk(KERN_DEBUG "fsm(%s): no function for event %s in state %s\n",
+		return 0;
+	} else {
+#if FSM_DEBUG || FSM_DEBUG_HISTORY
+		printk(KERN_DEBUG "fsm(%s): no function for event %s in state %s\n",
 		       fi->name, fi->f->event_names[event],
 		       fi->f->state_names[state]);
-#पूर्ण_अगर
-#अगर FSM_DEBUG_HISTORY
-		fsm_prपूर्णांक_history(fi);
-#पूर्ण_अगर
-		वापस !0;
-	पूर्ण
-पूर्ण
+#endif
+#if FSM_DEBUG_HISTORY
+		fsm_print_history(fi);
+#endif
+		return !0;
+	}
+}
 
 /**
- * Modअगरies the state of an FSM.
- * This करोes <em>not</em> trigger an event or calls an action function.
+ * Modifies the state of an FSM.
+ * This does <em>not</em> trigger an event or calls an action function.
  *
- * @param fi    Poपूर्णांकer to FSM
- * @param state The new state क्रम this FSM.
+ * @param fi    Pointer to FSM
+ * @param state The new state for this FSM.
  */
-अटल अंतरभूत व्योम
-fsm_newstate(fsm_instance *fi, पूर्णांक newstate)
-अणु
+static inline void
+fsm_newstate(fsm_instance *fi, int newstate)
+{
 	atomic_set(&fi->state,newstate);
-#अगर FSM_DEBUG_HISTORY
+#if FSM_DEBUG_HISTORY
 	fsm_record_history(fi, newstate, -1);
-#पूर्ण_अगर
-#अगर FSM_DEBUG
-	prपूर्णांकk(KERN_DEBUG "fsm(%s): New state %s\n", fi->name,
+#endif
+#if FSM_DEBUG
+	printk(KERN_DEBUG "fsm(%s): New state %s\n", fi->name,
 		fi->f->state_names[newstate]);
-#पूर्ण_अगर
-	wake_up(&fi->रुको_q);
-पूर्ण
+#endif
+	wake_up(&fi->wait_q);
+}
 
 /**
  * Retrieves the state of an FSM
  *
- * @param fi Poपूर्णांकer to FSM
+ * @param fi Pointer to FSM
  *
- * @वापस The current state of the FSM.
+ * @return The current state of the FSM.
  */
-अटल अंतरभूत पूर्णांक
-fsm_माला_लोtate(fsm_instance *fi)
-अणु
-	वापस atomic_पढ़ो(&fi->state);
-पूर्ण
+static inline int
+fsm_getstate(fsm_instance *fi)
+{
+	return atomic_read(&fi->state);
+}
 
 /**
  * Retrieves the name of the state of an FSM
  *
- * @param fi Poपूर्णांकer to FSM
+ * @param fi Pointer to FSM
  *
- * @वापस The current state of the FSM in a human पढ़ोable क्रमm.
+ * @return The current state of the FSM in a human readable form.
  */
-बाह्य स्थिर अक्षर *fsm_माला_लोtate_str(fsm_instance *fi);
+extern const char *fsm_getstate_str(fsm_instance *fi);
 
 /**
- * Initializes a समयr क्रम an FSM.
- * This prepares an fsm_समयr क्रम usage with fsm_addसमयr.
+ * Initializes a timer for an FSM.
+ * This prepares an fsm_timer for usage with fsm_addtimer.
  *
- * @param fi    Poपूर्णांकer to FSM
- * @param समयr The समयr to be initialized.
+ * @param fi    Pointer to FSM
+ * @param timer The timer to be initialized.
  */
-बाह्य व्योम fsm_समय_रखोr(fsm_instance *fi, fsm_समयr *);
+extern void fsm_settimer(fsm_instance *fi, fsm_timer *);
 
 /**
- * Clears a pending समयr of an FSM instance.
+ * Clears a pending timer of an FSM instance.
  *
- * @param समयr The समयr to clear.
+ * @param timer The timer to clear.
  */
-बाह्य व्योम fsm_delसमयr(fsm_समयr *समयr);
+extern void fsm_deltimer(fsm_timer *timer);
 
 /**
- * Adds and starts a समयr to an FSM instance.
+ * Adds and starts a timer to an FSM instance.
  *
- * @param समयr    The समयr to be added. The field fi of that समयr
- *                 must have been set to poपूर्णांक to the instance.
- * @param millisec Duration, after which the समयr should expire.
- * @param event    Event, to trigger अगर समयr expires.
+ * @param timer    The timer to be added. The field fi of that timer
+ *                 must have been set to point to the instance.
+ * @param millisec Duration, after which the timer should expire.
+ * @param event    Event, to trigger if timer expires.
  * @param arg      Generic argument, provided to expiry function.
  *
- * @वापस         0 on success, -1 अगर समयr is alपढ़ोy active.
+ * @return         0 on success, -1 if timer is already active.
  */
-बाह्य पूर्णांक fsm_addसमयr(fsm_समयr *समयr, पूर्णांक millisec, पूर्णांक event, व्योम *arg);
+extern int fsm_addtimer(fsm_timer *timer, int millisec, int event, void *arg);
 
 /**
- * Modअगरies a समयr of an FSM.
+ * Modifies a timer of an FSM.
  *
- * @param समयr    The समयr to modअगरy.
- * @param millisec Duration, after which the समयr should expire.
- * @param event    Event, to trigger अगर समयr expires.
+ * @param timer    The timer to modify.
+ * @param millisec Duration, after which the timer should expire.
+ * @param event    Event, to trigger if timer expires.
  * @param arg      Generic argument, provided to expiry function.
  */
-बाह्य व्योम fsm_modसमयr(fsm_समयr *समयr, पूर्णांक millisec, पूर्णांक event, व्योम *arg);
+extern void fsm_modtimer(fsm_timer *timer, int millisec, int event, void *arg);
 
-#पूर्ण_अगर /* _FSM_H_ */
+#endif /* _FSM_H_ */

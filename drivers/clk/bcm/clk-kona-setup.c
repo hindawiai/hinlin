@@ -1,90 +1,89 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2013 Broadcom Corporation
  * Copyright 2013 Linaro Limited
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License as
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/of_address.h>
+#include <linux/io.h>
+#include <linux/of_address.h>
 
-#समावेश "clk-kona.h"
+#include "clk-kona.h"
 
 /* These are used when a selector or trigger is found to be unneeded */
-#घोषणा selector_clear_exists(sel)	((sel)->width = 0)
-#घोषणा trigger_clear_exists(trig)	FLAG_CLEAR(trig, TRIG, EXISTS)
+#define selector_clear_exists(sel)	((sel)->width = 0)
+#define trigger_clear_exists(trig)	FLAG_CLEAR(trig, TRIG, EXISTS)
 
 /* Validity checking */
 
-अटल bool ccu_data_offsets_valid(काष्ठा ccu_data *ccu)
-अणु
-	काष्ठा ccu_policy *ccu_policy = &ccu->policy;
+static bool ccu_data_offsets_valid(struct ccu_data *ccu)
+{
+	struct ccu_policy *ccu_policy = &ccu->policy;
 	u32 limit;
 
-	limit = ccu->range - माप(u32);
-	limit = round_करोwn(limit, माप(u32));
-	अगर (ccu_policy_exists(ccu_policy)) अणु
-		अगर (ccu_policy->enable.offset > limit) अणु
+	limit = ccu->range - sizeof(u32);
+	limit = round_down(limit, sizeof(u32));
+	if (ccu_policy_exists(ccu_policy)) {
+		if (ccu_policy->enable.offset > limit) {
 			pr_err("%s: bad policy enable offset for %s "
 					"(%u > %u)\n", __func__,
 				ccu->name, ccu_policy->enable.offset, limit);
-			वापस false;
-		पूर्ण
-		अगर (ccu_policy->control.offset > limit) अणु
+			return false;
+		}
+		if (ccu_policy->control.offset > limit) {
 			pr_err("%s: bad policy control offset for %s "
 					"(%u > %u)\n", __func__,
 				ccu->name, ccu_policy->control.offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool clk_requires_trigger(काष्ठा kona_clk *bcm_clk)
-अणु
-	काष्ठा peri_clk_data *peri = bcm_clk->u.peri;
-	काष्ठा bcm_clk_sel *sel;
-	काष्ठा bcm_clk_भाग *भाग;
+static bool clk_requires_trigger(struct kona_clk *bcm_clk)
+{
+	struct peri_clk_data *peri = bcm_clk->u.peri;
+	struct bcm_clk_sel *sel;
+	struct bcm_clk_div *div;
 
-	अगर (bcm_clk->type != bcm_clk_peri)
-		वापस false;
+	if (bcm_clk->type != bcm_clk_peri)
+		return false;
 
 	sel = &peri->sel;
-	अगर (sel->parent_count && selector_exists(sel))
-		वापस true;
+	if (sel->parent_count && selector_exists(sel))
+		return true;
 
-	भाग = &peri->भाग;
-	अगर (!भागider_exists(भाग))
-		वापस false;
+	div = &peri->div;
+	if (!divider_exists(div))
+		return false;
 
-	/* Fixed भागiders करोn't need triggers */
-	अगर (!भागider_is_fixed(भाग))
-		वापस true;
+	/* Fixed dividers don't need triggers */
+	if (!divider_is_fixed(div))
+		return true;
 
-	भाग = &peri->pre_भाग;
+	div = &peri->pre_div;
 
-	वापस भागider_exists(भाग) && !भागider_is_fixed(भाग);
-पूर्ण
+	return divider_exists(div) && !divider_is_fixed(div);
+}
 
-अटल bool peri_clk_data_offsets_valid(काष्ठा kona_clk *bcm_clk)
-अणु
-	काष्ठा peri_clk_data *peri;
-	काष्ठा bcm_clk_policy *policy;
-	काष्ठा bcm_clk_gate *gate;
-	काष्ठा bcm_clk_hyst *hyst;
-	काष्ठा bcm_clk_भाग *भाग;
-	काष्ठा bcm_clk_sel *sel;
-	काष्ठा bcm_clk_trig *trig;
-	स्थिर अक्षर *name;
+static bool peri_clk_data_offsets_valid(struct kona_clk *bcm_clk)
+{
+	struct peri_clk_data *peri;
+	struct bcm_clk_policy *policy;
+	struct bcm_clk_gate *gate;
+	struct bcm_clk_hyst *hyst;
+	struct bcm_clk_div *div;
+	struct bcm_clk_sel *sel;
+	struct bcm_clk_trig *trig;
+	const char *name;
 	u32 range;
 	u32 limit;
 
@@ -93,550 +92,550 @@
 	name = bcm_clk->init_data.name;
 	range = bcm_clk->ccu->range;
 
-	limit = range - माप(u32);
-	limit = round_करोwn(limit, माप(u32));
+	limit = range - sizeof(u32);
+	limit = round_down(limit, sizeof(u32));
 
 	policy = &peri->policy;
-	अगर (policy_exists(policy)) अणु
-		अगर (policy->offset > limit) अणु
+	if (policy_exists(policy)) {
+		if (policy->offset > limit) {
 			pr_err("%s: bad policy offset for %s (%u > %u)\n",
 				__func__, name, policy->offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
 	gate = &peri->gate;
 	hyst = &peri->hyst;
-	अगर (gate_exists(gate)) अणु
-		अगर (gate->offset > limit) अणु
+	if (gate_exists(gate)) {
+		if (gate->offset > limit) {
 			pr_err("%s: bad gate offset for %s (%u > %u)\n",
 				__func__, name, gate->offset, limit);
-			वापस false;
-		पूर्ण
+			return false;
+		}
 
-		अगर (hyst_exists(hyst)) अणु
-			अगर (hyst->offset > limit) अणु
+		if (hyst_exists(hyst)) {
+			if (hyst->offset > limit) {
 				pr_err("%s: bad hysteresis offset for %s "
 					"(%u > %u)\n", __func__,
 					name, hyst->offset, limit);
-				वापस false;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (hyst_exists(hyst)) अणु
+				return false;
+			}
+		}
+	} else if (hyst_exists(hyst)) {
 		pr_err("%s: hysteresis but no gate for %s\n", __func__, name);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	भाग = &peri->भाग;
-	अगर (भागider_exists(भाग)) अणु
-		अगर (भाग->u.s.offset > limit) अणु
+	div = &peri->div;
+	if (divider_exists(div)) {
+		if (div->u.s.offset > limit) {
 			pr_err("%s: bad divider offset for %s (%u > %u)\n",
-				__func__, name, भाग->u.s.offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+				__func__, name, div->u.s.offset, limit);
+			return false;
+		}
+	}
 
-	भाग = &peri->pre_भाग;
-	अगर (भागider_exists(भाग)) अणु
-		अगर (भाग->u.s.offset > limit) अणु
+	div = &peri->pre_div;
+	if (divider_exists(div)) {
+		if (div->u.s.offset > limit) {
 			pr_err("%s: bad pre-divider offset for %s "
 					"(%u > %u)\n",
-				__func__, name, भाग->u.s.offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+				__func__, name, div->u.s.offset, limit);
+			return false;
+		}
+	}
 
 	sel = &peri->sel;
-	अगर (selector_exists(sel)) अणु
-		अगर (sel->offset > limit) अणु
+	if (selector_exists(sel)) {
+		if (sel->offset > limit) {
 			pr_err("%s: bad selector offset for %s (%u > %u)\n",
 				__func__, name, sel->offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
 	trig = &peri->trig;
-	अगर (trigger_exists(trig)) अणु
-		अगर (trig->offset > limit) अणु
+	if (trigger_exists(trig)) {
+		if (trig->offset > limit) {
 			pr_err("%s: bad trigger offset for %s (%u > %u)\n",
 				__func__, name, trig->offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
 	trig = &peri->pre_trig;
-	अगर (trigger_exists(trig)) अणु
-		अगर (trig->offset > limit) अणु
+	if (trigger_exists(trig)) {
+		if (trig->offset > limit) {
 			pr_err("%s: bad pre-trigger offset for %s (%u > %u)\n",
 				__func__, name, trig->offset, limit);
-			वापस false;
-		पूर्ण
-	पूर्ण
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* A bit position must be less than the number of bits in a 32-bit रेजिस्टर. */
-अटल bool bit_posn_valid(u32 bit_posn, स्थिर अक्षर *field_name,
-			स्थिर अक्षर *घड़ी_name)
-अणु
-	u32 limit = BITS_PER_BYTE * माप(u32) - 1;
+/* A bit position must be less than the number of bits in a 32-bit register. */
+static bool bit_posn_valid(u32 bit_posn, const char *field_name,
+			const char *clock_name)
+{
+	u32 limit = BITS_PER_BYTE * sizeof(u32) - 1;
 
-	अगर (bit_posn > limit) अणु
+	if (bit_posn > limit) {
 		pr_err("%s: bad %s bit for %s (%u > %u)\n", __func__,
-			field_name, घड़ी_name, bit_posn, limit);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			field_name, clock_name, bit_posn, limit);
+		return false;
+	}
+	return true;
+}
 
 /*
  * A bitfield must be at least 1 bit wide.  Both the low-order and
- * high-order bits must lie within a 32-bit रेजिस्टर.  We require
- * fields to be less than 32 bits wide, मुख्यly because we use
- * shअगरting to produce field masks, and shअगरting a full word width
+ * high-order bits must lie within a 32-bit register.  We require
+ * fields to be less than 32 bits wide, mainly because we use
+ * shifting to produce field masks, and shifting a full word width
  * is not well-defined by the C standard.
  */
-अटल bool bitfield_valid(u32 shअगरt, u32 width, स्थिर अक्षर *field_name,
-			स्थिर अक्षर *घड़ी_name)
-अणु
-	u32 limit = BITS_PER_BYTE * माप(u32);
+static bool bitfield_valid(u32 shift, u32 width, const char *field_name,
+			const char *clock_name)
+{
+	u32 limit = BITS_PER_BYTE * sizeof(u32);
 
-	अगर (!width) अणु
+	if (!width) {
 		pr_err("%s: bad %s field width 0 for %s\n", __func__,
-			field_name, घड़ी_name);
-		वापस false;
-	पूर्ण
-	अगर (shअगरt + width > limit) अणु
+			field_name, clock_name);
+		return false;
+	}
+	if (shift + width > limit) {
 		pr_err("%s: bad %s for %s (%u + %u > %u)\n", __func__,
-			field_name, घड़ी_name, shअगरt, width, limit);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			field_name, clock_name, shift, width, limit);
+		return false;
+	}
+	return true;
+}
 
-अटल bool
-ccu_policy_valid(काष्ठा ccu_policy *ccu_policy, स्थिर अक्षर *ccu_name)
-अणु
-	काष्ठा bcm_lvm_en *enable = &ccu_policy->enable;
-	काष्ठा bcm_policy_ctl *control;
+static bool
+ccu_policy_valid(struct ccu_policy *ccu_policy, const char *ccu_name)
+{
+	struct bcm_lvm_en *enable = &ccu_policy->enable;
+	struct bcm_policy_ctl *control;
 
-	अगर (!bit_posn_valid(enable->bit, "policy enable", ccu_name))
-		वापस false;
+	if (!bit_posn_valid(enable->bit, "policy enable", ccu_name))
+		return false;
 
 	control = &ccu_policy->control;
-	अगर (!bit_posn_valid(control->go_bit, "policy control GO", ccu_name))
-		वापस false;
+	if (!bit_posn_valid(control->go_bit, "policy control GO", ccu_name))
+		return false;
 
-	अगर (!bit_posn_valid(control->atl_bit, "policy control ATL", ccu_name))
-		वापस false;
+	if (!bit_posn_valid(control->atl_bit, "policy control ATL", ccu_name))
+		return false;
 
-	अगर (!bit_posn_valid(control->ac_bit, "policy control AC", ccu_name))
-		वापस false;
+	if (!bit_posn_valid(control->ac_bit, "policy control AC", ccu_name))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool policy_valid(काष्ठा bcm_clk_policy *policy, स्थिर अक्षर *घड़ी_name)
-अणु
-	अगर (!bit_posn_valid(policy->bit, "policy", घड़ी_name))
-		वापस false;
+static bool policy_valid(struct bcm_clk_policy *policy, const char *clock_name)
+{
+	if (!bit_posn_valid(policy->bit, "policy", clock_name))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * All gates, अगर defined, have a status bit, and क्रम hardware-only
+ * All gates, if defined, have a status bit, and for hardware-only
  * gates, that's it.  Gates that can be software controlled also
  * have an enable bit.  And a gate that can be hardware or software
  * controlled will have a hardware/software select bit.
  */
-अटल bool gate_valid(काष्ठा bcm_clk_gate *gate, स्थिर अक्षर *field_name,
-			स्थिर अक्षर *घड़ी_name)
-अणु
-	अगर (!bit_posn_valid(gate->status_bit, "gate status", घड़ी_name))
-		वापस false;
+static bool gate_valid(struct bcm_clk_gate *gate, const char *field_name,
+			const char *clock_name)
+{
+	if (!bit_posn_valid(gate->status_bit, "gate status", clock_name))
+		return false;
 
-	अगर (gate_is_sw_controllable(gate)) अणु
-		अगर (!bit_posn_valid(gate->en_bit, "gate enable", घड़ी_name))
-			वापस false;
+	if (gate_is_sw_controllable(gate)) {
+		if (!bit_posn_valid(gate->en_bit, "gate enable", clock_name))
+			return false;
 
-		अगर (gate_is_hw_controllable(gate)) अणु
-			अगर (!bit_posn_valid(gate->hw_sw_sel_bit,
+		if (gate_is_hw_controllable(gate)) {
+			if (!bit_posn_valid(gate->hw_sw_sel_bit,
 						"gate hw/sw select",
-						घड़ी_name))
-				वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+						clock_name))
+				return false;
+		}
+	} else {
 		BUG_ON(!gate_is_hw_controllable(gate));
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool hyst_valid(काष्ठा bcm_clk_hyst *hyst, स्थिर अक्षर *घड़ी_name)
-अणु
-	अगर (!bit_posn_valid(hyst->en_bit, "hysteresis enable", घड़ी_name))
-		वापस false;
+static bool hyst_valid(struct bcm_clk_hyst *hyst, const char *clock_name)
+{
+	if (!bit_posn_valid(hyst->en_bit, "hysteresis enable", clock_name))
+		return false;
 
-	अगर (!bit_posn_valid(hyst->val_bit, "hysteresis value", घड़ी_name))
-		वापस false;
+	if (!bit_posn_valid(hyst->val_bit, "hysteresis value", clock_name))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * A selector bitfield must be valid.  Its parent_sel array must
- * also be reasonable क्रम the field.
+ * also be reasonable for the field.
  */
-अटल bool sel_valid(काष्ठा bcm_clk_sel *sel, स्थिर अक्षर *field_name,
-			स्थिर अक्षर *घड़ी_name)
-अणु
-	अगर (!bitfield_valid(sel->shअगरt, sel->width, field_name, घड़ी_name))
-		वापस false;
+static bool sel_valid(struct bcm_clk_sel *sel, const char *field_name,
+			const char *clock_name)
+{
+	if (!bitfield_valid(sel->shift, sel->width, field_name, clock_name))
+		return false;
 
-	अगर (sel->parent_count) अणु
+	if (sel->parent_count) {
 		u32 max_sel;
 		u32 limit;
 
 		/*
 		 * Make sure the selector field can hold all the
 		 * selector values we expect to be able to use.  A
-		 * घड़ी only needs to have a selector defined अगर it
-		 * has more than one parent.  And in that हाल the
+		 * clock only needs to have a selector defined if it
+		 * has more than one parent.  And in that case the
 		 * highest selector value will be in the last entry
 		 * in the array.
 		 */
 		max_sel = sel->parent_sel[sel->parent_count - 1];
 		limit = (1 << sel->width) - 1;
-		अगर (max_sel > limit) अणु
+		if (max_sel > limit) {
 			pr_err("%s: bad selector for %s "
 					"(%u needs > %u bits)\n",
-				__func__, घड़ी_name, max_sel,
+				__func__, clock_name, max_sel,
 				sel->width);
-			वापस false;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return false;
+		}
+	} else {
 		pr_warn("%s: ignoring selector for %s (no parents)\n",
-			__func__, घड़ी_name);
+			__func__, clock_name);
 		selector_clear_exists(sel);
-		kमुक्त(sel->parent_sel);
-		sel->parent_sel = शून्य;
-	पूर्ण
+		kfree(sel->parent_sel);
+		sel->parent_sel = NULL;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * A fixed भागider just needs to be non-zero.  A variable भागider
- * has to have a valid भागider bitfield, and अगर it has a fraction,
+ * A fixed divider just needs to be non-zero.  A variable divider
+ * has to have a valid divider bitfield, and if it has a fraction,
  * the width of the fraction must not be no more than the width of
- * the भागider as a whole.
+ * the divider as a whole.
  */
-अटल bool भाग_valid(काष्ठा bcm_clk_भाग *भाग, स्थिर अक्षर *field_name,
-			स्थिर अक्षर *घड़ी_name)
-अणु
-	अगर (भागider_is_fixed(भाग)) अणु
-		/* Any fixed भागider value but 0 is OK */
-		अगर (भाग->u.fixed == 0) अणु
+static bool div_valid(struct bcm_clk_div *div, const char *field_name,
+			const char *clock_name)
+{
+	if (divider_is_fixed(div)) {
+		/* Any fixed divider value but 0 is OK */
+		if (div->u.fixed == 0) {
 			pr_err("%s: bad %s fixed value 0 for %s\n", __func__,
-				field_name, घड़ी_name);
-			वापस false;
-		पूर्ण
-		वापस true;
-	पूर्ण
-	अगर (!bitfield_valid(भाग->u.s.shअगरt, भाग->u.s.width,
-				field_name, घड़ी_name))
-		वापस false;
+				field_name, clock_name);
+			return false;
+		}
+		return true;
+	}
+	if (!bitfield_valid(div->u.s.shift, div->u.s.width,
+				field_name, clock_name))
+		return false;
 
-	अगर (भागider_has_fraction(भाग))
-		अगर (भाग->u.s.frac_width > भाग->u.s.width) अणु
+	if (divider_has_fraction(div))
+		if (div->u.s.frac_width > div->u.s.width) {
 			pr_warn("%s: bad %s fraction width for %s (%u > %u)\n",
-				__func__, field_name, घड़ी_name,
-				भाग->u.s.frac_width, भाग->u.s.width);
-			वापस false;
-		पूर्ण
+				__func__, field_name, clock_name,
+				div->u.s.frac_width, div->u.s.width);
+			return false;
+		}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
- * If a घड़ी has two भागiders, the combined number of fractional
- * bits must be representable in a 32-bit अचिन्हित value.  This
- * is because we scale up a भागidend using both भागiders beक्रमe
- * भागiding to improve accuracy, and we need to aव्योम overflow.
+ * If a clock has two dividers, the combined number of fractional
+ * bits must be representable in a 32-bit unsigned value.  This
+ * is because we scale up a dividend using both dividers before
+ * dividing to improve accuracy, and we need to avoid overflow.
  */
-अटल bool kona_भागiders_valid(काष्ठा kona_clk *bcm_clk)
-अणु
-	काष्ठा peri_clk_data *peri = bcm_clk->u.peri;
-	काष्ठा bcm_clk_भाग *भाग;
-	काष्ठा bcm_clk_भाग *pre_भाग;
+static bool kona_dividers_valid(struct kona_clk *bcm_clk)
+{
+	struct peri_clk_data *peri = bcm_clk->u.peri;
+	struct bcm_clk_div *div;
+	struct bcm_clk_div *pre_div;
 	u32 limit;
 
 	BUG_ON(bcm_clk->type != bcm_clk_peri);
 
-	अगर (!भागider_exists(&peri->भाग) || !भागider_exists(&peri->pre_भाग))
-		वापस true;
+	if (!divider_exists(&peri->div) || !divider_exists(&peri->pre_div))
+		return true;
 
-	भाग = &peri->भाग;
-	pre_भाग = &peri->pre_भाग;
-	अगर (भागider_is_fixed(भाग) || भागider_is_fixed(pre_भाग))
-		वापस true;
+	div = &peri->div;
+	pre_div = &peri->pre_div;
+	if (divider_is_fixed(div) || divider_is_fixed(pre_div))
+		return true;
 
-	limit = BITS_PER_BYTE * माप(u32);
+	limit = BITS_PER_BYTE * sizeof(u32);
 
-	वापस भाग->u.s.frac_width + pre_भाग->u.s.frac_width <= limit;
-पूर्ण
+	return div->u.s.frac_width + pre_div->u.s.frac_width <= limit;
+}
 
 
 /* A trigger just needs to represent a valid bit position */
-अटल bool trig_valid(काष्ठा bcm_clk_trig *trig, स्थिर अक्षर *field_name,
-			स्थिर अक्षर *घड़ी_name)
-अणु
-	वापस bit_posn_valid(trig->bit, field_name, घड़ी_name);
-पूर्ण
+static bool trig_valid(struct bcm_clk_trig *trig, const char *field_name,
+			const char *clock_name)
+{
+	return bit_posn_valid(trig->bit, field_name, clock_name);
+}
 
-/* Determine whether the set of peripheral घड़ी रेजिस्टरs are valid. */
-अटल bool
-peri_clk_data_valid(काष्ठा kona_clk *bcm_clk)
-अणु
-	काष्ठा peri_clk_data *peri;
-	काष्ठा bcm_clk_policy *policy;
-	काष्ठा bcm_clk_gate *gate;
-	काष्ठा bcm_clk_hyst *hyst;
-	काष्ठा bcm_clk_sel *sel;
-	काष्ठा bcm_clk_भाग *भाग;
-	काष्ठा bcm_clk_भाग *pre_भाग;
-	काष्ठा bcm_clk_trig *trig;
-	स्थिर अक्षर *name;
+/* Determine whether the set of peripheral clock registers are valid. */
+static bool
+peri_clk_data_valid(struct kona_clk *bcm_clk)
+{
+	struct peri_clk_data *peri;
+	struct bcm_clk_policy *policy;
+	struct bcm_clk_gate *gate;
+	struct bcm_clk_hyst *hyst;
+	struct bcm_clk_sel *sel;
+	struct bcm_clk_div *div;
+	struct bcm_clk_div *pre_div;
+	struct bcm_clk_trig *trig;
+	const char *name;
 
 	BUG_ON(bcm_clk->type != bcm_clk_peri);
 
 	/*
-	 * First validate रेजिस्टर offsets.  This is the only place
-	 * where we need something from the ccu, so we करो these
+	 * First validate register offsets.  This is the only place
+	 * where we need something from the ccu, so we do these
 	 * together.
 	 */
-	अगर (!peri_clk_data_offsets_valid(bcm_clk))
-		वापस false;
+	if (!peri_clk_data_offsets_valid(bcm_clk))
+		return false;
 
 	peri = bcm_clk->u.peri;
 	name = bcm_clk->init_data.name;
 
 	policy = &peri->policy;
-	अगर (policy_exists(policy) && !policy_valid(policy, name))
-		वापस false;
+	if (policy_exists(policy) && !policy_valid(policy, name))
+		return false;
 
 	gate = &peri->gate;
-	अगर (gate_exists(gate) && !gate_valid(gate, "gate", name))
-		वापस false;
+	if (gate_exists(gate) && !gate_valid(gate, "gate", name))
+		return false;
 
 	hyst = &peri->hyst;
-	अगर (hyst_exists(hyst) && !hyst_valid(hyst, name))
-		वापस false;
+	if (hyst_exists(hyst) && !hyst_valid(hyst, name))
+		return false;
 
 	sel = &peri->sel;
-	अगर (selector_exists(sel)) अणु
-		अगर (!sel_valid(sel, "selector", name))
-			वापस false;
+	if (selector_exists(sel)) {
+		if (!sel_valid(sel, "selector", name))
+			return false;
 
-	पूर्ण अन्यथा अगर (sel->parent_count > 1) अणु
+	} else if (sel->parent_count > 1) {
 		pr_err("%s: multiple parents but no selector for %s\n",
 			__func__, name);
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	भाग = &peri->भाग;
-	pre_भाग = &peri->pre_भाग;
-	अगर (भागider_exists(भाग)) अणु
-		अगर (!भाग_valid(भाग, "divider", name))
-			वापस false;
+	div = &peri->div;
+	pre_div = &peri->pre_div;
+	if (divider_exists(div)) {
+		if (!div_valid(div, "divider", name))
+			return false;
 
-		अगर (भागider_exists(pre_भाग))
-			अगर (!भाग_valid(pre_भाग, "pre-divider", name))
-				वापस false;
-	पूर्ण अन्यथा अगर (भागider_exists(pre_भाग)) अणु
+		if (divider_exists(pre_div))
+			if (!div_valid(pre_div, "pre-divider", name))
+				return false;
+	} else if (divider_exists(pre_div)) {
 		pr_err("%s: pre-divider but no divider for %s\n", __func__,
 			name);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	trig = &peri->trig;
-	अगर (trigger_exists(trig)) अणु
-		अगर (!trig_valid(trig, "trigger", name))
-			वापस false;
+	if (trigger_exists(trig)) {
+		if (!trig_valid(trig, "trigger", name))
+			return false;
 
-		अगर (trigger_exists(&peri->pre_trig)) अणु
-			अगर (!trig_valid(trig, "pre-trigger", name)) अणु
-				वापस false;
-			पूर्ण
-		पूर्ण
-		अगर (!clk_requires_trigger(bcm_clk)) अणु
+		if (trigger_exists(&peri->pre_trig)) {
+			if (!trig_valid(trig, "pre-trigger", name)) {
+				return false;
+			}
+		}
+		if (!clk_requires_trigger(bcm_clk)) {
 			pr_warn("%s: ignoring trigger for %s (not needed)\n",
 				__func__, name);
 			trigger_clear_exists(trig);
-		पूर्ण
-	पूर्ण अन्यथा अगर (trigger_exists(&peri->pre_trig)) अणु
+		}
+	} else if (trigger_exists(&peri->pre_trig)) {
 		pr_err("%s: pre-trigger but no trigger for %s\n", __func__,
 			name);
-		वापस false;
-	पूर्ण अन्यथा अगर (clk_requires_trigger(bcm_clk)) अणु
+		return false;
+	} else if (clk_requires_trigger(bcm_clk)) {
 		pr_err("%s: required trigger missing for %s\n", __func__,
 			name);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस kona_भागiders_valid(bcm_clk);
-पूर्ण
+	return kona_dividers_valid(bcm_clk);
+}
 
-अटल bool kona_clk_valid(काष्ठा kona_clk *bcm_clk)
-अणु
-	चयन (bcm_clk->type) अणु
-	हाल bcm_clk_peri:
-		अगर (!peri_clk_data_valid(bcm_clk))
-			वापस false;
-		अवरोध;
-	शेष:
+static bool kona_clk_valid(struct kona_clk *bcm_clk)
+{
+	switch (bcm_clk->type) {
+	case bcm_clk_peri:
+		if (!peri_clk_data_valid(bcm_clk))
+			return false;
+		break;
+	default:
 		pr_err("%s: unrecognized clock type (%d)\n", __func__,
-			(पूर्णांक)bcm_clk->type);
-		वापस false;
-	पूर्ण
-	वापस true;
-पूर्ण
+			(int)bcm_clk->type);
+		return false;
+	}
+	return true;
+}
 
 /*
- * Scan an array of parent घड़ी names to determine whether there
+ * Scan an array of parent clock names to determine whether there
  * are any entries containing BAD_CLK_NAME.  Such entries are
- * placeholders क्रम non-supported घड़ीs.  Keep track of the
- * position of each घड़ी name in the original array.
+ * placeholders for non-supported clocks.  Keep track of the
+ * position of each clock name in the original array.
  *
- * Allocates an array of poपूर्णांकers to to hold the names of all
- * non-null entries in the original array, and वापसs a poपूर्णांकer to
- * that array in *names.  This will be used क्रम रेजिस्टरing the
- * घड़ी with the common घड़ी code.  On successful वापस,
+ * Allocates an array of pointers to to hold the names of all
+ * non-null entries in the original array, and returns a pointer to
+ * that array in *names.  This will be used for registering the
+ * clock with the common clock code.  On successful return,
  * *count indicates how many entries are in that names array.
  *
  * If there is more than one entry in the resulting names array,
  * another array is allocated to record the parent selector value
- * क्रम each (defined) parent घड़ी.  This is the value that
- * represents this parent घड़ी in the घड़ी's source selector
- * रेजिस्टर.  The position of the घड़ी in the original parent array
+ * for each (defined) parent clock.  This is the value that
+ * represents this parent clock in the clock's source selector
+ * register.  The position of the clock in the original parent array
  * defines that selector value.  The number of entries in this array
  * is the same as the number of entries in the parent names array.
  *
- * The array of selector values is वापसed.  If the घड़ी has no
- * parents, no selector is required and a null poपूर्णांकer is वापसed.
+ * The array of selector values is returned.  If the clock has no
+ * parents, no selector is required and a null pointer is returned.
  *
- * Returns a null poपूर्णांकer अगर the घड़ी names array supplied was
+ * Returns a null pointer if the clock names array supplied was
  * null.  (This is not an error.)
  *
- * Returns a poपूर्णांकer-coded error अगर an error occurs.
+ * Returns a pointer-coded error if an error occurs.
  */
-अटल u32 *parent_process(स्थिर अक्षर *घड़ीs[],
-			u32 *count, स्थिर अक्षर ***names)
-अणु
-	अटल स्थिर अक्षर **parent_names;
-	अटल u32 *parent_sel;
-	स्थिर अक्षर **घड़ी;
+static u32 *parent_process(const char *clocks[],
+			u32 *count, const char ***names)
+{
+	static const char **parent_names;
+	static u32 *parent_sel;
+	const char **clock;
 	u32 parent_count;
 	u32 bad_count = 0;
 	u32 orig_count;
 	u32 i;
 	u32 j;
 
-	*count = 0;	/* In हाल of early वापस */
-	*names = शून्य;
-	अगर (!घड़ीs)
-		वापस शून्य;
+	*count = 0;	/* In case of early return */
+	*names = NULL;
+	if (!clocks)
+		return NULL;
 
 	/*
 	 * Count the number of names in the null-terminated array,
-	 * and find out how many of those are actually घड़ी names.
+	 * and find out how many of those are actually clock names.
 	 */
-	क्रम (घड़ी = घड़ीs; *घड़ी; घड़ी++)
-		अगर (*घड़ी == BAD_CLK_NAME)
+	for (clock = clocks; *clock; clock++)
+		if (*clock == BAD_CLK_NAME)
 			bad_count++;
-	orig_count = (u32)(घड़ी - घड़ीs);
+	orig_count = (u32)(clock - clocks);
 	parent_count = orig_count - bad_count;
 
-	/* If all घड़ीs are unsupported, we treat it as no घड़ी */
-	अगर (!parent_count)
-		वापस शून्य;
+	/* If all clocks are unsupported, we treat it as no clock */
+	if (!parent_count)
+		return NULL;
 
-	/* Aव्योम exceeding our parent घड़ी limit */
-	अगर (parent_count > PARENT_COUNT_MAX) अणु
+	/* Avoid exceeding our parent clock limit */
+	if (parent_count > PARENT_COUNT_MAX) {
 		pr_err("%s: too many parents (%u > %u)\n", __func__,
 			parent_count, PARENT_COUNT_MAX);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
 	/*
-	 * There is one parent name क्रम each defined parent घड़ी.
-	 * We also मुख्यtain an array containing the selector value
-	 * क्रम each defined घड़ी.  If there's only one घड़ी, the
-	 * selector is not required, but we allocate space क्रम the
+	 * There is one parent name for each defined parent clock.
+	 * We also maintain an array containing the selector value
+	 * for each defined clock.  If there's only one clock, the
+	 * selector is not required, but we allocate space for the
 	 * array anyway to keep things simple.
 	 */
-	parent_names = kदो_स्मृति_array(parent_count, माप(*parent_names),
+	parent_names = kmalloc_array(parent_count, sizeof(*parent_names),
 			       GFP_KERNEL);
-	अगर (!parent_names)
-		वापस ERR_PTR(-ENOMEM);
+	if (!parent_names)
+		return ERR_PTR(-ENOMEM);
 
 	/* There is at least one parent, so allocate a selector array */
-	parent_sel = kदो_स्मृति_array(parent_count, माप(*parent_sel),
+	parent_sel = kmalloc_array(parent_count, sizeof(*parent_sel),
 				   GFP_KERNEL);
-	अगर (!parent_sel) अणु
-		kमुक्त(parent_names);
+	if (!parent_sel) {
+		kfree(parent_names);
 
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+		return ERR_PTR(-ENOMEM);
+	}
 
 	/* Now fill in the parent names and selector arrays */
-	क्रम (i = 0, j = 0; i < orig_count; i++) अणु
-		अगर (घड़ीs[i] != BAD_CLK_NAME) अणु
-			parent_names[j] = घड़ीs[i];
+	for (i = 0, j = 0; i < orig_count; i++) {
+		if (clocks[i] != BAD_CLK_NAME) {
+			parent_names[j] = clocks[i];
 			parent_sel[j] = i;
 			j++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	*names = parent_names;
 	*count = parent_count;
 
-	वापस parent_sel;
-पूर्ण
+	return parent_sel;
+}
 
-अटल पूर्णांक
-clk_sel_setup(स्थिर अक्षर **घड़ीs, काष्ठा bcm_clk_sel *sel,
-		काष्ठा clk_init_data *init_data)
-अणु
-	स्थिर अक्षर **parent_names = शून्य;
+static int
+clk_sel_setup(const char **clocks, struct bcm_clk_sel *sel,
+		struct clk_init_data *init_data)
+{
+	const char **parent_names = NULL;
 	u32 parent_count = 0;
 	u32 *parent_sel;
 
 	/*
-	 * If a peripheral घड़ी has multiple parents, the value
+	 * If a peripheral clock has multiple parents, the value
 	 * used by the hardware to select that parent is represented
-	 * by the parent घड़ी's position in the "clocks" list.  Some
-	 * values करोn't have defined or supported घड़ीs; these will
+	 * by the parent clock's position in the "clocks" list.  Some
+	 * values don't have defined or supported clocks; these will
 	 * have BAD_CLK_NAME entries in the parents[] array.  The
-	 * list is terminated by a शून्य entry.
+	 * list is terminated by a NULL entry.
 	 *
 	 * We need to supply (only) the names of defined parent
-	 * घड़ीs when रेजिस्टरing a घड़ी though, so we use an
+	 * clocks when registering a clock though, so we use an
 	 * array of parent selector values to map between the
-	 * indexes the common घड़ी code uses and the selector
+	 * indexes the common clock code uses and the selector
 	 * values we need.
 	 */
-	parent_sel = parent_process(घड़ीs, &parent_count, &parent_names);
-	अगर (IS_ERR(parent_sel)) अणु
-		पूर्णांक ret = PTR_ERR(parent_sel);
+	parent_sel = parent_process(clocks, &parent_count, &parent_names);
+	if (IS_ERR(parent_sel)) {
+		int ret = PTR_ERR(parent_sel);
 
 		pr_err("%s: error processing parent clocks for %s (%d)\n",
 			__func__, init_data->name, ret);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	init_data->parent_names = parent_names;
 	init_data->num_parents = parent_count;
@@ -644,221 +643,221 @@ clk_sel_setup(स्थिर अक्षर **घड़ीs, काष्ठ�
 	sel->parent_count = parent_count;
 	sel->parent_sel = parent_sel;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम clk_sel_tearकरोwn(काष्ठा bcm_clk_sel *sel,
-		काष्ठा clk_init_data *init_data)
-अणु
-	kमुक्त(sel->parent_sel);
-	sel->parent_sel = शून्य;
+static void clk_sel_teardown(struct bcm_clk_sel *sel,
+		struct clk_init_data *init_data)
+{
+	kfree(sel->parent_sel);
+	sel->parent_sel = NULL;
 	sel->parent_count = 0;
 
 	init_data->num_parents = 0;
-	kमुक्त(init_data->parent_names);
-	init_data->parent_names = शून्य;
-पूर्ण
+	kfree(init_data->parent_names);
+	init_data->parent_names = NULL;
+}
 
-अटल व्योम peri_clk_tearकरोwn(काष्ठा peri_clk_data *data,
-				काष्ठा clk_init_data *init_data)
-अणु
-	clk_sel_tearकरोwn(&data->sel, init_data);
-पूर्ण
+static void peri_clk_teardown(struct peri_clk_data *data,
+				struct clk_init_data *init_data)
+{
+	clk_sel_teardown(&data->sel, init_data);
+}
 
 /*
- * Caller is responsible क्रम मुक्तing the parent_names[] and
- * parent_sel[] arrays in the peripheral घड़ी's "data" काष्ठाure
- * that can be asचिन्हित अगर the घड़ी has one or more parent घड़ीs
+ * Caller is responsible for freeing the parent_names[] and
+ * parent_sel[] arrays in the peripheral clock's "data" structure
+ * that can be assigned if the clock has one or more parent clocks
  * associated with it.
  */
-अटल पूर्णांक
-peri_clk_setup(काष्ठा peri_clk_data *data, काष्ठा clk_init_data *init_data)
-अणु
+static int
+peri_clk_setup(struct peri_clk_data *data, struct clk_init_data *init_data)
+{
 	init_data->flags = CLK_IGNORE_UNUSED;
 
-	वापस clk_sel_setup(data->घड़ीs, &data->sel, init_data);
-पूर्ण
+	return clk_sel_setup(data->clocks, &data->sel, init_data);
+}
 
-अटल व्योम bcm_clk_tearकरोwn(काष्ठा kona_clk *bcm_clk)
-अणु
-	चयन (bcm_clk->type) अणु
-	हाल bcm_clk_peri:
-		peri_clk_tearकरोwn(bcm_clk->u.data, &bcm_clk->init_data);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	bcm_clk->u.data = शून्य;
+static void bcm_clk_teardown(struct kona_clk *bcm_clk)
+{
+	switch (bcm_clk->type) {
+	case bcm_clk_peri:
+		peri_clk_teardown(bcm_clk->u.data, &bcm_clk->init_data);
+		break;
+	default:
+		break;
+	}
+	bcm_clk->u.data = NULL;
 	bcm_clk->type = bcm_clk_none;
-पूर्ण
+}
 
-अटल व्योम kona_clk_tearकरोwn(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा kona_clk *bcm_clk;
+static void kona_clk_teardown(struct clk_hw *hw)
+{
+	struct kona_clk *bcm_clk;
 
-	अगर (!hw)
-		वापस;
+	if (!hw)
+		return;
 
-	clk_hw_unरेजिस्टर(hw);
+	clk_hw_unregister(hw);
 
 	bcm_clk = to_kona_clk(hw);
-	bcm_clk_tearकरोwn(bcm_clk);
-पूर्ण
+	bcm_clk_teardown(bcm_clk);
+}
 
-अटल पूर्णांक kona_clk_setup(काष्ठा kona_clk *bcm_clk)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_init_data *init_data = &bcm_clk->init_data;
+static int kona_clk_setup(struct kona_clk *bcm_clk)
+{
+	int ret;
+	struct clk_init_data *init_data = &bcm_clk->init_data;
 
-	चयन (bcm_clk->type) अणु
-	हाल bcm_clk_peri:
+	switch (bcm_clk->type) {
+	case bcm_clk_peri:
 		ret = peri_clk_setup(bcm_clk->u.data, init_data);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	शेष:
+		if (ret)
+			return ret;
+		break;
+	default:
 		pr_err("%s: clock type %d invalid for %s\n", __func__,
-			(पूर्णांक)bcm_clk->type, init_data->name);
-		वापस -EINVAL;
-	पूर्ण
+			(int)bcm_clk->type, init_data->name);
+		return -EINVAL;
+	}
 
-	/* Make sure everything makes sense beक्रमe we set it up */
-	अगर (!kona_clk_valid(bcm_clk)) अणु
+	/* Make sure everything makes sense before we set it up */
+	if (!kona_clk_valid(bcm_clk)) {
 		pr_err("%s: clock data invalid for %s\n", __func__,
 			init_data->name);
 		ret = -EINVAL;
-		जाओ out_tearकरोwn;
-	पूर्ण
+		goto out_teardown;
+	}
 
 	bcm_clk->hw.init = init_data;
-	ret = clk_hw_रेजिस्टर(शून्य, &bcm_clk->hw);
-	अगर (ret) अणु
+	ret = clk_hw_register(NULL, &bcm_clk->hw);
+	if (ret) {
 		pr_err("%s: error registering clock %s (%d)\n", __func__,
 			init_data->name, ret);
-		जाओ out_tearकरोwn;
-	पूर्ण
+		goto out_teardown;
+	}
 
-	वापस 0;
-out_tearकरोwn:
-	bcm_clk_tearकरोwn(bcm_clk);
+	return 0;
+out_teardown:
+	bcm_clk_teardown(bcm_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ccu_clks_tearकरोwn(काष्ठा ccu_data *ccu)
-अणु
+static void ccu_clks_teardown(struct ccu_data *ccu)
+{
 	u32 i;
 
-	क्रम (i = 0; i < ccu->clk_num; i++)
-		kona_clk_tearकरोwn(&ccu->kona_clks[i].hw);
-पूर्ण
+	for (i = 0; i < ccu->clk_num; i++)
+		kona_clk_teardown(&ccu->kona_clks[i].hw);
+}
 
-अटल व्योम kona_ccu_tearकरोwn(काष्ठा ccu_data *ccu)
-अणु
-	अगर (!ccu->base)
-		वापस;
+static void kona_ccu_teardown(struct ccu_data *ccu)
+{
+	if (!ccu->base)
+		return;
 
-	of_clk_del_provider(ccu->node);	/* safe अगर never added */
-	ccu_clks_tearकरोwn(ccu);
+	of_clk_del_provider(ccu->node);	/* safe if never added */
+	ccu_clks_teardown(ccu);
 	of_node_put(ccu->node);
-	ccu->node = शून्य;
+	ccu->node = NULL;
 	iounmap(ccu->base);
-	ccu->base = शून्य;
-पूर्ण
+	ccu->base = NULL;
+}
 
-अटल bool ccu_data_valid(काष्ठा ccu_data *ccu)
-अणु
-	काष्ठा ccu_policy *ccu_policy;
+static bool ccu_data_valid(struct ccu_data *ccu)
+{
+	struct ccu_policy *ccu_policy;
 
-	अगर (!ccu_data_offsets_valid(ccu))
-		वापस false;
+	if (!ccu_data_offsets_valid(ccu))
+		return false;
 
 	ccu_policy = &ccu->policy;
-	अगर (ccu_policy_exists(ccu_policy))
-		अगर (!ccu_policy_valid(ccu_policy, ccu->name))
-			वापस false;
+	if (ccu_policy_exists(ccu_policy))
+		if (!ccu_policy_valid(ccu_policy, ccu->name))
+			return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा clk_hw *
-of_clk_kona_onecell_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
-अणु
-	काष्ठा ccu_data *ccu = data;
-	अचिन्हित पूर्णांक idx = clkspec->args[0];
+static struct clk_hw *
+of_clk_kona_onecell_get(struct of_phandle_args *clkspec, void *data)
+{
+	struct ccu_data *ccu = data;
+	unsigned int idx = clkspec->args[0];
 
-	अगर (idx >= ccu->clk_num) अणु
+	if (idx >= ccu->clk_num) {
 		pr_err("%s: invalid index %u\n", __func__, idx);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	वापस &ccu->kona_clks[idx].hw;
-पूर्ण
+	return &ccu->kona_clks[idx].hw;
+}
 
 /*
  * Set up a CCU.  Call the provided ccu_clks_setup callback to
- * initialize the array of घड़ीs provided by the CCU.
+ * initialize the array of clocks provided by the CCU.
  */
-व्योम __init kona_dt_ccu_setup(काष्ठा ccu_data *ccu,
-			काष्ठा device_node *node)
-अणु
-	काष्ठा resource res = अणु 0 पूर्ण;
-	resource_माप_प्रकार range;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+void __init kona_dt_ccu_setup(struct ccu_data *ccu,
+			struct device_node *node)
+{
+	struct resource res = { 0 };
+	resource_size_t range;
+	unsigned int i;
+	int ret;
 
 	ret = of_address_to_resource(node, 0, &res);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: no valid CCU registers found for %pOFn\n", __func__,
 			node);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	range = resource_size(&res);
-	अगर (range > (resource_माप_प्रकार)U32_MAX) अणु
+	if (range > (resource_size_t)U32_MAX) {
 		pr_err("%s: address range too large for %pOFn\n", __func__,
 			node);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	ccu->range = (u32)range;
 
-	अगर (!ccu_data_valid(ccu)) अणु
+	if (!ccu_data_valid(ccu)) {
 		pr_err("%s: ccu data not valid for %pOFn\n", __func__, node);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
 	ccu->base = ioremap(res.start, ccu->range);
-	अगर (!ccu->base) अणु
+	if (!ccu->base) {
 		pr_err("%s: unable to map CCU registers for %pOFn\n", __func__,
 			node);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 	ccu->node = of_node_get(node);
 
 	/*
-	 * Set up each defined kona घड़ी and save the result in
-	 * the घड़ी framework घड़ी array (in ccu->data).  Then
-	 * रेजिस्टर as a provider क्रम these घड़ीs.
+	 * Set up each defined kona clock and save the result in
+	 * the clock framework clock array (in ccu->data).  Then
+	 * register as a provider for these clocks.
 	 */
-	क्रम (i = 0; i < ccu->clk_num; i++) अणु
-		अगर (!ccu->kona_clks[i].ccu)
-			जारी;
+	for (i = 0; i < ccu->clk_num; i++) {
+		if (!ccu->kona_clks[i].ccu)
+			continue;
 		kona_clk_setup(&ccu->kona_clks[i]);
-	पूर्ण
+	}
 
 	ret = of_clk_add_hw_provider(node, of_clk_kona_onecell_get, ccu);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: error adding ccu %pOFn as provider (%d)\n", __func__,
 				node, ret);
-		जाओ out_err;
-	पूर्ण
+		goto out_err;
+	}
 
-	अगर (!kona_ccu_init(ccu))
+	if (!kona_ccu_init(ccu))
 		pr_err("Broadcom %pOFn initialization had errors\n", node);
 
-	वापस;
+	return;
 out_err:
-	kona_ccu_tearकरोwn(ccu);
+	kona_ccu_teardown(ccu);
 	pr_err("Broadcom %pOFn setup aborted\n", node);
-पूर्ण
+}

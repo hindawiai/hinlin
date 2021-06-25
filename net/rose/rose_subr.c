@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/types.h>
-#समावेश <linux/socket.h>
-#समावेश <linux/in.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sockios.h>
-#समावेश <linux/net.h>
-#समावेश <linux/slab.h>
-#समावेश <net/ax25.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp_states.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <net/rose.h>
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/socket.h>
+#include <linux/in.h>
+#include <linux/kernel.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/sockios.h>
+#include <linux/net.h>
+#include <linux/slab.h>
+#include <net/ax25.h>
+#include <linux/inet.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <net/sock.h>
+#include <net/tcp_states.h>
+#include <linux/fcntl.h>
+#include <linux/mm.h>
+#include <linux/interrupt.h>
+#include <net/rose.h>
 
-अटल पूर्णांक rose_create_facilities(अचिन्हित अक्षर *buffer, काष्ठा rose_sock *rose);
+static int rose_create_facilities(unsigned char *buffer, struct rose_sock *rose);
 
 /*
  *	This routine purges all of the queues of frames.
  */
-व्योम rose_clear_queues(काष्ठा sock *sk)
-अणु
-	skb_queue_purge(&sk->sk_ग_लिखो_queue);
+void rose_clear_queues(struct sock *sk)
+{
+	skb_queue_purge(&sk->sk_write_queue);
 	skb_queue_purge(&rose_sk(sk)->ack_queue);
-पूर्ण
+}
 
 /*
  * This routine purges the input queue of those frames that have been
  * acknowledged. This replaces the boxes labelled "V(a) <- N(r)" on the
  * SDL diagram.
  */
-व्योम rose_frames_acked(काष्ठा sock *sk, अचिन्हित लघु nr)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा rose_sock *rose = rose_sk(sk);
+void rose_frames_acked(struct sock *sk, unsigned short nr)
+{
+	struct sk_buff *skb;
+	struct rose_sock *rose = rose_sk(sk);
 
 	/*
 	 * Remove all the ack-ed frames from the ack queue.
 	 */
-	अगर (rose->va != nr) अणु
-		जबतक (skb_peek(&rose->ack_queue) != शून्य && rose->va != nr) अणु
+	if (rose->va != nr) {
+		while (skb_peek(&rose->ack_queue) != NULL && rose->va != nr) {
 			skb = skb_dequeue(&rose->ack_queue);
-			kमुक्त_skb(skb);
+			kfree_skb(skb);
 			rose->va = (rose->va + 1) % ROSE_MODULUS;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम rose_requeue_frames(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb, *skb_prev = शून्य;
+void rose_requeue_frames(struct sock *sk)
+{
+	struct sk_buff *skb, *skb_prev = NULL;
 
 	/*
 	 * Requeue all the un-ack-ed frames on the output queue to be picked
 	 * up by rose_kick. This arrangement handles the possibility of an
 	 * empty output queue.
 	 */
-	जबतक ((skb = skb_dequeue(&rose_sk(sk)->ack_queue)) != शून्य) अणु
-		अगर (skb_prev == शून्य)
-			skb_queue_head(&sk->sk_ग_लिखो_queue, skb);
-		अन्यथा
-			skb_append(skb_prev, skb, &sk->sk_ग_लिखो_queue);
+	while ((skb = skb_dequeue(&rose_sk(sk)->ack_queue)) != NULL) {
+		if (skb_prev == NULL)
+			skb_queue_head(&sk->sk_write_queue, skb);
+		else
+			skb_append(skb_prev, skb, &sk->sk_write_queue);
 		skb_prev = skb;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  *	Validate that the value of nr is between va and vs. Return true or
- *	false क्रम testing.
+ *	false for testing.
  */
-पूर्णांक rose_validate_nr(काष्ठा sock *sk, अचिन्हित लघु nr)
-अणु
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	अचिन्हित लघु vc = rose->va;
+int rose_validate_nr(struct sock *sk, unsigned short nr)
+{
+	struct rose_sock *rose = rose_sk(sk);
+	unsigned short vc = rose->va;
 
-	जबतक (vc != rose->vs) अणु
-		अगर (nr == vc) वापस 1;
+	while (vc != rose->vs) {
+		if (nr == vc) return 1;
 		vc = (vc + 1) % ROSE_MODULUS;
-	पूर्ण
+	}
 
-	वापस nr == rose->vs;
-पूर्ण
+	return nr == rose->vs;
+}
 
 /*
- *  This routine is called when the packet layer पूर्णांकernally generates a
+ *  This routine is called when the packet layer internally generates a
  *  control frame.
  */
-व्योम rose_ग_लिखो_पूर्णांकernal(काष्ठा sock *sk, पूर्णांक frametype)
-अणु
-	काष्ठा rose_sock *rose = rose_sk(sk);
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर  *dptr;
-	अचिन्हित अक्षर  lci1, lci2;
-	पूर्णांक maxfaclen = 0;
-	पूर्णांक len, faclen;
-	पूर्णांक reserve;
+void rose_write_internal(struct sock *sk, int frametype)
+{
+	struct rose_sock *rose = rose_sk(sk);
+	struct sk_buff *skb;
+	unsigned char  *dptr;
+	unsigned char  lci1, lci2;
+	int maxfaclen = 0;
+	int len, faclen;
+	int reserve;
 
 	reserve = AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + 1;
 	len = ROSE_MIN_LEN;
 
-	चयन (frametype) अणु
-	हाल ROSE_CALL_REQUEST:
+	switch (frametype) {
+	case ROSE_CALL_REQUEST:
 		len   += 1 + ROSE_ADDR_LEN + ROSE_ADDR_LEN;
 		maxfaclen = 256;
-		अवरोध;
-	हाल ROSE_CALL_ACCEPTED:
-	हाल ROSE_CLEAR_REQUEST:
-	हाल ROSE_RESET_REQUEST:
+		break;
+	case ROSE_CALL_ACCEPTED:
+	case ROSE_CLEAR_REQUEST:
+	case ROSE_RESET_REQUEST:
 		len   += 2;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	skb = alloc_skb(reserve + len + maxfaclen, GFP_ATOMIC);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
 	/*
-	 *	Space क्रम AX.25 header and PID.
+	 *	Space for AX.25 header and PID.
 	 */
 	skb_reserve(skb, reserve);
 
@@ -136,358 +135,358 @@
 	lci1 = (rose->lci >> 8) & 0x0F;
 	lci2 = (rose->lci >> 0) & 0xFF;
 
-	चयन (frametype) अणु
-	हाल ROSE_CALL_REQUEST:
+	switch (frametype) {
+	case ROSE_CALL_REQUEST:
 		*dptr++ = ROSE_GFI | lci1;
 		*dptr++ = lci2;
 		*dptr++ = frametype;
 		*dptr++ = ROSE_CALL_REQ_ADDR_LEN_VAL;
-		स_नकल(dptr, &rose->dest_addr,  ROSE_ADDR_LEN);
+		memcpy(dptr, &rose->dest_addr,  ROSE_ADDR_LEN);
 		dptr   += ROSE_ADDR_LEN;
-		स_नकल(dptr, &rose->source_addr, ROSE_ADDR_LEN);
+		memcpy(dptr, &rose->source_addr, ROSE_ADDR_LEN);
 		dptr   += ROSE_ADDR_LEN;
 		faclen = rose_create_facilities(dptr, rose);
 		skb_put(skb, faclen);
 		dptr   += faclen;
-		अवरोध;
+		break;
 
-	हाल ROSE_CALL_ACCEPTED:
+	case ROSE_CALL_ACCEPTED:
 		*dptr++ = ROSE_GFI | lci1;
 		*dptr++ = lci2;
 		*dptr++ = frametype;
 		*dptr++ = 0x00;		/* Address length */
 		*dptr++ = 0;		/* Facilities length */
-		अवरोध;
+		break;
 
-	हाल ROSE_CLEAR_REQUEST:
+	case ROSE_CLEAR_REQUEST:
 		*dptr++ = ROSE_GFI | lci1;
 		*dptr++ = lci2;
 		*dptr++ = frametype;
 		*dptr++ = rose->cause;
 		*dptr++ = rose->diagnostic;
-		अवरोध;
+		break;
 
-	हाल ROSE_RESET_REQUEST:
+	case ROSE_RESET_REQUEST:
 		*dptr++ = ROSE_GFI | lci1;
 		*dptr++ = lci2;
 		*dptr++ = frametype;
 		*dptr++ = ROSE_DTE_ORIGINATED;
 		*dptr++ = 0;
-		अवरोध;
+		break;
 
-	हाल ROSE_RR:
-	हाल ROSE_RNR:
+	case ROSE_RR:
+	case ROSE_RNR:
 		*dptr++ = ROSE_GFI | lci1;
 		*dptr++ = lci2;
 		*dptr   = frametype;
 		*dptr++ |= (rose->vr << 5) & 0xE0;
-		अवरोध;
+		break;
 
-	हाल ROSE_CLEAR_CONFIRMATION:
-	हाल ROSE_RESET_CONFIRMATION:
+	case ROSE_CLEAR_CONFIRMATION:
+	case ROSE_RESET_CONFIRMATION:
 		*dptr++ = ROSE_GFI | lci1;
 		*dptr++ = lci2;
 		*dptr++  = frametype;
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_ERR "ROSE: rose_write_internal - invalid frametype %02X\n", frametype);
-		kमुक्त_skb(skb);
-		वापस;
-	पूर्ण
+	default:
+		printk(KERN_ERR "ROSE: rose_write_internal - invalid frametype %02X\n", frametype);
+		kfree_skb(skb);
+		return;
+	}
 
 	rose_transmit_link(skb, rose->neighbour);
-पूर्ण
+}
 
-पूर्णांक rose_decode(काष्ठा sk_buff *skb, पूर्णांक *ns, पूर्णांक *nr, पूर्णांक *q, पूर्णांक *d, पूर्णांक *m)
-अणु
-	अचिन्हित अक्षर *frame;
+int rose_decode(struct sk_buff *skb, int *ns, int *nr, int *q, int *d, int *m)
+{
+	unsigned char *frame;
 
 	frame = skb->data;
 
 	*ns = *nr = *q = *d = *m = 0;
 
-	चयन (frame[2]) अणु
-	हाल ROSE_CALL_REQUEST:
-	हाल ROSE_CALL_ACCEPTED:
-	हाल ROSE_CLEAR_REQUEST:
-	हाल ROSE_CLEAR_CONFIRMATION:
-	हाल ROSE_RESET_REQUEST:
-	हाल ROSE_RESET_CONFIRMATION:
-		वापस frame[2];
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (frame[2]) {
+	case ROSE_CALL_REQUEST:
+	case ROSE_CALL_ACCEPTED:
+	case ROSE_CLEAR_REQUEST:
+	case ROSE_CLEAR_CONFIRMATION:
+	case ROSE_RESET_REQUEST:
+	case ROSE_RESET_CONFIRMATION:
+		return frame[2];
+	default:
+		break;
+	}
 
-	अगर ((frame[2] & 0x1F) == ROSE_RR  ||
-	    (frame[2] & 0x1F) == ROSE_RNR) अणु
+	if ((frame[2] & 0x1F) == ROSE_RR  ||
+	    (frame[2] & 0x1F) == ROSE_RNR) {
 		*nr = (frame[2] >> 5) & 0x07;
-		वापस frame[2] & 0x1F;
-	पूर्ण
+		return frame[2] & 0x1F;
+	}
 
-	अगर ((frame[2] & 0x01) == ROSE_DATA) अणु
+	if ((frame[2] & 0x01) == ROSE_DATA) {
 		*q  = (frame[0] & ROSE_Q_BIT) == ROSE_Q_BIT;
 		*d  = (frame[0] & ROSE_D_BIT) == ROSE_D_BIT;
 		*m  = (frame[2] & ROSE_M_BIT) == ROSE_M_BIT;
 		*nr = (frame[2] >> 5) & 0x07;
 		*ns = (frame[2] >> 1) & 0x07;
-		वापस ROSE_DATA;
-	पूर्ण
+		return ROSE_DATA;
+	}
 
-	वापस ROSE_ILLEGAL;
-पूर्ण
+	return ROSE_ILLEGAL;
+}
 
-अटल पूर्णांक rose_parse_national(अचिन्हित अक्षर *p, काष्ठा rose_facilities_काष्ठा *facilities, पूर्णांक len)
-अणु
-	अचिन्हित अक्षर *pt;
-	अचिन्हित अक्षर l, lg, n = 0;
-	पूर्णांक fac_national_digis_received = 0;
+static int rose_parse_national(unsigned char *p, struct rose_facilities_struct *facilities, int len)
+{
+	unsigned char *pt;
+	unsigned char l, lg, n = 0;
+	int fac_national_digis_received = 0;
 
-	करो अणु
-		चयन (*p & 0xC0) अणु
-		हाल 0x00:
-			अगर (len < 2)
-				वापस -1;
+	do {
+		switch (*p & 0xC0) {
+		case 0x00:
+			if (len < 2)
+				return -1;
 			p   += 2;
 			n   += 2;
 			len -= 2;
-			अवरोध;
+			break;
 
-		हाल 0x40:
-			अगर (len < 3)
-				वापस -1;
-			अगर (*p == FAC_NATIONAL_RAND)
-				facilities->अक्रम = ((p[1] << 8) & 0xFF00) + ((p[2] << 0) & 0x00FF);
+		case 0x40:
+			if (len < 3)
+				return -1;
+			if (*p == FAC_NATIONAL_RAND)
+				facilities->rand = ((p[1] << 8) & 0xFF00) + ((p[2] << 0) & 0x00FF);
 			p   += 3;
 			n   += 3;
 			len -= 3;
-			अवरोध;
+			break;
 
-		हाल 0x80:
-			अगर (len < 4)
-				वापस -1;
+		case 0x80:
+			if (len < 4)
+				return -1;
 			p   += 4;
 			n   += 4;
 			len -= 4;
-			अवरोध;
+			break;
 
-		हाल 0xC0:
-			अगर (len < 2)
-				वापस -1;
+		case 0xC0:
+			if (len < 2)
+				return -1;
 			l = p[1];
-			अगर (len < 2 + l)
-				वापस -1;
-			अगर (*p == FAC_NATIONAL_DEST_DIGI) अणु
-				अगर (!fac_national_digis_received) अणु
-					अगर (l < AX25_ADDR_LEN)
-						वापस -1;
-					स_नकल(&facilities->source_digis[0], p + 2, AX25_ADDR_LEN);
+			if (len < 2 + l)
+				return -1;
+			if (*p == FAC_NATIONAL_DEST_DIGI) {
+				if (!fac_national_digis_received) {
+					if (l < AX25_ADDR_LEN)
+						return -1;
+					memcpy(&facilities->source_digis[0], p + 2, AX25_ADDR_LEN);
 					facilities->source_ndigis = 1;
-				पूर्ण
-			पूर्ण
-			अन्यथा अगर (*p == FAC_NATIONAL_SRC_DIGI) अणु
-				अगर (!fac_national_digis_received) अणु
-					अगर (l < AX25_ADDR_LEN)
-						वापस -1;
-					स_नकल(&facilities->dest_digis[0], p + 2, AX25_ADDR_LEN);
+				}
+			}
+			else if (*p == FAC_NATIONAL_SRC_DIGI) {
+				if (!fac_national_digis_received) {
+					if (l < AX25_ADDR_LEN)
+						return -1;
+					memcpy(&facilities->dest_digis[0], p + 2, AX25_ADDR_LEN);
 					facilities->dest_ndigis = 1;
-				पूर्ण
-			पूर्ण
-			अन्यथा अगर (*p == FAC_NATIONAL_FAIL_CALL) अणु
-				अगर (l < AX25_ADDR_LEN)
-					वापस -1;
-				स_नकल(&facilities->fail_call, p + 2, AX25_ADDR_LEN);
-			पूर्ण
-			अन्यथा अगर (*p == FAC_NATIONAL_FAIL_ADD) अणु
-				अगर (l < 1 + ROSE_ADDR_LEN)
-					वापस -1;
-				स_नकल(&facilities->fail_addr, p + 3, ROSE_ADDR_LEN);
-			पूर्ण
-			अन्यथा अगर (*p == FAC_NATIONAL_DIGIS) अणु
-				अगर (l % AX25_ADDR_LEN)
-					वापस -1;
+				}
+			}
+			else if (*p == FAC_NATIONAL_FAIL_CALL) {
+				if (l < AX25_ADDR_LEN)
+					return -1;
+				memcpy(&facilities->fail_call, p + 2, AX25_ADDR_LEN);
+			}
+			else if (*p == FAC_NATIONAL_FAIL_ADD) {
+				if (l < 1 + ROSE_ADDR_LEN)
+					return -1;
+				memcpy(&facilities->fail_addr, p + 3, ROSE_ADDR_LEN);
+			}
+			else if (*p == FAC_NATIONAL_DIGIS) {
+				if (l % AX25_ADDR_LEN)
+					return -1;
 				fac_national_digis_received = 1;
 				facilities->source_ndigis = 0;
 				facilities->dest_ndigis   = 0;
-				क्रम (pt = p + 2, lg = 0 ; lg < l ; pt += AX25_ADDR_LEN, lg += AX25_ADDR_LEN) अणु
-					अगर (pt[6] & AX25_HBIT) अणु
-						अगर (facilities->dest_ndigis >= ROSE_MAX_DIGIS)
-							वापस -1;
-						स_नकल(&facilities->dest_digis[facilities->dest_ndigis++], pt, AX25_ADDR_LEN);
-					पूर्ण अन्यथा अणु
-						अगर (facilities->source_ndigis >= ROSE_MAX_DIGIS)
-							वापस -1;
-						स_नकल(&facilities->source_digis[facilities->source_ndigis++], pt, AX25_ADDR_LEN);
-					पूर्ण
-				पूर्ण
-			पूर्ण
+				for (pt = p + 2, lg = 0 ; lg < l ; pt += AX25_ADDR_LEN, lg += AX25_ADDR_LEN) {
+					if (pt[6] & AX25_HBIT) {
+						if (facilities->dest_ndigis >= ROSE_MAX_DIGIS)
+							return -1;
+						memcpy(&facilities->dest_digis[facilities->dest_ndigis++], pt, AX25_ADDR_LEN);
+					} else {
+						if (facilities->source_ndigis >= ROSE_MAX_DIGIS)
+							return -1;
+						memcpy(&facilities->source_digis[facilities->source_ndigis++], pt, AX25_ADDR_LEN);
+					}
+				}
+			}
 			p   += l + 2;
 			n   += l + 2;
 			len -= l + 2;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (*p != 0x00 && len > 0);
+			break;
+		}
+	} while (*p != 0x00 && len > 0);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-अटल पूर्णांक rose_parse_ccitt(अचिन्हित अक्षर *p, काष्ठा rose_facilities_काष्ठा *facilities, पूर्णांक len)
-अणु
-	अचिन्हित अक्षर l, n = 0;
-	अक्षर callsign[11];
+static int rose_parse_ccitt(unsigned char *p, struct rose_facilities_struct *facilities, int len)
+{
+	unsigned char l, n = 0;
+	char callsign[11];
 
-	करो अणु
-		चयन (*p & 0xC0) अणु
-		हाल 0x00:
-			अगर (len < 2)
-				वापस -1;
+	do {
+		switch (*p & 0xC0) {
+		case 0x00:
+			if (len < 2)
+				return -1;
 			p   += 2;
 			n   += 2;
 			len -= 2;
-			अवरोध;
+			break;
 
-		हाल 0x40:
-			अगर (len < 3)
-				वापस -1;
+		case 0x40:
+			if (len < 3)
+				return -1;
 			p   += 3;
 			n   += 3;
 			len -= 3;
-			अवरोध;
+			break;
 
-		हाल 0x80:
-			अगर (len < 4)
-				वापस -1;
+		case 0x80:
+			if (len < 4)
+				return -1;
 			p   += 4;
 			n   += 4;
 			len -= 4;
-			अवरोध;
+			break;
 
-		हाल 0xC0:
-			अगर (len < 2)
-				वापस -1;
+		case 0xC0:
+			if (len < 2)
+				return -1;
 			l = p[1];
 
 			/* Prevent overflows*/
-			अगर (l < 10 || l > 20)
-				वापस -1;
+			if (l < 10 || l > 20)
+				return -1;
 
-			अगर (*p == FAC_CCITT_DEST_NSAP) अणु
-				स_नकल(&facilities->source_addr, p + 7, ROSE_ADDR_LEN);
-				स_नकल(callsign, p + 12,   l - 10);
+			if (*p == FAC_CCITT_DEST_NSAP) {
+				memcpy(&facilities->source_addr, p + 7, ROSE_ADDR_LEN);
+				memcpy(callsign, p + 12,   l - 10);
 				callsign[l - 10] = '\0';
 				asc2ax(&facilities->source_call, callsign);
-			पूर्ण
-			अगर (*p == FAC_CCITT_SRC_NSAP) अणु
-				स_नकल(&facilities->dest_addr, p + 7, ROSE_ADDR_LEN);
-				स_नकल(callsign, p + 12, l - 10);
+			}
+			if (*p == FAC_CCITT_SRC_NSAP) {
+				memcpy(&facilities->dest_addr, p + 7, ROSE_ADDR_LEN);
+				memcpy(callsign, p + 12, l - 10);
 				callsign[l - 10] = '\0';
 				asc2ax(&facilities->dest_call, callsign);
-			पूर्ण
+			}
 			p   += l + 2;
 			n   += l + 2;
 			len -= l + 2;
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (*p != 0x00 && len > 0);
+			break;
+		}
+	} while (*p != 0x00 && len > 0);
 
-	वापस n;
-पूर्ण
+	return n;
+}
 
-पूर्णांक rose_parse_facilities(अचिन्हित अक्षर *p, अचिन्हित packet_len,
-	काष्ठा rose_facilities_काष्ठा *facilities)
-अणु
-	पूर्णांक facilities_len, len;
+int rose_parse_facilities(unsigned char *p, unsigned packet_len,
+	struct rose_facilities_struct *facilities)
+{
+	int facilities_len, len;
 
 	facilities_len = *p++;
 
-	अगर (facilities_len == 0 || (अचिन्हित पूर्णांक)facilities_len > packet_len)
-		वापस 0;
+	if (facilities_len == 0 || (unsigned int)facilities_len > packet_len)
+		return 0;
 
-	जबतक (facilities_len >= 3 && *p == 0x00) अणु
+	while (facilities_len >= 3 && *p == 0x00) {
 		facilities_len--;
 		p++;
 
-		चयन (*p) अणु
-		हाल FAC_NATIONAL:		/* National */
+		switch (*p) {
+		case FAC_NATIONAL:		/* National */
 			len = rose_parse_national(p + 1, facilities, facilities_len - 1);
-			अवरोध;
+			break;
 
-		हाल FAC_CCITT:		/* CCITT */
+		case FAC_CCITT:		/* CCITT */
 			len = rose_parse_ccitt(p + 1, facilities, facilities_len - 1);
-			अवरोध;
+			break;
 
-		शेष:
-			prपूर्णांकk(KERN_DEBUG "ROSE: rose_parse_facilities - unknown facilities family %02X\n", *p);
+		default:
+			printk(KERN_DEBUG "ROSE: rose_parse_facilities - unknown facilities family %02X\n", *p);
 			len = 1;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (len < 0)
-			वापस 0;
-		अगर (WARN_ON(len >= facilities_len))
-			वापस 0;
+		if (len < 0)
+			return 0;
+		if (WARN_ON(len >= facilities_len))
+			return 0;
 		facilities_len -= len + 1;
 		p += len + 1;
-	पूर्ण
+	}
 
-	वापस facilities_len == 0;
-पूर्ण
+	return facilities_len == 0;
+}
 
-अटल पूर्णांक rose_create_facilities(अचिन्हित अक्षर *buffer, काष्ठा rose_sock *rose)
-अणु
-	अचिन्हित अक्षर *p = buffer + 1;
-	अक्षर *callsign;
-	अक्षर buf[11];
-	पूर्णांक len, nb;
+static int rose_create_facilities(unsigned char *buffer, struct rose_sock *rose)
+{
+	unsigned char *p = buffer + 1;
+	char *callsign;
+	char buf[11];
+	int len, nb;
 
 	/* National Facilities */
-	अगर (rose->अक्रम != 0 || rose->source_ndigis == 1 || rose->dest_ndigis == 1) अणु
+	if (rose->rand != 0 || rose->source_ndigis == 1 || rose->dest_ndigis == 1) {
 		*p++ = 0x00;
 		*p++ = FAC_NATIONAL;
 
-		अगर (rose->अक्रम != 0) अणु
+		if (rose->rand != 0) {
 			*p++ = FAC_NATIONAL_RAND;
-			*p++ = (rose->अक्रम >> 8) & 0xFF;
-			*p++ = (rose->अक्रम >> 0) & 0xFF;
-		पूर्ण
+			*p++ = (rose->rand >> 8) & 0xFF;
+			*p++ = (rose->rand >> 0) & 0xFF;
+		}
 
-		/* Sent beक्रमe older facilities */
-		अगर ((rose->source_ndigis > 0) || (rose->dest_ndigis > 0)) अणु
-			पूर्णांक maxdigi = 0;
+		/* Sent before older facilities */
+		if ((rose->source_ndigis > 0) || (rose->dest_ndigis > 0)) {
+			int maxdigi = 0;
 			*p++ = FAC_NATIONAL_DIGIS;
 			*p++ = AX25_ADDR_LEN * (rose->source_ndigis + rose->dest_ndigis);
-			क्रम (nb = 0 ; nb < rose->source_ndigis ; nb++) अणु
-				अगर (++maxdigi >= ROSE_MAX_DIGIS)
-					अवरोध;
-				स_नकल(p, &rose->source_digis[nb], AX25_ADDR_LEN);
+			for (nb = 0 ; nb < rose->source_ndigis ; nb++) {
+				if (++maxdigi >= ROSE_MAX_DIGIS)
+					break;
+				memcpy(p, &rose->source_digis[nb], AX25_ADDR_LEN);
 				p[6] |= AX25_HBIT;
 				p += AX25_ADDR_LEN;
-			पूर्ण
-			क्रम (nb = 0 ; nb < rose->dest_ndigis ; nb++) अणु
-				अगर (++maxdigi >= ROSE_MAX_DIGIS)
-					अवरोध;
-				स_नकल(p, &rose->dest_digis[nb], AX25_ADDR_LEN);
+			}
+			for (nb = 0 ; nb < rose->dest_ndigis ; nb++) {
+				if (++maxdigi >= ROSE_MAX_DIGIS)
+					break;
+				memcpy(p, &rose->dest_digis[nb], AX25_ADDR_LEN);
 				p[6] &= ~AX25_HBIT;
 				p += AX25_ADDR_LEN;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/* For compatibility */
-		अगर (rose->source_ndigis > 0) अणु
+		if (rose->source_ndigis > 0) {
 			*p++ = FAC_NATIONAL_SRC_DIGI;
 			*p++ = AX25_ADDR_LEN;
-			स_नकल(p, &rose->source_digis[0], AX25_ADDR_LEN);
+			memcpy(p, &rose->source_digis[0], AX25_ADDR_LEN);
 			p   += AX25_ADDR_LEN;
-		पूर्ण
+		}
 
 		/* For compatibility */
-		अगर (rose->dest_ndigis > 0) अणु
+		if (rose->dest_ndigis > 0) {
 			*p++ = FAC_NATIONAL_DEST_DIGI;
 			*p++ = AX25_ADDR_LEN;
-			स_नकल(p, &rose->dest_digis[0], AX25_ADDR_LEN);
+			memcpy(p, &rose->dest_digis[0], AX25_ADDR_LEN);
 			p   += AX25_ADDR_LEN;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*p++ = 0x00;
 	*p++ = FAC_CCITT;
@@ -496,62 +495,62 @@
 
 	callsign = ax2asc(buf, &rose->dest_call);
 
-	*p++ = म_माप(callsign) + 10;
-	*p++ = (म_माप(callsign) + 9) * 2;		/* ??? */
+	*p++ = strlen(callsign) + 10;
+	*p++ = (strlen(callsign) + 9) * 2;		/* ??? */
 
 	*p++ = 0x47; *p++ = 0x00; *p++ = 0x11;
 	*p++ = ROSE_ADDR_LEN * 2;
-	स_नकल(p, &rose->dest_addr, ROSE_ADDR_LEN);
+	memcpy(p, &rose->dest_addr, ROSE_ADDR_LEN);
 	p   += ROSE_ADDR_LEN;
 
-	स_नकल(p, callsign, म_माप(callsign));
-	p   += म_माप(callsign);
+	memcpy(p, callsign, strlen(callsign));
+	p   += strlen(callsign);
 
 	*p++ = FAC_CCITT_SRC_NSAP;
 
 	callsign = ax2asc(buf, &rose->source_call);
 
-	*p++ = म_माप(callsign) + 10;
-	*p++ = (म_माप(callsign) + 9) * 2;		/* ??? */
+	*p++ = strlen(callsign) + 10;
+	*p++ = (strlen(callsign) + 9) * 2;		/* ??? */
 
 	*p++ = 0x47; *p++ = 0x00; *p++ = 0x11;
 	*p++ = ROSE_ADDR_LEN * 2;
-	स_नकल(p, &rose->source_addr, ROSE_ADDR_LEN);
+	memcpy(p, &rose->source_addr, ROSE_ADDR_LEN);
 	p   += ROSE_ADDR_LEN;
 
-	स_नकल(p, callsign, म_माप(callsign));
-	p   += म_माप(callsign);
+	memcpy(p, callsign, strlen(callsign));
+	p   += strlen(callsign);
 
 	len       = p - buffer;
 	buffer[0] = len - 1;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-व्योम rose_disconnect(काष्ठा sock *sk, पूर्णांक reason, पूर्णांक cause, पूर्णांक diagnostic)
-अणु
-	काष्ठा rose_sock *rose = rose_sk(sk);
+void rose_disconnect(struct sock *sk, int reason, int cause, int diagnostic)
+{
+	struct rose_sock *rose = rose_sk(sk);
 
-	rose_stop_समयr(sk);
-	rose_stop_idleसमयr(sk);
+	rose_stop_timer(sk);
+	rose_stop_idletimer(sk);
 
 	rose_clear_queues(sk);
 
 	rose->lci   = 0;
 	rose->state = ROSE_STATE_0;
 
-	अगर (cause != -1)
+	if (cause != -1)
 		rose->cause = cause;
 
-	अगर (diagnostic != -1)
+	if (diagnostic != -1)
 		rose->diagnostic = diagnostic;
 
 	sk->sk_state     = TCP_CLOSE;
 	sk->sk_err       = reason;
-	sk->sk_shutकरोwn |= SEND_SHUTDOWN;
+	sk->sk_shutdown |= SEND_SHUTDOWN;
 
-	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
+	if (!sock_flag(sk, SOCK_DEAD)) {
 		sk->sk_state_change(sk);
 		sock_set_flag(sk, SOCK_DEAD);
-	पूर्ण
-पूर्ण
+	}
+}

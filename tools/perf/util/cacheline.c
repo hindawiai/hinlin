@@ -1,26 +1,25 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "cacheline.h"
-#समावेश <unistd.h>
+// SPDX-License-Identifier: GPL-2.0
+#include "cacheline.h"
+#include <unistd.h>
 
-#अगर_घोषित _SC_LEVEL1_DCACHE_LINESIZE
-#घोषणा cache_line_size(cacheline_sizep) *cacheline_sizep = sysconf(_SC_LEVEL1_DCACHE_LINESIZE)
-#अन्यथा
-#समावेश <api/fs/fs.h>
-#समावेश "debug.h"
-अटल व्योम cache_line_size(पूर्णांक *cacheline_sizep)
-अणु
-	अगर (sysfs__पढ़ो_पूर्णांक("devices/system/cpu/cpu0/cache/index0/coherency_line_size", cacheline_sizep))
+#ifdef _SC_LEVEL1_DCACHE_LINESIZE
+#define cache_line_size(cacheline_sizep) *cacheline_sizep = sysconf(_SC_LEVEL1_DCACHE_LINESIZE)
+#else
+#include <api/fs/fs.h>
+#include "debug.h"
+static void cache_line_size(int *cacheline_sizep)
+{
+	if (sysfs__read_int("devices/system/cpu/cpu0/cache/index0/coherency_line_size", cacheline_sizep))
 		pr_debug("cannot determine cache line size");
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-पूर्णांक cacheline_size(व्योम)
-अणु
-	अटल पूर्णांक size;
+int cacheline_size(void)
+{
+	static int size;
 
-	अगर (!size)
+	if (!size)
 		cache_line_size(&size);
 
-	वापस size;
-पूर्ण
+	return size;
+}

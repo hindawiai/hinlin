@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2018 - All Rights Reserved
- * Author: Gabriel Fernandez <gabriel.fernandez@st.com> क्रम STMicroelectronics.
+ * Author: Gabriel Fernandez <gabriel.fernandez@st.com> for STMicroelectronics.
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset-controller.h>
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/reset-controller.h>
 
-#घोषणा CLR_OFFSET 0x4
+#define CLR_OFFSET 0x4
 
-काष्ठा sपंचांग32_reset_data अणु
-	काष्ठा reset_controller_dev	rcdev;
-	व्योम __iomem			*membase;
-पूर्ण;
+struct stm32_reset_data {
+	struct reset_controller_dev	rcdev;
+	void __iomem			*membase;
+};
 
-अटल अंतरभूत काष्ठा sपंचांग32_reset_data *
-to_sपंचांग32_reset_data(काष्ठा reset_controller_dev *rcdev)
-अणु
-	वापस container_of(rcdev, काष्ठा sपंचांग32_reset_data, rcdev);
-पूर्ण
+static inline struct stm32_reset_data *
+to_stm32_reset_data(struct reset_controller_dev *rcdev)
+{
+	return container_of(rcdev, struct stm32_reset_data, rcdev);
+}
 
-अटल पूर्णांक sपंचांग32_reset_update(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id, bool निश्चित)
-अणु
-	काष्ठा sपंचांग32_reset_data *data = to_sपंचांग32_reset_data(rcdev);
-	पूर्णांक reg_width = माप(u32);
-	पूर्णांक bank = id / (reg_width * BITS_PER_BYTE);
-	पूर्णांक offset = id % (reg_width * BITS_PER_BYTE);
-	व्योम __iomem *addr;
+static int stm32_reset_update(struct reset_controller_dev *rcdev,
+			      unsigned long id, bool assert)
+{
+	struct stm32_reset_data *data = to_stm32_reset_data(rcdev);
+	int reg_width = sizeof(u32);
+	int bank = id / (reg_width * BITS_PER_BYTE);
+	int offset = id % (reg_width * BITS_PER_BYTE);
+	void __iomem *addr;
 
 	addr = data->membase + (bank * reg_width);
-	अगर (!निश्चित)
+	if (!assert)
 		addr += CLR_OFFSET;
 
-	ग_लिखोl(BIT(offset), addr);
+	writel(BIT(offset), addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sपंचांग32_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	वापस sपंचांग32_reset_update(rcdev, id, true);
-पूर्ण
+static int stm32_reset_assert(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	return stm32_reset_update(rcdev, id, true);
+}
 
-अटल पूर्णांक sपंचांग32_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
-				अचिन्हित दीर्घ id)
-अणु
-	वापस sपंचांग32_reset_update(rcdev, id, false);
-पूर्ण
+static int stm32_reset_deassert(struct reset_controller_dev *rcdev,
+				unsigned long id)
+{
+	return stm32_reset_update(rcdev, id, false);
+}
 
-अटल पूर्णांक sपंचांग32_reset_status(काष्ठा reset_controller_dev *rcdev,
-			      अचिन्हित दीर्घ id)
-अणु
-	काष्ठा sपंचांग32_reset_data *data = to_sपंचांग32_reset_data(rcdev);
-	पूर्णांक reg_width = माप(u32);
-	पूर्णांक bank = id / (reg_width * BITS_PER_BYTE);
-	पूर्णांक offset = id % (reg_width * BITS_PER_BYTE);
+static int stm32_reset_status(struct reset_controller_dev *rcdev,
+			      unsigned long id)
+{
+	struct stm32_reset_data *data = to_stm32_reset_data(rcdev);
+	int reg_width = sizeof(u32);
+	int bank = id / (reg_width * BITS_PER_BYTE);
+	int offset = id % (reg_width * BITS_PER_BYTE);
 	u32 reg;
 
-	reg = पढ़ोl(data->membase + (bank * reg_width));
+	reg = readl(data->membase + (bank * reg_width));
 
-	वापस !!(reg & BIT(offset));
-पूर्ण
+	return !!(reg & BIT(offset));
+}
 
-अटल स्थिर काष्ठा reset_control_ops sपंचांग32_reset_ops = अणु
-	.निश्चित		= sपंचांग32_reset_निश्चित,
-	.deनिश्चित	= sपंचांग32_reset_deनिश्चित,
-	.status		= sपंचांग32_reset_status,
-पूर्ण;
+static const struct reset_control_ops stm32_reset_ops = {
+	.assert		= stm32_reset_assert,
+	.deassert	= stm32_reset_deassert,
+	.status		= stm32_reset_status,
+};
 
-अटल स्थिर काष्ठा of_device_id sपंचांग32_reset_dt_ids[] = अणु
-	अणु .compatible = "st,stm32mp1-rcc"पूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id stm32_reset_dt_ids[] = {
+	{ .compatible = "st,stm32mp1-rcc"},
+	{ /* sentinel */ },
+};
 
-अटल पूर्णांक sपंचांग32_reset_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा sपंचांग32_reset_data *data;
-	व्योम __iomem *membase;
-	काष्ठा resource *res;
+static int stm32_reset_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct stm32_reset_data *data;
+	void __iomem *membase;
+	struct resource *res;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	membase = devm_ioremap_resource(dev, res);
-	अगर (IS_ERR(membase))
-		वापस PTR_ERR(membase);
+	if (IS_ERR(membase))
+		return PTR_ERR(membase);
 
 	data->membase = membase;
 	data->rcdev.owner = THIS_MODULE;
 	data->rcdev.nr_resets = resource_size(res) * BITS_PER_BYTE;
-	data->rcdev.ops = &sपंचांग32_reset_ops;
+	data->rcdev.ops = &stm32_reset_ops;
 	data->rcdev.of_node = dev->of_node;
 
-	वापस devm_reset_controller_रेजिस्टर(dev, &data->rcdev);
-पूर्ण
+	return devm_reset_controller_register(dev, &data->rcdev);
+}
 
-अटल काष्ठा platक्रमm_driver sपंचांग32_reset_driver = अणु
-	.probe	= sपंचांग32_reset_probe,
-	.driver = अणु
+static struct platform_driver stm32_reset_driver = {
+	.probe	= stm32_reset_probe,
+	.driver = {
 		.name		= "stm32mp1-reset",
-		.of_match_table	= sपंचांग32_reset_dt_ids,
-	पूर्ण,
-पूर्ण;
+		.of_match_table	= stm32_reset_dt_ids,
+	},
+};
 
-builtin_platक्रमm_driver(sपंचांग32_reset_driver);
+builtin_platform_driver(stm32_reset_driver);

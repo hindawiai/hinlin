@@ -1,74 +1,73 @@
-<शैली गुरु>
 /* bnx2x_mfw_req.h: Qlogic Everest network driver.
  *
  * Copyright (c) 2012-2013 Broadcom Corporation
  * Copyright (c) 2014 QLogic Corporation
  * All rights reserved
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#अगर_अघोषित BNX2X_MFW_REQ_H
-#घोषणा BNX2X_MFW_REQ_H
+#ifndef BNX2X_MFW_REQ_H
+#define BNX2X_MFW_REQ_H
 
-#घोषणा PORT_0			0
-#घोषणा PORT_1			1
-#घोषणा PORT_MAX		2
-#घोषणा NVM_PATH_MAX		2
+#define PORT_0			0
+#define PORT_1			1
+#define PORT_MAX		2
+#define NVM_PATH_MAX		2
 
 /* FCoE capabilities required from the driver */
-काष्ठा fcoe_capabilities अणु
+struct fcoe_capabilities {
 	u32 capability1;
 	/* Maximum number of I/Os per connection */
-	#घोषणा FCOE_IOS_PER_CONNECTION_MASK    0x0000ffff
-	#घोषणा FCOE_IOS_PER_CONNECTION_SHIFT   0
+	#define FCOE_IOS_PER_CONNECTION_MASK    0x0000ffff
+	#define FCOE_IOS_PER_CONNECTION_SHIFT   0
 	/* Maximum number of Logins per port */
-	#घोषणा FCOE_LOGINS_PER_PORT_MASK       0xffff0000
-	#घोषणा FCOE_LOGINS_PER_PORT_SHIFT   16
+	#define FCOE_LOGINS_PER_PORT_MASK       0xffff0000
+	#define FCOE_LOGINS_PER_PORT_SHIFT   16
 
 	u32 capability2;
 	/* Maximum number of exchanges */
-	#घोषणा FCOE_NUMBER_OF_EXCHANGES_MASK   0x0000ffff
-	#घोषणा FCOE_NUMBER_OF_EXCHANGES_SHIFT  0
+	#define FCOE_NUMBER_OF_EXCHANGES_MASK   0x0000ffff
+	#define FCOE_NUMBER_OF_EXCHANGES_SHIFT  0
 	/* Maximum NPIV WWN per port */
-	#घोषणा FCOE_NPIV_WWN_PER_PORT_MASK     0xffff0000
-	#घोषणा FCOE_NPIV_WWN_PER_PORT_SHIFT    16
+	#define FCOE_NPIV_WWN_PER_PORT_MASK     0xffff0000
+	#define FCOE_NPIV_WWN_PER_PORT_SHIFT    16
 
 	u32 capability3;
-	/* Maximum number of tarमाला_लो supported */
-	#घोषणा FCOE_TARGETS_SUPPORTED_MASK     0x0000ffff
-	#घोषणा FCOE_TARGETS_SUPPORTED_SHIFT    0
+	/* Maximum number of targets supported */
+	#define FCOE_TARGETS_SUPPORTED_MASK     0x0000ffff
+	#define FCOE_TARGETS_SUPPORTED_SHIFT    0
 	/* Maximum number of outstanding commands across all connections */
-	#घोषणा FCOE_OUTSTANDING_COMMANDS_MASK  0xffff0000
-	#घोषणा FCOE_OUTSTANDING_COMMANDS_SHIFT 16
+	#define FCOE_OUTSTANDING_COMMANDS_MASK  0xffff0000
+	#define FCOE_OUTSTANDING_COMMANDS_SHIFT 16
 
 	u32 capability4;
-	#घोषणा FCOE_CAPABILITY4_STATEFUL			0x00000001
-	#घोषणा FCOE_CAPABILITY4_STATELESS			0x00000002
-	#घोषणा FCOE_CAPABILITY4_CAPABILITIES_REPORTED_VALID	0x00000004
-पूर्ण;
+	#define FCOE_CAPABILITY4_STATEFUL			0x00000001
+	#define FCOE_CAPABILITY4_STATELESS			0x00000002
+	#define FCOE_CAPABILITY4_CAPABILITIES_REPORTED_VALID	0x00000004
+};
 
-काष्ठा glob_ncsi_oem_data अणु
+struct glob_ncsi_oem_data {
 	u32 driver_version;
 	u32 unused[3];
-	काष्ठा fcoe_capabilities fcoe_features[NVM_PATH_MAX][PORT_MAX];
-पूर्ण;
+	struct fcoe_capabilities fcoe_features[NVM_PATH_MAX][PORT_MAX];
+};
 
 /* current drv_info version */
-#घोषणा DRV_INFO_CUR_VER 2
+#define DRV_INFO_CUR_VER 2
 
 /* drv_info op codes supported */
-क्रमागत drv_info_opcode अणु
+enum drv_info_opcode {
 	ETH_STATS_OPCODE,
 	FCOE_STATS_OPCODE,
 	ISCSI_STATS_OPCODE
-पूर्ण;
+};
 
-#घोषणा ETH_STAT_INFO_VERSION_LEN	12
+#define ETH_STAT_INFO_VERSION_LEN	12
 /*  Per PCI Function Ethernet Statistics required from the driver */
-काष्ठा eth_stats_info अणु
+struct eth_stats_info {
 	/* Function's Driver Version. padded to 12 */
 	u8 version[ETH_STAT_INFO_VERSION_LEN];
 	/* Locally Admin Addr. BigEndian EIU48. Actual size is 6 bytes */
@@ -77,15 +76,15 @@
 	u8 mac_add2[8];		/* Additional Programmed MAC Addr 2. */
 	u32 mtu_size;		/* MTU Size. Note   : Negotiated MTU */
 	u32 feature_flags;	/* Feature_Flags. */
-#घोषणा FEATURE_ETH_CHKSUM_OFFLOAD_MASK		0x01
-#घोषणा FEATURE_ETH_LSO_MASK			0x02
-#घोषणा FEATURE_ETH_BOOTMODE_MASK		0x1C
-#घोषणा FEATURE_ETH_BOOTMODE_SHIFT		2
-#घोषणा FEATURE_ETH_BOOTMODE_NONE		(0x0 << 2)
-#घोषणा FEATURE_ETH_BOOTMODE_PXE		(0x1 << 2)
-#घोषणा FEATURE_ETH_BOOTMODE_ISCSI		(0x2 << 2)
-#घोषणा FEATURE_ETH_BOOTMODE_FCOE		(0x3 << 2)
-#घोषणा FEATURE_ETH_TOE_MASK			0x20
+#define FEATURE_ETH_CHKSUM_OFFLOAD_MASK		0x01
+#define FEATURE_ETH_LSO_MASK			0x02
+#define FEATURE_ETH_BOOTMODE_MASK		0x1C
+#define FEATURE_ETH_BOOTMODE_SHIFT		2
+#define FEATURE_ETH_BOOTMODE_NONE		(0x0 << 2)
+#define FEATURE_ETH_BOOTMODE_PXE		(0x1 << 2)
+#define FEATURE_ETH_BOOTMODE_ISCSI		(0x2 << 2)
+#define FEATURE_ETH_BOOTMODE_FCOE		(0x3 << 2)
+#define FEATURE_ETH_TOE_MASK			0x20
 	u32 lso_max_size;	/* LSO MaxOffloadSize. */
 	u32 lso_min_seg_cnt;	/* LSO MinSegmentCount. */
 	/* Num Offloaded Connections TCP_IPv4. */
@@ -103,11 +102,11 @@
 	u32 iov_offload;
 	/* Number of NetQueue/VMQ Config'd. */
 	u32 netq_cnt;
-	u32 vf_cnt;		/* Num VF asचिन्हित to this PF. */
-पूर्ण;
+	u32 vf_cnt;		/* Num VF assigned to this PF. */
+};
 
 /*  Per PCI Function FCOE Statistics required from the driver */
-काष्ठा fcoe_stats_info अणु
+struct fcoe_stats_info {
 	u8 version[12];		/* Function's Driver Version. */
 	u8 mac_local[8];	/* Locally Admin Addr. */
 	u8 mac_add1[8];		/* Additional Programmed MAC Addr 1. */
@@ -128,10 +127,10 @@
 	u32 tx_frames_hi;	/* FCoE TX Frames sent. */
 	u32 tx_bytes_lo;	/* FCoE TX Bytes sent. */
 	u32 tx_bytes_hi;	/* FCoE TX Bytes sent. */
-पूर्ण;
+};
 
 /* Per PCI  Function iSCSI Statistics required from the driver*/
-काष्ठा iscsi_stats_info अणु
+struct iscsi_stats_info {
 	u8 version[12];		/* Function's Driver Version. */
 	u8 mac_local[8];	/* Locally Admin iSCSI MAC Addr. */
 	u8 mac_add1[8];		/* Additional Programmed MAC Addr 1. */
@@ -161,11 +160,11 @@
 				 * represents the C-PCP value, the value
 				 * of the nibble = S-PCP value.
 				 */
-पूर्ण;
+};
 
-जोड़ drv_info_to_mcp अणु
-	काष्ठा eth_stats_info	ether_stat;
-	काष्ठा fcoe_stats_info	fcoe_stat;
-	काष्ठा iscsi_stats_info	iscsi_stat;
-पूर्ण;
-#पूर्ण_अगर /* BNX2X_MFW_REQ_H */
+union drv_info_to_mcp {
+	struct eth_stats_info	ether_stat;
+	struct fcoe_stats_info	fcoe_stat;
+	struct iscsi_stats_info	iscsi_stat;
+};
+#endif /* BNX2X_MFW_REQ_H */

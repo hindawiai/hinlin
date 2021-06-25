@@ -1,22 +1,21 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_CSKY_ENTRY_H
-#घोषणा __ASM_CSKY_ENTRY_H
+#ifndef __ASM_CSKY_ENTRY_H
+#define __ASM_CSKY_ENTRY_H
 
-#समावेश <यंत्र/setup.h>
-#समावेश <abi/regdef.h>
+#include <asm/setup.h>
+#include <abi/regdef.h>
 
-#घोषणा LSAVE_PC	8
-#घोषणा LSAVE_PSR	12
-#घोषणा LSAVE_A0	24
-#घोषणा LSAVE_A1	28
-#घोषणा LSAVE_A2	32
-#घोषणा LSAVE_A3	36
-#घोषणा LSAVE_A4	40
-#घोषणा LSAVE_A5	44
+#define LSAVE_PC	8
+#define LSAVE_PSR	12
+#define LSAVE_A0	24
+#define LSAVE_A1	28
+#define LSAVE_A2	32
+#define LSAVE_A3	36
+#define LSAVE_A4	40
+#define LSAVE_A5	44
 
-#घोषणा usp ss1
+#define usp ss1
 
 .macro USPTOKSP
 	mtcr	sp, usp
@@ -118,7 +117,7 @@
 
 .macro SAVE_SWITCH_STACK
 	subi    sp, 32
-	sपंचांग     r8-r15, (sp)
+	stm     r8-r15, (sp)
 .endm
 
 .macro RESTORE_SWITCH_STACK
@@ -126,29 +125,29 @@
 	addi    sp, 32
 .endm
 
-/* MMU रेजिस्टरs चालकs. */
+/* MMU registers operators. */
 .macro RD_MIR	rx
-	cprcr   \लx, cpcr0
+	cprcr   \rx, cpcr0
 .endm
 
 .macro RD_MEH	rx
-	cprcr   \लx, cpcr4
+	cprcr   \rx, cpcr4
 .endm
 
 .macro RD_MCIR	rx
-	cprcr   \लx, cpcr8
+	cprcr   \rx, cpcr8
 .endm
 
 .macro RD_PGDR  rx
-	cprcr   \लx, cpcr29
+	cprcr   \rx, cpcr29
 .endm
 
 .macro WR_MEH	rx
-	cpwcr   \लx, cpcr4
+	cpwcr   \rx, cpcr4
 .endm
 
 .macro WR_MCIR	rx
-	cpwcr   \लx, cpcr8
+	cpwcr   \rx, cpcr8
 .endm
 
 .macro SETUP_MMU
@@ -161,7 +160,7 @@
 	cpseti	cp15
 
 	/*
-	 * cpcr30 क्रमmat:
+	 * cpcr30 format:
 	 * 31 - 29 | 28 - 4 | 3 | 2 | 1 | 0
 	 *   BA     Reserved  C   D   V
 	 */
@@ -174,4 +173,4 @@
 	movi	r6, 0
 	cpwcr	r6, cpcr31
 .endm
-#पूर्ण_अगर /* __ASM_CSKY_ENTRY_H */
+#endif /* __ASM_CSKY_ENTRY_H */

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
@@ -8,154 +7,154 @@
  *
  *****************************************************************************/
 
-#समावेश <acpi/acpi.h>
-#समावेश "accommon.h"
-#समावेश "acinterp.h"
-#समावेश "amlcode.h"
+#include <acpi/acpi.h>
+#include "accommon.h"
+#include "acinterp.h"
+#include "amlcode.h"
 
-#घोषणा _COMPONENT          ACPI_EXECUTER
+#define _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exconvrt")
 
 /* Local prototypes */
-अटल u32
-acpi_ex_convert_to_ascii(u64 पूर्णांकeger, u16 base, u8 *string, u8 max_length);
+static u32
+acpi_ex_convert_to_ascii(u64 integer, u16 base, u8 *string, u8 max_length);
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_convert_to_पूर्णांकeger
+ * FUNCTION:    acpi_ex_convert_to_integer
  *
  * PARAMETERS:  obj_desc            - Object to be converted. Must be an
  *                                    Integer, Buffer, or String
- *              result_desc         - Where the new Integer object is वापसed
- *              implicit_conversion - Used क्रम string conversion
+ *              result_desc         - Where the new Integer object is returned
+ *              implicit_conversion - Used for string conversion
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Convert an ACPI Object to an पूर्णांकeger.
+ * DESCRIPTION: Convert an ACPI Object to an integer.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_convert_to_पूर्णांकeger(जोड़ acpi_opeअक्रम_object *obj_desc,
-			   जोड़ acpi_opeअक्रम_object **result_desc,
+acpi_ex_convert_to_integer(union acpi_operand_object *obj_desc,
+			   union acpi_operand_object **result_desc,
 			   u32 implicit_conversion)
-अणु
-	जोड़ acpi_opeअक्रम_object *वापस_desc;
-	u8 *poपूर्णांकer;
+{
+	union acpi_operand_object *return_desc;
+	u8 *pointer;
 	u64 result;
 	u32 i;
 	u32 count;
 
-	ACPI_FUNCTION_TRACE_PTR(ex_convert_to_पूर्णांकeger, obj_desc);
+	ACPI_FUNCTION_TRACE_PTR(ex_convert_to_integer, obj_desc);
 
-	चयन (obj_desc->common.type) अणु
-	हाल ACPI_TYPE_INTEGER:
+	switch (obj_desc->common.type) {
+	case ACPI_TYPE_INTEGER:
 
 		/* No conversion necessary */
 
 		*result_desc = obj_desc;
-		वापस_ACPI_STATUS(AE_OK);
+		return_ACPI_STATUS(AE_OK);
 
-	हाल ACPI_TYPE_BUFFER:
-	हाल ACPI_TYPE_STRING:
+	case ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_STRING:
 
 		/* Note: Takes advantage of common buffer/string fields */
 
-		poपूर्णांकer = obj_desc->buffer.poपूर्णांकer;
+		pointer = obj_desc->buffer.pointer;
 		count = obj_desc->buffer.length;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
 	/*
-	 * Convert the buffer/string to an पूर्णांकeger. Note that both buffers and
-	 * strings are treated as raw data - we करोn't convert ascii to hex क्रम
+	 * Convert the buffer/string to an integer. Note that both buffers and
+	 * strings are treated as raw data - we don't convert ascii to hex for
 	 * strings.
 	 *
-	 * There are two terminating conditions क्रम the loop:
-	 * 1) The size of an पूर्णांकeger has been reached, or
+	 * There are two terminating conditions for the loop:
+	 * 1) The size of an integer has been reached, or
 	 * 2) The end of the buffer or string has been reached
 	 */
 	result = 0;
 
-	/* String conversion is dअगरferent than Buffer conversion */
+	/* String conversion is different than Buffer conversion */
 
-	चयन (obj_desc->common.type) अणु
-	हाल ACPI_TYPE_STRING:
+	switch (obj_desc->common.type) {
+	case ACPI_TYPE_STRING:
 		/*
-		 * Convert string to an पूर्णांकeger - क्रम most हालs, the string must be
-		 * hexadecimal as per the ACPI specअगरication. The only exception (as
-		 * of ACPI 3.0) is that the to_पूर्णांकeger() चालक allows both decimal
+		 * Convert string to an integer - for most cases, the string must be
+		 * hexadecimal as per the ACPI specification. The only exception (as
+		 * of ACPI 3.0) is that the to_integer() operator allows both decimal
 		 * and hexadecimal strings (hex prefixed with "0x").
 		 *
-		 * Explicit conversion is used only by to_पूर्णांकeger.
-		 * All other string-to-पूर्णांकeger conversions are implicit conversions.
+		 * Explicit conversion is used only by to_integer.
+		 * All other string-to-integer conversions are implicit conversions.
 		 */
-		अगर (implicit_conversion) अणु
+		if (implicit_conversion) {
 			result =
-			    acpi_ut_implicit_म_से_अदीर्घ64(ACPI_CAST_PTR
-						       (अक्षर, poपूर्णांकer));
-		पूर्ण अन्यथा अणु
+			    acpi_ut_implicit_strtoul64(ACPI_CAST_PTR
+						       (char, pointer));
+		} else {
 			result =
-			    acpi_ut_explicit_म_से_अदीर्घ64(ACPI_CAST_PTR
-						       (अक्षर, poपूर्णांकer));
-		पूर्ण
-		अवरोध;
+			    acpi_ut_explicit_strtoul64(ACPI_CAST_PTR
+						       (char, pointer));
+		}
+		break;
 
-	हाल ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_BUFFER:
 
-		/* Check क्रम zero-length buffer */
+		/* Check for zero-length buffer */
 
-		अगर (!count) अणु
-			वापस_ACPI_STATUS(AE_AML_BUFFER_LIMIT);
-		पूर्ण
+		if (!count) {
+			return_ACPI_STATUS(AE_AML_BUFFER_LIMIT);
+		}
 
-		/* Transfer no more than an पूर्णांकeger's worth of data */
+		/* Transfer no more than an integer's worth of data */
 
-		अगर (count > acpi_gbl_पूर्णांकeger_byte_width) अणु
-			count = acpi_gbl_पूर्णांकeger_byte_width;
-		पूर्ण
+		if (count > acpi_gbl_integer_byte_width) {
+			count = acpi_gbl_integer_byte_width;
+		}
 
 		/*
-		 * Convert buffer to an पूर्णांकeger - we simply grab enough raw data
-		 * from the buffer to fill an पूर्णांकeger
+		 * Convert buffer to an integer - we simply grab enough raw data
+		 * from the buffer to fill an integer
 		 */
-		क्रम (i = 0; i < count; i++) अणु
+		for (i = 0; i < count; i++) {
 			/*
-			 * Get next byte and shअगरt it पूर्णांकo the Result.
+			 * Get next byte and shift it into the Result.
 			 * Little endian is used, meaning that the first byte of the buffer
-			 * is the LSB of the पूर्णांकeger
+			 * is the LSB of the integer
 			 */
-			result |= (((u64) poपूर्णांकer[i]) << (i * 8));
-		पूर्ण
-		अवरोध;
+			result |= (((u64) pointer[i]) << (i * 8));
+		}
+		break;
 
-	शेष:
+	default:
 
 		/* No other types can get here */
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Create a new पूर्णांकeger */
+	/* Create a new integer */
 
-	वापस_desc = acpi_ut_create_पूर्णांकeger_object(result);
-	अगर (!वापस_desc) अणु
-		वापस_ACPI_STATUS(AE_NO_MEMORY);
-	पूर्ण
+	return_desc = acpi_ut_create_integer_object(result);
+	if (!return_desc) {
+		return_ACPI_STATUS(AE_NO_MEMORY);
+	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_EXEC, "Converted value: %8.8X%8.8X\n",
 			  ACPI_FORMAT_UINT64(result)));
 
 	/* Save the Result */
 
-	(व्योम)acpi_ex_truncate_क्रम32bit_table(वापस_desc);
-	*result_desc = वापस_desc;
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	(void)acpi_ex_truncate_for32bit_table(return_desc);
+	*result_desc = return_desc;
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -163,7 +162,7 @@ acpi_ex_convert_to_पूर्णांकeger(जोड़ acpi_opeअक्�
  *
  * PARAMETERS:  obj_desc        - Object to be converted. Must be an
  *                                Integer, Buffer, or String
- *              result_desc     - Where the new buffer object is वापसed
+ *              result_desc     - Where the new buffer object is returned
  *
  * RETURN:      Status
  *
@@ -172,41 +171,41 @@ acpi_ex_convert_to_पूर्णांकeger(जोड़ acpi_opeअक्�
  ******************************************************************************/
 
 acpi_status
-acpi_ex_convert_to_buffer(जोड़ acpi_opeअक्रम_object *obj_desc,
-			  जोड़ acpi_opeअक्रम_object **result_desc)
-अणु
-	जोड़ acpi_opeअक्रम_object *वापस_desc;
+acpi_ex_convert_to_buffer(union acpi_operand_object *obj_desc,
+			  union acpi_operand_object **result_desc)
+{
+	union acpi_operand_object *return_desc;
 	u8 *new_buf;
 
 	ACPI_FUNCTION_TRACE_PTR(ex_convert_to_buffer, obj_desc);
 
-	चयन (obj_desc->common.type) अणु
-	हाल ACPI_TYPE_BUFFER:
+	switch (obj_desc->common.type) {
+	case ACPI_TYPE_BUFFER:
 
 		/* No conversion necessary */
 
 		*result_desc = obj_desc;
-		वापस_ACPI_STATUS(AE_OK);
+		return_ACPI_STATUS(AE_OK);
 
-	हाल ACPI_TYPE_INTEGER:
+	case ACPI_TYPE_INTEGER:
 		/*
 		 * Create a new Buffer object.
-		 * Need enough space क्रम one पूर्णांकeger
+		 * Need enough space for one integer
 		 */
-		वापस_desc =
-		    acpi_ut_create_buffer_object(acpi_gbl_पूर्णांकeger_byte_width);
-		अगर (!वापस_desc) अणु
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+		return_desc =
+		    acpi_ut_create_buffer_object(acpi_gbl_integer_byte_width);
+		if (!return_desc) {
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
-		/* Copy the पूर्णांकeger to the buffer, LSB first */
+		/* Copy the integer to the buffer, LSB first */
 
-		new_buf = वापस_desc->buffer.poपूर्णांकer;
-		स_नकल(new_buf, &obj_desc->पूर्णांकeger.value,
-		       acpi_gbl_पूर्णांकeger_byte_width);
-		अवरोध;
+		new_buf = return_desc->buffer.pointer;
+		memcpy(new_buf, &obj_desc->integer.value,
+		       acpi_gbl_integer_byte_width);
+		break;
 
-	हाल ACPI_TYPE_STRING:
+	case ACPI_TYPE_STRING:
 		/*
 		 * Create a new Buffer object
 		 * Size will be the string length
@@ -216,39 +215,39 @@ acpi_ex_convert_to_buffer(जोड़ acpi_opeअक्रम_object *obj_desc,
 		 * ASL/AML code that depends on the null being transferred to the new
 		 * buffer.
 		 */
-		वापस_desc = acpi_ut_create_buffer_object((acpi_size)
+		return_desc = acpi_ut_create_buffer_object((acpi_size)
 							   obj_desc->string.
 							   length + 1);
-		अगर (!वापस_desc) अणु
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+		if (!return_desc) {
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
 		/* Copy the string to the buffer */
 
-		new_buf = वापस_desc->buffer.poपूर्णांकer;
-		म_नकलन((अक्षर *)new_buf, (अक्षर *)obj_desc->string.poपूर्णांकer,
+		new_buf = return_desc->buffer.pointer;
+		strncpy((char *)new_buf, (char *)obj_desc->string.pointer,
 			obj_desc->string.length);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
 	/* Mark buffer initialized */
 
-	वापस_desc->common.flags |= AOPOBJ_DATA_VALID;
-	*result_desc = वापस_desc;
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	return_desc->common.flags |= AOPOBJ_DATA_VALID;
+	*result_desc = return_desc;
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_convert_to_ascii
  *
- * PARAMETERS:  पूर्णांकeger         - Value to be converted
+ * PARAMETERS:  integer         - Value to be converted
  *              base            - ACPI_STRING_DECIMAL or ACPI_STRING_HEX
- *              string          - Where the string is वापसed
+ *              string          - Where the string is returned
  *              data_width      - Size of data item to be converted, in bytes
  *
  * RETURN:      Actual string length
@@ -257,102 +256,102 @@ acpi_ex_convert_to_buffer(जोड़ acpi_opeअक्रम_object *obj_desc,
  *
  ******************************************************************************/
 
-अटल u32
-acpi_ex_convert_to_ascii(u64 पूर्णांकeger, u16 base, u8 *string, u8 data_width)
-अणु
+static u32
+acpi_ex_convert_to_ascii(u64 integer, u16 base, u8 *string, u8 data_width)
+{
 	u64 digit;
 	u32 i;
 	u32 j;
 	u32 k = 0;
 	u32 hex_length;
 	u32 decimal_length;
-	u32 reमुख्यder;
+	u32 remainder;
 	u8 supress_zeros;
 
 	ACPI_FUNCTION_ENTRY();
 
-	चयन (base) अणु
-	हाल 10:
+	switch (base) {
+	case 10:
 
-		/* Setup max length क्रम the decimal number */
+		/* Setup max length for the decimal number */
 
-		चयन (data_width) अणु
-		हाल 1:
+		switch (data_width) {
+		case 1:
 
 			decimal_length = ACPI_MAX8_DECIMAL_DIGITS;
-			अवरोध;
+			break;
 
-		हाल 4:
+		case 4:
 
 			decimal_length = ACPI_MAX32_DECIMAL_DIGITS;
-			अवरोध;
+			break;
 
-		हाल 8:
-		शेष:
+		case 8:
+		default:
 
 			decimal_length = ACPI_MAX64_DECIMAL_DIGITS;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		supress_zeros = TRUE;	/* No leading zeros */
-		reमुख्यder = 0;
+		remainder = 0;
 
-		क्रम (i = decimal_length; i > 0; i--) अणु
+		for (i = decimal_length; i > 0; i--) {
 
 			/* Divide by nth factor of 10 */
 
-			digit = पूर्णांकeger;
-			क्रम (j = 0; j < i; j++) अणु
-				(व्योम)acpi_ut_लघु_भागide(digit, 10, &digit,
-							   &reमुख्यder);
-			पूर्ण
+			digit = integer;
+			for (j = 0; j < i; j++) {
+				(void)acpi_ut_short_divide(digit, 10, &digit,
+							   &remainder);
+			}
 
 			/* Handle leading zeros */
 
-			अगर (reमुख्यder != 0) अणु
+			if (remainder != 0) {
 				supress_zeros = FALSE;
-			पूर्ण
+			}
 
-			अगर (!supress_zeros) अणु
-				string[k] = (u8) (ACPI_ASCII_ZERO + reमुख्यder);
+			if (!supress_zeros) {
+				string[k] = (u8) (ACPI_ASCII_ZERO + remainder);
 				k++;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल 16:
+	case 16:
 
-		/* hex_length: 2 ascii hex अक्षरs per data byte */
+		/* hex_length: 2 ascii hex chars per data byte */
 
 		hex_length = (data_width * 2);
-		क्रम (i = 0, j = (hex_length - 1); i < hex_length; i++, j--) अणु
+		for (i = 0, j = (hex_length - 1); i < hex_length; i++, j--) {
 
-			/* Get one hex digit, most signअगरicant digits first */
+			/* Get one hex digit, most significant digits first */
 
 			string[k] = (u8)
-			    acpi_ut_hex_to_ascii_अक्षर(पूर्णांकeger, ACPI_MUL_4(j));
+			    acpi_ut_hex_to_ascii_char(integer, ACPI_MUL_4(j));
 			k++;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
-		वापस (0);
-	पूर्ण
+	default:
+		return (0);
+	}
 
 	/*
-	 * Since leading zeros are suppressed, we must check क्रम the हाल where
-	 * the पूर्णांकeger equals 0
+	 * Since leading zeros are suppressed, we must check for the case where
+	 * the integer equals 0
 	 *
-	 * Finally, null terminate the string and वापस the length
+	 * Finally, null terminate the string and return the length
 	 */
-	अगर (!k) अणु
+	if (!k) {
 		string[0] = ACPI_ASCII_ZERO;
 		k = 1;
-	पूर्ण
+	}
 
 	string[k] = 0;
-	वापस ((u32) k);
-पूर्ण
+	return ((u32) k);
+}
 
 /*******************************************************************************
  *
@@ -360,7 +359,7 @@ acpi_ex_convert_to_ascii(u64 पूर्णांकeger, u16 base, u8 *string,
  *
  * PARAMETERS:  obj_desc        - Object to be converted. Must be an
  *                                Integer, Buffer, or String
- *              result_desc     - Where the string object is वापसed
+ *              result_desc     - Where the string object is returned
  *              type            - String flags (base and conversion type)
  *
  * RETURN:      Status
@@ -371,10 +370,10 @@ acpi_ex_convert_to_ascii(u64 पूर्णांकeger, u16 base, u8 *string,
  ******************************************************************************/
 
 acpi_status
-acpi_ex_convert_to_string(जोड़ acpi_opeअक्रम_object * obj_desc,
-			  जोड़ acpi_opeअक्रम_object ** result_desc, u32 type)
-अणु
-	जोड़ acpi_opeअक्रम_object *वापस_desc;
+acpi_ex_convert_to_string(union acpi_operand_object * obj_desc,
+			  union acpi_operand_object ** result_desc, u32 type)
+{
+	union acpi_operand_object *return_desc;
 	u8 *new_buf;
 	u32 i;
 	u32 string_length = 0;
@@ -383,68 +382,68 @@ acpi_ex_convert_to_string(जोड़ acpi_opeअक्रम_object * obj_desc
 
 	ACPI_FUNCTION_TRACE_PTR(ex_convert_to_string, obj_desc);
 
-	चयन (obj_desc->common.type) अणु
-	हाल ACPI_TYPE_STRING:
+	switch (obj_desc->common.type) {
+	case ACPI_TYPE_STRING:
 
 		/* No conversion necessary */
 
 		*result_desc = obj_desc;
-		वापस_ACPI_STATUS(AE_OK);
+		return_ACPI_STATUS(AE_OK);
 
-	हाल ACPI_TYPE_INTEGER:
+	case ACPI_TYPE_INTEGER:
 
-		चयन (type) अणु
-		हाल ACPI_EXPLICIT_CONVERT_DECIMAL:
+		switch (type) {
+		case ACPI_EXPLICIT_CONVERT_DECIMAL:
 			/*
-			 * From to_decimal_string, पूर्णांकeger source.
+			 * From to_decimal_string, integer source.
 			 *
-			 * Make room क्रम the maximum decimal number size
+			 * Make room for the maximum decimal number size
 			 */
 			string_length = ACPI_MAX_DECIMAL_DIGITS;
 			base = 10;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
-			/* Two hex string अक्षरacters क्रम each पूर्णांकeger byte */
+			/* Two hex string characters for each integer byte */
 
-			string_length = ACPI_MUL_2(acpi_gbl_पूर्णांकeger_byte_width);
-			अवरोध;
-		पूर्ण
+			string_length = ACPI_MUL_2(acpi_gbl_integer_byte_width);
+			break;
+		}
 
 		/*
 		 * Create a new String
-		 * Need enough space क्रम one ASCII पूर्णांकeger (plus null terminator)
+		 * Need enough space for one ASCII integer (plus null terminator)
 		 */
-		वापस_desc =
+		return_desc =
 		    acpi_ut_create_string_object((acpi_size)string_length);
-		अगर (!वापस_desc) अणु
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+		if (!return_desc) {
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
-		new_buf = वापस_desc->buffer.poपूर्णांकer;
+		new_buf = return_desc->buffer.pointer;
 
-		/* Convert पूर्णांकeger to string */
+		/* Convert integer to string */
 
 		string_length =
-		    acpi_ex_convert_to_ascii(obj_desc->पूर्णांकeger.value, base,
+		    acpi_ex_convert_to_ascii(obj_desc->integer.value, base,
 					     new_buf,
-					     acpi_gbl_पूर्णांकeger_byte_width);
+					     acpi_gbl_integer_byte_width);
 
 		/* Null terminate at the correct place */
 
-		वापस_desc->string.length = string_length;
+		return_desc->string.length = string_length;
 		new_buf[string_length] = 0;
-		अवरोध;
+		break;
 
-	हाल ACPI_TYPE_BUFFER:
+	case ACPI_TYPE_BUFFER:
 
 		/* Setup string length, base, and separator */
 
-		चयन (type) अणु
-		हाल ACPI_EXPLICIT_CONVERT_DECIMAL:	/* Used by to_decimal_string */
+		switch (type) {
+		case ACPI_EXPLICIT_CONVERT_DECIMAL:	/* Used by to_decimal_string */
 			/*
-			 * Explicit conversion from the to_decimal_string ASL चालक.
+			 * Explicit conversion from the to_decimal_string ASL operator.
 			 *
 			 * From ACPI: "If the input is a buffer, it is converted to a
 			 * a string of decimal values separated by commas."
@@ -452,37 +451,37 @@ acpi_ex_convert_to_string(जोड़ acpi_opeअक्रम_object * obj_desc
 			base = 10;
 
 			/*
-			 * Calculate the final string length. Inभागidual string values
-			 * are variable length (include separator क्रम each)
+			 * Calculate the final string length. Individual string values
+			 * are variable length (include separator for each)
 			 */
-			क्रम (i = 0; i < obj_desc->buffer.length; i++) अणु
-				अगर (obj_desc->buffer.poपूर्णांकer[i] >= 100) अणु
+			for (i = 0; i < obj_desc->buffer.length; i++) {
+				if (obj_desc->buffer.pointer[i] >= 100) {
 					string_length += 4;
-				पूर्ण अन्यथा अगर (obj_desc->buffer.poपूर्णांकer[i] >= 10) अणु
+				} else if (obj_desc->buffer.pointer[i] >= 10) {
 					string_length += 3;
-				पूर्ण अन्यथा अणु
+				} else {
 					string_length += 2;
-				पूर्ण
-			पूर्ण
-			अवरोध;
+				}
+			}
+			break;
 
-		हाल ACPI_IMPLICIT_CONVERT_HEX:
+		case ACPI_IMPLICIT_CONVERT_HEX:
 			/*
 			 * Implicit buffer-to-string conversion
 			 *
 			 * From the ACPI spec:
 			 * "The entire contents of the buffer are converted to a string of
-			 * two-अक्षरacter hexadecimal numbers, each separated by a space."
+			 * two-character hexadecimal numbers, each separated by a space."
 			 *
 			 * Each hex number is prefixed with 0x (11/2018)
 			 */
 			separator = ' ';
 			string_length = (obj_desc->buffer.length * 5);
-			अवरोध;
+			break;
 
-		हाल ACPI_EXPLICIT_CONVERT_HEX:
+		case ACPI_EXPLICIT_CONVERT_HEX:
 			/*
-			 * Explicit conversion from the to_hex_string ASL चालक.
+			 * Explicit conversion from the to_hex_string ASL operator.
 			 *
 			 * From ACPI: "If Data is a buffer, it is converted to a string of
 			 * hexadecimal values separated by commas."
@@ -491,69 +490,69 @@ acpi_ex_convert_to_string(जोड़ acpi_opeअक्रम_object * obj_desc
 			 */
 			separator = ',';
 			string_length = (obj_desc->buffer.length * 5);
-			अवरोध;
+			break;
 
-		शेष:
-			वापस_ACPI_STATUS(AE_BAD_PARAMETER);
-		पूर्ण
+		default:
+			return_ACPI_STATUS(AE_BAD_PARAMETER);
+		}
 
 		/*
 		 * Create a new string object and string buffer
 		 * (-1 because of extra separator included in string_length from above)
 		 * Allow creation of zero-length strings from zero-length buffers.
 		 */
-		अगर (string_length) अणु
+		if (string_length) {
 			string_length--;
-		पूर्ण
+		}
 
-		वापस_desc =
+		return_desc =
 		    acpi_ut_create_string_object((acpi_size)string_length);
-		अगर (!वापस_desc) अणु
-			वापस_ACPI_STATUS(AE_NO_MEMORY);
-		पूर्ण
+		if (!return_desc) {
+			return_ACPI_STATUS(AE_NO_MEMORY);
+		}
 
-		new_buf = वापस_desc->buffer.poपूर्णांकer;
+		new_buf = return_desc->buffer.pointer;
 
 		/*
 		 * Convert buffer bytes to hex or decimal values
 		 * (separated by commas or spaces)
 		 */
-		क्रम (i = 0; i < obj_desc->buffer.length; i++) अणु
-			अगर (base == 16) अणु
+		for (i = 0; i < obj_desc->buffer.length; i++) {
+			if (base == 16) {
 
-				/* Emit 0x prefix क्रम explicit/implicit hex conversion */
+				/* Emit 0x prefix for explicit/implicit hex conversion */
 
 				*new_buf++ = '0';
 				*new_buf++ = 'x';
-			पूर्ण
+			}
 
 			new_buf += acpi_ex_convert_to_ascii((u64) obj_desc->
-							    buffer.poपूर्णांकer[i],
+							    buffer.pointer[i],
 							    base, new_buf, 1);
 
 			/* Each digit is separated by either a comma or space */
 
 			*new_buf++ = separator;
-		पूर्ण
+		}
 
 		/*
 		 * Null terminate the string
-		 * (overग_लिखोs final comma/space from above)
+		 * (overwrites final comma/space from above)
 		 */
-		अगर (obj_desc->buffer.length) अणु
+		if (obj_desc->buffer.length) {
 			new_buf--;
-		पूर्ण
+		}
 		*new_buf = 0;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
-		वापस_ACPI_STATUS(AE_TYPE);
-	पूर्ण
+		return_ACPI_STATUS(AE_TYPE);
+	}
 
-	*result_desc = वापस_desc;
-	वापस_ACPI_STATUS(AE_OK);
-पूर्ण
+	*result_desc = return_desc;
+	return_ACPI_STATUS(AE_OK);
+}
 
 /*******************************************************************************
  *
@@ -561,21 +560,21 @@ acpi_ex_convert_to_string(जोड़ acpi_opeअक्रम_object * obj_desc
  *
  * PARAMETERS:  destination_type    - Current type of the destination
  *              source_desc         - Source object to be converted.
- *              result_desc         - Where the converted object is वापसed
+ *              result_desc         - Where the converted object is returned
  *              walk_state          - Current method state
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Implements "implicit conversion" rules क्रम storing an object.
+ * DESCRIPTION: Implements "implicit conversion" rules for storing an object.
  *
  ******************************************************************************/
 
 acpi_status
 acpi_ex_convert_to_target_type(acpi_object_type destination_type,
-			       जोड़ acpi_opeअक्रम_object *source_desc,
-			       जोड़ acpi_opeअक्रम_object **result_desc,
-			       काष्ठा acpi_walk_state *walk_state)
-अणु
+			       union acpi_operand_object *source_desc,
+			       union acpi_operand_object **result_desc,
+			       struct acpi_walk_state *walk_state)
+{
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE(ex_convert_to_target_type);
@@ -586,25 +585,25 @@ acpi_ex_convert_to_target_type(acpi_object_type destination_type,
 
 	/*
 	 * If required by the target,
-	 * perक्रमm implicit conversion on the source beक्रमe we store it.
+	 * perform implicit conversion on the source before we store it.
 	 */
-	चयन (GET_CURRENT_ARG_TYPE(walk_state->op_info->runसमय_args)) अणु
-	हाल ARGI_SIMPLE_TARGET:
-	हाल ARGI_FIXED_TARGET:
-	हाल ARGI_INTEGER_REF:	/* Handles Increment, Decrement हालs */
+	switch (GET_CURRENT_ARG_TYPE(walk_state->op_info->runtime_args)) {
+	case ARGI_SIMPLE_TARGET:
+	case ARGI_FIXED_TARGET:
+	case ARGI_INTEGER_REF:	/* Handles Increment, Decrement cases */
 
-		चयन (destination_type) अणु
-		हाल ACPI_TYPE_LOCAL_REGION_FIELD:
+		switch (destination_type) {
+		case ACPI_TYPE_LOCAL_REGION_FIELD:
 			/*
 			 * Named field can always handle conversions
 			 */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
-			/* No conversion allowed क्रम these types */
+			/* No conversion allowed for these types */
 
-			अगर (destination_type != source_desc->common.type) अणु
+			if (destination_type != source_desc->common.type) {
 				ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 						  "Explicit operator, will store (%s) over existing type (%s)\n",
 						  acpi_ut_get_object_type_name
@@ -612,82 +611,82 @@ acpi_ex_convert_to_target_type(acpi_object_type destination_type,
 						  acpi_ut_get_type_name
 						  (destination_type)));
 				status = AE_TYPE;
-			पूर्ण
-		पूर्ण
-		अवरोध;
+			}
+		}
+		break;
 
-	हाल ARGI_TARGETREF:
-	हाल ARGI_STORE_TARGET:
+	case ARGI_TARGETREF:
+	case ARGI_STORE_TARGET:
 
-		चयन (destination_type) अणु
-		हाल ACPI_TYPE_INTEGER:
-		हाल ACPI_TYPE_BUFFER_FIELD:
-		हाल ACPI_TYPE_LOCAL_BANK_FIELD:
-		हाल ACPI_TYPE_LOCAL_INDEX_FIELD:
+		switch (destination_type) {
+		case ACPI_TYPE_INTEGER:
+		case ACPI_TYPE_BUFFER_FIELD:
+		case ACPI_TYPE_LOCAL_BANK_FIELD:
+		case ACPI_TYPE_LOCAL_INDEX_FIELD:
 			/*
-			 * These types require an Integer opeअक्रम. We can convert
-			 * a Buffer or a String to an Integer अगर necessary.
+			 * These types require an Integer operand. We can convert
+			 * a Buffer or a String to an Integer if necessary.
 			 */
 			status =
-			    acpi_ex_convert_to_पूर्णांकeger(source_desc, result_desc,
+			    acpi_ex_convert_to_integer(source_desc, result_desc,
 						       ACPI_IMPLICIT_CONVERSION);
-			अवरोध;
+			break;
 
-		हाल ACPI_TYPE_STRING:
+		case ACPI_TYPE_STRING:
 			/*
-			 * The opeअक्रम must be a String. We can convert an
-			 * Integer or Buffer अगर necessary
+			 * The operand must be a String. We can convert an
+			 * Integer or Buffer if necessary
 			 */
 			status =
 			    acpi_ex_convert_to_string(source_desc, result_desc,
 						      ACPI_IMPLICIT_CONVERT_HEX);
-			अवरोध;
+			break;
 
-		हाल ACPI_TYPE_BUFFER:
+		case ACPI_TYPE_BUFFER:
 			/*
-			 * The opeअक्रम must be a Buffer. We can convert an
-			 * Integer or String अगर necessary
+			 * The operand must be a Buffer. We can convert an
+			 * Integer or String if necessary
 			 */
 			status =
 			    acpi_ex_convert_to_buffer(source_desc, result_desc);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 
 			ACPI_ERROR((AE_INFO,
 				    "Bad destination type during conversion: 0x%X",
 				    destination_type));
 			status = AE_AML_INTERNAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल ARGI_REFERENCE:
+	case ARGI_REFERENCE:
 		/*
-		 * create_xxxx_field हालs - we are storing the field object पूर्णांकo the name
+		 * create_xxxx_field cases - we are storing the field object into the name
 		 */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 
 		ACPI_ERROR((AE_INFO,
 			    "Unknown Target type ID 0x%X AmlOpcode 0x%X DestType %s",
 			    GET_CURRENT_ARG_TYPE(walk_state->op_info->
-						 runसमय_args),
+						 runtime_args),
 			    walk_state->opcode,
 			    acpi_ut_get_type_name(destination_type)));
 		status = AE_AML_INTERNAL;
-	पूर्ण
+	}
 
 	/*
 	 * Source-to-Target conversion semantics:
 	 *
-	 * If conversion to the target type cannot be perक्रमmed, then simply
-	 * overग_लिखो the target with the new object and type.
+	 * If conversion to the target type cannot be performed, then simply
+	 * overwrite the target with the new object and type.
 	 */
-	अगर (status == AE_TYPE) अणु
+	if (status == AE_TYPE) {
 		status = AE_OK;
-	पूर्ण
+	}
 
-	वापस_ACPI_STATUS(status);
-पूर्ण
+	return_ACPI_STATUS(status);
+}

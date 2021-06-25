@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  *
  * Copyright (c) 2009 Zhang Le <r0bertz@gentoo.org>
  */
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <यंत्र/bootinfo.h>
+#include <linux/errno.h>
+#include <asm/bootinfo.h>
 
-#समावेश <loongson.h>
-#समावेश <machine.h>
+#include <loongson.h>
+#include <machine.h>
 
 /* please ensure the length of the machtype string is less than 50 */
-#घोषणा MACHTYPE_LEN 50
+#define MACHTYPE_LEN 50
 
-अटल स्थिर अक्षर *प्रणाली_types[] = अणु
+static const char *system_types[] = {
 	[MACH_LOONGSON_UNKNOWN]	= "unknown loongson machine",
 	[MACH_LEMOTE_FL2E]	= "lemote-fuloong-2e-box",
 	[MACH_LEMOTE_FL2F]	= "lemote-fuloong-2f-box",
@@ -24,40 +23,40 @@
 	[MACH_DEXXON_GDIUM2F10]	= "dexxon-gdium-2f",
 	[MACH_LEMOTE_NAS]	= "lemote-nas-2f",
 	[MACH_LEMOTE_LL2F]	= "lemote-lynloong-2f",
-	[MACH_LOONGSON_END]	= शून्य,
-पूर्ण;
+	[MACH_LOONGSON_END]	= NULL,
+};
 
-स्थिर अक्षर *get_प्रणाली_type(व्योम)
-अणु
-	वापस प्रणाली_types[mips_machtype];
-पूर्ण
+const char *get_system_type(void)
+{
+	return system_types[mips_machtype];
+}
 
-व्योम __weak __init mach_prom_init_machtype(व्योम)
-अणु
-पूर्ण
+void __weak __init mach_prom_init_machtype(void)
+{
+}
 
-व्योम __init prom_init_machtype(व्योम)
-अणु
-	अक्षर *p, str[MACHTYPE_LEN + 1];
-	पूर्णांक machtype = MACH_LEMOTE_FL2E;
+void __init prom_init_machtype(void)
+{
+	char *p, str[MACHTYPE_LEN + 1];
+	int machtype = MACH_LEMOTE_FL2E;
 
 	mips_machtype = LOONGSON_MACHTYPE;
 
-	p = म_माला(arcs_cmdline, "machtype=");
-	अगर (!p) अणु
+	p = strstr(arcs_cmdline, "machtype=");
+	if (!p) {
 		mach_prom_init_machtype();
-		वापस;
-	पूर्ण
-	p += म_माप("machtype=");
-	म_नकलन(str, p, MACHTYPE_LEN);
+		return;
+	}
+	p += strlen("machtype=");
+	strncpy(str, p, MACHTYPE_LEN);
 	str[MACHTYPE_LEN] = '\0';
-	p = म_माला(str, " ");
-	अगर (p)
+	p = strstr(str, " ");
+	if (p)
 		*p = '\0';
 
-	क्रम (; प्रणाली_types[machtype]; machtype++)
-		अगर (म_माला(प्रणाली_types[machtype], str)) अणु
+	for (; system_types[machtype]; machtype++)
+		if (strstr(system_types[machtype], str)) {
 			mips_machtype = machtype;
-			अवरोध;
-		पूर्ण
-पूर्ण
+			break;
+		}
+}

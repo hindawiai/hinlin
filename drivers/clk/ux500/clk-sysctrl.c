@@ -1,160 +1,159 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Sysctrl घड़ी implementation क्रम ux500 platक्रमm.
+ * Sysctrl clock implementation for ux500 platform.
  *
  * Copyright (C) 2013 ST-Ericsson SA
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/mfd/abx500/ab8500-sysctrl.h>
-#समावेश <linux/device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/err.h>
-#समावेश "clk.h"
+#include <linux/clk-provider.h>
+#include <linux/mfd/abx500/ab8500-sysctrl.h>
+#include <linux/device.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/err.h>
+#include "clk.h"
 
-#घोषणा SYSCTRL_MAX_NUM_PARENTS 4
+#define SYSCTRL_MAX_NUM_PARENTS 4
 
-#घोषणा to_clk_sysctrl(_hw) container_of(_hw, काष्ठा clk_sysctrl, hw)
+#define to_clk_sysctrl(_hw) container_of(_hw, struct clk_sysctrl, hw)
 
-काष्ठा clk_sysctrl अणु
-	काष्ठा clk_hw hw;
-	काष्ठा device *dev;
+struct clk_sysctrl {
+	struct clk_hw hw;
+	struct device *dev;
 	u8 parent_index;
 	u16 reg_sel[SYSCTRL_MAX_NUM_PARENTS];
 	u8 reg_mask[SYSCTRL_MAX_NUM_PARENTS];
 	u8 reg_bits[SYSCTRL_MAX_NUM_PARENTS];
-	अचिन्हित दीर्घ rate;
-	अचिन्हित दीर्घ enable_delay_us;
-पूर्ण;
+	unsigned long rate;
+	unsigned long enable_delay_us;
+};
 
-/* Sysctrl घड़ी operations. */
+/* Sysctrl clock operations. */
 
-अटल पूर्णांक clk_sysctrl_prepare(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_sysctrl *clk = to_clk_sysctrl(hw);
+static int clk_sysctrl_prepare(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_sysctrl *clk = to_clk_sysctrl(hw);
 
-	ret = ab8500_sysctrl_ग_लिखो(clk->reg_sel[0], clk->reg_mask[0],
+	ret = ab8500_sysctrl_write(clk->reg_sel[0], clk->reg_mask[0],
 				clk->reg_bits[0]);
 
-	अगर (!ret && clk->enable_delay_us)
+	if (!ret && clk->enable_delay_us)
 		usleep_range(clk->enable_delay_us, clk->enable_delay_us +
 			     (clk->enable_delay_us >> 2));
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम clk_sysctrl_unprepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sysctrl *clk = to_clk_sysctrl(hw);
-	अगर (ab8500_sysctrl_clear(clk->reg_sel[0], clk->reg_mask[0]))
+static void clk_sysctrl_unprepare(struct clk_hw *hw)
+{
+	struct clk_sysctrl *clk = to_clk_sysctrl(hw);
+	if (ab8500_sysctrl_clear(clk->reg_sel[0], clk->reg_mask[0]))
 		dev_err(clk->dev, "clk_sysctrl: %s fail to clear %s.\n",
 			__func__, clk_hw_get_name(hw));
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ clk_sysctrl_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_sysctrl *clk = to_clk_sysctrl(hw);
-	वापस clk->rate;
-पूर्ण
+static unsigned long clk_sysctrl_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct clk_sysctrl *clk = to_clk_sysctrl(hw);
+	return clk->rate;
+}
 
-अटल पूर्णांक clk_sysctrl_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा clk_sysctrl *clk = to_clk_sysctrl(hw);
+static int clk_sysctrl_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct clk_sysctrl *clk = to_clk_sysctrl(hw);
 	u8 old_index = clk->parent_index;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (clk->reg_sel[old_index]) अणु
+	if (clk->reg_sel[old_index]) {
 		ret = ab8500_sysctrl_clear(clk->reg_sel[old_index],
 					clk->reg_mask[old_index]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (clk->reg_sel[index]) अणु
-		ret = ab8500_sysctrl_ग_लिखो(clk->reg_sel[index],
+	if (clk->reg_sel[index]) {
+		ret = ab8500_sysctrl_write(clk->reg_sel[index],
 					clk->reg_mask[index],
 					clk->reg_bits[index]);
-		अगर (ret) अणु
-			अगर (clk->reg_sel[old_index])
-				ab8500_sysctrl_ग_लिखो(clk->reg_sel[old_index],
+		if (ret) {
+			if (clk->reg_sel[old_index])
+				ab8500_sysctrl_write(clk->reg_sel[old_index],
 						clk->reg_mask[old_index],
 						clk->reg_bits[old_index]);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 	clk->parent_index = index;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u8 clk_sysctrl_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_sysctrl *clk = to_clk_sysctrl(hw);
-	वापस clk->parent_index;
-पूर्ण
+static u8 clk_sysctrl_get_parent(struct clk_hw *hw)
+{
+	struct clk_sysctrl *clk = to_clk_sysctrl(hw);
+	return clk->parent_index;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_sysctrl_gate_ops = अणु
+static const struct clk_ops clk_sysctrl_gate_ops = {
 	.prepare = clk_sysctrl_prepare,
 	.unprepare = clk_sysctrl_unprepare,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops clk_sysctrl_gate_fixed_rate_ops = अणु
+static const struct clk_ops clk_sysctrl_gate_fixed_rate_ops = {
 	.prepare = clk_sysctrl_prepare,
 	.unprepare = clk_sysctrl_unprepare,
 	.recalc_rate = clk_sysctrl_recalc_rate,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा clk_ops clk_sysctrl_set_parent_ops = अणु
+static const struct clk_ops clk_sysctrl_set_parent_ops = {
 	.set_parent = clk_sysctrl_set_parent,
 	.get_parent = clk_sysctrl_get_parent,
-पूर्ण;
+};
 
-अटल काष्ठा clk *clk_reg_sysctrl(काष्ठा device *dev,
-				स्थिर अक्षर *name,
-				स्थिर अक्षर **parent_names,
+static struct clk *clk_reg_sysctrl(struct device *dev,
+				const char *name,
+				const char **parent_names,
 				u8 num_parents,
 				u16 *reg_sel,
 				u8 *reg_mask,
 				u8 *reg_bits,
-				अचिन्हित दीर्घ rate,
-				अचिन्हित दीर्घ enable_delay_us,
-				अचिन्हित दीर्घ flags,
-				स्थिर काष्ठा clk_ops *clk_sysctrl_ops)
-अणु
-	काष्ठा clk_sysctrl *clk;
-	काष्ठा clk_init_data clk_sysctrl_init;
-	काष्ठा clk *clk_reg;
-	पूर्णांक i;
+				unsigned long rate,
+				unsigned long enable_delay_us,
+				unsigned long flags,
+				const struct clk_ops *clk_sysctrl_ops)
+{
+	struct clk_sysctrl *clk;
+	struct clk_init_data clk_sysctrl_init;
+	struct clk *clk_reg;
+	int i;
 
-	अगर (!dev)
-		वापस ERR_PTR(-EINVAL);
+	if (!dev)
+		return ERR_PTR(-EINVAL);
 
-	अगर (!name || (num_parents > SYSCTRL_MAX_NUM_PARENTS)) अणु
+	if (!name || (num_parents > SYSCTRL_MAX_NUM_PARENTS)) {
 		dev_err(dev, "clk_sysctrl: invalid arguments passed\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	clk = devm_kzalloc(dev, माप(*clk), GFP_KERNEL);
-	अगर (!clk)
-		वापस ERR_PTR(-ENOMEM);
+	clk = devm_kzalloc(dev, sizeof(*clk), GFP_KERNEL);
+	if (!clk)
+		return ERR_PTR(-ENOMEM);
 
-	/* set मुख्य घड़ी रेजिस्टरs */
+	/* set main clock registers */
 	clk->reg_sel[0] = reg_sel[0];
 	clk->reg_bits[0] = reg_bits[0];
 	clk->reg_mask[0] = reg_mask[0];
 
-	/* handle घड़ीs with more than one parent */
-	क्रम (i = 1; i < num_parents; i++) अणु
+	/* handle clocks with more than one parent */
+	for (i = 1; i < num_parents; i++) {
 		clk->reg_sel[i] = reg_sel[i];
 		clk->reg_bits[i] = reg_bits[i];
 		clk->reg_mask[i] = reg_mask[i];
-	पूर्ण
+	}
 
 	clk->parent_index = 0;
 	clk->rate = rate;
@@ -168,59 +167,59 @@
 	clk_sysctrl_init.num_parents = num_parents;
 	clk->hw.init = &clk_sysctrl_init;
 
-	clk_reg = devm_clk_रेजिस्टर(clk->dev, &clk->hw);
-	अगर (IS_ERR(clk_reg))
+	clk_reg = devm_clk_register(clk->dev, &clk->hw);
+	if (IS_ERR(clk_reg))
 		dev_err(dev, "clk_sysctrl: clk_register failed\n");
 
-	वापस clk_reg;
-पूर्ण
+	return clk_reg;
+}
 
-काष्ठा clk *clk_reg_sysctrl_gate(काष्ठा device *dev,
-				स्थिर अक्षर *name,
-				स्थिर अक्षर *parent_name,
+struct clk *clk_reg_sysctrl_gate(struct device *dev,
+				const char *name,
+				const char *parent_name,
 				u16 reg_sel,
 				u8 reg_mask,
 				u8 reg_bits,
-				अचिन्हित दीर्घ enable_delay_us,
-				अचिन्हित दीर्घ flags)
-अणु
-	स्थिर अक्षर **parent_names = (parent_name ? &parent_name : शून्य);
+				unsigned long enable_delay_us,
+				unsigned long flags)
+{
+	const char **parent_names = (parent_name ? &parent_name : NULL);
 	u8 num_parents = (parent_name ? 1 : 0);
 
-	वापस clk_reg_sysctrl(dev, name, parent_names, num_parents,
+	return clk_reg_sysctrl(dev, name, parent_names, num_parents,
 			&reg_sel, &reg_mask, &reg_bits, 0, enable_delay_us,
 			flags, &clk_sysctrl_gate_ops);
-पूर्ण
+}
 
-काष्ठा clk *clk_reg_sysctrl_gate_fixed_rate(काष्ठा device *dev,
-					स्थिर अक्षर *name,
-					स्थिर अक्षर *parent_name,
+struct clk *clk_reg_sysctrl_gate_fixed_rate(struct device *dev,
+					const char *name,
+					const char *parent_name,
 					u16 reg_sel,
 					u8 reg_mask,
 					u8 reg_bits,
-					अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ enable_delay_us,
-					अचिन्हित दीर्घ flags)
-अणु
-	स्थिर अक्षर **parent_names = (parent_name ? &parent_name : शून्य);
+					unsigned long rate,
+					unsigned long enable_delay_us,
+					unsigned long flags)
+{
+	const char **parent_names = (parent_name ? &parent_name : NULL);
 	u8 num_parents = (parent_name ? 1 : 0);
 
-	वापस clk_reg_sysctrl(dev, name, parent_names, num_parents,
+	return clk_reg_sysctrl(dev, name, parent_names, num_parents,
 			&reg_sel, &reg_mask, &reg_bits,
 			rate, enable_delay_us, flags,
 			&clk_sysctrl_gate_fixed_rate_ops);
-पूर्ण
+}
 
-काष्ठा clk *clk_reg_sysctrl_set_parent(काष्ठा device *dev,
-				स्थिर अक्षर *name,
-				स्थिर अक्षर **parent_names,
+struct clk *clk_reg_sysctrl_set_parent(struct device *dev,
+				const char *name,
+				const char **parent_names,
 				u8 num_parents,
 				u16 *reg_sel,
 				u8 *reg_mask,
 				u8 *reg_bits,
-				अचिन्हित दीर्घ flags)
-अणु
-	वापस clk_reg_sysctrl(dev, name, parent_names, num_parents,
+				unsigned long flags)
+{
+	return clk_reg_sysctrl(dev, name, parent_names, num_parents,
 			reg_sel, reg_mask, reg_bits, 0, 0, flags,
 			&clk_sysctrl_set_parent_ops);
-पूर्ण
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * DaVinci MDIO Module driver
  *
@@ -10,187 +9,187 @@
  * Copyright (C) 2009 Texas Instruments.
  *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/phy.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/davinci_emac.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_mdपन.स>
-#समावेश <linux/pinctrl/consumer.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/phy.h>
+#include <linux/clk.h>
+#include <linux/err.h>
+#include <linux/io.h>
+#include <linux/iopoll.h>
+#include <linux/pm_runtime.h>
+#include <linux/davinci_emac.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_mdio.h>
+#include <linux/pinctrl/consumer.h>
 
 /*
- * This समयout definition is a worst-हाल ultra defensive measure against
+ * This timeout definition is a worst-case ultra defensive measure against
  * unexpected controller lock ups.  Ideally, we should never ever hit this
  * scenario in practice.
  */
-#घोषणा MDIO_TIMEOUT		100 /* msecs */
+#define MDIO_TIMEOUT		100 /* msecs */
 
-#घोषणा PHY_REG_MASK		0x1f
-#घोषणा PHY_ID_MASK		0x1f
+#define PHY_REG_MASK		0x1f
+#define PHY_ID_MASK		0x1f
 
-#घोषणा DEF_OUT_FREQ		2200000		/* 2.2 MHz */
+#define DEF_OUT_FREQ		2200000		/* 2.2 MHz */
 
-काष्ठा davinci_mdio_of_param अणु
-	पूर्णांक स्वतःsuspend_delay_ms;
-पूर्ण;
+struct davinci_mdio_of_param {
+	int autosuspend_delay_ms;
+};
 
-काष्ठा davinci_mdio_regs अणु
+struct davinci_mdio_regs {
 	u32	version;
 	u32	control;
-#घोषणा CONTROL_IDLE		BIT(31)
-#घोषणा CONTROL_ENABLE		BIT(30)
-#घोषणा CONTROL_MAX_DIV		(0xffff)
+#define CONTROL_IDLE		BIT(31)
+#define CONTROL_ENABLE		BIT(30)
+#define CONTROL_MAX_DIV		(0xffff)
 
 	u32	alive;
 	u32	link;
-	u32	linkपूर्णांकraw;
-	u32	linkपूर्णांकmasked;
+	u32	linkintraw;
+	u32	linkintmasked;
 	u32	__reserved_0[2];
-	u32	userपूर्णांकraw;
-	u32	userपूर्णांकmasked;
-	u32	userपूर्णांकmaskset;
-	u32	userपूर्णांकmaskclr;
+	u32	userintraw;
+	u32	userintmasked;
+	u32	userintmaskset;
+	u32	userintmaskclr;
 	u32	__reserved_1[20];
 
-	काष्ठा अणु
+	struct {
 		u32	access;
-#घोषणा USERACCESS_GO		BIT(31)
-#घोषणा USERACCESS_WRITE	BIT(30)
-#घोषणा USERACCESS_ACK		BIT(29)
-#घोषणा USERACCESS_READ		(0)
-#घोषणा USERACCESS_DATA		(0xffff)
+#define USERACCESS_GO		BIT(31)
+#define USERACCESS_WRITE	BIT(30)
+#define USERACCESS_ACK		BIT(29)
+#define USERACCESS_READ		(0)
+#define USERACCESS_DATA		(0xffff)
 
 		u32	physel;
-	पूर्ण	user[0];
-पूर्ण;
+	}	user[0];
+};
 
-अटल स्थिर काष्ठा mdio_platक्रमm_data शेष_pdata = अणु
+static const struct mdio_platform_data default_pdata = {
 	.bus_freq = DEF_OUT_FREQ,
-पूर्ण;
+};
 
-काष्ठा davinci_mdio_data अणु
-	काष्ठा mdio_platक्रमm_data pdata;
-	काष्ठा davinci_mdio_regs __iomem *regs;
-	काष्ठा clk	*clk;
-	काष्ठा device	*dev;
-	काष्ठा mii_bus	*bus;
+struct davinci_mdio_data {
+	struct mdio_platform_data pdata;
+	struct davinci_mdio_regs __iomem *regs;
+	struct clk	*clk;
+	struct device	*dev;
+	struct mii_bus	*bus;
 	bool            active_in_suspend;
-	अचिन्हित दीर्घ	access_समय; /* jअगरfies */
-	/* Indicates that driver shouldn't modअगरy phy_mask in हाल
-	 * अगर MDIO bus is रेजिस्टरed from DT.
+	unsigned long	access_time; /* jiffies */
+	/* Indicates that driver shouldn't modify phy_mask in case
+	 * if MDIO bus is registered from DT.
 	 */
 	bool		skip_scan;
-	u32		clk_भाग;
-पूर्ण;
+	u32		clk_div;
+};
 
-अटल व्योम davinci_mdio_init_clk(काष्ठा davinci_mdio_data *data)
-अणु
-	u32 mdio_in, भाग, mdio_out_khz, access_समय;
+static void davinci_mdio_init_clk(struct davinci_mdio_data *data)
+{
+	u32 mdio_in, div, mdio_out_khz, access_time;
 
 	mdio_in = clk_get_rate(data->clk);
-	भाग = (mdio_in / data->pdata.bus_freq) - 1;
-	अगर (भाग > CONTROL_MAX_DIV)
-		भाग = CONTROL_MAX_DIV;
+	div = (mdio_in / data->pdata.bus_freq) - 1;
+	if (div > CONTROL_MAX_DIV)
+		div = CONTROL_MAX_DIV;
 
-	data->clk_भाग = भाग;
+	data->clk_div = div;
 	/*
 	 * One mdio transaction consists of:
 	 *	32 bits of preamble
 	 *	32 bits of transferred data
 	 *	24 bits of bus yield (not needed unless shared?)
 	 */
-	mdio_out_khz = mdio_in / (1000 * (भाग + 1));
-	access_समय  = (88 * 1000) / mdio_out_khz;
+	mdio_out_khz = mdio_in / (1000 * (div + 1));
+	access_time  = (88 * 1000) / mdio_out_khz;
 
 	/*
-	 * In the worst हाल, we could be kicking off a user-access immediately
-	 * after the mdio bus scan state-machine triggered its own पढ़ो.  If
+	 * In the worst case, we could be kicking off a user-access immediately
+	 * after the mdio bus scan state-machine triggered its own read.  If
 	 * so, our request could get deferred by one access cycle.  We
-	 * defensively allow क्रम 4 access cycles.
+	 * defensively allow for 4 access cycles.
 	 */
-	data->access_समय = usecs_to_jअगरfies(access_समय * 4);
-	अगर (!data->access_समय)
-		data->access_समय = 1;
-पूर्ण
+	data->access_time = usecs_to_jiffies(access_time * 4);
+	if (!data->access_time)
+		data->access_time = 1;
+}
 
-अटल व्योम davinci_mdio_enable(काष्ठा davinci_mdio_data *data)
-अणु
-	/* set enable and घड़ी भागider */
-	ग_लिखोl(data->clk_भाग | CONTROL_ENABLE, &data->regs->control);
-पूर्ण
+static void davinci_mdio_enable(struct davinci_mdio_data *data)
+{
+	/* set enable and clock divider */
+	writel(data->clk_div | CONTROL_ENABLE, &data->regs->control);
+}
 
-अटल पूर्णांक davinci_mdio_reset(काष्ठा mii_bus *bus)
-अणु
-	काष्ठा davinci_mdio_data *data = bus->priv;
+static int davinci_mdio_reset(struct mii_bus *bus)
+{
+	struct davinci_mdio_data *data = bus->priv;
 	u32 phy_mask, ver;
-	पूर्णांक ret;
+	int ret;
 
-	ret = pm_runसमय_get_sync(data->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(data->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(data->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(data->dev);
+		return ret;
+	}
 
-	/* रुको क्रम scan logic to settle */
-	msleep(PHY_MAX_ADDR * data->access_समय);
+	/* wait for scan logic to settle */
+	msleep(PHY_MAX_ADDR * data->access_time);
 
 	/* dump hardware version info */
-	ver = पढ़ोl(&data->regs->version);
+	ver = readl(&data->regs->version);
 	dev_info(data->dev,
 		 "davinci mdio revision %d.%d, bus freq %ld\n",
 		 (ver >> 8) & 0xff, ver & 0xff,
 		 data->pdata.bus_freq);
 
-	अगर (data->skip_scan)
-		जाओ करोne;
+	if (data->skip_scan)
+		goto done;
 
-	/* get phy mask from the alive रेजिस्टर */
-	phy_mask = पढ़ोl(&data->regs->alive);
-	अगर (phy_mask) अणु
+	/* get phy mask from the alive register */
+	phy_mask = readl(&data->regs->alive);
+	if (phy_mask) {
 		/* restrict mdio bus to live phys only */
 		dev_info(data->dev, "detected phy mask %x\n", ~phy_mask);
 		phy_mask = ~phy_mask;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* desperately scan all phys */
 		dev_warn(data->dev, "no live phy, scanning all\n");
 		phy_mask = 0;
-	पूर्ण
+	}
 	data->bus->phy_mask = phy_mask;
 
-करोne:
-	pm_runसमय_mark_last_busy(data->dev);
-	pm_runसमय_put_स्वतःsuspend(data->dev);
+done:
+	pm_runtime_mark_last_busy(data->dev);
+	pm_runtime_put_autosuspend(data->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* रुको until hardware is पढ़ोy क्रम another user access */
-अटल अंतरभूत पूर्णांक रुको_क्रम_user_access(काष्ठा davinci_mdio_data *data)
-अणु
-	काष्ठा davinci_mdio_regs __iomem *regs = data->regs;
-	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(MDIO_TIMEOUT);
+/* wait until hardware is ready for another user access */
+static inline int wait_for_user_access(struct davinci_mdio_data *data)
+{
+	struct davinci_mdio_regs __iomem *regs = data->regs;
+	unsigned long timeout = jiffies + msecs_to_jiffies(MDIO_TIMEOUT);
 	u32 reg;
 
-	जबतक (समय_after(समयout, jअगरfies)) अणु
-		reg = पढ़ोl(&regs->user[0].access);
-		अगर ((reg & USERACCESS_GO) == 0)
-			वापस 0;
+	while (time_after(timeout, jiffies)) {
+		reg = readl(&regs->user[0].access);
+		if ((reg & USERACCESS_GO) == 0)
+			return 0;
 
-		reg = पढ़ोl(&regs->control);
-		अगर ((reg & CONTROL_IDLE) == 0) अणु
+		reg = readl(&regs->control);
+		if ((reg & CONTROL_IDLE) == 0) {
 			usleep_range(100, 200);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * An emac soft_reset may have clobbered the mdio controller's
@@ -199,339 +198,339 @@
 		 */
 		dev_warn(data->dev, "resetting idled controller\n");
 		davinci_mdio_enable(data);
-		वापस -EAGAIN;
-	पूर्ण
+		return -EAGAIN;
+	}
 
-	reg = पढ़ोl(&regs->user[0].access);
-	अगर ((reg & USERACCESS_GO) == 0)
-		वापस 0;
+	reg = readl(&regs->user[0].access);
+	if ((reg & USERACCESS_GO) == 0)
+		return 0;
 
 	dev_err(data->dev, "timed out waiting for user access\n");
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-/* रुको until hardware state machine is idle */
-अटल अंतरभूत पूर्णांक रुको_क्रम_idle(काष्ठा davinci_mdio_data *data)
-अणु
-	काष्ठा davinci_mdio_regs __iomem *regs = data->regs;
+/* wait until hardware state machine is idle */
+static inline int wait_for_idle(struct davinci_mdio_data *data)
+{
+	struct davinci_mdio_regs __iomem *regs = data->regs;
 	u32 val, ret;
 
-	ret = पढ़ोl_poll_समयout(&regs->control, val, val & CONTROL_IDLE,
+	ret = readl_poll_timeout(&regs->control, val, val & CONTROL_IDLE,
 				 0, MDIO_TIMEOUT * 1000);
-	अगर (ret)
+	if (ret)
 		dev_err(data->dev, "timed out waiting for idle\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक davinci_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक phy_reg)
-अणु
-	काष्ठा davinci_mdio_data *data = bus->priv;
+static int davinci_mdio_read(struct mii_bus *bus, int phy_id, int phy_reg)
+{
+	struct davinci_mdio_data *data = bus->priv;
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (phy_reg & ~PHY_REG_MASK || phy_id & ~PHY_ID_MASK)
-		वापस -EINVAL;
+	if (phy_reg & ~PHY_REG_MASK || phy_id & ~PHY_ID_MASK)
+		return -EINVAL;
 
-	ret = pm_runसमय_get_sync(data->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(data->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(data->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(data->dev);
+		return ret;
+	}
 
 	reg = (USERACCESS_GO | USERACCESS_READ | (phy_reg << 21) |
 	       (phy_id << 16));
 
-	जबतक (1) अणु
-		ret = रुको_क्रम_user_access(data);
-		अगर (ret == -EAGAIN)
-			जारी;
-		अगर (ret < 0)
-			अवरोध;
+	while (1) {
+		ret = wait_for_user_access(data);
+		if (ret == -EAGAIN)
+			continue;
+		if (ret < 0)
+			break;
 
-		ग_लिखोl(reg, &data->regs->user[0].access);
+		writel(reg, &data->regs->user[0].access);
 
-		ret = रुको_क्रम_user_access(data);
-		अगर (ret == -EAGAIN)
-			जारी;
-		अगर (ret < 0)
-			अवरोध;
+		ret = wait_for_user_access(data);
+		if (ret == -EAGAIN)
+			continue;
+		if (ret < 0)
+			break;
 
-		reg = पढ़ोl(&data->regs->user[0].access);
+		reg = readl(&data->regs->user[0].access);
 		ret = (reg & USERACCESS_ACK) ? (reg & USERACCESS_DATA) : -EIO;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	pm_runसमय_mark_last_busy(data->dev);
-	pm_runसमय_put_स्वतःsuspend(data->dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_mark_last_busy(data->dev);
+	pm_runtime_put_autosuspend(data->dev);
+	return ret;
+}
 
-अटल पूर्णांक davinci_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id,
-			      पूर्णांक phy_reg, u16 phy_data)
-अणु
-	काष्ठा davinci_mdio_data *data = bus->priv;
+static int davinci_mdio_write(struct mii_bus *bus, int phy_id,
+			      int phy_reg, u16 phy_data)
+{
+	struct davinci_mdio_data *data = bus->priv;
 	u32 reg;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (phy_reg & ~PHY_REG_MASK || phy_id & ~PHY_ID_MASK)
-		वापस -EINVAL;
+	if (phy_reg & ~PHY_REG_MASK || phy_id & ~PHY_ID_MASK)
+		return -EINVAL;
 
-	ret = pm_runसमय_get_sync(data->dev);
-	अगर (ret < 0) अणु
-		pm_runसमय_put_noidle(data->dev);
-		वापस ret;
-	पूर्ण
+	ret = pm_runtime_get_sync(data->dev);
+	if (ret < 0) {
+		pm_runtime_put_noidle(data->dev);
+		return ret;
+	}
 
 	reg = (USERACCESS_GO | USERACCESS_WRITE | (phy_reg << 21) |
 		   (phy_id << 16) | (phy_data & USERACCESS_DATA));
 
-	जबतक (1) अणु
-		ret = रुको_क्रम_user_access(data);
-		अगर (ret == -EAGAIN)
-			जारी;
-		अगर (ret < 0)
-			अवरोध;
+	while (1) {
+		ret = wait_for_user_access(data);
+		if (ret == -EAGAIN)
+			continue;
+		if (ret < 0)
+			break;
 
-		ग_लिखोl(reg, &data->regs->user[0].access);
+		writel(reg, &data->regs->user[0].access);
 
-		ret = रुको_क्रम_user_access(data);
-		अगर (ret == -EAGAIN)
-			जारी;
-		अवरोध;
-	पूर्ण
+		ret = wait_for_user_access(data);
+		if (ret == -EAGAIN)
+			continue;
+		break;
+	}
 
-	pm_runसमय_mark_last_busy(data->dev);
-	pm_runसमय_put_स्वतःsuspend(data->dev);
+	pm_runtime_mark_last_busy(data->dev);
+	pm_runtime_put_autosuspend(data->dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक davinci_mdio_probe_dt(काष्ठा mdio_platक्रमm_data *data,
-			 काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device_node *node = pdev->dev.of_node;
+static int davinci_mdio_probe_dt(struct mdio_platform_data *data,
+			 struct platform_device *pdev)
+{
+	struct device_node *node = pdev->dev.of_node;
 	u32 prop;
 
-	अगर (!node)
-		वापस -EINVAL;
+	if (!node)
+		return -EINVAL;
 
-	अगर (of_property_पढ़ो_u32(node, "bus_freq", &prop)) अणु
+	if (of_property_read_u32(node, "bus_freq", &prop)) {
 		dev_err(&pdev->dev, "Missing bus_freq property in the DT.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	data->bus_freq = prop;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर IS_ENABLED(CONFIG_OF)
-अटल स्थिर काष्ठा davinci_mdio_of_param of_cpsw_mdio_data = अणु
-	.स्वतःsuspend_delay_ms = 100,
-पूर्ण;
+#if IS_ENABLED(CONFIG_OF)
+static const struct davinci_mdio_of_param of_cpsw_mdio_data = {
+	.autosuspend_delay_ms = 100,
+};
 
-अटल स्थिर काष्ठा of_device_id davinci_mdio_of_mtable[] = अणु
-	अणु .compatible = "ti,davinci_mdio", पूर्ण,
-	अणु .compatible = "ti,cpsw-mdio", .data = &of_cpsw_mdio_dataपूर्ण,
-	अणु /* sentinel */ पूर्ण,
-पूर्ण;
+static const struct of_device_id davinci_mdio_of_mtable[] = {
+	{ .compatible = "ti,davinci_mdio", },
+	{ .compatible = "ti,cpsw-mdio", .data = &of_cpsw_mdio_data},
+	{ /* sentinel */ },
+};
 MODULE_DEVICE_TABLE(of, davinci_mdio_of_mtable);
-#पूर्ण_अगर
+#endif
 
-अटल पूर्णांक davinci_mdio_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mdio_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा davinci_mdio_data *data;
-	काष्ठा resource *res;
-	काष्ठा phy_device *phy;
-	पूर्णांक ret, addr;
-	पूर्णांक स्वतःsuspend_delay_ms = -1;
+static int davinci_mdio_probe(struct platform_device *pdev)
+{
+	struct mdio_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	struct device *dev = &pdev->dev;
+	struct davinci_mdio_data *data;
+	struct resource *res;
+	struct phy_device *phy;
+	int ret, addr;
+	int autosuspend_delay_ms = -1;
 
-	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	data->bus = devm_mdiobus_alloc(dev);
-	अगर (!data->bus) अणु
+	if (!data->bus) {
 		dev_err(dev, "failed to alloc mii bus\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (IS_ENABLED(CONFIG_OF) && dev->of_node) अणु
-		स्थिर काष्ठा davinci_mdio_of_param *of_mdio_data;
+	if (IS_ENABLED(CONFIG_OF) && dev->of_node) {
+		const struct davinci_mdio_of_param *of_mdio_data;
 
 		ret = davinci_mdio_probe_dt(&data->pdata, pdev);
-		अगर (ret)
-			वापस ret;
-		snम_लिखो(data->bus->id, MII_BUS_ID_SIZE, "%s", pdev->name);
+		if (ret)
+			return ret;
+		snprintf(data->bus->id, MII_BUS_ID_SIZE, "%s", pdev->name);
 
 		of_mdio_data = of_device_get_match_data(&pdev->dev);
-		अगर (of_mdio_data) अणु
-			स्वतःsuspend_delay_ms =
-					of_mdio_data->स्वतःsuspend_delay_ms;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		data->pdata = pdata ? (*pdata) : शेष_pdata;
-		snम_लिखो(data->bus->id, MII_BUS_ID_SIZE, "%s-%x",
+		if (of_mdio_data) {
+			autosuspend_delay_ms =
+					of_mdio_data->autosuspend_delay_ms;
+		}
+	} else {
+		data->pdata = pdata ? (*pdata) : default_pdata;
+		snprintf(data->bus->id, MII_BUS_ID_SIZE, "%s-%x",
 			 pdev->name, pdev->id);
-	पूर्ण
+	}
 
 	data->bus->name		= dev_name(dev);
-	data->bus->पढ़ो		= davinci_mdio_पढ़ो;
-	data->bus->ग_लिखो	= davinci_mdio_ग_लिखो;
+	data->bus->read		= davinci_mdio_read;
+	data->bus->write	= davinci_mdio_write;
 	data->bus->reset	= davinci_mdio_reset;
 	data->bus->parent	= dev;
 	data->bus->priv		= data;
 
 	data->clk = devm_clk_get(dev, "fck");
-	अगर (IS_ERR(data->clk)) अणु
+	if (IS_ERR(data->clk)) {
 		dev_err(dev, "failed to get device clock\n");
-		वापस PTR_ERR(data->clk);
-	पूर्ण
+		return PTR_ERR(data->clk);
+	}
 
 	dev_set_drvdata(dev, data);
 	data->dev = dev;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!res)
-		वापस -EINVAL;
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res)
+		return -EINVAL;
 	data->regs = devm_ioremap(dev, res->start, resource_size(res));
-	अगर (!data->regs)
-		वापस -ENOMEM;
+	if (!data->regs)
+		return -ENOMEM;
 
 	davinci_mdio_init_clk(data);
 
-	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, स्वतःsuspend_delay_ms);
-	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
-	pm_runसमय_enable(&pdev->dev);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, autosuspend_delay_ms);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
-	/* रेजिस्टर the mii bus
-	 * Create PHYs from DT only in हाल अगर PHY child nodes are explicitly
+	/* register the mii bus
+	 * Create PHYs from DT only in case if PHY child nodes are explicitly
 	 * defined to support backward compatibility with DTs which assume that
-	 * Davinci MDIO will always scan the bus क्रम PHYs detection.
+	 * Davinci MDIO will always scan the bus for PHYs detection.
 	 */
-	अगर (dev->of_node && of_get_child_count(dev->of_node))
+	if (dev->of_node && of_get_child_count(dev->of_node))
 		data->skip_scan = true;
 
-	ret = of_mdiobus_रेजिस्टर(data->bus, dev->of_node);
-	अगर (ret)
-		जाओ bail_out;
+	ret = of_mdiobus_register(data->bus, dev->of_node);
+	if (ret)
+		goto bail_out;
 
 	/* scan and dump the bus */
-	क्रम (addr = 0; addr < PHY_MAX_ADDR; addr++) अणु
+	for (addr = 0; addr < PHY_MAX_ADDR; addr++) {
 		phy = mdiobus_get_phy(data->bus, addr);
-		अगर (phy) अणु
+		if (phy) {
 			dev_info(dev, "phy[%d]: device %s, driver %s\n",
 				 phy->mdio.addr, phydev_name(phy),
 				 phy->drv ? phy->drv->name : "unknown");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 bail_out:
-	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
-	वापस ret;
-पूर्ण
+	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+	return ret;
+}
 
-अटल पूर्णांक davinci_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा davinci_mdio_data *data = platक्रमm_get_drvdata(pdev);
+static int davinci_mdio_remove(struct platform_device *pdev)
+{
+	struct davinci_mdio_data *data = platform_get_drvdata(pdev);
 
-	अगर (data->bus)
-		mdiobus_unरेजिस्टर(data->bus);
+	if (data->bus)
+		mdiobus_unregister(data->bus);
 
-	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक davinci_mdio_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा davinci_mdio_data *data = dev_get_drvdata(dev);
+#ifdef CONFIG_PM
+static int davinci_mdio_runtime_suspend(struct device *dev)
+{
+	struct davinci_mdio_data *data = dev_get_drvdata(dev);
 	u32 ctrl;
 
-	/* shutकरोwn the scan state machine */
-	ctrl = पढ़ोl(&data->regs->control);
+	/* shutdown the scan state machine */
+	ctrl = readl(&data->regs->control);
 	ctrl &= ~CONTROL_ENABLE;
-	ग_लिखोl(ctrl, &data->regs->control);
-	रुको_क्रम_idle(data);
+	writel(ctrl, &data->regs->control);
+	wait_for_idle(data);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_mdio_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा davinci_mdio_data *data = dev_get_drvdata(dev);
+static int davinci_mdio_runtime_resume(struct device *dev)
+{
+	struct davinci_mdio_data *data = dev_get_drvdata(dev);
 
 	davinci_mdio_enable(data);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक davinci_mdio_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा davinci_mdio_data *data = dev_get_drvdata(dev);
-	पूर्णांक ret = 0;
+#ifdef CONFIG_PM_SLEEP
+static int davinci_mdio_suspend(struct device *dev)
+{
+	struct davinci_mdio_data *data = dev_get_drvdata(dev);
+	int ret = 0;
 
-	data->active_in_suspend = !pm_runसमय_status_suspended(dev);
-	अगर (data->active_in_suspend)
-		ret = pm_runसमय_क्रमce_suspend(dev);
-	अगर (ret < 0)
-		वापस ret;
+	data->active_in_suspend = !pm_runtime_status_suspended(dev);
+	if (data->active_in_suspend)
+		ret = pm_runtime_force_suspend(dev);
+	if (ret < 0)
+		return ret;
 
 	/* Select sleep pin state */
 	pinctrl_pm_select_sleep_state(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक davinci_mdio_resume(काष्ठा device *dev)
-अणु
-	काष्ठा davinci_mdio_data *data = dev_get_drvdata(dev);
+static int davinci_mdio_resume(struct device *dev)
+{
+	struct davinci_mdio_data *data = dev_get_drvdata(dev);
 
-	/* Select शेष pin state */
-	pinctrl_pm_select_शेष_state(dev);
+	/* Select default pin state */
+	pinctrl_pm_select_default_state(dev);
 
-	अगर (data->active_in_suspend)
-		pm_runसमय_क्रमce_resume(dev);
+	if (data->active_in_suspend)
+		pm_runtime_force_resume(dev);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops davinci_mdio_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(davinci_mdio_runसमय_suspend,
-			   davinci_mdio_runसमय_resume, शून्य)
+static const struct dev_pm_ops davinci_mdio_pm_ops = {
+	SET_RUNTIME_PM_OPS(davinci_mdio_runtime_suspend,
+			   davinci_mdio_runtime_resume, NULL)
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(davinci_mdio_suspend, davinci_mdio_resume)
-पूर्ण;
+};
 
-अटल काष्ठा platक्रमm_driver davinci_mdio_driver = अणु
-	.driver = अणु
+static struct platform_driver davinci_mdio_driver = {
+	.driver = {
 		.name	 = "davinci_mdio",
 		.pm	 = &davinci_mdio_pm_ops,
 		.of_match_table = of_match_ptr(davinci_mdio_of_mtable),
-	पूर्ण,
+	},
 	.probe = davinci_mdio_probe,
-	.हटाओ = davinci_mdio_हटाओ,
-पूर्ण;
+	.remove = davinci_mdio_remove,
+};
 
-अटल पूर्णांक __init davinci_mdio_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&davinci_mdio_driver);
-पूर्ण
+static int __init davinci_mdio_init(void)
+{
+	return platform_driver_register(&davinci_mdio_driver);
+}
 device_initcall(davinci_mdio_init);
 
-अटल व्योम __निकास davinci_mdio_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&davinci_mdio_driver);
-पूर्ण
-module_निकास(davinci_mdio_निकास);
+static void __exit davinci_mdio_exit(void)
+{
+	platform_driver_unregister(&davinci_mdio_driver);
+}
+module_exit(davinci_mdio_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("DaVinci MDIO driver");

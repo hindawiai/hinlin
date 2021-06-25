@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#अगर_अघोषित __IEEE80211_H
-#घोषणा __IEEE80211_H
+#ifndef __IEEE80211_H
+#define __IEEE80211_H
 
-#समावेश <osdep_service.h>
-#समावेश <drv_types.h>
-#समावेश "wifi.h"
-#समावेश <linux/wireless.h>
+#include <osdep_service.h>
+#include <drv_types.h>
+#include "wifi.h"
+#include <linux/wireless.h>
 
-#अगर_घोषित CONFIG_88EU_AP_MODE
+#ifdef CONFIG_88EU_AP_MODE
 
-#घोषणा RTL_IOCTL_HOSTAPD (SIOCIWFIRSTPRIV + 28)
+#define RTL_IOCTL_HOSTAPD (SIOCIWFIRSTPRIV + 28)
 
 /* RTL871X_IOCTL_HOSTAPD ioctl() cmd: */
-क्रमागत अणु
+enum {
 	RTL871X_HOSTAPD_FLUSH = 1,
 	RTL871X_HOSTAPD_ADD_STA = 2,
 	RTL871X_HOSTAPD_REMOVE_STA = 3,
@@ -43,88 +42,88 @@
 	RTL871X_HOSTAPD_SET_MACADDR_ACL = 21,
 	RTL871X_HOSTAPD_ACL_ADD_STA = 22,
 	RTL871X_HOSTAPD_ACL_REMOVE_STA = 23,
-पूर्ण;
+};
 
 /* STA flags */
-#घोषणा WLAN_STA_AUTH BIT(0)
-#घोषणा WLAN_STA_ASSOC BIT(1)
-#घोषणा WLAN_STA_PS BIT(2)
-#घोषणा WLAN_STA_TIM BIT(3)
-#घोषणा WLAN_STA_PERM BIT(4)
-#घोषणा WLAN_STA_AUTHORIZED BIT(5)
-#घोषणा WLAN_STA_PENDING_POLL BIT(6) /* pending activity poll not ACKed */
-#घोषणा WLAN_STA_SHORT_PREAMBLE BIT(7)
-#घोषणा WLAN_STA_PREAUTH BIT(8)
-#घोषणा WLAN_STA_WME BIT(9)
-#घोषणा WLAN_STA_MFP BIT(10)
-#घोषणा WLAN_STA_HT BIT(11)
-#घोषणा WLAN_STA_WPS BIT(12)
-#घोषणा WLAN_STA_MAYBE_WPS BIT(13)
-#घोषणा WLAN_STA_NONERP BIT(31)
+#define WLAN_STA_AUTH BIT(0)
+#define WLAN_STA_ASSOC BIT(1)
+#define WLAN_STA_PS BIT(2)
+#define WLAN_STA_TIM BIT(3)
+#define WLAN_STA_PERM BIT(4)
+#define WLAN_STA_AUTHORIZED BIT(5)
+#define WLAN_STA_PENDING_POLL BIT(6) /* pending activity poll not ACKed */
+#define WLAN_STA_SHORT_PREAMBLE BIT(7)
+#define WLAN_STA_PREAUTH BIT(8)
+#define WLAN_STA_WME BIT(9)
+#define WLAN_STA_MFP BIT(10)
+#define WLAN_STA_HT BIT(11)
+#define WLAN_STA_WPS BIT(12)
+#define WLAN_STA_MAYBE_WPS BIT(13)
+#define WLAN_STA_NONERP BIT(31)
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा IEEE_CMD_SET_WPA_PARAM			1
-#घोषणा IEEE_CMD_SET_WPA_IE				2
-#घोषणा IEEE_CMD_SET_ENCRYPTION			3
-#घोषणा IEEE_CMD_MLME						4
+#define IEEE_CMD_SET_WPA_PARAM			1
+#define IEEE_CMD_SET_WPA_IE				2
+#define IEEE_CMD_SET_ENCRYPTION			3
+#define IEEE_CMD_MLME						4
 
-#घोषणा IEEE_PARAM_WPA_ENABLED				1
-#घोषणा IEEE_PARAM_TKIP_COUNTERMEASURES		2
-#घोषणा IEEE_PARAM_DROP_UNENCRYPTED			3
-#घोषणा IEEE_PARAM_PRIVACY_INVOKED			4
-#घोषणा IEEE_PARAM_AUTH_ALGS					5
-#घोषणा IEEE_PARAM_IEEE_802_1X				6
-#घोषणा IEEE_PARAM_WPAX_SELECT				7
+#define IEEE_PARAM_WPA_ENABLED				1
+#define IEEE_PARAM_TKIP_COUNTERMEASURES		2
+#define IEEE_PARAM_DROP_UNENCRYPTED			3
+#define IEEE_PARAM_PRIVACY_INVOKED			4
+#define IEEE_PARAM_AUTH_ALGS					5
+#define IEEE_PARAM_IEEE_802_1X				6
+#define IEEE_PARAM_WPAX_SELECT				7
 
-#घोषणा AUTH_ALG_OPEN_SYSTEM			0x1
-#घोषणा AUTH_ALG_SHARED_KEY			0x2
-#घोषणा AUTH_ALG_LEAP				0x00000004
+#define AUTH_ALG_OPEN_SYSTEM			0x1
+#define AUTH_ALG_SHARED_KEY			0x2
+#define AUTH_ALG_LEAP				0x00000004
 
-#घोषणा IEEE_MLME_STA_DEAUTH				1
-#घोषणा IEEE_MLME_STA_DISASSOC			2
+#define IEEE_MLME_STA_DEAUTH				1
+#define IEEE_MLME_STA_DISASSOC			2
 
-#घोषणा IEEE_CRYPT_ERR_UNKNOWN_ALG			2
-#घोषणा IEEE_CRYPT_ERR_UNKNOWN_ADDR			3
-#घोषणा IEEE_CRYPT_ERR_CRYPT_INIT_FAILED		4
-#घोषणा IEEE_CRYPT_ERR_KEY_SET_FAILED			5
-#घोषणा IEEE_CRYPT_ERR_TX_KEY_SET_FAILED		6
-#घोषणा IEEE_CRYPT_ERR_CARD_CONF_FAILED		7
+#define IEEE_CRYPT_ERR_UNKNOWN_ALG			2
+#define IEEE_CRYPT_ERR_UNKNOWN_ADDR			3
+#define IEEE_CRYPT_ERR_CRYPT_INIT_FAILED		4
+#define IEEE_CRYPT_ERR_KEY_SET_FAILED			5
+#define IEEE_CRYPT_ERR_TX_KEY_SET_FAILED		6
+#define IEEE_CRYPT_ERR_CARD_CONF_FAILED		7
 
-#घोषणा	IEEE_CRYPT_ALG_NAME_LEN			16
+#define	IEEE_CRYPT_ALG_NAME_LEN			16
 
-#घोषणा WPA_CIPHER_NONE		BIT(0)
-#घोषणा WPA_CIPHER_WEP40	BIT(1)
-#घोषणा WPA_CIPHER_WEP104 BIT(2)
-#घोषणा WPA_CIPHER_TKIP		BIT(3)
-#घोषणा WPA_CIPHER_CCMP		BIT(4)
+#define WPA_CIPHER_NONE		BIT(0)
+#define WPA_CIPHER_WEP40	BIT(1)
+#define WPA_CIPHER_WEP104 BIT(2)
+#define WPA_CIPHER_TKIP		BIT(3)
+#define WPA_CIPHER_CCMP		BIT(4)
 
-#घोषणा WPA_SELECTOR_LEN 4
-बाह्य u8 RTW_WPA_OUI_TYPE[];
-बाह्य u8 WPA_AUTH_KEY_MGMT_NONE[];
-बाह्य u8 WPA_AUTH_KEY_MGMT_UNSPEC_802_1X[];
-बाह्य u8 WPA_AUTH_KEY_MGMT_PSK_OVER_802_1X[];
-बाह्य u8 WPA_CIPHER_SUITE_NONE[];
-बाह्य u8 WPA_CIPHER_SUITE_WEP40[];
-बाह्य u8 WPA_CIPHER_SUITE_TKIP[];
-बाह्य u8 WPA_CIPHER_SUITE_WRAP[];
-बाह्य u8 WPA_CIPHER_SUITE_CCMP[];
-बाह्य u8 WPA_CIPHER_SUITE_WEP104[];
+#define WPA_SELECTOR_LEN 4
+extern u8 RTW_WPA_OUI_TYPE[];
+extern u8 WPA_AUTH_KEY_MGMT_NONE[];
+extern u8 WPA_AUTH_KEY_MGMT_UNSPEC_802_1X[];
+extern u8 WPA_AUTH_KEY_MGMT_PSK_OVER_802_1X[];
+extern u8 WPA_CIPHER_SUITE_NONE[];
+extern u8 WPA_CIPHER_SUITE_WEP40[];
+extern u8 WPA_CIPHER_SUITE_TKIP[];
+extern u8 WPA_CIPHER_SUITE_WRAP[];
+extern u8 WPA_CIPHER_SUITE_CCMP[];
+extern u8 WPA_CIPHER_SUITE_WEP104[];
 
-#घोषणा RSN_HEADER_LEN 4
-#घोषणा RSN_SELECTOR_LEN 4
+#define RSN_HEADER_LEN 4
+#define RSN_SELECTOR_LEN 4
 
-बाह्य u16 RSN_VERSION_BSD;
-बाह्य u8 RSN_AUTH_KEY_MGMT_UNSPEC_802_1X[];
-बाह्य u8 RSN_AUTH_KEY_MGMT_PSK_OVER_802_1X[];
-बाह्य u8 RSN_CIPHER_SUITE_NONE[];
-बाह्य u8 RSN_CIPHER_SUITE_WEP40[];
-बाह्य u8 RSN_CIPHER_SUITE_TKIP[];
-बाह्य u8 RSN_CIPHER_SUITE_WRAP[];
-बाह्य u8 RSN_CIPHER_SUITE_CCMP[];
-बाह्य u8 RSN_CIPHER_SUITE_WEP104[];
+extern u16 RSN_VERSION_BSD;
+extern u8 RSN_AUTH_KEY_MGMT_UNSPEC_802_1X[];
+extern u8 RSN_AUTH_KEY_MGMT_PSK_OVER_802_1X[];
+extern u8 RSN_CIPHER_SUITE_NONE[];
+extern u8 RSN_CIPHER_SUITE_WEP40[];
+extern u8 RSN_CIPHER_SUITE_TKIP[];
+extern u8 RSN_CIPHER_SUITE_WRAP[];
+extern u8 RSN_CIPHER_SUITE_CCMP[];
+extern u8 RSN_CIPHER_SUITE_WEP104[];
 
-क्रमागत ratr_table_mode अणु
+enum ratr_table_mode {
 	RATR_INX_WIRELESS_NGB = 0,	/*  BGN 40 Mhz 2SS 1SS */
 	RATR_INX_WIRELESS_NG = 1,	/*  GN or N */
 	RATR_INX_WIRELESS_NB = 2,	/*  BGN 20 Mhz 2SS 1SS  or BN */
@@ -134,9 +133,9 @@
 	RATR_INX_WIRELESS_B = 6,
 	RATR_INX_WIRELESS_MC = 7,
 	RATR_INX_WIRELESS_AC_N = 8,
-पूर्ण;
+};
 
-क्रमागत NETWORK_TYPE अणु
+enum NETWORK_TYPE {
 	WIRELESS_INVALID = 0,
 	/* Sub-Element */
 	WIRELESS_11B = BIT(0), /* tx:cck only, rx:cck only, hw: cck */
@@ -160,53 +159,53 @@
 			  WIRELESS_11_5N),
 	WIRELESS_11ABGN = (WIRELESS_11A | WIRELESS_11B | WIRELESS_11G |
 			   WIRELESS_11_24N | WIRELESS_11_5N),
-पूर्ण;
+};
 
-#घोषणा SUPPORTED_24G_NETTYPE_MSK				\
+#define SUPPORTED_24G_NETTYPE_MSK				\
 	 (WIRELESS_11B | WIRELESS_11G | WIRELESS_11_24N)
-#घोषणा SUPPORTED_5G_NETTYPE_MSK				\
+#define SUPPORTED_5G_NETTYPE_MSK				\
 	 (WIRELESS_11A | WIRELESS_11_5N)
 
-#घोषणा IsSupported24G(NetType)					\
+#define IsSupported24G(NetType)					\
 	((NetType) & SUPPORTED_24G_NETTYPE_MSK ? true : false)
-#घोषणा IsSupported5G(NetType)					\
+#define IsSupported5G(NetType)					\
 	((NetType) & SUPPORTED_5G_NETTYPE_MSK ? true : false)
 
-#घोषणा IsEnableHWCCK(NetType)					\
+#define IsEnableHWCCK(NetType)					\
 	IsSupported24G(NetType)
-#घोषणा IsEnableHWOFDM(NetType)					\
+#define IsEnableHWOFDM(NetType)					\
 	((NetType) & (WIRELESS_11G | WIRELESS_11_24N |		\
 	 SUPPORTED_5G_NETTYPE_MSK) ? true : false)
 
-#घोषणा IsSupportedRxCCK(NetType) IsEnableHWCCK(NetType)
-#घोषणा IsSupportedRxOFDM(NetType) IsEnableHWOFDM(NetType)
-#घोषणा IsSupportedRxMCS(NetType) IsEnableHWOFDM(NetType)
+#define IsSupportedRxCCK(NetType) IsEnableHWCCK(NetType)
+#define IsSupportedRxOFDM(NetType) IsEnableHWOFDM(NetType)
+#define IsSupportedRxMCS(NetType) IsEnableHWOFDM(NetType)
 
-#घोषणा IsSupportedTxCCK(NetType)				\
+#define IsSupportedTxCCK(NetType)				\
 	((NetType) & (WIRELESS_11B) ? true : false)
-#घोषणा IsSupportedTxOFDM(NetType)				\
+#define IsSupportedTxOFDM(NetType)				\
 	((NetType) & (WIRELESS_11G | WIRELESS_11A) ? true : false)
-#घोषणा IsSupportedTxMCS(NetType)				\
+#define IsSupportedTxMCS(NetType)				\
 	((NetType) & (WIRELESS_11_24N | WIRELESS_11_5N) ? true : false)
 
-काष्ठा ieee_param अणु
+struct ieee_param {
 	u32 cmd;
 	u8 sta_addr[ETH_ALEN];
-	जोड़ अणु
-		काष्ठा अणु
+	union {
+		struct {
 			u8 name;
 			u32 value;
-		पूर्ण wpa_param;
-		काष्ठा अणु
+		} wpa_param;
+		struct {
 			u32 len;
 			u8 reserved[32];
 			u8 data[0];
-		पूर्ण wpa_ie;
-		काष्ठा अणु
-			पूर्णांक command;
-			पूर्णांक reason_code;
-		पूर्ण mlme;
-		काष्ठा अणु
+		} wpa_ie;
+		struct {
+			int command;
+			int reason_code;
+		} mlme;
+		struct {
 			u8 alg[IEEE_CRYPT_ALG_NAME_LEN];
 			u8 set_tx;
 			u32 err;
@@ -214,180 +213,180 @@
 			u8 seq[8]; /* sequence counter (set: RX, get: TX) */
 			u16 key_len;
 			u8 key[0];
-		पूर्ण crypt;
-#अगर_घोषित CONFIG_88EU_AP_MODE
-		काष्ठा अणु
+		} crypt;
+#ifdef CONFIG_88EU_AP_MODE
+		struct {
 			u16 aid;
 			u16 capability;
-			पूर्णांक flags;
+			int flags;
 			u8 tx_supp_rates[16];
-			काष्ठा ieee80211_ht_cap ht_cap;
-		पूर्ण add_sta;
-		काष्ठा अणु
-			u8	reserved[2];/* क्रम set max_num_sta */
+			struct ieee80211_ht_cap ht_cap;
+		} add_sta;
+		struct {
+			u8	reserved[2];/* for set max_num_sta */
 			u8	buf[0];
-		पूर्ण bcn_ie;
-#पूर्ण_अगर
+		} bcn_ie;
+#endif
 
-	पूर्ण u;
-पूर्ण;
+	} u;
+};
 
-#अगर_घोषित CONFIG_88EU_AP_MODE
-काष्ठा ieee_param_ex अणु
+#ifdef CONFIG_88EU_AP_MODE
+struct ieee_param_ex {
 	u32 cmd;
 	u8 sta_addr[ETH_ALEN];
 	u8 data[0];
-पूर्ण;
+};
 
-काष्ठा sta_data अणु
+struct sta_data {
 	u16 aid;
 	u16 capability;
-	पूर्णांक flags;
+	int flags;
 	u32 sta_set;
 	u8 tx_supp_rates[16];
 	u32 tx_supp_rates_len;
-	काष्ठा ieee80211_ht_cap ht_cap;
+	struct ieee80211_ht_cap ht_cap;
 	u64	rx_pkts;
 	u64	rx_bytes;
 	u64	rx_drops;
 	u64	tx_pkts;
 	u64	tx_bytes;
 	u64	tx_drops;
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-#घोषणा IEEE80211_DATA_LEN		2304
-/* Maximum size क्रम the MA-UNITDATA primitive, 802.11 standard section
+#define IEEE80211_DATA_LEN		2304
+/* Maximum size for the MA-UNITDATA primitive, 802.11 standard section
  * 6.2.1.1.2.
 
  * The figure in section 7.1.2 suggests a body size of up to 2312
  * bytes is allowed, which is a bit confusing, I suspect this
  * represents the 2304 bytes of real data, plus a possible 8 bytes of
- * WEP IV and ICV. (this पूर्णांकerpretation suggested by Ramiro Barreiro)
+ * WEP IV and ICV. (this interpretation suggested by Ramiro Barreiro)
  */
 
-#घोषणा IEEE80211_HLEN			30
-#घोषणा IEEE80211_FRAME_LEN		(IEEE80211_DATA_LEN + IEEE80211_HLEN)
+#define IEEE80211_HLEN			30
+#define IEEE80211_FRAME_LEN		(IEEE80211_DATA_LEN + IEEE80211_HLEN)
 
 /* this is stolen from ipw2200 driver */
-#घोषणा IEEE_IBSS_MAC_HASH_SIZE 31
+#define IEEE_IBSS_MAC_HASH_SIZE 31
 
-क्रमागत eap_type अणु
+enum eap_type {
 	EAP_PACKET = 0,
 	EAPOL_START,
 	EAPOL_LOGOFF,
 	EAPOL_KEY,
 	EAPOL_ENCAP_ASF_ALERT
-पूर्ण;
+};
 
-#घोषणा IEEE80211_3ADDR_LEN 24
-#घोषणा IEEE80211_4ADDR_LEN 30
-#घोषणा IEEE80211_FCS_LEN    4
+#define IEEE80211_3ADDR_LEN 24
+#define IEEE80211_4ADDR_LEN 30
+#define IEEE80211_FCS_LEN    4
 
-#घोषणा MIN_FRAG_THRESHOLD     256U
-#घोषणा	MAX_FRAG_THRESHOLD     2346U
+#define MIN_FRAG_THRESHOLD     256U
+#define	MAX_FRAG_THRESHOLD     2346U
 
 /* sequence control field */
-#घोषणा RTW_IEEE80211_SCTL_FRAG	0x000F
-#घोषणा RTW_IEEE80211_SCTL_SEQ	0xFFF0
+#define RTW_IEEE80211_SCTL_FRAG	0x000F
+#define RTW_IEEE80211_SCTL_SEQ	0xFFF0
 
-#घोषणा RTW_ERP_INFO_NON_ERP_PRESENT BIT(0)
-#घोषणा RTW_ERP_INFO_USE_PROTECTION BIT(1)
-#घोषणा RTW_ERP_INFO_BARKER_PREAMBLE_MODE BIT(2)
+#define RTW_ERP_INFO_NON_ERP_PRESENT BIT(0)
+#define RTW_ERP_INFO_USE_PROTECTION BIT(1)
+#define RTW_ERP_INFO_BARKER_PREAMBLE_MODE BIT(2)
 
 /* QoS, QOS */
-#घोषणा NORMAL_ACK			0
-#घोषणा NO_ACK				1
-#घोषणा NON_EXPLICIT_ACK		2
-#घोषणा BLOCK_ACK			3
+#define NORMAL_ACK			0
+#define NO_ACK				1
+#define NON_EXPLICIT_ACK		2
+#define BLOCK_ACK			3
 
-#अगर_अघोषित ETH_P_PAE
-#घोषणा ETH_P_PAE 0x888E /* Port Access Entity (IEEE 802.1X) */
-#पूर्ण_अगर /* ETH_P_PAE */
+#ifndef ETH_P_PAE
+#define ETH_P_PAE 0x888E /* Port Access Entity (IEEE 802.1X) */
+#endif /* ETH_P_PAE */
 
-#घोषणा ETH_P_PREAUTH 0x88C7 /* IEEE 802.11i pre-authentication */
+#define ETH_P_PREAUTH 0x88C7 /* IEEE 802.11i pre-authentication */
 
-#घोषणा ETH_P_ECONET	0x0018
+#define ETH_P_ECONET	0x0018
 
-#अगर_अघोषित ETH_P_80211_RAW
-#घोषणा ETH_P_80211_RAW (ETH_P_ECONET + 1)
-#पूर्ण_अगर
+#ifndef ETH_P_80211_RAW
+#define ETH_P_80211_RAW (ETH_P_ECONET + 1)
+#endif
 
 /* IEEE 802.11 defines */
 
-#घोषणा P80211_OUI_LEN 3
+#define P80211_OUI_LEN 3
 
-काष्ठा ieee80211_snap_hdr अणु
+struct ieee80211_snap_hdr {
 	u8    dsap;   /* always 0xAA */
 	u8    ssap;   /* always 0xAA */
 	u8    ctrl;   /* always 0x03 */
 	u8    oui[P80211_OUI_LEN];    /* organizational universal id */
-पूर्ण __packed;
+} __packed;
 
-#घोषणा SNAP_SIZE माप(काष्ठा ieee80211_snap_hdr)
+#define SNAP_SIZE sizeof(struct ieee80211_snap_hdr)
 
-#घोषणा WLAN_QC_GET_TID(qc) ((qc) & 0x0f)
+#define WLAN_QC_GET_TID(qc) ((qc) & 0x0f)
 
-#घोषणा WLAN_GET_SEQ_FRAG(seq) ((seq) & RTW_IEEE80211_SCTL_FRAG)
-#घोषणा WLAN_GET_SEQ_SEQ(seq)  ((seq) & RTW_IEEE80211_SCTL_SEQ)
+#define WLAN_GET_SEQ_FRAG(seq) ((seq) & RTW_IEEE80211_SCTL_FRAG)
+#define WLAN_GET_SEQ_SEQ(seq)  ((seq) & RTW_IEEE80211_SCTL_SEQ)
 
 /* Non standard?  Not in <linux/ieee80211.h> */
-#घोषणा WLAN_REASON_EXPIRATION_CHK 65535
+#define WLAN_REASON_EXPIRATION_CHK 65535
 
-#घोषणा IEEE80211_MGMT_HDR_LEN 24
-#घोषणा IEEE80211_DATA_HDR3_LEN 24
-#घोषणा IEEE80211_DATA_HDR4_LEN 30
+#define IEEE80211_MGMT_HDR_LEN 24
+#define IEEE80211_DATA_HDR3_LEN 24
+#define IEEE80211_DATA_HDR4_LEN 30
 
-#घोषणा IEEE80211_CCK_MODULATION	BIT(0)
-#घोषणा IEEE80211_OFDM_MODULATION	BIT(1)
+#define IEEE80211_CCK_MODULATION	BIT(0)
+#define IEEE80211_OFDM_MODULATION	BIT(1)
 
-#घोषणा IEEE80211_24GHZ_BAND	BIT(0)
-#घोषणा IEEE80211_52GHZ_BAND	BIT(1)
+#define IEEE80211_24GHZ_BAND	BIT(0)
+#define IEEE80211_52GHZ_BAND	BIT(1)
 
-#घोषणा IEEE80211_CCK_RATE_LEN			4
-#घोषणा IEEE80211_NUM_OFDM_RATESLEN	8
+#define IEEE80211_CCK_RATE_LEN			4
+#define IEEE80211_NUM_OFDM_RATESLEN	8
 
-#घोषणा IEEE80211_CCK_RATE_1MB			0x02
-#घोषणा IEEE80211_CCK_RATE_2MB			0x04
-#घोषणा IEEE80211_CCK_RATE_5MB			0x0B
-#घोषणा IEEE80211_CCK_RATE_11MB			0x16
-#घोषणा IEEE80211_OFDM_RATE_LEN			8
-#घोषणा IEEE80211_OFDM_RATE_6MB			0x0C
-#घोषणा IEEE80211_OFDM_RATE_9MB			0x12
-#घोषणा IEEE80211_OFDM_RATE_12MB		0x18
-#घोषणा IEEE80211_OFDM_RATE_18MB		0x24
-#घोषणा IEEE80211_OFDM_RATE_24MB		0x30
-#घोषणा IEEE80211_OFDM_RATE_36MB		0x48
-#घोषणा IEEE80211_OFDM_RATE_48MB		0x60
-#घोषणा IEEE80211_OFDM_RATE_54MB		0x6C
-#घोषणा IEEE80211_BASIC_RATE_MASK		0x80
+#define IEEE80211_CCK_RATE_1MB			0x02
+#define IEEE80211_CCK_RATE_2MB			0x04
+#define IEEE80211_CCK_RATE_5MB			0x0B
+#define IEEE80211_CCK_RATE_11MB			0x16
+#define IEEE80211_OFDM_RATE_LEN			8
+#define IEEE80211_OFDM_RATE_6MB			0x0C
+#define IEEE80211_OFDM_RATE_9MB			0x12
+#define IEEE80211_OFDM_RATE_12MB		0x18
+#define IEEE80211_OFDM_RATE_18MB		0x24
+#define IEEE80211_OFDM_RATE_24MB		0x30
+#define IEEE80211_OFDM_RATE_36MB		0x48
+#define IEEE80211_OFDM_RATE_48MB		0x60
+#define IEEE80211_OFDM_RATE_54MB		0x6C
+#define IEEE80211_BASIC_RATE_MASK		0x80
 
-#घोषणा IEEE80211_CCK_RATE_1MB_MASK		BIT(0)
-#घोषणा IEEE80211_CCK_RATE_2MB_MASK		BIT(1)
-#घोषणा IEEE80211_CCK_RATE_5MB_MASK		BIT(2)
-#घोषणा IEEE80211_CCK_RATE_11MB_MASK		BIT(3)
-#घोषणा IEEE80211_OFDM_RATE_6MB_MASK		BIT(4)
-#घोषणा IEEE80211_OFDM_RATE_9MB_MASK		BIT(5)
-#घोषणा IEEE80211_OFDM_RATE_12MB_MASK		BIT(6)
-#घोषणा IEEE80211_OFDM_RATE_18MB_MASK		BIT(7)
-#घोषणा IEEE80211_OFDM_RATE_24MB_MASK		BIT(8)
-#घोषणा IEEE80211_OFDM_RATE_36MB_MASK		BIT(9)
-#घोषणा IEEE80211_OFDM_RATE_48MB_MASK		BIT(10)
-#घोषणा IEEE80211_OFDM_RATE_54MB_MASK		BIT(11)
+#define IEEE80211_CCK_RATE_1MB_MASK		BIT(0)
+#define IEEE80211_CCK_RATE_2MB_MASK		BIT(1)
+#define IEEE80211_CCK_RATE_5MB_MASK		BIT(2)
+#define IEEE80211_CCK_RATE_11MB_MASK		BIT(3)
+#define IEEE80211_OFDM_RATE_6MB_MASK		BIT(4)
+#define IEEE80211_OFDM_RATE_9MB_MASK		BIT(5)
+#define IEEE80211_OFDM_RATE_12MB_MASK		BIT(6)
+#define IEEE80211_OFDM_RATE_18MB_MASK		BIT(7)
+#define IEEE80211_OFDM_RATE_24MB_MASK		BIT(8)
+#define IEEE80211_OFDM_RATE_36MB_MASK		BIT(9)
+#define IEEE80211_OFDM_RATE_48MB_MASK		BIT(10)
+#define IEEE80211_OFDM_RATE_54MB_MASK		BIT(11)
 
-#घोषणा IEEE80211_CCK_RATES_MASK		0x0000000F
-#घोषणा IEEE80211_CCK_BASIC_RATES_MASK	(IEEE80211_CCK_RATE_1MB_MASK | \
+#define IEEE80211_CCK_RATES_MASK		0x0000000F
+#define IEEE80211_CCK_BASIC_RATES_MASK	(IEEE80211_CCK_RATE_1MB_MASK | \
 	IEEE80211_CCK_RATE_2MB_MASK)
-#घोषणा IEEE80211_CCK_DEFAULT_RATES_MASK				\
+#define IEEE80211_CCK_DEFAULT_RATES_MASK				\
 	(IEEE80211_CCK_BASIC_RATES_MASK |				\
 	IEEE80211_CCK_RATE_5MB_MASK |					\
 	IEEE80211_CCK_RATE_11MB_MASK)
 
-#घोषणा IEEE80211_OFDM_RATES_MASK		0x00000FF0
-#घोषणा IEEE80211_OFDM_BASIC_RATES_MASK	(IEEE80211_OFDM_RATE_6MB_MASK | \
+#define IEEE80211_OFDM_RATES_MASK		0x00000FF0
+#define IEEE80211_OFDM_BASIC_RATES_MASK	(IEEE80211_OFDM_RATE_6MB_MASK | \
 	IEEE80211_OFDM_RATE_12MB_MASK |					\
 	IEEE80211_OFDM_RATE_24MB_MASK)
-#घोषणा IEEE80211_OFDM_DEFAULT_RATES_MASK				\
+#define IEEE80211_OFDM_DEFAULT_RATES_MASK				\
 	(IEEE80211_OFDM_BASIC_RATES_MASK |				\
 	IEEE80211_OFDM_RATE_9MB_MASK  |					\
 	IEEE80211_OFDM_RATE_18MB_MASK |					\
@@ -395,64 +394,64 @@
 	IEEE80211_OFDM_RATE_48MB_MASK |					\
 	IEEE80211_OFDM_RATE_54MB_MASK)
 
-#घोषणा IEEE80211_NUM_OFDM_RATES	8
-#घोषणा IEEE80211_NUM_CCK_RATES		4
-#घोषणा IEEE80211_OFDM_SHIFT_MASK_A	4
+#define IEEE80211_NUM_OFDM_RATES	8
+#define IEEE80211_NUM_CCK_RATES		4
+#define IEEE80211_OFDM_SHIFT_MASK_A	4
 
 /* IEEE 802.11 requires that STA supports concurrent reception of at least
  * three fragmented frames. This define can be increased to support more
  * concurrent frames, but it should be noted that each entry can consume about
- * 2 kB of RAM and increasing cache size will slow करोwn frame reassembly.
+ * 2 kB of RAM and increasing cache size will slow down frame reassembly.
  */
-#घोषणा IEEE80211_FRAG_CACHE_LEN 4
+#define IEEE80211_FRAG_CACHE_LEN 4
 
-#घोषणा SEC_KEY_1	BIT(0)
-#घोषणा SEC_KEY_2	BIT(1)
-#घोषणा SEC_KEY_3	BIT(2)
-#घोषणा SEC_KEY_4	BIT(3)
-#घोषणा SEC_ACTIVE_KEY  BIT(4)
-#घोषणा SEC_AUTH_MODE   BIT(5)
-#घोषणा SEC_UNICAST_GROUP BIT(6)
-#घोषणा SEC_LEVEL	BIT(7)
-#घोषणा SEC_ENABLED     BIT(8)
+#define SEC_KEY_1	BIT(0)
+#define SEC_KEY_2	BIT(1)
+#define SEC_KEY_3	BIT(2)
+#define SEC_KEY_4	BIT(3)
+#define SEC_ACTIVE_KEY  BIT(4)
+#define SEC_AUTH_MODE   BIT(5)
+#define SEC_UNICAST_GROUP BIT(6)
+#define SEC_LEVEL	BIT(7)
+#define SEC_ENABLED     BIT(8)
 
-#घोषणा SEC_LEVEL_0      0 /* None */
-#घोषणा SEC_LEVEL_1      1 /* WEP 40 and 104 bit */
-#घोषणा SEC_LEVEL_2      2 /* Level 1 + TKIP */
-#घोषणा SEC_LEVEL_2_CKIP 3 /* Level 1 + CKIP */
-#घोषणा SEC_LEVEL_3      4 /* Level 2 + CCMP */
+#define SEC_LEVEL_0      0 /* None */
+#define SEC_LEVEL_1      1 /* WEP 40 and 104 bit */
+#define SEC_LEVEL_2      2 /* Level 1 + TKIP */
+#define SEC_LEVEL_2_CKIP 3 /* Level 1 + CKIP */
+#define SEC_LEVEL_3      4 /* Level 2 + CCMP */
 
-#घोषणा WEP_KEYS 4
-#घोषणा WEP_KEY_LEN 13
+#define WEP_KEYS 4
+#define WEP_KEY_LEN 13
 
 /* SWEEP TABLE ENTRIES NUMBER*/
-#घोषणा MAX_SWEEP_TAB_ENTRIES		  42
-#घोषणा MAX_SWEEP_TAB_ENTRIES_PER_PACKET  7
+#define MAX_SWEEP_TAB_ENTRIES		  42
+#define MAX_SWEEP_TAB_ENTRIES_PER_PACKET  7
 /* MAX_RATES_LENGTH needs to be 12.  The spec says 8, and many APs
- * only use 8, and then use extended rates क्रम the reमुख्यing supported
+ * only use 8, and then use extended rates for the remaining supported
  * rates.  Other APs, however, stick all of their supported rates on the
- * मुख्य rates inक्रमmation element...
+ * main rates information element...
  */
-#घोषणा MAX_RATES_LENGTH		((u8)12)
-#घोषणा MAX_RATES_EX_LENGTH		((u8)16)
-#घोषणा MAX_NETWORK_COUNT		128
-#घोषणा MAX_CHANNEL_NUMBER		161
-#घोषणा IEEE80211_SOFTMAC_SCAN_TIME	400
+#define MAX_RATES_LENGTH		((u8)12)
+#define MAX_RATES_EX_LENGTH		((u8)16)
+#define MAX_NETWORK_COUNT		128
+#define MAX_CHANNEL_NUMBER		161
+#define IEEE80211_SOFTMAC_SCAN_TIME	400
 /* HZ / 2) */
-#घोषणा IEEE80211_SOFTMAC_ASSOC_RETRY_TIME (HZ * 2)
+#define IEEE80211_SOFTMAC_ASSOC_RETRY_TIME (HZ * 2)
 
-#घोषणा CRC_LENGTH		 4U
+#define CRC_LENGTH		 4U
 
-#घोषणा MAX_WPA_IE_LEN (256)
-#घोषणा MAX_WPS_IE_LEN (512)
-#घोषणा MAX_P2P_IE_LEN (256)
-#घोषणा MAX_WFD_IE_LEN (128)
+#define MAX_WPA_IE_LEN (256)
+#define MAX_WPS_IE_LEN (512)
+#define MAX_P2P_IE_LEN (256)
+#define MAX_WFD_IE_LEN (128)
 
-#घोषणा NETWORK_EMPTY_ESSID	BIT(0)
-#घोषणा NETWORK_HAS_OFDM	BIT(1)
-#घोषणा NETWORK_HAS_CCK		BIT(2)
+#define NETWORK_EMPTY_ESSID	BIT(0)
+#define NETWORK_HAS_OFDM	BIT(1)
+#define NETWORK_HAS_CCK		BIT(2)
 
-#घोषणा IW_ESSID_MAX_SIZE 32
+#define IW_ESSID_MAX_SIZE 32
 /*
  * join_res:
  * -1: authentication fail
@@ -460,15 +459,15 @@
  * > 0: TID
  */
 
-क्रमागत ieee80211_state अणु
+enum ieee80211_state {
 	/* the card is not linked at all */
 	IEEE80211_NOLINK = 0,
 
-	/* IEEE80211_ASSOCIATING* are क्रम BSS client mode
-	 * the driver shall not perक्रमm RX filtering unless
+	/* IEEE80211_ASSOCIATING* are for BSS client mode
+	 * the driver shall not perform RX filtering unless
 	 * the state is LINKED.
-	 * The driver shall just check क्रम the state LINKED and
-	 * शेषs to NOLINK क्रम ALL the other states (including
+	 * The driver shall just check for the state LINKED and
+	 * defaults to NOLINK for ALL the other states (including
 	 * LINKED_SCANNING)
 	 */
 
@@ -491,33 +490,33 @@
 
 	/* same as LINKED, but the driver shall apply RX filter
 	 * rules as we are in NO_LINK mode. As the card is still
-	 * logically linked, but it is करोing a syncro site survey
+	 * logically linked, but it is doing a syncro site survey
 	 * then it will be back to LINKED state.
 	 */
 	IEEE80211_LINKED_SCANNING,
 
-पूर्ण;
+};
 
-#घोषणा DEFAULT_MAX_SCAN_AGE (15 * HZ)
-#घोषणा DEFAULT_FTS 2346
+#define DEFAULT_MAX_SCAN_AGE (15 * HZ)
+#define DEFAULT_FTS 2346
 
-#घोषणा CFG_IEEE80211_RESERVE_FCS	BIT(0)
-#घोषणा CFG_IEEE80211_COMPUTE_FCS	BIT(1)
+#define CFG_IEEE80211_RESERVE_FCS	BIT(0)
+#define CFG_IEEE80211_COMPUTE_FCS	BIT(1)
 
-#घोषणा MAXTID	16
+#define MAXTID	16
 
-#घोषणा IEEE_A	    BIT(0)
-#घोषणा IEEE_B	    BIT(1)
-#घोषणा IEEE_G	    BIT(2)
-#घोषणा IEEE_MODE_MASK    (IEEE_A | IEEE_B | IEEE_G)
+#define IEEE_A	    BIT(0)
+#define IEEE_B	    BIT(1)
+#define IEEE_G	    BIT(2)
+#define IEEE_MODE_MASK    (IEEE_A | IEEE_B | IEEE_G)
 
 /* Action category code */
-क्रमागत rtw_ieee80211_category अणु
+enum rtw_ieee80211_category {
 	RTW_WLAN_CATEGORY_SPECTRUM_MGMT = 0,
 	RTW_WLAN_CATEGORY_QOS = 1,
 	RTW_WLAN_CATEGORY_DLS = 2,
 	RTW_WLAN_CATEGORY_BACK = 3,
-	RTW_WLAN_CATEGORY_PUBLIC = 4, /* IEEE 802.11 खुला action frames */
+	RTW_WLAN_CATEGORY_PUBLIC = 4, /* IEEE 802.11 public action frames */
 	RTW_WLAN_CATEGORY_RADIO_MEASUREMENT  = 5,
 	RTW_WLAN_CATEGORY_FT = 6,
 	RTW_WLAN_CATEGORY_HT = 7,
@@ -525,9 +524,9 @@
 	RTW_WLAN_CATEGORY_TDLS = 12,
 	RTW_WLAN_CATEGORY_WMM = 17,
 	RTW_WLAN_CATEGORY_P2P = 0x7f,/* P2P action frames */
-पूर्ण;
+};
 
-क्रमागत _PUBLIC_ACTION अणु
+enum _PUBLIC_ACTION {
 	ACT_PUBLIC_BSSCOEXIST = 0, /*  20/40 BSS Coexistence */
 	ACT_PUBLIC_DSE_ENABLE = 1,
 	ACT_PUBLIC_DSE_DEENABLE = 2,
@@ -537,7 +536,7 @@
 	ACT_PUBLIC_DSE_MSR_RPRT = 6,
 	ACT_PUBLIC_MP = 7, /*  Measurement Pilot */
 	ACT_PUBLIC_DSE_PWR_CONSTRAINT = 8,
-	ACT_PUBLIC_VENDOR = 9, /*  क्रम WIFI_सूचीECT */
+	ACT_PUBLIC_VENDOR = 9, /*  for WIFI_DIRECT */
 	ACT_PUBLIC_GAS_INITIAL_REQ = 10,
 	ACT_PUBLIC_GAS_INITIAL_RSP = 11,
 	ACT_PUBLIC_GAS_COMEBACK_REQ = 12,
@@ -545,17 +544,17 @@
 	ACT_PUBLIC_TDLS_DISCOVERY_RSP = 14,
 	ACT_PUBLIC_LOCATION_TRACK = 15,
 	ACT_PUBLIC_MAX
-पूर्ण;
+};
 
 /* BACK action code */
-क्रमागत rtw_ieee80211_back_actioncode अणु
+enum rtw_ieee80211_back_actioncode {
 	RTW_WLAN_ACTION_ADDBA_REQ = 0,
 	RTW_WLAN_ACTION_ADDBA_RESP = 1,
 	RTW_WLAN_ACTION_DELBA = 2,
-पूर्ण;
+};
 
 /* HT features action code */
-क्रमागत rtw_ieee80211_ht_actioncode अणु
+enum rtw_ieee80211_ht_actioncode {
 	RTW_WLAN_ACTION_NOTIFY_CH_WIDTH = 0,
 	RTW_WLAN_ACTION_SM_PS = 1,
 	RTW_WLAN_ACTION_PSPM = 2,
@@ -565,42 +564,42 @@
 	RTW_WLAN_ACTION_MIMP_CP_BF = 6,
 	RTW_WLAN_ACTION_ASEL_INDICATES_FB = 7,
 	RTW_WLAN_ACTION_HI_INFO_EXCHG = 8,
-पूर्ण;
+};
 
 /* BACK (block-ack) parties */
-क्रमागत rtw_ieee80211_back_parties अणु
+enum rtw_ieee80211_back_parties {
 	RTW_WLAN_BACK_RECIPIENT = 0,
 	RTW_WLAN_BACK_INITIATOR = 1,
 	RTW_WLAN_BACK_TIMER = 2,
-पूर्ण;
+};
 
-#घोषणा OUI_MICROSOFT 0x0050f2 /* Microsoft (also used in Wi-Fi specs)
+#define OUI_MICROSOFT 0x0050f2 /* Microsoft (also used in Wi-Fi specs)
 				* 00:50:F2
 				*/
-#घोषणा WME_OUI_TYPE 2
-#घोषणा WME_OUI_SUBTYPE_INFORMATION_ELEMENT 0
-#घोषणा WME_OUI_SUBTYPE_PARAMETER_ELEMENT 1
-#घोषणा WME_OUI_SUBTYPE_TSPEC_ELEMENT 2
-#घोषणा WME_VERSION 1
+#define WME_OUI_TYPE 2
+#define WME_OUI_SUBTYPE_INFORMATION_ELEMENT 0
+#define WME_OUI_SUBTYPE_PARAMETER_ELEMENT 1
+#define WME_OUI_SUBTYPE_TSPEC_ELEMENT 2
+#define WME_VERSION 1
 
-#घोषणा WME_ACTION_CODE_SETUP_REQUEST 0
-#घोषणा WME_ACTION_CODE_SETUP_RESPONSE 1
-#घोषणा WME_ACTION_CODE_TEARDOWN 2
+#define WME_ACTION_CODE_SETUP_REQUEST 0
+#define WME_ACTION_CODE_SETUP_RESPONSE 1
+#define WME_ACTION_CODE_TEARDOWN 2
 
-#घोषणा WME_SETUP_RESPONSE_STATUS_ADMISSION_ACCEPTED 0
-#घोषणा WME_SETUP_RESPONSE_STATUS_INVALID_PARAMETERS 1
-#घोषणा WME_SETUP_RESPONSE_STATUS_REFUSED 3
+#define WME_SETUP_RESPONSE_STATUS_ADMISSION_ACCEPTED 0
+#define WME_SETUP_RESPONSE_STATUS_INVALID_PARAMETERS 1
+#define WME_SETUP_RESPONSE_STATUS_REFUSED 3
 
-#घोषणा WME_TSPEC_सूचीECTION_UPLINK 0
-#घोषणा WME_TSPEC_सूचीECTION_DOWNLINK 1
-#घोषणा WME_TSPEC_सूचीECTION_BI_सूचीECTIONAL 3
+#define WME_TSPEC_DIRECTION_UPLINK 0
+#define WME_TSPEC_DIRECTION_DOWNLINK 1
+#define WME_TSPEC_DIRECTION_BI_DIRECTIONAL 3
 
-#घोषणा OUI_BROADCOM 0x00904c /* Broadcom (Epigram) */
+#define OUI_BROADCOM 0x00904c /* Broadcom (Epigram) */
 
-#घोषणा VENDOR_HT_CAPAB_OUI_TYPE 0x33 /* 00-90-4c:0x33 */
+#define VENDOR_HT_CAPAB_OUI_TYPE 0x33 /* 00-90-4c:0x33 */
 
 /**
- * क्रमागत rtw_ieee80211_channel_flags - channel flags
+ * enum rtw_ieee80211_channel_flags - channel flags
  *
  * Channel flags set by the regulatory control code.
  *
@@ -614,34 +613,34 @@
  * @RTW_IEEE80211_CHAN_NO_HT40MINUS: extension channel below this channel
  *      is not permitted.
  */
-क्रमागत rtw_ieee80211_channel_flags अणु
+enum rtw_ieee80211_channel_flags {
 	RTW_IEEE80211_CHAN_DISABLED	 = BIT(0),
 	RTW_IEEE80211_CHAN_PASSIVE_SCAN     = BIT(1),
 	RTW_IEEE80211_CHAN_NO_IBSS	  = BIT(2),
 	RTW_IEEE80211_CHAN_RADAR	    = BIT(3),
 	RTW_IEEE80211_CHAN_NO_HT40PLUS      = BIT(4),
 	RTW_IEEE80211_CHAN_NO_HT40MINUS     = BIT(5),
-पूर्ण;
+};
 
-#घोषणा RTW_IEEE80211_CHAN_NO_HT40 \
+#define RTW_IEEE80211_CHAN_NO_HT40 \
 	  (RTW_IEEE80211_CHAN_NO_HT40PLUS | RTW_IEEE80211_CHAN_NO_HT40MINUS)
 
 /* Represent channel details, subset of ieee80211_channel */
-काष्ठा rtw_ieee80211_channel अणु
+struct rtw_ieee80211_channel {
 	u16 hw_value;
 	u32 flags;
-पूर्ण;
+};
 
-#घोषणा CHAN_FMT \
+#define CHAN_FMT \
 	"hw_value:%u, " \
 	"flags:0x%08x" \
 
-#घोषणा CHAN_ARG(channel) \
+#define CHAN_ARG(channel) \
 	(channel)->hw_value \
 	, (channel)->flags \
 
-/* Parsed Inक्रमmation Elements */
-काष्ठा rtw_ieee802_11_elems अणु
+/* Parsed Information Elements */
+struct rtw_ieee802_11_elems {
 	u8 *ssid;
 	u8 ssid_len;
 	u8 *supp_rates;
@@ -672,86 +671,86 @@
 	u8 wme_tspec_len;
 	u8 *wps_ie;
 	u8 wps_ie_len;
-	u8 *घातer_cap;
-	u8 घातer_cap_len;
+	u8 *power_cap;
+	u8 power_cap_len;
 	u8 *supp_channels;
 	u8 supp_channels_len;
 	u8 *mdie;
 	u8 mdie_len;
 	u8 *ftie;
 	u8 ftie_len;
-	u8 *समयout_पूर्णांक;
-	u8 समयout_पूर्णांक_len;
+	u8 *timeout_int;
+	u8 timeout_int_len;
 	u8 *ht_capabilities;
 	u8 ht_capabilities_len;
 	u8 *ht_operation;
 	u8 ht_operation_len;
-	u8 *venकरोr_ht_cap;
-	u8 venकरोr_ht_cap_len;
-पूर्ण;
+	u8 *vendor_ht_cap;
+	u8 vendor_ht_cap_len;
+};
 
-क्रमागत parse_res अणु
+enum parse_res {
 	ParseOK = 0,
 	ParseUnknown = 1,
 	ParseFailed = -1
-पूर्ण;
+};
 
-क्रमागत parse_res rtw_ieee802_11_parse_elems(u8 *start, uपूर्णांक len,
-					  काष्ठा rtw_ieee802_11_elems *elems,
-					  पूर्णांक show_errors);
+enum parse_res rtw_ieee802_11_parse_elems(u8 *start, uint len,
+					  struct rtw_ieee802_11_elems *elems,
+					  int show_errors);
 
-u8 *rtw_set_fixed_ie(व्योम *pbuf, अचिन्हित पूर्णांक len,
-		     व्योम *source, अचिन्हित पूर्णांक *frlen);
-u8 *rtw_set_ie(u8 *pbuf, पूर्णांक index, uपूर्णांक len, u8 *source, uपूर्णांक *frlen);
+u8 *rtw_set_fixed_ie(void *pbuf, unsigned int len,
+		     void *source, unsigned int *frlen);
+u8 *rtw_set_ie(u8 *pbuf, int index, uint len, u8 *source, uint *frlen);
 
-क्रमागत secondary_ch_offset अणु
+enum secondary_ch_offset {
 	SCN = 0, /* no secondary channel */
 	SCA = 1, /* secondary channel above */
 	SCB = 3,  /* secondary channel below */
-पूर्ण;
+};
 
-u8 *rtw_get_ie(u8 *pbuf, पूर्णांक index, uपूर्णांक *len, पूर्णांक limit);
+u8 *rtw_get_ie(u8 *pbuf, int index, uint *len, int limit);
 
-व्योम rtw_set_supported_rate(u8 *SupportedRates, uपूर्णांक mode);
+void rtw_set_supported_rate(u8 *SupportedRates, uint mode);
 
-अचिन्हित अक्षर *rtw_get_wpa_ie(अचिन्हित अक्षर *pie, uपूर्णांक *wpa_ie_len, पूर्णांक limit);
-अचिन्हित अक्षर *rtw_get_wpa2_ie(अचिन्हित अक्षर *pie, uपूर्णांक *rsn_ie_len, पूर्णांक limit);
-पूर्णांक rtw_get_wpa_cipher_suite(u8 *s);
-पूर्णांक rtw_get_wpa2_cipher_suite(u8 *s);
-पूर्णांक rtw_get_wapi_ie(u8 *in_ie, uपूर्णांक in_len, u8 *wapi_ie, u16 *wapi_len);
-पूर्णांक rtw_parse_wpa_ie(u8 *wpa_ie, पूर्णांक wpa_ie_len, पूर्णांक *group_cipher,
-		     पूर्णांक *pairwise_cipher, पूर्णांक *is_8021x);
-पूर्णांक rtw_parse_wpa2_ie(u8 *wpa_ie, पूर्णांक wpa_ie_len, पूर्णांक *group_cipher,
-		      पूर्णांक *pairwise_cipher, पूर्णांक *is_8021x);
+unsigned char *rtw_get_wpa_ie(unsigned char *pie, uint *wpa_ie_len, int limit);
+unsigned char *rtw_get_wpa2_ie(unsigned char *pie, uint *rsn_ie_len, int limit);
+int rtw_get_wpa_cipher_suite(u8 *s);
+int rtw_get_wpa2_cipher_suite(u8 *s);
+int rtw_get_wapi_ie(u8 *in_ie, uint in_len, u8 *wapi_ie, u16 *wapi_len);
+int rtw_parse_wpa_ie(u8 *wpa_ie, int wpa_ie_len, int *group_cipher,
+		     int *pairwise_cipher, int *is_8021x);
+int rtw_parse_wpa2_ie(u8 *wpa_ie, int wpa_ie_len, int *group_cipher,
+		      int *pairwise_cipher, int *is_8021x);
 
-व्योम rtw_get_sec_ie(u8 *in_ie, uपूर्णांक in_len, u8 *rsn_ie, u16 *rsn_len,
+void rtw_get_sec_ie(u8 *in_ie, uint in_len, u8 *rsn_ie, u16 *rsn_len,
 		    u8 *wpa_ie, u16 *wpa_len);
 
-u8 rtw_is_wps_ie(u8 *ie_ptr, uपूर्णांक *wps_ielen);
-u8 *rtw_get_wps_ie(u8 *in_ie, uपूर्णांक in_len, u8 *wps_ie, uपूर्णांक *wps_ielen);
-u8 *rtw_get_wps_attr(u8 *wps_ie, uपूर्णांक wps_ielen, u16 target_attr_id,
+u8 rtw_is_wps_ie(u8 *ie_ptr, uint *wps_ielen);
+u8 *rtw_get_wps_ie(u8 *in_ie, uint in_len, u8 *wps_ie, uint *wps_ielen);
+u8 *rtw_get_wps_attr(u8 *wps_ie, uint wps_ielen, u16 target_attr_id,
 		     u8 *buf_attr, u32 *len_attr);
-u8 *rtw_get_wps_attr_content(u8 *wps_ie, uपूर्णांक wps_ielen, u16 target_attr_id,
-			     u8 *buf_content, uपूर्णांक *len_content);
+u8 *rtw_get_wps_attr_content(u8 *wps_ie, uint wps_ielen, u16 target_attr_id,
+			     u8 *buf_content, uint *len_content);
 
-uपूर्णांक	rtw_get_rateset_len(u8	*rateset);
+uint	rtw_get_rateset_len(u8	*rateset);
 
-काष्ठा registry_priv;
-पूर्णांक rtw_generate_ie(काष्ठा registry_priv *pregistrypriv);
+struct registry_priv;
+int rtw_generate_ie(struct registry_priv *pregistrypriv);
 
-पूर्णांक rtw_get_bit_value_from_ieee_value(u8 val);
+int rtw_get_bit_value_from_ieee_value(u8 val);
 
 bool rtw_is_cckrates_included(u8 *rate);
 
 bool rtw_is_cckratesonly_included(u8 *rate);
 
-पूर्णांक rtw_check_network_type(अचिन्हित अक्षर *rate);
+int rtw_check_network_type(unsigned char *rate);
 
-व्योम rtw_get_bcn_info(काष्ठा wlan_network *pnetwork);
+void rtw_get_bcn_info(struct wlan_network *pnetwork);
 
-व्योम rtw_macaddr_cfg(u8 *mac_addr);
+void rtw_macaddr_cfg(u8 *mac_addr);
 
-u16 rtw_mcs_rate(u8 rf_type, u8 bw_40MHz, u8 लघु_GI_20, u8 लघु_GI_40,
-		 अचिन्हित अक्षर *MCS_rate);
+u16 rtw_mcs_rate(u8 rf_type, u8 bw_40MHz, u8 short_GI_20, u8 short_GI_40,
+		 unsigned char *MCS_rate);
 
-#पूर्ण_अगर /* IEEE80211_H */
+#endif /* IEEE80211_H */

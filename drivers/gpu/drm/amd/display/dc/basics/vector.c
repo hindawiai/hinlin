@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,287 +23,287 @@
  *
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "dm_services.h"
-#समावेश "include/vector.h"
+#include "dm_services.h"
+#include "include/vector.h"
 
-bool dal_vector_स्थिरruct(
-	काष्ठा vector *vector,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t capacity,
-	uपूर्णांक32_t काष्ठा_size)
-अणु
-	vector->container = शून्य;
+bool dal_vector_construct(
+	struct vector *vector,
+	struct dc_context *ctx,
+	uint32_t capacity,
+	uint32_t struct_size)
+{
+	vector->container = NULL;
 
-	अगर (!काष्ठा_size || !capacity) अणु
+	if (!struct_size || !capacity) {
 		/* Container must be non-zero size*/
 		BREAK_TO_DEBUGGER();
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	vector->container = kसुस्मृति(capacity, काष्ठा_size, GFP_KERNEL);
-	अगर (vector->container == शून्य)
-		वापस false;
+	vector->container = kcalloc(capacity, struct_size, GFP_KERNEL);
+	if (vector->container == NULL)
+		return false;
 	vector->capacity = capacity;
-	vector->काष्ठा_size = काष्ठा_size;
+	vector->struct_size = struct_size;
 	vector->count = 0;
 	vector->ctx = ctx;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool dal_vector_presized_coकाष्ठा(
-	काष्ठा vector *vector,
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t count,
-	व्योम *initial_value,
-	uपूर्णांक32_t काष्ठा_size)
-अणु
-	uपूर्णांक32_t i;
+static bool dal_vector_presized_costruct(
+	struct vector *vector,
+	struct dc_context *ctx,
+	uint32_t count,
+	void *initial_value,
+	uint32_t struct_size)
+{
+	uint32_t i;
 
-	vector->container = शून्य;
+	vector->container = NULL;
 
-	अगर (!काष्ठा_size || !count) अणु
+	if (!struct_size || !count) {
 		/* Container must be non-zero size*/
 		BREAK_TO_DEBUGGER();
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	vector->container = kसुस्मृति(count, काष्ठा_size, GFP_KERNEL);
+	vector->container = kcalloc(count, struct_size, GFP_KERNEL);
 
-	अगर (vector->container == शून्य)
-		वापस false;
+	if (vector->container == NULL)
+		return false;
 
-	/* If caller didn't supply initial value then the शेष
+	/* If caller didn't supply initial value then the default
 	 * of all zeros is expected, which is exactly what dal_alloc()
 	 * initialises the memory to. */
-	अगर (शून्य != initial_value) अणु
-		क्रम (i = 0; i < count; ++i)
-			स_हटाओ(
-				vector->container + i * काष्ठा_size,
+	if (NULL != initial_value) {
+		for (i = 0; i < count; ++i)
+			memmove(
+				vector->container + i * struct_size,
 				initial_value,
-				काष्ठा_size);
-	पूर्ण
+				struct_size);
+	}
 
 	vector->capacity = count;
-	vector->काष्ठा_size = काष्ठा_size;
+	vector->struct_size = struct_size;
 	vector->count = count;
-	वापस true;
-पूर्ण
+	return true;
+}
 
-काष्ठा vector *dal_vector_presized_create(
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t size,
-	व्योम *initial_value,
-	uपूर्णांक32_t काष्ठा_size)
-अणु
-	काष्ठा vector *vector = kzalloc(माप(काष्ठा vector), GFP_KERNEL);
+struct vector *dal_vector_presized_create(
+	struct dc_context *ctx,
+	uint32_t size,
+	void *initial_value,
+	uint32_t struct_size)
+{
+	struct vector *vector = kzalloc(sizeof(struct vector), GFP_KERNEL);
 
-	अगर (vector == शून्य)
-		वापस शून्य;
+	if (vector == NULL)
+		return NULL;
 
-	अगर (dal_vector_presized_coकाष्ठा(
-		vector, ctx, size, initial_value, काष्ठा_size))
-		वापस vector;
-
-	BREAK_TO_DEBUGGER();
-	kमुक्त(vector);
-	वापस शून्य;
-पूर्ण
-
-काष्ठा vector *dal_vector_create(
-	काष्ठा dc_context *ctx,
-	uपूर्णांक32_t capacity,
-	uपूर्णांक32_t काष्ठा_size)
-अणु
-	काष्ठा vector *vector = kzalloc(माप(काष्ठा vector), GFP_KERNEL);
-
-	अगर (vector == शून्य)
-		वापस शून्य;
-
-	अगर (dal_vector_स्थिरruct(vector, ctx, capacity, काष्ठा_size))
-		वापस vector;
+	if (dal_vector_presized_costruct(
+		vector, ctx, size, initial_value, struct_size))
+		return vector;
 
 	BREAK_TO_DEBUGGER();
-	kमुक्त(vector);
-	वापस शून्य;
-पूर्ण
+	kfree(vector);
+	return NULL;
+}
 
-व्योम dal_vector_deकाष्ठा(
-	काष्ठा vector *vector)
-अणु
-	kमुक्त(vector->container);
+struct vector *dal_vector_create(
+	struct dc_context *ctx,
+	uint32_t capacity,
+	uint32_t struct_size)
+{
+	struct vector *vector = kzalloc(sizeof(struct vector), GFP_KERNEL);
+
+	if (vector == NULL)
+		return NULL;
+
+	if (dal_vector_construct(vector, ctx, capacity, struct_size))
+		return vector;
+
+	BREAK_TO_DEBUGGER();
+	kfree(vector);
+	return NULL;
+}
+
+void dal_vector_destruct(
+	struct vector *vector)
+{
+	kfree(vector->container);
 	vector->count = 0;
 	vector->capacity = 0;
-पूर्ण
+}
 
-व्योम dal_vector_destroy(
-	काष्ठा vector **vector)
-अणु
-	अगर (vector == शून्य || *vector == शून्य)
-		वापस;
-	dal_vector_deकाष्ठा(*vector);
-	kमुक्त(*vector);
-	*vector = शून्य;
-पूर्ण
+void dal_vector_destroy(
+	struct vector **vector)
+{
+	if (vector == NULL || *vector == NULL)
+		return;
+	dal_vector_destruct(*vector);
+	kfree(*vector);
+	*vector = NULL;
+}
 
-uपूर्णांक32_t dal_vector_get_count(
-	स्थिर काष्ठा vector *vector)
-अणु
-	वापस vector->count;
-पूर्ण
+uint32_t dal_vector_get_count(
+	const struct vector *vector)
+{
+	return vector->count;
+}
 
-व्योम *dal_vector_at_index(
-	स्थिर काष्ठा vector *vector,
-	uपूर्णांक32_t index)
-अणु
-	अगर (vector->container == शून्य || index >= vector->count)
-		वापस शून्य;
-	वापस vector->container + (index * vector->काष्ठा_size);
-पूर्ण
+void *dal_vector_at_index(
+	const struct vector *vector,
+	uint32_t index)
+{
+	if (vector->container == NULL || index >= vector->count)
+		return NULL;
+	return vector->container + (index * vector->struct_size);
+}
 
-bool dal_vector_हटाओ_at_index(
-	काष्ठा vector *vector,
-	uपूर्णांक32_t index)
-अणु
-	अगर (index >= vector->count)
-		वापस false;
+bool dal_vector_remove_at_index(
+	struct vector *vector,
+	uint32_t index)
+{
+	if (index >= vector->count)
+		return false;
 
-	अगर (index != vector->count - 1)
-		स_हटाओ(
-			vector->container + (index * vector->काष्ठा_size),
-			vector->container + ((index + 1) * vector->काष्ठा_size),
-			(vector->count - index - 1) * vector->काष्ठा_size);
+	if (index != vector->count - 1)
+		memmove(
+			vector->container + (index * vector->struct_size),
+			vector->container + ((index + 1) * vector->struct_size),
+			(vector->count - index - 1) * vector->struct_size);
 	vector->count -= 1;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम dal_vector_set_at_index(
-	स्थिर काष्ठा vector *vector,
-	स्थिर व्योम *what,
-	uपूर्णांक32_t index)
-अणु
-	व्योम *where = dal_vector_at_index(vector, index);
+void dal_vector_set_at_index(
+	const struct vector *vector,
+	const void *what,
+	uint32_t index)
+{
+	void *where = dal_vector_at_index(vector, index);
 
-	अगर (!where) अणु
+	if (!where) {
 		BREAK_TO_DEBUGGER();
-		वापस;
-	पूर्ण
-	स_हटाओ(
+		return;
+	}
+	memmove(
 		where,
 		what,
-		vector->काष्ठा_size);
-पूर्ण
+		vector->struct_size);
+}
 
-अटल अंतरभूत uपूर्णांक32_t calc_increased_capacity(
-	uपूर्णांक32_t old_capacity)
-अणु
-	वापस old_capacity * 2;
-पूर्ण
+static inline uint32_t calc_increased_capacity(
+	uint32_t old_capacity)
+{
+	return old_capacity * 2;
+}
 
 bool dal_vector_insert_at(
-	काष्ठा vector *vector,
-	स्थिर व्योम *what,
-	uपूर्णांक32_t position)
-अणु
-	uपूर्णांक8_t *insert_address;
+	struct vector *vector,
+	const void *what,
+	uint32_t position)
+{
+	uint8_t *insert_address;
 
-	अगर (vector->count == vector->capacity) अणु
-		अगर (!dal_vector_reserve(
+	if (vector->count == vector->capacity) {
+		if (!dal_vector_reserve(
 			vector,
 			calc_increased_capacity(vector->capacity)))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	insert_address = vector->container + (vector->काष्ठा_size * position);
+	insert_address = vector->container + (vector->struct_size * position);
 
-	अगर (vector->count && position < vector->count)
-		स_हटाओ(
-			insert_address + vector->काष्ठा_size,
+	if (vector->count && position < vector->count)
+		memmove(
+			insert_address + vector->struct_size,
 			insert_address,
-			vector->काष्ठा_size * (vector->count - position));
+			vector->struct_size * (vector->count - position));
 
-	स_हटाओ(
+	memmove(
 		insert_address,
 		what,
-		vector->काष्ठा_size);
+		vector->struct_size);
 
 	vector->count++;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 bool dal_vector_append(
-	काष्ठा vector *vector,
-	स्थिर व्योम *item)
-अणु
-	वापस dal_vector_insert_at(vector, item, vector->count);
-पूर्ण
+	struct vector *vector,
+	const void *item)
+{
+	return dal_vector_insert_at(vector, item, vector->count);
+}
 
-काष्ठा vector *dal_vector_clone(
-	स्थिर काष्ठा vector *vector)
-अणु
-	काष्ठा vector *vec_cloned;
-	uपूर्णांक32_t count;
+struct vector *dal_vector_clone(
+	const struct vector *vector)
+{
+	struct vector *vec_cloned;
+	uint32_t count;
 
 	/* create new vector */
 	count = dal_vector_get_count(vector);
 
-	अगर (count == 0)
+	if (count == 0)
 		/* when count is 0 we still want to create clone of the vector
 		 */
 		vec_cloned = dal_vector_create(
 			vector->ctx,
 			vector->capacity,
-			vector->काष्ठा_size);
-	अन्यथा
+			vector->struct_size);
+	else
 		/* Call "presized create" version, independently of how the
 		 * original vector was created.
 		 * The owner of original vector must know how to treat the new
 		 * vector - as "presized" or as "regular".
-		 * But from vector poपूर्णांक of view it करोesn't matter. */
+		 * But from vector point of view it doesn't matter. */
 		vec_cloned = dal_vector_presized_create(vector->ctx, count,
-			शून्य,/* no initial value */
-			vector->काष्ठा_size);
+			NULL,/* no initial value */
+			vector->struct_size);
 
-	अगर (शून्य == vec_cloned) अणु
+	if (NULL == vec_cloned) {
 		BREAK_TO_DEBUGGER();
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/* copy vector's data */
-	स_हटाओ(vec_cloned->container, vector->container,
-			vec_cloned->काष्ठा_size * vec_cloned->capacity);
+	memmove(vec_cloned->container, vector->container,
+			vec_cloned->struct_size * vec_cloned->capacity);
 
-	वापस vec_cloned;
-पूर्ण
+	return vec_cloned;
+}
 
-uपूर्णांक32_t dal_vector_capacity(स्थिर काष्ठा vector *vector)
-अणु
-	वापस vector->capacity;
-पूर्ण
+uint32_t dal_vector_capacity(const struct vector *vector)
+{
+	return vector->capacity;
+}
 
-bool dal_vector_reserve(काष्ठा vector *vector, uपूर्णांक32_t capacity)
-अणु
-	व्योम *new_container;
+bool dal_vector_reserve(struct vector *vector, uint32_t capacity)
+{
+	void *new_container;
 
-	अगर (capacity <= vector->capacity)
-		वापस true;
+	if (capacity <= vector->capacity)
+		return true;
 
-	new_container = kपुनः_स्मृति(vector->container,
-				 capacity * vector->काष्ठा_size, GFP_KERNEL);
+	new_container = krealloc(vector->container,
+				 capacity * vector->struct_size, GFP_KERNEL);
 
-	अगर (new_container) अणु
+	if (new_container) {
 		vector->container = new_container;
 		vector->capacity = capacity;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम dal_vector_clear(काष्ठा vector *vector)
-अणु
+void dal_vector_clear(struct vector *vector)
+{
 	vector->count = 0;
-पूर्ण
+}

@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#समावेश "bpf_iter.h"
-#समावेश "bpf_tracing_net.h"
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include "bpf_iter.h"
+#include "bpf_tracing_net.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-अटल __attribute__((noअंतरभूत)) काष्ठा inode *SOCK_INODE(काष्ठा socket *socket)
-अणु
-	वापस &container_of(socket, काष्ठा socket_alloc, socket)->vfs_inode;
-पूर्ण
+static __attribute__((noinline)) struct inode *SOCK_INODE(struct socket *socket)
+{
+	return &container_of(socket, struct socket_alloc, socket)->vfs_inode;
+}
 
 SEC("iter/netlink")
-पूर्णांक dump_netlink(काष्ठा bpf_iter__netlink *ctx)
-अणु
-	काष्ठा seq_file *seq = ctx->meta->seq;
-	काष्ठा netlink_sock *nlk = ctx->sk;
-	अचिन्हित दीर्घ group, ino;
-	काष्ठा inode *inode;
-	काष्ठा socket *sk;
-	काष्ठा sock *s;
+int dump_netlink(struct bpf_iter__netlink *ctx)
+{
+	struct seq_file *seq = ctx->meta->seq;
+	struct netlink_sock *nlk = ctx->sk;
+	unsigned long group, ino;
+	struct inode *inode;
+	struct socket *sk;
+	struct sock *s;
 
-	अगर (nlk == (व्योम *)0)
-		वापस 0;
+	if (nlk == (void *)0)
+		return 0;
 
-	अगर (ctx->meta->seq_num == 0)
+	if (ctx->meta->seq_num == 0)
 		BPF_SEQ_PRINTF(seq, "sk               Eth Pid        Groups   "
 				    "Rmem     Wmem     Dump  Locks    Drops    "
 				    "Inode\n");
@@ -34,14 +33,14 @@ SEC("iter/netlink")
 	s = &nlk->sk;
 	BPF_SEQ_PRINTF(seq, "%pK %-3d ", s, s->sk_protocol);
 
-	अगर (!nlk->groups)  अणु
+	if (!nlk->groups)  {
 		group = 0;
-	पूर्ण अन्यथा अणु
-		/* FIXME: temporary use bpf_probe_पढ़ो_kernel here, needs
-		 * verअगरier support to करो direct access.
+	} else {
+		/* FIXME: temporary use bpf_probe_read_kernel here, needs
+		 * verifier support to do direct access.
 		 */
-		bpf_probe_पढ़ो_kernel(&group, माप(group), &nlk->groups[0]);
-	पूर्ण
+		bpf_probe_read_kernel(&group, sizeof(group), &nlk->groups[0]);
+	}
 	BPF_SEQ_PRINTF(seq, "%-10u %08x %-8d %-8d %-5d %-8d ",
 		       nlk->portid, (u32)group,
 		       s->sk_rmem_alloc.counter,
@@ -49,17 +48,17 @@ SEC("iter/netlink")
 		       nlk->cb_running, s->sk_refcnt.refs.counter);
 
 	sk = s->sk_socket;
-	अगर (!sk) अणु
+	if (!sk) {
 		ino = 0;
-	पूर्ण अन्यथा अणु
-		/* FIXME: container_of inside SOCK_INODE has a क्रमced
+	} else {
+		/* FIXME: container_of inside SOCK_INODE has a forced
 		 * type conversion, and direct access cannot be used
-		 * with current verअगरier.
+		 * with current verifier.
 		 */
 		inode = SOCK_INODE(sk);
-		bpf_probe_पढ़ो_kernel(&ino, माप(ino), &inode->i_ino);
-	पूर्ण
+		bpf_probe_read_kernel(&ino, sizeof(ino), &inode->i_ino);
+	}
 	BPF_SEQ_PRINTF(seq, "%-8u %-8lu\n", s->sk_drops.counter, ino);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

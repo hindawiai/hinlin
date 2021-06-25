@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * altera_jtaguart.c -- Altera JTAG UART driver
  *
@@ -10,401 +9,401 @@
  * (C) Copyright 2010, Tobias Klauser <tklauser@distanz.ch>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
-#समावेश <linux/console.h>
-#समावेश <linux/of.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/tty_flip.h>
-#समावेश <linux/serial.h>
-#समावेश <linux/serial_core.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/altera_jtaguart.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
+#include <linux/console.h>
+#include <linux/of.h>
+#include <linux/tty.h>
+#include <linux/tty_flip.h>
+#include <linux/serial.h>
+#include <linux/serial_core.h>
+#include <linux/platform_device.h>
+#include <linux/io.h>
+#include <linux/altera_jtaguart.h>
 
-#घोषणा DRV_NAME "altera_jtaguart"
+#define DRV_NAME "altera_jtaguart"
 
 /*
- * Altera JTAG UART रेजिस्टर definitions according to the Altera JTAG UART
+ * Altera JTAG UART register definitions according to the Altera JTAG UART
  * datasheet: https://www.altera.com/literature/hb/nios2/n2cpu_nii51009.pdf
  */
 
-#घोषणा ALTERA_JTAGUART_SIZE			8
+#define ALTERA_JTAGUART_SIZE			8
 
-#घोषणा ALTERA_JTAGUART_DATA_REG		0
+#define ALTERA_JTAGUART_DATA_REG		0
 
-#घोषणा ALTERA_JTAGUART_DATA_DATA_MSK		0x000000FF
-#घोषणा ALTERA_JTAGUART_DATA_RVALID_MSK		0x00008000
-#घोषणा ALTERA_JTAGUART_DATA_RAVAIL_MSK		0xFFFF0000
-#घोषणा ALTERA_JTAGUART_DATA_RAVAIL_OFF		16
+#define ALTERA_JTAGUART_DATA_DATA_MSK		0x000000FF
+#define ALTERA_JTAGUART_DATA_RVALID_MSK		0x00008000
+#define ALTERA_JTAGUART_DATA_RAVAIL_MSK		0xFFFF0000
+#define ALTERA_JTAGUART_DATA_RAVAIL_OFF		16
 
-#घोषणा ALTERA_JTAGUART_CONTROL_REG		4
+#define ALTERA_JTAGUART_CONTROL_REG		4
 
-#घोषणा ALTERA_JTAGUART_CONTROL_RE_MSK		0x00000001
-#घोषणा ALTERA_JTAGUART_CONTROL_WE_MSK		0x00000002
-#घोषणा ALTERA_JTAGUART_CONTROL_RI_MSK		0x00000100
-#घोषणा ALTERA_JTAGUART_CONTROL_RI_OFF		8
-#घोषणा ALTERA_JTAGUART_CONTROL_WI_MSK		0x00000200
-#घोषणा ALTERA_JTAGUART_CONTROL_AC_MSK		0x00000400
-#घोषणा ALTERA_JTAGUART_CONTROL_WSPACE_MSK	0xFFFF0000
-#घोषणा ALTERA_JTAGUART_CONTROL_WSPACE_OFF	16
+#define ALTERA_JTAGUART_CONTROL_RE_MSK		0x00000001
+#define ALTERA_JTAGUART_CONTROL_WE_MSK		0x00000002
+#define ALTERA_JTAGUART_CONTROL_RI_MSK		0x00000100
+#define ALTERA_JTAGUART_CONTROL_RI_OFF		8
+#define ALTERA_JTAGUART_CONTROL_WI_MSK		0x00000200
+#define ALTERA_JTAGUART_CONTROL_AC_MSK		0x00000400
+#define ALTERA_JTAGUART_CONTROL_WSPACE_MSK	0xFFFF0000
+#define ALTERA_JTAGUART_CONTROL_WSPACE_OFF	16
 
 /*
- * Local per-uart काष्ठाure.
+ * Local per-uart structure.
  */
-काष्ठा altera_jtaguart अणु
-	काष्ठा uart_port port;
-	अचिन्हित पूर्णांक sigs;	/* Local copy of line sigs */
-	अचिन्हित दीर्घ imr;	/* Local IMR mirror */
-पूर्ण;
+struct altera_jtaguart {
+	struct uart_port port;
+	unsigned int sigs;	/* Local copy of line sigs */
+	unsigned long imr;	/* Local IMR mirror */
+};
 
-अटल अचिन्हित पूर्णांक altera_jtaguart_tx_empty(काष्ठा uart_port *port)
-अणु
-	वापस (पढ़ोl(port->membase + ALTERA_JTAGUART_CONTROL_REG) &
+static unsigned int altera_jtaguart_tx_empty(struct uart_port *port)
+{
+	return (readl(port->membase + ALTERA_JTAGUART_CONTROL_REG) &
 		ALTERA_JTAGUART_CONTROL_WSPACE_MSK) ? TIOCSER_TEMT : 0;
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक altera_jtaguart_get_mctrl(काष्ठा uart_port *port)
-अणु
-	वापस TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
-पूर्ण
+static unsigned int altera_jtaguart_get_mctrl(struct uart_port *port)
+{
+	return TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
+}
 
-अटल व्योम altera_jtaguart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक sigs)
-अणु
-पूर्ण
+static void altera_jtaguart_set_mctrl(struct uart_port *port, unsigned int sigs)
+{
+}
 
-अटल व्योम altera_jtaguart_start_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा altera_jtaguart *pp =
-	    container_of(port, काष्ठा altera_jtaguart, port);
+static void altera_jtaguart_start_tx(struct uart_port *port)
+{
+	struct altera_jtaguart *pp =
+	    container_of(port, struct altera_jtaguart, port);
 
 	pp->imr |= ALTERA_JTAGUART_CONTROL_WE_MSK;
-	ग_लिखोl(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
-पूर्ण
+	writel(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+}
 
-अटल व्योम altera_jtaguart_stop_tx(काष्ठा uart_port *port)
-अणु
-	काष्ठा altera_jtaguart *pp =
-	    container_of(port, काष्ठा altera_jtaguart, port);
+static void altera_jtaguart_stop_tx(struct uart_port *port)
+{
+	struct altera_jtaguart *pp =
+	    container_of(port, struct altera_jtaguart, port);
 
 	pp->imr &= ~ALTERA_JTAGUART_CONTROL_WE_MSK;
-	ग_लिखोl(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
-पूर्ण
+	writel(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+}
 
-अटल व्योम altera_jtaguart_stop_rx(काष्ठा uart_port *port)
-अणु
-	काष्ठा altera_jtaguart *pp =
-	    container_of(port, काष्ठा altera_jtaguart, port);
+static void altera_jtaguart_stop_rx(struct uart_port *port)
+{
+	struct altera_jtaguart *pp =
+	    container_of(port, struct altera_jtaguart, port);
 
 	pp->imr &= ~ALTERA_JTAGUART_CONTROL_RE_MSK;
-	ग_लिखोl(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
-पूर्ण
+	writel(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+}
 
-अटल व्योम altera_jtaguart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
-अणु
-पूर्ण
+static void altera_jtaguart_break_ctl(struct uart_port *port, int break_state)
+{
+}
 
-अटल व्योम altera_jtaguart_set_termios(काष्ठा uart_port *port,
-					काष्ठा ktermios *termios,
-					काष्ठा ktermios *old)
-अणु
+static void altera_jtaguart_set_termios(struct uart_port *port,
+					struct ktermios *termios,
+					struct ktermios *old)
+{
 	/* Just copy the old termios settings back */
-	अगर (old)
+	if (old)
 		tty_termios_copy_hw(termios, old);
-पूर्ण
+}
 
-अटल व्योम altera_jtaguart_rx_अक्षरs(काष्ठा altera_jtaguart *pp)
-अणु
-	काष्ठा uart_port *port = &pp->port;
-	अचिन्हित अक्षर ch, flag;
-	अचिन्हित दीर्घ status;
+static void altera_jtaguart_rx_chars(struct altera_jtaguart *pp)
+{
+	struct uart_port *port = &pp->port;
+	unsigned char ch, flag;
+	unsigned long status;
 
-	जबतक ((status = पढ़ोl(port->membase + ALTERA_JTAGUART_DATA_REG)) &
-	       ALTERA_JTAGUART_DATA_RVALID_MSK) अणु
+	while ((status = readl(port->membase + ALTERA_JTAGUART_DATA_REG)) &
+	       ALTERA_JTAGUART_DATA_RVALID_MSK) {
 		ch = status & ALTERA_JTAGUART_DATA_DATA_MSK;
 		flag = TTY_NORMAL;
 		port->icount.rx++;
 
-		अगर (uart_handle_sysrq_अक्षर(port, ch))
-			जारी;
-		uart_insert_अक्षर(port, 0, 0, ch, flag);
-	पूर्ण
+		if (uart_handle_sysrq_char(port, ch))
+			continue;
+		uart_insert_char(port, 0, 0, ch, flag);
+	}
 
 	tty_flip_buffer_push(&port->state->port);
-पूर्ण
+}
 
-अटल व्योम altera_jtaguart_tx_अक्षरs(काष्ठा altera_jtaguart *pp)
-अणु
-	काष्ठा uart_port *port = &pp->port;
-	काष्ठा circ_buf *xmit = &port->state->xmit;
-	अचिन्हित पूर्णांक pending, count;
+static void altera_jtaguart_tx_chars(struct altera_jtaguart *pp)
+{
+	struct uart_port *port = &pp->port;
+	struct circ_buf *xmit = &port->state->xmit;
+	unsigned int pending, count;
 
-	अगर (port->x_अक्षर) अणु
-		/* Send special अक्षर - probably flow control */
-		ग_लिखोl(port->x_अक्षर, port->membase + ALTERA_JTAGUART_DATA_REG);
-		port->x_अक्षर = 0;
+	if (port->x_char) {
+		/* Send special char - probably flow control */
+		writel(port->x_char, port->membase + ALTERA_JTAGUART_DATA_REG);
+		port->x_char = 0;
 		port->icount.tx++;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	pending = uart_circ_अक्षरs_pending(xmit);
-	अगर (pending > 0) अणु
-		count = (पढ़ोl(port->membase + ALTERA_JTAGUART_CONTROL_REG) &
+	pending = uart_circ_chars_pending(xmit);
+	if (pending > 0) {
+		count = (readl(port->membase + ALTERA_JTAGUART_CONTROL_REG) &
 				ALTERA_JTAGUART_CONTROL_WSPACE_MSK) >>
 			ALTERA_JTAGUART_CONTROL_WSPACE_OFF;
-		अगर (count > pending)
+		if (count > pending)
 			count = pending;
-		अगर (count > 0) अणु
+		if (count > 0) {
 			pending -= count;
-			जबतक (count--) अणु
-				ग_लिखोl(xmit->buf[xmit->tail],
+			while (count--) {
+				writel(xmit->buf[xmit->tail],
 				       port->membase + ALTERA_JTAGUART_DATA_REG);
 				xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 				port->icount.tx++;
-			पूर्ण
-			अगर (pending < WAKEUP_CHARS)
-				uart_ग_लिखो_wakeup(port);
-		पूर्ण
-	पूर्ण
+			}
+			if (pending < WAKEUP_CHARS)
+				uart_write_wakeup(port);
+		}
+	}
 
-	अगर (pending == 0) अणु
+	if (pending == 0) {
 		pp->imr &= ~ALTERA_JTAGUART_CONTROL_WE_MSK;
-		ग_लिखोl(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
-	पूर्ण
-पूर्ण
+		writel(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+	}
+}
 
-अटल irqवापस_t altera_jtaguart_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा uart_port *port = data;
-	काष्ठा altera_jtaguart *pp =
-	    container_of(port, काष्ठा altera_jtaguart, port);
-	अचिन्हित पूर्णांक isr;
+static irqreturn_t altera_jtaguart_interrupt(int irq, void *data)
+{
+	struct uart_port *port = data;
+	struct altera_jtaguart *pp =
+	    container_of(port, struct altera_jtaguart, port);
+	unsigned int isr;
 
-	isr = (पढ़ोl(port->membase + ALTERA_JTAGUART_CONTROL_REG) >>
+	isr = (readl(port->membase + ALTERA_JTAGUART_CONTROL_REG) >>
 	       ALTERA_JTAGUART_CONTROL_RI_OFF) & pp->imr;
 
 	spin_lock(&port->lock);
 
-	अगर (isr & ALTERA_JTAGUART_CONTROL_RE_MSK)
-		altera_jtaguart_rx_अक्षरs(pp);
-	अगर (isr & ALTERA_JTAGUART_CONTROL_WE_MSK)
-		altera_jtaguart_tx_अक्षरs(pp);
+	if (isr & ALTERA_JTAGUART_CONTROL_RE_MSK)
+		altera_jtaguart_rx_chars(pp);
+	if (isr & ALTERA_JTAGUART_CONTROL_WE_MSK)
+		altera_jtaguart_tx_chars(pp);
 
 	spin_unlock(&port->lock);
 
-	वापस IRQ_RETVAL(isr);
-पूर्ण
+	return IRQ_RETVAL(isr);
+}
 
-अटल व्योम altera_jtaguart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
-अणु
+static void altera_jtaguart_config_port(struct uart_port *port, int flags)
+{
 	port->type = PORT_ALTERA_JTAGUART;
 
-	/* Clear mask, so no surprise पूर्णांकerrupts. */
-	ग_लिखोl(0, port->membase + ALTERA_JTAGUART_CONTROL_REG);
-पूर्ण
+	/* Clear mask, so no surprise interrupts. */
+	writel(0, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+}
 
-अटल पूर्णांक altera_jtaguart_startup(काष्ठा uart_port *port)
-अणु
-	काष्ठा altera_jtaguart *pp =
-	    container_of(port, काष्ठा altera_jtaguart, port);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int altera_jtaguart_startup(struct uart_port *port)
+{
+	struct altera_jtaguart *pp =
+	    container_of(port, struct altera_jtaguart, port);
+	unsigned long flags;
+	int ret;
 
-	ret = request_irq(port->irq, altera_jtaguart_पूर्णांकerrupt, 0,
+	ret = request_irq(port->irq, altera_jtaguart_interrupt, 0,
 			DRV_NAME, port);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err(DRV_NAME ": unable to attach Altera JTAG UART %d "
 		       "interrupt vector=%d\n", port->line, port->irq);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Enable RX पूर्णांकerrupts now */
+	/* Enable RX interrupts now */
 	pp->imr = ALTERA_JTAGUART_CONTROL_RE_MSK;
-	ग_लिखोl(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+	writel(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम altera_jtaguart_shutकरोwn(काष्ठा uart_port *port)
-अणु
-	काष्ठा altera_jtaguart *pp =
-	    container_of(port, काष्ठा altera_jtaguart, port);
-	अचिन्हित दीर्घ flags;
+static void altera_jtaguart_shutdown(struct uart_port *port)
+{
+	struct altera_jtaguart *pp =
+	    container_of(port, struct altera_jtaguart, port);
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Disable all पूर्णांकerrupts now */
+	/* Disable all interrupts now */
 	pp->imr = 0;
-	ग_लिखोl(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
+	writel(pp->imr, port->membase + ALTERA_JTAGUART_CONTROL_REG);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	मुक्त_irq(port->irq, port);
-पूर्ण
+	free_irq(port->irq, port);
+}
 
-अटल स्थिर अक्षर *altera_jtaguart_type(काष्ठा uart_port *port)
-अणु
-	वापस (port->type == PORT_ALTERA_JTAGUART) ? "Altera JTAG UART" : शून्य;
-पूर्ण
+static const char *altera_jtaguart_type(struct uart_port *port)
+{
+	return (port->type == PORT_ALTERA_JTAGUART) ? "Altera JTAG UART" : NULL;
+}
 
-अटल पूर्णांक altera_jtaguart_request_port(काष्ठा uart_port *port)
-अणु
+static int altera_jtaguart_request_port(struct uart_port *port)
+{
 	/* UARTs always present */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम altera_jtaguart_release_port(काष्ठा uart_port *port)
-अणु
+static void altera_jtaguart_release_port(struct uart_port *port)
+{
 	/* Nothing to release... */
-पूर्ण
+}
 
-अटल पूर्णांक altera_jtaguart_verअगरy_port(काष्ठा uart_port *port,
-				       काष्ठा serial_काष्ठा *ser)
-अणु
-	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_ALTERA_JTAGUART)
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+static int altera_jtaguart_verify_port(struct uart_port *port,
+				       struct serial_struct *ser)
+{
+	if (ser->type != PORT_UNKNOWN && ser->type != PORT_ALTERA_JTAGUART)
+		return -EINVAL;
+	return 0;
+}
 
 /*
  *	Define the basic serial functions we support.
  */
-अटल स्थिर काष्ठा uart_ops altera_jtaguart_ops = अणु
+static const struct uart_ops altera_jtaguart_ops = {
 	.tx_empty	= altera_jtaguart_tx_empty,
 	.get_mctrl	= altera_jtaguart_get_mctrl,
 	.set_mctrl	= altera_jtaguart_set_mctrl,
 	.start_tx	= altera_jtaguart_start_tx,
 	.stop_tx	= altera_jtaguart_stop_tx,
 	.stop_rx	= altera_jtaguart_stop_rx,
-	.अवरोध_ctl	= altera_jtaguart_अवरोध_ctl,
+	.break_ctl	= altera_jtaguart_break_ctl,
 	.startup	= altera_jtaguart_startup,
-	.shutकरोwn	= altera_jtaguart_shutकरोwn,
+	.shutdown	= altera_jtaguart_shutdown,
 	.set_termios	= altera_jtaguart_set_termios,
 	.type		= altera_jtaguart_type,
 	.request_port	= altera_jtaguart_request_port,
 	.release_port	= altera_jtaguart_release_port,
 	.config_port	= altera_jtaguart_config_port,
-	.verअगरy_port	= altera_jtaguart_verअगरy_port,
-पूर्ण;
+	.verify_port	= altera_jtaguart_verify_port,
+};
 
-#घोषणा ALTERA_JTAGUART_MAXPORTS 1
-अटल काष्ठा altera_jtaguart altera_jtaguart_ports[ALTERA_JTAGUART_MAXPORTS];
+#define ALTERA_JTAGUART_MAXPORTS 1
+static struct altera_jtaguart altera_jtaguart_ports[ALTERA_JTAGUART_MAXPORTS];
 
-#अगर defined(CONFIG_SERIAL_ALTERA_JTAGUART_CONSOLE)
+#if defined(CONFIG_SERIAL_ALTERA_JTAGUART_CONSOLE)
 
-#अगर defined(CONFIG_SERIAL_ALTERA_JTAGUART_CONSOLE_BYPASS)
-अटल व्योम altera_jtaguart_console_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
-अणु
-	अचिन्हित दीर्घ status;
-	अचिन्हित दीर्घ flags;
+#if defined(CONFIG_SERIAL_ALTERA_JTAGUART_CONSOLE_BYPASS)
+static void altera_jtaguart_console_putc(struct uart_port *port, int c)
+{
+	unsigned long status;
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	जबतक (((status = पढ़ोl(port->membase + ALTERA_JTAGUART_CONTROL_REG)) &
-		ALTERA_JTAGUART_CONTROL_WSPACE_MSK) == 0) अणु
-		अगर ((status & ALTERA_JTAGUART_CONTROL_AC_MSK) == 0) अणु
+	while (((status = readl(port->membase + ALTERA_JTAGUART_CONTROL_REG)) &
+		ALTERA_JTAGUART_CONTROL_WSPACE_MSK) == 0) {
+		if ((status & ALTERA_JTAGUART_CONTROL_AC_MSK) == 0) {
 			spin_unlock_irqrestore(&port->lock, flags);
-			वापस;	/* no connection activity */
-		पूर्ण
+			return;	/* no connection activity */
+		}
 		spin_unlock_irqrestore(&port->lock, flags);
 		cpu_relax();
 		spin_lock_irqsave(&port->lock, flags);
-	पूर्ण
-	ग_लिखोl(c, port->membase + ALTERA_JTAGUART_DATA_REG);
+	}
+	writel(c, port->membase + ALTERA_JTAGUART_DATA_REG);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
-#अन्यथा
-अटल व्योम altera_jtaguart_console_अ_दो(काष्ठा uart_port *port, पूर्णांक c)
-अणु
-	अचिन्हित दीर्घ flags;
+}
+#else
+static void altera_jtaguart_console_putc(struct uart_port *port, int c)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	जबतक ((पढ़ोl(port->membase + ALTERA_JTAGUART_CONTROL_REG) &
-		ALTERA_JTAGUART_CONTROL_WSPACE_MSK) == 0) अणु
+	while ((readl(port->membase + ALTERA_JTAGUART_CONTROL_REG) &
+		ALTERA_JTAGUART_CONTROL_WSPACE_MSK) == 0) {
 		spin_unlock_irqrestore(&port->lock, flags);
 		cpu_relax();
 		spin_lock_irqsave(&port->lock, flags);
-	पूर्ण
-	ग_लिखोl(c, port->membase + ALTERA_JTAGUART_DATA_REG);
+	}
+	writel(c, port->membase + ALTERA_JTAGUART_DATA_REG);
 	spin_unlock_irqrestore(&port->lock, flags);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल व्योम altera_jtaguart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-					  अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा uart_port *port = &(altera_jtaguart_ports + co->index)->port;
+static void altera_jtaguart_console_write(struct console *co, const char *s,
+					  unsigned int count)
+{
+	struct uart_port *port = &(altera_jtaguart_ports + co->index)->port;
 
-	uart_console_ग_लिखो(port, s, count, altera_jtaguart_console_अ_दो);
-पूर्ण
+	uart_console_write(port, s, count, altera_jtaguart_console_putc);
+}
 
-अटल पूर्णांक __init altera_jtaguart_console_setup(काष्ठा console *co,
-						अक्षर *options)
-अणु
-	काष्ठा uart_port *port;
+static int __init altera_jtaguart_console_setup(struct console *co,
+						char *options)
+{
+	struct uart_port *port;
 
-	अगर (co->index < 0 || co->index >= ALTERA_JTAGUART_MAXPORTS)
-		वापस -EINVAL;
+	if (co->index < 0 || co->index >= ALTERA_JTAGUART_MAXPORTS)
+		return -EINVAL;
 	port = &altera_jtaguart_ports[co->index].port;
-	अगर (port->membase == शून्य)
-		वापस -ENODEV;
-	वापस 0;
-पूर्ण
+	if (port->membase == NULL)
+		return -ENODEV;
+	return 0;
+}
 
-अटल काष्ठा uart_driver altera_jtaguart_driver;
+static struct uart_driver altera_jtaguart_driver;
 
-अटल काष्ठा console altera_jtaguart_console = अणु
+static struct console altera_jtaguart_console = {
 	.name	= "ttyJ",
-	.ग_लिखो	= altera_jtaguart_console_ग_लिखो,
+	.write	= altera_jtaguart_console_write,
 	.device	= uart_console_device,
 	.setup	= altera_jtaguart_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &altera_jtaguart_driver,
-पूर्ण;
+};
 
-अटल पूर्णांक __init altera_jtaguart_console_init(व्योम)
-अणु
-	रेजिस्टर_console(&altera_jtaguart_console);
-	वापस 0;
-पूर्ण
+static int __init altera_jtaguart_console_init(void)
+{
+	register_console(&altera_jtaguart_console);
+	return 0;
+}
 
 console_initcall(altera_jtaguart_console_init);
 
-#घोषणा	ALTERA_JTAGUART_CONSOLE	(&altera_jtaguart_console)
+#define	ALTERA_JTAGUART_CONSOLE	(&altera_jtaguart_console)
 
-अटल व्योम altera_jtaguart_earlycon_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
-					   अचिन्हित पूर्णांक count)
-अणु
-	काष्ठा earlycon_device *dev = co->data;
+static void altera_jtaguart_earlycon_write(struct console *co, const char *s,
+					   unsigned int count)
+{
+	struct earlycon_device *dev = co->data;
 
-	uart_console_ग_लिखो(&dev->port, s, count, altera_jtaguart_console_अ_दो);
-पूर्ण
+	uart_console_write(&dev->port, s, count, altera_jtaguart_console_putc);
+}
 
-अटल पूर्णांक __init altera_jtaguart_earlycon_setup(काष्ठा earlycon_device *dev,
-						 स्थिर अक्षर *options)
-अणु
-	अगर (!dev->port.membase)
-		वापस -ENODEV;
+static int __init altera_jtaguart_earlycon_setup(struct earlycon_device *dev,
+						 const char *options)
+{
+	if (!dev->port.membase)
+		return -ENODEV;
 
-	dev->con->ग_लिखो = altera_jtaguart_earlycon_ग_लिखो;
-	वापस 0;
-पूर्ण
+	dev->con->write = altera_jtaguart_earlycon_write;
+	return 0;
+}
 
 OF_EARLYCON_DECLARE(juart, "altr,juart-1.0", altera_jtaguart_earlycon_setup);
 
-#अन्यथा
+#else
 
-#घोषणा	ALTERA_JTAGUART_CONSOLE	शून्य
+#define	ALTERA_JTAGUART_CONSOLE	NULL
 
-#पूर्ण_अगर /* CONFIG_SERIAL_ALTERA_JTAGUART_CONSOLE */
+#endif /* CONFIG_SERIAL_ALTERA_JTAGUART_CONSOLE */
 
-अटल काष्ठा uart_driver altera_jtaguart_driver = अणु
+static struct uart_driver altera_jtaguart_driver = {
 	.owner		= THIS_MODULE,
 	.driver_name	= "altera_jtaguart",
 	.dev_name	= "ttyJ",
@@ -412,44 +411,44 @@ OF_EARLYCON_DECLARE(juart, "altr,juart-1.0", altera_jtaguart_earlycon_setup);
 	.minor		= ALTERA_JTAGUART_MINOR,
 	.nr		= ALTERA_JTAGUART_MAXPORTS,
 	.cons		= ALTERA_JTAGUART_CONSOLE,
-पूर्ण;
+};
 
-अटल पूर्णांक altera_jtaguart_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा altera_jtaguart_platक्रमm_uart *platp =
+static int altera_jtaguart_probe(struct platform_device *pdev)
+{
+	struct altera_jtaguart_platform_uart *platp =
 			dev_get_platdata(&pdev->dev);
-	काष्ठा uart_port *port;
-	काष्ठा resource *res_irq, *res_mem;
-	पूर्णांक i = pdev->id;
+	struct uart_port *port;
+	struct resource *res_irq, *res_mem;
+	int i = pdev->id;
 
-	/* -1 emphasizes that the platक्रमm must have one port, no .N suffix */
-	अगर (i == -1)
+	/* -1 emphasizes that the platform must have one port, no .N suffix */
+	if (i == -1)
 		i = 0;
 
-	अगर (i >= ALTERA_JTAGUART_MAXPORTS)
-		वापस -EINVAL;
+	if (i >= ALTERA_JTAGUART_MAXPORTS)
+		return -EINVAL;
 
 	port = &altera_jtaguart_ports[i].port;
 
-	res_mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (res_mem)
+	res_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (res_mem)
 		port->mapbase = res_mem->start;
-	अन्यथा अगर (platp)
+	else if (platp)
 		port->mapbase = platp->mapbase;
-	अन्यथा
-		वापस -ENODEV;
+	else
+		return -ENODEV;
 
-	res_irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
-	अगर (res_irq)
+	res_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+	if (res_irq)
 		port->irq = res_irq->start;
-	अन्यथा अगर (platp)
+	else if (platp)
 		port->irq = platp->irq;
-	अन्यथा
-		वापस -ENODEV;
+	else
+		return -ENODEV;
 
 	port->membase = ioremap(port->mapbase, ALTERA_JTAGUART_SIZE);
-	अगर (!port->membase)
-		वापस -ENOMEM;
+	if (!port->membase)
+		return -ENOMEM;
 
 	port->line = i;
 	port->type = PORT_ALTERA_JTAGUART;
@@ -460,63 +459,63 @@ OF_EARLYCON_DECLARE(juart, "altr,juart-1.0", altera_jtaguart_earlycon_setup);
 
 	uart_add_one_port(&altera_jtaguart_driver, port);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक altera_jtaguart_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा uart_port *port;
-	पूर्णांक i = pdev->id;
+static int altera_jtaguart_remove(struct platform_device *pdev)
+{
+	struct uart_port *port;
+	int i = pdev->id;
 
-	अगर (i == -1)
+	if (i == -1)
 		i = 0;
 
 	port = &altera_jtaguart_ports[i].port;
-	uart_हटाओ_one_port(&altera_jtaguart_driver, port);
+	uart_remove_one_port(&altera_jtaguart_driver, port);
 	iounmap(port->membase);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id altera_jtaguart_match[] = अणु
-	अणु .compatible = "ALTR,juart-1.0", पूर्ण,
-	अणु .compatible = "altr,juart-1.0", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id altera_jtaguart_match[] = {
+	{ .compatible = "ALTR,juart-1.0", },
+	{ .compatible = "altr,juart-1.0", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, altera_jtaguart_match);
-#पूर्ण_अगर /* CONFIG_OF */
+#endif /* CONFIG_OF */
 
-अटल काष्ठा platक्रमm_driver altera_jtaguart_platक्रमm_driver = अणु
+static struct platform_driver altera_jtaguart_platform_driver = {
 	.probe	= altera_jtaguart_probe,
-	.हटाओ	= altera_jtaguart_हटाओ,
-	.driver	= अणु
+	.remove	= altera_jtaguart_remove,
+	.driver	= {
 		.name		= DRV_NAME,
 		.of_match_table	= of_match_ptr(altera_jtaguart_match),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init altera_jtaguart_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init altera_jtaguart_init(void)
+{
+	int rc;
 
-	rc = uart_रेजिस्टर_driver(&altera_jtaguart_driver);
-	अगर (rc)
-		वापस rc;
-	rc = platक्रमm_driver_रेजिस्टर(&altera_jtaguart_platक्रमm_driver);
-	अगर (rc)
-		uart_unरेजिस्टर_driver(&altera_jtaguart_driver);
-	वापस rc;
-पूर्ण
+	rc = uart_register_driver(&altera_jtaguart_driver);
+	if (rc)
+		return rc;
+	rc = platform_driver_register(&altera_jtaguart_platform_driver);
+	if (rc)
+		uart_unregister_driver(&altera_jtaguart_driver);
+	return rc;
+}
 
-अटल व्योम __निकास altera_jtaguart_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&altera_jtaguart_platक्रमm_driver);
-	uart_unरेजिस्टर_driver(&altera_jtaguart_driver);
-पूर्ण
+static void __exit altera_jtaguart_exit(void)
+{
+	platform_driver_unregister(&altera_jtaguart_platform_driver);
+	uart_unregister_driver(&altera_jtaguart_driver);
+}
 
 module_init(altera_jtaguart_init);
-module_निकास(altera_jtaguart_निकास);
+module_exit(altera_jtaguart_exit);
 
 MODULE_DESCRIPTION("Altera JTAG UART driver");
 MODULE_AUTHOR("Thomas Chou <thomas@wytron.com.tw>");

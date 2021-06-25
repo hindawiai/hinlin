@@ -1,87 +1,86 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* $Id: scc.h,v 1.29 1997/04/02 14:56:45 jreuter Exp jreuter $ */
-#अगर_अघोषित	_SCC_H
-#घोषणा	_SCC_H
+#ifndef	_SCC_H
+#define	_SCC_H
 
-#समावेश <uapi/linux/scc.h>
+#include <uapi/linux/scc.h>
 
 
-क्रमागत अणुTX_OFF, TX_ONपूर्ण;	/* command क्रम scc_key_trx() */
+enum {TX_OFF, TX_ON};	/* command for scc_key_trx() */
 
 /* Vector masks in RR2B */
 
-#घोषणा VECTOR_MASK	0x06
-#घोषणा TXINT		0x00
-#घोषणा EXINT		0x02
-#घोषणा RXINT		0x04
-#घोषणा SPINT		0x06
+#define VECTOR_MASK	0x06
+#define TXINT		0x00
+#define EXINT		0x02
+#define RXINT		0x04
+#define SPINT		0x06
 
-#अगर_घोषित CONFIG_SCC_DELAY
-#घोषणा Inb(port)	inb_p(port)
-#घोषणा Outb(port, val)	outb_p(val, port)
-#अन्यथा
-#घोषणा Inb(port)	inb(port)
-#घोषणा Outb(port, val)	outb(val, port)
-#पूर्ण_अगर
+#ifdef CONFIG_SCC_DELAY
+#define Inb(port)	inb_p(port)
+#define Outb(port, val)	outb_p(val, port)
+#else
+#define Inb(port)	inb(port)
+#define Outb(port, val)	outb(val, port)
+#endif
 
-/* SCC channel control काष्ठाure क्रम KISS */
+/* SCC channel control structure for KISS */
 
-काष्ठा scc_kiss अणु
-	अचिन्हित अक्षर txdelay;		/* Transmit Delay 10 ms/cnt */
-	अचिन्हित अक्षर persist;		/* Persistence (0-255) as a % */
-	अचिन्हित अक्षर slotसमय;		/* Delay to रुको on persistence hit */
-	अचिन्हित अक्षर tailसमय;		/* Delay after last byte written */
-	अचिन्हित अक्षर fulldup;		/* Full Duplex mode 0=CSMA 1=DUP 2=ALWAYS KEYED */
-	अचिन्हित अक्षर रुकोसमय;		/* Waitसमय beक्रमe any transmit attempt */
-	अचिन्हित पूर्णांक  maxkeyup;		/* Maximum समय to transmit (seconds) */
-	अचिन्हित पूर्णांक  mपूर्णांकime;		/* Minimal offसमय after MAXKEYUP समयout (seconds) */
-	अचिन्हित पूर्णांक  idleसमय;		/* Maximum idle समय in ALWAYS KEYED mode (seconds) */
-	अचिन्हित पूर्णांक  maxdefer;		/* Timer क्रम CSMA channel busy limit */
-	अचिन्हित अक्षर tx_inhibit;	/* Transmit is not allowed when set */	
-	अचिन्हित अक्षर group;		/* Group ID क्रम AX.25 TX पूर्णांकerlocking */
-	अचिन्हित अक्षर mode;		/* 'normal' or 'hwctrl' mode (unused) */
-	अचिन्हित अक्षर softdcd;		/* Use DPLL instead of DCD pin क्रम carrier detect */
-पूर्ण;
+struct scc_kiss {
+	unsigned char txdelay;		/* Transmit Delay 10 ms/cnt */
+	unsigned char persist;		/* Persistence (0-255) as a % */
+	unsigned char slottime;		/* Delay to wait on persistence hit */
+	unsigned char tailtime;		/* Delay after last byte written */
+	unsigned char fulldup;		/* Full Duplex mode 0=CSMA 1=DUP 2=ALWAYS KEYED */
+	unsigned char waittime;		/* Waittime before any transmit attempt */
+	unsigned int  maxkeyup;		/* Maximum time to transmit (seconds) */
+	unsigned int  mintime;		/* Minimal offtime after MAXKEYUP timeout (seconds) */
+	unsigned int  idletime;		/* Maximum idle time in ALWAYS KEYED mode (seconds) */
+	unsigned int  maxdefer;		/* Timer for CSMA channel busy limit */
+	unsigned char tx_inhibit;	/* Transmit is not allowed when set */	
+	unsigned char group;		/* Group ID for AX.25 TX interlocking */
+	unsigned char mode;		/* 'normal' or 'hwctrl' mode (unused) */
+	unsigned char softdcd;		/* Use DPLL instead of DCD pin for carrier detect */
+};
 
 
-/* SCC channel काष्ठाure */
+/* SCC channel structure */
 
-काष्ठा scc_channel अणु
-	पूर्णांक init;			/* channel exists? */
+struct scc_channel {
+	int init;			/* channel exists? */
 
-	काष्ठा net_device *dev;		/* link to device control काष्ठाure */
-	काष्ठा net_device_stats dev_stat;/* device statistics */
+	struct net_device *dev;		/* link to device control structure */
+	struct net_device_stats dev_stat;/* device statistics */
 
-	अक्षर bअक्रम;			/* manufacturer of the board */
-	दीर्घ घड़ी;			/* used घड़ी */
+	char brand;			/* manufacturer of the board */
+	long clock;			/* used clock */
 
-	io_port ctrl;			/* I/O address of CONTROL रेजिस्टर */
-	io_port	data;			/* I/O address of DATA रेजिस्टर */
+	io_port ctrl;			/* I/O address of CONTROL register */
+	io_port	data;			/* I/O address of DATA register */
 	io_port special;		/* I/O address of special function port */
-	पूर्णांक irq;			/* Number of Interrupt */
+	int irq;			/* Number of Interrupt */
 
-	अक्षर option;
-	अक्षर enhanced;			/* Enhanced SCC support */
+	char option;
+	char enhanced;			/* Enhanced SCC support */
 
-	अचिन्हित अक्षर wreg[16]; 	/* Copy of last written value in WRx */
-	अचिन्हित अक्षर status;		/* Copy of R0 at last बाह्यal पूर्णांकerrupt */
-	अचिन्हित अक्षर dcd;		/* DCD status */
+	unsigned char wreg[16]; 	/* Copy of last written value in WRx */
+	unsigned char status;		/* Copy of R0 at last external interrupt */
+	unsigned char dcd;		/* DCD status */
 
-        काष्ठा scc_kiss kiss;		/* control काष्ठाure क्रम KISS params */
-        काष्ठा scc_stat stat;		/* statistical inक्रमmation */
-        काष्ठा scc_modem modem; 	/* modem inक्रमmation */
+        struct scc_kiss kiss;		/* control structure for KISS params */
+        struct scc_stat stat;		/* statistical information */
+        struct scc_modem modem; 	/* modem information */
 
-        काष्ठा sk_buff_head tx_queue;	/* next tx buffer */
-        काष्ठा sk_buff *rx_buff;	/* poपूर्णांकer to frame currently received */
-        काष्ठा sk_buff *tx_buff;	/* poपूर्णांकer to frame currently transmitted */
+        struct sk_buff_head tx_queue;	/* next tx buffer */
+        struct sk_buff *rx_buff;	/* pointer to frame currently received */
+        struct sk_buff *tx_buff;	/* pointer to frame currently transmitted */
 
 	/* Timer */
-	काष्ठा समयr_list tx_t;		/* tx समयr क्रम this channel */
-	काष्ठा समयr_list tx_wकरोg;	/* tx watchकरोgs */
+	struct timer_list tx_t;		/* tx timer for this channel */
+	struct timer_list tx_wdog;	/* tx watchdogs */
 	
 	/* Channel lock */
 	spinlock_t	lock;		/* Channel guard lock */
-पूर्ण;
+};
 
-#पूर्ण_अगर /* defined(_SCC_H) */
+#endif /* defined(_SCC_H) */

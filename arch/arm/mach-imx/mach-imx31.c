@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright 2012 Sascha Hauer, Pengutronix
  */
 
-#समावेश <यंत्र/mach/arch.h>
-#समावेश "common.h"
+#include <asm/mach/arch.h>
+#include "common.h"
 
-अटल स्थिर अक्षर * स्थिर imx31_dt_board_compat[] __initस्थिर = अणु
+static const char * const imx31_dt_board_compat[] __initconst = {
 	"fsl,imx31",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 DT_MACHINE_START(IMX31_DT, "Freescale i.MX31 (Device Tree Support)")
 	.map_io		= mx31_map_io,

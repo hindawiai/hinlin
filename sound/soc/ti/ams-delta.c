@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ams-delta.c  --  SoC audio क्रम Amstrad E3 (Delta) videophone
+ * ams-delta.c  --  SoC audio for Amstrad E3 (Delta) videophone
  *
  * Copyright (C) 2009 Janusz Krzysztofik <jkrzyszt@tis.icnet.pl>
  *
@@ -9,263 +8,263 @@
  * Copyright (C) 2008 Mistral Solutions
  */
 
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/module.h>
+#include <linux/gpio/consumer.h>
+#include <linux/spinlock.h>
+#include <linux/tty.h>
+#include <linux/module.h>
 
-#समावेश <sound/soc.h>
-#समावेश <sound/jack.h>
+#include <sound/soc.h>
+#include <sound/jack.h>
 
-#समावेश <यंत्र/mach-types.h>
+#include <asm/mach-types.h>
 
-#समावेश <linux/platक्रमm_data/asoc-ti-mcbsp.h>
+#include <linux/platform_data/asoc-ti-mcbsp.h>
 
-#समावेश "omap-mcbsp.h"
-#समावेश "../codecs/cx20442.h"
+#include "omap-mcbsp.h"
+#include "../codecs/cx20442.h"
 
-अटल काष्ठा gpio_desc *handset_mute;
-अटल काष्ठा gpio_desc *handsमुक्त_mute;
+static struct gpio_desc *handset_mute;
+static struct gpio_desc *handsfree_mute;
 
-अटल पूर्णांक ams_delta_event_handset(काष्ठा snd_soc_dapm_widget *w,
-				   काष्ठा snd_kcontrol *k, पूर्णांक event)
-अणु
+static int ams_delta_event_handset(struct snd_soc_dapm_widget *w,
+				   struct snd_kcontrol *k, int event)
+{
 	gpiod_set_value_cansleep(handset_mute, !SND_SOC_DAPM_EVENT_ON(event));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ams_delta_event_handsमुक्त(काष्ठा snd_soc_dapm_widget *w,
-				     काष्ठा snd_kcontrol *k, पूर्णांक event)
-अणु
-	gpiod_set_value_cansleep(handsमुक्त_mute, !SND_SOC_DAPM_EVENT_ON(event));
-	वापस 0;
-पूर्ण
+static int ams_delta_event_handsfree(struct snd_soc_dapm_widget *w,
+				     struct snd_kcontrol *k, int event)
+{
+	gpiod_set_value_cansleep(handsfree_mute, !SND_SOC_DAPM_EVENT_ON(event));
+	return 0;
+}
 
-/* Board specअगरic DAPM widमाला_लो */
-अटल स्थिर काष्ठा snd_soc_dapm_widget ams_delta_dapm_widमाला_लो[] = अणु
+/* Board specific DAPM widgets */
+static const struct snd_soc_dapm_widget ams_delta_dapm_widgets[] = {
 	/* Handset */
-	SND_SOC_DAPM_MIC("Mouthpiece", शून्य),
+	SND_SOC_DAPM_MIC("Mouthpiece", NULL),
 	SND_SOC_DAPM_HP("Earpiece", ams_delta_event_handset),
-	/* Handsमुक्त/Speakerphone */
-	SND_SOC_DAPM_MIC("Microphone", शून्य),
-	SND_SOC_DAPM_SPK("Speaker", ams_delta_event_handsमुक्त),
-पूर्ण;
+	/* Handsfree/Speakerphone */
+	SND_SOC_DAPM_MIC("Microphone", NULL),
+	SND_SOC_DAPM_SPK("Speaker", ams_delta_event_handsfree),
+};
 
 /* How they are connected to codec pins */
-अटल स्थिर काष्ठा snd_soc_dapm_route ams_delta_audio_map[] = अणु
-	अणु"TELIN", शून्य, "Mouthpiece"पूर्ण,
-	अणु"Earpiece", शून्य, "TELOUT"पूर्ण,
+static const struct snd_soc_dapm_route ams_delta_audio_map[] = {
+	{"TELIN", NULL, "Mouthpiece"},
+	{"Earpiece", NULL, "TELOUT"},
 
-	अणु"MIC", शून्य, "Microphone"पूर्ण,
-	अणु"Speaker", शून्य, "SPKOUT"पूर्ण,
-पूर्ण;
+	{"MIC", NULL, "Microphone"},
+	{"Speaker", NULL, "SPKOUT"},
+};
 
 /*
  * Controls, functional after the modem line discipline is activated.
  */
 
-/* Virtual चयन: audio input/output स्थिरellations */
-अटल स्थिर अक्षर *ams_delta_audio_mode[] =
-	अणु"Mixed", "Handset", "Handsfree", "Speakerphone"पूर्ण;
+/* Virtual switch: audio input/output constellations */
+static const char *ams_delta_audio_mode[] =
+	{"Mixed", "Handset", "Handsfree", "Speakerphone"};
 
 /* Selection <-> pin translation */
-#घोषणा AMS_DELTA_MOUTHPIECE	0
-#घोषणा AMS_DELTA_EARPIECE	1
-#घोषणा AMS_DELTA_MICROPHONE	2
-#घोषणा AMS_DELTA_SPEAKER	3
-#घोषणा AMS_DELTA_AGC		4
+#define AMS_DELTA_MOUTHPIECE	0
+#define AMS_DELTA_EARPIECE	1
+#define AMS_DELTA_MICROPHONE	2
+#define AMS_DELTA_SPEAKER	3
+#define AMS_DELTA_AGC		4
 
-#घोषणा AMS_DELTA_MIXED		((1 << AMS_DELTA_EARPIECE) | \
+#define AMS_DELTA_MIXED		((1 << AMS_DELTA_EARPIECE) | \
 						(1 << AMS_DELTA_MICROPHONE))
-#घोषणा AMS_DELTA_HANDSET	((1 << AMS_DELTA_MOUTHPIECE) | \
+#define AMS_DELTA_HANDSET	((1 << AMS_DELTA_MOUTHPIECE) | \
 						(1 << AMS_DELTA_EARPIECE))
-#घोषणा AMS_DELTA_HANDSFREE	((1 << AMS_DELTA_MICROPHONE) | \
+#define AMS_DELTA_HANDSFREE	((1 << AMS_DELTA_MICROPHONE) | \
 						(1 << AMS_DELTA_SPEAKER))
-#घोषणा AMS_DELTA_SPEAKERPHONE	(AMS_DELTA_HANDSFREE | (1 << AMS_DELTA_AGC))
+#define AMS_DELTA_SPEAKERPHONE	(AMS_DELTA_HANDSFREE | (1 << AMS_DELTA_AGC))
 
-अटल स्थिर अचिन्हित लघु ams_delta_audio_mode_pins[] = अणु
+static const unsigned short ams_delta_audio_mode_pins[] = {
 	AMS_DELTA_MIXED,
 	AMS_DELTA_HANDSET,
 	AMS_DELTA_HANDSFREE,
 	AMS_DELTA_SPEAKERPHONE,
-पूर्ण;
+};
 
-अटल अचिन्हित लघु ams_delta_audio_agc;
+static unsigned short ams_delta_audio_agc;
 
 /*
- * Used क्रम passing a codec काष्ठाure poपूर्णांकer
+ * Used for passing a codec structure pointer
  * from the board initialization code to the tty line discipline.
  */
-अटल काष्ठा snd_soc_component *cx20442_codec;
+static struct snd_soc_component *cx20442_codec;
 
-अटल पूर्णांक ams_delta_set_audio_mode(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_card *card = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_soc_dapm_context *dapm = &card->dapm;
-	काष्ठा soc_क्रमागत *control = (काष्ठा soc_क्रमागत *)kcontrol->निजी_value;
-	अचिन्हित लघु pins;
-	पूर्णांक pin, changed = 0;
+static int ams_delta_set_audio_mode(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_dapm_context *dapm = &card->dapm;
+	struct soc_enum *control = (struct soc_enum *)kcontrol->private_value;
+	unsigned short pins;
+	int pin, changed = 0;
 
-	/* Refuse any mode changes अगर we are not able to control the codec. */
-	अगर (!cx20442_codec->card->pop_समय)
-		वापस -EUNATCH;
+	/* Refuse any mode changes if we are not able to control the codec. */
+	if (!cx20442_codec->card->pop_time)
+		return -EUNATCH;
 
-	अगर (ucontrol->value.क्रमागतerated.item[0] >= control->items)
-		वापस -EINVAL;
+	if (ucontrol->value.enumerated.item[0] >= control->items)
+		return -EINVAL;
 
 	snd_soc_dapm_mutex_lock(dapm);
 
-	/* Translate selection to biपंचांगap */
-	pins = ams_delta_audio_mode_pins[ucontrol->value.क्रमागतerated.item[0]];
+	/* Translate selection to bitmap */
+	pins = ams_delta_audio_mode_pins[ucontrol->value.enumerated.item[0]];
 
-	/* Setup pins after corresponding bits अगर changed */
+	/* Setup pins after corresponding bits if changed */
 	pin = !!(pins & (1 << AMS_DELTA_MOUTHPIECE));
 
-	अगर (pin != snd_soc_dapm_get_pin_status(dapm, "Mouthpiece")) अणु
+	if (pin != snd_soc_dapm_get_pin_status(dapm, "Mouthpiece")) {
 		changed = 1;
-		अगर (pin)
+		if (pin)
 			snd_soc_dapm_enable_pin_unlocked(dapm, "Mouthpiece");
-		अन्यथा
+		else
 			snd_soc_dapm_disable_pin_unlocked(dapm, "Mouthpiece");
-	पूर्ण
+	}
 	pin = !!(pins & (1 << AMS_DELTA_EARPIECE));
-	अगर (pin != snd_soc_dapm_get_pin_status(dapm, "Earpiece")) अणु
+	if (pin != snd_soc_dapm_get_pin_status(dapm, "Earpiece")) {
 		changed = 1;
-		अगर (pin)
+		if (pin)
 			snd_soc_dapm_enable_pin_unlocked(dapm, "Earpiece");
-		अन्यथा
+		else
 			snd_soc_dapm_disable_pin_unlocked(dapm, "Earpiece");
-	पूर्ण
+	}
 	pin = !!(pins & (1 << AMS_DELTA_MICROPHONE));
-	अगर (pin != snd_soc_dapm_get_pin_status(dapm, "Microphone")) अणु
+	if (pin != snd_soc_dapm_get_pin_status(dapm, "Microphone")) {
 		changed = 1;
-		अगर (pin)
+		if (pin)
 			snd_soc_dapm_enable_pin_unlocked(dapm, "Microphone");
-		अन्यथा
+		else
 			snd_soc_dapm_disable_pin_unlocked(dapm, "Microphone");
-	पूर्ण
+	}
 	pin = !!(pins & (1 << AMS_DELTA_SPEAKER));
-	अगर (pin != snd_soc_dapm_get_pin_status(dapm, "Speaker")) अणु
+	if (pin != snd_soc_dapm_get_pin_status(dapm, "Speaker")) {
 		changed = 1;
-		अगर (pin)
+		if (pin)
 			snd_soc_dapm_enable_pin_unlocked(dapm, "Speaker");
-		अन्यथा
+		else
 			snd_soc_dapm_disable_pin_unlocked(dapm, "Speaker");
-	पूर्ण
+	}
 	pin = !!(pins & (1 << AMS_DELTA_AGC));
-	अगर (pin != ams_delta_audio_agc) अणु
+	if (pin != ams_delta_audio_agc) {
 		ams_delta_audio_agc = pin;
 		changed = 1;
-		अगर (pin)
+		if (pin)
 			snd_soc_dapm_enable_pin_unlocked(dapm, "AGCIN");
-		अन्यथा
+		else
 			snd_soc_dapm_disable_pin_unlocked(dapm, "AGCIN");
-	पूर्ण
+	}
 
-	अगर (changed)
+	if (changed)
 		snd_soc_dapm_sync_unlocked(dapm);
 
 	snd_soc_dapm_mutex_unlock(dapm);
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
-अटल पूर्णांक ams_delta_get_audio_mode(काष्ठा snd_kcontrol *kcontrol,
-					काष्ठा snd_ctl_elem_value *ucontrol)
-अणु
-	काष्ठा snd_soc_card *card = snd_kcontrol_chip(kcontrol);
-	काष्ठा snd_soc_dapm_context *dapm = &card->dapm;
-	अचिन्हित लघु pins, mode;
+static int ams_delta_get_audio_mode(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_card *card = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_dapm_context *dapm = &card->dapm;
+	unsigned short pins, mode;
 
 	pins = ((snd_soc_dapm_get_pin_status(dapm, "Mouthpiece") <<
 							AMS_DELTA_MOUTHPIECE) |
 			(snd_soc_dapm_get_pin_status(dapm, "Earpiece") <<
 							AMS_DELTA_EARPIECE));
-	अगर (pins)
+	if (pins)
 		pins |= (snd_soc_dapm_get_pin_status(dapm, "Microphone") <<
 							AMS_DELTA_MICROPHONE);
-	अन्यथा
+	else
 		pins = ((snd_soc_dapm_get_pin_status(dapm, "Microphone") <<
 							AMS_DELTA_MICROPHONE) |
 			(snd_soc_dapm_get_pin_status(dapm, "Speaker") <<
 							AMS_DELTA_SPEAKER) |
 			(ams_delta_audio_agc << AMS_DELTA_AGC));
 
-	क्रम (mode = 0; mode < ARRAY_SIZE(ams_delta_audio_mode); mode++)
-		अगर (pins == ams_delta_audio_mode_pins[mode])
-			अवरोध;
+	for (mode = 0; mode < ARRAY_SIZE(ams_delta_audio_mode); mode++)
+		if (pins == ams_delta_audio_mode_pins[mode])
+			break;
 
-	अगर (mode >= ARRAY_SIZE(ams_delta_audio_mode))
-		वापस -EINVAL;
+	if (mode >= ARRAY_SIZE(ams_delta_audio_mode))
+		return -EINVAL;
 
-	ucontrol->value.क्रमागतerated.item[0] = mode;
+	ucontrol->value.enumerated.item[0] = mode;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SOC_ENUM_SINGLE_EXT_DECL(ams_delta_audio_क्रमागत,
+static SOC_ENUM_SINGLE_EXT_DECL(ams_delta_audio_enum,
 				      ams_delta_audio_mode);
 
-अटल स्थिर काष्ठा snd_kcontrol_new ams_delta_audio_controls[] = अणु
-	SOC_ENUM_EXT("Audio Mode", ams_delta_audio_क्रमागत,
+static const struct snd_kcontrol_new ams_delta_audio_controls[] = {
+	SOC_ENUM_EXT("Audio Mode", ams_delta_audio_enum,
 			ams_delta_get_audio_mode, ams_delta_set_audio_mode),
-पूर्ण;
+};
 
-/* Hook चयन */
-अटल काष्ठा snd_soc_jack ams_delta_hook_चयन;
-अटल काष्ठा snd_soc_jack_gpio ams_delta_hook_चयन_gpios[] = अणु
-	अणु
+/* Hook switch */
+static struct snd_soc_jack ams_delta_hook_switch;
+static struct snd_soc_jack_gpio ams_delta_hook_switch_gpios[] = {
+	{
 		.name = "hook_switch",
 		.report = SND_JACK_HEADSET,
 		.invert = 1,
-		.debounce_समय = 150,
-	पूर्ण
-पूर्ण;
+		.debounce_time = 150,
+	}
+};
 
 /* After we are able to control the codec over the modem,
- * the hook चयन can be used क्रम dynamic DAPM reconfiguration. */
-अटल काष्ठा snd_soc_jack_pin ams_delta_hook_चयन_pins[] = अणु
+ * the hook switch can be used for dynamic DAPM reconfiguration. */
+static struct snd_soc_jack_pin ams_delta_hook_switch_pins[] = {
 	/* Handset */
-	अणु
+	{
 		.pin = "Mouthpiece",
 		.mask = SND_JACK_MICROPHONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.pin = "Earpiece",
 		.mask = SND_JACK_HEADPHONE,
-	पूर्ण,
-	/* Handsमुक्त */
-	अणु
+	},
+	/* Handsfree */
+	{
 		.pin = "Microphone",
 		.mask = SND_JACK_MICROPHONE,
 		.invert = 1,
-	पूर्ण,
-	अणु
+	},
+	{
 		.pin = "Speaker",
 		.mask = SND_JACK_HEADPHONE,
 		.invert = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 
 /*
- * Modem line discipline, required क्रम making above controls functional.
+ * Modem line discipline, required for making above controls functional.
  * Activated from userspace with ldattach, possibly invoked from udev rule.
  */
 
 /* To actually apply any modem controlled configuration changes to the codec,
- * we must connect codec DAI pins to the modem क्रम a moment.  Be careful not
- * to पूर्णांकerfere with our digital mute function that shares the same hardware. */
-अटल काष्ठा समयr_list cx81801_समयr;
-अटल bool cx81801_cmd_pending;
-अटल bool ams_delta_muted;
-अटल DEFINE_SPINLOCK(ams_delta_lock);
-अटल काष्ठा gpio_desc *gpiod_modem_codec;
+ * we must connect codec DAI pins to the modem for a moment.  Be careful not
+ * to interfere with our digital mute function that shares the same hardware. */
+static struct timer_list cx81801_timer;
+static bool cx81801_cmd_pending;
+static bool ams_delta_muted;
+static DEFINE_SPINLOCK(ams_delta_lock);
+static struct gpio_desc *gpiod_modem_codec;
 
-अटल व्योम cx81801_समयout(काष्ठा समयr_list *unused)
-अणु
-	पूर्णांक muted;
+static void cx81801_timeout(struct timer_list *unused)
+{
+	int muted;
 
 	spin_lock(&ams_delta_lock);
 	cx81801_cmd_pending = 0;
@@ -273,50 +272,50 @@
 	spin_unlock(&ams_delta_lock);
 
 	/* Reconnect the codec DAI back from the modem to the CPU DAI
-	 * only अगर digital mute still off */
-	अगर (!muted)
+	 * only if digital mute still off */
+	if (!muted)
 		gpiod_set_value(gpiod_modem_codec, 0);
-पूर्ण
+}
 
-/* Line discipline .खोलो() */
-अटल पूर्णांक cx81801_खोलो(काष्ठा tty_काष्ठा *tty)
-अणु
-	पूर्णांक ret;
+/* Line discipline .open() */
+static int cx81801_open(struct tty_struct *tty)
+{
+	int ret;
 
-	अगर (!cx20442_codec)
-		वापस -ENODEV;
+	if (!cx20442_codec)
+		return -ENODEV;
 
 	/*
-	 * Pass the codec काष्ठाure poपूर्णांकer क्रम use by other ldisc callbacks,
-	 * both the card and the codec specअगरic parts.
+	 * Pass the codec structure pointer for use by other ldisc callbacks,
+	 * both the card and the codec specific parts.
 	 */
 	tty->disc_data = cx20442_codec;
 
-	ret = v253_ops.खोलो(tty);
+	ret = v253_ops.open(tty);
 
-	अगर (ret < 0)
-		tty->disc_data = शून्य;
+	if (ret < 0)
+		tty->disc_data = NULL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* Line discipline .बंद() */
-अटल व्योम cx81801_बंद(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा snd_soc_component *component = tty->disc_data;
-	काष्ठा snd_soc_dapm_context *dapm = &component->card->dapm;
+/* Line discipline .close() */
+static void cx81801_close(struct tty_struct *tty)
+{
+	struct snd_soc_component *component = tty->disc_data;
+	struct snd_soc_dapm_context *dapm = &component->card->dapm;
 
-	del_समयr_sync(&cx81801_समयr);
+	del_timer_sync(&cx81801_timer);
 
-	/* Prevent the hook चयन from further changing the DAPM pins */
-	INIT_LIST_HEAD(&ams_delta_hook_चयन.pins);
+	/* Prevent the hook switch from further changing the DAPM pins */
+	INIT_LIST_HEAD(&ams_delta_hook_switch.pins);
 
-	अगर (!component)
-		वापस;
+	if (!component)
+		return;
 
-	v253_ops.बंद(tty);
+	v253_ops.close(tty);
 
-	/* Revert back to शेष audio input/output स्थिरellation */
+	/* Revert back to default audio input/output constellation */
 	snd_soc_dapm_mutex_lock(dapm);
 
 	snd_soc_dapm_disable_pin_unlocked(dapm, "Mouthpiece");
@@ -328,198 +327,198 @@
 	snd_soc_dapm_sync_unlocked(dapm);
 
 	snd_soc_dapm_mutex_unlock(dapm);
-पूर्ण
+}
 
 /* Line discipline .hangup() */
-अटल पूर्णांक cx81801_hangup(काष्ठा tty_काष्ठा *tty)
-अणु
-	cx81801_बंद(tty);
-	वापस 0;
-पूर्ण
+static int cx81801_hangup(struct tty_struct *tty)
+{
+	cx81801_close(tty);
+	return 0;
+}
 
 /* Line discipline .receive_buf() */
-अटल व्योम cx81801_receive(काष्ठा tty_काष्ठा *tty,
-				स्थिर अचिन्हित अक्षर *cp, अक्षर *fp, पूर्णांक count)
-अणु
-	काष्ठा snd_soc_component *component = tty->disc_data;
-	स्थिर अचिन्हित अक्षर *c;
-	पूर्णांक apply, ret;
+static void cx81801_receive(struct tty_struct *tty,
+				const unsigned char *cp, char *fp, int count)
+{
+	struct snd_soc_component *component = tty->disc_data;
+	const unsigned char *c;
+	int apply, ret;
 
-	अगर (!component)
-		वापस;
+	if (!component)
+		return;
 
-	अगर (!component->card->pop_समय) अणु
+	if (!component->card->pop_time) {
 		/* First modem response, complete setup procedure */
 
-		/* Initialize समयr used क्रम config pulse generation */
-		समयr_setup(&cx81801_समयr, cx81801_समयout, 0);
+		/* Initialize timer used for config pulse generation */
+		timer_setup(&cx81801_timer, cx81801_timeout, 0);
 
 		v253_ops.receive_buf(tty, cp, fp, count);
 
-		/* Link hook चयन to DAPM pins */
-		ret = snd_soc_jack_add_pins(&ams_delta_hook_चयन,
-					ARRAY_SIZE(ams_delta_hook_चयन_pins),
-					ams_delta_hook_चयन_pins);
-		अगर (ret)
+		/* Link hook switch to DAPM pins */
+		ret = snd_soc_jack_add_pins(&ams_delta_hook_switch,
+					ARRAY_SIZE(ams_delta_hook_switch_pins),
+					ams_delta_hook_switch_pins);
+		if (ret)
 			dev_warn(component->dev,
 				"Failed to link hook switch to DAPM pins, "
 				"will continue with hook switch unlinked.\n");
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	v253_ops.receive_buf(tty, cp, fp, count);
 
-	क्रम (c = &cp[count - 1]; c >= cp; c--) अणु
-		अगर (*c != '\r')
-			जारी;
+	for (c = &cp[count - 1]; c >= cp; c--) {
+		if (*c != '\r')
+			continue;
 		/* Complete modem response received, apply config to codec */
 
 		spin_lock_bh(&ams_delta_lock);
-		mod_समयr(&cx81801_समयr, jअगरfies + msecs_to_jअगरfies(150));
+		mod_timer(&cx81801_timer, jiffies + msecs_to_jiffies(150));
 		apply = !ams_delta_muted && !cx81801_cmd_pending;
 		cx81801_cmd_pending = 1;
 		spin_unlock_bh(&ams_delta_lock);
 
 		/* Apply config pulse by connecting the codec to the modem
-		 * अगर not alपढ़ोy करोne */
-		अगर (apply)
+		 * if not already done */
+		if (apply)
 			gpiod_set_value(gpiod_modem_codec, 1);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* Line discipline .ग_लिखो_wakeup() */
-अटल व्योम cx81801_wakeup(काष्ठा tty_काष्ठा *tty)
-अणु
-	v253_ops.ग_लिखो_wakeup(tty);
-पूर्ण
+/* Line discipline .write_wakeup() */
+static void cx81801_wakeup(struct tty_struct *tty)
+{
+	v253_ops.write_wakeup(tty);
+}
 
-अटल काष्ठा tty_ldisc_ops cx81801_ops = अणु
+static struct tty_ldisc_ops cx81801_ops = {
 	.name = "cx81801",
 	.owner = THIS_MODULE,
-	.खोलो = cx81801_खोलो,
-	.बंद = cx81801_बंद,
+	.open = cx81801_open,
+	.close = cx81801_close,
 	.hangup = cx81801_hangup,
 	.receive_buf = cx81801_receive,
-	.ग_लिखो_wakeup = cx81801_wakeup,
-पूर्ण;
+	.write_wakeup = cx81801_wakeup,
+};
 
 
 /*
- * Even अगर not very useful, the sound card can still work without any of the
+ * Even if not very useful, the sound card can still work without any of the
  * above functionality activated.  You can still control its audio input/output
- * स्थिरellation and speakerphone gain from userspace by issuing AT commands
+ * constellation and speakerphone gain from userspace by issuing AT commands
  * over the modem port.
  */
 
-अटल काष्ठा snd_soc_ops ams_delta_ops;
+static struct snd_soc_ops ams_delta_ops;
 
 
 /* Digital mute implemented using modem/CPU multiplexer.
  * Shares hardware with codec config pulse generation */
-अटल bool ams_delta_muted = 1;
+static bool ams_delta_muted = 1;
 
-अटल पूर्णांक ams_delta_mute(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
-अणु
-	पूर्णांक apply;
+static int ams_delta_mute(struct snd_soc_dai *dai, int mute, int direction)
+{
+	int apply;
 
-	अगर (ams_delta_muted == mute)
-		वापस 0;
+	if (ams_delta_muted == mute)
+		return 0;
 
 	spin_lock_bh(&ams_delta_lock);
 	ams_delta_muted = mute;
 	apply = !cx81801_cmd_pending;
 	spin_unlock_bh(&ams_delta_lock);
 
-	अगर (apply)
+	if (apply)
 		gpiod_set_value(gpiod_modem_codec, !!mute);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Our codec DAI probably करोesn't have its own .ops काष्ठाure */
-अटल स्थिर काष्ठा snd_soc_dai_ops ams_delta_dai_ops = अणु
+/* Our codec DAI probably doesn't have its own .ops structure */
+static const struct snd_soc_dai_ops ams_delta_dai_ops = {
 	.mute_stream = ams_delta_mute,
 	.no_capture_mute = 1,
-पूर्ण;
+};
 
-/* Will be used अगर the codec ever has its own digital_mute function */
-अटल पूर्णांक ams_delta_startup(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस ams_delta_mute(शून्य, 0, substream->stream);
-पूर्ण
+/* Will be used if the codec ever has its own digital_mute function */
+static int ams_delta_startup(struct snd_pcm_substream *substream)
+{
+	return ams_delta_mute(NULL, 0, substream->stream);
+}
 
-अटल व्योम ams_delta_shutकरोwn(काष्ठा snd_pcm_substream *substream)
-अणु
-	ams_delta_mute(शून्य, 1, substream->stream);
-पूर्ण
+static void ams_delta_shutdown(struct snd_pcm_substream *substream)
+{
+	ams_delta_mute(NULL, 1, substream->stream);
+}
 
 
 /*
  * Card initialization
  */
 
-अटल पूर्णांक ams_delta_cx20442_init(काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	काष्ठा snd_soc_card *card = rtd->card;
-	काष्ठा snd_soc_dapm_context *dapm = &card->dapm;
-	पूर्णांक ret;
-	/* Codec is पढ़ोy, now add/activate board specअगरic controls */
+static int ams_delta_cx20442_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	struct snd_soc_card *card = rtd->card;
+	struct snd_soc_dapm_context *dapm = &card->dapm;
+	int ret;
+	/* Codec is ready, now add/activate board specific controls */
 
-	/* Store a poपूर्णांकer to the codec काष्ठाure क्रम tty ldisc use */
+	/* Store a pointer to the codec structure for tty ldisc use */
 	cx20442_codec = asoc_rtd_to_codec(rtd, 0)->component;
 
-	/* Add hook चयन - can be used to control the codec from userspace
-	 * even अगर line discipline fails */
+	/* Add hook switch - can be used to control the codec from userspace
+	 * even if line discipline fails */
 	ret = snd_soc_card_jack_new(card, "hook_switch", SND_JACK_HEADSET,
-				    &ams_delta_hook_चयन, शून्य, 0);
-	अगर (ret)
+				    &ams_delta_hook_switch, NULL, 0);
+	if (ret)
 		dev_warn(card->dev,
 				"Failed to allocate resources for hook switch, "
 				"will continue without one.\n");
-	अन्यथा अणु
-		ret = snd_soc_jack_add_gpiods(card->dev, &ams_delta_hook_चयन,
-					ARRAY_SIZE(ams_delta_hook_चयन_gpios),
-					ams_delta_hook_चयन_gpios);
-		अगर (ret)
+	else {
+		ret = snd_soc_jack_add_gpiods(card->dev, &ams_delta_hook_switch,
+					ARRAY_SIZE(ams_delta_hook_switch_gpios),
+					ams_delta_hook_switch_gpios);
+		if (ret)
 			dev_warn(card->dev,
 				"Failed to set up hook switch GPIO line, "
 				"will continue with hook switch inactive.\n");
-	पूर्ण
+	}
 
 	gpiod_modem_codec = devm_gpiod_get(card->dev, "modem_codec",
 					   GPIOD_OUT_HIGH);
-	अगर (IS_ERR(gpiod_modem_codec)) अणु
+	if (IS_ERR(gpiod_modem_codec)) {
 		dev_warn(card->dev, "Failed to obtain modem_codec GPIO\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Set up digital mute अगर not provided by the codec */
-	अगर (!codec_dai->driver->ops) अणु
+	/* Set up digital mute if not provided by the codec */
+	if (!codec_dai->driver->ops) {
 		codec_dai->driver->ops = &ams_delta_dai_ops;
-	पूर्ण अन्यथा अणु
+	} else {
 		ams_delta_ops.startup = ams_delta_startup;
-		ams_delta_ops.shutकरोwn = ams_delta_shutकरोwn;
-	पूर्ण
+		ams_delta_ops.shutdown = ams_delta_shutdown;
+	}
 
-	/* Register optional line discipline क्रम over the modem control */
-	ret = tty_रेजिस्टर_ldisc(N_V253, &cx81801_ops);
-	अगर (ret) अणु
+	/* Register optional line discipline for over the modem control */
+	ret = tty_register_ldisc(N_V253, &cx81801_ops);
+	if (ret) {
 		dev_warn(card->dev,
 				"Failed to register line discipline, "
 				"will continue without any controls.\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Set up initial pin स्थिरellation */
+	/* Set up initial pin constellation */
 	snd_soc_dapm_disable_pin(dapm, "Mouthpiece");
 	snd_soc_dapm_disable_pin(dapm, "Speaker");
 	snd_soc_dapm_disable_pin(dapm, "AGCIN");
 	snd_soc_dapm_disable_pin(dapm, "AGCOUT");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* DAI glue - connects codec <--> CPU */
 SND_SOC_DAILINK_DEFS(cx20442,
@@ -527,7 +526,7 @@ SND_SOC_DAILINK_DEFS(cx20442,
 	DAILINK_COMP_ARRAY(COMP_CODEC("cx20442-codec", "cx20442-voice")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("omap-mcbsp.1")));
 
-अटल काष्ठा snd_soc_dai_link ams_delta_dai_link = अणु
+static struct snd_soc_dai_link ams_delta_dai_link = {
 	.name = "CX20442",
 	.stream_name = "CX20442",
 	.init = ams_delta_cx20442_init,
@@ -535,10 +534,10 @@ SND_SOC_DAILINK_DEFS(cx20442,
 	.dai_fmt = SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_NB_NF |
 		   SND_SOC_DAIFMT_CBM_CFM,
 	SND_SOC_DAILINK_REG(cx20442),
-पूर्ण;
+};
 
 /* Audio card driver */
-अटल काष्ठा snd_soc_card ams_delta_audio_card = अणु
+static struct snd_soc_card ams_delta_audio_card = {
 	.name = "AMS_DELTA",
 	.owner = THIS_MODULE,
 	.dai_link = &ams_delta_dai_link,
@@ -546,63 +545,63 @@ SND_SOC_DAILINK_DEFS(cx20442,
 
 	.controls = ams_delta_audio_controls,
 	.num_controls = ARRAY_SIZE(ams_delta_audio_controls),
-	.dapm_widमाला_लो = ams_delta_dapm_widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(ams_delta_dapm_widमाला_लो),
+	.dapm_widgets = ams_delta_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(ams_delta_dapm_widgets),
 	.dapm_routes = ams_delta_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(ams_delta_audio_map),
-पूर्ण;
+};
 
-/* Module init/निकास */
-अटल पूर्णांक ams_delta_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_card *card = &ams_delta_audio_card;
-	पूर्णांक ret;
+/* Module init/exit */
+static int ams_delta_probe(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = &ams_delta_audio_card;
+	int ret;
 
 	card->dev = &pdev->dev;
 
 	handset_mute = devm_gpiod_get(card->dev, "handset_mute",
 				      GPIOD_OUT_HIGH);
-	अगर (IS_ERR(handset_mute))
-		वापस PTR_ERR(handset_mute);
+	if (IS_ERR(handset_mute))
+		return PTR_ERR(handset_mute);
 
-	handsमुक्त_mute = devm_gpiod_get(card->dev, "handsfree_mute",
+	handsfree_mute = devm_gpiod_get(card->dev, "handsfree_mute",
 					GPIOD_OUT_HIGH);
-	अगर (IS_ERR(handsमुक्त_mute))
-		वापस PTR_ERR(handsमुक्त_mute);
+	if (IS_ERR(handsfree_mute))
+		return PTR_ERR(handsfree_mute);
 
-	ret = snd_soc_रेजिस्टर_card(card);
-	अगर (ret) अणु
+	ret = snd_soc_register_card(card);
+	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n", ret);
-		card->dev = शून्य;
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		card->dev = NULL;
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक ams_delta_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा snd_soc_card *card = platक्रमm_get_drvdata(pdev);
+static int ams_delta_remove(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
-	अगर (tty_unरेजिस्टर_ldisc(N_V253) != 0)
+	if (tty_unregister_ldisc(N_V253) != 0)
 		dev_warn(&pdev->dev,
 			"failed to unregister V253 line discipline\n");
 
-	snd_soc_unरेजिस्टर_card(card);
-	card->dev = शून्य;
-	वापस 0;
-पूर्ण
+	snd_soc_unregister_card(card);
+	card->dev = NULL;
+	return 0;
+}
 
-#घोषणा DRV_NAME "ams-delta-audio"
+#define DRV_NAME "ams-delta-audio"
 
-अटल काष्ठा platक्रमm_driver ams_delta_driver = अणु
-	.driver = अणु
+static struct platform_driver ams_delta_driver = {
+	.driver = {
 		.name = DRV_NAME,
-	पूर्ण,
+	},
 	.probe = ams_delta_probe,
-	.हटाओ = ams_delta_हटाओ,
-पूर्ण;
+	.remove = ams_delta_remove,
+};
 
-module_platक्रमm_driver(ams_delta_driver);
+module_platform_driver(ams_delta_driver);
 
 MODULE_AUTHOR("Janusz Krzysztofik <jkrzyszt@tis.icnet.pl>");
 MODULE_DESCRIPTION("ALSA SoC driver for Amstrad E3 (Delta) videophone");

@@ -1,264 +1,263 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/माला.स>
+#include <linux/bitfield.h>
+#include <linux/delay.h>
+#include <linux/mutex.h>
+#include <linux/of_device.h>
+#include <linux/slab.h>
+#include <linux/string.h>
 
-#समावेश <dt-bindings/memory/tegra20-mc.h>
+#include <dt-bindings/memory/tegra20-mc.h>
 
-#समावेश "mc.h"
+#include "mc.h"
 
-#घोषणा MC_STAT_CONTROL				0x90
-#घोषणा MC_STAT_EMC_CLOCK_LIMIT			0xa0
-#घोषणा MC_STAT_EMC_CLOCKS			0xa4
-#घोषणा MC_STAT_EMC_CONTROL_0			0xa8
-#घोषणा MC_STAT_EMC_CONTROL_1			0xac
-#घोषणा MC_STAT_EMC_COUNT_0			0xb8
-#घोषणा MC_STAT_EMC_COUNT_1			0xbc
+#define MC_STAT_CONTROL				0x90
+#define MC_STAT_EMC_CLOCK_LIMIT			0xa0
+#define MC_STAT_EMC_CLOCKS			0xa4
+#define MC_STAT_EMC_CONTROL_0			0xa8
+#define MC_STAT_EMC_CONTROL_1			0xac
+#define MC_STAT_EMC_COUNT_0			0xb8
+#define MC_STAT_EMC_COUNT_1			0xbc
 
-#घोषणा MC_STAT_CONTROL_CLIENT_ID		GENMASK(13,  8)
-#घोषणा MC_STAT_CONTROL_EVENT			GENMASK(23, 16)
-#घोषणा MC_STAT_CONTROL_PRI_EVENT		GENMASK(25, 24)
-#घोषणा MC_STAT_CONTROL_FILTER_CLIENT_ENABLE	GENMASK(26, 26)
-#घोषणा MC_STAT_CONTROL_FILTER_PRI		GENMASK(29, 28)
+#define MC_STAT_CONTROL_CLIENT_ID		GENMASK(13,  8)
+#define MC_STAT_CONTROL_EVENT			GENMASK(23, 16)
+#define MC_STAT_CONTROL_PRI_EVENT		GENMASK(25, 24)
+#define MC_STAT_CONTROL_FILTER_CLIENT_ENABLE	GENMASK(26, 26)
+#define MC_STAT_CONTROL_FILTER_PRI		GENMASK(29, 28)
 
-#घोषणा MC_STAT_CONTROL_PRI_EVENT_HP		0
-#घोषणा MC_STAT_CONTROL_PRI_EVENT_TM		1
-#घोषणा MC_STAT_CONTROL_PRI_EVENT_BW		2
+#define MC_STAT_CONTROL_PRI_EVENT_HP		0
+#define MC_STAT_CONTROL_PRI_EVENT_TM		1
+#define MC_STAT_CONTROL_PRI_EVENT_BW		2
 
-#घोषणा MC_STAT_CONTROL_FILTER_PRI_DISABLE	0
-#घोषणा MC_STAT_CONTROL_FILTER_PRI_NO		1
-#घोषणा MC_STAT_CONTROL_FILTER_PRI_YES		2
+#define MC_STAT_CONTROL_FILTER_PRI_DISABLE	0
+#define MC_STAT_CONTROL_FILTER_PRI_NO		1
+#define MC_STAT_CONTROL_FILTER_PRI_YES		2
 
-#घोषणा MC_STAT_CONTROL_EVENT_QUALIFIED		0
-#घोषणा MC_STAT_CONTROL_EVENT_ANY_READ		1
-#घोषणा MC_STAT_CONTROL_EVENT_ANY_WRITE		2
-#घोषणा MC_STAT_CONTROL_EVENT_RD_WR_CHANGE	3
-#घोषणा MC_STAT_CONTROL_EVENT_SUCCESSIVE	4
-#घोषणा MC_STAT_CONTROL_EVENT_ARB_BANK_AA	5
-#घोषणा MC_STAT_CONTROL_EVENT_ARB_BANK_BB	6
-#घोषणा MC_STAT_CONTROL_EVENT_PAGE_MISS		7
-#घोषणा MC_STAT_CONTROL_EVENT_AUTO_PRECHARGE	8
+#define MC_STAT_CONTROL_EVENT_QUALIFIED		0
+#define MC_STAT_CONTROL_EVENT_ANY_READ		1
+#define MC_STAT_CONTROL_EVENT_ANY_WRITE		2
+#define MC_STAT_CONTROL_EVENT_RD_WR_CHANGE	3
+#define MC_STAT_CONTROL_EVENT_SUCCESSIVE	4
+#define MC_STAT_CONTROL_EVENT_ARB_BANK_AA	5
+#define MC_STAT_CONTROL_EVENT_ARB_BANK_BB	6
+#define MC_STAT_CONTROL_EVENT_PAGE_MISS		7
+#define MC_STAT_CONTROL_EVENT_AUTO_PRECHARGE	8
 
-#घोषणा EMC_GATHER_RST				(0 << 8)
-#घोषणा EMC_GATHER_CLEAR			(1 << 8)
-#घोषणा EMC_GATHER_DISABLE			(2 << 8)
-#घोषणा EMC_GATHER_ENABLE			(3 << 8)
+#define EMC_GATHER_RST				(0 << 8)
+#define EMC_GATHER_CLEAR			(1 << 8)
+#define EMC_GATHER_DISABLE			(2 << 8)
+#define EMC_GATHER_ENABLE			(3 << 8)
 
-#घोषणा MC_STAT_SAMPLE_TIME_USEC		16000
+#define MC_STAT_SAMPLE_TIME_USEC		16000
 
-/* we store collected statistics as a fixed poपूर्णांक values */
-#घोषणा MC_FX_FRAC_SCALE			100
+/* we store collected statistics as a fixed point values */
+#define MC_FX_FRAC_SCALE			100
 
-अटल DEFINE_MUTEX(tegra20_mc_stat_lock);
+static DEFINE_MUTEX(tegra20_mc_stat_lock);
 
-काष्ठा tegra20_mc_stat_gather अणु
-	अचिन्हित पूर्णांक pri_filter;
-	अचिन्हित पूर्णांक pri_event;
-	अचिन्हित पूर्णांक result;
-	अचिन्हित पूर्णांक client;
-	अचिन्हित पूर्णांक event;
+struct tegra20_mc_stat_gather {
+	unsigned int pri_filter;
+	unsigned int pri_event;
+	unsigned int result;
+	unsigned int client;
+	unsigned int event;
 	bool client_enb;
-पूर्ण;
+};
 
-काष्ठा tegra20_mc_stat अणु
-	काष्ठा tegra20_mc_stat_gather gather0;
-	काष्ठा tegra20_mc_stat_gather gather1;
-	अचिन्हित पूर्णांक sample_समय_usec;
-	स्थिर काष्ठा tegra_mc *mc;
-पूर्ण;
+struct tegra20_mc_stat {
+	struct tegra20_mc_stat_gather gather0;
+	struct tegra20_mc_stat_gather gather1;
+	unsigned int sample_time_usec;
+	const struct tegra_mc *mc;
+};
 
-काष्ठा tegra20_mc_client_stat अणु
-	अचिन्हित पूर्णांक events;
-	अचिन्हित पूर्णांक arb_high_prio;
-	अचिन्हित पूर्णांक arb_समयout;
-	अचिन्हित पूर्णांक arb_bandwidth;
-	अचिन्हित पूर्णांक rd_wr_change;
-	अचिन्हित पूर्णांक successive;
-	अचिन्हित पूर्णांक page_miss;
-	अचिन्हित पूर्णांक स्वतः_preअक्षरge;
-	अचिन्हित पूर्णांक arb_bank_aa;
-	अचिन्हित पूर्णांक arb_bank_bb;
-पूर्ण;
+struct tegra20_mc_client_stat {
+	unsigned int events;
+	unsigned int arb_high_prio;
+	unsigned int arb_timeout;
+	unsigned int arb_bandwidth;
+	unsigned int rd_wr_change;
+	unsigned int successive;
+	unsigned int page_miss;
+	unsigned int auto_precharge;
+	unsigned int arb_bank_aa;
+	unsigned int arb_bank_bb;
+};
 
-अटल स्थिर काष्ठा tegra_mc_client tegra20_mc_clients[] = अणु
-	अणु
+static const struct tegra_mc_client tegra20_mc_clients[] = {
+	{
 		.id = 0x00,
 		.name = "display0a",
-	पूर्ण, अणु
+	}, {
 		.id = 0x01,
 		.name = "display0ab",
-	पूर्ण, अणु
+	}, {
 		.id = 0x02,
 		.name = "display0b",
-	पूर्ण, अणु
+	}, {
 		.id = 0x03,
 		.name = "display0bb",
-	पूर्ण, अणु
+	}, {
 		.id = 0x04,
 		.name = "display0c",
-	पूर्ण, अणु
+	}, {
 		.id = 0x05,
 		.name = "display0cb",
-	पूर्ण, अणु
+	}, {
 		.id = 0x06,
 		.name = "display1b",
-	पूर्ण, अणु
+	}, {
 		.id = 0x07,
 		.name = "display1bb",
-	पूर्ण, अणु
+	}, {
 		.id = 0x08,
 		.name = "eppup",
-	पूर्ण, अणु
+	}, {
 		.id = 0x09,
 		.name = "g2pr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x0a,
 		.name = "g2sr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x0b,
 		.name = "mpeunifbr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x0c,
 		.name = "viruv",
-	पूर्ण, अणु
+	}, {
 		.id = 0x0d,
 		.name = "avpcarm7r",
-	पूर्ण, अणु
+	}, {
 		.id = 0x0e,
 		.name = "displayhc",
-	पूर्ण, अणु
+	}, {
 		.id = 0x0f,
 		.name = "displayhcb",
-	पूर्ण, अणु
+	}, {
 		.id = 0x10,
 		.name = "fdcdrd",
-	पूर्ण, अणु
+	}, {
 		.id = 0x11,
 		.name = "g2dr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x12,
 		.name = "host1xdmar",
-	पूर्ण, अणु
+	}, {
 		.id = 0x13,
 		.name = "host1xr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x14,
 		.name = "idxsrd",
-	पूर्ण, अणु
+	}, {
 		.id = 0x15,
 		.name = "mpcorer",
-	पूर्ण, अणु
+	}, {
 		.id = 0x16,
 		.name = "mpe_ipred",
-	पूर्ण, अणु
+	}, {
 		.id = 0x17,
 		.name = "mpeamemrd",
-	पूर्ण, अणु
+	}, {
 		.id = 0x18,
 		.name = "mpecsrd",
-	पूर्ण, अणु
+	}, {
 		.id = 0x19,
 		.name = "ppcsahbdmar",
-	पूर्ण, अणु
+	}, {
 		.id = 0x1a,
 		.name = "ppcsahbslvr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x1b,
 		.name = "texsrd",
-	पूर्ण, अणु
+	}, {
 		.id = 0x1c,
 		.name = "vdebsevr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x1d,
 		.name = "vdember",
-	पूर्ण, अणु
+	}, {
 		.id = 0x1e,
 		.name = "vdemcer",
-	पूर्ण, अणु
+	}, {
 		.id = 0x1f,
 		.name = "vdetper",
-	पूर्ण, अणु
+	}, {
 		.id = 0x20,
 		.name = "eppu",
-	पूर्ण, अणु
+	}, {
 		.id = 0x21,
 		.name = "eppv",
-	पूर्ण, अणु
+	}, {
 		.id = 0x22,
 		.name = "eppy",
-	पूर्ण, अणु
+	}, {
 		.id = 0x23,
 		.name = "mpeunifbw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x24,
 		.name = "viwsb",
-	पूर्ण, अणु
+	}, {
 		.id = 0x25,
 		.name = "viwu",
-	पूर्ण, अणु
+	}, {
 		.id = 0x26,
 		.name = "viwv",
-	पूर्ण, अणु
+	}, {
 		.id = 0x27,
 		.name = "viwy",
-	पूर्ण, अणु
+	}, {
 		.id = 0x28,
 		.name = "g2dw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x29,
 		.name = "avpcarm7w",
-	पूर्ण, अणु
+	}, {
 		.id = 0x2a,
 		.name = "fdcdwr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x2b,
 		.name = "host1xw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x2c,
 		.name = "ispw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x2d,
 		.name = "mpcorew",
-	पूर्ण, अणु
+	}, {
 		.id = 0x2e,
 		.name = "mpecswr",
-	पूर्ण, अणु
+	}, {
 		.id = 0x2f,
 		.name = "ppcsahbdmaw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x30,
 		.name = "ppcsahbslvw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x31,
 		.name = "vdebsevw",
-	पूर्ण, अणु
+	}, {
 		.id = 0x32,
 		.name = "vdembew",
-	पूर्ण, अणु
+	}, {
 		.id = 0x33,
 		.name = "vdetpmw",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-#घोषणा TEGRA20_MC_RESET(_name, _control, _status, _reset, _bit)	\
-	अणु								\
+#define TEGRA20_MC_RESET(_name, _control, _status, _reset, _bit)	\
+	{								\
 		.name = #_name,						\
 		.id = TEGRA20_MC_RESET_##_name,				\
 		.control = _control,					\
 		.status = _status,					\
 		.reset = _reset,					\
 		.bit = _bit,						\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा tegra_mc_reset tegra20_mc_resets[] = अणु
+static const struct tegra_mc_reset tegra20_mc_resets[] = {
 	TEGRA20_MC_RESET(AVPC,   0x100, 0x140, 0x104,  0),
 	TEGRA20_MC_RESET(DC,     0x100, 0x144, 0x104,  1),
 	TEGRA20_MC_RESET(DCB,    0x100, 0x148, 0x104,  2),
@@ -274,167 +273,167 @@
 	TEGRA20_MC_RESET(PPCS,   0x100, 0x170, 0x104, 12),
 	TEGRA20_MC_RESET(VDE,    0x100, 0x174, 0x104, 13),
 	TEGRA20_MC_RESET(VI,     0x100, 0x178, 0x104, 14),
-पूर्ण;
+};
 
-अटल पूर्णांक tegra20_mc_hotreset_निश्चित(काष्ठा tegra_mc *mc,
-				      स्थिर काष्ठा tegra_mc_reset *rst)
-अणु
-	अचिन्हित दीर्घ flags;
+static int tegra20_mc_hotreset_assert(struct tegra_mc *mc,
+				      const struct tegra_mc_reset *rst)
+{
+	unsigned long flags;
 	u32 value;
 
 	spin_lock_irqsave(&mc->lock, flags);
 
-	value = mc_पढ़ोl(mc, rst->reset);
-	mc_ग_लिखोl(mc, value & ~BIT(rst->bit), rst->reset);
+	value = mc_readl(mc, rst->reset);
+	mc_writel(mc, value & ~BIT(rst->bit), rst->reset);
 
 	spin_unlock_irqrestore(&mc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_mc_hotreset_deनिश्चित(काष्ठा tegra_mc *mc,
-					स्थिर काष्ठा tegra_mc_reset *rst)
-अणु
-	अचिन्हित दीर्घ flags;
+static int tegra20_mc_hotreset_deassert(struct tegra_mc *mc,
+					const struct tegra_mc_reset *rst)
+{
+	unsigned long flags;
 	u32 value;
 
 	spin_lock_irqsave(&mc->lock, flags);
 
-	value = mc_पढ़ोl(mc, rst->reset);
-	mc_ग_लिखोl(mc, value | BIT(rst->bit), rst->reset);
+	value = mc_readl(mc, rst->reset);
+	mc_writel(mc, value | BIT(rst->bit), rst->reset);
 
 	spin_unlock_irqrestore(&mc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_mc_block_dma(काष्ठा tegra_mc *mc,
-				स्थिर काष्ठा tegra_mc_reset *rst)
-अणु
-	अचिन्हित दीर्घ flags;
+static int tegra20_mc_block_dma(struct tegra_mc *mc,
+				const struct tegra_mc_reset *rst)
+{
+	unsigned long flags;
 	u32 value;
 
 	spin_lock_irqsave(&mc->lock, flags);
 
-	value = mc_पढ़ोl(mc, rst->control) & ~BIT(rst->bit);
-	mc_ग_लिखोl(mc, value, rst->control);
+	value = mc_readl(mc, rst->control) & ~BIT(rst->bit);
+	mc_writel(mc, value, rst->control);
 
 	spin_unlock_irqrestore(&mc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool tegra20_mc_dma_idling(काष्ठा tegra_mc *mc,
-				  स्थिर काष्ठा tegra_mc_reset *rst)
-अणु
-	वापस mc_पढ़ोl(mc, rst->status) == 0;
-पूर्ण
+static bool tegra20_mc_dma_idling(struct tegra_mc *mc,
+				  const struct tegra_mc_reset *rst)
+{
+	return mc_readl(mc, rst->status) == 0;
+}
 
-अटल पूर्णांक tegra20_mc_reset_status(काष्ठा tegra_mc *mc,
-				   स्थिर काष्ठा tegra_mc_reset *rst)
-अणु
-	वापस (mc_पढ़ोl(mc, rst->reset) & BIT(rst->bit)) == 0;
-पूर्ण
+static int tegra20_mc_reset_status(struct tegra_mc *mc,
+				   const struct tegra_mc_reset *rst)
+{
+	return (mc_readl(mc, rst->reset) & BIT(rst->bit)) == 0;
+}
 
-अटल पूर्णांक tegra20_mc_unblock_dma(काष्ठा tegra_mc *mc,
-				  स्थिर काष्ठा tegra_mc_reset *rst)
-अणु
-	अचिन्हित दीर्घ flags;
+static int tegra20_mc_unblock_dma(struct tegra_mc *mc,
+				  const struct tegra_mc_reset *rst)
+{
+	unsigned long flags;
 	u32 value;
 
 	spin_lock_irqsave(&mc->lock, flags);
 
-	value = mc_पढ़ोl(mc, rst->control) | BIT(rst->bit);
-	mc_ग_लिखोl(mc, value, rst->control);
+	value = mc_readl(mc, rst->control) | BIT(rst->bit);
+	mc_writel(mc, value, rst->control);
 
 	spin_unlock_irqrestore(&mc->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा tegra_mc_reset_ops tegra20_mc_reset_ops = अणु
-	.hotreset_निश्चित = tegra20_mc_hotreset_निश्चित,
-	.hotreset_deनिश्चित = tegra20_mc_hotreset_deनिश्चित,
+static const struct tegra_mc_reset_ops tegra20_mc_reset_ops = {
+	.hotreset_assert = tegra20_mc_hotreset_assert,
+	.hotreset_deassert = tegra20_mc_hotreset_deassert,
 	.block_dma = tegra20_mc_block_dma,
 	.dma_idling = tegra20_mc_dma_idling,
 	.unblock_dma = tegra20_mc_unblock_dma,
 	.reset_status = tegra20_mc_reset_status,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra20_mc_icc_set(काष्ठा icc_node *src, काष्ठा icc_node *dst)
-अणु
+static int tegra20_mc_icc_set(struct icc_node *src, struct icc_node *dst)
+{
 	/*
 	 * It should be possible to tune arbitration knobs here, but the
-	 * शेष values are known to work well on all devices. Hence
-	 * nothing to करो here so far.
+	 * default values are known to work well on all devices. Hence
+	 * nothing to do here so far.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_mc_icc_aggreate(काष्ठा icc_node *node, u32 tag, u32 avg_bw,
+static int tegra20_mc_icc_aggreate(struct icc_node *node, u32 tag, u32 avg_bw,
 				   u32 peak_bw, u32 *agg_avg, u32 *agg_peak)
-अणु
+{
 	/*
 	 * ISO clients need to reserve extra bandwidth up-front because
 	 * there could be high bandwidth pressure during initial filling
-	 * of the client's FIFO buffers.  Secondly, we need to take पूर्णांकo
-	 * account impurities of the memory subप्रणाली.
+	 * of the client's FIFO buffers.  Secondly, we need to take into
+	 * account impurities of the memory subsystem.
 	 */
-	अगर (tag & TEGRA_MC_ICC_TAG_ISO)
+	if (tag & TEGRA_MC_ICC_TAG_ISO)
 		peak_bw = tegra_mc_scale_percents(peak_bw, 300);
 
 	*agg_avg += avg_bw;
 	*agg_peak = max(*agg_peak, peak_bw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा icc_node_data *
-tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व्योम *data)
-अणु
-	काष्ठा tegra_mc *mc = icc_provider_to_tegra_mc(data);
-	अचिन्हित पूर्णांक i, idx = spec->args[0];
-	काष्ठा icc_node_data *ndata;
-	काष्ठा icc_node *node;
+static struct icc_node_data *
+tegra20_mc_of_icc_xlate_extended(struct of_phandle_args *spec, void *data)
+{
+	struct tegra_mc *mc = icc_provider_to_tegra_mc(data);
+	unsigned int i, idx = spec->args[0];
+	struct icc_node_data *ndata;
+	struct icc_node *node;
 
-	list_क्रम_each_entry(node, &mc->provider.nodes, node_list) अणु
-		अगर (node->id != idx)
-			जारी;
+	list_for_each_entry(node, &mc->provider.nodes, node_list) {
+		if (node->id != idx)
+			continue;
 
-		ndata = kzalloc(माप(*ndata), GFP_KERNEL);
-		अगर (!ndata)
-			वापस ERR_PTR(-ENOMEM);
+		ndata = kzalloc(sizeof(*ndata), GFP_KERNEL);
+		if (!ndata)
+			return ERR_PTR(-ENOMEM);
 
 		ndata->node = node;
 
-		/* these clients are isochronous by शेष */
-		अगर (strstarts(node->name, "display") ||
+		/* these clients are isochronous by default */
+		if (strstarts(node->name, "display") ||
 		    strstarts(node->name, "vi"))
 			ndata->tag = TEGRA_MC_ICC_TAG_ISO;
-		अन्यथा
+		else
 			ndata->tag = TEGRA_MC_ICC_TAG_DEFAULT;
 
-		वापस ndata;
-	पूर्ण
+		return ndata;
+	}
 
-	क्रम (i = 0; i < mc->soc->num_clients; i++) अणु
-		अगर (mc->soc->clients[i].id == idx)
-			वापस ERR_PTR(-EPROBE_DEFER);
-	पूर्ण
+	for (i = 0; i < mc->soc->num_clients; i++) {
+		if (mc->soc->clients[i].id == idx)
+			return ERR_PTR(-EPROBE_DEFER);
+	}
 
 	dev_err(mc->dev, "invalid ICC client ID %u\n", idx);
 
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-अटल स्थिर काष्ठा tegra_mc_icc_ops tegra20_mc_icc_ops = अणु
+static const struct tegra_mc_icc_ops tegra20_mc_icc_ops = {
 	.xlate_extended = tegra20_mc_of_icc_xlate_extended,
 	.aggregate = tegra20_mc_icc_aggreate,
 	.set = tegra20_mc_icc_set,
-पूर्ण;
+};
 
-अटल u32 tegra20_mc_stat_gather_control(स्थिर काष्ठा tegra20_mc_stat_gather *g)
-अणु
+static u32 tegra20_mc_stat_gather_control(const struct tegra20_mc_stat_gather *g)
+{
 	u32 control;
 
 	control  = FIELD_PREP(MC_STAT_CONTROL_EVENT, g->event);
@@ -443,49 +442,49 @@ tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व�
 	control |= FIELD_PREP(MC_STAT_CONTROL_FILTER_PRI, g->pri_filter);
 	control |= FIELD_PREP(MC_STAT_CONTROL_FILTER_CLIENT_ENABLE, g->client_enb);
 
-	वापस control;
-पूर्ण
+	return control;
+}
 
-अटल व्योम tegra20_mc_stat_gather(काष्ठा tegra20_mc_stat *stat)
-अणु
-	u32 घड़ीs, count0, count1, control_0, control_1;
-	स्थिर काष्ठा tegra_mc *mc = stat->mc;
+static void tegra20_mc_stat_gather(struct tegra20_mc_stat *stat)
+{
+	u32 clocks, count0, count1, control_0, control_1;
+	const struct tegra_mc *mc = stat->mc;
 
 	control_0 = tegra20_mc_stat_gather_control(&stat->gather0);
 	control_1 = tegra20_mc_stat_gather_control(&stat->gather1);
 
 	/*
 	 * Reset statistic gathers state, select statistics collection mode
-	 * and set घड़ीs counter saturation limit to maximum.
+	 * and set clocks counter saturation limit to maximum.
 	 */
-	mc_ग_लिखोl(mc, 0x00000000, MC_STAT_CONTROL);
-	mc_ग_लिखोl(mc,  control_0, MC_STAT_EMC_CONTROL_0);
-	mc_ग_लिखोl(mc,  control_1, MC_STAT_EMC_CONTROL_1);
-	mc_ग_लिखोl(mc, 0xffffffff, MC_STAT_EMC_CLOCK_LIMIT);
+	mc_writel(mc, 0x00000000, MC_STAT_CONTROL);
+	mc_writel(mc,  control_0, MC_STAT_EMC_CONTROL_0);
+	mc_writel(mc,  control_1, MC_STAT_EMC_CONTROL_1);
+	mc_writel(mc, 0xffffffff, MC_STAT_EMC_CLOCK_LIMIT);
 
-	mc_ग_लिखोl(mc, EMC_GATHER_ENABLE, MC_STAT_CONTROL);
-	fsleep(stat->sample_समय_usec);
-	mc_ग_लिखोl(mc, EMC_GATHER_DISABLE, MC_STAT_CONTROL);
+	mc_writel(mc, EMC_GATHER_ENABLE, MC_STAT_CONTROL);
+	fsleep(stat->sample_time_usec);
+	mc_writel(mc, EMC_GATHER_DISABLE, MC_STAT_CONTROL);
 
-	count0 = mc_पढ़ोl(mc, MC_STAT_EMC_COUNT_0);
-	count1 = mc_पढ़ोl(mc, MC_STAT_EMC_COUNT_1);
-	घड़ीs = mc_पढ़ोl(mc, MC_STAT_EMC_CLOCKS);
-	घड़ीs = max(घड़ीs / 100 / MC_FX_FRAC_SCALE, 1u);
+	count0 = mc_readl(mc, MC_STAT_EMC_COUNT_0);
+	count1 = mc_readl(mc, MC_STAT_EMC_COUNT_1);
+	clocks = mc_readl(mc, MC_STAT_EMC_CLOCKS);
+	clocks = max(clocks / 100 / MC_FX_FRAC_SCALE, 1u);
 
-	stat->gather0.result = DIV_ROUND_UP(count0, घड़ीs);
-	stat->gather1.result = DIV_ROUND_UP(count1, घड़ीs);
-पूर्ण
+	stat->gather0.result = DIV_ROUND_UP(count0, clocks);
+	stat->gather1.result = DIV_ROUND_UP(count1, clocks);
+}
 
-अटल व्योम tegra20_mc_stat_events(स्थिर काष्ठा tegra_mc *mc,
-				   स्थिर काष्ठा tegra_mc_client *client0,
-				   स्थिर काष्ठा tegra_mc_client *client1,
-				   अचिन्हित पूर्णांक pri_filter,
-				   अचिन्हित पूर्णांक pri_event,
-				   अचिन्हित पूर्णांक event,
-				   अचिन्हित पूर्णांक *result0,
-				   अचिन्हित पूर्णांक *result1)
-अणु
-	काष्ठा tegra20_mc_stat stat = अणुपूर्ण;
+static void tegra20_mc_stat_events(const struct tegra_mc *mc,
+				   const struct tegra_mc_client *client0,
+				   const struct tegra_mc_client *client1,
+				   unsigned int pri_filter,
+				   unsigned int pri_event,
+				   unsigned int event,
+				   unsigned int *result0,
+				   unsigned int *result1)
+{
+	struct tegra20_mc_stat stat = {};
 
 	stat.gather0.client = client0 ? client0->id : 0;
 	stat.gather0.pri_filter = pri_filter;
@@ -499,28 +498,28 @@ tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व�
 	stat.gather1.pri_event = pri_event;
 	stat.gather1.event = event;
 
-	stat.sample_समय_usec = MC_STAT_SAMPLE_TIME_USEC;
+	stat.sample_time_usec = MC_STAT_SAMPLE_TIME_USEC;
 	stat.mc = mc;
 
 	tegra20_mc_stat_gather(&stat);
 
 	*result0 = stat.gather0.result;
 	*result1 = stat.gather1.result;
-पूर्ण
+}
 
-अटल व्योम tegra20_mc_collect_stats(स्थिर काष्ठा tegra_mc *mc,
-				     काष्ठा tegra20_mc_client_stat *stats)
-अणु
-	स्थिर काष्ठा tegra_mc_client *client0, *client1;
-	अचिन्हित पूर्णांक i;
+static void tegra20_mc_collect_stats(const struct tegra_mc *mc,
+				     struct tegra20_mc_client_stat *stats)
+{
+	const struct tegra_mc_client *client0, *client1;
+	unsigned int i;
 
-	/* collect memory controller utilization percent क्रम each client */
-	क्रम (i = 0; i < mc->soc->num_clients; i += 2) अणु
+	/* collect memory controller utilization percent for each client */
+	for (i = 0; i < mc->soc->num_clients; i += 2) {
 		client0 = &mc->soc->clients[i];
 		client1 = &mc->soc->clients[i + 1];
 
-		अगर (i + 1 == mc->soc->num_clients)
-			client1 = शून्य;
+		if (i + 1 == mc->soc->num_clients)
+			client1 = NULL;
 
 		tegra20_mc_stat_events(mc, client0, client1,
 				       MC_STAT_CONTROL_FILTER_PRI_DISABLE,
@@ -528,30 +527,30 @@ tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व�
 				       MC_STAT_CONTROL_EVENT_QUALIFIED,
 				       &stats[i + 0].events,
 				       &stats[i + 1].events);
-	पूर्ण
+	}
 
 	/* collect more info from active clients */
-	क्रम (i = 0; i < mc->soc->num_clients; i++) अणु
-		अचिन्हित पूर्णांक clienta, clientb = mc->soc->num_clients;
+	for (i = 0; i < mc->soc->num_clients; i++) {
+		unsigned int clienta, clientb = mc->soc->num_clients;
 
-		क्रम (client0 = शून्य; i < mc->soc->num_clients; i++) अणु
-			अगर (stats[i].events) अणु
+		for (client0 = NULL; i < mc->soc->num_clients; i++) {
+			if (stats[i].events) {
 				client0 = &mc->soc->clients[i];
 				clienta = i++;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		क्रम (client1 = शून्य; i < mc->soc->num_clients; i++) अणु
-			अगर (stats[i].events) अणु
+		for (client1 = NULL; i < mc->soc->num_clients; i++) {
+			if (stats[i].events) {
 				client1 = &mc->soc->clients[i];
 				clientb = i;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-		अगर (!client0 && !client1)
-			अवरोध;
+		if (!client0 && !client1)
+			break;
 
 		tegra20_mc_stat_events(mc, client0, client1,
 				       MC_STAT_CONTROL_FILTER_PRI_YES,
@@ -564,8 +563,8 @@ tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व�
 				       MC_STAT_CONTROL_FILTER_PRI_YES,
 				       MC_STAT_CONTROL_PRI_EVENT_TM,
 				       MC_STAT_CONTROL_EVENT_QUALIFIED,
-				       &stats[clienta].arb_समयout,
-				       &stats[clientb].arb_समयout);
+				       &stats[clienta].arb_timeout,
+				       &stats[clientb].arb_timeout);
 
 		tegra20_mc_stat_events(mc, client0, client1,
 				       MC_STAT_CONTROL_FILTER_PRI_YES,
@@ -594,30 +593,30 @@ tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व�
 				       MC_STAT_CONTROL_EVENT_PAGE_MISS,
 				       &stats[clienta].page_miss,
 				       &stats[clientb].page_miss);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tegra20_mc_म_लिखो_percents(काष्ठा seq_file *s,
-				       स्थिर अक्षर *fmt,
-				       अचिन्हित पूर्णांक percents_fx)
-अणु
-	अक्षर percents_str[8];
+static void tegra20_mc_printf_percents(struct seq_file *s,
+				       const char *fmt,
+				       unsigned int percents_fx)
+{
+	char percents_str[8];
 
-	snम_लिखो(percents_str, ARRAY_SIZE(percents_str), "%3u.%02u%%",
+	snprintf(percents_str, ARRAY_SIZE(percents_str), "%3u.%02u%%",
 		 percents_fx / MC_FX_FRAC_SCALE, percents_fx % MC_FX_FRAC_SCALE);
 
-	seq_म_लिखो(s, fmt, percents_str);
-पूर्ण
+	seq_printf(s, fmt, percents_str);
+}
 
-अटल पूर्णांक tegra20_mc_stats_show(काष्ठा seq_file *s, व्योम *unused)
-अणु
-	स्थिर काष्ठा tegra_mc *mc = dev_get_drvdata(s->निजी);
-	काष्ठा tegra20_mc_client_stat *stats;
-	अचिन्हित पूर्णांक i;
+static int tegra20_mc_stats_show(struct seq_file *s, void *unused)
+{
+	const struct tegra_mc *mc = dev_get_drvdata(s->private);
+	struct tegra20_mc_client_stat *stats;
+	unsigned int i;
 
-	stats = kसुस्मृति(mc->soc->num_clients + 1, माप(*stats), GFP_KERNEL);
-	अगर (!stats)
-		वापस -ENOMEM;
+	stats = kcalloc(mc->soc->num_clients + 1, sizeof(*stats), GFP_KERNEL);
+	if (!stats)
+		return -ENOMEM;
 
 	mutex_lock(&tegra20_mc_stat_lock);
 
@@ -625,79 +624,79 @@ tegra20_mc_of_icc_xlate_extended(काष्ठा of_phandle_args *spec, व�
 
 	mutex_unlock(&tegra20_mc_stat_lock);
 
-	seq_माला_दो(s, "Memory client   Events   Timeout   High priority   Bandwidth ARB   RW change   Successive   Page miss\n");
-	seq_माला_दो(s, "-----------------------------------------------------------------------------------------------------\n");
+	seq_puts(s, "Memory client   Events   Timeout   High priority   Bandwidth ARB   RW change   Successive   Page miss\n");
+	seq_puts(s, "-----------------------------------------------------------------------------------------------------\n");
 
-	क्रम (i = 0; i < mc->soc->num_clients; i++) अणु
-		seq_म_लिखो(s, "%-14s  ", mc->soc->clients[i].name);
+	for (i = 0; i < mc->soc->num_clients; i++) {
+		seq_printf(s, "%-14s  ", mc->soc->clients[i].name);
 
-		/* An event is generated when client perक्रमms R/W request. */
-		tegra20_mc_म_लिखो_percents(s,  "%-9s", stats[i].events);
-
-		/*
-		 * An event is generated based on the समयout (TM) संकेत
-		 * accompanying a request क्रम arbitration.
-		 */
-		tegra20_mc_म_लिखो_percents(s, "%-10s", stats[i].arb_समयout);
+		/* An event is generated when client performs R/W request. */
+		tegra20_mc_printf_percents(s,  "%-9s", stats[i].events);
 
 		/*
-		 * An event is generated based on the high-priority (HP) संकेत
-		 * accompanying a request क्रम arbitration.
+		 * An event is generated based on the timeout (TM) signal
+		 * accompanying a request for arbitration.
 		 */
-		tegra20_mc_म_लिखो_percents(s, "%-16s", stats[i].arb_high_prio);
+		tegra20_mc_printf_percents(s, "%-10s", stats[i].arb_timeout);
 
 		/*
-		 * An event is generated based on the bandwidth (BW) संकेत
-		 * accompanying a request क्रम arbitration.
+		 * An event is generated based on the high-priority (HP) signal
+		 * accompanying a request for arbitration.
 		 */
-		tegra20_mc_म_लिखो_percents(s, "%-16s", stats[i].arb_bandwidth);
+		tegra20_mc_printf_percents(s, "%-16s", stats[i].arb_high_prio);
 
 		/*
-		 * An event is generated when the memory controller चयनes
-		 * between making a पढ़ो request to making a ग_लिखो request.
+		 * An event is generated based on the bandwidth (BW) signal
+		 * accompanying a request for arbitration.
 		 */
-		tegra20_mc_म_लिखो_percents(s, "%-12s", stats[i].rd_wr_change);
+		tegra20_mc_printf_percents(s, "%-16s", stats[i].arb_bandwidth);
+
+		/*
+		 * An event is generated when the memory controller switches
+		 * between making a read request to making a write request.
+		 */
+		tegra20_mc_printf_percents(s, "%-12s", stats[i].rd_wr_change);
 
 		/*
 		 * An even generated when the chosen client has wins arbitration
 		 * when it was also the winner at the previous request.  If a
 		 * client makes N requests in a row that are honored, SUCCESSIVE
-		 * will be counted (N-1) बार.  Large values क्रम this event
-		 * imply that अगर we were patient enough, all of those requests
+		 * will be counted (N-1) times.  Large values for this event
+		 * imply that if we were patient enough, all of those requests
 		 * could have been coalesced.
 		 */
-		tegra20_mc_म_लिखो_percents(s, "%-13s", stats[i].successive);
+		tegra20_mc_printf_percents(s, "%-13s", stats[i].successive);
 
 		/*
 		 * An event is generated when the memory controller detects a
-		 * page miss क्रम the current request.
+		 * page miss for the current request.
 		 */
-		tegra20_mc_म_लिखो_percents(s, "%-12s\n", stats[i].page_miss);
-	पूर्ण
+		tegra20_mc_printf_percents(s, "%-12s\n", stats[i].page_miss);
+	}
 
-	kमुक्त(stats);
+	kfree(stats);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra20_mc_init(काष्ठा tegra_mc *mc)
-अणु
+static int tegra20_mc_init(struct tegra_mc *mc)
+{
 	debugfs_create_devm_seqfile(mc->dev, "stats", mc->debugfs.root,
 				    tegra20_mc_stats_show);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा tegra_mc_soc tegra20_mc_soc = अणु
+const struct tegra_mc_soc tegra20_mc_soc = {
 	.clients = tegra20_mc_clients,
 	.num_clients = ARRAY_SIZE(tegra20_mc_clients),
 	.num_address_bits = 32,
 	.client_id_mask = 0x3f,
-	.पूर्णांकmask = MC_INT_SECURITY_VIOLATION | MC_INT_INVALID_GART_PAGE |
+	.intmask = MC_INT_SECURITY_VIOLATION | MC_INT_INVALID_GART_PAGE |
 		   MC_INT_DECERR_EMEM,
 	.reset_ops = &tegra20_mc_reset_ops,
 	.resets = tegra20_mc_resets,
 	.num_resets = ARRAY_SIZE(tegra20_mc_resets),
 	.icc_ops = &tegra20_mc_icc_ops,
 	.init = tegra20_mc_init,
-पूर्ण;
+};

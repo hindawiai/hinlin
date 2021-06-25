@@ -1,86 +1,85 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_X86_MICROCODE_INTEL_H
-#घोषणा _ASM_X86_MICROCODE_INTEL_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_X86_MICROCODE_INTEL_H
+#define _ASM_X86_MICROCODE_INTEL_H
 
-#समावेश <यंत्र/microcode.h>
+#include <asm/microcode.h>
 
-काष्ठा microcode_header_पूर्णांकel अणु
-	अचिन्हित पूर्णांक            hdrver;
-	अचिन्हित पूर्णांक            rev;
-	अचिन्हित पूर्णांक            date;
-	अचिन्हित पूर्णांक            sig;
-	अचिन्हित पूर्णांक            cksum;
-	अचिन्हित पूर्णांक            ldrver;
-	अचिन्हित पूर्णांक            pf;
-	अचिन्हित पूर्णांक            datasize;
-	अचिन्हित पूर्णांक            totalsize;
-	अचिन्हित पूर्णांक            reserved[3];
-पूर्ण;
+struct microcode_header_intel {
+	unsigned int            hdrver;
+	unsigned int            rev;
+	unsigned int            date;
+	unsigned int            sig;
+	unsigned int            cksum;
+	unsigned int            ldrver;
+	unsigned int            pf;
+	unsigned int            datasize;
+	unsigned int            totalsize;
+	unsigned int            reserved[3];
+};
 
-काष्ठा microcode_पूर्णांकel अणु
-	काष्ठा microcode_header_पूर्णांकel hdr;
-	अचिन्हित पूर्णांक            bits[0];
-पूर्ण;
+struct microcode_intel {
+	struct microcode_header_intel hdr;
+	unsigned int            bits[0];
+};
 
-/* microcode क्रमmat is extended from prescott processors */
-काष्ठा extended_signature अणु
-	अचिन्हित पूर्णांक            sig;
-	अचिन्हित पूर्णांक            pf;
-	अचिन्हित पूर्णांक            cksum;
-पूर्ण;
+/* microcode format is extended from prescott processors */
+struct extended_signature {
+	unsigned int            sig;
+	unsigned int            pf;
+	unsigned int            cksum;
+};
 
-काष्ठा extended_sigtable अणु
-	अचिन्हित पूर्णांक            count;
-	अचिन्हित पूर्णांक            cksum;
-	अचिन्हित पूर्णांक            reserved[3];
-	काष्ठा extended_signature sigs[0];
-पूर्ण;
+struct extended_sigtable {
+	unsigned int            count;
+	unsigned int            cksum;
+	unsigned int            reserved[3];
+	struct extended_signature sigs[0];
+};
 
-#घोषणा DEFAULT_UCODE_DATASIZE	(2000)
-#घोषणा MC_HEADER_SIZE		(माप(काष्ठा microcode_header_पूर्णांकel))
-#घोषणा DEFAULT_UCODE_TOTALSIZE (DEFAULT_UCODE_DATASIZE + MC_HEADER_SIZE)
-#घोषणा EXT_HEADER_SIZE		(माप(काष्ठा extended_sigtable))
-#घोषणा EXT_SIGNATURE_SIZE	(माप(काष्ठा extended_signature))
+#define DEFAULT_UCODE_DATASIZE	(2000)
+#define MC_HEADER_SIZE		(sizeof(struct microcode_header_intel))
+#define DEFAULT_UCODE_TOTALSIZE (DEFAULT_UCODE_DATASIZE + MC_HEADER_SIZE)
+#define EXT_HEADER_SIZE		(sizeof(struct extended_sigtable))
+#define EXT_SIGNATURE_SIZE	(sizeof(struct extended_signature))
 
-#घोषणा get_totalsize(mc) \
-	(((काष्ठा microcode_पूर्णांकel *)mc)->hdr.datasize ? \
-	 ((काष्ठा microcode_पूर्णांकel *)mc)->hdr.totalsize : \
+#define get_totalsize(mc) \
+	(((struct microcode_intel *)mc)->hdr.datasize ? \
+	 ((struct microcode_intel *)mc)->hdr.totalsize : \
 	 DEFAULT_UCODE_TOTALSIZE)
 
-#घोषणा get_datasize(mc) \
-	(((काष्ठा microcode_पूर्णांकel *)mc)->hdr.datasize ? \
-	 ((काष्ठा microcode_पूर्णांकel *)mc)->hdr.datasize : DEFAULT_UCODE_DATASIZE)
+#define get_datasize(mc) \
+	(((struct microcode_intel *)mc)->hdr.datasize ? \
+	 ((struct microcode_intel *)mc)->hdr.datasize : DEFAULT_UCODE_DATASIZE)
 
-#घोषणा exttable_size(et) ((et)->count * EXT_SIGNATURE_SIZE + EXT_HEADER_SIZE)
+#define exttable_size(et) ((et)->count * EXT_SIGNATURE_SIZE + EXT_HEADER_SIZE)
 
-अटल अंतरभूत u32 पूर्णांकel_get_microcode_revision(व्योम)
-अणु
+static inline u32 intel_get_microcode_revision(void)
+{
 	u32 rev, dummy;
 
 	native_wrmsrl(MSR_IA32_UCODE_REV, 0);
 
-	/* As करोcumented in the SDM: Do a CPUID 1 here */
+	/* As documented in the SDM: Do a CPUID 1 here */
 	native_cpuid_eax(1);
 
 	/* get the current revision from MSR 0x8B */
 	native_rdmsr(MSR_IA32_UCODE_REV, dummy, rev);
 
-	वापस rev;
-पूर्ण
+	return rev;
+}
 
-#अगर_घोषित CONFIG_MICROCODE_INTEL
-बाह्य व्योम __init load_ucode_पूर्णांकel_bsp(व्योम);
-बाह्य व्योम load_ucode_पूर्णांकel_ap(व्योम);
-बाह्य व्योम show_ucode_info_early(व्योम);
-बाह्य पूर्णांक __init save_microcode_in_initrd_पूर्णांकel(व्योम);
-व्योम reload_ucode_पूर्णांकel(व्योम);
-#अन्यथा
-अटल अंतरभूत __init व्योम load_ucode_पूर्णांकel_bsp(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम load_ucode_पूर्णांकel_ap(व्योम) अणुपूर्ण
-अटल अंतरभूत व्योम show_ucode_info_early(व्योम) अणुपूर्ण
-अटल अंतरभूत पूर्णांक __init save_microcode_in_initrd_पूर्णांकel(व्योम) अणु वापस -EINVAL; पूर्ण
-अटल अंतरभूत व्योम reload_ucode_पूर्णांकel(व्योम) अणुपूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_MICROCODE_INTEL
+extern void __init load_ucode_intel_bsp(void);
+extern void load_ucode_intel_ap(void);
+extern void show_ucode_info_early(void);
+extern int __init save_microcode_in_initrd_intel(void);
+void reload_ucode_intel(void);
+#else
+static inline __init void load_ucode_intel_bsp(void) {}
+static inline void load_ucode_intel_ap(void) {}
+static inline void show_ucode_info_early(void) {}
+static inline int __init save_microcode_in_initrd_intel(void) { return -EINVAL; }
+static inline void reload_ucode_intel(void) {}
+#endif
 
-#पूर्ण_अगर /* _ASM_X86_MICROCODE_INTEL_H */
+#endif /* _ASM_X86_MICROCODE_INTEL_H */

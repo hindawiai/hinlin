@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2009 Wind River Systems Inc
  *   Implemented by fredrik.markstrom@gmail.com and ivarholmqvist@gmail.com
@@ -8,188 +7,188 @@
  * Copyright (C) 1995-2000 Ralf Baechle
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/संकेत.स>
-#समावेश <linux/sched.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/ptrace.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/extable.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/perf_event.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/sched/debug.h>
+#include <linux/interrupt.h>
+#include <linux/kernel.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/ptrace.h>
+#include <linux/mman.h>
+#include <linux/mm.h>
+#include <linux/extable.h>
+#include <linux/uaccess.h>
+#include <linux/perf_event.h>
 
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/traps.h>
+#include <asm/mmu_context.h>
+#include <asm/traps.h>
 
-#घोषणा EXC_SUPERV_INSN_ACCESS	9  /* Supervisor only inकाष्ठाion address */
-#घोषणा EXC_SUPERV_DATA_ACCESS	11 /* Supervisor only data address */
-#घोषणा EXC_X_PROTECTION_FAULT	13 /* TLB permission violation (x) */
-#घोषणा EXC_R_PROTECTION_FAULT	14 /* TLB permission violation (r) */
-#घोषणा EXC_W_PROTECTION_FAULT	15 /* TLB permission violation (w) */
+#define EXC_SUPERV_INSN_ACCESS	9  /* Supervisor only instruction address */
+#define EXC_SUPERV_DATA_ACCESS	11 /* Supervisor only data address */
+#define EXC_X_PROTECTION_FAULT	13 /* TLB permission violation (x) */
+#define EXC_R_PROTECTION_FAULT	14 /* TLB permission violation (r) */
+#define EXC_W_PROTECTION_FAULT	15 /* TLB permission violation (w) */
 
 /*
  * This routine handles page faults.  It determines the address,
  * and the problem, and then passes it off to one of the appropriate
  * routines.
  */
-यंत्रlinkage व्योम करो_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ cause,
-				अचिन्हित दीर्घ address)
-अणु
-	काष्ठा vm_area_काष्ठा *vma = शून्य;
-	काष्ठा task_काष्ठा *tsk = current;
-	काष्ठा mm_काष्ठा *mm = tsk->mm;
-	पूर्णांक code = SEGV_MAPERR;
+asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long cause,
+				unsigned long address)
+{
+	struct vm_area_struct *vma = NULL;
+	struct task_struct *tsk = current;
+	struct mm_struct *mm = tsk->mm;
+	int code = SEGV_MAPERR;
 	vm_fault_t fault;
-	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
+	unsigned int flags = FAULT_FLAG_DEFAULT;
 
 	cause >>= 2;
 
-	/* Restart the inकाष्ठाion */
+	/* Restart the instruction */
 	regs->ea -= 4;
 
 	/*
-	 * We fault-in kernel-space भव memory on-demand. The
+	 * We fault-in kernel-space virtual memory on-demand. The
 	 * 'reference' page table is init_mm.pgd.
 	 *
-	 * NOTE! We MUST NOT take any locks क्रम this हाल. We may
-	 * be in an पूर्णांकerrupt or a critical region, and should
-	 * only copy the inक्रमmation from the master page table,
+	 * NOTE! We MUST NOT take any locks for this case. We may
+	 * be in an interrupt or a critical region, and should
+	 * only copy the information from the master page table,
 	 * nothing more.
 	 */
-	अगर (unlikely(address >= VMALLOC_START && address <= VMALLOC_END)) अणु
-		अगर (user_mode(regs))
-			जाओ bad_area_nosemaphore;
-		अन्यथा
-			जाओ vदो_स्मृति_fault;
-	पूर्ण
+	if (unlikely(address >= VMALLOC_START && address <= VMALLOC_END)) {
+		if (user_mode(regs))
+			goto bad_area_nosemaphore;
+		else
+			goto vmalloc_fault;
+	}
 
-	अगर (unlikely(address >= TASK_SIZE))
-		जाओ bad_area_nosemaphore;
+	if (unlikely(address >= TASK_SIZE))
+		goto bad_area_nosemaphore;
 
 	/*
-	 * If we're in an पूर्णांकerrupt or have no user
+	 * If we're in an interrupt or have no user
 	 * context, we must not take the fault..
 	 */
-	अगर (faulthandler_disabled() || !mm)
-		जाओ bad_area_nosemaphore;
+	if (faulthandler_disabled() || !mm)
+		goto bad_area_nosemaphore;
 
-	अगर (user_mode(regs))
+	if (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 
-	अगर (!mmap_पढ़ो_trylock(mm)) अणु
-		अगर (!user_mode(regs) && !search_exception_tables(regs->ea))
-			जाओ bad_area_nosemaphore;
+	if (!mmap_read_trylock(mm)) {
+		if (!user_mode(regs) && !search_exception_tables(regs->ea))
+			goto bad_area_nosemaphore;
 retry:
-		mmap_पढ़ो_lock(mm);
-	पूर्ण
+		mmap_read_lock(mm);
+	}
 
 	vma = find_vma(mm, address);
-	अगर (!vma)
-		जाओ bad_area;
-	अगर (vma->vm_start <= address)
-		जाओ good_area;
-	अगर (!(vma->vm_flags & VM_GROWSDOWN))
-		जाओ bad_area;
-	अगर (expand_stack(vma, address))
-		जाओ bad_area;
+	if (!vma)
+		goto bad_area;
+	if (vma->vm_start <= address)
+		goto good_area;
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		goto bad_area;
+	if (expand_stack(vma, address))
+		goto bad_area;
 /*
- * Ok, we have a good vm_area क्रम this memory access, so
+ * Ok, we have a good vm_area for this memory access, so
  * we can handle it..
  */
 good_area:
 	code = SEGV_ACCERR;
 
-	चयन (cause) अणु
-	हाल EXC_SUPERV_INSN_ACCESS:
-		जाओ bad_area;
-	हाल EXC_SUPERV_DATA_ACCESS:
-		जाओ bad_area;
-	हाल EXC_X_PROTECTION_FAULT:
-		अगर (!(vma->vm_flags & VM_EXEC))
-			जाओ bad_area;
-		अवरोध;
-	हाल EXC_R_PROTECTION_FAULT:
-		अगर (!(vma->vm_flags & VM_READ))
-			जाओ bad_area;
-		अवरोध;
-	हाल EXC_W_PROTECTION_FAULT:
-		अगर (!(vma->vm_flags & VM_WRITE))
-			जाओ bad_area;
+	switch (cause) {
+	case EXC_SUPERV_INSN_ACCESS:
+		goto bad_area;
+	case EXC_SUPERV_DATA_ACCESS:
+		goto bad_area;
+	case EXC_X_PROTECTION_FAULT:
+		if (!(vma->vm_flags & VM_EXEC))
+			goto bad_area;
+		break;
+	case EXC_R_PROTECTION_FAULT:
+		if (!(vma->vm_flags & VM_READ))
+			goto bad_area;
+		break;
+	case EXC_W_PROTECTION_FAULT:
+		if (!(vma->vm_flags & VM_WRITE))
+			goto bad_area;
 		flags = FAULT_FLAG_WRITE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
-	 * If क्रम any reason at all we couldn't handle the fault,
-	 * make sure we निकास gracefully rather than endlessly reकरो
+	 * If for any reason at all we couldn't handle the fault,
+	 * make sure we exit gracefully rather than endlessly redo
 	 * the fault.
 	 */
 	fault = handle_mm_fault(vma, address, flags, regs);
 
-	अगर (fault_संकेत_pending(fault, regs))
-		वापस;
+	if (fault_signal_pending(fault, regs))
+		return;
 
-	अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
-		अगर (fault & VM_FAULT_OOM)
-			जाओ out_of_memory;
-		अन्यथा अगर (fault & VM_FAULT_संक_अंश)
-			जाओ bad_area;
-		अन्यथा अगर (fault & VM_FAULT_SIGBUS)
-			जाओ करो_sigbus;
+	if (unlikely(fault & VM_FAULT_ERROR)) {
+		if (fault & VM_FAULT_OOM)
+			goto out_of_memory;
+		else if (fault & VM_FAULT_SIGSEGV)
+			goto bad_area;
+		else if (fault & VM_FAULT_SIGBUS)
+			goto do_sigbus;
 		BUG();
-	पूर्ण
+	}
 
-	अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
-		अगर (fault & VM_FAULT_RETRY) अणु
+	if (flags & FAULT_FLAG_ALLOW_RETRY) {
+		if (fault & VM_FAULT_RETRY) {
 			flags |= FAULT_FLAG_TRIED;
 
 			/*
-			 * No need to mmap_पढ़ो_unlock(mm) as we would
-			 * have alपढ़ोy released it in __lock_page_or_retry
+			 * No need to mmap_read_unlock(mm) as we would
+			 * have already released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
 
-			जाओ retry;
-		पूर्ण
-	पूर्ण
+			goto retry;
+		}
+	}
 
-	mmap_पढ़ो_unlock(mm);
-	वापस;
+	mmap_read_unlock(mm);
+	return;
 
 /*
  * Something tried to access memory that isn't in our memory map..
- * Fix it, but check अगर it's kernel or user first..
+ * Fix it, but check if it's kernel or user first..
  */
 bad_area:
-	mmap_पढ़ो_unlock(mm);
+	mmap_read_unlock(mm);
 
 bad_area_nosemaphore:
-	/* User mode accesses just cause a संक_अंश */
-	अगर (user_mode(regs)) अणु
-		अगर (unhandled_संकेत(current, संक_अंश) && prपूर्णांकk_ratelimit()) अणु
+	/* User mode accesses just cause a SIGSEGV */
+	if (user_mode(regs)) {
+		if (unhandled_signal(current, SIGSEGV) && printk_ratelimit()) {
 			pr_info("%s: unhandled page fault (%d) at 0x%08lx, "
-				"cause %ld\n", current->comm, संक_अंश, address, cause);
+				"cause %ld\n", current->comm, SIGSEGV, address, cause);
 			show_regs(regs);
-		पूर्ण
-		_exception(संक_अंश, regs, code, address);
-		वापस;
-	पूर्ण
+		}
+		_exception(SIGSEGV, regs, code, address);
+		return;
+	}
 
 no_context:
 	/* Are we prepared to handle this kernel fault? */
-	अगर (fixup_exception(regs))
-		वापस;
+	if (fixup_exception(regs))
+		return;
 
 	/*
 	 * Oops. The kernel tried to access some bad page. We'll have to
@@ -203,39 +202,39 @@ no_context:
 	pr_alert("ea = %08lx, ra = %08lx, cause = %ld\n", regs->ea, regs->ra,
 		cause);
 	panic("Oops");
-	वापस;
+	return;
 
 /*
  * We ran out of memory, or some other thing happened to us that made
  * us unable to handle the page fault gracefully.
  */
 out_of_memory:
-	mmap_पढ़ो_unlock(mm);
-	अगर (!user_mode(regs))
-		जाओ no_context;
+	mmap_read_unlock(mm);
+	if (!user_mode(regs))
+		goto no_context;
 	pagefault_out_of_memory();
-	वापस;
+	return;
 
-करो_sigbus:
-	mmap_पढ़ो_unlock(mm);
+do_sigbus:
+	mmap_read_unlock(mm);
 
 	/* Kernel mode? Handle exceptions or die */
-	अगर (!user_mode(regs))
-		जाओ no_context;
+	if (!user_mode(regs))
+		goto no_context;
 
 	_exception(SIGBUS, regs, BUS_ADRERR, address);
-	वापस;
+	return;
 
-vदो_स्मृति_fault:
-	अणु
+vmalloc_fault:
+	{
 		/*
 		 * Synchronize this task's top level page-table
 		 * with the 'reference' page table.
 		 *
 		 * Do _not_ use "tsk" here. We might be inside
-		 * an पूर्णांकerrupt in the middle of a task चयन..
+		 * an interrupt in the middle of a task switch..
 		 */
-		पूर्णांक offset = pgd_index(address);
+		int offset = pgd_index(address);
 		pgd_t *pgd, *pgd_k;
 		p4d_t *p4d, *p4d_k;
 		pud_t *pud, *pud_k;
@@ -245,29 +244,29 @@ vदो_स्मृति_fault:
 		pgd = pgd_current + offset;
 		pgd_k = init_mm.pgd + offset;
 
-		अगर (!pgd_present(*pgd_k))
-			जाओ no_context;
+		if (!pgd_present(*pgd_k))
+			goto no_context;
 		set_pgd(pgd, *pgd_k);
 
 		p4d = p4d_offset(pgd, address);
 		p4d_k = p4d_offset(pgd_k, address);
-		अगर (!p4d_present(*p4d_k))
-			जाओ no_context;
+		if (!p4d_present(*p4d_k))
+			goto no_context;
 		pud = pud_offset(p4d, address);
 		pud_k = pud_offset(p4d_k, address);
-		अगर (!pud_present(*pud_k))
-			जाओ no_context;
+		if (!pud_present(*pud_k))
+			goto no_context;
 		pmd = pmd_offset(pud, address);
 		pmd_k = pmd_offset(pud_k, address);
-		अगर (!pmd_present(*pmd_k))
-			जाओ no_context;
+		if (!pmd_present(*pmd_k))
+			goto no_context;
 		set_pmd(pmd, *pmd_k);
 
 		pte_k = pte_offset_kernel(pmd_k, address);
-		अगर (!pte_present(*pte_k))
-			जाओ no_context;
+		if (!pte_present(*pte_k))
+			goto no_context;
 
 		flush_tlb_kernel_page(address);
-		वापस;
-	पूर्ण
-पूर्ण
+		return;
+	}
+}

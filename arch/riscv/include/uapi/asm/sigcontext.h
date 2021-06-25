@@ -1,23 +1,22 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Copyright (C) 2012 Regents of the University of Calअगरornia
+ * Copyright (C) 2012 Regents of the University of California
  */
 
-#अगर_अघोषित _UAPI_ASM_RISCV_SIGCONTEXT_H
-#घोषणा _UAPI_ASM_RISCV_SIGCONTEXT_H
+#ifndef _UAPI_ASM_RISCV_SIGCONTEXT_H
+#define _UAPI_ASM_RISCV_SIGCONTEXT_H
 
-#समावेश <यंत्र/ptrace.h>
+#include <asm/ptrace.h>
 
 /*
- * Signal context काष्ठाure
+ * Signal context structure
  *
- * This contains the context saved beक्रमe a संकेत handler is invoked;
- * it is restored by sys_sigवापस / sys_rt_sigवापस.
+ * This contains the context saved before a signal handler is invoked;
+ * it is restored by sys_sigreturn / sys_rt_sigreturn.
  */
-काष्ठा sigcontext अणु
-	काष्ठा user_regs_काष्ठा sc_regs;
-	जोड़ __riscv_fp_state sc_fpregs;
-पूर्ण;
+struct sigcontext {
+	struct user_regs_struct sc_regs;
+	union __riscv_fp_state sc_fpregs;
+};
 
-#पूर्ण_अगर /* _UAPI_ASM_RISCV_SIGCONTEXT_H */
+#endif /* _UAPI_ASM_RISCV_SIGCONTEXT_H */

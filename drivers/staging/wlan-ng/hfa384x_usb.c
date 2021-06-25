@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1)
+// SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1)
 /* src/prism2/driver/hfa384x_usb.c
  *
  * Functions that talk to the USB variant of the Intersil hfa384x MAC
@@ -16,17 +15,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License क्रम the specअगरic language governing
+ *   implied. See the License for the specific language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   हाल the provisions of the GPL are applicable instead of the
+ *   case the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you करो not delete
+ *   and other provisions required by the GPL.  If you do not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -47,63 +46,63 @@
  * --------------------------------------------------------------------
  *
  * This file implements functions that correspond to the prism2/hfa384x
- * 802.11 MAC hardware and firmware host पूर्णांकerface.
+ * 802.11 MAC hardware and firmware host interface.
  *
  * The functions can be considered to represent several levels of
- * असलtraction.  The lowest level functions are simply C-callable wrappers
- * around the रेजिस्टर accesses.  The next higher level represents C-callable
- * prism2 API functions that match the Intersil करोcumentation as बंदly
+ * abstraction.  The lowest level functions are simply C-callable wrappers
+ * around the register accesses.  The next higher level represents C-callable
+ * prism2 API functions that match the Intersil documentation as closely
  * as is reasonable.  The next higher layer implements common sequences
- * of invocations of the API layer (e.g. ग_लिखो to bap, followed by cmd).
+ * of invocations of the API layer (e.g. write to bap, followed by cmd).
  *
  * Common sequences:
- * hfa384x_drvr_xxx	Highest level असलtractions provided by the
+ * hfa384x_drvr_xxx	Highest level abstractions provided by the
  *			hfa384x code.  They are driver defined wrappers
- *			क्रम common sequences.  These functions generally
+ *			for common sequences.  These functions generally
  *			use the services of the lower levels.
  *
- * hfa384x_drvr_xxxconfig  An example of the drvr level असलtraction. These
- *			functions are wrappers क्रम the RID get/set
+ * hfa384x_drvr_xxxconfig  An example of the drvr level abstraction. These
+ *			functions are wrappers for the RID get/set
  *			sequence. They call copy_[to|from]_bap() and
  *			cmd_access(). These functions operate on the
  *			RIDs and buffers without validation. The caller
- *			is responsible क्रम that.
+ *			is responsible for that.
  *
  * API wrapper functions:
  * hfa384x_cmd_xxx	functions that provide access to the f/w commands.
  *			The function arguments correspond to each command
  *			argument, even command arguments that get packed
- *			पूर्णांकo single रेजिस्टरs.  These functions _just_
+ *			into single registers.  These functions _just_
  *			issue the command by setting the cmd/parm regs
- *			& पढ़ोing the status/resp regs.  Additional
+ *			& reading the status/resp regs.  Additional
  *			activities required to fully use a command
- *			(पढ़ो/ग_लिखो from/to bap, get/set पूर्णांक status etc.)
+ *			(read/write from/to bap, get/set int status etc.)
  *			are implemented separately.  Think of these as
  *			C-callable prism2 commands.
  *
  * Lowest Layer Functions:
- * hfa384x_करोcmd_xxx	These functions implement the sequence required
+ * hfa384x_docmd_xxx	These functions implement the sequence required
  *			to issue any prism2 command.  Primarily used by the
  *			hfa384x_cmd_xxx functions.
  *
- * hfa384x_bap_xxx	BAP पढ़ो/ग_लिखो access functions.
- *			Note: we usually use BAP0 क्रम non-पूर्णांकerrupt context
- *			 and BAP1 क्रम पूर्णांकerrupt context.
+ * hfa384x_bap_xxx	BAP read/write access functions.
+ *			Note: we usually use BAP0 for non-interrupt context
+ *			 and BAP1 for interrupt context.
  *
- * hfa384x_dl_xxx	करोwnload related functions.
+ * hfa384x_dl_xxx	download related functions.
  *
  * Driver State Issues:
  * Note that there are two pairs of functions that manage the
  * 'initialized' and 'running' states of the hw/MAC combo.  The four
  * functions are create(), destroy(), start(), and stop().  create()
- * sets up the data काष्ठाures required to support the hfa384x_*
- * functions and destroy() cleans them up.  The start() function माला_लो
- * the actual hardware running and enables the पूर्णांकerrupts.  The stop()
- * function shuts the hardware करोwn.  The sequence should be:
+ * sets up the data structures required to support the hfa384x_*
+ * functions and destroy() cleans them up.  The start() function gets
+ * the actual hardware running and enables the interrupts.  The stop()
+ * function shuts the hardware down.  The sequence should be:
  * create()
  * start()
  *  .
- *  .  Do पूर्णांकeresting things w/ the hardware
+ *  .  Do interesting things w/ the hardware
  *  .
  * stop()
  * destroy()
@@ -112,160 +111,160 @@
  * --------------------------------------------------------------------
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/wireless.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/list.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/byteorder/generic.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/wireless.h>
+#include <linux/netdevice.h>
+#include <linux/timer.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <asm/byteorder.h>
+#include <linux/bitops.h>
+#include <linux/list.h>
+#include <linux/usb.h>
+#include <linux/byteorder/generic.h>
 
-#समावेश "p80211types.h"
-#समावेश "p80211hdr.h"
-#समावेश "p80211mgmt.h"
-#समावेश "p80211conv.h"
-#समावेश "p80211msg.h"
-#समावेश "p80211netdev.h"
-#समावेश "p80211req.h"
-#समावेश "p80211metadef.h"
-#समावेश "p80211metastruct.h"
-#समावेश "hfa384x.h"
-#समावेश "prism2mgmt.h"
+#include "p80211types.h"
+#include "p80211hdr.h"
+#include "p80211mgmt.h"
+#include "p80211conv.h"
+#include "p80211msg.h"
+#include "p80211netdev.h"
+#include "p80211req.h"
+#include "p80211metadef.h"
+#include "p80211metastruct.h"
+#include "hfa384x.h"
+#include "prism2mgmt.h"
 
-क्रमागत cmd_mode अणु
+enum cmd_mode {
 	DOWAIT = 0,
 	DOASYNC
-पूर्ण;
+};
 
-#घोषणा THROTTLE_JIFFIES	(HZ / 8)
-#घोषणा URB_ASYNC_UNLINK 0
-#घोषणा USB_QUEUE_BULK 0
+#define THROTTLE_JIFFIES	(HZ / 8)
+#define URB_ASYNC_UNLINK 0
+#define USB_QUEUE_BULK 0
 
-#घोषणा ROUNDUP64(a) (((a) + 63) & ~63)
+#define ROUNDUP64(a) (((a) + 63) & ~63)
 
-#अगर_घोषित DEBUG_USB
-अटल व्योम dbprपूर्णांक_urb(काष्ठा urb *urb);
-#पूर्ण_अगर
+#ifdef DEBUG_USB
+static void dbprint_urb(struct urb *urb);
+#endif
 
-अटल व्योम hfa384x_पूर्णांक_rxmonitor(काष्ठा wlandevice *wlandev,
-				  काष्ठा hfa384x_usb_rxfrm *rxfrm);
+static void hfa384x_int_rxmonitor(struct wlandevice *wlandev,
+				  struct hfa384x_usb_rxfrm *rxfrm);
 
-अटल व्योम hfa384x_usb_defer(काष्ठा work_काष्ठा *data);
+static void hfa384x_usb_defer(struct work_struct *data);
 
-अटल पूर्णांक submit_rx_urb(काष्ठा hfa384x *hw, gfp_t flags);
+static int submit_rx_urb(struct hfa384x *hw, gfp_t flags);
 
-अटल पूर्णांक submit_tx_urb(काष्ठा hfa384x *hw, काष्ठा urb *tx_urb, gfp_t flags);
+static int submit_tx_urb(struct hfa384x *hw, struct urb *tx_urb, gfp_t flags);
 
 /*---------------------------------------------------*/
 /* Callbacks */
-अटल व्योम hfa384x_usbout_callback(काष्ठा urb *urb);
-अटल व्योम hfa384x_ctlxout_callback(काष्ठा urb *urb);
-अटल व्योम hfa384x_usbin_callback(काष्ठा urb *urb);
+static void hfa384x_usbout_callback(struct urb *urb);
+static void hfa384x_ctlxout_callback(struct urb *urb);
+static void hfa384x_usbin_callback(struct urb *urb);
 
-अटल व्योम
-hfa384x_usbin_txcompl(काष्ठा wlandevice *wlandev, जोड़ hfa384x_usbin *usbin);
+static void
+hfa384x_usbin_txcompl(struct wlandevice *wlandev, union hfa384x_usbin *usbin);
 
-अटल व्योम hfa384x_usbin_rx(काष्ठा wlandevice *wlandev, काष्ठा sk_buff *skb);
+static void hfa384x_usbin_rx(struct wlandevice *wlandev, struct sk_buff *skb);
 
-अटल व्योम hfa384x_usbin_info(काष्ठा wlandevice *wlandev,
-			       जोड़ hfa384x_usbin *usbin);
+static void hfa384x_usbin_info(struct wlandevice *wlandev,
+			       union hfa384x_usbin *usbin);
 
-अटल व्योम hfa384x_usbin_ctlx(काष्ठा hfa384x *hw, जोड़ hfa384x_usbin *usbin,
-			       पूर्णांक urb_status);
+static void hfa384x_usbin_ctlx(struct hfa384x *hw, union hfa384x_usbin *usbin,
+			       int urb_status);
 
 /*---------------------------------------------------*/
 /* Functions to support the prism2 usb command queue */
 
-अटल व्योम hfa384x_usbctlxq_run(काष्ठा hfa384x *hw);
+static void hfa384x_usbctlxq_run(struct hfa384x *hw);
 
-अटल व्योम hfa384x_usbctlx_reqसमयrfn(काष्ठा समयr_list *t);
+static void hfa384x_usbctlx_reqtimerfn(struct timer_list *t);
 
-अटल व्योम hfa384x_usbctlx_respसमयrfn(काष्ठा समयr_list *t);
+static void hfa384x_usbctlx_resptimerfn(struct timer_list *t);
 
-अटल व्योम hfa384x_usb_throttlefn(काष्ठा समयr_list *t);
+static void hfa384x_usb_throttlefn(struct timer_list *t);
 
-अटल व्योम hfa384x_usbctlx_completion_task(काष्ठा tasklet_काष्ठा *t);
+static void hfa384x_usbctlx_completion_task(struct tasklet_struct *t);
 
-अटल व्योम hfa384x_usbctlx_reaper_task(काष्ठा tasklet_काष्ठा *t);
+static void hfa384x_usbctlx_reaper_task(struct tasklet_struct *t);
 
-अटल पूर्णांक hfa384x_usbctlx_submit(काष्ठा hfa384x *hw,
-				  काष्ठा hfa384x_usbctlx *ctlx);
+static int hfa384x_usbctlx_submit(struct hfa384x *hw,
+				  struct hfa384x_usbctlx *ctlx);
 
-अटल व्योम unlocked_usbctlx_complete(काष्ठा hfa384x *hw,
-				      काष्ठा hfa384x_usbctlx *ctlx);
+static void unlocked_usbctlx_complete(struct hfa384x *hw,
+				      struct hfa384x_usbctlx *ctlx);
 
-काष्ठा usbctlx_completor अणु
-	पूर्णांक (*complete)(काष्ठा usbctlx_completor *completor);
-पूर्ण;
+struct usbctlx_completor {
+	int (*complete)(struct usbctlx_completor *completor);
+};
 
-अटल पूर्णांक
-hfa384x_usbctlx_complete_sync(काष्ठा hfa384x *hw,
-			      काष्ठा hfa384x_usbctlx *ctlx,
-			      काष्ठा usbctlx_completor *completor);
+static int
+hfa384x_usbctlx_complete_sync(struct hfa384x *hw,
+			      struct hfa384x_usbctlx *ctlx,
+			      struct usbctlx_completor *completor);
 
-अटल पूर्णांक
-unlocked_usbctlx_cancel_async(काष्ठा hfa384x *hw, काष्ठा hfa384x_usbctlx *ctlx);
+static int
+unlocked_usbctlx_cancel_async(struct hfa384x *hw, struct hfa384x_usbctlx *ctlx);
 
-अटल व्योम hfa384x_cb_status(काष्ठा hfa384x *hw,
-			      स्थिर काष्ठा hfa384x_usbctlx *ctlx);
+static void hfa384x_cb_status(struct hfa384x *hw,
+			      const struct hfa384x_usbctlx *ctlx);
 
-अटल पूर्णांक
-usbctlx_get_status(स्थिर काष्ठा hfa384x_usb_statusresp *cmdresp,
-		   काष्ठा hfa384x_cmdresult *result);
+static int
+usbctlx_get_status(const struct hfa384x_usb_statusresp *cmdresp,
+		   struct hfa384x_cmdresult *result);
 
-अटल व्योम
-usbctlx_get_rridresult(स्थिर काष्ठा hfa384x_usb_rridresp *rridresp,
-		       काष्ठा hfa384x_rridresult *result);
+static void
+usbctlx_get_rridresult(const struct hfa384x_usb_rridresp *rridresp,
+		       struct hfa384x_rridresult *result);
 
 /*---------------------------------------------------*/
-/* Low level req/resp CTLX क्रमmatters and submitters */
-अटल अंतरभूत पूर्णांक
-hfa384x_करोcmd(काष्ठा hfa384x *hw,
-	      काष्ठा hfa384x_metacmd *cmd);
+/* Low level req/resp CTLX formatters and submitters */
+static inline int
+hfa384x_docmd(struct hfa384x *hw,
+	      struct hfa384x_metacmd *cmd);
 
-अटल पूर्णांक
-hfa384x_करोrrid(काष्ठा hfa384x *hw,
-	       क्रमागत cmd_mode mode,
+static int
+hfa384x_dorrid(struct hfa384x *hw,
+	       enum cmd_mode mode,
 	       u16 rid,
-	       व्योम *riddata,
-	       अचिन्हित पूर्णांक riddatalen,
-	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, व्योम *usercb_data);
+	       void *riddata,
+	       unsigned int riddatalen,
+	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, void *usercb_data);
 
-अटल पूर्णांक
-hfa384x_करोwrid(काष्ठा hfa384x *hw,
-	       क्रमागत cmd_mode mode,
+static int
+hfa384x_dowrid(struct hfa384x *hw,
+	       enum cmd_mode mode,
 	       u16 rid,
-	       व्योम *riddata,
-	       अचिन्हित पूर्णांक riddatalen,
-	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, व्योम *usercb_data);
+	       void *riddata,
+	       unsigned int riddatalen,
+	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, void *usercb_data);
 
-अटल पूर्णांक
-hfa384x_करोrmem(काष्ठा hfa384x *hw,
+static int
+hfa384x_dormem(struct hfa384x *hw,
 	       u16 page,
 	       u16 offset,
-	       व्योम *data,
-	       अचिन्हित पूर्णांक len);
+	       void *data,
+	       unsigned int len);
 
-अटल पूर्णांक
-hfa384x_करोwmem(काष्ठा hfa384x *hw,
+static int
+hfa384x_dowmem(struct hfa384x *hw,
 	       u16 page,
 	       u16 offset,
-	       व्योम *data,
-	       अचिन्हित पूर्णांक len);
+	       void *data,
+	       unsigned int len);
 
-अटल पूर्णांक hfa384x_isgood_pdrcode(u16 pdrcode);
+static int hfa384x_isgood_pdrcode(u16 pdrcode);
 
-अटल अंतरभूत स्थिर अक्षर *ctlxstr(क्रमागत ctlx_state s)
-अणु
-	अटल स्थिर अक्षर * स्थिर ctlx_str[] = अणु
+static inline const char *ctlxstr(enum ctlx_state s)
+{
+	static const char * const ctlx_str[] = {
 		"Initial state",
 		"Complete",
 		"Request failed",
@@ -273,45 +272,45 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
 		"Request packet submitted",
 		"Request packet completed",
 		"Response packet completed"
-	पूर्ण;
+	};
 
-	वापस ctlx_str[s];
-पूर्ण;
+	return ctlx_str[s];
+};
 
-अटल अंतरभूत काष्ठा hfa384x_usbctlx *get_active_ctlx(काष्ठा hfa384x *hw)
-अणु
-	वापस list_entry(hw->ctlxq.active.next, काष्ठा hfa384x_usbctlx, list);
-पूर्ण
+static inline struct hfa384x_usbctlx *get_active_ctlx(struct hfa384x *hw)
+{
+	return list_entry(hw->ctlxq.active.next, struct hfa384x_usbctlx, list);
+}
 
-#अगर_घोषित DEBUG_USB
-व्योम dbprपूर्णांक_urb(काष्ठा urb *urb)
-अणु
+#ifdef DEBUG_USB
+void dbprint_urb(struct urb *urb)
+{
 	pr_debug("urb->pipe=0x%08x\n", urb->pipe);
 	pr_debug("urb->status=0x%08x\n", urb->status);
 	pr_debug("urb->transfer_flags=0x%08x\n", urb->transfer_flags);
 	pr_debug("urb->transfer_buffer=0x%08x\n",
-		 (अचिन्हित पूर्णांक)urb->transfer_buffer);
+		 (unsigned int)urb->transfer_buffer);
 	pr_debug("urb->transfer_buffer_length=0x%08x\n",
 		 urb->transfer_buffer_length);
 	pr_debug("urb->actual_length=0x%08x\n", urb->actual_length);
 	pr_debug("urb->setup_packet(ctl)=0x%08x\n",
-		 (अचिन्हित पूर्णांक)urb->setup_packet);
+		 (unsigned int)urb->setup_packet);
 	pr_debug("urb->start_frame(iso/irq)=0x%08x\n", urb->start_frame);
-	pr_debug("urb->interval(irq)=0x%08x\n", urb->पूर्णांकerval);
+	pr_debug("urb->interval(irq)=0x%08x\n", urb->interval);
 	pr_debug("urb->error_count(iso)=0x%08x\n", urb->error_count);
-	pr_debug("urb->context=0x%08x\n", (अचिन्हित पूर्णांक)urb->context);
-	pr_debug("urb->complete=0x%08x\n", (अचिन्हित पूर्णांक)urb->complete);
-पूर्ण
-#पूर्ण_अगर
+	pr_debug("urb->context=0x%08x\n", (unsigned int)urb->context);
+	pr_debug("urb->complete=0x%08x\n", (unsigned int)urb->complete);
+}
+#endif
 
 /*----------------------------------------------------------------
  * submit_rx_urb
  *
- * Listen क्रम input data on the BULK-IN pipe. If the pipe has
+ * Listen for input data on the BULK-IN pipe. If the pipe has
  * stalled then schedule it to be reset.
  *
  * Arguments:
- *	hw		device काष्ठा
+ *	hw		device struct
  *	memflags	memory allocation flags
  *
  * Returns:
@@ -321,49 +320,49 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	Any
  *----------------------------------------------------------------
  */
-अटल पूर्णांक submit_rx_urb(काष्ठा hfa384x *hw, gfp_t memflags)
-अणु
-	काष्ठा sk_buff *skb;
-	पूर्णांक result;
+static int submit_rx_urb(struct hfa384x *hw, gfp_t memflags)
+{
+	struct sk_buff *skb;
+	int result;
 
-	skb = dev_alloc_skb(माप(जोड़ hfa384x_usbin));
-	अगर (!skb) अणु
+	skb = dev_alloc_skb(sizeof(union hfa384x_usbin));
+	if (!skb) {
 		result = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Post the IN urb */
 	usb_fill_bulk_urb(&hw->rx_urb, hw->usb,
 			  hw->endp_in,
-			  skb->data, माप(जोड़ hfa384x_usbin),
+			  skb->data, sizeof(union hfa384x_usbin),
 			  hfa384x_usbin_callback, hw->wlandev);
 
 	hw->rx_urb_skb = skb;
 
 	result = -ENOLINK;
-	अगर (!hw->wlandev->hwहटाओd &&
-	    !test_bit(WORK_RX_HALT, &hw->usb_flags)) अणु
+	if (!hw->wlandev->hwremoved &&
+	    !test_bit(WORK_RX_HALT, &hw->usb_flags)) {
 		result = usb_submit_urb(&hw->rx_urb, memflags);
 
 		/* Check whether we need to reset the RX pipe */
-		अगर (result == -EPIPE) अणु
+		if (result == -EPIPE) {
 			netdev_warn(hw->wlandev->netdev,
 				    "%s rx pipe stalled: requesting reset\n",
 				    hw->wlandev->netdev->name);
-			अगर (!test_and_set_bit(WORK_RX_HALT, &hw->usb_flags))
+			if (!test_and_set_bit(WORK_RX_HALT, &hw->usb_flags))
 				schedule_work(&hw->usb_work);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Don't leak memory अगर anything should go wrong */
-	अगर (result != 0) अणु
-		dev_kमुक्त_skb(skb);
-		hw->rx_urb_skb = शून्य;
-	पूर्ण
+	/* Don't leak memory if anything should go wrong */
+	if (result != 0) {
+		dev_kfree_skb(skb);
+		hw->rx_urb_skb = NULL;
+	}
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
  * submit_tx_urb
@@ -373,8 +372,8 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  * be reset.
  *
  * Arguments:
- *	hw		device काष्ठा
- *	tx_urb		URB of data क्रम transmission
+ *	hw		device struct
+ *	tx_urb		URB of data for transmission
  *	memflags	memory allocation flags
  *
  * Returns:
@@ -384,42 +383,42 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	Any
  *----------------------------------------------------------------
  */
-अटल पूर्णांक submit_tx_urb(काष्ठा hfa384x *hw, काष्ठा urb *tx_urb, gfp_t memflags)
-अणु
-	काष्ठा net_device *netdev = hw->wlandev->netdev;
-	पूर्णांक result;
+static int submit_tx_urb(struct hfa384x *hw, struct urb *tx_urb, gfp_t memflags)
+{
+	struct net_device *netdev = hw->wlandev->netdev;
+	int result;
 
 	result = -ENOLINK;
-	अगर (netअगर_running(netdev)) अणु
-		अगर (!hw->wlandev->hwहटाओd &&
-		    !test_bit(WORK_TX_HALT, &hw->usb_flags)) अणु
+	if (netif_running(netdev)) {
+		if (!hw->wlandev->hwremoved &&
+		    !test_bit(WORK_TX_HALT, &hw->usb_flags)) {
 			result = usb_submit_urb(tx_urb, memflags);
 
 			/* Test whether we need to reset the TX pipe */
-			अगर (result == -EPIPE) अणु
+			if (result == -EPIPE) {
 				netdev_warn(hw->wlandev->netdev,
 					    "%s tx pipe stalled: requesting reset\n",
 					    netdev->name);
 				set_bit(WORK_TX_HALT, &hw->usb_flags);
 				schedule_work(&hw->usb_work);
-			पूर्ण अन्यथा अगर (result == 0) अणु
-				netअगर_stop_queue(netdev);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			} else if (result == 0) {
+				netif_stop_queue(netdev);
+			}
+		}
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa394x_usb_defer
  *
- * There are some things that the USB stack cannot करो जबतक
- * in पूर्णांकerrupt context, so we arrange this function to run
+ * There are some things that the USB stack cannot do while
+ * in interrupt context, so we arrange this function to run
  * in process context.
  *
  * Arguments:
- *	hw	device काष्ठाure
+ *	hw	device structure
  *
  * Returns:
  *	nothing
@@ -428,61 +427,61 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process (by design)
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usb_defer(काष्ठा work_काष्ठा *data)
-अणु
-	काष्ठा hfa384x *hw = container_of(data, काष्ठा hfa384x, usb_work);
-	काष्ठा net_device *netdev = hw->wlandev->netdev;
+static void hfa384x_usb_defer(struct work_struct *data)
+{
+	struct hfa384x *hw = container_of(data, struct hfa384x, usb_work);
+	struct net_device *netdev = hw->wlandev->netdev;
 
-	/* Don't bother trying to reset anything अगर the plug
+	/* Don't bother trying to reset anything if the plug
 	 * has been pulled ...
 	 */
-	अगर (hw->wlandev->hwहटाओd)
-		वापस;
+	if (hw->wlandev->hwremoved)
+		return;
 
 	/* Reception has stopped: try to reset the input pipe */
-	अगर (test_bit(WORK_RX_HALT, &hw->usb_flags)) अणु
-		पूर्णांक ret;
+	if (test_bit(WORK_RX_HALT, &hw->usb_flags)) {
+		int ret;
 
-		usb_समाप्त_urb(&hw->rx_urb); /* Cannot be holding spinlock! */
+		usb_kill_urb(&hw->rx_urb); /* Cannot be holding spinlock! */
 
 		ret = usb_clear_halt(hw->usb, hw->endp_in);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			netdev_err(hw->wlandev->netdev,
 				   "Failed to clear rx pipe for %s: err=%d\n",
 				   netdev->name, ret);
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_info(hw->wlandev->netdev, "%s rx pipe reset complete.\n",
 				    netdev->name);
 			clear_bit(WORK_RX_HALT, &hw->usb_flags);
 			set_bit(WORK_RX_RESUME, &hw->usb_flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Resume receiving data back from the device. */
-	अगर (test_bit(WORK_RX_RESUME, &hw->usb_flags)) अणु
-		पूर्णांक ret;
+	if (test_bit(WORK_RX_RESUME, &hw->usb_flags)) {
+		int ret;
 
 		ret = submit_rx_urb(hw, GFP_KERNEL);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			netdev_err(hw->wlandev->netdev,
 				   "Failed to resume %s rx pipe.\n",
 				   netdev->name);
-		पूर्ण अन्यथा अणु
+		} else {
 			clear_bit(WORK_RX_RESUME, &hw->usb_flags);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Transmission has stopped: try to reset the output pipe */
-	अगर (test_bit(WORK_TX_HALT, &hw->usb_flags)) अणु
-		पूर्णांक ret;
+	if (test_bit(WORK_TX_HALT, &hw->usb_flags)) {
+		int ret;
 
-		usb_समाप्त_urb(&hw->tx_urb);
+		usb_kill_urb(&hw->tx_urb);
 		ret = usb_clear_halt(hw->usb, hw->endp_out);
-		अगर (ret != 0) अणु
+		if (ret != 0) {
 			netdev_err(hw->wlandev->netdev,
 				   "Failed to clear tx pipe for %s: err=%d\n",
 				   netdev->name, ret);
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_info(hw->wlandev->netdev, "%s tx pipe reset complete.\n",
 				    netdev->name);
 			clear_bit(WORK_TX_HALT, &hw->usb_flags);
@@ -493,26 +492,26 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
 			 * we need to re-run our queue ...
 			 */
 			hfa384x_usbctlxq_run(hw);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Resume transmitting. */
-	अगर (test_and_clear_bit(WORK_TX_RESUME, &hw->usb_flags))
-		netअगर_wake_queue(hw->wlandev->netdev);
-पूर्ण
+	if (test_and_clear_bit(WORK_TX_RESUME, &hw->usb_flags))
+		netif_wake_queue(hw->wlandev->netdev);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_create
  *
- * Sets up the काष्ठा hfa384x data काष्ठाure क्रम use.  Note this
- * करोes _not_ initialize the actual hardware, just the data काष्ठाures
+ * Sets up the struct hfa384x data structure for use.  Note this
+ * does _not_ initialize the actual hardware, just the data structures
  * we use to keep track of its state.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	irq		device irq number
- *	iobase		i/o base address क्रम रेजिस्टर access
- *	membase		memory base address क्रम रेजिस्टर access
+ *	iobase		i/o base address for register access
+ *	membase		memory base address for register access
  *
  * Returns:
  *	nothing
@@ -523,12 +522,12 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-व्योम hfa384x_create(काष्ठा hfa384x *hw, काष्ठा usb_device *usb)
-अणु
+void hfa384x_create(struct hfa384x *hw, struct usb_device *usb)
+{
 	hw->usb = usb;
 
-	/* Set up the रुकोq */
-	init_रुकोqueue_head(&hw->cmdq);
+	/* Set up the waitq */
+	init_waitqueue_head(&hw->cmdq);
 
 	/* Initialize the command queue */
 	spin_lock_init(&hw->ctlxq.lock);
@@ -545,11 +544,11 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
 	INIT_WORK(&hw->link_bh, prism2sta_processing_defer);
 	INIT_WORK(&hw->usb_work, hfa384x_usb_defer);
 
-	समयr_setup(&hw->throttle, hfa384x_usb_throttlefn, 0);
+	timer_setup(&hw->throttle, hfa384x_usb_throttlefn, 0);
 
-	समयr_setup(&hw->respसमयr, hfa384x_usbctlx_respसमयrfn, 0);
+	timer_setup(&hw->resptimer, hfa384x_usbctlx_resptimerfn, 0);
 
-	समयr_setup(&hw->reqसमयr, hfa384x_usbctlx_reqसमयrfn, 0);
+	timer_setup(&hw->reqtimer, hfa384x_usbctlx_reqtimerfn, 0);
 
 	usb_init_urb(&hw->rx_urb);
 	usb_init_urb(&hw->tx_urb);
@@ -559,22 +558,22 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
 	hw->state = HFA384x_STATE_INIT;
 
 	INIT_WORK(&hw->commsqual_bh, prism2sta_commsqual_defer);
-	समयr_setup(&hw->commsqual_समयr, prism2sta_commsqual_समयr, 0);
-पूर्ण
+	timer_setup(&hw->commsqual_timer, prism2sta_commsqual_timer, 0);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_destroy
  *
  * Partner to hfa384x_create().  This function cleans up the hw
- * काष्ठाure so that it can be मुक्तd by the caller using a simple
- * kमुक्त.  Currently, this function is just a placeholder.  If, at some
- * poपूर्णांक in the future, an hw in the 'shutdown' state requires a 'deep'
- * kमुक्त, this is where it should be करोne.  Note that अगर this function
- * is called on a _running_ hw काष्ठाure, the drvr_stop() function is
+ * structure so that it can be freed by the caller using a simple
+ * kfree.  Currently, this function is just a placeholder.  If, at some
+ * point in the future, an hw in the 'shutdown' state requires a 'deep'
+ * kfree, this is where it should be done.  Note that if this function
+ * is called on a _running_ hw structure, the drvr_stop() function is
  * called.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *
  * Returns:
  *	nothing, this function is not allowed to fail.
@@ -585,38 +584,38 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-व्योम hfa384x_destroy(काष्ठा hfa384x *hw)
-अणु
-	काष्ठा sk_buff *skb;
+void hfa384x_destroy(struct hfa384x *hw)
+{
+	struct sk_buff *skb;
 
-	अगर (hw->state == HFA384x_STATE_RUNNING)
+	if (hw->state == HFA384x_STATE_RUNNING)
 		hfa384x_drvr_stop(hw);
 	hw->state = HFA384x_STATE_PREINIT;
 
-	kमुक्त(hw->scanresults);
-	hw->scanresults = शून्य;
+	kfree(hw->scanresults);
+	hw->scanresults = NULL;
 
 	/* Now to clean out the auth queue */
-	जबतक ((skb = skb_dequeue(&hw->authq)))
-		dev_kमुक्त_skb(skb);
-पूर्ण
+	while ((skb = skb_dequeue(&hw->authq)))
+		dev_kfree_skb(skb);
+}
 
-अटल काष्ठा hfa384x_usbctlx *usbctlx_alloc(व्योम)
-अणु
-	काष्ठा hfa384x_usbctlx *ctlx;
+static struct hfa384x_usbctlx *usbctlx_alloc(void)
+{
+	struct hfa384x_usbctlx *ctlx;
 
-	ctlx = kzalloc(माप(*ctlx),
-		       in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_KERNEL);
-	अगर (ctlx)
-		init_completion(&ctlx->करोne);
+	ctlx = kzalloc(sizeof(*ctlx),
+		       in_interrupt() ? GFP_ATOMIC : GFP_KERNEL);
+	if (ctlx)
+		init_completion(&ctlx->done);
 
-	वापस ctlx;
-पूर्ण
+	return ctlx;
+}
 
-अटल पूर्णांक
-usbctlx_get_status(स्थिर काष्ठा hfa384x_usb_statusresp *cmdresp,
-		   काष्ठा hfa384x_cmdresult *result)
-अणु
+static int
+usbctlx_get_status(const struct hfa384x_usb_statusresp *cmdresp,
+		   struct hfa384x_cmdresult *result)
+{
 	result->status = le16_to_cpu(cmdresp->status);
 	result->resp0 = le16_to_cpu(cmdresp->resp0);
 	result->resp1 = le16_to_cpu(cmdresp->resp1);
@@ -625,158 +624,158 @@ usbctlx_get_status(स्थिर काष्ठा hfa384x_usb_statusresp *cm
 	pr_debug("cmdresult:status=0x%04x resp0=0x%04x resp1=0x%04x resp2=0x%04x\n",
 		 result->status, result->resp0, result->resp1, result->resp2);
 
-	वापस result->status & HFA384x_STATUS_RESULT;
-पूर्ण
+	return result->status & HFA384x_STATUS_RESULT;
+}
 
-अटल व्योम
-usbctlx_get_rridresult(स्थिर काष्ठा hfa384x_usb_rridresp *rridresp,
-		       काष्ठा hfa384x_rridresult *result)
-अणु
+static void
+usbctlx_get_rridresult(const struct hfa384x_usb_rridresp *rridresp,
+		       struct hfa384x_rridresult *result)
+{
 	result->rid = le16_to_cpu(rridresp->rid);
 	result->riddata = rridresp->data;
 	result->riddata_len = ((le16_to_cpu(rridresp->frmlen) - 1) * 2);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * Completor object:
  * This completor must be passed to hfa384x_usbctlx_complete_sync()
- * when processing a CTLX that वापसs a काष्ठा hfa384x_cmdresult काष्ठाure.
+ * when processing a CTLX that returns a struct hfa384x_cmdresult structure.
  *----------------------------------------------------------------
  */
-काष्ठा usbctlx_cmd_completor अणु
-	काष्ठा usbctlx_completor head;
+struct usbctlx_cmd_completor {
+	struct usbctlx_completor head;
 
-	स्थिर काष्ठा hfa384x_usb_statusresp *cmdresp;
-	काष्ठा hfa384x_cmdresult *result;
-पूर्ण;
+	const struct hfa384x_usb_statusresp *cmdresp;
+	struct hfa384x_cmdresult *result;
+};
 
-अटल अंतरभूत पूर्णांक usbctlx_cmd_completor_fn(काष्ठा usbctlx_completor *head)
-अणु
-	काष्ठा usbctlx_cmd_completor *complete;
+static inline int usbctlx_cmd_completor_fn(struct usbctlx_completor *head)
+{
+	struct usbctlx_cmd_completor *complete;
 
-	complete = (काष्ठा usbctlx_cmd_completor *)head;
-	वापस usbctlx_get_status(complete->cmdresp, complete->result);
-पूर्ण
+	complete = (struct usbctlx_cmd_completor *)head;
+	return usbctlx_get_status(complete->cmdresp, complete->result);
+}
 
-अटल अंतरभूत काष्ठा usbctlx_completor *
-init_cmd_completor(काष्ठा usbctlx_cmd_completor *completor,
-		   स्थिर काष्ठा hfa384x_usb_statusresp *cmdresp,
-		   काष्ठा hfa384x_cmdresult *result)
-अणु
+static inline struct usbctlx_completor *
+init_cmd_completor(struct usbctlx_cmd_completor *completor,
+		   const struct hfa384x_usb_statusresp *cmdresp,
+		   struct hfa384x_cmdresult *result)
+{
 	completor->head.complete = usbctlx_cmd_completor_fn;
 	completor->cmdresp = cmdresp;
 	completor->result = result;
-	वापस &completor->head;
-पूर्ण
+	return &completor->head;
+}
 
 /*----------------------------------------------------------------
  * Completor object:
  * This completor must be passed to hfa384x_usbctlx_complete_sync()
- * when processing a CTLX that पढ़ोs a RID.
+ * when processing a CTLX that reads a RID.
  *----------------------------------------------------------------
  */
-काष्ठा usbctlx_rrid_completor अणु
-	काष्ठा usbctlx_completor head;
+struct usbctlx_rrid_completor {
+	struct usbctlx_completor head;
 
-	स्थिर काष्ठा hfa384x_usb_rridresp *rridresp;
-	व्योम *riddata;
-	अचिन्हित पूर्णांक riddatalen;
-पूर्ण;
+	const struct hfa384x_usb_rridresp *rridresp;
+	void *riddata;
+	unsigned int riddatalen;
+};
 
-अटल पूर्णांक usbctlx_rrid_completor_fn(काष्ठा usbctlx_completor *head)
-अणु
-	काष्ठा usbctlx_rrid_completor *complete;
-	काष्ठा hfa384x_rridresult rridresult;
+static int usbctlx_rrid_completor_fn(struct usbctlx_completor *head)
+{
+	struct usbctlx_rrid_completor *complete;
+	struct hfa384x_rridresult rridresult;
 
-	complete = (काष्ठा usbctlx_rrid_completor *)head;
+	complete = (struct usbctlx_rrid_completor *)head;
 	usbctlx_get_rridresult(complete->rridresp, &rridresult);
 
 	/* Validate the length, note body len calculation in bytes */
-	अगर (rridresult.riddata_len != complete->riddatalen) अणु
+	if (rridresult.riddata_len != complete->riddatalen) {
 		pr_warn("RID len mismatch, rid=0x%04x hlen=%d fwlen=%d\n",
 			rridresult.rid,
 			complete->riddatalen, rridresult.riddata_len);
-		वापस -ENODATA;
-	पूर्ण
+		return -ENODATA;
+	}
 
-	स_नकल(complete->riddata, rridresult.riddata, complete->riddatalen);
-	वापस 0;
-पूर्ण
+	memcpy(complete->riddata, rridresult.riddata, complete->riddatalen);
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा usbctlx_completor *
-init_rrid_completor(काष्ठा usbctlx_rrid_completor *completor,
-		    स्थिर काष्ठा hfa384x_usb_rridresp *rridresp,
-		    व्योम *riddata,
-		    अचिन्हित पूर्णांक riddatalen)
-अणु
+static inline struct usbctlx_completor *
+init_rrid_completor(struct usbctlx_rrid_completor *completor,
+		    const struct hfa384x_usb_rridresp *rridresp,
+		    void *riddata,
+		    unsigned int riddatalen)
+{
 	completor->head.complete = usbctlx_rrid_completor_fn;
 	completor->rridresp = rridresp;
 	completor->riddata = riddata;
 	completor->riddatalen = riddatalen;
-	वापस &completor->head;
-पूर्ण
+	return &completor->head;
+}
 
 /*----------------------------------------------------------------
  * Completor object:
- * Interprets the results of a synchronous RID-ग_लिखो
+ * Interprets the results of a synchronous RID-write
  *----------------------------------------------------------------
  */
-#घोषणा init_wrid_completor  init_cmd_completor
+#define init_wrid_completor  init_cmd_completor
 
 /*----------------------------------------------------------------
  * Completor object:
- * Interprets the results of a synchronous memory-ग_लिखो
+ * Interprets the results of a synchronous memory-write
  *----------------------------------------------------------------
  */
-#घोषणा init_wmem_completor  init_cmd_completor
+#define init_wmem_completor  init_cmd_completor
 
 /*----------------------------------------------------------------
  * Completor object:
- * Interprets the results of a synchronous memory-पढ़ो
+ * Interprets the results of a synchronous memory-read
  *----------------------------------------------------------------
  */
-काष्ठा usbctlx_rmem_completor अणु
-	काष्ठा usbctlx_completor head;
+struct usbctlx_rmem_completor {
+	struct usbctlx_completor head;
 
-	स्थिर काष्ठा hfa384x_usb_rmemresp *rmemresp;
-	व्योम *data;
-	अचिन्हित पूर्णांक len;
-पूर्ण;
+	const struct hfa384x_usb_rmemresp *rmemresp;
+	void *data;
+	unsigned int len;
+};
 
-अटल पूर्णांक usbctlx_rmem_completor_fn(काष्ठा usbctlx_completor *head)
-अणु
-	काष्ठा usbctlx_rmem_completor *complete =
-		(काष्ठा usbctlx_rmem_completor *)head;
+static int usbctlx_rmem_completor_fn(struct usbctlx_completor *head)
+{
+	struct usbctlx_rmem_completor *complete =
+		(struct usbctlx_rmem_completor *)head;
 
 	pr_debug("rmemresp:len=%d\n", complete->rmemresp->frmlen);
-	स_नकल(complete->data, complete->rmemresp->data, complete->len);
-	वापस 0;
-पूर्ण
+	memcpy(complete->data, complete->rmemresp->data, complete->len);
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा usbctlx_completor *
-init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
-		    काष्ठा hfa384x_usb_rmemresp *rmemresp,
-		    व्योम *data,
-		    अचिन्हित पूर्णांक len)
-अणु
+static inline struct usbctlx_completor *
+init_rmem_completor(struct usbctlx_rmem_completor *completor,
+		    struct hfa384x_usb_rmemresp *rmemresp,
+		    void *data,
+		    unsigned int len)
+{
 	completor->head.complete = usbctlx_rmem_completor_fn;
 	completor->rmemresp = rmemresp;
 	completor->data = data;
 	completor->len = len;
-	वापस &completor->head;
-पूर्ण
+	return &completor->head;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_cb_status
  *
- * Ctlx_complete handler क्रम async CMD type control exchanges.
- * mark the hw काष्ठा as such.
+ * Ctlx_complete handler for async CMD type control exchanges.
+ * mark the hw struct as such.
  *
  * Note: If the handling is changed here, it should probably be
- *       changed in करोcmd as well.
+ *       changed in docmd as well.
  *
  * Arguments:
- *	hw		hw काष्ठा
+ *	hw		hw struct
  *	ctlx		completed CTLX
  *
  * Returns:
@@ -785,26 +784,26 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_cb_status(काष्ठा hfa384x *hw,
-			      स्थिर काष्ठा hfa384x_usbctlx *ctlx)
-अणु
-	अगर (ctlx->usercb) अणु
-		काष्ठा hfa384x_cmdresult cmdresult;
+static void hfa384x_cb_status(struct hfa384x *hw,
+			      const struct hfa384x_usbctlx *ctlx)
+{
+	if (ctlx->usercb) {
+		struct hfa384x_cmdresult cmdresult;
 
-		अगर (ctlx->state != CTLX_COMPLETE) अणु
-			स_रखो(&cmdresult, 0, माप(cmdresult));
+		if (ctlx->state != CTLX_COMPLETE) {
+			memset(&cmdresult, 0, sizeof(cmdresult));
 			cmdresult.status =
 			    HFA384x_STATUS_RESULT_SET(HFA384x_CMD_ERR);
-		पूर्ण अन्यथा अणु
+		} else {
 			usbctlx_get_status(&ctlx->inbuf.cmdresp, &cmdresult);
-		पूर्ण
+		}
 
 		ctlx->usercb(hw, &cmdresult, ctlx->usercb_data);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*----------------------------------------------------------------
  * hfa384x_cmd_initialize
@@ -813,7 +812,7 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  * on the result.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *
  * Returns:
  *	0		success
@@ -826,31 +825,31 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_cmd_initialize(काष्ठा hfa384x *hw)
-अणु
-	पूर्णांक result = 0;
-	पूर्णांक i;
-	काष्ठा hfa384x_metacmd cmd;
+int hfa384x_cmd_initialize(struct hfa384x *hw)
+{
+	int result = 0;
+	int i;
+	struct hfa384x_metacmd cmd;
 
 	cmd.cmd = HFA384x_CMDCODE_INIT;
 	cmd.parm0 = 0;
 	cmd.parm1 = 0;
 	cmd.parm2 = 0;
 
-	result = hfa384x_करोcmd(hw, &cmd);
+	result = hfa384x_docmd(hw, &cmd);
 
 	pr_debug("cmdresp.init: status=0x%04x, resp0=0x%04x, resp1=0x%04x, resp2=0x%04x\n",
 		 cmd.result.status,
 		 cmd.result.resp0, cmd.result.resp1, cmd.result.resp2);
-	अगर (result == 0) अणु
-		क्रम (i = 0; i < HFA384x_NUMPORTS_MAX; i++)
+	if (result == 0) {
+		for (i = 0; i < HFA384x_NUMPORTS_MAX; i++)
 			hw->port_enabled[i] = 0;
-	पूर्ण
+	}
 
 	hw->link_status = HFA384x_LINK_NOTCONNECTED;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_cmd_disable
@@ -859,13 +858,13 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  * the MACs 'ports'.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	macport		MAC port number (host order)
  *
  * Returns:
  *	0		success
  *	>0		f/w reported failure - f/w status code
- *	<0		driver reported error (समयout|bad arg)
+ *	<0		driver reported error (timeout|bad arg)
  *
  * Side effects:
  *
@@ -873,9 +872,9 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_cmd_disable(काष्ठा hfa384x *hw, u16 macport)
-अणु
-	काष्ठा hfa384x_metacmd cmd;
+int hfa384x_cmd_disable(struct hfa384x *hw, u16 macport)
+{
+	struct hfa384x_metacmd cmd;
 
 	cmd.cmd = HFA384x_CMD_CMDCODE_SET(HFA384x_CMDCODE_DISABLE) |
 	    HFA384x_CMD_MACPORT_SET(macport);
@@ -883,8 +882,8 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
 	cmd.parm1 = 0;
 	cmd.parm2 = 0;
 
-	वापस hfa384x_करोcmd(hw, &cmd);
-पूर्ण
+	return hfa384x_docmd(hw, &cmd);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_cmd_enable
@@ -893,13 +892,13 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  * the MACs 'ports'.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	macport		MAC port number
  *
  * Returns:
  *	0		success
  *	>0		f/w reported failure - f/w status code
- *	<0		driver reported error (समयout|bad arg)
+ *	<0		driver reported error (timeout|bad arg)
  *
  * Side effects:
  *
@@ -907,9 +906,9 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_cmd_enable(काष्ठा hfa384x *hw, u16 macport)
-अणु
-	काष्ठा hfa384x_metacmd cmd;
+int hfa384x_cmd_enable(struct hfa384x *hw, u16 macport)
+{
+	struct hfa384x_metacmd cmd;
 
 	cmd.cmd = HFA384x_CMD_CMDCODE_SET(HFA384x_CMDCODE_ENABLE) |
 	    HFA384x_CMD_MACPORT_SET(macport);
@@ -917,8 +916,8 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
 	cmd.parm1 = 0;
 	cmd.parm2 = 0;
 
-	वापस hfa384x_करोcmd(hw, &cmd);
-पूर्ण
+	return hfa384x_docmd(hw, &cmd);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_cmd_monitor
@@ -927,22 +926,22 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  * monitor mode that I've received thus far:
  *
  *  "The "monitor mode" of operation is that the MAC passes all
- *  frames क्रम which the PLCP checks are correct. All received
+ *  frames for which the PLCP checks are correct. All received
  *  MPDUs are passed to the host with MAC Port = 7, with a
  *  receive status of good, FCS error, or undecryptable. Passing
  *  certain MPDUs is a violation of the 802.11 standard, but useful
- *  क्रम a debugging tool."  Normal communication is not possible
- *  जबतक monitor mode is enabled.
+ *  for a debugging tool."  Normal communication is not possible
+ *  while monitor mode is enabled.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	enable		a code (0x0b|0x0f) that enables/disables
  *			monitor mode. (host order)
  *
  * Returns:
  *	0		success
  *	>0		f/w reported failure - f/w status code
- *	<0		driver reported error (समयout|bad arg)
+ *	<0		driver reported error (timeout|bad arg)
  *
  * Side effects:
  *
@@ -950,9 +949,9 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_cmd_monitor(काष्ठा hfa384x *hw, u16 enable)
-अणु
-	काष्ठा hfa384x_metacmd cmd;
+int hfa384x_cmd_monitor(struct hfa384x *hw, u16 enable)
+{
+	struct hfa384x_metacmd cmd;
 
 	cmd.cmd = HFA384x_CMD_CMDCODE_SET(HFA384x_CMDCODE_MONITOR) |
 	    HFA384x_CMD_AINFO_SET(enable);
@@ -960,41 +959,41 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
 	cmd.parm1 = 0;
 	cmd.parm2 = 0;
 
-	वापस hfa384x_करोcmd(hw, &cmd);
-पूर्ण
+	return hfa384x_docmd(hw, &cmd);
+}
 
 /*----------------------------------------------------------------
- * hfa384x_cmd_करोwnload
+ * hfa384x_cmd_download
  *
- * Sets the controls क्रम the MAC controller code/data करोwnload
+ * Sets the controls for the MAC controller code/data download
  * process.  The arguments set the mode and address associated
- * with a करोwnload.  Note that the aux रेजिस्टरs should be enabled
- * prior to setting one of the करोwnload enable modes.
+ * with a download.  Note that the aux registers should be enabled
+ * prior to setting one of the download enable modes.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	mode		0 - Disable programming and begin code exec
- *			1 - Enable अस्थिर mem programming
- *			2 - Enable non-अस्थिर mem programming
- *			3 - Program non-अस्थिर section from NV करोwnload
+ *			1 - Enable volatile mem programming
+ *			2 - Enable non-volatile mem programming
+ *			3 - Program non-volatile section from NV download
  *			    buffer.
  *			(host order)
  *	lowaddr
  *	highaddr	For mode 1, sets the high & low order bits of
  *			the "destination address".  This address will be
- *			the execution start address when करोwnload is
+ *			the execution start address when download is
  *			subsequently disabled.
  *			For mode 2, sets the high & low order bits of
  *			the destination in NV ram.
  *			For modes 0 & 3, should be zero. (host order)
- *			NOTE: these are CMD क्रमmat.
- *	codelen		Length of the data to ग_लिखो in mode 2,
+ *			NOTE: these are CMD format.
+ *	codelen		Length of the data to write in mode 2,
  *			zero otherwise. (host order)
  *
  * Returns:
  *	0		success
  *	>0		f/w reported failure - f/w status code
- *	<0		driver reported error (समयout|bad arg)
+ *	<0		driver reported error (timeout|bad arg)
  *
  * Side effects:
  *
@@ -1002,10 +1001,10 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_cmd_करोwnload(काष्ठा hfa384x *hw, u16 mode, u16 lowaddr,
+int hfa384x_cmd_download(struct hfa384x *hw, u16 mode, u16 lowaddr,
 			 u16 highaddr, u16 codelen)
-अणु
-	काष्ठा hfa384x_metacmd cmd;
+{
+	struct hfa384x_metacmd cmd;
 
 	pr_debug("mode=%d, lowaddr=0x%04x, highaddr=0x%04x, codelen=%d\n",
 		 mode, lowaddr, highaddr, codelen);
@@ -1017,22 +1016,22 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
 	cmd.parm1 = highaddr;
 	cmd.parm2 = codelen;
 
-	वापस hfa384x_करोcmd(hw, &cmd);
-पूर्ण
+	return hfa384x_docmd(hw, &cmd);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_corereset
  *
- * Perक्रमm a reset of the hfa38xx MAC core.  We assume that the hw
- * काष्ठाure is in its "created" state.  That is, it is initialized
- * with proper values.  Note that अगर a reset is करोne after the
- * device has been active क्रम aजबतक, the caller might have to clean
- * up some leftover cruft in the hw काष्ठाure.
+ * Perform a reset of the hfa38xx MAC core.  We assume that the hw
+ * structure is in its "created" state.  That is, it is initialized
+ * with proper values.  Note that if a reset is done after the
+ * device has been active for awhile, the caller might have to clean
+ * up some leftover cruft in the hw structure.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	holdसमय	how दीर्घ (in ms) to hold the reset
- *	settleसमय	how दीर्घ (in ms) to रुको after releasing
+ *	hw		device structure
+ *	holdtime	how long (in ms) to hold the reset
+ *	settletime	how long (in ms) to wait after releasing
  *			the reset
  *
  * Returns:
@@ -1044,35 +1043,35 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_corereset(काष्ठा hfa384x *hw, पूर्णांक holdसमय,
-		      पूर्णांक settleसमय, पूर्णांक genesis)
-अणु
-	पूर्णांक result;
+int hfa384x_corereset(struct hfa384x *hw, int holdtime,
+		      int settletime, int genesis)
+{
+	int result;
 
 	result = usb_reset_device(hw->usb);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		netdev_err(hw->wlandev->netdev, "usb_reset_device() failed, result=%d.\n",
 			   result);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbctlx_complete_sync
  *
- * Waits क्रम a synchronous CTLX object to complete,
+ * Waits for a synchronous CTLX object to complete,
  * and then handles the response.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	ctlx		CTLX ptr
  *	completor	functor object to decide what to
- *			करो with the CTLX's result.
+ *			do with the CTLX's result.
  *
  * Returns:
  *	0		Success
- *	-ERESTARTSYS	Interrupted by a संकेत
+ *	-ERESTARTSYS	Interrupted by a signal
  *	-EIO		CTLX failed
  *	-ENODEV		Adapter was unplugged
  *	???		Result from completor
@@ -1083,45 +1082,45 @@ init_rmem_completor(काष्ठा usbctlx_rmem_completor *completor,
  *	process
  *----------------------------------------------------------------
  */
-अटल पूर्णांक hfa384x_usbctlx_complete_sync(काष्ठा hfa384x *hw,
-					 काष्ठा hfa384x_usbctlx *ctlx,
-					 काष्ठा usbctlx_completor *completor)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक result;
+static int hfa384x_usbctlx_complete_sync(struct hfa384x *hw,
+					 struct hfa384x_usbctlx *ctlx,
+					 struct usbctlx_completor *completor)
+{
+	unsigned long flags;
+	int result;
 
-	result = रुको_क्रम_completion_पूर्णांकerruptible(&ctlx->करोne);
+	result = wait_for_completion_interruptible(&ctlx->done);
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
 	/*
-	 * We can only handle the CTLX अगर the USB disconnect
+	 * We can only handle the CTLX if the USB disconnect
 	 * function has not run yet ...
 	 */
 cleanup:
-	अगर (hw->wlandev->hwहटाओd) अणु
+	if (hw->wlandev->hwremoved) {
 		spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 		result = -ENODEV;
-	पूर्ण अन्यथा अगर (result != 0) अणु
-		पूर्णांक runqueue = 0;
+	} else if (result != 0) {
+		int runqueue = 0;
 
 		/*
-		 * We were probably पूर्णांकerrupted, so delete
-		 * this CTLX asynchronously, समाप्त the समयrs
+		 * We were probably interrupted, so delete
+		 * this CTLX asynchronously, kill the timers
 		 * and the URB, and then start the next
 		 * pending CTLX.
 		 *
-		 * NOTE: We can only delete the समयrs and
-		 *       the URB अगर this CTLX is active.
+		 * NOTE: We can only delete the timers and
+		 *       the URB if this CTLX is active.
 		 */
-		अगर (ctlx == get_active_ctlx(hw)) अणु
+		if (ctlx == get_active_ctlx(hw)) {
 			spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 
-			del_singleshot_समयr_sync(&hw->reqसमयr);
-			del_singleshot_समयr_sync(&hw->respसमयr);
-			hw->req_समयr_करोne = 1;
-			hw->resp_समयr_करोne = 1;
-			usb_समाप्त_urb(&hw->ctlx_urb);
+			del_singleshot_timer_sync(&hw->reqtimer);
+			del_singleshot_timer_sync(&hw->resptimer);
+			hw->req_timer_done = 1;
+			hw->resp_timer_done = 1;
+			usb_kill_urb(&hw->ctlx_urb);
 
 			spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
@@ -1131,14 +1130,14 @@ cleanup:
 			 * This scenario is so unlikely that I'm
 			 * happy with a grubby "goto" solution ...
 			 */
-			अगर (hw->wlandev->hwहटाओd)
-				जाओ cleanup;
-		पूर्ण
+			if (hw->wlandev->hwremoved)
+				goto cleanup;
+		}
 
 		/*
 		 * The completion task will send this CTLX
-		 * to the reaper the next समय it runs. We
-		 * are no दीर्घer in a hurry.
+		 * to the reaper the next time it runs. We
+		 * are no longer in a hurry.
 		 */
 		ctlx->reapable = 1;
 		ctlx->state = CTLX_REQ_FAILED;
@@ -1146,46 +1145,46 @@ cleanup:
 
 		spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 
-		अगर (runqueue)
+		if (runqueue)
 			hfa384x_usbctlxq_run(hw);
-	पूर्ण अन्यथा अणु
-		अगर (ctlx->state == CTLX_COMPLETE) अणु
+	} else {
+		if (ctlx->state == CTLX_COMPLETE) {
 			result = completor->complete(completor);
-		पूर्ण अन्यथा अणु
+		} else {
 			netdev_warn(hw->wlandev->netdev, "CTLX[%d] error: state(%s)\n",
 				    le16_to_cpu(ctlx->outbuf.type),
 				    ctlxstr(ctlx->state));
 			result = -EIO;
-		पूर्ण
+		}
 
 		list_del(&ctlx->list);
 		spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-		kमुक्त(ctlx);
-	पूर्ण
+		kfree(ctlx);
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_करोcmd
+ * hfa384x_docmd
  *
- * Conकाष्ठाs a command CTLX and submits it.
+ * Constructs a command CTLX and submits it.
  *
  * NOTE: Any changes to the 'post-submit' code in this function
  *       need to be carried over to hfa384x_cbcmd() since the handling
- *       is भवly identical.
+ *       is virtually identical.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *       cmd             cmd काष्ठाure.  Includes all arguments and result
- *                       data poपूर्णांकs.  All in host order. in host order
+ *	hw		device structure
+ *       cmd             cmd structure.  Includes all arguments and result
+ *                       data points.  All in host order. in host order
  *
  * Returns:
  *	0		success
  *	-EIO		CTLX failure
- *	-ERESTARTSYS	Awakened on संकेत
+ *	-ERESTARTSYS	Awakened on signal
  *	>0		command indicated error, Status and Resp0-2 are
- *			in hw काष्ठाure.
+ *			in hw structure.
  *
  * Side effects:
  *
@@ -1194,18 +1193,18 @@ cleanup:
  *	process
  *----------------------------------------------------------------
  */
-अटल अंतरभूत पूर्णांक
-hfa384x_करोcmd(काष्ठा hfa384x *hw,
-	      काष्ठा hfa384x_metacmd *cmd)
-अणु
-	पूर्णांक result;
-	काष्ठा hfa384x_usbctlx *ctlx;
+static inline int
+hfa384x_docmd(struct hfa384x *hw,
+	      struct hfa384x_metacmd *cmd)
+{
+	int result;
+	struct hfa384x_usbctlx *ctlx;
 
 	ctlx = usbctlx_alloc();
-	अगर (!ctlx) अणु
+	if (!ctlx) {
 		result = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Initialize the command */
 	ctlx->outbuf.cmdreq.type = cpu_to_le16(HFA384x_USB_CMDREQ);
@@ -1214,95 +1213,95 @@ hfa384x_करोcmd(काष्ठा hfa384x *hw,
 	ctlx->outbuf.cmdreq.parm1 = cpu_to_le16(cmd->parm1);
 	ctlx->outbuf.cmdreq.parm2 = cpu_to_le16(cmd->parm2);
 
-	ctlx->outbufsize = माप(ctlx->outbuf.cmdreq);
+	ctlx->outbufsize = sizeof(ctlx->outbuf.cmdreq);
 
 	pr_debug("cmdreq: cmd=0x%04x parm0=0x%04x parm1=0x%04x parm2=0x%04x\n",
 		 cmd->cmd, cmd->parm0, cmd->parm1, cmd->parm2);
 
 	ctlx->reapable = DOWAIT;
-	ctlx->cmdcb = शून्य;
-	ctlx->usercb = शून्य;
-	ctlx->usercb_data = शून्य;
+	ctlx->cmdcb = NULL;
+	ctlx->usercb = NULL;
+	ctlx->usercb_data = NULL;
 
 	result = hfa384x_usbctlx_submit(hw, ctlx);
-	अगर (result != 0) अणु
-		kमुक्त(ctlx);
-	पूर्ण अन्यथा अणु
-		काष्ठा usbctlx_cmd_completor cmd_completor;
-		काष्ठा usbctlx_completor *completor;
+	if (result != 0) {
+		kfree(ctlx);
+	} else {
+		struct usbctlx_cmd_completor cmd_completor;
+		struct usbctlx_completor *completor;
 
 		completor = init_cmd_completor(&cmd_completor,
 					       &ctlx->inbuf.cmdresp,
 					       &cmd->result);
 
 		result = hfa384x_usbctlx_complete_sync(hw, ctlx, completor);
-	पूर्ण
+	}
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_करोrrid
+ * hfa384x_dorrid
  *
- * Conकाष्ठाs a पढ़ो rid CTLX and issues it.
+ * Constructs a read rid CTLX and issues it.
  *
  * NOTE: Any changes to the 'post-submit' code in this function
  *       need to be carried over to hfa384x_cbrrid() since the handling
- *       is भवly identical.
+ *       is virtually identical.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	mode		DOWAIT or DOASYNC
  *	rid		Read RID number (host order)
- *	riddata		Caller supplied buffer that MAC क्रमmatted RID.data
- *			record will be written to क्रम DOWAIT calls. Should
- *			be शून्य क्रम DOASYNC calls.
- *	riddatalen	Buffer length क्रम DOWAIT calls. Zero क्रम DOASYNC calls.
- *	cmdcb		command callback क्रम async calls, शून्य क्रम DOWAIT calls
- *	usercb		user callback क्रम async calls, शून्य क्रम DOWAIT calls
- *	usercb_data	user supplied data poपूर्णांकer क्रम async calls, शून्य
- *			क्रम DOWAIT calls
+ *	riddata		Caller supplied buffer that MAC formatted RID.data
+ *			record will be written to for DOWAIT calls. Should
+ *			be NULL for DOASYNC calls.
+ *	riddatalen	Buffer length for DOWAIT calls. Zero for DOASYNC calls.
+ *	cmdcb		command callback for async calls, NULL for DOWAIT calls
+ *	usercb		user callback for async calls, NULL for DOWAIT calls
+ *	usercb_data	user supplied data pointer for async calls, NULL
+ *			for DOWAIT calls
  *
  * Returns:
  *	0		success
  *	-EIO		CTLX failure
- *	-ERESTARTSYS	Awakened on संकेत
+ *	-ERESTARTSYS	Awakened on signal
  *	-ENODATA	riddatalen != macdatalen
  *	>0		command indicated error, Status and Resp0-2 are
- *			in hw काष्ठाure.
+ *			in hw structure.
  *
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt (DOASYNC)
+ *	interrupt (DOASYNC)
  *	process (DOWAIT or DOASYNC)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक
-hfa384x_करोrrid(काष्ठा hfa384x *hw,
-	       क्रमागत cmd_mode mode,
+static int
+hfa384x_dorrid(struct hfa384x *hw,
+	       enum cmd_mode mode,
 	       u16 rid,
-	       व्योम *riddata,
-	       अचिन्हित पूर्णांक riddatalen,
-	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, व्योम *usercb_data)
-अणु
-	पूर्णांक result;
-	काष्ठा hfa384x_usbctlx *ctlx;
+	       void *riddata,
+	       unsigned int riddatalen,
+	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, void *usercb_data)
+{
+	int result;
+	struct hfa384x_usbctlx *ctlx;
 
 	ctlx = usbctlx_alloc();
-	अगर (!ctlx) अणु
+	if (!ctlx) {
 		result = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Initialize the command */
 	ctlx->outbuf.rridreq.type = cpu_to_le16(HFA384x_USB_RRIDREQ);
 	ctlx->outbuf.rridreq.frmlen =
-	    cpu_to_le16(माप(ctlx->outbuf.rridreq.rid));
+	    cpu_to_le16(sizeof(ctlx->outbuf.rridreq.rid));
 	ctlx->outbuf.rridreq.rid = cpu_to_le16(rid);
 
-	ctlx->outbufsize = माप(ctlx->outbuf.rridreq);
+	ctlx->outbufsize = sizeof(ctlx->outbuf.rridreq);
 
 	ctlx->reapable = mode;
 	ctlx->cmdcb = cmdcb;
@@ -1311,10 +1310,10 @@ hfa384x_करोrrid(काष्ठा hfa384x *hw,
 
 	/* Submit the CTLX */
 	result = hfa384x_usbctlx_submit(hw, ctlx);
-	अगर (result != 0) अणु
-		kमुक्त(ctlx);
-	पूर्ण अन्यथा अगर (mode == DOWAIT) अणु
-		काष्ठा usbctlx_rrid_completor completor;
+	if (result != 0) {
+		kfree(ctlx);
+	} else if (mode == DOWAIT) {
+		struct usbctlx_rrid_completor completor;
 
 		result =
 		    hfa384x_usbctlx_complete_sync(hw, ctlx,
@@ -1322,73 +1321,73 @@ hfa384x_करोrrid(काष्ठा hfa384x *hw,
 						  (&completor,
 						   &ctlx->inbuf.rridresp,
 						   riddata, riddatalen));
-	पूर्ण
+	}
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_करोwrid
+ * hfa384x_dowrid
  *
- * Conकाष्ठाs a ग_लिखो rid CTLX and issues it.
+ * Constructs a write rid CTLX and issues it.
  *
  * NOTE: Any changes to the 'post-submit' code in this function
  *       need to be carried over to hfa384x_cbwrid() since the handling
- *       is भवly identical.
+ *       is virtually identical.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	क्रमागत cmd_mode	DOWAIT or DOASYNC
+ *	hw		device structure
+ *	enum cmd_mode	DOWAIT or DOASYNC
  *	rid		RID code
- *	riddata		Data portion of RID क्रमmatted क्रम MAC
+ *	riddata		Data portion of RID formatted for MAC
  *	riddatalen	Length of the data portion in bytes
- *       cmdcb           command callback क्रम async calls, शून्य क्रम DOWAIT calls
- *	usercb		user callback क्रम async calls, शून्य क्रम DOWAIT calls
- *	usercb_data	user supplied data poपूर्णांकer क्रम async calls
+ *       cmdcb           command callback for async calls, NULL for DOWAIT calls
+ *	usercb		user callback for async calls, NULL for DOWAIT calls
+ *	usercb_data	user supplied data pointer for async calls
  *
  * Returns:
  *	0		success
- *	-ETIMEDOUT	समयd out रुकोing क्रम रेजिस्टर पढ़ोy or
+ *	-ETIMEDOUT	timed out waiting for register ready or
  *			command completion
  *	>0		command indicated error, Status and Resp0-2 are
- *			in hw काष्ठाure.
+ *			in hw structure.
  *
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt (DOASYNC)
+ *	interrupt (DOASYNC)
  *	process (DOWAIT or DOASYNC)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक
-hfa384x_करोwrid(काष्ठा hfa384x *hw,
-	       क्रमागत cmd_mode mode,
+static int
+hfa384x_dowrid(struct hfa384x *hw,
+	       enum cmd_mode mode,
 	       u16 rid,
-	       व्योम *riddata,
-	       अचिन्हित पूर्णांक riddatalen,
-	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, व्योम *usercb_data)
-अणु
-	पूर्णांक result;
-	काष्ठा hfa384x_usbctlx *ctlx;
+	       void *riddata,
+	       unsigned int riddatalen,
+	       ctlx_cmdcb_t cmdcb, ctlx_usercb_t usercb, void *usercb_data)
+{
+	int result;
+	struct hfa384x_usbctlx *ctlx;
 
 	ctlx = usbctlx_alloc();
-	अगर (!ctlx) अणु
+	if (!ctlx) {
 		result = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Initialize the command */
 	ctlx->outbuf.wridreq.type = cpu_to_le16(HFA384x_USB_WRIDREQ);
-	ctlx->outbuf.wridreq.frmlen = cpu_to_le16((माप
+	ctlx->outbuf.wridreq.frmlen = cpu_to_le16((sizeof
 						   (ctlx->outbuf.wridreq.rid) +
 						   riddatalen + 1) / 2);
 	ctlx->outbuf.wridreq.rid = cpu_to_le16(rid);
-	स_नकल(ctlx->outbuf.wridreq.data, riddata, riddatalen);
+	memcpy(ctlx->outbuf.wridreq.data, riddata, riddatalen);
 
-	ctlx->outbufsize = माप(ctlx->outbuf.wridreq.type) +
-	    माप(ctlx->outbuf.wridreq.frmlen) +
-	    माप(ctlx->outbuf.wridreq.rid) + riddatalen;
+	ctlx->outbufsize = sizeof(ctlx->outbuf.wridreq.type) +
+	    sizeof(ctlx->outbuf.wridreq.frmlen) +
+	    sizeof(ctlx->outbuf.wridreq.rid) + riddatalen;
 
 	ctlx->reapable = mode;
 	ctlx->cmdcb = cmdcb;
@@ -1397,11 +1396,11 @@ hfa384x_करोwrid(काष्ठा hfa384x *hw,
 
 	/* Submit the CTLX */
 	result = hfa384x_usbctlx_submit(hw, ctlx);
-	अगर (result != 0) अणु
-		kमुक्त(ctlx);
-	पूर्ण अन्यथा अगर (mode == DOWAIT) अणु
-		काष्ठा usbctlx_cmd_completor completor;
-		काष्ठा hfa384x_cmdresult wridresult;
+	if (result != 0) {
+		kfree(ctlx);
+	} else if (mode == DOWAIT) {
+		struct usbctlx_cmd_completor completor;
+		struct hfa384x_cmdresult wridresult;
 
 		result = hfa384x_usbctlx_complete_sync(hw,
 						       ctlx,
@@ -1409,34 +1408,34 @@ hfa384x_करोwrid(काष्ठा hfa384x *hw,
 						       (&completor,
 							&ctlx->inbuf.wridresp,
 							&wridresult));
-	पूर्ण
+	}
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_करोrmem
+ * hfa384x_dormem
  *
- * Conकाष्ठाs a पढ़ोmem CTLX and issues it.
+ * Constructs a readmem CTLX and issues it.
  *
  * NOTE: Any changes to the 'post-submit' code in this function
  *       need to be carried over to hfa384x_cbrmem() since the handling
- *       is भवly identical.
+ *       is virtually identical.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	page		MAC address space page (CMD क्रमmat)
+ *	hw		device structure
+ *	page		MAC address space page (CMD format)
  *	offset		MAC address space offset
- *	data		Ptr to data buffer to receive पढ़ो
- *	len		Length of the data to पढ़ो (max == 2048)
+ *	data		Ptr to data buffer to receive read
+ *	len		Length of the data to read (max == 2048)
  *
  * Returns:
  *	0		success
- *	-ETIMEDOUT	समयd out रुकोing क्रम रेजिस्टर पढ़ोy or
+ *	-ETIMEDOUT	timed out waiting for register ready or
  *			command completion
  *	>0		command indicated error, Status and Resp0-2 are
- *			in hw काष्ठाure.
+ *			in hw structure.
  *
  * Side effects:
  *
@@ -1444,49 +1443,49 @@ hfa384x_करोwrid(काष्ठा hfa384x *hw,
  *	process (DOWAIT)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक
-hfa384x_करोrmem(काष्ठा hfa384x *hw,
+static int
+hfa384x_dormem(struct hfa384x *hw,
 	       u16 page,
 	       u16 offset,
-	       व्योम *data,
-	       अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक result;
-	काष्ठा hfa384x_usbctlx *ctlx;
+	       void *data,
+	       unsigned int len)
+{
+	int result;
+	struct hfa384x_usbctlx *ctlx;
 
 	ctlx = usbctlx_alloc();
-	अगर (!ctlx) अणु
+	if (!ctlx) {
 		result = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Initialize the command */
 	ctlx->outbuf.rmemreq.type = cpu_to_le16(HFA384x_USB_RMEMREQ);
 	ctlx->outbuf.rmemreq.frmlen =
-	    cpu_to_le16(माप(ctlx->outbuf.rmemreq.offset) +
-			माप(ctlx->outbuf.rmemreq.page) + len);
+	    cpu_to_le16(sizeof(ctlx->outbuf.rmemreq.offset) +
+			sizeof(ctlx->outbuf.rmemreq.page) + len);
 	ctlx->outbuf.rmemreq.offset = cpu_to_le16(offset);
 	ctlx->outbuf.rmemreq.page = cpu_to_le16(page);
 
-	ctlx->outbufsize = माप(ctlx->outbuf.rmemreq);
+	ctlx->outbufsize = sizeof(ctlx->outbuf.rmemreq);
 
 	pr_debug("type=0x%04x frmlen=%d offset=0x%04x page=0x%04x\n",
 		 ctlx->outbuf.rmemreq.type,
 		 ctlx->outbuf.rmemreq.frmlen,
 		 ctlx->outbuf.rmemreq.offset, ctlx->outbuf.rmemreq.page);
 
-	pr_debug("pktsize=%zd\n", ROUNDUP64(माप(ctlx->outbuf.rmemreq)));
+	pr_debug("pktsize=%zd\n", ROUNDUP64(sizeof(ctlx->outbuf.rmemreq)));
 
 	ctlx->reapable = DOWAIT;
-	ctlx->cmdcb = शून्य;
-	ctlx->usercb = शून्य;
-	ctlx->usercb_data = शून्य;
+	ctlx->cmdcb = NULL;
+	ctlx->usercb = NULL;
+	ctlx->usercb_data = NULL;
 
 	result = hfa384x_usbctlx_submit(hw, ctlx);
-	अगर (result != 0) अणु
-		kमुक्त(ctlx);
-	पूर्ण अन्यथा अणु
-		काष्ठा usbctlx_rmem_completor completor;
+	if (result != 0) {
+		kfree(ctlx);
+	} else {
+		struct usbctlx_rmem_completor completor;
 
 		result =
 		    hfa384x_usbctlx_complete_sync(hw, ctlx,
@@ -1494,85 +1493,85 @@ hfa384x_करोrmem(काष्ठा hfa384x *hw,
 						  (&completor,
 						   &ctlx->inbuf.rmemresp, data,
 						   len));
-	पूर्ण
+	}
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_करोwmem
+ * hfa384x_dowmem
  *
- * Conकाष्ठाs a ग_लिखोmem CTLX and issues it.
+ * Constructs a writemem CTLX and issues it.
  *
  * NOTE: Any changes to the 'post-submit' code in this function
  *       need to be carried over to hfa384x_cbwmem() since the handling
- *       is भवly identical.
+ *       is virtually identical.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	page		MAC address space page (CMD क्रमmat)
+ *	hw		device structure
+ *	page		MAC address space page (CMD format)
  *	offset		MAC address space offset
- *	data		Ptr to data buffer containing ग_लिखो data
- *	len		Length of the data to पढ़ो (max == 2048)
+ *	data		Ptr to data buffer containing write data
+ *	len		Length of the data to read (max == 2048)
  *
  * Returns:
  *	0		success
- *	-ETIMEDOUT	समयd out रुकोing क्रम रेजिस्टर पढ़ोy or
+ *	-ETIMEDOUT	timed out waiting for register ready or
  *			command completion
  *	>0		command indicated error, Status and Resp0-2 are
- *			in hw काष्ठाure.
+ *			in hw structure.
  *
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt (DOWAIT)
+ *	interrupt (DOWAIT)
  *	process (DOWAIT)
  *----------------------------------------------------------------
  */
-अटल पूर्णांक
-hfa384x_करोwmem(काष्ठा hfa384x *hw,
+static int
+hfa384x_dowmem(struct hfa384x *hw,
 	       u16 page,
 	       u16 offset,
-	       व्योम *data,
-	       अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक result;
-	काष्ठा hfa384x_usbctlx *ctlx;
+	       void *data,
+	       unsigned int len)
+{
+	int result;
+	struct hfa384x_usbctlx *ctlx;
 
 	pr_debug("page=0x%04x offset=0x%04x len=%d\n", page, offset, len);
 
 	ctlx = usbctlx_alloc();
-	अगर (!ctlx) अणु
+	if (!ctlx) {
 		result = -ENOMEM;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Initialize the command */
 	ctlx->outbuf.wmemreq.type = cpu_to_le16(HFA384x_USB_WMEMREQ);
 	ctlx->outbuf.wmemreq.frmlen =
-	    cpu_to_le16(माप(ctlx->outbuf.wmemreq.offset) +
-			माप(ctlx->outbuf.wmemreq.page) + len);
+	    cpu_to_le16(sizeof(ctlx->outbuf.wmemreq.offset) +
+			sizeof(ctlx->outbuf.wmemreq.page) + len);
 	ctlx->outbuf.wmemreq.offset = cpu_to_le16(offset);
 	ctlx->outbuf.wmemreq.page = cpu_to_le16(page);
-	स_नकल(ctlx->outbuf.wmemreq.data, data, len);
+	memcpy(ctlx->outbuf.wmemreq.data, data, len);
 
-	ctlx->outbufsize = माप(ctlx->outbuf.wmemreq.type) +
-	    माप(ctlx->outbuf.wmemreq.frmlen) +
-	    माप(ctlx->outbuf.wmemreq.offset) +
-	    माप(ctlx->outbuf.wmemreq.page) + len;
+	ctlx->outbufsize = sizeof(ctlx->outbuf.wmemreq.type) +
+	    sizeof(ctlx->outbuf.wmemreq.frmlen) +
+	    sizeof(ctlx->outbuf.wmemreq.offset) +
+	    sizeof(ctlx->outbuf.wmemreq.page) + len;
 
 	ctlx->reapable = DOWAIT;
-	ctlx->cmdcb = शून्य;
-	ctlx->usercb = शून्य;
-	ctlx->usercb_data = शून्य;
+	ctlx->cmdcb = NULL;
+	ctlx->usercb = NULL;
+	ctlx->usercb_data = NULL;
 
 	result = hfa384x_usbctlx_submit(hw, ctlx);
-	अगर (result != 0) अणु
-		kमुक्त(ctlx);
-	पूर्ण अन्यथा अणु
-		काष्ठा usbctlx_cmd_completor completor;
-		काष्ठा hfa384x_cmdresult wmemresult;
+	if (result != 0) {
+		kfree(ctlx);
+	} else {
+		struct usbctlx_cmd_completor completor;
+		struct hfa384x_cmdresult wmemresult;
 
 		result = hfa384x_usbctlx_complete_sync(hw,
 						       ctlx,
@@ -1580,28 +1579,28 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
 						       (&completor,
 							&ctlx->inbuf.wmemresp,
 							&wmemresult));
-	पूर्ण
+	}
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_disable
  *
  * Issues the disable command to stop communications on one of
- * the MACs 'ports'.  Only macport 0 is valid  क्रम stations.
+ * the MACs 'ports'.  Only macport 0 is valid  for stations.
  * APs may also disable macports 1-6.  Only ports that have been
  * previously enabled may be disabled.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	macport		MAC port number (host order)
  *
  * Returns:
  *	0		success
  *	>0		f/w reported failure - f/w status code
- *	<0		driver reported error (समयout|bad arg)
+ *	<0		driver reported error (timeout|bad arg)
  *
  * Side effects:
  *
@@ -1609,38 +1608,38 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_disable(काष्ठा hfa384x *hw, u16 macport)
-अणु
-	पूर्णांक result = 0;
+int hfa384x_drvr_disable(struct hfa384x *hw, u16 macport)
+{
+	int result = 0;
 
-	अगर ((!hw->isap && macport != 0) ||
+	if ((!hw->isap && macport != 0) ||
 	    (hw->isap && !(macport <= HFA384x_PORTID_MAX)) ||
-	    !(hw->port_enabled[macport])) अणु
+	    !(hw->port_enabled[macport])) {
 		result = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = hfa384x_cmd_disable(hw, macport);
-		अगर (result == 0)
+		if (result == 0)
 			hw->port_enabled[macport] = 0;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_enable
  *
  * Issues the enable command to enable communications on one of
- * the MACs 'ports'.  Only macport 0 is valid  क्रम stations.
+ * the MACs 'ports'.  Only macport 0 is valid  for stations.
  * APs may also enable macports 1-6.  Only ports that are currently
  * disabled may be enabled.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	macport		MAC port number
  *
  * Returns:
  *	0		success
  *	>0		f/w reported failure - f/w status code
- *	<0		driver reported error (समयout|bad arg)
+ *	<0		driver reported error (timeout|bad arg)
  *
  * Side effects:
  *
@@ -1648,32 +1647,32 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_enable(काष्ठा hfa384x *hw, u16 macport)
-अणु
-	पूर्णांक result = 0;
+int hfa384x_drvr_enable(struct hfa384x *hw, u16 macport)
+{
+	int result = 0;
 
-	अगर ((!hw->isap && macport != 0) ||
+	if ((!hw->isap && macport != 0) ||
 	    (hw->isap && !(macport <= HFA384x_PORTID_MAX)) ||
-	    (hw->port_enabled[macport])) अणु
+	    (hw->port_enabled[macport])) {
 		result = -EINVAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		result = hfa384x_cmd_enable(hw, macport);
-		अगर (result == 0)
+		if (result == 0)
 			hw->port_enabled[macport] = 1;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_flashdl_enable
  *
- * Begins the flash करोwnload state.  Checks to see that we're not
- * alपढ़ोy in a करोwnload state and that a port isn't enabled.
- * Sets the करोwnload state and retrieves the flash करोwnload
- * buffer location, buffer size, and समयout length.
+ * Begins the flash download state.  Checks to see that we're not
+ * already in a download state and that a port isn't enabled.
+ * Sets the download state and retrieves the flash download
+ * buffer location, buffer size, and timeout length.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *
  * Returns:
  *	0		success
@@ -1686,54 +1685,54 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_flashdl_enable(काष्ठा hfa384x *hw)
-अणु
-	पूर्णांक result = 0;
-	पूर्णांक i;
+int hfa384x_drvr_flashdl_enable(struct hfa384x *hw)
+{
+	int result = 0;
+	int i;
 
 	/* Check that a port isn't active */
-	क्रम (i = 0; i < HFA384x_PORTID_MAX; i++) अणु
-		अगर (hw->port_enabled[i]) अणु
+	for (i = 0; i < HFA384x_PORTID_MAX; i++) {
+		if (hw->port_enabled[i]) {
 			pr_debug("called when port enabled.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	/* Check that we're not alपढ़ोy in a करोwnload state */
-	अगर (hw->dlstate != HFA384x_DLSTATE_DISABLED)
-		वापस -EINVAL;
+	/* Check that we're not already in a download state */
+	if (hw->dlstate != HFA384x_DLSTATE_DISABLED)
+		return -EINVAL;
 
-	/* Retrieve the buffer loc&size and समयout */
-	result = hfa384x_drvr_अ_लोonfig(hw, HFA384x_RID_DOWNLOADBUFFER,
-					&hw->bufinfo, माप(hw->bufinfo));
-	अगर (result)
-		वापस result;
+	/* Retrieve the buffer loc&size and timeout */
+	result = hfa384x_drvr_getconfig(hw, HFA384x_RID_DOWNLOADBUFFER,
+					&hw->bufinfo, sizeof(hw->bufinfo));
+	if (result)
+		return result;
 
 	le16_to_cpus(&hw->bufinfo.page);
 	le16_to_cpus(&hw->bufinfo.offset);
 	le16_to_cpus(&hw->bufinfo.len);
-	result = hfa384x_drvr_अ_लोonfig16(hw, HFA384x_RID_MAXLOADTIME,
-					  &hw->dlसमयout);
-	अगर (result)
-		वापस result;
+	result = hfa384x_drvr_getconfig16(hw, HFA384x_RID_MAXLOADTIME,
+					  &hw->dltimeout);
+	if (result)
+		return result;
 
-	le16_to_cpus(&hw->dlसमयout);
+	le16_to_cpus(&hw->dltimeout);
 
 	pr_debug("flashdl_enable\n");
 
 	hw->dlstate = HFA384x_DLSTATE_FLASHENABLED;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_flashdl_disable
  *
- * Ends the flash करोwnload state.  Note that this will cause the MAC
+ * Ends the flash download state.  Note that this will cause the MAC
  * firmware to restart.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *
  * Returns:
  *	0		success
@@ -1746,39 +1745,39 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_flashdl_disable(काष्ठा hfa384x *hw)
-अणु
-	/* Check that we're alपढ़ोy in the करोwnload state */
-	अगर (hw->dlstate != HFA384x_DLSTATE_FLASHENABLED)
-		वापस -EINVAL;
+int hfa384x_drvr_flashdl_disable(struct hfa384x *hw)
+{
+	/* Check that we're already in the download state */
+	if (hw->dlstate != HFA384x_DLSTATE_FLASHENABLED)
+		return -EINVAL;
 
 	pr_debug("flashdl_enable\n");
 
 	/* There isn't much we can do at this point, so I don't */
-	/*  bother  w/ the वापस value */
-	hfa384x_cmd_करोwnload(hw, HFA384x_PROGMODE_DISABLE, 0, 0, 0);
+	/*  bother  w/ the return value */
+	hfa384x_cmd_download(hw, HFA384x_PROGMODE_DISABLE, 0, 0, 0);
 	hw->dlstate = HFA384x_DLSTATE_DISABLED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_drvr_flashdl_ग_लिखो
+ * hfa384x_drvr_flashdl_write
  *
- * Perक्रमms a FLASH करोwnload of a chunk of data. First checks to see
- * that we're in the FLASH करोwnload state, then sets the करोwnload
+ * Performs a FLASH download of a chunk of data. First checks to see
+ * that we're in the FLASH download state, then sets the download
  * mode, uses the aux functions to 1) copy the data to the flash
- * buffer, 2) sets the करोwnload 'write flash' mode, 3) पढ़ोback and
- * compare.  Lather rinse, repeat as many बार an necessary to get
- * all the given data पूर्णांकo flash.
+ * buffer, 2) sets the download 'write flash' mode, 3) readback and
+ * compare.  Lather rinse, repeat as many times an necessary to get
+ * all the given data into flash.
  * When all data has been written using this function (possibly
- * repeatedly), call drvr_flashdl_disable() to end the करोwnload state
+ * repeatedly), call drvr_flashdl_disable() to end the download state
  * and restart the MAC.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	daddr		Card address to ग_लिखो to. (host order)
- *	buf		Ptr to data to ग_लिखो.
+ *	hw		device structure
+ *	daddr		Card address to write to. (host order)
+ *	buf		Ptr to data to write.
  *	len		Length of data (host order).
  *
  * Returns:
@@ -1792,56 +1791,56 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_flashdl_ग_लिखो(काष्ठा hfa384x *hw, u32 daddr,
-			       व्योम *buf, u32 len)
-अणु
-	पूर्णांक result = 0;
+int hfa384x_drvr_flashdl_write(struct hfa384x *hw, u32 daddr,
+			       void *buf, u32 len)
+{
+	int result = 0;
 	u32 dlbufaddr;
-	पूर्णांक nburns;
+	int nburns;
 	u32 burnlen;
 	u32 burndaddr;
 	u16 burnlo;
 	u16 burnhi;
-	पूर्णांक nग_लिखोs;
-	u8 *ग_लिखोbuf;
-	u16 ग_लिखोpage;
-	u16 ग_लिखोoffset;
-	u32 ग_लिखोlen;
-	पूर्णांक i;
-	पूर्णांक j;
+	int nwrites;
+	u8 *writebuf;
+	u16 writepage;
+	u16 writeoffset;
+	u32 writelen;
+	int i;
+	int j;
 
 	pr_debug("daddr=0x%08x len=%d\n", daddr, len);
 
-	/* Check that we're in the flash करोwnload state */
-	अगर (hw->dlstate != HFA384x_DLSTATE_FLASHENABLED)
-		वापस -EINVAL;
+	/* Check that we're in the flash download state */
+	if (hw->dlstate != HFA384x_DLSTATE_FLASHENABLED)
+		return -EINVAL;
 
 	netdev_info(hw->wlandev->netdev,
 		    "Download %d bytes to flash @0x%06x\n", len, daddr);
 
-	/* Convert to flat address क्रम arithmetic */
-	/* NOTE: dlbuffer RID stores the address in AUX क्रमmat */
+	/* Convert to flat address for arithmetic */
+	/* NOTE: dlbuffer RID stores the address in AUX format */
 	dlbufaddr =
 	    HFA384x_ADDR_AUX_MKFLAT(hw->bufinfo.page, hw->bufinfo.offset);
 	pr_debug("dlbuf.page=0x%04x dlbuf.offset=0x%04x dlbufaddr=0x%08x\n",
 		 hw->bufinfo.page, hw->bufinfo.offset, dlbufaddr);
-	/* Calculations to determine how many fills of the dlbuffer to करो
-	 * and how many USB wmemreq's to करो क्रम each fill.  At this poपूर्णांक
-	 * in समय, the dlbuffer size and the wmemreq size are the same.
-	 * Thereक्रमe, nग_लिखोs should always be 1.  The extra complनिकासy
+	/* Calculations to determine how many fills of the dlbuffer to do
+	 * and how many USB wmemreq's to do for each fill.  At this point
+	 * in time, the dlbuffer size and the wmemreq size are the same.
+	 * Therefore, nwrites should always be 1.  The extra complexity
 	 * here is a hedge against future changes.
 	 */
 
-	/* Figure out how many बार to करो the flash programming */
+	/* Figure out how many times to do the flash programming */
 	nburns = len / hw->bufinfo.len;
 	nburns += (len % hw->bufinfo.len) ? 1 : 0;
 
 	/* For each flash program cycle, how many USB wmemreq's are needed? */
-	nग_लिखोs = hw->bufinfo.len / HFA384x_USB_RWMEM_MAXLEN;
-	nग_लिखोs += (hw->bufinfo.len % HFA384x_USB_RWMEM_MAXLEN) ? 1 : 0;
+	nwrites = hw->bufinfo.len / HFA384x_USB_RWMEM_MAXLEN;
+	nwrites += (hw->bufinfo.len % HFA384x_USB_RWMEM_MAXLEN) ? 1 : 0;
 
 	/* For each burn */
-	क्रम (i = 0; i < nburns; i++) अणु
+	for (i = 0; i < nburns; i++) {
 		/* Get the dest address and len */
 		burnlen = (len - (hw->bufinfo.len * i)) > hw->bufinfo.len ?
 		    hw->bufinfo.len : (len - (hw->bufinfo.len * i));
@@ -1852,69 +1851,69 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
 		netdev_info(hw->wlandev->netdev, "Writing %d bytes to flash @0x%06x\n",
 			    burnlen, burndaddr);
 
-		/* Set the करोwnload mode */
-		result = hfa384x_cmd_करोwnload(hw, HFA384x_PROGMODE_NV,
+		/* Set the download mode */
+		result = hfa384x_cmd_download(hw, HFA384x_PROGMODE_NV,
 					      burnlo, burnhi, burnlen);
-		अगर (result) अणु
+		if (result) {
 			netdev_err(hw->wlandev->netdev,
 				   "download(NV,lo=%x,hi=%x,len=%x) cmd failed, result=%d. Aborting d/l\n",
 				   burnlo, burnhi, burnlen, result);
-			जाओ निकास_proc;
-		पूर्ण
+			goto exit_proc;
+		}
 
-		/* copy the data to the flash करोwnload buffer */
-		क्रम (j = 0; j < nग_लिखोs; j++) अणु
-			ग_लिखोbuf = buf +
+		/* copy the data to the flash download buffer */
+		for (j = 0; j < nwrites; j++) {
+			writebuf = buf +
 			    (i * hw->bufinfo.len) +
 			    (j * HFA384x_USB_RWMEM_MAXLEN);
 
-			ग_लिखोpage = HFA384x_ADDR_CMD_MKPAGE(dlbufaddr +
+			writepage = HFA384x_ADDR_CMD_MKPAGE(dlbufaddr +
 						(j * HFA384x_USB_RWMEM_MAXLEN));
-			ग_लिखोoffset = HFA384x_ADDR_CMD_MKOFF(dlbufaddr +
+			writeoffset = HFA384x_ADDR_CMD_MKOFF(dlbufaddr +
 						(j * HFA384x_USB_RWMEM_MAXLEN));
 
-			ग_लिखोlen = burnlen - (j * HFA384x_USB_RWMEM_MAXLEN);
-			ग_लिखोlen = ग_लिखोlen > HFA384x_USB_RWMEM_MAXLEN ?
-			    HFA384x_USB_RWMEM_MAXLEN : ग_लिखोlen;
+			writelen = burnlen - (j * HFA384x_USB_RWMEM_MAXLEN);
+			writelen = writelen > HFA384x_USB_RWMEM_MAXLEN ?
+			    HFA384x_USB_RWMEM_MAXLEN : writelen;
 
-			result = hfa384x_करोwmem(hw,
-						ग_लिखोpage,
-						ग_लिखोoffset,
-						ग_लिखोbuf, ग_लिखोlen);
-		पूर्ण
+			result = hfa384x_dowmem(hw,
+						writepage,
+						writeoffset,
+						writebuf, writelen);
+		}
 
-		/* set the करोwnload 'write flash' mode */
-		result = hfa384x_cmd_करोwnload(hw,
+		/* set the download 'write flash' mode */
+		result = hfa384x_cmd_download(hw,
 					      HFA384x_PROGMODE_NVWRITE,
 					      0, 0, 0);
-		अगर (result) अणु
+		if (result) {
 			netdev_err(hw->wlandev->netdev,
 				   "download(NVWRITE,lo=%x,hi=%x,len=%x) cmd failed, result=%d. Aborting d/l\n",
 				   burnlo, burnhi, burnlen, result);
-			जाओ निकास_proc;
-		पूर्ण
+			goto exit_proc;
+		}
 
-		/* TODO: We really should करो a पढ़ोback and compare. */
-	पूर्ण
+		/* TODO: We really should do a readback and compare. */
+	}
 
-निकास_proc:
+exit_proc:
 
 	/* Leave the firmware in the 'post-prog' mode.  flashdl_disable will */
 	/*  actually disable programming mode.  Remember, that will cause the */
 	/*  the firmware to effectively reset itself. */
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_drvr_अ_लोonfig
+ * hfa384x_drvr_getconfig
  *
- * Perक्रमms the sequence necessary to पढ़ो a config/info item.
+ * Performs the sequence necessary to read a config/info item.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	rid		config/info record id (host order)
- *	buf		host side record buffer.  Upon वापस it will
+ *	buf		host side record buffer.  Upon return it will
  *			contain the body portion of the record (minus the
  *			RID and len).
  *	len		buffer length (in bytes, should match record length)
@@ -1932,18 +1931,18 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_अ_लोonfig(काष्ठा hfa384x *hw, u16 rid, व्योम *buf, u16 len)
-अणु
-	वापस hfa384x_करोrrid(hw, DOWAIT, rid, buf, len, शून्य, शून्य, शून्य);
-पूर्ण
+int hfa384x_drvr_getconfig(struct hfa384x *hw, u16 rid, void *buf, u16 len)
+{
+	return hfa384x_dorrid(hw, DOWAIT, rid, buf, len, NULL, NULL, NULL);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_setconfig_async
  *
- * Perक्रमms the sequence necessary to ग_लिखो a config/info item.
+ * Performs the sequence necessary to write a config/info item.
  *
  * Arguments:
- *       hw              device काष्ठाure
+ *       hw              device structure
  *       rid             config/info record id (in host order)
  *       buf             host side record buffer
  *       len             buffer length (in bytes)
@@ -1961,23 +1960,23 @@ hfa384x_करोwmem(काष्ठा hfa384x *hw,
  *       process
  *----------------------------------------------------------------
  */
-पूर्णांक
-hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
+int
+hfa384x_drvr_setconfig_async(struct hfa384x *hw,
 			     u16 rid,
-			     व्योम *buf,
-			     u16 len, ctlx_usercb_t usercb, व्योम *usercb_data)
-अणु
-	वापस hfa384x_करोwrid(hw, DOASYNC, rid, buf, len, hfa384x_cb_status,
+			     void *buf,
+			     u16 len, ctlx_usercb_t usercb, void *usercb_data)
+{
+	return hfa384x_dowrid(hw, DOASYNC, rid, buf, len, hfa384x_cb_status,
 			      usercb, usercb_data);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_ramdl_disable
  *
- * Ends the ram करोwnload state.
+ * Ends the ram download state.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *
  * Returns:
  *	0		success
@@ -1990,32 +1989,32 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_ramdl_disable(काष्ठा hfa384x *hw)
-अणु
-	/* Check that we're alपढ़ोy in the करोwnload state */
-	अगर (hw->dlstate != HFA384x_DLSTATE_RAMENABLED)
-		वापस -EINVAL;
+int hfa384x_drvr_ramdl_disable(struct hfa384x *hw)
+{
+	/* Check that we're already in the download state */
+	if (hw->dlstate != HFA384x_DLSTATE_RAMENABLED)
+		return -EINVAL;
 
 	pr_debug("ramdl_disable()\n");
 
 	/* There isn't much we can do at this point, so I don't */
-	/*  bother  w/ the वापस value */
-	hfa384x_cmd_करोwnload(hw, HFA384x_PROGMODE_DISABLE, 0, 0, 0);
+	/*  bother  w/ the return value */
+	hfa384x_cmd_download(hw, HFA384x_PROGMODE_DISABLE, 0, 0, 0);
 	hw->dlstate = HFA384x_DLSTATE_DISABLED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_ramdl_enable
  *
- * Begins the ram करोwnload state.  Checks to see that we're not
- * alपढ़ोy in a करोwnload state and that a port isn't enabled.
- * Sets the करोwnload state and calls cmd_करोwnload with the
+ * Begins the ram download state.  Checks to see that we're not
+ * already in a download state and that a port isn't enabled.
+ * Sets the download state and calls cmd_download with the
  * ENABLE_VOLATILE subcommand and the exeaddr argument.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	exeaddr		the card execution address that will be
  *                       jumped to when ramdl_disable() is called
  *			(host order).
@@ -2031,63 +2030,63 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_ramdl_enable(काष्ठा hfa384x *hw, u32 exeaddr)
-अणु
-	पूर्णांक result = 0;
+int hfa384x_drvr_ramdl_enable(struct hfa384x *hw, u32 exeaddr)
+{
+	int result = 0;
 	u16 lowaddr;
 	u16 hiaddr;
-	पूर्णांक i;
+	int i;
 
 	/* Check that a port isn't active */
-	क्रम (i = 0; i < HFA384x_PORTID_MAX; i++) अणु
-		अगर (hw->port_enabled[i]) अणु
+	for (i = 0; i < HFA384x_PORTID_MAX; i++) {
+		if (hw->port_enabled[i]) {
 			netdev_err(hw->wlandev->netdev,
 				   "Can't download with a macport enabled.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	/* Check that we're not alपढ़ोy in a करोwnload state */
-	अगर (hw->dlstate != HFA384x_DLSTATE_DISABLED) अणु
+	/* Check that we're not already in a download state */
+	if (hw->dlstate != HFA384x_DLSTATE_DISABLED) {
 		netdev_err(hw->wlandev->netdev,
 			   "Download state not disabled.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	pr_debug("ramdl_enable, exeaddr=0x%08x\n", exeaddr);
 
-	/* Call the करोwnload(1,addr) function */
+	/* Call the download(1,addr) function */
 	lowaddr = HFA384x_ADDR_CMD_MKOFF(exeaddr);
 	hiaddr = HFA384x_ADDR_CMD_MKPAGE(exeaddr);
 
-	result = hfa384x_cmd_करोwnload(hw, HFA384x_PROGMODE_RAM,
+	result = hfa384x_cmd_download(hw, HFA384x_PROGMODE_RAM,
 				      lowaddr, hiaddr, 0);
 
-	अगर (result == 0) अणु
-		/* Set the करोwnload state */
+	if (result == 0) {
+		/* Set the download state */
 		hw->dlstate = HFA384x_DLSTATE_RAMENABLED;
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug("cmd_download(0x%04x, 0x%04x) failed, result=%d.\n",
 			 lowaddr, hiaddr, result);
-	पूर्ण
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_drvr_ramdl_ग_लिखो
+ * hfa384x_drvr_ramdl_write
  *
- * Perक्रमms a RAM करोwnload of a chunk of data. First checks to see
- * that we're in the RAM करोwnload state, then uses the [पढ़ो|ग_लिखो]mem USB
- * commands to 1) copy the data, 2) पढ़ोback and compare.  The करोwnload
+ * Performs a RAM download of a chunk of data. First checks to see
+ * that we're in the RAM download state, then uses the [read|write]mem USB
+ * commands to 1) copy the data, 2) readback and compare.  The download
  * state is unaffected.  When all data has been written using
- * this function, call drvr_ramdl_disable() to end the करोwnload state
+ * this function, call drvr_ramdl_disable() to end the download state
  * and restart the MAC.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	daddr		Card address to ग_लिखो to. (host order)
- *	buf		Ptr to data to ग_लिखो.
+ *	hw		device structure
+ *	daddr		Card address to write to. (host order)
+ *	buf		Ptr to data to write.
  *	len		Length of data (host order).
  *
  * Returns:
@@ -2101,65 +2100,65 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_ramdl_ग_लिखो(काष्ठा hfa384x *hw, u32 daddr, व्योम *buf, u32 len)
-अणु
-	पूर्णांक result = 0;
-	पूर्णांक nग_लिखोs;
+int hfa384x_drvr_ramdl_write(struct hfa384x *hw, u32 daddr, void *buf, u32 len)
+{
+	int result = 0;
+	int nwrites;
 	u8 *data = buf;
-	पूर्णांक i;
+	int i;
 	u32 curraddr;
 	u16 currpage;
 	u16 curroffset;
 	u16 currlen;
 
-	/* Check that we're in the ram करोwnload state */
-	अगर (hw->dlstate != HFA384x_DLSTATE_RAMENABLED)
-		वापस -EINVAL;
+	/* Check that we're in the ram download state */
+	if (hw->dlstate != HFA384x_DLSTATE_RAMENABLED)
+		return -EINVAL;
 
 	netdev_info(hw->wlandev->netdev, "Writing %d bytes to ram @0x%06x\n",
 		    len, daddr);
 
-	/* How many करोwmem calls?  */
-	nग_लिखोs = len / HFA384x_USB_RWMEM_MAXLEN;
-	nग_लिखोs += len % HFA384x_USB_RWMEM_MAXLEN ? 1 : 0;
+	/* How many dowmem calls?  */
+	nwrites = len / HFA384x_USB_RWMEM_MAXLEN;
+	nwrites += len % HFA384x_USB_RWMEM_MAXLEN ? 1 : 0;
 
 	/* Do blocking wmem's */
-	क्रम (i = 0; i < nग_लिखोs; i++) अणु
+	for (i = 0; i < nwrites; i++) {
 		/* make address args */
 		curraddr = daddr + (i * HFA384x_USB_RWMEM_MAXLEN);
 		currpage = HFA384x_ADDR_CMD_MKPAGE(curraddr);
 		curroffset = HFA384x_ADDR_CMD_MKOFF(curraddr);
 		currlen = len - (i * HFA384x_USB_RWMEM_MAXLEN);
-		अगर (currlen > HFA384x_USB_RWMEM_MAXLEN)
+		if (currlen > HFA384x_USB_RWMEM_MAXLEN)
 			currlen = HFA384x_USB_RWMEM_MAXLEN;
 
 		/* Do blocking ctlx */
-		result = hfa384x_करोwmem(hw,
+		result = hfa384x_dowmem(hw,
 					currpage,
 					curroffset,
 					data + (i * HFA384x_USB_RWMEM_MAXLEN),
 					currlen);
 
-		अगर (result)
-			अवरोध;
+		if (result)
+			break;
 
-		/* TODO: We really should have a पढ़ोback. */
-	पूर्ण
+		/* TODO: We really should have a readback. */
+	}
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
- * hfa384x_drvr_पढ़ोpda
+ * hfa384x_drvr_readpda
  *
- * Perक्रमms the sequence to पढ़ो the PDA space.  Note there is no
- * drvr_ग_लिखोpda() function.  Writing a PDA is
+ * Performs the sequence to read the PDA space.  Note there is no
+ * drvr_writepda() function.  Writing a PDA is
  * generally implemented by a calling component via calls to
- * cmd_करोwnload and writing to the flash करोwnload buffer via the
+ * cmd_download and writing to the flash download buffer via the
  * aux regs.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	buf		buffer to store PDA in
  *	len		buffer length
  *
@@ -2167,90 +2166,90 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	0		success
  *	>0		f/w reported error - f/w status code
  *	<0		driver reported error
- *	-ETIMEDOUT	समयout रुकोing क्रम the cmd regs to become
- *			available, or रुकोing क्रम the control reg
+ *	-ETIMEDOUT	timeout waiting for the cmd regs to become
+ *			available, or waiting for the control reg
  *			to indicate the Aux port is enabled.
- *	-ENODATA	the buffer करोes NOT contain a valid PDA.
+ *	-ENODATA	the buffer does NOT contain a valid PDA.
  *			Either the card PDA is bad, or the auxdata
- *			पढ़ोs are giving us garbage.
+ *			reads are giving us garbage.
  *
  *
  * Side effects:
  *
  * Call context:
- *	process or non-card पूर्णांकerrupt.
+ *	process or non-card interrupt.
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_पढ़ोpda(काष्ठा hfa384x *hw, व्योम *buf, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक result = 0;
+int hfa384x_drvr_readpda(struct hfa384x *hw, void *buf, unsigned int len)
+{
+	int result = 0;
 	__le16 *pda = buf;
-	पूर्णांक pdaok = 0;
-	पूर्णांक morepdrs = 1;
-	पूर्णांक currpdr = 0;	/* word offset of the current pdr */
-	माप_प्रकार i;
+	int pdaok = 0;
+	int morepdrs = 1;
+	int currpdr = 0;	/* word offset of the current pdr */
+	size_t i;
 	u16 pdrlen;		/* pdr length in bytes, host order */
 	u16 pdrcode;		/* pdr code, host order */
 	u16 currpage;
 	u16 curroffset;
-	काष्ठा pdaloc अणु
+	struct pdaloc {
 		u32 cardaddr;
 		u16 auxctl;
-	पूर्ण pdaloc[] = अणु
-		अणु
-		HFA3842_PDA_BASE, 0पूर्ण, अणु
-		HFA3841_PDA_BASE, 0पूर्ण, अणु
-		HFA3841_PDA_BOGUS_BASE, 0पूर्ण
-	पूर्ण;
+	} pdaloc[] = {
+		{
+		HFA3842_PDA_BASE, 0}, {
+		HFA3841_PDA_BASE, 0}, {
+		HFA3841_PDA_BOGUS_BASE, 0}
+	};
 
 	/* Read the pda from each known address.  */
-	क्रम (i = 0; i < ARRAY_SIZE(pdaloc); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(pdaloc); i++) {
 		/* Make address */
 		currpage = HFA384x_ADDR_CMD_MKPAGE(pdaloc[i].cardaddr);
 		curroffset = HFA384x_ADDR_CMD_MKOFF(pdaloc[i].cardaddr);
 
 		/* units of bytes */
-		result = hfa384x_करोrmem(hw, currpage, curroffset, buf,
+		result = hfa384x_dormem(hw, currpage, curroffset, buf,
 					len);
 
-		अगर (result) अणु
+		if (result) {
 			netdev_warn(hw->wlandev->netdev,
 				    "Read from index %zd failed, continuing\n",
 				    i);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		/* Test क्रम garbage */
+		/* Test for garbage */
 		pdaok = 1;	/* initially assume good */
 		morepdrs = 1;
-		जबतक (pdaok && morepdrs) अणु
+		while (pdaok && morepdrs) {
 			pdrlen = le16_to_cpu(pda[currpdr]) * 2;
 			pdrcode = le16_to_cpu(pda[currpdr + 1]);
 			/* Test the record length */
-			अगर (pdrlen > HFA384x_PDR_LEN_MAX || pdrlen == 0) अणु
+			if (pdrlen > HFA384x_PDR_LEN_MAX || pdrlen == 0) {
 				netdev_err(hw->wlandev->netdev,
 					   "pdrlen invalid=%d\n", pdrlen);
 				pdaok = 0;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			/* Test the code */
-			अगर (!hfa384x_isgood_pdrcode(pdrcode)) अणु
+			if (!hfa384x_isgood_pdrcode(pdrcode)) {
 				netdev_err(hw->wlandev->netdev, "pdrcode invalid=%d\n",
 					   pdrcode);
 				pdaok = 0;
-				अवरोध;
-			पूर्ण
-			/* Test क्रम completion */
-			अगर (pdrcode == HFA384x_PDR_END_OF_PDA)
+				break;
+			}
+			/* Test for completion */
+			if (pdrcode == HFA384x_PDR_END_OF_PDA)
 				morepdrs = 0;
 
-			/* Move to the next pdr (अगर necessary) */
-			अगर (morepdrs) अणु
+			/* Move to the next pdr (if necessary) */
+			if (morepdrs) {
 				/* note the access to pda[], need words here */
 				currpdr += le16_to_cpu(pda[currpdr]) + 1;
-			पूर्ण
-		पूर्ण
-		अगर (pdaok) अणु
+			}
+		}
+		if (pdaok) {
 			netdev_info(hw->wlandev->netdev,
 				    "PDA Read from 0x%08x in %s space.\n",
 				    pdaloc[i].cardaddr,
@@ -2259,24 +2258,24 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 				    pdaloc[i].auxctl == 2 ? "PHY" :
 				    pdaloc[i].auxctl == 3 ? "ICSRAM" :
 				    "<bogus auxctl>");
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	result = pdaok ? 0 : -ENODATA;
 
-	अगर (result)
+	if (result)
 		pr_debug("Failure: pda is not okay\n");
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_setconfig
  *
- * Perक्रमms the sequence necessary to ग_लिखो a config/info item.
+ * Performs the sequence necessary to write a config/info item.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  *	rid		config/info record id (in host order)
  *	buf		host side record buffer
  *	len		buffer length (in bytes)
@@ -2292,20 +2291,20 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_setconfig(काष्ठा hfa384x *hw, u16 rid, व्योम *buf, u16 len)
-अणु
-	वापस hfa384x_करोwrid(hw, DOWAIT, rid, buf, len, शून्य, शून्य, शून्य);
-पूर्ण
+int hfa384x_drvr_setconfig(struct hfa384x *hw, u16 rid, void *buf, u16 len)
+{
+	return hfa384x_dowrid(hw, DOWAIT, rid, buf, len, NULL, NULL, NULL);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_start
  *
- * Issues the MAC initialize command, sets up some data काष्ठाures,
- * and enables the पूर्णांकerrupts.  After this function completes, the
- * low-level stuff should be पढ़ोy क्रम any/all commands.
+ * Issues the MAC initialize command, sets up some data structures,
+ * and enables the interrupts.  After this function completes, the
+ * low-level stuff should be ready for any/all commands.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  * Returns:
  *	0		success
  *	>0		f/w reported error - f/w status code
@@ -2317,99 +2316,99 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_start(काष्ठा hfa384x *hw)
-अणु
-	पूर्णांक result, result1, result2;
+int hfa384x_drvr_start(struct hfa384x *hw)
+{
+	int result, result1, result2;
 	u16 status;
 
 	might_sleep();
 
-	/* Clear endpoपूर्णांक stalls - but only करो this अगर the endpoपूर्णांक
+	/* Clear endpoint stalls - but only do this if the endpoint
 	 * is showing a stall status. Some prism2 cards seem to behave
-	 * badly अगर a clear_halt is called when the endpoपूर्णांक is alपढ़ोy
+	 * badly if a clear_halt is called when the endpoint is already
 	 * ok
 	 */
 	result =
 	    usb_get_std_status(hw->usb, USB_RECIP_ENDPOINT, hw->endp_in,
 			       &status);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		netdev_err(hw->wlandev->netdev, "Cannot get bulk in endpoint status.\n");
-		जाओ करोne;
-	पूर्ण
-	अगर ((status == 1) && usb_clear_halt(hw->usb, hw->endp_in))
+		goto done;
+	}
+	if ((status == 1) && usb_clear_halt(hw->usb, hw->endp_in))
 		netdev_err(hw->wlandev->netdev, "Failed to reset bulk in endpoint.\n");
 
 	result =
 	    usb_get_std_status(hw->usb, USB_RECIP_ENDPOINT, hw->endp_out,
 			       &status);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		netdev_err(hw->wlandev->netdev, "Cannot get bulk out endpoint status.\n");
-		जाओ करोne;
-	पूर्ण
-	अगर ((status == 1) && usb_clear_halt(hw->usb, hw->endp_out))
+		goto done;
+	}
+	if ((status == 1) && usb_clear_halt(hw->usb, hw->endp_out))
 		netdev_err(hw->wlandev->netdev, "Failed to reset bulk out endpoint.\n");
 
-	/* Synchronous unlink, in हाल we're trying to restart the driver */
-	usb_समाप्त_urb(&hw->rx_urb);
+	/* Synchronous unlink, in case we're trying to restart the driver */
+	usb_kill_urb(&hw->rx_urb);
 
 	/* Post the IN urb */
 	result = submit_rx_urb(hw, GFP_KERNEL);
-	अगर (result != 0) अणु
+	if (result != 0) {
 		netdev_err(hw->wlandev->netdev,
 			   "Fatal, failed to submit RX URB, result=%d\n",
 			   result);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* Call initialize twice, with a 1 second sleep in between.
 	 * This is a nasty work-around since many prism2 cards seem to
-	 * need समय to settle after an init from cold. The second
+	 * need time to settle after an init from cold. The second
 	 * call to initialize in theory is not necessary - but we call
-	 * it anyway as a द्विगुन insurance policy:
+	 * it anyway as a double insurance policy:
 	 * 1) If the first init should fail, the second may well succeed
 	 *    and the card can still be used
 	 * 2) It helps ensures all is well with the card after the first
-	 *    init and settle समय.
+	 *    init and settle time.
 	 */
 	result1 = hfa384x_cmd_initialize(hw);
 	msleep(1000);
 	result = hfa384x_cmd_initialize(hw);
 	result2 = result;
-	अगर (result1 != 0) अणु
-		अगर (result2 != 0) अणु
+	if (result1 != 0) {
+		if (result2 != 0) {
 			netdev_err(hw->wlandev->netdev,
 				   "cmd_initialize() failed on two attempts, results %d and %d\n",
 				   result1, result2);
-			usb_समाप्त_urb(&hw->rx_urb);
-			जाओ करोne;
-		पूर्ण अन्यथा अणु
+			usb_kill_urb(&hw->rx_urb);
+			goto done;
+		} else {
 			pr_debug("First cmd_initialize() failed (result %d),\n",
 				 result1);
 			pr_debug("but second attempt succeeded. All should be ok\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (result2 != 0) अणु
+		}
+	} else if (result2 != 0) {
 		netdev_warn(hw->wlandev->netdev, "First cmd_initialize() succeeded, but second attempt failed (result=%d)\n",
 			    result2);
 		netdev_warn(hw->wlandev->netdev,
 			    "Most likely the card will be functional\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	hw->state = HFA384x_STATE_RUNNING;
 
-करोne:
-	वापस result;
-पूर्ण
+done:
+	return result;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_stop
  *
- * Shuts करोwn the MAC to the poपूर्णांक where it is safe to unload the
- * driver.  Any subप्रणाली that may be holding a data or function
- * ptr पूर्णांकo the driver must be cleared/deinitialized.
+ * Shuts down the MAC to the point where it is safe to unload the
+ * driver.  Any subsystem that may be holding a data or function
+ * ptr into the driver must be cleared/deinitialized.
  *
  * Arguments:
- *	hw		device काष्ठाure
+ *	hw		device structure
  * Returns:
  *	0		success
  *	>0		f/w reported error - f/w status code
@@ -2421,45 +2420,45 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	process
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_stop(काष्ठा hfa384x *hw)
-अणु
-	पूर्णांक i;
+int hfa384x_drvr_stop(struct hfa384x *hw)
+{
+	int i;
 
 	might_sleep();
 
-	/* There's no need क्रम spinlocks here. The USB "disconnect"
+	/* There's no need for spinlocks here. The USB "disconnect"
 	 * function sets this "removed" flag and then calls us.
 	 */
-	अगर (!hw->wlandev->hwहटाओd) अणु
+	if (!hw->wlandev->hwremoved) {
 		/* Call initialize to leave the MAC in its 'reset' state */
 		hfa384x_cmd_initialize(hw);
 
 		/* Cancel the rxurb */
-		usb_समाप्त_urb(&hw->rx_urb);
-	पूर्ण
+		usb_kill_urb(&hw->rx_urb);
+	}
 
 	hw->link_status = HFA384x_LINK_NOTCONNECTED;
 	hw->state = HFA384x_STATE_INIT;
 
-	del_समयr_sync(&hw->commsqual_समयr);
+	del_timer_sync(&hw->commsqual_timer);
 
 	/* Clear all the port status */
-	क्रम (i = 0; i < HFA384x_NUMPORTS_MAX; i++)
+	for (i = 0; i < HFA384x_NUMPORTS_MAX; i++)
 		hw->port_enabled[i] = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_drvr_txframe
  *
- * Takes a frame from prism2sta and queues it क्रम transmission.
+ * Takes a frame from prism2sta and queues it for transmission.
  *
  * Arguments:
- *	hw		device काष्ठाure
- *	skb		packet buffer काष्ठा.  Contains an 802.11
+ *	hw		device structure
+ *	skb		packet buffer struct.  Contains an 802.11
  *			data frame.
- *       p80211_hdr      poपूर्णांकs to the 802.11 header क्रम the packet.
+ *       p80211_hdr      points to the 802.11 header for the packet.
  * Returns:
  *	0		Success and more buffs available
  *	1		Success but no more buffs
@@ -2469,82 +2468,82 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-पूर्णांक hfa384x_drvr_txframe(काष्ठा hfa384x *hw, काष्ठा sk_buff *skb,
-			 जोड़ p80211_hdr *p80211_hdr,
-			 काष्ठा p80211_metawep *p80211_wep)
-अणु
-	पूर्णांक usbpktlen = माप(काष्ठा hfa384x_tx_frame);
-	पूर्णांक result;
-	पूर्णांक ret;
-	अक्षर *ptr;
+int hfa384x_drvr_txframe(struct hfa384x *hw, struct sk_buff *skb,
+			 union p80211_hdr *p80211_hdr,
+			 struct p80211_metawep *p80211_wep)
+{
+	int usbpktlen = sizeof(struct hfa384x_tx_frame);
+	int result;
+	int ret;
+	char *ptr;
 
-	अगर (hw->tx_urb.status == -EINPROGRESS) अणु
+	if (hw->tx_urb.status == -EINPROGRESS) {
 		netdev_warn(hw->wlandev->netdev, "TX URB already in use\n");
 		result = 3;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	/* Build Tx frame काष्ठाure */
+	/* Build Tx frame structure */
 	/* Set up the control field */
-	स_रखो(&hw->txbuff.txfrm.desc, 0, माप(hw->txbuff.txfrm.desc));
+	memset(&hw->txbuff.txfrm.desc, 0, sizeof(hw->txbuff.txfrm.desc));
 
 	/* Setup the usb type field */
 	hw->txbuff.type = cpu_to_le16(HFA384x_USB_TXFRM);
 
-	/* Set up the sw_support field to identअगरy this frame */
+	/* Set up the sw_support field to identify this frame */
 	hw->txbuff.txfrm.desc.sw_support = 0x0123;
 
 /* Tx complete and Tx exception disable per dleach.  Might be causing
  * buf depletion
  */
-/* #घोषणा DOEXC  SLP -- करोboth अवरोधs horribly under load, करोexc less so. */
-#अगर defined(DOBOTH)
+/* #define DOEXC  SLP -- doboth breaks horribly under load, doexc less so. */
+#if defined(DOBOTH)
 	hw->txbuff.txfrm.desc.tx_control =
 	    HFA384x_TX_MACPORT_SET(0) | HFA384x_TX_STRUCTYPE_SET(1) |
 	    HFA384x_TX_TXEX_SET(1) | HFA384x_TX_TXOK_SET(1);
-#या_अगर defined(DOEXC)
+#elif defined(DOEXC)
 	hw->txbuff.txfrm.desc.tx_control =
 	    HFA384x_TX_MACPORT_SET(0) | HFA384x_TX_STRUCTYPE_SET(1) |
 	    HFA384x_TX_TXEX_SET(1) | HFA384x_TX_TXOK_SET(0);
-#अन्यथा
+#else
 	hw->txbuff.txfrm.desc.tx_control =
 	    HFA384x_TX_MACPORT_SET(0) | HFA384x_TX_STRUCTYPE_SET(1) |
 	    HFA384x_TX_TXEX_SET(0) | HFA384x_TX_TXOK_SET(0);
-#पूर्ण_अगर
+#endif
 	cpu_to_le16s(&hw->txbuff.txfrm.desc.tx_control);
 
 	/* copy the header over to the txdesc */
-	स_नकल(&hw->txbuff.txfrm.desc.frame_control, p80211_hdr,
-	       माप(जोड़ p80211_hdr));
+	memcpy(&hw->txbuff.txfrm.desc.frame_control, p80211_hdr,
+	       sizeof(union p80211_hdr));
 
-	/* अगर we're using host WEP, increase size by IV+ICV */
-	अगर (p80211_wep->data) अणु
+	/* if we're using host WEP, increase size by IV+ICV */
+	if (p80211_wep->data) {
 		hw->txbuff.txfrm.desc.data_len = cpu_to_le16(skb->len + 8);
 		usbpktlen += 8;
-	पूर्ण अन्यथा अणु
+	} else {
 		hw->txbuff.txfrm.desc.data_len = cpu_to_le16(skb->len);
-	पूर्ण
+	}
 
 	usbpktlen += skb->len;
 
-	/* copy over the WEP IV अगर we are using host WEP */
+	/* copy over the WEP IV if we are using host WEP */
 	ptr = hw->txbuff.txfrm.data;
-	अगर (p80211_wep->data) अणु
-		स_नकल(ptr, p80211_wep->iv, माप(p80211_wep->iv));
-		ptr += माप(p80211_wep->iv);
-		स_नकल(ptr, p80211_wep->data, skb->len);
-	पूर्ण अन्यथा अणु
-		स_नकल(ptr, skb->data, skb->len);
-	पूर्ण
+	if (p80211_wep->data) {
+		memcpy(ptr, p80211_wep->iv, sizeof(p80211_wep->iv));
+		ptr += sizeof(p80211_wep->iv);
+		memcpy(ptr, p80211_wep->data, skb->len);
+	} else {
+		memcpy(ptr, skb->data, skb->len);
+	}
 	/* copy over the packet data */
 	ptr += skb->len;
 
-	/* copy over the WEP ICV अगर we are using host WEP */
-	अगर (p80211_wep->data)
-		स_नकल(ptr, p80211_wep->icv, माप(p80211_wep->icv));
+	/* copy over the WEP ICV if we are using host WEP */
+	if (p80211_wep->data)
+		memcpy(ptr, p80211_wep->icv, sizeof(p80211_wep->icv));
 
 	/* Send the USB packet */
 	usb_fill_bulk_urb(&hw->tx_urb, hw->usb,
@@ -2555,34 +2554,34 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 
 	result = 1;
 	ret = submit_tx_urb(hw, &hw->tx_urb, GFP_ATOMIC);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		netdev_err(hw->wlandev->netdev,
 			   "submit_tx_urb() failed, error=%d\n", ret);
 		result = 3;
-	पूर्ण
+	}
 
-निकास:
-	वापस result;
-पूर्ण
+exit:
+	return result;
+}
 
-व्योम hfa384x_tx_समयout(काष्ठा wlandevice *wlandev)
-अणु
-	काष्ठा hfa384x *hw = wlandev->priv;
-	अचिन्हित दीर्घ flags;
+void hfa384x_tx_timeout(struct wlandevice *wlandev)
+{
+	struct hfa384x *hw = wlandev->priv;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	अगर (!hw->wlandev->hwहटाओd) अणु
-		पूर्णांक sched;
+	if (!hw->wlandev->hwremoved) {
+		int sched;
 
 		sched = !test_and_set_bit(WORK_TX_HALT, &hw->usb_flags);
 		sched |= !test_and_set_bit(WORK_RX_HALT, &hw->usb_flags);
-		अगर (sched)
+		if (sched)
 			schedule_work(&hw->usb_work);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbctlx_reaper_task
@@ -2590,7 +2589,7 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  * Tasklet to delete dead CTLX objects
  *
  * Arguments:
- *	data	ptr to a काष्ठा hfa384x
+ *	data	ptr to a struct hfa384x
  *
  * Returns:
  *
@@ -2598,32 +2597,32 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	Interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbctlx_reaper_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा hfa384x *hw = from_tasklet(hw, t, reaper_bh);
-	काष्ठा hfa384x_usbctlx *ctlx, *temp;
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usbctlx_reaper_task(struct tasklet_struct *t)
+{
+	struct hfa384x *hw = from_tasklet(hw, t, reaper_bh);
+	struct hfa384x_usbctlx *ctlx, *temp;
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	/* This list is guaranteed to be empty अगर someone
+	/* This list is guaranteed to be empty if someone
 	 * has unplugged the adapter.
 	 */
-	list_क्रम_each_entry_safe(ctlx, temp, &hw->ctlxq.reapable, list) अणु
+	list_for_each_entry_safe(ctlx, temp, &hw->ctlxq.reapable, list) {
 		list_del(&ctlx->list);
-		kमुक्त(ctlx);
-	पूर्ण
+		kfree(ctlx);
+	}
 
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbctlx_completion_task
  *
- * Tasklet to call completion handlers क्रम वापसed CTLXs
+ * Tasklet to call completion handlers for returned CTLXs
  *
  * Arguments:
- *	data	ptr to काष्ठा hfa384x
+ *	data	ptr to struct hfa384x
  *
  * Returns:
  *	Nothing
@@ -2632,64 +2631,64 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	Interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbctlx_completion_task(काष्ठा tasklet_काष्ठा *t)
-अणु
-	काष्ठा hfa384x *hw = from_tasklet(hw, t, completion_bh);
-	काष्ठा hfa384x_usbctlx *ctlx, *temp;
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usbctlx_completion_task(struct tasklet_struct *t)
+{
+	struct hfa384x *hw = from_tasklet(hw, t, completion_bh);
+	struct hfa384x_usbctlx *ctlx, *temp;
+	unsigned long flags;
 
-	पूर्णांक reap = 0;
+	int reap = 0;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	/* This list is guaranteed to be empty अगर someone
+	/* This list is guaranteed to be empty if someone
 	 * has unplugged the adapter ...
 	 */
-	list_क्रम_each_entry_safe(ctlx, temp, &hw->ctlxq.completing, list) अणु
+	list_for_each_entry_safe(ctlx, temp, &hw->ctlxq.completing, list) {
 		/* Call the completion function that this
-		 * command was asचिन्हित, assuming it has one.
+		 * command was assigned, assuming it has one.
 		 */
-		अगर (ctlx->cmdcb) अणु
+		if (ctlx->cmdcb) {
 			spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 			ctlx->cmdcb(hw, ctlx);
 			spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-			/* Make sure we करोn't try and complete
+			/* Make sure we don't try and complete
 			 * this CTLX more than once!
 			 */
-			ctlx->cmdcb = शून्य;
+			ctlx->cmdcb = NULL;
 
 			/* Did someone yank the adapter out
-			 * जबतक our list was (briefly) unlocked?
+			 * while our list was (briefly) unlocked?
 			 */
-			अगर (hw->wlandev->hwहटाओd) अणु
+			if (hw->wlandev->hwremoved) {
 				reap = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		/*
-		 * "Reapable" CTLXs are ones which करोn't have any
-		 * thपढ़ोs रुकोing क्रम them to die. Hence they must
+		 * "Reapable" CTLXs are ones which don't have any
+		 * threads waiting for them to die. Hence they must
 		 * be delivered to The Reaper!
 		 */
-		अगर (ctlx->reapable) अणु
+		if (ctlx->reapable) {
 			/* Move the CTLX off the "completing" list (hopefully)
 			 * on to the "reapable" list where the reaper task
 			 * can find it. And "reapable" means that this CTLX
-			 * isn't sitting on a रुको-queue somewhere.
+			 * isn't sitting on a wait-queue somewhere.
 			 */
 			list_move_tail(&ctlx->list, &hw->ctlxq.reapable);
 			reap = 1;
-		पूर्ण
+		}
 
-		complete(&ctlx->करोne);
-	पूर्ण
+		complete(&ctlx->done);
+	}
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 
-	अगर (reap)
+	if (reap)
 		tasklet_schedule(&hw->reaper_bh);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * unlocked_usbctlx_cancel_async
@@ -2698,21 +2697,21 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  * next command on the queue is run afterwards.
  *
  * Arguments:
- *	hw	ptr to the काष्ठा hfa384x काष्ठाure
- *	ctlx	ptr to a CTLX काष्ठाure
+ *	hw	ptr to the struct hfa384x structure
+ *	ctlx	ptr to a CTLX structure
  *
  * Returns:
  *	0	the CTLX's URB is inactive
  * -EINPROGRESS	the URB is currently being unlinked
  *
  * Call context:
- *	Either process or पूर्णांकerrupt, but presumably पूर्णांकerrupt
+ *	Either process or interrupt, but presumably interrupt
  *----------------------------------------------------------------
  */
-अटल पूर्णांक unlocked_usbctlx_cancel_async(काष्ठा hfa384x *hw,
-					 काष्ठा hfa384x_usbctlx *ctlx)
-अणु
-	पूर्णांक ret;
+static int unlocked_usbctlx_cancel_async(struct hfa384x *hw,
+					 struct hfa384x_usbctlx *ctlx)
+{
+	int ret;
 
 	/*
 	 * Try to delete the URB containing our request packet.
@@ -2722,9 +2721,9 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 	hw->ctlx_urb.transfer_flags |= URB_ASYNC_UNLINK;
 	ret = usb_unlink_urb(&hw->ctlx_urb);
 
-	अगर (ret != -EINPROGRESS) अणु
+	if (ret != -EINPROGRESS) {
 		/*
-		 * The OUT URB had either alपढ़ोy completed
+		 * The OUT URB had either already completed
 		 * or was still in the pending queue, so the
 		 * URB's completion function will not be called.
 		 * We will have to complete the CTLX ourselves.
@@ -2732,24 +2731,24 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 		ctlx->state = CTLX_REQ_FAILED;
 		unlocked_usbctlx_complete(hw, ctlx);
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*----------------------------------------------------------------
  * unlocked_usbctlx_complete
  *
  * A CTLX has completed.  It may have been successful, it may not
- * have been. At this poपूर्णांक, the CTLX should be quiescent.  The URBs
- * aren't active and the समयrs should have been stopped.
+ * have been. At this point, the CTLX should be quiescent.  The URBs
+ * aren't active and the timers should have been stopped.
  *
  * The CTLX is migrated to the "completing" queue, and the completing
  * tasklet is scheduled.
  *
  * Arguments:
- *	hw		ptr to a काष्ठा hfa384x काष्ठाure
- *	ctlx		ptr to a ctlx काष्ठाure
+ *	hw		ptr to a struct hfa384x structure
+ *	ctlx		ptr to a ctlx structure
  *
  * Returns:
  *	nothing
@@ -2757,12 +2756,12 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  * Side effects:
  *
  * Call context:
- *	Either, assume पूर्णांकerrupt
+ *	Either, assume interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम unlocked_usbctlx_complete(काष्ठा hfa384x *hw,
-				      काष्ठा hfa384x_usbctlx *ctlx)
-अणु
+static void unlocked_usbctlx_complete(struct hfa384x *hw,
+				      struct hfa384x_usbctlx *ctlx)
+{
 	/* Timers have been stopped, and ctlx should be in
 	 * a terminal state. Retire it from the "active"
 	 * queue.
@@ -2770,27 +2769,27 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 	list_move_tail(&ctlx->list, &hw->ctlxq.completing);
 	tasklet_schedule(&hw->completion_bh);
 
-	चयन (ctlx->state) अणु
-	हाल CTLX_COMPLETE:
-	हाल CTLX_REQ_FAILED:
+	switch (ctlx->state) {
+	case CTLX_COMPLETE:
+	case CTLX_REQ_FAILED:
 		/* This are the correct terminating states. */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		netdev_err(hw->wlandev->netdev, "CTLX[%d] not in a terminating state(%s)\n",
 			   le16_to_cpu(ctlx->outbuf.type),
 			   ctlxstr(ctlx->state));
-		अवरोध;
-	पूर्ण			/* चयन */
-पूर्ण
+		break;
+	}			/* switch */
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbctlxq_run
  *
- * Checks to see अगर the head item is running.  If not, starts it.
+ * Checks to see if the head item is running.  If not, starts it.
  *
  * Arguments:
- *	hw	ptr to काष्ठा hfa384x
+ *	hw	ptr to struct hfa384x
  *
  * Returns:
  *	nothing
@@ -2801,33 +2800,33 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
  *	any
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbctlxq_run(काष्ठा hfa384x *hw)
-अणु
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usbctlxq_run(struct hfa384x *hw)
+{
+	unsigned long flags;
 
 	/* acquire lock */
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	/* Only one active CTLX at any one समय, because there's no
+	/* Only one active CTLX at any one time, because there's no
 	 * other (reliable) way to match the response URB to the
 	 * correct CTLX.
 	 *
-	 * Don't touch any of these CTLXs अगर the hardware
-	 * has been हटाओd or the USB subप्रणाली is stalled.
+	 * Don't touch any of these CTLXs if the hardware
+	 * has been removed or the USB subsystem is stalled.
 	 */
-	अगर (!list_empty(&hw->ctlxq.active) ||
-	    test_bit(WORK_TX_HALT, &hw->usb_flags) || hw->wlandev->hwहटाओd)
-		जाओ unlock;
+	if (!list_empty(&hw->ctlxq.active) ||
+	    test_bit(WORK_TX_HALT, &hw->usb_flags) || hw->wlandev->hwremoved)
+		goto unlock;
 
-	जबतक (!list_empty(&hw->ctlxq.pending)) अणु
-		काष्ठा hfa384x_usbctlx *head;
-		पूर्णांक result;
+	while (!list_empty(&hw->ctlxq.pending)) {
+		struct hfa384x_usbctlx *head;
+		int result;
 
 		/* This is the first pending command */
 		head = list_entry(hw->ctlxq.pending.next,
-				  काष्ठा hfa384x_usbctlx, list);
+				  struct hfa384x_usbctlx, list);
 
-		/* We need to split this off to aव्योम a race condition */
+		/* We need to split this off to avoid a race condition */
 		list_move_tail(&head->list, &hw->ctlxq.active);
 
 		/* Fill the out packet */
@@ -2839,24 +2838,24 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 
 		/* Now submit the URB and update the CTLX's state */
 		result = usb_submit_urb(&hw->ctlx_urb, GFP_ATOMIC);
-		अगर (result == 0) अणु
+		if (result == 0) {
 			/* This CTLX is now running on the active queue */
 			head->state = CTLX_REQ_SUBMITTED;
 
-			/* Start the OUT रुको समयr */
-			hw->req_समयr_करोne = 0;
-			hw->reqसमयr.expires = jअगरfies + HZ;
-			add_समयr(&hw->reqसमयr);
+			/* Start the OUT wait timer */
+			hw->req_timer_done = 0;
+			hw->reqtimer.expires = jiffies + HZ;
+			add_timer(&hw->reqtimer);
 
-			/* Start the IN रुको समयr */
-			hw->resp_समयr_करोne = 0;
-			hw->respसमयr.expires = jअगरfies + 2 * HZ;
-			add_समयr(&hw->respसमयr);
+			/* Start the IN wait timer */
+			hw->resp_timer_done = 0;
+			hw->resptimer.expires = jiffies + 2 * HZ;
+			add_timer(&hw->resptimer);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (result == -EPIPE) अणु
+		if (result == -EPIPE) {
 			/* The OUT pipe needs resetting, so put
 			 * this CTLX back in the "pending" queue
 			 * and schedule a reset ...
@@ -2867,28 +2866,28 @@ hfa384x_drvr_setconfig_async(काष्ठा hfa384x *hw,
 			list_move(&head->list, &hw->ctlxq.pending);
 			set_bit(WORK_TX_HALT, &hw->usb_flags);
 			schedule_work(&hw->usb_work);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (result == -ESHUTDOWN) अणु
+		if (result == -ESHUTDOWN) {
 			netdev_warn(hw->wlandev->netdev, "%s urb shutdown!\n",
 				    hw->wlandev->netdev->name);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		netdev_err(hw->wlandev->netdev, "Failed to submit CTLX[%d]: error=%d\n",
 			   le16_to_cpu(head->outbuf.type), result);
 		unlocked_usbctlx_complete(hw, head);
-	पूर्ण			/* जबतक */
+	}			/* while */
 
 unlock:
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbin_callback
  *
- * Callback क्रम URBs on the BULKIN endpoपूर्णांक.
+ * Callback for URBs on the BULKIN endpoint.
  *
  * Arguments:
  *	urb		ptr to the completed urb
@@ -2899,173 +2898,173 @@ unlock:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbin_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा wlandevice *wlandev = urb->context;
-	काष्ठा hfa384x *hw;
-	जोड़ hfa384x_usbin *usbin;
-	काष्ठा sk_buff *skb = शून्य;
-	पूर्णांक result;
-	पूर्णांक urb_status;
+static void hfa384x_usbin_callback(struct urb *urb)
+{
+	struct wlandevice *wlandev = urb->context;
+	struct hfa384x *hw;
+	union hfa384x_usbin *usbin;
+	struct sk_buff *skb = NULL;
+	int result;
+	int urb_status;
 	u16 type;
 
-	क्रमागत USBIN_ACTION अणु
+	enum USBIN_ACTION {
 		HANDLE,
 		RESUBMIT,
 		ABORT
-	पूर्ण action;
+	} action;
 
-	अगर (!wlandev || !wlandev->netdev || wlandev->hwहटाओd)
-		जाओ निकास;
+	if (!wlandev || !wlandev->netdev || wlandev->hwremoved)
+		goto exit;
 
 	hw = wlandev->priv;
-	अगर (!hw)
-		जाओ निकास;
+	if (!hw)
+		goto exit;
 
 	skb = hw->rx_urb_skb;
-	अगर (!skb || (skb->data != urb->transfer_buffer)) अणु
+	if (!skb || (skb->data != urb->transfer_buffer)) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	hw->rx_urb_skb = शून्य;
+	hw->rx_urb_skb = NULL;
 
-	/* Check क्रम error conditions within the URB */
-	चयन (urb->status) अणु
-	हाल 0:
+	/* Check for error conditions within the URB */
+	switch (urb->status) {
+	case 0:
 		action = HANDLE;
 
-		/* Check क्रम लघु packet */
-		अगर (urb->actual_length == 0) अणु
+		/* Check for short packet */
+		if (urb->actual_length == 0) {
 			wlandev->netdev->stats.rx_errors++;
 			wlandev->netdev->stats.rx_length_errors++;
 			action = RESUBMIT;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल -EPIPE:
+	case -EPIPE:
 		netdev_warn(hw->wlandev->netdev, "%s rx pipe stalled: requesting reset\n",
 			    wlandev->netdev->name);
-		अगर (!test_and_set_bit(WORK_RX_HALT, &hw->usb_flags))
+		if (!test_and_set_bit(WORK_RX_HALT, &hw->usb_flags))
 			schedule_work(&hw->usb_work);
 		wlandev->netdev->stats.rx_errors++;
 		action = ABORT;
-		अवरोध;
+		break;
 
-	हाल -EILSEQ:
-	हाल -ETIMEDOUT:
-	हाल -EPROTO:
-		अगर (!test_and_set_bit(THROTTLE_RX, &hw->usb_flags) &&
-		    !समयr_pending(&hw->throttle)) अणु
-			mod_समयr(&hw->throttle, jअगरfies + THROTTLE_JIFFIES);
-		पूर्ण
+	case -EILSEQ:
+	case -ETIMEDOUT:
+	case -EPROTO:
+		if (!test_and_set_bit(THROTTLE_RX, &hw->usb_flags) &&
+		    !timer_pending(&hw->throttle)) {
+			mod_timer(&hw->throttle, jiffies + THROTTLE_JIFFIES);
+		}
 		wlandev->netdev->stats.rx_errors++;
 		action = ABORT;
-		अवरोध;
+		break;
 
-	हाल -EOVERFLOW:
+	case -EOVERFLOW:
 		wlandev->netdev->stats.rx_over_errors++;
 		action = RESUBMIT;
-		अवरोध;
+		break;
 
-	हाल -ENODEV:
-	हाल -ESHUTDOWN:
+	case -ENODEV:
+	case -ESHUTDOWN:
 		pr_debug("status=%d, device removed.\n", urb->status);
 		action = ABORT;
-		अवरोध;
+		break;
 
-	हाल -ENOENT:
-	हाल -ECONNRESET:
+	case -ENOENT:
+	case -ECONNRESET:
 		pr_debug("status=%d, urb explicitly unlinked.\n", urb->status);
 		action = ABORT;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_debug("urb status=%d, transfer flags=0x%x\n",
 			 urb->status, urb->transfer_flags);
 		wlandev->netdev->stats.rx_errors++;
 		action = RESUBMIT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	/* Save values from the RX URB beक्रमe reposting overग_लिखोs it. */
+	/* Save values from the RX URB before reposting overwrites it. */
 	urb_status = urb->status;
-	usbin = (जोड़ hfa384x_usbin *)urb->transfer_buffer;
+	usbin = (union hfa384x_usbin *)urb->transfer_buffer;
 
-	अगर (action != ABORT) अणु
+	if (action != ABORT) {
 		/* Repost the RX URB */
 		result = submit_rx_urb(hw, GFP_ATOMIC);
 
-		अगर (result != 0) अणु
+		if (result != 0) {
 			netdev_err(hw->wlandev->netdev,
 				   "Fatal, failed to resubmit rx_urb. error=%d\n",
 				   result);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Handle any USB-IN packet */
-	/* Note: the check of the sw_support field, the type field करोesn't
-	 *       have bit 12 set like the करोcs suggest.
+	/* Note: the check of the sw_support field, the type field doesn't
+	 *       have bit 12 set like the docs suggest.
 	 */
 	type = le16_to_cpu(usbin->type);
-	अगर (HFA384x_USB_ISRXFRM(type)) अणु
-		अगर (action == HANDLE) अणु
-			अगर (usbin->txfrm.desc.sw_support == 0x0123) अणु
+	if (HFA384x_USB_ISRXFRM(type)) {
+		if (action == HANDLE) {
+			if (usbin->txfrm.desc.sw_support == 0x0123) {
 				hfa384x_usbin_txcompl(wlandev, usbin);
-			पूर्ण अन्यथा अणु
-				skb_put(skb, माप(*usbin));
+			} else {
+				skb_put(skb, sizeof(*usbin));
 				hfa384x_usbin_rx(wlandev, skb);
-				skb = शून्य;
-			पूर्ण
-		पूर्ण
-		जाओ निकास;
-	पूर्ण
-	अगर (HFA384x_USB_ISTXFRM(type)) अणु
-		अगर (action == HANDLE)
+				skb = NULL;
+			}
+		}
+		goto exit;
+	}
+	if (HFA384x_USB_ISTXFRM(type)) {
+		if (action == HANDLE)
 			hfa384x_usbin_txcompl(wlandev, usbin);
-		जाओ निकास;
-	पूर्ण
-	चयन (type) अणु
-	हाल HFA384x_USB_INFOFRM:
-		अगर (action == ABORT)
-			जाओ निकास;
-		अगर (action == HANDLE)
+		goto exit;
+	}
+	switch (type) {
+	case HFA384x_USB_INFOFRM:
+		if (action == ABORT)
+			goto exit;
+		if (action == HANDLE)
 			hfa384x_usbin_info(wlandev, usbin);
-		अवरोध;
+		break;
 
-	हाल HFA384x_USB_CMDRESP:
-	हाल HFA384x_USB_WRIDRESP:
-	हाल HFA384x_USB_RRIDRESP:
-	हाल HFA384x_USB_WMEMRESP:
-	हाल HFA384x_USB_RMEMRESP:
+	case HFA384x_USB_CMDRESP:
+	case HFA384x_USB_WRIDRESP:
+	case HFA384x_USB_RRIDRESP:
+	case HFA384x_USB_WMEMRESP:
+	case HFA384x_USB_RMEMRESP:
 		/* ALWAYS, ALWAYS, ALWAYS handle this CTLX!!!! */
 		hfa384x_usbin_ctlx(hw, usbin, urb_status);
-		अवरोध;
+		break;
 
-	हाल HFA384x_USB_BUFAVAIL:
+	case HFA384x_USB_BUFAVAIL:
 		pr_debug("Received BUFAVAIL packet, frmlen=%d\n",
 			 usbin->bufavail.frmlen);
-		अवरोध;
+		break;
 
-	हाल HFA384x_USB_ERROR:
+	case HFA384x_USB_ERROR:
 		pr_debug("Received USB_ERROR packet, errortype=%d\n",
 			 usbin->usberror.errortype);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_debug("Unrecognized USBIN packet, type=%x, status=%d\n",
 			 usbin->type, urb_status);
-		अवरोध;
-	पूर्ण			/* चयन */
+		break;
+	}			/* switch */
 
-निकास:
+exit:
 
-	अगर (skb)
-		dev_kमुक्त_skb(skb);
-पूर्ण
+	if (skb)
+		dev_kfree_skb(skb);
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbin_ctlx
@@ -3075,7 +3074,7 @@ unlock:
  * queue and our state updated accordingly.
  *
  * Arguments:
- *	hw		ptr to काष्ठा hfa384x
+ *	hw		ptr to struct hfa384x
  *	usbin		ptr to USB IN packet
  *	urb_status	status of this Bulk-In URB
  *
@@ -3085,91 +3084,91 @@ unlock:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbin_ctlx(काष्ठा hfa384x *hw, जोड़ hfa384x_usbin *usbin,
-			       पूर्णांक urb_status)
-अणु
-	काष्ठा hfa384x_usbctlx *ctlx;
-	पूर्णांक run_queue = 0;
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usbin_ctlx(struct hfa384x *hw, union hfa384x_usbin *usbin,
+			       int urb_status)
+{
+	struct hfa384x_usbctlx *ctlx;
+	int run_queue = 0;
+	unsigned long flags;
 
 retry:
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
 	/* There can be only one CTLX on the active queue
-	 * at any one समय, and this is the CTLX that the
-	 * समयrs are रुकोing क्रम.
+	 * at any one time, and this is the CTLX that the
+	 * timers are waiting for.
 	 */
-	अगर (list_empty(&hw->ctlxq.active))
-		जाओ unlock;
+	if (list_empty(&hw->ctlxq.active))
+		goto unlock;
 
 	/* Remove the "response timeout". It's possible that
-	 * we are alपढ़ोy too late, and that the समयout is
-	 * alपढ़ोy running. And that's just too bad क्रम us,
+	 * we are already too late, and that the timeout is
+	 * already running. And that's just too bad for us,
 	 * because we could lose our CTLX from the active
 	 * queue here ...
 	 */
-	अगर (del_समयr(&hw->respसमयr) == 0) अणु
-		अगर (hw->resp_समयr_करोne == 0) अणु
+	if (del_timer(&hw->resptimer) == 0) {
+		if (hw->resp_timer_done == 0) {
 			spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-			जाओ retry;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		hw->resp_समयr_करोne = 1;
-	पूर्ण
+			goto retry;
+		}
+	} else {
+		hw->resp_timer_done = 1;
+	}
 
 	ctlx = get_active_ctlx(hw);
 
-	अगर (urb_status != 0) अणु
+	if (urb_status != 0) {
 		/*
 		 * Bad CTLX, so get rid of it. But we only
-		 * हटाओ it from the active queue अगर we're no
-		 * दीर्घer expecting the OUT URB to complete.
+		 * remove it from the active queue if we're no
+		 * longer expecting the OUT URB to complete.
 		 */
-		अगर (unlocked_usbctlx_cancel_async(hw, ctlx) == 0)
+		if (unlocked_usbctlx_cancel_async(hw, ctlx) == 0)
 			run_queue = 1;
-	पूर्ण अन्यथा अणु
-		स्थिर __le16 पूर्णांकype = (usbin->type & ~cpu_to_le16(0x8000));
+	} else {
+		const __le16 intype = (usbin->type & ~cpu_to_le16(0x8000));
 
 		/*
 		 * Check that our message is what we're expecting ...
 		 */
-		अगर (ctlx->outbuf.type != पूर्णांकype) अणु
+		if (ctlx->outbuf.type != intype) {
 			netdev_warn(hw->wlandev->netdev,
 				    "Expected IN[%d], received IN[%d] - ignored.\n",
 				    le16_to_cpu(ctlx->outbuf.type),
-				    le16_to_cpu(पूर्णांकype));
-			जाओ unlock;
-		पूर्ण
+				    le16_to_cpu(intype));
+			goto unlock;
+		}
 
 		/* This URB has succeeded, so grab the data ... */
-		स_नकल(&ctlx->inbuf, usbin, माप(ctlx->inbuf));
+		memcpy(&ctlx->inbuf, usbin, sizeof(ctlx->inbuf));
 
-		चयन (ctlx->state) अणु
-		हाल CTLX_REQ_SUBMITTED:
+		switch (ctlx->state) {
+		case CTLX_REQ_SUBMITTED:
 			/*
-			 * We have received our response URB beक्रमe
+			 * We have received our response URB before
 			 * our request has been acknowledged. Odd,
 			 * but our OUT URB is still alive...
 			 */
 			pr_debug("Causality violation: please reboot Universe\n");
 			ctlx->state = CTLX_RESP_COMPLETE;
-			अवरोध;
+			break;
 
-		हाल CTLX_REQ_COMPLETE:
+		case CTLX_REQ_COMPLETE:
 			/*
 			 * This is the usual path: our request
-			 * has alपढ़ोy been acknowledged, and
+			 * has already been acknowledged, and
 			 * now we have received the reply too.
 			 */
 			ctlx->state = CTLX_COMPLETE;
 			unlocked_usbctlx_complete(hw, ctlx);
 			run_queue = 1;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/*
 			 * Throw this CTLX away ...
 			 */
@@ -3177,23 +3176,23 @@ retry:
 				   "Matched IN URB, CTLX[%d] in invalid state(%s). Discarded.\n",
 				   le16_to_cpu(ctlx->outbuf.type),
 				   ctlxstr(ctlx->state));
-			अगर (unlocked_usbctlx_cancel_async(hw, ctlx) == 0)
+			if (unlocked_usbctlx_cancel_async(hw, ctlx) == 0)
 				run_queue = 1;
-			अवरोध;
-		पूर्ण		/* चयन */
-	पूर्ण
+			break;
+		}		/* switch */
+	}
 
 unlock:
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 
-	अगर (run_queue)
+	if (run_queue)
 		hfa384x_usbctlxq_run(hw);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbin_txcompl
  *
- * At this poपूर्णांक we have the results of a previous transmit.
+ * At this point we have the results of a previous transmit.
  *
  * Arguments:
  *	wlandev		wlan device
@@ -3205,27 +3204,27 @@ unlock:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbin_txcompl(काष्ठा wlandevice *wlandev,
-				  जोड़ hfa384x_usbin *usbin)
-अणु
+static void hfa384x_usbin_txcompl(struct wlandevice *wlandev,
+				  union hfa384x_usbin *usbin)
+{
 	u16 status;
 
 	status = le16_to_cpu(usbin->type); /* yeah I know it says type... */
 
 	/* Was there an error? */
-	अगर (HFA384x_TXSTATUS_ISERROR(status))
+	if (HFA384x_TXSTATUS_ISERROR(status))
 		prism2sta_ev_txexc(wlandev, status);
-	अन्यथा
+	else
 		prism2sta_ev_tx(wlandev, status);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbin_rx
  *
- * At this poपूर्णांक we have a successful received a rx frame packet.
+ * At this point we have a successful received a rx frame packet.
  *
  * Arguments:
  *	wlandev		wlan device
@@ -3237,48 +3236,48 @@ unlock:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbin_rx(काष्ठा wlandevice *wlandev, काष्ठा sk_buff *skb)
-अणु
-	जोड़ hfa384x_usbin *usbin = (जोड़ hfa384x_usbin *)skb->data;
-	काष्ठा hfa384x *hw = wlandev->priv;
-	पूर्णांक hdrlen;
-	काष्ठा p80211_rxmeta *rxmeta;
+static void hfa384x_usbin_rx(struct wlandevice *wlandev, struct sk_buff *skb)
+{
+	union hfa384x_usbin *usbin = (union hfa384x_usbin *)skb->data;
+	struct hfa384x *hw = wlandev->priv;
+	int hdrlen;
+	struct p80211_rxmeta *rxmeta;
 	u16 data_len;
 	u16 fc;
 	u16 status;
 
 	/* Byte order convert once up front. */
 	le16_to_cpus(&usbin->rxfrm.desc.status);
-	le32_to_cpus(&usbin->rxfrm.desc.समय);
+	le32_to_cpus(&usbin->rxfrm.desc.time);
 
 	/* Now handle frame based on port# */
 	status = HFA384x_RXSTATUS_MACPORT_GET(usbin->rxfrm.desc.status);
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		fc = le16_to_cpu(usbin->rxfrm.desc.frame_control);
 
 		/* If exclude and we receive an unencrypted, drop it */
-		अगर ((wlandev->hostwep & HOSTWEP_EXCLUDEUNENCRYPTED) &&
-		    !WLAN_GET_FC_ISWEP(fc)) अणु
-			अवरोध;
-		पूर्ण
+		if ((wlandev->hostwep & HOSTWEP_EXCLUDEUNENCRYPTED) &&
+		    !WLAN_GET_FC_ISWEP(fc)) {
+			break;
+		}
 
 		data_len = le16_to_cpu(usbin->rxfrm.desc.data_len);
 
-		/* How much header data करो we have? */
+		/* How much header data do we have? */
 		hdrlen = p80211_headerlen(fc);
 
 		/* Pull off the descriptor */
-		skb_pull(skb, माप(काष्ठा hfa384x_rx_frame));
+		skb_pull(skb, sizeof(struct hfa384x_rx_frame));
 
 		/* Now shunt the header block up against the data block
 		 * with an "overlapping" copy
 		 */
-		स_हटाओ(skb_push(skb, hdrlen),
+		memmove(skb_push(skb, hdrlen),
 			&usbin->rxfrm.desc.frame_control, hdrlen);
 
 		skb->dev = wlandev->netdev;
@@ -3286,121 +3285,121 @@ unlock:
 		/* And set the frame length properly */
 		skb_trim(skb, data_len + hdrlen);
 
-		/* The prism2 series करोes not वापस the CRC */
-		स_रखो(skb_put(skb, WLAN_CRC_LEN), 0xff, WLAN_CRC_LEN);
+		/* The prism2 series does not return the CRC */
+		memset(skb_put(skb, WLAN_CRC_LEN), 0xff, WLAN_CRC_LEN);
 
 		skb_reset_mac_header(skb);
 
 		/* Attach the rxmeta, set some stuff */
 		p80211skb_rxmeta_attach(wlandev, skb);
 		rxmeta = p80211skb_rxmeta(skb);
-		rxmeta->maस_समय = usbin->rxfrm.desc.समय;
+		rxmeta->mactime = usbin->rxfrm.desc.time;
 		rxmeta->rxrate = usbin->rxfrm.desc.rate;
-		rxmeta->संकेत = usbin->rxfrm.desc.संकेत - hw->dbmadjust;
+		rxmeta->signal = usbin->rxfrm.desc.signal - hw->dbmadjust;
 		rxmeta->noise = usbin->rxfrm.desc.silence - hw->dbmadjust;
 
 		p80211netdev_rx(wlandev, skb);
 
-		अवरोध;
+		break;
 
-	हाल 7:
-		अगर (!HFA384x_RXSTATUS_ISFCSERR(usbin->rxfrm.desc.status)) अणु
-			/* Copy to wlansnअगर skb */
-			hfa384x_पूर्णांक_rxmonitor(wlandev, &usbin->rxfrm);
-			dev_kमुक्त_skb(skb);
-		पूर्ण अन्यथा अणु
+	case 7:
+		if (!HFA384x_RXSTATUS_ISFCSERR(usbin->rxfrm.desc.status)) {
+			/* Copy to wlansnif skb */
+			hfa384x_int_rxmonitor(wlandev, &usbin->rxfrm);
+			dev_kfree_skb(skb);
+		} else {
 			pr_debug("Received monitor frame: FCSerr set\n");
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	शेष:
+	default:
 		netdev_warn(hw->wlandev->netdev,
 			    "Received frame on unsupported port=%d\n",
 			    status);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*----------------------------------------------------------------
- * hfa384x_पूर्णांक_rxmonitor
+ * hfa384x_int_rxmonitor
  *
- * Helper function क्रम पूर्णांक_rx.  Handles monitor frames.
- * Note that this function allocates space क्रम the FCS and sets it
- * to 0xffffffff.  The hfa384x करोesn't give us the FCS value but the
+ * Helper function for int_rx.  Handles monitor frames.
+ * Note that this function allocates space for the FCS and sets it
+ * to 0xffffffff.  The hfa384x doesn't give us the FCS value but the
  * higher layers expect it.  0xffffffff is used as a flag to indicate
  * the FCS is bogus.
  *
  * Arguments:
- *	wlandev		wlan device काष्ठाure
- *	rxfrm		rx descriptor पढ़ो from card in पूर्णांक_rx
+ *	wlandev		wlan device structure
+ *	rxfrm		rx descriptor read from card in int_rx
  *
  * Returns:
  *	nothing
  *
  * Side effects:
- *	Allocates an skb and passes it up via the PF_PACKET पूर्णांकerface.
+ *	Allocates an skb and passes it up via the PF_PACKET interface.
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_पूर्णांक_rxmonitor(काष्ठा wlandevice *wlandev,
-				  काष्ठा hfa384x_usb_rxfrm *rxfrm)
-अणु
-	काष्ठा hfa384x_rx_frame *rxdesc = &rxfrm->desc;
-	अचिन्हित पूर्णांक hdrlen = 0;
-	अचिन्हित पूर्णांक datalen = 0;
-	अचिन्हित पूर्णांक skblen = 0;
+static void hfa384x_int_rxmonitor(struct wlandevice *wlandev,
+				  struct hfa384x_usb_rxfrm *rxfrm)
+{
+	struct hfa384x_rx_frame *rxdesc = &rxfrm->desc;
+	unsigned int hdrlen = 0;
+	unsigned int datalen = 0;
+	unsigned int skblen = 0;
 	u8 *datap;
 	u16 fc;
-	काष्ठा sk_buff *skb;
-	काष्ठा hfa384x *hw = wlandev->priv;
+	struct sk_buff *skb;
+	struct hfa384x *hw = wlandev->priv;
 
-	/* Remember the status, समय, and data_len fields are in host order */
+	/* Remember the status, time, and data_len fields are in host order */
 	/* Figure out how big the frame is */
 	fc = le16_to_cpu(rxdesc->frame_control);
 	hdrlen = p80211_headerlen(fc);
 	datalen = le16_to_cpu(rxdesc->data_len);
 
 	/* Allocate an ind message+framesize skb */
-	skblen = माप(काष्ठा p80211_caphdr) + hdrlen + datalen + WLAN_CRC_LEN;
+	skblen = sizeof(struct p80211_caphdr) + hdrlen + datalen + WLAN_CRC_LEN;
 
 	/* sanity check the length */
-	अगर (skblen >
-	    (माप(काष्ठा p80211_caphdr) +
-	     WLAN_HDR_A4_LEN + WLAN_DATA_MAXLEN + WLAN_CRC_LEN)) अणु
+	if (skblen >
+	    (sizeof(struct p80211_caphdr) +
+	     WLAN_HDR_A4_LEN + WLAN_DATA_MAXLEN + WLAN_CRC_LEN)) {
 		pr_debug("overlen frm: len=%zd\n",
-			 skblen - माप(काष्ठा p80211_caphdr));
+			 skblen - sizeof(struct p80211_caphdr));
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	skb = dev_alloc_skb(skblen);
-	अगर (!skb)
-		वापस;
+	if (!skb)
+		return;
 
-	/* only prepend the prism header अगर in the right mode */
-	अगर ((wlandev->netdev->type == ARPHRD_IEEE80211_PRISM) &&
-	    (hw->snअगरfhdr != 0)) अणु
-		काष्ठा p80211_caphdr *caphdr;
-		/* The NEW header क्रमmat! */
-		datap = skb_put(skb, माप(काष्ठा p80211_caphdr));
-		caphdr = (काष्ठा p80211_caphdr *)datap;
+	/* only prepend the prism header if in the right mode */
+	if ((wlandev->netdev->type == ARPHRD_IEEE80211_PRISM) &&
+	    (hw->sniffhdr != 0)) {
+		struct p80211_caphdr *caphdr;
+		/* The NEW header format! */
+		datap = skb_put(skb, sizeof(struct p80211_caphdr));
+		caphdr = (struct p80211_caphdr *)datap;
 
 		caphdr->version = htonl(P80211CAPTURE_VERSION);
-		caphdr->length = htonl(माप(काष्ठा p80211_caphdr));
-		caphdr->maस_समय = __cpu_to_be64(rxdesc->समय * 1000);
-		caphdr->hostसमय = __cpu_to_be64(jअगरfies);
-		caphdr->phytype = htonl(4);	/* dss_करोt11_b */
-		caphdr->channel = htonl(hw->snअगरf_channel);
+		caphdr->length = htonl(sizeof(struct p80211_caphdr));
+		caphdr->mactime = __cpu_to_be64(rxdesc->time * 1000);
+		caphdr->hosttime = __cpu_to_be64(jiffies);
+		caphdr->phytype = htonl(4);	/* dss_dot11_b */
+		caphdr->channel = htonl(hw->sniff_channel);
 		caphdr->datarate = htonl(rxdesc->rate);
 		caphdr->antenna = htonl(0);	/* unknown */
 		caphdr->priority = htonl(0);	/* unknown */
 		caphdr->ssi_type = htonl(3);	/* rssi_raw */
-		caphdr->ssi_संकेत = htonl(rxdesc->संकेत);
+		caphdr->ssi_signal = htonl(rxdesc->signal);
 		caphdr->ssi_noise = htonl(rxdesc->silence);
 		caphdr->preamble = htonl(0);	/* unknown */
 		caphdr->encoding = htonl(1);	/* cck */
-	पूर्ण
+	}
 
 	/* Copy the 802.11 header to the skb
 	 * (ctl frames may be less than a full header)
@@ -3408,30 +3407,30 @@ unlock:
 	skb_put_data(skb, &rxdesc->frame_control, hdrlen);
 
 	/* If any, copy the data from the card to the skb */
-	अगर (datalen > 0) अणु
+	if (datalen > 0) {
 		datap = skb_put_data(skb, rxfrm->data, datalen);
 
-		/* check क्रम unencrypted stuff अगर WEP bit set. */
-		अगर (*(datap - hdrlen + 1) & 0x40)	/* wep set */
-			अगर ((*(datap) == 0xaa) && (*(datap + 1) == 0xaa))
+		/* check for unencrypted stuff if WEP bit set. */
+		if (*(datap - hdrlen + 1) & 0x40)	/* wep set */
+			if ((*(datap) == 0xaa) && (*(datap + 1) == 0xaa))
 				/* clear wep; it's the 802.2 header! */
 				*(datap - hdrlen + 1) &= 0xbf;
-	पूर्ण
+	}
 
-	अगर (hw->snअगरf_fcs) अणु
+	if (hw->sniff_fcs) {
 		/* Set the FCS */
 		datap = skb_put(skb, WLAN_CRC_LEN);
-		स_रखो(datap, 0xff, WLAN_CRC_LEN);
-	पूर्ण
+		memset(datap, 0xff, WLAN_CRC_LEN);
+	}
 
 	/* pass it back up */
 	p80211netdev_rx(wlandev, skb);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbin_info
  *
- * At this poपूर्णांक we have a successful received a Prism2 info frame.
+ * At this point we have a successful received a Prism2 info frame.
  *
  * Arguments:
  *	wlandev		wlan device
@@ -3443,20 +3442,20 @@ unlock:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbin_info(काष्ठा wlandevice *wlandev,
-			       जोड़ hfa384x_usbin *usbin)
-अणु
+static void hfa384x_usbin_info(struct wlandevice *wlandev,
+			       union hfa384x_usbin *usbin)
+{
 	le16_to_cpus(&usbin->infofrm.info.framelen);
 	prism2sta_ev_info(wlandev, &usbin->infofrm.info);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbout_callback
  *
- * Callback क्रम URBs on the BULKOUT endpoपूर्णांक.
+ * Callback for URBs on the BULKOUT endpoint.
  *
  * Arguments:
  *	urb		ptr to the completed urb
@@ -3467,68 +3466,68 @@ unlock:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbout_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा wlandevice *wlandev = urb->context;
+static void hfa384x_usbout_callback(struct urb *urb)
+{
+	struct wlandevice *wlandev = urb->context;
 
-#अगर_घोषित DEBUG_USB
-	dbprपूर्णांक_urb(urb);
-#पूर्ण_अगर
+#ifdef DEBUG_USB
+	dbprint_urb(urb);
+#endif
 
-	अगर (wlandev && wlandev->netdev) अणु
-		चयन (urb->status) अणु
-		हाल 0:
+	if (wlandev && wlandev->netdev) {
+		switch (urb->status) {
+		case 0:
 			prism2sta_ev_alloc(wlandev);
-			अवरोध;
+			break;
 
-		हाल -EPIPE: अणु
-			काष्ठा hfa384x *hw = wlandev->priv;
+		case -EPIPE: {
+			struct hfa384x *hw = wlandev->priv;
 
 			netdev_warn(hw->wlandev->netdev,
 				    "%s tx pipe stalled: requesting reset\n",
 				    wlandev->netdev->name);
-			अगर (!test_and_set_bit(WORK_TX_HALT, &hw->usb_flags))
+			if (!test_and_set_bit(WORK_TX_HALT, &hw->usb_flags))
 				schedule_work(&hw->usb_work);
 			wlandev->netdev->stats.tx_errors++;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		हाल -EPROTO:
-		हाल -ETIMEDOUT:
-		हाल -EILSEQ: अणु
-			काष्ठा hfa384x *hw = wlandev->priv;
+		case -EPROTO:
+		case -ETIMEDOUT:
+		case -EILSEQ: {
+			struct hfa384x *hw = wlandev->priv;
 
-			अगर (!test_and_set_bit(THROTTLE_TX, &hw->usb_flags) &&
-			    !समयr_pending(&hw->throttle)) अणु
-				mod_समयr(&hw->throttle,
-					  jअगरfies + THROTTLE_JIFFIES);
-			पूर्ण
+			if (!test_and_set_bit(THROTTLE_TX, &hw->usb_flags) &&
+			    !timer_pending(&hw->throttle)) {
+				mod_timer(&hw->throttle,
+					  jiffies + THROTTLE_JIFFIES);
+			}
 			wlandev->netdev->stats.tx_errors++;
-			netअगर_stop_queue(wlandev->netdev);
-			अवरोध;
-		पूर्ण
+			netif_stop_queue(wlandev->netdev);
+			break;
+		}
 
-		हाल -ENOENT:
-		हाल -ESHUTDOWN:
+		case -ENOENT:
+		case -ESHUTDOWN:
 			/* Ignorable errors */
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			netdev_info(wlandev->netdev, "unknown urb->status=%d\n",
 				    urb->status);
 			wlandev->netdev->stats.tx_errors++;
-			अवरोध;
-		पूर्ण		/* चयन */
-	पूर्ण
-पूर्ण
+			break;
+		}		/* switch */
+	}
+}
 
 /*----------------------------------------------------------------
  * hfa384x_ctlxout_callback
  *
- * Callback क्रम control data on the BULKOUT endpoपूर्णांक.
+ * Callback for control data on the BULKOUT endpoint.
  *
  * Arguments:
  *	urb		ptr to the completed urb
@@ -3539,131 +3538,131 @@ unlock:
  * Side effects:
  *
  * Call context:
- * पूर्णांकerrupt
+ * interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_ctlxout_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा hfa384x *hw = urb->context;
-	पूर्णांक delete_respसमयr = 0;
-	पूर्णांक समयr_ok = 1;
-	पूर्णांक run_queue = 0;
-	काष्ठा hfa384x_usbctlx *ctlx;
-	अचिन्हित दीर्घ flags;
+static void hfa384x_ctlxout_callback(struct urb *urb)
+{
+	struct hfa384x *hw = urb->context;
+	int delete_resptimer = 0;
+	int timer_ok = 1;
+	int run_queue = 0;
+	struct hfa384x_usbctlx *ctlx;
+	unsigned long flags;
 
 	pr_debug("urb->status=%d\n", urb->status);
-#अगर_घोषित DEBUG_USB
-	dbprपूर्णांक_urb(urb);
-#पूर्ण_अगर
-	अगर ((urb->status == -ESHUTDOWN) ||
+#ifdef DEBUG_USB
+	dbprint_urb(urb);
+#endif
+	if ((urb->status == -ESHUTDOWN) ||
 	    (urb->status == -ENODEV) || !hw)
-		वापस;
+		return;
 
 retry:
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
 	/*
-	 * Only one CTLX at a समय on the "active" list, and
-	 * none at all अगर we are unplugged. However, we can
+	 * Only one CTLX at a time on the "active" list, and
+	 * none at all if we are unplugged. However, we can
 	 * rely on the disconnect function to clean everything
-	 * up अगर someone unplugged the adapter.
+	 * up if someone unplugged the adapter.
 	 */
-	अगर (list_empty(&hw->ctlxq.active)) अणु
+	if (list_empty(&hw->ctlxq.active)) {
 		spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Having something on the "active" queue means
-	 * that we have समयrs to worry about ...
+	 * that we have timers to worry about ...
 	 */
-	अगर (del_समयr(&hw->reqसमयr) == 0) अणु
-		अगर (hw->req_समयr_करोne == 0) अणु
+	if (del_timer(&hw->reqtimer) == 0) {
+		if (hw->req_timer_done == 0) {
 			/*
-			 * This समयr was actually running जबतक we
+			 * This timer was actually running while we
 			 * were trying to delete it. Let it terminate
 			 * gracefully instead.
 			 */
 			spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-			जाओ retry;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		hw->req_समयr_करोne = 1;
-	पूर्ण
+			goto retry;
+		}
+	} else {
+		hw->req_timer_done = 1;
+	}
 
 	ctlx = get_active_ctlx(hw);
 
-	अगर (urb->status == 0) अणु
+	if (urb->status == 0) {
 		/* Request portion of a CTLX is successful */
-		चयन (ctlx->state) अणु
-		हाल CTLX_REQ_SUBMITTED:
-			/* This OUT-ACK received beक्रमe IN */
+		switch (ctlx->state) {
+		case CTLX_REQ_SUBMITTED:
+			/* This OUT-ACK received before IN */
 			ctlx->state = CTLX_REQ_COMPLETE;
-			अवरोध;
+			break;
 
-		हाल CTLX_RESP_COMPLETE:
-			/* IN alपढ़ोy received beक्रमe this OUT-ACK,
+		case CTLX_RESP_COMPLETE:
+			/* IN already received before this OUT-ACK,
 			 * so this command must now be complete.
 			 */
 			ctlx->state = CTLX_COMPLETE;
 			unlocked_usbctlx_complete(hw, ctlx);
 			run_queue = 1;
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/* This is NOT a valid CTLX "success" state! */
 			netdev_err(hw->wlandev->netdev,
 				   "Illegal CTLX[%d] success state(%s, %d) in OUT URB\n",
 				   le16_to_cpu(ctlx->outbuf.type),
 				   ctlxstr(ctlx->state), urb->status);
-			अवरोध;
-		पूर्ण		/* चयन */
-	पूर्ण अन्यथा अणु
+			break;
+		}		/* switch */
+	} else {
 		/* If the pipe has stalled then we need to reset it */
-		अगर ((urb->status == -EPIPE) &&
-		    !test_and_set_bit(WORK_TX_HALT, &hw->usb_flags)) अणु
+		if ((urb->status == -EPIPE) &&
+		    !test_and_set_bit(WORK_TX_HALT, &hw->usb_flags)) {
 			netdev_warn(hw->wlandev->netdev,
 				    "%s tx pipe stalled: requesting reset\n",
 				    hw->wlandev->netdev->name);
 			schedule_work(&hw->usb_work);
-		पूर्ण
+		}
 
 		/* If someone cancels the OUT URB then its status
 		 * should be either -ECONNRESET or -ENOENT.
 		 */
 		ctlx->state = CTLX_REQ_FAILED;
 		unlocked_usbctlx_complete(hw, ctlx);
-		delete_respसमयr = 1;
+		delete_resptimer = 1;
 		run_queue = 1;
-	पूर्ण
+	}
 
 delresp:
-	अगर (delete_respसमयr) अणु
-		समयr_ok = del_समयr(&hw->respसमयr);
-		अगर (समयr_ok != 0)
-			hw->resp_समयr_करोne = 1;
-	पूर्ण
+	if (delete_resptimer) {
+		timer_ok = del_timer(&hw->resptimer);
+		if (timer_ok != 0)
+			hw->resp_timer_done = 1;
+	}
 
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 
-	अगर (!समयr_ok && (hw->resp_समयr_करोne == 0)) अणु
+	if (!timer_ok && (hw->resp_timer_done == 0)) {
 		spin_lock_irqsave(&hw->ctlxq.lock, flags);
-		जाओ delresp;
-	पूर्ण
+		goto delresp;
+	}
 
-	अगर (run_queue)
+	if (run_queue)
 		hfa384x_usbctlxq_run(hw);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
- * hfa384x_usbctlx_reqसमयrfn
+ * hfa384x_usbctlx_reqtimerfn
  *
- * Timer response function क्रम CTLX request समयouts.  If this
- * function is called, it means that the callback क्रम the OUT
+ * Timer response function for CTLX request timeouts.  If this
+ * function is called, it means that the callback for the OUT
  * URB containing a Prism2.x XXX_Request was never called.
  *
  * Arguments:
- *	data		a ptr to the काष्ठा hfa384x
+ *	data		a ptr to the struct hfa384x
  *
  * Returns:
  *	nothing
@@ -3671,29 +3670,29 @@ delresp:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbctlx_reqसमयrfn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा hfa384x *hw = from_समयr(hw, t, reqसमयr);
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usbctlx_reqtimerfn(struct timer_list *t)
+{
+	struct hfa384x *hw = from_timer(hw, t, reqtimer);
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	hw->req_समयr_करोne = 1;
+	hw->req_timer_done = 1;
 
-	/* Removing the hardware स्वतःmatically empties
+	/* Removing the hardware automatically empties
 	 * the active list ...
 	 */
-	अगर (!list_empty(&hw->ctlxq.active)) अणु
+	if (!list_empty(&hw->ctlxq.active)) {
 		/*
-		 * We must ensure that our URB is हटाओd from
-		 * the प्रणाली, अगर it hasn't alपढ़ोy expired.
+		 * We must ensure that our URB is removed from
+		 * the system, if it hasn't already expired.
 		 */
 		hw->ctlx_urb.transfer_flags |= URB_ASYNC_UNLINK;
-		अगर (usb_unlink_urb(&hw->ctlx_urb) == -EINPROGRESS) अणु
-			काष्ठा hfa384x_usbctlx *ctlx = get_active_ctlx(hw);
+		if (usb_unlink_urb(&hw->ctlx_urb) == -EINPROGRESS) {
+			struct hfa384x_usbctlx *ctlx = get_active_ctlx(hw);
 
 			ctlx->state = CTLX_REQ_FAILED;
 
@@ -3702,27 +3701,27 @@ delresp:
 			 * -ECONNRESET in the callback function.
 			 *
 			 * We are cancelling this CTLX, so we're
-			 * not going to need to रुको क्रम a response.
+			 * not going to need to wait for a response.
 			 * The URB's callback function will check
-			 * that this समयr is truly dead.
+			 * that this timer is truly dead.
 			 */
-			अगर (del_समयr(&hw->respसमयr) != 0)
-				hw->resp_समयr_करोne = 1;
-		पूर्ण
-	पूर्ण
+			if (del_timer(&hw->resptimer) != 0)
+				hw->resp_timer_done = 1;
+		}
+	}
 
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
- * hfa384x_usbctlx_respसमयrfn
+ * hfa384x_usbctlx_resptimerfn
  *
- * Timer response function क्रम CTLX response समयouts.  If this
- * function is called, it means that the callback क्रम the IN
+ * Timer response function for CTLX response timeouts.  If this
+ * function is called, it means that the callback for the IN
  * URB containing a Prism2.x XXX_Response was never called.
  *
  * Arguments:
- *	data		a ptr to the काष्ठा hfa384x
+ *	data		a ptr to the struct hfa384x
  *
  * Returns:
  *	nothing
@@ -3730,32 +3729,32 @@ delresp:
  * Side effects:
  *
  * Call context:
- *	पूर्णांकerrupt
+ *	interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usbctlx_respसमयrfn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा hfa384x *hw = from_समयr(hw, t, respसमयr);
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usbctlx_resptimerfn(struct timer_list *t)
+{
+	struct hfa384x *hw = from_timer(hw, t, resptimer);
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	hw->resp_समयr_करोne = 1;
+	hw->resp_timer_done = 1;
 
-	/* The active list will be empty अगर the
+	/* The active list will be empty if the
 	 * adapter has been unplugged ...
 	 */
-	अगर (!list_empty(&hw->ctlxq.active)) अणु
-		काष्ठा hfa384x_usbctlx *ctlx = get_active_ctlx(hw);
+	if (!list_empty(&hw->ctlxq.active)) {
+		struct hfa384x_usbctlx *ctlx = get_active_ctlx(hw);
 
-		अगर (unlocked_usbctlx_cancel_async(hw, ctlx) == 0) अणु
+		if (unlocked_usbctlx_cancel_async(hw, ctlx) == 0) {
 			spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 			hfa384x_usbctlxq_run(hw);
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usb_throttlefn
@@ -3773,10 +3772,10 @@ delresp:
  *	Interrupt
  *----------------------------------------------------------------
  */
-अटल व्योम hfa384x_usb_throttlefn(काष्ठा समयr_list *t)
-अणु
-	काष्ठा hfa384x *hw = from_समयr(hw, t, throttle);
-	अचिन्हित दीर्घ flags;
+static void hfa384x_usb_throttlefn(struct timer_list *t)
+{
+	struct hfa384x *hw = from_timer(hw, t, throttle);
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
@@ -3785,56 +3784,56 @@ delresp:
 	 * so we use the bitwise OR instead of the logical OR.
 	 */
 	pr_debug("flags=0x%lx\n", hw->usb_flags);
-	अगर (!hw->wlandev->hwहटाओd &&
+	if (!hw->wlandev->hwremoved &&
 	    ((test_and_clear_bit(THROTTLE_RX, &hw->usb_flags) &&
 	      !test_and_set_bit(WORK_RX_RESUME, &hw->usb_flags)) |
 	     (test_and_clear_bit(THROTTLE_TX, &hw->usb_flags) &&
 	      !test_and_set_bit(WORK_TX_RESUME, &hw->usb_flags))
-	    )) अणु
+	    )) {
 		schedule_work(&hw->usb_work);
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-पूर्ण
+}
 
 /*----------------------------------------------------------------
  * hfa384x_usbctlx_submit
  *
- * Called from the करोxxx functions to submit a CTLX to the queue
+ * Called from the doxxx functions to submit a CTLX to the queue
  *
  * Arguments:
- *	hw		ptr to the hw काष्ठा
- *	ctlx		ctlx काष्ठाure to enqueue
+ *	hw		ptr to the hw struct
+ *	ctlx		ctlx structure to enqueue
  *
  * Returns:
- *	-ENODEV अगर the adapter is unplugged
+ *	-ENODEV if the adapter is unplugged
  *	0
  *
  * Side effects:
  *
  * Call context:
- *	process or पूर्णांकerrupt
+ *	process or interrupt
  *----------------------------------------------------------------
  */
-अटल पूर्णांक hfa384x_usbctlx_submit(काष्ठा hfa384x *hw,
-				  काष्ठा hfa384x_usbctlx *ctlx)
-अणु
-	अचिन्हित दीर्घ flags;
+static int hfa384x_usbctlx_submit(struct hfa384x *hw,
+				  struct hfa384x_usbctlx *ctlx)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-	अगर (hw->wlandev->hwहटाओd) अणु
+	if (hw->wlandev->hwremoved) {
 		spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ctlx->state = CTLX_PENDING;
 	list_add_tail(&ctlx->list, &hw->ctlxq.pending);
 	spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 	hfa384x_usbctlxq_run(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*----------------------------------------------------------------
  * hfa384x_isgood_pdrcore
@@ -3853,51 +3852,51 @@ delresp:
  * Call context:
  *----------------------------------------------------------------
  */
-अटल पूर्णांक hfa384x_isgood_pdrcode(u16 pdrcode)
-अणु
-	चयन (pdrcode) अणु
-	हाल HFA384x_PDR_END_OF_PDA:
-	हाल HFA384x_PDR_PCB_PARTNUM:
-	हाल HFA384x_PDR_PDAVER:
-	हाल HFA384x_PDR_NIC_SERIAL:
-	हाल HFA384x_PDR_MKK_MEASUREMENTS:
-	हाल HFA384x_PDR_NIC_RAMSIZE:
-	हाल HFA384x_PDR_MFISUPRANGE:
-	हाल HFA384x_PDR_CFISUPRANGE:
-	हाल HFA384x_PDR_NICID:
-	हाल HFA384x_PDR_MAC_ADDRESS:
-	हाल HFA384x_PDR_REGDOMAIN:
-	हाल HFA384x_PDR_ALLOWED_CHANNEL:
-	हाल HFA384x_PDR_DEFAULT_CHANNEL:
-	हाल HFA384x_PDR_TEMPTYPE:
-	हाल HFA384x_PDR_IFR_SETTING:
-	हाल HFA384x_PDR_RFR_SETTING:
-	हाल HFA384x_PDR_HFA3861_BASELINE:
-	हाल HFA384x_PDR_HFA3861_SHADOW:
-	हाल HFA384x_PDR_HFA3861_IFRF:
-	हाल HFA384x_PDR_HFA3861_CHCALSP:
-	हाल HFA384x_PDR_HFA3861_CHCALI:
-	हाल HFA384x_PDR_3842_NIC_CONFIG:
-	हाल HFA384x_PDR_USB_ID:
-	हाल HFA384x_PDR_PCI_ID:
-	हाल HFA384x_PDR_PCI_IFCONF:
-	हाल HFA384x_PDR_PCI_PMCONF:
-	हाल HFA384x_PDR_RFENRGY:
-	हाल HFA384x_PDR_HFA3861_MANF_TESTSP:
-	हाल HFA384x_PDR_HFA3861_MANF_TESTI:
+static int hfa384x_isgood_pdrcode(u16 pdrcode)
+{
+	switch (pdrcode) {
+	case HFA384x_PDR_END_OF_PDA:
+	case HFA384x_PDR_PCB_PARTNUM:
+	case HFA384x_PDR_PDAVER:
+	case HFA384x_PDR_NIC_SERIAL:
+	case HFA384x_PDR_MKK_MEASUREMENTS:
+	case HFA384x_PDR_NIC_RAMSIZE:
+	case HFA384x_PDR_MFISUPRANGE:
+	case HFA384x_PDR_CFISUPRANGE:
+	case HFA384x_PDR_NICID:
+	case HFA384x_PDR_MAC_ADDRESS:
+	case HFA384x_PDR_REGDOMAIN:
+	case HFA384x_PDR_ALLOWED_CHANNEL:
+	case HFA384x_PDR_DEFAULT_CHANNEL:
+	case HFA384x_PDR_TEMPTYPE:
+	case HFA384x_PDR_IFR_SETTING:
+	case HFA384x_PDR_RFR_SETTING:
+	case HFA384x_PDR_HFA3861_BASELINE:
+	case HFA384x_PDR_HFA3861_SHADOW:
+	case HFA384x_PDR_HFA3861_IFRF:
+	case HFA384x_PDR_HFA3861_CHCALSP:
+	case HFA384x_PDR_HFA3861_CHCALI:
+	case HFA384x_PDR_3842_NIC_CONFIG:
+	case HFA384x_PDR_USB_ID:
+	case HFA384x_PDR_PCI_ID:
+	case HFA384x_PDR_PCI_IFCONF:
+	case HFA384x_PDR_PCI_PMCONF:
+	case HFA384x_PDR_RFENRGY:
+	case HFA384x_PDR_HFA3861_MANF_TESTSP:
+	case HFA384x_PDR_HFA3861_MANF_TESTI:
 		/* code is OK */
-		वापस 1;
-	शेष:
-		अगर (pdrcode < 0x1000) अणु
-			/* code is OK, but we करोn't know exactly what it is */
+		return 1;
+	default:
+		if (pdrcode < 0x1000) {
+			/* code is OK, but we don't know exactly what it is */
 			pr_debug("Encountered unknown PDR#=0x%04x, assuming it's ok.\n",
 				 pdrcode);
-			वापस 1;
-		पूर्ण
-		अवरोध;
-	पूर्ण
+			return 1;
+		}
+		break;
+	}
 	/* bad code */
 	pr_debug("Encountered unknown PDR#=0x%04x, (>=0x1000), assuming it's bad.\n",
 		 pdrcode);
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#घोषणा _GNU_SOURCE
-#समावेश <sched.h>
-#समावेश <sys/mount.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/types.h>
-#समावेश <test_progs.h>
+#define _GNU_SOURCE
+#include <sched.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <test_progs.h>
 
-#घोषणा Tसूची "/sys/kernel/debug"
+#define TDIR "/sys/kernel/debug"
 
-अटल पूर्णांक पढ़ो_iter(अक्षर *file)
-अणु
-	/* 1024 should be enough to get contiguous 4 "iter" letters at some poपूर्णांक */
-	अक्षर buf[1024];
-	पूर्णांक fd, len;
+static int read_iter(char *file)
+{
+	/* 1024 should be enough to get contiguous 4 "iter" letters at some point */
+	char buf[1024];
+	int fd, len;
 
-	fd = खोलो(file, 0);
-	अगर (fd < 0)
-		वापस -1;
-	जबतक ((len = पढ़ो(fd, buf, माप(buf))) > 0)
-		अगर (म_माला(buf, "iter")) अणु
-			बंद(fd);
-			वापस 0;
-		पूर्ण
-	बंद(fd);
-	वापस -1;
-पूर्ण
+	fd = open(file, 0);
+	if (fd < 0)
+		return -1;
+	while ((len = read(fd, buf, sizeof(buf))) > 0)
+		if (strstr(buf, "iter")) {
+			close(fd);
+			return 0;
+		}
+	close(fd);
+	return -1;
+}
 
-अटल पूर्णांक fn(व्योम)
-अणु
-	पूर्णांक err, duration = 0;
+static int fn(void)
+{
+	int err, duration = 0;
 
 	err = unshare(CLONE_NEWNS);
-	अगर (CHECK(err, "unshare", "failed: %d\n", त्रुटि_सं))
-		जाओ out;
+	if (CHECK(err, "unshare", "failed: %d\n", errno))
+		goto out;
 
-	err = mount("", "/", "", MS_REC | MS_PRIVATE, शून्य);
-	अगर (CHECK(err, "mount /", "failed: %d\n", त्रुटि_सं))
-		जाओ out;
+	err = mount("", "/", "", MS_REC | MS_PRIVATE, NULL);
+	if (CHECK(err, "mount /", "failed: %d\n", errno))
+		goto out;
 
-	err = umount(Tसूची);
-	अगर (CHECK(err, "umount " Tसूची, "failed: %d\n", त्रुटि_सं))
-		जाओ out;
+	err = umount(TDIR);
+	if (CHECK(err, "umount " TDIR, "failed: %d\n", errno))
+		goto out;
 
-	err = mount("none", Tसूची, "tmpfs", 0, शून्य);
-	अगर (CHECK(err, "mount", "mount root failed: %d\n", त्रुटि_सं))
-		जाओ out;
+	err = mount("none", TDIR, "tmpfs", 0, NULL);
+	if (CHECK(err, "mount", "mount root failed: %d\n", errno))
+		goto out;
 
-	err = सूची_गढ़ो(Tसूची "/fs1", 0777);
-	अगर (CHECK(err, "mkdir "Tसूची"/fs1", "failed: %d\n", त्रुटि_सं))
-		जाओ out;
-	err = सूची_गढ़ो(Tसूची "/fs2", 0777);
-	अगर (CHECK(err, "mkdir "Tसूची"/fs2", "failed: %d\n", त्रुटि_सं))
-		जाओ out;
+	err = mkdir(TDIR "/fs1", 0777);
+	if (CHECK(err, "mkdir "TDIR"/fs1", "failed: %d\n", errno))
+		goto out;
+	err = mkdir(TDIR "/fs2", 0777);
+	if (CHECK(err, "mkdir "TDIR"/fs2", "failed: %d\n", errno))
+		goto out;
 
-	err = mount("bpf", Tसूची "/fs1", "bpf", 0, शून्य);
-	अगर (CHECK(err, "mount bpffs "Tसूची"/fs1", "failed: %d\n", त्रुटि_सं))
-		जाओ out;
-	err = mount("bpf", Tसूची "/fs2", "bpf", 0, शून्य);
-	अगर (CHECK(err, "mount bpffs " Tसूची "/fs2", "failed: %d\n", त्रुटि_सं))
-		जाओ out;
+	err = mount("bpf", TDIR "/fs1", "bpf", 0, NULL);
+	if (CHECK(err, "mount bpffs "TDIR"/fs1", "failed: %d\n", errno))
+		goto out;
+	err = mount("bpf", TDIR "/fs2", "bpf", 0, NULL);
+	if (CHECK(err, "mount bpffs " TDIR "/fs2", "failed: %d\n", errno))
+		goto out;
 
-	err = पढ़ो_iter(Tसूची "/fs1/maps.debug");
-	अगर (CHECK(err, "reading " Tसूची "/fs1/maps.debug", "failed\n"))
-		जाओ out;
-	err = पढ़ो_iter(Tसूची "/fs2/progs.debug");
-	अगर (CHECK(err, "reading " Tसूची "/fs2/progs.debug", "failed\n"))
-		जाओ out;
+	err = read_iter(TDIR "/fs1/maps.debug");
+	if (CHECK(err, "reading " TDIR "/fs1/maps.debug", "failed\n"))
+		goto out;
+	err = read_iter(TDIR "/fs2/progs.debug");
+	if (CHECK(err, "reading " TDIR "/fs2/progs.debug", "failed\n"))
+		goto out;
 out:
-	umount(Tसूची "/fs1");
-	umount(Tसूची "/fs2");
-	सूची_हटाओ(Tसूची "/fs1");
-	सूची_हटाओ(Tसूची "/fs2");
-	umount(Tसूची);
-	निकास(err);
-पूर्ण
+	umount(TDIR "/fs1");
+	umount(TDIR "/fs2");
+	rmdir(TDIR "/fs1");
+	rmdir(TDIR "/fs2");
+	umount(TDIR);
+	exit(err);
+}
 
-व्योम test_test_bpffs(व्योम)
-अणु
-	पूर्णांक err, duration = 0, status = 0;
+void test_test_bpffs(void)
+{
+	int err, duration = 0, status = 0;
 	pid_t pid;
 
-	pid = विभाजन();
-	अगर (CHECK(pid == -1, "clone", "clone failed %d", त्रुटि_सं))
-		वापस;
-	अगर (pid == 0)
+	pid = fork();
+	if (CHECK(pid == -1, "clone", "clone failed %d", errno))
+		return;
+	if (pid == 0)
 		fn();
-	err = रुकोpid(pid, &status, 0);
-	अगर (CHECK(err == -1 && त्रुटि_सं != ECHILD, "waitpid", "failed %d", त्रुटि_सं))
-		वापस;
-	अगर (CHECK(WEXITSTATUS(status), "bpffs test ", "failed %d", WEXITSTATUS(status)))
-		वापस;
-पूर्ण
+	err = waitpid(pid, &status, 0);
+	if (CHECK(err == -1 && errno != ECHILD, "waitpid", "failed %d", errno))
+		return;
+	if (CHECK(WEXITSTATUS(status), "bpffs test ", "failed %d", WEXITSTATUS(status)))
+		return;
+}

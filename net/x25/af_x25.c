@@ -1,10 +1,9 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *	X.25 Packet Layer release 002
  *
- *	This is ALPHA test software. This code may अवरोध your machine,
- *	अक्रमomly fail to work with new releases, misbehave and/or generally
+ *	This is ALPHA test software. This code may break your machine,
+ *	randomly fail to work with new releases, misbehave and/or generally
  *	screw up. It might even work.
  *
  *	This code REQUIRES 2.1.15 or higher
@@ -12,18 +11,18 @@
  *	History
  *	X.25 001	Jonathan Naylor	Started coding.
  *	X.25 002	Jonathan Naylor	Centralised disconnect handling.
- *					New समयr architecture.
+ *					New timer architecture.
  *	2000-03-11	Henner Eisen	MSG_EOR handling more POSIX compliant.
  *	2000-03-22	Daniela Squassoni Allowed disabling/enabling of
  *					  facilities negotiation and increased
  *					  the throughput upper limit.
- *	2000-08-27	Arnalकरो C. Melo s/suser/capable/ + micro cleanups
+ *	2000-08-27	Arnaldo C. Melo s/suser/capable/ + micro cleanups
  *	2000-09-04	Henner Eisen	Set sock->state in x25_accept().
  *					Fixed x25_output() related skb leakage.
- *	2000-10-02	Henner Eisen	Made x25_kick() single thपढ़ोed per socket.
- *	2000-10-27	Henner Eisen    MSG_DONTWAIT क्रम fragment allocation.
+ *	2000-10-02	Henner Eisen	Made x25_kick() single threaded per socket.
+ *	2000-10-27	Henner Eisen    MSG_DONTWAIT for fragment allocation.
  *	2000-11-14	Henner Eisen    Closing datalink from NETDEV_GOING_DOWN
- *	2002-10-06	Arnalकरो C. Melo Get rid of cli/sti, move proc stuff to
+ *	2002-10-06	Arnaldo C. Melo Get rid of cli/sti, move proc stuff to
  *					x25_proc.c, using seq_file
  *	2005-04-02	Shaun Pereira	Selective sub address matching
  *					with call user data
@@ -31,96 +30,96 @@
  *					response
  */
 
-#घोषणा pr_fmt(fmt) "X25: " fmt
+#define pr_fmt(fmt) "X25: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/capability.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/समयr.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/net.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp_states.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/termios.h>	/* For TIOCINQ/OUTQ */
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/init.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/प्रकार.स>
+#include <linux/module.h>
+#include <linux/capability.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/sched/signal.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/net.h>
+#include <linux/netdevice.h>
+#include <linux/if_arp.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <net/sock.h>
+#include <net/tcp_states.h>
+#include <linux/uaccess.h>
+#include <linux/fcntl.h>
+#include <linux/termios.h>	/* For TIOCINQ/OUTQ */
+#include <linux/notifier.h>
+#include <linux/init.h>
+#include <linux/compat.h>
+#include <linux/ctype.h>
 
-#समावेश <net/x25.h>
-#समावेश <net/compat.h>
+#include <net/x25.h>
+#include <net/compat.h>
 
-पूर्णांक sysctl_x25_restart_request_समयout = X25_DEFAULT_T20;
-पूर्णांक sysctl_x25_call_request_समयout    = X25_DEFAULT_T21;
-पूर्णांक sysctl_x25_reset_request_समयout   = X25_DEFAULT_T22;
-पूर्णांक sysctl_x25_clear_request_समयout   = X25_DEFAULT_T23;
-पूर्णांक sysctl_x25_ack_holdback_समयout    = X25_DEFAULT_T2;
-पूर्णांक sysctl_x25_क्रमward                 = 0;
+int sysctl_x25_restart_request_timeout = X25_DEFAULT_T20;
+int sysctl_x25_call_request_timeout    = X25_DEFAULT_T21;
+int sysctl_x25_reset_request_timeout   = X25_DEFAULT_T22;
+int sysctl_x25_clear_request_timeout   = X25_DEFAULT_T23;
+int sysctl_x25_ack_holdback_timeout    = X25_DEFAULT_T2;
+int sysctl_x25_forward                 = 0;
 
 HLIST_HEAD(x25_list);
 DEFINE_RWLOCK(x25_list_lock);
 
-अटल स्थिर काष्ठा proto_ops x25_proto_ops;
+static const struct proto_ops x25_proto_ops;
 
-अटल स्थिर काष्ठा x25_address null_x25_address = अणु"               "पूर्ण;
+static const struct x25_address null_x25_address = {"               "};
 
-#अगर_घोषित CONFIG_COMPAT
-काष्ठा compat_x25_subscrip_काष्ठा अणु
-	अक्षर device[200-माप(compat_uदीर्घ_t)];
-	compat_uदीर्घ_t global_facil_mask;
-	compat_uपूर्णांक_t extended;
-पूर्ण;
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+struct compat_x25_subscrip_struct {
+	char device[200-sizeof(compat_ulong_t)];
+	compat_ulong_t global_facil_mask;
+	compat_uint_t extended;
+};
+#endif
 
 
-पूर्णांक x25_parse_address_block(काष्ठा sk_buff *skb,
-		काष्ठा x25_address *called_addr,
-		काष्ठा x25_address *calling_addr)
-अणु
-	अचिन्हित अक्षर len;
-	पूर्णांक needed;
-	पूर्णांक rc;
+int x25_parse_address_block(struct sk_buff *skb,
+		struct x25_address *called_addr,
+		struct x25_address *calling_addr)
+{
+	unsigned char len;
+	int needed;
+	int rc;
 
-	अगर (!pskb_may_pull(skb, 1)) अणु
+	if (!pskb_may_pull(skb, 1)) {
 		/* packet has no address block */
 		rc = 0;
-		जाओ empty;
-	पूर्ण
+		goto empty;
+	}
 
 	len = *skb->data;
 	needed = 1 + ((len >> 4) + (len & 0x0f) + 1) / 2;
 
-	अगर (!pskb_may_pull(skb, needed)) अणु
-		/* packet is too लघु to hold the addresses it claims
+	if (!pskb_may_pull(skb, needed)) {
+		/* packet is too short to hold the addresses it claims
 		   to hold */
 		rc = -1;
-		जाओ empty;
-	पूर्ण
+		goto empty;
+	}
 
-	वापस x25_addr_ntoa(skb->data, called_addr, calling_addr);
+	return x25_addr_ntoa(skb->data, called_addr, calling_addr);
 
 empty:
 	*called_addr->x25_addr = 0;
 	*calling_addr->x25_addr = 0;
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-पूर्णांक x25_addr_ntoa(अचिन्हित अक्षर *p, काष्ठा x25_address *called_addr,
-		  काष्ठा x25_address *calling_addr)
-अणु
-	अचिन्हित पूर्णांक called_len, calling_len;
-	अक्षर *called, *calling;
-	अचिन्हित पूर्णांक i;
+int x25_addr_ntoa(unsigned char *p, struct x25_address *called_addr,
+		  struct x25_address *calling_addr)
+{
+	unsigned int called_len, calling_len;
+	char *called, *calling;
+	unsigned int i;
 
 	called_len  = (*p >> 0) & 0x0F;
 	calling_len = (*p >> 4) & 0x0F;
@@ -129,432 +128,432 @@ empty:
 	calling = calling_addr->x25_addr;
 	p++;
 
-	क्रम (i = 0; i < (called_len + calling_len); i++) अणु
-		अगर (i < called_len) अणु
-			अगर (i % 2 != 0) अणु
+	for (i = 0; i < (called_len + calling_len); i++) {
+		if (i < called_len) {
+			if (i % 2 != 0) {
 				*called++ = ((*p >> 0) & 0x0F) + '0';
 				p++;
-			पूर्ण अन्यथा अणु
+			} else {
 				*called++ = ((*p >> 4) & 0x0F) + '0';
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (i % 2 != 0) अणु
+			}
+		} else {
+			if (i % 2 != 0) {
 				*calling++ = ((*p >> 0) & 0x0F) + '0';
 				p++;
-			पूर्ण अन्यथा अणु
+			} else {
 				*calling++ = ((*p >> 4) & 0x0F) + '0';
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	*called = *calling = '\0';
 
-	वापस 1 + (called_len + calling_len + 1) / 2;
-पूर्ण
+	return 1 + (called_len + calling_len + 1) / 2;
+}
 
-पूर्णांक x25_addr_aton(अचिन्हित अक्षर *p, काष्ठा x25_address *called_addr,
-		  काष्ठा x25_address *calling_addr)
-अणु
-	अचिन्हित पूर्णांक called_len, calling_len;
-	अक्षर *called, *calling;
-	पूर्णांक i;
+int x25_addr_aton(unsigned char *p, struct x25_address *called_addr,
+		  struct x25_address *calling_addr)
+{
+	unsigned int called_len, calling_len;
+	char *called, *calling;
+	int i;
 
 	called  = called_addr->x25_addr;
 	calling = calling_addr->x25_addr;
 
-	called_len  = म_माप(called);
-	calling_len = म_माप(calling);
+	called_len  = strlen(called);
+	calling_len = strlen(calling);
 
 	*p++ = (calling_len << 4) | (called_len << 0);
 
-	क्रम (i = 0; i < (called_len + calling_len); i++) अणु
-		अगर (i < called_len) अणु
-			अगर (i % 2 != 0) अणु
+	for (i = 0; i < (called_len + calling_len); i++) {
+		if (i < called_len) {
+			if (i % 2 != 0) {
 				*p |= (*called++ - '0') << 0;
 				p++;
-			पूर्ण अन्यथा अणु
+			} else {
 				*p = 0x00;
 				*p |= (*called++ - '0') << 4;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (i % 2 != 0) अणु
+			}
+		} else {
+			if (i % 2 != 0) {
 				*p |= (*calling++ - '0') << 0;
 				p++;
-			पूर्ण अन्यथा अणु
+			} else {
 				*p = 0x00;
 				*p |= (*calling++ - '0') << 4;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस 1 + (called_len + calling_len + 1) / 2;
-पूर्ण
+	return 1 + (called_len + calling_len + 1) / 2;
+}
 
 /*
- *	Socket removal during an पूर्णांकerrupt is now safe.
+ *	Socket removal during an interrupt is now safe.
  */
-अटल व्योम x25_हटाओ_socket(काष्ठा sock *sk)
-अणु
-	ग_लिखो_lock_bh(&x25_list_lock);
+static void x25_remove_socket(struct sock *sk)
+{
+	write_lock_bh(&x25_list_lock);
 	sk_del_node_init(sk);
-	ग_लिखो_unlock_bh(&x25_list_lock);
-पूर्ण
+	write_unlock_bh(&x25_list_lock);
+}
 
 /*
  *	Handle device status changes.
  */
-अटल पूर्णांक x25_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
-			    व्योम *ptr)
-अणु
-	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
-	काष्ठा x25_neigh *nb;
+static int x25_device_event(struct notifier_block *this, unsigned long event,
+			    void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct x25_neigh *nb;
 
-	अगर (!net_eq(dev_net(dev), &init_net))
-		वापस NOTIFY_DONE;
+	if (!net_eq(dev_net(dev), &init_net))
+		return NOTIFY_DONE;
 
-	अगर (dev->type == ARPHRD_X25) अणु
-		चयन (event) अणु
-		हाल NETDEV_REGISTER:
-		हाल NETDEV_POST_TYPE_CHANGE:
+	if (dev->type == ARPHRD_X25) {
+		switch (event) {
+		case NETDEV_REGISTER:
+		case NETDEV_POST_TYPE_CHANGE:
 			x25_link_device_up(dev);
-			अवरोध;
-		हाल NETDEV_DOWN:
+			break;
+		case NETDEV_DOWN:
 			nb = x25_get_neigh(dev);
-			अगर (nb) अणु
+			if (nb) {
 				x25_link_terminated(nb);
 				x25_neigh_put(nb);
-			पूर्ण
-			x25_route_device_करोwn(dev);
-			अवरोध;
-		हाल NETDEV_PRE_TYPE_CHANGE:
-		हाल NETDEV_UNREGISTER:
-			x25_link_device_करोwn(dev);
-			अवरोध;
-		हाल NETDEV_CHANGE:
-			अगर (!netअगर_carrier_ok(dev)) अणु
+			}
+			x25_route_device_down(dev);
+			break;
+		case NETDEV_PRE_TYPE_CHANGE:
+		case NETDEV_UNREGISTER:
+			x25_link_device_down(dev);
+			break;
+		case NETDEV_CHANGE:
+			if (!netif_carrier_ok(dev)) {
 				nb = x25_get_neigh(dev);
-				अगर (nb) अणु
+				if (nb) {
 					x25_link_terminated(nb);
 					x25_neigh_put(nb);
-				पूर्ण
-			पूर्ण
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				}
+			}
+			break;
+		}
+	}
 
-	वापस NOTIFY_DONE;
-पूर्ण
+	return NOTIFY_DONE;
+}
 
 /*
  *	Add a socket to the bound sockets list.
  */
-अटल व्योम x25_insert_socket(काष्ठा sock *sk)
-अणु
-	ग_लिखो_lock_bh(&x25_list_lock);
+static void x25_insert_socket(struct sock *sk)
+{
+	write_lock_bh(&x25_list_lock);
 	sk_add_node(sk, &x25_list);
-	ग_लिखो_unlock_bh(&x25_list_lock);
-पूर्ण
+	write_unlock_bh(&x25_list_lock);
+}
 
 /*
  *	Find a socket that wants to accept the Call Request we just
- *	received. Check the full list क्रम an address/cud match.
- *	If no cuds match वापस the next_best thing, an address match.
- *	Note: अगर a listening socket has cud set it must only get calls
+ *	received. Check the full list for an address/cud match.
+ *	If no cuds match return the next_best thing, an address match.
+ *	Note: if a listening socket has cud set it must only get calls
  *	with matching cud.
  */
-अटल काष्ठा sock *x25_find_listener(काष्ठा x25_address *addr,
-					काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sock *s;
-	काष्ठा sock *next_best;
+static struct sock *x25_find_listener(struct x25_address *addr,
+					struct sk_buff *skb)
+{
+	struct sock *s;
+	struct sock *next_best;
 
-	पढ़ो_lock_bh(&x25_list_lock);
-	next_best = शून्य;
+	read_lock_bh(&x25_list_lock);
+	next_best = NULL;
 
-	sk_क्रम_each(s, &x25_list)
-		अगर ((!म_भेद(addr->x25_addr,
+	sk_for_each(s, &x25_list)
+		if ((!strcmp(addr->x25_addr,
 			x25_sk(s)->source_addr.x25_addr) ||
-				!म_भेद(x25_sk(s)->source_addr.x25_addr,
+				!strcmp(x25_sk(s)->source_addr.x25_addr,
 					null_x25_address.x25_addr)) &&
-					s->sk_state == TCP_LISTEN) अणु
+					s->sk_state == TCP_LISTEN) {
 			/*
 			 * Found a listening socket, now check the incoming
 			 * call user data vs this sockets call user data
 			 */
-			अगर (x25_sk(s)->cudmatchlength > 0 &&
-				skb->len >= x25_sk(s)->cudmatchlength) अणु
-				अगर((स_भेद(x25_sk(s)->calluserdata.cuddata,
+			if (x25_sk(s)->cudmatchlength > 0 &&
+				skb->len >= x25_sk(s)->cudmatchlength) {
+				if((memcmp(x25_sk(s)->calluserdata.cuddata,
 					skb->data,
-					x25_sk(s)->cudmatchlength)) == 0) अणु
+					x25_sk(s)->cudmatchlength)) == 0) {
 					sock_hold(s);
-					जाओ found;
-				 पूर्ण
-			पूर्ण अन्यथा
+					goto found;
+				 }
+			} else
 				next_best = s;
-		पूर्ण
-	अगर (next_best) अणु
+		}
+	if (next_best) {
 		s = next_best;
 		sock_hold(s);
-		जाओ found;
-	पूर्ण
-	s = शून्य;
+		goto found;
+	}
+	s = NULL;
 found:
-	पढ़ो_unlock_bh(&x25_list_lock);
-	वापस s;
-पूर्ण
+	read_unlock_bh(&x25_list_lock);
+	return s;
+}
 
 /*
  *	Find a connected X.25 socket given my LCI and neighbour.
  */
-अटल काष्ठा sock *__x25_find_socket(अचिन्हित पूर्णांक lci, काष्ठा x25_neigh *nb)
-अणु
-	काष्ठा sock *s;
+static struct sock *__x25_find_socket(unsigned int lci, struct x25_neigh *nb)
+{
+	struct sock *s;
 
-	sk_क्रम_each(s, &x25_list)
-		अगर (x25_sk(s)->lci == lci && x25_sk(s)->neighbour == nb) अणु
+	sk_for_each(s, &x25_list)
+		if (x25_sk(s)->lci == lci && x25_sk(s)->neighbour == nb) {
 			sock_hold(s);
-			जाओ found;
-		पूर्ण
-	s = शून्य;
+			goto found;
+		}
+	s = NULL;
 found:
-	वापस s;
-पूर्ण
+	return s;
+}
 
-काष्ठा sock *x25_find_socket(अचिन्हित पूर्णांक lci, काष्ठा x25_neigh *nb)
-अणु
-	काष्ठा sock *s;
+struct sock *x25_find_socket(unsigned int lci, struct x25_neigh *nb)
+{
+	struct sock *s;
 
-	पढ़ो_lock_bh(&x25_list_lock);
+	read_lock_bh(&x25_list_lock);
 	s = __x25_find_socket(lci, nb);
-	पढ़ो_unlock_bh(&x25_list_lock);
-	वापस s;
-पूर्ण
+	read_unlock_bh(&x25_list_lock);
+	return s;
+}
 
 /*
- *	Find a unique LCI क्रम a given device.
+ *	Find a unique LCI for a given device.
  */
-अटल अचिन्हित पूर्णांक x25_new_lci(काष्ठा x25_neigh *nb)
-अणु
-	अचिन्हित पूर्णांक lci = 1;
-	काष्ठा sock *sk;
+static unsigned int x25_new_lci(struct x25_neigh *nb)
+{
+	unsigned int lci = 1;
+	struct sock *sk;
 
-	जबतक ((sk = x25_find_socket(lci, nb)) != शून्य) अणु
+	while ((sk = x25_find_socket(lci, nb)) != NULL) {
 		sock_put(sk);
-		अगर (++lci == 4096) अणु
+		if (++lci == 4096) {
 			lci = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		cond_resched();
-	पूर्ण
+	}
 
-	वापस lci;
-पूर्ण
+	return lci;
+}
 
 /*
  *	Deferred destroy.
  */
-अटल व्योम __x25_destroy_socket(काष्ठा sock *);
+static void __x25_destroy_socket(struct sock *);
 
 /*
- *	handler क्रम deferred समाप्तs.
+ *	handler for deferred kills.
  */
-अटल व्योम x25_destroy_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sock *sk = from_समयr(sk, t, sk_समयr);
+static void x25_destroy_timer(struct timer_list *t)
+{
+	struct sock *sk = from_timer(sk, t, sk_timer);
 
-	x25_destroy_socket_from_समयr(sk);
-पूर्ण
+	x25_destroy_socket_from_timer(sk);
+}
 
 /*
- *	This is called from user mode and the समयrs. Thus it protects itself
- *	against पूर्णांकerrupt users but करोesn't worry about being called during
- *	work. Once it is हटाओd from the queue no पूर्णांकerrupt or bottom half
+ *	This is called from user mode and the timers. Thus it protects itself
+ *	against interrupt users but doesn't worry about being called during
+ *	work. Once it is removed from the queue no interrupt or bottom half
  *	will touch it and we are (fairly 8-) ) safe.
- *	Not अटल as it's used by the समयr
+ *	Not static as it's used by the timer
  */
-अटल व्योम __x25_destroy_socket(काष्ठा sock *sk)
-अणु
-	काष्ठा sk_buff *skb;
+static void __x25_destroy_socket(struct sock *sk)
+{
+	struct sk_buff *skb;
 
 	x25_stop_heartbeat(sk);
-	x25_stop_समयr(sk);
+	x25_stop_timer(sk);
 
-	x25_हटाओ_socket(sk);
+	x25_remove_socket(sk);
 	x25_clear_queues(sk);		/* Flush the queues */
 
-	जबतक ((skb = skb_dequeue(&sk->sk_receive_queue)) != शून्य) अणु
-		अगर (skb->sk != sk) अणु		/* A pending connection */
+	while ((skb = skb_dequeue(&sk->sk_receive_queue)) != NULL) {
+		if (skb->sk != sk) {		/* A pending connection */
 			/*
-			 * Queue the unaccepted socket क्रम death
+			 * Queue the unaccepted socket for death
 			 */
 			skb->sk->sk_state = TCP_LISTEN;
 			sock_set_flag(skb->sk, SOCK_DEAD);
 			x25_start_heartbeat(skb->sk);
 			x25_sk(skb->sk)->state = X25_STATE_0;
-		पूर्ण
+		}
 
-		kमुक्त_skb(skb);
-	पूर्ण
+		kfree_skb(skb);
+	}
 
-	अगर (sk_has_allocations(sk)) अणु
+	if (sk_has_allocations(sk)) {
 		/* Defer: outstanding buffers */
-		sk->sk_समयr.expires  = jअगरfies + 10 * HZ;
-		sk->sk_समयr.function = x25_destroy_समयr;
-		add_समयr(&sk->sk_समयr);
-	पूर्ण अन्यथा अणु
-		/* drop last reference so sock_put will मुक्त */
+		sk->sk_timer.expires  = jiffies + 10 * HZ;
+		sk->sk_timer.function = x25_destroy_timer;
+		add_timer(&sk->sk_timer);
+	} else {
+		/* drop last reference so sock_put will free */
 		__sock_put(sk);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम x25_destroy_socket_from_समयr(काष्ठा sock *sk)
-अणु
+void x25_destroy_socket_from_timer(struct sock *sk)
+{
 	sock_hold(sk);
 	bh_lock_sock(sk);
 	__x25_destroy_socket(sk);
 	bh_unlock_sock(sk);
 	sock_put(sk);
-पूर्ण
+}
 
 /*
- *	Handling क्रम प्रणाली calls applied via the various पूर्णांकerfaces to a
+ *	Handling for system calls applied via the various interfaces to a
  *	X.25 socket object.
  */
 
-अटल पूर्णांक x25_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
-अणु
-	पूर्णांक opt;
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक rc = -ENOPROTOOPT;
+static int x25_setsockopt(struct socket *sock, int level, int optname,
+			  sockptr_t optval, unsigned int optlen)
+{
+	int opt;
+	struct sock *sk = sock->sk;
+	int rc = -ENOPROTOOPT;
 
-	अगर (level != SOL_X25 || optname != X25_QBITINCL)
-		जाओ out;
+	if (level != SOL_X25 || optname != X25_QBITINCL)
+		goto out;
 
 	rc = -EINVAL;
-	अगर (optlen < माप(पूर्णांक))
-		जाओ out;
+	if (optlen < sizeof(int))
+		goto out;
 
 	rc = -EFAULT;
-	अगर (copy_from_sockptr(&opt, optval, माप(पूर्णांक)))
-		जाओ out;
+	if (copy_from_sockptr(&opt, optval, sizeof(int)))
+		goto out;
 
-	अगर (opt)
+	if (opt)
 		set_bit(X25_Q_BIT_FLAG, &x25_sk(sk)->flags);
-	अन्यथा
+	else
 		clear_bit(X25_Q_BIT_FLAG, &x25_sk(sk)->flags);
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक x25_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
-			  अक्षर __user *optval, पूर्णांक __user *optlen)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक val, len, rc = -ENOPROTOOPT;
+static int x25_getsockopt(struct socket *sock, int level, int optname,
+			  char __user *optval, int __user *optlen)
+{
+	struct sock *sk = sock->sk;
+	int val, len, rc = -ENOPROTOOPT;
 
-	अगर (level != SOL_X25 || optname != X25_QBITINCL)
-		जाओ out;
+	if (level != SOL_X25 || optname != X25_QBITINCL)
+		goto out;
 
 	rc = -EFAULT;
-	अगर (get_user(len, optlen))
-		जाओ out;
+	if (get_user(len, optlen))
+		goto out;
 
-	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
+	len = min_t(unsigned int, len, sizeof(int));
 
 	rc = -EINVAL;
-	अगर (len < 0)
-		जाओ out;
+	if (len < 0)
+		goto out;
 
 	rc = -EFAULT;
-	अगर (put_user(len, optlen))
-		जाओ out;
+	if (put_user(len, optlen))
+		goto out;
 
 	val = test_bit(X25_Q_BIT_FLAG, &x25_sk(sk)->flags);
 	rc = copy_to_user(optval, &val, len) ? -EFAULT : 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक x25_listen(काष्ठा socket *sock, पूर्णांक backlog)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	पूर्णांक rc = -EOPNOTSUPP;
+static int x25_listen(struct socket *sock, int backlog)
+{
+	struct sock *sk = sock->sk;
+	int rc = -EOPNOTSUPP;
 
 	lock_sock(sk);
-	अगर (sk->sk_state != TCP_LISTEN) अणु
-		स_रखो(&x25_sk(sk)->dest_addr, 0, X25_ADDR_LEN);
+	if (sk->sk_state != TCP_LISTEN) {
+		memset(&x25_sk(sk)->dest_addr, 0, X25_ADDR_LEN);
 		sk->sk_max_ack_backlog = backlog;
 		sk->sk_state           = TCP_LISTEN;
 		rc = 0;
-	पूर्ण
+	}
 	release_sock(sk);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा proto x25_proto = अणु
+static struct proto x25_proto = {
 	.name	  = "X25",
 	.owner	  = THIS_MODULE,
-	.obj_size = माप(काष्ठा x25_sock),
-पूर्ण;
+	.obj_size = sizeof(struct x25_sock),
+};
 
-अटल काष्ठा sock *x25_alloc_socket(काष्ठा net *net, पूर्णांक kern)
-अणु
-	काष्ठा x25_sock *x25;
-	काष्ठा sock *sk = sk_alloc(net, AF_X25, GFP_ATOMIC, &x25_proto, kern);
+static struct sock *x25_alloc_socket(struct net *net, int kern)
+{
+	struct x25_sock *x25;
+	struct sock *sk = sk_alloc(net, AF_X25, GFP_ATOMIC, &x25_proto, kern);
 
-	अगर (!sk)
-		जाओ out;
+	if (!sk)
+		goto out;
 
-	sock_init_data(शून्य, sk);
+	sock_init_data(NULL, sk);
 
 	x25 = x25_sk(sk);
 	skb_queue_head_init(&x25->ack_queue);
 	skb_queue_head_init(&x25->fragment_queue);
-	skb_queue_head_init(&x25->पूर्णांकerrupt_in_queue);
-	skb_queue_head_init(&x25->पूर्णांकerrupt_out_queue);
+	skb_queue_head_init(&x25->interrupt_in_queue);
+	skb_queue_head_init(&x25->interrupt_out_queue);
 out:
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल पूर्णांक x25_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
-		      पूर्णांक kern)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा x25_sock *x25;
-	पूर्णांक rc = -EAFNOSUPPORT;
+static int x25_create(struct net *net, struct socket *sock, int protocol,
+		      int kern)
+{
+	struct sock *sk;
+	struct x25_sock *x25;
+	int rc = -EAFNOSUPPORT;
 
-	अगर (!net_eq(net, &init_net))
-		जाओ out;
+	if (!net_eq(net, &init_net))
+		goto out;
 
 	rc = -ESOCKTNOSUPPORT;
-	अगर (sock->type != SOCK_SEQPACKET)
-		जाओ out;
+	if (sock->type != SOCK_SEQPACKET)
+		goto out;
 
 	rc = -EINVAL;
-	अगर (protocol)
-		जाओ out;
+	if (protocol)
+		goto out;
 
 	rc = -ENOMEM;
-	अगर ((sk = x25_alloc_socket(net, kern)) == शून्य)
-		जाओ out;
+	if ((sk = x25_alloc_socket(net, kern)) == NULL)
+		goto out;
 
 	x25 = x25_sk(sk);
 
 	sock_init_data(sock, sk);
 
-	x25_init_समयrs(sk);
+	x25_init_timers(sk);
 
 	sock->ops    = &x25_proto_ops;
 	sk->sk_protocol = protocol;
 	sk->sk_backlog_rcv = x25_backlog_rcv;
 
-	x25->t21   = sysctl_x25_call_request_समयout;
-	x25->t22   = sysctl_x25_reset_request_समयout;
-	x25->t23   = sysctl_x25_clear_request_समयout;
-	x25->t2    = sysctl_x25_ack_holdback_समयout;
+	x25->t21   = sysctl_x25_call_request_timeout;
+	x25->t22   = sysctl_x25_reset_request_timeout;
+	x25->t23   = sysctl_x25_clear_request_timeout;
+	x25->t2    = sysctl_x25_ack_holdback_timeout;
 	x25->state = X25_STATE_0;
 	x25->cudmatchlength = 0;
 	set_bit(X25_ACCPT_APPRV_FLAG, &x25->flags);	/* normally no cud  */
@@ -564,31 +563,31 @@ out:
 	x25->facilities.winsize_out = X25_DEFAULT_WINDOW_SIZE;
 	x25->facilities.pacsize_in  = X25_DEFAULT_PACKET_SIZE;
 	x25->facilities.pacsize_out = X25_DEFAULT_PACKET_SIZE;
-	x25->facilities.throughput  = 0;	/* by शेष करोn't negotiate
+	x25->facilities.throughput  = 0;	/* by default don't negotiate
 						   throughput */
 	x25->facilities.reverse     = X25_DEFAULT_REVERSE;
 	x25->dte_facilities.calling_len = 0;
 	x25->dte_facilities.called_len = 0;
-	स_रखो(x25->dte_facilities.called_ae, '\0',
-			माप(x25->dte_facilities.called_ae));
-	स_रखो(x25->dte_facilities.calling_ae, '\0',
-			माप(x25->dte_facilities.calling_ae));
+	memset(x25->dte_facilities.called_ae, '\0',
+			sizeof(x25->dte_facilities.called_ae));
+	memset(x25->dte_facilities.calling_ae, '\0',
+			sizeof(x25->dte_facilities.calling_ae));
 
 	rc = 0;
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल काष्ठा sock *x25_make_new(काष्ठा sock *osk)
-अणु
-	काष्ठा sock *sk = शून्य;
-	काष्ठा x25_sock *x25, *ox25;
+static struct sock *x25_make_new(struct sock *osk)
+{
+	struct sock *sk = NULL;
+	struct x25_sock *x25, *ox25;
 
-	अगर (osk->sk_type != SOCK_SEQPACKET)
-		जाओ out;
+	if (osk->sk_type != SOCK_SEQPACKET)
+		goto out;
 
-	अगर ((sk = x25_alloc_socket(sock_net(osk), 0)) == शून्य)
-		जाओ out;
+	if ((sk = x25_alloc_socket(sock_net(osk), 0)) == NULL)
+		goto out;
 
 	x25 = x25_sk(sk);
 
@@ -612,186 +611,186 @@ out:
 	x25->cudmatchlength = ox25->cudmatchlength;
 
 	clear_bit(X25_INTERRUPT_FLAG, &x25->flags);
-	x25_init_समयrs(sk);
+	x25_init_timers(sk);
 out:
-	वापस sk;
-पूर्ण
+	return sk;
+}
 
-अटल पूर्णांक x25_release(काष्ठा socket *sock)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा x25_sock *x25;
+static int x25_release(struct socket *sock)
+{
+	struct sock *sk = sock->sk;
+	struct x25_sock *x25;
 
-	अगर (!sk)
-		वापस 0;
+	if (!sk)
+		return 0;
 
 	x25 = x25_sk(sk);
 
 	sock_hold(sk);
 	lock_sock(sk);
-	चयन (x25->state) अणु
+	switch (x25->state) {
 
-		हाल X25_STATE_0:
-		हाल X25_STATE_2:
+		case X25_STATE_0:
+		case X25_STATE_2:
 			x25_disconnect(sk, 0, 0, 0);
 			__x25_destroy_socket(sk);
-			जाओ out;
+			goto out;
 
-		हाल X25_STATE_1:
-		हाल X25_STATE_3:
-		हाल X25_STATE_4:
+		case X25_STATE_1:
+		case X25_STATE_3:
+		case X25_STATE_4:
 			x25_clear_queues(sk);
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
-			x25_start_t23समयr(sk);
+			x25_write_internal(sk, X25_CLEAR_REQUEST);
+			x25_start_t23timer(sk);
 			x25->state = X25_STATE_2;
 			sk->sk_state	= TCP_CLOSE;
-			sk->sk_shutकरोwn	|= SEND_SHUTDOWN;
+			sk->sk_shutdown	|= SEND_SHUTDOWN;
 			sk->sk_state_change(sk);
 			sock_set_flag(sk, SOCK_DEAD);
 			sock_set_flag(sk, SOCK_DESTROY);
-			अवरोध;
+			break;
 
-		हाल X25_STATE_5:
-			x25_ग_लिखो_पूर्णांकernal(sk, X25_CLEAR_REQUEST);
+		case X25_STATE_5:
+			x25_write_internal(sk, X25_CLEAR_REQUEST);
 			x25_disconnect(sk, 0, 0, 0);
 			__x25_destroy_socket(sk);
-			जाओ out;
-	पूर्ण
+			goto out;
+	}
 
 	sock_orphan(sk);
 out:
 	release_sock(sk);
 	sock_put(sk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक x25_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sockaddr_x25 *addr = (काष्ठा sockaddr_x25 *)uaddr;
-	पूर्णांक len, i, rc = 0;
+static int x25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
+{
+	struct sock *sk = sock->sk;
+	struct sockaddr_x25 *addr = (struct sockaddr_x25 *)uaddr;
+	int len, i, rc = 0;
 
-	अगर (addr_len != माप(काष्ठा sockaddr_x25) ||
+	if (addr_len != sizeof(struct sockaddr_x25) ||
 	    addr->sx25_family != AF_X25 ||
-	    strnlen(addr->sx25_addr.x25_addr, X25_ADDR_LEN) == X25_ADDR_LEN) अणु
+	    strnlen(addr->sx25_addr.x25_addr, X25_ADDR_LEN) == X25_ADDR_LEN) {
 		rc = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* check क्रम the null_x25_address */
-	अगर (म_भेद(addr->sx25_addr.x25_addr, null_x25_address.x25_addr)) अणु
+	/* check for the null_x25_address */
+	if (strcmp(addr->sx25_addr.x25_addr, null_x25_address.x25_addr)) {
 
-		len = म_माप(addr->sx25_addr.x25_addr);
-		क्रम (i = 0; i < len; i++) अणु
-			अगर (!है_अंक(addr->sx25_addr.x25_addr[i])) अणु
+		len = strlen(addr->sx25_addr.x25_addr);
+		for (i = 0; i < len; i++) {
+			if (!isdigit(addr->sx25_addr.x25_addr[i])) {
 				rc = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 	lock_sock(sk);
-	अगर (sock_flag(sk, SOCK_ZAPPED)) अणु
+	if (sock_flag(sk, SOCK_ZAPPED)) {
 		x25_sk(sk)->source_addr = addr->sx25_addr;
 		x25_insert_socket(sk);
 		sock_reset_flag(sk, SOCK_ZAPPED);
-	पूर्ण अन्यथा अणु
+	} else {
 		rc = -EINVAL;
-	पूर्ण
+	}
 	release_sock(sk);
 	SOCK_DEBUG(sk, "x25_bind: socket is bound\n");
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक x25_रुको_क्रम_connection_establishment(काष्ठा sock *sk)
-अणु
-	DECLARE_WAITQUEUE(रुको, current);
-	पूर्णांक rc;
+static int x25_wait_for_connection_establishment(struct sock *sk)
+{
+	DECLARE_WAITQUEUE(wait, current);
+	int rc;
 
-	add_रुको_queue_exclusive(sk_sleep(sk), &रुको);
-	क्रम (;;) अणु
+	add_wait_queue_exclusive(sk_sleep(sk), &wait);
+	for (;;) {
 		__set_current_state(TASK_INTERRUPTIBLE);
 		rc = -ERESTARTSYS;
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (signal_pending(current))
+			break;
 		rc = sock_error(sk);
-		अगर (rc) अणु
+		if (rc) {
 			sk->sk_socket->state = SS_UNCONNECTED;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		rc = 0;
-		अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+		if (sk->sk_state != TCP_ESTABLISHED) {
 			release_sock(sk);
 			schedule();
 			lock_sock(sk);
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+		} else
+			break;
+	}
 	__set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस rc;
-पूर्ण
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return rc;
+}
 
-अटल पूर्णांक x25_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		       पूर्णांक addr_len, पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
-	काष्ठा sockaddr_x25 *addr = (काष्ठा sockaddr_x25 *)uaddr;
-	काष्ठा x25_route *rt;
-	पूर्णांक rc = 0;
+static int x25_connect(struct socket *sock, struct sockaddr *uaddr,
+		       int addr_len, int flags)
+{
+	struct sock *sk = sock->sk;
+	struct x25_sock *x25 = x25_sk(sk);
+	struct sockaddr_x25 *addr = (struct sockaddr_x25 *)uaddr;
+	struct x25_route *rt;
+	int rc = 0;
 
 	lock_sock(sk);
-	अगर (sk->sk_state == TCP_ESTABLISHED && sock->state == SS_CONNECTING) अणु
+	if (sk->sk_state == TCP_ESTABLISHED && sock->state == SS_CONNECTING) {
 		sock->state = SS_CONNECTED;
-		जाओ out; /* Connect completed during a ERESTARTSYS event */
-	पूर्ण
+		goto out; /* Connect completed during a ERESTARTSYS event */
+	}
 
 	rc = -ECONNREFUSED;
-	अगर (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) अणु
+	if (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) {
 		sock->state = SS_UNCONNECTED;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = -EISCONN;	/* No reconnect on a seqpacket socket */
-	अगर (sk->sk_state == TCP_ESTABLISHED)
-		जाओ out;
+	if (sk->sk_state == TCP_ESTABLISHED)
+		goto out;
 
-	rc = -EALREADY;	/* Do nothing अगर call is alपढ़ोy in progress */
-	अगर (sk->sk_state == TCP_SYN_SENT)
-		जाओ out;
+	rc = -EALREADY;	/* Do nothing if call is already in progress */
+	if (sk->sk_state == TCP_SYN_SENT)
+		goto out;
 
 	sk->sk_state   = TCP_CLOSE;
 	sock->state = SS_UNCONNECTED;
 
 	rc = -EINVAL;
-	अगर (addr_len != माप(काष्ठा sockaddr_x25) ||
+	if (addr_len != sizeof(struct sockaddr_x25) ||
 	    addr->sx25_family != AF_X25 ||
 	    strnlen(addr->sx25_addr.x25_addr, X25_ADDR_LEN) == X25_ADDR_LEN)
-		जाओ out;
+		goto out;
 
 	rc = -ENETUNREACH;
 	rt = x25_get_route(&addr->sx25_addr);
-	अगर (!rt)
-		जाओ out;
+	if (!rt)
+		goto out;
 
 	x25->neighbour = x25_get_neigh(rt->dev);
-	अगर (!x25->neighbour)
-		जाओ out_put_route;
+	if (!x25->neighbour)
+		goto out_put_route;
 
 	x25_limit_facilities(&x25->facilities, x25->neighbour);
 
 	x25->lci = x25_new_lci(x25->neighbour);
-	अगर (!x25->lci)
-		जाओ out_put_neigh;
+	if (!x25->lci)
+		goto out_put_neigh;
 
 	rc = -EINVAL;
-	अगर (sock_flag(sk, SOCK_ZAPPED)) /* Must bind first - स्वतःbinding करोes not work */
-		जाओ out_put_neigh;
+	if (sock_flag(sk, SOCK_ZAPPED)) /* Must bind first - autobinding does not work */
+		goto out_put_neigh;
 
-	अगर (!म_भेद(x25->source_addr.x25_addr, null_x25_address.x25_addr))
-		स_रखो(&x25->source_addr, '\0', X25_ADDR_LEN);
+	if (!strcmp(x25->source_addr.x25_addr, null_x25_address.x25_addr))
+		memset(&x25->source_addr, '\0', X25_ADDR_LEN);
 
 	x25->dest_addr = addr->sx25_addr;
 
@@ -801,142 +800,142 @@ out:
 
 	x25->state = X25_STATE_1;
 
-	x25_ग_लिखो_पूर्णांकernal(sk, X25_CALL_REQUEST);
+	x25_write_internal(sk, X25_CALL_REQUEST);
 
 	x25_start_heartbeat(sk);
-	x25_start_t21समयr(sk);
+	x25_start_t21timer(sk);
 
 	/* Now the loop */
 	rc = -EINPROGRESS;
-	अगर (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK))
-		जाओ out;
+	if (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK))
+		goto out;
 
-	rc = x25_रुको_क्रम_connection_establishment(sk);
-	अगर (rc)
-		जाओ out_put_neigh;
+	rc = x25_wait_for_connection_establishment(sk);
+	if (rc)
+		goto out_put_neigh;
 
 	sock->state = SS_CONNECTED;
 	rc = 0;
 out_put_neigh:
-	अगर (rc && x25->neighbour) अणु
-		पढ़ो_lock_bh(&x25_list_lock);
+	if (rc && x25->neighbour) {
+		read_lock_bh(&x25_list_lock);
 		x25_neigh_put(x25->neighbour);
-		x25->neighbour = शून्य;
-		पढ़ो_unlock_bh(&x25_list_lock);
+		x25->neighbour = NULL;
+		read_unlock_bh(&x25_list_lock);
 		x25->state = X25_STATE_0;
-	पूर्ण
+	}
 out_put_route:
 	x25_route_put(rt);
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक x25_रुको_क्रम_data(काष्ठा sock *sk, दीर्घ समयout)
-अणु
-	DECLARE_WAITQUEUE(रुको, current);
-	पूर्णांक rc = 0;
+static int x25_wait_for_data(struct sock *sk, long timeout)
+{
+	DECLARE_WAITQUEUE(wait, current);
+	int rc = 0;
 
-	add_रुको_queue_exclusive(sk_sleep(sk), &रुको);
-	क्रम (;;) अणु
+	add_wait_queue_exclusive(sk_sleep(sk), &wait);
+	for (;;) {
 		__set_current_state(TASK_INTERRUPTIBLE);
-		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
-			अवरोध;
+		if (sk->sk_shutdown & RCV_SHUTDOWN)
+			break;
 		rc = -ERESTARTSYS;
-		अगर (संकेत_pending(current))
-			अवरोध;
+		if (signal_pending(current))
+			break;
 		rc = -EAGAIN;
-		अगर (!समयout)
-			अवरोध;
+		if (!timeout)
+			break;
 		rc = 0;
-		अगर (skb_queue_empty(&sk->sk_receive_queue)) अणु
+		if (skb_queue_empty(&sk->sk_receive_queue)) {
 			release_sock(sk);
-			समयout = schedule_समयout(समयout);
+			timeout = schedule_timeout(timeout);
 			lock_sock(sk);
-		पूर्ण अन्यथा
-			अवरोध;
-	पूर्ण
+		} else
+			break;
+	}
 	__set_current_state(TASK_RUNNING);
-	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
-	वापस rc;
-पूर्ण
+	remove_wait_queue(sk_sleep(sk), &wait);
+	return rc;
+}
 
-अटल पूर्णांक x25_accept(काष्ठा socket *sock, काष्ठा socket *newsock, पूर्णांक flags,
+static int x25_accept(struct socket *sock, struct socket *newsock, int flags,
 		      bool kern)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा sock *newsk;
-	काष्ठा sk_buff *skb;
-	पूर्णांक rc = -EINVAL;
+{
+	struct sock *sk = sock->sk;
+	struct sock *newsk;
+	struct sk_buff *skb;
+	int rc = -EINVAL;
 
-	अगर (!sk)
-		जाओ out;
+	if (!sk)
+		goto out;
 
 	rc = -EOPNOTSUPP;
-	अगर (sk->sk_type != SOCK_SEQPACKET)
-		जाओ out;
+	if (sk->sk_type != SOCK_SEQPACKET)
+		goto out;
 
 	lock_sock(sk);
 	rc = -EINVAL;
-	अगर (sk->sk_state != TCP_LISTEN)
-		जाओ out2;
+	if (sk->sk_state != TCP_LISTEN)
+		goto out2;
 
-	rc = x25_रुको_क्रम_data(sk, sk->sk_rcvसमयo);
-	अगर (rc)
-		जाओ out2;
+	rc = x25_wait_for_data(sk, sk->sk_rcvtimeo);
+	if (rc)
+		goto out2;
 	skb = skb_dequeue(&sk->sk_receive_queue);
 	rc = -EINVAL;
-	अगर (!skb->sk)
-		जाओ out2;
+	if (!skb->sk)
+		goto out2;
 	newsk		 = skb->sk;
 	sock_graft(newsk, newsock);
 
 	/* Now attach up the new socket */
-	skb->sk = शून्य;
-	kमुक्त_skb(skb);
-	sk_acceptq_हटाओd(sk);
+	skb->sk = NULL;
+	kfree_skb(skb);
+	sk_acceptq_removed(sk);
 	newsock->state = SS_CONNECTED;
 	rc = 0;
 out2:
 	release_sock(sk);
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक x25_getname(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
-		       पूर्णांक peer)
-अणु
-	काष्ठा sockaddr_x25 *sx25 = (काष्ठा sockaddr_x25 *)uaddr;
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
-	पूर्णांक rc = 0;
+static int x25_getname(struct socket *sock, struct sockaddr *uaddr,
+		       int peer)
+{
+	struct sockaddr_x25 *sx25 = (struct sockaddr_x25 *)uaddr;
+	struct sock *sk = sock->sk;
+	struct x25_sock *x25 = x25_sk(sk);
+	int rc = 0;
 
-	अगर (peer) अणु
-		अगर (sk->sk_state != TCP_ESTABLISHED) अणु
+	if (peer) {
+		if (sk->sk_state != TCP_ESTABLISHED) {
 			rc = -ENOTCONN;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		sx25->sx25_addr = x25->dest_addr;
-	पूर्ण अन्यथा
+	} else
 		sx25->sx25_addr = x25->source_addr;
 
 	sx25->sx25_family = AF_X25;
-	rc = माप(*sx25);
+	rc = sizeof(*sx25);
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक x25_rx_call_request(काष्ठा sk_buff *skb, काष्ठा x25_neigh *nb,
-			अचिन्हित पूर्णांक lci)
-अणु
-	काष्ठा sock *sk;
-	काष्ठा sock *make;
-	काष्ठा x25_sock *makex25;
-	काष्ठा x25_address source_addr, dest_addr;
-	काष्ठा x25_facilities facilities;
-	काष्ठा x25_dte_facilities dte_facilities;
-	पूर्णांक len, addr_len, rc;
+int x25_rx_call_request(struct sk_buff *skb, struct x25_neigh *nb,
+			unsigned int lci)
+{
+	struct sock *sk;
+	struct sock *make;
+	struct x25_sock *makex25;
+	struct x25_address source_addr, dest_addr;
+	struct x25_facilities facilities;
+	struct x25_dte_facilities dte_facilities;
+	int len, addr_len, rc;
 
 	/*
 	 *	Remove the LCI and frame type.
@@ -945,77 +944,77 @@ out:
 
 	/*
 	 *	Extract the X.25 addresses and convert them to ASCII strings,
-	 *	and हटाओ them.
+	 *	and remove them.
 	 *
 	 *	Address block is mandatory in call request packets
 	 */
 	addr_len = x25_parse_address_block(skb, &source_addr, &dest_addr);
-	अगर (addr_len <= 0)
-		जाओ out_clear_request;
+	if (addr_len <= 0)
+		goto out_clear_request;
 	skb_pull(skb, addr_len);
 
 	/*
-	 *	Get the length of the facilities, skip past them क्रम the moment
+	 *	Get the length of the facilities, skip past them for the moment
 	 *	get the call user data because this is needed to determine
 	 *	the correct listener
 	 *
 	 *	Facilities length is mandatory in call request packets
 	 */
-	अगर (!pskb_may_pull(skb, 1))
-		जाओ out_clear_request;
+	if (!pskb_may_pull(skb, 1))
+		goto out_clear_request;
 	len = skb->data[0] + 1;
-	अगर (!pskb_may_pull(skb, len))
-		जाओ out_clear_request;
+	if (!pskb_may_pull(skb, len))
+		goto out_clear_request;
 	skb_pull(skb,len);
 
 	/*
 	 *	Ensure that the amount of call user data is valid.
 	 */
-	अगर (skb->len > X25_MAX_CUD_LEN)
-		जाओ out_clear_request;
+	if (skb->len > X25_MAX_CUD_LEN)
+		goto out_clear_request;
 
 	/*
 	 *	Get all the call user data so it can be used in
 	 *	x25_find_listener and skb_copy_from_linear_data up ahead.
 	 */
-	अगर (!pskb_may_pull(skb, skb->len))
-		जाओ out_clear_request;
+	if (!pskb_may_pull(skb, skb->len))
+		goto out_clear_request;
 
 	/*
-	 *	Find a listener क्रम the particular address/cud pair.
+	 *	Find a listener for the particular address/cud pair.
 	 */
 	sk = x25_find_listener(&source_addr,skb);
 	skb_push(skb,len);
 
-	अगर (sk != शून्य && sk_acceptq_is_full(sk)) अणु
-		जाओ out_sock_put;
-	पूर्ण
+	if (sk != NULL && sk_acceptq_is_full(sk)) {
+		goto out_sock_put;
+	}
 
 	/*
-	 *	We करोnt have any listeners क्रम this incoming call.
-	 *	Try क्रमwarding it.
+	 *	We dont have any listeners for this incoming call.
+	 *	Try forwarding it.
 	 */
-	अगर (sk == शून्य) अणु
+	if (sk == NULL) {
 		skb_push(skb, addr_len + X25_STD_MIN_LEN);
-		अगर (sysctl_x25_क्रमward &&
-				x25_क्रमward_call(&dest_addr, nb, skb, lci) > 0)
-		अणु
-			/* Call was क्रमwarded, करोnt process it any more */
-			kमुक्त_skb(skb);
+		if (sysctl_x25_forward &&
+				x25_forward_call(&dest_addr, nb, skb, lci) > 0)
+		{
+			/* Call was forwarded, dont process it any more */
+			kfree_skb(skb);
 			rc = 1;
-			जाओ out;
-		पूर्ण अन्यथा अणु
-			/* No listeners, can't क्रमward, clear the call */
-			जाओ out_clear_request;
-		पूर्ण
-	पूर्ण
+			goto out;
+		} else {
+			/* No listeners, can't forward, clear the call */
+			goto out_clear_request;
+		}
+	}
 
 	/*
 	 *	Try to reach a compromise on the requested facilities.
 	 */
 	len = x25_negotiate_facilities(skb, sk, &facilities, &dte_facilities);
-	अगर (len == -1)
-		जाओ out_sock_put;
+	if (len == -1)
+		goto out_sock_put;
 
 	/*
 	 * current neighbour/link might impose additional limits
@@ -1028,8 +1027,8 @@ out:
 	 *	Try to create a new socket.
 	 */
 	make = x25_make_new(sk);
-	अगर (!make)
-		जाओ out_sock_put;
+	if (!make)
+		goto out_sock_put;
 
 	/*
 	 *	Remove the facilities
@@ -1055,12 +1054,12 @@ out:
 	makex25->cudmatchlength = x25_sk(sk)->cudmatchlength;
 
 	/* Normally all calls are accepted immediately */
-	अगर (test_bit(X25_ACCPT_APPRV_FLAG, &makex25->flags)) अणु
-		x25_ग_लिखो_पूर्णांकernal(make, X25_CALL_ACCEPTED);
+	if (test_bit(X25_ACCPT_APPRV_FLAG, &makex25->flags)) {
+		x25_write_internal(make, X25_CALL_ACCEPTED);
 		makex25->state = X25_STATE_3;
-	पूर्ण अन्यथा अणु
+	} else {
 		makex25->state = X25_STATE_5;
-	पूर्ण
+	}
 
 	/*
 	 *	Incoming Call User Data.
@@ -1076,91 +1075,91 @@ out:
 
 	x25_start_heartbeat(make);
 
-	अगर (!sock_flag(sk, SOCK_DEAD))
-		sk->sk_data_पढ़ोy(sk);
+	if (!sock_flag(sk, SOCK_DEAD))
+		sk->sk_data_ready(sk);
 	rc = 1;
 	sock_put(sk);
 out:
-	वापस rc;
+	return rc;
 out_sock_put:
 	sock_put(sk);
 out_clear_request:
 	rc = 0;
 	x25_transmit_clear_request(nb, lci, 0x01);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक x25_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
-	DECLARE_SOCKADDR(काष्ठा sockaddr_x25 *, usx25, msg->msg_name);
-	काष्ठा sockaddr_x25 sx25;
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *यंत्रptr;
-	पूर्णांक noblock = msg->msg_flags & MSG_DONTWAIT;
-	माप_प्रकार size;
-	पूर्णांक qbit = 0, rc = -EINVAL;
+static int x25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
+{
+	struct sock *sk = sock->sk;
+	struct x25_sock *x25 = x25_sk(sk);
+	DECLARE_SOCKADDR(struct sockaddr_x25 *, usx25, msg->msg_name);
+	struct sockaddr_x25 sx25;
+	struct sk_buff *skb;
+	unsigned char *asmptr;
+	int noblock = msg->msg_flags & MSG_DONTWAIT;
+	size_t size;
+	int qbit = 0, rc = -EINVAL;
 
 	lock_sock(sk);
-	अगर (msg->msg_flags & ~(MSG_DONTWAIT|MSG_OOB|MSG_EOR|MSG_CMSG_COMPAT))
-		जाओ out;
+	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_OOB|MSG_EOR|MSG_CMSG_COMPAT))
+		goto out;
 
-	/* we currently करोn't support segmented records at the user पूर्णांकerface */
-	अगर (!(msg->msg_flags & (MSG_EOR|MSG_OOB)))
-		जाओ out;
+	/* we currently don't support segmented records at the user interface */
+	if (!(msg->msg_flags & (MSG_EOR|MSG_OOB)))
+		goto out;
 
 	rc = -EADDRNOTAVAIL;
-	अगर (sock_flag(sk, SOCK_ZAPPED))
-		जाओ out;
+	if (sock_flag(sk, SOCK_ZAPPED))
+		goto out;
 
 	rc = -EPIPE;
-	अगर (sk->sk_shutकरोwn & SEND_SHUTDOWN) अणु
+	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		send_sig(SIGPIPE, current, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	rc = -ENETUNREACH;
-	अगर (!x25->neighbour)
-		जाओ out;
+	if (!x25->neighbour)
+		goto out;
 
-	अगर (usx25) अणु
+	if (usx25) {
 		rc = -EINVAL;
-		अगर (msg->msg_namelen < माप(sx25))
-			जाओ out;
-		स_नकल(&sx25, usx25, माप(sx25));
+		if (msg->msg_namelen < sizeof(sx25))
+			goto out;
+		memcpy(&sx25, usx25, sizeof(sx25));
 		rc = -EISCONN;
-		अगर (म_भेद(x25->dest_addr.x25_addr, sx25.sx25_addr.x25_addr))
-			जाओ out;
+		if (strcmp(x25->dest_addr.x25_addr, sx25.sx25_addr.x25_addr))
+			goto out;
 		rc = -EINVAL;
-		अगर (sx25.sx25_family != AF_X25)
-			जाओ out;
-	पूर्ण अन्यथा अणु
+		if (sx25.sx25_family != AF_X25)
+			goto out;
+	} else {
 		/*
-		 *	FIXME 1003.1g - अगर the socket is like this because
-		 *	it has become बंदd (not started बंदd) we ought
+		 *	FIXME 1003.1g - if the socket is like this because
+		 *	it has become closed (not started closed) we ought
 		 *	to SIGPIPE, EPIPE;
 		 */
 		rc = -ENOTCONN;
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			जाओ out;
+		if (sk->sk_state != TCP_ESTABLISHED)
+			goto out;
 
 		sx25.sx25_family = AF_X25;
 		sx25.sx25_addr   = x25->dest_addr;
-	पूर्ण
+	}
 
 	/* Sanity check the packet size */
-	अगर (len > 65535) अणु
+	if (len > 65535) {
 		rc = -EMSGSIZE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	SOCK_DEBUG(sk, "x25_sendmsg: sendto: Addresses built.\n");
 
 	/* Build a packet */
 	SOCK_DEBUG(sk, "x25_sendmsg: sendto: building packet.\n");
 
-	अगर ((msg->msg_flags & MSG_OOB) && len > 32)
+	if ((msg->msg_flags & MSG_OOB) && len > 32)
 		len = 32;
 
 	size = len + X25_MAX_L2_LEN + X25_EXT_MIN_LEN;
@@ -1168,8 +1167,8 @@ out_clear_request:
 	release_sock(sk);
 	skb = sock_alloc_send_skb(sk, size, noblock, &rc);
 	lock_sock(sk);
-	अगर (!skb)
-		जाओ out;
+	if (!skb)
+		goto out;
 	X25_SKB_CB(skb)->flags = msg->msg_flags;
 
 	skb_reserve(skb, X25_MAX_L2_LEN + X25_EXT_MIN_LEN);
@@ -1182,551 +1181,551 @@ out_clear_request:
 	skb_reset_transport_header(skb);
 	skb_put(skb, len);
 
-	rc = स_नकल_from_msg(skb_transport_header(skb), msg, len);
-	अगर (rc)
-		जाओ out_kमुक्त_skb;
+	rc = memcpy_from_msg(skb_transport_header(skb), msg, len);
+	if (rc)
+		goto out_kfree_skb;
 
 	/*
-	 *	If the Q BIT Include socket option is in क्रमce, the first
+	 *	If the Q BIT Include socket option is in force, the first
 	 *	byte of the user data is the logical value of the Q Bit.
 	 */
-	अगर (test_bit(X25_Q_BIT_FLAG, &x25->flags)) अणु
-		अगर (!pskb_may_pull(skb, 1))
-			जाओ out_kमुक्त_skb;
+	if (test_bit(X25_Q_BIT_FLAG, &x25->flags)) {
+		if (!pskb_may_pull(skb, 1))
+			goto out_kfree_skb;
 
 		qbit = skb->data[0];
 		skb_pull(skb, 1);
-	पूर्ण
+	}
 
 	/*
-	 *	Push करोwn the X.25 header
+	 *	Push down the X.25 header
 	 */
 	SOCK_DEBUG(sk, "x25_sendmsg: Building X.25 Header.\n");
 
-	अगर (msg->msg_flags & MSG_OOB) अणु
-		अगर (x25->neighbour->extended) अणु
-			यंत्रptr    = skb_push(skb, X25_STD_MIN_LEN);
-			*यंत्रptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_EXTSEQ;
-			*यंत्रptr++ = (x25->lci >> 0) & 0xFF;
-			*यंत्रptr++ = X25_INTERRUPT;
-		पूर्ण अन्यथा अणु
-			यंत्रptr    = skb_push(skb, X25_STD_MIN_LEN);
-			*यंत्रptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_STDSEQ;
-			*यंत्रptr++ = (x25->lci >> 0) & 0xFF;
-			*यंत्रptr++ = X25_INTERRUPT;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (x25->neighbour->extended) अणु
+	if (msg->msg_flags & MSG_OOB) {
+		if (x25->neighbour->extended) {
+			asmptr    = skb_push(skb, X25_STD_MIN_LEN);
+			*asmptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_EXTSEQ;
+			*asmptr++ = (x25->lci >> 0) & 0xFF;
+			*asmptr++ = X25_INTERRUPT;
+		} else {
+			asmptr    = skb_push(skb, X25_STD_MIN_LEN);
+			*asmptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_STDSEQ;
+			*asmptr++ = (x25->lci >> 0) & 0xFF;
+			*asmptr++ = X25_INTERRUPT;
+		}
+	} else {
+		if (x25->neighbour->extended) {
 			/* Build an Extended X.25 header */
-			यंत्रptr    = skb_push(skb, X25_EXT_MIN_LEN);
-			*यंत्रptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_EXTSEQ;
-			*यंत्रptr++ = (x25->lci >> 0) & 0xFF;
-			*यंत्रptr++ = X25_DATA;
-			*यंत्रptr++ = X25_DATA;
-		पूर्ण अन्यथा अणु
+			asmptr    = skb_push(skb, X25_EXT_MIN_LEN);
+			*asmptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_EXTSEQ;
+			*asmptr++ = (x25->lci >> 0) & 0xFF;
+			*asmptr++ = X25_DATA;
+			*asmptr++ = X25_DATA;
+		} else {
 			/* Build an Standard X.25 header */
-			यंत्रptr    = skb_push(skb, X25_STD_MIN_LEN);
-			*यंत्रptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_STDSEQ;
-			*यंत्रptr++ = (x25->lci >> 0) & 0xFF;
-			*यंत्रptr++ = X25_DATA;
-		पूर्ण
+			asmptr    = skb_push(skb, X25_STD_MIN_LEN);
+			*asmptr++ = ((x25->lci >> 8) & 0x0F) | X25_GFI_STDSEQ;
+			*asmptr++ = (x25->lci >> 0) & 0xFF;
+			*asmptr++ = X25_DATA;
+		}
 
-		अगर (qbit)
+		if (qbit)
 			skb->data[0] |= X25_Q_BIT;
-	पूर्ण
+	}
 
 	SOCK_DEBUG(sk, "x25_sendmsg: Built header.\n");
 	SOCK_DEBUG(sk, "x25_sendmsg: Transmitting buffer\n");
 
 	rc = -ENOTCONN;
-	अगर (sk->sk_state != TCP_ESTABLISHED)
-		जाओ out_kमुक्त_skb;
+	if (sk->sk_state != TCP_ESTABLISHED)
+		goto out_kfree_skb;
 
-	अगर (msg->msg_flags & MSG_OOB)
-		skb_queue_tail(&x25->पूर्णांकerrupt_out_queue, skb);
-	अन्यथा अणु
+	if (msg->msg_flags & MSG_OOB)
+		skb_queue_tail(&x25->interrupt_out_queue, skb);
+	else {
 		rc = x25_output(sk, skb);
 		len = rc;
-		अगर (rc < 0)
-			kमुक्त_skb(skb);
-		अन्यथा अगर (test_bit(X25_Q_BIT_FLAG, &x25->flags))
+		if (rc < 0)
+			kfree_skb(skb);
+		else if (test_bit(X25_Q_BIT_FLAG, &x25->flags))
 			len++;
-	पूर्ण
+	}
 
 	x25_kick(sk);
 	rc = len;
 out:
 	release_sock(sk);
-	वापस rc;
-out_kमुक्त_skb:
-	kमुक्त_skb(skb);
-	जाओ out;
-पूर्ण
+	return rc;
+out_kfree_skb:
+	kfree_skb(skb);
+	goto out;
+}
 
 
-अटल पूर्णांक x25_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
-		       पूर्णांक flags)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
-	DECLARE_SOCKADDR(काष्ठा sockaddr_x25 *, sx25, msg->msg_name);
-	माप_प्रकार copied;
-	पूर्णांक qbit, header_len;
-	काष्ठा sk_buff *skb;
-	अचिन्हित अक्षर *यंत्रptr;
-	पूर्णांक rc = -ENOTCONN;
+static int x25_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+		       int flags)
+{
+	struct sock *sk = sock->sk;
+	struct x25_sock *x25 = x25_sk(sk);
+	DECLARE_SOCKADDR(struct sockaddr_x25 *, sx25, msg->msg_name);
+	size_t copied;
+	int qbit, header_len;
+	struct sk_buff *skb;
+	unsigned char *asmptr;
+	int rc = -ENOTCONN;
 
 	lock_sock(sk);
 
-	अगर (x25->neighbour == शून्य)
-		जाओ out;
+	if (x25->neighbour == NULL)
+		goto out;
 
 	header_len = x25->neighbour->extended ?
 		X25_EXT_MIN_LEN : X25_STD_MIN_LEN;
 
 	/*
-	 * This works क्रम seqpacket too. The receiver has ordered the queue क्रम
-	 * us! We करो one quick check first though
+	 * This works for seqpacket too. The receiver has ordered the queue for
+	 * us! We do one quick check first though
 	 */
-	अगर (sk->sk_state != TCP_ESTABLISHED)
-		जाओ out;
+	if (sk->sk_state != TCP_ESTABLISHED)
+		goto out;
 
-	अगर (flags & MSG_OOB) अणु
+	if (flags & MSG_OOB) {
 		rc = -EINVAL;
-		अगर (sock_flag(sk, SOCK_URGINLINE) ||
-		    !skb_peek(&x25->पूर्णांकerrupt_in_queue))
-			जाओ out;
+		if (sock_flag(sk, SOCK_URGINLINE) ||
+		    !skb_peek(&x25->interrupt_in_queue))
+			goto out;
 
-		skb = skb_dequeue(&x25->पूर्णांकerrupt_in_queue);
+		skb = skb_dequeue(&x25->interrupt_in_queue);
 
-		अगर (!pskb_may_pull(skb, X25_STD_MIN_LEN))
-			जाओ out_मुक्त_dgram;
+		if (!pskb_may_pull(skb, X25_STD_MIN_LEN))
+			goto out_free_dgram;
 
 		skb_pull(skb, X25_STD_MIN_LEN);
 
 		/*
-		 *	No Q bit inक्रमmation on Interrupt data.
+		 *	No Q bit information on Interrupt data.
 		 */
-		अगर (test_bit(X25_Q_BIT_FLAG, &x25->flags)) अणु
-			यंत्रptr  = skb_push(skb, 1);
-			*यंत्रptr = 0x00;
-		पूर्ण
+		if (test_bit(X25_Q_BIT_FLAG, &x25->flags)) {
+			asmptr  = skb_push(skb, 1);
+			*asmptr = 0x00;
+		}
 
 		msg->msg_flags |= MSG_OOB;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Now we can treat all alike */
 		release_sock(sk);
 		skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT,
 					flags & MSG_DONTWAIT, &rc);
 		lock_sock(sk);
-		अगर (!skb)
-			जाओ out;
+		if (!skb)
+			goto out;
 
-		अगर (!pskb_may_pull(skb, header_len))
-			जाओ out_मुक्त_dgram;
+		if (!pskb_may_pull(skb, header_len))
+			goto out_free_dgram;
 
 		qbit = (skb->data[0] & X25_Q_BIT) == X25_Q_BIT;
 
 		skb_pull(skb, header_len);
 
-		अगर (test_bit(X25_Q_BIT_FLAG, &x25->flags)) अणु
-			यंत्रptr  = skb_push(skb, 1);
-			*यंत्रptr = qbit;
-		पूर्ण
-	पूर्ण
+		if (test_bit(X25_Q_BIT_FLAG, &x25->flags)) {
+			asmptr  = skb_push(skb, 1);
+			*asmptr = qbit;
+		}
+	}
 
 	skb_reset_transport_header(skb);
 	copied = skb->len;
 
-	अगर (copied > size) अणु
+	if (copied > size) {
 		copied = size;
 		msg->msg_flags |= MSG_TRUNC;
-	पूर्ण
+	}
 
 	/* Currently, each datagram always contains a complete record */
 	msg->msg_flags |= MSG_EOR;
 
 	rc = skb_copy_datagram_msg(skb, 0, msg, copied);
-	अगर (rc)
-		जाओ out_मुक्त_dgram;
+	if (rc)
+		goto out_free_dgram;
 
-	अगर (sx25) अणु
+	if (sx25) {
 		sx25->sx25_family = AF_X25;
 		sx25->sx25_addr   = x25->dest_addr;
-		msg->msg_namelen = माप(*sx25);
-	पूर्ण
+		msg->msg_namelen = sizeof(*sx25);
+	}
 
 	x25_check_rbuf(sk);
 	rc = copied;
-out_मुक्त_dgram:
-	skb_मुक्त_datagram(sk, skb);
+out_free_dgram:
+	skb_free_datagram(sk, skb);
 out:
 	release_sock(sk);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 
-अटल पूर्णांक x25_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा sock *sk = sock->sk;
-	काष्ठा x25_sock *x25 = x25_sk(sk);
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक rc;
+static int x25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+{
+	struct sock *sk = sock->sk;
+	struct x25_sock *x25 = x25_sk(sk);
+	void __user *argp = (void __user *)arg;
+	int rc;
 
-	चयन (cmd) अणु
-	हाल TIOCOUTQ: अणु
-		पूर्णांक amount;
+	switch (cmd) {
+	case TIOCOUTQ: {
+		int amount;
 
 		amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
-		अगर (amount < 0)
+		if (amount < 0)
 			amount = 0;
-		rc = put_user(amount, (अचिन्हित पूर्णांक __user *)argp);
-		अवरोध;
-	पूर्ण
+		rc = put_user(amount, (unsigned int __user *)argp);
+		break;
+	}
 
-	हाल TIOCINQ: अणु
-		काष्ठा sk_buff *skb;
-		पूर्णांक amount = 0;
+	case TIOCINQ: {
+		struct sk_buff *skb;
+		int amount = 0;
 		/*
-		 * These two are safe on a single CPU प्रणाली as
+		 * These two are safe on a single CPU system as
 		 * only user tasks fiddle here
 		 */
 		lock_sock(sk);
-		अगर ((skb = skb_peek(&sk->sk_receive_queue)) != शून्य)
+		if ((skb = skb_peek(&sk->sk_receive_queue)) != NULL)
 			amount = skb->len;
 		release_sock(sk);
-		rc = put_user(amount, (अचिन्हित पूर्णांक __user *)argp);
-		अवरोध;
-	पूर्ण
+		rc = put_user(amount, (unsigned int __user *)argp);
+		break;
+	}
 
-	हाल SIOCGIFADDR:
-	हाल SIOCSIFADDR:
-	हाल SIOCGIFDSTADDR:
-	हाल SIOCSIFDSTADDR:
-	हाल SIOCGIFBRDADDR:
-	हाल SIOCSIFBRDADDR:
-	हाल SIOCGIFNETMASK:
-	हाल SIOCSIFNETMASK:
-	हाल SIOCGIFMETRIC:
-	हाल SIOCSIFMETRIC:
+	case SIOCGIFADDR:
+	case SIOCSIFADDR:
+	case SIOCGIFDSTADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCGIFBRDADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCGIFNETMASK:
+	case SIOCSIFNETMASK:
+	case SIOCGIFMETRIC:
+	case SIOCSIFMETRIC:
 		rc = -EINVAL;
-		अवरोध;
-	हाल SIOCADDRT:
-	हाल SIOCDELRT:
+		break;
+	case SIOCADDRT:
+	case SIOCDELRT:
 		rc = -EPERM;
-		अगर (!capable(CAP_NET_ADMIN))
-			अवरोध;
+		if (!capable(CAP_NET_ADMIN))
+			break;
 		rc = x25_route_ioctl(cmd, argp);
-		अवरोध;
-	हाल SIOCX25GSUBSCRIP:
+		break;
+	case SIOCX25GSUBSCRIP:
 		rc = x25_subscr_ioctl(cmd, argp);
-		अवरोध;
-	हाल SIOCX25SSUBSCRIP:
+		break;
+	case SIOCX25SSUBSCRIP:
 		rc = -EPERM;
-		अगर (!capable(CAP_NET_ADMIN))
-			अवरोध;
+		if (!capable(CAP_NET_ADMIN))
+			break;
 		rc = x25_subscr_ioctl(cmd, argp);
-		अवरोध;
-	हाल SIOCX25GFACILITIES: अणु
+		break;
+	case SIOCX25GFACILITIES: {
 		lock_sock(sk);
 		rc = copy_to_user(argp, &x25->facilities,
-				  माप(x25->facilities))
+				  sizeof(x25->facilities))
 			? -EFAULT : 0;
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25SFACILITIES: अणु
-		काष्ठा x25_facilities facilities;
+	case SIOCX25SFACILITIES: {
+		struct x25_facilities facilities;
 		rc = -EFAULT;
-		अगर (copy_from_user(&facilities, argp, माप(facilities)))
-			अवरोध;
+		if (copy_from_user(&facilities, argp, sizeof(facilities)))
+			break;
 		rc = -EINVAL;
 		lock_sock(sk);
-		अगर (sk->sk_state != TCP_LISTEN &&
+		if (sk->sk_state != TCP_LISTEN &&
 		    sk->sk_state != TCP_CLOSE)
-			जाओ out_fac_release;
-		अगर (facilities.pacsize_in < X25_PS16 ||
+			goto out_fac_release;
+		if (facilities.pacsize_in < X25_PS16 ||
 		    facilities.pacsize_in > X25_PS4096)
-			जाओ out_fac_release;
-		अगर (facilities.pacsize_out < X25_PS16 ||
+			goto out_fac_release;
+		if (facilities.pacsize_out < X25_PS16 ||
 		    facilities.pacsize_out > X25_PS4096)
-			जाओ out_fac_release;
-		अगर (facilities.winsize_in < 1 ||
+			goto out_fac_release;
+		if (facilities.winsize_in < 1 ||
 		    facilities.winsize_in > 127)
-			जाओ out_fac_release;
-		अगर (facilities.throughput) अणु
-			पूर्णांक out = facilities.throughput & 0xf0;
-			पूर्णांक in  = facilities.throughput & 0x0f;
-			अगर (!out)
+			goto out_fac_release;
+		if (facilities.throughput) {
+			int out = facilities.throughput & 0xf0;
+			int in  = facilities.throughput & 0x0f;
+			if (!out)
 				facilities.throughput |=
 					X25_DEFAULT_THROUGHPUT << 4;
-			अन्यथा अगर (out < 0x30 || out > 0xD0)
-				जाओ out_fac_release;
-			अगर (!in)
+			else if (out < 0x30 || out > 0xD0)
+				goto out_fac_release;
+			if (!in)
 				facilities.throughput |=
 					X25_DEFAULT_THROUGHPUT;
-			अन्यथा अगर (in < 0x03 || in > 0x0D)
-				जाओ out_fac_release;
-		पूर्ण
-		अगर (facilities.reverse &&
+			else if (in < 0x03 || in > 0x0D)
+				goto out_fac_release;
+		}
+		if (facilities.reverse &&
 		    (facilities.reverse & 0x81) != 0x81)
-			जाओ out_fac_release;
+			goto out_fac_release;
 		x25->facilities = facilities;
 		rc = 0;
 out_fac_release:
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25GDTEFACILITIES: अणु
+	case SIOCX25GDTEFACILITIES: {
 		lock_sock(sk);
 		rc = copy_to_user(argp, &x25->dte_facilities,
-				  माप(x25->dte_facilities));
+				  sizeof(x25->dte_facilities));
 		release_sock(sk);
-		अगर (rc)
+		if (rc)
 			rc = -EFAULT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25SDTEFACILITIES: अणु
-		काष्ठा x25_dte_facilities dtefacs;
+	case SIOCX25SDTEFACILITIES: {
+		struct x25_dte_facilities dtefacs;
 		rc = -EFAULT;
-		अगर (copy_from_user(&dtefacs, argp, माप(dtefacs)))
-			अवरोध;
+		if (copy_from_user(&dtefacs, argp, sizeof(dtefacs)))
+			break;
 		rc = -EINVAL;
 		lock_sock(sk);
-		अगर (sk->sk_state != TCP_LISTEN &&
+		if (sk->sk_state != TCP_LISTEN &&
 		    sk->sk_state != TCP_CLOSE)
-			जाओ out_dtefac_release;
-		अगर (dtefacs.calling_len > X25_MAX_AE_LEN)
-			जाओ out_dtefac_release;
-		अगर (dtefacs.called_len > X25_MAX_AE_LEN)
-			जाओ out_dtefac_release;
+			goto out_dtefac_release;
+		if (dtefacs.calling_len > X25_MAX_AE_LEN)
+			goto out_dtefac_release;
+		if (dtefacs.called_len > X25_MAX_AE_LEN)
+			goto out_dtefac_release;
 		x25->dte_facilities = dtefacs;
 		rc = 0;
 out_dtefac_release:
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25GCALLUSERDATA: अणु
+	case SIOCX25GCALLUSERDATA: {
 		lock_sock(sk);
 		rc = copy_to_user(argp, &x25->calluserdata,
-				  माप(x25->calluserdata))
+				  sizeof(x25->calluserdata))
 			? -EFAULT : 0;
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25SCALLUSERDATA: अणु
-		काष्ठा x25_calluserdata calluserdata;
+	case SIOCX25SCALLUSERDATA: {
+		struct x25_calluserdata calluserdata;
 
 		rc = -EFAULT;
-		अगर (copy_from_user(&calluserdata, argp, माप(calluserdata)))
-			अवरोध;
+		if (copy_from_user(&calluserdata, argp, sizeof(calluserdata)))
+			break;
 		rc = -EINVAL;
-		अगर (calluserdata.cudlength > X25_MAX_CUD_LEN)
-			अवरोध;
+		if (calluserdata.cudlength > X25_MAX_CUD_LEN)
+			break;
 		lock_sock(sk);
 		x25->calluserdata = calluserdata;
 		release_sock(sk);
 		rc = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25GCAUSEDIAG: अणु
+	case SIOCX25GCAUSEDIAG: {
 		lock_sock(sk);
-		rc = copy_to_user(argp, &x25->causediag, माप(x25->causediag))
+		rc = copy_to_user(argp, &x25->causediag, sizeof(x25->causediag))
 			? -EFAULT : 0;
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25SCAUSEDIAG: अणु
-		काष्ठा x25_causediag causediag;
+	case SIOCX25SCAUSEDIAG: {
+		struct x25_causediag causediag;
 		rc = -EFAULT;
-		अगर (copy_from_user(&causediag, argp, माप(causediag)))
-			अवरोध;
+		if (copy_from_user(&causediag, argp, sizeof(causediag)))
+			break;
 		lock_sock(sk);
 		x25->causediag = causediag;
 		release_sock(sk);
 		rc = 0;
-		अवरोध;
+		break;
 
-	पूर्ण
+	}
 
-	हाल SIOCX25SCUDMATCHLEN: अणु
-		काष्ठा x25_subaddr sub_addr;
+	case SIOCX25SCUDMATCHLEN: {
+		struct x25_subaddr sub_addr;
 		rc = -EINVAL;
 		lock_sock(sk);
-		अगर(sk->sk_state != TCP_CLOSE)
-			जाओ out_cud_release;
+		if(sk->sk_state != TCP_CLOSE)
+			goto out_cud_release;
 		rc = -EFAULT;
-		अगर (copy_from_user(&sub_addr, argp,
-				   माप(sub_addr)))
-			जाओ out_cud_release;
+		if (copy_from_user(&sub_addr, argp,
+				   sizeof(sub_addr)))
+			goto out_cud_release;
 		rc = -EINVAL;
-		अगर (sub_addr.cudmatchlength > X25_MAX_CUD_LEN)
-			जाओ out_cud_release;
+		if (sub_addr.cudmatchlength > X25_MAX_CUD_LEN)
+			goto out_cud_release;
 		x25->cudmatchlength = sub_addr.cudmatchlength;
 		rc = 0;
 out_cud_release:
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25CALLACCPTAPPRV: अणु
+	case SIOCX25CALLACCPTAPPRV: {
 		rc = -EINVAL;
 		lock_sock(sk);
-		अगर (sk->sk_state == TCP_CLOSE) अणु
+		if (sk->sk_state == TCP_CLOSE) {
 			clear_bit(X25_ACCPT_APPRV_FLAG, &x25->flags);
 			rc = 0;
-		पूर्ण
+		}
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	हाल SIOCX25SENDCALLACCPT:  अणु
+	case SIOCX25SENDCALLACCPT:  {
 		rc = -EINVAL;
 		lock_sock(sk);
-		अगर (sk->sk_state != TCP_ESTABLISHED)
-			जाओ out_sendcallaccpt_release;
+		if (sk->sk_state != TCP_ESTABLISHED)
+			goto out_sendcallaccpt_release;
 		/* must call accptapprv above */
-		अगर (test_bit(X25_ACCPT_APPRV_FLAG, &x25->flags))
-			जाओ out_sendcallaccpt_release;
-		x25_ग_लिखो_पूर्णांकernal(sk, X25_CALL_ACCEPTED);
+		if (test_bit(X25_ACCPT_APPRV_FLAG, &x25->flags))
+			goto out_sendcallaccpt_release;
+		x25_write_internal(sk, X25_CALL_ACCEPTED);
 		x25->state = X25_STATE_3;
 		rc = 0;
 out_sendcallaccpt_release:
 		release_sock(sk);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	शेष:
+	default:
 		rc = -ENOIOCTLCMD;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल स्थिर काष्ठा net_proto_family x25_family_ops = अणु
+static const struct net_proto_family x25_family_ops = {
 	.family =	AF_X25,
 	.create =	x25_create,
 	.owner	=	THIS_MODULE,
-पूर्ण;
+};
 
-#अगर_घोषित CONFIG_COMPAT
-अटल पूर्णांक compat_x25_subscr_ioctl(अचिन्हित पूर्णांक cmd,
-		काष्ठा compat_x25_subscrip_काष्ठा __user *x25_subscr32)
-अणु
-	काष्ठा compat_x25_subscrip_काष्ठा x25_subscr;
-	काष्ठा x25_neigh *nb;
-	काष्ठा net_device *dev;
-	पूर्णांक rc = -EINVAL;
+#ifdef CONFIG_COMPAT
+static int compat_x25_subscr_ioctl(unsigned int cmd,
+		struct compat_x25_subscrip_struct __user *x25_subscr32)
+{
+	struct compat_x25_subscrip_struct x25_subscr;
+	struct x25_neigh *nb;
+	struct net_device *dev;
+	int rc = -EINVAL;
 
 	rc = -EFAULT;
-	अगर (copy_from_user(&x25_subscr, x25_subscr32, माप(*x25_subscr32)))
-		जाओ out;
+	if (copy_from_user(&x25_subscr, x25_subscr32, sizeof(*x25_subscr32)))
+		goto out;
 
 	rc = -EINVAL;
 	dev = x25_dev_get(x25_subscr.device);
-	अगर (dev == शून्य)
-		जाओ out;
+	if (dev == NULL)
+		goto out;
 
 	nb = x25_get_neigh(dev);
-	अगर (nb == शून्य)
-		जाओ out_dev_put;
+	if (nb == NULL)
+		goto out_dev_put;
 
 	dev_put(dev);
 
-	अगर (cmd == SIOCX25GSUBSCRIP) अणु
-		पढ़ो_lock_bh(&x25_neigh_list_lock);
+	if (cmd == SIOCX25GSUBSCRIP) {
+		read_lock_bh(&x25_neigh_list_lock);
 		x25_subscr.extended = nb->extended;
 		x25_subscr.global_facil_mask = nb->global_facil_mask;
-		पढ़ो_unlock_bh(&x25_neigh_list_lock);
+		read_unlock_bh(&x25_neigh_list_lock);
 		rc = copy_to_user(x25_subscr32, &x25_subscr,
-				माप(*x25_subscr32)) ? -EFAULT : 0;
-	पूर्ण अन्यथा अणु
+				sizeof(*x25_subscr32)) ? -EFAULT : 0;
+	} else {
 		rc = -EINVAL;
-		अगर (x25_subscr.extended == 0 || x25_subscr.extended == 1) अणु
+		if (x25_subscr.extended == 0 || x25_subscr.extended == 1) {
 			rc = 0;
-			ग_लिखो_lock_bh(&x25_neigh_list_lock);
+			write_lock_bh(&x25_neigh_list_lock);
 			nb->extended = x25_subscr.extended;
 			nb->global_facil_mask = x25_subscr.global_facil_mask;
-			ग_लिखो_unlock_bh(&x25_neigh_list_lock);
-		पूर्ण
-	पूर्ण
+			write_unlock_bh(&x25_neigh_list_lock);
+		}
+	}
 	x25_neigh_put(nb);
 out:
-	वापस rc;
+	return rc;
 out_dev_put:
 	dev_put(dev);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक compat_x25_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
-				अचिन्हित दीर्घ arg)
-अणु
-	व्योम __user *argp = compat_ptr(arg);
-	पूर्णांक rc = -ENOIOCTLCMD;
+static int compat_x25_ioctl(struct socket *sock, unsigned int cmd,
+				unsigned long arg)
+{
+	void __user *argp = compat_ptr(arg);
+	int rc = -ENOIOCTLCMD;
 
-	चयन(cmd) अणु
-	हाल TIOCOUTQ:
-	हाल TIOCINQ:
-		rc = x25_ioctl(sock, cmd, (अचिन्हित दीर्घ)argp);
-		अवरोध;
-	हाल SIOCGIFADDR:
-	हाल SIOCSIFADDR:
-	हाल SIOCGIFDSTADDR:
-	हाल SIOCSIFDSTADDR:
-	हाल SIOCGIFBRDADDR:
-	हाल SIOCSIFBRDADDR:
-	हाल SIOCGIFNETMASK:
-	हाल SIOCSIFNETMASK:
-	हाल SIOCGIFMETRIC:
-	हाल SIOCSIFMETRIC:
+	switch(cmd) {
+	case TIOCOUTQ:
+	case TIOCINQ:
+		rc = x25_ioctl(sock, cmd, (unsigned long)argp);
+		break;
+	case SIOCGIFADDR:
+	case SIOCSIFADDR:
+	case SIOCGIFDSTADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCGIFBRDADDR:
+	case SIOCSIFBRDADDR:
+	case SIOCGIFNETMASK:
+	case SIOCSIFNETMASK:
+	case SIOCGIFMETRIC:
+	case SIOCSIFMETRIC:
 		rc = -EINVAL;
-		अवरोध;
-	हाल SIOCADDRT:
-	हाल SIOCDELRT:
+		break;
+	case SIOCADDRT:
+	case SIOCDELRT:
 		rc = -EPERM;
-		अगर (!capable(CAP_NET_ADMIN))
-			अवरोध;
+		if (!capable(CAP_NET_ADMIN))
+			break;
 		rc = x25_route_ioctl(cmd, argp);
-		अवरोध;
-	हाल SIOCX25GSUBSCRIP:
+		break;
+	case SIOCX25GSUBSCRIP:
 		rc = compat_x25_subscr_ioctl(cmd, argp);
-		अवरोध;
-	हाल SIOCX25SSUBSCRIP:
+		break;
+	case SIOCX25SSUBSCRIP:
 		rc = -EPERM;
-		अगर (!capable(CAP_NET_ADMIN))
-			अवरोध;
+		if (!capable(CAP_NET_ADMIN))
+			break;
 		rc = compat_x25_subscr_ioctl(cmd, argp);
-		अवरोध;
-	हाल SIOCX25GFACILITIES:
-	हाल SIOCX25SFACILITIES:
-	हाल SIOCX25GDTEFACILITIES:
-	हाल SIOCX25SDTEFACILITIES:
-	हाल SIOCX25GCALLUSERDATA:
-	हाल SIOCX25SCALLUSERDATA:
-	हाल SIOCX25GCAUSEDIAG:
-	हाल SIOCX25SCAUSEDIAG:
-	हाल SIOCX25SCUDMATCHLEN:
-	हाल SIOCX25CALLACCPTAPPRV:
-	हाल SIOCX25SENDCALLACCPT:
-		rc = x25_ioctl(sock, cmd, (अचिन्हित दीर्घ)argp);
-		अवरोध;
-	शेष:
+		break;
+	case SIOCX25GFACILITIES:
+	case SIOCX25SFACILITIES:
+	case SIOCX25GDTEFACILITIES:
+	case SIOCX25SDTEFACILITIES:
+	case SIOCX25GCALLUSERDATA:
+	case SIOCX25SCALLUSERDATA:
+	case SIOCX25GCAUSEDIAG:
+	case SIOCX25SCAUSEDIAG:
+	case SIOCX25SCUDMATCHLEN:
+	case SIOCX25CALLACCPTAPPRV:
+	case SIOCX25SENDCALLACCPT:
+		rc = x25_ioctl(sock, cmd, (unsigned long)argp);
+		break;
+	default:
 		rc = -ENOIOCTLCMD;
-		अवरोध;
-	पूर्ण
-	वापस rc;
-पूर्ण
-#पूर्ण_अगर
+		break;
+	}
+	return rc;
+}
+#endif
 
-अटल स्थिर काष्ठा proto_ops x25_proto_ops = अणु
+static const struct proto_ops x25_proto_ops = {
 	.family =	AF_X25,
 	.owner =	THIS_MODULE,
 	.release =	x25_release,
@@ -1737,104 +1736,104 @@ out_dev_put:
 	.getname =	x25_getname,
 	.poll =		datagram_poll,
 	.ioctl =	x25_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl = compat_x25_ioctl,
-#पूर्ण_अगर
+#endif
 	.gettstamp =	sock_gettstamp,
 	.listen =	x25_listen,
-	.shutकरोwn =	sock_no_shutकरोwn,
+	.shutdown =	sock_no_shutdown,
 	.setsockopt =	x25_setsockopt,
-	.माला_लोockopt =	x25_माला_लोockopt,
+	.getsockopt =	x25_getsockopt,
 	.sendmsg =	x25_sendmsg,
 	.recvmsg =	x25_recvmsg,
 	.mmap =		sock_no_mmap,
 	.sendpage =	sock_no_sendpage,
-पूर्ण;
+};
 
-अटल काष्ठा packet_type x25_packet_type __पढ़ो_mostly = अणु
+static struct packet_type x25_packet_type __read_mostly = {
 	.type =	cpu_to_be16(ETH_P_X25),
 	.func =	x25_lapb_receive_frame,
-पूर्ण;
+};
 
-अटल काष्ठा notअगरier_block x25_dev_notअगरier = अणु
-	.notअगरier_call = x25_device_event,
-पूर्ण;
+static struct notifier_block x25_dev_notifier = {
+	.notifier_call = x25_device_event,
+};
 
-व्योम x25_समाप्त_by_neigh(काष्ठा x25_neigh *nb)
-अणु
-	काष्ठा sock *s;
+void x25_kill_by_neigh(struct x25_neigh *nb)
+{
+	struct sock *s;
 
-	ग_लिखो_lock_bh(&x25_list_lock);
+	write_lock_bh(&x25_list_lock);
 
-	sk_क्रम_each(s, &x25_list)
-		अगर (x25_sk(s)->neighbour == nb)
+	sk_for_each(s, &x25_list)
+		if (x25_sk(s)->neighbour == nb)
 			x25_disconnect(s, ENETUNREACH, 0, 0);
 
-	ग_लिखो_unlock_bh(&x25_list_lock);
+	write_unlock_bh(&x25_list_lock);
 
-	/* Remove any related क्रमwards */
-	x25_clear_क्रमward_by_dev(nb->dev);
-पूर्ण
+	/* Remove any related forwards */
+	x25_clear_forward_by_dev(nb->dev);
+}
 
-अटल पूर्णांक __init x25_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init x25_init(void)
+{
+	int rc;
 
-	rc = proto_रेजिस्टर(&x25_proto, 0);
-	अगर (rc)
-		जाओ out;
+	rc = proto_register(&x25_proto, 0);
+	if (rc)
+		goto out;
 
-	rc = sock_रेजिस्टर(&x25_family_ops);
-	अगर (rc)
-		जाओ out_proto;
+	rc = sock_register(&x25_family_ops);
+	if (rc)
+		goto out_proto;
 
 	dev_add_pack(&x25_packet_type);
 
-	rc = रेजिस्टर_netdevice_notअगरier(&x25_dev_notअगरier);
-	अगर (rc)
-		जाओ out_sock;
+	rc = register_netdevice_notifier(&x25_dev_notifier);
+	if (rc)
+		goto out_sock;
 
-	rc = x25_रेजिस्टर_sysctl();
-	अगर (rc)
-		जाओ out_dev;
+	rc = x25_register_sysctl();
+	if (rc)
+		goto out_dev;
 
 	rc = x25_proc_init();
-	अगर (rc)
-		जाओ out_sysctl;
+	if (rc)
+		goto out_sysctl;
 
 	pr_info("Linux Version 0.2\n");
 
 out:
-	वापस rc;
+	return rc;
 out_sysctl:
-	x25_unरेजिस्टर_sysctl();
+	x25_unregister_sysctl();
 out_dev:
-	unरेजिस्टर_netdevice_notअगरier(&x25_dev_notअगरier);
+	unregister_netdevice_notifier(&x25_dev_notifier);
 out_sock:
-	dev_हटाओ_pack(&x25_packet_type);
-	sock_unरेजिस्टर(AF_X25);
+	dev_remove_pack(&x25_packet_type);
+	sock_unregister(AF_X25);
 out_proto:
-	proto_unरेजिस्टर(&x25_proto);
-	जाओ out;
-पूर्ण
+	proto_unregister(&x25_proto);
+	goto out;
+}
 module_init(x25_init);
 
-अटल व्योम __निकास x25_निकास(व्योम)
-अणु
-	x25_proc_निकास();
-	x25_link_मुक्त();
-	x25_route_मुक्त();
+static void __exit x25_exit(void)
+{
+	x25_proc_exit();
+	x25_link_free();
+	x25_route_free();
 
-	x25_unरेजिस्टर_sysctl();
+	x25_unregister_sysctl();
 
-	unरेजिस्टर_netdevice_notअगरier(&x25_dev_notअगरier);
+	unregister_netdevice_notifier(&x25_dev_notifier);
 
-	dev_हटाओ_pack(&x25_packet_type);
+	dev_remove_pack(&x25_packet_type);
 
-	sock_unरेजिस्टर(AF_X25);
-	proto_unरेजिस्टर(&x25_proto);
-पूर्ण
-module_निकास(x25_निकास);
+	sock_unregister(AF_X25);
+	proto_unregister(&x25_proto);
+}
+module_exit(x25_exit);
 
 MODULE_AUTHOR("Jonathan Naylor <g4klx@g4klx.demon.co.uk>");
 MODULE_DESCRIPTION("The X.25 Packet Layer network layer protocol");

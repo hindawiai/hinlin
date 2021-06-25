@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/pinctrl/pinctrl.h>
-#समावेश <linux/pinctrl/pinmux.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
-#समावेश <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/phy/phy.h>
+#include <linux/pinctrl/pinctrl.h>
+#include <linux/pinctrl/pinmux.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
+#include <linux/slab.h>
 
-#समावेश <dt-bindings/pinctrl/pinctrl-tegra-xusb.h>
+#include <dt-bindings/pinctrl/pinctrl-tegra-xusb.h>
 
-#समावेश "../core.h"
-#समावेश "../pinctrl-utils.h"
+#include "../core.h"
+#include "../pinctrl-utils.h"
 
-#घोषणा XUSB_PADCTL_ELPG_PROGRAM 0x01c
-#घोषणा XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_VCORE_DOWN (1 << 26)
-#घोषणा XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN_EARLY (1 << 25)
-#घोषणा XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN (1 << 24)
+#define XUSB_PADCTL_ELPG_PROGRAM 0x01c
+#define XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_VCORE_DOWN (1 << 26)
+#define XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN_EARLY (1 << 25)
+#define XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN (1 << 24)
 
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL1 0x040
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL0_LOCKDET (1 << 19)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL1_REFCLK_SEL_MASK (0xf << 12)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL_RST (1 << 1)
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL1 0x040
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL0_LOCKDET (1 << 19)
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL1_REFCLK_SEL_MASK (0xf << 12)
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL_RST (1 << 1)
 
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL2 0x044
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL2_REFCLKBUF_EN (1 << 6)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL2_TXCLKREF_EN (1 << 5)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_P0_CTL2_TXCLKREF_SEL (1 << 4)
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL2 0x044
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL2_REFCLKBUF_EN (1 << 6)
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL2_TXCLKREF_EN (1 << 5)
+#define XUSB_PADCTL_IOPHY_PLL_P0_CTL2_TXCLKREF_SEL (1 << 4)
 
-#घोषणा XUSB_PADCTL_IOPHY_PLL_S0_CTL1 0x138
-#घोषणा XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_LOCKDET (1 << 27)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_MODE (1 << 24)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_PWR_OVRD (1 << 3)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_RST (1 << 1)
-#घोषणा XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_IDDQ (1 << 0)
+#define XUSB_PADCTL_IOPHY_PLL_S0_CTL1 0x138
+#define XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_LOCKDET (1 << 27)
+#define XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_MODE (1 << 24)
+#define XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_PWR_OVRD (1 << 3)
+#define XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_RST (1 << 1)
+#define XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_IDDQ (1 << 0)
 
-#घोषणा XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1 0x148
-#घोषणा XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ_OVRD (1 << 1)
-#घोषणा XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ (1 << 0)
+#define XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1 0x148
+#define XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ_OVRD (1 << 1)
+#define XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ (1 << 0)
 
-काष्ठा tegra_xusb_padctl_function अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर * स्थिर *groups;
-	अचिन्हित पूर्णांक num_groups;
-पूर्ण;
+struct tegra_xusb_padctl_function {
+	const char *name;
+	const char * const *groups;
+	unsigned int num_groups;
+};
 
-काष्ठा tegra_xusb_padctl_soc अणु
-	स्थिर काष्ठा pinctrl_pin_desc *pins;
-	अचिन्हित पूर्णांक num_pins;
+struct tegra_xusb_padctl_soc {
+	const struct pinctrl_pin_desc *pins;
+	unsigned int num_pins;
 
-	स्थिर काष्ठा tegra_xusb_padctl_function *functions;
-	अचिन्हित पूर्णांक num_functions;
+	const struct tegra_xusb_padctl_function *functions;
+	unsigned int num_functions;
 
-	स्थिर काष्ठा tegra_xusb_padctl_lane *lanes;
-	अचिन्हित पूर्णांक num_lanes;
-पूर्ण;
+	const struct tegra_xusb_padctl_lane *lanes;
+	unsigned int num_lanes;
+};
 
-काष्ठा tegra_xusb_padctl_lane अणु
-	स्थिर अक्षर *name;
+struct tegra_xusb_padctl_lane {
+	const char *name;
 
-	अचिन्हित पूर्णांक offset;
-	अचिन्हित पूर्णांक shअगरt;
-	अचिन्हित पूर्णांक mask;
-	अचिन्हित पूर्णांक iddq;
+	unsigned int offset;
+	unsigned int shift;
+	unsigned int mask;
+	unsigned int iddq;
 
-	स्थिर अचिन्हित पूर्णांक *funcs;
-	अचिन्हित पूर्णांक num_funcs;
-पूर्ण;
+	const unsigned int *funcs;
+	unsigned int num_funcs;
+};
 
-काष्ठा tegra_xusb_padctl अणु
-	काष्ठा device *dev;
-	व्योम __iomem *regs;
-	काष्ठा mutex lock;
-	काष्ठा reset_control *rst;
+struct tegra_xusb_padctl {
+	struct device *dev;
+	void __iomem *regs;
+	struct mutex lock;
+	struct reset_control *rst;
 
-	स्थिर काष्ठा tegra_xusb_padctl_soc *soc;
-	काष्ठा pinctrl_dev *pinctrl;
-	काष्ठा pinctrl_desc desc;
+	const struct tegra_xusb_padctl_soc *soc;
+	struct pinctrl_dev *pinctrl;
+	struct pinctrl_desc desc;
 
-	काष्ठा phy_provider *provider;
-	काष्ठा phy *phys[2];
+	struct phy_provider *provider;
+	struct phy *phys[2];
 
-	अचिन्हित पूर्णांक enable;
-पूर्ण;
+	unsigned int enable;
+};
 
-अटल अंतरभूत व्योम padctl_ग_लिखोl(काष्ठा tegra_xusb_padctl *padctl, u32 value,
-				 अचिन्हित दीर्घ offset)
-अणु
-	ग_लिखोl(value, padctl->regs + offset);
-पूर्ण
+static inline void padctl_writel(struct tegra_xusb_padctl *padctl, u32 value,
+				 unsigned long offset)
+{
+	writel(value, padctl->regs + offset);
+}
 
-अटल अंतरभूत u32 padctl_पढ़ोl(काष्ठा tegra_xusb_padctl *padctl,
-			       अचिन्हित दीर्घ offset)
-अणु
-	वापस पढ़ोl(padctl->regs + offset);
-पूर्ण
+static inline u32 padctl_readl(struct tegra_xusb_padctl *padctl,
+			       unsigned long offset)
+{
+	return readl(padctl->regs + offset);
+}
 
-अटल पूर्णांक tegra_xusb_padctl_get_groups_count(काष्ठा pinctrl_dev *pinctrl)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+static int tegra_xusb_padctl_get_groups_count(struct pinctrl_dev *pinctrl)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
 
-	वापस padctl->soc->num_pins;
-पूर्ण
+	return padctl->soc->num_pins;
+}
 
-अटल स्थिर अक्षर *tegra_xusb_padctl_get_group_name(काष्ठा pinctrl_dev *pinctrl,
-						    अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+static const char *tegra_xusb_padctl_get_group_name(struct pinctrl_dev *pinctrl,
+						    unsigned int group)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
 
-	वापस padctl->soc->pins[group].name;
-पूर्ण
+	return padctl->soc->pins[group].name;
+}
 
-अटल पूर्णांक tegra_xusb_padctl_get_group_pins(काष्ठा pinctrl_dev *pinctrl,
-					    अचिन्हित group,
-					    स्थिर अचिन्हित **pins,
-					    अचिन्हित *num_pins)
-अणु
+static int tegra_xusb_padctl_get_group_pins(struct pinctrl_dev *pinctrl,
+					    unsigned group,
+					    const unsigned **pins,
+					    unsigned *num_pins)
+{
 	/*
 	 * For the tegra-xusb pad controller groups are synonymous
 	 * with lanes/pins and there is always one lane/pin per group.
@@ -130,587 +129,587 @@
 	*pins = &pinctrl->desc->pins[group].number;
 	*num_pins = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत tegra_xusb_padctl_param अणु
+enum tegra_xusb_padctl_param {
 	TEGRA_XUSB_PADCTL_IDDQ,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_xusb_padctl_property अणु
-	स्थिर अक्षर *name;
-	क्रमागत tegra_xusb_padctl_param param;
-पूर्ण properties[] = अणु
-	अणु "nvidia,iddq", TEGRA_XUSB_PADCTL_IDDQ पूर्ण,
-पूर्ण;
+static const struct tegra_xusb_padctl_property {
+	const char *name;
+	enum tegra_xusb_padctl_param param;
+} properties[] = {
+	{ "nvidia,iddq", TEGRA_XUSB_PADCTL_IDDQ },
+};
 
-#घोषणा TEGRA_XUSB_PADCTL_PACK(param, value) ((param) << 16 | (value))
-#घोषणा TEGRA_XUSB_PADCTL_UNPACK_PARAM(config) ((config) >> 16)
-#घोषणा TEGRA_XUSB_PADCTL_UNPACK_VALUE(config) ((config) & 0xffff)
+#define TEGRA_XUSB_PADCTL_PACK(param, value) ((param) << 16 | (value))
+#define TEGRA_XUSB_PADCTL_UNPACK_PARAM(config) ((config) >> 16)
+#define TEGRA_XUSB_PADCTL_UNPACK_VALUE(config) ((config) & 0xffff)
 
-अटल पूर्णांक tegra_xusb_padctl_parse_subnode(काष्ठा tegra_xusb_padctl *padctl,
-					   काष्ठा device_node *np,
-					   काष्ठा pinctrl_map **maps,
-					   अचिन्हित पूर्णांक *reserved_maps,
-					   अचिन्हित पूर्णांक *num_maps)
-अणु
-	अचिन्हित पूर्णांक i, reserve = 0, num_configs = 0;
-	अचिन्हित दीर्घ config, *configs = शून्य;
-	स्थिर अक्षर *function, *group;
-	काष्ठा property *prop;
-	पूर्णांक err = 0;
+static int tegra_xusb_padctl_parse_subnode(struct tegra_xusb_padctl *padctl,
+					   struct device_node *np,
+					   struct pinctrl_map **maps,
+					   unsigned int *reserved_maps,
+					   unsigned int *num_maps)
+{
+	unsigned int i, reserve = 0, num_configs = 0;
+	unsigned long config, *configs = NULL;
+	const char *function, *group;
+	struct property *prop;
+	int err = 0;
 	u32 value;
 
-	err = of_property_पढ़ो_string(np, "nvidia,function", &function);
-	अगर (err < 0) अणु
-		अगर (err != -EINVAL)
-			वापस err;
+	err = of_property_read_string(np, "nvidia,function", &function);
+	if (err < 0) {
+		if (err != -EINVAL)
+			return err;
 
-		function = शून्य;
-	पूर्ण
+		function = NULL;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(properties); i++) अणु
-		err = of_property_पढ़ो_u32(np, properties[i].name, &value);
-		अगर (err < 0) अणु
-			अगर (err == -EINVAL)
-				जारी;
+	for (i = 0; i < ARRAY_SIZE(properties); i++) {
+		err = of_property_read_u32(np, properties[i].name, &value);
+		if (err < 0) {
+			if (err == -EINVAL)
+				continue;
 
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		config = TEGRA_XUSB_PADCTL_PACK(properties[i].param, value);
 
 		err = pinctrl_utils_add_config(padctl->pinctrl, &configs,
 					       &num_configs, config);
-		अगर (err < 0)
-			जाओ out;
-	पूर्ण
+		if (err < 0)
+			goto out;
+	}
 
-	अगर (function)
+	if (function)
 		reserve++;
 
-	अगर (num_configs)
+	if (num_configs)
 		reserve++;
 
 	err = of_property_count_strings(np, "nvidia,lanes");
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
 	reserve *= err;
 
 	err = pinctrl_utils_reserve_map(padctl->pinctrl, maps, reserved_maps,
 					num_maps, reserve);
-	अगर (err < 0)
-		जाओ out;
+	if (err < 0)
+		goto out;
 
-	of_property_क्रम_each_string(np, "nvidia,lanes", prop, group) अणु
-		अगर (function) अणु
+	of_property_for_each_string(np, "nvidia,lanes", prop, group) {
+		if (function) {
 			err = pinctrl_utils_add_map_mux(padctl->pinctrl, maps,
 					reserved_maps, num_maps, group,
 					function);
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण
+			if (err < 0)
+				goto out;
+		}
 
-		अगर (num_configs) अणु
+		if (num_configs) {
 			err = pinctrl_utils_add_map_configs(padctl->pinctrl,
 					maps, reserved_maps, num_maps, group,
 					configs, num_configs,
 					PIN_MAP_TYPE_CONFIGS_GROUP);
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err < 0)
+				goto out;
+		}
+	}
 
 	err = 0;
 
 out:
-	kमुक्त(configs);
-	वापस err;
-पूर्ण
+	kfree(configs);
+	return err;
+}
 
-अटल पूर्णांक tegra_xusb_padctl_dt_node_to_map(काष्ठा pinctrl_dev *pinctrl,
-					    काष्ठा device_node *parent,
-					    काष्ठा pinctrl_map **maps,
-					    अचिन्हित पूर्णांक *num_maps)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
-	अचिन्हित पूर्णांक reserved_maps = 0;
-	काष्ठा device_node *np;
-	पूर्णांक err;
+static int tegra_xusb_padctl_dt_node_to_map(struct pinctrl_dev *pinctrl,
+					    struct device_node *parent,
+					    struct pinctrl_map **maps,
+					    unsigned int *num_maps)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+	unsigned int reserved_maps = 0;
+	struct device_node *np;
+	int err;
 
 	*num_maps = 0;
-	*maps = शून्य;
+	*maps = NULL;
 
-	क्रम_each_child_of_node(parent, np) अणु
+	for_each_child_of_node(parent, np) {
 		err = tegra_xusb_padctl_parse_subnode(padctl, np, maps,
 						      &reserved_maps,
 						      num_maps);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			of_node_put(np);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinctrl_ops tegra_xusb_padctl_pinctrl_ops = अणु
+static const struct pinctrl_ops tegra_xusb_padctl_pinctrl_ops = {
 	.get_groups_count = tegra_xusb_padctl_get_groups_count,
 	.get_group_name = tegra_xusb_padctl_get_group_name,
 	.get_group_pins = tegra_xusb_padctl_get_group_pins,
 	.dt_node_to_map = tegra_xusb_padctl_dt_node_to_map,
-	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
-पूर्ण;
+	.dt_free_map = pinctrl_utils_free_map,
+};
 
-अटल पूर्णांक tegra_xusb_padctl_get_functions_count(काष्ठा pinctrl_dev *pinctrl)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+static int tegra_xusb_padctl_get_functions_count(struct pinctrl_dev *pinctrl)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
 
-	वापस padctl->soc->num_functions;
-पूर्ण
+	return padctl->soc->num_functions;
+}
 
-अटल स्थिर अक्षर *
-tegra_xusb_padctl_get_function_name(काष्ठा pinctrl_dev *pinctrl,
-				    अचिन्हित पूर्णांक function)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+static const char *
+tegra_xusb_padctl_get_function_name(struct pinctrl_dev *pinctrl,
+				    unsigned int function)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
 
-	वापस padctl->soc->functions[function].name;
-पूर्ण
+	return padctl->soc->functions[function].name;
+}
 
-अटल पूर्णांक tegra_xusb_padctl_get_function_groups(काष्ठा pinctrl_dev *pinctrl,
-						 अचिन्हित पूर्णांक function,
-						 स्थिर अक्षर * स्थिर **groups,
-						 अचिन्हित * स्थिर num_groups)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+static int tegra_xusb_padctl_get_function_groups(struct pinctrl_dev *pinctrl,
+						 unsigned int function,
+						 const char * const **groups,
+						 unsigned * const num_groups)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
 
 	*num_groups = padctl->soc->functions[function].num_groups;
 	*groups = padctl->soc->functions[function].groups;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_xusb_padctl_pinmux_set(काष्ठा pinctrl_dev *pinctrl,
-					अचिन्हित पूर्णांक function,
-					अचिन्हित पूर्णांक group)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
-	स्थिर काष्ठा tegra_xusb_padctl_lane *lane;
-	अचिन्हित पूर्णांक i;
+static int tegra_xusb_padctl_pinmux_set(struct pinctrl_dev *pinctrl,
+					unsigned int function,
+					unsigned int group)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+	const struct tegra_xusb_padctl_lane *lane;
+	unsigned int i;
 	u32 value;
 
 	lane = &padctl->soc->lanes[group];
 
-	क्रम (i = 0; i < lane->num_funcs; i++)
-		अगर (lane->funcs[i] == function)
-			अवरोध;
+	for (i = 0; i < lane->num_funcs; i++)
+		if (lane->funcs[i] == function)
+			break;
 
-	अगर (i >= lane->num_funcs)
-		वापस -EINVAL;
+	if (i >= lane->num_funcs)
+		return -EINVAL;
 
-	value = padctl_पढ़ोl(padctl, lane->offset);
-	value &= ~(lane->mask << lane->shअगरt);
-	value |= i << lane->shअगरt;
-	padctl_ग_लिखोl(padctl, value, lane->offset);
+	value = padctl_readl(padctl, lane->offset);
+	value &= ~(lane->mask << lane->shift);
+	value |= i << lane->shift;
+	padctl_writel(padctl, value, lane->offset);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा pinmux_ops tegra_xusb_padctl_pinmux_ops = अणु
+static const struct pinmux_ops tegra_xusb_padctl_pinmux_ops = {
 	.get_functions_count = tegra_xusb_padctl_get_functions_count,
 	.get_function_name = tegra_xusb_padctl_get_function_name,
 	.get_function_groups = tegra_xusb_padctl_get_function_groups,
 	.set_mux = tegra_xusb_padctl_pinmux_set,
-पूर्ण;
+};
 
-अटल पूर्णांक tegra_xusb_padctl_pinconf_group_get(काष्ठा pinctrl_dev *pinctrl,
-					       अचिन्हित पूर्णांक group,
-					       अचिन्हित दीर्घ *config)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
-	स्थिर काष्ठा tegra_xusb_padctl_lane *lane;
-	क्रमागत tegra_xusb_padctl_param param;
+static int tegra_xusb_padctl_pinconf_group_get(struct pinctrl_dev *pinctrl,
+					       unsigned int group,
+					       unsigned long *config)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+	const struct tegra_xusb_padctl_lane *lane;
+	enum tegra_xusb_padctl_param param;
 	u32 value;
 
 	param = TEGRA_XUSB_PADCTL_UNPACK_PARAM(*config);
 	lane = &padctl->soc->lanes[group];
 
-	चयन (param) अणु
-	हाल TEGRA_XUSB_PADCTL_IDDQ:
-		/* lanes with iddq == 0 करोn't support this parameter */
-		अगर (lane->iddq == 0)
-			वापस -EINVAL;
+	switch (param) {
+	case TEGRA_XUSB_PADCTL_IDDQ:
+		/* lanes with iddq == 0 don't support this parameter */
+		if (lane->iddq == 0)
+			return -EINVAL;
 
-		value = padctl_पढ़ोl(padctl, lane->offset);
+		value = padctl_readl(padctl, lane->offset);
 
-		अगर (value & BIT(lane->iddq))
+		if (value & BIT(lane->iddq))
 			value = 0;
-		अन्यथा
+		else
 			value = 1;
 
 		*config = TEGRA_XUSB_PADCTL_PACK(param, value);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_err(padctl->dev, "invalid configuration parameter: %04x\n",
 			param);
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_xusb_padctl_pinconf_group_set(काष्ठा pinctrl_dev *pinctrl,
-					       अचिन्हित पूर्णांक group,
-					       अचिन्हित दीर्घ *configs,
-					       अचिन्हित पूर्णांक num_configs)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
-	स्थिर काष्ठा tegra_xusb_padctl_lane *lane;
-	क्रमागत tegra_xusb_padctl_param param;
-	अचिन्हित दीर्घ value;
-	अचिन्हित पूर्णांक i;
+static int tegra_xusb_padctl_pinconf_group_set(struct pinctrl_dev *pinctrl,
+					       unsigned int group,
+					       unsigned long *configs,
+					       unsigned int num_configs)
+{
+	struct tegra_xusb_padctl *padctl = pinctrl_dev_get_drvdata(pinctrl);
+	const struct tegra_xusb_padctl_lane *lane;
+	enum tegra_xusb_padctl_param param;
+	unsigned long value;
+	unsigned int i;
 	u32 regval;
 
 	lane = &padctl->soc->lanes[group];
 
-	क्रम (i = 0; i < num_configs; i++) अणु
+	for (i = 0; i < num_configs; i++) {
 		param = TEGRA_XUSB_PADCTL_UNPACK_PARAM(configs[i]);
 		value = TEGRA_XUSB_PADCTL_UNPACK_VALUE(configs[i]);
 
-		चयन (param) अणु
-		हाल TEGRA_XUSB_PADCTL_IDDQ:
-			/* lanes with iddq == 0 करोn't support this parameter */
-			अगर (lane->iddq == 0)
-				वापस -EINVAL;
+		switch (param) {
+		case TEGRA_XUSB_PADCTL_IDDQ:
+			/* lanes with iddq == 0 don't support this parameter */
+			if (lane->iddq == 0)
+				return -EINVAL;
 
-			regval = padctl_पढ़ोl(padctl, lane->offset);
+			regval = padctl_readl(padctl, lane->offset);
 
-			अगर (value)
+			if (value)
 				regval &= ~BIT(lane->iddq);
-			अन्यथा
+			else
 				regval |= BIT(lane->iddq);
 
-			padctl_ग_लिखोl(padctl, regval, lane->offset);
-			अवरोध;
+			padctl_writel(padctl, regval, lane->offset);
+			break;
 
-		शेष:
+		default:
 			dev_err(padctl->dev,
 				"invalid configuration parameter: %04x\n",
 				param);
-			वापस -ENOTSUPP;
-		पूर्ण
-	पूर्ण
+			return -ENOTSUPP;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल स्थिर अक्षर *strip_prefix(स्थिर अक्षर *s)
-अणु
-	स्थिर अक्षर *comma = म_अक्षर(s, ',');
-	अगर (!comma)
-		वापस s;
+#ifdef CONFIG_DEBUG_FS
+static const char *strip_prefix(const char *s)
+{
+	const char *comma = strchr(s, ',');
+	if (!comma)
+		return s;
 
-	वापस comma + 1;
-पूर्ण
+	return comma + 1;
+}
 
-अटल व्योम
-tegra_xusb_padctl_pinconf_group_dbg_show(काष्ठा pinctrl_dev *pinctrl,
-					 काष्ठा seq_file *s,
-					 अचिन्हित पूर्णांक group)
-अणु
-	अचिन्हित पूर्णांक i;
+static void
+tegra_xusb_padctl_pinconf_group_dbg_show(struct pinctrl_dev *pinctrl,
+					 struct seq_file *s,
+					 unsigned int group)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(properties); i++) अणु
-		अचिन्हित दीर्घ config, value;
-		पूर्णांक err;
+	for (i = 0; i < ARRAY_SIZE(properties); i++) {
+		unsigned long config, value;
+		int err;
 
 		config = TEGRA_XUSB_PADCTL_PACK(properties[i].param, 0);
 
 		err = tegra_xusb_padctl_pinconf_group_get(pinctrl, group,
 							  &config);
-		अगर (err < 0)
-			जारी;
+		if (err < 0)
+			continue;
 
 		value = TEGRA_XUSB_PADCTL_UNPACK_VALUE(config);
 
-		seq_म_लिखो(s, "\n\t%s=%lu\n", strip_prefix(properties[i].name),
+		seq_printf(s, "\n\t%s=%lu\n", strip_prefix(properties[i].name),
 			   value);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-tegra_xusb_padctl_pinconf_config_dbg_show(काष्ठा pinctrl_dev *pinctrl,
-					  काष्ठा seq_file *s,
-					  अचिन्हित दीर्घ config)
-अणु
-	क्रमागत tegra_xusb_padctl_param param;
-	स्थिर अक्षर *name = "unknown";
-	अचिन्हित दीर्घ value;
-	अचिन्हित पूर्णांक i;
+static void
+tegra_xusb_padctl_pinconf_config_dbg_show(struct pinctrl_dev *pinctrl,
+					  struct seq_file *s,
+					  unsigned long config)
+{
+	enum tegra_xusb_padctl_param param;
+	const char *name = "unknown";
+	unsigned long value;
+	unsigned int i;
 
 	param = TEGRA_XUSB_PADCTL_UNPACK_PARAM(config);
 	value = TEGRA_XUSB_PADCTL_UNPACK_VALUE(config);
 
-	क्रम (i = 0; i < ARRAY_SIZE(properties); i++) अणु
-		अगर (properties[i].param == param) अणु
+	for (i = 0; i < ARRAY_SIZE(properties); i++) {
+		if (properties[i].param == param) {
 			name = properties[i].name;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	seq_म_लिखो(s, "%s=%lu", strip_prefix(name), value);
-पूर्ण
-#पूर्ण_अगर
+	seq_printf(s, "%s=%lu", strip_prefix(name), value);
+}
+#endif
 
-अटल स्थिर काष्ठा pinconf_ops tegra_xusb_padctl_pinconf_ops = अणु
+static const struct pinconf_ops tegra_xusb_padctl_pinconf_ops = {
 	.pin_config_group_get = tegra_xusb_padctl_pinconf_group_get,
 	.pin_config_group_set = tegra_xusb_padctl_pinconf_group_set,
-#अगर_घोषित CONFIG_DEBUG_FS
+#ifdef CONFIG_DEBUG_FS
 	.pin_config_group_dbg_show = tegra_xusb_padctl_pinconf_group_dbg_show,
 	.pin_config_config_dbg_show = tegra_xusb_padctl_pinconf_config_dbg_show,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल पूर्णांक tegra_xusb_padctl_enable(काष्ठा tegra_xusb_padctl *padctl)
-अणु
+static int tegra_xusb_padctl_enable(struct tegra_xusb_padctl *padctl)
+{
 	u32 value;
 
 	mutex_lock(&padctl->lock);
 
-	अगर (padctl->enable++ > 0)
-		जाओ out;
+	if (padctl->enable++ > 0)
+		goto out;
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
+	value = padctl_readl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
 	value &= ~XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
+	padctl_writel(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
 
 	usleep_range(100, 200);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
+	value = padctl_readl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
 	value &= ~XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN_EARLY;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
+	padctl_writel(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
 
 	usleep_range(100, 200);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
+	value = padctl_readl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
 	value &= ~XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_VCORE_DOWN;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
+	padctl_writel(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
 
 out:
 	mutex_unlock(&padctl->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_xusb_padctl_disable(काष्ठा tegra_xusb_padctl *padctl)
-अणु
+static int tegra_xusb_padctl_disable(struct tegra_xusb_padctl *padctl)
+{
 	u32 value;
 
 	mutex_lock(&padctl->lock);
 
-	अगर (WARN_ON(padctl->enable == 0))
-		जाओ out;
+	if (WARN_ON(padctl->enable == 0))
+		goto out;
 
-	अगर (--padctl->enable > 0)
-		जाओ out;
+	if (--padctl->enable > 0)
+		goto out;
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
+	value = padctl_readl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
 	value |= XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_VCORE_DOWN;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
+	padctl_writel(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
 
 	usleep_range(100, 200);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
+	value = padctl_readl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
 	value |= XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN_EARLY;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
+	padctl_writel(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
 
 	usleep_range(100, 200);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
+	value = padctl_readl(padctl, XUSB_PADCTL_ELPG_PROGRAM);
 	value |= XUSB_PADCTL_ELPG_PROGRAM_AUX_MUX_LP0_CLAMP_EN;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
+	padctl_writel(padctl, value, XUSB_PADCTL_ELPG_PROGRAM);
 
 out:
 	mutex_unlock(&padctl->lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tegra_xusb_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
+static int tegra_xusb_phy_init(struct phy *phy)
+{
+	struct tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
 
-	वापस tegra_xusb_padctl_enable(padctl);
-पूर्ण
+	return tegra_xusb_padctl_enable(padctl);
+}
 
-अटल पूर्णांक tegra_xusb_phy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
+static int tegra_xusb_phy_exit(struct phy *phy)
+{
+	struct tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
 
-	वापस tegra_xusb_padctl_disable(padctl);
-पूर्ण
+	return tegra_xusb_padctl_disable(padctl);
+}
 
-अटल पूर्णांक pcie_phy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक err = -ETIMEDOUT;
+static int pcie_phy_power_on(struct phy *phy)
+{
+	struct tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
+	unsigned long timeout;
+	int err = -ETIMEDOUT;
 	u32 value;
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
 	value &= ~XUSB_PADCTL_IOPHY_PLL_P0_CTL1_REFCLK_SEL_MASK;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL2);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL2);
 	value |= XUSB_PADCTL_IOPHY_PLL_P0_CTL2_REFCLKBUF_EN |
 		 XUSB_PADCTL_IOPHY_PLL_P0_CTL2_TXCLKREF_EN |
 		 XUSB_PADCTL_IOPHY_PLL_P0_CTL2_TXCLKREF_SEL;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL2);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL2);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
 	value |= XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL_RST;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
 
-	समयout = jअगरfies + msecs_to_jअगरfies(50);
+	timeout = jiffies + msecs_to_jiffies(50);
 
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
-		अगर (value & XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL0_LOCKDET) अणु
+	while (time_before(jiffies, timeout)) {
+		value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+		if (value & XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL0_LOCKDET) {
 			err = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		usleep_range(100, 200);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक pcie_phy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
+static int pcie_phy_power_off(struct phy *phy)
+{
+	struct tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
 	u32 value;
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
 	value &= ~XUSB_PADCTL_IOPHY_PLL_P0_CTL1_PLL_RST;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_P0_CTL1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops pcie_phy_ops = अणु
+static const struct phy_ops pcie_phy_ops = {
 	.init = tegra_xusb_phy_init,
-	.निकास = tegra_xusb_phy_निकास,
-	.घातer_on = pcie_phy_घातer_on,
-	.घातer_off = pcie_phy_घातer_off,
+	.exit = tegra_xusb_phy_exit,
+	.power_on = pcie_phy_power_on,
+	.power_off = pcie_phy_power_off,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक sata_phy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
-	अचिन्हित दीर्घ समयout;
-	पूर्णांक err = -ETIMEDOUT;
+static int sata_phy_power_on(struct phy *phy)
+{
+	struct tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
+	unsigned long timeout;
+	int err = -ETIMEDOUT;
 	u32 value;
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
 	value &= ~XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ_OVRD;
 	value &= ~XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 	value &= ~XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_PWR_OVRD;
 	value &= ~XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_IDDQ;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 	value |= XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_MODE;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 	value |= XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_RST;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 
-	समयout = jअगरfies + msecs_to_jअगरfies(50);
+	timeout = jiffies + msecs_to_jiffies(50);
 
-	जबतक (समय_beक्रमe(jअगरfies, समयout)) अणु
-		value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
-		अगर (value & XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_LOCKDET) अणु
+	while (time_before(jiffies, timeout)) {
+		value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+		if (value & XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_LOCKDET) {
 			err = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		usleep_range(100, 200);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक sata_phy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
+static int sata_phy_power_off(struct phy *phy)
+{
+	struct tegra_xusb_padctl *padctl = phy_get_drvdata(phy);
 	u32 value;
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 	value &= ~XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_RST;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 	value &= ~XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL1_MODE;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 	value |= XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_PWR_OVRD;
 	value |= XUSB_PADCTL_IOPHY_PLL_S0_CTL1_PLL_IDDQ;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_PLL_S0_CTL1);
 
-	value = padctl_पढ़ोl(padctl, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
+	value = padctl_readl(padctl, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
 	value |= ~XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ_OVRD;
 	value |= ~XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1_IDDQ;
-	padctl_ग_लिखोl(padctl, value, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
+	padctl_writel(padctl, value, XUSB_PADCTL_IOPHY_MISC_PAD_S0_CTL1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops sata_phy_ops = अणु
+static const struct phy_ops sata_phy_ops = {
 	.init = tegra_xusb_phy_init,
-	.निकास = tegra_xusb_phy_निकास,
-	.घातer_on = sata_phy_घातer_on,
-	.घातer_off = sata_phy_घातer_off,
+	.exit = tegra_xusb_phy_exit,
+	.power_on = sata_phy_power_on,
+	.power_off = sata_phy_power_off,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा phy *tegra_xusb_padctl_xlate(काष्ठा device *dev,
-					   काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = dev_get_drvdata(dev);
-	अचिन्हित पूर्णांक index = args->args[0];
+static struct phy *tegra_xusb_padctl_xlate(struct device *dev,
+					   struct of_phandle_args *args)
+{
+	struct tegra_xusb_padctl *padctl = dev_get_drvdata(dev);
+	unsigned int index = args->args[0];
 
-	अगर (args->args_count <= 0)
-		वापस ERR_PTR(-EINVAL);
+	if (args->args_count <= 0)
+		return ERR_PTR(-EINVAL);
 
-	अगर (index >= ARRAY_SIZE(padctl->phys))
-		वापस ERR_PTR(-EINVAL);
+	if (index >= ARRAY_SIZE(padctl->phys))
+		return ERR_PTR(-EINVAL);
 
-	वापस padctl->phys[index];
-पूर्ण
+	return padctl->phys[index];
+}
 
-#घोषणा PIN_OTG_0   0
-#घोषणा PIN_OTG_1   1
-#घोषणा PIN_OTG_2   2
-#घोषणा PIN_ULPI_0  3
-#घोषणा PIN_HSIC_0  4
-#घोषणा PIN_HSIC_1  5
-#घोषणा PIN_PCIE_0  6
-#घोषणा PIN_PCIE_1  7
-#घोषणा PIN_PCIE_2  8
-#घोषणा PIN_PCIE_3  9
-#घोषणा PIN_PCIE_4 10
-#घोषणा PIN_SATA_0 11
+#define PIN_OTG_0   0
+#define PIN_OTG_1   1
+#define PIN_OTG_2   2
+#define PIN_ULPI_0  3
+#define PIN_HSIC_0  4
+#define PIN_HSIC_1  5
+#define PIN_PCIE_0  6
+#define PIN_PCIE_1  7
+#define PIN_PCIE_2  8
+#define PIN_PCIE_3  9
+#define PIN_PCIE_4 10
+#define PIN_SATA_0 11
 
-अटल स्थिर काष्ठा pinctrl_pin_desc tegra124_pins[] = अणु
+static const struct pinctrl_pin_desc tegra124_pins[] = {
 	PINCTRL_PIN(PIN_OTG_0,  "otg-0"),
 	PINCTRL_PIN(PIN_OTG_1,  "otg-1"),
 	PINCTRL_PIN(PIN_OTG_2,  "otg-2"),
@@ -723,51 +722,51 @@ out:
 	PINCTRL_PIN(PIN_PCIE_3, "pcie-3"),
 	PINCTRL_PIN(PIN_PCIE_4, "pcie-4"),
 	PINCTRL_PIN(PIN_SATA_0, "sata-0"),
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_snps_groups[] = अणु
+static const char * const tegra124_snps_groups[] = {
 	"otg-0",
 	"otg-1",
 	"otg-2",
 	"ulpi-0",
 	"hsic-0",
 	"hsic-1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_xusb_groups[] = अणु
+static const char * const tegra124_xusb_groups[] = {
 	"otg-0",
 	"otg-1",
 	"otg-2",
 	"ulpi-0",
 	"hsic-0",
 	"hsic-1",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_uart_groups[] = अणु
+static const char * const tegra124_uart_groups[] = {
 	"otg-0",
 	"otg-1",
 	"otg-2",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_pcie_groups[] = अणु
+static const char * const tegra124_pcie_groups[] = {
 	"pcie-0",
 	"pcie-1",
 	"pcie-2",
 	"pcie-3",
 	"pcie-4",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_usb3_groups[] = अणु
+static const char * const tegra124_usb3_groups[] = {
 	"pcie-0",
 	"pcie-1",
 	"sata-0",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_sata_groups[] = अणु
+static const char * const tegra124_sata_groups[] = {
 	"sata-0",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर tegra124_rsvd_groups[] = अणु
+static const char * const tegra124_rsvd_groups[] = {
 	"otg-0",
 	"otg-1",
 	"otg-2",
@@ -777,16 +776,16 @@ out:
 	"pcie-3",
 	"pcie-4",
 	"sata-0",
-पूर्ण;
+};
 
-#घोषणा TEGRA124_FUNCTION(_name)					\
-	अणु								\
+#define TEGRA124_FUNCTION(_name)					\
+	{								\
 		.name = #_name,						\
 		.num_groups = ARRAY_SIZE(tegra124_##_name##_groups),	\
 		.groups = tegra124_##_name##_groups,			\
-	पूर्ण
+	}
 
-अटल काष्ठा tegra_xusb_padctl_function tegra124_functions[] = अणु
+static struct tegra_xusb_padctl_function tegra124_functions[] = {
 	TEGRA124_FUNCTION(snps),
 	TEGRA124_FUNCTION(xusb),
 	TEGRA124_FUNCTION(uart),
@@ -794,9 +793,9 @@ out:
 	TEGRA124_FUNCTION(usb3),
 	TEGRA124_FUNCTION(sata),
 	TEGRA124_FUNCTION(rsvd),
-पूर्ण;
+};
 
-क्रमागत tegra124_function अणु
+enum tegra124_function {
 	TEGRA124_FUNC_SNPS,
 	TEGRA124_FUNC_XUSB,
 	TEGRA124_FUNC_UART,
@@ -804,39 +803,39 @@ out:
 	TEGRA124_FUNC_USB3,
 	TEGRA124_FUNC_SATA,
 	TEGRA124_FUNC_RSVD,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक tegra124_otg_functions[] = अणु
+static const unsigned int tegra124_otg_functions[] = {
 	TEGRA124_FUNC_SNPS,
 	TEGRA124_FUNC_XUSB,
 	TEGRA124_FUNC_UART,
 	TEGRA124_FUNC_RSVD,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक tegra124_usb_functions[] = अणु
+static const unsigned int tegra124_usb_functions[] = {
 	TEGRA124_FUNC_SNPS,
 	TEGRA124_FUNC_XUSB,
-पूर्ण;
+};
 
-अटल स्थिर अचिन्हित पूर्णांक tegra124_pci_functions[] = अणु
+static const unsigned int tegra124_pci_functions[] = {
 	TEGRA124_FUNC_PCIE,
 	TEGRA124_FUNC_USB3,
 	TEGRA124_FUNC_SATA,
 	TEGRA124_FUNC_RSVD,
-पूर्ण;
+};
 
-#घोषणा TEGRA124_LANE(_name, _offset, _shअगरt, _mask, _iddq, _funcs)	\
-	अणु								\
+#define TEGRA124_LANE(_name, _offset, _shift, _mask, _iddq, _funcs)	\
+	{								\
 		.name = _name,						\
 		.offset = _offset,					\
-		.shअगरt = _shअगरt,					\
+		.shift = _shift,					\
 		.mask = _mask,						\
 		.iddq = _iddq,						\
 		.num_funcs = ARRAY_SIZE(tegra124_##_funcs##_functions),	\
 		.funcs = tegra124_##_funcs##_functions,			\
-	पूर्ण
+	}
 
-अटल स्थिर काष्ठा tegra_xusb_padctl_lane tegra124_lanes[] = अणु
+static const struct tegra_xusb_padctl_lane tegra124_lanes[] = {
 	TEGRA124_LANE("otg-0",  0x004,  0, 0x3, 0, otg),
 	TEGRA124_LANE("otg-1",  0x004,  2, 0x3, 0, otg),
 	TEGRA124_LANE("otg-2",  0x004,  4, 0x3, 0, otg),
@@ -849,64 +848,64 @@ out:
 	TEGRA124_LANE("pcie-3", 0x134, 22, 0x3, 4, pci),
 	TEGRA124_LANE("pcie-4", 0x134, 24, 0x3, 5, pci),
 	TEGRA124_LANE("sata-0", 0x134, 26, 0x3, 6, pci),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा tegra_xusb_padctl_soc tegra124_soc = अणु
+static const struct tegra_xusb_padctl_soc tegra124_soc = {
 	.num_pins = ARRAY_SIZE(tegra124_pins),
 	.pins = tegra124_pins,
 	.num_functions = ARRAY_SIZE(tegra124_functions),
 	.functions = tegra124_functions,
 	.num_lanes = ARRAY_SIZE(tegra124_lanes),
 	.lanes = tegra124_lanes,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id tegra_xusb_padctl_of_match[] = अणु
-	अणु .compatible = "nvidia,tegra124-xusb-padctl", .data = &tegra124_soc पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id tegra_xusb_padctl_of_match[] = {
+	{ .compatible = "nvidia,tegra124-xusb-padctl", .data = &tegra124_soc },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, tegra_xusb_padctl_of_match);
 
 /* predeclare these in order to silence sparse */
-पूर्णांक tegra_xusb_padctl_legacy_probe(काष्ठा platक्रमm_device *pdev);
-पूर्णांक tegra_xusb_padctl_legacy_हटाओ(काष्ठा platक्रमm_device *pdev);
+int tegra_xusb_padctl_legacy_probe(struct platform_device *pdev);
+int tegra_xusb_padctl_legacy_remove(struct platform_device *pdev);
 
-पूर्णांक tegra_xusb_padctl_legacy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl;
-	स्थिर काष्ठा of_device_id *match;
-	काष्ठा phy *phy;
-	पूर्णांक err;
+int tegra_xusb_padctl_legacy_probe(struct platform_device *pdev)
+{
+	struct tegra_xusb_padctl *padctl;
+	const struct of_device_id *match;
+	struct phy *phy;
+	int err;
 
-	padctl = devm_kzalloc(&pdev->dev, माप(*padctl), GFP_KERNEL);
-	अगर (!padctl)
-		वापस -ENOMEM;
+	padctl = devm_kzalloc(&pdev->dev, sizeof(*padctl), GFP_KERNEL);
+	if (!padctl)
+		return -ENOMEM;
 
-	platक्रमm_set_drvdata(pdev, padctl);
+	platform_set_drvdata(pdev, padctl);
 	mutex_init(&padctl->lock);
 	padctl->dev = &pdev->dev;
 
 	/*
 	 * Note that we can't replace this by of_device_get_match_data()
-	 * because we need the separate matching table क्रम this legacy code on
+	 * because we need the separate matching table for this legacy code on
 	 * Tegra124. of_device_get_match_data() would attempt to use the table
 	 * from the updated driver and fail.
 	 */
 	match = of_match_node(tegra_xusb_padctl_of_match, pdev->dev.of_node);
 	padctl->soc = match->data;
 
-	padctl->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(padctl->regs))
-		वापस PTR_ERR(padctl->regs);
+	padctl->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(padctl->regs))
+		return PTR_ERR(padctl->regs);
 
-	padctl->rst = devm_reset_control_get_exclusive(&pdev->dev, शून्य);
-	अगर (IS_ERR(padctl->rst))
-		वापस PTR_ERR(padctl->rst);
+	padctl->rst = devm_reset_control_get_exclusive(&pdev->dev, NULL);
+	if (IS_ERR(padctl->rst))
+		return PTR_ERR(padctl->rst);
 
-	err = reset_control_deनिश्चित(padctl->rst);
-	अगर (err < 0)
-		वापस err;
+	err = reset_control_deassert(padctl->rst);
+	if (err < 0)
+		return err;
 
-	स_रखो(&padctl->desc, 0, माप(padctl->desc));
+	memset(&padctl->desc, 0, sizeof(padctl->desc));
 	padctl->desc.name = dev_name(padctl->dev);
 	padctl->desc.pins = tegra124_pins;
 	padctl->desc.npins = ARRAY_SIZE(tegra124_pins);
@@ -915,57 +914,57 @@ MODULE_DEVICE_TABLE(of, tegra_xusb_padctl_of_match);
 	padctl->desc.confops = &tegra_xusb_padctl_pinconf_ops;
 	padctl->desc.owner = THIS_MODULE;
 
-	padctl->pinctrl = devm_pinctrl_रेजिस्टर(&pdev->dev, &padctl->desc,
+	padctl->pinctrl = devm_pinctrl_register(&pdev->dev, &padctl->desc,
 						padctl);
-	अगर (IS_ERR(padctl->pinctrl)) अणु
+	if (IS_ERR(padctl->pinctrl)) {
 		dev_err(&pdev->dev, "failed to register pincontrol\n");
 		err = PTR_ERR(padctl->pinctrl);
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 
-	phy = devm_phy_create(&pdev->dev, शून्य, &pcie_phy_ops);
-	अगर (IS_ERR(phy)) अणु
+	phy = devm_phy_create(&pdev->dev, NULL, &pcie_phy_ops);
+	if (IS_ERR(phy)) {
 		err = PTR_ERR(phy);
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 
 	padctl->phys[TEGRA_XUSB_PADCTL_PCIE] = phy;
 	phy_set_drvdata(phy, padctl);
 
-	phy = devm_phy_create(&pdev->dev, शून्य, &sata_phy_ops);
-	अगर (IS_ERR(phy)) अणु
+	phy = devm_phy_create(&pdev->dev, NULL, &sata_phy_ops);
+	if (IS_ERR(phy)) {
 		err = PTR_ERR(phy);
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 
 	padctl->phys[TEGRA_XUSB_PADCTL_SATA] = phy;
 	phy_set_drvdata(phy, padctl);
 
-	padctl->provider = devm_of_phy_provider_रेजिस्टर(&pdev->dev,
+	padctl->provider = devm_of_phy_provider_register(&pdev->dev,
 							 tegra_xusb_padctl_xlate);
-	अगर (IS_ERR(padctl->provider)) अणु
+	if (IS_ERR(padctl->provider)) {
 		err = PTR_ERR(padctl->provider);
 		dev_err(&pdev->dev, "failed to register PHYs: %d\n", err);
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 
-	वापस 0;
+	return 0;
 
 reset:
-	reset_control_निश्चित(padctl->rst);
-	वापस err;
-पूर्ण
+	reset_control_assert(padctl->rst);
+	return err;
+}
 EXPORT_SYMBOL_GPL(tegra_xusb_padctl_legacy_probe);
 
-पूर्णांक tegra_xusb_padctl_legacy_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा tegra_xusb_padctl *padctl = platक्रमm_get_drvdata(pdev);
-	पूर्णांक err;
+int tegra_xusb_padctl_legacy_remove(struct platform_device *pdev)
+{
+	struct tegra_xusb_padctl *padctl = platform_get_drvdata(pdev);
+	int err;
 
-	err = reset_control_निश्चित(padctl->rst);
-	अगर (err < 0)
+	err = reset_control_assert(padctl->rst);
+	if (err < 0)
 		dev_err(&pdev->dev, "failed to assert reset: %d\n", err);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(tegra_xusb_padctl_legacy_हटाओ);
+	return err;
+}
+EXPORT_SYMBOL_GPL(tegra_xusb_padctl_legacy_remove);

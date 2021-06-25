@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2002 Roman Zippel <zippel@linux-m68k.org>
  */
 
-#अगर_अघोषित IMAGES_H
-#घोषणा IMAGES_H
+#ifndef IMAGES_H
+#define IMAGES_H
 
-#अगर_घोषित __cplusplus
-बाह्य "C" अणु
-#पूर्ण_अगर
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-बाह्य स्थिर अक्षर * स्थिर xpm_load[];
-बाह्य स्थिर अक्षर * स्थिर xpm_save[];
-बाह्य स्थिर अक्षर * स्थिर xpm_back[];
-बाह्य स्थिर अक्षर * स्थिर xpm_tree_view[];
-बाह्य स्थिर अक्षर * स्थिर xpm_single_view[];
-बाह्य स्थिर अक्षर * स्थिर xpm_split_view[];
-बाह्य स्थिर अक्षर * स्थिर xpm_symbol_no[];
-बाह्य स्थिर अक्षर * स्थिर xpm_symbol_mod[];
-बाह्य स्थिर अक्षर * स्थिर xpm_symbol_yes[];
-बाह्य स्थिर अक्षर * स्थिर xpm_choice_no[];
-बाह्य स्थिर अक्षर * स्थिर xpm_choice_yes[];
-बाह्य स्थिर अक्षर * स्थिर xpm_menu[];
-बाह्य स्थिर अक्षर * स्थिर xpm_menu_inv[];
-बाह्य स्थिर अक्षर * स्थिर xpm_menuback[];
-बाह्य स्थिर अक्षर * स्थिर xpm_व्योम[];
+extern const char * const xpm_load[];
+extern const char * const xpm_save[];
+extern const char * const xpm_back[];
+extern const char * const xpm_tree_view[];
+extern const char * const xpm_single_view[];
+extern const char * const xpm_split_view[];
+extern const char * const xpm_symbol_no[];
+extern const char * const xpm_symbol_mod[];
+extern const char * const xpm_symbol_yes[];
+extern const char * const xpm_choice_no[];
+extern const char * const xpm_choice_yes[];
+extern const char * const xpm_menu[];
+extern const char * const xpm_menu_inv[];
+extern const char * const xpm_menuback[];
+extern const char * const xpm_void[];
 
-#अगर_घोषित __cplusplus
-पूर्ण
-#पूर्ण_अगर
+#ifdef __cplusplus
+}
+#endif
 
-#पूर्ण_अगर /* IMAGES_H */
+#endif /* IMAGES_H */

@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  tw68_risc.c
- *  Part of the device driver क्रम Techwell 68xx based cards
+ *  Part of the device driver for Techwell 68xx based cards
  *
  *  Much of this code is derived from the cx88 and sa7134 drivers, which
  *  were in turn derived from the bt87x driver.  The original work was by
@@ -18,12 +17,12 @@
  *  Copyright (C) 2014 Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-#समावेश "tw68.h"
+#include "tw68.h"
 
 /**
  * tw68_risc_field
- *  @rp:	poपूर्णांकer to current risc program position
- *  @sglist:	poपूर्णांकer to "scatter-gather list" of buffer poपूर्णांकers
+ *  @rp:	pointer to current risc program position
+ *  @sglist:	pointer to "scatter-gather list" of buffer pointers
  *  @offset:	offset to target memory buffer
  *  @sync_line:	0 -> no sync, 1 -> odd sync, 2 -> even sync
  *  @bpl:	number of bytes per scan line
@@ -31,194 +30,194 @@
  *  @lines:	number of lines in field
  *  @jump:	insert a jump at the start
  */
-अटल __le32 *tw68_risc_field(__le32 *rp, काष्ठा scatterlist *sglist,
-			    अचिन्हित पूर्णांक offset, u32 sync_line,
-			    अचिन्हित पूर्णांक bpl, अचिन्हित पूर्णांक padding,
-			    अचिन्हित पूर्णांक lines, bool jump)
-अणु
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक line, toकरो, करोne;
+static __le32 *tw68_risc_field(__le32 *rp, struct scatterlist *sglist,
+			    unsigned int offset, u32 sync_line,
+			    unsigned int bpl, unsigned int padding,
+			    unsigned int lines, bool jump)
+{
+	struct scatterlist *sg;
+	unsigned int line, todo, done;
 
-	अगर (jump) अणु
+	if (jump) {
 		*(rp++) = cpu_to_le32(RISC_JUMP);
 		*(rp++) = 0;
-	पूर्ण
+	}
 
-	/* sync inकाष्ठाion */
-	अगर (sync_line == 1)
+	/* sync instruction */
+	if (sync_line == 1)
 		*(rp++) = cpu_to_le32(RISC_SYNCO);
-	अन्यथा
+	else
 		*(rp++) = cpu_to_le32(RISC_SYNCE);
 	*(rp++) = 0;
 
 	/* scan lines */
 	sg = sglist;
-	क्रम (line = 0; line < lines; line++) अणु
+	for (line = 0; line < lines; line++) {
 		/* calculate next starting position */
-		जबतक (offset && offset >= sg_dma_len(sg)) अणु
+		while (offset && offset >= sg_dma_len(sg)) {
 			offset -= sg_dma_len(sg);
 			sg = sg_next(sg);
-		पूर्ण
-		अगर (bpl <= sg_dma_len(sg) - offset) अणु
-			/* fits पूर्णांकo current chunk */
+		}
+		if (bpl <= sg_dma_len(sg) - offset) {
+			/* fits into current chunk */
 			*(rp++) = cpu_to_le32(RISC_LINESTART |
 					      /* (offset<<12) |*/  bpl);
 			*(rp++) = cpu_to_le32(sg_dma_address(sg) + offset);
 			offset += bpl;
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
 			 * scanline needs to be split.  Put the start in
-			 * whatever memory reमुख्यs using RISC_LINESTART,
-			 * then the reमुख्यder पूर्णांकo following addresses
+			 * whatever memory remains using RISC_LINESTART,
+			 * then the remainder into following addresses
 			 * given by the scatter-gather list.
 			 */
-			toकरो = bpl;	/* one full line to be करोne */
+			todo = bpl;	/* one full line to be done */
 			/* first fragment */
-			करोne = (sg_dma_len(sg) - offset);
+			done = (sg_dma_len(sg) - offset);
 			*(rp++) = cpu_to_le32(RISC_LINESTART |
 						(7 << 24) |
-						करोne);
+						done);
 			*(rp++) = cpu_to_le32(sg_dma_address(sg) + offset);
-			toकरो -= करोne;
+			todo -= done;
 			sg = sg_next(sg);
 			/* succeeding fragments have no offset */
-			जबतक (toकरो > sg_dma_len(sg)) अणु
+			while (todo > sg_dma_len(sg)) {
 				*(rp++) = cpu_to_le32(RISC_INLINE |
-						(करोne << 12) |
+						(done << 12) |
 						sg_dma_len(sg));
 				*(rp++) = cpu_to_le32(sg_dma_address(sg));
-				toकरो -= sg_dma_len(sg);
+				todo -= sg_dma_len(sg);
 				sg = sg_next(sg);
-				करोne += sg_dma_len(sg);
-			पूर्ण
-			अगर (toकरो) अणु
+				done += sg_dma_len(sg);
+			}
+			if (todo) {
 				/* final chunk - offset 0, count 'todo' */
 				*(rp++) = cpu_to_le32(RISC_INLINE |
-							(करोne << 12) |
-							toकरो);
+							(done << 12) |
+							todo);
 				*(rp++) = cpu_to_le32(sg_dma_address(sg));
-			पूर्ण
-			offset = toकरो;
-		पूर्ण
+			}
+			offset = todo;
+		}
 		offset += padding;
-	पूर्ण
+	}
 
-	वापस rp;
-पूर्ण
+	return rp;
+}
 
 /**
  * tw68_risc_buffer
  *
  *	This routine is called by tw68-video.  It allocates
- *	memory क्रम the dma controller "program" and then fills in that
+ *	memory for the dma controller "program" and then fills in that
  *	memory with the appropriate "instructions".
  *
- *	@pci:		काष्ठाure with info about the pci
+ *	@pci:		structure with info about the pci
  *			slot which our device is in.
- *	@buf:		काष्ठाure with info about the memory
- *			used क्रम our controller program.
+ *	@buf:		structure with info about the memory
+ *			used for our controller program.
  *	@sglist:	scatter-gather list entry
- *	@top_offset:	offset within the risc program area क्रम the
+ *	@top_offset:	offset within the risc program area for the
  *			first odd frame line
- *	@bottom_offset:	offset within the risc program area क्रम the
+ *	@bottom_offset:	offset within the risc program area for the
  *			first even frame line
  *	@bpl:		number of data bytes per scan line
  *	@padding:	number of extra bytes to add at end of line
  *	@lines:		number of scan lines
  */
-पूर्णांक tw68_risc_buffer(काष्ठा pci_dev *pci,
-			काष्ठा tw68_buf *buf,
-			काष्ठा scatterlist *sglist,
-			अचिन्हित पूर्णांक top_offset,
-			अचिन्हित पूर्णांक bottom_offset,
-			अचिन्हित पूर्णांक bpl,
-			अचिन्हित पूर्णांक padding,
-			अचिन्हित पूर्णांक lines)
-अणु
-	u32 inकाष्ठाions, fields;
+int tw68_risc_buffer(struct pci_dev *pci,
+			struct tw68_buf *buf,
+			struct scatterlist *sglist,
+			unsigned int top_offset,
+			unsigned int bottom_offset,
+			unsigned int bpl,
+			unsigned int padding,
+			unsigned int lines)
+{
+	u32 instructions, fields;
 	__le32 *rp;
 
 	fields = 0;
-	अगर (UNSET != top_offset)
+	if (UNSET != top_offset)
 		fields++;
-	अगर (UNSET != bottom_offset)
+	if (UNSET != bottom_offset)
 		fields++;
 	/*
-	 * estimate risc mem: worst हाल is one ग_लिखो per page border +
-	 * one ग_लिखो per scan line + syncs + 2 jumps (all 2 dwords).
-	 * Padding can cause next bpl to start बंद to a page border.
+	 * estimate risc mem: worst case is one write per page border +
+	 * one write per scan line + syncs + 2 jumps (all 2 dwords).
+	 * Padding can cause next bpl to start close to a page border.
 	 * First DMA region may be smaller than PAGE_SIZE
 	 */
-	inकाष्ठाions  = fields * (1 + (((bpl + padding) * lines) /
+	instructions  = fields * (1 + (((bpl + padding) * lines) /
 			 PAGE_SIZE) + lines) + 4;
-	buf->size = inकाष्ठाions * 8;
+	buf->size = instructions * 8;
 	buf->cpu = dma_alloc_coherent(&pci->dev, buf->size, &buf->dma,
 				      GFP_KERNEL);
-	अगर (buf->cpu == शून्य)
-		वापस -ENOMEM;
+	if (buf->cpu == NULL)
+		return -ENOMEM;
 
-	/* ग_लिखो risc inकाष्ठाions */
+	/* write risc instructions */
 	rp = buf->cpu;
-	अगर (UNSET != top_offset)	/* generates SYNCO */
+	if (UNSET != top_offset)	/* generates SYNCO */
 		rp = tw68_risc_field(rp, sglist, top_offset, 1,
 				     bpl, padding, lines, true);
-	अगर (UNSET != bottom_offset)	/* generates SYNCE */
+	if (UNSET != bottom_offset)	/* generates SYNCE */
 		rp = tw68_risc_field(rp, sglist, bottom_offset, 2,
 				     bpl, padding, lines, top_offset == UNSET);
 
-	/* save poपूर्णांकer to jmp inकाष्ठाion address */
+	/* save pointer to jmp instruction address */
 	buf->jmp = rp;
 	buf->cpu[1] = cpu_to_le32(buf->dma + 8);
 	/* assure risc buffer hasn't overflowed */
-	BUG_ON((buf->jmp - buf->cpu + 2) * माप(buf->cpu[0]) > buf->size);
-	वापस 0;
-पूर्ण
+	BUG_ON((buf->jmp - buf->cpu + 2) * sizeof(buf->cpu[0]) > buf->size);
+	return 0;
+}
 
-#अगर 0
+#if 0
 /* ------------------------------------------------------------------ */
 /* debug helper code                                                  */
 
-अटल व्योम tw68_risc_decode(u32 risc, u32 addr)
-अणु
-#घोषणा	RISC_OP(reg)	(((reg) >> 28) & 7)
-	अटल काष्ठा instr_details अणु
-		अक्षर *name;
+static void tw68_risc_decode(u32 risc, u32 addr)
+{
+#define	RISC_OP(reg)	(((reg) >> 28) & 7)
+	static struct instr_details {
+		char *name;
 		u8 has_data_type;
 		u8 has_byte_info;
 		u8 has_addr;
-	पूर्ण instr[8] = अणु
-		[RISC_OP(RISC_SYNCO)]	  = अणु"syncOdd", 0, 0, 0पूर्ण,
-		[RISC_OP(RISC_SYNCE)]	  = अणु"syncEven", 0, 0, 0पूर्ण,
-		[RISC_OP(RISC_JUMP)]	  = अणु"jump", 0, 0, 1पूर्ण,
-		[RISC_OP(RISC_LINESTART)] = अणु"lineStart", 1, 1, 1पूर्ण,
-		[RISC_OP(RISC_INLINE)]	  = अणु"inline", 1, 1, 1पूर्ण,
-	पूर्ण;
+	} instr[8] = {
+		[RISC_OP(RISC_SYNCO)]	  = {"syncOdd", 0, 0, 0},
+		[RISC_OP(RISC_SYNCE)]	  = {"syncEven", 0, 0, 0},
+		[RISC_OP(RISC_JUMP)]	  = {"jump", 0, 0, 1},
+		[RISC_OP(RISC_LINESTART)] = {"lineStart", 1, 1, 1},
+		[RISC_OP(RISC_INLINE)]	  = {"inline", 1, 1, 1},
+	};
 	u32 p;
 
 	p = RISC_OP(risc);
-	अगर (!(risc & 0x80000000) || !instr[p].name) अणु
+	if (!(risc & 0x80000000) || !instr[p].name) {
 		pr_debug("0x%08x [ INVALID ]\n", risc);
-		वापस;
-	पूर्ण
+		return;
+	}
 	pr_debug("0x%08x %-9s IRQ=%d",
 		risc, instr[p].name, (risc >> 27) & 1);
-	अगर (instr[p].has_data_type)
+	if (instr[p].has_data_type)
 		pr_debug(" Type=%d", (risc >> 24) & 7);
-	अगर (instr[p].has_byte_info)
+	if (instr[p].has_byte_info)
 		pr_debug(" Start=0x%03x Count=%03u",
 			(risc >> 12) & 0xfff, risc & 0xfff);
-	अगर (instr[p].has_addr)
+	if (instr[p].has_addr)
 		pr_debug(" StartAddr=0x%08x", addr);
 	pr_debug("\n");
-पूर्ण
+}
 
-व्योम tw68_risc_program_dump(काष्ठा tw68_core *core, काष्ठा tw68_buf *buf)
-अणु
-	स्थिर __le32 *addr;
+void tw68_risc_program_dump(struct tw68_core *core, struct tw68_buf *buf)
+{
+	const __le32 *addr;
 
 	pr_debug("%s: risc_program_dump: risc=%p, buf->cpu=0x%p, buf->jmp=0x%p\n",
 		  core->name, buf, buf->cpu, buf->jmp);
-	क्रम (addr = buf->cpu; addr <= buf->jmp; addr += 2)
+	for (addr = buf->cpu; addr <= buf->jmp; addr += 2)
 		tw68_risc_decode(*addr, *(addr+1));
-पूर्ण
-#पूर्ण_अगर
+}
+#endif

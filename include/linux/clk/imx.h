@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Freescale Semiconductor, Inc.
  *
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
-#अगर_अघोषित __LINUX_CLK_IMX_H
-#घोषणा __LINUX_CLK_IMX_H
+#ifndef __LINUX_CLK_IMX_H
+#define __LINUX_CLK_IMX_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-व्योम imx6sl_set_रुको_clk(bool enter);
+void imx6sl_set_wait_clk(bool enter);
 
-#पूर्ण_अगर
+#endif

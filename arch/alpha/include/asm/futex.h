@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_ALPHA_FUTEX_H
-#घोषणा _ASM_ALPHA_FUTEX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_ALPHA_FUTEX_H
+#define _ASM_ALPHA_FUTEX_H
 
-#अगर_घोषित __KERNEL__
+#ifdef __KERNEL__
 
-#समावेश <linux/futex.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/त्रुटिसं.स>
-#समावेश <यंत्र/barrier.h>
+#include <linux/futex.h>
+#include <linux/uaccess.h>
+#include <asm/errno.h>
+#include <asm/barrier.h>
 
-#घोषणा __futex_atomic_op(insn, ret, oldval, uaddr, oparg)	\
-	__यंत्र__ __अस्थिर__(					\
+#define __futex_atomic_op(insn, ret, oldval, uaddr, oparg)	\
+	__asm__ __volatile__(					\
 		__ASM_SMP_MB					\
 	"1:	ldl_l	%0,0(%2)\n"				\
 		insn						\
@@ -27,51 +26,51 @@
 	:	"r" (uaddr), "r"(oparg)				\
 	:	"memory")
 
-अटल अंतरभूत पूर्णांक arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval,
+static inline int arch_futex_atomic_op_inuser(int op, int oparg, int *oval,
 		u32 __user *uaddr)
-अणु
-	पूर्णांक oldval = 0, ret;
+{
+	int oldval = 0, ret;
 
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
+	switch (op) {
+	case FUTEX_OP_SET:
 		__futex_atomic_op("mov %3,%1\n", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ADD:
+		break;
+	case FUTEX_OP_ADD:
 		__futex_atomic_op("addl %0,%3,%1\n", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_OR:
+		break;
+	case FUTEX_OP_OR:
 		__futex_atomic_op("or %0,%3,%1\n", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
+		break;
+	case FUTEX_OP_ANDN:
 		__futex_atomic_op("andnot %0,%3,%1\n", ret, oldval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_XOR:
+		break;
+	case FUTEX_OP_XOR:
 		__futex_atomic_op("xor %0,%3,%1\n", ret, oldval, uaddr, oparg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक
+static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-अणु
-	पूर्णांक ret = 0, cmp;
+{
+	int ret = 0, cmp;
 	u32 prev;
 
-	अगर (!access_ok(uaddr, माप(u32)))
-		वापस -EFAULT;
+	if (!access_ok(uaddr, sizeof(u32)))
+		return -EFAULT;
 
-	__यंत्र__ __अस्थिर__ (
+	__asm__ __volatile__ (
 		__ASM_SMP_MB
 	"1:	ldl_l	%1,0(%3)\n"
 	"	cmpeq	%1,%4,%2\n"
@@ -85,12 +84,12 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 	EXC(1b,3b,$31,%0)
 	EXC(2b,3b,$31,%0)
 	:	"+r"(ret), "=&r"(prev), "=&r"(cmp)
-	:	"r"(uaddr), "r"((दीर्घ)(पूर्णांक)oldval), "r"(newval)
+	:	"r"(uaddr), "r"((long)(int)oldval), "r"(newval)
 	:	"memory");
 
 	*uval = prev;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* __KERNEL__ */
-#पूर्ण_अगर /* _ASM_ALPHA_FUTEX_H */
+#endif /* __KERNEL__ */
+#endif /* _ASM_ALPHA_FUTEX_H */

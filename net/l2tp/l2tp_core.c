@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* L2TP core.
  *
  * Copyright (c) 2008,2009,2010 Katalix Systems Ltd
@@ -11,462 +10,462 @@
  *		James Chapman (jchapman@katalix.com)
  * Contributors:
  *		Michal Ostrowski <mostrows@speakeasy.net>
- *		Arnalकरो Carvalho de Melo <acme@xconectiva.com.br>
+ *		Arnaldo Carvalho de Melo <acme@xconectiva.com.br>
  *		David S. Miller (davem@redhat.com)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/list.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/list.h>
+#include <linux/rculist.h>
+#include <linux/uaccess.h>
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/jअगरfies.h>
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/kthread.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/jiffies.h>
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/net.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/init.h>
-#समावेश <linux/in.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/udp.h>
-#समावेश <linux/l2tp.h>
-#समावेश <linux/hash.h>
-#समावेश <linux/sort.h>
-#समावेश <linux/file.h>
-#समावेश <linux/nsproxy.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/netns/generic.h>
-#समावेश <net/dst.h>
-#समावेश <net/ip.h>
-#समावेश <net/udp.h>
-#समावेश <net/udp_tunnel.h>
-#समावेश <net/inet_common.h>
-#समावेश <net/xfrm.h>
-#समावेश <net/protocol.h>
-#समावेश <net/inet6_connection_sock.h>
-#समावेश <net/inet_ecn.h>
-#समावेश <net/ip6_route.h>
-#समावेश <net/ip6_checksum.h>
+#include <linux/netdevice.h>
+#include <linux/net.h>
+#include <linux/inetdevice.h>
+#include <linux/skbuff.h>
+#include <linux/init.h>
+#include <linux/in.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
+#include <linux/l2tp.h>
+#include <linux/hash.h>
+#include <linux/sort.h>
+#include <linux/file.h>
+#include <linux/nsproxy.h>
+#include <net/net_namespace.h>
+#include <net/netns/generic.h>
+#include <net/dst.h>
+#include <net/ip.h>
+#include <net/udp.h>
+#include <net/udp_tunnel.h>
+#include <net/inet_common.h>
+#include <net/xfrm.h>
+#include <net/protocol.h>
+#include <net/inet6_connection_sock.h>
+#include <net/inet_ecn.h>
+#include <net/ip6_route.h>
+#include <net/ip6_checksum.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <linux/atomic.h>
+#include <asm/byteorder.h>
+#include <linux/atomic.h>
 
-#समावेश "l2tp_core.h"
-#समावेश "trace.h"
+#include "l2tp_core.h"
+#include "trace.h"
 
-#घोषणा CREATE_TRACE_POINTS
-#समावेश "trace.h"
+#define CREATE_TRACE_POINTS
+#include "trace.h"
 
-#घोषणा L2TP_DRV_VERSION	"V2.0"
+#define L2TP_DRV_VERSION	"V2.0"
 
-/* L2TP header स्थिरants */
-#घोषणा L2TP_HDRFLAG_T	   0x8000
-#घोषणा L2TP_HDRFLAG_L	   0x4000
-#घोषणा L2TP_HDRFLAG_S	   0x0800
-#घोषणा L2TP_HDRFLAG_O	   0x0200
-#घोषणा L2TP_HDRFLAG_P	   0x0100
+/* L2TP header constants */
+#define L2TP_HDRFLAG_T	   0x8000
+#define L2TP_HDRFLAG_L	   0x4000
+#define L2TP_HDRFLAG_S	   0x0800
+#define L2TP_HDRFLAG_O	   0x0200
+#define L2TP_HDRFLAG_P	   0x0100
 
-#घोषणा L2TP_HDR_VER_MASK  0x000F
-#घोषणा L2TP_HDR_VER_2	   0x0002
-#घोषणा L2TP_HDR_VER_3	   0x0003
+#define L2TP_HDR_VER_MASK  0x000F
+#define L2TP_HDR_VER_2	   0x0002
+#define L2TP_HDR_VER_3	   0x0003
 
-/* L2TPv3 शेष L2-specअगरic sublayer */
-#घोषणा L2TP_SLFLAG_S	   0x40000000
-#घोषणा L2TP_SL_SEQ_MASK   0x00ffffff
+/* L2TPv3 default L2-specific sublayer */
+#define L2TP_SLFLAG_S	   0x40000000
+#define L2TP_SL_SEQ_MASK   0x00ffffff
 
-#घोषणा L2TP_HDR_SIZE_MAX		14
+#define L2TP_HDR_SIZE_MAX		14
 
 /* Default trace flags */
-#घोषणा L2TP_DEFAULT_DEBUG_FLAGS	0
+#define L2TP_DEFAULT_DEBUG_FLAGS	0
 
-/* Private data stored क्रम received packets in the skb.
+/* Private data stored for received packets in the skb.
  */
-काष्ठा l2tp_skb_cb अणु
+struct l2tp_skb_cb {
 	u32			ns;
 	u16			has_seq;
 	u16			length;
-	अचिन्हित दीर्घ		expires;
-पूर्ण;
+	unsigned long		expires;
+};
 
-#घोषणा L2TP_SKB_CB(skb)	((काष्ठा l2tp_skb_cb *)&(skb)->cb[माप(काष्ठा inet_skb_parm)])
+#define L2TP_SKB_CB(skb)	((struct l2tp_skb_cb *)&(skb)->cb[sizeof(struct inet_skb_parm)])
 
-अटल काष्ठा workqueue_काष्ठा *l2tp_wq;
+static struct workqueue_struct *l2tp_wq;
 
-/* per-net निजी data क्रम this module */
-अटल अचिन्हित पूर्णांक l2tp_net_id;
-काष्ठा l2tp_net अणु
-	काष्ठा list_head l2tp_tunnel_list;
-	/* Lock क्रम ग_लिखो access to l2tp_tunnel_list */
+/* per-net private data for this module */
+static unsigned int l2tp_net_id;
+struct l2tp_net {
+	struct list_head l2tp_tunnel_list;
+	/* Lock for write access to l2tp_tunnel_list */
 	spinlock_t l2tp_tunnel_list_lock;
-	काष्ठा hlist_head l2tp_session_hlist[L2TP_HASH_SIZE_2];
-	/* Lock क्रम ग_लिखो access to l2tp_session_hlist */
+	struct hlist_head l2tp_session_hlist[L2TP_HASH_SIZE_2];
+	/* Lock for write access to l2tp_session_hlist */
 	spinlock_t l2tp_session_hlist_lock;
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल bool l2tp_sk_is_v6(काष्ठा sock *sk)
-अणु
-	वापस sk->sk_family == PF_INET6 &&
+#if IS_ENABLED(CONFIG_IPV6)
+static bool l2tp_sk_is_v6(struct sock *sk)
+{
+	return sk->sk_family == PF_INET6 &&
 	       !ipv6_addr_v4mapped(&sk->sk_v6_daddr);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-अटल अंतरभूत काष्ठा l2tp_net *l2tp_pernet(स्थिर काष्ठा net *net)
-अणु
-	वापस net_generic(net, l2tp_net_id);
-पूर्ण
+static inline struct l2tp_net *l2tp_pernet(const struct net *net)
+{
+	return net_generic(net, l2tp_net_id);
+}
 
-/* Session hash global list क्रम L2TPv3.
- * The session_id SHOULD be अक्रमom according to RFC3931, but several
- * L2TP implementations use incrementing session_ids.  So we करो a real
- * hash on the session_id, rather than a simple biपंचांगask.
+/* Session hash global list for L2TPv3.
+ * The session_id SHOULD be random according to RFC3931, but several
+ * L2TP implementations use incrementing session_ids.  So we do a real
+ * hash on the session_id, rather than a simple bitmask.
  */
-अटल अंतरभूत काष्ठा hlist_head *
-l2tp_session_id_hash_2(काष्ठा l2tp_net *pn, u32 session_id)
-अणु
-	वापस &pn->l2tp_session_hlist[hash_32(session_id, L2TP_HASH_BITS_2)];
-पूर्ण
+static inline struct hlist_head *
+l2tp_session_id_hash_2(struct l2tp_net *pn, u32 session_id)
+{
+	return &pn->l2tp_session_hlist[hash_32(session_id, L2TP_HASH_BITS_2)];
+}
 
 /* Session hash list.
- * The session_id SHOULD be अक्रमom according to RFC2661, but several
+ * The session_id SHOULD be random according to RFC2661, but several
  * L2TP implementations (Cisco and Microsoft) use incrementing
- * session_ids.  So we करो a real hash on the session_id, rather than a
- * simple biपंचांगask.
+ * session_ids.  So we do a real hash on the session_id, rather than a
+ * simple bitmask.
  */
-अटल अंतरभूत काष्ठा hlist_head *
-l2tp_session_id_hash(काष्ठा l2tp_tunnel *tunnel, u32 session_id)
-अणु
-	वापस &tunnel->session_hlist[hash_32(session_id, L2TP_HASH_BITS)];
-पूर्ण
+static inline struct hlist_head *
+l2tp_session_id_hash(struct l2tp_tunnel *tunnel, u32 session_id)
+{
+	return &tunnel->session_hlist[hash_32(session_id, L2TP_HASH_BITS)];
+}
 
-अटल व्योम l2tp_tunnel_मुक्त(काष्ठा l2tp_tunnel *tunnel)
-अणु
-	trace_मुक्त_tunnel(tunnel);
+static void l2tp_tunnel_free(struct l2tp_tunnel *tunnel)
+{
+	trace_free_tunnel(tunnel);
 	sock_put(tunnel->sock);
-	/* the tunnel is मुक्तd in the socket deकाष्ठाor */
-पूर्ण
+	/* the tunnel is freed in the socket destructor */
+}
 
-अटल व्योम l2tp_session_मुक्त(काष्ठा l2tp_session *session)
-अणु
-	trace_मुक्त_session(session);
-	अगर (session->tunnel)
+static void l2tp_session_free(struct l2tp_session *session)
+{
+	trace_free_session(session);
+	if (session->tunnel)
 		l2tp_tunnel_dec_refcount(session->tunnel);
-	kमुक्त(session);
-पूर्ण
+	kfree(session);
+}
 
-काष्ठा l2tp_tunnel *l2tp_sk_to_tunnel(काष्ठा sock *sk)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = sk->sk_user_data;
+struct l2tp_tunnel *l2tp_sk_to_tunnel(struct sock *sk)
+{
+	struct l2tp_tunnel *tunnel = sk->sk_user_data;
 
-	अगर (tunnel)
-		अगर (WARN_ON(tunnel->magic != L2TP_TUNNEL_MAGIC))
-			वापस शून्य;
+	if (tunnel)
+		if (WARN_ON(tunnel->magic != L2TP_TUNNEL_MAGIC))
+			return NULL;
 
-	वापस tunnel;
-पूर्ण
+	return tunnel;
+}
 EXPORT_SYMBOL_GPL(l2tp_sk_to_tunnel);
 
-व्योम l2tp_tunnel_inc_refcount(काष्ठा l2tp_tunnel *tunnel)
-अणु
+void l2tp_tunnel_inc_refcount(struct l2tp_tunnel *tunnel)
+{
 	refcount_inc(&tunnel->ref_count);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_inc_refcount);
 
-व्योम l2tp_tunnel_dec_refcount(काष्ठा l2tp_tunnel *tunnel)
-अणु
-	अगर (refcount_dec_and_test(&tunnel->ref_count))
-		l2tp_tunnel_मुक्त(tunnel);
-पूर्ण
+void l2tp_tunnel_dec_refcount(struct l2tp_tunnel *tunnel)
+{
+	if (refcount_dec_and_test(&tunnel->ref_count))
+		l2tp_tunnel_free(tunnel);
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_dec_refcount);
 
-व्योम l2tp_session_inc_refcount(काष्ठा l2tp_session *session)
-अणु
+void l2tp_session_inc_refcount(struct l2tp_session *session)
+{
 	refcount_inc(&session->ref_count);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(l2tp_session_inc_refcount);
 
-व्योम l2tp_session_dec_refcount(काष्ठा l2tp_session *session)
-अणु
-	अगर (refcount_dec_and_test(&session->ref_count))
-		l2tp_session_मुक्त(session);
-पूर्ण
+void l2tp_session_dec_refcount(struct l2tp_session *session)
+{
+	if (refcount_dec_and_test(&session->ref_count))
+		l2tp_session_free(session);
+}
 EXPORT_SYMBOL_GPL(l2tp_session_dec_refcount);
 
-/* Lookup a tunnel. A new reference is held on the वापसed tunnel. */
-काष्ठा l2tp_tunnel *l2tp_tunnel_get(स्थिर काष्ठा net *net, u32 tunnel_id)
-अणु
-	स्थिर काष्ठा l2tp_net *pn = l2tp_pernet(net);
-	काष्ठा l2tp_tunnel *tunnel;
+/* Lookup a tunnel. A new reference is held on the returned tunnel. */
+struct l2tp_tunnel *l2tp_tunnel_get(const struct net *net, u32 tunnel_id)
+{
+	const struct l2tp_net *pn = l2tp_pernet(net);
+	struct l2tp_tunnel *tunnel;
 
-	rcu_पढ़ो_lock_bh();
-	list_क्रम_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) अणु
-		अगर (tunnel->tunnel_id == tunnel_id &&
-		    refcount_inc_not_zero(&tunnel->ref_count)) अणु
-			rcu_पढ़ो_unlock_bh();
+	rcu_read_lock_bh();
+	list_for_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) {
+		if (tunnel->tunnel_id == tunnel_id &&
+		    refcount_inc_not_zero(&tunnel->ref_count)) {
+			rcu_read_unlock_bh();
 
-			वापस tunnel;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock_bh();
+			return tunnel;
+		}
+	}
+	rcu_read_unlock_bh();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_get);
 
-काष्ठा l2tp_tunnel *l2tp_tunnel_get_nth(स्थिर काष्ठा net *net, पूर्णांक nth)
-अणु
-	स्थिर काष्ठा l2tp_net *pn = l2tp_pernet(net);
-	काष्ठा l2tp_tunnel *tunnel;
-	पूर्णांक count = 0;
+struct l2tp_tunnel *l2tp_tunnel_get_nth(const struct net *net, int nth)
+{
+	const struct l2tp_net *pn = l2tp_pernet(net);
+	struct l2tp_tunnel *tunnel;
+	int count = 0;
 
-	rcu_पढ़ो_lock_bh();
-	list_क्रम_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) अणु
-		अगर (++count > nth &&
-		    refcount_inc_not_zero(&tunnel->ref_count)) अणु
-			rcu_पढ़ो_unlock_bh();
-			वापस tunnel;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_lock_bh();
+	list_for_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) {
+		if (++count > nth &&
+		    refcount_inc_not_zero(&tunnel->ref_count)) {
+			rcu_read_unlock_bh();
+			return tunnel;
+		}
+	}
+	rcu_read_unlock_bh();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_get_nth);
 
-काष्ठा l2tp_session *l2tp_tunnel_get_session(काष्ठा l2tp_tunnel *tunnel,
+struct l2tp_session *l2tp_tunnel_get_session(struct l2tp_tunnel *tunnel,
 					     u32 session_id)
-अणु
-	काष्ठा hlist_head *session_list;
-	काष्ठा l2tp_session *session;
+{
+	struct hlist_head *session_list;
+	struct l2tp_session *session;
 
 	session_list = l2tp_session_id_hash(tunnel, session_id);
 
-	पढ़ो_lock_bh(&tunnel->hlist_lock);
-	hlist_क्रम_each_entry(session, session_list, hlist)
-		अगर (session->session_id == session_id) अणु
+	read_lock_bh(&tunnel->hlist_lock);
+	hlist_for_each_entry(session, session_list, hlist)
+		if (session->session_id == session_id) {
 			l2tp_session_inc_refcount(session);
-			पढ़ो_unlock_bh(&tunnel->hlist_lock);
+			read_unlock_bh(&tunnel->hlist_lock);
 
-			वापस session;
-		पूर्ण
-	पढ़ो_unlock_bh(&tunnel->hlist_lock);
+			return session;
+		}
+	read_unlock_bh(&tunnel->hlist_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_get_session);
 
-काष्ठा l2tp_session *l2tp_session_get(स्थिर काष्ठा net *net, u32 session_id)
-अणु
-	काष्ठा hlist_head *session_list;
-	काष्ठा l2tp_session *session;
+struct l2tp_session *l2tp_session_get(const struct net *net, u32 session_id)
+{
+	struct hlist_head *session_list;
+	struct l2tp_session *session;
 
 	session_list = l2tp_session_id_hash_2(l2tp_pernet(net), session_id);
 
-	rcu_पढ़ो_lock_bh();
-	hlist_क्रम_each_entry_rcu(session, session_list, global_hlist)
-		अगर (session->session_id == session_id) अणु
+	rcu_read_lock_bh();
+	hlist_for_each_entry_rcu(session, session_list, global_hlist)
+		if (session->session_id == session_id) {
 			l2tp_session_inc_refcount(session);
-			rcu_पढ़ो_unlock_bh();
+			rcu_read_unlock_bh();
 
-			वापस session;
-		पूर्ण
-	rcu_पढ़ो_unlock_bh();
+			return session;
+		}
+	rcu_read_unlock_bh();
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(l2tp_session_get);
 
-काष्ठा l2tp_session *l2tp_session_get_nth(काष्ठा l2tp_tunnel *tunnel, पूर्णांक nth)
-अणु
-	पूर्णांक hash;
-	काष्ठा l2tp_session *session;
-	पूर्णांक count = 0;
+struct l2tp_session *l2tp_session_get_nth(struct l2tp_tunnel *tunnel, int nth)
+{
+	int hash;
+	struct l2tp_session *session;
+	int count = 0;
 
-	पढ़ो_lock_bh(&tunnel->hlist_lock);
-	क्रम (hash = 0; hash < L2TP_HASH_SIZE; hash++) अणु
-		hlist_क्रम_each_entry(session, &tunnel->session_hlist[hash], hlist) अणु
-			अगर (++count > nth) अणु
+	read_lock_bh(&tunnel->hlist_lock);
+	for (hash = 0; hash < L2TP_HASH_SIZE; hash++) {
+		hlist_for_each_entry(session, &tunnel->session_hlist[hash], hlist) {
+			if (++count > nth) {
 				l2tp_session_inc_refcount(session);
-				पढ़ो_unlock_bh(&tunnel->hlist_lock);
-				वापस session;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				read_unlock_bh(&tunnel->hlist_lock);
+				return session;
+			}
+		}
+	}
 
-	पढ़ो_unlock_bh(&tunnel->hlist_lock);
+	read_unlock_bh(&tunnel->hlist_lock);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 EXPORT_SYMBOL_GPL(l2tp_session_get_nth);
 
-/* Lookup a session by पूर्णांकerface name.
- * This is very inefficient but is only used by management पूर्णांकerfaces.
+/* Lookup a session by interface name.
+ * This is very inefficient but is only used by management interfaces.
  */
-काष्ठा l2tp_session *l2tp_session_get_by_अगरname(स्थिर काष्ठा net *net,
-						स्थिर अक्षर *अगरname)
-अणु
-	काष्ठा l2tp_net *pn = l2tp_pernet(net);
-	पूर्णांक hash;
-	काष्ठा l2tp_session *session;
+struct l2tp_session *l2tp_session_get_by_ifname(const struct net *net,
+						const char *ifname)
+{
+	struct l2tp_net *pn = l2tp_pernet(net);
+	int hash;
+	struct l2tp_session *session;
 
-	rcu_पढ़ो_lock_bh();
-	क्रम (hash = 0; hash < L2TP_HASH_SIZE_2; hash++) अणु
-		hlist_क्रम_each_entry_rcu(session, &pn->l2tp_session_hlist[hash], global_hlist) अणु
-			अगर (!म_भेद(session->अगरname, अगरname)) अणु
+	rcu_read_lock_bh();
+	for (hash = 0; hash < L2TP_HASH_SIZE_2; hash++) {
+		hlist_for_each_entry_rcu(session, &pn->l2tp_session_hlist[hash], global_hlist) {
+			if (!strcmp(session->ifname, ifname)) {
 				l2tp_session_inc_refcount(session);
-				rcu_पढ़ो_unlock_bh();
+				rcu_read_unlock_bh();
 
-				वापस session;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return session;
+			}
+		}
+	}
 
-	rcu_पढ़ो_unlock_bh();
+	rcu_read_unlock_bh();
 
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL_GPL(l2tp_session_get_by_अगरname);
+	return NULL;
+}
+EXPORT_SYMBOL_GPL(l2tp_session_get_by_ifname);
 
-पूर्णांक l2tp_session_रेजिस्टर(काष्ठा l2tp_session *session,
-			  काष्ठा l2tp_tunnel *tunnel)
-अणु
-	काष्ठा l2tp_session *session_walk;
-	काष्ठा hlist_head *g_head;
-	काष्ठा hlist_head *head;
-	काष्ठा l2tp_net *pn;
-	पूर्णांक err;
+int l2tp_session_register(struct l2tp_session *session,
+			  struct l2tp_tunnel *tunnel)
+{
+	struct l2tp_session *session_walk;
+	struct hlist_head *g_head;
+	struct hlist_head *head;
+	struct l2tp_net *pn;
+	int err;
 
 	head = l2tp_session_id_hash(tunnel, session->session_id);
 
-	ग_लिखो_lock_bh(&tunnel->hlist_lock);
-	अगर (!tunnel->acpt_newsess) अणु
+	write_lock_bh(&tunnel->hlist_lock);
+	if (!tunnel->acpt_newsess) {
 		err = -ENODEV;
-		जाओ err_tlock;
-	पूर्ण
+		goto err_tlock;
+	}
 
-	hlist_क्रम_each_entry(session_walk, head, hlist)
-		अगर (session_walk->session_id == session->session_id) अणु
+	hlist_for_each_entry(session_walk, head, hlist)
+		if (session_walk->session_id == session->session_id) {
 			err = -EEXIST;
-			जाओ err_tlock;
-		पूर्ण
+			goto err_tlock;
+		}
 
-	अगर (tunnel->version == L2TP_HDR_VER_3) अणु
+	if (tunnel->version == L2TP_HDR_VER_3) {
 		pn = l2tp_pernet(tunnel->l2tp_net);
 		g_head = l2tp_session_id_hash_2(pn, session->session_id);
 
 		spin_lock_bh(&pn->l2tp_session_hlist_lock);
 
-		/* IP encap expects session IDs to be globally unique, जबतक
-		 * UDP encap करोesn't.
+		/* IP encap expects session IDs to be globally unique, while
+		 * UDP encap doesn't.
 		 */
-		hlist_क्रम_each_entry(session_walk, g_head, global_hlist)
-			अगर (session_walk->session_id == session->session_id &&
+		hlist_for_each_entry(session_walk, g_head, global_hlist)
+			if (session_walk->session_id == session->session_id &&
 			    (session_walk->tunnel->encap == L2TP_ENCAPTYPE_IP ||
-			     tunnel->encap == L2TP_ENCAPTYPE_IP)) अणु
+			     tunnel->encap == L2TP_ENCAPTYPE_IP)) {
 				err = -EEXIST;
-				जाओ err_tlock_pnlock;
-			पूर्ण
+				goto err_tlock_pnlock;
+			}
 
 		l2tp_tunnel_inc_refcount(tunnel);
 		hlist_add_head_rcu(&session->global_hlist, g_head);
 
 		spin_unlock_bh(&pn->l2tp_session_hlist_lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		l2tp_tunnel_inc_refcount(tunnel);
-	पूर्ण
+	}
 
 	hlist_add_head(&session->hlist, head);
-	ग_लिखो_unlock_bh(&tunnel->hlist_lock);
+	write_unlock_bh(&tunnel->hlist_lock);
 
-	trace_रेजिस्टर_session(session);
+	trace_register_session(session);
 
-	वापस 0;
+	return 0;
 
 err_tlock_pnlock:
 	spin_unlock_bh(&pn->l2tp_session_hlist_lock);
 err_tlock:
-	ग_लिखो_unlock_bh(&tunnel->hlist_lock);
+	write_unlock_bh(&tunnel->hlist_lock);
 
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL_GPL(l2tp_session_रेजिस्टर);
+	return err;
+}
+EXPORT_SYMBOL_GPL(l2tp_session_register);
 
 /*****************************************************************************
  * Receive data handling
  *****************************************************************************/
 
-/* Queue a skb in order. We come here only अगर the skb has an L2TP sequence
+/* Queue a skb in order. We come here only if the skb has an L2TP sequence
  * number.
  */
-अटल व्योम l2tp_recv_queue_skb(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा sk_buff *skbp;
-	काष्ठा sk_buff *पंचांगp;
+static void l2tp_recv_queue_skb(struct l2tp_session *session, struct sk_buff *skb)
+{
+	struct sk_buff *skbp;
+	struct sk_buff *tmp;
 	u32 ns = L2TP_SKB_CB(skb)->ns;
 
 	spin_lock_bh(&session->reorder_q.lock);
-	skb_queue_walk_safe(&session->reorder_q, skbp, पंचांगp) अणु
-		अगर (L2TP_SKB_CB(skbp)->ns > ns) अणु
-			__skb_queue_beक्रमe(&session->reorder_q, skbp, skb);
-			atomic_दीर्घ_inc(&session->stats.rx_oos_packets);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	skb_queue_walk_safe(&session->reorder_q, skbp, tmp) {
+		if (L2TP_SKB_CB(skbp)->ns > ns) {
+			__skb_queue_before(&session->reorder_q, skbp, skb);
+			atomic_long_inc(&session->stats.rx_oos_packets);
+			goto out;
+		}
+	}
 
 	__skb_queue_tail(&session->reorder_q, skb);
 
 out:
 	spin_unlock_bh(&session->reorder_q.lock);
-पूर्ण
+}
 
 /* Dequeue a single skb.
  */
-अटल व्योम l2tp_recv_dequeue_skb(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
-	पूर्णांक length = L2TP_SKB_CB(skb)->length;
+static void l2tp_recv_dequeue_skb(struct l2tp_session *session, struct sk_buff *skb)
+{
+	struct l2tp_tunnel *tunnel = session->tunnel;
+	int length = L2TP_SKB_CB(skb)->length;
 
-	/* We're about to requeue the skb, so वापस resources
+	/* We're about to requeue the skb, so return resources
 	 * to its current owner (a socket receive buffer).
 	 */
 	skb_orphan(skb);
 
-	atomic_दीर्घ_inc(&tunnel->stats.rx_packets);
-	atomic_दीर्घ_add(length, &tunnel->stats.rx_bytes);
-	atomic_दीर्घ_inc(&session->stats.rx_packets);
-	atomic_दीर्घ_add(length, &session->stats.rx_bytes);
+	atomic_long_inc(&tunnel->stats.rx_packets);
+	atomic_long_add(length, &tunnel->stats.rx_bytes);
+	atomic_long_inc(&session->stats.rx_packets);
+	atomic_long_add(length, &session->stats.rx_bytes);
 
-	अगर (L2TP_SKB_CB(skb)->has_seq) अणु
+	if (L2TP_SKB_CB(skb)->has_seq) {
 		/* Bump our Nr */
 		session->nr++;
 		session->nr &= session->nr_max;
 		trace_session_seqnum_update(session);
-	पूर्ण
+	}
 
-	/* call निजी receive handler */
-	अगर (session->recv_skb)
+	/* call private receive handler */
+	if (session->recv_skb)
 		(*session->recv_skb)(session, skb, L2TP_SKB_CB(skb)->length);
-	अन्यथा
-		kमुक्त_skb(skb);
-पूर्ण
+	else
+		kfree_skb(skb);
+}
 
 /* Dequeue skbs from the session's reorder_q, subject to packet order.
- * Skbs that have been in the queue क्रम too दीर्घ are simply discarded.
+ * Skbs that have been in the queue for too long are simply discarded.
  */
-अटल व्योम l2tp_recv_dequeue(काष्ठा l2tp_session *session)
-अणु
-	काष्ठा sk_buff *skb;
-	काष्ठा sk_buff *पंचांगp;
+static void l2tp_recv_dequeue(struct l2tp_session *session)
+{
+	struct sk_buff *skb;
+	struct sk_buff *tmp;
 
 	/* If the pkt at the head of the queue has the nr that we
 	 * expect to send up next, dequeue it and any other
@@ -474,112 +473,112 @@ out:
 	 */
 start:
 	spin_lock_bh(&session->reorder_q.lock);
-	skb_queue_walk_safe(&session->reorder_q, skb, पंचांगp) अणु
-		काष्ठा l2tp_skb_cb *cb = L2TP_SKB_CB(skb);
+	skb_queue_walk_safe(&session->reorder_q, skb, tmp) {
+		struct l2tp_skb_cb *cb = L2TP_SKB_CB(skb);
 
-		/* If the packet has been pending on the queue क्रम too दीर्घ, discard it */
-		अगर (समय_after(jअगरfies, cb->expires)) अणु
-			atomic_दीर्घ_inc(&session->stats.rx_seq_discards);
-			atomic_दीर्घ_inc(&session->stats.rx_errors);
+		/* If the packet has been pending on the queue for too long, discard it */
+		if (time_after(jiffies, cb->expires)) {
+			atomic_long_inc(&session->stats.rx_seq_discards);
+			atomic_long_inc(&session->stats.rx_errors);
 			trace_session_pkt_expired(session, cb->ns);
 			session->reorder_skip = 1;
 			__skb_unlink(skb, &session->reorder_q);
-			kमुक्त_skb(skb);
-			जारी;
-		पूर्ण
+			kfree_skb(skb);
+			continue;
+		}
 
-		अगर (cb->has_seq) अणु
-			अगर (session->reorder_skip) अणु
+		if (cb->has_seq) {
+			if (session->reorder_skip) {
 				session->reorder_skip = 0;
 				session->nr = cb->ns;
 				trace_session_seqnum_reset(session);
-			पूर्ण
-			अगर (cb->ns != session->nr)
-				जाओ out;
-		पूर्ण
+			}
+			if (cb->ns != session->nr)
+				goto out;
+		}
 		__skb_unlink(skb, &session->reorder_q);
 
-		/* Process the skb. We release the queue lock जबतक we
-		 * करो so to let other contexts process the queue.
+		/* Process the skb. We release the queue lock while we
+		 * do so to let other contexts process the queue.
 		 */
 		spin_unlock_bh(&session->reorder_q.lock);
 		l2tp_recv_dequeue_skb(session, skb);
-		जाओ start;
-	पूर्ण
+		goto start;
+	}
 
 out:
 	spin_unlock_bh(&session->reorder_q.lock);
-पूर्ण
+}
 
-अटल पूर्णांक l2tp_seq_check_rx_winकरोw(काष्ठा l2tp_session *session, u32 nr)
-अणु
+static int l2tp_seq_check_rx_window(struct l2tp_session *session, u32 nr)
+{
 	u32 nws;
 
-	अगर (nr >= session->nr)
+	if (nr >= session->nr)
 		nws = nr - session->nr;
-	अन्यथा
+	else
 		nws = (session->nr_max + 1) - (session->nr - nr);
 
-	वापस nws < session->nr_winकरोw_size;
-पूर्ण
+	return nws < session->nr_window_size;
+}
 
-/* If packet has sequence numbers, queue it अगर acceptable. Returns 0 अगर
- * acceptable, अन्यथा non-zero.
+/* If packet has sequence numbers, queue it if acceptable. Returns 0 if
+ * acceptable, else non-zero.
  */
-अटल पूर्णांक l2tp_recv_data_seq(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2tp_skb_cb *cb = L2TP_SKB_CB(skb);
+static int l2tp_recv_data_seq(struct l2tp_session *session, struct sk_buff *skb)
+{
+	struct l2tp_skb_cb *cb = L2TP_SKB_CB(skb);
 
-	अगर (!l2tp_seq_check_rx_winकरोw(session, cb->ns)) अणु
-		/* Packet sequence number is outside allowed winकरोw.
+	if (!l2tp_seq_check_rx_window(session, cb->ns)) {
+		/* Packet sequence number is outside allowed window.
 		 * Discard it.
 		 */
-		trace_session_pkt_outside_rx_winकरोw(session, cb->ns);
-		जाओ discard;
-	पूर्ण
+		trace_session_pkt_outside_rx_window(session, cb->ns);
+		goto discard;
+	}
 
-	अगर (session->reorder_समयout != 0) अणु
+	if (session->reorder_timeout != 0) {
 		/* Packet reordering enabled. Add skb to session's
 		 * reorder queue, in order of ns.
 		 */
 		l2tp_recv_queue_skb(session, skb);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Packet reordering disabled. Discard out-of-sequence packets, जबतक
-	 * tracking the number अगर in-sequence packets after the first OOS packet
+	/* Packet reordering disabled. Discard out-of-sequence packets, while
+	 * tracking the number if in-sequence packets after the first OOS packet
 	 * is seen. After nr_oos_count_max in-sequence packets, reset the
 	 * sequence number to re-enable packet reception.
 	 */
-	अगर (cb->ns == session->nr) अणु
+	if (cb->ns == session->nr) {
 		skb_queue_tail(&session->reorder_q, skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 nr_oos = cb->ns;
 		u32 nr_next = (session->nr_oos + 1) & session->nr_max;
 
-		अगर (nr_oos == nr_next)
+		if (nr_oos == nr_next)
 			session->nr_oos_count++;
-		अन्यथा
+		else
 			session->nr_oos_count = 0;
 
 		session->nr_oos = nr_oos;
-		अगर (session->nr_oos_count > session->nr_oos_count_max) अणु
+		if (session->nr_oos_count > session->nr_oos_count_max) {
 			session->reorder_skip = 1;
-		पूर्ण
-		अगर (!session->reorder_skip) अणु
-			atomic_दीर्घ_inc(&session->stats.rx_seq_discards);
+		}
+		if (!session->reorder_skip) {
+			atomic_long_inc(&session->stats.rx_seq_discards);
 			trace_session_pkt_oos(session, cb->ns);
-			जाओ discard;
-		पूर्ण
+			goto discard;
+		}
 		skb_queue_tail(&session->reorder_q, skb);
-	पूर्ण
+	}
 
 out:
-	वापस 0;
+	return 0;
 
 discard:
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* Do receive processing of L2TP data frames. We handle both L2TPv2
  * and L2TPv3 data frames here.
@@ -606,7 +605,7 @@ discard:
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                      L2TP Session Header                      |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                      L2-Specअगरic Sublayer                     |
+ * |                      L2-Specific Sublayer                     |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                        Tunnel Payload                      ...
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -623,7 +622,7 @@ discard:
  *                                                                 |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- * L2TPv3 L2-Specअगरic Sublayer Format
+ * L2TPv3 L2-Specific Sublayer Format
  *
  *  0                   1                   2                   3
  *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -631,44 +630,44 @@ discard:
  * |x|S|x|x|x|x|x|x|              Sequence Number                  |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- * Cookie value and sublayer क्रमmat are negotiated with the peer when
- * the session is set up. Unlike L2TPv2, we करो not need to parse the
- * packet header to determine अगर optional fields are present.
+ * Cookie value and sublayer format are negotiated with the peer when
+ * the session is set up. Unlike L2TPv2, we do not need to parse the
+ * packet header to determine if optional fields are present.
  *
- * Caller must alपढ़ोy have parsed the frame and determined that it is
- * a data (not control) frame beक्रमe coming here. Fields up to the
- * session-id have alपढ़ोy been parsed and ptr poपूर्णांकs to the data
+ * Caller must already have parsed the frame and determined that it is
+ * a data (not control) frame before coming here. Fields up to the
+ * session-id have already been parsed and ptr points to the data
  * after the session-id.
  */
-व्योम l2tp_recv_common(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb,
-		      अचिन्हित अक्षर *ptr, अचिन्हित अक्षर *optr, u16 hdrflags,
-		      पूर्णांक length)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
-	पूर्णांक offset;
+void l2tp_recv_common(struct l2tp_session *session, struct sk_buff *skb,
+		      unsigned char *ptr, unsigned char *optr, u16 hdrflags,
+		      int length)
+{
+	struct l2tp_tunnel *tunnel = session->tunnel;
+	int offset;
 
 	/* Parse and check optional cookie */
-	अगर (session->peer_cookie_len > 0) अणु
-		अगर (स_भेद(ptr, &session->peer_cookie[0], session->peer_cookie_len)) अणु
+	if (session->peer_cookie_len > 0) {
+		if (memcmp(ptr, &session->peer_cookie[0], session->peer_cookie_len)) {
 			pr_debug_ratelimited("%s: cookie mismatch (%u/%u). Discarding.\n",
 					     tunnel->name, tunnel->tunnel_id,
 					     session->session_id);
-			atomic_दीर्घ_inc(&session->stats.rx_cookie_discards);
-			जाओ discard;
-		पूर्ण
+			atomic_long_inc(&session->stats.rx_cookie_discards);
+			goto discard;
+		}
 		ptr += session->peer_cookie_len;
-	पूर्ण
+	}
 
 	/* Handle the optional sequence numbers. Sequence numbers are
-	 * in dअगरferent places क्रम L2TPv2 and L2TPv3.
+	 * in different places for L2TPv2 and L2TPv3.
 	 *
 	 * If we are the LAC, enable/disable sequence numbers under
 	 * the control of the LNS.  If no sequence numbers present but
 	 * we were expecting them, discard frame.
 	 */
 	L2TP_SKB_CB(skb)->has_seq = 0;
-	अगर (tunnel->version == L2TP_HDR_VER_2) अणु
-		अगर (hdrflags & L2TP_HDRFLAG_S) अणु
+	if (tunnel->version == L2TP_HDR_VER_2) {
+		if (hdrflags & L2TP_HDRFLAG_S) {
 			/* Store L2TP info in the skb */
 			L2TP_SKB_CB(skb)->ns = ntohs(*(__be16 *)ptr);
 			L2TP_SKB_CB(skb)->has_seq = 1;
@@ -676,146 +675,146 @@ discard:
 			/* Skip past nr in the header */
 			ptr += 2;
 
-		पूर्ण
-	पूर्ण अन्यथा अगर (session->l2specअगरic_type == L2TP_L2SPECTYPE_DEFAULT) अणु
+		}
+	} else if (session->l2specific_type == L2TP_L2SPECTYPE_DEFAULT) {
 		u32 l2h = ntohl(*(__be32 *)ptr);
 
-		अगर (l2h & 0x40000000) अणु
+		if (l2h & 0x40000000) {
 			/* Store L2TP info in the skb */
 			L2TP_SKB_CB(skb)->ns = l2h & 0x00ffffff;
 			L2TP_SKB_CB(skb)->has_seq = 1;
-		पूर्ण
+		}
 		ptr += 4;
-	पूर्ण
+	}
 
-	अगर (L2TP_SKB_CB(skb)->has_seq) अणु
+	if (L2TP_SKB_CB(skb)->has_seq) {
 		/* Received a packet with sequence numbers. If we're the LAC,
-		 * check अगर we sre sending sequence numbers and अगर not,
+		 * check if we sre sending sequence numbers and if not,
 		 * configure it so.
 		 */
-		अगर (!session->lns_mode && !session->send_seq) अणु
+		if (!session->lns_mode && !session->send_seq) {
 			trace_session_seqnum_lns_enable(session);
 			session->send_seq = 1;
 			l2tp_session_set_header_len(session, tunnel->version);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		/* No sequence numbers.
 		 * If user has configured mandatory sequence numbers, discard.
 		 */
-		अगर (session->recv_seq) अणु
+		if (session->recv_seq) {
 			pr_debug_ratelimited("%s: recv data has no seq numbers when required. Discarding.\n",
 					     session->name);
-			atomic_दीर्घ_inc(&session->stats.rx_seq_discards);
-			जाओ discard;
-		पूर्ण
+			atomic_long_inc(&session->stats.rx_seq_discards);
+			goto discard;
+		}
 
 		/* If we're the LAC and we're sending sequence numbers, the
-		 * LNS has requested that we no दीर्घer send sequence numbers.
+		 * LNS has requested that we no longer send sequence numbers.
 		 * If we're the LNS and we're sending sequence numbers, the
 		 * LAC is broken. Discard the frame.
 		 */
-		अगर (!session->lns_mode && session->send_seq) अणु
+		if (!session->lns_mode && session->send_seq) {
 			trace_session_seqnum_lns_disable(session);
 			session->send_seq = 0;
 			l2tp_session_set_header_len(session, tunnel->version);
-		पूर्ण अन्यथा अगर (session->send_seq) अणु
+		} else if (session->send_seq) {
 			pr_debug_ratelimited("%s: recv data has no seq numbers when required. Discarding.\n",
 					     session->name);
-			atomic_दीर्घ_inc(&session->stats.rx_seq_discards);
-			जाओ discard;
-		पूर्ण
-	पूर्ण
+			atomic_long_inc(&session->stats.rx_seq_discards);
+			goto discard;
+		}
+	}
 
-	/* Session data offset is defined only क्रम L2TPv2 and is
+	/* Session data offset is defined only for L2TPv2 and is
 	 * indicated by an optional 16-bit value in the header.
 	 */
-	अगर (tunnel->version == L2TP_HDR_VER_2) अणु
+	if (tunnel->version == L2TP_HDR_VER_2) {
 		/* If offset bit set, skip it. */
-		अगर (hdrflags & L2TP_HDRFLAG_O) अणु
+		if (hdrflags & L2TP_HDRFLAG_O) {
 			offset = ntohs(*(__be16 *)ptr);
 			ptr += 2 + offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	offset = ptr - optr;
-	अगर (!pskb_may_pull(skb, offset))
-		जाओ discard;
+	if (!pskb_may_pull(skb, offset))
+		goto discard;
 
 	__skb_pull(skb, offset);
 
-	/* Prepare skb क्रम adding to the session's reorder_q.  Hold
-	 * packets क्रम max reorder_समयout or 1 second अगर not
+	/* Prepare skb for adding to the session's reorder_q.  Hold
+	 * packets for max reorder_timeout or 1 second if not
 	 * reordering.
 	 */
 	L2TP_SKB_CB(skb)->length = length;
-	L2TP_SKB_CB(skb)->expires = jअगरfies +
-		(session->reorder_समयout ? session->reorder_समयout : HZ);
+	L2TP_SKB_CB(skb)->expires = jiffies +
+		(session->reorder_timeout ? session->reorder_timeout : HZ);
 
-	/* Add packet to the session's receive queue. Reordering is करोne here, अगर
+	/* Add packet to the session's receive queue. Reordering is done here, if
 	 * enabled. Saved L2TP protocol info is stored in skb->sb[].
 	 */
-	अगर (L2TP_SKB_CB(skb)->has_seq) अणु
-		अगर (l2tp_recv_data_seq(session, skb))
-			जाओ discard;
-	पूर्ण अन्यथा अणु
+	if (L2TP_SKB_CB(skb)->has_seq) {
+		if (l2tp_recv_data_seq(session, skb))
+			goto discard;
+	} else {
 		/* No sequence numbers. Add the skb to the tail of the
 		 * reorder queue. This ensures that it will be
 		 * delivered after all previous sequenced skbs.
 		 */
 		skb_queue_tail(&session->reorder_q, skb);
-	पूर्ण
+	}
 
 	/* Try to dequeue as many skbs from reorder_q as we can. */
 	l2tp_recv_dequeue(session);
 
-	वापस;
+	return;
 
 discard:
-	atomic_दीर्घ_inc(&session->stats.rx_errors);
-	kमुक्त_skb(skb);
-पूर्ण
+	atomic_long_inc(&session->stats.rx_errors);
+	kfree_skb(skb);
+}
 EXPORT_SYMBOL_GPL(l2tp_recv_common);
 
 /* Drop skbs from the session's reorder_q
  */
-अटल व्योम l2tp_session_queue_purge(काष्ठा l2tp_session *session)
-अणु
-	काष्ठा sk_buff *skb = शून्य;
+static void l2tp_session_queue_purge(struct l2tp_session *session)
+{
+	struct sk_buff *skb = NULL;
 
-	जबतक ((skb = skb_dequeue(&session->reorder_q))) अणु
-		atomic_दीर्घ_inc(&session->stats.rx_errors);
-		kमुक्त_skb(skb);
-	पूर्ण
-पूर्ण
+	while ((skb = skb_dequeue(&session->reorder_q))) {
+		atomic_long_inc(&session->stats.rx_errors);
+		kfree_skb(skb);
+	}
+}
 
 /* Internal UDP receive frame. Do the real work of receiving an L2TP data frame
  * here. The skb is not on a list when we get here.
- * Returns 0 अगर the packet was a data packet and was successfully passed on.
- * Returns 1 अगर the packet was not a good data packet and could not be
- * क्रमwarded.  All such packets are passed up to userspace to deal with.
+ * Returns 0 if the packet was a data packet and was successfully passed on.
+ * Returns 1 if the packet was not a good data packet and could not be
+ * forwarded.  All such packets are passed up to userspace to deal with.
  */
-अटल पूर्णांक l2tp_udp_recv_core(काष्ठा l2tp_tunnel *tunnel, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2tp_session *session = शून्य;
-	अचिन्हित अक्षर *ptr, *optr;
+static int l2tp_udp_recv_core(struct l2tp_tunnel *tunnel, struct sk_buff *skb)
+{
+	struct l2tp_session *session = NULL;
+	unsigned char *ptr, *optr;
 	u16 hdrflags;
 	u32 tunnel_id, session_id;
 	u16 version;
-	पूर्णांक length;
+	int length;
 
-	/* UDP has verअगरied checksum */
+	/* UDP has verified checksum */
 
-	/* UDP always verअगरies the packet length. */
-	__skb_pull(skb, माप(काष्ठा udphdr));
+	/* UDP always verifies the packet length. */
+	__skb_pull(skb, sizeof(struct udphdr));
 
 	/* Short packet? */
-	अगर (!pskb_may_pull(skb, L2TP_HDR_SIZE_MAX)) अणु
+	if (!pskb_may_pull(skb, L2TP_HDR_SIZE_MAX)) {
 		pr_debug_ratelimited("%s: recv short packet (len=%d)\n",
 				     tunnel->name, skb->len);
-		जाओ invalid;
-	पूर्ण
+		goto invalid;
+	}
 
-	/* Poपूर्णांक to L2TP header */
+	/* Point to L2TP header */
 	optr = skb->data;
 	ptr = skb->data;
 
@@ -824,25 +823,25 @@ EXPORT_SYMBOL_GPL(l2tp_recv_common);
 
 	/* Check protocol version */
 	version = hdrflags & L2TP_HDR_VER_MASK;
-	अगर (version != tunnel->version) अणु
+	if (version != tunnel->version) {
 		pr_debug_ratelimited("%s: recv protocol version mismatch: got %d expected %d\n",
 				     tunnel->name, version, tunnel->version);
-		जाओ invalid;
-	पूर्ण
+		goto invalid;
+	}
 
 	/* Get length of L2TP packet */
 	length = skb->len;
 
 	/* If type is control packet, it is handled by userspace. */
-	अगर (hdrflags & L2TP_HDRFLAG_T)
-		जाओ pass;
+	if (hdrflags & L2TP_HDRFLAG_T)
+		goto pass;
 
 	/* Skip flags */
 	ptr += 2;
 
-	अगर (tunnel->version == L2TP_HDR_VER_2) अणु
+	if (tunnel->version == L2TP_HDR_VER_2) {
 		/* If length is present, skip it */
-		अगर (hdrflags & L2TP_HDRFLAG_L)
+		if (hdrflags & L2TP_HDRFLAG_L)
 			ptr += 2;
 
 		/* Extract tunnel and session ID */
@@ -850,43 +849,43 @@ EXPORT_SYMBOL_GPL(l2tp_recv_common);
 		ptr += 2;
 		session_id = ntohs(*(__be16 *)ptr);
 		ptr += 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		ptr += 2;	/* skip reserved bits */
 		tunnel_id = tunnel->tunnel_id;
 		session_id = ntohl(*(__be32 *)ptr);
 		ptr += 4;
-	पूर्ण
+	}
 
 	/* Find the session context */
 	session = l2tp_tunnel_get_session(tunnel, session_id);
-	अगर (!session || !session->recv_skb) अणु
-		अगर (session)
+	if (!session || !session->recv_skb) {
+		if (session)
 			l2tp_session_dec_refcount(session);
 
 		/* Not found? Pass to userspace to deal with */
 		pr_debug_ratelimited("%s: no session found (%u/%u). Passing up.\n",
 				     tunnel->name, tunnel_id, session_id);
-		जाओ pass;
-	पूर्ण
+		goto pass;
+	}
 
-	अगर (tunnel->version == L2TP_HDR_VER_3 &&
+	if (tunnel->version == L2TP_HDR_VER_3 &&
 	    l2tp_v3_ensure_opt_in_linear(session, skb, &ptr, &optr))
-		जाओ invalid;
+		goto invalid;
 
 	l2tp_recv_common(session, skb, ptr, optr, hdrflags, length);
 	l2tp_session_dec_refcount(session);
 
-	वापस 0;
+	return 0;
 
 invalid:
-	atomic_दीर्घ_inc(&tunnel->stats.rx_invalid);
+	atomic_long_inc(&tunnel->stats.rx_invalid);
 
 pass:
 	/* Put UDP header back */
-	__skb_push(skb, माप(काष्ठा udphdr));
+	__skb_push(skb, sizeof(struct udphdr));
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /* UDP encapsulation receive handler. See net/ipv4/udp.c.
  * Return codes:
@@ -894,180 +893,180 @@ pass:
  * <0: error
  * >0: skb should be passed up to userspace as UDP.
  */
-पूर्णांक l2tp_udp_encap_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा l2tp_tunnel *tunnel;
+int l2tp_udp_encap_recv(struct sock *sk, struct sk_buff *skb)
+{
+	struct l2tp_tunnel *tunnel;
 
 	/* Note that this is called from the encap_rcv hook inside an
-	 * RCU-रक्षित region, but without the socket being locked.
+	 * RCU-protected region, but without the socket being locked.
 	 * Hence we use rcu_dereference_sk_user_data to access the
-	 * tunnel data काष्ठाure rather the usual l2tp_sk_to_tunnel
+	 * tunnel data structure rather the usual l2tp_sk_to_tunnel
 	 * accessor function.
 	 */
 	tunnel = rcu_dereference_sk_user_data(sk);
-	अगर (!tunnel)
-		जाओ pass_up;
-	अगर (WARN_ON(tunnel->magic != L2TP_TUNNEL_MAGIC))
-		जाओ pass_up;
+	if (!tunnel)
+		goto pass_up;
+	if (WARN_ON(tunnel->magic != L2TP_TUNNEL_MAGIC))
+		goto pass_up;
 
-	अगर (l2tp_udp_recv_core(tunnel, skb))
-		जाओ pass_up;
+	if (l2tp_udp_recv_core(tunnel, skb))
+		goto pass_up;
 
-	वापस 0;
+	return 0;
 
 pass_up:
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL_GPL(l2tp_udp_encap_recv);
 
 /************************************************************************
  * Transmit handling
  ***********************************************************************/
 
-/* Build an L2TP header क्रम the session पूर्णांकo the buffer provided.
+/* Build an L2TP header for the session into the buffer provided.
  */
-अटल पूर्णांक l2tp_build_l2tpv2_header(काष्ठा l2tp_session *session, व्योम *buf)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
+static int l2tp_build_l2tpv2_header(struct l2tp_session *session, void *buf)
+{
+	struct l2tp_tunnel *tunnel = session->tunnel;
 	__be16 *bufp = buf;
 	__be16 *optr = buf;
 	u16 flags = L2TP_HDR_VER_2;
 	u32 tunnel_id = tunnel->peer_tunnel_id;
 	u32 session_id = session->peer_session_id;
 
-	अगर (session->send_seq)
+	if (session->send_seq)
 		flags |= L2TP_HDRFLAG_S;
 
 	/* Setup L2TP header. */
 	*bufp++ = htons(flags);
 	*bufp++ = htons(tunnel_id);
 	*bufp++ = htons(session_id);
-	अगर (session->send_seq) अणु
+	if (session->send_seq) {
 		*bufp++ = htons(session->ns);
 		*bufp++ = 0;
 		session->ns++;
 		session->ns &= 0xffff;
 		trace_session_seqnum_update(session);
-	पूर्ण
+	}
 
-	वापस bufp - optr;
-पूर्ण
+	return bufp - optr;
+}
 
-अटल पूर्णांक l2tp_build_l2tpv3_header(काष्ठा l2tp_session *session, व्योम *buf)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
-	अक्षर *bufp = buf;
-	अक्षर *optr = bufp;
+static int l2tp_build_l2tpv3_header(struct l2tp_session *session, void *buf)
+{
+	struct l2tp_tunnel *tunnel = session->tunnel;
+	char *bufp = buf;
+	char *optr = bufp;
 
-	/* Setup L2TP header. The header dअगरfers slightly क्रम UDP and
+	/* Setup L2TP header. The header differs slightly for UDP and
 	 * IP encapsulations. For UDP, there is 4 bytes of flags.
 	 */
-	अगर (tunnel->encap == L2TP_ENCAPTYPE_UDP) अणु
+	if (tunnel->encap == L2TP_ENCAPTYPE_UDP) {
 		u16 flags = L2TP_HDR_VER_3;
 		*((__be16 *)bufp) = htons(flags);
 		bufp += 2;
 		*((__be16 *)bufp) = 0;
 		bufp += 2;
-	पूर्ण
+	}
 
 	*((__be32 *)bufp) = htonl(session->peer_session_id);
 	bufp += 4;
-	अगर (session->cookie_len) अणु
-		स_नकल(bufp, &session->cookie[0], session->cookie_len);
+	if (session->cookie_len) {
+		memcpy(bufp, &session->cookie[0], session->cookie_len);
 		bufp += session->cookie_len;
-	पूर्ण
-	अगर (session->l2specअगरic_type == L2TP_L2SPECTYPE_DEFAULT) अणु
+	}
+	if (session->l2specific_type == L2TP_L2SPECTYPE_DEFAULT) {
 		u32 l2h = 0;
 
-		अगर (session->send_seq) अणु
+		if (session->send_seq) {
 			l2h = 0x40000000 | session->ns;
 			session->ns++;
 			session->ns &= 0xffffff;
 			trace_session_seqnum_update(session);
-		पूर्ण
+		}
 
 		*((__be32 *)bufp) = htonl(l2h);
 		bufp += 4;
-	पूर्ण
+	}
 
-	वापस bufp - optr;
-पूर्ण
+	return bufp - optr;
+}
 
-/* Queue the packet to IP क्रम output: tunnel socket lock must be held */
-अटल पूर्णांक l2tp_xmit_queue(काष्ठा l2tp_tunnel *tunnel, काष्ठा sk_buff *skb, काष्ठा flowi *fl)
-अणु
-	पूर्णांक err;
+/* Queue the packet to IP for output: tunnel socket lock must be held */
+static int l2tp_xmit_queue(struct l2tp_tunnel *tunnel, struct sk_buff *skb, struct flowi *fl)
+{
+	int err;
 
 	skb->ignore_df = 1;
 	skb_dst_drop(skb);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अगर (l2tp_sk_is_v6(tunnel->sock))
-		err = inet6_csk_xmit(tunnel->sock, skb, शून्य);
-	अन्यथा
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_IPV6)
+	if (l2tp_sk_is_v6(tunnel->sock))
+		err = inet6_csk_xmit(tunnel->sock, skb, NULL);
+	else
+#endif
 		err = ip_queue_xmit(tunnel->sock, skb, fl);
 
-	वापस err >= 0 ? NET_XMIT_SUCCESS : NET_XMIT_DROP;
-पूर्ण
+	return err >= 0 ? NET_XMIT_SUCCESS : NET_XMIT_DROP;
+}
 
-अटल पूर्णांक l2tp_xmit_core(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb, अचिन्हित पूर्णांक *len)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
-	अचिन्हित पूर्णांक data_len = skb->len;
-	काष्ठा sock *sk = tunnel->sock;
-	पूर्णांक headroom, uhlen, udp_len;
-	पूर्णांक ret = NET_XMIT_SUCCESS;
-	काष्ठा inet_sock *inet;
-	काष्ठा udphdr *uh;
+static int l2tp_xmit_core(struct l2tp_session *session, struct sk_buff *skb, unsigned int *len)
+{
+	struct l2tp_tunnel *tunnel = session->tunnel;
+	unsigned int data_len = skb->len;
+	struct sock *sk = tunnel->sock;
+	int headroom, uhlen, udp_len;
+	int ret = NET_XMIT_SUCCESS;
+	struct inet_sock *inet;
+	struct udphdr *uh;
 
 	/* Check that there's enough headroom in the skb to insert IP,
 	 * UDP and L2TP headers. If not enough, expand it to
 	 * make room. Adjust truesize.
 	 */
-	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? माप(*uh) : 0;
-	headroom = NET_SKB_PAD + माप(काष्ठा iphdr) + uhlen + session->hdr_len;
-	अगर (skb_cow_head(skb, headroom)) अणु
-		kमुक्त_skb(skb);
-		वापस NET_XMIT_DROP;
-	पूर्ण
+	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? sizeof(*uh) : 0;
+	headroom = NET_SKB_PAD + sizeof(struct iphdr) + uhlen + session->hdr_len;
+	if (skb_cow_head(skb, headroom)) {
+		kfree_skb(skb);
+		return NET_XMIT_DROP;
+	}
 
 	/* Setup L2TP header */
-	अगर (tunnel->version == L2TP_HDR_VER_2)
+	if (tunnel->version == L2TP_HDR_VER_2)
 		l2tp_build_l2tpv2_header(session, __skb_push(skb, session->hdr_len));
-	अन्यथा
+	else
 		l2tp_build_l2tpv3_header(session, __skb_push(skb, session->hdr_len));
 
 	/* Reset skb netfilter state */
-	स_रखो(&(IPCB(skb)->opt), 0, माप(IPCB(skb)->opt));
+	memset(&(IPCB(skb)->opt), 0, sizeof(IPCB(skb)->opt));
 	IPCB(skb)->flags &= ~(IPSKB_XFRM_TUNNEL_SIZE | IPSKB_XFRM_TRANSFORMED | IPSKB_REROUTED);
 	nf_reset_ct(skb);
 
 	bh_lock_sock(sk);
-	अगर (sock_owned_by_user(sk)) अणु
-		kमुक्त_skb(skb);
+	if (sock_owned_by_user(sk)) {
+		kfree_skb(skb);
 		ret = NET_XMIT_DROP;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	/* The user-space may change the connection status क्रम the user-space
-	 * provided socket at run समय: we must check it under the socket lock
+	/* The user-space may change the connection status for the user-space
+	 * provided socket at run time: we must check it under the socket lock
 	 */
-	अगर (tunnel->fd >= 0 && sk->sk_state != TCP_ESTABLISHED) अणु
-		kमुक्त_skb(skb);
+	if (tunnel->fd >= 0 && sk->sk_state != TCP_ESTABLISHED) {
+		kfree_skb(skb);
 		ret = NET_XMIT_DROP;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	/* Report transmitted length beक्रमe we add encap header, which keeps
-	 * statistics consistent क्रम both UDP and IP encap tx/rx paths.
+	/* Report transmitted length before we add encap header, which keeps
+	 * statistics consistent for both UDP and IP encap tx/rx paths.
 	 */
 	*len = skb->len;
 
 	inet = inet_sk(sk);
-	चयन (tunnel->encap) अणु
-	हाल L2TP_ENCAPTYPE_UDP:
+	switch (tunnel->encap) {
+	case L2TP_ENCAPTYPE_UDP:
 		/* Setup UDP header */
-		__skb_push(skb, माप(*uh));
+		__skb_push(skb, sizeof(*uh));
 		skb_reset_transport_header(skb);
 		uh = udp_hdr(skb);
 		uh->source = inet->inet_sport;
@@ -1075,179 +1074,179 @@ EXPORT_SYMBOL_GPL(l2tp_udp_encap_recv);
 		udp_len = uhlen + session->hdr_len + data_len;
 		uh->len = htons(udp_len);
 
-		/* Calculate UDP checksum अगर configured to करो so */
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अगर (l2tp_sk_is_v6(sk))
+		/* Calculate UDP checksum if configured to do so */
+#if IS_ENABLED(CONFIG_IPV6)
+		if (l2tp_sk_is_v6(sk))
 			udp6_set_csum(udp_get_no_check6_tx(sk),
 				      skb, &inet6_sk(sk)->saddr,
 				      &sk->sk_v6_daddr, udp_len);
-		अन्यथा
-#पूर्ण_अगर
+		else
+#endif
 			udp_set_csum(sk->sk_no_check_tx, skb, inet->inet_saddr,
 				     inet->inet_daddr, udp_len);
-		अवरोध;
+		break;
 
-	हाल L2TP_ENCAPTYPE_IP:
-		अवरोध;
-	पूर्ण
+	case L2TP_ENCAPTYPE_IP:
+		break;
+	}
 
 	ret = l2tp_xmit_queue(tunnel, skb, &inet->cork.fl);
 
 out_unlock:
 	bh_unlock_sock(sk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* If caller requires the skb to have a ppp header, the header must be
- * inserted in the skb data beक्रमe calling this function.
+ * inserted in the skb data before calling this function.
  */
-पूर्णांक l2tp_xmit_skb(काष्ठा l2tp_session *session, काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित पूर्णांक len = 0;
-	पूर्णांक ret;
+int l2tp_xmit_skb(struct l2tp_session *session, struct sk_buff *skb)
+{
+	unsigned int len = 0;
+	int ret;
 
 	ret = l2tp_xmit_core(session, skb, &len);
-	अगर (ret == NET_XMIT_SUCCESS) अणु
-		atomic_दीर्घ_inc(&session->tunnel->stats.tx_packets);
-		atomic_दीर्घ_add(len, &session->tunnel->stats.tx_bytes);
-		atomic_दीर्घ_inc(&session->stats.tx_packets);
-		atomic_दीर्घ_add(len, &session->stats.tx_bytes);
-	पूर्ण अन्यथा अणु
-		atomic_दीर्घ_inc(&session->tunnel->stats.tx_errors);
-		atomic_दीर्घ_inc(&session->stats.tx_errors);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	if (ret == NET_XMIT_SUCCESS) {
+		atomic_long_inc(&session->tunnel->stats.tx_packets);
+		atomic_long_add(len, &session->tunnel->stats.tx_bytes);
+		atomic_long_inc(&session->stats.tx_packets);
+		atomic_long_add(len, &session->stats.tx_bytes);
+	} else {
+		atomic_long_inc(&session->tunnel->stats.tx_errors);
+		atomic_long_inc(&session->stats.tx_errors);
+	}
+	return ret;
+}
 EXPORT_SYMBOL_GPL(l2tp_xmit_skb);
 
 /*****************************************************************************
  * Tinnel and session create/destroy.
  *****************************************************************************/
 
-/* Tunnel socket deकाष्ठा hook.
+/* Tunnel socket destruct hook.
  * The tunnel context is deleted only when all session sockets have been
- * बंदd.
+ * closed.
  */
-अटल व्योम l2tp_tunnel_deकाष्ठा(काष्ठा sock *sk)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = l2tp_sk_to_tunnel(sk);
+static void l2tp_tunnel_destruct(struct sock *sk)
+{
+	struct l2tp_tunnel *tunnel = l2tp_sk_to_tunnel(sk);
 
-	अगर (!tunnel)
-		जाओ end;
+	if (!tunnel)
+		goto end;
 
 	/* Disable udp encapsulation */
-	चयन (tunnel->encap) अणु
-	हाल L2TP_ENCAPTYPE_UDP:
-		/* No दीर्घer an encapsulation socket. See net/ipv4/udp.c */
+	switch (tunnel->encap) {
+	case L2TP_ENCAPTYPE_UDP:
+		/* No longer an encapsulation socket. See net/ipv4/udp.c */
 		(udp_sk(sk))->encap_type = 0;
-		(udp_sk(sk))->encap_rcv = शून्य;
-		(udp_sk(sk))->encap_destroy = शून्य;
-		अवरोध;
-	हाल L2TP_ENCAPTYPE_IP:
-		अवरोध;
-	पूर्ण
+		(udp_sk(sk))->encap_rcv = NULL;
+		(udp_sk(sk))->encap_destroy = NULL;
+		break;
+	case L2TP_ENCAPTYPE_IP:
+		break;
+	}
 
-	/* Remove hooks पूर्णांकo tunnel socket */
-	sk->sk_deकाष्ठा = tunnel->old_sk_deकाष्ठा;
-	sk->sk_user_data = शून्य;
+	/* Remove hooks into tunnel socket */
+	sk->sk_destruct = tunnel->old_sk_destruct;
+	sk->sk_user_data = NULL;
 
-	/* Call the original deकाष्ठाor */
-	अगर (sk->sk_deकाष्ठा)
-		(*sk->sk_deकाष्ठा)(sk);
+	/* Call the original destructor */
+	if (sk->sk_destruct)
+		(*sk->sk_destruct)(sk);
 
-	kमुक्त_rcu(tunnel, rcu);
+	kfree_rcu(tunnel, rcu);
 end:
-	वापस;
-पूर्ण
+	return;
+}
 
 /* Remove an l2tp session from l2tp_core's hash lists. */
-अटल व्योम l2tp_session_unhash(काष्ठा l2tp_session *session)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = session->tunnel;
+static void l2tp_session_unhash(struct l2tp_session *session)
+{
+	struct l2tp_tunnel *tunnel = session->tunnel;
 
 	/* Remove the session from core hashes */
-	अगर (tunnel) अणु
+	if (tunnel) {
 		/* Remove from the per-tunnel hash */
-		ग_लिखो_lock_bh(&tunnel->hlist_lock);
+		write_lock_bh(&tunnel->hlist_lock);
 		hlist_del_init(&session->hlist);
-		ग_लिखो_unlock_bh(&tunnel->hlist_lock);
+		write_unlock_bh(&tunnel->hlist_lock);
 
-		/* For L2TPv3 we have a per-net hash: हटाओ from there, too */
-		अगर (tunnel->version != L2TP_HDR_VER_2) अणु
-			काष्ठा l2tp_net *pn = l2tp_pernet(tunnel->l2tp_net);
+		/* For L2TPv3 we have a per-net hash: remove from there, too */
+		if (tunnel->version != L2TP_HDR_VER_2) {
+			struct l2tp_net *pn = l2tp_pernet(tunnel->l2tp_net);
 
 			spin_lock_bh(&pn->l2tp_session_hlist_lock);
 			hlist_del_init_rcu(&session->global_hlist);
 			spin_unlock_bh(&pn->l2tp_session_hlist_lock);
 			synchronize_rcu();
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-/* When the tunnel is बंदd, all the attached sessions need to go too.
+/* When the tunnel is closed, all the attached sessions need to go too.
  */
-अटल व्योम l2tp_tunnel_बंदall(काष्ठा l2tp_tunnel *tunnel)
-अणु
-	पूर्णांक hash;
-	काष्ठा hlist_node *walk;
-	काष्ठा hlist_node *पंचांगp;
-	काष्ठा l2tp_session *session;
+static void l2tp_tunnel_closeall(struct l2tp_tunnel *tunnel)
+{
+	int hash;
+	struct hlist_node *walk;
+	struct hlist_node *tmp;
+	struct l2tp_session *session;
 
-	ग_लिखो_lock_bh(&tunnel->hlist_lock);
+	write_lock_bh(&tunnel->hlist_lock);
 	tunnel->acpt_newsess = false;
-	क्रम (hash = 0; hash < L2TP_HASH_SIZE; hash++) अणु
+	for (hash = 0; hash < L2TP_HASH_SIZE; hash++) {
 again:
-		hlist_क्रम_each_safe(walk, पंचांगp, &tunnel->session_hlist[hash]) अणु
-			session = hlist_entry(walk, काष्ठा l2tp_session, hlist);
+		hlist_for_each_safe(walk, tmp, &tunnel->session_hlist[hash]) {
+			session = hlist_entry(walk, struct l2tp_session, hlist);
 			hlist_del_init(&session->hlist);
 
-			ग_लिखो_unlock_bh(&tunnel->hlist_lock);
+			write_unlock_bh(&tunnel->hlist_lock);
 			l2tp_session_delete(session);
-			ग_लिखो_lock_bh(&tunnel->hlist_lock);
+			write_lock_bh(&tunnel->hlist_lock);
 
 			/* Now restart from the beginning of this hash
-			 * chain.  We always हटाओ a session from the
-			 * list so we are guaranteed to make क्रमward
+			 * chain.  We always remove a session from the
+			 * list so we are guaranteed to make forward
 			 * progress.
 			 */
-			जाओ again;
-		पूर्ण
-	पूर्ण
-	ग_लिखो_unlock_bh(&tunnel->hlist_lock);
-पूर्ण
+			goto again;
+		}
+	}
+	write_unlock_bh(&tunnel->hlist_lock);
+}
 
-/* Tunnel socket destroy hook क्रम UDP encapsulation */
-अटल व्योम l2tp_udp_encap_destroy(काष्ठा sock *sk)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = l2tp_sk_to_tunnel(sk);
+/* Tunnel socket destroy hook for UDP encapsulation */
+static void l2tp_udp_encap_destroy(struct sock *sk)
+{
+	struct l2tp_tunnel *tunnel = l2tp_sk_to_tunnel(sk);
 
-	अगर (tunnel)
+	if (tunnel)
 		l2tp_tunnel_delete(tunnel);
-पूर्ण
+}
 
 /* Workqueue tunnel deletion function */
-अटल व्योम l2tp_tunnel_del_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = container_of(work, काष्ठा l2tp_tunnel,
+static void l2tp_tunnel_del_work(struct work_struct *work)
+{
+	struct l2tp_tunnel *tunnel = container_of(work, struct l2tp_tunnel,
 						  del_work);
-	काष्ठा sock *sk = tunnel->sock;
-	काष्ठा socket *sock = sk->sk_socket;
-	काष्ठा l2tp_net *pn;
+	struct sock *sk = tunnel->sock;
+	struct socket *sock = sk->sk_socket;
+	struct l2tp_net *pn;
 
-	l2tp_tunnel_बंदall(tunnel);
+	l2tp_tunnel_closeall(tunnel);
 
 	/* If the tunnel socket was created within the kernel, use
 	 * the sk API to release it here.
 	 */
-	अगर (tunnel->fd < 0) अणु
-		अगर (sock) अणु
-			kernel_sock_shutकरोwn(sock, SHUT_RDWR);
+	if (tunnel->fd < 0) {
+		if (sock) {
+			kernel_sock_shutdown(sock, SHUT_RDWR);
 			sock_release(sock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Remove the tunnel काष्ठा from the tunnel list */
+	/* Remove the tunnel struct from the tunnel list */
 	pn = l2tp_pernet(tunnel->l2tp_net);
 	spin_lock_bh(&pn->l2tp_tunnel_list_lock);
 	list_del_rcu(&tunnel->list);
@@ -1258,155 +1257,155 @@ again:
 
 	/* drop workqueue ref */
 	l2tp_tunnel_dec_refcount(tunnel);
-पूर्ण
+}
 
-/* Create a socket क्रम the tunnel, अगर one isn't set up by
- * userspace. This is used क्रम अटल tunnels where there is no
+/* Create a socket for the tunnel, if one isn't set up by
+ * userspace. This is used for static tunnels where there is no
  * managing L2TP daemon.
  *
- * Since we करोn't want these sockets to keep a namespace alive by
+ * Since we don't want these sockets to keep a namespace alive by
  * themselves, we drop the socket's namespace refcount after creation.
- * These sockets are मुक्तd when the namespace निकासs using the pernet
- * निकास hook.
+ * These sockets are freed when the namespace exits using the pernet
+ * exit hook.
  */
-अटल पूर्णांक l2tp_tunnel_sock_create(काष्ठा net *net,
+static int l2tp_tunnel_sock_create(struct net *net,
 				   u32 tunnel_id,
 				   u32 peer_tunnel_id,
-				   काष्ठा l2tp_tunnel_cfg *cfg,
-				   काष्ठा socket **sockp)
-अणु
-	पूर्णांक err = -EINVAL;
-	काष्ठा socket *sock = शून्य;
-	काष्ठा udp_port_cfg udp_conf;
+				   struct l2tp_tunnel_cfg *cfg,
+				   struct socket **sockp)
+{
+	int err = -EINVAL;
+	struct socket *sock = NULL;
+	struct udp_port_cfg udp_conf;
 
-	चयन (cfg->encap) अणु
-	हाल L2TP_ENCAPTYPE_UDP:
-		स_रखो(&udp_conf, 0, माप(udp_conf));
+	switch (cfg->encap) {
+	case L2TP_ENCAPTYPE_UDP:
+		memset(&udp_conf, 0, sizeof(udp_conf));
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अगर (cfg->local_ip6 && cfg->peer_ip6) अणु
+#if IS_ENABLED(CONFIG_IPV6)
+		if (cfg->local_ip6 && cfg->peer_ip6) {
 			udp_conf.family = AF_INET6;
-			स_नकल(&udp_conf.local_ip6, cfg->local_ip6,
-			       माप(udp_conf.local_ip6));
-			स_नकल(&udp_conf.peer_ip6, cfg->peer_ip6,
-			       माप(udp_conf.peer_ip6));
+			memcpy(&udp_conf.local_ip6, cfg->local_ip6,
+			       sizeof(udp_conf.local_ip6));
+			memcpy(&udp_conf.peer_ip6, cfg->peer_ip6,
+			       sizeof(udp_conf.peer_ip6));
 			udp_conf.use_udp6_tx_checksums =
 			  !cfg->udp6_zero_tx_checksums;
 			udp_conf.use_udp6_rx_checksums =
 			  !cfg->udp6_zero_rx_checksums;
-		पूर्ण अन्यथा
-#पूर्ण_अगर
-		अणु
+		} else
+#endif
+		{
 			udp_conf.family = AF_INET;
 			udp_conf.local_ip = cfg->local_ip;
 			udp_conf.peer_ip = cfg->peer_ip;
 			udp_conf.use_udp_checksums = cfg->use_udp_checksums;
-		पूर्ण
+		}
 
 		udp_conf.local_udp_port = htons(cfg->local_udp_port);
 		udp_conf.peer_udp_port = htons(cfg->peer_udp_port);
 
 		err = udp_sock_create(net, &udp_conf, &sock);
-		अगर (err < 0)
-			जाओ out;
+		if (err < 0)
+			goto out;
 
-		अवरोध;
+		break;
 
-	हाल L2TP_ENCAPTYPE_IP:
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अगर (cfg->local_ip6 && cfg->peer_ip6) अणु
-			काष्ठा sockaddr_l2tpip6 ip6_addr = अणु0पूर्ण;
+	case L2TP_ENCAPTYPE_IP:
+#if IS_ENABLED(CONFIG_IPV6)
+		if (cfg->local_ip6 && cfg->peer_ip6) {
+			struct sockaddr_l2tpip6 ip6_addr = {0};
 
 			err = sock_create_kern(net, AF_INET6, SOCK_DGRAM,
 					       IPPROTO_L2TP, &sock);
-			अगर (err < 0)
-				जाओ out;
+			if (err < 0)
+				goto out;
 
 			ip6_addr.l2tp_family = AF_INET6;
-			स_नकल(&ip6_addr.l2tp_addr, cfg->local_ip6,
-			       माप(ip6_addr.l2tp_addr));
+			memcpy(&ip6_addr.l2tp_addr, cfg->local_ip6,
+			       sizeof(ip6_addr.l2tp_addr));
 			ip6_addr.l2tp_conn_id = tunnel_id;
-			err = kernel_bind(sock, (काष्ठा sockaddr *)&ip6_addr,
-					  माप(ip6_addr));
-			अगर (err < 0)
-				जाओ out;
+			err = kernel_bind(sock, (struct sockaddr *)&ip6_addr,
+					  sizeof(ip6_addr));
+			if (err < 0)
+				goto out;
 
 			ip6_addr.l2tp_family = AF_INET6;
-			स_नकल(&ip6_addr.l2tp_addr, cfg->peer_ip6,
-			       माप(ip6_addr.l2tp_addr));
+			memcpy(&ip6_addr.l2tp_addr, cfg->peer_ip6,
+			       sizeof(ip6_addr.l2tp_addr));
 			ip6_addr.l2tp_conn_id = peer_tunnel_id;
 			err = kernel_connect(sock,
-					     (काष्ठा sockaddr *)&ip6_addr,
-					     माप(ip6_addr), 0);
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण अन्यथा
-#पूर्ण_अगर
-		अणु
-			काष्ठा sockaddr_l2tpip ip_addr = अणु0पूर्ण;
+					     (struct sockaddr *)&ip6_addr,
+					     sizeof(ip6_addr), 0);
+			if (err < 0)
+				goto out;
+		} else
+#endif
+		{
+			struct sockaddr_l2tpip ip_addr = {0};
 
 			err = sock_create_kern(net, AF_INET, SOCK_DGRAM,
 					       IPPROTO_L2TP, &sock);
-			अगर (err < 0)
-				जाओ out;
+			if (err < 0)
+				goto out;
 
 			ip_addr.l2tp_family = AF_INET;
 			ip_addr.l2tp_addr = cfg->local_ip;
 			ip_addr.l2tp_conn_id = tunnel_id;
-			err = kernel_bind(sock, (काष्ठा sockaddr *)&ip_addr,
-					  माप(ip_addr));
-			अगर (err < 0)
-				जाओ out;
+			err = kernel_bind(sock, (struct sockaddr *)&ip_addr,
+					  sizeof(ip_addr));
+			if (err < 0)
+				goto out;
 
 			ip_addr.l2tp_family = AF_INET;
 			ip_addr.l2tp_addr = cfg->peer_ip;
 			ip_addr.l2tp_conn_id = peer_tunnel_id;
-			err = kernel_connect(sock, (काष्ठा sockaddr *)&ip_addr,
-					     माप(ip_addr), 0);
-			अगर (err < 0)
-				जाओ out;
-		पूर्ण
-		अवरोध;
+			err = kernel_connect(sock, (struct sockaddr *)&ip_addr,
+					     sizeof(ip_addr), 0);
+			if (err < 0)
+				goto out;
+		}
+		break;
 
-	शेष:
-		जाओ out;
-	पूर्ण
+	default:
+		goto out;
+	}
 
 out:
 	*sockp = sock;
-	अगर (err < 0 && sock) अणु
-		kernel_sock_shutकरोwn(sock, SHUT_RDWR);
+	if (err < 0 && sock) {
+		kernel_sock_shutdown(sock, SHUT_RDWR);
 		sock_release(sock);
-		*sockp = शून्य;
-	पूर्ण
+		*sockp = NULL;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा lock_class_key l2tp_socket_class;
+static struct lock_class_key l2tp_socket_class;
 
-पूर्णांक l2tp_tunnel_create(पूर्णांक fd, पूर्णांक version, u32 tunnel_id, u32 peer_tunnel_id,
-		       काष्ठा l2tp_tunnel_cfg *cfg, काष्ठा l2tp_tunnel **tunnelp)
-अणु
-	काष्ठा l2tp_tunnel *tunnel = शून्य;
-	पूर्णांक err;
-	क्रमागत l2tp_encap_type encap = L2TP_ENCAPTYPE_UDP;
+int l2tp_tunnel_create(int fd, int version, u32 tunnel_id, u32 peer_tunnel_id,
+		       struct l2tp_tunnel_cfg *cfg, struct l2tp_tunnel **tunnelp)
+{
+	struct l2tp_tunnel *tunnel = NULL;
+	int err;
+	enum l2tp_encap_type encap = L2TP_ENCAPTYPE_UDP;
 
-	अगर (cfg)
+	if (cfg)
 		encap = cfg->encap;
 
-	tunnel = kzalloc(माप(*tunnel), GFP_KERNEL);
-	अगर (!tunnel) अणु
+	tunnel = kzalloc(sizeof(*tunnel), GFP_KERNEL);
+	if (!tunnel) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	tunnel->version = version;
 	tunnel->tunnel_id = tunnel_id;
 	tunnel->peer_tunnel_id = peer_tunnel_id;
 
 	tunnel->magic = L2TP_TUNNEL_MAGIC;
-	प्र_लिखो(&tunnel->name[0], "tunl %u", tunnel_id);
+	sprintf(&tunnel->name[0], "tunl %u", tunnel_id);
 	rwlock_init(&tunnel->hlist_lock);
 	tunnel->acpt_newsess = true;
 
@@ -1415,66 +1414,66 @@ out:
 	refcount_set(&tunnel->ref_count, 1);
 	tunnel->fd = fd;
 
-	/* Init delete workqueue काष्ठा */
+	/* Init delete workqueue struct */
 	INIT_WORK(&tunnel->del_work, l2tp_tunnel_del_work);
 
 	INIT_LIST_HEAD(&tunnel->list);
 
 	err = 0;
 err:
-	अगर (tunnelp)
+	if (tunnelp)
 		*tunnelp = tunnel;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_create);
 
-अटल पूर्णांक l2tp_validate_socket(स्थिर काष्ठा sock *sk, स्थिर काष्ठा net *net,
-				क्रमागत l2tp_encap_type encap)
-अणु
-	अगर (!net_eq(sock_net(sk), net))
-		वापस -EINVAL;
+static int l2tp_validate_socket(const struct sock *sk, const struct net *net,
+				enum l2tp_encap_type encap)
+{
+	if (!net_eq(sock_net(sk), net))
+		return -EINVAL;
 
-	अगर (sk->sk_type != SOCK_DGRAM)
-		वापस -EPROTONOSUPPORT;
+	if (sk->sk_type != SOCK_DGRAM)
+		return -EPROTONOSUPPORT;
 
-	अगर (sk->sk_family != PF_INET && sk->sk_family != PF_INET6)
-		वापस -EPROTONOSUPPORT;
+	if (sk->sk_family != PF_INET && sk->sk_family != PF_INET6)
+		return -EPROTONOSUPPORT;
 
-	अगर ((encap == L2TP_ENCAPTYPE_UDP && sk->sk_protocol != IPPROTO_UDP) ||
+	if ((encap == L2TP_ENCAPTYPE_UDP && sk->sk_protocol != IPPROTO_UDP) ||
 	    (encap == L2TP_ENCAPTYPE_IP && sk->sk_protocol != IPPROTO_L2TP))
-		वापस -EPROTONOSUPPORT;
+		return -EPROTONOSUPPORT;
 
-	अगर (sk->sk_user_data)
-		वापस -EBUSY;
+	if (sk->sk_user_data)
+		return -EBUSY;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक l2tp_tunnel_रेजिस्टर(काष्ठा l2tp_tunnel *tunnel, काष्ठा net *net,
-			 काष्ठा l2tp_tunnel_cfg *cfg)
-अणु
-	काष्ठा l2tp_tunnel *tunnel_walk;
-	काष्ठा l2tp_net *pn;
-	काष्ठा socket *sock;
-	काष्ठा sock *sk;
-	पूर्णांक ret;
+int l2tp_tunnel_register(struct l2tp_tunnel *tunnel, struct net *net,
+			 struct l2tp_tunnel_cfg *cfg)
+{
+	struct l2tp_tunnel *tunnel_walk;
+	struct l2tp_net *pn;
+	struct socket *sock;
+	struct sock *sk;
+	int ret;
 
-	अगर (tunnel->fd < 0) अणु
+	if (tunnel->fd < 0) {
 		ret = l2tp_tunnel_sock_create(net, tunnel->tunnel_id,
 					      tunnel->peer_tunnel_id, cfg,
 					      &sock);
-		अगर (ret < 0)
-			जाओ err;
-	पूर्ण अन्यथा अणु
+		if (ret < 0)
+			goto err;
+	} else {
 		sock = sockfd_lookup(tunnel->fd, &ret);
-		अगर (!sock)
-			जाओ err;
+		if (!sock)
+			goto err;
 
 		ret = l2tp_validate_socket(sock->sk, net, tunnel->encap);
-		अगर (ret < 0)
-			जाओ err_sock;
-	पूर्ण
+		if (ret < 0)
+			goto err_sock;
+	}
 
 	tunnel->l2tp_net = net;
 	pn = l2tp_pernet(net);
@@ -1484,122 +1483,122 @@ EXPORT_SYMBOL_GPL(l2tp_tunnel_create);
 	tunnel->sock = sk;
 
 	spin_lock_bh(&pn->l2tp_tunnel_list_lock);
-	list_क्रम_each_entry(tunnel_walk, &pn->l2tp_tunnel_list, list) अणु
-		अगर (tunnel_walk->tunnel_id == tunnel->tunnel_id) अणु
+	list_for_each_entry(tunnel_walk, &pn->l2tp_tunnel_list, list) {
+		if (tunnel_walk->tunnel_id == tunnel->tunnel_id) {
 			spin_unlock_bh(&pn->l2tp_tunnel_list_lock);
 			sock_put(sk);
 			ret = -EEXIST;
-			जाओ err_sock;
-		पूर्ण
-	पूर्ण
+			goto err_sock;
+		}
+	}
 	list_add_rcu(&tunnel->list, &pn->l2tp_tunnel_list);
 	spin_unlock_bh(&pn->l2tp_tunnel_list_lock);
 
-	अगर (tunnel->encap == L2TP_ENCAPTYPE_UDP) अणु
-		काष्ठा udp_tunnel_sock_cfg udp_cfg = अणु
+	if (tunnel->encap == L2TP_ENCAPTYPE_UDP) {
+		struct udp_tunnel_sock_cfg udp_cfg = {
 			.sk_user_data = tunnel,
 			.encap_type = UDP_ENCAP_L2TPINUDP,
 			.encap_rcv = l2tp_udp_encap_recv,
 			.encap_destroy = l2tp_udp_encap_destroy,
-		पूर्ण;
+		};
 
 		setup_udp_tunnel_sock(net, sock, &udp_cfg);
-	पूर्ण अन्यथा अणु
+	} else {
 		sk->sk_user_data = tunnel;
-	पूर्ण
+	}
 
-	tunnel->old_sk_deकाष्ठा = sk->sk_deकाष्ठा;
-	sk->sk_deकाष्ठा = &l2tp_tunnel_deकाष्ठा;
+	tunnel->old_sk_destruct = sk->sk_destruct;
+	sk->sk_destruct = &l2tp_tunnel_destruct;
 	lockdep_set_class_and_name(&sk->sk_lock.slock, &l2tp_socket_class,
 				   "l2tp_sock");
 	sk->sk_allocation = GFP_ATOMIC;
 
-	trace_रेजिस्टर_tunnel(tunnel);
+	trace_register_tunnel(tunnel);
 
-	अगर (tunnel->fd >= 0)
+	if (tunnel->fd >= 0)
 		sockfd_put(sock);
 
-	वापस 0;
+	return 0;
 
 err_sock:
-	अगर (tunnel->fd < 0)
+	if (tunnel->fd < 0)
 		sock_release(sock);
-	अन्यथा
+	else
 		sockfd_put(sock);
 err:
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(l2tp_tunnel_रेजिस्टर);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(l2tp_tunnel_register);
 
 /* This function is used by the netlink TUNNEL_DELETE command.
  */
-व्योम l2tp_tunnel_delete(काष्ठा l2tp_tunnel *tunnel)
-अणु
-	अगर (!test_and_set_bit(0, &tunnel->dead)) अणु
+void l2tp_tunnel_delete(struct l2tp_tunnel *tunnel)
+{
+	if (!test_and_set_bit(0, &tunnel->dead)) {
 		trace_delete_tunnel(tunnel);
 		l2tp_tunnel_inc_refcount(tunnel);
 		queue_work(l2tp_wq, &tunnel->del_work);
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(l2tp_tunnel_delete);
 
-व्योम l2tp_session_delete(काष्ठा l2tp_session *session)
-अणु
-	अगर (test_and_set_bit(0, &session->dead))
-		वापस;
+void l2tp_session_delete(struct l2tp_session *session)
+{
+	if (test_and_set_bit(0, &session->dead))
+		return;
 
 	trace_delete_session(session);
 	l2tp_session_unhash(session);
 	l2tp_session_queue_purge(session);
-	अगर (session->session_बंद)
-		(*session->session_बंद)(session);
+	if (session->session_close)
+		(*session->session_close)(session);
 
 	l2tp_session_dec_refcount(session);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(l2tp_session_delete);
 
 /* We come here whenever a session's send_seq, cookie_len or
- * l2specअगरic_type parameters are set.
+ * l2specific_type parameters are set.
  */
-व्योम l2tp_session_set_header_len(काष्ठा l2tp_session *session, पूर्णांक version)
-अणु
-	अगर (version == L2TP_HDR_VER_2) अणु
+void l2tp_session_set_header_len(struct l2tp_session *session, int version)
+{
+	if (version == L2TP_HDR_VER_2) {
 		session->hdr_len = 6;
-		अगर (session->send_seq)
+		if (session->send_seq)
 			session->hdr_len += 4;
-	पूर्ण अन्यथा अणु
+	} else {
 		session->hdr_len = 4 + session->cookie_len;
-		session->hdr_len += l2tp_get_l2specअगरic_len(session);
-		अगर (session->tunnel->encap == L2TP_ENCAPTYPE_UDP)
+		session->hdr_len += l2tp_get_l2specific_len(session);
+		if (session->tunnel->encap == L2TP_ENCAPTYPE_UDP)
 			session->hdr_len += 4;
-	पूर्ण
-पूर्ण
+	}
+}
 EXPORT_SYMBOL_GPL(l2tp_session_set_header_len);
 
-काष्ठा l2tp_session *l2tp_session_create(पूर्णांक priv_size, काष्ठा l2tp_tunnel *tunnel, u32 session_id,
-					 u32 peer_session_id, काष्ठा l2tp_session_cfg *cfg)
-अणु
-	काष्ठा l2tp_session *session;
+struct l2tp_session *l2tp_session_create(int priv_size, struct l2tp_tunnel *tunnel, u32 session_id,
+					 u32 peer_session_id, struct l2tp_session_cfg *cfg)
+{
+	struct l2tp_session *session;
 
-	session = kzalloc(माप(*session) + priv_size, GFP_KERNEL);
-	अगर (session) अणु
+	session = kzalloc(sizeof(*session) + priv_size, GFP_KERNEL);
+	if (session) {
 		session->magic = L2TP_SESSION_MAGIC;
 		session->tunnel = tunnel;
 
 		session->session_id = session_id;
 		session->peer_session_id = peer_session_id;
 		session->nr = 0;
-		अगर (tunnel->version == L2TP_HDR_VER_2)
+		if (tunnel->version == L2TP_HDR_VER_2)
 			session->nr_max = 0xffff;
-		अन्यथा
+		else
 			session->nr_max = 0xffffff;
-		session->nr_winकरोw_size = session->nr_max / 2;
+		session->nr_window_size = session->nr_max / 2;
 		session->nr_oos_count_max = 4;
 
 		/* Use NR of first received packet */
 		session->reorder_skip = 1;
 
-		प्र_लिखो(&session->name[0], "sess %u/%u",
+		sprintf(&session->name[0], "sess %u/%u",
 			tunnel->tunnel_id, session->session_id);
 
 		skb_queue_head_init(&session->reorder_q);
@@ -1607,110 +1606,110 @@ EXPORT_SYMBOL_GPL(l2tp_session_set_header_len);
 		INIT_HLIST_NODE(&session->hlist);
 		INIT_HLIST_NODE(&session->global_hlist);
 
-		अगर (cfg) अणु
+		if (cfg) {
 			session->pwtype = cfg->pw_type;
 			session->send_seq = cfg->send_seq;
 			session->recv_seq = cfg->recv_seq;
 			session->lns_mode = cfg->lns_mode;
-			session->reorder_समयout = cfg->reorder_समयout;
-			session->l2specअगरic_type = cfg->l2specअगरic_type;
+			session->reorder_timeout = cfg->reorder_timeout;
+			session->l2specific_type = cfg->l2specific_type;
 			session->cookie_len = cfg->cookie_len;
-			स_नकल(&session->cookie[0], &cfg->cookie[0], cfg->cookie_len);
+			memcpy(&session->cookie[0], &cfg->cookie[0], cfg->cookie_len);
 			session->peer_cookie_len = cfg->peer_cookie_len;
-			स_नकल(&session->peer_cookie[0], &cfg->peer_cookie[0], cfg->peer_cookie_len);
-		पूर्ण
+			memcpy(&session->peer_cookie[0], &cfg->peer_cookie[0], cfg->peer_cookie_len);
+		}
 
 		l2tp_session_set_header_len(session, tunnel->version);
 
 		refcount_set(&session->ref_count, 1);
 
-		वापस session;
-	पूर्ण
+		return session;
+	}
 
-	वापस ERR_PTR(-ENOMEM);
-पूर्ण
+	return ERR_PTR(-ENOMEM);
+}
 EXPORT_SYMBOL_GPL(l2tp_session_create);
 
 /*****************************************************************************
  * Init and cleanup
  *****************************************************************************/
 
-अटल __net_init पूर्णांक l2tp_init_net(काष्ठा net *net)
-अणु
-	काष्ठा l2tp_net *pn = net_generic(net, l2tp_net_id);
-	पूर्णांक hash;
+static __net_init int l2tp_init_net(struct net *net)
+{
+	struct l2tp_net *pn = net_generic(net, l2tp_net_id);
+	int hash;
 
 	INIT_LIST_HEAD(&pn->l2tp_tunnel_list);
 	spin_lock_init(&pn->l2tp_tunnel_list_lock);
 
-	क्रम (hash = 0; hash < L2TP_HASH_SIZE_2; hash++)
+	for (hash = 0; hash < L2TP_HASH_SIZE_2; hash++)
 		INIT_HLIST_HEAD(&pn->l2tp_session_hlist[hash]);
 
 	spin_lock_init(&pn->l2tp_session_hlist_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __net_निकास व्योम l2tp_निकास_net(काष्ठा net *net)
-अणु
-	काष्ठा l2tp_net *pn = l2tp_pernet(net);
-	काष्ठा l2tp_tunnel *tunnel = शून्य;
-	पूर्णांक hash;
+static __net_exit void l2tp_exit_net(struct net *net)
+{
+	struct l2tp_net *pn = l2tp_pernet(net);
+	struct l2tp_tunnel *tunnel = NULL;
+	int hash;
 
-	rcu_पढ़ो_lock_bh();
-	list_क्रम_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) अणु
+	rcu_read_lock_bh();
+	list_for_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) {
 		l2tp_tunnel_delete(tunnel);
-	पूर्ण
-	rcu_पढ़ो_unlock_bh();
+	}
+	rcu_read_unlock_bh();
 
-	अगर (l2tp_wq)
+	if (l2tp_wq)
 		flush_workqueue(l2tp_wq);
 	rcu_barrier();
 
-	क्रम (hash = 0; hash < L2TP_HASH_SIZE_2; hash++)
+	for (hash = 0; hash < L2TP_HASH_SIZE_2; hash++)
 		WARN_ON_ONCE(!hlist_empty(&pn->l2tp_session_hlist[hash]));
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations l2tp_net_ops = अणु
+static struct pernet_operations l2tp_net_ops = {
 	.init = l2tp_init_net,
-	.निकास = l2tp_निकास_net,
+	.exit = l2tp_exit_net,
 	.id   = &l2tp_net_id,
-	.size = माप(काष्ठा l2tp_net),
-पूर्ण;
+	.size = sizeof(struct l2tp_net),
+};
 
-अटल पूर्णांक __init l2tp_init(व्योम)
-अणु
-	पूर्णांक rc = 0;
+static int __init l2tp_init(void)
+{
+	int rc = 0;
 
-	rc = रेजिस्टर_pernet_device(&l2tp_net_ops);
-	अगर (rc)
-		जाओ out;
+	rc = register_pernet_device(&l2tp_net_ops);
+	if (rc)
+		goto out;
 
 	l2tp_wq = alloc_workqueue("l2tp", WQ_UNBOUND, 0);
-	अगर (!l2tp_wq) अणु
+	if (!l2tp_wq) {
 		pr_err("alloc_workqueue failed\n");
-		unरेजिस्टर_pernet_device(&l2tp_net_ops);
+		unregister_pernet_device(&l2tp_net_ops);
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	pr_info("L2TP core driver, %s\n", L2TP_DRV_VERSION);
 
 out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास l2tp_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_device(&l2tp_net_ops);
-	अगर (l2tp_wq) अणु
+static void __exit l2tp_exit(void)
+{
+	unregister_pernet_device(&l2tp_net_ops);
+	if (l2tp_wq) {
 		destroy_workqueue(l2tp_wq);
-		l2tp_wq = शून्य;
-	पूर्ण
-पूर्ण
+		l2tp_wq = NULL;
+	}
+}
 
 module_init(l2tp_init);
-module_निकास(l2tp_निकास);
+module_exit(l2tp_exit);
 
 MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");
 MODULE_DESCRIPTION("L2TP core");

@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Synaptics TouchPad PS/2 mouse driver
  *
  *   2003 Dmitry Torokhov <dtor@mail.ru>
- *     Added support क्रम pass-through port. Special thanks to Peter Berg Larsen
- *     क्रम explaining various Synaptics quirks.
+ *     Added support for pass-through port. Special thanks to Peter Berg Larsen
+ *     for explaining various Synaptics quirks.
  *
  *   2003 Peter Osterlund <petero2@telia.com>
- *     Ported to 2.5 input device infraकाष्ठाure.
+ *     Ported to 2.5 input device infrastructure.
  *
- *   Copyright (C) 2001 Stefan Gmeiner <riddlebox@मुक्तsurf.ch>
- *     start merging tpconfig and gpm code to a xमुक्त-input module
+ *   Copyright (C) 2001 Stefan Gmeiner <riddlebox@freesurf.ch>
+ *     start merging tpconfig and gpm code to a xfree-input module
  *     adding some changes and extensions (ex. 3rd and 4th button)
  *
  *   Copyright (c) 1997 C. Scott Ananian <cananian@alumni.priceton.edu>
  *   Copyright (c) 1998-2000 Bruce Kalk <kall@compass.com>
- *     code क्रम the special synaptics commands (from the tpconfig-source)
+ *     code for the special synaptics commands (from the tpconfig-source)
  *
  * Trademarks are the property of their respective owners.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/input/mt.h>
-#समावेश <linux/serपन.स>
-#समावेश <linux/libps2.h>
-#समावेश <linux/rmi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश "psmouse.h"
-#समावेश "synaptics.h"
+#include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/dmi.h>
+#include <linux/input/mt.h>
+#include <linux/serio.h>
+#include <linux/libps2.h>
+#include <linux/rmi.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include "psmouse.h"
+#include "synaptics.h"
 
 /*
- * The x/y limits are taken from the Synaptics TouchPad पूर्णांकerfacing Guide,
+ * The x/y limits are taken from the Synaptics TouchPad interfacing Guide,
  * section 2.3.2, which says that they should be valid regardless of the
  * actual size of the sensor.
- * Note that newer firmware allows querying device क्रम maximum useable
+ * Note that newer firmware allows querying device for maximum useable
  * coordinates.
  */
-#घोषणा XMIN 0
-#घोषणा XMAX 6143
-#घोषणा YMIN 0
-#घोषणा YMAX 6143
-#घोषणा XMIN_NOMINAL 1472
-#घोषणा XMAX_NOMINAL 5472
-#घोषणा YMIN_NOMINAL 1408
-#घोषणा YMAX_NOMINAL 4448
+#define XMIN 0
+#define XMAX 6143
+#define YMIN 0
+#define YMAX 6143
+#define XMIN_NOMINAL 1472
+#define XMAX_NOMINAL 5472
+#define YMIN_NOMINAL 1408
+#define YMAX_NOMINAL 4448
 
-/* Size in bits of असलolute position values reported by the hardware */
-#घोषणा ABS_POS_BITS 13
+/* Size in bits of absolute position values reported by the hardware */
+#define ABS_POS_BITS 13
 
 /*
- * These values should represent the असलolute maximum value that will
- * be reported क्रम a positive position value. Some Synaptics firmware
+ * These values should represent the absolute maximum value that will
+ * be reported for a positive position value. Some Synaptics firmware
  * uses this value to indicate a finger near the edge of the touchpad
  * whose precise position cannot be determined.
  *
@@ -64,40 +63,40 @@
  * than 8184 (i.e. -8), so we treat all values greater than 8176 as
  * negative and any other value as positive.
  */
-#घोषणा X_MAX_POSITIVE 8176
-#घोषणा Y_MAX_POSITIVE 8176
+#define X_MAX_POSITIVE 8176
+#define Y_MAX_POSITIVE 8176
 
 /* maximum ABS_MT_POSITION displacement (in mm) */
-#घोषणा DMAX 10
+#define DMAX 10
 
 /*****************************************************************************
- *	Stuff we need even when we करो not want native Synaptics support
+ *	Stuff we need even when we do not want native Synaptics support
  ****************************************************************************/
 
 /*
  * Set the synaptics touchpad mode byte by special commands
  */
-अटल पूर्णांक synaptics_mode_cmd(काष्ठा psmouse *psmouse, u8 mode)
-अणु
+static int synaptics_mode_cmd(struct psmouse *psmouse, u8 mode)
+{
 	u8 param[1];
-	पूर्णांक error;
+	int error;
 
 	error = ps2_sliced_command(&psmouse->ps2dev, mode);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	param[0] = SYN_PS_SET_MODE2;
 	error = ps2_command(&psmouse->ps2dev, param, PSMOUSE_CMD_SETRATE);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक synaptics_detect(काष्ठा psmouse *psmouse, bool set_properties)
-अणु
-	काष्ठा ps2dev *ps2dev = &psmouse->ps2dev;
-	u8 param[4] = अणु 0 पूर्ण;
+int synaptics_detect(struct psmouse *psmouse, bool set_properties)
+{
+	struct ps2dev *ps2dev = &psmouse->ps2dev;
+	u8 param[4] = { 0 };
 
 	ps2_command(ps2dev, param, PSMOUSE_CMD_SETRES);
 	ps2_command(ps2dev, param, PSMOUSE_CMD_SETRES);
@@ -105,28 +104,28 @@
 	ps2_command(ps2dev, param, PSMOUSE_CMD_SETRES);
 	ps2_command(ps2dev, param, PSMOUSE_CMD_GETINFO);
 
-	अगर (param[1] != 0x47)
-		वापस -ENODEV;
+	if (param[1] != 0x47)
+		return -ENODEV;
 
-	अगर (set_properties) अणु
-		psmouse->venकरोr = "Synaptics";
+	if (set_properties) {
+		psmouse->vendor = "Synaptics";
 		psmouse->name = "TouchPad";
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम synaptics_reset(काष्ठा psmouse *psmouse)
-अणु
+void synaptics_reset(struct psmouse *psmouse)
+{
 	/* reset touchpad back to relative mode, gestures enabled */
 	synaptics_mode_cmd(psmouse, 0);
-पूर्ण
+}
 
-#अगर defined(CONFIG_MOUSE_PS2_SYNAPTICS) || \
+#if defined(CONFIG_MOUSE_PS2_SYNAPTICS) || \
     defined(CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS)
 
 /* This list has been kindly provided by Synaptics. */
-अटल स्थिर अक्षर * स्थिर topbuttonpad_pnp_ids[] = अणु
+static const char * const topbuttonpad_pnp_ids[] = {
 	"LEN0017",
 	"LEN0018",
 	"LEN0019",
@@ -159,10 +158,10 @@
 	"LEN2009",
 	"LEN200A",
 	"LEN200B",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर अक्षर * स्थिर smbus_pnp_ids[] = अणु
+static const char * const smbus_pnp_ids[] = {
 	/* all of the topbuttonpad_pnp_ids are valid, we just add some extras */
 	"LEN0048", /* X1 Carbon 3 */
 	"LEN0046", /* X250 */
@@ -173,13 +172,13 @@
 	"LEN006c", /* T470s */
 	"LEN007a", /* T470s */
 	"LEN0071", /* T480 */
-	"LEN0072", /* X1 Carbon Gen 5 (2017) - Elan/ALPS trackpoपूर्णांक */
+	"LEN0072", /* X1 Carbon Gen 5 (2017) - Elan/ALPS trackpoint */
 	"LEN0073", /* X1 Carbon G5 (Elantech) */
 	"LEN0091", /* X1 Carbon 6 */
 	"LEN0092", /* X1 Carbon 6 */
 	"LEN0093", /* T480 */
 	"LEN0096", /* X280 */
-	"LEN0097", /* X280 -> ALPS trackpoपूर्णांक */
+	"LEN0097", /* X280 -> ALPS trackpoint */
 	"LEN0099", /* X1 Extreme Gen 1 / P1 Gen 1 */
 	"LEN009b", /* T580 */
 	"LEN0402", /* X1 Extreme Gen 2 / P1 Gen 2 */
@@ -192,320 +191,320 @@
 	"SYN3221", /* HP 15-ay000 */
 	"SYN323d", /* HP Spectre X360 13-w013dx */
 	"SYN3257", /* HP Envy 13-ad105ng */
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर अक्षर * स्थिर क्रमcepad_pnp_ids[] = अणु
+static const char * const forcepad_pnp_ids[] = {
 	"SYN300D",
 	"SYN3014",
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /*
  * Send a command to the synaptics touchpad by special commands
  */
-अटल पूर्णांक synaptics_send_cmd(काष्ठा psmouse *psmouse, u8 cmd, u8 *param)
-अणु
-	पूर्णांक error;
+static int synaptics_send_cmd(struct psmouse *psmouse, u8 cmd, u8 *param)
+{
+	int error;
 
 	error = ps2_sliced_command(&psmouse->ps2dev, cmd);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ps2_command(&psmouse->ps2dev, param, PSMOUSE_CMD_GETINFO);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक synaptics_query_पूर्णांक(काष्ठा psmouse *psmouse, u8 query_cmd, u32 *val)
-अणु
-	पूर्णांक error;
-	जोड़ अणु
+static int synaptics_query_int(struct psmouse *psmouse, u8 query_cmd, u32 *val)
+{
+	int error;
+	union {
 		__be32 be_val;
-		अक्षर buf[4];
-	पूर्ण resp = अणु 0 पूर्ण;
+		char buf[4];
+	} resp = { 0 };
 
 	error = synaptics_send_cmd(psmouse, query_cmd, resp.buf + 1);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	*val = be32_to_cpu(resp.be_val);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Identअगरy Touchpad
+ * Identify Touchpad
  * See also the SYN_ID_* macros
  */
-अटल पूर्णांक synaptics_identअगरy(काष्ठा psmouse *psmouse,
-			      काष्ठा synaptics_device_info *info)
-अणु
-	पूर्णांक error;
+static int synaptics_identify(struct psmouse *psmouse,
+			      struct synaptics_device_info *info)
+{
+	int error;
 
-	error = synaptics_query_पूर्णांक(psmouse, SYN_QUE_IDENTIFY, &info->identity);
-	अगर (error)
-		वापस error;
+	error = synaptics_query_int(psmouse, SYN_QUE_IDENTIFY, &info->identity);
+	if (error)
+		return error;
 
-	वापस SYN_ID_IS_SYNAPTICS(info->identity) ? 0 : -ENXIO;
-पूर्ण
+	return SYN_ID_IS_SYNAPTICS(info->identity) ? 0 : -ENXIO;
+}
 
 /*
  * Read the model-id bytes from the touchpad
  * see also SYN_MODEL_* macros
  */
-अटल पूर्णांक synaptics_model_id(काष्ठा psmouse *psmouse,
-			      काष्ठा synaptics_device_info *info)
-अणु
-	वापस synaptics_query_पूर्णांक(psmouse, SYN_QUE_MODEL, &info->model_id);
-पूर्ण
+static int synaptics_model_id(struct psmouse *psmouse,
+			      struct synaptics_device_info *info)
+{
+	return synaptics_query_int(psmouse, SYN_QUE_MODEL, &info->model_id);
+}
 
 /*
  * Read the firmware id from the touchpad
  */
-अटल पूर्णांक synaptics_firmware_id(काष्ठा psmouse *psmouse,
-				 काष्ठा synaptics_device_info *info)
-अणु
-	वापस synaptics_query_पूर्णांक(psmouse, SYN_QUE_FIRMWARE_ID,
+static int synaptics_firmware_id(struct psmouse *psmouse,
+				 struct synaptics_device_info *info)
+{
+	return synaptics_query_int(psmouse, SYN_QUE_FIRMWARE_ID,
 				   &info->firmware_id);
-पूर्ण
+}
 
 /*
  * Read the board id and the "More Extended Queries" from the touchpad
  * The board id is encoded in the "QUERY MODES" response
  */
-अटल पूर्णांक synaptics_query_modes(काष्ठा psmouse *psmouse,
-				 काष्ठा synaptics_device_info *info)
-अणु
+static int synaptics_query_modes(struct psmouse *psmouse,
+				 struct synaptics_device_info *info)
+{
 	u8 bid[3];
-	पूर्णांक error;
+	int error;
 
 	/* firmwares prior 7.5 have no board_id encoded */
-	अगर (SYN_ID_FULL(info->identity) < 0x705)
-		वापस 0;
+	if (SYN_ID_FULL(info->identity) < 0x705)
+		return 0;
 
 	error = synaptics_send_cmd(psmouse, SYN_QUE_MODES, bid);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	info->board_id = ((bid[0] & 0xfc) << 6) | bid[1];
 
-	अगर (SYN_MEXT_CAP_BIT(bid[0]))
-		वापस synaptics_query_पूर्णांक(psmouse, SYN_QUE_MEXT_CAPAB_10,
+	if (SYN_MEXT_CAP_BIT(bid[0]))
+		return synaptics_query_int(psmouse, SYN_QUE_MEXT_CAPAB_10,
 					   &info->ext_cap_10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Read the capability-bits from the touchpad
  * see also the SYN_CAP_* macros
  */
-अटल पूर्णांक synaptics_capability(काष्ठा psmouse *psmouse,
-				काष्ठा synaptics_device_info *info)
-अणु
-	पूर्णांक error;
+static int synaptics_capability(struct psmouse *psmouse,
+				struct synaptics_device_info *info)
+{
+	int error;
 
-	error = synaptics_query_पूर्णांक(psmouse, SYN_QUE_CAPABILITIES,
+	error = synaptics_query_int(psmouse, SYN_QUE_CAPABILITIES,
 				    &info->capabilities);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	info->ext_cap = info->ext_cap_0c = 0;
 
 	/*
 	 * Older firmwares had submodel ID fixed to 0x47
 	 */
-	अगर (SYN_ID_FULL(info->identity) < 0x705 &&
-	    SYN_CAP_SUBMODEL_ID(info->capabilities) != 0x47) अणु
-		वापस -ENXIO;
-	पूर्ण
+	if (SYN_ID_FULL(info->identity) < 0x705 &&
+	    SYN_CAP_SUBMODEL_ID(info->capabilities) != 0x47) {
+		return -ENXIO;
+	}
 
 	/*
 	 * Unless capExtended is set the rest of the flags should be ignored
 	 */
-	अगर (!SYN_CAP_EXTENDED(info->capabilities))
+	if (!SYN_CAP_EXTENDED(info->capabilities))
 		info->capabilities = 0;
 
-	अगर (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 1) अणु
-		error = synaptics_query_पूर्णांक(psmouse, SYN_QUE_EXT_CAPAB,
+	if (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 1) {
+		error = synaptics_query_int(psmouse, SYN_QUE_EXT_CAPAB,
 					    &info->ext_cap);
-		अगर (error) अणु
+		if (error) {
 			psmouse_warn(psmouse,
 				     "device claims to have extended capabilities, but I'm not able to read them.\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			/*
-			 * अगर nExtBtn is greater than 8 it should be considered
+			 * if nExtBtn is greater than 8 it should be considered
 			 * invalid and treated as 0
 			 */
-			अगर (SYN_CAP_MULTI_BUTTON_NO(info->ext_cap) > 8)
+			if (SYN_CAP_MULTI_BUTTON_NO(info->ext_cap) > 8)
 				info->ext_cap &= ~SYN_CAP_MB_MASK;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 4) अणु
-		error = synaptics_query_पूर्णांक(psmouse, SYN_QUE_EXT_CAPAB_0C,
+	if (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 4) {
+		error = synaptics_query_int(psmouse, SYN_QUE_EXT_CAPAB_0C,
 					    &info->ext_cap_0c);
-		अगर (error)
+		if (error)
 			psmouse_warn(psmouse,
 				     "device claims to have extended capability 0x0c, but I'm not able to read it.\n");
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Read touchpad resolution and maximum reported coordinates
- * Resolution is left zero अगर touchpad करोes not support the query
+ * Resolution is left zero if touchpad does not support the query
  */
-अटल पूर्णांक synaptics_resolution(काष्ठा psmouse *psmouse,
-				काष्ठा synaptics_device_info *info)
-अणु
+static int synaptics_resolution(struct psmouse *psmouse,
+				struct synaptics_device_info *info)
+{
 	u8 resp[3];
-	पूर्णांक error;
+	int error;
 
-	अगर (SYN_ID_MAJOR(info->identity) < 4)
-		वापस 0;
+	if (SYN_ID_MAJOR(info->identity) < 4)
+		return 0;
 
 	error = synaptics_send_cmd(psmouse, SYN_QUE_RESOLUTION, resp);
-	अगर (!error) अणु
-		अगर (resp[0] != 0 && (resp[1] & 0x80) && resp[2] != 0) अणु
+	if (!error) {
+		if (resp[0] != 0 && (resp[1] & 0x80) && resp[2] != 0) {
 			info->x_res = resp[0]; /* x resolution in units/mm */
 			info->y_res = resp[2]; /* y resolution in units/mm */
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 5 &&
-	    SYN_CAP_MAX_DIMENSIONS(info->ext_cap_0c)) अणु
+	if (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 5 &&
+	    SYN_CAP_MAX_DIMENSIONS(info->ext_cap_0c)) {
 		error = synaptics_send_cmd(psmouse,
 					   SYN_QUE_EXT_MAX_COORDS, resp);
-		अगर (error) अणु
+		if (error) {
 			psmouse_warn(psmouse,
 				     "device claims to have max coordinates query, but I'm not able to read it.\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			info->x_max = (resp[0] << 5) | ((resp[1] & 0x0f) << 1);
 			info->y_max = (resp[2] << 5) | ((resp[1] & 0xf0) >> 3);
 			psmouse_info(psmouse,
 				     "queried max coordinates: x [..%d], y [..%d]\n",
 				     info->x_max, info->y_max);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (SYN_CAP_MIN_DIMENSIONS(info->ext_cap_0c) &&
+	if (SYN_CAP_MIN_DIMENSIONS(info->ext_cap_0c) &&
 	    (SYN_EXT_CAP_REQUESTS(info->capabilities) >= 7 ||
 	     /*
-	      * Firmware v8.1 करोes not report proper number of extended
+	      * Firmware v8.1 does not report proper number of extended
 	      * capabilities, but has been proven to report correct min
 	      * coordinates.
 	      */
-	     SYN_ID_FULL(info->identity) == 0x801)) अणु
+	     SYN_ID_FULL(info->identity) == 0x801)) {
 		error = synaptics_send_cmd(psmouse,
 					   SYN_QUE_EXT_MIN_COORDS, resp);
-		अगर (error) अणु
+		if (error) {
 			psmouse_warn(psmouse,
 				     "device claims to have min coordinates query, but I'm not able to read it.\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			info->x_min = (resp[0] << 5) | ((resp[1] & 0x0f) << 1);
 			info->y_min = (resp[2] << 5) | ((resp[1] & 0xf0) >> 3);
 			psmouse_info(psmouse,
 				     "queried min coordinates: x [%d..], y [%d..]\n",
 				     info->x_min, info->y_min);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक synaptics_query_hardware(काष्ठा psmouse *psmouse,
-				    काष्ठा synaptics_device_info *info)
-अणु
-	पूर्णांक error;
+static int synaptics_query_hardware(struct psmouse *psmouse,
+				    struct synaptics_device_info *info)
+{
+	int error;
 
-	स_रखो(info, 0, माप(*info));
+	memset(info, 0, sizeof(*info));
 
-	error = synaptics_identअगरy(psmouse, info);
-	अगर (error)
-		वापस error;
+	error = synaptics_identify(psmouse, info);
+	if (error)
+		return error;
 
 	error = synaptics_model_id(psmouse, info);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = synaptics_firmware_id(psmouse, info);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = synaptics_query_modes(psmouse, info);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = synaptics_capability(psmouse, info);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = synaptics_resolution(psmouse, info);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर /* CONFIG_MOUSE_PS2_SYNAPTICS || CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
+#endif /* CONFIG_MOUSE_PS2_SYNAPTICS || CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
 
-#अगर_घोषित CONFIG_MOUSE_PS2_SYNAPTICS
+#ifdef CONFIG_MOUSE_PS2_SYNAPTICS
 
-अटल bool cr48_profile_sensor;
+static bool cr48_profile_sensor;
 
-#घोषणा ANY_BOARD_ID 0
-काष्ठा min_max_quirk अणु
-	स्थिर अक्षर * स्थिर *pnp_ids;
-	काष्ठा अणु
+#define ANY_BOARD_ID 0
+struct min_max_quirk {
+	const char * const *pnp_ids;
+	struct {
 		u32 min, max;
-	पूर्ण board_id;
+	} board_id;
 	u32 x_min, x_max, y_min, y_max;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा min_max_quirk min_max_pnpid_table[] = अणु
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN0033", शून्यपूर्ण,
-		अणुANY_BOARD_ID, ANY_BOARD_IDपूर्ण,
+static const struct min_max_quirk min_max_pnpid_table[] = {
+	{
+		(const char * const []){"LEN0033", NULL},
+		{ANY_BOARD_ID, ANY_BOARD_ID},
 		1024, 5052, 2258, 4832
-	पूर्ण,
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN0042", शून्यपूर्ण,
-		अणुANY_BOARD_ID, ANY_BOARD_IDपूर्ण,
+	},
+	{
+		(const char * const []){"LEN0042", NULL},
+		{ANY_BOARD_ID, ANY_BOARD_ID},
 		1232, 5710, 1156, 4696
-	पूर्ण,
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN0034", "LEN0036", "LEN0037",
+	},
+	{
+		(const char * const []){"LEN0034", "LEN0036", "LEN0037",
 					"LEN0039", "LEN2002", "LEN2004",
-					शून्यपूर्ण,
-		अणुANY_BOARD_ID, 2961पूर्ण,
+					NULL},
+		{ANY_BOARD_ID, 2961},
 		1024, 5112, 2024, 4832
-	पूर्ण,
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN2000", शून्यपूर्ण,
-		अणुANY_BOARD_ID, ANY_BOARD_IDपूर्ण,
+	},
+	{
+		(const char * const []){"LEN2000", NULL},
+		{ANY_BOARD_ID, ANY_BOARD_ID},
 		1024, 5113, 2021, 4832
-	पूर्ण,
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN2001", शून्यपूर्ण,
-		अणुANY_BOARD_ID, ANY_BOARD_IDपूर्ण,
+	},
+	{
+		(const char * const []){"LEN2001", NULL},
+		{ANY_BOARD_ID, ANY_BOARD_ID},
 		1024, 5022, 2508, 4832
-	पूर्ण,
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN2006", शून्यपूर्ण,
-		अणु2691, 2691पूर्ण,
+	},
+	{
+		(const char * const []){"LEN2006", NULL},
+		{2691, 2691},
 		1024, 5045, 2457, 4832
-	पूर्ण,
-	अणु
-		(स्थिर अक्षर * स्थिर [])अणु"LEN2006", शून्यपूर्ण,
-		अणुANY_BOARD_ID, ANY_BOARD_IDपूर्ण,
+	},
+	{
+		(const char * const []){"LEN2006", NULL},
+		{ANY_BOARD_ID, ANY_BOARD_ID},
 		1264, 5675, 1171, 4688
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+	},
+	{ }
+};
 
 /*****************************************************************************
  *	Synaptics communications functions
@@ -514,33 +513,33 @@
 /*
  * Synaptics touchpads report the y coordinate from bottom to top, which is
  * opposite from what userspace expects.
- * This function is used to invert y beक्रमe reporting.
+ * This function is used to invert y before reporting.
  */
-अटल पूर्णांक synaptics_invert_y(पूर्णांक y)
-अणु
-	वापस YMAX_NOMINAL + YMIN_NOMINAL - y;
-पूर्ण
+static int synaptics_invert_y(int y)
+{
+	return YMAX_NOMINAL + YMIN_NOMINAL - y;
+}
 
 /*
- * Apply quirk(s) अगर the hardware matches
+ * Apply quirk(s) if the hardware matches
  */
-अटल व्योम synaptics_apply_quirks(काष्ठा psmouse *psmouse,
-				   काष्ठा synaptics_device_info *info)
-अणु
-	पूर्णांक i;
+static void synaptics_apply_quirks(struct psmouse *psmouse,
+				   struct synaptics_device_info *info)
+{
+	int i;
 
-	क्रम (i = 0; min_max_pnpid_table[i].pnp_ids; i++) अणु
-		अगर (!psmouse_matches_pnp_id(psmouse,
+	for (i = 0; min_max_pnpid_table[i].pnp_ids; i++) {
+		if (!psmouse_matches_pnp_id(psmouse,
 					    min_max_pnpid_table[i].pnp_ids))
-			जारी;
+			continue;
 
-		अगर (min_max_pnpid_table[i].board_id.min != ANY_BOARD_ID &&
+		if (min_max_pnpid_table[i].board_id.min != ANY_BOARD_ID &&
 		    info->board_id < min_max_pnpid_table[i].board_id.min)
-			जारी;
+			continue;
 
-		अगर (min_max_pnpid_table[i].board_id.max != ANY_BOARD_ID &&
+		if (min_max_pnpid_table[i].board_id.max != ANY_BOARD_ID &&
 		    info->board_id > min_max_pnpid_table[i].board_id.max)
-			जारी;
+			continue;
 
 		info->x_min = min_max_pnpid_table[i].x_min;
 		info->x_max = min_max_pnpid_table[i].x_max;
@@ -550,174 +549,174 @@
 			     "quirked min/max coordinates: x [%d..%d], y [%d..%d]\n",
 			     info->x_min, info->x_max,
 			     info->y_min, info->y_max);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल bool synaptics_has_agm(काष्ठा synaptics_data *priv)
-अणु
-	वापस (SYN_CAP_ADV_GESTURE(priv->info.ext_cap_0c) ||
+static bool synaptics_has_agm(struct synaptics_data *priv)
+{
+	return (SYN_CAP_ADV_GESTURE(priv->info.ext_cap_0c) ||
 		SYN_CAP_IMAGE_SENSOR(priv->info.ext_cap_0c));
-पूर्ण
+}
 
-अटल पूर्णांक synaptics_set_advanced_gesture_mode(काष्ठा psmouse *psmouse)
-अणु
-	अटल u8 param = 0xc8;
-	पूर्णांक error;
+static int synaptics_set_advanced_gesture_mode(struct psmouse *psmouse)
+{
+	static u8 param = 0xc8;
+	int error;
 
 	error = ps2_sliced_command(&psmouse->ps2dev, SYN_QUE_MODEL);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ps2_command(&psmouse->ps2dev, &param, PSMOUSE_CMD_SETRATE);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक synaptics_set_mode(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	पूर्णांक error;
+static int synaptics_set_mode(struct psmouse *psmouse)
+{
+	struct synaptics_data *priv = psmouse->private;
+	int error;
 
 	priv->mode = 0;
-	अगर (priv->असलolute_mode)
+	if (priv->absolute_mode)
 		priv->mode |= SYN_BIT_ABSOLUTE_MODE;
-	अगर (priv->disable_gesture)
+	if (priv->disable_gesture)
 		priv->mode |= SYN_BIT_DISABLE_GESTURE;
-	अगर (psmouse->rate >= 80)
+	if (psmouse->rate >= 80)
 		priv->mode |= SYN_BIT_HIGH_RATE;
-	अगर (SYN_CAP_EXTENDED(priv->info.capabilities))
+	if (SYN_CAP_EXTENDED(priv->info.capabilities))
 		priv->mode |= SYN_BIT_W_MODE;
 
 	error = synaptics_mode_cmd(psmouse, priv->mode);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (priv->असलolute_mode && synaptics_has_agm(priv)) अणु
+	if (priv->absolute_mode && synaptics_has_agm(priv)) {
 		error = synaptics_set_advanced_gesture_mode(psmouse);
-		अगर (error) अणु
+		if (error) {
 			psmouse_err(psmouse,
 				    "Advanced gesture mode init failed: %d\n",
 				    error);
-			वापस error;
-		पूर्ण
-	पूर्ण
+			return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम synaptics_set_rate(काष्ठा psmouse *psmouse, अचिन्हित पूर्णांक rate)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
+static void synaptics_set_rate(struct psmouse *psmouse, unsigned int rate)
+{
+	struct synaptics_data *priv = psmouse->private;
 
-	अगर (rate >= 80) अणु
+	if (rate >= 80) {
 		priv->mode |= SYN_BIT_HIGH_RATE;
 		psmouse->rate = 80;
-	पूर्ण अन्यथा अणु
+	} else {
 		priv->mode &= ~SYN_BIT_HIGH_RATE;
 		psmouse->rate = 40;
-	पूर्ण
+	}
 
 	synaptics_mode_cmd(psmouse, priv->mode);
-पूर्ण
+}
 
 /*****************************************************************************
  *	Synaptics pass-through PS/2 port support
  ****************************************************************************/
-अटल पूर्णांक synaptics_pt_ग_लिखो(काष्ठा serio *serio, u8 c)
-अणु
-	काष्ठा psmouse *parent = serio_get_drvdata(serio->parent);
+static int synaptics_pt_write(struct serio *serio, u8 c)
+{
+	struct psmouse *parent = serio_get_drvdata(serio->parent);
 	u8 rate_param = SYN_PS_CLIENT_CMD; /* indicates that we want pass-through port */
-	पूर्णांक error;
+	int error;
 
 	error = ps2_sliced_command(&parent->ps2dev, c);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	error = ps2_command(&parent->ps2dev, &rate_param, PSMOUSE_CMD_SETRATE);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक synaptics_pt_start(काष्ठा serio *serio)
-अणु
-	काष्ठा psmouse *parent = serio_get_drvdata(serio->parent);
-	काष्ठा synaptics_data *priv = parent->निजी;
+static int synaptics_pt_start(struct serio *serio)
+{
+	struct psmouse *parent = serio_get_drvdata(serio->parent);
+	struct synaptics_data *priv = parent->private;
 
-	serio_छोड़ो_rx(parent->ps2dev.serio);
+	serio_pause_rx(parent->ps2dev.serio);
 	priv->pt_port = serio;
-	serio_जारी_rx(parent->ps2dev.serio);
+	serio_continue_rx(parent->ps2dev.serio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम synaptics_pt_stop(काष्ठा serio *serio)
-अणु
-	काष्ठा psmouse *parent = serio_get_drvdata(serio->parent);
-	काष्ठा synaptics_data *priv = parent->निजी;
+static void synaptics_pt_stop(struct serio *serio)
+{
+	struct psmouse *parent = serio_get_drvdata(serio->parent);
+	struct synaptics_data *priv = parent->private;
 
-	serio_छोड़ो_rx(parent->ps2dev.serio);
-	priv->pt_port = शून्य;
-	serio_जारी_rx(parent->ps2dev.serio);
-पूर्ण
+	serio_pause_rx(parent->ps2dev.serio);
+	priv->pt_port = NULL;
+	serio_continue_rx(parent->ps2dev.serio);
+}
 
-अटल पूर्णांक synaptics_is_pt_packet(u8 *buf)
-अणु
-	वापस (buf[0] & 0xFC) == 0x84 && (buf[3] & 0xCC) == 0xC4;
-पूर्ण
+static int synaptics_is_pt_packet(u8 *buf)
+{
+	return (buf[0] & 0xFC) == 0x84 && (buf[3] & 0xCC) == 0xC4;
+}
 
-अटल व्योम synaptics_pass_pt_packet(काष्ठा serio *ptport, u8 *packet)
-अणु
-	काष्ठा psmouse *child = serio_get_drvdata(ptport);
+static void synaptics_pass_pt_packet(struct serio *ptport, u8 *packet)
+{
+	struct psmouse *child = serio_get_drvdata(ptport);
 
-	अगर (child && child->state == PSMOUSE_ACTIVATED) अणु
-		serio_पूर्णांकerrupt(ptport, packet[1], 0);
-		serio_पूर्णांकerrupt(ptport, packet[4], 0);
-		serio_पूर्णांकerrupt(ptport, packet[5], 0);
-		अगर (child->pktsize == 4)
-			serio_पूर्णांकerrupt(ptport, packet[2], 0);
-	पूर्ण अन्यथा अणु
-		serio_पूर्णांकerrupt(ptport, packet[1], 0);
-	पूर्ण
-पूर्ण
+	if (child && child->state == PSMOUSE_ACTIVATED) {
+		serio_interrupt(ptport, packet[1], 0);
+		serio_interrupt(ptport, packet[4], 0);
+		serio_interrupt(ptport, packet[5], 0);
+		if (child->pktsize == 4)
+			serio_interrupt(ptport, packet[2], 0);
+	} else {
+		serio_interrupt(ptport, packet[1], 0);
+	}
+}
 
-अटल व्योम synaptics_pt_activate(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	काष्ठा psmouse *child = serio_get_drvdata(priv->pt_port);
+static void synaptics_pt_activate(struct psmouse *psmouse)
+{
+	struct synaptics_data *priv = psmouse->private;
+	struct psmouse *child = serio_get_drvdata(priv->pt_port);
 
 	/* adjust the touchpad to child's choice of protocol */
-	अगर (child) अणु
-		अगर (child->pktsize == 4)
+	if (child) {
+		if (child->pktsize == 4)
 			priv->mode |= SYN_BIT_FOUR_BYTE_CLIENT;
-		अन्यथा
+		else
 			priv->mode &= ~SYN_BIT_FOUR_BYTE_CLIENT;
 
-		अगर (synaptics_mode_cmd(psmouse, priv->mode))
+		if (synaptics_mode_cmd(psmouse, priv->mode))
 			psmouse_warn(psmouse,
 				     "failed to switch guest protocol\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम synaptics_pt_create(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा serio *serio;
+static void synaptics_pt_create(struct psmouse *psmouse)
+{
+	struct serio *serio;
 
-	serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
-	अगर (!serio) अणु
+	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
+	if (!serio) {
 		psmouse_err(psmouse,
 			    "not enough memory for pass-through port\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	serio->id.type = SERIO_PS_PSTHRU;
-	strlcpy(serio->name, "Synaptics pass-through", माप(serio->name));
-	strlcpy(serio->phys, "synaptics-pt/serio0", माप(serio->phys));
-	serio->ग_लिखो = synaptics_pt_ग_लिखो;
+	strlcpy(serio->name, "Synaptics pass-through", sizeof(serio->name));
+	strlcpy(serio->phys, "synaptics-pt/serio0", sizeof(serio->phys));
+	serio->write = synaptics_pt_write;
 	serio->start = synaptics_pt_start;
 	serio->stop = synaptics_pt_stop;
 	serio->parent = psmouse->ps2dev.serio;
@@ -726,67 +725,67 @@
 
 	psmouse_info(psmouse, "serio: %s port at %s\n",
 		     serio->name, psmouse->phys);
-	serio_रेजिस्टर_port(serio);
-पूर्ण
+	serio_register_port(serio);
+}
 
 /*****************************************************************************
- *	Functions to पूर्णांकerpret the असलolute mode packets
+ *	Functions to interpret the absolute mode packets
  ****************************************************************************/
 
-अटल व्योम synaptics_parse_agm(स्थिर u8 buf[],
-				काष्ठा synaptics_data *priv,
-				काष्ठा synaptics_hw_state *hw)
-अणु
-	काष्ठा synaptics_hw_state *agm = &priv->agm;
-	पूर्णांक agm_packet_type;
+static void synaptics_parse_agm(const u8 buf[],
+				struct synaptics_data *priv,
+				struct synaptics_hw_state *hw)
+{
+	struct synaptics_hw_state *agm = &priv->agm;
+	int agm_packet_type;
 
 	agm_packet_type = (buf[5] & 0x30) >> 4;
-	चयन (agm_packet_type) अणु
-	हाल 1:
+	switch (agm_packet_type) {
+	case 1:
 		/* Gesture packet: (x, y, z) half resolution */
 		agm->w = hw->w;
 		agm->x = (((buf[4] & 0x0f) << 8) | buf[1]) << 1;
 		agm->y = (((buf[4] & 0xf0) << 4) | buf[2]) << 1;
 		agm->z = ((buf[3] & 0x30) | (buf[5] & 0x0f)) << 1;
-		अवरोध;
+		break;
 
-	हाल 2:
-		/* AGM-CONTACT packet: we are only पूर्णांकerested in the count */
+	case 2:
+		/* AGM-CONTACT packet: we are only interested in the count */
 		priv->agm_count = buf[1];
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+	default:
+		break;
+	}
+}
 
-अटल व्योम synaptics_parse_ext_buttons(स्थिर u8 buf[],
-					काष्ठा synaptics_data *priv,
-					काष्ठा synaptics_hw_state *hw)
-अणु
-	अचिन्हित पूर्णांक ext_bits =
+static void synaptics_parse_ext_buttons(const u8 buf[],
+					struct synaptics_data *priv,
+					struct synaptics_hw_state *hw)
+{
+	unsigned int ext_bits =
 		(SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap) + 1) >> 1;
-	अचिन्हित पूर्णांक ext_mask = GENMASK(ext_bits - 1, 0);
+	unsigned int ext_mask = GENMASK(ext_bits - 1, 0);
 
 	hw->ext_buttons = buf[4] & ext_mask;
 	hw->ext_buttons |= (buf[5] & ext_mask) << ext_bits;
-पूर्ण
+}
 
-अटल पूर्णांक synaptics_parse_hw_state(स्थिर u8 buf[],
-				    काष्ठा synaptics_data *priv,
-				    काष्ठा synaptics_hw_state *hw)
-अणु
-	स_रखो(hw, 0, माप(काष्ठा synaptics_hw_state));
+static int synaptics_parse_hw_state(const u8 buf[],
+				    struct synaptics_data *priv,
+				    struct synaptics_hw_state *hw)
+{
+	memset(hw, 0, sizeof(struct synaptics_hw_state));
 
-	अगर (SYN_MODEL_NEWABS(priv->info.model_id)) अणु
+	if (SYN_MODEL_NEWABS(priv->info.model_id)) {
 		hw->w = (((buf[0] & 0x30) >> 2) |
 			 ((buf[0] & 0x04) >> 1) |
 			 ((buf[3] & 0x04) >> 2));
 
-		अगर (synaptics_has_agm(priv) && hw->w == 2) अणु
+		if (synaptics_has_agm(priv) && hw->w == 2) {
 			synaptics_parse_agm(buf, priv, hw);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 
 		hw->x = (((buf[3] & 0x10) << 8) |
 			 ((buf[1] & 0x0f) << 8) |
@@ -799,43 +798,43 @@
 		hw->left  = (buf[0] & 0x01) ? 1 : 0;
 		hw->right = (buf[0] & 0x02) ? 1 : 0;
 
-		अगर (priv->is_क्रमcepad) अणु
+		if (priv->is_forcepad) {
 			/*
 			 * ForcePads, like Clickpads, use middle button
 			 * bits to report primary button clicks.
-			 * Unक्रमtunately they report primary button not
+			 * Unfortunately they report primary button not
 			 * only when user presses on the pad above certain
 			 * threshold, but also when there are more than one
-			 * finger on the touchpad, which पूर्णांकerferes with
+			 * finger on the touchpad, which interferes with
 			 * out multi-finger gestures.
 			 */
-			अगर (hw->z == 0) अणु
+			if (hw->z == 0) {
 				/* No contacts */
 				priv->press = priv->report_press = false;
-			पूर्ण अन्यथा अगर (hw->w >= 4 && ((buf[0] ^ buf[3]) & 0x01)) अणु
+			} else if (hw->w >= 4 && ((buf[0] ^ buf[3]) & 0x01)) {
 				/*
 				 * Single-finger touch with pressure above
-				 * the threshold. If pressure stays दीर्घ
+				 * the threshold. If pressure stays long
 				 * enough, we'll start reporting primary
 				 * button. We rely on the device continuing
-				 * sending data even अगर finger करोes not
+				 * sending data even if finger does not
 				 * move.
 				 */
-				अगर  (!priv->press) अणु
-					priv->press_start = jअगरfies;
+				if  (!priv->press) {
+					priv->press_start = jiffies;
 					priv->press = true;
-				पूर्ण अन्यथा अगर (समय_after(jअगरfies,
+				} else if (time_after(jiffies,
 						priv->press_start +
-							msecs_to_jअगरfies(50))) अणु
+							msecs_to_jiffies(50))) {
 					priv->report_press = true;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				priv->press = false;
-			पूर्ण
+			}
 
 			hw->left = priv->report_press;
 
-		पूर्ण अन्यथा अगर (SYN_CAP_CLICKPAD(priv->info.ext_cap_0c)) अणु
+		} else if (SYN_CAP_CLICKPAD(priv->info.ext_cap_0c)) {
 			/*
 			 * Clickpad's button is transmitted as middle button,
 			 * however, since it is primary button, we will report
@@ -843,22 +842,22 @@
 			 */
 			hw->left = ((buf[0] ^ buf[3]) & 0x01) ? 1 : 0;
 
-		पूर्ण अन्यथा अगर (SYN_CAP_MIDDLE_BUTTON(priv->info.capabilities)) अणु
+		} else if (SYN_CAP_MIDDLE_BUTTON(priv->info.capabilities)) {
 			hw->middle = ((buf[0] ^ buf[3]) & 0x01) ? 1 : 0;
-			अगर (hw->w == 2)
+			if (hw->w == 2)
 				hw->scroll = (s8)buf[1];
-		पूर्ण
+		}
 
-		अगर (SYN_CAP_FOUR_BUTTON(priv->info.capabilities)) अणु
+		if (SYN_CAP_FOUR_BUTTON(priv->info.capabilities)) {
 			hw->up   = ((buf[0] ^ buf[3]) & 0x01) ? 1 : 0;
-			hw->करोwn = ((buf[0] ^ buf[3]) & 0x02) ? 1 : 0;
-		पूर्ण
+			hw->down = ((buf[0] ^ buf[3]) & 0x02) ? 1 : 0;
+		}
 
-		अगर (SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap) > 0 &&
-		    ((buf[0] ^ buf[3]) & 0x02)) अणु
+		if (SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap) > 0 &&
+		    ((buf[0] ^ buf[3]) & 0x02)) {
 			synaptics_parse_ext_buttons(buf, priv, hw);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		hw->x = (((buf[1] & 0x1f) << 8) | buf[2]);
 		hw->y = (((buf[4] & 0x1f) << 8) | buf[5]);
 
@@ -867,7 +866,7 @@
 
 		hw->left  = (buf[0] & 0x01) ? 1 : 0;
 		hw->right = (buf[0] & 0x02) ? 1 : 0;
-	पूर्ण
+	}
 
 	/*
 	 * Convert wrap-around values to negative. (X|Y)_MAX_POSITIVE
@@ -875,82 +874,82 @@
 	 * the touchpad whose precise position cannot be determined, so
 	 * convert these values to the maximum axis value.
 	 */
-	अगर (hw->x > X_MAX_POSITIVE)
+	if (hw->x > X_MAX_POSITIVE)
 		hw->x -= 1 << ABS_POS_BITS;
-	अन्यथा अगर (hw->x == X_MAX_POSITIVE)
+	else if (hw->x == X_MAX_POSITIVE)
 		hw->x = XMAX;
 
-	अगर (hw->y > Y_MAX_POSITIVE)
+	if (hw->y > Y_MAX_POSITIVE)
 		hw->y -= 1 << ABS_POS_BITS;
-	अन्यथा अगर (hw->y == Y_MAX_POSITIVE)
+	else if (hw->y == Y_MAX_POSITIVE)
 		hw->y = YMAX;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम synaptics_report_semi_mt_slot(काष्ठा input_dev *dev, पूर्णांक slot,
-					  bool active, पूर्णांक x, पूर्णांक y)
-अणु
+static void synaptics_report_semi_mt_slot(struct input_dev *dev, int slot,
+					  bool active, int x, int y)
+{
 	input_mt_slot(dev, slot);
 	input_mt_report_slot_state(dev, MT_TOOL_FINGER, active);
-	अगर (active) अणु
-		input_report_असल(dev, ABS_MT_POSITION_X, x);
-		input_report_असल(dev, ABS_MT_POSITION_Y, synaptics_invert_y(y));
-	पूर्ण
-पूर्ण
+	if (active) {
+		input_report_abs(dev, ABS_MT_POSITION_X, x);
+		input_report_abs(dev, ABS_MT_POSITION_Y, synaptics_invert_y(y));
+	}
+}
 
-अटल व्योम synaptics_report_semi_mt_data(काष्ठा input_dev *dev,
-					  स्थिर काष्ठा synaptics_hw_state *a,
-					  स्थिर काष्ठा synaptics_hw_state *b,
-					  पूर्णांक num_fingers)
-अणु
-	अगर (num_fingers >= 2) अणु
+static void synaptics_report_semi_mt_data(struct input_dev *dev,
+					  const struct synaptics_hw_state *a,
+					  const struct synaptics_hw_state *b,
+					  int num_fingers)
+{
+	if (num_fingers >= 2) {
 		synaptics_report_semi_mt_slot(dev, 0, true, min(a->x, b->x),
 					      min(a->y, b->y));
 		synaptics_report_semi_mt_slot(dev, 1, true, max(a->x, b->x),
 					      max(a->y, b->y));
-	पूर्ण अन्यथा अगर (num_fingers == 1) अणु
+	} else if (num_fingers == 1) {
 		synaptics_report_semi_mt_slot(dev, 0, true, a->x, a->y);
 		synaptics_report_semi_mt_slot(dev, 1, false, 0, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		synaptics_report_semi_mt_slot(dev, 0, false, 0, 0);
 		synaptics_report_semi_mt_slot(dev, 1, false, 0, 0);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम synaptics_report_ext_buttons(काष्ठा psmouse *psmouse,
-					 स्थिर काष्ठा synaptics_hw_state *hw)
-अणु
-	काष्ठा input_dev *dev = psmouse->dev;
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	पूर्णांक ext_bits = (SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap) + 1) >> 1;
-	पूर्णांक i;
+static void synaptics_report_ext_buttons(struct psmouse *psmouse,
+					 const struct synaptics_hw_state *hw)
+{
+	struct input_dev *dev = psmouse->dev;
+	struct synaptics_data *priv = psmouse->private;
+	int ext_bits = (SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap) + 1) >> 1;
+	int i;
 
-	अगर (!SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap))
-		वापस;
+	if (!SYN_CAP_MULTI_BUTTON_NO(priv->info.ext_cap))
+		return;
 
 	/* Bug in FW 8.1 & 8.2, buttons are reported only when ExtBit is 1 */
-	अगर ((SYN_ID_FULL(priv->info.identity) == 0x801 ||
+	if ((SYN_ID_FULL(priv->info.identity) == 0x801 ||
 	     SYN_ID_FULL(priv->info.identity) == 0x802) &&
 	    !((psmouse->packet[0] ^ psmouse->packet[3]) & 0x02))
-		वापस;
+		return;
 
-	अगर (!SYN_CAP_EXT_BUTTONS_STICK(priv->info.ext_cap_10)) अणु
-		क्रम (i = 0; i < ext_bits; i++) अणु
+	if (!SYN_CAP_EXT_BUTTONS_STICK(priv->info.ext_cap_10)) {
+		for (i = 0; i < ext_bits; i++) {
 			input_report_key(dev, BTN_0 + 2 * i,
 				hw->ext_buttons & BIT(i));
 			input_report_key(dev, BTN_1 + 2 * i,
 				hw->ext_buttons & BIT(i + ext_bits));
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	/*
 	 * This generation of touchpads has the trackstick buttons
 	 * physically wired to the touchpad. Re-route them through
-	 * the pass-through पूर्णांकerface.
+	 * the pass-through interface.
 	 */
-	अगर (priv->pt_port) अणु
+	if (priv->pt_port) {
 		u8 pt_buttons;
 
 		/* The trackstick expects at most 3 buttons */
@@ -958,63 +957,63 @@
 			     SYN_EXT_BUTTON_STICK_R(hw->ext_buttons) << 1 |
 			     SYN_EXT_BUTTON_STICK_M(hw->ext_buttons) << 2;
 
-		serio_पूर्णांकerrupt(priv->pt_port,
+		serio_interrupt(priv->pt_port,
 				PSMOUSE_OOB_EXTRA_BTNS, SERIO_OOB_DATA);
-		serio_पूर्णांकerrupt(priv->pt_port, pt_buttons, SERIO_OOB_DATA);
-	पूर्ण
-पूर्ण
+		serio_interrupt(priv->pt_port, pt_buttons, SERIO_OOB_DATA);
+	}
+}
 
-अटल व्योम synaptics_report_buttons(काष्ठा psmouse *psmouse,
-				     स्थिर काष्ठा synaptics_hw_state *hw)
-अणु
-	काष्ठा input_dev *dev = psmouse->dev;
-	काष्ठा synaptics_data *priv = psmouse->निजी;
+static void synaptics_report_buttons(struct psmouse *psmouse,
+				     const struct synaptics_hw_state *hw)
+{
+	struct input_dev *dev = psmouse->dev;
+	struct synaptics_data *priv = psmouse->private;
 
 	input_report_key(dev, BTN_LEFT, hw->left);
 	input_report_key(dev, BTN_RIGHT, hw->right);
 
-	अगर (SYN_CAP_MIDDLE_BUTTON(priv->info.capabilities))
+	if (SYN_CAP_MIDDLE_BUTTON(priv->info.capabilities))
 		input_report_key(dev, BTN_MIDDLE, hw->middle);
 
-	अगर (SYN_CAP_FOUR_BUTTON(priv->info.capabilities)) अणु
+	if (SYN_CAP_FOUR_BUTTON(priv->info.capabilities)) {
 		input_report_key(dev, BTN_FORWARD, hw->up);
-		input_report_key(dev, BTN_BACK, hw->करोwn);
-	पूर्ण
+		input_report_key(dev, BTN_BACK, hw->down);
+	}
 
 	synaptics_report_ext_buttons(psmouse, hw);
-पूर्ण
+}
 
-अटल व्योम synaptics_report_mt_data(काष्ठा psmouse *psmouse,
-				     स्थिर काष्ठा synaptics_hw_state *sgm,
-				     पूर्णांक num_fingers)
-अणु
-	काष्ठा input_dev *dev = psmouse->dev;
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	स्थिर काष्ठा synaptics_hw_state *hw[2] = अणु sgm, &priv->agm पूर्ण;
-	काष्ठा input_mt_pos pos[2];
-	पूर्णांक slot[2], nsemi, i;
+static void synaptics_report_mt_data(struct psmouse *psmouse,
+				     const struct synaptics_hw_state *sgm,
+				     int num_fingers)
+{
+	struct input_dev *dev = psmouse->dev;
+	struct synaptics_data *priv = psmouse->private;
+	const struct synaptics_hw_state *hw[2] = { sgm, &priv->agm };
+	struct input_mt_pos pos[2];
+	int slot[2], nsemi, i;
 
 	nsemi = clamp_val(num_fingers, 0, 2);
 
-	क्रम (i = 0; i < nsemi; i++) अणु
+	for (i = 0; i < nsemi; i++) {
 		pos[i].x = hw[i]->x;
 		pos[i].y = synaptics_invert_y(hw[i]->y);
-	पूर्ण
+	}
 
 	input_mt_assign_slots(dev, slot, pos, nsemi, DMAX * priv->info.x_res);
 
-	क्रम (i = 0; i < nsemi; i++) अणु
+	for (i = 0; i < nsemi; i++) {
 		input_mt_slot(dev, slot[i]);
 		input_mt_report_slot_state(dev, MT_TOOL_FINGER, true);
-		input_report_असल(dev, ABS_MT_POSITION_X, pos[i].x);
-		input_report_असल(dev, ABS_MT_POSITION_Y, pos[i].y);
-		input_report_असल(dev, ABS_MT_PRESSURE, hw[i]->z);
-	पूर्ण
+		input_report_abs(dev, ABS_MT_POSITION_X, pos[i].x);
+		input_report_abs(dev, ABS_MT_POSITION_Y, pos[i].y);
+		input_report_abs(dev, ABS_MT_PRESSURE, hw[i]->z);
+	}
 
 	input_mt_drop_unused(dev);
 
 	/* Don't use active slot count to generate BTN_TOOL events. */
-	input_mt_report_poपूर्णांकer_emulation(dev, false);
+	input_mt_report_pointer_emulation(dev, false);
 
 	/* Send the number of fingers reported by touchpad itself. */
 	input_mt_report_finger_count(dev, num_fingers);
@@ -1022,245 +1021,245 @@
 	synaptics_report_buttons(psmouse, sgm);
 
 	input_sync(dev);
-पूर्ण
+}
 
-अटल व्योम synaptics_image_sensor_process(काष्ठा psmouse *psmouse,
-					   काष्ठा synaptics_hw_state *sgm)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	पूर्णांक num_fingers;
+static void synaptics_image_sensor_process(struct psmouse *psmouse,
+					   struct synaptics_hw_state *sgm)
+{
+	struct synaptics_data *priv = psmouse->private;
+	int num_fingers;
 
 	/*
 	 * Update mt_state using the new finger count and current mt_state.
 	 */
-	अगर (sgm->z == 0)
+	if (sgm->z == 0)
 		num_fingers = 0;
-	अन्यथा अगर (sgm->w >= 4)
+	else if (sgm->w >= 4)
 		num_fingers = 1;
-	अन्यथा अगर (sgm->w == 0)
+	else if (sgm->w == 0)
 		num_fingers = 2;
-	अन्यथा अगर (sgm->w == 1)
+	else if (sgm->w == 1)
 		num_fingers = priv->agm_count ? priv->agm_count : 3;
-	अन्यथा
+	else
 		num_fingers = 4;
 
 	/* Send resulting input events to user space */
 	synaptics_report_mt_data(psmouse, sgm, num_fingers);
-पूर्ण
+}
 
-अटल bool synaptics_has_multअगरinger(काष्ठा synaptics_data *priv)
-अणु
-	अगर (SYN_CAP_MULTIFINGER(priv->info.capabilities))
-		वापस true;
+static bool synaptics_has_multifinger(struct synaptics_data *priv)
+{
+	if (SYN_CAP_MULTIFINGER(priv->info.capabilities))
+		return true;
 
 	/* Advanced gesture mode also sends multi finger data */
-	वापस synaptics_has_agm(priv);
-पूर्ण
+	return synaptics_has_agm(priv);
+}
 
 /*
- *  called क्रम each full received packet from the touchpad
+ *  called for each full received packet from the touchpad
  */
-अटल व्योम synaptics_process_packet(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा input_dev *dev = psmouse->dev;
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	काष्ठा synaptics_device_info *info = &priv->info;
-	काष्ठा synaptics_hw_state hw;
-	पूर्णांक num_fingers;
-	पूर्णांक finger_width;
+static void synaptics_process_packet(struct psmouse *psmouse)
+{
+	struct input_dev *dev = psmouse->dev;
+	struct synaptics_data *priv = psmouse->private;
+	struct synaptics_device_info *info = &priv->info;
+	struct synaptics_hw_state hw;
+	int num_fingers;
+	int finger_width;
 
-	अगर (synaptics_parse_hw_state(psmouse->packet, priv, &hw))
-		वापस;
+	if (synaptics_parse_hw_state(psmouse->packet, priv, &hw))
+		return;
 
-	अगर (SYN_CAP_IMAGE_SENSOR(info->ext_cap_0c)) अणु
+	if (SYN_CAP_IMAGE_SENSOR(info->ext_cap_0c)) {
 		synaptics_image_sensor_process(psmouse, &hw);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (hw.scroll) अणु
+	if (hw.scroll) {
 		priv->scroll += hw.scroll;
 
-		जबतक (priv->scroll >= 4) अणु
-			input_report_key(dev, BTN_BACK, !hw.करोwn);
+		while (priv->scroll >= 4) {
+			input_report_key(dev, BTN_BACK, !hw.down);
 			input_sync(dev);
-			input_report_key(dev, BTN_BACK, hw.करोwn);
+			input_report_key(dev, BTN_BACK, hw.down);
 			input_sync(dev);
 			priv->scroll -= 4;
-		पूर्ण
-		जबतक (priv->scroll <= -4) अणु
+		}
+		while (priv->scroll <= -4) {
 			input_report_key(dev, BTN_FORWARD, !hw.up);
 			input_sync(dev);
 			input_report_key(dev, BTN_FORWARD, hw.up);
 			input_sync(dev);
 			priv->scroll += 4;
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	अगर (hw.z > 0 && hw.x > 1) अणु
+	if (hw.z > 0 && hw.x > 1) {
 		num_fingers = 1;
 		finger_width = 5;
-		अगर (SYN_CAP_EXTENDED(info->capabilities)) अणु
-			चयन (hw.w) अणु
-			हाल 0 ... 1:
-				अगर (synaptics_has_multअगरinger(priv))
+		if (SYN_CAP_EXTENDED(info->capabilities)) {
+			switch (hw.w) {
+			case 0 ... 1:
+				if (synaptics_has_multifinger(priv))
 					num_fingers = hw.w + 2;
-				अवरोध;
-			हाल 2:
+				break;
+			case 2:
 				/*
-				 * SYN_MODEL_PEN(info->model_id): even अगर
+				 * SYN_MODEL_PEN(info->model_id): even if
 				 * the device supports pen, we treat it as
 				 * a single finger.
 				 */
-				अवरोध;
-			हाल 4 ... 15:
-				अगर (SYN_CAP_PALMDETECT(info->capabilities))
+				break;
+			case 4 ... 15:
+				if (SYN_CAP_PALMDETECT(info->capabilities))
 					finger_width = hw.w;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				break;
+			}
+		}
+	} else {
 		num_fingers = 0;
 		finger_width = 0;
-	पूर्ण
+	}
 
-	अगर (cr48_profile_sensor) अणु
+	if (cr48_profile_sensor) {
 		synaptics_report_mt_data(psmouse, &hw, num_fingers);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (SYN_CAP_ADV_GESTURE(info->ext_cap_0c))
+	if (SYN_CAP_ADV_GESTURE(info->ext_cap_0c))
 		synaptics_report_semi_mt_data(dev, &hw, &priv->agm,
 					      num_fingers);
 
 	/* Post events
-	 * BTN_TOUCH has to be first as mousedev relies on it when करोing
-	 * असलolute -> relative conversion
+	 * BTN_TOUCH has to be first as mousedev relies on it when doing
+	 * absolute -> relative conversion
 	 */
-	अगर (hw.z > 30) input_report_key(dev, BTN_TOUCH, 1);
-	अगर (hw.z < 25) input_report_key(dev, BTN_TOUCH, 0);
+	if (hw.z > 30) input_report_key(dev, BTN_TOUCH, 1);
+	if (hw.z < 25) input_report_key(dev, BTN_TOUCH, 0);
 
-	अगर (num_fingers > 0) अणु
-		input_report_असल(dev, ABS_X, hw.x);
-		input_report_असल(dev, ABS_Y, synaptics_invert_y(hw.y));
-	पूर्ण
-	input_report_असल(dev, ABS_PRESSURE, hw.z);
+	if (num_fingers > 0) {
+		input_report_abs(dev, ABS_X, hw.x);
+		input_report_abs(dev, ABS_Y, synaptics_invert_y(hw.y));
+	}
+	input_report_abs(dev, ABS_PRESSURE, hw.z);
 
-	अगर (SYN_CAP_PALMDETECT(info->capabilities))
-		input_report_असल(dev, ABS_TOOL_WIDTH, finger_width);
+	if (SYN_CAP_PALMDETECT(info->capabilities))
+		input_report_abs(dev, ABS_TOOL_WIDTH, finger_width);
 
 	input_report_key(dev, BTN_TOOL_FINGER, num_fingers == 1);
-	अगर (synaptics_has_multअगरinger(priv)) अणु
+	if (synaptics_has_multifinger(priv)) {
 		input_report_key(dev, BTN_TOOL_DOUBLETAP, num_fingers == 2);
 		input_report_key(dev, BTN_TOOL_TRIPLETAP, num_fingers == 3);
-	पूर्ण
+	}
 
 	synaptics_report_buttons(psmouse, &hw);
 
 	input_sync(dev);
-पूर्ण
+}
 
-अटल bool synaptics_validate_byte(काष्ठा psmouse *psmouse,
-				    पूर्णांक idx, क्रमागत synaptics_pkt_type pkt_type)
-अणु
-	अटल स्थिर u8 newअसल_mask[]	  = अणु 0xC8, 0x00, 0x00, 0xC8, 0x00 पूर्ण;
-	अटल स्थिर u8 newअसल_rel_mask[] = अणु 0xC0, 0x00, 0x00, 0xC0, 0x00 पूर्ण;
-	अटल स्थिर u8 newअसल_rslt[]	  = अणु 0x80, 0x00, 0x00, 0xC0, 0x00 पूर्ण;
-	अटल स्थिर u8 oldअसल_mask[]	  = अणु 0xC0, 0x60, 0x00, 0xC0, 0x60 पूर्ण;
-	अटल स्थिर u8 oldअसल_rslt[]	  = अणु 0xC0, 0x00, 0x00, 0x80, 0x00 पूर्ण;
-	स्थिर u8 *packet = psmouse->packet;
+static bool synaptics_validate_byte(struct psmouse *psmouse,
+				    int idx, enum synaptics_pkt_type pkt_type)
+{
+	static const u8 newabs_mask[]	  = { 0xC8, 0x00, 0x00, 0xC8, 0x00 };
+	static const u8 newabs_rel_mask[] = { 0xC0, 0x00, 0x00, 0xC0, 0x00 };
+	static const u8 newabs_rslt[]	  = { 0x80, 0x00, 0x00, 0xC0, 0x00 };
+	static const u8 oldabs_mask[]	  = { 0xC0, 0x60, 0x00, 0xC0, 0x60 };
+	static const u8 oldabs_rslt[]	  = { 0xC0, 0x00, 0x00, 0x80, 0x00 };
+	const u8 *packet = psmouse->packet;
 
-	अगर (idx < 0 || idx > 4)
-		वापस false;
+	if (idx < 0 || idx > 4)
+		return false;
 
-	चयन (pkt_type) अणु
+	switch (pkt_type) {
 
-	हाल SYN_NEWABS:
-	हाल SYN_NEWABS_RELAXED:
-		वापस (packet[idx] & newअसल_rel_mask[idx]) == newअसल_rslt[idx];
+	case SYN_NEWABS:
+	case SYN_NEWABS_RELAXED:
+		return (packet[idx] & newabs_rel_mask[idx]) == newabs_rslt[idx];
 
-	हाल SYN_NEWABS_STRICT:
-		वापस (packet[idx] & newअसल_mask[idx]) == newअसल_rslt[idx];
+	case SYN_NEWABS_STRICT:
+		return (packet[idx] & newabs_mask[idx]) == newabs_rslt[idx];
 
-	हाल SYN_OLDABS:
-		वापस (packet[idx] & oldअसल_mask[idx]) == oldअसल_rslt[idx];
+	case SYN_OLDABS:
+		return (packet[idx] & oldabs_mask[idx]) == oldabs_rslt[idx];
 
-	शेष:
+	default:
 		psmouse_err(psmouse, "unknown packet type %d\n", pkt_type);
-		वापस false;
-	पूर्ण
-पूर्ण
+		return false;
+	}
+}
 
-अटल क्रमागत synaptics_pkt_type
-synaptics_detect_pkt_type(काष्ठा psmouse *psmouse)
-अणु
-	पूर्णांक i;
+static enum synaptics_pkt_type
+synaptics_detect_pkt_type(struct psmouse *psmouse)
+{
+	int i;
 
-	क्रम (i = 0; i < 5; i++) अणु
-		अगर (!synaptics_validate_byte(psmouse, i, SYN_NEWABS_STRICT)) अणु
+	for (i = 0; i < 5; i++) {
+		if (!synaptics_validate_byte(psmouse, i, SYN_NEWABS_STRICT)) {
 			psmouse_info(psmouse, "using relaxed packet validation\n");
-			वापस SYN_NEWABS_RELAXED;
-		पूर्ण
-	पूर्ण
+			return SYN_NEWABS_RELAXED;
+		}
+	}
 
-	वापस SYN_NEWABS_STRICT;
-पूर्ण
+	return SYN_NEWABS_STRICT;
+}
 
-अटल psmouse_ret_t synaptics_process_byte(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
+static psmouse_ret_t synaptics_process_byte(struct psmouse *psmouse)
+{
+	struct synaptics_data *priv = psmouse->private;
 
-	अगर (psmouse->pktcnt >= 6) अणु /* Full packet received */
-		अगर (unlikely(priv->pkt_type == SYN_NEWABS))
+	if (psmouse->pktcnt >= 6) { /* Full packet received */
+		if (unlikely(priv->pkt_type == SYN_NEWABS))
 			priv->pkt_type = synaptics_detect_pkt_type(psmouse);
 
-		अगर (SYN_CAP_PASS_THROUGH(priv->info.capabilities) &&
-		    synaptics_is_pt_packet(psmouse->packet)) अणु
-			अगर (priv->pt_port)
+		if (SYN_CAP_PASS_THROUGH(priv->info.capabilities) &&
+		    synaptics_is_pt_packet(psmouse->packet)) {
+			if (priv->pt_port)
 				synaptics_pass_pt_packet(priv->pt_port,
 							 psmouse->packet);
-		पूर्ण अन्यथा
+		} else
 			synaptics_process_packet(psmouse);
 
-		वापस PSMOUSE_FULL_PACKET;
-	पूर्ण
+		return PSMOUSE_FULL_PACKET;
+	}
 
-	वापस synaptics_validate_byte(psmouse, psmouse->pktcnt - 1, priv->pkt_type) ?
+	return synaptics_validate_byte(psmouse, psmouse->pktcnt - 1, priv->pkt_type) ?
 		PSMOUSE_GOOD_DATA : PSMOUSE_BAD_DATA;
-पूर्ण
+}
 
 /*****************************************************************************
  *	Driver initialization/cleanup functions
  ****************************************************************************/
-अटल व्योम set_असल_position_params(काष्ठा input_dev *dev,
-				    काष्ठा synaptics_device_info *info,
-				    पूर्णांक x_code, पूर्णांक y_code)
-अणु
-	पूर्णांक x_min = info->x_min ?: XMIN_NOMINAL;
-	पूर्णांक x_max = info->x_max ?: XMAX_NOMINAL;
-	पूर्णांक y_min = info->y_min ?: YMIN_NOMINAL;
-	पूर्णांक y_max = info->y_max ?: YMAX_NOMINAL;
-	पूर्णांक fuzz = SYN_CAP_REDUCED_FILTERING(info->ext_cap_0c) ?
+static void set_abs_position_params(struct input_dev *dev,
+				    struct synaptics_device_info *info,
+				    int x_code, int y_code)
+{
+	int x_min = info->x_min ?: XMIN_NOMINAL;
+	int x_max = info->x_max ?: XMAX_NOMINAL;
+	int y_min = info->y_min ?: YMIN_NOMINAL;
+	int y_max = info->y_max ?: YMAX_NOMINAL;
+	int fuzz = SYN_CAP_REDUCED_FILTERING(info->ext_cap_0c) ?
 			SYN_REDUCED_FILTER_FUZZ : 0;
 
-	input_set_असल_params(dev, x_code, x_min, x_max, fuzz, 0);
-	input_set_असल_params(dev, y_code, y_min, y_max, fuzz, 0);
-	input_असल_set_res(dev, x_code, info->x_res);
-	input_असल_set_res(dev, y_code, info->y_res);
-पूर्ण
+	input_set_abs_params(dev, x_code, x_min, x_max, fuzz, 0);
+	input_set_abs_params(dev, y_code, y_min, y_max, fuzz, 0);
+	input_abs_set_res(dev, x_code, info->x_res);
+	input_abs_set_res(dev, y_code, info->y_res);
+}
 
-अटल पूर्णांक set_input_params(काष्ठा psmouse *psmouse,
-			    काष्ठा synaptics_data *priv)
-अणु
-	काष्ठा input_dev *dev = psmouse->dev;
-	काष्ठा synaptics_device_info *info = &priv->info;
-	पूर्णांक i;
-	पूर्णांक error;
+static int set_input_params(struct psmouse *psmouse,
+			    struct synaptics_data *priv)
+{
+	struct input_dev *dev = psmouse->dev;
+	struct synaptics_device_info *info = &priv->info;
+	int i;
+	int error;
 
-	/* Reset शेष psmouse capabilities */
+	/* Reset default psmouse capabilities */
 	__clear_bit(EV_REL, dev->evbit);
-	biपंचांगap_zero(dev->relbit, REL_CNT);
-	biपंचांगap_zero(dev->keybit, KEY_CNT);
+	bitmap_zero(dev->relbit, REL_CNT);
+	bitmap_zero(dev->keybit, KEY_CNT);
 
 	/* Things that apply to both modes */
 	__set_bit(INPUT_PROP_POINTER, dev->propbit);
@@ -1268,42 +1267,42 @@ synaptics_detect_pkt_type(काष्ठा psmouse *psmouse)
 	input_set_capability(dev, EV_KEY, BTN_LEFT);
 
 	/* Clickpads report only left button */
-	अगर (!SYN_CAP_CLICKPAD(info->ext_cap_0c)) अणु
+	if (!SYN_CAP_CLICKPAD(info->ext_cap_0c)) {
 		input_set_capability(dev, EV_KEY, BTN_RIGHT);
-		अगर (SYN_CAP_MIDDLE_BUTTON(info->capabilities))
+		if (SYN_CAP_MIDDLE_BUTTON(info->capabilities))
 			input_set_capability(dev, EV_KEY, BTN_MIDDLE);
-	पूर्ण
+	}
 
-	अगर (!priv->असलolute_mode) अणु
+	if (!priv->absolute_mode) {
 		/* Relative mode */
 		input_set_capability(dev, EV_REL, REL_X);
 		input_set_capability(dev, EV_REL, REL_Y);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Absolute mode */
-	set_असल_position_params(dev, &priv->info, ABS_X, ABS_Y);
-	input_set_असल_params(dev, ABS_PRESSURE, 0, 255, 0, 0);
+	set_abs_position_params(dev, &priv->info, ABS_X, ABS_Y);
+	input_set_abs_params(dev, ABS_PRESSURE, 0, 255, 0, 0);
 
-	अगर (cr48_profile_sensor)
-		input_set_असल_params(dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
+	if (cr48_profile_sensor)
+		input_set_abs_params(dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
 
-	अगर (SYN_CAP_IMAGE_SENSOR(info->ext_cap_0c)) अणु
-		set_असल_position_params(dev, info,
+	if (SYN_CAP_IMAGE_SENSOR(info->ext_cap_0c)) {
+		set_abs_position_params(dev, info,
 					ABS_MT_POSITION_X, ABS_MT_POSITION_Y);
 		/* Image sensors can report per-contact pressure */
-		input_set_असल_params(dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
+		input_set_abs_params(dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
 
 		error = input_mt_init_slots(dev, 2,
 					    INPUT_MT_POINTER | INPUT_MT_TRACK);
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
-		/* Image sensors can संकेत 4 and 5 finger clicks */
+		/* Image sensors can signal 4 and 5 finger clicks */
 		input_set_capability(dev, EV_KEY, BTN_TOOL_QUADTAP);
 		input_set_capability(dev, EV_KEY, BTN_TOOL_QUINTTAP);
-	पूर्ण अन्यथा अगर (SYN_CAP_ADV_GESTURE(info->ext_cap_0c)) अणु
-		set_असल_position_params(dev, info,
+	} else if (SYN_CAP_ADV_GESTURE(info->ext_cap_0c)) {
+		set_abs_position_params(dev, info,
 					ABS_MT_POSITION_X, ABS_MT_POSITION_Y);
 		/*
 		 * Profile sensor in CR-48 tracks contacts reasonably well,
@@ -1314,274 +1313,274 @@ synaptics_detect_pkt_type(काष्ठा psmouse *psmouse)
 					     (cr48_profile_sensor ?
 					      INPUT_MT_TRACK :
 					      INPUT_MT_SEMI_MT));
-		अगर (error)
-			वापस error;
+		if (error)
+			return error;
 
 		/*
 		 * For semi-mt devices we send ABS_X/Y ourselves instead of
-		 * input_mt_report_poपूर्णांकer_emulation. But
+		 * input_mt_report_pointer_emulation. But
 		 * input_mt_init_slots() resets the fuzz to 0, leading to a
 		 * filtered ABS_MT_POSITION_X but an unfiltered ABS_X
 		 * position. Let's re-initialize ABS_X/Y here.
 		 */
-		अगर (!cr48_profile_sensor)
-			set_असल_position_params(dev, &priv->info, ABS_X, ABS_Y);
-	पूर्ण
+		if (!cr48_profile_sensor)
+			set_abs_position_params(dev, &priv->info, ABS_X, ABS_Y);
+	}
 
-	अगर (SYN_CAP_PALMDETECT(info->capabilities))
-		input_set_असल_params(dev, ABS_TOOL_WIDTH, 0, 15, 0, 0);
+	if (SYN_CAP_PALMDETECT(info->capabilities))
+		input_set_abs_params(dev, ABS_TOOL_WIDTH, 0, 15, 0, 0);
 
 	input_set_capability(dev, EV_KEY, BTN_TOUCH);
 	input_set_capability(dev, EV_KEY, BTN_TOOL_FINGER);
 
-	अगर (synaptics_has_multअगरinger(priv)) अणु
+	if (synaptics_has_multifinger(priv)) {
 		input_set_capability(dev, EV_KEY, BTN_TOOL_DOUBLETAP);
 		input_set_capability(dev, EV_KEY, BTN_TOOL_TRIPLETAP);
-	पूर्ण
+	}
 
-	अगर (SYN_CAP_FOUR_BUTTON(info->capabilities) ||
-	    SYN_CAP_MIDDLE_BUTTON(info->capabilities)) अणु
+	if (SYN_CAP_FOUR_BUTTON(info->capabilities) ||
+	    SYN_CAP_MIDDLE_BUTTON(info->capabilities)) {
 		input_set_capability(dev, EV_KEY, BTN_FORWARD);
 		input_set_capability(dev, EV_KEY, BTN_BACK);
-	पूर्ण
+	}
 
-	अगर (!SYN_CAP_EXT_BUTTONS_STICK(info->ext_cap_10))
-		क्रम (i = 0; i < SYN_CAP_MULTI_BUTTON_NO(info->ext_cap); i++)
+	if (!SYN_CAP_EXT_BUTTONS_STICK(info->ext_cap_10))
+		for (i = 0; i < SYN_CAP_MULTI_BUTTON_NO(info->ext_cap); i++)
 			input_set_capability(dev, EV_KEY, BTN_0 + i);
 
-	अगर (SYN_CAP_CLICKPAD(info->ext_cap_0c)) अणु
+	if (SYN_CAP_CLICKPAD(info->ext_cap_0c)) {
 		__set_bit(INPUT_PROP_BUTTONPAD, dev->propbit);
-		अगर (psmouse_matches_pnp_id(psmouse, topbuttonpad_pnp_ids) &&
+		if (psmouse_matches_pnp_id(psmouse, topbuttonpad_pnp_ids) &&
 		    !SYN_CAP_EXT_BUTTONS_STICK(info->ext_cap_10))
 			__set_bit(INPUT_PROP_TOPBUTTONPAD, dev->propbit);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार synaptics_show_disable_gesture(काष्ठा psmouse *psmouse,
-					      व्योम *data, अक्षर *buf)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
+static ssize_t synaptics_show_disable_gesture(struct psmouse *psmouse,
+					      void *data, char *buf)
+{
+	struct synaptics_data *priv = psmouse->private;
 
-	वापस प्र_लिखो(buf, "%c\n", priv->disable_gesture ? '1' : '0');
-पूर्ण
+	return sprintf(buf, "%c\n", priv->disable_gesture ? '1' : '0');
+}
 
-अटल sमाप_प्रकार synaptics_set_disable_gesture(काष्ठा psmouse *psmouse,
-					     व्योम *data, स्थिर अक्षर *buf,
-					     माप_प्रकार len)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	अचिन्हित पूर्णांक value;
-	पूर्णांक err;
+static ssize_t synaptics_set_disable_gesture(struct psmouse *psmouse,
+					     void *data, const char *buf,
+					     size_t len)
+{
+	struct synaptics_data *priv = psmouse->private;
+	unsigned int value;
+	int err;
 
-	err = kstrtouपूर्णांक(buf, 10, &value);
-	अगर (err)
-		वापस err;
+	err = kstrtouint(buf, 10, &value);
+	if (err)
+		return err;
 
-	अगर (value > 1)
-		वापस -EINVAL;
+	if (value > 1)
+		return -EINVAL;
 
-	अगर (value == priv->disable_gesture)
-		वापस len;
+	if (value == priv->disable_gesture)
+		return len;
 
 	priv->disable_gesture = value;
-	अगर (value)
+	if (value)
 		priv->mode |= SYN_BIT_DISABLE_GESTURE;
-	अन्यथा
+	else
 		priv->mode &= ~SYN_BIT_DISABLE_GESTURE;
 
-	अगर (synaptics_mode_cmd(psmouse, priv->mode))
-		वापस -EIO;
+	if (synaptics_mode_cmd(psmouse, priv->mode))
+		return -EIO;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-PSMOUSE_DEFINE_ATTR(disable_gesture, S_IWUSR | S_IRUGO, शून्य,
+PSMOUSE_DEFINE_ATTR(disable_gesture, S_IWUSR | S_IRUGO, NULL,
 		    synaptics_show_disable_gesture,
 		    synaptics_set_disable_gesture);
 
-अटल व्योम synaptics_disconnect(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
+static void synaptics_disconnect(struct psmouse *psmouse)
+{
+	struct synaptics_data *priv = psmouse->private;
 
 	/*
-	 * We might have left a bपढ़ोcrumb when trying to
+	 * We might have left a breadcrumb when trying to
 	 * set up SMbus companion.
 	 */
 	psmouse_smbus_cleanup(psmouse);
 
-	अगर (!priv->असलolute_mode &&
+	if (!priv->absolute_mode &&
 			SYN_ID_DISGEST_SUPPORTED(priv->info.identity))
-		device_हटाओ_file(&psmouse->ps2dev.serio->dev,
+		device_remove_file(&psmouse->ps2dev.serio->dev,
 				   &psmouse_attr_disable_gesture.dattr);
 
 	synaptics_reset(psmouse);
-	kमुक्त(priv);
-	psmouse->निजी = शून्य;
-पूर्ण
+	kfree(priv);
+	psmouse->private = NULL;
+}
 
-अटल पूर्णांक synaptics_reconnect(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_data *priv = psmouse->निजी;
-	काष्ठा synaptics_device_info info;
+static int synaptics_reconnect(struct psmouse *psmouse)
+{
+	struct synaptics_data *priv = psmouse->private;
+	struct synaptics_device_info info;
 	u8 param[2];
-	पूर्णांक retry = 0;
-	पूर्णांक error;
+	int retry = 0;
+	int error;
 
-	करो अणु
+	do {
 		psmouse_reset(psmouse);
-		अगर (retry) अणु
+		if (retry) {
 			/*
 			 * On some boxes, right after resuming, the touchpad
-			 * needs some समय to finish initializing (I assume
-			 * it needs समय to calibrate) and start responding
-			 * to Synaptics-specअगरic queries, so let's रुको a
+			 * needs some time to finish initializing (I assume
+			 * it needs time to calibrate) and start responding
+			 * to Synaptics-specific queries, so let's wait a
 			 * bit.
 			 */
 			ssleep(1);
-		पूर्ण
+		}
 		ps2_command(&psmouse->ps2dev, param, PSMOUSE_CMD_GETID);
 		error = synaptics_detect(psmouse, 0);
-	पूर्ण जबतक (error && ++retry < 3);
+	} while (error && ++retry < 3);
 
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (retry > 1)
+	if (retry > 1)
 		psmouse_dbg(psmouse, "reconnected after %d tries\n", retry);
 
 	error = synaptics_query_hardware(psmouse, &info);
-	अगर (error) अणु
+	if (error) {
 		psmouse_err(psmouse, "Unable to query device.\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
 	error = synaptics_set_mode(psmouse);
-	अगर (error) अणु
+	if (error) {
 		psmouse_err(psmouse, "Unable to initialize device.\n");
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (info.identity != priv->info.identity ||
+	if (info.identity != priv->info.identity ||
 	    info.model_id != priv->info.model_id ||
 	    info.capabilities != priv->info.capabilities ||
-	    info.ext_cap != priv->info.ext_cap) अणु
+	    info.ext_cap != priv->info.ext_cap) {
 		psmouse_err(psmouse,
 			    "hardware appears to be different: id(%u-%u), model(%u-%u), caps(%x-%x), ext(%x-%x).\n",
 			    priv->info.identity, info.identity,
 			    priv->info.model_id, info.model_id,
 			    priv->info.capabilities, info.capabilities,
 			    priv->info.ext_cap, info.ext_cap);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool impaired_toshiba_kbc;
+static bool impaired_toshiba_kbc;
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id toshiba_dmi_table[] __initस्थिर = अणु
-#अगर defined(CONFIG_DMI) && defined(CONFIG_X86)
-	अणु
+static const struct dmi_system_id toshiba_dmi_table[] __initconst = {
+#if defined(CONFIG_DMI) && defined(CONFIG_X86)
+	{
 		/* Toshiba Satellite */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Satellite"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* Toshiba Dynabook */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "dynabook"),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		/* Toshiba Portege M300 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "PORTEGE M300"),
-		पूर्ण,
+		},
 
-	पूर्ण,
-	अणु
+	},
+	{
 		/* Toshiba Portege M300 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "TOSHIBA"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Portable PC"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "Version 1.0"),
-		पूर्ण,
+		},
 
-	पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+	},
+#endif
+	{ }
+};
 
-अटल bool broken_olpc_ec;
+static bool broken_olpc_ec;
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id olpc_dmi_table[] __initस्थिर = अणु
-#अगर defined(CONFIG_DMI) && defined(CONFIG_OLPC)
-	अणु
+static const struct dmi_system_id olpc_dmi_table[] __initconst = {
+#if defined(CONFIG_DMI) && defined(CONFIG_OLPC)
+	{
 		/* OLPC XO-1 or XO-1.5 */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "OLPC"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "XO"),
-		पूर्ण,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+#endif
+	{ }
+};
 
-अटल स्थिर काष्ठा dmi_प्रणाली_id __initस्थिर cr48_dmi_table[] = अणु
-#अगर defined(CONFIG_DMI) && defined(CONFIG_X86)
-	अणु
+static const struct dmi_system_id __initconst cr48_dmi_table[] = {
+#if defined(CONFIG_DMI) && defined(CONFIG_X86)
+	{
 		/* Cr-48 Chromebook (Codename Mario) */
-		.matches = अणु
+		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "IEC"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Mario"),
-		पूर्ण,
-	पूर्ण,
-#पूर्ण_अगर
-	अणु पूर्ण
-पूर्ण;
+		},
+	},
+#endif
+	{ }
+};
 
-व्योम __init synaptics_module_init(व्योम)
-अणु
-	impaired_toshiba_kbc = dmi_check_प्रणाली(toshiba_dmi_table);
-	broken_olpc_ec = dmi_check_प्रणाली(olpc_dmi_table);
-	cr48_profile_sensor = dmi_check_प्रणाली(cr48_dmi_table);
-पूर्ण
+void __init synaptics_module_init(void)
+{
+	impaired_toshiba_kbc = dmi_check_system(toshiba_dmi_table);
+	broken_olpc_ec = dmi_check_system(olpc_dmi_table);
+	cr48_profile_sensor = dmi_check_system(cr48_dmi_table);
+}
 
-अटल पूर्णांक synaptics_init_ps2(काष्ठा psmouse *psmouse,
-			      काष्ठा synaptics_device_info *info,
-			      bool असलolute_mode)
-अणु
-	काष्ठा synaptics_data *priv;
-	पूर्णांक err;
+static int synaptics_init_ps2(struct psmouse *psmouse,
+			      struct synaptics_device_info *info,
+			      bool absolute_mode)
+{
+	struct synaptics_data *priv;
+	int err;
 
 	synaptics_apply_quirks(psmouse, info);
 
-	psmouse->निजी = priv = kzalloc(माप(काष्ठा synaptics_data), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	psmouse->private = priv = kzalloc(sizeof(struct synaptics_data), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
 	priv->info = *info;
-	priv->असलolute_mode = असलolute_mode;
-	अगर (SYN_ID_DISGEST_SUPPORTED(info->identity))
+	priv->absolute_mode = absolute_mode;
+	if (SYN_ID_DISGEST_SUPPORTED(info->identity))
 		priv->disable_gesture = true;
 
 	/*
-	 * Unक्रमtunately ForcePad capability is not exported over PS/2,
+	 * Unfortunately ForcePad capability is not exported over PS/2,
 	 * so we have to resort to checking PNP IDs.
 	 */
-	priv->is_क्रमcepad = psmouse_matches_pnp_id(psmouse, क्रमcepad_pnp_ids);
+	priv->is_forcepad = psmouse_matches_pnp_id(psmouse, forcepad_pnp_ids);
 
 	err = synaptics_set_mode(psmouse);
-	अगर (err) अणु
+	if (err) {
 		psmouse_err(psmouse, "Unable to initialize device.\n");
-		जाओ init_fail;
-	पूर्ण
+		goto init_fail;
+	}
 
 	priv->pkt_type = SYN_MODEL_NEWABS(info->model_id) ?
 					SYN_NEWABS : SYN_OLDABS;
@@ -1595,39 +1594,39 @@ PSMOUSE_DEFINE_ATTR(disable_gesture, S_IWUSR | S_IRUGO, शून्य,
 		     info->ext_cap_10, info->board_id, info->firmware_id);
 
 	err = set_input_params(psmouse, priv);
-	अगर (err) अणु
+	if (err) {
 		psmouse_err(psmouse,
 			    "failed to set up capabilities: %d\n", err);
-		जाओ init_fail;
-	पूर्ण
+		goto init_fail;
+	}
 
 	/*
 	 * Encode touchpad model so that it can be used to set
 	 * input device->id.version and be visible to userspace.
 	 * Because version is __u16 we have to drop something.
 	 * Hardware info bits seem to be good candidates as they
-	 * are करोcumented to be क्रम Synaptics corp. पूर्णांकernal use.
+	 * are documented to be for Synaptics corp. internal use.
 	 */
 	psmouse->model = ((info->model_id & 0x00ff0000) >> 8) |
 			  (info->model_id & 0x000000ff);
 
-	अगर (असलolute_mode) अणु
+	if (absolute_mode) {
 		psmouse->protocol_handler = synaptics_process_byte;
 		psmouse->pktsize = 6;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Relative mode follows standard PS/2 mouse protocol */
 		psmouse->protocol_handler = psmouse_process_byte;
 		psmouse->pktsize = 3;
-	पूर्ण
+	}
 
 	psmouse->set_rate = synaptics_set_rate;
 	psmouse->disconnect = synaptics_disconnect;
 	psmouse->reconnect = synaptics_reconnect;
 	psmouse->cleanup = synaptics_reset;
 	/* Synaptics can usually stay in sync without extra help */
-	psmouse->resync_समय = 0;
+	psmouse->resync_time = 0;
 
-	अगर (SYN_CAP_PASS_THROUGH(info->capabilities))
+	if (SYN_CAP_PASS_THROUGH(info->capabilities))
 		synaptics_pt_create(psmouse);
 
 	/*
@@ -1635,272 +1634,272 @@ PSMOUSE_DEFINE_ATTR(disable_gesture, S_IWUSR | S_IRUGO, शून्य,
 	 * Synaptics at full rate.  Switch to a lower rate (roughly
 	 * the same rate as a standard PS/2 mouse).
 	 */
-	अगर (psmouse->rate >= 80 && impaired_toshiba_kbc) अणु
+	if (psmouse->rate >= 80 && impaired_toshiba_kbc) {
 		psmouse_info(psmouse,
 			     "Toshiba %s detected, limiting rate to 40pps.\n",
-			     dmi_get_प्रणाली_info(DMI_PRODUCT_NAME));
+			     dmi_get_system_info(DMI_PRODUCT_NAME));
 		psmouse->rate = 40;
-	पूर्ण
+	}
 
-	अगर (!priv->असलolute_mode && SYN_ID_DISGEST_SUPPORTED(info->identity)) अणु
+	if (!priv->absolute_mode && SYN_ID_DISGEST_SUPPORTED(info->identity)) {
 		err = device_create_file(&psmouse->ps2dev.serio->dev,
 					 &psmouse_attr_disable_gesture.dattr);
-		अगर (err) अणु
+		if (err) {
 			psmouse_err(psmouse,
 				    "Failed to create disable_gesture attribute (%d)",
 				    err);
-			जाओ init_fail;
-		पूर्ण
-	पूर्ण
+			goto init_fail;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
  init_fail:
-	kमुक्त(priv);
-	वापस err;
-पूर्ण
+	kfree(priv);
+	return err;
+}
 
-अटल पूर्णांक __synaptics_init(काष्ठा psmouse *psmouse, bool असलolute_mode)
-अणु
-	काष्ठा synaptics_device_info info;
-	पूर्णांक error;
+static int __synaptics_init(struct psmouse *psmouse, bool absolute_mode)
+{
+	struct synaptics_device_info info;
+	int error;
 
 	psmouse_reset(psmouse);
 
 	error = synaptics_query_hardware(psmouse, &info);
-	अगर (error) अणु
+	if (error) {
 		psmouse_err(psmouse, "Unable to query device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस synaptics_init_ps2(psmouse, &info, असलolute_mode);
-पूर्ण
+	return synaptics_init_ps2(psmouse, &info, absolute_mode);
+}
 
-पूर्णांक synaptics_init_असलolute(काष्ठा psmouse *psmouse)
-अणु
-	वापस __synaptics_init(psmouse, true);
-पूर्ण
+int synaptics_init_absolute(struct psmouse *psmouse)
+{
+	return __synaptics_init(psmouse, true);
+}
 
-पूर्णांक synaptics_init_relative(काष्ठा psmouse *psmouse)
-अणु
-	वापस __synaptics_init(psmouse, false);
-पूर्ण
+int synaptics_init_relative(struct psmouse *psmouse)
+{
+	return __synaptics_init(psmouse, false);
+}
 
-अटल पूर्णांक synaptics_setup_ps2(काष्ठा psmouse *psmouse,
-			       काष्ठा synaptics_device_info *info)
-अणु
-	bool असलolute_mode = true;
-	पूर्णांक error;
+static int synaptics_setup_ps2(struct psmouse *psmouse,
+			       struct synaptics_device_info *info)
+{
+	bool absolute_mode = true;
+	int error;
 
 	/*
-	 * The OLPC XO has issues with Synaptics' असलolute mode; the स्थिरant
+	 * The OLPC XO has issues with Synaptics' absolute mode; the constant
 	 * packet spew overloads the EC such that key presses on the keyboard
-	 * are missed.  Given that, करोn't even attempt to use Absolute mode.
+	 * are missed.  Given that, don't even attempt to use Absolute mode.
 	 * Relative mode seems to work just fine.
 	 */
-	अगर (broken_olpc_ec) अणु
+	if (broken_olpc_ec) {
 		psmouse_info(psmouse,
 			     "OLPC XO detected, forcing relative protocol.\n");
-		असलolute_mode = false;
-	पूर्ण
+		absolute_mode = false;
+	}
 
-	error = synaptics_init_ps2(psmouse, info, असलolute_mode);
-	अगर (error)
-		वापस error;
+	error = synaptics_init_ps2(psmouse, info, absolute_mode);
+	if (error)
+		return error;
 
-	वापस असलolute_mode ? PSMOUSE_SYNAPTICS : PSMOUSE_SYNAPTICS_RELATIVE;
-पूर्ण
+	return absolute_mode ? PSMOUSE_SYNAPTICS : PSMOUSE_SYNAPTICS_RELATIVE;
+}
 
-#अन्यथा /* CONFIG_MOUSE_PS2_SYNAPTICS */
+#else /* CONFIG_MOUSE_PS2_SYNAPTICS */
 
-व्योम __init synaptics_module_init(व्योम)
-अणु
-पूर्ण
+void __init synaptics_module_init(void)
+{
+}
 
-अटल पूर्णांक __maybe_unused
-synaptics_setup_ps2(काष्ठा psmouse *psmouse,
-		    काष्ठा synaptics_device_info *info)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int __maybe_unused
+synaptics_setup_ps2(struct psmouse *psmouse,
+		    struct synaptics_device_info *info)
+{
+	return -ENOSYS;
+}
 
-#पूर्ण_अगर /* CONFIG_MOUSE_PS2_SYNAPTICS */
+#endif /* CONFIG_MOUSE_PS2_SYNAPTICS */
 
-#अगर_घोषित CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS
+#ifdef CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS
 
 /*
  * The newest Synaptics device can use a secondary bus (called InterTouch) which
  * provides a better bandwidth and allow a better control of the touchpads.
- * This is used to decide अगर we need to use this bus or not.
+ * This is used to decide if we need to use this bus or not.
  */
-क्रमागत अणु
+enum {
 	SYNAPTICS_INTERTOUCH_NOT_SET = -1,
 	SYNAPTICS_INTERTOUCH_OFF,
 	SYNAPTICS_INTERTOUCH_ON,
-पूर्ण;
+};
 
-अटल पूर्णांक synaptics_पूर्णांकertouch = IS_ENABLED(CONFIG_RMI4_SMB) ?
+static int synaptics_intertouch = IS_ENABLED(CONFIG_RMI4_SMB) ?
 		SYNAPTICS_INTERTOUCH_NOT_SET : SYNAPTICS_INTERTOUCH_OFF;
-module_param_named(synaptics_पूर्णांकertouch, synaptics_पूर्णांकertouch, पूर्णांक, 0644);
-MODULE_PARM_DESC(synaptics_पूर्णांकertouch, "Use a secondary bus for the Synaptics device.");
+module_param_named(synaptics_intertouch, synaptics_intertouch, int, 0644);
+MODULE_PARM_DESC(synaptics_intertouch, "Use a secondary bus for the Synaptics device.");
 
-अटल पूर्णांक synaptics_create_पूर्णांकertouch(काष्ठा psmouse *psmouse,
-				       काष्ठा synaptics_device_info *info,
-				       bool leave_bपढ़ोcrumbs)
-अणु
+static int synaptics_create_intertouch(struct psmouse *psmouse,
+				       struct synaptics_device_info *info,
+				       bool leave_breadcrumbs)
+{
 	bool topbuttonpad =
 		psmouse_matches_pnp_id(psmouse, topbuttonpad_pnp_ids) &&
 		!SYN_CAP_EXT_BUTTONS_STICK(info->ext_cap_10);
-	स्थिर काष्ठा rmi_device_platक्रमm_data pdata = अणु
-		.sensor_pdata = अणु
+	const struct rmi_device_platform_data pdata = {
+		.sensor_pdata = {
 			.sensor_type = rmi_sensor_touchpad,
 			.axis_align.flip_y = true,
 			.kernel_tracking = false,
 			.topbuttonpad = topbuttonpad,
-		पूर्ण,
-		.gpio_data = अणु
+		},
+		.gpio_data = {
 			.buttonpad = SYN_CAP_CLICKPAD(info->ext_cap_0c),
 			.trackstick_buttons =
 				!!SYN_CAP_EXT_BUTTONS_STICK(info->ext_cap_10),
-		पूर्ण,
-	पूर्ण;
-	स्थिर काष्ठा i2c_board_info पूर्णांकertouch_board = अणु
+		},
+	};
+	const struct i2c_board_info intertouch_board = {
 		I2C_BOARD_INFO("rmi4_smbus", 0x2c),
 		.flags = I2C_CLIENT_HOST_NOTIFY,
-	पूर्ण;
+	};
 
-	वापस psmouse_smbus_init(psmouse, &पूर्णांकertouch_board,
-				  &pdata, माप(pdata), true,
-				  leave_bपढ़ोcrumbs);
-पूर्ण
+	return psmouse_smbus_init(psmouse, &intertouch_board,
+				  &pdata, sizeof(pdata), true,
+				  leave_breadcrumbs);
+}
 
 /*
- * synaptics_setup_पूर्णांकertouch - called once the PS/2 devices are क्रमागतerated
+ * synaptics_setup_intertouch - called once the PS/2 devices are enumerated
  * and decides to instantiate a SMBus InterTouch device.
  */
-अटल पूर्णांक synaptics_setup_पूर्णांकertouch(काष्ठा psmouse *psmouse,
-				      काष्ठा synaptics_device_info *info,
-				      bool leave_bपढ़ोcrumbs)
-अणु
-	पूर्णांक error;
+static int synaptics_setup_intertouch(struct psmouse *psmouse,
+				      struct synaptics_device_info *info,
+				      bool leave_breadcrumbs)
+{
+	int error;
 
-	अगर (synaptics_पूर्णांकertouch == SYNAPTICS_INTERTOUCH_OFF)
-		वापस -ENXIO;
+	if (synaptics_intertouch == SYNAPTICS_INTERTOUCH_OFF)
+		return -ENXIO;
 
-	अगर (synaptics_पूर्णांकertouch == SYNAPTICS_INTERTOUCH_NOT_SET) अणु
-		अगर (!psmouse_matches_pnp_id(psmouse, topbuttonpad_pnp_ids) &&
-		    !psmouse_matches_pnp_id(psmouse, smbus_pnp_ids)) अणु
+	if (synaptics_intertouch == SYNAPTICS_INTERTOUCH_NOT_SET) {
+		if (!psmouse_matches_pnp_id(psmouse, topbuttonpad_pnp_ids) &&
+		    !psmouse_matches_pnp_id(psmouse, smbus_pnp_ids)) {
 
-			अगर (!psmouse_matches_pnp_id(psmouse, क्रमcepad_pnp_ids))
+			if (!psmouse_matches_pnp_id(psmouse, forcepad_pnp_ids))
 				psmouse_info(psmouse,
 					     "Your touchpad (%s) says it can support a different bus. "
 					     "If i2c-hid and hid-rmi are not used, you might want to try setting psmouse.synaptics_intertouch to 1 and report this to linux-input@vger.kernel.org.\n",
 					     psmouse->ps2dev.serio->firmware_id);
 
-			वापस -ENXIO;
-		पूर्ण
-	पूर्ण
+			return -ENXIO;
+		}
+	}
 
 	psmouse_info(psmouse, "Trying to set up SMBus access\n");
 
-	error = synaptics_create_पूर्णांकertouch(psmouse, info, leave_bपढ़ोcrumbs);
-	अगर (error) अणु
-		अगर (error == -EAGAIN)
+	error = synaptics_create_intertouch(psmouse, info, leave_breadcrumbs);
+	if (error) {
+		if (error == -EAGAIN)
 			psmouse_info(psmouse, "SMbus companion is not ready yet\n");
-		अन्यथा
+		else
 			psmouse_err(psmouse, "unable to create intertouch device\n");
 
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक synaptics_init_smbus(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_device_info info;
-	पूर्णांक error;
+int synaptics_init_smbus(struct psmouse *psmouse)
+{
+	struct synaptics_device_info info;
+	int error;
 
 	psmouse_reset(psmouse);
 
 	error = synaptics_query_hardware(psmouse, &info);
-	अगर (error) अणु
+	if (error) {
 		psmouse_err(psmouse, "Unable to query device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (!SYN_CAP_INTERTOUCH(info.ext_cap_0c))
-		वापस -ENXIO;
+	if (!SYN_CAP_INTERTOUCH(info.ext_cap_0c))
+		return -ENXIO;
 
-	वापस synaptics_create_पूर्णांकertouch(psmouse, &info, false);
-पूर्ण
+	return synaptics_create_intertouch(psmouse, &info, false);
+}
 
-#अन्यथा /* CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
+#else /* CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
 
-अटल पूर्णांक __maybe_unused
-synaptics_setup_पूर्णांकertouch(काष्ठा psmouse *psmouse,
-			   काष्ठा synaptics_device_info *info,
-			   bool leave_bपढ़ोcrumbs)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+static int __maybe_unused
+synaptics_setup_intertouch(struct psmouse *psmouse,
+			   struct synaptics_device_info *info,
+			   bool leave_breadcrumbs)
+{
+	return -ENOSYS;
+}
 
-पूर्णांक synaptics_init_smbus(काष्ठा psmouse *psmouse)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+int synaptics_init_smbus(struct psmouse *psmouse)
+{
+	return -ENOSYS;
+}
 
-#पूर्ण_अगर /* CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
+#endif /* CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
 
-#अगर defined(CONFIG_MOUSE_PS2_SYNAPTICS) || \
+#if defined(CONFIG_MOUSE_PS2_SYNAPTICS) || \
     defined(CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS)
 
-पूर्णांक synaptics_init(काष्ठा psmouse *psmouse)
-अणु
-	काष्ठा synaptics_device_info info;
-	पूर्णांक error;
-	पूर्णांक retval;
+int synaptics_init(struct psmouse *psmouse)
+{
+	struct synaptics_device_info info;
+	int error;
+	int retval;
 
 	psmouse_reset(psmouse);
 
 	error = synaptics_query_hardware(psmouse, &info);
-	अगर (error) अणु
+	if (error) {
 		psmouse_err(psmouse, "Unable to query device: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	अगर (SYN_CAP_INTERTOUCH(info.ext_cap_0c)) अणु
-		अगर ((!IS_ENABLED(CONFIG_RMI4_SMB) ||
+	if (SYN_CAP_INTERTOUCH(info.ext_cap_0c)) {
+		if ((!IS_ENABLED(CONFIG_RMI4_SMB) ||
 		     !IS_ENABLED(CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS)) &&
-		    /* Forcepads need F21, which is not पढ़ोy */
-		    !psmouse_matches_pnp_id(psmouse, क्रमcepad_pnp_ids)) अणु
+		    /* Forcepads need F21, which is not ready */
+		    !psmouse_matches_pnp_id(psmouse, forcepad_pnp_ids)) {
 			psmouse_warn(psmouse,
 				     "The touchpad can support a better bus than the too old PS/2 protocol. "
 				     "Make sure MOUSE_PS2_SYNAPTICS_SMBUS and RMI4_SMB are enabled to get a better touchpad experience.\n");
-		पूर्ण
+		}
 
-		error = synaptics_setup_पूर्णांकertouch(psmouse, &info, true);
-		अगर (!error)
-			वापस PSMOUSE_SYNAPTICS_SMBUS;
-	पूर्ण
+		error = synaptics_setup_intertouch(psmouse, &info, true);
+		if (!error)
+			return PSMOUSE_SYNAPTICS_SMBUS;
+	}
 
 	retval = synaptics_setup_ps2(psmouse, &info);
-	अगर (retval < 0) अणु
+	if (retval < 0) {
 		/*
 		 * Not using any flavor of Synaptics support, so clean up
-		 * SMbus bपढ़ोcrumbs, अगर any.
+		 * SMbus breadcrumbs, if any.
 		 */
 		psmouse_smbus_cleanup(psmouse);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-#अन्यथा /* CONFIG_MOUSE_PS2_SYNAPTICS || CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
+#else /* CONFIG_MOUSE_PS2_SYNAPTICS || CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
 
-पूर्णांक synaptics_init(काष्ठा psmouse *psmouse)
-अणु
-	वापस -ENOSYS;
-पूर्ण
+int synaptics_init(struct psmouse *psmouse)
+{
+	return -ENOSYS;
+}
 
-#पूर्ण_अगर /* CONFIG_MOUSE_PS2_SYNAPTICS || CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */
+#endif /* CONFIG_MOUSE_PS2_SYNAPTICS || CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS */

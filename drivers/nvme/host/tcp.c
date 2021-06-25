@@ -1,1395 +1,1394 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * NVMe over Fabrics TCP host.
- * Copyright (c) 2018 Lightbits Lअसल. All rights reserved.
+ * Copyright (c) 2018 Lightbits Labs. All rights reserved.
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/nvme-tcp.h>
-#समावेश <net/sock.h>
-#समावेश <net/tcp.h>
-#समावेश <linux/blk-mq.h>
-#समावेश <crypto/hash.h>
-#समावेश <net/busy_poll.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/nvme-tcp.h>
+#include <net/sock.h>
+#include <net/tcp.h>
+#include <linux/blk-mq.h>
+#include <crypto/hash.h>
+#include <net/busy_poll.h>
 
-#समावेश "nvme.h"
-#समावेश "fabrics.h"
+#include "nvme.h"
+#include "fabrics.h"
 
-काष्ठा nvme_tcp_queue;
+struct nvme_tcp_queue;
 
-/* Define the socket priority to use क्रम connections were it is desirable
- * that the NIC consider perक्रमming optimized packet processing or filtering.
+/* Define the socket priority to use for connections were it is desirable
+ * that the NIC consider performing optimized packet processing or filtering.
  * A non-zero value being sufficient to indicate general consideration of any
- * possible optimization.  Making it a module param allows क्रम alternative
- * values that may be unique क्रम some NIC implementations.
+ * possible optimization.  Making it a module param allows for alternative
+ * values that may be unique for some NIC implementations.
  */
-अटल पूर्णांक so_priority;
-module_param(so_priority, पूर्णांक, 0644);
+static int so_priority;
+module_param(so_priority, int, 0644);
 MODULE_PARM_DESC(so_priority, "nvme tcp socket optimize priority");
 
-क्रमागत nvme_tcp_send_state अणु
+enum nvme_tcp_send_state {
 	NVME_TCP_SEND_CMD_PDU = 0,
 	NVME_TCP_SEND_H2C_PDU,
 	NVME_TCP_SEND_DATA,
 	NVME_TCP_SEND_DDGST,
-पूर्ण;
+};
 
-काष्ठा nvme_tcp_request अणु
-	काष्ठा nvme_request	req;
-	व्योम			*pdu;
-	काष्ठा nvme_tcp_queue	*queue;
+struct nvme_tcp_request {
+	struct nvme_request	req;
+	void			*pdu;
+	struct nvme_tcp_queue	*queue;
 	u32			data_len;
 	u32			pdu_len;
 	u32			pdu_sent;
 	u16			ttag;
-	काष्ठा list_head	entry;
-	काष्ठा llist_node	lentry;
+	struct list_head	entry;
+	struct llist_node	lentry;
 	__le32			ddgst;
 
-	काष्ठा bio		*curr_bio;
-	काष्ठा iov_iter		iter;
+	struct bio		*curr_bio;
+	struct iov_iter		iter;
 
 	/* send state */
-	माप_प्रकार			offset;
-	माप_प्रकार			data_sent;
-	क्रमागत nvme_tcp_send_state state;
-पूर्ण;
+	size_t			offset;
+	size_t			data_sent;
+	enum nvme_tcp_send_state state;
+};
 
-क्रमागत nvme_tcp_queue_flags अणु
+enum nvme_tcp_queue_flags {
 	NVME_TCP_Q_ALLOCATED	= 0,
 	NVME_TCP_Q_LIVE		= 1,
 	NVME_TCP_Q_POLLING	= 2,
-पूर्ण;
+};
 
-क्रमागत nvme_tcp_recv_state अणु
+enum nvme_tcp_recv_state {
 	NVME_TCP_RECV_PDU = 0,
 	NVME_TCP_RECV_DATA,
 	NVME_TCP_RECV_DDGST,
-पूर्ण;
+};
 
-काष्ठा nvme_tcp_ctrl;
-काष्ठा nvme_tcp_queue अणु
-	काष्ठा socket		*sock;
-	काष्ठा work_काष्ठा	io_work;
-	पूर्णांक			io_cpu;
+struct nvme_tcp_ctrl;
+struct nvme_tcp_queue {
+	struct socket		*sock;
+	struct work_struct	io_work;
+	int			io_cpu;
 
-	काष्ठा mutex		queue_lock;
-	काष्ठा mutex		send_mutex;
-	काष्ठा llist_head	req_list;
-	काष्ठा list_head	send_list;
+	struct mutex		queue_lock;
+	struct mutex		send_mutex;
+	struct llist_head	req_list;
+	struct list_head	send_list;
 	bool			more_requests;
 
 	/* recv state */
-	व्योम			*pdu;
-	पूर्णांक			pdu_reमुख्यing;
-	पूर्णांक			pdu_offset;
-	माप_प्रकार			data_reमुख्यing;
-	माप_प्रकार			ddgst_reमुख्यing;
-	अचिन्हित पूर्णांक		nr_cqe;
+	void			*pdu;
+	int			pdu_remaining;
+	int			pdu_offset;
+	size_t			data_remaining;
+	size_t			ddgst_remaining;
+	unsigned int		nr_cqe;
 
 	/* send state */
-	काष्ठा nvme_tcp_request *request;
+	struct nvme_tcp_request *request;
 
-	पूर्णांक			queue_size;
-	माप_प्रकार			cmnd_capsule_len;
-	काष्ठा nvme_tcp_ctrl	*ctrl;
-	अचिन्हित दीर्घ		flags;
+	int			queue_size;
+	size_t			cmnd_capsule_len;
+	struct nvme_tcp_ctrl	*ctrl;
+	unsigned long		flags;
 	bool			rd_enabled;
 
 	bool			hdr_digest;
 	bool			data_digest;
-	काष्ठा ahash_request	*rcv_hash;
-	काष्ठा ahash_request	*snd_hash;
+	struct ahash_request	*rcv_hash;
+	struct ahash_request	*snd_hash;
 	__le32			exp_ddgst;
 	__le32			recv_ddgst;
 
-	काष्ठा page_frag_cache	pf_cache;
+	struct page_frag_cache	pf_cache;
 
-	व्योम (*state_change)(काष्ठा sock *);
-	व्योम (*data_पढ़ोy)(काष्ठा sock *);
-	व्योम (*ग_लिखो_space)(काष्ठा sock *);
-पूर्ण;
+	void (*state_change)(struct sock *);
+	void (*data_ready)(struct sock *);
+	void (*write_space)(struct sock *);
+};
 
-काष्ठा nvme_tcp_ctrl अणु
-	/* पढ़ो only in the hot path */
-	काष्ठा nvme_tcp_queue	*queues;
-	काष्ठा blk_mq_tag_set	tag_set;
+struct nvme_tcp_ctrl {
+	/* read only in the hot path */
+	struct nvme_tcp_queue	*queues;
+	struct blk_mq_tag_set	tag_set;
 
 	/* other member variables */
-	काष्ठा list_head	list;
-	काष्ठा blk_mq_tag_set	admin_tag_set;
-	काष्ठा sockaddr_storage addr;
-	काष्ठा sockaddr_storage src_addr;
-	काष्ठा nvme_ctrl	ctrl;
+	struct list_head	list;
+	struct blk_mq_tag_set	admin_tag_set;
+	struct sockaddr_storage addr;
+	struct sockaddr_storage src_addr;
+	struct nvme_ctrl	ctrl;
 
-	काष्ठा work_काष्ठा	err_work;
-	काष्ठा delayed_work	connect_work;
-	काष्ठा nvme_tcp_request async_req;
+	struct work_struct	err_work;
+	struct delayed_work	connect_work;
+	struct nvme_tcp_request async_req;
 	u32			io_queues[HCTX_MAX_TYPES];
-पूर्ण;
+};
 
-अटल LIST_HEAD(nvme_tcp_ctrl_list);
-अटल DEFINE_MUTEX(nvme_tcp_ctrl_mutex);
-अटल काष्ठा workqueue_काष्ठा *nvme_tcp_wq;
-अटल स्थिर काष्ठा blk_mq_ops nvme_tcp_mq_ops;
-अटल स्थिर काष्ठा blk_mq_ops nvme_tcp_admin_mq_ops;
-अटल पूर्णांक nvme_tcp_try_send(काष्ठा nvme_tcp_queue *queue);
+static LIST_HEAD(nvme_tcp_ctrl_list);
+static DEFINE_MUTEX(nvme_tcp_ctrl_mutex);
+static struct workqueue_struct *nvme_tcp_wq;
+static const struct blk_mq_ops nvme_tcp_mq_ops;
+static const struct blk_mq_ops nvme_tcp_admin_mq_ops;
+static int nvme_tcp_try_send(struct nvme_tcp_queue *queue);
 
-अटल अंतरभूत काष्ठा nvme_tcp_ctrl *to_tcp_ctrl(काष्ठा nvme_ctrl *ctrl)
-अणु
-	वापस container_of(ctrl, काष्ठा nvme_tcp_ctrl, ctrl);
-पूर्ण
+static inline struct nvme_tcp_ctrl *to_tcp_ctrl(struct nvme_ctrl *ctrl)
+{
+	return container_of(ctrl, struct nvme_tcp_ctrl, ctrl);
+}
 
-अटल अंतरभूत पूर्णांक nvme_tcp_queue_id(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस queue - queue->ctrl->queues;
-पूर्ण
+static inline int nvme_tcp_queue_id(struct nvme_tcp_queue *queue)
+{
+	return queue - queue->ctrl->queues;
+}
 
-अटल अंतरभूत काष्ठा blk_mq_tags *nvme_tcp_tagset(काष्ठा nvme_tcp_queue *queue)
-अणु
+static inline struct blk_mq_tags *nvme_tcp_tagset(struct nvme_tcp_queue *queue)
+{
 	u32 queue_idx = nvme_tcp_queue_id(queue);
 
-	अगर (queue_idx == 0)
-		वापस queue->ctrl->admin_tag_set.tags[queue_idx];
-	वापस queue->ctrl->tag_set.tags[queue_idx - 1];
-पूर्ण
+	if (queue_idx == 0)
+		return queue->ctrl->admin_tag_set.tags[queue_idx];
+	return queue->ctrl->tag_set.tags[queue_idx - 1];
+}
 
-अटल अंतरभूत u8 nvme_tcp_hdgst_len(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस queue->hdr_digest ? NVME_TCP_DIGEST_LENGTH : 0;
-पूर्ण
+static inline u8 nvme_tcp_hdgst_len(struct nvme_tcp_queue *queue)
+{
+	return queue->hdr_digest ? NVME_TCP_DIGEST_LENGTH : 0;
+}
 
-अटल अंतरभूत u8 nvme_tcp_ddgst_len(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस queue->data_digest ? NVME_TCP_DIGEST_LENGTH : 0;
-पूर्ण
+static inline u8 nvme_tcp_ddgst_len(struct nvme_tcp_queue *queue)
+{
+	return queue->data_digest ? NVME_TCP_DIGEST_LENGTH : 0;
+}
 
-अटल अंतरभूत माप_प्रकार nvme_tcp_अंतरभूत_data_size(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस queue->cmnd_capsule_len - माप(काष्ठा nvme_command);
-पूर्ण
+static inline size_t nvme_tcp_inline_data_size(struct nvme_tcp_queue *queue)
+{
+	return queue->cmnd_capsule_len - sizeof(struct nvme_command);
+}
 
-अटल अंतरभूत bool nvme_tcp_async_req(काष्ठा nvme_tcp_request *req)
-अणु
-	वापस req == &req->queue->ctrl->async_req;
-पूर्ण
+static inline bool nvme_tcp_async_req(struct nvme_tcp_request *req)
+{
+	return req == &req->queue->ctrl->async_req;
+}
 
-अटल अंतरभूत bool nvme_tcp_has_अंतरभूत_data(काष्ठा nvme_tcp_request *req)
-अणु
-	काष्ठा request *rq;
+static inline bool nvme_tcp_has_inline_data(struct nvme_tcp_request *req)
+{
+	struct request *rq;
 
-	अगर (unlikely(nvme_tcp_async_req(req)))
-		वापस false; /* async events करोn't have a request */
+	if (unlikely(nvme_tcp_async_req(req)))
+		return false; /* async events don't have a request */
 
 	rq = blk_mq_rq_from_pdu(req);
 
-	वापस rq_data_dir(rq) == WRITE && req->data_len &&
-		req->data_len <= nvme_tcp_अंतरभूत_data_size(req->queue);
-पूर्ण
+	return rq_data_dir(rq) == WRITE && req->data_len &&
+		req->data_len <= nvme_tcp_inline_data_size(req->queue);
+}
 
-अटल अंतरभूत काष्ठा page *nvme_tcp_req_cur_page(काष्ठा nvme_tcp_request *req)
-अणु
-	वापस req->iter.bvec->bv_page;
-पूर्ण
+static inline struct page *nvme_tcp_req_cur_page(struct nvme_tcp_request *req)
+{
+	return req->iter.bvec->bv_page;
+}
 
-अटल अंतरभूत माप_प्रकार nvme_tcp_req_cur_offset(काष्ठा nvme_tcp_request *req)
-अणु
-	वापस req->iter.bvec->bv_offset + req->iter.iov_offset;
-पूर्ण
+static inline size_t nvme_tcp_req_cur_offset(struct nvme_tcp_request *req)
+{
+	return req->iter.bvec->bv_offset + req->iter.iov_offset;
+}
 
-अटल अंतरभूत माप_प्रकार nvme_tcp_req_cur_length(काष्ठा nvme_tcp_request *req)
-अणु
-	वापस min_t(माप_प्रकार, iov_iter_single_seg_count(&req->iter),
+static inline size_t nvme_tcp_req_cur_length(struct nvme_tcp_request *req)
+{
+	return min_t(size_t, iov_iter_single_seg_count(&req->iter),
 			req->pdu_len - req->pdu_sent);
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार nvme_tcp_pdu_data_left(काष्ठा nvme_tcp_request *req)
-अणु
-	वापस rq_data_dir(blk_mq_rq_from_pdu(req)) == WRITE ?
+static inline size_t nvme_tcp_pdu_data_left(struct nvme_tcp_request *req)
+{
+	return rq_data_dir(blk_mq_rq_from_pdu(req)) == WRITE ?
 			req->pdu_len - req->pdu_sent : 0;
-पूर्ण
+}
 
-अटल अंतरभूत माप_प्रकार nvme_tcp_pdu_last_send(काष्ठा nvme_tcp_request *req,
-		पूर्णांक len)
-अणु
-	वापस nvme_tcp_pdu_data_left(req) <= len;
-पूर्ण
+static inline size_t nvme_tcp_pdu_last_send(struct nvme_tcp_request *req,
+		int len)
+{
+	return nvme_tcp_pdu_data_left(req) <= len;
+}
 
-अटल व्योम nvme_tcp_init_iter(काष्ठा nvme_tcp_request *req,
-		अचिन्हित पूर्णांक dir)
-अणु
-	काष्ठा request *rq = blk_mq_rq_from_pdu(req);
-	काष्ठा bio_vec *vec;
-	अचिन्हित पूर्णांक size;
-	पूर्णांक nr_bvec;
-	माप_प्रकार offset;
+static void nvme_tcp_init_iter(struct nvme_tcp_request *req,
+		unsigned int dir)
+{
+	struct request *rq = blk_mq_rq_from_pdu(req);
+	struct bio_vec *vec;
+	unsigned int size;
+	int nr_bvec;
+	size_t offset;
 
-	अगर (rq->rq_flags & RQF_SPECIAL_PAYLOAD) अणु
+	if (rq->rq_flags & RQF_SPECIAL_PAYLOAD) {
 		vec = &rq->special_vec;
 		nr_bvec = 1;
 		size = blk_rq_payload_bytes(rq);
 		offset = 0;
-	पूर्ण अन्यथा अणु
-		काष्ठा bio *bio = req->curr_bio;
-		काष्ठा bvec_iter bi;
-		काष्ठा bio_vec bv;
+	} else {
+		struct bio *bio = req->curr_bio;
+		struct bvec_iter bi;
+		struct bio_vec bv;
 
 		vec = __bvec_iter_bvec(bio->bi_io_vec, bio->bi_iter);
 		nr_bvec = 0;
-		bio_क्रम_each_bvec(bv, bio, bi) अणु
+		bio_for_each_bvec(bv, bio, bi) {
 			nr_bvec++;
-		पूर्ण
+		}
 		size = bio->bi_iter.bi_size;
-		offset = bio->bi_iter.bi_bvec_करोne;
-	पूर्ण
+		offset = bio->bi_iter.bi_bvec_done;
+	}
 
 	iov_iter_bvec(&req->iter, dir, vec, nr_bvec, size);
 	req->iter.iov_offset = offset;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nvme_tcp_advance_req(काष्ठा nvme_tcp_request *req,
-		पूर्णांक len)
-अणु
+static inline void nvme_tcp_advance_req(struct nvme_tcp_request *req,
+		int len)
+{
 	req->data_sent += len;
 	req->pdu_sent += len;
 	iov_iter_advance(&req->iter, len);
-	अगर (!iov_iter_count(&req->iter) &&
-	    req->data_sent < req->data_len) अणु
+	if (!iov_iter_count(&req->iter) &&
+	    req->data_sent < req->data_len) {
 		req->curr_bio = req->curr_bio->bi_next;
 		nvme_tcp_init_iter(req, WRITE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम nvme_tcp_send_all(काष्ठा nvme_tcp_queue *queue)
-अणु
-	पूर्णांक ret;
+static inline void nvme_tcp_send_all(struct nvme_tcp_queue *queue)
+{
+	int ret;
 
 	/* drain the send queue as much as we can... */
-	करो अणु
+	do {
 		ret = nvme_tcp_try_send(queue);
-	पूर्ण जबतक (ret > 0);
-पूर्ण
+	} while (ret > 0);
+}
 
-अटल अंतरभूत व्योम nvme_tcp_queue_request(काष्ठा nvme_tcp_request *req,
+static inline void nvme_tcp_queue_request(struct nvme_tcp_request *req,
 		bool sync, bool last)
-अणु
-	काष्ठा nvme_tcp_queue *queue = req->queue;
+{
+	struct nvme_tcp_queue *queue = req->queue;
 	bool empty;
 
 	empty = llist_add(&req->lentry, &queue->req_list) &&
 		list_empty(&queue->send_list) && !queue->request;
 
 	/*
-	 * अगर we're the first on the send_list and we can try to send
-	 * directly, otherwise queue io_work. Also, only करो that अगर we
-	 * are on the same cpu, so we करोn't पूर्णांकroduce contention.
+	 * if we're the first on the send_list and we can try to send
+	 * directly, otherwise queue io_work. Also, only do that if we
+	 * are on the same cpu, so we don't introduce contention.
 	 */
-	अगर (queue->io_cpu == raw_smp_processor_id() &&
-	    sync && empty && mutex_trylock(&queue->send_mutex)) अणु
+	if (queue->io_cpu == raw_smp_processor_id() &&
+	    sync && empty && mutex_trylock(&queue->send_mutex)) {
 		queue->more_requests = !last;
 		nvme_tcp_send_all(queue);
 		queue->more_requests = false;
 		mutex_unlock(&queue->send_mutex);
-	पूर्ण अन्यथा अगर (last) अणु
+	} else if (last) {
 		queue_work_on(queue->io_cpu, nvme_tcp_wq, &queue->io_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nvme_tcp_process_req_list(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_request *req;
-	काष्ठा llist_node *node;
+static void nvme_tcp_process_req_list(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_request *req;
+	struct llist_node *node;
 
-	क्रम (node = llist_del_all(&queue->req_list); node; node = node->next) अणु
-		req = llist_entry(node, काष्ठा nvme_tcp_request, lentry);
+	for (node = llist_del_all(&queue->req_list); node; node = node->next) {
+		req = llist_entry(node, struct nvme_tcp_request, lentry);
 		list_add(&req->entry, &queue->send_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत काष्ठा nvme_tcp_request *
-nvme_tcp_fetch_request(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_request *req;
+static inline struct nvme_tcp_request *
+nvme_tcp_fetch_request(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_request *req;
 
 	req = list_first_entry_or_null(&queue->send_list,
-			काष्ठा nvme_tcp_request, entry);
-	अगर (!req) अणु
+			struct nvme_tcp_request, entry);
+	if (!req) {
 		nvme_tcp_process_req_list(queue);
 		req = list_first_entry_or_null(&queue->send_list,
-				काष्ठा nvme_tcp_request, entry);
-		अगर (unlikely(!req))
-			वापस शून्य;
-	पूर्ण
+				struct nvme_tcp_request, entry);
+		if (unlikely(!req))
+			return NULL;
+	}
 
 	list_del(&req->entry);
-	वापस req;
-पूर्ण
+	return req;
+}
 
-अटल अंतरभूत व्योम nvme_tcp_ddgst_final(काष्ठा ahash_request *hash,
+static inline void nvme_tcp_ddgst_final(struct ahash_request *hash,
 		__le32 *dgst)
-अणु
-	ahash_request_set_crypt(hash, शून्य, (u8 *)dgst, 0);
+{
+	ahash_request_set_crypt(hash, NULL, (u8 *)dgst, 0);
 	crypto_ahash_final(hash);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nvme_tcp_ddgst_update(काष्ठा ahash_request *hash,
-		काष्ठा page *page, off_t off, माप_प्रकार len)
-अणु
-	काष्ठा scatterlist sg;
+static inline void nvme_tcp_ddgst_update(struct ahash_request *hash,
+		struct page *page, off_t off, size_t len)
+{
+	struct scatterlist sg;
 
 	sg_init_marker(&sg, 1);
 	sg_set_page(&sg, page, len, off);
-	ahash_request_set_crypt(hash, &sg, शून्य, len);
+	ahash_request_set_crypt(hash, &sg, NULL, len);
 	crypto_ahash_update(hash);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nvme_tcp_hdgst(काष्ठा ahash_request *hash,
-		व्योम *pdu, माप_प्रकार len)
-अणु
-	काष्ठा scatterlist sg;
+static inline void nvme_tcp_hdgst(struct ahash_request *hash,
+		void *pdu, size_t len)
+{
+	struct scatterlist sg;
 
 	sg_init_one(&sg, pdu, len);
 	ahash_request_set_crypt(hash, &sg, pdu + len, len);
 	crypto_ahash_digest(hash);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_verअगरy_hdgst(काष्ठा nvme_tcp_queue *queue,
-		व्योम *pdu, माप_प्रकार pdu_len)
-अणु
-	काष्ठा nvme_tcp_hdr *hdr = pdu;
+static int nvme_tcp_verify_hdgst(struct nvme_tcp_queue *queue,
+		void *pdu, size_t pdu_len)
+{
+	struct nvme_tcp_hdr *hdr = pdu;
 	__le32 recv_digest;
 	__le32 exp_digest;
 
-	अगर (unlikely(!(hdr->flags & NVME_TCP_F_HDGST))) अणु
+	if (unlikely(!(hdr->flags & NVME_TCP_F_HDGST))) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d: header digest flag is cleared\n",
 			nvme_tcp_queue_id(queue));
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
 	recv_digest = *(__le32 *)(pdu + hdr->hlen);
 	nvme_tcp_hdgst(queue->rcv_hash, pdu, pdu_len);
 	exp_digest = *(__le32 *)(pdu + hdr->hlen);
-	अगर (recv_digest != exp_digest) अणु
+	if (recv_digest != exp_digest) {
 		dev_err(queue->ctrl->ctrl.device,
 			"header digest error: recv %#x expected %#x\n",
 			le32_to_cpu(recv_digest), le32_to_cpu(exp_digest));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_check_ddgst(काष्ठा nvme_tcp_queue *queue, व्योम *pdu)
-अणु
-	काष्ठा nvme_tcp_hdr *hdr = pdu;
+static int nvme_tcp_check_ddgst(struct nvme_tcp_queue *queue, void *pdu)
+{
+	struct nvme_tcp_hdr *hdr = pdu;
 	u8 digest_len = nvme_tcp_hdgst_len(queue);
 	u32 len;
 
 	len = le32_to_cpu(hdr->plen) - hdr->hlen -
 		((hdr->flags & NVME_TCP_F_HDGST) ? digest_len : 0);
 
-	अगर (unlikely(len && !(hdr->flags & NVME_TCP_F_DDGST))) अणु
+	if (unlikely(len && !(hdr->flags & NVME_TCP_F_DDGST))) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d: data digest flag is cleared\n",
 		nvme_tcp_queue_id(queue));
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 	crypto_ahash_init(queue->rcv_hash);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvme_tcp_निकास_request(काष्ठा blk_mq_tag_set *set,
-		काष्ठा request *rq, अचिन्हित पूर्णांक hctx_idx)
-अणु
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+static void nvme_tcp_exit_request(struct blk_mq_tag_set *set,
+		struct request *rq, unsigned int hctx_idx)
+{
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
 
-	page_frag_मुक्त(req->pdu);
-पूर्ण
+	page_frag_free(req->pdu);
+}
 
-अटल पूर्णांक nvme_tcp_init_request(काष्ठा blk_mq_tag_set *set,
-		काष्ठा request *rq, अचिन्हित पूर्णांक hctx_idx,
-		अचिन्हित पूर्णांक numa_node)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = set->driver_data;
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
-	काष्ठा nvme_tcp_cmd_pdu *pdu;
-	पूर्णांक queue_idx = (set == &ctrl->tag_set) ? hctx_idx + 1 : 0;
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[queue_idx];
+static int nvme_tcp_init_request(struct blk_mq_tag_set *set,
+		struct request *rq, unsigned int hctx_idx,
+		unsigned int numa_node)
+{
+	struct nvme_tcp_ctrl *ctrl = set->driver_data;
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+	struct nvme_tcp_cmd_pdu *pdu;
+	int queue_idx = (set == &ctrl->tag_set) ? hctx_idx + 1 : 0;
+	struct nvme_tcp_queue *queue = &ctrl->queues[queue_idx];
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
 
 	req->pdu = page_frag_alloc(&queue->pf_cache,
-		माप(काष्ठा nvme_tcp_cmd_pdu) + hdgst,
+		sizeof(struct nvme_tcp_cmd_pdu) + hdgst,
 		GFP_KERNEL | __GFP_ZERO);
-	अगर (!req->pdu)
-		वापस -ENOMEM;
+	if (!req->pdu)
+		return -ENOMEM;
 
 	pdu = req->pdu;
 	req->queue = queue;
 	nvme_req(rq)->ctrl = &ctrl->ctrl;
 	nvme_req(rq)->cmd = &pdu->cmd;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_init_hctx(काष्ठा blk_mq_hw_ctx *hctx, व्योम *data,
-		अचिन्हित पूर्णांक hctx_idx)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = data;
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[hctx_idx + 1];
-
-	hctx->driver_data = queue;
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक nvme_tcp_init_admin_hctx(काष्ठा blk_mq_hw_ctx *hctx, व्योम *data,
-		अचिन्हित पूर्णांक hctx_idx)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = data;
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[0];
+static int nvme_tcp_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+		unsigned int hctx_idx)
+{
+	struct nvme_tcp_ctrl *ctrl = data;
+	struct nvme_tcp_queue *queue = &ctrl->queues[hctx_idx + 1];
 
 	hctx->driver_data = queue;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत nvme_tcp_recv_state
-nvme_tcp_recv_state(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस  (queue->pdu_reमुख्यing) ? NVME_TCP_RECV_PDU :
-		(queue->ddgst_reमुख्यing) ? NVME_TCP_RECV_DDGST :
+static int nvme_tcp_init_admin_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+		unsigned int hctx_idx)
+{
+	struct nvme_tcp_ctrl *ctrl = data;
+	struct nvme_tcp_queue *queue = &ctrl->queues[0];
+
+	hctx->driver_data = queue;
+	return 0;
+}
+
+static enum nvme_tcp_recv_state
+nvme_tcp_recv_state(struct nvme_tcp_queue *queue)
+{
+	return  (queue->pdu_remaining) ? NVME_TCP_RECV_PDU :
+		(queue->ddgst_remaining) ? NVME_TCP_RECV_DDGST :
 		NVME_TCP_RECV_DATA;
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_init_recv_ctx(काष्ठा nvme_tcp_queue *queue)
-अणु
-	queue->pdu_reमुख्यing = माप(काष्ठा nvme_tcp_rsp_pdu) +
+static void nvme_tcp_init_recv_ctx(struct nvme_tcp_queue *queue)
+{
+	queue->pdu_remaining = sizeof(struct nvme_tcp_rsp_pdu) +
 				nvme_tcp_hdgst_len(queue);
 	queue->pdu_offset = 0;
-	queue->data_reमुख्यing = -1;
-	queue->ddgst_reमुख्यing = 0;
-पूर्ण
+	queue->data_remaining = -1;
+	queue->ddgst_remaining = 0;
+}
 
-अटल व्योम nvme_tcp_error_recovery(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अगर (!nvme_change_ctrl_state(ctrl, NVME_CTRL_RESETTING))
-		वापस;
+static void nvme_tcp_error_recovery(struct nvme_ctrl *ctrl)
+{
+	if (!nvme_change_ctrl_state(ctrl, NVME_CTRL_RESETTING))
+		return;
 
 	dev_warn(ctrl->device, "starting error recovery\n");
 	queue_work(nvme_reset_wq, &to_tcp_ctrl(ctrl)->err_work);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_process_nvme_cqe(काष्ठा nvme_tcp_queue *queue,
-		काष्ठा nvme_completion *cqe)
-अणु
-	काष्ठा request *rq;
+static int nvme_tcp_process_nvme_cqe(struct nvme_tcp_queue *queue,
+		struct nvme_completion *cqe)
+{
+	struct request *rq;
 
 	rq = blk_mq_tag_to_rq(nvme_tcp_tagset(queue), cqe->command_id);
-	अगर (!rq) अणु
+	if (!rq) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d tag 0x%x not found\n",
 			nvme_tcp_queue_id(queue), cqe->command_id);
 		nvme_tcp_error_recovery(&queue->ctrl->ctrl);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!nvme_try_complete_req(rq, cqe->status, cqe->result))
+	if (!nvme_try_complete_req(rq, cqe->status, cqe->result))
 		nvme_complete_rq(rq);
 	queue->nr_cqe++;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_handle_c2h_data(काष्ठा nvme_tcp_queue *queue,
-		काष्ठा nvme_tcp_data_pdu *pdu)
-अणु
-	काष्ठा request *rq;
+static int nvme_tcp_handle_c2h_data(struct nvme_tcp_queue *queue,
+		struct nvme_tcp_data_pdu *pdu)
+{
+	struct request *rq;
 
 	rq = blk_mq_tag_to_rq(nvme_tcp_tagset(queue), pdu->command_id);
-	अगर (!rq) अणु
+	if (!rq) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d tag %#x not found\n",
 			nvme_tcp_queue_id(queue), pdu->command_id);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	अगर (!blk_rq_payload_bytes(rq)) अणु
+	if (!blk_rq_payload_bytes(rq)) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d tag %#x unexpected data\n",
 			nvme_tcp_queue_id(queue), rq->tag);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	queue->data_reमुख्यing = le32_to_cpu(pdu->data_length);
+	queue->data_remaining = le32_to_cpu(pdu->data_length);
 
-	अगर (pdu->hdr.flags & NVME_TCP_F_DATA_SUCCESS &&
-	    unlikely(!(pdu->hdr.flags & NVME_TCP_F_DATA_LAST))) अणु
+	if (pdu->hdr.flags & NVME_TCP_F_DATA_SUCCESS &&
+	    unlikely(!(pdu->hdr.flags & NVME_TCP_F_DATA_LAST))) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d tag %#x SUCCESS set but not last PDU\n",
 			nvme_tcp_queue_id(queue), rq->tag);
 		nvme_tcp_error_recovery(&queue->ctrl->ctrl);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_handle_comp(काष्ठा nvme_tcp_queue *queue,
-		काष्ठा nvme_tcp_rsp_pdu *pdu)
-अणु
-	काष्ठा nvme_completion *cqe = &pdu->cqe;
-	पूर्णांक ret = 0;
+static int nvme_tcp_handle_comp(struct nvme_tcp_queue *queue,
+		struct nvme_tcp_rsp_pdu *pdu)
+{
+	struct nvme_completion *cqe = &pdu->cqe;
+	int ret = 0;
 
 	/*
-	 * AEN requests are special as they करोn't समय out and can
-	 * survive any kind of queue मुक्तze and often करोn't respond to
-	 * पातs.  We करोn't even bother to allocate a काष्ठा request
-	 * क्रम them but rather special हाल them here.
+	 * AEN requests are special as they don't time out and can
+	 * survive any kind of queue freeze and often don't respond to
+	 * aborts.  We don't even bother to allocate a struct request
+	 * for them but rather special case them here.
 	 */
-	अगर (unlikely(nvme_is_aen_req(nvme_tcp_queue_id(queue),
+	if (unlikely(nvme_is_aen_req(nvme_tcp_queue_id(queue),
 				     cqe->command_id)))
 		nvme_complete_async_event(&queue->ctrl->ctrl, cqe->status,
 				&cqe->result);
-	अन्यथा
+	else
 		ret = nvme_tcp_process_nvme_cqe(queue, cqe);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nvme_tcp_setup_h2c_data_pdu(काष्ठा nvme_tcp_request *req,
-		काष्ठा nvme_tcp_r2t_pdu *pdu)
-अणु
-	काष्ठा nvme_tcp_data_pdu *data = req->pdu;
-	काष्ठा nvme_tcp_queue *queue = req->queue;
-	काष्ठा request *rq = blk_mq_rq_from_pdu(req);
+static int nvme_tcp_setup_h2c_data_pdu(struct nvme_tcp_request *req,
+		struct nvme_tcp_r2t_pdu *pdu)
+{
+	struct nvme_tcp_data_pdu *data = req->pdu;
+	struct nvme_tcp_queue *queue = req->queue;
+	struct request *rq = blk_mq_rq_from_pdu(req);
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
 	u8 ddgst = nvme_tcp_ddgst_len(queue);
 
 	req->pdu_len = le32_to_cpu(pdu->r2t_length);
 	req->pdu_sent = 0;
 
-	अगर (unlikely(!req->pdu_len)) अणु
+	if (unlikely(!req->pdu_len)) {
 		dev_err(queue->ctrl->ctrl.device,
 			"req %d r2t len is %u, probably a bug...\n",
 			rq->tag, req->pdu_len);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (unlikely(req->data_sent + req->pdu_len > req->data_len)) अणु
+	if (unlikely(req->data_sent + req->pdu_len > req->data_len)) {
 		dev_err(queue->ctrl->ctrl.device,
 			"req %d r2t len %u exceeded data len %u (%zu sent)\n",
 			rq->tag, req->pdu_len, req->data_len,
 			req->data_sent);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	अगर (unlikely(le32_to_cpu(pdu->r2t_offset) < req->data_sent)) अणु
+	if (unlikely(le32_to_cpu(pdu->r2t_offset) < req->data_sent)) {
 		dev_err(queue->ctrl->ctrl.device,
 			"req %d unexpected r2t offset %u (expected %zu)\n",
 			rq->tag, le32_to_cpu(pdu->r2t_offset),
 			req->data_sent);
-		वापस -EPROTO;
-	पूर्ण
+		return -EPROTO;
+	}
 
-	स_रखो(data, 0, माप(*data));
+	memset(data, 0, sizeof(*data));
 	data->hdr.type = nvme_tcp_h2c_data;
 	data->hdr.flags = NVME_TCP_F_DATA_LAST;
-	अगर (queue->hdr_digest)
+	if (queue->hdr_digest)
 		data->hdr.flags |= NVME_TCP_F_HDGST;
-	अगर (queue->data_digest)
+	if (queue->data_digest)
 		data->hdr.flags |= NVME_TCP_F_DDGST;
-	data->hdr.hlen = माप(*data);
-	data->hdr.pकरो = data->hdr.hlen + hdgst;
+	data->hdr.hlen = sizeof(*data);
+	data->hdr.pdo = data->hdr.hlen + hdgst;
 	data->hdr.plen =
 		cpu_to_le32(data->hdr.hlen + hdgst + req->pdu_len + ddgst);
 	data->ttag = pdu->ttag;
 	data->command_id = rq->tag;
 	data->data_offset = cpu_to_le32(req->data_sent);
 	data->data_length = cpu_to_le32(req->pdu_len);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_handle_r2t(काष्ठा nvme_tcp_queue *queue,
-		काष्ठा nvme_tcp_r2t_pdu *pdu)
-अणु
-	काष्ठा nvme_tcp_request *req;
-	काष्ठा request *rq;
-	पूर्णांक ret;
+static int nvme_tcp_handle_r2t(struct nvme_tcp_queue *queue,
+		struct nvme_tcp_r2t_pdu *pdu)
+{
+	struct nvme_tcp_request *req;
+	struct request *rq;
+	int ret;
 
 	rq = blk_mq_tag_to_rq(nvme_tcp_tagset(queue), pdu->command_id);
-	अगर (!rq) अणु
+	if (!rq) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d tag %#x not found\n",
 			nvme_tcp_queue_id(queue), pdu->command_id);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	req = blk_mq_rq_to_pdu(rq);
 
 	ret = nvme_tcp_setup_h2c_data_pdu(req, pdu);
-	अगर (unlikely(ret))
-		वापस ret;
+	if (unlikely(ret))
+		return ret;
 
 	req->state = NVME_TCP_SEND_H2C_PDU;
 	req->offset = 0;
 
 	nvme_tcp_queue_request(req, false, true);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_recv_pdu(काष्ठा nvme_tcp_queue *queue, काष्ठा sk_buff *skb,
-		अचिन्हित पूर्णांक *offset, माप_प्रकार *len)
-अणु
-	काष्ठा nvme_tcp_hdr *hdr;
-	अक्षर *pdu = queue->pdu;
-	माप_प्रकार rcv_len = min_t(माप_प्रकार, *len, queue->pdu_reमुख्यing);
-	पूर्णांक ret;
+static int nvme_tcp_recv_pdu(struct nvme_tcp_queue *queue, struct sk_buff *skb,
+		unsigned int *offset, size_t *len)
+{
+	struct nvme_tcp_hdr *hdr;
+	char *pdu = queue->pdu;
+	size_t rcv_len = min_t(size_t, *len, queue->pdu_remaining);
+	int ret;
 
 	ret = skb_copy_bits(skb, *offset,
 		&pdu[queue->pdu_offset], rcv_len);
-	अगर (unlikely(ret))
-		वापस ret;
+	if (unlikely(ret))
+		return ret;
 
-	queue->pdu_reमुख्यing -= rcv_len;
+	queue->pdu_remaining -= rcv_len;
 	queue->pdu_offset += rcv_len;
 	*offset += rcv_len;
 	*len -= rcv_len;
-	अगर (queue->pdu_reमुख्यing)
-		वापस 0;
+	if (queue->pdu_remaining)
+		return 0;
 
 	hdr = queue->pdu;
-	अगर (queue->hdr_digest) अणु
-		ret = nvme_tcp_verअगरy_hdgst(queue, queue->pdu, hdr->hlen);
-		अगर (unlikely(ret))
-			वापस ret;
-	पूर्ण
+	if (queue->hdr_digest) {
+		ret = nvme_tcp_verify_hdgst(queue, queue->pdu, hdr->hlen);
+		if (unlikely(ret))
+			return ret;
+	}
 
 
-	अगर (queue->data_digest) अणु
+	if (queue->data_digest) {
 		ret = nvme_tcp_check_ddgst(queue, queue->pdu);
-		अगर (unlikely(ret))
-			वापस ret;
-	पूर्ण
+		if (unlikely(ret))
+			return ret;
+	}
 
-	चयन (hdr->type) अणु
-	हाल nvme_tcp_c2h_data:
-		वापस nvme_tcp_handle_c2h_data(queue, (व्योम *)queue->pdu);
-	हाल nvme_tcp_rsp:
+	switch (hdr->type) {
+	case nvme_tcp_c2h_data:
+		return nvme_tcp_handle_c2h_data(queue, (void *)queue->pdu);
+	case nvme_tcp_rsp:
 		nvme_tcp_init_recv_ctx(queue);
-		वापस nvme_tcp_handle_comp(queue, (व्योम *)queue->pdu);
-	हाल nvme_tcp_r2t:
+		return nvme_tcp_handle_comp(queue, (void *)queue->pdu);
+	case nvme_tcp_r2t:
 		nvme_tcp_init_recv_ctx(queue);
-		वापस nvme_tcp_handle_r2t(queue, (व्योम *)queue->pdu);
-	शेष:
+		return nvme_tcp_handle_r2t(queue, (void *)queue->pdu);
+	default:
 		dev_err(queue->ctrl->ctrl.device,
 			"unsupported pdu type (%d)\n", hdr->type);
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return -EINVAL;
+	}
+}
 
-अटल अंतरभूत व्योम nvme_tcp_end_request(काष्ठा request *rq, u16 status)
-अणु
-	जोड़ nvme_result res = अणुपूर्ण;
+static inline void nvme_tcp_end_request(struct request *rq, u16 status)
+{
+	union nvme_result res = {};
 
-	अगर (!nvme_try_complete_req(rq, cpu_to_le16(status << 1), res))
+	if (!nvme_try_complete_req(rq, cpu_to_le16(status << 1), res))
 		nvme_complete_rq(rq);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_recv_data(काष्ठा nvme_tcp_queue *queue, काष्ठा sk_buff *skb,
-			      अचिन्हित पूर्णांक *offset, माप_प्रकार *len)
-अणु
-	काष्ठा nvme_tcp_data_pdu *pdu = (व्योम *)queue->pdu;
-	काष्ठा nvme_tcp_request *req;
-	काष्ठा request *rq;
+static int nvme_tcp_recv_data(struct nvme_tcp_queue *queue, struct sk_buff *skb,
+			      unsigned int *offset, size_t *len)
+{
+	struct nvme_tcp_data_pdu *pdu = (void *)queue->pdu;
+	struct nvme_tcp_request *req;
+	struct request *rq;
 
 	rq = blk_mq_tag_to_rq(nvme_tcp_tagset(queue), pdu->command_id);
-	अगर (!rq) अणु
+	if (!rq) {
 		dev_err(queue->ctrl->ctrl.device,
 			"queue %d tag %#x not found\n",
 			nvme_tcp_queue_id(queue), pdu->command_id);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 	req = blk_mq_rq_to_pdu(rq);
 
-	जबतक (true) अणु
-		पूर्णांक recv_len, ret;
+	while (true) {
+		int recv_len, ret;
 
-		recv_len = min_t(माप_प्रकार, *len, queue->data_reमुख्यing);
-		अगर (!recv_len)
-			अवरोध;
+		recv_len = min_t(size_t, *len, queue->data_remaining);
+		if (!recv_len)
+			break;
 
-		अगर (!iov_iter_count(&req->iter)) अणु
+		if (!iov_iter_count(&req->iter)) {
 			req->curr_bio = req->curr_bio->bi_next;
 
 			/*
-			 * If we करोn`t have any bios it means that controller
+			 * If we don`t have any bios it means that controller
 			 * sent more data than we requested, hence error
 			 */
-			अगर (!req->curr_bio) अणु
+			if (!req->curr_bio) {
 				dev_err(queue->ctrl->ctrl.device,
 					"queue %d no space in request %#x",
 					nvme_tcp_queue_id(queue), rq->tag);
 				nvme_tcp_init_recv_ctx(queue);
-				वापस -EIO;
-			पूर्ण
+				return -EIO;
+			}
 			nvme_tcp_init_iter(req, READ);
-		पूर्ण
+		}
 
-		/* we can पढ़ो only from what is left in this bio */
-		recv_len = min_t(माप_प्रकार, recv_len,
+		/* we can read only from what is left in this bio */
+		recv_len = min_t(size_t, recv_len,
 				iov_iter_count(&req->iter));
 
-		अगर (queue->data_digest)
+		if (queue->data_digest)
 			ret = skb_copy_and_hash_datagram_iter(skb, *offset,
 				&req->iter, recv_len, queue->rcv_hash);
-		अन्यथा
+		else
 			ret = skb_copy_datagram_iter(skb, *offset,
 					&req->iter, recv_len);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(queue->ctrl->ctrl.device,
 				"queue %d failed to copy request %#x data",
 				nvme_tcp_queue_id(queue), rq->tag);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
 		*len -= recv_len;
 		*offset += recv_len;
-		queue->data_reमुख्यing -= recv_len;
-	पूर्ण
+		queue->data_remaining -= recv_len;
+	}
 
-	अगर (!queue->data_reमुख्यing) अणु
-		अगर (queue->data_digest) अणु
+	if (!queue->data_remaining) {
+		if (queue->data_digest) {
 			nvme_tcp_ddgst_final(queue->rcv_hash, &queue->exp_ddgst);
-			queue->ddgst_reमुख्यing = NVME_TCP_DIGEST_LENGTH;
-		पूर्ण अन्यथा अणु
-			अगर (pdu->hdr.flags & NVME_TCP_F_DATA_SUCCESS) अणु
+			queue->ddgst_remaining = NVME_TCP_DIGEST_LENGTH;
+		} else {
+			if (pdu->hdr.flags & NVME_TCP_F_DATA_SUCCESS) {
 				nvme_tcp_end_request(rq, NVME_SC_SUCCESS);
 				queue->nr_cqe++;
-			पूर्ण
+			}
 			nvme_tcp_init_recv_ctx(queue);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_recv_ddgst(काष्ठा nvme_tcp_queue *queue,
-		काष्ठा sk_buff *skb, अचिन्हित पूर्णांक *offset, माप_प्रकार *len)
-अणु
-	काष्ठा nvme_tcp_data_pdu *pdu = (व्योम *)queue->pdu;
-	अक्षर *ddgst = (अक्षर *)&queue->recv_ddgst;
-	माप_प्रकार recv_len = min_t(माप_प्रकार, *len, queue->ddgst_reमुख्यing);
-	off_t off = NVME_TCP_DIGEST_LENGTH - queue->ddgst_reमुख्यing;
-	पूर्णांक ret;
+static int nvme_tcp_recv_ddgst(struct nvme_tcp_queue *queue,
+		struct sk_buff *skb, unsigned int *offset, size_t *len)
+{
+	struct nvme_tcp_data_pdu *pdu = (void *)queue->pdu;
+	char *ddgst = (char *)&queue->recv_ddgst;
+	size_t recv_len = min_t(size_t, *len, queue->ddgst_remaining);
+	off_t off = NVME_TCP_DIGEST_LENGTH - queue->ddgst_remaining;
+	int ret;
 
 	ret = skb_copy_bits(skb, *offset, &ddgst[off], recv_len);
-	अगर (unlikely(ret))
-		वापस ret;
+	if (unlikely(ret))
+		return ret;
 
-	queue->ddgst_reमुख्यing -= recv_len;
+	queue->ddgst_remaining -= recv_len;
 	*offset += recv_len;
 	*len -= recv_len;
-	अगर (queue->ddgst_reमुख्यing)
-		वापस 0;
+	if (queue->ddgst_remaining)
+		return 0;
 
-	अगर (queue->recv_ddgst != queue->exp_ddgst) अणु
+	if (queue->recv_ddgst != queue->exp_ddgst) {
 		dev_err(queue->ctrl->ctrl.device,
 			"data digest error: recv %#x expected %#x\n",
 			le32_to_cpu(queue->recv_ddgst),
 			le32_to_cpu(queue->exp_ddgst));
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (pdu->hdr.flags & NVME_TCP_F_DATA_SUCCESS) अणु
-		काष्ठा request *rq = blk_mq_tag_to_rq(nvme_tcp_tagset(queue),
+	if (pdu->hdr.flags & NVME_TCP_F_DATA_SUCCESS) {
+		struct request *rq = blk_mq_tag_to_rq(nvme_tcp_tagset(queue),
 						pdu->command_id);
 
 		nvme_tcp_end_request(rq, NVME_SC_SUCCESS);
 		queue->nr_cqe++;
-	पूर्ण
+	}
 
 	nvme_tcp_init_recv_ctx(queue);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_recv_skb(पढ़ो_descriptor_t *desc, काष्ठा sk_buff *skb,
-			     अचिन्हित पूर्णांक offset, माप_प्रकार len)
-अणु
-	काष्ठा nvme_tcp_queue *queue = desc->arg.data;
-	माप_प्रकार consumed = len;
-	पूर्णांक result;
+static int nvme_tcp_recv_skb(read_descriptor_t *desc, struct sk_buff *skb,
+			     unsigned int offset, size_t len)
+{
+	struct nvme_tcp_queue *queue = desc->arg.data;
+	size_t consumed = len;
+	int result;
 
-	जबतक (len) अणु
-		चयन (nvme_tcp_recv_state(queue)) अणु
-		हाल NVME_TCP_RECV_PDU:
+	while (len) {
+		switch (nvme_tcp_recv_state(queue)) {
+		case NVME_TCP_RECV_PDU:
 			result = nvme_tcp_recv_pdu(queue, skb, &offset, &len);
-			अवरोध;
-		हाल NVME_TCP_RECV_DATA:
+			break;
+		case NVME_TCP_RECV_DATA:
 			result = nvme_tcp_recv_data(queue, skb, &offset, &len);
-			अवरोध;
-		हाल NVME_TCP_RECV_DDGST:
+			break;
+		case NVME_TCP_RECV_DDGST:
 			result = nvme_tcp_recv_ddgst(queue, skb, &offset, &len);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			result = -EFAULT;
-		पूर्ण
-		अगर (result) अणु
+		}
+		if (result) {
 			dev_err(queue->ctrl->ctrl.device,
 				"receive failed:  %d\n", result);
 			queue->rd_enabled = false;
 			nvme_tcp_error_recovery(&queue->ctrl->ctrl);
-			वापस result;
-		पूर्ण
-	पूर्ण
+			return result;
+		}
+	}
 
-	वापस consumed;
-पूर्ण
+	return consumed;
+}
 
-अटल व्योम nvme_tcp_data_पढ़ोy(काष्ठा sock *sk)
-अणु
-	काष्ठा nvme_tcp_queue *queue;
+static void nvme_tcp_data_ready(struct sock *sk)
+{
+	struct nvme_tcp_queue *queue;
 
-	पढ़ो_lock_bh(&sk->sk_callback_lock);
+	read_lock_bh(&sk->sk_callback_lock);
 	queue = sk->sk_user_data;
-	अगर (likely(queue && queue->rd_enabled) &&
+	if (likely(queue && queue->rd_enabled) &&
 	    !test_bit(NVME_TCP_Q_POLLING, &queue->flags))
 		queue_work_on(queue->io_cpu, nvme_tcp_wq, &queue->io_work);
-	पढ़ो_unlock_bh(&sk->sk_callback_lock);
-पूर्ण
+	read_unlock_bh(&sk->sk_callback_lock);
+}
 
-अटल व्योम nvme_tcp_ग_लिखो_space(काष्ठा sock *sk)
-अणु
-	काष्ठा nvme_tcp_queue *queue;
+static void nvme_tcp_write_space(struct sock *sk)
+{
+	struct nvme_tcp_queue *queue;
 
-	पढ़ो_lock_bh(&sk->sk_callback_lock);
+	read_lock_bh(&sk->sk_callback_lock);
 	queue = sk->sk_user_data;
-	अगर (likely(queue && sk_stream_is_ग_लिखोable(sk))) अणु
+	if (likely(queue && sk_stream_is_writeable(sk))) {
 		clear_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
 		queue_work_on(queue->io_cpu, nvme_tcp_wq, &queue->io_work);
-	पूर्ण
-	पढ़ो_unlock_bh(&sk->sk_callback_lock);
-पूर्ण
+	}
+	read_unlock_bh(&sk->sk_callback_lock);
+}
 
-अटल व्योम nvme_tcp_state_change(काष्ठा sock *sk)
-अणु
-	काष्ठा nvme_tcp_queue *queue;
+static void nvme_tcp_state_change(struct sock *sk)
+{
+	struct nvme_tcp_queue *queue;
 
-	पढ़ो_lock_bh(&sk->sk_callback_lock);
+	read_lock_bh(&sk->sk_callback_lock);
 	queue = sk->sk_user_data;
-	अगर (!queue)
-		जाओ करोne;
+	if (!queue)
+		goto done;
 
-	चयन (sk->sk_state) अणु
-	हाल TCP_CLOSE:
-	हाल TCP_CLOSE_WAIT:
-	हाल TCP_LAST_ACK:
-	हाल TCP_FIN_WAIT1:
-	हाल TCP_FIN_WAIT2:
+	switch (sk->sk_state) {
+	case TCP_CLOSE:
+	case TCP_CLOSE_WAIT:
+	case TCP_LAST_ACK:
+	case TCP_FIN_WAIT1:
+	case TCP_FIN_WAIT2:
 		nvme_tcp_error_recovery(&queue->ctrl->ctrl);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_info(queue->ctrl->ctrl.device,
 			"queue %d socket state %d\n",
 			nvme_tcp_queue_id(queue), sk->sk_state);
-	पूर्ण
+	}
 
 	queue->state_change(sk);
-करोne:
-	पढ़ो_unlock_bh(&sk->sk_callback_lock);
-पूर्ण
+done:
+	read_unlock_bh(&sk->sk_callback_lock);
+}
 
-अटल अंतरभूत bool nvme_tcp_queue_more(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस !list_empty(&queue->send_list) ||
+static inline bool nvme_tcp_queue_more(struct nvme_tcp_queue *queue)
+{
+	return !list_empty(&queue->send_list) ||
 		!llist_empty(&queue->req_list) || queue->more_requests;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम nvme_tcp_करोne_send_req(काष्ठा nvme_tcp_queue *queue)
-अणु
-	queue->request = शून्य;
-पूर्ण
+static inline void nvme_tcp_done_send_req(struct nvme_tcp_queue *queue)
+{
+	queue->request = NULL;
+}
 
-अटल व्योम nvme_tcp_fail_request(काष्ठा nvme_tcp_request *req)
-अणु
+static void nvme_tcp_fail_request(struct nvme_tcp_request *req)
+{
 	nvme_tcp_end_request(blk_mq_rq_from_pdu(req), NVME_SC_HOST_PATH_ERROR);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_try_send_data(काष्ठा nvme_tcp_request *req)
-अणु
-	काष्ठा nvme_tcp_queue *queue = req->queue;
+static int nvme_tcp_try_send_data(struct nvme_tcp_request *req)
+{
+	struct nvme_tcp_queue *queue = req->queue;
 
-	जबतक (true) अणु
-		काष्ठा page *page = nvme_tcp_req_cur_page(req);
-		माप_प्रकार offset = nvme_tcp_req_cur_offset(req);
-		माप_प्रकार len = nvme_tcp_req_cur_length(req);
+	while (true) {
+		struct page *page = nvme_tcp_req_cur_page(req);
+		size_t offset = nvme_tcp_req_cur_offset(req);
+		size_t len = nvme_tcp_req_cur_length(req);
 		bool last = nvme_tcp_pdu_last_send(req, len);
-		पूर्णांक ret, flags = MSG_DONTWAIT;
+		int ret, flags = MSG_DONTWAIT;
 
-		अगर (last && !queue->data_digest && !nvme_tcp_queue_more(queue))
+		if (last && !queue->data_digest && !nvme_tcp_queue_more(queue))
 			flags |= MSG_EOR;
-		अन्यथा
+		else
 			flags |= MSG_MORE | MSG_SENDPAGE_NOTLAST;
 
-		अगर (sendpage_ok(page)) अणु
+		if (sendpage_ok(page)) {
 			ret = kernel_sendpage(queue->sock, page, offset, len,
 					flags);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = sock_no_sendpage(queue->sock, page, offset, len,
 					flags);
-		पूर्ण
-		अगर (ret <= 0)
-			वापस ret;
+		}
+		if (ret <= 0)
+			return ret;
 
-		अगर (queue->data_digest)
+		if (queue->data_digest)
 			nvme_tcp_ddgst_update(queue->snd_hash, page,
 					offset, ret);
 
-		/* fully successful last ग_लिखो*/
-		अगर (last && ret == len) अणु
-			अगर (queue->data_digest) अणु
+		/* fully successful last write*/
+		if (last && ret == len) {
+			if (queue->data_digest) {
 				nvme_tcp_ddgst_final(queue->snd_hash,
 					&req->ddgst);
 				req->state = NVME_TCP_SEND_DDGST;
 				req->offset = 0;
-			पूर्ण अन्यथा अणु
-				nvme_tcp_करोne_send_req(queue);
-			पूर्ण
-			वापस 1;
-		पूर्ण
+			} else {
+				nvme_tcp_done_send_req(queue);
+			}
+			return 1;
+		}
 		nvme_tcp_advance_req(req, ret);
-	पूर्ण
-	वापस -EAGAIN;
-पूर्ण
+	}
+	return -EAGAIN;
+}
 
-अटल पूर्णांक nvme_tcp_try_send_cmd_pdu(काष्ठा nvme_tcp_request *req)
-अणु
-	काष्ठा nvme_tcp_queue *queue = req->queue;
-	काष्ठा nvme_tcp_cmd_pdu *pdu = req->pdu;
-	bool अंतरभूत_data = nvme_tcp_has_अंतरभूत_data(req);
+static int nvme_tcp_try_send_cmd_pdu(struct nvme_tcp_request *req)
+{
+	struct nvme_tcp_queue *queue = req->queue;
+	struct nvme_tcp_cmd_pdu *pdu = req->pdu;
+	bool inline_data = nvme_tcp_has_inline_data(req);
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
-	पूर्णांक len = माप(*pdu) + hdgst - req->offset;
-	पूर्णांक flags = MSG_DONTWAIT;
-	पूर्णांक ret;
+	int len = sizeof(*pdu) + hdgst - req->offset;
+	int flags = MSG_DONTWAIT;
+	int ret;
 
-	अगर (अंतरभूत_data || nvme_tcp_queue_more(queue))
+	if (inline_data || nvme_tcp_queue_more(queue))
 		flags |= MSG_MORE | MSG_SENDPAGE_NOTLAST;
-	अन्यथा
+	else
 		flags |= MSG_EOR;
 
-	अगर (queue->hdr_digest && !req->offset)
-		nvme_tcp_hdgst(queue->snd_hash, pdu, माप(*pdu));
+	if (queue->hdr_digest && !req->offset)
+		nvme_tcp_hdgst(queue->snd_hash, pdu, sizeof(*pdu));
 
 	ret = kernel_sendpage(queue->sock, virt_to_page(pdu),
 			offset_in_page(pdu) + req->offset, len,  flags);
-	अगर (unlikely(ret <= 0))
-		वापस ret;
+	if (unlikely(ret <= 0))
+		return ret;
 
 	len -= ret;
-	अगर (!len) अणु
-		अगर (अंतरभूत_data) अणु
+	if (!len) {
+		if (inline_data) {
 			req->state = NVME_TCP_SEND_DATA;
-			अगर (queue->data_digest)
+			if (queue->data_digest)
 				crypto_ahash_init(queue->snd_hash);
-		पूर्ण अन्यथा अणु
-			nvme_tcp_करोne_send_req(queue);
-		पूर्ण
-		वापस 1;
-	पूर्ण
+		} else {
+			nvme_tcp_done_send_req(queue);
+		}
+		return 1;
+	}
 	req->offset += ret;
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक nvme_tcp_try_send_data_pdu(काष्ठा nvme_tcp_request *req)
-अणु
-	काष्ठा nvme_tcp_queue *queue = req->queue;
-	काष्ठा nvme_tcp_data_pdu *pdu = req->pdu;
+static int nvme_tcp_try_send_data_pdu(struct nvme_tcp_request *req)
+{
+	struct nvme_tcp_queue *queue = req->queue;
+	struct nvme_tcp_data_pdu *pdu = req->pdu;
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
-	पूर्णांक len = माप(*pdu) - req->offset + hdgst;
-	पूर्णांक ret;
+	int len = sizeof(*pdu) - req->offset + hdgst;
+	int ret;
 
-	अगर (queue->hdr_digest && !req->offset)
-		nvme_tcp_hdgst(queue->snd_hash, pdu, माप(*pdu));
+	if (queue->hdr_digest && !req->offset)
+		nvme_tcp_hdgst(queue->snd_hash, pdu, sizeof(*pdu));
 
 	ret = kernel_sendpage(queue->sock, virt_to_page(pdu),
 			offset_in_page(pdu) + req->offset, len,
 			MSG_DONTWAIT | MSG_MORE | MSG_SENDPAGE_NOTLAST);
-	अगर (unlikely(ret <= 0))
-		वापस ret;
+	if (unlikely(ret <= 0))
+		return ret;
 
 	len -= ret;
-	अगर (!len) अणु
+	if (!len) {
 		req->state = NVME_TCP_SEND_DATA;
-		अगर (queue->data_digest)
+		if (queue->data_digest)
 			crypto_ahash_init(queue->snd_hash);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	req->offset += ret;
 
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक nvme_tcp_try_send_ddgst(काष्ठा nvme_tcp_request *req)
-अणु
-	काष्ठा nvme_tcp_queue *queue = req->queue;
-	पूर्णांक ret;
-	काष्ठा msghdr msg = अणु .msg_flags = MSG_DONTWAIT पूर्ण;
-	काष्ठा kvec iov = अणु
+static int nvme_tcp_try_send_ddgst(struct nvme_tcp_request *req)
+{
+	struct nvme_tcp_queue *queue = req->queue;
+	int ret;
+	struct msghdr msg = { .msg_flags = MSG_DONTWAIT };
+	struct kvec iov = {
 		.iov_base = &req->ddgst + req->offset,
 		.iov_len = NVME_TCP_DIGEST_LENGTH - req->offset
-	पूर्ण;
+	};
 
-	अगर (nvme_tcp_queue_more(queue))
+	if (nvme_tcp_queue_more(queue))
 		msg.msg_flags |= MSG_MORE;
-	अन्यथा
+	else
 		msg.msg_flags |= MSG_EOR;
 
 	ret = kernel_sendmsg(queue->sock, &msg, &iov, 1, iov.iov_len);
-	अगर (unlikely(ret <= 0))
-		वापस ret;
+	if (unlikely(ret <= 0))
+		return ret;
 
-	अगर (req->offset + ret == NVME_TCP_DIGEST_LENGTH) अणु
-		nvme_tcp_करोne_send_req(queue);
-		वापस 1;
-	पूर्ण
+	if (req->offset + ret == NVME_TCP_DIGEST_LENGTH) {
+		nvme_tcp_done_send_req(queue);
+		return 1;
+	}
 
 	req->offset += ret;
-	वापस -EAGAIN;
-पूर्ण
+	return -EAGAIN;
+}
 
-अटल पूर्णांक nvme_tcp_try_send(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_request *req;
-	पूर्णांक ret = 1;
+static int nvme_tcp_try_send(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_request *req;
+	int ret = 1;
 
-	अगर (!queue->request) अणु
+	if (!queue->request) {
 		queue->request = nvme_tcp_fetch_request(queue);
-		अगर (!queue->request)
-			वापस 0;
-	पूर्ण
+		if (!queue->request)
+			return 0;
+	}
 	req = queue->request;
 
-	अगर (req->state == NVME_TCP_SEND_CMD_PDU) अणु
+	if (req->state == NVME_TCP_SEND_CMD_PDU) {
 		ret = nvme_tcp_try_send_cmd_pdu(req);
-		अगर (ret <= 0)
-			जाओ करोne;
-		अगर (!nvme_tcp_has_अंतरभूत_data(req))
-			वापस ret;
-	पूर्ण
+		if (ret <= 0)
+			goto done;
+		if (!nvme_tcp_has_inline_data(req))
+			return ret;
+	}
 
-	अगर (req->state == NVME_TCP_SEND_H2C_PDU) अणु
+	if (req->state == NVME_TCP_SEND_H2C_PDU) {
 		ret = nvme_tcp_try_send_data_pdu(req);
-		अगर (ret <= 0)
-			जाओ करोne;
-	पूर्ण
+		if (ret <= 0)
+			goto done;
+	}
 
-	अगर (req->state == NVME_TCP_SEND_DATA) अणु
+	if (req->state == NVME_TCP_SEND_DATA) {
 		ret = nvme_tcp_try_send_data(req);
-		अगर (ret <= 0)
-			जाओ करोne;
-	पूर्ण
+		if (ret <= 0)
+			goto done;
+	}
 
-	अगर (req->state == NVME_TCP_SEND_DDGST)
+	if (req->state == NVME_TCP_SEND_DDGST)
 		ret = nvme_tcp_try_send_ddgst(req);
-करोne:
-	अगर (ret == -EAGAIN) अणु
+done:
+	if (ret == -EAGAIN) {
 		ret = 0;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+	} else if (ret < 0) {
 		dev_err(queue->ctrl->ctrl.device,
 			"failed to send request %d\n", ret);
-		अगर (ret != -EPIPE && ret != -ECONNRESET)
+		if (ret != -EPIPE && ret != -ECONNRESET)
 			nvme_tcp_fail_request(queue->request);
-		nvme_tcp_करोne_send_req(queue);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		nvme_tcp_done_send_req(queue);
+	}
+	return ret;
+}
 
-अटल पूर्णांक nvme_tcp_try_recv(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा socket *sock = queue->sock;
-	काष्ठा sock *sk = sock->sk;
-	पढ़ो_descriptor_t rd_desc;
-	पूर्णांक consumed;
+static int nvme_tcp_try_recv(struct nvme_tcp_queue *queue)
+{
+	struct socket *sock = queue->sock;
+	struct sock *sk = sock->sk;
+	read_descriptor_t rd_desc;
+	int consumed;
 
 	rd_desc.arg.data = queue;
 	rd_desc.count = 1;
 	lock_sock(sk);
 	queue->nr_cqe = 0;
-	consumed = sock->ops->पढ़ो_sock(sk, &rd_desc, nvme_tcp_recv_skb);
+	consumed = sock->ops->read_sock(sk, &rd_desc, nvme_tcp_recv_skb);
 	release_sock(sk);
-	वापस consumed;
-पूर्ण
+	return consumed;
+}
 
-अटल व्योम nvme_tcp_io_work(काष्ठा work_काष्ठा *w)
-अणु
-	काष्ठा nvme_tcp_queue *queue =
-		container_of(w, काष्ठा nvme_tcp_queue, io_work);
-	अचिन्हित दीर्घ deadline = jअगरfies + msecs_to_jअगरfies(1);
+static void nvme_tcp_io_work(struct work_struct *w)
+{
+	struct nvme_tcp_queue *queue =
+		container_of(w, struct nvme_tcp_queue, io_work);
+	unsigned long deadline = jiffies + msecs_to_jiffies(1);
 
-	करो अणु
+	do {
 		bool pending = false;
-		पूर्णांक result;
+		int result;
 
-		अगर (mutex_trylock(&queue->send_mutex)) अणु
+		if (mutex_trylock(&queue->send_mutex)) {
 			result = nvme_tcp_try_send(queue);
 			mutex_unlock(&queue->send_mutex);
-			अगर (result > 0)
+			if (result > 0)
 				pending = true;
-			अन्यथा अगर (unlikely(result < 0))
-				अवरोध;
-		पूर्ण अन्यथा
+			else if (unlikely(result < 0))
+				break;
+		} else
 			pending = !llist_empty(&queue->req_list);
 
 		result = nvme_tcp_try_recv(queue);
-		अगर (result > 0)
+		if (result > 0)
 			pending = true;
-		अन्यथा अगर (unlikely(result < 0))
-			वापस;
+		else if (unlikely(result < 0))
+			return;
 
-		अगर (!pending)
-			वापस;
+		if (!pending)
+			return;
 
-	पूर्ण जबतक (!समय_after(jअगरfies, deadline)); /* quota is exhausted */
+	} while (!time_after(jiffies, deadline)); /* quota is exhausted */
 
 	queue_work_on(queue->io_cpu, nvme_tcp_wq, &queue->io_work);
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_मुक्त_crypto(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(queue->rcv_hash);
+static void nvme_tcp_free_crypto(struct nvme_tcp_queue *queue)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(queue->rcv_hash);
 
-	ahash_request_मुक्त(queue->rcv_hash);
-	ahash_request_मुक्त(queue->snd_hash);
-	crypto_मुक्त_ahash(tfm);
-पूर्ण
+	ahash_request_free(queue->rcv_hash);
+	ahash_request_free(queue->snd_hash);
+	crypto_free_ahash(tfm);
+}
 
-अटल पूर्णांक nvme_tcp_alloc_crypto(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा crypto_ahash *tfm;
+static int nvme_tcp_alloc_crypto(struct nvme_tcp_queue *queue)
+{
+	struct crypto_ahash *tfm;
 
 	tfm = crypto_alloc_ahash("crc32c", 0, CRYPTO_ALG_ASYNC);
-	अगर (IS_ERR(tfm))
-		वापस PTR_ERR(tfm);
+	if (IS_ERR(tfm))
+		return PTR_ERR(tfm);
 
 	queue->snd_hash = ahash_request_alloc(tfm, GFP_KERNEL);
-	अगर (!queue->snd_hash)
-		जाओ मुक्त_tfm;
-	ahash_request_set_callback(queue->snd_hash, 0, शून्य, शून्य);
+	if (!queue->snd_hash)
+		goto free_tfm;
+	ahash_request_set_callback(queue->snd_hash, 0, NULL, NULL);
 
 	queue->rcv_hash = ahash_request_alloc(tfm, GFP_KERNEL);
-	अगर (!queue->rcv_hash)
-		जाओ मुक्त_snd_hash;
-	ahash_request_set_callback(queue->rcv_hash, 0, शून्य, शून्य);
+	if (!queue->rcv_hash)
+		goto free_snd_hash;
+	ahash_request_set_callback(queue->rcv_hash, 0, NULL, NULL);
 
-	वापस 0;
-मुक्त_snd_hash:
-	ahash_request_मुक्त(queue->snd_hash);
-मुक्त_tfm:
-	crypto_मुक्त_ahash(tfm);
-	वापस -ENOMEM;
-पूर्ण
+	return 0;
+free_snd_hash:
+	ahash_request_free(queue->snd_hash);
+free_tfm:
+	crypto_free_ahash(tfm);
+	return -ENOMEM;
+}
 
-अटल व्योम nvme_tcp_मुक्त_async_req(काष्ठा nvme_tcp_ctrl *ctrl)
-अणु
-	काष्ठा nvme_tcp_request *async = &ctrl->async_req;
+static void nvme_tcp_free_async_req(struct nvme_tcp_ctrl *ctrl)
+{
+	struct nvme_tcp_request *async = &ctrl->async_req;
 
-	page_frag_मुक्त(async->pdu);
-पूर्ण
+	page_frag_free(async->pdu);
+}
 
-अटल पूर्णांक nvme_tcp_alloc_async_req(काष्ठा nvme_tcp_ctrl *ctrl)
-अणु
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[0];
-	काष्ठा nvme_tcp_request *async = &ctrl->async_req;
+static int nvme_tcp_alloc_async_req(struct nvme_tcp_ctrl *ctrl)
+{
+	struct nvme_tcp_queue *queue = &ctrl->queues[0];
+	struct nvme_tcp_request *async = &ctrl->async_req;
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
 
 	async->pdu = page_frag_alloc(&queue->pf_cache,
-		माप(काष्ठा nvme_tcp_cmd_pdu) + hdgst,
+		sizeof(struct nvme_tcp_cmd_pdu) + hdgst,
 		GFP_KERNEL | __GFP_ZERO);
-	अगर (!async->pdu)
-		वापस -ENOMEM;
+	if (!async->pdu)
+		return -ENOMEM;
 
 	async->queue = &ctrl->queues[0];
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvme_tcp_मुक्त_queue(काष्ठा nvme_ctrl *nctrl, पूर्णांक qid)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[qid];
+static void nvme_tcp_free_queue(struct nvme_ctrl *nctrl, int qid)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+	struct nvme_tcp_queue *queue = &ctrl->queues[qid];
 
-	अगर (!test_and_clear_bit(NVME_TCP_Q_ALLOCATED, &queue->flags))
-		वापस;
+	if (!test_and_clear_bit(NVME_TCP_Q_ALLOCATED, &queue->flags))
+		return;
 
-	अगर (queue->hdr_digest || queue->data_digest)
-		nvme_tcp_मुक्त_crypto(queue);
+	if (queue->hdr_digest || queue->data_digest)
+		nvme_tcp_free_crypto(queue);
 
 	sock_release(queue->sock);
-	kमुक्त(queue->pdu);
+	kfree(queue->pdu);
 	mutex_destroy(&queue->queue_lock);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_init_connection(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_icreq_pdu *icreq;
-	काष्ठा nvme_tcp_icresp_pdu *icresp;
-	काष्ठा msghdr msg = अणुपूर्ण;
-	काष्ठा kvec iov;
+static int nvme_tcp_init_connection(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_icreq_pdu *icreq;
+	struct nvme_tcp_icresp_pdu *icresp;
+	struct msghdr msg = {};
+	struct kvec iov;
 	bool ctrl_hdgst, ctrl_ddgst;
-	पूर्णांक ret;
+	int ret;
 
-	icreq = kzalloc(माप(*icreq), GFP_KERNEL);
-	अगर (!icreq)
-		वापस -ENOMEM;
+	icreq = kzalloc(sizeof(*icreq), GFP_KERNEL);
+	if (!icreq)
+		return -ENOMEM;
 
-	icresp = kzalloc(माप(*icresp), GFP_KERNEL);
-	अगर (!icresp) अणु
+	icresp = kzalloc(sizeof(*icresp), GFP_KERNEL);
+	if (!icresp) {
 		ret = -ENOMEM;
-		जाओ मुक्त_icreq;
-	पूर्ण
+		goto free_icreq;
+	}
 
 	icreq->hdr.type = nvme_tcp_icreq;
-	icreq->hdr.hlen = माप(*icreq);
-	icreq->hdr.pकरो = 0;
+	icreq->hdr.hlen = sizeof(*icreq);
+	icreq->hdr.pdo = 0;
 	icreq->hdr.plen = cpu_to_le32(icreq->hdr.hlen);
 	icreq->pfv = cpu_to_le16(NVME_TCP_PFV_1_0);
 	icreq->maxr2t = 0; /* single inflight r2t supported */
-	icreq->hpda = 0; /* no alignment स्थिरraपूर्णांक */
-	अगर (queue->hdr_digest)
+	icreq->hpda = 0; /* no alignment constraint */
+	if (queue->hdr_digest)
 		icreq->digest |= NVME_TCP_HDR_DIGEST_ENABLE;
-	अगर (queue->data_digest)
+	if (queue->data_digest)
 		icreq->digest |= NVME_TCP_DATA_DIGEST_ENABLE;
 
 	iov.iov_base = icreq;
-	iov.iov_len = माप(*icreq);
+	iov.iov_len = sizeof(*icreq);
 	ret = kernel_sendmsg(queue->sock, &msg, &iov, 1, iov.iov_len);
-	अगर (ret < 0)
-		जाओ मुक्त_icresp;
+	if (ret < 0)
+		goto free_icresp;
 
-	स_रखो(&msg, 0, माप(msg));
+	memset(&msg, 0, sizeof(msg));
 	iov.iov_base = icresp;
-	iov.iov_len = माप(*icresp);
+	iov.iov_len = sizeof(*icresp);
 	ret = kernel_recvmsg(queue->sock, &msg, &iov, 1,
 			iov.iov_len, msg.msg_flags);
-	अगर (ret < 0)
-		जाओ मुक्त_icresp;
+	if (ret < 0)
+		goto free_icresp;
 
 	ret = -EINVAL;
-	अगर (icresp->hdr.type != nvme_tcp_icresp) अणु
+	if (icresp->hdr.type != nvme_tcp_icresp) {
 		pr_err("queue %d: bad type returned %d\n",
 			nvme_tcp_queue_id(queue), icresp->hdr.type);
-		जाओ मुक्त_icresp;
-	पूर्ण
+		goto free_icresp;
+	}
 
-	अगर (le32_to_cpu(icresp->hdr.plen) != माप(*icresp)) अणु
+	if (le32_to_cpu(icresp->hdr.plen) != sizeof(*icresp)) {
 		pr_err("queue %d: bad pdu length returned %d\n",
 			nvme_tcp_queue_id(queue), icresp->hdr.plen);
-		जाओ मुक्त_icresp;
-	पूर्ण
+		goto free_icresp;
+	}
 
-	अगर (icresp->pfv != NVME_TCP_PFV_1_0) अणु
+	if (icresp->pfv != NVME_TCP_PFV_1_0) {
 		pr_err("queue %d: bad pfv returned %d\n",
 			nvme_tcp_queue_id(queue), icresp->pfv);
-		जाओ मुक्त_icresp;
-	पूर्ण
+		goto free_icresp;
+	}
 
 	ctrl_ddgst = !!(icresp->digest & NVME_TCP_DATA_DIGEST_ENABLE);
-	अगर ((queue->data_digest && !ctrl_ddgst) ||
-	    (!queue->data_digest && ctrl_ddgst)) अणु
+	if ((queue->data_digest && !ctrl_ddgst) ||
+	    (!queue->data_digest && ctrl_ddgst)) {
 		pr_err("queue %d: data digest mismatch host: %s ctrl: %s\n",
 			nvme_tcp_queue_id(queue),
 			queue->data_digest ? "enabled" : "disabled",
 			ctrl_ddgst ? "enabled" : "disabled");
-		जाओ मुक्त_icresp;
-	पूर्ण
+		goto free_icresp;
+	}
 
 	ctrl_hdgst = !!(icresp->digest & NVME_TCP_HDR_DIGEST_ENABLE);
-	अगर ((queue->hdr_digest && !ctrl_hdgst) ||
-	    (!queue->hdr_digest && ctrl_hdgst)) अणु
+	if ((queue->hdr_digest && !ctrl_hdgst) ||
+	    (!queue->hdr_digest && ctrl_hdgst)) {
 		pr_err("queue %d: header digest mismatch host: %s ctrl: %s\n",
 			nvme_tcp_queue_id(queue),
 			queue->hdr_digest ? "enabled" : "disabled",
 			ctrl_hdgst ? "enabled" : "disabled");
-		जाओ मुक्त_icresp;
-	पूर्ण
+		goto free_icresp;
+	}
 
-	अगर (icresp->cpda != 0) अणु
+	if (icresp->cpda != 0) {
 		pr_err("queue %d: unsupported cpda returned %d\n",
 			nvme_tcp_queue_id(queue), icresp->cpda);
-		जाओ मुक्त_icresp;
-	पूर्ण
+		goto free_icresp;
+	}
 
 	ret = 0;
-मुक्त_icresp:
-	kमुक्त(icresp);
-मुक्त_icreq:
-	kमुक्त(icreq);
-	वापस ret;
-पूर्ण
+free_icresp:
+	kfree(icresp);
+free_icreq:
+	kfree(icreq);
+	return ret;
+}
 
-अटल bool nvme_tcp_admin_queue(काष्ठा nvme_tcp_queue *queue)
-अणु
-	वापस nvme_tcp_queue_id(queue) == 0;
-पूर्ण
+static bool nvme_tcp_admin_queue(struct nvme_tcp_queue *queue)
+{
+	return nvme_tcp_queue_id(queue) == 0;
+}
 
-अटल bool nvme_tcp_शेष_queue(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = queue->ctrl;
-	पूर्णांक qid = nvme_tcp_queue_id(queue);
+static bool nvme_tcp_default_queue(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_ctrl *ctrl = queue->ctrl;
+	int qid = nvme_tcp_queue_id(queue);
 
-	वापस !nvme_tcp_admin_queue(queue) &&
+	return !nvme_tcp_admin_queue(queue) &&
 		qid < 1 + ctrl->io_queues[HCTX_TYPE_DEFAULT];
-पूर्ण
+}
 
-अटल bool nvme_tcp_पढ़ो_queue(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = queue->ctrl;
-	पूर्णांक qid = nvme_tcp_queue_id(queue);
+static bool nvme_tcp_read_queue(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_ctrl *ctrl = queue->ctrl;
+	int qid = nvme_tcp_queue_id(queue);
 
-	वापस !nvme_tcp_admin_queue(queue) &&
-		!nvme_tcp_शेष_queue(queue) &&
+	return !nvme_tcp_admin_queue(queue) &&
+		!nvme_tcp_default_queue(queue) &&
 		qid < 1 + ctrl->io_queues[HCTX_TYPE_DEFAULT] +
 			  ctrl->io_queues[HCTX_TYPE_READ];
-पूर्ण
+}
 
-अटल bool nvme_tcp_poll_queue(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = queue->ctrl;
-	पूर्णांक qid = nvme_tcp_queue_id(queue);
+static bool nvme_tcp_poll_queue(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_ctrl *ctrl = queue->ctrl;
+	int qid = nvme_tcp_queue_id(queue);
 
-	वापस !nvme_tcp_admin_queue(queue) &&
-		!nvme_tcp_शेष_queue(queue) &&
-		!nvme_tcp_पढ़ो_queue(queue) &&
+	return !nvme_tcp_admin_queue(queue) &&
+		!nvme_tcp_default_queue(queue) &&
+		!nvme_tcp_read_queue(queue) &&
 		qid < 1 + ctrl->io_queues[HCTX_TYPE_DEFAULT] +
 			  ctrl->io_queues[HCTX_TYPE_READ] +
 			  ctrl->io_queues[HCTX_TYPE_POLL];
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_set_queue_io_cpu(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = queue->ctrl;
-	पूर्णांक qid = nvme_tcp_queue_id(queue);
-	पूर्णांक n = 0;
+static void nvme_tcp_set_queue_io_cpu(struct nvme_tcp_queue *queue)
+{
+	struct nvme_tcp_ctrl *ctrl = queue->ctrl;
+	int qid = nvme_tcp_queue_id(queue);
+	int n = 0;
 
-	अगर (nvme_tcp_शेष_queue(queue))
+	if (nvme_tcp_default_queue(queue))
 		n = qid - 1;
-	अन्यथा अगर (nvme_tcp_पढ़ो_queue(queue))
+	else if (nvme_tcp_read_queue(queue))
 		n = qid - ctrl->io_queues[HCTX_TYPE_DEFAULT] - 1;
-	अन्यथा अगर (nvme_tcp_poll_queue(queue))
+	else if (nvme_tcp_poll_queue(queue))
 		n = qid - ctrl->io_queues[HCTX_TYPE_DEFAULT] -
 				ctrl->io_queues[HCTX_TYPE_READ] - 1;
 	queue->io_cpu = cpumask_next_wrap(n - 1, cpu_online_mask, -1, false);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_alloc_queue(काष्ठा nvme_ctrl *nctrl,
-		पूर्णांक qid, माप_प्रकार queue_size)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[qid];
-	पूर्णांक ret, rcv_pdu_size;
+static int nvme_tcp_alloc_queue(struct nvme_ctrl *nctrl,
+		int qid, size_t queue_size)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+	struct nvme_tcp_queue *queue = &ctrl->queues[qid];
+	int ret, rcv_pdu_size;
 
 	mutex_init(&queue->queue_lock);
 	queue->ctrl = ctrl;
@@ -1399,19 +1398,19 @@ nvme_tcp_recv_state(काष्ठा nvme_tcp_queue *queue)
 	INIT_WORK(&queue->io_work, nvme_tcp_io_work);
 	queue->queue_size = queue_size;
 
-	अगर (qid > 0)
+	if (qid > 0)
 		queue->cmnd_capsule_len = nctrl->ioccsz * 16;
-	अन्यथा
-		queue->cmnd_capsule_len = माप(काष्ठा nvme_command) +
+	else
+		queue->cmnd_capsule_len = sizeof(struct nvme_command) +
 						NVME_TCP_ADMIN_CCSZ;
 
 	ret = sock_create(ctrl->addr.ss_family, SOCK_STREAM,
 			IPPROTO_TCP, &queue->sock);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(nctrl->device,
 			"failed to create socket: %d\n", ret);
-		जाओ err_destroy_mutex;
-	पूर्ण
+		goto err_destroy_mutex;
+	}
 
 	/* Single syn retry */
 	tcp_sock_set_syncnt(queue->sock->sk, 1);
@@ -1421,480 +1420,480 @@ nvme_tcp_recv_state(काष्ठा nvme_tcp_queue *queue)
 
 	/*
 	 * Cleanup whatever is sitting in the TCP transmit queue on socket
-	 * बंद. This is करोne to prevent stale data from being sent should
-	 * the network connection be restored beक्रमe TCP बार out.
+	 * close. This is done to prevent stale data from being sent should
+	 * the network connection be restored before TCP times out.
 	 */
 	sock_no_linger(queue->sock->sk);
 
-	अगर (so_priority > 0)
+	if (so_priority > 0)
 		sock_set_priority(queue->sock->sk, so_priority);
 
 	/* Set socket type of service */
-	अगर (nctrl->opts->tos >= 0)
+	if (nctrl->opts->tos >= 0)
 		ip_sock_set_tos(queue->sock->sk, nctrl->opts->tos);
 
-	/* Set 10 seconds समयout क्रम icresp recvmsg */
-	queue->sock->sk->sk_rcvसमयo = 10 * HZ;
+	/* Set 10 seconds timeout for icresp recvmsg */
+	queue->sock->sk->sk_rcvtimeo = 10 * HZ;
 
 	queue->sock->sk->sk_allocation = GFP_ATOMIC;
 	nvme_tcp_set_queue_io_cpu(queue);
-	queue->request = शून्य;
-	queue->data_reमुख्यing = 0;
-	queue->ddgst_reमुख्यing = 0;
-	queue->pdu_reमुख्यing = 0;
+	queue->request = NULL;
+	queue->data_remaining = 0;
+	queue->ddgst_remaining = 0;
+	queue->pdu_remaining = 0;
 	queue->pdu_offset = 0;
-	sk_set_meदो_स्मृति(queue->sock->sk);
+	sk_set_memalloc(queue->sock->sk);
 
-	अगर (nctrl->opts->mask & NVMF_OPT_HOST_TRADDR) अणु
-		ret = kernel_bind(queue->sock, (काष्ठा sockaddr *)&ctrl->src_addr,
-			माप(ctrl->src_addr));
-		अगर (ret) अणु
+	if (nctrl->opts->mask & NVMF_OPT_HOST_TRADDR) {
+		ret = kernel_bind(queue->sock, (struct sockaddr *)&ctrl->src_addr,
+			sizeof(ctrl->src_addr));
+		if (ret) {
 			dev_err(nctrl->device,
 				"failed to bind queue %d socket %d\n",
 				qid, ret);
-			जाओ err_sock;
-		पूर्ण
-	पूर्ण
+			goto err_sock;
+		}
+	}
 
 	queue->hdr_digest = nctrl->opts->hdr_digest;
 	queue->data_digest = nctrl->opts->data_digest;
-	अगर (queue->hdr_digest || queue->data_digest) अणु
+	if (queue->hdr_digest || queue->data_digest) {
 		ret = nvme_tcp_alloc_crypto(queue);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(nctrl->device,
 				"failed to allocate queue %d crypto\n", qid);
-			जाओ err_sock;
-		पूर्ण
-	पूर्ण
+			goto err_sock;
+		}
+	}
 
-	rcv_pdu_size = माप(काष्ठा nvme_tcp_rsp_pdu) +
+	rcv_pdu_size = sizeof(struct nvme_tcp_rsp_pdu) +
 			nvme_tcp_hdgst_len(queue);
-	queue->pdu = kदो_स्मृति(rcv_pdu_size, GFP_KERNEL);
-	अगर (!queue->pdu) अणु
+	queue->pdu = kmalloc(rcv_pdu_size, GFP_KERNEL);
+	if (!queue->pdu) {
 		ret = -ENOMEM;
-		जाओ err_crypto;
-	पूर्ण
+		goto err_crypto;
+	}
 
 	dev_dbg(nctrl->device, "connecting queue %d\n",
 			nvme_tcp_queue_id(queue));
 
-	ret = kernel_connect(queue->sock, (काष्ठा sockaddr *)&ctrl->addr,
-		माप(ctrl->addr), 0);
-	अगर (ret) अणु
+	ret = kernel_connect(queue->sock, (struct sockaddr *)&ctrl->addr,
+		sizeof(ctrl->addr), 0);
+	if (ret) {
 		dev_err(nctrl->device,
 			"failed to connect socket: %d\n", ret);
-		जाओ err_rcv_pdu;
-	पूर्ण
+		goto err_rcv_pdu;
+	}
 
 	ret = nvme_tcp_init_connection(queue);
-	अगर (ret)
-		जाओ err_init_connect;
+	if (ret)
+		goto err_init_connect;
 
 	queue->rd_enabled = true;
 	set_bit(NVME_TCP_Q_ALLOCATED, &queue->flags);
 	nvme_tcp_init_recv_ctx(queue);
 
-	ग_लिखो_lock_bh(&queue->sock->sk->sk_callback_lock);
+	write_lock_bh(&queue->sock->sk->sk_callback_lock);
 	queue->sock->sk->sk_user_data = queue;
 	queue->state_change = queue->sock->sk->sk_state_change;
-	queue->data_पढ़ोy = queue->sock->sk->sk_data_पढ़ोy;
-	queue->ग_लिखो_space = queue->sock->sk->sk_ग_लिखो_space;
-	queue->sock->sk->sk_data_पढ़ोy = nvme_tcp_data_पढ़ोy;
+	queue->data_ready = queue->sock->sk->sk_data_ready;
+	queue->write_space = queue->sock->sk->sk_write_space;
+	queue->sock->sk->sk_data_ready = nvme_tcp_data_ready;
 	queue->sock->sk->sk_state_change = nvme_tcp_state_change;
-	queue->sock->sk->sk_ग_लिखो_space = nvme_tcp_ग_लिखो_space;
-#अगर_घोषित CONFIG_NET_RX_BUSY_POLL
+	queue->sock->sk->sk_write_space = nvme_tcp_write_space;
+#ifdef CONFIG_NET_RX_BUSY_POLL
 	queue->sock->sk->sk_ll_usec = 1;
-#पूर्ण_अगर
-	ग_लिखो_unlock_bh(&queue->sock->sk->sk_callback_lock);
+#endif
+	write_unlock_bh(&queue->sock->sk->sk_callback_lock);
 
-	वापस 0;
+	return 0;
 
 err_init_connect:
-	kernel_sock_shutकरोwn(queue->sock, SHUT_RDWR);
+	kernel_sock_shutdown(queue->sock, SHUT_RDWR);
 err_rcv_pdu:
-	kमुक्त(queue->pdu);
+	kfree(queue->pdu);
 err_crypto:
-	अगर (queue->hdr_digest || queue->data_digest)
-		nvme_tcp_मुक्त_crypto(queue);
+	if (queue->hdr_digest || queue->data_digest)
+		nvme_tcp_free_crypto(queue);
 err_sock:
 	sock_release(queue->sock);
-	queue->sock = शून्य;
+	queue->sock = NULL;
 err_destroy_mutex:
 	mutex_destroy(&queue->queue_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nvme_tcp_restore_sock_calls(काष्ठा nvme_tcp_queue *queue)
-अणु
-	काष्ठा socket *sock = queue->sock;
+static void nvme_tcp_restore_sock_calls(struct nvme_tcp_queue *queue)
+{
+	struct socket *sock = queue->sock;
 
-	ग_लिखो_lock_bh(&sock->sk->sk_callback_lock);
-	sock->sk->sk_user_data  = शून्य;
-	sock->sk->sk_data_पढ़ोy = queue->data_पढ़ोy;
+	write_lock_bh(&sock->sk->sk_callback_lock);
+	sock->sk->sk_user_data  = NULL;
+	sock->sk->sk_data_ready = queue->data_ready;
 	sock->sk->sk_state_change = queue->state_change;
-	sock->sk->sk_ग_लिखो_space  = queue->ग_लिखो_space;
-	ग_लिखो_unlock_bh(&sock->sk->sk_callback_lock);
-पूर्ण
+	sock->sk->sk_write_space  = queue->write_space;
+	write_unlock_bh(&sock->sk->sk_callback_lock);
+}
 
-अटल व्योम __nvme_tcp_stop_queue(काष्ठा nvme_tcp_queue *queue)
-अणु
-	kernel_sock_shutकरोwn(queue->sock, SHUT_RDWR);
+static void __nvme_tcp_stop_queue(struct nvme_tcp_queue *queue)
+{
+	kernel_sock_shutdown(queue->sock, SHUT_RDWR);
 	nvme_tcp_restore_sock_calls(queue);
 	cancel_work_sync(&queue->io_work);
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_stop_queue(काष्ठा nvme_ctrl *nctrl, पूर्णांक qid)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[qid];
+static void nvme_tcp_stop_queue(struct nvme_ctrl *nctrl, int qid)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+	struct nvme_tcp_queue *queue = &ctrl->queues[qid];
 
 	mutex_lock(&queue->queue_lock);
-	अगर (test_and_clear_bit(NVME_TCP_Q_LIVE, &queue->flags))
+	if (test_and_clear_bit(NVME_TCP_Q_LIVE, &queue->flags))
 		__nvme_tcp_stop_queue(queue);
 	mutex_unlock(&queue->queue_lock);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_start_queue(काष्ठा nvme_ctrl *nctrl, पूर्णांक idx)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
-	पूर्णांक ret;
+static int nvme_tcp_start_queue(struct nvme_ctrl *nctrl, int idx)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+	int ret;
 
-	अगर (idx)
+	if (idx)
 		ret = nvmf_connect_io_queue(nctrl, idx, false);
-	अन्यथा
+	else
 		ret = nvmf_connect_admin_queue(nctrl);
 
-	अगर (!ret) अणु
+	if (!ret) {
 		set_bit(NVME_TCP_Q_LIVE, &ctrl->queues[idx].flags);
-	पूर्ण अन्यथा अणु
-		अगर (test_bit(NVME_TCP_Q_ALLOCATED, &ctrl->queues[idx].flags))
+	} else {
+		if (test_bit(NVME_TCP_Q_ALLOCATED, &ctrl->queues[idx].flags))
 			__nvme_tcp_stop_queue(&ctrl->queues[idx]);
 		dev_err(nctrl->device,
 			"failed to connect queue: %d ret=%d\n", idx, ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल काष्ठा blk_mq_tag_set *nvme_tcp_alloc_tagset(काष्ठा nvme_ctrl *nctrl,
+static struct blk_mq_tag_set *nvme_tcp_alloc_tagset(struct nvme_ctrl *nctrl,
 		bool admin)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
-	काष्ठा blk_mq_tag_set *set;
-	पूर्णांक ret;
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+	struct blk_mq_tag_set *set;
+	int ret;
 
-	अगर (admin) अणु
+	if (admin) {
 		set = &ctrl->admin_tag_set;
-		स_रखो(set, 0, माप(*set));
+		memset(set, 0, sizeof(*set));
 		set->ops = &nvme_tcp_admin_mq_ops;
 		set->queue_depth = NVME_AQ_MQ_TAG_DEPTH;
 		set->reserved_tags = NVMF_RESERVED_TAGS;
 		set->numa_node = nctrl->numa_node;
 		set->flags = BLK_MQ_F_BLOCKING;
-		set->cmd_size = माप(काष्ठा nvme_tcp_request);
+		set->cmd_size = sizeof(struct nvme_tcp_request);
 		set->driver_data = ctrl;
 		set->nr_hw_queues = 1;
-		set->समयout = NVME_ADMIN_TIMEOUT;
-	पूर्ण अन्यथा अणु
+		set->timeout = NVME_ADMIN_TIMEOUT;
+	} else {
 		set = &ctrl->tag_set;
-		स_रखो(set, 0, माप(*set));
+		memset(set, 0, sizeof(*set));
 		set->ops = &nvme_tcp_mq_ops;
 		set->queue_depth = nctrl->sqsize + 1;
 		set->reserved_tags = NVMF_RESERVED_TAGS;
 		set->numa_node = nctrl->numa_node;
 		set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_BLOCKING;
-		set->cmd_size = माप(काष्ठा nvme_tcp_request);
+		set->cmd_size = sizeof(struct nvme_tcp_request);
 		set->driver_data = ctrl;
 		set->nr_hw_queues = nctrl->queue_count - 1;
-		set->समयout = NVME_IO_TIMEOUT;
+		set->timeout = NVME_IO_TIMEOUT;
 		set->nr_maps = nctrl->opts->nr_poll_queues ? HCTX_MAX_TYPES : 2;
-	पूर्ण
+	}
 
 	ret = blk_mq_alloc_tag_set(set);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	वापस set;
-पूर्ण
+	return set;
+}
 
-अटल व्योम nvme_tcp_मुक्त_admin_queue(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अगर (to_tcp_ctrl(ctrl)->async_req.pdu) अणु
+static void nvme_tcp_free_admin_queue(struct nvme_ctrl *ctrl)
+{
+	if (to_tcp_ctrl(ctrl)->async_req.pdu) {
 		cancel_work_sync(&ctrl->async_event_work);
-		nvme_tcp_मुक्त_async_req(to_tcp_ctrl(ctrl));
-		to_tcp_ctrl(ctrl)->async_req.pdu = शून्य;
-	पूर्ण
+		nvme_tcp_free_async_req(to_tcp_ctrl(ctrl));
+		to_tcp_ctrl(ctrl)->async_req.pdu = NULL;
+	}
 
-	nvme_tcp_मुक्त_queue(ctrl, 0);
-पूर्ण
+	nvme_tcp_free_queue(ctrl, 0);
+}
 
-अटल व्योम nvme_tcp_मुक्त_io_queues(काष्ठा nvme_ctrl *ctrl)
-अणु
-	पूर्णांक i;
+static void nvme_tcp_free_io_queues(struct nvme_ctrl *ctrl)
+{
+	int i;
 
-	क्रम (i = 1; i < ctrl->queue_count; i++)
-		nvme_tcp_मुक्त_queue(ctrl, i);
-पूर्ण
+	for (i = 1; i < ctrl->queue_count; i++)
+		nvme_tcp_free_queue(ctrl, i);
+}
 
-अटल व्योम nvme_tcp_stop_io_queues(काष्ठा nvme_ctrl *ctrl)
-अणु
-	पूर्णांक i;
+static void nvme_tcp_stop_io_queues(struct nvme_ctrl *ctrl)
+{
+	int i;
 
-	क्रम (i = 1; i < ctrl->queue_count; i++)
+	for (i = 1; i < ctrl->queue_count; i++)
 		nvme_tcp_stop_queue(ctrl, i);
-पूर्ण
+}
 
-अटल पूर्णांक nvme_tcp_start_io_queues(काष्ठा nvme_ctrl *ctrl)
-अणु
-	पूर्णांक i, ret = 0;
+static int nvme_tcp_start_io_queues(struct nvme_ctrl *ctrl)
+{
+	int i, ret = 0;
 
-	क्रम (i = 1; i < ctrl->queue_count; i++) अणु
+	for (i = 1; i < ctrl->queue_count; i++) {
 		ret = nvme_tcp_start_queue(ctrl, i);
-		अगर (ret)
-			जाओ out_stop_queues;
-	पूर्ण
+		if (ret)
+			goto out_stop_queues;
+	}
 
-	वापस 0;
+	return 0;
 
 out_stop_queues:
-	क्रम (i--; i >= 1; i--)
+	for (i--; i >= 1; i--)
 		nvme_tcp_stop_queue(ctrl, i);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक nvme_tcp_alloc_admin_queue(काष्ठा nvme_ctrl *ctrl)
-अणु
-	पूर्णांक ret;
+static int nvme_tcp_alloc_admin_queue(struct nvme_ctrl *ctrl)
+{
+	int ret;
 
 	ret = nvme_tcp_alloc_queue(ctrl, 0, NVME_AQ_DEPTH);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = nvme_tcp_alloc_async_req(to_tcp_ctrl(ctrl));
-	अगर (ret)
-		जाओ out_मुक्त_queue;
+	if (ret)
+		goto out_free_queue;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_queue:
-	nvme_tcp_मुक्त_queue(ctrl, 0);
-	वापस ret;
-पूर्ण
+out_free_queue:
+	nvme_tcp_free_queue(ctrl, 0);
+	return ret;
+}
 
-अटल पूर्णांक __nvme_tcp_alloc_io_queues(काष्ठा nvme_ctrl *ctrl)
-अणु
-	पूर्णांक i, ret;
+static int __nvme_tcp_alloc_io_queues(struct nvme_ctrl *ctrl)
+{
+	int i, ret;
 
-	क्रम (i = 1; i < ctrl->queue_count; i++) अणु
+	for (i = 1; i < ctrl->queue_count; i++) {
 		ret = nvme_tcp_alloc_queue(ctrl, i,
 				ctrl->sqsize + 1);
-		अगर (ret)
-			जाओ out_मुक्त_queues;
-	पूर्ण
+		if (ret)
+			goto out_free_queues;
+	}
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_queues:
-	क्रम (i--; i >= 1; i--)
-		nvme_tcp_मुक्त_queue(ctrl, i);
+out_free_queues:
+	for (i--; i >= 1; i--)
+		nvme_tcp_free_queue(ctrl, i);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अचिन्हित पूर्णांक nvme_tcp_nr_io_queues(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अचिन्हित पूर्णांक nr_io_queues;
+static unsigned int nvme_tcp_nr_io_queues(struct nvme_ctrl *ctrl)
+{
+	unsigned int nr_io_queues;
 
 	nr_io_queues = min(ctrl->opts->nr_io_queues, num_online_cpus());
-	nr_io_queues += min(ctrl->opts->nr_ग_लिखो_queues, num_online_cpus());
+	nr_io_queues += min(ctrl->opts->nr_write_queues, num_online_cpus());
 	nr_io_queues += min(ctrl->opts->nr_poll_queues, num_online_cpus());
 
-	वापस nr_io_queues;
-पूर्ण
+	return nr_io_queues;
+}
 
-अटल व्योम nvme_tcp_set_io_queues(काष्ठा nvme_ctrl *nctrl,
-		अचिन्हित पूर्णांक nr_io_queues)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
-	काष्ठा nvmf_ctrl_options *opts = nctrl->opts;
+static void nvme_tcp_set_io_queues(struct nvme_ctrl *nctrl,
+		unsigned int nr_io_queues)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+	struct nvmf_ctrl_options *opts = nctrl->opts;
 
-	अगर (opts->nr_ग_लिखो_queues && opts->nr_io_queues < nr_io_queues) अणु
+	if (opts->nr_write_queues && opts->nr_io_queues < nr_io_queues) {
 		/*
-		 * separate पढ़ो/ग_लिखो queues
-		 * hand out dedicated शेष queues only after we have
-		 * sufficient पढ़ो queues.
+		 * separate read/write queues
+		 * hand out dedicated default queues only after we have
+		 * sufficient read queues.
 		 */
 		ctrl->io_queues[HCTX_TYPE_READ] = opts->nr_io_queues;
 		nr_io_queues -= ctrl->io_queues[HCTX_TYPE_READ];
 		ctrl->io_queues[HCTX_TYPE_DEFAULT] =
-			min(opts->nr_ग_लिखो_queues, nr_io_queues);
+			min(opts->nr_write_queues, nr_io_queues);
 		nr_io_queues -= ctrl->io_queues[HCTX_TYPE_DEFAULT];
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
-		 * shared पढ़ो/ग_लिखो queues
-		 * either no ग_लिखो queues were requested, or we करोn't have
-		 * sufficient queue count to have dedicated शेष queues.
+		 * shared read/write queues
+		 * either no write queues were requested, or we don't have
+		 * sufficient queue count to have dedicated default queues.
 		 */
 		ctrl->io_queues[HCTX_TYPE_DEFAULT] =
 			min(opts->nr_io_queues, nr_io_queues);
 		nr_io_queues -= ctrl->io_queues[HCTX_TYPE_DEFAULT];
-	पूर्ण
+	}
 
-	अगर (opts->nr_poll_queues && nr_io_queues) अणु
-		/* map dedicated poll queues only अगर we have queues left */
+	if (opts->nr_poll_queues && nr_io_queues) {
+		/* map dedicated poll queues only if we have queues left */
 		ctrl->io_queues[HCTX_TYPE_POLL] =
 			min(opts->nr_poll_queues, nr_io_queues);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nvme_tcp_alloc_io_queues(काष्ठा nvme_ctrl *ctrl)
-अणु
-	अचिन्हित पूर्णांक nr_io_queues;
-	पूर्णांक ret;
+static int nvme_tcp_alloc_io_queues(struct nvme_ctrl *ctrl)
+{
+	unsigned int nr_io_queues;
+	int ret;
 
 	nr_io_queues = nvme_tcp_nr_io_queues(ctrl);
 	ret = nvme_set_queue_count(ctrl, &nr_io_queues);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ctrl->queue_count = nr_io_queues + 1;
-	अगर (ctrl->queue_count < 2) अणु
+	if (ctrl->queue_count < 2) {
 		dev_err(ctrl->device,
 			"unable to set any I/O queues\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	dev_info(ctrl->device,
 		"creating %d I/O queues.\n", nr_io_queues);
 
 	nvme_tcp_set_io_queues(ctrl, nr_io_queues);
 
-	वापस __nvme_tcp_alloc_io_queues(ctrl);
-पूर्ण
+	return __nvme_tcp_alloc_io_queues(ctrl);
+}
 
-अटल व्योम nvme_tcp_destroy_io_queues(काष्ठा nvme_ctrl *ctrl, bool हटाओ)
-अणु
+static void nvme_tcp_destroy_io_queues(struct nvme_ctrl *ctrl, bool remove)
+{
 	nvme_tcp_stop_io_queues(ctrl);
-	अगर (हटाओ) अणु
+	if (remove) {
 		blk_cleanup_queue(ctrl->connect_q);
-		blk_mq_मुक्त_tag_set(ctrl->tagset);
-	पूर्ण
-	nvme_tcp_मुक्त_io_queues(ctrl);
-पूर्ण
+		blk_mq_free_tag_set(ctrl->tagset);
+	}
+	nvme_tcp_free_io_queues(ctrl);
+}
 
-अटल पूर्णांक nvme_tcp_configure_io_queues(काष्ठा nvme_ctrl *ctrl, bool new)
-अणु
-	पूर्णांक ret;
+static int nvme_tcp_configure_io_queues(struct nvme_ctrl *ctrl, bool new)
+{
+	int ret;
 
 	ret = nvme_tcp_alloc_io_queues(ctrl);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (new) अणु
+	if (new) {
 		ctrl->tagset = nvme_tcp_alloc_tagset(ctrl, false);
-		अगर (IS_ERR(ctrl->tagset)) अणु
+		if (IS_ERR(ctrl->tagset)) {
 			ret = PTR_ERR(ctrl->tagset);
-			जाओ out_मुक्त_io_queues;
-		पूर्ण
+			goto out_free_io_queues;
+		}
 
 		ctrl->connect_q = blk_mq_init_queue(ctrl->tagset);
-		अगर (IS_ERR(ctrl->connect_q)) अणु
+		if (IS_ERR(ctrl->connect_q)) {
 			ret = PTR_ERR(ctrl->connect_q);
-			जाओ out_मुक्त_tag_set;
-		पूर्ण
-	पूर्ण
+			goto out_free_tag_set;
+		}
+	}
 
 	ret = nvme_tcp_start_io_queues(ctrl);
-	अगर (ret)
-		जाओ out_cleanup_connect_q;
+	if (ret)
+		goto out_cleanup_connect_q;
 
-	अगर (!new) अणु
+	if (!new) {
 		nvme_start_queues(ctrl);
-		अगर (!nvme_रुको_मुक्तze_समयout(ctrl, NVME_IO_TIMEOUT)) अणु
+		if (!nvme_wait_freeze_timeout(ctrl, NVME_IO_TIMEOUT)) {
 			/*
-			 * If we समयd out रुकोing क्रम मुक्तze we are likely to
+			 * If we timed out waiting for freeze we are likely to
 			 * be stuck.  Fail the controller initialization just
 			 * to be safe.
 			 */
 			ret = -ENODEV;
-			जाओ out_रुको_मुक्तze_समयd_out;
-		पूर्ण
+			goto out_wait_freeze_timed_out;
+		}
 		blk_mq_update_nr_hw_queues(ctrl->tagset,
 			ctrl->queue_count - 1);
-		nvme_unमुक्तze(ctrl);
-	पूर्ण
+		nvme_unfreeze(ctrl);
+	}
 
-	वापस 0;
+	return 0;
 
-out_रुको_मुक्तze_समयd_out:
+out_wait_freeze_timed_out:
 	nvme_stop_queues(ctrl);
 	nvme_sync_io_queues(ctrl);
 	nvme_tcp_stop_io_queues(ctrl);
 out_cleanup_connect_q:
 	nvme_cancel_tagset(ctrl);
-	अगर (new)
+	if (new)
 		blk_cleanup_queue(ctrl->connect_q);
-out_मुक्त_tag_set:
-	अगर (new)
-		blk_mq_मुक्त_tag_set(ctrl->tagset);
-out_मुक्त_io_queues:
-	nvme_tcp_मुक्त_io_queues(ctrl);
-	वापस ret;
-पूर्ण
+out_free_tag_set:
+	if (new)
+		blk_mq_free_tag_set(ctrl->tagset);
+out_free_io_queues:
+	nvme_tcp_free_io_queues(ctrl);
+	return ret;
+}
 
-अटल व्योम nvme_tcp_destroy_admin_queue(काष्ठा nvme_ctrl *ctrl, bool हटाओ)
-अणु
+static void nvme_tcp_destroy_admin_queue(struct nvme_ctrl *ctrl, bool remove)
+{
 	nvme_tcp_stop_queue(ctrl, 0);
-	अगर (हटाओ) अणु
+	if (remove) {
 		blk_cleanup_queue(ctrl->admin_q);
 		blk_cleanup_queue(ctrl->fabrics_q);
-		blk_mq_मुक्त_tag_set(ctrl->admin_tagset);
-	पूर्ण
-	nvme_tcp_मुक्त_admin_queue(ctrl);
-पूर्ण
+		blk_mq_free_tag_set(ctrl->admin_tagset);
+	}
+	nvme_tcp_free_admin_queue(ctrl);
+}
 
-अटल पूर्णांक nvme_tcp_configure_admin_queue(काष्ठा nvme_ctrl *ctrl, bool new)
-अणु
-	पूर्णांक error;
+static int nvme_tcp_configure_admin_queue(struct nvme_ctrl *ctrl, bool new)
+{
+	int error;
 
 	error = nvme_tcp_alloc_admin_queue(ctrl);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	अगर (new) अणु
+	if (new) {
 		ctrl->admin_tagset = nvme_tcp_alloc_tagset(ctrl, true);
-		अगर (IS_ERR(ctrl->admin_tagset)) अणु
+		if (IS_ERR(ctrl->admin_tagset)) {
 			error = PTR_ERR(ctrl->admin_tagset);
-			जाओ out_मुक्त_queue;
-		पूर्ण
+			goto out_free_queue;
+		}
 
 		ctrl->fabrics_q = blk_mq_init_queue(ctrl->admin_tagset);
-		अगर (IS_ERR(ctrl->fabrics_q)) अणु
+		if (IS_ERR(ctrl->fabrics_q)) {
 			error = PTR_ERR(ctrl->fabrics_q);
-			जाओ out_मुक्त_tagset;
-		पूर्ण
+			goto out_free_tagset;
+		}
 
 		ctrl->admin_q = blk_mq_init_queue(ctrl->admin_tagset);
-		अगर (IS_ERR(ctrl->admin_q)) अणु
+		if (IS_ERR(ctrl->admin_q)) {
 			error = PTR_ERR(ctrl->admin_q);
-			जाओ out_cleanup_fabrics_q;
-		पूर्ण
-	पूर्ण
+			goto out_cleanup_fabrics_q;
+		}
+	}
 
 	error = nvme_tcp_start_queue(ctrl, 0);
-	अगर (error)
-		जाओ out_cleanup_queue;
+	if (error)
+		goto out_cleanup_queue;
 
 	error = nvme_enable_ctrl(ctrl);
-	अगर (error)
-		जाओ out_stop_queue;
+	if (error)
+		goto out_stop_queue;
 
 	blk_mq_unquiesce_queue(ctrl->admin_q);
 
 	error = nvme_init_ctrl_finish(ctrl);
-	अगर (error)
-		जाओ out_quiesce_queue;
+	if (error)
+		goto out_quiesce_queue;
 
-	वापस 0;
+	return 0;
 
 out_quiesce_queue:
 	blk_mq_quiesce_queue(ctrl->admin_q);
@@ -1903,289 +1902,289 @@ out_stop_queue:
 	nvme_tcp_stop_queue(ctrl, 0);
 	nvme_cancel_admin_tagset(ctrl);
 out_cleanup_queue:
-	अगर (new)
+	if (new)
 		blk_cleanup_queue(ctrl->admin_q);
 out_cleanup_fabrics_q:
-	अगर (new)
+	if (new)
 		blk_cleanup_queue(ctrl->fabrics_q);
-out_मुक्त_tagset:
-	अगर (new)
-		blk_mq_मुक्त_tag_set(ctrl->admin_tagset);
-out_मुक्त_queue:
-	nvme_tcp_मुक्त_admin_queue(ctrl);
-	वापस error;
-पूर्ण
+out_free_tagset:
+	if (new)
+		blk_mq_free_tag_set(ctrl->admin_tagset);
+out_free_queue:
+	nvme_tcp_free_admin_queue(ctrl);
+	return error;
+}
 
-अटल व्योम nvme_tcp_tearकरोwn_admin_queue(काष्ठा nvme_ctrl *ctrl,
-		bool हटाओ)
-अणु
+static void nvme_tcp_teardown_admin_queue(struct nvme_ctrl *ctrl,
+		bool remove)
+{
 	blk_mq_quiesce_queue(ctrl->admin_q);
 	blk_sync_queue(ctrl->admin_q);
 	nvme_tcp_stop_queue(ctrl, 0);
 	nvme_cancel_admin_tagset(ctrl);
-	अगर (हटाओ)
+	if (remove)
 		blk_mq_unquiesce_queue(ctrl->admin_q);
-	nvme_tcp_destroy_admin_queue(ctrl, हटाओ);
-पूर्ण
+	nvme_tcp_destroy_admin_queue(ctrl, remove);
+}
 
-अटल व्योम nvme_tcp_tearकरोwn_io_queues(काष्ठा nvme_ctrl *ctrl,
-		bool हटाओ)
-अणु
-	अगर (ctrl->queue_count <= 1)
-		वापस;
+static void nvme_tcp_teardown_io_queues(struct nvme_ctrl *ctrl,
+		bool remove)
+{
+	if (ctrl->queue_count <= 1)
+		return;
 	blk_mq_quiesce_queue(ctrl->admin_q);
-	nvme_start_मुक्तze(ctrl);
+	nvme_start_freeze(ctrl);
 	nvme_stop_queues(ctrl);
 	nvme_sync_io_queues(ctrl);
 	nvme_tcp_stop_io_queues(ctrl);
 	nvme_cancel_tagset(ctrl);
-	अगर (हटाओ)
+	if (remove)
 		nvme_start_queues(ctrl);
-	nvme_tcp_destroy_io_queues(ctrl, हटाओ);
-पूर्ण
+	nvme_tcp_destroy_io_queues(ctrl, remove);
+}
 
-अटल व्योम nvme_tcp_reconnect_or_हटाओ(काष्ठा nvme_ctrl *ctrl)
-अणु
-	/* If we are resetting/deleting then करो nothing */
-	अगर (ctrl->state != NVME_CTRL_CONNECTING) अणु
+static void nvme_tcp_reconnect_or_remove(struct nvme_ctrl *ctrl)
+{
+	/* If we are resetting/deleting then do nothing */
+	if (ctrl->state != NVME_CTRL_CONNECTING) {
 		WARN_ON_ONCE(ctrl->state == NVME_CTRL_NEW ||
 			ctrl->state == NVME_CTRL_LIVE);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (nvmf_should_reconnect(ctrl)) अणु
+	if (nvmf_should_reconnect(ctrl)) {
 		dev_info(ctrl->device, "Reconnecting in %d seconds...\n",
 			ctrl->opts->reconnect_delay);
 		queue_delayed_work(nvme_wq, &to_tcp_ctrl(ctrl)->connect_work,
 				ctrl->opts->reconnect_delay * HZ);
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_info(ctrl->device, "Removing controller...\n");
 		nvme_delete_ctrl(ctrl);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक nvme_tcp_setup_ctrl(काष्ठा nvme_ctrl *ctrl, bool new)
-अणु
-	काष्ठा nvmf_ctrl_options *opts = ctrl->opts;
-	पूर्णांक ret;
+static int nvme_tcp_setup_ctrl(struct nvme_ctrl *ctrl, bool new)
+{
+	struct nvmf_ctrl_options *opts = ctrl->opts;
+	int ret;
 
 	ret = nvme_tcp_configure_admin_queue(ctrl, new);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (ctrl->icकरोff) अणु
+	if (ctrl->icdoff) {
 		dev_err(ctrl->device, "icdoff is not supported!\n");
-		जाओ destroy_admin;
-	पूर्ण
+		goto destroy_admin;
+	}
 
-	अगर (!(ctrl->sgls & ((1 << 0) | (1 << 1)))) अणु
+	if (!(ctrl->sgls & ((1 << 0) | (1 << 1)))) {
 		dev_err(ctrl->device, "Mandatory sgls are not supported!\n");
-		जाओ destroy_admin;
-	पूर्ण
+		goto destroy_admin;
+	}
 
-	अगर (opts->queue_size > ctrl->sqsize + 1)
+	if (opts->queue_size > ctrl->sqsize + 1)
 		dev_warn(ctrl->device,
 			"queue_size %zu > ctrl sqsize %u, clamping down\n",
 			opts->queue_size, ctrl->sqsize + 1);
 
-	अगर (ctrl->sqsize + 1 > ctrl->maxcmd) अणु
+	if (ctrl->sqsize + 1 > ctrl->maxcmd) {
 		dev_warn(ctrl->device,
 			"sqsize %u > ctrl maxcmd %u, clamping down\n",
 			ctrl->sqsize + 1, ctrl->maxcmd);
 		ctrl->sqsize = ctrl->maxcmd - 1;
-	पूर्ण
+	}
 
-	अगर (ctrl->queue_count > 1) अणु
+	if (ctrl->queue_count > 1) {
 		ret = nvme_tcp_configure_io_queues(ctrl, new);
-		अगर (ret)
-			जाओ destroy_admin;
-	पूर्ण
+		if (ret)
+			goto destroy_admin;
+	}
 
-	अगर (!nvme_change_ctrl_state(ctrl, NVME_CTRL_LIVE)) अणु
+	if (!nvme_change_ctrl_state(ctrl, NVME_CTRL_LIVE)) {
 		/*
-		 * state change failure is ok अगर we started ctrl delete,
+		 * state change failure is ok if we started ctrl delete,
 		 * unless we're during creation of a new controller to
-		 * aव्योम races with tearकरोwn flow.
+		 * avoid races with teardown flow.
 		 */
 		WARN_ON_ONCE(ctrl->state != NVME_CTRL_DELETING &&
 			     ctrl->state != NVME_CTRL_DELETING_NOIO);
 		WARN_ON_ONCE(new);
 		ret = -EINVAL;
-		जाओ destroy_io;
-	पूर्ण
+		goto destroy_io;
+	}
 
 	nvme_start_ctrl(ctrl);
-	वापस 0;
+	return 0;
 
 destroy_io:
-	अगर (ctrl->queue_count > 1) अणु
+	if (ctrl->queue_count > 1) {
 		nvme_stop_queues(ctrl);
 		nvme_sync_io_queues(ctrl);
 		nvme_tcp_stop_io_queues(ctrl);
 		nvme_cancel_tagset(ctrl);
 		nvme_tcp_destroy_io_queues(ctrl, new);
-	पूर्ण
+	}
 destroy_admin:
 	blk_mq_quiesce_queue(ctrl->admin_q);
 	blk_sync_queue(ctrl->admin_q);
 	nvme_tcp_stop_queue(ctrl, 0);
 	nvme_cancel_admin_tagset(ctrl);
 	nvme_tcp_destroy_admin_queue(ctrl, new);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम nvme_tcp_reconnect_ctrl_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvme_tcp_ctrl *tcp_ctrl = container_of(to_delayed_work(work),
-			काष्ठा nvme_tcp_ctrl, connect_work);
-	काष्ठा nvme_ctrl *ctrl = &tcp_ctrl->ctrl;
+static void nvme_tcp_reconnect_ctrl_work(struct work_struct *work)
+{
+	struct nvme_tcp_ctrl *tcp_ctrl = container_of(to_delayed_work(work),
+			struct nvme_tcp_ctrl, connect_work);
+	struct nvme_ctrl *ctrl = &tcp_ctrl->ctrl;
 
 	++ctrl->nr_reconnects;
 
-	अगर (nvme_tcp_setup_ctrl(ctrl, false))
-		जाओ requeue;
+	if (nvme_tcp_setup_ctrl(ctrl, false))
+		goto requeue;
 
 	dev_info(ctrl->device, "Successfully reconnected (%d attempt)\n",
 			ctrl->nr_reconnects);
 
 	ctrl->nr_reconnects = 0;
 
-	वापस;
+	return;
 
 requeue:
 	dev_info(ctrl->device, "Failed reconnect attempt %d\n",
 			ctrl->nr_reconnects);
-	nvme_tcp_reconnect_or_हटाओ(ctrl);
-पूर्ण
+	nvme_tcp_reconnect_or_remove(ctrl);
+}
 
-अटल व्योम nvme_tcp_error_recovery_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvme_tcp_ctrl *tcp_ctrl = container_of(work,
-				काष्ठा nvme_tcp_ctrl, err_work);
-	काष्ठा nvme_ctrl *ctrl = &tcp_ctrl->ctrl;
+static void nvme_tcp_error_recovery_work(struct work_struct *work)
+{
+	struct nvme_tcp_ctrl *tcp_ctrl = container_of(work,
+				struct nvme_tcp_ctrl, err_work);
+	struct nvme_ctrl *ctrl = &tcp_ctrl->ctrl;
 
 	nvme_stop_keep_alive(ctrl);
-	nvme_tcp_tearकरोwn_io_queues(ctrl, false);
+	nvme_tcp_teardown_io_queues(ctrl, false);
 	/* unquiesce to fail fast pending requests */
 	nvme_start_queues(ctrl);
-	nvme_tcp_tearकरोwn_admin_queue(ctrl, false);
+	nvme_tcp_teardown_admin_queue(ctrl, false);
 	blk_mq_unquiesce_queue(ctrl->admin_q);
 
-	अगर (!nvme_change_ctrl_state(ctrl, NVME_CTRL_CONNECTING)) अणु
-		/* state change failure is ok अगर we started ctrl delete */
+	if (!nvme_change_ctrl_state(ctrl, NVME_CTRL_CONNECTING)) {
+		/* state change failure is ok if we started ctrl delete */
 		WARN_ON_ONCE(ctrl->state != NVME_CTRL_DELETING &&
 			     ctrl->state != NVME_CTRL_DELETING_NOIO);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	nvme_tcp_reconnect_or_हटाओ(ctrl);
-पूर्ण
+	nvme_tcp_reconnect_or_remove(ctrl);
+}
 
-अटल व्योम nvme_tcp_tearकरोwn_ctrl(काष्ठा nvme_ctrl *ctrl, bool shutकरोwn)
-अणु
+static void nvme_tcp_teardown_ctrl(struct nvme_ctrl *ctrl, bool shutdown)
+{
 	cancel_work_sync(&to_tcp_ctrl(ctrl)->err_work);
 	cancel_delayed_work_sync(&to_tcp_ctrl(ctrl)->connect_work);
 
-	nvme_tcp_tearकरोwn_io_queues(ctrl, shutकरोwn);
+	nvme_tcp_teardown_io_queues(ctrl, shutdown);
 	blk_mq_quiesce_queue(ctrl->admin_q);
-	अगर (shutकरोwn)
-		nvme_shutकरोwn_ctrl(ctrl);
-	अन्यथा
+	if (shutdown)
+		nvme_shutdown_ctrl(ctrl);
+	else
 		nvme_disable_ctrl(ctrl);
-	nvme_tcp_tearकरोwn_admin_queue(ctrl, shutकरोwn);
-पूर्ण
+	nvme_tcp_teardown_admin_queue(ctrl, shutdown);
+}
 
-अटल व्योम nvme_tcp_delete_ctrl(काष्ठा nvme_ctrl *ctrl)
-अणु
-	nvme_tcp_tearकरोwn_ctrl(ctrl, true);
-पूर्ण
+static void nvme_tcp_delete_ctrl(struct nvme_ctrl *ctrl)
+{
+	nvme_tcp_teardown_ctrl(ctrl, true);
+}
 
-अटल व्योम nvme_reset_ctrl_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा nvme_ctrl *ctrl =
-		container_of(work, काष्ठा nvme_ctrl, reset_work);
+static void nvme_reset_ctrl_work(struct work_struct *work)
+{
+	struct nvme_ctrl *ctrl =
+		container_of(work, struct nvme_ctrl, reset_work);
 
 	nvme_stop_ctrl(ctrl);
-	nvme_tcp_tearकरोwn_ctrl(ctrl, false);
+	nvme_tcp_teardown_ctrl(ctrl, false);
 
-	अगर (!nvme_change_ctrl_state(ctrl, NVME_CTRL_CONNECTING)) अणु
-		/* state change failure is ok अगर we started ctrl delete */
+	if (!nvme_change_ctrl_state(ctrl, NVME_CTRL_CONNECTING)) {
+		/* state change failure is ok if we started ctrl delete */
 		WARN_ON_ONCE(ctrl->state != NVME_CTRL_DELETING &&
 			     ctrl->state != NVME_CTRL_DELETING_NOIO);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (nvme_tcp_setup_ctrl(ctrl, false))
-		जाओ out_fail;
+	if (nvme_tcp_setup_ctrl(ctrl, false))
+		goto out_fail;
 
-	वापस;
+	return;
 
 out_fail:
 	++ctrl->nr_reconnects;
-	nvme_tcp_reconnect_or_हटाओ(ctrl);
-पूर्ण
+	nvme_tcp_reconnect_or_remove(ctrl);
+}
 
-अटल व्योम nvme_tcp_मुक्त_ctrl(काष्ठा nvme_ctrl *nctrl)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
+static void nvme_tcp_free_ctrl(struct nvme_ctrl *nctrl)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(nctrl);
 
-	अगर (list_empty(&ctrl->list))
-		जाओ मुक्त_ctrl;
+	if (list_empty(&ctrl->list))
+		goto free_ctrl;
 
 	mutex_lock(&nvme_tcp_ctrl_mutex);
 	list_del(&ctrl->list);
 	mutex_unlock(&nvme_tcp_ctrl_mutex);
 
-	nvmf_मुक्त_options(nctrl->opts);
-मुक्त_ctrl:
-	kमुक्त(ctrl->queues);
-	kमुक्त(ctrl);
-पूर्ण
+	nvmf_free_options(nctrl->opts);
+free_ctrl:
+	kfree(ctrl->queues);
+	kfree(ctrl);
+}
 
-अटल व्योम nvme_tcp_set_sg_null(काष्ठा nvme_command *c)
-अणु
-	काष्ठा nvme_sgl_desc *sg = &c->common.dptr.sgl;
+static void nvme_tcp_set_sg_null(struct nvme_command *c)
+{
+	struct nvme_sgl_desc *sg = &c->common.dptr.sgl;
 
 	sg->addr = 0;
 	sg->length = 0;
 	sg->type = (NVME_TRANSPORT_SGL_DATA_DESC << 4) |
 			NVME_SGL_FMT_TRANSPORT_A;
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_set_sg_अंतरभूत(काष्ठा nvme_tcp_queue *queue,
-		काष्ठा nvme_command *c, u32 data_len)
-अणु
-	काष्ठा nvme_sgl_desc *sg = &c->common.dptr.sgl;
+static void nvme_tcp_set_sg_inline(struct nvme_tcp_queue *queue,
+		struct nvme_command *c, u32 data_len)
+{
+	struct nvme_sgl_desc *sg = &c->common.dptr.sgl;
 
-	sg->addr = cpu_to_le64(queue->ctrl->ctrl.icकरोff);
+	sg->addr = cpu_to_le64(queue->ctrl->ctrl.icdoff);
 	sg->length = cpu_to_le32(data_len);
 	sg->type = (NVME_SGL_FMT_DATA_DESC << 4) | NVME_SGL_FMT_OFFSET;
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_set_sg_host_data(काष्ठा nvme_command *c,
+static void nvme_tcp_set_sg_host_data(struct nvme_command *c,
 		u32 data_len)
-अणु
-	काष्ठा nvme_sgl_desc *sg = &c->common.dptr.sgl;
+{
+	struct nvme_sgl_desc *sg = &c->common.dptr.sgl;
 
 	sg->addr = 0;
 	sg->length = cpu_to_le32(data_len);
 	sg->type = (NVME_TRANSPORT_SGL_DATA_DESC << 4) |
 			NVME_SGL_FMT_TRANSPORT_A;
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_submit_async_event(काष्ठा nvme_ctrl *arg)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = to_tcp_ctrl(arg);
-	काष्ठा nvme_tcp_queue *queue = &ctrl->queues[0];
-	काष्ठा nvme_tcp_cmd_pdu *pdu = ctrl->async_req.pdu;
-	काष्ठा nvme_command *cmd = &pdu->cmd;
+static void nvme_tcp_submit_async_event(struct nvme_ctrl *arg)
+{
+	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(arg);
+	struct nvme_tcp_queue *queue = &ctrl->queues[0];
+	struct nvme_tcp_cmd_pdu *pdu = ctrl->async_req.pdu;
+	struct nvme_command *cmd = &pdu->cmd;
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
 
-	स_रखो(pdu, 0, माप(*pdu));
+	memset(pdu, 0, sizeof(*pdu));
 	pdu->hdr.type = nvme_tcp_cmd;
-	अगर (queue->hdr_digest)
+	if (queue->hdr_digest)
 		pdu->hdr.flags |= NVME_TCP_F_HDGST;
-	pdu->hdr.hlen = माप(*pdu);
+	pdu->hdr.hlen = sizeof(*pdu);
 	pdu->hdr.plen = cpu_to_le32(pdu->hdr.hlen + hdgst);
 
 	cmd->common.opcode = nvme_admin_async_event;
@@ -2195,41 +2194,41 @@ out_fail:
 
 	ctrl->async_req.state = NVME_TCP_SEND_CMD_PDU;
 	ctrl->async_req.offset = 0;
-	ctrl->async_req.curr_bio = शून्य;
+	ctrl->async_req.curr_bio = NULL;
 	ctrl->async_req.data_len = 0;
 
 	nvme_tcp_queue_request(&ctrl->async_req, true, true);
-पूर्ण
+}
 
-अटल व्योम nvme_tcp_complete_समयd_out(काष्ठा request *rq)
-अणु
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
-	काष्ठा nvme_ctrl *ctrl = &req->queue->ctrl->ctrl;
+static void nvme_tcp_complete_timed_out(struct request *rq)
+{
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+	struct nvme_ctrl *ctrl = &req->queue->ctrl->ctrl;
 
 	nvme_tcp_stop_queue(ctrl, nvme_tcp_queue_id(req->queue));
-	अगर (blk_mq_request_started(rq) && !blk_mq_request_completed(rq)) अणु
+	if (blk_mq_request_started(rq) && !blk_mq_request_completed(rq)) {
 		nvme_req(rq)->status = NVME_SC_HOST_ABORTED_CMD;
 		blk_mq_complete_request(rq);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल क्रमागत blk_eh_समयr_वापस
-nvme_tcp_समयout(काष्ठा request *rq, bool reserved)
-अणु
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
-	काष्ठा nvme_ctrl *ctrl = &req->queue->ctrl->ctrl;
-	काष्ठा nvme_tcp_cmd_pdu *pdu = req->pdu;
+static enum blk_eh_timer_return
+nvme_tcp_timeout(struct request *rq, bool reserved)
+{
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+	struct nvme_ctrl *ctrl = &req->queue->ctrl->ctrl;
+	struct nvme_tcp_cmd_pdu *pdu = req->pdu;
 
 	dev_warn(ctrl->device,
 		"queue %d: timeout request %#x type %d\n",
 		nvme_tcp_queue_id(req->queue), rq->tag, pdu->hdr.type);
 
-	अगर (ctrl->state != NVME_CTRL_LIVE) अणु
+	if (ctrl->state != NVME_CTRL_LIVE) {
 		/*
 		 * If we are resetting, connecting or deleting we should
 		 * complete immediately because we may block controller
-		 * tearकरोwn or setup sequence
-		 * - ctrl disable/shutकरोwn fabrics requests
+		 * teardown or setup sequence
+		 * - ctrl disable/shutdown fabrics requests
 		 * - connect requests
 		 * - initialization admin requests
 		 * - I/O requests that entered after unquiescing and
@@ -2238,50 +2237,50 @@ nvme_tcp_समयout(काष्ठा request *rq, bool reserved)
 		 * All other requests should be cancelled by the error
 		 * recovery work, so it's fine that we fail it here.
 		 */
-		nvme_tcp_complete_समयd_out(rq);
-		वापस BLK_EH_DONE;
-	पूर्ण
+		nvme_tcp_complete_timed_out(rq);
+		return BLK_EH_DONE;
+	}
 
 	/*
 	 * LIVE state should trigger the normal error recovery which will
 	 * handle completing this request.
 	 */
 	nvme_tcp_error_recovery(ctrl);
-	वापस BLK_EH_RESET_TIMER;
-पूर्ण
+	return BLK_EH_RESET_TIMER;
+}
 
-अटल blk_status_t nvme_tcp_map_data(काष्ठा nvme_tcp_queue *queue,
-			काष्ठा request *rq)
-अणु
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
-	काष्ठा nvme_tcp_cmd_pdu *pdu = req->pdu;
-	काष्ठा nvme_command *c = &pdu->cmd;
+static blk_status_t nvme_tcp_map_data(struct nvme_tcp_queue *queue,
+			struct request *rq)
+{
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+	struct nvme_tcp_cmd_pdu *pdu = req->pdu;
+	struct nvme_command *c = &pdu->cmd;
 
 	c->common.flags |= NVME_CMD_SGL_METABUF;
 
-	अगर (!blk_rq_nr_phys_segments(rq))
+	if (!blk_rq_nr_phys_segments(rq))
 		nvme_tcp_set_sg_null(c);
-	अन्यथा अगर (rq_data_dir(rq) == WRITE &&
-	    req->data_len <= nvme_tcp_अंतरभूत_data_size(queue))
-		nvme_tcp_set_sg_अंतरभूत(queue, c, req->data_len);
-	अन्यथा
+	else if (rq_data_dir(rq) == WRITE &&
+	    req->data_len <= nvme_tcp_inline_data_size(queue))
+		nvme_tcp_set_sg_inline(queue, c, req->data_len);
+	else
 		nvme_tcp_set_sg_host_data(c, req->data_len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल blk_status_t nvme_tcp_setup_cmd_pdu(काष्ठा nvme_ns *ns,
-		काष्ठा request *rq)
-अणु
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
-	काष्ठा nvme_tcp_cmd_pdu *pdu = req->pdu;
-	काष्ठा nvme_tcp_queue *queue = req->queue;
+static blk_status_t nvme_tcp_setup_cmd_pdu(struct nvme_ns *ns,
+		struct request *rq)
+{
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+	struct nvme_tcp_cmd_pdu *pdu = req->pdu;
+	struct nvme_tcp_queue *queue = req->queue;
 	u8 hdgst = nvme_tcp_hdgst_len(queue), ddgst = 0;
 	blk_status_t ret;
 
 	ret = nvme_setup_cmd(ns, rq);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	req->state = NVME_TCP_SEND_CMD_PDU;
 	req->offset = 0;
@@ -2291,76 +2290,76 @@ nvme_tcp_समयout(काष्ठा request *rq, bool reserved)
 	req->data_len = blk_rq_nr_phys_segments(rq) ?
 				blk_rq_payload_bytes(rq) : 0;
 	req->curr_bio = rq->bio;
-	अगर (req->curr_bio && req->data_len)
+	if (req->curr_bio && req->data_len)
 		nvme_tcp_init_iter(req, rq_data_dir(rq));
 
-	अगर (rq_data_dir(rq) == WRITE &&
-	    req->data_len <= nvme_tcp_अंतरभूत_data_size(queue))
+	if (rq_data_dir(rq) == WRITE &&
+	    req->data_len <= nvme_tcp_inline_data_size(queue))
 		req->pdu_len = req->data_len;
 
 	pdu->hdr.type = nvme_tcp_cmd;
 	pdu->hdr.flags = 0;
-	अगर (queue->hdr_digest)
+	if (queue->hdr_digest)
 		pdu->hdr.flags |= NVME_TCP_F_HDGST;
-	अगर (queue->data_digest && req->pdu_len) अणु
+	if (queue->data_digest && req->pdu_len) {
 		pdu->hdr.flags |= NVME_TCP_F_DDGST;
 		ddgst = nvme_tcp_ddgst_len(queue);
-	पूर्ण
-	pdu->hdr.hlen = माप(*pdu);
-	pdu->hdr.pकरो = req->pdu_len ? pdu->hdr.hlen + hdgst : 0;
+	}
+	pdu->hdr.hlen = sizeof(*pdu);
+	pdu->hdr.pdo = req->pdu_len ? pdu->hdr.hlen + hdgst : 0;
 	pdu->hdr.plen =
 		cpu_to_le32(pdu->hdr.hlen + hdgst + req->pdu_len + ddgst);
 
 	ret = nvme_tcp_map_data(queue, rq);
-	अगर (unlikely(ret)) अणु
+	if (unlikely(ret)) {
 		nvme_cleanup_cmd(rq);
 		dev_err(queue->ctrl->ctrl.device,
 			"Failed to map data (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम nvme_tcp_commit_rqs(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	काष्ठा nvme_tcp_queue *queue = hctx->driver_data;
+static void nvme_tcp_commit_rqs(struct blk_mq_hw_ctx *hctx)
+{
+	struct nvme_tcp_queue *queue = hctx->driver_data;
 
-	अगर (!llist_empty(&queue->req_list))
+	if (!llist_empty(&queue->req_list))
 		queue_work_on(queue->io_cpu, nvme_tcp_wq, &queue->io_work);
-पूर्ण
+}
 
-अटल blk_status_t nvme_tcp_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
-		स्थिर काष्ठा blk_mq_queue_data *bd)
-अणु
-	काष्ठा nvme_ns *ns = hctx->queue->queuedata;
-	काष्ठा nvme_tcp_queue *queue = hctx->driver_data;
-	काष्ठा request *rq = bd->rq;
-	काष्ठा nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
-	bool queue_पढ़ोy = test_bit(NVME_TCP_Q_LIVE, &queue->flags);
+static blk_status_t nvme_tcp_queue_rq(struct blk_mq_hw_ctx *hctx,
+		const struct blk_mq_queue_data *bd)
+{
+	struct nvme_ns *ns = hctx->queue->queuedata;
+	struct nvme_tcp_queue *queue = hctx->driver_data;
+	struct request *rq = bd->rq;
+	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+	bool queue_ready = test_bit(NVME_TCP_Q_LIVE, &queue->flags);
 	blk_status_t ret;
 
-	अगर (!nvme_check_पढ़ोy(&queue->ctrl->ctrl, rq, queue_पढ़ोy))
-		वापस nvme_fail_nonपढ़ोy_command(&queue->ctrl->ctrl, rq);
+	if (!nvme_check_ready(&queue->ctrl->ctrl, rq, queue_ready))
+		return nvme_fail_nonready_command(&queue->ctrl->ctrl, rq);
 
 	ret = nvme_tcp_setup_cmd_pdu(ns, rq);
-	अगर (unlikely(ret))
-		वापस ret;
+	if (unlikely(ret))
+		return ret;
 
 	blk_mq_start_request(rq);
 
 	nvme_tcp_queue_request(req, true, bd->last);
 
-	वापस BLK_STS_OK;
-पूर्ण
+	return BLK_STS_OK;
+}
 
-अटल पूर्णांक nvme_tcp_map_queues(काष्ठा blk_mq_tag_set *set)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl = set->driver_data;
-	काष्ठा nvmf_ctrl_options *opts = ctrl->ctrl.opts;
+static int nvme_tcp_map_queues(struct blk_mq_tag_set *set)
+{
+	struct nvme_tcp_ctrl *ctrl = set->driver_data;
+	struct nvmf_ctrl_options *opts = ctrl->ctrl.opts;
 
-	अगर (opts->nr_ग_लिखो_queues && ctrl->io_queues[HCTX_TYPE_READ]) अणु
-		/* separate पढ़ो/ग_लिखो queues */
+	if (opts->nr_write_queues && ctrl->io_queues[HCTX_TYPE_READ]) {
+		/* separate read/write queues */
 		set->map[HCTX_TYPE_DEFAULT].nr_queues =
 			ctrl->io_queues[HCTX_TYPE_DEFAULT];
 		set->map[HCTX_TYPE_DEFAULT].queue_offset = 0;
@@ -2368,27 +2367,27 @@ nvme_tcp_समयout(काष्ठा request *rq, bool reserved)
 			ctrl->io_queues[HCTX_TYPE_READ];
 		set->map[HCTX_TYPE_READ].queue_offset =
 			ctrl->io_queues[HCTX_TYPE_DEFAULT];
-	पूर्ण अन्यथा अणु
-		/* shared पढ़ो/ग_लिखो queues */
+	} else {
+		/* shared read/write queues */
 		set->map[HCTX_TYPE_DEFAULT].nr_queues =
 			ctrl->io_queues[HCTX_TYPE_DEFAULT];
 		set->map[HCTX_TYPE_DEFAULT].queue_offset = 0;
 		set->map[HCTX_TYPE_READ].nr_queues =
 			ctrl->io_queues[HCTX_TYPE_DEFAULT];
 		set->map[HCTX_TYPE_READ].queue_offset = 0;
-	पूर्ण
+	}
 	blk_mq_map_queues(&set->map[HCTX_TYPE_DEFAULT]);
 	blk_mq_map_queues(&set->map[HCTX_TYPE_READ]);
 
-	अगर (opts->nr_poll_queues && ctrl->io_queues[HCTX_TYPE_POLL]) अणु
-		/* map dedicated poll queues only अगर we have queues left */
+	if (opts->nr_poll_queues && ctrl->io_queues[HCTX_TYPE_POLL]) {
+		/* map dedicated poll queues only if we have queues left */
 		set->map[HCTX_TYPE_POLL].nr_queues =
 				ctrl->io_queues[HCTX_TYPE_POLL];
 		set->map[HCTX_TYPE_POLL].queue_offset =
 			ctrl->io_queues[HCTX_TYPE_DEFAULT] +
 			ctrl->io_queues[HCTX_TYPE_READ];
 		blk_mq_map_queues(&set->map[HCTX_TYPE_POLL]);
-	पूर्ण
+	}
 
 	dev_info(ctrl->ctrl.device,
 		"mapped %d/%d/%d default/read/poll queues.\n",
@@ -2396,89 +2395,89 @@ nvme_tcp_समयout(काष्ठा request *rq, bool reserved)
 		ctrl->io_queues[HCTX_TYPE_READ],
 		ctrl->io_queues[HCTX_TYPE_POLL]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nvme_tcp_poll(काष्ठा blk_mq_hw_ctx *hctx)
-अणु
-	काष्ठा nvme_tcp_queue *queue = hctx->driver_data;
-	काष्ठा sock *sk = queue->sock->sk;
+static int nvme_tcp_poll(struct blk_mq_hw_ctx *hctx)
+{
+	struct nvme_tcp_queue *queue = hctx->driver_data;
+	struct sock *sk = queue->sock->sk;
 
-	अगर (!test_bit(NVME_TCP_Q_LIVE, &queue->flags))
-		वापस 0;
+	if (!test_bit(NVME_TCP_Q_LIVE, &queue->flags))
+		return 0;
 
 	set_bit(NVME_TCP_Q_POLLING, &queue->flags);
-	अगर (sk_can_busy_loop(sk) && skb_queue_empty_lockless(&sk->sk_receive_queue))
+	if (sk_can_busy_loop(sk) && skb_queue_empty_lockless(&sk->sk_receive_queue))
 		sk_busy_loop(sk, true);
 	nvme_tcp_try_recv(queue);
 	clear_bit(NVME_TCP_Q_POLLING, &queue->flags);
-	वापस queue->nr_cqe;
-पूर्ण
+	return queue->nr_cqe;
+}
 
-अटल स्थिर काष्ठा blk_mq_ops nvme_tcp_mq_ops = अणु
+static const struct blk_mq_ops nvme_tcp_mq_ops = {
 	.queue_rq	= nvme_tcp_queue_rq,
 	.commit_rqs	= nvme_tcp_commit_rqs,
 	.complete	= nvme_complete_rq,
 	.init_request	= nvme_tcp_init_request,
-	.निकास_request	= nvme_tcp_निकास_request,
+	.exit_request	= nvme_tcp_exit_request,
 	.init_hctx	= nvme_tcp_init_hctx,
-	.समयout	= nvme_tcp_समयout,
+	.timeout	= nvme_tcp_timeout,
 	.map_queues	= nvme_tcp_map_queues,
 	.poll		= nvme_tcp_poll,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा blk_mq_ops nvme_tcp_admin_mq_ops = अणु
+static const struct blk_mq_ops nvme_tcp_admin_mq_ops = {
 	.queue_rq	= nvme_tcp_queue_rq,
 	.complete	= nvme_complete_rq,
 	.init_request	= nvme_tcp_init_request,
-	.निकास_request	= nvme_tcp_निकास_request,
+	.exit_request	= nvme_tcp_exit_request,
 	.init_hctx	= nvme_tcp_init_admin_hctx,
-	.समयout	= nvme_tcp_समयout,
-पूर्ण;
+	.timeout	= nvme_tcp_timeout,
+};
 
-अटल स्थिर काष्ठा nvme_ctrl_ops nvme_tcp_ctrl_ops = अणु
+static const struct nvme_ctrl_ops nvme_tcp_ctrl_ops = {
 	.name			= "tcp",
 	.module			= THIS_MODULE,
 	.flags			= NVME_F_FABRICS,
-	.reg_पढ़ो32		= nvmf_reg_पढ़ो32,
-	.reg_पढ़ो64		= nvmf_reg_पढ़ो64,
-	.reg_ग_लिखो32		= nvmf_reg_ग_लिखो32,
-	.मुक्त_ctrl		= nvme_tcp_मुक्त_ctrl,
+	.reg_read32		= nvmf_reg_read32,
+	.reg_read64		= nvmf_reg_read64,
+	.reg_write32		= nvmf_reg_write32,
+	.free_ctrl		= nvme_tcp_free_ctrl,
 	.submit_async_event	= nvme_tcp_submit_async_event,
 	.delete_ctrl		= nvme_tcp_delete_ctrl,
 	.get_address		= nvmf_get_address,
-पूर्ण;
+};
 
-अटल bool
-nvme_tcp_existing_controller(काष्ठा nvmf_ctrl_options *opts)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl;
+static bool
+nvme_tcp_existing_controller(struct nvmf_ctrl_options *opts)
+{
+	struct nvme_tcp_ctrl *ctrl;
 	bool found = false;
 
 	mutex_lock(&nvme_tcp_ctrl_mutex);
-	list_क्रम_each_entry(ctrl, &nvme_tcp_ctrl_list, list) अणु
+	list_for_each_entry(ctrl, &nvme_tcp_ctrl_list, list) {
 		found = nvmf_ip_options_match(&ctrl->ctrl, opts);
-		अगर (found)
-			अवरोध;
-	पूर्ण
+		if (found)
+			break;
+	}
 	mutex_unlock(&nvme_tcp_ctrl_mutex);
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल काष्ठा nvme_ctrl *nvme_tcp_create_ctrl(काष्ठा device *dev,
-		काष्ठा nvmf_ctrl_options *opts)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl;
-	पूर्णांक ret;
+static struct nvme_ctrl *nvme_tcp_create_ctrl(struct device *dev,
+		struct nvmf_ctrl_options *opts)
+{
+	struct nvme_tcp_ctrl *ctrl;
+	int ret;
 
-	ctrl = kzalloc(माप(*ctrl), GFP_KERNEL);
-	अगर (!ctrl)
-		वापस ERR_PTR(-ENOMEM);
+	ctrl = kzalloc(sizeof(*ctrl), GFP_KERNEL);
+	if (!ctrl)
+		return ERR_PTR(-ENOMEM);
 
 	INIT_LIST_HEAD(&ctrl->list);
 	ctrl->ctrl.opts = opts;
-	ctrl->ctrl.queue_count = opts->nr_io_queues + opts->nr_ग_लिखो_queues +
+	ctrl->ctrl.queue_count = opts->nr_io_queues + opts->nr_write_queues +
 				opts->nr_poll_queues + 1;
 	ctrl->ctrl.sqsize = opts->queue_size - 1;
 	ctrl->ctrl.kato = opts->kato;
@@ -2488,59 +2487,59 @@ nvme_tcp_existing_controller(काष्ठा nvmf_ctrl_options *opts)
 	INIT_WORK(&ctrl->err_work, nvme_tcp_error_recovery_work);
 	INIT_WORK(&ctrl->ctrl.reset_work, nvme_reset_ctrl_work);
 
-	अगर (!(opts->mask & NVMF_OPT_TRSVCID)) अणु
+	if (!(opts->mask & NVMF_OPT_TRSVCID)) {
 		opts->trsvcid =
-			kstrdup(__stringअगरy(NVME_TCP_DISC_PORT), GFP_KERNEL);
-		अगर (!opts->trsvcid) अणु
+			kstrdup(__stringify(NVME_TCP_DISC_PORT), GFP_KERNEL);
+		if (!opts->trsvcid) {
 			ret = -ENOMEM;
-			जाओ out_मुक्त_ctrl;
-		पूर्ण
+			goto out_free_ctrl;
+		}
 		opts->mask |= NVMF_OPT_TRSVCID;
-	पूर्ण
+	}
 
 	ret = inet_pton_with_scope(&init_net, AF_UNSPEC,
 			opts->traddr, opts->trsvcid, &ctrl->addr);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("malformed address passed: %s:%s\n",
 			opts->traddr, opts->trsvcid);
-		जाओ out_मुक्त_ctrl;
-	पूर्ण
+		goto out_free_ctrl;
+	}
 
-	अगर (opts->mask & NVMF_OPT_HOST_TRADDR) अणु
+	if (opts->mask & NVMF_OPT_HOST_TRADDR) {
 		ret = inet_pton_with_scope(&init_net, AF_UNSPEC,
-			opts->host_traddr, शून्य, &ctrl->src_addr);
-		अगर (ret) अणु
+			opts->host_traddr, NULL, &ctrl->src_addr);
+		if (ret) {
 			pr_err("malformed src address passed: %s\n",
 			       opts->host_traddr);
-			जाओ out_मुक्त_ctrl;
-		पूर्ण
-	पूर्ण
+			goto out_free_ctrl;
+		}
+	}
 
-	अगर (!opts->duplicate_connect && nvme_tcp_existing_controller(opts)) अणु
+	if (!opts->duplicate_connect && nvme_tcp_existing_controller(opts)) {
 		ret = -EALREADY;
-		जाओ out_मुक्त_ctrl;
-	पूर्ण
+		goto out_free_ctrl;
+	}
 
-	ctrl->queues = kसुस्मृति(ctrl->ctrl.queue_count, माप(*ctrl->queues),
+	ctrl->queues = kcalloc(ctrl->ctrl.queue_count, sizeof(*ctrl->queues),
 				GFP_KERNEL);
-	अगर (!ctrl->queues) अणु
+	if (!ctrl->queues) {
 		ret = -ENOMEM;
-		जाओ out_मुक्त_ctrl;
-	पूर्ण
+		goto out_free_ctrl;
+	}
 
 	ret = nvme_init_ctrl(&ctrl->ctrl, dev, &nvme_tcp_ctrl_ops, 0);
-	अगर (ret)
-		जाओ out_kमुक्त_queues;
+	if (ret)
+		goto out_kfree_queues;
 
-	अगर (!nvme_change_ctrl_state(&ctrl->ctrl, NVME_CTRL_CONNECTING)) अणु
+	if (!nvme_change_ctrl_state(&ctrl->ctrl, NVME_CTRL_CONNECTING)) {
 		WARN_ON_ONCE(1);
 		ret = -EINTR;
-		जाओ out_uninit_ctrl;
-	पूर्ण
+		goto out_uninit_ctrl;
+	}
 
 	ret = nvme_tcp_setup_ctrl(&ctrl->ctrl, true);
-	अगर (ret)
-		जाओ out_uninit_ctrl;
+	if (ret)
+		goto out_uninit_ctrl;
 
 	dev_info(ctrl->ctrl.device, "new ctrl: NQN \"%s\", addr %pISp\n",
 		ctrl->ctrl.opts->subsysnqn, &ctrl->addr);
@@ -2549,22 +2548,22 @@ nvme_tcp_existing_controller(काष्ठा nvmf_ctrl_options *opts)
 	list_add_tail(&ctrl->list, &nvme_tcp_ctrl_list);
 	mutex_unlock(&nvme_tcp_ctrl_mutex);
 
-	वापस &ctrl->ctrl;
+	return &ctrl->ctrl;
 
 out_uninit_ctrl:
 	nvme_uninit_ctrl(&ctrl->ctrl);
 	nvme_put_ctrl(&ctrl->ctrl);
-	अगर (ret > 0)
+	if (ret > 0)
 		ret = -EIO;
-	वापस ERR_PTR(ret);
-out_kमुक्त_queues:
-	kमुक्त(ctrl->queues);
-out_मुक्त_ctrl:
-	kमुक्त(ctrl);
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+out_kfree_queues:
+	kfree(ctrl->queues);
+out_free_ctrl:
+	kfree(ctrl);
+	return ERR_PTR(ret);
+}
 
-अटल काष्ठा nvmf_transport_ops nvme_tcp_transport = अणु
+static struct nvmf_transport_ops nvme_tcp_transport = {
 	.name		= "tcp",
 	.module		= THIS_MODULE,
 	.required_opts	= NVMF_OPT_TRADDR,
@@ -2574,35 +2573,35 @@ out_मुक्त_ctrl:
 			  NVMF_OPT_NR_WRITE_QUEUES | NVMF_OPT_NR_POLL_QUEUES |
 			  NVMF_OPT_TOS,
 	.create_ctrl	= nvme_tcp_create_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nvme_tcp_init_module(व्योम)
-अणु
+static int __init nvme_tcp_init_module(void)
+{
 	nvme_tcp_wq = alloc_workqueue("nvme_tcp_wq",
 			WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
-	अगर (!nvme_tcp_wq)
-		वापस -ENOMEM;
+	if (!nvme_tcp_wq)
+		return -ENOMEM;
 
-	nvmf_रेजिस्टर_transport(&nvme_tcp_transport);
-	वापस 0;
-पूर्ण
+	nvmf_register_transport(&nvme_tcp_transport);
+	return 0;
+}
 
-अटल व्योम __निकास nvme_tcp_cleanup_module(व्योम)
-अणु
-	काष्ठा nvme_tcp_ctrl *ctrl;
+static void __exit nvme_tcp_cleanup_module(void)
+{
+	struct nvme_tcp_ctrl *ctrl;
 
-	nvmf_unरेजिस्टर_transport(&nvme_tcp_transport);
+	nvmf_unregister_transport(&nvme_tcp_transport);
 
 	mutex_lock(&nvme_tcp_ctrl_mutex);
-	list_क्रम_each_entry(ctrl, &nvme_tcp_ctrl_list, list)
+	list_for_each_entry(ctrl, &nvme_tcp_ctrl_list, list)
 		nvme_delete_ctrl(&ctrl->ctrl);
 	mutex_unlock(&nvme_tcp_ctrl_mutex);
 	flush_workqueue(nvme_delete_wq);
 
 	destroy_workqueue(nvme_tcp_wq);
-पूर्ण
+}
 
 module_init(nvme_tcp_init_module);
-module_निकास(nvme_tcp_cleanup_module);
+module_exit(nvme_tcp_cleanup_module);
 
 MODULE_LICENSE("GPL v2");

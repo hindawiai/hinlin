@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Define the string that exports the set of kernel-supported
  * Kerberos enctypes. This list is sent via upcall to gssd, and
@@ -8,10 +7,10 @@
  * is the most preferred.
  */
 
-#अगर_अघोषित _LINUX_SUNRPC_GSS_KRB5_ENCTYPES_H
-#घोषणा _LINUX_SUNRPC_GSS_KRB5_ENCTYPES_H
+#ifndef _LINUX_SUNRPC_GSS_KRB5_ENCTYPES_H
+#define _LINUX_SUNRPC_GSS_KRB5_ENCTYPES_H
 
-#अगर_घोषित CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES
+#ifdef CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES
 
 /*
  * NB: This list includes DES3_CBC_SHA1, which was deprecated by RFC 8429.
@@ -20,9 +19,9 @@
  * ENCTYPE_AES128_CTS_HMAC_SHA1_96
  * ENCTYPE_DES3_CBC_SHA1
  */
-#घोषणा KRB5_SUPPORTED_ENCTYPES "18,17,16"
+#define KRB5_SUPPORTED_ENCTYPES "18,17,16"
 
-#अन्यथा	/* CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES */
+#else	/* CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES */
 
 /*
  * NB: This list includes encryption types that were deprecated
@@ -35,8 +34,8 @@
  * ENCTYPE_DES_CBC_CRC
  * ENCTYPE_DES_CBC_MD4
  */
-#घोषणा KRB5_SUPPORTED_ENCTYPES "18,17,16,3,1,2"
+#define KRB5_SUPPORTED_ENCTYPES "18,17,16,3,1,2"
 
-#पूर्ण_अगर	/* CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES */
+#endif	/* CONFIG_SUNRPC_DISABLE_INSECURE_ENCTYPES */
 
-#पूर्ण_अगर	/* _LINUX_SUNRPC_GSS_KRB5_ENCTYPES_H */
+#endif	/* _LINUX_SUNRPC_GSS_KRB5_ENCTYPES_H */

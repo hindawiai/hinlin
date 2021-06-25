@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * isl9305 - Intersil ISL9305 DCDC regulator
  *
@@ -8,67 +7,67 @@
  * Author: Mark Brown <broonie@kernel.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/err.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_data/isl9305.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/regulator/driver.h>
-#समावेश <linux/regulator/of_regulator.h>
-#समावेश <linux/slab.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/of.h>
+#include <linux/platform_data/isl9305.h>
+#include <linux/regmap.h>
+#include <linux/regulator/driver.h>
+#include <linux/regulator/of_regulator.h>
+#include <linux/slab.h>
 
 /*
  * Registers
  */
-#घोषणा ISL9305_DCD1OUT          0x0
-#घोषणा ISL9305_DCD2OUT          0x1
-#घोषणा ISL9305_LDO1OUT          0x2
-#घोषणा ISL9305_LDO2OUT          0x3
-#घोषणा ISL9305_DCD_PARAMETER    0x4
-#घोषणा ISL9305_SYSTEM_PARAMETER 0x5
-#घोषणा ISL9305_DCD_SRCTL        0x6
+#define ISL9305_DCD1OUT          0x0
+#define ISL9305_DCD2OUT          0x1
+#define ISL9305_LDO1OUT          0x2
+#define ISL9305_LDO2OUT          0x3
+#define ISL9305_DCD_PARAMETER    0x4
+#define ISL9305_SYSTEM_PARAMETER 0x5
+#define ISL9305_DCD_SRCTL        0x6
 
-#घोषणा ISL9305_MAX_REG ISL9305_DCD_SRCTL
+#define ISL9305_MAX_REG ISL9305_DCD_SRCTL
 
 /*
  * DCD_PARAMETER
  */
-#घोषणा ISL9305_DCD_PHASE   0x40
-#घोषणा ISL9305_DCD2_ULTRA  0x20
-#घोषणा ISL9305_DCD1_ULTRA  0x10
-#घोषणा ISL9305_DCD2_BLD    0x08
-#घोषणा ISL9305_DCD1_BLD    0x04
-#घोषणा ISL9305_DCD2_MODE   0x02
-#घोषणा ISL9305_DCD1_MODE   0x01
+#define ISL9305_DCD_PHASE   0x40
+#define ISL9305_DCD2_ULTRA  0x20
+#define ISL9305_DCD1_ULTRA  0x10
+#define ISL9305_DCD2_BLD    0x08
+#define ISL9305_DCD1_BLD    0x04
+#define ISL9305_DCD2_MODE   0x02
+#define ISL9305_DCD1_MODE   0x01
 
 /*
  * SYSTEM_PARAMETER
  */
-#घोषणा ISL9305_I2C_EN      0x40
-#घोषणा ISL9305_DCDPOR_MASK 0x30
-#घोषणा ISL9305_LDO2_EN     0x08
-#घोषणा ISL9305_LDO1_EN     0x04
-#घोषणा ISL9305_DCD2_EN     0x02
-#घोषणा ISL9305_DCD1_EN     0x01
+#define ISL9305_I2C_EN      0x40
+#define ISL9305_DCDPOR_MASK 0x30
+#define ISL9305_LDO2_EN     0x08
+#define ISL9305_LDO1_EN     0x04
+#define ISL9305_DCD2_EN     0x02
+#define ISL9305_DCD1_EN     0x01
 
 /*
  * DCD_SRCTL
  */
-#घोषणा ISL9305_DCD2SR_MASK 0xc0
-#घोषणा ISL9305_DCD1SR_MASK 0x07
+#define ISL9305_DCD2SR_MASK 0xc0
+#define ISL9305_DCD1SR_MASK 0x07
 
-अटल स्थिर काष्ठा regulator_ops isl9305_ops = अणु
+static const struct regulator_ops isl9305_ops = {
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
 	.list_voltage = regulator_list_voltage_linear,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा regulator_desc isl9305_regulators[] = अणु
-	[ISL9305_DCD1] = अणु
+static const struct regulator_desc isl9305_regulators[] = {
+	[ISL9305_DCD1] = {
 		.name =		"DCD1",
 		.of_match =	of_match_ptr("dcd1"),
 		.regulators_node = of_match_ptr("regulators"),
@@ -82,8 +81,8 @@
 		.supply_name =	"VINDCD1",
 		.ops =		&isl9305_ops,
 		.owner =	THIS_MODULE,
-	पूर्ण,
-	[ISL9305_DCD2] = अणु
+	},
+	[ISL9305_DCD2] = {
 		.name =		"DCD2",
 		.of_match =	of_match_ptr("dcd2"),
 		.regulators_node = of_match_ptr("regulators"),
@@ -97,8 +96,8 @@
 		.supply_name =	"VINDCD2",
 		.ops =		&isl9305_ops,
 		.owner =	THIS_MODULE,
-	पूर्ण,
-	[ISL9305_LDO1] = अणु
+	},
+	[ISL9305_LDO1] = {
 		.name =		"LDO1",
 		.of_match =	of_match_ptr("ldo1"),
 		.regulators_node = of_match_ptr("regulators"),
@@ -112,8 +111,8 @@
 		.supply_name =	"VINLDO1",
 		.ops =		&isl9305_ops,
 		.owner =	THIS_MODULE,
-	पूर्ण,
-	[ISL9305_LDO2] = अणु
+	},
+	[ISL9305_LDO2] = {
 		.name =		"LDO2",
 		.of_match =	of_match_ptr("ldo2"),
 		.regulators_node = of_match_ptr("regulators"),
@@ -127,80 +126,80 @@
 		.supply_name =	"VINLDO2",
 		.ops =		&isl9305_ops,
 		.owner =	THIS_MODULE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा regmap_config isl9305_regmap = अणु
+static const struct regmap_config isl9305_regmap = {
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_रेजिस्टर = ISL9305_MAX_REG,
+	.max_register = ISL9305_MAX_REG,
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 
-अटल पूर्णांक isl9305_i2c_probe(काष्ठा i2c_client *i2c)
-अणु
-	काष्ठा regulator_config config = अणु पूर्ण;
-	काष्ठा isl9305_pdata *pdata = i2c->dev.platक्रमm_data;
-	काष्ठा regulator_dev *rdev;
-	काष्ठा regmap *regmap;
-	पूर्णांक i, ret;
+static int isl9305_i2c_probe(struct i2c_client *i2c)
+{
+	struct regulator_config config = { };
+	struct isl9305_pdata *pdata = i2c->dev.platform_data;
+	struct regulator_dev *rdev;
+	struct regmap *regmap;
+	int i, ret;
 
 	regmap = devm_regmap_init_i2c(i2c, &isl9305_regmap);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		ret = PTR_ERR(regmap);
 		dev_err(&i2c->dev, "Failed to create regmap: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	config.dev = &i2c->dev;
 
-	क्रम (i = 0; i < ARRAY_SIZE(isl9305_regulators); i++) अणु
-		अगर (pdata)
+	for (i = 0; i < ARRAY_SIZE(isl9305_regulators); i++) {
+		if (pdata)
 			config.init_data = pdata->init_data[i];
-		अन्यथा
-			config.init_data = शून्य;
+		else
+			config.init_data = NULL;
 
-		rdev = devm_regulator_रेजिस्टर(&i2c->dev,
+		rdev = devm_regulator_register(&i2c->dev,
 					       &isl9305_regulators[i],
 					       &config);
-		अगर (IS_ERR(rdev)) अणु
+		if (IS_ERR(rdev)) {
 			ret = PTR_ERR(rdev);
 			dev_err(&i2c->dev, "Failed to register %s: %d\n",
 				isl9305_regulators[i].name, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id isl9305_dt_ids[] = अणु
-	अणु .compatible = "isl,isl9305" पूर्ण, /* क्रम backward compat., करोn't use */
-	अणु .compatible = "isil,isl9305" पूर्ण,
-	अणु .compatible = "isl,isl9305h" पूर्ण, /* क्रम backward compat., करोn't use */
-	अणु .compatible = "isil,isl9305h" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id isl9305_dt_ids[] = {
+	{ .compatible = "isl,isl9305" }, /* for backward compat., don't use */
+	{ .compatible = "isil,isl9305" },
+	{ .compatible = "isl,isl9305h" }, /* for backward compat., don't use */
+	{ .compatible = "isil,isl9305h" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, isl9305_dt_ids);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा i2c_device_id isl9305_i2c_id[] = अणु
-	अणु "isl9305", पूर्ण,
-	अणु "isl9305h", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id isl9305_i2c_id[] = {
+	{ "isl9305", },
+	{ "isl9305h", },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, isl9305_i2c_id);
 
-अटल काष्ठा i2c_driver isl9305_regulator_driver = अणु
-	.driver = अणु
+static struct i2c_driver isl9305_regulator_driver = {
+	.driver = {
 		.name = "isl9305",
 		.of_match_table	= of_match_ptr(isl9305_dt_ids),
-	पूर्ण,
+	},
 	.probe_new = isl9305_i2c_probe,
 	.id_table = isl9305_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(isl9305_regulator_driver);
 

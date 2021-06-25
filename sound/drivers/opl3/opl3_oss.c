@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Interface क्रम OSS sequencer emulation
+ *  Interface for OSS sequencer emulation
  *
  *  Copyright (C) 2000 Uros Bizjak <uros@kss-loka.si>
  */
 
-#समावेश <linux/export.h>
-#समावेश "opl3_voice.h"
+#include <linux/export.h>
+#include "opl3_voice.h"
 
-अटल पूर्णांक snd_opl3_खोलो_seq_oss(काष्ठा snd_seq_oss_arg *arg, व्योम *closure);
-अटल पूर्णांक snd_opl3_बंद_seq_oss(काष्ठा snd_seq_oss_arg *arg);
-अटल पूर्णांक snd_opl3_ioctl_seq_oss(काष्ठा snd_seq_oss_arg *arg, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ ioarg);
-अटल पूर्णांक snd_opl3_load_patch_seq_oss(काष्ठा snd_seq_oss_arg *arg, पूर्णांक क्रमmat, स्थिर अक्षर __user *buf, पूर्णांक offs, पूर्णांक count);
-अटल पूर्णांक snd_opl3_reset_seq_oss(काष्ठा snd_seq_oss_arg *arg);
+static int snd_opl3_open_seq_oss(struct snd_seq_oss_arg *arg, void *closure);
+static int snd_opl3_close_seq_oss(struct snd_seq_oss_arg *arg);
+static int snd_opl3_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd, unsigned long ioarg);
+static int snd_opl3_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format, const char __user *buf, int offs, int count);
+static int snd_opl3_reset_seq_oss(struct snd_seq_oss_arg *arg);
 
-/* चालकs */
+/* operators */
 
-अटल स्थिर काष्ठा snd_seq_oss_callback oss_callback = अणु
+static const struct snd_seq_oss_callback oss_callback = {
 	.owner = 	THIS_MODULE,
-	.खोलो =		snd_opl3_खोलो_seq_oss,
-	.बंद =	snd_opl3_बंद_seq_oss,
+	.open =		snd_opl3_open_seq_oss,
+	.close =	snd_opl3_close_seq_oss,
 	.ioctl =	snd_opl3_ioctl_seq_oss,
 	.load_patch =	snd_opl3_load_patch_seq_oss,
 	.reset =	snd_opl3_reset_seq_oss,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_opl3_oss_event_input(काष्ठा snd_seq_event *ev, पूर्णांक direct,
-				    व्योम *निजी_data, पूर्णांक atomic, पूर्णांक hop)
-अणु
-	काष्ठा snd_opl3 *opl3 = निजी_data;
+static int snd_opl3_oss_event_input(struct snd_seq_event *ev, int direct,
+				    void *private_data, int atomic, int hop)
+{
+	struct snd_opl3 *opl3 = private_data;
 
-	अगर (ev->type != SNDRV_SEQ_EVENT_OSS)
+	if (ev->type != SNDRV_SEQ_EVENT_OSS)
 		snd_midi_process_event(&opl3_ops, ev, opl3->oss_chset);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ------------------------------ */
 
-अटल व्योम snd_opl3_oss_मुक्त_port(व्योम *निजी_data)
-अणु
-	काष्ठा snd_opl3 *opl3 = निजी_data;
+static void snd_opl3_oss_free_port(void *private_data)
+{
+	struct snd_opl3 *opl3 = private_data;
 
-	snd_midi_channel_मुक्त_set(opl3->oss_chset);
-पूर्ण
+	snd_midi_channel_free_set(opl3->oss_chset);
+}
 
-अटल पूर्णांक snd_opl3_oss_create_port(काष्ठा snd_opl3 * opl3)
-अणु
-	काष्ठा snd_seq_port_callback callbacks;
-	अक्षर name[32];
-	पूर्णांक voices, opl_ver;
+static int snd_opl3_oss_create_port(struct snd_opl3 * opl3)
+{
+	struct snd_seq_port_callback callbacks;
+	char name[32];
+	int voices, opl_ver;
 
 	voices = (opl3->hardware < OPL3_HW_OPL3) ?
 		MAX_OPL2_VOICES : MAX_OPL3_VOICES;
 	opl3->oss_chset = snd_midi_channel_alloc_set(voices);
-	अगर (opl3->oss_chset == शून्य)
-		वापस -ENOMEM;
-	opl3->oss_chset->निजी_data = opl3;
+	if (opl3->oss_chset == NULL)
+		return -ENOMEM;
+	opl3->oss_chset->private_data = opl3;
 
-	स_रखो(&callbacks, 0, माप(callbacks));
+	memset(&callbacks, 0, sizeof(callbacks));
 	callbacks.owner = THIS_MODULE;
 	callbacks.event_input = snd_opl3_oss_event_input;
-	callbacks.निजी_मुक्त = snd_opl3_oss_मुक्त_port;
-	callbacks.निजी_data = opl3;
+	callbacks.private_free = snd_opl3_oss_free_port;
+	callbacks.private_data = opl3;
 
 	opl_ver = (opl3->hardware & OPL3_HW_MASK) >> 8;
-	प्र_लिखो(name, "OPL%i OSS Port", opl_ver);
+	sprintf(name, "OPL%i OSS Port", opl_ver);
 
 	opl3->oss_chset->client = opl3->seq_client;
 	opl3->oss_chset->port = snd_seq_event_port_attach(opl3->seq_client, &callbacks,
@@ -76,176 +75,176 @@
 							  SNDRV_SEQ_PORT_TYPE_SYNTHESIZER,
 							  voices, voices,
 							  name);
-	अगर (opl3->oss_chset->port < 0) अणु
-		पूर्णांक port;
+	if (opl3->oss_chset->port < 0) {
+		int port;
 		port = opl3->oss_chset->port;
-		snd_midi_channel_मुक्त_set(opl3->oss_chset);
-		वापस port;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		snd_midi_channel_free_set(opl3->oss_chset);
+		return port;
+	}
+	return 0;
+}
 
 /* ------------------------------ */
 
-/* रेजिस्टर OSS synth */
-व्योम snd_opl3_init_seq_oss(काष्ठा snd_opl3 *opl3, अक्षर *name)
-अणु
-	काष्ठा snd_seq_oss_reg *arg;
-	काष्ठा snd_seq_device *dev;
+/* register OSS synth */
+void snd_opl3_init_seq_oss(struct snd_opl3 *opl3, char *name)
+{
+	struct snd_seq_oss_reg *arg;
+	struct snd_seq_device *dev;
 
-	अगर (snd_seq_device_new(opl3->card, 0, SNDRV_SEQ_DEV_ID_OSS,
-			       माप(काष्ठा snd_seq_oss_reg), &dev) < 0)
-		वापस;
+	if (snd_seq_device_new(opl3->card, 0, SNDRV_SEQ_DEV_ID_OSS,
+			       sizeof(struct snd_seq_oss_reg), &dev) < 0)
+		return;
 
 	opl3->oss_seq_dev = dev;
-	strscpy(dev->name, name, माप(dev->name));
+	strscpy(dev->name, name, sizeof(dev->name));
 	arg = SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	arg->type = SYNTH_TYPE_FM;
-	अगर (opl3->hardware < OPL3_HW_OPL3) अणु
+	if (opl3->hardware < OPL3_HW_OPL3) {
 		arg->subtype = FM_TYPE_ADLIB;
 		arg->nvoices = MAX_OPL2_VOICES;
-	पूर्ण अन्यथा अणु
+	} else {
 		arg->subtype = FM_TYPE_OPL3;
 		arg->nvoices = MAX_OPL3_VOICES;
-	पूर्ण
+	}
 	arg->oper = oss_callback;
-	arg->निजी_data = opl3;
+	arg->private_data = opl3;
 
-	अगर (snd_opl3_oss_create_port(opl3)) अणु
-		/* रेजिस्टर to OSS synth table */
-		snd_device_रेजिस्टर(opl3->card, dev);
-	पूर्ण
-पूर्ण
+	if (snd_opl3_oss_create_port(opl3)) {
+		/* register to OSS synth table */
+		snd_device_register(opl3->card, dev);
+	}
+}
 
-/* unरेजिस्टर */
-व्योम snd_opl3_मुक्त_seq_oss(काष्ठा snd_opl3 *opl3)
-अणु
-	अगर (opl3->oss_seq_dev) अणु
+/* unregister */
+void snd_opl3_free_seq_oss(struct snd_opl3 *opl3)
+{
+	if (opl3->oss_seq_dev) {
 		/* The instance should have been released in prior */
-		opl3->oss_seq_dev = शून्य;
-	पूर्ण
-पूर्ण
+		opl3->oss_seq_dev = NULL;
+	}
+}
 
 /* ------------------------------ */
 
-/* खोलो OSS sequencer */
-अटल पूर्णांक snd_opl3_खोलो_seq_oss(काष्ठा snd_seq_oss_arg *arg, व्योम *closure)
-अणु
-	काष्ठा snd_opl3 *opl3 = closure;
-	पूर्णांक err;
+/* open OSS sequencer */
+static int snd_opl3_open_seq_oss(struct snd_seq_oss_arg *arg, void *closure)
+{
+	struct snd_opl3 *opl3 = closure;
+	int err;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
 
-	अगर ((err = snd_opl3_synth_setup(opl3)) < 0)
-		वापस err;
+	if ((err = snd_opl3_synth_setup(opl3)) < 0)
+		return err;
 
 	/* fill the argument data */
-	arg->निजी_data = opl3;
+	arg->private_data = opl3;
 	arg->addr.client = opl3->oss_chset->client;
 	arg->addr.port = opl3->oss_chset->port;
 
-	अगर ((err = snd_opl3_synth_use_inc(opl3)) < 0)
-		वापस err;
+	if ((err = snd_opl3_synth_use_inc(opl3)) < 0)
+		return err;
 
 	opl3->synth_mode = SNDRV_OPL3_MODE_SYNTH;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* बंद OSS sequencer */
-अटल पूर्णांक snd_opl3_बंद_seq_oss(काष्ठा snd_seq_oss_arg *arg)
-अणु
-	काष्ठा snd_opl3 *opl3;
+/* close OSS sequencer */
+static int snd_opl3_close_seq_oss(struct snd_seq_oss_arg *arg)
+{
+	struct snd_opl3 *opl3;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	opl3 = arg->निजी_data;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	opl3 = arg->private_data;
 
 	snd_opl3_synth_cleanup(opl3);
 
 	snd_opl3_synth_use_dec(opl3);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* load patch */
 
 /* from sound_config.h */
-#घोषणा SBFM_MAXINSTR	256
+#define SBFM_MAXINSTR	256
 
-अटल पूर्णांक snd_opl3_load_patch_seq_oss(काष्ठा snd_seq_oss_arg *arg, पूर्णांक क्रमmat,
-				       स्थिर अक्षर __user *buf, पूर्णांक offs, पूर्णांक count)
-अणु
-	काष्ठा snd_opl3 *opl3;
-	काष्ठा sbi_instrument sbi;
-	अक्षर name[32];
-	पूर्णांक err, type;
+static int snd_opl3_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
+				       const char __user *buf, int offs, int count)
+{
+	struct snd_opl3 *opl3;
+	struct sbi_instrument sbi;
+	char name[32];
+	int err, type;
 
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	opl3 = arg->निजी_data;
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	opl3 = arg->private_data;
 
-	अगर (क्रमmat == FM_PATCH)
+	if (format == FM_PATCH)
 		type = FM_PATCH_OPL2;
-	अन्यथा अगर (क्रमmat == OPL3_PATCH)
+	else if (format == OPL3_PATCH)
 		type = FM_PATCH_OPL3;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	अगर (count < (पूर्णांक)माप(sbi)) अणु
-		snd_prपूर्णांकk(KERN_ERR "FM Error: Patch record too short\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (copy_from_user(&sbi, buf, माप(sbi)))
-		वापस -EFAULT;
+	if (count < (int)sizeof(sbi)) {
+		snd_printk(KERN_ERR "FM Error: Patch record too short\n");
+		return -EINVAL;
+	}
+	if (copy_from_user(&sbi, buf, sizeof(sbi)))
+		return -EFAULT;
 
-	अगर (sbi.channel < 0 || sbi.channel >= SBFM_MAXINSTR) अणु
-		snd_prपूर्णांकk(KERN_ERR "FM Error: Invalid instrument number %d\n",
+	if (sbi.channel < 0 || sbi.channel >= SBFM_MAXINSTR) {
+		snd_printk(KERN_ERR "FM Error: Invalid instrument number %d\n",
 			   sbi.channel);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_रखो(name, 0, माप(name));
-	प्र_लिखो(name, "Chan%d", sbi.channel);
+	memset(name, 0, sizeof(name));
+	sprintf(name, "Chan%d", sbi.channel);
 
-	err = snd_opl3_load_patch(opl3, sbi.channel, 127, type, name, शून्य,
-				  sbi.चालकs);
-	अगर (err < 0)
-		वापस err;
+	err = snd_opl3_load_patch(opl3, sbi.channel, 127, type, name, NULL,
+				  sbi.operators);
+	if (err < 0)
+		return err;
 
-	वापस माप(sbi);
-पूर्ण
+	return sizeof(sbi);
+}
 
 /* ioctl */
-अटल पूर्णांक snd_opl3_ioctl_seq_oss(काष्ठा snd_seq_oss_arg *arg, अचिन्हित पूर्णांक cmd,
-				  अचिन्हित दीर्घ ioarg)
-अणु
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
-	चयन (cmd) अणु
-		हाल SNDCTL_FM_LOAD_INSTR:
-			snd_prपूर्णांकk(KERN_ERR "OPL3: "
+static int snd_opl3_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd,
+				  unsigned long ioarg)
+{
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
+	switch (cmd) {
+		case SNDCTL_FM_LOAD_INSTR:
+			snd_printk(KERN_ERR "OPL3: "
 				   "Obsolete ioctl(SNDCTL_FM_LOAD_INSTR) used. "
 				   "Fix the program.\n");
-			वापस -EINVAL;
+			return -EINVAL;
 
-		हाल SNDCTL_SYNTH_MEMAVL:
-			वापस 0x7fffffff;
+		case SNDCTL_SYNTH_MEMAVL:
+			return 0x7fffffff;
 
-		हाल SNDCTL_FM_4OP_ENABLE:
-			// handled स्वतःmatically by OPL instrument type
-			वापस 0;
+		case SNDCTL_FM_4OP_ENABLE:
+			// handled automatically by OPL instrument type
+			return 0;
 
-		शेष:
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		default:
+			return -EINVAL;
+	}
+	return 0;
+}
 
 /* reset device */
-अटल पूर्णांक snd_opl3_reset_seq_oss(काष्ठा snd_seq_oss_arg *arg)
-अणु
-	अगर (snd_BUG_ON(!arg))
-		वापस -ENXIO;
+static int snd_opl3_reset_seq_oss(struct snd_seq_oss_arg *arg)
+{
+	if (snd_BUG_ON(!arg))
+		return -ENXIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

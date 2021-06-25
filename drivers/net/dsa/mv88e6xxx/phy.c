@@ -1,247 +1,246 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Marvell 88e6xxx Ethernet चयन PHY and PPU support
+ * Marvell 88e6xxx Ethernet switch PHY and PPU support
  *
  * Copyright (c) 2008 Marvell Semiconductor
  *
  * Copyright (c) 2017 Andrew Lunn <andrew@lunn.ch>
  */
 
-#समावेश <linux/mdपन.स>
-#समावेश <linux/module.h>
+#include <linux/mdio.h>
+#include <linux/module.h>
 
-#समावेश "chip.h"
-#समावेश "phy.h"
+#include "chip.h"
+#include "phy.h"
 
-पूर्णांक mv88e6165_phy_पढ़ो(काष्ठा mv88e6xxx_chip *chip, काष्ठा mii_bus *bus,
-		       पूर्णांक addr, पूर्णांक reg, u16 *val)
-अणु
-	वापस mv88e6xxx_पढ़ो(chip, addr, reg, val);
-पूर्ण
+int mv88e6165_phy_read(struct mv88e6xxx_chip *chip, struct mii_bus *bus,
+		       int addr, int reg, u16 *val)
+{
+	return mv88e6xxx_read(chip, addr, reg, val);
+}
 
-पूर्णांक mv88e6165_phy_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, काष्ठा mii_bus *bus,
-			पूर्णांक addr, पूर्णांक reg, u16 val)
-अणु
-	वापस mv88e6xxx_ग_लिखो(chip, addr, reg, val);
-पूर्ण
+int mv88e6165_phy_write(struct mv88e6xxx_chip *chip, struct mii_bus *bus,
+			int addr, int reg, u16 val)
+{
+	return mv88e6xxx_write(chip, addr, reg, val);
+}
 
-पूर्णांक mv88e6xxx_phy_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक phy, पूर्णांक reg, u16 *val)
-अणु
-	पूर्णांक addr = phy; /* PHY devices addresses start at 0x0 */
-	काष्ठा mii_bus *bus;
+int mv88e6xxx_phy_read(struct mv88e6xxx_chip *chip, int phy, int reg, u16 *val)
+{
+	int addr = phy; /* PHY devices addresses start at 0x0 */
+	struct mii_bus *bus;
 
-	bus = mv88e6xxx_शेष_mdio_bus(chip);
-	अगर (!bus)
-		वापस -EOPNOTSUPP;
+	bus = mv88e6xxx_default_mdio_bus(chip);
+	if (!bus)
+		return -EOPNOTSUPP;
 
-	अगर (!chip->info->ops->phy_पढ़ो)
-		वापस -EOPNOTSUPP;
+	if (!chip->info->ops->phy_read)
+		return -EOPNOTSUPP;
 
-	वापस chip->info->ops->phy_पढ़ो(chip, bus, addr, reg, val);
-पूर्ण
+	return chip->info->ops->phy_read(chip, bus, addr, reg, val);
+}
 
-पूर्णांक mv88e6xxx_phy_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक phy, पूर्णांक reg, u16 val)
-अणु
-	पूर्णांक addr = phy; /* PHY devices addresses start at 0x0 */
-	काष्ठा mii_bus *bus;
+int mv88e6xxx_phy_write(struct mv88e6xxx_chip *chip, int phy, int reg, u16 val)
+{
+	int addr = phy; /* PHY devices addresses start at 0x0 */
+	struct mii_bus *bus;
 
-	bus = mv88e6xxx_शेष_mdio_bus(chip);
-	अगर (!bus)
-		वापस -EOPNOTSUPP;
+	bus = mv88e6xxx_default_mdio_bus(chip);
+	if (!bus)
+		return -EOPNOTSUPP;
 
-	अगर (!chip->info->ops->phy_ग_लिखो)
-		वापस -EOPNOTSUPP;
+	if (!chip->info->ops->phy_write)
+		return -EOPNOTSUPP;
 
-	वापस chip->info->ops->phy_ग_लिखो(chip, bus, addr, reg, val);
-पूर्ण
+	return chip->info->ops->phy_write(chip, bus, addr, reg, val);
+}
 
-अटल पूर्णांक mv88e6xxx_phy_page_get(काष्ठा mv88e6xxx_chip *chip, पूर्णांक phy, u8 page)
-अणु
-	वापस mv88e6xxx_phy_ग_लिखो(chip, phy, MV88E6XXX_PHY_PAGE, page);
-पूर्ण
+static int mv88e6xxx_phy_page_get(struct mv88e6xxx_chip *chip, int phy, u8 page)
+{
+	return mv88e6xxx_phy_write(chip, phy, MV88E6XXX_PHY_PAGE, page);
+}
 
-अटल व्योम mv88e6xxx_phy_page_put(काष्ठा mv88e6xxx_chip *chip, पूर्णांक phy)
-अणु
-	पूर्णांक err;
+static void mv88e6xxx_phy_page_put(struct mv88e6xxx_chip *chip, int phy)
+{
+	int err;
 
-	/* Restore PHY page Copper 0x0 क्रम access via the रेजिस्टरed
+	/* Restore PHY page Copper 0x0 for access via the registered
 	 * MDIO bus
 	 */
-	err = mv88e6xxx_phy_ग_लिखो(chip, phy, MV88E6XXX_PHY_PAGE,
+	err = mv88e6xxx_phy_write(chip, phy, MV88E6XXX_PHY_PAGE,
 				  MV88E6XXX_PHY_PAGE_COPPER);
-	अगर (unlikely(err)) अणु
+	if (unlikely(err)) {
 		dev_err(chip->dev,
 			"failed to restore PHY %d page Copper (%d)\n",
 			phy, err);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक mv88e6xxx_phy_page_पढ़ो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक phy,
-			    u8 page, पूर्णांक reg, u16 *val)
-अणु
-	पूर्णांक err;
+int mv88e6xxx_phy_page_read(struct mv88e6xxx_chip *chip, int phy,
+			    u8 page, int reg, u16 *val)
+{
+	int err;
 
-	/* There is no paging क्रम रेजिस्टरs 22 */
-	अगर (reg == MV88E6XXX_PHY_PAGE)
-		वापस -EINVAL;
-
-	err = mv88e6xxx_phy_page_get(chip, phy, page);
-	अगर (!err) अणु
-		err = mv88e6xxx_phy_पढ़ो(chip, phy, reg, val);
-		mv88e6xxx_phy_page_put(chip, phy);
-	पूर्ण
-
-	वापस err;
-पूर्ण
-
-पूर्णांक mv88e6xxx_phy_page_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, पूर्णांक phy,
-			     u8 page, पूर्णांक reg, u16 val)
-अणु
-	पूर्णांक err;
-
-	/* There is no paging क्रम रेजिस्टरs 22 */
-	अगर (reg == MV88E6XXX_PHY_PAGE)
-		वापस -EINVAL;
+	/* There is no paging for registers 22 */
+	if (reg == MV88E6XXX_PHY_PAGE)
+		return -EINVAL;
 
 	err = mv88e6xxx_phy_page_get(chip, phy, page);
-	अगर (!err) अणु
-		err = mv88e6xxx_phy_ग_लिखो(chip, phy, MV88E6XXX_PHY_PAGE, page);
-		अगर (!err)
-			err = mv88e6xxx_phy_ग_लिखो(chip, phy, reg, val);
+	if (!err) {
+		err = mv88e6xxx_phy_read(chip, phy, reg, val);
+		mv88e6xxx_phy_page_put(chip, phy);
+	}
+
+	return err;
+}
+
+int mv88e6xxx_phy_page_write(struct mv88e6xxx_chip *chip, int phy,
+			     u8 page, int reg, u16 val)
+{
+	int err;
+
+	/* There is no paging for registers 22 */
+	if (reg == MV88E6XXX_PHY_PAGE)
+		return -EINVAL;
+
+	err = mv88e6xxx_phy_page_get(chip, phy, page);
+	if (!err) {
+		err = mv88e6xxx_phy_write(chip, phy, MV88E6XXX_PHY_PAGE, page);
+		if (!err)
+			err = mv88e6xxx_phy_write(chip, phy, reg, val);
 
 		mv88e6xxx_phy_page_put(chip, phy);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mv88e6xxx_phy_ppu_disable(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	अगर (!chip->info->ops->ppu_disable)
-		वापस 0;
+static int mv88e6xxx_phy_ppu_disable(struct mv88e6xxx_chip *chip)
+{
+	if (!chip->info->ops->ppu_disable)
+		return 0;
 
-	वापस chip->info->ops->ppu_disable(chip);
-पूर्ण
+	return chip->info->ops->ppu_disable(chip);
+}
 
-अटल पूर्णांक mv88e6xxx_phy_ppu_enable(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	अगर (!chip->info->ops->ppu_enable)
-		वापस 0;
+static int mv88e6xxx_phy_ppu_enable(struct mv88e6xxx_chip *chip)
+{
+	if (!chip->info->ops->ppu_enable)
+		return 0;
 
-	वापस chip->info->ops->ppu_enable(chip);
-पूर्ण
+	return chip->info->ops->ppu_enable(chip);
+}
 
-अटल व्योम mv88e6xxx_phy_ppu_reenable_work(काष्ठा work_काष्ठा *ugly)
-अणु
-	काष्ठा mv88e6xxx_chip *chip;
+static void mv88e6xxx_phy_ppu_reenable_work(struct work_struct *ugly)
+{
+	struct mv88e6xxx_chip *chip;
 
-	chip = container_of(ugly, काष्ठा mv88e6xxx_chip, ppu_work);
+	chip = container_of(ugly, struct mv88e6xxx_chip, ppu_work);
 
 	mv88e6xxx_reg_lock(chip);
 
-	अगर (mutex_trylock(&chip->ppu_mutex)) अणु
-		अगर (mv88e6xxx_phy_ppu_enable(chip) == 0)
+	if (mutex_trylock(&chip->ppu_mutex)) {
+		if (mv88e6xxx_phy_ppu_enable(chip) == 0)
 			chip->ppu_disabled = 0;
 		mutex_unlock(&chip->ppu_mutex);
-	पूर्ण
+	}
 
 	mv88e6xxx_reg_unlock(chip);
-पूर्ण
+}
 
-अटल व्योम mv88e6xxx_phy_ppu_reenable_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा mv88e6xxx_chip *chip = from_समयr(chip, t, ppu_समयr);
+static void mv88e6xxx_phy_ppu_reenable_timer(struct timer_list *t)
+{
+	struct mv88e6xxx_chip *chip = from_timer(chip, t, ppu_timer);
 
 	schedule_work(&chip->ppu_work);
-पूर्ण
+}
 
-अटल पूर्णांक mv88e6xxx_phy_ppu_access_get(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	पूर्णांक ret;
+static int mv88e6xxx_phy_ppu_access_get(struct mv88e6xxx_chip *chip)
+{
+	int ret;
 
 	mutex_lock(&chip->ppu_mutex);
 
 	/* If the PHY polling unit is enabled, disable it so that
-	 * we can access the PHY रेजिस्टरs.  If it was alपढ़ोy
-	 * disabled, cancel the समयr that is going to re-enable
+	 * we can access the PHY registers.  If it was already
+	 * disabled, cancel the timer that is going to re-enable
 	 * it.
 	 */
-	अगर (!chip->ppu_disabled) अणु
+	if (!chip->ppu_disabled) {
 		ret = mv88e6xxx_phy_ppu_disable(chip);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			mutex_unlock(&chip->ppu_mutex);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 		chip->ppu_disabled = 1;
-	पूर्ण अन्यथा अणु
-		del_समयr(&chip->ppu_समयr);
+	} else {
+		del_timer(&chip->ppu_timer);
 		ret = 0;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mv88e6xxx_phy_ppu_access_put(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	/* Schedule a समयr to re-enable the PHY polling unit. */
-	mod_समयr(&chip->ppu_समयr, jअगरfies + msecs_to_jअगरfies(10));
+static void mv88e6xxx_phy_ppu_access_put(struct mv88e6xxx_chip *chip)
+{
+	/* Schedule a timer to re-enable the PHY polling unit. */
+	mod_timer(&chip->ppu_timer, jiffies + msecs_to_jiffies(10));
 	mutex_unlock(&chip->ppu_mutex);
-पूर्ण
+}
 
-अटल व्योम mv88e6xxx_phy_ppu_state_init(काष्ठा mv88e6xxx_chip *chip)
-अणु
+static void mv88e6xxx_phy_ppu_state_init(struct mv88e6xxx_chip *chip)
+{
 	mutex_init(&chip->ppu_mutex);
 	INIT_WORK(&chip->ppu_work, mv88e6xxx_phy_ppu_reenable_work);
-	समयr_setup(&chip->ppu_समयr, mv88e6xxx_phy_ppu_reenable_समयr, 0);
-पूर्ण
+	timer_setup(&chip->ppu_timer, mv88e6xxx_phy_ppu_reenable_timer, 0);
+}
 
-अटल व्योम mv88e6xxx_phy_ppu_state_destroy(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	del_समयr_sync(&chip->ppu_समयr);
-पूर्ण
+static void mv88e6xxx_phy_ppu_state_destroy(struct mv88e6xxx_chip *chip)
+{
+	del_timer_sync(&chip->ppu_timer);
+}
 
-पूर्णांक mv88e6185_phy_ppu_पढ़ो(काष्ठा mv88e6xxx_chip *chip, काष्ठा mii_bus *bus,
-			   पूर्णांक addr, पूर्णांक reg, u16 *val)
-अणु
-	पूर्णांक err;
-
-	err = mv88e6xxx_phy_ppu_access_get(chip);
-	अगर (!err) अणु
-		err = mv88e6xxx_पढ़ो(chip, addr, reg, val);
-		mv88e6xxx_phy_ppu_access_put(chip);
-	पूर्ण
-
-	वापस err;
-पूर्ण
-
-पूर्णांक mv88e6185_phy_ppu_ग_लिखो(काष्ठा mv88e6xxx_chip *chip, काष्ठा mii_bus *bus,
-			    पूर्णांक addr, पूर्णांक reg, u16 val)
-अणु
-	पूर्णांक err;
+int mv88e6185_phy_ppu_read(struct mv88e6xxx_chip *chip, struct mii_bus *bus,
+			   int addr, int reg, u16 *val)
+{
+	int err;
 
 	err = mv88e6xxx_phy_ppu_access_get(chip);
-	अगर (!err) अणु
-		err = mv88e6xxx_ग_लिखो(chip, addr, reg, val);
+	if (!err) {
+		err = mv88e6xxx_read(chip, addr, reg, val);
 		mv88e6xxx_phy_ppu_access_put(chip);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम mv88e6xxx_phy_init(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	अगर (chip->info->ops->ppu_enable && chip->info->ops->ppu_disable)
+int mv88e6185_phy_ppu_write(struct mv88e6xxx_chip *chip, struct mii_bus *bus,
+			    int addr, int reg, u16 val)
+{
+	int err;
+
+	err = mv88e6xxx_phy_ppu_access_get(chip);
+	if (!err) {
+		err = mv88e6xxx_write(chip, addr, reg, val);
+		mv88e6xxx_phy_ppu_access_put(chip);
+	}
+
+	return err;
+}
+
+void mv88e6xxx_phy_init(struct mv88e6xxx_chip *chip)
+{
+	if (chip->info->ops->ppu_enable && chip->info->ops->ppu_disable)
 		mv88e6xxx_phy_ppu_state_init(chip);
-पूर्ण
+}
 
-व्योम mv88e6xxx_phy_destroy(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	अगर (chip->info->ops->ppu_enable && chip->info->ops->ppu_disable)
+void mv88e6xxx_phy_destroy(struct mv88e6xxx_chip *chip)
+{
+	if (chip->info->ops->ppu_enable && chip->info->ops->ppu_disable)
 		mv88e6xxx_phy_ppu_state_destroy(chip);
-पूर्ण
+}
 
-पूर्णांक mv88e6xxx_phy_setup(काष्ठा mv88e6xxx_chip *chip)
-अणु
-	वापस mv88e6xxx_phy_ppu_enable(chip);
-पूर्ण
+int mv88e6xxx_phy_setup(struct mv88e6xxx_chip *chip)
+{
+	return mv88e6xxx_phy_ppu_enable(chip);
+}

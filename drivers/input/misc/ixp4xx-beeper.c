@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Generic IXP4xx beeper driver
  *
@@ -9,99 +8,99 @@
  *  Copyright (C) 2004 Karen Spearel
  *
  * Author: Alessandro Zummo <a.zummo@towertech.it>
- * Maपूर्णांकainers: http://www.nslu2-linux.org/
+ * Maintainers: http://www.nslu2-linux.org/
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/input.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/gpपन.स>
-#समावेश <mach/hardware.h>
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/gpio.h>
+#include <mach/hardware.h>
 
 MODULE_AUTHOR("Alessandro Zummo <a.zummo@towertech.it>");
 MODULE_DESCRIPTION("ixp4xx beeper driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:ixp4xx-beeper");
 
-अटल DEFINE_SPINLOCK(beep_lock);
+static DEFINE_SPINLOCK(beep_lock);
 
-अटल पूर्णांक ixp4xx_समयr2_irq;
+static int ixp4xx_timer2_irq;
 
-अटल व्योम ixp4xx_spkr_control(अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक count)
-अणु
-	अचिन्हित दीर्घ flags;
+static void ixp4xx_spkr_control(unsigned int pin, unsigned int count)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&beep_lock, flags);
 
-	अगर (count) अणु
+	if (count) {
 		gpio_direction_output(pin, 0);
 		*IXP4XX_OSRT2 = (count & ~IXP4XX_OST_RELOAD_MASK) | IXP4XX_OST_ENABLE;
-	पूर्ण अन्यथा अणु
+	} else {
 		gpio_direction_output(pin, 1);
 		gpio_direction_input(pin);
 		*IXP4XX_OSRT2 = 0;
-	पूर्ण
+	}
 
 	spin_unlock_irqrestore(&beep_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक ixp4xx_spkr_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	अचिन्हित पूर्णांक pin = (अचिन्हित पूर्णांक) input_get_drvdata(dev);
-	अचिन्हित पूर्णांक count = 0;
+static int ixp4xx_spkr_event(struct input_dev *dev, unsigned int type, unsigned int code, int value)
+{
+	unsigned int pin = (unsigned int) input_get_drvdata(dev);
+	unsigned int count = 0;
 
-	अगर (type != EV_SND)
-		वापस -1;
+	if (type != EV_SND)
+		return -1;
 
-	चयन (code) अणु
-		हाल SND_BELL:
-			अगर (value)
+	switch (code) {
+		case SND_BELL:
+			if (value)
 				value = 1000;
-		हाल SND_TONE:
-			अवरोध;
-		शेष:
-			वापस -1;
-	पूर्ण
+		case SND_TONE:
+			break;
+		default:
+			return -1;
+	}
 
-	अगर (value > 20 && value < 32767)
-		count = (ixp4xx_समयr_freq / (value * 4)) - 1;
+	if (value > 20 && value < 32767)
+		count = (ixp4xx_timer_freq / (value * 4)) - 1;
 
 	ixp4xx_spkr_control(pin, count);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t ixp4xx_spkr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	अचिन्हित पूर्णांक pin = (अचिन्हित पूर्णांक) dev_id;
+static irqreturn_t ixp4xx_spkr_interrupt(int irq, void *dev_id)
+{
+	unsigned int pin = (unsigned int) dev_id;
 
-	/* clear पूर्णांकerrupt */
+	/* clear interrupt */
 	*IXP4XX_OSST = IXP4XX_OSST_TIMER_2_PEND;
 
 	/* flip the beeper output */
 	gpio_set_value(pin, !gpio_get_value(pin));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ixp4xx_spkr_probe(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा input_dev *input_dev;
-	पूर्णांक irq;
-	पूर्णांक err;
+static int ixp4xx_spkr_probe(struct platform_device *dev)
+{
+	struct input_dev *input_dev;
+	int irq;
+	int err;
 
 	input_dev = input_allocate_device();
-	अगर (!input_dev)
-		वापस -ENOMEM;
+	if (!input_dev)
+		return -ENOMEM;
 
-	input_set_drvdata(input_dev, (व्योम *) dev->id);
+	input_set_drvdata(input_dev, (void *) dev->id);
 
 	input_dev->name = "ixp4xx beeper";
 	input_dev->phys = "ixp4xx/gpio";
 	input_dev->id.bustype = BUS_HOST;
-	input_dev->id.venकरोr  = 0x001f;
+	input_dev->id.vendor  = 0x001f;
 	input_dev->id.product = 0x0001;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &dev->dev;
@@ -110,75 +109,75 @@ MODULE_ALIAS("platform:ixp4xx-beeper");
 	input_dev->sndbit[0] = BIT_MASK(SND_BELL) | BIT_MASK(SND_TONE);
 	input_dev->event = ixp4xx_spkr_event;
 
-	irq = platक्रमm_get_irq(dev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(dev, 0);
+	if (irq < 0) {
 		err = irq;
-		जाओ err_मुक्त_device;
-	पूर्ण
+		goto err_free_device;
+	}
 
 	err = gpio_request(dev->id, "ixp4-beeper");
-	अगर (err)
-		जाओ err_मुक्त_device;
+	if (err)
+		goto err_free_device;
 
-	err = request_irq(irq, &ixp4xx_spkr_पूर्णांकerrupt,
+	err = request_irq(irq, &ixp4xx_spkr_interrupt,
 			  IRQF_NO_SUSPEND, "ixp4xx-beeper",
-			  (व्योम *) dev->id);
-	अगर (err)
-		जाओ err_मुक्त_gpio;
-	ixp4xx_समयr2_irq = irq;
+			  (void *) dev->id);
+	if (err)
+		goto err_free_gpio;
+	ixp4xx_timer2_irq = irq;
 
-	err = input_रेजिस्टर_device(input_dev);
-	अगर (err)
-		जाओ err_मुक्त_irq;
+	err = input_register_device(input_dev);
+	if (err)
+		goto err_free_irq;
 
-	platक्रमm_set_drvdata(dev, input_dev);
+	platform_set_drvdata(dev, input_dev);
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_irq:
-	मुक्त_irq(irq, (व्योम *)dev->id);
- err_मुक्त_gpio:
-	gpio_मुक्त(dev->id);
- err_मुक्त_device:
-	input_मुक्त_device(input_dev);
+ err_free_irq:
+	free_irq(irq, (void *)dev->id);
+ err_free_gpio:
+	gpio_free(dev->id);
+ err_free_device:
+	input_free_device(input_dev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक ixp4xx_spkr_हटाओ(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा input_dev *input_dev = platक्रमm_get_drvdata(dev);
-	अचिन्हित पूर्णांक pin = (अचिन्हित पूर्णांक) input_get_drvdata(input_dev);
+static int ixp4xx_spkr_remove(struct platform_device *dev)
+{
+	struct input_dev *input_dev = platform_get_drvdata(dev);
+	unsigned int pin = (unsigned int) input_get_drvdata(input_dev);
 
-	input_unरेजिस्टर_device(input_dev);
+	input_unregister_device(input_dev);
 
 	/* turn the speaker off */
-	disable_irq(ixp4xx_समयr2_irq);
+	disable_irq(ixp4xx_timer2_irq);
 	ixp4xx_spkr_control(pin, 0);
 
-	मुक्त_irq(ixp4xx_समयr2_irq, (व्योम *)dev->id);
-	gpio_मुक्त(dev->id);
+	free_irq(ixp4xx_timer2_irq, (void *)dev->id);
+	gpio_free(dev->id);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ixp4xx_spkr_shutकरोwn(काष्ठा platक्रमm_device *dev)
-अणु
-	काष्ठा input_dev *input_dev = platक्रमm_get_drvdata(dev);
-	अचिन्हित पूर्णांक pin = (अचिन्हित पूर्णांक) input_get_drvdata(input_dev);
+static void ixp4xx_spkr_shutdown(struct platform_device *dev)
+{
+	struct input_dev *input_dev = platform_get_drvdata(dev);
+	unsigned int pin = (unsigned int) input_get_drvdata(input_dev);
 
 	/* turn off the speaker */
-	disable_irq(ixp4xx_समयr2_irq);
+	disable_irq(ixp4xx_timer2_irq);
 	ixp4xx_spkr_control(pin, 0);
-पूर्ण
+}
 
-अटल काष्ठा platक्रमm_driver ixp4xx_spkr_platक्रमm_driver = अणु
-	.driver		= अणु
+static struct platform_driver ixp4xx_spkr_platform_driver = {
+	.driver		= {
 		.name	= "ixp4xx-beeper",
-	पूर्ण,
+	},
 	.probe		= ixp4xx_spkr_probe,
-	.हटाओ		= ixp4xx_spkr_हटाओ,
-	.shutकरोwn	= ixp4xx_spkr_shutकरोwn,
-पूर्ण;
-module_platक्रमm_driver(ixp4xx_spkr_platक्रमm_driver);
+	.remove		= ixp4xx_spkr_remove,
+	.shutdown	= ixp4xx_spkr_shutdown,
+};
+module_platform_driver(ixp4xx_spkr_platform_driver);
 

@@ -1,186 +1,185 @@
-<शैली गुरु>
 /*
- * पूर्णांकc.c  --  पूर्णांकerrupt controller or ColdFire 5272 SoC
+ * intc.c  --  interrupt controller or ColdFire 5272 SoC
  *
  * (C) Copyright 2009, Greg Ungerer <gerg@snapgear.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file COPYING in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/types.h>
-#समावेश <linux/init.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/kernel_स्थिति.स>
-#समावेश <linux/irq.h>
-#समावेश <linux/पन.स>
-#समावेश <यंत्र/coldfire.h>
-#समावेश <यंत्र/mcfsim.h>
-#समावेश <यंत्र/traps.h>
+#include <linux/types.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/interrupt.h>
+#include <linux/kernel_stat.h>
+#include <linux/irq.h>
+#include <linux/io.h>
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/traps.h>
 
 /*
- * The 5272 ColdFire पूर्णांकerrupt controller is nothing like any other
- * ColdFire पूर्णांकerrupt controller - it truly is completely dअगरferent.
+ * The 5272 ColdFire interrupt controller is nothing like any other
+ * ColdFire interrupt controller - it truly is completely different.
  * Given its age it is unlikely to be used on any other ColdFire CPU.
  */
 
 /*
- * The masking and priproty setting of पूर्णांकerrupts on the 5272 is करोne
+ * The masking and priproty setting of interrupts on the 5272 is done
  * via a set of 4 "Interrupt Controller Registers" (ICR). There is a
- * loose mapping of vector number to रेजिस्टर and पूर्णांकernal bits, but
+ * loose mapping of vector number to register and internal bits, but
  * a table is the easiest and quickest way to map them.
  *
- * Note that the बाह्यal पूर्णांकerrupts are edge triggered (unlike the
- * पूर्णांकernal पूर्णांकerrupt sources which are level triggered). Which means
+ * Note that the external interrupts are edge triggered (unlike the
+ * internal interrupt sources which are level triggered). Which means
  * they also need acknowledging via acknowledge bits.
  */
-काष्ठा irqmap अणु
-	अचिन्हित पूर्णांक	icr;
-	अचिन्हित अक्षर	index;
-	अचिन्हित अक्षर	ack;
-पूर्ण;
+struct irqmap {
+	unsigned int	icr;
+	unsigned char	index;
+	unsigned char	ack;
+};
 
-अटल काष्ठा irqmap पूर्णांकc_irqmap[MCFINT_VECMAX - MCFINT_VECBASE] = अणु
-	/*MCF_IRQ_SPURIOUS*/	अणु .icr = 0,           .index = 0,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_EINT1*/	अणु .icr = MCFSIM_ICR1, .index = 28, .ack = 1, पूर्ण,
-	/*MCF_IRQ_EINT2*/	अणु .icr = MCFSIM_ICR1, .index = 24, .ack = 1, पूर्ण,
-	/*MCF_IRQ_EINT3*/	अणु .icr = MCFSIM_ICR1, .index = 20, .ack = 1, पूर्ण,
-	/*MCF_IRQ_EINT4*/	अणु .icr = MCFSIM_ICR1, .index = 16, .ack = 1, पूर्ण,
-	/*MCF_IRQ_TIMER1*/	अणु .icr = MCFSIM_ICR1, .index = 12, .ack = 0, पूर्ण,
-	/*MCF_IRQ_TIMER2*/	अणु .icr = MCFSIM_ICR1, .index = 8,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_TIMER3*/	अणु .icr = MCFSIM_ICR1, .index = 4,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_TIMER4*/	अणु .icr = MCFSIM_ICR1, .index = 0,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_UART1*/	अणु .icr = MCFSIM_ICR2, .index = 28, .ack = 0, पूर्ण,
-	/*MCF_IRQ_UART2*/	अणु .icr = MCFSIM_ICR2, .index = 24, .ack = 0, पूर्ण,
-	/*MCF_IRQ_PLIP*/	अणु .icr = MCFSIM_ICR2, .index = 20, .ack = 0, पूर्ण,
-	/*MCF_IRQ_PLIA*/	अणु .icr = MCFSIM_ICR2, .index = 16, .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB0*/	अणु .icr = MCFSIM_ICR2, .index = 12, .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB1*/	अणु .icr = MCFSIM_ICR2, .index = 8,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB2*/	अणु .icr = MCFSIM_ICR2, .index = 4,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB3*/	अणु .icr = MCFSIM_ICR2, .index = 0,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB4*/	अणु .icr = MCFSIM_ICR3, .index = 28, .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB5*/	अणु .icr = MCFSIM_ICR3, .index = 24, .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB6*/	अणु .icr = MCFSIM_ICR3, .index = 20, .ack = 0, पूर्ण,
-	/*MCF_IRQ_USB7*/	अणु .icr = MCFSIM_ICR3, .index = 16, .ack = 0, पूर्ण,
-	/*MCF_IRQ_DMA*/		अणु .icr = MCFSIM_ICR3, .index = 12, .ack = 0, पूर्ण,
-	/*MCF_IRQ_ERX*/		अणु .icr = MCFSIM_ICR3, .index = 8,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_ETX*/		अणु .icr = MCFSIM_ICR3, .index = 4,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_ENTC*/	अणु .icr = MCFSIM_ICR3, .index = 0,  .ack = 0, पूर्ण,
-	/*MCF_IRQ_QSPI*/	अणु .icr = MCFSIM_ICR4, .index = 28, .ack = 0, पूर्ण,
-	/*MCF_IRQ_EINT5*/	अणु .icr = MCFSIM_ICR4, .index = 24, .ack = 1, पूर्ण,
-	/*MCF_IRQ_EINT6*/	अणु .icr = MCFSIM_ICR4, .index = 20, .ack = 1, पूर्ण,
-	/*MCF_IRQ_SWTO*/	अणु .icr = MCFSIM_ICR4, .index = 16, .ack = 0, पूर्ण,
-पूर्ण;
+static struct irqmap intc_irqmap[MCFINT_VECMAX - MCFINT_VECBASE] = {
+	/*MCF_IRQ_SPURIOUS*/	{ .icr = 0,           .index = 0,  .ack = 0, },
+	/*MCF_IRQ_EINT1*/	{ .icr = MCFSIM_ICR1, .index = 28, .ack = 1, },
+	/*MCF_IRQ_EINT2*/	{ .icr = MCFSIM_ICR1, .index = 24, .ack = 1, },
+	/*MCF_IRQ_EINT3*/	{ .icr = MCFSIM_ICR1, .index = 20, .ack = 1, },
+	/*MCF_IRQ_EINT4*/	{ .icr = MCFSIM_ICR1, .index = 16, .ack = 1, },
+	/*MCF_IRQ_TIMER1*/	{ .icr = MCFSIM_ICR1, .index = 12, .ack = 0, },
+	/*MCF_IRQ_TIMER2*/	{ .icr = MCFSIM_ICR1, .index = 8,  .ack = 0, },
+	/*MCF_IRQ_TIMER3*/	{ .icr = MCFSIM_ICR1, .index = 4,  .ack = 0, },
+	/*MCF_IRQ_TIMER4*/	{ .icr = MCFSIM_ICR1, .index = 0,  .ack = 0, },
+	/*MCF_IRQ_UART1*/	{ .icr = MCFSIM_ICR2, .index = 28, .ack = 0, },
+	/*MCF_IRQ_UART2*/	{ .icr = MCFSIM_ICR2, .index = 24, .ack = 0, },
+	/*MCF_IRQ_PLIP*/	{ .icr = MCFSIM_ICR2, .index = 20, .ack = 0, },
+	/*MCF_IRQ_PLIA*/	{ .icr = MCFSIM_ICR2, .index = 16, .ack = 0, },
+	/*MCF_IRQ_USB0*/	{ .icr = MCFSIM_ICR2, .index = 12, .ack = 0, },
+	/*MCF_IRQ_USB1*/	{ .icr = MCFSIM_ICR2, .index = 8,  .ack = 0, },
+	/*MCF_IRQ_USB2*/	{ .icr = MCFSIM_ICR2, .index = 4,  .ack = 0, },
+	/*MCF_IRQ_USB3*/	{ .icr = MCFSIM_ICR2, .index = 0,  .ack = 0, },
+	/*MCF_IRQ_USB4*/	{ .icr = MCFSIM_ICR3, .index = 28, .ack = 0, },
+	/*MCF_IRQ_USB5*/	{ .icr = MCFSIM_ICR3, .index = 24, .ack = 0, },
+	/*MCF_IRQ_USB6*/	{ .icr = MCFSIM_ICR3, .index = 20, .ack = 0, },
+	/*MCF_IRQ_USB7*/	{ .icr = MCFSIM_ICR3, .index = 16, .ack = 0, },
+	/*MCF_IRQ_DMA*/		{ .icr = MCFSIM_ICR3, .index = 12, .ack = 0, },
+	/*MCF_IRQ_ERX*/		{ .icr = MCFSIM_ICR3, .index = 8,  .ack = 0, },
+	/*MCF_IRQ_ETX*/		{ .icr = MCFSIM_ICR3, .index = 4,  .ack = 0, },
+	/*MCF_IRQ_ENTC*/	{ .icr = MCFSIM_ICR3, .index = 0,  .ack = 0, },
+	/*MCF_IRQ_QSPI*/	{ .icr = MCFSIM_ICR4, .index = 28, .ack = 0, },
+	/*MCF_IRQ_EINT5*/	{ .icr = MCFSIM_ICR4, .index = 24, .ack = 1, },
+	/*MCF_IRQ_EINT6*/	{ .icr = MCFSIM_ICR4, .index = 20, .ack = 1, },
+	/*MCF_IRQ_SWTO*/	{ .icr = MCFSIM_ICR4, .index = 16, .ack = 0, },
+};
 
 /*
- * The act of masking the पूर्णांकerrupt also has a side effect of 'ack'ing
- * an पूर्णांकerrupt on this irq (क्रम the बाह्यal irqs). So this mask function
+ * The act of masking the interrupt also has a side effect of 'ack'ing
+ * an interrupt on this irq (for the external irqs). So this mask function
  * is also an ack_mask function.
  */
-अटल व्योम पूर्णांकc_irq_mask(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static void intc_irq_mask(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	अगर ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) अणु
+	if ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) {
 		u32 v;
 		irq -= MCFINT_VECBASE;
-		v = 0x8 << पूर्णांकc_irqmap[irq].index;
-		ग_लिखोl(v, पूर्णांकc_irqmap[irq].icr);
-	पूर्ण
-पूर्ण
+		v = 0x8 << intc_irqmap[irq].index;
+		writel(v, intc_irqmap[irq].icr);
+	}
+}
 
-अटल व्योम पूर्णांकc_irq_unmask(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static void intc_irq_unmask(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	अगर ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) अणु
+	if ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) {
 		u32 v;
 		irq -= MCFINT_VECBASE;
-		v = 0xd << पूर्णांकc_irqmap[irq].index;
-		ग_लिखोl(v, पूर्णांकc_irqmap[irq].icr);
-	पूर्ण
-पूर्ण
+		v = 0xd << intc_irqmap[irq].index;
+		writel(v, intc_irqmap[irq].icr);
+	}
+}
 
-अटल व्योम पूर्णांकc_irq_ack(काष्ठा irq_data *d)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static void intc_irq_ack(struct irq_data *d)
+{
+	unsigned int irq = d->irq;
 
-	/* Only बाह्यal पूर्णांकerrupts are acked */
-	अगर ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) अणु
+	/* Only external interrupts are acked */
+	if ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) {
 		irq -= MCFINT_VECBASE;
-		अगर (पूर्णांकc_irqmap[irq].ack) अणु
+		if (intc_irqmap[irq].ack) {
 			u32 v;
-			v = पढ़ोl(पूर्णांकc_irqmap[irq].icr);
-			v &= (0x7 << पूर्णांकc_irqmap[irq].index);
-			v |= (0x8 << पूर्णांकc_irqmap[irq].index);
-			ग_लिखोl(v, पूर्णांकc_irqmap[irq].icr);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			v = readl(intc_irqmap[irq].icr);
+			v &= (0x7 << intc_irqmap[irq].index);
+			v |= (0x8 << intc_irqmap[irq].index);
+			writel(v, intc_irqmap[irq].icr);
+		}
+	}
+}
 
-अटल पूर्णांक पूर्णांकc_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
-अणु
-	अचिन्हित पूर्णांक irq = d->irq;
+static int intc_irq_set_type(struct irq_data *d, unsigned int type)
+{
+	unsigned int irq = d->irq;
 
-	अगर ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) अणु
+	if ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX)) {
 		irq -= MCFINT_VECBASE;
-		अगर (पूर्णांकc_irqmap[irq].ack) अणु
+		if (intc_irqmap[irq].ack) {
 			u32 v;
-			v = पढ़ोl(MCFSIM_PITR);
-			अगर (type == IRQ_TYPE_EDGE_FALLING)
+			v = readl(MCFSIM_PITR);
+			if (type == IRQ_TYPE_EDGE_FALLING)
 				v &= ~(0x1 << (32 - irq));
-			अन्यथा
+			else
 				v |= (0x1 << (32 - irq));
-			ग_लिखोl(v, MCFSIM_PITR);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			writel(v, MCFSIM_PITR);
+		}
+	}
+	return 0;
+}
 
 /*
- * Simple flow handler to deal with the बाह्यal edge triggered पूर्णांकerrupts.
+ * Simple flow handler to deal with the external edge triggered interrupts.
  * We need to be careful with the masking/acking due to the side effects
- * of masking an पूर्णांकerrupt.
+ * of masking an interrupt.
  */
-अटल व्योम पूर्णांकc_बाह्यal_irq(काष्ठा irq_desc *desc)
-अणु
+static void intc_external_irq(struct irq_desc *desc)
+{
 	irq_desc_get_chip(desc)->irq_ack(&desc->irq_data);
 	handle_simple_irq(desc);
-पूर्ण
+}
 
-अटल काष्ठा irq_chip पूर्णांकc_irq_chip = अणु
+static struct irq_chip intc_irq_chip = {
 	.name		= "CF-INTC",
-	.irq_mask	= पूर्णांकc_irq_mask,
-	.irq_unmask	= पूर्णांकc_irq_unmask,
-	.irq_mask_ack	= पूर्णांकc_irq_mask,
-	.irq_ack	= पूर्णांकc_irq_ack,
-	.irq_set_type	= पूर्णांकc_irq_set_type,
-पूर्ण;
+	.irq_mask	= intc_irq_mask,
+	.irq_unmask	= intc_irq_unmask,
+	.irq_mask_ack	= intc_irq_mask,
+	.irq_ack	= intc_irq_ack,
+	.irq_set_type	= intc_irq_set_type,
+};
 
-व्योम __init init_IRQ(व्योम)
-अणु
-	पूर्णांक irq, edge;
+void __init init_IRQ(void)
+{
+	int irq, edge;
 
-	/* Mask all पूर्णांकerrupt sources */
-	ग_लिखोl(0x88888888, MCFSIM_ICR1);
-	ग_लिखोl(0x88888888, MCFSIM_ICR2);
-	ग_लिखोl(0x88888888, MCFSIM_ICR3);
-	ग_लिखोl(0x88888888, MCFSIM_ICR4);
+	/* Mask all interrupt sources */
+	writel(0x88888888, MCFSIM_ICR1);
+	writel(0x88888888, MCFSIM_ICR2);
+	writel(0x88888888, MCFSIM_ICR3);
+	writel(0x88888888, MCFSIM_ICR4);
 
-	क्रम (irq = 0; (irq < NR_IRQS); irq++) अणु
-		irq_set_chip(irq, &पूर्णांकc_irq_chip);
+	for (irq = 0; (irq < NR_IRQS); irq++) {
+		irq_set_chip(irq, &intc_irq_chip);
 		edge = 0;
-		अगर ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX))
-			edge = पूर्णांकc_irqmap[irq - MCFINT_VECBASE].ack;
-		अगर (edge) अणु
+		if ((irq >= MCFINT_VECBASE) && (irq <= MCFINT_VECMAX))
+			edge = intc_irqmap[irq - MCFINT_VECBASE].ack;
+		if (edge) {
 			irq_set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
-			irq_set_handler(irq, पूर्णांकc_बाह्यal_irq);
-		पूर्ण अन्यथा अणु
+			irq_set_handler(irq, intc_external_irq);
+		} else {
 			irq_set_irq_type(irq, IRQ_TYPE_LEVEL_HIGH);
 			irq_set_handler(irq, handle_level_irq);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * mm/percpu-km.c - kernel memory based chunk allocation
  *
@@ -18,53 +17,53 @@
  *   fine.
  *
  * - NUMA is not supported.  When setting up the first chunk,
- *   @cpu_distance_fn should be शून्य or report all CPUs to be nearer
+ *   @cpu_distance_fn should be NULL or report all CPUs to be nearer
  *   than or at LOCAL_DISTANCE.
  *
- * - It's best अगर the chunk size is घातer of two multiple of
+ * - It's best if the chunk size is power of two multiple of
  *   PAGE_SIZE.  Because each chunk is allocated as a contiguous
- *   kernel memory block using alloc_pages(), memory will be wasted अगर
+ *   kernel memory block using alloc_pages(), memory will be wasted if
  *   chunk size is not aligned.  percpu-km code will whine about it.
  */
 
-#अगर defined(CONFIG_SMP) && defined(CONFIG_NEED_PER_CPU_PAGE_FIRST_CHUNK)
-#त्रुटि "contiguous percpu allocation is incompatible with paged first chunk"
-#पूर्ण_अगर
+#if defined(CONFIG_SMP) && defined(CONFIG_NEED_PER_CPU_PAGE_FIRST_CHUNK)
+#error "contiguous percpu allocation is incompatible with paged first chunk"
+#endif
 
-#समावेश <linux/log2.h>
+#include <linux/log2.h>
 
-अटल पूर्णांक pcpu_populate_chunk(काष्ठा pcpu_chunk *chunk,
-			       पूर्णांक page_start, पूर्णांक page_end, gfp_t gfp)
-अणु
-	वापस 0;
-पूर्ण
+static int pcpu_populate_chunk(struct pcpu_chunk *chunk,
+			       int page_start, int page_end, gfp_t gfp)
+{
+	return 0;
+}
 
-अटल व्योम pcpu_depopulate_chunk(काष्ठा pcpu_chunk *chunk,
-				  पूर्णांक page_start, पूर्णांक page_end)
-अणु
+static void pcpu_depopulate_chunk(struct pcpu_chunk *chunk,
+				  int page_start, int page_end)
+{
 	/* nada */
-पूर्ण
+}
 
-अटल काष्ठा pcpu_chunk *pcpu_create_chunk(क्रमागत pcpu_chunk_type type,
+static struct pcpu_chunk *pcpu_create_chunk(enum pcpu_chunk_type type,
 					    gfp_t gfp)
-अणु
-	स्थिर पूर्णांक nr_pages = pcpu_group_sizes[0] >> PAGE_SHIFT;
-	काष्ठा pcpu_chunk *chunk;
-	काष्ठा page *pages;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
+{
+	const int nr_pages = pcpu_group_sizes[0] >> PAGE_SHIFT;
+	struct pcpu_chunk *chunk;
+	struct page *pages;
+	unsigned long flags;
+	int i;
 
 	chunk = pcpu_alloc_chunk(type, gfp);
-	अगर (!chunk)
-		वापस शून्य;
+	if (!chunk)
+		return NULL;
 
 	pages = alloc_pages(gfp, order_base_2(nr_pages));
-	अगर (!pages) अणु
-		pcpu_मुक्त_chunk(chunk);
-		वापस शून्य;
-	पूर्ण
+	if (!pages) {
+		pcpu_free_chunk(chunk);
+		return NULL;
+	}
 
-	क्रम (i = 0; i < nr_pages; i++)
+	for (i = 0; i < nr_pages; i++)
 		pcpu_set_page_chunk(nth_page(pages, i), chunk);
 
 	chunk->data = pages;
@@ -77,45 +76,45 @@
 	pcpu_stats_chunk_alloc();
 	trace_percpu_create_chunk(chunk->base_addr);
 
-	वापस chunk;
-पूर्ण
+	return chunk;
+}
 
-अटल व्योम pcpu_destroy_chunk(काष्ठा pcpu_chunk *chunk)
-अणु
-	स्थिर पूर्णांक nr_pages = pcpu_group_sizes[0] >> PAGE_SHIFT;
+static void pcpu_destroy_chunk(struct pcpu_chunk *chunk)
+{
+	const int nr_pages = pcpu_group_sizes[0] >> PAGE_SHIFT;
 
-	अगर (!chunk)
-		वापस;
+	if (!chunk)
+		return;
 
 	pcpu_stats_chunk_dealloc();
 	trace_percpu_destroy_chunk(chunk->base_addr);
 
-	अगर (chunk->data)
-		__मुक्त_pages(chunk->data, order_base_2(nr_pages));
-	pcpu_मुक्त_chunk(chunk);
-पूर्ण
+	if (chunk->data)
+		__free_pages(chunk->data, order_base_2(nr_pages));
+	pcpu_free_chunk(chunk);
+}
 
-अटल काष्ठा page *pcpu_addr_to_page(व्योम *addr)
-अणु
-	वापस virt_to_page(addr);
-पूर्ण
+static struct page *pcpu_addr_to_page(void *addr)
+{
+	return virt_to_page(addr);
+}
 
-अटल पूर्णांक __init pcpu_verअगरy_alloc_info(स्थिर काष्ठा pcpu_alloc_info *ai)
-अणु
-	माप_प्रकार nr_pages, alloc_pages;
+static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai)
+{
+	size_t nr_pages, alloc_pages;
 
 	/* all units must be in a single group */
-	अगर (ai->nr_groups != 1) अणु
+	if (ai->nr_groups != 1) {
 		pr_crit("can't handle more than one group\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	nr_pages = (ai->groups[0].nr_units * ai->unit_size) >> PAGE_SHIFT;
-	alloc_pages = roundup_घात_of_two(nr_pages);
+	alloc_pages = roundup_pow_of_two(nr_pages);
 
-	अगर (alloc_pages > nr_pages)
+	if (alloc_pages > nr_pages)
 		pr_warn("wasting %zu pages per chunk\n",
 			alloc_pages - nr_pages);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -8,94 +7,94 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/spi/spi.h>
+#include <linux/interrupt.h>
 
-#समावेश "wlcore.h"
-#समावेश "debug.h"
-#समावेश "wl12xx_80211.h"
-#समावेश "io.h"
-#समावेश "tx.h"
+#include "wlcore.h"
+#include "debug.h"
+#include "wl12xx_80211.h"
+#include "io.h"
+#include "tx.h"
 
-bool wl1271_set_block_size(काष्ठा wl1271 *wl)
-अणु
-	अगर (wl->अगर_ops->set_block_size) अणु
-		wl->अगर_ops->set_block_size(wl->dev, WL12XX_BUS_BLOCK_SIZE);
-		वापस true;
-	पूर्ण
+bool wl1271_set_block_size(struct wl1271 *wl)
+{
+	if (wl->if_ops->set_block_size) {
+		wl->if_ops->set_block_size(wl->dev, WL12XX_BUS_BLOCK_SIZE);
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-व्योम wlcore_disable_पूर्णांकerrupts(काष्ठा wl1271 *wl)
-अणु
+void wlcore_disable_interrupts(struct wl1271 *wl)
+{
 	disable_irq(wl->irq);
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_disable_पूर्णांकerrupts);
+}
+EXPORT_SYMBOL_GPL(wlcore_disable_interrupts);
 
-व्योम wlcore_disable_पूर्णांकerrupts_nosync(काष्ठा wl1271 *wl)
-अणु
+void wlcore_disable_interrupts_nosync(struct wl1271 *wl)
+{
 	disable_irq_nosync(wl->irq);
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_disable_पूर्णांकerrupts_nosync);
+}
+EXPORT_SYMBOL_GPL(wlcore_disable_interrupts_nosync);
 
-व्योम wlcore_enable_पूर्णांकerrupts(काष्ठा wl1271 *wl)
-अणु
+void wlcore_enable_interrupts(struct wl1271 *wl)
+{
 	enable_irq(wl->irq);
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_enable_पूर्णांकerrupts);
+}
+EXPORT_SYMBOL_GPL(wlcore_enable_interrupts);
 
-व्योम wlcore_synchronize_पूर्णांकerrupts(काष्ठा wl1271 *wl)
-अणु
+void wlcore_synchronize_interrupts(struct wl1271 *wl)
+{
 	synchronize_irq(wl->irq);
-पूर्ण
-EXPORT_SYMBOL_GPL(wlcore_synchronize_पूर्णांकerrupts);
+}
+EXPORT_SYMBOL_GPL(wlcore_synchronize_interrupts);
 
-पूर्णांक wlcore_translate_addr(काष्ठा wl1271 *wl, पूर्णांक addr)
-अणु
-	काष्ठा wlcore_partition_set *part = &wl->curr_part;
+int wlcore_translate_addr(struct wl1271 *wl, int addr)
+{
+	struct wlcore_partition_set *part = &wl->curr_part;
 
 	/*
-	 * To translate, first check to which winकरोw of addresses the
-	 * particular address beदीर्घs. Then subtract the starting address
-	 * of that winकरोw from the address. Then, add offset of the
+	 * To translate, first check to which window of addresses the
+	 * particular address belongs. Then subtract the starting address
+	 * of that window from the address. Then, add offset of the
 	 * translated region.
 	 *
 	 * The translated regions occur next to each other in physical device
 	 * memory, so just add the sizes of the preceding address regions to
 	 * get the offset to the new region.
 	 */
-	अगर ((addr >= part->mem.start) &&
+	if ((addr >= part->mem.start) &&
 	    (addr < part->mem.start + part->mem.size))
-		वापस addr - part->mem.start;
-	अन्यथा अगर ((addr >= part->reg.start) &&
+		return addr - part->mem.start;
+	else if ((addr >= part->reg.start) &&
 		 (addr < part->reg.start + part->reg.size))
-		वापस addr - part->reg.start + part->mem.size;
-	अन्यथा अगर ((addr >= part->mem2.start) &&
+		return addr - part->reg.start + part->mem.size;
+	else if ((addr >= part->mem2.start) &&
 		 (addr < part->mem2.start + part->mem2.size))
-		वापस addr - part->mem2.start + part->mem.size +
+		return addr - part->mem2.start + part->mem.size +
 			part->reg.size;
-	अन्यथा अगर ((addr >= part->mem3.start) &&
+	else if ((addr >= part->mem3.start) &&
 		 (addr < part->mem3.start + part->mem3.size))
-		वापस addr - part->mem3.start + part->mem.size +
+		return addr - part->mem3.start + part->mem.size +
 			part->reg.size + part->mem2.size;
 
 	WARN(1, "HW address 0x%x out of range", addr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(wlcore_translate_addr);
 
 /* Set the partitions to access the chip addresses
  *
- * To simplअगरy driver code, a fixed (भव) memory map is defined क्रम
- * रेजिस्टर and memory addresses. Because in the chipset, in dअगरferent stages
+ * To simplify driver code, a fixed (virtual) memory map is defined for
+ * register and memory addresses. Because in the chipset, in different stages
  * of operation, those addresses will move around, an address translation
  * mechanism is required.
  *
- * There are four partitions (three memory and one रेजिस्टर partition),
- * which are mapped to two dअगरferent areas of the hardware memory.
+ * There are four partitions (three memory and one register partition),
+ * which are mapped to two different areas of the hardware memory.
  *
  *                                Virtual address
  *                                     space
@@ -109,7 +108,7 @@ EXPORT_SYMBOL_GPL(wlcore_translate_addr);
  *               |    |         ...   |    |
  *               |MEM |      ...      |    |
  *               |    |   ...         |    |
- *  mem.size  <--+----+...            |    | अणुunused area)
+ *  mem.size  <--+----+...            |    | {unused area)
  *               |    |   ...         |    |
  *               |REG |      ...      |    |
  *  mem.size     |    |         ...   |    |
@@ -121,13 +120,13 @@ EXPORT_SYMBOL_GPL(wlcore_translate_addr);
  *                                    |    |
  *
  */
-पूर्णांक wlcore_set_partition(काष्ठा wl1271 *wl,
-			 स्थिर काष्ठा wlcore_partition_set *p)
-अणु
-	पूर्णांक ret;
+int wlcore_set_partition(struct wl1271 *wl,
+			 const struct wlcore_partition_set *p)
+{
+	int ret;
 
 	/* copy partition info */
-	स_नकल(&wl->curr_part, p, माप(*p));
+	memcpy(&wl->curr_part, p, sizeof(*p));
 
 	wl1271_debug(DEBUG_IO, "mem_start %08X mem_size %08X",
 		     p->mem.start, p->mem.size);
@@ -138,62 +137,62 @@ EXPORT_SYMBOL_GPL(wlcore_translate_addr);
 	wl1271_debug(DEBUG_IO, "mem3_start %08X mem3_size %08X",
 		     p->mem3.start, p->mem3.size);
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART0_START_ADDR, p->mem.start);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART0_START_ADDR, p->mem.start);
+	if (ret < 0)
+		goto out;
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART0_SIZE_ADDR, p->mem.size);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART0_SIZE_ADDR, p->mem.size);
+	if (ret < 0)
+		goto out;
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART1_START_ADDR, p->reg.start);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART1_START_ADDR, p->reg.start);
+	if (ret < 0)
+		goto out;
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART1_SIZE_ADDR, p->reg.size);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART1_SIZE_ADDR, p->reg.size);
+	if (ret < 0)
+		goto out;
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART2_START_ADDR, p->mem2.start);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART2_START_ADDR, p->mem2.start);
+	if (ret < 0)
+		goto out;
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART2_SIZE_ADDR, p->mem2.size);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART2_SIZE_ADDR, p->mem2.size);
+	if (ret < 0)
+		goto out;
 
-	/* wl12xx only: We करोn't need the size of the last partition,
-	 * as it is स्वतःmatically calculated based on the total memory
+	/* wl12xx only: We don't need the size of the last partition,
+	 * as it is automatically calculated based on the total memory
 	 * size and the sizes of the previous partitions.
 	 *
-	 * wl18xx re-defines the HW_PART3 addresses क्रम logger over
-	 * SDIO support. wl12xx is expecting the ग_लिखो to
+	 * wl18xx re-defines the HW_PART3 addresses for logger over
+	 * SDIO support. wl12xx is expecting the write to
 	 * HW_PART3_START_ADDR at offset 24. This creates conflict
 	 * between the addresses.
 	 * In order to fix this the expected value is written to
 	 * HW_PART3_SIZE_ADDR instead which is at offset 24 after changes.
 	 */
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART3_START_ADDR, p->mem3.start);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART3_START_ADDR, p->mem3.start);
+	if (ret < 0)
+		goto out;
 
-	ret = wlcore_raw_ग_लिखो32(wl, HW_PART3_SIZE_ADDR, p->mem3.size);
-	अगर (ret < 0)
-		जाओ out;
+	ret = wlcore_raw_write32(wl, HW_PART3_SIZE_ADDR, p->mem3.size);
+	if (ret < 0)
+		goto out;
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(wlcore_set_partition);
 
-व्योम wl1271_io_reset(काष्ठा wl1271 *wl)
-अणु
-	अगर (wl->अगर_ops->reset)
-		wl->अगर_ops->reset(wl->dev);
-पूर्ण
+void wl1271_io_reset(struct wl1271 *wl)
+{
+	if (wl->if_ops->reset)
+		wl->if_ops->reset(wl->dev);
+}
 
-व्योम wl1271_io_init(काष्ठा wl1271 *wl)
-अणु
-	अगर (wl->अगर_ops->init)
-		wl->अगर_ops->init(wl->dev);
-पूर्ण
+void wl1271_io_init(struct wl1271 *wl)
+{
+	if (wl->if_ops->init)
+		wl->if_ops->init(wl->dev);
+}

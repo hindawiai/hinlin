@@ -1,32 +1,31 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-/* ioctl() (mostly Linux Wireless Extensions) routines क्रम Host AP driver */
+// SPDX-License-Identifier: GPL-2.0
+/* ioctl() (mostly Linux Wireless Extensions) routines for Host AP driver */
 
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/ethtool.h>
-#समावेश <linux/अगर_arp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <net/lib80211.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/sched/signal.h>
+#include <linux/ethtool.h>
+#include <linux/if_arp.h>
+#include <linux/module.h>
+#include <linux/etherdevice.h>
+#include <net/lib80211.h>
 
-#समावेश "hostap_wlan.h"
-#समावेश "hostap.h"
-#समावेश "hostap_ap.h"
+#include "hostap_wlan.h"
+#include "hostap.h"
+#include "hostap_ap.h"
 
-अटल काष्ठा iw_statistics *hostap_get_wireless_stats(काष्ठा net_device *dev)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static struct iw_statistics *hostap_get_wireless_stats(struct net_device *dev)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	काष्ठा iw_statistics *wstats;
+	struct iw_statistics *wstats;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	/* Why are we करोing that ? Jean II */
-	अगर (अगरace->type != HOSTAP_INTERFACE_MAIN)
-		वापस शून्य;
+	/* Why are we doing that ? Jean II */
+	if (iface->type != HOSTAP_INTERFACE_MAIN)
+		return NULL;
 
 	wstats = &local->wstats;
 
@@ -43,262 +42,262 @@
 	wstats->discard.fragment =
 		local->comm_tallies.rx_message_in_bad_msg_fragments;
 
-	अगर (local->iw_mode != IW_MODE_MASTER &&
-	    local->iw_mode != IW_MODE_REPEAT) अणु
+	if (local->iw_mode != IW_MODE_MASTER &&
+	    local->iw_mode != IW_MODE_REPEAT) {
 
-		अगर (prism2_update_comms_qual(dev) == 0)
+		if (prism2_update_comms_qual(dev) == 0)
 			wstats->qual.updated = IW_QUAL_ALL_UPDATED |
 				IW_QUAL_DBM;
 
 		wstats->qual.qual = local->comms_qual;
-		wstats->qual.level = local->avg_संकेत;
+		wstats->qual.level = local->avg_signal;
 		wstats->qual.noise = local->avg_noise;
-	पूर्ण अन्यथा अणु
+	} else {
 		wstats->qual.qual = 0;
 		wstats->qual.level = 0;
 		wstats->qual.noise = 0;
 		wstats->qual.updated = IW_QUAL_ALL_INVALID;
-	पूर्ण
+	}
 
-	वापस wstats;
-पूर्ण
+	return wstats;
+}
 
 
-अटल पूर्णांक prism2_get_datarates(काष्ठा net_device *dev, u8 *rates)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_get_datarates(struct net_device *dev, u8 *rates)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	u8 buf[12];
-	पूर्णांक len;
+	int len;
 	u16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	len = local->func->get_rid(dev, HFA384X_RID_SUPPORTEDDATARATES, buf,
-				   माप(buf), 0);
-	अगर (len < 2)
-		वापस 0;
+				   sizeof(buf), 0);
+	if (len < 2)
+		return 0;
 
 	val = le16_to_cpu(*(__le16 *) buf); /* string length */
 
-	अगर (len - 2 < val || val > 10)
-		वापस 0;
+	if (len - 2 < val || val > 10)
+		return 0;
 
-	स_नकल(rates, buf + 2, val);
-	वापस val;
-पूर्ण
+	memcpy(rates, buf + 2, val);
+	return val;
+}
 
 
-अटल पूर्णांक prism2_get_name(काष्ठा net_device *dev,
-			   काष्ठा iw_request_info *info,
-			   अक्षर *name, अक्षर *extra)
-अणु
+static int prism2_get_name(struct net_device *dev,
+			   struct iw_request_info *info,
+			   char *name, char *extra)
+{
 	u8 rates[10];
-	पूर्णांक len, i, over2 = 0;
+	int len, i, over2 = 0;
 
 	len = prism2_get_datarates(dev, rates);
 
-	क्रम (i = 0; i < len; i++) अणु
-		अगर (rates[i] == 0x0b || rates[i] == 0x16) अणु
+	for (i = 0; i < len; i++) {
+		if (rates[i] == 0x0b || rates[i] == 0x16) {
 			over2 = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	म_नकल(name, over2 ? "IEEE 802.11b" : "IEEE 802.11-DS");
+	strcpy(name, over2 ? "IEEE 802.11b" : "IEEE 802.11-DS");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwencode(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_poपूर्णांक *erq, अक्षर *keybuf)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwencode(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_point *erq, char *keybuf)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक i;
-	काष्ठा lib80211_crypt_data **crypt;
+	int i;
+	struct lib80211_crypt_data **crypt;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	i = erq->flags & IW_ENCODE_INDEX;
-	अगर (i < 1 || i > 4)
+	if (i < 1 || i > 4)
 		i = local->crypt_info.tx_keyidx;
-	अन्यथा
+	else
 		i--;
-	अगर (i < 0 || i >= WEP_KEYS)
-		वापस -EINVAL;
+	if (i < 0 || i >= WEP_KEYS)
+		return -EINVAL;
 
 	crypt = &local->crypt_info.crypt[i];
 
-	अगर (erq->flags & IW_ENCODE_DISABLED) अणु
-		अगर (*crypt)
+	if (erq->flags & IW_ENCODE_DISABLED) {
+		if (*crypt)
 			lib80211_crypt_delayed_deinit(&local->crypt_info, crypt);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (*crypt != शून्य && (*crypt)->ops != शून्य &&
-	    म_भेद((*crypt)->ops->name, "WEP") != 0) अणु
+	if (*crypt != NULL && (*crypt)->ops != NULL &&
+	    strcmp((*crypt)->ops->name, "WEP") != 0) {
 		/* changing to use WEP; deinit previously used algorithm */
 		lib80211_crypt_delayed_deinit(&local->crypt_info, crypt);
-	पूर्ण
+	}
 
-	अगर (*crypt == शून्य) अणु
-		काष्ठा lib80211_crypt_data *new_crypt;
+	if (*crypt == NULL) {
+		struct lib80211_crypt_data *new_crypt;
 
-		/* take WEP पूर्णांकo use */
-		new_crypt = kzalloc(माप(काष्ठा lib80211_crypt_data),
+		/* take WEP into use */
+		new_crypt = kzalloc(sizeof(struct lib80211_crypt_data),
 				GFP_KERNEL);
-		अगर (new_crypt == शून्य)
-			वापस -ENOMEM;
+		if (new_crypt == NULL)
+			return -ENOMEM;
 		new_crypt->ops = lib80211_get_crypto_ops("WEP");
-		अगर (!new_crypt->ops) अणु
+		if (!new_crypt->ops) {
 			request_module("lib80211_crypt_wep");
 			new_crypt->ops = lib80211_get_crypto_ops("WEP");
-		पूर्ण
-		अगर (new_crypt->ops && try_module_get(new_crypt->ops->owner))
+		}
+		if (new_crypt->ops && try_module_get(new_crypt->ops->owner))
 			new_crypt->priv = new_crypt->ops->init(i);
-		अगर (!new_crypt->ops || !new_crypt->priv) अणु
-			kमुक्त(new_crypt);
-			new_crypt = शून्य;
+		if (!new_crypt->ops || !new_crypt->priv) {
+			kfree(new_crypt);
+			new_crypt = NULL;
 
-			prपूर्णांकk(KERN_WARNING "%s: could not initialize WEP: "
+			printk(KERN_WARNING "%s: could not initialize WEP: "
 			       "load module hostap_crypt_wep.o\n",
 			       dev->name);
-			वापस -EOPNOTSUPP;
-		पूर्ण
+			return -EOPNOTSUPP;
+		}
 		*crypt = new_crypt;
-	पूर्ण
+	}
 
-	अगर (erq->length > 0) अणु
-		पूर्णांक len = erq->length <= 5 ? 5 : 13;
-		पूर्णांक first = 1, j;
-		अगर (len > erq->length)
-			स_रखो(keybuf + erq->length, 0, len - erq->length);
-		(*crypt)->ops->set_key(keybuf, len, शून्य, (*crypt)->priv);
-		क्रम (j = 0; j < WEP_KEYS; j++) अणु
-			अगर (j != i && local->crypt_info.crypt[j]) अणु
+	if (erq->length > 0) {
+		int len = erq->length <= 5 ? 5 : 13;
+		int first = 1, j;
+		if (len > erq->length)
+			memset(keybuf + erq->length, 0, len - erq->length);
+		(*crypt)->ops->set_key(keybuf, len, NULL, (*crypt)->priv);
+		for (j = 0; j < WEP_KEYS; j++) {
+			if (j != i && local->crypt_info.crypt[j]) {
 				first = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (first)
+				break;
+			}
+		}
+		if (first)
 			local->crypt_info.tx_keyidx = i;
-	पूर्ण अन्यथा अणु
-		/* No key data - just set the शेष TX key index */
+	} else {
+		/* No key data - just set the default TX key index */
 		local->crypt_info.tx_keyidx = i;
-	पूर्ण
+	}
 
- करोne:
-	local->खोलो_wep = erq->flags & IW_ENCODE_OPEN;
+ done:
+	local->open_wep = erq->flags & IW_ENCODE_OPEN;
 
-	अगर (hostap_set_encryption(local)) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: set_encryption failed\n", dev->name);
-		वापस -EINVAL;
-	पूर्ण
+	if (hostap_set_encryption(local)) {
+		printk(KERN_DEBUG "%s: set_encryption failed\n", dev->name);
+		return -EINVAL;
+	}
 
-	/* Do not reset port0 अगर card is in Managed mode since resetting will
+	/* Do not reset port0 if card is in Managed mode since resetting will
 	 * generate new IEEE 802.11 authentication which may end up in looping
-	 * with IEEE 802.1X. Prism2 करोcumentation seem to require port reset
+	 * with IEEE 802.1X. Prism2 documentation seem to require port reset
 	 * after WEP configuration. However, keys are apparently changed at
 	 * least in Managed mode. */
-	अगर (local->iw_mode != IW_MODE_INFRA && local->func->reset_port(dev)) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: reset_port failed\n", dev->name);
-		वापस -EINVAL;
-	पूर्ण
+	if (local->iw_mode != IW_MODE_INFRA && local->func->reset_port(dev)) {
+		printk(KERN_DEBUG "%s: reset_port failed\n", dev->name);
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwencode(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_poपूर्णांक *erq, अक्षर *key)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwencode(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_point *erq, char *key)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक i, len;
+	int i, len;
 	u16 val;
-	काष्ठा lib80211_crypt_data *crypt;
+	struct lib80211_crypt_data *crypt;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	i = erq->flags & IW_ENCODE_INDEX;
-	अगर (i < 1 || i > 4)
+	if (i < 1 || i > 4)
 		i = local->crypt_info.tx_keyidx;
-	अन्यथा
+	else
 		i--;
-	अगर (i < 0 || i >= WEP_KEYS)
-		वापस -EINVAL;
+	if (i < 0 || i >= WEP_KEYS)
+		return -EINVAL;
 
 	crypt = local->crypt_info.crypt[i];
 	erq->flags = i + 1;
 
-	अगर (crypt == शून्य || crypt->ops == शून्य) अणु
+	if (crypt == NULL || crypt->ops == NULL) {
 		erq->length = 0;
 		erq->flags |= IW_ENCODE_DISABLED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (म_भेद(crypt->ops->name, "WEP") != 0) अणु
+	if (strcmp(crypt->ops->name, "WEP") != 0) {
 		/* only WEP is supported with wireless extensions, so just
 		 * report that encryption is used */
 		erq->length = 0;
 		erq->flags |= IW_ENCODE_ENABLED;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Reads from HFA384X_RID_CNFDEFAULTKEY* वापस bogus values, so show
+	/* Reads from HFA384X_RID_CNFDEFAULTKEY* return bogus values, so show
 	 * the keys from driver buffer */
-	len = crypt->ops->get_key(key, WEP_KEY_LEN, शून्य, crypt->priv);
+	len = crypt->ops->get_key(key, WEP_KEY_LEN, NULL, crypt->priv);
 	erq->length = (len >= 0 ? len : 0);
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_CNFWEPFLAGS, &val, 2, 1) < 0)
-	अणु
-		prपूर्णांकk("CNFWEPFLAGS reading failed\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	if (local->func->get_rid(dev, HFA384X_RID_CNFWEPFLAGS, &val, 2, 1) < 0)
+	{
+		printk("CNFWEPFLAGS reading failed\n");
+		return -EOPNOTSUPP;
+	}
 	le16_to_cpus(&val);
-	अगर (val & HFA384X_WEPFLAGS_PRIVACYINVOKED)
+	if (val & HFA384X_WEPFLAGS_PRIVACYINVOKED)
 		erq->flags |= IW_ENCODE_ENABLED;
-	अन्यथा
+	else
 		erq->flags |= IW_ENCODE_DISABLED;
-	अगर (val & HFA384X_WEPFLAGS_EXCLUDEUNENCRYPTED)
+	if (val & HFA384X_WEPFLAGS_EXCLUDEUNENCRYPTED)
 		erq->flags |= IW_ENCODE_RESTRICTED;
-	अन्यथा
+	else
 		erq->flags |= IW_ENCODE_OPEN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक hostap_set_rate(काष्ठा net_device *dev)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int hostap_set_rate(struct net_device *dev)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक ret, basic_rates;
+	int ret, basic_rates;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	basic_rates = local->basic_rates & local->tx_rate_control;
-	अगर (!basic_rates || basic_rates != local->basic_rates) अणु
-		prपूर्णांकk(KERN_INFO "%s: updating basic rate set automatically "
+	if (!basic_rates || basic_rates != local->basic_rates) {
+		printk(KERN_INFO "%s: updating basic rate set automatically "
 		       "to match with the new supported rate set\n",
 		       dev->name);
-		अगर (!basic_rates)
+		if (!basic_rates)
 			basic_rates = local->tx_rate_control;
 
 		local->basic_rates = basic_rates;
-		अगर (hostap_set_word(dev, HFA384X_RID_CNFBASICRATES,
+		if (hostap_set_word(dev, HFA384X_RID_CNFBASICRATES,
 				    basic_rates))
-			prपूर्णांकk(KERN_WARNING "%s: failed to set "
+			printk(KERN_WARNING "%s: failed to set "
 			       "cnfBasicRates\n", dev->name);
-	पूर्ण
+	}
 
 	ret = (hostap_set_word(dev, HFA384X_RID_TXRATECONTROL,
 			       local->tx_rate_control) ||
@@ -306,669 +305,669 @@
 			       local->tx_rate_control) ||
 	       local->func->reset_port(dev));
 
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_WARNING "%s: TXRateControl/cnfSupportedRates "
+	if (ret) {
+		printk(KERN_WARNING "%s: TXRateControl/cnfSupportedRates "
 		       "setting to 0x%x failed\n",
 		       dev->name, local->tx_rate_control);
-	पूर्ण
+	}
 
-	/* Update TX rate configuration क्रम all STAs based on new operational
+	/* Update TX rate configuration for all STAs based on new operational
 	 * rate set. */
 	hostap_update_rates(local);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwrate(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwrate(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *rrq, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (rrq->fixed) अणु
-		चयन (rrq->value) अणु
-		हाल 11000000:
+	if (rrq->fixed) {
+		switch (rrq->value) {
+		case 11000000:
 			local->tx_rate_control = HFA384X_RATES_11MBPS;
-			अवरोध;
-		हाल 5500000:
+			break;
+		case 5500000:
 			local->tx_rate_control = HFA384X_RATES_5MBPS;
-			अवरोध;
-		हाल 2000000:
+			break;
+		case 2000000:
 			local->tx_rate_control = HFA384X_RATES_2MBPS;
-			अवरोध;
-		हाल 1000000:
+			break;
+		case 1000000:
 			local->tx_rate_control = HFA384X_RATES_1MBPS;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			local->tx_rate_control = HFA384X_RATES_1MBPS |
 				HFA384X_RATES_2MBPS | HFA384X_RATES_5MBPS |
 				HFA384X_RATES_11MBPS;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (rrq->value) अणु
-		हाल 11000000:
+			break;
+		}
+	} else {
+		switch (rrq->value) {
+		case 11000000:
 			local->tx_rate_control = HFA384X_RATES_1MBPS |
 				HFA384X_RATES_2MBPS | HFA384X_RATES_5MBPS |
 				HFA384X_RATES_11MBPS;
-			अवरोध;
-		हाल 5500000:
+			break;
+		case 5500000:
 			local->tx_rate_control = HFA384X_RATES_1MBPS |
 				HFA384X_RATES_2MBPS | HFA384X_RATES_5MBPS;
-			अवरोध;
-		हाल 2000000:
+			break;
+		case 2000000:
 			local->tx_rate_control = HFA384X_RATES_1MBPS |
 				HFA384X_RATES_2MBPS;
-			अवरोध;
-		हाल 1000000:
+			break;
+		case 1000000:
 			local->tx_rate_control = HFA384X_RATES_1MBPS;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			local->tx_rate_control = HFA384X_RATES_1MBPS |
 				HFA384X_RATES_2MBPS | HFA384X_RATES_5MBPS |
 				HFA384X_RATES_11MBPS;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस hostap_set_rate(dev);
-पूर्ण
+	return hostap_set_rate(dev);
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwrate(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
+static int prism2_ioctl_giwrate(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *rrq, char *extra)
+{
 	u16 val;
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_TXRATECONTROL, &val, 2, 1) <
+	if (local->func->get_rid(dev, HFA384X_RID_TXRATECONTROL, &val, 2, 1) <
 	    0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर ((val & 0x1) && (val > 1))
+	if ((val & 0x1) && (val > 1))
 		rrq->fixed = 0;
-	अन्यथा
+	else
 		rrq->fixed = 1;
 
-	अगर (local->iw_mode == IW_MODE_MASTER && local->ap != शून्य &&
-	    !local->fw_tx_rate_control) अणु
+	if (local->iw_mode == IW_MODE_MASTER && local->ap != NULL &&
+	    !local->fw_tx_rate_control) {
 		/* HFA384X_RID_CURRENTTXRATE seems to always be 2 Mbps in
 		 * Host AP mode, so use the recorded TX rate of the last sent
 		 * frame */
 		rrq->value = local->ap->last_tx_rate > 0 ?
 			local->ap->last_tx_rate * 100000 : 11000000;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_CURRENTTXRATE, &val, 2, 1) <
+	if (local->func->get_rid(dev, HFA384X_RID_CURRENTTXRATE, &val, 2, 1) <
 	    0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	चयन (val) अणु
-	हाल HFA384X_RATES_1MBPS:
+	switch (val) {
+	case HFA384X_RATES_1MBPS:
 		rrq->value = 1000000;
-		अवरोध;
-	हाल HFA384X_RATES_2MBPS:
+		break;
+	case HFA384X_RATES_2MBPS:
 		rrq->value = 2000000;
-		अवरोध;
-	हाल HFA384X_RATES_5MBPS:
+		break;
+	case HFA384X_RATES_5MBPS:
 		rrq->value = 5500000;
-		अवरोध;
-	हाल HFA384X_RATES_11MBPS:
+		break;
+	case HFA384X_RATES_11MBPS:
 		rrq->value = 11000000;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		/* should not happen */
 		rrq->value = 11000000;
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwsens(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *sens, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwsens(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *sens, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	/* Set the desired AP density */
-	अगर (sens->value < 1 || sens->value > 3)
-		वापस -EINVAL;
+	if (sens->value < 1 || sens->value > 3)
+		return -EINVAL;
 
-	अगर (hostap_set_word(dev, HFA384X_RID_CNFSYSTEMSCALE, sens->value) ||
+	if (hostap_set_word(dev, HFA384X_RID_CNFSYSTEMSCALE, sens->value) ||
 	    local->func->reset_port(dev))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_ioctl_giwsens(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *sens, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwsens(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *sens, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	__le16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	/* Get the current AP density */
-	अगर (local->func->get_rid(dev, HFA384X_RID_CNFSYSTEMSCALE, &val, 2, 1) <
+	if (local->func->get_rid(dev, HFA384X_RID_CNFSYSTEMSCALE, &val, 2, 1) <
 	    0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	sens->value = le16_to_cpu(val);
 	sens->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /* Deprecated in new wireless extension API */
-अटल पूर्णांक prism2_ioctl_giwaplist(काष्ठा net_device *dev,
-				  काष्ठा iw_request_info *info,
-				  काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwaplist(struct net_device *dev,
+				  struct iw_request_info *info,
+				  struct iw_point *data, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	काष्ठा sockaddr *addr;
-	काष्ठा iw_quality *qual;
+	struct sockaddr *addr;
+	struct iw_quality *qual;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->iw_mode != IW_MODE_MASTER) अणु
-		prपूर्णांकk(KERN_DEBUG "SIOCGIWAPLIST is currently only supported "
+	if (local->iw_mode != IW_MODE_MASTER) {
+		printk(KERN_DEBUG "SIOCGIWAPLIST is currently only supported "
 		       "in Host AP mode\n");
 		data->length = 0;
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
-	addr = kदो_स्मृति_array(IW_MAX_AP, माप(काष्ठा sockaddr), GFP_KERNEL);
-	qual = kदो_स्मृति_array(IW_MAX_AP, माप(काष्ठा iw_quality), GFP_KERNEL);
-	अगर (addr == शून्य || qual == शून्य) अणु
-		kमुक्त(addr);
-		kमुक्त(qual);
+	addr = kmalloc_array(IW_MAX_AP, sizeof(struct sockaddr), GFP_KERNEL);
+	qual = kmalloc_array(IW_MAX_AP, sizeof(struct iw_quality), GFP_KERNEL);
+	if (addr == NULL || qual == NULL) {
+		kfree(addr);
+		kfree(qual);
 		data->length = 0;
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	data->length = prism2_ap_get_sta_qual(local, addr, qual, IW_MAX_AP, 1);
 
-	स_नकल(extra, addr, माप(काष्ठा sockaddr) * data->length);
-	data->flags = 1; /* has quality inक्रमmation */
-	स_नकल(extra + माप(काष्ठा sockaddr) * data->length, qual,
-	       माप(काष्ठा iw_quality) * data->length);
+	memcpy(extra, addr, sizeof(struct sockaddr) * data->length);
+	data->flags = 1; /* has quality information */
+	memcpy(extra + sizeof(struct sockaddr) * data->length, qual,
+	       sizeof(struct iw_quality) * data->length);
 
-	kमुक्त(addr);
-	kमुक्त(qual);
-	वापस 0;
-पूर्ण
+	kfree(addr);
+	kfree(qual);
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwrts(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwrts(struct net_device *dev,
+			       struct iw_request_info *info,
+			       struct iw_param *rts, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	__le16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (rts->disabled)
+	if (rts->disabled)
 		val = cpu_to_le16(2347);
-	अन्यथा अगर (rts->value < 0 || rts->value > 2347)
-		वापस -EINVAL;
-	अन्यथा
+	else if (rts->value < 0 || rts->value > 2347)
+		return -EINVAL;
+	else
 		val = cpu_to_le16(rts->value);
 
-	अगर (local->func->set_rid(dev, HFA384X_RID_RTSTHRESHOLD, &val, 2) ||
+	if (local->func->set_rid(dev, HFA384X_RID_RTSTHRESHOLD, &val, 2) ||
 	    local->func->reset_port(dev))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	local->rts_threshold = rts->value;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_ioctl_giwrts(काष्ठा net_device *dev,
-			       काष्ठा iw_request_info *info,
-			       काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwrts(struct net_device *dev,
+			       struct iw_request_info *info,
+			       struct iw_param *rts, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	__le16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_RTSTHRESHOLD, &val, 2, 1) <
+	if (local->func->get_rid(dev, HFA384X_RID_RTSTHRESHOLD, &val, 2, 1) <
 	    0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	rts->value = le16_to_cpu(val);
 	rts->disabled = (rts->value == 2347);
 	rts->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwfrag(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwfrag(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *rts, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	__le16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (rts->disabled)
+	if (rts->disabled)
 		val = cpu_to_le16(2346);
-	अन्यथा अगर (rts->value < 256 || rts->value > 2346)
-		वापस -EINVAL;
-	अन्यथा
+	else if (rts->value < 256 || rts->value > 2346)
+		return -EINVAL;
+	else
 		val = cpu_to_le16(rts->value & ~0x1); /* even numbers only */
 
 	local->fragm_threshold = rts->value & ~0x1;
-	अगर (local->func->set_rid(dev, HFA384X_RID_FRAGMENTATIONTHRESHOLD, &val,
+	if (local->func->set_rid(dev, HFA384X_RID_FRAGMENTATIONTHRESHOLD, &val,
 				 2)
 	    || local->func->reset_port(dev))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_ioctl_giwfrag(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *rts, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwfrag(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *rts, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	__le16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_FRAGMENTATIONTHRESHOLD,
+	if (local->func->get_rid(dev, HFA384X_RID_FRAGMENTATIONTHRESHOLD,
 				 &val, 2, 1) < 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	rts->value = le16_to_cpu(val);
 	rts->disabled = (rts->value == 2346);
 	rts->fixed = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-अटल पूर्णांक hostap_join_ap(काष्ठा net_device *dev)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+#ifndef PRISM2_NO_STATION_MODES
+static int hostap_join_ap(struct net_device *dev)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	काष्ठा hfa384x_join_request req;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i;
-	काष्ठा hfa384x_hostscan_result *entry;
+	struct hfa384x_join_request req;
+	unsigned long flags;
+	int i;
+	struct hfa384x_hostscan_result *entry;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	स_नकल(req.bssid, local->preferred_ap, ETH_ALEN);
+	memcpy(req.bssid, local->preferred_ap, ETH_ALEN);
 	req.channel = 0;
 
 	spin_lock_irqsave(&local->lock, flags);
-	क्रम (i = 0; i < local->last_scan_results_count; i++) अणु
-		अगर (!local->last_scan_results)
-			अवरोध;
+	for (i = 0; i < local->last_scan_results_count; i++) {
+		if (!local->last_scan_results)
+			break;
 		entry = &local->last_scan_results[i];
-		अगर (ether_addr_equal(local->preferred_ap, entry->bssid)) अणु
+		if (ether_addr_equal(local->preferred_ap, entry->bssid)) {
 			req.channel = entry->chid;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock_irqrestore(&local->lock, flags);
 
-	अगर (local->func->set_rid(dev, HFA384X_RID_JOINREQUEST, &req,
-				 माप(req))) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: JoinRequest %pM failed\n",
+	if (local->func->set_rid(dev, HFA384X_RID_JOINREQUEST, &req,
+				 sizeof(req))) {
+		printk(KERN_DEBUG "%s: JoinRequest %pM failed\n",
 		       dev->name, local->preferred_ap);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	prपूर्णांकk(KERN_DEBUG "%s: Trying to join BSSID %pM\n",
+	printk(KERN_DEBUG "%s: Trying to join BSSID %pM\n",
 	       dev->name, local->preferred_ap);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
+	return 0;
+}
+#endif /* PRISM2_NO_STATION_MODES */
 
 
-अटल पूर्णांक prism2_ioctl_siwap(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-#अगर_घोषित PRISM2_NO_STATION_MODES
-	वापस -EOPNOTSUPP;
-#अन्यथा /* PRISM2_NO_STATION_MODES */
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwap(struct net_device *dev,
+			      struct iw_request_info *info,
+			      struct sockaddr *ap_addr, char *extra)
+{
+#ifdef PRISM2_NO_STATION_MODES
+	return -EOPNOTSUPP;
+#else /* PRISM2_NO_STATION_MODES */
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	स_नकल(local->preferred_ap, &ap_addr->sa_data, ETH_ALEN);
+	memcpy(local->preferred_ap, &ap_addr->sa_data, ETH_ALEN);
 
-	अगर (local->host_roaming == 1 && local->iw_mode == IW_MODE_INFRA) अणु
-		काष्ठा hfa384x_scan_request scan_req;
-		स_रखो(&scan_req, 0, माप(scan_req));
+	if (local->host_roaming == 1 && local->iw_mode == IW_MODE_INFRA) {
+		struct hfa384x_scan_request scan_req;
+		memset(&scan_req, 0, sizeof(scan_req));
 		scan_req.channel_list = cpu_to_le16(0x3fff);
 		scan_req.txrate = cpu_to_le16(HFA384X_RATES_1MBPS);
-		अगर (local->func->set_rid(dev, HFA384X_RID_SCANREQUEST,
-					 &scan_req, माप(scan_req))) अणु
-			prपूर्णांकk(KERN_DEBUG "%s: ScanResults request failed - "
+		if (local->func->set_rid(dev, HFA384X_RID_SCANREQUEST,
+					 &scan_req, sizeof(scan_req))) {
+			printk(KERN_DEBUG "%s: ScanResults request failed - "
 			       "preferred AP delayed to next unsolicited "
 			       "scan\n", dev->name);
-		पूर्ण
-	पूर्ण अन्यथा अगर (local->host_roaming == 2 &&
-		   local->iw_mode == IW_MODE_INFRA) अणु
-		अगर (hostap_join_ap(dev))
-			वापस -EINVAL;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk(KERN_DEBUG "%s: Preferred AP (SIOCSIWAP) is used only "
+		}
+	} else if (local->host_roaming == 2 &&
+		   local->iw_mode == IW_MODE_INFRA) {
+		if (hostap_join_ap(dev))
+			return -EINVAL;
+	} else {
+		printk(KERN_DEBUG "%s: Preferred AP (SIOCSIWAP) is used only "
 		       "in Managed mode when host_roaming is enabled\n",
 		       dev->name);
-	पूर्ण
+	}
 
-	वापस 0;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-पूर्ण
+	return 0;
+#endif /* PRISM2_NO_STATION_MODES */
+}
 
-अटल पूर्णांक prism2_ioctl_giwap(काष्ठा net_device *dev,
-			      काष्ठा iw_request_info *info,
-			      काष्ठा sockaddr *ap_addr, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwap(struct net_device *dev,
+			      struct iw_request_info *info,
+			      struct sockaddr *ap_addr, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	ap_addr->sa_family = ARPHRD_ETHER;
-	चयन (अगरace->type) अणु
-	हाल HOSTAP_INTERFACE_AP:
-		स_नकल(&ap_addr->sa_data, dev->dev_addr, ETH_ALEN);
-		अवरोध;
-	हाल HOSTAP_INTERFACE_STA:
-		स_नकल(&ap_addr->sa_data, local->assoc_ap_addr, ETH_ALEN);
-		अवरोध;
-	हाल HOSTAP_INTERFACE_WDS:
-		स_नकल(&ap_addr->sa_data, अगरace->u.wds.remote_addr, ETH_ALEN);
-		अवरोध;
-	शेष:
-		अगर (local->func->get_rid(dev, HFA384X_RID_CURRENTBSSID,
+	switch (iface->type) {
+	case HOSTAP_INTERFACE_AP:
+		memcpy(&ap_addr->sa_data, dev->dev_addr, ETH_ALEN);
+		break;
+	case HOSTAP_INTERFACE_STA:
+		memcpy(&ap_addr->sa_data, local->assoc_ap_addr, ETH_ALEN);
+		break;
+	case HOSTAP_INTERFACE_WDS:
+		memcpy(&ap_addr->sa_data, iface->u.wds.remote_addr, ETH_ALEN);
+		break;
+	default:
+		if (local->func->get_rid(dev, HFA384X_RID_CURRENTBSSID,
 					 &ap_addr->sa_data, ETH_ALEN, 1) < 0)
-			वापस -EOPNOTSUPP;
+			return -EOPNOTSUPP;
 
 		/* local->bssid is also updated in LinkStatus handler when in
 		 * station mode */
-		स_नकल(local->bssid, &ap_addr->sa_data, ETH_ALEN);
-		अवरोध;
-	पूर्ण
+		memcpy(local->bssid, &ap_addr->sa_data, ETH_ALEN);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwnickn(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *nickname)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwnickn(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *nickname)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	स_रखो(local->name, 0, माप(local->name));
-	स_नकल(local->name, nickname, data->length);
+	memset(local->name, 0, sizeof(local->name));
+	memcpy(local->name, nickname, data->length);
 	local->name_set = 1;
 
-	अगर (hostap_set_string(dev, HFA384X_RID_CNFOWNNAME, local->name) ||
+	if (hostap_set_string(dev, HFA384X_RID_CNFOWNNAME, local->name) ||
 	    local->func->reset_port(dev))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_ioctl_giwnickn(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *nickname)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwnickn(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *nickname)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक len;
-	अक्षर name[MAX_NAME_LEN + 3];
+	int len;
+	char name[MAX_NAME_LEN + 3];
 	u16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	len = local->func->get_rid(dev, HFA384X_RID_CNFOWNNAME,
 				   &name, MAX_NAME_LEN + 2, 0);
 	val = le16_to_cpu(*(__le16 *) name);
-	अगर (len > MAX_NAME_LEN + 2 || len < 0 || val > MAX_NAME_LEN)
-		वापस -EOPNOTSUPP;
+	if (len > MAX_NAME_LEN + 2 || len < 0 || val > MAX_NAME_LEN)
+		return -EOPNOTSUPP;
 
 	name[val + 2] = '\0';
 	data->length = val + 1;
-	स_नकल(nickname, name + 2, val + 1);
+	memcpy(nickname, name + 2, val + 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwfreq(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_freq *freq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwfreq(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_freq *freq, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	/* freq => chan. */
-	अगर (freq->e == 1 &&
+	if (freq->e == 1 &&
 	    freq->m / 100000 >= freq_list[0] &&
-	    freq->m / 100000 <= freq_list[FREQ_COUNT - 1]) अणु
-		पूर्णांक ch;
-		पूर्णांक fr = freq->m / 100000;
-		क्रम (ch = 0; ch < FREQ_COUNT; ch++) अणु
-			अगर (fr == freq_list[ch]) अणु
+	    freq->m / 100000 <= freq_list[FREQ_COUNT - 1]) {
+		int ch;
+		int fr = freq->m / 100000;
+		for (ch = 0; ch < FREQ_COUNT; ch++) {
+			if (fr == freq_list[ch]) {
 				freq->e = 0;
 				freq->m = ch + 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	अगर (freq->e != 0 || freq->m < 1 || freq->m > FREQ_COUNT ||
+	if (freq->e != 0 || freq->m < 1 || freq->m > FREQ_COUNT ||
 	    !(local->channel_mask & (1 << (freq->m - 1))))
-		वापस -EINVAL;
+		return -EINVAL;
 
 	local->channel = freq->m; /* channel is used in prism2_setup_rids() */
-	अगर (hostap_set_word(dev, HFA384X_RID_CNFOWNCHANNEL, local->channel) ||
+	if (hostap_set_word(dev, HFA384X_RID_CNFOWNCHANNEL, local->channel) ||
 	    local->func->reset_port(dev))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_ioctl_giwfreq(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_freq *freq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwfreq(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_freq *freq, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	u16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_CURRENTCHANNEL, &val, 2, 1) <
+	if (local->func->get_rid(dev, HFA384X_RID_CURRENTCHANNEL, &val, 2, 1) <
 	    0)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	le16_to_cpus(&val);
-	अगर (val < 1 || val > FREQ_COUNT)
-		वापस -EINVAL;
+	if (val < 1 || val > FREQ_COUNT)
+		return -EINVAL;
 
 	freq->m = freq_list[val - 1] * 100000;
 	freq->e = 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल व्योम hostap_monitor_set_type(local_info_t *local)
-अणु
-	काष्ठा net_device *dev = local->ddev;
+static void hostap_monitor_set_type(local_info_t *local)
+{
+	struct net_device *dev = local->ddev;
 
-	अगर (dev == शून्य)
-		वापस;
+	if (dev == NULL)
+		return;
 
-	अगर (local->monitor_type == PRISM2_MONITOR_PRISM ||
-	    local->monitor_type == PRISM2_MONITOR_CAPHDR) अणु
+	if (local->monitor_type == PRISM2_MONITOR_PRISM ||
+	    local->monitor_type == PRISM2_MONITOR_CAPHDR) {
 		dev->type = ARPHRD_IEEE80211_PRISM;
-	पूर्ण अन्यथा अगर (local->monitor_type == PRISM2_MONITOR_RADIOTAP) अणु
+	} else if (local->monitor_type == PRISM2_MONITOR_RADIOTAP) {
 		dev->type = ARPHRD_IEEE80211_RADIOTAP;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev->type = ARPHRD_IEEE80211;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwessid(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *ssid)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwessid(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *ssid)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (अगरace->type == HOSTAP_INTERFACE_WDS)
-		वापस -EOPNOTSUPP;
+	if (iface->type == HOSTAP_INTERFACE_WDS)
+		return -EOPNOTSUPP;
 
-	अगर (data->flags == 0)
+	if (data->flags == 0)
 		ssid[0] = '\0'; /* ANY */
 
-	अगर (local->iw_mode == IW_MODE_MASTER && ssid[0] == '\0') अणु
-		/* Setting SSID to empty string seems to समाप्त the card in
+	if (local->iw_mode == IW_MODE_MASTER && ssid[0] == '\0') {
+		/* Setting SSID to empty string seems to kill the card in
 		 * Host AP mode */
-		prपूर्णांकk(KERN_DEBUG "%s: Host AP mode does not support "
+		printk(KERN_DEBUG "%s: Host AP mode does not support "
 		       "'Any' essid\n", dev->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	स_नकल(local->essid, ssid, data->length);
+	memcpy(local->essid, ssid, data->length);
 	local->essid[data->length] = '\0';
 
-	अगर ((!local->fw_ap &&
+	if ((!local->fw_ap &&
 	     hostap_set_string(dev, HFA384X_RID_CNFDESIREDSSID, local->essid))
 	    || hostap_set_string(dev, HFA384X_RID_CNFOWNSSID, local->essid) ||
 	    local->func->reset_port(dev))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prism2_ioctl_giwessid(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *essid)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwessid(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *essid)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	u16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (अगरace->type == HOSTAP_INTERFACE_WDS)
-		वापस -EOPNOTSUPP;
+	if (iface->type == HOSTAP_INTERFACE_WDS)
+		return -EOPNOTSUPP;
 
 	data->flags = 1; /* active */
-	अगर (local->iw_mode == IW_MODE_MASTER) अणु
-		data->length = म_माप(local->essid);
-		स_नकल(essid, local->essid, IW_ESSID_MAX_SIZE);
-	पूर्ण अन्यथा अणु
-		पूर्णांक len;
-		अक्षर ssid[MAX_SSID_LEN + 2];
-		स_रखो(ssid, 0, माप(ssid));
+	if (local->iw_mode == IW_MODE_MASTER) {
+		data->length = strlen(local->essid);
+		memcpy(essid, local->essid, IW_ESSID_MAX_SIZE);
+	} else {
+		int len;
+		char ssid[MAX_SSID_LEN + 2];
+		memset(ssid, 0, sizeof(ssid));
 		len = local->func->get_rid(dev, HFA384X_RID_CURRENTSSID,
 					   &ssid, MAX_SSID_LEN + 2, 0);
 		val = le16_to_cpu(*(__le16 *) ssid);
-		अगर (len > MAX_SSID_LEN + 2 || len < 0 || val > MAX_SSID_LEN) अणु
-			वापस -EOPNOTSUPP;
-		पूर्ण
+		if (len > MAX_SSID_LEN + 2 || len < 0 || val > MAX_SSID_LEN) {
+			return -EOPNOTSUPP;
+		}
 		data->length = val;
-		स_नकल(essid, ssid + 2, IW_ESSID_MAX_SIZE);
-	पूर्ण
+		memcpy(essid, ssid + 2, IW_ESSID_MAX_SIZE);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwrange(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwrange(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	काष्ठा iw_range *range = (काष्ठा iw_range *) extra;
+	struct iw_range *range = (struct iw_range *) extra;
 	u8 rates[10];
 	u16 val;
-	पूर्णांक i, len, over2;
+	int i, len, over2;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	data->length = माप(काष्ठा iw_range);
-	स_रखो(range, 0, माप(काष्ठा iw_range));
+	data->length = sizeof(struct iw_range);
+	memset(range, 0, sizeof(struct iw_range));
 
-	/* TODO: could fill num_txघातer and txघातer array with
-	 * something; however, there are 128 dअगरferent values.. */
+	/* TODO: could fill num_txpower and txpower array with
+	 * something; however, there are 128 different values.. */
 
-	range->txघातer_capa = IW_TXPOW_DBM;
+	range->txpower_capa = IW_TXPOW_DBM;
 
-	अगर (local->iw_mode == IW_MODE_INFRA || local->iw_mode == IW_MODE_ADHOC)
-	अणु
+	if (local->iw_mode == IW_MODE_INFRA || local->iw_mode == IW_MODE_ADHOC)
+	{
 		range->min_pmp = 1 * 1024;
 		range->max_pmp = 65535 * 1024;
 		range->min_pmt = 1 * 1024;
@@ -977,7 +976,7 @@
 		range->pmt_flags = IW_POWER_TIMEOUT;
 		range->pm_capa = IW_POWER_PERIOD | IW_POWER_TIMEOUT |
 			IW_POWER_UNICAST_R | IW_POWER_ALL_R;
-	पूर्ण
+	}
 
 	range->we_version_compiled = WIRELESS_EXT;
 	range->we_version_source = 18;
@@ -990,34 +989,34 @@
 	range->num_channels = FREQ_COUNT;
 
 	val = 0;
-	क्रम (i = 0; i < FREQ_COUNT; i++) अणु
-		अगर (local->channel_mask & (1 << i)) अणु
+	for (i = 0; i < FREQ_COUNT; i++) {
+		if (local->channel_mask & (1 << i)) {
 			range->freq[val].i = i + 1;
 			range->freq[val].m = freq_list[i] * 100000;
 			range->freq[val].e = 1;
 			val++;
-		पूर्ण
-		अगर (val == IW_MAX_FREQUENCIES)
-			अवरोध;
-	पूर्ण
+		}
+		if (val == IW_MAX_FREQUENCIES)
+			break;
+	}
 	range->num_frequency = val;
 
-	अगर (local->sta_fw_ver >= PRISM2_FW_VER(1,3,1)) अणु
+	if (local->sta_fw_ver >= PRISM2_FW_VER(1,3,1)) {
 		range->max_qual.qual = 70; /* what is correct max? This was not
-					    * करोcumented exactly. At least
+					    * documented exactly. At least
 					    * 69 has been observed. */
 		range->max_qual.level = 0; /* dB */
 		range->max_qual.noise = 0; /* dB */
 
-		/* What would be suitable values क्रम "average/typical" qual? */
+		/* What would be suitable values for "average/typical" qual? */
 		range->avg_qual.qual = 20;
 		range->avg_qual.level = -60;
 		range->avg_qual.noise = -95;
-	पूर्ण अन्यथा अणु
+	} else {
 		range->max_qual.qual = 92; /* 0 .. 92 */
 		range->max_qual.level = 154; /* 27 .. 154 */
 		range->max_qual.noise = 154; /* 27 .. 154 */
-	पूर्ण
+	}
 	range->sensitivity = 3;
 
 	range->max_encoding_tokens = WEP_KEYS;
@@ -1028,15 +1027,15 @@
 	over2 = 0;
 	len = prism2_get_datarates(dev, rates);
 	range->num_bitrates = 0;
-	क्रम (i = 0; i < len; i++) अणु
-		अगर (range->num_bitrates < IW_MAX_BITRATES) अणु
+	for (i = 0; i < len; i++) {
+		if (range->num_bitrates < IW_MAX_BITRATES) {
 			range->bitrate[range->num_bitrates] =
 				rates[i] * 500000;
 			range->num_bitrates++;
-		पूर्ण
-		अगर (rates[i] == 0x0b || rates[i] == 0x16)
+		}
+		if (rates[i] == 0x0b || rates[i] == 0x16)
 			over2 = 1;
-	पूर्ण
+	}
 	/* estimated maximum TCP throughput values (bps) */
 	range->throughput = over2 ? 5500000 : 1500000;
 
@@ -1059,2828 +1058,2828 @@
 	range->enc_capa = IW_ENC_CAPA_WPA | IW_ENC_CAPA_WPA2 |
 		IW_ENC_CAPA_CIPHER_TKIP | IW_ENC_CAPA_CIPHER_CCMP;
 
-	अगर (local->sta_fw_ver >= PRISM2_FW_VER(1,3,1))
+	if (local->sta_fw_ver >= PRISM2_FW_VER(1,3,1))
 		range->scan_capa = IW_SCAN_CAPA_ESSID;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक hostap_monitor_mode_enable(local_info_t *local)
-अणु
-	काष्ठा net_device *dev = local->dev;
+static int hostap_monitor_mode_enable(local_info_t *local)
+{
+	struct net_device *dev = local->dev;
 
-	prपूर्णांकk(KERN_DEBUG "Enabling monitor mode\n");
+	printk(KERN_DEBUG "Enabling monitor mode\n");
 	hostap_monitor_set_type(local);
 
-	अगर (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
-			    HFA384X_PORTTYPE_PSEUDO_IBSS)) अणु
-		prपूर्णांकk(KERN_DEBUG "Port type setting for monitor mode "
+	if (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
+			    HFA384X_PORTTYPE_PSEUDO_IBSS)) {
+		printk(KERN_DEBUG "Port type setting for monitor mode "
 		       "failed\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	/* Host decrypt is needed to get the IV and ICV fields;
-	 * however, monitor mode seems to हटाओ WEP flag from frame
+	 * however, monitor mode seems to remove WEP flag from frame
 	 * control field */
-	अगर (hostap_set_word(dev, HFA384X_RID_CNFWEPFLAGS,
+	if (hostap_set_word(dev, HFA384X_RID_CNFWEPFLAGS,
 			    HFA384X_WEPFLAGS_HOSTENCRYPT |
-			    HFA384X_WEPFLAGS_HOSTDECRYPT)) अणु
-		prपूर्णांकk(KERN_DEBUG "WEP flags setting failed\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+			    HFA384X_WEPFLAGS_HOSTDECRYPT)) {
+		printk(KERN_DEBUG "WEP flags setting failed\n");
+		return -EOPNOTSUPP;
+	}
 
-	अगर (local->func->reset_port(dev) ||
+	if (local->func->reset_port(dev) ||
 	    local->func->cmd(dev, HFA384X_CMDCODE_TEST |
 			     (HFA384X_TEST_MONITOR << 8),
-			     0, शून्य, शून्य)) अणु
-		prपूर्णांकk(KERN_DEBUG "Setting monitor mode failed\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+			     0, NULL, NULL)) {
+		printk(KERN_DEBUG "Setting monitor mode failed\n");
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक hostap_monitor_mode_disable(local_info_t *local)
-अणु
-	काष्ठा net_device *dev = local->ddev;
+static int hostap_monitor_mode_disable(local_info_t *local)
+{
+	struct net_device *dev = local->ddev;
 
-	अगर (dev == शून्य)
-		वापस -1;
+	if (dev == NULL)
+		return -1;
 
-	prपूर्णांकk(KERN_DEBUG "%s: Disabling monitor mode\n", dev->name);
+	printk(KERN_DEBUG "%s: Disabling monitor mode\n", dev->name);
 	dev->type = ARPHRD_ETHER;
 
-	अगर (local->func->cmd(dev, HFA384X_CMDCODE_TEST |
+	if (local->func->cmd(dev, HFA384X_CMDCODE_TEST |
 			     (HFA384X_TEST_STOP << 8),
-			     0, शून्य, शून्य))
-		वापस -1;
-	वापस hostap_set_encryption(local);
-पूर्ण
+			     0, NULL, NULL))
+		return -1;
+	return hostap_set_encryption(local);
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwmode(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				__u32 *mode, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwmode(struct net_device *dev,
+				struct iw_request_info *info,
+				__u32 *mode, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक द्विगुन_reset = 0;
+	int double_reset = 0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (*mode != IW_MODE_ADHOC && *mode != IW_MODE_INFRA &&
+	if (*mode != IW_MODE_ADHOC && *mode != IW_MODE_INFRA &&
 	    *mode != IW_MODE_MASTER && *mode != IW_MODE_REPEAT &&
 	    *mode != IW_MODE_MONITOR)
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-#अगर_घोषित PRISM2_NO_STATION_MODES
-	अगर (*mode == IW_MODE_ADHOC || *mode == IW_MODE_INFRA)
-		वापस -EOPNOTSUPP;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
+#ifdef PRISM2_NO_STATION_MODES
+	if (*mode == IW_MODE_ADHOC || *mode == IW_MODE_INFRA)
+		return -EOPNOTSUPP;
+#endif /* PRISM2_NO_STATION_MODES */
 
-	अगर (*mode == local->iw_mode)
-		वापस 0;
+	if (*mode == local->iw_mode)
+		return 0;
 
-	अगर (*mode == IW_MODE_MASTER && local->essid[0] == '\0') अणु
-		prपूर्णांकk(KERN_WARNING "%s: empty SSID not allowed in Master "
+	if (*mode == IW_MODE_MASTER && local->essid[0] == '\0') {
+		printk(KERN_WARNING "%s: empty SSID not allowed in Master "
 		       "mode\n", dev->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (local->iw_mode == IW_MODE_MONITOR)
+	if (local->iw_mode == IW_MODE_MONITOR)
 		hostap_monitor_mode_disable(local);
 
-	अगर ((local->iw_mode == IW_MODE_ADHOC ||
-	     local->iw_mode == IW_MODE_MONITOR) && *mode == IW_MODE_MASTER) अणु
+	if ((local->iw_mode == IW_MODE_ADHOC ||
+	     local->iw_mode == IW_MODE_MONITOR) && *mode == IW_MODE_MASTER) {
 		/* There seems to be a firmware bug in at least STA f/w v1.5.6
 		 * that leaves beacon frames to use IBSS type when moving from
-		 * IBSS to Host AP mode. Doing द्विगुन Port0 reset seems to be
+		 * IBSS to Host AP mode. Doing double Port0 reset seems to be
 		 * enough to workaround this. */
-		द्विगुन_reset = 1;
-	पूर्ण
+		double_reset = 1;
+	}
 
-	prपूर्णांकk(KERN_DEBUG "prism2: %s: operating mode changed "
+	printk(KERN_DEBUG "prism2: %s: operating mode changed "
 	       "%d -> %d\n", dev->name, local->iw_mode, *mode);
 	local->iw_mode = *mode;
 
-	अगर (local->iw_mode == IW_MODE_MONITOR)
+	if (local->iw_mode == IW_MODE_MONITOR)
 		hostap_monitor_mode_enable(local);
-	अन्यथा अगर (local->iw_mode == IW_MODE_MASTER && !local->host_encrypt &&
-		 !local->fw_encrypt_ok) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: defaulting to host-based encryption as "
+	else if (local->iw_mode == IW_MODE_MASTER && !local->host_encrypt &&
+		 !local->fw_encrypt_ok) {
+		printk(KERN_DEBUG "%s: defaulting to host-based encryption as "
 		       "a workaround for firmware bug in Host AP mode WEP\n",
 		       dev->name);
 		local->host_encrypt = 1;
-	पूर्ण
+	}
 
-	अगर (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
+	if (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
 			    hostap_get_porttype(local)))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (local->func->reset_port(dev))
-		वापस -EINVAL;
-	अगर (द्विगुन_reset && local->func->reset_port(dev))
-		वापस -EINVAL;
+	if (local->func->reset_port(dev))
+		return -EINVAL;
+	if (double_reset && local->func->reset_port(dev))
+		return -EINVAL;
 
-	अगर (local->iw_mode != IW_MODE_INFRA && local->iw_mode != IW_MODE_ADHOC)
-	अणु
-		/* netअगर_carrier is used only in client modes क्रम now, so make
+	if (local->iw_mode != IW_MODE_INFRA && local->iw_mode != IW_MODE_ADHOC)
+	{
+		/* netif_carrier is used only in client modes for now, so make
 		 * sure carrier is on when moving to non-client modes. */
-		netअगर_carrier_on(local->dev);
-		netअगर_carrier_on(local->ddev);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		netif_carrier_on(local->dev);
+		netif_carrier_on(local->ddev);
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwmode(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				__u32 *mode, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwmode(struct net_device *dev,
+				struct iw_request_info *info,
+				__u32 *mode, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	चयन (अगरace->type) अणु
-	हाल HOSTAP_INTERFACE_STA:
+	switch (iface->type) {
+	case HOSTAP_INTERFACE_STA:
 		*mode = IW_MODE_INFRA;
-		अवरोध;
-	हाल HOSTAP_INTERFACE_WDS:
+		break;
+	case HOSTAP_INTERFACE_WDS:
 		*mode = IW_MODE_REPEAT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		*mode = local->iw_mode;
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwघातer(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *wrq, अक्षर *extra)
-अणु
-#अगर_घोषित PRISM2_NO_STATION_MODES
-	वापस -EOPNOTSUPP;
-#अन्यथा /* PRISM2_NO_STATION_MODES */
-	पूर्णांक ret = 0;
+static int prism2_ioctl_siwpower(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *wrq, char *extra)
+{
+#ifdef PRISM2_NO_STATION_MODES
+	return -EOPNOTSUPP;
+#else /* PRISM2_NO_STATION_MODES */
+	int ret = 0;
 
-	अगर (wrq->disabled)
-		वापस hostap_set_word(dev, HFA384X_RID_CNFPMENABLED, 0);
+	if (wrq->disabled)
+		return hostap_set_word(dev, HFA384X_RID_CNFPMENABLED, 0);
 
-	चयन (wrq->flags & IW_POWER_MODE) अणु
-	हाल IW_POWER_UNICAST_R:
+	switch (wrq->flags & IW_POWER_MODE) {
+	case IW_POWER_UNICAST_R:
 		ret = hostap_set_word(dev, HFA384X_RID_CNFMULTICASTRECEIVE, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = hostap_set_word(dev, HFA384X_RID_CNFPMENABLED, 1);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	हाल IW_POWER_ALL_R:
+		if (ret)
+			return ret;
+		break;
+	case IW_POWER_ALL_R:
 		ret = hostap_set_word(dev, HFA384X_RID_CNFMULTICASTRECEIVE, 1);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = hostap_set_word(dev, HFA384X_RID_CNFPMENABLED, 1);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	हाल IW_POWER_ON:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		if (ret)
+			return ret;
+		break;
+	case IW_POWER_ON:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	अगर (wrq->flags & IW_POWER_TIMEOUT) अणु
+	if (wrq->flags & IW_POWER_TIMEOUT) {
 		ret = hostap_set_word(dev, HFA384X_RID_CNFPMENABLED, 1);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = hostap_set_word(dev, HFA384X_RID_CNFPMHOLDOVERDURATION,
 				      wrq->value / 1024);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	अगर (wrq->flags & IW_POWER_PERIOD) अणु
+		if (ret)
+			return ret;
+	}
+	if (wrq->flags & IW_POWER_PERIOD) {
 		ret = hostap_set_word(dev, HFA384X_RID_CNFPMENABLED, 1);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		ret = hostap_set_word(dev, HFA384X_RID_CNFMAXSLEEPDURATION,
 				      wrq->value / 1024);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस ret;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-पूर्ण
+	return ret;
+#endif /* PRISM2_NO_STATION_MODES */
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwघातer(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-#अगर_घोषित PRISM2_NO_STATION_MODES
-	वापस -EOPNOTSUPP;
-#अन्यथा /* PRISM2_NO_STATION_MODES */
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwpower(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rrq, char *extra)
+{
+#ifdef PRISM2_NO_STATION_MODES
+	return -EOPNOTSUPP;
+#else /* PRISM2_NO_STATION_MODES */
+	struct hostap_interface *iface;
 	local_info_t *local;
 	__le16 enable, mcast;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_CNFPMENABLED, &enable, 2, 1)
+	if (local->func->get_rid(dev, HFA384X_RID_CNFPMENABLED, &enable, 2, 1)
 	    < 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (!le16_to_cpu(enable)) अणु
+	if (!le16_to_cpu(enable)) {
 		rrq->disabled = 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	rrq->disabled = 0;
 
-	अगर ((rrq->flags & IW_POWER_TYPE) == IW_POWER_TIMEOUT) अणु
-		__le16 समयout;
-		अगर (local->func->get_rid(dev,
+	if ((rrq->flags & IW_POWER_TYPE) == IW_POWER_TIMEOUT) {
+		__le16 timeout;
+		if (local->func->get_rid(dev,
 					 HFA384X_RID_CNFPMHOLDOVERDURATION,
-					 &समयout, 2, 1) < 0)
-			वापस -EINVAL;
+					 &timeout, 2, 1) < 0)
+			return -EINVAL;
 
 		rrq->flags = IW_POWER_TIMEOUT;
-		rrq->value = le16_to_cpu(समयout) * 1024;
-	पूर्ण अन्यथा अणु
+		rrq->value = le16_to_cpu(timeout) * 1024;
+	} else {
 		__le16 period;
-		अगर (local->func->get_rid(dev, HFA384X_RID_CNFMAXSLEEPDURATION,
+		if (local->func->get_rid(dev, HFA384X_RID_CNFMAXSLEEPDURATION,
 					 &period, 2, 1) < 0)
-			वापस -EINVAL;
+			return -EINVAL;
 
 		rrq->flags = IW_POWER_PERIOD;
 		rrq->value = le16_to_cpu(period) * 1024;
-	पूर्ण
+	}
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_CNFMULTICASTRECEIVE, &mcast,
+	if (local->func->get_rid(dev, HFA384X_RID_CNFMULTICASTRECEIVE, &mcast,
 				 2, 1) < 0)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (le16_to_cpu(mcast))
+	if (le16_to_cpu(mcast))
 		rrq->flags |= IW_POWER_ALL_R;
-	अन्यथा
+	else
 		rrq->flags |= IW_POWER_UNICAST_R;
 
-	वापस 0;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-पूर्ण
+	return 0;
+#endif /* PRISM2_NO_STATION_MODES */
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwretry(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwretry(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rrq, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (rrq->disabled)
-		वापस -EINVAL;
+	if (rrq->disabled)
+		return -EINVAL;
 
 	/* setting retry limits is not supported with the current station
-	 * firmware code; simulate this with alternative retry count क्रम now */
-	अगर (rrq->flags == IW_RETRY_LIMIT) अणु
-		अगर (rrq->value < 0) अणु
+	 * firmware code; simulate this with alternative retry count for now */
+	if (rrq->flags == IW_RETRY_LIMIT) {
+		if (rrq->value < 0) {
 			/* disable manual retry count setting and use firmware
-			 * शेषs */
+			 * defaults */
 			local->manual_retry_count = -1;
 			local->tx_control &= ~HFA384X_TX_CTRL_ALT_RTRY;
-		पूर्ण अन्यथा अणु
-			अगर (hostap_set_word(dev, HFA384X_RID_CNFALTRETRYCOUNT,
-					    rrq->value)) अणु
-				prपूर्णांकk(KERN_DEBUG "%s: Alternate retry count "
+		} else {
+			if (hostap_set_word(dev, HFA384X_RID_CNFALTRETRYCOUNT,
+					    rrq->value)) {
+				printk(KERN_DEBUG "%s: Alternate retry count "
 				       "setting to %d failed\n",
 				       dev->name, rrq->value);
-				वापस -EOPNOTSUPP;
-			पूर्ण
+				return -EOPNOTSUPP;
+			}
 
 			local->manual_retry_count = rrq->value;
 			local->tx_control |= HFA384X_TX_CTRL_ALT_RTRY;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
-	वापस -EOPNOTSUPP;
+	return -EOPNOTSUPP;
 
-#अगर 0
-	/* what could be करोne, अगर firmware would support this.. */
+#if 0
+	/* what could be done, if firmware would support this.. */
 
-	अगर (rrq->flags & IW_RETRY_LIMIT) अणु
-		अगर (rrq->flags & IW_RETRY_LONG)
+	if (rrq->flags & IW_RETRY_LIMIT) {
+		if (rrq->flags & IW_RETRY_LONG)
 			HFA384X_RID_LONGRETRYLIMIT = rrq->value;
-		अन्यथा अगर (rrq->flags & IW_RETRY_SHORT)
+		else if (rrq->flags & IW_RETRY_SHORT)
 			HFA384X_RID_SHORTRETRYLIMIT = rrq->value;
-		अन्यथा अणु
+		else {
 			HFA384X_RID_LONGRETRYLIMIT = rrq->value;
 			HFA384X_RID_SHORTRETRYLIMIT = rrq->value;
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	अगर (rrq->flags & IW_RETRY_LIFETIME) अणु
+	if (rrq->flags & IW_RETRY_LIFETIME) {
 		HFA384X_RID_MAXTRANSMITLIFETIME = rrq->value / 1024;
-	पूर्ण
+	}
 
-	वापस 0;
-#पूर्ण_अगर /* 0 */
-पूर्ण
+	return 0;
+#endif /* 0 */
+}
 
-अटल पूर्णांक prism2_ioctl_giwretry(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwretry(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rrq, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	__le16 लघुretry, दीर्घretry, lअगरeसमय, altretry;
+	__le16 shortretry, longretry, lifetime, altretry;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->get_rid(dev, HFA384X_RID_SHORTRETRYLIMIT, &लघुretry,
+	if (local->func->get_rid(dev, HFA384X_RID_SHORTRETRYLIMIT, &shortretry,
 				 2, 1) < 0 ||
-	    local->func->get_rid(dev, HFA384X_RID_LONGRETRYLIMIT, &दीर्घretry,
+	    local->func->get_rid(dev, HFA384X_RID_LONGRETRYLIMIT, &longretry,
 				 2, 1) < 0 ||
 	    local->func->get_rid(dev, HFA384X_RID_MAXTRANSMITLIFETIME,
-				 &lअगरeसमय, 2, 1) < 0)
-		वापस -EINVAL;
+				 &lifetime, 2, 1) < 0)
+		return -EINVAL;
 
 	rrq->disabled = 0;
 
-	अगर ((rrq->flags & IW_RETRY_TYPE) == IW_RETRY_LIFETIME) अणु
+	if ((rrq->flags & IW_RETRY_TYPE) == IW_RETRY_LIFETIME) {
 		rrq->flags = IW_RETRY_LIFETIME;
-		rrq->value = le16_to_cpu(lअगरeसमय) * 1024;
-	पूर्ण अन्यथा अणु
-		अगर (local->manual_retry_count >= 0) अणु
+		rrq->value = le16_to_cpu(lifetime) * 1024;
+	} else {
+		if (local->manual_retry_count >= 0) {
 			rrq->flags = IW_RETRY_LIMIT;
-			अगर (local->func->get_rid(dev,
+			if (local->func->get_rid(dev,
 						 HFA384X_RID_CNFALTRETRYCOUNT,
 						 &altretry, 2, 1) >= 0)
 				rrq->value = le16_to_cpu(altretry);
-			अन्यथा
+			else
 				rrq->value = local->manual_retry_count;
-		पूर्ण अन्यथा अगर ((rrq->flags & IW_RETRY_LONG)) अणु
+		} else if ((rrq->flags & IW_RETRY_LONG)) {
 			rrq->flags = IW_RETRY_LIMIT | IW_RETRY_LONG;
-			rrq->value = le16_to_cpu(दीर्घretry);
-		पूर्ण अन्यथा अणु
+			rrq->value = le16_to_cpu(longretry);
+		} else {
 			rrq->flags = IW_RETRY_LIMIT;
-			rrq->value = le16_to_cpu(लघुretry);
-			अगर (लघुretry != दीर्घretry)
+			rrq->value = le16_to_cpu(shortretry);
+			if (shortretry != longretry)
 				rrq->flags |= IW_RETRY_SHORT;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+	}
+	return 0;
+}
 
 
-/* Note! This TX घातer controlling is experimental and should not be used in
- * production use. It just sets raw घातer रेजिस्टर and करोes not use any kind of
- * feedback inक्रमmation from the measured TX घातer (CR58). This is now
- * commented out to make sure that it is not used by accident. TX घातer
+/* Note! This TX power controlling is experimental and should not be used in
+ * production use. It just sets raw power register and does not use any kind of
+ * feedback information from the measured TX power (CR58). This is now
+ * commented out to make sure that it is not used by accident. TX power
  * configuration will be enabled again after proper algorithm using feedback
  * has been implemented. */
 
-#अगर_घोषित RAW_TXPOWER_SETTING
+#ifdef RAW_TXPOWER_SETTING
 /* Map HFA386x's CR31 to and from dBm with some sort of ad hoc mapping..
  * This version assumes following mapping:
  * CR31 is 7-bit value with -64 to +63 range.
- * -64 is mapped पूर्णांकo +20dBm and +63 पूर्णांकo -43dBm.
- * This is certainly not an exact mapping क्रम every card, but at least
- * increasing dBm value should correspond to increasing TX घातer.
+ * -64 is mapped into +20dBm and +63 into -43dBm.
+ * This is certainly not an exact mapping for every card, but at least
+ * increasing dBm value should correspond to increasing TX power.
  */
 
-अटल पूर्णांक prism2_txघातer_hfa386x_to_dBm(u16 val)
-अणु
-	चिन्हित अक्षर पंचांगp;
+static int prism2_txpower_hfa386x_to_dBm(u16 val)
+{
+	signed char tmp;
 
-	अगर (val > 255)
+	if (val > 255)
 		val = 255;
 
-	पंचांगp = val;
-	पंचांगp >>= 2;
+	tmp = val;
+	tmp >>= 2;
 
-	वापस -12 - पंचांगp;
-पूर्ण
+	return -12 - tmp;
+}
 
-अटल u16 prism2_txघातer_dBm_to_hfa386x(पूर्णांक val)
-अणु
-	चिन्हित अक्षर पंचांगp;
+static u16 prism2_txpower_dBm_to_hfa386x(int val)
+{
+	signed char tmp;
 
-	अगर (val > 20)
-		वापस 128;
-	अन्यथा अगर (val < -43)
-		वापस 127;
+	if (val > 20)
+		return 128;
+	else if (val < -43)
+		return 127;
 
-	पंचांगp = val;
-	पंचांगp = -12 - पंचांगp;
-	पंचांगp <<= 2;
+	tmp = val;
+	tmp = -12 - tmp;
+	tmp <<= 2;
 
-	वापस (अचिन्हित अक्षर) पंचांगp;
-पूर्ण
-#पूर्ण_अगर /* RAW_TXPOWER_SETTING */
+	return (unsigned char) tmp;
+}
+#endif /* RAW_TXPOWER_SETTING */
 
 
-अटल पूर्णांक prism2_ioctl_siwtxघात(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwtxpow(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rrq, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-#अगर_घोषित RAW_TXPOWER_SETTING
-	अक्षर *पंचांगp;
-#पूर्ण_अगर
+#ifdef RAW_TXPOWER_SETTING
+	char *tmp;
+#endif
 	u16 val;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (rrq->disabled) अणु
-		अगर (local->txघातer_type != PRISM2_TXPOWER_OFF) अणु
+	if (rrq->disabled) {
+		if (local->txpower_type != PRISM2_TXPOWER_OFF) {
 			val = 0xff; /* use all standby and sleep modes */
 			ret = local->func->cmd(dev, HFA384X_CMDCODE_WRITEMIF,
 					       HFA386X_CR_A_D_TEST_MODES2,
-					       &val, शून्य);
-			prपूर्णांकk(KERN_DEBUG "%s: Turning radio off: %s\n",
+					       &val, NULL);
+			printk(KERN_DEBUG "%s: Turning radio off: %s\n",
 			       dev->name, ret ? "failed" : "OK");
-			local->txघातer_type = PRISM2_TXPOWER_OFF;
-		पूर्ण
-		वापस (ret ? -EOPNOTSUPP : 0);
-	पूर्ण
+			local->txpower_type = PRISM2_TXPOWER_OFF;
+		}
+		return (ret ? -EOPNOTSUPP : 0);
+	}
 
-	अगर (local->txघातer_type == PRISM2_TXPOWER_OFF) अणु
+	if (local->txpower_type == PRISM2_TXPOWER_OFF) {
 		val = 0; /* disable all standby and sleep modes */
 		ret = local->func->cmd(dev, HFA384X_CMDCODE_WRITEMIF,
-				       HFA386X_CR_A_D_TEST_MODES2, &val, शून्य);
-		prपूर्णांकk(KERN_DEBUG "%s: Turning radio on: %s\n",
+				       HFA386X_CR_A_D_TEST_MODES2, &val, NULL);
+		printk(KERN_DEBUG "%s: Turning radio on: %s\n",
 		       dev->name, ret ? "failed" : "OK");
-		local->txघातer_type = PRISM2_TXPOWER_UNKNOWN;
-	पूर्ण
+		local->txpower_type = PRISM2_TXPOWER_UNKNOWN;
+	}
 
-#अगर_घोषित RAW_TXPOWER_SETTING
-	अगर (!rrq->fixed && local->txघातer_type != PRISM2_TXPOWER_AUTO) अणु
-		prपूर्णांकk(KERN_DEBUG "Setting ALC on\n");
+#ifdef RAW_TXPOWER_SETTING
+	if (!rrq->fixed && local->txpower_type != PRISM2_TXPOWER_AUTO) {
+		printk(KERN_DEBUG "Setting ALC on\n");
 		val = HFA384X_TEST_CFG_BIT_ALC;
 		local->func->cmd(dev, HFA384X_CMDCODE_TEST |
-				 (HFA384X_TEST_CFG_BITS << 8), 1, &val, शून्य);
-		local->txघातer_type = PRISM2_TXPOWER_AUTO;
-		वापस 0;
-	पूर्ण
+				 (HFA384X_TEST_CFG_BITS << 8), 1, &val, NULL);
+		local->txpower_type = PRISM2_TXPOWER_AUTO;
+		return 0;
+	}
 
-	अगर (local->txघातer_type != PRISM2_TXPOWER_FIXED) अणु
-		prपूर्णांकk(KERN_DEBUG "Setting ALC off\n");
+	if (local->txpower_type != PRISM2_TXPOWER_FIXED) {
+		printk(KERN_DEBUG "Setting ALC off\n");
 		val = HFA384X_TEST_CFG_BIT_ALC;
 		local->func->cmd(dev, HFA384X_CMDCODE_TEST |
-				 (HFA384X_TEST_CFG_BITS << 8), 0, &val, शून्य);
-			local->txघातer_type = PRISM2_TXPOWER_FIXED;
-	पूर्ण
+				 (HFA384X_TEST_CFG_BITS << 8), 0, &val, NULL);
+			local->txpower_type = PRISM2_TXPOWER_FIXED;
+	}
 
-	अगर (rrq->flags == IW_TXPOW_DBM)
-		पंचांगp = "dBm";
-	अन्यथा अगर (rrq->flags == IW_TXPOW_MWATT)
-		पंचांगp = "mW";
-	अन्यथा
-		पंचांगp = "UNKNOWN";
-	prपूर्णांकk(KERN_DEBUG "Setting TX power to %d %s\n", rrq->value, पंचांगp);
+	if (rrq->flags == IW_TXPOW_DBM)
+		tmp = "dBm";
+	else if (rrq->flags == IW_TXPOW_MWATT)
+		tmp = "mW";
+	else
+		tmp = "UNKNOWN";
+	printk(KERN_DEBUG "Setting TX power to %d %s\n", rrq->value, tmp);
 
-	अगर (rrq->flags != IW_TXPOW_DBM) अणु
-		prपूर्णांकk("SIOCSIWTXPOW with mW is not supported; use dBm\n");
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	if (rrq->flags != IW_TXPOW_DBM) {
+		printk("SIOCSIWTXPOW with mW is not supported; use dBm\n");
+		return -EOPNOTSUPP;
+	}
 
-	local->txघातer = rrq->value;
-	val = prism2_txघातer_dBm_to_hfa386x(local->txघातer);
-	अगर (local->func->cmd(dev, HFA384X_CMDCODE_WRITEMIF,
-			     HFA386X_CR_MANUAL_TX_POWER, &val, शून्य))
+	local->txpower = rrq->value;
+	val = prism2_txpower_dBm_to_hfa386x(local->txpower);
+	if (local->func->cmd(dev, HFA384X_CMDCODE_WRITEMIF,
+			     HFA386X_CR_MANUAL_TX_POWER, &val, NULL))
 		ret = -EOPNOTSUPP;
-#अन्यथा /* RAW_TXPOWER_SETTING */
-	अगर (rrq->fixed)
+#else /* RAW_TXPOWER_SETTING */
+	if (rrq->fixed)
 		ret = -EOPNOTSUPP;
-#पूर्ण_अगर /* RAW_TXPOWER_SETTING */
+#endif /* RAW_TXPOWER_SETTING */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक prism2_ioctl_giwtxघात(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_param *rrq, अक्षर *extra)
-अणु
-#अगर_घोषित RAW_TXPOWER_SETTING
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwtxpow(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_param *rrq, char *extra)
+{
+#ifdef RAW_TXPOWER_SETTING
+	struct hostap_interface *iface;
 	local_info_t *local;
 	u16 resp0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	rrq->flags = IW_TXPOW_DBM;
 	rrq->disabled = 0;
 	rrq->fixed = 0;
 
-	अगर (local->txघातer_type == PRISM2_TXPOWER_AUTO) अणु
-		अगर (local->func->cmd(dev, HFA384X_CMDCODE_READMIF,
+	if (local->txpower_type == PRISM2_TXPOWER_AUTO) {
+		if (local->func->cmd(dev, HFA384X_CMDCODE_READMIF,
 				     HFA386X_CR_MANUAL_TX_POWER,
-				     शून्य, &resp0) == 0) अणु
-			rrq->value = prism2_txघातer_hfa386x_to_dBm(resp0);
-		पूर्ण अन्यथा अणु
-			/* Could not get real txघातer; guess 15 dBm */
+				     NULL, &resp0) == 0) {
+			rrq->value = prism2_txpower_hfa386x_to_dBm(resp0);
+		} else {
+			/* Could not get real txpower; guess 15 dBm */
 			rrq->value = 15;
-		पूर्ण
-	पूर्ण अन्यथा अगर (local->txघातer_type == PRISM2_TXPOWER_OFF) अणु
+		}
+	} else if (local->txpower_type == PRISM2_TXPOWER_OFF) {
 		rrq->value = 0;
 		rrq->disabled = 1;
-	पूर्ण अन्यथा अगर (local->txघातer_type == PRISM2_TXPOWER_FIXED) अणु
-		rrq->value = local->txघातer;
+	} else if (local->txpower_type == PRISM2_TXPOWER_FIXED) {
+		rrq->value = local->txpower;
 		rrq->fixed = 1;
-	पूर्ण अन्यथा अणु
-		prपूर्णांकk("SIOCGIWTXPOW - unknown txpower_type=%d\n",
-		       local->txघातer_type);
-	पूर्ण
-	वापस 0;
-#अन्यथा /* RAW_TXPOWER_SETTING */
-	वापस -EOPNOTSUPP;
-#पूर्ण_अगर /* RAW_TXPOWER_SETTING */
-पूर्ण
+	} else {
+		printk("SIOCGIWTXPOW - unknown txpower_type=%d\n",
+		       local->txpower_type);
+	}
+	return 0;
+#else /* RAW_TXPOWER_SETTING */
+	return -EOPNOTSUPP;
+#endif /* RAW_TXPOWER_SETTING */
+}
 
 
-#अगर_अघोषित PRISM2_NO_STATION_MODES
+#ifndef PRISM2_NO_STATION_MODES
 
 /* HostScan request works with and without host_roaming mode. In addition, it
- * करोes not अवरोध current association. However, it requires newer station
+ * does not break current association. However, it requires newer station
  * firmware version (>= 1.3.1) than scan request. */
-अटल पूर्णांक prism2_request_hostscan(काष्ठा net_device *dev,
+static int prism2_request_hostscan(struct net_device *dev,
 				   u8 *ssid, u8 ssid_len)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	काष्ठा hfa384x_hostscan_request scan_req;
+	struct hfa384x_hostscan_request scan_req;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	स_रखो(&scan_req, 0, माप(scan_req));
+	memset(&scan_req, 0, sizeof(scan_req));
 	scan_req.channel_list = cpu_to_le16(local->channel_mask &
 					    local->scan_channel_mask);
 	scan_req.txrate = cpu_to_le16(HFA384X_RATES_1MBPS);
-	अगर (ssid) अणु
-		अगर (ssid_len > 32)
-			वापस -EINVAL;
+	if (ssid) {
+		if (ssid_len > 32)
+			return -EINVAL;
 		scan_req.target_ssid_len = cpu_to_le16(ssid_len);
-		स_नकल(scan_req.target_ssid, ssid, ssid_len);
-	पूर्ण
+		memcpy(scan_req.target_ssid, ssid, ssid_len);
+	}
 
-	अगर (local->func->set_rid(dev, HFA384X_RID_HOSTSCAN, &scan_req,
-				 माप(scan_req))) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: HOSTSCAN failed\n", dev->name);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (local->func->set_rid(dev, HFA384X_RID_HOSTSCAN, &scan_req,
+				 sizeof(scan_req))) {
+		printk(KERN_DEBUG "%s: HOSTSCAN failed\n", dev->name);
+		return -EINVAL;
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_request_scan(काष्ठा net_device *dev)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_request_scan(struct net_device *dev)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	काष्ठा hfa384x_scan_request scan_req;
-	पूर्णांक ret = 0;
+	struct hfa384x_scan_request scan_req;
+	int ret = 0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	स_रखो(&scan_req, 0, माप(scan_req));
+	memset(&scan_req, 0, sizeof(scan_req));
 	scan_req.channel_list = cpu_to_le16(local->channel_mask &
 					    local->scan_channel_mask);
 	scan_req.txrate = cpu_to_le16(HFA384X_RATES_1MBPS);
 
 	/* FIX:
-	 * It seems to be enough to set roaming mode क्रम a लघु moment to
-	 * host-based and then setup scanrequest data and वापस the mode to
+	 * It seems to be enough to set roaming mode for a short moment to
+	 * host-based and then setup scanrequest data and return the mode to
 	 * firmware-based.
 	 *
-	 * Master mode would need to drop to Managed mode क्रम a लघु जबतक
-	 * to make scanning work.. Or sweep through the dअगरferent channels and
+	 * Master mode would need to drop to Managed mode for a short while
+	 * to make scanning work.. Or sweep through the different channels and
 	 * use passive scan based on beacons. */
 
-	अगर (!local->host_roaming)
+	if (!local->host_roaming)
 		hostap_set_word(dev, HFA384X_RID_CNFROAMINGMODE,
 				HFA384X_ROAMING_HOST);
 
-	अगर (local->func->set_rid(dev, HFA384X_RID_SCANREQUEST, &scan_req,
-				 माप(scan_req))) अणु
-		prपूर्णांकk(KERN_DEBUG "SCANREQUEST failed\n");
+	if (local->func->set_rid(dev, HFA384X_RID_SCANREQUEST, &scan_req,
+				 sizeof(scan_req))) {
+		printk(KERN_DEBUG "SCANREQUEST failed\n");
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!local->host_roaming)
+	if (!local->host_roaming)
 		hostap_set_word(dev, HFA384X_RID_CNFROAMINGMODE,
 				HFA384X_ROAMING_FIRMWARE);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#अन्यथा /* !PRISM2_NO_STATION_MODES */
+#else /* !PRISM2_NO_STATION_MODES */
 
-अटल अंतरभूत पूर्णांक prism2_request_hostscan(काष्ठा net_device *dev,
+static inline int prism2_request_hostscan(struct net_device *dev,
 					  u8 *ssid, u8 ssid_len)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+{
+	return -EOPNOTSUPP;
+}
 
 
-अटल अंतरभूत पूर्णांक prism2_request_scan(काष्ठा net_device *dev)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
+static inline int prism2_request_scan(struct net_device *dev)
+{
+	return -EOPNOTSUPP;
+}
 
-#पूर्ण_अगर /* !PRISM2_NO_STATION_MODES */
+#endif /* !PRISM2_NO_STATION_MODES */
 
 
-अटल पूर्णांक prism2_ioctl_siwscan(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_siwscan(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_point *data, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक ret;
-	u8 *ssid = शून्य, ssid_len = 0;
-	काष्ठा iw_scan_req *req = (काष्ठा iw_scan_req *) extra;
+	int ret;
+	u8 *ssid = NULL, ssid_len = 0;
+	struct iw_scan_req *req = (struct iw_scan_req *) extra;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (data->length < माप(काष्ठा iw_scan_req))
-		req = शून्य;
+	if (data->length < sizeof(struct iw_scan_req))
+		req = NULL;
 
-	अगर (local->iw_mode == IW_MODE_MASTER) अणु
-		/* In master mode, we just वापस the results of our local
-		 * tables, so we करोn't need to start anything...
+	if (local->iw_mode == IW_MODE_MASTER) {
+		/* In master mode, we just return the results of our local
+		 * tables, so we don't need to start anything...
 		 * Jean II */
 		data->length = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!local->dev_enabled)
-		वापस -ENETDOWN;
+	if (!local->dev_enabled)
+		return -ENETDOWN;
 
-	अगर (req && data->flags & IW_SCAN_THIS_ESSID) अणु
+	if (req && data->flags & IW_SCAN_THIS_ESSID) {
 		ssid = req->essid;
 		ssid_len = req->essid_len;
 
-		अगर (ssid_len &&
+		if (ssid_len &&
 		    ((local->iw_mode != IW_MODE_INFRA &&
 		      local->iw_mode != IW_MODE_ADHOC) ||
 		     (local->sta_fw_ver < PRISM2_FW_VER(1,3,1))))
-			वापस -EOPNOTSUPP;
-	पूर्ण
+			return -EOPNOTSUPP;
+	}
 
-	अगर (local->sta_fw_ver >= PRISM2_FW_VER(1,3,1))
+	if (local->sta_fw_ver >= PRISM2_FW_VER(1,3,1))
 		ret = prism2_request_hostscan(dev, ssid, ssid_len);
-	अन्यथा
+	else
 		ret = prism2_request_scan(dev);
 
-	अगर (ret == 0)
-		local->scan_बारtamp = jअगरfies;
+	if (ret == 0)
+		local->scan_timestamp = jiffies;
 
-	/* Could inquire F101, F103 or रुको क्रम SIOCGIWSCAN and पढ़ो RID */
+	/* Could inquire F101, F103 or wait for SIOCGIWSCAN and read RID */
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-अटल अक्षर * __prism2_translate_scan(local_info_t *local,
-				      काष्ठा iw_request_info *info,
-				      काष्ठा hfa384x_hostscan_result *scan,
-				      काष्ठा hostap_bss_info *bss,
-				      अक्षर *current_ev, अक्षर *end_buf)
-अणु
-	पूर्णांक i, chan;
-	काष्ठा iw_event iwe;
-	अक्षर *current_val;
+#ifndef PRISM2_NO_STATION_MODES
+static char * __prism2_translate_scan(local_info_t *local,
+				      struct iw_request_info *info,
+				      struct hfa384x_hostscan_result *scan,
+				      struct hostap_bss_info *bss,
+				      char *current_ev, char *end_buf)
+{
+	int i, chan;
+	struct iw_event iwe;
+	char *current_val;
 	u16 capabilities;
 	u8 *pos;
 	u8 *ssid, *bssid;
-	माप_प्रकार ssid_len;
-	अक्षर *buf;
+	size_t ssid_len;
+	char *buf;
 
-	अगर (bss) अणु
+	if (bss) {
 		ssid = bss->ssid;
 		ssid_len = bss->ssid_len;
 		bssid = bss->bssid;
-	पूर्ण अन्यथा अणु
+	} else {
 		ssid = scan->ssid;
 		ssid_len = le16_to_cpu(scan->ssid_len);
 		bssid = scan->bssid;
-	पूर्ण
-	अगर (ssid_len > 32)
+	}
+	if (ssid_len > 32)
 		ssid_len = 32;
 
 	/* First entry *MUST* be the AP MAC address */
-	स_रखो(&iwe, 0, माप(iwe));
+	memset(&iwe, 0, sizeof(iwe));
 	iwe.cmd = SIOCGIWAP;
 	iwe.u.ap_addr.sa_family = ARPHRD_ETHER;
-	स_नकल(iwe.u.ap_addr.sa_data, bssid, ETH_ALEN);
+	memcpy(iwe.u.ap_addr.sa_data, bssid, ETH_ALEN);
 	current_ev = iwe_stream_add_event(info, current_ev, end_buf, &iwe,
 					  IW_EV_ADDR_LEN);
 
 	/* Other entries will be displayed in the order we give them */
 
-	स_रखो(&iwe, 0, माप(iwe));
+	memset(&iwe, 0, sizeof(iwe));
 	iwe.cmd = SIOCGIWESSID;
 	iwe.u.data.length = ssid_len;
 	iwe.u.data.flags = 1;
-	current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
+	current_ev = iwe_stream_add_point(info, current_ev, end_buf,
 					  &iwe, ssid);
 
-	स_रखो(&iwe, 0, माप(iwe));
+	memset(&iwe, 0, sizeof(iwe));
 	iwe.cmd = SIOCGIWMODE;
-	अगर (bss) अणु
+	if (bss) {
 		capabilities = bss->capab_info;
-	पूर्ण अन्यथा अणु
+	} else {
 		capabilities = le16_to_cpu(scan->capability);
-	पूर्ण
-	अगर (capabilities & (WLAN_CAPABILITY_ESS |
-			    WLAN_CAPABILITY_IBSS)) अणु
-		अगर (capabilities & WLAN_CAPABILITY_ESS)
+	}
+	if (capabilities & (WLAN_CAPABILITY_ESS |
+			    WLAN_CAPABILITY_IBSS)) {
+		if (capabilities & WLAN_CAPABILITY_ESS)
 			iwe.u.mode = IW_MODE_MASTER;
-		अन्यथा
+		else
 			iwe.u.mode = IW_MODE_ADHOC;
 		current_ev = iwe_stream_add_event(info, current_ev, end_buf,
 						  &iwe, IW_EV_UINT_LEN);
-	पूर्ण
+	}
 
-	स_रखो(&iwe, 0, माप(iwe));
+	memset(&iwe, 0, sizeof(iwe));
 	iwe.cmd = SIOCGIWFREQ;
-	अगर (scan) अणु
+	if (scan) {
 		chan = le16_to_cpu(scan->chid);
-	पूर्ण अन्यथा अगर (bss) अणु
+	} else if (bss) {
 		chan = bss->chan;
-	पूर्ण अन्यथा अणु
+	} else {
 		chan = 0;
-	पूर्ण
+	}
 
-	अगर (chan > 0) अणु
+	if (chan > 0) {
 		iwe.u.freq.m = freq_list[chan - 1] * 100000;
 		iwe.u.freq.e = 1;
 		current_ev = iwe_stream_add_event(info, current_ev, end_buf,
 						  &iwe, IW_EV_FREQ_LEN);
-	पूर्ण
+	}
 
-	अगर (scan) अणु
-		स_रखो(&iwe, 0, माप(iwe));
+	if (scan) {
+		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = IWEVQUAL;
-		अगर (local->last_scan_type == PRISM2_HOSTSCAN) अणु
+		if (local->last_scan_type == PRISM2_HOSTSCAN) {
 			iwe.u.qual.level = le16_to_cpu(scan->sl);
 			iwe.u.qual.noise = le16_to_cpu(scan->anl);
-		पूर्ण अन्यथा अणु
+		} else {
 			iwe.u.qual.level =
 				HFA384X_LEVEL_TO_dBm(le16_to_cpu(scan->sl));
 			iwe.u.qual.noise =
 				HFA384X_LEVEL_TO_dBm(le16_to_cpu(scan->anl));
-		पूर्ण
+		}
 		iwe.u.qual.updated = IW_QUAL_LEVEL_UPDATED
 			| IW_QUAL_NOISE_UPDATED
 			| IW_QUAL_QUAL_INVALID
 			| IW_QUAL_DBM;
 		current_ev = iwe_stream_add_event(info, current_ev, end_buf,
 						  &iwe, IW_EV_QUAL_LEN);
-	पूर्ण
+	}
 
-	स_रखो(&iwe, 0, माप(iwe));
+	memset(&iwe, 0, sizeof(iwe));
 	iwe.cmd = SIOCGIWENCODE;
-	अगर (capabilities & WLAN_CAPABILITY_PRIVACY)
+	if (capabilities & WLAN_CAPABILITY_PRIVACY)
 		iwe.u.data.flags = IW_ENCODE_ENABLED | IW_ENCODE_NOKEY;
-	अन्यथा
+	else
 		iwe.u.data.flags = IW_ENCODE_DISABLED;
 	iwe.u.data.length = 0;
-	current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf, &iwe, "");
+	current_ev = iwe_stream_add_point(info, current_ev, end_buf, &iwe, "");
 
-	/* TODO: add SuppRates पूर्णांकo BSS table */
-	अगर (scan) अणु
-		स_रखो(&iwe, 0, माप(iwe));
+	/* TODO: add SuppRates into BSS table */
+	if (scan) {
+		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = SIOCGIWRATE;
 		current_val = current_ev + iwe_stream_lcp_len(info);
 		pos = scan->sup_rates;
-		क्रम (i = 0; i < माप(scan->sup_rates); i++) अणु
-			अगर (pos[i] == 0)
-				अवरोध;
+		for (i = 0; i < sizeof(scan->sup_rates); i++) {
+			if (pos[i] == 0)
+				break;
 			/* Bit rate given in 500 kb/s units (+ 0x80) */
 			iwe.u.bitrate.value = ((pos[i] & 0x7f) * 500000);
 			current_val = iwe_stream_add_value(
 				info, current_ev, current_val, end_buf, &iwe,
 				IW_EV_PARAM_LEN);
-		पूर्ण
-		/* Check अगर we added any event */
-		अगर ((current_val - current_ev) > iwe_stream_lcp_len(info))
+		}
+		/* Check if we added any event */
+		if ((current_val - current_ev) > iwe_stream_lcp_len(info))
 			current_ev = current_val;
-	पूर्ण
+	}
 
-	/* TODO: add BeaconInt,resp_rate,atim पूर्णांकo BSS table */
-	buf = kदो_स्मृति(MAX_WPA_IE_LEN * 2 + 30, GFP_ATOMIC);
-	अगर (buf && scan) अणु
-		स_रखो(&iwe, 0, माप(iwe));
+	/* TODO: add BeaconInt,resp_rate,atim into BSS table */
+	buf = kmalloc(MAX_WPA_IE_LEN * 2 + 30, GFP_ATOMIC);
+	if (buf && scan) {
+		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = IWEVCUSTOM;
-		प्र_लिखो(buf, "bcn_int=%d", le16_to_cpu(scan->beacon_पूर्णांकerval));
-		iwe.u.data.length = म_माप(buf);
-		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
+		sprintf(buf, "bcn_int=%d", le16_to_cpu(scan->beacon_interval));
+		iwe.u.data.length = strlen(buf);
+		current_ev = iwe_stream_add_point(info, current_ev, end_buf,
 						  &iwe, buf);
 
-		स_रखो(&iwe, 0, माप(iwe));
+		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = IWEVCUSTOM;
-		प्र_लिखो(buf, "resp_rate=%d", le16_to_cpu(scan->rate));
-		iwe.u.data.length = म_माप(buf);
-		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
+		sprintf(buf, "resp_rate=%d", le16_to_cpu(scan->rate));
+		iwe.u.data.length = strlen(buf);
+		current_ev = iwe_stream_add_point(info, current_ev, end_buf,
 						  &iwe, buf);
 
-		अगर (local->last_scan_type == PRISM2_HOSTSCAN &&
-		    (capabilities & WLAN_CAPABILITY_IBSS)) अणु
-			स_रखो(&iwe, 0, माप(iwe));
+		if (local->last_scan_type == PRISM2_HOSTSCAN &&
+		    (capabilities & WLAN_CAPABILITY_IBSS)) {
+			memset(&iwe, 0, sizeof(iwe));
 			iwe.cmd = IWEVCUSTOM;
-			प्र_लिखो(buf, "atim=%d", le16_to_cpu(scan->atim));
-			iwe.u.data.length = म_माप(buf);
-			current_ev = iwe_stream_add_poपूर्णांक(info, current_ev,
+			sprintf(buf, "atim=%d", le16_to_cpu(scan->atim));
+			iwe.u.data.length = strlen(buf);
+			current_ev = iwe_stream_add_point(info, current_ev,
 							  end_buf, &iwe, buf);
-		पूर्ण
-	पूर्ण
-	kमुक्त(buf);
+		}
+	}
+	kfree(buf);
 
-	अगर (bss && bss->wpa_ie_len > 0 && bss->wpa_ie_len <= MAX_WPA_IE_LEN) अणु
-		स_रखो(&iwe, 0, माप(iwe));
+	if (bss && bss->wpa_ie_len > 0 && bss->wpa_ie_len <= MAX_WPA_IE_LEN) {
+		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = IWEVGENIE;
 		iwe.u.data.length = bss->wpa_ie_len;
-		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
+		current_ev = iwe_stream_add_point(info, current_ev, end_buf,
 						  &iwe, bss->wpa_ie);
-	पूर्ण
+	}
 
-	अगर (bss && bss->rsn_ie_len > 0 && bss->rsn_ie_len <= MAX_WPA_IE_LEN) अणु
-		स_रखो(&iwe, 0, माप(iwe));
+	if (bss && bss->rsn_ie_len > 0 && bss->rsn_ie_len <= MAX_WPA_IE_LEN) {
+		memset(&iwe, 0, sizeof(iwe));
 		iwe.cmd = IWEVGENIE;
 		iwe.u.data.length = bss->rsn_ie_len;
-		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
+		current_ev = iwe_stream_add_point(info, current_ev, end_buf,
 						  &iwe, bss->rsn_ie);
-	पूर्ण
+	}
 
-	वापस current_ev;
-पूर्ण
+	return current_ev;
+}
 
 
-/* Translate scan data वापसed from the card to a card independent
- * क्रमmat that the Wireless Tools will understand - Jean II */
-अटल अंतरभूत पूर्णांक prism2_translate_scan(local_info_t *local,
-					काष्ठा iw_request_info *info,
-					अक्षर *buffer, पूर्णांक buflen)
-अणु
-	काष्ठा hfa384x_hostscan_result *scan;
-	पूर्णांक entry;
-	अक्षर *current_ev = buffer;
-	अक्षर *end_buf = buffer + buflen;
-	काष्ठा list_head *ptr;
+/* Translate scan data returned from the card to a card independent
+ * format that the Wireless Tools will understand - Jean II */
+static inline int prism2_translate_scan(local_info_t *local,
+					struct iw_request_info *info,
+					char *buffer, int buflen)
+{
+	struct hfa384x_hostscan_result *scan;
+	int entry;
+	char *current_ev = buffer;
+	char *end_buf = buffer + buflen;
+	struct list_head *ptr;
 
 	spin_lock_bh(&local->lock);
 
-	list_क्रम_each(ptr, &local->bss_list) अणु
-		काष्ठा hostap_bss_info *bss;
-		bss = list_entry(ptr, काष्ठा hostap_bss_info, list);
+	list_for_each(ptr, &local->bss_list) {
+		struct hostap_bss_info *bss;
+		bss = list_entry(ptr, struct hostap_bss_info, list);
 		bss->included = 0;
-	पूर्ण
+	}
 
-	क्रम (entry = 0; entry < local->last_scan_results_count; entry++) अणु
-		पूर्णांक found = 0;
+	for (entry = 0; entry < local->last_scan_results_count; entry++) {
+		int found = 0;
 		scan = &local->last_scan_results[entry];
 
-		/* Report every SSID अगर the AP is using multiple SSIDs. If no
+		/* Report every SSID if the AP is using multiple SSIDs. If no
 		 * BSS record is found (e.g., when WPA mode is disabled),
 		 * report the AP once. */
-		list_क्रम_each(ptr, &local->bss_list) अणु
-			काष्ठा hostap_bss_info *bss;
-			bss = list_entry(ptr, काष्ठा hostap_bss_info, list);
-			अगर (ether_addr_equal(bss->bssid, scan->bssid)) अणु
+		list_for_each(ptr, &local->bss_list) {
+			struct hostap_bss_info *bss;
+			bss = list_entry(ptr, struct hostap_bss_info, list);
+			if (ether_addr_equal(bss->bssid, scan->bssid)) {
 				bss->included = 1;
 				current_ev = __prism2_translate_scan(
 					local, info, scan, bss, current_ev,
 					end_buf);
 				found++;
-			पूर्ण
-		पूर्ण
-		अगर (!found) अणु
+			}
+		}
+		if (!found) {
 			current_ev = __prism2_translate_scan(
-				local, info, scan, शून्य, current_ev, end_buf);
-		पूर्ण
-		/* Check अगर there is space क्रम one more entry */
-		अगर ((end_buf - current_ev) <= IW_EV_ADDR_LEN) अणु
+				local, info, scan, NULL, current_ev, end_buf);
+		}
+		/* Check if there is space for one more entry */
+		if ((end_buf - current_ev) <= IW_EV_ADDR_LEN) {
 			/* Ask user space to try again with a bigger buffer */
 			spin_unlock_bh(&local->lock);
-			वापस -E2BIG;
-		पूर्ण
-	पूर्ण
+			return -E2BIG;
+		}
+	}
 
-	/* Prism2 firmware has limits (32 at least in some versions) क्रम number
+	/* Prism2 firmware has limits (32 at least in some versions) for number
 	 * of BSSes in scan results. Extend this limit by using local BSS list.
 	 */
-	list_क्रम_each(ptr, &local->bss_list) अणु
-		काष्ठा hostap_bss_info *bss;
-		bss = list_entry(ptr, काष्ठा hostap_bss_info, list);
-		अगर (bss->included)
-			जारी;
-		current_ev = __prism2_translate_scan(local, info, शून्य, bss,
+	list_for_each(ptr, &local->bss_list) {
+		struct hostap_bss_info *bss;
+		bss = list_entry(ptr, struct hostap_bss_info, list);
+		if (bss->included)
+			continue;
+		current_ev = __prism2_translate_scan(local, info, NULL, bss,
 						     current_ev, end_buf);
-		/* Check अगर there is space क्रम one more entry */
-		अगर ((end_buf - current_ev) <= IW_EV_ADDR_LEN) अणु
+		/* Check if there is space for one more entry */
+		if ((end_buf - current_ev) <= IW_EV_ADDR_LEN) {
 			/* Ask user space to try again with a bigger buffer */
 			spin_unlock_bh(&local->lock);
-			वापस -E2BIG;
-		पूर्ण
-	पूर्ण
+			return -E2BIG;
+		}
+	}
 
 	spin_unlock_bh(&local->lock);
 
-	वापस current_ev - buffer;
-पूर्ण
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
+	return current_ev - buffer;
+}
+#endif /* PRISM2_NO_STATION_MODES */
 
 
-अटल अंतरभूत पूर्णांक prism2_ioctl_giwscan_sta(काष्ठा net_device *dev,
-					   काष्ठा iw_request_info *info,
-					   काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-#अगर_घोषित PRISM2_NO_STATION_MODES
-	वापस -EOPNOTSUPP;
-#अन्यथा /* PRISM2_NO_STATION_MODES */
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static inline int prism2_ioctl_giwscan_sta(struct net_device *dev,
+					   struct iw_request_info *info,
+					   struct iw_point *data, char *extra)
+{
+#ifdef PRISM2_NO_STATION_MODES
+	return -EOPNOTSUPP;
+#else /* PRISM2_NO_STATION_MODES */
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक res;
+	int res;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	/* Wait until the scan is finished. We can probably करो better
+	/* Wait until the scan is finished. We can probably do better
 	 * than that - Jean II */
-	अगर (local->scan_बारtamp &&
-	    समय_beक्रमe(jअगरfies, local->scan_बारtamp + 3 * HZ)) अणु
-		/* Important note : we करोn't want to block the caller
-		 * until results are पढ़ोy क्रम various reasons.
-		 * First, managing रुको queues is complex and racy
+	if (local->scan_timestamp &&
+	    time_before(jiffies, local->scan_timestamp + 3 * HZ)) {
+		/* Important note : we don't want to block the caller
+		 * until results are ready for various reasons.
+		 * First, managing wait queues is complex and racy
 		 * (there may be multiple simultaneous callers).
-		 * Second, we grab some rtnetlink lock beक्रमe coming
+		 * Second, we grab some rtnetlink lock before coming
 		 * here (in dev_ioctl()).
-		 * Third, the caller can रुको on the Wireless Event
+		 * Third, the caller can wait on the Wireless Event
 		 * - Jean II */
-		वापस -EAGAIN;
-	पूर्ण
-	local->scan_बारtamp = 0;
+		return -EAGAIN;
+	}
+	local->scan_timestamp = 0;
 
 	res = prism2_translate_scan(local, info, extra, data->length);
 
-	अगर (res >= 0) अणु
+	if (res >= 0) {
 		data->length = res;
-		वापस 0;
-	पूर्ण अन्यथा अणु
+		return 0;
+	} else {
 		data->length = 0;
-		वापस res;
-	पूर्ण
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-पूर्ण
+		return res;
+	}
+#endif /* PRISM2_NO_STATION_MODES */
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwscan(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_giwscan(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_point *data, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक res;
+	int res;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->iw_mode == IW_MODE_MASTER) अणु
-		/* In MASTER mode, it करोesn't make sense to go around
+	if (local->iw_mode == IW_MODE_MASTER) {
+		/* In MASTER mode, it doesn't make sense to go around
 		 * scanning the frequencies and make the stations we serve
-		 * रुको when what the user is really पूर्णांकerested about is the
-		 * list of stations and access poपूर्णांकs we are talking to.
+		 * wait when what the user is really interested about is the
+		 * list of stations and access points we are talking to.
 		 * So, just extract results from our cache...
 		 * Jean II */
 
-		/* Translate to WE क्रमmat */
+		/* Translate to WE format */
 		res = prism2_ap_translate_scan(dev, info, extra);
-		अगर (res >= 0) अणु
-			prपूर्णांकk(KERN_DEBUG "Scan result translation succeeded "
+		if (res >= 0) {
+			printk(KERN_DEBUG "Scan result translation succeeded "
 			       "(length=%d)\n", res);
 			data->length = res;
-			वापस 0;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_DEBUG
+			return 0;
+		} else {
+			printk(KERN_DEBUG
 			       "Scan result translation failed (res=%d)\n",
 			       res);
 			data->length = 0;
-			वापस res;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return res;
+		}
+	} else {
 		/* Station mode */
-		वापस prism2_ioctl_giwscan_sta(dev, info, data, extra);
-	पूर्ण
-पूर्ण
+		return prism2_ioctl_giwscan_sta(dev, info, data, extra);
+	}
+}
 
 
-अटल स्थिर काष्ठा iw_priv_args prism2_priv[] = अणु
-	अणु PRISM2_IOCTL_MONITOR,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "monitor" पूर्ण,
-	अणु PRISM2_IOCTL_READMIF,
+static const struct iw_priv_args prism2_priv[] = {
+	{ PRISM2_IOCTL_MONITOR,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "monitor" },
+	{ PRISM2_IOCTL_READMIF,
 	  IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1,
-	  IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1, "readmif" पूर्ण,
-	अणु PRISM2_IOCTL_WRITEMIF,
-	  IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 2, 0, "writemif" पूर्ण,
-	अणु PRISM2_IOCTL_RESET,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "reset" पूर्ण,
-	अणु PRISM2_IOCTL_INQUIRE,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "inquire" पूर्ण,
-	अणु PRISM2_IOCTL_SET_RID_WORD,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2, 0, "set_rid_word" पूर्ण,
-	अणु PRISM2_IOCTL_MACCMD,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "maccmd" पूर्ण,
-	अणु PRISM2_IOCTL_WDS_ADD,
-	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "wds_add" पूर्ण,
-	अणु PRISM2_IOCTL_WDS_DEL,
-	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "wds_del" पूर्ण,
-	अणु PRISM2_IOCTL_ADDMAC,
-	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "addmac" पूर्ण,
-	अणु PRISM2_IOCTL_DELMAC,
-	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "delmac" पूर्ण,
-	अणु PRISM2_IOCTL_KICKMAC,
-	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "kickmac" पूर्ण,
+	  IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1, "readmif" },
+	{ PRISM2_IOCTL_WRITEMIF,
+	  IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 2, 0, "writemif" },
+	{ PRISM2_IOCTL_RESET,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "reset" },
+	{ PRISM2_IOCTL_INQUIRE,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "inquire" },
+	{ PRISM2_IOCTL_SET_RID_WORD,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2, 0, "set_rid_word" },
+	{ PRISM2_IOCTL_MACCMD,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "maccmd" },
+	{ PRISM2_IOCTL_WDS_ADD,
+	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "wds_add" },
+	{ PRISM2_IOCTL_WDS_DEL,
+	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "wds_del" },
+	{ PRISM2_IOCTL_ADDMAC,
+	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "addmac" },
+	{ PRISM2_IOCTL_DELMAC,
+	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "delmac" },
+	{ PRISM2_IOCTL_KICKMAC,
+	  IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "kickmac" },
 	/* --- raw access to sub-ioctls --- */
-	अणु PRISM2_IOCTL_PRISM2_PARAM,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2, 0, "prism2_param" पूर्ण,
-	अणु PRISM2_IOCTL_GET_PRISM2_PARAM,
+	{ PRISM2_IOCTL_PRISM2_PARAM,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2, 0, "prism2_param" },
+	{ PRISM2_IOCTL_GET_PRISM2_PARAM,
 	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getprism2_param" पूर्ण,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getprism2_param" },
 	/* --- sub-ioctls handlers --- */
-	अणु PRISM2_IOCTL_PRISM2_PARAM,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "" पूर्ण,
-	अणु PRISM2_IOCTL_GET_PRISM2_PARAM,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "" पूर्ण,
+	{ PRISM2_IOCTL_PRISM2_PARAM,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "" },
+	{ PRISM2_IOCTL_GET_PRISM2_PARAM,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "" },
 	/* --- sub-ioctls definitions --- */
-	अणु PRISM2_PARAM_TXRATECTRL,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "txratectrl" पूर्ण,
-	अणु PRISM2_PARAM_TXRATECTRL,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gettxratectrl" पूर्ण,
-	अणु PRISM2_PARAM_BEACON_INT,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "beacon_int" पूर्ण,
-	अणु PRISM2_PARAM_BEACON_INT,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbeacon_int" पूर्ण,
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-	अणु PRISM2_PARAM_PSEUDO_IBSS,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "pseudo_ibss" पूर्ण,
-	अणु PRISM2_PARAM_PSEUDO_IBSS,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getpseudo_ibss" पूर्ण,
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-	अणु PRISM2_PARAM_ALC,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "alc" पूर्ण,
-	अणु PRISM2_PARAM_ALC,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getalc" पूर्ण,
-	अणु PRISM2_PARAM_DUMP,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "dump" पूर्ण,
-	अणु PRISM2_PARAM_DUMP,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getdump" पूर्ण,
-	अणु PRISM2_PARAM_OTHER_AP_POLICY,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "other_ap_policy" पूर्ण,
-	अणु PRISM2_PARAM_OTHER_AP_POLICY,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getother_ap_pol" पूर्ण,
-	अणु PRISM2_PARAM_AP_MAX_INACTIVITY,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "max_inactivity" पूर्ण,
-	अणु PRISM2_PARAM_AP_MAX_INACTIVITY,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmax_inactivi" पूर्ण,
-	अणु PRISM2_PARAM_AP_BRIDGE_PACKETS,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "bridge_packets" पूर्ण,
-	अणु PRISM2_PARAM_AP_BRIDGE_PACKETS,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbridge_packe" पूर्ण,
-	अणु PRISM2_PARAM_DTIM_PERIOD,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "dtim_period" पूर्ण,
-	अणु PRISM2_PARAM_DTIM_PERIOD,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getdtim_period" पूर्ण,
-	अणु PRISM2_PARAM_AP_शून्यFUNC_ACK,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "nullfunc_ack" पूर्ण,
-	अणु PRISM2_PARAM_AP_शून्यFUNC_ACK,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getnullfunc_ack" पूर्ण,
-	अणु PRISM2_PARAM_MAX_WDS,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "max_wds" पूर्ण,
-	अणु PRISM2_PARAM_MAX_WDS,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmax_wds" पूर्ण,
-	अणु PRISM2_PARAM_AP_AUTOM_AP_WDS,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "autom_ap_wds" पूर्ण,
-	अणु PRISM2_PARAM_AP_AUTOM_AP_WDS,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getautom_ap_wds" पूर्ण,
-	अणु PRISM2_PARAM_AP_AUTH_ALGS,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "ap_auth_algs" पूर्ण,
-	अणु PRISM2_PARAM_AP_AUTH_ALGS,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getap_auth_algs" पूर्ण,
-	अणु PRISM2_PARAM_MONITOR_ALLOW_FCSERR,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "allow_fcserr" पूर्ण,
-	अणु PRISM2_PARAM_MONITOR_ALLOW_FCSERR,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getallow_fcserr" पूर्ण,
-	अणु PRISM2_PARAM_HOST_ENCRYPT,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "host_encrypt" पूर्ण,
-	अणु PRISM2_PARAM_HOST_ENCRYPT,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethost_encrypt" पूर्ण,
-	अणु PRISM2_PARAM_HOST_DECRYPT,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "host_decrypt" पूर्ण,
-	अणु PRISM2_PARAM_HOST_DECRYPT,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethost_decrypt" पूर्ण,
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-	अणु PRISM2_PARAM_HOST_ROAMING,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "host_roaming" पूर्ण,
-	अणु PRISM2_PARAM_HOST_ROAMING,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethost_roaming" पूर्ण,
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-	अणु PRISM2_PARAM_BCRX_STA_KEY,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "bcrx_sta_key" पूर्ण,
-	अणु PRISM2_PARAM_BCRX_STA_KEY,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbcrx_sta_key" पूर्ण,
-	अणु PRISM2_PARAM_IEEE_802_1X,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "ieee_802_1x" पूर्ण,
-	अणु PRISM2_PARAM_IEEE_802_1X,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getieee_802_1x" पूर्ण,
-	अणु PRISM2_PARAM_ANTSEL_TX,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "antsel_tx" पूर्ण,
-	अणु PRISM2_PARAM_ANTSEL_TX,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getantsel_tx" पूर्ण,
-	अणु PRISM2_PARAM_ANTSEL_RX,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "antsel_rx" पूर्ण,
-	अणु PRISM2_PARAM_ANTSEL_RX,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getantsel_rx" पूर्ण,
-	अणु PRISM2_PARAM_MONITOR_TYPE,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "monitor_type" पूर्ण,
-	अणु PRISM2_PARAM_MONITOR_TYPE,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmonitor_type" पूर्ण,
-	अणु PRISM2_PARAM_WDS_TYPE,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "wds_type" पूर्ण,
-	अणु PRISM2_PARAM_WDS_TYPE,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getwds_type" पूर्ण,
-	अणु PRISM2_PARAM_HOSTSCAN,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "hostscan" पूर्ण,
-	अणु PRISM2_PARAM_HOSTSCAN,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostscan" पूर्ण,
-	अणु PRISM2_PARAM_AP_SCAN,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "ap_scan" पूर्ण,
-	अणु PRISM2_PARAM_AP_SCAN,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getap_scan" पूर्ण,
-	अणु PRISM2_PARAM_ENH_SEC,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "enh_sec" पूर्ण,
-	अणु PRISM2_PARAM_ENH_SEC,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getenh_sec" पूर्ण,
-#अगर_घोषित PRISM2_IO_DEBUG
-	अणु PRISM2_PARAM_IO_DEBUG,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "io_debug" पूर्ण,
-	अणु PRISM2_PARAM_IO_DEBUG,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getio_debug" पूर्ण,
-#पूर्ण_अगर /* PRISM2_IO_DEBUG */
-	अणु PRISM2_PARAM_BASIC_RATES,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "basic_rates" पूर्ण,
-	अणु PRISM2_PARAM_BASIC_RATES,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbasic_rates" पूर्ण,
-	अणु PRISM2_PARAM_OPER_RATES,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "oper_rates" पूर्ण,
-	अणु PRISM2_PARAM_OPER_RATES,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getoper_rates" पूर्ण,
-	अणु PRISM2_PARAM_HOSTAPD,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "hostapd" पूर्ण,
-	अणु PRISM2_PARAM_HOSTAPD,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostapd" पूर्ण,
-	अणु PRISM2_PARAM_HOSTAPD_STA,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "hostapd_sta" पूर्ण,
-	अणु PRISM2_PARAM_HOSTAPD_STA,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostapd_sta" पूर्ण,
-	अणु PRISM2_PARAM_WPA,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "wpa" पूर्ण,
-	अणु PRISM2_PARAM_WPA,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getwpa" पूर्ण,
-	अणु PRISM2_PARAM_PRIVACY_INVOKED,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "privacy_invoked" पूर्ण,
-	अणु PRISM2_PARAM_PRIVACY_INVOKED,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getprivacy_invo" पूर्ण,
-	अणु PRISM2_PARAM_TKIP_COUNTERMEASURES,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "tkip_countermea" पूर्ण,
-	अणु PRISM2_PARAM_TKIP_COUNTERMEASURES,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gettkip_counter" पूर्ण,
-	अणु PRISM2_PARAM_DROP_UNENCRYPTED,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "drop_unencrypte" पूर्ण,
-	अणु PRISM2_PARAM_DROP_UNENCRYPTED,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getdrop_unencry" पूर्ण,
-	अणु PRISM2_PARAM_SCAN_CHANNEL_MASK,
-	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "scan_channels" पूर्ण,
-	अणु PRISM2_PARAM_SCAN_CHANNEL_MASK,
-	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getscan_channel" पूर्ण,
-पूर्ण;
+	{ PRISM2_PARAM_TXRATECTRL,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "txratectrl" },
+	{ PRISM2_PARAM_TXRATECTRL,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gettxratectrl" },
+	{ PRISM2_PARAM_BEACON_INT,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "beacon_int" },
+	{ PRISM2_PARAM_BEACON_INT,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbeacon_int" },
+#ifndef PRISM2_NO_STATION_MODES
+	{ PRISM2_PARAM_PSEUDO_IBSS,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "pseudo_ibss" },
+	{ PRISM2_PARAM_PSEUDO_IBSS,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getpseudo_ibss" },
+#endif /* PRISM2_NO_STATION_MODES */
+	{ PRISM2_PARAM_ALC,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "alc" },
+	{ PRISM2_PARAM_ALC,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getalc" },
+	{ PRISM2_PARAM_DUMP,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "dump" },
+	{ PRISM2_PARAM_DUMP,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getdump" },
+	{ PRISM2_PARAM_OTHER_AP_POLICY,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "other_ap_policy" },
+	{ PRISM2_PARAM_OTHER_AP_POLICY,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getother_ap_pol" },
+	{ PRISM2_PARAM_AP_MAX_INACTIVITY,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "max_inactivity" },
+	{ PRISM2_PARAM_AP_MAX_INACTIVITY,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmax_inactivi" },
+	{ PRISM2_PARAM_AP_BRIDGE_PACKETS,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "bridge_packets" },
+	{ PRISM2_PARAM_AP_BRIDGE_PACKETS,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbridge_packe" },
+	{ PRISM2_PARAM_DTIM_PERIOD,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "dtim_period" },
+	{ PRISM2_PARAM_DTIM_PERIOD,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getdtim_period" },
+	{ PRISM2_PARAM_AP_NULLFUNC_ACK,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "nullfunc_ack" },
+	{ PRISM2_PARAM_AP_NULLFUNC_ACK,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getnullfunc_ack" },
+	{ PRISM2_PARAM_MAX_WDS,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "max_wds" },
+	{ PRISM2_PARAM_MAX_WDS,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmax_wds" },
+	{ PRISM2_PARAM_AP_AUTOM_AP_WDS,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "autom_ap_wds" },
+	{ PRISM2_PARAM_AP_AUTOM_AP_WDS,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getautom_ap_wds" },
+	{ PRISM2_PARAM_AP_AUTH_ALGS,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "ap_auth_algs" },
+	{ PRISM2_PARAM_AP_AUTH_ALGS,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getap_auth_algs" },
+	{ PRISM2_PARAM_MONITOR_ALLOW_FCSERR,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "allow_fcserr" },
+	{ PRISM2_PARAM_MONITOR_ALLOW_FCSERR,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getallow_fcserr" },
+	{ PRISM2_PARAM_HOST_ENCRYPT,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "host_encrypt" },
+	{ PRISM2_PARAM_HOST_ENCRYPT,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethost_encrypt" },
+	{ PRISM2_PARAM_HOST_DECRYPT,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "host_decrypt" },
+	{ PRISM2_PARAM_HOST_DECRYPT,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethost_decrypt" },
+#ifndef PRISM2_NO_STATION_MODES
+	{ PRISM2_PARAM_HOST_ROAMING,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "host_roaming" },
+	{ PRISM2_PARAM_HOST_ROAMING,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethost_roaming" },
+#endif /* PRISM2_NO_STATION_MODES */
+	{ PRISM2_PARAM_BCRX_STA_KEY,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "bcrx_sta_key" },
+	{ PRISM2_PARAM_BCRX_STA_KEY,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbcrx_sta_key" },
+	{ PRISM2_PARAM_IEEE_802_1X,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "ieee_802_1x" },
+	{ PRISM2_PARAM_IEEE_802_1X,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getieee_802_1x" },
+	{ PRISM2_PARAM_ANTSEL_TX,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "antsel_tx" },
+	{ PRISM2_PARAM_ANTSEL_TX,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getantsel_tx" },
+	{ PRISM2_PARAM_ANTSEL_RX,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "antsel_rx" },
+	{ PRISM2_PARAM_ANTSEL_RX,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getantsel_rx" },
+	{ PRISM2_PARAM_MONITOR_TYPE,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "monitor_type" },
+	{ PRISM2_PARAM_MONITOR_TYPE,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getmonitor_type" },
+	{ PRISM2_PARAM_WDS_TYPE,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "wds_type" },
+	{ PRISM2_PARAM_WDS_TYPE,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getwds_type" },
+	{ PRISM2_PARAM_HOSTSCAN,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "hostscan" },
+	{ PRISM2_PARAM_HOSTSCAN,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostscan" },
+	{ PRISM2_PARAM_AP_SCAN,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "ap_scan" },
+	{ PRISM2_PARAM_AP_SCAN,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getap_scan" },
+	{ PRISM2_PARAM_ENH_SEC,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "enh_sec" },
+	{ PRISM2_PARAM_ENH_SEC,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getenh_sec" },
+#ifdef PRISM2_IO_DEBUG
+	{ PRISM2_PARAM_IO_DEBUG,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "io_debug" },
+	{ PRISM2_PARAM_IO_DEBUG,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getio_debug" },
+#endif /* PRISM2_IO_DEBUG */
+	{ PRISM2_PARAM_BASIC_RATES,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "basic_rates" },
+	{ PRISM2_PARAM_BASIC_RATES,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getbasic_rates" },
+	{ PRISM2_PARAM_OPER_RATES,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "oper_rates" },
+	{ PRISM2_PARAM_OPER_RATES,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getoper_rates" },
+	{ PRISM2_PARAM_HOSTAPD,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "hostapd" },
+	{ PRISM2_PARAM_HOSTAPD,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostapd" },
+	{ PRISM2_PARAM_HOSTAPD_STA,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "hostapd_sta" },
+	{ PRISM2_PARAM_HOSTAPD_STA,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gethostapd_sta" },
+	{ PRISM2_PARAM_WPA,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "wpa" },
+	{ PRISM2_PARAM_WPA,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getwpa" },
+	{ PRISM2_PARAM_PRIVACY_INVOKED,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "privacy_invoked" },
+	{ PRISM2_PARAM_PRIVACY_INVOKED,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getprivacy_invo" },
+	{ PRISM2_PARAM_TKIP_COUNTERMEASURES,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "tkip_countermea" },
+	{ PRISM2_PARAM_TKIP_COUNTERMEASURES,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "gettkip_counter" },
+	{ PRISM2_PARAM_DROP_UNENCRYPTED,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "drop_unencrypte" },
+	{ PRISM2_PARAM_DROP_UNENCRYPTED,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getdrop_unencry" },
+	{ PRISM2_PARAM_SCAN_CHANNEL_MASK,
+	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "scan_channels" },
+	{ PRISM2_PARAM_SCAN_CHANNEL_MASK,
+	  0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getscan_channel" },
+};
 
 
-अटल पूर्णांक prism2_ioctl_priv_inquire(काष्ठा net_device *dev, पूर्णांक *i)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_inquire(struct net_device *dev, int *i)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->cmd(dev, HFA384X_CMDCODE_INQUIRE, *i, शून्य, शून्य))
-		वापस -EOPNOTSUPP;
+	if (local->func->cmd(dev, HFA384X_CMDCODE_INQUIRE, *i, NULL, NULL))
+		return -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_prism2_param(काष्ठा net_device *dev,
-					  काष्ठा iw_request_info *info,
-					  व्योम *wrqu, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_prism2_param(struct net_device *dev,
+					  struct iw_request_info *info,
+					  void *wrqu, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक *i = (पूर्णांक *) extra;
-	पूर्णांक param = *i;
-	पूर्णांक value = *(i + 1);
-	पूर्णांक ret = 0;
+	int *i = (int *) extra;
+	int param = *i;
+	int value = *(i + 1);
+	int ret = 0;
 	u16 val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	चयन (param) अणु
-	हाल PRISM2_PARAM_TXRATECTRL:
+	switch (param) {
+	case PRISM2_PARAM_TXRATECTRL:
 		local->fw_tx_rate_control = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_BEACON_INT:
-		अगर (hostap_set_word(dev, HFA384X_RID_CNFBEACONINT, value) ||
+	case PRISM2_PARAM_BEACON_INT:
+		if (hostap_set_word(dev, HFA384X_RID_CNFBEACONINT, value) ||
 		    local->func->reset_port(dev))
 			ret = -EINVAL;
-		अन्यथा
-			local->beacon_पूर्णांक = value;
-		अवरोध;
+		else
+			local->beacon_int = value;
+		break;
 
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-	हाल PRISM2_PARAM_PSEUDO_IBSS:
-		अगर (value == local->pseuकरो_adhoc)
-			अवरोध;
+#ifndef PRISM2_NO_STATION_MODES
+	case PRISM2_PARAM_PSEUDO_IBSS:
+		if (value == local->pseudo_adhoc)
+			break;
 
-		अगर (value != 0 && value != 1) अणु
+		if (value != 0 && value != 1) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		prपूर्णांकk(KERN_DEBUG "prism2: %s: pseudo IBSS change %d -> %d\n",
-		       dev->name, local->pseuकरो_adhoc, value);
-		local->pseuकरो_adhoc = value;
-		अगर (local->iw_mode != IW_MODE_ADHOC)
-			अवरोध;
+		printk(KERN_DEBUG "prism2: %s: pseudo IBSS change %d -> %d\n",
+		       dev->name, local->pseudo_adhoc, value);
+		local->pseudo_adhoc = value;
+		if (local->iw_mode != IW_MODE_ADHOC)
+			break;
 
-		अगर (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
-				    hostap_get_porttype(local))) अणु
+		if (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
+				    hostap_get_porttype(local))) {
 			ret = -EOPNOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (local->func->reset_port(dev))
+		if (local->func->reset_port(dev))
 			ret = -EINVAL;
-		अवरोध;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
+		break;
+#endif /* PRISM2_NO_STATION_MODES */
 
-	हाल PRISM2_PARAM_ALC:
-		prपूर्णांकk(KERN_DEBUG "%s: %s ALC\n", dev->name,
+	case PRISM2_PARAM_ALC:
+		printk(KERN_DEBUG "%s: %s ALC\n", dev->name,
 		       value == 0 ? "Disabling" : "Enabling");
 		val = HFA384X_TEST_CFG_BIT_ALC;
 		local->func->cmd(dev, HFA384X_CMDCODE_TEST |
 				 (HFA384X_TEST_CFG_BITS << 8),
-				 value == 0 ? 0 : 1, &val, शून्य);
-		अवरोध;
+				 value == 0 ? 0 : 1, &val, NULL);
+		break;
 
-	हाल PRISM2_PARAM_DUMP:
+	case PRISM2_PARAM_DUMP:
 		local->frame_dump = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_OTHER_AP_POLICY:
-		अगर (value < 0 || value > 3) अणु
+	case PRISM2_PARAM_OTHER_AP_POLICY:
+		if (value < 0 || value > 3) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (local->ap != शून्य)
+			break;
+		}
+		if (local->ap != NULL)
 			local->ap->ap_policy = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_MAX_INACTIVITY:
-		अगर (value < 0 || value > 7 * 24 * 60 * 60) अणु
+	case PRISM2_PARAM_AP_MAX_INACTIVITY:
+		if (value < 0 || value > 7 * 24 * 60 * 60) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (local->ap != शून्य)
+			break;
+		}
+		if (local->ap != NULL)
 			local->ap->max_inactivity = value * HZ;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_BRIDGE_PACKETS:
-		अगर (local->ap != शून्य)
+	case PRISM2_PARAM_AP_BRIDGE_PACKETS:
+		if (local->ap != NULL)
 			local->ap->bridge_packets = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_DTIM_PERIOD:
-		अगर (value < 0 || value > 65535) अणु
+	case PRISM2_PARAM_DTIM_PERIOD:
+		if (value < 0 || value > 65535) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (hostap_set_word(dev, HFA384X_RID_CNFOWNDTIMPERIOD, value)
+			break;
+		}
+		if (hostap_set_word(dev, HFA384X_RID_CNFOWNDTIMPERIOD, value)
 		    || local->func->reset_port(dev))
 			ret = -EINVAL;
-		अन्यथा
+		else
 			local->dtim_period = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_शून्यFUNC_ACK:
-		अगर (local->ap != शून्य)
+	case PRISM2_PARAM_AP_NULLFUNC_ACK:
+		if (local->ap != NULL)
 			local->ap->nullfunc_ack = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_MAX_WDS:
+	case PRISM2_PARAM_MAX_WDS:
 		local->wds_max_connections = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_AUTOM_AP_WDS:
-		अगर (local->ap != शून्य) अणु
-			अगर (!local->ap->स्वतःm_ap_wds && value) अणु
+	case PRISM2_PARAM_AP_AUTOM_AP_WDS:
+		if (local->ap != NULL) {
+			if (!local->ap->autom_ap_wds && value) {
 				/* add WDS link to all APs in STA table */
 				hostap_add_wds_links(local);
-			पूर्ण
-			local->ap->स्वतःm_ap_wds = value;
-		पूर्ण
-		अवरोध;
+			}
+			local->ap->autom_ap_wds = value;
+		}
+		break;
 
-	हाल PRISM2_PARAM_AP_AUTH_ALGS:
+	case PRISM2_PARAM_AP_AUTH_ALGS:
 		local->auth_algs = value;
-		अगर (hostap_set_auth_algs(local))
+		if (hostap_set_auth_algs(local))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_MONITOR_ALLOW_FCSERR:
+	case PRISM2_PARAM_MONITOR_ALLOW_FCSERR:
 		local->monitor_allow_fcserr = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOST_ENCRYPT:
+	case PRISM2_PARAM_HOST_ENCRYPT:
 		local->host_encrypt = value;
-		अगर (hostap_set_encryption(local) ||
+		if (hostap_set_encryption(local) ||
 		    local->func->reset_port(dev))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOST_DECRYPT:
+	case PRISM2_PARAM_HOST_DECRYPT:
 		local->host_decrypt = value;
-		अगर (hostap_set_encryption(local) ||
+		if (hostap_set_encryption(local) ||
 		    local->func->reset_port(dev))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-	हाल PRISM2_PARAM_HOST_ROAMING:
-		अगर (value < 0 || value > 2) अणु
+#ifndef PRISM2_NO_STATION_MODES
+	case PRISM2_PARAM_HOST_ROAMING:
+		if (value < 0 || value > 2) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		local->host_roaming = value;
-		अगर (hostap_set_roaming(local) || local->func->reset_port(dev))
+		if (hostap_set_roaming(local) || local->func->reset_port(dev))
 			ret = -EINVAL;
-		अवरोध;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
+		break;
+#endif /* PRISM2_NO_STATION_MODES */
 
-	हाल PRISM2_PARAM_BCRX_STA_KEY:
+	case PRISM2_PARAM_BCRX_STA_KEY:
 		local->bcrx_sta_key = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_IEEE_802_1X:
+	case PRISM2_PARAM_IEEE_802_1X:
 		local->ieee_802_1x = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_ANTSEL_TX:
-		अगर (value < 0 || value > HOSTAP_ANTSEL_HIGH) अणु
+	case PRISM2_PARAM_ANTSEL_TX:
+		if (value < 0 || value > HOSTAP_ANTSEL_HIGH) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		local->antsel_tx = value;
 		hostap_set_antsel(local);
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_ANTSEL_RX:
-		अगर (value < 0 || value > HOSTAP_ANTSEL_HIGH) अणु
+	case PRISM2_PARAM_ANTSEL_RX:
+		if (value < 0 || value > HOSTAP_ANTSEL_HIGH) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		local->antsel_rx = value;
 		hostap_set_antsel(local);
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_MONITOR_TYPE:
-		अगर (value != PRISM2_MONITOR_80211 &&
+	case PRISM2_PARAM_MONITOR_TYPE:
+		if (value != PRISM2_MONITOR_80211 &&
 		    value != PRISM2_MONITOR_CAPHDR &&
 		    value != PRISM2_MONITOR_PRISM &&
-		    value != PRISM2_MONITOR_RADIOTAP) अणु
+		    value != PRISM2_MONITOR_RADIOTAP) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		local->monitor_type = value;
-		अगर (local->iw_mode == IW_MODE_MONITOR)
+		if (local->iw_mode == IW_MODE_MONITOR)
 			hostap_monitor_set_type(local);
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_WDS_TYPE:
+	case PRISM2_PARAM_WDS_TYPE:
 		local->wds_type = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOSTSCAN:
-	अणु
-		काष्ठा hfa384x_hostscan_request scan_req;
+	case PRISM2_PARAM_HOSTSCAN:
+	{
+		struct hfa384x_hostscan_request scan_req;
 		u16 rate;
 
-		स_रखो(&scan_req, 0, माप(scan_req));
+		memset(&scan_req, 0, sizeof(scan_req));
 		scan_req.channel_list = cpu_to_le16(0x3fff);
-		चयन (value) अणु
-		हाल 1: rate = HFA384X_RATES_1MBPS; अवरोध;
-		हाल 2: rate = HFA384X_RATES_2MBPS; अवरोध;
-		हाल 3: rate = HFA384X_RATES_5MBPS; अवरोध;
-		हाल 4: rate = HFA384X_RATES_11MBPS; अवरोध;
-		शेष: rate = HFA384X_RATES_1MBPS; अवरोध;
-		पूर्ण
+		switch (value) {
+		case 1: rate = HFA384X_RATES_1MBPS; break;
+		case 2: rate = HFA384X_RATES_2MBPS; break;
+		case 3: rate = HFA384X_RATES_5MBPS; break;
+		case 4: rate = HFA384X_RATES_11MBPS; break;
+		default: rate = HFA384X_RATES_1MBPS; break;
+		}
 		scan_req.txrate = cpu_to_le16(rate);
 		/* leave SSID empty to accept all SSIDs */
 
-		अगर (local->iw_mode == IW_MODE_MASTER) अणु
-			अगर (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
+		if (local->iw_mode == IW_MODE_MASTER) {
+			if (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
 					    HFA384X_PORTTYPE_BSS) ||
 			    local->func->reset_port(dev))
-				prपूर्णांकk(KERN_DEBUG "Leaving Host AP mode "
+				printk(KERN_DEBUG "Leaving Host AP mode "
 				       "for HostScan failed\n");
-		पूर्ण
+		}
 
-		अगर (local->func->set_rid(dev, HFA384X_RID_HOSTSCAN, &scan_req,
-					 माप(scan_req))) अणु
-			prपूर्णांकk(KERN_DEBUG "HOSTSCAN failed\n");
+		if (local->func->set_rid(dev, HFA384X_RID_HOSTSCAN, &scan_req,
+					 sizeof(scan_req))) {
+			printk(KERN_DEBUG "HOSTSCAN failed\n");
 			ret = -EINVAL;
-		पूर्ण
-		अगर (local->iw_mode == IW_MODE_MASTER) अणु
-			रुको_queue_entry_t __रुको;
-			init_रुकोqueue_entry(&__रुको, current);
-			add_रुको_queue(&local->hostscan_wq, &__रुको);
+		}
+		if (local->iw_mode == IW_MODE_MASTER) {
+			wait_queue_entry_t __wait;
+			init_waitqueue_entry(&__wait, current);
+			add_wait_queue(&local->hostscan_wq, &__wait);
 			set_current_state(TASK_INTERRUPTIBLE);
-			schedule_समयout(HZ);
-			अगर (संकेत_pending(current))
+			schedule_timeout(HZ);
+			if (signal_pending(current))
 				ret = -EINTR;
 			set_current_state(TASK_RUNNING);
-			हटाओ_रुको_queue(&local->hostscan_wq, &__रुको);
+			remove_wait_queue(&local->hostscan_wq, &__wait);
 
-			अगर (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
+			if (hostap_set_word(dev, HFA384X_RID_CNFPORTTYPE,
 					    HFA384X_PORTTYPE_HOSTAP) ||
 			    local->func->reset_port(dev))
-				prपूर्णांकk(KERN_DEBUG "Returning to Host AP mode "
+				printk(KERN_DEBUG "Returning to Host AP mode "
 				       "after HostScan failed\n");
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
-	हाल PRISM2_PARAM_AP_SCAN:
-		local->passive_scan_पूर्णांकerval = value;
-		अगर (समयr_pending(&local->passive_scan_समयr))
-			del_समयr(&local->passive_scan_समयr);
-		अगर (value > 0 && value < पूर्णांक_उच्च / HZ) अणु
-			local->passive_scan_समयr.expires = jअगरfies +
-				local->passive_scan_पूर्णांकerval * HZ;
-			add_समयr(&local->passive_scan_समयr);
-		पूर्ण
-		अवरोध;
+	case PRISM2_PARAM_AP_SCAN:
+		local->passive_scan_interval = value;
+		if (timer_pending(&local->passive_scan_timer))
+			del_timer(&local->passive_scan_timer);
+		if (value > 0 && value < INT_MAX / HZ) {
+			local->passive_scan_timer.expires = jiffies +
+				local->passive_scan_interval * HZ;
+			add_timer(&local->passive_scan_timer);
+		}
+		break;
 
-	हाल PRISM2_PARAM_ENH_SEC:
-		अगर (value < 0 || value > 3) अणु
+	case PRISM2_PARAM_ENH_SEC:
+		if (value < 0 || value > 3) {
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		local->enh_sec = value;
-		अगर (hostap_set_word(dev, HFA384X_RID_CNFENHSECURITY,
+		if (hostap_set_word(dev, HFA384X_RID_CNFENHSECURITY,
 				    local->enh_sec) ||
-		    local->func->reset_port(dev)) अणु
-			prपूर्णांकk(KERN_INFO "%s: cnfEnhSecurity requires STA f/w "
+		    local->func->reset_port(dev)) {
+			printk(KERN_INFO "%s: cnfEnhSecurity requires STA f/w "
 			       "1.6.3 or newer\n", dev->name);
 			ret = -EOPNOTSUPP;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-#अगर_घोषित PRISM2_IO_DEBUG
-	हाल PRISM2_PARAM_IO_DEBUG:
+#ifdef PRISM2_IO_DEBUG
+	case PRISM2_PARAM_IO_DEBUG:
 		local->io_debug_enabled = value;
-		अवरोध;
-#पूर्ण_अगर /* PRISM2_IO_DEBUG */
+		break;
+#endif /* PRISM2_IO_DEBUG */
 
-	हाल PRISM2_PARAM_BASIC_RATES:
-		अगर ((value & local->tx_rate_control) != value || value == 0) अणु
-			prपूर्णांकk(KERN_INFO "%s: invalid basic rate set - basic "
+	case PRISM2_PARAM_BASIC_RATES:
+		if ((value & local->tx_rate_control) != value || value == 0) {
+			printk(KERN_INFO "%s: invalid basic rate set - basic "
 			       "rates must be in supported rate set\n",
 			       dev->name);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		local->basic_rates = value;
-		अगर (hostap_set_word(dev, HFA384X_RID_CNFBASICRATES,
+		if (hostap_set_word(dev, HFA384X_RID_CNFBASICRATES,
 				    local->basic_rates) ||
 		    local->func->reset_port(dev))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_OPER_RATES:
+	case PRISM2_PARAM_OPER_RATES:
 		local->tx_rate_control = value;
-		अगर (hostap_set_rate(dev))
+		if (hostap_set_rate(dev))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOSTAPD:
+	case PRISM2_PARAM_HOSTAPD:
 		ret = hostap_set_hostapd(local, value, 1);
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOSTAPD_STA:
+	case PRISM2_PARAM_HOSTAPD_STA:
 		ret = hostap_set_hostapd_sta(local, value, 1);
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_WPA:
+	case PRISM2_PARAM_WPA:
 		local->wpa = value;
-		अगर (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
+		if (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
 			ret = -EOPNOTSUPP;
-		अन्यथा अगर (hostap_set_word(dev, HFA384X_RID_SSNHANDLINGMODE,
+		else if (hostap_set_word(dev, HFA384X_RID_SSNHANDLINGMODE,
 					 value ? 1 : 0))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_PRIVACY_INVOKED:
+	case PRISM2_PARAM_PRIVACY_INVOKED:
 		local->privacy_invoked = value;
-		अगर (hostap_set_encryption(local) ||
+		if (hostap_set_encryption(local) ||
 		    local->func->reset_port(dev))
 			ret = -EINVAL;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_TKIP_COUNTERMEASURES:
+	case PRISM2_PARAM_TKIP_COUNTERMEASURES:
 		local->tkip_countermeasures = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_DROP_UNENCRYPTED:
+	case PRISM2_PARAM_DROP_UNENCRYPTED:
 		local->drop_unencrypted = value;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_SCAN_CHANNEL_MASK:
+	case PRISM2_PARAM_SCAN_CHANNEL_MASK:
 		local->scan_channel_mask = value;
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "%s: prism2_param: unknown param %d\n",
+	default:
+		printk(KERN_DEBUG "%s: prism2_param: unknown param %d\n",
 		       dev->name, param);
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_get_prism2_param(काष्ठा net_device *dev,
-					      काष्ठा iw_request_info *info,
-					      व्योम *wrqu, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_get_prism2_param(struct net_device *dev,
+					      struct iw_request_info *info,
+					      void *wrqu, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक *param = (पूर्णांक *) extra;
-	पूर्णांक ret = 0;
+	int *param = (int *) extra;
+	int ret = 0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	चयन (*param) अणु
-	हाल PRISM2_PARAM_TXRATECTRL:
+	switch (*param) {
+	case PRISM2_PARAM_TXRATECTRL:
 		*param = local->fw_tx_rate_control;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_BEACON_INT:
-		*param = local->beacon_पूर्णांक;
-		अवरोध;
+	case PRISM2_PARAM_BEACON_INT:
+		*param = local->beacon_int;
+		break;
 
-	हाल PRISM2_PARAM_PSEUDO_IBSS:
-		*param = local->pseuकरो_adhoc;
-		अवरोध;
+	case PRISM2_PARAM_PSEUDO_IBSS:
+		*param = local->pseudo_adhoc;
+		break;
 
-	हाल PRISM2_PARAM_ALC:
+	case PRISM2_PARAM_ALC:
 		ret = -EOPNOTSUPP; /* FIX */
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_DUMP:
+	case PRISM2_PARAM_DUMP:
 		*param = local->frame_dump;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_OTHER_AP_POLICY:
-		अगर (local->ap != शून्य)
+	case PRISM2_PARAM_OTHER_AP_POLICY:
+		if (local->ap != NULL)
 			*param = local->ap->ap_policy;
-		अन्यथा
+		else
 			ret = -EOPNOTSUPP;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_MAX_INACTIVITY:
-		अगर (local->ap != शून्य)
+	case PRISM2_PARAM_AP_MAX_INACTIVITY:
+		if (local->ap != NULL)
 			*param = local->ap->max_inactivity / HZ;
-		अन्यथा
+		else
 			ret = -EOPNOTSUPP;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_BRIDGE_PACKETS:
-		अगर (local->ap != शून्य)
+	case PRISM2_PARAM_AP_BRIDGE_PACKETS:
+		if (local->ap != NULL)
 			*param = local->ap->bridge_packets;
-		अन्यथा
+		else
 			ret = -EOPNOTSUPP;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_DTIM_PERIOD:
+	case PRISM2_PARAM_DTIM_PERIOD:
 		*param = local->dtim_period;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_शून्यFUNC_ACK:
-		अगर (local->ap != शून्य)
+	case PRISM2_PARAM_AP_NULLFUNC_ACK:
+		if (local->ap != NULL)
 			*param = local->ap->nullfunc_ack;
-		अन्यथा
+		else
 			ret = -EOPNOTSUPP;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_MAX_WDS:
+	case PRISM2_PARAM_MAX_WDS:
 		*param = local->wds_max_connections;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_AUTOM_AP_WDS:
-		अगर (local->ap != शून्य)
-			*param = local->ap->स्वतःm_ap_wds;
-		अन्यथा
+	case PRISM2_PARAM_AP_AUTOM_AP_WDS:
+		if (local->ap != NULL)
+			*param = local->ap->autom_ap_wds;
+		else
 			ret = -EOPNOTSUPP;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_AUTH_ALGS:
+	case PRISM2_PARAM_AP_AUTH_ALGS:
 		*param = local->auth_algs;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_MONITOR_ALLOW_FCSERR:
+	case PRISM2_PARAM_MONITOR_ALLOW_FCSERR:
 		*param = local->monitor_allow_fcserr;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOST_ENCRYPT:
+	case PRISM2_PARAM_HOST_ENCRYPT:
 		*param = local->host_encrypt;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOST_DECRYPT:
+	case PRISM2_PARAM_HOST_DECRYPT:
 		*param = local->host_decrypt;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOST_ROAMING:
+	case PRISM2_PARAM_HOST_ROAMING:
 		*param = local->host_roaming;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_BCRX_STA_KEY:
+	case PRISM2_PARAM_BCRX_STA_KEY:
 		*param = local->bcrx_sta_key;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_IEEE_802_1X:
+	case PRISM2_PARAM_IEEE_802_1X:
 		*param = local->ieee_802_1x;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_ANTSEL_TX:
+	case PRISM2_PARAM_ANTSEL_TX:
 		*param = local->antsel_tx;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_ANTSEL_RX:
+	case PRISM2_PARAM_ANTSEL_RX:
 		*param = local->antsel_rx;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_MONITOR_TYPE:
+	case PRISM2_PARAM_MONITOR_TYPE:
 		*param = local->monitor_type;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_WDS_TYPE:
+	case PRISM2_PARAM_WDS_TYPE:
 		*param = local->wds_type;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOSTSCAN:
+	case PRISM2_PARAM_HOSTSCAN:
 		ret = -EOPNOTSUPP;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_AP_SCAN:
-		*param = local->passive_scan_पूर्णांकerval;
-		अवरोध;
+	case PRISM2_PARAM_AP_SCAN:
+		*param = local->passive_scan_interval;
+		break;
 
-	हाल PRISM2_PARAM_ENH_SEC:
+	case PRISM2_PARAM_ENH_SEC:
 		*param = local->enh_sec;
-		अवरोध;
+		break;
 
-#अगर_घोषित PRISM2_IO_DEBUG
-	हाल PRISM2_PARAM_IO_DEBUG:
+#ifdef PRISM2_IO_DEBUG
+	case PRISM2_PARAM_IO_DEBUG:
 		*param = local->io_debug_enabled;
-		अवरोध;
-#पूर्ण_अगर /* PRISM2_IO_DEBUG */
+		break;
+#endif /* PRISM2_IO_DEBUG */
 
-	हाल PRISM2_PARAM_BASIC_RATES:
+	case PRISM2_PARAM_BASIC_RATES:
 		*param = local->basic_rates;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_OPER_RATES:
+	case PRISM2_PARAM_OPER_RATES:
 		*param = local->tx_rate_control;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOSTAPD:
+	case PRISM2_PARAM_HOSTAPD:
 		*param = local->hostapd;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_HOSTAPD_STA:
+	case PRISM2_PARAM_HOSTAPD_STA:
 		*param = local->hostapd_sta;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_WPA:
-		अगर (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
+	case PRISM2_PARAM_WPA:
+		if (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
 			ret = -EOPNOTSUPP;
 		*param = local->wpa;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_PRIVACY_INVOKED:
+	case PRISM2_PARAM_PRIVACY_INVOKED:
 		*param = local->privacy_invoked;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_TKIP_COUNTERMEASURES:
+	case PRISM2_PARAM_TKIP_COUNTERMEASURES:
 		*param = local->tkip_countermeasures;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_DROP_UNENCRYPTED:
+	case PRISM2_PARAM_DROP_UNENCRYPTED:
 		*param = local->drop_unencrypted;
-		अवरोध;
+		break;
 
-	हाल PRISM2_PARAM_SCAN_CHANNEL_MASK:
+	case PRISM2_PARAM_SCAN_CHANNEL_MASK:
 		*param = local->scan_channel_mask;
-		अवरोध;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "%s: get_prism2_param: unknown param %d\n",
+	default:
+		printk(KERN_DEBUG "%s: get_prism2_param: unknown param %d\n",
 		       dev->name, *param);
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_पढ़ोmअगर(काष्ठा net_device *dev,
-				     काष्ठा iw_request_info *info,
-				     व्योम *wrqu, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_readmif(struct net_device *dev,
+				     struct iw_request_info *info,
+				     void *wrqu, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	u16 resp0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	अगर (local->func->cmd(dev, HFA384X_CMDCODE_READMIF, *extra, शून्य,
+	if (local->func->cmd(dev, HFA384X_CMDCODE_READMIF, *extra, NULL,
 			     &resp0))
-		वापस -EOPNOTSUPP;
-	अन्यथा
+		return -EOPNOTSUPP;
+	else
 		*extra = resp0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_ग_लिखोmअगर(काष्ठा net_device *dev,
-				      काष्ठा iw_request_info *info,
-				      व्योम *wrqu, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_writemif(struct net_device *dev,
+				      struct iw_request_info *info,
+				      void *wrqu, char *extra)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 	u16 cr, val;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
 	cr = *extra;
 	val = *(extra + 1);
-	अगर (local->func->cmd(dev, HFA384X_CMDCODE_WRITEMIF, cr, &val, शून्य))
-		वापस -EOPNOTSUPP;
+	if (local->func->cmd(dev, HFA384X_CMDCODE_WRITEMIF, cr, &val, NULL))
+		return -EOPNOTSUPP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_monitor(काष्ठा net_device *dev, पूर्णांक *i)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_monitor(struct net_device *dev, int *i)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक ret = 0;
+	int ret = 0;
 	u32 mode;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	prपूर्णांकk(KERN_DEBUG "%s: process %d (%s) used deprecated iwpriv monitor "
+	printk(KERN_DEBUG "%s: process %d (%s) used deprecated iwpriv monitor "
 	       "- update software to use iwconfig mode monitor\n",
 	       dev->name, task_pid_nr(current), current->comm);
 
-	/* Backward compatibility code - this can be हटाओd at some poपूर्णांक */
+	/* Backward compatibility code - this can be removed at some point */
 
-	अगर (*i == 0) अणु
+	if (*i == 0) {
 		/* Disable monitor mode - old mode was not saved, so go to
 		 * Master mode */
 		mode = IW_MODE_MASTER;
-		ret = prism2_ioctl_siwmode(dev, शून्य, &mode, शून्य);
-	पूर्ण अन्यथा अगर (*i == 1) अणु
+		ret = prism2_ioctl_siwmode(dev, NULL, &mode, NULL);
+	} else if (*i == 1) {
 		/* netlink socket mode is not supported anymore since it did
-		 * not separate dअगरferent devices from each other and was not
-		 * best method क्रम delivering large amount of packets to
+		 * not separate different devices from each other and was not
+		 * best method for delivering large amount of packets to
 		 * user space */
 		ret = -EOPNOTSUPP;
-	पूर्ण अन्यथा अगर (*i == 2 || *i == 3) अणु
-		चयन (*i) अणु
-		हाल 2:
+	} else if (*i == 2 || *i == 3) {
+		switch (*i) {
+		case 2:
 			local->monitor_type = PRISM2_MONITOR_80211;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			local->monitor_type = PRISM2_MONITOR_PRISM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		mode = IW_MODE_MONITOR;
-		ret = prism2_ioctl_siwmode(dev, शून्य, &mode, शून्य);
+		ret = prism2_ioctl_siwmode(dev, NULL, &mode, NULL);
 		hostap_monitor_mode_enable(local);
-	पूर्ण अन्यथा
+	} else
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_reset(काष्ठा net_device *dev, पूर्णांक *i)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static int prism2_ioctl_priv_reset(struct net_device *dev, int *i)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	prपूर्णांकk(KERN_DEBUG "%s: manual reset request(%d)\n", dev->name, *i);
-	चयन (*i) अणु
-	हाल 0:
+	printk(KERN_DEBUG "%s: manual reset request(%d)\n", dev->name, *i);
+	switch (*i) {
+	case 0:
 		/* Disable and enable card */
-		local->func->hw_shutकरोwn(dev, 1);
+		local->func->hw_shutdown(dev, 1);
 		local->func->hw_config(dev, 0);
-		अवरोध;
+		break;
 
-	हाल 1:
+	case 1:
 		/* COR sreset */
 		local->func->hw_reset(dev);
-		अवरोध;
+		break;
 
-	हाल 2:
+	case 2:
 		/* Disable and enable port 0 */
 		local->func->reset_port(dev);
-		अवरोध;
+		break;
 
-	हाल 3:
+	case 3:
 		prism2_sta_deauth(local, WLAN_REASON_DEAUTH_LEAVING);
-		अगर (local->func->cmd(dev, HFA384X_CMDCODE_DISABLE, 0, शून्य,
-				     शून्य))
-			वापस -EINVAL;
-		अवरोध;
+		if (local->func->cmd(dev, HFA384X_CMDCODE_DISABLE, 0, NULL,
+				     NULL))
+			return -EINVAL;
+		break;
 
-	हाल 4:
-		अगर (local->func->cmd(dev, HFA384X_CMDCODE_ENABLE, 0, शून्य,
-				     शून्य))
-			वापस -EINVAL;
-		अवरोध;
+	case 4:
+		if (local->func->cmd(dev, HFA384X_CMDCODE_ENABLE, 0, NULL,
+				     NULL))
+			return -EINVAL;
+		break;
 
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "Unknown reset request %d\n", *i);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+	default:
+		printk(KERN_DEBUG "Unknown reset request %d\n", *i);
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
-
-
-अटल पूर्णांक prism2_ioctl_priv_set_rid_word(काष्ठा net_device *dev, पूर्णांक *i)
-अणु
-	पूर्णांक rid = *i;
-	पूर्णांक value = *(i + 1);
-
-	prपूर्णांकk(KERN_DEBUG "%s: Set RID[0x%X] = %d\n", dev->name, rid, value);
-
-	अगर (hostap_set_word(dev, rid, value))
-		वापस -EINVAL;
-
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-#अगर_अघोषित PRISM2_NO_KERNEL_IEEE80211_MGMT
-अटल पूर्णांक ap_mac_cmd_ioctl(local_info_t *local, पूर्णांक *cmd)
-अणु
-	पूर्णांक ret = 0;
+static int prism2_ioctl_priv_set_rid_word(struct net_device *dev, int *i)
+{
+	int rid = *i;
+	int value = *(i + 1);
 
-	चयन (*cmd) अणु
-	हाल AP_MAC_CMD_POLICY_OPEN:
+	printk(KERN_DEBUG "%s: Set RID[0x%X] = %d\n", dev->name, rid, value);
+
+	if (hostap_set_word(dev, rid, value))
+		return -EINVAL;
+
+	return 0;
+}
+
+
+#ifndef PRISM2_NO_KERNEL_IEEE80211_MGMT
+static int ap_mac_cmd_ioctl(local_info_t *local, int *cmd)
+{
+	int ret = 0;
+
+	switch (*cmd) {
+	case AP_MAC_CMD_POLICY_OPEN:
 		local->ap->mac_restrictions.policy = MAC_POLICY_OPEN;
-		अवरोध;
-	हाल AP_MAC_CMD_POLICY_ALLOW:
+		break;
+	case AP_MAC_CMD_POLICY_ALLOW:
 		local->ap->mac_restrictions.policy = MAC_POLICY_ALLOW;
-		अवरोध;
-	हाल AP_MAC_CMD_POLICY_DENY:
+		break;
+	case AP_MAC_CMD_POLICY_DENY:
 		local->ap->mac_restrictions.policy = MAC_POLICY_DENY;
-		अवरोध;
-	हाल AP_MAC_CMD_FLUSH:
+		break;
+	case AP_MAC_CMD_FLUSH:
 		ap_control_flush_macs(&local->ap->mac_restrictions);
-		अवरोध;
-	हाल AP_MAC_CMD_KICKALL:
+		break;
+	case AP_MAC_CMD_KICKALL:
 		ap_control_kickall(local->ap);
 		hostap_deauth_all_stas(local->dev, local->ap, 0);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
+	return ret;
+}
+#endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
 
 
-#अगर_घोषित PRISM2_DOWNLOAD_SUPPORT
-अटल पूर्णांक prism2_ioctl_priv_करोwnload(local_info_t *local, काष्ठा iw_poपूर्णांक *p)
-अणु
-	काष्ठा prism2_करोwnload_param *param;
-	पूर्णांक ret = 0;
+#ifdef PRISM2_DOWNLOAD_SUPPORT
+static int prism2_ioctl_priv_download(local_info_t *local, struct iw_point *p)
+{
+	struct prism2_download_param *param;
+	int ret = 0;
 
-	अगर (p->length < माप(काष्ठा prism2_करोwnload_param) ||
-	    p->length > 1024 || !p->poपूर्णांकer)
-		वापस -EINVAL;
+	if (p->length < sizeof(struct prism2_download_param) ||
+	    p->length > 1024 || !p->pointer)
+		return -EINVAL;
 
-	param = memdup_user(p->poपूर्णांकer, p->length);
-	अगर (IS_ERR(param)) अणु
-		वापस PTR_ERR(param);
-	पूर्ण
+	param = memdup_user(p->pointer, p->length);
+	if (IS_ERR(param)) {
+		return PTR_ERR(param);
+	}
 
-	अगर (p->length < माप(काष्ठा prism2_करोwnload_param) +
-	    param->num_areas * माप(काष्ठा prism2_करोwnload_area)) अणु
+	if (p->length < sizeof(struct prism2_download_param) +
+	    param->num_areas * sizeof(struct prism2_download_area)) {
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = local->func->करोwnload(local, param);
+	ret = local->func->download(local, param);
 
  out:
-	kमुक्त(param);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर /* PRISM2_DOWNLOAD_SUPPORT */
+	kfree(param);
+	return ret;
+}
+#endif /* PRISM2_DOWNLOAD_SUPPORT */
 
 
-अटल पूर्णांक prism2_set_genericelement(काष्ठा net_device *dev, u8 *elem,
-				     माप_प्रकार len)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
+static int prism2_set_genericelement(struct net_device *dev, u8 *elem,
+				     size_t len)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
 	u8 *buf;
 
 	/*
 	 * Add 16-bit length in the beginning of the buffer because Prism2 RID
 	 * includes it.
 	 */
-	buf = kदो_स्मृति(len + 2, GFP_KERNEL);
-	अगर (buf == शून्य)
-		वापस -ENOMEM;
+	buf = kmalloc(len + 2, GFP_KERNEL);
+	if (buf == NULL)
+		return -ENOMEM;
 
 	*((__le16 *) buf) = cpu_to_le16(len);
-	स_नकल(buf + 2, elem, len);
+	memcpy(buf + 2, elem, len);
 
-	kमुक्त(local->generic_elem);
+	kfree(local->generic_elem);
 	local->generic_elem = buf;
 	local->generic_elem_len = len + 2;
 
-	वापस local->func->set_rid(local->dev, HFA384X_RID_GENERICELEMENT,
+	return local->func->set_rid(local->dev, HFA384X_RID_GENERICELEMENT,
 				    buf, len + 2);
-पूर्ण
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwauth(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
+static int prism2_ioctl_siwauth(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *data, char *extra)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
 
-	चयन (data->flags & IW_AUTH_INDEX) अणु
-	हाल IW_AUTH_WPA_VERSION:
-	हाल IW_AUTH_CIPHER_PAIRWISE:
-	हाल IW_AUTH_CIPHER_GROUP:
-	हाल IW_AUTH_KEY_MGMT:
+	switch (data->flags & IW_AUTH_INDEX) {
+	case IW_AUTH_WPA_VERSION:
+	case IW_AUTH_CIPHER_PAIRWISE:
+	case IW_AUTH_CIPHER_GROUP:
+	case IW_AUTH_KEY_MGMT:
 		/*
-		 * Host AP driver करोes not use these parameters and allows
-		 * wpa_supplicant to control them पूर्णांकernally.
+		 * Host AP driver does not use these parameters and allows
+		 * wpa_supplicant to control them internally.
 		 */
-		अवरोध;
-	हाल IW_AUTH_TKIP_COUNTERMEASURES:
+		break;
+	case IW_AUTH_TKIP_COUNTERMEASURES:
 		local->tkip_countermeasures = data->value;
-		अवरोध;
-	हाल IW_AUTH_DROP_UNENCRYPTED:
+		break;
+	case IW_AUTH_DROP_UNENCRYPTED:
 		local->drop_unencrypted = data->value;
-		अवरोध;
-	हाल IW_AUTH_80211_AUTH_ALG:
+		break;
+	case IW_AUTH_80211_AUTH_ALG:
 		local->auth_algs = data->value;
-		अवरोध;
-	हाल IW_AUTH_WPA_ENABLED:
-		अगर (data->value == 0) अणु
+		break;
+	case IW_AUTH_WPA_ENABLED:
+		if (data->value == 0) {
 			local->wpa = 0;
-			अगर (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
-				अवरोध;
+			if (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
+				break;
 			prism2_set_genericelement(dev, "", 0);
 			local->host_roaming = 0;
 			local->privacy_invoked = 0;
-			अगर (hostap_set_word(dev, HFA384X_RID_SSNHANDLINGMODE,
+			if (hostap_set_word(dev, HFA384X_RID_SSNHANDLINGMODE,
 					    0) ||
 			    hostap_set_roaming(local) ||
 			    hostap_set_encryption(local) ||
 			    local->func->reset_port(dev))
-				वापस -EINVAL;
-			अवरोध;
-		पूर्ण
-		अगर (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
-			वापस -EOPNOTSUPP;
+				return -EINVAL;
+			break;
+		}
+		if (local->sta_fw_ver < PRISM2_FW_VER(1,7,0))
+			return -EOPNOTSUPP;
 		local->host_roaming = 2;
 		local->privacy_invoked = 1;
 		local->wpa = 1;
-		अगर (hostap_set_word(dev, HFA384X_RID_SSNHANDLINGMODE, 1) ||
+		if (hostap_set_word(dev, HFA384X_RID_SSNHANDLINGMODE, 1) ||
 		    hostap_set_roaming(local) ||
 		    hostap_set_encryption(local) ||
 		    local->func->reset_port(dev))
-			वापस -EINVAL;
-		अवरोध;
-	हाल IW_AUTH_RX_UNENCRYPTED_EAPOL:
+			return -EINVAL;
+		break;
+	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
 		local->ieee_802_1x = data->value;
-		अवरोध;
-	हाल IW_AUTH_PRIVACY_INVOKED:
+		break;
+	case IW_AUTH_PRIVACY_INVOKED:
 		local->privacy_invoked = data->value;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwauth(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_param *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
+static int prism2_ioctl_giwauth(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_param *data, char *extra)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
 
-	चयन (data->flags & IW_AUTH_INDEX) अणु
-	हाल IW_AUTH_WPA_VERSION:
-	हाल IW_AUTH_CIPHER_PAIRWISE:
-	हाल IW_AUTH_CIPHER_GROUP:
-	हाल IW_AUTH_KEY_MGMT:
+	switch (data->flags & IW_AUTH_INDEX) {
+	case IW_AUTH_WPA_VERSION:
+	case IW_AUTH_CIPHER_PAIRWISE:
+	case IW_AUTH_CIPHER_GROUP:
+	case IW_AUTH_KEY_MGMT:
 		/*
-		 * Host AP driver करोes not use these parameters and allows
-		 * wpa_supplicant to control them पूर्णांकernally.
+		 * Host AP driver does not use these parameters and allows
+		 * wpa_supplicant to control them internally.
 		 */
-		वापस -EOPNOTSUPP;
-	हाल IW_AUTH_TKIP_COUNTERMEASURES:
+		return -EOPNOTSUPP;
+	case IW_AUTH_TKIP_COUNTERMEASURES:
 		data->value = local->tkip_countermeasures;
-		अवरोध;
-	हाल IW_AUTH_DROP_UNENCRYPTED:
+		break;
+	case IW_AUTH_DROP_UNENCRYPTED:
 		data->value = local->drop_unencrypted;
-		अवरोध;
-	हाल IW_AUTH_80211_AUTH_ALG:
+		break;
+	case IW_AUTH_80211_AUTH_ALG:
 		data->value = local->auth_algs;
-		अवरोध;
-	हाल IW_AUTH_WPA_ENABLED:
+		break;
+	case IW_AUTH_WPA_ENABLED:
 		data->value = local->wpa;
-		अवरोध;
-	हाल IW_AUTH_RX_UNENCRYPTED_EAPOL:
+		break;
+	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
 		data->value = local->ieee_802_1x;
-		अवरोध;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwencodeext(काष्ठा net_device *dev,
-				     काष्ठा iw_request_info *info,
-				     काष्ठा iw_poपूर्णांक *erq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
-	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *) extra;
-	पूर्णांक i, ret = 0;
-	काष्ठा lib80211_crypto_ops *ops;
-	काष्ठा lib80211_crypt_data **crypt;
-	व्योम *sta_ptr;
+static int prism2_ioctl_siwencodeext(struct net_device *dev,
+				     struct iw_request_info *info,
+				     struct iw_point *erq, char *extra)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
+	struct iw_encode_ext *ext = (struct iw_encode_ext *) extra;
+	int i, ret = 0;
+	struct lib80211_crypto_ops *ops;
+	struct lib80211_crypt_data **crypt;
+	void *sta_ptr;
 	u8 *addr;
-	स्थिर अक्षर *alg, *module;
+	const char *alg, *module;
 
 	i = erq->flags & IW_ENCODE_INDEX;
-	अगर (i > WEP_KEYS)
-		वापस -EINVAL;
-	अगर (i < 1 || i > WEP_KEYS)
+	if (i > WEP_KEYS)
+		return -EINVAL;
+	if (i < 1 || i > WEP_KEYS)
 		i = local->crypt_info.tx_keyidx;
-	अन्यथा
+	else
 		i--;
-	अगर (i < 0 || i >= WEP_KEYS)
-		वापस -EINVAL;
+	if (i < 0 || i >= WEP_KEYS)
+		return -EINVAL;
 
 	addr = ext->addr.sa_data;
-	अगर (is_broadcast_ether_addr(addr)) अणु
-		sta_ptr = शून्य;
+	if (is_broadcast_ether_addr(addr)) {
+		sta_ptr = NULL;
 		crypt = &local->crypt_info.crypt[i];
-	पूर्ण अन्यथा अणु
-		अगर (i != 0)
-			वापस -EINVAL;
+	} else {
+		if (i != 0)
+			return -EINVAL;
 		sta_ptr = ap_crypt_get_ptrs(local->ap, addr, 0, &crypt);
-		अगर (sta_ptr == शून्य) अणु
-			अगर (local->iw_mode == IW_MODE_INFRA) अणु
+		if (sta_ptr == NULL) {
+			if (local->iw_mode == IW_MODE_INFRA) {
 				/*
-				 * TODO: add STA entry क्रम the current AP so
+				 * TODO: add STA entry for the current AP so
 				 * that unicast key can be used. For now, this
-				 * is emulated by using शेष key idx 0.
+				 * is emulated by using default key idx 0.
 				 */
 				i = 0;
 				crypt = &local->crypt_info.crypt[i];
-			पूर्ण अन्यथा
-				वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			} else
+				return -EINVAL;
+		}
+	}
 
-	अगर ((erq->flags & IW_ENCODE_DISABLED) ||
-	    ext->alg == IW_ENCODE_ALG_NONE) अणु
-		अगर (*crypt)
+	if ((erq->flags & IW_ENCODE_DISABLED) ||
+	    ext->alg == IW_ENCODE_ALG_NONE) {
+		if (*crypt)
 			lib80211_crypt_delayed_deinit(&local->crypt_info, crypt);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	चयन (ext->alg) अणु
-	हाल IW_ENCODE_ALG_WEP:
+	switch (ext->alg) {
+	case IW_ENCODE_ALG_WEP:
 		alg = "WEP";
 		module = "lib80211_crypt_wep";
-		अवरोध;
-	हाल IW_ENCODE_ALG_TKIP:
+		break;
+	case IW_ENCODE_ALG_TKIP:
 		alg = "TKIP";
 		module = "lib80211_crypt_tkip";
-		अवरोध;
-	हाल IW_ENCODE_ALG_CCMP:
+		break;
+	case IW_ENCODE_ALG_CCMP:
 		alg = "CCMP";
 		module = "lib80211_crypt_ccmp";
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_DEBUG "%s: unsupported algorithm %d\n",
+		break;
+	default:
+		printk(KERN_DEBUG "%s: unsupported algorithm %d\n",
 		       local->dev->name, ext->alg);
 		ret = -EOPNOTSUPP;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ops = lib80211_get_crypto_ops(alg);
-	अगर (ops == शून्य) अणु
+	if (ops == NULL) {
 		request_module(module);
 		ops = lib80211_get_crypto_ops(alg);
-	पूर्ण
-	अगर (ops == शून्य) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: unknown crypto alg '%s'\n",
+	}
+	if (ops == NULL) {
+		printk(KERN_DEBUG "%s: unknown crypto alg '%s'\n",
 		       local->dev->name, alg);
 		ret = -EOPNOTSUPP;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (sta_ptr || ext->alg != IW_ENCODE_ALG_WEP) अणु
+	if (sta_ptr || ext->alg != IW_ENCODE_ALG_WEP) {
 		/*
 		 * Per station encryption and other than WEP algorithms
-		 * require host-based encryption, so क्रमce them on
-		 * स्वतःmatically.
+		 * require host-based encryption, so force them on
+		 * automatically.
 		 */
 		local->host_decrypt = local->host_encrypt = 1;
-	पूर्ण
+	}
 
-	अगर (*crypt == शून्य || (*crypt)->ops != ops) अणु
-		काष्ठा lib80211_crypt_data *new_crypt;
+	if (*crypt == NULL || (*crypt)->ops != ops) {
+		struct lib80211_crypt_data *new_crypt;
 
 		lib80211_crypt_delayed_deinit(&local->crypt_info, crypt);
 
-		new_crypt = kzalloc(माप(काष्ठा lib80211_crypt_data),
+		new_crypt = kzalloc(sizeof(struct lib80211_crypt_data),
 				GFP_KERNEL);
-		अगर (new_crypt == शून्य) अणु
+		if (new_crypt == NULL) {
 			ret = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		new_crypt->ops = ops;
-		अगर (new_crypt->ops && try_module_get(new_crypt->ops->owner))
+		if (new_crypt->ops && try_module_get(new_crypt->ops->owner))
 			new_crypt->priv = new_crypt->ops->init(i);
-		अगर (new_crypt->priv == शून्य) अणु
-			kमुक्त(new_crypt);
+		if (new_crypt->priv == NULL) {
+			kfree(new_crypt);
 			ret = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		*crypt = new_crypt;
-	पूर्ण
+	}
 
 	/*
-	 * TODO: अगर ext_flags करोes not have IW_ENCODE_EXT_RX_SEQ_VALID, the
+	 * TODO: if ext_flags does not have IW_ENCODE_EXT_RX_SEQ_VALID, the
 	 * existing seq# should not be changed.
-	 * TODO: अगर ext_flags has IW_ENCODE_EXT_TX_SEQ_VALID, next TX seq#
-	 * should be changed to something अन्यथा than zero.
+	 * TODO: if ext_flags has IW_ENCODE_EXT_TX_SEQ_VALID, next TX seq#
+	 * should be changed to something else than zero.
 	 */
-	अगर ((!(ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) || ext->key_len > 0)
+	if ((!(ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) || ext->key_len > 0)
 	    && (*crypt)->ops->set_key &&
 	    (*crypt)->ops->set_key(ext->key, ext->key_len, ext->rx_seq,
-				   (*crypt)->priv) < 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: key setting failed\n",
+				   (*crypt)->priv) < 0) {
+		printk(KERN_DEBUG "%s: key setting failed\n",
 		       local->dev->name);
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) अणु
-		अगर (!sta_ptr)
+	if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) {
+		if (!sta_ptr)
 			local->crypt_info.tx_keyidx = i;
-	पूर्ण
+	}
 
 
-	अगर (sta_ptr == शून्य && ext->key_len > 0) अणु
-		पूर्णांक first = 1, j;
-		क्रम (j = 0; j < WEP_KEYS; j++) अणु
-			अगर (j != i && local->crypt_info.crypt[j]) अणु
+	if (sta_ptr == NULL && ext->key_len > 0) {
+		int first = 1, j;
+		for (j = 0; j < WEP_KEYS; j++) {
+			if (j != i && local->crypt_info.crypt[j]) {
 				first = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (first)
+				break;
+			}
+		}
+		if (first)
 			local->crypt_info.tx_keyidx = i;
-	पूर्ण
+	}
 
- करोne:
-	अगर (sta_ptr)
+ done:
+	if (sta_ptr)
 		hostap_handle_sta_release(sta_ptr);
 
-	local->खोलो_wep = erq->flags & IW_ENCODE_OPEN;
+	local->open_wep = erq->flags & IW_ENCODE_OPEN;
 
 	/*
-	 * Do not reset port0 अगर card is in Managed mode since resetting will
+	 * Do not reset port0 if card is in Managed mode since resetting will
 	 * generate new IEEE 802.11 authentication which may end up in looping
-	 * with IEEE 802.1X. Prism2 करोcumentation seem to require port reset
+	 * with IEEE 802.1X. Prism2 documentation seem to require port reset
 	 * after WEP configuration. However, keys are apparently changed at
 	 * least in Managed mode.
 	 */
-	अगर (ret == 0 &&
+	if (ret == 0 &&
 	    (hostap_set_encryption(local) ||
 	     (local->iw_mode != IW_MODE_INFRA &&
 	      local->func->reset_port(local->dev))))
 		ret = -EINVAL;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwencodeext(काष्ठा net_device *dev,
-				     काष्ठा iw_request_info *info,
-				     काष्ठा iw_poपूर्णांक *erq, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
-	काष्ठा lib80211_crypt_data **crypt;
-	व्योम *sta_ptr;
-	पूर्णांक max_key_len, i;
-	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *) extra;
+static int prism2_ioctl_giwencodeext(struct net_device *dev,
+				     struct iw_request_info *info,
+				     struct iw_point *erq, char *extra)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
+	struct lib80211_crypt_data **crypt;
+	void *sta_ptr;
+	int max_key_len, i;
+	struct iw_encode_ext *ext = (struct iw_encode_ext *) extra;
 	u8 *addr;
 
-	max_key_len = erq->length - माप(*ext);
-	अगर (max_key_len < 0)
-		वापस -EINVAL;
+	max_key_len = erq->length - sizeof(*ext);
+	if (max_key_len < 0)
+		return -EINVAL;
 
 	i = erq->flags & IW_ENCODE_INDEX;
-	अगर (i < 1 || i > WEP_KEYS)
+	if (i < 1 || i > WEP_KEYS)
 		i = local->crypt_info.tx_keyidx;
-	अन्यथा
+	else
 		i--;
 
 	addr = ext->addr.sa_data;
-	अगर (is_broadcast_ether_addr(addr)) अणु
-		sta_ptr = शून्य;
+	if (is_broadcast_ether_addr(addr)) {
+		sta_ptr = NULL;
 		crypt = &local->crypt_info.crypt[i];
-	पूर्ण अन्यथा अणु
+	} else {
 		i = 0;
 		sta_ptr = ap_crypt_get_ptrs(local->ap, addr, 0, &crypt);
-		अगर (sta_ptr == शून्य)
-			वापस -EINVAL;
-	पूर्ण
+		if (sta_ptr == NULL)
+			return -EINVAL;
+	}
 	erq->flags = i + 1;
-	स_रखो(ext, 0, माप(*ext));
+	memset(ext, 0, sizeof(*ext));
 
-	अगर (*crypt == शून्य || (*crypt)->ops == शून्य) अणु
+	if (*crypt == NULL || (*crypt)->ops == NULL) {
 		ext->alg = IW_ENCODE_ALG_NONE;
 		ext->key_len = 0;
 		erq->flags |= IW_ENCODE_DISABLED;
-	पूर्ण अन्यथा अणु
-		अगर (म_भेद((*crypt)->ops->name, "WEP") == 0)
+	} else {
+		if (strcmp((*crypt)->ops->name, "WEP") == 0)
 			ext->alg = IW_ENCODE_ALG_WEP;
-		अन्यथा अगर (म_भेद((*crypt)->ops->name, "TKIP") == 0)
+		else if (strcmp((*crypt)->ops->name, "TKIP") == 0)
 			ext->alg = IW_ENCODE_ALG_TKIP;
-		अन्यथा अगर (म_भेद((*crypt)->ops->name, "CCMP") == 0)
+		else if (strcmp((*crypt)->ops->name, "CCMP") == 0)
 			ext->alg = IW_ENCODE_ALG_CCMP;
-		अन्यथा
-			वापस -EINVAL;
+		else
+			return -EINVAL;
 
-		अगर ((*crypt)->ops->get_key) अणु
+		if ((*crypt)->ops->get_key) {
 			ext->key_len =
 				(*crypt)->ops->get_key(ext->key,
 						       max_key_len,
 						       ext->tx_seq,
 						       (*crypt)->priv);
-			अगर (ext->key_len &&
+			if (ext->key_len &&
 			    (ext->alg == IW_ENCODE_ALG_TKIP ||
 			     ext->alg == IW_ENCODE_ALG_CCMP))
 				ext->ext_flags |= IW_ENCODE_EXT_TX_SEQ_VALID;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sta_ptr)
+	if (sta_ptr)
 		hostap_handle_sta_release(sta_ptr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_set_encryption(local_info_t *local,
-				       काष्ठा prism2_hostapd_param *param,
-				       पूर्णांक param_len)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा lib80211_crypto_ops *ops;
-	काष्ठा lib80211_crypt_data **crypt;
-	व्योम *sta_ptr;
+static int prism2_ioctl_set_encryption(local_info_t *local,
+				       struct prism2_hostapd_param *param,
+				       int param_len)
+{
+	int ret = 0;
+	struct lib80211_crypto_ops *ops;
+	struct lib80211_crypt_data **crypt;
+	void *sta_ptr;
 
 	param->u.crypt.err = 0;
 	param->u.crypt.alg[HOSTAP_CRYPT_ALG_NAME_LEN - 1] = '\0';
 
-	अगर (param_len !=
-	    (पूर्णांक) ((अक्षर *) param->u.crypt.key - (अक्षर *) param) +
+	if (param_len !=
+	    (int) ((char *) param->u.crypt.key - (char *) param) +
 	    param->u.crypt.key_len)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	अगर (is_broadcast_ether_addr(param->sta_addr)) अणु
-		अगर (param->u.crypt.idx >= WEP_KEYS)
-			वापस -EINVAL;
-		sta_ptr = शून्य;
+	if (is_broadcast_ether_addr(param->sta_addr)) {
+		if (param->u.crypt.idx >= WEP_KEYS)
+			return -EINVAL;
+		sta_ptr = NULL;
 		crypt = &local->crypt_info.crypt[param->u.crypt.idx];
-	पूर्ण अन्यथा अणु
-		अगर (param->u.crypt.idx)
-			वापस -EINVAL;
+	} else {
+		if (param->u.crypt.idx)
+			return -EINVAL;
 		sta_ptr = ap_crypt_get_ptrs(
 			local->ap, param->sta_addr,
 			(param->u.crypt.flags & HOSTAP_CRYPT_FLAG_PERMANENT),
 			&crypt);
 
-		अगर (sta_ptr == शून्य) अणु
+		if (sta_ptr == NULL) {
 			param->u.crypt.err = HOSTAP_CRYPT_ERR_UNKNOWN_ADDR;
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (म_भेद(param->u.crypt.alg, "none") == 0) अणु
-		अगर (crypt)
+	if (strcmp(param->u.crypt.alg, "none") == 0) {
+		if (crypt)
 			lib80211_crypt_delayed_deinit(&local->crypt_info, crypt);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	ops = lib80211_get_crypto_ops(param->u.crypt.alg);
-	अगर (ops == शून्य && म_भेद(param->u.crypt.alg, "WEP") == 0) अणु
+	if (ops == NULL && strcmp(param->u.crypt.alg, "WEP") == 0) {
 		request_module("lib80211_crypt_wep");
 		ops = lib80211_get_crypto_ops(param->u.crypt.alg);
-	पूर्ण अन्यथा अगर (ops == शून्य && म_भेद(param->u.crypt.alg, "TKIP") == 0) अणु
+	} else if (ops == NULL && strcmp(param->u.crypt.alg, "TKIP") == 0) {
 		request_module("lib80211_crypt_tkip");
 		ops = lib80211_get_crypto_ops(param->u.crypt.alg);
-	पूर्ण अन्यथा अगर (ops == शून्य && म_भेद(param->u.crypt.alg, "CCMP") == 0) अणु
+	} else if (ops == NULL && strcmp(param->u.crypt.alg, "CCMP") == 0) {
 		request_module("lib80211_crypt_ccmp");
 		ops = lib80211_get_crypto_ops(param->u.crypt.alg);
-	पूर्ण
-	अगर (ops == शून्य) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: unknown crypto alg '%s'\n",
+	}
+	if (ops == NULL) {
+		printk(KERN_DEBUG "%s: unknown crypto alg '%s'\n",
 		       local->dev->name, param->u.crypt.alg);
 		param->u.crypt.err = HOSTAP_CRYPT_ERR_UNKNOWN_ALG;
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* station based encryption and other than WEP algorithms require
-	 * host-based encryption, so क्रमce them on स्वतःmatically */
+	 * host-based encryption, so force them on automatically */
 	local->host_decrypt = local->host_encrypt = 1;
 
-	अगर (*crypt == शून्य || (*crypt)->ops != ops) अणु
-		काष्ठा lib80211_crypt_data *new_crypt;
+	if (*crypt == NULL || (*crypt)->ops != ops) {
+		struct lib80211_crypt_data *new_crypt;
 
 		lib80211_crypt_delayed_deinit(&local->crypt_info, crypt);
 
-		new_crypt = kzalloc(माप(काष्ठा lib80211_crypt_data),
+		new_crypt = kzalloc(sizeof(struct lib80211_crypt_data),
 				GFP_KERNEL);
-		अगर (new_crypt == शून्य) अणु
+		if (new_crypt == NULL) {
 			ret = -ENOMEM;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		new_crypt->ops = ops;
 		new_crypt->priv = new_crypt->ops->init(param->u.crypt.idx);
-		अगर (new_crypt->priv == शून्य) अणु
-			kमुक्त(new_crypt);
+		if (new_crypt->priv == NULL) {
+			kfree(new_crypt);
 			param->u.crypt.err =
 				HOSTAP_CRYPT_ERR_CRYPT_INIT_FAILED;
 			ret = -EINVAL;
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 
 		*crypt = new_crypt;
-	पूर्ण
+	}
 
-	अगर ((!(param->u.crypt.flags & HOSTAP_CRYPT_FLAG_SET_TX_KEY) ||
+	if ((!(param->u.crypt.flags & HOSTAP_CRYPT_FLAG_SET_TX_KEY) ||
 	     param->u.crypt.key_len > 0) && (*crypt)->ops->set_key &&
 	    (*crypt)->ops->set_key(param->u.crypt.key,
 				   param->u.crypt.key_len, param->u.crypt.seq,
-				   (*crypt)->priv) < 0) अणु
-		prपूर्णांकk(KERN_DEBUG "%s: key setting failed\n",
+				   (*crypt)->priv) < 0) {
+		printk(KERN_DEBUG "%s: key setting failed\n",
 		       local->dev->name);
 		param->u.crypt.err = HOSTAP_CRYPT_ERR_KEY_SET_FAILED;
 		ret = -EINVAL;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (param->u.crypt.flags & HOSTAP_CRYPT_FLAG_SET_TX_KEY) अणु
-		अगर (!sta_ptr)
+	if (param->u.crypt.flags & HOSTAP_CRYPT_FLAG_SET_TX_KEY) {
+		if (!sta_ptr)
 			local->crypt_info.tx_keyidx = param->u.crypt.idx;
-		अन्यथा अगर (param->u.crypt.idx) अणु
-			prपूर्णांकk(KERN_DEBUG "%s: TX key idx setting failed\n",
+		else if (param->u.crypt.idx) {
+			printk(KERN_DEBUG "%s: TX key idx setting failed\n",
 			       local->dev->name);
 			param->u.crypt.err =
 				HOSTAP_CRYPT_ERR_TX_KEY_SET_FAILED;
 			ret = -EINVAL;
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 
- करोne:
-	अगर (sta_ptr)
+ done:
+	if (sta_ptr)
 		hostap_handle_sta_release(sta_ptr);
 
-	/* Do not reset port0 अगर card is in Managed mode since resetting will
+	/* Do not reset port0 if card is in Managed mode since resetting will
 	 * generate new IEEE 802.11 authentication which may end up in looping
-	 * with IEEE 802.1X. Prism2 करोcumentation seem to require port reset
+	 * with IEEE 802.1X. Prism2 documentation seem to require port reset
 	 * after WEP configuration. However, keys are apparently changed at
 	 * least in Managed mode. */
-	अगर (ret == 0 &&
+	if (ret == 0 &&
 	    (hostap_set_encryption(local) ||
 	     (local->iw_mode != IW_MODE_INFRA &&
-	      local->func->reset_port(local->dev)))) अणु
+	      local->func->reset_port(local->dev)))) {
 		param->u.crypt.err = HOSTAP_CRYPT_ERR_CARD_CONF_FAILED;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक prism2_ioctl_get_encryption(local_info_t *local,
-				       काष्ठा prism2_hostapd_param *param,
-				       पूर्णांक param_len)
-अणु
-	काष्ठा lib80211_crypt_data **crypt;
-	व्योम *sta_ptr;
-	पूर्णांक max_key_len;
+static int prism2_ioctl_get_encryption(local_info_t *local,
+				       struct prism2_hostapd_param *param,
+				       int param_len)
+{
+	struct lib80211_crypt_data **crypt;
+	void *sta_ptr;
+	int max_key_len;
 
 	param->u.crypt.err = 0;
 
 	max_key_len = param_len -
-		(पूर्णांक) ((अक्षर *) param->u.crypt.key - (अक्षर *) param);
-	अगर (max_key_len < 0)
-		वापस -EINVAL;
+		(int) ((char *) param->u.crypt.key - (char *) param);
+	if (max_key_len < 0)
+		return -EINVAL;
 
-	अगर (is_broadcast_ether_addr(param->sta_addr)) अणु
-		sta_ptr = शून्य;
-		अगर (param->u.crypt.idx >= WEP_KEYS)
+	if (is_broadcast_ether_addr(param->sta_addr)) {
+		sta_ptr = NULL;
+		if (param->u.crypt.idx >= WEP_KEYS)
 			param->u.crypt.idx = local->crypt_info.tx_keyidx;
 		crypt = &local->crypt_info.crypt[param->u.crypt.idx];
-	पूर्ण अन्यथा अणु
+	} else {
 		param->u.crypt.idx = 0;
 		sta_ptr = ap_crypt_get_ptrs(local->ap, param->sta_addr, 0,
 					    &crypt);
 
-		अगर (sta_ptr == शून्य) अणु
+		if (sta_ptr == NULL) {
 			param->u.crypt.err = HOSTAP_CRYPT_ERR_UNKNOWN_ADDR;
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	अगर (*crypt == शून्य || (*crypt)->ops == शून्य) अणु
-		स_नकल(param->u.crypt.alg, "none", 5);
+	if (*crypt == NULL || (*crypt)->ops == NULL) {
+		memcpy(param->u.crypt.alg, "none", 5);
 		param->u.crypt.key_len = 0;
 		param->u.crypt.idx = 0xff;
-	पूर्ण अन्यथा अणु
-		म_नकलन(param->u.crypt.alg, (*crypt)->ops->name,
+	} else {
+		strncpy(param->u.crypt.alg, (*crypt)->ops->name,
 			HOSTAP_CRYPT_ALG_NAME_LEN);
 		param->u.crypt.key_len = 0;
 
-		स_रखो(param->u.crypt.seq, 0, 8);
-		अगर ((*crypt)->ops->get_key) अणु
+		memset(param->u.crypt.seq, 0, 8);
+		if ((*crypt)->ops->get_key) {
 			param->u.crypt.key_len =
 				(*crypt)->ops->get_key(param->u.crypt.key,
 						       max_key_len,
 						       param->u.crypt.seq,
 						       (*crypt)->priv);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (sta_ptr)
+	if (sta_ptr)
 		hostap_handle_sta_release(sta_ptr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_get_rid(local_info_t *local,
-				काष्ठा prism2_hostapd_param *param,
-				पूर्णांक param_len)
-अणु
-	पूर्णांक max_len, res;
+static int prism2_ioctl_get_rid(local_info_t *local,
+				struct prism2_hostapd_param *param,
+				int param_len)
+{
+	int max_len, res;
 
 	max_len = param_len - PRISM2_HOSTAPD_RID_HDR_LEN;
-	अगर (max_len < 0)
-		वापस -EINVAL;
+	if (max_len < 0)
+		return -EINVAL;
 
 	res = local->func->get_rid(local->dev, param->u.rid.rid,
 				   param->u.rid.data, param->u.rid.len, 0);
-	अगर (res >= 0) अणु
+	if (res >= 0) {
 		param->u.rid.len = res;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 
-अटल पूर्णांक prism2_ioctl_set_rid(local_info_t *local,
-				काष्ठा prism2_hostapd_param *param,
-				पूर्णांक param_len)
-अणु
-	पूर्णांक max_len;
+static int prism2_ioctl_set_rid(local_info_t *local,
+				struct prism2_hostapd_param *param,
+				int param_len)
+{
+	int max_len;
 
 	max_len = param_len - PRISM2_HOSTAPD_RID_HDR_LEN;
-	अगर (max_len < 0 || max_len < param->u.rid.len)
-		वापस -EINVAL;
+	if (max_len < 0 || max_len < param->u.rid.len)
+		return -EINVAL;
 
-	वापस local->func->set_rid(local->dev, param->u.rid.rid,
+	return local->func->set_rid(local->dev, param->u.rid.rid,
 				    param->u.rid.data, param->u.rid.len);
-पूर्ण
+}
 
 
-अटल पूर्णांक prism2_ioctl_set_assoc_ap_addr(local_info_t *local,
-					  काष्ठा prism2_hostapd_param *param,
-					  पूर्णांक param_len)
-अणु
-	prपूर्णांकk(KERN_DEBUG "%ssta: associated as client with AP %pM\n",
+static int prism2_ioctl_set_assoc_ap_addr(local_info_t *local,
+					  struct prism2_hostapd_param *param,
+					  int param_len)
+{
+	printk(KERN_DEBUG "%ssta: associated as client with AP %pM\n",
 	       local->dev->name, param->sta_addr);
-	स_नकल(local->assoc_ap_addr, param->sta_addr, ETH_ALEN);
-	वापस 0;
-पूर्ण
+	memcpy(local->assoc_ap_addr, param->sta_addr, ETH_ALEN);
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwgenie(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	वापस prism2_set_genericelement(dev, extra, data->length);
-पूर्ण
+static int prism2_ioctl_siwgenie(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *extra)
+{
+	return prism2_set_genericelement(dev, extra, data->length);
+}
 
 
-अटल पूर्णांक prism2_ioctl_giwgenie(काष्ठा net_device *dev,
-				 काष्ठा iw_request_info *info,
-				 काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
-	पूर्णांक len = local->generic_elem_len - 2;
+static int prism2_ioctl_giwgenie(struct net_device *dev,
+				 struct iw_request_info *info,
+				 struct iw_point *data, char *extra)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
+	int len = local->generic_elem_len - 2;
 
-	अगर (len <= 0 || local->generic_elem == शून्य) अणु
+	if (len <= 0 || local->generic_elem == NULL) {
 		data->length = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (data->length < len)
-		वापस -E2BIG;
+	if (data->length < len)
+		return -E2BIG;
 
 	data->length = len;
-	स_नकल(extra, local->generic_elem + 2, len);
+	memcpy(extra, local->generic_elem + 2, len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक prism2_ioctl_set_generic_element(local_info_t *local,
-					    काष्ठा prism2_hostapd_param *param,
-					    पूर्णांक param_len)
-अणु
-	पूर्णांक max_len, len;
+static int prism2_ioctl_set_generic_element(local_info_t *local,
+					    struct prism2_hostapd_param *param,
+					    int param_len)
+{
+	int max_len, len;
 
 	len = param->u.generic_elem.len;
 	max_len = param_len - PRISM2_HOSTAPD_GENERIC_ELEMENT_HDR_LEN;
-	अगर (max_len < 0 || max_len < len)
-		वापस -EINVAL;
+	if (max_len < 0 || max_len < len)
+		return -EINVAL;
 
-	वापस prism2_set_genericelement(local->dev,
+	return prism2_set_genericelement(local->dev,
 					 param->u.generic_elem.data, len);
-पूर्ण
+}
 
 
-अटल पूर्णांक prism2_ioctl_siwmlme(काष्ठा net_device *dev,
-				काष्ठा iw_request_info *info,
-				काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace = netdev_priv(dev);
-	local_info_t *local = अगरace->local;
-	काष्ठा iw_mlme *mlme = (काष्ठा iw_mlme *) extra;
+static int prism2_ioctl_siwmlme(struct net_device *dev,
+				struct iw_request_info *info,
+				struct iw_point *data, char *extra)
+{
+	struct hostap_interface *iface = netdev_priv(dev);
+	local_info_t *local = iface->local;
+	struct iw_mlme *mlme = (struct iw_mlme *) extra;
 	__le16 reason;
 
 	reason = cpu_to_le16(mlme->reason_code);
 
-	चयन (mlme->cmd) अणु
-	हाल IW_MLME_DEAUTH:
-		वापस prism2_sta_send_mgmt(local, mlme->addr.sa_data,
+	switch (mlme->cmd) {
+	case IW_MLME_DEAUTH:
+		return prism2_sta_send_mgmt(local, mlme->addr.sa_data,
 					    IEEE80211_STYPE_DEAUTH,
 					    (u8 *) &reason, 2);
-	हाल IW_MLME_DISASSOC:
-		वापस prism2_sta_send_mgmt(local, mlme->addr.sa_data,
+	case IW_MLME_DISASSOC:
+		return prism2_sta_send_mgmt(local, mlme->addr.sa_data,
 					    IEEE80211_STYPE_DISASSOC,
 					    (u8 *) &reason, 2);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
 
-अटल पूर्णांक prism2_ioctl_mlme(local_info_t *local,
-			     काष्ठा prism2_hostapd_param *param)
-अणु
+static int prism2_ioctl_mlme(local_info_t *local,
+			     struct prism2_hostapd_param *param)
+{
 	__le16 reason;
 
 	reason = cpu_to_le16(param->u.mlme.reason_code);
-	चयन (param->u.mlme.cmd) अणु
-	हाल MLME_STA_DEAUTH:
-		वापस prism2_sta_send_mgmt(local, param->sta_addr,
+	switch (param->u.mlme.cmd) {
+	case MLME_STA_DEAUTH:
+		return prism2_sta_send_mgmt(local, param->sta_addr,
 					    IEEE80211_STYPE_DEAUTH,
 					    (u8 *) &reason, 2);
-	हाल MLME_STA_DISASSOC:
-		वापस prism2_sta_send_mgmt(local, param->sta_addr,
+	case MLME_STA_DISASSOC:
+		return prism2_sta_send_mgmt(local, param->sta_addr,
 					    IEEE80211_STYPE_DISASSOC,
 					    (u8 *) &reason, 2);
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
 
-अटल पूर्णांक prism2_ioctl_scan_req(local_info_t *local,
-				 काष्ठा prism2_hostapd_param *param)
-अणु
-#अगर_अघोषित PRISM2_NO_STATION_MODES
-	अगर ((local->iw_mode != IW_MODE_INFRA &&
+static int prism2_ioctl_scan_req(local_info_t *local,
+				 struct prism2_hostapd_param *param)
+{
+#ifndef PRISM2_NO_STATION_MODES
+	if ((local->iw_mode != IW_MODE_INFRA &&
 	     local->iw_mode != IW_MODE_ADHOC) ||
 	    (local->sta_fw_ver < PRISM2_FW_VER(1,3,1)))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	अगर (!local->dev_enabled)
-		वापस -ENETDOWN;
+	if (!local->dev_enabled)
+		return -ENETDOWN;
 
-	वापस prism2_request_hostscan(local->dev, param->u.scan_req.ssid,
+	return prism2_request_hostscan(local->dev, param->u.scan_req.ssid,
 				       param->u.scan_req.ssid_len);
-#अन्यथा /* PRISM2_NO_STATION_MODES */
-	वापस -EOPNOTSUPP;
-#पूर्ण_अगर /* PRISM2_NO_STATION_MODES */
-पूर्ण
+#else /* PRISM2_NO_STATION_MODES */
+	return -EOPNOTSUPP;
+#endif /* PRISM2_NO_STATION_MODES */
+}
 
 
-अटल पूर्णांक prism2_ioctl_priv_hostapd(local_info_t *local, काष्ठा iw_poपूर्णांक *p)
-अणु
-	काष्ठा prism2_hostapd_param *param;
-	पूर्णांक ret = 0;
-	पूर्णांक ap_ioctl = 0;
+static int prism2_ioctl_priv_hostapd(local_info_t *local, struct iw_point *p)
+{
+	struct prism2_hostapd_param *param;
+	int ret = 0;
+	int ap_ioctl = 0;
 
-	अगर (p->length < माप(काष्ठा prism2_hostapd_param) ||
-	    p->length > PRISM2_HOSTAPD_MAX_BUF_SIZE || !p->poपूर्णांकer)
-		वापस -EINVAL;
+	if (p->length < sizeof(struct prism2_hostapd_param) ||
+	    p->length > PRISM2_HOSTAPD_MAX_BUF_SIZE || !p->pointer)
+		return -EINVAL;
 
-	param = memdup_user(p->poपूर्णांकer, p->length);
-	अगर (IS_ERR(param)) अणु
-		वापस PTR_ERR(param);
-	पूर्ण
+	param = memdup_user(p->pointer, p->length);
+	if (IS_ERR(param)) {
+		return PTR_ERR(param);
+	}
 
-	चयन (param->cmd) अणु
-	हाल PRISM2_SET_ENCRYPTION:
+	switch (param->cmd) {
+	case PRISM2_SET_ENCRYPTION:
 		ret = prism2_ioctl_set_encryption(local, param, p->length);
-		अवरोध;
-	हाल PRISM2_GET_ENCRYPTION:
+		break;
+	case PRISM2_GET_ENCRYPTION:
 		ret = prism2_ioctl_get_encryption(local, param, p->length);
-		अवरोध;
-	हाल PRISM2_HOSTAPD_GET_RID:
+		break;
+	case PRISM2_HOSTAPD_GET_RID:
 		ret = prism2_ioctl_get_rid(local, param, p->length);
-		अवरोध;
-	हाल PRISM2_HOSTAPD_SET_RID:
+		break;
+	case PRISM2_HOSTAPD_SET_RID:
 		ret = prism2_ioctl_set_rid(local, param, p->length);
-		अवरोध;
-	हाल PRISM2_HOSTAPD_SET_ASSOC_AP_ADDR:
+		break;
+	case PRISM2_HOSTAPD_SET_ASSOC_AP_ADDR:
 		ret = prism2_ioctl_set_assoc_ap_addr(local, param, p->length);
-		अवरोध;
-	हाल PRISM2_HOSTAPD_SET_GENERIC_ELEMENT:
+		break;
+	case PRISM2_HOSTAPD_SET_GENERIC_ELEMENT:
 		ret = prism2_ioctl_set_generic_element(local, param,
 						       p->length);
-		अवरोध;
-	हाल PRISM2_HOSTAPD_MLME:
+		break;
+	case PRISM2_HOSTAPD_MLME:
 		ret = prism2_ioctl_mlme(local, param);
-		अवरोध;
-	हाल PRISM2_HOSTAPD_SCAN_REQ:
+		break;
+	case PRISM2_HOSTAPD_SCAN_REQ:
 		ret = prism2_ioctl_scan_req(local, param);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = prism2_hostapd(local->ap, param);
 		ap_ioctl = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (ret == 1 || !ap_ioctl) अणु
-		अगर (copy_to_user(p->poपूर्णांकer, param, p->length)) अणु
+	if (ret == 1 || !ap_ioctl) {
+		if (copy_to_user(p->pointer, param, p->length)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण अन्यथा अगर (ap_ioctl)
+			goto out;
+		} else if (ap_ioctl)
 			ret = 0;
-	पूर्ण
+	}
 
  out:
-	kमुक्त(param);
-	वापस ret;
-पूर्ण
+	kfree(param);
+	return ret;
+}
 
 
-अटल व्योम prism2_get_drvinfo(काष्ठा net_device *dev,
-			       काष्ठा ethtool_drvinfo *info)
-अणु
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+static void prism2_get_drvinfo(struct net_device *dev,
+			       struct ethtool_drvinfo *info)
+{
+	struct hostap_interface *iface;
 	local_info_t *local;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	strlcpy(info->driver, "hostap", माप(info->driver));
-	snम_लिखो(info->fw_version, माप(info->fw_version),
+	strlcpy(info->driver, "hostap", sizeof(info->driver));
+	snprintf(info->fw_version, sizeof(info->fw_version),
 		 "%d.%d.%d", (local->sta_fw_ver >> 16) & 0xff,
 		 (local->sta_fw_ver >> 8) & 0xff,
 		 local->sta_fw_ver & 0xff);
-पूर्ण
+}
 
-स्थिर काष्ठा ethtool_ops prism2_ethtool_ops = अणु
+const struct ethtool_ops prism2_ethtool_ops = {
 	.get_drvinfo = prism2_get_drvinfo
-पूर्ण;
+};
 
 
 /* Structures to export the Wireless Handlers */
 
-अटल स्थिर iw_handler prism2_handler[] =
-अणु
-	(iw_handler) शून्य,				/* SIOCSIWCOMMIT */
+static const iw_handler prism2_handler[] =
+{
+	(iw_handler) NULL,				/* SIOCSIWCOMMIT */
 	(iw_handler) prism2_get_name,			/* SIOCGIWNAME */
-	(iw_handler) शून्य,				/* SIOCSIWNWID */
-	(iw_handler) शून्य,				/* SIOCGIWNWID */
+	(iw_handler) NULL,				/* SIOCSIWNWID */
+	(iw_handler) NULL,				/* SIOCGIWNWID */
 	(iw_handler) prism2_ioctl_siwfreq,		/* SIOCSIWFREQ */
 	(iw_handler) prism2_ioctl_giwfreq,		/* SIOCGIWFREQ */
 	(iw_handler) prism2_ioctl_siwmode,		/* SIOCSIWMODE */
 	(iw_handler) prism2_ioctl_giwmode,		/* SIOCGIWMODE */
 	(iw_handler) prism2_ioctl_siwsens,		/* SIOCSIWSENS */
 	(iw_handler) prism2_ioctl_giwsens,		/* SIOCGIWSENS */
-	(iw_handler) शून्य /* not used */,		/* SIOCSIWRANGE */
+	(iw_handler) NULL /* not used */,		/* SIOCSIWRANGE */
 	(iw_handler) prism2_ioctl_giwrange,		/* SIOCGIWRANGE */
-	(iw_handler) शून्य /* not used */,		/* SIOCSIWPRIV */
-	(iw_handler) शून्य /* kernel code */,		/* SIOCGIWPRIV */
-	(iw_handler) शून्य /* not used */,		/* SIOCSIWSTATS */
-	(iw_handler) शून्य /* kernel code */,		/* SIOCGIWSTATS */
+	(iw_handler) NULL /* not used */,		/* SIOCSIWPRIV */
+	(iw_handler) NULL /* kernel code */,		/* SIOCGIWPRIV */
+	(iw_handler) NULL /* not used */,		/* SIOCSIWSTATS */
+	(iw_handler) NULL /* kernel code */,		/* SIOCGIWSTATS */
 	iw_handler_set_spy,				/* SIOCSIWSPY */
 	iw_handler_get_spy,				/* SIOCGIWSPY */
 	iw_handler_set_thrspy,				/* SIOCSIWTHRSPY */
@@ -3895,142 +3894,142 @@
 	(iw_handler) prism2_ioctl_giwessid,		/* SIOCGIWESSID */
 	(iw_handler) prism2_ioctl_siwnickn,		/* SIOCSIWNICKN */
 	(iw_handler) prism2_ioctl_giwnickn,		/* SIOCGIWNICKN */
-	(iw_handler) शून्य,				/* -- hole -- */
-	(iw_handler) शून्य,				/* -- hole -- */
+	(iw_handler) NULL,				/* -- hole -- */
+	(iw_handler) NULL,				/* -- hole -- */
 	(iw_handler) prism2_ioctl_siwrate,		/* SIOCSIWRATE */
 	(iw_handler) prism2_ioctl_giwrate,		/* SIOCGIWRATE */
 	(iw_handler) prism2_ioctl_siwrts,		/* SIOCSIWRTS */
 	(iw_handler) prism2_ioctl_giwrts,		/* SIOCGIWRTS */
 	(iw_handler) prism2_ioctl_siwfrag,		/* SIOCSIWFRAG */
 	(iw_handler) prism2_ioctl_giwfrag,		/* SIOCGIWFRAG */
-	(iw_handler) prism2_ioctl_siwtxघात,		/* SIOCSIWTXPOW */
-	(iw_handler) prism2_ioctl_giwtxघात,		/* SIOCGIWTXPOW */
+	(iw_handler) prism2_ioctl_siwtxpow,		/* SIOCSIWTXPOW */
+	(iw_handler) prism2_ioctl_giwtxpow,		/* SIOCGIWTXPOW */
 	(iw_handler) prism2_ioctl_siwretry,		/* SIOCSIWRETRY */
 	(iw_handler) prism2_ioctl_giwretry,		/* SIOCGIWRETRY */
 	(iw_handler) prism2_ioctl_siwencode,		/* SIOCSIWENCODE */
 	(iw_handler) prism2_ioctl_giwencode,		/* SIOCGIWENCODE */
-	(iw_handler) prism2_ioctl_siwघातer,		/* SIOCSIWPOWER */
-	(iw_handler) prism2_ioctl_giwघातer,		/* SIOCGIWPOWER */
-	(iw_handler) शून्य,				/* -- hole -- */
-	(iw_handler) शून्य,				/* -- hole -- */
+	(iw_handler) prism2_ioctl_siwpower,		/* SIOCSIWPOWER */
+	(iw_handler) prism2_ioctl_giwpower,		/* SIOCGIWPOWER */
+	(iw_handler) NULL,				/* -- hole -- */
+	(iw_handler) NULL,				/* -- hole -- */
 	(iw_handler) prism2_ioctl_siwgenie,		/* SIOCSIWGENIE */
 	(iw_handler) prism2_ioctl_giwgenie,		/* SIOCGIWGENIE */
 	(iw_handler) prism2_ioctl_siwauth,		/* SIOCSIWAUTH */
 	(iw_handler) prism2_ioctl_giwauth,		/* SIOCGIWAUTH */
 	(iw_handler) prism2_ioctl_siwencodeext,		/* SIOCSIWENCODEEXT */
 	(iw_handler) prism2_ioctl_giwencodeext,		/* SIOCGIWENCODEEXT */
-	(iw_handler) शून्य,				/* SIOCSIWPMKSA */
-	(iw_handler) शून्य,				/* -- hole -- */
-पूर्ण;
+	(iw_handler) NULL,				/* SIOCSIWPMKSA */
+	(iw_handler) NULL,				/* -- hole -- */
+};
 
-अटल स्थिर iw_handler prism2_निजी_handler[] =
-अणु							/* SIOCIWFIRSTPRIV + */
+static const iw_handler prism2_private_handler[] =
+{							/* SIOCIWFIRSTPRIV + */
 	(iw_handler) prism2_ioctl_priv_prism2_param,	/* 0 */
 	(iw_handler) prism2_ioctl_priv_get_prism2_param, /* 1 */
-	(iw_handler) prism2_ioctl_priv_ग_लिखोmअगर,	/* 2 */
-	(iw_handler) prism2_ioctl_priv_पढ़ोmअगर,		/* 3 */
-पूर्ण;
+	(iw_handler) prism2_ioctl_priv_writemif,	/* 2 */
+	(iw_handler) prism2_ioctl_priv_readmif,		/* 3 */
+};
 
-स्थिर काष्ठा iw_handler_def hostap_iw_handler_def =
-अणु
+const struct iw_handler_def hostap_iw_handler_def =
+{
 	.num_standard	= ARRAY_SIZE(prism2_handler),
-	.num_निजी	= ARRAY_SIZE(prism2_निजी_handler),
-	.num_निजी_args = ARRAY_SIZE(prism2_priv),
+	.num_private	= ARRAY_SIZE(prism2_private_handler),
+	.num_private_args = ARRAY_SIZE(prism2_priv),
 	.standard	= (iw_handler *) prism2_handler,
-	.निजी	= (iw_handler *) prism2_निजी_handler,
-	.निजी_args	= (काष्ठा iw_priv_args *) prism2_priv,
+	.private	= (iw_handler *) prism2_private_handler,
+	.private_args	= (struct iw_priv_args *) prism2_priv,
 	.get_wireless_stats = hostap_get_wireless_stats,
-पूर्ण;
+};
 
 
-पूर्णांक hostap_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
-अणु
-	काष्ठा iwreq *wrq = (काष्ठा iwreq *) अगरr;
-	काष्ठा hostap_पूर्णांकerface *अगरace;
+int hostap_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+{
+	struct iwreq *wrq = (struct iwreq *) ifr;
+	struct hostap_interface *iface;
 	local_info_t *local;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगरace = netdev_priv(dev);
-	local = अगरace->local;
+	iface = netdev_priv(dev);
+	local = iface->local;
 
-	चयन (cmd) अणु
+	switch (cmd) {
 		/* Private ioctls (iwpriv) that have not yet been converted
-		 * पूर्णांकo new wireless extensions API */
+		 * into new wireless extensions API */
 
-	हाल PRISM2_IOCTL_INQUIRE:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_ioctl_priv_inquire(dev, (पूर्णांक *) wrq->u.name);
-		अवरोध;
+	case PRISM2_IOCTL_INQUIRE:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_ioctl_priv_inquire(dev, (int *) wrq->u.name);
+		break;
 
-	हाल PRISM2_IOCTL_MONITOR:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_ioctl_priv_monitor(dev, (पूर्णांक *) wrq->u.name);
-		अवरोध;
+	case PRISM2_IOCTL_MONITOR:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_ioctl_priv_monitor(dev, (int *) wrq->u.name);
+		break;
 
-	हाल PRISM2_IOCTL_RESET:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_ioctl_priv_reset(dev, (पूर्णांक *) wrq->u.name);
-		अवरोध;
+	case PRISM2_IOCTL_RESET:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_ioctl_priv_reset(dev, (int *) wrq->u.name);
+		break;
 
-	हाल PRISM2_IOCTL_WDS_ADD:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_wds_add(local, wrq->u.ap_addr.sa_data, 1);
-		अवरोध;
+	case PRISM2_IOCTL_WDS_ADD:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_wds_add(local, wrq->u.ap_addr.sa_data, 1);
+		break;
 
-	हाल PRISM2_IOCTL_WDS_DEL:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_wds_del(local, wrq->u.ap_addr.sa_data, 1, 0);
-		अवरोध;
+	case PRISM2_IOCTL_WDS_DEL:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_wds_del(local, wrq->u.ap_addr.sa_data, 1, 0);
+		break;
 
-	हाल PRISM2_IOCTL_SET_RID_WORD:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_ioctl_priv_set_rid_word(dev,
-							  (पूर्णांक *) wrq->u.name);
-		अवरोध;
+	case PRISM2_IOCTL_SET_RID_WORD:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_ioctl_priv_set_rid_word(dev,
+							  (int *) wrq->u.name);
+		break;
 
-#अगर_अघोषित PRISM2_NO_KERNEL_IEEE80211_MGMT
-	हाल PRISM2_IOCTL_MACCMD:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = ap_mac_cmd_ioctl(local, (पूर्णांक *) wrq->u.name);
-		अवरोध;
+#ifndef PRISM2_NO_KERNEL_IEEE80211_MGMT
+	case PRISM2_IOCTL_MACCMD:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = ap_mac_cmd_ioctl(local, (int *) wrq->u.name);
+		break;
 
-	हाल PRISM2_IOCTL_ADDMAC:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = ap_control_add_mac(&local->ap->mac_restrictions,
+	case PRISM2_IOCTL_ADDMAC:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = ap_control_add_mac(&local->ap->mac_restrictions,
 					      wrq->u.ap_addr.sa_data);
-		अवरोध;
-	हाल PRISM2_IOCTL_DELMAC:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = ap_control_del_mac(&local->ap->mac_restrictions,
+		break;
+	case PRISM2_IOCTL_DELMAC:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = ap_control_del_mac(&local->ap->mac_restrictions,
 					      wrq->u.ap_addr.sa_data);
-		अवरोध;
-	हाल PRISM2_IOCTL_KICKMAC:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = ap_control_kick_mac(local->ap, local->dev,
+		break;
+	case PRISM2_IOCTL_KICKMAC:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = ap_control_kick_mac(local->ap, local->dev,
 					       wrq->u.ap_addr.sa_data);
-		अवरोध;
-#पूर्ण_अगर /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
+		break;
+#endif /* PRISM2_NO_KERNEL_IEEE80211_MGMT */
 
 
 		/* Private ioctls that are not used with iwpriv;
 		 * in SIOCDEVPRIVATE range */
 
-#अगर_घोषित PRISM2_DOWNLOAD_SUPPORT
-	हाल PRISM2_IOCTL_DOWNLOAD:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_ioctl_priv_करोwnload(local, &wrq->u.data);
-		अवरोध;
-#पूर्ण_अगर /* PRISM2_DOWNLOAD_SUPPORT */
+#ifdef PRISM2_DOWNLOAD_SUPPORT
+	case PRISM2_IOCTL_DOWNLOAD:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_ioctl_priv_download(local, &wrq->u.data);
+		break;
+#endif /* PRISM2_DOWNLOAD_SUPPORT */
 
-	हाल PRISM2_IOCTL_HOSTAPD:
-		अगर (!capable(CAP_NET_ADMIN)) ret = -EPERM;
-		अन्यथा ret = prism2_ioctl_priv_hostapd(local, &wrq->u.data);
-		अवरोध;
+	case PRISM2_IOCTL_HOSTAPD:
+		if (!capable(CAP_NET_ADMIN)) ret = -EPERM;
+		else ret = prism2_ioctl_priv_hostapd(local, &wrq->u.data);
+		break;
 
-	शेष:
+	default:
 		ret = -EOPNOTSUPP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

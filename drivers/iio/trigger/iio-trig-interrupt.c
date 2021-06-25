@@ -1,115 +1,114 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Industrial I/O - generic पूर्णांकerrupt based trigger support
+ * Industrial I/O - generic interrupt based trigger support
  *
  * Copyright (c) 2008-2013 Jonathan Cameron
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/interrupt.h>
+#include <linux/slab.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/trigger.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/trigger.h>
 
 
-काष्ठा iio_पूर्णांकerrupt_trigger_info अणु
-	अचिन्हित पूर्णांक irq;
-पूर्ण;
+struct iio_interrupt_trigger_info {
+	unsigned int irq;
+};
 
-अटल irqवापस_t iio_पूर्णांकerrupt_trigger_poll(पूर्णांक irq, व्योम *निजी)
-अणु
-	iio_trigger_poll(निजी);
-	वापस IRQ_HANDLED;
-पूर्ण
+static irqreturn_t iio_interrupt_trigger_poll(int irq, void *private)
+{
+	iio_trigger_poll(private);
+	return IRQ_HANDLED;
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops iio_पूर्णांकerrupt_trigger_ops = अणु
-पूर्ण;
+static const struct iio_trigger_ops iio_interrupt_trigger_ops = {
+};
 
-अटल पूर्णांक iio_पूर्णांकerrupt_trigger_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iio_पूर्णांकerrupt_trigger_info *trig_info;
-	काष्ठा iio_trigger *trig;
-	अचिन्हित दीर्घ irqflags;
-	काष्ठा resource *irq_res;
-	पूर्णांक irq, ret = 0;
+static int iio_interrupt_trigger_probe(struct platform_device *pdev)
+{
+	struct iio_interrupt_trigger_info *trig_info;
+	struct iio_trigger *trig;
+	unsigned long irqflags;
+	struct resource *irq_res;
+	int irq, ret = 0;
 
-	irq_res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	irq_res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 
-	अगर (irq_res == शून्य)
-		वापस -ENODEV;
+	if (irq_res == NULL)
+		return -ENODEV;
 
 	irqflags = (irq_res->flags & IRQF_TRIGGER_MASK) | IRQF_SHARED;
 
 	irq = irq_res->start;
 
-	trig = iio_trigger_alloc(शून्य, "irqtrig%d", irq);
-	अगर (!trig) अणु
+	trig = iio_trigger_alloc(NULL, "irqtrig%d", irq);
+	if (!trig) {
 		ret = -ENOMEM;
-		जाओ error_ret;
-	पूर्ण
+		goto error_ret;
+	}
 
-	trig_info = kzalloc(माप(*trig_info), GFP_KERNEL);
-	अगर (!trig_info) अणु
+	trig_info = kzalloc(sizeof(*trig_info), GFP_KERNEL);
+	if (!trig_info) {
 		ret = -ENOMEM;
-		जाओ error_मुक्त_trigger;
-	पूर्ण
+		goto error_free_trigger;
+	}
 	iio_trigger_set_drvdata(trig, trig_info);
 	trig_info->irq = irq;
-	trig->ops = &iio_पूर्णांकerrupt_trigger_ops;
-	ret = request_irq(irq, iio_पूर्णांकerrupt_trigger_poll,
+	trig->ops = &iio_interrupt_trigger_ops;
+	ret = request_irq(irq, iio_interrupt_trigger_poll,
 			  irqflags, trig->name, trig);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&pdev->dev,
 			"request IRQ-%d failed", irq);
-		जाओ error_मुक्त_trig_info;
-	पूर्ण
+		goto error_free_trig_info;
+	}
 
-	ret = iio_trigger_रेजिस्टर(trig);
-	अगर (ret)
-		जाओ error_release_irq;
-	platक्रमm_set_drvdata(pdev, trig);
+	ret = iio_trigger_register(trig);
+	if (ret)
+		goto error_release_irq;
+	platform_set_drvdata(pdev, trig);
 
-	वापस 0;
+	return 0;
 
 /* First clean up the partly allocated trigger */
 error_release_irq:
-	मुक्त_irq(irq, trig);
-error_मुक्त_trig_info:
-	kमुक्त(trig_info);
-error_मुक्त_trigger:
-	iio_trigger_मुक्त(trig);
+	free_irq(irq, trig);
+error_free_trig_info:
+	kfree(trig_info);
+error_free_trigger:
+	iio_trigger_free(trig);
 error_ret:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक iio_पूर्णांकerrupt_trigger_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा iio_trigger *trig;
-	काष्ठा iio_पूर्णांकerrupt_trigger_info *trig_info;
+static int iio_interrupt_trigger_remove(struct platform_device *pdev)
+{
+	struct iio_trigger *trig;
+	struct iio_interrupt_trigger_info *trig_info;
 
-	trig = platक्रमm_get_drvdata(pdev);
+	trig = platform_get_drvdata(pdev);
 	trig_info = iio_trigger_get_drvdata(trig);
-	iio_trigger_unरेजिस्टर(trig);
-	मुक्त_irq(trig_info->irq, trig);
-	kमुक्त(trig_info);
-	iio_trigger_मुक्त(trig);
+	iio_trigger_unregister(trig);
+	free_irq(trig_info->irq, trig);
+	kfree(trig_info);
+	iio_trigger_free(trig);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver iio_पूर्णांकerrupt_trigger_driver = अणु
-	.probe = iio_पूर्णांकerrupt_trigger_probe,
-	.हटाओ = iio_पूर्णांकerrupt_trigger_हटाओ,
-	.driver = अणु
+static struct platform_driver iio_interrupt_trigger_driver = {
+	.probe = iio_interrupt_trigger_probe,
+	.remove = iio_interrupt_trigger_remove,
+	.driver = {
 		.name = "iio_interrupt_trigger",
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(iio_पूर्णांकerrupt_trigger_driver);
+module_platform_driver(iio_interrupt_trigger_driver);
 
 MODULE_AUTHOR("Jonathan Cameron <jic23@kernel.org>");
 MODULE_DESCRIPTION("Interrupt trigger for the iio subsystem");

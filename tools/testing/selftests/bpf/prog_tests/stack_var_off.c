@@ -1,36 +1,35 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <test_progs.h>
-#समावेश "test_stack_var_off.skel.h"
+// SPDX-License-Identifier: GPL-2.0
+#include <test_progs.h>
+#include "test_stack_var_off.skel.h"
 
-/* Test पढ़ो and ग_लिखोs to the stack perक्रमmed with offsets that are not
- * अटलally known.
+/* Test read and writes to the stack performed with offsets that are not
+ * statically known.
  */
-व्योम test_stack_var_off(व्योम)
-अणु
-	पूर्णांक duration = 0;
-	काष्ठा test_stack_var_off *skel;
+void test_stack_var_off(void)
+{
+	int duration = 0;
+	struct test_stack_var_off *skel;
 
-	skel = test_stack_var_off__खोलो_and_load();
-	अगर (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
-		वापस;
+	skel = test_stack_var_off__open_and_load();
+	if (CHECK(!skel, "skel_open", "failed to open skeleton\n"))
+		return;
 
-	/* Give pid to bpf prog so it करोesn't trigger क्रम anyone अन्यथा. */
+	/* Give pid to bpf prog so it doesn't trigger for anyone else. */
 	skel->bss->test_pid = getpid();
 	/* Initialize the probe's input. */
 	skel->bss->input[0] = 2;
-	skel->bss->input[1] = 42;  /* This will be वापसed in probe_res. */
+	skel->bss->input[1] = 42;  /* This will be returned in probe_res. */
 
-	अगर (!ASSERT_OK(test_stack_var_off__attach(skel), "skel_attach"))
-		जाओ cleanup;
+	if (!ASSERT_OK(test_stack_var_off__attach(skel), "skel_attach"))
+		goto cleanup;
 
 	/* Trigger probe. */
 	usleep(1);
 
-	अगर (CHECK(skel->bss->probe_res != 42, "check_probe_res",
+	if (CHECK(skel->bss->probe_res != 42, "check_probe_res",
 		  "wrong probe res: %d\n", skel->bss->probe_res))
-		जाओ cleanup;
+		goto cleanup;
 
 cleanup:
 	test_stack_var_off__destroy(skel);
-पूर्ण
+}

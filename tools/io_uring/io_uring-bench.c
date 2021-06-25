@@ -1,439 +1,438 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Simple benchmark program that uses the various features of io_uring
- * to provide fast अक्रमom access to a device/file. It has various
+ * to provide fast random access to a device/file. It has various
  * options that are control how we use io_uring, see the OPTIONS section
- * below. This uses the raw io_uring पूर्णांकerface.
+ * below. This uses the raw io_uring interface.
  *
  * Copyright (C) 2018-2019 Jens Axboe
  */
-#समावेश <मानकपन.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <निश्चित.स>
-#समावेश <मानककोष.स>
-#समावेश <मानकघोष.स>
-#समावेश <संकेत.स>
-#समावेश <पूर्णांकtypes.h>
+#include <stdio.h>
+#include <errno.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <signal.h>
+#include <inttypes.h>
 
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/ioctl.h>
-#समावेश <sys/syscall.h>
-#समावेश <sys/resource.h>
-#समावेश <sys/mman.h>
-#समावेश <sys/uपन.स>
-#समावेश <linux/fs.h>
-#समावेश <fcntl.h>
-#समावेश <unistd.h>
-#समावेश <माला.स>
-#समावेश <pthपढ़ो.h>
-#समावेश <sched.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
+#include <sys/resource.h>
+#include <sys/mman.h>
+#include <sys/uio.h>
+#include <linux/fs.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+#include <pthread.h>
+#include <sched.h>
 
-#समावेश "liburing.h"
-#समावेश "barrier.h"
+#include "liburing.h"
+#include "barrier.h"
 
-#घोषणा min(a, b)		((a < b) ? (a) : (b))
+#define min(a, b)		((a < b) ? (a) : (b))
 
-काष्ठा io_sq_ring अणु
-	अचिन्हित *head;
-	अचिन्हित *tail;
-	अचिन्हित *ring_mask;
-	अचिन्हित *ring_entries;
-	अचिन्हित *flags;
-	अचिन्हित *array;
-पूर्ण;
+struct io_sq_ring {
+	unsigned *head;
+	unsigned *tail;
+	unsigned *ring_mask;
+	unsigned *ring_entries;
+	unsigned *flags;
+	unsigned *array;
+};
 
-काष्ठा io_cq_ring अणु
-	अचिन्हित *head;
-	अचिन्हित *tail;
-	अचिन्हित *ring_mask;
-	अचिन्हित *ring_entries;
-	काष्ठा io_uring_cqe *cqes;
-पूर्ण;
+struct io_cq_ring {
+	unsigned *head;
+	unsigned *tail;
+	unsigned *ring_mask;
+	unsigned *ring_entries;
+	struct io_uring_cqe *cqes;
+};
 
-#घोषणा DEPTH			128
+#define DEPTH			128
 
-#घोषणा BATCH_SUBMIT		32
-#घोषणा BATCH_COMPLETE		32
+#define BATCH_SUBMIT		32
+#define BATCH_COMPLETE		32
 
-#घोषणा BS			4096
+#define BS			4096
 
-#घोषणा MAX_FDS			16
+#define MAX_FDS			16
 
-अटल अचिन्हित sq_ring_mask, cq_ring_mask;
+static unsigned sq_ring_mask, cq_ring_mask;
 
-काष्ठा file अणु
-	अचिन्हित दीर्घ max_blocks;
-	अचिन्हित pending_ios;
-	पूर्णांक real_fd;
-	पूर्णांक fixed_fd;
-पूर्ण;
+struct file {
+	unsigned long max_blocks;
+	unsigned pending_ios;
+	int real_fd;
+	int fixed_fd;
+};
 
-काष्ठा submitter अणु
-	pthपढ़ो_t thपढ़ो;
-	पूर्णांक ring_fd;
-	काष्ठा dअक्रम48_data अक्रम;
-	काष्ठा io_sq_ring sq_ring;
-	काष्ठा io_uring_sqe *sqes;
-	काष्ठा iovec iovecs[DEPTH];
-	काष्ठा io_cq_ring cq_ring;
-	पूर्णांक inflight;
-	अचिन्हित दीर्घ reaps;
-	अचिन्हित दीर्घ करोne;
-	अचिन्हित दीर्घ calls;
-	अस्थिर पूर्णांक finish;
+struct submitter {
+	pthread_t thread;
+	int ring_fd;
+	struct drand48_data rand;
+	struct io_sq_ring sq_ring;
+	struct io_uring_sqe *sqes;
+	struct iovec iovecs[DEPTH];
+	struct io_cq_ring cq_ring;
+	int inflight;
+	unsigned long reaps;
+	unsigned long done;
+	unsigned long calls;
+	volatile int finish;
 
 	__s32 *fds;
 
-	काष्ठा file files[MAX_FDS];
-	अचिन्हित nr_files;
-	अचिन्हित cur_file;
-पूर्ण;
+	struct file files[MAX_FDS];
+	unsigned nr_files;
+	unsigned cur_file;
+};
 
-अटल काष्ठा submitter submitters[1];
-अटल अस्थिर पूर्णांक finish;
+static struct submitter submitters[1];
+static volatile int finish;
 
 /*
  * OPTIONS: Set these to test the various features of io_uring.
  */
-अटल पूर्णांक polled = 1;		/* use IO polling */
-अटल पूर्णांक fixedbufs = 1;	/* use fixed user buffers */
-अटल पूर्णांक रेजिस्टर_files = 1;	/* use fixed files */
-अटल पूर्णांक buffered = 0;	/* use buffered IO, not O_सूचीECT */
-अटल पूर्णांक sq_thपढ़ो_poll = 0;	/* use kernel submission/poller thपढ़ो */
-अटल पूर्णांक sq_thपढ़ो_cpu = -1;	/* pin above thपढ़ो to this CPU */
-अटल पूर्णांक करो_nop = 0;		/* no-op SQ ring commands */
+static int polled = 1;		/* use IO polling */
+static int fixedbufs = 1;	/* use fixed user buffers */
+static int register_files = 1;	/* use fixed files */
+static int buffered = 0;	/* use buffered IO, not O_DIRECT */
+static int sq_thread_poll = 0;	/* use kernel submission/poller thread */
+static int sq_thread_cpu = -1;	/* pin above thread to this CPU */
+static int do_nop = 0;		/* no-op SQ ring commands */
 
-अटल पूर्णांक io_uring_रेजिस्टर_buffers(काष्ठा submitter *s)
-अणु
-	अगर (करो_nop)
-		वापस 0;
+static int io_uring_register_buffers(struct submitter *s)
+{
+	if (do_nop)
+		return 0;
 
-	वापस io_uring_रेजिस्टर(s->ring_fd, IORING_REGISTER_BUFFERS, s->iovecs,
+	return io_uring_register(s->ring_fd, IORING_REGISTER_BUFFERS, s->iovecs,
 					DEPTH);
-पूर्ण
+}
 
-अटल पूर्णांक io_uring_रेजिस्टर_files(काष्ठा submitter *s)
-अणु
-	अचिन्हित i;
+static int io_uring_register_files(struct submitter *s)
+{
+	unsigned i;
 
-	अगर (करो_nop)
-		वापस 0;
+	if (do_nop)
+		return 0;
 
-	s->fds = सुस्मृति(s->nr_files, माप(__s32));
-	क्रम (i = 0; i < s->nr_files; i++) अणु
+	s->fds = calloc(s->nr_files, sizeof(__s32));
+	for (i = 0; i < s->nr_files; i++) {
 		s->fds[i] = s->files[i].real_fd;
 		s->files[i].fixed_fd = i;
-	पूर्ण
+	}
 
-	वापस io_uring_रेजिस्टर(s->ring_fd, IORING_REGISTER_खाताS, s->fds,
+	return io_uring_register(s->ring_fd, IORING_REGISTER_FILES, s->fds,
 					s->nr_files);
-पूर्ण
+}
 
-अटल पूर्णांक lk_gettid(व्योम)
-अणु
-	वापस syscall(__NR_gettid);
-पूर्ण
+static int lk_gettid(void)
+{
+	return syscall(__NR_gettid);
+}
 
-अटल अचिन्हित file_depth(काष्ठा submitter *s)
-अणु
-	वापस (DEPTH + s->nr_files - 1) / s->nr_files;
-पूर्ण
+static unsigned file_depth(struct submitter *s)
+{
+	return (DEPTH + s->nr_files - 1) / s->nr_files;
+}
 
-अटल व्योम init_io(काष्ठा submitter *s, अचिन्हित index)
-अणु
-	काष्ठा io_uring_sqe *sqe = &s->sqes[index];
-	अचिन्हित दीर्घ offset;
-	काष्ठा file *f;
-	दीर्घ r;
+static void init_io(struct submitter *s, unsigned index)
+{
+	struct io_uring_sqe *sqe = &s->sqes[index];
+	unsigned long offset;
+	struct file *f;
+	long r;
 
-	अगर (करो_nop) अणु
+	if (do_nop) {
 		sqe->opcode = IORING_OP_NOP;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (s->nr_files == 1) अणु
+	if (s->nr_files == 1) {
 		f = &s->files[0];
-	पूर्ण अन्यथा अणु
+	} else {
 		f = &s->files[s->cur_file];
-		अगर (f->pending_ios >= file_depth(s)) अणु
+		if (f->pending_ios >= file_depth(s)) {
 			s->cur_file++;
-			अगर (s->cur_file == s->nr_files)
+			if (s->cur_file == s->nr_files)
 				s->cur_file = 0;
 			f = &s->files[s->cur_file];
-		पूर्ण
-	पूर्ण
+		}
+	}
 	f->pending_ios++;
 
-	lअक्रम48_r(&s->अक्रम, &r);
+	lrand48_r(&s->rand, &r);
 	offset = (r % (f->max_blocks - 1)) * BS;
 
-	अगर (रेजिस्टर_files) अणु
-		sqe->flags = IOSQE_FIXED_खाता;
+	if (register_files) {
+		sqe->flags = IOSQE_FIXED_FILE;
 		sqe->fd = f->fixed_fd;
-	पूर्ण अन्यथा अणु
+	} else {
 		sqe->flags = 0;
 		sqe->fd = f->real_fd;
-	पूर्ण
-	अगर (fixedbufs) अणु
+	}
+	if (fixedbufs) {
 		sqe->opcode = IORING_OP_READ_FIXED;
-		sqe->addr = (अचिन्हित दीर्घ) s->iovecs[index].iov_base;
+		sqe->addr = (unsigned long) s->iovecs[index].iov_base;
 		sqe->len = BS;
 		sqe->buf_index = index;
-	पूर्ण अन्यथा अणु
+	} else {
 		sqe->opcode = IORING_OP_READV;
-		sqe->addr = (अचिन्हित दीर्घ) &s->iovecs[index];
+		sqe->addr = (unsigned long) &s->iovecs[index];
 		sqe->len = 1;
 		sqe->buf_index = 0;
-	पूर्ण
+	}
 	sqe->ioprio = 0;
 	sqe->off = offset;
-	sqe->user_data = (अचिन्हित दीर्घ) f;
-पूर्ण
+	sqe->user_data = (unsigned long) f;
+}
 
-अटल पूर्णांक prep_more_ios(काष्ठा submitter *s, अचिन्हित max_ios)
-अणु
-	काष्ठा io_sq_ring *ring = &s->sq_ring;
-	अचिन्हित index, tail, next_tail, prepped = 0;
+static int prep_more_ios(struct submitter *s, unsigned max_ios)
+{
+	struct io_sq_ring *ring = &s->sq_ring;
+	unsigned index, tail, next_tail, prepped = 0;
 
 	next_tail = tail = *ring->tail;
-	करो अणु
+	do {
 		next_tail++;
-		पढ़ो_barrier();
-		अगर (next_tail == *ring->head)
-			अवरोध;
+		read_barrier();
+		if (next_tail == *ring->head)
+			break;
 
 		index = tail & sq_ring_mask;
 		init_io(s, index);
 		ring->array[index] = index;
 		prepped++;
 		tail = next_tail;
-	पूर्ण जबतक (prepped < max_ios);
+	} while (prepped < max_ios);
 
-	अगर (*ring->tail != tail) अणु
-		/* order tail store with ग_लिखोs to sqes above */
-		ग_लिखो_barrier();
+	if (*ring->tail != tail) {
+		/* order tail store with writes to sqes above */
+		write_barrier();
 		*ring->tail = tail;
-		ग_लिखो_barrier();
-	पूर्ण
-	वापस prepped;
-पूर्ण
+		write_barrier();
+	}
+	return prepped;
+}
 
-अटल पूर्णांक get_file_size(काष्ठा file *f)
-अणु
-	काष्ठा stat st;
+static int get_file_size(struct file *f)
+{
+	struct stat st;
 
-	अगर (ख_स्थिति(f->real_fd, &st) < 0)
-		वापस -1;
-	अगर (S_ISBLK(st.st_mode)) अणु
-		अचिन्हित दीर्घ दीर्घ bytes;
+	if (fstat(f->real_fd, &st) < 0)
+		return -1;
+	if (S_ISBLK(st.st_mode)) {
+		unsigned long long bytes;
 
-		अगर (ioctl(f->real_fd, BLKGETSIZE64, &bytes) != 0)
-			वापस -1;
+		if (ioctl(f->real_fd, BLKGETSIZE64, &bytes) != 0)
+			return -1;
 
 		f->max_blocks = bytes / BS;
-		वापस 0;
-	पूर्ण अन्यथा अगर (S_ISREG(st.st_mode)) अणु
+		return 0;
+	} else if (S_ISREG(st.st_mode)) {
 		f->max_blocks = st.st_size / BS;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक reap_events(काष्ठा submitter *s)
-अणु
-	काष्ठा io_cq_ring *ring = &s->cq_ring;
-	काष्ठा io_uring_cqe *cqe;
-	अचिन्हित head, reaped = 0;
+static int reap_events(struct submitter *s)
+{
+	struct io_cq_ring *ring = &s->cq_ring;
+	struct io_uring_cqe *cqe;
+	unsigned head, reaped = 0;
 
 	head = *ring->head;
-	करो अणु
-		काष्ठा file *f;
+	do {
+		struct file *f;
 
-		पढ़ो_barrier();
-		अगर (head == *ring->tail)
-			अवरोध;
+		read_barrier();
+		if (head == *ring->tail)
+			break;
 		cqe = &ring->cqes[head & cq_ring_mask];
-		अगर (!करो_nop) अणु
-			f = (काष्ठा file *) (uपूर्णांकptr_t) cqe->user_data;
+		if (!do_nop) {
+			f = (struct file *) (uintptr_t) cqe->user_data;
 			f->pending_ios--;
-			अगर (cqe->res != BS) अणु
-				म_लिखो("io: unexpected ret=%d\n", cqe->res);
-				अगर (polled && cqe->res == -EOPNOTSUPP)
-					म_लिखो("Your filesystem doesn't support poll\n");
-				वापस -1;
-			पूर्ण
-		पूर्ण
+			if (cqe->res != BS) {
+				printf("io: unexpected ret=%d\n", cqe->res);
+				if (polled && cqe->res == -EOPNOTSUPP)
+					printf("Your filesystem doesn't support poll\n");
+				return -1;
+			}
+		}
 		reaped++;
 		head++;
-	पूर्ण जबतक (1);
+	} while (1);
 
 	s->inflight -= reaped;
 	*ring->head = head;
-	ग_लिखो_barrier();
-	वापस reaped;
-पूर्ण
+	write_barrier();
+	return reaped;
+}
 
-अटल व्योम *submitter_fn(व्योम *data)
-अणु
-	काष्ठा submitter *s = data;
-	काष्ठा io_sq_ring *ring = &s->sq_ring;
-	पूर्णांक ret, prepped;
+static void *submitter_fn(void *data)
+{
+	struct submitter *s = data;
+	struct io_sq_ring *ring = &s->sq_ring;
+	int ret, prepped;
 
-	म_लिखो("submitter=%d\n", lk_gettid());
+	printf("submitter=%d\n", lk_gettid());
 
-	बेक्रम48_r(pthपढ़ो_self(), &s->अक्रम);
+	srand48_r(pthread_self(), &s->rand);
 
 	prepped = 0;
-	करो अणु
-		पूर्णांक to_रुको, to_submit, this_reap, to_prep;
+	do {
+		int to_wait, to_submit, this_reap, to_prep;
 
-		अगर (!prepped && s->inflight < DEPTH) अणु
+		if (!prepped && s->inflight < DEPTH) {
 			to_prep = min(DEPTH - s->inflight, BATCH_SUBMIT);
 			prepped = prep_more_ios(s, to_prep);
-		पूर्ण
+		}
 		s->inflight += prepped;
 submit_more:
 		to_submit = prepped;
 submit:
-		अगर (to_submit && (s->inflight + to_submit <= DEPTH))
-			to_रुको = 0;
-		अन्यथा
-			to_रुको = min(s->inflight + to_submit, BATCH_COMPLETE);
+		if (to_submit && (s->inflight + to_submit <= DEPTH))
+			to_wait = 0;
+		else
+			to_wait = min(s->inflight + to_submit, BATCH_COMPLETE);
 
 		/*
-		 * Only need to call io_uring_enter अगर we're not using SQ thपढ़ो
-		 * poll, or अगर IORING_SQ_NEED_WAKEUP is set.
+		 * Only need to call io_uring_enter if we're not using SQ thread
+		 * poll, or if IORING_SQ_NEED_WAKEUP is set.
 		 */
-		अगर (!sq_thपढ़ो_poll || (*ring->flags & IORING_SQ_NEED_WAKEUP)) अणु
-			अचिन्हित flags = 0;
+		if (!sq_thread_poll || (*ring->flags & IORING_SQ_NEED_WAKEUP)) {
+			unsigned flags = 0;
 
-			अगर (to_रुको)
+			if (to_wait)
 				flags = IORING_ENTER_GETEVENTS;
-			अगर ((*ring->flags & IORING_SQ_NEED_WAKEUP))
+			if ((*ring->flags & IORING_SQ_NEED_WAKEUP))
 				flags |= IORING_ENTER_SQ_WAKEUP;
-			ret = io_uring_enter(s->ring_fd, to_submit, to_रुको,
-						flags, शून्य);
+			ret = io_uring_enter(s->ring_fd, to_submit, to_wait,
+						flags, NULL);
 			s->calls++;
-		पूर्ण
+		}
 
 		/*
-		 * For non SQ thपढ़ो poll, we alपढ़ोy got the events we needed
-		 * through the io_uring_enter() above. For SQ thपढ़ो poll, we
+		 * For non SQ thread poll, we already got the events we needed
+		 * through the io_uring_enter() above. For SQ thread poll, we
 		 * need to loop here until we find enough events.
 		 */
 		this_reap = 0;
-		करो अणु
-			पूर्णांक r;
+		do {
+			int r;
 			r = reap_events(s);
-			अगर (r == -1) अणु
+			if (r == -1) {
 				s->finish = 1;
-				अवरोध;
-			पूर्ण अन्यथा अगर (r > 0)
+				break;
+			} else if (r > 0)
 				this_reap += r;
-		पूर्ण जबतक (sq_thपढ़ो_poll && this_reap < to_रुको);
+		} while (sq_thread_poll && this_reap < to_wait);
 		s->reaps += this_reap;
 
-		अगर (ret >= 0) अणु
-			अगर (!ret) अणु
+		if (ret >= 0) {
+			if (!ret) {
 				to_submit = 0;
-				अगर (s->inflight)
-					जाओ submit;
-				जारी;
-			पूर्ण अन्यथा अगर (ret < to_submit) अणु
-				पूर्णांक dअगरf = to_submit - ret;
+				if (s->inflight)
+					goto submit;
+				continue;
+			} else if (ret < to_submit) {
+				int diff = to_submit - ret;
 
-				s->करोne += ret;
-				prepped -= dअगरf;
-				जाओ submit_more;
-			पूर्ण
-			s->करोne += ret;
+				s->done += ret;
+				prepped -= diff;
+				goto submit_more;
+			}
+			s->done += ret;
 			prepped = 0;
-			जारी;
-		पूर्ण अन्यथा अगर (ret < 0) अणु
-			अगर (त्रुटि_सं == EAGAIN) अणु
-				अगर (s->finish)
-					अवरोध;
-				अगर (this_reap)
-					जाओ submit;
+			continue;
+		} else if (ret < 0) {
+			if (errno == EAGAIN) {
+				if (s->finish)
+					break;
+				if (this_reap)
+					goto submit;
 				to_submit = 0;
-				जाओ submit;
-			पूर्ण
-			म_लिखो("io_submit: %s\n", म_त्रुटि(त्रुटि_सं));
-			अवरोध;
-		पूर्ण
-	पूर्ण जबतक (!s->finish);
+				goto submit;
+			}
+			printf("io_submit: %s\n", strerror(errno));
+			break;
+		}
+	} while (!s->finish);
 
 	finish = 1;
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम sig_पूर्णांक(पूर्णांक sig)
-अणु
-	म_लिखो("Exiting on signal %d\n", sig);
+static void sig_int(int sig)
+{
+	printf("Exiting on signal %d\n", sig);
 	submitters[0].finish = 1;
 	finish = 1;
-पूर्ण
+}
 
-अटल व्योम arm_sig_पूर्णांक(व्योम)
-अणु
-	काष्ठा sigaction act;
+static void arm_sig_int(void)
+{
+	struct sigaction act;
 
-	स_रखो(&act, 0, माप(act));
-	act.sa_handler = sig_पूर्णांक;
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = sig_int;
 	act.sa_flags = SA_RESTART;
-	sigaction(संक_विघ्न, &act, शून्य);
-पूर्ण
+	sigaction(SIGINT, &act, NULL);
+}
 
-अटल पूर्णांक setup_ring(काष्ठा submitter *s)
-अणु
-	काष्ठा io_sq_ring *sring = &s->sq_ring;
-	काष्ठा io_cq_ring *cring = &s->cq_ring;
-	काष्ठा io_uring_params p;
-	पूर्णांक ret, fd;
-	व्योम *ptr;
+static int setup_ring(struct submitter *s)
+{
+	struct io_sq_ring *sring = &s->sq_ring;
+	struct io_cq_ring *cring = &s->cq_ring;
+	struct io_uring_params p;
+	int ret, fd;
+	void *ptr;
 
-	स_रखो(&p, 0, माप(p));
+	memset(&p, 0, sizeof(p));
 
-	अगर (polled && !करो_nop)
+	if (polled && !do_nop)
 		p.flags |= IORING_SETUP_IOPOLL;
-	अगर (sq_thपढ़ो_poll) अणु
+	if (sq_thread_poll) {
 		p.flags |= IORING_SETUP_SQPOLL;
-		अगर (sq_thपढ़ो_cpu != -1) अणु
+		if (sq_thread_cpu != -1) {
 			p.flags |= IORING_SETUP_SQ_AFF;
-			p.sq_thपढ़ो_cpu = sq_thपढ़ो_cpu;
-		पूर्ण
-	पूर्ण
+			p.sq_thread_cpu = sq_thread_cpu;
+		}
+	}
 
 	fd = io_uring_setup(DEPTH, &p);
-	अगर (fd < 0) अणु
-		लिखो_त्रुटि("io_uring_setup");
-		वापस 1;
-	पूर्ण
+	if (fd < 0) {
+		perror("io_uring_setup");
+		return 1;
+	}
 	s->ring_fd = fd;
 
-	अगर (fixedbufs) अणु
-		ret = io_uring_रेजिस्टर_buffers(s);
-		अगर (ret < 0) अणु
-			लिखो_त्रुटि("io_uring_register_buffers");
-			वापस 1;
-		पूर्ण
-	पूर्ण
+	if (fixedbufs) {
+		ret = io_uring_register_buffers(s);
+		if (ret < 0) {
+			perror("io_uring_register_buffers");
+			return 1;
+		}
+	}
 
-	अगर (रेजिस्टर_files) अणु
-		ret = io_uring_रेजिस्टर_files(s);
-		अगर (ret < 0) अणु
-			लिखो_त्रुटि("io_uring_register_files");
-			वापस 1;
-		पूर्ण
-	पूर्ण
+	if (register_files) {
+		ret = io_uring_register_files(s);
+		if (ret < 0) {
+			perror("io_uring_register_files");
+			return 1;
+		}
+	}
 
-	ptr = mmap(0, p.sq_off.array + p.sq_entries * माप(__u32),
+	ptr = mmap(0, p.sq_off.array + p.sq_entries * sizeof(__u32),
 			PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd,
 			IORING_OFF_SQ_RING);
-	म_लिखो("sq_ring ptr = 0x%p\n", ptr);
+	printf("sq_ring ptr = 0x%p\n", ptr);
 	sring->head = ptr + p.sq_off.head;
 	sring->tail = ptr + p.sq_off.tail;
 	sring->ring_mask = ptr + p.sq_off.ring_mask;
@@ -442,152 +441,152 @@ submit:
 	sring->array = ptr + p.sq_off.array;
 	sq_ring_mask = *sring->ring_mask;
 
-	s->sqes = mmap(0, p.sq_entries * माप(काष्ठा io_uring_sqe),
+	s->sqes = mmap(0, p.sq_entries * sizeof(struct io_uring_sqe),
 			PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd,
 			IORING_OFF_SQES);
-	म_लिखो("sqes ptr    = 0x%p\n", s->sqes);
+	printf("sqes ptr    = 0x%p\n", s->sqes);
 
-	ptr = mmap(0, p.cq_off.cqes + p.cq_entries * माप(काष्ठा io_uring_cqe),
+	ptr = mmap(0, p.cq_off.cqes + p.cq_entries * sizeof(struct io_uring_cqe),
 			PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd,
 			IORING_OFF_CQ_RING);
-	म_लिखो("cq_ring ptr = 0x%p\n", ptr);
+	printf("cq_ring ptr = 0x%p\n", ptr);
 	cring->head = ptr + p.cq_off.head;
 	cring->tail = ptr + p.cq_off.tail;
 	cring->ring_mask = ptr + p.cq_off.ring_mask;
 	cring->ring_entries = ptr + p.cq_off.ring_entries;
 	cring->cqes = ptr + p.cq_off.cqes;
 	cq_ring_mask = *cring->ring_mask;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम file_depths(अक्षर *buf)
-अणु
-	काष्ठा submitter *s = &submitters[0];
-	अचिन्हित i;
-	अक्षर *p;
+static void file_depths(char *buf)
+{
+	struct submitter *s = &submitters[0];
+	unsigned i;
+	char *p;
 
 	buf[0] = '\0';
 	p = buf;
-	क्रम (i = 0; i < s->nr_files; i++) अणु
-		काष्ठा file *f = &s->files[i];
+	for (i = 0; i < s->nr_files; i++) {
+		struct file *f = &s->files[i];
 
-		अगर (i + 1 == s->nr_files)
-			p += प्र_लिखो(p, "%d", f->pending_ios);
-		अन्यथा
-			p += प्र_लिखो(p, "%d, ", f->pending_ios);
-	पूर्ण
-पूर्ण
+		if (i + 1 == s->nr_files)
+			p += sprintf(p, "%d", f->pending_ios);
+		else
+			p += sprintf(p, "%d, ", f->pending_ios);
+	}
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
-अणु
-	काष्ठा submitter *s = &submitters[0];
-	अचिन्हित दीर्घ करोne, calls, reap;
-	पूर्णांक err, i, flags, fd;
-	अक्षर *fdepths;
-	व्योम *ret;
+int main(int argc, char *argv[])
+{
+	struct submitter *s = &submitters[0];
+	unsigned long done, calls, reap;
+	int err, i, flags, fd;
+	char *fdepths;
+	void *ret;
 
-	अगर (!करो_nop && argc < 2) अणु
-		म_लिखो("%s: filename\n", argv[0]);
-		वापस 1;
-	पूर्ण
+	if (!do_nop && argc < 2) {
+		printf("%s: filename\n", argv[0]);
+		return 1;
+	}
 
 	flags = O_RDONLY | O_NOATIME;
-	अगर (!buffered)
-		flags |= O_सूचीECT;
+	if (!buffered)
+		flags |= O_DIRECT;
 
 	i = 1;
-	जबतक (!करो_nop && i < argc) अणु
-		काष्ठा file *f;
+	while (!do_nop && i < argc) {
+		struct file *f;
 
-		अगर (s->nr_files == MAX_FDS) अणु
-			म_लिखो("Max number of files (%d) reached\n", MAX_FDS);
-			अवरोध;
-		पूर्ण
-		fd = खोलो(argv[i], flags);
-		अगर (fd < 0) अणु
-			लिखो_त्रुटि("open");
-			वापस 1;
-		पूर्ण
+		if (s->nr_files == MAX_FDS) {
+			printf("Max number of files (%d) reached\n", MAX_FDS);
+			break;
+		}
+		fd = open(argv[i], flags);
+		if (fd < 0) {
+			perror("open");
+			return 1;
+		}
 
 		f = &s->files[s->nr_files];
 		f->real_fd = fd;
-		अगर (get_file_size(f)) अणु
-			म_लिखो("failed getting size of device/file\n");
-			वापस 1;
-		पूर्ण
-		अगर (f->max_blocks <= 1) अणु
-			म_लिखो("Zero file/device size?\n");
-			वापस 1;
-		पूर्ण
+		if (get_file_size(f)) {
+			printf("failed getting size of device/file\n");
+			return 1;
+		}
+		if (f->max_blocks <= 1) {
+			printf("Zero file/device size?\n");
+			return 1;
+		}
 		f->max_blocks--;
 
-		म_लिखो("Added file %s\n", argv[i]);
+		printf("Added file %s\n", argv[i]);
 		s->nr_files++;
 		i++;
-	पूर्ण
+	}
 
-	अगर (fixedbufs) अणु
-		काष्ठा rlimit rlim;
+	if (fixedbufs) {
+		struct rlimit rlim;
 
-		rlim.rlim_cur = RLIM_अनन्त;
-		rlim.rlim_max = RLIM_अनन्त;
-		अगर (setrlimit(RLIMIT_MEMLOCK, &rlim) < 0) अणु
-			लिखो_त्रुटि("setrlimit");
-			वापस 1;
-		पूर्ण
-	पूर्ण
+		rlim.rlim_cur = RLIM_INFINITY;
+		rlim.rlim_max = RLIM_INFINITY;
+		if (setrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
+			perror("setrlimit");
+			return 1;
+		}
+	}
 
-	arm_sig_पूर्णांक();
+	arm_sig_int();
 
-	क्रम (i = 0; i < DEPTH; i++) अणु
-		व्योम *buf;
+	for (i = 0; i < DEPTH; i++) {
+		void *buf;
 
-		अगर (posix_memalign(&buf, BS, BS)) अणु
-			म_लिखो("failed alloc\n");
-			वापस 1;
-		पूर्ण
+		if (posix_memalign(&buf, BS, BS)) {
+			printf("failed alloc\n");
+			return 1;
+		}
 		s->iovecs[i].iov_base = buf;
 		s->iovecs[i].iov_len = BS;
-	पूर्ण
+	}
 
 	err = setup_ring(s);
-	अगर (err) अणु
-		म_लिखो("ring setup failed: %s, %d\n", म_त्रुटि(त्रुटि_सं), err);
-		वापस 1;
-	पूर्ण
-	म_लिखो("polled=%d, fixedbufs=%d, buffered=%d", polled, fixedbufs, buffered);
-	म_लिखो(" QD=%d, sq_ring=%d, cq_ring=%d\n", DEPTH, *s->sq_ring.ring_entries, *s->cq_ring.ring_entries);
+	if (err) {
+		printf("ring setup failed: %s, %d\n", strerror(errno), err);
+		return 1;
+	}
+	printf("polled=%d, fixedbufs=%d, buffered=%d", polled, fixedbufs, buffered);
+	printf(" QD=%d, sq_ring=%d, cq_ring=%d\n", DEPTH, *s->sq_ring.ring_entries, *s->cq_ring.ring_entries);
 
-	pthपढ़ो_create(&s->thपढ़ो, शून्य, submitter_fn, s);
+	pthread_create(&s->thread, NULL, submitter_fn, s);
 
-	fdepths = दो_स्मृति(8 * s->nr_files);
-	reap = calls = करोne = 0;
-	करो अणु
-		अचिन्हित दीर्घ this_करोne = 0;
-		अचिन्हित दीर्घ this_reap = 0;
-		अचिन्हित दीर्घ this_call = 0;
-		अचिन्हित दीर्घ rpc = 0, ipc = 0;
+	fdepths = malloc(8 * s->nr_files);
+	reap = calls = done = 0;
+	do {
+		unsigned long this_done = 0;
+		unsigned long this_reap = 0;
+		unsigned long this_call = 0;
+		unsigned long rpc = 0, ipc = 0;
 
 		sleep(1);
-		this_करोne += s->करोne;
+		this_done += s->done;
 		this_call += s->calls;
 		this_reap += s->reaps;
-		अगर (this_call - calls) अणु
-			rpc = (this_करोne - करोne) / (this_call - calls);
+		if (this_call - calls) {
+			rpc = (this_done - done) / (this_call - calls);
 			ipc = (this_reap - reap) / (this_call - calls);
-		पूर्ण अन्यथा
+		} else
 			rpc = ipc = -1;
 		file_depths(fdepths);
-		म_लिखो("IOPS=%lu, IOS/call=%ld/%ld, inflight=%u (%s)\n",
-				this_करोne - करोne, rpc, ipc, s->inflight,
+		printf("IOPS=%lu, IOS/call=%ld/%ld, inflight=%u (%s)\n",
+				this_done - done, rpc, ipc, s->inflight,
 				fdepths);
-		करोne = this_करोne;
+		done = this_done;
 		calls = this_call;
 		reap = this_reap;
-	पूर्ण जबतक (!finish);
+	} while (!finish);
 
-	pthपढ़ो_join(s->thपढ़ो, &ret);
-	बंद(s->ring_fd);
-	मुक्त(fdepths);
-	वापस 0;
-पूर्ण
+	pthread_join(s->thread, &ret);
+	close(s->ring_fd);
+	free(fdepths);
+	return 0;
+}

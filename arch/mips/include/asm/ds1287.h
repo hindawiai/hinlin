@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- *  DS1287 समयr functions.
+ *  DS1287 timer functions.
  *
  *  Copyright (C) 2008  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#अगर_अघोषित __ASM_DS1287_H
-#घोषणा __ASM_DS1287_H
+#ifndef __ASM_DS1287_H
+#define __ASM_DS1287_H
 
-बाह्य पूर्णांक ds1287_समयr_state(व्योम);
-बाह्य व्योम ds1287_set_base_घड़ी(अचिन्हित पूर्णांक घड़ी);
-बाह्य पूर्णांक ds1287_घड़ीevent_init(पूर्णांक irq);
+extern int ds1287_timer_state(void);
+extern void ds1287_set_base_clock(unsigned int clock);
+extern int ds1287_clockevent_init(int irq);
 
-#पूर्ण_अगर
+#endif

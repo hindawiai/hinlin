@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,17 +24,17 @@
  */
 
 
-#अगर_अघोषित _DCE_ABM_H_
-#घोषणा _DCE_ABM_H_
+#ifndef _DCE_ABM_H_
+#define _DCE_ABM_H_
 
-#समावेश "abm.h"
+#include "abm.h"
 
-#घोषणा ABM_COMMON_REG_LIST_DCE_BASE() \
+#define ABM_COMMON_REG_LIST_DCE_BASE() \
 	SR(MASTER_COMM_CNTL_REG), \
 	SR(MASTER_COMM_CMD_REG), \
 	SR(MASTER_COMM_DATA_REG1)
 
-#घोषणा ABM_DCE110_COMMON_REG_LIST() \
+#define ABM_DCE110_COMMON_REG_LIST() \
 	ABM_COMMON_REG_LIST_DCE_BASE(), \
 	SR(DC_ABM1_HG_SAMPLE_RATE), \
 	SR(DC_ABM1_LS_SAMPLE_RATE), \
@@ -51,7 +50,7 @@
 	SR(DC_ABM1_ACE_THRES_12), \
 	SR(BIOS_SCRATCH_2)
 
-#घोषणा ABM_DCN10_REG_LIST(id)\
+#define ABM_DCN10_REG_LIST(id)\
 	ABM_COMMON_REG_LIST_DCE_BASE(), \
 	SRI(DC_ABM1_HG_SAMPLE_RATE, ABM, id), \
 	SRI(DC_ABM1_LS_SAMPLE_RATE, ABM, id), \
@@ -67,7 +66,7 @@
 	SRI(DC_ABM1_ACE_THRES_12, ABM, id), \
 	NBIO_SR(BIOS_SCRATCH_2)
 
-#घोषणा ABM_DCN20_REG_LIST() \
+#define ABM_DCN20_REG_LIST() \
 	ABM_COMMON_REG_LIST_DCE_BASE(), \
 	SR(DC_ABM1_HG_SAMPLE_RATE), \
 	SR(DC_ABM1_LS_SAMPLE_RATE), \
@@ -83,7 +82,7 @@
 	SR(DC_ABM1_ACE_THRES_12), \
 	NBIO_SR(BIOS_SCRATCH_2)
 
-#घोषणा ABM_DCN301_REG_LIST(id)\
+#define ABM_DCN301_REG_LIST(id)\
 	ABM_COMMON_REG_LIST_DCE_BASE(), \
 	SRI(DC_ABM1_HG_SAMPLE_RATE, ABM, id), \
 	SRI(DC_ABM1_LS_SAMPLE_RATE, ABM, id), \
@@ -97,7 +96,7 @@
 	SRI(DC_ABM1_HGLS_REG_READ_PROGRESS, ABM, id), \
 	NBIO_SR(BIOS_SCRATCH_2)
 
-#घोषणा ABM_DCN30_REG_LIST(id)\
+#define ABM_DCN30_REG_LIST(id)\
 	ABM_COMMON_REG_LIST_DCE_BASE(), \
 	SRI(DC_ABM1_HG_SAMPLE_RATE, ABM, id), \
 	SRI(DC_ABM1_LS_SAMPLE_RATE, ABM, id), \
@@ -113,16 +112,16 @@
 	SRI(DC_ABM1_ACE_THRES_12, ABM, id), \
 	NBIO_SR(BIOS_SCRATCH_2)
 
-#घोषणा ABM_SF(reg_name, field_name, post_fix)\
+#define ABM_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#घोषणा ABM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
+#define ABM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh) \
 	ABM_SF(MASTER_COMM_CNTL_REG, MASTER_COMM_INTERRUPT, mask_sh), \
 	ABM_SF(MASTER_COMM_CMD_REG, MASTER_COMM_CMD_REG_BYTE0, mask_sh), \
 	ABM_SF(MASTER_COMM_CMD_REG, MASTER_COMM_CMD_REG_BYTE1, mask_sh), \
 	ABM_SF(MASTER_COMM_CMD_REG, MASTER_COMM_CMD_REG_BYTE2, mask_sh)
 
-#घोषणा ABM_MASK_SH_LIST_DCE110(mask_sh) \
+#define ABM_MASK_SH_LIST_DCE110(mask_sh) \
 	ABM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh), \
 	ABM_SF(DC_ABM1_HG_MISC_CTRL, \
 			ABM1_HG_NUM_OF_BINS_SEL, mask_sh), \
@@ -153,7 +152,7 @@
 	ABM_SF(DC_ABM1_HGLS_REG_READ_PROGRESS, \
 			ABM1_BL_REG_READ_MISSED_FRAME_CLEAR, mask_sh)
 
-#घोषणा ABM_MASK_SH_LIST_DCN10(mask_sh) \
+#define ABM_MASK_SH_LIST_DCN10(mask_sh) \
 	ABM_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(mask_sh), \
 	ABM_SF(ABM0_DC_ABM1_HG_MISC_CTRL, \
 			ABM1_HG_NUM_OF_BINS_SEL, mask_sh), \
@@ -184,11 +183,11 @@
 	ABM_SF(ABM0_DC_ABM1_HGLS_REG_READ_PROGRESS, \
 			ABM1_BL_REG_READ_MISSED_FRAME_CLEAR, mask_sh)
 
-#घोषणा ABM_MASK_SH_LIST_DCN20(mask_sh) ABM_MASK_SH_LIST_DCE110(mask_sh)
+#define ABM_MASK_SH_LIST_DCN20(mask_sh) ABM_MASK_SH_LIST_DCE110(mask_sh)
 
-#घोषणा ABM_MASK_SH_LIST_DCN30(mask_sh) ABM_MASK_SH_LIST_DCN10(mask_sh)
+#define ABM_MASK_SH_LIST_DCN30(mask_sh) ABM_MASK_SH_LIST_DCN10(mask_sh)
 
-#घोषणा ABM_REG_FIELD_LIST(type) \
+#define ABM_REG_FIELD_LIST(type) \
 	type ABM1_HG_NUM_OF_BINS_SEL; \
 	type ABM1_HG_VMAX_SEL; \
 	type ABM1_HG_BIN_BITWIDTH_SIZE_SEL; \
@@ -208,46 +207,46 @@
 	type MASTER_COMM_CMD_REG_BYTE1; \
 	type MASTER_COMM_CMD_REG_BYTE2
 
-काष्ठा dce_abm_shअगरt अणु
-	ABM_REG_FIELD_LIST(uपूर्णांक8_t);
-पूर्ण;
+struct dce_abm_shift {
+	ABM_REG_FIELD_LIST(uint8_t);
+};
 
-काष्ठा dce_abm_mask अणु
-	ABM_REG_FIELD_LIST(uपूर्णांक32_t);
-पूर्ण;
+struct dce_abm_mask {
+	ABM_REG_FIELD_LIST(uint32_t);
+};
 
-काष्ठा dce_abm_रेजिस्टरs अणु
-	uपूर्णांक32_t DC_ABM1_HG_SAMPLE_RATE;
-	uपूर्णांक32_t DC_ABM1_LS_SAMPLE_RATE;
-	uपूर्णांक32_t BL1_PWM_BL_UPDATE_SAMPLE_RATE;
-	uपूर्णांक32_t DC_ABM1_HG_MISC_CTRL;
-	uपूर्णांक32_t DC_ABM1_IPCSC_COEFF_SEL;
-	uपूर्णांक32_t BL1_PWM_CURRENT_ABM_LEVEL;
-	uपूर्णांक32_t BL1_PWM_TARGET_ABM_LEVEL;
-	uपूर्णांक32_t BL1_PWM_USER_LEVEL;
-	uपूर्णांक32_t DC_ABM1_LS_MIN_MAX_PIXEL_VALUE_THRES;
-	uपूर्णांक32_t DC_ABM1_HGLS_REG_READ_PROGRESS;
-	uपूर्णांक32_t DC_ABM1_ACE_OFFSET_SLOPE_0;
-	uपूर्णांक32_t DC_ABM1_ACE_THRES_12;
-	uपूर्णांक32_t MASTER_COMM_CNTL_REG;
-	uपूर्णांक32_t MASTER_COMM_CMD_REG;
-	uपूर्णांक32_t MASTER_COMM_DATA_REG1;
-	uपूर्णांक32_t BIOS_SCRATCH_2;
-पूर्ण;
+struct dce_abm_registers {
+	uint32_t DC_ABM1_HG_SAMPLE_RATE;
+	uint32_t DC_ABM1_LS_SAMPLE_RATE;
+	uint32_t BL1_PWM_BL_UPDATE_SAMPLE_RATE;
+	uint32_t DC_ABM1_HG_MISC_CTRL;
+	uint32_t DC_ABM1_IPCSC_COEFF_SEL;
+	uint32_t BL1_PWM_CURRENT_ABM_LEVEL;
+	uint32_t BL1_PWM_TARGET_ABM_LEVEL;
+	uint32_t BL1_PWM_USER_LEVEL;
+	uint32_t DC_ABM1_LS_MIN_MAX_PIXEL_VALUE_THRES;
+	uint32_t DC_ABM1_HGLS_REG_READ_PROGRESS;
+	uint32_t DC_ABM1_ACE_OFFSET_SLOPE_0;
+	uint32_t DC_ABM1_ACE_THRES_12;
+	uint32_t MASTER_COMM_CNTL_REG;
+	uint32_t MASTER_COMM_CMD_REG;
+	uint32_t MASTER_COMM_DATA_REG1;
+	uint32_t BIOS_SCRATCH_2;
+};
 
-काष्ठा dce_abm अणु
-	काष्ठा abm base;
-	स्थिर काष्ठा dce_abm_रेजिस्टरs *regs;
-	स्थिर काष्ठा dce_abm_shअगरt *abm_shअगरt;
-	स्थिर काष्ठा dce_abm_mask *abm_mask;
-पूर्ण;
+struct dce_abm {
+	struct abm base;
+	const struct dce_abm_registers *regs;
+	const struct dce_abm_shift *abm_shift;
+	const struct dce_abm_mask *abm_mask;
+};
 
-काष्ठा abm *dce_abm_create(
-	काष्ठा dc_context *ctx,
-	स्थिर काष्ठा dce_abm_रेजिस्टरs *regs,
-	स्थिर काष्ठा dce_abm_shअगरt *abm_shअगरt,
-	स्थिर काष्ठा dce_abm_mask *abm_mask);
+struct abm *dce_abm_create(
+	struct dc_context *ctx,
+	const struct dce_abm_registers *regs,
+	const struct dce_abm_shift *abm_shift,
+	const struct dce_abm_mask *abm_mask);
 
-व्योम dce_abm_destroy(काष्ठा abm **abm);
+void dce_abm_destroy(struct abm **abm);
 
-#पूर्ण_अगर /* _DCE_ABM_H_ */
+#endif /* _DCE_ABM_H_ */

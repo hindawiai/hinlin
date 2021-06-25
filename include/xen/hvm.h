@@ -1,16 +1,15 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Simple wrappers around HVM functions */
-#अगर_अघोषित XEN_HVM_H__
-#घोषणा XEN_HVM_H__
+#ifndef XEN_HVM_H__
+#define XEN_HVM_H__
 
-#समावेश <xen/पूर्णांकerface/hvm/params.h>
-#समावेश <यंत्र/xen/hypercall.h>
+#include <xen/interface/hvm/params.h>
+#include <asm/xen/hypercall.h>
 
-अटल स्थिर अक्षर *param_name(पूर्णांक op)
-अणु
-#घोषणा PARAM(x) [HVM_PARAM_##x] = #x
-	अटल स्थिर अक्षर *स्थिर names[] = अणु
+static const char *param_name(int op)
+{
+#define PARAM(x) [HVM_PARAM_##x] = #x
+	static const char *const names[] = {
 		PARAM(CALLBACK_IRQ),
 		PARAM(STORE_PFN),
 		PARAM(STORE_EVTCHN),
@@ -26,39 +25,39 @@
 		PARAM(VPT_ALIGN),
 		PARAM(CONSOLE_PFN),
 		PARAM(CONSOLE_EVTCHN),
-	पूर्ण;
-#अघोषित PARAM
+	};
+#undef PARAM
 
-	अगर (op >= ARRAY_SIZE(names))
-		वापस "unknown";
+	if (op >= ARRAY_SIZE(names))
+		return "unknown";
 
-	अगर (!names[op])
-		वापस "reserved";
+	if (!names[op])
+		return "reserved";
 
-	वापस names[op];
-पूर्ण
-अटल अंतरभूत पूर्णांक hvm_get_parameter(पूर्णांक idx, uपूर्णांक64_t *value)
-अणु
-	काष्ठा xen_hvm_param xhv;
-	पूर्णांक r;
+	return names[op];
+}
+static inline int hvm_get_parameter(int idx, uint64_t *value)
+{
+	struct xen_hvm_param xhv;
+	int r;
 
-	xhv.करोmid = DOMID_SELF;
+	xhv.domid = DOMID_SELF;
 	xhv.index = idx;
 	r = HYPERVISOR_hvm_op(HVMOP_get_param, &xhv);
-	अगर (r < 0) अणु
+	if (r < 0) {
 		pr_err("Cannot get hvm parameter %s (%d): %d!\n",
 		       param_name(idx), idx, r);
-		वापस r;
-	पूर्ण
+		return r;
+	}
 	*value = xhv.value;
-	वापस r;
-पूर्ण
+	return r;
+}
 
-#घोषणा HVM_CALLBACK_VIA_TYPE_VECTOR 0x2
-#घोषणा HVM_CALLBACK_VIA_TYPE_SHIFT 56
-#घोषणा HVM_CALLBACK_VECTOR(x) (((uपूर्णांक64_t)HVM_CALLBACK_VIA_TYPE_VECTOR)<<\
+#define HVM_CALLBACK_VIA_TYPE_VECTOR 0x2
+#define HVM_CALLBACK_VIA_TYPE_SHIFT 56
+#define HVM_CALLBACK_VECTOR(x) (((uint64_t)HVM_CALLBACK_VIA_TYPE_VECTOR)<<\
 		HVM_CALLBACK_VIA_TYPE_SHIFT | (x))
 
-व्योम xen_setup_callback_vector(व्योम);
+void xen_setup_callback_vector(void);
 
-#पूर्ण_अगर /* XEN_HVM_H__ */
+#endif /* XEN_HVM_H__ */

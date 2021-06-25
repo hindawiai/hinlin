@@ -1,55 +1,54 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _OSDEP_SERVICE_C_
+#define _OSDEP_SERVICE_C_
 
-#समावेश <osdep_service.h>
-#समावेश <osdep_पूर्णांकf.h>
-#समावेश <drv_types.h>
-#समावेश <recv_osdep.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <rtw_ioctl_set.h>
+#include <osdep_service.h>
+#include <osdep_intf.h>
+#include <drv_types.h>
+#include <recv_osdep.h>
+#include <linux/vmalloc.h>
+#include <rtw_ioctl_set.h>
 
-u8 *_rtw_दो_स्मृति(u32 sz)
-अणु
-	वापस kदो_स्मृति(sz, in_पूर्णांकerrupt() ? GFP_ATOMIC : GFP_KERNEL);
-पूर्ण
+u8 *_rtw_malloc(u32 sz)
+{
+	return kmalloc(sz, in_interrupt() ? GFP_ATOMIC : GFP_KERNEL);
+}
 
-व्योम _rtw_init_queue(काष्ठा __queue *pqueue)
-अणु
+void _rtw_init_queue(struct __queue *pqueue)
+{
 	INIT_LIST_HEAD(&pqueue->queue);
 	spin_lock_init(&pqueue->lock);
-पूर्ण
+}
 
-व्योम rtw_buf_मुक्त(u8 **buf, u32 *buf_len)
-अणु
+void rtw_buf_free(u8 **buf, u32 *buf_len)
+{
 	*buf_len = 0;
-	kमुक्त(*buf);
-	*buf = शून्य;
-पूर्ण
+	kfree(*buf);
+	*buf = NULL;
+}
 
-व्योम rtw_buf_update(u8 **buf, u32 *buf_len, u8 *src, u32 src_len)
-अणु
+void rtw_buf_update(u8 **buf, u32 *buf_len, u8 *src, u32 src_len)
+{
 	u32 dup_len = 0;
-	u8 *ori = शून्य;
-	u8 *dup = शून्य;
+	u8 *ori = NULL;
+	u8 *dup = NULL;
 
-	अगर (!buf || !buf_len)
-		वापस;
+	if (!buf || !buf_len)
+		return;
 
-	अगर (!src || !src_len)
-		जाओ keep_ori;
+	if (!src || !src_len)
+		goto keep_ori;
 
 	/* duplicate src */
-	dup = rtw_दो_स्मृति(src_len);
-	अगर (dup) अणु
+	dup = rtw_malloc(src_len);
+	if (dup) {
 		dup_len = src_len;
-		स_नकल(dup, src, dup_len);
-	पूर्ण
+		memcpy(dup, src, dup_len);
+	}
 
 keep_ori:
 	ori = *buf;
@@ -59,6 +58,6 @@ keep_ori:
 	*buf = dup;
 	*buf_len = dup_len;
 
-	/* मुक्त ori */
-	kमुक्त(ori);
-पूर्ण
+	/* free ori */
+	kfree(ori);
+}

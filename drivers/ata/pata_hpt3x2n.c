@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Libata driver क्रम the HighPoपूर्णांक 371N, 372N, and 302N UDMA66 ATA controllers.
+ * Libata driver for the HighPoint 371N, 372N, and 302N UDMA66 ATA controllers.
  *
  * This driver is heavily based upon:
  *
  * linux/drivers/ide/pci/hpt366.c		Version 0.36	April 25, 2003
  *
  * Copyright (C) 1999-2003		Andre Hedrick <andre@linux-ide.org>
- * Portions Copyright (C) 2001	        Sun Microप्रणालीs, Inc.
+ * Portions Copyright (C) 2001	        Sun Microsystems, Inc.
  * Portions Copyright (C) 2003		Red Hat Inc
  * Portions Copyright (C) 2005-2010	MontaVista Software, Inc.
  *
@@ -17,119 +16,119 @@
  *	Work out best PLL policy
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <scsi/scsi_host.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME	"pata_hpt3x2n"
-#घोषणा DRV_VERSION	"0.3.15"
+#define DRV_NAME	"pata_hpt3x2n"
+#define DRV_VERSION	"0.3.15"
 
-क्रमागत अणु
+enum {
 	HPT_PCI_FAST	=	(1 << 31),
 	PCI66		=	(1 << 1),
 	USE_DPLL	=	(1 << 0)
-पूर्ण;
+};
 
-काष्ठा hpt_घड़ी अणु
+struct hpt_clock {
 	u8	xfer_speed;
 	u32	timing;
-पूर्ण;
+};
 
-काष्ठा hpt_chip अणु
-	स्थिर अक्षर *name;
-	काष्ठा hpt_घड़ी *घड़ीs[3];
-पूर्ण;
+struct hpt_chip {
+	const char *name;
+	struct hpt_clock *clocks[3];
+};
 
-/* key क्रम bus घड़ी timings
+/* key for bus clock timings
  * bit
- * 0:3    data_high_समय. Inactive समय of DIOW_/DIOR_ क्रम PIO and MW DMA.
+ * 0:3    data_high_time. Inactive time of DIOW_/DIOR_ for PIO and MW DMA.
  *        cycles = value + 1
- * 4:8    data_low_समय. Active समय of DIOW_/DIOR_ क्रम PIO and MW DMA.
+ * 4:8    data_low_time. Active time of DIOW_/DIOR_ for PIO and MW DMA.
  *        cycles = value + 1
- * 9:12   cmd_high_समय. Inactive समय of DIOW_/DIOR_ during task file
- *        रेजिस्टर access.
- * 13:17  cmd_low_समय. Active समय of DIOW_/DIOR_ during task file
- *        रेजिस्टर access.
- * 18:20  udma_cycle_समय. Clock cycles क्रम UDMA xfer.
- * 21     CLK frequency क्रम UDMA: 0=ATA घड़ी, 1=dual ATA घड़ी.
- * 22:24  pre_high_समय. Time to initialize 1st cycle क्रम PIO and MW DMA xfer.
- * 25:27  cmd_pre_high_समय. Time to initialize 1st PIO cycle क्रम task file
- *        रेजिस्टर access.
+ * 9:12   cmd_high_time. Inactive time of DIOW_/DIOR_ during task file
+ *        register access.
+ * 13:17  cmd_low_time. Active time of DIOW_/DIOR_ during task file
+ *        register access.
+ * 18:20  udma_cycle_time. Clock cycles for UDMA xfer.
+ * 21     CLK frequency for UDMA: 0=ATA clock, 1=dual ATA clock.
+ * 22:24  pre_high_time. Time to initialize 1st cycle for PIO and MW DMA xfer.
+ * 25:27  cmd_pre_high_time. Time to initialize 1st PIO cycle for task file
+ *        register access.
  * 28     UDMA enable.
  * 29     DMA  enable.
  * 30     PIO_MST enable. If set, the chip is in bus master mode during
  *        PIO xfer.
- * 31     FIFO enable. Only क्रम PIO.
+ * 31     FIFO enable. Only for PIO.
  */
 
-/* 66MHz DPLL घड़ीs */
+/* 66MHz DPLL clocks */
 
-अटल काष्ठा hpt_घड़ी hpt3x2n_घड़ीs[] = अणु
-	अणु	XFER_UDMA_7,	0x1c869c62	पूर्ण,
-	अणु	XFER_UDMA_6,	0x1c869c62	पूर्ण,
-	अणु	XFER_UDMA_5,	0x1c8a9c62	पूर्ण,
-	अणु	XFER_UDMA_4,	0x1c8a9c62	पूर्ण,
-	अणु	XFER_UDMA_3,	0x1c8e9c62	पूर्ण,
-	अणु	XFER_UDMA_2,	0x1c929c62	पूर्ण,
-	अणु	XFER_UDMA_1,	0x1c9a9c62	पूर्ण,
-	अणु	XFER_UDMA_0,	0x1c829c62	पूर्ण,
+static struct hpt_clock hpt3x2n_clocks[] = {
+	{	XFER_UDMA_7,	0x1c869c62	},
+	{	XFER_UDMA_6,	0x1c869c62	},
+	{	XFER_UDMA_5,	0x1c8a9c62	},
+	{	XFER_UDMA_4,	0x1c8a9c62	},
+	{	XFER_UDMA_3,	0x1c8e9c62	},
+	{	XFER_UDMA_2,	0x1c929c62	},
+	{	XFER_UDMA_1,	0x1c9a9c62	},
+	{	XFER_UDMA_0,	0x1c829c62	},
 
-	अणु	XFER_MW_DMA_2,	0x2c829c62	पूर्ण,
-	अणु	XFER_MW_DMA_1,	0x2c829c66	पूर्ण,
-	अणु	XFER_MW_DMA_0,	0x2c829d2e	पूर्ण,
+	{	XFER_MW_DMA_2,	0x2c829c62	},
+	{	XFER_MW_DMA_1,	0x2c829c66	},
+	{	XFER_MW_DMA_0,	0x2c829d2e	},
 
-	अणु	XFER_PIO_4,	0x0c829c62	पूर्ण,
-	अणु	XFER_PIO_3,	0x0c829c84	पूर्ण,
-	अणु	XFER_PIO_2,	0x0c829ca6	पूर्ण,
-	अणु	XFER_PIO_1,	0x0d029d26	पूर्ण,
-	अणु	XFER_PIO_0,	0x0d029d5e	पूर्ण,
-पूर्ण;
+	{	XFER_PIO_4,	0x0c829c62	},
+	{	XFER_PIO_3,	0x0c829c84	},
+	{	XFER_PIO_2,	0x0c829ca6	},
+	{	XFER_PIO_1,	0x0d029d26	},
+	{	XFER_PIO_0,	0x0d029d5e	},
+};
 
 /**
  *	hpt3x2n_find_mode	-	reset the hpt3x2n bus
  *	@ap: ATA port
  *	@speed: transfer mode
  *
- *	Return the 32bit रेजिस्टर programming inक्रमmation क्रम this channel
- *	that matches the speed provided. For the moment the घड़ीs table
- *	is hard coded but easy to change. This will be needed अगर we use
- *	dअगरferent DPLLs
+ *	Return the 32bit register programming information for this channel
+ *	that matches the speed provided. For the moment the clocks table
+ *	is hard coded but easy to change. This will be needed if we use
+ *	different DPLLs
  */
 
-अटल u32 hpt3x2n_find_mode(काष्ठा ata_port *ap, पूर्णांक speed)
-अणु
-	काष्ठा hpt_घड़ी *घड़ीs = hpt3x2n_घड़ीs;
+static u32 hpt3x2n_find_mode(struct ata_port *ap, int speed)
+{
+	struct hpt_clock *clocks = hpt3x2n_clocks;
 
-	जबतक (घड़ीs->xfer_speed) अणु
-		अगर (घड़ीs->xfer_speed == speed)
-			वापस घड़ीs->timing;
-		घड़ीs++;
-	पूर्ण
+	while (clocks->xfer_speed) {
+		if (clocks->xfer_speed == speed)
+			return clocks->timing;
+		clocks++;
+	}
 	BUG();
-	वापस 0xffffffffU;	/* silence compiler warning */
-पूर्ण
+	return 0xffffffffU;	/* silence compiler warning */
+}
 
 /**
  *	hpt372n_filter	-	mode selection filter
  *	@adev: ATA device
  *	@mask: mode mask
  *
- *	The Marvell bridge chips used on the HighPoपूर्णांक SATA cards करो not seem
+ *	The Marvell bridge chips used on the HighPoint SATA cards do not seem
  *	to support the UltraDMA modes 1, 2, and 3 as well as any MWDMA modes...
  */
-अटल अचिन्हित दीर्घ hpt372n_filter(काष्ठा ata_device *adev, अचिन्हित दीर्घ mask)
-अणु
-	अगर (ata_id_is_sata(adev->id))
+static unsigned long hpt372n_filter(struct ata_device *adev, unsigned long mask)
+{
+	if (ata_id_is_sata(adev->id))
 		mask &= ~((0xE << ATA_SHIFT_UDMA) | ATA_MASK_MWDMA);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
 /**
  *	hpt3x2n_cable_detect	-	Detect the cable type
@@ -138,52 +137,52 @@
  *	Return the cable type attached to this port
  */
 
-अटल पूर्णांक hpt3x2n_cable_detect(काष्ठा ata_port *ap)
-अणु
+static int hpt3x2n_cable_detect(struct ata_port *ap)
+{
 	u8 scr2, ata66;
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 
-	pci_पढ़ो_config_byte(pdev, 0x5B, &scr2);
-	pci_ग_लिखो_config_byte(pdev, 0x5B, scr2 & ~0x01);
+	pci_read_config_byte(pdev, 0x5B, &scr2);
+	pci_write_config_byte(pdev, 0x5B, scr2 & ~0x01);
 
 	udelay(10); /* debounce */
 
-	/* Cable रेजिस्टर now active */
-	pci_पढ़ो_config_byte(pdev, 0x5A, &ata66);
+	/* Cable register now active */
+	pci_read_config_byte(pdev, 0x5A, &ata66);
 	/* Restore state */
-	pci_ग_लिखो_config_byte(pdev, 0x5B, scr2);
+	pci_write_config_byte(pdev, 0x5B, scr2);
 
-	अगर (ata66 & (2 >> ap->port_no))
-		वापस ATA_CBL_PATA40;
-	अन्यथा
-		वापस ATA_CBL_PATA80;
-पूर्ण
+	if (ata66 & (2 >> ap->port_no))
+		return ATA_CBL_PATA40;
+	else
+		return ATA_CBL_PATA80;
+}
 
 /**
  *	hpt3x2n_pre_reset	-	reset the hpt3x2n bus
  *	@link: ATA link to reset
- *	@deadline: deadline jअगरfies क्रम the operation
+ *	@deadline: deadline jiffies for the operation
  *
- *	Perक्रमm the initial reset handling क्रम the 3x2n series controllers.
+ *	Perform the initial reset handling for the 3x2n series controllers.
  *	Reset the hardware and state machine,
  */
 
-अटल पूर्णांक hpt3x2n_pre_reset(काष्ठा ata_link *link, अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+static int hpt3x2n_pre_reset(struct ata_link *link, unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 
 	/* Reset the state machine */
-	pci_ग_लिखो_config_byte(pdev, 0x50 + 4 * ap->port_no, 0x37);
+	pci_write_config_byte(pdev, 0x50 + 4 * ap->port_no, 0x37);
 	udelay(100);
 
-	वापस ata_sff_prereset(link, deadline);
-पूर्ण
+	return ata_sff_prereset(link, deadline);
+}
 
-अटल व्योम hpt3x2n_set_mode(काष्ठा ata_port *ap, काष्ठा ata_device *adev,
+static void hpt3x2n_set_mode(struct ata_port *ap, struct ata_device *adev,
 			     u8 mode)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+{
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
 	u32 addr1, addr2;
 	u32 reg, timing, mask;
 	u8 fast;
@@ -191,51 +190,51 @@
 	addr1 = 0x40 + 4 * (adev->devno + 2 * ap->port_no);
 	addr2 = 0x51 + 4 * ap->port_no;
 
-	/* Fast पूर्णांकerrupt prediction disable, hold off पूर्णांकerrupt disable */
-	pci_पढ़ो_config_byte(pdev, addr2, &fast);
+	/* Fast interrupt prediction disable, hold off interrupt disable */
+	pci_read_config_byte(pdev, addr2, &fast);
 	fast &= ~0x07;
-	pci_ग_लिखो_config_byte(pdev, addr2, fast);
+	pci_write_config_byte(pdev, addr2, fast);
 
 	/* Determine timing mask and find matching mode entry */
-	अगर (mode < XFER_MW_DMA_0)
+	if (mode < XFER_MW_DMA_0)
 		mask = 0xcfc3ffff;
-	अन्यथा अगर (mode < XFER_UDMA_0)
+	else if (mode < XFER_UDMA_0)
 		mask = 0x31c001ff;
-	अन्यथा
+	else
 		mask = 0x303c0000;
 
 	timing = hpt3x2n_find_mode(ap, mode);
 
-	pci_पढ़ो_config_dword(pdev, addr1, &reg);
+	pci_read_config_dword(pdev, addr1, &reg);
 	reg = (reg & ~mask) | (timing & mask);
-	pci_ग_लिखो_config_dword(pdev, addr1, reg);
-पूर्ण
+	pci_write_config_dword(pdev, addr1, reg);
+}
 
 /**
  *	hpt3x2n_set_piomode		-	PIO setup
- *	@ap: ATA पूर्णांकerface
- *	@adev: device on the पूर्णांकerface
+ *	@ap: ATA interface
+ *	@adev: device on the interface
  *
- *	Perक्रमm PIO mode setup.
+ *	Perform PIO mode setup.
  */
 
-अटल व्योम hpt3x2n_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
+static void hpt3x2n_set_piomode(struct ata_port *ap, struct ata_device *adev)
+{
 	hpt3x2n_set_mode(ap, adev, adev->pio_mode);
-पूर्ण
+}
 
 /**
  *	hpt3x2n_set_dmamode		-	DMA timing setup
- *	@ap: ATA पूर्णांकerface
+ *	@ap: ATA interface
  *	@adev: Device being configured
  *
- *	Set up the channel क्रम MWDMA or UDMA modes.
+ *	Set up the channel for MWDMA or UDMA modes.
  */
 
-अटल व्योम hpt3x2n_set_dmamode(काष्ठा ata_port *ap, काष्ठा ata_device *adev)
-अणु
+static void hpt3x2n_set_dmamode(struct ata_port *ap, struct ata_device *adev)
+{
 	hpt3x2n_set_mode(ap, adev, adev->dma_mode);
-पूर्ण
+}
 
 /**
  *	hpt3x2n_bmdma_stop		-	DMA engine stop
@@ -244,114 +243,114 @@
  *	Clean up after the HPT3x2n and later DMA engine
  */
 
-अटल व्योम hpt3x2n_bmdma_stop(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
-	पूर्णांक mscreg = 0x50 + 2 * ap->port_no;
+static void hpt3x2n_bmdma_stop(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
+	int mscreg = 0x50 + 2 * ap->port_no;
 	u8 bwsr_stat, msc_stat;
 
-	pci_पढ़ो_config_byte(pdev, 0x6A, &bwsr_stat);
-	pci_पढ़ो_config_byte(pdev, mscreg, &msc_stat);
-	अगर (bwsr_stat & (1 << ap->port_no))
-		pci_ग_लिखो_config_byte(pdev, mscreg, msc_stat | 0x30);
+	pci_read_config_byte(pdev, 0x6A, &bwsr_stat);
+	pci_read_config_byte(pdev, mscreg, &msc_stat);
+	if (bwsr_stat & (1 << ap->port_no))
+		pci_write_config_byte(pdev, mscreg, msc_stat | 0x30);
 	ata_bmdma_stop(qc);
-पूर्ण
+}
 
 /**
- *	hpt3x2n_set_घड़ी	-	घड़ी control
+ *	hpt3x2n_set_clock	-	clock control
  *	@ap: ATA port
- *	@source: 0x21 or 0x23 क्रम PLL or PCI sourced घड़ी
+ *	@source: 0x21 or 0x23 for PLL or PCI sourced clock
  *
- *	Switch the ATA bus घड़ी between the PLL and PCI घड़ी sources
- *	जबतक correctly isolating the bus and resetting पूर्णांकernal logic
+ *	Switch the ATA bus clock between the PLL and PCI clock sources
+ *	while correctly isolating the bus and resetting internal logic
  *
- *	We must use the DPLL क्रम
+ *	We must use the DPLL for
  *	-	writing
  *	-	second channel UDMA7 (SATA ports) or higher
  *	-	66MHz PCI
  *
- *	or we will underघड़ी the device and get reduced perक्रमmance.
+ *	or we will underclock the device and get reduced performance.
  */
 
-अटल व्योम hpt3x2n_set_घड़ी(काष्ठा ata_port *ap, पूर्णांक source)
-अणु
-	व्योम __iomem *bmdma = ap->ioaddr.bmdma_addr - ap->port_no * 8;
+static void hpt3x2n_set_clock(struct ata_port *ap, int source)
+{
+	void __iomem *bmdma = ap->ioaddr.bmdma_addr - ap->port_no * 8;
 
 	/* Tristate the bus */
-	ioग_लिखो8(0x80, bmdma+0x73);
-	ioग_लिखो8(0x80, bmdma+0x77);
+	iowrite8(0x80, bmdma+0x73);
+	iowrite8(0x80, bmdma+0x77);
 
-	/* Switch घड़ी and reset channels */
-	ioग_लिखो8(source, bmdma+0x7B);
-	ioग_लिखो8(0xC0, bmdma+0x79);
+	/* Switch clock and reset channels */
+	iowrite8(source, bmdma+0x7B);
+	iowrite8(0xC0, bmdma+0x79);
 
-	/* Reset state machines, aव्योम enabling the disabled channels */
-	ioग_लिखो8(ioपढ़ो8(bmdma+0x70) | 0x32, bmdma+0x70);
-	ioग_लिखो8(ioपढ़ो8(bmdma+0x74) | 0x32, bmdma+0x74);
+	/* Reset state machines, avoid enabling the disabled channels */
+	iowrite8(ioread8(bmdma+0x70) | 0x32, bmdma+0x70);
+	iowrite8(ioread8(bmdma+0x74) | 0x32, bmdma+0x74);
 
 	/* Complete reset */
-	ioग_लिखो8(0x00, bmdma+0x79);
+	iowrite8(0x00, bmdma+0x79);
 
 	/* Reconnect channels to bus */
-	ioग_लिखो8(0x00, bmdma+0x73);
-	ioग_लिखो8(0x00, bmdma+0x77);
-पूर्ण
+	iowrite8(0x00, bmdma+0x73);
+	iowrite8(0x00, bmdma+0x77);
+}
 
-अटल पूर्णांक hpt3x2n_use_dpll(काष्ठा ata_port *ap, पूर्णांक writing)
-अणु
-	दीर्घ flags = (दीर्घ)ap->host->निजी_data;
+static int hpt3x2n_use_dpll(struct ata_port *ap, int writing)
+{
+	long flags = (long)ap->host->private_data;
 
-	/* See अगर we should use the DPLL */
-	अगर (writing)
-		वापस USE_DPLL;	/* Needed क्रम ग_लिखो */
-	अगर (flags & PCI66)
-		वापस USE_DPLL;	/* Needed at 66Mhz */
-	वापस 0;
-पूर्ण
+	/* See if we should use the DPLL */
+	if (writing)
+		return USE_DPLL;	/* Needed for write */
+	if (flags & PCI66)
+		return USE_DPLL;	/* Needed at 66Mhz */
+	return 0;
+}
 
-अटल पूर्णांक hpt3x2n_qc_defer(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा ata_port *alt = ap->host->ports[ap->port_no ^ 1];
-	पूर्णांक rc, flags = (दीर्घ)ap->host->निजी_data;
-	पूर्णांक dpll = hpt3x2n_use_dpll(ap, qc->tf.flags & ATA_TFLAG_WRITE);
+static int hpt3x2n_qc_defer(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct ata_port *alt = ap->host->ports[ap->port_no ^ 1];
+	int rc, flags = (long)ap->host->private_data;
+	int dpll = hpt3x2n_use_dpll(ap, qc->tf.flags & ATA_TFLAG_WRITE);
 
 	/* First apply the usual rules */
 	rc = ata_std_qc_defer(qc);
-	अगर (rc != 0)
-		वापस rc;
+	if (rc != 0)
+		return rc;
 
-	अगर ((flags & USE_DPLL) != dpll && alt->qc_active)
-		वापस ATA_DEFER_PORT;
-	वापस 0;
-पूर्ण
+	if ((flags & USE_DPLL) != dpll && alt->qc_active)
+		return ATA_DEFER_PORT;
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक hpt3x2n_qc_issue(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	पूर्णांक flags = (दीर्घ)ap->host->निजी_data;
-	पूर्णांक dpll = hpt3x2n_use_dpll(ap, qc->tf.flags & ATA_TFLAG_WRITE);
+static unsigned int hpt3x2n_qc_issue(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	int flags = (long)ap->host->private_data;
+	int dpll = hpt3x2n_use_dpll(ap, qc->tf.flags & ATA_TFLAG_WRITE);
 
-	अगर ((flags & USE_DPLL) != dpll) अणु
+	if ((flags & USE_DPLL) != dpll) {
 		flags &= ~USE_DPLL;
 		flags |= dpll;
-		ap->host->निजी_data = (व्योम *)(दीर्घ)flags;
+		ap->host->private_data = (void *)(long)flags;
 
-		hpt3x2n_set_घड़ी(ap, dpll ? 0x21 : 0x23);
-	पूर्ण
-	वापस ata_bmdma_qc_issue(qc);
-पूर्ण
+		hpt3x2n_set_clock(ap, dpll ? 0x21 : 0x23);
+	}
+	return ata_bmdma_qc_issue(qc);
+}
 
-अटल काष्ठा scsi_host_ढाँचा hpt3x2n_sht = अणु
+static struct scsi_host_template hpt3x2n_sht = {
 	ATA_BMDMA_SHT(DRV_NAME),
-पूर्ण;
+};
 
 /*
- *	Configuration क्रम HPT302N/371N.
+ *	Configuration for HPT302N/371N.
  */
 
-अटल काष्ठा ata_port_operations hpt3xxn_port_ops = अणु
+static struct ata_port_operations hpt3xxn_port_ops = {
 	.inherits	= &ata_bmdma_port_ops,
 
 	.bmdma_stop	= hpt3x2n_bmdma_stop,
@@ -363,96 +362,96 @@
 	.set_piomode	= hpt3x2n_set_piomode,
 	.set_dmamode	= hpt3x2n_set_dmamode,
 	.prereset	= hpt3x2n_pre_reset,
-पूर्ण;
+};
 
 /*
- *	Configuration क्रम HPT372N. Same as 302N/371N but we have a mode filter.
+ *	Configuration for HPT372N. Same as 302N/371N but we have a mode filter.
  */
 
-अटल काष्ठा ata_port_operations hpt372n_port_ops = अणु
+static struct ata_port_operations hpt372n_port_ops = {
 	.inherits	= &hpt3xxn_port_ops,
 	.mode_filter	= &hpt372n_filter,
-पूर्ण;
+};
 
 /**
  *	hpt3xn_calibrate_dpll		-	Calibrate the DPLL loop
  *	@dev: PCI device
  *
- *	Perक्रमm a calibration cycle on the HPT3xN DPLL. Returns 1 अगर this
+ *	Perform a calibration cycle on the HPT3xN DPLL. Returns 1 if this
  *	succeeds
  */
 
-अटल पूर्णांक hpt3xn_calibrate_dpll(काष्ठा pci_dev *dev)
-अणु
+static int hpt3xn_calibrate_dpll(struct pci_dev *dev)
+{
 	u8 reg5b;
 	u32 reg5c;
-	पूर्णांक tries;
+	int tries;
 
-	क्रम (tries = 0; tries < 0x5000; tries++) अणु
+	for (tries = 0; tries < 0x5000; tries++) {
 		udelay(50);
-		pci_पढ़ो_config_byte(dev, 0x5b, &reg5b);
-		अगर (reg5b & 0x80) अणु
-			/* See अगर it stays set */
-			क्रम (tries = 0; tries < 0x1000; tries++) अणु
-				pci_पढ़ो_config_byte(dev, 0x5b, &reg5b);
+		pci_read_config_byte(dev, 0x5b, &reg5b);
+		if (reg5b & 0x80) {
+			/* See if it stays set */
+			for (tries = 0; tries < 0x1000; tries++) {
+				pci_read_config_byte(dev, 0x5b, &reg5b);
 				/* Failed ? */
-				अगर ((reg5b & 0x80) == 0)
-					वापस 0;
-			पूर्ण
+				if ((reg5b & 0x80) == 0)
+					return 0;
+			}
 			/* Turn off tuning, we have the DPLL set */
-			pci_पढ़ो_config_dword(dev, 0x5c, &reg5c);
-			pci_ग_लिखो_config_dword(dev, 0x5c, reg5c & ~0x100);
-			वापस 1;
-		पूर्ण
-	पूर्ण
+			pci_read_config_dword(dev, 0x5c, &reg5c);
+			pci_write_config_dword(dev, 0x5c, reg5c & ~0x100);
+			return 1;
+		}
+	}
 	/* Never went stable */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक hpt3x2n_pci_घड़ी(काष्ठा pci_dev *pdev)
-अणु
-	अचिन्हित दीर्घ freq;
+static int hpt3x2n_pci_clock(struct pci_dev *pdev)
+{
+	unsigned long freq;
 	u32 fcnt;
-	अचिन्हित दीर्घ iobase = pci_resource_start(pdev, 4);
+	unsigned long iobase = pci_resource_start(pdev, 4);
 
-	fcnt = inl(iobase + 0x90);	/* Not PCI पढ़ोable क्रम some chips */
-	अगर ((fcnt >> 12) != 0xABCDE) अणु
-		पूर्णांक i;
+	fcnt = inl(iobase + 0x90);	/* Not PCI readable for some chips */
+	if ((fcnt >> 12) != 0xABCDE) {
+		int i;
 		u16 sr;
 		u32 total = 0;
 
 		pr_warn("BIOS clock data not set\n");
 
 		/* This is the process the HPT371 BIOS is reported to use */
-		क्रम (i = 0; i < 128; i++) अणु
-			pci_पढ़ो_config_word(pdev, 0x78, &sr);
+		for (i = 0; i < 128; i++) {
+			pci_read_config_word(pdev, 0x78, &sr);
 			total += sr & 0x1FF;
 			udelay(15);
-		पूर्ण
+		}
 		fcnt = total / 128;
-	पूर्ण
+	}
 	fcnt &= 0x1FF;
 
 	freq = (fcnt * 77) / 192;
 
 	/* Clamp to bands */
-	अगर (freq < 40)
-		वापस 33;
-	अगर (freq < 45)
-		वापस 40;
-	अगर (freq < 55)
-		वापस 50;
-	वापस 66;
-पूर्ण
+	if (freq < 40)
+		return 33;
+	if (freq < 45)
+		return 40;
+	if (freq < 55)
+		return 50;
+	return 66;
+}
 
 /**
  *	hpt3x2n_init_one		-	Initialise an HPT37X/302
  *	@dev: PCI device
  *	@id: Entry in match table
  *
- *	Initialise an HPT3x2n device. There are some पूर्णांकeresting complications
+ *	Initialise an HPT3x2n device. There are some interesting complications
  *	here. Firstly the chip may report 366 and be one of several variants.
- *	Secondly all the timings depend on the घड़ी क्रम the chip which we must
+ *	Secondly all the timings depend on the clock for the chip which we must
  *	detect and look up
  *
  *	This is the known chip mappings. It may be missing a couple of later
@@ -470,157 +469,157 @@
  *	HPT374			8 (HPT374)	*	Other driver
  *	HPT372N			9 (HPT372N)	*	UDMA133
  *
- *	(1) UDMA133 support depends on the bus घड़ी
+ *	(1) UDMA133 support depends on the bus clock
  */
 
-अटल पूर्णांक hpt3x2n_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
-अणु
+static int hpt3x2n_init_one(struct pci_dev *dev, const struct pci_device_id *id)
+{
 	/* HPT372N - UDMA133 */
-	अटल स्थिर काष्ठा ata_port_info info_hpt372n = अणु
+	static const struct ata_port_info info_hpt372n = {
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.mwdma_mask = ATA_MWDMA2,
 		.udma_mask = ATA_UDMA6,
 		.port_ops = &hpt372n_port_ops
-	पूर्ण;
+	};
 	/* HPT302N and HPT371N - UDMA133 */
-	अटल स्थिर काष्ठा ata_port_info info_hpt3xxn = अणु
+	static const struct ata_port_info info_hpt3xxn = {
 		.flags = ATA_FLAG_SLAVE_POSS,
 		.pio_mask = ATA_PIO4,
 		.mwdma_mask = ATA_MWDMA2,
 		.udma_mask = ATA_UDMA6,
 		.port_ops = &hpt3xxn_port_ops
-	पूर्ण;
-	स्थिर काष्ठा ata_port_info *ppi[] = अणु &info_hpt3xxn, शून्य पूर्ण;
+	};
+	const struct ata_port_info *ppi[] = { &info_hpt3xxn, NULL };
 	u8 rev = dev->revision;
 	u8 irqmask;
-	अचिन्हित पूर्णांक pci_mhz;
-	अचिन्हित पूर्णांक f_low, f_high;
-	पूर्णांक adjust;
-	अचिन्हित दीर्घ iobase = pci_resource_start(dev, 4);
-	व्योम *hpriv = (व्योम *)USE_DPLL;
-	पूर्णांक rc;
+	unsigned int pci_mhz;
+	unsigned int f_low, f_high;
+	int adjust;
+	unsigned long iobase = pci_resource_start(dev, 4);
+	void *hpriv = (void *)USE_DPLL;
+	int rc;
 
 	rc = pcim_enable_device(dev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
-	चयन (dev->device) अणु
-	हाल PCI_DEVICE_ID_TTI_HPT366:
-		/* 372N अगर rev >= 6 */
-		अगर (rev < 6)
-			वापस -ENODEV;
-		जाओ hpt372n;
-	हाल PCI_DEVICE_ID_TTI_HPT371:
-		/* 371N अगर rev >= 2 */
-		अगर (rev < 2)
-			वापस -ENODEV;
-		अवरोध;
-	हाल PCI_DEVICE_ID_TTI_HPT372:
-		/* 372N अगर rev >= 2 */
-		अगर (rev < 2)
-			वापस -ENODEV;
-		जाओ hpt372n;
-	हाल PCI_DEVICE_ID_TTI_HPT302:
-		/* 302N अगर rev >= 2 */
-		अगर (rev < 2)
-			वापस -ENODEV;
-		अवरोध;
-	हाल PCI_DEVICE_ID_TTI_HPT372N:
+	switch (dev->device) {
+	case PCI_DEVICE_ID_TTI_HPT366:
+		/* 372N if rev >= 6 */
+		if (rev < 6)
+			return -ENODEV;
+		goto hpt372n;
+	case PCI_DEVICE_ID_TTI_HPT371:
+		/* 371N if rev >= 2 */
+		if (rev < 2)
+			return -ENODEV;
+		break;
+	case PCI_DEVICE_ID_TTI_HPT372:
+		/* 372N if rev >= 2 */
+		if (rev < 2)
+			return -ENODEV;
+		goto hpt372n;
+	case PCI_DEVICE_ID_TTI_HPT302:
+		/* 302N if rev >= 2 */
+		if (rev < 2)
+			return -ENODEV;
+		break;
+	case PCI_DEVICE_ID_TTI_HPT372N:
 hpt372n:
 		ppi[0] = &info_hpt372n;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		pr_err("PCI table is bogus, please report (%d)\n", dev->device);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	/* Ok so this is a chip we support */
 
-	pci_ग_लिखो_config_byte(dev, PCI_CACHE_LINE_SIZE, (L1_CACHE_BYTES / 4));
-	pci_ग_लिखो_config_byte(dev, PCI_LATENCY_TIMER, 0x78);
-	pci_ग_लिखो_config_byte(dev, PCI_MIN_GNT, 0x08);
-	pci_ग_लिखो_config_byte(dev, PCI_MAX_LAT, 0x08);
+	pci_write_config_byte(dev, PCI_CACHE_LINE_SIZE, (L1_CACHE_BYTES / 4));
+	pci_write_config_byte(dev, PCI_LATENCY_TIMER, 0x78);
+	pci_write_config_byte(dev, PCI_MIN_GNT, 0x08);
+	pci_write_config_byte(dev, PCI_MAX_LAT, 0x08);
 
-	pci_पढ़ो_config_byte(dev, 0x5A, &irqmask);
+	pci_read_config_byte(dev, 0x5A, &irqmask);
 	irqmask &= ~0x10;
-	pci_ग_लिखो_config_byte(dev, 0x5a, irqmask);
+	pci_write_config_byte(dev, 0x5a, irqmask);
 
 	/*
 	 * HPT371 chips physically have only one channel, the secondary one,
-	 * but the primary channel रेजिस्टरs करो exist!  Go figure...
+	 * but the primary channel registers do exist!  Go figure...
 	 * So,  we manually disable the non-existing channel here
-	 * (अगर the BIOS hasn't करोne this alपढ़ोy).
+	 * (if the BIOS hasn't done this already).
 	 */
-	अगर (dev->device == PCI_DEVICE_ID_TTI_HPT371) अणु
+	if (dev->device == PCI_DEVICE_ID_TTI_HPT371) {
 		u8 mcr1;
-		pci_पढ़ो_config_byte(dev, 0x50, &mcr1);
+		pci_read_config_byte(dev, 0x50, &mcr1);
 		mcr1 &= ~0x04;
-		pci_ग_लिखो_config_byte(dev, 0x50, mcr1);
-	पूर्ण
+		pci_write_config_byte(dev, 0x50, mcr1);
+	}
 
 	/*
-	 * Tune the PLL. HPT recommend using 75 क्रम SATA, 66 क्रम UDMA133 or
-	 * 50 क्रम UDMA100. Right now we always use 66
+	 * Tune the PLL. HPT recommend using 75 for SATA, 66 for UDMA133 or
+	 * 50 for UDMA100. Right now we always use 66
 	 */
 
-	pci_mhz = hpt3x2n_pci_घड़ी(dev);
+	pci_mhz = hpt3x2n_pci_clock(dev);
 
-	f_low = (pci_mhz * 48) / 66;	/* PCI Mhz क्रम 66Mhz DPLL */
+	f_low = (pci_mhz * 48) / 66;	/* PCI Mhz for 66Mhz DPLL */
 	f_high = f_low + 2;		/* Tolerance */
 
-	pci_ग_लिखो_config_dword(dev, 0x5C, (f_high << 16) | f_low | 0x100);
-	/* PLL घड़ी */
-	pci_ग_लिखो_config_byte(dev, 0x5B, 0x21);
+	pci_write_config_dword(dev, 0x5C, (f_high << 16) | f_low | 0x100);
+	/* PLL clock */
+	pci_write_config_byte(dev, 0x5B, 0x21);
 
-	/* Unlike the 37x we करोn't try jiggling the frequency */
-	क्रम (adjust = 0; adjust < 8; adjust++) अणु
-		अगर (hpt3xn_calibrate_dpll(dev))
-			अवरोध;
-		pci_ग_लिखो_config_dword(dev, 0x5C, (f_high << 16) | f_low);
-	पूर्ण
-	अगर (adjust == 8) अणु
+	/* Unlike the 37x we don't try jiggling the frequency */
+	for (adjust = 0; adjust < 8; adjust++) {
+		if (hpt3xn_calibrate_dpll(dev))
+			break;
+		pci_write_config_dword(dev, 0x5C, (f_high << 16) | f_low);
+	}
+	if (adjust == 8) {
 		pr_err("DPLL did not stabilize!\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	pr_info("bus clock %dMHz, using 66MHz DPLL\n", pci_mhz);
 
 	/*
-	 * Set our निजी data up. We only need a few flags
+	 * Set our private data up. We only need a few flags
 	 * so we use it directly.
 	 */
-	अगर (pci_mhz > 60)
-		hpriv = (व्योम *)(PCI66 | USE_DPLL);
+	if (pci_mhz > 60)
+		hpriv = (void *)(PCI66 | USE_DPLL);
 
 	/*
-	 * On  HPT371N, अगर ATA घड़ी is 66 MHz we must set bit 2 in
-	 * the MISC. रेजिस्टर to stretch the UltraDMA Tss timing.
-	 * NOTE: This रेजिस्टर is only ग_लिखोable via I/O space.
+	 * On  HPT371N, if ATA clock is 66 MHz we must set bit 2 in
+	 * the MISC. register to stretch the UltraDMA Tss timing.
+	 * NOTE: This register is only writeable via I/O space.
 	 */
-	अगर (dev->device == PCI_DEVICE_ID_TTI_HPT371)
+	if (dev->device == PCI_DEVICE_ID_TTI_HPT371)
 		outb(inb(iobase + 0x9c) | 0x04, iobase + 0x9c);
 
 	/* Now kick off ATA set up */
-	वापस ata_pci_bmdma_init_one(dev, ppi, &hpt3x2n_sht, hpriv, 0);
-पूर्ण
+	return ata_pci_bmdma_init_one(dev, ppi, &hpt3x2n_sht, hpriv, 0);
+}
 
-अटल स्थिर काष्ठा pci_device_id hpt3x2n[] = अणु
-	अणु PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT366), पूर्ण,
-	अणु PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT371), पूर्ण,
-	अणु PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT372), पूर्ण,
-	अणु PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT302), पूर्ण,
-	अणु PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT372N), पूर्ण,
+static const struct pci_device_id hpt3x2n[] = {
+	{ PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT366), },
+	{ PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT371), },
+	{ PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT372), },
+	{ PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT302), },
+	{ PCI_VDEVICE(TTI, PCI_DEVICE_ID_TTI_HPT372N), },
 
-	अणु पूर्ण,
-पूर्ण;
+	{ },
+};
 
-अटल काष्ठा pci_driver hpt3x2n_pci_driver = अणु
+static struct pci_driver hpt3x2n_pci_driver = {
 	.name		= DRV_NAME,
 	.id_table	= hpt3x2n,
 	.probe		= hpt3x2n_init_one,
-	.हटाओ		= ata_pci_हटाओ_one
-पूर्ण;
+	.remove		= ata_pci_remove_one
+};
 
 module_pci_driver(hpt3x2n_pci_driver);
 
